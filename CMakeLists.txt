@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.8)
 
 
 
-project ("filesyn")
+project ("filesyn" VERSION 0.1.0)
 
 # 包含子项目。
 add_subdirectory ("filesyn")

@@ -3,6 +3,11 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
+find_package(SQLite3 REQUIRED)
+find_package(Boost REQUIRED)
+
+include_directories(${Boost_INCLUDE_DIRS})
+
 # 将源代码添加到此项目的可执行文件。
 add_executable (filesyn "filesyn.cpp" "filesyn.h")
 
