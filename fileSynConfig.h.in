@@ -1,0 +1,2 @@
+#define fileSyn_VERSION_MAJOR @fileSyn_VERSION_MAJOR@
+#define fileSyn_VERSION_MINOR @fileSyn_VERSION_MINOR@
