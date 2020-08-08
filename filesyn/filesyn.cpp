@@ -4,10 +4,10 @@
 #include "filesyn.h"
 #include "boost/filesystem.hpp"
 #include "fileSynConfig.h"
-using namespace std;
+
 
 int main()
 {
-	cout << fileSyn_VERSION_MAJOR << "." << fileSyn_VERSION_MINOR << endl;
+	std::cout << fileSyn_VERSION_MAJOR << "." << fileSyn_VERSION_MINOR << std::endl;
 	return 0;
 }
