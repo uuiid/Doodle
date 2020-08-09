@@ -12,6 +12,12 @@ include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${PROJECT_BINARY_DIR})
 message(${PROJECT_SOURCE_DIR})
 # 将源代码添加到此项目的可执行文件。
-add_executable (filesyn "filesyn.cpp" "filesyn.h" "fileInfo.cpp" "fileInfo.h")
+add_executable (filesyn 
+"filesyn.cpp"
+"filesyn.h" 
+"fileInfo.cpp" 
+"fileInfo.h" 
+"setting.cpp" 
+"setting.h")
 
 # TODO: 如有需要，请添加测试并安装目标。

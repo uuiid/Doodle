@@ -1,29 +1,25 @@
 #pragma once
 
 #include <boost/filesystem.hpp>
-#include <boost/progress.hpp>
-
+#include <boost/date_time.hpp>
+//#include <boost/date_time/posix_time/posix_time.hpp>
+#include <cstdint>
 class fileInfo
 {
 public:
 	fileInfo( );
+	fileInfo(boost::filesystem::path absPath );
 	~fileInfo( );
 
-	boost::filesystem::path absPath;
-	boost::filesystem::path relativePath;
-	boost::progress_timer createTime;
-	boost::progress_timer modifyTime;
-	boost::progress_timer synTimer;
+
 
 
 private:
+	boost::filesystem::path _absPath_;
+	boost::filesystem::path relativePath;
+	boost::posix_time::ptime modifyTime;
+	boost::posix_time::ptime synTimer;
+	uintmax_t fileSize;
 
 };
 
-fileInfo::fileInfo( )
-{
-}
-
-fileInfo::~fileInfo( )
-{
-}
