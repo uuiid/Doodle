@@ -17,8 +17,6 @@ fileInfo::fileInfo(boost::filesystem::path absPath)
     synTimer = boost::posix_time::from_time_t(NULL);
 
     _absPath_ = absPath;
-
-    
 }
 
 fileInfo::~fileInfo( )

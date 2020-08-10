@@ -6,18 +6,23 @@ cmake_minimum_required (VERSION 3.8)
 #set(cmake_pix)
 
 find_package(SQLite3 REQUIRED)
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem)
 
 include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${SQLite3_INCLUDE_DIRS})
+# message(" ++++++++++++++++++${SQLite3_INCLUDE_DIRS}")
 include_directories(${PROJECT_BINARY_DIR})
-message(${PROJECT_SOURCE_DIR})
-# 将源代码添加到此项目的可执行文件。
+# message(${PROJECT_SOURCE_DIR})
+# 将源代码添加到此项目的可执行文件
+
+#add_library(Boost::filesystem IMPORTED INTERFACE)
+
 add_executable (filesyn 
 "filesyn.cpp"
 "filesyn.h" 
 "fileInfo.cpp" 
 "fileInfo.h" 
 "setting.cpp" 
-"setting.h")
-
+"setting.h" "sqlConnect.h" "sqlConnect.cpp")
+target_link_libraries(filesyn Boost::filesystem)
 # TODO: 如有需要，请添加测试并安装目标。
