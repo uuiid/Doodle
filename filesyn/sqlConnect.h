@@ -9,7 +9,10 @@ public:
 	sqlConnect( );
 	~sqlConnect( );
 
-private:
 
+
+private:
+	sqlite3* db;
+	char* ZErrMsg;
 };
 

@@ -15,3 +15,13 @@ setting& setting::GetSetting( )
 setting::~setting( )
 {
 }
+
+void setting::setRoot(boost::filesystem::path root_)
+{
+    root = root_;
+}
+
+boost::filesystem::path setting::getRoot( )
+{
+    return root;
+}
