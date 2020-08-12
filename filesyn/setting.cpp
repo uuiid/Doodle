@@ -25,3 +25,8 @@ boost::filesystem::path setting::getRoot( )
 {
     return root;
 }
+
+void setting::addExclude(const char& regex)
+{
+
+}

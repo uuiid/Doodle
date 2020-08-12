@@ -2,6 +2,7 @@
 //
 
 #include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
 #include "filesyn.h"
 #include "setting.h"
 #include "fileSynConfig.h"
@@ -16,11 +17,35 @@ fileSyn::~fileSyn( )
 
 void fileSyn::scanfile(boost::filesystem::path root)
 {
+	if (!boost::filesystem::exists(root))
+	{
+		return ;
+	}
 	setting* test = &setting::GetSetting( );
 	setting::GetSetting( ).setRoot(root);
 	if (boost::filesystem::is_directory(root))
 	{
-		//synSet.setRoot(root);
+		boost::filesystem::recursive_directory_iterator end_iter;
+		
+		for (boost::filesystem::recursive_directory_iterator iter(root); iter != end_iter; iter++)
+		{
+			try
+			{
+				if (boost::filesystem::is_directory(iter->path()))
+				{
+					std::cout << iter->path( ).string( ) << std::endl;
+				}
+				else
+				{
+					std::cout << iter->path( ).string( ) << std::endl;
+				}
+			}
+			catch (const std::exception& ex)
+			{
+				std::cout << "错误" << ex.what() << std::endl;
+				continue;
+			}
+		}
 
 	}
 	
@@ -30,5 +55,10 @@ void fileSyn::scanfile(boost::filesystem::path root)
 int main()
 {
 	std::cout << fileSyn_VERSION_MAJOR << "." << fileSyn_VERSION_MINOR << std::endl;
+	fileSyn f;
+	boost::filesystem::path p("D:\\USD\\plugin\\usd");
+	
+	f.scanfile(p);
+	
 	return 0;
 }
