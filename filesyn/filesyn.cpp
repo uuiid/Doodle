@@ -4,6 +4,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 #include "filesyn.h"
+#include "fileInfo.h"
 #include "setting.h"
 #include "fileSynConfig.h"
 
@@ -15,14 +16,51 @@ fileSyn::~fileSyn( )
 {
 }
 
+void fileSyn::scan( )
+{
+}
+
+folderCompare::folderCompare( )
+{
+}
+
+folderCompare::folderCompare(boost::filesystem::path path1, boost::filesystem::path path2)
+{
+	compare = std::make_pair(path1, path2);
+}
+
+folderCompare::~folderCompare( )
+{
+}
+
+void folderCompare::setFolderCompare(boost::filesystem::path path1, boost::filesystem::path path2)
+{
+	compare = std::make_pair(path1, path2);
+}
+
+boost::filesystem::path folderCompare::getCompareFirst( )
+{
+	return compare.first;
+}
+
+boost::filesystem::path folderCompare::getCompareSecond( )
+{
+	return compare.second;
+}
+
+std::pair<boost::filesystem::path, boost::filesystem::path> folderCompare::getFolderCompare( )
+{
+	return compare;
+}
+
 void fileSyn::scanfile(boost::filesystem::path root)
 {
 	if (!boost::filesystem::exists(root))
 	{
 		return ;
 	}
-	setting* test = &setting::GetSetting( );
-	setting::GetSetting( ).setRoot(root);
+	//setting* test = &setting::GetSetting( );
+	//setting::GetSetting( ).setRoot(root);
 	if (boost::filesystem::is_directory(root))
 	{
 		boost::filesystem::recursive_directory_iterator end_iter;
@@ -31,11 +69,7 @@ void fileSyn::scanfile(boost::filesystem::path root)
 		{
 			try
 			{
-				if (boost::filesystem::is_directory(iter->path()))
-				{
-					std::cout << iter->path( ).string( ) << std::endl;
-				}
-				else
+				if (boost::filesystem::is_regular_file(iter->path()))
 				{
 					std::cout << iter->path( ).string( ) << std::endl;
 				}
@@ -51,6 +85,16 @@ void fileSyn::scanfile(boost::filesystem::path root)
 	
 }
 
+void fileSyn::addFolderCompare(folderCompare folderCom)
+{
+	folder.push_back(folderCom);
+}
+
+void fileSyn::clearFodlerCompare( )
+{
+	folder.clear( );
+}
+
 
 int main()
 {
@@ -58,7 +102,7 @@ int main()
 	fileSyn f;
 	boost::filesystem::path p("D:\\USD\\plugin\\usd");
 	
-	f.scanfile(p);
+	//f.scanfile(p);
 	
 	return 0;
 }

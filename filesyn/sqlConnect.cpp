@@ -8,12 +8,8 @@
 
 sqlConnect::sqlConnect( )
 {
-    int rc;
-    rc = sqlite3_open("test.db", &db);
-    if (rc)
-    {
-        throw std::runtime_error("无法打开数据库");
-    }
+    db = nullptr;
+    ZErrMsg = "ok";
 }
 
 
@@ -22,4 +18,19 @@ sqlConnect::sqlConnect( )
 sqlConnect::~sqlConnect( )
 {
     sqlite3_close(db);
+}
+
+char* sqlConnect::openSqlDB( )
+{
+    int rc;
+    rc = sqlite3_open(".doodle_syn.db", &db);
+    if (rc)
+    {
+        throw std::runtime_error("无法打开数据库");
+    }
+    return "fail";
+}
+
+void sqlConnect::subObj( )
+{
 }

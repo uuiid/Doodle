@@ -9,6 +9,9 @@ public:
 	sqlConnect( );
 	~sqlConnect( );
 
+	char* openSqlDB( );
+	void subObj( );
+
 
 
 private:
