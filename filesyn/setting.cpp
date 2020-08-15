@@ -1,32 +1,32 @@
 #include "setting.h"
 
-setting::setting( )
+globalSetting::globalSetting( )
 {
 }
 
 
-setting& setting::GetSetting( )
+globalSetting& globalSetting::GetSetting( )
 {
-    static setting instance;
+    static globalSetting instance;
     
     return instance;
 }
 
-setting::~setting( )
+globalSetting::~globalSetting( )
 {
 }
 
-void setting::setRoot(boost::filesystem::path root_)
+void globalSetting::setRoot(boost::filesystem::path root_)
 {
     root = root_;
 }
 
-boost::filesystem::path setting::getRoot( )
+boost::filesystem::path globalSetting::getRoot( )
 {
     return root;
 }
 
-void setting::addExclude(const char& regex)
+void globalSetting::addExclude(const char& regex)
 {
 
 }

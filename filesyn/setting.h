@@ -2,22 +2,39 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
-class setting
+class globalSetting
 {
 public:
-	static setting& GetSetting( );
-	~setting( );
+
+	enum class synmethod
+	{
+		upload, down, ignore
+	};
+
+	enum class fileSeat
+	{
+		local, server
+	};
+
+	enum class compareResult
+	{
+		earlier, Later, nonExistent
+	};
+
+	static globalSetting& GetSetting( );
+	~globalSetting( );
 	void setRoot(boost::filesystem::path root_);
 	boost::filesystem::path getRoot( );
 	void addExclude(const char& regex);
 private:
-	setting( );
-	setting(const setting&) = delete;
-	setting& operator = (const setting& s) = delete;
+	globalSetting( );
+	globalSetting(const globalSetting&) = delete;
+	globalSetting& operator = (const globalSetting& s) = delete;
 
 	boost::filesystem::path root;
 	std::vector<boost::regex> RegexExclude;
 
 
 };
+
 

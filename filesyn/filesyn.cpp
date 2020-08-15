@@ -8,14 +8,6 @@
 #include "setting.h"
 #include "fileSynConfig.h"
 
-fileSyn::fileSyn( )
-{
-}
-
-fileSyn::~fileSyn( )
-{
-}
-
 void fileSyn::scan( )
 {
 }
@@ -33,9 +25,19 @@ folderCompare::~folderCompare( )
 {
 }
 
+void folderCompare::scan( )
+{
+
+}
+
 void folderCompare::setFolderCompare(boost::filesystem::path path1, boost::filesystem::path path2)
 {
 	compare = std::make_pair(path1, path2);
+}
+
+void folderCompare::addFileInfo(fileInfo & fi)
+{
+	fileInfoPtr.push_back(&fi);
 }
 
 boost::filesystem::path folderCompare::getCompareFirst( )
@@ -53,14 +55,27 @@ std::pair<boost::filesystem::path, boost::filesystem::path> folderCompare::getFo
 	return compare;
 }
 
+/// <summary>
+/// 主要同步类
+/// ==================================================================
+/// </summary>
+
+fileSyn::fileSyn( )
+{
+}
+
+fileSyn::~fileSyn( )
+{
+}
+
 void fileSyn::scanfile(boost::filesystem::path root)
 {
 	if (!boost::filesystem::exists(root))
 	{
 		return ;
 	}
-	//setting* test = &setting::GetSetting( );
-	//setting::GetSetting( ).setRoot(root);
+	//globalSetting* test = &globalSetting::GetSetting( );
+	//globalSetting::GetSetting( ).setRoot(root);
 	if (boost::filesystem::is_directory(root))
 	{
 		boost::filesystem::recursive_directory_iterator end_iter;
@@ -85,9 +100,9 @@ void fileSyn::scanfile(boost::filesystem::path root)
 	
 }
 
-void fileSyn::addFolderCompare(folderCompare folderCom)
+void fileSyn::addFolderCompare(folderCompare &folderCom)
 {
-	folder.push_back(folderCom);
+	folder.push_back(&folderCom);
 }
 
 void fileSyn::clearFodlerCompare( )
