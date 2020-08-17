@@ -8,53 +8,6 @@
 #include "setting.h"
 #include "fileSynConfig.h"
 
-void fileSyn::scan( )
-{
-}
-
-folderCompare::folderCompare( )
-{
-}
-
-folderCompare::folderCompare(boost::filesystem::path path1, boost::filesystem::path path2)
-{
-	compare = std::make_pair(path1, path2);
-}
-
-folderCompare::~folderCompare( )
-{
-}
-
-void folderCompare::scan( )
-{
-
-}
-
-void folderCompare::setFolderCompare(boost::filesystem::path path1, boost::filesystem::path path2)
-{
-	compare = std::make_pair(path1, path2);
-}
-
-void folderCompare::addFileInfo(fileInfo & fi)
-{
-	fileInfoPtr.push_back(&fi);
-}
-
-boost::filesystem::path folderCompare::getCompareFirst( )
-{
-	return compare.first;
-}
-
-boost::filesystem::path folderCompare::getCompareSecond( )
-{
-	return compare.second;
-}
-
-std::pair<boost::filesystem::path, boost::filesystem::path> folderCompare::getFolderCompare( )
-{
-	return compare;
-}
-
 /// <summary>
 /// 主要同步类
 /// ==================================================================
@@ -65,6 +18,10 @@ fileSyn::fileSyn( )
 }
 
 fileSyn::~fileSyn( )
+{
+}
+
+void fileSyn::scan( )
 {
 }
 

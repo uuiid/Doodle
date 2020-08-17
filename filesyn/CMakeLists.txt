@@ -26,6 +26,6 @@ add_executable (filesyn
 "fileInfo.cpp" 
 "fileInfo.h" 
 "setting.cpp" 
-"setting.h" "sqlConnect.h" "sqlConnect.cpp")
+"setting.h" "sqlConnect.h" "sqlConnect.cpp" "folderCompare.h" "folderCompare.cpp")
 target_link_libraries(filesyn Boost::filesystem ${SQLite3_LIBRARY} )
 # TODO: 如有需要，请添加测试并安装目标。
