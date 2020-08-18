@@ -8,6 +8,7 @@
 #include "fileInfo.h"
 #include "folderCompare.h"
 #include <boost/filesystem.hpp>
+#include <boost/shared_ptr.hpp>
 #include <iostream>
 
 
@@ -21,12 +22,9 @@ public:
 	~fileSyn( );
 	void scan( );
 
-	
-
 	void addFolderCompare(folderCompare &folderCom);
 	void clearFodlerCompare( );
 protected:
-	void scanfile(boost::filesystem::path root);
-	std::vector<folderCompare*> folder;
+	std::list<boost::shared_ptr<folderCompare>> folder;
 };
 // TODO: 在此处引用程序需要的其他标头。

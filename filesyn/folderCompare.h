@@ -4,6 +4,7 @@
 #include "setting.h"
 #include "fileInfo.h"
 #include <boost/filesystem.hpp>
+#include <boost/shared_ptr.hpp>
 #include <iostream>
 
 /// <summary>
@@ -18,16 +19,14 @@ public:
 
 	virtual void scan( ) = 0;
 
-	void addFileInfo(fileInfo& fi);
-
-	void setFolderCompare(boost::filesystem::path path1, boost::filesystem::path path2);
+	void setFolderCompare(boost::filesystem::path &path1, boost::filesystem::path &path2);
 	boost::filesystem::path getCompareFirst( );
 	boost::filesystem::path getCompareSecond( );
 	std::pair<boost::filesystem::path, boost::filesystem::path> getFolderCompare( );
 
 protected:
 	std::pair<boost::filesystem::path, boost::filesystem::path> compare;
-	std::vector<fileInfo*> fileInfoPtr;
+	std::vector<boost::shared_ptr<fileInfo>> fileInfoPtr;
 };
 
 class folderCompareSys :public folderCompare

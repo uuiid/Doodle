@@ -18,6 +18,7 @@ sqlConnect::sqlConnect( )
 sqlConnect::~sqlConnect( )
 {
     sqlite3_close(db);
+    delete ZErrMsg;
 }
 
 char* sqlConnect::openSqlDB( )

@@ -14,14 +14,9 @@ folderCompare::~folderCompare( )
 {
 }
 
-void folderCompare::setFolderCompare(boost::filesystem::path path1, boost::filesystem::path path2)
+void folderCompare::setFolderCompare(boost::filesystem::path &path1, boost::filesystem::path &path2)
 {
 	compare = std::make_pair(path1, path2);
-}
-
-void folderCompare::addFileInfo(fileInfo& fi)
-{
-	fileInfoPtr.push_back(&fi);
 }
 
 boost::filesystem::path folderCompare::getCompareFirst( )
@@ -50,6 +45,8 @@ folderCompareSys::~folderCompareSys( )
 
 void folderCompareSys::scan( )
 {
+	scanPath(compare.first);
+	scanPath(compare.second);
 }
 
 void folderCompareSys::scanPath(boost::filesystem::path& path)
@@ -60,17 +57,18 @@ void folderCompareSys::scanPath(boost::filesystem::path& path)
 	}
 	//globalSetting* test = &globalSetting::GetSetting( );
 	//globalSetting::GetSetting( ).setRoot(root);
-	if (boost::filesystem::is_directory(path))
+	if (boost::filesystem::is_directory(path)) //确认是目录
 	{
 		boost::filesystem::recursive_directory_iterator end_iter;
-
+		//创建迭代器开始迭代
 		for (boost::filesystem::recursive_directory_iterator iter(path); iter != end_iter; iter++)
 		{
 			try
-			{
+			{//错误处理, 并创建文件信息类
 				if (boost::filesystem::is_regular_file(iter->path( )))
 				{
-					fileInfo* info = new fileInfo(iter->path( ));
+					boost::shared_ptr<fileInfo> info(new fileInfo(iter->path( )));
+					fileInfoPtr.push_back(info);
 				}
 			}
 			catch (const std::exception& ex)

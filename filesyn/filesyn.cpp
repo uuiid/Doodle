@@ -13,6 +13,8 @@
 /// ==================================================================
 /// </summary>
 
+typedef boost::shared_ptr<folderCompare> test;
+
 fileSyn::fileSyn( )
 {
 }
@@ -23,43 +25,18 @@ fileSyn::~fileSyn( )
 
 void fileSyn::scan( )
 {
+	std::list<boost::shared_ptr<folderCompare>>::iterator it;
+	for(it = folder.begin();it != folder.end(); ++it)
+	{
+		(**it).scan( );
+	}
 }
 
-void fileSyn::scanfile(boost::filesystem::path root)
-{
-	if (!boost::filesystem::exists(root))
-	{
-		return ;
-	}
-	//globalSetting* test = &globalSetting::GetSetting( );
-	//globalSetting::GetSetting( ).setRoot(root);
-	if (boost::filesystem::is_directory(root))
-	{
-		boost::filesystem::recursive_directory_iterator end_iter;
-		
-		for (boost::filesystem::recursive_directory_iterator iter(root); iter != end_iter; iter++)
-		{
-			try
-			{
-				if (boost::filesystem::is_regular_file(iter->path()))
-				{
-					std::cout << iter->path( ).string( ) << std::endl;
-				}
-			}
-			catch (const std::exception& ex)
-			{
-				std::cout << "错误" << ex.what() << std::endl;
-				continue;
-			}
-		}
-
-	}
-	
-}
 
 void fileSyn::addFolderCompare(folderCompare &folderCom)
 {
-	folder.push_back(&folderCom);
+	boost::shared_ptr<folderCompare> ptr(&folderCom);
+	folder.push_back(ptr);
 }
 
 void fileSyn::clearFodlerCompare( )
@@ -67,14 +44,24 @@ void fileSyn::clearFodlerCompare( )
 	folder.clear( );
 }
 
+inline void EnableMemLeakCheck( )
+{
+	//该语句在程序退出时自动调用 _CrtDumpMemoryLeaks(),用于多个退出出口的情况.
+	//如果只有一个退出位置，可以在程序退出之前调用 _CrtDumpMemoryLeaks()
+	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
+}
 
 int main()
 {
+	EnableMemLeakCheck( );
 	std::cout << fileSyn_VERSION_MAJOR << "." << fileSyn_VERSION_MINOR << std::endl;
 	fileSyn f;
-	boost::filesystem::path p("D:\\USD\\plugin\\usd");
-	
-	//f.scanfile(p);
-	
+	boost::filesystem::path p("F:\\USD\\plugin\\usd");
+	boost::filesystem::path p2("D:\\job");
+	folderCompareSys fcom;
+	fcom.setFolderCompare(p, p2);
+	f.addFolderCompare(fcom);
+	f.scan( );
+	//_CrtDumpMemoryLeaks( );
 	return 0;
 }

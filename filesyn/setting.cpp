@@ -8,7 +8,6 @@ globalSetting::globalSetting( )
 globalSetting& globalSetting::GetSetting( )
 {
     static globalSetting instance;
-    
     return instance;
 }
 
