@@ -14,4 +14,6 @@ configure_file(fileSynConfig.h.in fileSynConfig.h)
 project ("filesyn" VERSION 0.1.0)
 
 # 包含子项目。
-add_subdirectory ("filesyn")
+enable_testing()
+add_subdirectory("filesyn")
+add_subdirectory("googleTest")

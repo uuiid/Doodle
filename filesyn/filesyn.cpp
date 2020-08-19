@@ -51,6 +51,7 @@ void fileSyn::clearFodlerCompare( )
 	folder.clear( );
 }
 
+
 //inline void EnableMemLeakCheck( )
 //{
 //	//该语句在程序退出时自动调用 _CrtDumpMemoryLeaks(),用于多个退出出口的情况.
@@ -58,17 +59,17 @@ void fileSyn::clearFodlerCompare( )
 //	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 //}
 
-int main()
-{
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	std::cout << fileSyn_VERSION_MAJOR << "." << fileSyn_VERSION_MINOR << std::endl;
-	fileSyn f;
-	boost::filesystem::path p("F:\\USD\\plugin\\usd");
-	boost::filesystem::path p2("D:\\job");
-	folderCompareSys* fcom = new folderCompareSys();
-	fcom->setFolderCompare(p, p2);
-	f.addFolderCompare(*fcom);
-	//f.scan( );
-	_CrtDumpMemoryLeaks( );
-	return 0;
-}
+//int main()
+//{
+//	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+//	std::cout << fileSyn_VERSION_MAJOR << "." << fileSyn_VERSION_MINOR << std::endl;
+//	fileSyn f;
+//	boost::filesystem::path p("F:\\USD\\plugin\\usd");
+//	boost::filesystem::path p2("D:\\job");
+//	folderCompareSys* fcom = new folderCompareSys();
+//	fcom->setFolderCompare(p, p2);
+//	f.addFolderCompare(*fcom);
+//	//f.scan( );
+//	_CrtDumpMemoryLeaks( );
+//	return 0;
+//}

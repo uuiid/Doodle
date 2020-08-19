@@ -21,17 +21,39 @@ sqlConnect::~sqlConnect( )
     delete ZErrMsg;
 }
 
-char* sqlConnect::openSqlDB( )
+bool sqlConnect::openSqlDB( )
 {
     int rc;
-    rc = sqlite3_open(".doodle_syn.db", &db);
-    if (rc)
+    if (db != nullptr)
     {
-        throw std::runtime_error("无法打开数据库");
+        rc = sqlite3_open("D:\\.doodle_syn.db", &db);
+        if (rc)
+        {
+            throw std::runtime_error("无法打开数据库");
+            return false;
+        }
     }
-    return "fail";
+    
+    return true;
 }
 
 void sqlConnect::subObj( )
 {
+}
+
+bool sqlConnect::exeStmtNoReturn(sqlite3_stmt * stmt )
+{
+    sqlite3_step(stmt);
+    return true;
+}
+
+sqlite3* sqlConnect::getDB( )
+{
+    return db;
+}
+
+sqlConnect& sqlConnect::GetSqlCommect( )
+{
+    static sqlConnect instance;
+    return instance;
 }

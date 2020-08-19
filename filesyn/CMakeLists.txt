@@ -1,7 +1,7 @@
 ﻿# CMakeList.txt: filesyn 的 CMake 项目，在此处包括源代码并定义
 # 项目特定的逻辑。
 #
-cmake_minimum_required (VERSION 3.8)
+# cmake_minimum_required (VERSION 3.8)
 # 
 #set(cmake_pix)
 
@@ -20,12 +20,13 @@ foreach (_variableName ${_variableNames})
     message(STATUS "${_variableName}=${${_variableName}}")
 endforeach()
 
-add_executable (filesyn 
+add_library(filesyn SHARED
 "filesyn.cpp"
 "filesyn.h" 
 "fileInfo.cpp" 
 "fileInfo.h" 
 "setting.cpp" 
 "setting.h" "sqlConnect.h" "sqlConnect.cpp" "folderCompare.h" "folderCompare.cpp")
-target_link_libraries(filesyn Boost::filesystem ${SQLite3_LIBRARY} )
-# TODO: 如有需要，请添加测试并安装目标。
+#target_link_directories(filesyn Boost::filesystem ${SQLite3_LIBRARY})
+message("================ " )
+target_link_libraries(filesyn Boost::filesystem sqlite3 )

@@ -24,6 +24,7 @@ public:
 
 	void addFolderCompare(folderCompare &folderCom);
 	void clearFodlerCompare( );
+	
 protected:
 	std::list<boost::shared_ptr<folderCompare>> folder;
 };

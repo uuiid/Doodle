@@ -1,18 +1,25 @@
 #pragma once
 
+#include "fileInfo.h"
 #include <sqlite3.h>
-//#include <sqlite3ext.h>
+
 
 class sqlConnect
 {
 public:
-	sqlConnect( );
 	~sqlConnect( );
 
-	char* openSqlDB( );
+	bool openSqlDB( );
 	void subObj( );
 
+	bool exeStmtNoReturn(sqlite3_stmt* stmt);
+	sqlite3* getDB( );
+	static sqlConnect& GetSqlCommect( );
 
+private:
+	sqlConnect( );
+	sqlConnect(const sqlConnect&) = delete;
+	sqlConnect& operator = (const sqlConnect& s) = delete;
 
 private:
 	sqlite3* db;

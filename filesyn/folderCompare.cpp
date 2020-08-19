@@ -1,4 +1,5 @@
 #include "folderCompare.h"
+#include "sqlConnect.h"
 #include <boost/filesystem.hpp>
 
 folderCompare::folderCompare( )
@@ -34,6 +35,19 @@ std::pair<boost::filesystem::path, boost::filesystem::path> folderCompare::getFo
 	return compare;
 }
 
+void folderCompare::initDB( )
+{
+	sqlConnect& sqlcon = sqlConnect::GetSqlCommect( );
+	sqlite3_stmt* stmt;
+	if (sqlcon.openSqlDB( ))
+	{
+		sqlcon.exeStmtNoReturn(fileInfo::getCreateTable(sqlcon.getDB( ), stmt, "first" ));
+		sqlcon.exeStmtNoReturn(fileInfo::getCreateTable(sqlcon.getDB( ), stmt, "Second"));
+		sqlite3_finalize(stmt);
+	}
+	
+}
+
 
 folderCompareSys::folderCompareSys( )
 {
@@ -45,12 +59,13 @@ folderCompareSys::~folderCompareSys( )
 
 void folderCompareSys::scan( )
 {
-	scanPath(compare.first);
-	scanPath(compare.second);
+	scanPath(compare.first,fileInfoPtrFirst);
+	scanPath(compare.second,fileInfoPtrSecond);
 }
 
-void folderCompareSys::scanPath(boost::filesystem::path& path)
+void folderCompareSys::scanPath(const boost::filesystem::path & path, std::list<boost::shared_ptr<fileInfo>>& addFileInfo)
 {
+	initDB( );
 	if (!boost::filesystem::exists(path))
 	{
 		return;
@@ -67,8 +82,8 @@ void folderCompareSys::scanPath(boost::filesystem::path& path)
 			{//错误处理, 并创建文件信息类
 				if (boost::filesystem::is_regular_file(iter->path( )))
 				{
-					boost::shared_ptr<fileInfo> info(new fileInfo(iter->path( )));
-					fileInfoPtr.push_back(info);
+					boost::shared_ptr<fileInfo> info(new fileInfo(iter->path( ),path));
+					addFileInfo.push_back(info);
 				}
 			}
 			catch (const std::exception& ex)
@@ -88,9 +103,11 @@ void folderCompareFtp::scan( )
 
 folderCompareFtp::folderCompareFtp( )
 {
+
 }
 
 folderCompareFtp::~folderCompareFtp( )
 {
+
 }
 

@@ -25,9 +25,13 @@ public:
 	std::pair<boost::filesystem::path, boost::filesystem::path> getFolderCompare( );
 
 protected:
+	void initDB( );
 	std::pair<boost::filesystem::path, boost::filesystem::path> compare;
-	std::vector<boost::shared_ptr<fileInfo>> fileInfoPtr;
+	std::list<sPtrFileInfo> fileInfoPtrFirst;
+	std::list<sPtrFileInfo> fileInfoPtrSecond;
 };
+
+typedef boost::shared_ptr<folderCompare> sPtrFolderCompare;
 
 class folderCompareSys :public folderCompare
 {
@@ -36,8 +40,10 @@ public:
 	~folderCompareSys( );
 	void scan( ) override;
 private:
-	void scanPath(boost::filesystem::path &path);
+	void scanPath(const boost::filesystem::path & path, std::list<boost::shared_ptr<fileInfo>> &addFileInfo);
 };
+
+typedef boost::shared_ptr<folderCompareSys> sPtrFolderCompareSys;
 
 class folderCompareFtp :public folderCompare
 {
@@ -50,3 +56,4 @@ private:
 
 };
 
+typedef boost::shared_ptr<folderCompareFtp> sPtrFolderCompareFtp;

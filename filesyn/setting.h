@@ -23,6 +23,7 @@ public:
 
 	static globalSetting& GetSetting( );
 	~globalSetting( );
+
 	void setRoot(boost::filesystem::path root_);
 	boost::filesystem::path getRoot( );
 	void addExclude(const char& regex);
@@ -30,7 +31,7 @@ private:
 	globalSetting( );
 	globalSetting(const globalSetting&) = delete;
 	globalSetting& operator = (const globalSetting& s) = delete;
-
+private:
 	boost::filesystem::path root;
 	std::vector<boost::regex> RegexExclude;
 
