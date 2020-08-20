@@ -11,7 +11,7 @@ set(fileSyn_VERSION_MINOR 0.2)
 
 configure_file(fileSynConfig.h.in fileSynConfig.h)
 
-project ("filesyn" VERSION 0.1.0)
+project ("doodle" VERSION 0.1.0)
 
 # 包含子项目。
 enable_testing()

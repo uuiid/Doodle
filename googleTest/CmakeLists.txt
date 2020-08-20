@@ -1,8 +1,6 @@
 # 查找Googletest 
 find_package(GTest CONFIG REQUIRED)
 
-find_package(SQLite3 CONFIG REQUIRED)
-find_package(Boost REQUIRED COMPONENTS filesystem)
 # include 头文件
 
 include_directories(${GTest_DIR})
@@ -20,6 +18,6 @@ endforeach()
 add_executable(test_my_class "test_fileInfo.cpp" "test_sqlComm.cpp")
 
 target_link_libraries(test_my_class
-	                   PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main filesyn Boost::filesystem ${SQLite3_LIBRARY})
-add_test(AllTestsInMain test_my_class)
+	                   PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main filesyn)
+add_test(AllTestsInMain ${CMAKE_CURRENT_BINARY_DIR}/debug/test_my_class)
 #gtest_discover_tests(test_my_class)
