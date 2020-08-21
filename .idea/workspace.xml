@@ -1,7 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
-    <generated />
+    <generated>
+      <config projectName="doodle" targetName="filesyn" />
+      <config projectName="doodle" targetName="test_my_class" />
+    </generated>
   </component>
   <component name="CMakeSettings">
     <configurations>
@@ -10,13 +31,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3916a141-1fcc-4529-b226-35caa5920a79" name="默认更改列表" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/filesyn.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/filesyn/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/filesyn/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/googleTest/main.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/macro/macroApi.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fileSynConfig.h.in" beforeDir="false" afterPath="$PROJECT_DIR$/fileSynConfig.h.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/filesyn/sqlConnect.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/filesyn/sqlConnect.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/googleTest/CmakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/googleTest/CmakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/googleTest/test_fileInfo.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/googleTest/test_fileInfo.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/googleTest/test_sqlComm.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/googleTest/test_sqlComm.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,6 +50,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -35,13 +60,40 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="DatabaseDriversLRU" value="sqlite" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="cf.advertisement.text.has.clang-format" value="true" />
     <property name="cf.first.check.clang-format" value="false" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="settings.editor.selected.configurable" value="CMakeSettings" />
   </component>
-  <component name="RunManager">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
+  <component name="RunManager" selected="Google Test.test_sqlCom_sub.sqlcom_sub">
+    <configuration name="test_my_class" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="doodle" TARGET_NAME="test_my_class" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="doodle" RUN_TARGET_NAME="test_my_class" TEST_MODE="SUITE_TEST">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="BeforeTestRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test_sqlCom_sub.sqlcom_sub" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" temporary="true" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="doodle" TARGET_NAME="test_my_class" RUN_TARGET_PROJECT_NAME="doodle" RUN_TARGET_NAME="test_my_class" TEST_CLASS="test_sqlCom_sub" TEST_METHOD="sqlcom_sub" TEST_MODE="SUITE_TEST">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="BeforeTestRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test_sqlComm.sqlComm" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" temporary="true" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="doodle" TARGET_NAME="test_my_class" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="doodle" RUN_TARGET_NAME="test_my_class" TEST_CLASS="test_sqlComm" TEST_METHOD="sqlComm" TEST_MODE="SUITE_TEST">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="BeforeTestRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="filesyn" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="doodle" TARGET_NAME="filesyn" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -51,6 +103,18 @@
         <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="CMake Application.filesyn" />
+      <item itemvalue="Google Test.test_my_class" />
+      <item itemvalue="Google Test.test_sqlComm.sqlComm" />
+      <item itemvalue="Google Test.test_sqlCom_sub.sqlcom_sub" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Google Test.test_sqlCom_sub.sqlcom_sub" />
+        <item itemvalue="Google Test.test_sqlComm.sqlComm" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -61,16 +125,92 @@
       <option name="presentableId" value="Default" />
       <updated>1597915728802</updated>
       <workItem from="1597915732337" duration="487000" />
+      <workItem from="1598005057702" duration="216000" />
+      <workItem from="1598008427147" duration="2416000" />
+      <workItem from="1598011825294" duration="2350000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
   <component name="WindowStateProjectService">
-    <state x="450" y="279" key="SettingsEditor" timestamp="1597916057917">
+    <state x="552" y="273" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1598014809551">
       <screen x="0" y="30" width="1920" height="1170" />
     </state>
-    <state x="450" y="279" key="SettingsEditor/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1597916057917" />
+    <state x="552" y="273" key="#com.intellij.execution.impl.EditConfigurationsDialog/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1598014809551" />
+    <state width="938" height="325" key="GridCell.Tab.0.bottom" timestamp="1598014823926">
+      <screen x="0" y="30" width="1920" height="1170" />
+    </state>
+    <state width="938" height="325" key="GridCell.Tab.0.bottom/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1598014823926" />
+    <state width="938" height="325" key="GridCell.Tab.0.center" timestamp="1598014823926">
+      <screen x="0" y="30" width="1920" height="1170" />
+    </state>
+    <state width="938" height="325" key="GridCell.Tab.0.center/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1598014823926" />
+    <state width="938" height="325" key="GridCell.Tab.0.left" timestamp="1598014823926">
+      <screen x="0" y="30" width="1920" height="1170" />
+    </state>
+    <state width="938" height="325" key="GridCell.Tab.0.left/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1598014823926" />
+    <state width="938" height="325" key="GridCell.Tab.0.right" timestamp="1598014823926">
+      <screen x="0" y="30" width="1920" height="1170" />
+    </state>
+    <state width="938" height="325" key="GridCell.Tab.0.right/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1598014823926" />
+    <state width="1877" height="400" key="GridCell.Tab.1.bottom" timestamp="1598014546197">
+      <screen x="0" y="30" width="1920" height="1170" />
+    </state>
+    <state width="1877" height="400" key="GridCell.Tab.1.bottom/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1598014546197" />
+    <state width="1877" height="400" key="GridCell.Tab.1.center" timestamp="1598014546197">
+      <screen x="0" y="30" width="1920" height="1170" />
+    </state>
+    <state width="1877" height="400" key="GridCell.Tab.1.center/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1598014546197" />
+    <state width="1877" height="400" key="GridCell.Tab.1.left" timestamp="1598014546197">
+      <screen x="0" y="30" width="1920" height="1170" />
+    </state>
+    <state width="1877" height="400" key="GridCell.Tab.1.left/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1598014546197" />
+    <state width="1877" height="400" key="GridCell.Tab.1.right" timestamp="1598014546197">
+      <screen x="0" y="30" width="1920" height="1170" />
+    </state>
+    <state width="1877" height="400" key="GridCell.Tab.1.right/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1598014546197" />
+    <state width="220" height="477" key="HiddenNamespacesPopup" timestamp="1598014729331">
+      <screen x="0" y="30" width="1920" height="1170" />
+    </state>
+    <state width="220" height="477" key="HiddenNamespacesPopup/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1598014729331" />
+    <state x="450" y="279" key="SettingsEditor" timestamp="1598005173233">
+      <screen x="0" y="30" width="1920" height="1170" />
+    </state>
+    <state x="450" y="279" key="SettingsEditor/-1200.30.1200.1890/0.30.1920.1170@0.30.1920.1170" timestamp="1598005173233" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/googleTest/test_sqlComm.cpp</url>
+          <line>20</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/filesyn/fileInfo.cpp</url>
+          <line>48</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/filesyn/sqlConnect.cpp</url>
+          <line>46</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

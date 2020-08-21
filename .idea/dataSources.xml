@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="SQLite - doodle_syn.db" uuid="1bdc75d7-5d77-498f-83ef-b1ce3221f0e2">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:F:\Source\filesyn\cmake-build-debug\googleTest\doodle_syn.db</jdbc-url>
+    </data-source>
+  </component>
+</project>
