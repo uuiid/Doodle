@@ -9,6 +9,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(fileSyn_VERSION_MAJOR 0)
 set(fileSyn_VERSION_MINOR 0.2)
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+set(CMAKE_PREFIX_PATH "F:\\Qt\\Qt5.12.8\\5.12.8\\msvc2017_64")
+find_package(Qt5 COMPONENTS Widgets Sql REQUIRED)
+
+
+
 configure_file(fileSynConfig.h.in fileSynConfig.h)
 
 project ("doodle" VERSION 0.1.0)

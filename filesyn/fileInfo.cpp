@@ -1,4 +1,5 @@
 #include "fileInfo.h"
+#include "boost/format.hpp"
 
 const char* fileInfo::install = "INSERT INTO @table(file_size,modify_time,path) \
 VALUES (@file_size,@modify_time,@path)";
@@ -45,6 +46,8 @@ void fileInfo::setTableName(std::string& table)
 
 sqlite3_stmt* fileInfo::getCreateTable(sqlite3* sqlDB,sqlite3_stmt* sqlStmt,std::string table)
 {
+    std::string create= boost::format ("%1").str();
+    //boost::shared_ptr<>
 
     sqlite3_prepare(sqlDB,createTable, -1, &sqlStmt, NULL);
     sqlite3_bind_text(sqlStmt,1,table.c_str(),-1,NULL);

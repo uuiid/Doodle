@@ -3,7 +3,10 @@
 
 #include <iostream>
 #include <exception>
-
+#include <qsqldatabase.h>
+#include <qsqldriver.h>
+#include <qsqlerror.h>
+#include <qsqlquery.h>
 //#include <sqlite3ext.h>
 
 sqlConnect::sqlConnect( )
@@ -23,17 +26,22 @@ sqlConnect::~sqlConnect( )
 
 bool sqlConnect::openSqlDB( )
 {
-    int rc;
-    if (db == nullptr)
-    {
-        rc = sqlite3_open("doodle_syn.db", &db);
-        if (rc)
-        {
-            throw std::runtime_error("无法打开数据库");
-            return false;
-        }
+    QSqlDatabase db_ = QSqlDatabase::addDatabase("QSQLITE");
+    db_.setDatabaseName("test");
+    if (!db_.open()){
+        return false;
     }
-    
+//    int rc;
+//    if (db == nullptr)
+//    {
+//        rc = sqlite3_open("doodle_syn.db", &db);
+//        if (rc)
+//        {
+//            throw std::runtime_error("无法打开数据库");
+//            return false;
+//        }
+//    }
+//
     return true;
 }
 

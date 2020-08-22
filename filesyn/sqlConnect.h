@@ -2,7 +2,7 @@
 
 #include "fileInfo.h"
 #include <sqlite3.h>
-
+//#include <qsql.h>
 
 class sqlConnect
 {

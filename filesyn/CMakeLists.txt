@@ -7,11 +7,14 @@
 
 find_package(SQLite3 CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem date_time )
+#find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${SQLite3_INCLUDE_DIRS})
 # message(" ++++++++++++++++++${SQLite3_INCLUDE_DIRS}")
 include_directories(${PROJECT_BINARY_DIR})
+include_directories(${Qt5Core_INCLUDE_DIRS})
+include_directories(${Qt5Sql_INCLUDE_DIRS})
 # message(${PROJECT_SOURCE_DIR})
 # 将源代码添加到此项目的可执行文件
 
@@ -29,6 +32,6 @@ add_library(filesyn STATIC
 "setting.h" "sqlConnect.h" "sqlConnect.cpp" "folderCompare.h" "folderCompare.cpp")
 #target_link_directories(filesyn Boost::filesystem ${SQLite3_LIBRARY})
 message("================ " )
-target_link_libraries(filesyn Boost::filesystem sqlite3 )
+target_link_libraries(filesyn Boost::filesystem sqlite3 QT )
 # target_compile_definitions(filesyn INTERFACE USING_filesyn_LIB)
 # install(TARGETS filesyn "${PROJECT_BINARY_DIR}/out")
