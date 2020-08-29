@@ -15,8 +15,8 @@ public:
     fileInfo(const QDir & dir,   const QString & tableName_);
     fileInfo(const QString & dir,const QString & tableName_);
 
-    QString subFileInfo(QSqlQuery & bindSql);
-
+    QSqlQuery subFileInfo(QSqlQuery & bindSql);
+    QString getSqlCom();
 
 
     static QString getCreataTableCom(const QString &tableName);

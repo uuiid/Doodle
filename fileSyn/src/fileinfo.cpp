@@ -37,9 +37,12 @@ fileInfo::fileInfo(const QString &dir,const QString & tableName_)
 
 }
 
-QString fileInfo::subFileInfo(QSqlQuery &bindSql)
+QSqlQuery fileInfo::subFileInfo(QSqlQuery &bindSql)
 {
-    bindSql.bindValue(":file_size",QVariant(int(fileSize)));
+    bindSql.bindValue(":file_size",   QVariant(int(fileSize)));
+    bindSql.bindValue(":modify_time", QVariant(modifyTime));
+    bindSql.bindValue(":path",        QVariant(path.canonicalPath()));
+    return bindSql;
 }
 
 fileInfo::fileInfo(const QDir &dir, const QString & tableName_)
@@ -60,7 +63,7 @@ fileInfo::fileInfo(const QDir &dir, const QString & tableName_)
 
 }
 
-QString fileInfo::subFileInfo()
+QString fileInfo::getSqlCom()
 {
     return subInfo.arg(tableName);
 }
