@@ -1,28 +1,57 @@
-﻿# CMakeList.txt: 顶层 CMake 项目文件，在此处执行全局配置
-# 并包含子项目。
-#
-cmake_minimum_required (VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-# 添加版本号
-set(fileSyn_VERSION_MAJOR 0)
-set(fileSyn_VERSION_MINOR 0.2)
+project(Doodle LANGUAGES CXX)
 
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_PREFIX_PATH "F:\\Qt\\Qt5.12.8\\5.12.8\\msvc2017_64")
-find_package(Qt5 COMPONENTS Widgets Sql REQUIRED)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# QtCreator supports the following variables for Android, which are identical to qmake Android variables.
+# Check http://doc.qt.io/qt-5/deployment-android.html for more information.
+# They need to be set before the find_package(Qt5 ...) call.
 
+#if(ANDROID)
+#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
+#    if (ANDROID_ABI STREQUAL "armeabi-v7a")
+#        set(ANDROID_EXTRA_LIBS
+#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libcrypto.so
+#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libssl.so)
+#    endif()
+#endif()
 
-configure_file(fileSynConfig.h.in fileSynConfig.h)
+find_package(Qt5 COMPONENTS Core Widgets Test LinguistTools REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem date_time)
+add_subdirectory("fileSyn")
+set(TS_FILES test_cmake_zh_CN.ts)
 
-project ("doodle" VERSION 0.1.0)
+if(ANDROID)
+  add_library(Doodle SHARED
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h
+    mainwindow.ui
+    ${TS_FILES}
+  )
+else()
+  add_executable(Doodle
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h
+    mainwindow.ui
+    ${TS_FILES}
+  )
+endif()
 
-# 包含子项目。
+target_link_libraries(Doodle PRIVATE Qt5::Widgets fileSyn)
+
+qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+install( TARGETS Doodle DESTINATION bin)
+#install( FILES "")
 enable_testing()
-add_subdirectory("filesyn")
-add_subdirectory("googleTest")
+add_subdirectory("test")
+
