@@ -23,5 +23,5 @@ void test_fileSyn::test_sqlCreateTable()
 
 void test_fileSyn::test_scan()
 {
-
+    doFileSyn::folderCompareSyn t(QDir("D:/tmp"),QDir("D:/hou"));
 }

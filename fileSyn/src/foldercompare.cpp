@@ -3,17 +3,13 @@
 #include <QDirIterator>
 DNAMESPACE_S
 
-folderCompare::folderCompare()
-{
 
-}
-
-folderCompare::folderCompare(QDir path1, QDir path2)
-{
-    if(!path1.exists()) path1.mkdir(path1.absolutePath());
-    if(!path2.exists()) path2.mkdir(path2.absolutePath());
-    filesynPair = std::make_pair(path1,path2);
-}
+//folderCompare::folderCompare(QDir path1, QDir path2)
+//{
+//    if(!path1.exists()) path1.mkdir(path1.absolutePath());
+//    if(!path2.exists()) path2.mkdir(path2.absolutePath());
+//    filesynPair = std::make_pair(path1,path2);
+//}
 
 bool folderCompare::initDB()
 {
@@ -47,7 +43,7 @@ bool folderCompareSyn::scanPath(const QDir & path,std::map<QString,fileInfoptr> 
 
 bool folderCompareSyn::subFileInfo(const std::map<QString, fileInfoptr> &fileInfoList)
 {
-
+    return true;
 }
 
 DNAMESPACE_E

@@ -43,12 +43,13 @@ bool sqlConnect::openSqlDB(const QDir & dir)
 
 bool sqlConnect::setRoot(const QDir &dir)
 {
-    if  (dir.exists()){
+    if(dir.exists()){
         Root = dir;
         return true;
     }else{
-        if (!dir.mkdir(dir.canonicalPath())) return false;
+        if (!dir.mkdir(".")) return false;
         Root = dir;
+        return true;
     }
     return false;
 }

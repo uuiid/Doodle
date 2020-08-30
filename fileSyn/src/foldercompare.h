@@ -13,8 +13,8 @@ typedef std::pair<QDir,QDir> synPair;
 class FILESYN_EXPORT folderCompare
 {
 public:
-    folderCompare();
-    folderCompare(QDir path1,QDir path2);
+//    folderCompare() {};
+    folderCompare(const QDir path1,const QDir path2) :filesynPair(path1,path2) {};
     virtual bool scan() = 0;
 protected:
     virtual bool scanPath(const QDir & path,std::map<QString,fileInfoptr> & fileInfoList, const QString & tableName) = 0;
@@ -29,6 +29,7 @@ protected:
 class FILESYN_EXPORT folderCompareSyn :public folderCompare
 {
 public:
+    using folderCompare::folderCompare;
     bool scan() override;
 protected:
     bool scanPath(const QDir & path, std::map<QString,fileInfoptr> & fileInfoList, const QString &tableName) override;
