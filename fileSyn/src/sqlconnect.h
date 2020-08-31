@@ -18,6 +18,8 @@ public:
     bool openSqlDB(const QDir & dir);
     bool setRoot(const QDir & dir);
     bool createTable(const QString & sqlcom);
+    bool subObj(QSqlQuery &query);
+    QSqlDatabase &GetdataBase();
     void closedb();
 private:
     sqlConnect();

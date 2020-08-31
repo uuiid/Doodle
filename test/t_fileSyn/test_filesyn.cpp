@@ -18,10 +18,11 @@ void test_fileSyn::test_sqlCreateTable()
 {
     doFileSyn::sqlConnect& taa = doFileSyn::sqlConnect::GetSqlConnect();
     if (!taa.openSqlDB(QDir("D:/tmp"))) return ;
-    QVERIFY(taa.createTable(doFileSyn::fileInfo::getCreataTableCom("test")));
+    QVERIFY(taa.createTable(doFileSyn::fileInfo::getCreataTableCom("file")));
 }
 
 void test_fileSyn::test_scan()
 {
-    doFileSyn::folderCompareSyn t(QDir("D:/tmp"),QDir("D:/hou"));
+    doFileSyn::fileInfo t("D:/sc_064","D:/tmp","BuJu.1001.png");
+    QVERIFY(t.subAndUpdataSQL());
 }

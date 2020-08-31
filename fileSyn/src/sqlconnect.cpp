@@ -66,6 +66,18 @@ bool sqlConnect::createTable(const QString &sqlcom)
     return true;
 }
 
+bool sqlConnect::subObj(QSqlQuery &query)
+{
+    if(!query.exec())return false;
+    dataBase.commit();
+    return true;
+}
+
+QSqlDatabase& sqlConnect::GetdataBase()
+{
+    return dataBase;
+}
+
 void sqlConnect::closedb()
 {
     dataBase.close();

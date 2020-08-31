@@ -5,10 +5,13 @@
 #include "fileSyn_global.h"
 #include "fileinfo.h"
 #include <QtCore/QDir>
+#include <QtSql/QSqlTableModel>
 #include <map>
 
 DNAMESPACE_S
 typedef std::pair<QDir,QDir> synPair;
+typedef std::map<QString,fileInfoptr> synMap;
+typedef std::map<QString,std::pair<fileInfoptr,fileInfoptr>> synMapPair;
 
 class FILESYN_EXPORT folderCompare
 {
@@ -17,11 +20,15 @@ public:
     folderCompare(const QDir path1,const QDir path2) :filesynPair(path1,path2) {};
     virtual bool scan() = 0;
 protected:
-    virtual bool scanPath(const QDir & path,std::map<QString,fileInfoptr> & fileInfoList, const QString & tableName) = 0;
-    virtual bool subFileInfo(const std::map<QString,fileInfoptr> & fileInfoList) = 0;
+    virtual bool scanPath(const QDir & path, synMap &filemap) = 0;
+    virtual bool subFileInfo(const synMapPair & fileInfoList) = 0;
     synPair filesynPair;
-    std::map<QString,fileInfoptr> fileInfoFirst;
-    std::map<QString,fileInfoptr> fileInfoSecond;
+    synMap fileInfoFirst;
+    synMap fileInfoSecond;
+    synMapPair filemap;
+
+    QSharedPointer<QSqlTableModel> table;
+
     bool initDB();
 
 };
@@ -32,8 +39,8 @@ public:
     using folderCompare::folderCompare;
     bool scan() override;
 protected:
-    bool scanPath(const QDir & path, std::map<QString,fileInfoptr> & fileInfoList, const QString &tableName) override;
-    bool subFileInfo(const std::map<QString, fileInfoptr> &fileInfoList) override;
+    bool scanPath(const QDir & path, synMap &filemap) override;
+    bool subFileInfo(const synMapPair &fileInfoList) override;
 };
 
 
