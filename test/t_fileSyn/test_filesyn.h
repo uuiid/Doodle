@@ -12,9 +12,12 @@ class test_fileSyn :public QObject
 public:
     test_fileSyn();
 private slots:
+    void init();
     void test_sqlconn();
     void test_sqlCreateTable();
-    void test_scan();
+    void test_fileIno_sql_sub();
+    void test_fileInfo_sql_delete();
+    void test_fileInfo_filsyn();
 };
 
 #endif // TEST_FILESYN_H

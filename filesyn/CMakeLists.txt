@@ -19,7 +19,8 @@ set(HEADER_FILES
     src/filesyn.h
     src/sqlconnect.h
     src/foldercompare.h
-    src/fileinfo.h)
+    src/fileinfo.h
+    src/d_setting.h)
 
 add_library(fileSyn SHARED
   ${HEADER_FILES}
@@ -27,6 +28,7 @@ add_library(fileSyn SHARED
   src/sqlconnect.cpp
   src/foldercompare.cpp
   src/fileinfo.cpp
+  src/d_setting.cpp
   ${TS_FILES}
 )
 

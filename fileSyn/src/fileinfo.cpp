@@ -3,6 +3,8 @@
 #include <QtCore/QVariant>
 #include <QtSql/QSqlError>
 #include <QtDebug>
+#include <QFile>
+
 DNAMESPACE_S
 
 QString fileInfo::createTableSqlcom = "CREATE TABLE IF NOT EXISTS `%1` (\
@@ -10,11 +12,9 @@ QString fileInfo::createTableSqlcom = "CREATE TABLE IF NOT EXISTS `%1` (\
         file_size_2 integer,\
         modify_time_1 text,\
         modify_time_2 text,\
+        syn_time text,\
         path text primary key\
         )";
-
-QString fileInfo::subInfo = "INSERT INTO `%1`(file_size,modify_time,path) \
-VALUES (:file_size,:modify_time,:path)";
 
 fileInfo::fileInfo()
 {
@@ -23,62 +23,54 @@ fileInfo::fileInfo()
 
 fileInfo::fileInfo(const QString &dirRoot1, const QString &dirRoot2, const QString &dir)
 {
-    QDir root1 = dirRoot1;
-    root1.cd(dir);
+    QString root1 = QString("%1/%2").arg(dirRoot1, dir);
+    absPath_1 = root1;
     path = QDir(dir);
-    if (root1.exists()){
-        QFileInfo info(root1.absolutePath());
-        absPath_1 = root1.absolutePath();
+    if (QFile(root1).exists()){
+        QFileInfo info(root1);
         fileSize_1 =info.size();
         modifyTime_1 = info.lastModified();
     }else {
-        absPath_1 = "";
         fileSize_1 = 0;
         modifyTime_1 = QDateTime();
     }
 
-    QDir root2 = dirRoot2;
-    root2.cd(dir);
-    if (root2.exists()){
-        QFileInfo info(root2.absolutePath());
-        absPath_1 = root2.absolutePath();
-        fileSize_1 =info.size();
-        modifyTime_1 = info.lastModified();
+    QString root2 = QString("%1/%2").arg(dirRoot2, dir);
+    absPath_2 = root2;
+    if (QFile(root2).exists()){
+        QFileInfo info(root2);
+        fileSize_2 =info.size();
+        modifyTime_2 = info.lastModified();
     }else {
-        absPath_1 = "";
-        fileSize_1 = 0;
-        modifyTime_1 = QDateTime();
+        fileSize_2 = 0;
+        modifyTime_2 = QDateTime();
     }
 
 }
 
 fileInfo::fileInfo(const QDir & dirRoot1,const QDir & dirRoot2, const QDir & dir)
 {
-    QDir root1 = dirRoot1;
-    root1.cd(dir.path());
+    QString root1 = QString("%1/%2").arg(dirRoot1.path(),dirRoot1.path());
     path = dir;
-    if (root1.exists()){
-        QFileInfo info(root1.absolutePath());
-        absPath_1 = root1.absolutePath();
+    absPath_1 = root1;
+    if (QFile(root1).exists()){
+        QFileInfo info(root1);
         fileSize_1 =info.size();
         modifyTime_1 = info.lastModified();
     }else {
-        absPath_1 = "";
         fileSize_1 = 0;
         modifyTime_1 = QDateTime();
     }
 
-    QDir root2 = dirRoot2;
-    root2.cd(dir.path());
-    if (root2.exists()){
-        QFileInfo info(root2.absolutePath());
-        absPath_1 = root2.absolutePath();
-        fileSize_1 =info.size();
-        modifyTime_1 = info.lastModified();
+    QString root2 = QString("%1/%2").arg(dirRoot2.path(),dirRoot1.path());
+    absPath_2 = root2;
+    if (QFile(root2).exists()){
+        QFileInfo info(root2);
+        fileSize_2 =info.size();
+        modifyTime_2 = info.lastModified();
     }else {
-        absPath_1 = "";
-        fileSize_1 = 0;
-        modifyTime_1 = QDateTime();
+        fileSize_2 = 0;
+        modifyTime_2 = QDateTime();
     }
 }
 
@@ -90,13 +82,11 @@ QString fileInfo::getCreataTableCom(const QString &tableName_)
 bool fileInfo::subAndUpdataSQL()
 {
     QSqlQuery query(nullptr,QSqlDatabase::database("sqlite_syn_db",true));
-    QString sql = "SELECT * FROM `%1` WHERE path='%2'";
-    query.exec(sql.arg("file",path.path()));
-    if(query.next()){
-        if(!SQLupdata(query)) {qDebug() << query.lastError().text();return false;}
+    if(SQLSelect()){
+        if(!SQLupdata(query)) {qDebug() << query.lastError().text();return false;}//更新数据库数据
         return true;
     }else {
-        if(!SQLinstall(query)) {qDebug() << query.lastError().text();return false;}
+        if(!SQLinstall(query)) {qDebug() << query.lastError().text();return false;}//没有时提交数据库数据
         return true;
     }
 }
@@ -117,8 +107,55 @@ bool fileInfo::SQLdelete()
 {
     QString sql = "DELETE FROM %1 WHERE path='%2'";
     QSqlQuery query(nullptr,QSqlDatabase::database("sqlite_syn_db",true));
-    return query.exec(sql.arg("file"));
+    return query.exec(sql.arg("file",path.path()));
 
+}
+
+bool fileInfo::com()
+{
+    d_setting& set = d_setting::GetSetting();
+    if(fileSize_1 == fileSize_2 && modifyTime_1 == modifyTime_2){
+        synset = d_setting::synSet::ignore;
+        return true;
+    }else if (modifyTime_1 > modifyTime_2) {
+        if(!syn_time.isNull()){
+            if(fileSize_2 !=0 && modifyTime_2 > syn_time){
+                synset = set.getSynDef_conflict();
+            }else if(fileSize_2 !=0 && modifyTime_2 < syn_time) {
+                synset = set.getSynDef_local_new();
+            }else {
+                synset = set.getSynDef_local_only();
+            }
+        }else {
+            if(fileSize_2 !=0){
+                synset = set.getSynDef_local_new();
+            }else {
+                synset = set.getSynDef_local_only();
+            }
+        }
+    }else if (modifyTime_1 < modifyTime_2) {
+        if(!syn_time.isNull()){
+            if(fileSize_1 !=0 && modifyTime_1 > syn_time){
+                synset = set.getSynDef_conflict();
+            }else if(fileSize_1 !=0 && modifyTime_1 < syn_time) {
+                synset = set.getSynDef_server_new();
+            }else {
+                synset = set.getSynDef_server_only();
+            }
+        }else {
+            if(fileSize_1 !=0){
+                synset = set.getSynDef_server_new();
+            }else {
+                synset = set.getSynDef_server_only();
+            }
+        }
+    }
+    return true;
+}
+
+bool fileInfo::syn()
+{
+    return syn_(synset);
 }
 bool fileInfo::SQLinstall(QSqlQuery & query)
 {
@@ -130,6 +167,67 @@ bool fileInfo::SQLinstall(QSqlQuery & query)
     query.bindValue(":mo2",modifyTime_2);
     query.bindValue(":p",path.path());
     return query.exec();
+}
+
+bool fileInfo::SQLSelect()
+{
+    QSqlQuery query(nullptr,QSqlDatabase::database("sqlite_syn_db",true));
+    QString sql = "SELECT file_size_1,file_size_2,modify_time_1,modify_time_2,syn_time FROM `%1` WHERE path='%2'";
+    query.exec(sql.arg("file",path.path()));
+    if(query.next()){
+        syn_time = query.value(4).toDateTime();
+//        modifyTime_1 = query.value(2).toDateTime();
+//        modifyTime_2 = query.value(3).toDateTime();
+        return true;
+    }else {
+        syn_time = QDateTime();
+        return false;
+    }
+}
+
+bool fileInfo::syn_(const d_setting::synSet & set)
+{
+    switch (set) {
+    case d_setting::synSet::down: return down();
+    case d_setting::synSet::updata: return upload();
+    case d_setting::synSet::ignore : return true;
+    case d_setting::synSet::del: return del();
+    }
+    return true;
+}
+
+bool fileInfo::down()
+{
+    d_setting& set = d_setting::GetSetting();
+    QFile path1(absPath_1);
+    if(path1.exists()){
+        path1.rename(set.getBackup(path).toLocalFile());
+    }
+    return QFile(absPath_2).copy(absPath_1);
+}
+
+bool fileInfo::upload()
+{
+    d_setting& set = d_setting::GetSetting();
+    QFile path1(absPath_2);
+    if(path1.exists()){
+        if(!path1.rename(set.getBackup(path).toLocalFile())) return false;
+    }
+    return QFile(absPath_1).copy(absPath_2);
+}
+
+bool fileInfo::del()
+{
+    d_setting& set = d_setting::GetSetting();
+    QFile path1(absPath_1);
+    if(path1.exists()){
+        path1.remove(set.getBackup(path).toLocalFile());
+    }
+    QFile path2(absPath_2);
+    if(path2.exists()){
+        path2.remove(set.getBackup(path).toLocalFile());
+    }
+    return true;
 }
 
 DNAMESPACE_E
