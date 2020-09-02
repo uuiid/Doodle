@@ -10,7 +10,7 @@ add_library(ftp SHARED
     src/ftphandle.cpp
     )
 
-target_link_libraries(ftp PRIVATE Qt5::Core Qt5::Network)
+target_link_libraries(ftp PRIVATE Qt5::Core Qt5::Network CURL::libcurl)
 target_compile_definitions(ftp PRIVATE FTP_LIBRARY)
 
 target_include_directories(ftp PUBLIC ${CMAKE_CURRENT_LIST_DIR})

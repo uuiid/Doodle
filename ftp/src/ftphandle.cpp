@@ -1,11 +1,12 @@
 #include "ftphandle.h"
 #include <QUrl>
-
+#include <curl/curl.h>
+#include <stdexcept>
 
 FTPSPACE_S
 ftphandle::~ftphandle()
 {
-
+    curl_global_cleanup();
 }
 
 ftphandle &ftphandle::getFTP()
@@ -51,5 +52,9 @@ void ftphandle::merror(QNetworkReply::NetworkError err)
 ftphandle::ftphandle()
 {
     ftp = QSharedPointer<QNetworkAccessManager>(new QNetworkAccessManager(this));
+    const auto  eCode = curl_global_init(CURL_GLOBAL_ALL);
+    if(eCode != CURLE_OK){
+        throw std::runtime_error("Error initializing libCURL");
+    }
 }
 FTPSPACE_E
