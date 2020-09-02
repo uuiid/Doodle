@@ -11,6 +11,8 @@ class FILESYN_EXPORT d_setting
 {
 public:
     ~d_setting();
+    d_setting(const d_setting&) =delete ;
+    d_setting & operator =(const d_setting& s) =delete ;
     enum class synSet{
         down,
         updata,
@@ -57,8 +59,6 @@ protected:
 
 private:
     d_setting();
-    d_setting(const d_setting&) =delete ;
-    d_setting & operator =(const d_setting& s) =delete ;
 };
 
 DNAMESPACE_E

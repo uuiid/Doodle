@@ -12,6 +12,8 @@ class FILESYN_EXPORT sqlConnect
 {
 public:
     ~sqlConnect();
+    sqlConnect(const sqlConnect&) = delete;
+    sqlConnect & operator = (const sqlConnect& s) = delete ;
 
     static sqlConnect& GetSqlConnect();
 
@@ -23,8 +25,6 @@ public:
     void closedb();
 private:
     sqlConnect();
-    sqlConnect(const sqlConnect&) = delete;
-    sqlConnect & operator = (const sqlConnect& s) = delete ;
     QSqlDatabase dataBase;
     QDir Root;
 };
