@@ -15,6 +15,13 @@ ftphandle &ftphandle::getFTP()
     return install;
 }
 
+ftpSession ftphandle::session(const QString &host,const qint16 &prot,const QString &name,const QString &password)
+{
+    ftpSession session;
+    session.setInfo(host,prot,name,password);
+    return session;
+}
+
 void ftphandle::downfile(const QUrl & url,const QString & outFile_)
 {
     outfile.setFileName(outFile_);

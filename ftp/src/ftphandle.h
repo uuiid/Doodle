@@ -2,6 +2,7 @@
 #define FTPHANDLE_H
 
 #include "ftp_global.h"
+#include "ftpsession.h"
 #include <QObject>
 #include <QSharedPointer>
 #include <QFile>
@@ -18,6 +19,10 @@ public:
     ftphandle& operator =(const ftphandle& s) =delete ;
 
     static ftphandle& getFTP();
+    ftpSession session(const QString &host,
+                       const qint16 &prot = 21,
+                       const QString &name = "",
+                       const QString &password="");
     void downfile(const QUrl & url, const QString &outFile_);
 
 
