@@ -11,9 +11,9 @@ test_ftp::test_ftp()
 
 void test_ftp::test_d()
 {
-    doFtp::ftpSession session = doFtp::ftphandle::getFTP().session("192.168.10.213",
-                                                                   21);
-    session.down("D:/tmp/test.exe","dist/key.txt");
+    doFtp::ftpSessionPtr session = doFtp::ftphandle::getFTP().session("192.168.10.213",
+                                                                   21,"","");
+    session->down("D:/tmp/test.exe","/dist/key.txt");
 }
 
 void test_ftp::test_down()
