@@ -1,19 +1,27 @@
-#ifndef FTPSESSION_H
+﻿#ifndef FTPSESSION_H
 #define FTPSESSION_H
 
 #include "ftp_global.h"
+#include <curl/curl.h>
 #include <QtCore>
 #include <QObject>
 #include <QSharedPointer>
 #include <QUrl>
 #include <QFile>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
+
 
 FTPSPACE_S
+struct oFileInfo{
+    QString filepath;
+    bool isFolder;
+    time_t fileMtime;
+    double fileSize;
+};
+
 class FTP_EXPORT ftpSession:public QObject
 {
     Q_OBJECT
+
 public:
     ftpSession();
     ~ftpSession();
@@ -22,24 +30,26 @@ public:
                  const QString &name,
                  const QString &password);
 
-    void down  (const QString& localFile,const QString& remoteFile);
-    void updata(const QString& localFile,const QString& remoteFile);
+    bool down  (const QString& localFile,const QString& remoteFile);
+    bool upload(const QString& localFile,const QString& remoteFile);
+    oFileInfo fileInfo(const QString& remoteFile);
+    std::vector<oFileInfo> list(const QString& remoteFolder);
 signals:
     void finished();
 
-private slots:
-    void WriteFileCallbask();
-    void downloadFinished();
-
-    void updataFinished();
+private:
+    static size_t writeFileCallbask(void *buff, size_t size, size_t nmemb, void *data);
+    static size_t readFileCallbask (void *buff, size_t size, size_t nmemb, void *data);
+    static size_t notCallbask      (void *buff,size_t size, size_t nmemb,void * data);
+    static size_t writeStringCallbask(void *ptr, size_t size, size_t nmemb, void *data);
+    CURLcode perform();
 
 private:
     QSharedPointer<QFile> outfile;
     QSharedPointer<QFile> inputfile;
     QSharedPointer<QUrl> ptrUrl;
-    QSharedPointer<QNetworkAccessManager> ftp;
-    QNetworkReply *currentDownload = nullptr;
-    QNetworkReply *currentUpdata   = nullptr;
+
+    mutable CURL * curlSession;
 };
 typedef QSharedPointer<ftpSession> ftpSessionPtr;
 FTPSPACE_E
