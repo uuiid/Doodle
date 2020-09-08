@@ -1,6 +1,10 @@
 #include "t_fileSyn/test_filesyn.h"
 #include "t_ftp/test_ftp.h"
 
+#include "ftp_global.h"
+#include "src/ftphandle.h"
+#include <QFileInfo>
+#include <QTest>
 
 int main(int argc, char *argv[])
 {
@@ -13,7 +17,6 @@ int main(int argc, char *argv[])
     test_ftp tftp;
     QTEST_SET_MAIN_SOURCE_PATH
     QTest::qExec(&tftp,argc,argv);
-
     return 0;
 }
 

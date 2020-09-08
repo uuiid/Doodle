@@ -9,8 +9,11 @@ class test_ftp:public QObject
 public:
     test_ftp();
 private slots:
-    void test_d();
+    void test_upload();
     void test_down();
+    void test_getInfo();
+    void test_getList();
+
 };
 
 #endif // TEST_FTP_H

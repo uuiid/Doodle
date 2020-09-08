@@ -2,6 +2,7 @@
 #define FTPHANDLE_H
 
 #include "ftp_global.h"
+#include "ftpsession.h"
 #include <QObject>
 #include <QSharedPointer>
 #include <QFile>
@@ -18,19 +19,10 @@ public:
     ftphandle& operator =(const ftphandle& s) =delete ;
 
     static ftphandle& getFTP();
-    void downfile(const QUrl & url, const QString &outFile_);
-
-
-protected slots:
-    void downloadReadyRead();
-    void downloadFinished();
-    void merror(QNetworkReply::NetworkError err);
-
-protected:
-    QSharedPointer<QNetworkAccessManager> ftp;
-    QNetworkReply *currentDownload = nullptr;
-    QFile outfile;
-
+    ftpSessionPtr session(const QString &host,
+                        int prot,
+                       const QString &name,
+                       const QString &password);
 private:
     ftphandle();
 
