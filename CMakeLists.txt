@@ -23,6 +23,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libssl.so)
 #    endif()
 #endif()
+set(CMAKE_INSTALL_PREFIX "D:/install")
 configure_file(DoodleConfig.h.in ${CMAKE_CURRENT_LIST_DIR}/DoodleConfig.h)
 find_package(Qt5 COMPONENTS Core Widgets Test LinguistTools REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem date_time)
@@ -57,3 +58,16 @@ install( TARGETS Doodle DESTINATION bin)
 enable_testing()
 add_subdirectory("test")
 
+
+set(APPS ${CMAKE_INSTALL_PREFIX}/bin/Doodle.exe)  # paths to executables
+set(DIRS "D:/Qt_lin/5.15.0/msvc2019_64/bin"
+    "D:/source/vcpkg/installed/x64-windows/bin"
+    "D:/source/build-Doodle-Desktop_Qt_5_15_0_MSVC2019_64bit-Debug/filesyn"
+    "D:/source/build-Doodle-Desktop_Qt_5_15_0_MSVC2019_64bit-Debug/ftp")   # directories to search for prerequisites
+install(CODE "
+    include(BundleUtilities)
+    fixup_bundle(\"${APPS}\"   \"\"   \"${DIRS}\")
+    ")
+
+include(InstallRequiredSystemLibraries)
+include(CPack)
