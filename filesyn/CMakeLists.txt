@@ -13,7 +13,7 @@ find_package(Qt5 COMPONENTS Core Sql LinguistTools REQUIRED)
 #include_directories(${Qt5Core_INCLUDE_DIRS})
 
 
-set(TS_FILES fileSyn_zh_CN.ts)
+#set(TS_FILES fileSyn_zh_CN.ts)
 set(HEADER_FILES
     fileSyn_global.h
     src/filesyn.h
@@ -29,7 +29,7 @@ add_library(fileSyn SHARED
   src/foldercompare.cpp
   src/fileinfo.cpp
   src/d_setting.cpp
-  ${TS_FILES}
+
 )
 
 target_link_libraries(fileSyn PRIVATE Qt5::Sql Qt5::Core )

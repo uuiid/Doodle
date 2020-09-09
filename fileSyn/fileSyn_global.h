@@ -10,7 +10,7 @@
 #  define FILESYN_EXPORT Q_DECL_IMPORT
 #endif
 
-#define DNAMESPACE_S namespace doFileSyn {
+#define SYN_NAMESPACE_S namespace doFileSyn {
 #define DNAMESPACE_E }
 #endif // FILESYN_GLOBAL_H
 

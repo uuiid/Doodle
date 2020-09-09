@@ -5,7 +5,7 @@
 #include <QtDebug>
 #include <QFile>
 
-DNAMESPACE_S
+SYN_NAMESPACE_S
 
 QString fileInfo::createTableSqlcom = "CREATE TABLE IF NOT EXISTS `%1` (\
         file_size_1 integer,\

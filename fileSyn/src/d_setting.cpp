@@ -1,6 +1,6 @@
 #include "d_setting.h"
 #include <QUuid>
-DNAMESPACE_S
+SYN_NAMESPACE_S
 doFileSyn::d_setting::~d_setting()
 {
 

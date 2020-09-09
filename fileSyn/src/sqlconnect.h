@@ -4,7 +4,7 @@
 #include <QtSql/QSqlDatabase>
 #include <QtCore/QSharedPointer>
 #include <QtCore/QDir>
-DNAMESPACE_S
+SYN_NAMESPACE_S
 
 typedef QSharedPointer<QSqlDatabase> sqldatabasePtr;
 

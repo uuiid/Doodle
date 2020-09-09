@@ -2,7 +2,7 @@
 #include <QDebug>
 #include <QSqlQuery>
 #include <QCoreApplication>
-DNAMESPACE_S
+SYN_NAMESPACE_S
 
 sqlConnect::sqlConnect()
 {

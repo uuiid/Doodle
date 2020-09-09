@@ -4,7 +4,7 @@
 #include <QSqlTableModel>
 #include <QtDebug>
 #include <set>
-DNAMESPACE_S
+SYN_NAMESPACE_S
 
 
 //folderCompare::folderCompare(QDir path1, QDir path2)

@@ -8,7 +8,7 @@
 #include <QtCore/QSharedPointer>
 #include "d_setting.h"
 
-DNAMESPACE_S
+SYN_NAMESPACE_S
 class FILESYN_EXPORT fileInfo
 {
 public:

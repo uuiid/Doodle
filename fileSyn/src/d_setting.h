@@ -5,7 +5,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QUrl>
 
-DNAMESPACE_S
+SYN_NAMESPACE_S
 
 class FILESYN_EXPORT d_setting
 {

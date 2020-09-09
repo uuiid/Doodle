@@ -8,7 +8,7 @@
 #include <QtSql/QSqlTableModel>
 #include <map>
 
-DNAMESPACE_S
+SYN_NAMESPACE_S
 typedef std::pair<QDir,QDir> synPair;
 typedef std::map<QString,fileInfoptr> synMap;
 typedef std::map<QString,std::pair<fileInfoptr,fileInfoptr>> synMapPair;
