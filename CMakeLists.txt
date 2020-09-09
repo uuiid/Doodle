@@ -56,21 +56,46 @@ endif()
 target_link_libraries(Doodle PRIVATE Qt5::Widgets fileSyn)
 
 qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-install( TARGETS Doodle DESTINATION bin)
-#install( FILES "")
+install( TARGETS Doodle
+    RUNTIME DESTINATION Doodle
+    BUNDLE  DESTINATION Doodle)
+#启用测试
 enable_testing()
 add_subdirectory("test")
 
+#=====================安装打包过程===============================
+#首先搜索我们的自定义函数
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
+include(mypack)
+#搜索qt 安装辅助程序
+find_program(WINQT windeployqt REQUIRED)
+#添加qt 安装辅助程序的一些命令
+add_custom_command(
+    TARGET Doodle POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E rm -r -f ${CMAKE_INSTALL_PREFIX}/Doodle
+    COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/Doodle $<TARGET_FILE:Doodle>
+    )
+install(
+    DIRECTORY ${CMAKE_INSTALL_PREFIX}/Doodle/
+    DESTINATION ${PROJECT_NAME}
+    )
+CPACKIFW_COMMON()
+#显示所有变量
+#dump_cmake_variables()
 
-set(APPS ${CMAKE_INSTALL_PREFIX}/bin/Doodle.exe)  # paths to executables
-set(DIRS "D:/Qt_lin/5.15.0/msvc2019_64/bin"
-    "D:/source/vcpkg/installed/x64-windows/bin"
-    "D:/source/build-Doodle-Desktop_Qt_5_15_0_MSVC2019_64bit-Debug/filesyn"
-    "D:/source/build-Doodle-Desktop_Qt_5_15_0_MSVC2019_64bit-Debug/ftp")   # directories to search for prerequisites
+#====================一些非qt组件的搜索和安装=============
+#第一种搜索方式
+include(InstallRequiredSystemLibraries)
+#第二中验证加搜索方式
+set(APPS ${CMAKE_INSTALL_PREFIX}/Doodle/Doodle.exe)  # paths to executables
+get_filename_component(fixdir ${QT_QMAKE_EXECUTABLE} DIRECTORY)
+set(DIRS ${CMAKE_FIND_ROOT_PATH}
+    ${fixdir}
+    ${CMAKE_INSTALL_PREFIX}/lib)
+
 install(CODE "
     include(BundleUtilities)
     fixup_bundle(\"${APPS}\"   \"\"   \"${DIRS}\")
     ")
 
-include(InstallRequiredSystemLibraries)
 include(CPack)

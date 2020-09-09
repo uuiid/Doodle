@@ -6,6 +6,7 @@
 #include <QSharedPointer>
 #include <QRegularExpression>
 #include <QSqlQuery>
+#include <QDir>
 
 PINYIN_NAMESPACE_S
 
@@ -18,10 +19,12 @@ private:
     void initDB();
     void initQuery();
     void initExp();
+    bool search();
     QString toEnOne(const QString &conStr);
 
 private:
     QSqlDatabase dataBase;
+    QSharedPointer<QDir> sqlDBPath;
     bool isinitDB;
     QSharedPointer<QRegularExpression> re;
     QSharedPointer<QSqlQuery> query;

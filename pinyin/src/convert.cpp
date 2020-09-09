@@ -23,12 +23,13 @@ QString convert::toEn(const QString &conStr)
 
 void convert::initDB()
 {
+    if(!search()) throw std::runtime_error("not search DB");
     if(QSqlDatabase::contains("sqlite_pinyin_db")){
         dataBase = QSqlDatabase::database("sqlite_pinyin_db");
     }else {
         dataBase = QSqlDatabase::addDatabase("QSQLITE","sqlite_pinyin_db");
 //        dataBase.setDatabaseName("pinyin/pinyin.db");
-        dataBase.setDatabaseName("F:/Source/qt_test/Doodle/resource/pinyin/pinyin.db");
+        dataBase.setDatabaseName(sqlDBPath->absolutePath() + "/pinyin.db");
         if(!dataBase.open()) throw std::runtime_error(dataBase.lastError().text().toStdString());
     }
     initQuery();
@@ -44,6 +45,15 @@ void convert::initQuery()
 void convert::initExp()
 {
     re->setPattern("[\u4e00-\u9fa5]");
+}
+
+bool convert::search()
+{
+    QDir dir(QDir::currentPath());
+    dir.cdUp();
+    if(!dir.cd("resource")) return false;
+    sqlDBPath = QSharedPointer<QDir>(new QDir(dir));
+    return true;
 }
 
 QString convert::toEnOne(const QString &conStr)
