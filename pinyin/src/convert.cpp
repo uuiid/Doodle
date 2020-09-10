@@ -9,6 +9,11 @@ convert::convert()
     re = QSharedPointer<QRegularExpression>(new QRegularExpression());
 }
 
+convert::~convert()
+{
+    dataBase.close();
+}
+
 QString convert::toEn(const QString &conStr)
 {
     if(!isinitDB) initDB();
@@ -30,8 +35,9 @@ void convert::initDB()
         dataBase = QSqlDatabase::addDatabase("QSQLITE","sqlite_pinyin_db");
 //        dataBase.setDatabaseName("pinyin/pinyin.db");
         dataBase.setDatabaseName(sqlDBPath->absolutePath() + "/pinyin.db");
-        if(!dataBase.open()) throw std::runtime_error(dataBase.lastError().text().toStdString());
     }
+    if(!dataBase.open()) throw std::runtime_error(dataBase.lastError().text().toStdString());
+    dataBase.transaction();
     initQuery();
     initExp();
     isinitDB = true;

@@ -33,6 +33,7 @@ find_package(CURL REQUIRED)
 add_subdirectory("ftp")
 add_subdirectory("fileSyn")
 add_subdirectory("pinyin")
+add_subdirectory("core")
 set(TS_FILES test_cmake_zh_CN.ts)
 
 if(ANDROID)

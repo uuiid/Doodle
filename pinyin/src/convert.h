@@ -14,6 +14,7 @@ class PINYIN_EXPORT convert
 {
 public:
     convert();
+    ~convert();
     QString toEn(const QString &conStr);
 private:
     void initDB();
