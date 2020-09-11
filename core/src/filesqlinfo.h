@@ -23,7 +23,7 @@ typedef QSharedPointer<fileType> fileTypePtr;
 typedef QSharedPointer<assType> assTypePtr;
 typedef QSharedDataPointer<fileSqlInfo> fileSqlInfoPtr;
 
-typedef QSharedDataPointer<QVector<QFileInfo>> QfileListPtr;
+typedef QVector<QFileInfo> QfileListPtr;
 
 class CORE_EXPORT fileSqlInfo
 {

@@ -2,7 +2,10 @@
 #define CORE_GLOBAL_H
 
 #include <QtCore/qglobal.h>
-//#include <QtGlobal>
+#include <QSqlQuery>
+#include <QSharedPointer>
+#include <QMap>
+
 
 #if defined(CORE_LIBRARY)
 #  define CORE_EXPORT Q_DECL_EXPORT
@@ -14,7 +17,8 @@
 #define CORE_DNAMESPACE_E }
 
 
-
+typedef QSharedPointer<QSqlQuery> sqlQuertPtr;
+typedef QMap<QString,QString> mapStringPtr;
 
 
 

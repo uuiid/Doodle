@@ -14,13 +14,13 @@ fileSqlInfo::fileSqlInfo()
 
 QfileListPtr fileSqlInfo::fileListGet() const
 {
-    QfileListPtr list_(new QVector<QFileInfo>());
+    QfileListPtr list_;
     QJsonDocument jsondoc = QJsonDocument::fromBinaryData(filepathP.toUtf8());
     if(jsondoc.isNull()){
-        list_->append(QFileInfo(filepathP));
+        list_.append(QFileInfo(filepathP));
     }else {
         for(QJsonValueRef x :jsondoc.array()){
-            list_->append(QFileInfo(x.toString()));
+            list_.append(QFileInfo(x.toString()));
         }
     }
     return list_;
@@ -29,7 +29,7 @@ QfileListPtr fileSqlInfo::fileListGet() const
 void fileSqlInfo::setFileList(const QfileListPtr filelist)
 {
     QJsonArray jsonList;
-    for (QFileInfo d: *filelist.data()){
+    for (QFileInfo d: filelist){
         jsonList.append(d.absolutePath());
     }
     QJsonDocument jsondoc(jsonList);
@@ -37,6 +37,51 @@ void fileSqlInfo::setFileList(const QfileListPtr filelist)
 }
 
 episodesPtr fileSqlInfo::episdes() const
+{
+    return nullptr;
+}
+
+void fileSqlInfo::setEpisdes(const episodesPtr &eps_)
+{
+
+}
+
+shotPtr fileSqlInfo::shot() const
+{
+return nullptr;
+}
+
+void fileSqlInfo::setshot(const shotPtr &shot_)
+{
+
+}
+
+fileClassPtr fileSqlInfo::fileclass() const
+{
+return nullptr;
+}
+
+void fileSqlInfo::setFileClass(const fileClassPtr &fileclass_)
+{
+
+}
+
+fileTypePtr fileSqlInfo::fileType() const
+{
+return nullptr;
+}
+
+void fileSqlInfo::setFileType(const fileTypePtr &fileType_)
+{
+
+}
+
+assTypePtr fileSqlInfo::assType() const
+{
+return nullptr;
+}
+
+void fileSqlInfo::setAssType(const assTypePtr &assType_)
 {
 
 }

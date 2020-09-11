@@ -9,9 +9,6 @@
 
 CORE_NAMESPACE_S
 
-typedef QSharedPointer<QSqlQuery> sqlQuertPtr;
-typedef QSharedPointer<QMap<QString,QString>> sqlUserList;
-
 /*
 * 数据库连接类
 * 全局静态类
@@ -38,7 +35,9 @@ private:
 };
 
 
-//数据库中的user类 只有在注册的时候会用到
+/*
+数据库中的user类 只有在注册的时候会用到
+*/
 class CORE_EXPORT coreSqlUser :public QObject
 {
     Q_OBJECT
@@ -47,7 +46,7 @@ public:
     coreSqlUser & operator =(const coreSqlUser & s) = delete ;
     coreSqlUser(const coreSqlUser& s) =delete;
 
-    sqlUserList getUser();
+    mapStringPtr getUser();
 
 public slots:
     void initDB(const QString &ip,const QString &dataName);

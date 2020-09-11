@@ -48,17 +48,17 @@ coreSqlUser &coreSqlUser::getCoreSqlUser()
     return install;
 }
 
-sqlUserList coreSqlUser::getUser()
+mapStringPtr coreSqlUser::getUser()
 {
     if(!isInit) throw std::runtime_error("not init DB (sql mian data)");
     QSqlQuery query(dataBase);
 
     query.exec("SELECT user,password FROM user;");
-    sqlUserList list;
+    mapStringPtr list;
     while (query.next()) {
         QString user = query.value(0).toString();
         QString powr = query.value(1).toString();
-        list->insert(user,powr);
+        list.insert(user,powr);
     }
     return list;
 }
@@ -80,6 +80,11 @@ void coreSqlUser::initDB(const QString& ip,const QString &dataName)
     if(!dataBase.open()) throw std::runtime_error(dataBase.lastError().text().toStdString());
     dataBase.transaction();
     isInit = true;
+}
+
+coreSqlUser::coreSqlUser()
+{
+
 }
 
 CORE_DNAMESPACE_E

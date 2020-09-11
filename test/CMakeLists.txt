@@ -7,9 +7,11 @@ add_executable(test_fileSyn
     "t_ftp/test_ftp.cpp"
     "t_convert/test_convert.h"
     "t_convert/test_convert.cpp"
+    "t_core/test_core.h"
+    "t_core/test_core.cpp"
     "main.cpp"
     )
 
 target_link_libraries(test_fileSyn
-    PRIVATE Qt5::Test fileSyn ftp pinyin)
+    PRIVATE Qt5::Test fileSyn ftp pinyin core)
 add_test(NAME AllTestsInMain COMMAND test_fileSyn)
