@@ -1,5 +1,5 @@
-#ifndef FOLDERCOMPARE_H
-#define FOLDERCOMPARE_H
+﻿#pragma once
+
 
 
 #include "fileSyn_global.h"
@@ -45,4 +45,4 @@ protected:
 
 
 DNAMESPACE_E
-#endif // FOLDERCOMPARE_H
+

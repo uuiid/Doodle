@@ -1,5 +1,5 @@
-#ifndef FTP_GLOBAL_H
-#define FTP_GLOBAL_H
+﻿#pragma once
+
 #include <QtCore/qglobal.h>
 #if defined (FTP_LIBRARY)
 #   define FTP_EXPORT Q_DECL_EXPORT
@@ -10,4 +10,3 @@
 #define FTPSPACE_S namespace doFtp {
 #define FTPSPACE_E }
 
-#endif // FTP_GLOBAL_H

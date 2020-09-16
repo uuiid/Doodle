@@ -1,5 +1,5 @@
-﻿#ifndef FTPSESSION_H
-#define FTPSESSION_H
+﻿#pragma once
+
 
 #include "ftp_global.h"
 #include <curl/curl.h>
@@ -53,4 +53,4 @@ private:
 };
 typedef QSharedPointer<ftpSession> ftpSessionPtr;
 FTPSPACE_E
-#endif // FTPSESSION_H
+

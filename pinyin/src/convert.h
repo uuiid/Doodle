@@ -1,5 +1,5 @@
-#ifndef CONVERT_H
-#define CONVERT_H
+﻿#pragma once
+
 
 #include "pinyin_global.h"
 #include <QSqlDatabase>
@@ -33,4 +33,4 @@ private:
 
 
 DNAMESPACE_E
-#endif // CONVERT_H
+

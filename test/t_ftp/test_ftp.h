@@ -1,5 +1,5 @@
-#ifndef TEST_FTP_H
-#define TEST_FTP_H
+﻿#pragma once
+
 
 #include <QObject>
 
@@ -15,5 +15,3 @@ private slots:
     void test_getList();
 
 };
-
-#endif // TEST_FTP_H

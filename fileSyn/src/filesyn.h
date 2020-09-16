@@ -1,5 +1,5 @@
-#ifndef FILESYN_H
-#define FILESYN_H
+﻿#pragma once
+
 
 #include "fileSyn_global.h"
 
@@ -10,4 +10,3 @@ public:
 
 };
 
-#endif // FILESYN_H

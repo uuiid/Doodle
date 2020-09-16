@@ -1,4 +1,4 @@
-#include "coresql.h"
+﻿#include "coresql.h"
 #include <QSqlError>
 #include <QVariant>
 #include <QMap>
@@ -13,6 +13,7 @@ coreSql::coreSql()
 
 void coreSql::initDB(const QString &ip,const QString &dataName)
 {
+    QSqlDatabase dataBase;
     if(QSqlDatabase::contains("mysql_main_data")){
         dataBase = QSqlDatabase::database("mysql_main_data");
     }else {
@@ -29,6 +30,11 @@ void coreSql::initDB(const QString &ip,const QString &dataName)
     isInit = true;
 }
 
+coreSql::~coreSql()
+{
+    closeDataBase();
+}
+
 coreSql &coreSql::getCoreSql()
 {
     static coreSql install;
@@ -37,9 +43,24 @@ coreSql &coreSql::getCoreSql()
 
 sqlQuertPtr coreSql::getquery()
 {
+    QSqlDatabase dataBase = QSqlDatabase::database("mysql_main_data");
+    dataBase.open();
+    dataBase.transaction();
     if(!isInit) throw std::runtime_error("not init DB (sql mian data)");
     sqlQuertPtr queryPtr(new QSqlQuery(dataBase));
     return queryPtr;
+}
+
+void coreSql::closeDataBase()
+{
+    QSqlDatabase::database("mysql_main_data").close();
+}
+
+bool coreSql::commitDataBase()
+{
+    QSqlDatabase dataBase = QSqlDatabase::database("mysql_main_data");
+    dataBase.open();
+    return dataBase.commit();
 }
 
 coreSqlUser &coreSqlUser::getCoreSqlUser()
@@ -50,6 +71,8 @@ coreSqlUser &coreSqlUser::getCoreSqlUser()
 
 mapStringPtr coreSqlUser::getUser()
 {
+    QSqlDatabase dataBase = QSqlDatabase::database("mysql_main_user");
+    dataBase.open();
     if(!isInit) throw std::runtime_error("not init DB (sql mian data)");
     QSqlQuery query(dataBase);
 
@@ -65,6 +88,7 @@ mapStringPtr coreSqlUser::getUser()
 
 void coreSqlUser::initDB(const QString& ip,const QString &dataName)
 {
+    QSqlDatabase dataBase;
     if(QSqlDatabase::contains("mysql_main_user")){
         dataBase = QSqlDatabase::database("mysql_main_user");
     }else {

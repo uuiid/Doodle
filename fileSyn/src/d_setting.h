@@ -1,5 +1,5 @@
-#ifndef D_SETTING_H
-#define D_SETTING_H
+﻿#pragma once
+
 #include "fileSyn_global.h"
 #include <QtCore/QDir>
 #include <QtCore/QDateTime>
@@ -62,4 +62,4 @@ private:
 };
 
 DNAMESPACE_E
-#endif // D_SETTING_H
+

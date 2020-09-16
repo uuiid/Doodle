@@ -1,5 +1,5 @@
-#ifndef PINYIN_GLOBAL_H
-#define PINYIN_GLOBAL_H
+﻿#pragma once
+
 
 #include <QtCore/qglobal.h>
 
@@ -11,5 +11,5 @@
 
 #define PINYIN_NAMESPACE_S namespace dopinyin {
 #define DNAMESPACE_E }
-#endif // PINYIN_GLOBAL_H
+
 

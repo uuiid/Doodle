@@ -1,5 +1,5 @@
-#ifndef FTPHANDLE_H
-#define FTPHANDLE_H
+﻿#pragma once
+
 
 #include "ftp_global.h"
 #include "ftpsession.h"
@@ -30,4 +30,4 @@ private:
 
 FTPSPACE_E
 
-#endif // FTPHANDLE_H
+

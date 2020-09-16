@@ -1,5 +1,5 @@
-﻿#ifndef CORESET_H
-#define CORESET_H
+﻿#pragma once
+
 
 #include "core_global.h"
 #include "coresql.h"
@@ -45,6 +45,7 @@ public:
 
     //初始化函数
     void init();
+    void initdb();
     //获得同步路径
     synPathListPtr getSynDir();
 
@@ -125,4 +126,4 @@ private:
 };
 
 CORE_DNAMESPACE_E
-#endif // CORESET_H
+

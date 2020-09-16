@@ -1,21 +1,30 @@
-#include "filesqlinfo.h"
+﻿#include "filesqlinfo.h"
+
+#include "coreset.h"
 
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QJsonObject>
 #include <QJsonValueRef>
+#include <QVariant>
+
 
 CORE_NAMESPACE_S
 
+
+
 fileSqlInfo::fileSqlInfo()
 {
+    userP = coreSet::getCoreSet().getUser();
+    idP = -1;
+    versionP = 0;
 }
 
 QfileListPtr fileSqlInfo::fileListGet() const
 {
     QfileListPtr list_;
-    QJsonDocument jsondoc = QJsonDocument::fromBinaryData(filepathP.toUtf8());
+    QJsonDocument jsondoc = QJsonDocument::fromJson(filepathP.toUtf8());
     if(jsondoc.isNull()){
         list_.append(QFileInfo(filepathP));
     }else {
@@ -26,64 +35,49 @@ QfileListPtr fileSqlInfo::fileListGet() const
     return list_;
 }
 
-void fileSqlInfo::setFileList(const QfileListPtr filelist)
+void fileSqlInfo::setFileList(const QfileListPtr& filelist)
 {
+    if(filelist.size() == 0){throw std::runtime_error("filelist not value");}
     QJsonArray jsonList;
     for (QFileInfo d: filelist){
-        jsonList.append(d.absolutePath());
+        jsonList.append(d.absoluteFilePath());
     }
     QJsonDocument jsondoc(jsonList);
     filepathP = QString(jsondoc.toJson());
+    fileP = filelist[0].fileName();
+    fileSuffixesP = filelist[0].suffix();
 }
 
-episodesPtr fileSqlInfo::episdes() const
+int fileSqlInfo::getVersionP() const
 {
-    return nullptr;
+    return versionP;
 }
 
-void fileSqlInfo::setEpisdes(const episodesPtr &eps_)
+void fileSqlInfo::setVersionP(const int &value)
 {
-
+    versionP = value;
 }
 
-shotPtr fileSqlInfo::shot() const
+QString fileSqlInfo::getInfoP() const
 {
-return nullptr;
+    return infoP;
 }
 
-void fileSqlInfo::setshot(const shotPtr &shot_)
+void fileSqlInfo::setInfoP(const QString &value)
 {
-
+    infoP = value;
 }
 
-fileClassPtr fileSqlInfo::fileclass() const
+QString fileSqlInfo::getFileStateP() const
 {
-return nullptr;
+    return fileStateP;
 }
 
-void fileSqlInfo::setFileClass(const fileClassPtr &fileclass_)
+void fileSqlInfo::setFileStateP(const QString &value)
 {
-
+    fileStateP = value;
 }
 
-fileTypePtr fileSqlInfo::fileType() const
-{
-return nullptr;
-}
 
-void fileSqlInfo::setFileType(const fileTypePtr &fileType_)
-{
-
-}
-
-assTypePtr fileSqlInfo::assType() const
-{
-return nullptr;
-}
-
-void fileSqlInfo::setAssType(const assTypePtr &assType_)
-{
-
-}
 
 CORE_DNAMESPACE_E

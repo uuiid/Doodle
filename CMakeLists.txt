@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+﻿cmake_minimum_required(VERSION 3.5)
 
 project(Doodle LANGUAGES CXX)
 
@@ -30,10 +30,15 @@ find_package(Boost REQUIRED COMPONENTS filesystem date_time)
 find_package(CURL REQUIRED)
 #include_directories(${CURL_INCLUDE_DIRS})
 #message(${CURL_INCLUDE_DIRS})
-add_subdirectory("ftp")
-add_subdirectory("fileSyn")
-add_subdirectory("pinyin")
-add_subdirectory("core")
+# 添加orm
+#add_subdirectory(QxOrm ./QxOrm)
+#include(QxOrm/QxOrm.cmake)
+
+add_subdirectory(ftp)
+add_subdirectory(fileSyn)
+add_subdirectory(pinyin)
+add_subdirectory(core)
+
 set(TS_FILES test_cmake_zh_CN.ts)
 
 if(ANDROID)

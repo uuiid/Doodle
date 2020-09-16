@@ -1,5 +1,5 @@
-#ifndef TEST_CORE_H
-#define TEST_CORE_H
+﻿#pragma once
+
 
 #include <QObject>
 
@@ -12,6 +12,7 @@ private slots:
     void init();
     void test_set_query();
     void test_set_synpath();
+
+    void test_create_eps();
 };
 
-#endif // TEST_CORE_H

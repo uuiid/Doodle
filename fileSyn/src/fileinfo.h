@@ -1,5 +1,5 @@
-﻿#ifndef FILEINFO_H
-#define FILEINFO_H
+﻿#pragma once
+
 
 #include "fileSyn_global.h"
 #include <QtCore/QDir>
@@ -59,4 +59,4 @@ typedef QSharedPointer<fileInfo> fileInfoptr;
 
 DNAMESPACE_E
 
-#endif // FILEINFO_H
+

@@ -1,27 +1,12 @@
-﻿#ifndef FILESQLINFO_H
-#define FILESQLINFO_H
+﻿#pragma once
 
 #include "core_global.h"
 #include <QVector>
 #include <QFileInfo>
 #include <QSharedPointer>
-
+#include <QWeakPointer>
 
 CORE_NAMESPACE_S
-
-class shot;
-class episodes;
-class fileClass;
-class fileType;
-class assType;
-class fileSqlInfo;
-
-typedef QSharedPointer<shot> shotPtr;
-typedef QSharedPointer<episodes> episodesPtr;
-typedef QSharedPointer<fileClass> fileClassPtr;
-typedef QSharedPointer<fileType> fileTypePtr;
-typedef QSharedPointer<assType> assTypePtr;
-typedef QSharedDataPointer<fileSqlInfo> fileSqlInfoPtr;
 
 typedef QVector<QFileInfo> QfileListPtr;
 
@@ -31,7 +16,20 @@ public:
     //属性设置和查询
     fileSqlInfo();
     QfileListPtr fileListGet() const;
-    void setFileList(const QfileListPtr filelist);
+    virtual void setFileList(const QfileListPtr &filelist);
+
+    virtual void insert() = 0;
+    virtual void deleteSQL() = 0;
+    virtual void updata() = 0;
+
+    int getVersionP() const;
+    void setVersionP(const int &value);
+
+    QString getInfoP() const;
+    void setInfoP(const QString &value);
+
+    QString getFileStateP() const;
+    void setFileStateP(const QString &value);
 
 protected:
     //属性包装
@@ -41,39 +39,10 @@ protected:
     QString userP;
     int versionP;
     QString filepathP;
+    QString infoP;
     QString fileStateP;
-
-
-
-public:
-    //外键查询
-    episodesPtr episdes() const;
-    void setEpisdes( const episodesPtr& eps_);
-
-    shotPtr shot() const;
-    void setshot(const shotPtr& shot_);
-
-    fileClassPtr fileclass() const;
-    void setFileClass(const fileClassPtr& fileclass_);
-
-    fileTypePtr fileType() const;
-    void setFileType(const fileTypePtr& fileType_);
-
-    assTypePtr assType() const;
-    void setAssType(const assTypePtr& assType_);
-
-protected:
-    episodesPtr epsP;
-    shotPtr shotP;
-    fileClassPtr fileClassP;
-    fileTypePtr fileTypeP;
-    assTypePtr assTypeP;
-
 };
 
-class CORE_EXPORT shot {
-
-};
 
 CORE_DNAMESPACE_E
-#endif // FILESQLINFO_H
+

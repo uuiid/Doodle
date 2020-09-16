@@ -1,5 +1,5 @@
-#ifndef TEST_FILESYN_H
-#define TEST_FILESYN_H
+﻿#pragma once
+
 
 //#include "fileSyn/fileSyn_global.h"
 //#include "fileSyn/src/sqlconnect.h"
@@ -20,4 +20,3 @@ private slots:
     void test_fileInfo_filsyn();
 };
 
-#endif // TEST_FILESYN_H

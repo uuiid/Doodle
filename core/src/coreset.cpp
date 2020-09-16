@@ -1,4 +1,4 @@
-#include "coreset.h"
+﻿#include "coreset.h"
 #include "coresql.h"
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -25,12 +25,17 @@ void coreSet::init()
 {
     doc = QDir::homePath() + "/Documents/doodle";
     getSetting();
+    initdb();
+    getServerSetting();
+    getCacheDiskPath();
+}
+
+void coreSet::initdb()
+{
     coreSql& sql = coreSql::getCoreSql();
     sql.initDB(ipMysql,projectname);
     coreSqlUser& sqluser = coreSqlUser::getCoreSqlUser();
     sqluser.initDB(ipMysql,"");
-    getServerSetting();
-    getCacheDiskPath();
 }
 
 void coreSet::writeDoodleLocalSet()
@@ -227,12 +232,12 @@ synPathListPtr coreSet::getSynDir()
 
     while (query->next()) {
         synPath_struct synpath_;
-        synpath_.local = QString("%1/%2/%3")
+        synpath_.local = QString("%1%2/%3")
                 .arg(synPath.absolutePath())
                 .arg(projectname)
                 .arg(query->value(1).toString());
         query->next();
-        synpath_.server = QString("%1/%2/%3/%4")
+        synpath_.server = QString("%1%2/%3/%4")
                 .arg(prjectRoot.absolutePath())
                 .arg(toIpPath(synServer.absolutePath()))
                 .arg(department)

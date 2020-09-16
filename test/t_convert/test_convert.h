@@ -1,5 +1,5 @@
-#ifndef TEST_CONVERT_H
-#define TEST_CONVERT_H
+﻿#pragma once
+
 
 #include <QObject>
 
@@ -14,6 +14,3 @@ private slots:
     void test_conver();
 };
 
-
-
-#endif //TEST_CONVERT_H

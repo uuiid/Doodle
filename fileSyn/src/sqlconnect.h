@@ -1,5 +1,5 @@
-#ifndef SQLCONNECT_H
-#define SQLCONNECT_H
+﻿#pragma once
+
 #include "fileSyn_global.h"
 #include <QtSql/QSqlDatabase>
 #include <QtCore/QSharedPointer>
@@ -30,4 +30,4 @@ private:
 };
 
 DNAMESPACE_E
-#endif // SQLCONNECT_H
+

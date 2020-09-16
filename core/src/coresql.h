@@ -1,5 +1,5 @@
-﻿#ifndef CORESQL_H
-#define CORESQL_H
+﻿#pragma once
+
 
 #include "core_global.h"
 #include <QObject>
@@ -21,8 +21,10 @@ public:
     coreSql & operator =(const coreSql & s) = delete ;
     coreSql(const coreSql& s) =delete;
 
+    ~coreSql();
     sqlQuertPtr getquery();
-
+    void closeDataBase();
+    bool commitDataBase();
 public slots:
     void initDB(const QString& ip,const QString &dataName);
 
@@ -31,7 +33,7 @@ private:
 
 private:
     bool isInit = false;
-    QSqlDatabase dataBase;
+
 };
 
 
@@ -55,8 +57,8 @@ private:
 
 private:
     bool isInit = false;
-    QSqlDatabase dataBase;
+
 };
 
 CORE_DNAMESPACE_E
-#endif // CORESQL_H
+
