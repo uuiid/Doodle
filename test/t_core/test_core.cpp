@@ -2,6 +2,7 @@
 #include "src/coreset.h"
 #include "src/filesqlinfo.h"
 #include "src/shotfilesqlinfo.h"
+
 #include <QDebug>
 
 test_core::test_core()
@@ -43,7 +44,11 @@ void test_core::test_create_eps()
     doCore::QfileListPtr list;
     list.append(QFileInfo("D:/tmp/etr.vdb"));
     t.setFileList(list);
-    t.setInfoP("测试");
+    t.setInfoP(QString::fromStdString("test"));
     t.setVersionP(0);
-    t.insert();
+    try {
+        t.insert();
+    }  catch (std::runtime_error err) {
+        qDebug() << err.what();
+    }
 }

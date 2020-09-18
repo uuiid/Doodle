@@ -1,7 +1,33 @@
 ﻿find_package(Qt5 COMPONENTS Core Sql REQUIRED)
+find_package(Sqlpp11 REQUIRED)
+
+#find_library(sqlpp-mysql_LIBS
+#    NAMES sqlpp-mysql
+#    PATHS  ${CMAKE_FIND_ROOT_PATH}/debug/lib
+#    REQUIRED)
+
+#find_library(mysql_LIBS
+#    NAMES libmysql
+#    PATHS  ${CMAKE_FIND_ROOT_PATH}/debug/lib
+#    REQUIRED)
+
+set(ORM_HEADER
+    src/coreOrm/assclass_sqlOrm.h
+    src/coreOrm/basefile_sqlOrm.h
+    src/coreOrm/configure_sqlOrm.h
+    src/coreOrm/episodes_sqlOrm.h
+    src/coreOrm/fileclass_sqlOrm.h
+    src/coreOrm/filetype_sqlOrm.h
+    src/coreOrm/mainshot_sqlOrm.h
+    src/coreOrm/shot_sqlOrm.h
+    src/coreOrm/znch_sqlOrm.h
+    )
+file(COPY ${PROJECT_SOURCE_DIR}/sql-builder/sql.h
+    DESTINATION ${CMAKE_CURRENT_LIST_DIR}/src/sql_builder)
 
 set(HEADER_FILES
     "core_global.h"
+    "src/sql_builder/sql.h"
     "src/filesqlinfo.h"
     "src/coresql.h"
     "src/coreset.h"
@@ -27,7 +53,7 @@ add_library(core SHARED
     "src/asstype.cpp"
   )
 
-target_link_libraries(core PRIVATE Qt5::Sql Qt5::Core )
+target_link_libraries(core PUBLIC Qt5::Sql Qt5::Core  )
 
 target_compile_definitions(core PRIVATE CORE_LIBRARY)
 

@@ -4,7 +4,7 @@
 #include "coreset.h"
 #include "episodes.h"
 #include "shot.h"
-
+#include "sql_builder/sql.h"
 
 #include <QVariant>
 #include <QDebug>
@@ -61,29 +61,46 @@ shotFileSqlInfo::shotFileSqlInfo(const qint64 &ID_)
 
 void shotFileSqlInfo::insert()
 {
+    sql::InsertModel install;
     if(idP < 0){
-        QString sql = SQLInsert.arg(coreSet::getCoreSet().getProjectname());
         sqlQuertPtr query = coreSql::getCoreSql().getquery();
-        query->prepare(sql);
-        query->bindValue(":file",fileP);
-        query->bindValue(":fileSuffixes",fileSuffixesP);
-        query->bindValue(":user",userP);
-        query->bindValue(":version",versionP);
-        query->bindValue(":_file_path_",filepathP);
-        query->bindValue(":infor",infoP);
-        if(__episodes__   > 0 ){ query->bindValue(":__episodes__",__episodes__);}
-        else {query->bindValue(":__episodes__",QVariant(QVariant::Int));}
+        install.insert("file",fileP.toStdString());
+        install.insert("fileSuffixes",fileSuffixesP.toStdString());
+        install.insert("user",userP.toStdString());
+        install.insert("version",(unsigned char)versionP);
+        install.insert("_file_path_",filepathP.toStdString());
 
-        if(__shot__       > 0 ) query->bindValue(":__shot__",__shot__);
-        else {query->bindValue(":__episodes__",QVariant(QVariant::Int));}
+        if(!infoP.isEmpty())
+        install.insert("infor",infoP.toStdString());
 
-        if(__file_class__ > 0 ) query->bindValue(":__file_class__",__file_class__);
-        else {query->bindValue(":__episodes__",QVariant(QVariant::Int));}
+        if(!fileStateP.isEmpty())
+        install.insert("filestate",fileStateP.toStdString());
 
-        if(__file_type__  > 0 ) query->bindValue(":__file_type__",__file_type__);
-        else {query->bindValue(":__episodes__",QVariant(QVariant::Int));}
+//        QString sql = SQLInsert.arg(coreSet::getCoreSet().getProjectname());
+//        query->prepare(sql);
+//        query->bindValue(":file",fileP);
+//        query->bindValue(":fileSuffixes",fileSuffixesP);
+//        query->bindValue(":user",userP);
+//        query->bindValue(":version",versionP);
+//        query->bindValue(":_file_path_",filepathP);
+//        query->bindValue(":infor",infoP);
+        if(__episodes__   > 0 )
+            install.insert("__episodes__",(unsigned char)__episodes__);
 
-        if(!query->exec()) throw std::runtime_error("not insert fileInfo");
+        if(__shot__       > 0 )
+            install.insert("__shot__",(unsigned char)__shot__);
+
+        if(__file_class__ > 0 )
+            install.insert("__file_class__",(unsigned char)__file_class__);
+
+        if(__file_type__  > 0 )
+            install.insert("__file_type__",(unsigned char)__file_type__);
+
+        install.into(coreSet::getCoreSet().getProjectname().toStdString() + ".basefile");
+
+        qDebug() << QString::fromStdString(install.str());
+        if(!query->exec(QString::fromStdString(install.str())))
+            throw std::runtime_error(query->lastError().text().toStdString());
 
         qDebug() << query->lastError().text();
         query->finish();

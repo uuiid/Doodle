@@ -1,0 +1,4 @@
+[submodule "sql-builder"]
+	path = sql-builder
+	url = https://github.com/six-ddc/sql-builder.git
+	branch = master

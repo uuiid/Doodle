@@ -45,7 +45,7 @@ sqlQuertPtr coreSql::getquery()
 {
     QSqlDatabase dataBase = QSqlDatabase::database("mysql_main_data");
     dataBase.open();
-    dataBase.transaction();
+//    dataBase.transaction();
     if(!isInit) throw std::runtime_error("not init DB (sql mian data)");
     sqlQuertPtr queryPtr(new QSqlQuery(dataBase));
     return queryPtr;
@@ -102,7 +102,7 @@ void coreSqlUser::initDB(const QString& ip,const QString &dataName)
         dataBase.setDatabaseName("myuser");
     }
     if(!dataBase.open()) throw std::runtime_error(dataBase.lastError().text().toStdString());
-    dataBase.transaction();
+//    dataBase.transaction();
     isInit = true;
 }
 
