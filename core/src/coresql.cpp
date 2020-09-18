@@ -26,7 +26,7 @@ void coreSql::initDB(const QString &ip,const QString &dataName)
         dataBase.setDatabaseName(dataName);
     }
     if(!dataBase.open()) throw std::runtime_error(dataBase.lastError().text().toStdString());
-    dataBase.transaction();
+//    dataBase.transaction();
     isInit = true;
 }
 

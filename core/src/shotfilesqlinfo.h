@@ -17,10 +17,10 @@ public:
 
 
     //外键查询
-    episodesPtr getEisdes() const;
+    episodesPtr getEpisdes();
     void setEpisdes( const episodesPtrW& eps_);
 
-    shotPtr getShot() const;
+    shotPtr getShot();
     void setShot(const shotPtrW& shot_);
     const static QString SQLCreateTable;
 
@@ -30,12 +30,9 @@ private:
     qint64 __file_class__;
     qint64 __file_type__;
 
-    episodesPtrW epsP;
-    shotPtrW shotP;
+    episodesPtrW eps_ptrW;
+    shotPtrW shot_ptrW;
 
-    const static QString SQLSelectCOM;
-    const static QString SQLInsert;
-    const static QString SQLUpdata;
 };
 
 CORE_DNAMESPACE_E

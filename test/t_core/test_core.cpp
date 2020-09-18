@@ -13,7 +13,6 @@ test_core::test_core()
 void test_core::init()
 {
     doCore::coreSet& set = doCore::coreSet::getCoreSet();
-    set.setProjectname("test_db");
     set.init();
 
 }
@@ -47,8 +46,9 @@ void test_core::test_create_eps()
     t.setInfoP(QString::fromStdString("test"));
     t.setVersionP(0);
     try {
-        t.insert();
+//        t.insert();
     }  catch (std::runtime_error err) {
         qDebug() << err.what();
     }
+
 }

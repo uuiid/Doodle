@@ -24,7 +24,7 @@ public:
     ~coreSql();
     sqlQuertPtr getquery();
     void closeDataBase();
-    bool commitDataBase();
+    static bool commitDataBase();
 public slots:
     void initDB(const QString& ip,const QString &dataName);
 

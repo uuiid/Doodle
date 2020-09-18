@@ -97,7 +97,7 @@ void coreSet::getSetting()
 QString coreSet::toIpPath(const QString &path)
 {
     static QRegularExpression exp("^[A-Z]:");
-    qDebug()<<exp.match(path);
+//    qDebug()<<exp.match(path);
     if(exp.match(path).hasMatch()){
         return path.right(path.size() - 2);
     }

@@ -80,4 +80,5 @@ void fileSqlInfo::setFileStateP(const QString &value)
 
 
 
+
 CORE_DNAMESPACE_E

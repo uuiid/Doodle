@@ -11,13 +11,17 @@ public:
     assFileSqlInfo();
     assFileSqlInfo(qint64 &ID_);
 
-    fileClassPtr getFileclass() const;
+    void insert() override;
+    void updata() override;
+    void deleteSQL() override;
+
+    fileClassPtr getFileclass();
     void setFileClass(const fileClassPtrW& fileclass_);
 
-    fileTypePtr getFileType() const;
+    fileTypePtr getFileType();
     void setFileType(const fileTypePtrW& fileType_);
 
-    assTypePtr getAssType() const;
+    assTypePtr getAssType();
     void setAssType(const assTypePtrW& assType_);
 
 private:
@@ -29,7 +33,6 @@ private:
     fileTypePtrW fileTypeP;
     assTypePtrW assTypeP;
 
-    const static QString SQLSelectCOM;
 };
 
 CORE_DNAMESPACE_E

@@ -12,4 +12,5 @@ assType::assType(const qint64 &ID_)
 
 }
 
+
 CORE_DNAMESPACE_E

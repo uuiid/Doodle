@@ -21,10 +21,6 @@ public:
     QfileListPtr fileListGet() const;
     virtual void setFileList(const QfileListPtr &filelist);
 
-    virtual void insert() = 0;
-    virtual void updata() = 0;
-    virtual void deleteSQL() = 0;
-
     int getVersionP() const;
     void setVersionP(const int &value);
 

@@ -37,7 +37,8 @@ set(HEADER_FILES
     "src/shot.h"
     "src/fileclass.h"
     "src/filetype.h"
-    "src/asstype.h")
+    "src/asstype.h"
+    "src/coresqldata.h")
 
 add_library(core SHARED
     ${HEADER_FILES}
@@ -51,6 +52,7 @@ add_library(core SHARED
     "src/fileclass.cpp"
     "src/filetype.cpp"
     "src/asstype.cpp"
+    "src/coresqldata.cpp"
   )
 
 target_link_libraries(core PUBLIC Qt5::Sql Qt5::Core  )
