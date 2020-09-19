@@ -1,0 +1,17 @@
+[
+    {
+        "name": "MY__Visual Studio_2017 Release - amd64-qt5.12.9",
+        "visualStudio": "e9363a14",
+        "visualStudioArchitecture": "x64",
+        "preferredGenerator": {
+          "name": "Visual Studio 15 2017",
+          "platform": "x64",
+          "toolset": "host=x64"
+        },
+        "toolchainFile": "D:\\source\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+        "environmentVariables": {
+          "QT_ROOT":"D:\\Qt_lin\\5.12.9\\msvc2017_64",
+          "CMAKE_PREFIX_PATH":"D:\\Qt_lin\\5.12.9\\msvc2017_64"
+        }
+      }
+]
