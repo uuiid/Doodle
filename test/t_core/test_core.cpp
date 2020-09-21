@@ -33,7 +33,7 @@ void test_core::test_set_synpath()
 
 }
 
-void test_core::test_create_eps()
+void test_core::test_create_shotinfo()
 {
     doCore::coreSet& set = doCore::coreSet::getCoreSet();
     set.setProjectname("test_db");

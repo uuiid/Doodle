@@ -12,7 +12,7 @@ public:
     shotFileSqlInfo(const qint64 &ID_);
 
     void insert() override;
-    void updata() override;
+    void updateSQL() override;
     void deleteSQL() override;
 
 

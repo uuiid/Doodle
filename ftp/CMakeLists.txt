@@ -1,5 +1,5 @@
 find_package(Qt5 COMPONENTS Core Network REQUIRED)
-
+find_package(CURL CONFIG REQUIRED)
 set(HEADER_FILES
     ftp_global.h
     src/ftphandle.h

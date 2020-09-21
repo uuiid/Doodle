@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "t_fileSyn/test_filesyn.h"
 #include "t_ftp/test_ftp.h"
 #include "t_convert/test_convert.h"
@@ -12,7 +14,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication app(argc,argv);
     app.setAttribute(Qt::AA_Use96Dpi,true);
-
+    std::cout << "test" << std::endl;
 //    test_fileSyn tc1;
 //    QTEST_SET_MAIN_SOURCE_PATH
 //    QTest::qExec(&tc1,argc,argv);
@@ -24,7 +26,7 @@ int main(int argc, char *argv[])
 //    test_convert tCon;
 //    QTEST_SET_MAIN_SOURCE_PATH
 //    QTest::qExec(&tCon,argc,argv);
-
+    qDebug() << "Running" << __FILE__ << ":" << __LINE__;
     test_core tCore;
     QTEST_SET_MAIN_SOURCE_PATH
     QTest::qExec(&tCore, argc, argv);

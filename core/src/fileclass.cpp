@@ -47,23 +47,30 @@ void fileClass::insert()
         if(__eps__  > 0)
             ins_.insert("__episodes__",__eps__);
 
-        ins_.into(coreSet::getCoreSet().getProjectname().toStdString() + ".fileclass");
+        ins_.into(QString("%1.fileclass").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
         if(!query->exec(QString::fromStdString(ins_.str())))
             throw std::runtime_error(query->lastError().text().toStdString());
 
         query->finish();
     }else {
-        updata();
+        updateSQL();
     }
 }
 
-void fileClass::updata()
+void fileClass::updateSQL()
 {
     sql::UpdateModel upd_;
-    upd_.update(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    upd_.update(QString("%1.fileclass").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
-    upd_.set("")
+    upd_.set("__shot__",__shot__);
+    upd_.set("__episodes__",__eps__);
+
+    upd_.where(sql::column("id") == idP);
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if(!query->exec(QString::fromStdString(upd_.str()))) 
+        throw std::runtime_error(query->lastError().text().toStdString());
+    query->finish();
 }
 
 void fileClass::deleteSQL()

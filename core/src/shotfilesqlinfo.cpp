@@ -27,16 +27,16 @@ shotFileSqlInfo::shotFileSqlInfo()
 
 shotFileSqlInfo::shotFileSqlInfo(const qint64 &ID_)
 {
-    sql::SelectModel select;
-    select.select("id","file","fileSuffixes","user","version",
+    sql::SelectModel sel_;
+    sel_.select("id","file","fileSuffixes","user","version",
                   "_file_path_","infor","filestate",
                   "__episodes__","__shot__","__file_class__","__file_type__");
 
-    select.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-    select.where(sql::column("id") == ID_);
+    sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.where(sql::column("id") == ID_);
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
-    if(!query->exec(QString::fromStdString(select.str()))) return;
+    if(!query->exec(QString::fromStdString(sel_.str()))) return;
     if(query->next()){
         idP           = query->value(0).toInt();
         fileP         = query->value(1).toString();
@@ -82,7 +82,7 @@ void shotFileSqlInfo::insert()
         if(__file_type__  > 0 )
             ins_.insert("__file_type__",(unsigned char)__file_type__);
 
-        ins_.into(coreSet::getCoreSet().getProjectname().toStdString() + ".basefile");
+        ins_.into(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
         qDebug() << QString::fromStdString(ins_.str());
         if(!query->exec(QString::fromStdString(ins_.str())))
@@ -91,26 +91,26 @@ void shotFileSqlInfo::insert()
         qDebug() << query->lastError().text();
         query->finish();
     }else {
-        updata();
+        updateSQL();
     }
 
 }
 
-void shotFileSqlInfo::updata()
+void shotFileSqlInfo::updateSQL()
 {
-    sql::UpdateModel updatasql_;
-    updatasql_.update(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-    updatasql_.set("filestate",fileSuffixesP.toStdString());
-    updatasql_.set("infor",infoP.toStdString());
-    updatasql_.set("__episodes__",__episodes__);
-    updatasql_.set("__shot__",__shot__);
-    updatasql_.set("__file_class__",__file_class__);
-    updatasql_.set("__file_type__",__file_type__);
+    sql::UpdateModel upd_;
+    upd_.update(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    upd_.set("filestate",fileSuffixesP.toStdString());
+    upd_.set("infor",infoP.toStdString());
+    upd_.set("__episodes__",__episodes__);
+    upd_.set("__shot__",__shot__);
+    upd_.set("__file_class__",__file_class__);
+    upd_.set("__file_type__",__file_type__);
 
-    updatasql_.where(sql::column("id") == idP);
+    upd_.where(sql::column("id") == idP);
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
-    if(!query->exec(QString::fromStdString(updatasql_.str()))) throw  std::runtime_error("not updata fileinfo");
+    if(!query->exec(QString::fromStdString(upd_.str()))) throw  std::runtime_error("not updata fileinfo");
     query->finish();
 }
 

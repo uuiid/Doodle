@@ -23,6 +23,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libssl.so)
 #    endif()
 #endif()
+#启用测试
+include(CTest)
+enable_testing()
 set(CMAKE_INSTALL_PREFIX "F:/Source/qt_test/install")
 configure_file(DoodleConfig.h.in ${CMAKE_CURRENT_LIST_DIR}/DoodleConfig.h)
 find_package(Qt5 COMPONENTS Core Widgets Test LinguistTools REQUIRED)
@@ -38,6 +41,7 @@ add_subdirectory(ftp)
 add_subdirectory(fileSyn)
 add_subdirectory(pinyin)
 add_subdirectory(core)
+add_subdirectory(test)
 
 set(TS_FILES test_cmake_zh_CN.ts)
 
@@ -59,15 +63,12 @@ else()
   )
 endif()
 
-target_link_libraries(Doodle PRIVATE Qt5::Widgets fileSyn)
+target_link_libraries(Doodle PRIVATE Qt5::Widgets)
 
 qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 install( TARGETS Doodle
     RUNTIME DESTINATION Doodle
     BUNDLE  DESTINATION Doodle)
-#启用测试
-enable_testing()
-add_subdirectory("test")
 
 #=====================安装打包过程===============================
 #首先搜索我们的自定义函数
@@ -94,7 +95,7 @@ CPACKIFW_COMMON()
 include(InstallRequiredSystemLibraries)
 #第二中验证加搜索方式
 set(APPS ${CMAKE_INSTALL_PREFIX}/Doodle/Doodle.exe)  # paths to executables
-get_filename_component(fixdir ${QT_QMAKE_EXECUTABLE} DIRECTORY)
+get_filename_component(fixdir ${WINQT} DIRECTORY)
 set(DIRS ${CMAKE_FIND_ROOT_PATH}
     ${fixdir}
     ${CMAKE_INSTALL_PREFIX}/lib)

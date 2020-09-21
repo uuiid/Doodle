@@ -16,7 +16,7 @@ qint64 coresqldata::getIdP() const
 
 bool coresqldata::isNULL() const
 {
-    if(idP > 0){
+    if(idP >= 0){
         return true;
     }else {
         return false;

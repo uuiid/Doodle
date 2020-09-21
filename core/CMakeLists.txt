@@ -1,15 +1,7 @@
 ﻿find_package(Qt5 COMPONENTS Core Sql REQUIRED)
 find_package(Sqlpp11 REQUIRED)
 
-#find_library(sqlpp-mysql_LIBS
-#    NAMES sqlpp-mysql
-#    PATHS  ${CMAKE_FIND_ROOT_PATH}/debug/lib
-#    REQUIRED)
-
-#find_library(mysql_LIBS
-#    NAMES libmysql
-#    PATHS  ${CMAKE_FIND_ROOT_PATH}/debug/lib
-#    REQUIRED)
+find_package(magic_enum CONFIG REQUIRED)
 
 set(ORM_HEADER
     src/coreOrm/assclass_sqlOrm.h
@@ -55,7 +47,7 @@ add_library(core SHARED
     "src/coresqldata.cpp"
   )
 
-target_link_libraries(core PUBLIC Qt5::Sql Qt5::Core  )
+target_link_libraries(core PUBLIC Qt5::Sql Qt5::Core magic_enum::magic_enum)
 
 target_compile_definitions(core PRIVATE CORE_LIBRARY)
 

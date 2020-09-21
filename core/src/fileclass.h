@@ -15,7 +15,7 @@ public:
     fileClass(const qint64 & ID_);
 
     void insert() override;
-    void updata() override;
+    void updateSQL() override;
     void deleteSQL() override;
 
 
@@ -35,7 +35,7 @@ private:
 
     episodesPtrW eps_ptrW;
     shotPtrW shot_ptrW;
-
+    
     qint64 __shot__;
     qint64 __eps__;
 };

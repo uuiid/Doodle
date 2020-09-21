@@ -1,19 +1,24 @@
 {
-    // 使用 IntelliSense 了解相关属性。 
-    // 悬停以查看现有属性的描述。
-    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
     "configurations": [
         {
-            "name": "test",
+            "name": "my",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/test.exe",
-            "args": [],
+            "program": "${workspaceFolder}/build/test/Debug/test_my.exe",
+            "args": [
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "$PATH;${env:QT_MYROOT}/5.12.9/msvc2017_64;${env:QT_MYROOT}/5.12.9/msvc2017_64/bin;${env:QT_MYROOT}/5.12.9/msvc2017_64/plugins;${workspaceFolder}/build/core/Debug/;${workspaceFolder}/build/fileSyn/Debug/;${workspaceFolder}/build/ftp/Debug/;${workspaceFolder}/build/pinyin/Debug/;${workspaceFolder}/build/;${env:VCPKG_ROOT}/vcpkg/installed/x64-windows/bin;${env:VCPKG_ROOT}/vcpkg/installed/x64-windows/debug/bin"
+                }
+            ],
+            
+            "externalConsole": false,
+            "visualizerFile": "c:\\Users\\teXiao\\AppData\\Roaming\\Code\\User\\workspaceStorage\\6497f7d85fd757f5c725b616d006dc4f\\tonka3000.qtvsctools\\qt.natvis.xml"
         }
     ]
+
 }

@@ -77,12 +77,12 @@ void assFileSqlInfo::insert()
             throw std::runtime_error(query->lastError().text().toStdString());
         query->finish();
     }else {
-        updata();
+        updateSQL();
 }
 
 }
 
-void assFileSqlInfo::updata()
+void assFileSqlInfo::updateSQL()
 {
     sql::UpdateModel updatasql_;
     updatasql_.update(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());

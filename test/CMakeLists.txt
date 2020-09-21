@@ -1,6 +1,6 @@
 ﻿find_package(Qt5 COMPONENTS Core Test REQUIRED)
 
-add_executable(test_fileSyn
+add_executable(test_my
     "t_fileSyn/test_filesyn.h"
     "t_fileSyn/test_filesyn.cpp"
     "t_ftp/test_ftp.h"
@@ -12,6 +12,6 @@ add_executable(test_fileSyn
     "main.cpp"
     )
 
-target_link_libraries(test_fileSyn
+target_link_libraries(test_my
     PRIVATE Qt5::Test fileSyn ftp pinyin core )
-add_test(NAME AllTestsInMain COMMAND test_fileSyn)
+add_test(NAME AllTestsInMain COMMAND test_my)

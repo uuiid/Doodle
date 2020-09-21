@@ -11,7 +11,7 @@ public:
     coresqldata();
 
     virtual void insert() = 0;
-    virtual void updata() = 0;
+    virtual void updateSQL() = 0;
     virtual void deleteSQL() = 0;
 
     qint64 getIdP() const;
