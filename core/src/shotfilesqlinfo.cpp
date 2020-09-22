@@ -1,55 +1,69 @@
 ﻿#include "shotfilesqlinfo.h"
 
+#include "sql_builder/sql.h"
 
 #include "coreset.h"
 #include "episodes.h"
 #include "shot.h"
-#include "sql_builder/sql.h"
+#include "fileclass.h"
+#include "filetype.h"
 
 #include <QVariant>
 #include <QDebug>
 #include <QSqlError>
 //#include <QxOrm_Impl.h>
 
-
 CORE_NAMESPACE_S
-//选择信息
-
-const QString shotFileSqlInfo::SQLCreateTable = "";
 
 shotFileSqlInfo::shotFileSqlInfo()
 {
-    __episodes__   = -1;
-    __shot__       = -1;
+    __episodes__ = -1;
+    __shot__ = -1;
     __file_class__ = -1;
-    __file_type__  = -1;
+    __file_type__ = -1;
 }
 
 shotFileSqlInfo::shotFileSqlInfo(const qint64 &ID_)
 {
     sql::SelectModel sel_;
-    sel_.select("id","file","fileSuffixes","user","version",
-                  "_file_path_","infor","filestate",
-                  "__episodes__","__shot__","__file_class__","__file_type__");
+    sel_.select("id", "file", "fileSuffixes", "user", "version",
+                "_file_path_", "infor", "filestate",
+                "__episodes__", "__shot__", "__file_class__", "__file_type__");
 
     sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
     sel_.where(sql::column("id") == ID_);
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
-    if(!query->exec(QString::fromStdString(sel_.str()))) return;
-    if(query->next()){
-        idP           = query->value(0).toInt();
-        fileP         = query->value(1).toString();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+        return;
+    if (query->next())
+    {
+        idP = query->value(0).toInt();
+        fileP = query->value(1).toString();
         fileSuffixesP = query->value(2).toString();
-        userP         = query->value(3).toString();
-        versionP      = query->value(4).toInt();
-        filepathP     = query->value(5).toString();
-        infoP         = query->value(6).toString();
-        fileStateP    = query->value(7).toString();
-        __episodes__  = query->value(8).toInt();
-        __shot__      = query->value(9).toInt();
-        __file_class__= query->value(10).toInt();
-        __file_type__ = query->value(11).toInt();
+        userP = query->value(3).toString();
+        versionP = query->value(4).toInt();
+        filepathP = query->value(5).toString();
+        infoP = query->value(6).toString();
+        fileStateP = query->value(7).toString();
+
+        if (!query->value(8).isNull())
+            __episodes__ = query->value(8).toInt();
+        else
+            __episodes__ = -1;
+
+        if (!query->value(9).isNull())
+            __shot__ = query->value(9).toInt();
+        else
+            __shot__ = -1;
+        if (!query->value(10).isNull())
+            __file_class__ = query->value(10).toInt();
+        else
+            __file_class__ = -1;
+        if (!query->value(11).isNull())
+            __file_type__ = query->value(11).toInt();
+        else
+            __file_type__ = -1;
         return;
     }
     //失败保护
@@ -59,70 +73,77 @@ shotFileSqlInfo::shotFileSqlInfo(const qint64 &ID_)
 void shotFileSqlInfo::insert()
 {
     sql::InsertModel ins_;
-    if(idP < 0){
+    if (idP < 0)
+    {
         sqlQuertPtr query = coreSql::getCoreSql().getquery();
-        ins_.insert("file",fileP.toStdString());
-        ins_.insert("fileSuffixes",fileSuffixesP.toStdString());
-        ins_.insert("user",userP.toStdString());
-        ins_.insert("version",(unsigned char)versionP);
-        ins_.insert("_file_path_",filepathP.toStdString());
+        ins_.insert("file", fileP.toStdString());
+        ins_.insert("fileSuffixes", fileSuffixesP.toStdString());
+        ins_.insert("user", userP.toStdString());
+        ins_.insert("version", (unsigned char)versionP);
+        ins_.insert("_file_path_", filepathP.toStdString());
 
-        if(!infoP.isEmpty())
-        ins_.insert("infor",infoP.toStdString());
+        if (!infoP.isEmpty())
+            ins_.insert("infor", infoP.toStdString());
 
-        if(!fileStateP.isEmpty())
-        ins_.insert("filestate",fileStateP.toStdString());
+        if (!fileStateP.isEmpty())
+            ins_.insert("filestate", fileStateP.toStdString());
 
-        if(__episodes__   > 0 )
-            ins_.insert("__episodes__",(unsigned char)__episodes__);
-        if(__shot__       > 0 )
-            ins_.insert("__shot__",(unsigned char)__shot__);
-        if(__file_class__ > 0 )
-            ins_.insert("__file_class__",(unsigned char)__file_class__);
-        if(__file_type__  > 0 )
-            ins_.insert("__file_type__",(unsigned char)__file_type__);
+        if (__episodes__ > 0)
+            ins_.insert("__episodes__", (unsigned char)__episodes__);
+        if (__shot__ > 0)
+            ins_.insert("__shot__", (unsigned char)__shot__);
+        if (__file_class__ > 0)
+            ins_.insert("__file_class__", (unsigned char)__file_class__);
+        if (__file_type__ > 0)
+            ins_.insert("__file_type__", (unsigned char)__file_type__);
 
         ins_.into(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
         qDebug() << QString::fromStdString(ins_.str());
-        if(!query->exec(QString::fromStdString(ins_.str())))
+        if (!query->exec(QString::fromStdString(ins_.str())))
             throw std::runtime_error(query->lastError().text().toStdString());
+        getInsertID(query);
 
         qDebug() << query->lastError().text();
         query->finish();
-    }else {
-        updateSQL();
     }
-
 }
 
 void shotFileSqlInfo::updateSQL()
 {
     sql::UpdateModel upd_;
     upd_.update(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-    upd_.set("filestate",fileSuffixesP.toStdString());
-    upd_.set("infor",infoP.toStdString());
-    upd_.set("__episodes__",__episodes__);
-    upd_.set("__shot__",__shot__);
-    upd_.set("__file_class__",__file_class__);
-    upd_.set("__file_type__",__file_type__);
+    upd_.set("filestate", fileSuffixesP.toStdString());
+    upd_.set("infor", infoP.toStdString());
+    if (__episodes__ >= 0)
+        upd_.set("__episodes__", __episodes__);
+    if (__shot__ >= 0)
+        upd_.set("__shot__", __shot__);
+    if (__file_class__ >= 0)
+        upd_.set("__file_class__", __file_class__);
+    if (__file_type__ >= 0)
+        upd_.set("__file_type__", __file_type__);
 
     upd_.where(sql::column("id") == idP);
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
-    if(!query->exec(QString::fromStdString(upd_.str()))) throw  std::runtime_error("not updata fileinfo");
+    if (!query->exec(QString::fromStdString(upd_.str())))
+        throw std::runtime_error("not updata fileinfo");
     query->finish();
 }
 
 void shotFileSqlInfo::deleteSQL()
 {
-
 }
 
 episodesPtr shotFileSqlInfo::getEpisdes()
 {
-    if(eps_ptrW != nullptr) {return eps_ptrW;}
-    else {
+    if (p_ptrw_eps != nullptr)
+    {
+        return p_ptrw_eps;
+    }
+    else if(__episodes__ >= 0)
+    {
         episodesPtr p_ = episodesPtr(new episodes(__episodes__));
         this->setEpisdes(p_);
         return p_;
@@ -132,16 +153,20 @@ episodesPtr shotFileSqlInfo::getEpisdes()
 
 void shotFileSqlInfo::setEpisdes(const episodesPtrW &eps_)
 {
-    eps_ptrW = eps_;
+    p_ptrw_eps = eps_;
     __episodes__ = eps_.lock()->getIdP();
 }
 
 shotPtr shotFileSqlInfo::getShot()
 {
-    if(shot_ptrW != nullptr){return shot_ptrW;}
-    else{
+    if (p_ptrw_shot != nullptr)
+    {
+        return p_ptrw_shot;
+    }
+    else if (__shot__ >= 0)
+    {
         shotPtrW p_ = shotPtr(new shot(__shot__));
-        shot_ptrW = p_;
+        p_ptrw_shot = p_;
         return p_;
     }
     return nullptr;
@@ -149,8 +174,43 @@ shotPtr shotFileSqlInfo::getShot()
 
 void shotFileSqlInfo::setShot(const shotPtrW &shot_)
 {
-    shot_ptrW = shot_;
+    p_ptrw_shot = shot_;
     __shot__ = shot_.lock()->getIdP();
 }
 
+fileClassPtr shotFileSqlInfo::getFileclass()
+{
+    if (p_ptrw_fileClass)
+        return p_ptrw_fileClass;
+    else if (__file_class__ >= 0)
+    {
+        fileClassPtr p_ = fileClassPtr(new fileClass(__file_class__));
+        p_ptrw_fileClass = p_;
+        return p_;
+    }
+}
+
+void shotFileSqlInfo::setFileclass(const fileClassPtrW &value)
+{
+    __file_class__ = value.lock()->getIdP();
+    p_ptrw_fileClass = value;
+}
+
+fileTypePtr shotFileSqlInfo::getFileType()
+{
+    if (p_ptrw_fileType)
+        return p_ptrw_fileType;
+    else if (__file_type__ >= 0)
+    {
+        fileTypePtr p_ = fileTypePtr(new fileType(__file_type__));
+        p_ptrw_fileType = p_;
+        return p_;
+    }
+}
+
+void shotFileSqlInfo::setFileType(const fileTypePtrW &fileType_)
+{
+    __file_type__ = fileType_.lock()->getIdP();
+    p_ptrw_fileType = fileType_;
+}
 CORE_DNAMESPACE_E

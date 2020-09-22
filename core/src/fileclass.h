@@ -14,24 +14,37 @@ public:
     fileClass();
     fileClass(const qint64 & ID_);
 
+    enum class e_fileclass {
+        _ = 0,
+        Executive = 1,
+        Light = 2,
+        VFX  = 3,
+        modle = 4,
+        rig = 5,
+        Anm = 6,
+        direct =7,
+        paint = 8,
+    };
+
     void insert() override;
     void updateSQL() override;
     void deleteSQL() override;
 
+    static fileClassPtrList getAll();
 
-    QString getFilecalssP() const;
-    void setFilecalssP(const QString &value);
+    QString getFileclass_str() const;
+    e_fileclass getFileclass() const;
+    void setFileclass(const e_fileclass &value);
+    void setFileclass(const QString &value);
 
-    episodesPtr getEps_ptrW();
-    void setEps_ptrW(const episodesPtrW &value);
+    episodesPtr getEpisodes();
+    void setEpisodes(const episodesPtrW &value);
 
-    shotPtr getShot_ptrW();
-    void setShot_ptrW(const shotPtrW &value);
-
-    qint64 getIdP();
+    shotPtr getShot();
+    void setShot(const shotPtrW &value);
 
 private:
-    QString filecalssP;
+    e_fileclass p_fileclass;
 
     episodesPtrW eps_ptrW;
     shotPtrW shot_ptrW;

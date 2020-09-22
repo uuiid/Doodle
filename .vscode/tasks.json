@@ -1,0 +1,12 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "echo",
+            "type": "shell",
+            "command": "${env:QT_MYROOT}/5.12.9/msvc2017_64/bin/windeployqt.exe ${workspaceFolder}/build/test/Debug/test_my.exe"
+        }
+    ]
+}

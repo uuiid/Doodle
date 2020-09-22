@@ -15,12 +15,13 @@ public:
     void updateSQL() override;
     void deleteSQL() override;
 
+    static episodesPtrList getAll();
 
     qint64 getEpisdes() const;
     void setEpisdes(const qint64 &value);
 
 private:
-    qint64 episP;
+    qint64 p_int_episodes;
 
 };
 

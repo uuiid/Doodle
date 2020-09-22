@@ -4,7 +4,7 @@
 
 CORE_NAMESPACE_S
 
-class CORE_EXPORT shotFileSqlInfo :public fileSqlInfo
+class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo
 {
 
 public:
@@ -15,14 +15,18 @@ public:
     void updateSQL() override;
     void deleteSQL() override;
 
-
     //外键查询
     episodesPtr getEpisdes();
-    void setEpisdes( const episodesPtrW& eps_);
+    void setEpisdes(const episodesPtrW &eps_);
 
     shotPtr getShot();
-    void setShot(const shotPtrW& shot_);
-    const static QString SQLCreateTable;
+    void setShot(const shotPtrW &shot_);
+
+    fileClassPtr getFileclass();
+    void setFileclass(const fileClassPtrW &value);
+
+    fileTypePtr getFileType();
+    void setFileType(const fileTypePtrW &fileType_);
 
 private:
     qint64 __episodes__;
@@ -30,9 +34,10 @@ private:
     qint64 __file_class__;
     qint64 __file_type__;
 
-    episodesPtrW eps_ptrW;
-    shotPtrW shot_ptrW;
-
+    episodesPtrW p_ptrw_eps;
+    shotPtrW p_ptrw_shot;
+    fileClassPtrW p_ptrw_fileClass;
+    fileTypePtrW p_ptrw_fileType;
 };
 
 CORE_DNAMESPACE_E

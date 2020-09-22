@@ -13,6 +13,13 @@ private slots:
     void test_set_query();
     void test_set_synpath();
 
+
     void test_create_shotinfo();
+    void test_get_shotinfo();
+
+    void test_create_assInfo();
+    void test_get_assInfo();
+
+    
 };
 

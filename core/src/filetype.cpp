@@ -41,9 +41,27 @@ fileType::fileType(const qint64 &ID_)
     {
         idP = query->value(0).toInt();
         p_Str_Type = query->value(1).toString();
-        __file_class__ = query->value(2).toInt();
-        __ass_class__ = query->value(3).toInt();
-        __shot__ = query->value(4).toInt();
+
+        if (!query->value(2).isNull())
+            __file_class__ = query->value(2).toInt();
+        else
+            __file_class__ = -1;
+
+        if (!query->value(3).isNull())
+            __ass_class__ = query->value(3).toInt();
+        else
+            __ass_class__ = -1;
+
+        if(!query->value(4).isNull())
+            __episodes__ = query->value(4).toInt();
+        else
+            __episodes__ = -1;
+
+        if (!query->value(5).isNull())
+            __shot__ = query->value(5).toInt();
+        else
+            __shot__ = -1;
+
         return;
     }
     idP = -1;
@@ -55,7 +73,7 @@ void fileType::insert()
     if (idP < 0)
     {
         sqlQuertPtr query = coreSql::getCoreSql().getquery();
-        ins_.insert("file_type", p_Str_Type);
+        ins_.insert("file_type", p_Str_Type.toStdString());
 
         if (__file_class__ > 0)
             ins_.insert("__file_class__", __file_class__);
@@ -70,12 +88,9 @@ void fileType::insert()
 
         if (!query->exec(QString::fromStdString(ins_.str())))
             throw std::runtime_error(query->lastError().text().toStdString());
+        getInsertID(query);
 
         query->finish();
-    }
-    else
-    {
-        updateSQL();
     }
 }
 
@@ -83,11 +98,17 @@ void fileType::updateSQL()
 {
     sql::UpdateModel upd_;
     upd_.update(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    if (__episodes__ > 0)
+        upd_.set("__episodes__", __episodes__);
 
-    upd_.set("__episodes__", __episodes__);
-    upd_.set("__shot__", __shot__);
-    upd_.set("__file_class__", __file_class__);
-    upd_.set("__ass_class__", __ass_class__);
+    if (__shot__ > 0)
+        upd_.set("__shot__", __shot__);
+
+    if (__file_class__ > 0)
+        upd_.set("__file_class__", __file_class__);
+
+    if (__ass_class__ > 0)
+        upd_.set("__ass_class__", __ass_class__);
 
     upd_.where(sql::column("id") == idP);
 
@@ -203,6 +224,5 @@ shotPtr fileType::getShot()
         return nullptr;
     }
 }
-
 
 CORE_DNAMESPACE_E

@@ -32,18 +32,28 @@ class assType;
 
 class fileSqlInfo;
 
+class shotFileSqlInfo;
+class assFileSqlInfo;
+//共享指针引用类
 typedef QSharedPointer<shot> shotPtr;
 typedef QSharedPointer<episodes> episodesPtr;
 typedef QSharedPointer<fileClass> fileClassPtr;
 typedef QSharedPointer<fileType> fileTypePtr;
 typedef QSharedPointer<assType> assTypePtr;
-typedef QSharedPointer<fileSqlInfo> fileSqlInfoPtr;
-
+typedef QSharedPointer<shotFileSqlInfo> shotFileSqlInfoPtr;
+typedef QSharedPointer<assFileSqlInfo> assFileSqlInfoPtr;
+//弱指针指针引用类
 typedef QWeakPointer<shot> shotPtrW;
 typedef QWeakPointer<episodes> episodesPtrW;
 typedef QWeakPointer<fileClass> fileClassPtrW;
 typedef QWeakPointer<fileType> fileTypePtrW;
 typedef QWeakPointer<assType> assTypePtrW;
-typedef QWeakPointer<fileSqlInfo> fileSqlInfoPtrW;
+typedef QWeakPointer<shotFileSqlInfo> shotFileSqlInfoPtrW;
+typedef QWeakPointer<assFileSqlInfo> assFileSqlInfoPtrW;
+
+//列表引用类
+typedef QVector<episodesPtr> episodesPtrList;
+typedef QVector<fileClassPtr> fileClassPtrList;
+
 
 CORE_DNAMESPACE_E
