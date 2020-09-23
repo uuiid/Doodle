@@ -98,21 +98,9 @@ void fileClass::deleteSQL()
 {
 }
 
-fileClassPtrList fileClass::getAll()
+fileClassPtrList fileClass::batchQuerySelect(sqlQuertPtr &query)
 {
     fileClassPtrList list_fileClass;
-
-    sql::SelectModel sel_;
-    sel_.select("id", "file_class", "__shot__", "__episodes__");
-    sel_.from(QString("%1.fileclass").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-    sel_.where(sql::column("__shot__").is_null());
-    sel_.where(sql::column("__episodes__").is_null());
-
-    sqlQuertPtr query = coreSql::getCoreSql().getquery();
-    if (!query->exec(QString::fromStdString(sel_.str())))
-    {
-        throw std::runtime_error("not exe fileClass get all ");
-    }
     while (query->next())
     {
         fileClassPtr tmp_fileClass(new fileClass);
@@ -132,8 +120,72 @@ fileClassPtrList fileClass::getAll()
         QVariant tmp_eps = query->value("__episodes__");
         if (!tmp_eps.isNull())
             tmp_fileClass->__eps__ = tmp_eps.toInt();
+
+        list_fileClass.append(tmp_fileClass);
     }
     return list_fileClass;
+}
+
+fileClassPtrList fileClass::getAll()
+{
+    fileClassPtrList list_fileClass;
+
+    sql::SelectModel sel_;
+    sel_.select("id", "file_class", "__shot__", "__episodes__");
+    sel_.from(QString("%1.fileclass").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.where(sql::column("__shot__").is_null());
+    sel_.where(sql::column("__episodes__").is_null());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+    {
+        throw std::runtime_error("not exe fileClass get all ");
+    }
+
+    return batchQuerySelect(query);
+}
+
+fileClassPtrList fileClass::getAll(const episodesPtr &EP_)
+{
+
+    sql::SelectModel sel_;
+    sel_.select("id", "file_class", "__shot__", "__episodes__");
+    sel_.from(QString("%1.fileclass").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.where(sql::column("__episodes__") == EP_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+    {
+        throw std::runtime_error("not exe fileClass get all ");
+    }
+
+    fileClassPtrList listFileClass = batchQuerySelect(query);
+    for (auto &x : listFileClass)
+    {
+        x->eps_ptrW = EP_.toWeakRef();
+    }
+    return listFileClass;
+}
+
+fileClassPtrList fileClass::getAll(const shotPtr &SH_)
+{
+    sql::SelectModel sel_;
+    sel_.select("id", "file_class", "__shot__", "__episodes__");
+    sel_.from(QString("%1.fileclass").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.where(sql::column("__episodes__") == SH_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+    {
+        throw std::runtime_error("not exe fileClass get all ");
+    }
+
+    fileClassPtrList listFileClass = batchQuerySelect(query);
+    for (auto &x : listFileClass)
+    {
+        x->eps_ptrW = SH_.toWeakRef();
+    }
+    return listFileClass;
 }
 
 QString fileClass::getFileclass_str() const

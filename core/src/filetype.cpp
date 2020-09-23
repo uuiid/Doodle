@@ -9,6 +9,7 @@
 
 #include <QVariant>
 #include <QSqlError>
+#include <QVector>
 
 CORE_NAMESPACE_S
 
@@ -52,7 +53,7 @@ fileType::fileType(const qint64 &ID_)
         else
             __ass_class__ = -1;
 
-        if(!query->value(4).isNull())
+        if (!query->value(4).isNull())
             __episodes__ = query->value(4).toInt();
         else
             __episodes__ = -1;
@@ -122,6 +123,138 @@ void fileType::updateSQL()
 
 void fileType::deleteSQL()
 {
+}
+
+fileTypePtrList fileType::batchQuerySelect(sqlQuertPtr &query)
+{
+    fileTypePtrList list_;
+    while (query->next())
+    {
+        fileTypePtr p_ = fileTypePtr(new fileType);
+        p_->idP = query->value(0).toInt();
+        p_->p_Str_Type = query->value(1).toString();
+        if (!query->value(2).isNull())
+            p_->__file_class__ = query->value(2).toInt();
+        else
+            p_->__file_class__ = -1;
+
+        if (!query->value(3).isNull())
+            p_->__ass_class__ = query->value(3).toInt();
+        else
+            p_->__ass_class__ = -1;
+
+        if (!query->value(4).isNull())
+            p_->__episodes__ = query->value(4).toInt();
+        else
+            p_->__episodes__ = -1;
+
+        if (!query->value(5).isNull())
+            p_->__shot__ = query->value(5).toInt();
+        else
+            p_->__shot__ = -1;
+
+        list_.append(p_);
+    }
+    return list_;
+}
+
+fileTypePtrList fileType::getAll(const fileClassPtr &FT_)
+{
+    sql::SelectModel sel_;
+    sel_.select("id", "file_type",
+                "__file_class__", "__ass_class__", "__episodes__", "__shot__");
+
+    sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.where(sql::column("__file_class__") == FT_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+    {
+        throw std::runtime_error(query->lastError().text().toStdString());
+    }
+
+    fileTypePtrList listfileTypes = batchQuerySelect(query);
+
+    for (auto &x : listfileTypes)
+    {
+        x->p_fileClass = FT_.toWeakRef();
+    }
+    return listfileTypes;
+}
+
+fileTypePtrList fileType::getAll(const assTypePtr &AT_)
+{
+    sql::SelectModel sel_;
+    sel_.select("id", "file_type",
+                "__file_class__", "__ass_class__", "__episodes__", "__shot__");
+
+    sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+
+    sel_.where(sql::column("__file_class__") == AT_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+    {
+        throw std::runtime_error(query->lastError().text().toStdString());
+    }
+
+    fileTypePtrList listfileTypes = batchQuerySelect(query);
+
+    for (auto &x : listfileTypes)
+    {
+        x->p_assType = AT_.toWeakRef();
+    }
+    return listfileTypes;
+}
+
+fileTypePtrList fileType::getAll(const episodesPtr &EP_)
+{
+    sql::SelectModel sel_;
+    sel_.select("id", "file_type",
+                "__file_class__", "__ass_class__", "__episodes__", "__shot__");
+
+    sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+
+    sel_.where(sql::column("__file_class__") == EP_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+    {
+        throw std::runtime_error(query->lastError().text().toStdString());
+    }
+
+    fileTypePtrList listfileTypes = batchQuerySelect(query);
+
+    for (auto &x : listfileTypes)
+    {
+        x->p_episdes = EP_.toWeakRef();
+    }
+    return listfileTypes;
+}
+
+fileTypePtrList fileType::getAll(const shotPtr &SH_)
+{
+    sql::SelectModel sel_;
+    sel_.select("id", "file_type",
+                "__file_class__", "__ass_class__", "__episodes__", "__shot__");
+
+    sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+
+    sel_.where(sql::column("__file_class__") == SH_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+    {
+        throw std::runtime_error(query->lastError().text().toStdString());
+    }
+
+    fileTypePtrList listfileTypes = batchQuerySelect(query);
+
+    for (auto &x : listfileTypes)
+    {
+        x->p_shot = SH_.toWeakRef();
+    }
+    return listfileTypes;
 }
 
 void fileType::setType(const QString &value)

@@ -8,6 +8,7 @@
 
 #include <QVariant>
 #include <QSqlError>
+#include <QVector>
 
 CORE_NAMESPACE_S
 
@@ -113,5 +114,40 @@ void shot::updateSQL()
 
 void shot::deleteSQL()
 {
+}
+
+shotPtrList shot::getAll(const episodesPtr &EP_)
+{
+    //创建选择sql语句
+    sql::SelectModel sel_;
+    sel_.select("id", "shot_", "shotab", "__episodes__");
+    sel_.from(QString("%1.shot").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.where(sql::column("__episodes__") == EP_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    //如果获得就抛出异常
+    if (!query->exec(QString::fromStdString(sel_.str())))
+        throw std::runtime_error(query->lastError().text().toStdString());
+    
+    shotPtrList listShot;
+    while (query->next())
+    {
+        shotPtr sh_(new shot);
+        sh_->idP = query->value(0).toInt();
+        sh_->p_qint_shot_ = query->value(1).toInt();
+        //转换并检查枚举值
+        auto ab = magic_enum::enum_cast<e_shotAB>(query->value(2).toString().toStdString());
+        if (ab.has_value())
+            sh_->p_qenm_shotab = ab.value();
+        else
+            sh_->p_qenm_shotab = e_shotAB::_;
+
+        //连接外键和实体约束
+        sh_->__episodes__ = query->value(3).toInt();
+        sh_->p_ptr_eps = EP_.toWeakRef();
+        listShot.append(sh_);
+    }
+
+    return listShot;
 }
 CORE_DNAMESPACE_E

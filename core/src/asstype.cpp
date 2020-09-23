@@ -6,6 +6,7 @@
 
 #include <QVariant>
 #include <QSqlError>
+#include <QVector>
 
 CORE_NAMESPACE_S
 
@@ -13,7 +14,7 @@ assType::assType()
 {
     name = "";
     __file_class__ = -1;
-    filassP = nullptr;
+    p_tprw_fileClass = nullptr;
 }
 
 assType::assType(const qint64 &ID_)
@@ -77,23 +78,57 @@ void assType::deleteSQL()
 {
 }
 
+assTypePtrList assType::batchQuerySelect(sqlQuertPtr & query)
+{
+    assTypePtrList listassType;
+    while (query->next())
+    {
+        assTypePtr p_;
+        p_->idP = query->value(0).toInt();
+        p_->name = query->value(1).toString();
+        p_->__file_class__ = query->value(2).toInt();
+        listassType.append(p_);
+    }
+    return listassType;
+}
+
+assTypePtrList assType::getAll(const fileClassPtr &fc_)
+{
+    sql::SelectModel sel_;
+    sel_.select("id", "file_name", "__file_class__");
+    sel_.from(QString("%1.assclass").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.where(sql::column("__file_class__") == fc_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+
+    if (!query->exec(QString::fromStdString(sel_.str())))
+        return;
+    
+    assTypePtrList listassType = batchQuerySelect(query);
+    for (auto &x : listassType)
+    {
+        x->p_tprw_fileClass = fc_.toWeakRef();
+    }
+    return listassType;
+}
+
 fileClassPtr assType::getFile_class()
 {
-    if (filassP != nullptr)
+    if (p_tprw_fileClass != nullptr)
     {
-        return filassP;
+        return p_tprw_fileClass;
     }
     else
     {
         fileClassPtr p_ = fileClassPtr(new fileClass(__file_class__));
-        this->filassP = p_;
+        this->p_tprw_fileClass = p_;
         return p_;
     }
 }
 
 void assType::setFile_class(const fileClassPtrW &value)
 {
-    filassP = value;
+    p_tprw_fileClass = value;
     __file_class__ = value.lock()->getIdP();
 }
 

@@ -31,6 +31,9 @@ public:
     void deleteSQL() override;
 
     static fileClassPtrList getAll();
+    static fileClassPtrList getAll(const episodesPtr &EP_);
+    static fileClassPtrList getAll(const shotPtr     &SH_);
+
 
     QString getFileclass_str() const;
     e_fileclass getFileclass() const;
@@ -43,6 +46,8 @@ public:
     shotPtr getShot();
     void setShot(const shotPtrW &value);
 
+private:
+    static fileClassPtrList batchQuerySelect(sqlQuertPtr & query);
 private:
     e_fileclass p_fileclass;
 

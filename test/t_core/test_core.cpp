@@ -67,7 +67,7 @@ void test_core::test_create_shotinfo()
         ft->setShot(sh.toWeakRef());
         ft->insert();
 
-        doCore::shotFileSqlInfoPtr sf(new doCore::shotFileSqlInfo());
+        doCore::shotInfoPtr sf(new doCore::shotFileSqlInfo());
         doCore::QfileListPtr list;
         sf->setInfoP(QString("test"));
         list.append(QFileInfo("D:/tmp/etr.vdb"));
