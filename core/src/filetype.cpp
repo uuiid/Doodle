@@ -190,7 +190,7 @@ fileTypePtrList fileType::getAll(const assTypePtr &AT_)
 
     sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
-    sel_.where(sql::column("__file_class__") == AT_->getIdP());
+    sel_.where(sql::column("__ass_class__") == AT_->getIdP());
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     if (!query->exec(QString::fromStdString(sel_.str())))
@@ -215,7 +215,7 @@ fileTypePtrList fileType::getAll(const episodesPtr &EP_)
 
     sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
-    sel_.where(sql::column("__file_class__") == EP_->getIdP());
+    sel_.where(sql::column("__episodes__") == EP_->getIdP());
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     if (!query->exec(QString::fromStdString(sel_.str())))
@@ -240,7 +240,7 @@ fileTypePtrList fileType::getAll(const shotPtr &SH_)
 
     sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
-    sel_.where(sql::column("__file_class__") == SH_->getIdP());
+    sel_.where(sql::column("__shot__") == SH_->getIdP());
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     if (!query->exec(QString::fromStdString(sel_.str())))

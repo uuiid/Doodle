@@ -172,7 +172,7 @@ fileClassPtrList fileClass::getAll(const shotPtr &SH_)
     sql::SelectModel sel_;
     sel_.select("id", "file_class", "__shot__", "__episodes__");
     sel_.from(QString("%1.fileclass").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-    sel_.where(sql::column("__episodes__") == SH_->getIdP());
+    sel_.where(sql::column("__shot__") == SH_->getIdP());
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     if (!query->exec(QString::fromStdString(sel_.str())))
@@ -183,7 +183,7 @@ fileClassPtrList fileClass::getAll(const shotPtr &SH_)
     fileClassPtrList listFileClass = batchQuerySelect(query);
     for (auto &x : listFileClass)
     {
-        x->eps_ptrW = SH_.toWeakRef();
+        x->shot_ptrW = SH_.toWeakRef();
     }
     return listFileClass;
 }

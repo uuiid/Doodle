@@ -18,6 +18,7 @@ public:
     static episodesPtrList getAll();
 
     qint64 getEpisdes() const;
+    QString getEpisdes_str() const;
     void setEpisdes(const qint64 &value);
 
 private:

@@ -40,7 +40,7 @@ public:
 
     //设置shot自身信息
     void setShot(const qint64 &sh, const e_shotAB &ab = e_shotAB::_);
-
+    QString getShot_str() const;
 private:
     qint64 p_qint_shot_;
     e_shotAB p_qenm_shotab;

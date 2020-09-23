@@ -16,12 +16,16 @@ CORE_NAMESPACE_S
 
 fileSqlInfo::fileSqlInfo()
 {
+    fileP = "";
+    fileSuffixesP = "";
     userP = coreSet::getCoreSet().getUser();
-    idP = -1;
     versionP = 0;
+    filepathP = "";
+    infoP = "";
+    fileStateP = "";
 }
 
-QfileListPtr fileSqlInfo::fileListGet() const
+QfileListPtr fileSqlInfo::getFileList() const
 {
     QfileListPtr list_;
     QJsonDocument jsondoc = QJsonDocument::fromJson(filepathP.toUtf8());

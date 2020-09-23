@@ -1,5 +1,8 @@
 ﻿#include "coreset.h"
+
 #include "coresql.h"
+#include "src/convert.h"
+
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QByteArray>
@@ -117,6 +120,12 @@ void coreSet::setDepartment(const QString &value)
 QString coreSet::getUser() const
 {
     return user;
+}
+
+QString coreSet::getUser_en() const
+{
+    dopinyin::convert con;
+    return con.toEn(user);
 }
 
 void coreSet::setUser(const QString &value)

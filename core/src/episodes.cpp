@@ -94,4 +94,11 @@ qint64 episodes::getEpisdes() const
 {
     return p_int_episodes;
 }
+
+QString episodes::getEpisdes_str() const
+{
+    QString str("ep%1");
+    return str.arg(p_int_episodes,3,10,QLatin1Char('0'));
+}
+
 CORE_DNAMESPACE_E

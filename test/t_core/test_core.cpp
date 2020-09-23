@@ -91,7 +91,26 @@ void test_core::test_get_shotinfo()
     eplist = doCore::episodes::getAll();
     if (!eplist.isEmpty())
     {
-        qDebug() << "episodes: " << eplist[0]->getEpisdes();
+        doCore::episodesPtr ep = eplist[0];
+        doCore::shotPtr sh = doCore::shot::getAll(ep)[0];
+        doCore::fileClassPtr fc = doCore::fileClass::getAll(sh)[0];
+        doCore::fileTypePtr ft = doCore::fileType::getAll(fc)[0];
+        doCore::shotInfoPtr sf = doCore::shotFileSqlInfo::getAll(ft)[0];
+
+        qDebug() << "episodes: " << ep->getEpisdes_str();
+        qDebug() << "shot:" << sh->getShot_str();
+        qDebug() << "fileclass :" << fc->getFileclass_str();
+        qDebug() << "filetype :" << ft->getType();
+        qDebug() << "shotinfo generatePath :" << sf->generatePath("test", ".mb").absoluteFilePath();
+        qDebug() << "shotinfo path :" << sf->getFileList();
+
+        //防止共享指针提前删除导致访问冲突
+        qDebug() << "episodes: " << ep->getEpisdes_str();
+        qDebug() << "shot:" << sh->getShot_str();
+        qDebug() << "fileclass :" << fc->getFileclass_str();
+        qDebug() << "filetype :" << ft->getType();
+        qDebug() << "shotinfo generatePath :" << sf->generatePath("test", ".mb").filePath();
+        qDebug() << "shotinfo path :" << sf->getFileList();
     }
 }
 

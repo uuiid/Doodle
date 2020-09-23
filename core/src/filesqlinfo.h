@@ -18,7 +18,7 @@ class CORE_EXPORT fileSqlInfo :public coresqldata
 public:
     //属性设置和查询
     fileSqlInfo();
-    QfileListPtr fileListGet() const;
+    QfileListPtr getFileList() const;
     virtual void setFileList(const QfileListPtr &filelist);
 
     int getVersionP() const;

@@ -136,13 +136,224 @@ void shotFileSqlInfo::deleteSQL()
 {
 }
 
+shotInfoPtrList shotFileSqlInfo::batchQuerySelect(sqlQuertPtr &query)
+{
+    shotInfoPtrList listShot;
+    while (query->next())
+    {
+        shotInfoPtr ptr(new shotFileSqlInfo);
+
+        ptr->idP = query->value(0).toInt();
+        ptr->fileP = query->value(1).toString();
+        ptr->fileSuffixesP = query->value(2).toString();
+        ptr->userP = query->value(3).toString();
+        ptr->versionP = query->value(4).toInt();
+        ptr->filepathP = query->value(5).toString();
+        ptr->infoP = query->value(6).toString();
+        ptr->fileStateP = query->value(7).toString();
+
+        if (!query->value(8).isNull())
+            ptr->__episodes__ = query->value(8).toInt();
+        else
+            ptr->__episodes__ = -1;
+
+        if (!query->value(9).isNull())
+            ptr->__shot__ = query->value(9).toInt();
+        else
+            ptr->__shot__ = -1;
+
+        if (!query->value(10).isNull())
+            ptr->__file_class__ = query->value(10).toInt();
+        else
+            ptr->__file_class__ = -1;
+
+        if (!query->value(11).isNull())
+            ptr->__file_type__ = query->value(11).toInt();
+        else
+            ptr->__file_type__ = -1;
+
+        listShot.append(ptr);
+    }
+    return listShot;
+}
+
+shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr &EP_)
+{
+    sql::SelectModel sel_;
+    sel_.select("id", "file", "fileSuffixes", "user", "version",
+                "_file_path_", "infor", "filestate",
+                "__episodes__", "__shot__", "__file_class__", "__file_type__");
+
+    sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.where(sql::column("__episodes__") == EP_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+        throw std::runtime_error("not exe query");
+
+    shotInfoPtrList listInfo = batchQuerySelect(query);
+    for (auto &x : listInfo)
+    {
+        x->p_ptrw_eps = EP_.toWeakRef();
+    }
+    return listInfo;
+}
+
+shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr &sh_)
+{
+    sql::SelectModel sel_;
+    sel_.select("id", "file", "fileSuffixes", "user", "version",
+                "_file_path_", "infor", "filestate",
+                "__episodes__", "__shot__", "__file_class__", "__file_type__");
+
+    sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.where(sql::column("__shot__") == sh_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+        throw std::runtime_error("not exe query");
+
+    shotInfoPtrList listInfo = batchQuerySelect(query);
+    for (auto &x : listInfo)
+    {
+        x->p_ptrw_shot = sh_.toWeakRef();
+    }
+    return listInfo;
+}
+
+shotInfoPtrList shotFileSqlInfo::getAll(const fileClassPtr &fc_)
+{
+    sql::SelectModel sel_;
+    sel_.select("id", "file", "fileSuffixes", "user", "version",
+                "_file_path_", "infor", "filestate",
+                "__episodes__", "__shot__", "__file_class__", "__file_type__");
+
+    sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.where(sql::column("__file_class__") == fc_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+        throw std::runtime_error("not exe query");
+
+    shotInfoPtrList listInfo = batchQuerySelect(query);
+    for (auto &x : listInfo)
+    {
+        x->p_ptrw_fileClass = fc_.toWeakRef();
+    }
+    return listInfo;
+}
+
+shotInfoPtrList shotFileSqlInfo::getAll(const fileTypePtr &ft_)
+{
+    sql::SelectModel sel_;
+    sel_.select("id", "file", "fileSuffixes", "user", "version",
+                "_file_path_", "infor", "filestate",
+                "__episodes__", "__shot__", "__file_class__", "__file_type__");
+
+    sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.where(sql::column("__file_type__") == ft_->getIdP());
+
+    sqlQuertPtr query = coreSql::getCoreSql().getquery();
+    if (!query->exec(QString::fromStdString(sel_.str())))
+        throw std::runtime_error("not exe query");
+
+    shotInfoPtrList listInfo = batchQuerySelect(query);
+    for (auto &x : listInfo)
+    {
+        x->p_ptrw_fileType = ft_.toWeakRef();
+    }
+    return listInfo;
+}
+
+QFileInfo shotFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes)
+{
+    QString str("%1/%2/%3/%4/%5/%6/%7");
+    coreSet &set = coreSet::getCoreSet();
+    //第一次格式化添加根路径
+    str = str.arg(set.getShotRoot().absolutePath());
+    //第二次格式化添加集数字符串
+    episodesPtr ep_ = getEpisdes();
+    if (ep_ != nullptr)
+        str = str.arg(ep_->getEpisdes_str());
+    else
+        str = str.arg(QString());
+
+    //第三次格式化添加镜头字符串
+    shotPtr sh_ = getShot();
+    if (sh_ != nullptr)
+        str = str.arg(sh_->getShot_str());
+    else
+        str = str.arg(QString());
+
+    //第四次格式化添加程序文件夹
+    str = str.arg(programFolder);
+
+    //第五次格式化添加部门文件夹
+    fileClassPtr fc_ = getFileclass();
+    if (fc_ != nullptr)
+        str = str.arg(fc_->getFileclass_str());
+    else
+        str = str.arg(QString());
+
+    //第六次格式化添加类别文件夹
+    fileTypePtr ft_ = getFileType();
+    if (ft_ != nullptr)
+        str = str.arg(ft_->getType());
+    else
+        str = str.arg(QString());
+
+    //第七次添加文件夹名称
+    str = str.arg(generateFileName(suffixes));
+
+    return str;
+}
+
+QString shotFileSqlInfo::generateFileName(const QString &suffixes)
+{
+
+    QString name("shot_%1_%2_%3_%4_v%5_%6_%7");
+    //第一次 格式化添加 集数
+    episodesPtr ep_ = getEpisdes();
+    if (ep_ != nullptr)
+        name = name.arg(ep_->getEpisdes_str());
+    else
+        name = name.arg(QString());
+
+    //第二次格式化添加 镜头号
+    shotPtr sh_ = getShot();
+    if (sh_ != nullptr)
+        name = name.arg(sh_->getShot_str());
+    else
+        name = name.arg(QString());
+
+    //第三次格式化添加 fileclass
+    fileClassPtr fc_ = getFileclass();
+    if (fc_ != nullptr)
+        name = name.arg(fc_->getFileclass_str());
+    else
+        name = name.arg(QString());
+
+    //第四次格式化添加 fileType
+    fileTypePtr ft_ = getFileType();
+    if (ft_ != nullptr)
+        name = name.arg(ft_->getType());
+    else
+        name = name.arg(QString());
+
+    name = name.arg(versionP, 4, 10, QLatin1Char('0'));
+    name = name.arg(coreSet::getCoreSet().getUser_en());
+    name = name.arg(suffixes);
+
+    return name;
+}
+
 episodesPtr shotFileSqlInfo::getEpisdes()
 {
     if (p_ptrw_eps != nullptr)
     {
         return p_ptrw_eps;
     }
-    else if(__episodes__ >= 0)
+    else if (__episodes__ >= 0)
     {
         episodesPtr p_ = episodesPtr(new episodes(__episodes__));
         this->setEpisdes(p_);
@@ -165,8 +376,8 @@ shotPtr shotFileSqlInfo::getShot()
     }
     else if (__shot__ >= 0)
     {
-        shotPtrW p_ = shotPtr(new shot(__shot__));
-        p_ptrw_shot = p_;
+        shotPtr p_ = shotPtr(new shot(__shot__));
+        p_ptrw_shot = p_.toWeakRef();
         return p_;
     }
     return nullptr;
@@ -188,6 +399,7 @@ fileClassPtr shotFileSqlInfo::getFileclass()
         p_ptrw_fileClass = p_;
         return p_;
     }
+    return nullptr;
 }
 
 void shotFileSqlInfo::setFileclass(const fileClassPtrW &value)
@@ -206,6 +418,7 @@ fileTypePtr shotFileSqlInfo::getFileType()
         p_ptrw_fileType = p_;
         return p_;
     }
+    return nullptr;
 }
 
 void shotFileSqlInfo::setFileType(const fileTypePtrW &fileType_)

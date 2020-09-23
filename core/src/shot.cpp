@@ -77,6 +77,23 @@ void shot::setShot(const qint64 &sh, const e_shotAB &ab)
     p_qenm_shotab = ab;
 }
 
+QString shot::getShot_str() const
+{
+    QString str ="sc%1%2";
+    str = str.arg(p_qint_shot_,4,10,QLatin1Char('0'));
+    switch (p_qenm_shotab)
+    {
+    case e_shotAB::_:
+        str = str.arg(QString());
+        break;
+    default:
+        std::string tmpstr(magic_enum::enum_name(p_qenm_shotab));
+        str = str.arg(QString::fromStdString(tmpstr));
+        break;
+    }
+    return str;
+}
+
 void shot::insert()
 {
     sql::InsertModel ins_;

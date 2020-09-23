@@ -5,5 +5,7 @@
 		}
 	],
 	"settings": {
+		"qttools.visualizerFile": "${workspaceFolder}/.vscode/qt5.natvis.xml",
+		"qttools.injectNatvisFile": false
 	}
 }

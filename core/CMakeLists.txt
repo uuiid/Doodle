@@ -47,7 +47,10 @@ add_library(core SHARED
     "src/coresqldata.cpp"
   )
 
-target_link_libraries(core PUBLIC Qt5::Sql Qt5::Core magic_enum::magic_enum)
+target_link_libraries(core PUBLIC Qt5::Sql)
+target_link_libraries(core PUBLIC Qt5::Core)
+target_link_libraries(core PUBLIC magic_enum::magic_enum)
+target_link_libraries(core PUBLIC pinyin)
 
 target_compile_definitions(core PRIVATE CORE_LIBRARY)
 

@@ -54,6 +54,7 @@ public:
     void setIpMysql(const QString &value);
     //user设置
     QString getUser() const;
+    QString getUser_en() const;
     void setUser(const QString &value);
     //部门设置
     QString getDepartment() const;

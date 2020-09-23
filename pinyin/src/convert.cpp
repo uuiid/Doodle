@@ -1,6 +1,7 @@
 #include "convert.h"
 #include <QSqlError>
 
+#include <QDebug>
 
 PINYIN_NAMESPACE_S
 convert::convert()
@@ -56,6 +57,7 @@ void convert::initExp()
 bool convert::search()
 {
     QDir dir(QDir::currentPath());
+    qDebug() << dir.absolutePath();
     dir.cdUp();
     if(!dir.cd("resource")) return false;
     sqlDBPath = QSharedPointer<QDir>(new QDir(dir));

@@ -83,7 +83,7 @@ assTypePtrList assType::batchQuerySelect(sqlQuertPtr & query)
     assTypePtrList listassType;
     while (query->next())
     {
-        assTypePtr p_;
+        assTypePtr p_(new assType);
         p_->idP = query->value(0).toInt();
         p_->name = query->value(1).toString();
         p_->__file_class__ = query->value(2).toInt();
@@ -102,7 +102,7 @@ assTypePtrList assType::getAll(const fileClassPtr &fc_)
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
 
     if (!query->exec(QString::fromStdString(sel_.str())))
-        return;
+        throw std::runtime_error(query->lastError().text().toStdString());
     
     assTypePtrList listassType = batchQuerySelect(query);
     for (auto &x : listassType)

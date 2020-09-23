@@ -83,6 +83,9 @@
         "xmemory0": "cpp",
         "xstddef": "cpp",
         "xtr1common": "cpp",
-        "xutility": "cpp"
-    }
+        "xutility": "cpp",
+        "qfileinfo": "cpp",
+        "qsqldatabase": "cpp"
+    },
+    "qttools.injectNatvisFile": false
 }

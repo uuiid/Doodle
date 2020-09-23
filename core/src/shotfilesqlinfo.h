@@ -15,6 +15,13 @@ public:
     void updateSQL() override;
     void deleteSQL() override;
 
+    static shotInfoPtrList getAll(const episodesPtr &EP_);
+    static shotInfoPtrList getAll(const shotPtr &sh_);
+    static shotInfoPtrList getAll(const fileClassPtr &fc_);
+    static shotInfoPtrList getAll(const fileTypePtr &ft_);
+
+    QFileInfo generatePath(const QString &programFolder, const QString &suffixes);
+    QString generateFileName(const QString &suffixes);
     //外键查询
     episodesPtr getEpisdes();
     void setEpisdes(const episodesPtrW &eps_);
@@ -27,6 +34,10 @@ public:
 
     fileTypePtr getFileType();
     void setFileType(const fileTypePtrW &fileType_);
+
+private:
+    //循环获得查询结果
+    static shotInfoPtrList batchQuerySelect(sqlQuertPtr &query);
 
 private:
     qint64 __episodes__;
