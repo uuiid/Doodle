@@ -6,14 +6,19 @@ set(HEADER_FILES
     )
 
 set(RESOURE_FILE
-    ${PROJECT_SOURCE_DIR}/resource/pinyin.db)
+    ${PROJECT_SOURCE_DIR}/resource/resource.qrc)
+
+qt5_add_resources(RESOURE_FILE ${PROJECT_SOURCE_DIR}/resource/resource.qrc)
 
 add_library(pinyin SHARED
     ${HEADER_FILES}
+    ${RESOURE_FILE}
     "src/convert.cpp"
     )
 
-file(COPY ${RESOURE_FILE} DESTINATION ${CMAKE_BINARY_DIR}/resource)
+
+
+# file(COPY ${RESOURE_FILE} DESTINATION ${CMAKE_BINARY_DIR}/resource)
 
 target_link_libraries(pinyin PUBLIC Qt5::Core Qt5::Sql)
 target_compile_definitions(pinyin PRIVATE PINYIN_LIBRARY)

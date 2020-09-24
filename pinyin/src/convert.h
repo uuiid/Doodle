@@ -20,15 +20,17 @@ private:
     void initDB();
     void initQuery();
     void initExp();
-    bool search();
+    bool createDB();
     QString toEnOne(const QString &conStr);
 
 private:
     QSqlDatabase dataBase;
     QSharedPointer<QDir> sqlDBPath;
-    bool isinitDB;
     QSharedPointer<QRegularExpression> re;
     QSharedPointer<QSqlQuery> query;
+    
+    bool isinitDB;
+    static QTemporaryFile tmpDBFile;
 };
 
 

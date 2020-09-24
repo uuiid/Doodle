@@ -96,7 +96,7 @@ void test_core::test_get_shotinfo()
         doCore::fileClassPtr fc = doCore::fileClass::getAll(sh)[0];
         doCore::fileTypePtr ft = doCore::fileType::getAll(fc)[0];
         doCore::shotInfoPtr sf = doCore::shotFileSqlInfo::getAll(ft)[0];
-
+        
         qDebug() << "episodes: " << ep->getEpisdes_str();
         qDebug() << "shot:" << sh->getShot_str();
         qDebug() << "fileclass :" << fc->getFileclass_str();
