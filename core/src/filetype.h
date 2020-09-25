@@ -32,7 +32,7 @@ public:
     //设置和连接外键 fileclass
     void setFileClass(const fileClassPtrW & fileclass_);
     //获得外键连接的实体对象 fileclass
-    fileClassPtr getFileclass();
+    fileClassPtr getFileClass();
 
     //设置和连接外键 assType
     void setAssType(const assTypePtrW & assType_);

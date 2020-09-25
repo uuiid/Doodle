@@ -85,7 +85,9 @@
         "xtr1common": "cpp",
         "xutility": "cpp",
         "qfileinfo": "cpp",
-        "qsqldatabase": "cpp"
+        "qsqldatabase": "cpp",
+        "xxatomic": "cpp",
+        "*.rh": "cpp"
     },
     "qttools.injectNatvisFile": false
 }

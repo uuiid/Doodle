@@ -254,22 +254,18 @@ QString fileType::getFileType() const
 
 void fileType::setFileClass(const fileClassPtrW &value)
 {
-    try
-    {
-        __file_class__ = value.lock()->getIdP();
-        p_fileClass = value;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-    if (__file_class__ >= 0)
+    if (!value)
+        return;
+    __file_class__ = value.lock()->getIdP();
+    p_fileClass = value;
+
+    if (__shot__ >= 0)
     {
         setShot(value.lock()->getShot());
     }
 }
 
-fileClassPtr fileType::getFileclass()
+fileClassPtr fileType::getFileClass()
 {
     if (p_fileClass)
         return p_fileClass;
@@ -303,7 +299,7 @@ assTypePtr fileType::getAssType()
 {
     if (p_assType)
         return p_assType;
-    else if (__ass_class__ > 0)
+    else if (__ass_class__ >= 0)
     {
         assTypePtr p_ = assTypePtr(new assType);
         p_->select(__ass_class__);
@@ -318,15 +314,10 @@ assTypePtr fileType::getAssType()
 
 void fileType::setEpisodes(const episodesPtrW &value)
 {
-    try
-    {
-        __episodes__ = value.lock()->getIdP();
-        p_episdes = value;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if (!value)
+        return;
+    __episodes__ = value.lock()->getIdP();
+    p_episdes = value;
 }
 
 episodesPtr fileType::getEpisdes()
@@ -335,7 +326,7 @@ episodesPtr fileType::getEpisdes()
     {
         return p_episdes;
     }
-    else if (__episodes__ > 0)
+    else if (__episodes__ >= 0)
     {
         episodesPtr p_ = episodesPtr(new episodes);
         p_->select(__episodes__);
@@ -350,15 +341,10 @@ episodesPtr fileType::getEpisdes()
 
 void fileType::setShot(const shotPtrW &shot_)
 {
-    try
-    {
-        __shot__ = shot_.lock()->getIdP();
-        p_shot = shot_;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if (!shot_)
+        return;
+    __shot__ = shot_.lock()->getIdP();
+    p_shot = shot_;
     setEpisodes(shot_.lock()->getEpisodes());
 }
 
@@ -368,7 +354,7 @@ shotPtr fileType::getShot()
     {
         return p_shot;
     }
-    else if (__shot__ > 0)
+    else if (__shot__ >= 0)
     {
         shotPtr p_ = shotPtr(new shot);
         p_->select(__shot__);

@@ -363,7 +363,7 @@ QString shotFileSqlInfo::generateFileName(const QString &suffixes, const QString
 
 episodesPtr shotFileSqlInfo::getEpisdes()
 {
-    if (p_ptrw_eps != nullptr)
+    if (p_ptrw_eps)
     {
         return p_ptrw_eps;
     }
@@ -379,15 +379,11 @@ episodesPtr shotFileSqlInfo::getEpisdes()
 
 void shotFileSqlInfo::setEpisdes(const episodesPtrW &eps_)
 {
-    try
-    {
-        p_ptrw_eps = eps_;
-        __episodes__ = eps_.lock()->getIdP();
-    }
-    catch (const std::bad_typeid &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if (!eps_)
+        return;
+
+    p_ptrw_eps = eps_;
+    __episodes__ = eps_.lock()->getIdP();
 }
 
 shotPtr shotFileSqlInfo::getShot()
@@ -408,15 +404,11 @@ shotPtr shotFileSqlInfo::getShot()
 
 void shotFileSqlInfo::setShot(const shotPtrW &shot_)
 {
-    try
-    {
-        p_ptrw_shot = shot_;
-        __shot__ = shot_.lock()->getIdP();
-    }
-    catch (const std::bad_typeid &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if (!shot_)
+        return;
+    p_ptrw_shot = shot_;
+    __shot__ = shot_.lock()->getIdP();
+
     setEpisdes(shot_.lock()->getEpisodes());
 }
 
@@ -436,15 +428,11 @@ fileClassPtr shotFileSqlInfo::getFileclass()
 
 void shotFileSqlInfo::setFileClass(const fileClassPtrW &value)
 {
-    try
-    {
-        __file_class__ = value.lock()->getIdP();
-        p_ptrw_fileClass = value;
-    }
-    catch (const std::bad_typeid &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if (!value)
+        return;
+    __file_class__ = value.lock()->getIdP();
+    p_ptrw_fileClass = value;
+
     setShot(value.lock()->getShot());
 }
 
@@ -464,14 +452,12 @@ fileTypePtr shotFileSqlInfo::getFileType()
 
 void shotFileSqlInfo::setFileType(const fileTypePtrW &fileType_)
 {
-    try
-    {
-        __file_type__ = fileType_.lock()->getIdP();
-        p_ptrw_fileType = fileType_;
-    }
-    catch (const std::bad_typeid &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if (!fileType_)
+        return;
+    __file_type__ = fileType_.lock()->getIdP();
+    p_ptrw_fileType = fileType_;
+
+    setFileClass(fileType_.lock()->getFileClass());
 }
+
 CORE_DNAMESPACE_E

@@ -24,10 +24,10 @@ public:
     void setFileClass(const fileClassPtrW & value);
 
     QString getAssType() const ;
-    QString getAssType(const bool isZNCH) ;
+    QString getAssType(const assTypePtr& isZNCH) ;
 
     void setAssType(const QString & value);
-    void setAssType(const QString & value, const bool isZNCH);
+    void setAssType(const QString & value, const assTypePtr& isZNCH);
 
 private:
     static assTypePtrList batchQuerySelect(sqlQuertPtr & query);

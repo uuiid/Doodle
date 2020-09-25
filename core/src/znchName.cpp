@@ -11,12 +11,12 @@
 
 CORE_NAMESPACE_S
 
-znchName::znchName(const assTypePtr& at_)
+znchName::znchName(const assTypePtr &at_)
 {
-    name = QString();
-    con = nullptr;
+    nameZNCH = QString();
+    con = dopinyin::convertPtr();
 
-    p_ptrW_assType = at_;
+    p_ptr_assType = at_;
 }
 
 znchName::~znchName()
@@ -25,20 +25,25 @@ znchName::~znchName()
 
 void znchName::setName(const QString &name_)
 {
-    name = name_;
+    nameEN = name_;
 }
 
 void znchName::insert()
 {
     sql::InsertModel ins_;
-    if(idP < 0)
+    if (idP < 0)
     {
         sqlQuertPtr query = coreSql::getCoreSql().getquery();
-        ins_.insert("localname", name.toStdString());
-        
-        if(p_ptrW_assType.isNull())
+        ins_.insert("localname", nameZNCH.toStdString());
+
+        if (!p_ptr_assType)
             throw std::runtime_error("not asstype ");
-        ins_.insert("__ass_class__", p_ptrW_assType.lock()->getIdP());
+        ins_.insert("__ass_class__", p_ptr_assType.lock()->getIdP());
+        //添加插入表
+        ins_.into(QString("%1.znch").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+        
+        if (!query->exec(QString::fromStdString(ins_.str())))
+            throw std::runtime_error(query->lastError().text().toStdString());
 
         getInsertID(query);
         query->finish();
@@ -48,7 +53,7 @@ void znchName::insert()
 void znchName::select(const assTypePtr &at_)
 {
     sql::SelectModel sel_;
-    sel_.select("id,localname");
+    sel_.select("id","localname");
     sel_.from(QString("%1.znch").arg(coreSet::getCoreSet().getProjectname()).toStdString());
     sel_.where(sql::column("__ass_class__") == at_->getIdP());
 
@@ -57,16 +62,16 @@ void znchName::select(const assTypePtr &at_)
     if (!query->exec(QString::fromStdString(sel_.str())))
         throw std::runtime_error(query->lastError().text().toStdString());
 
-    if(query->next())
+    if (query->next())
     {
         idP = query->value(0).toInt();
-        name = query->value(1).toString();
-        p_ptrW_assType = at_;
+        nameZNCH = query->value(1).toString();
+        p_ptr_assType = at_;
     }
     else
     {
         idP = -1;
-        name = QString();
+        nameZNCH = QString();
     }
 }
 
@@ -76,33 +81,38 @@ void znchName::updateSQL()
 
     upd_.update(QString("%1.znch").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
-    upd_.set("localname", name.toStdString());
+    upd_.set("localname", nameZNCH.toStdString());
 
     upd_.where(sql::column("id") == idP);
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
 
-    if(!query->exec(QString::fromStdString(upd_.str())))
+    if (!query->exec(QString::fromStdString(upd_.str())))
         throw std::runtime_error(query->lastError().text().toStdString());
     query->finish();
 }
 
 void znchName::deleteSQL()
 {
-    
 }
 
 void znchName::setName(const QString &name_, const bool &isZNCH)
 {
     if (!con)
-        con = dopinyin::convertPtr(new dopinyin::convert());
-    name = con->toEn(name_);
+        con = dopinyin::convertPtr(new dopinyin::convert);
+    nameZNCH = name_;
+    nameEN = con->toEn(name_);
 }
 
 QString znchName::getName() const
 {
-    if(!name.isNull()) return name;
-    else return QString();
+    if (!nameZNCH.isNull())
+        return nameZNCH;
+    else
+        return nameEN;
 }
-
+QString znchName::pinyin() const
+{
+    return nameEN;
+}
 CORE_DNAMESPACE_E

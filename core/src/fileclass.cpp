@@ -113,7 +113,7 @@ fileClassPtrList fileClass::batchQuerySelect(sqlQuertPtr &query)
         QVariant tmp_shot = query->value("__shot__");
         if (!tmp_shot.isNull())
             tmp_fileClass->__shot__ = tmp_shot.toInt();
-            
+
         QVariant tmp_eps = query->value("__episodes__");
         if (!tmp_eps.isNull())
             tmp_fileClass->__eps__ = tmp_eps.toInt();
@@ -216,7 +216,7 @@ void fileClass::setFileclass(const QString &value)
 
 episodesPtr fileClass::getEpisodes()
 {
-    if (p_ptrW_eps != nullptr)
+    if (p_ptrW_eps)
     {
         return p_ptrW_eps;
     }
@@ -235,20 +235,15 @@ episodesPtr fileClass::getEpisodes()
 
 void fileClass::setEpisodes(const episodesPtrW &value)
 {
-    try
-    {
-        p_ptrW_eps = value;
-        __eps__ = value.lock()->getIdP();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if (!value)
+        return;
+    p_ptrW_eps = value;
+    __eps__ = value.lock()->getIdP();
 }
 
 shotPtr fileClass::getShot()
 {
-    if (p_ptrW_shot != nullptr && p_ptrW_shot.isNull())
+    if (p_ptrW_shot)
     {
         return p_ptrW_shot;
     }
@@ -267,15 +262,10 @@ shotPtr fileClass::getShot()
 
 void fileClass::setShot(const shotPtrW &value)
 {
-    try
-    {
-        p_ptrW_shot = value;
-        __shot__ = value.lock()->getIdP();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if (!value)
+        return;
+    p_ptrW_shot = value;
+    __shot__ = value.lock()->getIdP();
     setEpisodes(value.lock()->getEpisodes());
 }
 

@@ -12,26 +12,27 @@
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication app(argc,argv);
-    app.setAttribute(Qt::AA_Use96Dpi,true);
+    // QTextCodec *codec = QTextCodec::codecForName("utf-8");
+    // QTextCodec::setCodecForLocale(codec);
+    // QTextCodec::codecForName("GBK");
+    QCoreApplication app(argc, argv);
+    app.setAttribute(Qt::AA_Use96Dpi, true);
     std::cout << "test" << std::endl;
-//    test_fileSyn tc1;
-//    QTEST_SET_MAIN_SOURCE_PATH
-//    QTest::qExec(&tc1,argc,argv);
+    //    test_fileSyn tc1;
+    //    QTEST_SET_MAIN_SOURCE_PATH
+    //    QTest::qExec(&tc1,argc,argv);
 
-//    test_ftp tftp;
-//    QTEST_SET_MAIN_SOURCE_PATH
-//    QTest::qExec(&tftp,argc,argv);
+    //    test_ftp tftp;
+    //    QTEST_SET_MAIN_SOURCE_PATH
+    //    QTest::qExec(&tftp,argc,argv);
 
-//    test_convert tCon;
-//    QTEST_SET_MAIN_SOURCE_PATH
-//    QTest::qExec(&tCon,argc,argv);
+    //    test_convert tCon;
+    //    QTEST_SET_MAIN_SOURCE_PATH
+    //    QTest::qExec(&tCon,argc,argv);
     qDebug() << "Running" << __FILE__ << ":" << __LINE__;
     test_core tCore;
     QTEST_SET_MAIN_SOURCE_PATH
     QTest::qExec(&tCore, argc, argv);
 
-
     return 0;
 }
-

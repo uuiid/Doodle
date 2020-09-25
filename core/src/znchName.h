@@ -11,7 +11,7 @@ CORE_NAMESPACE_S
 class CORE_EXPORT znchName :public coresqldata
 {
 public:
-    znchName(const assTypePtr& at_);
+    znchName(const assTypePtr & at_);
     ~znchName();
 
     void insert() override;
@@ -22,12 +22,13 @@ public:
     void setName(const QString & name_);
     void setName(const QString & name_, const bool & isZNCH);
     QString getName() const;
-
+    QString pinyin() const;
 private:
-    QString name;
+    QString nameZNCH;
+    QString nameEN;
     dopinyin::convertPtr con;
 
-    assTypePtrW p_ptrW_assType;
+    assTypePtrW p_ptr_assType;
 };
 
 

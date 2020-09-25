@@ -13,10 +13,9 @@
 #include <QtDebug>
 #include <QRegularExpression>
 
-
 CORE_NAMESPACE_S
 
-const QString coreSet::settingFileName  = "doodle_conf.json";
+const QString coreSet::settingFileName = "doodle_conf.json";
 
 coreSet &coreSet::getCoreSet()
 {
@@ -35,24 +34,25 @@ void coreSet::init()
 
 void coreSet::initdb()
 {
-    coreSql& sql = coreSql::getCoreSql();
-    sql.initDB(ipMysql,projectname);
-    coreSqlUser& sqluser = coreSqlUser::getCoreSqlUser();
-    sqluser.initDB(ipMysql,"");
+    coreSql &sql = coreSql::getCoreSql();
+    sql.initDB(ipMysql, projectname);
+    coreSqlUser &sqluser = coreSqlUser::getCoreSqlUser();
+    sqluser.initDB(ipMysql, "");
 }
 
 void coreSet::writeDoodleLocalSet()
 {
     QJsonObject jsonobj;
-    jsonobj.insert("user",user);
-    jsonobj.insert("department",department);
-    jsonobj.insert("synPath",synPath.absolutePath());
-    jsonobj.insert("synEp",syneps);
-    jsonobj.insert("projectname",projectname);
-    jsonobj.insert("FreeFileSync",freeFileSyn.path());
+    jsonobj.insert("user", user);
+    jsonobj.insert("department", department);
+    jsonobj.insert("synPath", synPath.absolutePath());
+    jsonobj.insert("synEp", syneps);
+    jsonobj.insert("projectname", projectname);
+    jsonobj.insert("FreeFileSync", freeFileSyn.path());
     QJsonDocument jsonDoc(jsonobj);
     QFile strFile(doc.absoluteFilePath(settingFileName));
-    if(!strFile.open(QIODevice::WriteOnly)) throw std::runtime_error("not open doodle_conf.json");
+    if (!strFile.open(QIODevice::WriteOnly))
+        throw std::runtime_error("not open doodle_conf.json");
     strFile.write(jsonDoc.toBinaryData());
     strFile.close();
 }
@@ -65,28 +65,38 @@ coreSet::coreSet()
 
 void coreSet::getSetting()
 {
-    if(doc.exists(settingFileName)){
+    if (doc.exists(settingFileName))
+    {
         QFile strFile(doc.absoluteFilePath(settingFileName));
-        if(!strFile.open(QIODevice::ReadOnly | QIODevice::Text)) throw std::runtime_error("not open doodle_conf.json");
+        if (!strFile.open(QIODevice::ReadOnly | QIODevice::Text))
+            throw std::runtime_error("not open doodle_conf.json");
 
         QJsonParseError err;
-        QJsonDocument jsondoc = QJsonDocument::fromJson(strFile.readAll(),&err);
+        QJsonDocument jsondoc = QJsonDocument::fromJson(strFile.readAll(), &err);
         QJsonObject jsonObj = jsondoc.object();
         QJsonValue value;
         value = jsonObj.value("user");
-        if(value != QJsonValue::Undefined) user = value.toString();
+        if (value != QJsonValue::Undefined)
+            user = value.toString();
         value = jsonObj.value("department");
-        if(value != QJsonValue::Undefined) department = value.toString();
+        if (value != QJsonValue::Undefined)
+            department = value.toString();
         value = jsonObj.value("syn");
-        if(value != QJsonValue::Undefined) synPath = value.toString();
+        if (value != QJsonValue::Undefined)
+            synPath = value.toString();
         value = jsonObj.value("synEp");
-        if(value != QJsonValue::Undefined) syneps = value.toInt();
+        if (value != QJsonValue::Undefined)
+            syneps = value.toInt();
         value = jsonObj.value("projectname");
-        if(value != QJsonValue::Undefined) projectname = value.toString();
+        if (value != QJsonValue::Undefined)
+            projectname = value.toString();
         value = jsonObj.value("FreeFileSync");
-        if(value != QJsonValue::Undefined) freeFileSyn = value.toString();
+        if (value != QJsonValue::Undefined)
+            freeFileSyn = value.toString();
         strFile.close();
-    }else {
+    }
+    else
+    {
         user = "none";
         department = "none";
         synPath = QString("D:/ue_prj");
@@ -100,8 +110,9 @@ void coreSet::getSetting()
 QString coreSet::toIpPath(const QString &path)
 {
     static QRegularExpression exp("^[A-Z]:");
-//    qDebug()<<exp.match(path);
-    if(exp.match(path).hasMatch()){
+    //    qDebug()<<exp.match(path);
+    if (exp.match(path).hasMatch())
+    {
         return path.right(path.size() - 2);
     }
     return path;
@@ -220,13 +231,14 @@ void coreSet::getServerSetting()
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     query->exec(sql);
     mapStringPtr mapSet;
-    for(int i=0;i<5;i++){
+    for (int i = 0; i < 5; i++)
+    {
         query->next();
-        mapSet.insert(query->value(0).toString(),query->value(1).toString());
+        mapSet.insert(query->value(0).toString(), query->value(1).toString());
     }
     shotRoot = mapSet.value("shotRoot");
-    assRoot  = mapSet.value("assetsRoot");
-    synServer= mapSet.value("synSever");
+    assRoot = mapSet.value("assetsRoot");
+    synServer = mapSet.value("synSever");
     prjectRoot = mapSet.value("project");
 }
 
@@ -234,36 +246,39 @@ synPathListPtr coreSet::getSynDir()
 {
     QString sql = "SELECT DISTINCT value3, value4 FROM %1.`configure` "
                   "WHERE name='synpath' AND value='%2' AND value2 ='%3'";
-    sql = sql.arg(projectname).arg(department).arg(syneps,3,10,QLatin1Char('0'));
+    sql = sql.arg(projectname).arg(department).arg(syneps, 3, 10, QLatin1Char('0'));
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     query->exec(sql);
     synPathListPtr list;
 
-    while (query->next()) {
+    while (query->next())
+    {
         synPath_struct synpath_;
         synpath_.local = QString("%1%2/%3")
-                .arg(synPath.absolutePath())
-                .arg(projectname)
-                .arg(query->value(1).toString());
+                             .arg(synPath.absolutePath())
+                             .arg(projectname)
+                             .arg(query->value(1).toString());
         query->next();
         synpath_.server = QString("%1%2/%3/%4")
-                .arg(prjectRoot.absolutePath())
-                .arg(toIpPath(synServer.absolutePath()))
-                .arg(department)
-                .arg(query->value(1).toString());
+                              .arg(prjectRoot.absolutePath())
+                              .arg(toIpPath(synServer.absolutePath()))
+                              .arg(department)
+                              .arg(query->value(1).toString());
         list.append(synpath_);
     }
     return list;
 }
 
-
 void coreSet::getCacheDiskPath()
 {
-    for(QStorageInfo &x: QStorageInfo::mountedVolumes()){
-        if(x.isValid() && x.isReady()){
-            if(!x.isReadOnly()){
-                if(((double)x.bytesAvailable()/(double)x.bytesTotal() > 0.5f)
-                        && (!x.isRoot())){
+    for (QStorageInfo &x : QStorageInfo::mountedVolumes())
+    {
+        if (x.isValid() && x.isReady())
+        {
+            if (!x.isReadOnly())
+            {
+                if (((double)x.bytesAvailable() / (double)x.bytesTotal() > 0.5f) && (!x.isRoot()))
+                {
                     cacheRoot = x.rootPath() + "Doodle_cache";
                     break;
                 }

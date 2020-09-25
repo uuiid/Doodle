@@ -51,15 +51,10 @@ void shot::select(const qint64 &ID_)
 
 void shot::setEpisdes(const episodesPtrW &value)
 {
-    try
-    {
-        __episodes__ = value.lock()->getIdP();
-        p_ptr_eps = value;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if (!value)
+        return;
+    __episodes__ = value.lock()->getIdP();
+    p_ptr_eps = value;
 }
 
 episodesPtr shot::getEpisodes()

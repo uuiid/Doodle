@@ -58,7 +58,8 @@ void assType::insert()
 
         query->finish();
     }
-    p_ptr_znch->insert();
+    if (p_ptr_znch)
+        p_ptr_znch->insert();
 }
 
 void assType::updateSQL()
@@ -141,12 +142,15 @@ void assType::setAssType(const QString &value)
     name = value;
 }
 
-void assType::setAssType(const QString &value, const bool isZNCH)
+void assType::setAssType(const QString &value, const assTypePtr &isZNCH)
 {
-    if (p_ptr_znch)
-        p_ptr_znch = znchNamePtr(new znchName(assTypePtr(this)));
+    if (!p_ptr_znch)
+    {
+        p_ptr_znch = znchNamePtr(new znchName(isZNCH));
+    }
 
     p_ptr_znch->setName(value, true);
+    name = p_ptr_znch->pinyin();
 }
 
 QString assType::getAssType() const
@@ -154,17 +158,19 @@ QString assType::getAssType() const
     return name;
 }
 
-QString assType::getAssType(const bool isZNCH)
+QString assType::getAssType(const assTypePtr &isZNCH)
 {
     QString str;
-    if (p_ptr_znch)
+    if (!p_ptr_znch)
     {
-        p_ptr_znch = znchNamePtr(new znchName(assTypePtr(this)));
-        p_ptr_znch->select(assTypePtr(this));
+        p_ptr_znch = znchNamePtr(new znchName(isZNCH));
+        p_ptr_znch->select(isZNCH);
     }
     str = p_ptr_znch->getName();
-    if (str.isNull()) return name;
-    else return str;
+    if (str.isNull())
+        return name;
+    else
+        return str;
 }
 
 CORE_DNAMESPACE_E

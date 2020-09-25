@@ -24,6 +24,10 @@ public:
         Anm = 6,
         direct =7,
         paint = 8,
+        character = 9,
+        effects = 10,
+        scene = 11,
+        prop = 12,
     };
 
     void insert() override;

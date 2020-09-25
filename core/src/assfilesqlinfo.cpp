@@ -122,7 +122,7 @@ assInfoPtrList assFileSqlInfo::batchQuerySelect(sqlQuertPtr &query)
     assInfoPtrList list;
     while (query->next())
     {
-        assInfoPtr ass_;
+        assInfoPtr ass_(new assFileSqlInfo);
         ass_->idP = query->value(0).toInt();
         ass_->fileP = query->value(1).toString();
         ass_->fileSuffixesP = query->value(2).toString();
@@ -263,7 +263,7 @@ QFileInfo assFileSqlInfo::generatePath(const QString &programFolder, const QStri
 
 QString assFileSqlInfo::generateFileName(const QString &suffixes)
 {
-    QString name("%1_%2_%3");
+    QString name("%1%2%3");
 
     //首先格式化基本名称
     assTypePtr at_ = getAssType();
@@ -300,7 +300,7 @@ QString assFileSqlInfo::generateFileName(const QString &suffixes, const QString 
 
 fileClassPtr assFileSqlInfo::getFileClass()
 {
-    if (p_ptrW_fileClass != nullptr)
+    if (p_ptrW_fileClass)
     {
         return p_ptrW_fileClass;
     }
@@ -316,20 +316,15 @@ fileClassPtr assFileSqlInfo::getFileClass()
 
 void assFileSqlInfo::setFileClass(const fileClassPtrW &fileclass_)
 {
-    try
-    {
-        p_ptrW_fileClass = fileclass_;
-        __file_class__ = fileclass_.lock()->getIdP();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if (!fileclass_)
+        return;
+    p_ptrW_fileClass = fileclass_;
+    __file_class__ = fileclass_.lock()->getIdP();
 }
 
 fileTypePtr assFileSqlInfo::getFileType()
 {
-    if (p_ptrW_fileType != nullptr)
+    if (p_ptrW_fileType)
     {
         return p_ptrW_fileType;
     }
@@ -345,15 +340,11 @@ fileTypePtr assFileSqlInfo::getFileType()
 
 void assFileSqlInfo::setFileType(const fileTypePtrW &fileType_)
 {
-    try
-    {
-        p_ptrW_fileType = fileType_;
-        __file_type__ = fileType_.lock()->getIdP();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << std::endl;
-    }
+    if (!fileType_)
+        return;
+    p_ptrW_fileType = fileType_;
+    __file_type__ = fileType_.lock()->getIdP();
+
     setAssType(fileType_.lock()->getAssType());
 }
 
@@ -375,15 +366,11 @@ assTypePtr assFileSqlInfo::getAssType()
 
 void assFileSqlInfo::setAssType(const assTypePtrW &assType_)
 {
-    try
-    {
-        p_ptrW_assType = assType_;
-        __ass_class__ = assType_.lock()->getIdP();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if (!assType_)
+        return;
+    p_ptrW_assType = assType_;
+    __ass_class__ = assType_.lock()->getIdP();
+
     setFileClass(assType_.lock()->getFileClass());
 }
 

@@ -12,7 +12,7 @@
 #include "src/shotfilesqlinfo.h"
 
 #include <QDebug>
-
+#include <iostream>
 test_core::test_core()
 {
 }
@@ -47,7 +47,7 @@ void test_core::test_create_shotinfo()
     if (eplist.size() < 2)
     {
         doCore::episodesPtr eps(new doCore::episodes());
-        eps->setEpisdes(10);
+        eps->setEpisdes(11);
         eps->insert();
 
         doCore::shotPtr sh(new doCore::shot());
@@ -57,14 +57,14 @@ void test_core::test_create_shotinfo()
 
         doCore::fileClassPtr fc(new doCore::fileClass());
         fc->setFileclass(doCore::fileClass::e_fileclass::VFX);
-        fc->setEpisodes(eps.toWeakRef());
+
         fc->setShot(sh.toWeakRef());
         fc->insert();
 
         doCore::fileTypePtr ft(new doCore::fileType());
         ft->setFileType("test");
         ft->setFileClass(fc.toWeakRef());
-        ft->setShot(sh.toWeakRef());
+
         ft->insert();
 
         doCore::shotInfoPtr sf(new doCore::shotFileSqlInfo());
@@ -73,9 +73,7 @@ void test_core::test_create_shotinfo()
         list.append(QFileInfo("D:/tmp/etr.vdb"));
         sf->setFileList(list);
         sf->setVersionP(0);
-        sf->setEpisdes(eps.toWeakRef());
-        sf->setShot(sh.toWeakRef());
-        sf->setFileClass(fc.toWeakRef());
+        
         sf->setFileType(ft.toWeakRef());
         sf->insert();
     }
@@ -119,26 +117,26 @@ void test_core::test_create_assInfo()
 
     if (fc_.size() == 4)
     {
-        doCore::assTypePtr af_(new doCore::assType);
-        af_->setAssType("大小", true);
-        af_->insert();
+        // doCore::assTypePtr af_(new doCore::assType);
+        // af_->setFileClass(fc_[0]);
+        // af_->setAssType(QString::fromUtf8("大小"), af_);
+        // af_->insert();
 
-        doCore::fileTypePtr ft_(new doCore::fileType);
-        ft_->setFileType("ffff");
-        ft_->insert();
+        // doCore::fileTypePtr ft_(new doCore::fileType);
+        // ft_->setFileType("ffff");
+        // ft_->setAssType(af_);
+        // ft_->insert();
 
-        doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
-        doCore::QfileListPtr list;
-        sf_->setInfoP(QString("test"));
-        list.append(QFileInfo("D:/tmp/etr.vdb"));
-        sf_->setFileList(list);
-        sf_->setVersionP(0);
+        // doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
+        // doCore::QfileListPtr list;
+        // sf_->setInfoP(QString("test"));
+        // list.append(QFileInfo("D:/tmp/etr.vdb"));
+        // sf_->setFileList(list);
+        // sf_->setVersionP(1);
 
-        sf_->setFileClass(fc_[0]);
-        sf_->setAssType(af_);
-        sf_->setFileType(ft_);
+        // sf_->setFileType(ft_);
 
-        sf_->insert();
+        // sf_->insert();
     }
 }
 
@@ -152,7 +150,7 @@ void test_core::test_get_assInfo()
     }
     
     doCore::assTypePtr af_ = doCore::assType::getAll(list_fileClass[0])[0];
-    qDebug() << "asstype :" << af_->getAssType(true);
+    qDebug() << "asstype :" << af_->getAssType(af_);
     
     doCore::fileTypePtr ft_ = doCore::fileType::getAll(af_)[0];
     qDebug() << "filetype :" << ft_->getFileType();
