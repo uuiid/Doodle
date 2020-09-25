@@ -11,13 +11,13 @@ class CORE_EXPORT fileType :public coresqldata
 {
 public:
     fileType();
-    fileType(const qint64 & ID_);
+    void select(const qint64 & ID_);
 
     void insert() override;
     void updateSQL() override;
     void deleteSQL() override;
     //根据fileclass外键查询filetype
-    static fileTypePtrList getAll(const fileClassPtr & FT_);
+    static fileTypePtrList getAll(const fileClassPtr & fc_);
     //根据assType 外键查询
     static fileTypePtrList getAll(const assTypePtr  & AT_);
     //根据eps外键查询
@@ -25,9 +25,9 @@ public:
     //根据shot外键查询
     static fileTypePtrList getAll(const shotPtr     & SH_);
     
-    void setType(const QString &value);
+    void setFileType(const QString &value);
     //获得本身的字符串属性
-    QString getType() const;
+    QString getFileType() const;
     
     //设置和连接外键 fileclass
     void setFileClass(const fileClassPtrW & fileclass_);
@@ -40,7 +40,7 @@ public:
     assTypePtr getAssType();
 
     //设置和连接集数外键约束
-    void setEpisdes(const episodesPtrW &value);
+    void setEpisodes(const episodesPtrW &value);
     //获得集数实体外键引用
     episodesPtr getEpisdes();
 

@@ -3,6 +3,7 @@
 #include "asstype.h"
 #include "coreSet.h"
 #include "fileclass.h"
+#include "znchName.h"
 
 #include <QVariant>
 #include <QSqlError>
@@ -12,12 +13,15 @@ CORE_NAMESPACE_S
 
 assType::assType()
 {
-    name = "";
+    name = QString();
+
     __file_class__ = -1;
     p_tprw_fileClass = nullptr;
+
+    p_ptr_znch = nullptr;
 }
 
-assType::assType(const qint64 &ID_)
+void assType::select(const qint64 &ID_)
 {
     sql::SelectModel sel_;
     sel_.select("id", "file_name", "__file_class__");
@@ -27,16 +31,13 @@ assType::assType(const qint64 &ID_)
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
 
     if (!query->exec(QString::fromStdString(sel_.str())))
-        return;
+        throw std::runtime_error(query->lastError().text().toStdString());
     if (query->next())
     {
         idP = query->value(0).toInt();
         name = query->value(1).toString();
         __file_class__ = query->value(2).toInt();
-        return;
     }
-    //添加失败保护
-    __file_class__ = -1;
 }
 
 void assType::insert()
@@ -54,8 +55,10 @@ void assType::insert()
         if (!query->exec(QString::fromStdString(ins_.str())))
             throw std::runtime_error(query->lastError().text().toStdString());
         getInsertID(query);
+
         query->finish();
     }
+    p_ptr_znch->insert();
 }
 
 void assType::updateSQL()
@@ -78,7 +81,7 @@ void assType::deleteSQL()
 {
 }
 
-assTypePtrList assType::batchQuerySelect(sqlQuertPtr & query)
+assTypePtrList assType::batchQuerySelect(sqlQuertPtr &query)
 {
     assTypePtrList listassType;
     while (query->next())
@@ -103,16 +106,16 @@ assTypePtrList assType::getAll(const fileClassPtr &fc_)
 
     if (!query->exec(QString::fromStdString(sel_.str())))
         throw std::runtime_error(query->lastError().text().toStdString());
-    
+
     assTypePtrList listassType = batchQuerySelect(query);
     for (auto &x : listassType)
     {
-        x->p_tprw_fileClass = fc_.toWeakRef();
+        x->setFileClass(fc_);
     }
     return listassType;
 }
 
-fileClassPtr assType::getFile_class()
+fileClassPtr assType::getFileClass()
 {
     if (p_tprw_fileClass != nullptr)
     {
@@ -120,26 +123,48 @@ fileClassPtr assType::getFile_class()
     }
     else
     {
-        fileClassPtr p_ = fileClassPtr(new fileClass(__file_class__));
+        fileClassPtr p_ = fileClassPtr(new fileClass);
+        p_->select(__file_class__);
         this->p_tprw_fileClass = p_;
         return p_;
     }
 }
 
-void assType::setFile_class(const fileClassPtrW &value)
+void assType::setFileClass(const fileClassPtrW &value)
 {
     p_tprw_fileClass = value;
     __file_class__ = value.lock()->getIdP();
 }
 
-void assType::setName(const QString &value)
+void assType::setAssType(const QString &value)
 {
     name = value;
 }
 
-QString assType::getName() const
+void assType::setAssType(const QString &value, const bool isZNCH)
+{
+    if (p_ptr_znch)
+        p_ptr_znch = znchNamePtr(new znchName(assTypePtr(this)));
+
+    p_ptr_znch->setName(value, true);
+}
+
+QString assType::getAssType() const
 {
     return name;
+}
+
+QString assType::getAssType(const bool isZNCH)
+{
+    QString str;
+    if (p_ptr_znch)
+    {
+        p_ptr_znch = znchNamePtr(new znchName(assTypePtr(this)));
+        p_ptr_znch->select(assTypePtr(this));
+    }
+    str = p_ptr_znch->getName();
+    if (str.isNull()) return name;
+    else return str;
 }
 
 CORE_DNAMESPACE_E

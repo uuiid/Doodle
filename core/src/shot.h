@@ -23,7 +23,7 @@ public:
 
     shot();
     //使用id直接从数据库创建类
-    shot(const qint64 &ID_);
+    void select(const qint64 &ID_);
 
     //数据库语句发出
     void insert() override;
@@ -36,7 +36,7 @@ public:
     //设置episodes约束外键
     void setEpisdes(const episodesPtrW &value);
     //获得episodes 约束实体
-    episodesPtr getEpisdes();
+    episodesPtr getEpisodes();
 
     //设置shot自身信息
     void setShot(const qint64 &sh, const e_shotAB &ab = e_shotAB::_);

@@ -44,7 +44,7 @@ void test_core::test_create_shotinfo()
 {
     doCore::episodesPtrList eplist;
     eplist = doCore::episodes::getAll();
-    if (eplist.empty())
+    if (eplist.size() < 2)
     {
         doCore::episodesPtr eps(new doCore::episodes());
         eps->setEpisdes(10);
@@ -62,7 +62,7 @@ void test_core::test_create_shotinfo()
         fc->insert();
 
         doCore::fileTypePtr ft(new doCore::fileType());
-        ft->setType("test");
+        ft->setFileType("test");
         ft->setFileClass(fc.toWeakRef());
         ft->setShot(sh.toWeakRef());
         ft->insert();
@@ -75,7 +75,7 @@ void test_core::test_create_shotinfo()
         sf->setVersionP(0);
         sf->setEpisdes(eps.toWeakRef());
         sf->setShot(sh.toWeakRef());
-        sf->setFileclass(fc.toWeakRef());
+        sf->setFileClass(fc.toWeakRef());
         sf->setFileType(ft.toWeakRef());
         sf->insert();
     }
@@ -96,19 +96,18 @@ void test_core::test_get_shotinfo()
         doCore::fileClassPtr fc = doCore::fileClass::getAll(sh)[0];
         doCore::fileTypePtr ft = doCore::fileType::getAll(fc)[0];
         doCore::shotInfoPtr sf = doCore::shotFileSqlInfo::getAll(ft)[0];
-        
+
         qDebug() << "episodes: " << ep->getEpisdes_str();
         qDebug() << "shot:" << sh->getShot_str();
         qDebug() << "fileclass :" << fc->getFileclass_str();
-        qDebug() << "filetype :" << ft->getType();
+        qDebug() << "filetype :" << ft->getFileType();
         qDebug() << "shotinfo generatePath :" << sf->generatePath("test", ".mb").absoluteFilePath();
         qDebug() << "shotinfo path :" << sf->getFileList();
 
-        //防止共享指针提前删除导致访问冲突
         qDebug() << "episodes: " << ep->getEpisdes_str();
         qDebug() << "shot:" << sh->getShot_str();
         qDebug() << "fileclass :" << fc->getFileclass_str();
-        qDebug() << "filetype :" << ft->getType();
+        qDebug() << "filetype :" << ft->getFileType();
         qDebug() << "shotinfo generatePath :" << sf->generatePath("test", ".mb").filePath();
         qDebug() << "shotinfo path :" << sf->getFileList();
     }
@@ -116,10 +115,51 @@ void test_core::test_get_shotinfo()
 
 void test_core::test_create_assInfo()
 {
+    doCore::fileClassPtrList fc_ = doCore::fileClass::getAll();
+
+    if (fc_.size() == 4)
+    {
+        doCore::assTypePtr af_(new doCore::assType);
+        af_->setAssType("大小", true);
+        af_->insert();
+
+        doCore::fileTypePtr ft_(new doCore::fileType);
+        ft_->setFileType("ffff");
+        ft_->insert();
+
+        doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
+        doCore::QfileListPtr list;
+        sf_->setInfoP(QString("test"));
+        list.append(QFileInfo("D:/tmp/etr.vdb"));
+        sf_->setFileList(list);
+        sf_->setVersionP(0);
+
+        sf_->setFileClass(fc_[0]);
+        sf_->setAssType(af_);
+        sf_->setFileType(ft_);
+
+        sf_->insert();
+    }
 }
 
 void test_core::test_get_assInfo()
 {
     doCore::fileClassPtrList list_fileClass;
     list_fileClass = doCore::fileClass::getAll();
+    for (auto &&x : list_fileClass)
+    {
+        qDebug() << "fileclass :" << x->getFileclass_str();
+    }
+    
+    doCore::assTypePtr af_ = doCore::assType::getAll(list_fileClass[0])[0];
+    qDebug() << "asstype :" << af_->getAssType(true);
+    
+    doCore::fileTypePtr ft_ = doCore::fileType::getAll(af_)[0];
+    qDebug() << "filetype :" << ft_->getFileType();
+    
+    doCore::assInfoPtr ai_ = doCore::assFileSqlInfo::getAll(ft_)[0];
+    qDebug() << "assinfo path :" << ai_->generatePath("test",".mb").filePath();
+    
+
+
 }

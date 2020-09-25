@@ -11,7 +11,8 @@
 #include <QVariant>
 #include <QDebug>
 #include <QSqlError>
-//#include <QxOrm_Impl.h>
+
+#include <iostream>
 
 CORE_NAMESPACE_S
 
@@ -21,9 +22,14 @@ shotFileSqlInfo::shotFileSqlInfo()
     __shot__ = -1;
     __file_class__ = -1;
     __file_type__ = -1;
+
+    p_ptrw_eps = nullptr;
+    p_ptrw_shot = nullptr;
+    p_ptrw_fileClass = nullptr;
+    p_ptrw_fileType = nullptr;
 }
 
-shotFileSqlInfo::shotFileSqlInfo(const qint64 &ID_)
+void shotFileSqlInfo::select(const qint64 &ID_)
 {
     sql::SelectModel sel_;
     sel_.select("id", "file", "fileSuffixes", "user", "version",
@@ -35,7 +41,7 @@ shotFileSqlInfo::shotFileSqlInfo(const qint64 &ID_)
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     if (!query->exec(QString::fromStdString(sel_.str())))
-        return;
+        throw std::runtime_error(query->lastError().text().toStdString());
     if (query->next())
     {
         idP = query->value(0).toInt();
@@ -49,25 +55,16 @@ shotFileSqlInfo::shotFileSqlInfo(const qint64 &ID_)
 
         if (!query->value(8).isNull())
             __episodes__ = query->value(8).toInt();
-        else
-            __episodes__ = -1;
 
         if (!query->value(9).isNull())
             __shot__ = query->value(9).toInt();
-        else
-            __shot__ = -1;
+
         if (!query->value(10).isNull())
             __file_class__ = query->value(10).toInt();
-        else
-            __file_class__ = -1;
+
         if (!query->value(11).isNull())
             __file_type__ = query->value(11).toInt();
-        else
-            __file_type__ = -1;
-        return;
     }
-    //失败保护
-    idP = -1;
 }
 
 void shotFileSqlInfo::insert()
@@ -154,23 +151,15 @@ shotInfoPtrList shotFileSqlInfo::batchQuerySelect(sqlQuertPtr &query)
 
         if (!query->value(8).isNull())
             ptr->__episodes__ = query->value(8).toInt();
-        else
-            ptr->__episodes__ = -1;
 
         if (!query->value(9).isNull())
             ptr->__shot__ = query->value(9).toInt();
-        else
-            ptr->__shot__ = -1;
 
         if (!query->value(10).isNull())
             ptr->__file_class__ = query->value(10).toInt();
-        else
-            ptr->__file_class__ = -1;
 
         if (!query->value(11).isNull())
             ptr->__file_type__ = query->value(11).toInt();
-        else
-            ptr->__file_type__ = -1;
 
         listShot.append(ptr);
     }
@@ -194,7 +183,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr &EP_)
     shotInfoPtrList listInfo = batchQuerySelect(query);
     for (auto &x : listInfo)
     {
-        x->p_ptrw_eps = EP_.toWeakRef();
+        x->setEpisdes(EP_);
     }
     return listInfo;
 }
@@ -216,7 +205,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr &sh_)
     shotInfoPtrList listInfo = batchQuerySelect(query);
     for (auto &x : listInfo)
     {
-        x->p_ptrw_shot = sh_.toWeakRef();
+        x->setShot(sh_);
     }
     return listInfo;
 }
@@ -238,7 +227,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const fileClassPtr &fc_)
     shotInfoPtrList listInfo = batchQuerySelect(query);
     for (auto &x : listInfo)
     {
-        x->p_ptrw_fileClass = fc_.toWeakRef();
+        x->setFileClass(fc_);
     }
     return listInfo;
 }
@@ -260,14 +249,14 @@ shotInfoPtrList shotFileSqlInfo::getAll(const fileTypePtr &ft_)
     shotInfoPtrList listInfo = batchQuerySelect(query);
     for (auto &x : listInfo)
     {
-        x->p_ptrw_fileType = ft_.toWeakRef();
+        x->setFileType(ft_);
     }
     return listInfo;
 }
 
-QFileInfo shotFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes)
+QFileInfo shotFileSqlInfo::generatePath(const QString &programFolder)
 {
-    QString str("%1/%2/%3/%4/%5/%6/%7");
+    QString str("%1/%2/%3/%4/%5/%6");
     coreSet &set = coreSet::getCoreSet();
     //第一次格式化添加根路径
     str = str.arg(set.getShotRoot().absolutePath());
@@ -298,12 +287,29 @@ QFileInfo shotFileSqlInfo::generatePath(const QString &programFolder, const QStr
     //第六次格式化添加类别文件夹
     fileTypePtr ft_ = getFileType();
     if (ft_ != nullptr)
-        str = str.arg(ft_->getType());
+        str = str.arg(ft_->getFileType());
     else
         str = str.arg(QString());
 
-    //第七次添加文件夹名称
+    return str;
+}
+
+QFileInfo shotFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes)
+{
+    QString str("%1/%2");
+    str = str.arg(generatePath(programFolder).filePath());
+
     str = str.arg(generateFileName(suffixes));
+
+    return str;
+}
+
+QFileInfo shotFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix)
+{
+    QString str("%1/%2");
+    str = str.arg(generatePath(programFolder).filePath());
+
+    str = str.arg(generateFileName(suffixes, prefix));
 
     return str;
 }
@@ -336,7 +342,7 @@ QString shotFileSqlInfo::generateFileName(const QString &suffixes)
     //第四次格式化添加 fileType
     fileTypePtr ft_ = getFileType();
     if (ft_ != nullptr)
-        name = name.arg(ft_->getType());
+        name = name.arg(ft_->getFileType());
     else
         name = name.arg(QString());
 
@@ -344,6 +350,14 @@ QString shotFileSqlInfo::generateFileName(const QString &suffixes)
     name = name.arg(coreSet::getCoreSet().getUser_en());
     name = name.arg(suffixes);
 
+    return name;
+}
+
+QString shotFileSqlInfo::generateFileName(const QString &suffixes, const QString &prefix)
+{
+    QString name("%1_%2");
+    name = name.arg(prefix);
+    name = name.arg(generateFileName(suffixes));
     return name;
 }
 
@@ -355,7 +369,8 @@ episodesPtr shotFileSqlInfo::getEpisdes()
     }
     else if (__episodes__ >= 0)
     {
-        episodesPtr p_ = episodesPtr(new episodes(__episodes__));
+        episodesPtr p_ = episodesPtr(new episodes);
+        p_->select(__episodes__);
         this->setEpisdes(p_);
         return p_;
     }
@@ -364,8 +379,15 @@ episodesPtr shotFileSqlInfo::getEpisdes()
 
 void shotFileSqlInfo::setEpisdes(const episodesPtrW &eps_)
 {
-    p_ptrw_eps = eps_;
-    __episodes__ = eps_.lock()->getIdP();
+    try
+    {
+        p_ptrw_eps = eps_;
+        __episodes__ = eps_.lock()->getIdP();
+    }
+    catch (const std::bad_typeid &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
 }
 
 shotPtr shotFileSqlInfo::getShot()
@@ -376,7 +398,8 @@ shotPtr shotFileSqlInfo::getShot()
     }
     else if (__shot__ >= 0)
     {
-        shotPtr p_ = shotPtr(new shot(__shot__));
+        shotPtr p_ = shotPtr(new shot);
+        p_->select(__shot__);
         p_ptrw_shot = p_.toWeakRef();
         return p_;
     }
@@ -385,8 +408,16 @@ shotPtr shotFileSqlInfo::getShot()
 
 void shotFileSqlInfo::setShot(const shotPtrW &shot_)
 {
-    p_ptrw_shot = shot_;
-    __shot__ = shot_.lock()->getIdP();
+    try
+    {
+        p_ptrw_shot = shot_;
+        __shot__ = shot_.lock()->getIdP();
+    }
+    catch (const std::bad_typeid &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    setEpisdes(shot_.lock()->getEpisodes());
 }
 
 fileClassPtr shotFileSqlInfo::getFileclass()
@@ -395,17 +426,26 @@ fileClassPtr shotFileSqlInfo::getFileclass()
         return p_ptrw_fileClass;
     else if (__file_class__ >= 0)
     {
-        fileClassPtr p_ = fileClassPtr(new fileClass(__file_class__));
+        fileClassPtr p_ = fileClassPtr(new fileClass);
+        p_->select(__file_class__);
         p_ptrw_fileClass = p_;
         return p_;
     }
     return nullptr;
 }
 
-void shotFileSqlInfo::setFileclass(const fileClassPtrW &value)
+void shotFileSqlInfo::setFileClass(const fileClassPtrW &value)
 {
-    __file_class__ = value.lock()->getIdP();
-    p_ptrw_fileClass = value;
+    try
+    {
+        __file_class__ = value.lock()->getIdP();
+        p_ptrw_fileClass = value;
+    }
+    catch (const std::bad_typeid &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    setShot(value.lock()->getShot());
 }
 
 fileTypePtr shotFileSqlInfo::getFileType()
@@ -414,7 +454,8 @@ fileTypePtr shotFileSqlInfo::getFileType()
         return p_ptrw_fileType;
     else if (__file_type__ >= 0)
     {
-        fileTypePtr p_ = fileTypePtr(new fileType(__file_type__));
+        fileTypePtr p_ = fileTypePtr(new fileType);
+        p_->select(__file_type__);
         p_ptrw_fileType = p_;
         return p_;
     }
@@ -423,7 +464,14 @@ fileTypePtr shotFileSqlInfo::getFileType()
 
 void shotFileSqlInfo::setFileType(const fileTypePtrW &fileType_)
 {
-    __file_type__ = fileType_.lock()->getIdP();
-    p_ptrw_fileType = fileType_;
+    try
+    {
+        __file_type__ = fileType_.lock()->getIdP();
+        p_ptrw_fileType = fileType_;
+    }
+    catch (const std::bad_typeid &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
 }
 CORE_DNAMESPACE_E

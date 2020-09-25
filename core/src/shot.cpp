@@ -10,6 +10,8 @@
 #include <QSqlError>
 #include <QVector>
 
+#include <iostream>
+
 CORE_NAMESPACE_S
 
 shot::shot()
@@ -18,9 +20,10 @@ shot::shot()
     p_qenm_shotab = e_shotAB::_;
 
     __episodes__ = -1;
+    p_ptr_eps = nullptr;
 }
 
-shot::shot(const qint64 &ID_)
+void shot::select(const qint64 &ID_)
 {
     sql::SelectModel sel_;
     sel_.select("id", "shot_", "shotab", "__episodes__");
@@ -30,7 +33,7 @@ shot::shot(const qint64 &ID_)
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
 
     if (!query->exec(QString::fromStdString(sel_.str())))
-        return;
+        throw std::runtime_error(query->lastError().text().toStdString());
     if (query->next())
     {
         idP = query->value(0).toInt();
@@ -40,32 +43,33 @@ shot::shot(const qint64 &ID_)
         {
             p_qenm_shotab = ab.value();
         }
-        else
-        {
-            p_qenm_shotab = e_shotAB::_;
-        }
+
         if (!query->value(2).isNull())
             __episodes__ = query->value(2).toInt();
-        else
-            __episodes__ = -1;
-        return;
     }
-    idP = -1;
 }
 
 void shot::setEpisdes(const episodesPtrW &value)
 {
-    __episodes__ = value.lock()->getIdP();
-    p_ptr_eps = value;
+    try
+    {
+        __episodes__ = value.lock()->getIdP();
+        p_ptr_eps = value;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
 }
 
-episodesPtr shot::getEpisdes()
+episodesPtr shot::getEpisodes()
 {
     if (p_ptr_eps)
         return p_ptr_eps.lock();
     else
     {
-        episodesPtr p_ = episodesPtr(new episodes(__episodes__));
+        episodesPtr p_ = episodesPtr(new episodes);
+        p_->select(__episodes__);
         p_ptr_eps = p_.toWeakRef();
         return p_;
     }
@@ -79,8 +83,8 @@ void shot::setShot(const qint64 &sh, const e_shotAB &ab)
 
 QString shot::getShot_str() const
 {
-    QString str ="sc%1%2";
-    str = str.arg(p_qint_shot_,4,10,QLatin1Char('0'));
+    QString str = "sc%1%2";
+    str = str.arg(p_qint_shot_, 4, 10, QLatin1Char('0'));
     switch (p_qenm_shotab)
     {
     case e_shotAB::_:
@@ -145,7 +149,7 @@ shotPtrList shot::getAll(const episodesPtr &EP_)
     //如果获得就抛出异常
     if (!query->exec(QString::fromStdString(sel_.str())))
         throw std::runtime_error(query->lastError().text().toStdString());
-    
+
     shotPtrList listShot;
     while (query->next())
     {
@@ -161,7 +165,7 @@ shotPtrList shot::getAll(const episodesPtr &EP_)
 
         //连接外键和实体约束
         sh_->__episodes__ = query->value(3).toInt();
-        sh_->p_ptr_eps = EP_.toWeakRef();
+        sh_->setEpisdes(EP_);
         listShot.append(sh_);
     }
 

@@ -14,7 +14,7 @@ episodes::episodes()
     p_int_episodes = -1;
 }
 
-episodes::episodes(const qint64 &ID_)
+void episodes::select(const qint64 &ID_)
 {
     sql::SelectModel sel_;
 

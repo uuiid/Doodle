@@ -9,7 +9,7 @@ class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo
 
 public:
     shotFileSqlInfo();
-    shotFileSqlInfo(const qint64 &ID_);
+    void select(const qint64 &ID_);
 
     void insert() override;
     void updateSQL() override;
@@ -20,8 +20,11 @@ public:
     static shotInfoPtrList getAll(const fileClassPtr &fc_);
     static shotInfoPtrList getAll(const fileTypePtr &ft_);
 
+    QFileInfo generatePath(const QString &programFolder);
     QFileInfo generatePath(const QString &programFolder, const QString &suffixes);
+    QFileInfo generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix);
     QString generateFileName(const QString &suffixes);
+    QString generateFileName(const QString &suffixes, const QString &prefix);
     //外键查询
     episodesPtr getEpisdes();
     void setEpisdes(const episodesPtrW &eps_);
@@ -30,7 +33,7 @@ public:
     void setShot(const shotPtrW &shot_);
 
     fileClassPtr getFileclass();
-    void setFileclass(const fileClassPtrW &value);
+    void setFileClass(const fileClassPtrW &value);
 
     fileTypePtr getFileType();
     void setFileType(const fileTypePtrW &fileType_);

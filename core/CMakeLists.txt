@@ -18,33 +18,35 @@ file(COPY ${PROJECT_SOURCE_DIR}/sql-builder/sql.h
     DESTINATION ${CMAKE_CURRENT_LIST_DIR}/src/sql_builder)
 
 set(HEADER_FILES
-    "core_global.h"
-    "src/sql_builder/sql.h"
-    "src/filesqlinfo.h"
-    "src/coresql.h"
-    "src/coreset.h"
-    "src/shotfilesqlinfo.h"
-    "src/assfilesqlinfo.h"
-    "src/episodes.h"
-    "src/shot.h"
-    "src/fileclass.h"
-    "src/filetype.h"
-    "src/asstype.h"
-    "src/coresqldata.h")
+    core_global.h
+    src/sql_builder/sql.h
+    src/filesqlinfo.h
+    src/coresql.h
+    src/coreset.h
+    src/shotfilesqlinfo.h
+    src/assfilesqlinfo.h
+    src/episodes.h
+    src/shot.h
+    src/fileclass.h
+    src/filetype.h
+    src/asstype.h
+    src/coresqldata.h
+    src/znchName.h)
 
 add_library(core SHARED
     ${HEADER_FILES}
-    "src/filesqlinfo.cpp"
-    "src/coresql.cpp"
-    "src/coreset.cpp"
-    "src/shotfilesqlinfo.cpp"
-    "src/assfilesqlinfo.cpp"
-    "src/episodes.cpp"
-    "src/shot.cpp"
-    "src/fileclass.cpp"
-    "src/filetype.cpp"
-    "src/asstype.cpp"
-    "src/coresqldata.cpp"
+    src/filesqlinfo.cpp
+    src/coresql.cpp
+    src/coreset.cpp
+    src/shotfilesqlinfo.cpp
+    src/assfilesqlinfo.cpp
+    src/episodes.cpp
+    src/shot.cpp
+    src/fileclass.cpp
+    src/filetype.cpp
+    src/asstype.cpp
+    src/coresqldata.cpp
+    src/znchName.cpp
   )
 
 target_link_libraries(core PUBLIC Qt5::Sql)

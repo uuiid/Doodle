@@ -34,6 +34,9 @@ class fileSqlInfo;
 
 class shotFileSqlInfo;
 class assFileSqlInfo;
+
+class znchName;
+
 //共享指针引用类
 typedef QSharedPointer<shot> shotPtr;
 typedef QSharedPointer<episodes> episodesPtr;
@@ -42,6 +45,8 @@ typedef QSharedPointer<fileType> fileTypePtr;
 typedef QSharedPointer<assType> assTypePtr;
 typedef QSharedPointer<shotFileSqlInfo> shotInfoPtr;
 typedef QSharedPointer<assFileSqlInfo> assInfoPtr;
+typedef QSharedPointer<znchName> znchNamePtr;
+
 //弱指针指针引用类
 typedef QWeakPointer<shot> shotPtrW;
 typedef QWeakPointer<episodes> episodesPtrW;
@@ -50,6 +55,7 @@ typedef QWeakPointer<fileType> fileTypePtrW;
 typedef QWeakPointer<assType> assTypePtrW;
 typedef QWeakPointer<shotFileSqlInfo> shotlInfoPtrW;
 typedef QWeakPointer<assFileSqlInfo> assInfoPtrW;
+typedef QWeakPointer<znchName> znchNamePtrW;
 
 //列表引用类
 typedef QVector<episodesPtr>  episodesPtrList;

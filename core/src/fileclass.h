@@ -12,7 +12,7 @@ class CORE_EXPORT fileClass :public coresqldata
 {
 public:
     fileClass();
-    fileClass(const qint64 & ID_);
+    void select(const qint64 & ID_);
 
     enum class e_fileclass {
         _ = 0,
@@ -51,8 +51,8 @@ private:
 private:
     e_fileclass p_fileclass;
 
-    episodesPtrW eps_ptrW;
-    shotPtrW shot_ptrW;
+    episodesPtrW p_ptrW_eps;
+    shotPtrW p_ptrW_shot;
     
     qint64 __shot__;
     qint64 __eps__;

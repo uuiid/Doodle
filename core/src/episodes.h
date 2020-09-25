@@ -9,7 +9,7 @@ class CORE_EXPORT episodes :public coresqldata
 {
 public:
     episodes();
-    episodes(const qint64 & ID_);
+    void select(const qint64 & ID_);
 
     void insert() override;
     void updateSQL() override;

@@ -12,15 +12,22 @@
 #include <QSqlError>
 #include <QVector>
 
+#include <iostream>
+
 CORE_NAMESPACE_S
 
 fileClass::fileClass()
 {
+    p_fileclass = e_fileclass::_;
+
     __shot__ = -1;
     __eps__ = -1;
+
+    p_ptrW_eps = nullptr;
+    p_ptrW_shot = nullptr;
 }
 
-fileClass::fileClass(const qint64 &ID_)
+void fileClass::select(const qint64 &ID_)
 {
     sql::SelectModel sel_;
     sel_.select("id", "file_class", "__shot__", "__episodes__");
@@ -29,7 +36,7 @@ fileClass::fileClass(const qint64 &ID_)
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     if (!query->exec(QString::fromStdString(sel_.str())))
-        return;
+        throw std::runtime_error(query->lastError().text().toStdString());
     if (query->next())
     {
         idP = query->value("id").toInt();
@@ -38,21 +45,13 @@ fileClass::fileClass(const qint64 &ID_)
         {
             p_fileclass = tmp_fc.value();
         }
-        else
-        {
-            p_fileclass = e_fileclass::_;
-        }
+
         if (!query->value("__shot__").isNull())
             __shot__ = query->value("__shot__").toInt();
-        else
-            __shot__ = -1;
+
         if (!query->value("__episodes__").isNull())
             __eps__ = query->value("__episodes__").toInt();
-        else
-            __eps__ = -1;
-        return;
     }
-    idP = -1;
 }
 
 void fileClass::insert()
@@ -110,13 +109,11 @@ fileClassPtrList fileClass::batchQuerySelect(sqlQuertPtr &query)
         {
             tmp_fileClass->p_fileclass = tmp_fc.value();
         }
-        else
-        {
-            tmp_fileClass->p_fileclass = e_fileclass::_;
-        }
+
         QVariant tmp_shot = query->value("__shot__");
         if (!tmp_shot.isNull())
             tmp_fileClass->__shot__ = tmp_shot.toInt();
+            
         QVariant tmp_eps = query->value("__episodes__");
         if (!tmp_eps.isNull())
             tmp_fileClass->__eps__ = tmp_eps.toInt();
@@ -162,7 +159,7 @@ fileClassPtrList fileClass::getAll(const episodesPtr &EP_)
     fileClassPtrList listFileClass = batchQuerySelect(query);
     for (auto &x : listFileClass)
     {
-        x->eps_ptrW = EP_.toWeakRef();
+        x->p_ptrW_eps = EP_.toWeakRef();
     }
     return listFileClass;
 }
@@ -183,7 +180,7 @@ fileClassPtrList fileClass::getAll(const shotPtr &SH_)
     fileClassPtrList listFileClass = batchQuerySelect(query);
     for (auto &x : listFileClass)
     {
-        x->shot_ptrW = SH_.toWeakRef();
+        x->p_ptrW_shot = SH_.toWeakRef();
     }
     return listFileClass;
 }
@@ -219,14 +216,15 @@ void fileClass::setFileclass(const QString &value)
 
 episodesPtr fileClass::getEpisodes()
 {
-    if (eps_ptrW != nullptr)
+    if (p_ptrW_eps != nullptr)
     {
-        return eps_ptrW;
+        return p_ptrW_eps;
     }
     else if (__eps__ > 0)
     {
-        episodesPtr p_ = episodesPtr(new episodes(__eps__));
-        eps_ptrW = p_;
+        episodesPtr p_ = episodesPtr(new episodes);
+        p_->select(__eps__);
+        p_ptrW_eps = p_;
         return p_;
     }
     else
@@ -237,20 +235,28 @@ episodesPtr fileClass::getEpisodes()
 
 void fileClass::setEpisodes(const episodesPtrW &value)
 {
-    eps_ptrW = value;
-    __eps__ = value.lock()->getIdP();
+    try
+    {
+        p_ptrW_eps = value;
+        __eps__ = value.lock()->getIdP();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
 }
 
 shotPtr fileClass::getShot()
 {
-    if (shot_ptrW != nullptr && shot_ptrW.isNull())
+    if (p_ptrW_shot != nullptr && p_ptrW_shot.isNull())
     {
-        return shot_ptrW;
+        return p_ptrW_shot;
     }
     else if (__shot__ > 0)
     {
-        shotPtr p_ = shotPtr(new shot(__shot__));
-        shot_ptrW = p_;
+        shotPtr p_ = shotPtr(new shot);
+        p_->select(__shot__);
+        p_ptrW_shot = p_;
         return p_;
     }
     else
@@ -261,8 +267,16 @@ shotPtr fileClass::getShot()
 
 void fileClass::setShot(const shotPtrW &value)
 {
-    shot_ptrW = value;
-    __shot__ = value.lock()->getIdP();
+    try
+    {
+        p_ptrW_shot = value;
+        __shot__ = value.lock()->getIdP();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    setEpisodes(value.lock()->getEpisodes());
 }
 
 CORE_DNAMESPACE_E

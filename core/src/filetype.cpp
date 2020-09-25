@@ -11,14 +11,18 @@
 #include <QSqlError>
 #include <QVector>
 
+#include <iostream>
+
 CORE_NAMESPACE_S
 
 fileType::fileType()
 {
-    p_Str_Type = "";
+    p_Str_Type = QString();
+
     p_fileClass = nullptr;
     p_assType = nullptr;
     p_episdes = nullptr;
+    p_shot = nullptr;
 
     __file_class__ = -1;
     __ass_class__ = -1;
@@ -26,7 +30,7 @@ fileType::fileType()
     __shot__ = -1;
 }
 
-fileType::fileType(const qint64 &ID_)
+void fileType::select(const qint64 &ID_)
 {
     sql::SelectModel sel_;
     sel_.select("id", "file_type",
@@ -45,27 +49,16 @@ fileType::fileType(const qint64 &ID_)
 
         if (!query->value(2).isNull())
             __file_class__ = query->value(2).toInt();
-        else
-            __file_class__ = -1;
 
         if (!query->value(3).isNull())
             __ass_class__ = query->value(3).toInt();
-        else
-            __ass_class__ = -1;
 
         if (!query->value(4).isNull())
             __episodes__ = query->value(4).toInt();
-        else
-            __episodes__ = -1;
 
         if (!query->value(5).isNull())
             __shot__ = query->value(5).toInt();
-        else
-            __shot__ = -1;
-
-        return;
     }
-    idP = -1;
 }
 
 void fileType::insert()
@@ -135,37 +128,29 @@ fileTypePtrList fileType::batchQuerySelect(sqlQuertPtr &query)
         p_->p_Str_Type = query->value(1).toString();
         if (!query->value(2).isNull())
             p_->__file_class__ = query->value(2).toInt();
-        else
-            p_->__file_class__ = -1;
 
         if (!query->value(3).isNull())
             p_->__ass_class__ = query->value(3).toInt();
-        else
-            p_->__ass_class__ = -1;
 
         if (!query->value(4).isNull())
             p_->__episodes__ = query->value(4).toInt();
-        else
-            p_->__episodes__ = -1;
 
         if (!query->value(5).isNull())
             p_->__shot__ = query->value(5).toInt();
-        else
-            p_->__shot__ = -1;
 
         list_.append(p_);
     }
     return list_;
 }
 
-fileTypePtrList fileType::getAll(const fileClassPtr &FT_)
+fileTypePtrList fileType::getAll(const fileClassPtr &fc_)
 {
     sql::SelectModel sel_;
     sel_.select("id", "file_type",
                 "__file_class__", "__ass_class__", "__episodes__", "__shot__");
 
     sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-    sel_.where(sql::column("__file_class__") == FT_->getIdP());
+    sel_.where(sql::column("__file_class__") == fc_->getIdP());
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     if (!query->exec(QString::fromStdString(sel_.str())))
@@ -177,7 +162,7 @@ fileTypePtrList fileType::getAll(const fileClassPtr &FT_)
 
     for (auto &x : listfileTypes)
     {
-        x->p_fileClass = FT_.toWeakRef();
+        x->setFileClass(fc_);
     }
     return listfileTypes;
 }
@@ -202,7 +187,7 @@ fileTypePtrList fileType::getAll(const assTypePtr &AT_)
 
     for (auto &x : listfileTypes)
     {
-        x->p_assType = AT_.toWeakRef();
+        x->setAssType(AT_);
     }
     return listfileTypes;
 }
@@ -227,7 +212,7 @@ fileTypePtrList fileType::getAll(const episodesPtr &EP_)
 
     for (auto &x : listfileTypes)
     {
-        x->p_episdes = EP_.toWeakRef();
+        x->setEpisodes(EP_);
     }
     return listfileTypes;
 }
@@ -252,25 +237,36 @@ fileTypePtrList fileType::getAll(const shotPtr &SH_)
 
     for (auto &x : listfileTypes)
     {
-        x->p_shot = SH_.toWeakRef();
+        x->setShot(SH_);
     }
     return listfileTypes;
 }
 
-void fileType::setType(const QString &value)
+void fileType::setFileType(const QString &value)
 {
     p_Str_Type = value;
 }
 
-QString fileType::getType() const
+QString fileType::getFileType() const
 {
     return p_Str_Type;
 }
 
 void fileType::setFileClass(const fileClassPtrW &value)
 {
-    __file_class__ = value.lock()->getIdP();
-    p_fileClass = value;
+    try
+    {
+        __file_class__ = value.lock()->getIdP();
+        p_fileClass = value;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    if (__file_class__ >= 0)
+    {
+        setShot(value.lock()->getShot());
+    }
 }
 
 fileClassPtr fileType::getFileclass()
@@ -279,7 +275,8 @@ fileClassPtr fileType::getFileclass()
         return p_fileClass;
     else if (__file_class__ > 0)
     {
-        fileClassPtr p_ = fileClassPtr(new fileClass(__file_class__));
+        fileClassPtr p_ = fileClassPtr(new fileClass);
+        p_->select(__file_class__);
         p_fileClass = p_;
         return p_;
     }
@@ -290,8 +287,16 @@ fileClassPtr fileType::getFileclass()
 }
 void fileType::setAssType(const assTypePtrW &assType_)
 {
-    __ass_class__ = assType_.lock()->getIdP();
-    p_assType = assType_;
+    try
+    {
+        __ass_class__ = assType_.lock()->getIdP();
+        p_assType = assType_;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    setFileClass(assType_.lock()->getFileClass());
 }
 
 assTypePtr fileType::getAssType()
@@ -300,7 +305,8 @@ assTypePtr fileType::getAssType()
         return p_assType;
     else if (__ass_class__ > 0)
     {
-        assTypePtr p_ = assTypePtr(new assType(__ass_class__));
+        assTypePtr p_ = assTypePtr(new assType);
+        p_->select(__ass_class__);
         p_assType = p_;
         return p_;
     }
@@ -310,10 +316,17 @@ assTypePtr fileType::getAssType()
     }
 }
 
-void fileType::setEpisdes(const episodesPtrW &value)
+void fileType::setEpisodes(const episodesPtrW &value)
 {
-    __episodes__ = value.lock()->getIdP();
-    p_episdes = value;
+    try
+    {
+        __episodes__ = value.lock()->getIdP();
+        p_episdes = value;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
 }
 
 episodesPtr fileType::getEpisdes()
@@ -324,7 +337,8 @@ episodesPtr fileType::getEpisdes()
     }
     else if (__episodes__ > 0)
     {
-        episodesPtr p_ = episodesPtr(new episodes(__episodes__));
+        episodesPtr p_ = episodesPtr(new episodes);
+        p_->select(__episodes__);
         p_episdes = p_;
         return p_;
     }
@@ -336,8 +350,16 @@ episodesPtr fileType::getEpisdes()
 
 void fileType::setShot(const shotPtrW &shot_)
 {
-    __shot__ = shot_.lock()->getIdP();
-    p_shot = shot_;
+    try
+    {
+        __shot__ = shot_.lock()->getIdP();
+        p_shot = shot_;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    setEpisodes(shot_.lock()->getEpisodes());
 }
 
 shotPtr fileType::getShot()
@@ -348,7 +370,8 @@ shotPtr fileType::getShot()
     }
     else if (__shot__ > 0)
     {
-        shotPtr p_ = shotPtr(new shot(__shot__));
+        shotPtr p_ = shotPtr(new shot);
+        p_->select(__shot__);
         p_shot = p_;
         return p_shot;
     }
