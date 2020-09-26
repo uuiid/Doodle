@@ -8,9 +8,9 @@
       "platform": "x64",
       "toolset": "host=x64"
     },
-    "toolchainFile": "${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+    "toolchainFile": "${env:VCPKG_MYROOT}/scripts/buildsystems/vcpkg.cmake",
     "environmentVariables": {
-      "CMAKE_PREFIX_PATH": "${env:QT_ROOT}/5.12.9/msvc2017_64",
+      "CMAKE_PREFIX_PATH": "${env:QT_MYROOT}/5.12.9/msvc2017_64",
       "VCPKG_TARGET_TRIPLET": "x64-windows"
     },
     "cmakeSettings": {
@@ -19,9 +19,9 @@
   },
   {
     "name": "MY__VisS_2017_ninja_-amd64-qt5.12.9",
-    "toolchainFile": "${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+    "toolchainFile": "${env:VCPKG_MYROOT}/scripts/buildsystems/vcpkg.cmake",
     "environmentVariables": {
-      "CMAKE_PREFIX_PATH": "${env:QT_ROOT}/5.12.9/msvc2017_64"
+      "CMAKE_PREFIX_PATH": "${env:QT_MYROOT}/5.12.9/msvc2017_64"
     }
   }
 ]

@@ -1,5 +1,4 @@
-﻿#include "test_core.h"
-#include "src/coreset.h"
+﻿#include "src/coreset.h"
 #include "src/filesqlinfo.h"
 
 #include "src/episodes.h"
@@ -11,36 +10,50 @@
 #include "src/assFileSqlInfo.h"
 #include "src/shotfilesqlinfo.h"
 
-#include <QDebug>
-#include <iostream>
-test_core::test_core()
-{
-}
+#include <gtest/gtest.h>
 
-void test_core::init()
+// #include <QTextCodec>
+
+#include <iostream>
+class CoreTest : public ::testing::Test
 {
+protected:
+    virtual void SetUp();
+    virtual void TearDown();
+
     doCore::coreSet &set = doCore::coreSet::getCoreSet();
+};
+
+void CoreTest::SetUp()
+{
     set.init();
     set.setProjectname("test_db");
     set.initdb();
 }
 
-void test_core::test_set_query()
+void CoreTest::TearDown()
 {
-    doCore::coreSet &set = doCore::coreSet::getCoreSet();
-    qDebug() << set.getCacheRoot().absolutePath();
+    
 }
 
-void test_core::test_set_synpath()
+TEST_F(CoreTest, tets_quert)
 {
-    doCore::coreSet &set = doCore::coreSet::getCoreSet();
+    std::cout << set.getCacheRoot().absolutePath().toStdString() << std::endl;
+    ;
+    RecordProperty("cacheRoot", set.getCacheRoot().absolutePath().toStdString());
+}
+
+TEST_F(CoreTest, set_synpath)
+{
     for (doCore::synPath_struct &p : set.getSynDir())
     {
-        qDebug() << "\n local -->" << p.local << "\n server-->" << p.server;
+        std::cout << "\n local -->" << p.local.toStdString()
+                  << "\n server-->" << p.server.toStdString() << std::endl;
+        ;
     }
 }
 
-void test_core::test_create_shotinfo()
+TEST_F(CoreTest, create_shotinfo)
 {
     doCore::episodesPtrList eplist;
     eplist = doCore::episodes::getAll();
@@ -73,17 +86,17 @@ void test_core::test_create_shotinfo()
         list.append(QFileInfo("D:/tmp/etr.vdb"));
         sf->setFileList(list);
         sf->setVersionP(0);
-        
+
         sf->setFileType(ft.toWeakRef());
         sf->insert();
     }
     else
     {
-        qDebug() << "is create ok, ";
+        std::cout << "is create ok, " << std::endl;
     }
 }
 
-void test_core::test_get_shotinfo()
+TEST_F(CoreTest, get_shotinf)
 {
     doCore::episodesPtrList eplist;
     eplist = doCore::episodes::getAll();
@@ -95,23 +108,19 @@ void test_core::test_get_shotinfo()
         doCore::fileTypePtr ft = doCore::fileType::getAll(fc)[0];
         doCore::shotInfoPtr sf = doCore::shotFileSqlInfo::getAll(ft)[0];
 
-        qDebug() << "episodes: " << ep->getEpisdes_str();
-        qDebug() << "shot:" << sh->getShot_str();
-        qDebug() << "fileclass :" << fc->getFileclass_str();
-        qDebug() << "filetype :" << ft->getFileType();
-        qDebug() << "shotinfo generatePath :" << sf->generatePath("test", ".mb").absoluteFilePath();
-        qDebug() << "shotinfo path :" << sf->getFileList();
-
-        qDebug() << "episodes: " << ep->getEpisdes_str();
-        qDebug() << "shot:" << sh->getShot_str();
-        qDebug() << "fileclass :" << fc->getFileclass_str();
-        qDebug() << "filetype :" << ft->getFileType();
-        qDebug() << "shotinfo generatePath :" << sf->generatePath("test", ".mb").filePath();
-        qDebug() << "shotinfo path :" << sf->getFileList();
+        std::cout << "episodes: " << ep->getEpisdes_str().toStdString() << std::endl;
+        std::cout << "shot:" << sh->getShot_str().toStdString() << std::endl;
+        std::cout << "fileclass :" << fc->getFileclass_str().toStdString() << std::endl;
+        std::cout << "filetype :" << ft->getFileType().toStdString() << std::endl;
+        std::cout << "shotinfo generatePath :" << sf->generatePath("test", ".mb").absoluteFilePath().toStdString() << std::endl;
+        for (auto &x : sf->getFileList())
+        {
+            std::cout << "shotinfo path :" << x.absoluteFilePath().toStdString() << std::endl;
+        }
     }
 }
 
-void test_core::test_create_assInfo()
+TEST_F(CoreTest, create_assInfo)
 {
     doCore::fileClassPtrList fc_ = doCore::fileClass::getAll();
 
@@ -140,24 +149,23 @@ void test_core::test_create_assInfo()
     }
 }
 
-void test_core::test_get_assInfo()
+TEST_F(CoreTest, get_assInf)
 {
     doCore::fileClassPtrList list_fileClass;
     list_fileClass = doCore::fileClass::getAll();
     for (auto &&x : list_fileClass)
     {
-        qDebug() << "fileclass :" << x->getFileclass_str();
+        std::cout << "fileclass :" << x->getFileclass_str().toStdString() << std::endl;
     }
-    
+
     doCore::assTypePtr af_ = doCore::assType::getAll(list_fileClass[0])[0];
-    qDebug() << "asstype :" << af_->getAssType(af_);
-    
+    std::cout << "asstype :" << af_->getAssType(af_).toLocal8Bit().toStdString() << std::endl;
+    // QTextCodec *code = QTextCodec::codecForName("GBK");
+    // std::cout << "asstype :" <<code->fromUnicode(af_->getAssType(af_)).toStdString() << std::endl;
+
     doCore::fileTypePtr ft_ = doCore::fileType::getAll(af_)[0];
-    qDebug() << "filetype :" << ft_->getFileType();
-    
+    std::cout << "filetype :" << ft_->getFileType().toStdString() << std::endl;
+
     doCore::assInfoPtr ai_ = doCore::assFileSqlInfo::getAll(ft_)[0];
-    qDebug() << "assinfo path :" << ai_->generatePath("test",".mb").filePath();
-    
-
-
+    std::cout << "assinfo path :" << ai_->generatePath("test", ".mb").filePath().toStdString() << std::endl;
 }

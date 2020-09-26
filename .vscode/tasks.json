@@ -1,12 +1,28 @@
 {
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
+    //${env:QT_MYROOT}/5.12.9/msvc2017_64/bin/windeployqt.exe 
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "echo",
+            "label": "run_winQT",
             "type": "shell",
-            "command": "${env:QT_MYROOT}/5.12.9/msvc2017_64/bin/windeployqt.exe ${workspaceFolder}/build/test/Debug/test_my.exe"
+            "command": "${workspaceFolder}/build/test/Debug/test_my.exe",
+            "problemMatcher": [],
+            "options": {
+                "env": {
+                    "PATH": "$PATH;${env:QT_MYROOT}/5.12.9/msvc2017_64;${env:QT_MYROOT}/5.12.9/msvc2017_64/bin;${env:QT_MYROOT}/5.12.9/msvc2017_64/plugins;${workspaceFolder}/build/core/Debug/;${workspaceFolder}/build/fileSyn/Debug/;${workspaceFolder}/build/ftp/Debug/;${workspaceFolder}/build/pinyin/Debug/;${workspaceFolder}/build/;${env:VCPKG_MYROOT}/vcpkg/installed/x64-windows/bin;${env:VCPKG_MYROOT}/vcpkg/installed/x64-windows/debug/bin;C:/Program Files/MySQL/MySQL Server 8.0/lib;${workspaceFolder}"
+                }
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "run-->windeployqt",
+            "type": "shell",
+            "command":"${env:QT_MYROOT}/5.12.9/msvc2017_64/bin/windeployqt.exe ${workspaceFolder}/build/test/Debug/test_my.exe",
         }
     ]
 }

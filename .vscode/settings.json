@@ -87,7 +87,18 @@
         "qfileinfo": "cpp",
         "qsqldatabase": "cpp",
         "xxatomic": "cpp",
-        "*.rh": "cpp"
+        "*.rh": "cpp",
+        "qtextcodec": "cpp"
     },
-    "qttools.injectNatvisFile": false
+    "qttools.injectNatvisFile": false,
+    "testMate.cpp.log.logSentry": "disable_3",
+    "cmake.configureSettings": {
+        "gtest_build_samples":"ON",
+    },
+    "testMate.cpp.test.advancedExecutables": [
+        {
+            "name":"${filename}",
+            "pattern":"${workspaceFolder}/build/test/Debug/test_my.exe",
+        }
+    ]
 }
