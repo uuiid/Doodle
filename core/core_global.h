@@ -17,11 +17,11 @@
 #define CORE_DNAMESPACE_E }
 
 
-typedef QSharedPointer<QSqlQuery> sqlQuertPtr;
-typedef QMap<QString,QString> mapStringPtr;
 
 
 CORE_NAMESPACE_S
+typedef QSharedPointer<QSqlQuery> sqlQuertPtr;
+typedef QMap<QString,QString> mapStringPtr;
 
 class shot;
 class episodes;

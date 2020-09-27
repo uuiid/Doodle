@@ -88,17 +88,24 @@
         "qsqldatabase": "cpp",
         "xxatomic": "cpp",
         "*.rh": "cpp",
-        "qtextcodec": "cpp"
+        "qtextcodec": "cpp",
+        "qvector": "cpp",
+        "qstorageinfo": "cpp",
+        "qtcore": "cpp",
+        "qtcoredepends": "cpp",
+        "qsqlquery": "cpp",
+        "qsharedpointer": "cpp",
+        "qurl": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",
     "cmake.configureSettings": {
-        "gtest_build_samples":"ON",
+        "gtest_build_samples": "ON",
     },
     "testMate.cpp.test.advancedExecutables": [
         {
-            "name":"${filename}",
-            "pattern":"${workspaceFolder}/build/test/Debug/test_my.exe",
+            "name": "test_my",
+            "pattern": "${workspaceFolder}/build/test/Debug/test_my.exe",
         }
     ]
 }

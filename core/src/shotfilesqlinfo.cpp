@@ -101,7 +101,6 @@ void shotFileSqlInfo::insert()
             throw std::runtime_error(query->lastError().text().toStdString());
         getInsertID(query);
 
-        qDebug() << query->lastError().text();
         query->finish();
     }
 }

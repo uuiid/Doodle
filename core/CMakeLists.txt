@@ -2,7 +2,11 @@
 find_package(Sqlpp11 REQUIRED)
 
 find_package(magic_enum CONFIG REQUIRED)
+#由于这个库只有一个文件,  所以直接复制过的了事
+file(COPY ${PROJECT_SOURCE_DIR}/sql-builder/sql.h
+    DESTINATION ${CMAKE_CURRENT_LIST_DIR}/src/sql_builder)
 
+#这个是拎一个ORM库  还没开始用预备着
 set(ORM_HEADER
     src/coreOrm/assclass_sqlOrm.h
     src/coreOrm/basefile_sqlOrm.h
@@ -14,10 +18,9 @@ set(ORM_HEADER
     src/coreOrm/shot_sqlOrm.h
     src/coreOrm/znch_sqlOrm.h
     )
-file(COPY ${PROJECT_SOURCE_DIR}/sql-builder/sql.h
-    DESTINATION ${CMAKE_CURRENT_LIST_DIR}/src/sql_builder)
 
-set(HEADER_FILES
+#这个是和MySQL交互的头文件
+set(CORE_SQL_HEADER 
     core_global.h
     src/sql_builder/sql.h
     src/filesqlinfo.h
@@ -31,10 +34,10 @@ set(HEADER_FILES
     src/filetype.h
     src/asstype.h
     src/coresqldata.h
-    src/znchName.h)
-
-add_library(core SHARED
-    ${HEADER_FILES}
+    src/znchName.h
+)
+#这个是和MySQL交互的实现文件
+set(CORE_SQL_SOURCE
     src/filesqlinfo.cpp
     src/coresql.cpp
     src/coreset.cpp
@@ -47,7 +50,39 @@ add_library(core SHARED
     src/asstype.cpp
     src/coresqldata.cpp
     src/znchName.cpp
-  )
+)
+
+#这个是和文件服务器交互的头文件
+set(CORE_ARCHIVE_HEADER
+    src/filearchive.h
+    src/fileArchiveOneFile.h
+    src/fileArchiveMultipleFile.h
+    src/mayaArchive.h
+    src/ueArchive.h
+    src/movieArchive.h
+    src/imageArchive.h
+    src/imageSequenArchive.h
+)   
+#这个是和文件服务器交互的实现文件
+set(CORE_ARCHIVE_SOURCE
+    src/filearchive.cpp
+    src/fileArchiveOneFile.cpp
+    src/fileArchiveMultipleFile.cpp
+    src/mayaArchive.cpp
+    src/ueArchive.cpp
+    src/movieArchive.cpp
+    src/imageArchive.cpp
+    src/imageSequenArchive.cpp
+)
+
+add_library(core SHARED
+    src/doException/doException.h
+    src/doException/doException.cpp
+    ${CORE_SQL_HEADER}
+    ${CORE_SQL_SOURCE}
+    ${CORE_ARCHIVE_HEADER}
+    ${CORE_ARCHIVE_SOURCE}
+)
 
 target_link_libraries(core PUBLIC Qt5::Sql)
 target_link_libraries(core PUBLIC Qt5::Core)

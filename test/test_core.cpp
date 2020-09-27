@@ -112,7 +112,7 @@ TEST_F(CoreTest, get_shotinf)
         std::cout << "shot:" << sh->getShot_str().toStdString() << std::endl;
         std::cout << "fileclass :" << fc->getFileclass_str().toStdString() << std::endl;
         std::cout << "filetype :" << ft->getFileType().toStdString() << std::endl;
-        std::cout << "shotinfo generatePath :" << sf->generatePath("test", ".mb").absoluteFilePath().toStdString() << std::endl;
+        std::cout << "shotinfo generatePath :" << sf->generatePath("test", ".mb").filePath().toStdString() << std::endl;
         for (auto &x : sf->getFileList())
         {
             std::cout << "shotinfo path :" << x.absoluteFilePath().toStdString() << std::endl;
@@ -126,26 +126,26 @@ TEST_F(CoreTest, create_assInfo)
 
     if (fc_.size() == 4)
     {
-        // doCore::assTypePtr af_(new doCore::assType);
-        // af_->setFileClass(fc_[0]);
-        // af_->setAssType(QString::fromUtf8("大小"), af_);
-        // af_->insert();
+        doCore::assTypePtr af_(new doCore::assType);
+        af_->setFileClass(fc_[0]);
+        af_->setAssType(QString::fromUtf8("大小"), af_);
+        af_->insert();
 
-        // doCore::fileTypePtr ft_(new doCore::fileType);
-        // ft_->setFileType("ffff");
-        // ft_->setAssType(af_);
-        // ft_->insert();
+        doCore::fileTypePtr ft_(new doCore::fileType);
+        ft_->setFileType("ffff");
+        ft_->setAssType(af_);
+        ft_->insert();
 
-        // doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
-        // doCore::QfileListPtr list;
-        // sf_->setInfoP(QString("test"));
-        // list.append(QFileInfo("D:/tmp/etr.vdb"));
-        // sf_->setFileList(list);
-        // sf_->setVersionP(1);
+        doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
+        doCore::QfileListPtr list;
+        sf_->setInfoP(QString("test"));
+        list.append(QFileInfo("D:/tmp/etr.vdb"));
+        sf_->setFileList(list);
+        sf_->setVersionP(1);
 
-        // sf_->setFileType(ft_);
+        sf_->setFileType(ft_);
 
-        // sf_->insert();
+        sf_->insert();
     }
 }
 
@@ -160,6 +160,7 @@ TEST_F(CoreTest, get_assInf)
 
     doCore::assTypePtr af_ = doCore::assType::getAll(list_fileClass[0])[0];
     std::cout << "asstype :" << af_->getAssType(af_).toLocal8Bit().toStdString() << std::endl;
+    RecordProperty("asstype", af_->getAssType(af_).toStdString());
     // QTextCodec *code = QTextCodec::codecForName("GBK");
     // std::cout << "asstype :" <<code->fromUnicode(af_->getAssType(af_)).toStdString() << std::endl;
 
