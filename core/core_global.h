@@ -5,7 +5,8 @@
 #include <QSqlQuery>
 #include <QSharedPointer>
 #include <QMap>
-
+#include <QFileInfo>
+#include <QVector>
 
 #if defined(CORE_LIBRARY)
 #  define CORE_EXPORT Q_DECL_EXPORT
@@ -20,6 +21,9 @@
 
 
 CORE_NAMESPACE_S
+//使用一些其他方便的引用类型
+typedef QVector<QFileInfo> QfileInfoVector;
+
 typedef QSharedPointer<QSqlQuery> sqlQuertPtr;
 typedef QMap<QString,QString> mapStringPtr;
 
@@ -67,5 +71,6 @@ typedef QVector<assTypePtr>   assTypePtrList;
 typedef QVector<shotInfoPtr> shotInfoPtrList;
 typedef QVector<assInfoPtr>  assInfoPtrList;
 
+typedef QSharedPointer<fileSqlInfo> fileSqlInfoPtr;
 
 CORE_DNAMESPACE_E

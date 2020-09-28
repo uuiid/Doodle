@@ -48,7 +48,7 @@ void coreSet::writeDoodleLocalSet()
     jsonobj.insert("synPath", synPath.absolutePath());
     jsonobj.insert("synEp", syneps);
     jsonobj.insert("projectname", projectname);
-    jsonobj.insert("FreeFileSync", freeFileSyn.path());
+    jsonobj.insert("FreeFileSync", freeFileSyn);
     QJsonDocument jsonDoc(jsonobj);
     QFile strFile(doc.absoluteFilePath(settingFileName));
     if (!strFile.open(QIODevice::WriteOnly))
@@ -59,8 +59,21 @@ void coreSet::writeDoodleLocalSet()
 
 coreSet::coreSet()
 {
-    cacheRoot = "C:/Doodle_cache";
     ipMysql = "192.168.10.213";
+    user = "user";
+    department = "VFX";
+    syneps = 1;
+    freeFileSyn = "C:\\PROGRA~1\\FREEFI~1\\FreeFileSync.exe";
+    projectname = "init_DB";
+    synPath = QString("D:/ue_prj");
+    synServer = "/03_Workflow/Assets";
+
+    shotRoot = QString("/03_Workflow/Shots");
+    assRoot = QString("/03_Workflow/Assets");
+    prjectRoot = QString("W:/");
+
+    cacheRoot = "C:/Doodle_cache";
+    doc = QString("C:/Doodle_cache");
 }
 
 void coreSet::getSetting()
@@ -154,6 +167,16 @@ void coreSet::setIpMysql(const QString &value)
     ipMysql = value;
 }
 
+QString coreSet::getIpFtp() const
+{
+    return ipFTP;
+}
+
+void coreSet::setIpFtp(const QString &value)
+{
+    ipFTP = value;
+}
+
 QDir coreSet::getDoc() const
 {
     return doc;
@@ -204,12 +227,12 @@ void coreSet::setProjectname(const QString &value)
     projectname = value;
 }
 
-QFileInfo coreSet::getFreeFileSyn() const
+QString coreSet::getFreeFileSyn() const
 {
     return freeFileSyn;
 }
 
-void coreSet::setFreeFileSyn(const QFileInfo &value)
+void coreSet::setFreeFileSyn(const QString &value)
 {
     freeFileSyn = value;
 }
@@ -234,12 +257,17 @@ void coreSet::getServerSetting()
     for (int i = 0; i < 5; i++)
     {
         query->next();
-        mapSet.insert(query->value(0).toString(), query->value(1).toString());
+        if (!query->value(0).isNull() && !query->value(1).isNull())
+            mapSet.insert(query->value(0).toString(), query->value(1).toString());
     }
     shotRoot = mapSet.value("shotRoot");
     assRoot = mapSet.value("assetsRoot");
     synServer = mapSet.value("synSever");
     prjectRoot = mapSet.value("project");
+    if (!mapSet.value("IP_FTP").isNull())
+        ipFTP = mapSet["IP_FTP"];
+    else
+        ipFTP = ipMysql;
 }
 
 synPathListPtr coreSet::getSynDir()

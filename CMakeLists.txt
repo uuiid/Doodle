@@ -28,7 +28,7 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 #启用测试
 set(CMAKE_INSTALL_PREFIX "F:/Source/qt_test/install")
 configure_file(DoodleConfig.h.in ${CMAKE_CURRENT_LIST_DIR}/DoodleConfig.h)
-find_package(Qt5 COMPONENTS Core Widgets Test LinguistTools REQUIRED)
+find_package(Qt5 CONFIG COMPONENTS Core Widgets Test LinguistTools REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem date_time)
 find_package(CURL REQUIRED)
 #include_directories(${CURL_INCLUDE_DIRS})
@@ -41,33 +41,34 @@ add_subdirectory(ftp)
 add_subdirectory(fileSyn)
 add_subdirectory(pinyin)
 add_subdirectory(core)
+add_subdirectory(doodle_GUI)
 
-set(TS_FILES test_cmake_zh_CN.ts)
+# set(TS_FILES test_cmake_zh_CN.ts)
 
-if(ANDROID)
-add_library(Doodle SHARED
-main.cpp
-mainwindow.cpp
-mainwindow.h
-mainwindow.ui
-${TS_FILES}
-)
-else()
-add_executable(Doodle
-main.cpp
-mainwindow.cpp
-mainwindow.h
-mainwindow.ui
-${TS_FILES}
-)
-endif()
+# if(ANDROID)
+# add_library(Doodle SHARED
+# main.cpp
+# mainwindow.cpp
+# mainwindow.h
+# mainwindow.ui
+# ${TS_FILES}
+# )
+# else()
+# add_executable(Doodle
+# main.cpp
+# mainwindow.cpp
+# mainwindow.h
+# mainwindow.ui
+# ${TS_FILES}
+# )
+# endif()
 
-target_link_libraries(Doodle PRIVATE Qt5::Widgets)
+# target_link_libraries(Doodle PRIVATE Qt5::Widgets)
 
-qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-install( TARGETS Doodle
-RUNTIME DESTINATION Doodle
-BUNDLE  DESTINATION Doodle)
+# qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+# install( TARGETS Doodle
+# RUNTIME DESTINATION Doodle
+# BUNDLE  DESTINATION Doodle)
 
 #添加测试
 find_package(GTest CONFIG REQUIRED)

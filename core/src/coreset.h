@@ -40,7 +40,7 @@ class CORE_EXPORT coreSet :public QObject
     Q_OBJECT
 public:
     static coreSet& getCoreSet();
-    coreSet & operator =(const coreSet& s) =delete ;
+    coreSet & operator =(const coreSet& s) = delete ;
     coreSet(const coreSet& s) = delete ;
 
     //初始化函数
@@ -49,9 +49,12 @@ public:
     //获得同步路径
     synPathListPtr getSynDir();
 
-    //ip设置
+    //MySQL ip设置
     QString getIpMysql() const;
     void setIpMysql(const QString &value);
+    //FTP ip
+    QString getIpFtp() const;
+    void setIpFtp(const QString &value);
     //user设置
     QString getUser() const;
     QString getUser_en() const;
@@ -63,8 +66,8 @@ public:
     int getSyneps() const;
     void setSyneps(int value);
     //获得freesyn同步软件设置
-    QFileInfo getFreeFileSyn() const;
-    void setFreeFileSyn(const QFileInfo &value);
+    QString getFreeFileSyn() const;
+    void setFreeFileSyn(const QString &value);
     //项目名称设置
     QString getProjectname() const;
     void setProjectname(const QString &value);
@@ -101,11 +104,19 @@ private:
     static QString toIpPath(const QString &path);
 private:
     const static QString settingFileName;
+    //MySQL IP地址
     QString ipMysql;
+    //FTP IP地址
+    QString ipFTP;
+    //用户名称
     QString user;
+    //部门
     QString department;
+    //同步集数
     int syneps;
-    QFileInfo freeFileSyn;
+    //同步文件的文件运行程序
+    QString freeFileSyn;
+    //项目名称
     QString projectname;
 
 private:
@@ -113,10 +124,10 @@ private:
     QFileInfo synPath;
     QDir synServer;
 
-    //只读属性
-    QStringList ProgramFolder;
-    QStringList assTypeFolder;
-    QStringList Amnnnll;
+    //不知道什么属性
+    // QStringList ProgramFolder;
+    // QStringList assTypeFolder;
+    // QStringList Amnnnll;
 
     QDir shotRoot;
     QDir assRoot;

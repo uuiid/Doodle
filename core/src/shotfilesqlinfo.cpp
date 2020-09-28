@@ -253,7 +253,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const fileTypePtr &ft_)
     return listInfo;
 }
 
-QFileInfo shotFileSqlInfo::generatePath(const QString &programFolder)
+QString shotFileSqlInfo::generatePath(const QString &programFolder)
 {
     QString str("%1/%2/%3/%4/%5/%6");
     coreSet &set = coreSet::getCoreSet();
@@ -290,23 +290,23 @@ QFileInfo shotFileSqlInfo::generatePath(const QString &programFolder)
     else
         str = str.arg(QString());
 
-    return str;
+    return formatPath(str);
 }
 
-QFileInfo shotFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes)
+QString shotFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes)
 {
     QString str("%1/%2");
-    str = str.arg(generatePath(programFolder).filePath());
+    str = str.arg(generatePath(programFolder));
 
     str = str.arg(generateFileName(suffixes));
 
     return str;
 }
 
-QFileInfo shotFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix)
+QString shotFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix)
 {
     QString str("%1/%2");
-    str = str.arg(generatePath(programFolder).filePath());
+    str = str.arg(generatePath(programFolder));
 
     str = str.arg(generateFileName(suffixes, prefix));
 
@@ -316,7 +316,7 @@ QFileInfo shotFileSqlInfo::generatePath(const QString &programFolder, const QStr
 QString shotFileSqlInfo::generateFileName(const QString &suffixes)
 {
 
-    QString name("shot_%1_%2_%3_%4_v%5_%6_%7");
+    QString name("shot_%1_%2_%3_%4_v%5_%6.%7");
     //第一次 格式化添加 集数
     episodesPtr ep_ = getEpisdes();
     if (ep_ != nullptr)

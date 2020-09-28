@@ -91,12 +91,12 @@ QString convert::toEnOne(const QString &conStr)
     query->prepare(sql.arg(conStr));
     if (!query->exec())
         throw std::runtime_error(QString("not quert %1").arg(conStr).toStdString());
-    QString enstr = "";
+    QString enstr("");
     if (query->next())
     {
         enstr = query->value(0).toString();
     }
-    return enstr;
+    return enstr.left(enstr.size() -1 );
 }
 
 DNAMESPACE_E

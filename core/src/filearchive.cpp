@@ -1,25 +1,30 @@
 #include "filearchive.h"
-#include <QUrl>
+#include <QFileInfo>
+#include <QVector>
 
 CORE_NAMESPACE_S
-filearchive::filearchive()
-{
-}
 
-filearchive::~filearchive()
+void fileArchive::update(const QFileInfo &path)
 {
-}
-
-void filearchive::update(const QUrl &path)
-{
-    QUrl path2 = path;
-    if (!isInCache(path))
+    p_soureFile.clear();
+    p_soureFile.append(path);
+    _generateFilePath();
+    if (!isInCache())
     {
-        path2 = copyToCache(path);
+        copyToCache();
     }
+    _updata();
+    insertArchive();
+}
 
-    insterArchive();
-    _updata(path2);
+void fileArchive::update(const QfileInfoVector & filelist) 
+{
+    if(filelist.size() == 1) update(filelist[0]);
+}
+
+QfileInfoVector fileArchive::down(const QFileInfo &path) 
+{
+    return QfileInfoVector();
 }
 
 CORE_DNAMESPACE_E

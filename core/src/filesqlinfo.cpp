@@ -25,9 +25,9 @@ fileSqlInfo::fileSqlInfo()
     fileStateP = "";
 }
 
-QfileListPtr fileSqlInfo::getFileList() const
+QfileInfoVector fileSqlInfo::getFileList() const
 {
-    QfileListPtr list_;
+    QfileInfoVector list_;
     QJsonDocument jsondoc = QJsonDocument::fromJson(filepathP.toUtf8());
     if(jsondoc.isNull()){
         list_.append(QFileInfo(filepathP));
@@ -39,7 +39,7 @@ QfileListPtr fileSqlInfo::getFileList() const
     return list_;
 }
 
-void fileSqlInfo::setFileList(const QfileListPtr& filelist)
+void fileSqlInfo::setFileList(const QfileInfoVector& filelist)
 {
     if(filelist.size() == 0){throw std::runtime_error("filelist not value");}
     QJsonArray jsonList;
@@ -82,6 +82,10 @@ void fileSqlInfo::setFileStateP(const QString &value)
     fileStateP = value;
 }
 
+QString fileSqlInfo::formatPath(const QString &value) const
+{
+    return QFileInfo(value).filePath();
+}
 
 
 

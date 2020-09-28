@@ -2,7 +2,7 @@
 
 
 #include "ftp_global.h"
-#include "ftpsession.h"
+
 #include <QObject>
 #include <QSharedPointer>
 #include <QFile>

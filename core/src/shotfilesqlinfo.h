@@ -20,11 +20,11 @@ public:
     static shotInfoPtrList getAll(const fileClassPtr &fc_);
     static shotInfoPtrList getAll(const fileTypePtr &ft_);
 
-    QFileInfo generatePath(const QString &programFolder);
-    QFileInfo generatePath(const QString &programFolder, const QString &suffixes);
-    QFileInfo generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix);
-    QString generateFileName(const QString &suffixes);
-    QString generateFileName(const QString &suffixes, const QString &prefix);
+    QString generatePath(const QString &programFolder) override;
+    QString generatePath(const QString &programFolder, const QString &suffixes) override;
+    QString generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix) override;
+    QString generateFileName(const QString &suffixes) override;
+    QString generateFileName(const QString &suffixes, const QString &prefix) override;
     //外键查询
     episodesPtr getEpisdes();
     void setEpisdes(const episodesPtrW &eps_);

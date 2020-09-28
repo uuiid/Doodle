@@ -211,7 +211,7 @@ assInfoPtrList assFileSqlInfo::getAll(const assTypePtr &AT_)
     }
     return list;
 }
-QFileInfo assFileSqlInfo::generatePath(const QString &programFolder)
+QString assFileSqlInfo::generatePath(const QString &programFolder)
 {
     QString path("%1/%2/%3/%4/%5");
 
@@ -242,28 +242,28 @@ QFileInfo assFileSqlInfo::generatePath(const QString &programFolder)
     else
         path = path.arg(QString());
 
-    return path;
+    return formatPath(path);
 }
 
-QFileInfo assFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes)
+QString assFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes)
 {
     QString path("%1/%2");
-    path = path.arg(generatePath(programFolder).filePath());
+    path = path.arg(generatePath(programFolder));
     path = path.arg(generateFileName(suffixes));
     return path;
 }
 
-QFileInfo assFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix)
+QString assFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix)
 {
     QString path("%1/%2");
-    path = path.arg(generatePath(programFolder).filePath());
+    path = path.arg(generatePath(programFolder));
     path = path.arg(generateFileName(suffixes, prefix));
     return path;
 }
 
 QString assFileSqlInfo::generateFileName(const QString &suffixes)
 {
-    QString name("%1%2%3");
+    QString name("%1%2.%3");
 
     //首先格式化基本名称
     assTypePtr at_ = getAssType();

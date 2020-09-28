@@ -8,18 +8,15 @@
 #include <QSharedPointer>
 #include <QWeakPointer>
 
-
 CORE_NAMESPACE_S
 
-typedef QVector<QFileInfo> QfileListPtr;
-
-class CORE_EXPORT fileSqlInfo :public coresqldata
+class CORE_EXPORT fileSqlInfo : public coresqldata
 {
 public:
     //属性设置和查询
     fileSqlInfo();
-    QfileListPtr getFileList() const;
-    virtual void setFileList(const QfileListPtr &filelist);
+    QfileInfoVector getFileList() const;
+    virtual void setFileList(const QfileInfoVector &filelist);
 
     int getVersionP() const;
     void setVersionP(const int &value);
@@ -30,6 +27,11 @@ public:
     QString getFileStateP() const;
     void setFileStateP(const QString &value);
 
+    virtual QString generatePath(const QString &programFodler) = 0;
+    virtual QString generatePath(const QString &programFolder, const QString &suffixes) = 0;
+    virtual QString generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix) = 0;
+    virtual QString generateFileName(const QString &suffixes) = 0;
+    virtual QString generateFileName(const QString &suffixes, const QString &prefix) = 0;
 
 protected:
     //属性包装
@@ -40,8 +42,9 @@ protected:
     QString filepathP;
     QString infoP;
     QString fileStateP;
+
+protected:
+    QString formatPath(const QString &value) const;
 };
 
-
 CORE_DNAMESPACE_E
-

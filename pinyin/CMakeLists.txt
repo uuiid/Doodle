@@ -1,4 +1,4 @@
-find_package(Qt5 COMPONENTS Core Sql REQUIRED)
+find_package(Qt5 CONFIG COMPONENTS Core Sql REQUIRED)
 
 set(HEADER_FILES
     "src/convert.h"

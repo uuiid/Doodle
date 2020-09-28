@@ -81,7 +81,7 @@ TEST_F(CoreTest, create_shotinfo)
         ft->insert();
 
         doCore::shotInfoPtr sf(new doCore::shotFileSqlInfo());
-        doCore::QfileListPtr list;
+        doCore::QfileInfoVector list;
         sf->setInfoP(QString("test"));
         list.append(QFileInfo("D:/tmp/etr.vdb"));
         sf->setFileList(list);
@@ -112,7 +112,7 @@ TEST_F(CoreTest, get_shotinf)
         std::cout << "shot:" << sh->getShot_str().toStdString() << std::endl;
         std::cout << "fileclass :" << fc->getFileclass_str().toStdString() << std::endl;
         std::cout << "filetype :" << ft->getFileType().toStdString() << std::endl;
-        std::cout << "shotinfo generatePath :" << sf->generatePath("test", ".mb").filePath().toStdString() << std::endl;
+        std::cout << "shotinfo generatePath :" << sf->generatePath("test", ".mb").toStdString() << std::endl;
         for (auto &x : sf->getFileList())
         {
             std::cout << "shotinfo path :" << x.absoluteFilePath().toStdString() << std::endl;
@@ -137,7 +137,7 @@ TEST_F(CoreTest, create_assInfo)
         ft_->insert();
 
         doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
-        doCore::QfileListPtr list;
+        doCore::QfileInfoVector list;
         sf_->setInfoP(QString("test"));
         list.append(QFileInfo("D:/tmp/etr.vdb"));
         sf_->setFileList(list);
@@ -168,5 +168,5 @@ TEST_F(CoreTest, get_assInf)
     std::cout << "filetype :" << ft_->getFileType().toStdString() << std::endl;
 
     doCore::assInfoPtr ai_ = doCore::assFileSqlInfo::getAll(ft_)[0];
-    std::cout << "assinfo path :" << ai_->generatePath("test", ".mb").filePath().toStdString() << std::endl;
+    std::cout << "assinfo path :" << ai_->generatePath("test", ".mb").toStdString() << std::endl;
 }

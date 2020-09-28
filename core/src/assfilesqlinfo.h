@@ -19,11 +19,11 @@ public:
     static assInfoPtrList getAll(const assTypePtr  & AT_);
     static assInfoPtrList getAll(const fileTypePtr &ft_);
 
-    QFileInfo generatePath(const QString &programFodler);
-    QFileInfo generatePath(const QString &programFolder, const QString &suffixes);
-    QFileInfo generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix);
-    QString generateFileName(const QString &suffixes);
-    QString generateFileName(const QString &suffixes, const QString &prefix);
+    QString generatePath(const QString &programFodler) override;
+    QString generatePath(const QString &programFolder, const QString &suffixes) override;
+    QString generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix) override;
+    QString generateFileName(const QString &suffixes) override;
+    QString generateFileName(const QString &suffixes, const QString &prefix) override;
 
 
     fileClassPtr getFileClass();
