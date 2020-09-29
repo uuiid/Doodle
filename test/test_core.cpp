@@ -39,7 +39,6 @@ void CoreTest::TearDown()
 TEST_F(CoreTest, tets_quert)
 {
     std::cout << set.getCacheRoot().absolutePath().toStdString() << std::endl;
-    ;
     RecordProperty("cacheRoot", set.getCacheRoot().absolutePath().toStdString());
 }
 

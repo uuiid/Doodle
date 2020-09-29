@@ -2,9 +2,11 @@ find_package(Qt5 CONFIG COMPONENTS Core Widgets Sql REQUIRED)
 
 set(DOODLE_SOURE_HEADER
     src/episodesListWidget.h
+    src/mainWindows.h
 )
 set(DOODLE_SOURE
     src/episodesListWidget.cpp
+    src/mainWindows.cpp
 )
 
 set(QM_FILES

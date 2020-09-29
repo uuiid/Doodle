@@ -69,6 +69,8 @@ episodesPtrList episodes::getAll()
 
     sel_.from(QString("%1.episodes").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
+    sel_.order_by("episodes");
+
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     if (!query->exec(QString::fromStdString(sel_.str())))
     {
