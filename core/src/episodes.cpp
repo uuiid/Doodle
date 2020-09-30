@@ -2,6 +2,7 @@
 
 #include "sql_builder/sql.h"
 #include "coreset.h"
+#include "doException/doException.h"
 
 #include <QVariant>
 #include <QSqlError>
@@ -41,7 +42,8 @@ void episodes::insert()
     if (idP < 0)
     {
         sqlQuertPtr query = coreSql::getCoreSql().getquery();
-
+        if (p_int_episodes < 0)
+            throw doodle_InsertErrorInfo(QString("%1").arg(p_int_episodes).toStdString());
         ins_.insert("episodes", p_int_episodes);
 
         ins_.into(QString("%1.episodes").arg(coreSet::getCoreSet().getProjectname()).toStdString());
@@ -100,7 +102,7 @@ qint64 episodes::getEpisdes() const
 QString episodes::getEpisdes_str() const
 {
     QString str("ep%1");
-    return str.arg(p_int_episodes,3,10,QLatin1Char('0'));
+    return str.arg(p_int_episodes, 3, 10, QLatin1Char('0'));
 }
 
 CORE_DNAMESPACE_E

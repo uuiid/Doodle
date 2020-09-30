@@ -4,7 +4,7 @@
 
 CORE_NAMESPACE_S
 
-class coresqldata
+class CORE_EXPORT coresqldata
 {
 public:
     coresqldata();
@@ -17,6 +17,7 @@ public:
     qint64 getIdP(const bool & useInsert);
 
     bool isNULL() const;
+    bool isInsert() const { return !isNULL();};
 protected:
     qint64 idP;
 

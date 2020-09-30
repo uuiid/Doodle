@@ -140,6 +140,8 @@ shotPtrList shot::getAll(const episodesPtr &EP_)
     sel_.from(QString("%1.shot").arg(coreSet::getCoreSet().getProjectname()).toStdString());
     sel_.where(sql::column("__episodes__") == EP_->getIdP());
 
+    sel_.order_by("shot_").order_by("shotab");
+
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     //如果获得就抛出异常
     if (!query->exec(QString::fromStdString(sel_.str())))

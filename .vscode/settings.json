@@ -95,7 +95,12 @@
         "qtcoredepends": "cpp",
         "qsqlquery": "cpp",
         "qsharedpointer": "cpp",
-        "qurl": "cpp"
+        "qurl": "cpp",
+        "qmodelindex": "cpp",
+        "cassert": "cpp",
+        "cerrno": "cpp",
+        "cfloat": "cpp",
+        "climits": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",

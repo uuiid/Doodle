@@ -18,13 +18,12 @@ private:
 public:
     episodesListModel(QObject *parent = nullptr);
     ~episodesListModel();
-    //刷新函数
-    void init();
 
     //返回总行数
     int rowCount(const QModelIndex &parent = QModelIndex()) const override ;
     //返回数据
     QVariant data(const QModelIndex &index,int role) const override;
+    doCore::episodesPtr dataRaw(const QModelIndex &index) const;
     //返回标题
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     
@@ -35,7 +34,10 @@ public:
 
     //添加数据
     bool insertRows(int position, int rows, const QModelIndex &index = QModelIndex()) override;
-    
+    bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex()) override;
+public slots:    
+    //刷新函数
+    void init();
 };
 
 class episodesintDelegate : public QStyledItemDelegate
@@ -68,9 +70,20 @@ class episodesListWidget : public QListView
 public:
     episodesListWidget(QWidget *parent = nullptr);
     ~episodesListWidget();
+signals:
+    void episodesEmit(const doCore::episodesPtr &episodes);
 
 private:
     episodesListModel * p_episodesListModel;
     episodesintDelegate * p_episodesListDelegate;
+
+    QMenu * p_eps_Menu;
+private slots:
+    void insertEpisodes();
+    void _doodle_episodes_emit(const QModelIndex &index);
+
+protected:
+    void contextMenuEvent(QContextMenuEvent *event) override;
 };
+
 DOODLE_NAMESPACE_E

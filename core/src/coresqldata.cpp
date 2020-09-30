@@ -45,13 +45,9 @@ qint64 coresqldata::getIdP(const bool &useInsert)
 bool coresqldata::isNULL() const
 {
     if (idP >= 0)
-    {
-        return true;
-    }
-    else
-    {
         return false;
-    }
+    else
+        return true;
 }
 
 void coresqldata::getInsertID(sqlQuertPtr &query)

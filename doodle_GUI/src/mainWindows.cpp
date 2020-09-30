@@ -1,4 +1,4 @@
-#include "mainWindows.h"
+﻿#include "mainWindows.h"
 
 #include "episodesListWidget.h"
 
@@ -8,10 +8,19 @@
 #include <QMenuBar>
 #include <QStatusBar>
 
-
 DOODLE_NAMESPACE_S
 
-mainWindows::mainWindows(QWidget *parent) : QMainWindow(parent)
+mainWindows::mainWindows(QWidget *parent)
+    : QMainWindow(parent),
+      exitAction(nullptr),
+      refreshAction(nullptr),
+      openSetWindows(nullptr),
+      p_d_MenuBar(nullptr),
+      p_d_Menu(nullptr),
+      p_d_StatusBar(nullptr),
+      centralWidget(nullptr),
+      p_b_vboxLayout(nullptr),
+      p_d_episodesListWidget(nullptr)
 {
     doodle_init();
 }
@@ -69,16 +78,22 @@ void mainWindows::doodle_createAction()
     refreshAction = new QAction(this);
     refreshAction->setObjectName(QString::fromUtf8("refreshAction"));
     refreshAction->setText(tr("Refresh"));
+    refreshAction->setStatusTip(tr("刷新"));
+    refreshAction->setToolTip(tr("Refresh"));
     p_d_Menu->addAction(refreshAction);
 
     openSetWindows = new QAction(this);
     openSetWindows->setObjectName(QString::fromUtf8("openSetWindows"));
     openSetWindows->setText(tr("Open Setting"));
+    openSetWindows->setStatusTip(tr("打开设置"));
+    openSetWindows->setToolTip(tr("Open Setting"));
     p_d_Menu->addAction(openSetWindows);
 
     exitAction = new QAction(this);
     exitAction->setObjectName(QString::fromUtf8("exitAction"));
     exitAction->setText(tr("Exit"));
+    exitAction->setStatusTip(tr("退出"));
+    exitAction->setToolTip(tr("Exit"));
     p_d_Menu->addAction(exitAction);
 
     //添加状态栏
