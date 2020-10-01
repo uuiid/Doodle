@@ -1,3 +1,11 @@
+/*
+ * @Author: your name
+ * @Date: 2020-09-30 14:05:57
+ * @LastEditTime: 2020-10-01 19:51:37
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\doodle_GUI\src\shotListWidget.h
+ */
 #pragma once
 
 #include "doodle_global.h"
@@ -10,7 +18,9 @@
 
 DOODLE_NAMESPACE_S
 
-//这个时镜头的自定义模型
+/**
+ * @description: 这个时镜头的自定义模型
+ */
 class shotListModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -21,6 +31,11 @@ public:
     shotListModel(QObject *parent = nullptr);
     ~shotListModel();
 
+    /**
+     * @description: 
+     * @param {type} 
+     * @return {type} 
+     */
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role) const override;
 
@@ -41,4 +56,12 @@ public slots:
     void init(doCore::episodesPtr &episodes_);
 };
 
+class shotIntEnumDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+
+private: 
+    shotIntEnumDelegate(const QObject *parent = nullptr);
+    ~shotIntEnumDelegate();
+};
 DOODLE_NAMESPACE_E

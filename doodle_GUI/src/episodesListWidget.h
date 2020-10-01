@@ -1,3 +1,11 @@
+/*
+ * @Author: your name
+ * @Date: 2020-09-28 14:46:53
+ * @LastEditTime: 2020-10-01 19:49:23
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\doodle_GUI\src\episodesListWidget.h
+ */
 #pragma once
 
 #include "doodle_global.h"
@@ -8,7 +16,9 @@
 #include <QListView>
 
 DOODLE_NAMESPACE_S
-
+/**
+ * @description: 自定义集数模型
+ */
 class episodesListModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -40,6 +50,9 @@ public slots:
     void init();
 };
 
+/**
+ * @description: 自定义集数委托
+ */
 class episodesintDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
