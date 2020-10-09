@@ -76,18 +76,49 @@ void shot::setShot(const qint64 &sh, const e_shotAB &ab)
     p_qenm_shotab = ab;
 }
 
-QString shot::getShot_str() const
+void shot::setShot(const qint64 &sh, const QString &ab)
+{
+    p_qint_shot_ = sh;
+    setShotAb(ab);
+}
+
+void shot::setShotAb(const QString &ab)
+{
+    if (ab.isEmpty())
+        p_qenm_shotab = e_shotAB::_;
+    else
+    {
+        auto enum_ab = magic_enum::enum_cast<e_shotAB>(ab.toStdString());
+        if (enum_ab.has_value())
+        {
+            p_qenm_shotab = enum_ab.value();
+        }
+    }
+}
+
+QString shot::getShotAndAb_str() const
 {
     QString str = "sc%1%2";
-    str = str.arg(p_qint_shot_, 4, 10, QLatin1Char('0'));
+    str = str.arg(getShot_str()).arg(getShotAb_str());
+    return str;
+}
+
+QString shot::getShot_str() const
+{
+    return QString("sc%1").arg(p_qint_shot_, 4, 10, QLatin1Char('0'));
+}
+
+QString shot::getShotAb_str() const
+{
+    QString str;
     switch (p_qenm_shotab)
     {
     case e_shotAB::_:
-        str = str.arg(QString());
+        str = QString();
         break;
     default:
         std::string tmpstr(magic_enum::enum_name(p_qenm_shotab));
-        str = str.arg(QString::fromStdString(tmpstr));
+        str = QString::fromStdString(tmpstr);
         break;
     }
     return str;

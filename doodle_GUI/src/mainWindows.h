@@ -1,10 +1,17 @@
+/*
+ * @Author: your name
+ * @Date: 2020-09-29 17:22:20
+ * @LastEditTime: 2020-10-09 11:52:56
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\doodle_GUI\src\mainWindows.h
+ */
 #pragma once
 
 #include "doodle_global.h"
 
 #include <QMainWindow>
 
-#include <QVBoxLayout>
 
 DOODLE_NAMESPACE_S
 

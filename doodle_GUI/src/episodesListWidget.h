@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-28 14:46:53
- * @LastEditTime: 2020-10-01 19:49:23
+ * @LastEditTime: 2020-10-09 10:27:28
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\src\episodesListWidget.h
@@ -61,7 +61,7 @@ private:
     /* data */
 public:
     episodesintDelegate(QObject *parent = nullptr);
-    ~episodesintDelegate();
+    virtual ~episodesintDelegate();
     //创建一个提供编辑的小部件
     QWidget *createEditor(QWidget *parent,
                           const QStyleOptionViewItem &option,

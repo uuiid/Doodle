@@ -1,4 +1,12 @@
-﻿#pragma once
+﻿/*
+ * @Author: your name
+ * @Date: 2020-09-15 13:57:51
+ * @LastEditTime: 2020-10-09 09:56:27
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\shot.h
+ */
+#pragma once
 
 #include "core_global.h"
 #include "coresqldata.h"
@@ -40,7 +48,16 @@ public:
 
     //设置shot自身信息
     void setShot(const qint64 &sh, const e_shotAB &ab = e_shotAB::_);
+    void setShot(const qint64 &sh, const QString &ab);
+    void setShotAb(const QString & ab);
+    void setShotAb(const e_shotAB &ab){ p_qenm_shotab = ab; };
+    //获得全部的shot的str格式化信息
+    QString getShotAndAb_str() const;
+    //只有shot的格式化信息
     QString getShot_str() const;
+    //只有shot Ab的格式化信息
+    QString getShotAb_str() const;
+    //获得shot的数值
     qint64 getShot() const { return p_qint_shot_;};
 private:
     qint64 p_qint_shot_;

@@ -269,7 +269,7 @@ QString shotFileSqlInfo::generatePath(const QString &programFolder)
     //第三次格式化添加镜头字符串
     shotPtr sh_ = getShot();
     if (sh_ != nullptr)
-        str = str.arg(sh_->getShot_str());
+        str = str.arg(sh_->getShotAndAb_str());
     else
         str = str.arg(QString());
 
@@ -327,7 +327,7 @@ QString shotFileSqlInfo::generateFileName(const QString &suffixes)
     //第二次格式化添加 镜头号
     shotPtr sh_ = getShot();
     if (sh_ != nullptr)
-        name = name.arg(sh_->getShot_str());
+        name = name.arg(sh_->getShotAndAb_str());
     else
         name = name.arg(QString());
 

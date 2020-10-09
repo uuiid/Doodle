@@ -108,7 +108,7 @@ TEST_F(CoreTest, get_shotinf)
         doCore::shotInfoPtr sf = doCore::shotFileSqlInfo::getAll(ft)[0];
 
         std::cout << "episodes: " << ep->getEpisdes_str().toStdString() << std::endl;
-        std::cout << "shot:" << sh->getShot_str().toStdString() << std::endl;
+        std::cout << "shot:" << sh->getShotAndAb_str().toStdString() << std::endl;
         std::cout << "fileclass :" << fc->getFileclass_str().toStdString() << std::endl;
         std::cout << "filetype :" << ft->getFileType().toStdString() << std::endl;
         std::cout << "shotinfo generatePath :" << sf->generatePath("test", ".mb").toStdString() << std::endl;
