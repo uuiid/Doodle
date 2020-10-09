@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-15 13:57:51
- * @LastEditTime: 2020-10-09 09:56:27
+ * @LastEditTime: 2020-10-09 17:20:22
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\shot.h
@@ -28,7 +28,7 @@ public:
         G = 6,
         H = 7
     };
-
+    const static std::vector<std::string> e_shotAB_list;
     shot();
     //使用id直接从数据库创建类
     void select(const qint64 &ID_);

@@ -187,9 +187,7 @@ void episodesintDelegate::updateEditorGeometry(QWidget *editor,
     editor->setGeometry(option.rect);
 }
 
-//----------------------------------------------------------------
-//集数小部件
-//----------------------------------------------------------------
+/* ---------------------------------- 集数小部件 --------------------------------- */
 
 episodesListWidget::episodesListWidget(QWidget *parent)
     : QListView(parent),

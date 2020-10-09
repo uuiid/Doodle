@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-30 14:05:57
- * @LastEditTime: 2020-10-09 11:51:42
+ * @LastEditTime: 2020-10-09 18:09:05
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\src\shotListWidget.h
@@ -41,6 +41,7 @@ public:
      */
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role) const override;
+    doCore::shotPtr dataRaw(const QModelIndex &index) const ;
 
     QVariant headerData(int section,
                         Qt::Orientation orientation,
@@ -56,8 +57,11 @@ public:
     //删除数据
     bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex()) override;
 public slots:
-    void init(doCore::episodesPtr &episodes_);
+    //自定义创建函数
+    void init(const doCore::episodesPtr &episodes_);
 };
+
+
 /**
  * @description: 自定义小部件, 用来修改shot使用
  */
@@ -67,21 +71,20 @@ class shotEditWidget : public QWidget
     
 public:
     shotEditWidget(QWidget *parent = nullptr);
-    virtual ~shotEditWidget(){};
+    virtual ~shotEditWidget();
 
-    QMap<QString, QVariant> value() const;
+    QMap<QString, QVariant> value();
     void setValue(const QMap<QString, QVariant> &value);
 
 private:
     QMap<QString, QVariant> p_map_value;
 
     QSpinBox *p_spin;
+    QComboBox *p_combox;
 
-    QWidget * centralWidget;
     QHBoxLayout * p_b_hboxLayout;
     
 };
-
 
 /**
  * @description: 自定义委托类型
@@ -91,7 +94,7 @@ class shotIntEnumDelegate : public QStyledItemDelegate
     Q_OBJECT
 
 public:
-    shotIntEnumDelegate(const QObject *parent = nullptr);
+    shotIntEnumDelegate(QObject *parent = nullptr);
     virtual ~shotIntEnumDelegate();
 
     QWidget *createEditor(QWidget *parent,
@@ -103,5 +106,36 @@ public:
                       const QModelIndex &index) const override;
     void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
                               const QModelIndex &index) const override;
+};
+
+/* ------------------------------- 自定义shot小部件 ------------------------------- */
+
+class shotLsitWidget : public QListView
+{
+    Q_OBJECT
+
+public:
+    shotLsitWidget(QWidget *parent = nullptr);
+    ~shotLsitWidget();
+    
+    void init(const doCore::episodesPtr &episodes_);
+
+signals:
+    void shotEmit(const doCore::shotPtr &shot);
+
+private:
+    //私有变量
+    shotListModel * p_model;
+    shotIntEnumDelegate * p_delegate;
+    
+    QMenu * p_shot_menu;
+private slots:
+    //添加镜头号
+    void insertShot();
+    //私有的镜头点击发射事件
+    void _doodle_shot_emit(const QModelIndex &index);
+
+protected:
+    void contextMenuEvent(QContextMenuEvent *event) override;
 };
 DOODLE_NAMESPACE_E

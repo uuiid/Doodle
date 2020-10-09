@@ -14,6 +14,8 @@
 
 CORE_NAMESPACE_S
 
+const std::vector<std::string> shot::e_shotAB_list={"B","C","D","E","F","G","H"};
+
 shot::shot()
 {
     p_qint_shot_ = -1;
@@ -98,7 +100,7 @@ void shot::setShotAb(const QString &ab)
 
 QString shot::getShotAndAb_str() const
 {
-    QString str = "sc%1%2";
+    QString str = "%1%2";
     str = str.arg(getShot_str()).arg(getShotAb_str());
     return str;
 }
@@ -171,7 +173,7 @@ shotPtrList shot::getAll(const episodesPtr &EP_)
     sel_.from(QString("%1.shot").arg(coreSet::getCoreSet().getProjectname()).toStdString());
     sel_.where(sql::column("__episodes__") == EP_->getIdP());
 
-    sel_.order_by("shot_").order_by("shotab");
+    sel_.order_by("shot_,shotab");
 
     sqlQuertPtr query = coreSql::getCoreSql().getquery();
     //如果获得就抛出异常

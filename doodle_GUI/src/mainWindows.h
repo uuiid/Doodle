@@ -1,8 +1,8 @@
 /*
  * @Author: your name
  * @Date: 2020-09-29 17:22:20
- * @LastEditTime: 2020-10-09 11:52:56
- * @LastEditors: your name
+ * @LastEditTime: 2020-10-09 16:23:08
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\src\mainWindows.h
  */
@@ -36,9 +36,10 @@ private:
     QStatusBar *p_d_StatusBar;
 
     QWidget *centralWidget; //中心小部件
-    QVBoxLayout *p_b_vboxLayout; //布局
+    QHBoxLayout *p_b_boxLayout; //布局
 
     episodesListWidget *p_d_episodesListWidget; //集数小部件
+    shotLsitWidget *p_d_shotLsitWidget; //镜头小部件
 };
 
 DOODLE_NAMESPACE_E

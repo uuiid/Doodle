@@ -1,6 +1,11 @@
 ﻿#include "mainWindows.h"
 
+#include "src/episodes.h"
+
+
 #include "episodesListWidget.h"
+#include "shotListWidget.h"
+
 
 #include <QAction>
 #include <QVBoxLayout>
@@ -19,7 +24,7 @@ mainWindows::mainWindows(QWidget *parent)
       p_d_Menu(nullptr),
       p_d_StatusBar(nullptr),
       centralWidget(nullptr),
-      p_b_vboxLayout(nullptr),
+      p_b_boxLayout(nullptr),
       p_d_episodesListWidget(nullptr)
 {
     doodle_init();
@@ -47,17 +52,24 @@ void mainWindows::doodle_init()
     setCentralWidget(centralWidget);
 
     //设置基本布局
-    p_b_vboxLayout = new QVBoxLayout(centralWidget);
-    p_b_vboxLayout->setSpacing(0);
-    p_b_vboxLayout->setContentsMargins(0, 0, 0, 0);
-    p_b_vboxLayout->setObjectName(QString::fromUtf8("p_b_vboxLayout"));
+    p_b_boxLayout = new QHBoxLayout(centralWidget);
+    p_b_boxLayout->setSpacing(0);
+    p_b_boxLayout->setContentsMargins(0, 0, 0, 0);
+    p_b_boxLayout->setObjectName(QString::fromUtf8("p_b_boxLayout"));
 
     //创建集数小部件
     p_d_episodesListWidget = new episodesListWidget(centralWidget);
     p_d_episodesListWidget->setObjectName(QString::fromUtf8("p_d_episodesListWidget"));
 
+    //添加镜头小部件
+    p_d_shotLsitWidget = new shotLsitWidget(centralWidget);
+    p_d_shotLsitWidget->setObjectName(QString::fromUtf8("p_d_shotLsitWidget"));
+    connect(p_d_episodesListWidget, &episodesListWidget::episodesEmit,
+            p_d_shotLsitWidget,     &shotLsitWidget::init);
+
     //将集数小部件添加到布局中
-    p_b_vboxLayout->addWidget(p_d_episodesListWidget);
+    p_b_boxLayout->addWidget(p_d_episodesListWidget);
+    p_b_boxLayout->addWidget(p_d_shotLsitWidget);
 }
 
 void mainWindows::doodle_createAction()
