@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-30 14:05:57
- * @LastEditTime: 2020-10-09 18:09:05
+ * @LastEditTime: 2020-10-10 14:31:42
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\src\shotListWidget.h
@@ -59,6 +59,10 @@ public:
 public slots:
     //自定义创建函数
     void init(const doCore::episodesPtr &episodes_);
+
+
+private:
+    doCore::episodesPtr p_episodes;
 };
 
 
@@ -117,18 +121,23 @@ class shotLsitWidget : public QListView
 public:
     shotLsitWidget(QWidget *parent = nullptr);
     ~shotLsitWidget();
-    
-    void init(const doCore::episodesPtr &episodes_);
 
 signals:
+    void init(const doCore::episodesPtr &episodes_);
     void shotEmit(const doCore::shotPtr &shot);
 
 private:
     //私有变量
+    //模型
     shotListModel * p_model;
+    //自定义委托
     shotIntEnumDelegate * p_delegate;
-    
+    //上下文菜单
     QMenu * p_shot_menu;
+
+    //保存上一个小部件发射出来的集数指针
+    doCore::episodesPtr p_episodes;
+
 private slots:
     //添加镜头号
     void insertShot();

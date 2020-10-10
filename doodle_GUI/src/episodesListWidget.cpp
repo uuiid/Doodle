@@ -131,7 +131,7 @@ bool episodesListModel::removeRows(int position, int rows, const QModelIndex &in
     return true;
 }
 //------------------------------------------------------------------------------------
-//集数编辑类
+//                                         集数编辑类
 //------------------------------------------------------------------------------------
 
 episodesintDelegate::episodesintDelegate(QObject *parent)

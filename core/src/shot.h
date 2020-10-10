@@ -42,7 +42,7 @@ public:
     static shotPtrList getAll(const episodesPtr &EP_);
 
     //设置episodes约束外键
-    void setEpisdes(const episodesPtrW &value);
+    void setEpisodes(const episodesPtrW &value);
     //获得episodes 约束实体
     episodesPtr getEpisodes();
 

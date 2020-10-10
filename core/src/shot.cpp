@@ -51,7 +51,7 @@ void shot::select(const qint64 &ID_)
     }
 }
 
-void shot::setEpisdes(const episodesPtrW &value)
+void shot::setEpisodes(const episodesPtrW &value)
 {
     if (!value)
         return;
@@ -195,7 +195,7 @@ shotPtrList shot::getAll(const episodesPtr &EP_)
 
         //连接外键和实体约束
         sh_->__episodes__ = query->value(3).toInt();
-        sh_->setEpisdes(EP_);
+        sh_->setEpisodes(EP_);
         listShot.append(sh_);
     }
 

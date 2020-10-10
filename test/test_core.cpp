@@ -64,7 +64,7 @@ TEST_F(CoreTest, create_shotinfo)
 
         doCore::shotPtr sh(new doCore::shot());
         sh->setShot(10);
-        sh->setEpisdes(eps.toWeakRef());
+        sh->setEpisodes(eps.toWeakRef());
         sh->insert();
 
         doCore::fileClassPtr fc(new doCore::fileClass());

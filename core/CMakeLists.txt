@@ -89,6 +89,7 @@ target_link_libraries(core PUBLIC Qt5::Core)
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
 target_link_libraries(core PUBLIC pinyin)
 target_link_libraries(core PUBLIC ftp)
+target_link_libraries(core PUBLIC logger)
 
 target_compile_definitions(core PRIVATE CORE_LIBRARY)
 
