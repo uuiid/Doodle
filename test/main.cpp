@@ -1,9 +1,6 @@
 ﻿#include "core_global.h"
 #include "src/coreset.h"
-#include "src/coresql.h"
-// #include "t_fileSyn/test_filesyn.h"
-// #include "t_ftp/test_ftp.h"
-// #include "t_convert/test_convert.h"
+
 #include <QCoreApplication>
 #include <QTextCodec>
 #include <QSqlQuery>
@@ -13,13 +10,11 @@
 class Environment : public ::testing::Environment
 {
 public:
-    ~Environment() override;
 
     void SetUp() override;
     void TearDown() override;
     doCore::coreSet &set = doCore::coreSet::getCoreSet();
 };
-Environment::~Environment() {}
 
 void Environment::SetUp()
 {
@@ -72,7 +67,7 @@ int main(int argc, char *argv[])
 {
     //创建qt必要的运行事件循环
     QCoreApplication app(argc, argv);
-    app.setAttribute(Qt::AA_Use96Dpi, true);
+    QCoreApplication::setAttribute(Qt::AA_Use96Dpi, true);
 
     //设置本地编码
     QTextCodec *codec = QTextCodec::codecForName("GBK");

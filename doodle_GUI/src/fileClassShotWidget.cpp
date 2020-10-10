@@ -11,6 +11,9 @@
 #include "src/fileclass.h"
 #include "Logger.h"
 
+#include <QMenu>
+#include <QContextMenuEvent>
+
 DOODLE_NAMESPACE_S
 fileClassShotModel::fileClassShotModel(QObject *parent)
     : QAbstractListModel(parent),
@@ -112,13 +115,14 @@ bool fileClassShotModel::removeRows(int position, int rows, const QModelIndex &i
 }
 
 void fileClassShotModel::init(const doCore::shotPtr &shot) {
+  p_shot = shot;
+
   doCore::fileClassPtrList fileClassPtrList = doCore::fileClass::getAll(shot);
   if (!list_fileClass.isEmpty()) {
     //开始删除模型中的fileclass
     beginRemoveRows(QModelIndex(), 0, list_fileClass.size() - 1);
     list_fileClass.clear();
     endRemoveRows();
-
   }
   beginInsertRows(QModelIndex(), 0, fileClassPtrList.size());
   list_fileClass = fileClassPtrList;
@@ -142,28 +146,38 @@ fileClassShotWidget::fileClassShotWidget(QWidget *parent)
           this, &fileClassShotWidget::_doodle_fileclass_emit);
 }
 
-fileClassShotWidget::~fileClassShotWidget() {
-}
-
 void fileClassShotWidget::init(const doCore::shotPtr &shot) {
   p_shot = shot;
   p_model->init(shot);
 }
 
-void fileClassShotWidget::fileClassShotEmitted(const doCore::fileClassPtr &fc_) {
-
-}
-
 void fileClassShotWidget::insertFileClass() {
+  int kRow = selectionModel()->currentIndex().row() + 1;
+  p_model->insertRow(kRow, QModelIndex());
 
+  setCurrentIndex(p_model->index(kRow));
+  edit(p_model->index(kRow));
 }
 
 void fileClassShotWidget::_doodle_fileclass_emit(const QModelIndex &index) {
-
+  emit fileClassShotEmitted(p_model->dataRow(index));
 }
 
 void fileClassShotWidget::contextMenuEvent(QContextMenuEvent *event) {
-  QAbstractScrollArea::contextMenuEvent(event);
+  p_fileClass_menu = new QMenu(this);
+
+  if(p_shot){
+    auto *action = new QAction(this);
+
+    connect(action, &QAction::triggered,
+            this, &fileClassShotWidget::insertFileClass);
+    action->setText(tr("添加部门"));
+    action->setToolTip(tr("添加本部门"));
+    p_fileClass_menu->addAction(action);
+  }
+  p_fileClass_menu->move(event->globalPos());
+  p_fileClass_menu->show();
+  DOODLE_LOG_INFO << "显示部门上下文菜单";
 }
 
 DOODLE_NAMESPACE_E

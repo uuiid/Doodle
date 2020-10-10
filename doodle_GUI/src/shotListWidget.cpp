@@ -187,13 +187,13 @@ shotIntEnumDelegate::~shotIntEnumDelegate() {
 QWidget *shotIntEnumDelegate::createEditor(QWidget *parent,
                                            const QStyleOptionViewItem &option,
                                            const QModelIndex &index) const {
-  shotEditWidget *shotedit = new shotEditWidget(parent);
+  auto *shotedit = new shotEditWidget(parent);
 
   return shotedit;
 }
 
 void shotIntEnumDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const {
-  shotEditWidget *shotedit = static_cast<shotEditWidget *>(editor);
+  auto *shotedit = static_cast<shotEditWidget *>(editor);
   QMap<QString, QVariant> map;
   map["shot"] = 0;
   map["shotAb"] = "";
@@ -203,7 +203,7 @@ void shotIntEnumDelegate::setEditorData(QWidget *editor, const QModelIndex &inde
 void shotIntEnumDelegate::setModelData(QWidget *editor,
                                        QAbstractItemModel *model,
                                        const QModelIndex &index) const {
-  shotEditWidget *shotedit = static_cast<shotEditWidget *>(editor);
+  auto *shotedit = static_cast<shotEditWidget *>(editor);
 
   QMap<QString, QVariant> data = shotedit->value();
   QMessageBox::StandardButton box = QMessageBox::information(static_cast<QWidget *>(this->parent()),
@@ -252,7 +252,7 @@ void shotLsitWidget::init(const doCore::episodesPtr &episodes_) {
 
 void shotLsitWidget::insertShot() {
   int raw = selectionModel()->currentIndex().row() + 1;
-  p_model->insertRow(raw, selectionModel()->currentIndex());
+  p_model->insertRow(raw, QModelIndex());
 
   setCurrentIndex(p_model->index(raw));
   edit(p_model->index(raw));
@@ -265,7 +265,7 @@ void shotLsitWidget::_doodle_shot_emit(const QModelIndex &index) {
 void shotLsitWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_shot_menu = new QMenu(this);
   if (p_episodes) {
-    QAction *action = new QAction(this);
+    auto *action = new QAction(this);
 
     connect(action, &QAction::triggered,
             this, &shotLsitWidget::insertShot);

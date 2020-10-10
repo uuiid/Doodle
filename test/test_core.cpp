@@ -5,21 +5,20 @@
 #include "src/shot.h"
 #include "src/fileclass.h"
 #include "src/filetype.h"
-#include "src/assType.h"
+#include "src/asstype.h"
 
-#include "src/assFileSqlInfo.h"
+#include "src/assfilesqlinfo.h"
 #include "src/shotfilesqlinfo.h"
 
 #include <gtest/gtest.h>
 
-// #include <QTextCodec>
 
 #include <iostream>
 class CoreTest : public ::testing::Test
 {
 protected:
-    virtual void SetUp();
-    virtual void TearDown();
+    void SetUp() override;
+    void TearDown() override;
 
     doCore::coreSet &set = doCore::coreSet::getCoreSet();
 };

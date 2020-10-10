@@ -57,7 +57,7 @@ class fileClassShotWidget : public QListView
 
 public:
     explicit fileClassShotWidget(QWidget *parent = nullptr);
-    ~fileClassShotWidget() override;
+    ~fileClassShotWidget() override = default;
 
     void init(const doCore::shotPtr &shot);
 signals:
