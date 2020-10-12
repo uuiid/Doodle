@@ -6,9 +6,9 @@ set(HEADER_FILES
     )
 
 set(RESOURE_FILE
-    ${PROJECT_SOURCE_DIR}/resource/resource.qrc)
+        resource/resource.qrc)
 
-qt5_add_resources(RESOURE_FILE ${PROJECT_SOURCE_DIR}/resource/resource.qrc)
+qt5_add_resources(RESOURE_FILE resource/resource.qrc)
 
 add_library(pinyin SHARED
     ${HEADER_FILES}

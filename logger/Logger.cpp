@@ -25,7 +25,7 @@ namespace Logger
     static void outputMessage(QtMsgType type, const QMessageLogContext &context, const QString &msg);
     static void outputMessageAsync(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
-    void initLog(const QString &logPath, int logMaxCount, bool async)
+    void doodle_initLog(const QString &logPath, int logMaxCount, bool async)
     {
         if (async)
         {
@@ -102,8 +102,8 @@ namespace Logger
         }
         mutex.unlock();
 #ifdef Q_OS_WIN
-        ::OutputDebugString(message.toStdWString().data());
-        ::OutputDebugString(L"\r\n");
+        ::OutputDebugString(reinterpret_cast<LPCSTR>(message.toStdWString().data()));
+        ::OutputDebugString(reinterpret_cast<LPCSTR>(L"\r\n"));
 #else
         fprintf(stderr, message.toStdString().data());
 #endif
@@ -141,8 +141,8 @@ namespace Logger
         file.close();
         mutex.unlock();
 #ifdef Q_OS_WIN
-        ::OutputDebugString(message.toStdWString().data());
-        ::OutputDebugString(L"\r\n");
+        ::OutputDebugString(reinterpret_cast<LPCSTR>(message.toStdWString().data()));
+        ::OutputDebugString(reinterpret_cast<LPCSTR>(L"\r\n"));
 #else
         fprintf(stderr, message.toStdString().data());
 #endif

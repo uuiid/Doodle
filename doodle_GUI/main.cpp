@@ -2,23 +2,32 @@
 
 //测试时导入
 #include "src/mainWindows.h"
+#include "resource/DarkStyle.h"
+
+#include "Logger.h"
 //必要导入
 #include <QApplication>
 #include <QTextCodec>
 
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
 
-    //设置本地编码
-    QTextCodec *codec = QTextCodec::codecForName("GBK");
-    QTextCodec::setCodecForLocale(codec);
+int main(int argc, char *argv[]) {
+  QApplication q_application(argc, argv);
 
-    doCore::coreSet &set = doCore::coreSet::getCoreSet();
-    set.init();
+  //初始化log
+  Logger::doodle_initLog();
 
-    doodle::mainWindows main_doodle = doodle::mainWindows();
-    main_doodle.show();
-    
-    return a.exec();
+  //设置本地编码
+  QTextCodec *codec = QTextCodec::codecForName("GBK");
+  QTextCodec::setCodecForLocale(codec);
+
+  //设置主题
+  QApplication::setStyle(new DarkStyle);
+
+  doCore::coreSet &set = doCore::coreSet::getCoreSet();
+  set.init();
+
+  doodle::mainWindows main_doodle = doodle::mainWindows();
+  main_doodle.show();
+
+  return QApplication::exec();
 }

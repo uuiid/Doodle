@@ -6,6 +6,9 @@
  * @Description: In User Settings Edit  
  * @FilePath: \Doodle\doodle_GUI\src\fileClassShotWidget.cpp
  */
+#include "src/shot.h"
+#include "src/coreset.h"
+
 #include "fileClassShotWidget.h"
 
 #include "src/fileclass.h"
@@ -40,7 +43,7 @@ QVariant fileClassShotModel::data(const QModelIndex &index, int role) const {
 doCore::fileClassPtr fileClassShotModel::dataRow(const QModelIndex &index) const {
   if (!index.isValid())
     return nullptr;
-  if (!index.row() >= list_fileClass.size())
+  if (index.row() >= list_fileClass.size())
     return nullptr;
   return list_fileClass[index.row()];
 }
@@ -62,7 +65,7 @@ Qt::ItemFlags fileClassShotModel::flags(const QModelIndex &index) const {
   if (list_fileClass[index.row()]->isInsert())
     return QAbstractListModel::flags(index);
   else
-    return Qt::ItemIsEnabled | Qt::ItemIsEnabled | QAbstractListModel::flags(index);
+    return Qt::ItemIsEnabled | QAbstractListModel::flags(index);
 }
 
 bool fileClassShotModel::setData(const QModelIndex &index, const QVariant &value, int role) {
@@ -92,11 +95,23 @@ bool fileClassShotModel::setData(const QModelIndex &index, const QVariant &value
 }
 
 bool fileClassShotModel::insertRows(int position, int rows, const QModelIndex &index) {
+  bool isHas = false;
+  auto dep = doCore::coreSet::getCoreSet().getDepartment();
+  for (auto &&i : list_fileClass) {
+    if (dep == i->getFileclass_str()) {
+      isHas = true;
+      break;
+    }
+  };
   beginInsertRows(index, position, position + rows - 1);
-
-  for (int row = 0; row < rows; ++row) {
-    DOODLE_LOG_INFO << "插入新的fileclass镜头";
-    list_fileClass.insert(position, doCore::fileClassPtr(new doCore::fileClass));
+  if (!isHas) {
+    for (int row = 0; row < rows; ++row) {
+      DOODLE_LOG_INFO << "插入新的fileclass镜头";
+      list_fileClass.insert(position, doCore::fileClassPtr(new doCore::fileClass));
+      list_fileClass[position]->setFileclass(dep);
+      list_fileClass[position]->setShot(p_shot);
+      list_fileClass[position]->insert();
+    }
   }
   endInsertRows();
   return true;
@@ -118,16 +133,16 @@ void fileClassShotModel::init(const doCore::shotPtr &shot) {
   p_shot = shot;
 
   doCore::fileClassPtrList fileClassPtrList = doCore::fileClass::getAll(shot);
-  if (!list_fileClass.isEmpty()) {
-    //开始删除模型中的fileclass
-    beginRemoveRows(QModelIndex(), 0, list_fileClass.size() - 1);
-    list_fileClass.clear();
-    endRemoveRows();
-  }
+  clear();
   beginInsertRows(QModelIndex(), 0, fileClassPtrList.size());
   list_fileClass = fileClassPtrList;
   endInsertRows();
+}
 
+void fileClassShotModel::clear() {
+  beginResetModel();
+  list_fileClass.clear();
+  endResetModel();
 }
 
 /* --------------------------------- 自定义小部件 --------------------------------- */
@@ -166,7 +181,7 @@ void fileClassShotWidget::_doodle_fileclass_emit(const QModelIndex &index) {
 void fileClassShotWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_fileClass_menu = new QMenu(this);
 
-  if(p_shot){
+  if (p_shot) {
     auto *action = new QAction(this);
 
     connect(action, &QAction::triggered,
@@ -178,6 +193,9 @@ void fileClassShotWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_fileClass_menu->move(event->globalPos());
   p_fileClass_menu->show();
   DOODLE_LOG_INFO << "显示部门上下文菜单";
+}
+void fileClassShotWidget::clear() {
+  p_model->clear();
 }
 
 DOODLE_NAMESPACE_E

@@ -11,20 +11,11 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+#使用中文
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
-# QtCreator supports the following variables for Android, which are identical to qmake Android variables.
-# Check http://doc.qt.io/qt-5/deployment-android.html for more information.
-# They need to be set before the find_package(Qt5 ...) call.
 
-#if(ANDROID)
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-#    if (ANDROID_ABI STREQUAL "armeabi-v7a")
-#        set(ANDROID_EXTRA_LIBS
-#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libcrypto.so
-#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libssl.so)
-#    endif()
-#endif()
+
 #启用测试
 set(CMAKE_INSTALL_PREFIX "F:/Source/qt_test/install")
 configure_file(DoodleConfig.h.in ${CMAKE_CURRENT_LIST_DIR}/DoodleConfig.h)
@@ -76,25 +67,22 @@ find_package(GTest CONFIG REQUIRED)
 
 #enable_testing()
 add_subdirectory(test)
-# #=====================安装打包过程===============================
-# #首先搜索我们的自定义函数
-# list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
-# include(mypack)
-# #搜索qt 安装辅助程序
-# find_program(WINQT windeployqt REQUIRED)
-# #添加qt 安装辅助程序的一些命令
-# add_custom_command(
-#     TARGET Doodle POST_BUILD
-#     COMMAND ${CMAKE_COMMAND} -E rm -r -f ${CMAKE_INSTALL_PREFIX}/Doodle
-#     COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/Doodle $<TARGET_FILE:Doodle>
-#     )
-# install(
-#     DIRECTORY ${CMAKE_INSTALL_PREFIX}/Doodle/
-#     DESTINATION ${PROJECT_NAME}
-#     )
-# CPACKIFW_COMMON()
-# #显示所有变量
-# #dump_cmake_variables()
+#=====================安装打包过程===============================
+#首先搜索我们的自定义函数
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
+include(mypack)
+#搜索qt 安装辅助程序
+find_program(WINQT windeployqt REQUIRED)
+#添加qt 安装辅助程序的一些命令
+
+
+install(
+    DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin/
+    DESTINATION ${PROJECT_NAME}
+    )
+#CPACKIFW_COMMON()
+#显示所有变量
+#dump_cmake_variables()
 
 # #====================一些非qt组件的搜索和安装=============
 # #第一种搜索方式

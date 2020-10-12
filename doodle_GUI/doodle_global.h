@@ -31,4 +31,8 @@ class shotListModel;
 class shotIntEnumDelegate;
 class shotLsitWidget;
 
+class fileClassShotModel;
+class fileClassShotWidget;
+
+class fileTypeShotWidget;
 DOODLE_NAMESPACE_E

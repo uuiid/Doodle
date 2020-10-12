@@ -21,24 +21,17 @@ shotListModel::shotListModel(QObject *parent)
       p_episodes(nullptr) {
 }
 
-shotListModel::~shotListModel() {
-}
+shotListModel::~shotListModel() = default;
 
 void shotListModel::init(const doCore::episodesPtr &episodes_) {
   doCore::shotPtrList tmp_shot_list = doCore::shot::getAll(episodes_);
-  if (!shotlist.isEmpty()) {
-    beginRemoveRows(QModelIndex(), 0, shotlist.size() - 1);
-    shotlist.clear();
-    endRemoveRows();
 
-    beginInsertRows(QModelIndex(), 0, tmp_shot_list.size() - 1);
-    shotlist = tmp_shot_list;
-    endInsertRows();
-  } else {
-    beginInsertRows(QModelIndex(), 0, tmp_shot_list.size());
-    shotlist = tmp_shot_list;
-    endInsertRows();
-  }
+  clear();
+
+  beginInsertRows(QModelIndex(), 0, tmp_shot_list.size());
+  shotlist = tmp_shot_list;
+  endInsertRows();
+
   p_episodes = episodes_;
 }
 
@@ -96,8 +89,11 @@ bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int
     //这个函数不设置AB镜
     bool isHasShot = false;
     for (auto &&x : shotlist) {
-      if (infoMap["shot"].toInt() == x->getShot() || x->isInsert()) {
+      if ((infoMap["shot"].toInt() == x->getShot()
+          && infoMap["shotAb"].toString() == x->getShotAndAb_str())
+          || x->isInsert()) {
         isHasShot = true;
+        break;
       }
     }
 
@@ -115,7 +111,7 @@ bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int
 }
 
 bool shotListModel::insertRows(int position, int rows, const QModelIndex &index) {
-  beginInsertRows(index, position, position + rows - 1);
+  beginInsertRows(QModelIndex(), position, position + rows - 1);
 
   for (int row = 0; row < rows; ++row) {
     shotlist.insert(position, doCore::shotPtr(new doCore::shot));
@@ -131,6 +127,11 @@ bool shotListModel::removeRows(int position, int rows, const QModelIndex &index)
   }
   endRemoveRows();
   return true;
+}
+void shotListModel::clear() {
+  beginResetModel();
+  shotlist.clear();
+  endResetModel();
 }
 
 /* -------------------------------- 自定义小部件 -------------------------------- */
@@ -276,6 +277,5 @@ void shotLsitWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_shot_menu->move(event->globalPos());
   p_shot_menu->show();
 }
-
 
 DOODLE_NAMESPACE_E

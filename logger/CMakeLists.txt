@@ -12,6 +12,8 @@ add_library(logger SHARED
     LoggerTemplate.h)
 
 target_link_libraries(logger PUBLIC Qt5::Core)
+target_compile_definitions(core PRIVATE LOGGER_LIBRARY)
+
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 install(TARGETS logger DESTINATION lib)
