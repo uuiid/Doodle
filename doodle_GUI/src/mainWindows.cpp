@@ -9,6 +9,8 @@
 #include "shotListWidget.h"
 #include "fileClassShotWidget.h"
 #include "fileTypeShotWidget.h"
+#include "shotTableWidget.h"
+
 
 #include <QAction>
 #include <QMenu>
@@ -30,7 +32,8 @@ mainWindows::mainWindows(QWidget *parent)
       p_episodes_list_widget_(nullptr),
       p_shot_lsit_widget_(nullptr),
       p_file_class_shot_widget_(nullptr),
-      p_file_type_shot_widget_(nullptr) {
+      p_file_type_shot_widget_(nullptr),
+      p_shot_table_widget_(nullptr){
   doodle_init();
 }
 
@@ -89,11 +92,23 @@ void mainWindows::doodle_init() {
   connect(p_shot_lsit_widget_,&shotLsitWidget::shotEmit,
           p_file_type_shot_widget_,&fileTypeShotWidget::clear);
 
+  p_shot_table_widget_ = new shotTableWidget(centralWidget);
+  p_shot_table_widget_->setObjectName("p_shot_table_widget_");
+  connect(p_file_type_shot_widget_,&fileTypeShotWidget::typeEmit,
+          p_shot_table_widget_, &shotTableWidget::init);
+  connect(p_episodes_list_widget_,&episodesListWidget::episodesEmit,
+          p_shot_table_widget_, &shotTableWidget::clear);
+  connect(p_file_class_shot_widget_,&fileClassShotWidget::fileClassShotEmitted,
+          p_shot_table_widget_, &shotTableWidget::clear);
+  connect(p_file_type_shot_widget_,&fileTypeShotWidget::typeEmit,
+          p_shot_table_widget_, &shotTableWidget::clear);
+
   //将小部件添加到布局中
   p_b_box_layout_->addWidget(p_episodes_list_widget_);
   p_b_box_layout_->addWidget(p_shot_lsit_widget_);
   p_b_box_layout_->addWidget(p_file_class_shot_widget_);
   p_b_box_layout_->addWidget(p_file_type_shot_widget_);
+  p_b_box_layout_->addWidget(p_shot_table_widget_);
 }
 
 void mainWindows::doodle_createAction() {

@@ -10,8 +10,9 @@ CORE_NAMESPACE_S
 
 class CORE_EXPORT znchName :public coresqldata
 {
+  Q_GADGET
 public:
-    znchName(const assTypePtr & at_);
+    explicit znchName(const assTypePtr & at_);
     ~znchName();
 
     void insert() override;
@@ -21,8 +22,8 @@ public:
 
     void setName(const QString & name_);
     void setName(const QString & name_, const bool & isZNCH);
-    QString getName() const;
-    QString pinyin() const;
+    [[nodiscard]] QString getName() const;
+    [[nodiscard]] QString pinyin() const;
 private:
     QString nameZNCH;
     QString nameEN;
@@ -31,6 +32,6 @@ private:
     assTypePtrW p_ptr_assType;
 };
 
-
-
 CORE_DNAMESPACE_E
+
+Q_DECLARE_METATYPE(doCore::znchNamePtr)

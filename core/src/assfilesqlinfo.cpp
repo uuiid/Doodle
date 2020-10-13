@@ -43,7 +43,7 @@ void assFileSqlInfo::select(qint64 &ID_)
         userP = query->value(3).toString();
         versionP = query->value(4).toInt();
         filepathP = query->value(5).toString();
-        infoP = query->value(6).toString();
+        infoP = query->value(6).toByteArray();
         fileStateP = query->value(7).toString();
 
         if (!query->value(8).isNull())
@@ -98,11 +98,11 @@ void assFileSqlInfo::updateSQL()
     updatasql_.set("filestate", fileSuffixesP.toStdString());
     updatasql_.set("infor", infoP.toStdString());
 
-    if (__file_class__ >= 0)
+    if ((__file_class__ >= 0) && (__file_class__ != p_ptrW_fileClass.lock()->getIdP()))
         updatasql_.set("__file_class__", __file_class__);
-    if (__file_type__ >= 0)
+    if ((__file_type__ >= 0) && (__file_type__ != p_ptrW_fileType.lock()->getIdP()))
         updatasql_.set("__file_type__", __file_type__);
-    if (__ass_class__ >= 0)
+    if ((__ass_class__ >= 0) && (__ass_class__ != p_ptrW_assType.lock()->getIdP()))
         updatasql_.set("__ass_class__", __ass_class__);
 
     updatasql_.where(sql::column("id") == idP);
@@ -129,7 +129,7 @@ assInfoPtrList assFileSqlInfo::batchQuerySelect(sqlQuertPtr &query)
         ass_->userP = query->value(3).toString();
         ass_->versionP = query->value(4).toInt();
         ass_->filepathP = query->value(5).toString();
-        ass_->infoP = query->value(6).toString();
+        ass_->infoP = query->value(6).toByteArray();
         ass_->fileStateP = query->value(7).toString();
 
         if (!query->value(8).isNull())

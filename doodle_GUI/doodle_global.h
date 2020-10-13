@@ -35,4 +35,6 @@ class fileClassShotModel;
 class fileClassShotWidget;
 
 class fileTypeShotWidget;
+
+class shotTableWidget;
 DOODLE_NAMESPACE_E

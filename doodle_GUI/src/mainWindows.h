@@ -15,6 +15,7 @@
 DOODLE_NAMESPACE_S
 
 class mainWindows : public QMainWindow {
+ Q_OBJECT
  private:
  public:
   explicit mainWindows(QWidget *parent = nullptr);
@@ -23,6 +24,7 @@ class mainWindows : public QMainWindow {
  private:
   void doodle_init();
   void doodle_createAction();
+  Q_DISABLE_COPY(mainWindows);
 
  private:
   QAction *exitAction;     // 退出软件
@@ -40,6 +42,7 @@ class mainWindows : public QMainWindow {
   shotLsitWidget *p_shot_lsit_widget_; //镜头小部件
   fileClassShotWidget *p_file_class_shot_widget_;//部门小部件
   fileTypeShotWidget *p_file_type_shot_widget_;//种类小部件
+  shotTableWidget *p_shot_table_widget_;//文件小部件
 };
 
 DOODLE_NAMESPACE_E

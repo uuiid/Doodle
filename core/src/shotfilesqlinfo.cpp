@@ -50,7 +50,7 @@ void shotFileSqlInfo::select(const qint64 &ID_)
         userP = query->value(3).toString();
         versionP = query->value(4).toInt();
         filepathP = query->value(5).toString();
-        infoP = query->value(6).toString();
+        infoP = query->value(6).toByteArray();
         fileStateP = query->value(7).toString();
 
         if (!query->value(8).isNull())
@@ -111,13 +111,16 @@ void shotFileSqlInfo::updateSQL()
     upd_.update(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
     upd_.set("filestate", fileSuffixesP.toStdString());
     upd_.set("infor", infoP.toStdString());
-    if (__episodes__ >= 0)
+    if ((__episodes__ >= 0) && (__episodes__ != p_ptrw_eps.lock()->getIdP()))
         upd_.set("__episodes__", __episodes__);
-    if (__shot__ >= 0)
+
+    if (__shot__ >= 0) {
+      if (__shot__ != p_ptrw_shot.lock()->getIdP())
         upd_.set("__shot__", __shot__);
-    if (__file_class__ >= 0)
+    }
+    if ((__file_class__ >= 0) && (__file_class__ != p_ptrw_fileClass.lock()->getIdP()))
         upd_.set("__file_class__", __file_class__);
-    if (__file_type__ >= 0)
+    if ((__file_type__ >= 0) && (__file_type__ != p_ptrw_fileType.lock()->getIdP()))
         upd_.set("__file_type__", __file_type__);
 
     upd_.where(sql::column("id") == idP);
@@ -145,7 +148,7 @@ shotInfoPtrList shotFileSqlInfo::batchQuerySelect(sqlQuertPtr &query)
         ptr->userP = query->value(3).toString();
         ptr->versionP = query->value(4).toInt();
         ptr->filepathP = query->value(5).toString();
-        ptr->infoP = query->value(6).toString();
+        ptr->infoP = query->value(6).toByteArray();
         ptr->fileStateP = query->value(7).toString();
 
         if (!query->value(8).isNull())
