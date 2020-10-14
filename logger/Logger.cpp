@@ -66,7 +66,7 @@ namespace Logger
         Q_UNUSED(context);
         QDateTime dt = QDateTime::currentDateTime();
         //每小时一个文件
-        QString fileNameDt = dt.toString("yyyy-MM-dd");
+        QString fileNameDt = dt.toString("yyyy-MM-dd-hh");
 
         //每分钟一个文件
         //QString fileNameDt = dt.toString("yyyy-MM-dd_hh_mm");

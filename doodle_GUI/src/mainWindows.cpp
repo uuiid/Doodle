@@ -1,15 +1,6 @@
 ﻿#include "mainWindows.h"
 
-#include "src/episodes.h"
-#include "src/shot.h"
-#include "src/fileclass.h"
-#include "src/filetype.h"
-
-#include "episodesListWidget.h"
-#include "shotListWidget.h"
-#include "fileClassShotWidget.h"
-#include "fileTypeShotWidget.h"
-#include "shotTableWidget.h"
+#include "ProjectWidget.h"
 
 
 #include <QAction>
@@ -29,11 +20,7 @@ mainWindows::mainWindows(QWidget *parent)
       p_status_bar_(nullptr),
       centralWidget(nullptr),
       p_b_box_layout_(nullptr),
-      p_episodes_list_widget_(nullptr),
-      p_shot_lsit_widget_(nullptr),
-      p_file_class_shot_widget_(nullptr),
-      p_file_type_shot_widget_(nullptr),
-      p_shot_table_widget_(nullptr){
+      p_prject_widght_(nullptr){
   doodle_init();
 }
 
@@ -43,7 +30,7 @@ void mainWindows::doodle_init() {
   //初始化自身
   if (objectName().isEmpty())
     setObjectName(QString::fromUtf8("mainWindows"));
-  resize(640, 480);
+  resize(1200, 800);
   setWindowTitle(tr("MainWindow"));
 
   //添加动作和菜单
@@ -61,54 +48,8 @@ void mainWindows::doodle_init() {
   p_b_box_layout_->setContentsMargins(0, 0, 0, 0);
   p_b_box_layout_->setObjectName(QString::fromUtf8("p_b_box_layout_"));
 
-  //创建集数小部件
-  p_episodes_list_widget_ = new episodesListWidget(centralWidget);
-  p_episodes_list_widget_->setObjectName(QString::fromUtf8("p_episodes_list_widget_"));
-
-  //添加镜头小部件
-  p_shot_lsit_widget_ = new shotLsitWidget(centralWidget);
-  p_shot_lsit_widget_->setObjectName(QString::fromUtf8("p_shot_lsit_widget_"));
-  //连接集数和镜头的更新
-  connect(p_episodes_list_widget_, &episodesListWidget::episodesEmit,
-          p_shot_lsit_widget_, &shotLsitWidget::init);
-
-
-  //添加部门小部件
-  p_file_class_shot_widget_ = new fileClassShotWidget(centralWidget);
-  p_file_class_shot_widget_->setObjectName(QString::fromUtf8("p_file_class_shot_widget_"));
-  connect(p_shot_lsit_widget_, &shotLsitWidget::shotEmit,
-          p_file_class_shot_widget_, &fileClassShotWidget::init);
-  //连接刷新函数
-  connect(p_episodes_list_widget_,&episodesListWidget::episodesEmit,
-          p_file_class_shot_widget_,&fileClassShotWidget::clear);
-
-  //添加种类小部件
-  p_file_type_shot_widget_ = new fileTypeShotWidget(centralWidget);
-  p_file_type_shot_widget_->setObjectName("p_file_type_shot_widget_");
-  connect(p_file_class_shot_widget_, &fileClassShotWidget::fileClassShotEmitted,
-          p_file_type_shot_widget_, &fileTypeShotWidget::init);
-  connect(p_episodes_list_widget_,&episodesListWidget::episodesEmit,
-          p_file_type_shot_widget_,&fileTypeShotWidget::clear);
-  connect(p_shot_lsit_widget_,&shotLsitWidget::shotEmit,
-          p_file_type_shot_widget_,&fileTypeShotWidget::clear);
-
-  p_shot_table_widget_ = new shotTableWidget(centralWidget);
-  p_shot_table_widget_->setObjectName("p_shot_table_widget_");
-  connect(p_file_type_shot_widget_,&fileTypeShotWidget::typeEmit,
-          p_shot_table_widget_, &shotTableWidget::init);
-  connect(p_episodes_list_widget_,&episodesListWidget::episodesEmit,
-          p_shot_table_widget_, &shotTableWidget::clear);
-  connect(p_file_class_shot_widget_,&fileClassShotWidget::fileClassShotEmitted,
-          p_shot_table_widget_, &shotTableWidget::clear);
-  connect(p_file_type_shot_widget_,&fileTypeShotWidget::typeEmit,
-          p_shot_table_widget_, &shotTableWidget::clear);
-
-  //将小部件添加到布局中
-  p_b_box_layout_->addWidget(p_episodes_list_widget_);
-  p_b_box_layout_->addWidget(p_shot_lsit_widget_);
-  p_b_box_layout_->addWidget(p_file_class_shot_widget_);
-  p_b_box_layout_->addWidget(p_file_type_shot_widget_);
-  p_b_box_layout_->addWidget(p_shot_table_widget_);
+  p_prject_widght_ = new ProjectWidget(centralWidget);
+  p_b_box_layout_->addWidget(p_prject_widght_);
 }
 
 void mainWindows::doodle_createAction() {

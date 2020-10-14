@@ -21,7 +21,7 @@ void Environment::SetUp()
     set.init();
     set.setProjectname("test_db");
     set.initdb();
-    std::cout << "exe init" << std::endl;
+    std::cout << "exe init_" << std::endl;
     doCore::sqlQuertPtr query = doCore::coreSql::getCoreSql().getquery();
     if (!query->exec("INSERT INTO test_db.configure(name, value) VALUES "
                      "('shotRoot','/03_Workflow/Shots'),"

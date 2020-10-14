@@ -27,6 +27,8 @@ class CORE_EXPORT fileSqlInfo : public coresqldata {
   [[nodiscard]] QString getFileStateP() const;
   void setFileStateP(const QString &value);
 
+  [[nodiscard]] QString getSuffixes() const;
+
   [[nodiscard]] QString getUserP() const;
 
   virtual QString generatePath(const QString &programFodler) = 0;

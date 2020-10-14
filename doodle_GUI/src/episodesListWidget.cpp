@@ -1,5 +1,6 @@
 ﻿#include "episodesListWidget.h"
 
+#include "episodesListModel.h"
 #include "src/episodes.h"
 
 #include <QSpinBox>
@@ -11,114 +12,6 @@
 
 DOODLE_NAMESPACE_S
 
-episodesListModel::episodesListModel(QObject *parent)
-    : QAbstractListModel(parent), eplist() {
-  init();
-}
-
-episodesListModel::~episodesListModel()
-= default;
-
-void episodesListModel::init() {
-  auto tmp_eps = doCore::episodes::getAll();
-  beginInsertRows(QModelIndex(), 0, tmp_eps.size() - 1);
-  eplist = tmp_eps;
-  endInsertRows();
-}
-
-int episodesListModel::rowCount(const QModelIndex &parent) const {
-  return eplist.size();
-}
-
-QVariant episodesListModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid())
-    return QVariant();
-
-  if (index.row() >= eplist.size())
-    return QVariant();
-
-  if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return eplist[index.row()]->getEpisdes_str();
-  } else {
-    return QVariant();
-  }
-}
-
-doCore::episodesPtr episodesListModel::dataRaw(const QModelIndex &index) const {
-  if (!index.isValid())
-    return nullptr;
-
-  if (index.row() >= eplist.size())
-    return nullptr;
-
-  return eplist[index.row()];
-}
-QVariant episodesListModel::headerData(int section, Qt::Orientation orientation, int role) const {
-  if (role != Qt::DisplayRole)
-    return QVariant();
-
-  if (orientation == Qt::Horizontal)
-    return QStringLiteral("Column %1").arg(section);
-  else
-    return QStringLiteral("Row %1").arg(section);
-}
-
-Qt::ItemFlags episodesListModel::flags(const QModelIndex &index) const {
-  if (!index.isValid())
-    return Qt::ItemIsEnabled;
-
-  if (eplist[index.row()]->isInsert())
-    return QAbstractListModel::flags(index);
-  else
-    return Qt::ItemIsEditable | Qt::ItemIsEnabled | QAbstractListModel::flags(index);
-}
-
-bool episodesListModel::setData(const QModelIndex &index, const QVariant &value, int role) {
-  if (index.isValid() && role == Qt::EditRole) {
-    //确认镜头不重复和没有提交
-    bool isHasEps = false;
-    for (auto &&x : eplist) {
-      if (value.toInt() == x->getEpisdes() || x->isInsert()) {
-        isHasEps = true;
-        break;
-      }
-    }
-    if (isHasEps)
-      return false;
-    else {
-      eplist[index.row()]->setEpisdes(value.toInt());
-      eplist[index.row()]->insert();
-      emit dataChanged(index, index, {role});
-      return true;
-    }
-  }
-  return false;
-}
-
-bool episodesListModel::insertRows(int position, int rows, const QModelIndex &index) {
-  beginInsertRows(index, position, position + rows - 1);
-  for (int row = 0; row < rows; ++row) {
-    std::cout << position << " " << row << std::endl;
-    eplist.insert(position, doCore::episodesPtr(new doCore::episodes));
-  }
-  endInsertRows();
-  return true;
-}
-
-bool episodesListModel::removeRows(int position, int rows, const QModelIndex &index) {
-  beginRemoveRows(index, position, position + rows - 1);
-  for (int row = 0; row < rows; ++row) {
-    eplist.remove(position);
-  }
-  endRemoveRows();
-  return true;
-}
-
-void episodesListModel::clear() {
-  beginResetModel();
-  eplist.clear();
-  endResetModel();
-}
 //------------------------------------------------------------------------------------
 //                                         集数编辑类
 //------------------------------------------------------------------------------------
@@ -174,13 +67,9 @@ void episodesintDelegate::updateEditorGeometry(QWidget *editor,
 
 episodesListWidget::episodesListWidget(QWidget *parent)
     : QListView(parent),
-      p_episodesListModel(nullptr),
       p_episodesListDelegate(nullptr),
       p_eps_Menu(nullptr) {
-  p_episodesListModel = new episodesListModel(this);
   p_episodesListDelegate = new episodesintDelegate(this);
-
-  setModel(p_episodesListModel);
   setItemDelegate(p_episodesListDelegate);
 
   setStatusTip(tr("集数栏 注意不要添加错误的集数"));
@@ -194,7 +83,7 @@ episodesListWidget::~episodesListWidget()
 
 void episodesListWidget::insertEpisodes() {
   int raw = selectionModel()->currentIndex().row() + 1;
-  p_episodesListModel->insertRow(raw, selectionModel()->currentIndex());
+  model()->insertRow(raw, selectionModel()->currentIndex());
   //设置当前行的选择
   setCurrentIndex(p_episodesListModel->index(raw));
   edit(p_episodesListModel->index(raw));
@@ -217,5 +106,13 @@ void episodesListWidget::contextMenuEvent(QContextMenuEvent *event) {
 
 void episodesListWidget::_doodle_episodes_emit(const QModelIndex &index) {
   emit episodesEmit(p_episodesListModel->dataRaw(index));
+}
+void episodesListWidget::init() {
+    p_episodesListModel->init();
+}
+void episodesListWidget::setModel(QAbstractItemModel *model) {
+  auto p_model = dynamic_cast<episodesListModel*>(model);
+  if(p_model) p_episodesListModel = p_model;
+  QAbstractItemView::setModel(model);
 }
 DOODLE_NAMESPACE_E

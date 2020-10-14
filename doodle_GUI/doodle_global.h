@@ -29,12 +29,16 @@ class episodesListWidget;
 
 class shotListModel;
 class shotIntEnumDelegate;
-class shotLsitWidget;
+class shotListWidget;
 
 class fileClassShotModel;
 class fileClassShotWidget;
 
+class fileTypeShotModel;
 class fileTypeShotWidget;
 
+class shotTableModel;
 class shotTableWidget;
+
+class ProjectWidget;
 DOODLE_NAMESPACE_E

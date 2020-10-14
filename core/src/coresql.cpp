@@ -46,7 +46,7 @@ sqlQuertPtr coreSql::getquery()
     QSqlDatabase dataBase = QSqlDatabase::database("mysql_main_data");
     dataBase.open();
 //    dataBase.transaction();
-    if(!isInit) throw std::runtime_error("not init DB (sql mian data)");
+    if(!isInit) throw std::runtime_error("not init_ DB (sql mian data)");
     sqlQuertPtr queryPtr(new QSqlQuery(dataBase));
     return queryPtr;
 }
@@ -73,7 +73,7 @@ mapStringPtr coreSqlUser::getUser()
 {
     QSqlDatabase dataBase = QSqlDatabase::database("mysql_main_user");
     dataBase.open();
-    if(!isInit) throw std::runtime_error("not init DB (sql mian data)");
+    if(!isInit) throw std::runtime_error("not init_ DB (sql mian data)");
     QSqlQuery query(dataBase);
 
     query.exec("SELECT user,password FROM user;");

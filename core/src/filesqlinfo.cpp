@@ -65,7 +65,9 @@ QJsonArray fileSqlInfo::getInfoP() const {
 void fileSqlInfo::setInfoP(const QString &value) {
   auto json_document = convertJson();
   if(json_document.isArray()){
-    json_document.array().push_back(value);
+    auto arr = json_document.array();
+    arr.push_back(value);
+    json_document.setArray(arr);
   }
   infoP = json_document.toJson(QJsonDocument::Compact);
 }
@@ -94,6 +96,9 @@ QJsonDocument fileSqlInfo::convertJson() const {
     json_document.setArray(json_array);
     return json_document;
   }
+}
+QString fileSqlInfo::getSuffixes() const {
+  return fileSuffixesP;
 }
 
 CORE_DNAMESPACE_E

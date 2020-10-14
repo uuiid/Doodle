@@ -18,42 +18,6 @@
 
 DOODLE_NAMESPACE_S
 
-/**
- * @description: 这个时镜头的自定义模型
- */
-class shotListModel : public QAbstractListModel {
- Q_OBJECT
- private:
-  doCore::shotPtrList shotlist;
-
- public:
-  explicit shotListModel(QObject *parent = nullptr);
-  ~shotListModel() override;
-
-  [[nodiscard]] int rowCount(const QModelIndex &parent) const override;
-  [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override;
-  [[nodiscard]] doCore::shotPtr dataRaw(const QModelIndex &index) const;
-
-  [[nodiscard]] QVariant headerData(int section,
-                      Qt::Orientation orientation,
-                      int role) const override;
-
-  //设置编辑标识
-  [[nodiscard]] Qt::ItemFlags flags(const QModelIndex &index) const override;
-  //设置数据(内部使用 QMap[shot] 和 QMap[shotAb] 获得传入信息)
-  bool setData(const QModelIndex &index, const QVariant &value, int role) override;
-
-  //插入数据
-  bool insertRows(int position, int rows, const QModelIndex &index) override;
-  //删除数据
-  bool removeRows(int position, int rows, const QModelIndex &index) override;
- public slots:
-  //自定义创建函数
-  void init(const doCore::episodesPtr &episodes_);
-  void clear();
- private:
-  doCore::episodesPtr p_episodes;
-};
 
 /**
  * @description: 自定义小部件, 用来修改shot使用
@@ -99,13 +63,14 @@ class shotIntEnumDelegate : public QStyledItemDelegate {
 
 /* ------------------------------- 自定义shot小部件 ------------------------------- */
 
-class shotLsitWidget : public QListView {
+class shotListWidget : public QListView {
  Q_OBJECT
 
  public:
-  explicit shotLsitWidget(QWidget *parent = nullptr);
-  ~shotLsitWidget() override;
+  explicit shotListWidget(QWidget *parent = nullptr);
+  ~shotListWidget() override;
 
+  void setModel(QAbstractItemModel *model) override;
  public slots :
   void init(const doCore::episodesPtr &episodes_);
 
@@ -115,7 +80,7 @@ class shotLsitWidget : public QListView {
  private:
   //私有变量
   //模型
-  shotListModel *p_model;
+  shotListModel *p_model_;
   //自定义委托
   shotIntEnumDelegate *p_delegate;
   //上下文菜单

@@ -11,44 +11,12 @@
 #include "doodle_global.h"
 #include "core_global.h"
 
+
 #include <QAbstractListModel>
 #include <QStyledItemDelegate>
 #include <QListView>
 
 DOODLE_NAMESPACE_S
-/**
- * @description: 自定义集数模型
- */
-class episodesListModel : public QAbstractListModel {
- Q_OBJECT
- private:
-  doCore::episodesPtrList eplist;
-
- public:
-  explicit episodesListModel(QObject *parent = nullptr);
-  ~episodesListModel() override;
-
-  //返回总行数
-  int rowCount(const QModelIndex &parent) const override;
-  //返回数据
-  QVariant data(const QModelIndex &index, int role) const override;
-  doCore::episodesPtr dataRaw(const QModelIndex &index) const;
-  //返回标题
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
-
-  //设置是否编辑标识
-  Qt::ItemFlags flags(const QModelIndex &index) const override;
-  //设置数据
-  bool setData(const QModelIndex &index, const QVariant &value, int role) override;
-
-  //添加数据
-  bool insertRows(int position, int rows, const QModelIndex &index) override;
-  bool removeRows(int position, int rows, const QModelIndex &index) override;
- public slots:
-  //刷新函数
-  void init();
-  void clear();
-};
 
 /**
  * @description: 自定义集数委托
@@ -80,6 +48,10 @@ class episodesListWidget : public QListView {
  public:
   explicit episodesListWidget(QWidget *parent = nullptr);
   ~episodesListWidget() override;
+
+  void setModel(QAbstractItemModel *model) override;
+ public slots:
+  void init();
  signals:
   void episodesEmit(const doCore::episodesPtr &episodes);
 

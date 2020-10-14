@@ -16,9 +16,9 @@ int main(int argc, char *argv[]) {
   //初始化log
   Logger::doodle_initLog();
 
-  //设置本地编码
-  QTextCodec *codec = QTextCodec::codecForName("GBK");
-  QTextCodec::setCodecForLocale(codec);
+//  //设置本地编码
+//  QTextCodec *codec = QTextCodec::codecForName("GBK");
+//  QTextCodec::setCodecForLocale(codec);
 
   //设置主题
   QApplication::setStyle(new DarkStyle);

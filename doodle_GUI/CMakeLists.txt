@@ -19,6 +19,8 @@ set(DOODLE_SOURE_HEADER
         src/episodesListWidget.h
         src/fileTypeShotWidget.h
         src/shotTableWidget.h
+        src/ProjectWidget.h
+        src/episodesListModel.h
         src/mainWindows.h
         )
 set(DOODLE_SOURE
@@ -29,7 +31,8 @@ set(DOODLE_SOURE
         src/fileTypeShotWidget.cpp
         src/shotTableWidget.cpp
         src/mainWindows.cpp
-        )
+        src/ProjectWidget.cpp
+        src/episodesListModel.cpp src/fileClassShotModel.cpp src/fileClassShotModel.h src/fileTypeShotModel.cpp src/fileTypeShotModel.h src/shotListModel.cpp src/shotListModel.h src/shotTableModel.cpp src/shotTableModel.h)
 
 set(TS_FILES
 

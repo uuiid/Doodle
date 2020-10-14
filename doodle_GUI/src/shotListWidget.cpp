@@ -1,138 +1,18 @@
-#include "shotListWidget.h"
-
 #include "src/shot.h"
 
 #include "Logger.h"
+#include "shotListModel.h"
+
+#include "shotListWidget.h"
 
 #include <QSpinBox>
 #include <QHBoxLayout>
 #include <QComboBox>
 #include <QMessageBox>
 #include <QMenu>
-#include <QAction>
-
 #include <QContextMenuEvent>
 
 DOODLE_NAMESPACE_S
-
-shotListModel::shotListModel(QObject *parent)
-    : QAbstractListModel(parent),
-      shotlist(),
-      p_episodes(nullptr) {
-}
-
-shotListModel::~shotListModel() = default;
-
-void shotListModel::init(const doCore::episodesPtr &episodes_) {
-  doCore::shotPtrList tmp_shot_list = doCore::shot::getAll(episodes_);
-
-  clear();
-
-  beginInsertRows(QModelIndex(), 0, tmp_shot_list.size());
-  shotlist = tmp_shot_list;
-  endInsertRows();
-
-  p_episodes = episodes_;
-}
-
-int shotListModel::rowCount(const QModelIndex &parent) const {
-  return shotlist.size();
-}
-
-QVariant shotListModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid())
-    return QVariant();
-
-  if (index.row() >= shotlist.size())
-    return QVariant();
-
-  if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return shotlist[index.row()]->getShotAndAb_str();
-  } else {
-    return QVariant();
-  }
-}
-
-doCore::shotPtr shotListModel::dataRaw(const QModelIndex &index) const {
-  if (!index.isValid())
-    return nullptr;
-
-  return shotlist[index.row()];
-}
-
-QVariant shotListModel::headerData(int section,
-                                   Qt::Orientation orientation,
-                                   int role) const {
-  if (role != Qt::DisplayRole)
-    return QVariant();
-
-  if (orientation == Qt::Horizontal)
-    return QStringLiteral("Column %1").arg(section);
-  else
-    return QStringLiteral("Row %1").arg(section);
-}
-
-Qt::ItemFlags shotListModel::flags(const QModelIndex &index) const {
-  if (!index.isValid())
-    return Qt::ItemIsEnabled;
-
-  if (shotlist[index.row()]->isInsert())
-    return QAbstractListModel::flags(index);
-  else
-    return Qt::ItemIsEditable | Qt::ItemIsEnabled | QAbstractListModel::flags(index);
-}
-
-bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int role) {
-  QMap infoMap = value.toMap();
-  if (index.isValid() && role == Qt::EditRole) {
-    //确认镜头不重复和没有提交
-    //这个函数不设置AB镜
-    bool isHasShot = false;
-    for (auto &&x : shotlist) {
-      if ((infoMap["shot"].toInt() == x->getShot()
-          && infoMap["shotAb"].toString() == x->getShotAndAb_str())
-          || x->isInsert()) {
-        isHasShot = true;
-        break;
-      }
-    }
-
-    if (isHasShot)
-      return false;
-    else {
-      shotlist[index.row()]->setShot(infoMap["shot"].toInt(), infoMap["shotAb"].toString());
-      shotlist[index.row()]->setEpisodes(p_episodes);
-      shotlist[index.row()]->insert();
-      emit dataChanged(index, index, {role});
-      return true;
-    }
-  }
-  return false;
-}
-
-bool shotListModel::insertRows(int position, int rows, const QModelIndex &index) {
-  beginInsertRows(QModelIndex(), position, position + rows - 1);
-
-  for (int row = 0; row < rows; ++row) {
-    shotlist.insert(position, doCore::shotPtr(new doCore::shot));
-  }
-  endInsertRows();
-  return true;
-}
-
-bool shotListModel::removeRows(int position, int rows, const QModelIndex &index) {
-  beginRemoveRows(index, position, position + rows - 1);
-  for (int row = 0; row < rows; ++row) {
-    shotlist.remove(position);
-  }
-  endRemoveRows();
-  return true;
-}
-void shotListModel::clear() {
-  beginResetModel();
-  shotlist.clear();
-  endResetModel();
-}
 
 /* -------------------------------- 自定义小部件 -------------------------------- */
 
@@ -226,56 +106,60 @@ void shotIntEnumDelegate::updateEditorGeometry(QWidget *editor, const QStyleOpti
 }
 
 /* ------------------------------- 自定义shot小部件 ------------------------------- */
-shotLsitWidget::shotLsitWidget(QWidget *parent)
+shotListWidget::shotListWidget(QWidget *parent)
     : QListView(parent),
-      p_model(nullptr),
+      p_model_(nullptr),
       p_delegate(nullptr),
       p_shot_menu(nullptr),
       p_episodes(nullptr) {
-  p_model = new shotListModel(this);
   p_delegate = new shotIntEnumDelegate(this);
 
-  setModel(p_model);
   setItemDelegate(p_delegate);
 
   setStatusTip(tr("镜头栏 右键添加镜头"));
 
-  connect(this, &shotLsitWidget::clicked,
-          this, &shotLsitWidget::_doodle_shot_emit);
+  connect(this, &shotListWidget::clicked,
+          this, &shotListWidget::_doodle_shot_emit);
 }
 
-shotLsitWidget::~shotLsitWidget() {};
+shotListWidget::~shotListWidget() {};
 
-void shotLsitWidget::init(const doCore::episodesPtr &episodes_) {
+void shotListWidget::init(const doCore::episodesPtr &episodes_) {
   p_episodes = episodes_;
-  p_model->init(episodes_);
+  p_model_->init(episodes_);
 }
 
-void shotLsitWidget::insertShot() {
+void shotListWidget::insertShot() {
   int raw = selectionModel()->currentIndex().row() + 1;
-  p_model->insertRow(raw, QModelIndex());
+  p_model_->insertRow(raw, QModelIndex());
 
-  setCurrentIndex(p_model->index(raw));
-  edit(p_model->index(raw));
+  setCurrentIndex(p_model_->index(raw));
+  edit(p_model_->index(raw));
 }
 
-void shotLsitWidget::_doodle_shot_emit(const QModelIndex &index) {
-  emit shotEmit(p_model->dataRaw(index));
+void shotListWidget::_doodle_shot_emit(const QModelIndex &index) {
+  emit shotEmit(p_model_->dataRaw(index));
 }
 
-void shotLsitWidget::contextMenuEvent(QContextMenuEvent *event) {
+void shotListWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_shot_menu = new QMenu(this);
   if (p_episodes) {
     auto *action = new QAction(this);
 
     connect(action, &QAction::triggered,
-            this, &shotLsitWidget::insertShot);
+            this, &shotListWidget::insertShot);
     action->setText(tr("添加镜头"));
     action->setStatusTip(tr("添加镜头"));
     p_shot_menu->addAction(action);
   }
   p_shot_menu->move(event->globalPos());
   p_shot_menu->show();
+}
+void shotListWidget::setModel(QAbstractItemModel *model) {
+  auto p_model = dynamic_cast<shotListModel *>(model);
+  if (p_model)
+    p_model_ = p_model;
+  QAbstractItemView::setModel(model);
 }
 
 DOODLE_NAMESPACE_E
