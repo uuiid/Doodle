@@ -16,7 +16,7 @@
 
 
 #define DOODLE_NAMESPACE_S namespace doodle {
-#define DOODLE_NAMESPACE_E }
+#define DOODLE_NAMESPACE_E };
 
 // class QHBoxLayout;
 // class QComboBox;
@@ -40,5 +40,10 @@ class fileTypeShotWidget;
 class shotTableModel;
 class shotTableWidget;
 
+class fileClassAssModel;
+
+
 class ProjectWidget;
+
+
 DOODLE_NAMESPACE_E

@@ -22,10 +22,10 @@ class CORE_EXPORT assType : public coresqldata {
   void setFileClass(const fileClassPtrW &value);
 
   QString getAssType() const;
-  QString getAssType(const assTypePtr &isZNCH);
+  QString getAssType(const bool &isZNCH);
 
   void setAssType(const QString &value);
-  void setAssType(const QString &value, const assTypePtr &isZNCH);
+  void setAssType(const QString &value, const bool &isZNCH);
 
  private:
   static assTypePtrList batchQuerySelect(sqlQuertPtr &query);

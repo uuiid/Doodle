@@ -132,6 +132,8 @@ void fileClassShotModel::init(const doCore::shotPtr &shot) {
 }
 
 void fileClassShotModel::clear() {
+  p_shot = nullptr;
+  if (list_fileClass.isEmpty()) return;
   beginResetModel();
   list_fileClass.clear();
   endResetModel();

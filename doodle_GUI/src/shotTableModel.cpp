@@ -18,90 +18,33 @@ int shotTableModel::columnCount(const QModelIndex &parent) const {
   return 5;
 }
 QVariant shotTableModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid()) return QVariant();
-  if (index.row() >= p_shot_info_ptr_list_.size()) return QVariant();
+  auto var = QVariant();
+  if (!index.isValid()) return var;
+  if (index.row() >= p_shot_info_ptr_list_.size()) return var;
 
   auto shot = p_shot_info_ptr_list_[index.row()];
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
     switch (index.column()) {
-      case 0:return QString("v%1").arg(shot->getVersionP(), 4, 10, QLatin1Char('0'));
+      case 0:var = QString("v%1").arg(shot->getVersionP(), 4, 10, QLatin1Char('0'));
         break;
-      case 1:return shot->getInfoP().last().toVariant();
+      case 1:var = shot->getInfoP().last().toVariant();
         break;
-      case 2:return shot->getUserP();
+      case 2:var = shot->getUserP();
         break;
       case 3:
-        DOODLE_LOG_INFO << shot->getSuffixes();
-        return shot->getSuffixes();
+        var = shot->getSuffixes();
         break;
-      case 4:return shot->getIdP();
+      case 4:var = shot->getIdP();
         break;
-      default:return QVariant();
+      default:var = QVariant();
         break;
     }
   } else if (role == Qt::UserRole) {
-    return QVariant::fromValue(shot);
+    var =  QVariant::fromValue(shot);
   } else {
-    return QVariant();
+    var =  QVariant();
   }
-}
-bool shotTableModel::setData(const QModelIndex &index, const QVariant &value, int role) {
-  if (!index.isValid()) return false;
-  if (index.row() >= p_shot_info_ptr_list_.size()) return false;
-
-  if (index.column() == 1 && role == Qt::EditRole) {
-    if(!value.toString().isEmpty() &&
-        value.toString() != p_shot_info_ptr_list_[index.row()]->getInfoP().last().toString()) {
-      DOODLE_LOG_INFO << p_shot_info_ptr_list_[index.row()]->getInfoP().last().toString();
-      p_shot_info_ptr_list_[index.row()]->setInfoP(value.toString());
-      p_shot_info_ptr_list_[index.row()]->updateSQL();
-      dataChanged(index, index);
-      return true;
-    }
-    return false;
-  } else if (role == Qt::UserRole) {
-    if (!value.canConvert<doCore::shotInfoPtr>()) return false;
-    p_shot_info_ptr_list_[index.row()] = value.value<doCore::shotInfoPtr>();
-    p_shot_info_ptr_list_[index.row()]->insert();
-    dataChanged(index, index);
-    return true;
-  } else {
-    return false;
-  }
-
-}
-
-Qt::ItemFlags shotTableModel::flags(const QModelIndex &index) const {
-  if (index.column() == 1)
-    return Qt::ItemIsEditable | Qt::ItemIsEnabled | QAbstractTableModel::flags(index);
-  else
-    return QAbstractTableModel::flags(index);
-}
-bool shotTableModel::insertRows(int position, int rows, const QModelIndex &parent) {
-  beginInsertRows(QModelIndex(), position, position + rows - 1);
-  for (int row = 0; row < rows; ++row) {
-    p_shot_info_ptr_list_.insert(position,
-                                 doCore::shotInfoPtr(new doCore::shotFileSqlInfo));
-    p_shot_info_ptr_list_[position]->setFileType(p_type_ptr_);
-  }
-  endInsertRows();
-  return true;
-}
-
-void shotTableModel::init(const doCore::fileTypePtr &file_type_ptr) {
-  auto tmp_list = doCore::shotFileSqlInfo::getAll(file_type_ptr);
-  clear();
-  beginInsertRows(QModelIndex(), 0, tmp_list.size() - 1);
-  p_type_ptr_ = file_type_ptr;
-  p_shot_info_ptr_list_ = tmp_list;
-  endInsertRows();
-}
-void shotTableModel::clear() {
-  if (!p_shot_info_ptr_list_.isEmpty()) {
-    beginResetModel();
-    p_shot_info_ptr_list_.clear();
-    endResetModel();
-  }
+  return var;
 }
 QVariant shotTableModel::headerData(int section, Qt::Orientation orientation, int role) const {
   QString str;
@@ -121,8 +64,69 @@ QVariant shotTableModel::headerData(int section, Qt::Orientation orientation, in
         break;
     }
   } else
-    str = section;
+    str = QString(section);
   return str;
+}
+
+bool shotTableModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+  if (!index.isValid()) return false;
+  if (index.row() >= p_shot_info_ptr_list_.size()) return false;
+
+  if (index.column() == 1 && role == Qt::EditRole) {
+    if (!value.toString().isEmpty() &&
+        value.toString() != p_shot_info_ptr_list_[index.row()]->getInfoP().last().toString()) {
+      DOODLE_LOG_INFO << p_shot_info_ptr_list_[index.row()]->getInfoP().last().toString();
+      p_shot_info_ptr_list_[index.row()]->setInfoP(value.toString());
+      p_shot_info_ptr_list_[index.row()]->updateSQL();
+      dataChanged(index, index);
+      return true;
+    }
+    return false;
+  } else if (role == Qt::UserRole) {
+    if (!value.canConvert<doCore::shotInfoPtr>()) return false;
+    p_shot_info_ptr_list_[index.row()] = value.value<doCore::shotInfoPtr>();
+    p_shot_info_ptr_list_[index.row()]->insert();
+    dataChanged(index, index);
+    return true;
+  } else {
+    return false;
+  }
+
+}
+Qt::ItemFlags shotTableModel::flags(const QModelIndex &index) const {
+  if (index.column() == 1)
+    return Qt::ItemIsEditable | Qt::ItemIsEnabled | QAbstractTableModel::flags(index);
+  else
+    return QAbstractTableModel::flags(index);
+}
+
+bool shotTableModel::insertRows(int position, int rows, const QModelIndex &parent) {
+  beginInsertRows(QModelIndex(), position, position + rows - 1);
+  beginInsertColumns(QModelIndex(), 0, 4);
+  for (int row = 0; row < rows; ++row) {
+    p_shot_info_ptr_list_.insert(position,
+                                 doCore::shotInfoPtr(new doCore::shotFileSqlInfo));
+    p_shot_info_ptr_list_[position]->setFileType(p_type_ptr_);
+  }
+  endInsertColumns();
+  endInsertRows();
+  return true;
+}
+void shotTableModel::init(const doCore::fileTypePtr &file_type_ptr) {
+  auto tmp_list = doCore::shotFileSqlInfo::getAll(file_type_ptr);
+  clear();
+  beginInsertRows(QModelIndex(), 0, tmp_list.size() - 1);
+  p_type_ptr_ = file_type_ptr;
+  p_shot_info_ptr_list_ = tmp_list;
+  endInsertRows();
+}
+void shotTableModel::clear() {
+  p_type_ptr_ = nullptr;
+  if (p_shot_info_ptr_list_.isEmpty()) return;
+  beginResetModel();
+  p_shot_info_ptr_list_.clear();
+  endResetModel();
+
 }
 
 DOODLE_NAMESPACE_E

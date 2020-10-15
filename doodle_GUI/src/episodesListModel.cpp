@@ -7,7 +7,6 @@
 #include <src/episodes.h>
 #include "episodesListModel.h"
 
-
 DOODLE_NAMESPACE_S
 
 episodesListModel::episodesListModel(QObject *parent)
@@ -16,12 +15,6 @@ episodesListModel::episodesListModel(QObject *parent)
 }
 episodesListModel::~episodesListModel()
 = default;
-void episodesListModel::init() {
-  auto tmp_eps = doCore::episodes::getAll();
-  beginInsertRows(QModelIndex(), 0, tmp_eps.size() - 1);
-  eplist = tmp_eps;
-  endInsertRows();
-}
 int episodesListModel::rowCount(const QModelIndex &parent) const {
   return eplist.size();
 }
@@ -94,11 +87,17 @@ bool episodesListModel::removeRows(int position, int rows, const QModelIndex &in
   endRemoveRows();
   return true;
 }
+void episodesListModel::init() {
+  auto tmp_eps = doCore::episodes::getAll();
+  beginInsertRows(QModelIndex(), 0, tmp_eps.size() - 1);
+  eplist = tmp_eps;
+  endInsertRows();
+}
 void episodesListModel::clear() {
-  if(!eplist.isEmpty()) {
-    beginResetModel();
-    eplist.clear();
-    endResetModel();
-  }
+  if (eplist.isEmpty()) return;
+  beginResetModel();
+  eplist.clear();
+  endResetModel();
+
 }
 DOODLE_NAMESPACE_E

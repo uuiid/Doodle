@@ -10,8 +10,7 @@
 #include "core_global.h"
 
 #include <QAbstractListModel>
-#include <QStyledItemDelegate>
-#include <QListView>
+
 
 DOODLE_NAMESPACE_S
 

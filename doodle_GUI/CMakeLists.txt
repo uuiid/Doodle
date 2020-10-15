@@ -22,6 +22,12 @@ set(DOODLE_SOURE_HEADER
         src/ProjectWidget.h
         src/episodesListModel.h
         src/mainWindows.h
+        src/fileClassShotModel.h
+        src/fileTypeShotModel.h
+        src/shotListModel.h
+        src/shotTableModel.h
+        src/fileClassAssModel.h
+        src/fileClassAssWidget.h
         )
 set(DOODLE_SOURE
         resource/DarkStyle.cpp
@@ -32,7 +38,12 @@ set(DOODLE_SOURE
         src/shotTableWidget.cpp
         src/mainWindows.cpp
         src/ProjectWidget.cpp
-        src/episodesListModel.cpp src/fileClassShotModel.cpp src/fileClassShotModel.h src/fileTypeShotModel.cpp src/fileTypeShotModel.h src/shotListModel.cpp src/shotListModel.h src/shotTableModel.cpp src/shotTableModel.h)
+        src/episodesListModel.cpp
+        src/fileClassShotModel.cpp
+        src/fileTypeShotModel.cpp
+        src/shotListModel.cpp
+        src/shotTableModel.cpp
+        src/fileClassAssModel.cpp src/fileClassAssWidget.cpp src/assClassModel.cpp src/assClassModel.h src/fileTypeAssModel.cpp src/fileTypeAssModel.h src/assTableModel.cpp src/assTableModel.h)
 
 set(TS_FILES
 

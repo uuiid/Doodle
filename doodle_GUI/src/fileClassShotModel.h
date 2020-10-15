@@ -6,7 +6,6 @@
 #include "doodle_global.h"
 #include "core_global.h"
 
-#include <QListView>
 #include <QAbstractListModel>
 
 

@@ -126,7 +126,7 @@ TEST_F(CoreTest, create_assInfo)
     {
         doCore::assTypePtr af_(new doCore::assType);
         af_->setFileClass(fc_[0]);
-        af_->setAssType(QString::fromUtf8("大小"), af_);
+        af_->setAssType(QString::fromUtf8("大小"), true);
         af_->insert();
 
         doCore::fileTypePtr ft_(new doCore::fileType);
@@ -157,8 +157,8 @@ TEST_F(CoreTest, get_assInf)
     }
 
     doCore::assTypePtr af_ = doCore::assType::getAll(list_fileClass[0])[0];
-    std::cout << "asstype :" << af_->getAssType(af_).toLocal8Bit().toStdString() << std::endl;
-    RecordProperty("asstype", af_->getAssType(af_).toStdString());
+    std::cout << "asstype :" << af_->getAssType(true).toLocal8Bit().toStdString() << std::endl;
+    RecordProperty("asstype", af_->getAssType(true).toStdString());
     // QTextCodec *code = QTextCodec::codecForName("GBK");
     // std::cout << "asstype :" <<code->fromUnicode(af_->getAssType(af_)).toStdString() << std::endl;
 

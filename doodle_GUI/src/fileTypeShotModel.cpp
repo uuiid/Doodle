@@ -49,6 +49,7 @@ void fileTypeShotModel::init(const doCore::fileClassPtr &file_class_ptr) {
   endInsertRows();
 }
 void fileTypeShotModel::clear() {
+  p_class_ptr_ = nullptr;
   beginResetModel();
   p_type_ptr_list_.clear();
   endResetModel();

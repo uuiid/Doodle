@@ -8,7 +8,7 @@
 //必要导入
 #include <QApplication>
 #include <QTextCodec>
-
+#include <iostream>
 
 int main(int argc, char *argv[]) {
   QApplication q_application(argc, argv);
@@ -19,7 +19,6 @@ int main(int argc, char *argv[]) {
 //  //设置本地编码
 //  QTextCodec *codec = QTextCodec::codecForName("GBK");
 //  QTextCodec::setCodecForLocale(codec);
-
   //设置主题
   QApplication::setStyle(new DarkStyle);
 

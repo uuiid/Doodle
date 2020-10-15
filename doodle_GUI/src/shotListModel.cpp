@@ -17,17 +17,6 @@ shotListModel::shotListModel(QObject *parent)
 
 shotListModel::~shotListModel() = default;
 
-void shotListModel::init(const doCore::episodesPtr &episodes_) {
-  doCore::shotPtrList tmp_shot_list = doCore::shot::getAll(episodes_);
-
-  clear();
-
-  beginInsertRows(QModelIndex(), 0, tmp_shot_list.size());
-  shotlist = tmp_shot_list;
-  endInsertRows();
-
-  p_episodes = episodes_;
-}
 
 int shotListModel::rowCount(const QModelIndex &parent) const {
   return shotlist.size();
@@ -122,7 +111,20 @@ bool shotListModel::removeRows(int position, int rows, const QModelIndex &index)
   endRemoveRows();
   return true;
 }
+void shotListModel::init(const doCore::episodesPtr &episodes_) {
+  doCore::shotPtrList tmp_shot_list = doCore::shot::getAll(episodes_);
+
+  clear();
+
+  beginInsertRows(QModelIndex(), 0, tmp_shot_list.size());
+  shotlist = tmp_shot_list;
+  endInsertRows();
+
+  p_episodes = episodes_;
+}
 void shotListModel::clear() {
+  p_episodes = nullptr;
+  if(shotlist.isEmpty()) return;
   beginResetModel();
   shotlist.clear();
   endResetModel();
