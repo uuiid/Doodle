@@ -28,6 +28,10 @@ set(DOODLE_SOURE_HEADER
         src/shotTableModel.h
         src/fileClassAssModel.h
         src/fileClassAssWidget.h
+        src/assClassWidget.h
+        src/assTableModel.h
+        src/fileTypeAssModel.h
+        src/assClassModel.h
         )
 set(DOODLE_SOURE
         resource/DarkStyle.cpp
@@ -43,7 +47,13 @@ set(DOODLE_SOURE
         src/fileTypeShotModel.cpp
         src/shotListModel.cpp
         src/shotTableModel.cpp
-        src/fileClassAssModel.cpp src/fileClassAssWidget.cpp src/assClassModel.cpp src/assClassModel.h src/fileTypeAssModel.cpp src/fileTypeAssModel.h src/assTableModel.cpp src/assTableModel.h)
+        src/fileClassAssModel.cpp
+        src/fileClassAssWidget.cpp
+        src/assClassModel.cpp
+        src/fileTypeAssModel.cpp
+        src/assTableModel.cpp
+        src/assClassWidget.cpp
+        src/fileTypeAssWidget.cpp src/fileTypeAssWidget.h)
 
 set(TS_FILES
 
