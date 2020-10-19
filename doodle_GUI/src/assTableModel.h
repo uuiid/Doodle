@@ -6,6 +6,7 @@
 #include "doodle_global.h"
 #include "core_global.h"
 #include <QAbstractTableModel>
+
 DOODLE_NAMESPACE_S
 
 class assTableModel : public QAbstractTableModel {

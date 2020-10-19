@@ -1,7 +1,8 @@
 #include "src/coreset.h"
 
-//测试时导入
+
 #include "src/mainWindows.h"
+#include "src/systemTray.h"
 #include "resource/DarkStyle.h"
 
 #include "Logger.h"

@@ -47,7 +47,7 @@ void znchName::insert() {
 
 void znchName::select() {
   sql::SelectModel sel_;
-  sel_.select("id", "localname");
+  sel_.select("id", "localname","__ass_class__");
   sel_.from(QString("%1.znch").arg(coreSet::getCoreSet().getProjectname()).toStdString());
   sel_.where(sql::column("__ass_class__") == p_ptr_assType->getIdP());
 
@@ -59,7 +59,7 @@ void znchName::select() {
   if (query->next()) {
     idP = query->value(0).toInt();
     nameZNCH = query->value(1).toString();
-    assert(idP == p_ptr_assType->getIdP());
+    assert(query->value(2).toUInt() == p_ptr_assType->getIdP());
   } else {
     idP = -1;
     nameZNCH = p_ptr_assType->getAssType();

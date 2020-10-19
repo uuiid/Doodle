@@ -41,12 +41,18 @@ class shotTableModel;
 class shotTableWidget;
 
 class fileClassAssModel;
+class fileClassAssWidget;
 
 class assClassModel;
+class assClassWidget;
 
 class fileTypeAssModel;
+class fileTypeAssWidget;
 
 class assTableModel;
+class assTableWidght;
+
+class settingWidget;
 
 class ProjectWidget;
 

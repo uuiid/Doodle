@@ -72,7 +72,7 @@ class shotListWidget : public QListView {
   void setModel(QAbstractItemModel *model) override;
  public slots :
   void init(const doCore::episodesPtr &episodes_);
-
+  void clear();
  signals:
   void shotEmit(const doCore::shotPtr &shot);
 

@@ -130,6 +130,7 @@ fileClassPtrList fileClass::getAll()
     sql::SelectModel sel_;
     sel_.select("id", "file_class", "__shot__", "__episodes__");
     sel_.from(QString("%1.fileclass").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+    sel_.order_by("file_class");
     sel_.where(sql::column("__shot__").is_null());
     sel_.where(sql::column("__episodes__").is_null());
 

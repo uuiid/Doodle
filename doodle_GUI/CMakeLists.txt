@@ -32,7 +32,12 @@ set(DOODLE_SOURE_HEADER
         src/assTableModel.h
         src/fileTypeAssModel.h
         src/assClassModel.h
+        src/fileTypeAssWidget.h
+        src/assTableWidght.h
+        src/settingWidget.h
+        src/systemTray.h
         )
+
 set(DOODLE_SOURE
         resource/DarkStyle.cpp
         src/fileClassShotWidget.cpp
@@ -53,11 +58,15 @@ set(DOODLE_SOURE
         src/fileTypeAssModel.cpp
         src/assTableModel.cpp
         src/assClassWidget.cpp
-        src/fileTypeAssWidget.cpp src/fileTypeAssWidget.h)
+        src/fileTypeAssWidget.cpp
+        src/assTableWidght.cpp
+        src/settingWidget.cpp
+        src/systemTray.cpp
+        )
 
 set(TS_FILES
-
         )
+
 
 set(RESOURCE_SOURCE
         resource/resource.qrc

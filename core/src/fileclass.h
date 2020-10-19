@@ -26,6 +26,8 @@ class CORE_EXPORT fileClass : public coresqldata {
     effects = 10,
     scene = 11,
     prop = 12,
+    scane = 13,
+    props = 14,
   };
 
   void insert() override;

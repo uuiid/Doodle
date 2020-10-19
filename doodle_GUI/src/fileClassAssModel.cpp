@@ -5,11 +5,12 @@
 #include "fileClassAssModel.h"
 DOODLE_NAMESPACE_S
 fileClassAssModel::fileClassAssModel(QObject *parent)
-:QAbstractListModel(parent),p_class_ptr_list_(){
+:QAbstractListModel(parent)
+,p_class_ptr_list_(){
   init();
 }
 int fileClassAssModel::rowCount(const QModelIndex &parent) const {
-  return 0;
+  return p_class_ptr_list_.size();
 }
 QVariant fileClassAssModel::data(const QModelIndex &index, int role) const {
   if(!index.isValid()) return QVariant();

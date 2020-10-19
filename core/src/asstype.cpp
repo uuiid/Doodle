@@ -91,6 +91,7 @@ assTypePtrList assType::getAll(const fileClassPtr &fc_) {
   sql::SelectModel sel_;
   sel_.select("id", "file_name", "__file_class__");
   sel_.from(QString("%1.assclass").arg(coreSet::getCoreSet().getProjectname()).toStdString());
+  sel_.order_by("file_name");
   sel_.where(sql::column("__file_class__") == fc_->getIdP());
 
   sqlQuertPtr query = coreSql::getCoreSql().getquery();

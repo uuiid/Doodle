@@ -7,6 +7,8 @@
 #include "src/fileclass.h"
 #include "src/filetype.h"
 
+#include "src/asstype.h"
+
 #include "episodesListWidget.h"
 #include "shotListWidget.h"
 #include "fileClassShotWidget.h"
@@ -19,36 +21,58 @@
 #include "fileTypeShotModel.h"
 #include "shotTableModel.h"
 
+#include "fileClassAssModel.h"
+#include "assClassModel.h"
+#include "fileTypeAssModel.h"
+#include "assTableModel.h"
+
+#include "fileClassAssWidget.h"
+#include "assClassWidget.h"
+#include "fileTypeAssWidget.h"
+#include "assTableWidght.h"
+
+
 #include "ProjectWidget.h"
 
 DOODLE_NAMESPACE_S
 
 ProjectWidget::ProjectWidget(QWidget *parent)
 : QTabWidget(parent),
-  p_b_box_layout_(nullptr),
+  p_shot_layout_(nullptr),
   p_episodes_list_widget_(nullptr),
   p_shot_list_widget_(nullptr),
   p_file_class_shot_widget_(nullptr),
   p_file_type_shot_widget_(nullptr),
-  p_shot_table_widget_(nullptr){
+  p_shot_table_widget_(nullptr),
+  p_episodes_list_model_(nullptr),
+  p_shot_list_model_(nullptr),
+  p_file_class_shot_model_(nullptr),
+  p_file_type_shot_model_(nullptr),
+  p_shot_table_model_(nullptr),
+
+  p_file_class_ass_widget_(nullptr),
+  p_ass_class_widget_(nullptr),
+  p_file_type_ass_widget_(nullptr),
+  p_ass_table_widght_(nullptr),
+  p_file_class_ass_model_(nullptr),
+  p_ass_class_model_(nullptr),
+  p_file_type_ass_model_(nullptr),
+  p_ass_table_model_(nullptr){
   init_();
 }
 void ProjectWidget::init_() {
   auto ass_parent = new QWidget();
   assInit(ass_parent);
   addTab(ass_parent,QString("ass"));
-  setTabText(0,"ass");
+  setTabText(0,tr("资产"));
 
   //添加shot页面
   auto shot_anm_parent = new QWidget();
   shotInitAnm(shot_anm_parent);
   addTab(shot_anm_parent,QString("Anm"));
-  setTabText(1,"Anm");
+  setTabText(1,tr("动画"));
 }
 
-void ProjectWidget::init() {
-  p_episodes_list_widget_->init();
-}
 void ProjectWidget::shotInitAnm(QWidget *parent) {
   //创建模型
   p_episodes_list_model_ = new episodesListModel(this);
@@ -58,10 +82,10 @@ void ProjectWidget::shotInitAnm(QWidget *parent) {
   p_shot_table_model_ = new shotTableModel(this);
 
   //设置基本布局
-  p_b_box_layout_ = new QHBoxLayout(parent);
-  p_b_box_layout_->setSpacing(3);
-  p_b_box_layout_->setContentsMargins(0, 0, 0, 0);
-  p_b_box_layout_->setObjectName(QString::fromUtf8("p_b_box_layout_"));
+  p_shot_layout_ = new QHBoxLayout(parent);
+  p_shot_layout_->setSpacing(3);
+  p_shot_layout_->setContentsMargins(0, 0, 0, 0);
+  p_shot_layout_->setObjectName(QString::fromUtf8("p_shot_layout_"));
 
   //创建集数小部件
   p_episodes_list_widget_ = new episodesListWidget(parent);
@@ -112,15 +136,71 @@ void ProjectWidget::shotInitAnm(QWidget *parent) {
           p_shot_table_widget_, &shotTableWidget::clear);
 
   //将小部件添加到布局中
-  p_b_box_layout_->addWidget(p_episodes_list_widget_,1);
-  p_b_box_layout_->addWidget(p_shot_list_widget_, 1);
-  p_b_box_layout_->addWidget(p_file_class_shot_widget_,1);
-  p_b_box_layout_->addWidget(p_file_type_shot_widget_,1);
-  p_b_box_layout_->addWidget(p_shot_table_widget_,5);
+  p_shot_layout_->addWidget(p_episodes_list_widget_, 1);
+  p_shot_layout_->addWidget(p_shot_list_widget_, 1);
+  p_shot_layout_->addWidget(p_file_class_shot_widget_, 1);
+  p_shot_layout_->addWidget(p_file_type_shot_widget_, 1);
+  p_shot_layout_->addWidget(p_shot_table_widget_, 5);
 }
 void ProjectWidget::assInit(QWidget *parent) {
-  auto test =  new QHBoxLayout(parent);
-  auto but = new QLabel("科目");
-  test->addWidget(but);
+  p_ass_layout_ = new QHBoxLayout(parent);
+  p_ass_layout_->setSpacing(3);
+  p_ass_layout_->setContentsMargins(0, 0, 0, 0);
+  p_ass_layout_->setObjectName(QString::fromUtf8("p_ass_layout_"));
+
+  p_file_class_ass_model_ = new fileClassAssModel(this);
+  p_ass_class_model_ = new assClassModel(this);
+  p_file_type_ass_model_ = new fileTypeAssModel(this);
+  p_ass_table_model_ = new assTableModel(this);
+
+  p_file_class_ass_widget_ = new fileClassAssWidget(parent);
+  p_file_class_ass_widget_->setObjectName("p_file_class_ass_widget_");
+  p_file_class_ass_widget_->setModel(p_file_class_ass_model_);
+
+
+  p_ass_class_widget_ = new assClassWidget(parent);
+  p_ass_class_widget_->setObjectName("p_ass_class_widget_");
+  p_ass_class_widget_->setModel(p_ass_class_model_);
+  connect(p_file_class_ass_widget_, &fileClassAssWidget::fileClassEmit,
+          p_ass_class_widget_, &assClassWidget::init);
+
+
+  p_file_type_ass_widget_ = new fileTypeAssWidget(parent);
+  p_file_type_ass_widget_->setObjectName("p_file_type_ass_widget_");
+  p_file_type_ass_widget_->setModel(p_file_type_ass_model_);
+  connect(p_ass_class_widget_, &assClassWidget::assClassEmited,
+          p_file_type_ass_widget_,&fileTypeAssWidget::init);
+  connect(p_file_class_ass_widget_, & fileClassAssWidget::fileClassEmit,
+          p_file_type_ass_widget_,&fileTypeAssWidget::clear);
+
+  p_ass_table_widght_ = new assTableWidght(parent);
+  p_ass_table_widght_->setObjectName("p_ass_table_widght_");
+  p_ass_table_widght_->setModel(p_ass_table_model_);
+  connect(p_file_type_ass_widget_,&fileTypeAssWidget::filetypeEmited,
+          p_ass_table_widght_, &assTableWidght::init);
+  connect(p_ass_class_widget_, &assClassWidget::assClassEmited,
+          p_ass_table_widght_, &assTableWidght::clear);
+  connect(p_file_class_ass_widget_, &fileClassAssWidget::fileClassEmit,
+          p_ass_table_widght_, &assTableWidght::clear);
+
+  auto class_ass_layout = new QVBoxLayout(parent);
+  class_ass_layout->addWidget(p_file_class_ass_widget_,1);
+  class_ass_layout->addWidget(p_ass_class_widget_,30);
+  p_ass_layout_->addLayout(class_ass_layout,2);
+
+  p_ass_layout_->addWidget(p_file_type_ass_widget_,1);
+  p_ass_layout_->addWidget(p_ass_table_widght_,3);
+}
+void ProjectWidget::refresh() {
+  p_file_class_ass_widget_->init();
+  p_ass_class_widget_->clear();
+  p_file_type_ass_widget_->clear();
+  p_ass_table_widght_->clear();
+
+  p_episodes_list_widget_->init();
+  p_shot_list_widget_->clear();
+  p_file_class_shot_widget_->clear();
+  p_file_type_shot_widget_->clear();
+  p_shot_table_widget_->clear();
 }
 DOODLE_NAMESPACE_E

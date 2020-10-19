@@ -41,8 +41,7 @@ shotEditWidget::shotEditWidget(QWidget *parent) : QWidget(parent),
   }
 }
 
-shotEditWidget::~shotEditWidget() {
-}
+shotEditWidget::~shotEditWidget() = default;
 
 QMap<QString, QVariant> shotEditWidget::value() {
   QMap<QString, QVariant> map;
@@ -62,8 +61,7 @@ void shotEditWidget::setValue(const QMap<QString, QVariant> &value) {
 shotIntEnumDelegate::shotIntEnumDelegate(QObject *parent) : QStyledItemDelegate(parent) {
 }
 
-shotIntEnumDelegate::~shotIntEnumDelegate() {
-}
+shotIntEnumDelegate::~shotIntEnumDelegate() = default;
 
 QWidget *shotIntEnumDelegate::createEditor(QWidget *parent,
                                            const QStyleOptionViewItem &option,
@@ -122,7 +120,7 @@ shotListWidget::shotListWidget(QWidget *parent)
           this, &shotListWidget::_doodle_shot_emit);
 }
 
-shotListWidget::~shotListWidget() {};
+shotListWidget::~shotListWidget() = default;;
 
 void shotListWidget::init(const doCore::episodesPtr &episodes_) {
   p_episodes = episodes_;
@@ -160,6 +158,10 @@ void shotListWidget::setModel(QAbstractItemModel *model) {
   if (p_model)
     p_model_ = p_model;
   QAbstractItemView::setModel(model);
+}
+void shotListWidget::clear() {
+  if (p_model_)
+    p_model_->clear();
 }
 
 DOODLE_NAMESPACE_E

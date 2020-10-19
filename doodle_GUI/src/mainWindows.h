@@ -19,11 +19,14 @@ class mainWindows : public QMainWindow {
  public:
   explicit mainWindows(QWidget *parent = nullptr);
   ~mainWindows() override;
+  Q_DISABLE_COPY(mainWindows);
 
  private:
   void doodle_init();
   void doodle_createAction();
-  Q_DISABLE_COPY(mainWindows);
+
+ private slots:
+  void openSetting();
 
  private:
   QAction *exitAction;     // 退出软件
@@ -35,9 +38,10 @@ class mainWindows : public QMainWindow {
   QStatusBar *p_status_bar_;
 
   QWidget *centralWidget; //中心小部件
-  QHBoxLayout *p_b_box_layout_; //布局
+  QVBoxLayout *p_b_box_layout_; //布局
 
   ProjectWidget * p_prject_widght_;
+  settingWidget * p_setting_widget_;
 };
 
 DOODLE_NAMESPACE_E

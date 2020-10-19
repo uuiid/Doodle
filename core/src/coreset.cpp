@@ -53,7 +53,7 @@ void coreSet::writeDoodleLocalSet()
     QFile strFile(doc.absoluteFilePath(settingFileName));
     if (!strFile.open(QIODevice::WriteOnly))
         throw std::runtime_error("not open doodle_conf.json");
-    strFile.write(jsonDoc.toBinaryData());
+    strFile.write(jsonDoc.toJson(QJsonDocument::Compact));
     strFile.close();
 }
 
@@ -313,5 +313,14 @@ void coreSet::getCacheDiskPath()
             }
         }
     }
+}
+QStringList coreSet::getAllPrjName() const {
+  return {"dubuxiaoyao","dubuxiaoyao3","changanhuanjie"};
+}
+const QFileInfo &coreSet::getSynPathLocale() const {
+  return synPath;
+}
+void coreSet::setSynPathLocale(const QFileInfo &syn_path) {
+  synPath = syn_path;
 }
 CORE_DNAMESPACE_E

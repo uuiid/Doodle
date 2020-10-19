@@ -2,11 +2,8 @@
 
 #include "ProjectWidget.h"
 
+#include "settingWidget.h"
 
-#include <QAction>
-#include <QMenu>
-#include <QMenuBar>
-#include <QStatusBar>
 
 DOODLE_NAMESPACE_S
 
@@ -20,7 +17,8 @@ mainWindows::mainWindows(QWidget *parent)
       p_status_bar_(nullptr),
       centralWidget(nullptr),
       p_b_box_layout_(nullptr),
-      p_prject_widght_(nullptr){
+      p_prject_widght_(nullptr),
+      p_setting_widget_(nullptr){
   doodle_init();
 }
 
@@ -43,13 +41,29 @@ void mainWindows::doodle_init() {
   setCentralWidget(centralWidget);
 
   //设置基本布局
-  p_b_box_layout_ = new QHBoxLayout(centralWidget);
+  p_b_box_layout_ = new QVBoxLayout(centralWidget);
   p_b_box_layout_->setSpacing(0);
   p_b_box_layout_->setContentsMargins(0, 0, 0, 0);
   p_b_box_layout_->setObjectName(QString::fromUtf8("p_b_box_layout_"));
 
+  //开始设置项目小部件
+  auto prj = new QListWidget(centralWidget);
+  prj->setObjectName("prj");
+  prj->addItems(doCore::coreSet::getCoreSet().getAllPrjName());
+  prj->setFlow(QListView::LeftToRight);
+
   p_prject_widght_ = new ProjectWidget(centralWidget);
-  p_b_box_layout_->addWidget(p_prject_widght_);
+  p_prject_widght_->setObjectName("p_prject_widght_");
+  p_b_box_layout_->addWidget(prj,1);
+  p_b_box_layout_->addWidget(p_prject_widght_,35);
+
+  p_setting_widget_ = new settingWidget(centralWidget);
+  //连接项目更改设置
+  connect(prj, &QListWidget::itemClicked,
+          p_setting_widget_, [=](QListWidgetItem *item)mutable{
+    p_setting_widget_->setProject(item->text());});
+  connect(prj, &QListWidget::itemClicked,
+          p_prject_widght_, &ProjectWidget::refresh);
 }
 
 void mainWindows::doodle_createAction() {
@@ -78,6 +92,8 @@ void mainWindows::doodle_createAction() {
   openSetWindows->setText(tr("Open Setting"));
   openSetWindows->setStatusTip(tr("打开设置"));
   openSetWindows->setToolTip(tr("Open Setting"));
+  connect(openSetWindows,&QAction::triggered,
+          this,&mainWindows::openSetting);
   p_menu_->addAction(openSetWindows);
 
   exitAction = new QAction(this);
@@ -92,5 +108,8 @@ void mainWindows::doodle_createAction() {
   p_status_bar_->setObjectName(QString::fromUtf8("p_status_bar_"));
   setStatusBar(p_status_bar_);
 }
-
+void mainWindows::openSetting() {
+  p_setting_widget_->setInit();
+  p_setting_widget_->show();
+}
 DOODLE_NAMESPACE_E

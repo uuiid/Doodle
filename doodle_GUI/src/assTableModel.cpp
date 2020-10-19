@@ -32,17 +32,19 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
         break;
       case 1:var = ass->getInfoP().last().toString();
         break;
-      case 2:var = ass->getSuffixes();
+      case 2:var = ass->getUserP();
         break;
-      case 3:var = ass->getUserP();
+      case 3:var = ass->getSuffixes();
         break;
-      case 4:var = ass->getIdP();
+      case 4:var = QString("%1").arg(ass->getIdP());
+        break;
       default:var = "";
         break;
     }
-  } else {
+  } else if (role == Qt::UserRole) {
     var = QVariant::fromValue(ass);
-  }
+  } else
+    var = QVariant();
   return var;
 }
 QVariant assTableModel::headerData(int section, Qt::Orientation orientation, int role) const {
@@ -81,8 +83,8 @@ bool assTableModel::setData(const QModelIndex &index, const QVariant &value, int
     }
     return false;
   } else if (role == Qt::UserRole) {
-    if (!value.canConvert<doCore::shotInfoPtr>()) return false;
-    p_ass_info_ptr_list_[index.row()] = value.value<doCore::shotInfoPtr>();
+    if (!value.canConvert<doCore::assInfoPtr>()) return false;
+    p_ass_info_ptr_list_[index.row()] = value.value<doCore::assInfoPtr>();
     p_ass_info_ptr_list_[index.row()]->insert();
     dataChanged(index, index);
     return true;
@@ -114,7 +116,7 @@ void assTableModel::init(const doCore::fileTypePtr &file_type_ptr) {
   clear();
   beginInsertRows(QModelIndex(), 0, tmp_list.size() - 1);
   p_ass_info_ptr_list_ = tmp_list;
-  p_file_type_ptr_ = tmp_list;
+  p_file_type_ptr_ = file_type_ptr;
   endInsertRows();
 }
 void assTableModel::clear() {
@@ -126,3 +128,4 @@ void assTableModel::clear() {
 }
 
 DOODLE_NAMESPACE_E
+

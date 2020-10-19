@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE RCC>
 <RCC version="1.0">
     <qresource prefix="/">
-        <file>qtquickcontrols2.conf</file>
+        <file>icon.tga</file>
     </qresource>
 </RCC>

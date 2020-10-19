@@ -8,8 +8,7 @@
 
 #include "core_global.h"
 
-#include <QtWidgets/qtableview.h>
-#include <QAbstractTableModel>
+#include <QTableView>
 
 DOODLE_NAMESPACE_S
 
