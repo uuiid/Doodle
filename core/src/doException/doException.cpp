@@ -36,4 +36,4 @@ const char *doodle_InsertErrorInfo::what() const noexcept
     str = str + std::runtime_error::what();
     return str.c_str();
 }
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

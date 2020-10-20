@@ -201,4 +201,4 @@ shotPtrList shot::getAll(const episodesPtr &EP_)
 
     return listShot;
 }
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

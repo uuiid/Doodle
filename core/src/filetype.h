@@ -64,6 +64,6 @@ class CORE_EXPORT fileType : public coresqldata {
   qint64 __shot__;
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E
 
 Q_DECLARE_METATYPE(doCore::fileTypePtr)

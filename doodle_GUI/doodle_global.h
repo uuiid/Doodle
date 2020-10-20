@@ -55,6 +55,6 @@ class assTableWidght;
 class settingWidget;
 
 class ProjectWidget;
-
+class mainWindows;
 
 DOODLE_NAMESPACE_E

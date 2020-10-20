@@ -24,4 +24,4 @@ protected:
     void getInsertID(sqlQuertPtr &query);
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

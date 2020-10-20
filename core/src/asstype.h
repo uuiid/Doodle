@@ -39,6 +39,6 @@ class CORE_EXPORT assType : public coresqldata {
   znchNamePtr p_ptr_znch;
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E
 
 Q_DECLARE_METATYPE(doCore::assTypePtr)

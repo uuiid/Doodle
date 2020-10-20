@@ -149,4 +149,4 @@ QString assType::getAssType(const bool &isZNCH) {
   return str;
 }
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

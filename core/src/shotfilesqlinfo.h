@@ -53,6 +53,6 @@ class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo {
   fileTypePtrW p_ptrw_fileType;
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E
 
 Q_DECLARE_METATYPE(doCore::shotInfoPtr)

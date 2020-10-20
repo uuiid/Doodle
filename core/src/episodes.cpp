@@ -105,4 +105,4 @@ QString episodes::getEpisdes_str() const
     return str.arg(p_int_episodes, 3, 10, QLatin1Char('0'));
 }
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

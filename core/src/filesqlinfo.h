@@ -53,4 +53,4 @@ class CORE_EXPORT fileSqlInfo : public coresqldata {
   [[nodiscard]] QJsonDocument convertJson() const;
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

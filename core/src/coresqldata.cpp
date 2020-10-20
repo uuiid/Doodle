@@ -59,4 +59,4 @@ void coresqldata::getInsertID(sqlQuertPtr &query)
         idP = query->value("id_").toInt();
     }
 }
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

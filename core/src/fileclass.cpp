@@ -270,4 +270,4 @@ void fileClass::setShot(const shotPtrW &value)
     setEpisodes(value.lock()->getEpisodes());
 }
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

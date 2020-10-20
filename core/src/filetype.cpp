@@ -367,4 +367,4 @@ shotPtr fileType::getShot()
     }
 }
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

@@ -101,4 +101,4 @@ QString fileSqlInfo::getSuffixes() const {
   return fileSuffixesP;
 }
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

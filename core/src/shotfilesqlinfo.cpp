@@ -462,4 +462,4 @@ void shotFileSqlInfo::setFileType(const fileTypePtrW &fileType_)
     setFileClass(fileType_.lock()->getFileClass());
 }
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

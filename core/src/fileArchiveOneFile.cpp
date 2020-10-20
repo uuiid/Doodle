@@ -64,4 +64,4 @@ void fileArchiveOneFile::_updata()
     if (!session->upload(p_cacheFilePath.absoluteFilePath(), p_Path))
         throw doodle_upload_error(p_cacheFilePath.absoluteFilePath().toStdString());
 }
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

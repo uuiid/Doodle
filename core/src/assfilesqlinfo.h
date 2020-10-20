@@ -48,6 +48,6 @@ class CORE_EXPORT assFileSqlInfo : public fileSqlInfo {
 
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E
 
 Q_DECLARE_METATYPE(doCore::assInfoPtr)

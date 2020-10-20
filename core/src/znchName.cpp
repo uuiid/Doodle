@@ -102,4 +102,4 @@ QString znchName::getName() const {
 QString znchName::pinyin() const {
   return nameEN;
 }
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

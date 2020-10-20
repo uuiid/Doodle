@@ -27,8 +27,6 @@ struct synPath_struct {
   QString server;
 };
 
-typedef QVector<synPath_struct> synPathListPtr;
-
 /*
 *全局静态设置类
 */
@@ -134,5 +132,5 @@ class CORE_EXPORT coreSet : public QObject {
   QDir doc;
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E
 

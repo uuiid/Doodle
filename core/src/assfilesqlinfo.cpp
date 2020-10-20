@@ -340,4 +340,4 @@ void assFileSqlInfo::setAssType(const assTypePtrW &assType_) {
   setFileClass(assType_.lock()->getFileClass());
 }
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

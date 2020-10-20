@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE RCC>
 <RCC version="1.0">
     <qresource prefix="/">
-        <file>icon.tga</file>
+        <file>_GlobalSettings.xml</file>
+        <file>template.ffs_batch</file>
     </qresource>
 </RCC>

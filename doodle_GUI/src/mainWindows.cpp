@@ -3,6 +3,7 @@
 #include "ProjectWidget.h"
 
 #include "settingWidget.h"
+#include "systemTray.h"
 
 
 DOODLE_NAMESPACE_S

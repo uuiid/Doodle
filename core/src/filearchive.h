@@ -32,4 +32,4 @@ protected:
     QfileInfoVector p_soureFile;
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

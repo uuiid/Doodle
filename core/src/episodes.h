@@ -26,5 +26,5 @@ class CORE_EXPORT episodes : public coresqldata {
 
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E
 Q_DECLARE_METATYPE(doCore::episodesPtr)

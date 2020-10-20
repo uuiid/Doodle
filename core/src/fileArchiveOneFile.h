@@ -30,4 +30,4 @@ protected:
     QString p_Path;
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

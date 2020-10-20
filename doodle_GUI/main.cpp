@@ -22,12 +22,16 @@ int main(int argc, char *argv[]) {
 //  QTextCodec::setCodecForLocale(codec);
   //设置主题
   QApplication::setStyle(new DarkStyle);
-
+  //初始化设置
   doCore::coreSet &set = doCore::coreSet::getCoreSet();
   set.init();
+  QApplication::setQuitOnLastWindowClosed(false);
 
-  doodle::mainWindows main_doodle = doodle::mainWindows();
-  main_doodle.show();
+  auto sys_tray = new doodle::systemTray();
+  sys_tray->showMessage("doodle","hello");
+  sys_tray->setIcon(QIcon(":/resource/icon.png"));
+  sys_tray->setVisible(true);
+  sys_tray->show();
 
   return QApplication::exec();
 }

@@ -61,6 +61,6 @@ class CORE_EXPORT fileClass : public coresqldata {
   qint64 __eps__;
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E
 
 Q_DECLARE_METATYPE(doCore::fileClassPtr)

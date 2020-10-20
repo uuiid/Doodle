@@ -27,4 +27,4 @@ QfileInfoVector fileArchive::down(const QFileInfo &path)
     return QfileInfoVector();
 }
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

@@ -45,4 +45,4 @@ public:
     virtual const char *what() const noexcept override;
 };
 
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

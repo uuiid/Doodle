@@ -323,4 +323,4 @@ const QFileInfo &coreSet::getSynPathLocale() const {
 void coreSet::setSynPathLocale(const QFileInfo &syn_path) {
   synPath = syn_path;
 }
-CORE_DNAMESPACE_E
+CORE_NAMESPACE_E

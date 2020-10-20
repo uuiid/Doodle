@@ -69,7 +69,7 @@ set(TS_FILES
 
 
 set(RESOURCE_SOURCE
-        resource/resource.qrc
+        resource.qrc
 )
 
 qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})

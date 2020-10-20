@@ -15,7 +15,7 @@
 #endif
 
 #define CORE_NAMESPACE_S namespace doCore {
-#define CORE_DNAMESPACE_E };
+#define CORE_NAMESPACE_E };
 
 
 
@@ -72,7 +72,10 @@ typedef QVector<shotInfoPtr> shotInfoPtrList;
 typedef QVector<assInfoPtr>  assInfoPtrList;
 
 typedef QSharedPointer<fileSqlInfo> fileSqlInfoPtr;
+struct synPath_struct;
 
-CORE_DNAMESPACE_E
+typedef QVector<synPath_struct> synPathListPtr;
+
+CORE_NAMESPACE_E
 
 
