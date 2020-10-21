@@ -11,15 +11,19 @@ DOODLE_NAMESPACE_S
 class systemTray : public QSystemTrayIcon {
  Q_OBJECT
  public:
-  explicit systemTray(QWidget *parent = nullptr);
+  explicit systemTray(mainWindows *parent = nullptr);
   enum class installModel {
     peject,
     exeFile
   };
+
+
  private slots:
   void synFile();
   void installMayaPlug();
   void installUe4Plug(const installModel &model);
   void doodleQuery();
+ private:
+  QAction * setting;
 };
 DOODLE_NAMESPACE_E

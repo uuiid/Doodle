@@ -24,7 +24,5 @@ ftpSessionPtr ftphandle::session(const QString &host, int prot, const QString &n
     return session;
 }
 
-ftphandle::ftphandle()
-{
-}
+ftphandle::ftphandle()= default;
 FTPSPACE_E

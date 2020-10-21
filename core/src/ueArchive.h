@@ -2,7 +2,11 @@
 
 #include "core_global.h"
 
-CORE_NAMESPACE_S
+#include "fileArchive.h"
 
+CORE_NAMESPACE_S
+class CORE_EXPORT ueArchive : public fileArchive{
+
+};
 
 CORE_NAMESPACE_E

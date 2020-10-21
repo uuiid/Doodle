@@ -65,7 +65,7 @@ void assFileSqlInfo::insert() {
     ins_.insert("file", fileP.toStdString());
     ins_.insert("fileSuffixes", fileSuffixesP.toStdString());
     ins_.insert("user", userP.toStdString());
-    ins_.insert("version", (unsigned char) versionP);
+    ins_.insert("version", versionP);
     ins_.insert("_file_path_", filepathP.toStdString());
 
     if (!infoP.isEmpty())
@@ -75,11 +75,11 @@ void assFileSqlInfo::insert() {
       ins_.insert("filestate", fileStateP.toStdString());
 
     if (__file_class__ > 0)
-      ins_.insert("__file_class__", (unsigned char) __file_class__);
+      ins_.insert("__file_class__", __file_class__);
     if (__file_type__ > 0)
-      ins_.insert("__file_type__", (unsigned char) __file_type__);
+      ins_.insert("__file_type__", __file_type__);
     if (__ass_class__ > 0)
-      ins_.insert("__ass_class__", (unsigned char) __ass_class__);
+      ins_.insert("__ass_class__", __ass_class__);
     ins_.into(coreSet::getCoreSet().getProjectname().toStdString() + ".basefile");
     if (!query->exec(QString::fromStdString(ins_.str())))
       throw std::runtime_error(query->lastError().text().toStdString());
@@ -230,7 +230,7 @@ QString assFileSqlInfo::generatePath(const QString &programFolder) {
   else
     path = path.arg(QString());
 
-  return formatPath(path);
+  return QDir::cleanPath(path);
 }
 
 QString assFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes) {

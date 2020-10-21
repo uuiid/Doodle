@@ -2,11 +2,11 @@
 
 #include "coreset.h"
 
+#include "Logger.h"
+
 #include <QJsonArray>
 #include <QJsonDocument>
-#include <QJsonParseError>
 #include <QJsonObject>
-#include <QJsonValueRef>
 #include <QVariant>
 
 CORE_NAMESPACE_S
@@ -36,9 +36,10 @@ QfileInfoVector fileSqlInfo::getFileList() const {
 
 void fileSqlInfo::setFileList(const QfileInfoVector &filelist) {
   if (filelist.size() == 0) { throw std::runtime_error("filelist not value"); }
+  DOODLE_LOG_INFO << filelist;
   QJsonArray jsonList;
-  for (QFileInfo d: filelist) {
-    jsonList.append(d.absoluteFilePath());
+  for (auto &&item: filelist) {
+    jsonList.append(item.filePath());
   }
   QJsonDocument jsondoc(jsonList);
   filepathP = QString(jsondoc.toJson(QJsonDocument::Compact));
@@ -80,9 +81,6 @@ void fileSqlInfo::setFileStateP(const QString &value) {
   fileStateP = value;
 }
 
-QString fileSqlInfo::formatPath(const QString &value) const {
-  return QFileInfo(value).filePath();
-}
 QString fileSqlInfo::getUserP() const {
   return userP;
 }

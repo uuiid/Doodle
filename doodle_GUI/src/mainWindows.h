@@ -25,7 +25,7 @@ class mainWindows : public QMainWindow {
   void doodle_init();
   void doodle_createAction();
 
- private slots:
+ public slots:
   void openSetting();
 
  private:

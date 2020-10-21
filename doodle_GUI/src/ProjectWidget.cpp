@@ -183,9 +183,9 @@ void ProjectWidget::assInit(QWidget *parent) {
   connect(p_file_class_ass_widget_, &fileClassAssWidget::fileClassEmit,
           p_ass_table_widght_, &assTableWidght::clear);
 
-  auto class_ass_layout = new QVBoxLayout(parent);
+  auto class_ass_layout = new QVBoxLayout();
   class_ass_layout->addWidget(p_file_class_ass_widget_,1);
-  class_ass_layout->addWidget(p_ass_class_widget_,30);
+  class_ass_layout->addWidget(p_ass_class_widget_,50);
   p_ass_layout_->addLayout(class_ass_layout,2);
 
   p_ass_layout_->addWidget(p_file_type_ass_widget_,1);

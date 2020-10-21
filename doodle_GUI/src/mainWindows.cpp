@@ -5,7 +5,9 @@
 #include "settingWidget.h"
 #include "systemTray.h"
 
-
+#include <QListWidget>
+#include <QMenuBar>
+#include <QStatusBar>
 DOODLE_NAMESPACE_S
 
 mainWindows::mainWindows(QWidget *parent)
@@ -65,6 +67,13 @@ void mainWindows::doodle_init() {
     p_setting_widget_->setProject(item->text());});
   connect(prj, &QListWidget::itemClicked,
           p_prject_widght_, &ProjectWidget::refresh);
+
+  //添加托盘图标
+  auto tray = new systemTray(this);
+  tray->showMessage("doodle","hello");
+  tray->setIcon(QIcon(":/resource/icon.png"));
+  tray->setVisible(true);
+  tray->show();
 }
 
 void mainWindows::doodle_createAction() {
@@ -108,7 +117,9 @@ void mainWindows::doodle_createAction() {
   p_status_bar_ = new QStatusBar(this);
   p_status_bar_->setObjectName(QString::fromUtf8("p_status_bar_"));
   setStatusBar(p_status_bar_);
+
 }
+
 void mainWindows::openSetting() {
   p_setting_widget_->setInit();
   p_setting_widget_->show();

@@ -20,35 +20,35 @@ settingWidget::settingWidget(QWidget *parent)
   p_dep_text = new QComboBox(this);
   p_dep_text->addItems({"Executive",
                         "Light", "VFX", "modle", "rig", "Anm", "direct", "paint"});
-  auto p_dep_layout = new QHBoxLayout(this);
+  auto p_dep_layout = new QHBoxLayout();
   p_dep_layout->addWidget(p_dep_label);
   p_dep_layout->addWidget(p_dep_text);
 
   auto p_user_label = new QLabel(this);
   p_user_label->setText(tr("用户名:"));
   p_user_text = new QLineEdit(this);
-  auto p_user_layout = new QHBoxLayout(this);
+  auto p_user_layout = new QHBoxLayout();
   p_user_layout->addWidget(p_user_label);
   p_user_layout->addWidget(p_user_text);
 
   auto p_syn_label = new QLabel(this);
   p_syn_label->setText(tr("同步目录:"));
   p_syn_text = new QLineEdit(this);
-  auto p_syn_layout = new QHBoxLayout(this);
+  auto p_syn_layout = new QHBoxLayout();
   p_syn_layout->addWidget(p_syn_label);
   p_syn_layout->addWidget(p_syn_text);
 
   auto p_eps_label = new QLabel(this);
   p_eps_text = new QSpinBox(this);
   p_eps_label->setText(tr("同步集数:"));
-  auto p_eps_layout = new QHBoxLayout(this);
+  auto p_eps_layout = new QHBoxLayout();
   p_eps_layout->addWidget(p_eps_label);
   p_eps_layout->addWidget(p_eps_text);
 
   auto p_prj_label = new QLabel(this);
   p_prj_label->setText(tr("项目名称:"));
   p_prj_text = new QComboBox(this);
-  auto p_prj_layout = new QHBoxLayout(this);
+  auto p_prj_layout = new QHBoxLayout();
   p_prj_layout->addWidget(p_prj_label);
   p_prj_layout->addWidget(p_prj_text);
 
@@ -61,7 +61,7 @@ settingWidget::settingWidget(QWidget *parent)
   connect(p_save,&QPushButton::clicked,
           this, &settingWidget::save);
 
-  auto p_same_layout = new QVBoxLayout(this);
+  auto p_same_layout = new QVBoxLayout();
   p_same_layout->addLayout(p_dep_layout);
   p_same_layout->addLayout(p_user_layout);
   p_same_layout->addLayout(p_syn_layout);
@@ -98,6 +98,7 @@ void settingWidget::setInit() {
   p_syn_text->setText(p_set_.getSynPathLocale().absolutePath());
   p_eps_text->setValue(p_set_.getSyneps());
   p_prj_text->setCurrentText(p_set_.getProjectname());
+  seteps(p_set_.getSyneps());
 }
 void settingWidget::setDepartment(const QString &dep) {
   p_set_.setDepartment(dep);

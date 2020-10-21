@@ -19,10 +19,10 @@
 namespace Logger
 {
 
-#define DOODLE_LOG_DEBUG qDebug() << __FILE__ << __FUNCTION__ << __LINE__
-#define DOODLE_LOG_INFO qInfo() << __FILE__ << __FUNCTION__ << __LINE__
-#define DOODLE_LOG_WARN qWarning() << __FILE__ << __FUNCTION__ << __LINE__
-#define DOODLE_LOG_CRIT qCritical() << __FILE__ << __FUNCTION__ << __LINE__
+#define DOODLE_LOG_DEBUG qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << "\n"
+#define DOODLE_LOG_INFO qInfo() << __FILE__ << __FUNCTION__ << __LINE__ << "\n"
+#define DOODLE_LOG_WARN qWarning() << __FILE__ << __FUNCTION__ << __LINE__ << "\n"
+#define DOODLE_LOG_CRIT qCritical() << __FILE__ << __FUNCTION__ << __LINE__ << "\n"
 
 void LOGGER_EXPORT doodle_initLog(const QString &logPath = QStringLiteral("Log"),
                                   int logMaxCount = 1024, bool async = true);

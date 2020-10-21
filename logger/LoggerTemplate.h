@@ -5,7 +5,7 @@ namespace Logger
 {
     const static QString logTemplate = u8R"logTemplate(
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "https://github.com/">
 <html>
 
 <head>
@@ -92,7 +92,8 @@ namespace Logger
             obj.style.display="none"
         }
         function objShow(obj) {
-            obj.style.display="block"
+            obj.style.display="block";
+            obj.style.whiteSpace = "pre-wrap";
         }
         function selectType() {
             var sel = document.getElementById("typeSelect");

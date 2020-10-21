@@ -4,6 +4,7 @@
 
 #include "systemTray.h"
 #include "mainWindows.h"
+#include "settingWidget.h"
 
 #include "src/coreset.h"
 #include "src/freeSynWrap.h"
@@ -11,7 +12,7 @@
 
 #include <QMenu>
 DOODLE_NAMESPACE_S
-systemTray::systemTray(QWidget *parent) : QSystemTrayIcon(parent) {
+systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   setToolTip(tr("doodle 文件 %1").arg("2.1"));
 
   auto menu = new QMenu(parent);
@@ -32,8 +33,8 @@ systemTray::systemTray(QWidget *parent) : QSystemTrayIcon(parent) {
   install->addAction(install_ue4_plug_prj);
   install->addAction(install_ue4_plug);
 
-  auto setting = new QAction(menu);
-  setting->setText(tr("打开设置"));
+  setting = new QAction(menu);
+  setting->setText(tr("设置"));
   auto re_user = new QAction(menu);
   re_user->setText(tr("注册"));
   auto k_exit_ = new QAction(menu);
@@ -43,7 +44,10 @@ systemTray::systemTray(QWidget *parent) : QSystemTrayIcon(parent) {
           this, &systemTray::synFile);
   connect(k_exit_, &QAction::triggered,
           this, &systemTray::doodleQuery);
-
+  connect(prj_widght,&QAction::triggered,
+          parent,&mainWindows::show);
+  connect(setting, &QAction::triggered,
+          parent,&mainWindows::openSetting);
   menu->addAction(fileSyn);
   menu->addAction(prj_widght);
   menu->addMenu(install);
@@ -79,6 +83,5 @@ void systemTray::doodleQuery() {
   setVisible(false);
   qApp->quit();
 }
-
 
 DOODLE_NAMESPACE_E

@@ -27,11 +27,7 @@ int main(int argc, char *argv[]) {
   set.init();
   QApplication::setQuitOnLastWindowClosed(false);
 
-  auto sys_tray = new doodle::systemTray();
-  sys_tray->showMessage("doodle","hello");
-  sys_tray->setIcon(QIcon(":/resource/icon.png"));
-  sys_tray->setVisible(true);
-  sys_tray->show();
+  auto mainWin = doodle::mainWindows();
 
   return QApplication::exec();
 }

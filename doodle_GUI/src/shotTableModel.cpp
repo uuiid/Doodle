@@ -40,7 +40,21 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
         break;
     }
   } else if (role == Qt::UserRole) {
-    var =  QVariant::fromValue(shot);
+    switch (index.column()) {
+      case 0:var = shot->getVersionP();
+        break;
+      case 1:var = shot->getInfoP().last().toVariant();
+        break;
+      case 2:var = shot->getUserP();
+        break;
+      case 3:
+        var = shot->getSuffixes();
+        break;
+      case 4:var = QVariant::fromValue(shot);
+        break;
+      default:var = QVariant();
+        break;
+    }
   } else {
     var =  QVariant();
   }
@@ -101,14 +115,13 @@ Qt::ItemFlags shotTableModel::flags(const QModelIndex &index) const {
 }
 
 bool shotTableModel::insertRows(int position, int rows, const QModelIndex &parent) {
+//  auto version = p_shot_info_ptr_list_[0]->getVersionP();
   beginInsertRows(QModelIndex(), position, position + rows - 1);
-  beginInsertColumns(QModelIndex(), 0, 4);
   for (int row = 0; row < rows; ++row) {
     p_shot_info_ptr_list_.insert(position,
                                  doCore::shotInfoPtr(new doCore::shotFileSqlInfo));
     p_shot_info_ptr_list_[position]->setFileType(p_type_ptr_);
   }
-  endInsertColumns();
   endInsertRows();
   return true;
 }

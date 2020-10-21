@@ -5,11 +5,13 @@
 #include "ftphandle.h"
 
 #include <curl/curl.h>
-#include <QtCore>
+
 #include <QObject>
 #include <QSharedPointer>
-#include <QUrl>
-#include <QFile>
+
+
+class QFile;
+class QUrl;
 
 FTPSPACE_S
 struct oFileInfo
@@ -25,10 +27,11 @@ class FTP_EXPORT ftpSession : public QObject
     Q_OBJECT
 
 public:
-    ~ftpSession();
+    ~ftpSession() override;
 
     bool down(const QString &localFile, const QString &remoteFile);
     bool upload(const QString &localFile, const QString &remoteFile);
+    bool uploadFolder(const QString &localFolder, const QString & remoteFolder);
     oFileInfo fileInfo(const QString &remoteFile);
     //获得文件列表
     std::vector<oFileInfo> list(const QString &remoteFolder);

@@ -1,7 +1,13 @@
 ﻿#include "ftpsession.h"
 
-#include <fstream>
+#include "Logger.h"
 
+#include <fstream>
+#include <QUrl>
+#include <QFile>
+#include <QDir>
+
+#include <QDirIterator>
 
 FTPSPACE_S
 ftpSession::ftpSession()
@@ -41,7 +47,6 @@ bool ftpSession::down(const QString &localFile, const QString &remoteFile)
     outfile->setFileName(localFile);
     if(!outfile->open(QIODevice::WriteOnly)){
         throw std::runtime_error("not open file");
-        return false;
     }
     //设置url路径
     ptrUrl->setPath(remoteFile);
@@ -70,7 +75,6 @@ bool ftpSession::upload(const QString &localFile, const QString &remoteFile)
     inputfile->setFileName(localFile);
     if(!inputfile->open(QIODevice::ReadOnly)){
         throw std::runtime_error("not open file(Read Only)");
-        return false;
     }
     ptrUrl->setPath(remoteFile);
     curl_easy_reset(curlSession);
@@ -86,7 +90,7 @@ bool ftpSession::upload(const QString &localFile, const QString &remoteFile)
     CURLcode err = perform();
     inputfile->close();
     if(err != CURLE_OK){
-        qDebug()<<err<<curl_easy_strerror(err);
+        DOODLE_LOG_WARN<<err<<curl_easy_strerror(err);
         return false;
     }
     emit finished();
@@ -113,10 +117,11 @@ oFileInfo ftpSession::fileInfo(const QString &remoteFile)
     if(err == CURLE_OK){
         long ftime = -1;
         err = curl_easy_getinfo(curlSession,CURLINFO_FILETIME, &ftime);
-        if(err == CURLE_OK && ftime >0){
+        if(err == CURLE_OK && ftime >0)
             info.fileMtime = static_cast<time_t>(ftime);
-        }
         err = curl_easy_getinfo(curlSession,CURLINFO_CONTENT_LENGTH_DOWNLOAD,&info.fileSize);
+        if(err != CURLE_OK)
+          info.fileSize = 0;
     }else {
         info.fileMtime = -1;
         info.fileSize = 0;
@@ -165,7 +170,7 @@ std::vector<oFileInfo> ftpSession::list(const QString &remoteFolder)
 size_t ftpSession::writeFileCallbask(void * buff,size_t size,size_t nmemb, void *data)
 {
     if ((size == 0) || (nmemb == 0) || ((size * nmemb) < 1) || (data == nullptr)) return 0;
-    QFile * file = static_cast<QFile *>(data);
+    auto * file = static_cast<QFile *>(data);
     if(file->isOpen()){
         file->write(reinterpret_cast<char *>(buff), size *nmemb);
     }
@@ -174,7 +179,7 @@ size_t ftpSession::writeFileCallbask(void * buff,size_t size,size_t nmemb, void 
 
 size_t ftpSession::readFileCallbask(void *buff, size_t size, size_t nmemb, void *data)
 {
-    QFile *file = static_cast<QFile *>(data);
+    auto *file = static_cast<QFile *>(data);
     return file->read(reinterpret_cast<char *>(buff),size * nmemb);
 }
 
@@ -186,7 +191,7 @@ size_t ftpSession::notCallbask(void *buff, size_t size, size_t nmemb, void *data
 size_t ftpSession::writeStringCallbask(void *ptr, size_t size, size_t nmemb, void *data)
 {
     if ((size == 0) || (nmemb == 0) || ((size * nmemb) < 1) || (data == nullptr)) return 0;
-    QString * ptrlist = static_cast<QString *>(data);
+    auto * ptrlist = static_cast<QString *>(data);
     if(ptrlist != nullptr){
         ptrlist->append(QByteArray(reinterpret_cast<char *>(ptr),size * nmemb));
         return size * nmemb;
@@ -197,8 +202,22 @@ size_t ftpSession::writeStringCallbask(void *ptr, size_t size, size_t nmemb, voi
 
 CURLcode ftpSession::perform()
 {
-    CURLcode err = CURLE_OK;
+    CURLcode err;
     err = curl_easy_perform(curlSession);
+    DOODLE_LOG_INFO <<err;
     return err;
+}
+bool ftpSession::uploadFolder(const QString &localFolder, const QString &remoteFolder) {
+  bool err = true;
+  auto localiter = new QDirIterator(localFolder,QDir::NoDotAndDotDot,QDirIterator::Subdirectories);
+  while (localiter->hasNext()){
+    auto file = localiter->path();
+    auto rem_file = file.replace(localFolder,remoteFolder);
+    DOODLE_LOG_INFO << "本地文件 : " << file;
+    DOODLE_LOG_INFO << "远程文件 : " << rem_file;
+    if(!upload(file,rem_file))
+      err = false;
+  }
+  return err;
 }
 FTPSPACE_E

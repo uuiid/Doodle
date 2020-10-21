@@ -149,7 +149,7 @@ QString coreSet::getUser() const
 QString coreSet::getUser_en() const
 {
     dopinyin::convert con;
-    return con.toEn(user);
+    return con.toEn(user).toLower();
 }
 
 void coreSet::setUser(const QString &value)
@@ -287,8 +287,7 @@ synPathListPtr coreSet::getSynDir()
                              .arg(projectname)
                              .arg(query->value(1).toString());
         query->next();
-        synpath_.server = QString("%1%2/%3/%4")
-                              .arg(prjectRoot.absolutePath())
+        synpath_.server = QString("%2/%3/%4")
                               .arg(toIpPath(synServer.absolutePath()))
                               .arg(department)
                               .arg(query->value(1).toString());

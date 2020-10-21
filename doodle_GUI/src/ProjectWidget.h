@@ -4,7 +4,7 @@
 
 #pragma once
 #include "doodle_global.h"
-#include <QtWidgets>
+
 #include <QTabWidget>
 
 DOODLE_NAMESPACE_S

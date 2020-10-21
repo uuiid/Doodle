@@ -14,7 +14,6 @@ public:
     virtual void deleteSQL() = 0;
 
     qint64 getIdP() const;
-    qint64 getIdP(const bool & useInsert);
 
     bool isNULL() const;
     bool isInsert() const { return !isNULL();};

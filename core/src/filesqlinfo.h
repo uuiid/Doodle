@@ -47,8 +47,6 @@ class CORE_EXPORT fileSqlInfo : public coresqldata {
   QByteArray infoP;
   QString fileStateP;
 
- protected:
-  [[nodiscard]] QString formatPath(const QString &value) const;
  private:
   [[nodiscard]] QJsonDocument convertJson() const;
 };

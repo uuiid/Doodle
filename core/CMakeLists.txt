@@ -54,9 +54,8 @@ set(CORE_SQL_SOURCE
 
 #这个是和文件服务器交互的头文件
 set(CORE_ARCHIVE_HEADER
-        src/filearchive.h
-        src/fileArchiveOneFile.h
-        src/fileArchiveMultipleFile.h
+        src/archiveFactory.h
+        src/fileArchive.h
         src/mayaArchive.h
         src/ueArchive.h
         src/movieArchive.h
@@ -66,9 +65,8 @@ set(CORE_ARCHIVE_HEADER
         )
 #这个是和文件服务器交互的实现文件
 set(CORE_ARCHIVE_SOURCE
-        src/filearchive.cpp
-        src/fileArchiveOneFile.cpp
-        src/fileArchiveMultipleFile.cpp
+        src/archiveFactory.cpp
+        src/fileArchive.cpp
         src/mayaArchive.cpp
         src/ueArchive.cpp
         src/movieArchive.cpp
