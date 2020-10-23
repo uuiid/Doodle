@@ -14,6 +14,7 @@ class CORE_EXPORT fileArchive {
   virtual void update(const QFileInfo &path);
   virtual void update(const QfileInfoVector &filelist);
   virtual QfileInfoVector down(const QFileInfo &path);
+  virtual QfileInfoVector down();
 
  protected:
   //复制到和缓存文件夹
@@ -24,14 +25,13 @@ class CORE_EXPORT fileArchive {
   virtual void insertDB() = 0;
   //上传文件
   virtual void _updata();
-  //组合出服务器路径路径
+  //组合出服务器路径路径()
   virtual void _generateFilePath() = 0;
-
+  //下载文件
+  virtual void _down(const QString &localPath);
  protected:
   //复制的数据来源
   QfileInfoVector p_soureFile;
-  //主要属性  必须进行初始化
-  fileSqlInfoPtr p_fileInfo;
   //缓存路径
   QFileInfo p_cacheFilePath;
   //这个是服务器路径

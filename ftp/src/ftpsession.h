@@ -9,58 +9,56 @@
 #include <QObject>
 #include <QSharedPointer>
 
-
 class QFile;
 class QUrl;
 
 FTPSPACE_S
-struct oFileInfo
-{
-    QString filepath;
-    bool isFolder;
-    time_t fileMtime;
-    double fileSize;
+struct oFileInfo {
+  QString filepath;
+  bool isFolder;
+  time_t fileMtime;
+  double fileSize;
 };
 
-class FTP_EXPORT ftpSession : public QObject
-{
-    Q_OBJECT
+class FTP_EXPORT ftpSession : public QObject {
+ Q_OBJECT
 
-public:
-    ~ftpSession() override;
+ public:
+  ~ftpSession() override;
 
-    bool down(const QString &localFile, const QString &remoteFile);
-    bool upload(const QString &localFile, const QString &remoteFile);
-    bool uploadFolder(const QString &localFolder, const QString & remoteFolder);
-    oFileInfo fileInfo(const QString &remoteFile);
-    //获得文件列表
-    std::vector<oFileInfo> list(const QString &remoteFolder);
+  bool down(const QString &localFile, const QString &remoteFile);
+  bool downFolder(const QString &localFile, const QString &remoteFile);
+  bool upload(const QString &localFile, const QString &remoteFile);
+  bool uploadFolder(const QString &localFolder, const QString &remoteFolder);
+  oFileInfo fileInfo(const QString &remoteFile);
+  //获得文件列表
+  std::vector<oFileInfo> list(const QString &remoteFolder);
 
-    friend ftpSessionPtr ftphandle::session(const QString &host,
-                                            int prot,
-                                            const QString &name,
-                                            const QString &password);
-signals:
-    void finished();
+  friend ftpSessionPtr ftphandle::session(const QString &host,
+                                          int prot,
+                                          const QString &name,
+                                          const QString &password);
+ signals:
+  void finished();
 
-private:
-    ftpSession();
-    void setInfo(const QString &host,
-                 int prot,
-                 const QString &name,
-                 const QString &password);
-    static size_t writeFileCallbask(void *buff, size_t size, size_t nmemb, void *data);
-    static size_t readFileCallbask(void *buff, size_t size, size_t nmemb, void *data);
-    static size_t notCallbask(void *buff, size_t size, size_t nmemb, void *data);
-    static size_t writeStringCallbask(void *ptr, size_t size, size_t nmemb, void *data);
-    CURLcode perform();
+ private:
+  ftpSession();
+  void setInfo(const QString &host,
+               int prot,
+               const QString &name,
+               const QString &password);
+  static size_t writeFileCallbask(void *buff, size_t size, size_t nmemb, void *data);
+  static size_t readFileCallbask(void *buff, size_t size, size_t nmemb, void *data);
+  static size_t notCallbask(void *buff, size_t size, size_t nmemb, void *data);
+  static size_t writeStringCallbask(void *ptr, size_t size, size_t nmemb, void *data);
+  CURLcode perform();
 
-private:
-    QSharedPointer<QFile> outfile;
-    QSharedPointer<QFile> inputfile;
-    QSharedPointer<QUrl> ptrUrl;
+ private:
+  QSharedPointer<QFile> outfile;
+  QSharedPointer<QFile> inputfile;
+  QSharedPointer<QUrl> ptrUrl;
 
-    mutable CURL *curlSession;
+  mutable CURL *curlSession;
 };
 
 FTPSPACE_E

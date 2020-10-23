@@ -19,6 +19,7 @@ namespace Logger
             margin-left: 20px;
             font-size: 14px;
             font-family: Arial, sans-serif, sans;
+            white-space: pre-wrap;
         }
 
         a {

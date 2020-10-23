@@ -105,7 +105,6 @@ bool shotTableModel::setData(const QModelIndex &index, const QVariant &value, in
   } else {
     return false;
   }
-
 }
 Qt::ItemFlags shotTableModel::flags(const QModelIndex &index) const {
   if (index.column() == 1)

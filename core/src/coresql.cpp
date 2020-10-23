@@ -1,4 +1,7 @@
 ﻿#include "coresql.h"
+
+#include "Logger.h"
+
 #include <QSqlError>
 #include <QVariant>
 #include <QMap>
@@ -98,7 +101,6 @@ void coreSqlUser::initDB(const QString& ip,const QString &dataName)
 
         dataBase.setHostName(ip);
         dataBase.setPort(3306);
-        qDebug()<<dataName;
         dataBase.setDatabaseName("myuser");
     }
     if(!dataBase.open()) throw std::runtime_error(dataBase.lastError().text().toStdString());

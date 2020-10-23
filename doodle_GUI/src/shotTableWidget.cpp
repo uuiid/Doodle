@@ -9,16 +9,20 @@
 
 #include "src/mayaArchive.h"
 
+#include "src/coreset.h"
 #include "src/filetype.h"
 #include "src/shotfilesqlinfo.h"
-#include "Logger.h"
-#include "shotTableModel.h"
 
+#include "Logger.h"
+
+#include "shotTableModel.h"
 #include "shotTableWidget.h"
 
 #include <QMimeData>
 #include <QFileDialog>
-
+#include <QMessageBox>
+#include <QClipboard>
+#include <QGuiApplication>
 DOODLE_NAMESPACE_S
 //-----------------------------------自定义shot小部件---------------------------------------------//
 shotTableWidget::shotTableWidget(QWidget *parent)
@@ -38,6 +42,7 @@ void shotTableWidget::init(const doCore::fileTypePtr &file_type_ptr) {
 }
 void shotTableWidget::insertShot(const QString &path) {
   DOODLE_LOG_INFO << "提交文件";
+  if (path.isEmpty()) return;
   //获得最大版本
   auto version = p_model_->data(p_model_->index(0, 0), Qt::UserRole)
       .toInt();
@@ -56,27 +61,38 @@ void shotTableWidget::insertShot(const QString &path) {
 
 }
 void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
-  p_menu_ = new QMenu(this);
+  if (!p_menu_)
+    p_menu_ = new QMenu(this);
+  p_menu_->clear();
   if (p_type_ptr_) {
     //上传文件
-    auto *k_sub_file = new QAction(p_menu_);
+    auto k_sub_file = new QAction();
     connect(k_sub_file, &QAction::triggered,
             this, &shotTableWidget::getSelectPath);
     k_sub_file->setText(tr("提交文件"));
     k_sub_file->setStatusTip(tr("提交所需要的文件"));
-
-    //打开文件位置
-
-
-    //导出fbx脚本
-
-
-    //复制文件目录
-
-
-
-
     p_menu_->addAction(k_sub_file);
+
+    if (selectionModel()->hasSelection()) {
+      auto index = p_model_->index(selectionModel()->currentIndex().row(), 4);
+      //打开文件位置
+      auto k_openFile = new QAction();
+      k_openFile->setText(tr("打开文件所在位置"));
+      connect(k_openFile, &QAction::triggered,
+              this, [=] {
+            openPath(p_model_->data(index, Qt::UserRole)
+                         .value<doCore::shotInfoPtr>(), true);
+          });
+      p_menu_->addAction(k_openFile);
+
+      //导出fbx脚本
+      auto k_exportFbx = new QAction();
+      k_exportFbx->setText(tr("导出fbx文件"));
+      connect(k_exportFbx, &QAction::triggered,
+              this, &shotTableWidget::exportFbx);
+      p_menu_->addAction(k_exportFbx);
+      //复制文件目录
+    }
   }
 
   p_menu_->popup(event->globalPos());
@@ -127,6 +143,35 @@ void shotTableWidget::getSelectPath() {
                                            QString(),
                                            "files (*.mb *.ma *.uproject *.max *.fbx *.png *.tga *.jpg))");
   insertShot(path);
+}
+void shotTableWidget::openPath(const doCore::fileSqlInfoPtr &info_ptr, const bool &openEx) {
+  auto path = doCore::coreSet::getCoreSet().getPrjectRoot().path() + info_ptr->getFileList()[0].path();
+  DOODLE_LOG_INFO << "打开路径: " << path;
+  if (QDir(path).exists()) {
+    if (openEx)
+      std::system(QString("explorer %1").arg(QDir::cleanPath(path)).toStdString().c_str());
+    else
+      QGuiApplication::clipboard()->setText(path);
+  } else {
+    DOODLE_LOG_CRIT << QString("没有在服务器中找到目录:\n %1").arg(path);
+    QMessageBox::warning(this, tr("没有目录"),
+                         tr("没有在服务器中找到目录:\n %1").arg(path),
+                         QMessageBox::Yes);
+  }
+}
+void shotTableWidget::exportFbx() {
+  if(!selectionModel()->hasSelection()) return;
+  //获得选择数据
+  auto index = p_model_->index(selectionModel()->currentIndex().row(), 4);
+
+  auto data = p_model_->data(index,Qt::UserRole).value<doCore::shotInfoPtr>();
+  if(!data) return;
+  //创建上传类
+  auto file = doCore::mayaArchivePtr::create(data);
+  //开始导出
+  file->exportFbx();
+  //更新列表
+  p_model_->init(p_type_ptr_);
 }
 
 DOODLE_NAMESPACE_E

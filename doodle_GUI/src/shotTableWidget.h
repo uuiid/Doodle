@@ -23,8 +23,9 @@ class shotTableWidget : public QTableView {
   void clear();
  private slots:
   void getSelectPath();
- protected:
+  void exportFbx();
 
+ protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
   void dragEnterEvent(QDragEnterEvent *event) override;
   void dragLeaveEvent(QDragLeaveEvent *event) override;
@@ -33,11 +34,12 @@ class shotTableWidget : public QTableView {
  private:
   doCore::fileTypePtr p_type_ptr_;
   shotTableModel *p_model_;
-  QMenu *p_menu_;
 
+  QMenu *p_menu_;
  private:
   void insertShot(const QString &path);
   void enableBorder(const bool &isEnable);
+  void openPath(const doCore::fileSqlInfoPtr &info_ptr, const bool &openEx);
 };
 
 DOODLE_NAMESPACE_E

@@ -1,9 +1,8 @@
 ﻿#include "fileinfo.h"
-#include <QtCore/QFileInfo>
+
 #include <QtCore/QVariant>
 #include <QtSql/QSqlError>
 #include <QtDebug>
-#include <QFile>
 
 SYN_NAMESPACE_S
 
