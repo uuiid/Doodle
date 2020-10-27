@@ -87,7 +87,7 @@ namespace Logger
 </head>
 
 <body>
-    <h1><a href="https://jaredtao.github.io">TaoLogger</a> 日志文件</h1>
+    <h1><a href="https://github.com/">TaoLogger</a> 日志文件</h1>
     <script type="text/JavaScript">
         function objHide(obj) {
             obj.style.display="none"

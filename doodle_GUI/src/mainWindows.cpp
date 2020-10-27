@@ -54,6 +54,7 @@ void mainWindows::doodle_init() {
   prj->setObjectName("prj");
   prj->addItems(doCore::coreSet::getCoreSet().getAllPrjName());
   prj->setFlow(QListView::LeftToRight);
+  prj->setCurrentItem(prj->item(0));
 
   p_prject_widght_ = new ProjectWidget(centralWidget);
   p_prject_widght_->setObjectName("p_prject_widght_");

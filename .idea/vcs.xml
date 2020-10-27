@@ -4,6 +4,7 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Qt-Frameless-Window-DarkStyle" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/TaoLogger" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/avcpp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/sql-builder" vcs="Git" />
   </component>
 </project>

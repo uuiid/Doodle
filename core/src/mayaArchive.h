@@ -9,12 +9,13 @@ class CORE_EXPORT mayaArchive : public fileArchive {
  public:
   explicit mayaArchive(shotInfoPtr & shot_data);
 
-  bool exportFbx();
+
  protected:
   void insertDB() override;
   void _generateFilePath() override;
  private:
   shotInfoPtr p_info_ptr_;
+
 };
 
 

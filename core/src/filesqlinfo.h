@@ -17,7 +17,7 @@ class CORE_EXPORT fileSqlInfo : public coresqldata {
   fileSqlInfo();
   [[nodiscard]] QfileInfoVector getFileList() const;
   virtual void setFileList(const QfileInfoVector &filelist);
-
+  virtual void setFileList(const stringList &filelist);
   [[nodiscard]] int getVersionP() const;
   void setVersionP(const int &value);
 

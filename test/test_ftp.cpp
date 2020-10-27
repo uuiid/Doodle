@@ -34,6 +34,15 @@ TEST(ftp,getInfo){
   DOODLE_LOG_DEBUG << info.filepath;
   DOODLE_LOG_DEBUG << info.isFolder;
 }
+TEST(ftp,getInfo_folder){
+  doFtp::ftpSessionPtr session = doFtp::ftphandle::getFTP().session("192.168.10.213",
+                                                                    21, "", "");
+  doFtp::oFileInfo info = session->fileInfo("/dist/");
+  DOODLE_LOG_DEBUG << QDateTime::fromTime_t(info.fileMtime);
+  DOODLE_LOG_DEBUG << (info.fileSize) / (1024 * 1024) << "/mb";
+  DOODLE_LOG_DEBUG << info.filepath;
+  DOODLE_LOG_DEBUG << info.isFolder;
+}
 
 TEST(ftp,getList){
   doFtp::ftpSessionPtr session = doFtp::ftphandle::getFTP().session("192.168.10.213",

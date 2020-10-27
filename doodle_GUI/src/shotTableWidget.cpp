@@ -8,7 +8,7 @@
 #include <QHeaderView>
 
 #include "src/mayaArchive.h"
-
+#include "src/mayaArchiveShotFbx.h"
 #include "src/coreset.h"
 #include "src/filetype.h"
 #include "src/shotfilesqlinfo.h"
@@ -23,6 +23,7 @@
 #include <QMessageBox>
 #include <QClipboard>
 #include <QGuiApplication>
+#include <memory>
 DOODLE_NAMESPACE_S
 //-----------------------------------自定义shot小部件---------------------------------------------//
 shotTableWidget::shotTableWidget(QWidget *parent)
@@ -39,26 +40,6 @@ void shotTableWidget::init(const doCore::fileTypePtr &file_type_ptr) {
   horizontalHeader()->setVisible(true);
   horizontalHeader()->setMinimumHeight(20);
   horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-}
-void shotTableWidget::insertShot(const QString &path) {
-  DOODLE_LOG_INFO << "提交文件";
-  if (path.isEmpty()) return;
-  //获得最大版本
-  auto version = p_model_->data(p_model_->index(0, 0), Qt::UserRole)
-      .toInt();
-  //插入新的数据
-  p_model_->insertRow(0, QModelIndex());
-  auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
-      .value<doCore::shotInfoPtr>();
-  data->setVersionP(version + 1);
-  //创建上传类
-  auto file = doCore::mayaArchivePtr::create(data);
-  if (path.isEmpty()) return;
-  //开始上传
-  file->update(path);
-  //更新列表
-  p_model_->init(p_type_ptr_);
-
 }
 void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
   if (!p_menu_)
@@ -144,12 +125,33 @@ void shotTableWidget::getSelectPath() {
                                            "files (*.mb *.ma *.uproject *.max *.fbx *.png *.tga *.jpg))");
   insertShot(path);
 }
+void shotTableWidget::insertShot(const QString &path) {
+  DOODLE_LOG_INFO << "提交文件";
+  if (path.isEmpty()) return;
+  //获得最大版本
+  auto version = p_model_->data(p_model_->index(0, 0), Qt::UserRole)
+      .toInt();
+  //插入新的数据
+  p_model_->insertRow(0, QModelIndex());
+  auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
+      .value<doCore::shotInfoPtr>();
+  data->setVersionP(version + 1);
+  //创建上传类
+  auto file = std::make_shared<doCore::mayaArchive>(data);
+  if (path.isEmpty()) return;
+  //开始上传
+  file->update(path);
+  //更新列表
+  p_model_->init(p_type_ptr_);
+
+}
 void shotTableWidget::openPath(const doCore::fileSqlInfoPtr &info_ptr, const bool &openEx) {
   auto path = doCore::coreSet::getCoreSet().getPrjectRoot().path() + info_ptr->getFileList()[0].path();
-  DOODLE_LOG_INFO << "打开路径: " << path;
+  DOODLE_LOG_INFO << "打开路径: " << QDir::cleanPath(path);
   if (QDir(path).exists()) {
     if (openEx)
-      std::system(QString("explorer %1").arg(QDir::cleanPath(path)).toStdString().c_str());
+      std::system(QString("explorer %1").arg(QDir::cleanPath(path))
+                      .replace("/", "\\").toStdString().c_str());
     else
       QGuiApplication::clipboard()->setText(path);
   } else {
@@ -160,16 +162,16 @@ void shotTableWidget::openPath(const doCore::fileSqlInfoPtr &info_ptr, const boo
   }
 }
 void shotTableWidget::exportFbx() {
-  if(!selectionModel()->hasSelection()) return;
+  if (!selectionModel()->hasSelection()) return;
   //获得选择数据
   auto index = p_model_->index(selectionModel()->currentIndex().row(), 4);
 
-  auto data = p_model_->data(index,Qt::UserRole).value<doCore::shotInfoPtr>();
-  if(!data) return;
+  auto data = p_model_->data(index, Qt::UserRole).value<doCore::shotInfoPtr>();
+  if (!data) return;
   //创建上传类
-  auto file = doCore::mayaArchivePtr::create(data);
+  auto k_fileexport = std::make_shared<doCore::mayaArchiveShotFbx>(data);
   //开始导出
-  file->exportFbx();
+  k_fileexport->update();
   //更新列表
   p_model_->init(p_type_ptr_);
 }

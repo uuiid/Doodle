@@ -35,16 +35,28 @@ QfileInfoVector fileSqlInfo::getFileList() const {
 }
 
 void fileSqlInfo::setFileList(const QfileInfoVector &filelist) {
-  if (filelist.size() == 0) { throw std::runtime_error("filelist not value"); }
-  DOODLE_LOG_INFO << filelist;
+  stringList list ;
+  for(auto && item:filelist){
+    list.push_back(item.filePath());
+  }
+  setFileList(list);
+}
+
+void fileSqlInfo::setFileList(const stringList &filelist) {
+  if(filelist.empty()) {
+    DOODLE_LOG_WARN << "传入空列表";
+    return;
+  }
   QJsonArray jsonList;
   for (auto &&item: filelist) {
-    jsonList.append(item.filePath());
+    jsonList.append(item);
   }
   QJsonDocument jsondoc(jsonList);
   filepathP = QString(jsondoc.toJson(QJsonDocument::Compact));
-  fileP = filelist[0].fileName();
-  fileSuffixesP = filelist[0].suffix();
+  fileP = QFileInfo(filelist[0]).fileName();
+  fileSuffixesP = QFileInfo(filelist[0]).suffix();
+
+
 }
 
 int fileSqlInfo::getVersionP() const {
@@ -80,7 +92,6 @@ QString fileSqlInfo::getFileStateP() const {
 void fileSqlInfo::setFileStateP(const QString &value) {
   fileStateP = value;
 }
-
 QString fileSqlInfo::getUserP() const {
   return userP;
 }

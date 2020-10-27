@@ -2,10 +2,6 @@
 	path = sql-builder
 	url = https://github.com/six-ddc/sql-builder.git
 	branch = master
-[submodule "TaoLogger"]
-	path = TaoLogger
-	url = https://github.com/jaredtao/TaoLogger.git
-	branch = master
 [submodule "Qt-Frameless-Window-DarkStyle"]
 	path = Qt-Frameless-Window-DarkStyle
 	url = https://github.com/Jorgen-VikingGod/Qt-Frameless-Window-DarkStyle.git

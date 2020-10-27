@@ -70,16 +70,22 @@ typedef QVector<fileTypePtr>  fileTypePtrList;
 typedef QVector<assTypePtr>   assTypePtrList;
 typedef QVector<shotInfoPtr> shotInfoPtrList;
 
-typedef QVector<assInfoPtr>  assInfoPtrList;
-typedef QSharedPointer<fileSqlInfo> fileSqlInfoPtr;
+
+using assInfoPtrList = QVector<assInfoPtr>;
+using fileSqlInfoPtr = QSharedPointer<fileSqlInfo>;
 
 struct synPath_struct;
-typedef QVector<synPath_struct> synPathListPtr;
+using synPathListPtr=QVector<synPath_struct>;
 
 class fileArchive;
-using fileArchivePtr = QSharedPointer<fileArchive>;
+using fileArchivePtr = std::shared_ptr<fileArchive>;
 class mayaArchive;
-using mayaArchivePtr = QSharedPointer<mayaArchive>;
+using mayaArchivePtr = std::shared_ptr<mayaArchive>;
+
+class mayaArchiveShotFbx;
+using mayaArchiveShotFbxPtr = std::shared_ptr<mayaArchiveShotFbx>;
+
+using stringList = std::vector<QString>;
 CORE_NAMESPACE_E
 
 

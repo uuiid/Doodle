@@ -44,45 +44,45 @@ class CORE_EXPORT coreSet : public QObject {
   //获得同步路径
   synPathListPtr getSynDir();
 
-  const QFileInfo &getSynPathLocale() const;
+  [[nodiscard]] const QFileInfo &getSynPathLocale() const;
   void setSynPathLocale(const QFileInfo &syn_path);
   //MySQL ip设置
-  QString getIpMysql() const;
+  [[nodiscard]] QString getIpMysql() const;
   void setIpMysql(const QString &value);
   //FTP ip
-  QString getIpFtp() const;
+  [[nodiscard]] QString getIpFtp() const;
   void setIpFtp(const QString &value);
   //user设置
-  QString getUser() const;
-  QString getUser_en() const;
+  [[nodiscard]] QString getUser() const;
+  [[nodiscard]] QString getUser_en() const;
   void setUser(const QString &value);
   //部门设置
-  QString getDepartment() const;
+  [[nodiscard]] QString getDepartment() const;
   void setDepartment(const QString &value);
   //同步集数设置
-  int getSyneps() const;
+  [[nodiscard]] int getSyneps() const;
   void setSyneps(int value);
   //获得freesyn同步软件设置
-  QString getFreeFileSyn() const;
+  [[nodiscard]] QString getFreeFileSyn() const;
   void setFreeFileSyn(const QString &value);
   //项目名称设置
-  QString getProjectname() const;
-  QStringList getAllPrjName() const;
+  QString getProjectname();
+  [[nodiscard]] QStringList getAllPrjName() const;
   void setProjectname(const QString &value);
   //shot根路径
-  QDir getShotRoot() const;
+  [[nodiscard]] QDir getShotRoot() const;
   void setShotRoot(const QDir &value);
   //ass根路径
-  QDir getAssRoot() const;
+  [[nodiscard]] QDir getAssRoot() const;
   void setAssRoot(const QDir &value);
   //project根路径
-  QDir getPrjectRoot() const;
+  [[nodiscard]] QDir getPrjectRoot() const;
   void setPrjectRoot(const QDir &value);
   //缓存路径
-  QDir getCacheRoot() const;
+  [[nodiscard]] QDir getCacheRoot() const;
 
   //doc路径
-  QDir getDoc() const;
+  [[nodiscard]] QDir getDoc() const;
  public slots:
 
   void writeDoodleLocalSet();

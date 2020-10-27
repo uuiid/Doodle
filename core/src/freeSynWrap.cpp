@@ -12,7 +12,7 @@
 
 CORE_NAMESPACE_S
 freeSynWrap::freeSynWrap() {
-  auto file = QFile(":/template.ffs_batch");
+  auto file = QFile(":/resource/template.ffs_batch");
   if (!file.open(QIODevice::ReadOnly)) return;
   if (!p_doc_.setContent(&file)) {
     file.close();
@@ -152,7 +152,8 @@ void freeSynWrap::setSyn(const freeSynWrap::syn_set &set,
   k_ver_dolder.appendChild(p_doc_.createTextNode(versioning_folder));
 }
 void freeSynWrap::copyGlobSetting() {
-  auto k_golb_sett = QFile(":/_GlobalSettings.xml");
+  auto k_golb_sett = QFile(":/resource/_GlobalSettings.xml");
+  p_tem_golb_.setFileTemplate(QDir::tempPath() + "/_GlobalSettings_XXXXXX.xml");
   if (p_tem_golb_.open()) {
     if (k_golb_sett.open(QIODevice::ReadOnly))
       p_tem_golb_.write(k_golb_sett.readAll());
@@ -161,7 +162,7 @@ void freeSynWrap::copyGlobSetting() {
   p_tem_golb_.close();
 }
 bool freeSynWrap::write() {
-  p_tem_config.setFileTemplate("doodle_XXXXXX.ffs_batch");
+  p_tem_config.setFileTemplate(QDir::tempPath() + "/doodle_XXXXXX.ffs_batch");
   if (p_tem_config.open()) {
     QTextStream k_stream(&p_tem_config);
     p_doc_.save(k_stream, 4);

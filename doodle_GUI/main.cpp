@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
   QApplication::setQuitOnLastWindowClosed(false);
 
   auto mainWin = doodle::mainWindows();
+  mainWin.show();
 
   return QApplication::exec();
 }

@@ -85,7 +85,7 @@ bool ftpSession::upload(const QString &localFile, const QString &remoteFile) {
   CURLcode err = perform();
   inputfile->close();
   if (err != CURLE_OK) {
-    DOODLE_LOG_WARN << curl_easy_strerror(err) << "-->"<< inputfile->fileName();
+    DOODLE_LOG_WARN << curl_easy_strerror(err) << "-->" << inputfile->fileName();
     return false;
   }
   emit finished();
@@ -94,8 +94,7 @@ bool ftpSession::upload(const QString &localFile, const QString &remoteFile) {
 
 oFileInfo ftpSession::fileInfo(const QString &remoteFile) {
   if (remoteFile.isEmpty()) throw std::runtime_error("remote file is NULL");
-  ptrUrl->setPath(remoteFile);
-
+  ptrUrl->setPath(QDir::cleanPath(remoteFile));
   curl_easy_reset(curlSession);
 
   oFileInfo info;
@@ -115,17 +114,21 @@ oFileInfo ftpSession::fileInfo(const QString &remoteFile) {
       info.fileMtime = static_cast<time_t>(ftime);
     else
       info.fileMtime = -1;
+
     err = curl_easy_getinfo(curlSession, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &info.fileSize);
     if (err != CURLE_OK || info.fileSize < 0) {
       info.fileSize = 0;
       info.isFolder = true;
+    } else{
+      info.isFolder = false;
     }
+
   } else {
     info.fileMtime = -1;
     info.fileSize = 0;
-    info.isFolder = false;
+    info.isFolder = true;
   }
-  info.filepath = remoteFile;
+  info.filepath = QDir::cleanPath(remoteFile);
 
   return info;
 }
@@ -146,14 +149,16 @@ std::vector<oFileInfo> ftpSession::list(const QString &remoteFolder) {
   curl_easy_setopt(curlSession, CURLOPT_WRITEDATA, &folderList);
 //  curl_easy_setopt(curlSession, CURLOPT_HEADER, 0L);
 
+
+  std::vector<oFileInfo> listInfo;
   CURLcode err = perform();
   if (err != CURLE_OK) {
-    throw std::runtime_error(curl_easy_strerror(err));
+    DOODLE_LOG_WARN << curl_easy_strerror(err);
+    return listInfo;
   }
   QStringList::const_iterator iter_folder;
 
   QStringList list_folder = folderList.split("\r\n", QString::SkipEmptyParts);
-  std::vector<oFileInfo> listInfo;
   for (iter_folder = list_folder.begin(); iter_folder != list_folder.end(); iter_folder++) {
     oFileInfo info;
     info.isFolder = false;
@@ -167,7 +172,7 @@ std::vector<oFileInfo> ftpSession::list(const QString &remoteFolder) {
     p.append(folderInfo[folderInfo.size() - 1]);
     info.filepath = p.join("/");
 
-    if(info.isFolder)
+    if (info.isFolder)
       info.filepath += "/";
     listInfo.push_back(info);
   }
@@ -205,8 +210,8 @@ size_t ftpSession::writeStringCallbask(void *ptr, size_t size, size_t nmemb, voi
 CURLcode ftpSession::perform() {
   CURLcode err;
   err = curl_easy_perform(curlSession);
-  if(err != CURLE_OK)
-  DOODLE_LOG_WARN << curl_easy_strerror(err);
+  if (err != CURLE_OK)
+    DOODLE_LOG_WARN << curl_easy_strerror(err);
   return err;
 }
 bool ftpSession::uploadFolder(const QString &localFolder, const QString &remoteFolder) {
@@ -235,7 +240,7 @@ bool ftpSession::downFolder(const QString &localFile, const QString &remoteFile)
   auto remoteFile_ = QDir::cleanPath(remoteFile);
 
   auto k_lo_dir = QDir(localFile_);
-  if(!k_lo_dir.exists())
+  if (!k_lo_dir.exists())
     k_lo_dir.mkpath(QDir::cleanPath(localFile_));
 
   auto k_list = list(remoteFile_ + "/");

@@ -12,75 +12,101 @@
 
 CORE_NAMESPACE_S
 
-fileArchive::fileArchive() : p_soureFile(),
-                             p_cacheFilePath(),
-                             p_Path() {}
+fileArchive::fileArchive()
+    : p_soureFile(),
+      p_cacheFilePath(),
+      p_Path() {}
 
 void fileArchive::update(const QFileInfo &path) {
-  QfileInfoVector tmp;
-  tmp.append(path);
+  stringList tmp;
+  tmp.push_back(path.filePath());
   update(tmp);
 }
 
-void fileArchive::update(const QfileInfoVector &filelist) {
+void fileArchive::update(const stringList &filelist) {
   p_soureFile.clear();
   p_soureFile = filelist;
   _generateFilePath();
   //获得缓存路径
+  p_cacheFilePath.clear();
   coreSet &set = coreSet::getCoreSet();
-  p_cacheFilePath = QFileInfo(set.getCacheRoot().path() + p_Path);
+  for (auto &&item :p_soureFile) {
+    auto path = set.getCacheRoot().path().append((item));
+    p_cacheFilePath.push_back(path);
+  }
+
   if (!isInCache()) {
     copyToCache();
   }
-  _updata();
+  _updata(p_cacheFilePath);
   insertDB();
 }
-QfileInfoVector fileArchive::down(const QFileInfo &path) {
-  return QfileInfoVector();
+stringList fileArchive::down(const QString &path) {
+  return stringList{};
 }
 
-QfileInfoVector fileArchive::down() {
+stringList fileArchive::down() {
   _generateFilePath();
   //获得缓存路径
+  p_cacheFilePath.clear();
   coreSet &set = coreSet::getCoreSet();
-  p_cacheFilePath = QFileInfo(set.getCacheRoot().path() + p_Path);
+  for (auto &&item :p_Path) {//这个是下载 要获得p_path服务器路径
+    auto path = set.getCacheRoot().path().append((item));
+    p_cacheFilePath.push_back(path);
+  }
 
-  _down(p_cacheFilePath.filePath());
-  return {p_cacheFilePath};
+  _down(p_cacheFilePath);
+  return p_cacheFilePath;
 }
 //保护功能
 void fileArchive::copyToCache() const {
-  if (p_cacheFilePath.exists()) //进行检查存在性,  存在即删除
+  assert(p_soureFile.size() == p_cacheFilePath.size());
+  if (!p_cacheFilePath.empty()) //进行检查存在性,  存在即删除
   {
-    QFile f;
-    f.setFileName(p_cacheFilePath.filePath());
-    f.remove();
+    for (auto &&item :p_cacheFilePath) {
+      auto file = QFile((item));
+      if (file.exists())
+        file.remove();
+    }
   }
-  //复制文件  如果无法复制就抛出异常
-  QFile soureFile_;
-  soureFile_.setFileName(p_soureFile[0].filePath());
-  DOODLE_LOG_INFO << p_soureFile << "-copy->" << p_cacheFilePath;
-  if (!QFile::copy(p_soureFile[0].filePath(), p_cacheFilePath.filePath())) {
-    DOODLE_LOG_INFO << "复制文件: " << p_soureFile[0];
-    throw doodle_CopyErr(p_soureFile[0].filePath().toStdString());
+  //复制文件  如果无法复制输出错误
+  int i = 0;
+  for (auto &&item :p_soureFile) {
+    if(item == p_cacheFilePath[i])//如果路径相同就跳过
+      continue;
+
+    auto file = QFile((item));
+    DOODLE_LOG_INFO << p_soureFile << "-copy->" << p_cacheFilePath;
+    if (QFile::copy((item),
+                    (p_cacheFilePath[i])))
+      DOODLE_LOG_WARN << "复制文件: " << p_soureFile;
+    ++i;
   }
 }
 bool fileArchive::isInCache() {
+  bool has = true;
+  if (!p_cacheFilePath.empty()) {
+    int i =0;
+    for (auto &&item:p_cacheFilePath) {
+      auto fileinfo = QFileInfo((item));
 
-//  if (!p_soureFile[0].exists())
-//    throw doodle_notFile(p_soureFile[0].filePath().toStdString());
-
-  if (p_cacheFilePath.exists()) //不存在缓存目录
-  {
-    QFile(p_cacheFilePath.path()).remove();
+      if (!QFileInfo(fileinfo.path()).exists()) {//首先测试是否存在目录,不存在直接返回
+        has &= false;
+      } else if (fileinfo.exists()) {//如果存在就看文件是否存在,  存在就删除
+        if (item == p_soureFile[i])
+          has &=  true;
+        else {
+          QFile(fileinfo.filePath()).remove();
+          has &= false;
+        }
+      }
+      ++i;
+    }
   }
-  DOODLE_LOG_INFO << QDir(p_cacheFilePath.path());
-  if (!QDir(p_cacheFilePath.path()).exists()) {
-    QDir().mkpath(p_cacheFilePath.path());
-  }
-  return false;
+  return has;
 }
-void fileArchive::_updata() {
+void fileArchive::_updata(const stringList &pathList) {
+  assert(p_Path.size() == p_cacheFilePath.size());
   coreSet &set = coreSet::getCoreSet();
   DOODLE_LOG_INFO << "登录 : " << set.getProjectname() + set.getUser_en() << "\n" << set.getUser_en();
   doFtp::ftpSessionPtr session = doFtp::ftphandle::getFTP().session(
@@ -88,10 +114,16 @@ void fileArchive::_updata() {
       21,
       set.getProjectname() + set.getUser_en(),
       set.getUser_en());
-  if (!session->upload(p_cacheFilePath.absoluteFilePath(), p_Path))
-    throw doodle_upload_error(p_cacheFilePath.absoluteFilePath().toStdString());
+
+  int i = 0;
+  for (auto &&item:p_cacheFilePath) {
+    if (!session->upload((item), (p_Path[i])))
+      DOODLE_LOG_WARN << "无法上传文件" << (item);
+    ++i;
+  }
 }
-void fileArchive::_down(const QString &localPath) {
+void fileArchive::_down(const stringList &localPath) {
+  assert(p_Path.size() == localPath.size());
   coreSet &set = coreSet::getCoreSet();
   DOODLE_LOG_INFO << "登录 : " << set.getProjectname() + set.getUser_en() << "\n" << set.getUser_en();
   doFtp::ftpSessionPtr session = doFtp::ftphandle::getFTP().session(
@@ -99,12 +131,19 @@ void fileArchive::_down(const QString &localPath) {
       21,
       set.getProjectname() + set.getUser_en(),
       set.getUser_en());
-  auto k_down_path = QFileInfo(localPath).path();
-  if(!QDir(k_down_path).exists())
-    QDir(k_down_path).mkpath(k_down_path);
 
-  if (!session->down(localPath, p_soureFile[0].filePath()))
-    DOODLE_LOG_WARN << "无法下载文件" << p_soureFile[0].filePath();
+  int i = 0;
+  for (auto &&item : p_Path) {
+    auto k_down_path = QFileInfo((localPath[i])).path();
+    if (!QDir(k_down_path).exists())
+      QDir(k_down_path).mkpath(k_down_path);
+    if (!session->down((localPath[i]),
+                       (item)))
+      DOODLE_LOG_WARN << "无法下载文件" << (item);
+  }
+}
+void fileArchive::update() {
+  insertDB();
 }
 
 CORE_NAMESPACE_E

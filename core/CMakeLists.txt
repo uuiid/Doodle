@@ -1,6 +1,6 @@
 ﻿find_package(Qt5 CONFIG COMPONENTS Core Sql Xml REQUIRED)
 find_package(Sqlpp11 REQUIRED)
-
+find_package(FFMPEG  REQUIRED )
 find_package(magic_enum CONFIG REQUIRED)
 #由于这个库只有一个文件,  所以直接复制过的了事
 file(COPY ${PROJECT_SOURCE_DIR}/sql-builder/sql.h
@@ -62,6 +62,7 @@ set(CORE_ARCHIVE_HEADER
         src/imageArchive.h
         src/imageSequenArchive.h
         src/freeSynWrap.h
+        src/mayaArchiveShotFbx.h
         )
 #这个是和文件服务器交互的实现文件
 set(CORE_ARCHIVE_SOURCE
@@ -72,10 +73,12 @@ set(CORE_ARCHIVE_SOURCE
         src/movieArchive.cpp
         src/imageArchive.cpp
         src/imageSequenArchive.cpp
-        src/freeSynWrap.cpp)
+        src/freeSynWrap.cpp
+        src/mayaArchiveShotFbx.cpp
+        )
 
 set(RESOURCE_SOURCE
-        resource/resource.qrc)
+        core_resource.qrc)
 qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 add_library(core SHARED
         src/doException/doException.h
@@ -90,6 +93,7 @@ add_library(core SHARED
 target_link_libraries(core PUBLIC Qt5::Sql)
 target_link_libraries(core PUBLIC Qt5::Core)
 target_link_libraries(core PUBLIC Qt5::Xml)
+#target_link_libraries(core PUBLIC ${FFMPEG_LIBRARIES})
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
 target_link_libraries(core PUBLIC pinyin)
 target_link_libraries(core PUBLIC ftp)

@@ -1,7 +1,0 @@
-﻿<!DOCTYPE RCC>
-<RCC version="1.0">
-    <qresource prefix="/">
-        <file>_GlobalSettings.xml</file>
-        <file>template.ffs_batch</file>
-    </qresource>
-</RCC>
