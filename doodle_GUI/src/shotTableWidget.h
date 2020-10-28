@@ -9,6 +9,7 @@
 #include "core_global.h"
 
 #include <QTableView>
+#include <src/movieArchive.h>
 
 DOODLE_NAMESPACE_S
 
@@ -24,6 +25,8 @@ class shotTableWidget : public QTableView {
  private slots:
   void getSelectPath();
   void exportFbx();
+  void createFlipbook_slot();
+  void createFlipbook(const QString & video_folder);
 
  protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
@@ -38,6 +41,7 @@ class shotTableWidget : public QTableView {
   QMenu *p_menu_;
 
   std::vector<doCore::mayaArchiveShotFbxPtr> exportList;
+  std::vector<doCore::movieArchive> movieList;
  private:
   void insertShot(const QString &path);
   void enableBorder(const bool &isEnable);

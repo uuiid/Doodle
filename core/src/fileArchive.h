@@ -30,6 +30,10 @@ class CORE_EXPORT fileArchive {
   //判断是否在缓存文件夹
   //我们认为缓存目录是一样的  不存在两个不同的目录  只有文件名称不同
   virtual bool isInCache();
+  //生成cachepath
+  virtual bool generateCachePath();
+
+
   //提交到数据库
   virtual void insertDB() = 0;
   //上传文件

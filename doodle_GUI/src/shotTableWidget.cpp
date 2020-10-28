@@ -31,7 +31,10 @@ DOODLE_NAMESPACE_S
 shotTableWidget::shotTableWidget(QWidget *parent)
     : QTableView(parent),
       p_model_(),
-      p_menu_() {
+      p_menu_(),
+      p_type_ptr_(),
+      exportList(),
+      movieList() {
   setSelectionBehavior(QAbstractItemView::SelectRows);//行选
   setSelectionMode(QAbstractItemView::SingleSelection);//单选
   setAcceptDrops(true);
@@ -55,6 +58,12 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
     k_sub_file->setText(tr("提交文件"));
     k_sub_file->setStatusTip(tr("提交所需要的文件"));
     p_menu_->addAction(k_sub_file);
+    //上传拍屏
+    auto k_sub_fb = new QAction();
+    connect(k_sub_fb, &QAction::triggered,
+            this,&shotTableWidget::createFlipbook_slot);
+    k_sub_fb->setText(tr("提交拍屏"));
+    p_menu_->addAction(k_sub_fb);
 
     if (selectionModel()->hasSelection()) {
       auto index = p_model_->index(selectionModel()->currentIndex().row(), 4);
@@ -67,6 +76,7 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
                          .value<doCore::shotInfoPtr>(), true);
           });
       p_menu_->addAction(k_openFile);
+
 
       //导出fbx脚本
       auto k_exportFbx = new QAction();
@@ -111,7 +121,9 @@ void shotTableWidget::dropEvent(QDropEvent *event) {
   if (event->mimeData()->urls().size() != 1) return;
   auto url = event->mimeData()->urls()[0];
   DOODLE_LOG_INFO << "文件拖入窗口" << url;
-  insertShot(url.toLocalFile());
+  if (QFileInfo(url.toLocalFile()).suffix() == "ma" || QFileInfo(url.toLocalFile()).suffix() == "mb")
+    insertShot(url.toLocalFile());
+
   enableBorder(false);
 }
 void shotTableWidget::enableBorder(const bool &isEnable) {
@@ -165,30 +177,56 @@ void shotTableWidget::openPath(const doCore::fileSqlInfoPtr &info_ptr, const boo
   }
 }
 void shotTableWidget::exportFbx() {
+  //迭代检查导出是否成功
+  bool is_success = true;
   for (auto &&item :exportList) {
     if (item->isState() == doCore::fileArchive::state::fail) {
       auto info = item->getInfo();
       QMessageBox::warning(this, "导出文件失败", QString("集数: %1, 镜头: %2")
           .arg(info["episodes"])
           .arg(info["shot"]));
+      is_success &= false;
     }
   }
+  if (is_success) exportList.clear();
+  //是否选择导出物体
   if (!selectionModel()->hasSelection()) return;
   //获得选择数据
   auto index = p_model_->index(selectionModel()->currentIndex().row(), 4);
 
   auto data = p_model_->data(index, Qt::UserRole).value<doCore::shotInfoPtr>();
   if (!data) return;
+
+  p_model_->insertRow(0, QModelIndex());
+
+  auto export_data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
+      .value<doCore::shotInfoPtr>();
+
   //创建上传类
-  auto k_fileexport = std::make_shared<doCore::mayaArchiveShotFbx>(data);
+  auto k_fileexport = std::make_shared<doCore::mayaArchiveShotFbx>(export_data);
   //将导出类插入到管理中
   exportList.push_back(k_fileexport);
   //开始导出
-  std::thread export_th{&doCore::mayaArchiveShotFbx::update, k_fileexport.get()};
+  std::thread export_th{&doCore::mayaArchiveShotFbx::exportFbx, k_fileexport.get(), data};
   export_th.detach();
 
   //更新列表
   p_model_->init(p_type_ptr_);
+}
+void shotTableWidget::createFlipbook_slot() {
+  auto k_path_str = QFileDialog::getExistingDirectory(this, "选择镜头拍屏图片文件夹");
+  if (!k_path_str.isEmpty())
+    createFlipbook(k_path_str);
+}
+
+void shotTableWidget::createFlipbook(const QString &image_folder) {
+  p_model_->insertRow(0, QModelIndex());
+
+  auto movide_data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
+      .value<doCore::shotInfoPtr>();
+  auto k_movie = std::make_shared<doCore::movieArchive>(movide_data);
+  k_movie->update({image_folder});
+
 }
 
 DOODLE_NAMESPACE_E

@@ -9,7 +9,6 @@
 #include "filetype.h"
 #include "mayaArchive.h"
 
-
 #include "episodes.h"
 #include "shot.h"
 #include "Logger.h"
@@ -25,9 +24,8 @@ CORE_NAMESPACE_S
 mayaArchiveShotFbx::mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr)
     : fileArchive(),
       p_info_ptr_(shot_info_ptr),
-      p_maya_archive_ptr_(),
       p_temporary_file_() {
-  p_maya_archive_ptr_ = std::make_shared<mayaArchive>(shot_info_ptr);
+
 }
 void mayaArchiveShotFbx::_generateFilePath() {
   if (!p_soureFile.empty())
@@ -37,8 +35,13 @@ void mayaArchiveShotFbx::_generateFilePath() {
     for (auto &&item: p_info_ptr_->getFileList())
       p_Path.push_back(item.filePath());
 }
-bool mayaArchiveShotFbx::exportFbx() {
-  auto info = QFileInfo(p_maya_archive_ptr_->down().front());
+bool mayaArchiveShotFbx::exportFbx(shotInfoPtr &shot_data) {
+  if (!shot_data) {
+    DOODLE_LOG_WARN << "没有数据传入";
+    throw std::runtime_error("没有数据传入");
+  }
+  auto kArchivePtr = std::make_shared<mayaArchive>(shot_data);
+  auto info = QFileInfo(kArchivePtr->down().front());
   p_temporary_file_ = std::make_shared<QTemporaryFile>();
   p_temporary_file_->setFileTemplate(QDir::tempPath() + "/mayaExport_XXXXXX.py");
   //复制出导出脚本
@@ -57,7 +60,7 @@ bool mayaArchiveShotFbx::exportFbx() {
       .arg(p_temporary_file_->fileName())//导出脚本位置           -->2
       .arg(info.path())//导出到文件的位置中--3
       .arg(info.baseName())//导出的名称  --4
-      .arg(p_info_ptr_->getVersionP())//版本 --5
+      .arg(shot_data->getVersionP())//版本 --5
       .arg("." + info.suffix())//文件后缀 -- 6
       .arg(info.path());
   DOODLE_LOG_INFO << "导出命令" << comm;
@@ -66,17 +69,19 @@ bool mayaArchiveShotFbx::exportFbx() {
 //  list << p_temporary_file_->fileName()
 //  <<" --path "<< info.path()
 //  <<" --name "<< info.baseName()
-//  <<" --version "<< QString(p_info_ptr_->getVersionP())
+//  <<" --version "<< QString(shot_data->getVersionP())
 //  <<" --suffix "<< "." + info.suffix()
 //  <<" --exportpath "<< info.path();
 //
 //  popen.start(mayapath,list);
 //  popen.waitForFinished();
-
   std::system(comm.toStdString().c_str());
   bool kJson = readExportJson(info.path());
-  if (!kJson)
+  if (!kJson) {
     p_state_ = state::fail;
+  }
+  p_info_ptr_->setVersionP(shot_data->getVersionP());
+  update();
   return kJson;
 }
 bool mayaArchiveShotFbx::readExportJson(const QString &exportPath) {
@@ -101,46 +106,30 @@ bool mayaArchiveShotFbx::readExportJson(const QString &exportPath) {
   return true;
 }
 bool mayaArchiveShotFbx::update() {
-  bool var = true;
-  var &= exportFbx();
   _generateFilePath();
   p_cacheFilePath = p_soureFile;
   _updata(p_soureFile);
   insertDB();
   p_state_ = state::success;
-  return var;
+  return true;
 }
 void mayaArchiveShotFbx::insertDB() {
-  auto shotInfo = std::make_shared<shotFileSqlInfo>();
-  shotInfo->setFileList(p_Path);
+  p_info_ptr_->setFileList(p_Path);
 
-  //获得导出类别的约束
-  auto fileTypelist = fileType::getAll(p_info_ptr_->getFileclass());
-  fileTypePtr k_fileType = nullptr;
-  for (auto &&item:fileTypelist) {
-    if (item->getFileType() == "export_fbx") {
-      k_fileType = item;
-      break;
-    }
-  }
-  if (!k_fileType) {
-    k_fileType.reset(new fileType());
-    k_fileType->setFileType("export_fbx");
-    k_fileType->setFileClass(p_info_ptr_->getFileclass());
-    k_fileType->insert();
-  }
+  p_info_ptr_->setFileType(p_info_ptr_->findFileType("export_fbx"));
 
-  shotInfo->setFileType(k_fileType);
-  shotInfo->setVersionP(p_info_ptr_->getVersionP());
-
-  shotInfo->insert();
+  p_info_ptr_->insert();
 
 }
 std::map<QString, QString> mayaArchiveShotFbx::getInfo() {
   auto map = std::map<QString, QString>();
-  map.insert(std::make_pair("episodes",QString::number(p_info_ptr_->getEpisdes()->getEpisdes())));
-  map.insert(std::make_pair("shot",QString::number(p_info_ptr_->getShot()->getShot())));
+  map.insert(std::make_pair("episodes", QString::number(p_info_ptr_->getEpisdes()->getEpisdes())));
+  map.insert(std::make_pair("shot", QString::number(p_info_ptr_->getShot()->getShot())));
   return map;
+}
+void mayaArchiveShotFbx::operator()(shotInfoPtr &shot_data) {
+  exportFbx(shot_data);
+  update();
 }
 
 CORE_NAMESPACE_E

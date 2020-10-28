@@ -63,6 +63,7 @@ set(CORE_ARCHIVE_HEADER
         src/imageSequenArchive.h
         src/freeSynWrap.h
         src/mayaArchiveShotFbx.h
+        src/ffmpegWrap.h
         )
 #这个是和文件服务器交互的实现文件
 set(CORE_ARCHIVE_SOURCE
@@ -75,7 +76,7 @@ set(CORE_ARCHIVE_SOURCE
         src/imageSequenArchive.cpp
         src/freeSynWrap.cpp
         src/mayaArchiveShotFbx.cpp
-        )
+        src/ffmpegWrap.cpp)
 
 set(RESOURCE_SOURCE
         core_resource.qrc)

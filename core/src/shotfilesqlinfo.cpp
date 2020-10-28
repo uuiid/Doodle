@@ -422,5 +422,23 @@ void shotFileSqlInfo::setFileType(const fileTypePtrW &fileType_) {
 
   setFileClass(fileType_.lock()->getFileClass());
 }
+fileTypePtr shotFileSqlInfo::findFileType(const std::string &type_str) {
+  //获得导出类别的约束
+  auto fileTypelist = fileType::getAll(getFileclass());
+  fileTypePtr k_fileType = nullptr;
+  for (auto &&item:fileTypelist) {
+    if (item->getFileType() == QString::fromStdString(type_str)) {
+      k_fileType = item;
+      break;
+    }
+  }
+  if (!k_fileType) {
+    k_fileType.reset(new fileType());
+    k_fileType->setFileType(QString::fromStdString(type_str));
+    k_fileType->setFileClass(getFileclass());
+    k_fileType->insert();
+  }
+  return k_fileType;
+}
 
 CORE_NAMESPACE_E

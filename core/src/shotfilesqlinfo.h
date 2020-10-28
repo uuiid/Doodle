@@ -37,6 +37,8 @@ class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo {
   fileTypePtr getFileType();
   void setFileType(const fileTypePtrW &fileType_);
 
+
+  fileTypePtr findFileType(const std::string & type_str);
  private:
   //循环获得查询结果
   static shotInfoPtrList batchQuerySelect(sqlQuertPtr &query);

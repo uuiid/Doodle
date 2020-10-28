@@ -18,7 +18,7 @@
 #define CORE_NAMESPACE_E };
 
 
-
+#define DOODLE_FFMPEG_PATH "tools/ffmpeg/bin"
 
 CORE_NAMESPACE_S
 //使用一些其他方便的引用类型

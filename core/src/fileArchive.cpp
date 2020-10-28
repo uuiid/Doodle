@@ -24,16 +24,13 @@ bool fileArchive::update(const QFileInfo &path) {
 }
 
 bool fileArchive::update(const stringList &filelist) {
-  p_soureFile.clear();
-  p_soureFile = filelist;
+  if(p_soureFile != filelist) {
+    p_soureFile.clear();
+    p_soureFile = filelist;
+  }
   _generateFilePath();
   //获得缓存路径
-  p_cacheFilePath.clear();
-  coreSet &set = coreSet::getCoreSet();
-  for (auto &&item :p_soureFile) {
-    auto path = set.getCacheRoot().path().append((item));
-    p_cacheFilePath.push_back(path);
-  }
+  generateCachePath();
 
   if (!isInCache()) {
     copyToCache();
@@ -49,13 +46,7 @@ stringList fileArchive::down(const QString &path) {
 stringList fileArchive::down() {
   _generateFilePath();
   //获得缓存路径
-  p_cacheFilePath.clear();
-  coreSet &set = coreSet::getCoreSet();
-  for (auto &&item :p_Path) {//这个是下载 要获得p_path服务器路径
-    auto path = set.getCacheRoot().path().append((item));
-    p_cacheFilePath.push_back(path);
-  }
-
+  generateCachePath();
   _down(p_cacheFilePath);
   return p_cacheFilePath;
 }
@@ -100,7 +91,8 @@ bool fileArchive::isInCache() {
           QFile(fileinfo.filePath()).remove();
           has &= false;
         }
-      }
+      }else
+        has &= false;
       ++i;
     }
   }
@@ -149,6 +141,16 @@ bool fileArchive::update() {
 }
 fileArchive::state fileArchive::isState() const {
   return p_state_;
+}
+bool fileArchive::generateCachePath() {
+  //获得缓存路径
+  p_cacheFilePath.clear();
+  coreSet &set = coreSet::getCoreSet();
+  for (auto &&item :p_Path) {//这个是下载 要获得p_path服务器路径
+    auto path = set.getCacheRoot().path().append((item));
+    p_cacheFilePath.push_back(path);
+  }
+  return true;
 }
 
 CORE_NAMESPACE_E

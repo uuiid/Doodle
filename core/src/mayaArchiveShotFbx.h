@@ -11,8 +11,11 @@ class CORE_EXPORT mayaArchiveShotFbx : public fileArchive {
  public:
 
   explicit mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr);
-  bool exportFbx();
+  bool exportFbx(shotInfoPtr &shot_data);
   bool update() override;
+
+  void operator()(shotInfoPtr &shot_data);
+
   std::map<QString,QString> getInfo();
  protected:
   void insertDB() override;
@@ -20,7 +23,6 @@ class CORE_EXPORT mayaArchiveShotFbx : public fileArchive {
  private:
   //数据库文件类
   shotInfoPtr p_info_ptr_;
-  mayaArchivePtr p_maya_archive_ptr_;
   //临时导出脚本的地方
   std::shared_ptr<QTemporaryFile> p_temporary_file_;
 
