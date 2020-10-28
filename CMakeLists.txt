@@ -8,7 +8,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #使用中文
@@ -28,7 +28,6 @@ find_package(CURL REQUIRED)
 #add_subdirectory(QxOrm ./QxOrm)
 #include(QxOrm/QxOrm.cmake)
 
-add_subdirectory(avcpp)
 add_subdirectory(logger)
 add_subdirectory(ftp)
 add_subdirectory(fileSyn)
@@ -77,26 +76,26 @@ find_program(WINQT windeployqt REQUIRED)
 
 
 install(
-    DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin/
-    DESTINATION ${PROJECT_NAME}
-    )
+        DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin/
+        DESTINATION ${PROJECT_NAME}
+)
 #CPACKIFW_COMMON()
 #显示所有变量
 #dump_cmake_variables()
 
-# #====================一些非qt组件的搜索和安装=============
-# #第一种搜索方式
-# include(InstallRequiredSystemLibraries)
-# #第二中验证加搜索方式
-# set(APPS ${CMAKE_INSTALL_PREFIX}/Doodle/Doodle.exe)  # paths to executables
-# get_filename_component(fixdir ${WINQT} DIRECTORY)
-# set(DIRS ${CMAKE_FIND_ROOT_PATH}
-#     ${fixdir}
-#     ${CMAKE_INSTALL_PREFIX}/lib)
+#====================一些非qt组件的搜索和安装=============
+#第一种搜索方式
+include(InstallRequiredSystemLibraries)
+#第二中验证加搜索方式
+set(APPS ${CMAKE_INSTALL_PREFIX}/install/bin/doodle.exe)  # paths to executables
+get_filename_component(fixdir ${WINQT} DIRECTORY)
+set(DIRS ${CMAKE_FIND_ROOT_PATH}
+        ${fixdir}
+        ${CMAKE_INSTALL_PREFIX}/lib)
 
-# install(CODE "
-#     include(BundleUtilities)
-#     fixup_bundle(\"${APPS}\"   \"\"   \"${DIRS}\")
-#     ")
+install(CODE "
+     include(BundleUtilities)
+     fixup_bundle(\"${APPS}\"   \"\"   \"${DIRS}\")
+     ")
 
 # include(CPack)

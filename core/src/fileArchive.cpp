@@ -3,7 +3,6 @@
 
 //设置导入
 #include "coreset.h"
-#include "doException/doException.h"
 
 //ftp模块导入
 #include "src/ftpsession.h"
@@ -15,15 +14,16 @@ CORE_NAMESPACE_S
 fileArchive::fileArchive()
     : p_soureFile(),
       p_cacheFilePath(),
-      p_Path() {}
+      p_Path(),
+      p_state_(state::none){}
 
-void fileArchive::update(const QFileInfo &path) {
+bool fileArchive::update(const QFileInfo &path) {
   stringList tmp;
   tmp.push_back(path.filePath());
-  update(tmp);
+  return update(tmp);
 }
 
-void fileArchive::update(const stringList &filelist) {
+bool fileArchive::update(const stringList &filelist) {
   p_soureFile.clear();
   p_soureFile = filelist;
   _generateFilePath();
@@ -40,6 +40,7 @@ void fileArchive::update(const stringList &filelist) {
   }
   _updata(p_cacheFilePath);
   insertDB();
+  return true;
 }
 stringList fileArchive::down(const QString &path) {
   return stringList{};
@@ -64,7 +65,7 @@ void fileArchive::copyToCache() const {
   if (!p_cacheFilePath.empty()) //进行检查存在性,  存在即删除
   {
     for (auto &&item :p_cacheFilePath) {
-      auto file = QFile((item));
+      QFile file(item);
       if (file.exists())
         file.remove();
     }
@@ -72,10 +73,10 @@ void fileArchive::copyToCache() const {
   //复制文件  如果无法复制输出错误
   int i = 0;
   for (auto &&item :p_soureFile) {
-    if(item == p_cacheFilePath[i])//如果路径相同就跳过
+    if (item == p_cacheFilePath[i])//如果路径相同就跳过
       continue;
 
-    auto file = QFile((item));
+    QFile file(item);
     DOODLE_LOG_INFO << p_soureFile << "-copy->" << p_cacheFilePath;
     if (QFile::copy((item),
                     (p_cacheFilePath[i])))
@@ -86,7 +87,7 @@ void fileArchive::copyToCache() const {
 bool fileArchive::isInCache() {
   bool has = true;
   if (!p_cacheFilePath.empty()) {
-    int i =0;
+    int i = 0;
     for (auto &&item:p_cacheFilePath) {
       auto fileinfo = QFileInfo((item));
 
@@ -94,7 +95,7 @@ bool fileArchive::isInCache() {
         has &= false;
       } else if (fileinfo.exists()) {//如果存在就看文件是否存在,  存在就删除
         if (item == p_soureFile[i])
-          has &=  true;
+          has &= true;
         else {
           QFile(fileinfo.filePath()).remove();
           has &= false;
@@ -142,8 +143,12 @@ void fileArchive::_down(const stringList &localPath) {
       DOODLE_LOG_WARN << "无法下载文件" << (item);
   }
 }
-void fileArchive::update() {
+bool fileArchive::update() {
   insertDB();
+  return true;
+}
+fileArchive::state fileArchive::isState() const {
+  return p_state_;
 }
 
 CORE_NAMESPACE_E

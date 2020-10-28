@@ -111,7 +111,7 @@ void coreSet::getSetting() {
 
 QString coreSet::toIpPath(const QString &path) {
   static QRegularExpression exp("^[A-Z]:");
-  DOODLE_LOG_INFO << exp.match(path);
+//  DOODLE_LOG_INFO << exp.match(path);
   if (exp.match(path).hasMatch()) {
     return path.right(path.size() - 2);
   }

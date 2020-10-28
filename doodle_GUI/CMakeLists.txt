@@ -96,3 +96,17 @@ qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 #        TARGET doodle POST_BUILD
 #        COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_BINARY_DIR}/doodle_GUI $<TARGET_FILE:doodle>
 #)
+if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    add_custom_command(
+            TARGET doodle POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.exe
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.pdb
+            COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_SOURCE_DIR}/install/bin/ $<TARGET_FILE:doodle>
+            COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_SOURCE_DIR}/install/bin/ $<TARGET_FILE:core>
+    )
+else()
+    add_custom_command(
+            TARGET doodle POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.exe
+    )
+endif()

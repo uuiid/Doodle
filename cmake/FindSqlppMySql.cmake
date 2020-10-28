@@ -1,11 +1,10 @@
 include(FindPackageHandleStandardArgs)
 
-#find_path(
-#        SQLPPMYSQL_LIBRARY
-#        NAMES sqlpp-mysql.lib
-#        HINTS $ENV{VCPKG_MYROOT}/vcpkg/installed/x64-windows/debug/lib/sqlpp-mysql.lib)
+find_library(
+        SQLPPMYSQL_LIBRARY
+        NAMES sqlpp-mysql.lib)
 
-set(SQLPPMYSQL_LIBRARY $ENV{VCPKG_MYROOT}/vcpkg/installed/x64-windows/debug/lib/sqlpp-mysql.lib)
+#set(SQLPPMYSQL_LIBRARY $ENV{VCPKG_MYROOT}/vcpkg/installed/x64-windows/debug/lib/sqlpp-mysql.lib)
 
 find_library(MySql_LIBRARY
         NAMES libmysql.lib)

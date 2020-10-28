@@ -10,10 +10,17 @@ class CORE_EXPORT fileArchive {
  public:
   fileArchive();
   virtual ~fileArchive() = default;;
+  enum class state{
+    none = 0,
+    success = 1,
+    fail = 2,
+  };
 
-  virtual void update(const QFileInfo &path);
-  virtual void update(const stringList &filelist);
-  virtual void update();
+  [[nodiscard]] state isState() const;
+
+  virtual bool update(const QFileInfo &path);
+  virtual bool update(const stringList &filelist);
+  virtual bool update();
   virtual stringList down(const QString &path);
   virtual stringList down();
 
@@ -38,6 +45,9 @@ class CORE_EXPORT fileArchive {
   stringList p_cacheFilePath;
   //这个是服务器路径(服务器)
   stringList p_Path;
+
+  //状态
+  state p_state_;
 };
 
 CORE_NAMESPACE_E

@@ -9,9 +9,11 @@
 CORE_NAMESPACE_S
 class CORE_EXPORT mayaArchiveShotFbx : public fileArchive {
  public:
+
   explicit mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr);
   bool exportFbx();
-  void update() override;
+  bool update() override;
+  std::map<QString,QString> getInfo();
  protected:
   void insertDB() override;
   void _generateFilePath() override;

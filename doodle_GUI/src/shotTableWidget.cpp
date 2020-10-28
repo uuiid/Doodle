@@ -24,6 +24,8 @@
 #include <QClipboard>
 #include <QGuiApplication>
 #include <memory>
+#include <thread>
+
 DOODLE_NAMESPACE_S
 //-----------------------------------自定义shot小部件---------------------------------------------//
 shotTableWidget::shotTableWidget(QWidget *parent)
@@ -148,6 +150,7 @@ void shotTableWidget::insertShot(const QString &path) {
 void shotTableWidget::openPath(const doCore::fileSqlInfoPtr &info_ptr, const bool &openEx) {
   auto path = doCore::coreSet::getCoreSet().getPrjectRoot().path() + info_ptr->getFileList()[0].path();
   DOODLE_LOG_INFO << "打开路径: " << QDir::cleanPath(path);
+
   if (QDir(path).exists()) {
     if (openEx)
       std::system(QString("explorer %1").arg(QDir::cleanPath(path))
@@ -162,6 +165,14 @@ void shotTableWidget::openPath(const doCore::fileSqlInfoPtr &info_ptr, const boo
   }
 }
 void shotTableWidget::exportFbx() {
+  for (auto &&item :exportList) {
+    if (item->isState() == doCore::fileArchive::state::fail) {
+      auto info = item->getInfo();
+      QMessageBox::warning(this, "导出文件失败", QString("集数: %1, 镜头: %2")
+          .arg(info["episodes"])
+          .arg(info["shot"]));
+    }
+  }
   if (!selectionModel()->hasSelection()) return;
   //获得选择数据
   auto index = p_model_->index(selectionModel()->currentIndex().row(), 4);
@@ -170,8 +181,12 @@ void shotTableWidget::exportFbx() {
   if (!data) return;
   //创建上传类
   auto k_fileexport = std::make_shared<doCore::mayaArchiveShotFbx>(data);
+  //将导出类插入到管理中
+  exportList.push_back(k_fileexport);
   //开始导出
-  k_fileexport->update();
+  std::thread export_th{&doCore::mayaArchiveShotFbx::update, k_fileexport.get()};
+  export_th.detach();
+
   //更新列表
   p_model_->init(p_type_ptr_);
 }

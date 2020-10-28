@@ -36,6 +36,8 @@ class shotTableWidget : public QTableView {
   shotTableModel *p_model_;
 
   QMenu *p_menu_;
+
+  std::vector<doCore::mayaArchiveShotFbxPtr> exportList;
  private:
   void insertShot(const QString &path);
   void enableBorder(const bool &isEnable);

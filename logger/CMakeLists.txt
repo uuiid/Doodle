@@ -18,3 +18,16 @@ target_include_directories(logger PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 install(TARGETS logger DESTINATION lib)
 install(FILES ${LOG_FILES} DESTINATION include)
+
+if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    add_custom_command(
+            TARGET logger POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:logger> ${CMAKE_SOURCE_DIR}/install/bin/logger.dll
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:logger> ${CMAKE_SOURCE_DIR}/install/bin/logger.pdb
+    )
+else()
+    add_custom_command(
+            TARGET logger POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:logger> ${CMAKE_SOURCE_DIR}/install/bin/logger.dll
+    )
+endif()

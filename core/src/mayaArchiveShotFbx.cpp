@@ -9,6 +9,9 @@
 #include "filetype.h"
 #include "mayaArchive.h"
 
+
+#include "episodes.h"
+#include "shot.h"
 #include "Logger.h"
 
 #include <QTemporaryFile>
@@ -20,8 +23,10 @@
 CORE_NAMESPACE_S
 
 mayaArchiveShotFbx::mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr)
-    : p_info_ptr_(shot_info_ptr),
-      p_maya_archive_ptr_() {
+    : fileArchive(),
+      p_info_ptr_(shot_info_ptr),
+      p_maya_archive_ptr_(),
+      p_temporary_file_() {
   p_maya_archive_ptr_ = std::make_shared<mayaArchive>(shot_info_ptr);
 }
 void mayaArchiveShotFbx::_generateFilePath() {
@@ -37,7 +42,7 @@ bool mayaArchiveShotFbx::exportFbx() {
   p_temporary_file_ = std::make_shared<QTemporaryFile>();
   p_temporary_file_->setFileTemplate(QDir::tempPath() + "/mayaExport_XXXXXX.py");
   //复制出导出脚本
-  auto file_tmp = QFile(":/resource/mayaExport.py");
+  QFile file_tmp(":/resource/mayaExport.py");
   p_temporary_file_->open();
   if (file_tmp.open(QIODevice::ReadOnly))
     p_temporary_file_->write(file_tmp.readAll());
@@ -68,14 +73,16 @@ bool mayaArchiveShotFbx::exportFbx() {
 //  popen.start(mayapath,list);
 //  popen.waitForFinished();
 
-//  std::system(comm.toStdString().c_str());
-  readExportJson(info.path());
-  return true;
+  std::system(comm.toStdString().c_str());
+  bool kJson = readExportJson(info.path());
+  if (!kJson)
+    p_state_ = state::fail;
+  return kJson;
 }
 bool mayaArchiveShotFbx::readExportJson(const QString &exportPath) {
   auto k_s_file = QDir::cleanPath(exportPath) + "/doodle_Export.json";
   //读取文件
-  auto k_file = QFile(k_s_file);
+  QFile k_file(k_s_file);
   if (!k_file.open(QIODevice::ReadOnly)) return false;
   auto k_exjson = QJsonDocument::fromJson(k_file.readAll());
 
@@ -93,27 +100,30 @@ bool mayaArchiveShotFbx::readExportJson(const QString &exportPath) {
   }
   return true;
 }
-void mayaArchiveShotFbx::update() {
-  exportFbx();
+bool mayaArchiveShotFbx::update() {
+  bool var = true;
+  var &= exportFbx();
   _generateFilePath();
   p_cacheFilePath = p_soureFile;
   _updata(p_soureFile);
   insertDB();
+  p_state_ = state::success;
+  return var;
 }
 void mayaArchiveShotFbx::insertDB() {
   auto shotInfo = std::make_shared<shotFileSqlInfo>();
   shotInfo->setFileList(p_Path);
 
   //获得导出类别的约束
-  auto fileTypelist =fileType::getAll(p_info_ptr_->getFileclass());
+  auto fileTypelist = fileType::getAll(p_info_ptr_->getFileclass());
   fileTypePtr k_fileType = nullptr;
-  for (auto &&item:fileTypelist){
-    if(item->getFileType() == "export_fbx"){
+  for (auto &&item:fileTypelist) {
+    if (item->getFileType() == "export_fbx") {
       k_fileType = item;
       break;
     }
   }
-  if(!k_fileType){
+  if (!k_fileType) {
     k_fileType.reset(new fileType());
     k_fileType->setFileType("export_fbx");
     k_fileType->setFileClass(p_info_ptr_->getFileclass());
@@ -121,9 +131,16 @@ void mayaArchiveShotFbx::insertDB() {
   }
 
   shotInfo->setFileType(k_fileType);
+  shotInfo->setVersionP(p_info_ptr_->getVersionP());
 
   shotInfo->insert();
 
+}
+std::map<QString, QString> mayaArchiveShotFbx::getInfo() {
+  auto map = std::map<QString, QString>();
+  map.insert(std::make_pair("episodes",QString::number(p_info_ptr_->getEpisdes()->getEpisdes())));
+  map.insert(std::make_pair("shot",QString::number(p_info_ptr_->getShot()->getShot())));
+  return map;
 }
 
 CORE_NAMESPACE_E

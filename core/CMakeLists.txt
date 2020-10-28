@@ -93,7 +93,6 @@ add_library(core SHARED
 target_link_libraries(core PUBLIC Qt5::Sql)
 target_link_libraries(core PUBLIC Qt5::Core)
 target_link_libraries(core PUBLIC Qt5::Xml)
-#target_link_libraries(core PUBLIC ${FFMPEG_LIBRARIES})
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
 target_link_libraries(core PUBLIC pinyin)
 target_link_libraries(core PUBLIC ftp)
@@ -105,5 +104,26 @@ qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
-install(TARGETS core DESTINATION lib)
-install(FILES ${HEADER_FILES} DESTINATION include)
+#install(TARGETS core DESTINATION lib)
+#install(FILES ${HEADER_FILES} DESTINATION include)
+
+file(COPY "$ENV{ProgramFiles}/MySQL/MySQL Server 8.0/lib/"
+        DESTINATION ${CMAKE_SOURCE_DIR}/install/bin
+        FILES_MATCHING PATTERN "*.dll")
+
+file(COPY ${CMAKE_SOURCE_DIR}/tools
+        DESTINATION ${CMAKE_SOURCE_DIR}/install)
+
+
+if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    add_custom_command(
+            TARGET core POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.dll
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.pdb
+    )
+else()
+    add_custom_command(
+            TARGET core POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.dll
+    )
+endif()

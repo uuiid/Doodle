@@ -20,3 +20,20 @@ target_include_directories(ftp PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 install(TARGETS ftp DESTINATION lib)
 install(FILES ${HEADER_FILES} DESTINATION include)
 
+if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    add_custom_command(
+            TARGET ftp POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:ftp> ${CMAKE_SOURCE_DIR}/install/bin/ftp.dll
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:ftp> ${CMAKE_SOURCE_DIR}/install/bin/ftp.pdb
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:CURL::libcurl> ${CMAKE_SOURCE_DIR}/install/bin/
+    )
+    include(BundleUtilities)
+    fixup_bundle(${CMAKE_SOURCE_DIR}/install/bin/doodle.exe  ""   "${CMAKE_FIND_ROOT_PATH}")
+#    file(COPY $<TARGET_FILE:CURL::libcurl> DESTINATION ${CMAKE_SOURCE_DIR}/install/bin/libcurl-d.dll)
+else()
+    add_custom_command(
+            TARGET ftp POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:ftp> ${CMAKE_SOURCE_DIR}/install/bin/ftp.dll
+    )
+endif()
+
