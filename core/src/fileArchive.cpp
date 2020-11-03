@@ -110,8 +110,11 @@ void fileArchive::_updata(const stringList &pathList) {
 
   int i = 0;
   for (auto &&item:p_cacheFilePath) {
-    if (!session->upload((item), (p_Path[i])))
+    if (!session->upload((item), (p_Path[i]))) {
+      p_state_ = state::fail;
       DOODLE_LOG_WARN << "无法上传文件" << (item);
+      return;
+    }
     ++i;
   }
 }
@@ -131,8 +134,11 @@ void fileArchive::_down(const stringList &localPath) {
     if (!QDir(k_down_path).exists())
       QDir(k_down_path).mkpath(k_down_path);
     if (!session->down((localPath[i]),
-                       (item)))
+                       (item))) {
       DOODLE_LOG_WARN << "无法下载文件" << (item);
+      p_state_ = state::fail;
+      return;
+    }
   }
 }
 bool fileArchive::update() {

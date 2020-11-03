@@ -8,6 +8,7 @@
 #include "src/convert.h"
 
 #include <QSqlError>
+#include <stdexcept>
 
 CORE_NAMESPACE_S
 

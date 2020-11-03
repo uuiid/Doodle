@@ -12,18 +12,18 @@ CORE_NAMESPACE_S
 * 数据库连接类
 * 全局静态类
 */
-class CORE_EXPORT coreSql : public QObject {
- Q_OBJECT
+class CORE_EXPORT coreSql{
+
  public:
   static coreSql &getCoreSql();
   coreSql &operator=(const coreSql &s) = delete;
   coreSql(const coreSql &s) = delete;
 
-  ~coreSql() override;
+  ~coreSql();
   sqlQuertPtr getquery();
   void closeDataBase();
   static bool commitDataBase();
- public slots:
+
   void initDB(const QString &ip, const QString &dataName);
 
  private:
@@ -40,8 +40,8 @@ class CORE_EXPORT coreSql : public QObject {
 /*
 数据库中的user类 只有在注册的时候会用到
 */
-class CORE_EXPORT coreSqlUser : public QObject {
- Q_OBJECT
+class CORE_EXPORT coreSqlUser {
+
  public:
   static coreSqlUser &getCoreSqlUser();
   coreSqlUser &operator=(const coreSqlUser &s) = delete;
@@ -49,7 +49,6 @@ class CORE_EXPORT coreSqlUser : public QObject {
 
   mapStringPtr getUser();
 
- public slots:
   void initDB(const QString &ip, const QString &dataName);
  private:
   coreSqlUser();

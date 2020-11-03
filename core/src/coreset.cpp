@@ -10,6 +10,7 @@
 #include <QStorageInfo>
 
 #include <QRegularExpression>
+#include <stdexcept>
 
 CORE_NAMESPACE_S
 

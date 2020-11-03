@@ -31,8 +31,8 @@ struct synPath_struct {
 *全局静态设置类
 */
 
-class CORE_EXPORT coreSet : public QObject {
- Q_OBJECT
+class CORE_EXPORT coreSet{
+
  public:
   static coreSet &getCoreSet();
   coreSet &operator=(const coreSet &s) = delete;
@@ -83,7 +83,6 @@ class CORE_EXPORT coreSet : public QObject {
 
   //doc路径
   [[nodiscard]] QDir getDoc() const;
- public slots:
 
   void writeDoodleLocalSet();
  private:

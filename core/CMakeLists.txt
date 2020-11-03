@@ -1,6 +1,7 @@
 ﻿find_package(Qt5 CONFIG COMPONENTS Core Sql Xml REQUIRED)
 find_package(Sqlpp11 REQUIRED)
 find_package(FFMPEG  REQUIRED )
+find_package(Boost COMPONENTS filesystem REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 #由于这个库只有一个文件,  所以直接复制过的了事
 file(COPY ${PROJECT_SOURCE_DIR}/sql-builder/sql.h
@@ -95,6 +96,7 @@ target_link_libraries(core PUBLIC Qt5::Sql)
 target_link_libraries(core PUBLIC Qt5::Core)
 target_link_libraries(core PUBLIC Qt5::Xml)
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
+target_link_libraries(core PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(core PUBLIC pinyin)
 target_link_libraries(core PUBLIC ftp)
 target_link_libraries(core PUBLIC logger)

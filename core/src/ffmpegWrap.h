@@ -3,19 +3,24 @@
 //
 
 #include "core_global.h"
+#include <boost/filesystem/path.hpp>
+
 CORE_NAMESPACE_S
 
-class CORE_EXPORT ffmpegWrap{
+class CORE_EXPORT ffmpegWrap {
  public:
-  explicit ffmpegWrap (QString  path);
-
+  explicit ffmpegWrap(const std::string& path);
 
   bool imageToVideo(const std::vector<QString> &image_path,
                     const QString &videoPath,
                     const QString &subtitles) const;
+  bool imageToVideo(const std::vector<std::string> &image_path,
+                    const std::string &videoPath,
+                    const std::string &subtitles) const;
+  bool convertToVideo(const std::string &in_videoPath, const std::string &out_videoPath, const std::string &subtitles) const;
  private:
-  QString p_path_;
-  std::shared_ptr<QTemporaryFile> p_file_;
+  std::shared_ptr<boost::filesystem::path> p_path_;
+  std::shared_ptr<boost::filesystem::path> p_tmp_file_;
 };
 
 CORE_NAMESPACE_E

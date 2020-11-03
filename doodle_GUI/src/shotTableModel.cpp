@@ -127,10 +127,12 @@ bool shotTableModel::insertRows(int position, int rows, const QModelIndex &paren
 void shotTableModel::init(const doCore::fileTypePtr &file_type_ptr) {
   auto tmp_list = doCore::shotFileSqlInfo::getAll(file_type_ptr);
   clear();
-  beginInsertRows(QModelIndex(), 0, tmp_list.size() - 1);
-  p_type_ptr_ = file_type_ptr;
-  p_shot_info_ptr_list_ = tmp_list;
-  endInsertRows();
+  if(!tmp_list.empty()) {
+    beginInsertRows(QModelIndex(), 0, tmp_list.size() - 1);
+    p_type_ptr_ = file_type_ptr;
+    p_shot_info_ptr_list_ = tmp_list;
+    endInsertRows();
+  }
 }
 void shotTableModel::clear() {
   p_type_ptr_ = nullptr;

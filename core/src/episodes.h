@@ -6,7 +6,7 @@
 CORE_NAMESPACE_S
 
 class CORE_EXPORT episodes : public coresqldata {
- Q_GADGET
+
  public:
   episodes();
   void select(const qint64 &ID_);

@@ -36,6 +36,7 @@ set(DOODLE_SOURE_HEADER
         src/assTableWidght.h
         src/settingWidget.h
         src/systemTray.h
+        src/speedProgressWidget.h
         )
 
 set(DOODLE_SOURE
@@ -62,7 +63,7 @@ set(DOODLE_SOURE
         src/assTableWidght.cpp
         src/settingWidget.cpp
         src/systemTray.cpp
-        )
+        src/speedProgressWidget.cpp)
 
 set(TS_FILES
         )

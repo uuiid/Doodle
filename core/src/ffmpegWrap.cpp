@@ -2,42 +2,95 @@
 // Created by teXiao on 2020/10/28.
 //
 
+
 #include "ffmpegWrap.h"
 
 #include "Logger.h"
 
-#include <QTemporaryFile>
-#include <QtCore/QDir>
+
+
+#include <boost/process.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/format.hpp>
+#include <iostream>
 
 CORE_NAMESPACE_S
-ffmpegWrap::ffmpegWrap(QString path)
-    : p_path_(std::move(path)),
-      p_file_() {
-  p_file_ = std::make_shared<QTemporaryFile>();
+ffmpegWrap::ffmpegWrap(const std::string &path)
+    : p_path_(std::make_shared<boost::filesystem::path>(path)),
+      p_tmp_file_() {
+  p_tmp_file_ = std::make_shared<boost::filesystem::path>(boost::filesystem::temp_directory_path()
+                                                              / boost::filesystem::unique_path().filename());
 }
+bool ffmpegWrap::imageToVideo(const std::vector<std::string> &image_path,
+                              const std::string &videoPath,
+                              const std::string &subtitles) const {
+  boost::filesystem::ofstream fileOpen(*p_tmp_file_);
+
+  for (auto &&item :image_path) {
+    fileOpen << boost::format("file '%1%'\n") % item;
+  }
+  fileOpen.close();
+  boost::filesystem::path k_videopath(videoPath);
+  //如果不存在就创建
+  if (!k_videopath.has_parent_path())
+    boost::filesystem::create_directories(k_videopath.parent_path());
+  if (boost::filesystem::exists(k_videopath))
+    boost::filesystem::remove(k_videopath);
+
+//  stringList com_arg;
+  auto com_arg =
+      boost::format("ffmpeg.exe -r 25 -f concat -safe 0 -i %1% "
+                    "-filter_complex \"drawtext=text='%2%':fontcolor=0xc62d1d:fontsize=44:x=10:y=10:shadowx=3:shadowy=3\" "
+                    "-c:v libx264 -pix_fmt yuv420p -s 1920*1080 %3%")
+          % p_tmp_file_->string()
+          % subtitles
+          % videoPath;
+
+  DOODLE_LOG_INFO << QString::fromStdString(com_arg.str());
+  auto env = boost::this_process::environment();
+
+  env["PATH"] += p_path_->parent_path().string();
+//  env["PATH"] += R"(c:\Windows\Fonts\)";
+  boost::process::system(com_arg.str(), env);
+
+  if (boost::filesystem::exists(k_videopath)) return true;
+  return false;
+}
+
 bool ffmpegWrap::imageToVideo(const std::vector<QString> &image_path,
                               const QString &videoPath,
                               const QString &subtitles) const {
-  p_file_->open();
-  for (auto &&item :image_path) {
-    p_file_->write(QString("'%1'\n").arg(item).toStdString().c_str());
-  }
-  p_file_->close();
-  //不纯在路径创建一下
-  auto dir = QDir(QFileInfo(videoPath).path());
-  if (!dir.exists()) dir.mkpath(dir.path());
+  std::vector<std::string> k_image_path;
+  k_image_path.clear();
+  for (auto &&x :image_path)
+    k_image_path.push_back(x.toStdString());
+  return imageToVideo(k_image_path, videoPath.toStdString(), subtitles.toStdString());
+}
+bool ffmpegWrap::convertToVideo(
+    const std::string &in_videoPath, const std::string &out_videoPath, const std::string &subtitles) const {
 
-  auto comm = QString(R"("%1" -r 25 -f concat -safe 0 -i %2 )"
-                      R"(-filter_complex "drawtext=text='%3' : fontcolor=0xc62d1d: fontsize=44: x=10:y=10: shadowx=3: shadowy=3")"
-                      R"( -c:v libx264 -pix_fmt yuv420p -s 1920*1080 %4 ")")
-      .arg(p_path_)
-      .arg(p_file_->fileName())
-      .arg(subtitles)
-      .arg(videoPath);
-  DOODLE_LOG_INFO << "转换视频命令 : " << comm << "\n转换视频位置:" << videoPath;
+  boost::filesystem::path k_out_path(out_videoPath);
+  if(!boost::filesystem::exists(k_out_path.parent_path()))
+    boost::filesystem::create_directories(k_out_path.parent_path());
+  if(boost::filesystem::exists(k_out_path))
+    boost::filesystem::remove(k_out_path);
 
-//  std::system(comm.toStdString().c_str());
-  return true;
+  auto com_arg =
+      boost::format ("ffmpeg.exe -i %1% -vcodec h264"
+                     " -filter_complex \"drawtext=text='%2%':"
+                     "fontcolor=0xc62d1d:fontsize=44:x=10:y=10:shadowx=3:shadowy=3\" "
+                     "-acodec mp2 -s 1920*1080 %3%")
+                     % in_videoPath
+                     % subtitles
+                     % out_videoPath;
+  DOODLE_LOG_INFO << QString::fromStdString(com_arg.str());
+
+  auto env = boost::this_process::environment();
+  env["PATH"] = p_path_->parent_path().string();
+  boost::process::system(com_arg.str(),env);
+
+  if(boost::filesystem::exists(k_out_path)) return true;
+  return false;
 }
 
 CORE_NAMESPACE_E

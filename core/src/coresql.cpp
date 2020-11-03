@@ -6,6 +6,7 @@
 
 #include <QMap>
 #include <thread>
+#include <stdexcept>
 
 CORE_NAMESPACE_S
 coreSql::coreSql()

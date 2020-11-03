@@ -8,6 +8,7 @@
 #include <QTemporaryFile>
 
 #include <thread>
+#include <stdexcept>
 PINYIN_NAMESPACE_S
 
 QTemporaryFile convert::tmpDBFile;

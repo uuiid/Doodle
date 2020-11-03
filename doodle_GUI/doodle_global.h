@@ -8,6 +8,8 @@
  */
 #pragma once
 
+
+
 #include <QtCore/qglobal.h>
 #include <QWidget>
 #include <QHBoxLayout>

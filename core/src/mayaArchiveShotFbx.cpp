@@ -18,6 +18,7 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonArray>
+#include <stdexcept>
 
 CORE_NAMESPACE_S
 

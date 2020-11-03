@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#define _SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING 1
+#define _WIN32_WINNT 0x0601
 
 #include <QtCore/qglobal.h>
 #include <QSqlQuery>
@@ -8,10 +10,12 @@
 #include <QFileInfo>
 #include <QVector>
 
+
+
 #if defined(CORE_LIBRARY)
-#  define CORE_EXPORT Q_DECL_EXPORT
+#  define CORE_EXPORT __declspec(dllexport)
 #else
-#  define CORE_EXPORT Q_DECL_IMPORT
+#  define CORE_EXPORT __declspec(dllimport)
 #endif
 
 #define CORE_NAMESPACE_S namespace doCore {
@@ -86,6 +90,8 @@ class mayaArchiveShotFbx;
 using mayaArchiveShotFbxPtr = std::shared_ptr<mayaArchiveShotFbx>;
 
 using stringList = std::vector<QString>;
+
+
 CORE_NAMESPACE_E
 
 

@@ -23,6 +23,10 @@
 #include <QMessageBox>
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QProgressDialog>
+
+#include <boost/process.hpp>
+
 #include <memory>
 #include <thread>
 
@@ -61,7 +65,7 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
     //上传拍屏
     auto k_sub_fb = new QAction();
     connect(k_sub_fb, &QAction::triggered,
-            this,&shotTableWidget::createFlipbook_slot);
+            this, &shotTableWidget::createFlipbook_slot);
     k_sub_fb->setText(tr("提交拍屏"));
     p_menu_->addAction(k_sub_fb);
 
@@ -100,6 +104,8 @@ void shotTableWidget::setModel(QAbstractItemModel *model) {
     p_model_ = p_model;
   QTableView::setModel(model);
 }
+
+
 void shotTableWidget::dragEnterEvent(QDragEnterEvent *event) {
   if (event->mimeData()->hasUrls()) {
     event->acceptProposedAction();
@@ -117,12 +123,23 @@ void shotTableWidget::dragMoveEvent(QDragMoveEvent *event) {
 }
 void shotTableWidget::dropEvent(QDropEvent *event) {
   QAbstractItemView::dropEvent(event);
-  if (!event->mimeData()->hasUrls()) return;
-  if (event->mimeData()->urls().size() != 1) return;
+  if (!event->mimeData()->hasUrls()) return enableBorder(false);
+  if (event->mimeData()->urls().size() != 1) return enableBorder(false);
   auto url = event->mimeData()->urls()[0];
   DOODLE_LOG_INFO << "文件拖入窗口" << url;
-  if (QFileInfo(url.toLocalFile()).suffix() == "ma" || QFileInfo(url.toLocalFile()).suffix() == "mb")
-    insertShot(url.toLocalFile());
+
+  const QFileInfo &kFileInfo = QFileInfo(url.toLocalFile());
+  if (kFileInfo.isFile()) {
+    if (kFileInfo.suffix() == "ma" || kFileInfo.suffix() == "mb")
+      insertShot(url.toLocalFile());
+    else if(kFileInfo.suffix() == "mp4" || kFileInfo.suffix() == "avi" || kFileInfo.suffix() == "mov")
+      createFlipbook(url.toLocalFile());
+  }else if (kFileInfo.isDir()){
+    auto dir = QDir(url.toLocalFile());
+    auto image_list = dir.entryInfoList({"*.png", "*.jpg", "*.tga", "*.exr"}, QDir::Files, QDir::Name);
+    if (!image_list.isEmpty()) 
+      createFlipbook(url.toLocalFile());
+  }
 
   enableBorder(false);
 }
@@ -132,6 +149,8 @@ void shotTableWidget::enableBorder(const bool &isEnable) {
   else
     setStyleSheet("");
 }
+
+
 void shotTableWidget::getSelectPath() {
   auto path = QFileDialog::getOpenFileName(this,
                                            tr("提交文件"),
@@ -165,8 +184,9 @@ void shotTableWidget::openPath(const doCore::fileSqlInfoPtr &info_ptr, const boo
 
   if (QDir(path).exists()) {
     if (openEx)
-      std::system(QString("explorer %1").arg(QDir::cleanPath(path))
-                      .replace("/", "\\").toStdString().c_str());
+      boost::process::system(QString("explorer.exe %1").arg(QDir::cleanPath(path).replace("/", "\\")).toStdString());
+//      std::system(QString("explorer.exe %1").arg(QDir::cleanPath(path).replace("/", "\\"))
+//                      .toStdString().c_str());
     else
       QGuiApplication::clipboard()->setText(path);
   } else {
@@ -220,13 +240,16 @@ void shotTableWidget::createFlipbook_slot() {
 }
 
 void shotTableWidget::createFlipbook(const QString &image_folder) {
-  p_model_->insertRow(0, QModelIndex());
 
+  p_model_->insertRow(0, QModelIndex());
   auto movide_data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
       .value<doCore::shotInfoPtr>();
-  auto k_movie = std::make_shared<doCore::movieArchive>(movide_data);
-  k_movie->update({image_folder});
 
+  auto k_movie = std::make_shared<doCore::movieArchive>(movide_data);
+
+  auto th = std::thread(&doCore::movieArchive::update, *k_movie, std::vector{image_folder});
+  th.detach();
+  p_model_->init(p_type_ptr_);
 }
 
 DOODLE_NAMESPACE_E

@@ -8,6 +8,7 @@
 #include <QVariant>
 #include <QSqlError>
 #include <QVector>
+#include <stdexcept>
 
 CORE_NAMESPACE_S
 

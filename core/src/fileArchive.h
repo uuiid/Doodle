@@ -6,10 +6,10 @@
 
 CORE_NAMESPACE_S
 
-class CORE_EXPORT fileArchive {
+class CORE_EXPORT fileArchive{
  public:
   fileArchive();
-  virtual ~fileArchive() = default;;
+  ~fileArchive() = default;;
   enum class state{
     none = 0,
     success = 1,
