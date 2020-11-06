@@ -1,12 +1,8 @@
 ﻿#pragma once
 
+#include <QtCore/QDir>
 #include "core_global.h"
-#include "coresql.h"
-#include <QObject>
-#include <QString>
-#include <QFileInfo>
-#include <QFile>
-#include <QDir>
+
 
 CORE_NAMESPACE_S
 
@@ -67,8 +63,11 @@ class CORE_EXPORT coreSet{
   void setFreeFileSyn(const QString &value);
   //项目名称设置
   QString getProjectname();
+  [[nodiscard]] std::pair<int,std::string> projectName() const;
   [[nodiscard]] QStringList getAllPrjName() const;
   void setProjectname(const QString &value);
+  void setProjectname(const std::string &value);
+
   //shot根路径
   [[nodiscard]] QDir getShotRoot() const;
   void setShotRoot(const QDir &value);
@@ -113,15 +112,13 @@ class CORE_EXPORT coreSet{
 
   //项目名称
   QString projectname;
+  std::pair<int,std::string> project;
  private:
   //内部属性
   QFileInfo synPath;
   QDir synServer;
 
-  //不知道什么属性
-  // QStringList ProgramFolder;
-  // QStringList assTypeFolder;
-  // QStringList Amnnnll;
+  std::map<int,std::string> prjMap;
 
   QDir shotRoot;
   QDir assRoot;

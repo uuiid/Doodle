@@ -15,36 +15,36 @@ class CORE_EXPORT assFileSqlInfo : public fileSqlInfo {
   void updateSQL() override;
   void deleteSQL() override;
 
-  static assInfoPtrList getAll(const fileClassPtr &fc_);
-  static assInfoPtrList getAll(const assTypePtr &AT_);
-  static assInfoPtrList getAll(const fileTypePtr &ft_);
+  static assInfoPtrList getAll(const assDepPtr &fc_);
+  static assInfoPtrList getAll(const assClassPtr &AT_);
+  static assInfoPtrList getAll(const assTypePtr &ft_);
 
-  QString generatePath(const QString &programFodler) override;
-  QString generatePath(const QString &programFolder, const QString &suffixes) override;
-  QString generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix) override;
-  QString generateFileName(const QString &suffixes) override;
-  QString generateFileName(const QString &suffixes, const QString &prefix) override;
+  dpath generatePath(const std::string &programFolder) override;
+  dpath generatePath(const dstring &programFolder, const dstring &suffixes) override;
+  dpath generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) override;
+  dstring generateFileName(const dstring &suffixes) override;
+  dstring generateFileName(const dstring &suffixes, const dstring &prefix) override;
 
-  fileClassPtr getFileClass();
-  void setFileClass(const fileClassPtrW &fileclass_);
+  assDepPtr getAssDep();
+  void setAssDep(const assDepPtr &ass_dep_);
 
-  fileTypePtr getFileType();
-  void setFileType(const fileTypePtrW &fileType_);
+  const assClassPtr & getAssClass();
+  void setAssClass(const assClassPtr &ass_type_);
 
-  assTypePtr getAssType();
-  void setAssType(const assTypePtrW &assType_);
-
- private:
-  static assInfoPtrList batchQuerySelect(sqlQuertPtr &query);
+  const assTypePtr & getAssType();
+  void setAssType(const assTypePtr &ass_type_);
 
  private:
-  qint64 __file_class__;
-  qint64 __file_type__;
-  qint64 __ass_class__;
+  template<typename T>
+  void batchSetAttr(const T& t);
 
-  fileClassPtrW p_ptrW_fileClass;
-  fileTypePtrW p_ptrW_fileType;
-  assTypePtrW p_ptrW_assType;
+ private:
+  int64_t ass_class_id;
+  int64_t ass_type_id;
+
+  assDepPtr p_dep_ptr_;
+  assClassPtr p_class_ptr_;
+  assTypePtr p_type_ptr_;
 
 };
 

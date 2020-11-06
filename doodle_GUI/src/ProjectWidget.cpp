@@ -7,7 +7,7 @@
 #include "src/fileclass.h"
 #include "src/filetype.h"
 
-#include "src/asstype.h"
+#include "src/assClass.h"
 
 #include "episodesListWidget.h"
 #include "shotListWidget.h"

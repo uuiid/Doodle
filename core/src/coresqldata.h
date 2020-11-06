@@ -19,8 +19,6 @@ public:
     bool isInsert() const { return !isNULL();};
 protected:
     qint64 idP;
-
-    void getInsertID(sqlQuertPtr &query);
 };
 
 CORE_NAMESPACE_E

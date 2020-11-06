@@ -30,7 +30,7 @@ class assClassModel : public QAbstractListModel {
   void clear();
 
  private:
-  doCore::assTypePtrList p_ass_info_ptr_list_;
+  doCore::assClassPtrList p_ass_info_ptr_list_;
   doCore::fileClassPtr p_class_ptr_;
 
 };

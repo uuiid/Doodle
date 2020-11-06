@@ -19,11 +19,11 @@ class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo {
   static shotInfoPtrList getAll(const fileClassPtr &fc_);
   static shotInfoPtrList getAll(const fileTypePtr &ft_);
 
-  QString generatePath(const QString &programFolder) override;
-  QString generatePath(const QString &programFolder, const QString &suffixes) override;
-  QString generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix) override;
-  QString generateFileName(const QString &suffixes) override;
-  QString generateFileName(const QString &suffixes, const QString &prefix) override;
+  dpath generatePath(const std::string &programFolder) override;
+  dpath generatePath(const dstring &programFolder, const dstring &suffixes) override;
+  dpath generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) override;
+  dstring generateFileName(const dstring &suffixes) override;
+  dstring generateFileName(const dstring &suffixes, const dstring &prefix) override;
   //外键查询
   episodesPtr getEpisdes();
   void setEpisdes(const episodesPtrW &eps_);

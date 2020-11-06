@@ -31,21 +31,22 @@ class CORE_EXPORT fileSqlInfo : public coresqldata {
 
   [[nodiscard]] QString getUserP() const;
 
-  virtual QString generatePath(const QString &programFodler) = 0;
-  virtual QString generatePath(const QString &programFolder, const QString &suffixes) = 0;
-  virtual QString generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix) = 0;
-  virtual QString generateFileName(const QString &suffixes) = 0;
-  virtual QString generateFileName(const QString &suffixes, const QString &prefix) = 0;
+  virtual dpath generatePath(const std::string &programFodler) = 0;
+  virtual dpath generatePath(const dstring &programFolder, const dstring &suffixes) = 0;
+  virtual dpath generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) = 0;
+  virtual dstring generateFileName(const dstring &suffixes) = 0;
+  virtual dstring generateFileName(const dstring &suffixes, const dstring &prefix) = 0;
 
  protected:
   //属性包装
-  QString fileP;
-  QString fileSuffixesP;
-  QString userP;
+
+  std::string  fileP;
+  std::string  fileSuffixesP;
+  std::string  userP;
   int versionP;
-  QString filepathP;
-  QByteArray infoP;
-  QString fileStateP;
+  std::string  filepathP;
+  std::string  infoP;
+  std::string  fileStateP;
 
  private:
   [[nodiscard]] QJsonDocument convertJson() const;

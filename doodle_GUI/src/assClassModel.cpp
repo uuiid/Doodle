@@ -3,7 +3,7 @@
 //
 
 #include "assClassModel.h"
-#include "src/asstype.h"
+#include "src/assClass.h"
 
 DOODLE_NAMESPACE_S
 assClassModel::assClassModel(QObject *parent)
@@ -19,7 +19,7 @@ QVariant assClassModel::data(const QModelIndex &index, int role) const {
   if (index.row() >= p_ass_info_ptr_list_.size()) return QVariant();
 
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return p_ass_info_ptr_list_[index.row()]->getAssType(true);
+    return p_ass_info_ptr_list_[index.row()]->getAssClass(true);
   } else if (role == Qt::UserRole) {
     return QVariant::fromValue(p_ass_info_ptr_list_[index.row()]);
   } else {
@@ -39,14 +39,14 @@ bool assClassModel::setData(const QModelIndex &index, const QVariant &value, int
   if (!index.isValid()) return false;
   bool is_has = false;
   for (auto &&item : p_ass_info_ptr_list_) {
-    if (value.toString() == item->getAssType(true) || value.toString() == item->getAssType()) {
+    if (value.toString() == item->getAssClass(true) || value.toString() == item->getAssClass()) {
       is_has = true;
       break;
     }
   }
 
   if (!is_has) {
-    p_ass_info_ptr_list_[index.row()]->setAssType(value.toString());
+    p_ass_info_ptr_list_[index.row()]->setAssClass(value.toString());
     p_ass_info_ptr_list_[index.row()]->setFileClass(p_class_ptr_);
     p_ass_info_ptr_list_[index.row()]->insert();
     emit dataChanged(index, index, {role});
@@ -57,7 +57,7 @@ bool assClassModel::setData(const QModelIndex &index, const QVariant &value, int
 bool assClassModel::insertRows(int position, int rows, const QModelIndex &index) {
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
-    p_ass_info_ptr_list_.insert(position, doCore::assTypePtr(new doCore::assType));
+    p_ass_info_ptr_list_.insert(position, doCore::assClassPtr(new doCore::assClass));
   }
   endInsertRows();
   return true;

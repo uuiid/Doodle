@@ -1,10 +1,6 @@
 ﻿#pragma once
 
 #include "core_global.h"
-#include <QObject>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSharedPointer>
 
 CORE_NAMESPACE_S
 
@@ -20,42 +16,24 @@ class CORE_EXPORT coreSql{
   coreSql(const coreSql &s) = delete;
 
   ~coreSql();
-  sqlQuertPtr getquery();
+
   void closeDataBase();
   static bool commitDataBase();
 
   void initDB(const QString &ip, const QString &dataName);
-
+  void initDB(const QString &ip_);
+  mysqlConnPtr getConnection();
  private:
   void initDB();
   QString getThreadId();
   coreSql();
 
  private:
+  std::shared_ptr<sqlpp::mysql::connection_config> config;
+
   bool isInit = false;
-  QString ip;
-  QString dataName;
-};
-
-/*
-数据库中的user类 只有在注册的时候会用到
-*/
-class CORE_EXPORT coreSqlUser {
-
- public:
-  static coreSqlUser &getCoreSqlUser();
-  coreSqlUser &operator=(const coreSqlUser &s) = delete;
-  coreSqlUser(const coreSqlUser &s) = delete;
-
-  mapStringPtr getUser();
-
-  void initDB(const QString &ip, const QString &dataName);
- private:
-  coreSqlUser();
-
- private:
-  bool isInit = false;
-
+  std::string ip;
+  std::string  dataName;
 };
 
 CORE_NAMESPACE_E

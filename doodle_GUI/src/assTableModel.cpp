@@ -105,7 +105,7 @@ bool assTableModel::insertRows(int position, int rows, const QModelIndex &parent
   for (int row = 0; row < rows; ++row) {
     p_ass_info_ptr_list_.insert(position,
                                 doCore::assInfoPtr(new doCore::assFileSqlInfo));
-    p_ass_info_ptr_list_[position]->setFileType(p_file_type_ptr_);
+    p_ass_info_ptr_list_[position]->setAssClass(p_file_type_ptr_);
   }
   endInsertColumns();
   endInsertRows();

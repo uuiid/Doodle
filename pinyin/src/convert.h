@@ -15,7 +15,8 @@ class PINYIN_EXPORT convert
 public:
     convert();
     ~convert();
-    QString toEn(const QString &conStr);
+    std::string toEn(const std::string &conStr);
+
 private:
     void initDB();
     void initQuery();

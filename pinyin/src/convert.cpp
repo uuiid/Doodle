@@ -21,16 +21,16 @@ convert::~convert() {
   dataBase.close();
 }
 
-QString convert::toEn(const QString &conStr) {
+std::string convert::toEn(const std::string &conStr) {
   if (!isinitDB)
     initDB();
-  QRegularExpressionMatchIterator iter = re->globalMatch(conStr);
-  QString enStr = conStr;
+  QRegularExpressionMatchIterator iter = re->globalMatch(QString::fromStdString(conStr));
+  QString enStr = QString::fromStdString(conStr);
   while (iter.hasNext()) {
     QRegularExpressionMatch matchStr = iter.next();
     enStr = enStr.replace(matchStr.captured(), toEnOne(matchStr.captured()));
   }
-  return enStr;
+  return enStr.toStdString();
 }
 
 void convert::initDB() {

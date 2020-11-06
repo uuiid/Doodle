@@ -17,7 +17,7 @@ class CORE_EXPORT fileType : public coresqldata {
   //根据fileclass外键查询filetype
   static fileTypePtrList getAll(const fileClassPtr &fc_);
   //根据assType 外键查询
-  static fileTypePtrList getAll(const assTypePtr &AT_);
+  static fileTypePtrList getAll(const assClassPtr &AT_);
   //根据eps外键查询
   static fileTypePtrList getAll(const episodesPtr &EP_);
   //根据shot外键查询
@@ -32,10 +32,10 @@ class CORE_EXPORT fileType : public coresqldata {
   //获得外键连接的实体对象 fileclass
   fileClassPtr getFileClass();
 
-  //设置和连接外键 assType
+  //设置和连接外键 assClass
   void setAssType(const assTypePtrW &assType_);
   //获得assType实体引用
-  assTypePtr getAssType();
+  assClassPtr getAssType();
 
   //设置和连接集数外键约束
   void setEpisodes(const episodesPtrW &value);
@@ -53,10 +53,10 @@ class CORE_EXPORT fileType : public coresqldata {
   //自身属性
   QString p_Str_Type;
   //指针属性
-  fileClassPtrW p_fileClass;
-  assTypePtrW p_assType;
-  episodesPtrW p_episdes;
-  shotPtrW p_shot;
+  fileClassPtr p_fileClass;
+  assClassPtr p_assType;
+  episodesPtr p_episdes;
+  shotPtr p_shot;
   //指针id属性
   qint64 __file_class__;
   qint64 __ass_class__;

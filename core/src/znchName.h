@@ -11,24 +11,23 @@ CORE_NAMESPACE_S
 class CORE_EXPORT znchName : public coresqldata {
  Q_GADGET
  public:
-  explicit znchName(assType *at_);
-  ~znchName();
+  explicit znchName(assClass *at_);
 
   void insert() override;
   void updateSQL() override;
   void deleteSQL() override;
   void select();
 
-  void setName(const QString &name_);
-  void setName(const QString &name_, const bool &isZNCH);
-  [[nodiscard]] QString getName() const;
-  [[nodiscard]] QString pinyin() const;
+  void setName(const std::string &name_);
+  void setName(const std::string &name_, const bool &isZNCH);
+  [[nodiscard]] std::string getName() const;
+  [[nodiscard]] std::string pinyin() const;
  private:
-  QString nameZNCH;
-  QString nameEN;
+  std::string nameZNCH;
+  std::string  nameEN;
   dopinyin::convertPtr con;
 
-  assType *p_ptr_assType;
+  assClass *p_ptr_assType;
 };
 
 CORE_NAMESPACE_E

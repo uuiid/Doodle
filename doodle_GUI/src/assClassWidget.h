@@ -21,7 +21,7 @@ class assClassWidget : public QListView {
   void init(const doCore::fileClassPtr &file_class_ptr);
   void clear();
  signals:
-  void assClassEmited(const doCore::assTypePtr &ptr);
+  void assClassEmited(const doCore::assClassPtr &ptr);
 
  private:
   //模型指针

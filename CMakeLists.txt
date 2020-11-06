@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.5)
+﻿cmake_minimum_required(VERSION 3.14)
 
 project(Doodle LANGUAGES CXX)
 
@@ -17,8 +17,11 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 
 #启用测试
-set(CMAKE_INSTALL_PREFIX "F:/Source/qt_test/install")
+set(CMAKE_INSTALL_PREFIX "F:/Source/qt_test/Doodle/install")
 configure_file(DoodleConfig.h.in ${CMAKE_CURRENT_LIST_DIR}/DoodleConfig.h)
+
+list(APPEND CMAKE_PREFIX_PATH $ENV{QT_MYROOT}/5.12.9/msvc2017_64)
+
 find_package(Qt5 CONFIG COMPONENTS Core Widgets Test LinguistTools REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem date_time)
 find_package(CURL REQUIRED)
@@ -75,10 +78,10 @@ find_program(WINQT windeployqt REQUIRED)
 #添加qt 安装辅助程序的一些命令
 
 
-install(
-        DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin/
-        DESTINATION ${PROJECT_NAME}
-)
+#install(
+#        DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin/
+#        DESTINATION ${PROJECT_NAME}
+#)
 #CPACKIFW_COMMON()
 #显示所有变量
 #dump_cmake_variables()
@@ -87,12 +90,25 @@ install(
 #第一种搜索方式
 include(InstallRequiredSystemLibraries)
 #第二中验证加搜索方式
-set(APPS ${CMAKE_INSTALL_PREFIX}/install/bin/doodle.exe)  # paths to executables
-get_filename_component(fixdir ${WINQT} DIRECTORY)
-set(DIRS ${CMAKE_FIND_ROOT_PATH}
-        ${fixdir}
-        ${CMAKE_INSTALL_PREFIX}/lib)
+set(APPS ${CMAKE_INSTALL_PREFIX}/bin/doodle.exe)  # paths to executables
 
+get_filename_component(fixdir ${WINQT} DIRECTORY)
+
+list(APPEND DIRS ${fixdir})
+list(APPEND DIRS ${CMAKE_INSTALL_PREFIX}/lib)
+foreach(_var in LISTS ${CMAKE_FIND_ROOT_PATH})
+     list(APPEND DIRS ${_var}/bin)
+endforeach(_var)
+
+
+#set(DIRS ${CMAKE_FIND_ROOT_PATH}/bin
+#        ${fixdir}
+#        ${CMAKE_INSTALL_PREFIX}/lib)
+#复制tool
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/tools/
+        DESTINATION tools)
+
+#最后实现camke修复
 install(CODE "
      include(BundleUtilities)
      fixup_bundle(\"${APPS}\"   \"\"   \"${DIRS}\")

@@ -97,17 +97,31 @@ qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 #        TARGET doodle POST_BUILD
 #        COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_BINARY_DIR}/doodle_GUI $<TARGET_FILE:doodle>
 #)
-if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
-    add_custom_command(
-            TARGET doodle POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.exe
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.pdb
-            COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_SOURCE_DIR}/install/bin/ $<TARGET_FILE:doodle>
-            COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_SOURCE_DIR}/install/bin/ $<TARGET_FILE:core>
-    )
-else()
-    add_custom_command(
-            TARGET doodle POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.exe
-    )
-endif()
+#安装基本组件
+install(TARGETS doodle
+        DESTINATION bin)
+#安装调试文件
+install(FILES $<TARGET_PDB_FILE:doodle>
+        DESTINATION bin
+        CONFIGURATIONS Debug)
+#运行qt
+install(CODE "
+execute_process(
+COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin $<TARGET_FILE:doodle>
+)
+")
+
+#if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
+#    add_custom_command(
+#            TARGET doodle POST_BUILD
+#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.exe
+#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.pdb
+#            COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_SOURCE_DIR}/install/bin $<TARGET_FILE:doodle>
+#            COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_SOURCE_DIR}/install/bin $<TARGET_FILE:core>
+#    )
+#else()
+#    add_custom_command(
+#            TARGET doodle POST_BUILD
+#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.exe
+#    )
+#endif()

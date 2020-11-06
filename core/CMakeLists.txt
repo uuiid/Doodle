@@ -1,23 +1,32 @@
 ﻿find_package(Qt5 CONFIG COMPONENTS Core Sql Xml REQUIRED)
 find_package(Sqlpp11 REQUIRED)
+
+list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
+
+find_package(SqlppMySql REQUIRED)
+
 find_package(FFMPEG  REQUIRED )
 find_package(Boost COMPONENTS filesystem REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 #由于这个库只有一个文件,  所以直接复制过的了事
-file(COPY ${PROJECT_SOURCE_DIR}/sql-builder/sql.h
-        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/src/sql_builder)
+#file(COPY ${PROJECT_SOURCE_DIR}/sql-builder/sql.h
+#        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/src/sql_builder)
 
 #这个是拎一个ORM库  还没开始用预备着
 set(ORM_HEADER
-        src/coreOrm/assclass_sqlOrm.h
-        src/coreOrm/basefile_sqlOrm.h
-        src/coreOrm/configure_sqlOrm.h
+        src/coreOrm/project_sqlOrm.h
+        src/coreOrm/user_sqlOrm.h
         src/coreOrm/episodes_sqlOrm.h
-        src/coreOrm/fileclass_sqlOrm.h
-        src/coreOrm/filetype_sqlOrm.h
-        src/coreOrm/mainshot_sqlOrm.h
-        src/coreOrm/shot_sqlOrm.h
+        src/coreOrm/configure_sqlOrm.h
+        src/coreOrm/assdepartment_sqlOrm.h
+        src/coreOrm/shots_sqlOrm.h
+        src/coreOrm/assclass_sqlOrm.h
+        src/coreOrm/shotclass_sqlOrm.h
+        src/coreOrm/synfile_sqlOrm.h
+        src/coreOrm/asstype_sqlOrm.h
         src/coreOrm/znch_sqlOrm.h
+        src/coreOrm/shottype_sqlOrm.h
+        src/coreOrm/basefile_sqlOrm.h
         )
 
 #这个是和MySQL交互的头文件
@@ -33,7 +42,7 @@ set(CORE_SQL_HEADER
         src/shot.h
         src/fileclass.h
         src/filetype.h
-        src/asstype.h
+        src/assClass.h
         src/coresqldata.h
         src/znchName.h
         )
@@ -48,7 +57,7 @@ set(CORE_SQL_SOURCE
         src/shot.cpp
         src/fileclass.cpp
         src/filetype.cpp
-        src/asstype.cpp
+        src/assClass.cpp
         src/coresqldata.cpp
         src/znchName.cpp
         )
@@ -77,7 +86,7 @@ set(CORE_ARCHIVE_SOURCE
         src/imageSequenArchive.cpp
         src/freeSynWrap.cpp
         src/mayaArchiveShotFbx.cpp
-        src/ffmpegWrap.cpp)
+        src/ffmpegWrap.cpp src/assdepartment.cpp src/assdepartment.h src/assType.cpp src/assType.h)
 
 set(RESOURCE_SOURCE
         core_resource.qrc)
@@ -92,9 +101,9 @@ add_library(core SHARED
         ${RESOURE_FILE}
         )
 
-target_link_libraries(core PUBLIC Qt5::Sql)
 target_link_libraries(core PUBLIC Qt5::Core)
 target_link_libraries(core PUBLIC Qt5::Xml)
+target_link_libraries(core PUBLIC SqlppMySql)
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
 target_link_libraries(core PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(core PUBLIC pinyin)
@@ -107,26 +116,45 @@ qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
-#install(TARGETS core DESTINATION lib)
+#安装基本组件
+install(TARGETS core
+        DESTINATION bin)
+
 #install(FILES ${HEADER_FILES} DESTINATION include)
+#安装调试文件
+install(FILES $<TARGET_PDB_FILE:core>
+        DESTINATION bin
+        CONFIGURATIONS Debug)
 
-file(COPY "$ENV{ProgramFiles}/MySQL/MySQL Server 8.0/lib/"
-        DESTINATION ${CMAKE_SOURCE_DIR}/install/bin
-        FILES_MATCHING PATTERN "*.dll")
+#复制mysql
+file(TO_CMAKE_PATH "$ENV{ProgramFiles}/MySQL/MySQL Server 8.0/lib/" DOODLE_MYSQL)
+install(DIRECTORY "${DOODLE_MYSQL}/"
+        TYPE BIN
+        PATTERN "*.dll")
+#运行qt
+install(CODE "
+execute_process(
+COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin $<TARGET_FILE:core>
+)
+")
 
-file(COPY ${CMAKE_SOURCE_DIR}/tools
-        DESTINATION ${CMAKE_SOURCE_DIR}/install)
-
-
-if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
-    add_custom_command(
-            TARGET core POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.dll
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.pdb
-    )
-else()
-    add_custom_command(
-            TARGET core POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.dll
-    )
-endif()
+#file(COPY "$ENV{ProgramFiles}/MySQL/MySQL Server 8.0/lib/"
+#        DESTINATION ${CMAKE_SOURCE_DIR}/install/bin
+#        FILES_MATCHING PATTERN "*.dll")
+#
+#file(COPY ${CMAKE_SOURCE_DIR}/tools
+#        DESTINATION ${CMAKE_SOURCE_DIR}/install)
+#
+#
+#if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
+#    add_custom_command(
+#            TARGET core POST_BUILD
+#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.dll
+#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.pdb
+#    )
+#else()
+#    add_custom_command(
+#            TARGET core POST_BUILD
+#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.dll
+#    )
+#endif()

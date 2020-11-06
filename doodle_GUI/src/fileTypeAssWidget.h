@@ -11,6 +11,25 @@
 #include <QListView>
 DOODLE_NAMESPACE_S
 
+class fileTypeAssDelegate : public QStyledItemDelegate{
+  Q_OBJECT
+ public:
+  explicit fileTypeAssDelegate(QObject *parent = nullptr);
+
+  QWidget *createEditor(QWidget *parent,
+                        const QStyleOptionViewItem &option,
+                        const QModelIndex &index) const override;
+
+  void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+  void setModelData(QWidget *editor, QAbstractItemModel *model,
+                    const QModelIndex &index) const override;
+  void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
+                            const QModelIndex &index) const override;
+};
+
+
+
+
 class fileTypeAssWidget : public QListView {
  Q_OBJECT
  public:
@@ -18,7 +37,7 @@ class fileTypeAssWidget : public QListView {
 
   void setModel(QAbstractItemModel *model) override;
  public slots:
-  void init(const doCore::assTypePtr &ass_type_ptr);
+  void init(const doCore::assClassPtr &ass_type_ptr);
   void clear();
  signals:
   void filetypeEmited(const doCore::fileTypePtr &file_type_ptr);
@@ -29,7 +48,7 @@ class fileTypeAssWidget : public QListView {
   fileTypeAssModel *p_model_;
   //菜单
   QMenu *p_menu_;
-  doCore::assTypePtr p_ass_type_ptr_;
+  doCore::assClassPtr p_ass_type_ptr_;
 
  private slots:
   void inserttype();

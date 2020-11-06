@@ -39,7 +39,7 @@ bool fileTypeAssModel::setData(const QModelIndex &index, const QVariant &value, 
   if (!index.isValid()) return false;
   bool is_has = false;
   for (auto &&item : p_file_type_ptr_list_) {
-    if (value.toString() == item->getFileType()) {
+    if (value.toString() == item->getAssClass()) {
       is_has = true;
       break;
     }
@@ -71,7 +71,7 @@ bool fileTypeAssModel::removeRows(int position, int rows, const QModelIndex &ind
   endRemoveRows();
   return false;
 }
-void fileTypeAssModel::init(const doCore::assTypePtr &ass_type_ptr) {
+void fileTypeAssModel::init(const doCore::assClassPtr &ass_type_ptr) {
   clear();
   p_ass_ptr_ = ass_type_ptr;
   auto tmp_list = doCore::fileType::getAll(ass_type_ptr);
@@ -85,6 +85,9 @@ void fileTypeAssModel::clear() {
   beginResetModel();
   p_file_type_ptr_list_.clear();
   endResetModel();
+}
+doCore::assClassPtr fileTypeAssModel::getAssTypePtr() const  {
+  return p_ass_ptr_;
 }
 fileTypeAssModel::~fileTypeAssModel() = default;
 

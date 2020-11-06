@@ -16,6 +16,17 @@ target_link_libraries(test_my
 # include(CTest)
 enable_testing()
 include(GoogleTest)
+
+#安装基本组件
+install(TARGETS test_my
+        DESTINATION bin
+        CONFIGURATIONS Debug)
+
+#安装调试文件
+install(FILES $<TARGET_PDB_FILE:test_my>
+        DESTINATION bin
+        CONFIGURATIONS Debug)
+
 # add_test(alltest test_my)
 # gtest_discover_tests(test_my
 #     PROPERTIES

@@ -34,7 +34,7 @@ void shotFileSqlInfo::select(const qint64 &ID_) {
   sql::SelectModel sel_;
   sel_.select("id", "file", "fileSuffixes", "user", "version",
               "_file_path_", "infor", "filestate",
-              "__episodes__", "__shot__", "__file_class__", "__file_type__");
+              "__episodes__", "__shot__", "p_assDep_id", "ass_type_id");
 
   sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
   sel_.where(sql::column("id") == ID_);
@@ -87,9 +87,9 @@ void shotFileSqlInfo::insert() {
     if (__shot__ > 0)
       ins_.insert("__shot__", __shot__);
     if (__file_class__ > 0)
-      ins_.insert("__file_class__", __file_class__);
+      ins_.insert("p_assDep_id", __file_class__);
     if (__file_type__ > 0)
-      ins_.insert("__file_type__", __file_type__);
+      ins_.insert("ass_type_id", __file_type__);
 
     ins_.into(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
@@ -113,9 +113,9 @@ void shotFileSqlInfo::updateSQL() {
   if ((__shot__ >= 0) && (__shot__ != p_ptrw_shot.lock()->getIdP()) )
     upd_.set("__shot__", __shot__);
   if ((__file_class__ >= 0) && (__file_class__ != p_ptrw_fileClass.lock()->getIdP()))
-    upd_.set("__file_class__", __file_class__);
+    upd_.set("p_assDep_id", __file_class__);
   if ((__file_type__ >= 0) && (__file_type__ != p_ptrw_fileType.lock()->getIdP()))
-    upd_.set("__file_type__", __file_type__);
+    upd_.set("ass_type_id", __file_type__);
 
   upd_.where(sql::column("id") == idP);
 
@@ -163,7 +163,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr &EP_) {
   sql::SelectModel sel_;
   sel_.select("id", "file", "fileSuffixes", "user", "version",
               "_file_path_", "infor", "filestate",
-              "__episodes__", "__shot__", "__file_class__", "__file_type__");
+              "__episodes__", "__shot__", "p_assDep_id", "ass_type_id");
 
   sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
   sel_.where(sql::column("__episodes__") == EP_->getIdP());
@@ -183,7 +183,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr &sh_) {
   sql::SelectModel sel_;
   sel_.select("id", "file", "fileSuffixes", "user", "version",
               "_file_path_", "infor", "filestate",
-              "__episodes__", "__shot__", "__file_class__", "__file_type__");
+              "__episodes__", "__shot__", "p_assDep_id", "ass_type_id");
 
   sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
   sel_.where(sql::column("__shot__") == sh_->getIdP());
@@ -203,10 +203,10 @@ shotInfoPtrList shotFileSqlInfo::getAll(const fileClassPtr &fc_) {
   sql::SelectModel sel_;
   sel_.select("id", "file", "fileSuffixes", "user", "version",
               "_file_path_", "infor", "filestate",
-              "__episodes__", "__shot__", "__file_class__", "__file_type__");
+              "__episodes__", "__shot__", "p_assDep_id", "ass_type_id");
 
   sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-  sel_.where(sql::column("__file_class__") == fc_->getIdP());
+  sel_.where(sql::column("p_assDep_id") == fc_->getIdP());
 
   sqlQuertPtr query = coreSql::getCoreSql().getquery();
   if (!query->exec(QString::fromStdString(sel_.str())))
@@ -214,7 +214,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const fileClassPtr &fc_) {
 
   shotInfoPtrList listInfo = batchQuerySelect(query);
   for (auto &x : listInfo) {
-    x->setFileClass(fc_);
+    x->setAssDep(fc_);
   }
   return listInfo;
 }
@@ -223,11 +223,11 @@ shotInfoPtrList shotFileSqlInfo::getAll(const fileTypePtr &ft_) {
   sql::SelectModel sel_;
   sel_.select("id", "file", "fileSuffixes", "user", "version",
               "_file_path_", "infor", "filestate",
-              "__episodes__", "__shot__", "__file_class__", "__file_type__");
+              "__episodes__", "__shot__", "p_assDep_id", "ass_type_id");
 
   sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
   sel_.order_by("filetime DESC");
-  sel_.where(sql::column("__file_type__") == ft_->getIdP());
+  sel_.where(sql::column("ass_type_id") == ft_->getIdP());
 
   sqlQuertPtr query = coreSql::getCoreSql().getquery();
   if (!query->exec(QString::fromStdString(sel_.str())))
@@ -235,12 +235,12 @@ shotInfoPtrList shotFileSqlInfo::getAll(const fileTypePtr &ft_) {
 
   shotInfoPtrList listInfo = batchQuerySelect(query);
   for (auto &x : listInfo) {
-    x->setFileType(ft_);
+    x->setAssClass(ft_);
   }
   return listInfo;
 }
 
-QString shotFileSqlInfo::generatePath(const QString &programFolder) {
+dpath shotFileSqlInfo::generatePath(const std::string &programFolder) {
   QString str("%1/%2/%3/%4/%5/%6");
   coreSet &set = coreSet::getCoreSet();
   //第一次格式化添加根路径
@@ -278,7 +278,7 @@ QString shotFileSqlInfo::generatePath(const QString &programFolder) {
   return QDir::cleanPath(str);
 }
 
-QString shotFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes) {
+dpath shotFileSqlInfo::generatePath(const dstring &programFolder, const dstring &suffixes) {
   QString str("%1/%2");
   str = str.arg(generatePath(programFolder));
 
@@ -287,7 +287,7 @@ QString shotFileSqlInfo::generatePath(const QString &programFolder, const QStrin
   return str;
 }
 
-QString shotFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix) {
+dpath shotFileSqlInfo::generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) {
   QString str("%1/%2");
   str = str.arg(generatePath(programFolder));
 
@@ -296,7 +296,7 @@ QString shotFileSqlInfo::generatePath(const QString &programFolder, const QStrin
   return str;
 }
 
-QString shotFileSqlInfo::generateFileName(const QString &suffixes) {
+dstring shotFileSqlInfo::generateFileName(const dstring &suffixes) {
 
   QString name("shot_%1_%2_%3_%4_v%5_%6.%7");
   //第一次 格式化添加 集数
@@ -333,7 +333,7 @@ QString shotFileSqlInfo::generateFileName(const QString &suffixes) {
   return name;
 }
 
-QString shotFileSqlInfo::generateFileName(const QString &suffixes, const QString &prefix) {
+dstring shotFileSqlInfo::generateFileName(const dstring &suffixes, const dstring &prefix) {
   QString name("%1_%2");
   name = name.arg(prefix);
   name = name.arg(generateFileName(suffixes));
@@ -427,7 +427,7 @@ fileTypePtr shotFileSqlInfo::findFileType(const std::string &type_str) {
   auto fileTypelist = fileType::getAll(getFileclass());
   fileTypePtr k_fileType = nullptr;
   for (auto &&item:fileTypelist) {
-    if (item->getFileType() == QString::fromStdString(type_str)) {
+    if (item->getAssClass() == QString::fromStdString(type_str)) {
       k_fileType = item;
       break;
     }

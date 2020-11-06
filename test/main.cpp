@@ -17,26 +17,26 @@ class Environment : public ::testing::Environment {
 };
 
 void Environment::SetUp() {
-  set.init();
-  set.setProjectname("test_db");
-  set.initdb();
-  std::cout << "exe init_" << std::endl;
-  doCore::sqlQuertPtr query = doCore::coreSql::getCoreSql().getquery();
-  if (!query->exec("INSERT INTO test_db.configure(name, value) VALUES "
-                   "('shotRoot','/03_Workflow/Shots'),"
-                   "('assetsRoot','/03_Workflow/Assets'),"
-                   "('synSever','/03_Workflow/Assets'),"
-                   "('project','X:/');"))
-    std::cout << "not exe insert project info" << std::endl;
-  if (!query->exec("INSERT INTO test_db.configure(name, value, value2, value3, value4) VALUES"
-                   "('synpath','Light','001','Left','Ep_01/FuTuJieShenYuan_ZX/Content/shot'),"
-                   "('synpath','Light','001','Right','Ep_01/FuTuJieShenYuan_ZX/Content/shot'),"
-                   "('synpath','VFX','001','Left','Ep_01/HuaiLaoBanDeDain_LZ/Content/shot'),"
-                   "('synpath','VFX','001','Right','Ep_01/HuaiLaoBanDeDain_LZ/Content/shott');"))
-    std::cout << "not exe insert syninfo" << std::endl;
-  if (!query->exec("INSERT INTO test_db.fileclass(file_class) VALUES "
-                   "('character'),('effects'),('scene'),('prop')"))
-    std::cout << "not exe insert fileclass info" << std::endl;
+//  set.init();
+//  set.setProjectname("test_db");
+//  set.initdb();
+//  std::cout << "exe init_" << std::endl;
+//  doCore::sqlQuertPtr query = doCore::coreSql::getCoreSql().getquery();
+//  if (!query->exec("INSERT INTO test_db.configure(name, value) VALUES "
+//                   "('shotRoot','/03_Workflow/Shots'),"
+//                   "('assetsRoot','/03_Workflow/Assets'),"
+//                   "('synSever','/03_Workflow/Assets'),"
+//                   "('project','X:/');"))
+//    std::cout << "not exe insert project info" << std::endl;
+//  if (!query->exec("INSERT INTO test_db.configure(name, value, value2, value3, value4) VALUES"
+//                   "('synpath','Light','001','Left','Ep_01/FuTuJieShenYuan_ZX/Content/shot'),"
+//                   "('synpath','Light','001','Right','Ep_01/FuTuJieShenYuan_ZX/Content/shot'),"
+//                   "('synpath','VFX','001','Left','Ep_01/HuaiLaoBanDeDain_LZ/Content/shot'),"
+//                   "('synpath','VFX','001','Right','Ep_01/HuaiLaoBanDeDain_LZ/Content/shott');"))
+//    std::cout << "not exe insert syninfo" << std::endl;
+//  if (!query->exec("INSERT INTO test_db.fileclass(file_class) VALUES "
+//                   "('character'),('effects'),('scene'),('prop')"))
+//    std::cout << "not exe insert fileclass info" << std::endl;
 }
 
 void Environment::TearDown() {

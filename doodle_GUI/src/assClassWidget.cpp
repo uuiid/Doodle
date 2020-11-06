@@ -6,7 +6,7 @@
 
 #include "assClassModel.h"
 
-#include "src/asstype.h"
+#include "src/assClass.h"
 
 #include <QMenu>
 DOODLE_NAMESPACE_S
@@ -45,7 +45,7 @@ void assClassWidget::editAssName() {
 }
 void assClassWidget::_doodle_ass_emit(const QModelIndex &index) {
   emit assClassEmited(
-      p_model_->data(index, Qt::UserRole).value<doCore::assTypePtr>());
+      p_model_->data(index, Qt::UserRole).value<doCore::assClassPtr>());
 }
 void assClassWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_menu_ = new QMenu(this);

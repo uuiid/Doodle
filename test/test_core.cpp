@@ -5,7 +5,7 @@
 #include "src/shot.h"
 #include "src/fileclass.h"
 #include "src/filetype.h"
-#include "src/asstype.h"
+#include "src/assClass.h"
 
 #include "src/assfilesqlinfo.h"
 #include "src/shotfilesqlinfo.h"
@@ -26,7 +26,7 @@ protected:
 void CoreTest::SetUp()
 {
     set.init();
-    set.setProjectname("test_db");
+    set.setProjectname("dubuxiaoyao3");
     set.initdb();
 }
 
@@ -124,9 +124,9 @@ TEST_F(CoreTest, create_assInfo)
 
     if (fc_.size() == 4)
     {
-        doCore::assTypePtr af_(new doCore::assType);
+        doCore::assClassPtr af_(new doCore::assClass);
         af_->setFileClass(fc_[0]);
-        af_->setAssType(QString::fromUtf8("大小"), true);
+      af_->setAssClass(QString::fromUtf8("大小"), true);
         af_->insert();
 
         doCore::fileTypePtr ft_(new doCore::fileType);
@@ -141,7 +141,7 @@ TEST_F(CoreTest, create_assInfo)
         sf_->setFileList(list);
         sf_->setVersionP(1);
 
-        sf_->setFileType(ft_);
+      sf_->setAssClass(ft_);
 
         sf_->insert();
     }
@@ -156,11 +156,11 @@ TEST_F(CoreTest, get_assInf)
         std::cout << "fileclass :" << x->getFileclass_str().toStdString() << std::endl;
     }
 
-    doCore::assTypePtr af_ = doCore::assType::getAll(list_fileClass[0])[0];
-    std::cout << "asstype :" << af_->getAssType(true).toLocal8Bit().toStdString() << std::endl;
-    RecordProperty("asstype", af_->getAssType(true).toStdString());
+    doCore::assClassPtr af_ = doCore::assType::getAll(list_fileClass[0])[0];
+    std::cout << "asstype :" << af_->getAssClass(true).toLocal8Bit().toStdString() << std::endl;
+    RecordProperty("asstype", af_->getAssClass(true).toStdString());
     // QTextCodec *code = QTextCodec::codecForName("GBK");
-    // std::cout << "asstype :" <<code->fromUnicode(af_->getAssType(af_)).toStdString() << std::endl;
+    // std::cout << "asstype :" <<code->fromUnicode(af_->getAssClass(af_)).toStdString() << std::endl;
 
     doCore::fileTypePtr ft_ = doCore::fileType::getAll(af_)[0];
     std::cout << "filetype :" << ft_->getFileType().toStdString() << std::endl;

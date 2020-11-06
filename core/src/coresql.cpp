@@ -2,23 +2,24 @@
 
 #include "Logger.h"
 
-#include <QSqlError>
 
-#include <QMap>
 #include <thread>
 #include <stdexcept>
+
+#include <sqlpp11/sqlpp11.h>
+#include <sqlpp11/mysql/mysql.h>
 
 CORE_NAMESPACE_S
 coreSql::coreSql()
     : isInit(false),
       ip(),
-      dataName() {
+      dataName(),
+      config(std::make_shared<sqlpp::mysql::connection_config>()) {
 
 }
 
 void coreSql::initDB(const QString &ip_, const QString &dataName_) {
-  ip = QString(ip);
-  dataName = QString(dataName);
+  initDB(ip_);
 }
 
 coreSql::~coreSql() {
@@ -28,17 +29,6 @@ coreSql::~coreSql() {
 coreSql &coreSql::getCoreSql() {
   static coreSql install;
   return install;
-}
-
-sqlQuertPtr coreSql::getquery() {
-  auto db_name = getThreadId();
-  initDB();
-  QSqlDatabase dataBase = QSqlDatabase::database(db_name);
-  dataBase.open();
-//    dataBase.transaction();
-//  if (!isInit) throw std::runtime_error("not init_ DB (sql mian data)");
-  sqlQuertPtr queryPtr(new QSqlQuery(dataBase));
-  return queryPtr;
 }
 
 void coreSql::closeDataBase() {
@@ -52,22 +42,28 @@ bool coreSql::commitDataBase() {
   return false;
 }
 void coreSql::initDB() {
+  config->user = "Effects";
+  config->password = "Effects";
+  config->host = ip;
+  config->port = 3306;
+  config->database = "doodle_main";
+  config->debug = true;
 
   auto db_name = getThreadId();
 
-  QSqlDatabase dataBase;
-  if (QSqlDatabase::contains(db_name)) {
-    dataBase = QSqlDatabase::database(db_name);
-  } else {
-    dataBase = QSqlDatabase::addDatabase("QMYSQL", db_name);
-    dataBase.setUserName("Effects");
-    dataBase.setPassword("Effects");
-
-    dataBase.setHostName(ip);
-    dataBase.setPort(3306);
-    dataBase.setDatabaseName(dataName);
-  }
-  if (!dataBase.open()) throw std::runtime_error(dataBase.lastError().text().toStdString());
+//  QSqlDatabase dataBase;
+//  if (QSqlDatabase::contains(db_name)) {
+//    dataBase = QSqlDatabase::database(db_name);
+//  } else {
+//    dataBase = QSqlDatabase::addDatabase("QMYSQL", db_name);
+//    dataBase.setUserName("Effects");
+//    dataBase.setPassword("Effects");
+//
+//    dataBase.setHostName(ip);
+//    dataBase.setPort(3306);
+//    dataBase.setDatabaseName(dataName);
+//  }
+//  if (!dataBase.open()) throw std::runtime_error(dataBase.lastError().text().toStdString());
 }
 QString coreSql::getThreadId() {
   //使用线程id创建不一样的名字
@@ -76,47 +72,11 @@ QString coreSql::getThreadId() {
   return db_name;
 }
 
-coreSqlUser &coreSqlUser::getCoreSqlUser() {
-  static coreSqlUser install;
-  return install;
+mysqlConnPtr coreSql::getConnection() {
+  return std::make_unique<sqlpp::mysql::connection>(config);
 }
-
-mapStringPtr coreSqlUser::getUser() {
-  QSqlDatabase dataBase = QSqlDatabase::database("mysql_main_user");
-  dataBase.open();
-  if (!isInit) throw std::runtime_error("not init_ DB (sql mian data)");
-  QSqlQuery query(dataBase);
-
-  query.exec("SELECT user,password FROM user;");
-  mapStringPtr list;
-  while (query.next()) {
-    QString user = query.value(0).toString();
-    QString powr = query.value(1).toString();
-    list.insert(user, powr);
-  }
-  return list;
-}
-
-void coreSqlUser::initDB(const QString &ip, const QString &dataName) {
-  QSqlDatabase dataBase;
-  if (QSqlDatabase::contains("mysql_main_user")) {
-    dataBase = QSqlDatabase::database("mysql_main_user");
-  } else {
-    dataBase = QSqlDatabase::addDatabase("QMYSQL", "mysql_main_user");
-    dataBase.setUserName("Effects");
-    dataBase.setPassword("Effects");
-
-    dataBase.setHostName(ip);
-    dataBase.setPort(3306);
-    dataBase.setDatabaseName("myuser");
-  }
-  if (!dataBase.open()) throw std::runtime_error(dataBase.lastError().text().toStdString());
-//    dataBase.transaction();
-  isInit = true;
-}
-
-coreSqlUser::coreSqlUser() {
-
+void coreSql::initDB(const QString &ip_) {
+  ip = ip_.toStdString();
 }
 
 CORE_NAMESPACE_E

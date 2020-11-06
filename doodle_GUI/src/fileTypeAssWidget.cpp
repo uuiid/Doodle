@@ -6,18 +6,67 @@
 
 #include "fileTypeAssModel.h"
 #include "src/filetype.h"
-#include <QModelIndex>
+#include "src/assClass.h"
 #include <QMenu>
 
 #include <QContextMenuEvent>
+#include <QtWidgets/QMessageBox>
 
 DOODLE_NAMESPACE_S
+fileTypeAssDelegate::fileTypeAssDelegate(QObject *parent) : QStyledItemDelegate(parent) {
+
+}
+QWidget *fileTypeAssDelegate::createEditor(QWidget *parent,
+                                           const QStyleOptionViewItem &option,
+                                           const QModelIndex &index) const {
+  auto * fileType = new QComboBox(parent);
+
+  const auto modle = dynamic_cast<fileTypeAssModel *>(const_cast<QAbstractItemModel * >(index.model()));
+
+  QStringList list;
+  list << "sourceimages"
+  << "scenes"
+  << QString("%1_UE4").arg(modle->getAssTypePtr()->getAssClass())
+  << "rig"
+  << QString("%1_low").arg(modle->getAssTypePtr()->getAssClass());
+
+  fileType->addItems(list);
+
+  return fileType;
+}
+void fileTypeAssDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const {
+  auto *edit = dynamic_cast<QComboBox *>(editor);
+
+  edit->setCurrentIndex(0);
+}
+void fileTypeAssDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const {
+  auto *edit = dynamic_cast<QComboBox *>(editor);
+
+  auto value = edit->currentText();
+  QMessageBox::StandardButton box = QMessageBox::information(dynamic_cast<QWidget *>(this->parent()),
+                                                             tr("警告:"),
+                                                             tr("将 %1 类型提交到服务器").arg(value),
+                                                             QMessageBox::Yes | QMessageBox::Cancel);
+  if (box == QMessageBox::Yes)
+    model->setData(index, value, Qt::EditRole);
+  else
+    model->removeRow(index.row(), index);
+}
+void fileTypeAssDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
+                                               const QModelIndex &index) const {
+  editor->setGeometry(option.rect);
+}
+
+
+
+
 fileTypeAssWidget::fileTypeAssWidget(QWidget *parent)
     : QListView(parent),
       p_type_ptr_list_(),
       p_menu_(nullptr),
       p_model_(nullptr),
       p_ass_type_ptr_(nullptr) {
+  setItemDelegate(new fileTypeAssDelegate(this));
   connect(this,&fileTypeAssWidget::clicked,
           this,&fileTypeAssWidget::_doodle_type_emit);
 }
@@ -27,7 +76,7 @@ void fileTypeAssWidget::setModel(QAbstractItemModel *model) {
     p_model_ = k_model;
   QAbstractItemView::setModel(model);
 }
-void fileTypeAssWidget::init(const doCore::assTypePtr &ass_type_ptr) {
+void fileTypeAssWidget::init(const doCore::assClassPtr &ass_type_ptr) {
   p_ass_type_ptr_ = ass_type_ptr;
   p_model_->init(ass_type_ptr);
 }

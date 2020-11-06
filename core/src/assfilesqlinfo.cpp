@@ -1,343 +1,257 @@
 ﻿#include "assfilesqlinfo.h"
-#include "coreset.h"
-#include "fileclass.h"
-#include "filetype.h"
-#include "asstype.h"
 
-#include "sql_builder/sql.h"
+#include "coreset.h"
+#include "coresql.h"
+
+#include "assdepartment.h"
+#include "assClass.h"
+#include "assType.h"
 
 #include "Logger.h"
+
+#include "coreOrm/basefile_sqlOrm.h"
+#include <sqlpp11/sqlpp11.h>
+#include <sqlpp11/mysql/mysql.h>
 
 #include <QVariant>
 #include <QSqlError>
 
 #include <iostream>
+#include <boost/format.hpp>
+#include <boost/filesystem.hpp>
+#include <filesystem>
 CORE_NAMESPACE_S
 
-assFileSqlInfo::assFileSqlInfo() {
-  __file_class__ = -1;
-  __file_type__ = -1;
-  __ass_class__ = -1;
+assFileSqlInfo::assFileSqlInfo() :
+    p_type_ptr_(),
+    p_class_ptr_(),
+    p_dep_ptr_(),
+    ass_type_id(-1),
+    ass_class_id(-1) {
 
-  p_ptrW_fileClass = nullptr;
-  p_ptrW_fileType = nullptr;
-  p_ptrW_assType = nullptr;
 }
 
 void assFileSqlInfo::select(qint64 &ID_) {
-  sql::SelectModel sel_;
-  sel_.select("id", "file", "fileSuffixes", "user", "version",
-              "_file_path_", "infor", "filestate",
-              "__file_class__", "__file_type__", "__ass_class__");
-  sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-  sel_.where(sql::column("id") == ID_);
+  doodle::Basefile tab;
 
-  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-  if (!query->exec(QString::fromStdString(sel_.str())))
-    throw std::runtime_error(query->lastError().text().toStdString());
-  if (query->next()) {
-    idP = query->value(0).toInt();
-    fileP = query->value(1).toString();
-    fileSuffixesP = query->value(2).toString();
-    userP = query->value(3).toString();
-    versionP = query->value(4).toInt();
-    filepathP = query->value(5).toString();
-    infoP = query->value(6).toByteArray();
-    fileStateP = query->value(7).toString();
-
-    if (!query->value(8).isNull())
-      __file_class__ = query->value(8).toInt();
-
-    if (!query->value(9).isNull())
-      __file_type__ = query->value(9).toInt();
-
-    if (!query->value(10).isNull())
-      __ass_class__ = query->value(10).toInt();
-
-    return;
+  auto db = coreSql::getCoreSql().getConnection();
+  for (auto &&row:db->run(
+      sqlpp::select(sqlpp::all_of(tab))
+          .where(tab.id == ID_)
+  )) {
+    batchSetAttr(row);
   }
 }
 
 void assFileSqlInfo::insert() {
-  sql::InsertModel ins_;
-  if (idP < 0) {
-    sqlQuertPtr query = coreSql::getCoreSql().getquery();
-    ins_.insert("file", fileP.toStdString());
-    ins_.insert("fileSuffixes", fileSuffixesP.toStdString());
-    ins_.insert("user", userP.toStdString());
-    ins_.insert("version", versionP);
-    ins_.insert("_file_path_", filepathP.toStdString());
+  if (idP > 0) return;
+  doodle::Basefile tab;
 
-    if (!infoP.isEmpty())
-      ins_.insert("infor", infoP.toStdString());
-
-    if (!fileStateP.isEmpty())
-      ins_.insert("filestate", fileStateP.toStdString());
-
-    if (__file_class__ > 0)
-      ins_.insert("__file_class__", __file_class__);
-    if (__file_type__ > 0)
-      ins_.insert("__file_type__", __file_type__);
-    if (__ass_class__ > 0)
-      ins_.insert("__ass_class__", __ass_class__);
-    ins_.into(coreSet::getCoreSet().getProjectname().toStdString() + ".basefile");
-    if (!query->exec(QString::fromStdString(ins_.str())))
-      throw std::runtime_error(query->lastError().text().toStdString());
-    getInsertID(query);
-    query->finish();
-  }
+  auto db = coreSql::getCoreSql().getConnection();
+  auto install = sqlpp::insert_into(tab);
+  install.set(
+      tab.file = fileP,
+      tab.fileSuffixes = fileSuffixesP,
+      tab.user = userP,
+      tab.version = versionP,
+      tab.FilePath_ = filepathP,
+      tab.filestate = sqlpp::value_or_null(fileStateP)
+  );
+  if (!infoP.empty())
+    install.set(tab.infor = infoP);
+  if (ass_class_id > 0)
+    install.set(tab.assClassId = ass_class_id);
+  if (ass_type_id > 0)
+    install.set(tab.assTypeId = ass_type_id);
+  idP = db->insert(install);
 }
 
 void assFileSqlInfo::updateSQL() {
-  sql::UpdateModel updatasql_;
-  updatasql_.update(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-  updatasql_.set("filestate", fileSuffixesP.toStdString());
-  updatasql_.set("infor", infoP.toStdString());
+  if (idP < 0) return;
+  doodle::Basefile tab;
 
-  if ((__file_class__ >= 0) && (__file_class__ != p_ptrW_fileClass.lock()->getIdP()))
-    updatasql_.set("__file_class__", __file_class__);
-  if ((__file_type__ >= 0) && (__file_type__ != p_ptrW_fileType.lock()->getIdP()))
-    updatasql_.set("__file_type__", __file_type__);
-  if ((__ass_class__ >= 0) && (__ass_class__ != p_ptrW_assType.lock()->getIdP()))
-    updatasql_.set("__ass_class__", __ass_class__);
-
-  updatasql_.where(sql::column("id") == idP);
-
-  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-  if (!query->exec(QString::fromStdString(updatasql_.str())))
-    throw std::runtime_error("not updata fileinfo");
-  query->finish();
+  auto db = coreSql::getCoreSql().getConnection();
+  auto updata = sqlpp::update(tab);
+  updata.set(
+      tab.infor = infoP,
+      tab.filestate = fileStateP
+  );
+  db->update(updata);
 }
 
 void assFileSqlInfo::deleteSQL() {
 }
 
-assInfoPtrList assFileSqlInfo::batchQuerySelect(sqlQuertPtr &query) {
+assInfoPtrList assFileSqlInfo::getAll(const assDepPtr &fc_) {
+  doodle::Basefile tab;
   assInfoPtrList list;
-  while (query->next()) {
-    assInfoPtr ass_(new assFileSqlInfo);
-    ass_->idP = query->value(0).toInt();
-    ass_->fileP = query->value(1).toString();
-    ass_->fileSuffixesP = query->value(2).toString();
-    ass_->userP = query->value(3).toString();
-    ass_->versionP = query->value(4).toInt();
-    ass_->filepathP = query->value(5).toString();
-    ass_->infoP = query->value(6).toByteArray();
-    ass_->fileStateP = query->value(7).toString();
 
-    if (!query->value(8).isNull())
-      ass_->__file_class__ = query->value(8).toInt();
-
-    if (!query->value(9).isNull())
-      ass_->__file_type__ = query->value(9).toInt();
-
-    if (!query->value(10).isNull())
-      ass_->__ass_class__ = query->value(10).toInt();
-
-    list.append(ass_);
+  auto db = coreSql::getCoreSql().getConnection();
+  for (auto &&row :db->run(
+      sqlpp::select(sqlpp::all_of(tab))
+          .where(tab.assTypeId == fc_->getIdP())
+  )) {
+    auto assInfo = std::make_shared<assFileSqlInfo>();
+    assInfo->batchSetAttr(row);
+    assInfo->setAssDep(fc_);
+    list.push_back(assInfo);
   }
   return list;
 }
 
-assInfoPtrList assFileSqlInfo::getAll(const fileClassPtr &fc_) {
-  sql::SelectModel sel_;
-  sel_.select("id", "file", "fileSuffixes", "user", "version",
-              "_file_path_", "infor", "filestate",
-              "__file_class__", "__file_type__", "__ass_class__");
-  sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-  sel_.where(sql::column("__file_class__") == fc_->getIdP());
+assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
+  doodle::Basefile tab;
+  assInfoPtrList list;
 
-  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-  if (!query->exec(QString::fromStdString(sel_.str())))
-    throw std::runtime_error(query->lastError().text().toStdString());
-
-  assInfoPtrList list = batchQuerySelect(query);
-
-  for (auto &x : list) {
-    x->setFileClass(fc_);
+  auto db = coreSql::getCoreSql().getConnection();
+  for (auto &&row :db->run(sqlpp::select(sqlpp::all_of(tab))
+                               .where(tab.assTypeId == AT_->getIdP())
+  )) {
+    auto assInfo = std::make_shared<assFileSqlInfo>();
+    assInfo->batchSetAttr(row);
+    assInfo->setAssClass(AT_);
+    list.push_back(assInfo);
   }
   return list;
 }
 
-assInfoPtrList assFileSqlInfo::getAll(const fileTypePtr &ft_) {
-  sql::SelectModel sel_;
-  sel_.select("id", "file", "fileSuffixes", "user", "version",
-              "_file_path_", "infor", "filestate",
-              "__file_class__", "__file_type__", "__ass_class__");
-  sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-  sel_.where(sql::column("__file_type__") == ft_->getIdP());
-  sel_.order_by("version DESC");
-  DOODLE_LOG_INFO << QString::fromStdString(sel_.str());
+assInfoPtrList assFileSqlInfo::getAll(const assTypePtr &ft_) {
+  doodle::Basefile tab;
+  assInfoPtrList list;
 
-  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-  if (!query->exec(QString::fromStdString(sel_.str())))
-    throw std::runtime_error(query->lastError().text().toStdString());
-
-  assInfoPtrList list = batchQuerySelect(query);
-
-  for (auto &x : list) {
-    x->setFileType(ft_);
+  auto db = coreSql::getCoreSql().getConnection();
+  for (auto &&row :db->run(sqlpp::select(sqlpp::all_of(tab))
+                               .where(tab.assTypeId == ft_->getIdP())
+  )) {
+    auto assInfo = std::make_shared<assFileSqlInfo>();
+    assInfo->batchSetAttr(row);
+    assInfo->setAssType(ft_);
+    list.push_back(assInfo);
   }
   return list;
 }
-
-assInfoPtrList assFileSqlInfo::getAll(const assTypePtr &AT_) {
-  sql::SelectModel sel_;
-  sel_.select("id", "file", "fileSuffixes", "user", "version",
-              "_file_path_", "infor", "filestate",
-              "__file_class__", "__file_type__", "__ass_class__");
-  sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-  sel_.where(sql::column("__ass_class__") == AT_->getIdP());
-
-  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-  if (!query->exec(QString::fromStdString(sel_.str())))
-    throw std::runtime_error(query->lastError().text().toStdString());
-
-  assInfoPtrList list = batchQuerySelect(query);
-
-  for (auto &x : list) {
-    x->setAssType(AT_);
-  }
-  return list;
-}
-QString assFileSqlInfo::generatePath(const QString &programFolder) {
-  QString path("%1/%2/%3/%4/%5");
+dpath assFileSqlInfo::generatePath(const std::string &programFolder) {
+//  QString path("%1/%2/%3/%4/%5");
 
   //第一次 格式化添加根目录
-  path = path.arg(coreSet::getCoreSet().getAssRoot().absolutePath());
+  dpath path = coreSet::getCoreSet().getAssRoot().absolutePath().toStdString();
 
   //第二次添加类型
-  fileClassPtr fc_ = getFileClass();
-  if (fc_)
-    path = path.arg(fc_->getFileclass_str());
-  else
-    path = path.arg(QString());
+  auto dep = getAssDep();
+  if (dep)
+    path = path / dep->getAssDep();
 
   //第三次格式化添加  ass_type
-  assTypePtr at_ = getAssType();
-  if (at_)
-    path = path.arg(at_->getAssType());
-  else
-    path = path.arg(QString());
+  auto as_cls = getAssClass();
+  if (as_cls)
+    path = path / as_cls->getAssClass();
 
-  //第五次格式化程序文件夹
-  path = path.arg(programFolder);
+  //第四次次格式化程序文件夹
+  path = path / programFolder;
 
   //第五次添加fileType
-  fileTypePtr ft_ = getFileType();
-  if (ft_)
-    path = path.arg(ft_->getFileType());
-  else
-    path = path.arg(QString());
+  auto as_ty = getAssType();
+  if (as_ty) {
+    path = path / as_ty->getType();
+  }
 
-  return QDir::cleanPath(path);
-}
-
-QString assFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes) {
-  QString path("%1/%2");
-  path = path.arg(generatePath(programFolder));
-  path = path.arg(generateFileName(suffixes));
   return path;
 }
 
-QString assFileSqlInfo::generatePath(const QString &programFolder, const QString &suffixes, const QString &prefix) {
-  QString path("%1/%2");
-  path = path.arg(generatePath(programFolder));
-  path = path.arg(generateFileName(suffixes, prefix));
-  return path;
+dpath assFileSqlInfo::generatePath(const dstring &programFolder, const dstring &suffixes) {
+  return generatePath(programFolder) / generateFileName(suffixes);
 }
 
-QString assFileSqlInfo::generateFileName(const QString &suffixes) {
-  QString name("%1%2.%3");
+dpath assFileSqlInfo::generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) {
+  return generatePath(programFolder) / generateFileName(suffixes, prefix);
+}
 
-  //首先格式化基本名称
-  assTypePtr at_ = getAssType();
-  if (at_)
-    name = name.arg(at_->getAssType());
+dstring assFileSqlInfo::generateFileName(const dstring &suffixes) {
+
+  boost::format format("%1%%2%.%3%");
+  auto as_cl = getAssClass();
+  if (as_cl)
+    format % as_cl->getAssClass();
   else
-    name = name.arg(QString());
+    format % "";
 
-  fileTypePtr ft_ = getFileType();
-  if (ft_) {
-    if (ft_->getFileType() == QString("rig"))
-      name = name.arg(ft_->getFileType());
+  auto as_ty = getAssType();
+  if (as_ty) {
+    if (as_ty->getType() == "rig")
+      format % as_ty->getType();
     else
-      name = name.arg(QString());
-  } else {
-    name = name.arg(QString());
-  }
+      format % "";
+  } else
+    format % "";
 
-  name = name.arg(suffixes);
-
-  return name;
+  return format.str();
 }
 
-QString assFileSqlInfo::generateFileName(const QString &suffixes, const QString &prefix) {
-  QString name("%1_%2");
-  name = name.arg(prefix);
-  name = name.arg(generateFileName(suffixes));
-  return name;
+dstring assFileSqlInfo::generateFileName(const dstring &suffixes, const dstring &prefix) {
+  boost::format str("%1%_%2%");
+  str % prefix % generateFileName(suffixes);
+  return str.str();
 }
 
-fileClassPtr assFileSqlInfo::getFileClass() {
-  if (p_ptrW_fileClass) {
-    return p_ptrW_fileClass;
-  } else {
-    fileClassPtr p_ = fileClassPtr(new fileClass);
-    p_->select(__file_class__);
-    p_ptrW_fileClass = p_;
-    return p_;
-  }
-  return nullptr;
+assDepPtr assFileSqlInfo::getAssDep() {
+  return p_dep_ptr_;
 }
 
-void assFileSqlInfo::setFileClass(const fileClassPtrW &fileclass_) {
-  if (!fileclass_)
+void assFileSqlInfo::setAssDep(const assDepPtr &ass_dep_) {
+  if (!ass_dep_)
     return;
-  p_ptrW_fileClass = fileclass_;
-  __file_class__ = fileclass_.lock()->getIdP();
+  p_dep_ptr_ = ass_dep_;
 }
 
-fileTypePtr assFileSqlInfo::getFileType() {
-  if (p_ptrW_fileType) {
-    return p_ptrW_fileType;
-  } else {
-    fileTypePtr p_ = fileTypePtr(new fileType);
-    p_->select(__file_type__);
-    p_ptrW_fileType = p_;
-    return p_;
+const assClassPtr &assFileSqlInfo::getAssClass() {
+  if (!p_class_ptr_) {
+    p_class_ptr_ = std::make_shared<assClass>();
+    p_class_ptr_->select(ass_class_id);
   }
-  return nullptr;
+  return p_class_ptr_;
 }
 
-void assFileSqlInfo::setFileType(const fileTypePtrW &fileType_) {
-  if (!fileType_)
+void assFileSqlInfo::setAssClass(const assClassPtr &ass_type_) {
+  if (!ass_type_)
     return;
-  p_ptrW_fileType = fileType_;
-  __file_type__ = fileType_.lock()->getIdP();
+  p_type_ptr_ = ass_type_;
+  ass_type_id = ass_type_->getIdP();
 
-  setAssType(fileType_.lock()->getAssType());
+  setAssDep(ass_type_->getAssDep());
 }
 
-assTypePtr assFileSqlInfo::getAssType() {
-  if (p_ptrW_assType != nullptr) {
-    return p_ptrW_assType;
-  } else {
-    assTypePtr p_ = assTypePtr(new assType);
-    p_->select(__ass_class__);
-    p_ptrW_assType = p_;
-    return p_;
+const assTypePtr &assFileSqlInfo::getAssType() {
+  if (!p_type_ptr_) {
+    p_type_ptr_ = std::make_shared<assClass>();
+    p_type_ptr_->select(ass_type_id);
   }
-  return nullptr;
+  return p_type_ptr_;
 }
 
-void assFileSqlInfo::setAssType(const assTypePtrW &assType_) {
-  if (!assType_)
+void assFileSqlInfo::setAssType(const assTypePtr &ass_type_) {
+  if (!ass_type_)
     return;
-  p_ptrW_assType = assType_;
-  __ass_class__ = assType_.lock()->getIdP();
+  p_class_ptr_ = ass_type_;
+  ass_class_id = ass_type_->getIdP();
 
-  setFileClass(assType_.lock()->getFileClass());
+  setAssClass(ass_type_->getAssClassPtr());
+}
+template<typename T>
+void assFileSqlInfo::batchSetAttr(const T &t) {
+  idP = t.id;
+  fileP = t.file;
+  fileSuffixesP = t.fileSuffixes;
+  userP = t.user;
+  versionP = t.version;
+  filepathP = t.FilePath_;
+  infoP = t.infor;
+  fileStateP = t.filestate;
+
+  if (t.assClassId._is_valid)
+    ass_class_id = t.assClassId;
+
+  if (t.assTypeId._is_valid)
+    ass_type_id = t.assTypeId;
 }
 
 CORE_NAMESPACE_E

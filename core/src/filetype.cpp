@@ -3,7 +3,7 @@
 #include "sql_builder/sql.h"
 #include "coreset.h"
 #include "fileclass.h"
-#include "asstype.h"
+#include "assClass.h"
 #include "episodes.h"
 #include "shot.h"
 
@@ -34,7 +34,7 @@ fileType::fileType() {
 void fileType::select(const qint64 &ID_) {
   sql::SelectModel sel_;
   sel_.select("id", "file_type",
-              "__file_class__", "__ass_class__", "__episodes__", "__shot__");
+              "p_assDep_id", "ass_class_id", "__episodes__", "__shot__");
 
   sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
   sel_.where(sql::column("id") == ID_);
@@ -67,9 +67,9 @@ void fileType::insert() {
     ins_.insert("file_type", p_Str_Type.toStdString());
 
     if (__file_class__ > 0)
-      ins_.insert("__file_class__", __file_class__);
+      ins_.insert("p_assDep_id", __file_class__);
     if (__ass_class__ > 0)
-      ins_.insert("__ass_class__", __ass_class__);
+      ins_.insert("ass_class_id", __ass_class__);
     if (__episodes__ > 0)
       ins_.insert("__episodes__", __episodes__);
     if (__shot__ > 0)
@@ -95,10 +95,10 @@ void fileType::updateSQL() {
     upd_.set("__shot__", __shot__);
 
   if (__file_class__ > 0)
-    upd_.set("__file_class__", __file_class__);
+    upd_.set("p_assDep_id", __file_class__);
 
   if (__ass_class__ > 0)
-    upd_.set("__ass_class__", __ass_class__);
+    upd_.set("ass_class_id", __ass_class__);
 
   upd_.where(sql::column("id") == idP);
 
@@ -138,10 +138,10 @@ fileTypePtrList fileType::batchQuerySelect(sqlQuertPtr &query) {
 fileTypePtrList fileType::getAll(const fileClassPtr &fc_) {
   sql::SelectModel sel_;
   sel_.select("id", "file_type",
-              "__file_class__", "__ass_class__", "__episodes__", "__shot__");
+              "p_assDep_id", "ass_class_id", "__episodes__", "__shot__");
 
   sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-  sel_.where(sql::column("__file_class__") == fc_->getIdP());
+  sel_.where(sql::column("p_assDep_id") == fc_->getIdP());
 
   sqlQuertPtr query = coreSql::getCoreSql().getquery();
   if (!query->exec(QString::fromStdString(sel_.str()))) {
@@ -152,19 +152,19 @@ fileTypePtrList fileType::getAll(const fileClassPtr &fc_) {
   fileTypePtrList listfileTypes = batchQuerySelect(query);
 
   for (auto &x : listfileTypes) {
-    x->setFileClass(fc_);
+    x->setAssDep(fc_);
   }
   return listfileTypes;
 }
 
-fileTypePtrList fileType::getAll(const assTypePtr &AT_) {
+fileTypePtrList fileType::getAll(const assClassPtr &AT_) {
   sql::SelectModel sel_;
   sel_.select("id", "file_type",
-              "__file_class__", "__ass_class__", "__episodes__", "__shot__");
+              "p_assDep_id", "ass_class_id", "__episodes__", "__shot__");
 
   sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
-  sel_.where(sql::column("__ass_class__") == AT_->getIdP());
+  sel_.where(sql::column("ass_class_id") == AT_->getIdP());
 
   sqlQuertPtr query = coreSql::getCoreSql().getquery();
   if (!query->exec(QString::fromStdString(sel_.str()))) {
@@ -174,7 +174,7 @@ fileTypePtrList fileType::getAll(const assTypePtr &AT_) {
   fileTypePtrList listfileTypes = batchQuerySelect(query);
 
   for (auto &x : listfileTypes) {
-    x->setAssType(AT_);
+    x->setAssClass(AT_);
   }
   return listfileTypes;
 }
@@ -182,7 +182,7 @@ fileTypePtrList fileType::getAll(const assTypePtr &AT_) {
 fileTypePtrList fileType::getAll(const episodesPtr &EP_) {
   sql::SelectModel sel_;
   sel_.select("id", "file_type",
-              "__file_class__", "__ass_class__", "__episodes__", "__shot__");
+              "p_assDep_id", "ass_class_id", "__episodes__", "__shot__");
 
   sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
@@ -204,7 +204,7 @@ fileTypePtrList fileType::getAll(const episodesPtr &EP_) {
 fileTypePtrList fileType::getAll(const shotPtr &SH_) {
   sql::SelectModel sel_;
   sel_.select("id", "file_type",
-              "__file_class__", "__ass_class__", "__episodes__", "__shot__");
+              "p_assDep_id", "ass_class_id", "__episodes__", "__shot__");
 
   sel_.from(QString("%1.filetype").arg(coreSet::getCoreSet().getProjectname()).toStdString());
 
@@ -265,11 +265,11 @@ void fileType::setAssType(const assTypePtrW &assType_) {
   setFileClass(assType_.lock()->getFileClass());
 }
 
-assTypePtr fileType::getAssType() {
+assClassPtr fileType::getAssType() {
   if (p_assType)
     return p_assType;
   else if (__ass_class__ >= 0) {
-    assTypePtr p_ = assTypePtr(new assType);
+    assClassPtr p_ = assClassPtr(new assClass);
     p_->select(__ass_class__);
     p_assType = p_;
     return p_;

@@ -58,7 +58,7 @@ bool fileTypeShotModel::setData(const QModelIndex &index, const QVariant &value,
   if (index.isValid() && role == Qt::EditRole) {
     bool isHas = false;
     for (const auto &item : p_type_ptr_list_) {
-      if (item->isInsert() || value.toString() == item->getFileType()) {
+      if (item->isInsert() || value.toString() == item->getAssClass()) {
         isHas = true;
         break;
       }
