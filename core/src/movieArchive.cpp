@@ -51,7 +51,7 @@ bool movieArchive::update(const stringList &filelist) {
   const shotTypePtr &kType = p_info_ptr_->findFileType("movie");
   auto version = shotFileSqlInfo::getAll(kType).size();
   p_info_ptr_->setVersionP(version + 1);
-  p_info_ptr_->setFileType(kType);
+  p_info_ptr_->setShotType(kType);
   p_info_ptr_->setInfoP("拍屏");
   _generateFilePath();
   generateCachePath();

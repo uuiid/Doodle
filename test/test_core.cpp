@@ -73,7 +73,7 @@ TEST_F(CoreTest, create_shotinfo)
         fc->insert();
 
         doCore::shotTypePtr ft(new doCore::shotType());
-        ft->setFileType("test");
+      ft->setType("test");
         ft->setFileClass(fc.toWeakRef());
 
         ft->insert();
@@ -85,7 +85,7 @@ TEST_F(CoreTest, create_shotinfo)
         sf->setFileList(list);
         sf->setVersionP(0);
 
-        sf->setFileType(ft.toWeakRef());
+      sf->setShotType(ft.toWeakRef());
         sf->insert();
     }
     else
@@ -109,7 +109,7 @@ TEST_F(CoreTest, get_shotinf)
         std::cout << "episodes: " << ep->getEpisdes_str().toStdString() << std::endl;
         std::cout << "shot:" << sh->getShotAndAb_str().toStdString() << std::endl;
         std::cout << "fileclass :" << fc->getClass_str().toStdString() << std::endl;
-        std::cout << "filetype :" << ft->getFileType().toStdString() << std::endl;
+        std::cout << "filetype :" << ft->getType().toStdString() << std::endl;
         std::cout << "shotinfo generatePath :" << sf->generatePath("test", ".mb").toStdString() << std::endl;
         for (auto &x : sf->getFileList())
         {
@@ -130,7 +130,7 @@ TEST_F(CoreTest, create_assInfo)
         af_->insert();
 
         doCore::shotTypePtr ft_(new doCore::shotType);
-        ft_->setFileType("ffff");
+      ft_->setType("ffff");
         ft_->setAssType(af_);
         ft_->insert();
 
@@ -163,7 +163,7 @@ TEST_F(CoreTest, get_assInf)
     // std::cout << "asstype :" <<code->fromUnicode(af_->getAssClass(af_)).toStdString() << std::endl;
 
     doCore::shotTypePtr ft_ = doCore::fileType::getAll(af_)[0];
-    std::cout << "filetype :" << ft_->getFileType().toStdString() << std::endl;
+    std::cout << "filetype :" << ft_->getType().toStdString() << std::endl;
 
     doCore::assInfoPtr ai_ = doCore::assFileSqlInfo::getAll(ft_)[0];
     std::cout << "assinfo path :" << ai_->generatePath("test", ".mb").toStdString() << std::endl;

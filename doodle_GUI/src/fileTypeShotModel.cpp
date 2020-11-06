@@ -18,7 +18,7 @@ QVariant fileTypeShotModel::data(const QModelIndex &index, int role) const {
   if (index.row() >= p_type_ptr_list_.size()) return QVariant();
 
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return p_type_ptr_list_[index.row()]->getFileType();
+    return p_type_ptr_list_[index.row()]->getType();
   } else {
     return QVariant();
   }
@@ -65,7 +65,7 @@ bool fileTypeShotModel::setData(const QModelIndex &index, const QVariant &value,
     }
 
     if (!isHas) {
-      p_type_ptr_list_[index.row()]->setFileType(value.toString());
+      p_type_ptr_list_[index.row()]->setType(value.toString());
       p_type_ptr_list_[index.row()]->setFileClass(p_class_ptr_);
       p_type_ptr_list_[index.row()]->insert();
     } else {

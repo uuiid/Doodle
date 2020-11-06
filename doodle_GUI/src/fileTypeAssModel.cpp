@@ -19,7 +19,7 @@ QVariant fileTypeAssModel::data(const QModelIndex &index, int role) const {
   if (index.row() >= p_file_type_ptr_list_.size()) return var;
 
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    var = p_file_type_ptr_list_[index.row()]->getFileType();
+    var = p_file_type_ptr_list_[index.row()]->getType();
   } else if (role == Qt::UserRole) {
     var = QVariant::fromValue(p_file_type_ptr_list_[index.row()]);
   }
@@ -46,7 +46,7 @@ bool fileTypeAssModel::setData(const QModelIndex &index, const QVariant &value, 
   }
 
   if (!is_has) {
-    p_file_type_ptr_list_[index.row()]->setFileType(value.toString());
+    p_file_type_ptr_list_[index.row()]->setType(value.toString());
     p_file_type_ptr_list_[index.row()]->setAssType(p_ass_ptr_);
     p_file_type_ptr_list_[index.row()]->insert();
     emit dataChanged(index, index, {role});

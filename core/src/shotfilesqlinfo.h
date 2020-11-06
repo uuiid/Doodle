@@ -8,7 +8,7 @@ class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo {
  Q_GADGET
  public:
   shotFileSqlInfo();
-  void select(const qint64 &ID_);
+  void select(const int64_t &ID_);
 
   void insert() override;
   void updateSQL() override;
@@ -26,33 +26,34 @@ class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo {
   dstring generateFileName(const dstring &suffixes, const dstring &prefix) override;
   //外键查询
   episodesPtr getEpisdes();
-  void setEpisdes(const episodesPtrW &eps_);
+  void setEpisdes(const episodesPtr &eps_);
 
   shotPtr getShot();
-  void setShot(const shotPtrW &shot_);
+  void setShot(const shotPtr &shot_);
 
-  shotClassPtr getFileclass();
-  void setFileClass(const fileClassPtrW &value);
+  shotClassPtr getShotclass();
+  void setShotClass(const shotClassPtr &value);
 
-  shotTypePtr getFileType();
-  void setFileType(const fileTypePtrW &fileType_);
+  shotTypePtr getShotType();
+  void setShotType(const shotTypePtr &fileType_);
 
 
   shotTypePtr findFileType(const std::string & type_str);
  private:
   //循环获得查询结果
-  static shotInfoPtrList batchQuerySelect(sqlQuertPtr &query);
+  template<typename T>
+  void batchQuerySelect(T &row);
 
  private:
-  qint64 __episodes__;
-  qint64 __shot__;
-  qint64 __file_class__;
-  qint64 __file_type__;
+  qint64 p_eps_id;
+  qint64 p_shot_id;
+  qint64 p_shCla_id;
+  qint64 p_shTy_id;
 
-  episodesPtrW p_ptrw_eps;
-  shotPtrW p_ptrw_shot;
-  fileClassPtrW p_ptrw_fileClass;
-  fileTypePtrW p_ptrw_fileType;
+  episodesPtr p_ptr_eps;
+  shotPtr p_ptr_shot;
+  shotClassPtr p_ptr_shcla;
+  shotTypePtr p_ptr_shTy;
 };
 
 CORE_NAMESPACE_E

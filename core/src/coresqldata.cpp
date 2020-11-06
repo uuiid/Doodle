@@ -10,17 +10,12 @@ coresqldata::coresqldata() {
 }
 
 qint64 coresqldata::getIdP() const {
-  if (idP > 0)
-    return idP;
-  else
-    return 0;
+  if (idP > 0) return idP;
+  else return 0;
 }
 
 bool coresqldata::isNULL() const {
-  if (idP > 0)
-    return false;
-  else
-    return true;
+  return idP <= 0;
 }
 
 CORE_NAMESPACE_E

@@ -13,12 +13,13 @@ public:
     virtual void updateSQL() = 0;
     virtual void deleteSQL() = 0;
 
-    qint64 getIdP() const;
+    [[nodiscard]] int64_t getIdP() const;
 
-    bool isNULL() const;
-    bool isInsert() const { return !isNULL();};
+    [[nodiscard]] bool isNULL() const;
+    [[nodiscard]] inline bool isInsert() const;
 protected:
     qint64 idP;
 };
 
+bool coresqldata::isInsert() const { return !isNULL();}
 CORE_NAMESPACE_E

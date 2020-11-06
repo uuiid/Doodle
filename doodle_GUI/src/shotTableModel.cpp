@@ -119,7 +119,7 @@ bool shotTableModel::insertRows(int position, int rows, const QModelIndex &paren
   for (int row = 0; row < rows; ++row) {
     p_shot_info_ptr_list_.insert(position,
                                  doCore::shotInfoPtr(new doCore::shotFileSqlInfo));
-    p_shot_info_ptr_list_[position]->setFileType(p_type_ptr_);
+    p_shot_info_ptr_list_[position]->setShotType(p_type_ptr_);
   }
   endInsertRows();
   return true;
