@@ -1,5 +1,5 @@
 #include "movieArchive.h"
-#include "filetype.h"
+#include "shottype.h"
 
 #include "ffmpegWrap.h"
 #include "Logger.h"
@@ -48,7 +48,7 @@ bool movieArchive::update(const stringList &filelist) {
   p_soureFile = filelist;
   DOODLE_LOG_INFO << filelist;
 
-  const fileTypePtr &kType = p_info_ptr_->findFileType("movie");
+  const shotTypePtr &kType = p_info_ptr_->findFileType("movie");
   auto version = shotFileSqlInfo::getAll(kType).size();
   p_info_ptr_->setVersionP(version + 1);
   p_info_ptr_->setFileType(kType);

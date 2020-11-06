@@ -22,7 +22,7 @@ class shotTableWidget : public QTableView {
 
   void setModel(QAbstractItemModel *model) override;
  public slots:
-  void init(const doCore::fileTypePtr &file_type_ptr);
+  void init(const doCore::shotTypePtr &file_type_ptr);
   void clear();
  private slots:
   void getSelectPath();
@@ -38,7 +38,7 @@ class shotTableWidget : public QTableView {
   void dragMoveEvent(QDragMoveEvent *event) override;
   void dropEvent(QDropEvent *event) override;
  private:
-  doCore::fileTypePtr p_type_ptr_;
+  doCore::shotTypePtr p_type_ptr_;
   shotTableModel *p_model_;
 
   QMenu *p_menu_;

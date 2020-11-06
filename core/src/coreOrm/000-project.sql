@@ -1,4 +1,4 @@
-create table project
+create table if not exists project
 (
 	id smallint auto_increment,
 	name varchar(128) null,

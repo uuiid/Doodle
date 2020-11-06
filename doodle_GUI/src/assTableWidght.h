@@ -17,7 +17,7 @@ class assTableWidght : public QTableView {
 
   void setModel(QAbstractItemModel *model) override;
  public:
-  void init(const doCore::fileTypePtr &file_type_ptr);
+  void init(const doCore::shotTypePtr &file_type_ptr);
   void clear();
 
  private:
@@ -25,7 +25,7 @@ class assTableWidght : public QTableView {
   assTableModel *p_model_;
 
   QMenu *p_menu_;
-  doCore::fileTypePtr p_file_type_ptr_;
+  doCore::shotTypePtr p_file_type_ptr_;
 
  private slots:
   void insertAss();

@@ -26,12 +26,12 @@ class assClassModel : public QAbstractListModel {
   //删除数据
   bool removeRows(int position, int rows, const QModelIndex &index) override;
 
-  void init(const doCore::fileClassPtr & file_class_ptr);
+  void init(const doCore::shotClassPtr & file_class_ptr);
   void clear();
 
  private:
   doCore::assClassPtrList p_ass_info_ptr_list_;
-  doCore::fileClassPtr p_class_ptr_;
+  doCore::shotClassPtr p_class_ptr_;
 
 };
 DOODLE_NAMESPACE_E

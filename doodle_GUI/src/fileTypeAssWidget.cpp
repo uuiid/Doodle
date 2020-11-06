@@ -5,7 +5,7 @@
 #include "fileTypeAssWidget.h"
 
 #include "fileTypeAssModel.h"
-#include "src/filetype.h"
+#include "src/shottype.h"
 #include "src/assClass.h"
 #include <QMenu>
 
@@ -92,7 +92,7 @@ void fileTypeAssWidget::inserttype() {
  edit(p_model_->index(raw));
 }
 void fileTypeAssWidget::_doodle_type_emit(const QModelIndex &index) {
-  emit filetypeEmited(index.data(Qt::UserRole).value<doCore::fileTypePtr>());
+  emit filetypeEmited(index.data(Qt::UserRole).value<doCore::shotTypePtr>());
 }
 void fileTypeAssWidget::contextMenuEvent(QContextMenuEvent *event) {
   if(p_ass_type_ptr_ && !p_menu_){

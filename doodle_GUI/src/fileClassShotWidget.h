@@ -26,7 +26,7 @@ class fileClassShotWidget : public QListView {
 
   void setModel(QAbstractItemModel *model) override;
  signals:
-  void fileClassShotEmitted(const doCore::fileClassPtr &fc_);
+  void fileClassShotEmitted(const doCore::shotClassPtr &fc_);
 
  public slots:
   void init(const doCore::shotPtr &shot);

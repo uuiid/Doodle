@@ -4,8 +4,8 @@
 
 #include "src/episodes.h"
 #include "src/shot.h"
-#include "src/fileclass.h"
-#include "src/filetype.h"
+#include "src/shotClass.h"
+#include "src/shottype.h"
 
 #include "src/assClass.h"
 

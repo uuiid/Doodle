@@ -1,4 +1,4 @@
-create table asstype
+create table if not exists asstype
 (
 	id smallint auto_increment,
 	ass_type varchar(64) null,

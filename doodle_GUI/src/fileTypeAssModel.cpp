@@ -3,7 +3,7 @@
 //
 
 #include "fileTypeAssModel.h"
-#include "src/filetype.h"
+#include "src/shottype.h"
 
 DOODLE_NAMESPACE_S
 fileTypeAssModel::fileTypeAssModel(QObject *parent)
@@ -58,7 +58,7 @@ bool fileTypeAssModel::setData(const QModelIndex &index, const QVariant &value, 
 bool fileTypeAssModel::insertRows(int position, int rows, const QModelIndex &index) {
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
-    p_file_type_ptr_list_.insert(position,doCore::fileTypePtr(new doCore::fileType));
+    p_file_type_ptr_list_.insert(position,doCore::shotTypePtr(new doCore::shotType));
   }
   endInsertRows();
   return true;

@@ -16,7 +16,7 @@ DOODLE_NAMESPACE_S
 class fileClassShotModel : public QAbstractListModel {
  Q_OBJECT
  private:
-  doCore::fileClassPtrList list_fileClass;
+  doCore::shotClassPtrList list_fileClass;
   doCore::shotPtr p_shot;
 
  public:
@@ -27,7 +27,7 @@ class fileClassShotModel : public QAbstractListModel {
   int rowCount(const QModelIndex &parent) const override;
   //返回数据
   QVariant data(const QModelIndex &index, int role) const override;
-  [[nodiscard]] doCore::fileClassPtr dataRow(const QModelIndex &index) const;
+  [[nodiscard]] doCore::shotClassPtr dataRow(const QModelIndex &index) const;
   //返回标题
   QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 

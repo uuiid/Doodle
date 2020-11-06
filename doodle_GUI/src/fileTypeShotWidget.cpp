@@ -2,7 +2,7 @@
 // Created by teXiao on 2020/10/12.
 //
 #include "src/coreset.h"
-#include "src/filetype.h"
+#include "src/shottype.h"
 #include "fileTypeShotModel.h"
 #include "fileTypeShotWidget.h"
 
@@ -70,7 +70,7 @@ fileTypeShotWidget::fileTypeShotWidget(QWidget *parent)
 
 }
 
-void fileTypeShotWidget::init(const doCore::fileClassPtr &file_class_ptr) {
+void fileTypeShotWidget::init(const doCore::shotClassPtr &file_class_ptr) {
   p_file_class_ptr_ = file_class_ptr;
   p_file_type_shot_model_->init(file_class_ptr);
 }

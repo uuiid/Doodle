@@ -6,7 +6,7 @@
 #include "src/shot.h"
 #include "src/coreset.h"
 
-#include "src/fileclass.h"
+#include "src/shotClass.h"
 #include "Logger.h"
 
 DOODLE_NAMESPACE_S
@@ -26,13 +26,13 @@ QVariant fileClassShotModel::data(const QModelIndex &index, int role) const {
   if (index.row() >= list_fileClass.size())
     return QVariant();
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return list_fileClass[index.row()]->getFileclass_str();
+    return list_fileClass[index.row()]->getClass_str();
   } else {
     return QVariant();
   }
 }
 
-doCore::fileClassPtr fileClassShotModel::dataRow(const QModelIndex &index) const {
+doCore::shotClassPtr fileClassShotModel::dataRow(const QModelIndex &index) const {
   if (!index.isValid())
     return nullptr;
   if (index.row() >= list_fileClass.size())
@@ -65,7 +65,7 @@ bool fileClassShotModel::setData(const QModelIndex &index, const QVariant &value
     //确认没有重复的fileclass
     bool isHas = false;
     for (auto &&i : list_fileClass) {
-      if (value.toString() == i->getFileclass_str() || i->isInsert()) {
+      if (value.toString() == i->getClass_str() || i->isInsert()) {
         isHas = true;
         break;
       }
@@ -75,7 +75,7 @@ bool fileClassShotModel::setData(const QModelIndex &index, const QVariant &value
       return false;
     else {
       DOODLE_LOG_CRIT << "注意将fileclass提交到数据库";
-      list_fileClass[index.row()]->setFileclass(value.toString());
+      list_fileClass[index.row()]->setclass(value.toString());
       list_fileClass[index.row()]->setShot(p_shot);
       list_fileClass[index.row()]->insert();
 
@@ -90,7 +90,7 @@ bool fileClassShotModel::insertRows(int position, int rows, const QModelIndex &i
   bool isHas = false;
   auto dep = doCore::coreSet::getCoreSet().getDepartment();
   for (auto &&i : list_fileClass) {
-    if (dep == i->getFileclass_str()) {
+    if (dep == i->getClass_str()) {
       isHas = true;
       break;
     }
@@ -99,8 +99,8 @@ bool fileClassShotModel::insertRows(int position, int rows, const QModelIndex &i
   if (!isHas) {
     for (int row = 0; row < rows; ++row) {
       DOODLE_LOG_INFO << "插入新的fileclass镜头";
-      list_fileClass.insert(position, doCore::fileClassPtr(new doCore::fileClass));
-      list_fileClass[position]->setFileclass(dep);
+      list_fileClass.insert(position, doCore::shotClassPtr(new doCore::shotClass));
+      list_fileClass[position]->setclass(dep);
       list_fileClass[position]->setShot(p_shot);
       list_fileClass[position]->insert();
     }
@@ -124,7 +124,7 @@ bool fileClassShotModel::removeRows(int position, int rows, const QModelIndex &i
 void fileClassShotModel::init(const doCore::shotPtr &shot) {
   p_shot = shot;
 
-  doCore::fileClassPtrList fileClassPtrList = doCore::fileClass::getAll(shot);
+  doCore::shotClassPtrList fileClassPtrList = doCore::fileClass::getAll(shot);
   clear();
   beginInsertRows(QModelIndex(), 0, fileClassPtrList.size());
   list_fileClass = fileClassPtrList;

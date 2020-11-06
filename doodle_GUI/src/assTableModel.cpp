@@ -111,7 +111,7 @@ bool assTableModel::insertRows(int position, int rows, const QModelIndex &parent
   endInsertRows();
   return true;
 }
-void assTableModel::init(const doCore::fileTypePtr &file_type_ptr) {
+void assTableModel::init(const doCore::shotTypePtr &file_type_ptr) {
   auto tmp_list = doCore::assFileSqlInfo::getAll(file_type_ptr);
   clear();
   beginInsertRows(QModelIndex(), 0, tmp_list.size() - 1);

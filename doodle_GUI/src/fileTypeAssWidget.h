@@ -40,10 +40,10 @@ class fileTypeAssWidget : public QListView {
   void init(const doCore::assClassPtr &ass_type_ptr);
   void clear();
  signals:
-  void filetypeEmited(const doCore::fileTypePtr &file_type_ptr);
+  void filetypeEmited(const doCore::shotTypePtr &file_type_ptr);
 
  private:
-  doCore::fileTypePtrList p_type_ptr_list_;
+  doCore::shotTypePtrList p_type_ptr_list_;
   //m模型指针
   fileTypeAssModel *p_model_;
   //菜单

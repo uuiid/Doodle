@@ -11,7 +11,7 @@
 #include "fileClassShotWidget.h"
 #include "src/coreset.h"
 #include "src/shot.h"
-#include "src/fileclass.h"
+#include "src/shotClass.h"
 
 #include <QMenu>
 #include <QContextMenuEvent>

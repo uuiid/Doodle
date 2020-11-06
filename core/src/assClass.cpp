@@ -29,7 +29,7 @@ void assClass::select(const qint64 &ID_) {
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row:db->run(
       sqlpp::select(sqlpp::all_of(table))
-          .where(table.assdepId == ID_)
+          .where(table.id == ID_)
   )) {
     name = row.assName;
     idP = row.id;
@@ -42,8 +42,11 @@ void assClass::insert() {
   if (idP > 0) return;
 
   doodle::Assclass table;
+
   auto db = coreSql::getCoreSql().getConnection();
-  idP = db->insert(sqlpp::insert_into(table).set(table.assName = name));
+  idP = db->insert(sqlpp::insert_into(table).set(
+      table.assName = name,
+      table.assdepId = p_assDep_id));
   if (idP == 0) {
     throw std::runtime_error("not insert assclass");
   }

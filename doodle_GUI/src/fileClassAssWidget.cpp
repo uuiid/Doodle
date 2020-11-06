@@ -4,7 +4,7 @@
 
 #include "fileClassAssWidget.h"
 #include "fileClassAssModel.h"
-#include "src/fileclass.h"
+#include "src/shotClass.h"
 DOODLE_NAMESPACE_S
 fileClassAssWidget::fileClassAssWidget(QWidget *parent) : QListView(parent) {
   setFlow(QListView::LeftToRight);
@@ -23,7 +23,7 @@ void fileClassAssWidget::init() {
 }
 void fileClassAssWidget::_doodle_emit(const QModelIndex &index) {
   emit fileClassEmit(p_file_class_ass_model_
-                         ->data(index, Qt::UserRole).value<doCore::fileClassPtr>());
+                         ->data(index, Qt::UserRole).value<doCore::shotClassPtr>());
 }
 fileClassAssWidget::~fileClassAssWidget() = default;
 DOODLE_NAMESPACE_E

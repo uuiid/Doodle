@@ -29,12 +29,12 @@ class shotTableModel : public QAbstractTableModel {
   //修改数据
   bool insertRows(int position, int rows, const QModelIndex &parent) override;
 
-  void init(const doCore::fileTypePtr &file_type_ptr);
+  void init(const doCore::shotTypePtr &file_type_ptr);
   void clear();
 
  private:
   doCore::shotInfoPtrList p_shot_info_ptr_list_;
-  doCore::fileTypePtr p_type_ptr_;
+  doCore::shotTypePtr p_type_ptr_;
 };
 
 DOODLE_NAMESPACE_E

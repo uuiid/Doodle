@@ -16,8 +16,8 @@ class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo {
 
   static shotInfoPtrList getAll(const episodesPtr &EP_);
   static shotInfoPtrList getAll(const shotPtr &sh_);
-  static shotInfoPtrList getAll(const fileClassPtr &fc_);
-  static shotInfoPtrList getAll(const fileTypePtr &ft_);
+  static shotInfoPtrList getAll(const shotClassPtr &fc_);
+  static shotInfoPtrList getAll(const shotTypePtr &ft_);
 
   dpath generatePath(const std::string &programFolder) override;
   dpath generatePath(const dstring &programFolder, const dstring &suffixes) override;
@@ -31,14 +31,14 @@ class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo {
   shotPtr getShot();
   void setShot(const shotPtrW &shot_);
 
-  fileClassPtr getFileclass();
+  shotClassPtr getFileclass();
   void setFileClass(const fileClassPtrW &value);
 
-  fileTypePtr getFileType();
+  shotTypePtr getFileType();
   void setFileType(const fileTypePtrW &fileType_);
 
 
-  fileTypePtr findFileType(const std::string & type_str);
+  shotTypePtr findFileType(const std::string & type_str);
  private:
   //循环获得查询结果
   static shotInfoPtrList batchQuerySelect(sqlQuertPtr &query);

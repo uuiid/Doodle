@@ -23,7 +23,7 @@ class fileTypeShotModel : public QAbstractListModel {
   [[nodiscard]] int rowCount(const QModelIndex &parent) const override;
 
   [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override;
-  [[nodiscard]] doCore::fileTypePtr daraRow(const QModelIndex &index) const;
+  [[nodiscard]] doCore::shotTypePtr daraRow(const QModelIndex &index) const;
 
   //返回标头
   [[nodiscard]] QVariant headerData(int section,
@@ -39,10 +39,10 @@ class fileTypeShotModel : public QAbstractListModel {
   bool removeRows(int position, int rows, const QModelIndex &index) override;
 
  public slots:
-  void init(const doCore::fileClassPtr &file_class_ptr);
+  void init(const doCore::shotClassPtr &file_class_ptr);
   void clear();
  private:
-  doCore::fileTypePtrList p_type_ptr_list_;
-  doCore::fileClassPtr p_class_ptr_;
+  doCore::shotTypePtrList p_type_ptr_list_;
+  doCore::shotClassPtr p_class_ptr_;
 };
 DOODLE_NAMESPACE_E

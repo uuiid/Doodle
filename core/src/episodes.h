@@ -19,10 +19,11 @@ class CORE_EXPORT episodes : public coresqldata {
 
   int64_t getEpisdes() const;
   dstring getEpisdes_str() const;
-  void setEpisdes(const qint64 &value);
+  void setEpisdes(const int64_t &value);
 
  private:
   int64_t p_int_episodes;
+  int64_t p_prj;
 
 };
 

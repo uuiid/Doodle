@@ -40,8 +40,8 @@ set(CORE_SQL_HEADER
         src/assfilesqlinfo.h
         src/episodes.h
         src/shot.h
-        src/fileclass.h
-        src/filetype.h
+        src/shotClass.h
+        src/shottype.h
         src/assClass.h
         src/coresqldata.h
         src/znchName.h
@@ -55,8 +55,8 @@ set(CORE_SQL_SOURCE
         src/assfilesqlinfo.cpp
         src/episodes.cpp
         src/shot.cpp
-        src/fileclass.cpp
-        src/filetype.cpp
+        src/shotClass.cpp
+        src/shottype.cpp
         src/assClass.cpp
         src/coresqldata.cpp
         src/znchName.cpp

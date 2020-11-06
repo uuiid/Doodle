@@ -5,8 +5,8 @@
 #include "mayaArchiveShotFbx.h"
 
 #include "shotfilesqlinfo.h"
-#include "fileclass.h"
-#include "filetype.h"
+#include "shotClass.h"
+#include "shottype.h"
 #include "mayaArchive.h"
 
 #include "episodes.h"

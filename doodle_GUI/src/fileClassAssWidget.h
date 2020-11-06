@@ -19,7 +19,7 @@ class fileClassAssWidget : public QListView {
   void init();
 
  signals:
-  void fileClassEmit(const doCore::fileClassPtr &file_class_ptr);
+  void fileClassEmit(const doCore::shotClassPtr &file_class_ptr);
 
  private:
   fileClassAssModel * p_file_class_ass_model_;

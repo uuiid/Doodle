@@ -41,10 +41,10 @@ class fileTypeShotWidget : public QListView {
 
   void setModel(QAbstractItemModel *model) override;
  public slots:
-  void init(const doCore::fileClassPtr &file_class_ptr);
+  void init(const doCore::shotClassPtr &file_class_ptr);
   void clear();
  signals:
-  void typeEmit(const doCore::fileTypePtr &file_type_ptr);
+  void typeEmit(const doCore::shotTypePtr &file_type_ptr);
 
  private:
   //模型
@@ -54,7 +54,7 @@ class fileTypeShotWidget : public QListView {
   //上下文菜单
   QMenu *p_menu_;
   //上一级发射出来的指针
-  doCore::fileClassPtr p_file_class_ptr_;
+  doCore::shotClassPtr p_file_class_ptr_;
  private slots:
   //添加filetype
   void insertFileType();

@@ -4,7 +4,7 @@
 #include "fileTypeShotModel.h"
 
 #include "src/coreset.h"
-#include "src/filetype.h"
+#include "src/shottype.h"
 
 DOODLE_NAMESPACE_S
 fileTypeShotModel::fileTypeShotModel(QObject *parent) : QAbstractListModel(parent) {}
@@ -24,7 +24,7 @@ QVariant fileTypeShotModel::data(const QModelIndex &index, int role) const {
   }
 }
 
-doCore::fileTypePtr fileTypeShotModel::daraRow(const QModelIndex &index) const {
+doCore::shotTypePtr fileTypeShotModel::daraRow(const QModelIndex &index) const {
   if (!index.isValid()) return nullptr;
   return p_type_ptr_list_[index.row()];
 }
@@ -40,7 +40,7 @@ Qt::ItemFlags fileTypeShotModel::flags(const QModelIndex &index) const {
     return Qt::ItemIsEnabled | Qt::ItemIsEditable | QAbstractListModel::flags(index);
 }
 
-void fileTypeShotModel::init(const doCore::fileClassPtr &file_class_ptr) {
+void fileTypeShotModel::init(const doCore::shotClassPtr &file_class_ptr) {
   p_class_ptr_ = file_class_ptr;
   auto tmp_fileTypeList = doCore::fileType::getAll(file_class_ptr);
   clear();
@@ -77,7 +77,7 @@ bool fileTypeShotModel::setData(const QModelIndex &index, const QVariant &value,
 bool fileTypeShotModel::insertRows(int position, int rows, const QModelIndex &index) {
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
-    p_type_ptr_list_.insert(position, doCore::fileTypePtr(new doCore::fileType));
+    p_type_ptr_list_.insert(position, doCore::shotTypePtr(new doCore::shotType));
   }
   endInsertRows();
   return true;

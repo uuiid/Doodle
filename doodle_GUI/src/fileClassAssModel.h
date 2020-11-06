@@ -23,7 +23,7 @@ class fileClassAssModel : public QAbstractListModel {
  void clear();
 
  private:
-  doCore::fileClassPtrList p_class_ptr_list_;
+  doCore::shotClassPtrList p_class_ptr_list_;
 };
 
 DOODLE_NAMESPACE_E

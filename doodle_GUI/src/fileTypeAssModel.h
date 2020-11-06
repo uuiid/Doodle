@@ -32,7 +32,7 @@ class fileTypeAssModel : public QAbstractListModel {
 
   doCore::assClassPtr getAssTypePtr() const;
  private:
-  doCore::fileTypePtrList p_file_type_ptr_list_;
+  doCore::shotTypePtrList p_file_type_ptr_list_;
   doCore::assClassPtr p_ass_ptr_;
 };
 DOODLE_NAMESPACE_E

@@ -1,18 +1,19 @@
-create table if not exists configure
+create table if not exists episodes
 (
 	id smallint auto_increment,
-	name varchar(128) null,
-	value varchar(128) null,
+	episodes smallint null,
 	project_id smallint null,
+	constraint episodes
+		unique (episodes),
 	constraint id
 		unique (id),
-	constraint configure_ibfk_1
+	constraint episodes_ibfk_1
 		foreign key (project_id) references project (id)
 );
 
 create index project_id
-	on configure (project_id);
+	on episodes (project_id);
 
-alter table configure
+alter table episodes
 	add primary key (id);
 

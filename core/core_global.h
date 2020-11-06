@@ -42,8 +42,8 @@ typedef QMap<QString, QString> mapStringPtr;
 class shot;
 class episodes;
 
-class fileClass;
-class fileType;
+class shotClass;
+class shotType;
 
 
 class fileSqlInfo;
@@ -58,29 +58,21 @@ class assFileSqlInfo;
 //共享指针引用类
 using shotPtr =std::shared_ptr<shot>;
 using episodesPtr =std::shared_ptr<episodes>  ;
-using fileClassPtr = std::shared_ptr<fileClass>;
-using fileTypePtr = std::shared_ptr<fileType>;
+using shotClassPtr = std::shared_ptr<shotClass>;
+using shotTypePtr = std::shared_ptr<shotType>;
 using shotInfoPtr = std::shared_ptr<shotFileSqlInfo>;
-using znchNamePtr = std::shared_ptr<znchName>;
-
 using assDepPtr = std::shared_ptr<assdepartment>;
+
 using assClassPtr = std::shared_ptr<assClass>;
+using znchNamePtr = std::shared_ptr<znchName>;
 using assTypePtr = std::shared_ptr<assType>;
 using assInfoPtr = std::shared_ptr<assFileSqlInfo>;
-
-//弱指针指针引用类
-using shotPtrW = std::weak_ptr<shot>;
-using episodesPtrW = std::weak_ptr<episodes>;
-using fileClassPtrW = std::weak_ptr<fileClass>;
-using fileTypePtrW = std::weak_ptr<fileType>;
-using assTypePtrW = std::weak_ptr<assClass>;
-
 
 //列表引用类
 using episodesPtrList = std::vector<episodesPtr>;
 using shotPtrList = std::vector<shotPtr>;
-using fileClassPtrList = std::vector<fileClassPtr>;
-using fileTypePtrList = std::vector<fileTypePtr>;
+using shotClassPtrList = std::vector<shotClassPtr>;
+using shotTypePtrList = std::vector<shotTypePtr>;
 using shotInfoPtrList = std::vector<shotInfoPtr>;
 
 using assDepPtrList = std::vector<assDepPtr>;

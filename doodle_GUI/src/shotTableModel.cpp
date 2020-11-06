@@ -4,7 +4,7 @@
 
 #include "shotTableModel.h"
 #include "Logger.h"
-#include "src/filetype.h"
+#include "src/shottype.h"
 #include "src/shotfilesqlinfo.h"
 #include <QJsonArray>
 
@@ -124,7 +124,7 @@ bool shotTableModel::insertRows(int position, int rows, const QModelIndex &paren
   endInsertRows();
   return true;
 }
-void shotTableModel::init(const doCore::fileTypePtr &file_type_ptr) {
+void shotTableModel::init(const doCore::shotTypePtr &file_type_ptr) {
   auto tmp_list = doCore::shotFileSqlInfo::getAll(file_type_ptr);
   clear();
   if(!tmp_list.empty()) {

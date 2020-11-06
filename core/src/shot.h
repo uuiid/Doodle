@@ -14,7 +14,6 @@
 CORE_NAMESPACE_S
 
 class CORE_EXPORT shot : public coresqldata {
- Q_GADGET
  public:
 
   enum class e_shotAB {
@@ -41,32 +40,30 @@ class CORE_EXPORT shot : public coresqldata {
   static shotPtrList getAll(const episodesPtr &EP_);
 
   //设置episodes约束外键
-  void setEpisodes(const episodesPtrW &value);
+  void setEpisodes(const episodesPtr &value);
   //获得episodes 约束实体
   episodesPtr getEpisodes();
 
   //设置shot自身信息
-  void setShot(const qint64 &sh, const e_shotAB &ab = e_shotAB::_);
-  void setShot(const qint64 &sh, const QString &ab);
-  void setShotAb(const QString &ab);
+  void setShot(const int64_t &sh, const e_shotAB &ab = e_shotAB::_);
+  void setShot(const int64_t &sh, const dstring &ab);
+  void setShotAb(const dstring &ab);
   void setShotAb(const e_shotAB &ab) { p_qenm_shotab = ab; };
   //获得全部的shot的str格式化信息
-  QString getShotAndAb_str() const;
+  dstring getShotAndAb_str() const;
   //只有shot的格式化信息
-  QString getShot_str() const;
+  dstring getShot_str() const;
   //只有shot Ab的格式化信息
-  QString getShotAb_str() const;
+  dstring getShotAb_str() const;
   //获得shot的数值
-  qint64 getShot() const { return p_qint_shot_; };
+  int64_t getShot() const { return p_qint_shot_; };
  private:
-  qint64 p_qint_shot_;
+  int64_t p_qint_shot_;
   e_shotAB p_qenm_shotab;
 
-  episodesPtrW p_ptr_eps;
-  qint64 __episodes__;
+  episodesPtr p_ptr_eps;
+  int64_t p_eps_id;
 
 };
 
 CORE_NAMESPACE_E
-
-Q_DECLARE_METATYPE(doCore::shotPtr)

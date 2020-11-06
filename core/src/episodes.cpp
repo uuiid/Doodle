@@ -1,104 +1,82 @@
 ﻿#include "episodes.h"
 
-
+#include "coresql.h"
 #include "coreset.h"
-#include "doException/doException.h"
 
+#include "Logger.h"
+
+#include "coreOrm/episodes_sqlOrm.h"
+#include <sqlpp11/sqlpp11.h>
+#include <sqlpp11/mysql/mysql.h>
+#include <boost/format.hpp>
 
 CORE_NAMESPACE_S
 
-episodes::episodes():p_int_episodes(-1)
-{
+episodes::episodes() : p_int_episodes(-1),
+p_prj(coreSet::getCoreSet().projectName().first){
 }
 
-void episodes::select(const qint64 &ID_)
-{
-//    sql::SelectModel sel_;
-//
-//    sel_.select("id", "episodes");
-//
-//    sel_.from(QString("%1.episodes").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-//    sel_.where(sql::column("id") == ID_);
-//
-//    sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//    if (!query->exec(QString::fromStdString(sel_.str())))
-//        return;
-//    if (query->next())
-//    {
-//        idP = query->value(0).toInt();
-//        p_int_episodes = query->value(1).toInt();
-//        return;
-//    }
-//    idP = -1;
+void episodes::select(const qint64 &ID_) {
+  doodle::Episodes table;
+  auto db = coreSql::getCoreSql().getConnection();
+  for (auto &&row:db->run(
+      sqlpp::select(sqlpp::all_of(table))
+          .where(table.id == ID_)
+  )) {
+    p_int_episodes = row.episodes;
+    idP = row.id;
+  }
 }
 
-void episodes::insert()
-{
-//    sql::InsertModel ins_;
-//    if (idP < 0)
-//    {
-//        sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//        if (p_int_episodes < 0)
-//            throw doodle_InsertErrorInfo(QString("%1").arg(p_int_episodes).toStdString());
-//        ins_.insert("episodes", p_int_episodes);
-//
-//        ins_.into(QString("%1.episodes").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-//
-//        if (!query->exec(QString::fromStdString(ins_.str())))
-//            throw std::runtime_error(query->lastError().text().toStdString());
-//        getInsertID(query);
-//        query->finish();
-//    }
+void episodes::insert() {
+  if(idP >0) return;
+  if(p_prj < 0) return;
+  doodle::Episodes table;
+  auto db = coreSql::getCoreSql().getConnection();
+  idP = db->insert(sqlpp::insert_into(table)
+                       .set(table.episodes = p_int_episodes,
+                            table.projectId = p_prj));
+  if(idP == 0){
+    DOODLE_LOG_WARN << "无法插入集数" << p_int_episodes;
+    throw std::runtime_error("not install eps");
+  }
 }
-void episodes::updateSQL()
-{
-    return;
+void episodes::updateSQL() {
 }
 
-void episodes::deleteSQL()
-{
+void episodes::deleteSQL() {
 }
 
-episodesPtrList episodes::getAll()
-{
-//    sql::SelectModel sel_;
-//
-//    sel_.select("id", "episodes");
-//
-//    sel_.from(QString("%1.episodes").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-//
-//    sel_.order_by("episodes");
-//
-//    sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//    if (!query->exec(QString::fromStdString(sel_.str())))
-//    {
-//        throw std::runtime_error("not exe episode get all ");
-//    }
-//    episodesPtrList list_episode;
-//    while (query->next())
-//    {
-//        episodesPtr tmp_eps(new episodes);
-//        tmp_eps->idP = query->value(0).toInt();
-//        tmp_eps->p_int_episodes = query->value(1).toInt();
-//        list_episode.append(tmp_eps);
-//    }
-//    return list_episode;
+episodesPtrList episodes::getAll() {
+  episodesPtrList list;
+
+  doodle::Episodes table;
+  auto db = coreSql::getCoreSql().getConnection();
+  for (auto &&row:db->run(
+      sqlpp::select(sqlpp::all_of(table))
+          .where(table.id == coreSet::getCoreSet().projectName().first)
+  )) {
+    auto eps = std::make_shared<episodes>();
+    eps->p_int_episodes = row.episodes;
+    eps->idP = row.id;
+    eps->p_prj = row.projectId;
+    list.push_back(eps);
+  }
+  return list;
 }
 
-void episodes::setEpisdes(const qint64 &value)
-{
-    p_int_episodes = value;
+void episodes::setEpisdes(const int64_t &value) {
+  p_int_episodes = value;
 }
 
-int64_t episodes::getEpisdes() const
-{
-    return p_int_episodes;
+int64_t episodes::getEpisdes() const {
+  return p_int_episodes;
 }
 
-dstring episodes::getEpisdes_str() const
-{
-    QString str("ep%1");
-    return str.arg(p_int_episodes, 3, 10, QLatin1Char('0'));
+dstring episodes::getEpisdes_str() const {
+  boost::format str("ep%30");
+  str % p_int_episodes;
+  return str.str();
 }
 
 CORE_NAMESPACE_E

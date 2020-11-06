@@ -3,8 +3,8 @@
 
 #include "src/episodes.h"
 #include "src/shot.h"
-#include "src/fileclass.h"
-#include "src/filetype.h"
+#include "src/shotClass.h"
+#include "src/shottype.h"
 #include "src/assClass.h"
 
 #include "src/assfilesqlinfo.h"
@@ -66,13 +66,13 @@ TEST_F(CoreTest, create_shotinfo)
         sh->setEpisodes(eps.toWeakRef());
         sh->insert();
 
-        doCore::fileClassPtr fc(new doCore::fileClass());
-        fc->setFileclass(doCore::fileClass::e_fileclass::VFX);
+        doCore::shotClassPtr fc(new doCore::shotClass());
+      fc->setclass(doCore::fileClass::e_fileclass::VFX);
 
         fc->setShot(sh.toWeakRef());
         fc->insert();
 
-        doCore::fileTypePtr ft(new doCore::fileType());
+        doCore::shotTypePtr ft(new doCore::shotType());
         ft->setFileType("test");
         ft->setFileClass(fc.toWeakRef());
 
@@ -102,13 +102,13 @@ TEST_F(CoreTest, get_shotinf)
     {
         doCore::episodesPtr ep = eplist[0];
         doCore::shotPtr sh = doCore::shot::getAll(ep)[0];
-        doCore::fileClassPtr fc = doCore::fileClass::getAll(sh)[0];
-        doCore::fileTypePtr ft = doCore::fileType::getAll(fc)[0];
+        doCore::shotClassPtr fc = doCore::fileClass::getAll(sh)[0];
+        doCore::shotTypePtr ft = doCore::fileType::getAll(fc)[0];
         doCore::shotInfoPtr sf = doCore::shotFileSqlInfo::getAll(ft)[0];
 
         std::cout << "episodes: " << ep->getEpisdes_str().toStdString() << std::endl;
         std::cout << "shot:" << sh->getShotAndAb_str().toStdString() << std::endl;
-        std::cout << "fileclass :" << fc->getFileclass_str().toStdString() << std::endl;
+        std::cout << "fileclass :" << fc->getClass_str().toStdString() << std::endl;
         std::cout << "filetype :" << ft->getFileType().toStdString() << std::endl;
         std::cout << "shotinfo generatePath :" << sf->generatePath("test", ".mb").toStdString() << std::endl;
         for (auto &x : sf->getFileList())
@@ -120,7 +120,7 @@ TEST_F(CoreTest, get_shotinf)
 
 TEST_F(CoreTest, create_assInfo)
 {
-    doCore::fileClassPtrList fc_ = doCore::fileClass::getAll();
+    doCore::shotClassPtrList fc_ = doCore::fileClass::getAll();
 
     if (fc_.size() == 4)
     {
@@ -129,7 +129,7 @@ TEST_F(CoreTest, create_assInfo)
       af_->setAssClass(QString::fromUtf8("大小"), true);
         af_->insert();
 
-        doCore::fileTypePtr ft_(new doCore::fileType);
+        doCore::shotTypePtr ft_(new doCore::shotType);
         ft_->setFileType("ffff");
         ft_->setAssType(af_);
         ft_->insert();
@@ -149,11 +149,11 @@ TEST_F(CoreTest, create_assInfo)
 
 TEST_F(CoreTest, get_assInf)
 {
-    doCore::fileClassPtrList list_fileClass;
+    doCore::shotClassPtrList list_fileClass;
     list_fileClass = doCore::fileClass::getAll();
     for (auto &&x : list_fileClass)
     {
-        std::cout << "fileclass :" << x->getFileclass_str().toStdString() << std::endl;
+        std::cout << "fileclass :" << x->getClass_str().toStdString() << std::endl;
     }
 
     doCore::assClassPtr af_ = doCore::assType::getAll(list_fileClass[0])[0];
@@ -162,7 +162,7 @@ TEST_F(CoreTest, get_assInf)
     // QTextCodec *code = QTextCodec::codecForName("GBK");
     // std::cout << "asstype :" <<code->fromUnicode(af_->getAssClass(af_)).toStdString() << std::endl;
 
-    doCore::fileTypePtr ft_ = doCore::fileType::getAll(af_)[0];
+    doCore::shotTypePtr ft_ = doCore::fileType::getAll(af_)[0];
     std::cout << "filetype :" << ft_->getFileType().toStdString() << std::endl;
 
     doCore::assInfoPtr ai_ = doCore::assFileSqlInfo::getAll(ft_)[0];

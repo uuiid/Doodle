@@ -70,7 +70,7 @@ bool assClassModel::removeRows(int position, int rows, const QModelIndex &index)
   endRemoveRows();
   return true;
 }
-void assClassModel::init(const doCore::fileClassPtr &file_class_ptr) {
+void assClassModel::init(const doCore::shotClassPtr &file_class_ptr) {
   if (!file_class_ptr) return;
 
   clear();

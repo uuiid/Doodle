@@ -29,7 +29,7 @@ void assClassWidget::setModel(QAbstractItemModel *model) {
     p_model_ = t_model_;
   QAbstractItemView::setModel(model);
 }
-void assClassWidget::init(const doCore::fileClassPtr &file_class_ptr) {
+void assClassWidget::init(const doCore::shotClassPtr &file_class_ptr) {
   p_class_ptr_ = file_class_ptr;
   p_model_->init(file_class_ptr);
 }

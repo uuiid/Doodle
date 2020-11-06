@@ -10,7 +10,7 @@
 #include "src/mayaArchive.h"
 #include "src/mayaArchiveShotFbx.h"
 #include "src/coreset.h"
-#include "src/filetype.h"
+#include "src/shottype.h"
 #include "src/shotfilesqlinfo.h"
 
 #include "Logger.h"
@@ -43,7 +43,7 @@ shotTableWidget::shotTableWidget(QWidget *parent)
   setSelectionMode(QAbstractItemView::SingleSelection);//单选
   setAcceptDrops(true);
 }
-void shotTableWidget::init(const doCore::fileTypePtr &file_type_ptr) {
+void shotTableWidget::init(const doCore::shotTypePtr &file_type_ptr) {
   p_type_ptr_ = file_type_ptr;
   p_model_->init(file_type_ptr);
   horizontalHeader()->setVisible(true);

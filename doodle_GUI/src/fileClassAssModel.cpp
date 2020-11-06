@@ -1,7 +1,7 @@
 ﻿//
 // Created by teXiao on 2020/10/14.
 //
-#include "src/fileclass.h"
+#include "src/shotClass.h"
 #include "fileClassAssModel.h"
 DOODLE_NAMESPACE_S
 fileClassAssModel::fileClassAssModel(QObject *parent)
@@ -17,7 +17,7 @@ QVariant fileClassAssModel::data(const QModelIndex &index, int role) const {
   if(index.row() >= p_class_ptr_list_.size()) return QVariant();
 
   if(role == Qt::DisplayRole || role == Qt::EditRole){
-    return p_class_ptr_list_[index.row()]->getFileclass_str();
+    return p_class_ptr_list_[index.row()]->getClass_str();
   } else if (role == Qt::UserRole){
     return QVariant::fromValue(p_class_ptr_list_[index.row()]);
   } else{

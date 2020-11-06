@@ -5,23 +5,22 @@
 
 CORE_NAMESPACE_S
 
-class CORE_EXPORT fileType : public coresqldata {
-  Q_GADGET
+class CORE_EXPORT shotType : public coresqldata {
  public:
-  fileType();
+  shotType();
   void select(const qint64 &ID_);
 
   void insert() override;
   void updateSQL() override;
   void deleteSQL() override;
   //根据fileclass外键查询filetype
-  static fileTypePtrList getAll(const fileClassPtr &fc_);
+  static shotTypePtrList getAll(const shotClassPtr &fc_);
   //根据assType 外键查询
-  static fileTypePtrList getAll(const assClassPtr &AT_);
+  static shotTypePtrList getAll(const assClassPtr &AT_);
   //根据eps外键查询
-  static fileTypePtrList getAll(const episodesPtr &EP_);
+  static shotTypePtrList getAll(const episodesPtr &EP_);
   //根据shot外键查询
-  static fileTypePtrList getAll(const shotPtr &SH_);
+  static shotTypePtrList getAll(const shotPtr &SH_);
 
   void setFileType(const QString &value);
   //获得本身的字符串属性
@@ -30,7 +29,7 @@ class CORE_EXPORT fileType : public coresqldata {
   //设置和连接外键 fileclass
   void setFileClass(const fileClassPtrW &fileclass_);
   //获得外键连接的实体对象 fileclass
-  fileClassPtr getFileClass();
+  shotClassPtr getFileClass();
 
   //设置和连接外键 assClass
   void setAssType(const assTypePtrW &assType_);
@@ -46,24 +45,19 @@ class CORE_EXPORT fileType : public coresqldata {
   shotPtr getShot();
 
  private:
-  //生成批量生成fileclass
-  static fileTypePtrList batchQuerySelect(sqlQuertPtr &query);
 
  private:
   //自身属性
-  QString p_Str_Type;
+  dstring p_Str_Type;
   //指针属性
-  fileClassPtr p_fileClass;
+  shotClassPtr p_fileClass;
   assClassPtr p_assType;
   episodesPtr p_episdes;
   shotPtr p_shot;
   //指针id属性
-  qint64 __file_class__;
-  qint64 __ass_class__;
-  qint64 __episodes__;
-  qint64 __shot__;
+  int64_t p_shotClass_id;
+  int64_t p_eps_id;
+  int64_t p_shot_id;
 };
 
 CORE_NAMESPACE_E
-
-Q_DECLARE_METATYPE(doCore::fileTypePtr)
