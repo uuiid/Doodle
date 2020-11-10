@@ -10,25 +10,28 @@
 #include "coreOrm/project_sqlOrm.h"
 #include "coreOrm/synfile_sqlOrm.h"
 
-#include <QJsonDocument>
-#include <QJsonObject>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
 
-#include <QStorageInfo>
+#include <json/json.h>
 
-#include <QRegularExpression>
 #include <stdexcept>
+#include <fstream>
 
+#include <QtCore/QStorageInfo>
 CORE_NAMESPACE_S
 
-const QString coreSet::settingFileName = "doodle_conf.json";
+const dstring coreSet::settingFileName = "doodle_conf.json";
 
-coreSet &coreSet::getCoreSet() {
+coreSet &coreSet::getSet() {
   static coreSet install;
   return install;
 }
 
 void coreSet::init() {
-  doc = QDir::homePath() + "/Documents/doodle";
+  std::string str = std::getenv("HOMEPATH");
+  *doc = "C:" + str + "/Documents/doodle";
   getSetting();
   initdb();
   getServerSetting();
@@ -41,20 +44,51 @@ void coreSet::initdb() {
 }
 
 void coreSet::writeDoodleLocalSet() {
+//  Json::CharReaderBuilder json;
+  Json::Value root;
+  Json::StreamWriterBuilder builder;
+  builder.settings_["emitUTF8"] = true;
+  const auto waiter = std::unique_ptr<Json::StreamWriter>(builder.newStreamWriter());
 
-  QJsonObject jsonobj;
-  jsonobj.insert("user", user);
-  jsonobj.insert("department", department);
-  jsonobj.insert("synPath", synPath.absolutePath());
-  jsonobj.insert("synEp", syneps);
-  jsonobj.insert("projectname", QString::fromStdString(project.second));
-  jsonobj.insert("FreeFileSync", freeFileSyn);
-  QJsonDocument jsonDoc(jsonobj);
-  QFile strFile(doc.absoluteFilePath(settingFileName));
-  if (!strFile.open(QIODevice::WriteOnly))
-    throw std::runtime_error("not open doodle_conf.json");
-  strFile.write(jsonDoc.toJson(QJsonDocument::Compact));
-  strFile.close();
+//  boost::filesystem::ifstream injosn((*doc/settingFileName),std::ifstream::binary);
+//  injosn >> root;
+
+  root["user"] = user;
+  root["department"] = department;
+  root["synPath"] = synPath->generic_string();
+  root["synEp"] = syneps;
+  root["projectname"] = project.second;
+  root["FreeFileSync"] = freeFileSyn;
+
+  boost::filesystem::ofstream outjosn;
+  outjosn.open((*doc / settingFileName), std::ifstream::binary);
+  waiter->write(root, &outjosn);
+  outjosn.close();
+//  boost::property_tree::ptree json;
+//
+//  boost::property_tree::read_json((*doc/settingFileName).string(),json);
+//  json.put("", user);
+//  json.put("department", department);
+//  json.put("synPath", synPath);
+//  json.put("synEp", syneps);
+//  json.put("projectname",project.second);
+//  json.put("FreeFileSync", freeFileSyn);
+//
+//  boost::property_tree::write_json((*doc/settingFileName).string(),json);
+//
+//  QJsonObject jsonobj;
+//  jsonobj.insert("user", user);
+//  jsonobj.insert("department", department);
+//  jsonobj.insert("synPath", synPath.absolutePath());
+//  jsonobj.insert("synEp", syneps);
+//  jsonobj.insert("projectname", QString::fromStdString(project.second));
+//  jsonobj.insert("FreeFileSync", freeFileSyn);
+//  QJsonDocument jsonDoc(jsonobj);
+//  QFile strFile(doc.absoluteFilePath(settingFileName));
+//  if (!strFile.open(QIODevice::WriteOnly))
+//    throw std::runtime_error("not open doodle_conf.json");
+//  strFile.write(jsonDoc.toJson(QJsonDocument::Compact));
+//  strFile.close();
 }
 
 coreSet::coreSet() {
@@ -63,150 +97,136 @@ coreSet::coreSet() {
   department = "VFX";
   syneps = 1;
   freeFileSyn = R"("C:\PROGRA~1\FREEFI~1\FreeFileSync.exe")";
-  project = std::make_pair(3,"dubuxiaoyao3");
-  synPath = QString("D:/ue_prj");
-  synServer = "/03_Workflow/Assets";
+  project = std::make_pair(1, "dubuxiaoyao3");
+  synPath = std::make_shared<dpath>("D:/ue_prj");
+  synServer = std::make_shared<dpath>("/03_Workflow/Assets");
 
-  shotRoot = QString("/03_Workflow/Shots");
-  assRoot = QString("/03_Workflow/Assets");
-  prjectRoot = QString("W:/");
+  shotRoot = std::make_shared<dpath>("/03_Workflow/Shots");
+  assRoot = std::make_shared<dpath>("/03_Workflow/Assets");
+  prjectRoot = std::make_shared<dpath>("W:/");
 
-  cacheRoot = "C:/Doodle_cache";
-  doc = QString("C:/Doodle_cache");
+  cacheRoot = std::make_shared<dpath>("C:/Doodle_cache");
+  doc = std::make_shared<dpath>("C:/Doodle_cache");
 }
 
 void coreSet::getSetting() {
-  if (doc.exists(settingFileName)) {
-    QFile strFile(doc.absoluteFilePath(settingFileName));
-    if (!strFile.open(QIODevice::ReadOnly | QIODevice::Text))
-      throw std::runtime_error("not open doodle_conf.json");
+  if (boost::filesystem::exists(*doc / settingFileName)) {
+    dpath strFile(*doc / settingFileName);
+    boost::filesystem::ifstream inJosn;
+    inJosn.open((*doc / settingFileName), std::ifstream::binary);
 
-    QJsonParseError err;
-    QJsonDocument jsondoc = QJsonDocument::fromJson(strFile.readAll(), &err);
-    QJsonObject jsonObj = jsondoc.object();
-    QJsonValue value;
-    value = jsonObj.value("user");
-    if (value != QJsonValue::Undefined)
-      user = value.toString();
-    value = jsonObj.value("department");
-    if (value != QJsonValue::Undefined)
-      department = value.toString();
-    value = jsonObj.value("syn");
-    if (value != QJsonValue::Undefined)
-      synPath = value.toString();
-    value = jsonObj.value("synEp");
-    if (value != QJsonValue::Undefined)
-      syneps = value.toInt();
-
-    value = jsonObj.value("projectname");
-    if (value != QJsonValue::Undefined)
-      project.second = value.toString().toStdString();
-    value = jsonObj.value("FreeFileSync");
-    if (value != QJsonValue::Undefined)
-      freeFileSyn = value.toString();
-    strFile.close();
-  } else {
-    user = "none";
-    department = "none";
-    synPath = QString("D:/ue_prj");
-    syneps = 1;
-    projectname = "dubuxiaoyao3";
-    freeFileSyn = QString(R"("C:\PROGRA~1\FREEFI~1\FreeFileSync.exe")");
-    writeDoodleLocalSet();
+    Json::Value root;
+    Json::CharReaderBuilder builder;
+    builder.settings_["emitUTF8"] = true;
+    JSONCPP_STRING errs;
+    if (!Json::parseFromStream(builder, inJosn, &root, &errs)) {
+      DOODLE_LOG_WARN << errs.c_str();
+    }
+    inJosn.close();
+    if (root.isMember("user"))
+      user = root["user"].asString();
+    if (root.isMember("department"))
+      department = root["department"].asString();
+    if (root.isMember("synPath"))
+      *synPath = root["synPath"].asString();
+    if (root.isMember("synEp"))
+      project.second = root["projectname"].asString();
+    if (root.isMember("FreeFileSync"))
+      freeFileSyn = root["FreeFileSync"].asString();
+    DOODLE_LOG_INFO << root["projectname"].asString().c_str();
+    DOODLE_LOG_INFO << root["synPath"].asString().c_str();
   }
 }
 
-QString coreSet::toIpPath(const QString &path) {
-  static QRegularExpression exp("^[A-Z]:");
+dstring coreSet::toIpPath(const dstring &path) {
+  static boost::regex exp("^[A-Z]:");
 //  DOODLE_LOG_INFO << exp.match(path);
-  if (exp.match(path).hasMatch()) {
-    return path.right(path.size() - 2);
+
+  if (boost::regex_match(path, exp)) {
+    return path.substr(2);
   }
   return path;
 }
 
-QString coreSet::getDepartment() const {
+dstring coreSet::getDepartment() const {
   return department;
 }
 
-void coreSet::setDepartment(const QString &value) {
+void coreSet::setDepartment(const dstring &value) {
   department = value;
 }
 
-QString coreSet::getUser() const {
+dstring coreSet::getUser() const {
   return user;
 }
 
-QString coreSet::getUser_en() const {
+dstring coreSet::getUser_en() const {
   dopinyin::convert con;
-  return QString::fromStdString(con.toEn(user.toStdString())).toLower();
+
+  return boost::algorithm::to_lower_copy(con.toEn(user));//QString::fromStdString().toLower();
 }
 
-void coreSet::setUser(const QString &value) {
+void coreSet::setUser(const dstring &value) {
   user = value;
 }
 
-QString coreSet::getIpMysql() const {
+dstring coreSet::getIpMysql() const {
   return ipMysql;
 }
 
-void coreSet::setIpMysql(const QString &value) {
+void coreSet::setIpMysql(const dstring &value) {
   ipMysql = value;
 }
 
-QString coreSet::getIpFtp() const {
+dstring coreSet::getIpFtp() const {
   return ipFTP;
 }
 
-void coreSet::setIpFtp(const QString &value) {
+void coreSet::setIpFtp(const dstring &value) {
   ipFTP = value;
 }
 
-QDir coreSet::getDoc() const {
-  return doc;
+dpath coreSet::getDoc() const {
+  return *doc;
 }
 
-QDir coreSet::getCacheRoot() const {
-  return cacheRoot;
+dpath coreSet::getCacheRoot() const {
+  return *cacheRoot;
 }
 
-QDir coreSet::getPrjectRoot() const {
-  return prjectRoot;
+dpath coreSet::getPrjectRoot() const {
+  return *prjectRoot;
 }
 
-void coreSet::setPrjectRoot(const QDir &value) {
-  prjectRoot = value;
+void coreSet::setPrjectRoot(const dpath &value) {
+  *prjectRoot = value;
 }
 
-QDir coreSet::getAssRoot() const {
-  return assRoot;
+dpath coreSet::getAssRoot() const {
+  return *assRoot;
 }
 
-void coreSet::setAssRoot(const QDir &value) {
-  assRoot = value;
+void coreSet::setAssRoot(const dpath &value) {
+  *assRoot = value;
 }
 
-QDir coreSet::getShotRoot() const {
-  return shotRoot;
+dpath coreSet::getShotRoot() const {
+  return *shotRoot;
 }
 
-void coreSet::setShotRoot(const QDir &value) {
-  shotRoot = value;
+void coreSet::setShotRoot(const dpath &value) {
+  shotRoot = std::make_shared<dpath>(value);
 }
 
-QString coreSet::getProjectname() {
-  return QString::fromStdString(project.second);
+dstring coreSet::getProjectname() {
+  return project.second;
 }
 
-void coreSet::setProjectname(const QString &value) {
-  setProjectname(value.toStdString());
-}
-
-QString coreSet::getFreeFileSyn() const {
+dstring coreSet::getFreeFileSyn() const {
   return freeFileSyn;
 }
 
-void coreSet::setFreeFileSyn(const QString &value) {
+void coreSet::setFreeFileSyn(const dstring &value) {
   freeFileSyn = value;
 }
 
@@ -221,76 +241,52 @@ void coreSet::setSyneps(int value) {
 void coreSet::getServerSetting() {
   //获得项目个数
   auto db = coreSql::getCoreSql().getConnection();
-  doodle::Project prjTab;
+  doodle::Project prjTab{};
   for (auto &&raw: db->run(sqlpp::select(sqlpp::all_of(prjTab)).from(prjTab).unconditionally())) {
     prjMap.insert(std::make_pair<int, std::string>((int) raw.id, (std::string) raw.name));
   }
   setProjectname(project.second);
 
-  doodle::Configure tab;
+  doodle::Configure tab{};
   std::map<std::string, std::string> map;
   for (auto &&raw: db->run(sqlpp::select(tab.name, tab.value)
                                .from(tab)
                                .where(tab.projectId == project.first))) {
     map.insert(std::make_pair<std::string, std::string>(raw.name, raw.value));
+    DOODLE_LOG_INFO << raw.name.text << "--->" << raw.value.text;
   }
-  shotRoot = QString::fromStdString(map["shotRoot"]);
-  assRoot = QString::fromStdString(map["assetsRoot"]);
-  synServer = QString::fromStdString(map["synSever"]);
-  prjectRoot = QString::fromStdString(map["project"]);
+
+  *shotRoot = (map["shotRoot"]);
+  *assRoot = (map["assetsRoot"]);
+  *synServer = (map["synSever"]);
+  *prjectRoot = (map["project"]);
 
   if (map.find("IP_FTP") != map.end())
-    ipFTP = QString::fromStdString(map["IP_FTP"]);
+    ipFTP = (map["IP_FTP"]);
   else
     ipFTP = ipMysql;
-
-//  QString sql = "SELECT DISTINCT name,value FROM %1.`configure`";
-//  sql = sql.arg(projectname);
-//  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//  query->exec(sql);
-//  mapStringPtr mapSet;
-//  for (int i = 0; i < 5; i++) {
-//    query->next();
-//    if (!query->value(0).isNull() && !query->value(1).isNull())
-//      mapSet.insert(query->value(0).toString(), query->value(1).toString());
-//  }
-//  shotRoot = mapSet.value("shotRoot");
-//  assRoot = mapSet.value("assetsRoot");
-//  synServer = mapSet.value("synSever");
-//  prjectRoot = mapSet.value("project");
-//  if (!mapSet.value("IP_FTP").isNull())
-//    ipFTP = mapSet["IP_FTP"];
-//  else
-//    ipFTP = ipMysql;
 }
 
 synPathListPtr coreSet::getSynDir() {
   auto db = coreSql::getCoreSql().getConnection();
-  doodle::Synfile table;
-  for (auto &&row:db->run(sqlpp::select(table.path)
-                              .where(table.projectId == project.first))) {
-  DOODLE_LOG_INFO << QString::fromStdString(row.path);
-  }
-
+  doodle::Synfile table{};
+  Json::CharReaderBuilder builder;
+  Json::Value root;
+  JSONCPP_STRING err;
   synPathListPtr list;
-//  QString sql = "SELECT DISTINCT value3, value4 FROM %1.`configure` "
-//                "WHERE name='synpath' AND value='%2' AND value2 ='%3'";
-//  sql = sql.arg(projectname).arg(department).arg(syneps, 3, 10, QLatin1Char('0'));
-//  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//  query->exec(sql);
-//  while (query->next()) {
-//    synPath_struct synpath_;
-//    synpath_.local = QString("%1%2/%3")
-//        .arg(synPath.absolutePath())
-//        .arg(projectname)
-//        .arg(query->value(1).toString());
-//    query->next();
-//    synpath_.server = QString("%2/%3/%4")
-//        .arg(toIpPath(synServer.absolutePath()))
-//        .arg(department)
-//        .arg(query->value(1).toString());
-//    list.append(synpath_);
-//  }
+  const auto reand = std::unique_ptr<Json::CharReader>(builder.newCharReader());
+  for (auto &&row:db->run(sqlpp::select(table.path)
+                              .from(table)
+                              .where(table.episodesId == syneps))) {
+    reand->parse(row.path.text,row.path.text + row.path.len,&root,&err);
+    for (const auto &item : root) {
+      synPath_struct fileSyn{};
+      fileSyn.local = std::make_shared<dpath>(item["Left"].asString());
+      fileSyn.server = std::make_shared<dpath>(item["Right"].asString());
+      list.push_back(fileSyn);
+    }
+    DOODLE_LOG_INFO << QString::fromStdString(row.path);
+  }
   return list;
 }
 
@@ -299,25 +295,25 @@ void coreSet::getCacheDiskPath() {
     if (x.isValid() && x.isReady()) {
       if (!x.isReadOnly()) {
         if (((double) x.bytesAvailable() / (double) x.bytesTotal() > 0.5f) && (!x.isRoot())) {
-          cacheRoot = x.rootPath() + "Doodle_cache";
+          *cacheRoot = x.rootPath().toStdString() + "Doodle_cache";
           break;
         }
       }
     }
   }
 }
-QStringList coreSet::getAllPrjName() const {
-  QStringList list;
+dstringList coreSet::getAllPrjName() const {
+  dstringList list;
   for (auto &&prj :prjMap) {
-    list.push_back(QString::fromStdString(prj.second));
+    list.push_back(prj.second);
   }
   return list;
 }
-const QFileInfo &coreSet::getSynPathLocale() const {
-  return synPath;
+const dpath &coreSet::getSynPathLocale() const {
+  return *synPath;
 }
-void coreSet::setSynPathLocale(const QFileInfo &syn_path) {
-  synPath = syn_path;
+void coreSet::setSynPathLocale(const dpath &syn_path) {
+  synPath = std::make_shared<dpath>(syn_path);
 }
 std::pair<int, std::string> coreSet::projectName() const {
   return project;

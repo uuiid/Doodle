@@ -3,7 +3,7 @@
 #include "core_global.h"
 // #include <QFileInfo>
 // #include <QVector>
-
+#include <boost/filesystem.hpp>
 CORE_NAMESPACE_S
 
 class CORE_EXPORT fileArchive{
@@ -18,11 +18,11 @@ class CORE_EXPORT fileArchive{
 
   [[nodiscard]] state isState() const;
 
-  virtual bool update(const QFileInfo &path);
-  virtual bool update(const stringList &filelist);
+  virtual bool update(const dpath &path);
+  virtual bool update(const dpathList &filelist);
   virtual bool update();
-  virtual stringList down(const QString &path);
-  virtual stringList down();
+  virtual dpathList down(const dstring &path);
+  virtual dpathList down();
 
  protected:
   //复制到和缓存文件夹
@@ -37,19 +37,18 @@ class CORE_EXPORT fileArchive{
   //提交到数据库
   virtual void insertDB() = 0;
   //上传文件
-  virtual void _updata(const stringList &pathList);
+  virtual void _updata(const dpathList &pathList);
   //组合需要的路径  包括来源  缓存和服务器路径
   virtual void _generateFilePath() = 0;
   //下载文件
-  virtual void _down(const stringList &localPath);
+  virtual void _down(const dpathList &localPath);
  protected:
   //复制的数据来源(本地)
-  stringList p_soureFile;
+  dpathList p_soureFile;
   //缓存路径
-  stringList p_cacheFilePath;
+  dpathList p_cacheFilePath;
   //这个是服务器路径(服务器)
-  stringList p_Path;
-
+  dpathList p_Path;
   //状态
   state p_state_;
 };

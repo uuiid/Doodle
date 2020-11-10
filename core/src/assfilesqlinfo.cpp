@@ -13,13 +13,10 @@
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
 
-#include <QVariant>
-#include <QSqlError>
 
 #include <iostream>
 #include <boost/format.hpp>
 #include <boost/filesystem.hpp>
-#include <filesystem>
 CORE_NAMESPACE_S
 
 assFileSqlInfo::assFileSqlInfo() :
@@ -32,11 +29,12 @@ assFileSqlInfo::assFileSqlInfo() :
 }
 
 void assFileSqlInfo::select(qint64 &ID_) {
-  doodle::Basefile tab;
+  doodle::Basefile tab{};
 
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row:db->run(
       sqlpp::select(sqlpp::all_of(tab))
+          .from(tab)
           .where(tab.id == ID_)
   )) {
     batchSetAttr(row);
@@ -45,50 +43,52 @@ void assFileSqlInfo::select(qint64 &ID_) {
 
 void assFileSqlInfo::insert() {
   if (idP > 0) return;
-  doodle::Basefile tab;
+  doodle::Basefile tab{};
 
   auto db = coreSql::getCoreSql().getConnection();
-  auto install = sqlpp::insert_into(tab);
-  install.set(
+  auto install = sqlpp::dynamic_insert_into(*db,tab).dynamic_set(
       tab.file = fileP,
       tab.fileSuffixes = fileSuffixesP,
       tab.user = userP,
       tab.version = versionP,
       tab.FilePath_ = filepathP,
-      tab.filestate = sqlpp::value_or_null(fileStateP)
-  );
+      tab.filestate = sqlpp::value_or_null(fileStateP),
+      tab.projectId = coreSet::getSet().projectName().first
+      );
   if (!infoP.empty())
-    install.set(tab.infor = infoP);
+    install.insert_list.add(tab.infor = strList_tojson(infoP));
   if (ass_class_id > 0)
-    install.set(tab.assClassId = ass_class_id);
+    install.insert_list.add(tab.assClassId = ass_class_id);
   if (ass_type_id > 0)
-    install.set(tab.assTypeId = ass_type_id);
+    install.insert_list.add(tab.assTypeId = ass_type_id);
   idP = db->insert(install);
+  if(idP == 0){
+    DOODLE_LOG_WARN << fileStateP.c_str();
+    throw std::runtime_error("");
+  }
 }
 
 void assFileSqlInfo::updateSQL() {
   if (idP < 0) return;
-  doodle::Basefile tab;
+  doodle::Basefile tab{};
 
   auto db = coreSql::getCoreSql().getConnection();
   auto updata = sqlpp::update(tab);
   updata.set(
-      tab.infor = infoP,
+      tab.infor = strList_tojson(infoP),
       tab.filestate = fileStateP
-  );
+  ).where(tab.id == idP);
   db->update(updata);
 }
 
-void assFileSqlInfo::deleteSQL() {
-}
-
 assInfoPtrList assFileSqlInfo::getAll(const assDepPtr &fc_) {
-  doodle::Basefile tab;
-  assInfoPtrList list;
+  doodle::Basefile tab{};
+  assInfoPtrList list{};
 
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row :db->run(
       sqlpp::select(sqlpp::all_of(tab))
+          .from(tab)
           .where(tab.assTypeId == fc_->getIdP())
   )) {
     auto assInfo = std::make_shared<assFileSqlInfo>();
@@ -100,11 +100,12 @@ assInfoPtrList assFileSqlInfo::getAll(const assDepPtr &fc_) {
 }
 
 assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
-  doodle::Basefile tab;
+  doodle::Basefile tab{};
   assInfoPtrList list;
 
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row :db->run(sqlpp::select(sqlpp::all_of(tab))
+                               .from(tab)
                                .where(tab.assTypeId == AT_->getIdP())
   )) {
     auto assInfo = std::make_shared<assFileSqlInfo>();
@@ -116,11 +117,12 @@ assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
 }
 
 assInfoPtrList assFileSqlInfo::getAll(const assTypePtr &ft_) {
-  doodle::Basefile tab;
-  assInfoPtrList list;
+  doodle::Basefile tab{};
+  assInfoPtrList list{};
 
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row :db->run(sqlpp::select(sqlpp::all_of(tab))
+                               .from(tab)
                                .where(tab.assTypeId == ft_->getIdP())
   )) {
     auto assInfo = std::make_shared<assFileSqlInfo>();
@@ -134,7 +136,7 @@ dpath assFileSqlInfo::generatePath(const std::string &programFolder) {
 //  QString path("%1/%2/%3/%4/%5");
 
   //第一次 格式化添加根目录
-  dpath path = coreSet::getCoreSet().getAssRoot().absolutePath().toStdString();
+  dpath path = coreSet::getSet().getAssRoot();
 
   //第二次添加类型
   auto dep = getAssDep();
@@ -168,7 +170,7 @@ dpath assFileSqlInfo::generatePath(const dstring &programFolder, const dstring &
 
 dstring assFileSqlInfo::generateFileName(const dstring &suffixes) {
 
-  boost::format format("%1%%2%.%3%");
+  boost::format format("%1%%2%%3%");
   auto as_cl = getAssClass();
   if (as_cl)
     format % as_cl->getAssClass();
@@ -183,6 +185,7 @@ dstring assFileSqlInfo::generateFileName(const dstring &suffixes) {
       format % "";
   } else
     format % "";
+  format % suffixes;
 
   return format.str();
 }
@@ -211,47 +214,47 @@ const assClassPtr &assFileSqlInfo::getAssClass() {
   return p_class_ptr_;
 }
 
-void assFileSqlInfo::setAssClass(const assClassPtr &ass_type_) {
-  if (!ass_type_)
+void assFileSqlInfo::setAssClass(const assClassPtr &class_ptr) {
+  if (!class_ptr)
     return;
-  p_type_ptr_ = ass_type_;
-  ass_type_id = ass_type_->getIdP();
+  p_class_ptr_ = class_ptr;
+  ass_class_id = class_ptr->getIdP();
 
-  setAssDep(ass_type_->getAssDep());
+  setAssDep(class_ptr->getAssDep());
 }
 
 const assTypePtr &assFileSqlInfo::getAssType() {
   if (!p_type_ptr_) {
-    p_type_ptr_ = std::make_shared<assClass>();
+    p_type_ptr_ = std::make_shared<assType>();
     p_type_ptr_->select(ass_type_id);
   }
   return p_type_ptr_;
 }
 
-void assFileSqlInfo::setAssType(const assTypePtr &ass_type_) {
-  if (!ass_type_)
+void assFileSqlInfo::setAssType(const assTypePtr &ass_type_ptr) {
+  if (!ass_type_ptr)
     return;
-  p_class_ptr_ = ass_type_;
-  ass_class_id = ass_type_->getIdP();
+  p_type_ptr_ = ass_type_ptr;
+  ass_type_id = ass_type_ptr->getIdP();
 
-  setAssClass(ass_type_->getAssClassPtr());
+  setAssClass(ass_type_ptr->getAssClassPtr());
 }
 template<typename T>
-void assFileSqlInfo::batchSetAttr(const T &t) {
-  idP = t.id;
-  fileP = t.file;
-  fileSuffixesP = t.fileSuffixes;
-  userP = t.user;
-  versionP = t.version;
-  filepathP = t.FilePath_;
-  infoP = t.infor;
-  fileStateP = t.filestate;
+void assFileSqlInfo::batchSetAttr(const T &row) {
+  idP = row.id;
+  fileP = row.file;
+  fileSuffixesP = row.fileSuffixes;
+  userP = row.user;
+  versionP = row.version;
+  filepathP = row.FilePath_;
+  infoP = json_to_strList(row.infor);
+  fileStateP = row.filestate;
 
-  if (t.assClassId._is_valid)
-    ass_class_id = t.assClassId;
+  if (row.assClassId._is_valid)
+    ass_class_id = row.assClassId;
 
-  if (t.assTypeId._is_valid)
-    ass_type_id = t.assTypeId;
+  if (row.assTypeId._is_valid)
+    ass_type_id = row.assTypeId;
 }
 
 CORE_NAMESPACE_E

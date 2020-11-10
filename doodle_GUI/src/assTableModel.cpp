@@ -32,7 +32,7 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
         break;
       case 1:var = ass->getInfoP().last().toString();
         break;
-      case 2:var = ass->getUserP();
+      case 2:var = ass->getUser();
         break;
       case 3:var = ass->getSuffixes();
         break;

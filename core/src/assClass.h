@@ -7,7 +7,6 @@
 CORE_NAMESPACE_S
 
 class CORE_EXPORT assClass : public coresqldata {
- Q_GADGET
  public:
   assClass();
   void select(const qint64 &ID_);
@@ -36,5 +35,3 @@ class CORE_EXPORT assClass : public coresqldata {
 };
 
 CORE_NAMESPACE_E
-
-Q_DECLARE_METATYPE(doCore::assClassPtr)

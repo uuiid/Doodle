@@ -1,113 +1,156 @@
-﻿#include "filesqlinfo.h"
+﻿#include <boost/format.hpp>
+#include <memory>
+#include <iostream>
+#include <sqlpp11/mysql/mysql.h>
+#include <sqlpp11/sqlpp11.h>
+#include "coreOrm/basefile_sqlOrm.h"
+#include "shottype.h"
+#include "shotClass.h"
+#include "shot.h"
+#include "episodes.h"
+#include "coresql.h"
+#include "shotfilesqlinfo.h"
+#include "filesqlinfo.h"
 
 #include "coreset.h"
 
 #include "Logger.h"
 
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QVariant>
+#include <json/json.h>
+#include <boost/filesystem.hpp>
+
 
 CORE_NAMESPACE_S
 
-fileSqlInfo::fileSqlInfo() {
-  fileP = "";
-  fileSuffixesP = "";
-  userP = coreSet::getCoreSet().getUser();
-  versionP = 0;
-  filepathP = "";
-  infoP = "";
-  fileStateP = "";
+fileSqlInfo::fileSqlInfo() :
+    coresqldata(),
+    versionP(0),
+    infoP(),
+    fileSuffixesP(),
+    fileP(),
+    fileStateP(),
+    filepathP(),
+    userP(coreSet::getSet().getUser()){
 }
 
-QfileInfoVector fileSqlInfo::getFileList() const {
-  QfileInfoVector list_;
-  QJsonDocument jsondoc = QJsonDocument::fromJson(filepathP.toUtf8());
-  if (jsondoc.isNull()) {
-    list_.append(QFileInfo(filepathP));
-  } else {
-    for (QJsonValueRef x :jsondoc.array()) {
-      list_.append(QFileInfo(x.toString()));
+dpathList fileSqlInfo::getFileList() const {
+  dpathList list_;
+  Json::Value root;
+//  Json::StreamWriterBuilder builder;
+//  builder.settings_["emitUTF8"] = true;
+//  builder.settings_["commentStyle"] = "None";
+//  builder.settings_["indentation"] = "";
+  Json::CharReaderBuilder char_reader_builder;
+  JSONCPP_STRING err;
+
+  auto jsonReader = std::unique_ptr<Json::CharReader>(char_reader_builder.newCharReader());
+  if (jsonReader->parse(fileStateP.c_str(), fileStateP.c_str() + fileStateP.length(),
+                        &root, &err)) {
+    for (auto &&x:root) {
+      list_.push_back((dpath) x.asString());
     }
+  } else {
+    list_.push_back((dpath) fileStateP);
   }
   return list_;
 }
 
-void fileSqlInfo::setFileList(const QfileInfoVector &filelist) {
-  stringList list ;
-  for(auto && item:filelist){
-    list.push_back(item.filePath());
+void fileSqlInfo::setFileList(const dpathList &filelist) {
+  dstringList list;
+  for (auto &&item:filelist) {
+    list.push_back(item.generic_string());
   }
   setFileList(list);
 }
 
-void fileSqlInfo::setFileList(const stringList &filelist) {
-  if(filelist.empty()) {
+void fileSqlInfo::setFileList(const dstringList &filelist) {
+  if (filelist.empty()) {
     DOODLE_LOG_WARN << "传入空列表";
     return;
   }
-  QJsonArray jsonList;
-  for (auto &&item: filelist) {
-    jsonList.append(item);
+  Json::StreamWriterBuilder builder;
+  builder.settings_["emitUTF8"] = true;
+  builder.settings_["commentStyle"] = "None";
+  builder.settings_["indentation"] = "";
+
+  Json::Value root;
+
+  for (auto &&x:filelist) {
+    root.append(x);
   }
-  QJsonDocument jsondoc(jsonList);
-  filepathP = QString(jsondoc.toJson(QJsonDocument::Compact));
-  fileP = QFileInfo(filelist[0]).fileName();
-  fileSuffixesP = QFileInfo(filelist[0]).suffix();
-
-
+  auto water = std::unique_ptr<Json::StreamWriter>(builder.newStreamWriter());
+  filepathP = Json::writeString(builder, root);
+  fileP = boost::filesystem::basename(filelist[0]);
+  fileSuffixesP = boost::filesystem::extension(filelist[0]);
 }
 
 int fileSqlInfo::getVersionP() const {
   return versionP;
 }
 
-void fileSqlInfo::setVersionP(const int &value) {
+void fileSqlInfo::setVersionP(const int64_t &value) {
   versionP = value;
 }
 
-QJsonArray fileSqlInfo::getInfoP() const {
-  QJsonDocument json_document = convertJson();
-  if (json_document.isArray())
-    return json_document.array();
-  else
-    return QJsonArray();
+dstringList fileSqlInfo::getInfoP() const {
+  return infoP;
 }
 
-void fileSqlInfo::setInfoP(const QString &value) {
-  auto json_document = convertJson();
-  if(json_document.isArray()){
-    auto arr = json_document.array();
-    arr.push_back(value);
-    json_document.setArray(arr);
-  }
-  infoP = json_document.toJson(QJsonDocument::Compact);
+void fileSqlInfo::setInfoP(const dstring &value) {
+  infoP.push_back(value);
 }
 
-QString fileSqlInfo::getFileStateP() const {
+dstring fileSqlInfo::getFileStateP() const {
   return fileStateP;
 }
 
-void fileSqlInfo::setFileStateP(const QString &value) {
+void fileSqlInfo::setFileStateP(const dstring &value) {
   fileStateP = value;
 }
-QString fileSqlInfo::getUserP() const {
+dstring fileSqlInfo::getUser() const {
   return userP;
 }
-QJsonDocument fileSqlInfo::convertJson() const {
-  QJsonDocument json_document = QJsonDocument::fromJson(infoP);
-  if (!json_document.isNull()) {
-    return json_document;
-  } else{
-    auto json_array = QJsonArray();
-    json_array.push_back(QJsonValue(QString(infoP)));
-    json_document.setArray(json_array);
-    return json_document;
+dstringList fileSqlInfo::json_to_strList(const dstring &json_str) const {
+  dstringList list_;
+  Json::Value root;
+  Json::CharReaderBuilder char_reader_builder;
+  JSONCPP_STRING err;
+
+  auto jsonReader = std::unique_ptr<Json::CharReader>(char_reader_builder.newCharReader());
+  if (jsonReader->parse(json_str.c_str(), json_str.c_str() + json_str.length(),
+                        &root, &err)) {
+    for (auto &&x:root) {
+      list_.push_back(x.asString());
+    }
+  } else {
+    list_.push_back(json_str);
   }
+  return list_;
+
 }
-QString fileSqlInfo::getSuffixes() const {
+dstring fileSqlInfo::strList_tojson(const dstringList &str_list) const {
+  Json::StreamWriterBuilder builder;
+  builder.settings_["emitUTF8"] = true;
+  builder.settings_["commentStyle"] = "None";
+  builder.settings_["indentation"] = "";
+
+  Json::Value root;
+
+  for (auto &&x:str_list) {
+    root.append(x);
+  }
+  auto water = std::unique_ptr<Json::StreamWriter>(builder.newStreamWriter());
+  return Json::writeString(builder, root);
+}
+dstring fileSqlInfo::getSuffixes() const {
   return fileSuffixesP;
+}
+void fileSqlInfo::deleteSQL() {
+  doodle::Basefile tab{};
+
+  auto db = coreSql::getCoreSql().getConnection();
+  db->remove(sqlpp::remove_from(tab)
+                 .where(tab.id == idP));
 }
 
 CORE_NAMESPACE_E

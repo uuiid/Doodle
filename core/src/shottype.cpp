@@ -29,12 +29,13 @@ shotType::shotType()
 }
 
 void shotType::select(const qint64 &ID_) {
-  doodle::Shottype table;
+  doodle::Shottype table{};
 
   auto db = coreSql::getCoreSql().getConnection();
 
   for (auto &&row:db->run(
       sqlpp::select(sqlpp::all_of(table))
+          .from(table)
           .where(table.id == ID_)
   )) {
     batchSetAttr(row);
@@ -43,13 +44,17 @@ void shotType::select(const qint64 &ID_) {
 
 void shotType::insert() {
   if (isInsert()) return;
-  doodle::Shottype table;
+  doodle::Shottype table{};
 
   auto db = coreSql::getCoreSql().getConnection();
-  idP = db->insert(sqlpp::insert_into(table)
-                       .set(table.shotClassId = p_shotClass_id,
-                            table.shotType = p_Str_Type));
-  if(idP == 0) {
+  auto insert = sqlpp::insert_into(table)
+      .columns(table.shotType,
+               table.shotClassId);
+  insert.values.add(table.shotType = p_Str_Type,
+                    table.shotClassId = p_shotClass_id);
+
+  idP = db->insert(insert);
+  if (idP == 0) {
     DOODLE_LOG_WARN << "无法插入shot type " << p_Str_Type.c_str();
     throw std::runtime_error("not install shot type");
   }
@@ -57,18 +62,23 @@ void shotType::insert() {
 
 void shotType::updateSQL() {
   if (isNULL()) return;
-  doodle::Shottype table;
+  doodle::Shottype table{};
 
   auto db = coreSql::getCoreSql().getConnection();
 
   db->update(
       sqlpp::update(table)
-      .set(table.shotType = p_Str_Type)
-      .where(table.id = idP)
-      );
+          .set(table.shotType = p_Str_Type)
+          .where(table.id == idP)
+  );
 }
 
 void shotType::deleteSQL() {
+  doodle::Shottype table{};
+
+  auto db = coreSql::getCoreSql().getConnection();
+  db->remove(sqlpp::remove_from(table)
+  .where(table.id == idP));
 }
 
 template<typename T>
@@ -79,12 +89,13 @@ void shotType::batchSetAttr(T &row) {
 }
 
 shotTypePtrList shotType::getAll(const shotClassPtr &fc_) {
-  doodle::Shottype table;
+  doodle::Shottype table{};
 
   auto db = coreSql::getCoreSql().getConnection();
   shotTypePtrList list;
   for (auto &&row:db->run(
       sqlpp::select(sqlpp::all_of(table))
+          .from(table)
           .where(table.shotClassId == fc_->getIdP())
   )) {
     auto item = std::make_shared<shotType>();

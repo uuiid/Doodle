@@ -36,7 +36,7 @@ add_subdirectory(ftp)
 add_subdirectory(fileSyn)
 add_subdirectory(pinyin)
 add_subdirectory(core)
-add_subdirectory(doodle_GUI)
+#add_subdirectory(doodle_GUI)
 # set(TS_FILES test_cmake_zh_CN.ts)
 
 # if(ANDROID)
@@ -90,8 +90,8 @@ find_program(WINQT windeployqt REQUIRED)
 #第一种搜索方式
 include(InstallRequiredSystemLibraries)
 #第二中验证加搜索方式
-set(APPS ${CMAKE_INSTALL_PREFIX}/bin/doodle.exe)  # paths to executables
-
+set(DOODLEAPPS ${CMAKE_INSTALL_PREFIX}/bin/doodle.exe)  # paths to executables
+set(TESTAPPS ${CMAKE_INSTALL_PREFIX}/bin/test_my.exe)
 get_filename_component(fixdir ${WINQT} DIRECTORY)
 
 list(APPEND DIRS ${fixdir})
@@ -99,7 +99,8 @@ list(APPEND DIRS ${CMAKE_INSTALL_PREFIX}/lib)
 foreach(_var in LISTS ${CMAKE_FIND_ROOT_PATH})
      list(APPEND DIRS ${_var}/bin)
 endforeach(_var)
-
+list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/")
+list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/Remote Debugger/x64/")
 
 #set(DIRS ${CMAKE_FIND_ROOT_PATH}/bin
 #        ${fixdir}
@@ -111,7 +112,11 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/tools/
 #最后实现camke修复
 install(CODE "
      include(BundleUtilities)
-     fixup_bundle(\"${APPS}\"   \"\"   \"${DIRS}\")
+     fixup_bundle(\"${DOODLEAPPS}\"   \"\"   \"${DIRS}\")
      ")
-
+install(CODE "
+     include(BundleUtilities)
+     fixup_bundle(\"${TESTAPPS}\"   \"\"   \"${DIRS}\")
+     ")
 # include(CPack)
+# ${projectDir}\out\install\${name}

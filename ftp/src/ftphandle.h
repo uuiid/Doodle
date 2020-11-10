@@ -7,18 +7,18 @@
 
 FTPSPACE_S
 
-class FTP_EXPORT ftphandle : public QObject {
- Q_OBJECT
+class FTP_EXPORT ftphandle{
+
  public:
-  ~ftphandle() override;
+  ~ftphandle();
   ftphandle(const ftphandle &) = delete;
   ftphandle &operator=(const ftphandle &s) = delete;
 
   static ftphandle &getFTP();
-  ftpSessionPtr session(const QString &host,
+  ftpSessionPtr session(const std::string &host,
                         int prot,
-                        const QString &name,
-                        const QString &password);
+                        const std::string &name,
+                        const std::string &password);
  private:
   ftphandle();
 

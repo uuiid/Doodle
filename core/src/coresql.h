@@ -9,7 +9,6 @@ CORE_NAMESPACE_S
 * 全局静态类
 */
 class CORE_EXPORT coreSql{
-
  public:
   static coreSql &getCoreSql();
   coreSql &operator=(const coreSql &s) = delete;
@@ -20,8 +19,8 @@ class CORE_EXPORT coreSql{
   void closeDataBase();
   static bool commitDataBase();
 
-  void initDB(const QString &ip, const QString &dataName);
-  void initDB(const QString &ip_);
+  void initDB(const dstring &ip_str, const dstring &dataName);
+  void initDB(const dstring &ip_);
   mysqlConnPtr getConnection();
  private:
   void initDB();

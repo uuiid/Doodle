@@ -2,7 +2,7 @@
 #include "shotfilesqlinfo.h"
 
 #include "Logger.h"
-
+#include <boost/filesystem.hpp>
 CORE_NAMESPACE_S
 mayaArchive::mayaArchive(shotInfoPtr &shot_data)
     : p_info_ptr_(shot_data) {}
@@ -16,10 +16,11 @@ void mayaArchive::_generateFilePath() {
 
   if (!p_soureFile.empty())
     p_Path.push_back( p_info_ptr_->generatePath("Scenefiles",
-                                                QFileInfo(p_soureFile[0]).suffix()));
-  else if (!p_info_ptr_->getFileList().isEmpty()) {
+                                                boost::filesystem::extension(p_soureFile[0]))
+                                                .generic_string());
+  else if (!p_info_ptr_->getFileList().empty()) {
     for(auto &&item :p_info_ptr_->getFileList()){
-      p_Path.push_back(item.filePath());
+      p_Path.push_back(item.generic_string());
     }
   }
 }

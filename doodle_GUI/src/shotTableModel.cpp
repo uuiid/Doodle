@@ -29,7 +29,7 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
         break;
       case 1:var = shot->getInfoP().last().toVariant();
         break;
-      case 2:var = shot->getUserP();
+      case 2:var = shot->getUser();
         break;
       case 3:
         var = shot->getSuffixes();
@@ -45,7 +45,7 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
         break;
       case 1:var = shot->getInfoP().last().toVariant();
         break;
-      case 2:var = shot->getUserP();
+      case 2:var = shot->getUser();
         break;
       case 3:
         var = shot->getSuffixes();

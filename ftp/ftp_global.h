@@ -1,8 +1,8 @@
 ﻿#pragma once
 
 #include <QtCore/qglobal.h>
-#include <QSharedPointer>
-
+#include <memory>
+#include <string>
 #if defined (FTP_LIBRARY)
 #   define FTP_EXPORT Q_DECL_EXPORT
 #else
@@ -16,6 +16,6 @@ FTPSPACE_S
 
 class ftphandle;
 class ftpSession;
-typedef QSharedPointer<ftpSession> ftpSessionPtr;
-
+typedef std::shared_ptr<ftpSession> ftpSessionPtr;
+using dstring = std::string;
 FTPSPACE_E

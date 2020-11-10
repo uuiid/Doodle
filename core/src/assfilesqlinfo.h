@@ -13,7 +13,6 @@ class CORE_EXPORT assFileSqlInfo : public fileSqlInfo {
 
   void insert() override;
   void updateSQL() override;
-  void deleteSQL() override;
 
   static assInfoPtrList getAll(const assDepPtr &fc_);
   static assInfoPtrList getAll(const assClassPtr &AT_);
@@ -29,14 +28,14 @@ class CORE_EXPORT assFileSqlInfo : public fileSqlInfo {
   void setAssDep(const assDepPtr &ass_dep_);
 
   const assClassPtr & getAssClass();
-  void setAssClass(const assClassPtr &ass_type_);
+  void setAssClass(const assClassPtr &class_ptr);
 
   const assTypePtr & getAssType();
-  void setAssType(const assTypePtr &ass_type_);
+  void setAssType(const assTypePtr &ass_type_ptr);
 
  private:
   template<typename T>
-  void batchSetAttr(const T& t);
+  void batchSetAttr(const T& row);
 
  private:
   int64_t ass_class_id;
@@ -49,5 +48,3 @@ class CORE_EXPORT assFileSqlInfo : public fileSqlInfo {
 };
 
 CORE_NAMESPACE_E
-
-Q_DECLARE_METATYPE(doCore::assInfoPtr)

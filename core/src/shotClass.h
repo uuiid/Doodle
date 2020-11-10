@@ -55,5 +55,3 @@ class CORE_EXPORT shotClass : public coresqldata {
 };
 
 CORE_NAMESPACE_E
-
-//Q_DECLARE_METATYPE(doCore::shotClassPtr)

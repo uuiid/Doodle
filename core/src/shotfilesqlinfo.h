@@ -12,14 +12,13 @@ class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo {
 
   void insert() override;
   void updateSQL() override;
-  void deleteSQL() override;
 
   static shotInfoPtrList getAll(const episodesPtr &EP_);
   static shotInfoPtrList getAll(const shotPtr &sh_);
-  static shotInfoPtrList getAll(const shotClassPtr &fc_);
-  static shotInfoPtrList getAll(const shotTypePtr &ft_);
+  static shotInfoPtrList getAll(const shotClassPtr &class_ptr);
+  static shotInfoPtrList getAll(const shotTypePtr &type_ptr);
 
-  dpath generatePath(const std::string &programFolder) override;
+  dpath generatePath(const dstring &programFolder) override;
   dpath generatePath(const dstring &programFolder, const dstring &suffixes) override;
   dpath generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) override;
   dstring generateFileName(const dstring &suffixes) override;
@@ -42,7 +41,7 @@ class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo {
  private:
   //循环获得查询结果
   template<typename T>
-  void batchQuerySelect(T &row);
+  void batchSetAttr(T &row);
 
  private:
   qint64 p_eps_id;
@@ -58,4 +57,3 @@ class CORE_EXPORT shotFileSqlInfo : public fileSqlInfo {
 
 CORE_NAMESPACE_E
 
-Q_DECLARE_METATYPE(doCore::shotInfoPtr)

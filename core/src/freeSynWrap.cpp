@@ -9,6 +9,8 @@
 
 #include <QStringList>
 #include <QTextStream>
+#include <QDir>
+
 
 CORE_NAMESPACE_S
 freeSynWrap::freeSynWrap() {
@@ -29,12 +31,12 @@ void freeSynWrap::addSynFile(const synPathListPtr &path_list_ptr) {
     pair_parent.appendChild(
         p_doc_.createElement("Left")
     ).appendChild(
-        p_doc_.createTextNode(x.local)
+        p_doc_.createTextNode(QString::fromStdString(x.local))
     );
     pair_parent.appendChild(
         p_doc_.createElement("Right")
     ).appendChild(
-        p_doc_.createTextNode(x.server)
+        p_doc_.createTextNode(QString::fromStdString(x.server))
     );
   }
 }

@@ -13,7 +13,7 @@ class Environment : public ::testing::Environment {
 
   void SetUp() override;
   void TearDown() override;
-  doCore::coreSet &set = doCore::coreSet::getCoreSet();
+  doCore::coreSet &set = doCore::coreSet::getSet();
 };
 
 void Environment::SetUp() {

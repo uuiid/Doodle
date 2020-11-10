@@ -18,8 +18,8 @@ coreSql::coreSql()
 
 }
 
-void coreSql::initDB(const QString &ip_, const QString &dataName_) {
-  initDB(ip_);
+void coreSql::initDB(const dstring &ip_str, const dstring &dataName) {
+  initDB(ip_str);
 }
 
 coreSql::~coreSql() {
@@ -75,8 +75,9 @@ QString coreSql::getThreadId() {
 mysqlConnPtr coreSql::getConnection() {
   return std::make_unique<sqlpp::mysql::connection>(config);
 }
-void coreSql::initDB(const QString &ip_) {
-  ip = ip_.toStdString();
+void coreSql::initDB(const dstring &ip_) {
+  ip = ip_;
+  initDB();
 }
 
 CORE_NAMESPACE_E

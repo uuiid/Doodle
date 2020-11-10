@@ -1,12 +1,12 @@
 ﻿find_package(Qt5 CONFIG COMPONENTS Core Sql Xml REQUIRED)
 find_package(Sqlpp11 REQUIRED)
-
+find_package(jsoncpp CONFIG REQUIRED)
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 
 find_package(SqlppMySql REQUIRED)
 
 find_package(FFMPEG  REQUIRED )
-find_package(Boost COMPONENTS filesystem REQUIRED)
+find_package(Boost COMPONENTS filesystem regex REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 #由于这个库只有一个文件,  所以直接复制过的了事
 #file(COPY ${PROJECT_SOURCE_DIR}/sql-builder/sql.h
@@ -32,7 +32,6 @@ set(ORM_HEADER
 #这个是和MySQL交互的头文件
 set(CORE_SQL_HEADER
         core_global.h
-        src/sql_builder/sql.h
         src/filesqlinfo.h
         src/coresql.h
         src/coreset.h
@@ -106,6 +105,7 @@ target_link_libraries(core PUBLIC Qt5::Xml)
 target_link_libraries(core PUBLIC SqlppMySql)
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
 target_link_libraries(core PUBLIC ${Boost_LIBRARIES})
+target_link_libraries(core PUBLIC jsoncpp_lib jsoncpp_object)
 target_link_libraries(core PUBLIC pinyin)
 target_link_libraries(core PUBLIC ftp)
 target_link_libraries(core PUBLIC logger)
@@ -127,14 +127,14 @@ install(FILES $<TARGET_PDB_FILE:core>
         CONFIGURATIONS Debug)
 
 #复制mysql
-file(TO_CMAKE_PATH "$ENV{ProgramFiles}/MySQL/MySQL Server 8.0/lib/" DOODLE_MYSQL)
-install(DIRECTORY "${DOODLE_MYSQL}/"
-        TYPE BIN
-        PATTERN "*.dll")
+#file(TO_CMAKE_PATH "$ENV{ProgramFiles}/MySQL/MySQL Server 8.0/lib/" DOODLE_MYSQL)
+#install(DIRECTORY "${DOODLE_MYSQL}/"
+#        TYPE BIN
+#        PATTERN "*.dll")
 #运行qt
 install(CODE "
 execute_process(
-COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin $<TARGET_FILE:core>
+COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin ${CMAKE_INSTALL_PREFIX}/bin/core.dll
 )
 ")
 

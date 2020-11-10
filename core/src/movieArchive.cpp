@@ -5,7 +5,7 @@
 #include "Logger.h"
 
 #include <QtCore/QDir>
-
+#include <boost/filesystem.hpp>
 #include "shotfilesqlinfo.h"
 CORE_NAMESPACE_S
 movieArchive::movieArchive(doCore::shotInfoPtr &shot_info_ptr)
@@ -20,33 +20,38 @@ void movieArchive::insertDB() {
 }
 void movieArchive::_generateFilePath() {
   if (!p_soureFile.empty())
-    p_Path.push_back(p_info_ptr_->generatePath("movie", "mp4"));
+    p_Path.push_back(p_info_ptr_->generatePath("movie", ".mp4").generic_string());
   else if (!p_info_ptr_->getFileList().empty())
-    p_Path.push_back(p_info_ptr_->getFileList()[0].filePath());
+    p_Path.push_back(p_info_ptr_->getFileList()[0].generic_string());
 }
-bool movieArchive::makeMovie(const QString &imageFolder) {
-
-  auto dir = QDir(imageFolder);
-  auto image_list = dir.entryInfoList({"*.png", "*.jpg", "*.tga", "*.exr"}, QDir::Files, QDir::Name);
-
-  auto ffmpeg = std::make_unique<ffmpegWrap>(findFFmpeg().toStdString() + "/ffmpeg.exe");
-  std::vector<QString> list;
-  for (auto &&item :image_list.toStdList()) list.push_back(item.absoluteFilePath());
-
-  return ffmpeg->imageToVideo(list, p_cacheFilePath.front(), QFileInfo(p_cacheFilePath.front()).baseName());
+bool movieArchive::makeMovie(const dpath &imageFolder) {
+  auto ffmpeg = std::make_unique<ffmpegWrap>(findFFmpeg() + "/ffmpeg.exe");
+  auto path = dpath(imageFolder);
+  dpathList list;
+  for (auto &&item:boost::filesystem::directory_iterator(path)) {
+    if (item.path().extension() == ".png"
+        || item.path().extension() == ".jpg"
+        || item.path().extension() == ".tga"
+        || item.path().extension() == ".exr") {
+      list.push_back(item.path().string());
+    }
+  }
+  return ffmpeg->imageToVideo(list,
+                              p_cacheFilePath.front(),
+                              boost::filesystem::basename(p_cacheFilePath.front()));
 }
 
-bool movieArchive::convertMovie(const QString &moviePath) {
-  auto ffmpeg = std::make_unique<ffmpegWrap>(findFFmpeg().toStdString() + "/ffmpeg.exe");
+bool movieArchive::convertMovie(const dpath &moviePath) {
+  auto ffmpeg = std::make_unique<ffmpegWrap>(findFFmpeg() + "/ffmpeg.exe");
   return ffmpeg->convertToVideo(
-      moviePath.toStdString(),
-      p_cacheFilePath.front().toStdString(),
-      QFileInfo(p_cacheFilePath.front()).baseName().toStdString()
-      );
+      moviePath,
+      p_cacheFilePath.front(),
+      boost::filesystem::basename(p_cacheFilePath.front())
+  );
 }
-bool movieArchive::update(const stringList &filelist) {
+bool movieArchive::update(const dpathList &filelist) {
   p_soureFile = filelist;
-  DOODLE_LOG_INFO << filelist;
+  DOODLE_LOG_INFO << filelist.front().c_str();
 
   const shotTypePtr &kType = p_info_ptr_->findFileType("movie");
   auto version = shotFileSqlInfo::getAll(kType).size();
@@ -56,14 +61,13 @@ bool movieArchive::update(const stringList &filelist) {
   _generateFilePath();
   generateCachePath();
 
-
   bool isok = false;
   if (filelist.size() == 1) {
-    if (QFileInfo(filelist.front()).isDir())
+    if (boost::filesystem::is_directory(filelist.front()))//QFileInfo().isDir()
       isok = makeMovie(filelist.front());
-    else if (QFileInfo(filelist.front()).isFile())
+    else if (boost::filesystem::is_regular_file(filelist.front()))//QFileInfo().isFile()
       isok = convertMovie(filelist.front());
-  }else{
+  } else {
     return false;
   }
 
@@ -76,12 +80,12 @@ bool movieArchive::update(const stringList &filelist) {
 
   return isok;
 }
-QString movieArchive::findFFmpeg() const {
+dstring movieArchive::findFFmpeg() {
   auto ffmpeg_exe = QDir::current();
   ffmpeg_exe.cdUp();
   ffmpeg_exe.cd(DOODLE_FFMPEG_PATH);
   DOODLE_LOG_INFO << "找到ffmpeg" << ffmpeg_exe.absolutePath() << "\n" << ffmpeg_exe;
-  return ffmpeg_exe.path();
+  return ffmpeg_exe.path().toStdString();
 }
 
 CORE_NAMESPACE_E

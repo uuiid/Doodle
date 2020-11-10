@@ -27,9 +27,5 @@ class CORE_EXPORT assdepartment : public coresqldata{
 
 };
 
-
-
-
-
 CORE_NAMESPACE_E
 

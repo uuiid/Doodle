@@ -24,10 +24,11 @@ shot::shot()
 }
 
 void shot::select(const qint64 &ID_) {
-  doodle::Shots table;
+  doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row: db->run(
       sqlpp::select(sqlpp::all_of(table))
+          .from(table)
           .where(table.id == ID_)
   )) {
     idP = row.id;
@@ -38,18 +39,19 @@ void shot::select(const qint64 &ID_) {
 }
 
 void shot::insert() {
-  if(idP > 0) return;
+  if (idP > 0) return;
 
-  doodle::Shots table;
+  doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
-  auto install = sqlpp::insert_into(table);
-  install.set(
-      table.episodesId = p_eps_id,
-      table.shot = p_qint_shot_,
-      table.shotab = sqlpp::value_or_null<dstring>(getShotAb_str())
-  );
+  auto install = sqlpp::insert_into(table).columns(table.episodesId,
+                                        table.shot,
+                                        table.shotab);
+
+  install.values.add(table.episodesId = p_eps_id,
+                  table.shot = p_qint_shot_,
+                  table.shotab = sqlpp::value_or_null<dstring>(getShotAb_str()));
   idP = db->insert(install);
-  if(idP == 0){
+  if (idP == 0) {
     DOODLE_LOG_WARN << "无法插入镜头" << p_qint_shot_;
     throw std::runtime_error("not install shots");
   }
@@ -61,15 +63,21 @@ void shot::updateSQL() {
 }
 
 void shot::deleteSQL() {
+  doodle::Shots table{};
+  auto db = coreSql::getCoreSql().getConnection();
+  db->remove(sqlpp::remove_from(table)
+  .where(table.id == idP));
 }
 
 shotPtrList shot::getAll(const episodesPtr &EP_) {
-  shotPtrList list;
-  doodle::Shots table;
+  shotPtrList list{};
+  doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row: db->run(
       sqlpp::select(sqlpp::all_of(table))
+          .from(table)
           .where(table.episodesId == EP_->getIdP())
+          .order_by(table.shot.asc(),table.shotab.asc())
   )) {
     auto item = std::make_shared<shot>();
     item->idP = row.id;
@@ -126,7 +134,7 @@ dstring shot::getShotAndAb_str() const {
 }
 
 dstring shot::getShot_str() const {
-  boost::format str("sc%40");
+  boost::format str("sc%04i");
   str % p_qint_shot_;
   return str.str();
 }

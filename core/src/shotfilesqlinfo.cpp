@@ -7,10 +7,17 @@
 #include "shotClass.h"
 #include "shottype.h"
 
+#include "coreOrm/basefile_sqlOrm.h"
+#include <sqlpp11/sqlpp11.h>
+#include <sqlpp11/mysql/mysql.h>
+
 #include "Logger.h"
+#include "filesqlinfo.h"
 
 #include <iostream>
-
+#include <boost/filesystem.hpp>
+#include <memory>
+#include <boost/format.hpp>
 CORE_NAMESPACE_S
 
 shotFileSqlInfo::shotFileSqlInfo()
@@ -27,320 +34,232 @@ shotFileSqlInfo::shotFileSqlInfo()
 }
 
 void shotFileSqlInfo::select(const qint64 &ID_) {
-//  sql::SelectModel sel_;
-//  sel_.select("id", "file", "fileSuffixes", "user", "version",
-//              "_file_path_", "infor", "filestate",
-//              "p_eps_id", "p_shot_id", "p_assDep_id", "ass_type_id");
-//
-//  sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-//  sel_.where(sql::column("id") == ID_);
-//
-//  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//  if (!query->exec(QString::fromStdString(sel_.str())))
-//    throw std::runtime_error(query->lastError().text().toStdString());
-//  if (query->next()) {
-//    idP = query->value(0).toInt();
-//    fileP = query->value(1).toString();
-//    fileSuffixesP = query->value(2).toString();
-//    userP = query->value(3).toString();
-//    versionP = query->value(4).toInt();
-//    filepathP = query->value(5).toString();
-//    infoP = query->value(6).toByteArray();
-//    fileStateP = query->value(7).toString();
-//
-//    if (!query->value(8).isNull())
-//      p_eps_id = query->value(8).toInt();
-//
-//    if (!query->value(9).isNull())
-//      p_shot_id = query->value(9).toInt();
-//
-//    if (!query->value(10).isNull())
-//      p_shCla_id = query->value(10).toInt();
-//
-//    if (!query->value(11).isNull())
-//      p_shTy_id = query->value(11).toInt();
-//  }
+
+  doodle::Basefile tab{};
+
+  auto db = coreSql::getCoreSql().getConnection();
+  for (auto &&row:db->run(
+      sqlpp::select(sqlpp::all_of(tab))
+          .from(tab)
+          .where(tab.id == ID_)
+  )) {
+    batchSetAttr(row);
+  }
 }
 
 void shotFileSqlInfo::insert() {
-//  sql::InsertModel ins_;
-//  if (idP < 0) {
-//    sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//    ins_.insert("file", fileP.toStdString());
-//    ins_.insert("fileSuffixes", fileSuffixesP.toStdString());
-//    ins_.insert("user", userP.toStdString());
-//    ins_.insert("version", versionP);
-//    ins_.insert("_file_path_", filepathP.toStdString());
-//
-//    if (!infoP.isEmpty())
-//      ins_.insert("infor", infoP.toStdString());
-//
-//    if (!fileStateP.isEmpty())
-//      ins_.insert("filestate", fileStateP.toStdString());
-//
-//    if (p_eps_id > 0)
-//      ins_.insert("p_eps_id", p_eps_id);
-//    if (p_shot_id > 0)
-//      ins_.insert("p_shot_id", p_shot_id);
-//    if (p_shCla_id > 0)
-//      ins_.insert("p_assDep_id", p_shCla_id);
-//    if (p_shTy_id > 0)
-//      ins_.insert("ass_type_id", p_shTy_id);
-//
-//    ins_.into(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-//
-//    DOODLE_LOG_DEBUG << QString::fromStdString(ins_.str());
-//    if (!query->exec(QString::fromStdString(ins_.str())))
-//      throw std::runtime_error(query->lastError().text().toStdString());
-//    getInsertID(query);
-//    DOODLE_LOG_INFO << " \n 插入数据库id :" << idP;
-//    query->finish();
-//  }
+  if (idP > 0) return;
+  doodle::Basefile tab{};
+
+  auto db = coreSql::getCoreSql().getConnection();
+  auto install = sqlpp::dynamic_insert_into(*db,tab).dynamic_set(
+          tab.file = fileP,
+          tab.fileSuffixes = fileSuffixesP,
+          tab.user = userP,
+          tab.version = versionP,
+          tab.FilePath_ = filepathP,
+          tab.filestate = sqlpp::value_or_null(fileStateP),
+          tab.projectId = coreSet::getSet().projectName().first
+      );
+  if (!infoP.empty())
+    install.insert_list.add(tab.infor = strList_tojson(infoP));
+  if (p_shot_id > 0)
+    install.insert_list.add(tab.shotsId = p_shot_id);
+  if (p_shCla_id > 0)
+    install.insert_list.add(tab.shotClassId = p_shCla_id);
+  if (p_shTy_id > 0)
+    install.insert_list.add(tab.shotTypeId = p_shTy_id);
+  idP = db->insert(install);
+  if (idP == 0) {
+    DOODLE_LOG_WARN << fileStateP.c_str();
+    throw std::runtime_error("");
+  }
 }
 
 void shotFileSqlInfo::updateSQL() {
-//  sql::UpdateModel upd_;
-//  upd_.update(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-//  upd_.set("filestate", fileSuffixesP.toStdString());
-//  upd_.set("infor", infoP.toStdString());
-//
-//  if ((p_eps_id >= 0) && (p_eps_id != p_ptr_eps.lock()->getIdP()))
-//    upd_.set("p_eps_id", p_eps_id);
-//  if ((p_shot_id >= 0) && (p_shot_id != p_ptr_shot.lock()->getIdP()))
-//    upd_.set("p_shot_id", p_shot_id);
-//  if ((p_shCla_id >= 0) && (p_shCla_id != p_ptr_shcla.lock()->getIdP()))
-//    upd_.set("p_assDep_id", p_shCla_id);
-//  if ((p_shTy_id >= 0) && (p_shTy_id != p_ptr_shTy.lock()->getIdP()))
-//    upd_.set("ass_type_id", p_shTy_id);
-//
-//  upd_.where(sql::column("id") == idP);
-//
-//  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//  if (!query->exec(QString::fromStdString(upd_.str())))
-//    throw std::runtime_error("not updata fileinfo");
-//  query->finish();
+  if (idP < 0) return;
+  doodle::Basefile tab{};
+
+  auto db = coreSql::getCoreSql().getConnection();
+  auto updata = sqlpp::update(tab);
+  updata.set(
+      tab.infor = strList_tojson(infoP),
+      tab.filestate = fileStateP
+  ).where(tab.id == idP);
+  db->update(updata);
 }
 
-void shotFileSqlInfo::deleteSQL() {
-}
 template<typename T>
-void shotFileSqlInfo::batchQuerySelect(T &row) {
-//  shotInfoPtrList listShot;
-//  while (query->next()) {
-//    shotInfoPtr ptr(new shotFileSqlInfo);
-//
-//    ptr->idP = query->value(0).toInt();
-//    ptr->fileP = query->value(1).toString();
-//    ptr->fileSuffixesP = query->value(2).toString();
-//    ptr->userP = query->value(3).toString();
-//    ptr->versionP = query->value(4).toInt();
-//    ptr->filepathP = query->value(5).toString();
-//    ptr->infoP = query->value(6).toByteArray();
-//    ptr->fileStateP = query->value(7).toString();
-//
-//    if (!query->value(8).isNull())
-//      ptr->p_eps_id = query->value(8).toInt();
-//
-//    if (!query->value(9).isNull())
-//      ptr->p_shot_id = query->value(9).toInt();
-//
-//    if (!query->value(10).isNull())
-//      ptr->p_shCla_id = query->value(10).toInt();
-//
-//    if (!query->value(11).isNull())
-//      ptr->p_shTy_id = query->value(11).toInt();
-//
-//    listShot.append(ptr);
-//  }
-//  return listShot;
+void shotFileSqlInfo::batchSetAttr(T &row) {
+  idP = row.id;
+  fileP = row.file;
+  fileSuffixesP = row.fileSuffixes;
+  userP = row.user;
+  versionP = row.version;
+  filepathP = row.FilePath_;
+  infoP = json_to_strList(row.infor);
+  fileStateP = row.filestate;
+  if (row.shotsId._is_valid)
+    p_shot_id = row.shotsId;
+  if (row.shotClassId._is_valid)
+    p_shCla_id = row.shotClassId;
+  if (row.shotTypeId._is_valid)
+    p_shTy_id = row.shotTypeId;
 }
 
 shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr &EP_) {
-//  sql::SelectModel sel_;
-//  sel_.select("id", "file", "fileSuffixes", "user", "version",
-//              "_file_path_", "infor", "filestate",
-//              "p_eps_id", "p_shot_id", "p_assDep_id", "ass_type_id");
-//
-//  sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-//  sel_.where(sql::column("p_eps_id") == EP_->getIdP());
-//
-//  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//  if (!query->exec(QString::fromStdString(sel_.str())))
-//    throw std::runtime_error("not exe query");
-//
-//  shotInfoPtrList listInfo = batchQuerySelect(query);
-//  for (auto &x : listInfo) {
-//    x->setEpisdes(EP_);
-//  }
-//  return listInfo;
+  doodle::Basefile tab{};
+  shotInfoPtrList list{};
+
+  auto db = coreSql::getCoreSql().getConnection();
+  for (auto &&row :db->run(
+      sqlpp::select(sqlpp::all_of(tab))
+          .from(tab)
+          .where(tab.assTypeId == EP_->getIdP())
+  )) {
+    auto assInfo = std::make_shared<shotFileSqlInfo>();
+    assInfo->batchSetAttr(row);
+    assInfo->setEpisdes(EP_);
+    list.push_back(assInfo);
+  }
+  return list;
 }
 
 shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr &sh_) {
-//  sql::SelectModel sel_;
-//  sel_.select("id", "file", "fileSuffixes", "user", "version",
-//              "_file_path_", "infor", "filestate",
-//              "p_eps_id", "p_shot_id", "p_assDep_id", "ass_type_id");
-//
-//  sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-//  sel_.where(sql::column("p_shot_id") == sh_->getIdP());
-//
-//  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//  if (!query->exec(QString::fromStdString(sel_.str())))
-//    throw std::runtime_error("not exe query");
-//
-//  shotInfoPtrList listInfo = batchQuerySelect(query);
-//  for (auto &x : listInfo) {
-//    x->setShot(sh_);
-//  }
-//  return listInfo;
+  doodle::Basefile tab{};
+  shotInfoPtrList list;
+
+  auto db = coreSql::getCoreSql().getConnection();
+  for (auto &&row :db->run(
+      sqlpp::select(sqlpp::all_of(tab))
+          .from(tab)
+          .where(tab.assTypeId == sh_->getIdP())
+  )) {
+    auto assInfo = std::make_shared<shotFileSqlInfo>();
+    assInfo->batchSetAttr(row);
+    assInfo->setShot(sh_);
+    list.push_back(assInfo);
+  }
+  return list;
 }
 
-shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr &fc_) {
-//  sql::SelectModel sel_;
-//  sel_.select("id", "file", "fileSuffixes", "user", "version",
-//              "_file_path_", "infor", "filestate",
-//              "p_eps_id", "p_shot_id", "p_assDep_id", "ass_type_id");
-//
-//  sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-//  sel_.where(sql::column("p_assDep_id") == fc_->getIdP());
-//
-//  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//  if (!query->exec(QString::fromStdString(sel_.str())))
-//    throw std::runtime_error("not exe query");
-//
-//  shotInfoPtrList listInfo = batchQuerySelect(query);
-//  for (auto &x : listInfo) {
-//    x->setAssDep(fc_);
-//  }
-//  return listInfo;
+shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr &class_ptr) {
+  doodle::Basefile tab{};
+  shotInfoPtrList list;
+
+  auto db = coreSql::getCoreSql().getConnection();
+  for (auto &&row :db->run(
+      sqlpp::select(sqlpp::all_of(tab))
+          .from(tab)
+          .where(tab.assTypeId == class_ptr->getIdP())
+  )) {
+    auto assInfo = std::make_shared<shotFileSqlInfo>();
+    assInfo->batchSetAttr(row);
+    assInfo->setShotClass(class_ptr);
+    list.push_back(assInfo);
+  }
+  return list;
 }
 
-shotInfoPtrList shotFileSqlInfo::getAll(const shotTypePtr &ft_) {
-//  sql::SelectModel sel_;
-//  sel_.select("id", "file", "fileSuffixes", "user", "version",
-//              "_file_path_", "infor", "filestate",
-//              "p_eps_id", "p_shot_id", "p_assDep_id", "ass_type_id");
-//
-//  sel_.from(QString("%1.basefile").arg(coreSet::getCoreSet().getProjectname()).toStdString());
-//  sel_.order_by("filetime DESC");
-//  sel_.where(sql::column("ass_type_id") == ft_->getIdP());
-//
-//  sqlQuertPtr query = coreSql::getCoreSql().getquery();
-//  if (!query->exec(QString::fromStdString(sel_.str())))
-//    throw std::runtime_error("not exe query");
-//
-//  shotInfoPtrList listInfo = batchQuerySelect(query);
-//  for (auto &x : listInfo) {
-//    x->setAssClass(ft_);
-//  }
-//  return listInfo;
+shotInfoPtrList shotFileSqlInfo::getAll(const shotTypePtr &type_ptr) {
+  doodle::Basefile tab{};
+  shotInfoPtrList list;
+
+  auto db = coreSql::getCoreSql().getConnection();
+  for (auto &&row :db->run(
+      sqlpp::select(sqlpp::all_of(tab))
+          .from(tab)
+          .where(tab.assTypeId == type_ptr->getIdP())
+  )) {
+    auto assInfo = std::make_shared<shotFileSqlInfo>();
+    assInfo->batchSetAttr(row);
+    assInfo->setShotType(type_ptr);
+    list.push_back(assInfo);
+  }
+  return list;
 }
 
-dpath shotFileSqlInfo::generatePath(const std::string &programFolder) {
-  QString str("%1/%2/%3/%4/%5/%6");
-  coreSet &set = coreSet::getCoreSet();
+dpath shotFileSqlInfo::generatePath(const dstring &programFolder) {
   //第一次格式化添加根路径
-  str = str.arg(set.getShotRoot().absolutePath());
+  dpath path = coreSet::getSet().getShotRoot();
+
   //第二次格式化添加集数字符串
-  episodesPtr ep_ = getEpisdes();
-  if (ep_ != nullptr)
-    str = str.arg(ep_->getEpisdes_str());
-  else
-    str = str.arg(QString());
+  path = path / getEpisdes()->getEpisdes_str();
 
   //第三次格式化添加镜头字符串
-  shotPtr sh_ = getShot();
-  if (sh_ != nullptr)
-    str = str.arg(sh_->getShotAndAb_str());
-  else
-    str = str.arg(QString());
+  auto shot = getShot();
+  if (shot)
+    path = path / shot->getShot_str();
 
   //第四次格式化添加程序文件夹
-  str = str.arg(programFolder);
+  path = path / programFolder;
 
   //第五次格式化添加部门文件夹
-  if (getShotclass())
-    str = str.arg(coreSet::getCoreSet().getDepartment());
-  else
-    str = str.arg(QString());
+  path = path / coreSet::getSet().getDepartment();
 
   //第六次格式化添加类别文件夹
-  shotTypePtr ft_ = getShotType();
-  if (ft_ != nullptr)
-    str = str.arg(ft_->getType());
-  else
-    str = str.arg(QString());
+  path = path / getShotType()->getType();
 
-  return QDir::cleanPath(str);
+  return path;
 }
 
 dpath shotFileSqlInfo::generatePath(const dstring &programFolder, const dstring &suffixes) {
-  QString str("%1/%2");
-  str = str.arg(generatePath(programFolder));
-
-  str = str.arg(generateFileName(suffixes));
-
-  return str;
+  return generatePath(programFolder) / generateFileName(suffixes);
 }
 
 dpath shotFileSqlInfo::generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) {
-  QString str("%1/%2");
-  str = str.arg(generatePath(programFolder));
-
-  str = str.arg(generateFileName(suffixes, prefix));
-
-  return str;
+  return generatePath(programFolder) / generateFileName(suffixes, prefix);
 }
 
 dstring shotFileSqlInfo::generateFileName(const dstring &suffixes) {
+  boost::format name("shot_%s_%s_%s_%s_v%04i_%s%s");
 
-  QString name("shot_%1_%2_%3_%4_v%5_%6.%7");
   //第一次 格式化添加 集数
   episodesPtr ep_ = getEpisdes();
-  if (ep_ != nullptr)
-    name = name.arg(ep_->getEpisdes_str());
+  if (ep_)
+    name % ep_->getEpisdes_str();
   else
-    name = name.arg(QString());
+    name % "";
 
   //第二次格式化添加 镜头号
   shotPtr sh_ = getShot();
-  if (sh_ != nullptr)
-    name = name.arg(sh_->getShotAndAb_str());
+  if (sh_)
+    name % sh_->getShotAndAb_str();
   else
-    name = name.arg(QString());
+    name % "";
 
   //第三次格式化添加 fileclass
   if (getShotclass())
-    name = name.arg(coreSet::getCoreSet().getDepartment());
+    name % coreSet::getSet().getDepartment();
   else
-    name = name.arg(QString());
+    name % "";
 
   //第四次格式化添加 shotType
   shotTypePtr ft_ = getShotType();
-  if (ft_ != nullptr)
-    name = name.arg(ft_->getType());
+  if (ft_)
+    name % ft_->getType();
   else
-    name = name.arg(QString());
+    name % "";
 
-  name = name.arg(versionP, 4, 10, QLatin1Char('0'));
-  name = name.arg(coreSet::getCoreSet().getUser_en());
-  name = name.arg(suffixes);
+  name % versionP;
+  name % coreSet::getSet().getUser_en();
+  name % suffixes;
 
-  return name;
+  return name.str();
 }
 
 dstring shotFileSqlInfo::generateFileName(const dstring &suffixes, const dstring &prefix) {
-  QString name("%1_%2");
-  name = name.arg(prefix);
-  name = name.arg(generateFileName(suffixes));
-  return name;
+  boost::format name("%s_%s");
+  name % prefix;
+  name % generateFileName(suffixes);
+  return name.str();
 }
 
 episodesPtr shotFileSqlInfo::getEpisdes() {
   if (p_ptr_eps) {
     return p_ptr_eps;
   } else if (p_eps_id >= 0) {
-    episodesPtr p_ = episodesPtr(new episodes);
+    episodesPtr p_ = std::make_shared<episodes>();
     p_->select(p_eps_id);
     this->setEpisdes(p_);
     return p_;
@@ -348,12 +267,12 @@ episodesPtr shotFileSqlInfo::getEpisdes() {
   return nullptr;
 }
 
-void shotFileSqlInfo::setEpisdes(const episodesPtrW &eps_) {
+void shotFileSqlInfo::setEpisdes(const episodesPtr &eps_) {
   if (!eps_)
     return;
 
   p_ptr_eps = eps_;
-  p_eps_id = eps_.->getIdP();
+  p_eps_id = eps_->getIdP();
 }
 
 shotPtr shotFileSqlInfo::getShot() {

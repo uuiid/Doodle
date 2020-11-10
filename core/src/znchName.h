@@ -5,11 +5,10 @@
 #include "coresqldata.h"
 
 #include "pinyin_global.h"
-
+#include "assClass.h"
 CORE_NAMESPACE_S
 
 class CORE_EXPORT znchName : public coresqldata {
- Q_GADGET
  public:
   explicit znchName(assClass *at_);
 
@@ -22,6 +21,8 @@ class CORE_EXPORT znchName : public coresqldata {
   void setName(const std::string &name_, const bool &isZNCH);
   [[nodiscard]] std::string getName() const;
   [[nodiscard]] std::string pinyin() const;
+
+  friend assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr);
  private:
   std::string nameZNCH;
   std::string  nameEN;
@@ -32,4 +33,3 @@ class CORE_EXPORT znchName : public coresqldata {
 
 CORE_NAMESPACE_E
 
-Q_DECLARE_METATYPE(doCore::znchNamePtr)

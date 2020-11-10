@@ -1,8 +1,7 @@
 ﻿#pragma once
 
-#include <QtCore/QDir>
 #include "core_global.h"
-
+#include <map>
 
 CORE_NAMESPACE_S
 
@@ -19,8 +18,8 @@ enum class dep {
 };
 
 struct synPath_struct {
-  QString local;
-  QString server;
+  dpathPtr local;
+  dpathPtr server;
 };
 
 /*
@@ -30,7 +29,8 @@ struct synPath_struct {
 class CORE_EXPORT coreSet{
 
  public:
-  static coreSet &getCoreSet();
+  static coreSet &getSet();
+
   coreSet &operator=(const coreSet &s) = delete;
   coreSet(const coreSet &s) = delete;
 
@@ -40,50 +40,50 @@ class CORE_EXPORT coreSet{
   //获得同步路径
   synPathListPtr getSynDir();
 
-  [[nodiscard]] const QFileInfo &getSynPathLocale() const;
-  void setSynPathLocale(const QFileInfo &syn_path);
+  [[nodiscard]] const dpath & getSynPathLocale() const;
+  void setSynPathLocale(const dpath &syn_path);
   //MySQL ip设置
-  [[nodiscard]] QString getIpMysql() const;
-  void setIpMysql(const QString &value);
+  [[nodiscard]] dstring getIpMysql() const;
+  void setIpMysql(const dstring &value);
   //FTP ip
-  [[nodiscard]] QString getIpFtp() const;
-  void setIpFtp(const QString &value);
+  [[nodiscard]] dstring getIpFtp() const;
+  void setIpFtp(const dstring &value);
   //user设置
-  [[nodiscard]] QString getUser() const;
-  [[nodiscard]] QString getUser_en() const;
-  void setUser(const QString &value);
+  [[nodiscard]] dstring getUser() const;
+  [[nodiscard]] dstring getUser_en() const;
+  void setUser(const dstring &value);
   //部门设置
-  [[nodiscard]] QString getDepartment() const;
-  void setDepartment(const QString &value);
+  [[nodiscard]] dstring getDepartment() const;
+  void setDepartment(const dstring &value);
   //同步集数设置
   [[nodiscard]] int getSyneps() const;
   void setSyneps(int value);
   //获得freesyn同步软件设置
-  [[nodiscard]] QString getFreeFileSyn() const;
-  void setFreeFileSyn(const QString &value);
+  [[nodiscard]] dstring getFreeFileSyn() const;
+  void setFreeFileSyn(const dstring &value);
   //项目名称设置
-  QString getProjectname();
+  dstring getProjectname();
   [[nodiscard]] std::pair<int,std::string> projectName() const;
-  [[nodiscard]] QStringList getAllPrjName() const;
-  void setProjectname(const QString &value);
+  [[nodiscard]] dstringList getAllPrjName() const;
   void setProjectname(const std::string &value);
 
   //shot根路径
-  [[nodiscard]] QDir getShotRoot() const;
-  void setShotRoot(const QDir &value);
+  [[nodiscard]] dpath getShotRoot() const;
+  void setShotRoot(const dpath &value);
   //ass根路径
-  [[nodiscard]] QDir getAssRoot() const;
-  void setAssRoot(const QDir &value);
+  [[nodiscard]] dpath getAssRoot() const;
+  void setAssRoot(const dpath &value);
   //project根路径
-  [[nodiscard]] QDir getPrjectRoot() const;
-  void setPrjectRoot(const QDir &value);
+  [[nodiscard]] dpath getPrjectRoot() const;
+  void setPrjectRoot(const dpath &value);
   //缓存路径
-  [[nodiscard]] QDir getCacheRoot() const;
+  [[nodiscard]] dpath getCacheRoot() const;
 
   //doc路径
-  [[nodiscard]] QDir getDoc() const;
+  [[nodiscard]] dpath getDoc() const;
 
   void writeDoodleLocalSet();
+
  private:
   //私有化构造函数
   coreSet();
@@ -94,38 +94,38 @@ class CORE_EXPORT coreSet{
   //获得本地的有限设置
   void getSetting();
   //转换为ip路径
-  static QString toIpPath(const QString &path);
+  static dstring toIpPath(const dstring &path);
  private:
-  const static QString settingFileName;
+  const static dstring settingFileName;
   //MySQL IP地址
-  QString ipMysql;
+  dstring ipMysql;
   //FTP IP地址
-  QString ipFTP;
+  dstring ipFTP;
   //用户名称
-  QString user;
+  dstring user;
   //部门
-  QString department;
+  dstring department;
   //同步集数
   int syneps;
   //同步文件的文件运行程序
-  QString freeFileSyn;
+  dstring freeFileSyn;
 
   //项目名称
-  QString projectname;
+  dstring projectname;
   std::pair<int,std::string> project;
  private:
   //内部属性
-  QFileInfo synPath;
-  QDir synServer;
+  dpathPtr synPath;
+  dpathPtr synServer;
 
   std::map<int,std::string> prjMap;
 
-  QDir shotRoot;
-  QDir assRoot;
-  QDir prjectRoot;
+  dpathPtr shotRoot;
+  dpathPtr assRoot;
+  dpathPtr prjectRoot;
 
-  QDir cacheRoot;
-  QDir doc;
+  dpathPtr cacheRoot;
+  dpathPtr doc;
 };
 
 CORE_NAMESPACE_E

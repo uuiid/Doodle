@@ -13,14 +13,15 @@
 CORE_NAMESPACE_S
 
 episodes::episodes() : p_int_episodes(-1),
-p_prj(coreSet::getCoreSet().projectName().first){
+                       p_prj(coreSet::getSet().projectName().first) {
 }
 
 void episodes::select(const qint64 &ID_) {
-  doodle::Episodes table;
+  doodle::Episodes table{};
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row:db->run(
       sqlpp::select(sqlpp::all_of(table))
+          .from(table)
           .where(table.id == ID_)
   )) {
     p_int_episodes = row.episodes;
@@ -29,14 +30,18 @@ void episodes::select(const qint64 &ID_) {
 }
 
 void episodes::insert() {
-  if(idP >0) return;
-  if(p_prj < 0) return;
-  doodle::Episodes table;
+  if (idP > 0) return;
+  if (p_prj < 0) return;
+  doodle::Episodes table{};
   auto db = coreSql::getCoreSql().getConnection();
-  idP = db->insert(sqlpp::insert_into(table)
-                       .set(table.episodes = p_int_episodes,
-                            table.projectId = p_prj));
-  if(idP == 0){
+
+  auto insert = sqlpp::insert_into(table)
+      .set(table.episodes = p_int_episodes,
+           table.projectId = p_prj);
+
+
+  idP = db->insert(insert);
+  if (idP == 0) {
     DOODLE_LOG_WARN << "无法插入集数" << p_int_episodes;
     throw std::runtime_error("not install eps");
   }
@@ -45,16 +50,22 @@ void episodes::updateSQL() {
 }
 
 void episodes::deleteSQL() {
+  doodle::Episodes table{};
+  auto db = coreSql::getCoreSql().getConnection();
+  db->remove(sqlpp::remove_from(table)
+  .where(table.id == idP));
 }
 
 episodesPtrList episodes::getAll() {
   episodesPtrList list;
 
-  doodle::Episodes table;
+  doodle::Episodes table{};
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row:db->run(
       sqlpp::select(sqlpp::all_of(table))
-          .where(table.id == coreSet::getCoreSet().projectName().first)
+          .from(table)
+          .where(table.projectId == coreSet::getSet().projectName().first)
+          .order_by(table.episodes.asc())
   )) {
     auto eps = std::make_shared<episodes>();
     eps->p_int_episodes = row.episodes;
@@ -74,7 +85,7 @@ int64_t episodes::getEpisdes() const {
 }
 
 dstring episodes::getEpisdes_str() const {
-  boost::format str("ep%30");
+  boost::format str("ep%03i");
   str % p_int_episodes;
   return str.str();
 }

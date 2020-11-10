@@ -6,47 +6,41 @@
 
 #include <curl/curl.h>
 
-#include <QObject>
-#include <QSharedPointer>
-
 class QFile;
 class QUrl;
 
 FTPSPACE_S
 struct oFileInfo {
-  QString filepath;
+  dstring filepath;
   bool isFolder;
   time_t fileMtime;
   double fileSize;
 };
 
-class FTP_EXPORT ftpSession : public QObject {
- Q_OBJECT
+class FTP_EXPORT ftpSession  {
 
  public:
-  ~ftpSession() override;
+  ~ftpSession() ;
 
-  bool down(const QString &localFile, const QString &remoteFile);
-  bool downFolder(const QString &localFile, const QString &remoteFile);
-  bool upload(const QString &localFile, const QString &remoteFile);
-  bool uploadFolder(const QString &localFolder, const QString &remoteFolder);
-  oFileInfo fileInfo(const QString &remoteFile);
+  bool down(const dstring &localFile, const dstring &remoteFile);
+  bool downFolder(const dstring &localFile, const dstring &remoteFile);
+  bool upload(const dstring &localFile, const dstring &remoteFile);
+  bool uploadFolder(const dstring &localFolder, const dstring &remoteFolder);
+  oFileInfo fileInfo(const dstring &remoteFile);
   //获得文件列表
   std::vector<oFileInfo> list(const QString &remoteFolder);
 
-  friend ftpSessionPtr ftphandle::session(const QString &host,
+  friend ftpSessionPtr ftphandle::session(const dstring &host,
                                           int prot,
-                                          const QString &name,
-                                          const QString &password);
- signals:
-  void finished();
+                                          const dstring &name,
+                                          const dstring &password);
 
  private:
   ftpSession();
-  void setInfo(const QString &host,
+  void setInfo(const dstring &host,
                int prot,
-               const QString &name,
-               const QString &password);
+               const dstring &name,
+               const dstring &password);
   static size_t writeFileCallbask(void *buff, size_t size, size_t nmemb, void *data);
   static size_t readFileCallbask(void *buff, size_t size, size_t nmemb, void *data);
   static size_t notCallbask(void *buff, size_t size, size_t nmemb, void *data);
@@ -54,9 +48,9 @@ class FTP_EXPORT ftpSession : public QObject {
   CURLcode perform();
 
  private:
-  QSharedPointer<QFile> outfile;
-  QSharedPointer<QFile> inputfile;
-  QSharedPointer<QUrl> ptrUrl;
+  std::shared_ptr<QFile> outfile;
+  std::shared_ptr<QFile> inputfile;
+  std::shared_ptr<QUrl> ptrUrl;
 
   mutable CURL *curlSession;
 };

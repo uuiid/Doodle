@@ -11,32 +11,31 @@
 CORE_NAMESPACE_S
 
 class CORE_EXPORT fileSqlInfo : public coresqldata {
-  Q_GADGET
  public:
   //属性设置和查询
   fileSqlInfo();
-  [[nodiscard]] QfileInfoVector getFileList() const;
-  virtual void setFileList(const QfileInfoVector &filelist);
-  virtual void setFileList(const stringList &filelist);
+  [[nodiscard]] dpathList getFileList() const;
+  virtual void setFileList(const dpathList &filelist);
+  virtual void setFileList(const dstringList &filelist);
   [[nodiscard]] int getVersionP() const;
-  void setVersionP(const int &value);
+  void setVersionP(const int64_t &value);
 
-  [[nodiscard]] QJsonArray getInfoP() const;
-  void setInfoP(const QString &value);
+  [[nodiscard]] dstringList getInfoP() const;
+  void setInfoP(const dstring &value);
 
-  [[nodiscard]] QString getFileStateP() const;
-  void setFileStateP(const QString &value);
+  [[nodiscard]] dstring getFileStateP() const;
+  void setFileStateP(const dstring &value);
 
-  [[nodiscard]] QString getSuffixes() const;
+  [[nodiscard]] dstring getSuffixes() const;
 
-  [[nodiscard]] QString getUserP() const;
+  [[nodiscard]] dstring getUser() const;
 
   virtual dpath generatePath(const std::string &programFodler) = 0;
   virtual dpath generatePath(const dstring &programFolder, const dstring &suffixes) = 0;
   virtual dpath generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) = 0;
   virtual dstring generateFileName(const dstring &suffixes) = 0;
   virtual dstring generateFileName(const dstring &suffixes, const dstring &prefix) = 0;
-
+  virtual void deleteSQL() override;
  protected:
   //属性包装
 
@@ -45,11 +44,12 @@ class CORE_EXPORT fileSqlInfo : public coresqldata {
   std::string  userP;
   int versionP;
   std::string  filepathP;
-  std::string  infoP;
+  dstringList infoP;
   std::string  fileStateP;
 
- private:
-  [[nodiscard]] QJsonDocument convertJson() const;
+ protected:
+  [[nodiscard]] dstringList json_to_strList(const dstring &json_str) const;
+  [[nodiscard]] dstring     strList_tojson(const dstringList & str_list) const;
 };
 
 CORE_NAMESPACE_E

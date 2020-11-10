@@ -5,166 +5,213 @@
 #include "src/shot.h"
 #include "src/shotClass.h"
 #include "src/shottype.h"
-#include "src/assClass.h"
 
+#include "src/assClass.h"
+#include "src/assType.h"
+#include "src/assdepartment.h"
 #include "src/assfilesqlinfo.h"
 #include "src/shotfilesqlinfo.h"
 
-#include <gtest/gtest.h>
+#include "src/mayaArchive.h"
 
+#include <gtest/gtest.h>
+#include <boost/filesystem.hpp>
+#include "Logger.h"
 
 #include <iostream>
-class CoreTest : public ::testing::Test
-{
-protected:
-    void SetUp() override;
-    void TearDown() override;
+#include <src/movieArchive.h>
+class CoreTest : public ::testing::Test {
+ protected:
+  void SetUp() override;
+  void TearDown() override;
 
-    doCore::coreSet &set = doCore::coreSet::getCoreSet();
+  doCore::coreSet &set = doCore::coreSet::getSet();
 };
 
-void CoreTest::SetUp()
-{
-    set.init();
-    set.setProjectname("dubuxiaoyao3");
-    set.initdb();
+void CoreTest::SetUp() {
+  set.init();
+  set.setProjectname("dubuxiaoyao3");
+  set.initdb();
 }
 
-void CoreTest::TearDown()
-{
-    
+void CoreTest::TearDown() {
+
 }
 
-TEST_F(CoreTest, tets_quert)
-{
-    std::cout << set.getCacheRoot().absolutePath().toStdString() << std::endl;
-    RecordProperty("cacheRoot", set.getCacheRoot().absolutePath().toStdString());
+TEST_F(CoreTest, tets_quert) {
+  std::cout << set.getCacheRoot().generic_string() << std::endl;
+  RecordProperty("cacheRoot", set.getCacheRoot().generic_string());
 }
 
-TEST_F(CoreTest, set_synpath)
-{
-    for (doCore::synPath_struct &p : set.getSynDir())
-    {
-        std::cout << "\n local -->" << p.local.toStdString()
-                  << "\n server-->" << p.server.toStdString() << std::endl;
-        ;
+TEST_F(CoreTest, set_synpath) {
+  for (doCore::synPath_struct &p : set.getSynDir()) {
+    std::cout << "\n local -->" << p.local->generic_string()
+              << "\n server-->" << p.server->generic_string() << std::endl;;
+  }
+}
+
+TEST_F(CoreTest, create_shotinfo) {
+  doCore::episodesPtrList eplist;
+  eplist = doCore::episodes::getAll();
+  if (!eplist.empty()) {
+    doCore::episodesPtr eps(new doCore::episodes());
+    eps->setEpisdes(11);
+    eps->insert();
+
+    doCore::shotPtr sh(new doCore::shot());
+    sh->setShot(10);
+    sh->setEpisodes(eps);
+    sh->insert();
+
+    doCore::shotClassPtr fc(new doCore::shotClass());
+    fc->setclass(doCore::shotClass::e_fileclass::VFX);
+
+    fc->setShot(sh);
+    fc->insert();
+
+    doCore::shotTypePtr ft(new doCore::shotType());
+    ft->setType("test");
+    ft->setFileClass(fc);
+
+    ft->insert();
+
+    doCore::shotInfoPtr sf(new doCore::shotFileSqlInfo());
+    doCore::dpathList list;
+    sf->setInfoP("test");
+    list.push_back("D:/tmp/etr.vdb");
+    sf->setFileList(list);
+    sf->setVersionP(0);
+
+    sf->setShotType(ft);
+    sf->insert();
+
+    sf->deleteSQL();
+    ft->deleteSQL();
+    fc->deleteSQL();
+    sh->deleteSQL();
+    eps->deleteSQL();
+
+  }
+}
+
+TEST_F(CoreTest, get_shotinf) {
+  doCore::episodesPtrList eplist;
+  eplist = doCore::episodes::getAll();
+  if (!eplist.empty()) {
+    doCore::episodesPtr ep = eplist[0];
+    auto shlist = doCore::shot::getAll(eplist.front());
+    ASSERT_TRUE(!shlist.empty());
+    auto shclList = doCore::shotClass::getAll(shlist.front());
+    ASSERT_TRUE(!shclList.empty());
+    auto shtyList = doCore::shotType::getAll(shclList.front());
+    ASSERT_TRUE(!shtyList.empty());
+    auto sfList = doCore::shotFileSqlInfo::getAll(shtyList.front());
+    ASSERT_TRUE(!sfList.empty());
+
+    std::cout << "episodes: " << ep->getEpisdes_str() << std::endl;
+    std::cout << "shot:" << shlist[0]->getShotAndAb_str() << std::endl;
+    std::cout << "fileclass :" << shclList.front()->getClass_str() << std::endl;
+    std::cout << "filetype :" << shtyList.front()->getType() << std::endl;
+    std::cout << "shotinfo generatePath :" << sfList.front()->generatePath("test", ".mb") << std::endl;
+    for (auto &x : sfList.front()->getFileList()) {
+      std::cout << "shotinfo path :" << x.generic_string() << std::endl;
     }
+  }
 }
 
-TEST_F(CoreTest, create_shotinfo)
-{
-    doCore::episodesPtrList eplist;
-    eplist = doCore::episodes::getAll();
-    if (eplist.size() < 2)
-    {
-        doCore::episodesPtr eps(new doCore::episodes());
-        eps->setEpisdes(11);
-        eps->insert();
+TEST_F(CoreTest, create_assInfo) {
+  auto fc_ = doCore::assdepartment::getAll();
 
-        doCore::shotPtr sh(new doCore::shot());
-        sh->setShot(10);
-        sh->setEpisodes(eps.toWeakRef());
-        sh->insert();
+  if (fc_.size() == 4) {
+    doCore::assClassPtr af_(new doCore::assClass);
+    af_->setAssDep(fc_[0]);
+    af_->setAssClass("大小", true);
+    af_->insert();
 
-        doCore::shotClassPtr fc(new doCore::shotClass());
-      fc->setclass(doCore::fileClass::e_fileclass::VFX);
+    doCore::assTypePtr ft_(new doCore::assType);
+    ft_->setType("ffff");
+    ft_->setAssClassPtr(af_);
+    ft_->insert();
 
-        fc->setShot(sh.toWeakRef());
-        fc->insert();
+    doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
+    doCore::dpathList list;
+    sf_->setInfoP("test");
+    list.push_back("D:/tmp/etr.vdb");
+    sf_->setFileList(list);
+    sf_->setVersionP(1);
 
-        doCore::shotTypePtr ft(new doCore::shotType());
-      ft->setType("test");
-        ft->setFileClass(fc.toWeakRef());
+    sf_->setAssType(ft_);
 
-        ft->insert();
+    sf_->insert();
 
-        doCore::shotInfoPtr sf(new doCore::shotFileSqlInfo());
-        doCore::QfileInfoVector list;
-        sf->setInfoP(QString("test"));
-        list.append(QFileInfo("D:/tmp/etr.vdb"));
-        sf->setFileList(list);
-        sf->setVersionP(0);
-
-      sf->setShotType(ft.toWeakRef());
-        sf->insert();
-    }
-    else
-    {
-        std::cout << "is create ok, " << std::endl;
-    }
+    sf_->deleteSQL();
+    ft_->deleteSQL();
+    af_->deleteSQL();
+  }
 }
 
-TEST_F(CoreTest, get_shotinf)
-{
-    doCore::episodesPtrList eplist;
-    eplist = doCore::episodes::getAll();
-    if (!eplist.isEmpty())
-    {
-        doCore::episodesPtr ep = eplist[0];
-        doCore::shotPtr sh = doCore::shot::getAll(ep)[0];
-        doCore::shotClassPtr fc = doCore::fileClass::getAll(sh)[0];
-        doCore::shotTypePtr ft = doCore::fileType::getAll(fc)[0];
-        doCore::shotInfoPtr sf = doCore::shotFileSqlInfo::getAll(ft)[0];
+TEST_F(CoreTest, get_assInf) {
+  auto list_fileClass = doCore::assdepartment::getAll();
+  for (auto &&x : list_fileClass) {
+    std::cout << "fileclass :" << x->getAssDep() << std::endl;
+  }
+  auto test = doCore::assClass::getAll(list_fileClass[0]);
+  doCore::assClassPtr af_ = test[0];
+  std::cout << "asstype :" << af_->getAssClass(true) << std::endl;
+  RecordProperty("asstype", af_->getAssClass(true));
+  // QTextCodec *code = QTextCodec::codecForName("GBK");
+  // std::cout << "asstype :" <<code->fromUnicode(af_->getAssClass(af_)) << std::endl;
 
-        std::cout << "episodes: " << ep->getEpisdes_str().toStdString() << std::endl;
-        std::cout << "shot:" << sh->getShotAndAb_str().toStdString() << std::endl;
-        std::cout << "fileclass :" << fc->getClass_str().toStdString() << std::endl;
-        std::cout << "filetype :" << ft->getType().toStdString() << std::endl;
-        std::cout << "shotinfo generatePath :" << sf->generatePath("test", ".mb").toStdString() << std::endl;
-        for (auto &x : sf->getFileList())
-        {
-            std::cout << "shotinfo path :" << x.absoluteFilePath().toStdString() << std::endl;
-        }
-    }
+  doCore::assTypePtr ft_ = doCore::assType::getAll(af_)[0];
+  std::cout << "filetype :" << ft_->getType() << std::endl;
+
+  doCore::assInfoPtr ai_ = doCore::assFileSqlInfo::getAll(ft_)[0];
+  std::cout << "assinfo path :" << ai_->generatePath("test", ".mb") << std::endl;
 }
 
-TEST_F(CoreTest, create_assInfo)
-{
-    doCore::shotClassPtrList fc_ = doCore::fileClass::getAll();
+TEST_F(CoreTest,up_maya_file){
+  auto epslist = doCore::episodes::getAll();
+  auto shotList = doCore::shot::getAll(epslist.front());
+  auto shclassList = doCore::shotClass::getAll(shotList.front());
+  auto shtypeList = doCore::shotType::getAll(shclassList.front());
 
-    if (fc_.size() == 4)
-    {
-        doCore::assClassPtr af_(new doCore::assClass);
-        af_->setFileClass(fc_[0]);
-      af_->setAssClass(QString::fromUtf8("大小"), true);
-        af_->insert();
+  auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
+  shotinfo->setShotType(shtypeList.front());
+  auto maya = std::make_shared<doCore::mayaArchive>(shotinfo);
+  maya->update("D:/DBXY_004_035.mb");
 
-        doCore::shotTypePtr ft_(new doCore::shotType);
-      ft_->setType("ffff");
-        ft_->setAssType(af_);
-        ft_->insert();
-
-        doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
-        doCore::QfileInfoVector list;
-        sf_->setInfoP(QString("test"));
-        list.append(QFileInfo("D:/tmp/etr.vdb"));
-        sf_->setFileList(list);
-        sf_->setVersionP(1);
-
-      sf_->setAssClass(ft_);
-
-        sf_->insert();
-    }
+  shotinfo->deleteSQL();
 }
 
-TEST_F(CoreTest, get_assInf)
-{
-    doCore::shotClassPtrList list_fileClass;
-    list_fileClass = doCore::fileClass::getAll();
-    for (auto &&x : list_fileClass)
-    {
-        std::cout << "fileclass :" << x->getClass_str().toStdString() << std::endl;
-    }
+TEST_F(CoreTest, create_Move){
+  auto epslist = doCore::episodes::getAll();
+  auto shotList = doCore::shot::getAll(epslist.front());
+  auto shclassList = doCore::shotClass::getAll(shotList.front());
+  auto shtypeList = doCore::shotType::getAll(shclassList.front());
 
-    doCore::assClassPtr af_ = doCore::assType::getAll(list_fileClass[0])[0];
-    std::cout << "asstype :" << af_->getAssClass(true).toLocal8Bit().toStdString() << std::endl;
-    RecordProperty("asstype", af_->getAssClass(true).toStdString());
-    // QTextCodec *code = QTextCodec::codecForName("GBK");
-    // std::cout << "asstype :" <<code->fromUnicode(af_->getAssClass(af_)).toStdString() << std::endl;
+  auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
+  shotinfo->setShotType(shtypeList.front());
+  auto up_move = std::make_shared<doCore::movieArchive>(shotinfo);
+  up_move->update({"D:\\sc_064"});
 
-    doCore::shotTypePtr ft_ = doCore::fileType::getAll(af_)[0];
-    std::cout << "filetype :" << ft_->getType().toStdString() << std::endl;
+  shotinfo->deleteSQL();
+}
 
-    doCore::assInfoPtr ai_ = doCore::assFileSqlInfo::getAll(ft_)[0];
-    std::cout << "assinfo path :" << ai_->generatePath("test", ".mb").toStdString() << std::endl;
+TEST_F(CoreTest, convert_Move){
+  auto epslist = doCore::episodes::getAll();
+  auto shotList = doCore::shot::getAll(epslist.front());
+  auto shclassList = doCore::shotClass::getAll(shotList.front());
+  auto shtypeList = doCore::shotType::getAll(shclassList.front());
+
+  auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
+  shotinfo->setShotType(shtypeList.front());
+  auto up_move = std::make_shared<doCore::movieArchive>(shotinfo);
+  up_move->update({"D:\\DBXY_041_017_AN.mov"});
+
+  shotinfo->deleteSQL();
+}
+TEST_F(CoreTest,Synfile_down_ue){
+  auto synpath = set.getSynDir();
+
+
 }

@@ -13,28 +13,28 @@
 #include "shot.h"
 #include "Logger.h"
 
-#include <QTemporaryFile>
 #include <QDir>
-#include <QtCore/QJsonDocument>
-#include <QtCore/QJsonObject>
-#include <QtCore/QJsonArray>
-#include <stdexcept>
 
+#include <stdexcept>
+#include <boost/filesystem.hpp>
+#include <boost/format.hpp>
+#include <json/json.h>
 CORE_NAMESPACE_S
 
 mayaArchiveShotFbx::mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr)
     : fileArchive(),
       p_info_ptr_(shot_info_ptr),
-      p_temporary_file_() {
+      p_temporary_file_(std::make_shared<dpath>(boost::filesystem::unique_path())) {
 
 }
 void mayaArchiveShotFbx::_generateFilePath() {
   if (!p_soureFile.empty())
     for (auto &k_i : p_soureFile)
-      p_Path.push_back(p_info_ptr_->generatePath("export_fbx") + "/" + QFileInfo(k_i).fileName());
+      p_Path.push_back((p_info_ptr_->generatePath("export_fbx")
+          / boost::filesystem::extension(k_i)).string());
   else if (!p_info_ptr_->getFileList().empty())
     for (auto &&item: p_info_ptr_->getFileList())
-      p_Path.push_back(item.filePath());
+      p_Path.push_back(item.string());
 }
 bool mayaArchiveShotFbx::exportFbx(shotInfoPtr &shot_data) {
   if (!shot_data) {
@@ -42,29 +42,40 @@ bool mayaArchiveShotFbx::exportFbx(shotInfoPtr &shot_data) {
     throw std::runtime_error("没有数据传入");
   }
   auto kArchivePtr = std::make_shared<mayaArchive>(shot_data);
-  auto info = QFileInfo(kArchivePtr->down().front());
-  p_temporary_file_ = std::make_shared<QTemporaryFile>();
-  p_temporary_file_->setFileTemplate(QDir::tempPath() + "/mayaExport_XXXXXX.py");
+  auto info = dpath (kArchivePtr->down().front());
+//  p_temporary_file_ = std::make_shared<QTemporaryFile>();
+
+
+//  p_temporary_file_->setFileTemplate(QDir::tempPath() + "/mayaExport_XXXXXX.py");
   //复制出导出脚本
   QFile file_tmp(":/resource/mayaExport.py");
-  p_temporary_file_->open();
+  boost::filesystem::ofstream out;
+  out.open(*p_temporary_file_,std::ofstream::out);
+//  p_temporary_file_->open();
   if (file_tmp.open(QIODevice::ReadOnly))
-    p_temporary_file_->write(file_tmp.readAll());
-  p_temporary_file_->close();
+    out<<file_tmp.readAll().toStdString();
+  out.close();
 
-  const auto mayapath = QString(R"("C:\Program Files\Autodesk\Maya2018\bin\mayapy.exe")");
-  auto filePath = info.filePath();
-  DOODLE_LOG_INFO << "导出文件" << filePath;
+  const auto mayapath = dstring (R"("C:\Program Files\Autodesk\Maya2018\bin\mayapy.exe")");
+  DOODLE_LOG_INFO << "导出文件" << info.string().c_str();
 
-  auto comm = QString("%1 %2 --path %3 --name %4 --version %5 --suffix %6 --exportpath %7")
-      .arg(mayapath)//maya py 解释器位置 -->1
-      .arg(p_temporary_file_->fileName())//导出脚本位置           -->2
-      .arg(info.path())//导出到文件的位置中--3
-      .arg(info.baseName())//导出的名称  --4
-      .arg(shot_data->getVersionP())//版本 --5
-      .arg("." + info.suffix())//文件后缀 -- 6
-      .arg(info.path());
-  DOODLE_LOG_INFO << "导出命令" << comm;
+  boost::format str("%1 %2 --path %3 --name %4 --version %5 --suffix %6 --exportpath %7");
+  str % mayapath
+      % p_temporary_file_->generic_string()
+      % info.generic_string()
+      % boost::filesystem::basename(info)
+      % shot_data->getVersionP()
+      % boost::filesystem::extension(info)
+      % info.parent_path();
+//  auto comm = QString("%1 %2 --path %3 --name %4 --version %5 --suffix %6 --exportpath %7")
+//      .arg(mayapath)//maya py 解释器位置 -->1
+//      .arg(p_temporary_file_->fileName())//导出脚本位置           -->2
+//      .arg(info.path())//导出到文件的位置中--3
+//      .arg(info.baseName())//导出的名称  --4
+//      .arg(shot_data->getVersionP())//版本 --5
+//      .arg("." + info.suffix())//文件后缀 -- 6
+//      .arg(info.path());
+  DOODLE_LOG_INFO << "导出命令" << str.str().c_str();
 //  auto popen = QProcess();
 //  auto list = QStringList();
 //  list << p_temporary_file_->fileName()
@@ -76,8 +87,8 @@ bool mayaArchiveShotFbx::exportFbx(shotInfoPtr &shot_data) {
 //
 //  popen.start(mayapath,list);
 //  popen.waitForFinished();
-  std::system(comm.toStdString().c_str());
-  bool kJson = readExportJson(info.path());
+  std::system(str.str().c_str());
+  bool kJson = readExportJson(info.parent_path());
   if (!kJson) {
     p_state_ = state::fail;
   }
@@ -85,24 +96,20 @@ bool mayaArchiveShotFbx::exportFbx(shotInfoPtr &shot_data) {
   update();
   return kJson;
 }
-bool mayaArchiveShotFbx::readExportJson(const QString &exportPath) {
-  auto k_s_file = QDir::cleanPath(exportPath) + "/doodle_Export.json";
+bool mayaArchiveShotFbx::readExportJson(const dpath &exportPath) {
+  auto k_s_file = exportPath / "/doodle_Export.json";
   //读取文件
-  QFile k_file(k_s_file);
-  if (!k_file.open(QIODevice::ReadOnly)) return false;
-  auto k_exjson = QJsonDocument::fromJson(k_file.readAll());
+  boost::filesystem::ifstream rfile;
+  rfile.open(k_s_file,std::ifstream::in);
+  Json::CharReaderBuilder builder;
+  Json::String err;
+  Json::Value root;
 
-  if (k_exjson.isEmpty()) return false;
-  if (!k_exjson.isObject()) return false;
-
-  auto list = k_exjson.object();
-  try {
-    for (auto &&item :list)
-      p_soureFile.push_back(item.toArray()[0].toString());
+  if(!Json::parseFromStream(builder,rfile,&root,&err)){
+    DOODLE_LOG_WARN << err.c_str();
   }
-  catch (...) {
-    DOODLE_LOG_WARN << "获得导出文件失败, 导出maya失败" << k_s_file;
-    return false;
+  for(auto &&item:root){
+    p_soureFile.push_back(item[0].asString());
   }
   return true;
 }

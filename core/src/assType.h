@@ -8,7 +8,7 @@
 #include "coresqldata.h"
 CORE_NAMESPACE_S
 
-class assType : public coresqldata {
+class CORE_EXPORT assType : public coresqldata {
  public:
   explicit assType();
   void select(const int64_t & ID_);

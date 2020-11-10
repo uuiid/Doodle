@@ -27,10 +27,11 @@ shotClass::shotClass() :
 }
 
 void shotClass::select(const qint64 &ID_) {
-  doodle::Shotclass table;
+  doodle::Shotclass table{};
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row: db->run(
       sqlpp::select(sqlpp::all_of(table))
+          .from(table)
           .where(table.id == ID_)
   )) {
     idP = row.id;
@@ -43,36 +44,41 @@ void shotClass::select(const qint64 &ID_) {
 }
 
 void shotClass::insert() {
-  if(idP > 0) return;
+  if (idP > 0) return;
 
-  doodle::Shotclass table;
+  doodle::Shotclass table{};
   auto db = coreSql::getCoreSql().getConnection();
-  auto install = sqlpp::insert_into(table);
-  install.set(
-      table.shotClass = sqlpp::value_or_null(getClass_str())
-  );
-  if(p_ptr_shot)
-    install.set(table.shotClass = p_shot_id);
-  if(p_ptr_eps)
-    install.set(table.episodesId = p_eps_id);
+  auto install = sqlpp::dynamic_insert_into(*db,table)
+      .dynamic_set(table.shotClass = sqlpp::value_or_null(getClass_str()));
+//  auto test =   sqlpp::dynamic_insert_into(*db,table);
+//  test.dynamic_set();
+
+  if (p_ptr_shot)
+    install.insert_list.add(table.shotsId = p_shot_id);
+  if (p_ptr_eps)
+    install.insert_list.add(table.episodesId = p_eps_id);
 
   idP = db->insert(install);
-  if(idP == 0){
+  if (idP == 0) {
     DOODLE_LOG_WARN << "无法插入shot type" << getClass_str().c_str();
     throw std::runtime_error("not install shot");
   }
 }
 
 void shotClass::updateSQL() {
-  if(idP < 0 ) return;
-  doodle::Shotclass table;
+  if (idP < 0) return;
+  doodle::Shotclass table{};
   auto db = coreSql::getCoreSql().getConnection();
   db->update(sqlpp::update(table)
-  .set(table.shotClass = getClass_str())
-  .where(table.id == idP));
+                 .set(table.shotClass = getClass_str())
+                 .where(table.id == idP));
 }
 
 void shotClass::deleteSQL() {
+  doodle::Shotclass table{};
+  auto db = coreSql::getCoreSql().getConnection();
+  db->remove(sqlpp::remove_from(table)
+  .where(table.id == idP));
 }
 template<typename T>
 void shotClass::batchSetAttr(T &row) {
@@ -85,14 +91,15 @@ void shotClass::batchSetAttr(T &row) {
 }
 
 shotClassPtrList shotClass::getAll(const episodesPtr &episodes_ptr) {
-  shotClassPtrList list;
+  shotClassPtrList list{};
 
-  doodle::Shotclass table;
+  doodle::Shotclass table{};
   auto db = coreSql::getCoreSql().getConnection();
-  for(auto &&row:db->run(
+  for (auto &&row:db->run(
       sqlpp::select(sqlpp::all_of(table))
-      .where(table.episodesId == episodes_ptr->getIdP())
-      )){
+          .from(table)
+          .where(table.episodesId == episodes_ptr->getIdP())
+  )) {
     auto item = std::make_shared<shotClass>();
     item->batchSetAttr(row);
     item->setEpisodes(episodes_ptr);
@@ -102,14 +109,15 @@ shotClassPtrList shotClass::getAll(const episodesPtr &episodes_ptr) {
 }
 
 shotClassPtrList shotClass::getAll(const shotPtr &shot_ptr) {
-  shotClassPtrList list;
+  shotClassPtrList list{};
 
-  doodle::Shotclass table;
+  doodle::Shotclass table{};
   auto db = coreSql::getCoreSql().getConnection();
-  for(auto &&row:db->run(
+  for (auto &&row:db->run(
       sqlpp::select(sqlpp::all_of(table))
-          .where(table.episodesId == shot_ptr->getIdP())
-  )){
+          .from(table)
+          .where(table.shotsId == shot_ptr->getIdP())
+  )) {
     auto item = std::make_shared<shotClass>();
     item->batchSetAttr(row);
     item->setShot(shot_ptr);

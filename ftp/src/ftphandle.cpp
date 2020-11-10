@@ -17,7 +17,7 @@ ftphandle &ftphandle::getFTP()
     return install;
 }
 
-ftpSessionPtr ftphandle::session(const QString &host, int prot, const QString &name, const QString &password)
+ftpSessionPtr ftphandle::session(const std::string &host, int prot, const std::string &name, const std::string &password)
 {
     ftpSessionPtr session(new ftpSession());
     session->setInfo(host,prot,name,password);

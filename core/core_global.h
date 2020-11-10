@@ -19,6 +19,7 @@
 #define CORE_NAMESPACE_E };
 
 #define DOODLE_FFMPEG_PATH "tools/ffmpeg/bin"
+
 namespace sqlpp::mysql {
 class connection;
 struct connection_config;
@@ -68,37 +69,42 @@ using znchNamePtr = std::shared_ptr<znchName>;
 using assTypePtr = std::shared_ptr<assType>;
 using assInfoPtr = std::shared_ptr<assFileSqlInfo>;
 
+using fileSqlInfoPtr = std::shared_ptr<fileSqlInfo>;
 //列表引用类
+
 using episodesPtrList = std::vector<episodesPtr>;
 using shotPtrList = std::vector<shotPtr>;
 using shotClassPtrList = std::vector<shotClassPtr>;
 using shotTypePtrList = std::vector<shotTypePtr>;
 using shotInfoPtrList = std::vector<shotInfoPtr>;
-
 using assDepPtrList = std::vector<assDepPtr>;
+
 using assClassPtrList = std::vector<assClassPtr>;
 using assTypePtrList = std::vector<assTypePtr>;
 using assInfoPtrList = std::vector<assInfoPtr>;
-
-
-using fileSqlInfoPtr = std::shared_ptr<fileSqlInfo>;
-
 struct synPath_struct;
-using synPathListPtr = std::vector<synPath_struct>;
 
+using synPathListPtr = std::vector<synPath_struct>;
 class fileArchive;
+
 using fileArchivePtr = std::shared_ptr<fileArchive>;
 class mayaArchive;
 using mayaArchivePtr = std::shared_ptr<mayaArchive>;
-
 class mayaArchiveShotFbx;
+
 using mayaArchiveShotFbxPtr = std::shared_ptr<mayaArchiveShotFbx>;
 
+using dstring = std::string;
 using stringList = std::vector<QString>;
 
+
+using dstringList = std::vector<std::string>;
+
 using dpath = boost::filesystem::path;
-using dstring = std::string;
+using dpathPtr = std::shared_ptr<dpath>;
+using dpathList = std::vector<dpath>;
+
 CORE_NAMESPACE_E
 
 
-
+//Q_DECLARE_METATYPE(doCore::shotInfoPtr)

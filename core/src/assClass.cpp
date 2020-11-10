@@ -1,19 +1,21 @@
-﻿
-#include "coreset.h"
+﻿#include "assClass.h"
 #include "coresql.h"
 
-#include "assClass.h"
 #include "assdepartment.h"
+
 #include "znchName.h"
 
 #include "Logger.h"
 
 #include <memory>
-#include <stdexcept>
 
+#include <stdexcept>
 #include "coreOrm/assclass_sqlOrm.h"
+#include "coreOrm/znch_sqlOrm.h"
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
+
+SQLPP_ALIAS_PROVIDER(znID)
 
 CORE_NAMESPACE_S
 
@@ -25,10 +27,12 @@ assClass::assClass()
 }
 
 void assClass::select(const qint64 &ID_) {
-  doodle::Assclass table;
+  doodle::Assclass table{};
+
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row:db->run(
       sqlpp::select(sqlpp::all_of(table))
+          .from(table)
           .where(table.id == ID_)
   )) {
     name = row.assName;
@@ -41,12 +45,15 @@ void assClass::insert() {
   //id大于0就不逊要插入
   if (idP > 0) return;
 
-  doodle::Assclass table;
+  doodle::Assclass table{};
 
   auto db = coreSql::getCoreSql().getConnection();
-  idP = db->insert(sqlpp::insert_into(table).set(
-      table.assName = name,
-      table.assdepId = p_assDep_id));
+  auto install = sqlpp::insert_into(table).columns(table.assName,
+                                                   table.assdepId);
+  install.values.add(table.assName = name,
+                     table.assdepId = p_assDep_id);
+  idP = db->insert(install);
+
   if (idP == 0) {
     throw std::runtime_error("not insert assclass");
   }
@@ -60,22 +67,43 @@ void assClass::updateSQL() {
 }
 
 void assClass::deleteSQL() {
+  if (p_ptr_znch)
+    p_ptr_znch->deleteSQL();
+  doodle::Assclass table{};
+
+  auto db = coreSql::getCoreSql().getConnection();
+  db->remove(sqlpp::remove_from(table)
+                 .where(table.id == idP));
 }
 
 assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
   assClassPtrList list;
 
-  doodle::Assclass table;
+  doodle::Znch znNa{};
+  doodle::Assclass table{};//.left_outer_join(znNa)
   auto db = coreSql::getCoreSql().getConnection();
+  //sqlpp::all_of(table),sqlpp::all_of(znNa)
+
+
   for (auto &&row:db->run(
-      sqlpp::select(sqlpp::all_of(table))
+      sqlpp::select(table.id,table.assdepId,table.assName,znNa.localname,znNa.id.as(znID))
           .where(table.assdepId == ass_dep_ptr->getIdP())
+          .from(table.left_outer_join(znNa).on(table.id == znNa.assClassId))
+          .flags(sqlpp::distinct)
+          .order_by(table.assName.asc())
   )) {
     auto assclass = std::make_shared<assClass>();
 
     assclass->name = row.assName;
     assclass->idP = row.id;
     assclass->setAssDep(ass_dep_ptr);
+    if(row.localname._is_valid) {
+//      std::cout << row.localname <<std::endl;
+      assclass->p_ptr_znch = std::make_shared<znchName>(assclass.get());
+      assclass->p_ptr_znch->nameZNCH = row.localname;
+      assclass->p_ptr_znch->idP = row.znID;
+      assclass->p_ptr_znch->nameEN = row.assName;
+    }
 
     list.push_back(assclass);
   }
@@ -115,7 +143,6 @@ std::string assClass::getAssClass(const bool &isZNCH) {
   std::string str;
   if (!p_ptr_znch) {
     p_ptr_znch = std::make_shared<znchName>(this);
-    p_ptr_znch->select();
   }
   str = p_ptr_znch->getName();
   return str;
