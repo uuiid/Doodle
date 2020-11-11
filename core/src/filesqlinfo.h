@@ -10,7 +10,7 @@
 
 CORE_NAMESPACE_S
 
-class CORE_EXPORT fileSqlInfo : public coresqldata {
+class CORE_API fileSqlInfo : public coresqldata {
  public:
   //属性设置和查询
   fileSqlInfo();

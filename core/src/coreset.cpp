@@ -162,7 +162,6 @@ dstring coreSet::getUser() const {
 
 dstring coreSet::getUser_en() const {
   dopinyin::convert con;
-
   return boost::algorithm::to_lower_copy(con.toEn(user));//QString::fromStdString().toLower();
 }
 
@@ -281,8 +280,8 @@ synPathListPtr coreSet::getSynDir() {
     reand->parse(row.path.text,row.path.text + row.path.len,&root,&err);
     for (const auto &item : root) {
       synPath_struct fileSyn{};
-      fileSyn.local = std::make_shared<dpath>(item["Left"].asString());
-      fileSyn.server = std::make_shared<dpath>(item["Right"].asString());
+      fileSyn.local = item["Left"].asString();
+      fileSyn.server = item["Right"].asString();
       list.push_back(fileSyn);
     }
     DOODLE_LOG_INFO << QString::fromStdString(row.path);

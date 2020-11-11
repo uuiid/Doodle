@@ -6,11 +6,12 @@
 
 #include <QtCore/QDir>
 #include <boost/filesystem.hpp>
+#include <utility>
 #include "shotfilesqlinfo.h"
 CORE_NAMESPACE_S
-movieArchive::movieArchive(doCore::shotInfoPtr &shot_info_ptr)
+movieArchive::movieArchive(fileSqlInfoPtr shot_info_ptr)
     : fileArchive(),
-      p_info_ptr_(shot_info_ptr) {
+      p_info_ptr_(std::move(shot_info_ptr)) {
 
 }
 void movieArchive::insertDB() {
@@ -52,12 +53,7 @@ bool movieArchive::convertMovie(const dpath &moviePath) {
 bool movieArchive::update(const dpathList &filelist) {
   p_soureFile = filelist;
   DOODLE_LOG_INFO << filelist.front().c_str();
-
-  const shotTypePtr &kType = p_info_ptr_->findFileType("movie");
-  auto version = shotFileSqlInfo::getAll(kType).size();
-  p_info_ptr_->setVersionP(version + 1);
-  p_info_ptr_->setShotType(kType);
-  p_info_ptr_->setInfoP("拍屏");
+  setInfoAttr();
   _generateFilePath();
   generateCachePath();
 

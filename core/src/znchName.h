@@ -8,7 +8,7 @@
 #include "assClass.h"
 CORE_NAMESPACE_S
 
-class CORE_EXPORT znchName : public coresqldata {
+class CORE_API znchName : public coresqldata {
  public:
   explicit znchName(assClass *at_);
 

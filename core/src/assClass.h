@@ -6,7 +6,7 @@
 
 CORE_NAMESPACE_S
 
-class CORE_EXPORT assClass : public coresqldata {
+class CORE_API assClass : public coresqldata {
  public:
   assClass();
   void select(const qint64 &ID_);

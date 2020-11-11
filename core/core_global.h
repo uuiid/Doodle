@@ -10,16 +10,17 @@
 #include <memory>
 
 #if defined(CORE_LIBRARY)
-#  define CORE_EXPORT __declspec(dllexport)
+#  define CORE_API __declspec(dllexport)
 #else
-#  define CORE_EXPORT __declspec(dllimport)
+#  define CORE_API __declspec(dllimport)
 #endif
 
 #define CORE_NAMESPACE_S namespace doCore {
 #define CORE_NAMESPACE_E };
 
 #define DOODLE_FFMPEG_PATH "tools/ffmpeg/bin"
-
+#define DOODLE_BACKUP "backup"
+#define DOODLE_CONTENT "Content"
 namespace sqlpp::mysql {
 class connection;
 struct connection_config;
@@ -55,6 +56,7 @@ class assClass;
 class znchName;
 class assType;
 class assFileSqlInfo;
+class freeSynWrap;
 
 //共享指针引用类
 using shotPtr =std::shared_ptr<shot>;
@@ -103,6 +105,8 @@ using dstringList = std::vector<std::string>;
 using dpath = boost::filesystem::path;
 using dpathPtr = std::shared_ptr<dpath>;
 using dpathList = std::vector<dpath>;
+
+using freeSynWrapPtr = std::shared_ptr<freeSynWrap>;
 
 CORE_NAMESPACE_E
 

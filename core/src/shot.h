@@ -13,7 +13,7 @@
 
 CORE_NAMESPACE_S
 
-class CORE_EXPORT shot : public coresqldata {
+class CORE_API shot : public coresqldata {
  public:
 
   enum class e_shotAB {

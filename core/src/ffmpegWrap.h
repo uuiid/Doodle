@@ -7,7 +7,7 @@
 
 CORE_NAMESPACE_S
 
-class CORE_EXPORT ffmpegWrap {
+class CORE_API ffmpegWrap {
  public:
   explicit ffmpegWrap(const std::string& path);
 

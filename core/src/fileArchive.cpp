@@ -9,6 +9,8 @@
 
 #include "Logger.h"
 #include <boost/filesystem.hpp>
+#include <regex>
+
 CORE_NAMESPACE_S
 
 fileArchive::fileArchive()
@@ -40,60 +42,51 @@ bool fileArchive::update(const dpathList &filelist) {
   return true;
 }
 dpathList fileArchive::down(const dstring &path) {
-  return dpathList{};
+  _generateFilePath();
+  //获得缓存路径
+  generateCachePath();
+  _down({path});
+  return {path};
 }
 
 dpathList fileArchive::down() {
   _generateFilePath();
   //获得缓存路径
   generateCachePath();
-  _down(p_cacheFilePath);
+  _down(p_cacheFilePath.front());
   return p_cacheFilePath;
 }
 //保护功能
 void fileArchive::copyToCache() const {
   assert(p_soureFile.size() == p_cacheFilePath.size());
-  if (!p_cacheFilePath.empty()) //进行检查存在性,  存在即删除
-  {
-    for (auto &&item :p_cacheFilePath) {
-      dpath file(item);
-      if (boost::filesystem::exists(item))
-        boost::filesystem::remove(item);
-    }
-  }
-  //复制文件  如果无法复制输出错误
-  int i = 0;
-  for (auto &&item :p_soureFile) {
-    if (item == p_cacheFilePath[i])//如果路径相同就跳过
-      continue;
 
-    dpath file(item);
-    DOODLE_LOG_INFO << p_soureFile.front().generic_string().c_str()
-                    << "-copy->" << p_cacheFilePath.front().generic_string().c_str();
-    if (!boost::filesystem::exists(dpath(p_cacheFilePath[i]).parent_path()))
-      boost::filesystem::create_directories(dpath(p_cacheFilePath[i]).parent_path());
-    boost::filesystem::copy((item), (p_cacheFilePath[i]));
-    ++i;
+  //复制文件  如果无法复制输出错误
+  for (int index = 0; index < p_soureFile.size(); ++index) {
+    if (p_soureFile[index] == p_cacheFilePath[index])
+      continue;//如果路径相同就跳过
+
+    DOODLE_LOG_INFO << p_soureFile[index].generic_string().c_str()
+                    << "-copy->" << p_cacheFilePath[index].generic_string().c_str();
+    if (!boost::filesystem::exists(p_cacheFilePath[index].parent_path()))
+      boost::filesystem::create_directories(p_cacheFilePath[index].parent_path());
+    boost::filesystem::copy(p_soureFile[index], p_cacheFilePath[index]);
   }
 }
 bool fileArchive::isInCache() {
   bool has = true;
   if (!p_cacheFilePath.empty()) {
-    int i = 0;
-    for (auto &&item:p_cacheFilePath) {
-      auto fileinfo = dpath(item);
-
-      if (!boost::filesystem::exists(fileinfo.parent_path())) {//首先测试是否存在目录,不存在直接返回
+    for (int index = 0; index < p_cacheFilePath.size(); ++index) {
+      if (!boost::filesystem::exists(p_cacheFilePath[index].parent_path())) {
+        //首先测试是否存在目录,不存在直接返回
         has &= false;
-      } else if (boost::filesystem::exists(fileinfo.parent_path())) {//如果存在就看文件是否存在,  存在就删除
-        if (item == p_soureFile[i])
+      } else {        //如果存在就看文件是否存在,  存在就删除(boost::filesystem::exists(p_cacheFilePath[index].parent_path()))
+        if (p_cacheFilePath[index] == p_soureFile[index])
           has &= true;
         else {
-          boost::filesystem::remove(fileinfo);
+          boost::filesystem::remove(p_cacheFilePath[index]);
           has &= false;
         }
-      } else { has &= false; }
-      ++i;
+      }
     }
   }
   return has;
@@ -124,7 +117,7 @@ void fileArchive::_updata(const dpathList &pathList) {
     ++i;
   }
 }
-void fileArchive::_down(const dpathList &localPath) {
+void fileArchive::_down(const dpath &localPath) {
   assert(p_Path.size() == localPath.size());
   coreSet &set = coreSet::getSet();
   DOODLE_LOG_INFO
@@ -165,6 +158,25 @@ bool fileArchive::generateCachePath() {
   for (auto &&item :p_Path) {//这个是下载 要获得p_path服务器路径
     auto path = set.getCacheRoot() / item;
     p_cacheFilePath.push_back(path.generic_string());
+  }
+  return true;
+}
+bool fileArchive::copy(const dpath &sourePath, const dpath &trange_path) const noexcept {
+  if(boost::filesystem::exists(trange_path)) return false;
+  auto dregex = std::regex(sourePath.generic_string());
+  for(auto &item : boost::filesystem::recursive_directory_iterator(sourePath)){
+    if(boost::filesystem::is_regular_file(item.path())){
+      dpath basic_string = std::regex_replace(item.path().generic_string(),
+                                              dregex,
+                                              trange_path.generic_string());
+      DOODLE_LOG_INFO << basic_string.generic_string().c_str();
+      try {
+        boost::filesystem::create_directories(basic_string.parent_path());
+        boost::filesystem::copy(item.path(), basic_string);
+      } catch (boost::filesystem::filesystem_error &error) {
+        DOODLE_LOG_WARN << error.what();
+      }
+    }
   }
   return true;
 }

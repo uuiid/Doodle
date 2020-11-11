@@ -5,7 +5,7 @@
 
 CORE_NAMESPACE_S
 
-class CORE_EXPORT episodes : public coresqldata {
+class CORE_API episodes : public coresqldata {
 
  public:
   explicit episodes();

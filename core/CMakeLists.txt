@@ -1,6 +1,9 @@
 ﻿find_package(Qt5 CONFIG COMPONENTS Core Sql Xml REQUIRED)
 find_package(Sqlpp11 REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
+find_package(pugixml CONFIG REQUIRED)
+
+
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 
 find_package(SqlppMySql REQUIRED)
@@ -8,9 +11,13 @@ find_package(SqlppMySql REQUIRED)
 find_package(FFMPEG  REQUIRED )
 find_package(Boost COMPONENTS filesystem regex REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
-#由于这个库只有一个文件,  所以直接复制过的了事
-#file(COPY ${PROJECT_SOURCE_DIR}/sql-builder/sql.h
-#        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/src/sql_builder)
+#execute_process(
+#        COMMAND "C:/Program Files (x86)/bin2cpp 2.3.0/bin/bin2cpp.exe" --file=src/resource/_GlobalSettings.xml --output=src/resource/ --headerfile=freeSynGlob.h --identifier=freeSynGlob
+#        COMMAND "C:/Program Files (x86)/bin2cpp 2.3.0/bin/bin2cpp.exe" --file=src/resource/_GlobalSettings.xml --output=src/resource/ --headerfile=freeSynGlob.h --identifier=freeSynGlob
+#        WORKING_DIRECTORY
+#)
+
+
 
 #这个是拎一个ORM库  还没开始用预备着
 set(ORM_HEADER
@@ -85,7 +92,7 @@ set(CORE_ARCHIVE_SOURCE
         src/imageSequenArchive.cpp
         src/freeSynWrap.cpp
         src/mayaArchiveShotFbx.cpp
-        src/ffmpegWrap.cpp src/assdepartment.cpp src/assdepartment.h src/assType.cpp src/assType.h)
+        src/ffmpegWrap.cpp src/assdepartment.cpp src/assdepartment.h src/assType.cpp src/assType.h src/moveShotA.cpp src/moveShotA.h)
 
 set(RESOURCE_SOURCE
         core_resource.qrc)
@@ -106,6 +113,7 @@ target_link_libraries(core PUBLIC SqlppMySql)
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
 target_link_libraries(core PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(core PUBLIC jsoncpp_lib jsoncpp_object)
+target_link_libraries(core PUBLIC pugixml)
 target_link_libraries(core PUBLIC pinyin)
 target_link_libraries(core PUBLIC ftp)
 target_link_libraries(core PUBLIC logger)

@@ -5,7 +5,7 @@
 
 CORE_NAMESPACE_S
 
-class CORE_EXPORT assFileSqlInfo : public fileSqlInfo {
+class CORE_API assFileSqlInfo : public fileSqlInfo {
   Q_GADGET
  public:
   assFileSqlInfo();

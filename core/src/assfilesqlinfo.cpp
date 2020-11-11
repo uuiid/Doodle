@@ -90,6 +90,7 @@ assInfoPtrList assFileSqlInfo::getAll(const assDepPtr &fc_) {
       sqlpp::select(sqlpp::all_of(tab))
           .from(tab)
           .where(tab.assTypeId == fc_->getIdP())
+          .order_by(tab.filetime.desc())
   )) {
     auto assInfo = std::make_shared<assFileSqlInfo>();
     assInfo->batchSetAttr(row);
@@ -107,6 +108,7 @@ assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
   for (auto &&row :db->run(sqlpp::select(sqlpp::all_of(tab))
                                .from(tab)
                                .where(tab.assTypeId == AT_->getIdP())
+                               .order_by(tab.filetime.desc())
   )) {
     auto assInfo = std::make_shared<assFileSqlInfo>();
     assInfo->batchSetAttr(row);
@@ -124,6 +126,7 @@ assInfoPtrList assFileSqlInfo::getAll(const assTypePtr &ft_) {
   for (auto &&row :db->run(sqlpp::select(sqlpp::all_of(tab))
                                .from(tab)
                                .where(tab.assTypeId == ft_->getIdP())
+                               .order_by(tab.filetime.desc())
   )) {
     auto assInfo = std::make_shared<assFileSqlInfo>();
     assInfo->batchSetAttr(row);

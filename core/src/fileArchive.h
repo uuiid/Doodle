@@ -6,7 +6,7 @@
 #include <boost/filesystem.hpp>
 CORE_NAMESPACE_S
 
-class CORE_EXPORT fileArchive{
+class CORE_API fileArchive{
  public:
   fileArchive();
   ~fileArchive() = default;;
@@ -18,7 +18,7 @@ class CORE_EXPORT fileArchive{
 
   [[nodiscard]] state isState() const;
 
-  virtual bool update(const dpath &path);
+  bool update(const dpath &path);
   virtual bool update(const dpathList &filelist);
   virtual bool update();
   virtual dpathList down(const dstring &path);
@@ -41,7 +41,9 @@ class CORE_EXPORT fileArchive{
   //组合需要的路径  包括来源  缓存和服务器路径
   virtual void _generateFilePath() = 0;
   //下载文件
-  virtual void _down(const dpathList &localPath);
+  virtual void _down(const dpath &localPath);
+
+  bool copy(const dpath& sourePath,const  dpath& trange_path) const noexcept;
  protected:
   //复制的数据来源(本地)
   dpathList p_soureFile;

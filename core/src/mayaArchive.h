@@ -5,16 +5,16 @@
 #include "fileArchive.h"
 
 CORE_NAMESPACE_S
-class CORE_EXPORT mayaArchive : public fileArchive {
+class CORE_API mayaArchive : public fileArchive {
  public:
-  explicit mayaArchive(shotInfoPtr & shot_data);
+  explicit mayaArchive(fileSqlInfoPtr shot_data);
 
 
  protected:
   void insertDB() override;
   void _generateFilePath() override;
  private:
-  shotInfoPtr p_info_ptr_;
+  fileSqlInfoPtr p_info_ptr_;
 
 };
 

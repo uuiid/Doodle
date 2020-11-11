@@ -6,7 +6,7 @@ add_executable(test_my
         test_core.cpp
         test_ftp.cpp
         main.cpp
-        )
+        test_boost.cpp)
 #连接自己的库进行测试
 target_link_libraries(test_my
         PRIVATE core fileSyn ftp pinyin logger)

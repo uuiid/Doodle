@@ -7,7 +7,7 @@
 #include "fileArchive.h"
 #include <map>
 CORE_NAMESPACE_S
-class CORE_EXPORT mayaArchiveShotFbx : public fileArchive {
+class CORE_API mayaArchiveShotFbx : public fileArchive {
  public:
 
   explicit mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr);

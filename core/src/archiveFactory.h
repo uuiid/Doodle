@@ -7,7 +7,7 @@
 
 
 CORE_NAMESPACE_S
-class CORE_EXPORT archiveFactory{
+class CORE_API archiveFactory{
  public:
   static fileArchivePtr crearte(const QString & suffix);
 };

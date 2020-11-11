@@ -5,7 +5,7 @@
 
 CORE_NAMESPACE_S
 
-class CORE_EXPORT shotType : public coresqldata {
+class CORE_API shotType : public coresqldata {
  public:
   shotType();
   void select(const qint64 &ID_);

@@ -11,7 +11,7 @@
 #include "src/assdepartment.h"
 #include "src/assfilesqlinfo.h"
 #include "src/shotfilesqlinfo.h"
-
+#include "src/moveShotA.h"
 #include "src/mayaArchive.h"
 
 #include <gtest/gtest.h>
@@ -20,6 +20,10 @@
 
 #include <iostream>
 #include <src/movieArchive.h>
+#include <src/ueArchive.h>
+
+
+
 class CoreTest : public ::testing::Test {
  protected:
   void SetUp() override;
@@ -45,8 +49,8 @@ TEST_F(CoreTest, tets_quert) {
 
 TEST_F(CoreTest, set_synpath) {
   for (doCore::synPath_struct &p : set.getSynDir()) {
-    std::cout << "\n local -->" << p.local->generic_string()
-              << "\n server-->" << p.server->generic_string() << std::endl;;
+    std::cout << "\n local -->" << p.local.generic_string()
+              << "\n server-->" << p.server.generic_string() << std::endl;;
   }
 }
 
@@ -191,7 +195,7 @@ TEST_F(CoreTest, create_Move){
 
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
-  auto up_move = std::make_shared<doCore::movieArchive>(shotinfo);
+  auto up_move = std::make_shared<doCore::moveShotA>(shotinfo);
   up_move->update({"D:\\sc_064"});
 
   shotinfo->deleteSQL();
@@ -205,13 +209,20 @@ TEST_F(CoreTest, convert_Move){
 
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
-  auto up_move = std::make_shared<doCore::movieArchive>(shotinfo);
+  auto up_move = std::make_shared<doCore::moveShotA>(shotinfo);
   up_move->update({"D:\\DBXY_041_017_AN.mov"});
 
   shotinfo->deleteSQL();
 }
 TEST_F(CoreTest,Synfile_down_ue){
-  auto synpath = set.getSynDir();
+  auto epslist = doCore::episodes::getAll();
+  auto shotList = doCore::shot::getAll(epslist.front());
+  auto shclassList = doCore::shotClass::getAll(shotList.front());
+  auto shtypeList = doCore::shotType::getAll(shclassList.front());
 
+  auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
+  shotinfo->setShotType(shtypeList.front());
 
+  auto up_move = std::make_shared<doCore::ueArchive>(shotinfo);
+  up_move->update(R"(F:\Users\teXiao\Documents\Unreal Projects\test_tt\test_tt.uproject)");
 }

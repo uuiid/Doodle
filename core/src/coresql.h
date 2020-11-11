@@ -8,7 +8,7 @@ CORE_NAMESPACE_S
 * 数据库连接类
 * 全局静态类
 */
-class CORE_EXPORT coreSql{
+class CORE_API coreSql{
  public:
   static coreSql &getCoreSql();
   coreSql &operator=(const coreSql &s) = delete;

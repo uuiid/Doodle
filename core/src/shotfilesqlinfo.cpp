@@ -116,6 +116,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr &EP_) {
       sqlpp::select(sqlpp::all_of(tab))
           .from(tab)
           .where(tab.assTypeId == EP_->getIdP())
+          .order_by(tab.filetime.desc())
   )) {
     auto assInfo = std::make_shared<shotFileSqlInfo>();
     assInfo->batchSetAttr(row);
@@ -134,6 +135,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr &sh_) {
       sqlpp::select(sqlpp::all_of(tab))
           .from(tab)
           .where(tab.assTypeId == sh_->getIdP())
+          .order_by(tab.filetime.desc())
   )) {
     auto assInfo = std::make_shared<shotFileSqlInfo>();
     assInfo->batchSetAttr(row);
@@ -152,6 +154,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr &class_ptr) {
       sqlpp::select(sqlpp::all_of(tab))
           .from(tab)
           .where(tab.assTypeId == class_ptr->getIdP())
+          .order_by(tab.filetime.desc())
   )) {
     auto assInfo = std::make_shared<shotFileSqlInfo>();
     assInfo->batchSetAttr(row);
@@ -170,6 +173,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotTypePtr &type_ptr) {
       sqlpp::select(sqlpp::all_of(tab))
           .from(tab)
           .where(tab.assTypeId == type_ptr->getIdP())
+          .order_by(tab.filetime.desc())
   )) {
     auto assInfo = std::make_shared<shotFileSqlInfo>();
     assInfo->batchSetAttr(row);

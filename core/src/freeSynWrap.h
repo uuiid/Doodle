@@ -6,9 +6,15 @@
 #include <QDomDocument>
 #include <QTemporaryFile>
 
+
+namespace pugi{
+class xml_document;
+class xml_node;
+}
+
+
 CORE_NAMESPACE_S
-class CORE_EXPORT freeSynWrap {
-Q_GADGET
+class CORE_API freeSynWrap {
  public:
   freeSynWrap();
   enum class syn_set{
@@ -16,33 +22,41 @@ Q_GADGET
     upload = 1,
     twoWay = 2
   };
-  bool write();
+  ~freeSynWrap();
+  bool run();
+
   //添加同步文件夹
   void addSynFile(const synPathListPtr & path_list_ptr);
   //添加包含和排除文件夹
-  void addInclude(const QStringList & include_list);
-  void addExclude(const QStringList & exclude_list);
+  void addInclude(const dstringList &include_list);
+  void addExclude(const dstringList &exclude_list);
   //为每个文件夹单独设置文件夹
-  void addSubIncludeExclude(const int sub,const QStringList& include_lsit,
-                            const QStringList &exclude_list);
-  //为每个子目设置备份文件夹
+  void addSubIncludeExclude(const int sub, const dstringList &include_lsit,
+                            const dstringList &exclude_list);
+  //为每个子目设置备份文件夹和同步备份方式
   void addSubSynchronize(int sub_index,
                          const syn_set & synchronize_set,
-                         const QString & versioning_folder
+                         const dpath &versioning_folder
                          );
   //设置同步方式和备份文件夹
-  void setVersioningFolder(const syn_set & synchronize_set,const QString & folder);
+  void setVersioningFolder(const syn_set & synchronize_set, const dpath &folder);
  private:
+
   //设置文件夹的同步方式和备份
   void setSyn(const syn_set & set,
-              const QString & versioning_folder,
-              QDomNode &parent_node
+              const dpath &versioning_folder,
+              pugi::xml_node *parent_node
               );
+  bool write();
   void copyGlobSetting();
-  QDomDocument p_doc_;
-  QDomElement p_root_;
-  QFile p_file_;
-  QTemporaryFile p_tem_golb_;
-  QTemporaryFile p_tem_config;
+  dstring createIpPath(const dstring & val);
+  static dstring decode64(const dstring &val);
+  static dstring encode64(const dstring &val);
+
+  bool hasInclude;
+
+  std::shared_ptr<pugi::xml_document> p_doc_;
+  dpathPtr p_tem_golb_;
+  dpathPtr p_tem_config;
 };
 CORE_NAMESPACE_E

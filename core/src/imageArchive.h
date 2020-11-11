@@ -3,7 +3,7 @@
 #include "core_global.h"
 #include "fileArchive.h"
 CORE_NAMESPACE_S
-class CORE_EXPORT imageArchive : public fileArchive {
+class CORE_API imageArchive : public fileArchive {
 
 };
 

@@ -2,7 +2,7 @@
 
 #include "core_global.h"
 #include <map>
-
+#include <boost/filesystem.hpp>
 CORE_NAMESPACE_S
 
 enum class dep {
@@ -18,15 +18,15 @@ enum class dep {
 };
 
 struct synPath_struct {
-  dpathPtr local;
-  dpathPtr server;
+  dpath local;
+  dpath server;
 };
 
 /*
 *全局静态设置类
 */
 
-class CORE_EXPORT coreSet{
+class CORE_API coreSet{
 
  public:
   static coreSet &getSet();
