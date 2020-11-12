@@ -1,5 +1,7 @@
 find_package(Qt5 CONFIG COMPONENTS Core Network REQUIRED)
 find_package(CURL CONFIG REQUIRED)
+find_package(Boost COMPONENTS filesystem REQUIRED)
+
 set(HEADER_FILES
         ftp_global.h
         src/ftphandle.h
@@ -13,7 +15,10 @@ add_library(ftp SHARED
         )
 
 target_link_libraries(ftp PUBLIC Qt5::Core Qt5::Network CURL::libcurl)
+target_link_libraries(ftp PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(ftp PUBLIC logger)
+
+
 target_compile_definitions(ftp PRIVATE FTP_LIBRARY)
 
 target_include_directories(ftp PUBLIC ${CMAKE_CURRENT_LIST_DIR})

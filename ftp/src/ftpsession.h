@@ -17,10 +17,10 @@ struct oFileInfo {
   double fileSize;
 };
 
-class FTP_EXPORT ftpSession  {
+class FTP_EXPORT ftpSession {
 
  public:
-  ~ftpSession() ;
+  ~ftpSession();
 
   bool down(const dstring &localFile, const dstring &remoteFile);
   bool downFolder(const dstring &localFile, const dstring &remoteFile);
@@ -28,8 +28,8 @@ class FTP_EXPORT ftpSession  {
   bool uploadFolder(const dstring &localFolder, const dstring &remoteFolder);
   oFileInfo fileInfo(const dstring &remoteFile);
   //获得文件列表
-  std::vector<oFileInfo> list(const QString &remoteFolder);
-
+  std::vector<oFileInfo> list(const dstring &remoteFolder);
+  bool createdir(const dstring &path);
   friend ftpSessionPtr ftphandle::session(const dstring &host,
                                           int prot,
                                           const dstring &name,

@@ -81,25 +81,6 @@ void assFileSqlInfo::updateSQL() {
   db->update(updata);
 }
 
-assInfoPtrList assFileSqlInfo::getAll(const assDepPtr &fc_) {
-  doodle::Basefile tab{};
-  assInfoPtrList list{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row :db->run(
-      sqlpp::select(sqlpp::all_of(tab))
-          .from(tab)
-          .where(tab.assTypeId == fc_->getIdP())
-          .order_by(tab.filetime.desc())
-  )) {
-    auto assInfo = std::make_shared<assFileSqlInfo>();
-    assInfo->batchSetAttr(row);
-    assInfo->setAssDep(fc_);
-    list.push_back(assInfo);
-  }
-  return list;
-}
-
 assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
   doodle::Basefile tab{};
   assInfoPtrList list;
@@ -107,7 +88,7 @@ assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
   auto db = coreSql::getCoreSql().getConnection();
   for (auto &&row :db->run(sqlpp::select(sqlpp::all_of(tab))
                                .from(tab)
-                               .where(tab.assTypeId == AT_->getIdP())
+                               .where(tab.assClassId == AT_->getIdP())
                                .order_by(tab.filetime.desc())
   )) {
     auto assInfo = std::make_shared<assFileSqlInfo>();

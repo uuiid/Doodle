@@ -21,8 +21,8 @@ class CORE_API fileArchive{
   bool update(const dpath &path);
   virtual bool update(const dpathList &filelist);
   virtual bool update();
-  virtual dpathList down(const dstring &path);
-  virtual dpathList down();
+  virtual dpath down(const dstring &path);
+  virtual dpath down();
 
  protected:
   //复制到和缓存文件夹

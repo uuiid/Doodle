@@ -41,20 +41,20 @@ bool fileArchive::update(const dpathList &filelist) {
   insertDB();
   return true;
 }
-dpathList fileArchive::down(const dstring &path) {
+dpath fileArchive::down(const dstring &path) {
   _generateFilePath();
   //获得缓存路径
   generateCachePath();
-  _down({path});
+  _down(path);
   return {path};
 }
 
-dpathList fileArchive::down() {
+dpath fileArchive::down() {
   _generateFilePath();
   //获得缓存路径
   generateCachePath();
-  _down(p_cacheFilePath.front());
-  return p_cacheFilePath;
+  _down(p_cacheFilePath.front().parent_path());
+  return p_cacheFilePath.front();
 }
 //保护功能
 void fileArchive::copyToCache() const {
@@ -118,7 +118,6 @@ void fileArchive::_updata(const dpathList &pathList) {
   }
 }
 void fileArchive::_down(const dpath &localPath) {
-  assert(p_Path.size() == localPath.size());
   coreSet &set = coreSet::getSet();
   DOODLE_LOG_INFO
       << "登录 : "
@@ -131,14 +130,12 @@ void fileArchive::_down(const dpath &localPath) {
       set.getProjectname() + set.getUser_en(),
       set.getUser_en());
 
-  int i = 0;
   for (auto &&item : p_Path) {
-    auto k_down_path = dpath(localPath[i]).parent_path();
-    if (!boost::filesystem::exists(k_down_path))
-      boost::filesystem::create_directories(k_down_path);
-    if (!session->down((localPath[i].generic_string()),
-                       (item.generic_string()))) {
-      DOODLE_LOG_WARN << "无法下载文件" << (item).c_str();
+    if (!boost::filesystem::exists(localPath))
+      boost::filesystem::create_directories(localPath);
+    if (!session->down((localPath/item.filename()).generic_string(),
+                       item.generic_string())) {
+      DOODLE_LOG_WARN << "无法下载文件" << item.c_str();
       p_state_ = state::fail;
       return;
     }

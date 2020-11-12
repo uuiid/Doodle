@@ -214,7 +214,7 @@ TEST_F(CoreTest, convert_Move){
 
   shotinfo->deleteSQL();
 }
-TEST_F(CoreTest,Synfile_down_ue){
+TEST_F(CoreTest,Synfile_up_ue){
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll(shotList.front());
@@ -225,4 +225,15 @@ TEST_F(CoreTest,Synfile_down_ue){
 
   auto up_move = std::make_shared<doCore::ueArchive>(shotinfo);
   up_move->update(R"(F:\Users\teXiao\Documents\Unreal Projects\test_tt\test_tt.uproject)");
+}
+TEST_F(CoreTest,Synfile_dow_ue){
+  auto epslist = doCore::episodes::getAll();
+  auto shotList = doCore::shot::getAll(epslist.front());
+  auto shclassList = doCore::shotClass::getAll(shotList.front());
+  auto shtypeList = doCore::shotType::getAll(shclassList.front());
+
+  auto shotinfoList  = doCore::shotFileSqlInfo::getAll(shtypeList.front());
+  auto up_move = std::make_shared<doCore::ueArchive>(shotinfoList.front());
+  up_move->down(R"(F:\Users\)");
+  shotinfoList.front()->deleteSQL();
 }

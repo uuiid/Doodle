@@ -3,15 +3,14 @@
 //
 
 #include "mayaArchiveShotFbx.h"
+#include <src/shotfilesqlinfo.h>
+#include <src/shotClass.h>
+#include <src/shottype.h>
+#include <src/mayaArchive.h>
 
-#include "shotfilesqlinfo.h"
-#include "shotClass.h"
-#include "shottype.h"
-#include "mayaArchive.h"
-
-#include "episodes.h"
-#include "shot.h"
-#include "Logger.h"
+#include <src/episodes.h>
+#include <src/shot.h>
+#include <Logger.h>
 
 #include <QDir>
 
@@ -42,7 +41,7 @@ bool mayaArchiveShotFbx::exportFbx(shotInfoPtr &shot_data) {
     throw std::runtime_error("没有数据传入");
   }
   auto kArchivePtr = std::make_shared<mayaArchive>(shot_data);
-  auto info = dpath (kArchivePtr->down().front());
+  auto info = dpath (kArchivePtr->down());
 //  p_temporary_file_ = std::make_shared<QTemporaryFile>();
 
 

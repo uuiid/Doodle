@@ -8,7 +8,7 @@
 
 #include <QDirIterator>
 #include <memory>
-
+#include <boost/filesystem.hpp>
 FTPSPACE_S
 ftpSession::ftpSession() {
   ptrUrl = std::make_shared<QUrl>();
@@ -35,6 +35,22 @@ void ftpSession::setInfo(const dstring &host, int prot, const dstring &name, con
     ptrUrl->setPassword(QString::fromStdString(password));
   } else {
     ptrUrl->setPassword("");
+  }
+}
+
+bool ftpSession::createdir(const dstring &path) {
+  if(path.empty()) return false;
+  if (!curlSession) return false;
+
+  curl_easy_reset(curlSession);
+
+  struct curl_slist *headerList = nullptr;
+
+  std::string strRemoteFolder;
+  std::string strRemoteNewFolderName;
+  auto uFound = path.find_last_of('/');
+  if(uFound != std::string::npos){
+
   }
 }
 
@@ -90,7 +106,6 @@ bool ftpSession::upload(const dstring &localFile, const dstring &remoteFile) {
   }
   return true;
 }
-
 oFileInfo ftpSession::fileInfo(const dstring &remoteFile) {
   if (remoteFile.empty()) throw std::runtime_error("remote file is NULL");
   ptrUrl->setPath(QDir::cleanPath(QString::fromStdString(remoteFile)));
@@ -131,12 +146,13 @@ oFileInfo ftpSession::fileInfo(const dstring &remoteFile) {
 
   return info;
 }
+
 /*
 获得服务器上的文件列表
 */
-std::vector<oFileInfo> ftpSession::list(const QString &remoteFolder) {
-  const QStringList remote = remoteFolder.split("/", QString::SkipEmptyParts);
-  ptrUrl->setPath(remoteFolder);
+std::vector<oFileInfo> ftpSession::list(const dstring &remoteFolder) {
+  const QStringList remote = QString::fromStdString(remoteFolder).split("/", QString::SkipEmptyParts);
+  ptrUrl->setPath(QString::fromStdString(remoteFolder));
 
   curl_easy_reset(curlSession);//重置保护
   QString folderList;
@@ -205,7 +221,6 @@ size_t ftpSession::writeStringCallbask(void *ptr, size_t size, size_t nmemb, voi
   }
   return 0;
 }
-
 CURLcode ftpSession::perform() {
   CURLcode err;
   err = curl_easy_perform(curlSession);
@@ -242,7 +257,7 @@ bool ftpSession::downFolder(const dstring &localFile, const dstring &remoteFile)
   if (!k_lo_dir.exists())
     k_lo_dir.mkpath(QDir::cleanPath(localFile_));
 
-  auto k_list = list(remoteFile_ + "/");
+  auto k_list = list((remoteFile_ + "/").toStdString());
   for (auto &&k_f : k_list) {
     //文件夹的话直接递归
     auto k_loca_path = QString::fromStdString(k_f.filepath);

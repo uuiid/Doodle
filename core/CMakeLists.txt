@@ -80,6 +80,10 @@ set(CORE_ARCHIVE_HEADER
         src/freeSynWrap.h
         src/mayaArchiveShotFbx.h
         src/ffmpegWrap.h
+        src/ueSynArchive.h
+        src/moveShotA.h
+        src/assType.h
+        src/assdepartment.h
         )
 #这个是和文件服务器交互的实现文件
 set(CORE_ARCHIVE_SOURCE
@@ -92,7 +96,12 @@ set(CORE_ARCHIVE_SOURCE
         src/imageSequenArchive.cpp
         src/freeSynWrap.cpp
         src/mayaArchiveShotFbx.cpp
-        src/ffmpegWrap.cpp src/assdepartment.cpp src/assdepartment.h src/assType.cpp src/assType.h src/moveShotA.cpp src/moveShotA.h)
+        src/ffmpegWrap.cpp
+        src/assdepartment.cpp
+        src/assType.cpp
+        src/moveShotA.cpp
+        src/ueSynArchive.cpp
+        )
 
 set(RESOURCE_SOURCE
         core_resource.qrc)

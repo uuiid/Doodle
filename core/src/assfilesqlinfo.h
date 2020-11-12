@@ -14,7 +14,6 @@ class CORE_API assFileSqlInfo : public fileSqlInfo {
   void insert() override;
   void updateSQL() override;
 
-  static assInfoPtrList getAll(const assDepPtr &fc_);
   static assInfoPtrList getAll(const assClassPtr &AT_);
   static assInfoPtrList getAll(const assTypePtr &ft_);
 

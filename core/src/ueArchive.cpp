@@ -43,11 +43,14 @@ void ueArchive::_updata(const dpathList &pathList) {
 void ueArchive::_down(const dpath &localPath) {
   synPath_struct syn_path_struct{};
   syn_path_struct.server = p_Path.back();
-  syn_path_struct.local = localPath.back()/DOODLE_CONTENT;
+  syn_path_struct.local = localPath.parent_path()/DOODLE_CONTENT;
   p_syn->addSynFile({syn_path_struct});
   p_syn->setVersioningFolder(freeSynWrap::syn_set::down,
                              p_Path.front().parent_path() / DOODLE_BACKUP);
   p_syn->run();
+  p_Path.pop_back();
+  p_cacheFilePath.pop_back();
+  fileArchive::_down(localPath);
 }
 CORE_NAMESPACE_E
 

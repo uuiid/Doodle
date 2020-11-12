@@ -44,13 +44,14 @@ dpathList fileSqlInfo::getFileList() const {
   JSONCPP_STRING err;
 
   auto jsonReader = std::unique_ptr<Json::CharReader>(char_reader_builder.newCharReader());
-  if (jsonReader->parse(fileStateP.c_str(), fileStateP.c_str() + fileStateP.length(),
+  const int len = filepathP.length();
+  if (jsonReader->parse(filepathP.c_str(), filepathP.c_str() + len,
                         &root, &err)) {
     for (auto &&x:root) {
-      list_.push_back((dpath) x.asString());
+      list_.push_back(x.asString());
     }
   } else {
-    list_.push_back((dpath) fileStateP);
+    list_.push_back(fileStateP);
   }
   return list_;
 }
