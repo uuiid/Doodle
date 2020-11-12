@@ -2,7 +2,6 @@
 #include "ftpsession.h"
 
 #include <QUrl>
-#include <curl/curl.h>
 #include <stdexcept>
 
 FTPSPACE_S

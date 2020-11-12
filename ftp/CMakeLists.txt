@@ -1,4 +1,4 @@
-find_package(Qt5 CONFIG COMPONENTS Core Network REQUIRED)
+find_package(Qt5 CONFIG COMPONENTS Core REQUIRED)
 find_package(CURL CONFIG REQUIRED)
 find_package(Boost COMPONENTS filesystem REQUIRED)
 
@@ -14,7 +14,8 @@ add_library(ftp SHARED
         src/ftpsession.cpp
         )
 
-target_link_libraries(ftp PUBLIC Qt5::Core Qt5::Network CURL::libcurl)
+target_link_libraries(ftp PUBLIC Qt5::Core)
+target_link_libraries(ftp PUBLIC CURL::libcurl)
 target_link_libraries(ftp PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(ftp PUBLIC logger)
 

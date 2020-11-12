@@ -29,7 +29,8 @@ class FTP_EXPORT ftpSession {
   oFileInfo fileInfo(const dstring &remoteFile);
   //获得文件列表
   std::vector<oFileInfo> list(const dstring &remoteFolder);
-  bool createdir(const dstring &path);
+  bool createDir(const dstring &path);
+  bool createDir(const std::vector<dstring> &path);
   friend ftpSessionPtr ftphandle::session(const dstring &host,
                                           int prot,
                                           const dstring &name,
@@ -55,4 +56,7 @@ class FTP_EXPORT ftpSession {
   mutable CURL *curlSession;
 };
 
+inline bool ftpSession::createDir(const dstring &path) {
+  return createDir(std::vector<dstring>{path});
+}
 FTPSPACE_E

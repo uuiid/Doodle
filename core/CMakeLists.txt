@@ -101,7 +101,7 @@ set(CORE_ARCHIVE_SOURCE
         src/assType.cpp
         src/moveShotA.cpp
         src/ueSynArchive.cpp
-        )
+        src/coreDataManager.cpp src/coreDataManager.h)
 
 set(RESOURCE_SOURCE
         core_resource.qrc)

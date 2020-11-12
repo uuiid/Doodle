@@ -105,7 +105,8 @@ void fileArchive::_updata(const dpathList &pathList) {
       set.getIpFtp(),
       21,
       set.getProjectname() + set.getUser_en(),
-      set.getUser_en());
+      set.getUser_en()
+      );
 
   int i = 0;
   for (auto &&item:p_cacheFilePath) {

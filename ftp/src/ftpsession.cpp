@@ -38,20 +38,40 @@ void ftpSession::setInfo(const dstring &host, int prot, const dstring &name, con
   }
 }
 
-bool ftpSession::createdir(const dstring &path) {
+bool ftpSession::createDir(const std::vector<dstring> &path) {
   if(path.empty()) return false;
   if (!curlSession) return false;
 
   curl_easy_reset(curlSession);
 
-  struct curl_slist *headerList = nullptr;
+  std::string comm("MKD ");
 
-  std::string strRemoteFolder;
-  std::string strRemoteNewFolderName;
-  auto uFound = path.find_last_of('/');
-  if(uFound != std::string::npos){
+  ptrUrl->setPath("/");
+  curl_easy_setopt(curlSession,CURLOPT_NOBODY, 1L);
+  curl_easy_setopt(curlSession,CURLOPT_HEADER, 1L);
+  curl_easy_setopt(curlSession,CURLOPT_FTP_CREATE_MISSING_DIRS,CURLFTP_CREATE_DIR );
+  curl_easy_setopt(curlSession,CURLOPT_URL,ptrUrl->toString().toStdString().c_str());
+//  comm.append("MKD ").append(path);
+  boost::filesystem::path p;
+  for (const auto &path_ : path) {
+    boost::filesystem::path kpath(path_);
+    for (const auto &item : kpath) {
+      p = p / item;
+      if(item == *kpath.begin())
+        continue;
+      struct curl_slist *headerList = nullptr;
+      headerList = curl_slist_append(headerList,(comm + p.generic_string()).c_str());
+      curl_easy_setopt(curlSession, CURLOPT_POSTQUOTE, headerList);
 
+      CURLcode err = perform();
+      if (err != CURLE_OK && err != CURLE_QUOTE_ERROR) {
+        DOODLE_LOG_WARN << err << curl_easy_strerror(err) << ptrUrl->toString().toStdString().c_str();
+        break;
+      }
+      curl_slist_free_all(headerList);
+    }
   }
+  return true;
 }
 
 bool ftpSession::down(const dstring &localFile, const dstring &remoteFile) {
@@ -80,7 +100,6 @@ bool ftpSession::down(const dstring &localFile, const dstring &remoteFile) {
   }
   return true;
 }
-
 bool ftpSession::upload(const dstring &localFile, const dstring &remoteFile) {
   //打开本地文件准备上传
   inputfile->setFileName(QString::fromStdString(localFile));
@@ -106,6 +125,7 @@ bool ftpSession::upload(const dstring &localFile, const dstring &remoteFile) {
   }
   return true;
 }
+
 oFileInfo ftpSession::fileInfo(const dstring &remoteFile) {
   if (remoteFile.empty()) throw std::runtime_error("remote file is NULL");
   ptrUrl->setPath(QDir::cleanPath(QString::fromStdString(remoteFile)));
@@ -211,7 +231,6 @@ size_t ftpSession::readFileCallbask(void *buff, size_t size, size_t nmemb, void 
 size_t ftpSession::notCallbask(void *buff, size_t size, size_t nmemb, void *data) {
   return size * nmemb;
 }
-
 size_t ftpSession::writeStringCallbask(void *ptr, size_t size, size_t nmemb, void *data) {
   if ((size == 0) || (nmemb == 0) || ((size * nmemb) < 1) || (data == nullptr)) return 0;
   auto *ptrlist = static_cast<QString *>(data);

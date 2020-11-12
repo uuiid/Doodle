@@ -21,7 +21,7 @@
 #include <iostream>
 #include <src/movieArchive.h>
 #include <src/ueArchive.h>
-
+#include <src/ueSynArchive.h>
 
 
 class CoreTest : public ::testing::Test {
@@ -236,4 +236,8 @@ TEST_F(CoreTest,Synfile_dow_ue){
   auto up_move = std::make_shared<doCore::ueArchive>(shotinfoList.front());
   up_move->down(R"(F:\Users\)");
   shotinfoList.front()->deleteSQL();
+}
+TEST_F(CoreTest,Synfile){
+  set.setSyneps(41);
+  doCore::ueSynArchive().down();
 }

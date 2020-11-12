@@ -6,11 +6,13 @@
 
 
 CORE_NAMESPACE_S
-class ueSynArchive : public fileArchive {
+class CORE_API ueSynArchive : public fileArchive {
  public:
   ueSynArchive();
   dpath down() override;
   bool update() override;
+  static bool makeDir() ;
+
  protected:
   void insertDB() override;
   void _generateFilePath() override;

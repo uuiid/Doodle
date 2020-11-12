@@ -67,3 +67,10 @@ TEST(ftp,uploadFolder){
                                                                     "zhangyubin");
   ASSERT_TRUE(session->uploadFolder("D:/tmp/render", "/cache/test"));
 }
+TEST(ftp,createFolder){
+  doFtp::ftpSessionPtr session = doFtp::ftphandle::getFTP().session("192.168.10.213",
+                                                                    21,
+                                                                    "dubuxiaoyaozhangyubin",
+                                                                    "zhangyubin");
+  ASSERT_TRUE(session->createDir("/tmp/test/dddd"));
+}
