@@ -6,7 +6,8 @@
 
 CORE_NAMESPACE_S
 
-class CORE_API shotClass : public coresqldata {
+class CORE_API shotClass : public coresqldata ,
+                           private std::enable_shared_from_this<shotClass>{
  public:
   shotClass();
   void select(const qint64 &ID_);

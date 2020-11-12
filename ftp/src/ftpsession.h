@@ -5,7 +5,7 @@
 #include "ftphandle.h"
 
 #include <curl/curl.h>
-
+#include <boost/property_tree/ptree.hpp>
 class QFile;
 class QUrl;
 
@@ -16,7 +16,6 @@ struct oFileInfo {
   time_t fileMtime;
   double fileSize;
 };
-
 class FTP_EXPORT ftpSession {
 
  public:
@@ -30,7 +29,7 @@ class FTP_EXPORT ftpSession {
   //获得文件列表
   std::vector<oFileInfo> list(const dstring &remoteFolder);
   bool createDir(const dstring &path);
-  bool createDir(const std::vector<dstring> &path);
+  bool createDir(const std::vector<dstring> &path, bool allPath);
   friend ftpSessionPtr ftphandle::session(const dstring &host,
                                           int prot,
                                           const dstring &name,
@@ -57,6 +56,6 @@ class FTP_EXPORT ftpSession {
 };
 
 inline bool ftpSession::createDir(const dstring &path) {
-  return createDir(std::vector<dstring>{path});
+  return createDir(std::vector<dstring>{path}, true);
 }
 FTPSPACE_E

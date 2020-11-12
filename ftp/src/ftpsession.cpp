@@ -9,6 +9,7 @@
 #include <QDirIterator>
 #include <memory>
 #include <boost/filesystem.hpp>
+#include <iostream>
 FTPSPACE_S
 ftpSession::ftpSession() {
   ptrUrl = std::make_shared<QUrl>();
@@ -38,8 +39,8 @@ void ftpSession::setInfo(const dstring &host, int prot, const dstring &name, con
   }
 }
 
-bool ftpSession::createDir(const std::vector<dstring> &path) {
-  if(path.empty()) return false;
+bool ftpSession::createDir(const std::vector<dstring> &path, bool allPath) {
+  if (path.empty()) return false;
   if (!curlSession) return false;
 
   curl_easy_reset(curlSession);
@@ -47,33 +48,47 @@ bool ftpSession::createDir(const std::vector<dstring> &path) {
   std::string comm("MKD ");
 
   ptrUrl->setPath("/");
-  curl_easy_setopt(curlSession,CURLOPT_NOBODY, 1L);
-  curl_easy_setopt(curlSession,CURLOPT_HEADER, 1L);
-  curl_easy_setopt(curlSession,CURLOPT_FTP_CREATE_MISSING_DIRS,CURLFTP_CREATE_DIR );
-  curl_easy_setopt(curlSession,CURLOPT_URL,ptrUrl->toString().toStdString().c_str());
+
 //  comm.append("MKD ").append(path);
-  boost::filesystem::path p;
+
+  curl_easy_setopt(curlSession, CURLOPT_URL, ptrUrl->toString().toStdString().c_str());
+  curl_easy_setopt(curlSession, CURLOPT_NOBODY, 1L);
+  curl_easy_setopt(curlSession, CURLOPT_HEADER, 1L);
+  curl_easy_setopt(curlSession, CURLOPT_FTP_CREATE_MISSING_DIRS, CURLFTP_CREATE_DIR);
+
   for (const auto &path_ : path) {
     boost::filesystem::path kpath(path_);
-    for (const auto &item : kpath) {
-      p = p / item;
-      if(item == *kpath.begin())
-        continue;
-      struct curl_slist *headerList = nullptr;
-      headerList = curl_slist_append(headerList,(comm + p.generic_string()).c_str());
-      curl_easy_setopt(curlSession, CURLOPT_POSTQUOTE, headerList);
 
-      CURLcode err = perform();
-      if (err != CURLE_OK && err != CURLE_QUOTE_ERROR) {
-        DOODLE_LOG_WARN << err << curl_easy_strerror(err) << ptrUrl->toString().toStdString().c_str();
-        break;
+    boost::filesystem::path p;
+    if (allPath) {
+      for (const auto &item : kpath) {
+        p = p / item;
+        if (item == *kpath.begin()) {
+          continue;
+        }
+        struct curl_slist *headerList = nullptr;
+        headerList = curl_slist_append(headerList, (comm + p.generic_string()).c_str());
+
+        curl_easy_setopt(curlSession, CURLOPT_POSTQUOTE, headerList);
+
+        CURLcode err = perform();
+        if (err != CURLE_OK && err != CURLE_QUOTE_ERROR) {
+          DOODLE_LOG_WARN << err << curl_easy_strerror(err) << ptrUrl->toString().toStdString().c_str();
+          break;
+        }
+        curl_slist_free_all(headerList);
       }
-      curl_slist_free_all(headerList);
+    } else {
+      struct curl_slist *headerList = nullptr;
+      headerList = curl_slist_append(headerList, (comm + kpath.generic_string()).c_str());
+      curl_easy_setopt(curlSession, CURLOPT_POSTQUOTE, headerList);
+      CURLcode err = perform();
+      if (err != CURLE_OK && err != CURLE_QUOTE_ERROR)
+        DOODLE_LOG_WARN << err << curl_easy_strerror(err) << ptrUrl->toString().toStdString().c_str();
     }
   }
   return true;
 }
-
 bool ftpSession::down(const dstring &localFile, const dstring &remoteFile) {
   //打开文件
   outfile->setFileName(QString::fromStdString(localFile));
@@ -153,7 +168,7 @@ oFileInfo ftpSession::fileInfo(const dstring &remoteFile) {
     if (err != CURLE_OK || info.fileSize < 0) {
       info.fileSize = 0;
       info.isFolder = true;
-    } else{
+    } else {
       info.isFolder = false;
     }
 
@@ -288,4 +303,5 @@ bool ftpSession::downFolder(const dstring &localFile, const dstring &remoteFile)
   }
   return err;
 }
+
 FTPSPACE_E

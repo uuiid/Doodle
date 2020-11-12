@@ -17,6 +17,7 @@
 #include <iostream>
 #include <boost/format.hpp>
 #include <boost/filesystem.hpp>
+#include <src/coreDataManager.h>
 CORE_NAMESPACE_S
 
 assFileSqlInfo::assFileSqlInfo() :
@@ -66,6 +67,7 @@ void assFileSqlInfo::insert() {
     DOODLE_LOG_WARN << fileStateP.c_str();
     throw std::runtime_error("");
   }
+  coreDataManager::get().setAssInfoL(shared_from_this());
 }
 
 void assFileSqlInfo::updateSQL() {
@@ -96,6 +98,7 @@ assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
     assInfo->setAssClass(AT_);
     list.push_back(assInfo);
   }
+  coreDataManager::get().setAssInfoL(list);
   return list;
 }
 
@@ -114,6 +117,7 @@ assInfoPtrList assFileSqlInfo::getAll(const assTypePtr &ft_) {
     assInfo->setAssType(ft_);
     list.push_back(assInfo);
   }
+  coreDataManager::get().setAssInfoL(list);
   return list;
 }
 dpath assFileSqlInfo::generatePath(const std::string &programFolder) {

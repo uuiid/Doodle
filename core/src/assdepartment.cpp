@@ -12,6 +12,7 @@
 
 #include <stdexcept>
 #include <memory>
+#include <src/coreDataManager.h>
 CORE_NAMESPACE_S
 
 assdepartment::assdepartment()
@@ -29,12 +30,11 @@ void assdepartment::insert() {
   auto insert = sqlpp::insert_into(table).columns(table.projectId,table.assDep);
   insert.values.add(table.projectId = i_prjID,
                     table.assDep = s_assDep);
-
-
   idP = db->insert(insert);
   if (idP == 0) {
     throw std::runtime_error("not install assDep");
   }
+  coreDataManager::get().setAssDepL(shared_from_this());
 }
 void assdepartment::updateSQL() {
 
@@ -64,6 +64,7 @@ assDepPtrList assdepartment::getAll() {
     assdep->i_prjID = row.projectId.value();
     list.push_back(assdep);
   }
+  coreDataManager::get().setAssDepL(list);
   return list;
 
 }

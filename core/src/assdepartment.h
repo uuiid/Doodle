@@ -8,7 +8,7 @@
 #include "coresqldata.h"
 
 CORE_NAMESPACE_S
-class CORE_API assdepartment : public coresqldata{
+class CORE_API assdepartment : public coresqldata, private std::enable_shared_from_this<assdepartment> {
  public:
   explicit assdepartment();
   void select(const int64_t &ID_);
@@ -23,7 +23,6 @@ class CORE_API assdepartment : public coresqldata{
   int64_t i_prjID;
 
   std::string s_assDep;
-
 
 };
 

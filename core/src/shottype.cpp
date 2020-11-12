@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <memory>
+#include <src/coreDataManager.h>
 
 CORE_NAMESPACE_S
 
@@ -58,6 +59,7 @@ void shotType::insert() {
     DOODLE_LOG_WARN << "无法插入shot type " << p_Str_Type.c_str();
     throw std::runtime_error("not install shot type");
   }
+  coreDataManager::get().setShotTypeL(shared_from_this());
 }
 
 void shotType::updateSQL() {
@@ -102,6 +104,7 @@ shotTypePtrList shotType::getAll(const shotClassPtr &fc_) {
     item->batchSetAttr(row);
     list.push_back(item);
   }
+  coreDataManager::get().setShotTypeL(list);
   return list;
 }
 

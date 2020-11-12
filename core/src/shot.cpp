@@ -12,6 +12,8 @@
 #include <memory>
 #include <boost/format.hpp>
 #include <Logger.h>
+
+#include <src/coreDataManager.h>
 CORE_NAMESPACE_S
 
 const std::vector<std::string> shot::e_shotAB_list = {"B", "C", "D", "E", "F", "G", "H"};
@@ -36,6 +38,7 @@ void shot::select(const qint64 &ID_) {
     setShotAb((dstring) row.shotab);
     p_eps_id = row.episodesId;
   }
+
 }
 
 void shot::insert() {
@@ -55,7 +58,7 @@ void shot::insert() {
     DOODLE_LOG_WARN << "无法插入镜头" << p_qint_shot_;
     throw std::runtime_error("not install shots");
   }
-
+  coreDataManager::get().setShotL(shared_from_this());
 }
 
 void shot::updateSQL() {
@@ -86,6 +89,7 @@ shotPtrList shot::getAll(const episodesPtr &EP_) {
     item->setEpisodes(EP_);
     list.push_back(item);
   }
+  coreDataManager::get().setShotL(list);
   return list;
 }
 

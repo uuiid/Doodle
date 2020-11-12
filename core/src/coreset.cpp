@@ -9,7 +9,7 @@
 #include "coreOrm/configure_sqlOrm.h"
 #include "coreOrm/project_sqlOrm.h"
 #include "coreOrm/synfile_sqlOrm.h"
-
+#include <src/coreOrm/episodes_sqlOrm.h>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
@@ -269,16 +269,20 @@ void coreSet::getServerSetting() {
 synPathListPtr coreSet::getSynDir() {
   auto db = coreSql::getCoreSql().getConnection();
   doodle::Synfile table{};
+  doodle::Episodes epTable{};
+
   Json::CharReaderBuilder builder;
   Json::Value root;
   JSONCPP_STRING err;
   synPathListPtr list;
   const auto reand = std::unique_ptr<Json::CharReader>(builder.newCharReader());
   for (auto &&row:db->run(sqlpp::select(table.path)
-                              .from(table)
-                              .where(table.episodesId == syneps))) {
-    reand->parse(row.path.text,row.path.text + row.path.len,&root,&err);
+                              .from(table.join(epTable).on(table.episodesId == epTable.id))
+                              .where(epTable.episodes == syneps
+                                         and epTable.projectId == project.first))) {
+    reand->parse(row.path.text, row.path.text + row.path.len, &root, &err);
     for (const auto &item : root) {
+
       synPath_struct fileSyn{};
       fileSyn.local = item["Left"].asString();
       fileSyn.server = item["Right"].asString();

@@ -241,3 +241,13 @@ TEST_F(CoreTest,Synfile){
   set.setSyneps(41);
   doCore::ueSynArchive().down();
 }
+TEST_F(CoreTest,Synfile_lisgt){
+  set.setSyneps(41);
+  set.setDepartment("Light");
+  doCore::ueSynArchive().down();
+}
+TEST_F(CoreTest,Synfile_create_dir){
+  set.setSyneps(41);
+  set.setAssRoot("/tmp/tt");
+  doCore::ueSynArchive::makeDir();
+}

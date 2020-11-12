@@ -4,7 +4,7 @@
 
 CORE_NAMESPACE_S
 
- class CORE_API coresqldata : public std::enable_shared_from_this<coresqldata>
+ class CORE_API coresqldata
 {
 public:
     coresqldata();

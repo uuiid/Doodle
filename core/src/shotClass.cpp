@@ -15,6 +15,8 @@
 #include <memory>
 #include <Logger.h>
 
+#include <src/coreDataManager.h>
+
 CORE_NAMESPACE_S
 
 shotClass::shotClass() :
@@ -41,6 +43,7 @@ void shotClass::select(const qint64 &ID_) {
     if (row.id._is_valid)
       p_eps_id = row.id;
   }
+
 }
 
 void shotClass::insert() {
@@ -63,6 +66,7 @@ void shotClass::insert() {
     DOODLE_LOG_WARN << "无法插入shot type" << getClass_str().c_str();
     throw std::runtime_error("not install shot");
   }
+  coreDataManager::get().setShotClassL(shared_from_this());
 }
 
 void shotClass::updateSQL() {
@@ -105,6 +109,7 @@ shotClassPtrList shotClass::getAll(const episodesPtr &episodes_ptr) {
     item->setEpisodes(episodes_ptr);
     list.push_back(item);
   }
+  coreDataManager::get().setShotClassL(list);
   return list;
 }
 
@@ -123,6 +128,7 @@ shotClassPtrList shotClass::getAll(const shotPtr &shot_ptr) {
     item->setShot(shot_ptr);
     list.push_back(item);
   }
+  coreDataManager::get().setShotClassL(list);
   return list;
 }
 

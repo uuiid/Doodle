@@ -14,6 +14,8 @@
 #include "coreOrm/znch_sqlOrm.h"
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
+#include <src/coreDataManager.h>
+
 
 SQLPP_ALIAS_PROVIDER(znID)
 
@@ -39,6 +41,7 @@ void assClass::select(const qint64 &ID_) {
     idP = row.id;
     p_assDep_id = row.assdepId;
   }
+
 }
 
 void assClass::insert() {
@@ -59,6 +62,7 @@ void assClass::insert() {
   }
   if (p_ptr_znch)
     p_ptr_znch->insert();
+  coreDataManager::get().setAssClassL(shared_from_this());
 }
 
 void assClass::updateSQL() {
@@ -107,6 +111,7 @@ assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
 
     list.push_back(assclass);
   }
+  coreDataManager::get().setAssClassL(list);
   return list;
 }
 

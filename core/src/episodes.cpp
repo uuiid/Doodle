@@ -9,7 +9,7 @@
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
 #include <boost/format.hpp>
-
+#include <src/coreDataManager.h>
 CORE_NAMESPACE_S
 
 episodes::episodes() : p_int_episodes(-1),
@@ -45,6 +45,7 @@ void episodes::insert() {
     DOODLE_LOG_WARN << "无法插入集数" << p_int_episodes;
     throw std::runtime_error("not install eps");
   }
+  coreDataManager::get().setEpisodeL(shared_from_this());
 }
 void episodes::updateSQL() {
 }
@@ -73,6 +74,7 @@ episodesPtrList episodes::getAll() {
     eps->p_prj = row.projectId;
     list.push_back(eps);
   }
+  coreDataManager::get().setEpisodeL(list);
   return list;
 }
 

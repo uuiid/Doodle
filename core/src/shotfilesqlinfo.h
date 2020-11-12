@@ -4,7 +4,8 @@
 
 CORE_NAMESPACE_S
 
-class CORE_API shotFileSqlInfo : public fileSqlInfo {
+class CORE_API shotFileSqlInfo : public fileSqlInfo,
+                                 private std::enable_shared_from_this<shotFileSqlInfo> {
  Q_GADGET
  public:
   shotFileSqlInfo();
@@ -36,8 +37,7 @@ class CORE_API shotFileSqlInfo : public fileSqlInfo {
   shotTypePtr getShotType();
   void setShotType(const shotTypePtr &fileType_);
 
-
-  shotTypePtr findFileType(const std::string & type_str);
+  shotTypePtr findFileType(const std::string &type_str);
  private:
   //循环获得查询结果
   template<typename T>

@@ -18,6 +18,9 @@
 #include <boost/filesystem.hpp>
 #include <memory>
 #include <boost/format.hpp>
+
+#include <src/coreDataManager.h>
+
 CORE_NAMESPACE_S
 
 shotFileSqlInfo::shotFileSqlInfo()
@@ -74,6 +77,7 @@ void shotFileSqlInfo::insert() {
     DOODLE_LOG_WARN << fileStateP.c_str();
     throw std::runtime_error("");
   }
+  coreDataManager::get().setShotInfoL(shared_from_this());
 }
 
 void shotFileSqlInfo::updateSQL() {
@@ -123,6 +127,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr &EP_) {
     assInfo->setEpisdes(EP_);
     list.push_back(assInfo);
   }
+  coreDataManager::get().setShotInfoL(list);
   return list;
 }
 
@@ -142,6 +147,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr &sh_) {
     assInfo->setShot(sh_);
     list.push_back(assInfo);
   }
+  coreDataManager::get().setShotInfoL(list);
   return list;
 }
 
@@ -161,6 +167,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr &class_ptr) {
     assInfo->setShotClass(class_ptr);
     list.push_back(assInfo);
   }
+  coreDataManager::get().setShotInfoL(list);
   return list;
 }
 
@@ -180,6 +187,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotTypePtr &type_ptr) {
     assInfo->setShotType(type_ptr);
     list.push_back(assInfo);
   }
+  coreDataManager::get().setShotInfoL(list);
   return list;
 }
 

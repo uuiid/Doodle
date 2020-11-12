@@ -30,139 +30,139 @@ coreDataManager::coreDataManager()
       p_shCLas_() {
 
 }
-const episodesPtrList &coreDataManager::GetEpisodeL() const {
+const episodesPtrList &coreDataManager::getEpisodeL() const {
   return p_eps_;
 }
-void coreDataManager::SetEpisodeL(const episodesPtrList &eps) {
+void coreDataManager::setEpisodeL(const episodesPtrList &eps) {
   coreDataManager::p_eps_ = eps;
 }
-const episodesPtr &coreDataManager::GetEpisodesPtr() const {
+const episodesPtr &coreDataManager::getEpisodesPtr() const {
   return p_ep_;
 }
-void coreDataManager::SetEpisodesPtr(const episodesPtr &ep) {
+void coreDataManager::setEpisodesPtr(const episodesPtr &ep) {
   coreDataManager::p_ep_ = ep;
 }
-const shotPtrList &coreDataManager::GetShotL() const {
+const shotPtrList &coreDataManager::getShotL() const {
   return p_shots_;
 }
-void coreDataManager::SetShotL(const shotPtrList &shots) {
+void coreDataManager::setShotL(const shotPtrList &shots) {
   coreDataManager::p_shots_ = shots;
 }
-const shotPtr &coreDataManager::GetShotPtr() const {
+const shotPtr &coreDataManager::getShotPtr() const {
   return p_shot_;
 }
-void coreDataManager::SetShotPtr(const shotPtr &shot) {
+void coreDataManager::setShotPtr(const shotPtr &shot) {
   coreDataManager::p_shot_ = shot;
 }
-const shotClassPtrList &coreDataManager::GetShotClassL() const {
+const shotClassPtrList &coreDataManager::getShotClassL() const {
   return p_shCLas_;
 }
-void coreDataManager::SetShotClassL(const shotClassPtrList &sh_c_las) {
+void coreDataManager::setShotClassL(const shotClassPtrList &sh_c_las) {
   p_shCLas_ = sh_c_las;
 }
-const shotClassPtr &coreDataManager::GetShotClassPtr() const {
+const shotClassPtr &coreDataManager::getShotClassPtr() const {
   return p_shCL_;
 }
-void coreDataManager::SetShotClassPtr(const shotClassPtr &sh_cl) {
+void coreDataManager::setShotClassPtr(const shotClassPtr &sh_cl) {
   p_shCL_ = sh_cl;
 }
-const shotTypePtrList &coreDataManager::GetShotTypeL() const {
+const shotTypePtrList &coreDataManager::getShotTypeL() const {
   return p_shTypes_;
 }
-void coreDataManager::SetShotTypeL(const shotTypePtrList &sh_types) {
+void coreDataManager::setShotTypeL(const shotTypePtrList &sh_types) {
   p_shTypes_ = sh_types;
 }
-const shotTypePtr &coreDataManager::GetShotTypePtr() const {
+const shotTypePtr &coreDataManager::getShotTypePtr() const {
   return p_shType_;
 }
-void coreDataManager::SetShotTypePtr(const shotTypePtr &sh_type) {
+void coreDataManager::setShotTypePtr(const shotTypePtr &sh_type) {
   p_shType_ = sh_type;
 }
-const shotInfoPtrList &coreDataManager::GetShotInfoL() const {
+const shotInfoPtrList &coreDataManager::getShotInfoL() const {
   return p_shInfos_;
 }
-void coreDataManager::SetShotInfoL(const shotInfoPtrList &sh_infos) {
+void coreDataManager::setShotInfoL(const shotInfoPtrList &sh_infos) {
   p_shInfos_ = sh_infos;
 }
-const shotInfoPtr &coreDataManager::GetShotInfoPtr() const {
+const shotInfoPtr &coreDataManager::getShotInfoPtr() const {
   return p_shInfo_;
 }
-void coreDataManager::SetShotInfoPtr(const shotInfoPtr &sh_info) {
+void coreDataManager::setShotInfoPtr(const shotInfoPtr &sh_info) {
   p_shInfo_ = sh_info;
 }
-const assDepPtrList &coreDataManager::GetAssDepL() const {
+const assDepPtrList &coreDataManager::getAssDepL() const {
   return p_assDeps_;
 }
-void coreDataManager::SetAssDepL(const assDepPtrList &ass_deps) {
+void coreDataManager::setAssDepL(const assDepPtrList &ass_deps) {
   p_assDeps_ = ass_deps;
 }
-const assDepPtr &coreDataManager::GetAssDepPtr() const {
+const assDepPtr &coreDataManager::getAssDepPtr() const {
   return p_assDep_;
 }
-void coreDataManager::SetAssDepPtr(const assDepPtr &ass_dep) {
+void coreDataManager::setAssDepPtr(const assDepPtr &ass_dep) {
   p_assDep_ = ass_dep;
 }
-const assClassPtrList &coreDataManager::GetAssClassL() const {
+const assClassPtrList &coreDataManager::getAssClassL() const {
   return p_assCLss_;
 }
-void coreDataManager::SetAssClassL(const assClassPtrList &ass_c_lss) {
+void coreDataManager::setAssClassL(const assClassPtrList &ass_c_lss) {
   p_assCLss_ = ass_c_lss;
 }
-const assClassPtr &coreDataManager::GetAssClassPtr() const {
+const assClassPtr &coreDataManager::getAssClassPtr() const {
   return p_assCL_;
 }
-void coreDataManager::SetAssClassPtr(const assClassPtr &ass_cl) {
+void coreDataManager::setAssClassPtr(const assClassPtr &ass_cl) {
   p_assCL_ = ass_cl;
 }
-const assTypePtrList &coreDataManager::GetAssTypeL() const {
+const assTypePtrList &coreDataManager::getAssTypeL() const {
   return p_assTypes_;
 }
-void coreDataManager::SetAssTypeL(const assTypePtrList &ass_types) {
+void coreDataManager::setAssTypeL(const assTypePtrList &ass_types) {
   p_assTypes_ = ass_types;
 }
-const assTypePtr &coreDataManager::GetAssTypePtr() const {
+const assTypePtr &coreDataManager::getAssTypePtr() const {
   return p_assType_;
 }
-void coreDataManager::SetAssTypePtr(const assTypePtr &ass_type) {
+void coreDataManager::setAssTypePtr(const assTypePtr &ass_type) {
   p_assType_ = ass_type;
 }
-const assInfoPtrList &coreDataManager::GetAssInfoL() const {
+const assInfoPtrList &coreDataManager::getAssInfoL() const {
   return p_assInfos_;
 }
-void coreDataManager::SetAssInfoL(const assInfoPtrList &ass_infos) {
+void coreDataManager::setAssInfoL(const assInfoPtrList &ass_infos) {
   p_assInfos_ = ass_infos;
 }
-const assInfoPtr &coreDataManager::GetAssInfoPtr() const {
+const assInfoPtr &coreDataManager::getAssInfoPtr() const {
   return p_assInfo_;
 }
-void coreDataManager::SetAssInfoPtr(const assInfoPtr &ass_info) {
+void coreDataManager::setAssInfoPtr(const assInfoPtr &ass_info) {
   p_assInfo_ = ass_info;
 }
-void coreDataManager::SetEpisodeL(const episodesPtr &eps) {
+void coreDataManager::setEpisodeL(const episodesPtr &eps) {
   p_eps_.push_back(eps);
 }
-void coreDataManager::SetShotL(const shotPtr &shots) {
+void coreDataManager::setShotL(const shotPtr &shots) {
   p_shots_.push_back(shots);
 }
-void coreDataManager::SetShotClassL(const shotClassPtr &sh_c_las) {
+void coreDataManager::setShotClassL(const shotClassPtr &sh_c_las) {
   p_shCLas_.push_back(sh_c_las);
 }
-void coreDataManager::SetShotTypeL(const shotTypePtr &sh_types) {
+void coreDataManager::setShotTypeL(const shotTypePtr &sh_types) {
   p_shTypes_.push_back(sh_types);
 }
-void coreDataManager::SetShotInfoL(const shotInfoPtr &sh_infos) {
+void coreDataManager::setShotInfoL(const shotInfoPtr &sh_infos) {
   p_shInfos_.push_back(sh_infos);
 }
-void coreDataManager::SetAssDepL(const assDepPtr &ass_deps) {
+void coreDataManager::setAssDepL(const assDepPtr &ass_deps) {
   p_assDeps_.push_back(ass_deps);
 }
-void coreDataManager::SetAssClassL(const assClassPtr &ass_c_lss) {
+void coreDataManager::setAssClassL(const assClassPtr &ass_c_lss) {
   p_assCLss_.push_back(ass_c_lss);
 }
-void coreDataManager::SetAssTypeL(const assTypePtr &ass_types) {
+void coreDataManager::setAssTypeL(const assTypePtr &ass_types) {
   p_assTypes_.push_back(ass_types);
 }
-void coreDataManager::SetAssInfoL(const assInfoPtr &ass_infos) {
+void coreDataManager::setAssInfoL(const assInfoPtr &ass_infos) {
   p_assInfos_.push_back(ass_infos);
 }
 

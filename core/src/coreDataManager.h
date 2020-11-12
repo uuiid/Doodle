@@ -12,68 +12,68 @@ class coreDataManager {
   coreDataManager &operator=(const coreDataManager &s) = delete;
   coreDataManager(const coreDataManager &s) = delete;
  public:
-  const episodesPtrList &GetEpisodeL() const;
-  void SetEpisodeL(const episodesPtrList &eps);
-  void SetEpisodeL(const episodesPtr &eps);
+  const episodesPtrList &getEpisodeL() const;
+  void setEpisodeL(const episodesPtrList &eps);
+  void setEpisodeL(const episodesPtr &eps);
 
-  const episodesPtr &GetEpisodesPtr() const;
-  void SetEpisodesPtr(const episodesPtr &ep);
+  const episodesPtr &getEpisodesPtr() const;
+  void setEpisodesPtr(const episodesPtr &ep);
 
-  const shotPtrList &GetShotL() const;
-  void SetShotL(const shotPtrList &shots);
-  void SetShotL(const shotPtr  &shots);
+  const shotPtrList &getShotL() const;
+  void setShotL(const shotPtrList &shots);
+  void setShotL(const shotPtr  &shots);
 
-  const shotPtr &GetShotPtr() const;
-  void SetShotPtr(const shotPtr &shot);
+  const shotPtr &getShotPtr() const;
+  void setShotPtr(const shotPtr &shot);
 
-  const shotClassPtrList &GetShotClassL() const;
-  void SetShotClassL(const shotClassPtrList &sh_c_las);
-  void SetShotClassL(const shotClassPtr  &sh_c_las);
+  const shotClassPtrList &getShotClassL() const;
+  void setShotClassL(const shotClassPtrList &sh_c_las);
+  void setShotClassL(const shotClassPtr  &sh_c_las);
 
-  const shotClassPtr &GetShotClassPtr() const;
-  void SetShotClassPtr(const shotClassPtr &sh_cl);
+  const shotClassPtr &getShotClassPtr() const;
+  void setShotClassPtr(const shotClassPtr &sh_cl);
 
-  const shotTypePtrList &GetShotTypeL() const;
-  void SetShotTypeL(const shotTypePtrList &sh_types);
-  void SetShotTypeL(const shotTypePtr &sh_types);
+  const shotTypePtrList &getShotTypeL() const;
+  void setShotTypeL(const shotTypePtrList &sh_types);
+  void setShotTypeL(const shotTypePtr &sh_types);
 
-  const shotTypePtr &GetShotTypePtr() const;
-  void SetShotTypePtr(const shotTypePtr &sh_type);
+  const shotTypePtr &getShotTypePtr() const;
+  void setShotTypePtr(const shotTypePtr &sh_type);
 
-  const shotInfoPtrList &GetShotInfoL() const;
-  void SetShotInfoL(const shotInfoPtrList &sh_infos);
-  void SetShotInfoL(const shotInfoPtr &sh_infos);
+  const shotInfoPtrList &getShotInfoL() const;
+  void setShotInfoL(const shotInfoPtrList &sh_infos);
+  void setShotInfoL(const shotInfoPtr &sh_infos);
 
-  const shotInfoPtr &GetShotInfoPtr() const;
-  void SetShotInfoPtr(const shotInfoPtr &sh_info);
+  const shotInfoPtr &getShotInfoPtr() const;
+  void setShotInfoPtr(const shotInfoPtr &sh_info);
 
-  const assDepPtrList &GetAssDepL() const;
-  void SetAssDepL(const assDepPtrList &ass_deps);
-  void SetAssDepL(const assDepPtr &ass_deps);
+  const assDepPtrList &getAssDepL() const;
+  void setAssDepL(const assDepPtrList &ass_deps);
+  void setAssDepL(const assDepPtr &ass_deps);
 
-  const assDepPtr &GetAssDepPtr() const;
-  void SetAssDepPtr(const assDepPtr &ass_dep);
+  const assDepPtr &getAssDepPtr() const;
+  void setAssDepPtr(const assDepPtr &ass_dep);
 
-  const assClassPtrList &GetAssClassL() const;
-  void SetAssClassL(const assClassPtrList &ass_c_lss);
-  void SetAssClassL(const assClassPtr &ass_c_lss);
+  const assClassPtrList &getAssClassL() const;
+  void setAssClassL(const assClassPtrList &ass_c_lss);
+  void setAssClassL(const assClassPtr &ass_c_lss);
 
-  const assClassPtr &GetAssClassPtr() const;
-  void SetAssClassPtr(const assClassPtr &ass_cl);
+  const assClassPtr &getAssClassPtr() const;
+  void setAssClassPtr(const assClassPtr &ass_cl);
 
-  const assTypePtrList &GetAssTypeL() const;
-  void SetAssTypeL(const assTypePtrList &ass_types);
-  void SetAssTypeL(const assTypePtr &ass_types);
+  const assTypePtrList &getAssTypeL() const;
+  void setAssTypeL(const assTypePtrList &ass_types);
+  void setAssTypeL(const assTypePtr &ass_types);
 
-  const assTypePtr &GetAssTypePtr() const;
-  void SetAssTypePtr(const assTypePtr &ass_type);
+  const assTypePtr &getAssTypePtr() const;
+  void setAssTypePtr(const assTypePtr &ass_type);
 
-  const assInfoPtrList &GetAssInfoL() const;
-  void SetAssInfoL(const assInfoPtrList &ass_infos);
-  void SetAssInfoL(const assInfoPtr &ass_infos);
+  const assInfoPtrList &getAssInfoL() const;
+  void setAssInfoL(const assInfoPtrList &ass_infos);
+  void setAssInfoL(const assInfoPtr &ass_infos);
 
-  const assInfoPtr &GetAssInfoPtr() const;
-  void SetAssInfoPtr(const assInfoPtr &ass_info);
+  const assInfoPtr &getAssInfoPtr() const;
+  void setAssInfoPtr(const assInfoPtr &ass_info);
 
  private:
   coreDataManager();

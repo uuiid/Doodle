@@ -77,7 +77,7 @@ void freeSynWrap::addSubIncludeExclude(const int sub, const dstringList &include
     include.append_child("Item").text().set(item.c_str());
   }
   //创建排除选项
-  auto exclude = filter.append_child("Include");
+  auto exclude = filter.append_child("Exclude");
   for (const auto &item : exclude_list) {
     exclude.append_child("Item").text().set(item.c_str());
   }

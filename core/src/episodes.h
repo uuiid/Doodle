@@ -5,7 +5,8 @@
 
 CORE_NAMESPACE_S
 
-class CORE_API episodes : public coresqldata {
+class CORE_API episodes : public coresqldata,
+ private std::enable_shared_from_this<episodes>{
 
  public:
   explicit episodes();

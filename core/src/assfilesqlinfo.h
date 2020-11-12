@@ -5,7 +5,7 @@
 
 CORE_NAMESPACE_S
 
-class CORE_API assFileSqlInfo : public fileSqlInfo {
+ class CORE_API assFileSqlInfo : public fileSqlInfo , private std::enable_shared_from_this<assFileSqlInfo>{
   Q_GADGET
  public:
   assFileSqlInfo();

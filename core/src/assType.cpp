@@ -13,7 +13,7 @@
 #include <sqlpp11/mysql/mysql.h>
 
 #include <stdexcept>
-
+#include <src/coreDataManager.h>
 CORE_NAMESPACE_S
 assType::assType()
     : s_type(),
@@ -38,6 +38,7 @@ void assType::insert() {
     DOODLE_LOG_WARN << "无法插入asstype " << s_type.c_str();
     throw std::runtime_error("asstype");
   }
+  coreDataManager::get().setAssTypeL(shared_from_this());
 }
 void assType::updateSQL() {
 
@@ -65,6 +66,7 @@ assTypePtrList assType::getAll(const assClassPtr &ass_class_ptr) {
     at->setAssClassPtr(ass_class_ptr);
     ptr_list.push_back(at);
   }
+  coreDataManager::get().setAssTypeL(ptr_list);
   return ptr_list;
 }
 const std::string &assType::getType() const {

@@ -5,7 +5,8 @@
 
 CORE_NAMESPACE_S
 
-class CORE_API shotType : public coresqldata {
+class CORE_API shotType : public coresqldata,
+                          private std::enable_shared_from_this<shotType> {
  public:
   shotType();
   void select(const qint64 &ID_);
@@ -30,7 +31,6 @@ class CORE_API shotType : public coresqldata {
   void setFileClass(const shotClassPtr &fileclass_);
   //获得外键连接的实体对象 shotclass
   shotClassPtr getFileClass();
-
 
   //设置和连接集数外键约束
   void setEpisodes(const episodesPtr &value);
