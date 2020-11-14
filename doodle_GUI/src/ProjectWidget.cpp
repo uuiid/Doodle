@@ -21,7 +21,7 @@
 #include "fileTypeShotModel.h"
 #include "shotTableModel.h"
 
-#include "fileClassAssModel.h"
+#include "AssDepModel.h"
 #include "assClassModel.h"
 #include "fileTypeAssModel.h"
 #include "assTableModel.h"
@@ -148,7 +148,7 @@ void ProjectWidget::assInit(QWidget *parent) {
   p_ass_layout_->setContentsMargins(0, 0, 0, 0);
   p_ass_layout_->setObjectName(QString::fromUtf8("p_ass_layout_"));
 
-  p_file_class_ass_model_ = new fileClassAssModel(this);
+  p_file_class_ass_model_ = new AssDepModel(this);
   p_ass_class_model_ = new assClassModel(this);
   p_file_type_ass_model_ = new fileTypeAssModel(this);
   p_ass_table_model_ = new assTableModel(this);

@@ -13,10 +13,13 @@
 #include <stdexcept>
 #include <memory>
 #include <src/coreDataManager.h>
+#include <QString>
 CORE_NAMESPACE_S
 
 assdepartment::assdepartment()
-    : i_prjID(-1),
+    : coresqldata(),
+      std::enable_shared_from_this<assdepartment>(),
+      i_prjID(-1),
       s_assDep("character") {
   i_prjID = coreSet::getSet().projectName().first;
 }
@@ -27,7 +30,7 @@ void assdepartment::insert() {
   auto db = coreSql::getCoreSql().getConnection();
   doodle::Assdepartment table{};
 
-  auto insert = sqlpp::insert_into(table).columns(table.projectId,table.assDep);
+  auto insert = sqlpp::insert_into(table).columns(table.projectId, table.assDep);
   insert.values.add(table.projectId = i_prjID,
                     table.assDep = s_assDep);
   idP = db->insert(insert);
@@ -56,8 +59,7 @@ assDepPtrList assdepartment::getAll() {
       sqlpp::select(sqlpp::all_of(table))
           .from(table)
           .where(table.projectId == coreSet::getSet().projectName().first)
-  ))
-  {
+  )) {
     auto assdep = std::make_shared<assdepartment>();
     assdep->s_assDep = row.assDep.value();
     assdep->idP = row.id.value();
@@ -70,6 +72,9 @@ assDepPtrList assdepartment::getAll() {
 }
 void assdepartment::select(const int64_t &ID_) {
 
+}
+const QString assdepartment::getAssDepQ() const {
+  return QString::fromStdString(getAssDep());
 }
 
 CORE_NAMESPACE_E

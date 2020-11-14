@@ -4,9 +4,10 @@
 
 CORE_NAMESPACE_S
 
-class CORE_API shotFileSqlInfo : public fileSqlInfo,
-                                 private std::enable_shared_from_this<shotFileSqlInfo> {
- Q_GADGET
+class CORE_API shotFileSqlInfo
+    : public std::enable_shared_from_this<shotFileSqlInfo>,
+      public fileSqlInfo {
+
  public:
   shotFileSqlInfo();
   void select(const int64_t &ID_);

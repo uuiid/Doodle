@@ -58,9 +58,9 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   setContextMenu(menu);
 }
 void systemTray::synFile() {
-  if (doCore::coreSet::getCoreSet().getDepartment() == "VFX") {
+  if (doCore::coreSet::getSet().getDepartment() == "VFX") {
     auto run = doCore::freeSynWrap();
-    run.addSynFile(doCore::coreSet::getCoreSet().getSynDir());
+    run.addSynFile(doCore::coreSet::getSet().getSynDir());
     run.addInclude({"*"});
     run.addExclude({"dddd", "ssss"});
     run.addSubIncludeExclude(0, {"*"}, {"fgaaa"});
@@ -69,7 +69,7 @@ void systemTray::synFile() {
     run.addSubSynchronize(0,
                           doCore::freeSynWrap::syn_set::down,
                           "/dddd/uuuu/fff");
-    run.write();
+    run.run();
   }
 }
 

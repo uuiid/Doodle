@@ -12,7 +12,7 @@
 #include <sqlpp11/mysql/mysql.h>
 
 #include "Logger.h"
-#include "filesqlinfo.h"
+
 
 #include <iostream>
 #include <boost/filesystem.hpp>
@@ -25,6 +25,7 @@ CORE_NAMESPACE_S
 
 shotFileSqlInfo::shotFileSqlInfo()
     : fileSqlInfo(),
+      std::enable_shared_from_this<shotFileSqlInfo>(),
       p_shot_id(-1),
       p_eps_id(-1),
       p_shCla_id(-1),
@@ -32,7 +33,7 @@ shotFileSqlInfo::shotFileSqlInfo()
       p_ptr_eps(),
       p_ptr_shot(),
       p_ptr_shTy(),
-      p_ptr_shcla() {
+      p_ptr_shcla(){
 
 }
 
@@ -351,7 +352,7 @@ void shotFileSqlInfo::setShotType(const shotTypePtr &fileType_) {
 }
 shotTypePtr shotFileSqlInfo::findFileType(const std::string &type_str) {
   //获得导出类别的约束
-  auto fileTypelist = shotType::getAll(getShotclass());
+  auto fileTypelist = coreDataManager::get().getShotTypeL();
   shotTypePtr k_fileType = nullptr;
   for (auto &&item:fileTypelist) {
     if (item->getType() == type_str) {
@@ -362,7 +363,7 @@ shotTypePtr shotFileSqlInfo::findFileType(const std::string &type_str) {
   if (!k_fileType) {
     k_fileType = std::make_shared<shotType>();
     k_fileType->setType(type_str);
-    k_fileType->setFileClass(getShotclass());
+    k_fileType->setShotClass(getShotclass());
     k_fileType->insert();
   }
   return k_fileType;

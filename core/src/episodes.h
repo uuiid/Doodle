@@ -6,7 +6,7 @@
 CORE_NAMESPACE_S
 
 class CORE_API episodes : public coresqldata,
- private std::enable_shared_from_this<episodes>{
+                          public std::enable_shared_from_this<episodes>{
 
  public:
   explicit episodes();
@@ -20,6 +20,7 @@ class CORE_API episodes : public coresqldata,
 
   int64_t getEpisdes() const;
   dstring getEpisdes_str() const;
+  QString getEpisdes_QStr() const;
   void setEpisdes(const int64_t &value);
 
  private:

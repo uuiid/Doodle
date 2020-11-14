@@ -101,7 +101,7 @@ set(CORE_ARCHIVE_SOURCE
         src/assType.cpp
         src/moveShotA.cpp
         src/ueSynArchive.cpp
-        src/coreDataManager.cpp src/coreDataManager.h)
+        src/coreDataManager.cpp src/coreDataManager.h core_doQt.h)
 
 set(RESOURCE_SOURCE
         core_resource.qrc)
@@ -128,7 +128,7 @@ target_link_libraries(core PUBLIC ftp)
 target_link_libraries(core PUBLIC logger)
 
 target_compile_definitions(core PRIVATE CORE_LIBRARY)
-
+target_compile_definitions(core PUBLIC DOODLE_QT)
 qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_LIST_DIR})

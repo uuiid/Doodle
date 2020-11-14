@@ -36,10 +36,6 @@ fileSqlInfo::fileSqlInfo() :
 dpathList fileSqlInfo::getFileList() const {
   dpathList list_;
   Json::Value root;
-//  Json::StreamWriterBuilder builder;
-//  builder.settings_["emitUTF8"] = true;
-//  builder.settings_["commentStyle"] = "None";
-//  builder.settings_["indentation"] = "";
   Json::CharReaderBuilder char_reader_builder;
   JSONCPP_STRING err;
 
@@ -51,7 +47,7 @@ dpathList fileSqlInfo::getFileList() const {
       list_.push_back(x.asString());
     }
   } else {
-    list_.push_back(fileStateP);
+    list_.push_back(filepathP);
   }
   return list_;
 }

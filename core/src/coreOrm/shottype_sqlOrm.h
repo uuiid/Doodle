@@ -58,12 +58,29 @@ namespace doodle
       };
       using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
     };
+    struct ShotsId
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "shots_id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T shotsId;
+            T& operator()() { return shotsId; }
+            const T& operator()() const { return shotsId; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
+    };
   } // namespace Shottype_
 
   struct Shottype: sqlpp::table_t<Shottype,
                Shottype_::Id,
                Shottype_::ShotType,
-               Shottype_::ShotClassId>
+               Shottype_::ShotClassId,
+               Shottype_::ShotsId>
   {
     struct _alias_t
     {

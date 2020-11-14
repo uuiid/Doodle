@@ -19,7 +19,9 @@ CORE_NAMESPACE_S
 const std::vector<std::string> shot::e_shotAB_list = {"B", "C", "D", "E", "F", "G", "H"};
 
 shot::shot()
-    : p_qint_shot_(-1),
+    : coresqldata(),
+      std::enable_shared_from_this<shot>(),
+      p_qint_shot_(-1),
       p_qenm_shotab(e_shotAB::_),
       p_eps_id(-1),
       p_ptr_eps() {
@@ -47,12 +49,12 @@ void shot::insert() {
   doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
   auto install = sqlpp::insert_into(table).columns(table.episodesId,
-                                        table.shot,
-                                        table.shotab);
+                                                   table.shot,
+                                                   table.shotab);
 
   install.values.add(table.episodesId = p_eps_id,
-                  table.shot = p_qint_shot_,
-                  table.shotab = sqlpp::value_or_null<dstring>(getShotAb_str()));
+                     table.shot = p_qint_shot_,
+                     table.shotab = sqlpp::value_or_null<dstring>(getShotAb_str()));
   idP = db->insert(install);
   if (idP == 0) {
     DOODLE_LOG_WARN << "无法插入镜头" << p_qint_shot_;
@@ -69,7 +71,7 @@ void shot::deleteSQL() {
   doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
   db->remove(sqlpp::remove_from(table)
-  .where(table.id == idP));
+                 .where(table.id == idP));
 }
 
 shotPtrList shot::getAll(const episodesPtr &EP_) {
@@ -80,7 +82,7 @@ shotPtrList shot::getAll(const episodesPtr &EP_) {
       sqlpp::select(sqlpp::all_of(table))
           .from(table)
           .where(table.episodesId == EP_->getIdP())
-          .order_by(table.shot.asc(),table.shotab.asc())
+          .order_by(table.shot.asc(), table.shotab.asc())
   )) {
     auto item = std::make_shared<shot>();
     item->idP = row.id;

@@ -1,4 +1,4 @@
-create table if not exists assdepartment
+create table assdepartment
 (
 	id smallint auto_increment,
 	ass_dep varchar(64) null,

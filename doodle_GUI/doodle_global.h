@@ -42,7 +42,7 @@ class fileTypeShotWidget;
 class shotTableModel;
 class shotTableWidget;
 
-class fileClassAssModel;
+class AssDepModel;
 class fileClassAssWidget;
 
 class assClassModel;

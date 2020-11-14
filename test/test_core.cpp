@@ -19,10 +19,11 @@
 #include "Logger.h"
 
 #include <iostream>
+#include <memory>
 #include <src/movieArchive.h>
 #include <src/ueArchive.h>
 #include <src/ueSynArchive.h>
-
+#include <src/mayaArchiveShotFbx.h>
 
 class CoreTest : public ::testing::Test {
  protected:
@@ -75,7 +76,7 @@ TEST_F(CoreTest, create_shotinfo) {
 
     doCore::shotTypePtr ft(new doCore::shotType());
     ft->setType("test");
-    ft->setFileClass(fc);
+    ft->setShotClass(fc);
 
     ft->insert();
 
@@ -186,7 +187,24 @@ TEST_F(CoreTest,up_maya_file){
 
   shotinfo->deleteSQL();
 }
+TEST_F(CoreTest,mayaExport_fbx){
+  auto epslist = doCore::episodes::getAll();
+  auto shotList = doCore::shot::getAll(epslist.front());
+  auto shclassList = doCore::shotClass::getAll(shotList.front());
+  auto shtypeList = doCore::shotType::getAll(shclassList.front());
 
+  for (const auto &item : shtypeList) {
+    if(item->getType() == "fbx"){
+      auto shot = doCore::shotFileSqlInfo::getAll(item);
+      auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
+      shotinfo->setShotType(item);
+      auto export_ = std::make_shared<doCore::mayaArchiveShotFbx>(shotinfo);
+      ASSERT_TRUE(export_->update(shot.front()));
+
+    }
+  }
+
+}
 TEST_F(CoreTest, create_Move){
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());

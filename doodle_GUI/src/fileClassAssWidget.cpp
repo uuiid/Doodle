@@ -3,7 +3,7 @@
 //
 
 #include "fileClassAssWidget.h"
-#include "fileClassAssModel.h"
+#include "AssDepModel.h"
 #include "src/shotClass.h"
 DOODLE_NAMESPACE_S
 fileClassAssWidget::fileClassAssWidget(QWidget *parent) : QListView(parent) {
@@ -12,7 +12,7 @@ fileClassAssWidget::fileClassAssWidget(QWidget *parent) : QListView(parent) {
           this, &fileClassAssWidget::_doodle_emit);
 }
 void fileClassAssWidget::setModel(QAbstractItemModel *model) {
-  auto model_ = dynamic_cast<fileClassAssModel *>(model);
+  auto model_ = dynamic_cast<AssDepModel *>(model);
   if (model_)
     p_file_class_ass_model_ = model_;
   QAbstractItemView::setModel(model);

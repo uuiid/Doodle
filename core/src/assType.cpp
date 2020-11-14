@@ -16,7 +16,9 @@
 #include <src/coreDataManager.h>
 CORE_NAMESPACE_S
 assType::assType()
-    : s_type(),
+    : coresqldata(),
+      std::enable_shared_from_this<assType>(),
+      s_type(),
       p_ass_class_id(-1),
       p_class_ptr_() {
 }
@@ -30,7 +32,7 @@ void assType::insert() {
   auto insert = sqlpp::insert_into(table).columns(table.assType,
                                                   table.assClassId);
   insert.values.add(table.assType = s_type,
-                  table.assClassId = p_ass_class_id);
+                    table.assClassId = p_ass_class_id);
 
   idP = db->insert(insert);
 

@@ -39,7 +39,7 @@ class ProjectWidget : public QTabWidget {
 
 //这些都是资产变量
   QHBoxLayout *p_ass_layout_;
-  fileClassAssModel *p_file_class_ass_model_;
+  AssDepModel *p_file_class_ass_model_;
   assClassModel *p_ass_class_model_;
   fileTypeAssModel *p_file_type_ass_model_;
   assTableModel *p_ass_table_model_;

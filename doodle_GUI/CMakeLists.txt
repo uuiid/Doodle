@@ -26,7 +26,7 @@ set(DOODLE_SOURE_HEADER
         src/fileTypeShotModel.h
         src/shotListModel.h
         src/shotTableModel.h
-        src/fileClassAssModel.h
+        src/AssDepModel.h
         src/fileClassAssWidget.h
         src/assClassWidget.h
         src/assTableModel.h
@@ -53,7 +53,7 @@ set(DOODLE_SOURE
         src/fileTypeShotModel.cpp
         src/shotListModel.cpp
         src/shotTableModel.cpp
-        src/fileClassAssModel.cpp
+        src/AssDepModel.cpp
         src/fileClassAssWidget.cpp
         src/assClassModel.cpp
         src/fileTypeAssModel.cpp

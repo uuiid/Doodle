@@ -36,7 +36,7 @@ add_subdirectory(ftp)
 add_subdirectory(fileSyn)
 add_subdirectory(pinyin)
 add_subdirectory(core)
-#add_subdirectory(doodle_GUI)
+add_subdirectory(doodle_GUI)
 # set(TS_FILES test_cmake_zh_CN.ts)
 
 # if(ANDROID)

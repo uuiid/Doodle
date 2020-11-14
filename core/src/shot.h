@@ -14,7 +14,7 @@
 CORE_NAMESPACE_S
 
 class CORE_API shot : public coresqldata,
-                      private std::enable_shared_from_this<shot> {
+                      public std::enable_shared_from_this<shot> {
  public:
 
   enum class e_shotAB {

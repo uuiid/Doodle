@@ -20,9 +20,9 @@ CORE_NAMESPACE_S
 
 shotType::shotType()
     : coresqldata(),
+      std::enable_shared_from_this<shotType>(),
       p_shot_id(-1),
       p_shotClass_id(-1),
-      p_eps_id(-1),
       p_shot(),
       p_Str_Type(),
       p_episdes(),
@@ -80,7 +80,7 @@ void shotType::deleteSQL() {
 
   auto db = coreSql::getCoreSql().getConnection();
   db->remove(sqlpp::remove_from(table)
-  .where(table.id == idP));
+                 .where(table.id == idP));
 }
 
 template<typename T>
@@ -91,33 +91,43 @@ void shotType::batchSetAttr(T &row) {
 }
 
 shotTypePtrList shotType::getAll(const shotClassPtr &fc_) {
+  auto list = coreDataManager::get().getShotTypeL();
+  shotTypePtrList ptr_list;
+  if(list.empty()){
+    list = getAll(fc_->getShot());
+    coreDataManager::get().setShotTypeL(list);
+  }
+  for (const auto &item : list) {
+    if (item->p_class_ptr_ == fc_)
+      ptr_list.push_back(item);
+  }
+
+  return list;
+}
+
+shotTypePtrList shotType::getAll(const shotPtr &SH_) {
   doodle::Shottype table{};
+  const auto shotclasList = coreDataManager::get().getShotClassL();
 
   auto db = coreSql::getCoreSql().getConnection();
   shotTypePtrList list;
   for (auto &&row:db->run(
       sqlpp::select(sqlpp::all_of(table))
           .from(table)
-          .where(table.shotClassId == fc_->getIdP())
+          .where(table.shotsId == SH_->getIdP())
   )) {
     auto item = std::make_shared<shotType>();
     item->batchSetAttr(row);
+    for (const auto &shCl : shotclasList) {
+      if(item->p_shotClass_id == shCl->getIdP())
+        item->setShotClass(shCl);
+    }
+
+//    item->setShot(SH_);
     list.push_back(item);
   }
   coreDataManager::get().setShotTypeL(list);
   return list;
-}
-
-shotTypePtrList shotType::getAll(const shotType &AT_) {
-  return shotTypePtrList();
-}
-
-shotTypePtrList shotType::getAll(const episodesPtr &EP_) {
-  return shotTypePtrList();
-}
-
-shotTypePtrList shotType::getAll(const shotPtr &SH_) {
-  return shotTypePtrList();
 }
 
 void shotType::setType(const dstring &value) {
@@ -128,7 +138,7 @@ dstring shotType::getType() const {
   return p_Str_Type;
 }
 
-void shotType::setFileClass(const shotClassPtr &fileclass_) {
+void shotType::setShotClass(const shotClassPtr &fileclass_) {
   if (!fileclass_)
     return;
   p_shotClass_id = fileclass_->getIdP();
@@ -155,21 +165,11 @@ shotClassPtr shotType::getFileClass() {
 void shotType::setEpisodes(const episodesPtr &value) {
   if (!value)
     return;
-  p_eps_id = value->getIdP();
   p_episdes = value;
 }
 
 episodesPtr shotType::getEpisdes() {
-  if (p_episdes) {
-    return p_episdes;
-  } else if (p_eps_id >= 0) {
-    episodesPtr p_ = std::make_shared<episodes>();
-    p_->select(p_eps_id);
-    p_episdes = p_;
-    return p_;
-  } else {
-    return nullptr;
-  }
+  return p_episdes;
 }
 
 void shotType::setShot(const shotPtr &shot_) {

@@ -5,8 +5,8 @@
 
 CORE_NAMESPACE_S
 
- class CORE_API assFileSqlInfo : public fileSqlInfo , private std::enable_shared_from_this<assFileSqlInfo>{
-  Q_GADGET
+class CORE_API assFileSqlInfo : public fileSqlInfo,
+                                public std::enable_shared_from_this<assFileSqlInfo> {
  public:
   assFileSqlInfo();
   void select(qint64 &ID_);
@@ -26,15 +26,15 @@ CORE_NAMESPACE_S
   assDepPtr getAssDep();
   void setAssDep(const assDepPtr &ass_dep_);
 
-  const assClassPtr & getAssClass();
+  const assClassPtr &getAssClass();
   void setAssClass(const assClassPtr &class_ptr);
 
-  const assTypePtr & getAssType();
+  const assTypePtr &getAssType();
   void setAssType(const assTypePtr &ass_type_ptr);
 
  private:
   template<typename T>
-  void batchSetAttr(const T& row);
+  void batchSetAttr(const T &row);
 
  private:
   int64_t ass_class_id;

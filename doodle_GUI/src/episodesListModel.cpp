@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <memory>
 
 #include <src/episodes.h>
 #include "episodesListModel.h"
@@ -26,7 +27,7 @@ QVariant episodesListModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return eplist[index.row()]->getEpisdes_str();
+    return eplist[index.row()]->getEpisdes_QStr();
   } else {
     return QVariant();
   }
@@ -74,7 +75,8 @@ bool episodesListModel::insertRows(int position, int rows, const QModelIndex &in
   beginInsertRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     std::cout << position << " " << row << std::endl;
-    eplist.insert(position, doCore::episodesPtr(new doCore::episodes));
+    eplist.insert(eplist.begin() + position,
+                  std::make_shared<doCore::episodes>());
   }
   endInsertRows();
   return true;
@@ -82,7 +84,7 @@ bool episodesListModel::insertRows(int position, int rows, const QModelIndex &in
 bool episodesListModel::removeRows(int position, int rows, const QModelIndex &index) {
   beginRemoveRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
-    eplist.remove(position);
+    eplist.erase(eplist.begin() + position);
   }
   endRemoveRows();
   return true;
@@ -94,7 +96,7 @@ void episodesListModel::init() {
   endInsertRows();
 }
 void episodesListModel::clear() {
-  if (eplist.isEmpty()) return;
+  if (eplist.empty()) return;
   beginResetModel();
   eplist.clear();
   endResetModel();

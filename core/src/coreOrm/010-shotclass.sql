@@ -1,4 +1,4 @@
-create table if not exists shotclass
+create table shotclass
 (
 	id smallint auto_increment,
 	shot_class varchar(64) null,

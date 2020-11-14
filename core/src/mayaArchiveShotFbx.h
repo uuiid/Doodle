@@ -12,9 +12,7 @@ class CORE_API mayaArchiveShotFbx : public fileArchive {
 
   explicit mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr);
   bool exportFbx(shotInfoPtr &shot_data);
-  bool update() override;
-
-  void operator()(shotInfoPtr &shot_data);
+  bool update(shotInfoPtr &shot_data);
 
   std::map<QString,QString> getInfo();
  protected:

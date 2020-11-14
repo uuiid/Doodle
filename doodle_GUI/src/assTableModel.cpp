@@ -3,15 +3,16 @@
 //
 
 #include "assTableModel.h"
-#include "src/assfilesqlinfo.h"
+#include <core_doQt.h>
 
 #include "Logger.h"
 #include <QJsonArray>
+#include <memory>
 DOODLE_NAMESPACE_S
 assTableModel::assTableModel(QObject *parent)
     : QAbstractTableModel(parent),
-      p_ass_info_ptr_list_(),
-      p_file_type_ptr_(nullptr) {}
+      p_ass_info_ptr_list_()
+      {}
 int assTableModel::rowCount(const QModelIndex &parent) const {
   return p_ass_info_ptr_list_.size();
 }
@@ -30,13 +31,13 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
         var = QString("v%1").arg(ass->getVersionP(),
                                  4, 10, QLatin1Char('0'));
         break;
-      case 1:var = ass->getInfoP().last().toString();
+      case 1:var = DOTOS(ass->getInfoP().back());
         break;
-      case 2:var = ass->getUser();
+      case 2:var = DOTOS(ass->getUser());
         break;
-      case 3:var = ass->getSuffixes();
+      case 3:var = DOTOS(ass->getSuffixes());
         break;
-      case 4:var = QString("%1").arg(ass->getIdP());
+      case 4:var = ass->getIdP();
         break;
       default:var = "";
         break;
@@ -74,9 +75,9 @@ bool assTableModel::setData(const QModelIndex &index, const QVariant &value, int
 
   if (index.column() == 1 && role == Qt::EditRole) {
     if (!value.toString().isEmpty() &&
-        value.toString() != p_ass_info_ptr_list_[index.row()]->getInfoP().last().toString()) {
-      DOODLE_LOG_INFO << p_ass_info_ptr_list_[index.row()]->getInfoP().last().toString();
-      p_ass_info_ptr_list_[index.row()]->setInfoP(value.toString());
+        value.toString().toStdString() != p_ass_info_ptr_list_[index.row()]->getInfoP().back()) {
+      DOODLE_LOG_INFO << p_ass_info_ptr_list_[index.row()]->getInfoP().back().c_str();
+      p_ass_info_ptr_list_[index.row()]->setInfoP(value.toString().toStdString());
       p_ass_info_ptr_list_[index.row()]->updateSQL();
       dataChanged(index, index);
       return true;
@@ -103,25 +104,24 @@ bool assTableModel::insertRows(int position, int rows, const QModelIndex &parent
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   beginInsertColumns(QModelIndex(), 0, 4);
   for (int row = 0; row < rows; ++row) {
-    p_ass_info_ptr_list_.insert(position,
-                                doCore::assInfoPtr(new doCore::assFileSqlInfo));
-    p_ass_info_ptr_list_[position]->setAssClass(p_file_type_ptr_);
+    p_ass_info_ptr_list_.insert(p_ass_info_ptr_list_.begin() + position,
+                                std::make_shared<doCore::assFileSqlInfo>());
+    p_ass_info_ptr_list_[position]->setAssType(doCore::coreDataManager::get().getAssTypePtr());
   }
   endInsertColumns();
   endInsertRows();
   return true;
 }
-void assTableModel::init(const doCore::shotTypePtr &file_type_ptr) {
+void assTableModel::init(const doCore::assTypePtr &file_type_ptr) {
   auto tmp_list = doCore::assFileSqlInfo::getAll(file_type_ptr);
   clear();
   beginInsertRows(QModelIndex(), 0, tmp_list.size() - 1);
   p_ass_info_ptr_list_ = tmp_list;
-  p_file_type_ptr_ = file_type_ptr;
+  doCore::coreDataManager::get().setAssTypePtr(file_type_ptr);
   endInsertRows();
 }
 void assTableModel::clear() {
-  p_file_type_ptr_ = nullptr;
-  if (p_ass_info_ptr_list_.isEmpty()) return;
+  if (p_ass_info_ptr_list_.empty()) return;
   beginResetModel();
   p_ass_info_ptr_list_.clear();
   endResetModel();

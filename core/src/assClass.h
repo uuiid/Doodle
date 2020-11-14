@@ -7,7 +7,7 @@
 CORE_NAMESPACE_S
 
 class CORE_API assClass : public coresqldata,
-                          private std::enable_shared_from_this<assClass> {
+                          public std::enable_shared_from_this<assClass> {
  public:
   assClass();
   void select(const qint64 &ID_);
@@ -34,5 +34,4 @@ class CORE_API assClass : public coresqldata,
 
   znchNamePtr p_ptr_znch;
 };
-
 CORE_NAMESPACE_E

@@ -13,7 +13,6 @@
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
 
-
 #include <iostream>
 #include <boost/format.hpp>
 #include <boost/filesystem.hpp>
@@ -21,6 +20,8 @@
 CORE_NAMESPACE_S
 
 assFileSqlInfo::assFileSqlInfo() :
+    fileSqlInfo(),
+    std::enable_shared_from_this<assFileSqlInfo>(),
     p_type_ptr_(),
     p_class_ptr_(),
     p_dep_ptr_(),
@@ -47,7 +48,7 @@ void assFileSqlInfo::insert() {
   doodle::Basefile tab{};
 
   auto db = coreSql::getCoreSql().getConnection();
-  auto install = sqlpp::dynamic_insert_into(*db,tab).dynamic_set(
+  auto install = sqlpp::dynamic_insert_into(*db, tab).dynamic_set(
       tab.file = fileP,
       tab.fileSuffixes = fileSuffixesP,
       tab.user = userP,
@@ -55,7 +56,7 @@ void assFileSqlInfo::insert() {
       tab.FilePath_ = filepathP,
       tab.filestate = sqlpp::value_or_null(fileStateP),
       tab.projectId = coreSet::getSet().projectName().first
-      );
+  );
   if (!infoP.empty())
     install.insert_list.add(tab.infor = strList_tojson(infoP));
   if (ass_class_id > 0)
@@ -63,7 +64,7 @@ void assFileSqlInfo::insert() {
   if (ass_type_id > 0)
     install.insert_list.add(tab.assTypeId = ass_type_id);
   idP = db->insert(install);
-  if(idP == 0){
+  if (idP == 0) {
     DOODLE_LOG_WARN << fileStateP.c_str();
     throw std::runtime_error("");
   }

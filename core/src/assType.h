@@ -8,10 +8,12 @@
 #include "coresqldata.h"
 CORE_NAMESPACE_S
 
- class CORE_API assType : public coresqldata , private std::enable_shared_from_this<assType>{
+class CORE_API assType
+    : public coresqldata,
+      public std::enable_shared_from_this<assType> {
  public:
   explicit assType();
-  void select(const int64_t & ID_);
+  void select(const int64_t &ID_);
   void insert() override;
   void updateSQL() override;
   void deleteSQL() override;

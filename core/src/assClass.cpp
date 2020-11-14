@@ -16,13 +16,14 @@
 #include <sqlpp11/mysql/mysql.h>
 #include <src/coreDataManager.h>
 
-
 SQLPP_ALIAS_PROVIDER(znID)
 
 CORE_NAMESPACE_S
 
 assClass::assClass()
-    : name(),
+    : coresqldata(),
+      std::enable_shared_from_this<assClass>(),
+      name(),
       p_assDep_id(-1),
       p_ass_dep_ptr_(),
       p_ptr_znch() {
@@ -90,7 +91,7 @@ assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
 
 
   for (auto &&row:db->run(
-      sqlpp::select(table.id,table.assdepId,table.assName,znNa.localname,znNa.id.as(znID))
+      sqlpp::select(table.id, table.assdepId, table.assName, znNa.localname, znNa.id.as(znID))
           .where(table.assdepId == ass_dep_ptr->getIdP())
           .from(table.left_outer_join(znNa).on(table.id == znNa.assClassId))
           .flags(sqlpp::distinct)
@@ -101,8 +102,7 @@ assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
     assclass->name = row.assName;
     assclass->idP = row.id;
     assclass->setAssDep(ass_dep_ptr);
-    if(row.localname._is_valid) {
-//      std::cout << row.localname <<std::endl;
+    if (row.localname._is_valid) {
       assclass->p_ptr_znch = std::make_shared<znchName>(assclass.get());
       assclass->p_ptr_znch->nameZNCH = row.localname;
       assclass->p_ptr_znch->idP = row.znID;

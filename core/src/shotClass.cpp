@@ -21,6 +21,7 @@ CORE_NAMESPACE_S
 
 shotClass::shotClass() :
     coresqldata(),
+    std::enable_shared_from_this<shotClass>(),
     p_fileclass(e_fileclass::_),
     p_shot_id(-1),
     p_eps_id(-1),
@@ -51,7 +52,7 @@ void shotClass::insert() {
 
   doodle::Shotclass table{};
   auto db = coreSql::getCoreSql().getConnection();
-  auto install = sqlpp::dynamic_insert_into(*db,table)
+  auto install = sqlpp::dynamic_insert_into(*db, table)
       .dynamic_set(table.shotClass = sqlpp::value_or_null(getClass_str()));
 //  auto test =   sqlpp::dynamic_insert_into(*db,table);
 //  test.dynamic_set();
@@ -82,7 +83,7 @@ void shotClass::deleteSQL() {
   doodle::Shotclass table{};
   auto db = coreSql::getCoreSql().getConnection();
   db->remove(sqlpp::remove_from(table)
-  .where(table.id == idP));
+                 .where(table.id == idP));
 }
 template<typename T>
 void shotClass::batchSetAttr(T &row) {

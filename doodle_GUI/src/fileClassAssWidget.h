@@ -22,7 +22,7 @@ class fileClassAssWidget : public QListView {
   void fileClassEmit(const doCore::shotClassPtr &file_class_ptr);
 
  private:
-  fileClassAssModel * p_file_class_ass_model_;
+  AssDepModel * p_file_class_ass_model_;
 
  private slots:
   void _doodle_emit(const  QModelIndex & index);

@@ -1,4 +1,4 @@
-create table if not exists assclass
+create table assclass
 (
 	id smallint auto_increment,
 	ass_name varchar(256) null,

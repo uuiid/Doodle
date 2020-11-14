@@ -12,8 +12,11 @@
 #include <src/coreDataManager.h>
 CORE_NAMESPACE_S
 
-episodes::episodes() : p_int_episodes(-1),
-                       p_prj(coreSet::getSet().projectName().first) {
+episodes::episodes()
+    : coresqldata(),
+      std::enable_shared_from_this<episodes>(),
+      p_int_episodes(-1),
+      p_prj(coreSet::getSet().projectName().first) {
 }
 
 void episodes::select(const qint64 &ID_) {
@@ -39,7 +42,6 @@ void episodes::insert() {
       .set(table.episodes = p_int_episodes,
            table.projectId = p_prj);
 
-
   idP = db->insert(insert);
   if (idP == 0) {
     DOODLE_LOG_WARN << "无法插入集数" << p_int_episodes;
@@ -54,7 +56,7 @@ void episodes::deleteSQL() {
   doodle::Episodes table{};
   auto db = coreSql::getCoreSql().getConnection();
   db->remove(sqlpp::remove_from(table)
-  .where(table.id == idP));
+                 .where(table.id == idP));
 }
 
 episodesPtrList episodes::getAll() {
@@ -90,6 +92,9 @@ dstring episodes::getEpisdes_str() const {
   boost::format str("ep%03i");
   str % p_int_episodes;
   return str.str();
+}
+QString episodes::getEpisdes_QStr() const {
+  return QString::fromStdString(getEpisdes_str());
 }
 
 CORE_NAMESPACE_E
