@@ -14,11 +14,11 @@
 
 DOODLE_NAMESPACE_S
 
-class fileTypeShotModel : public QAbstractListModel {
+class ShotTypeModel : public QAbstractListModel {
  Q_OBJECT
  public:
-  explicit fileTypeShotModel(QObject *parent = nullptr);
-  ~fileTypeShotModel() override;
+  explicit ShotTypeModel(QObject *parent = nullptr);
+  ~ShotTypeModel() override;
   //返回总行数
   [[nodiscard]] int rowCount(const QModelIndex &parent) const override;
 

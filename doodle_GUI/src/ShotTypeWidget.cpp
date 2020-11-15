@@ -2,8 +2,8 @@
 // Created by teXiao on 2020/10/12.
 //
 #include <core_doQt.h>
-#include "fileTypeShotModel.h"
-#include "fileTypeShotWidget.h"
+#include "ShotTypeModel.h"
+#include "ShotTypeWidget.h"
 
 
 #include <QLineEdit>
@@ -52,7 +52,7 @@ fileTypeShotDelegate::~fileTypeShotDelegate() = default;
 
 //-----------------------------------自定义小部件---------------------------------------//
 
-fileTypeShotWidget::fileTypeShotWidget(QWidget *parent)
+ShotTypeWidget::ShotTypeWidget(QWidget *parent)
     : QListView(parent),
     p_file_type_shot_model_(nullptr),
     p_file_type_shot_delegate_(nullptr),
@@ -64,32 +64,32 @@ fileTypeShotWidget::fileTypeShotWidget(QWidget *parent)
 
   setStatusTip("种类  使用右键添加");
 
-  connect(this, &fileTypeShotWidget::clicked,
-          this, &fileTypeShotWidget::_doodle_type_emit);
+  connect(this, &ShotTypeWidget::clicked,
+          this, &ShotTypeWidget::_doodle_type_emit);
 
 }
 
-void fileTypeShotWidget::init(const doCore::shotClassPtr &file_class_ptr) {
+void ShotTypeWidget::init(const doCore::shotClassPtr &file_class_ptr) {
   p_file_class_ptr_ = file_class_ptr;
   p_file_type_shot_model_->init(file_class_ptr);
 }
-void fileTypeShotWidget::insertFileType() {
+void ShotTypeWidget::insertFileType() {
   int row = selectionModel()->currentIndex().row() + 1;
   p_file_type_shot_model_->insertRow(row,QModelIndex());
 
   setCurrentIndex(p_file_type_shot_model_->index(row));
   edit(p_file_type_shot_model_->index(row));
 }
-void fileTypeShotWidget::_doodle_type_emit(const QModelIndex &index) {
+void ShotTypeWidget::_doodle_type_emit(const QModelIndex &index) {
   emit typeEmit(p_file_type_shot_model_->daraRow(index));
 }
-void fileTypeShotWidget::contextMenuEvent(QContextMenuEvent * event) {
+void ShotTypeWidget::contextMenuEvent(QContextMenuEvent * event) {
   p_menu_ = new QMenu(this);
   if (p_file_class_ptr_){
     auto *action = new QAction(this);
 
     connect(action, &QAction::triggered,
-            this, &fileTypeShotWidget::insertFileType);
+            this, &ShotTypeWidget::insertFileType);
     action->setText(tr("添加种类"));
     action->setToolTip(tr("添加镜头"));
     p_menu_->addAction(action);
@@ -97,17 +97,17 @@ void fileTypeShotWidget::contextMenuEvent(QContextMenuEvent * event) {
   p_menu_->move(event->globalPos());
   p_menu_->show();
 }
-void fileTypeShotWidget::clear() {
+void ShotTypeWidget::clear() {
   p_file_type_shot_model_->clear();
 }
-void fileTypeShotWidget::setModel(QAbstractItemModel *model) {
-  auto p_model = dynamic_cast<fileTypeShotModel *>(model);
+void ShotTypeWidget::setModel(QAbstractItemModel *model) {
+  auto p_model = dynamic_cast<ShotTypeModel *>(model);
   if(p_model)
     p_file_type_shot_model_ = p_model;
   QAbstractItemView::setModel(model);
 };
 
-fileTypeShotWidget::~fileTypeShotWidget() = default;
+ShotTypeWidget::~ShotTypeWidget() = default;
 
 DOODLE_NAMESPACE_E
 

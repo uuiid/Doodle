@@ -4,7 +4,7 @@
  * @LastEditTime: 2020-10-10 14:36:12
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
- * @FilePath: \Doodle\doodle_GUI\src\fileClassShotWidget.h
+ * @FilePath: \Doodle\doodle_GUI\src\ShotClassWidget.h
  */
 #pragma once
 
@@ -17,12 +17,12 @@
 
 DOODLE_NAMESPACE_S
 
-class fileClassShotWidget : public QListView {
+class ShotClassWidget : public QListView {
  Q_OBJECT
 
  public:
-  explicit fileClassShotWidget(QWidget *parent = nullptr);
-  ~fileClassShotWidget() override = default;
+  explicit ShotClassWidget(QWidget *parent = nullptr);
+  ~ShotClassWidget() override = default;
 
   void setModel(QAbstractItemModel *model) override;
  signals:
@@ -42,7 +42,7 @@ class fileClassShotWidget : public QListView {
   void contextMenuEvent(QContextMenuEvent *event) override;
 
  private:
-  fileClassShotModel *p_model_;
+  ShotClassModel *p_model_;
   //上下文菜单
   QMenu *p_fileClass_menu;
 

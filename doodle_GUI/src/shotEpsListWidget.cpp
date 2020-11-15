@@ -1,6 +1,6 @@
-﻿#include "episodesListWidget.h"
+﻿#include "shotEpsListWidget.h"
 
-#include "episodesListModel.h"
+#include "shotEpsListModel.h"
 #include "src/episodes.h"
 
 #include <QSpinBox>
@@ -65,7 +65,7 @@ void episodesintDelegate::updateEditorGeometry(QWidget *editor,
 
 /* ---------------------------------- 集数小部件 --------------------------------- */
 
-episodesListWidget::episodesListWidget(QWidget *parent)
+shotEpsListWidget::shotEpsListWidget(QWidget *parent)
     : QListView(parent),
       p_episodesListDelegate(nullptr),
       p_eps_Menu(nullptr) {
@@ -74,14 +74,14 @@ episodesListWidget::episodesListWidget(QWidget *parent)
 
   setStatusTip(tr("集数栏 注意不要添加错误的集数"));
 
-  connect(this, &episodesListWidget::clicked,
-          this, &episodesListWidget::_doodle_episodes_emit);
+  connect(this, &shotEpsListWidget::clicked,
+          this, &shotEpsListWidget::_doodle_episodes_emit);
 }
 
-episodesListWidget::~episodesListWidget()
+shotEpsListWidget::~shotEpsListWidget()
 = default;
 
-void episodesListWidget::insertEpisodes() {
+void shotEpsListWidget::insertEpisodes() {
   int raw = selectionModel()->currentIndex().row() + 1;
   model()->insertRow(raw, selectionModel()->currentIndex());
   //设置当前行的选择
@@ -89,12 +89,12 @@ void episodesListWidget::insertEpisodes() {
   edit(p_episodesListModel->index(raw));
 }
 
-void episodesListWidget::contextMenuEvent(QContextMenuEvent *event) {
+void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_eps_Menu = new QMenu(this);
   auto *action = new QAction(this);
 
   connect(action, &QAction::triggered,
-          this, &episodesListWidget::insertEpisodes);
+          this, &shotEpsListWidget::insertEpisodes);
 
   action->setText(tr("添加集数"));
   action->setStatusTip(tr("添加集数"));
@@ -104,14 +104,14 @@ void episodesListWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_eps_Menu->show();
 }
 
-void episodesListWidget::_doodle_episodes_emit(const QModelIndex &index) {
+void shotEpsListWidget::_doodle_episodes_emit(const QModelIndex &index) {
   emit episodesEmit(p_episodesListModel->dataRaw(index));
 }
-void episodesListWidget::init() {
+void shotEpsListWidget::init() {
     p_episodesListModel->init();
 }
-void episodesListWidget::setModel(QAbstractItemModel *model) {
-  auto p_model = dynamic_cast<episodesListModel*>(model);
+void shotEpsListWidget::setModel(QAbstractItemModel *model) {
+  auto p_model = dynamic_cast<shotEpsListModel*>(model);
   if(p_model) p_episodesListModel = p_model;
   QAbstractItemView::setModel(model);
 }

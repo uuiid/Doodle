@@ -2,9 +2,9 @@
 // Created by teXiao on 2020/10/16.
 //
 
-#include "fileTypeAssWidget.h"
+#include "AssTypeWidget.h"
 
-#include "fileTypeAssModel.h"
+#include "AssTypeModel.h"
 #include "src/shottype.h"
 #include "src/assClass.h"
 #include <QMenu>
@@ -21,7 +21,7 @@ QWidget *fileTypeAssDelegate::createEditor(QWidget *parent,
                                            const QModelIndex &index) const {
   auto * fileType = new QComboBox(parent);
 
-  const auto modle = dynamic_cast<fileTypeAssModel *>(const_cast<QAbstractItemModel * >(index.model()));
+  const auto modle = dynamic_cast<AssTypeModel *>(const_cast<QAbstractItemModel * >(index.model()));
 
   QStringList list;
   list << "sourceimages"
@@ -60,47 +60,47 @@ void fileTypeAssDelegate::updateEditorGeometry(QWidget *editor, const QStyleOpti
 
 
 
-fileTypeAssWidget::fileTypeAssWidget(QWidget *parent)
+AssTypeWidget::AssTypeWidget(QWidget *parent)
     : QListView(parent),
       p_type_ptr_list_(),
       p_menu_(nullptr),
       p_model_(nullptr),
       p_ass_type_ptr_(nullptr) {
   setItemDelegate(new fileTypeAssDelegate(this));
-  connect(this,&fileTypeAssWidget::clicked,
-          this,&fileTypeAssWidget::_doodle_type_emit);
+  connect(this,&AssTypeWidget::clicked,
+          this,&AssTypeWidget::_doodle_type_emit);
 }
-void fileTypeAssWidget::setModel(QAbstractItemModel *model) {
-  auto k_model = dynamic_cast<fileTypeAssModel *>(model);
+void AssTypeWidget::setModel(QAbstractItemModel *model) {
+  auto k_model = dynamic_cast<AssTypeModel *>(model);
   if (k_model)
     p_model_ = k_model;
   QAbstractItemView::setModel(model);
 }
-void fileTypeAssWidget::init(const doCore::assClassPtr &ass_type_ptr) {
+void AssTypeWidget::init(const doCore::assClassPtr &ass_type_ptr) {
   p_ass_type_ptr_ = ass_type_ptr;
   p_model_->init(ass_type_ptr);
 }
 
-void fileTypeAssWidget::clear() {
+void AssTypeWidget::clear() {
   p_ass_type_ptr_.reset();
   p_model_->clear();
 }
-void fileTypeAssWidget::inserttype() {
+void AssTypeWidget::inserttype() {
  int raw = selectionModel()->currentIndex().row();
  p_model_->insertRow(raw);
  setCurrentIndex(p_model_->index(raw));
  edit(p_model_->index(raw));
 }
-void fileTypeAssWidget::_doodle_type_emit(const QModelIndex &index) {
+void AssTypeWidget::_doodle_type_emit(const QModelIndex &index) {
   emit filetypeEmited(index.data(Qt::UserRole).value<doCore::shotTypePtr>());
 }
-void fileTypeAssWidget::contextMenuEvent(QContextMenuEvent *event) {
+void AssTypeWidget::contextMenuEvent(QContextMenuEvent *event) {
   if(p_ass_type_ptr_ && !p_menu_){
     p_menu_ = new QMenu(this);
     auto add_ass_type = new QAction(p_menu_);
     add_ass_type->setText(tr("添加"));
     connect(add_ass_type,&QAction::triggered,
-            this,&fileTypeAssWidget::inserttype);
+            this,&AssTypeWidget::inserttype);
     p_menu_->addAction(add_ass_type);
   }
   p_menu_->move(event->globalPos());

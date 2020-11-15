@@ -30,10 +30,10 @@ class fileTypeAssDelegate : public QStyledItemDelegate{
 
 
 
-class fileTypeAssWidget : public QListView {
+class AssTypeWidget : public QListView {
  Q_OBJECT
  public:
-  explicit fileTypeAssWidget(QWidget *parent = nullptr);
+  explicit AssTypeWidget(QWidget *parent = nullptr);
 
   void setModel(QAbstractItemModel *model) override;
  public slots:
@@ -45,7 +45,7 @@ class fileTypeAssWidget : public QListView {
  private:
   doCore::shotTypePtrList p_type_ptr_list_;
   //m模型指针
-  fileTypeAssModel *p_model_;
+  AssTypeModel *p_model_;
   //菜单
   QMenu *p_menu_;
   doCore::assClassPtr p_ass_type_ptr_;

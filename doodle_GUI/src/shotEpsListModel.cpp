@@ -6,20 +6,20 @@
 #include <memory>
 
 #include <src/episodes.h>
-#include "episodesListModel.h"
+#include "shotEpsListModel.h"
 
 DOODLE_NAMESPACE_S
 
-episodesListModel::episodesListModel(QObject *parent)
+shotEpsListModel::shotEpsListModel(QObject *parent)
     : QAbstractListModel(parent), eplist() {
   init();
 }
-episodesListModel::~episodesListModel()
+shotEpsListModel::~shotEpsListModel()
 = default;
-int episodesListModel::rowCount(const QModelIndex &parent) const {
+int shotEpsListModel::rowCount(const QModelIndex &parent) const {
   return eplist.size();
 }
-QVariant episodesListModel::data(const QModelIndex &index, int role) const {
+QVariant shotEpsListModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid())
     return QVariant();
 
@@ -32,7 +32,7 @@ QVariant episodesListModel::data(const QModelIndex &index, int role) const {
     return QVariant();
   }
 }
-doCore::episodesPtr episodesListModel::dataRaw(const QModelIndex &index) const {
+doCore::episodesPtr shotEpsListModel::dataRaw(const QModelIndex &index) const {
   if (!index.isValid())
     return nullptr;
 
@@ -41,7 +41,7 @@ doCore::episodesPtr episodesListModel::dataRaw(const QModelIndex &index) const {
 
   return eplist[index.row()];
 }
-Qt::ItemFlags episodesListModel::flags(const QModelIndex &index) const {
+Qt::ItemFlags shotEpsListModel::flags(const QModelIndex &index) const {
   if (!index.isValid())
     return Qt::ItemIsEnabled;
 
@@ -50,7 +50,7 @@ Qt::ItemFlags episodesListModel::flags(const QModelIndex &index) const {
   else
     return Qt::ItemIsEditable | Qt::ItemIsEnabled | QAbstractListModel::flags(index);
 }
-bool episodesListModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value, int role) {
   if (index.isValid() && role == Qt::EditRole) {
     //确认镜头不重复和没有提交
     bool isHasEps = false;
@@ -71,7 +71,7 @@ bool episodesListModel::setData(const QModelIndex &index, const QVariant &value,
   }
   return false;
 }
-bool episodesListModel::insertRows(int position, int rows, const QModelIndex &index) {
+bool shotEpsListModel::insertRows(int position, int rows, const QModelIndex &index) {
   beginInsertRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     std::cout << position << " " << row << std::endl;
@@ -81,7 +81,7 @@ bool episodesListModel::insertRows(int position, int rows, const QModelIndex &in
   endInsertRows();
   return true;
 }
-bool episodesListModel::removeRows(int position, int rows, const QModelIndex &index) {
+bool shotEpsListModel::removeRows(int position, int rows, const QModelIndex &index) {
   beginRemoveRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     eplist.erase(eplist.begin() + position);
@@ -89,13 +89,13 @@ bool episodesListModel::removeRows(int position, int rows, const QModelIndex &in
   endRemoveRows();
   return true;
 }
-void episodesListModel::init() {
+void shotEpsListModel::init() {
   auto tmp_eps = doCore::episodes::getAll();
   beginInsertRows(QModelIndex(), 0, tmp_eps.size() - 1);
   eplist = tmp_eps;
   endInsertRows();
 }
-void episodesListModel::clear() {
+void shotEpsListModel::clear() {
   if (eplist.empty()) return;
   beginResetModel();
   eplist.clear();

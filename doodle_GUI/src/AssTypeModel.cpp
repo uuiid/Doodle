@@ -2,20 +2,20 @@
 // Created by teXiao on 2020/10/15.
 //
 
-#include "fileTypeAssModel.h"
+#include "AssTypeModel.h"
 #include <core_doQt.h>
 
 #include <memory>
 
 DOODLE_NAMESPACE_S
-fileTypeAssModel::fileTypeAssModel(QObject *parent)
+AssTypeModel::AssTypeModel(QObject *parent)
     : QAbstractListModel(parent),
       p_file_type_ptr_list_(),
       p_ass_ptr_(nullptr) {}
-int fileTypeAssModel::rowCount(const QModelIndex &parent) const {
+int AssTypeModel::rowCount(const QModelIndex &parent) const {
   return p_file_type_ptr_list_.size();
 }
-QVariant fileTypeAssModel::data(const QModelIndex &index, int role) const {
+QVariant AssTypeModel::data(const QModelIndex &index, int role) const {
   auto var = QVariant();
   if (!index.isValid()) return var;
   if (index.row() >= p_file_type_ptr_list_.size()) return var;
@@ -28,7 +28,7 @@ QVariant fileTypeAssModel::data(const QModelIndex &index, int role) const {
 
   return var;
 }
-Qt::ItemFlags fileTypeAssModel::flags(const QModelIndex &index) const {
+Qt::ItemFlags AssTypeModel::flags(const QModelIndex &index) const {
   if (!index.isValid()) return Qt::ItemIsEditable;
   if (index.row() >= p_file_type_ptr_list_.size()) return Qt::ItemIsEditable;
 
@@ -37,7 +37,7 @@ Qt::ItemFlags fileTypeAssModel::flags(const QModelIndex &index) const {
   else
     return Qt::ItemIsEditable | Qt::ItemIsEnabled | QAbstractListModel::flags(index);
 }
-bool fileTypeAssModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+bool AssTypeModel::setData(const QModelIndex &index, const QVariant &value, int role) {
   if (!index.isValid()) return false;
   bool is_has = false;
   for (auto &&item : p_file_type_ptr_list_) {
@@ -57,7 +57,7 @@ bool fileTypeAssModel::setData(const QModelIndex &index, const QVariant &value, 
   return false;
 
 }
-bool fileTypeAssModel::insertRows(int position, int rows, const QModelIndex &index) {
+bool AssTypeModel::insertRows(int position, int rows, const QModelIndex &index) {
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     p_file_type_ptr_list_.insert(p_file_type_ptr_list_.begin() + position,
@@ -66,7 +66,7 @@ bool fileTypeAssModel::insertRows(int position, int rows, const QModelIndex &ind
   endInsertRows();
   return true;
 }
-bool fileTypeAssModel::removeRows(int position, int rows, const QModelIndex &index) {
+bool AssTypeModel::removeRows(int position, int rows, const QModelIndex &index) {
   beginRemoveRows(QModelIndex(),position, position + rows -1);
   for (int row = 0; row < rows; ++row) {
     p_file_type_ptr_list_.erase(p_file_type_ptr_list_.begin() + position);
@@ -74,7 +74,7 @@ bool fileTypeAssModel::removeRows(int position, int rows, const QModelIndex &ind
   endRemoveRows();
   return false;
 }
-void fileTypeAssModel::init(const doCore::assClassPtr &ass_type_ptr) {
+void AssTypeModel::init(const doCore::assClassPtr &ass_type_ptr) {
   clear();
   p_ass_ptr_ = ass_type_ptr;
   auto tmp_list = doCore::assType::getAll(ass_type_ptr);
@@ -82,16 +82,16 @@ void fileTypeAssModel::init(const doCore::assClassPtr &ass_type_ptr) {
   p_file_type_ptr_list_ = tmp_list;
   endInsertRows();
 }
-void fileTypeAssModel::clear() {
+void AssTypeModel::clear() {
   if(!p_file_type_ptr_list_.empty()) return;
   p_ass_ptr_ = nullptr;
   beginResetModel();
   p_file_type_ptr_list_.clear();
   endResetModel();
 }
-doCore::assClassPtr fileTypeAssModel::getAssTypePtr() const  {
+doCore::assClassPtr AssTypeModel::getAssTypePtr() const  {
   return p_ass_ptr_;
 }
-fileTypeAssModel::~fileTypeAssModel() = default;
+AssTypeModel::~AssTypeModel() = default;
 
 DOODLE_NAMESPACE_E

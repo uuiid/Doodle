@@ -14,25 +14,25 @@ file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/DarkStyle.cpp
 
 set(DOODLE_SOURE_HEADER
         resource/DarkStyle.h
-        src/fileClassShotWidget.h
+        src/ShotClassWidget.h
         src/shotListWidget.h
-        src/episodesListWidget.h
-        src/fileTypeShotWidget.h
+        src/shotEpsListWidget.h
+        src/ShotTypeWidget.h
         src/shotTableWidget.h
         src/ProjectWidget.h
-        src/episodesListModel.h
+        src/shotEpsListModel.h
         src/mainWindows.h
-        src/fileClassShotModel.h
-        src/fileTypeShotModel.h
+        src/ShotClassModel.h
+        src/ShotTypeModel.h
         src/shotListModel.h
         src/shotTableModel.h
         src/AssDepModel.h
-        src/fileClassAssWidget.h
+        src/AssDepWidget.h
         src/assClassWidget.h
         src/assTableModel.h
-        src/fileTypeAssModel.h
+        src/AssTypeModel.h
         src/assClassModel.h
-        src/fileTypeAssWidget.h
+        src/AssTypeWidget.h
         src/assTableWidght.h
         src/settingWidget.h
         src/systemTray.h
@@ -41,25 +41,25 @@ set(DOODLE_SOURE_HEADER
 
 set(DOODLE_SOURE
         resource/DarkStyle.cpp
-        src/fileClassShotWidget.cpp
+        src/ShotClassWidget.cpp
         src/shotListWidget.cpp
-        src/episodesListWidget.cpp
-        src/fileTypeShotWidget.cpp
+        src/shotEpsListWidget.cpp
+        src/ShotTypeWidget.cpp
         src/shotTableWidget.cpp
         src/mainWindows.cpp
         src/ProjectWidget.cpp
-        src/episodesListModel.cpp
-        src/fileClassShotModel.cpp
-        src/fileTypeShotModel.cpp
+        src/shotEpsListModel.cpp
+        src/ShotClassModel.cpp
+        src/ShotTypeModel.cpp
         src/shotListModel.cpp
         src/shotTableModel.cpp
         src/AssDepModel.cpp
-        src/fileClassAssWidget.cpp
+        src/AssDepWidget.cpp
         src/assClassModel.cpp
-        src/fileTypeAssModel.cpp
+        src/AssTypeModel.cpp
         src/assTableModel.cpp
         src/assClassWidget.cpp
-        src/fileTypeAssWidget.cpp
+        src/AssTypeWidget.cpp
         src/assTableWidght.cpp
         src/settingWidget.cpp
         src/systemTray.cpp

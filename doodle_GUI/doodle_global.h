@@ -25,31 +25,31 @@
 
 DOODLE_NAMESPACE_S
 
-class episodesListModel;
+class shotEpsListModel;
 class episodesintDelegate;
-class episodesListWidget;
+class shotEpsListWidget;
 
 class shotListModel;
 class shotIntEnumDelegate;
 class shotListWidget;
 
-class fileClassShotModel;
-class fileClassShotWidget;
+class ShotClassModel;
+class ShotClassWidget;
 
-class fileTypeShotModel;
-class fileTypeShotWidget;
+class ShotTypeModel;
+class ShotTypeWidget;
 
 class shotTableModel;
 class shotTableWidget;
 
 class AssDepModel;
-class fileClassAssWidget;
+class AssDepWidget;
 
 class assClassModel;
 class assClassWidget;
 
-class fileTypeAssModel;
-class fileTypeAssWidget;
+class AssTypeModel;
+class AssTypeWidget;
 
 class assTableModel;
 class assTableWidght;

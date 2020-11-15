@@ -4,7 +4,7 @@
  * @LastEditTime: 2020-10-09 15:00:48
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
- * @FilePath: \Doodle\doodle_GUI\src\episodesListWidget.h
+ * @FilePath: \Doodle\doodle_GUI\src\shotEpsListWidget.h
  */
 #pragma once
 
@@ -43,11 +43,11 @@ class episodesintDelegate : public QStyledItemDelegate {
                             const QModelIndex &index) const override;
 };
 
-class episodesListWidget : public QListView {
+class shotEpsListWidget : public QListView {
  Q_OBJECT
  public:
-  explicit episodesListWidget(QWidget *parent = nullptr);
-  ~episodesListWidget() override;
+  explicit shotEpsListWidget(QWidget *parent = nullptr);
+  ~shotEpsListWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
  public slots:
@@ -56,7 +56,7 @@ class episodesListWidget : public QListView {
   void episodesEmit(const doCore::episodesPtr &episodes);
 
  private:
-  episodesListModel *p_episodesListModel;
+  shotEpsListModel *p_episodesListModel;
   episodesintDelegate *p_episodesListDelegate;
 
   QMenu *p_eps_Menu;

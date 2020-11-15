@@ -2,24 +2,24 @@
 // Created by teXiao on 2020/10/14.
 //
 
-#include "fileClassShotModel.h"
+#include "ShotClassModel.h"
 #include <core_doQt.h>
 
 #include <memory>
 #include "Logger.h"
 
 DOODLE_NAMESPACE_S
-fileClassShotModel::fileClassShotModel(QObject *parent)
+ShotClassModel::ShotClassModel(QObject *parent)
     : QAbstractListModel(parent),
       list_fileClass(),
       p_shot(nullptr) {
 }
 
-int fileClassShotModel::rowCount(const QModelIndex &parent) const {
+int ShotClassModel::rowCount(const QModelIndex &parent) const {
   return list_fileClass.size();
 }
 
-QVariant fileClassShotModel::data(const QModelIndex &index, int role) const {
+QVariant ShotClassModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid())
     return QVariant();
   if (index.row() >= list_fileClass.size())
@@ -31,7 +31,7 @@ QVariant fileClassShotModel::data(const QModelIndex &index, int role) const {
   }
 }
 
-doCore::shotClassPtr fileClassShotModel::dataRow(const QModelIndex &index) const {
+doCore::shotClassPtr ShotClassModel::dataRow(const QModelIndex &index) const {
   if (!index.isValid())
     return nullptr;
   if (index.row() >= list_fileClass.size())
@@ -39,7 +39,7 @@ doCore::shotClassPtr fileClassShotModel::dataRow(const QModelIndex &index) const
   return list_fileClass[index.row()];
 }
 
-QVariant fileClassShotModel::headerData(int section, Qt::Orientation orientation, int role) const {
+QVariant ShotClassModel::headerData(int section, Qt::Orientation orientation, int role) const {
   if (role != Qt::DisplayRole)
     return QVariant();
 
@@ -49,7 +49,7 @@ QVariant fileClassShotModel::headerData(int section, Qt::Orientation orientation
     return QStringLiteral("Row %1").arg(section);
 }
 
-Qt::ItemFlags fileClassShotModel::flags(const QModelIndex &index) const {
+Qt::ItemFlags ShotClassModel::flags(const QModelIndex &index) const {
   if (!index.isValid())
     return Qt::ItemIsEnabled;
 
@@ -59,7 +59,7 @@ Qt::ItemFlags fileClassShotModel::flags(const QModelIndex &index) const {
     return Qt::ItemIsEnabled | QAbstractListModel::flags(index);
 }
 
-bool fileClassShotModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+bool ShotClassModel::setData(const QModelIndex &index, const QVariant &value, int role) {
   if (index.isValid() && role == Qt::EditRole) {
     //确认没有重复的fileclass
     bool isHas = false;
@@ -85,7 +85,7 @@ bool fileClassShotModel::setData(const QModelIndex &index, const QVariant &value
   return false;
 }
 
-bool fileClassShotModel::insertRows(int position, int rows, const QModelIndex &index) {
+bool ShotClassModel::insertRows(int position, int rows, const QModelIndex &index) {
   bool isHas = false;
   auto dep = doCore::coreSet::getSet().getDepartment();
   for (auto &&i : list_fileClass) {
@@ -109,7 +109,7 @@ bool fileClassShotModel::insertRows(int position, int rows, const QModelIndex &i
   return true;
 }
 
-bool fileClassShotModel::removeRows(int position, int rows, const QModelIndex &index) {
+bool ShotClassModel::removeRows(int position, int rows, const QModelIndex &index) {
   beginRemoveRows(QModelIndex(), position, position + rows - 1);
 
   for (int row = 0; row < rows; ++row) {
@@ -121,7 +121,7 @@ bool fileClassShotModel::removeRows(int position, int rows, const QModelIndex &i
   return true;
 }
 
-void fileClassShotModel::init(const doCore::shotPtr &shot) {
+void ShotClassModel::init(const doCore::shotPtr &shot) {
   p_shot = shot;
 
   doCore::shotClassPtrList fileClassPtrList = doCore::shotClass::getAll(shot);
@@ -131,7 +131,7 @@ void fileClassShotModel::init(const doCore::shotPtr &shot) {
   endInsertRows();
 }
 
-void fileClassShotModel::clear() {
+void ShotClassModel::clear() {
   p_shot = nullptr;
   if (list_fileClass.empty()) return;
   beginResetModel();

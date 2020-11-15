@@ -11,14 +11,14 @@ DOODLE_NAMESPACE_S
 /**
  * @description: 自定义集数模型
  */
-class episodesListModel : public QAbstractListModel {
+class shotEpsListModel : public QAbstractListModel {
  Q_OBJECT
  private:
   doCore::episodesPtrList eplist;
 
  public:
-  explicit episodesListModel(QObject *parent = nullptr);
-  ~episodesListModel() override;
+  explicit shotEpsListModel(QObject *parent = nullptr);
+  ~shotEpsListModel() override;
 
   //返回总行数
   int rowCount(const QModelIndex &parent) const override;
