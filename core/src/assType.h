@@ -24,7 +24,9 @@ class CORE_API assType
   std::string s_type;
  public:
   [[nodiscard]] const std::string &getType() const;
+  [[nodiscard]] const QString getTypeQ() const;
   void setType(const std::string &string);
+  void setType(const QString &string);
  private:
   int64_t p_ass_class_id;
 
@@ -34,4 +36,10 @@ class CORE_API assType
   void setAssClassPtr(const assClassPtr &class_ptr);
 };
 
+inline const QString assType::getTypeQ() const {
+  return QString::fromStdString(getType());
+}
+inline void assType::setType(const QString &string) {
+  setType(string.toStdString());
+}
 CORE_NAMESPACE_E

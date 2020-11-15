@@ -7,11 +7,7 @@
 #include <QContextMenuEvent>
 #include <QHeaderView>
 
-#include "src/mayaArchive.h"
-#include "src/mayaArchiveShotFbx.h"
-#include "src/coreset.h"
-#include "src/shottype.h"
-#include "src/shotfilesqlinfo.h"
+#include <core_doQt.h>
 
 #include "Logger.h"
 
@@ -173,26 +169,26 @@ void shotTableWidget::insertShot(const QString &path) {
   auto file = std::make_shared<doCore::mayaArchive>(data);
   if (path.isEmpty()) return;
   //开始上传
-  file->update(path);
+  file->update(path.toStdString());
   //更新列表
   p_model_->init(p_type_ptr_);
 
 }
 void shotTableWidget::openPath(const doCore::fileSqlInfoPtr &info_ptr, const bool &openEx) {
-  auto path = doCore::coreSet::getCoreSet().getPrjectRoot().path() + info_ptr->getFileList()[0].path();
-  DOODLE_LOG_INFO << "打开路径: " << QDir::cleanPath(path);
+  auto path = doCore::coreSet::getSet().getPrjectRoot()
+      / info_ptr->getFileList()[0];
+  DOODLE_LOG_INFO << "打开路径: " << QDir::cleanPath(DOTOS(path.generic_string()));
 
-  if (QDir(path).exists()) {
+  if (QDir(DOTOS(path.generic_string())).exists()) {
     if (openEx)
-      boost::process::system(QString("explorer.exe %1").arg(QDir::cleanPath(path).replace("/", "\\")).toStdString());
-//      std::system(QString("explorer.exe %1").arg(QDir::cleanPath(path).replace("/", "\\"))
-//                      .toStdString().c_str());
+      boost::process::system(QString("explorer.exe %1")
+      .arg(QDir::cleanPath(DOTOS(path.generic_string())).replace("/", "\\")).toStdString());
     else
-      QGuiApplication::clipboard()->setText(path);
+      QGuiApplication::clipboard()->setText(DOTOS(path.generic_string()));
   } else {
-    DOODLE_LOG_CRIT << QString("没有在服务器中找到目录:\n %1").arg(path);
+    DOODLE_LOG_CRIT << QString("没有在服务器中找到目录:\n %1").arg(DOTOS(path.generic_string()));
     QMessageBox::warning(this, tr("没有目录"),
-                         tr("没有在服务器中找到目录:\n %1").arg(path),
+                         tr("没有在服务器中找到目录:\n %1").arg(DOTOS(path.generic_string())),
                          QMessageBox::Yes);
   }
 }
@@ -245,7 +241,7 @@ void shotTableWidget::createFlipbook(const QString &image_folder) {
   auto movide_data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
       .value<doCore::shotInfoPtr>();
 
-  auto k_movie = std::make_shared<doCore::movieArchive>(movide_data);
+  auto k_movie = std::make_shared<doCore::moveShotA>(movide_data);
 
   auto th = std::thread(&doCore::movieArchive::update, *k_movie, std::vector{image_folder});
   th.detach();

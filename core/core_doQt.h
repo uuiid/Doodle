@@ -21,7 +21,7 @@
 #include <src/ueArchive.h>
 
 #include <src/coreDataManager.h>
-
+#include <src/coreset.h>
 
 #ifdef DOODLE_QT
 Q_DECLARE_METATYPE(doCore::episodes)

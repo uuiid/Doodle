@@ -4,9 +4,10 @@
 
 #include "shotTableModel.h"
 #include "Logger.h"
-#include "src/shottype.h"
-#include "src/shotfilesqlinfo.h"
-#include <QJsonArray>
+#include <core_doQt.h>
+
+#include <memory>
+
 
 DOODLE_NAMESPACE_S
 shotTableModel::shotTableModel(QObject *parent)
@@ -27,12 +28,12 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
     switch (index.column()) {
       case 0:var = QString("v%1").arg(shot->getVersionP(), 4, 10, QLatin1Char('0'));
         break;
-      case 1:var = shot->getInfoP().last().toVariant();
+      case 1:var = DOTOS(shot->getInfoP().back());
         break;
-      case 2:var = shot->getUser();
+      case 2:var = shot->getUserQ();
         break;
       case 3:
-        var = shot->getSuffixes();
+        var = shot->getSuffixesQ();
         break;
       case 4:var = shot->getIdP();
         break;
@@ -43,12 +44,12 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
     switch (index.column()) {
       case 0:var = shot->getVersionP();
         break;
-      case 1:var = shot->getInfoP().last().toVariant();
+      case 1:var = QString::fromStdString(shot->getInfoP().back());
         break;
-      case 2:var = shot->getUser();
+      case 2:var = shot->getUserQ();
         break;
       case 3:
-        var = shot->getSuffixes();
+        var = shot->getSuffixesQ();
         break;
       case 4:var = QVariant::fromValue(shot);
         break;
@@ -88,9 +89,9 @@ bool shotTableModel::setData(const QModelIndex &index, const QVariant &value, in
 
   if (index.column() == 1 && role == Qt::EditRole) {
     if (!value.toString().isEmpty() &&
-        value.toString() != p_shot_info_ptr_list_[index.row()]->getInfoP().last().toString()) {
-      DOODLE_LOG_INFO << p_shot_info_ptr_list_[index.row()]->getInfoP().last().toString();
-      p_shot_info_ptr_list_[index.row()]->setInfoP(value.toString());
+        value.toString().toStdString() != p_shot_info_ptr_list_[index.row()]->getInfoP().back()) {
+      DOODLE_LOG_INFO << p_shot_info_ptr_list_[index.row()]->getInfoP().back().c_str();
+      p_shot_info_ptr_list_[index.row()]->setInfoP(value.toString().toStdString());
       p_shot_info_ptr_list_[index.row()]->updateSQL();
       dataChanged(index, index);
       return true;
@@ -117,8 +118,8 @@ bool shotTableModel::insertRows(int position, int rows, const QModelIndex &paren
 //  auto version = p_shot_info_ptr_list_[0]->getVersionP();
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
-    p_shot_info_ptr_list_.insert(position,
-                                 doCore::shotInfoPtr(new doCore::shotFileSqlInfo));
+    p_shot_info_ptr_list_.insert(p_shot_info_ptr_list_.begin() + position,
+                                 std::make_shared<doCore::shotFileSqlInfo>());
     p_shot_info_ptr_list_[position]->setShotType(p_type_ptr_);
   }
   endInsertRows();
@@ -136,7 +137,7 @@ void shotTableModel::init(const doCore::shotTypePtr &file_type_ptr) {
 }
 void shotTableModel::clear() {
   p_type_ptr_ = nullptr;
-  if (p_shot_info_ptr_list_.isEmpty()) return;
+  if (p_shot_info_ptr_list_.empty()) return;
   beginResetModel();
   p_shot_info_ptr_list_.clear();
   endResetModel();

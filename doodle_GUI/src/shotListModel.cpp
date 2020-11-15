@@ -3,6 +3,8 @@
 //
 
 #include "shotListModel.h"
+
+#include <memory>
 #include "src/shot.h"
 
 #include "Logger.h"
@@ -30,7 +32,7 @@ QVariant shotListModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return shotlist[index.row()]->getShotAndAb_str();
+    return shotlist[index.row()]->getShotAndAb_strQ();
   } else {
     return QVariant();
   }
@@ -73,7 +75,7 @@ bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int
     bool isHasShot = false;
     for (auto &&x : shotlist) {
       if ((infoMap["shot"].toInt() == x->getShot()
-          && infoMap["shotAb"].toString() == x->getShotAndAb_str())
+          && infoMap["shotAb"].toString() == x->getShotAndAb_strQ())
           || x->isInsert()) {
         isHasShot = true;
         break;
@@ -97,7 +99,7 @@ bool shotListModel::insertRows(int position, int rows, const QModelIndex &index)
   beginInsertRows(QModelIndex(), position, position + rows - 1);
 
   for (int row = 0; row < rows; ++row) {
-    shotlist.insert(position, doCore::shotPtr(new doCore::shot));
+    shotlist.insert(shotlist.begin() + position, std::make_shared<doCore::shot>());
   }
   endInsertRows();
   return true;
@@ -106,7 +108,7 @@ bool shotListModel::insertRows(int position, int rows, const QModelIndex &index)
 bool shotListModel::removeRows(int position, int rows, const QModelIndex &index) {
   beginRemoveRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
-    shotlist.remove(position);
+    shotlist.erase(shotlist.begin() + position);
   }
   endRemoveRows();
   return true;
@@ -124,7 +126,7 @@ void shotListModel::init(const doCore::episodesPtr &episodes_) {
 }
 void shotListModel::clear() {
   p_episodes = nullptr;
-  if(shotlist.isEmpty()) return;
+  if(shotlist.empty()) return;
   beginResetModel();
   shotlist.clear();
   endResetModel();

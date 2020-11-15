@@ -28,7 +28,7 @@ class settingWidget : public QWidget {
  protected:
   void closeEvent(QCloseEvent *event) override;
  private:
-  doCore::coreSet &p_set_ = doCore::coreSet::getCoreSet();
+  doCore::coreSet &p_set_ = doCore::coreSet::getSet();
 
   QComboBox *p_dep_text;
   QLineEdit *p_user_text;

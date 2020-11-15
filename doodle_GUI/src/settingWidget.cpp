@@ -3,11 +3,12 @@
 //
 
 #include "settingWidget.h"
-
+#include <core_doQt.h>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPushButton>
+#include <QtCore/QDir>
 
 DOODLE_NAMESPACE_S
 settingWidget::settingWidget(QWidget *parent)
@@ -54,7 +55,7 @@ settingWidget::settingWidget(QWidget *parent)
 
   auto p_syn_exe_path = new QLabel(this);
   p_syn_exe_path->setText(tr("同步软件安装目录 : %1")
-                              .arg(doCore::coreSet::getCoreSet().getFreeFileSyn()));
+                              .arg(DOTOS(doCore::coreSet::getSet().getFreeFileSyn())));
 
   auto p_save = new QPushButton(this);
   p_save->setText(tr("保存"));
@@ -92,12 +93,14 @@ settingWidget::settingWidget(QWidget *parent)
 
 }
 void settingWidget::setInit() {
-  p_prj_text->addItems(p_set_.getAllPrjName());
-  p_dep_text->setCurrentText(p_set_.getDepartment());
-  p_user_text->setText(p_set_.getUser());
-  p_syn_text->setText(p_set_.getSynPathLocale().absolutePath());
+  for (const auto &name : p_set_.getAllPrjName()) {
+    p_prj_text->addItem(DOTOS(name));
+  }
+  p_dep_text->setCurrentText(DOTOS(p_set_.getDepartment()));
+  p_user_text->setText(DOTOS(p_set_.getUser()));
+  p_syn_text->setText(DOTOS(p_set_.getSynPathLocale().generic_string()));
   p_eps_text->setValue(p_set_.getSyneps());
-  p_prj_text->setCurrentText(p_set_.getProjectname());
+  p_prj_text->setCurrentText(DOTOS(p_set_.getProjectname()));
   seteps(p_set_.getSyneps());
 }
 void settingWidget::setDepartment(const QString &dep) {
@@ -120,12 +123,11 @@ void settingWidget::seteps(int eps) {
   p_syn_sever_path->clear();
   auto tmplist = p_set_.getSynDir();
   for(auto &&x :tmplist){
-    p_syn_locale_path->addItem(x.local);
-    p_syn_sever_path->addItem(x.server);
+    p_syn_locale_path->addItem(DOTOS(x.local.generic_string()));
+    p_syn_sever_path->addItem(DOTOS(x.server.generic_string()));
   }
 }
 void settingWidget::setProject(const QString &prj) {
-
   p_set_.setProjectname(prj);
 }
 void settingWidget::closeEvent(QCloseEvent *event) {

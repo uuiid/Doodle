@@ -42,6 +42,7 @@ class CORE_API coreSet{
   //同步目录时的本地路径
   [[nodiscard]] const dpath & getSynPathLocale() const;
   void setSynPathLocale(const dpath &syn_path);
+  void setSynPathLocale(const QString &syn_path);
   //MySQL ip设置
   [[nodiscard]] dstring getIpMysql() const;
   void setIpMysql(const dstring &value);
@@ -52,9 +53,12 @@ class CORE_API coreSet{
   [[nodiscard]] dstring getUser() const;
   [[nodiscard]] dstring getUser_en() const;
   void setUser(const dstring &value);
+  void setUser(const QString &value);
   //部门设置
   [[nodiscard]] dstring getDepartment() const;
+  [[nodiscard]] QString getDepartmentQ() const;
   void setDepartment(const dstring &value);
+  void setDepartment(const QString &value);
   //同步集数设置
   [[nodiscard]] int getSyneps() const;
   void setSyneps(int value);
@@ -66,6 +70,7 @@ class CORE_API coreSet{
   [[nodiscard]] std::pair<int,std::string> projectName() const;
   [[nodiscard]] dstringList getAllPrjName() const;
   void setProjectname(const std::string &value);
+  void setProjectname(const QString &value);
 
   //shot根路径
   [[nodiscard]] dpath getShotRoot() const;
@@ -127,6 +132,20 @@ class CORE_API coreSet{
   dpathPtr cacheRoot;
   dpathPtr doc;
 };
-
+inline QString coreSet::getDepartmentQ() const {
+  return QString::fromStdString(getDepartment());
+}
+inline void coreSet::setDepartment(const QString &value) {
+  setDepartment(value.toStdString());
+}
+inline void  coreSet::setUser(const QString &value) {
+  setUser(value.toStdString());
+}
+inline void  coreSet::setSynPathLocale(const QString &syn_path) {
+  setSynPathLocale(dpath{syn_path.toStdString()});
+}
+inline void coreSet::setProjectname(const QString &value) {
+  setProjectname(value.toStdString());
+}
 CORE_NAMESPACE_E
 

@@ -27,9 +27,10 @@ class CORE_API fileSqlInfo : public coresqldata {
   void setFileStateP(const dstring &value);
 
   [[nodiscard]] dstring getSuffixes() const;
+  [[nodiscard]] QString getSuffixesQ() const;
 
   [[nodiscard]] dstring getUser() const;
-
+  [[nodiscard]] QString getUserQ() const;
   virtual dpath generatePath(const std::string &programFodler) = 0;
   virtual dpath generatePath(const dstring &programFolder, const dstring &suffixes) = 0;
   virtual dpath generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) = 0;
@@ -51,5 +52,10 @@ class CORE_API fileSqlInfo : public coresqldata {
   [[nodiscard]] dstringList json_to_strList(const dstring &json_str) const;
   [[nodiscard]] dstring     strList_tojson(const dstringList & str_list) const;
 };
-
+inline QString fileSqlInfo::getUserQ() const {
+  return QString::fromStdString(getUser());
+}
+inline QString fileSqlInfo::getSuffixesQ() const {
+  return QString::fromStdString(getSuffixes());
+}
 CORE_NAMESPACE_E

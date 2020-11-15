@@ -32,9 +32,11 @@ class CORE_API shotClass : public coresqldata ,
   static shotClassPtrList getAll(const shotPtr &shot_ptr);
 
   [[nodiscard]] dstring getClass_str() const;
+  [[nodiscard]] QString getClass_Qstr() const;
   [[nodiscard]] e_fileclass getClass() const;
   void setclass(const e_fileclass &value);
   void setclass(const dstring &value);
+  void setclass(const QString &value);
 
   episodesPtr getEpisodes();
   void setEpisodes(const episodesPtr &value);
@@ -54,5 +56,10 @@ class CORE_API shotClass : public coresqldata ,
   qint64 p_shot_id;
   qint64 p_eps_id;
 };
-
+inline QString shotClass::getClass_Qstr() const {
+  return QString::fromStdString(getClass_str());
+}
+inline void shotClass::setclass(const QString &value) {
+  setclass(value.toStdString());
+}
 CORE_NAMESPACE_E

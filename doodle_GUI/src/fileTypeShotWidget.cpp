@@ -1,8 +1,7 @@
 ﻿//
 // Created by teXiao on 2020/10/12.
 //
-#include "src/coreset.h"
-#include "src/shottype.h"
+#include <core_doQt.h>
 #include "fileTypeShotModel.h"
 #include "fileTypeShotWidget.h"
 
@@ -26,7 +25,7 @@ QWidget *fileTypeShotDelegate::createEditor(QWidget *parent,
 }
 void fileTypeShotDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const {
   auto *edit = static_cast<QLineEdit *>(editor);
-  edit->setText(doCore::coreSet::getCoreSet().getDepartment());
+  edit->setText(doCore::coreSet::getSet().getDepartmentQ());
 }
 void fileTypeShotDelegate::setModelData(QWidget *editor,
                                         QAbstractItemModel *model, const QModelIndex &index) const {

@@ -4,7 +4,7 @@
 #define _WIN32_WINNT 0x0A00
 
 #include <QtCore/qglobal.h>
-
+#include <QtCore/QString>
 #include <vector>
 #include <iostream>
 #include <memory>

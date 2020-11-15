@@ -48,10 +48,12 @@ class CORE_API shot : public coresqldata,
   //设置shot自身信息
   void setShot(const int64_t &sh, const e_shotAB &ab = e_shotAB::_);
   void setShot(const int64_t &sh, const dstring &ab);
+  void setShot(const int64_t &sh, const QString &ab);
   void setShotAb(const dstring &ab);
   void setShotAb(const e_shotAB &ab) { p_qenm_shotab = ab; };
   //获得全部的shot的str格式化信息
   dstring getShotAndAb_str() const;
+  QString getShotAndAb_strQ() const;
   //只有shot的格式化信息
   dstring getShot_str() const;
   //只有shot Ab的格式化信息
@@ -66,5 +68,10 @@ class CORE_API shot : public coresqldata,
   int64_t p_eps_id;
 
 };
-
+inline void shot::setShot(const int64_t &sh, const QString &ab) {
+  setShot(sh,ab.toStdString());
+}
+inline QString shot::getShotAndAb_strQ() const {
+  return QString::fromStdString(getShotAndAb_str());
+}
 CORE_NAMESPACE_E

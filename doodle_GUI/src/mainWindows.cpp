@@ -52,7 +52,9 @@ void mainWindows::doodle_init() {
   //开始设置项目小部件
   auto prj = new QListWidget(centralWidget);
   prj->setObjectName("prj");
-  prj->addItems(doCore::coreSet::getCoreSet().getAllPrjName());
+  for (const auto &name : doCore::coreSet::getSet().getAllPrjName()) {
+    prj->addItem(QString::fromStdString(name));
+  }
   prj->setFlow(QListView::LeftToRight);
   prj->setCurrentItem(prj->item(0));
 

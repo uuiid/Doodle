@@ -3,6 +3,8 @@
 //
 #include "fileTypeShotModel.h"
 
+#include <memory>
+
 #include "src/coreset.h"
 #include "src/shottype.h"
 
@@ -18,7 +20,7 @@ QVariant fileTypeShotModel::data(const QModelIndex &index, int role) const {
   if (index.row() >= p_type_ptr_list_.size()) return QVariant();
 
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return p_type_ptr_list_[index.row()]->getType();
+    return p_type_ptr_list_[index.row()]->getTypeQ();
   } else {
     return QVariant();
   }
@@ -42,7 +44,7 @@ Qt::ItemFlags fileTypeShotModel::flags(const QModelIndex &index) const {
 
 void fileTypeShotModel::init(const doCore::shotClassPtr &file_class_ptr) {
   p_class_ptr_ = file_class_ptr;
-  auto tmp_fileTypeList = doCore::fileType::getAll(file_class_ptr);
+  auto tmp_fileTypeList = doCore::shotType::getAll(file_class_ptr);
   clear();
   beginInsertRows(QModelIndex(), 0, tmp_fileTypeList.size());
   p_type_ptr_list_ = tmp_fileTypeList;
@@ -58,7 +60,7 @@ bool fileTypeShotModel::setData(const QModelIndex &index, const QVariant &value,
   if (index.isValid() && role == Qt::EditRole) {
     bool isHas = false;
     for (const auto &item : p_type_ptr_list_) {
-      if (item->isInsert() || value.toString() == item->getAssClass()) {
+      if (item->isInsert() || value.toString() == item->getTypeQ()) {
         isHas = true;
         break;
       }
@@ -66,7 +68,7 @@ bool fileTypeShotModel::setData(const QModelIndex &index, const QVariant &value,
 
     if (!isHas) {
       p_type_ptr_list_[index.row()]->setType(value.toString());
-      p_type_ptr_list_[index.row()]->setFileClass(p_class_ptr_);
+      p_type_ptr_list_[index.row()]->setShotClass(p_class_ptr_);
       p_type_ptr_list_[index.row()]->insert();
     } else {
       return false;
@@ -77,7 +79,8 @@ bool fileTypeShotModel::setData(const QModelIndex &index, const QVariant &value,
 bool fileTypeShotModel::insertRows(int position, int rows, const QModelIndex &index) {
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
-    p_type_ptr_list_.insert(position, doCore::shotTypePtr(new doCore::shotType));
+    p_type_ptr_list_.insert(p_type_ptr_list_.begin() + position,
+                            std::make_shared<doCore::shotType>());
   }
   endInsertRows();
   return true;
@@ -85,7 +88,7 @@ bool fileTypeShotModel::insertRows(int position, int rows, const QModelIndex &in
 bool fileTypeShotModel::removeRows(int position, int rows, const QModelIndex &index) {
   beginRemoveRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
-    p_type_ptr_list_.remove(position);
+    p_type_ptr_list_.erase(p_type_ptr_list_.begin() + position);
   }
   endRemoveRows();
   return true;

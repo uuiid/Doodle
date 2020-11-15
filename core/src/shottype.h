@@ -21,9 +21,10 @@ class CORE_API shotType : public coresqldata,
 
 
   void setType(const dstring &value);
+  void setType(const QString &value);
   //获得本身的字符串属性
   dstring getType() const;
-
+  QString getTypeQ() const;
   //设置和连接外键 shotclass
   void setShotClass(const shotClassPtr &fileclass_);
   //获得外键连接的实体对象 shotclass
@@ -54,4 +55,10 @@ class CORE_API shotType : public coresqldata,
   int64_t p_shot_id;
 };
 
+inline void shotType::setType(const QString &value) {
+  setType(value.toStdString());
+}
+inline QString shotType::getTypeQ() const {
+  return QString::fromStdString(getType());
+}
 CORE_NAMESPACE_E

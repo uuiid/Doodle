@@ -3,10 +3,9 @@
 //
 
 #include "fileClassShotModel.h"
-#include "src/shot.h"
-#include "src/coreset.h"
+#include <core_doQt.h>
 
-#include "src/shotClass.h"
+#include <memory>
 #include "Logger.h"
 
 DOODLE_NAMESPACE_S
@@ -26,7 +25,7 @@ QVariant fileClassShotModel::data(const QModelIndex &index, int role) const {
   if (index.row() >= list_fileClass.size())
     return QVariant();
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return list_fileClass[index.row()]->getClass_str();
+    return list_fileClass[index.row()]->getClass_Qstr();
   } else {
     return QVariant();
   }
@@ -65,7 +64,7 @@ bool fileClassShotModel::setData(const QModelIndex &index, const QVariant &value
     //确认没有重复的fileclass
     bool isHas = false;
     for (auto &&i : list_fileClass) {
-      if (value.toString() == i->getClass_str() || i->isInsert()) {
+      if (value.toString() == i->getClass_Qstr() || i->isInsert()) {
         isHas = true;
         break;
       }
@@ -88,7 +87,7 @@ bool fileClassShotModel::setData(const QModelIndex &index, const QVariant &value
 
 bool fileClassShotModel::insertRows(int position, int rows, const QModelIndex &index) {
   bool isHas = false;
-  auto dep = doCore::coreSet::getCoreSet().getDepartment();
+  auto dep = doCore::coreSet::getSet().getDepartment();
   for (auto &&i : list_fileClass) {
     if (dep == i->getClass_str()) {
       isHas = true;
@@ -99,7 +98,8 @@ bool fileClassShotModel::insertRows(int position, int rows, const QModelIndex &i
   if (!isHas) {
     for (int row = 0; row < rows; ++row) {
       DOODLE_LOG_INFO << "插入新的fileclass镜头";
-      list_fileClass.insert(position, doCore::shotClassPtr(new doCore::shotClass));
+      list_fileClass.insert(list_fileClass.begin() +  position,
+                            std::make_shared<doCore::shotClass>());
       list_fileClass[position]->setclass(dep);
       list_fileClass[position]->setShot(p_shot);
       list_fileClass[position]->insert();
@@ -114,7 +114,7 @@ bool fileClassShotModel::removeRows(int position, int rows, const QModelIndex &i
 
   for (int row = 0; row < rows; ++row) {
     DOODLE_LOG_INFO << "去除队列中的fileclass镜头";
-    list_fileClass.remove(position);
+    list_fileClass.erase(list_fileClass.begin() + position);
   }
 
   endRemoveRows();
@@ -124,7 +124,7 @@ bool fileClassShotModel::removeRows(int position, int rows, const QModelIndex &i
 void fileClassShotModel::init(const doCore::shotPtr &shot) {
   p_shot = shot;
 
-  doCore::shotClassPtrList fileClassPtrList = doCore::fileClass::getAll(shot);
+  doCore::shotClassPtrList fileClassPtrList = doCore::shotClass::getAll(shot);
   clear();
   beginInsertRows(QModelIndex(), 0, fileClassPtrList.size());
   list_fileClass = fileClassPtrList;
@@ -133,7 +133,7 @@ void fileClassShotModel::init(const doCore::shotPtr &shot) {
 
 void fileClassShotModel::clear() {
   p_shot = nullptr;
-  if (list_fileClass.isEmpty()) return;
+  if (list_fileClass.empty()) return;
   beginResetModel();
   list_fileClass.clear();
   endResetModel();
