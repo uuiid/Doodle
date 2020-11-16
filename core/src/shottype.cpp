@@ -129,7 +129,7 @@ shotClassPtr shotType::getFileClass() {
   }
 }
 
-shotTypePtr shotType::findShotType(std::string &type_name) {
+shotTypePtr shotType::findShotType(const std::string & type_name) {
   shotTypePtr ptr = nullptr;
   auto list = coreDataManager::get().getShotTypeL();
   if (list.empty()) shotType::getAll();
@@ -143,7 +143,7 @@ shotTypePtr shotType::findShotType(std::string &type_name) {
   return ptr;
 }
 
-shotTypePtr shotType::findShotType(std::string &type_nmae, bool autoInstall) {
+shotTypePtr shotType::findShotType(const  std::string & type_nmae, bool autoInstall) {
   shotTypePtr ptr = shotType::findShotType(type_nmae);
   if (!ptr) {
     ptr = std::make_shared<shotType>();

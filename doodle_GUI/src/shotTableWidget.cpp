@@ -67,14 +67,28 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
                           true);
       });
       p_menu_->addAction(k_openFile);
+      //复制文件目录到剪切板
+      auto k_copyClip = new QAction();
+      k_copyClip->setText(tr("复制到剪贴板"));
 
-      //导出fbx脚本
-      auto k_exportFbx = new QAction();
-      k_exportFbx->setText(tr("导出fbx文件"));
-      connect(k_exportFbx, &QAction::triggered, this,
-              &shotTableWidget::exportFbx);
-      p_menu_->addAction(k_exportFbx);
-      //复制文件目录
+
+
+      connect(k_copyClip, &QAction::triggered, this, [=] {
+        toolkit::openPath(index.data(Qt::UserRole).value<doCore::shotInfoPtr>(),
+                          false);
+      });
+      p_menu_->addAction(k_copyClip);
+
+      const auto suffix =
+          index.data(Qt::UserRole).value<doCore::shotInfoPtr>()->getSuffixes();
+      if (suffix == ".ma" || suffix == ".mb") {
+        //导出fbx脚本
+        auto k_exportFbx = new QAction();
+        k_exportFbx->setText(tr("导出fbx文件"));
+        connect(k_exportFbx, &QAction::triggered, this,
+                &shotTableWidget::exportFbx);
+        p_menu_->addAction(k_exportFbx);
+      }
     }
   }
 

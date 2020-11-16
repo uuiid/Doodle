@@ -27,8 +27,8 @@ class CORE_API shotType : public coresqldata,
   shotClassPtr getFileClass();
 
   //根据字符串寻找tyep
-  static shotTypePtr findShotType(std::string &type_name);
-  static shotTypePtr findShotType(std::string &type_nmae, bool autoInstall);
+  static shotTypePtr findShotType(const std::string & type_name);
+  static shotTypePtr findShotType(const  std::string & type_nmae, bool autoInstall);
  private:
   template<typename T>
   void batchSetAttr(T &row);

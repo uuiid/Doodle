@@ -68,7 +68,6 @@ bool ShotTypeModel::setData(const QModelIndex &index, const QVariant &value, int
 
     if (!isHas) {
       p_type_ptr_list_[index.row()]->setType(value.toString());
-      p_type_ptr_list_[index.row()]->setShotClass(p_class_ptr_);
       p_type_ptr_list_[index.row()]->insert();
     } else {
       return false;

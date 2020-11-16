@@ -106,7 +106,7 @@ bool mayaArchiveShotFbx::update(shotInfoPtr &shot_data) {
 void mayaArchiveShotFbx::insertDB() {
   p_info_ptr_->setFileList(p_Path);
 
-  p_info_ptr_->setShotType(p_info_ptr_->findFileType("export_fbx"));
+  p_info_ptr_->setShotType(doCore::shotType::findShotType("export_fbx",true));
 
   p_info_ptr_->insert();
 
