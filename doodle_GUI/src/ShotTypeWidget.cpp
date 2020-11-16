@@ -105,7 +105,7 @@ void ShotTypeWidget::setModel(QAbstractItemModel *model) {
   if(p_model)
     p_file_type_shot_model_ = p_model;
   QAbstractItemView::setModel(model);
-};
+}
 
 ShotTypeWidget::~ShotTypeWidget() = default;
 

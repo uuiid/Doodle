@@ -23,7 +23,6 @@ class shotListModel : public QAbstractListModel {
 
   [[nodiscard]] int rowCount(const QModelIndex &parent) const override;
   [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override;
-  [[nodiscard]] doCore::shotPtr dataRaw(const QModelIndex &index) const;
 
   [[nodiscard]] QVariant headerData(int section,
                                     Qt::Orientation orientation,
@@ -40,10 +39,9 @@ class shotListModel : public QAbstractListModel {
   bool removeRows(int position, int rows, const QModelIndex &index) override;
  public slots:
   //自定义创建函数
-  void init(const doCore::episodesPtr &episodes_);
+  void init();
   void clear();
  private:
   doCore::shotPtrList shotlist;
-  doCore::episodesPtr p_episodes;
 };
 DOODLE_NAMESPACE_E

@@ -1,4 +1,4 @@
-find_package(Qt5 CONFIG COMPONENTS Core Widgets Sql QuickControls2 REQUIRED)
+find_package(Qt5 CONFIG COMPONENTS Core Widgets QuickControls2 REQUIRED)
 
 file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/DarkStyle.h
         DESTINATION ${CMAKE_CURRENT_LIST_DIR}/resource)
@@ -37,6 +37,7 @@ set(DOODLE_SOURE_HEADER
         src/settingWidget.h
         src/systemTray.h
         src/speedProgressWidget.h
+        src/Toolkit.h
         )
 
 set(DOODLE_SOURE
@@ -63,7 +64,9 @@ set(DOODLE_SOURE
         src/assTableWidght.cpp
         src/settingWidget.cpp
         src/systemTray.cpp
-        src/speedProgressWidget.cpp)
+        src/speedProgressWidget.cpp
+        src/Toolkit.cpp
+        )
 
 set(TS_FILES
         )
@@ -85,7 +88,6 @@ add_executable(doodle
         )
 
 target_link_libraries(doodle PRIVATE Qt5::Core)
-target_link_libraries(doodle PRIVATE Qt5::Sql)
 target_link_libraries(doodle PRIVATE Qt5::Widgets)
 target_link_libraries(doodle PRIVATE Qt5::QuickControls2)
 target_link_libraries(doodle PRIVATE core)

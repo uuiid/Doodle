@@ -21,9 +21,6 @@ class shotTableWidget : public QTableView {
   explicit shotTableWidget(QWidget *parent = nullptr);
 
   void setModel(QAbstractItemModel *model) override;
- public slots:
-  void init(const doCore::shotTypePtr &file_type_ptr);
-  void clear();
  private slots:
   void getSelectPath();
   void exportFbx();
@@ -49,9 +46,9 @@ class shotTableWidget : public QTableView {
   std::vector<doCore::mayaArchiveShotFbxPtr> exportList;
   std::vector<doCore::movieArchive> movieList;
  private:
+  void init();
   void insertShot(const QString &path);
   void enableBorder(const bool &isEnable);
-  void openPath(const doCore::fileSqlInfoPtr &info_ptr, const bool &openEx);
 };
 
 DOODLE_NAMESPACE_E

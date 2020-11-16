@@ -6,14 +6,14 @@
 #include <core_doQt.h>
 
 #include <memory>
-
+#include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
 AssTypeModel::AssTypeModel(QObject *parent)
     : QAbstractListModel(parent),
       p_file_type_ptr_list_(),
       p_ass_ptr_(nullptr) {}
 int AssTypeModel::rowCount(const QModelIndex &parent) const {
-  return p_file_type_ptr_list_.size();
+  return boost::numeric_cast<int>(p_file_type_ptr_list_.size());
 }
 QVariant AssTypeModel::data(const QModelIndex &index, int role) const {
   auto var = QVariant();
@@ -49,8 +49,6 @@ bool AssTypeModel::setData(const QModelIndex &index, const QVariant &value, int 
 
   if (!is_has) {
     p_file_type_ptr_list_[index.row()]->setType(value.toString());
-    p_file_type_ptr_list_[index.row()]->setAssClassPtr(p_ass_ptr_);
-    p_file_type_ptr_list_[index.row()]->insert();
     emit dataChanged(index, index, {role});
     return true;
   }
@@ -78,7 +76,7 @@ void AssTypeModel::init(const doCore::assClassPtr &ass_type_ptr) {
   clear();
   p_ass_ptr_ = ass_type_ptr;
   auto tmp_list = doCore::assType::getAll();
-  beginInsertRows(QModelIndex(),0,tmp_list.size() -1);
+  beginInsertRows(QModelIndex(),0,boost::numeric_cast<int>(tmp_list.size()) -1 );
   p_file_type_ptr_list_ = tmp_list;
   endInsertRows();
 }

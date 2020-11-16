@@ -2,7 +2,6 @@
 
 
 #include "src/mainWindows.h"
-#include "src/systemTray.h"
 #include "resource/DarkStyle.h"
 
 #include "Logger.h"
@@ -23,7 +22,7 @@ int main(int argc, char *argv[]) {
   //设置主题
   QApplication::setStyle(new DarkStyle);
   //初始化设置
-  doCore::coreSet &set = doCore::coreSet::getCoreSet();
+  doCore::coreSet &set = doCore::coreSet::getSet();
   set.init();
   QApplication::setQuitOnLastWindowClosed(false);
 

@@ -108,8 +108,7 @@ shotListWidget::shotListWidget(QWidget *parent)
     : QListView(parent),
       p_model_(nullptr),
       p_delegate(nullptr),
-      p_shot_menu(nullptr),
-      p_episodes(nullptr) {
+      p_shot_menu(nullptr) {
   p_delegate = new shotIntEnumDelegate(this);
 
   setItemDelegate(p_delegate);
@@ -120,13 +119,7 @@ shotListWidget::shotListWidget(QWidget *parent)
           this, &shotListWidget::_doodle_shot_emit);
 }
 
-shotListWidget::~shotListWidget() = default;;
-
-void shotListWidget::init(const doCore::episodesPtr &episodes_) {
-  p_episodes = episodes_;
-  p_model_->init(episodes_);
-}
-
+shotListWidget::~shotListWidget() = default;
 void shotListWidget::insertShot() {
   int raw = selectionModel()->currentIndex().row() + 1;
   p_model_->insertRow(raw, QModelIndex());
@@ -136,12 +129,15 @@ void shotListWidget::insertShot() {
 }
 
 void shotListWidget::_doodle_shot_emit(const QModelIndex &index) {
-  emit shotEmit(p_model_->dataRaw(index));
+  doCore::coreDataManager::get().setShotPtr(
+      index.data(Qt::UserRole).value<doCore::shotPtr>()
+      );
+  emit initEmit();
 }
 
 void shotListWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_shot_menu = new QMenu(this);
-  if (p_episodes) {
+  if (doCore::coreDataManager::get().getEpisodesPtr()) {
     auto *action = new QAction(this);
 
     connect(action, &QAction::triggered,
@@ -158,10 +154,6 @@ void shotListWidget::setModel(QAbstractItemModel *model) {
   if (p_model)
     p_model_ = p_model;
   QAbstractItemView::setModel(model);
-}
-void shotListWidget::clear() {
-  if (p_model_)
-    p_model_->clear();
 }
 
 DOODLE_NAMESPACE_E

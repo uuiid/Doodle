@@ -7,13 +7,13 @@
 #include <core_doQt.h>
 
 #include <memory>
-
+#include <boost/numeric/conversion/cast.hpp>
 
 DOODLE_NAMESPACE_S
 shotTableModel::shotTableModel(QObject *parent)
-    : QAbstractTableModel(parent), p_shot_info_ptr_list_(), p_type_ptr_(nullptr) {}
+    : QAbstractTableModel(parent), p_shot_info_ptr_list_() {}
 int shotTableModel::rowCount(const QModelIndex &parent) const {
-  return p_shot_info_ptr_list_.size();
+  return boost::numeric_cast<int>(p_shot_info_ptr_list_.size());
 }
 int shotTableModel::columnCount(const QModelIndex &parent) const {
   return 5;
@@ -120,23 +120,22 @@ bool shotTableModel::insertRows(int position, int rows, const QModelIndex &paren
   for (int row = 0; row < rows; ++row) {
     p_shot_info_ptr_list_.insert(p_shot_info_ptr_list_.begin() + position,
                                  std::make_shared<doCore::shotFileSqlInfo>());
-    p_shot_info_ptr_list_[position]->setShotType(p_type_ptr_);
+//    p_shot_info_ptr_list_[position]->setShotType(p_type_ptr_);
   }
   endInsertRows();
   return true;
 }
-void shotTableModel::init(const doCore::shotTypePtr &file_type_ptr) {
-  auto tmp_list = doCore::shotFileSqlInfo::getAll(file_type_ptr);
+void shotTableModel::init() {
+  auto tmp_list = doCore::shotFileSqlInfo::getAll(doCore::coreDataManager::get().getShotPtr());
   clear();
   if(!tmp_list.empty()) {
-    beginInsertRows(QModelIndex(), 0, tmp_list.size() - 1);
-    p_type_ptr_ = file_type_ptr;
+    beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_list.size()) - 1);
+//    p_type_ptr_ = file_type_ptr;
     p_shot_info_ptr_list_ = tmp_list;
     endInsertRows();
   }
 }
 void shotTableModel::clear() {
-  p_type_ptr_ = nullptr;
   if (p_shot_info_ptr_list_.empty()) return;
   beginResetModel();
   p_shot_info_ptr_list_.clear();

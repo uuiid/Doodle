@@ -15,11 +15,9 @@ class AssDepWidget : public QListView {
   ~AssDepWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
- public slots:
-  void init();
 
  signals:
-  void fileClassEmit(const doCore::assDepPtr &ass_dep);
+  void initEmit();
 
  private:
   AssDepModel * p_file_class_ass_model_;

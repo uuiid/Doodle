@@ -26,8 +26,9 @@ class ProjectWidget : public QTabWidget {
   QHBoxLayout *p_shot_layout_; //布局
   shotEpsListModel *p_episodes_list_model_;//集数模型
   shotListModel *p_shot_list_model_;//镜头模型
-  ShotTypeModel *p_file_type_shot_model_;//类型模型
-  ShotClassModel *p_file_class_shot_model_;//种类模型
+
+  ShotTypeModel *p_file_type_shot_model_;//类型模型 这个作为过滤器
+  ShotClassModel *p_file_class_shot_model_;//种类模型 这个作为过滤器
 
   shotTableModel *p_shot_table_model_;//镜头信息模型
 
@@ -41,13 +42,14 @@ class ProjectWidget : public QTabWidget {
   QHBoxLayout *p_ass_layout_;
   AssDepModel *p_file_class_ass_model_;
   assClassModel *p_ass_class_model_;
-  AssTypeModel *p_file_type_ass_model_;
   assTableModel *p_ass_table_model_;
 
-  AssDepWidget *p_file_class_ass_widget_;
+  AssTypeModel *p_file_type_ass_model_; //这个作为过滤器
+
+  AssDepWidget *p_ass_dep_widget_;
   assClassWidget *p_ass_class_widget_;
   AssTypeWidget *p_file_type_ass_widget_;
-  assTableWidght *p_ass_table_widght_;
+  assTableWidght *p_ass_info_widght_;
 };
 DOODLE_NAMESPACE_E
 

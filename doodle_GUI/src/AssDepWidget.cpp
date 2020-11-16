@@ -2,28 +2,26 @@
 // Created by teXiao on 2020/10/15.
 //
 
-#include "AssDepWidget.h"
-#include "AssDepModel.h"
 #include <core_doQt.h>
+#include <src/AssDepModel.h>
+#include <src/AssDepWidget.h>
+
 DOODLE_NAMESPACE_S
-AssDepWidget::AssDepWidget(QWidget *parent) : QListView(parent) {
+AssDepWidget::AssDepWidget(QWidget *parent)
+    : QListView(parent), p_file_class_ass_model_(nullptr) {
   setFlow(QListView::LeftToRight);
-  connect(this, &AssDepWidget::clicked,
-          this, &AssDepWidget::_doodle_emit);
+  connect(this, &AssDepWidget::clicked, this, &AssDepWidget::_doodle_emit);
 }
 void AssDepWidget::setModel(QAbstractItemModel *model) {
   auto model_ = dynamic_cast<AssDepModel *>(model);
-  if (model_)
-    p_file_class_ass_model_ = model_;
+  if (model_) p_file_class_ass_model_ = model_;
   QAbstractItemView::setModel(model);
 }
-void AssDepWidget::init() {
-  if (p_file_class_ass_model_)
-    p_file_class_ass_model_->init();
-}
 void AssDepWidget::_doodle_emit(const QModelIndex &index) {
-  emit fileClassEmit(p_file_class_ass_model_
-                         ->data(index, Qt::UserRole).value<doCore::assDepPtr>());
+  auto assdep = p_file_class_ass_model_->data(index, Qt::UserRole)
+                    .value<doCore::assDepPtr>();
+  doCore::coreDataManager::get().setAssDepPtr(assdep);
+  emit initEmit();
 }
 AssDepWidget::~AssDepWidget() = default;
 DOODLE_NAMESPACE_E

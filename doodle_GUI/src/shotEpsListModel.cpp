@@ -8,6 +8,7 @@
 #include <core_doQt.h>
 #include "shotEpsListModel.h"
 
+#include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
 
 shotEpsListModel::shotEpsListModel(QObject *parent)
@@ -17,7 +18,7 @@ shotEpsListModel::shotEpsListModel(QObject *parent)
 shotEpsListModel::~shotEpsListModel()
 = default;
 int shotEpsListModel::rowCount(const QModelIndex &parent) const {
-  return eplist.size();
+  return boost::numeric_cast<int>(eplist.size());
 }
 QVariant shotEpsListModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid())
@@ -28,18 +29,11 @@ QVariant shotEpsListModel::data(const QModelIndex &index, int role) const {
 
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
     return eplist[index.row()]->getEpisdes_QStr();
+  } else if (role == Qt::UserRole) {
+    return QVariant::fromValue(eplist[index.row()]);
   } else {
     return QVariant();
   }
-}
-doCore::episodesPtr shotEpsListModel::dataRaw(const QModelIndex &index) const {
-  if (!index.isValid())
-    return nullptr;
-
-  if (index.row() >= eplist.size())
-    return nullptr;
-
-  return eplist[index.row()];
 }
 Qt::ItemFlags shotEpsListModel::flags(const QModelIndex &index) const {
   if (!index.isValid())
@@ -91,7 +85,7 @@ bool shotEpsListModel::removeRows(int position, int rows, const QModelIndex &ind
 }
 void shotEpsListModel::init() {
   auto tmp_eps = doCore::episodes::getAll();
-  beginInsertRows(QModelIndex(), 0, tmp_eps.size() - 1);
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_eps.size()) - 1);
   eplist = tmp_eps;
   endInsertRows();
 }

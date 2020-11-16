@@ -5,7 +5,7 @@
 #include <core_global.h>
 
 CORE_NAMESPACE_S
-class coreDataManager {
+class CORE_API coreDataManager {
  public:
   //单例使用
   static coreDataManager& get();

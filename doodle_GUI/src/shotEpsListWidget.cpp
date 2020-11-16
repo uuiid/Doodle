@@ -105,14 +105,16 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
 }
 
 void shotEpsListWidget::_doodle_episodes_emit(const QModelIndex &index) {
-  emit episodesEmit(p_episodesListModel->dataRaw(index));
+  doCore::coreDataManager::get().setEpisodesPtr(index.data(Qt::UserRole)
+                                                    .value<doCore::episodesPtr>());
+  emit initEmit();
 }
 void shotEpsListWidget::init() {
-    p_episodesListModel->init();
+  p_episodesListModel->init();
 }
 void shotEpsListWidget::setModel(QAbstractItemModel *model) {
-  auto p_model = dynamic_cast<shotEpsListModel*>(model);
-  if(p_model) p_episodesListModel = p_model;
+  auto p_model = dynamic_cast<shotEpsListModel *>(model);
+  if (p_model) p_episodesListModel = p_model;
   QAbstractItemView::setModel(model);
 }
 DOODLE_NAMESPACE_E

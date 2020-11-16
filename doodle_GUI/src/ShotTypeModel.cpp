@@ -7,11 +7,12 @@
 
 #include <core_doQt.h>
 
+#include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
 ShotTypeModel::ShotTypeModel(QObject *parent) : QAbstractListModel(parent) {}
 
 int ShotTypeModel::rowCount(const QModelIndex &parent) const {
-  return p_type_ptr_list_.size();
+  return boost::numeric_cast<int>(p_type_ptr_list_.size());
 }
 
 QVariant ShotTypeModel::data(const QModelIndex &index, int role) const {
@@ -45,7 +46,7 @@ void ShotTypeModel::init(const doCore::shotClassPtr &file_class_ptr) {
   p_class_ptr_ = file_class_ptr;
   auto tmp_fileTypeList = doCore::shotType::getAll();
   clear();
-  beginInsertRows(QModelIndex(), 0, tmp_fileTypeList.size());
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()));
   p_type_ptr_list_ = tmp_fileTypeList;
   endInsertRows();
 }
@@ -93,6 +94,6 @@ bool ShotTypeModel::removeRows(int position, int rows, const QModelIndex &index)
   return true;
 }
 
-ShotTypeModel::~ShotTypeModel() = default;;
+ShotTypeModel::~ShotTypeModel() = default;
 
 DOODLE_NAMESPACE_E

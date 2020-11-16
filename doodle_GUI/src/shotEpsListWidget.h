@@ -53,7 +53,7 @@ class shotEpsListWidget : public QListView {
  public slots:
   void init();
  signals:
-  void episodesEmit(const doCore::episodesPtr &episodes);
+  void initEmit();
 
  private:
   shotEpsListModel *p_episodesListModel;

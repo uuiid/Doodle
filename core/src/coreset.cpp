@@ -312,7 +312,7 @@ dstringList coreSet::getAllPrjName() const {
   }
   return list;
 }
-const dpath &coreSet::getSynPathLocale() const {
+const dpath coreSet::getSynPathLocale() const {
   return *synPath;
 }
 void coreSet::setSynPathLocale(const dpath &syn_path) {

@@ -8,6 +8,8 @@
 #include <memory>
 #include "Logger.h"
 
+#include <boost/numeric/conversion/cast.hpp>
+
 DOODLE_NAMESPACE_S
 ShotClassModel::ShotClassModel(QObject *parent)
     : QAbstractListModel(parent),
@@ -16,7 +18,7 @@ ShotClassModel::ShotClassModel(QObject *parent)
 }
 
 int ShotClassModel::rowCount(const QModelIndex &parent) const {
-  return list_fileClass.size();
+  return boost::numeric_cast<int>(list_fileClass.size());
 }
 
 QVariant ShotClassModel::data(const QModelIndex &index, int role) const {
@@ -75,9 +77,6 @@ bool ShotClassModel::setData(const QModelIndex &index, const QVariant &value, in
     else {
       DOODLE_LOG_CRIT << "注意将fileclass提交到数据库";
       list_fileClass[index.row()]->setclass(value.toString());
-      list_fileClass[index.row()]->setShot(p_shot);
-      list_fileClass[index.row()]->insert();
-
       emit dataChanged(index, index, {role});
       return true;
     }
@@ -93,7 +92,7 @@ bool ShotClassModel::insertRows(int position, int rows, const QModelIndex &index
       isHas = true;
       break;
     }
-  };
+  }
   beginInsertRows(index, position, position + rows - 1);
   if (!isHas) {
     for (int row = 0; row < rows; ++row) {
@@ -101,8 +100,6 @@ bool ShotClassModel::insertRows(int position, int rows, const QModelIndex &index
       list_fileClass.insert(list_fileClass.begin() +  position,
                             std::make_shared<doCore::shotClass>());
       list_fileClass[position]->setclass(dep);
-      list_fileClass[position]->setShot(p_shot);
-      list_fileClass[position]->insert();
     }
   }
   endInsertRows();
@@ -124,9 +121,9 @@ bool ShotClassModel::removeRows(int position, int rows, const QModelIndex &index
 void ShotClassModel::init(const doCore::shotPtr &shot) {
   p_shot = shot;
 
-  doCore::shotClassPtrList fileClassPtrList = doCore::shotClass::getAll();
+  auto fileClassPtrList = doCore::shotClass::getAll();
   clear();
-  beginInsertRows(QModelIndex(), 0, fileClassPtrList.size());
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(fileClassPtrList.size()));
   list_fileClass = fileClassPtrList;
   endInsertRows();
 }

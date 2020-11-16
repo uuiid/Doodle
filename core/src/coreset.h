@@ -40,7 +40,7 @@ class CORE_API coreSet{
   //获得同步路径
   synPathListPtr getSynDir();
   //同步目录时的本地路径
-  [[nodiscard]] const dpath & getSynPathLocale() const;
+  [[nodiscard]] const dpath getSynPathLocale() const;
   void setSynPathLocale(const dpath &syn_path);
   void setSynPathLocale(const QString &syn_path);
   //MySQL ip设置

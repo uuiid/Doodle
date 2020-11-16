@@ -70,11 +70,8 @@ class shotListWidget : public QListView {
   ~shotListWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
- public slots :
-  void init(const doCore::episodesPtr &episodes_);
-  void clear();
  signals:
-  void shotEmit(const doCore::shotPtr &shot);
+  void initEmit();
 
  private:
   //私有变量
@@ -84,9 +81,6 @@ class shotListWidget : public QListView {
   shotIntEnumDelegate *p_delegate;
   //上下文菜单
   QMenu *p_shot_menu;
-
-  //保存上一个小部件发射出来的集数指针
-  doCore::episodesPtr p_episodes;
 
  private slots:
   //添加镜头号

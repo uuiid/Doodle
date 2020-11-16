@@ -3,6 +3,7 @@
 //
 #include <core_doQt.h>
 #include "AssDepModel.h"
+#include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
 AssDepModel::AssDepModel(QObject *parent)
 :QAbstractListModel(parent)
@@ -10,7 +11,7 @@ AssDepModel::AssDepModel(QObject *parent)
   init();
 }
 int AssDepModel::rowCount(const QModelIndex &parent) const {
-  return p_class_ptr_list_.size();
+  return boost::numeric_cast<int>(p_class_ptr_list_.size());
 }
 QVariant AssDepModel::data(const QModelIndex &index, int role) const {
   if(!index.isValid()) return QVariant();
@@ -27,7 +28,7 @@ QVariant AssDepModel::data(const QModelIndex &index, int role) const {
 void AssDepModel::init() {
   clear();
   auto tmp_List  = doCore::assdepartment::getAll();
-  beginInsertRows(QModelIndex(),0,tmp_List.size()-1);
+  beginInsertRows(QModelIndex(),0,boost::numeric_cast<int>(tmp_List.size())-1);
   p_class_ptr_list_ = tmp_List;
   endInsertRows();
 }
@@ -37,7 +38,7 @@ void AssDepModel::clear() {
     p_class_ptr_list_.clear();
     endResetModel();
   }
-};
+}
 AssDepModel::~AssDepModel() = default;
 
 

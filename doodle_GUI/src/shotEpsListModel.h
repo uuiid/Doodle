@@ -24,7 +24,6 @@ class shotEpsListModel : public QAbstractListModel {
   int rowCount(const QModelIndex &parent) const override;
   //返回数据
   QVariant data(const QModelIndex &index, int role) const override;
-  doCore::episodesPtr dataRaw(const QModelIndex &index) const;
 
   //设置是否编辑标识
   Qt::ItemFlags flags(const QModelIndex &index) const override;

@@ -8,20 +8,18 @@
 #include <core_doQt.h>
 
 #include "Logger.h"
-
+#include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
 
 shotListModel::shotListModel(QObject *parent)
     : QAbstractListModel(parent),
-      shotlist(),
-      p_episodes(nullptr) {
+      shotlist() {
 }
 
 shotListModel::~shotListModel() = default;
 
-
 int shotListModel::rowCount(const QModelIndex &parent) const {
-  return shotlist.size();
+  return boost::numeric_cast<int>(shotlist.size());
 }
 
 QVariant shotListModel::data(const QModelIndex &index, int role) const {
@@ -33,16 +31,11 @@ QVariant shotListModel::data(const QModelIndex &index, int role) const {
 
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
     return shotlist[index.row()]->getShotAndAb_strQ();
+  } else if (role == Qt::UserRole) {
+    return QVariant::fromValue(shotlist[index.row()]);
   } else {
     return QVariant();
   }
-}
-
-doCore::shotPtr shotListModel::dataRaw(const QModelIndex &index) const {
-  if (!index.isValid())
-    return nullptr;
-
-  return shotlist[index.row()];
 }
 
 QVariant shotListModel::headerData(int section,
@@ -86,7 +79,7 @@ bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int
       return false;
     else {
       shotlist[index.row()]->setShot(infoMap["shot"].toInt(), infoMap["shotAb"].toString());
-      shotlist[index.row()]->setEpisodes(p_episodes);
+      shotlist[index.row()]->setEpisodes(doCore::coreDataManager::get().getEpisodesPtr());
       shotlist[index.row()]->insert();
       emit dataChanged(index, index, {role});
       return true;
@@ -113,20 +106,17 @@ bool shotListModel::removeRows(int position, int rows, const QModelIndex &index)
   endRemoveRows();
   return true;
 }
-void shotListModel::init(const doCore::episodesPtr &episodes_) {
-  doCore::shotPtrList tmp_shot_list = doCore::shot::getAll(episodes_);
+void shotListModel::init() {
+  doCore::shotPtrList tmp_shot_list = doCore::shot::getAll(doCore::coreDataManager::get().getEpisodesPtr());
 
   clear();
 
-  beginInsertRows(QModelIndex(), 0, tmp_shot_list.size());
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_shot_list.size()));
   shotlist = tmp_shot_list;
   endInsertRows();
-
-  p_episodes = episodes_;
 }
 void shotListModel::clear() {
-  p_episodes = nullptr;
-  if(shotlist.empty()) return;
+  if (shotlist.empty()) return;
   beginResetModel();
   shotlist.clear();
   endResetModel();

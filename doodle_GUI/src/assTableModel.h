@@ -28,7 +28,7 @@ class assTableModel : public QAbstractTableModel {
   //修改数据
   bool insertRows(int position, int rows, const QModelIndex &parent) override;
 
-  void init(const doCore::assTypePtr &file_type_ptr);
+  void init();
   void clear();
  private:
   doCore::assInfoPtrList p_ass_info_ptr_list_;

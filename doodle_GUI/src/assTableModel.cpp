@@ -8,13 +8,14 @@
 #include "Logger.h"
 #include <QJsonArray>
 #include <memory>
+#include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
 assTableModel::assTableModel(QObject *parent)
     : QAbstractTableModel(parent),
       p_ass_info_ptr_list_()
       {}
 int assTableModel::rowCount(const QModelIndex &parent) const {
-  return p_ass_info_ptr_list_.size();
+  return boost::numeric_cast<int>(p_ass_info_ptr_list_.size());
 }
 int assTableModel::columnCount(const QModelIndex &parent) const {
   return 5;
@@ -86,7 +87,6 @@ bool assTableModel::setData(const QModelIndex &index, const QVariant &value, int
   } else if (role == Qt::UserRole) {
     if (!value.canConvert<doCore::assInfoPtr>()) return false;
     p_ass_info_ptr_list_[index.row()] = value.value<doCore::assInfoPtr>();
-    p_ass_info_ptr_list_[index.row()]->insert();
     dataChanged(index, index);
     return true;
   } else {
@@ -106,18 +106,17 @@ bool assTableModel::insertRows(int position, int rows, const QModelIndex &parent
   for (int row = 0; row < rows; ++row) {
     p_ass_info_ptr_list_.insert(p_ass_info_ptr_list_.begin() + position,
                                 std::make_shared<doCore::assFileSqlInfo>());
-    p_ass_info_ptr_list_[position]->setAssType(doCore::coreDataManager::get().getAssTypePtr());
+//    p_ass_info_ptr_list_[position]->setAssType(doCore::coreDataManager::get().getAssTypePtr());
   }
   endInsertColumns();
   endInsertRows();
   return true;
 }
-void assTableModel::init(const doCore::assTypePtr &file_type_ptr) {
-  auto tmp_list = doCore::assFileSqlInfo::getAll(file_type_ptr);
+void assTableModel::init() {
+  auto tmp_list = doCore::assFileSqlInfo::getAll(doCore::coreDataManager::get().getAssClassPtr());
   clear();
-  beginInsertRows(QModelIndex(), 0, tmp_list.size() - 1);
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_list.size()) - 1);
   p_ass_info_ptr_list_ = tmp_list;
-  doCore::coreDataManager::get().setAssTypePtr(file_type_ptr);
   endInsertRows();
 }
 void assTableModel::clear() {

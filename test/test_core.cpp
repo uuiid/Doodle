@@ -35,7 +35,7 @@ class CoreTest : public ::testing::Test {
 
 void CoreTest::SetUp() {
   set.init();
-  set.setProjectname("dubuxiaoyao3");
+  set.setProjectname((std::string)"dubuxiaoyao3");
   set.initdb();
 }
 
@@ -71,11 +71,10 @@ TEST_F(CoreTest, create_shotinfo) {
     doCore::shotClassPtr fc(new doCore::shotClass());
     fc->setclass(doCore::shotClass::e_fileclass::VFX);
 
-    fc->setShot(sh);
     fc->insert();
 
     doCore::shotTypePtr ft(new doCore::shotType());
-    ft->setType("test");
+    ft->setType((std::string)"test");
     ft->setShotClass(fc);
 
     ft->insert();
@@ -134,8 +133,7 @@ TEST_F(CoreTest, create_assInfo) {
     af_->insert();
 
     doCore::assTypePtr ft_(new doCore::assType);
-    ft_->setType("ffff");
-    ft_->setAssClassPtr(af_);
+    ft_->setType((std::string)"ffff");
     ft_->insert();
 
     doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
@@ -144,8 +142,6 @@ TEST_F(CoreTest, create_assInfo) {
     list.push_back("D:/tmp/etr.vdb");
     sf_->setFileList(list);
     sf_->setVersionP(1);
-
-    sf_->setAssType(ft_);
 
     sf_->insert();
 
@@ -170,7 +166,7 @@ TEST_F(CoreTest, get_assInf) {
   doCore::assTypePtr ft_ = doCore::assType::getAll()[0];
   std::cout << "filetype :" << ft_->getType() << std::endl;
 
-  doCore::assInfoPtr ai_ = doCore::assFileSqlInfo::getAll(ft_)[0];
+  doCore::assInfoPtr ai_ = doCore::assFileSqlInfo::getAll(af_)[0];
   std::cout << "assinfo path :" << ai_->generatePath("test", ".mb") << std::endl;
 }
 
@@ -261,7 +257,7 @@ TEST_F(CoreTest,Synfile){
 }
 TEST_F(CoreTest,Synfile_lisgt){
   set.setSyneps(41);
-  set.setDepartment("Light");
+  set.setDepartment((std::string)"Light");
   doCore::ueSynArchive().down();
 }
 TEST_F(CoreTest,Synfile_create_dir){
