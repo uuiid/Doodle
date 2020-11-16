@@ -63,8 +63,7 @@ AssTypeWidget::AssTypeWidget(QWidget *parent)
     : QListView(parent),
       p_type_ptr_list_(),
       p_menu_(nullptr),
-      p_model_(nullptr),
-      p_ass_type_ptr_(nullptr) {
+      p_model_(nullptr) {
   setItemDelegate(new fileTypeAssDelegate(this));
   connect(this,&AssTypeWidget::clicked,
           this,&AssTypeWidget::_doodle_type_emit);
@@ -75,15 +74,7 @@ void AssTypeWidget::setModel(QAbstractItemModel *model) {
     p_model_ = k_model;
   QAbstractItemView::setModel(model);
 }
-void AssTypeWidget::init(const doCore::assClassPtr &ass_type_ptr) {
-  p_ass_type_ptr_ = ass_type_ptr;
-  p_model_->init(ass_type_ptr);
-}
 
-void AssTypeWidget::clear() {
-  p_ass_type_ptr_.reset();
-  p_model_->clear();
-}
 void AssTypeWidget::inserttype() {
  int raw = selectionModel()->currentIndex().row();
  p_model_->insertRow(raw);
@@ -94,7 +85,7 @@ void AssTypeWidget::_doodle_type_emit(const QModelIndex &index) {
   emit filetypeEmited(index.data(Qt::UserRole).value<doCore::shotTypePtr>());
 }
 void AssTypeWidget::contextMenuEvent(QContextMenuEvent *event) {
-  if(p_ass_type_ptr_ && !p_menu_){
+  if(!p_menu_){
     p_menu_ = new QMenu(this);
     auto add_ass_type = new QAction(p_menu_);
     add_ass_type->setText(tr("添加"));
