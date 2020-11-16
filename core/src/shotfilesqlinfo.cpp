@@ -69,8 +69,9 @@ void shotFileSqlInfo::insert() {
     install.insert_list.add(tab.infor = strList_tojson(infoP));
   if (p_shot_id > 0)
     install.insert_list.add(tab.shotsId = p_shot_id);
-  if (p_shCla_id > 0)
-    install.insert_list.add(tab.shotClassId = p_shCla_id);
+
+  install.insert_list.add(tab.shotClassId = shotClass::getCurrentClass()->getIdP());
+  
   if (p_shTy_id > 0)
     install.insert_list.add(tab.shotTypeId = p_shTy_id);
   idP = db->insert(install);

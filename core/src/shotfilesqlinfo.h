@@ -33,13 +33,13 @@ class CORE_API shotFileSqlInfo
   void setShot(const shotPtr &shot_);
 
   shotClassPtr getShotclass();
-  void setShotClass(const shotClassPtr &value);
 
   shotTypePtr getShotType();
   void setShotType(const shotTypePtr &fileType_);
 
   shotTypePtr findFileType(const std::string &type_str);
  private:
+  void setShotClass(const shotClassPtr &value);
   //循环获得查询结果
   template<typename T>
   void batchSetAttr(T &row);

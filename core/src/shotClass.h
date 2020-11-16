@@ -30,6 +30,8 @@ class CORE_API shotClass : public coresqldata ,
 
 
   static shotClassPtrList getAll();
+  static shotClassPtr getCurrentClass();
+
 
   [[nodiscard]] dstring getClass_str() const;
   [[nodiscard]] QString getClass_Qstr() const;

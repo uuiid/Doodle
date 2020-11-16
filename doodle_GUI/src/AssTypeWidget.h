@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "doodle_global.h"
-#include "core_global.h"
+#include <doodle_global.h>
+#include <core_global.h>
 
 #include <QStyledItemDelegate>
 #include <QListView>
@@ -36,9 +36,7 @@ class AssTypeWidget : public QListView {
   explicit AssTypeWidget(QWidget *parent = nullptr);
 
   void setModel(QAbstractItemModel *model) override;
- public slots:
-  void init(const doCore::assClassPtr &ass_type_ptr);
-  void clear();
+
  signals:
   void filetypeEmited(const doCore::shotTypePtr &file_type_ptr);
 
@@ -48,7 +46,6 @@ class AssTypeWidget : public QListView {
   AssTypeModel *p_model_;
   //菜单
   QMenu *p_menu_;
-  doCore::assClassPtr p_ass_type_ptr_;
 
  private slots:
   void inserttype();

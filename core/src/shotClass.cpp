@@ -96,6 +96,24 @@ shotClassPtrList shotClass::getAll() {
   return list;
 }
 
+shotClassPtr shotClass::getCurrentClass() { 
+  shotClassPtr ptr = nullptr;
+  for (auto &item : coreDataManager::get().getShotClassL()) {
+    if (item->getClass_str() == coreSet::getSet().getDepartment()) {
+      ptr = item;
+      break;
+    }
+  }
+  if (!ptr) {
+    ptr = std::make_shared<shotClass>();
+    ptr->setclass(coreSet::getSet().getDepartment());
+    ptr->insert();
+  }
+
+  return ptr; 
+
+}
+
 dstring shotClass::getClass_str() const {
   std::string str(magic_enum::enum_name(p_fileclass));
   return str;

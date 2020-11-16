@@ -61,8 +61,10 @@ void assFileSqlInfo::insert() {
     install.insert_list.add(tab.infor = strList_tojson(infoP));
   if (ass_class_id > 0)
     install.insert_list.add(tab.assClassId = ass_class_id);
+
   if (ass_type_id > 0)
     install.insert_list.add(tab.assTypeId = ass_type_id);
+
   idP = db->insert(install);
   if (idP == 0) {
     DOODLE_LOG_WARN << fileStateP.c_str();

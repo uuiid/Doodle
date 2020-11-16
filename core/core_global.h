@@ -21,6 +21,28 @@
 #define DOODLE_FFMPEG_PATH "tools/ffmpeg/bin"
 #define DOODLE_BACKUP "backup"
 #define DOODLE_CONTENT "Content"
+
+
+
+#if __has_cpp_attribute(nodiscard) && \
+    !(defined(__clang__) && (__cplusplus < 201703L))
+#define DOODLE_NODISCARD [[nodiscard]]
+#endif
+#if __has_cpp_attribute(no_unique_address) && \
+    !(defined(__GNUC__) && (__cplusplus < 201100))
+#define DOODLE_NO_UNIQUE_ADDRESS [[no_unique_address]]
+#endif
+
+#ifndef DOODLE_NODISCARD
+#define DOODLE_NODISCARD
+#endif
+#ifndef DOODLE_NO_UNIQUE_ADDRESS
+#define DOODLE_NO_UNIQUE_ADDRESS
+#endif
+
+
+
+
 namespace sqlpp::mysql {
 class connection;
 struct connection_config;
