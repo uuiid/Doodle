@@ -37,7 +37,6 @@ class CORE_API shotFileSqlInfo
   shotTypePtr getShotType();
   void setShotType(const shotTypePtr &fileType_);
 
-  shotTypePtr findFileType(const std::string &type_str);
  private:
   void setShotClass(const shotClassPtr &value);
   //循环获得查询结果

@@ -357,23 +357,5 @@ void shotFileSqlInfo::setShotType(const shotTypePtr &fileType_) {
 
   setShotClass(fileType_->getFileClass());
 }
-shotTypePtr shotFileSqlInfo::findFileType(const std::string &type_str) {
-  //获得导出类别的约束
-  auto fileTypelist = coreDataManager::get().getShotTypeL();
-  shotTypePtr k_fileType = nullptr;
-  for (auto &&item:fileTypelist) {
-    if (item->getType() == type_str) {
-      k_fileType = item;
-      break;
-    }
-  }
-  if (!k_fileType) {
-    k_fileType = std::make_shared<shotType>();
-    k_fileType->setType(type_str);
-    k_fileType->setShotClass(getShotclass());
-    k_fileType->insert();
-  }
-  return k_fileType;
-}
 
 CORE_NAMESPACE_E

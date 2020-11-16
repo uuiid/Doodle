@@ -23,15 +23,18 @@ class CORE_API shotType : public coresqldata,
   //获得本身的字符串属性
   dstring getType() const;
   QString getTypeQ() const;
-  //设置和连接外键 shotclass
-  void setShotClass(const shotClassPtr &fileclass_);
   //获得外键连接的实体对象 shotclass
   shotClassPtr getFileClass();
 
-
+  //根据字符串寻找tyep
+  static shotTypePtr findShotType(std::string &type_name);
+  static shotTypePtr findShotType(std::string &type_nmae, bool autoInstall);
  private:
   template<typename T>
   void batchSetAttr(T &row);
+  
+  //设置和连接外键 shotclass
+  void setShotClass(const shotClassPtr &fileclass_);
  private:
   //自身属性
   dstring p_Str_Type;
