@@ -3,10 +3,6 @@
 //
 #include "core_global.h"
 
-#include <QDomDocument>
-#include <QTemporaryFile>
-
-
 namespace pugi{
 class xml_document;
 class xml_node;

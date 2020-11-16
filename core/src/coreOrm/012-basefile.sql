@@ -1,21 +1,21 @@
-create table basefile
+create table if not exists basefile
 (
-	id smallint auto_increment,
+	id bigint auto_increment,
 	file varchar(128) null,
 	fileSuffixes varchar(32) null,
 	user varchar(128) null,
-	version smallint null,
+	version bigint null,
 	_file_path_ varchar(4096) null,
 	infor varchar(4096) null,
 	filestate varchar(64) null,
 	filetime datetime default CURRENT_TIMESTAMP null,
-	assClass_id smallint null,
-	assType_id smallint null,
-	episodes_id smallint null,
-	shots_id smallint null,
-	shotClass_id smallint null,
-	shotType_id smallint null,
-	project_id smallint null,
+	assClass_id bigint null,
+	assType_id bigint null,
+	episodes_id bigint null,
+	shots_id bigint null,
+	shotClass_id bigint null,
+	shotType_id bigint null,
+	project_id bigint null,
 	constraint id
 		unique (id),
 	constraint basefile_ibfk_1

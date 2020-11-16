@@ -5,7 +5,7 @@
 #include "shotListModel.h"
 
 #include <memory>
-#include "src/shot.h"
+#include <core_doQt.h>
 
 #include "Logger.h"
 

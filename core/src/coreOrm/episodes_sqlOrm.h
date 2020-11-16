@@ -24,7 +24,7 @@ namespace doodle
             const T& operator()() const { return id; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::must_not_insert, sqlpp::tag::must_not_update, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::must_not_insert, sqlpp::tag::must_not_update, sqlpp::tag::can_be_null>;
     };
     struct Episodes
     {
@@ -40,7 +40,7 @@ namespace doodle
             const T& operator()() const { return episodes; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
     };
     struct ProjectId
     {
@@ -56,7 +56,7 @@ namespace doodle
             const T& operator()() const { return projectId; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
     };
   } // namespace Episodes_
 

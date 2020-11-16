@@ -1,9 +1,9 @@
-create table znch
+create table if not exists znch
 (
-	id smallint auto_increment
+	id bigint auto_increment
 		primary key,
 	localname varchar(128) null,
-	assClass_id smallint null,
+	assClass_id bigint null,
 	constraint assClass_id
 		unique (assClass_id),
 	constraint znch_ibfk_1

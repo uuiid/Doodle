@@ -5,8 +5,7 @@
 #include "AssTypeWidget.h"
 
 #include "AssTypeModel.h"
-#include "src/shottype.h"
-#include "src/assClass.h"
+#include <core_doQt.h>
 #include <QMenu>
 
 #include <QContextMenuEvent>
@@ -26,9 +25,9 @@ QWidget *fileTypeAssDelegate::createEditor(QWidget *parent,
   QStringList list;
   list << "sourceimages"
   << "scenes"
-  << QString("%1_UE4").arg(modle->getAssTypePtr()->getAssClass())
+  << QString("%1_UE4").arg(modle->getAssTypePtr()->getAssClassQ())
   << "rig"
-  << QString("%1_low").arg(modle->getAssTypePtr()->getAssClass());
+  << QString("%1_low").arg(modle->getAssTypePtr()->getAssClassQ());
 
   fileType->addItems(list);
 

@@ -6,8 +6,7 @@
 #include "mainWindows.h"
 #include "settingWidget.h"
 
-#include "src/coreset.h"
-#include "src/freeSynWrap.h"
+#include <core_doQt.h>
 #include <QApplication>
 
 #include <QMenu>
@@ -58,19 +57,8 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   setContextMenu(menu);
 }
 void systemTray::synFile() {
-  if (doCore::coreSet::getSet().getDepartment() == "VFX") {
-    auto run = doCore::freeSynWrap();
-    run.addSynFile(doCore::coreSet::getSet().getSynDir());
-    run.addInclude({"*"});
-    run.addExclude({"dddd", "ssss"});
-    run.addSubIncludeExclude(0, {"*"}, {"fgaaa"});
-    run.setVersioningFolder(doCore::freeSynWrap::syn_set::down,
-                            "/das/grg/saaaa");
-    run.addSubSynchronize(0,
-                          doCore::freeSynWrap::syn_set::down,
-                          "/dddd/uuuu/fff");
-    run.run();
-  }
+  auto syn = std::make_unique<doCore::ueSynArchive>();
+  syn->down();
 }
 
 void systemTray::installMayaPlug() {

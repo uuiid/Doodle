@@ -17,7 +17,7 @@ class assTableWidght : public QTableView {
 
   void setModel(QAbstractItemModel *model) override;
  public:
-  void init(const doCore::shotTypePtr &file_type_ptr);
+  void init(const doCore::assTypePtr &file_type_ptr);
   void clear();
 
  private:

@@ -50,6 +50,13 @@ bool movieArchive::convertMovie(const dpath &moviePath) {
       boost::filesystem::basename(p_cacheFilePath.front())
   );
 }
+//bool movieArchive::update(const std::vector<QString> &filelist) {
+//  dpathList kdpath_list;
+//  for (const auto &item : filelist) {
+//    kdpath_list.push_back(item.toStdString());
+//  }
+//  return update(kdpath_list);
+//}
 bool movieArchive::update(const dpathList &filelist) {
   p_soureFile = filelist;
   DOODLE_LOG_INFO << filelist.front().c_str();

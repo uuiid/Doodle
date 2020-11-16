@@ -9,9 +9,7 @@
 #include "Logger.h"
 #include "ShotClassModel.h"
 #include "ShotClassWidget.h"
-#include "src/coreset.h"
-#include "src/shot.h"
-#include "src/shotClass.h"
+#include <core_doQt.h>
 
 #include <QMenu>
 #include <QContextMenuEvent>

@@ -22,6 +22,7 @@ class CORE_API assClass : public coresqldata,
 
   std::string getAssClass() const;
   std::string getAssClass(const bool &isZNCH);
+  QString getAssClassQ();
 
   void setAssClass(const std::string &value);
   void setAssClass(const std::string &value, const bool &isZNCH);
@@ -34,4 +35,7 @@ class CORE_API assClass : public coresqldata,
 
   znchNamePtr p_ptr_znch;
 };
+inline QString assClass::getAssClassQ() {
+  return QString::fromStdString(getAssClass(true));
+}
 CORE_NAMESPACE_E

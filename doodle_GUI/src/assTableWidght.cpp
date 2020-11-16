@@ -6,7 +6,7 @@
 
 #include "assTableModel.h"
 #include "Logger.h"
-
+#include <core_doQt.h>
 #include <QMenu>
 #include <QContextMenuEvent>
 
@@ -32,7 +32,7 @@ void assTableWidght::setModel(QAbstractItemModel *model) {
     p_model_ = k_model_;
   QTableView::setModel(model);
 }
-void assTableWidght::init(const doCore::shotTypePtr &file_type_ptr) {
+void assTableWidght::init(const doCore::assTypePtr &file_type_ptr) {
   p_file_type_ptr_ = file_type_ptr;
   p_model_->init(file_type_ptr);
   horizontalHeader()->setVisible(true);

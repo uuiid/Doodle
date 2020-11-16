@@ -1,8 +1,8 @@
-create table assclass
+create table if not exists assclass
 (
-	id smallint auto_increment,
+	id bigint auto_increment,
 	ass_name varchar(256) null,
-	assdep_id smallint null,
+	assdep_id bigint null,
 	constraint id
 		unique (id),
 	constraint assclass_ibfk_1

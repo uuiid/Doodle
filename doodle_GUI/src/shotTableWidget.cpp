@@ -243,7 +243,12 @@ void shotTableWidget::createFlipbook(const QString &image_folder) {
 
   auto k_movie = std::make_shared<doCore::moveShotA>(movide_data);
 
-  auto th = std::thread(&doCore::movieArchive::update, *k_movie, std::vector{image_folder});
+
+//  std::bind(static_cast<bool(doCore::moveShotA::*)(std::vector<QString>)>(&doCore::moveShotA::update),
+//                                                               *k_movie,
+//                                                               std::vector{image_folder}
+//                                                               );
+  auto th = std::thread(&doCore::moveShotA::update, *k_movie, std::vector{(doCore::dpath)image_folder.toStdString()});
   th.detach();
   p_model_->init(p_type_ptr_);
 }

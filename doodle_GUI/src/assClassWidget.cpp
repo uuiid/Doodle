@@ -6,7 +6,7 @@
 
 #include "assClassModel.h"
 
-#include "src/assClass.h"
+#include <core_doQt.h>
 
 #include <QMenu>
 DOODLE_NAMESPACE_S
@@ -15,7 +15,7 @@ assClassWidget::assClassWidget(QWidget *parent)
     : QListView(parent),
       p_model_(),
       p_menu_(nullptr),
-      p_class_ptr_(nullptr) {
+      p_ass_dep_ptr_(nullptr) {
 
   setStatusTip("右键添加文件");
   connect(this, &assClassWidget::clicked,
@@ -29,9 +29,9 @@ void assClassWidget::setModel(QAbstractItemModel *model) {
     p_model_ = t_model_;
   QAbstractItemView::setModel(model);
 }
-void assClassWidget::init(const doCore::shotClassPtr &file_class_ptr) {
-  p_class_ptr_ = file_class_ptr;
-  p_model_->init(file_class_ptr);
+void assClassWidget::init(const doCore::assDepPtr &ass_class) {
+  p_ass_dep_ptr_ = ass_class;
+  p_model_->init(ass_class);
 }
 void assClassWidget::insertAss() {
   int raw = selectionModel()->currentIndex().row();
@@ -49,7 +49,7 @@ void assClassWidget::_doodle_ass_emit(const QModelIndex &index) {
 }
 void assClassWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_menu_ = new QMenu(this);
-  if (p_class_ptr_) {
+  if (p_ass_dep_ptr_) {
     auto *add_ass = new QAction(p_menu_);
     connect(add_ass, &QAction::triggered,
             this, &assClassWidget::insertAss);

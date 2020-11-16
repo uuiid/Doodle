@@ -9,7 +9,7 @@ class CORE_API movieArchive : public fileArchive {
   bool makeMovie(const dpath &imageFolder);
   bool convertMovie(const dpath &moviePath);
   bool update(const dpathList &filelist) override;
-
+//  bool update(const std::vector<QString> &filelist);
  protected:
   void insertDB() override;
   void _generateFilePath() override;

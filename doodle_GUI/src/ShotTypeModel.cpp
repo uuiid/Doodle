@@ -5,8 +5,7 @@
 
 #include <memory>
 
-#include "src/coreset.h"
-#include "src/shottype.h"
+#include <core_doQt.h>
 
 DOODLE_NAMESPACE_S
 ShotTypeModel::ShotTypeModel(QObject *parent) : QAbstractListModel(parent) {}

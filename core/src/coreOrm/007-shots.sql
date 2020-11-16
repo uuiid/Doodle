@@ -1,9 +1,9 @@
-create table shots
+create table if not exists shots
 (
-	id smallint auto_increment,
-	shot smallint null,
+	id bigint auto_increment,
+	shot bigint null,
 	shotab varchar(64) null,
-	episodes_id smallint null,
+	episodes_id bigint null,
 	constraint id
 		unique (id),
 	constraint shots_ibfk_1

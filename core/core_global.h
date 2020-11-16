@@ -64,8 +64,8 @@ using episodesPtr =std::shared_ptr<episodes>  ;
 using shotClassPtr = std::shared_ptr<shotClass>;
 using shotTypePtr = std::shared_ptr<shotType>;
 using shotInfoPtr = std::shared_ptr<shotFileSqlInfo>;
-using assDepPtr = std::shared_ptr<assdepartment>;
 
+using assDepPtr = std::shared_ptr<assdepartment>;
 using assClassPtr = std::shared_ptr<assClass>;
 using znchNamePtr = std::shared_ptr<znchName>;
 using assTypePtr = std::shared_ptr<assType>;

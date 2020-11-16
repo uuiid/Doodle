@@ -1,9 +1,9 @@
-create table configure
+create table if not exists configure
 (
-	id smallint auto_increment,
+	id bigint auto_increment,
 	name varchar(128) null,
 	value varchar(128) null,
-	project_id smallint null,
+	project_id bigint null,
 	constraint id
 		unique (id),
 	constraint configure_ibfk_1

@@ -24,7 +24,7 @@ namespace doodle
             const T& operator()() const { return id; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::must_not_insert, sqlpp::tag::must_not_update, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::must_not_insert, sqlpp::tag::must_not_update, sqlpp::tag::can_be_null>;
     };
     struct File
     {
@@ -88,7 +88,7 @@ namespace doodle
             const T& operator()() const { return version; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
     };
     struct _filePath_
     {
@@ -168,7 +168,7 @@ namespace doodle
             const T& operator()() const { return assClassId; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
     };
     struct AssTypeId
     {
@@ -184,7 +184,7 @@ namespace doodle
             const T& operator()() const { return assTypeId; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
     };
     struct EpisodesId
     {
@@ -200,7 +200,7 @@ namespace doodle
             const T& operator()() const { return episodesId; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
     };
     struct ShotsId
     {
@@ -216,7 +216,7 @@ namespace doodle
             const T& operator()() const { return shotsId; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
     };
     struct ShotClassId
     {
@@ -232,7 +232,7 @@ namespace doodle
             const T& operator()() const { return shotClassId; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
     };
     struct ShotTypeId
     {
@@ -248,7 +248,7 @@ namespace doodle
             const T& operator()() const { return shotTypeId; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
     };
     struct ProjectId
     {
@@ -264,7 +264,7 @@ namespace doodle
             const T& operator()() const { return projectId; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::smallint, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
     };
   } // namespace Basefile_
 

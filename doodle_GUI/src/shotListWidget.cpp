@@ -1,4 +1,4 @@
-#include "src/shot.h"
+#include <core_doQt.h>
 
 #include "Logger.h"
 #include "shotListModel.h"

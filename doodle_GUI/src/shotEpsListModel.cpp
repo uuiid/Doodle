@@ -5,7 +5,7 @@
 #include <iostream>
 #include <memory>
 
-#include <src/episodes.h>
+#include <core_doQt.h>
 #include "shotEpsListModel.h"
 
 DOODLE_NAMESPACE_S

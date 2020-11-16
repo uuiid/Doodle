@@ -1,4 +1,4 @@
-﻿find_package(Qt5 CONFIG COMPONENTS Core Sql Xml REQUIRED)
+﻿find_package(Qt5 CONFIG COMPONENTS Core  REQUIRED)
 find_package(Sqlpp11 REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
 find_package(pugixml CONFIG REQUIRED)
@@ -19,7 +19,7 @@ find_package(magic_enum CONFIG REQUIRED)
 
 
 
-#这个是拎一个ORM库  还没开始用预备着
+#这个是拎一个ORM库
 set(ORM_HEADER
         src/coreOrm/project_sqlOrm.h
         src/coreOrm/user_sqlOrm.h
@@ -84,6 +84,8 @@ set(CORE_ARCHIVE_HEADER
         src/moveShotA.h
         src/assType.h
         src/assdepartment.h
+        src/coreDataManager.h
+
         )
 #这个是和文件服务器交互的实现文件
 set(CORE_ARCHIVE_SOURCE
@@ -101,7 +103,8 @@ set(CORE_ARCHIVE_SOURCE
         src/assType.cpp
         src/moveShotA.cpp
         src/ueSynArchive.cpp
-        src/coreDataManager.cpp src/coreDataManager.h core_doQt.h)
+        src/coreDataManager.cpp
+        )
 
 set(RESOURCE_SOURCE
         core_resource.qrc)
@@ -109,6 +112,7 @@ qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 add_library(core SHARED
         src/doException/doException.h
         src/doException/doException.cpp
+        core_doQt.h
         ${CORE_SQL_HEADER}
         ${CORE_SQL_SOURCE}
         ${CORE_ARCHIVE_HEADER}
@@ -117,7 +121,6 @@ add_library(core SHARED
         )
 
 target_link_libraries(core PUBLIC Qt5::Core)
-target_link_libraries(core PUBLIC Qt5::Xml)
 target_link_libraries(core PUBLIC SqlppMySql)
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
 target_link_libraries(core PUBLIC ${Boost_LIBRARIES})

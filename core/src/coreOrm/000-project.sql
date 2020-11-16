@@ -1,6 +1,6 @@
-create table project
+create table if not exists project
 (
-	id smallint auto_increment,
+	id bigint auto_increment,
 	name varchar(128) null,
 	constraint id
 		unique (id)

@@ -1,8 +1,8 @@
-create table assdepartment
+create table if not exists assdepartment
 (
-	id smallint auto_increment,
+	id bigint auto_increment,
 	ass_dep varchar(64) null,
-	project_id smallint null,
+	project_id bigint null,
 	constraint id
 		unique (id),
 	constraint assdepartment_ibfk_1

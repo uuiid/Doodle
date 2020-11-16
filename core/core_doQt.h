@@ -1,6 +1,8 @@
 ﻿//
 // Created by teXiao on 2020/11/13.
 //
+#pragma once
+
 #include <core_global.h>
 
 #include <src/episodes.h>
@@ -24,15 +26,16 @@
 #include <src/coreset.h>
 
 #ifdef DOODLE_QT
-Q_DECLARE_METATYPE(doCore::episodes)
-Q_DECLARE_METATYPE(doCore::shot)
-Q_DECLARE_METATYPE(doCore::shotClass)
-Q_DECLARE_METATYPE(doCore::shotType)
-Q_DECLARE_METATYPE(doCore::shotFileSqlInfo)
+#include <QtCore/QVariant>
+Q_DECLARE_METATYPE(doCore::episodesPtr)
+Q_DECLARE_METATYPE(doCore::shotPtr)
+Q_DECLARE_METATYPE(doCore::shotClassPtr)
+Q_DECLARE_METATYPE(doCore::shotTypePtr)
+Q_DECLARE_METATYPE(doCore::shotInfoPtr)
 
-Q_DECLARE_METATYPE(doCore::assdepartment)
-Q_DECLARE_METATYPE(doCore::assClass)
-Q_DECLARE_METATYPE(doCore::assType)
-Q_DECLARE_METATYPE(doCore::assFileSqlInfo)
+Q_DECLARE_METATYPE(doCore::assDepPtr)
+Q_DECLARE_METATYPE(doCore::assClassPtr)
+Q_DECLARE_METATYPE(doCore::assTypePtr)
+Q_DECLARE_METATYPE(doCore::assInfoPtr)
 #define DOTOS(str) QString::fromStdString(str)
 #endif //DOODLE_QT

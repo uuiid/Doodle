@@ -5,7 +5,7 @@
 #include "assClassModel.h"
 
 #include <memory>
-#include "core_doQt.h"
+#include <core_doQt.h>
 
 DOODLE_NAMESPACE_S
 assClassModel::assClassModel(QObject *parent)

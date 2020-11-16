@@ -18,7 +18,7 @@ class assClassWidget : public QListView {
 
   void setModel(QAbstractItemModel *model) override;
  public slots:
-  void init(const doCore::shotClassPtr &file_class_ptr);
+  void init(const doCore::assDepPtr &ass_class);
   void clear();
  signals:
   void assClassEmited(const doCore::assClassPtr &ptr);
@@ -29,7 +29,7 @@ class assClassWidget : public QListView {
 
   QMenu *p_menu_;
 
-  doCore::shotClassPtr p_class_ptr_;
+  doCore::assDepPtr p_ass_dep_ptr_;
 
  private slots:
   void insertAss();

@@ -1,6 +1,6 @@
-create table user
+create table if not exists user
 (
-	id smallint auto_increment,
+	id bigint auto_increment,
 	user varchar(128) not null,
 	password varchar(1024) not null,
 	constraint id

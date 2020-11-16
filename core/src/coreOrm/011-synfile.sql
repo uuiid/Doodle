@@ -1,9 +1,9 @@
-create table synfile
+create table if not exists synfile
 (
-	id smallint auto_increment,
-	assClass_id smallint null,
-	project_id smallint null,
-	episodes_id smallint null,
+	id bigint auto_increment,
+	assClass_id bigint null,
+	project_id bigint null,
+	episodes_id bigint null,
 	path varchar(4096) not null,
 	constraint id
 		unique (id),

@@ -1,7 +1,7 @@
 ﻿#include "shotEpsListWidget.h"
 
 #include "shotEpsListModel.h"
-#include "src/episodes.h"
+#include <core_doQt.h>
 
 #include <QSpinBox>
 #include <QMenu>
