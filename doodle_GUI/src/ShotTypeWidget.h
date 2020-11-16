@@ -40,9 +40,6 @@ class ShotTypeWidget : public QListView {
   ~ShotTypeWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
- public slots:
-  void init(const doCore::shotClassPtr &file_class_ptr);
-  void clear();
  signals:
   void typeEmit(const doCore::shotTypePtr &file_type_ptr);
 

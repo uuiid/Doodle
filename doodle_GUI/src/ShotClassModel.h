@@ -41,7 +41,7 @@ class ShotClassModel : public QAbstractListModel {
   bool removeRows(int position, int rows, const QModelIndex &index) override;
 
  public slots:
-  void init(const doCore::shotPtr &shot);
+  void init();
   void clear();
 };
 DOODLE_NAMESPACE_E

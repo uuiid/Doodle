@@ -42,8 +42,7 @@ Qt::ItemFlags ShotTypeModel::flags(const QModelIndex &index) const {
     return Qt::ItemIsEnabled | Qt::ItemIsEditable | QAbstractListModel::flags(index);
 }
 
-void ShotTypeModel::init(const doCore::shotClassPtr &file_class_ptr) {
-  p_class_ptr_ = file_class_ptr;
+void ShotTypeModel::init( ) {
   auto tmp_fileTypeList = doCore::shotType::getAll();
   clear();
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()));
@@ -51,7 +50,6 @@ void ShotTypeModel::init(const doCore::shotClassPtr &file_class_ptr) {
   endInsertRows();
 }
 void ShotTypeModel::clear() {
-  p_class_ptr_ = nullptr;
   beginResetModel();
   p_type_ptr_list_.clear();
   endResetModel();

@@ -69,10 +69,6 @@ ShotTypeWidget::ShotTypeWidget(QWidget *parent)
 
 }
 
-void ShotTypeWidget::init(const doCore::shotClassPtr &file_class_ptr) {
-  p_file_class_ptr_ = file_class_ptr;
-  p_file_type_shot_model_->init(file_class_ptr);
-}
 void ShotTypeWidget::insertFileType() {
   int row = selectionModel()->currentIndex().row() + 1;
   p_file_type_shot_model_->insertRow(row,QModelIndex());
@@ -97,9 +93,7 @@ void ShotTypeWidget::contextMenuEvent(QContextMenuEvent * event) {
   p_menu_->move(event->globalPos());
   p_menu_->show();
 }
-void ShotTypeWidget::clear() {
-  p_file_type_shot_model_->clear();
-}
+
 void ShotTypeWidget::setModel(QAbstractItemModel *model) {
   auto p_model = dynamic_cast<ShotTypeModel *>(model);
   if(p_model)

@@ -28,10 +28,6 @@ class ShotClassWidget : public QListView {
  signals:
   void fileClassShotEmitted(const doCore::shotClassPtr &fc_);
 
- public slots:
-  void init();
-  void clear();
-
  private slots:
   //添加fileclass
   void insertFileClass();
