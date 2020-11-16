@@ -29,7 +29,7 @@ class ShotClassWidget : public QListView {
   void fileClassShotEmitted(const doCore::shotClassPtr &fc_);
 
  public slots:
-  void init(const doCore::shotPtr &shot);
+  void init();
   void clear();
 
  private slots:

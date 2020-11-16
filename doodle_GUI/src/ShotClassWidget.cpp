@@ -29,9 +29,8 @@ ShotClassWidget::ShotClassWidget(QWidget *parent)
           this, &ShotClassWidget::_doodle_fileclass_emit);
 }
 
-void ShotClassWidget::init(const doCore::shotPtr &shot) {
-  p_shot = shot;
-  p_model_->init(shot);
+void ShotClassWidget::init() {
+  p_model_->init();
 }
 
 void ShotClassWidget::insertFileClass() {

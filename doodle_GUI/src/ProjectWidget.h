@@ -34,17 +34,17 @@ class ProjectWidget : public QTabWidget {
 
   shotEpsListWidget *p_episodes_list_widget_; //集数小部件
   shotListWidget *p_shot_list_widget_; //镜头小部件
-  ShotClassWidget *p_file_class_shot_widget_;//部门小部件
+  ShotClassWidget *p_shot_class_widget_;//部门小部件
   ShotTypeWidget *p_file_type_shot_widget_;//种类小部件
   shotTableWidget *p_shot_table_widget_;//文件小部件
 
 //这些都是资产变量
   QHBoxLayout *p_ass_layout_;
-  AssDepModel *p_file_class_ass_model_;
+  AssDepModel *p_ass_dep_model_;
   assClassModel *p_ass_class_model_;
   assTableModel *p_ass_table_model_;
 
-  AssTypeModel *p_file_type_ass_model_; //这个作为过滤器
+  AssTypeModel *p_ass_type_model_; //这个作为过滤器
 
   AssDepWidget *p_ass_dep_widget_;
   assClassWidget *p_ass_class_widget_;
