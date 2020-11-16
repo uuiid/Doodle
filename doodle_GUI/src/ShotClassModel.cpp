@@ -124,7 +124,7 @@ bool ShotClassModel::removeRows(int position, int rows, const QModelIndex &index
 void ShotClassModel::init(const doCore::shotPtr &shot) {
   p_shot = shot;
 
-  doCore::shotClassPtrList fileClassPtrList = doCore::shotClass::getAll(shot);
+  doCore::shotClassPtrList fileClassPtrList = doCore::shotClass::getAll();
   clear();
   beginInsertRows(QModelIndex(), 0, fileClassPtrList.size());
   list_fileClass = fileClassPtrList;

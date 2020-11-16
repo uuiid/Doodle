@@ -18,7 +18,7 @@ class CORE_API assType
   void updateSQL() override;
   void deleteSQL() override;
 
-  static assTypePtrList getAll(const assClassPtr &ass_class_ptr);
+  static assTypePtrList getAll();
 
  private:
   std::string s_type;
@@ -30,10 +30,6 @@ class CORE_API assType
  private:
   int64_t p_ass_class_id;
 
-  assClassPtr p_class_ptr_;
- public:
-  [[nodiscard]] const assClassPtr &getAssClassPtr() const;
-  void setAssClassPtr(const assClassPtr &class_ptr);
 };
 
 inline const QString assType::getTypeQ() const {

@@ -98,25 +98,7 @@ assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
     assInfo->batchSetAttr(row);
     assInfo->setAssClass(AT_);
     list.push_back(assInfo);
-  }
-  coreDataManager::get().setAssInfoL(list);
-  return list;
-}
-
-assInfoPtrList assFileSqlInfo::getAll(const assTypePtr &ft_) {
-  doodle::Basefile tab{};
-  assInfoPtrList list{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row :db->run(sqlpp::select(sqlpp::all_of(tab))
-                               .from(tab)
-                               .where(tab.assTypeId == ft_->getIdP())
-                               .order_by(tab.filetime.desc())
-  )) {
-    auto assInfo = std::make_shared<assFileSqlInfo>();
-    assInfo->batchSetAttr(row);
-    assInfo->setAssType(ft_);
-    list.push_back(assInfo);
+    assInfo->setAssType();
   }
   coreDataManager::get().setAssInfoL(list);
   return list;
@@ -196,10 +178,6 @@ void assFileSqlInfo::setAssDep(const assDepPtr &ass_dep_) {
 }
 
 const assClassPtr &assFileSqlInfo::getAssClass() {
-  if (!p_class_ptr_) {
-    p_class_ptr_ = std::make_shared<assClass>();
-    p_class_ptr_->select(ass_class_id);
-  }
   return p_class_ptr_;
 }
 
@@ -214,19 +192,24 @@ void assFileSqlInfo::setAssClass(const assClassPtr &class_ptr) {
 
 const assTypePtr &assFileSqlInfo::getAssType() {
   if (!p_type_ptr_) {
-    p_type_ptr_ = std::make_shared<assType>();
-    p_type_ptr_->select(ass_type_id);
+    for (const auto &item : coreDataManager::get().getAssTypeL()) {
+      if (item->getIdP() == ass_type_id){
+        p_type_ptr_ = item;
+        break;
+      }
+    }
   }
   return p_type_ptr_;
 }
 
-void assFileSqlInfo::setAssType(const assTypePtr &ass_type_ptr) {
-  if (!ass_type_ptr)
-    return;
-  p_type_ptr_ = ass_type_ptr;
-  ass_type_id = ass_type_ptr->getIdP();
-
-  setAssClass(ass_type_ptr->getAssClassPtr());
+void assFileSqlInfo::setAssType() {
+  auto assTypeList = coreDataManager::get().getAssTypeL();
+  for (const auto &item : assTypeList) {
+    if (item->getIdP() == idP){
+      p_type_ptr_ = item;
+      break;
+    }
+  }
 }
 template<typename T>
 void assFileSqlInfo::batchSetAttr(const T &row) {

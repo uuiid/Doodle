@@ -313,10 +313,13 @@ shotClassPtr shotFileSqlInfo::getShotclass() {
   if (p_ptr_shcla)
     return p_ptr_shcla;
   else if (p_shCla_id >= 0) {
-    shotClassPtr p_ = std::make_shared<shotClass>();
-    p_->select(p_shCla_id);
-    p_ptr_shcla = p_;
-    return p_;
+    for (const auto &item : coreDataManager::get().getShotClassL()) {
+      if(item->getIdP() == p_shCla_id){
+        p_ptr_shcla = item;
+        break;
+      }
+    }
+    return p_ptr_shcla;
   }
   return nullptr;
 }
@@ -326,18 +329,21 @@ void shotFileSqlInfo::setShotClass(const shotClassPtr &value) {
     return;
   p_shCla_id = value->getIdP();
   p_ptr_shcla = value;
-
-  setShot(value->getShot());
 }
 
 shotTypePtr shotFileSqlInfo::getShotType() {
   if (p_ptr_shTy)
     return p_ptr_shTy;
   else if (p_shTy_id >= 0) {
-    shotTypePtr p_ = std::make_shared<shotType>();
-    p_->select(p_shTy_id);
-    p_ptr_shTy = p_;
-    return p_;
+
+    for (const auto &item : coreDataManager::get().getShotTypeL()) {
+      if(item->getIdP() == p_shCla_id){
+        p_ptr_shTy = item;
+        break;
+      }
+    }
+
+    return p_ptr_shTy;
   }
   return nullptr;
 }

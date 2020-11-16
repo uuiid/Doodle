@@ -40,7 +40,7 @@ dpathList fileSqlInfo::getFileList() const {
   JSONCPP_STRING err;
 
   auto jsonReader = std::unique_ptr<Json::CharReader>(char_reader_builder.newCharReader());
-  const int len = filepathP.length();
+  const size_t len = filepathP.length();
   if (jsonReader->parse(filepathP.c_str(), filepathP.c_str() + len,
                         &root, &err)) {
     for (auto &&x:root) {

@@ -106,9 +106,9 @@ TEST_F(CoreTest, get_shotinf) {
     doCore::episodesPtr ep = eplist[0];
     auto shlist = doCore::shot::getAll(eplist.front());
     ASSERT_TRUE(!shlist.empty());
-    auto shclList = doCore::shotClass::getAll(shlist.front());
+    auto shclList = doCore::shotClass::getAll();
     ASSERT_TRUE(!shclList.empty());
-    auto shtyList = doCore::shotType::getAll(shclList.front());
+    auto shtyList = doCore::shotType::getAll();
     ASSERT_TRUE(!shtyList.empty());
     auto sfList = doCore::shotFileSqlInfo::getAll(shtyList.front());
     ASSERT_TRUE(!sfList.empty());
@@ -167,7 +167,7 @@ TEST_F(CoreTest, get_assInf) {
   // QTextCodec *code = QTextCodec::codecForName("GBK");
   // std::cout << "asstype :" <<code->fromUnicode(af_->getAssClass(af_)) << std::endl;
 
-  doCore::assTypePtr ft_ = doCore::assType::getAll(af_)[0];
+  doCore::assTypePtr ft_ = doCore::assType::getAll()[0];
   std::cout << "filetype :" << ft_->getType() << std::endl;
 
   doCore::assInfoPtr ai_ = doCore::assFileSqlInfo::getAll(ft_)[0];
@@ -177,8 +177,8 @@ TEST_F(CoreTest, get_assInf) {
 TEST_F(CoreTest,up_maya_file){
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll(shotList.front());
-  auto shtypeList = doCore::shotType::getAll(shclassList.front());
+  auto shclassList = doCore::shotClass::getAll();
+  auto shtypeList = doCore::shotType::getAll();
 
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
@@ -190,8 +190,8 @@ TEST_F(CoreTest,up_maya_file){
 TEST_F(CoreTest,mayaExport_fbx){
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll(shotList.front());
-  auto shtypeList = doCore::shotType::getAll(shclassList.front());
+  auto shclassList = doCore::shotClass::getAll();
+  auto shtypeList = doCore::shotType::getAll();
 
   for (const auto &item : shtypeList) {
     if(item->getType() == "fbx"){
@@ -208,8 +208,8 @@ TEST_F(CoreTest,mayaExport_fbx){
 TEST_F(CoreTest, create_Move){
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll(shotList.front());
-  auto shtypeList = doCore::shotType::getAll(shclassList.front());
+  auto shclassList = doCore::shotClass::getAll();
+  auto shtypeList = doCore::shotType::getAll();
 
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
@@ -222,8 +222,8 @@ TEST_F(CoreTest, create_Move){
 TEST_F(CoreTest, convert_Move){
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll(shotList.front());
-  auto shtypeList = doCore::shotType::getAll(shclassList.front());
+  auto shclassList = doCore::shotClass::getAll();
+  auto shtypeList = doCore::shotType::getAll();
 
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
@@ -235,8 +235,8 @@ TEST_F(CoreTest, convert_Move){
 TEST_F(CoreTest,Synfile_up_ue){
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll(shotList.front());
-  auto shtypeList = doCore::shotType::getAll(shclassList.front());
+  auto shclassList = doCore::shotClass::getAll();
+  auto shtypeList = doCore::shotType::getAll();
 
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
@@ -247,8 +247,8 @@ TEST_F(CoreTest,Synfile_up_ue){
 TEST_F(CoreTest,Synfile_dow_ue){
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll(shotList.front());
-  auto shtypeList = doCore::shotType::getAll(shclassList.front());
+  auto shclassList = doCore::shotClass::getAll();
+  auto shtypeList = doCore::shotType::getAll();
 
   auto shotinfoList  = doCore::shotFileSqlInfo::getAll(shtypeList.front());
   auto up_move = std::make_shared<doCore::ueArchive>(shotinfoList.front());

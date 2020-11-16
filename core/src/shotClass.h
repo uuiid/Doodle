@@ -28,8 +28,8 @@ class CORE_API shotClass : public coresqldata ,
   void updateSQL() override;
   void deleteSQL() override;
 
-  static shotClassPtrList getAll(const episodesPtr &episodes_ptr);
-  static shotClassPtrList getAll(const shotPtr &shot_ptr);
+
+  static shotClassPtrList getAll();
 
   [[nodiscard]] dstring getClass_str() const;
   [[nodiscard]] QString getClass_Qstr() const;
@@ -38,23 +38,12 @@ class CORE_API shotClass : public coresqldata ,
   void setclass(const dstring &value);
   void setclass(const QString &value);
 
-  episodesPtr getEpisodes();
-  void setEpisodes(const episodesPtr &value);
-
-  shotPtr getShot();
-  void setShot(const shotPtr &value);
-
  private:
   template<typename T>
   void batchSetAttr(T &row);
  private:
   e_fileclass p_fileclass;
 
-  episodesPtr p_ptr_eps;
-  shotPtr p_ptr_shot;
-
-  qint64 p_shot_id;
-  qint64 p_eps_id;
 };
 inline QString shotClass::getClass_Qstr() const {
   return QString::fromStdString(getClass_str());

@@ -14,10 +14,8 @@ class CORE_API shotType : public coresqldata,
   void insert() override;
   void updateSQL() override;
   void deleteSQL() override;
-  //根据shot外键查询
-  static shotTypePtrList getAll(const shotPtr &SH_);
   //根据fileclass外键查询filetype
-  static shotTypePtrList getAll(const shotClassPtr &fc_);
+  static shotTypePtrList getAll();
 
 
   void setType(const dstring &value);
@@ -30,13 +28,6 @@ class CORE_API shotType : public coresqldata,
   //获得外键连接的实体对象 shotclass
   shotClassPtr getFileClass();
 
-  //设置和连接集数外键约束
-  void setEpisodes(const episodesPtr &value);
-  //获得集数实体外键引用
-  episodesPtr getEpisdes();
-
-  void setShot(const shotPtr &shot_);
-  shotPtr getShot();
 
  private:
   template<typename T>
@@ -46,13 +37,11 @@ class CORE_API shotType : public coresqldata,
   dstring p_Str_Type;
 
   //指针属性
-  shotPtr p_shot;
-  episodesPtr p_episdes;
   shotClassPtr p_class_ptr_;
 
   //指针id属性
   int64_t p_shotClass_id;
-  int64_t p_shot_id;
+
 };
 
 inline void shotType::setType(const QString &value) {

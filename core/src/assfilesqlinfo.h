@@ -15,7 +15,6 @@ class CORE_API assFileSqlInfo : public fileSqlInfo,
   void updateSQL() override;
 
   static assInfoPtrList getAll(const assClassPtr &AT_);
-  static assInfoPtrList getAll(const assTypePtr &ft_);
 
   dpath generatePath(const std::string &programFolder) override;
   dpath generatePath(const dstring &programFolder, const dstring &suffixes) override;
@@ -30,9 +29,9 @@ class CORE_API assFileSqlInfo : public fileSqlInfo,
   void setAssClass(const assClassPtr &class_ptr);
 
   const assTypePtr &getAssType();
-  void setAssType(const assTypePtr &ass_type_ptr);
 
  private:
+  void setAssType();
   template<typename T>
   void batchSetAttr(const T &row);
 

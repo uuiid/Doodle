@@ -43,7 +43,7 @@ Qt::ItemFlags ShotTypeModel::flags(const QModelIndex &index) const {
 
 void ShotTypeModel::init(const doCore::shotClassPtr &file_class_ptr) {
   p_class_ptr_ = file_class_ptr;
-  auto tmp_fileTypeList = doCore::shotType::getAll(file_class_ptr);
+  auto tmp_fileTypeList = doCore::shotType::getAll();
   clear();
   beginInsertRows(QModelIndex(), 0, tmp_fileTypeList.size());
   p_type_ptr_list_ = tmp_fileTypeList;

@@ -5,7 +5,7 @@
 #include "shot.h"
 #include "episodes.h"
 #include "shotClass.h"
-
+#include <src/coreset.h>
 #include "coreOrm/shottype_sqlOrm.h"
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
@@ -21,11 +21,8 @@ CORE_NAMESPACE_S
 shotType::shotType()
     : coresqldata(),
       std::enable_shared_from_this<shotType>(),
-      p_shot_id(-1),
       p_shotClass_id(-1),
-      p_shot(),
       p_Str_Type(),
-      p_episdes(),
       p_class_ptr_() {
 }
 
@@ -50,9 +47,11 @@ void shotType::insert() {
   auto db = coreSql::getCoreSql().getConnection();
   auto insert = sqlpp::insert_into(table)
       .columns(table.shotType,
-               table.shotClassId);
+               table.shotClassId,
+               table.projectId);
   insert.values.add(table.shotType = p_Str_Type,
-                    table.shotClassId = p_shotClass_id);
+                    table.shotClassId = p_shotClass_id,
+                    table.projectId = coreSet::getSet().projectName().first);
 
   idP = db->insert(insert);
   if (idP == 0) {
@@ -90,22 +89,7 @@ void shotType::batchSetAttr(T &row) {
   p_shotClass_id = row.shotClassId;
 }
 
-shotTypePtrList shotType::getAll(const shotClassPtr &fc_) {
-  auto list = coreDataManager::get().getShotTypeL();
-  shotTypePtrList ptr_list;
-  if(list.empty()){
-    list = getAll(fc_->getShot());
-    coreDataManager::get().setShotTypeL(list);
-  }
-  for (const auto &item : list) {
-    if (item->p_class_ptr_ == fc_)
-      ptr_list.push_back(item);
-  }
-
-  return list;
-}
-
-shotTypePtrList shotType::getAll(const shotPtr &SH_) {
+shotTypePtrList shotType::getAll() {
   doodle::Shottype table{};
   const auto shotclasList = coreDataManager::get().getShotClassL();
 
@@ -114,7 +98,7 @@ shotTypePtrList shotType::getAll(const shotPtr &SH_) {
   for (auto &&row:db->run(
       sqlpp::select(sqlpp::all_of(table))
           .from(table)
-          .where(table.shotsId == SH_->getIdP())
+          .where(table.projectId == coreSet::getSet().projectName().first)
   )) {
     auto item = std::make_shared<shotType>();
     item->batchSetAttr(row);
@@ -122,8 +106,6 @@ shotTypePtrList shotType::getAll(const shotPtr &SH_) {
       if(item->p_shotClass_id == shCl->getIdP())
         item->setShotClass(shCl);
     }
-
-//    item->setShot(SH_);
     list.push_back(item);
   }
   coreDataManager::get().setShotTypeL(list);
@@ -143,10 +125,6 @@ void shotType::setShotClass(const shotClassPtr &fileclass_) {
     return;
   p_shotClass_id = fileclass_->getIdP();
   p_class_ptr_ = fileclass_;
-
-  if (p_shot_id >= 0) {
-    setShot(fileclass_->getShot());
-  }
 }
 
 shotClassPtr shotType::getFileClass() {
@@ -162,35 +140,5 @@ shotClassPtr shotType::getFileClass() {
   }
 }
 
-void shotType::setEpisodes(const episodesPtr &value) {
-  if (!value)
-    return;
-  p_episdes = value;
-}
-
-episodesPtr shotType::getEpisdes() {
-  return p_episdes;
-}
-
-void shotType::setShot(const shotPtr &shot_) {
-  if (!shot_)
-    return;
-  p_shot_id = shot_->getIdP();
-  p_shot = shot_;
-  setEpisodes(shot_->getEpisodes());
-}
-
-shotPtr shotType::getShot() {
-  if (p_shot) {
-    return p_shot;
-  } else if (p_shot_id >= 0) {
-    shotPtr p_ = std::make_shared<shot>();
-    p_->select(p_shot_id);
-    p_shot = p_;
-    return p_shot;
-  } else {
-    return nullptr;
-  }
-}
 
 CORE_NAMESPACE_E
