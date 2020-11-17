@@ -6,6 +6,9 @@
 #include "doodle_global.h"
 #include "core_global.h"
 #include <QAbstractTableModel>
+#include <boost/regex.hpp>
+
+
 
 DOODLE_NAMESPACE_S
 
@@ -32,6 +35,9 @@ class assTableModel : public QAbstractTableModel {
   void clear();
  private:
   doCore::assInfoPtrList p_ass_info_ptr_list_;
+  std::shared_ptr<boost::regex> mayaRex;
+  std::shared_ptr<boost::regex> ue4Rex;
+  std::shared_ptr<boost::regex> rigRex;
 };
 
 DOODLE_NAMESPACE_E

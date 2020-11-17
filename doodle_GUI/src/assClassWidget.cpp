@@ -10,7 +10,36 @@
 
 #include "assClassModel.h"
 #include <QtGui/qevent.h>
+#include <QtWidgets/QLineEdit>
+
 DOODLE_NAMESPACE_S
+assClassDelegate::assClassDelegate(QObject *parent)
+    : QStyledItemDelegate(parent) {}
+
+QWidget *assClassDelegate::createEditor(QWidget *parent,
+                                        const QStyleOptionViewItem &option,
+                                        const QModelIndex &index) const {
+  auto lineEdit = new QLineEdit(parent);
+  return lineEdit;
+}
+void doodle::assClassDelegate::setEditorData(QWidget *editor,
+                                             const QModelIndex &index) const {
+  auto lineEdit = dynamic_cast<QLineEdit*>(editor);
+  lineEdit->setText("");
+}
+
+void assClassDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
+                                    const QModelIndex &index) const {
+  auto lineEdit = dynamic_cast<QLineEdit *>(editor);
+  model->setData(index, lineEdit->text());
+}
+
+void assClassDelegate::updateEditorGeometry(QWidget *editor,
+                                            const QStyleOptionViewItem &option,
+                                            const QModelIndex &index) const {
+  editor->setGeometry(option.rect);
+}
+
 
 assClassWidget::assClassWidget(QWidget *parent)
     : QListView(parent), p_model_(), p_menu_(nullptr) {
@@ -19,6 +48,7 @@ assClassWidget::assClassWidget(QWidget *parent)
           &assClassWidget::_doodle_ass_emit);
 
   setEditTriggers(QAbstractItemView::NoEditTriggers);
+  setItemDelegate(new assClassDelegate(this));
 }
 void assClassWidget::setModel(QAbstractItemModel *model) {
   auto t_model_ = dynamic_cast<assClassModel *>(model);

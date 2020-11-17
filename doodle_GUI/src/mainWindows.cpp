@@ -25,8 +25,6 @@ mainWindows::mainWindows(QWidget *parent)
   doodle_init();
 }
 
-mainWindows::~mainWindows() = default;
-
 void mainWindows::doodle_init() {
   //初始化自身
   if (objectName().isEmpty())

@@ -33,5 +33,5 @@ int main(int argc, char *argv[]) {
   auto mainWin = doodle::mainWindows();
   mainWin.show();
 
-  return QApplication::exec();
+  return q_application.exec();
 }

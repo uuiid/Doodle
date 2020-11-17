@@ -68,7 +68,6 @@ bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value, 
 bool shotEpsListModel::insertRows(int position, int rows, const QModelIndex &index) {
   beginInsertRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
-    std::cout << position << " " << row << std::endl;
     eplist.insert(eplist.begin() + position,
                   std::make_shared<doCore::episodes>());
   }

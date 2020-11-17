@@ -54,14 +54,14 @@ ProjectWidget::ProjectWidget(QWidget* parent)
 }
 void ProjectWidget::init_( ) {
   auto ass_parent = new QWidget( );
-  assInit(ass_parent);
   addTab(ass_parent, QString("ass"));
+  assInit(ass_parent);
   setTabText(0, tr("资产"));
 
   //添加shot页面
   auto shot_anm_parent = new QWidget( );
-  shotInitAnm(shot_anm_parent);
   addTab(shot_anm_parent, QString("Anm"));
+  shotInitAnm(shot_anm_parent);
   setTabText(1, tr("动画"));
 }
 
@@ -125,11 +125,11 @@ void ProjectWidget::shotInitAnm(QWidget* parent) {
 
 
   //将小部件添加到布局中
-  p_shot_layout_->addWidget(p_episodes_list_widget_, 1);
-  p_shot_layout_->addWidget(p_shot_list_widget_, 1);
-  p_shot_layout_->addWidget(p_shot_table_widget_, 5);
+  p_shot_layout_->addWidget(p_episodes_list_widget_, 2);
+  p_shot_layout_->addWidget(p_shot_list_widget_, 2);
+  p_shot_layout_->addWidget(p_shot_table_widget_, 10);
   //添加布局
-  p_shot_layout_->addLayout(layout_1);
+  p_shot_layout_->addLayout(layout_1,3);
 }
 void ProjectWidget::assInit(QWidget* parent) {
   auto itemSize = QSize();
@@ -173,8 +173,8 @@ void ProjectWidget::assInit(QWidget* parent) {
   p_ass_layout_->addLayout(class_ass_layout, 4);
 
   //  p_ass_layout_->addWidget(p_ass_type_widget_,1);
-  p_ass_layout_->addWidget(p_ass_info_widght_, 6);
-  p_ass_layout_->addWidget(p_ass_type_widget_, 1);
+  p_ass_layout_->addWidget(p_ass_info_widght_, 10);
+  p_ass_layout_->addWidget(p_ass_type_widget_, 2);
 }
 void ProjectWidget::refresh( ) {
   p_ass_dep_model_->init( );

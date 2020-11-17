@@ -122,6 +122,10 @@ dstringList fileSqlInfo::json_to_strList(const dstring &json_str) const {
   } else {
     list_.push_back(json_str);
   }
+  if (list_.empty())
+  {
+    list_.push_back("");
+  }
   return list_;
 
 }

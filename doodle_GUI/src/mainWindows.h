@@ -18,7 +18,7 @@ class mainWindows : public QMainWindow {
  Q_OBJECT
  public:
   explicit mainWindows(QWidget *parent = nullptr);
-  ~mainWindows() override;
+  //~mainWindows() override;
   Q_DISABLE_COPY(mainWindows);
 
  private:
