@@ -60,6 +60,7 @@ assTypePtrList assType::getAll() {
       sqlpp::select(sqlpp::all_of(table))
           .from(table)
           .where(table.projectId == coreSet::getSet().projectName().first)
+          .order_by(table.assType.desc())
   )) {
     auto at = std::make_shared<assType>();
     at->idP = row.id;

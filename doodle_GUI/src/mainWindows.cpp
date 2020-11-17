@@ -61,7 +61,7 @@ void mainWindows::doodle_init() {
   p_prject_widght_ = new ProjectWidget(centralWidget);
   p_prject_widght_->setObjectName("p_prject_widght_");
   p_b_box_layout_->addWidget(prj,1);
-  p_b_box_layout_->addWidget(p_prject_widght_,35);
+  p_b_box_layout_->addWidget(p_prject_widght_,20);
 
   p_setting_widget_ = new settingWidget(centralWidget);
   //连接项目更改设置
@@ -77,6 +77,7 @@ void mainWindows::doodle_init() {
   tray->setIcon(QIcon(":/resource/icon.png"));
   tray->setVisible(true);
   tray->show();
+  p_prject_widght_->refresh();
 }
 
 void mainWindows::doodle_createAction() {

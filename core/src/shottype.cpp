@@ -14,7 +14,6 @@
 #include <src/coresql.h>
 #include <src/episodes.h>
 #include <src/shot.h>
-#include <src/shotClass.h>
 
 CORE_NAMESPACE_S
 
@@ -74,7 +73,7 @@ void shotType::deleteSQL() {
   db->remove(sqlpp::remove_from(table).where(table.id == idP));
 }
 
-template <typename T>
+template<typename T>
 void shotType::batchSetAttr(T &row) {
   idP = row.id;
   p_Str_Type = row.shotType;
@@ -88,10 +87,11 @@ shotTypePtrList shotType::getAll() {
   auto db = coreSql::getCoreSql().getConnection();
   shotTypePtrList list;
   for (auto &&row :
-       db->run(sqlpp::select(sqlpp::all_of(table))
-                   .from(table)
-                   .where(table.projectId ==
-                          coreSet::getSet().projectName().first))) {
+      db->run(sqlpp::select(sqlpp::all_of(table))
+                  .from(table)
+                  .where(table.projectId ==
+                      coreSet::getSet().projectName().first)
+                  .order_by(table.shotType.desc()))) {
     auto item = std::make_shared<shotType>();
     item->batchSetAttr(row);
     for (const auto &shCl : shotclasList) {
@@ -129,7 +129,7 @@ shotClassPtr shotType::getFileClass() {
   }
 }
 
-shotTypePtr shotType::findShotType(const std::string & type_name) {
+shotTypePtr shotType::findShotType(const std::string &type_name) {
   shotTypePtr ptr = nullptr;
   auto list = coreDataManager::get().getShotTypeL();
   if (list.empty()) shotType::getAll();
@@ -143,7 +143,7 @@ shotTypePtr shotType::findShotType(const std::string & type_name) {
   return ptr;
 }
 
-shotTypePtr shotType::findShotType(const  std::string & type_nmae, bool autoInstall) {
+shotTypePtr shotType::findShotType(const std::string &type_nmae, bool autoInstall) {
   shotTypePtr ptr = shotType::findShotType(type_nmae);
   if (!ptr) {
     ptr = std::make_shared<shotType>();

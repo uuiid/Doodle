@@ -23,7 +23,9 @@ QVariant assClassModel::data(const QModelIndex &index, int role) const {
     return DOTOS(p_ass_info_ptr_list_[index.row()]->getAssClass(true));
   } else if (role == Qt::UserRole) {
     return QVariant::fromValue(p_ass_info_ptr_list_[index.row()]);
-  } else {
+  } /*else if (role == Qt::SizeHintRole) {
+    return QSize();
+  }*/ else {
     return QVariant();
   }
 }

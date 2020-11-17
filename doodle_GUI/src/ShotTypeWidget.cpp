@@ -79,20 +79,27 @@ void ShotTypeWidget::insertFileType() {
 void ShotTypeWidget::_doodle_type_emit(const QModelIndex &index) {
   emit typeEmit(p_file_type_shot_model_->daraRow(index));
 }
-void ShotTypeWidget::contextMenuEvent(QContextMenuEvent * event) {
-  p_menu_ = new QMenu(this);
-  if (p_file_class_ptr_){
-    auto *action = new QAction(this);
-
-    connect(action, &QAction::triggered,
-            this, &ShotTypeWidget::insertFileType);
-    action->setText(tr("添加种类"));
-    action->setToolTip(tr("添加镜头"));
-    p_menu_->addAction(action);
+void ShotTypeWidget::mousePressEvent(QMouseEvent *event) {
+  QListView::mousePressEvent(event);
+  if (!indexAt(event->pos()).isValid()) {
+    clearSelection();
+    update(QModelIndex());
   }
-  p_menu_->move(event->globalPos());
-  p_menu_->show();
 }
+//void ShotTypeWidget::contextMenuEvent(QContextMenuEvent * event) {
+//  p_menu_ = new QMenu(this);
+//  if (p_file_class_ptr_){
+//    auto *action = new QAction(this);
+//
+//    connect(action, &QAction::triggered,
+//            this, &ShotTypeWidget::insertFileType);
+//    action->setText(tr("添加种类"));
+//    action->setToolTip(tr("添加镜头"));
+//    p_menu_->addAction(action);
+//  }
+//  p_menu_->move(event->globalPos());
+//  p_menu_->show();
+//}
 
 void ShotTypeWidget::setModel(QAbstractItemModel *model) {
   auto p_model = dynamic_cast<ShotTypeModel *>(model);

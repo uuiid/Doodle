@@ -2,14 +2,13 @@
 
 
 #include "src/mainWindows.h"
-#include "resource/DarkStyle.h"
 
 #include "Logger.h"
 //必要导入
 #include <QApplication>
 #include <QTextCodec>
 #include <iostream>
-
+#include <QtCore/QFile>
 int main(int argc, char *argv[]) {
   QApplication q_application(argc, argv);
 
@@ -20,7 +19,12 @@ int main(int argc, char *argv[]) {
 //  QTextCodec *codec = QTextCodec::codecForName("GBK");
 //  QTextCodec::setCodecForLocale(codec);
   //设置主题
-  QApplication::setStyle(new DarkStyle);
+  QFile darkStyle{":qdarkstyle/style.qss"};
+  if (darkStyle.exists()) {
+    darkStyle.open(QFile::ReadOnly | QFile::Text);
+    QTextStream ts{&darkStyle};
+    q_application.setStyleSheet(ts.readAll());
+  }
   //初始化设置
   doCore::coreSet &set = doCore::coreSet::getSet();
   set.init();

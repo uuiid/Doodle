@@ -58,7 +58,8 @@ class ShotTypeWidget : public QListView {
   //发射fileType
   void _doodle_type_emit(const QModelIndex &index);
  protected:
-  void contextMenuEvent(QContextMenuEvent *event) override;
+  void mousePressEvent(QMouseEvent *event) override;
+  //void contextMenuEvent(QContextMenuEvent *event) override;
 };
 
 DOODLE_NAMESPACE_E

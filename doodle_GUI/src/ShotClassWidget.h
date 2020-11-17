@@ -35,15 +35,13 @@ class ShotClassWidget : public QListView {
   void _doodle_fileclass_emit(const QModelIndex &index);
 
  protected:
-  void contextMenuEvent(QContextMenuEvent *event) override;
+  void mousePressEvent(QMouseEvent *event) override;
+  //void contextMenuEvent(QContextMenuEvent *event) override;
 
  private:
   ShotClassModel *p_model_;
   //上下文菜单
   QMenu *p_fileClass_menu;
-
-  //保存上一个小部件发射出来的集数指针
-  doCore::shotPtr p_shot;
 };
 
 DOODLE_NAMESPACE_E

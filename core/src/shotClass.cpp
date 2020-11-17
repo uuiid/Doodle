@@ -87,6 +87,7 @@ shotClassPtrList shotClass::getAll() {
       sqlpp::select(sqlpp::all_of(table))
           .from(table)
           .where(table.projectId == coreSet::getSet().projectName().first)
+          .order_by(table.shotClass.desc())
   )) {
     auto item = std::make_shared<shotClass>();
     item->batchSetAttr(row);

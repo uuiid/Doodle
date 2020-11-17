@@ -20,14 +20,13 @@ QWidget *fileTypeAssDelegate::createEditor(QWidget *parent,
                                            const QModelIndex &index) const {
   auto * fileType = new QComboBox(parent);
 
-  const auto modle = dynamic_cast<AssTypeModel *>(const_cast<QAbstractItemModel * >(index.model()));
-
+  auto assClass = doCore::coreDataManager::get().getAssClassPtr();
   QStringList list;
   list << "sourceimages"
   << "scenes"
-  << QString("%1_UE4").arg(modle->getAssTypePtr()->getAssClassQ())
+  << QString("%1_UE4").arg(assClass->getAssClassQ())
   << "rig"
-  << QString("%1_low").arg(modle->getAssTypePtr()->getAssClassQ());
+  << QString("%1_low").arg(assClass->getAssClassQ());
 
   fileType->addItems(list);
 
@@ -84,17 +83,24 @@ void AssTypeWidget::inserttype() {
 void AssTypeWidget::_doodle_type_emit(const QModelIndex &index) {
   emit filetypeEmited(index.data(Qt::UserRole).value<doCore::shotTypePtr>());
 }
-void AssTypeWidget::contextMenuEvent(QContextMenuEvent *event) {
-  if(!p_menu_){
-    p_menu_ = new QMenu(this);
-    auto add_ass_type = new QAction(p_menu_);
-    add_ass_type->setText(tr("添加"));
-    connect(add_ass_type,&QAction::triggered,
-            this,&AssTypeWidget::inserttype);
-    p_menu_->addAction(add_ass_type);
+void AssTypeWidget::mousePressEvent(QMouseEvent *event) {
+  QListView::mousePressEvent(event);
+  if (!indexAt(event->pos()).isValid()) {
+    clearSelection();
+    update(QModelIndex());
   }
-  p_menu_->move(event->globalPos());
-  p_menu_->show();
 }
+//void AssTypeWidget::contextMenuEvent(QContextMenuEvent *event) {
+//  if(!p_menu_){
+//    p_menu_ = new QMenu(this);
+//    auto add_ass_type = new QAction(p_menu_);
+//    add_ass_type->setText(tr("添加"));
+//    connect(add_ass_type,&QAction::triggered,
+//            this,&AssTypeWidget::inserttype);
+//    p_menu_->addAction(add_ass_type);
+//  }
+//  p_menu_->move(event->globalPos());
+//  p_menu_->show();
+//}
 
 DOODLE_NAMESPACE_E

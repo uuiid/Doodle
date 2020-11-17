@@ -75,7 +75,6 @@ TEST_F(CoreTest, create_shotinfo) {
 
     doCore::shotTypePtr ft(new doCore::shotType());
     ft->setType((std::string)"test");
-    ft->setShotClass(fc);
 
     ft->insert();
 

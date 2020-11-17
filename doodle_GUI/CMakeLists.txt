@@ -13,7 +13,7 @@ file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/DarkStyle.cpp
 
 
 set(DOODLE_SOURE_HEADER
-        resource/DarkStyle.h
+        
         src/ShotClassWidget.h
         src/shotListWidget.h
         src/shotEpsListWidget.h
@@ -41,7 +41,7 @@ set(DOODLE_SOURE_HEADER
         )
 
 set(DOODLE_SOURE
-        resource/DarkStyle.cpp
+        
         src/ShotClassWidget.cpp
         src/shotListWidget.cpp
         src/shotEpsListWidget.cpp
@@ -74,6 +74,7 @@ set(TS_FILES
 
 set(RESOURCE_SOURCE
         resource.qrc
+        style.qrc
 )
 
 qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
