@@ -39,23 +39,6 @@ add_subdirectory(core)
 add_subdirectory(doodle_GUI)
 # set(TS_FILES test_cmake_zh_CN.ts)
 
-# if(ANDROID)
-# add_library(Doodle SHARED
-# main.cpp
-# mainwindow.cpp
-# mainwindow.h
-# mainwindow.ui
-# ${TS_FILES}
-# )
-# else()
-# add_executable(Doodle
-# main.cpp
-# mainwindow.cpp
-# mainwindow.h
-# mainwindow.ui
-# ${TS_FILES}
-# )
-# endif()
 
 # target_link_libraries(Doodle PRIVATE Qt5::Widgets)
 

@@ -54,7 +54,6 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
       }
       break;
     case Qt::DecorationRole:
-      DOODLE_LOG_INFO << ass->getAssType()->getType().c_str();
       if (boost::regex_match(ass->getAssType()->getType(), *(mayaRex)) &&  index.column() == 3) {
         var = QIcon(":/resource/mayaIcon.png");
       } else if (boost::regex_match(ass->getAssType()->getType(), *(ue4Rex)) && index.column() == 3) {
