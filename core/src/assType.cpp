@@ -79,4 +79,7 @@ void assType::setType(const std::string &string) {
 void assType::select(const int64_t &ID_) {
 
 }
+bool assType::sortType(const assTypePtr &t1,const assTypePtr &t2) {
+  return t1->s_type < t2->s_type;
+}
 CORE_NAMESPACE_E

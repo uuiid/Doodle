@@ -17,7 +17,6 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 
 #启用测试
-set(CMAKE_INSTALL_PREFIX "F:/Source/qt_test/Doodle/install")
 configure_file(DoodleConfig.h.in ${CMAKE_CURRENT_LIST_DIR}/DoodleConfig.h)
 
 list(APPEND CMAKE_PREFIX_PATH $ENV{QT_MYROOT}/5.12.9/msvc2017_64)
@@ -25,11 +24,7 @@ list(APPEND CMAKE_PREFIX_PATH $ENV{QT_MYROOT}/5.12.9/msvc2017_64)
 find_package(Qt5 CONFIG COMPONENTS Core Widgets Test LinguistTools REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem date_time)
 find_package(CURL REQUIRED)
-#include_directories(${CURL_INCLUDE_DIRS})
-#message(${CURL_INCLUDE_DIRS})
-# 添加orm
-#add_subdirectory(QxOrm ./QxOrm)
-#include(QxOrm/QxOrm.cmake)
+
 
 add_subdirectory(logger)
 add_subdirectory(ftp)
@@ -37,15 +32,7 @@ add_subdirectory(fileSyn)
 add_subdirectory(pinyin)
 add_subdirectory(core)
 add_subdirectory(doodle_GUI)
-# set(TS_FILES test_cmake_zh_CN.ts)
 
-
-# target_link_libraries(Doodle PRIVATE Qt5::Widgets)
-
-# qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-# install( TARGETS Doodle
-# RUNTIME DESTINATION Doodle
-# BUNDLE  DESTINATION Doodle)
 
 #添加测试
 find_package(GTest CONFIG REQUIRED)
@@ -59,15 +46,6 @@ include(mypack)
 #搜索qt 安装辅助程序
 find_program(WINQT windeployqt REQUIRED)
 #添加qt 安装辅助程序的一些命令
-
-
-#install(
-#        DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin/
-#        DESTINATION ${PROJECT_NAME}
-#)
-#CPACKIFW_COMMON()
-#显示所有变量
-#dump_cmake_variables()
 
 #====================一些非qt组件的搜索和安装=============
 #第一种搜索方式
@@ -85,12 +63,11 @@ endforeach(_var)
 list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/")
 list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/Remote Debugger/x64/")
 
-#set(DIRS ${CMAKE_FIND_ROOT_PATH}/bin
-#        ${fixdir}
-#        ${CMAKE_INSTALL_PREFIX}/lib)
 #复制tool
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/tools/
         DESTINATION tools)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/resource/
+        DESTINATION resource)
 
 #最后实现camke修复
 install(CODE "
@@ -101,5 +78,6 @@ install(CODE "
      include(BundleUtilities)
      fixup_bundle(\"${TESTAPPS}\"   \"\"   \"${DIRS}\")
      ")
+
 # include(CPack)
 # ${projectDir}\out\install\${name}

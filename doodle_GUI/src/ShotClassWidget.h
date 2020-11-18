@@ -26,7 +26,7 @@ class ShotClassWidget : public QListView {
 
   void setModel(QAbstractItemModel *model) override;
  signals:
-  void fileClassShotEmitted(const doCore::shotClassPtr &fc_);
+  void doodleUseFilter(bool useFilter);
 
  private slots:
   //添加fileclass

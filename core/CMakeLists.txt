@@ -139,42 +139,13 @@ target_include_directories(core PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 #安装基本组件
 install(TARGETS core
         DESTINATION bin)
-
-#install(FILES ${HEADER_FILES} DESTINATION include)
 #安装调试文件
 install(FILES $<TARGET_PDB_FILE:core>
         DESTINATION bin
         CONFIGURATIONS Debug)
-
-#复制mysql
-#file(TO_CMAKE_PATH "$ENV{ProgramFiles}/MySQL/MySQL Server 8.0/lib/" DOODLE_MYSQL)
-#install(DIRECTORY "${DOODLE_MYSQL}/"
-#        TYPE BIN
-#        PATTERN "*.dll")
 #运行qt
 install(CODE "
 execute_process(
 COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin ${CMAKE_INSTALL_PREFIX}/bin/core.dll
 )
 ")
-
-#file(COPY "$ENV{ProgramFiles}/MySQL/MySQL Server 8.0/lib/"
-#        DESTINATION ${CMAKE_SOURCE_DIR}/install/bin
-#        FILES_MATCHING PATTERN "*.dll")
-#
-#file(COPY ${CMAKE_SOURCE_DIR}/tools
-#        DESTINATION ${CMAKE_SOURCE_DIR}/install)
-#
-#
-#if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
-#    add_custom_command(
-#            TARGET core POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.dll
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.pdb
-#    )
-#else()
-#    add_custom_command(
-#            TARGET core POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:core> ${CMAKE_SOURCE_DIR}/install/bin/core.dll
-#    )
-#endif()

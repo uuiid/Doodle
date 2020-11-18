@@ -5,7 +5,6 @@
 #include "ShotTypeModel.h"
 #include "ShotTypeWidget.h"
 
-
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QMenu>
@@ -54,10 +53,10 @@ fileTypeShotDelegate::~fileTypeShotDelegate() = default;
 
 ShotTypeWidget::ShotTypeWidget(QWidget *parent)
     : QListView(parent),
-    p_file_type_shot_model_(nullptr),
-    p_file_type_shot_delegate_(nullptr),
-    p_menu_(nullptr),
-    p_file_class_ptr_(nullptr){
+      p_file_type_shot_model_(nullptr),
+      p_file_type_shot_delegate_(nullptr),
+      p_menu_(nullptr),
+      p_file_class_ptr_(nullptr) {
   p_file_type_shot_delegate_ = new fileTypeShotDelegate(this);
 
   setItemDelegate(p_file_type_shot_delegate_);
@@ -71,19 +70,24 @@ ShotTypeWidget::ShotTypeWidget(QWidget *parent)
 
 void ShotTypeWidget::insertFileType() {
   int row = selectionModel()->currentIndex().row() + 1;
-  p_file_type_shot_model_->insertRow(row,QModelIndex());
+  p_file_type_shot_model_->insertRow(row, QModelIndex());
 
   setCurrentIndex(p_file_type_shot_model_->index(row));
   edit(p_file_type_shot_model_->index(row));
 }
 void ShotTypeWidget::_doodle_type_emit(const QModelIndex &index) {
-  emit typeEmit(p_file_type_shot_model_->daraRow(index));
+  doCore::coreDataManager::get().setShotTypePtr(
+      index.data(Qt::UserRole).value<doCore::shotTypePtr>()
+  );
+  emit doodleUseFilter(true);
 }
 void ShotTypeWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
   if (!indexAt(event->pos()).isValid()) {
     clearSelection();
-    update(QModelIndex());
+    p_file_type_shot_model_->reInit();
+    doCore::coreDataManager::get().setShotTypePtr(nullptr);
+    doodleUseFilter(false);
   }
 }
 //void ShotTypeWidget::contextMenuEvent(QContextMenuEvent * event) {
@@ -103,7 +107,7 @@ void ShotTypeWidget::mousePressEvent(QMouseEvent *event) {
 
 void ShotTypeWidget::setModel(QAbstractItemModel *model) {
   auto p_model = dynamic_cast<ShotTypeModel *>(model);
-  if(p_model)
+  if (p_model)
     p_file_type_shot_model_ = p_model;
   QAbstractItemView::setModel(model);
 }

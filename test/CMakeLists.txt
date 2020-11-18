@@ -1,7 +1,4 @@
 ﻿
-# test_filesyn.cpp
-# test_ftp.cpp
-# test_convert.cpp
 add_executable(test_my
         test_core.cpp
         test_ftp.cpp
@@ -17,6 +14,7 @@ target_link_libraries(test_my
 enable_testing()
 include(GoogleTest)
 add_test(test_doodle test_my)
+
 #安装基本组件
 install(TARGETS test_my
         DESTINATION bin
@@ -28,8 +26,8 @@ install(FILES $<TARGET_PDB_FILE:test_my>
         CONFIGURATIONS Debug)
 
 # add_test(alltest test_my)
- gtest_discover_tests(test_my
- )
+# gtest_discover_tests(test_my
+# )
 #     PROPERTIES
 #     ENVIRONMENT "PATH=$ENV{QT_MYROOT}/5.12.9/msvc2017_64;$ENV{QT_MYROOT}/5.12.9/msvc2017_64/bin;$ENV{QT_MYROOT}/5.12.9/msvc2017_64/plugins;${CMAKE_BUILD_DIR}/build/core/Debug/;${CMAKE_BUILD_DIR}/build/fileSyn/Debug/;${CMAKE_BUILD_DIR}/build/ftp/Debug/;${CMAKE_BUILD_DIR}/build/pinyin/Debug/;${CMAKE_BUILD_DIR}/build/;$ENV{VCPKG_ROOT}/vcpkg/installed/x64-windows/bin;$ENV{VCPKG_ROOT}/vcpkg/installed/x64-windows/debug/bin;C:/Program Files/MySQL/MySQL Server 8.0/lib\;$ENV{PATH}"
 

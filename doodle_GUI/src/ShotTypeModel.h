@@ -11,7 +11,6 @@
 
 #include <QAbstractListModel>
 
-
 DOODLE_NAMESPACE_S
 
 class ShotTypeModel : public QAbstractListModel {
@@ -40,6 +39,7 @@ class ShotTypeModel : public QAbstractListModel {
 
  public slots:
   void init();
+  void reInit();
   void clear();
  private:
   doCore::shotTypePtrList p_type_ptr_list_;

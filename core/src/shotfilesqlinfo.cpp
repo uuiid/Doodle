@@ -13,7 +13,6 @@
 
 #include "Logger.h"
 
-
 #include <iostream>
 #include <boost/filesystem.hpp>
 #include <memory>
@@ -33,7 +32,7 @@ shotFileSqlInfo::shotFileSqlInfo()
       p_ptr_eps(),
       p_ptr_shot(),
       p_ptr_shTy(),
-      p_ptr_shcla(){
+      p_ptr_shcla() {
 
 }
 
@@ -56,22 +55,22 @@ void shotFileSqlInfo::insert() {
   doodle::Basefile tab{};
 
   auto db = coreSql::getCoreSql().getConnection();
-  auto install = sqlpp::dynamic_insert_into(*db,tab).dynamic_set(
-          tab.file = fileP,
-          tab.fileSuffixes = fileSuffixesP,
-          tab.user = userP,
-          tab.version = versionP,
-          tab.FilePath_ = filepathP,
-          tab.filestate = sqlpp::value_or_null(fileStateP),
-          tab.projectId = coreSet::getSet().projectName().first
-      );
+  auto install = sqlpp::dynamic_insert_into(*db, tab).dynamic_set(
+      tab.file = fileP,
+      tab.fileSuffixes = fileSuffixesP,
+      tab.user = userP,
+      tab.version = versionP,
+      tab.FilePath_ = filepathP,
+      tab.filestate = sqlpp::value_or_null(fileStateP),
+      tab.projectId = coreSet::getSet().projectName().first
+  );
   if (!infoP.empty())
     install.insert_list.add(tab.infor = strList_tojson(infoP));
   if (p_shot_id > 0)
     install.insert_list.add(tab.shotsId = p_shot_id);
 
   install.insert_list.add(tab.shotClassId = shotClass::getCurrentClass()->getIdP());
-  
+
   if (p_shTy_id > 0)
     install.insert_list.add(tab.shotTypeId = p_shTy_id);
   idP = db->insert(install);
@@ -315,7 +314,7 @@ shotClassPtr shotFileSqlInfo::getShotclass() {
     return p_ptr_shcla;
   else if (p_shCla_id >= 0) {
     for (const auto &item : coreDataManager::get().getShotClassL()) {
-      if(item->getIdP() == p_shCla_id){
+      if (item->getIdP() == p_shCla_id) {
         p_ptr_shcla = item;
         break;
       }
@@ -338,7 +337,7 @@ shotTypePtr shotFileSqlInfo::getShotType() {
   else if (p_shTy_id >= 0) {
 
     for (const auto &item : coreDataManager::get().getShotTypeL()) {
-      if(item->getIdP() == p_shCla_id){
+      if (item->getIdP() == p_shCla_id) {
         p_ptr_shTy = item;
         break;
       }
@@ -356,6 +355,10 @@ void shotFileSqlInfo::setShotType(const shotTypePtr &fileType_) {
   p_ptr_shTy = fileType_;
 
   setShotClass(fileType_->getFileClass());
+}
+bool shotFileSqlInfo::sort(const shotInfoPtr &t1, const shotInfoPtr &t2) {
+  return (t1->getShotclass()->getClass_str() < t2->getShotclass()->getClass_str()) &&
+      (t1->getShotType()->getType() < t2->getShotType()->getType());
 }
 
 CORE_NAMESPACE_E

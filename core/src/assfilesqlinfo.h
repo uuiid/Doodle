@@ -29,7 +29,7 @@ class CORE_API assFileSqlInfo : public fileSqlInfo,
   void setAssClass(const assClassPtr &class_ptr);
 
   const assTypePtr &getAssType();
-
+  static bool sortType(const assInfoPtr &t1,const assInfoPtr &t2);
  private:
   void setAssType();
   template<typename T>

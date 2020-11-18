@@ -13,8 +13,7 @@
 DOODLE_NAMESPACE_S
 ShotClassModel::ShotClassModel(QObject *parent)
     : QAbstractListModel(parent),
-      list_fileClass(),
-      p_shot(nullptr) {
+      list_fileClass() {
 }
 
 int ShotClassModel::rowCount(const QModelIndex &parent) const {
@@ -26,11 +25,19 @@ QVariant ShotClassModel::data(const QModelIndex &index, int role) const {
     return QVariant();
   if (index.row() >= list_fileClass.size())
     return QVariant();
-  if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return list_fileClass[index.row()]->getClass_Qstr();
-  } else {
-    return QVariant();
+  auto var = QVariant();
+  switch (role) {
+    case Qt::DisplayRole:
+    case Qt::EditRole:
+      var = list_fileClass[index.row()]->getClass_Qstr();
+      break;
+    case Qt::UserRole:
+      var = QVariant::fromValue(list_fileClass[index.row()]);
+      break;
+    default:
+      break;
   }
+  return var;
 }
 
 doCore::shotClassPtr ShotClassModel::dataRow(const QModelIndex &index) const {
@@ -97,7 +104,7 @@ bool ShotClassModel::insertRows(int position, int rows, const QModelIndex &index
   if (!isHas) {
     for (int row = 0; row < rows; ++row) {
       DOODLE_LOG_INFO << "插入新的fileclass镜头";
-      list_fileClass.insert(list_fileClass.begin() +  position,
+      list_fileClass.insert(list_fileClass.begin() + position,
                             std::make_shared<doCore::shotClass>());
       list_fileClass[position]->setclass(dep);
     }
@@ -122,16 +129,22 @@ void ShotClassModel::init() {
 
   auto fileClassPtrList = doCore::shotClass::getAll();
   clear();
-  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(fileClassPtrList.size()));
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(fileClassPtrList.size()) - 1);
   list_fileClass = fileClassPtrList;
   endInsertRows();
 }
 
 void ShotClassModel::clear() {
-  p_shot = nullptr;
   if (list_fileClass.empty()) return;
   beginResetModel();
   list_fileClass.clear();
   endResetModel();
+}
+void ShotClassModel::reInit() {
+  auto list = doCore::coreDataManager::get().getShotClassL();
+  if (list_fileClass.empty()) return;
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list.size()) -1);
+  list_fileClass = list;
+  endInsertRows();
 }
 DOODLE_NAMESPACE_E

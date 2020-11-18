@@ -46,7 +46,7 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
           var = DOTOS(ass->getSuffixes());
           break;
         case 4:
-          var = ass->getIdP();
+          var = ass->getAssType()->getTypeQ();
           break;
         default:
           var = "";
@@ -156,21 +156,53 @@ bool assTableModel::insertRows(int position, int rows,
   return true;
 }
 void assTableModel::init() {
-  auto tmp_list = doCore::assFileSqlInfo::getAll(
-      doCore::coreDataManager::get().getAssClassPtr());
-  DOODLE_LOG_INFO << boost::numeric_cast<int>(tmp_list.size());
-  if (tmp_list.empty()) return;
   clear();
-  beginInsertRows(QModelIndex(), 0,
-                  boost::numeric_cast<int>(tmp_list.size()) - 1);
-  p_ass_info_ptr_list_ = tmp_list;
-  endInsertRows();
+  p_ass_info_ptr_list_ = doCore::assFileSqlInfo::getAll(
+      doCore::coreDataManager::get().getAssClassPtr());
+//  if (tmp_list.empty()) return;
+  eachOne();
 }
 void assTableModel::clear() {
   if (p_ass_info_ptr_list_.empty()) return;
   beginResetModel();
   p_ass_info_ptr_list_.clear();
   endResetModel();
+}
+void assTableModel::eachOne() {
+  doCore::assTypePtrList list;
+  doCore::assInfoPtrList outlist;
+  for (const auto &item : doCore::coreDataManager::get().getAssInfoL()) {
+    auto assty = item->getAssType();
+    if(std::find(list.begin(),list.end(),assty) == list.end()){
+      outlist.push_back(item);
+      list.push_back(assty);
+    }
+  }
+  std::sort(outlist.begin(),outlist.end(),&doCore::assFileSqlInfo::sortType);
+  setList(outlist);
+}
+void assTableModel::filter(bool useFilter) {
+  if(useFilter){
+    doCore::assInfoPtrList outlist;
+    for (const auto &item : doCore::coreDataManager::get().getAssInfoL()) {
+      auto assty = item->getAssType();
+      if(assty == doCore::coreDataManager::get().getAssTypePtr()){
+        outlist.push_back(item);
+      }
+    }
+    setList(outlist);
+  } else{
+    eachOne();
+  }
+}
+void assTableModel::setList(doCore::assInfoPtrList &list) {
+  if (list.empty()) {
+    clear();
+    return;
+  }
+  beginInsertRows(QModelIndex(), 0,boost::numeric_cast<int>(list.size()) - 1);
+  p_ass_info_ptr_list_ = list;
+  endInsertRows();
 }
 
 DOODLE_NAMESPACE_E

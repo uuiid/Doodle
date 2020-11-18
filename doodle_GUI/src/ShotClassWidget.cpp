@@ -37,14 +37,19 @@ void ShotClassWidget::insertFileClass() {
 }
 
 void ShotClassWidget::_doodle_fileclass_emit(const QModelIndex &index) {
-  emit fileClassShotEmitted(p_model_->dataRow(index));
+  doCore::coreDataManager::get().setShotClassPtr(
+      index.data(Qt::UserRole).value<doCore::shotClassPtr>()
+      );
+  emit doodleUseFilter(true);
 }
 
 void ShotClassWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
   if (!indexAt(event->pos()).isValid()) {
     clearSelection();
-    update(QModelIndex());
+    p_model_->reInit();
+    doCore::coreDataManager::get().setShotClassPtr(nullptr);
+    doodleUseFilter(false);
   }
 }
 

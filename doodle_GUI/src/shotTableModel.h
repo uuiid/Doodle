@@ -30,8 +30,11 @@ class shotTableModel : public QAbstractTableModel {
   bool insertRows(int position, int rows, const QModelIndex &parent) override;
 
   void init();
+  void filter(bool useFilter);
   void clear();
-
+ private:
+  void eachOne();
+  void setList(const doCore::shotInfoPtrList &list);
  private:
   doCore::shotInfoPtrList p_shot_info_ptr_list_;
 };

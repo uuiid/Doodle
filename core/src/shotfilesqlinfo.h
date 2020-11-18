@@ -36,7 +36,7 @@ class CORE_API shotFileSqlInfo
 
   shotTypePtr getShotType();
   void setShotType(const shotTypePtr &fileType_);
-
+  static bool sort(const shotInfoPtr &t1,const shotInfoPtr &t2);
  private:
   void setShotClass(const shotClassPtr &value);
   //循环获得查询结果

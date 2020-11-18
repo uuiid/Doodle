@@ -17,7 +17,6 @@ class ShotClassModel : public QAbstractListModel {
  Q_OBJECT
  private:
   doCore::shotClassPtrList list_fileClass;
-  doCore::shotPtr p_shot;
 
  public:
   explicit ShotClassModel(QObject *parent = nullptr);
@@ -42,6 +41,7 @@ class ShotClassModel : public QAbstractListModel {
 
  public slots:
   void init();
+  void reInit();
   void clear();
 };
 DOODLE_NAMESPACE_E

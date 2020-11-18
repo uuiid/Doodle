@@ -41,7 +41,7 @@ class ShotTypeWidget : public QListView {
 
   void setModel(QAbstractItemModel *model) override;
  signals:
-  void typeEmit(const doCore::shotTypePtr &file_type_ptr);
+  void doodleUseFilter(bool useFilter);
 
  private:
   //模型

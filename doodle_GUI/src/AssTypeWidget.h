@@ -38,8 +38,7 @@ class AssTypeWidget : public QListView {
   void setModel(QAbstractItemModel *model) override;
 
  signals:
-  void filetypeEmited(const doCore::shotTypePtr &file_type_ptr);
-
+  void doodleUseFilter(bool useFilter);
  private:
   doCore::shotTypePtrList p_type_ptr_list_;
   //m模型指针

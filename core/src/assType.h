@@ -19,7 +19,7 @@ class CORE_API assType
   void deleteSQL() override;
 
   static assTypePtrList getAll();
-
+  static bool sortType(const assTypePtr &t1,const assTypePtr &t2);
  private:
   std::string s_type;
  public:

@@ -1,9 +1,6 @@
 find_package(Qt5 CONFIG COMPONENTS Core Widgets QuickControls2 REQUIRED)
 find_package(Boost COMPONENTS regex REQUIRED)
-file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/DarkStyle.h
-        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/resource)
-file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/DarkStyle.cpp
-        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/resource)
+
 #file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/framelesswindow/framelesswindow.h
 #        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/resource)
 #file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/framelesswindow/framelesswindow.cpp
@@ -38,7 +35,7 @@ set(DOODLE_SOURE_HEADER
         src/systemTray.h
         src/speedProgressWidget.h
         src/Toolkit.h
-        )
+        src/assSortfilterModel.h)
 
 set(DOODLE_SOURE
         
@@ -66,6 +63,7 @@ set(DOODLE_SOURE
         src/systemTray.cpp
         src/speedProgressWidget.cpp
         src/Toolkit.cpp
+        src/assSortfilterModel.cpp
         )
 
 set(TS_FILES
@@ -96,11 +94,7 @@ target_link_libraries(doodle PRIVATE core)
 target_link_libraries(doodle PRIVATE logger)
 
 qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-#        COMMAND ${CMAKE_COMMAND} -E rm -r -f ${CMAKE_BINARY_DIR}/doodle_GUI
-#add_custom_command(
-#        TARGET doodle POST_BUILD
-#        COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_BINARY_DIR}/doodle_GUI $<TARGET_FILE:doodle>
-#)
+
 #安装基本组件
 install(TARGETS doodle
         DESTINATION bin)
@@ -114,18 +108,3 @@ execute_process(
 COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin $<TARGET_FILE:doodle>
 )
 ")
-
-#if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
-#    add_custom_command(
-#            TARGET doodle POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.exe
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.pdb
-#            COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_SOURCE_DIR}/install/bin $<TARGET_FILE:doodle>
-#            COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_SOURCE_DIR}/install/bin $<TARGET_FILE:core>
-#    )
-#else()
-#    add_custom_command(
-#            TARGET doodle POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:doodle> ${CMAKE_SOURCE_DIR}/install/bin/doodle.exe
-#    )
-#endif()

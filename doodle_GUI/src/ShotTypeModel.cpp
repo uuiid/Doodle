@@ -18,12 +18,18 @@ int ShotTypeModel::rowCount(const QModelIndex &parent) const {
 QVariant ShotTypeModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid()) return QVariant();
   if (index.row() >= p_type_ptr_list_.size()) return QVariant();
+  auto var = QVariant();
 
-  if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return p_type_ptr_list_[index.row()]->getTypeQ();
-  } else {
-    return QVariant();
+  switch (role) {
+    case Qt::DisplayRole:
+    case Qt::EditRole:var = p_type_ptr_list_[index.row()]->getTypeQ();
+      break;
+    case Qt::UserRole:var = QVariant::fromValue(p_type_ptr_list_[index.row()]);
+      break;
+    default:
+      break;
   }
+  return var;
 }
 
 doCore::shotTypePtr ShotTypeModel::daraRow(const QModelIndex &index) const {
@@ -42,18 +48,6 @@ Qt::ItemFlags ShotTypeModel::flags(const QModelIndex &index) const {
     return Qt::ItemIsEnabled | Qt::ItemIsEditable | QAbstractListModel::flags(index);
 }
 
-void ShotTypeModel::init( ) {
-  auto tmp_fileTypeList = doCore::shotType::getAll();
-  clear();
-  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()));
-  p_type_ptr_list_ = tmp_fileTypeList;
-  endInsertRows();
-}
-void ShotTypeModel::clear() {
-  beginResetModel();
-  p_type_ptr_list_.clear();
-  endResetModel();
-}
 bool ShotTypeModel::setData(const QModelIndex &index, const QVariant &value, int role) {
   if (index.isValid() && role == Qt::EditRole) {
     bool isHas = false;
@@ -89,6 +83,26 @@ bool ShotTypeModel::removeRows(int position, int rows, const QModelIndex &index)
   }
   endRemoveRows();
   return true;
+}
+void ShotTypeModel::init() {
+  auto tmp_fileTypeList = doCore::shotType::getAll();
+  clear();
+  if (tmp_fileTypeList.empty()) return;
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()) - 1);
+  p_type_ptr_list_ = tmp_fileTypeList;
+  endInsertRows();
+}
+void ShotTypeModel::clear() {
+  beginResetModel();
+  p_type_ptr_list_.clear();
+  endResetModel();
+}
+void ShotTypeModel::reInit() {
+  auto tmp_fileTypeList = doCore::coreDataManager::get().getShotTypeL();
+  if (tmp_fileTypeList.empty()) return;
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()) - 1);
+  p_type_ptr_list_ = tmp_fileTypeList;
+  endInsertRows();
 }
 
 ShotTypeModel::~ShotTypeModel() = default;

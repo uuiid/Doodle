@@ -7,9 +7,6 @@
 #include "core_global.h"
 #include <QAbstractTableModel>
 #include <boost/regex.hpp>
-
-
-
 DOODLE_NAMESPACE_S
 
 class assTableModel : public QAbstractTableModel {
@@ -32,7 +29,11 @@ class assTableModel : public QAbstractTableModel {
   bool insertRows(int position, int rows, const QModelIndex &parent) override;
 
   void init();
+  void filter(bool useFilter);
   void clear();
+ private:
+  void eachOne();
+  void setList(doCore::assInfoPtrList &list);
  private:
   doCore::assInfoPtrList p_ass_info_ptr_list_;
   std::shared_ptr<boost::regex> mayaRex;
