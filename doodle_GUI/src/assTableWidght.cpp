@@ -26,17 +26,12 @@ DOODLE_NAMESPACE_S
 assTableWidght::assTableWidght(QWidget *parent)
     : QTableView(parent),
       p_menu_(nullptr),
-      p_model_(nullptr),
-      p_updataFtpQueue(),
-      p_timer_(nullptr) {
+      p_model_(nullptr) {
   setSelectionBehavior(QAbstractItemView::SelectRows);   //行选
   setSelectionMode(QAbstractItemView::SingleSelection);  //单选
   setSelectionBehavior(QAbstractItemView::SelectRows);
   setShowGrid(false);
   setFrameShape(QFrame::NoFrame);
-  p_timer_ = new QTimer(this);
-  connect(p_timer_,&QTimer::timeout,
-          this,&assTableWidght::chickUpdataQueue);
 }
 void assTableWidght::setModel(QAbstractItemModel *model) {
   auto k_model_ = dynamic_cast<assTableModel *>(model);
@@ -86,23 +81,12 @@ void assTableWidght::insertAss(const QString &path) {
       return;
     }
     auto maya_archive = std::make_shared<doCore::mayaArchive>(data);
-//    maya_archive->update(path.toStdString());
-//    auto updata = std::bind((bool (doCore::ueArchive::*)(const doCore::dpath &)) &doCore::ueArchive::update,
-//                            maya_archive,
-//                            path.toStdString());
-    auto pro = new QProgressDialog(this);
-    pro->setLabelText("正在上传中");
-    pro->setMinimum(0);
-    pro->setMaximum(100);
-    pro->setValue(1);
-    auto test = std::async(std::launch::async,[=](){
+
+    auto future = std::async(std::launch::async, [=](){
      return maya_archive->update(path.toStdString());
     });
-    p_updataFtpQueue.emplace_back(std::move(test), pro);
-    if (!p_timer_->isActive()){
-      p_timer_->start(2000);
-    };
-    pro->show();
+    updataManager::get().addQueue(future, "正在上传中");
+    updataManager::get().run();
 
   } else if (boost::regex_match(pathInfo.suffix().toStdString(), reUe4)) {
     //ue4文件
@@ -114,7 +98,7 @@ void assTableWidght::insertAss(const QString &path) {
 //    auto image_archice = std::make_shared<doCore::imageArchive>(data);
     return;
   }
-  return;
+  p_model_->filter(false);
 }
 void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
   //只有在菜单指针为空 并且 持有上一级的的情况下才进行显示菜单
@@ -152,24 +136,6 @@ void assTableWidght::openFileDialog() {
   if (path.isNull()) return;
   insertAss(path);
 }
-void assTableWidght::chickUpdataQueue() {
-  for (const auto &item : p_updataFtpQueue) {
-    if (item.first.wait_for(std::chrono::microseconds(1)) == std::future_status::ready) {
-      item.second->setValue(100);
-//      item.second->cancel();
-    } else {
-      if (item.second->value() < 100)
-        item.second->setValue(item.second->value() + 1);
-    }
-  }
-  p_updataFtpQueue.erase(
-      std::remove_if(p_updataFtpQueue.begin(),p_updataFtpQueue.end(),
-                     [this](std::pair<std::future<bool>,QProgressDialog *> &part){
-        return part.first.wait_for(std::chrono::microseconds(1)) == std::future_status::ready;
-      }),p_updataFtpQueue.end()
-      );
-  if (p_updataFtpQueue.empty())
-    p_timer_->stop();
-}
+
 
 DOODLE_NAMESPACE_E

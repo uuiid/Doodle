@@ -151,7 +151,7 @@ void coreDataManager::setShotTypeL(const shotTypePtr &sh_types) {
   p_shTypes_.push_back(sh_types);
 }
 void coreDataManager::setShotInfoL(const shotInfoPtr &sh_infos) {
-  p_shInfos_.push_back(sh_infos);
+  p_shInfos_.insert(p_shInfos_.begin(), sh_infos);
 }
 void coreDataManager::setAssDepL(const assDepPtr &ass_deps) {
   p_assDeps_.push_back(ass_deps);
@@ -163,7 +163,7 @@ void coreDataManager::setAssTypeL(const assTypePtr &ass_types) {
   p_assTypes_.push_back(ass_types);
 }
 void coreDataManager::setAssInfoL(const assInfoPtr &ass_infos) {
-  p_assInfos_.push_back(ass_infos);
+  p_assInfos_.insert(p_assInfos_.begin(), ass_infos);
 }
 
 CORE_NAMESPACE_E

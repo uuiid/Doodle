@@ -27,7 +27,6 @@ assFileSqlInfo::assFileSqlInfo() :
     p_dep_ptr_(),
     ass_type_id(-1),
     ass_class_id(-1) {
-
 }
 
 void assFileSqlInfo::select(qint64 &ID_) {

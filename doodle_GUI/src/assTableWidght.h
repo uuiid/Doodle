@@ -25,12 +25,8 @@ class assTableWidght : public QTableView {
  private:
   assTableModel *p_model_;
   QMenu *p_menu_;
-//  std::vector<std::future<bool>> p_updataFtpQueue;
-  std::vector<std::pair<std::future<bool>,QProgressDialog *>> p_updataFtpQueue;
-  QTimer * p_timer_;
  private:
   void insertAss(const QString &path);
-  void chickUpdataQueue();
  private slots:
   void openFileDialog();
 
