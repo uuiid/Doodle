@@ -143,7 +143,7 @@ dpath assFileSqlInfo::generatePath(const dstring &programFolder, const dstring &
 
 dstring assFileSqlInfo::generateFileName(const dstring &suffixes) {
 
-  boost::format format("%1%%2%%3%");
+  boost::format format("%1%_%2%%3%");
   auto as_cl = getAssClass();
   if (as_cl)
     format % as_cl->getAssClass();
@@ -195,7 +195,7 @@ void assFileSqlInfo::setAssClass(const assClassPtr &class_ptr) {
 const assTypePtr &assFileSqlInfo::getAssType() {
   if (!p_type_ptr_) {
     for (const auto &item : coreDataManager::get().getAssTypeL()) {
-      if (item->getIdP() == ass_type_id){
+      if (item->getIdP() == ass_type_id) {
         p_type_ptr_ = item;
         break;
       }
@@ -207,11 +207,17 @@ const assTypePtr &assFileSqlInfo::getAssType() {
 void assFileSqlInfo::setAssType() {
   auto assTypeList = coreDataManager::get().getAssTypeL();
   for (const auto &item : assTypeList) {
-    if (item->getIdP() == idP){
+    if (item->getIdP() == idP) {
       p_type_ptr_ = item;
       break;
     }
   }
+}
+void assFileSqlInfo::setAssType(const assTypePtr &type_ptr) {
+  ass_type_id = type_ptr->getIdP();
+  p_type_ptr_ = type_ptr;
+
+  versionP = getMaxVecsion() + 1;
 }
 template<typename T>
 void assFileSqlInfo::batchSetAttr(const T &row) {
@@ -232,6 +238,13 @@ void assFileSqlInfo::batchSetAttr(const T &row) {
 }
 bool assFileSqlInfo::sortType(const assInfoPtr &t1, const assInfoPtr &t2) {
   return t1->getAssType()->getType() < t2->getAssType()->getType();
+}
+int assFileSqlInfo::getMaxVecsion() {
+  for (const auto &info_l : coreDataManager::get().getAssInfoL()) {
+    if ((getAssType() == info_l->getAssType()))
+      return info_l->versionP;
+  }
+  return 0;
 }
 
 CORE_NAMESPACE_E

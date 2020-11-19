@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <doodle_global.h>
 #include <core_global.h>
 

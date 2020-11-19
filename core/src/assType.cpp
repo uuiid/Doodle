@@ -82,4 +82,26 @@ void assType::select(const int64_t &ID_) {
 bool assType::sortType(const assTypePtr &t1,const assTypePtr &t2) {
   return t1->s_type < t2->s_type;
 }
+assTypePtr assType::findType(const std::string& typeName) {
+  for (const auto &item : coreDataManager::get().getAssTypeL()) {
+    if (item->getType() == typeName)
+      return item;
+  }
+  return nullptr;
+}
+assTypePtr assType::findType(const std::string &typeName, bool autoInstall) {
+  if (autoInstall){
+    auto asstype = findType(typeName);
+    if (asstype)
+      return asstype;
+    else{
+      auto type = std::make_shared<assType>();
+      type->setType(typeName);
+      type->insert();
+      return type;
+    }
+  } else{
+    return findType(typeName);
+  }
+}
 CORE_NAMESPACE_E

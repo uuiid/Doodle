@@ -19,8 +19,10 @@ class CORE_API assType
   void deleteSQL() override;
 
   static assTypePtrList getAll();
+  static assTypePtr findType(const std::string& typeName,bool autoInstall);
   static bool sortType(const assTypePtr &t1,const assTypePtr &t2);
  private:
+  static assTypePtr findType(const std::string& typeName);
   std::string s_type;
  public:
   [[nodiscard]] const std::string &getType() const;

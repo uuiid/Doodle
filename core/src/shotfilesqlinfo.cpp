@@ -354,11 +354,21 @@ void shotFileSqlInfo::setShotType(const shotTypePtr &fileType_) {
   p_shTy_id = fileType_->getIdP();
   p_ptr_shTy = fileType_;
 
+  versionP = getVersionMax() + 1;
+
   setShotClass(fileType_->getFileClass());
 }
 bool shotFileSqlInfo::sort(const shotInfoPtr &t1, const shotInfoPtr &t2) {
   return (t1->getShotclass()->getClass_str() < t2->getShotclass()->getClass_str()) &&
       (t1->getShotType()->getType() < t2->getShotType()->getType());
+}
+int shotFileSqlInfo::getVersionMax() {
+  for (const auto &info_l : coreDataManager::get().getShotInfoL()) {
+    if ((getShotType() == info_l->getShotType())
+        && (info_l->getShotclass() == shotClass::getCurrentClass()))
+      return info_l->versionP;
+  }
+  return 0;
 }
 
 CORE_NAMESPACE_E

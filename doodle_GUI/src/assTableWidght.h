@@ -8,7 +8,8 @@
 #include "core_global.h"
 
 #include <QTableView>
-
+#include <future>
+class QProgressDialog;
 DOODLE_NAMESPACE_S
 class assTableWidght : public QTableView {
  Q_OBJECT
@@ -22,14 +23,16 @@ class assTableWidght : public QTableView {
   void init();
 
  private:
-  doCore::assInfoPtrList p_info_ptr_list_;
   assTableModel *p_model_;
-
   QMenu *p_menu_;
-  doCore::shotTypePtr p_file_type_ptr_;
-
+//  std::vector<std::future<bool>> p_updataFtpQueue;
+  std::vector<std::pair<std::future<bool>,QProgressDialog *>> p_updataFtpQueue;
+  QTimer * p_timer_;
+ private:
+  void insertAss(const QString &path);
+  void chickUpdataQueue();
  private slots:
-  void insertAss();
+  void openFileDialog();
 
  protected:
   void contextMenuEvent(QContextMenuEvent *event) override;

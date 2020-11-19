@@ -39,6 +39,7 @@ class CORE_API shotFileSqlInfo
   static bool sort(const shotInfoPtr &t1,const shotInfoPtr &t2);
  private:
   void setShotClass(const shotClassPtr &value);
+  int getVersionMax();
   //循环获得查询结果
   template<typename T>
   void batchSetAttr(T &row);

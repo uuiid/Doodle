@@ -151,6 +151,8 @@ void shotTableWidget::getSelectPath() {
   auto path = QFileDialog::getOpenFileName(
       this, tr("提交文件"), QString(),
       "files (*.mb *.ma *.uproject *.max *.fbx *.png *.tga *.jpg))");
+  if (path.isEmpty()) return;
+  if (path.isNull()) return;
   insertShot(path);
 }
 void shotTableWidget::insertShot(const QString &path) {

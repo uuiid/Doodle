@@ -24,7 +24,9 @@ class FTP_EXPORT ftpSession {
   bool down(const dstring &localFile, const dstring &remoteFile);
   bool downFolder(const dstring &localFile, const dstring &remoteFile);
   bool upload(const dstring &localFile, const dstring &remoteFile);
+  bool upload(const dstring &localFile, const dstring &remoteFile,bool backupFile);
   bool uploadFolder(const dstring &localFolder, const dstring &remoteFolder);
+  bool rename(const dstring &oldName, const dstring &newName);
   oFileInfo fileInfo(const dstring &remoteFile);
   //获得文件列表
   std::vector<oFileInfo> list(const dstring &remoteFolder);

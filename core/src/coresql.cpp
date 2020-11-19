@@ -50,20 +50,6 @@ void coreSql::initDB() {
   config->debug = true;
 
   auto db_name = getThreadId();
-
-//  QSqlDatabase dataBase;
-//  if (QSqlDatabase::contains(db_name)) {
-//    dataBase = QSqlDatabase::database(db_name);
-//  } else {
-//    dataBase = QSqlDatabase::addDatabase("QMYSQL", db_name);
-//    dataBase.setUserName("Effects");
-//    dataBase.setPassword("Effects");
-//
-//    dataBase.setHostName(ip);
-//    dataBase.setPort(3306);
-//    dataBase.setDatabaseName(dataName);
-//  }
-//  if (!dataBase.open()) throw std::runtime_error(dataBase.lastError().text().toStdString());
 }
 QString coreSql::getThreadId() {
   //使用线程id创建不一样的名字

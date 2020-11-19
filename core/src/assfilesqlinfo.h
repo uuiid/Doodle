@@ -29,11 +29,15 @@ class CORE_API assFileSqlInfo : public fileSqlInfo,
   void setAssClass(const assClassPtr &class_ptr);
 
   const assTypePtr &getAssType();
+  void setAssType(const assTypePtr& type_ptr);
   static bool sortType(const assInfoPtr &t1,const assInfoPtr &t2);
+
+
  private:
   void setAssType();
   template<typename T>
   void batchSetAttr(const T &row);
+  int getMaxVecsion();
 
  private:
   int64_t ass_class_id;

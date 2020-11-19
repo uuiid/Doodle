@@ -1,4 +1,4 @@
-#include <src/Toolkit.h>
+ï»¿#include <src/Toolkit.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/process.hpp>
@@ -24,18 +24,17 @@ void toolkit::openPath(const doCore::fileSqlInfoPtr& info_ptr,
 
   str % path_noral;
 
-  DOODLE_LOG_INFO << "´ò¿ªÂ·¾¶: " << str.str().c_str();
+  DOODLE_LOG_INFO << "æ‰“å¼€è·¯å¾„: " << str.str().c_str();
   if (boost::filesystem::exists(path)) {
     if (openEx)
       boost::process::system(str.str().c_str());
     else
       QGuiApplication::clipboard()->setText(DOTOS(path.generic_string()));
   } else {
-    DOODLE_LOG_CRIT << QString("Ã»ÓÐÔÚ·þÎñÆ÷ÖÐÕÒµ½Ä¿Â¼:\n %1")
+    DOODLE_LOG_CRIT << QString::fromUtf8("æ²¡æœ‰åœ¨æœåŠ¡å™¨ä¸­æ‰¾åˆ°ç›®å½•:\n %1")
                            .arg(DOTOS(path.generic_string()));
-    QMessageBox::warning(
-        nullptr, QString("Ã»ÓÐÄ¿Â¼"),
-                         QString("Ã»ÓÐÔÚ·þÎñÆ÷ÖÐÕÒµ½Ä¿Â¼:\n %1")
+    QMessageBox::warning(nullptr, QString::fromUtf8("æ²¡æœ‰ç›®å½•"),
+                         QString::fromUtf8("æ²¡æœ‰åœ¨æœåŠ¡å™¨ä¸­æ‰¾åˆ°ç›®å½•:\n %1")
                              .arg(DOTOS(path.generic_string())),
         QMessageBox::Yes);
   }

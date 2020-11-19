@@ -6,7 +6,7 @@ add_executable(test_my
         test_boost.cpp)
 #连接自己的库进行测试
 target_link_libraries(test_my
-        PRIVATE core fileSyn ftp pinyin logger)
+        PRIVATE core ftp pinyin logger)
 #连接谷歌测试框架
 target_link_libraries(test_my
         PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)

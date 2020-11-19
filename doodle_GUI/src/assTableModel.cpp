@@ -32,36 +32,40 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
   switch (role) {
     case Qt::DisplayRole:
     case Qt::EditRole:
-      switch (index.column()) {
-        case 0:
-          var = QString("v%1").arg(ass->getVersionP(), 4, 10, QLatin1Char('0'));
-          break;
-        case 1:
-          var = DOTOS(ass->getInfoP().back());
-          break;
-        case 2:
-          var = DOTOS(ass->getUser());
-          break;
-        case 3:
-          var = DOTOS(ass->getSuffixes());
-          break;
-        case 4:
-          var = ass->getAssType()->getTypeQ();
-          break;
-        default:
-          var = "";
-          break;
+      if (ass->isInsert()) {
+        switch (index.column()) {
+          case 0:
+            var = QString("v%1").arg(ass->getVersionP(), 4, 10, QLatin1Char('0'));
+            break;
+          case 1:
+            var = DOTOS(ass->getInfoP().back());
+            break;
+          case 2:
+            var = DOTOS(ass->getUser());
+            break;
+          case 3:
+            var = DOTOS(ass->getSuffixes());
+            break;
+          case 4:
+            var = ass->getAssType()->getTypeQ();
+            break;
+          default:
+            var = "";
+            break;
+        }
       }
       break;
     case Qt::DecorationRole:
-      if (boost::regex_match(ass->getAssType()->getType(), *(mayaRex)) &&  index.column() == 3) {
-        var = QIcon(":/resource/mayaIcon.png");
-      } else if (boost::regex_match(ass->getAssType()->getType(), *(ue4Rex)) && index.column() == 3) {
-        var = QIcon(":/resource/ue4Icon.png");
-      } else if (boost::regex_match(ass->getAssType()->getType(), *(rigRex)) &&  index.column() == 3) {
-        var = QColor("lightblue");
-      } else {
-        var = QVariant();
+      if (ass->isInsert()) {
+        if (boost::regex_match(ass->getAssType()->getType(), *(mayaRex)) &&  index.column() == 3) {
+          var = QIcon(":/resource/mayaIcon.png");
+        } else if (boost::regex_match(ass->getAssType()->getType(), *(ue4Rex)) && index.column() == 3) {
+          var = QIcon(":/resource/ue4Icon.png");
+        } else if (boost::regex_match(ass->getAssType()->getType(), *(rigRex)) &&  index.column() == 3) {
+          var = QColor("lightblue");
+        } else {
+          var = QVariant();
+        }
       }
       break;
     case Qt::UserRole:
@@ -149,7 +153,9 @@ bool assTableModel::insertRows(int position, int rows,
   for (int row = 0; row < rows; ++row) {
     p_ass_info_ptr_list_.insert(p_ass_info_ptr_list_.begin() + position,
                                 std::make_shared<doCore::assFileSqlInfo>());
-    //    p_ass_info_ptr_list_[position]->setAssType(doCore::coreDataManager::get().getAssTypePtr());
+        p_ass_info_ptr_list_[position]->setAssClass(
+            doCore::coreDataManager::get().getAssClassPtr()
+            );
   }
   endInsertColumns();
   endInsertRows();

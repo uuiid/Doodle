@@ -64,31 +64,7 @@ void coreSet::writeDoodleLocalSet() {
   outjosn.open((*doc / settingFileName), std::ifstream::binary);
   waiter->write(root, &outjosn);
   outjosn.close();
-//  boost::property_tree::ptree json;
-//
-//  boost::property_tree::read_json((*doc/settingFileName).string(),json);
-//  json.put("", user);
-//  json.put("department", department);
-//  json.put("synPath", synPath);
-//  json.put("synEp", syneps);
-//  json.put("projectname",project.second);
-//  json.put("FreeFileSync", freeFileSyn);
-//
-//  boost::property_tree::write_json((*doc/settingFileName).string(),json);
-//
-//  QJsonObject jsonobj;
-//  jsonobj.insert("user", user);
-//  jsonobj.insert("department", department);
-//  jsonobj.insert("synPath", synPath.absolutePath());
-//  jsonobj.insert("synEp", syneps);
-//  jsonobj.insert("projectname", QString::fromStdString(project.second));
-//  jsonobj.insert("FreeFileSync", freeFileSyn);
-//  QJsonDocument jsonDoc(jsonobj);
-//  QFile strFile(doc.absoluteFilePath(settingFileName));
-//  if (!strFile.open(QIODevice::WriteOnly))
-//    throw std::runtime_error("not open doodle_conf.json");
-//  strFile.write(jsonDoc.toJson(QJsonDocument::Compact));
-//  strFile.close();
+
 }
 
 coreSet::coreSet() {
@@ -133,8 +109,8 @@ void coreSet::getSetting() {
       project.second = root["projectname"].asString();
     if (root.isMember("FreeFileSync"))
       freeFileSyn = root["FreeFileSync"].asString();
-    DOODLE_LOG_INFO << root["projectname"].asString().c_str();
-    DOODLE_LOG_INFO << root["synPath"].asString().c_str();
+    DOODLE_LOG_INFO << "projectname" << root["projectname"].asString().c_str();
+    DOODLE_LOG_INFO << "synPath" << root["synPath"].asString().c_str();
   }
 }
 

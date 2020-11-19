@@ -110,7 +110,9 @@ void fileArchive::_updata(const dpathList &pathList) {
 
   int i = 0;
   for (auto &&item:p_cacheFilePath) {
-    if (!session->upload((item.generic_string()), (p_Path[i].generic_string()))) {
+    if (
+        !session->upload((item.generic_string()), (p_Path[i].generic_string()),true)
+        ) {
       p_state_ = state::fail;
       DOODLE_LOG_WARN << "无法上传文件" << (item).c_str();
       return;

@@ -9,7 +9,10 @@
 #include <QDirIterator>
 #include <memory>
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 #include <iostream>
+#include <ctime>
+#include <QtCore/QDateTime>
 FTPSPACE_S
 ftpSession::ftpSession() {
   ptrUrl = std::make_shared<QUrl>();
@@ -135,7 +138,6 @@ bool ftpSession::upload(const dstring &localFile, const dstring &remoteFile) {
   CURLcode err = perform();
   inputfile->close();
   if (err != CURLE_OK) {
-    DOODLE_LOG_WARN << curl_easy_strerror(err) << "-->" << inputfile->fileName();
     return false;
   }
   return true;
@@ -302,6 +304,46 @@ bool ftpSession::downFolder(const dstring &localFile, const dstring &remoteFile)
     }
   }
   return err;
+}
+bool ftpSession::rename(const dstring &oldName, const dstring &newName) {
+  ptrUrl->setPath("");
+  curl_easy_reset(curlSession);
+  //ftp命令
+  struct curl_slist *ftpList = nullptr;
+  boost::format str("%s %s");
+  str % "RNFR" % oldName;
+  DOODLE_LOG_INFO << str.str().c_str();
+  ftpList = curl_slist_append(ftpList,str.str().c_str());
+
+  str.clear();
+  str % "RNTO" % newName;
+  DOODLE_LOG_INFO << str.str().c_str();
+  ftpList = curl_slist_append(ftpList,str.str().c_str());
+
+  //创建上传设置
+  curl_easy_setopt(curlSession, CURLOPT_URL, ptrUrl->toString().toStdString().c_str());
+  curl_easy_setopt(curlSession, CURLOPT_NOBODY, 1L);
+  curl_easy_setopt(curlSession, CURLOPT_POSTQUOTE, ftpList);
+
+  CURLcode err = perform();
+  auto isOK = false;
+  if (err != CURLE_OK) {isOK = false;}
+  curl_slist_free_all(ftpList);
+  isOK = true;
+  return isOK;
+}
+bool ftpSession::upload(const dstring &localFile, const dstring &remoteFile, bool backupFile) {
+  boost::filesystem::path path(remoteFile);//2018-09-19 08:59:07
+  QDateTime dt = QDateTime::currentDateTime();
+  //每小时一个文件
+  QString fileNameDt = dt.toString("yyyy_MM_dd_hh_mm");
+  path = path.parent_path() / "backup" / fileNameDt.toStdString() / path.filename();
+
+  createDir(path.parent_path().generic_string());
+  if (backupFile) {
+    rename(remoteFile, path.generic_string());
+  }
+  return upload(localFile, remoteFile);
 }
 
 FTPSPACE_E
