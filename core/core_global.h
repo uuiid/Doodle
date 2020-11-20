@@ -21,7 +21,8 @@
 #define DOODLE_FFMPEG_PATH "tools/ffmpeg/bin"
 #define DOODLE_BACKUP "backup"
 #define DOODLE_CONTENT "Content"
-
+#define DOODLE_EPFORMAT "ep%03i"
+#define DOODLE_SHFORMAT "sc%04i"
 
 
 #if __has_cpp_attribute(nodiscard) && \

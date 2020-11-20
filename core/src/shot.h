@@ -58,6 +58,7 @@ class CORE_API shot : public coresqldata,
   dstring getShot_str() const;
   //只有shot Ab的格式化信息
   dstring getShotAb_str() const;
+  QString getShotAb_strQ() const;
   //获得shot的数值
   int64_t getShot() const { return p_qint_shot_; };
  private:
@@ -74,4 +75,5 @@ inline void shot::setShot(const int64_t &sh, const QString &ab) {
 inline QString shot::getShotAndAb_strQ() const {
   return QString::fromStdString(getShotAndAb_str());
 }
+inline QString shot::getShotAb_strQ() const { return QString::fromStdString(getShotAb_str()); }
 CORE_NAMESPACE_E

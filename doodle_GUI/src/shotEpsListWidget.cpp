@@ -34,11 +34,10 @@ QWidget *episodesintDelegate::createEditor(QWidget *parent,
 }
 
 void episodesintDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const {
-  QString name = index.model()->data(index, Qt::EditRole).toString();
-  int value = name.right(name.size() - 2).toInt();
+  auto int_value = index.data(Qt::EditRole).toInt();
 
   auto *spinbox = static_cast<QSpinBox *>(editor);
-  spinbox->setValue(value);
+  spinbox->setValue(int_value);
 }
 
 void episodesintDelegate::setModelData(QWidget *editor,
@@ -51,10 +50,13 @@ void episodesintDelegate::setModelData(QWidget *editor,
   QMessageBox::StandardButton box = QMessageBox::information(static_cast<QWidget *>(this->parent()),
                                                              tr("警告:"), tr("将第 %1 集提交到服务器").arg(value),
                                                              QMessageBox::Yes | QMessageBox::Cancel);
-  if (box == QMessageBox::Yes)
-    model->setData(index, value, Qt::EditRole);
+  if (box == QMessageBox::Yes) {
+    if (!model->setData(index, value, Qt::EditRole)) {
+      model->removeRow(index.row(), QModelIndex());
+    }
+  }
   else
-    model->removeRow(index.row(), index);
+    model->removeRow(index.row(), QModelIndex());
 }
 
 void episodesintDelegate::updateEditorGeometry(QWidget *editor,

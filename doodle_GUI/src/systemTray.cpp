@@ -58,7 +58,7 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
 }
 void systemTray::synFile() {
   auto syn = std::make_unique<doCore::ueSynArchive>();
-  syn->down();
+  syn->down(nullptr);
 }
 
 void systemTray::installMayaPlug() {

@@ -1,4 +1,4 @@
-#include <core_doQt.h>
+﻿#include <core_doQt.h>
 
 #include "Logger.h"
 #include "shotListModel.h"
@@ -11,7 +11,7 @@
 #include <QMessageBox>
 #include <QMenu>
 #include <QContextMenuEvent>
-
+#include <QtWidgets/QApplication>
 DOODLE_NAMESPACE_S
 
 /* -------------------------------- 自定义小部件 -------------------------------- */
@@ -56,6 +56,14 @@ void shotEditWidget::setValue(const QMap<QString, QVariant> &value) {
   p_combox->setCurrentText(value["shotAb"].toString());
 }
 
+//void shotEditWidget::mousePressEvent(QMouseEvent *event) {
+//  auto ptr = qApp->widgetAt(event->globalPos());
+//  if (ptr != p_spin || ptr != p_combox) {
+//    editingFinished();
+//  }
+//  QWidget::mousePressEvent(event);
+//}
+
 /* ---------------------------------- 自定义委托 --------------------------------- */
 
 shotIntEnumDelegate::shotIntEnumDelegate(QObject *parent) : QStyledItemDelegate(parent) {
@@ -73,9 +81,7 @@ QWidget *shotIntEnumDelegate::createEditor(QWidget *parent,
 
 void shotIntEnumDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const {
   auto *shotedit = static_cast<shotEditWidget *>(editor);
-  QMap<QString, QVariant> map;
-  map["shot"] = 0;
-  map["shotAb"] = "";
+  auto map = index.data(Qt::EditRole).toMap();
   shotedit->setValue(map);
 }
 
@@ -92,10 +98,14 @@ void shotIntEnumDelegate::setModelData(QWidget *editor,
                                                                                          10,
                                                                                          QLatin1Char('0')).arg(data["shotAb"].toString()),
                                                              QMessageBox::Yes | QMessageBox::Cancel);
-  if (box == QMessageBox::Yes)
-    model->setData(index, data, Qt::EditRole);
+  if (box == QMessageBox::Yes) {
+    if (!model->setData(index, data, Qt::EditRole)) {
+      model->removeRow(index.row(), QModelIndex());
+    }
+  }
   else
-    model->removeRow(index.row(), index);
+    model->removeRow(index.row(), QModelIndex());
+  
 }
 
 void shotIntEnumDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,

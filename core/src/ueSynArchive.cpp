@@ -9,13 +9,12 @@
 #include <boost/format.hpp>
 #include <src/ftphandle.h>
 #include <src/ftpsession.h>
-
+#include <src/shot.h>
 #include <boost/property_tree/ptree.hpp>
 
 CORE_NAMESPACE_S
 ueSynArchive::ueSynArchive()
-    : fileArchive(),
-      p_syn(std::make_shared<freeSynWrap>()) {
+    : fileArchive(), p_syn(std::make_shared<freeSynWrap>()), synpart() {
 
 }
 void ueSynArchive::insertDB() {
@@ -24,29 +23,60 @@ void ueSynArchive::insertDB() {
 void ueSynArchive::_generateFilePath() {
 
 }
-dpath ueSynArchive::down() {
+dpath ueSynArchive::down(const shotPtr & shot_) {
   auto &set = coreSet::getSet();
   boost::format str("/03_Workflow/Assets/%s/backup");
   str % set.getDepartment();
-  auto synpart = set.getSynDir();
-
+  synpart = set.getSynDir();
+  if (synpart.empty()) {
+    return {};
+  }
   boost::format eps("EP_%02i");
   eps % set.getSyneps();
+
+
+  auto tmp = set.getPrjectRoot() / set.getAssRoot() / set.getDepartment() / eps.str();
+  if (boost::filesystem::exists(tmp)) {
+    oldDown(shot_);
+    return {};
+  } else {
+    newDown(shot_);
+  }
+  return {};
+}
+void ueSynArchive::newDown(const shotPtr &shot_) {
+  auto &set = coreSet::getSet();
+  boost::format str("/03_Workflow/Assets/%s/backup");
+  str % set.getDepartment();
+  if (synpart.empty()) {
+    return;
+  }
+  
+  boost::format eps(DOODLE_EPFORMAT);
+  eps % set.getSyneps();
+  dstring shotFstr = "*\\VFX\\*";
+  if (shot_) {
+    boost::format shotFlliter(R"(*\sc%04i\Checkpoint\VFX\*)");
+    shotFstr = (shotFlliter % shot_->getShot()).str();
+  }
   for (auto &item : synpart) {
-    item.local = set.getSynPathLocale() / set.projectName().second / eps.str() / item.local / DOODLE_CONTENT / "shot";
-    item.server = set.getAssRoot() / set.getDepartment() / eps.str() / item.server / DOODLE_CONTENT / "shot";
+    item.local = set.getSynPathLocale() / set.projectName().second / eps.str() /
+                 item.local / DOODLE_CONTENT / "shot";
+    item.server = set.getAssRoot() / set.getDepartment() / eps.str() /
+                  item.server / DOODLE_CONTENT / "shot";
   }
 
   p_syn->addSynFile(synpart);
   p_syn->setVersioningFolder(freeSynWrap::syn_set::twoWay, str.str());
   if (set.getDepartment() == "VFX") {
     //设置同步方式
-    p_syn->addInclude({"*\\VFX\\*"});
+    p_syn->addInclude({shotFstr});
+
   } else if (set.getDepartment() == "Light") {
     //同步light镜头
     for (int i = 0; i < synpart.size(); ++i) {
       p_syn->addSubSynchronize(i, freeSynWrap::syn_set::twoWay, str.str());
-      p_syn->addSubIncludeExclude(i, {"*"}, {"*\\VFX\\*"});
+      p_syn->addSubIncludeExclude(i, {"*"}, {shotFstr});
     }
 
     //下载vfx镜头
@@ -56,32 +86,76 @@ dpath ueSynArchive::down() {
       item.server = set.getAssRoot() / "VFX" / item.server / eps.str() / DOODLE_CONTENT / "shot";
     }
     p_syn->addSynFile(syn_part_vfx);
-    for (int i = syn_part_vfx.size(); i < syn_part_vfx.size() + synpart.size(); ++i) {
+    for (int i = syn_part_vfx.size(); i < syn_part_vfx.size() + synpart.size();
+         ++i) {
       p_syn->addSubSynchronize(i, freeSynWrap::syn_set::down, str.str());
-      p_syn->addSubIncludeExclude(i, {"*\\VFX\\*"}, {});
+      p_syn->addSubIncludeExclude(i, {shotFstr}, {});
     }
-  } else {
-    return fileArchive::down();
   }
   p_syn->run();
+}
+void ueSynArchive::oldDown(const shotPtr &shot_) {
+  auto &set = coreSet::getSet();
+  boost::format str("/03_Workflow/Assets/%s/backup");
+  str % set.getDepartment();
 
-  return {};
+  boost::format eps("EP_%02i");
+  eps % set.getSyneps();
+
+  dstring shotFstr = "*\\VFX\\*";
+  if (shot_) {
+    boost::format shotFlliter(R"(*\Sc%04i\Checkpoint\VFX\*)");
+    shotFstr = (shotFlliter % shot_->getShot()).str();
+  }
+  for (auto &item : synpart) {
+    item.local = set.getSynPathLocale() / set.projectName().second / eps.str() /
+                 item.local / DOODLE_CONTENT / "shot";
+    item.server = set.getAssRoot() / set.getDepartment() / eps.str() /
+                  item.server / DOODLE_CONTENT / "shot";
+  }
+
+  p_syn->addSynFile(synpart);
+  p_syn->setVersioningFolder(freeSynWrap::syn_set::twoWay, str.str());
+  if (set.getDepartment() == "VFX") {
+    //设置同步方式
+    p_syn->addInclude({shotFstr});
+
+  } else if (set.getDepartment() == "Light") {
+    //同步light镜头
+    for (int i = 0; i < synpart.size(); ++i) {
+      p_syn->addSubSynchronize(i, freeSynWrap::syn_set::twoWay, str.str());
+      p_syn->addSubIncludeExclude(i, {"*"}, {shotFstr});
+    }
+
+    //下载vfx镜头
+    auto syn_part_vfx = set.getSynDir();
+    for (auto &item : syn_part_vfx) {
+      item.local = set.getSynPathLocale() / set.projectName().second /
+                   eps.str() / item.local / DOODLE_CONTENT / "shot";
+      item.server = set.getAssRoot() / "VFX" / item.server / eps.str() /
+                    DOODLE_CONTENT / "shot";
+    }
+    p_syn->addSynFile(syn_part_vfx);
+    for (int i = syn_part_vfx.size(); i < syn_part_vfx.size() + synpart.size();
+         ++i) {
+      p_syn->addSubSynchronize(i, freeSynWrap::syn_set::down, str.str());
+      p_syn->addSubIncludeExclude(i, {shotFstr}, {});
+    }
+  }
+  p_syn->run();
 }
 bool ueSynArchive::update() {
-  down();
+  down(nullptr);
   return true;
 }
 bool ueSynArchive::makeDir() {
   auto &set = coreSet::getSet();
-  auto synpart = set.getSynDir();
-  boost::format eps("EP_%02i");
+  synpart = set.getSynDir();
+  boost::format eps(DOODLE_EPFORMAT);
   eps % set.getSyneps();
   dstringList list;
 
-  boost::format eps2("Ep%03i");
-  eps2 % set.getSyneps();
-
-  boost::format shot("Sc%03i");
+  boost::format shot(DOODLE_SHFORMAT);
 
   dstringList listcreates{"Checkpoint",
                           "Light",
@@ -101,7 +175,7 @@ bool ueSynArchive::makeDir() {
         / item.server
         / DOODLE_CONTENT
         / "shot"
-        / eps2.str();
+        / eps.str();
     session->createDir(server.generic_string());
 
     for (int kI = 0; kI < 120; ++kI) {

@@ -140,7 +140,7 @@ dstring shot::getShotAndAb_str() const {
 }
 
 dstring shot::getShot_str() const {
-  boost::format str("sc%04i");
+  boost::format str(DOODLE_SHFORMAT);
   str % p_qint_shot_;
   return str.str();
 }

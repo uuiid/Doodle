@@ -58,7 +58,7 @@ bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value, 
     //确认镜头不重复和没有提交
     bool isHasEps = false;
     for (auto &&x : eplist) {
-      if (value.toInt() == x->getEpisdes() || x->isInsert()) {
+      if (value.toInt() == x->getEpisdes() && x->isInsert()) {
         isHasEps = true;
         break;
       }

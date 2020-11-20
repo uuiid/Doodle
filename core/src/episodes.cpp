@@ -89,7 +89,7 @@ int64_t episodes::getEpisdes() const {
 }
 
 dstring episodes::getEpisdes_str() const {
-  boost::format str("ep%03i");
+  boost::format str(DOODLE_EPFORMAT);
   str % p_int_episodes;
   return str.str();
 }

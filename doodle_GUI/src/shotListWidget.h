@@ -1,4 +1,4 @@
-/*
+﻿/*
  * @Author: your name
  * @Date: 2020-09-30 14:05:57
  * @LastEditTime: 2020-10-10 14:31:42
@@ -30,13 +30,16 @@ class shotEditWidget : public QWidget {
 
   QMap<QString, QVariant> value();
   void setValue(const QMap<QString, QVariant> &value);
-
+ signals:
+  void editingFinished();
  private:
   QSpinBox *p_spin;
   QComboBox *p_combox;
 
   QHBoxLayout *p_b_hboxLayout;
 
+ //protected:
+ // void mousePressEvent(QMouseEvent *event) override;
 };
 
 /**
