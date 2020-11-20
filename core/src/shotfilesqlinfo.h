@@ -15,10 +15,7 @@ class CORE_API shotFileSqlInfo
   void insert() override;
   void updateSQL() override;
 
-  static shotInfoPtrList getAll(const episodesPtr &EP_);
   static shotInfoPtrList getAll(const shotPtr &sh_);
-  static shotInfoPtrList getAll(const shotClassPtr &class_ptr);
-  static shotInfoPtrList getAll(const shotTypePtr &type_ptr);
 
   dpath generatePath(const dstring &programFolder) override;
   dpath generatePath(const dstring &programFolder, const dstring &suffixes) override;
@@ -38,7 +35,10 @@ class CORE_API shotFileSqlInfo
   void setShotType(const shotTypePtr &fileType_);
   static bool sort(const shotInfoPtr &t1,const shotInfoPtr &t2);
  private:
-  void setShotClass(const shotClassPtr &value);
+  static shotInfoPtrList getAll(const episodesPtr &EP_);
+  static shotInfoPtrList getAll(const shotClassPtr &class_ptr);
+  static shotInfoPtrList getAll(const shotTypePtr &type_ptr);
+  void setShotClass();
   int getVersionMax();
   //循环获得查询结果
   template<typename T>

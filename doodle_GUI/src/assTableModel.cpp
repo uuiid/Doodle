@@ -23,6 +23,7 @@ int assTableModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_ass_info_ptr_list_.size());
 }
 int assTableModel::columnCount(const QModelIndex &parent) const { return 5; }
+
 QVariant assTableModel::data(const QModelIndex &index, int role) const {
   auto var = QVariant();
   if (!index.isValid()) return var;
@@ -158,7 +159,7 @@ bool assTableModel::insertRows(int position, int rows,
 }
 void assTableModel::init() {
   clear();
-  //p_ass_info_ptr_list_ = 
+  //p_ass_info_ptr_list_ =
   doCore::assFileSqlInfo::getAll(
       doCore::coreDataManager::get().getAssClassPtr());
 //  if (tmp_list.empty()) return;

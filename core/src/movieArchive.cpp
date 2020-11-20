@@ -16,7 +16,7 @@ movieArchive::movieArchive(fileSqlInfoPtr shot_info_ptr)
 }
 void movieArchive::insertDB() {
   p_info_ptr_->setFileList(p_Path);
-
+  p_info_ptr_->setInfoP("拍屏文件");
   p_info_ptr_->insert();
 }
 void movieArchive::_generateFilePath() {

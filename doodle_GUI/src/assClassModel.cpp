@@ -91,6 +91,7 @@ void assClassModel::clear() {
   beginResetModel();
   p_ass_info_ptr_list_.clear();
   endResetModel();
+  doCore::coreDataManager::get().setAssClassPtr(nullptr);
 }
 assClassModel::~assClassModel() = default;
 

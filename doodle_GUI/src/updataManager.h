@@ -19,7 +19,7 @@ class updataManager : public QObject{
 
   static updataManager &get();
   void addQueue(std::future<bool> &f, QProgressDialog *t);
-  void addQueue(std::future<bool> &f,const std::string &lableText);
+  void addQueue(std::future<bool> &f,const std::string &lableText, int maxValue);
   void run();
 
  private:

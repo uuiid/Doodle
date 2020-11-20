@@ -38,6 +38,7 @@ void AssDepModel::clear() {
     p_class_ptr_list_.clear();
     endResetModel();
   }
+  doCore::coreDataManager::get().setAssDepPtr(nullptr);
 }
 AssDepModel::~AssDepModel() = default;
 

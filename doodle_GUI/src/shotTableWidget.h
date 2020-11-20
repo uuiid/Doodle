@@ -22,14 +22,18 @@ class shotTableWidget : public QTableView {
 
   void setModel(QAbstractItemModel *model) override;
  private slots:
+
   void getSelectPath();
   void exportFbx();
 
   void createFlipbook_slot();
   void createFlipbook(const QString & video_folder);
 
+  static void submitMayaFile(doCore::shotInfoPtr &info_ptr,const QString& path);
+  static void submitFBFile(doCore::shotInfoPtr &info_ptr,const QString& path);
  protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
+
   void dragEnterEvent(QDragEnterEvent *event) override;
   void dragLeaveEvent(QDragLeaveEvent *event) override;
   void dragMoveEvent(QDragMoveEvent *event) override;

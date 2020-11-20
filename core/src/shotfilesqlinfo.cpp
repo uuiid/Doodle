@@ -106,8 +106,10 @@ void shotFileSqlInfo::batchSetAttr(T &row) {
   fileStateP = row.filestate;
   if (row.shotsId._is_valid)
     p_shot_id = row.shotsId;
-  if (row.shotClassId._is_valid)
+  if (row.shotClassId._is_valid) {
     p_shCla_id = row.shotClassId;
+    getShotType();
+  }
   if (row.shotTypeId._is_valid)
     p_shTy_id = row.shotTypeId;
 }
@@ -165,7 +167,6 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr &class_ptr) {
   )) {
     auto assInfo = std::make_shared<shotFileSqlInfo>();
     assInfo->batchSetAttr(row);
-    assInfo->setShotClass(class_ptr);
     list.push_back(assInfo);
   }
   coreDataManager::get().setShotInfoL(list);
@@ -324,7 +325,8 @@ shotClassPtr shotFileSqlInfo::getShotclass() {
   return nullptr;
 }
 
-void shotFileSqlInfo::setShotClass(const shotClassPtr &value) {
+void shotFileSqlInfo::setShotClass() {
+  auto value = shotClass::getCurrentClass();
   if (!value)
     return;
   p_shCla_id = value->getIdP();
@@ -342,7 +344,6 @@ shotTypePtr shotFileSqlInfo::getShotType() {
         break;
       }
     }
-
     return p_ptr_shTy;
   }
   return nullptr;
@@ -355,8 +356,7 @@ void shotFileSqlInfo::setShotType(const shotTypePtr &fileType_) {
   p_ptr_shTy = fileType_;
 
   versionP = getVersionMax() + 1;
-
-  setShotClass(fileType_->getFileClass());
+  setShotClass();
 }
 bool shotFileSqlInfo::sort(const shotInfoPtr &t1, const shotInfoPtr &t2) {
   return (t1->getShotclass()->getClass_str() < t2->getShotclass()->getClass_str()) &&

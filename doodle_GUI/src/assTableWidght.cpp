@@ -22,6 +22,7 @@
 #include <QtWidgets/QProgressDialog>
 #include <QtCore/QTimer>
 #include <src/updataManager.h>
+#include <QMimeData>
 DOODLE_NAMESPACE_S
 assTableWidght::assTableWidght(QWidget *parent)
     : QTableView(parent),
@@ -32,6 +33,7 @@ assTableWidght::assTableWidght(QWidget *parent)
   setSelectionBehavior(QAbstractItemView::SelectRows);
   setShowGrid(false);
   setFrameShape(QFrame::NoFrame);
+  setAcceptDrops(true);
 }
 void assTableWidght::setModel(QAbstractItemModel *model) {
   auto k_model_ = dynamic_cast<assTableModel *>(model);
@@ -85,7 +87,8 @@ void assTableWidght::insertAss(const QString &path) {
     auto future = std::async(std::launch::async, [=](){
      return maya_archive->update(path.toStdString());
     });
-    updataManager::get().addQueue(future, "正在上传中");
+    //打开后台传输
+    updataManager::get().addQueue(future, "正在上传中", 100);
     updataManager::get().run();
 
   } else if (boost::regex_match(pathInfo.suffix().toStdString(), reUe4)) {
@@ -94,7 +97,8 @@ void assTableWidght::insertAss(const QString &path) {
     auto ue4_archice = std::make_shared<doCore::ueArchive>(data);
   } else {
     //图片文件
-//    data->setAssType(doCore::assType::findType("sourceimages",true));
+    data->setAssType(doCore::assType::findType("sourceimages",true));
+    p_model_->removeRow(0);
 //    auto image_archice = std::make_shared<doCore::imageArchive>(data);
     return;
   }
@@ -136,6 +140,40 @@ void assTableWidght::openFileDialog() {
   if (path.isNull()) return;
   insertAss(path);
 }
+void assTableWidght::dropEvent(QDropEvent *event) {
+  QAbstractItemView::dropEvent(event);
+  if (!event->mimeData()->hasUrls()) return enableBorder(false);
+  if (event->mimeData()->urls().size() != 1) return enableBorder(false);
+  auto url = event->mimeData()->urls()[0];
+  DOODLE_LOG_INFO << "文件拖入窗口" << url;
 
+  const QFileInfo &kFileInfo = QFileInfo(url.toLocalFile());
+  enableBorder(false);
+  if (kFileInfo.exists()) {
+    insertAss(url.toLocalFile());
+  }
+//  QAbstractItemView::dropEvent(event);
+}
+void assTableWidght::dragMoveEvent(QDragMoveEvent *event) {
+//  QAbstractItemView::dragMoveEvent(event);
+}
+void assTableWidght::dragLeaveEvent(QDragLeaveEvent *event) {
+  enableBorder(false);
+//  QAbstractItemView::dragLeaveEvent(event);
+}
+void assTableWidght::dragEnterEvent(QDragEnterEvent *event) {
+  if (event->mimeData()->hasUrls()) {
+    event->acceptProposedAction();
+    enableBorder(true);
+  } else
+    event->ignore();
+//  QAbstractItemView::dragEnterEvent(event);
+}
+void assTableWidght::enableBorder(const bool &isEnable) {
+  if (isEnable)
+    setStyleSheet("border:3px solid #165E23");
+  else
+    setStyleSheet("");
+}
 
 DOODLE_NAMESPACE_E

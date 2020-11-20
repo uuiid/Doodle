@@ -21,19 +21,28 @@ int shotEpsListModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(eplist.size());
 }
 QVariant shotEpsListModel::data(const QModelIndex &index, int role) const {
+  auto var = QVariant();
   if (!index.isValid())
-    return QVariant();
+    return var;
 
   if (index.row() >= eplist.size())
-    return QVariant();
+    return var;
 
-  if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return eplist[index.row()]->getEpisdes_QStr();
-  } else if (role == Qt::UserRole) {
-    return QVariant::fromValue(eplist[index.row()]);
-  } else {
-    return QVariant();
+  switch (role) {
+    case Qt::DisplayRole:
+      var = eplist[index.row()]->getEpisdes_QStr();
+      break;
+    case Qt::EditRole:
+      var = eplist[index.row()]->getEpisdes();
+      break;
+    case Qt::UserRole:
+      var = QVariant::fromValue(eplist[index.row()]);
+      break;
+    default:
+      break;
   }
+
+  return var;
 }
 Qt::ItemFlags shotEpsListModel::flags(const QModelIndex &index) const {
   if (!index.isValid())
@@ -93,6 +102,6 @@ void shotEpsListModel::clear() {
   beginResetModel();
   eplist.clear();
   endResetModel();
-
+  doCore::coreDataManager::get().setEpisodesPtr(nullptr);
 }
 DOODLE_NAMESPACE_E

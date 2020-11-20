@@ -120,6 +120,7 @@ void shotListModel::clear() {
   beginResetModel();
   shotlist.clear();
   endResetModel();
+  doCore::coreDataManager::get().setShotPtr(nullptr);
 }
 
 DOODLE_NAMESPACE_E

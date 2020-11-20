@@ -19,6 +19,7 @@ updataManager::updataManager() :
 void updataManager::chickQueue() {
   for (const auto &item : p_updataFtpQueue) {
     if (item.first.wait_for(std::chrono::microseconds(1)) == std::future_status::ready) {
+      item.second->maximum();
       item.second->setValue(100);
       item.second->close();
       item.second->deleteLater();
@@ -39,7 +40,7 @@ void updataManager::chickQueue() {
 }
 void updataManager::run() {
   if (!p_timer_->isActive()){
-    p_timer_->start(100);
+    p_timer_->start();
   }
 }
 void updataManager::run_() {
@@ -47,7 +48,8 @@ void updataManager::run_() {
 void updataManager::addQueue(std::future<bool> &f, QProgressDialog *t) {
   p_updataFtpQueue.emplace_back(std::move(f),t);
 }
-void updataManager::addQueue(std::future<bool> &f, const std::string &lableText) {
+void updataManager::addQueue(std::future<bool> &f, const std::string &lableText, int maxValue) {
+  p_timer_->setInterval(maxValue);
   auto pro = new QProgressDialog();
   pro->setLabelText(QString::fromStdString(lableText));
   pro->setMinimum(0);

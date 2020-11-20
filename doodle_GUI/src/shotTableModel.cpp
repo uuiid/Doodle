@@ -11,7 +11,12 @@
 
 DOODLE_NAMESPACE_S
 shotTableModel::shotTableModel(QObject *parent)
-    : QAbstractTableModel(parent), p_shot_info_ptr_list_() {}
+    : QAbstractTableModel(parent),
+      p_shot_info_ptr_list_(),
+      FBRex(std::make_unique<boost::regex>(R"(mp4|avi)")),
+      mayaRex(std::make_unique<boost::regex>(R"(ma|ab)")),
+      show_mayaex(std::make_unique<boost::regex>(R"(FB_|flipbook)")),
+      show_FBRex(std::make_unique<boost::regex>(R"(Anm|Animation)")) {}
 int shotTableModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_shot_info_ptr_list_.size());
 }
@@ -24,23 +29,49 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
   if (index.row() >= p_shot_info_ptr_list_.size()) return var;
 
   auto shot = p_shot_info_ptr_list_[index.row()];
-  if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    switch (index.column()) {
-      case 0:var = QString("v%1").arg(shot->getVersionP(), 4, 10, QLatin1Char('0'));
-        break;
-      case 1:var = DOTOS(shot->getInfoP().back());
-        break;
-      case 2:var = shot->getUserQ();
-        break;
-      case 3:var = shot->getSuffixesQ();
-        break;
-      case 4:var = shot->getIdP();
-        break;
-      default:var = QVariant();
-        break;
-    }
-  } else if (role == Qt::UserRole) {
-    var = QVariant::fromValue(shot);
+  if (!shot) {
+    return var;
+  }
+  switch (role) {
+    case Qt::DisplayRole:
+    case Qt::EditRole:
+      if (shot->isInsert()) {
+        switch (index.column()) {
+          case 0:var = QString("v%1").arg(shot->getVersionP(), 4, 10, QLatin1Char('0'));
+            break;
+          case 1:var = DOTOS(shot->getInfoP().back());
+            break;
+          case 2:var = shot->getUserQ();
+            break;
+          case 3:var = shot->getSuffixesQ();
+            break;
+          case 4:var = shot->getShotType()->getTypeQ();
+            break;
+          default:var = QVariant();
+            break;
+        }
+      } else {
+        switch (index.column()) {
+          case 1:var = "正在上传";
+            break;
+          case 2:var = shot->getUserQ();
+            break;
+          default:var = QVariant();
+            break;
+        }
+      }
+      break;
+    case Qt::DecorationRole:
+      if (shot->isInsert()) {
+        if (boost::regex_match(shot->getSuffixes(), *FBRex)) {
+          var = QIcon(":/resource/mayaIcon.png");
+        } else if (boost::regex_match(shot->getSuffixes(), *mayaRex)) {
+          var = QColor("lightcyan");
+        }
+      }
+      break;
+    case Qt::UserRole:var = QVariant::fromValue(shot);
+    default:break;
   }
   return var;
 }
@@ -83,7 +114,6 @@ bool shotTableModel::setData(const QModelIndex &index, const QVariant &value, in
   } else if (role == Qt::UserRole) {
     if (!value.canConvert<doCore::shotInfoPtr>()) return false;
     p_shot_info_ptr_list_[index.row()] = value.value<doCore::shotInfoPtr>();
-    p_shot_info_ptr_list_[index.row()]->insert();
     dataChanged(index, index);
     return true;
   } else {
@@ -103,7 +133,9 @@ bool shotTableModel::insertRows(int position, int rows, const QModelIndex &paren
   for (int row = 0; row < rows; ++row) {
     p_shot_info_ptr_list_.insert(p_shot_info_ptr_list_.begin() + position,
                                  std::make_shared<doCore::shotFileSqlInfo>());
-//    p_shot_info_ptr_list_[position]->setShotType(p_type_ptr_);
+    p_shot_info_ptr_list_[position]->setShot(
+        doCore::coreDataManager::get().getShotPtr()
+    );
   }
   endInsertRows();
   return true;
@@ -152,24 +184,47 @@ void shotTableModel::filter(bool useFilter) {
 }
 void shotTableModel::eachOne() {
   std::vector<std::string> show{"Animation", "FB_VFX", "FB_Light", "flipbook"};
+  auto listout = doCore::coreDataManager::get().getShotInfoL();
+
+  doCore::shotTypePtrList typelist;
+
+  auto it = std::remove_if(listout.begin(), listout.end(), [=](const doCore::shotInfoPtr &ptr) {
+     return !(
+       boost::regex_match(ptr->getShotType()->getType(), *mayaRex) ||
+       boost::regex_match(ptr->getShotType()->getType(), *show_FBRex) ||
+       boost::regex_match(ptr->getSuffixes(), *mayaRex));
+     });
   doCore::shotInfoPtrList list;
-  for (const auto &info_l : doCore::coreDataManager::get().getShotInfoL()) {
-    auto item = std::find(show.begin(), show.end(), info_l->getShotType()->getType());
-    if (item != show.end()) {
-      list.push_back(info_l);
-      show.erase(item);
+  list.assign(listout.begin(),it);
+  listout.clear();
+  for (const auto &i : list) {
+    if (std::find(typelist.begin(), typelist.end(), i->getShotType()) != typelist.end()) {
+      listout.push_back(i);
+    } else {
+      typelist.push_back(i->getShotType());
     }
   }
+
+//  for (const auto &info_l : doCore::coreDataManager::get().getShotInfoL()) {
+//    auto item = std::find(show.begin(), show.end(), info_l->getShotType()->getType());
+//    if (item != show.end()) {
+//      list.push_back(info_l);
+//      show.erase(item);
+//    }
+//  }
   setList(list);
 }
 void shotTableModel::setList(const doCore::shotInfoPtrList &list) {
+  clear();
   if (list.empty()) {
-    clear();
     return;
   }
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list.size()) - 1);
   p_shot_info_ptr_list_ = list;
   endInsertRows();
+}
+void shotTableModel::showAll() {
+  setList(doCore::coreDataManager::get().getShotInfoL());
 }
 
 DOODLE_NAMESPACE_E

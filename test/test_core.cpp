@@ -108,7 +108,7 @@ TEST_F(CoreTest, get_shotinf) {
     ASSERT_TRUE(!shclList.empty());
     auto shtyList = doCore::shotType::getAll();
     ASSERT_TRUE(!shtyList.empty());
-    auto sfList = doCore::shotFileSqlInfo::getAll(shtyList.front());
+    auto sfList = doCore::shotFileSqlInfo::getAll(shlist.front());
     ASSERT_TRUE(!sfList.empty());
 
     std::cout << "episodes: " << ep->getEpisdes_str() << std::endl;
@@ -190,7 +190,7 @@ TEST_F(CoreTest,mayaExport_fbx){
 
   for (const auto &item : shtypeList) {
     if(item->getType() == "fbx"){
-      auto shot = doCore::shotFileSqlInfo::getAll(item);
+      auto shot = doCore::shotFileSqlInfo::getAll(shotList.front());
       auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
       shotinfo->setShotType(item);
       auto export_ = std::make_shared<doCore::mayaArchiveShotFbx>(shotinfo);
@@ -245,7 +245,7 @@ TEST_F(CoreTest,Synfile_dow_ue){
   auto shclassList = doCore::shotClass::getAll();
   auto shtypeList = doCore::shotType::getAll();
 
-  auto shotinfoList  = doCore::shotFileSqlInfo::getAll(shtypeList.front());
+  auto shotinfoList  = doCore::shotFileSqlInfo::getAll(shotList.front());
   auto up_move = std::make_shared<doCore::ueArchive>(shotinfoList.front());
   up_move->down(R"(F:\Users\)");
   shotinfoList.front()->deleteSQL();

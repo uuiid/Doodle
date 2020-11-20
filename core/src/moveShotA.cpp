@@ -12,10 +12,6 @@ moveShotA::moveShotA(shotInfoPtr shot_info_ptr)
 }
 void doCore::moveShotA::setInfoAttr() {
   auto info = std::dynamic_pointer_cast<shotFileSqlInfo>(p_info_ptr_);
-  const shotTypePtr &kType = doCore::shotType::findShotType("movie");
-  auto version = shotFileSqlInfo::getAll(kType).size();
-  info->setVersionP(version + 1);
-  info->setShotType(kType);
   info->setInfoP("拍屏");
 
 }

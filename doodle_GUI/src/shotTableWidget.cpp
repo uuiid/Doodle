@@ -20,7 +20,8 @@
 
 #include "Logger.h"
 #include "shotTableModel.h"
-
+#include <future>
+#include <src/updataManager.h>
 DOODLE_NAMESPACE_S
 //-----------------------------------自定义shot小部件---------------------------------------------//
 shotTableWidget::shotTableWidget(QWidget *parent)
@@ -57,7 +58,17 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
     k_sub_fb->setText(tr("提交拍屏"));
     p_menu_->addAction(k_sub_fb);
 
+    auto k_show_all = new QAction();
+    connect(k_show_all,&QAction::triggered,
+            this,[=](){
+      p_model_->showAll();
+    });
+    k_show_all->setText("显示所有");
+    p_menu_->addAction(k_show_all);
+
     if (selectionModel()->hasSelection()) {
+      p_menu_->addSeparator();
+      p_menu_->addSeparator();
       auto index = p_model_->index(selectionModel()->currentIndex().row(), 4);
       //打开文件位置
       auto k_openFile = new QAction();
@@ -70,8 +81,6 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
       //复制文件目录到剪切板
       auto k_copyClip = new QAction();
       k_copyClip->setText(tr("复制到剪贴板"));
-
-
 
       connect(k_copyClip, &QAction::triggered, this, [=] {
         toolkit::openPath(index.data(Qt::UserRole).value<doCore::shotInfoPtr>(),
@@ -124,20 +133,7 @@ void shotTableWidget::dropEvent(QDropEvent *event) {
   auto url = event->mimeData()->urls()[0];
   DOODLE_LOG_INFO << "文件拖入窗口" << url;
 
-  const QFileInfo &kFileInfo = QFileInfo(url.toLocalFile());
-  if (kFileInfo.isFile()) {
-    if (kFileInfo.suffix() == "ma" || kFileInfo.suffix() == "mb")
-      insertShot(url.toLocalFile());
-    else if (kFileInfo.suffix() == "mp4" || kFileInfo.suffix() == "avi" ||
-             kFileInfo.suffix() == "mov")
-      createFlipbook(url.toLocalFile());
-  } else if (kFileInfo.isDir()) {
-    auto dir = QDir(url.toLocalFile());
-    auto image_list = dir.entryInfoList({"*.png", "*.jpg", "*.tga", "*.exr"},
-                                        QDir::Files, QDir::Name);
-    if (!image_list.isEmpty()) createFlipbook(url.toLocalFile());
-  }
-
+  insertShot(url.toLocalFile());
   enableBorder(false);
 }
 void shotTableWidget::enableBorder(const bool &isEnable) {
@@ -158,18 +154,30 @@ void shotTableWidget::getSelectPath() {
 void shotTableWidget::insertShot(const QString &path) {
   DOODLE_LOG_INFO << "提交文件";
   if (path.isEmpty()) return;
-  //获得最大版本
-  auto version = p_model_->data(p_model_->index(0, 0), Qt::UserRole).toInt();
+  auto pathInfo = QFileInfo(path);
   //插入新的数据
   p_model_->insertRow(0, QModelIndex());
   auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
-                  .value<doCore::shotInfoPtr>();
-  data->setVersionP(version + 1);
-  //创建上传类
-  auto file = std::make_shared<doCore::mayaArchive>(data);
-  if (path.isEmpty()) return;
-  //开始上传
-  file->update(path.toStdString());
+      .value<doCore::shotInfoPtr>();
+
+  if (pathInfo.isFile()) {
+    if (pathInfo.suffix() == "ma" || pathInfo.suffix() == "mb") {//maya文件
+      data->setShotType(doCore::shotType::findShotType("Animation",true));
+      submitMayaFile(data, path);
+    } else if (pathInfo.suffix() == "mp4" || pathInfo.suffix() == "avi" ||
+        pathInfo.suffix() == "mov") {//拖拽文件(拍屏已经是视频文件)
+      data->setShotType(doCore::shotType::findShotType("flipbook",true));
+      submitFBFile(data, path);
+    }
+  } else if (pathInfo.isDir()) {//拖动路径(拍屏所在路径)
+    if (QDir(path).isEmpty()) {
+      p_model_->removeRow(0,QModelIndex());
+      return;
+    }
+    data->setShotType(doCore::shotType::findShotType("flipbook",true));
+    submitFBFile(data, path);
+
+  }
   //更新列表
   p_model_->init();
 }
@@ -198,7 +206,7 @@ void shotTableWidget::exportFbx() {
   p_model_->insertRow(0, QModelIndex());
 
   auto export_data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
-                         .value<doCore::shotInfoPtr>();
+      .value<doCore::shotInfoPtr>();
 
   //创建上传类
   auto k_fileexport = std::make_shared<doCore::mayaArchiveShotFbx>(export_data);
@@ -221,7 +229,7 @@ void shotTableWidget::createFlipbook_slot() {
 void shotTableWidget::createFlipbook(const QString &image_folder) {
   p_model_->insertRow(0, QModelIndex());
   auto movide_data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
-                         .value<doCore::shotInfoPtr>();
+      .value<doCore::shotInfoPtr>();
 
   auto k_movie = std::make_shared<doCore::moveShotA>(movide_data);
 
@@ -230,9 +238,26 @@ void shotTableWidget::createFlipbook(const QString &image_folder) {
   //                                                               std::vector{image_folder}
   //                                                               );
   auto th = std::thread(&doCore::moveShotA::update, *k_movie,
-                        std::vector{(doCore::dpath)image_folder.toStdString()});
+                        std::vector{(doCore::dpath) image_folder.toStdString()});
   th.detach();
   p_model_->init();
+}
+void shotTableWidget::submitMayaFile(doCore::shotInfoPtr &info_ptr, const QString &path) {
+  auto file = std::make_shared<doCore::mayaArchive>(info_ptr);
+  auto fun = std::async(std::launch::async, [=]() {
+    return file->update(path.toStdString());
+  });
+  updataManager::get().addQueue(fun, "正在上传中", 100);
+  updataManager::get().run();
+}
+void shotTableWidget::submitFBFile(doCore::shotInfoPtr &info_ptr, const QString &path) {
+  auto k_movie = std::make_shared<doCore::moveShotA>(info_ptr);
+  std::future<bool> k_fu;
+  k_fu = std::async(std::launch::async, [=]() {
+    return k_movie->update({path.toStdString()});
+  });
+  updataManager::get().addQueue(k_fu, "正在上传中", 1000);
+  updataManager::get().run();
 }
 
 DOODLE_NAMESPACE_E

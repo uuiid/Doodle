@@ -7,7 +7,7 @@
 
 #include "core_global.h"
 #include <QAbstractTableModel>
-
+#include <boost/regex.hpp>
 
 DOODLE_NAMESPACE_S
 class shotTableModel : public QAbstractTableModel {
@@ -32,11 +32,17 @@ class shotTableModel : public QAbstractTableModel {
   void init();
   void filter(bool useFilter);
   void clear();
+  void showAll();
  private:
   void eachOne();
   void setList(const doCore::shotInfoPtrList &list);
  private:
   doCore::shotInfoPtrList p_shot_info_ptr_list_;
+  std::unique_ptr<boost::regex> mayaRex;
+  std::unique_ptr<boost::regex> FBRex;
+  std::unique_ptr<boost::regex> show_FBRex;
+  std::unique_ptr<boost::regex> show_mayaex;
+
 };
 
 DOODLE_NAMESPACE_E

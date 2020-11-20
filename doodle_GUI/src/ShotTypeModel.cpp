@@ -22,12 +22,19 @@ QVariant ShotTypeModel::data(const QModelIndex &index, int role) const {
 
   switch (role) {
     case Qt::DisplayRole:
-    case Qt::EditRole:var = p_type_ptr_list_[index.row()]->getTypeQ();
+    case Qt::EditRole: {
+      auto typStr = p_type_ptr_list_[index.row()]->getTypeQ();
+      const doCore::shotClassPtr &k_shCl = p_type_ptr_list_[index.row()]->getFileClass();
+      if (k_shCl) {
+        var = typStr + k_shCl->getClass_Qstr();
+      } else {
+        var = typStr;
+      }
+    }
       break;
     case Qt::UserRole:var = QVariant::fromValue(p_type_ptr_list_[index.row()]);
       break;
-    default:
-      break;
+    default:break;
   }
   return var;
 }

@@ -10,6 +10,7 @@ mayaArchive::mayaArchive(fileSqlInfoPtr shot_data)
 void mayaArchive::insertDB() {
 
   p_info_ptr_->setFileList(p_Path);
+  p_info_ptr_->setInfoP("maya动画文件");
   p_info_ptr_->insert();
 }
 void mayaArchive::_generateFilePath() {

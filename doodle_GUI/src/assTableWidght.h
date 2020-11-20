@@ -27,11 +27,18 @@ class assTableWidght : public QTableView {
   QMenu *p_menu_;
  private:
   void insertAss(const QString &path);
+  void enableBorder(const bool &isEnable);
  private slots:
   void openFileDialog();
 
  protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
+  //拖拽函数
+
+  void dragMoveEvent(QDragMoveEvent *event) override;
+  void dragLeaveEvent(QDragLeaveEvent *event) override;
+  void dragEnterEvent(QDragEnterEvent *event) override;
+  void dropEvent(QDropEvent *event) override;
 };
 
 DOODLE_NAMESPACE_E
