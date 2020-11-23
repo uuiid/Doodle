@@ -42,7 +42,7 @@ class ShotTypeWidget;
 class shotTableModel;
 class shotTableWidget;
 
-class AssDepModel;
+class assDepModel;
 class AssDepWidget;
 
 class assClassModel;

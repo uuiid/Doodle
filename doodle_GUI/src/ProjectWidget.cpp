@@ -2,7 +2,7 @@
 // Created by teXiao on 2020/10/14.
 //
 
-#include <src/AssDepModel.h>
+#include <src/assDepModel.h>
 #include <src/AssDepWidget.h>
 #include <src/AssTypeModel.h>
 #include <src/AssTypeWidget.h>
@@ -147,7 +147,7 @@ void ProjectWidget::assInit(QWidget* parent) {
   p_ass_layout_->setContentsMargins(0, 0, 0, 0);
   p_ass_layout_->setObjectName(QString::fromUtf8("p_ass_layout_"));
 
-  p_ass_dep_model_ = new AssDepModel(this);
+  p_ass_dep_model_ = new assDepModel(this);
   p_ass_class_model_ = new assClassModel(this);
   p_ass_type_model_ = new AssTypeModel(this);
   p_ass_table_model_ = new assTableModel(this);

@@ -20,7 +20,7 @@ class AssDepWidget : public QListView {
   void initEmit();
 
  private:
-  AssDepModel * p_file_class_ass_model_;
+  assDepModel * p_file_class_ass_model_;
 
  private slots:
   void _doodle_emit(const  QModelIndex & index);

@@ -10,11 +10,11 @@
 #include <QAbstractListModel>
 
 DOODLE_NAMESPACE_S
-class AssDepModel : public QAbstractListModel {
+class assDepModel : public QAbstractListModel {
  Q_OBJECT
  public:
-  explicit AssDepModel(QObject *parent = nullptr);
-  ~AssDepModel() override;
+  explicit assDepModel(QObject *parent = nullptr);
+  ~assDepModel() override;
 
   [[nodiscard]] int rowCount(const QModelIndex &parent) const override;
   [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override;

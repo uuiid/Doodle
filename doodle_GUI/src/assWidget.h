@@ -11,7 +11,7 @@ class assWidght : public QWidget {
  private:
 //这些都是资产变量
   QHBoxLayout *p_ass_layout_;
-  AssDepModel *p_ass_dep_model_;
+  assDepModel *p_ass_dep_model_;
   assClassModel *p_ass_class_model_;
   assTableModel *p_ass_table_model_;
 

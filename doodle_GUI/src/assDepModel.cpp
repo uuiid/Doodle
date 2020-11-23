@@ -2,18 +2,18 @@
 // Created by teXiao on 2020/10/14.
 //
 #include <core_doQt.h>
-#include "AssDepModel.h"
+#include "assDepModel.h"
 #include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
-AssDepModel::AssDepModel(QObject *parent)
+assDepModel::assDepModel(QObject *parent)
 :QAbstractListModel(parent)
 ,p_class_ptr_list_(){
   init();
 }
-int AssDepModel::rowCount(const QModelIndex &parent) const {
+int assDepModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_class_ptr_list_.size());
 }
-QVariant AssDepModel::data(const QModelIndex &index, int role) const {
+QVariant assDepModel::data(const QModelIndex &index, int role) const {
   if(!index.isValid()) return QVariant();
   if(index.row() >= p_class_ptr_list_.size()) return QVariant();
 
@@ -25,14 +25,14 @@ QVariant AssDepModel::data(const QModelIndex &index, int role) const {
     return QVariant();
   }
 }
-void AssDepModel::init() {
+void assDepModel::init() {
   clear();
   auto tmp_List  = doCore::assdepartment::getAll();
   beginInsertRows(QModelIndex(),0,boost::numeric_cast<int>(tmp_List.size())-1);
   p_class_ptr_list_ = tmp_List;
   endInsertRows();
 }
-void AssDepModel::clear() {
+void assDepModel::clear() {
   if(!p_class_ptr_list_.empty()) {
     beginResetModel();
     p_class_ptr_list_.clear();
@@ -40,7 +40,7 @@ void AssDepModel::clear() {
   }
   doCore::coreDataManager::get().setAssDepPtr(nullptr);
 }
-AssDepModel::~AssDepModel() = default;
+assDepModel::~assDepModel() = default;
 
 
 DOODLE_NAMESPACE_E
