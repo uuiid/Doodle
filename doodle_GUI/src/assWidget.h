@@ -15,11 +15,11 @@ class assWidght : public QWidget {
   assClassModel *p_ass_class_model_;
   assTableModel *p_ass_table_model_;
 
-  AssTypeModel *p_ass_type_model_; //这个作为过滤器
+  assTypeModel *p_ass_type_model_; //这个作为过滤器
 
-  AssDepWidget *p_ass_dep_widget_;
+  assDepWidget *p_ass_dep_widget_;
   assClassWidget *p_ass_class_widget_;
-  AssTypeWidget *p_ass_type_widget_;
+  assTypeWidget *p_ass_type_widget_;
   assTableWidght *p_ass_info_widght_;
 };
 

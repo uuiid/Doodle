@@ -33,11 +33,11 @@ class fileTypeShotDelegate : public QStyledItemDelegate {
 };
 
 //-----------------------------------自定义小部件---------------------------------------------//
-class ShotTypeWidget : public QListView {
+class shotTypeWidget : public QListView {
  Q_OBJECT
  public:
-  explicit ShotTypeWidget(QWidget *parent = nullptr);
-  ~ShotTypeWidget() override;
+  explicit shotTypeWidget(QWidget *parent = nullptr);
+  ~shotTypeWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
  signals:
@@ -45,7 +45,7 @@ class ShotTypeWidget : public QListView {
 
  private:
   //模型
-  ShotTypeModel *p_file_type_shot_model_;
+  shotTypeModel *p_file_type_shot_model_;
   //委托
   fileTypeShotDelegate *p_file_type_shot_delegate_;
   //上下文菜单

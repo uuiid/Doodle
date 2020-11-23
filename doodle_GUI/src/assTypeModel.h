@@ -9,11 +9,11 @@
 
 DOODLE_NAMESPACE_S
 
-class AssTypeModel : public QAbstractListModel {
+class assTypeModel : public QAbstractListModel {
   Q_OBJECT
  public:
-  explicit AssTypeModel(QObject * parent = nullptr);
-  ~AssTypeModel() override;
+  explicit assTypeModel(QObject * parent = nullptr);
+  ~assTypeModel() override;
 
   [[nodiscard]] int rowCount(const QModelIndex &parent) const override;
   [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override;

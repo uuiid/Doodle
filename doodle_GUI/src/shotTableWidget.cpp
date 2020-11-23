@@ -5,7 +5,7 @@
 #include "shotTableWidget.h"
 
 #include <core_doQt.h>
-#include <src/Toolkit.h>
+#include <src/toolkit.h>
 
 #include <QContextMenuEvent>
 #include <QFileDialog>

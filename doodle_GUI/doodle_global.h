@@ -33,30 +33,30 @@ class shotListModel;
 class shotIntEnumDelegate;
 class shotListWidget;
 
-class ShotClassModel;
-class ShotClassWidget;
+class shotClassModel;
+class shotClassWidget;
 
-class ShotTypeModel;
-class ShotTypeWidget;
+class shotTypeModel;
+class shotTypeWidget;
 
 class shotTableModel;
 class shotTableWidget;
 
 class assDepModel;
-class AssDepWidget;
+class assDepWidget;
 
 class assClassModel;
 class assClassWidget;
 
-class AssTypeModel;
-class AssTypeWidget;
+class assTypeModel;
+class assTypeWidget;
 
 class assTableModel;
 class assTableWidght;
 
 class settingWidget;
 
-class ProjectWidget;
+class projectWidget;
 class mainWindows;
 
 DOODLE_NAMESPACE_E

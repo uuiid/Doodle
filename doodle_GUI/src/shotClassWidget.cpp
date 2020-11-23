@@ -4,11 +4,11 @@
  * @LastEditTime: 2020-10-10 15:58:55
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit  
- * @FilePath: \Doodle\doodle_GUI\src\ShotClassWidget.cpp
+ * @FilePath: \Doodle\doodle_GUI\src\shotClassWidget.cpp
  */
 #include "Logger.h"
-#include "ShotClassModel.h"
-#include "ShotClassWidget.h"
+#include "shotClassModel.h"
+#include "shotClassWidget.h"
 #include <core_doQt.h>
 
 #include <QMenu>
@@ -17,18 +17,18 @@
 DOODLE_NAMESPACE_S
 
 /* --------------------------------- 自定义小部件 --------------------------------- */
-ShotClassWidget::ShotClassWidget(QWidget *parent)
+shotClassWidget::shotClassWidget(QWidget *parent)
     : QListView(parent),
       p_model_(nullptr),
       p_fileClass_menu(nullptr){
 
   setStatusTip(tr("使用右键直接添加部门类型"));
 
-  connect(this, &ShotClassWidget::clicked,
-          this, &ShotClassWidget::_doodle_fileclass_emit);
+  connect(this, &shotClassWidget::clicked,
+          this, &shotClassWidget::_doodle_fileclass_emit);
 }
 
-void ShotClassWidget::insertFileClass() {
+void shotClassWidget::insertFileClass() {
   int kRow = selectionModel()->currentIndex().row() + 1;
   p_model_->insertRow(kRow, QModelIndex());
 
@@ -36,14 +36,14 @@ void ShotClassWidget::insertFileClass() {
   edit(p_model_->index(kRow));
 }
 
-void ShotClassWidget::_doodle_fileclass_emit(const QModelIndex &index) {
+void shotClassWidget::_doodle_fileclass_emit(const QModelIndex &index) {
   doCore::coreDataManager::get().setShotClassPtr(
       index.data(Qt::UserRole).value<doCore::shotClassPtr>()
       );
   emit doodleUseFilter(true);
 }
 
-void ShotClassWidget::mousePressEvent(QMouseEvent *event) {
+void shotClassWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
   if (!indexAt(event->pos()).isValid()) {
     clearSelection();
@@ -53,14 +53,14 @@ void ShotClassWidget::mousePressEvent(QMouseEvent *event) {
   }
 }
 
-//void ShotClassWidget::contextMenuEvent(QContextMenuEvent *event) {
+//void shotClassWidget::contextMenuEvent(QContextMenuEvent *event) {
 //  p_fileClass_menu = new QMenu(this);
 //
 //  if (p_shot) {
 //    auto *action = new QAction(this);
 //
 //    connect(action, &QAction::triggered, this,
-//            &ShotClassWidget::insertFileClass);
+//            &shotClassWidget::insertFileClass);
 //    action->setText(tr("添加部门"));
 //    action->setToolTip(tr("添加本部门"));
 //    p_fileClass_menu->addAction(action);
@@ -69,8 +69,8 @@ void ShotClassWidget::mousePressEvent(QMouseEvent *event) {
 //  p_fileClass_menu->show();
 //  DOODLE_LOG_INFO << "显示部门上下文菜单";
 //}
-void ShotClassWidget::setModel(QAbstractItemModel *model) {
-  auto p_model = dynamic_cast<ShotClassModel *>(model);
+void shotClassWidget::setModel(QAbstractItemModel *model) {
+  auto p_model = dynamic_cast<shotClassModel *>(model);
   if (p_model)
     p_model_ = p_model;
   QAbstractItemView::setModel(model);

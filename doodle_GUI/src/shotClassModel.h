@@ -13,14 +13,14 @@
 #include "core_global.h"
 
 DOODLE_NAMESPACE_S
-class ShotClassModel : public QAbstractListModel {
+class shotClassModel : public QAbstractListModel {
  Q_OBJECT
  private:
   doCore::shotClassPtrList list_fileClass;
 
  public:
-  explicit ShotClassModel(QObject *parent = nullptr);
-  ~ShotClassModel() override = default;;
+  explicit shotClassModel(QObject *parent = nullptr);
+  ~shotClassModel() override = default;;
 
   //返回总行数
   int rowCount(const QModelIndex &parent) const override;

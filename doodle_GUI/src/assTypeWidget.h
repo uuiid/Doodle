@@ -30,10 +30,10 @@ class fileTypeAssDelegate : public QStyledItemDelegate{
 
 
 
-class AssTypeWidget : public QListView {
+class assTypeWidget : public QListView {
  Q_OBJECT
  public:
-  explicit AssTypeWidget(QWidget *parent = nullptr);
+  explicit assTypeWidget(QWidget *parent = nullptr);
 
   void setModel(QAbstractItemModel *model) override;
 
@@ -42,7 +42,7 @@ class AssTypeWidget : public QListView {
  private:
   doCore::shotTypePtrList p_type_ptr_list_;
   //m模型指针
-  AssTypeModel *p_model_;
+  assTypeModel *p_model_;
   //菜单
   QMenu *p_menu_;
 

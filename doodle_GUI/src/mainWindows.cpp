@@ -3,7 +3,7 @@
 #include <QMenuBar>
 #include <QStatusBar>
 #include <src/assWidget.h>
-#include <src/ProjectWidget.h>
+#include <src/projectWidget.h>
 #include <src/settingWidget.h>
 #include <src/shotWidget.h>
 #include <src/systemTray.h>
@@ -56,7 +56,7 @@ void mainWindows::doodle_init() {
   prj->setFlow(QListView::LeftToRight);
   prj->setCurrentItem(prj->item(0));
 
-  p_prject_widght_ = new ProjectWidget(centralWidget);
+  p_prject_widght_ = new projectWidget(centralWidget);
   p_prject_widght_->setObjectName("p_prject_widght_");
   p_b_box_layout_->addWidget(prj, 1);
   p_b_box_layout_->addWidget(p_prject_widght_, 18);
@@ -67,7 +67,7 @@ void mainWindows::doodle_init() {
     p_setting_widget_, [=](QListWidgetItem* item)mutable {
       p_setting_widget_->setProject(item->text()); });
   connect(prj, &QListWidget::itemClicked,
-    p_prject_widght_, &ProjectWidget::refresh);
+    p_prject_widght_, &projectWidget::refresh);
 
   //添加托盘图标
   auto tray = new systemTray(this);

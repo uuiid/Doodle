@@ -40,7 +40,7 @@ class mainWindows : public QMainWindow {
   QWidget *centralWidget; //中心小部件
   QVBoxLayout *p_b_box_layout_; //布局
 
-  ProjectWidget * p_prject_widght_;
+  projectWidget * p_prject_widght_;
   settingWidget * p_setting_widget_;
 };
 

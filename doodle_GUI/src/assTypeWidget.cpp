@@ -2,9 +2,9 @@
 // Created by teXiao on 2020/10/16.
 //
 
-#include "AssTypeWidget.h"
+#include "assTypeWidget.h"
 
-#include "AssTypeModel.h"
+#include "assTypeModel.h"
 #include <core_doQt.h>
 #include <QMenu>
 
@@ -58,35 +58,35 @@ void fileTypeAssDelegate::updateEditorGeometry(QWidget *editor, const QStyleOpti
 
 
 
-AssTypeWidget::AssTypeWidget(QWidget *parent)
+assTypeWidget::assTypeWidget(QWidget *parent)
     : QListView(parent),
       p_type_ptr_list_(),
       p_menu_(nullptr),
       p_model_(nullptr) {
   setItemDelegate(new fileTypeAssDelegate(this));
-  connect(this,&AssTypeWidget::clicked,
-          this,&AssTypeWidget::_doodle_type_emit);
+  connect(this,&assTypeWidget::clicked,
+          this,&assTypeWidget::_doodle_type_emit);
 }
-void AssTypeWidget::setModel(QAbstractItemModel *model) {
-  auto k_model = dynamic_cast<AssTypeModel *>(model);
+void assTypeWidget::setModel(QAbstractItemModel *model) {
+  auto k_model = dynamic_cast<assTypeModel *>(model);
   if (k_model)
     p_model_ = k_model;
   QAbstractItemView::setModel(model);
 }
 
-void AssTypeWidget::inserttype() {
+void assTypeWidget::inserttype() {
  int raw = selectionModel()->currentIndex().row();
  p_model_->insertRow(raw);
  setCurrentIndex(p_model_->index(raw));
  edit(p_model_->index(raw));
 }
-void AssTypeWidget::_doodle_type_emit(const QModelIndex &index) {
+void assTypeWidget::_doodle_type_emit(const QModelIndex &index) {
   doCore::coreDataManager::get().setAssTypePtr(
       index.data(Qt::UserRole).value<doCore::assTypePtr>()
       );
   emit doodleUseFilter(true);
 }
-void AssTypeWidget::mousePressEvent(QMouseEvent *event) {
+void assTypeWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
   if (!indexAt(event->pos()).isValid()) {
     clearSelection();
@@ -95,13 +95,13 @@ void AssTypeWidget::mousePressEvent(QMouseEvent *event) {
     emit doodleUseFilter(false);
   }
 }
-//void AssTypeWidget::contextMenuEvent(QContextMenuEvent *event) {
+//void assTypeWidget::contextMenuEvent(QContextMenuEvent *event) {
 //  if(!p_menu_){
 //    p_menu_ = new QMenu(this);
 //    auto add_ass_type = new QAction(p_menu_);
 //    add_ass_type->setText(tr("添加"));
 //    connect(add_ass_type,&QAction::triggered,
-//            this,&AssTypeWidget::inserttype);
+//            this,&assTypeWidget::inserttype);
 //    p_menu_->addAction(add_ass_type);
 //  }
 //  p_menu_->move(event->globalPos());

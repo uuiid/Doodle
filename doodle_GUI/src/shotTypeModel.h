@@ -13,11 +13,11 @@
 
 DOODLE_NAMESPACE_S
 
-class ShotTypeModel : public QAbstractListModel {
+class shotTypeModel : public QAbstractListModel {
  Q_OBJECT
  public:
-  explicit ShotTypeModel(QObject *parent = nullptr);
-  ~ShotTypeModel() override;
+  explicit shotTypeModel(QObject *parent = nullptr);
+  ~shotTypeModel() override;
   //返回总行数
   [[nodiscard]] int rowCount(const QModelIndex &parent) const override;
 

@@ -21,7 +21,7 @@
 #include <QtWidgets/qlistwidget.h>
 #include <src/assTableModel.h>
 #include <src/imageArchive.h>
-#include <src/Toolkit.h>
+#include <src/toolkit.h>
 #include <src/updataManager.h>
 #include <string>
 #include <src/shotEpsListModel.h>

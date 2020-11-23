@@ -8,11 +8,11 @@
 #include "core_global.h"
 #include <QListView>
 DOODLE_NAMESPACE_S
-class AssDepWidget : public QListView {
+class assDepWidget : public QListView {
  Q_OBJECT
  public:
-  explicit AssDepWidget(QWidget *parent = nullptr);
-  ~AssDepWidget() override;
+  explicit assDepWidget(QWidget *parent = nullptr);
+  ~assDepWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
 

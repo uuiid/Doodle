@@ -3,14 +3,14 @@
 //
 
 #include <src/assDepModel.h>
-#include <src/AssDepWidget.h>
-#include <src/AssTypeModel.h>
-#include <src/AssTypeWidget.h>
-#include <src/ProjectWidget.h>
-#include <src/ShotClassModel.h>
-#include <src/ShotClassWidget.h>
-#include <src/ShotTypeModel.h>
-#include <src/ShotTypeWidget.h>
+#include <src/assDepWidget.h>
+#include <src/assTypeModel.h>
+#include <src/assTypeWidget.h>
+#include <src/projectWidget.h>
+#include <src/shotClassModel.h>
+#include <src/shotClassWidget.h>
+#include <src/shotTypeModel.h>
+#include <src/shotTypeWidget.h>
 #include <src/assClass.h>
 #include <src/assClassModel.h>
 #include <src/assClassWidget.h>
@@ -28,7 +28,7 @@
 #include <src/shottype.h>
 DOODLE_NAMESPACE_S
 
-ProjectWidget::ProjectWidget(QWidget* parent)
+projectWidget::projectWidget(QWidget* parent)
   : QTabWidget(parent),
   p_shot_layout_(nullptr),
   p_episodes_list_widget_(nullptr),
@@ -52,7 +52,7 @@ ProjectWidget::ProjectWidget(QWidget* parent)
   p_ass_table_model_(nullptr) {
   init_();
 }
-void ProjectWidget::init_() {
+void projectWidget::init_() {
   auto ass_parent = new QWidget();
   addTab(ass_parent, QString("ass"));
   assInit(ass_parent);
@@ -71,13 +71,13 @@ void ProjectWidget::init_() {
   //setTabText(2, tr("灯光"));
 }
 
-void ProjectWidget::shotInitAnm(QWidget* parent) {
+void projectWidget::shotInitAnm(QWidget* parent) {
   //创建模型
   p_episodes_list_model_ = new shotEpsListModel(this);
   p_episodes_list_model_->setObjectName(QString::fromUtf8("p_episodes_list_model_"));
   p_shot_list_model_ = new shotListModel(this);
-  p_shot_type_model_ = new ShotTypeModel(this);
-  p_shot_class_model_ = new ShotClassModel(this);
+  p_shot_type_model_ = new shotTypeModel(this);
+  p_shot_class_model_ = new shotClassModel(this);
   p_shot_table_model_ = new shotTableModel(this);
 
   //设置基本布局
@@ -116,19 +116,19 @@ void ProjectWidget::shotInitAnm(QWidget* parent) {
     p_shot_table_model_, &shotTableModel::init);
 
   //添加部门小部件
-  p_shot_class_widget_ = new ShotClassWidget(parent);
+  p_shot_class_widget_ = new shotClassWidget(parent);
   p_shot_class_widget_->setObjectName(QString::fromUtf8("p_shot_class_widget_"));
   p_shot_class_widget_->setModel(p_shot_class_model_);
   layout_1->addWidget(p_shot_class_widget_);
-  connect(p_shot_class_widget_, &ShotClassWidget::doodleUseFilter,
+  connect(p_shot_class_widget_, &shotClassWidget::doodleUseFilter,
     p_shot_table_model_, &shotTableModel::filter);
 
   //添加种类小部件
-  p_shot_type_widget_ = new ShotTypeWidget(parent);
+  p_shot_type_widget_ = new shotTypeWidget(parent);
   p_shot_type_widget_->setObjectName("p_shot_type_widget_");
   p_shot_type_widget_->setModel(p_shot_type_model_);
   layout_1->addWidget(p_shot_type_widget_);
-  connect(p_shot_type_widget_, &ShotTypeWidget::doodleUseFilter,
+  connect(p_shot_type_widget_, &shotTypeWidget::doodleUseFilter,
     p_shot_table_model_, &shotTableModel::filter);
 
 
@@ -141,7 +141,7 @@ void ProjectWidget::shotInitAnm(QWidget* parent) {
   //添加布局
   p_shot_layout_->addLayout(layout_1, 3);
 }
-void ProjectWidget::assInit(QWidget* parent) {
+void projectWidget::assInit(QWidget* parent) {
   p_ass_layout_ = new QHBoxLayout(parent);
   p_ass_layout_->setSpacing(3);
   p_ass_layout_->setContentsMargins(0, 0, 0, 0);
@@ -149,17 +149,17 @@ void ProjectWidget::assInit(QWidget* parent) {
 
   p_ass_dep_model_ = new assDepModel(this);
   p_ass_class_model_ = new assClassModel(this);
-  p_ass_type_model_ = new AssTypeModel(this);
+  p_ass_type_model_ = new assTypeModel(this);
   p_ass_table_model_ = new assTableModel(this);
 
-  p_ass_dep_widget_ = new AssDepWidget(parent);
+  p_ass_dep_widget_ = new assDepWidget(parent);
   p_ass_dep_widget_->setObjectName("p_file_class_ass_widget_");
   p_ass_dep_widget_->setModel(p_ass_dep_model_);
 
   p_ass_class_widget_ = new assClassWidget(parent);
   p_ass_class_widget_->setObjectName("p_ass_class_widget_");
   p_ass_class_widget_->setModel(p_ass_class_model_);
-  connect(p_ass_dep_widget_, &AssDepWidget::initEmit,
+  connect(p_ass_dep_widget_, &assDepWidget::initEmit,
     p_ass_class_model_, &assClassModel::init);
 
   p_ass_info_widght_ = new assTableWidght(parent);
@@ -167,16 +167,16 @@ void ProjectWidget::assInit(QWidget* parent) {
   p_ass_info_widght_->setModel(p_ass_table_model_);
   connect(p_ass_class_widget_, &assClassWidget::initEmited,
     p_ass_table_model_, &assTableModel::init);
-  connect(p_ass_dep_widget_, &AssDepWidget::initEmit,
+  connect(p_ass_dep_widget_, &assDepWidget::initEmit,
     p_ass_table_model_, &assTableModel::clear);
 
-  p_ass_type_widget_ = new AssTypeWidget(parent);
+  p_ass_type_widget_ = new assTypeWidget(parent);
   p_ass_type_widget_->setObjectName("p_ass_type_widget_");
   p_ass_type_widget_->setModel(p_ass_type_model_);
-  connect(p_ass_type_widget_, &AssTypeWidget::doodleUseFilter,
+  connect(p_ass_type_widget_, &assTypeWidget::doodleUseFilter,
     p_ass_table_model_, &assTableModel::filter);
   connect(p_ass_class_widget_, &assClassWidget::initEmited,
-    p_ass_type_model_, &AssTypeModel::reInit);
+    p_ass_type_model_, &assTypeModel::reInit);
 
   auto class_ass_layout = new QVBoxLayout();
   class_ass_layout->addWidget(p_ass_dep_widget_, 1);
@@ -187,7 +187,7 @@ void ProjectWidget::assInit(QWidget* parent) {
   p_ass_layout_->addWidget(p_ass_info_widght_, 10);
   p_ass_layout_->addWidget(p_ass_type_widget_, 2);
 }
-void ProjectWidget::lightInit(QWidget* parent) {
+void projectWidget::lightInit(QWidget* parent) {
   //auto layout  = new QHBoxLayout(parent);
   //layout->setSpacing(3);
   //layout->setContentsMargins(0, 0, 0, 0);
@@ -221,7 +221,7 @@ void ProjectWidget::lightInit(QWidget* parent) {
   //        p_shot_list_model_, &shotListModel::init);
 
 }
-void ProjectWidget::refresh() {
+void projectWidget::refresh() {
   p_ass_dep_model_->init();
   p_ass_type_model_->init();
 

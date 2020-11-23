@@ -6,9 +6,9 @@
 #include <src/assTableModel.h>
 #include <src/assTableWidght.h>
 #include <src/assDepModel.h>
-#include <src/AssDepWidget.h>
-#include <src/AssTypeModel.h>
-#include <src/AssTypeWidget.h>
+#include <src/assDepWidget.h>
+#include <src/assTypeModel.h>
+#include <src/assTypeWidget.h>
 DOODLE_NAMESPACE_S
 
 assWidght::assWidght() {
@@ -19,17 +19,17 @@ assWidght::assWidght() {
 
   p_ass_dep_model_ = new assDepModel(this);
   p_ass_class_model_ = new assClassModel(this);
-  p_ass_type_model_ = new AssTypeModel(this);
+  p_ass_type_model_ = new assTypeModel(this);
   p_ass_table_model_ = new assTableModel(this);
 
-  p_ass_dep_widget_ = new AssDepWidget();
+  p_ass_dep_widget_ = new assDepWidget();
   p_ass_dep_widget_->setObjectName("p_file_class_ass_widget_");
   p_ass_dep_widget_->setModel(p_ass_dep_model_);
 
   p_ass_class_widget_ = new assClassWidget();
   p_ass_class_widget_->setObjectName("p_ass_class_widget_");
   p_ass_class_widget_->setModel(p_ass_class_model_);
-  connect(p_ass_dep_widget_, &AssDepWidget::initEmit,
+  connect(p_ass_dep_widget_, &assDepWidget::initEmit,
           p_ass_class_model_, &assClassModel::init);
 
   p_ass_info_widght_ = new assTableWidght();
@@ -37,16 +37,16 @@ assWidght::assWidght() {
   p_ass_info_widght_->setModel(p_ass_table_model_);
   connect(p_ass_class_widget_, &assClassWidget::initEmited,
           p_ass_table_model_, &assTableModel::init);
-  connect(p_ass_dep_widget_, &AssDepWidget::initEmit,
+  connect(p_ass_dep_widget_, &assDepWidget::initEmit,
           p_ass_table_model_, &assTableModel::clear);
 
-  p_ass_type_widget_ = new AssTypeWidget();
+  p_ass_type_widget_ = new assTypeWidget();
   p_ass_type_widget_->setObjectName("p_ass_type_widget_");
   p_ass_type_widget_->setModel(p_ass_type_model_);
-  connect(p_ass_type_widget_, &AssTypeWidget::doodleUseFilter,
+  connect(p_ass_type_widget_, &assTypeWidget::doodleUseFilter,
           p_ass_table_model_, &assTableModel::filter);
   connect(p_ass_class_widget_, &assClassWidget::initEmited,
-          p_ass_type_model_, &AssTypeModel::reInit);
+          p_ass_type_model_, &assTypeModel::reInit);
 
   auto class_ass_layout = new QVBoxLayout();
   class_ass_layout->addWidget(p_ass_dep_widget_, 1);

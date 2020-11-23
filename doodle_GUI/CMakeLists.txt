@@ -10,31 +10,31 @@ find_package(Boost COMPONENTS regex REQUIRED)
 
 
 set(DOODLE_SOURE_HEADER
-        
-        src/ShotClassWidget.h
+
+        src/shotClassWidget.h
         src/shotListWidget.h
         src/shotEpsListWidget.h
-        src/ShotTypeWidget.h
+        src/shotTypeWidget.h
         src/shotTableWidget.h
-        src/ProjectWidget.h
+        src/projectWidget.h
         src/shotEpsListModel.h
         src/mainWindows.h
-        src/ShotClassModel.h
-        src/ShotTypeModel.h
+        src/shotClassModel.h
+        src/shotTypeModel.h
         src/shotListModel.h
         src/shotTableModel.h
         src/assDepModel.h
-        src/AssDepWidget.h
+        src/assDepWidget.h
         src/assClassWidget.h
         src/assTableModel.h
-        src/AssTypeModel.h
+        src/assTypeModel.h
         src/assClassModel.h
-        src/AssTypeWidget.h
+        src/assTypeWidget.h
         src/assTableWidght.h
         src/settingWidget.h
         src/systemTray.h
         src/speedProgressWidget.h
-        src/Toolkit.h
+        src/toolkit.h
         src/assSortfilterModel.h
         src/updataManager.h 
         src/assWidget.h
@@ -42,31 +42,31 @@ set(DOODLE_SOURE_HEADER
         )
 
 set(DOODLE_SOURE
-        
-        src/ShotClassWidget.cpp
+
+        src/shotClassWidget.cpp
         src/shotListWidget.cpp
         src/shotEpsListWidget.cpp
-        src/ShotTypeWidget.cpp
+        src/shotTypeWidget.cpp
         src/shotTableWidget.cpp
         src/mainWindows.cpp
-        src/ProjectWidget.cpp
+        src/projectWidget.cpp
         src/shotEpsListModel.cpp
-        src/ShotClassModel.cpp
-        src/ShotTypeModel.cpp
+        src/shotClassModel.cpp
+        src/shotTypeModel.cpp
         src/shotListModel.cpp
         src/shotTableModel.cpp
         src/assDepModel.cpp
-        src/AssDepWidget.cpp
+        src/assDepWidget.cpp
         src/assClassModel.cpp
-        src/AssTypeModel.cpp
+        src/assTypeModel.cpp
         src/assTableModel.cpp
         src/assClassWidget.cpp
-        src/AssTypeWidget.cpp
+        src/assTypeWidget.cpp
         src/assTableWidght.cpp
         src/settingWidget.cpp
         src/systemTray.cpp
         src/speedProgressWidget.cpp
-        src/Toolkit.cpp
+        src/toolkit.cpp
         src/assSortfilterModel.cpp
         src/updataManager.cpp 
         src/assWidget.cpp

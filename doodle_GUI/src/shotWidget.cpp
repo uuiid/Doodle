@@ -2,13 +2,13 @@
 #include <src/shotEpsListModel.h>
 #include <src/shotListModel.h>
 #include <src/shotTableModel.h>
-#include <src/ShotTypeModel.h>
-#include <src/ShotClassModel.h>
+#include <src/shotTypeModel.h>
+#include <src/shotClassModel.h>
 #include <src/shotEpsListWidget.h>
 #include <src/shotListWidget.h>
 #include <src/shotTableWidget.h>
-#include <src/ShotClassWidget.h>
-#include <src/ShotTypeWidget.h>
+#include <src/shotClassWidget.h>
+#include <src/shotTypeWidget.h>
 DOODLE_NAMESPACE_S
 
 shotWidget::shotWidget()
@@ -17,8 +17,8 @@ shotWidget::shotWidget()
   p_episodes_list_model_ = new shotEpsListModel(this);
   p_episodes_list_model_->setObjectName(QString::fromUtf8("p_episodes_list_model_"));
   p_shot_list_model_ = new shotListModel(this);
-  p_shot_type_model_ = new ShotTypeModel(this);
-  p_shot_class_model_ = new ShotClassModel(this);
+  p_shot_type_model_ = new shotTypeModel(this);
+  p_shot_class_model_ = new shotClassModel(this);
   p_shot_table_model_ = new shotTableModel(this);
 
   //设置基本布局
@@ -57,19 +57,19 @@ shotWidget::shotWidget()
     p_shot_table_model_, &shotTableModel::init);
 
   //添加部门小部件
-  p_shot_class_widget_ = new ShotClassWidget();
+  p_shot_class_widget_ = new shotClassWidget();
   p_shot_class_widget_->setObjectName(QString::fromUtf8("p_shot_class_widget_"));
   p_shot_class_widget_->setModel(p_shot_class_model_);
   layout_1->addWidget(p_shot_class_widget_);
-  connect(p_shot_class_widget_, &ShotClassWidget::doodleUseFilter,
+  connect(p_shot_class_widget_, &shotClassWidget::doodleUseFilter,
     p_shot_table_model_, &shotTableModel::filter);
 
   //添加种类小部件
-  p_shot_type_widget_ = new ShotTypeWidget();
+  p_shot_type_widget_ = new shotTypeWidget();
   p_shot_type_widget_->setObjectName("p_shot_type_widget_");
   p_shot_type_widget_->setModel(p_shot_type_model_);
   layout_1->addWidget(p_shot_type_widget_);
-  connect(p_shot_type_widget_, &ShotTypeWidget::doodleUseFilter,
+  connect(p_shot_type_widget_, &shotTypeWidget::doodleUseFilter,
     p_shot_table_model_, &shotTableModel::filter);
 
   //将小部件添加到布局中
