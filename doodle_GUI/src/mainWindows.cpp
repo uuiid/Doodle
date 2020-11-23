@@ -1,27 +1,27 @@
 ﻿#include "mainWindows.h"
-
-#include "ProjectWidget.h"
-
-#include "settingWidget.h"
-#include "systemTray.h"
-
 #include <QListWidget>
 #include <QMenuBar>
 #include <QStatusBar>
+#include <src/assWidget.h>
+#include <src/ProjectWidget.h>
+#include <src/settingWidget.h>
+#include <src/shotWidget.h>
+#include <src/systemTray.h>
+
 DOODLE_NAMESPACE_S
 
-mainWindows::mainWindows(QWidget *parent)
-    : QMainWindow(parent),
-      exitAction(nullptr),
-      refreshAction(nullptr),
-      openSetWindows(nullptr),
-      p_menu_bar_(nullptr),
-      p_menu_(nullptr),
-      p_status_bar_(nullptr),
-      centralWidget(nullptr),
-      p_b_box_layout_(nullptr),
-      p_prject_widght_(nullptr),
-      p_setting_widget_(nullptr){
+mainWindows::mainWindows(QWidget* parent)
+  : QMainWindow(parent),
+  exitAction(nullptr),
+  refreshAction(nullptr),
+  openSetWindows(nullptr),
+  p_menu_bar_(nullptr),
+  p_menu_(nullptr),
+  p_status_bar_(nullptr),
+  centralWidget(nullptr),
+  p_b_box_layout_(nullptr),
+  p_prject_widght_(nullptr),
+  p_setting_widget_(nullptr) {
   doodle_init();
 }
 
@@ -50,7 +50,7 @@ void mainWindows::doodle_init() {
   //开始设置项目小部件
   auto prj = new QListWidget(centralWidget);
   prj->setObjectName("prj");
-  for (const auto &name : doCore::coreSet::getSet().getAllPrjName()) {
+  for (const auto& name : doCore::coreSet::getSet().getAllPrjName()) {
     prj->addItem(QString::fromStdString(name));
   }
   prj->setFlow(QListView::LeftToRight);
@@ -58,24 +58,25 @@ void mainWindows::doodle_init() {
 
   p_prject_widght_ = new ProjectWidget(centralWidget);
   p_prject_widght_->setObjectName("p_prject_widght_");
-  p_b_box_layout_->addWidget(prj,1);
-  p_b_box_layout_->addWidget(p_prject_widght_,18);
+  p_b_box_layout_->addWidget(prj, 1);
+  p_b_box_layout_->addWidget(p_prject_widght_, 18);
 
   p_setting_widget_ = new settingWidget(centralWidget);
   //连接项目更改设置
   connect(prj, &QListWidget::itemClicked,
-          p_setting_widget_, [=](QListWidgetItem *item)mutable{
-    p_setting_widget_->setProject(item->text());});
+    p_setting_widget_, [=](QListWidgetItem* item)mutable {
+      p_setting_widget_->setProject(item->text()); });
   connect(prj, &QListWidget::itemClicked,
-          p_prject_widght_, &ProjectWidget::refresh);
+    p_prject_widght_, &ProjectWidget::refresh);
 
   //添加托盘图标
   auto tray = new systemTray(this);
-  tray->showMessage("doodle","hello");
+  tray->showMessage("doodle", "hello");
   tray->setIcon(QIcon(":/resource/icon.png"));
   tray->setVisible(true);
   tray->show();
   p_prject_widght_->refresh();
+
 }
 
 void mainWindows::doodle_createAction() {
@@ -104,8 +105,8 @@ void mainWindows::doodle_createAction() {
   openSetWindows->setText(tr("Open Setting"));
   openSetWindows->setStatusTip(tr("打开设置"));
   openSetWindows->setToolTip(tr("Open Setting"));
-  connect(openSetWindows,&QAction::triggered,
-          this,&mainWindows::openSetting);
+  connect(openSetWindows, &QAction::triggered,
+    this, &mainWindows::openSetting);
   p_menu_->addAction(openSetWindows);
 
   exitAction = new QAction(this);

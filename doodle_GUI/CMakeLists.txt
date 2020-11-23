@@ -36,7 +36,10 @@ set(DOODLE_SOURE_HEADER
         src/speedProgressWidget.h
         src/Toolkit.h
         src/assSortfilterModel.h
-        src/updataManager.h)
+        src/updataManager.h 
+        src/assWidget.h
+        src/shotWidget.h
+        )
 
 set(DOODLE_SOURE
         
@@ -65,7 +68,10 @@ set(DOODLE_SOURE
         src/speedProgressWidget.cpp
         src/Toolkit.cpp
         src/assSortfilterModel.cpp
-        src/updataManager.cpp )
+        src/updataManager.cpp 
+        src/assWidget.cpp
+        src/shotWidget.cpp
+        )
 
 set(TS_FILES
         )

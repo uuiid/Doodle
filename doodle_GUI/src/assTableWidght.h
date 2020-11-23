@@ -12,33 +12,33 @@
 class QProgressDialog;
 DOODLE_NAMESPACE_S
 class assTableWidght : public QTableView {
- Q_OBJECT
- public:
-  explicit assTableWidght(QWidget *parent = nullptr);
+  Q_OBJECT
+public:
+  explicit assTableWidght(QWidget* parent = nullptr);
 
-  void setModel(QAbstractItemModel *model) override;
- public:
+  void setModel(QAbstractItemModel* model) override;
+public:
 
- private:
+private:
   void init();
 
- private:
-  assTableModel *p_model_;
-  QMenu *p_menu_;
- private:
-  void insertAss(const QString &path);
-  void enableBorder(const bool &isEnable);
- private slots:
+private:
+  assTableModel* p_model_;
+  QMenu* p_menu_;
+private:
+  void insertAss(const QString& path);
+  void enableBorder(const bool& isEnable);
+private slots:
   void openFileDialog();
-
- protected:
-  void contextMenuEvent(QContextMenuEvent *event) override;
+  void createLightDir();
+protected:
+  void contextMenuEvent(QContextMenuEvent* event) override;
   //拖拽函数
 
-  void dragMoveEvent(QDragMoveEvent *event) override;
-  void dragLeaveEvent(QDragLeaveEvent *event) override;
-  void dragEnterEvent(QDragEnterEvent *event) override;
-  void dropEvent(QDropEvent *event) override;
+  void dragMoveEvent(QDragMoveEvent* event) override;
+  void dragLeaveEvent(QDragLeaveEvent* event) override;
+  void dragEnterEvent(QDragEnterEvent* event) override;
+  void dropEvent(QDropEvent* event) override;
 };
 
 DOODLE_NAMESPACE_E

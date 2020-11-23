@@ -33,9 +33,9 @@ Qt::ItemFlags assClassModel::flags(const QModelIndex &index) const {
   if (!index.isValid()) return Qt::ItemIsEditable;
   if (index.row() >= p_ass_info_ptr_list_.size()) return Qt::ItemIsEditable;
 
-  if (p_ass_info_ptr_list_[index.row()]->isInsert())
-    return QAbstractListModel::flags(index);
-  else
+  //if (p_ass_info_ptr_list_[index.row()]->isInsert())
+  //  return QAbstractListModel::flags(index);
+  //else
     return Qt::ItemIsEditable | Qt::ItemIsEnabled | QAbstractListModel::flags(index);
 }
 bool assClassModel::setData(const QModelIndex &index, const QVariant &value, int role) {
@@ -52,7 +52,11 @@ bool assClassModel::setData(const QModelIndex &index, const QVariant &value, int
   if (!is_has) {
     p_ass_info_ptr_list_[index.row()]->setAssClass(value.toString().toStdString());
     p_ass_info_ptr_list_[index.row()]->setAssDep(doCore::coreDataManager::get().getAssDepPtr());
-    p_ass_info_ptr_list_[index.row()]->insert();
+    if (p_ass_info_ptr_list_[index.row()]->isInsert()) {
+      p_ass_info_ptr_list_[index.row()]->updateSQL();
+    } else {
+      p_ass_info_ptr_list_[index.row()]->insert();
+    }
     emit dataChanged(index, index, {role});
     return true;
   }
