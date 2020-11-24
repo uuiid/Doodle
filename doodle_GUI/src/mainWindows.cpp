@@ -59,27 +59,6 @@ void mainWindows::doodle_init() {
 
   p_b_box_layout_->addWidget(prj);
   p_b_box_layout_->setSizeConstraint(QLayout::SetFixedSize);//设置不需要调整大小
-
-  auto k_ass_dock = new QDockWidget(tr("资产"),
-                                    this,
-                                    Qt::WindowStaysOnTopHint | Qt::X11BypassWindowManagerHint
-                                        | Qt::FramelessWindowHint);
-  auto ass_widget = new assWidght(k_ass_dock);
-  k_ass_dock->setWidget(ass_widget);
-  addDockWidget(Qt::BottomDockWidgetArea, k_ass_dock);
-  connect(prj, &QListWidget::itemChanged,
-          ass_widget, &assWidght::refresh);
-//  p_b_box_layout_->addWidget(k_ass_dock, 18);
-
-  auto k_shot_dock = new QDockWidget(tr("镜头"), this);
-  auto shot_widght = new shotWidget(k_shot_dock);
-  k_shot_dock->setWidget(shot_widght);
-  addDockWidget(Qt::BottomDockWidgetArea, k_ass_dock);
-  connect(prj, &QListWidget::itemChanged,
-          shot_widght, &shotWidget::refresh);
-  tabifyDockWidget(k_ass_dock, k_shot_dock);
-
-
   p_setting_widget_ = new settingWidget(centralWidget);
   //连接项目更改设置
   connect(prj, &QListWidget::itemClicked,
@@ -87,6 +66,26 @@ void mainWindows::doodle_init() {
         p_setting_widget_->setProject(item->text());
       });
 
+  auto k_ass_dock = new QDockWidget(tr("资产"),
+                                    this,
+                                    Qt::WindowStaysOnTopHint | Qt::X11BypassWindowManagerHint
+                                        | Qt::FramelessWindowHint);
+  auto p_ass_widght_= new assWidght(k_ass_dock);
+  k_ass_dock->setWidget(p_ass_widght_);
+  addDockWidget(Qt::BottomDockWidgetArea, k_ass_dock);
+  connect(prj, &QListWidget::itemClicked,
+          p_ass_widght_, [=]()mutable{
+    p_ass_widght_->refresh();
+  });
+//  p_b_box_layout_->addWidget(k_ass_dock, 18);
+
+  auto k_shot_dock = new QDockWidget(tr("镜头"), this);
+  auto p_shot_widget_ = new shotWidget(k_shot_dock);
+  k_shot_dock->setWidget(p_shot_widget_);
+  addDockWidget(Qt::BottomDockWidgetArea, k_shot_dock);
+  connect(prj, &QListWidget::itemClicked,
+          p_shot_widget_, &shotWidget::refresh);
+  tabifyDockWidget(k_ass_dock, k_shot_dock);
 
   //添加托盘图标
   auto tray = new systemTray(this);
@@ -95,8 +94,8 @@ void mainWindows::doodle_init() {
   tray->setVisible(true);
   tray->show();
 
-  ass_widget->refresh();
-  shot_widght->refresh();
+  p_ass_widght_->refresh();
+  p_shot_widget_->refresh();
 
 }
 

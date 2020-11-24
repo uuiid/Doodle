@@ -142,8 +142,14 @@ bool shotTableModel::insertRows(int position, int rows, const QModelIndex &paren
 }
 void shotTableModel::init() {
   clear();
-  p_shot_info_ptr_list_ =
-      doCore::shotFileSqlInfo::getAll(doCore::coreDataManager::get().getShotPtr());
+  auto shot = doCore::coreDataManager::get().getShotPtr();
+  if (shot){
+    p_shot_info_ptr_list_ =doCore::shotFileSqlInfo::getAll(shot);
+  } else{
+    auto eps = doCore::coreDataManager::get().getEpisodesPtr();
+    p_shot_info_ptr_list_ = doCore::shotFileSqlInfo::getAll(eps);
+  }
+
   eachOne();
 }
 void shotTableModel::clear() {

@@ -17,6 +17,7 @@ class CORE_API shotFileSqlInfo
 
   static shotInfoPtrList getAll(const shotPtr &sh_);
   static shotInfoPtrList getAll(const shotPtr &shot_ptr,const shotTypePtr &type_ptr);
+  static shotInfoPtrList getAll(const episodesPtr &EP_);
   dpath generatePath(const dstring &programFolder) override;
   dpath generatePath(const dstring &programFolder, const dstring &suffixes) override;
   dpath generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) override;
@@ -24,18 +25,17 @@ class CORE_API shotFileSqlInfo
   dstring generateFileName(const dstring &suffixes, const dstring &prefix) override;
   //外键查询
   episodesPtr getEpisdes();
-  void setEpisdes(const episodesPtr &eps_);
 
+  void setEpisdes(const episodesPtr &eps_);
   shotPtr getShot();
+
   void setShot(const shotPtr &shot_);
 
   shotClassPtr getShotclass();
-
   shotTypePtr getShotType();
   void setShotType(const shotTypePtr &fileType_);
   static bool sort(const shotInfoPtr &t1,const shotInfoPtr &t2);
  private:
-  static shotInfoPtrList getAll(const episodesPtr &EP_, const shotType &type);
   static shotInfoPtrList getAll(const shotClassPtr &class_ptr);
   static shotInfoPtrList getAll(const shotTypePtr &type_ptr);
   void setShotClass();

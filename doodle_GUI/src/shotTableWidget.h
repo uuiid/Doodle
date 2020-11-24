@@ -11,7 +11,6 @@
 #include <QTableView>
 #include <src/movieArchive.h>
 
-
 class QProgressDialog;
 DOODLE_NAMESPACE_S
 
@@ -24,13 +23,11 @@ class shotTableWidget : public QTableView {
  private slots:
 
   void getSelectPath();
+  void getSelectDir();
   void exportFbx();
 
-  void createFlipbook_slot();
-  void createFlipbook(const QString & video_folder);
-
-  static void submitMayaFile(doCore::shotInfoPtr &info_ptr,const QString& path);
-  static void submitFBFile(doCore::shotInfoPtr &info_ptr,const QString& path);
+  static void submitMayaFile(doCore::shotInfoPtr &info_ptr, const QString &path);
+  static void submitFBFile(doCore::shotInfoPtr &info_ptr, const QString &path);
  protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
 
@@ -43,12 +40,6 @@ class shotTableWidget : public QTableView {
   shotTableModel *p_model_;
 
   QMenu *p_menu_;
-
-  QProgressDialog * p_dialog_;
-
-
-  std::vector<doCore::mayaArchiveShotFbxPtr> exportList;
-  std::vector<doCore::movieArchive> movieList;
  private:
   void init();
   void insertShot(const QString &path);

@@ -11,10 +11,9 @@ class CORE_API mayaArchiveShotFbx : public fileArchive {
  public:
 
   explicit mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr);
-  bool exportFbx(shotInfoPtr &shot_data);
-  bool update(shotInfoPtr &shot_data);
+  bool exportFbx(const dpath  &shot_data);
+  bool update(const dpath &shot_data) override;
 
-  std::map<QString,QString> getInfo();
  protected:
   void insertDB() override;
   void _generateFilePath() override;

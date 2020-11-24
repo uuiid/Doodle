@@ -92,14 +92,19 @@ end = maya.cmds.playbackOptions(query=True, max=True)
 
 myfile = os.path.join(args.exportpath, "doodle_Export.json")
 exports = maya.cmds.ls("::*UE4")
-print(exports)
+print("export select ->> {}".format(exports))
+print("args exportpath --> {}".format(args.exportpath))
+print("args name --> {}".format(args.name))
+print("args version --> {}".format(args.version))
+print("args suffix --> {}".format(args.suffix))
+
 log = export()
 
 for index,export in enumerate(exports):
     maya.cmds.select(export)
     split___ = export.split(":")[0].split("_")[0] + index.__str__()
     mel_name = "{path}/{name}_{suh}.fbx".format(path=args.exportpath, name=args.name, suh=split___)
-
+    print("fbx export path --> {}".format(mel_name))
     maya.cmds.bakeResults(simulation=True, t=(start, end), hierarchy="below", sampleBy=1, disableImplicitControl=True,
                           preserveOutsideKeys=False, sparseAnimCurveBake=False)
     maya.mel.eval("FBXExportBakeComplexStart -v {}".format(start))
@@ -137,6 +142,7 @@ for camer in cameras:
         maya.mel.eval("FBXExportBakeComplexAnimation -v true")
         maya.mel.eval("FBXExportConstraints -v true")
         maya.mel.eval('FBXExport -f "{}" -s'.format(mel_name))
+        print("camera erport ----> {}".format(mel_name))
         log.addfile("camera", mel_name, args.version)
 
 with open(myfile, "w") as f:

@@ -63,7 +63,7 @@ shotWidget::shotWidget(QWidget *parent)
   p_shot_table_widget_->setObjectName("p_shot_table_widget_");
   p_shot_table_widget_->setModel(p_shot_table_model_);
   connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
-          p_shot_table_model_, &shotTableModel::clear);
+          p_shot_table_model_, &shotTableModel::init);
   connect(p_shot_list_widget_, &shotListWidget::initEmit,
           p_shot_table_model_, &shotTableModel::init);
 

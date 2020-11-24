@@ -13,7 +13,7 @@
 #include <Logger.h>
 
 #include <QDir>
-
+#include <src/coreset.h>
 #include <stdexcept>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
@@ -32,71 +32,86 @@ mayaArchiveShotFbx::mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr)
 void mayaArchiveShotFbx::_generateFilePath() {
   if (!p_soureFile.empty())
     for (auto &k_i : p_soureFile)
-      p_Path.push_back((p_info_ptr_->generatePath("export_fbx")
-          / boost::filesystem::extension(k_i)).string());
+      p_Path.push_back(
+          p_info_ptr_->generatePath("export_fbx")
+              / k_i.filename()
+      );
   else if (!p_info_ptr_->getFileList().empty())
     for (auto &&item: p_info_ptr_->getFileList())
       p_Path.push_back(item.string());
 }
-bool mayaArchiveShotFbx::exportFbx(shotInfoPtr &shot_data) {
-  if (!shot_data) {
-    DOODLE_LOG_WARN << "没有数据传入";
-    throw std::runtime_error("没有数据传入");
-  }
-  auto kArchivePtr = std::make_shared<mayaArchive>(shot_data);
-  auto info = kArchivePtr->down();
-
+bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
   auto resou = boost::filesystem::current_path().parent_path() / "resource";
 
   //复制出导出脚本
-  boost::filesystem::copy(resou / "mayaExport.py",*p_temporary_file_);
-
+  boost::filesystem::copy(resou / "mayaExport.py", *p_temporary_file_);
 
   const auto mayapath = dstring{"mayapy.exe"};
-  DOODLE_LOG_INFO << "导出文件" << info.string().c_str();
+  DOODLE_LOG_INFO << "导出文件" << shot_data.string().c_str();
 
   boost::format str("%1% %2% --path %3% --name %4% --version %5% --suffix %6% --exportpath %7%");
   str % mayapath
       % p_temporary_file_->generic_string()
-      % info.parent_path().generic_string()
-      % boost::filesystem::basename(info)
-      % shot_data->getVersionP()
-      % boost::filesystem::extension(info)
-      % info.parent_path();
+      % shot_data.parent_path().generic_string()
+      % boost::filesystem::basename(shot_data)
+      % 0
+      % boost::filesystem::extension(shot_data)
+      % shot_data.parent_path().generic_string();
 
   DOODLE_LOG_INFO << "导出命令" << str.str().c_str();
   auto env = boost::this_process::environment();
   env["PATH"] += R"(C:\Program Files\Autodesk\Maya2018\bin\)";
 
   boost::process::system(str.str(), env);
-  bool kJson = readExportJson(info.parent_path());
-  if (!kJson) {
-    p_state_ = state::fail;
-  }
-  p_info_ptr_->setVersionP(shot_data->getVersionP());
-  return kJson;
+
+  return boost::filesystem::exists(shot_data.parent_path() / "doodle_Export.json");
 }
 bool mayaArchiveShotFbx::readExportJson(const dpath &exportPath) {
-  auto k_s_file = exportPath / "/doodle_Export.json";
+  auto k_s_file = exportPath / "doodle_Export.json";
   //读取文件
-  boost::filesystem::ifstream rfile{};
-  rfile.open(k_s_file,std::ifstream::in);
-  std::stringstream strin;
-  strin << rfile.gcount();
-  nlohmann::json root;
-  strin >> root;
-  if (root.empty()){
-    DOODLE_LOG_WARN << "not rand json";
-    return false;
+  boost::filesystem::ifstream kIfstream{};
+  kIfstream.open(k_s_file);
+  std::stringstream kStringstream;
+  kStringstream << kIfstream.rdbuf();
+  kIfstream.close();
+
+  bool re = true;
+  try {
+    DOODLE_LOG_INFO << kStringstream.str().c_str();
+    nlohmann::json root = nlohmann::json::parse(kStringstream.str());
+    for (auto &item:root.items()) {
+      auto str = item.value()[0].get<dstring>();
+      p_soureFile.push_back(str);
+    }
+    re = true;
+  } catch (nlohmann::json::parse_error &err) {
+    DOODLE_LOG_WARN << "not export maya fbx" << err.what();
+    re = false;
   }
-  for(auto &&item:root){
-    p_soureFile.push_back(item[0].get<dstring>());
-  }
-  return true;
+
+  return re;
 }
-bool mayaArchiveShotFbx::update(shotInfoPtr &shot_data) {
-  if (!exportFbx(shot_data))
+bool mayaArchiveShotFbx::update(const dpath &shot_data) {
+  if (shot_data.empty()) return false;
+  p_info_ptr_->setShotType(shotType::findShotType("maya_export"));
+  //获得缓存路径并下载文件
+  auto cache_path = p_info_ptr_->generatePath("export_fbx");
+  cache_path = coreSet::getSet().getCacheRoot() / cache_path;
+  p_Path = {shot_data};
+  _down({cache_path});
+
+  //确认导出成功
+  //if (!exportFbx(cache_path / shot_data.filename()))
+  //  return false;
+  //读取导出文件的设置并进行确认
+  //并设置文件来源
+  if (!readExportJson(cache_path)) {
+    p_state_ = state::fail;
     return false;
+  }
+  p_Path.clear();
+  p_cacheFilePath.clear();
+  //开始上传文件
   _generateFilePath();
   p_cacheFilePath = p_soureFile;
   _updata(p_soureFile);
@@ -107,16 +122,10 @@ bool mayaArchiveShotFbx::update(shotInfoPtr &shot_data) {
 void mayaArchiveShotFbx::insertDB() {
   p_info_ptr_->setFileList(p_Path);
 
-  p_info_ptr_->setShotType(doCore::shotType::findShotType("export_fbx",true));
-
+  p_info_ptr_->setShotType(doCore::shotType::findShotType("maya_export", true));
+  p_info_ptr_->setInfoP("导出fbx文件");
   p_info_ptr_->insert();
 
-}
-std::map<QString, QString> mayaArchiveShotFbx::getInfo() {
-  auto map = std::map<QString, QString>();
-  map.insert(std::make_pair("episodes", QString::number(p_info_ptr_->getEpisdes()->getEpisdes())));
-  map.insert(std::make_pair("shot", QString::number(p_info_ptr_->getShot()->getShot())));
-  return map;
 }
 
 CORE_NAMESPACE_E

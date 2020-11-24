@@ -41,6 +41,10 @@ class mainWindows : public QMainWindow {
   QVBoxLayout *p_b_box_layout_; //布局
 
   settingWidget * p_setting_widget_;
+
+//  assWidght * p_ass_widght_;
+//  shotWidget * p_shot_widget_;
+
 };
 
 DOODLE_NAMESPACE_E

@@ -4,6 +4,7 @@
 
 DOODLE_NAMESPACE_S
 class shotWidget : public QWidget {
+  Q_OBJECT
  public:
   shotWidget(QWidget *parent = nullptr);
  public slots:

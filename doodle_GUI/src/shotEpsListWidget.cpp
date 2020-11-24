@@ -126,8 +126,12 @@ void shotEpsListWidget::setModel(QAbstractItemModel *model) {
 }
 void shotEpsListWidget::creatEpsMov() {
   auto shotInfo = std::make_shared<doCore::shotFileSqlInfo>();
-  shotInfo->setEpisdes(selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>());
-  auto move = std::make_unique<doCore::movieEpsArchive>(shotInfo);
-  move->update();
+
+  const auto &kEps = selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>();
+  if (kEps) {
+    shotInfo->setEpisdes(kEps);
+    auto move = std::make_unique<doCore::movieEpsArchive>(shotInfo);
+    move->update();
+  }
 }
 DOODLE_NAMESPACE_E

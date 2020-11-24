@@ -19,7 +19,7 @@ class CORE_API fileArchive{
 
   [[nodiscard]] state isState() const;
 
-  bool update(const dpath &path);
+  virtual bool update(const dpath &path);
   virtual bool update(const dpathList &filelist);
   virtual bool update();
   virtual dpath down(const dstring &path);

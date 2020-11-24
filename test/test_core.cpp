@@ -26,11 +26,11 @@
 #include <src/mayaArchiveShotFbx.h>
 
 class CoreTest : public ::testing::Test {
- protected:
+protected:
   void SetUp() override;
   void TearDown() override;
 
-  doCore::coreSet &set = doCore::coreSet::getSet();
+  doCore::coreSet& set = doCore::coreSet::getSet();
 };
 
 void CoreTest::SetUp() {
@@ -49,9 +49,9 @@ TEST_F(CoreTest, tets_quert) {
 }
 
 TEST_F(CoreTest, set_synpath) {
-  for (doCore::synPath_struct &p : set.getSynDir()) {
+  for (doCore::synPath_struct& p : set.getSynDir()) {
     std::cout << "\n local -->" << p.local.generic_string()
-              << "\n server-->" << p.server.generic_string() << std::endl;;
+      << "\n server-->" << p.server.generic_string() << std::endl;;
   }
 }
 
@@ -116,7 +116,7 @@ TEST_F(CoreTest, get_shotinf) {
     std::cout << "fileclass :" << shclList.front()->getClass_str() << std::endl;
     std::cout << "filetype :" << shtyList.front()->getType() << std::endl;
     std::cout << "shotinfo generatePath :" << sfList.front()->generatePath("test", ".mb") << std::endl;
-    for (auto &x : sfList.front()->getFileList()) {
+    for (auto& x : sfList.front()->getFileList()) {
       std::cout << "shotinfo path :" << x.generic_string() << std::endl;
     }
   }
@@ -152,7 +152,7 @@ TEST_F(CoreTest, create_assInfo) {
 
 TEST_F(CoreTest, get_assInf) {
   auto list_fileClass = doCore::assdepartment::getAll();
-  for (auto &&x : list_fileClass) {
+  for (auto&& x : list_fileClass) {
     std::cout << "fileclass :" << x->getAssDep() << std::endl;
   }
   auto test = doCore::assClass::getAll(list_fileClass[0]);
@@ -169,7 +169,7 @@ TEST_F(CoreTest, get_assInf) {
   std::cout << "assinfo path :" << ai_->generatePath("test", ".mb") << std::endl;
 }
 
-TEST_F(CoreTest,up_maya_file){
+TEST_F(CoreTest, up_maya_file) {
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
@@ -182,25 +182,25 @@ TEST_F(CoreTest,up_maya_file){
 
   shotinfo->deleteSQL();
 }
-TEST_F(CoreTest,mayaExport_fbx){
+TEST_F(CoreTest, mayaExport_fbx) {
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
   auto shtypeList = doCore::shotType::getAll();
 
-  for (const auto &item : shtypeList) {
-    if(item->getType() == "fbx"){
+  for (const auto& item : shtypeList) {
+    if (item->getType() == "fbx") {
       auto shot = doCore::shotFileSqlInfo::getAll(shotList.front());
       auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
       shotinfo->setShotType(item);
       auto export_ = std::make_shared<doCore::mayaArchiveShotFbx>(shotinfo);
-      ASSERT_TRUE(export_->update(shot.front()));
+      ASSERT_TRUE(export_->update(shot.front()->getFileList().front()));
 
     }
   }
 
 }
-TEST_F(CoreTest, create_Move){
+TEST_F(CoreTest, create_Move) {
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
@@ -209,12 +209,12 @@ TEST_F(CoreTest, create_Move){
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
   auto up_move = std::make_shared<doCore::moveShotA>(shotinfo);
-  up_move->update({"D:\\sc_064"});
+  up_move->update({ "D:\\sc_064" });
 
   shotinfo->deleteSQL();
 }
 
-TEST_F(CoreTest, convert_Move){
+TEST_F(CoreTest, convert_Move) {
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
@@ -223,11 +223,11 @@ TEST_F(CoreTest, convert_Move){
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
   auto up_move = std::make_shared<doCore::moveShotA>(shotinfo);
-  up_move->update({"D:\\DBXY_041_017_AN.mov"});
+  up_move->update({ "D:\\DBXY_041_017_AN.mov" });
 
   shotinfo->deleteSQL();
 }
-TEST_F(CoreTest,Synfile_up_ue){
+TEST_F(CoreTest, Synfile_up_ue) {
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
@@ -239,27 +239,27 @@ TEST_F(CoreTest,Synfile_up_ue){
   auto up_move = std::make_shared<doCore::ueArchive>(shotinfo);
   up_move->update(R"(F:\Users\teXiao\Documents\Unreal Projects\test_tt\test_tt.uproject)");
 }
-TEST_F(CoreTest,Synfile_dow_ue){
+TEST_F(CoreTest, Synfile_dow_ue) {
   auto epslist = doCore::episodes::getAll();
   auto shotList = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
   auto shtypeList = doCore::shotType::getAll();
 
-  auto shotinfoList  = doCore::shotFileSqlInfo::getAll(shotList.front());
+  auto shotinfoList = doCore::shotFileSqlInfo::getAll(shotList.front());
   auto up_move = std::make_shared<doCore::ueArchive>(shotinfoList.front());
   up_move->down(R"(F:\Users\)");
   shotinfoList.front()->deleteSQL();
 }
-TEST_F(CoreTest,Synfile){
+TEST_F(CoreTest, Synfile) {
   set.setSyneps(41);
   doCore::ueSynArchive().syn(nullptr);
 }
-TEST_F(CoreTest,Synfile_lisgt){
+TEST_F(CoreTest, Synfile_lisgt) {
   set.setSyneps(41);
   set.setDepartment((std::string)"Light");
   doCore::ueSynArchive().syn(nullptr);
 }
-TEST_F(CoreTest,Synfile_create_dir){
+TEST_F(CoreTest, Synfile_create_dir) {
   set.setSyneps(41);
   set.setAssRoot("/tmp/tt");
   doCore::ueSynArchive().makeDir();

@@ -68,6 +68,8 @@ void shotFileSqlInfo::insert() {
     install.insert_list.add(tab.infor = strList_tojson(infoP));
   if (p_shot_id > 0)
     install.insert_list.add(tab.shotsId = p_shot_id);
+  if(p_eps_id > 0)
+    install.insert_list.add(tab.episodesId = p_eps_id);
 
   install.insert_list.add(tab.shotClassId = shotClass::getCurrentClass()->getIdP());
 
@@ -114,7 +116,7 @@ void shotFileSqlInfo::batchSetAttr(T& row) {
     p_shTy_id = row.shotTypeId;
 }
 
-shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr& EP_, const shotType& type) {
+shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr &EP_) {
   doodle::Basefile tab{};
   shotInfoPtrList list{};
 
@@ -122,7 +124,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr& EP_, const shotType& 
   for (auto&& row : db->run(
     sqlpp::select(sqlpp::all_of(tab))
     .from(tab)
-    .where(tab.episodesId == EP_->getIdP())
+    .where(tab.episodesId == EP_->getIdP() and tab.shotsId.is_null())
     .order_by(tab.filetime.desc())
   )) {
     auto assInfo = std::make_shared<shotFileSqlInfo>();
@@ -386,7 +388,7 @@ shotTypePtr shotFileSqlInfo::getShotType() {
   else if (p_shTy_id >= 0) {
 
     for (const auto& item : coreDataManager::get().getShotTypeL()) {
-      if (item->getIdP() == p_shCla_id) {
+      if (item->getIdP() == p_shTy_id) {
         p_ptr_shTy = item;
         break;
       }

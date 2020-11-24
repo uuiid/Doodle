@@ -133,9 +133,10 @@ shotTypePtr shotType::findShotType(const std::string &type_name) {
   shotTypePtr ptr = nullptr;
   auto list = coreDataManager::get().getShotTypeL();
   if (list.empty()) shotType::getAll();
+  //&&
+  //        item->getFileClass() == shotClass::getCurrentClass()
   for (auto &item : list) {
-    if (item->getType() == type_name &&
-        item->getFileClass() == shotClass::getCurrentClass()) {
+    if (item->getType() == type_name ) {
       ptr = item;
       break;
     }
