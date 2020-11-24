@@ -14,7 +14,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
 
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 
 #include <stdexcept>
 #include <fstream>
@@ -45,13 +45,14 @@ void coreSet::initdb() {
 
 void coreSet::writeDoodleLocalSet() {
 //  Json::CharReaderBuilder json;
-  Json::Value root;
-  Json::StreamWriterBuilder builder;
-  builder.settings_["emitUTF8"] = true;
-  const auto waiter = std::unique_ptr<Json::StreamWriter>(builder.newStreamWriter());
+//  Json::Value root;
+//  Json::StreamWriterBuilder builder;
+//  builder.settings_["emitUTF8"] = true;
+//  const auto waiter = std::unique_ptr<Json::StreamWriter>(builder.newStreamWriter());
 
 //  boost::filesystem::ifstream injosn((*doc/settingFileName),std::ifstream::binary);
 //  injosn >> root;
+  nlohmann::json root;
 
   root["user"] = user;
   root["department"] = department;
@@ -62,7 +63,7 @@ void coreSet::writeDoodleLocalSet() {
 
   boost::filesystem::ofstream outjosn;
   outjosn.open((*doc / settingFileName), std::ifstream::binary);
-  waiter->write(root, &outjosn);
+  outjosn << root.dump();
   outjosn.close();
 
 }
@@ -91,26 +92,27 @@ void coreSet::getSetting() {
     boost::filesystem::ifstream inJosn;
     inJosn.open((*doc / settingFileName), std::ifstream::binary);
 
-    Json::Value root;
-    Json::CharReaderBuilder builder;
-    builder.settings_["emitUTF8"] = true;
-    JSONCPP_STRING errs;
-    if (!Json::parseFromStream(builder, inJosn, &root, &errs)) {
-      DOODLE_LOG_WARN << errs.c_str();
-    }
+    nlohmann::json root;
+    std::stringstream instr;
+    instr << inJosn.rdbuf();
+    instr >> root;
+
     inJosn.close();
-    if (root.isMember("user"))
-      user = root["user"].asString();
-    if (root.isMember("department"))
-      department = root["department"].asString();
-    if (root.isMember("synPath"))
-      *synPath = root["synPath"].asString();
-    if (root.isMember("synEp"))
-      project.second = root["projectname"].asString();
-    if (root.isMember("FreeFileSync"))
-      freeFileSyn = root["FreeFileSync"].asString();
-    DOODLE_LOG_INFO << "projectname" << root["projectname"].asString().c_str();
-    DOODLE_LOG_INFO << "synPath" << root["synPath"].asString().c_str();
+
+    user = root.value("user", "");
+
+    department = root.value("department", "VFX");
+
+    *synPath = root.value("synPath", "D:/ue_prj");
+
+    project.second = root.value("synEp", 1);
+
+    freeFileSyn = root.value("FreeFileSync", R"("C:\PROGRA~1\FREEFI~1\FreeFileSync.exe")");
+    project.second = root.value("projectname", "dubuxiaoyao3");
+    syneps = root.value("synEp",1);
+
+    DOODLE_LOG_INFO << "projectname" << project.second.c_str();
+
   }
 }
 
@@ -247,21 +249,22 @@ synPathListPtr coreSet::getSynDir() {
   doodle::Synfile table{};
   doodle::Episodes epTable{};
 
-  Json::CharReaderBuilder builder;
-  Json::Value root;
-  JSONCPP_STRING err;
+
+  nlohmann::json root;
+
   synPathListPtr list;
-  const auto reand = std::unique_ptr<Json::CharReader>(builder.newCharReader());
+//  const auto reand = std::unique_ptr<Json::CharReader>(builder.newCharReader());
   for (auto &&row:db->run(sqlpp::select(table.path)
                               .from(table.join(epTable).on(table.episodesId == epTable.id))
                               .where(epTable.episodes == syneps
                                          and epTable.projectId == project.first))) {
-    reand->parse(row.path.text, row.path.text + row.path.len, &root, &err);
+    dstring str = row.path;
+    root = str;
     for (const auto &item : root) {
 
       synPath_struct fileSyn{};
-      fileSyn.local = item["Left"].asString();
-      fileSyn.server = item["Right"].asString();
+      fileSyn.local = item.get<dstring>();
+      fileSyn.server = item.get<dstring>();
       list.push_back(fileSyn);
     }
     DOODLE_LOG_INFO << QString::fromStdString(row.path);

@@ -11,7 +11,17 @@
 #include <src/assTypeWidget.h>
 DOODLE_NAMESPACE_S
 
-assWidght::assWidght() {
+assWidght::assWidght(QWidget *parent)
+    : QWidget(parent),
+      p_ass_class_widget_(nullptr),
+      p_ass_type_widget_(nullptr),
+      p_ass_type_model_(nullptr),
+      p_ass_table_model_(nullptr),
+      p_ass_class_model_(nullptr),
+      p_ass_dep_model_(nullptr),
+      p_ass_layout_(nullptr),
+      p_ass_dep_widget_(nullptr),
+      p_ass_info_widght_(nullptr) {
   p_ass_layout_ = new QHBoxLayout(this);
   p_ass_layout_->setSpacing(3);
   p_ass_layout_->setContentsMargins(0, 0, 0, 0);
@@ -50,12 +60,15 @@ assWidght::assWidght() {
 
   auto class_ass_layout = new QVBoxLayout();
   class_ass_layout->addWidget(p_ass_dep_widget_, 1);
-  class_ass_layout->addWidget(p_ass_class_widget_, 20);
+  class_ass_layout->addWidget(p_ass_class_widget_, 10);
   p_ass_layout_->addLayout(class_ass_layout, 4);
 
   //  p_ass_layout_->addWidget(p_ass_type_widget_,1);
   p_ass_layout_->addWidget(p_ass_info_widght_, 10);
   p_ass_layout_->addWidget(p_ass_type_widget_, 2);
+  setMinimumWidth(500);
+//  setMinimumSize(100,150);
+//  setBaseSize(800,650);
 }
 void assWidght::refresh() {
   p_ass_dep_model_->init();

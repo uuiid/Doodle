@@ -5,7 +5,7 @@ DOODLE_NAMESPACE_S
 
 class assWidght : public QWidget {
  public:
-  assWidght();
+  assWidght(QWidget *parent = nullptr);
  public slots:
   void refresh();
  private:

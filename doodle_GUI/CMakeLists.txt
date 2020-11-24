@@ -16,7 +16,6 @@ set(DOODLE_SOURE_HEADER
         src/shotEpsListWidget.h
         src/shotTypeWidget.h
         src/shotTableWidget.h
-        src/projectWidget.h
         src/shotEpsListModel.h
         src/mainWindows.h
         src/shotClassModel.h
@@ -49,7 +48,6 @@ set(DOODLE_SOURE
         src/shotTypeWidget.cpp
         src/shotTableWidget.cpp
         src/mainWindows.cpp
-        src/projectWidget.cpp
         src/shotEpsListModel.cpp
         src/shotClassModel.cpp
         src/shotTypeModel.cpp

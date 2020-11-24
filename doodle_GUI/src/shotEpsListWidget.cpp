@@ -54,8 +54,7 @@ void episodesintDelegate::setModelData(QWidget *editor,
     if (!model->setData(index, value, Qt::EditRole)) {
       model->removeRow(index.row(), QModelIndex());
     }
-  }
-  else
+  } else
     model->removeRow(index.row(), QModelIndex());
 }
 
@@ -92,16 +91,25 @@ void shotEpsListWidget::insertEpisodes() {
 }
 
 void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
-  p_eps_Menu = new QMenu(this);
-  auto *action = new QAction(this);
+  if (p_eps_Menu) {
+    p_eps_Menu->clear();
+  } else {
+    p_eps_Menu = new QMenu(this);
+  }
 
-  connect(action, &QAction::triggered,
+  auto add_eps = new QAction();
+  connect(add_eps, &QAction::triggered,
           this, &shotEpsListWidget::insertEpisodes);
-
-  action->setText(tr("添加集数"));
-  action->setStatusTip(tr("添加集数"));
-  p_eps_Menu->addAction(action);
-
+  add_eps->setText(tr("添加集数"));
+  add_eps->setStatusTip(tr("添加集数"));
+  p_eps_Menu->addAction(add_eps);
+  if(selectionModel()->hasSelection()) {
+    auto createMove = new QAction();
+    createMove->setText(tr("制作整集拍屏"));
+    connect(createMove, &QAction::triggered,
+            this, &shotEpsListWidget::creatEpsMov);
+    p_eps_Menu->addAction(createMove);
+  }
   p_eps_Menu->move(event->globalPos());
   p_eps_Menu->show();
 }
@@ -111,12 +119,15 @@ void shotEpsListWidget::_doodle_episodes_emit(const QModelIndex &index) {
                                                     .value<doCore::episodesPtr>());
   emit initEmit();
 }
-void shotEpsListWidget::init() {
-  p_episodesListModel->init();
-}
 void shotEpsListWidget::setModel(QAbstractItemModel *model) {
   auto p_model = dynamic_cast<shotEpsListModel *>(model);
   if (p_model) p_episodesListModel = p_model;
   QAbstractItemView::setModel(model);
+}
+void shotEpsListWidget::creatEpsMov() {
+  auto shotInfo = std::make_shared<doCore::shotFileSqlInfo>();
+  shotInfo->setEpisdes(selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>());
+  auto move = std::make_unique<doCore::movieEpsArchive>(shotInfo);
+  move->update();
 }
 DOODLE_NAMESPACE_E

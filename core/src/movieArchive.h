@@ -17,8 +17,6 @@ class CORE_API movieArchive : public fileArchive {
   virtual void setInfoAttr() = 0;
 
   fileSqlInfoPtr p_info_ptr_;
- private:
-  static dstring findFFmpeg() ;
 };
 
 CORE_NAMESPACE_E

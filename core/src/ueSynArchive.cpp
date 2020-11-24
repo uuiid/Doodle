@@ -23,7 +23,7 @@ void ueSynArchive::insertDB() {
 void ueSynArchive::_generateFilePath() {
 
 }
-dpath ueSynArchive::down(const shotPtr & shot_) {
+dpath ueSynArchive::syn(const shotPtr & shot_) {
   auto &set = coreSet::getSet();
   boost::format str("/03_Workflow/Assets/%s/backup");
   str % set.getDepartment();
@@ -31,39 +31,17 @@ dpath ueSynArchive::down(const shotPtr & shot_) {
   if (synpart.empty()) {
     return {};
   }
-  boost::format eps("EP_%02i");
-  eps % set.getSyneps();
 
-
-  auto tmp = set.getPrjectRoot() / set.getAssRoot() / set.getDepartment() / eps.str();
-  if (boost::filesystem::exists(tmp)) {
-    oldDown(shot_);
-    return {};
-  } else {
-    newDown(shot_);
-  }
-  return {};
-}
-void ueSynArchive::newDown(const shotPtr &shot_) {
-  auto &set = coreSet::getSet();
-  boost::format str("/03_Workflow/Assets/%s/backup");
-  str % set.getDepartment();
-  if (synpart.empty()) {
-    return;
-  }
-  
-  boost::format eps(DOODLE_EPFORMAT);
-  eps % set.getSyneps();
+//  boost::format eps(DOODLE_EPFORMAT);
+//  eps % set.getSyneps();
   dstring shotFstr = "*\\VFX\\*";
   if (shot_) {
     boost::format shotFlliter(R"(*\sc%04i\Checkpoint\VFX\*)");
     shotFstr = (shotFlliter % shot_->getShot()).str();
   }
   for (auto &item : synpart) {
-    item.local = set.getSynPathLocale() / set.projectName().second / eps.str() /
-                 item.local / DOODLE_CONTENT / "shot";
-    item.server = set.getAssRoot() / set.getDepartment() / eps.str() /
-                  item.server / DOODLE_CONTENT / "shot";
+    item.local = set.getSynPathLocale() / set.projectName().second / item.local / DOODLE_CONTENT / "shot";
+    item.server = set.getAssRoot() / set.getDepartment() / item.server / DOODLE_CONTENT / "shot";
   }
 
   p_syn->addSynFile(synpart);
@@ -82,8 +60,8 @@ void ueSynArchive::newDown(const shotPtr &shot_) {
     //下载vfx镜头
     auto syn_part_vfx = set.getSynDir();
     for (auto &item : syn_part_vfx) {
-      item.local = set.getSynPathLocale() / set.projectName().second / eps.str() / item.local / DOODLE_CONTENT / "shot";
-      item.server = set.getAssRoot() / "VFX" / item.server / eps.str() / DOODLE_CONTENT / "shot";
+      item.local = set.getSynPathLocale() / set.projectName().second / item.local / DOODLE_CONTENT / "shot";
+      item.server = set.getAssRoot() / "VFX" / item.server /  DOODLE_CONTENT / "shot";
     }
     p_syn->addSynFile(syn_part_vfx);
     for (int i = syn_part_vfx.size(); i < syn_part_vfx.size() + synpart.size();
@@ -93,59 +71,12 @@ void ueSynArchive::newDown(const shotPtr &shot_) {
     }
   }
   p_syn->run();
+
+  return {};
 }
-void ueSynArchive::oldDown(const shotPtr &shot_) {
-  auto &set = coreSet::getSet();
-  boost::format str("/03_Workflow/Assets/%s/backup");
-  str % set.getDepartment();
 
-  boost::format eps("EP_%02i");
-  eps % set.getSyneps();
-
-  dstring shotFstr = "*\\VFX\\*";
-  if (shot_) {
-    boost::format shotFlliter(R"(*\Sc%04i\Checkpoint\VFX\*)");
-    shotFstr = (shotFlliter % shot_->getShot()).str();
-  }
-  for (auto &item : synpart) {
-    item.local = set.getSynPathLocale() / set.projectName().second / eps.str() /
-                 item.local / DOODLE_CONTENT / "shot";
-    item.server = set.getAssRoot() / set.getDepartment() / eps.str() /
-                  item.server / DOODLE_CONTENT / "shot";
-  }
-
-  p_syn->addSynFile(synpart);
-  p_syn->setVersioningFolder(freeSynWrap::syn_set::twoWay, str.str());
-  if (set.getDepartment() == "VFX") {
-    //设置同步方式
-    p_syn->addInclude({shotFstr});
-
-  } else if (set.getDepartment() == "Light") {
-    //同步light镜头
-    for (int i = 0; i < synpart.size(); ++i) {
-      p_syn->addSubSynchronize(i, freeSynWrap::syn_set::twoWay, str.str());
-      p_syn->addSubIncludeExclude(i, {"*"}, {shotFstr});
-    }
-
-    //下载vfx镜头
-    auto syn_part_vfx = set.getSynDir();
-    for (auto &item : syn_part_vfx) {
-      item.local = set.getSynPathLocale() / set.projectName().second /
-                   eps.str() / item.local / DOODLE_CONTENT / "shot";
-      item.server = set.getAssRoot() / "VFX" / item.server / eps.str() /
-                    DOODLE_CONTENT / "shot";
-    }
-    p_syn->addSynFile(syn_part_vfx);
-    for (int i = syn_part_vfx.size(); i < syn_part_vfx.size() + synpart.size();
-         ++i) {
-      p_syn->addSubSynchronize(i, freeSynWrap::syn_set::down, str.str());
-      p_syn->addSubIncludeExclude(i, {shotFstr}, {});
-    }
-  }
-  p_syn->run();
-}
 bool ueSynArchive::update() {
-  down(nullptr);
+  syn(nullptr);
   return true;
 }
 bool ueSynArchive::makeDir() {

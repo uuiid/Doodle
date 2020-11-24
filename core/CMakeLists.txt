@@ -11,6 +11,8 @@ find_package(SqlppMySql REQUIRED)
 find_package(FFMPEG  REQUIRED )
 find_package(Boost COMPONENTS filesystem regex REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
 #execute_process(
 #        COMMAND "C:/Program Files (x86)/bin2cpp 2.3.0/bin/bin2cpp.exe" --file=src/resource/_GlobalSettings.xml --output=src/resource/ --headerfile=freeSynGlob.h --identifier=freeSynGlob
 #        COMMAND "C:/Program Files (x86)/bin2cpp 2.3.0/bin/bin2cpp.exe" --file=src/resource/_GlobalSettings.xml --output=src/resource/ --headerfile=freeSynGlob.h --identifier=freeSynGlob
@@ -104,7 +106,7 @@ set(CORE_ARCHIVE_SOURCE
         src/moveShotA.cpp
         src/ueSynArchive.cpp
         src/coreDataManager.cpp
-        )
+        src/movieEpsArchive.cpp src/movieEpsArchive.h)
 
 set(RESOURCE_SOURCE
         core_resource.qrc)
@@ -124,7 +126,8 @@ target_link_libraries(core PUBLIC Qt5::Core)
 target_link_libraries(core PUBLIC SqlppMySql)
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
 target_link_libraries(core PUBLIC ${Boost_LIBRARIES})
-target_link_libraries(core PUBLIC jsoncpp_lib jsoncpp_object)
+#target_link_libraries(core PUBLIC jsoncpp_lib jsoncpp_object)
+target_link_libraries(core PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
 target_link_libraries(core PUBLIC pugixml)
 target_link_libraries(core PUBLIC pinyin)
 target_link_libraries(core PUBLIC ftp)

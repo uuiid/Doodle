@@ -16,7 +16,7 @@ class CORE_API shotFileSqlInfo
   void updateSQL() override;
 
   static shotInfoPtrList getAll(const shotPtr &sh_);
-
+  static shotInfoPtrList getAll(const shotPtr &shot_ptr,const shotTypePtr &type_ptr);
   dpath generatePath(const dstring &programFolder) override;
   dpath generatePath(const dstring &programFolder, const dstring &suffixes) override;
   dpath generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) override;
@@ -35,7 +35,7 @@ class CORE_API shotFileSqlInfo
   void setShotType(const shotTypePtr &fileType_);
   static bool sort(const shotInfoPtr &t1,const shotInfoPtr &t2);
  private:
-  static shotInfoPtrList getAll(const episodesPtr &EP_);
+  static shotInfoPtrList getAll(const episodesPtr &EP_, const shotType &type);
   static shotInfoPtrList getAll(const shotClassPtr &class_ptr);
   static shotInfoPtrList getAll(const shotTypePtr &type_ptr);
   void setShotClass();

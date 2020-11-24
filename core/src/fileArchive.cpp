@@ -1,3 +1,9 @@
+#include "shotfilesqlinfo.h"
+#include <utility>
+#include <QtCore/QDir>
+#include "ffmpegWrap.h"
+#include "shottype.h"
+#include "movieArchive.h"
 #include "fileArchive.h"
 #include <QFileInfo>
 
@@ -13,10 +19,18 @@
 
 CORE_NAMESPACE_S
 
+dstring doCore::fileArchive::findFFmpeg() {
+  auto ffmpeg_exe = QDir::current();
+  ffmpeg_exe.cdUp();
+  ffmpeg_exe.cd(DOODLE_FFMPEG_PATH);
+  DOODLE_LOG_INFO << "找到ffmpeg" << ffmpeg_exe.absolutePath() << "\n" << ffmpeg_exe;
+  return ffmpeg_exe.path().toStdString();
+}
 fileArchive::fileArchive()
     : p_soureFile(),
       p_cacheFilePath(),
       p_Path(),
+      p_session_(),
       p_state_(state::none) {}
 
 bool fileArchive::update(const dpath &path) {
@@ -106,12 +120,12 @@ void fileArchive::_updata(const dpathList &pathList) {
       21,
       set.getProjectname() + set.getUser_en(),
       set.getUser_en()
-      );
+  );
 
   int i = 0;
   for (auto &&item:p_cacheFilePath) {
     if (
-        !session->upload((item.generic_string()), (p_Path[i].generic_string()),true)
+        !session->upload((item.generic_string()), (p_Path[i].generic_string()), true)
         ) {
       p_state_ = state::fail;
       DOODLE_LOG_WARN << "无法上传文件" << (item).c_str();
@@ -121,26 +135,18 @@ void fileArchive::_updata(const dpathList &pathList) {
   }
 }
 void fileArchive::_down(const dpath &localPath) {
-  coreSet &set = coreSet::getSet();
-  DOODLE_LOG_INFO
-      << "登录 : "
-      << set.getProjectname().c_str()
-      << set.getUser_en().c_str()
-      << "\n" << set.getUser_en().c_str();
-  doFtp::ftpSessionPtr session = doFtp::ftphandle::getFTP().session(
-      set.getIpFtp(),
-      21,
-      set.getProjectname() + set.getUser_en(),
-      set.getUser_en());
+  if (!p_session_) {
+    login();
+  }
 
   for (auto &&item : p_Path) {
     if (!boost::filesystem::exists(localPath))
       boost::filesystem::create_directories(localPath);
-    if (!session->down((localPath/item.filename()).generic_string(),
+    if (!p_session_->down((localPath / item.filename()).generic_string(),
                        item.generic_string())) {
       DOODLE_LOG_WARN << "无法下载文件" << item.c_str();
       p_state_ = state::fail;
-      return;
+      continue;
     }
   }
 }
@@ -162,10 +168,10 @@ bool fileArchive::generateCachePath() {
   return true;
 }
 bool fileArchive::copy(const dpath &sourePath, const dpath &trange_path) const noexcept {
-  if(boost::filesystem::exists(trange_path)) return false;
+  if (boost::filesystem::exists(trange_path)) return false;
   auto dregex = std::regex(sourePath.generic_string());
-  for(auto &item : boost::filesystem::recursive_directory_iterator(sourePath)){
-    if(boost::filesystem::is_regular_file(item.path())){
+  for (auto &item : boost::filesystem::recursive_directory_iterator(sourePath)) {
+    if (boost::filesystem::is_regular_file(item.path())) {
       dpath basic_string = std::regex_replace(item.path().generic_string(),
                                               dregex,
                                               trange_path.generic_string());
@@ -179,6 +185,19 @@ bool fileArchive::copy(const dpath &sourePath, const dpath &trange_path) const n
     }
   }
   return true;
+}
+void fileArchive::login() {
+  coreSet &set = coreSet::getSet();
+  DOODLE_LOG_INFO
+      << "登录 : "
+      << set.getProjectname().c_str()
+      << set.getUser_en().c_str()
+      << "\n" << set.getUser_en().c_str();
+  p_session_ = doFtp::ftphandle::getFTP().session(
+      set.getIpFtp(),
+      21,
+      set.getProjectname() + set.getUser_en(),
+      set.getUser_en());
 }
 
 CORE_NAMESPACE_E

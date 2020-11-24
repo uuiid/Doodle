@@ -18,6 +18,8 @@ class CORE_API ffmpegWrap {
                     const dpath &videoPath,
                     const std::string &subtitles) const;
   bool convertToVideo(const dpath &in_videoPath, const dpath &out_videoPath, const std::string &subtitles) const;
+
+  bool connectVideo(const dpathList& in_videoPath,const dpath &out_videoPath);
  private:
   std::shared_ptr<boost::filesystem::path> p_path_;
   std::shared_ptr<boost::filesystem::path> p_tmp_file_;

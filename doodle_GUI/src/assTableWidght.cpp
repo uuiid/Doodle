@@ -24,7 +24,8 @@
 #include <src/toolkit.h>
 #include <src/updataManager.h>
 #include <string>
-#include <src/shotEpsListModel.h>
+#include <src/shotEpsListWidget.h>
+#include <ObjIdlbase.h>
 DOODLE_NAMESPACE_S
 assTableWidght::assTableWidght(QWidget* parent)
   : QTableView(parent),
@@ -193,20 +194,36 @@ void assTableWidght::enableBorder(const bool& isEnable) {
     setStyleSheet("");
 }
 void assTableWidght::createLightDir() {
-  //auto widghtList = qApp->allWidgets();
-  //shotEpsListModel* epsListModle = nullptr;
+  auto widghtList = qApp->allWidgets();
+  shotEpsListWidget* epsListModle = nullptr;
 
-  //for (auto& wid : widghtList)
-  //{
-  //  if (!epsListModle)
-  //  {
-  //    epsListModle = wid->findChild<shotEpsListModel* >("p_episodes_list_model_");
-  //  }
-  //  else
-  //  {
-  //    break;
-  //  }
-  //}
+  for (auto& wid : widghtList)
+  {
+    if (!epsListModle)
+    {
+      epsListModle = wid->findChild<shotEpsListWidget* >("p_episodes_list_widget_");
+    }
+    else
+    {
+      break;
+    }
+  }
+  if(epsListModle) {
+    if(epsListModle->selectionModel()->hasSelection()){
+      auto eps = epsListModle->selectionModel()->currentIndex().data(Qt::EditRole).toInt();
+      auto butten = QMessageBox::question(this,tr("注意"),tr("将添加 %1 集数到共享盘").arg(
+          eps,0,10,QLatin1Char('0')
+          ),QMessageBox::Yes|QMessageBox::No,QMessageBox::No);
+
+      if (butten == QMessageBox::Yes){
+
+      }
+    } else{
+      QMessageBox::warning(this,tr("注意"),tr("请选择集数"));
+    }
+  }
+
+
   //auto epsList = new QInputDialog::getItem(this, tr("选择创建集数"), tr("集数"));
   //auto epsListWidght = new QListView(this);
   //epsListWidght->setWindowFlag(Qt::Dialog);

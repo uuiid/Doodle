@@ -21,6 +21,7 @@
 #include <src/moveShotA.h>
 #include <src/ueSynArchive.h>
 #include <src/ueArchive.h>
+#include <src/movieEpsArchive.h>
 
 #include <src/coreDataManager.h>
 #include <src/coreset.h>

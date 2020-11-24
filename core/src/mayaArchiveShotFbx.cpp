@@ -17,9 +17,10 @@
 #include <stdexcept>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 #include <boost/process.hpp>
 #include <ObjIdlbase.h>
+#include <sstream>
 CORE_NAMESPACE_S
 
 mayaArchiveShotFbx::mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr)
@@ -78,18 +79,18 @@ bool mayaArchiveShotFbx::exportFbx(shotInfoPtr &shot_data) {
 bool mayaArchiveShotFbx::readExportJson(const dpath &exportPath) {
   auto k_s_file = exportPath / "/doodle_Export.json";
   //读取文件
-  boost::filesystem::ifstream rfile;
+  boost::filesystem::ifstream rfile{};
   rfile.open(k_s_file,std::ifstream::in);
-  Json::CharReaderBuilder builder;
-  Json::String err;
-  Json::Value root;
-
-  if(!Json::parseFromStream(builder,rfile,&root,&err)){
-    DOODLE_LOG_WARN << err.c_str();
+  std::stringstream strin;
+  strin << rfile.gcount();
+  nlohmann::json root;
+  strin >> root;
+  if (root.empty()){
+    DOODLE_LOG_WARN << "not rand json";
     return false;
   }
   for(auto &&item:root){
-    p_soureFile.push_back(item[0].asString());
+    p_soureFile.push_back(item[0].get<dstring>());
   }
   return true;
 }

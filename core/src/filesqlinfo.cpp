@@ -16,7 +16,7 @@
 
 #include "Logger.h"
 
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 #include <boost/filesystem.hpp>
 
 
@@ -35,20 +35,25 @@ fileSqlInfo::fileSqlInfo() :
 
 dpathList fileSqlInfo::getFileList() const {
   dpathList list_;
-  Json::Value root;
-  Json::CharReaderBuilder char_reader_builder;
-  JSONCPP_STRING err;
-
-  auto jsonReader = std::unique_ptr<Json::CharReader>(char_reader_builder.newCharReader());
-  const size_t len = filepathP.length();
-  if (jsonReader->parse(filepathP.c_str(), filepathP.c_str() + len,
-                        &root, &err)) {
+//  nlohmann::json root;
+//  auto jsonReader = std::unique_ptr<Json::CharReader>(char_reader_builder.newCharReader());
+//  const size_t len = filepathP.length();
+//  root = filepathP;
+  try {
+    nlohmann::json root = nlohmann::json::parse(filepathP);
     for (auto &&x:root) {
-      list_.push_back(x.asString());
+      list_.push_back(x.get<dstring>());
     }
-  } else {
+  } catch (nlohmann::json::parse_error & error) {
     list_.push_back(filepathP);
   }
+//  if (!root.empty()) {
+//    for (auto &&x:root) {
+//      list_.push_back(x.get<dstring>());
+//    }
+//  } else {
+//    list_.push_back(filepathP);
+//  }
   return list_;
 }
 
@@ -65,18 +70,13 @@ void fileSqlInfo::setFileList(const dstringList &filelist) {
     DOODLE_LOG_WARN << "传入空列表";
     return;
   }
-  Json::StreamWriterBuilder builder;
-  builder.settings_["emitUTF8"] = true;
-  builder.settings_["commentStyle"] = "None";
-  builder.settings_["indentation"] = "";
 
-  Json::Value root;
+  nlohmann::json root;
 
   for (auto &&x:filelist) {
-    root.append(x);
+    root.push_back(x);
   }
-  auto water = std::unique_ptr<Json::StreamWriter>(builder.newStreamWriter());
-  filepathP = Json::writeString(builder, root);
+  filepathP = root.dump();
   fileP = boost::filesystem::basename(filelist[0]);
   fileSuffixesP = boost::filesystem::extension(filelist[0]);
 }
@@ -109,15 +109,11 @@ dstring fileSqlInfo::getUser() const {
 }
 dstringList fileSqlInfo::json_to_strList(const dstring &json_str) const {
   dstringList list_;
-  Json::Value root;
-  Json::CharReaderBuilder char_reader_builder;
-  JSONCPP_STRING err;
 
-  auto jsonReader = std::unique_ptr<Json::CharReader>(char_reader_builder.newCharReader());
-  if (jsonReader->parse(json_str.c_str(), json_str.c_str() + json_str.length(),
-                        &root, &err)) {
+  nlohmann::json root  = json_str;
+  if (!root.empty()) {
     for (auto &&x:root) {
-      list_.push_back(x.asString());
+      list_.push_back(x.get<dstring>());
     }
   } else {
     list_.push_back(json_str);
@@ -130,18 +126,13 @@ dstringList fileSqlInfo::json_to_strList(const dstring &json_str) const {
 
 }
 dstring fileSqlInfo::strList_tojson(const dstringList &str_list) const {
-  Json::StreamWriterBuilder builder;
-  builder.settings_["emitUTF8"] = true;
-  builder.settings_["commentStyle"] = "None";
-  builder.settings_["indentation"] = "";
 
-  Json::Value root;
+  nlohmann::json root;
 
   for (auto &&x:str_list) {
-    root.append(x);
+    root.push_back(x);
   }
-  auto water = std::unique_ptr<Json::StreamWriter>(builder.newStreamWriter());
-  return Json::writeString(builder, root);
+  return root.dump();
 }
 dstring fileSqlInfo::getSuffixes() const {
   return fileSuffixesP;

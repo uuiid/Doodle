@@ -3,25 +3,25 @@
 #include <QMenuBar>
 #include <QStatusBar>
 #include <src/assWidget.h>
-#include <src/projectWidget.h>
 #include <src/settingWidget.h>
 #include <src/shotWidget.h>
 #include <src/systemTray.h>
-
+#include <QtWidgets/qdockwidget.h>
+#include <QtWidgets/qsizepolicy.h>
 DOODLE_NAMESPACE_S
 
-mainWindows::mainWindows(QWidget* parent)
-  : QMainWindow(parent),
-  exitAction(nullptr),
-  refreshAction(nullptr),
-  openSetWindows(nullptr),
-  p_menu_bar_(nullptr),
-  p_menu_(nullptr),
-  p_status_bar_(nullptr),
-  centralWidget(nullptr),
-  p_b_box_layout_(nullptr),
-  p_prject_widght_(nullptr),
-  p_setting_widget_(nullptr) {
+mainWindows::mainWindows(QWidget *parent)
+    : QMainWindow(parent),
+      exitAction(nullptr),
+      refreshAction(nullptr),
+      openSetWindows(nullptr),
+      p_menu_bar_(nullptr),
+      p_menu_(nullptr),
+      p_status_bar_(nullptr),
+      centralWidget(nullptr),
+      p_b_box_layout_(nullptr) {
+  setDockNestingEnabled(true);
+  setCorner(Qt::TopLeftCorner, Qt::BottomDockWidgetArea);
   doodle_init();
 }
 
@@ -50,24 +50,43 @@ void mainWindows::doodle_init() {
   //开始设置项目小部件
   auto prj = new QListWidget(centralWidget);
   prj->setObjectName("prj");
-  for (const auto& name : doCore::coreSet::getSet().getAllPrjName()) {
+  for (const auto &name : doCore::coreSet::getSet().getAllPrjName()) {
     prj->addItem(QString::fromStdString(name));
   }
   prj->setFlow(QListView::LeftToRight);
+  prj->setFixedHeight(35);//设置固定大小
   prj->setCurrentItem(prj->item(0));
 
-  p_prject_widght_ = new projectWidget(centralWidget);
-  p_prject_widght_->setObjectName("p_prject_widght_");
-  p_b_box_layout_->addWidget(prj, 1);
-  p_b_box_layout_->addWidget(p_prject_widght_, 18);
+  p_b_box_layout_->addWidget(prj);
+  p_b_box_layout_->setSizeConstraint(QLayout::SetFixedSize);//设置不需要调整大小
+
+  auto k_ass_dock = new QDockWidget(tr("资产"),
+                                    this,
+                                    Qt::WindowStaysOnTopHint | Qt::X11BypassWindowManagerHint
+                                        | Qt::FramelessWindowHint);
+  auto ass_widget = new assWidght(k_ass_dock);
+  k_ass_dock->setWidget(ass_widget);
+  addDockWidget(Qt::BottomDockWidgetArea, k_ass_dock);
+  connect(prj, &QListWidget::itemChanged,
+          ass_widget, &assWidght::refresh);
+//  p_b_box_layout_->addWidget(k_ass_dock, 18);
+
+  auto k_shot_dock = new QDockWidget(tr("镜头"), this);
+  auto shot_widght = new shotWidget(k_shot_dock);
+  k_shot_dock->setWidget(shot_widght);
+  addDockWidget(Qt::BottomDockWidgetArea, k_ass_dock);
+  connect(prj, &QListWidget::itemChanged,
+          shot_widght, &shotWidget::refresh);
+  tabifyDockWidget(k_ass_dock, k_shot_dock);
+
 
   p_setting_widget_ = new settingWidget(centralWidget);
   //连接项目更改设置
   connect(prj, &QListWidget::itemClicked,
-    p_setting_widget_, [=](QListWidgetItem* item)mutable {
-      p_setting_widget_->setProject(item->text()); });
-  connect(prj, &QListWidget::itemClicked,
-    p_prject_widght_, &projectWidget::refresh);
+          p_setting_widget_, [=](QListWidgetItem *item)mutable {
+        p_setting_widget_->setProject(item->text());
+      });
+
 
   //添加托盘图标
   auto tray = new systemTray(this);
@@ -75,7 +94,9 @@ void mainWindows::doodle_init() {
   tray->setIcon(QIcon(":/resource/icon.png"));
   tray->setVisible(true);
   tray->show();
-  p_prject_widght_->refresh();
+
+  ass_widget->refresh();
+  shot_widght->refresh();
 
 }
 
@@ -106,7 +127,7 @@ void mainWindows::doodle_createAction() {
   openSetWindows->setStatusTip(tr("打开设置"));
   openSetWindows->setToolTip(tr("Open Setting"));
   connect(openSetWindows, &QAction::triggered,
-    this, &mainWindows::openSetting);
+          this, &mainWindows::openSetting);
   p_menu_->addAction(openSetWindows);
 
   exitAction = new QAction(this);

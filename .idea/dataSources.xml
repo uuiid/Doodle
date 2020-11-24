@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="@127.0.0.1" uuid="8a40dabe-2aed-406b-86a5-e7f72d44d2ad">
+    <data-source source="LOCAL" name="doodle_main@127.0.0.1" uuid="8a40dabe-2aed-406b-86a5-e7f72d44d2ad">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://127.0.0.1:3306</jdbc-url>
+      <jdbc-url>jdbc:mysql://127.0.0.1:3306/doodle_main</jdbc-url>
       <driver-properties>
         <property name="serverTimezone" value="UTC" />
       </driver-properties>

@@ -8,6 +8,7 @@
 #include <boost/filesystem.hpp>
 #include <utility>
 #include "shotfilesqlinfo.h"
+#include "fileArchive.h"
 CORE_NAMESPACE_S
 movieArchive::movieArchive(fileSqlInfoPtr shot_info_ptr)
     : fileArchive(),
@@ -82,13 +83,6 @@ bool movieArchive::update(const dpathList &filelist) {
     p_state_ = state::fail;
 
   return isok;
-}
-dstring movieArchive::findFFmpeg() {
-  auto ffmpeg_exe = QDir::current();
-  ffmpeg_exe.cdUp();
-  ffmpeg_exe.cd(DOODLE_FFMPEG_PATH);
-  DOODLE_LOG_INFO << "找到ffmpeg" << ffmpeg_exe.absolutePath() << "\n" << ffmpeg_exe;
-  return ffmpeg_exe.path().toStdString();
 }
 
 CORE_NAMESPACE_E

@@ -80,7 +80,7 @@ class znchName;
 class assType;
 class assFileSqlInfo;
 class freeSynWrap;
-
+class movieEpsArchive;
 //共享指针引用类
 using shotPtr =std::shared_ptr<shot>;
 using episodesPtr =std::shared_ptr<episodes>  ;

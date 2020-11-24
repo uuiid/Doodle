@@ -15,8 +15,8 @@ shotTableModel::shotTableModel(QObject *parent)
       p_shot_info_ptr_list_(),
       FBRex(std::make_unique<boost::regex>(R"(mp4|avi)")),
       mayaRex(std::make_unique<boost::regex>(R"(ma|ab)")),
-      show_mayaex(std::make_unique<boost::regex>(R"(FB_|flipbook)")),
-      show_FBRex(std::make_unique<boost::regex>(R"(Anm|Animation)")) {}
+      show_mayaex(std::make_unique<boost::regex>(R"(Anm|Animation)")),
+      show_FBRex(std::make_unique<boost::regex>(R"(FB_|flipbook)")) {}
 int shotTableModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_shot_info_ptr_list_.size());
 }
@@ -186,21 +186,21 @@ void shotTableModel::eachOne() {
   std::vector<std::string> show{"Animation", "FB_VFX", "FB_Light", "flipbook"};
   auto listout = doCore::coreDataManager::get().getShotInfoL();
 
-  doCore::shotTypePtrList typelist;
 
   auto it = std::remove_if(listout.begin(), listout.end(), [=](const doCore::shotInfoPtr &ptr) {
-     return !(
-       boost::regex_match(ptr->getShotType()->getType(), *mayaRex) ||
-       boost::regex_match(ptr->getShotType()->getType(), *show_FBRex) ||
-       boost::regex_match(ptr->getSuffixes(), *mayaRex));
-     });
+    return !(
+        boost::regex_search(ptr->getShotType()->getType(), *show_FBRex) ||
+            boost::regex_search(ptr->getShotType()->getType(), *show_mayaex) ||
+            boost::regex_search(ptr->getSuffixes(), *mayaRex));
+  });
+
   doCore::shotInfoPtrList list;
-  list.assign(listout.begin(),it);
+  list.assign(listout.begin(), it);
   listout.clear();
+  doCore::shotTypePtrList typelist;
   for (const auto &i : list) {
-    if (std::find(typelist.begin(), typelist.end(), i->getShotType()) != typelist.end()) {
+    if (std::find(typelist.begin(), typelist.end(), i->getShotType()) == typelist.end()) {
       listout.push_back(i);
-    } else {
       typelist.push_back(i->getShotType());
     }
   }
@@ -212,7 +212,7 @@ void shotTableModel::eachOne() {
 //      show.erase(item);
 //    }
 //  }
-  setList(list);
+  setList(listout);
 }
 void shotTableModel::setList(const doCore::shotInfoPtrList &list) {
   clear();

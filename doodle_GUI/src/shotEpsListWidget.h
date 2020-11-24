@@ -50,8 +50,6 @@ class shotEpsListWidget : public QListView {
   ~shotEpsListWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
- public slots:
-  void init();
  signals:
   void initEmit();
 
@@ -64,6 +62,7 @@ class shotEpsListWidget : public QListView {
   void insertEpisodes();
   void _doodle_episodes_emit(const QModelIndex &index);
 
+  void creatEpsMov();
  protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
 };

@@ -9,7 +9,7 @@ CORE_NAMESPACE_S
 class CORE_API ueSynArchive : public fileArchive {
  public:
   ueSynArchive();
-  dpath down(const shotPtr& shot_);
+  dpath syn(const shotPtr& shot_);
   bool update() override;
   bool makeDir() ;
 
@@ -19,9 +19,8 @@ class CORE_API ueSynArchive : public fileArchive {
  private:
   freeSynWrapPtr p_syn;
   synPathListPtr synpart;
- private:
-  void oldDown(const shotPtr& shot_);
-  void newDown(const shotPtr& shot_);
+
+
 };
 
 CORE_NAMESPACE_E
