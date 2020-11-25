@@ -146,9 +146,14 @@ install(TARGETS core
 install(FILES $<TARGET_PDB_FILE:core>
         DESTINATION bin
         CONFIGURATIONS Debug)
-#运行qt
-install(CODE "
-execute_process(
-COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin ${CMAKE_INSTALL_PREFIX}/bin/core.dll
-)
-")
+        
+if(RUN_QT_TOOL)
+        #运行qt
+        install(CODE "
+        execute_process(
+        COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin ${CMAKE_INSTALL_PREFIX}/bin/core.dll
+        )
+        ")
+endif(RUN_QT_TOOL)
+
+

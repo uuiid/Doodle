@@ -35,27 +35,14 @@ install(FILES $<TARGET_PDB_FILE:fileSystem>
 #安装引用库
 install(FILES $<TARGET_FILE:CURL::libcurl>
         DESTINATION bin)
-#运行qt
-install(CODE "
-execute_process(
-COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin $<TARGET_FILE:fileSystem>
-)
-")
 
-#if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
-#    add_custom_command(
-#            TARGET fileSystem POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fileSystem> ${CMAKE_SOURCE_DIR}/install/bin/fileSystem.dll
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:fileSystem> ${CMAKE_SOURCE_DIR}/install/bin/fileSystem.pdb
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:CURL::libcurl> ${CMAKE_SOURCE_DIR}/install/bin/
-#    )
-#    include(BundleUtilities)
-#    fixup_bundle(${CMAKE_SOURCE_DIR}/install/bin/doodle.exe  ""   "${CMAKE_FIND_ROOT_PATH}")
-##    file(COPY $<TARGET_FILE:CURL::libcurl> DESTINATION ${CMAKE_SOURCE_DIR}/install/bin/libcurl-d.dll)
-#else()
-#    add_custom_command(
-#            TARGET fileSystem POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fileSystem> ${CMAKE_SOURCE_DIR}/install/bin/fileSystem.dll
-#    )
-#endif()
+if(RUN_QT_TOOL)
+        #运行qt
+        install(CODE "
+        execute_process(
+        COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin $<TARGET_FILE:fileSystem>
+        )
+        ")  
+endif(RUN_QT_TOOL)
+
 

@@ -116,34 +116,5 @@
             "name": "test_my",
             "pattern": "${workspaceFolder}/build/test/Debug/test_my.exe",
         }
-    ],
-    "sqltools.connections": [
-        {
-            "mysqlOptions": {
-                "authProtocol": "default"
-            },
-            "previewLimit": 50,
-            "server": "192.168.10.213",
-            "port": 3306,
-            "driver": "MariaDB",
-            "name": "test",
-            "database": "test_db",
-            "username": "root",
-            "password": "root"
-        },
-        {
-            "mysqlOptions": {
-                "authProtocol": "default"
-            },
-            "previewLimit": 50,
-            "server": "192.168.10.213",
-            "port": 3306,
-            "driver": "MySQL",
-            "name": "my",
-            "group": "my",
-            "database": "test_db",
-            "username": "root",
-            "password": "root"
-        }
     ]
 }

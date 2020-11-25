@@ -108,9 +108,13 @@ install(TARGETS doodle
 install(FILES $<TARGET_PDB_FILE:doodle>
         DESTINATION bin
         CONFIGURATIONS Debug)
-#运行qt
-install(CODE "
-execute_process(
-COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin $<TARGET_FILE:doodle>
-)
-")
+        
+if(RUN_QT_TOOL)
+        #运行qt
+        install(CODE "
+        execute_process(
+        COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin $<TARGET_FILE:doodle>
+        )
+        ")  
+endif(RUN_QT_TOOL)
+
