@@ -18,7 +18,7 @@ class DSYSTEM_API DfileSyntem{
                         const std::string &password);
 
   static bool copy(const dpath& sourePath,const  dpath& trange_path) noexcept;
-
+  static bool removeDir(const dpath &path);
  private:
   DfileSyntem();
 

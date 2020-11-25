@@ -1,14 +1,15 @@
 ﻿#include "coreset.h"
-#include "coresql.h"
+#include <src/coresql.h>
 
-#include "src/convert.h"
-#include "Logger.h"
+#include <src/convert.h>
+#include <Logger.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
-#include "coreOrm/configure_sqlOrm.h"
-#include "coreOrm/project_sqlOrm.h"
-#include "coreOrm/synfile_sqlOrm.h"
+#include <src/coreOrm/configure_sqlOrm.h>
+#include <src/coreOrm/project_sqlOrm.h>
+#include <src/coreOrm/synfile_sqlOrm.h>
+#include <src/coreOrm/user_sqlOrm.h>
 #include <src/coreOrm/episodes_sqlOrm.h>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
@@ -110,7 +111,7 @@ void coreSet::getSetting() {
 
     freeFileSyn = root.value("FreeFileSync", R"("C:\PROGRA~1\FREEFI~1\FreeFileSync.exe")");
     project.second = root.value("projectname", "dubuxiaoyao3");
-    syneps = root.value("synEp",1);
+    syneps = root.value("synEp", 1);
 
     DOODLE_LOG_INFO << "projectname" << project.second.c_str();
 
@@ -250,7 +251,6 @@ synPathListPtr coreSet::getSynDir() {
   doodle::Synfile table{};
   doodle::Episodes epTable{};
 
-
   nlohmann::json root;
 
   synPathListPtr list;
@@ -307,10 +307,34 @@ void coreSet::setProjectname(const std::string &value) {
   if (result != prjMap.end())
     project = *result;
 }
-dpath coreSet::program_location() const {
-  return boost::dll::program_location();
+dpath coreSet::program_location() {
+  return boost::filesystem::path{boost::dll::program_location()}.parent_path();
 }
-dpath coreSet::program_location(const dpath &path) const {
+dpath coreSet::program_location(const dpath &path) {
   return program_location() / path;
+}
+dstringList coreSet::getAllUser() {
+  auto db = coreSql::getCoreSql().getConnection();
+  doodle::User table{};
+  dstringList dstring_list{};
+  for (const auto &row : db->run(sqlpp::select(table.user)
+                                      .from(table)
+                                      .unconditionally())) {
+    dstring_list.push_back(row.user);
+  }
+
+  return dstring_list;
+}
+bool coreSet::subUser(const dstring& user_str) {
+  if (user_str.empty()) return false;
+  auto db = coreSql::getCoreSql().getConnection();
+  doodle::User table{};
+
+  auto pow = boost::algorithm::to_lower_copy(dopinyin::convert{}.toEn(user_str));
+  db->run(sqlpp::insert_into(table).set(
+      table.user = user_str,
+      table.password = pow
+      ));
+  return true;
 }
 CORE_NAMESPACE_E

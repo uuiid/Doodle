@@ -40,8 +40,8 @@ class CORE_API coreSet{
   //获得同步路径
   synPathListPtr getSynDir();
   //获得运行程序目录
-  dpath program_location() const;
-  dpath program_location(const dpath &path) const;
+  static dpath program_location() ;
+  static dpath program_location(const dpath &path) ;
 
   //同步目录时的本地路径
   [[nodiscard]] const dpath getSynPathLocale() const;
@@ -93,6 +93,8 @@ class CORE_API coreSet{
 
   void writeDoodleLocalSet();
 
+  static dstringList getAllUser();
+  static bool subUser(const dstring& user_str);
  private:
   //私有化构造函数
   coreSet();

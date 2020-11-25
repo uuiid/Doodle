@@ -23,6 +23,7 @@ class systemTray : public QSystemTrayIcon {
   void installMayaPlug();
   void installUe4Plug(const installModel &model);
   void doodleQuery();
+  void showRigister();
  private:
   QAction * setting;
 };
