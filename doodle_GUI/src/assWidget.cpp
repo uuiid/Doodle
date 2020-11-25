@@ -57,6 +57,10 @@ assWidght::assWidght(QWidget *parent)
           p_ass_table_model_, &assTableModel::filter);
   connect(p_ass_class_widget_, &assClassWidget::initEmited,
           p_ass_type_model_, &assTypeModel::reInit);
+  connect(p_ass_dep_widget_, &assDepWidget::initEmit,
+          p_ass_type_model_, &assTypeModel::reInit);
+  connect(p_ass_class_widget_, &assClassWidget::initEmited,
+          p_ass_type_model_, &assTypeModel::reInit);
 
   auto class_ass_layout = new QVBoxLayout();
   class_ass_layout->addWidget(p_ass_dep_widget_, 1);

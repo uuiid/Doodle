@@ -27,8 +27,8 @@ find_package(CURL REQUIRED)
 
 
 add_subdirectory(logger)
-add_subdirectory(ftp)
-add_subdirectory(fileSyn)
+add_subdirectory(fileSystem)
+#add_subdirectory(fileSyn)
 add_subdirectory(pinyin)
 add_subdirectory(core)
 add_subdirectory(doodle_GUI)
@@ -63,11 +63,20 @@ endforeach(_var)
 list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/")
 list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/Remote Debugger/x64/")
 
+#复制资源
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/resource/
+        DESTINATION resource)
 #复制tool
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/tools/
         DESTINATION tools)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/resource/
-        DESTINATION resource)
+#复制我自己写的一些工具
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/Cmd_tool
+        DESTINATION tools)
+#复制插件
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya_plug
+        DESTINATION plug)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug
+        DESTINATION plug)
 
 #最后实现camke修复
 install(CODE "

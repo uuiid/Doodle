@@ -7,7 +7,7 @@
 #include <src/coreset.h>
 #include <src/freeSynWrap.h>
 #include <boost/format.hpp>
-#include <src/ftphandle.h>
+#include <src/DfileSyntem.h>
 #include <src/ftpsession.h>
 #include <src/shot.h>
 #include <boost/property_tree/ptree.hpp>
@@ -93,7 +93,7 @@ bool ueSynArchive::makeDir() {
                           "Ren"};
   dstringList listDep{"Light",
                       "VFX"};
-  auto session = doFtp::ftphandle::getFTP().session(
+  auto session = doSystem::DfileSyntem::getFTP().session(
       set.getIpFtp(),
       21,
       set.getProjectname() + set.getUser_en(),

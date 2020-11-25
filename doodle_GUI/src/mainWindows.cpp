@@ -21,7 +21,6 @@ mainWindows::mainWindows(QWidget *parent)
       centralWidget(nullptr),
       p_b_box_layout_(nullptr) {
   setDockNestingEnabled(true);
-  setCorner(Qt::TopLeftCorner, Qt::BottomDockWidgetArea);
   doodle_init();
 }
 
@@ -67,10 +66,10 @@ void mainWindows::doodle_init() {
       });
 
   auto k_ass_dock = new QDockWidget(tr("资产"),
-                                    this,
+                                    centralWidget,
                                     Qt::WindowStaysOnTopHint | Qt::X11BypassWindowManagerHint
                                         | Qt::FramelessWindowHint);
-  auto p_ass_widght_= new assWidght(k_ass_dock);
+  auto p_ass_widght_= new assWidght();
   k_ass_dock->setWidget(p_ass_widght_);
   addDockWidget(Qt::BottomDockWidgetArea, k_ass_dock);
   connect(prj, &QListWidget::itemClicked,
@@ -79,8 +78,8 @@ void mainWindows::doodle_init() {
   });
 //  p_b_box_layout_->addWidget(k_ass_dock, 18);
 
-  auto k_shot_dock = new QDockWidget(tr("镜头"), this);
-  auto p_shot_widget_ = new shotWidget(k_shot_dock);
+  auto k_shot_dock = new QDockWidget(tr("镜头"), centralWidget);
+  auto p_shot_widget_ = new shotWidget();
   k_shot_dock->setWidget(p_shot_widget_);
   addDockWidget(Qt::BottomDockWidgetArea, k_shot_dock);
   connect(prj, &QListWidget::itemClicked,

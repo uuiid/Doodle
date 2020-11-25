@@ -84,10 +84,7 @@ void shotTypeWidget::_doodle_type_emit(const QModelIndex &index) {
 void shotTypeWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
   if (!indexAt(event->pos()).isValid()) {
-    clearSelection();
-    p_file_type_shot_model_->reInit();
-    doCore::coreDataManager::get().setShotTypePtr(nullptr);
-    doodleUseFilter(false);
+    clear();
   }
 }
 //void shotTypeWidget::contextMenuEvent(QContextMenuEvent * event) {
@@ -110,6 +107,12 @@ void shotTypeWidget::setModel(QAbstractItemModel *model) {
   if (p_model)
     p_file_type_shot_model_ = p_model;
   QAbstractItemView::setModel(model);
+}
+void shotTypeWidget::clear() {
+  clearSelection();
+  p_file_type_shot_model_->reInit();
+  doCore::coreDataManager::get().setShotTypePtr(nullptr);
+  doodleUseFilter(false);
 }
 
 shotTypeWidget::~shotTypeWidget() = default;

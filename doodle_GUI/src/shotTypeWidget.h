@@ -40,6 +40,7 @@ class shotTypeWidget : public QListView {
   ~shotTypeWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
+  void clear();
  signals:
   void doodleUseFilter(bool useFilter);
 

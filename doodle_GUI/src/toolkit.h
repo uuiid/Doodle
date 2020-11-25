@@ -7,7 +7,7 @@ class toolkit {
  public:
   static void openPath(const doCore::fileSqlInfoPtr &info_ptr,
                        const bool &openEx);
-
+  static void installUePath();
  private:
 };
 

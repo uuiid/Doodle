@@ -8,6 +8,8 @@
 #include <QtGui/qclipboard.h>
 #include <QtGui/QGuiApplication>
 #include <QtWidgets/qmessagebox.h>
+#include <QtWidgets/qinputdialog.h>
+#include <QtCore/qsettings.h>
 #include <string>
 
 DOODLE_NAMESPACE_S
@@ -38,6 +40,35 @@ void toolkit::openPath(const doCore::fileSqlInfoPtr& info_ptr,
                              .arg(DOTOS(path.generic_string())),
         QMessageBox::Yes);
   }
+}
+void toolkit::installUePath() {
+  auto uePath_key = QSettings{R"(HKEY_LOCAL_MACHINE\SOFTWARE\EpicGames\Unreal Engine)",
+                              QSettings::NativeFormat};
+  doCore::dpathList dpath_list;
+  for (const auto &item : uePath_key.childGroups()) {
+    auto setting_ue = QSettings(QString(R"(HKEY_LOCAL_MACHINE\SOFTWARE\EpicGames\Unreal Engine\%1)")
+                                    .arg(item),QSettings::NativeFormat);
+    auto path = setting_ue.value("InstalledDirectory");
+    dpath_list.push_back(path.toString().toStdString());
+  }
+  dpath_list.erase(std::remove_if(dpath_list.begin(),dpath_list.end(),[=](doCore::dpath &dpath){
+    return boost::filesystem::exists(dpath);
+  }) ,dpath_list.end());
+
+  if (dpath_list.empty()){
+    QMessageBox::warning(nullptr,QString::fromUtf8("注意"),QString::fromUtf8("没有在注册表中找到目录"));
+    return;
+  }
+
+  QStringList list;
+  for (const auto &item : dpath_list) {
+    list.push_back(DOTOS(item.generic_string()));
+  }
+  auto ue_path = QInputDialog::getItem(nullptr,"选择安装ue插件的版本","路径",list);
+  if (ue_path.isNull() || ue_path.isEmpty()) return;
+
+
+
 }
 DOODLE_NAMESPACE_E
 

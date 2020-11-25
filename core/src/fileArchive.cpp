@@ -115,7 +115,7 @@ void fileArchive::_updata(const dpathList &pathList) {
       << "\n"
       << set.getUser_en().c_str();
 
-  doFtp::ftpSessionPtr session = doFtp::ftphandle::getFTP().session(
+  auto session = doSystem::DfileSyntem::getFTP().session(
       set.getIpFtp(),
       21,
       set.getProjectname() + set.getUser_en(),
@@ -167,25 +167,6 @@ bool fileArchive::generateCachePath() {
   }
   return true;
 }
-bool fileArchive::copy(const dpath &sourePath, const dpath &trange_path) const noexcept {
-  if (boost::filesystem::exists(trange_path)) return false;
-  auto dregex = std::regex(sourePath.generic_string());
-  for (auto &item : boost::filesystem::recursive_directory_iterator(sourePath)) {
-    if (boost::filesystem::is_regular_file(item.path())) {
-      dpath basic_string = std::regex_replace(item.path().generic_string(),
-                                              dregex,
-                                              trange_path.generic_string());
-      DOODLE_LOG_INFO << basic_string.generic_string().c_str();
-      try {
-        boost::filesystem::create_directories(basic_string.parent_path());
-        boost::filesystem::copy(item.path(), basic_string);
-      } catch (boost::filesystem::filesystem_error &error) {
-        DOODLE_LOG_WARN << error.what();
-      }
-    }
-  }
-  return true;
-}
 void fileArchive::login() {
   coreSet &set = coreSet::getSet();
   DOODLE_LOG_INFO
@@ -193,7 +174,7 @@ void fileArchive::login() {
       << set.getProjectname().c_str()
       << set.getUser_en().c_str()
       << "\n" << set.getUser_en().c_str();
-  p_session_ = doFtp::ftphandle::getFTP().session(
+  p_session_ = doSystem::DfileSyntem::getFTP().session(
       set.getIpFtp(),
       21,
       set.getProjectname() + set.getUser_en(),

@@ -1,12 +1,12 @@
 ﻿
 add_executable(test_my
         test_core.cpp
-        test_ftp.cpp
+        test_fileSystem.cpp
         main.cpp
-        test_boost.cpp)
+        test_boost.cpp test_qtCore.cpp)
 #连接自己的库进行测试
 target_link_libraries(test_my
-        PRIVATE core ftp pinyin logger)
+        PRIVATE core fileSystem pinyin logger)
 #连接谷歌测试框架
 target_link_libraries(test_my
         PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)

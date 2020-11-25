@@ -20,6 +20,7 @@
 #include <fstream>
 
 #include <QtCore/QStorageInfo>
+#include <boost/dll.hpp>
 CORE_NAMESPACE_S
 
 const dstring coreSet::settingFileName = "doodle_conf.json";
@@ -305,5 +306,11 @@ void coreSet::setProjectname(const std::string &value) {
                              [=](const auto &mo) { return mo.second == value; });
   if (result != prjMap.end())
     project = *result;
+}
+dpath coreSet::program_location() const {
+  return boost::dll::program_location();
+}
+dpath coreSet::program_location(const dpath &path) const {
+  return program_location() / path;
 }
 CORE_NAMESPACE_E

@@ -10,6 +10,9 @@
 #include <QApplication>
 
 #include <QMenu>
+#include <src/coreset.h>
+#include <boost/format.hpp>
+#include <QtCore/qsettings.h>
 DOODLE_NAMESPACE_S
 systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   setToolTip(tr("doodle 文件 %1").arg("2.1"));
@@ -43,10 +46,10 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
           this, &systemTray::synFile);
   connect(k_exit_, &QAction::triggered,
           this, &systemTray::doodleQuery);
-  connect(prj_widght,&QAction::triggered,
-          parent,&mainWindows::show);
+  connect(prj_widght, &QAction::triggered,
+          parent, &mainWindows::show);
   connect(setting, &QAction::triggered,
-          parent,&mainWindows::openSetting);
+          parent, &mainWindows::openSetting);
   menu->addAction(fileSyn);
   menu->addAction(prj_widght);
   menu->addMenu(install);
@@ -62,12 +65,30 @@ void systemTray::synFile() {
 }
 
 void systemTray::installMayaPlug() {
-
+  auto maya_plug = doCore::coreSet::getSet().program_location("plug/maya_plug");
+  boost::format k_string{R"(+ doodle_main.py 1.1 %1%
+MYMODULE_LOCATION:= %1%
+PATH+:= %1%/scripts;%1%/plug-ins
+PYTHONPATH+:= %1%/scripts
+)"};
+  k_string % maya_plug.generic_string();
+  auto docPath = doCore::coreSet::getSet().getDoc().parent_path() / "maya" / "modules" / "Doodle.mod";
+  boost::filesystem::ofstream k_out{};
+  k_out.open(docPath);
+  k_out << k_string.str();
+  k_out.close();
 }
 void systemTray::installUe4Plug(const systemTray::installModel &model) {
+  auto uePath_key = QSettings{R"(HKEY_LOCAL_MACHINE\SOFTWARE\EpicGames\Unreal Engine)"};
 
+  if (model == systemTray::installModel::exeFile){
+
+  } else{
+
+  }
 }
 void systemTray::doodleQuery() {
+  dynamic_cast<mainWindows *>(parent())->close();
   setVisible(false);
   qApp->quit();
 }

@@ -72,8 +72,13 @@ shotWidget::shotWidget(QWidget *parent)
   p_shot_class_widget_->setObjectName(QString::fromUtf8("p_shot_class_widget_"));
   p_shot_class_widget_->setModel(p_shot_class_model_);
   layout_1->addWidget(p_shot_class_widget_);
+
   connect(p_shot_class_widget_, &shotClassWidget::doodleUseFilter,
           p_shot_table_model_, &shotTableModel::filter);
+  connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
+          p_shot_class_model_, &shotClassModel::reInit);
+  connect(p_shot_list_widget_, &shotListWidget::initEmit,
+          p_shot_class_model_, &shotClassModel::reInit);
 
   //添加种类小部件
   p_shot_type_widget_ = new shotTypeWidget();
@@ -82,6 +87,10 @@ shotWidget::shotWidget(QWidget *parent)
   layout_1->addWidget(p_shot_type_widget_);
   connect(p_shot_type_widget_, &shotTypeWidget::doodleUseFilter,
           p_shot_table_model_, &shotTableModel::filter);
+  connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
+          p_shot_type_model_, &shotTypeModel::reInit);
+  connect(p_shot_list_widget_, &shotListWidget::initEmit,
+          p_shot_type_model_, &shotTypeModel::reInit);
 
   //将小部件添加到布局中
   p_shot_layout_->addWidget(p_episodes_list_widget_, 2);

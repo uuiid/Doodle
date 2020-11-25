@@ -46,10 +46,7 @@ void shotClassWidget::_doodle_fileclass_emit(const QModelIndex &index) {
 void shotClassWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
   if (!indexAt(event->pos()).isValid()) {
-    clearSelection();
-    p_model_->reInit();
-    doCore::coreDataManager::get().setShotClassPtr(nullptr);
-    doodleUseFilter(false);
+    clear();
   }
 }
 
@@ -74,6 +71,12 @@ void shotClassWidget::setModel(QAbstractItemModel *model) {
   if (p_model)
     p_model_ = p_model;
   QAbstractItemView::setModel(model);
+}
+void shotClassWidget::clear() {
+  clearSelection();
+  p_model_->reInit();
+  doCore::coreDataManager::get().setShotClassPtr(nullptr);
+  doodleUseFilter(false);
 }
 
 DOODLE_NAMESPACE_E

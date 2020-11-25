@@ -6,20 +6,17 @@
 #include <src/shotfilesqlinfo.h>
 #include <src/shotClass.h>
 #include <src/shottype.h>
-#include <src/mayaArchive.h>
 
 #include <src/episodes.h>
 #include <src/shot.h>
 #include <Logger.h>
 
-#include <QDir>
 #include <src/coreset.h>
 #include <stdexcept>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <nlohmann/json.hpp>
 #include <boost/process.hpp>
-#include <ObjIdlbase.h>
 #include <sstream>
 CORE_NAMESPACE_S
 

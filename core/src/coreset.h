@@ -39,6 +39,10 @@ class CORE_API coreSet{
   void initdb();
   //获得同步路径
   synPathListPtr getSynDir();
+  //获得运行程序目录
+  dpath program_location() const;
+  dpath program_location(const dpath &path) const;
+
   //同步目录时的本地路径
   [[nodiscard]] const dpath getSynPathLocale() const;
   void setSynPathLocale(const dpath &syn_path);

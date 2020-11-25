@@ -4,7 +4,7 @@
 // #include <QFileInfo>
 // #include <QVector>
 #include <boost/filesystem.hpp>
-#include <ftp_global.h>
+#include <fileSystem_global.h>
 CORE_NAMESPACE_S
 
 class CORE_API fileArchive{
@@ -43,8 +43,6 @@ class CORE_API fileArchive{
   virtual void _generateFilePath() = 0;
   //下载文件
   virtual void _down(const dpath &localPath);
-
-  bool copy(const dpath& sourePath,const  dpath& trange_path) const noexcept;
   void login();
   static dstring findFFmpeg() ;
  protected:
@@ -58,7 +56,7 @@ class CORE_API fileArchive{
   state p_state_;
 
   //ftp
-  doFtp::ftpSessionPtr p_session_;
+  doSystem::ftpSessionPtr p_session_;
 };
 
 CORE_NAMESPACE_E

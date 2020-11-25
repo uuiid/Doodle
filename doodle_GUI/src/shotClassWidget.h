@@ -25,6 +25,8 @@ class shotClassWidget : public QListView {
   ~shotClassWidget() override = default;
 
   void setModel(QAbstractItemModel *model) override;
+ public:
+  void clear();
  signals:
   void doodleUseFilter(bool useFilter);
 

@@ -130,7 +130,7 @@ target_link_libraries(core PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(core PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
 target_link_libraries(core PUBLIC pugixml)
 target_link_libraries(core PUBLIC pinyin)
-target_link_libraries(core PUBLIC ftp)
+target_link_libraries(core PUBLIC fileSystem)
 target_link_libraries(core PUBLIC logger)
 
 target_compile_definitions(core PRIVATE CORE_LIBRARY)
