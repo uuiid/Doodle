@@ -1,4 +1,12 @@
-﻿#include "coresql.h"
+﻿/*
+ * @Author: your name
+ * @Date: 2020-09-10 14:59:48
+ * @LastEditTime: 2020-11-25 17:29:05
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\coresql.cpp
+ */
+#include "coresql.h"
 
 #include "Logger.h"
 
@@ -47,7 +55,7 @@ void coreSql::initDB() {
   config->host = ip;
   config->port = 3306;
   config->database = "doodle_main";
-  config->debug = true;
+  config->debug = false;
 
   auto db_name = getThreadId();
 }

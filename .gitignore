@@ -65,3 +65,4 @@ cmake-build-debug/
 /.idea/
 /venv/
 /build/
+/install_release

@@ -19,16 +19,22 @@
       ]
     },
     {
-      "name": "x64-Debug-vs2019",
-      "generator": "Visual Studio 16 2019 Win64",
-      "configurationType": "Debug",
-      "buildRoot": "${projectDir}\\..\\${name}_test",
-      "installRoot": "${projectDir}\\out\\install\\${name}",
-      "cmakeCommandArgs": "",
+      "name": "x64_Release",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\install_release",
+      "cmakeCommandArgs": "-DRUN_QT_TOOL=ON -DRUN_fixup=ON -DRUN_COPY=ON",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x64_x64" ],
-      "variables": []
+      "inheritEnvironments": [ "msvc_x64" ],
+      "variables": [
+        {
+          "name": "Qt5_DIR",
+          "value": "F:/Qt/5.15.0/msvc2019_64",
+          "type": "PATH"
+        }
+      ]
     }
   ]
 }

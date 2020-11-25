@@ -92,10 +92,12 @@ if(RUN_fixup)
         include(BundleUtilities)
         fixup_bundle(\"${DOODLEAPPS}\"   \"\"   \"${DIRS}\")
         ")
-        install(CODE "
-        include(BundleUtilities)
-        fixup_bundle(\"${TESTAPPS}\"   \"\"   \"${DIRS}\")
-        ")   
+        if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
+                install(CODE "
+                include(BundleUtilities)
+                fixup_bundle(\"${TESTAPPS}\"   \"\"   \"${DIRS}\")
+                ") 
+        endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
 endif(RUN_fixup)
 
 
