@@ -63,14 +63,16 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
       break;
     case Qt::DecorationRole:
       if (ass->isInsert()) {
-        if (boost::regex_match(ass->getAssType()->getType(), *(mayaRex)) && index.column() == 3) {
-          var = QIcon(":/resource/mayaIcon.png");
-        } else if (boost::regex_match(ass->getAssType()->getType(), *(ue4Rex)) && index.column() == 3) {
-          var = QIcon(":/resource/ue4Icon.png");
-        } else if (boost::regex_match(ass->getAssType()->getType(), *(rigRex)) && index.column() == 3) {
-          var = QColor("lightblue");
-        } else {
-          var = QVariant();
+        if (ass->getAssType()) {
+          if (boost::regex_match(ass->getAssType()->getType(), *(mayaRex)) && index.column() == 3) {
+            var = QIcon(":/resource/mayaIcon.png");
+          } else if (boost::regex_match(ass->getAssType()->getType(), *(ue4Rex)) && index.column() == 3) {
+            var = QIcon(":/resource/ue4Icon.png");
+          } else if (boost::regex_match(ass->getAssType()->getType(), *(rigRex)) && index.column() == 3) {
+            var = QColor("lightblue");
+          } else {
+            var = QVariant();
+          }
         }
       }
       break;

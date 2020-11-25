@@ -11,7 +11,7 @@ class CORE_API ueSynArchive : public fileArchive {
   ueSynArchive();
   dpath syn(const shotPtr& shot_);
   bool update() override;
-  bool makeDir() ;
+  bool makeDir(const episodesPtr &episodes_ptr);
 
  protected:
   void insertDB() override;

@@ -83,7 +83,7 @@ set(RESOURCE_SOURCE
 
 qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 
-add_executable(doodle
+add_executable(doodle WIN32
         doodle_global.h
         ${DOODLE_SOURE_HEADER}
         ${DOODLE_SOURE}

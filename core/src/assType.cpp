@@ -15,6 +15,7 @@
 
 #include <stdexcept>
 #include <src/coreDataManager.h>
+#include <magic_enum.hpp>
 CORE_NAMESPACE_S
 assType::assType()
     : coresqldata(),
@@ -89,19 +90,20 @@ assTypePtr assType::findType(const std::string& typeName) {
   }
   return nullptr;
 }
-assTypePtr assType::findType(const std::string &typeName, bool autoInstall) {
+assTypePtr assType::findType(const e_type &typeName, bool autoInstall) {
+  std::string name{magic_enum::enum_name(typeName)};
   if (autoInstall){
-    auto asstype = findType(typeName);
+    auto asstype = findType(name);
     if (asstype)
       return asstype;
     else{
       auto type = std::make_shared<assType>();
-      type->setType(typeName);
+      type->setType(name);
       type->insert();
       return type;
     }
   } else{
-    return findType(typeName);
+    return findType(name);
   }
 }
 CORE_NAMESPACE_E

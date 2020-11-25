@@ -58,6 +58,7 @@ include(InstallRequiredSystemLibraries)
 #第二中验证加搜索方式
 set(DOODLEAPPS ${CMAKE_INSTALL_PREFIX}/bin/doodle.exe)  # paths to executables
 set(TESTAPPS ${CMAKE_INSTALL_PREFIX}/bin/test_my.exe)
+
 get_filename_component(fixdir ${WINQT} DIRECTORY)
 
 list(APPEND DIRS ${fixdir})

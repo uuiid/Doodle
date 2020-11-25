@@ -79,7 +79,7 @@ bool ueSynArchive::update() {
   syn(nullptr);
   return true;
 }
-bool ueSynArchive::makeDir() {
+bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   auto &set = coreSet::getSet();
   synpart = set.getSynDir();
   boost::format eps(DOODLE_EPFORMAT);

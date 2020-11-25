@@ -262,5 +262,5 @@ TEST_F(CoreTest, Synfile_lisgt) {
 TEST_F(CoreTest, Synfile_create_dir) {
   set.setSyneps(41);
   set.setAssRoot("/tmp/tt");
-  doCore::ueSynArchive().makeDir();
+  doCore::ueSynArchive().makeDir(<#initializer#>);
 }

@@ -12,6 +12,15 @@ class CORE_API assType
     : public coresqldata,
       public std::enable_shared_from_this<assType> {
  public:
+  enum e_type{
+    UE4,
+    scenes,
+    rig,
+    scenes_low,
+    sourceimages,
+    screenshot,
+  };
+ public:
   explicit assType();
   void select(const int64_t &ID_);
   void insert() override;
@@ -19,7 +28,7 @@ class CORE_API assType
   void deleteSQL() override;
 
   static assTypePtrList getAll();
-  static assTypePtr findType(const std::string& typeName,bool autoInstall);
+  static assTypePtr findType(const e_type &typeName, bool autoInstall);
   static bool sortType(const assTypePtr &t1,const assTypePtr &t2);
  private:
   static assTypePtr findType(const std::string& typeName);

@@ -31,3 +31,11 @@ install(FILES $<TARGET_PDB_FILE:pinyin>
         DESTINATION bin
         CONFIGURATIONS Debug)
 
+if(RUN_QT_TOOL)
+        #运行qt
+        install(CODE "
+        execute_process(
+        COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin $<TARGET_FILE:pinyin>
+        )
+        ")  
+endif(RUN_QT_TOOL)

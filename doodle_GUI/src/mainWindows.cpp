@@ -21,6 +21,8 @@ mainWindows::mainWindows(QWidget *parent)
       centralWidget(nullptr),
       p_b_box_layout_(nullptr) {
   setDockNestingEnabled(true);
+  //添加动作和菜单
+  doodle_createAction();
   doodle_init();
 }
 
@@ -30,9 +32,6 @@ void mainWindows::doodle_init() {
     setObjectName(QString::fromUtf8("mainWindows"));
   resize(1200, 800);
   setWindowTitle(tr("MainWindow"));
-
-  //添加动作和菜单
-  doodle_createAction();
 
   //设置中央小部件
   centralWidget = new QWidget(this);
@@ -85,6 +84,11 @@ void mainWindows::doodle_init() {
   connect(prj, &QListWidget::itemClicked,
           p_shot_widget_, &shotWidget::refresh);
   tabifyDockWidget(k_ass_dock, k_shot_dock);
+
+  //添加显示选项
+  auto k_win_drok = p_menu_bar_->addMenu("窗口");
+  k_win_drok->addAction(k_ass_dock->toggleViewAction());
+  k_win_drok->addAction(k_shot_dock->toggleViewAction());
 
   //添加托盘图标
   auto tray = new systemTray(this);
