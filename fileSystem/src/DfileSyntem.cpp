@@ -7,7 +7,6 @@
 #include <Logger.h>
 #include <regex>
 
-#include <boost/thread.hpp>
 #include <boost/asio.hpp>
 
 DSYSTEM_S

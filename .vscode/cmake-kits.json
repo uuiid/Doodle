@@ -14,7 +14,27 @@
       "VCPKG_TARGET_TRIPLET": "x64-windows"
     },
     "cmakeSettings": {
-      "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+      "CMAKE_INSTALL_PREFIX":"F:/Source/qt_test/Doodle/install"
+    }
+  },
+  {
+    "name": "MY__VisS_2019_-amd64-qt5.12.9",
+    "visualStudio": "bfc23b1b",
+    "visualStudioArchitecture": "x64",
+    "preferredGenerator": {
+      "name": "Visual Studio 16 2019",
+      "platform": "x64",
+      "toolset": "host=x64"
+    },
+    "toolchainFile": "${env:VCPKG_MYROOT}/scripts/buildsystems/vcpkg.cmake",
+    "environmentVariables": {
+      "CMAKE_PREFIX_PATH": "${env:QT_MYROOT}/5.15.0/msvc2019_64",
+      "VCPKG_TARGET_TRIPLET": "x64-windows"
+    },
+    "cmakeSettings": {
+      "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+      "CMAKE_INSTALL_PREFIX":"F:/Source/qt_test/Doodle/install"
     }
   },
   {

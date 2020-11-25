@@ -60,8 +60,8 @@ _ReSharper*/
 packages/
 out/
 cmake-build-debug/
-/.idea/dataSources/1bdc75d7-5d77-498f-83ef-b1ce3221f0e2.xml
 /cmake-build-*
 /core/doodle_core.xmind
-/.idea/dataSources/8a40dabe-2aed-406b-86a5-e7f72d44d2ad/storage_v2/_src_/schema/information_schema.FNRwLQ.meta
+/.idea/
 /venv/
+/build/

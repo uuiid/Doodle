@@ -1,4 +1,12 @@
-﻿//
+﻿/*
+ * @Author: your name
+ * @Date: 2020-11-23 17:47:24
+ * @LastEditTime: 2020-11-25 15:15:17
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodlef:\source\qt_test\doodle\core\src\movieepsarchive.cpp
+ */
+//
 // Created by teXiao on 2020/11/23.
 //
 
@@ -57,7 +65,7 @@ bool movieEpsArchive::update() {
   if (epsMove()){
     p_soureFile = {p_cacheFilePath.front()};
     p_Path.clear();
-    fileArchive::update(p_soureFile);
+    return fileArchive::update(p_soureFile);
   } else{
     return false;
   }

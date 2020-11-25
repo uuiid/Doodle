@@ -18,6 +18,7 @@
 #include <nlohmann/json.hpp>
 #include <boost/process.hpp>
 #include <sstream>
+#include <filesystem>
 CORE_NAMESPACE_S
 
 mayaArchiveShotFbx::mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr)
@@ -56,8 +57,18 @@ bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
       % shot_data.parent_path().generic_string();
 
   DOODLE_LOG_INFO << "导出命令" << str.str().c_str();
+
   auto env = boost::this_process::environment();
-  env["PATH"] += R"(C:\Program Files\Autodesk\Maya2018\bin\)";
+
+  if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
+    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2018\bin\)";
+  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
+    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2019\bin\)";
+  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
+    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2020\bin\)";
+  } else {
+    return false;
+  }
 
   boost::process::system(str.str(), env);
 
