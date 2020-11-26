@@ -150,8 +150,10 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& sh_) {
     auto assInfo = std::make_shared<shotFileSqlInfo>();
     assInfo->batchSetAttr(row);
     assInfo->setShot(sh_);
+    assInfo->exist(true);
     list.push_back(assInfo);
   }
+
   coreDataManager::get().setShotInfoL(list);
   return list;
 }
@@ -191,7 +193,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& shot_ptr, const shotTypeP
       shotInfo->p_shTy_id = row.shotTypeId;
 
 
-
+    shotInfo->exist(true);
     list.push_back(shotInfo);
   }
   else {
@@ -214,6 +216,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr& class_ptr) {
   )) {
     auto assInfo = std::make_shared<shotFileSqlInfo>();
     assInfo->batchSetAttr(row);
+    assInfo->exist(true);
     list.push_back(assInfo);
   }
   coreDataManager::get().setShotInfoL(list);
@@ -234,6 +237,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotTypePtr& type_ptr) {
     auto assInfo = std::make_shared<shotFileSqlInfo>();
     assInfo->batchSetAttr(row);
     assInfo->setShotType(type_ptr);
+    assInfo->exist(true);
     list.push_back(assInfo);
   }
   coreDataManager::get().setShotInfoL(list);

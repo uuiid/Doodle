@@ -37,6 +37,8 @@ class CORE_API fileSqlInfo : public coresqldata {
   virtual dstring generateFileName(const dstring &suffixes) = 0;
   virtual dstring generateFileName(const dstring &suffixes, const dstring &prefix) = 0;
   virtual void deleteSQL() override;
+
+  virtual bool exist(bool refresh);
  protected:
   //属性包装
 
@@ -47,7 +49,7 @@ class CORE_API fileSqlInfo : public coresqldata {
   std::string  filepathP;
   dstringList infoP;
   std::string  fileStateP;
-
+  bool p_b_exist;
  protected:
   [[nodiscard]] dstringList json_to_strList(const dstring &json_str) const;
   [[nodiscard]] dstring     strList_tojson(const dstringList & str_list) const;

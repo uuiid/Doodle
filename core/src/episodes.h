@@ -22,7 +22,7 @@ class CORE_API episodes : public coresqldata,
   dstring getEpisdes_str() const;
   QString getEpisdes_QStr() const;
   void setEpisdes(const int64_t &value);
-
+  static episodesPtr find(int64_t episodes);
  private:
   int64_t p_int_episodes;
   int64_t p_prj;

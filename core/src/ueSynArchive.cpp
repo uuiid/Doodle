@@ -10,8 +10,9 @@
 #include <src/DfileSyntem.h>
 #include <src/ftpsession.h>
 #include <src/shot.h>
-#include <boost/property_tree/ptree.hpp>
-
+#include <src/synData.h>
+#include <src/coreDataManager.h>
+#include <src/episodes.h>
 CORE_NAMESPACE_S
 ueSynArchive::ueSynArchive()
     : fileArchive(), p_syn(std::make_shared<freeSynWrap>()), synpart() {
@@ -80,10 +81,20 @@ bool ueSynArchive::update() {
   return true;
 }
 bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
+
+  auto synClass = synData::getAll(episodes_ptr);
+  if (synClass->isNULL()){
+    synClass->setEpisodes(episodes_ptr);
+    synClass->insert();
+  }
+  auto assClass =coreDataManager::get().getAssClassPtr();
+
+  auto create_path = synClass->push_back(assClass);
+
+  synClass->updateSQL();
+
   auto &set = coreSet::getSet();
-  synpart = set.getSynDir();
-  boost::format eps(DOODLE_EPFORMAT);
-  eps % set.getSyneps();
+;
   dstringList list;
 
   boost::format shot(DOODLE_SHFORMAT);
@@ -99,31 +110,28 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
       set.getProjectname() + set.getUser_en(),
       set.getUser_en()
   );
-  for (auto &item : synpart) {
-    auto server = set.getAssRoot()
-        / set.getDepartment()
-        / eps.str()
-        / item.server
-        / DOODLE_CONTENT
-        / "shot"
-        / eps.str();
-    session->createDir(server.generic_string());
+  auto server = set.getAssRoot()
+      / set.getDepartment()
+      / create_path->server
+      / DOODLE_CONTENT
+      / "shot"
+      / episodes_ptr->getEpisdes_str();
+  session->createDir(server.generic_string());
 
-    for (int kI = 0; kI < 120; ++kI) {
-      auto ks1 = server / (shot % kI).str();
-      session->createDir({ks1.generic_string()},false);
+  for (int kI = 0; kI < 120; ++kI) {
+    auto ks1 = server / (shot % kI).str();
+    session->createDir({ks1.generic_string()},false);
 
-      for (const auto &listcreate : listcreates) {
-        auto ks3 = ks1 / listcreate;
-        session->createDir({ks3.generic_string()},false);
+    for (const auto &listcreate : listcreates) {
+      auto ks3 = ks1 / listcreate;
+      session->createDir({ks3.generic_string()},false);
 
-        if (listcreate == *listcreates.begin()) {
-          for (const auto &list_dep : listDep) {
-            auto ks2 = ks3 / list_dep;
-            session->createDir({ks2.generic_string()},false);
-          }
-
+      if (listcreate == *listcreates.begin()) {
+        for (const auto &list_dep : listDep) {
+          auto ks2 = ks3 / list_dep;
+          session->createDir({ks2.generic_string()},false);
         }
+
       }
     }
   }

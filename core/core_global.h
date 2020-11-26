@@ -60,9 +60,7 @@ using mysqlConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
 
 
 //使用一些其他方便的引用类型
-typedef std::vector<QFileInfo> QfileInfoVector;
 
-typedef QMap<QString, QString> mapStringPtr;
 
 class shot;
 class episodes;
@@ -81,6 +79,8 @@ class assType;
 class assFileSqlInfo;
 class freeSynWrap;
 class movieEpsArchive;
+class synData;
+
 //共享指针引用类
 using shotPtr =std::shared_ptr<shot>;
 using episodesPtr =std::shared_ptr<episodes>  ;
@@ -95,6 +95,7 @@ using assTypePtr = std::shared_ptr<assType>;
 using assInfoPtr = std::shared_ptr<assFileSqlInfo>;
 
 using fileSqlInfoPtr = std::shared_ptr<fileSqlInfo>;
+using synDataPtr = std::shared_ptr<synData>;
 //列表引用类
 
 using episodesPtrList = std::vector<episodesPtr>;
@@ -108,7 +109,7 @@ using assClassPtrList = std::vector<assClassPtr>;
 using assTypePtrList = std::vector<assTypePtr>;
 using assInfoPtrList = std::vector<assInfoPtr>;
 struct synPath_struct;
-
+using synPath_structPtr = std::shared_ptr<synPath_struct>;
 using synPathListPtr = std::vector<synPath_struct>;
 class fileArchive;
 

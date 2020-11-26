@@ -84,6 +84,16 @@ void episodes::setEpisdes(const int64_t &value) {
   p_int_episodes = value;
 }
 
+episodesPtr episodes::find(int64_t episodes) {
+  for (auto &&eps_ptr : coreDataManager::get().getEpisodeL()){
+    if (eps_ptr->idP == episodes)
+    {
+      return eps_ptr;
+    }
+  }
+  return nullptr;
+}
+
 int64_t episodes::getEpisdes() const {
   return p_int_episodes;
 }

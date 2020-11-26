@@ -146,10 +146,15 @@ std::string assClass::getAssClass() const {
 }
 std::string assClass::getAssClass(const bool &isZNCH) {
   std::string str;
-  if (!p_ptr_znch) {
-    p_ptr_znch = std::make_shared<znchName>(this);
+  if (isZNCH){
+    if (!p_ptr_znch) {
+      p_ptr_znch = std::make_shared<znchName>(this);
+    }
+    str = p_ptr_znch->getName();
+  } else{
+    str = name;
   }
-  str = p_ptr_znch->getName();
+
   return str;
 }
 

@@ -98,6 +98,7 @@ assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
     auto assInfo = std::make_shared<assFileSqlInfo>();
     assInfo->batchSetAttr(row);
     assInfo->setAssClass(AT_);
+    assInfo->exist(true);
     list.push_back(assInfo);
     assInfo->setAssType();
   }

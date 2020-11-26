@@ -201,13 +201,16 @@ void assTableWidght::createLightDir() {
   }
   if (epsListModle) {
     if (epsListModle->selectionModel()->hasSelection()) {
-      auto eps = epsListModle->selectionModel()->currentIndex().data(Qt::EditRole).toInt();
+      auto eps_ptr = epsListModle->selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>();
+      
       auto butten = QMessageBox::question(this, tr("注意"), tr("将添加 %1 集数到共享盘").arg(
-          eps, 0, 10, QLatin1Char('0')
+          eps_ptr->getEpisdes(), 0, 10, QLatin1Char('0')
       ), QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
       if (butten == QMessageBox::Yes) {
-
+        auto uesyn = std::make_shared<doCore::ueSynArchive>();
+        auto eps_ptr = epsListModle->selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>();
+        uesyn->makeDir(eps_ptr);
       }
     } else {
       QMessageBox::warning(this, tr("注意"), tr("请选择集数"));

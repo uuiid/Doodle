@@ -1,4 +1,12 @@
-﻿//
+﻿/*
+ * @Author: your name
+ * @Date: 2020-11-13 13:45:54
+ * @LastEditTime: 2020-11-26 16:06:43
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\core_doQt.h
+ */
+//
 // Created by teXiao on 2020/11/13.
 //
 #pragma once
@@ -21,8 +29,8 @@
 #include <src/moveShotA.h>
 #include <src/ueSynArchive.h>
 #include <src/ueArchive.h>
+#include <src/ueSynArchive.h>
 #include <src/movieEpsArchive.h>
-
 #include <src/coreDataManager.h>
 #include <src/coreset.h>
 

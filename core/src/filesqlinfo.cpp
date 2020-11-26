@@ -19,7 +19,6 @@
 #include <nlohmann/json.hpp>
 #include <boost/filesystem.hpp>
 
-
 CORE_NAMESPACE_S
 
 fileSqlInfo::fileSqlInfo() :
@@ -30,7 +29,8 @@ fileSqlInfo::fileSqlInfo() :
     fileP(),
     fileStateP(),
     filepathP(),
-    userP(coreSet::getSet().getUser()){
+    userP(coreSet::getSet().getUser()),
+    p_b_exist(true){
 }
 
 dpathList fileSqlInfo::getFileList() const {
@@ -44,7 +44,7 @@ dpathList fileSqlInfo::getFileList() const {
     for (auto &&x:root) {
       list_.push_back(x.get<dstring>());
     }
-  } catch (nlohmann::json::parse_error & error) {
+  } catch (nlohmann::json::parse_error &error) {
     DOODLE_LOG_INFO << error.what();
     list_.push_back(filepathP);
   }
@@ -111,7 +111,7 @@ dstring fileSqlInfo::getUser() const {
 dstringList fileSqlInfo::json_to_strList(const dstring &json_str) const {
   dstringList list_;
 
-  nlohmann::json root  = json_str;
+  nlohmann::json root = json_str;
   if (!root.empty()) {
     for (auto &&x:root) {
       list_.push_back(x.get<dstring>());
@@ -119,8 +119,7 @@ dstringList fileSqlInfo::json_to_strList(const dstring &json_str) const {
   } else {
     list_.push_back(json_str);
   }
-  if (list_.empty())
-  {
+  if (list_.empty()) {
     list_.push_back("");
   }
   return list_;
@@ -144,6 +143,14 @@ void fileSqlInfo::deleteSQL() {
   auto db = coreSql::getCoreSql().getConnection();
   db->remove(sqlpp::remove_from(tab)
                  .where(tab.id == idP));
+}
+bool fileSqlInfo::exist(bool refresh) {
+  auto pro_path = coreSet::getSet().getPrjectRoot();
+  if (refresh)
+    for (const auto &path : getFileList()) {
+      p_b_exist &= boost::filesystem::exists(pro_path / path.parent_path());
+    }
+  return p_b_exist;
 }
 
 CORE_NAMESPACE_E

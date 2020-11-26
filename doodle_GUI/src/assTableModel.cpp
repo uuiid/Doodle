@@ -32,7 +32,6 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
   auto ass = p_ass_info_ptr_list_[index.row()];
   switch (role) {
     case Qt::DisplayRole:
-    case Qt::EditRole:
       if (ass->isInsert()) {
         switch (index.column()) {
           case 0:var = QString("v%1").arg(ass->getVersionP(), 4, 10, QLatin1Char('0'));
@@ -61,6 +60,24 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
         }
       }
       break;
+    case Qt::EditRole:
+      if (ass->isInsert()) {
+        switch (index.column()) {
+          case 0:var = ass->getVersionP();
+            break;
+          case 1:var = DOTOS(ass->getInfoP().back());
+            break;
+          case 2:var = DOTOS(ass->getUser());
+            break;
+          case 3:var = DOTOS(ass->getSuffixes());
+            break;
+          case 4:var = ass->getAssType()->getTypeQ();
+            break;
+          default:var = "";
+            break;
+        }
+      }
+      break;
     case Qt::DecorationRole:
       if (ass->isInsert()) {
         if (ass->getAssType()) {
@@ -77,6 +94,13 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
       }
       break;
     case Qt::UserRole:var = QVariant::fromValue(ass);
+      break;
+    case Qt::BackgroundColorRole: {
+      if (ass->isInsert()) {
+        if (!ass->exist(false))
+          var = QColor("darkred");
+      }
+    }
       break;
     default:var = QVariant();
       break;
