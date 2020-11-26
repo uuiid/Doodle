@@ -45,6 +45,7 @@ dpathList fileSqlInfo::getFileList() const {
       list_.push_back(x.get<dstring>());
     }
   } catch (nlohmann::json::parse_error & error) {
+    DOODLE_LOG_INFO << error.what();
     list_.push_back(filepathP);
   }
 //  if (!root.empty()) {

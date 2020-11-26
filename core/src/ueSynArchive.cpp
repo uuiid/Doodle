@@ -64,7 +64,7 @@ dpath ueSynArchive::syn(const shotPtr & shot_) {
       item.server = set.getAssRoot() / "VFX" / item.server /  DOODLE_CONTENT / "shot";
     }
     p_syn->addSynFile(syn_part_vfx);
-    for (int i = syn_part_vfx.size(); i < syn_part_vfx.size() + synpart.size();
+    for (size_t i = syn_part_vfx.size(); i < syn_part_vfx.size() + synpart.size();
          ++i) {
       p_syn->addSubSynchronize(i, freeSynWrap::syn_set::down, str.str());
       p_syn->addSubIncludeExclude(i, {shotFstr}, {});

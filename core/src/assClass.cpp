@@ -10,8 +10,8 @@
 #include <memory>
 
 #include <stdexcept>
-#include "coreOrm/assclass_sqlOrm.h"
-#include "coreOrm/znch_sqlOrm.h"
+#include <src/coreOrm/assclass_sqlOrm.h>
+#include <src/coreOrm/znch_sqlOrm.h>
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
 #include <src/coreDataManager.h>

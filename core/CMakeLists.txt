@@ -87,7 +87,8 @@ set(CORE_ARCHIVE_HEADER
         src/assType.h
         src/assdepartment.h
         src/coreDataManager.h
-
+        src/synData.h
+        src/movieEpsArchive.h
         )
 #这个是和文件服务器交互的实现文件
 set(CORE_ARCHIVE_SOURCE
@@ -106,7 +107,8 @@ set(CORE_ARCHIVE_SOURCE
         src/moveShotA.cpp
         src/ueSynArchive.cpp
         src/coreDataManager.cpp
-        src/movieEpsArchive.cpp src/movieEpsArchive.h)
+        src/movieEpsArchive.cpp
+        src/synData.cpp)
 
 set(RESOURCE_SOURCE
         core_resource.qrc)

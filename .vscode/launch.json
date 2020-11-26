@@ -1,21 +1,21 @@
 {
     "configurations": [
         {
-            "name": "Doodle_Test",
+            "name": "Doodle_debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/install/bin/test_my.exe",
+            "program": "${command:cmake.launchTargetPath}",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "$PATH;"
+                    "value": "$PATH;${workspaceFolder}/install/bin;${command:cmake.launchTargetDirectory}"
                 }
             ],
             "externalConsole": true,
-            "visualizerFile": "${workspaceFolder}/.vscode/qt5.natvis.xml"
+            "visualizerFile": "${workspaceFolder}/qt5.natvis"
         },
         {
             "name": "Doodle_run",
@@ -32,7 +32,7 @@
                 }
             ],
             "externalConsole": true,
-            "visualizerFile": "${workspaceFolder}/.vscode/qt5.natvis.xml"
+            "visualizerFile": "${workspaceFolder}/qt5.natvis"
         }
     ]
 }

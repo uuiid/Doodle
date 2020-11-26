@@ -19,13 +19,11 @@
     }
   },
   {
-    "name": "MY__VisS_2019_-amd64-qt5.12.9",
+    "name": "MY_ninja_64-qt5.12.9",
     "visualStudio": "bfc23b1b",
     "visualStudioArchitecture": "x64",
     "preferredGenerator": {
-      "name": "Visual Studio 16 2019",
-      "platform": "x64",
-      "toolset": "host=x64"
+      "name": "Ninja"
     },
     "toolchainFile": "${env:VCPKG_MYROOT}/scripts/buildsystems/vcpkg.cmake",
     "environmentVariables": {
@@ -38,13 +36,11 @@
     }
   },
   {
-    "name": "MY_Vis_R_2019_-amd64",
+    "name": "MY_Ninja_R_2019_-amd64",
     "visualStudio": "bfc23b1b",
     "visualStudioArchitecture": "x64",
     "preferredGenerator": {
-      "name": "Visual Studio 16 2019",
-      "platform": "x64",
-      "toolset": "host=x64"
+      "name": "Ninja"
     },
     "toolchainFile": "${env:VCPKG_MYROOT}/scripts/buildsystems/vcpkg.cmake",
     "environmentVariables": {
@@ -57,13 +53,6 @@
       "RUN_QT_TOOL":"ON",
       "RUN_fixup":"ON",
       "RUN_COPY":"ON"
-    }
-  },
-  {
-    "name": "MY__VisS_2017_ninja_-amd64-qt5.12.9",
-    "toolchainFile": "${env:VCPKG_MYROOT}/scripts/buildsystems/vcpkg.cmake",
-    "environmentVariables": {
-      "CMAKE_PREFIX_PATH": "${env:QT_MYROOT}/5.12.9/msvc2017_64"
     }
   }
 ]

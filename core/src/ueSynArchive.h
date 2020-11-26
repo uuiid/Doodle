@@ -1,4 +1,12 @@
-﻿//
+﻿/*
+ * @Author: your name
+ * @Date: 2020-11-11 16:20:03
+ * @LastEditTime: 2020-11-26 10:15:07
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\ueSynArchive.h
+ */
+//
 // Created by teXiao on 2020/11/11.
 //
 #include <core_global.h>
@@ -12,7 +20,6 @@ class CORE_API ueSynArchive : public fileArchive {
   dpath syn(const shotPtr& shot_);
   bool update() override;
   bool makeDir(const episodesPtr &episodes_ptr);
-
  protected:
   void insertDB() override;
   void _generateFilePath() override;

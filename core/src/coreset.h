@@ -37,6 +37,8 @@ class CORE_API coreSet{
   //初始化函数
   void init();
   void initdb();
+
+  //这个要改到其他地方
   //获得同步路径
   synPathListPtr getSynDir();
   //获得运行程序目录
