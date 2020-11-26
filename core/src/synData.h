@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-11-26 10:16:48
- * @LastEditTime: 2020-11-26 15:21:04
+ * @LastEditTime: 2020-11-26 17:58:15
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\synData.h
@@ -26,7 +26,8 @@ class CORE_API synData : public coresqldata {
 
  private:
   std::string toString();
-  void setSynPath(const std::string& json_str);
+  void setSynPath(const std::string &json_str);
+
  private:
   episodesPtr p_episodes_;
   assClassPtrList p_class_list_;

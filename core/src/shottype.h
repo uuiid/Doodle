@@ -17,7 +17,6 @@ class CORE_API shotType : public coresqldata,
   //根据fileclass外键查询filetype
   static shotTypePtrList getAll();
 
-
   void setType(const dstring &value);
   void setType(const QString &value);
   //获得本身的字符串属性
@@ -27,14 +26,17 @@ class CORE_API shotType : public coresqldata,
   shotClassPtr getFileClass();
 
   //根据字符串寻找tyep
-  static shotTypePtr findShotType(const std::string & type_name);
-  static shotTypePtr findShotType(const  std::string & type_nmae, bool autoInstall);
+  static shotTypePtr findShotType(const std::string &type_name);
+  static shotTypePtr findShotType(const std::string &type_nmae,
+                                  bool autoInstall);
+
  private:
-  template<typename T>
+  template <typename T>
   void batchSetAttr(T &row);
-  
+
   //设置和连接外键 shotclass
   void setShotClass(const shotClassPtr &fileclass_);
+
  private:
   //自身属性
   dstring p_Str_Type;
@@ -44,7 +46,6 @@ class CORE_API shotType : public coresqldata,
 
   //指针id属性
   int64_t p_shotClass_id;
-
 };
 
 inline void shotType::setType(const QString &value) {

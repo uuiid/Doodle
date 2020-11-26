@@ -203,6 +203,16 @@ void assTableWidght::createLightDir() {
     if (epsListModle->selectionModel()->hasSelection()) {
       auto eps_ptr = epsListModle->selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>();
       
+      auto ass_ptr = selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::assInfoPtr>();
+      auto file_exit = true;
+      if (ass_ptr){
+        file_exit = boost::filesystem::exists(doCore::coreSet::getSet().getPrjectRoot() /ass_ptr->getFileList().front());
+      }
+      if (!file_exit){
+        QMessageBox::warning(this, tr("注意"), tr("没有再目录中找到这个文件,请重新提交到数据库"));
+        return;
+      }
+
       auto butten = QMessageBox::question(this, tr("注意"), tr("将添加 %1 集数到共享盘").arg(
           eps_ptr->getEpisdes(), 0, 10, QLatin1Char('0')
       ), QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
@@ -216,13 +226,5 @@ void assTableWidght::createLightDir() {
       QMessageBox::warning(this, tr("注意"), tr("请选择集数"));
     }
   }
-
-
-  //auto epsList = new QInputDialog::getItem(this, tr("选择创建集数"), tr("集数"));
-  //auto epsListWidght = new QListView(this);
-  //epsListWidght->setWindowFlag(Qt::Dialog);
-  //epsListWidght->setModel(epsListModle);
-  //epsListWidght->show();
-
 }
 DOODLE_NAMESPACE_E

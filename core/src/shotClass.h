@@ -1,13 +1,20 @@
-﻿#pragma once
+﻿/*
+ * @Author: your name
+ * @Date: 2020-10-19 13:26:31
+ * @LastEditTime: 2020-11-26 17:58:53
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\shotClass.h
+ */
+#pragma once
 
 #include "core_global.h"
-
 #include "coresqldata.h"
 
 CORE_NAMESPACE_S
 
-class CORE_API shotClass : public coresqldata ,
-                           public std::enable_shared_from_this<shotClass>{
+class CORE_API shotClass : public coresqldata,
+                           public std::enable_shared_from_this<shotClass> {
  public:
   shotClass();
   void select(const qint64 &ID_);
@@ -28,10 +35,8 @@ class CORE_API shotClass : public coresqldata ,
   void updateSQL() override;
   void deleteSQL() override;
 
-
   static shotClassPtrList getAll();
   static shotClassPtr getCurrentClass();
-
 
   [[nodiscard]] dstring getClass_str() const;
   [[nodiscard]] QString getClass_Qstr() const;
@@ -41,11 +46,11 @@ class CORE_API shotClass : public coresqldata ,
   void setclass(const QString &value);
 
  private:
-  template<typename T>
+  template <typename T>
   void batchSetAttr(T &row);
+
  private:
   e_fileclass p_fileclass;
-
 };
 inline QString shotClass::getClass_Qstr() const {
   return QString::fromStdString(getClass_str());
