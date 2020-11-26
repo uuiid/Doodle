@@ -1,4 +1,12 @@
-﻿#pragma once
+﻿/*
+ * @Author: your name
+ * @Date: 2020-09-10 09:56:04
+ * @LastEditTime: 2020-11-26 20:38:26
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\filesqlinfo.h
+ */
+#pragma once
 
 #include "core_global.h"
 #include "coresqldata.h"
@@ -32,27 +40,33 @@ class CORE_API fileSqlInfo : public coresqldata {
   [[nodiscard]] dstring getUser() const;
   [[nodiscard]] QString getUserQ() const;
   virtual dpath generatePath(const std::string &programFodler) = 0;
-  virtual dpath generatePath(const dstring &programFolder, const dstring &suffixes) = 0;
-  virtual dpath generatePath(const dstring &programFolder, const dstring &suffixes, const dstring &prefix) = 0;
+  virtual dpath generatePath(const dstring &programFolder,
+                             const dstring &suffixes) = 0;
+  virtual dpath generatePath(const dstring &programFolder,
+                             const dstring &suffixes,
+                             const dstring &prefix) = 0;
   virtual dstring generateFileName(const dstring &suffixes) = 0;
-  virtual dstring generateFileName(const dstring &suffixes, const dstring &prefix) = 0;
+  virtual dstring generateFileName(const dstring &suffixes,
+                                   const dstring &prefix) = 0;
   virtual void deleteSQL() override;
 
   virtual bool exist(bool refresh);
+
  protected:
   //属性包装
 
-  std::string  fileP;
-  std::string  fileSuffixesP;
-  std::string  userP;
+  std::string fileP;
+  std::string fileSuffixesP;
+  std::string userP;
   int versionP;
-  std::string  filepathP;
+  std::string filepathP;
   dstringList infoP;
-  std::string  fileStateP;
+  std::string fileStateP;
   bool p_b_exist;
+
  protected:
   [[nodiscard]] dstringList json_to_strList(const dstring &json_str) const;
-  [[nodiscard]] dstring     strList_tojson(const dstringList & str_list) const;
+  [[nodiscard]] dstring strList_tojson(const dstringList &str_list) const;
 };
 inline QString fileSqlInfo::getUserQ() const {
   return QString::fromStdString(getUser());

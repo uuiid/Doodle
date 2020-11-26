@@ -1,11 +1,19 @@
-﻿//
+﻿/*
+ * @Author: your name
+ * @Date: 2020-11-16 19:05:34
+ * @LastEditTime: 2020-11-26 20:13:10
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\doodle_GUI\src\assTableWidght.h
+ */
+//
 // Created by teXiao on 2020/10/17.
 //
 
 #pragma once
 
-#include "doodle_global.h"
-#include "core_global.h"
+#include <core_global.h>
+#include <doodle_global.h>
 
 #include <QTableView>
 #include <future>
@@ -13,25 +21,29 @@ class QProgressDialog;
 DOODLE_NAMESPACE_S
 class assTableWidght : public QTableView {
   Q_OBJECT
-public:
+ public:
   explicit assTableWidght(QWidget* parent = nullptr);
 
   void setModel(QAbstractItemModel* model) override;
-public:
 
-private:
+ private:
   void init();
 
-private:
+ private:
   assTableModel* p_model_;
   QMenu* p_menu_;
-private:
+
+ private:
   void insertAss(const QString& path);
   void enableBorder(const bool& isEnable);
-private slots:
+
+ private slots:
   void openFileDialog();
   void createLightDir();
-protected:
+
+  void doClickedSlots(const QModelIndex& index);
+
+ protected:
   void contextMenuEvent(QContextMenuEvent* event) override;
   //拖拽函数
 

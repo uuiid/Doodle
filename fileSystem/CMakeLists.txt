@@ -18,7 +18,7 @@ target_link_libraries(fileSystem PUBLIC Qt5::Core)
 target_link_libraries(fileSystem PUBLIC CURL::libcurl)
 target_link_libraries(fileSystem PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(fileSystem PUBLIC logger)
-
+target_compile_definitions(fileSystem PRIVATE _WIN32_WINNT=0x0A00)
 
 target_compile_definitions(fileSystem PRIVATE FILESYSTEM_LIBRARY)
 

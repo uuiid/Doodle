@@ -5,6 +5,7 @@
 #include "ueSynArchive.h"
 
 #include <src/DfileSyntem.h>
+#include <src/assfilesqlinfo.h>
 #include <src/coreDataManager.h>
 #include <src/coreset.h>
 #include <src/episodes.h>
@@ -81,11 +82,17 @@ bool ueSynArchive::update() {
 }
 bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   auto synClass = synData::getAll(episodes_ptr);
+  auto assClass = coreDataManager::get().getAssClassPtr();
+  //复制文件的来源
+  auto soure_ptr = coreDataManager::get().getAssInfoPtr();
+
+  //验证各种指针
+  if (!episodes_ptr) return false;
   if (synClass->isNULL()) {
     synClass->setEpisodes(episodes_ptr);
     synClass->insert();
   }
-  auto assClass = coreDataManager::get().getAssClassPtr();
+  if (!soure_ptr) return false;
 
   auto create_path = synClass->push_back(assClass);
 
@@ -121,6 +128,11 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
         }
       }
     }
+  }
+
+  server = set.getAssRoot() / set.getDepartment() / create_path->server;
+  for (auto &&path : soure_ptr->getFileList()) {
+    doSystem::DfileSyntem::copy(path, server / path.filename());
   }
   return true;
 }

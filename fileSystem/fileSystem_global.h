@@ -1,9 +1,9 @@
 ﻿#pragma once
 
+#include <boost/filesystem/path.hpp>
 #include <QtCore/qglobal.h>
 #include <memory>
 #include <string>
-#include <boost/filesystem/path.hpp>
 
 #if defined (FILESYSTEM_LIBRARY)
 #   define DSYSTEM_API Q_DECL_EXPORT

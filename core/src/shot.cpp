@@ -1,22 +1,21 @@
 ﻿#include "shot.h"
 
-#include "episodes.h"
-#include "coresql.h"
+#include <Logger.h>
+#include <sqlpp11/mysql/mysql.h>
+#include <sqlpp11/sqlpp11.h>
+#include <src/coreDataManager.h>
+
+#include <boost/format.hpp>
+#include <magic_enum.hpp>
+#include <memory>
 
 #include "coreOrm/shots_sqlOrm.h"
-#include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/mysql/mysql.h>
-
-#include <magic_enum.hpp>
-
-#include <memory>
-#include <boost/format.hpp>
-#include <Logger.h>
-
-#include <src/coreDataManager.h>
+#include "coresql.h"
+#include "episodes.h"
 CORE_NAMESPACE_S
 
-const std::vector<std::string> shot::e_shotAB_list = {"B", "C", "D", "E", "F", "G", "H"};
+const std::vector<std::string> shot::e_shotAB_list = {"B", "C", "D", "E",
+                                                      "F", "G", "H"};
 
 shot::shot()
     : coresqldata(),
@@ -24,23 +23,19 @@ shot::shot()
       p_qint_shot_(-1),
       p_qenm_shotab(e_shotAB::_),
       p_eps_id(-1),
-      p_ptr_eps() {
-}
+      p_ptr_eps() {}
 
 void shot::select(const qint64 &ID_) {
   doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row: db->run(
-      sqlpp::select(sqlpp::all_of(table))
-          .from(table)
-          .where(table.id == ID_)
-  )) {
+  for (auto &&row : db->run(sqlpp::select(sqlpp::all_of(table))
+                                .from(table)
+                                .where(table.id == ID_))) {
     idP = row.id;
     p_qint_shot_ = row.shot;
-    setShotAb((dstring) row.shotab);
+    setShotAb((dstring)row.shotab);
     p_eps_id = row.episodesId;
   }
-
 }
 
 void shot::insert() {
@@ -48,13 +43,12 @@ void shot::insert() {
 
   doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
-  auto install = sqlpp::insert_into(table).columns(table.episodesId,
-                                                   table.shot,
+  auto install = sqlpp::insert_into(table).columns(table.episodesId, table.shot,
                                                    table.shotab);
 
-  install.values.add(table.episodesId = p_eps_id,
-                     table.shot = p_qint_shot_,
-                     table.shotab = sqlpp::value_or_null<dstring>(getShotAb_str()));
+  install.values.add(
+      table.episodesId = p_eps_id, table.shot = p_qint_shot_,
+      table.shotab = sqlpp::value_or_null<dstring>(getShotAb_str()));
   idP = db->insert(install);
   if (idP == 0) {
     DOODLE_LOG_WARN << "无法插入镜头" << p_qint_shot_;
@@ -63,27 +57,23 @@ void shot::insert() {
   coreDataManager::get().setShotL(shared_from_this());
 }
 
-void shot::updateSQL() {
-
-}
+void shot::updateSQL() {}
 
 void shot::deleteSQL() {
   doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
-  db->remove(sqlpp::remove_from(table)
-                 .where(table.id == idP));
+  db->remove(sqlpp::remove_from(table).where(table.id == idP));
 }
 
 shotPtrList shot::getAll(const episodesPtr &EP_) {
   shotPtrList list{};
   doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row: db->run(
-      sqlpp::select(sqlpp::all_of(table))
-          .from(table)
-          .where(table.episodesId == EP_->getIdP())
-          .order_by(table.shot.asc(), table.shotab.asc())
-  )) {
+  for (auto &&row :
+       db->run(sqlpp::select(sqlpp::all_of(table))
+                   .from(table)
+                   .where(table.episodesId == EP_->getIdP())
+                   .order_by(table.shot.asc(), table.shotab.asc()))) {
     auto item = std::make_shared<shot>();
     item->idP = row.id;
     item->p_qint_shot_ = row.shot;
@@ -96,8 +86,7 @@ shotPtrList shot::getAll(const episodesPtr &EP_) {
 }
 
 void shot::setEpisodes(const episodesPtr &value) {
-  if (!value)
-    return;
+  if (!value) return;
   p_eps_id = value->getIdP();
   p_ptr_eps = value;
 }
@@ -148,9 +137,11 @@ dstring shot::getShot_str() const {
 dstring shot::getShotAb_str() const {
   dstring str;
   switch (p_qenm_shotab) {
-    case e_shotAB::_:str = "";
+    case e_shotAB::_:
+      str = "";
       break;
-    default:std::string tmpstr(magic_enum::enum_name(p_qenm_shotab));
+    default:
+      std::string tmpstr(magic_enum::enum_name(p_qenm_shotab));
       str = tmpstr;
       break;
   }

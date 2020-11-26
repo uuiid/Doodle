@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-15 13:57:51
- * @LastEditTime: 2020-10-09 17:20:22
+ * @LastEditTime: 2020-11-26 18:02:40
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\shot.h
@@ -16,7 +16,6 @@ CORE_NAMESPACE_S
 class CORE_API shot : public coresqldata,
                       public std::enable_shared_from_this<shot> {
  public:
-
   enum class e_shotAB {
     _ = 0,
     B = 1,
@@ -61,19 +60,21 @@ class CORE_API shot : public coresqldata,
   QString getShotAb_strQ() const;
   //获得shot的数值
   int64_t getShot() const { return p_qint_shot_; };
+
  private:
   int64_t p_qint_shot_;
   e_shotAB p_qenm_shotab;
 
   episodesPtr p_ptr_eps;
   int64_t p_eps_id;
-
 };
 inline void shot::setShot(const int64_t &sh, const QString &ab) {
-  setShot(sh,ab.toStdString());
+  setShot(sh, ab.toStdString());
 }
 inline QString shot::getShotAndAb_strQ() const {
   return QString::fromStdString(getShotAndAb_str());
 }
-inline QString shot::getShotAb_strQ() const { return QString::fromStdString(getShotAb_str()); }
+inline QString shot::getShotAb_strQ() const {
+  return QString::fromStdString(getShotAb_str());
+}
 CORE_NAMESPACE_E

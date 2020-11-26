@@ -1,42 +1,50 @@
 ﻿//
 // Created by teXiao on 2020/10/17.
 //
-#include <src/assTableWidght.h>
-#include <boost/algorithm/string.hpp>
-#include <boost/regex.hpp>
+//这里开始禁用clang-format排序
+// clang-format off
+#include "assTableWidght.h"
+#include <src/updataManager.h>  //这个必须往上放 这样才不会出错
+
+// clang-format on
+
 #include <core_doQt.h>
-#include <future>
+#include <boost/regex.hpp>
+
 #include <Logger.h>
+#include <ObjIdlbase.h>
+#include <QtWidgets/qapplication.h>
+#include <QtWidgets/qlistwidget.h>
+#include <QtWidgets/qmessagebox.h>
+
+#include <src/assTableModel.h>
+#include <src/imageArchive.h>
+#include <src/shotEpsListWidget.h>
+#include <src/toolkit.h>
+
 #include <QContextMenuEvent>
 #include <QHeaderView>
 #include <QMenu>
 #include <QMimeData>
 #include <QtCore/QTimer>
-#include <QtWidgets/qapplication.h>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QInputDialog>
-#include <QtWidgets/qmessagebox.h>
 #include <QtWidgets/QProgressDialog>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/qlistwidget.h>
-#include <src/assTableModel.h>
-#include <src/imageArchive.h>
-#include <src/toolkit.h>
-#include <src/updataManager.h>
+#include <future>
 #include <string>
-#include <src/shotEpsListWidget.h>
-#include <ObjIdlbase.h>
+
 DOODLE_NAMESPACE_S
 assTableWidght::assTableWidght(QWidget *parent)
-    : QTableView(parent),
-      p_menu_(nullptr),
-      p_model_(nullptr) {
+    : QTableView(parent), p_menu_(nullptr), p_model_(nullptr) {
   setSelectionBehavior(QAbstractItemView::SelectRows);   //行选
   setSelectionMode(QAbstractItemView::SingleSelection);  //单选
   setSelectionBehavior(QAbstractItemView::SelectRows);
   setShowGrid(false);
   setFrameShape(QFrame::NoFrame);
   setAcceptDrops(true);
+  connect(this, &assTableWidght::clicked, this,
+          &assTableWidght::doClickedSlots);
 }
 void assTableWidght::setModel(QAbstractItemModel *model) {
   auto k_model_ = dynamic_cast<assTableModel *>(model);
@@ -58,15 +66,15 @@ void assTableWidght::insertAss(const QString &path) {
 
   p_model_->insertRow(0, QModelIndex());
   auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
-      .value<doCore::assInfoPtr>();
+                  .value<doCore::assInfoPtr>();
   QMessageBox msgBox;
-  auto text_info = QInputDialog::getText(this, tr("请输入备注"),
-                                         tr("请输入文件备注"));
+  auto text_info =
+      QInputDialog::getText(this, tr("请输入备注"), tr("请输入文件备注"));
   data->setInfoP(text_info.toStdString());
   DOODLE_LOG_INFO << pathInfo.suffix();
 
   if (boost::regex_match(pathInfo.suffix().toStdString(), reMaya)) {
-    //maya文件
+    // maya文件
     msgBox.setText(tr("请选择类型"));
     auto modelFile = msgBox.addButton("模型文件", QMessageBox::AcceptRole);
     auto rig = msgBox.addButton("绑定文件", QMessageBox::AcceptRole);
@@ -76,11 +84,14 @@ void assTableWidght::insertAss(const QString &path) {
     msgBox.exec();
 
     if (msgBox.clickedButton() == modelFile) {
-      data->setAssType(doCore::assType::findType(doCore::assType::e_type::scenes, true));
+      data->setAssType(
+          doCore::assType::findType(doCore::assType::e_type::scenes, true));
     } else if (msgBox.clickedButton() == rig) {
-      data->setAssType(doCore::assType::findType(doCore::assType::e_type::rig, true));
+      data->setAssType(
+          doCore::assType::findType(doCore::assType::e_type::rig, true));
     } else if (msgBox.clickedButton() == modelFile_low) {
-      data->setAssType(doCore::assType::findType(doCore::assType::e_type::scenes_low, true));
+      data->setAssType(
+          doCore::assType::findType(doCore::assType::e_type::scenes_low, true));
     } else if (msgBox.clickedButton() == noButten) {
       p_model_->removeRow(0);
       return;
@@ -95,13 +106,15 @@ void assTableWidght::insertAss(const QString &path) {
     updataManager::get().run();
 
   } else if (boost::regex_search(pathInfo.suffix().toStdString(), reUe4)) {
-    //ue4文件
-    data->setAssType(doCore::assType::findType(doCore::assType::e_type::UE4, true));
+    // ue4文件
+    data->setAssType(
+        doCore::assType::findType(doCore::assType::e_type::UE4, true));
     auto ue4_archice = std::make_shared<doCore::ueArchive>(data);
     ue4_archice->update(path.toStdString());
   } else {
     //图片文件
-    data->setAssType(doCore::assType::findType(doCore::assType::e_type::screenshot, true));
+    data->setAssType(
+        doCore::assType::findType(doCore::assType::e_type::screenshot, true));
     p_model_->removeRow(0);
     //    auto image_archice = std::make_shared<doCore::imageArchive>(data);
     return;
@@ -117,8 +130,7 @@ void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
   }
   auto sub_file = new QAction(p_menu_);
   sub_file->setText(tr("提交文件"));
-  connect(sub_file, &QAction::triggered,
-          this, &assTableWidght::openFileDialog);
+  connect(sub_file, &QAction::triggered, this, &assTableWidght::openFileDialog);
   p_menu_->addAction(sub_file);
 
   auto index = p_model_->index(selectionModel()->currentIndex().row(),
@@ -128,16 +140,17 @@ void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
     auto k_openFile = new QAction();
     k_openFile->setText("打开文件所在位置");
     connect(k_openFile, &QAction::triggered, this, [=] {
-      toolkit::openPath(index.data(Qt::UserRole).value<doCore::assInfoPtr>(), true);
+      toolkit::openPath(index.data(Qt::UserRole).value<doCore::assInfoPtr>(),
+                        true);
     });
     p_menu_->addAction(k_openFile);
 
-    if (index.data(Qt::UserRole).value<doCore::assInfoPtr>()->getAssType()
-        == doCore::assType::findType(doCore::assType::e_type::UE4, false)) {
+    if (index.data(Qt::UserRole).value<doCore::assInfoPtr>()->getAssType() ==
+        doCore::assType::findType(doCore::assType::e_type::UE4, false)) {
       auto k_createDir = new QAction();
       k_createDir->setText("创建灯光文件夹");
-      connect(k_createDir, &QAction::triggered,
-              this, &assTableWidght::createLightDir);
+      connect(k_createDir, &QAction::triggered, this,
+              &assTableWidght::createLightDir);
       p_menu_->addAction(k_createDir);
     }
   }
@@ -194,37 +207,52 @@ void assTableWidght::createLightDir() {
 
   for (auto &wid : widghtList) {
     if (!epsListModle) {
-      epsListModle = wid->findChild<shotEpsListWidget *>("p_episodes_list_widget_");
+      epsListModle =
+          wid->findChild<shotEpsListWidget *>("p_episodes_list_widget_");
     } else {
       break;
     }
   }
   if (epsListModle) {
     if (epsListModle->selectionModel()->hasSelection()) {
-      auto eps_ptr = epsListModle->selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>();
-      
-      auto ass_ptr = selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::assInfoPtr>();
+      auto eps_ptr = epsListModle->selectionModel()
+                         ->currentIndex()
+                         .data(Qt::UserRole)
+                         .value<doCore::episodesPtr>();
+
+      auto ass_ptr = selectionModel()
+                         ->currentIndex()
+                         .data(Qt::UserRole)
+                         .value<doCore::assInfoPtr>();
       auto file_exit = true;
-      if (ass_ptr){
-        file_exit = boost::filesystem::exists(doCore::coreSet::getSet().getPrjectRoot() /ass_ptr->getFileList().front());
+      if (ass_ptr) {
+        file_exit = boost::filesystem::exists(
+            doCore::coreSet::getSet().getPrjectRoot() /
+            ass_ptr->getFileList().front());
       }
-      if (!file_exit){
-        QMessageBox::warning(this, tr("注意"), tr("没有再目录中找到这个文件,请重新提交到数据库"));
+      if (!file_exit) {
+        QMessageBox::warning(this, tr("注意"),
+                             tr("没有再目录中找到这个文件,请重新提交到数据库"));
         return;
       }
 
-      auto butten = QMessageBox::question(this, tr("注意"), tr("将添加 %1 集数到共享盘").arg(
-          eps_ptr->getEpisdes(), 0, 10, QLatin1Char('0')
-      ), QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+      auto butten = QMessageBox::question(
+          this, tr("注意"),
+          tr("将添加 %1 集数到共享盘")
+              .arg(eps_ptr->getEpisdes(), 0, 10, QLatin1Char('0')),
+          QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
       if (butten == QMessageBox::Yes) {
         auto uesyn = std::make_shared<doCore::ueSynArchive>();
-        auto eps_ptr = epsListModle->selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>();
         uesyn->makeDir(eps_ptr);
       }
     } else {
       QMessageBox::warning(this, tr("注意"), tr("请选择集数"));
     }
   }
+}
+void assTableWidght::doClickedSlots(const QModelIndex &index) {
+  auto assinfo = index.data(Qt::UserRole).value<doCore::assInfoPtr>();
+  if (assinfo) doCore::coreDataManager::get().setAssInfoPtr(assinfo);
 }
 DOODLE_NAMESPACE_E
