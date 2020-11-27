@@ -57,6 +57,7 @@ find_program(WINQT windeployqt REQUIRED)
 
 #====================一些非qt组件的搜索和安装=============
 #第一种搜索方式
+set(CMAKE_INSTALL_UCRT_LIBRARIES "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64")
 include(InstallRequiredSystemLibraries)
 #第二中验证加搜索方式
 set(DOODLEAPPS ${CMAKE_INSTALL_PREFIX}/bin/doodle.exe)  # paths to executables
@@ -69,9 +70,9 @@ list(APPEND DIRS ${CMAKE_INSTALL_PREFIX}/lib)
 foreach(_var in LISTS ${CMAKE_FIND_ROOT_PATH})
      list(APPEND DIRS ${_var}/bin)
 endforeach(_var)
-list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/")
-list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/Remote Debugger/x64/")
-list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/x64/bin")
+# list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/")
+# list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/Remote Debugger/x64/")
+# list(APPEND DIRS "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64")
 
 if(RUN_COPY)
         #复制资源

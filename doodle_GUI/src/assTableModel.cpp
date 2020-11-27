@@ -123,6 +123,18 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
         if (!ass->exist(false)) var = QColor("darkred");
       }
     } break;
+    case Qt::ToolTipRole:
+      if (ass->isInsert()) {
+        if (index.column() == 1) {
+          QString tooltip{};
+          for (auto &&tex : ass->getInfoP()) {
+            if (tex == ass->getInfoP().back()) continue;
+            tooltip.append(DOTOS(tex));
+          }
+          var = tooltip;
+        }
+      }
+      break;
     default:
       var = QVariant();
       break;

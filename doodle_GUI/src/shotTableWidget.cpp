@@ -6,6 +6,7 @@
 
 #include <core_doQt.h>
 #include <src/toolkit.h>
+#include <boost/process.hpp>
 
 #include <QContextMenuEvent>
 #include <QFileDialog>
@@ -25,13 +26,15 @@
 DOODLE_NAMESPACE_S
 //-----------------------------------自定义shot小部件---------------------------------------------//
 shotTableWidget::shotTableWidget(QWidget *parent)
-    : QTableView(parent),
-      p_model_(),
-      p_menu_(),
-      p_type_ptr_() {
+    : QTableView(parent), p_model_(), p_menu_(), p_type_ptr_() {
   setSelectionBehavior(QAbstractItemView::SelectRows);   //行选
   setSelectionMode(QAbstractItemView::SingleSelection);  //单选
   setAcceptDrops(true);
+
+  connect(this, &shotTableWidget::clicked, this,
+          &shotTableWidget::doClickedSlots);
+  connect(this, &shotTableWidget::doubleClicked, this,
+          &shotTableWidget::doDubledSlots);
 }
 void shotTableWidget::init() {
   horizontalHeader()->setVisible(true);
@@ -44,23 +47,21 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
   if (doCore::coreDataManager::get().getShotPtr()) {
     //上传文件
     auto k_sub_file = new QAction();
-    connect(k_sub_file, &QAction::triggered,
-            this, &shotTableWidget::getSelectPath);
+    connect(k_sub_file, &QAction::triggered, this,
+            &shotTableWidget::getSelectPath);
     k_sub_file->setText(tr("提交文件"));
     k_sub_file->setStatusTip(tr("提交所需要的文件"));
     p_menu_->addAction(k_sub_file);
     //上传拍屏
     auto k_sub_fb = new QAction();
-    connect(k_sub_fb, &QAction::triggered,
-            this, &shotTableWidget::getSelectDir);
+    connect(k_sub_fb, &QAction::triggered, this,
+            &shotTableWidget::getSelectDir);
     k_sub_fb->setText(tr("提交目录"));
     p_menu_->addAction(k_sub_fb);
 
     auto k_show_all = new QAction();
-    connect(k_show_all, &QAction::triggered,
-            this, [=]() {
-          p_model_->showAll();
-        });
+    connect(k_show_all, &QAction::triggered, this,
+            [=]() { p_model_->showAll(); });
     k_show_all->setText("显示所有");
     p_menu_->addAction(k_show_all);
 
@@ -91,8 +92,8 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
         //导出fbx脚本
         auto k_exportFbx = new QAction();
         k_exportFbx->setText(tr("导出fbx文件"));
-        connect(k_exportFbx, &QAction::triggered,
-                this, &shotTableWidget::exportFbx);
+        connect(k_exportFbx, &QAction::triggered, this,
+                &shotTableWidget::exportFbx);
         p_menu_->addAction(k_exportFbx);
       }
     }
@@ -170,10 +171,10 @@ void shotTableWidget::getSelectPath() {
   insertShot(path);
 }
 void shotTableWidget::getSelectDir() {
-  auto path = QFileDialog::getExistingDirectory(
-      this, tr("提交文件"), QString()
-  );
-  if (path.isEmpty()) return;;
+  auto path =
+      QFileDialog::getExistingDirectory(this, tr("提交文件"), QString());
+  if (path.isEmpty()) return;
+  ;
   if (path.isNull()) return;
   insertShot(path);
 }
@@ -184,31 +185,29 @@ void shotTableWidget::insertShot(const QString &path) {
   //插入新的数据
   p_model_->insertRow(0, QModelIndex());
   auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
-      .value<doCore::shotInfoPtr>();
+                  .value<doCore::shotInfoPtr>();
 
   if (pathInfo.isFile()) {
-    if (pathInfo.suffix() == "ma" || pathInfo.suffix() == "mb") {//maya文件
+    if (pathInfo.suffix() == "ma" || pathInfo.suffix() == "mb") {  // maya文件
       data->setShotType(doCore::shotType::findShotType("Animation", true));
       submitMayaFile(data, path);
     } else if (pathInfo.suffix() == "mp4" || pathInfo.suffix() == "avi" ||
-        pathInfo.suffix() == "mov") {//拖拽文件(拍屏已经是视频文件)
+               pathInfo.suffix() == "mov") {  //拖拽文件(拍屏已经是视频文件)
       data->setShotType(doCore::shotType::findShotType("flipbook", true));
       submitFBFile(data, path);
     }
-  } else if (pathInfo.isDir()) {//拖动路径(拍屏所在路径)
+  } else if (pathInfo.isDir()) {  //拖动路径(拍屏所在路径)
     if (QDir(path).isEmpty()) {
       p_model_->removeRow(0, QModelIndex());
       return;
     }
     data->setShotType(doCore::shotType::findShotType("flipbook", true));
     submitFBFile(data, path);
-
   }
   //更新列表
   p_model_->init();
 }
 void shotTableWidget::exportFbx() {
-
   //是否选择导出物体
   if (!selectionModel()->hasSelection()) return;
   //获得选择数据
@@ -220,12 +219,12 @@ void shotTableWidget::exportFbx() {
   p_model_->insertRow(0, QModelIndex());
 
   auto export_data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
-      .value<doCore::shotInfoPtr>();
+                         .value<doCore::shotInfoPtr>();
 
   //创建上传类
   auto k_fileexport = std::make_shared<doCore::mayaArchiveShotFbx>(export_data);
   //开始导出
-  auto fun = std::async(std::launch::async, [=]()->bool {
+  auto fun = std::async(std::launch::async, [=]() -> bool {
     return k_fileexport->update(data->getFileList().front());
   });
   updataManager::get().addQueue(fun, "正在上传中", 2000);
@@ -234,20 +233,33 @@ void shotTableWidget::exportFbx() {
   //更新列表
   p_model_->init();
 }
-void shotTableWidget::submitMayaFile(doCore::shotInfoPtr &info_ptr, const QString &path) {
+
+void shotTableWidget::doClickedSlots(const QModelIndex &index) {
+  auto info = index.data(Qt::UserRole).value<doCore::shotInfoPtr>();
+  if (info) doCore::coreDataManager::get().setShotInfoPtr(info);
+}
+
+void shotTableWidget::doDubledSlots(const QModelIndex &index) {
+  auto info = index.data(Qt::UserRole).value<doCore::shotInfoPtr>();
+  if (info) {
+    auto path = info->getFileList().front();
+    toolkit::openPath(path);
+  }
+}
+void shotTableWidget::submitMayaFile(doCore::shotInfoPtr &info_ptr,
+                                     const QString &path) {
   auto file = std::make_shared<doCore::mayaArchive>(info_ptr);
-  auto fun = std::async(std::launch::async, [=]() {
-    return file->update(path.toStdString());
-  });
+  auto fun = std::async(std::launch::async,
+                        [=]() { return file->update(path.toStdString()); });
   updataManager::get().addQueue(fun, "正在上传中", 100);
   updataManager::get().run();
 }
-void shotTableWidget::submitFBFile(doCore::shotInfoPtr &info_ptr, const QString &path) {
+void shotTableWidget::submitFBFile(doCore::shotInfoPtr &info_ptr,
+                                   const QString &path) {
   auto k_movie = std::make_shared<doCore::moveShotA>(info_ptr);
   std::future<bool> k_fu;
-  k_fu = std::async(std::launch::async, [=]() {
-    return k_movie->update({path.toStdString()});
-  });
+  k_fu = std::async(std::launch::async,
+                    [=]() { return k_movie->update({path.toStdString()}); });
   updataManager::get().addQueue(k_fu, "正在上传中", 1000);
   updataManager::get().run();
 }

@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-11-16 15:39:08
- * @LastEditTime: 2020-11-27 11:34:02
+ * @LastEditTime: 2020-11-27 17:21:31
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\src\toolkit.h
@@ -15,6 +15,7 @@ class toolkit {
  public:
   static void openPath(const doCore::fileSqlInfoPtr &info_ptr,
                        const bool &openEx);
+  static void openPath(const doCore::dpath &path);
   static void installUePath(const std::string &path);
   static bool update();
 

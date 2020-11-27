@@ -27,8 +27,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
 
 [Files]
-Source: "install_release\bin\doodle.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "install_release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs replacesameversion
+Source: "install_release\bin\doodle.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "install_release\*";Excludes :"*.lib"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs replacesameversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -39,7 +39,7 @@ Name: "{commondesktop}\doodle"; Filename: "{app}\doodle.exe"; Tasks: desktopicon
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\doodle"; Filename: "{app}\doodle.exe"; Tasks: quicklaunchicon
 
 [Run]
-Filename: "{app}\doodle.exe"; Description: "{cm:LaunchProgram,doodle}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\bin\doodle.exe"; Description: "{cm:LaunchProgram,doodle}"; Flags: nowait postinstall skipifsilent
 
 [LangOptions]
 LanguageID=$0804

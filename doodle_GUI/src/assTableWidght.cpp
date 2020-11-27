@@ -10,7 +10,7 @@
 
 #include <core_doQt.h>
 #include <boost/regex.hpp>
-
+#include <boost/process.hpp>
 #include <Logger.h>
 #include <ObjIdlbase.h>
 #include <QtWidgets/qapplication.h>
@@ -45,6 +45,8 @@ assTableWidght::assTableWidght(QWidget *parent)
   setAcceptDrops(true);
   connect(this, &assTableWidght::clicked, this,
           &assTableWidght::doClickedSlots);
+  connect(this, &assTableWidght::doubleClicked, this,
+          &assTableWidght::doDubledSlots);
 }
 void assTableWidght::setModel(QAbstractItemModel *model) {
   auto k_model_ = dynamic_cast<assTableModel *>(model);
@@ -254,5 +256,13 @@ void assTableWidght::createLightDir() {
 void assTableWidght::doClickedSlots(const QModelIndex &index) {
   auto assinfo = index.data(Qt::UserRole).value<doCore::assInfoPtr>();
   if (assinfo) doCore::coreDataManager::get().setAssInfoPtr(assinfo);
+}
+
+void assTableWidght::doDubledSlots(const QModelIndex &index) {
+  auto assinfo = index.data(Qt::UserRole).value<doCore::assInfoPtr>();
+  if (assinfo) {
+    auto path = assinfo->getFileList().front();
+    toolkit::openPath(path);
+  }
 }
 DOODLE_NAMESPACE_E

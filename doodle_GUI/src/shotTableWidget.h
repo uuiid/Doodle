@@ -1,4 +1,12 @@
-﻿//
+﻿/*
+ * @Author: your name
+ * @Date: 2020-11-16 19:06:12
+ * @LastEditTime: 2020-11-27 16:55:03
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\doodle_GUI\src\shotTableWidget.h
+ */
+//
 // Created by teXiao on 2020/10/13.
 //
 
@@ -15,7 +23,7 @@ class QProgressDialog;
 DOODLE_NAMESPACE_S
 
 class shotTableWidget : public QTableView {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit shotTableWidget(QWidget *parent = nullptr);
 
@@ -26,8 +34,13 @@ class shotTableWidget : public QTableView {
   void getSelectDir();
   void exportFbx();
 
-  static void submitMayaFile(doCore::shotInfoPtr &info_ptr, const QString &path);
+  void doClickedSlots(const QModelIndex &index);
+  void doDubledSlots(const QModelIndex &index);
+
+  static void submitMayaFile(doCore::shotInfoPtr &info_ptr,
+                             const QString &path);
   static void submitFBFile(doCore::shotInfoPtr &info_ptr, const QString &path);
+
  protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
 
@@ -35,11 +48,13 @@ class shotTableWidget : public QTableView {
   void dragLeaveEvent(QDragLeaveEvent *event) override;
   void dragMoveEvent(QDragMoveEvent *event) override;
   void dropEvent(QDropEvent *event) override;
+
  private:
   doCore::shotTypePtr p_type_ptr_;
   shotTableModel *p_model_;
 
   QMenu *p_menu_;
+
  private:
   void init();
   void insertShot(const QString &path);
@@ -47,5 +62,3 @@ class shotTableWidget : public QTableView {
 };
 
 DOODLE_NAMESPACE_E
-
-

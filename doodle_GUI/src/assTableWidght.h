@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-11-16 19:05:34
- * @LastEditTime: 2020-11-26 20:13:10
+ * @LastEditTime: 2020-11-27 16:49:39
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\src\assTableWidght.h
@@ -42,6 +42,7 @@ class assTableWidght : public QTableView {
   void createLightDir();
 
   void doClickedSlots(const QModelIndex& index);
+  void doDubledSlots(const QModelIndex& index);
 
  protected:
   void contextMenuEvent(QContextMenuEvent* event) override;
