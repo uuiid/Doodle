@@ -1,25 +1,6 @@
 [
   {
-    "name": "MY__VisS_2017_-amd64-qt5.12.9",
-    "visualStudio": "0b8dd8f0",
-    "visualStudioArchitecture": "x64",
-    "preferredGenerator": {
-      "name": "Visual Studio 15 2017",
-      "platform": "x64",
-      "toolset": "host=x64"
-    },
-    "toolchainFile": "${env:VCPKG_MYROOT}/scripts/buildsystems/vcpkg.cmake",
-    "environmentVariables": {
-      "CMAKE_PREFIX_PATH": "${env:QT_MYROOT}/5.12.9/msvc2017_64",
-      "VCPKG_TARGET_TRIPLET": "x64-windows"
-    },
-    "cmakeSettings": {
-      "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-      "CMAKE_INSTALL_PREFIX":"F:/Source/qt_test/Doodle/install"
-    }
-  },
-  {
-    "name": "MY_ninja_64-qt5.12.9",
+    "name": "MY_19_ninja_64-qt5.15.9",
     "visualStudio": "bfc23b1b",
     "visualStudioArchitecture": "x64",
     "preferredGenerator": {
@@ -32,11 +13,11 @@
     },
     "cmakeSettings": {
       "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-      "CMAKE_INSTALL_PREFIX":"F:/Source/qt_test/Doodle/install"
+      "CMAKE_INSTALL_PREFIX": "F:/Source/qt_test/Doodle/install"
     }
   },
   {
-    "name": "MY_Ninja_R_2019_-amd64",
+    "name": "MY_19_Ninja_R__64-qt5.15.9",
     "visualStudio": "bfc23b1b",
     "visualStudioArchitecture": "x64",
     "preferredGenerator": {
@@ -49,10 +30,10 @@
     },
     "cmakeSettings": {
       "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-      "CMAKE_INSTALL_PREFIX":"F:/Source/qt_test/install",
-      "RUN_QT_TOOL":"ON",
-      "RUN_fixup":"ON",
-      "RUN_COPY":"ON"
+      "CMAKE_INSTALL_PREFIX": "F:/Source/qt_test/install_release",
+      "RUN_QT_TOOL": "ON",
+      "RUN_fixup": "ON",
+      "RUN_COPY": "ON"
     }
   }
 ]

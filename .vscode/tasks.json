@@ -5,7 +5,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "GoogleTest",
+            "label": "doodle_Test",
             "type": "shell",
             "command": "${workspaceFolder}/build/test/Debug/test_my.exe",
             "problemMatcher": [],
@@ -25,22 +25,17 @@
         {
             "label": "run-->windeployqt",
             "type": "shell",
-            "command":"${env:QT_MYROOT}/5.12.9/msvc2017_64/bin/windeployqt.exe ${workspaceFolder}/build/test/Debug/test_my.exe",
+            "command": "${env:QT_MYROOT}/5.12.9/msvc2017_64/bin/windeployqt.exe ${workspaceFolder}/build/test/Debug/test_my.exe",
         },
         {
-            "label": "Doodle_run",
+            "label": "pack",
             "type": "shell",
-            "command": "${workspaceFolder}/build/doodle_GUI/Debug/doodle.exe",
+            "command": "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe",
             "problemMatcher": [],
             "args": [
-                "--gtest_output=xml:${workspaceFolder}/build/test.xml"
+                "anzhuang.iss"
             ],
-            "options": {
-                "env": {
-                    "PATH": "$PATH;"
-                }
-            },
-            "group": "build"
+            "group": "none"
         }
     ]
 }

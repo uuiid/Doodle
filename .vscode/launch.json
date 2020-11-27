@@ -7,7 +7,7 @@
             "program": "${workspaceFolder}/install/bin/doodle.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/install/bin",
             "environment": [
                 {
                     "name": "PATH",
@@ -24,7 +24,7 @@
             "program": "${workspaceFolder}/install/bin/doodle.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/install/bin",
             "environment": [
                 {
                     "name": "PATH",

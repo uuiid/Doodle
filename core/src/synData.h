@@ -22,7 +22,7 @@ class CORE_API synData : public coresqldata {
   void setEpisodes(const episodesPtr &episodes_ptr);
   episodesPtr getEpisodes();
 
-  synPath_structPtr push_back(const assClassPtr &ass_class_ptr);
+  dpathPtr push_back(const assClassPtr &ass_class_ptr);
 
  private:
   std::string toString();

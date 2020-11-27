@@ -33,7 +33,7 @@ dpath ueSynArchive::syn(const shotPtr &shot_) {
   //  eps % set.getSyneps();
   dstring shotFstr = "*\\VFX\\*";
   if (shot_) {
-    boost::format shotFlliter(R"(*\sc%04i\Checkpoint\VFX\*)");
+    boost::format shotFlliter(R"(*c%04i\Checkpoint\VFX\*)");
     shotFstr = (shotFlliter % shot_->getShot()).str();
   }
   for (auto &item : synpart) {
@@ -99,18 +99,37 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   synClass->updateSQL();
 
   auto &set = coreSet::getSet();
-  ;
+
   dstringList list;
+  //复制灯光需要的文件夹
+  auto server = set.getPrjectRoot() / set.getAssRoot() / set.getDepartment() /
+                *create_path;
+  auto copy_path_list = soure_ptr->getFileList();
+  if (copy_path_list.size() == 1) {
+    auto path = copy_path_list.front();
+    doSystem::DfileSyntem::copy(set.getPrjectRoot() / path,
+                                server / path.filename());
+    doSystem::DfileSyntem::copy(
+        set.getPrjectRoot() / path.parent_path() / DOODLE_CONTENT,
+        server / DOODLE_CONTENT);
+  } else if (copy_path_list.size() == 2) {
+    for (auto &copy_path : copy_path_list) {
+      doSystem::DfileSyntem::copy(set.getPrjectRoot() / copy_path,
+                                  server / copy_path.filename());
+    }
+  }
 
+  for (auto &&path : soure_ptr->getFileList()) {
+  }
+  //创建灯光需要的文件夹
   boost::format shot(DOODLE_SHFORMAT);
-
   dstringList listcreates{"Checkpoint", "Light", "Ren"};
   dstringList listDep{"Light", "VFX"};
   auto session = doSystem::DfileSyntem::getFTP().session(
       set.getIpFtp(), 21, set.getProjectname() + set.getUser_en(),
       set.getUser_en());
-  auto server = set.getAssRoot() / set.getDepartment() / create_path->server /
-                DOODLE_CONTENT / "shot" / episodes_ptr->getEpisdes_str();
+  server = set.getAssRoot() / set.getDepartment() / *create_path /
+           DOODLE_CONTENT / "shot" / episodes_ptr->getEpisdes_str();
   session->createDir(server.generic_string());
 
   for (int kI = 0; kI < 120; ++kI) {
@@ -128,11 +147,6 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
         }
       }
     }
-  }
-
-  server = set.getAssRoot() / set.getDepartment() / create_path->server;
-  for (auto &&path : soure_ptr->getFileList()) {
-    doSystem::DfileSyntem::copy(path, server / path.filename());
   }
   return true;
 }

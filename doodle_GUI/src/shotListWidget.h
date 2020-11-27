@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-30 14:05:57
- * @LastEditTime: 2020-10-10 14:31:42
+ * @LastEditTime: 2020-11-27 10:45:00
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\src\shotListWidget.h
@@ -17,12 +17,11 @@
 
 DOODLE_NAMESPACE_S
 
-
 /**
  * @description: 自定义小部件, 用来修改shot使用
  */
 class shotEditWidget : public QWidget {
- Q_OBJECT
+  Q_OBJECT
 
  public:
   explicit shotEditWidget(QWidget *parent = nullptr);
@@ -32,28 +31,28 @@ class shotEditWidget : public QWidget {
   void setValue(const QMap<QString, QVariant> &value);
  signals:
   void editingFinished();
+
  private:
   QSpinBox *p_spin;
   QComboBox *p_combox;
 
   QHBoxLayout *p_b_hboxLayout;
 
- //protected:
- // void mousePressEvent(QMouseEvent *event) override;
+  // protected:
+  // void mousePressEvent(QMouseEvent *event) override;
 };
 
 /**
  * @description: 自定义委托类型
  */
 class shotIntEnumDelegate : public QStyledItemDelegate {
- Q_OBJECT
+  Q_OBJECT
 
  public:
   explicit shotIntEnumDelegate(QObject *parent = nullptr);
   ~shotIntEnumDelegate() override;
 
-  QWidget *createEditor(QWidget *parent,
-                        const QStyleOptionViewItem &option,
+  QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
                         const QModelIndex &index) const override;
 
   void setEditorData(QWidget *editor, const QModelIndex &index) const override;
@@ -63,10 +62,11 @@ class shotIntEnumDelegate : public QStyledItemDelegate {
                             const QModelIndex &index) const override;
 };
 
-/* ------------------------------- 自定义shot小部件 ------------------------------- */
+/* ------------------------------- 自定义shot小部件
+ * ------------------------------- */
 
 class shotListWidget : public QListView {
- Q_OBJECT
+  Q_OBJECT
 
  public:
   explicit shotListWidget(QWidget *parent = nullptr);
@@ -88,6 +88,8 @@ class shotListWidget : public QListView {
  private slots:
   //添加镜头号
   void insertShot();
+  //同步镜头
+  void synShot();
   //私有的镜头点击发射事件
   void _doodle_shot_emit(const QModelIndex &index);
 

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-03 09:10:01
- * @LastEditTime: 2020-11-26 19:49:34
+ * @LastEditTime: 2020-11-27 10:37:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\fileSystem\src\DfileSyntem.cpp
@@ -38,11 +38,15 @@ bool DfileSyntem::copy(const dpath &sourePath,
   //创建线程池多线程复制
   boost::asio::thread_pool pool(std::thread::hardware_concurrency());
   //验证文件存在
-  if (boost::filesystem::exists(trange_path)) return false;
+  // if (boost::filesystem::exists(trange_path)) return false;
   if (!boost::filesystem::exists(sourePath)) return false;
+  if (!boost::filesystem::exists(trange_path.parent_path()))
+    boost::filesystem::create_directories(trange_path.parent_path());
 
   if (boost::filesystem::is_regular_file(sourePath)) {
-    boost::filesystem::copy_file(sourePath, trange_path);
+    boost::filesystem::copy_file(
+        sourePath, trange_path,
+        boost::filesystem::copy_option::overwrite_if_exists);
   } else {
     auto dregex = std::regex(sourePath.generic_string());
     DOODLE_LOG_INFO << sourePath.generic_string().c_str() << "-->"
@@ -53,8 +57,12 @@ bool DfileSyntem::copy(const dpath &sourePath,
         dpath basic_string = std::regex_replace(
             item.path().generic_string(), dregex, trange_path.generic_string());
         boost::asio::post(pool, [=]() {
-          boost::filesystem::create_directories(basic_string.parent_path());
-          boost::filesystem::copy_file(item.path(), basic_string);
+          if (!boost::filesystem::exists(basic_string.parent_path()))
+            boost::filesystem::create_directories(basic_string.parent_path());
+
+          boost::filesystem::copy_file(
+              item.path(), basic_string,
+              boost::filesystem::copy_option::overwrite_if_exists);
         });
       }
     }

@@ -1,8 +1,8 @@
 /*
  * @Author: your name
  * @Date: 2020-11-26 10:17:07
- * @LastEditTime: 2020-11-26 17:51:42
- * @LastEditors: your name
+ * @LastEditTime: 2020-11-27 10:04:50
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\synData.cpp
  */
@@ -67,14 +67,19 @@ void synData::deleteSQL() {
 
   db->remove(sqlpp::remove_from(tab).where(tab.id == idP));
 }
-synPath_structPtr synData::push_back(const assClassPtr &ass_class_ptr) {
-  auto data = std::make_shared<synPath_struct>();
-  data->server =
+dpathPtr synData::push_back(const assClassPtr &ass_class_ptr) {
+  auto data = synPath_struct{};
+  data.server =
       p_episodes_->getEpisdes_str() + "/" + ass_class_ptr->getAssClass();
-  data->local =
+  data.local =
       p_episodes_->getEpisdes_str() + "/" + ass_class_ptr->getAssClass();
-  p_path.push_back(*data);
-  return data;
+  auto iter =
+      std::find_if(p_path.begin(), p_path.end(),
+                   [=](synPath_struct &d) { return d.server == data.server; });
+  if (iter == p_path.end()) {
+    p_path.push_back(data);
+  }
+  return std::make_shared<dpath>(data.server);
 }
 episodesPtr synData::getEpisodes() { return p_episodes_; }
 void synData::setEpisodes(const episodesPtr &episodes_ptr) {

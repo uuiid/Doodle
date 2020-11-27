@@ -105,7 +105,13 @@
         "qabstractlistmodel": "cpp",
         "qwidget": "cpp",
         "qmessagelogger": "cpp",
-        "qpushbutton": "cpp"
+        "qpushbutton": "cpp",
+        "filesystem": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "forward_list": "cpp",
+        "regex": "cpp",
+        "valarray": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",

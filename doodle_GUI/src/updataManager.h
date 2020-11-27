@@ -1,4 +1,12 @@
-﻿//
+﻿/*
+ * @Author: your name
+ * @Date: 2020-11-19 15:17:00
+ * @LastEditTime: 2020-11-27 11:26:54
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\doodle_GUI\src\updataManager.h
+ */
+//
 // Created by teXiao on 2020/11/19.
 //
 
@@ -11,7 +19,7 @@ class QProgressDialog;
 
 DOODLE_NAMESPACE_S
 
-class updataManager : public QObject{
+class updataManager : public QObject {
   Q_OBJECT
  public:
   updataManager &operator=(const updataManager &s) = delete;
@@ -19,16 +27,16 @@ class updataManager : public QObject{
 
   static updataManager &get();
   void addQueue(std::future<bool> &f, QProgressDialog *t);
-  void addQueue(std::future<bool> &f,const std::string &lableText, int maxValue);
+  void addQueue(std::future<bool> &f, const std::string &lableText,
+                int maxValue);
   void run();
+  bool empty() const;
 
  private:
-
   std::vector<std::pair<std::future<bool>, QProgressDialog *>> p_updataFtpQueue;
-  QTimer * p_timer_;
+  QTimer *p_timer_;
 
   updataManager();
   void chickQueue();
-  void run_();
 };
 DOODLE_NAMESPACE_E
