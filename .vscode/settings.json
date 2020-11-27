@@ -111,7 +111,8 @@
         "concepts": "cpp",
         "forward_list": "cpp",
         "regex": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "qdebug": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",
@@ -123,5 +124,8 @@
             "name": "test_my",
             "pattern": "${workspaceFolder}/build/test/Debug/test_my.exe",
         }
-    ]
+    ],
+    "editor.formatOnSave": true,
+    "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, SortIncludes: false}",
+    "cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}"
 }

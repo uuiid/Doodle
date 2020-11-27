@@ -120,7 +120,6 @@ void coreSet::getSetting() {
 
 dstring coreSet::toIpPath(const dstring &path) {
   static boost::regex exp("^[A-Z]:");
-  //  DOODLE_LOG_INFO << exp.match(path);
 
   if (boost::regex_match(path, exp)) {
     return path.substr(2);

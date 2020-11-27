@@ -1,4 +1,6 @@
 find_package(Qt5 CONFIG COMPONENTS Core Sql REQUIRED)
+find_package(Sqlpp11 REQUIRED)
+find_package(SqlppSqlite REQUIRED)
 
 set(HEADER_FILES
     "src/convert.h"
@@ -17,6 +19,7 @@ add_library(pinyin SHARED
     )
 
 target_link_libraries(pinyin PUBLIC Qt5::Core Qt5::Sql)
+target_link_libraries(pinyin PUBLIC SqlppSqlite)
 target_link_libraries(pinyin PUBLIC logger)
 target_compile_definitions(pinyin PRIVATE PINYIN_LIBRARY)
 

@@ -10,6 +10,9 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#添加模块文件
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+
 
 #使用中文
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
@@ -17,8 +20,8 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 #添加选项
 option(RUN_QT_TOOL "run qt windeployqt" OFF)
-option(RUN_fixup   "run fixup " OFF)
-option(RUN_COPY    "run copy tools" OFF)
+option(RUN_fixup   "run fixup "         OFF)
+option(RUN_COPY    "run copy tools"     OFF)
 
 
 #启用测试
@@ -68,6 +71,7 @@ foreach(_var in LISTS ${CMAKE_FIND_ROOT_PATH})
 endforeach(_var)
 list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/")
 list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/Remote Debugger/x64/")
+list(APPEND DIRS "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/x64/bin")
 
 if(RUN_COPY)
         #复制资源
