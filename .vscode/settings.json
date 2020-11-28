@@ -112,7 +112,8 @@
         "forward_list": "cpp",
         "regex": "cpp",
         "valarray": "cpp",
-        "qdebug": "cpp"
+        "qdebug": "cpp",
+        "*.in": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",

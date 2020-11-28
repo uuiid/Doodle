@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <DoodleConfig.h>
+
 #define _SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING 1
 #define _WIN32_WINNT 0x0A00
 
@@ -10,20 +12,21 @@
 #include <memory>
 
 #if defined(CORE_LIBRARY)
-#  define CORE_API __declspec(dllexport)
+#define CORE_API __declspec(dllexport)
 #else
-#  define CORE_API __declspec(dllimport)
+#define CORE_API __declspec(dllimport)
 #endif
 
 #define CORE_NAMESPACE_S namespace doCore {
-#define CORE_NAMESPACE_E };
+#define CORE_NAMESPACE_E \
+  }                      \
+  ;
 
 #define DOODLE_FFMPEG_PATH "tools/ffmpeg/bin"
 #define DOODLE_BACKUP "backup"
 #define DOODLE_CONTENT "Content"
 #define DOODLE_EPFORMAT "ep%03i"
 #define DOODLE_SHFORMAT "sc%04i"
-
 
 #if __has_cpp_attribute(nodiscard) && \
     !(defined(__clang__) && (__cplusplus < 201703L))
@@ -41,15 +44,12 @@
 #define DOODLE_NO_UNIQUE_ADDRESS
 #endif
 
-
-
-
 namespace sqlpp::mysql {
 class connection;
 struct connection_config;
-}
+}  // namespace sqlpp::mysql
 
-namespace boost::filesystem{
+namespace boost::filesystem {
 class path;
 }
 
@@ -58,16 +58,13 @@ class QFileInfo;
 CORE_NAMESPACE_S
 using mysqlConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
 
-
 //使用一些其他方便的引用类型
-
 
 class shot;
 class episodes;
 
 class shotClass;
 class shotType;
-
 
 class fileSqlInfo;
 class shotFileSqlInfo;
@@ -82,8 +79,8 @@ class movieEpsArchive;
 class synData;
 
 //共享指针引用类
-using shotPtr =std::shared_ptr<shot>;
-using episodesPtr =std::shared_ptr<episodes>  ;
+using shotPtr = std::shared_ptr<shot>;
+using episodesPtr = std::shared_ptr<episodes>;
 using shotClassPtr = std::shared_ptr<shotClass>;
 using shotTypePtr = std::shared_ptr<shotType>;
 using shotInfoPtr = std::shared_ptr<shotFileSqlInfo>;
@@ -123,7 +120,6 @@ using mayaArchiveShotFbxPtr = std::shared_ptr<mayaArchiveShotFbx>;
 using dstring = std::string;
 using stringList = std::vector<QString>;
 
-
 using dstringList = std::vector<std::string>;
 
 using dpath = boost::filesystem::path;
@@ -134,5 +130,4 @@ using freeSynWrapPtr = std::shared_ptr<freeSynWrap>;
 
 CORE_NAMESPACE_E
 
-
-//Q_DECLARE_METATYPE(doCore::shotInfoPtr)
+// Q_DECLARE_METATYPE(doCore::shotInfoPtr)

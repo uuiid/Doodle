@@ -1,4 +1,13 @@
+/*
+ * @Author: your name
+ * @Date: 2020-08-08 17:45:24
+ * @LastEditTime: 2020-11-28 20:51:11
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\DoodleConfig.h.in
+ */
 #pragma once
-
-#define Doodle_VERSION_MAJOR @fileSyn_VERSION_MAJOR@
-#define Doodle_VERSION_MINOR @fileSyn_VERSION_MINOR@
+// clang-format off
+#define Doodle_VERSION_MAJOR @Doodle_VERSION_MAJOR@
+#define Doodle_VERSION_MINOR @Doodle_VERSION_MINOR@
+// clang-format on

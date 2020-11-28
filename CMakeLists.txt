@@ -24,8 +24,12 @@ option(RUN_fixup   "run fixup "         OFF)
 option(RUN_COPY    "run copy tools"     OFF)
 
 
-#启用测试
-configure_file(DoodleConfig.h.in ${CMAKE_CURRENT_LIST_DIR}/DoodleConfig.h)
+#配置版本文件
+set(Doodle_VERSION_MAJOR 1)
+set(Doodle_VERSION_MINOR 1) 
+configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)
+include_directories(${CMAKE_BINARY_DIR}/configure)
+
 
 list(APPEND CMAKE_PREFIX_PATH $ENV{QT_MYROOT}/5.12.9/msvc2017_64)
 
@@ -33,6 +37,8 @@ find_package(Qt5 CONFIG COMPONENTS Core Widgets Test LinguistTools REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem date_time)
 find_package(CURL REQUIRED)
 
+#搜索qt 安装辅助程序
+find_program(WINQT windeployqt REQUIRED)
 
 add_subdirectory(logger)
 add_subdirectory(fileSystem)
@@ -51,8 +57,7 @@ add_subdirectory(test)
 #首先搜索我们的自定义函数
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(mypack)
-#搜索qt 安装辅助程序
-find_program(WINQT windeployqt REQUIRED)
+
 
 #====================一些非qt组件的搜索和安装=============
 
