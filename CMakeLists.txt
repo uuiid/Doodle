@@ -53,12 +53,17 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(mypack)
 #搜索qt 安装辅助程序
 find_program(WINQT windeployqt REQUIRED)
-#添加qt 安装辅助程序的一些命令
 
 #====================一些非qt组件的搜索和安装=============
-#第一种搜索方式
-set(CMAKE_INSTALL_UCRT_LIBRARIES "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64")
-include(InstallRequiredSystemLibraries)
+
+if(RUN_fixup)
+        #第一种搜索方式
+        set(CMAKE_INSTALL_UCRT_LIBRARIES "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64")
+        include(InstallRequiredSystemLibraries)
+endif(RUN_fixup)
+
+
+
 #第二中验证加搜索方式
 set(DOODLEAPPS ${CMAKE_INSTALL_PREFIX}/bin/doodle.exe)  # paths to executables
 set(TESTAPPS ${CMAKE_INSTALL_PREFIX}/bin/test_my.exe)

@@ -33,18 +33,20 @@
                 "short": "not_fixup",
                 "long": "not qttools and fixup",
                 "settings": {
-                    "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                    "CMAKE_INSTALL_PREFIX": "F:/Source/qt_test/Doodle/install_release",
-                    "RUN_QT_TOOL": "ON",
-                    "RUN_fixup": "ON",
-                    "RUN_COPY": "ON"
+                    "CMAKE_INSTALL_PREFIX": "F:/Source/qt_test/Doodle/install",
+                    "RUN_QT_TOOL": "OFF",
+                    "RUN_fixup": "OFF",
+                    "RUN_COPY": "OFF"
                 }
             },
             "fixup": {
                 "short": "fixup",
                 "long": "run qttools and fixup",
                 "settings": {
-                    "CMAKE_INSTALL_PREFIX": "F:/Source/qt_test/Doodle/install"
+                    "CMAKE_INSTALL_PREFIX": "F:/Source/qt_test/Doodle/install_release",
+                    "RUN_QT_TOOL": "ON",
+                    "RUN_fixup": "ON",
+                    "RUN_COPY": "ON"
                 }
             }
         }
