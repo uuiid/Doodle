@@ -1,0 +1,6 @@
+﻿add_subdirectory(assetsWidget)
+add_subdirectory(mainWidght)
+add_subdirectory(rigisterWight)
+add_subdirectory(settingWidght)
+add_subdirectory(shotsWidght)
+add_subdirectory(toolkit)

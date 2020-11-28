@@ -1,0 +1,12 @@
+﻿target_sources(
+        doodle
+        PUBLIC
+        mainWindows.h
+        systemTray.h
+)
+target_sources(
+        doodle
+        PRIVATE
+        mainWindows.cpp
+        systemTray.cpp
+)

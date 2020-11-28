@@ -1,0 +1,18 @@
+﻿target_sources(
+        doodle
+        PUBLIC
+        shotEpsListModel.h
+        shotListModel.h
+        shotClassModel.h
+        shotTypeModel.h
+        shotTableModel.h
+)
+target_sources(
+        doodle
+        PRIVATE
+        shotEpsListModel.cpp
+        shotListModel.cpp
+        shotClassModel.cpp
+        shotTypeModel.cpp
+        shotTableModel.cpp
+)

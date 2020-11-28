@@ -1,0 +1,18 @@
+﻿target_sources(
+        core
+        PUBLIC
+        episodes.h
+        shot.h
+        shotClass.h
+        shottype.h
+        shotfilesqlinfo.h
+)
+target_sources(
+        core
+        PRIVATE
+        episodes.cpp
+        shot.cpp
+        shotClass.cpp
+        shottype.cpp
+        shotfilesqlinfo.cpp
+)

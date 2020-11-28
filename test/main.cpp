@@ -1,5 +1,5 @@
 ﻿#include "core_global.h"
-#include "src/coreset.h"
+#include "src/core/coreset.h"
 #include "Logger.h"
 
 #include <QCoreApplication>

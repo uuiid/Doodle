@@ -1,18 +1,18 @@
-﻿#include "src/coreset.h"
-#include "src/filesqlinfo.h"
+﻿#include "src/core/coreset.h"
+#include "src/fileDBInfo/filesqlinfo.h"
 
-#include "src/episodes.h"
-#include "src/shot.h"
-#include "src/shotClass.h"
-#include "src/shottype.h"
+#include "src/shots/episodes.h"
+#include "src/shots/shot.h"
+#include "src/shots/shotClass.h"
+#include "src/shots/shottype.h"
 
-#include "src/assClass.h"
-#include "src/assType.h"
-#include "src/assdepartment.h"
-#include "src/assfilesqlinfo.h"
-#include "src/shotfilesqlinfo.h"
-#include "src/moveShotA.h"
-#include "src/mayaArchive.h"
+#include "src/assets/assClass.h"
+#include "src/assets/assType.h"
+#include "src/assets/assdepartment.h"
+#include "src/assets/assfilesqlinfo.h"
+#include "src/shots/shotfilesqlinfo.h"
+#include "src/fileArchive/moveShotA.h"
+#include "src/fileArchive/mayaArchive.h"
 
 #include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
@@ -20,10 +20,10 @@
 
 #include <iostream>
 #include <memory>
-#include <src/movieArchive.h>
-#include <src/ueArchive.h>
-#include <src/ueSynArchive.h>
-#include <src/mayaArchiveShotFbx.h>
+#include <src/fileArchive/movieArchive.h>
+#include <src/fileArchive/ueArchive.h>
+#include <src/fileArchive/ueSynArchive.h>
+#include <src/fileArchive/mayaArchiveShotFbx.h>
 
 class CoreTest : public ::testing::Test {
 protected:

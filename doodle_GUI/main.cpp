@@ -6,9 +6,9 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
-#include "src/coreset.h"
+#include "src/core/coreset.h"
 
-#include "src/mainWindows.h"
+#include "src/mainWidght/mainWindows.h"
 
 #include "Logger.h"
 //必要导入

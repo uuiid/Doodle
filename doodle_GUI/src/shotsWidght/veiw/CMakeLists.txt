@@ -1,0 +1,18 @@
+﻿target_sources(
+        doodle
+        PUBLIC
+        shotEpsListWidget.h
+        shotListWidget.h
+        shotClassWidget.h
+        shotTypeWidget.h
+        shotTableWidget.h
+)
+target_sources(
+        doodle
+        PRIVATE
+        shotEpsListWidget.cpp
+        shotListWidget.cpp
+        shotClassWidget.cpp
+        shotTypeWidget.cpp
+        shotTableWidget.cpp
+)

@@ -1,0 +1,10 @@
+﻿target_sources(
+        core
+        PUBLIC
+        doException.h
+)
+target_sources(
+        core
+        PRIVATE
+        doException.cpp
+)

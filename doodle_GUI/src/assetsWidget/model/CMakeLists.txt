@@ -1,0 +1,19 @@
+﻿target_sources(
+        doodle
+        PUBLIC
+        assDepModel.h
+        assClassModel.h
+        assSortfilterModel.h
+        assTypeModel.h
+        assTableModel.h
+
+)
+target_sources(
+        doodle
+        PRIVATE
+        assDepModel.cpp
+        assClassModel.cpp
+        assSortfilterModel.cpp
+        assTypeModel.cpp
+        assTableModel.cpp
+)

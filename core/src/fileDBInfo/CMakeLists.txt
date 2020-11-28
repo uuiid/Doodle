@@ -1,0 +1,10 @@
+﻿target_sources(
+        core
+        PUBLIC
+        filesqlinfo.h
+)
+target_sources(
+        core
+        PRIVATE
+        filesqlinfo.cpp
+)

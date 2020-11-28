@@ -1,0 +1,12 @@
+﻿target_sources(
+        core
+        PUBLIC
+        ffmpegWrap.h
+        freeSynWrap.h
+)
+target_sources(
+        core
+        PRIVATE
+        ffmpegWrap.cpp
+        freeSynWrap.cpp
+)

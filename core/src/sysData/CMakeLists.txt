@@ -1,0 +1,10 @@
+﻿target_sources(
+        core
+        PUBLIC
+        synData.h
+)
+target_sources(
+        core
+        PRIVATE
+        synData.cpp
+)

@@ -8,70 +8,6 @@ find_package(Boost COMPONENTS regex REQUIRED)
 #file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/framelesswindow/framelesswindow.ui
 #        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/resource)
 
-
-set(DOODLE_SOURE_HEADER
-
-        src/shotClassWidget.h
-        src/shotListWidget.h
-        src/shotEpsListWidget.h
-        src/shotTypeWidget.h
-        src/shotTableWidget.h
-        src/shotEpsListModel.h
-        src/mainWindows.h
-        src/shotClassModel.h
-        src/shotTypeModel.h
-        src/shotListModel.h
-        src/shotTableModel.h
-        src/assDepModel.h
-        src/assDepWidget.h
-        src/assClassWidget.h
-        src/assTableModel.h
-        src/assTypeModel.h
-        src/assClassModel.h
-        src/assTypeWidget.h
-        src/assTableWidght.h
-        src/settingWidget.h
-        src/systemTray.h
-        src/speedProgressWidget.h
-        src/toolkit.h
-        src/assSortfilterModel.h
-        src/updataManager.h 
-        src/assWidget.h
-        src/shotWidget.h
-        src/doodleRigister.h
-        )
-
-set(DOODLE_SOURE
-
-        src/shotClassWidget.cpp
-        src/shotListWidget.cpp
-        src/shotEpsListWidget.cpp
-        src/shotTypeWidget.cpp
-        src/shotTableWidget.cpp
-        src/mainWindows.cpp
-        src/shotEpsListModel.cpp
-        src/shotClassModel.cpp
-        src/shotTypeModel.cpp
-        src/shotListModel.cpp
-        src/shotTableModel.cpp
-        src/assDepModel.cpp
-        src/assDepWidget.cpp
-        src/assClassModel.cpp
-        src/assTypeModel.cpp
-        src/assTableModel.cpp
-        src/assClassWidget.cpp
-        src/assTypeWidget.cpp
-        src/assTableWidght.cpp
-        src/settingWidget.cpp
-        src/systemTray.cpp
-        src/speedProgressWidget.cpp
-        src/toolkit.cpp
-        src/assSortfilterModel.cpp
-        src/updataManager.cpp 
-        src/assWidget.cpp
-        src/shotWidget.cpp
-        src/doodleRigister.cpp)
-
 set(TS_FILES
         )
 
@@ -85,16 +21,16 @@ qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 
 add_executable(doodle WIN32
         doodle_global.h
-        ${DOODLE_SOURE_HEADER}
-        ${DOODLE_SOURE}
         main.cpp
         ${TS_FILES}
         ${RESOURE_FILE}
         )
+add_subdirectory(src)
 
 target_link_libraries(doodle PRIVATE Qt5::Core)
 target_link_libraries(doodle PRIVATE Qt5::Widgets)
 target_link_libraries(doodle PRIVATE Qt5::QuickControls2)
+
 target_link_libraries(doodle PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(doodle PRIVATE core)
 target_link_libraries(doodle PRIVATE logger)

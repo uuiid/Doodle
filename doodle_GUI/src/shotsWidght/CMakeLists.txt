@@ -1,0 +1,12 @@
+﻿add_subdirectory(model)
+add_subdirectory(veiw)
+target_sources(
+        doodle
+        PUBLIC
+        shotWidget.h
+)
+target_sources(
+        doodle
+        PRIVATE
+        shotWidget.cpp
+)

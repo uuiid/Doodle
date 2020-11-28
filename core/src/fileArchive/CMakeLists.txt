@@ -1,0 +1,24 @@
+﻿target_sources(
+        core
+        PUBLIC
+        fileArchive.h
+        mayaArchive.h
+        mayaArchiveShotFbx.h
+        movieArchive.h
+        moveShotA.h
+        movieEpsArchive.h
+        ueArchive.h
+        ueSynArchive.h
+)
+target_sources(
+        core
+        PRIVATE
+        fileArchive.cpp
+        mayaArchive.cpp
+        mayaArchiveShotFbx.cpp
+        movieArchive.cpp
+        moveShotA.cpp
+        movieEpsArchive.cpp
+        ueArchive.cpp
+        ueSynArchive.cpp
+)

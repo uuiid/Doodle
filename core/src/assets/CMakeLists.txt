@@ -1,0 +1,19 @@
+﻿#这个是和文件服务器中资产交互的库
+target_sources(
+        core
+        PUBLIC
+        assdepartment.h
+        assClass.h
+        assType.h
+        assfilesqlinfo.h
+        znchName.h
+)
+target_sources(
+        core
+        PRIVATE
+        assdepartment.cpp
+        assClass.cpp
+        assType.cpp
+        assfilesqlinfo.cpp
+        znchName.cpp
+)

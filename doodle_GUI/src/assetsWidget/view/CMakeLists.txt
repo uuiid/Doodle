@@ -1,0 +1,16 @@
+﻿target_sources(
+        doodle
+        PUBLIC
+        assDepWidget.h
+        assClassWidget.h
+        assTypeWidget.h
+        assTableWidght.h
+)
+target_sources(
+        doodle
+        PRIVATE
+        assDepWidget.cpp
+        assClassWidget.cpp
+        assTypeWidget.cpp
+        assTableWidght.cpp
+)

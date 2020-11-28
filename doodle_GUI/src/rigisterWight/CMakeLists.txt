@@ -1,0 +1,10 @@
+﻿target_sources(
+        doodle
+        PUBLIC
+        doodleRigister.h
+)
+target_sources(
+        doodle
+        PRIVATE
+        doodleRigister.cpp
+)
