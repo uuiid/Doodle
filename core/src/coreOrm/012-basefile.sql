@@ -1,4 +1,4 @@
-create table if not exists basefile
+create table basefile
 (
 	id bigint auto_increment,
 	file varchar(128) null,

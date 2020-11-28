@@ -1,4 +1,4 @@
-create table if not exists shottype
+create table shottype
 (
 	id bigint auto_increment,
 	shot_type varchar(64) null,

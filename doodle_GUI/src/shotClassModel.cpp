@@ -12,19 +12,15 @@
 
 DOODLE_NAMESPACE_S
 shotClassModel::shotClassModel(QObject *parent)
-    : QAbstractListModel(parent),
-      list_fileClass() {
-}
+    : QAbstractListModel(parent), list_fileClass() {}
 
 int shotClassModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(list_fileClass.size());
 }
 
 QVariant shotClassModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid())
-    return QVariant();
-  if (index.row() >= list_fileClass.size())
-    return QVariant();
+  if (!index.isValid()) return QVariant();
+  if (index.row() >= list_fileClass.size()) return QVariant();
   auto var = QVariant();
   switch (role) {
     case Qt::DisplayRole:
@@ -41,16 +37,14 @@ QVariant shotClassModel::data(const QModelIndex &index, int role) const {
 }
 
 doCore::shotClassPtr shotClassModel::dataRow(const QModelIndex &index) const {
-  if (!index.isValid())
-    return nullptr;
-  if (index.row() >= list_fileClass.size())
-    return nullptr;
+  if (!index.isValid()) return nullptr;
+  if (index.row() >= list_fileClass.size()) return nullptr;
   return list_fileClass[index.row()];
 }
 
-QVariant shotClassModel::headerData(int section, Qt::Orientation orientation, int role) const {
-  if (role != Qt::DisplayRole)
-    return QVariant();
+QVariant shotClassModel::headerData(int section, Qt::Orientation orientation,
+                                    int role) const {
+  if (role != Qt::DisplayRole) return QVariant();
 
   if (orientation == Qt::Horizontal)
     return QStringLiteral("Column %1").arg(section);
@@ -59,8 +53,7 @@ QVariant shotClassModel::headerData(int section, Qt::Orientation orientation, in
 }
 
 Qt::ItemFlags shotClassModel::flags(const QModelIndex &index) const {
-  if (!index.isValid())
-    return Qt::ItemIsEnabled;
+  if (!index.isValid()) return Qt::ItemIsEnabled;
 
   if (list_fileClass[index.row()]->isInsert())
     return QAbstractListModel::flags(index);
@@ -68,7 +61,8 @@ Qt::ItemFlags shotClassModel::flags(const QModelIndex &index) const {
     return Qt::ItemIsEnabled | QAbstractListModel::flags(index);
 }
 
-bool shotClassModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+bool shotClassModel::setData(const QModelIndex &index, const QVariant &value,
+                             int role) {
   if (index.isValid() && role == Qt::EditRole) {
     //确认没有重复的fileclass
     bool isHas = false;
@@ -91,7 +85,8 @@ bool shotClassModel::setData(const QModelIndex &index, const QVariant &value, in
   return false;
 }
 
-bool shotClassModel::insertRows(int position, int rows, const QModelIndex &index) {
+bool shotClassModel::insertRows(int position, int rows,
+                                const QModelIndex &index) {
   bool isHas = false;
   auto dep = doCore::coreSet::getSet().getDepartment();
   for (auto &&i : list_fileClass) {
@@ -113,7 +108,8 @@ bool shotClassModel::insertRows(int position, int rows, const QModelIndex &index
   return true;
 }
 
-bool shotClassModel::removeRows(int position, int rows, const QModelIndex &index) {
+bool shotClassModel::removeRows(int position, int rows,
+                                const QModelIndex &index) {
   beginRemoveRows(QModelIndex(), position, position + rows - 1);
 
   for (int row = 0; row < rows; ++row) {
@@ -126,10 +122,11 @@ bool shotClassModel::removeRows(int position, int rows, const QModelIndex &index
 }
 
 void shotClassModel::init() {
-
   auto fileClassPtrList = doCore::shotClass::getAll();
   clear();
-  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(fileClassPtrList.size()) - 1);
+  if (fileClassPtrList.empty()) return;
+  beginInsertRows(QModelIndex(), 0,
+                  boost::numeric_cast<int>(fileClassPtrList.size()) - 1);
   list_fileClass = fileClassPtrList;
   endInsertRows();
 }
@@ -143,7 +140,7 @@ void shotClassModel::clear() {
 void shotClassModel::reInit() {
   auto list = doCore::coreDataManager::get().getShotClassL();
   if (list_fileClass.empty()) return;
-  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list.size()) -1);
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list.size()) - 1);
   list_fileClass = list;
   endInsertRows();
 }

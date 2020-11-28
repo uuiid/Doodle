@@ -1,4 +1,4 @@
-create table if not exists synfile
+create table synfile
 (
 	id bigint auto_increment,
 	assClass_id bigint null,

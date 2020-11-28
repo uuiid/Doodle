@@ -1,18 +1,17 @@
-create table if not exists configure
+create table asstype
 (
 	id bigint auto_increment,
-	name varchar(128) null,
-	value varchar(128) null,
+	ass_type varchar(64) null,
 	project_id bigint null,
 	constraint id
 		unique (id),
-	constraint configure_ibfk_1
+	constraint asstype_ibfk_1
 		foreign key (project_id) references project (id)
 );
 
 create index project_id
-	on configure (project_id);
+	on asstype (project_id);
 
-alter table configure
+alter table asstype
 	add primary key (id);
 

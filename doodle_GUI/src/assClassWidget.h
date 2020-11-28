@@ -1,4 +1,12 @@
-﻿//
+﻿/*
+ * @Author: your name
+ * @Date: 2020-10-19 13:26:31
+ * @LastEditTime: 2020-11-28 16:04:32
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\doodle_GUI\src\assClassWidget.h
+ */
+//
 // Created by teXiao on 2020/10/16.
 //
 
@@ -12,41 +20,43 @@
 DOODLE_NAMESPACE_S
 class assClassDelegate : public QStyledItemDelegate {
   Q_OBJECT
-public:
+ public:
   explicit assClassDelegate(QObject* parent = nullptr);
 
   //创建一个提供编辑的小部件
   QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option,
-    const QModelIndex& index) const override;
+                        const QModelIndex& index) const override;
 
   void setEditorData(QWidget* editor, const QModelIndex& index) const override;
   void setModelData(QWidget* editor, QAbstractItemModel* model,
-    const QModelIndex& index) const override;
+                    const QModelIndex& index) const override;
   void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option,
-    const QModelIndex& index) const override;
+                            const QModelIndex& index) const override;
 };
 
 class assClassWidget : public QListView {
   Q_OBJECT
-public:
+ public:
   explicit assClassWidget(QWidget* parent = nullptr);
 
   void setModel(QAbstractItemModel* model) override;
-signals:
+ signals:
   void initEmited();
 
-private:
+ private:
   //模型指针
   assClassModel* p_model_;
 
   QMenu* p_menu_;
 
-private slots:
+ private slots:
   void insertAss();
   void editAssName();
+  void deleteSQLFile();
+
   void _doodle_ass_emit(const QModelIndex& index);
 
-protected:
+ protected:
   void contextMenuEvent(QContextMenuEvent* event) override;
 };
 

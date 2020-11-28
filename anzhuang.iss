@@ -32,11 +32,11 @@ Source: "install_release\*";Excludes :"*.lib"; DestDir: "{app}"; Flags: ignoreve
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{group}\doodle"; Filename: "{app}\doodle.exe"
+Name: "{group}\doodle"; Filename: "{app}\bin\doodle.exe"
 Name: "{group}\{cm:ProgramOnTheWeb,doodle}"; Filename: "http://www.example.com/"
 Name: "{group}\{cm:UninstallProgram,doodle}"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\doodle"; Filename: "{app}\doodle.exe"; Tasks: desktopicon
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\doodle"; Filename: "{app}\doodle.exe"; Tasks: quicklaunchicon
+Name: "{commondesktop}\doodle"; Filename: "{app}\bin\doodle.exe"; Tasks: desktopicon
+Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\doodle"; Filename: "{app}\bin\doodle.exe"; Tasks: quicklaunchicon
 
 [Run]
 Filename: "{app}\bin\doodle.exe"; Description: "{cm:LaunchProgram,doodle}"; Flags: nowait postinstall skipifsilent

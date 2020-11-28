@@ -1,17 +1,17 @@
-create table if not exists shotclass
+create table assdepartment
 (
 	id bigint auto_increment,
-	shot_class varchar(64) null,
+	ass_dep varchar(64) null,
 	project_id bigint null,
 	constraint id
 		unique (id),
-	constraint shotclass_ibfk_1
+	constraint assdepartment_ibfk_1
 		foreign key (project_id) references project (id)
 );
 
 create index project_id
-	on shotclass (project_id);
+	on assdepartment (project_id);
 
-alter table shotclass
+alter table assdepartment
 	add primary key (id);
 

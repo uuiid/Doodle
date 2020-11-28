@@ -77,6 +77,8 @@ bool assTypeModel::removeRows(int position, int rows,
 void assTypeModel::init() {
   clear();
   const auto tmp_list = doCore::assType::getAll();
+  if (tmp_list.empty()) return;
+
   beginInsertRows(QModelIndex(), 0,
                   boost::numeric_cast<int>(tmp_list.size()) - 1);
   p_file_type_ptr_list_ = tmp_list;

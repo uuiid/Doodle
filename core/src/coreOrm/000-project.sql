@@ -1,4 +1,4 @@
-create table if not exists project
+create table project
 (
 	id bigint auto_increment,
 	name varchar(128) null,

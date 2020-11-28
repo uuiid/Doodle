@@ -15,18 +15,15 @@ shotEpsListModel::shotEpsListModel(QObject *parent)
     : QAbstractListModel(parent), eplist() {
   init();
 }
-shotEpsListModel::~shotEpsListModel()
-= default;
+shotEpsListModel::~shotEpsListModel() = default;
 int shotEpsListModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(eplist.size());
 }
 QVariant shotEpsListModel::data(const QModelIndex &index, int role) const {
   auto var = QVariant();
-  if (!index.isValid())
-    return var;
+  if (!index.isValid()) return var;
 
-  if (index.row() >= eplist.size())
-    return var;
+  if (index.row() >= eplist.size()) return var;
 
   switch (role) {
     case Qt::DisplayRole:
@@ -45,15 +42,16 @@ QVariant shotEpsListModel::data(const QModelIndex &index, int role) const {
   return var;
 }
 Qt::ItemFlags shotEpsListModel::flags(const QModelIndex &index) const {
-  if (!index.isValid())
-    return Qt::ItemIsEnabled;
+  if (!index.isValid()) return Qt::ItemIsEnabled;
 
   if (eplist[index.row()]->isInsert())
     return QAbstractListModel::flags(index);
   else
-    return Qt::ItemIsEditable | Qt::ItemIsEnabled | QAbstractListModel::flags(index);
+    return Qt::ItemIsEditable | Qt::ItemIsEnabled |
+           QAbstractListModel::flags(index);
 }
-bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value,
+                               int role) {
   if (index.isValid() && role == Qt::EditRole) {
     //确认镜头不重复和没有提交
     bool isHasEps = false;
@@ -74,7 +72,8 @@ bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value, 
   }
   return false;
 }
-bool shotEpsListModel::insertRows(int position, int rows, const QModelIndex &index) {
+bool shotEpsListModel::insertRows(int position, int rows,
+                                  const QModelIndex &index) {
   beginInsertRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     eplist.insert(eplist.begin() + position,
@@ -83,7 +82,8 @@ bool shotEpsListModel::insertRows(int position, int rows, const QModelIndex &ind
   endInsertRows();
   return true;
 }
-bool shotEpsListModel::removeRows(int position, int rows, const QModelIndex &index) {
+bool shotEpsListModel::removeRows(int position, int rows,
+                                  const QModelIndex &index) {
   beginRemoveRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     eplist.erase(eplist.begin() + position);
@@ -92,8 +92,11 @@ bool shotEpsListModel::removeRows(int position, int rows, const QModelIndex &ind
   return true;
 }
 void shotEpsListModel::init() {
+  clear();
   auto tmp_eps = doCore::episodes::getAll();
-  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_eps.size()) - 1);
+  if (tmp_eps.empty()) return;
+  beginInsertRows(QModelIndex(), 0,
+                  boost::numeric_cast<int>(tmp_eps.size()) - 1);
   eplist = tmp_eps;
   endInsertRows();
 }

@@ -8,32 +8,7 @@
     },
     "toolchainFile": "${env:VCPKG_MYROOT}/scripts/buildsystems/vcpkg.cmake",
     "environmentVariables": {
-      "CMAKE_PREFIX_PATH": "${env:QT_MYROOT}/5.15.0/msvc2019_64",
       "VCPKG_TARGET_TRIPLET": "x64-windows"
-    },
-    "cmakeSettings": {
-      "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-      "CMAKE_INSTALL_PREFIX": "F:/Source/qt_test/Doodle/install"
-    }
-  },
-  {
-    "name": "VS19_Ni_R_64_qt515",
-    "visualStudio": "bfc23b1b",
-    "visualStudioArchitecture": "x64",
-    "preferredGenerator": {
-      "name": "Ninja"
-    },
-    "toolchainFile": "${env:VCPKG_MYROOT}/scripts/buildsystems/vcpkg.cmake",
-    "environmentVariables": {
-      "CMAKE_PREFIX_PATH": "${env:QT_MYROOT}/5.15.0/msvc2019_64",
-      "VCPKG_TARGET_TRIPLET": "x64-windows"
-    },
-    "cmakeSettings": {
-      "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-      "CMAKE_INSTALL_PREFIX": "F:/Source/qt_test/install_release",
-      "RUN_QT_TOOL": "ON",
-      "RUN_fixup": "ON",
-      "RUN_COPY": "ON"
     }
   }
 ]

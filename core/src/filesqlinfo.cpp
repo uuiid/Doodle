@@ -81,7 +81,9 @@ void fileSqlInfo::setInfoP(const dstring &value) { infoP.push_back(value); }
 dstring fileSqlInfo::getFileStateP() const { return fileStateP; }
 
 void fileSqlInfo::setFileStateP(const dstring &value) { fileStateP = value; }
+
 dstring fileSqlInfo::getUser() const { return userP; }
+
 dstringList fileSqlInfo::json_to_strList(const dstring &json_str) const {
   dstringList list_;
 
@@ -111,7 +113,9 @@ dstring fileSqlInfo::strList_tojson(const dstringList &str_list) const {
   }
   return root.dump();
 }
+
 dstring fileSqlInfo::getSuffixes() const { return fileSuffixesP; }
+
 void fileSqlInfo::deleteSQL() {
   doodle::Basefile tab{};
 
@@ -122,7 +126,7 @@ bool fileSqlInfo::exist(bool refresh) {
   auto pro_path = coreSet::getSet().getPrjectRoot();
   if (refresh)
     for (const auto &path : getFileList()) {
-      p_b_exist &= boost::filesystem::exists(pro_path / path.parent_path());
+      p_b_exist &= boost::filesystem::exists(pro_path / path);
     }
   return p_b_exist;
 }

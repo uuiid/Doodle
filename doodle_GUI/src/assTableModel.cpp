@@ -48,7 +48,9 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
             var = DOTOS(ass->getSuffixes());
             break;
           case 4:
-            var = ass->getAssType()->getTypeQ();
+            if (ass->getAssType()) {
+              var = ass->getAssType()->getTypeQ();
+            }
             break;
           default:
             var = "";
@@ -222,6 +224,17 @@ bool assTableModel::insertRows(int position, int rows,
   }
   //  endInsertColumns();
   endInsertRows();
+  return true;
+}
+bool assTableModel::removeRows(int position, int rows,
+                               const QModelIndex &parent) {
+  beginRemoveRows(QModelIndex(), position, position + rows - 1);
+  for (int row = 0; row < rows; ++row) {
+    auto ass = p_ass_info_ptr_list_[position];
+    if (ass) ass->deleteSQL();
+    p_ass_info_ptr_list_.erase(p_ass_info_ptr_list_.begin() + position);
+  }
+  endRemoveRows();
   return true;
 }
 void assTableModel::init() {

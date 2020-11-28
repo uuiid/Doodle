@@ -28,8 +28,7 @@ mainWindows::mainWindows(QWidget *parent)
 
 void mainWindows::doodle_init() {
   //初始化自身
-  if (objectName().isEmpty())
-    setObjectName(QString::fromUtf8("mainWindows"));
+  if (objectName().isEmpty()) setObjectName(QString::fromUtf8("mainWindows"));
   resize(1200, 800);
   setWindowTitle(tr("MainWindow"));
 
@@ -52,37 +51,36 @@ void mainWindows::doodle_init() {
     prj->addItem(QString::fromStdString(name));
   }
   prj->setFlow(QListView::LeftToRight);
-  prj->setFixedHeight(35);//设置固定大小
+  prj->setFixedHeight(50);  //设置固定大小
+  prj->setFixedWidth(1200);
   prj->setCurrentItem(prj->item(0));
 
   p_b_box_layout_->addWidget(prj);
-  p_b_box_layout_->setSizeConstraint(QLayout::SetFixedSize);//设置不需要调整大小
+  p_b_box_layout_->setSizeConstraint(
+      QLayout::SetFixedSize);  //设置不需要调整大小
   p_setting_widget_ = new settingWidget(centralWidget);
   //连接项目更改设置
-  connect(prj, &QListWidget::itemClicked,
-          p_setting_widget_, [=](QListWidgetItem *item)mutable {
-        p_setting_widget_->setProject(item->text());
-      });
+  connect(prj, &QListWidget::itemClicked, p_setting_widget_,
+          [=](QListWidgetItem *item) mutable {
+            p_setting_widget_->setProject(item->text());
+          });
 
-  auto k_ass_dock = new QDockWidget(tr("资产"),
-                                    centralWidget,
-                                    Qt::WindowStaysOnTopHint | Qt::X11BypassWindowManagerHint
-                                        | Qt::FramelessWindowHint);
-  auto p_ass_widght_= new assWidght();
+  auto k_ass_dock = new QDockWidget(tr("资产"), centralWidget,
+                                    Qt::WindowStaysOnTopHint |
+                                        Qt::X11BypassWindowManagerHint |
+                                        Qt::FramelessWindowHint);
+  auto p_ass_widght_ = new assWidght();
   k_ass_dock->setWidget(p_ass_widght_);
   addDockWidget(Qt::BottomDockWidgetArea, k_ass_dock);
-  connect(prj, &QListWidget::itemClicked,
-          p_ass_widght_, [=]()mutable{
-    p_ass_widght_->refresh();
-  });
-//  p_b_box_layout_->addWidget(k_ass_dock, 18);
+  connect(prj, &QListWidget::itemClicked, p_ass_widght_,
+          [=]() mutable { p_ass_widght_->refresh(); });
+  //  p_b_box_layout_->addWidget(k_ass_dock, 18);
 
   auto k_shot_dock = new QDockWidget(tr("镜头"), centralWidget);
   auto p_shot_widget_ = new shotWidget();
   k_shot_dock->setWidget(p_shot_widget_);
   addDockWidget(Qt::BottomDockWidgetArea, k_shot_dock);
-  connect(prj, &QListWidget::itemClicked,
-          p_shot_widget_, &shotWidget::refresh);
+  connect(prj, &QListWidget::itemClicked, p_shot_widget_, &shotWidget::refresh);
   tabifyDockWidget(k_ass_dock, k_shot_dock);
 
   //添加显示选项
@@ -99,7 +97,6 @@ void mainWindows::doodle_init() {
 
   p_ass_widght_->refresh();
   p_shot_widget_->refresh();
-
 }
 
 void mainWindows::doodle_createAction() {
@@ -128,8 +125,7 @@ void mainWindows::doodle_createAction() {
   openSetWindows->setText(tr("Open Setting"));
   openSetWindows->setStatusTip(tr("打开设置"));
   openSetWindows->setToolTip(tr("Open Setting"));
-  connect(openSetWindows, &QAction::triggered,
-          this, &mainWindows::openSetting);
+  connect(openSetWindows, &QAction::triggered, this, &mainWindows::openSetting);
   p_menu_->addAction(openSetWindows);
 
   exitAction = new QAction(this);
@@ -143,7 +139,6 @@ void mainWindows::doodle_createAction() {
   p_status_bar_ = new QStatusBar(this);
   p_status_bar_->setObjectName(QString::fromUtf8("p_status_bar_"));
   setStatusBar(p_status_bar_);
-
 }
 
 void mainWindows::openSetting() {

@@ -1,4 +1,4 @@
-create table if not exists znch
+create table znch
 (
 	id bigint auto_increment
 		primary key,

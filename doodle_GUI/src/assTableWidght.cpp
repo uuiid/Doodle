@@ -2,6 +2,7 @@
 // Created by teXiao on 2020/10/17.
 //
 //这里开始禁用clang-format排序
+
 // clang-format off
 #include "assTableWidght.h"
 #include <src/updataManager.h>  //这个必须往上放 这样才不会出错
@@ -100,8 +101,10 @@ void assTableWidght::insertAss(const QString &path) {
     }
     auto maya_archive = std::make_shared<doCore::mayaArchive>(data);
 
-    auto future = std::async(std::launch::async, [=]() {
-      return maya_archive->update(path.toStdString());
+    auto future = std::async(std::launch::async, [=]() -> bool {
+      auto result = maya_archive->update(path.toStdString());
+      this->p_model_->init();
+      return result;
     });
     //打开后台传输
     updataManager::get().addQueue(future, "正在上传中", 100);
@@ -146,6 +149,12 @@ void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
                         true);
     });
     p_menu_->addAction(k_openFile);
+
+    auto k_deleteFile = new QAction();
+    k_deleteFile->setText("删除(小心 别错)");
+    connect(k_deleteFile, &QAction::triggered, this,
+            &assTableWidght::deleteSQLFile);
+    p_menu_->addAction(k_deleteFile);
 
     if (index.data(Qt::UserRole).value<doCore::assInfoPtr>()->getAssType() ==
         doCore::assType::findType(doCore::assType::e_type::UE4, false)) {
@@ -264,5 +273,13 @@ void assTableWidght::doDubledSlots(const QModelIndex &index) {
     auto path = assinfo->getFileList().front();
     toolkit::openPath(path);
   }
+}
+
+void assTableWidght::deleteSQLFile() {
+  if (!selectionModel()->hasSelection()) return;
+  auto str_delete = QInputDialog::getText(this, tr("输入delete删除条目"),
+                                          tr("输入: "), QLineEdit::Password);
+  if (str_delete == "delete")
+    p_model_->removeRow(selectionModel()->currentIndex().row());
 }
 DOODLE_NAMESPACE_E

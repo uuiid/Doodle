@@ -26,43 +26,37 @@ assClass::assClass()
       name(),
       p_assDep_id(-1),
       p_ass_dep_ptr_(),
-      p_ptr_znch() {
-}
+      p_ptr_znch() {}
 
 void assClass::select(const qint64 &ID_) {
   doodle::Assclass table{};
 
   auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row:db->run(
-      sqlpp::select(sqlpp::all_of(table))
-          .from(table)
-          .where(table.id == ID_)
-  )) {
+  for (auto &&row : db->run(sqlpp::select(sqlpp::all_of(table))
+                                .from(table)
+                                .where(table.id == ID_))) {
     name = row.assName;
     idP = row.id;
     p_assDep_id = row.assdepId;
   }
-
 }
 
 void assClass::insert() {
-  //id大于0就不逊要插入
+  // id大于0就不逊要插入
   if (idP > 0) return;
 
   doodle::Assclass table{};
 
   auto db = coreSql::getCoreSql().getConnection();
-  auto install = sqlpp::insert_into(table).columns(table.assName,
-                                                   table.assdepId);
-  install.values.add(table.assName = name,
-                     table.assdepId = p_assDep_id);
+  auto install =
+      sqlpp::insert_into(table).columns(table.assName, table.assdepId);
+  install.values.add(table.assName = name, table.assdepId = p_assDep_id);
   idP = db->insert(install);
 
   if (idP == 0) {
     throw std::runtime_error("not insert assclass");
   }
-  if (p_ptr_znch)
-    p_ptr_znch->insert();
+  if (p_ptr_znch) p_ptr_znch->insert();
   coreDataManager::get().setAssClassL(shared_from_this());
 }
 
@@ -72,31 +66,39 @@ void assClass::updateSQL() {
 }
 
 void assClass::deleteSQL() {
-  if (p_ptr_znch)
-    p_ptr_znch->deleteSQL();
+  if (p_ptr_znch) p_ptr_znch->deleteSQL();
   doodle::Assclass table{};
 
   auto db = coreSql::getCoreSql().getConnection();
-  db->remove(sqlpp::remove_from(table)
-                 .where(table.id == idP));
+  db->remove(sqlpp::remove_from(table).where(table.id == idP));
+  //我们需要在总的设置里面删除刚刚的指针
+  auto list = coreDataManager::get().getAssClassL();
+
+  list.erase(std::remove_if(list.begin(), list.end(),
+                            [=](assClassPtr &info) -> bool {
+                              return info == this->shared_from_this();
+                            }),
+             list.end());
+
+  coreDataManager::get().setAssClassL(list);
 }
 
 assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
   assClassPtrList list;
 
   doodle::Znch znNa{};
-  doodle::Assclass table{};//.left_outer_join(znNa)
+  doodle::Assclass table{};  //.left_outer_join(znNa)
   auto db = coreSql::getCoreSql().getConnection();
-  //sqlpp::all_of(table),sqlpp::all_of(znNa)
+  // sqlpp::all_of(table),sqlpp::all_of(znNa)
 
-
-  for (auto &&row:db->run(
-      sqlpp::select(table.id, table.assdepId, table.assName, znNa.localname, znNa.id.as(znID))
-          .where(table.assdepId == ass_dep_ptr->getIdP())
-          .from(table.left_outer_join(znNa).on(table.id == znNa.assClassId))
-          .flags(sqlpp::distinct)
-          .order_by(table.assName.asc())
-  )) {
+  for (auto &&row :
+       db->run(sqlpp::select(table.id, table.assdepId, table.assName,
+                             znNa.localname, znNa.id.as(znID))
+                   .where(table.assdepId == ass_dep_ptr->getIdP())
+                   .from(table.left_outer_join(znNa).on(table.id ==
+                                                        znNa.assClassId))
+                   .flags(sqlpp::distinct)
+                   .order_by(table.assName.asc()))) {
     auto assclass = std::make_shared<assClass>();
 
     assclass->name = row.assName;
@@ -120,7 +122,6 @@ assDepPtr assClass::getAssDep() const {
     return p_ass_dep_ptr_;
   else
     return nullptr;
-
 }
 
 void assClass::setAssDep(const assDepPtr &value) {
@@ -141,17 +142,15 @@ void assClass::setAssClass(const std::string &value, const bool &isZNCH) {
   setAssClass(value);
 }
 
-std::string assClass::getAssClass() const {
-  return name;
-}
+std::string assClass::getAssClass() const { return name; }
 std::string assClass::getAssClass(const bool &isZNCH) {
   std::string str;
-  if (isZNCH){
+  if (isZNCH) {
     if (!p_ptr_znch) {
       p_ptr_znch = std::make_shared<znchName>(this);
     }
     str = p_ptr_znch->getName();
-  } else{
+  } else {
     str = name;
   }
 

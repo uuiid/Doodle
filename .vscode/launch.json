@@ -11,7 +11,7 @@
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "$PATH;${workspaceFolder}/install/bin;${command:cmake.launchTargetDirectory}"
+                    "value": "$PATH;${workspaceFolder}/install/bin;"
                 }
             ],
             "externalConsole": true,
