@@ -21,7 +21,9 @@
 #include <future>
 DOODLE_NAMESPACE_S
 systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
-  setToolTip(tr("doodle 文件 %1").arg("2.1"));
+  setToolTip(tr("doodle 文件 %1.%2")
+                 .arg(Doodle_VERSION_MINOR)
+                 .arg(Doodle_VERSION_MAJOR));
 
   auto menu = new QMenu(parent);
   auto fileSyn = new QAction(menu);

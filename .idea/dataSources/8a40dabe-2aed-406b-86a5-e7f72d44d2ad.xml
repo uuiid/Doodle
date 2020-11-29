@@ -965,1029 +965,1014 @@ APPLICATION_PASSWORD_ADMIN,AUDIT_ADMIN,BACKUP_ADMIN,BINLOG_ADMIN,BINLOG_ENCRYPTI
     <table id="306" parent="2" name="znch"/>
     <table id="307" parent="6" name="user"/>
     <table id="308" parent="10" name="assclass"/>
-    <table id="309" parent="10" name="basefile"/>
-    <table id="310" parent="10" name="configure"/>
-    <table id="311" parent="10" name="episodes"/>
-    <table id="312" parent="10" name="fileclass"/>
-    <table id="313" parent="10" name="filetype"/>
-    <table id="314" parent="10" name="shot"/>
-    <table id="315" parent="10" name="znch"/>
-    <column id="316" parent="294" name="id">
+    <table id="309" parent="10" name="assdepartment"/>
+    <table id="310" parent="10" name="asstype"/>
+    <table id="311" parent="10" name="basefile"/>
+    <table id="312" parent="10" name="configure"/>
+    <table id="313" parent="10" name="episodes"/>
+    <table id="314" parent="10" name="project"/>
+    <table id="315" parent="10" name="shotclass"/>
+    <table id="316" parent="10" name="shots"/>
+    <table id="317" parent="10" name="shottype"/>
+    <table id="318" parent="10" name="synfile"/>
+    <table id="319" parent="10" name="user"/>
+    <table id="320" parent="10" name="znch"/>
+    <column id="321" parent="294" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="317" parent="294" name="ass_name">
+    <column id="322" parent="294" name="ass_name">
       <Position>2</Position>
       <DataType>varchar(256)|0s</DataType>
     </column>
-    <column id="318" parent="294" name="assdep_id">
+    <column id="323" parent="294" name="assdep_id">
       <Position>3</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <index id="319" parent="294" name="id">
+    <index id="324" parent="294" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="320" parent="294" name="assdep_id">
+    <index id="325" parent="294" name="assdep_id">
       <ColNames>assdep_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="321" parent="294" name="PRIMARY">
+    <key id="326" parent="294" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="322" parent="294" name="id">
+    <key id="327" parent="294" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="323" parent="294" name="assclass_ibfk_1">
+    <foreign-key id="328" parent="294" name="assclass_ibfk_1">
       <ColNames>assdep_id</ColNames>
       <RefTableName>assdepartment</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="324" parent="295" name="id">
+    <column id="329" parent="295" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="325" parent="295" name="ass_dep">
+    <column id="330" parent="295" name="ass_dep">
       <Position>2</Position>
       <DataType>varchar(64)|0s</DataType>
     </column>
-    <column id="326" parent="295" name="project_id">
+    <column id="331" parent="295" name="project_id">
       <Position>3</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <index id="327" parent="295" name="id">
+    <index id="332" parent="295" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="328" parent="295" name="project_id">
+    <index id="333" parent="295" name="project_id">
       <ColNames>project_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="329" parent="295" name="PRIMARY">
+    <key id="334" parent="295" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="330" parent="295" name="id">
+    <key id="335" parent="295" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="331" parent="295" name="assdepartment_ibfk_1">
+    <foreign-key id="336" parent="295" name="assdepartment_ibfk_1">
       <ColNames>project_id</ColNames>
       <RefTableName>project</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="332" parent="296" name="id">
+    <column id="337" parent="296" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="333" parent="296" name="ass_type">
+    <column id="338" parent="296" name="ass_type">
       <Position>2</Position>
       <DataType>varchar(64)|0s</DataType>
     </column>
-    <column id="334" parent="296" name="project_id">
+    <column id="339" parent="296" name="project_id">
       <Position>3</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <index id="335" parent="296" name="id">
+    <index id="340" parent="296" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="336" parent="296" name="project_id">
+    <index id="341" parent="296" name="project_id">
       <ColNames>project_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="337" parent="296" name="PRIMARY">
+    <key id="342" parent="296" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="338" parent="296" name="id">
+    <key id="343" parent="296" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="339" parent="296" name="asstype_ibfk_1">
+    <foreign-key id="344" parent="296" name="asstype_ibfk_1">
       <ColNames>project_id</ColNames>
       <RefTableName>project</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="340" parent="297" name="id">
+    <column id="345" parent="297" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="341" parent="297" name="file">
+    <column id="346" parent="297" name="file">
       <Position>2</Position>
       <DataType>varchar(128)|0s</DataType>
     </column>
-    <column id="342" parent="297" name="fileSuffixes">
+    <column id="347" parent="297" name="fileSuffixes">
       <Position>3</Position>
       <DataType>varchar(32)|0s</DataType>
     </column>
-    <column id="343" parent="297" name="user">
+    <column id="348" parent="297" name="user">
       <Position>4</Position>
       <DataType>varchar(128)|0s</DataType>
     </column>
-    <column id="344" parent="297" name="version">
+    <column id="349" parent="297" name="version">
       <Position>5</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="345" parent="297" name="_file_path_">
+    <column id="350" parent="297" name="_file_path_">
       <Position>6</Position>
       <DataType>varchar(4096)|0s</DataType>
     </column>
-    <column id="346" parent="297" name="infor">
+    <column id="351" parent="297" name="infor">
       <Position>7</Position>
       <DataType>varchar(4096)|0s</DataType>
     </column>
-    <column id="347" parent="297" name="filestate">
+    <column id="352" parent="297" name="filestate">
       <Position>8</Position>
       <DataType>varchar(64)|0s</DataType>
     </column>
-    <column id="348" parent="297" name="filetime">
+    <column id="353" parent="297" name="filetime">
       <Position>9</Position>
       <DataType>datetime|0s</DataType>
       <DefaultExpression>CURRENT_TIMESTAMP</DefaultExpression>
     </column>
-    <column id="349" parent="297" name="assClass_id">
+    <column id="354" parent="297" name="assClass_id">
       <Position>10</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="350" parent="297" name="assType_id">
+    <column id="355" parent="297" name="assType_id">
       <Position>11</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="351" parent="297" name="episodes_id">
+    <column id="356" parent="297" name="episodes_id">
       <Position>12</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="352" parent="297" name="shots_id">
+    <column id="357" parent="297" name="shots_id">
       <Position>13</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="353" parent="297" name="shotClass_id">
+    <column id="358" parent="297" name="shotClass_id">
       <Position>14</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="354" parent="297" name="shotType_id">
+    <column id="359" parent="297" name="shotType_id">
       <Position>15</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="355" parent="297" name="project_id">
+    <column id="360" parent="297" name="project_id">
       <Position>16</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <index id="356" parent="297" name="id">
+    <index id="361" parent="297" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="357" parent="297" name="assClass_id">
+    <index id="362" parent="297" name="assClass_id">
       <ColNames>assClass_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="358" parent="297" name="assType_id">
+    <index id="363" parent="297" name="assType_id">
       <ColNames>assType_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="359" parent="297" name="episodes_id">
+    <index id="364" parent="297" name="episodes_id">
       <ColNames>episodes_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="360" parent="297" name="shots_id">
+    <index id="365" parent="297" name="shots_id">
       <ColNames>shots_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="361" parent="297" name="shotClass_id">
+    <index id="366" parent="297" name="shotClass_id">
       <ColNames>shotClass_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="362" parent="297" name="shotType_id">
+    <index id="367" parent="297" name="shotType_id">
       <ColNames>shotType_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="363" parent="297" name="project_id">
+    <index id="368" parent="297" name="project_id">
       <ColNames>project_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="364" parent="297" name="PRIMARY">
+    <key id="369" parent="297" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="365" parent="297" name="id">
+    <key id="370" parent="297" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="366" parent="297" name="basefile_ibfk_1">
+    <foreign-key id="371" parent="297" name="basefile_ibfk_1">
       <ColNames>assClass_id</ColNames>
       <RefTableName>assclass</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <foreign-key id="367" parent="297" name="basefile_ibfk_2">
+    <foreign-key id="372" parent="297" name="basefile_ibfk_2">
       <ColNames>assType_id</ColNames>
       <RefTableName>asstype</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <foreign-key id="368" parent="297" name="basefile_ibfk_3">
+    <foreign-key id="373" parent="297" name="basefile_ibfk_3">
       <ColNames>episodes_id</ColNames>
       <RefTableName>episodes</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <foreign-key id="369" parent="297" name="basefile_ibfk_4">
+    <foreign-key id="374" parent="297" name="basefile_ibfk_4">
       <ColNames>shots_id</ColNames>
       <RefTableName>shots</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <foreign-key id="370" parent="297" name="basefile_ibfk_5">
+    <foreign-key id="375" parent="297" name="basefile_ibfk_5">
       <ColNames>shotClass_id</ColNames>
       <RefTableName>shotclass</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <foreign-key id="371" parent="297" name="basefile_ibfk_6">
+    <foreign-key id="376" parent="297" name="basefile_ibfk_6">
       <ColNames>shotType_id</ColNames>
       <RefTableName>shottype</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <foreign-key id="372" parent="297" name="basefile_ibfk_7">
+    <foreign-key id="377" parent="297" name="basefile_ibfk_7">
       <ColNames>project_id</ColNames>
       <RefTableName>project</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="373" parent="298" name="id">
+    <column id="378" parent="298" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="374" parent="298" name="name">
+    <column id="379" parent="298" name="name">
       <Position>2</Position>
       <DataType>varchar(128)|0s</DataType>
     </column>
-    <column id="375" parent="298" name="value">
+    <column id="380" parent="298" name="value">
       <Position>3</Position>
       <DataType>varchar(128)|0s</DataType>
     </column>
-    <column id="376" parent="298" name="project_id">
+    <column id="381" parent="298" name="project_id">
       <Position>4</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <index id="377" parent="298" name="id">
+    <index id="382" parent="298" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="378" parent="298" name="project_id">
+    <index id="383" parent="298" name="project_id">
       <ColNames>project_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="379" parent="298" name="PRIMARY">
+    <key id="384" parent="298" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="380" parent="298" name="id">
+    <key id="385" parent="298" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="381" parent="298" name="configure_ibfk_1">
+    <foreign-key id="386" parent="298" name="configure_ibfk_1">
       <ColNames>project_id</ColNames>
       <RefTableName>project</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="382" parent="299" name="id">
+    <column id="387" parent="299" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="383" parent="299" name="episodes">
+    <column id="388" parent="299" name="episodes">
       <Position>2</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="384" parent="299" name="project_id">
+    <column id="389" parent="299" name="project_id">
       <Position>3</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <index id="385" parent="299" name="id">
+    <index id="390" parent="299" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="386" parent="299" name="episodes">
+    <index id="391" parent="299" name="episodes">
       <ColNames>episodes</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="387" parent="299" name="project_id">
+    <index id="392" parent="299" name="project_id">
       <ColNames>project_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="388" parent="299" name="PRIMARY">
+    <key id="393" parent="299" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="389" parent="299" name="id">
+    <key id="394" parent="299" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="390" parent="299" name="episodes_ibfk_1">
+    <foreign-key id="395" parent="299" name="episodes_ibfk_1">
       <ColNames>project_id</ColNames>
       <RefTableName>project</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="391" parent="300" name="id">
+    <column id="396" parent="300" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="392" parent="300" name="name">
+    <column id="397" parent="300" name="name">
       <Position>2</Position>
       <DataType>varchar(128)|0s</DataType>
     </column>
-    <index id="393" parent="300" name="id">
+    <index id="398" parent="300" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <key id="394" parent="300" name="PRIMARY">
+    <key id="399" parent="300" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="395" parent="300" name="id">
+    <key id="400" parent="300" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <column id="396" parent="301" name="id">
+    <column id="401" parent="301" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="397" parent="301" name="shot_class">
+    <column id="402" parent="301" name="shot_class">
       <Position>2</Position>
       <DataType>varchar(64)|0s</DataType>
     </column>
-    <column id="398" parent="301" name="project_id">
+    <column id="403" parent="301" name="project_id">
       <Position>3</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <index id="399" parent="301" name="id">
+    <index id="404" parent="301" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="400" parent="301" name="project_id">
+    <index id="405" parent="301" name="project_id">
       <ColNames>project_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="401" parent="301" name="PRIMARY">
+    <key id="406" parent="301" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="402" parent="301" name="id">
+    <key id="407" parent="301" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="403" parent="301" name="shotclass_ibfk_1">
+    <foreign-key id="408" parent="301" name="shotclass_ibfk_1">
       <ColNames>project_id</ColNames>
       <RefTableName>project</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="404" parent="302" name="id">
+    <column id="409" parent="302" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="405" parent="302" name="shot">
+    <column id="410" parent="302" name="shot">
       <Position>2</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="406" parent="302" name="shotab">
+    <column id="411" parent="302" name="shotab">
       <Position>3</Position>
       <DataType>varchar(64)|0s</DataType>
     </column>
-    <column id="407" parent="302" name="episodes_id">
+    <column id="412" parent="302" name="episodes_id">
       <Position>4</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <index id="408" parent="302" name="id">
+    <index id="413" parent="302" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="409" parent="302" name="episodes_id">
+    <index id="414" parent="302" name="episodes_id">
       <ColNames>episodes_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="410" parent="302" name="PRIMARY">
+    <key id="415" parent="302" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="411" parent="302" name="id">
+    <key id="416" parent="302" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="412" parent="302" name="shots_ibfk_1">
+    <foreign-key id="417" parent="302" name="shots_ibfk_1">
       <ColNames>episodes_id</ColNames>
       <RefTableName>episodes</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="413" parent="303" name="id">
+    <column id="418" parent="303" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="414" parent="303" name="shot_type">
+    <column id="419" parent="303" name="shot_type">
       <Position>2</Position>
       <DataType>varchar(64)|0s</DataType>
     </column>
-    <column id="415" parent="303" name="shotClass_id">
+    <column id="420" parent="303" name="shotClass_id">
       <Position>3</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="416" parent="303" name="project_id">
+    <column id="421" parent="303" name="project_id">
       <Position>4</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <index id="417" parent="303" name="id">
+    <index id="422" parent="303" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="418" parent="303" name="shotClass_id">
+    <index id="423" parent="303" name="shotClass_id">
       <ColNames>shotClass_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="419" parent="303" name="project_id">
+    <index id="424" parent="303" name="project_id">
       <ColNames>project_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="420" parent="303" name="PRIMARY">
+    <key id="425" parent="303" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="421" parent="303" name="id">
+    <key id="426" parent="303" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="422" parent="303" name="shottype_ibfk_1">
+    <foreign-key id="427" parent="303" name="shottype_ibfk_1">
       <ColNames>shotClass_id</ColNames>
       <RefTableName>shotclass</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <foreign-key id="423" parent="303" name="shottype_ibfk_2">
+    <foreign-key id="428" parent="303" name="shottype_ibfk_2">
       <ColNames>project_id</ColNames>
       <RefTableName>project</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="424" parent="304" name="id">
+    <column id="429" parent="304" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="425" parent="304" name="assClass_id">
+    <column id="430" parent="304" name="assClass_id">
       <Position>2</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="426" parent="304" name="project_id">
+    <column id="431" parent="304" name="project_id">
       <Position>3</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="427" parent="304" name="episodes_id">
+    <column id="432" parent="304" name="episodes_id">
       <Position>4</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <column id="428" parent="304" name="path">
+    <column id="433" parent="304" name="path">
       <Position>5</Position>
       <DataType>varchar(4096)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <index id="429" parent="304" name="id">
+    <index id="434" parent="304" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="430" parent="304" name="assClass_id">
+    <index id="435" parent="304" name="assClass_id">
       <ColNames>assClass_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="431" parent="304" name="project_id">
+    <index id="436" parent="304" name="project_id">
       <ColNames>project_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="432" parent="304" name="episodes_id">
+    <index id="437" parent="304" name="episodes_id">
       <ColNames>episodes_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="433" parent="304" name="PRIMARY">
+    <key id="438" parent="304" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="434" parent="304" name="id">
+    <key id="439" parent="304" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="435" parent="304" name="synfile_ibfk_1">
+    <foreign-key id="440" parent="304" name="synfile_ibfk_1">
       <ColNames>assClass_id</ColNames>
       <RefTableName>assclass</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <foreign-key id="436" parent="304" name="synfile_ibfk_2">
+    <foreign-key id="441" parent="304" name="synfile_ibfk_2">
       <ColNames>project_id</ColNames>
       <RefTableName>project</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <foreign-key id="437" parent="304" name="synfile_ibfk_3">
+    <foreign-key id="442" parent="304" name="synfile_ibfk_3">
       <ColNames>episodes_id</ColNames>
       <RefTableName>episodes</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="438" parent="305" name="id">
+    <column id="443" parent="305" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="439" parent="305" name="user">
+    <column id="444" parent="305" name="user">
       <Position>2</Position>
       <DataType>varchar(128)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="440" parent="305" name="password">
+    <column id="445" parent="305" name="password">
       <Position>3</Position>
       <DataType>varchar(1024)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <index id="441" parent="305" name="id">
+    <index id="446" parent="305" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <key id="442" parent="305" name="PRIMARY">
+    <key id="447" parent="305" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="443" parent="305" name="id">
+    <key id="448" parent="305" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <column id="444" parent="306" name="id">
+    <column id="449" parent="306" name="id">
       <Position>1</Position>
       <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="445" parent="306" name="localname">
+    <column id="450" parent="306" name="localname">
       <Position>2</Position>
       <DataType>varchar(128)|0s</DataType>
     </column>
-    <column id="446" parent="306" name="assClass_id">
+    <column id="451" parent="306" name="assClass_id">
       <Position>3</Position>
       <DataType>bigint|0s</DataType>
     </column>
-    <index id="447" parent="306" name="assClass_id">
+    <index id="452" parent="306" name="assClass_id">
       <ColNames>assClass_id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <key id="448" parent="306" name="PRIMARY">
+    <key id="453" parent="306" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="449" parent="306" name="assClass_id">
+    <key id="454" parent="306" name="assClass_id">
       <ColNames>assClass_id</ColNames>
       <UnderlyingIndexName>assClass_id</UnderlyingIndexName>
     </key>
-    <foreign-key id="450" parent="306" name="znch_ibfk_1">
+    <foreign-key id="455" parent="306" name="znch_ibfk_1">
       <ColNames>assClass_id</ColNames>
       <RefTableName>assclass</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="451" parent="307" name="id">
+    <column id="456" parent="307" name="id">
       <Position>1</Position>
       <DataType>int|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="452" parent="307" name="user">
+    <column id="457" parent="307" name="user">
       <Position>2</Position>
       <DataType>varchar(128)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="453" parent="307" name="password">
+    <column id="458" parent="307" name="password">
       <Position>3</Position>
       <DataType>varchar(1024)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <index id="454" parent="307" name="user_user_uindex">
+    <index id="459" parent="307" name="user_user_uindex">
       <ColNames>user</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <key id="455" parent="307" name="PRIMARY">
+    <key id="460" parent="307" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="456" parent="307" name="user_user_uindex">
+    <key id="461" parent="307" name="user_user_uindex">
       <ColNames>user</ColNames>
       <UnderlyingIndexName>user_user_uindex</UnderlyingIndexName>
     </key>
-    <column id="457" parent="308" name="id">
+    <column id="462" parent="308" name="id">
       <Position>1</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="458" parent="308" name="file_name">
+    <column id="463" parent="308" name="ass_name">
       <Position>2</Position>
       <DataType>varchar(256)|0s</DataType>
     </column>
-    <column id="459" parent="308" name="__file_class__">
+    <column id="464" parent="308" name="assdep_id">
       <Position>3</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
     </column>
-    <index id="460" parent="308" name="id">
+    <index id="465" parent="308" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="461" parent="308" name="__file_class__">
-      <ColNames>__file_class__</ColNames>
+    <index id="466" parent="308" name="assdep_id">
+      <ColNames>assdep_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="462" parent="308" name="PRIMARY">
+    <key id="467" parent="308" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="463" parent="308" name="id">
+    <key id="468" parent="308" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="464" parent="308" name="assclass_ibfk_1">
-      <ColNames>__file_class__</ColNames>
-      <RefTableName>fileclass</RefTableName>
+    <foreign-key id="469" parent="308" name="assclass_ibfk_1">
+      <ColNames>assdep_id</ColNames>
+      <RefTableName>assdepartment</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="465" parent="309" name="id">
+    <column id="470" parent="309" name="id">
       <Position>1</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="466" parent="309" name="file">
+    <column id="471" parent="309" name="ass_dep">
+      <Position>2</Position>
+      <DataType>varchar(64)|0s</DataType>
+    </column>
+    <column id="472" parent="309" name="project_id">
+      <Position>3</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <index id="473" parent="309" name="id">
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+      <Type>btree</Type>
+    </index>
+    <index id="474" parent="309" name="project_id">
+      <ColNames>project_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <key id="475" parent="309" name="PRIMARY">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <key id="476" parent="309" name="id">
+      <ColNames>id</ColNames>
+      <UnderlyingIndexName>id</UnderlyingIndexName>
+    </key>
+    <foreign-key id="477" parent="309" name="assdepartment_ibfk_1">
+      <ColNames>project_id</ColNames>
+      <RefTableName>project</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <column id="478" parent="310" name="id">
+      <Position>1</Position>
+      <DataType>bigint|0s</DataType>
+      <NotNull>1</NotNull>
+      <SequenceIdentity>null</SequenceIdentity>
+    </column>
+    <column id="479" parent="310" name="ass_type">
+      <Position>2</Position>
+      <DataType>varchar(64)|0s</DataType>
+    </column>
+    <column id="480" parent="310" name="project_id">
+      <Position>3</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <index id="481" parent="310" name="id">
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+      <Type>btree</Type>
+    </index>
+    <index id="482" parent="310" name="project_id">
+      <ColNames>project_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <key id="483" parent="310" name="PRIMARY">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <key id="484" parent="310" name="id">
+      <ColNames>id</ColNames>
+      <UnderlyingIndexName>id</UnderlyingIndexName>
+    </key>
+    <foreign-key id="485" parent="310" name="asstype_ibfk_1">
+      <ColNames>project_id</ColNames>
+      <RefTableName>project</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <column id="486" parent="311" name="id">
+      <Position>1</Position>
+      <DataType>bigint|0s</DataType>
+      <NotNull>1</NotNull>
+      <SequenceIdentity>null</SequenceIdentity>
+    </column>
+    <column id="487" parent="311" name="file">
       <Position>2</Position>
       <DataType>varchar(128)|0s</DataType>
     </column>
-    <column id="467" parent="309" name="fileSuffixes">
+    <column id="488" parent="311" name="fileSuffixes">
       <Position>3</Position>
       <DataType>varchar(32)|0s</DataType>
     </column>
-    <column id="468" parent="309" name="user">
+    <column id="489" parent="311" name="user">
       <Position>4</Position>
       <DataType>varchar(128)|0s</DataType>
     </column>
-    <column id="469" parent="309" name="version">
+    <column id="490" parent="311" name="version">
       <Position>5</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
     </column>
-    <column id="470" parent="309" name="_file_path_">
+    <column id="491" parent="311" name="_file_path_">
       <Position>6</Position>
-      <DataType>varchar(1024)|0s</DataType>
+      <DataType>varchar(4096)|0s</DataType>
     </column>
-    <column id="471" parent="309" name="infor">
+    <column id="492" parent="311" name="infor">
       <Position>7</Position>
       <DataType>varchar(4096)|0s</DataType>
     </column>
-    <column id="472" parent="309" name="filestate">
+    <column id="493" parent="311" name="filestate">
       <Position>8</Position>
       <DataType>varchar(64)|0s</DataType>
     </column>
-    <column id="473" parent="309" name="filetime">
+    <column id="494" parent="311" name="filetime">
       <Position>9</Position>
       <DataType>datetime|0s</DataType>
       <DefaultExpression>CURRENT_TIMESTAMP</DefaultExpression>
     </column>
-    <column id="474" parent="309" name="__episodes__">
+    <column id="495" parent="311" name="assClass_id">
       <Position>10</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
     </column>
-    <column id="475" parent="309" name="__shot__">
+    <column id="496" parent="311" name="assType_id">
       <Position>11</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
     </column>
-    <column id="476" parent="309" name="__file_class__">
+    <column id="497" parent="311" name="episodes_id">
       <Position>12</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
     </column>
-    <column id="477" parent="309" name="__file_type__">
+    <column id="498" parent="311" name="shots_id">
       <Position>13</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
     </column>
-    <column id="478" parent="309" name="__ass_class__">
+    <column id="499" parent="311" name="shotClass_id">
       <Position>14</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
     </column>
-    <index id="479" parent="309" name="id">
+    <column id="500" parent="311" name="shotType_id">
+      <Position>15</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <column id="501" parent="311" name="project_id">
+      <Position>16</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <index id="502" parent="311" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="480" parent="309" name="__episodes__">
-      <ColNames>__episodes__</ColNames>
+    <index id="503" parent="311" name="assClass_id">
+      <ColNames>assClass_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="481" parent="309" name="__shot__">
-      <ColNames>__shot__</ColNames>
+    <index id="504" parent="311" name="assType_id">
+      <ColNames>assType_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="482" parent="309" name="__file_class__">
-      <ColNames>__file_class__</ColNames>
+    <index id="505" parent="311" name="episodes_id">
+      <ColNames>episodes_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="483" parent="309" name="__file_type__">
-      <ColNames>__file_type__</ColNames>
+    <index id="506" parent="311" name="shots_id">
+      <ColNames>shots_id</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="484" parent="309" name="__ass_class__">
-      <ColNames>__ass_class__</ColNames>
+    <index id="507" parent="311" name="shotClass_id">
+      <ColNames>shotClass_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="485" parent="309" name="PRIMARY">
+    <index id="508" parent="311" name="shotType_id">
+      <ColNames>shotType_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <index id="509" parent="311" name="project_id">
+      <ColNames>project_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <key id="510" parent="311" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="486" parent="309" name="id">
+    <key id="511" parent="311" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="487" parent="309" name="basefile_ibfk_1">
-      <ColNames>__episodes__</ColNames>
-      <RefTableName>episodes</RefTableName>
-      <RefColNames>id</RefColNames>
-    </foreign-key>
-    <foreign-key id="488" parent="309" name="basefile_ibfk_2">
-      <ColNames>__shot__</ColNames>
-      <RefTableName>shot</RefTableName>
-      <RefColNames>id</RefColNames>
-    </foreign-key>
-    <foreign-key id="489" parent="309" name="basefile_ibfk_3">
-      <ColNames>__file_class__</ColNames>
-      <RefTableName>fileclass</RefTableName>
-      <RefColNames>id</RefColNames>
-    </foreign-key>
-    <foreign-key id="490" parent="309" name="basefile_ibfk_4">
-      <ColNames>__file_type__</ColNames>
-      <RefTableName>filetype</RefTableName>
-      <RefColNames>id</RefColNames>
-    </foreign-key>
-    <foreign-key id="491" parent="309" name="basefile_ibfk_5">
-      <ColNames>__ass_class__</ColNames>
+    <foreign-key id="512" parent="311" name="basefile_ibfk_1">
+      <ColNames>assClass_id</ColNames>
       <RefTableName>assclass</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>
-    <column id="492" parent="310" name="name">
+    <foreign-key id="513" parent="311" name="basefile_ibfk_2">
+      <ColNames>assType_id</ColNames>
+      <RefTableName>asstype</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <foreign-key id="514" parent="311" name="basefile_ibfk_3">
+      <ColNames>episodes_id</ColNames>
+      <RefTableName>episodes</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <foreign-key id="515" parent="311" name="basefile_ibfk_4">
+      <ColNames>shots_id</ColNames>
+      <RefTableName>shots</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <foreign-key id="516" parent="311" name="basefile_ibfk_5">
+      <ColNames>shotClass_id</ColNames>
+      <RefTableName>shotclass</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <foreign-key id="517" parent="311" name="basefile_ibfk_6">
+      <ColNames>shotType_id</ColNames>
+      <RefTableName>shottype</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <foreign-key id="518" parent="311" name="basefile_ibfk_7">
+      <ColNames>project_id</ColNames>
+      <RefTableName>project</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <column id="519" parent="312" name="id">
       <Position>1</Position>
+      <DataType>bigint|0s</DataType>
+      <NotNull>1</NotNull>
+      <SequenceIdentity>null</SequenceIdentity>
+    </column>
+    <column id="520" parent="312" name="name">
+      <Position>2</Position>
       <DataType>varchar(128)|0s</DataType>
     </column>
-    <column id="493" parent="310" name="value">
-      <Position>2</Position>
-      <DataType>varchar(1024)|0s</DataType>
-    </column>
-    <column id="494" parent="310" name="id">
+    <column id="521" parent="312" name="value">
       <Position>3</Position>
-      <DataType>smallint|0s</DataType>
-      <NotNull>1</NotNull>
-      <SequenceIdentity>null</SequenceIdentity>
+      <DataType>varchar(128)|0s</DataType>
     </column>
-    <column id="495" parent="310" name="value2">
+    <column id="522" parent="312" name="project_id">
       <Position>4</Position>
-      <DataType>varchar(32)|0s</DataType>
+      <DataType>bigint|0s</DataType>
     </column>
-    <column id="496" parent="310" name="value3">
-      <Position>5</Position>
-      <DataType>varchar(256)|0s</DataType>
-    </column>
-    <column id="497" parent="310" name="value4">
-      <Position>6</Position>
-      <DataType>varchar(1024)|0s</DataType>
-    </column>
-    <key id="498" parent="310" name="PRIMARY">
-      <NameSurrogate>1</NameSurrogate>
-      <ColNames>id</ColNames>
-      <Primary>1</Primary>
-    </key>
-    <column id="499" parent="311" name="id">
-      <Position>1</Position>
-      <DataType>smallint|0s</DataType>
-      <NotNull>1</NotNull>
-      <SequenceIdentity>null</SequenceIdentity>
-    </column>
-    <column id="500" parent="311" name="episodes">
-      <Position>2</Position>
-      <DataType>smallint|0s</DataType>
-    </column>
-    <index id="501" parent="311" name="id">
+    <index id="523" parent="312" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="502" parent="311" name="episodes">
+    <index id="524" parent="312" name="project_id">
+      <ColNames>project_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <key id="525" parent="312" name="PRIMARY">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <key id="526" parent="312" name="id">
+      <ColNames>id</ColNames>
+      <UnderlyingIndexName>id</UnderlyingIndexName>
+    </key>
+    <foreign-key id="527" parent="312" name="configure_ibfk_1">
+      <ColNames>project_id</ColNames>
+      <RefTableName>project</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <column id="528" parent="313" name="id">
+      <Position>1</Position>
+      <DataType>bigint|0s</DataType>
+      <NotNull>1</NotNull>
+      <SequenceIdentity>null</SequenceIdentity>
+    </column>
+    <column id="529" parent="313" name="episodes">
+      <Position>2</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <column id="530" parent="313" name="project_id">
+      <Position>3</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <index id="531" parent="313" name="id">
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+      <Type>btree</Type>
+    </index>
+    <index id="532" parent="313" name="episodes">
       <ColNames>episodes</ColNames>
-      <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <key id="503" parent="311" name="PRIMARY">
+    <index id="533" parent="313" name="project_id">
+      <ColNames>project_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <key id="534" parent="313" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="504" parent="311" name="id">
+    <key id="535" parent="313" name="id">
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <key id="505" parent="311" name="episodes">
-      <ColNames>episodes</ColNames>
-      <UnderlyingIndexName>episodes</UnderlyingIndexName>
-    </key>
-    <column id="506" parent="312" name="id">
+    <foreign-key id="536" parent="313" name="episodes_ibfk_1">
+      <ColNames>project_id</ColNames>
+      <RefTableName>project</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <column id="537" parent="314" name="id">
       <Position>1</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="507" parent="312" name="file_class">
+    <column id="538" parent="314" name="name">
       <Position>2</Position>
-      <DataType>varchar(64)|0s</DataType>
+      <DataType>varchar(128)|0s</DataType>
     </column>
-    <column id="508" parent="312" name="__shot__">
-      <Position>3</Position>
-      <DataType>smallint|0s</DataType>
-    </column>
-    <column id="509" parent="312" name="__episodes__">
-      <Position>4</Position>
-      <DataType>smallint|0s</DataType>
-    </column>
-    <index id="510" parent="312" name="id">
+    <index id="539" parent="314" name="id">
       <ColNames>id</ColNames>
       <Unique>1</Unique>
-      <Type>btree</Type>
-    </index>
-    <index id="511" parent="312" name="__shot__">
-      <ColNames>__shot__</ColNames>
-      <Type>btree</Type>
-    </index>
-    <index id="512" parent="312" name="__episodes__">
-      <ColNames>__episodes__</ColNames>
-      <Type>btree</Type>
-    </index>
-    <key id="513" parent="312" name="PRIMARY">
-      <NameSurrogate>1</NameSurrogate>
-      <ColNames>id</ColNames>
-      <Primary>1</Primary>
-    </key>
-    <key id="514" parent="312" name="id">
-      <ColNames>id</ColNames>
-      <UnderlyingIndexName>id</UnderlyingIndexName>
-    </key>
-    <foreign-key id="515" parent="312" name="fileclass_ibfk_1">
-      <ColNames>__shot__</ColNames>
-      <RefTableName>shot</RefTableName>
-      <RefColNames>id</RefColNames>
-    </foreign-key>
-    <foreign-key id="516" parent="312" name="fileclass_ibfk_2">
-      <ColNames>__episodes__</ColNames>
-      <RefTableName>episodes</RefTableName>
-      <RefColNames>id</RefColNames>
-    </foreign-key>
-    <column id="517" parent="313" name="id">
-      <Position>1</Position>
-      <DataType>smallint|0s</DataType>
-      <NotNull>1</NotNull>
-      <SequenceIdentity>null</SequenceIdentity>
-    </column>
-    <column id="518" parent="313" name="file_type">
-      <Position>2</Position>
-      <DataType>varchar(64)|0s</DataType>
-    </column>
-    <column id="519" parent="313" name="__file_class__">
-      <Position>3</Position>
-      <DataType>smallint|0s</DataType>
-    </column>
-    <column id="520" parent="313" name="__ass_class__">
-      <Position>4</Position>
-      <DataType>smallint|0s</DataType>
-    </column>
-    <column id="521" parent="313" name="__episodes__">
-      <Position>5</Position>
-      <DataType>smallint|0s</DataType>
-    </column>
-    <column id="522" parent="313" name="__shot__">
-      <Position>6</Position>
-      <DataType>smallint|0s</DataType>
-    </column>
-    <index id="523" parent="313" name="id">
-      <ColNames>id</ColNames>
-      <Unique>1</Unique>
-      <Type>btree</Type>
-    </index>
-    <index id="524" parent="313" name="__file_class__">
-      <ColNames>__file_class__</ColNames>
-      <Type>btree</Type>
-    </index>
-    <index id="525" parent="313" name="__ass_class__">
-      <ColNames>__ass_class__</ColNames>
-      <Type>btree</Type>
-    </index>
-    <index id="526" parent="313" name="__episodes__">
-      <ColNames>__episodes__</ColNames>
-      <Type>btree</Type>
-    </index>
-    <index id="527" parent="313" name="__shot__">
-      <ColNames>__shot__</ColNames>
-      <Type>btree</Type>
-    </index>
-    <key id="528" parent="313" name="PRIMARY">
-      <NameSurrogate>1</NameSurrogate>
-      <ColNames>id</ColNames>
-      <Primary>1</Primary>
-    </key>
-    <key id="529" parent="313" name="id">
-      <ColNames>id</ColNames>
-      <UnderlyingIndexName>id</UnderlyingIndexName>
-    </key>
-    <foreign-key id="530" parent="313" name="filetype_ibfk_1">
-      <ColNames>__file_class__</ColNames>
-      <RefTableName>fileclass</RefTableName>
-      <RefColNames>id</RefColNames>
-    </foreign-key>
-    <foreign-key id="531" parent="313" name="filetype_ibfk_2">
-      <ColNames>__ass_class__</ColNames>
-      <RefTableName>assclass</RefTableName>
-      <RefColNames>id</RefColNames>
-    </foreign-key>
-    <foreign-key id="532" parent="313" name="filetype_ibfk_3">
-      <ColNames>__episodes__</ColNames>
-      <RefTableName>episodes</RefTableName>
-      <RefColNames>id</RefColNames>
-    </foreign-key>
-    <foreign-key id="533" parent="313" name="filetype_ibfk_4">
-      <ColNames>__shot__</ColNames>
-      <RefTableName>shot</RefTableName>
-      <RefColNames>id</RefColNames>
-    </foreign-key>
-    <column id="534" parent="314" name="id">
-      <Position>1</Position>
-      <DataType>smallint|0s</DataType>
-      <NotNull>1</NotNull>
-      <SequenceIdentity>null</SequenceIdentity>
-    </column>
-    <column id="535" parent="314" name="__episodes__">
-      <Position>2</Position>
-      <DataType>smallint|0s</DataType>
-    </column>
-    <column id="536" parent="314" name="shot_">
-      <Position>3</Position>
-      <DataType>smallint|0s</DataType>
-    </column>
-    <column id="537" parent="314" name="shotab">
-      <Position>4</Position>
-      <DataType>varchar(64)|0s</DataType>
-    </column>
-    <index id="538" parent="314" name="id">
-      <ColNames>id</ColNames>
-      <Unique>1</Unique>
-      <Type>btree</Type>
-    </index>
-    <index id="539" parent="314" name="__episodes__">
-      <ColNames>__episodes__</ColNames>
       <Type>btree</Type>
     </index>
     <key id="540" parent="314" name="PRIMARY">
@@ -1999,50 +1984,258 @@ APPLICATION_PASSWORD_ADMIN,AUDIT_ADMIN,BACKUP_ADMIN,BINLOG_ADMIN,BINLOG_ENCRYPTI
       <ColNames>id</ColNames>
       <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <foreign-key id="542" parent="314" name="shot_ibfk_1">
-      <ColNames>__episodes__</ColNames>
-      <RefTableName>episodes</RefTableName>
-      <RefColNames>id</RefColNames>
-    </foreign-key>
-    <column id="543" parent="315" name="id">
+    <column id="542" parent="315" name="id">
       <Position>1</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
       <NotNull>1</NotNull>
       <SequenceIdentity>null</SequenceIdentity>
     </column>
-    <column id="544" parent="315" name="localname">
+    <column id="543" parent="315" name="shot_class">
       <Position>2</Position>
-      <DataType>varchar(128)|0s</DataType>
+      <DataType>varchar(64)|0s</DataType>
     </column>
-    <column id="545" parent="315" name="__ass_class__">
+    <column id="544" parent="315" name="project_id">
       <Position>3</Position>
-      <DataType>smallint|0s</DataType>
+      <DataType>bigint|0s</DataType>
     </column>
-    <index id="546" parent="315" name="localname">
-      <ColNames>localname</ColNames>
+    <index id="545" parent="315" name="id">
+      <ColNames>id</ColNames>
       <Unique>1</Unique>
       <Type>btree</Type>
     </index>
-    <index id="547" parent="315" name="__ass_class__">
-      <ColNames>__ass_class__</ColNames>
-      <Unique>1</Unique>
+    <index id="546" parent="315" name="project_id">
+      <ColNames>project_id</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="548" parent="315" name="PRIMARY">
+    <key id="547" parent="315" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="549" parent="315" name="localname">
-      <ColNames>localname</ColNames>
-      <UnderlyingIndexName>localname</UnderlyingIndexName>
+    <key id="548" parent="315" name="id">
+      <ColNames>id</ColNames>
+      <UnderlyingIndexName>id</UnderlyingIndexName>
     </key>
-    <key id="550" parent="315" name="__ass_class__">
-      <ColNames>__ass_class__</ColNames>
-      <UnderlyingIndexName>__ass_class__</UnderlyingIndexName>
+    <foreign-key id="549" parent="315" name="shotclass_ibfk_1">
+      <ColNames>project_id</ColNames>
+      <RefTableName>project</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <column id="550" parent="316" name="id">
+      <Position>1</Position>
+      <DataType>bigint|0s</DataType>
+      <NotNull>1</NotNull>
+      <SequenceIdentity>null</SequenceIdentity>
+    </column>
+    <column id="551" parent="316" name="shot">
+      <Position>2</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <column id="552" parent="316" name="shotab">
+      <Position>3</Position>
+      <DataType>varchar(64)|0s</DataType>
+    </column>
+    <column id="553" parent="316" name="episodes_id">
+      <Position>4</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <index id="554" parent="316" name="id">
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+      <Type>btree</Type>
+    </index>
+    <index id="555" parent="316" name="episodes_id">
+      <ColNames>episodes_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <key id="556" parent="316" name="PRIMARY">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
     </key>
-    <foreign-key id="551" parent="315" name="znch_ibfk_1">
-      <ColNames>__ass_class__</ColNames>
+    <key id="557" parent="316" name="id">
+      <ColNames>id</ColNames>
+      <UnderlyingIndexName>id</UnderlyingIndexName>
+    </key>
+    <foreign-key id="558" parent="316" name="shots_ibfk_1">
+      <ColNames>episodes_id</ColNames>
+      <RefTableName>episodes</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <column id="559" parent="317" name="id">
+      <Position>1</Position>
+      <DataType>bigint|0s</DataType>
+      <NotNull>1</NotNull>
+      <SequenceIdentity>null</SequenceIdentity>
+    </column>
+    <column id="560" parent="317" name="shot_type">
+      <Position>2</Position>
+      <DataType>varchar(64)|0s</DataType>
+    </column>
+    <column id="561" parent="317" name="shotClass_id">
+      <Position>3</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <column id="562" parent="317" name="project_id">
+      <Position>4</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <index id="563" parent="317" name="id">
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+      <Type>btree</Type>
+    </index>
+    <index id="564" parent="317" name="shotClass_id">
+      <ColNames>shotClass_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <index id="565" parent="317" name="project_id">
+      <ColNames>project_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <key id="566" parent="317" name="PRIMARY">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <key id="567" parent="317" name="id">
+      <ColNames>id</ColNames>
+      <UnderlyingIndexName>id</UnderlyingIndexName>
+    </key>
+    <foreign-key id="568" parent="317" name="shottype_ibfk_1">
+      <ColNames>shotClass_id</ColNames>
+      <RefTableName>shotclass</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <foreign-key id="569" parent="317" name="shottype_ibfk_2">
+      <ColNames>project_id</ColNames>
+      <RefTableName>project</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <column id="570" parent="318" name="id">
+      <Position>1</Position>
+      <DataType>bigint|0s</DataType>
+      <NotNull>1</NotNull>
+      <SequenceIdentity>null</SequenceIdentity>
+    </column>
+    <column id="571" parent="318" name="assClass_id">
+      <Position>2</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <column id="572" parent="318" name="project_id">
+      <Position>3</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <column id="573" parent="318" name="episodes_id">
+      <Position>4</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <column id="574" parent="318" name="path">
+      <Position>5</Position>
+      <DataType>varchar(4096)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <index id="575" parent="318" name="id">
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+      <Type>btree</Type>
+    </index>
+    <index id="576" parent="318" name="assClass_id">
+      <ColNames>assClass_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <index id="577" parent="318" name="project_id">
+      <ColNames>project_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <index id="578" parent="318" name="episodes_id">
+      <ColNames>episodes_id</ColNames>
+      <Type>btree</Type>
+    </index>
+    <key id="579" parent="318" name="PRIMARY">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <key id="580" parent="318" name="id">
+      <ColNames>id</ColNames>
+      <UnderlyingIndexName>id</UnderlyingIndexName>
+    </key>
+    <foreign-key id="581" parent="318" name="synfile_ibfk_1">
+      <ColNames>assClass_id</ColNames>
+      <RefTableName>assclass</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <foreign-key id="582" parent="318" name="synfile_ibfk_2">
+      <ColNames>project_id</ColNames>
+      <RefTableName>project</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <foreign-key id="583" parent="318" name="synfile_ibfk_3">
+      <ColNames>episodes_id</ColNames>
+      <RefTableName>episodes</RefTableName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <column id="584" parent="319" name="id">
+      <Position>1</Position>
+      <DataType>bigint|0s</DataType>
+      <NotNull>1</NotNull>
+      <SequenceIdentity>null</SequenceIdentity>
+    </column>
+    <column id="585" parent="319" name="user">
+      <Position>2</Position>
+      <DataType>varchar(128)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="586" parent="319" name="password">
+      <Position>3</Position>
+      <DataType>varchar(1024)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <index id="587" parent="319" name="id">
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+      <Type>btree</Type>
+    </index>
+    <key id="588" parent="319" name="PRIMARY">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <key id="589" parent="319" name="id">
+      <ColNames>id</ColNames>
+      <UnderlyingIndexName>id</UnderlyingIndexName>
+    </key>
+    <column id="590" parent="320" name="id">
+      <Position>1</Position>
+      <DataType>bigint|0s</DataType>
+      <NotNull>1</NotNull>
+      <SequenceIdentity>null</SequenceIdentity>
+    </column>
+    <column id="591" parent="320" name="localname">
+      <Position>2</Position>
+      <DataType>varchar(128)|0s</DataType>
+    </column>
+    <column id="592" parent="320" name="assClass_id">
+      <Position>3</Position>
+      <DataType>bigint|0s</DataType>
+    </column>
+    <index id="593" parent="320" name="assClass_id">
+      <ColNames>assClass_id</ColNames>
+      <Unique>1</Unique>
+      <Type>btree</Type>
+    </index>
+    <key id="594" parent="320" name="PRIMARY">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <key id="595" parent="320" name="assClass_id">
+      <ColNames>assClass_id</ColNames>
+      <UnderlyingIndexName>assClass_id</UnderlyingIndexName>
+    </key>
+    <foreign-key id="596" parent="320" name="znch_ibfk_1">
+      <ColNames>assClass_id</ColNames>
       <RefTableName>assclass</RefTableName>
       <RefColNames>id</RefColNames>
     </foreign-key>

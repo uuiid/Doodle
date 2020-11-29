@@ -1,14 +1,22 @@
-﻿#pragma once
+﻿/*
+ * @Author: your name
+ * @Date: 2020-09-02 09:53:52
+ * @LastEditTime: 2020-11-29 17:27:04
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\fileSystem\fileSystem_global.h
+ */
+#pragma once
 
 #include <boost/filesystem/path.hpp>
 #include <QtCore/qglobal.h>
 #include <memory>
 #include <string>
 
-#if defined (FILESYSTEM_LIBRARY)
-#   define DSYSTEM_API Q_DECL_EXPORT
+#if defined(FILESYSTEM_LIBRARY)
+#define DSYSTEM_API Q_DECL_EXPORT
 #else
-#   define DSYSTEM_API Q_DECL_IMPORT
+#define DSYSTEM_API Q_DECL_IMPORT
 #endif
 
 #define DSYSTEM_S namespace doSystem {

@@ -1,6 +1,7 @@
 find_package(Qt5 CONFIG COMPONENTS Core REQUIRED)
 find_package(CURL CONFIG REQUIRED)
 find_package(Boost COMPONENTS filesystem REQUIRED)
+find_package(magic_enum CONFIG REQUIRED)
 
 set(HEADER_FILES
         fileSystem_global.h
@@ -10,16 +11,22 @@ set(HEADER_FILES
 
 add_library(fileSystem SHARED
         ${HEADER_FILES}
+
         src/DfileSyntem.cpp
         src/ftpsession.cpp
+        fileSystem_cpp.h
         )
 
-target_link_libraries(fileSystem PUBLIC Qt5::Core)
-target_link_libraries(fileSystem PUBLIC CURL::libcurl)
-target_link_libraries(fileSystem PUBLIC ${Boost_LIBRARIES})
-target_link_libraries(fileSystem PUBLIC logger)
-target_compile_definitions(fileSystem PRIVATE _WIN32_WINNT=0x0A00)
+target_link_libraries(fileSystem PRIVATE Qt5::Core)
+target_link_libraries(fileSystem PRIVATE ${Boost_LIBRARIES})
 
+#私有连接
+target_link_libraries(fileSystem PRIVATE CURL::libcurl)
+target_link_libraries(fileSystem PRIVATE magic_enum::magic_enum)
+target_link_libraries(fileSystem PRIVATE logger)
+
+#编译宏
+target_compile_definitions(fileSystem PRIVATE _WIN32_WINNT=0x0A00)
 target_compile_definitions(fileSystem PRIVATE FILESYSTEM_LIBRARY)
 
 target_include_directories(fileSystem PUBLIC ${CMAKE_CURRENT_LIST_DIR})

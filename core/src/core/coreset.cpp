@@ -22,6 +22,7 @@
 
 #include <QtCore/QStorageInfo>
 #include <boost/dll.hpp>
+#include <fileSystem_cpp.h>
 CORE_NAMESPACE_S
 
 const dstring coreSet::settingFileName = "doodle_conf.json";
@@ -38,6 +39,8 @@ void coreSet::init() {
   initdb();
   getServerSetting();
   getCacheDiskPath();
+  DOODLE_LOG_INFO << "登录 : " << project.second.c_str();
+  doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "");
 }
 
 void coreSet::initdb() {
@@ -46,15 +49,6 @@ void coreSet::initdb() {
 }
 
 void coreSet::writeDoodleLocalSet() {
-  //  Json::CharReaderBuilder json;
-  //  Json::Value root;
-  //  Json::StreamWriterBuilder builder;
-  //  builder.settings_["emitUTF8"] = true;
-  //  const auto waiter =
-  //  std::unique_ptr<Json::StreamWriter>(builder.newStreamWriter());
-
-  //  boost::filesystem::ifstream
-  //  injosn((*doc/settingFileName),std::ifstream::binary); injosn >> root;
   nlohmann::json root;
 
   root["user"] = user;
@@ -217,8 +211,7 @@ synPathListPtr coreSet::getSynDir() {
   nlohmann::json root;
 
   synPathListPtr list;
-  //  const auto reand =
-  //  std::unique_ptr<Json::CharReader>(builder.newCharReader());
+
   for (auto &&row :
        db->run(sqlpp::select(table.path)
                    .from(table.join(epTable).on(table.episodesId == epTable.id))

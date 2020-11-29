@@ -18,10 +18,10 @@
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
         },
         {
-            "name": "Doodle_run",
+            "name": "Doodle_Test",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/install/bin/doodle.exe",
+            "program": "${workspaceFolder}/install/bin/test_my.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/install/bin",

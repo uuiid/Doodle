@@ -18,50 +18,58 @@
 #include <boost/format.hpp>
 
 CORE_NAMESPACE_S
-freeSynWrap::freeSynWrap() :
-    hasInclude(false),
-    p_tem_golb_(std::make_shared<dpath>(boost::filesystem::temp_directory_path())),
-    p_tem_config(std::make_shared<dpath>(boost::filesystem::temp_directory_path())),
-    p_doc_(std::make_shared<pugi::xml_document>()) {
+freeSynWrap::freeSynWrap()
+    : hasInclude(false),
+      p_tem_golb_(
+          std::make_shared<dpath>(boost::filesystem::temp_directory_path())),
+      p_tem_config(
+          std::make_shared<dpath>(boost::filesystem::temp_directory_path())),
+      p_doc_(std::make_shared<pugi::xml_document>()) {
   auto file = QFile(":/resource/template.ffs_batch");
   if (!file.open(QIODevice::ReadOnly)) return;
 
   auto string = file.readAll().toStdString();
   p_doc_->load_string(string.data());
-//  p_doc_->load_buffer_inplace_own(string.data(), string.size(), pugi::parse_default, pugi::encoding_utf8);
-//  p_doc_->load_file(R"(F:\Source\qt_test\Doodle\core\resource\template.ffs_batch)");
   file.close();
-
-//  p_root_ = p_doc_.documentElement();
 }
+
 void freeSynWrap::addSynFile(const synPathListPtr &path_list_ptr) {
   for (auto &&item : path_list_ptr) {
-    auto pair_parent = p_doc_->root().select_node("/FreeFileSync/FolderPairs").node().append_child("Pair");
-    pair_parent.append_child("Left").text().set(item.local.generic_string().c_str());
-    pair_parent.append_child("Right").text().set(createIpPath(item.server.generic_string()).c_str());
+    auto pair_parent = p_doc_->root()
+                           .select_node("/FreeFileSync/FolderPairs")
+                           .node()
+                           .append_child("Pair");
+    pair_parent.append_child("Left").text().set(
+        item.local.generic_string().c_str());
+    pair_parent.append_child("Right").text().set(
+        createIpPath(item.server.generic_string()).c_str());
   }
 }
+
 void freeSynWrap::addInclude(const dstringList &include_list) {
-  auto include = p_doc_->root().select_node("/FreeFileSync/Filter/Include").node();
+  auto include =
+      p_doc_->root().select_node("/FreeFileSync/Filter/Include").node();
 
   if (include_list.empty()) {
     include.append_child("Item").text().set("*");
     return;
   }
-  for (auto &item:include_list) {
+  for (auto &item : include_list) {
     include.append_child("Item").text().set(item.c_str());
   }
   hasInclude = true;
 }
-void freeSynWrap::addExclude(const dstringList &exclude_list) {
 
-  auto exclude = p_doc_->root().select_node("/FreeFileSync/Filter/Exclude").node();
-  for (auto &&item :exclude_list) {
+void freeSynWrap::addExclude(const dstringList &exclude_list) {
+  auto exclude =
+      p_doc_->root().select_node("/FreeFileSync/Filter/Exclude").node();
+  for (auto &&item : exclude_list) {
     exclude.append_child("Item").text().set(item.c_str());
   }
-
 }
-void freeSynWrap::addSubIncludeExclude(const int sub, const dstringList &include_lsit,
+
+void freeSynWrap::addSubIncludeExclude(const int sub,
+                                       const dstringList &include_lsit,
                                        const dstringList &exclude_list) {
   auto pair = p_doc_->root().select_nodes("/FreeFileSync/FolderPairs/Pair");
   if (pair.empty()) return;
@@ -93,17 +101,24 @@ void freeSynWrap::addSubIncludeExclude(const int sub, const dstringList &include
   sizeMax.append_attribute("Unit").set_value("None");
   sizeMax.text().set("0");
 }
-void freeSynWrap::addSubSynchronize(int sub_index, const syn_set &synchronize_set, const dpath &versioning_folder) {
 
-  auto k_pair = p_doc_->root().select_node("/FreeFileSync/FolderPairs").node()
-      .select_nodes("Pair")[sub_index].node();
+void freeSynWrap::addSubSynchronize(int sub_index,
+                                    const syn_set &synchronize_set,
+                                    const dpath &versioning_folder) {
+  auto k_pair = p_doc_->root()
+                    .select_node("/FreeFileSync/FolderPairs")
+                    .node()
+                    .select_nodes("Pair")[sub_index]
+                    .node();
   auto k_syn = k_pair.append_child("Synchronize");
   setSyn(synchronize_set, versioning_folder, &k_syn);
 }
 
-void freeSynWrap::setVersioningFolder(const syn_set &synchronize_set, const dpath &folder) {
-
-  auto k_ver_folder = p_doc_->root().select_node("/FreeFileSync/Synchronize").node();//p_root_.firstChildElement("");
+void freeSynWrap::setVersioningFolder(const syn_set &synchronize_set,
+                                      const dpath &folder) {
+  auto k_ver_folder = p_doc_->root()
+                          .select_node("/FreeFileSync/Synchronize")
+                          .node();  // p_root_.firstChildElement("");
   setSyn(synchronize_set, folder, &k_ver_folder);
 }
 
@@ -129,8 +144,10 @@ void freeSynWrap::setSyn(const freeSynWrap::syn_set &set,
   parent_node->append_child("DeletionPolicy").text().set("Versioning");
   auto k_var_dolder = parent_node->append_child("VersioningFolder");
   k_var_dolder.append_attribute("Style").set_value("TimeStamp-Folder");
-  k_var_dolder.text().set(createIpPath(versioning_folder.generic_string()).c_str());
+  k_var_dolder.text().set(
+      createIpPath(versioning_folder.generic_string()).c_str());
 }
+
 void freeSynWrap::copyGlobSetting() {
   auto k_golb_sett = QFile(":/resource/_GlobalSettings.xml");
   boost::format str("_GlobalSettings_%s.xml");
@@ -145,10 +162,12 @@ void freeSynWrap::copyGlobSetting() {
   }
   kOfstream.close();
 }
+
 bool freeSynWrap::write() {
   copyGlobSetting();
   boost::format str("doodle_%s.ffs_batch");
-  DOODLE_LOG_INFO << boost::filesystem::unique_path("%%%%_%%").generic_string().c_str();
+  DOODLE_LOG_INFO
+      << boost::filesystem::unique_path("%%%%_%%").generic_string().c_str();
   str % boost::filesystem::unique_path("%%%%_%%").filename().generic_string();
 
   *p_tem_config = *p_tem_config / str.str();
@@ -160,9 +179,9 @@ bool freeSynWrap::write() {
   DOODLE_LOG_INFO << "写入配置文件" << p_tem_config->generic_string().c_str();
   return true;
 }
+
 bool freeSynWrap::run() {
-  if (!hasInclude)
-    addInclude(dstringList{});
+  if (!hasInclude) addInclude(dstringList{});
   write();
   auto com_arg = boost::format("FreeFileSync.exe %s %s");
   com_arg % p_tem_config->generic_string() % p_tem_golb_->generic_string();
@@ -173,32 +192,44 @@ bool freeSynWrap::run() {
   boost::process::spawn(com_arg.str(), env);
   return true;
 }
+
 dstring freeSynWrap::decode64(const dstring &val) {
   using namespace boost::archive::iterators;
-  using It = transform_width<binary_from_base64<std::string::const_iterator>, 8, 6>;
-  return boost::algorithm::trim_right_copy_if(std::string(It(std::begin(val)), It(std::end(val))), [](char c) {
-    return c == '\0';
-  });
+  using It =
+      transform_width<binary_from_base64<std::string::const_iterator>, 8, 6>;
+  return boost::algorithm::trim_right_copy_if(
+      std::string(It(std::begin(val)), It(std::end(val))),
+      [](char c) { return c == '\0'; });
 }
+
 dstring freeSynWrap::encode64(const dstring &val) {
   using namespace boost::archive::iterators;
-  using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
+  using It =
+      base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
   auto tmp = std::string(It(std::begin(val)), It(std::end(val)));
   return tmp.append((3 - val.size() % 3) % 3, '=');
 }
+
 dstring freeSynWrap::createIpPath(const dstring &val) {
-  auto serverPath = boost::format("ftp://%s@%s:21%s|pass64=%s");
+  //带密码和永华名称的访问
+  // auto serverPath = boost::format("ftp://%s@%s:21%s|pass64=%s");
+  // auto &set = coreSet::getSet();
+  // serverPath % (set.getProjectname() + set.getUser_en()) % set.getIpFtp() %
+  //     val % encode64(set.getUser_en());
+
+  // DOODLE_LOG_INFO << serverPath.str().c_str();
+  //不带密码的访问
+  auto serverPath = boost::format("ftp://%s@%s:21%s");
   auto &set = coreSet::getSet();
-  serverPath % (set.getProjectname() + set.getUser_en())
-      % set.getIpFtp()
-      % val
-      % encode64(set.getUser_en());
+  serverPath % set.getProjectname() % set.getIpFtp() % val;
+
   DOODLE_LOG_INFO << serverPath.str().c_str();
   return serverPath.str();
 }
+
 freeSynWrap::~freeSynWrap() {
-//  boost::filesystem::remove(*p_tem_config);
-//  boost::filesystem::remove(*p_tem_golb_);
+  //  boost::filesystem::remove(*p_tem_config);
+  //  boost::filesystem::remove(*p_tem_golb_);
 }
 
 CORE_NAMESPACE_E

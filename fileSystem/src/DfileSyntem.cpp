@@ -1,12 +1,13 @@
 /*
  * @Author: your name
  * @Date: 2020-09-03 09:10:01
- * @LastEditTime: 2020-11-27 10:37:43
+ * @LastEditTime: 2020-11-29 17:27:56
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\fileSystem\src\DfileSyntem.cpp
  */
 #include "DfileSyntem.h"
+#include <curl/curl.h>
 
 #include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
@@ -16,7 +17,7 @@
 #include <regex>
 #include <stdexcept>
 
-#include "ftpsession.h"
+#include <src/ftpsession.h>
 
 DSYSTEM_S
 DfileSyntem::~DfileSyntem() { curl_global_cleanup(); }
@@ -26,13 +27,25 @@ DfileSyntem &DfileSyntem::getFTP() {
   return install;
 }
 
+ftpSessionPtr DfileSyntem::session() const {
+  auto session = std::make_shared<ftpSession>();
+  session->setInfo(p_host_, p_prot_, p_name_, p_password_);
+  return session;
+}
+
 ftpSessionPtr DfileSyntem::session(const std::string &host, int prot,
                                    const std::string &name,
                                    const std::string &password) {
   ftpSessionPtr session(new ftpSession());
-  session->setInfo(host, prot, name, password);
+  p_host_ = host;
+  p_prot_ = prot;
+  p_name_ = name;
+  p_password_ = password;
+
+  session->setInfo(p_host_, p_prot_, p_name_, p_password_);
   return session;
 }
+
 bool DfileSyntem::copy(const dpath &sourePath,
                        const dpath &trange_path) noexcept {
   //创建线程池多线程复制
@@ -73,16 +86,10 @@ bool DfileSyntem::copy(const dpath &sourePath,
 }
 bool DfileSyntem::removeDir(const dpath &path) {
   boost::filesystem::remove_all(path);
-  //  if (!boost::filesystem::exists(path)) return true;
-  //
-  //  DOODLE_LOG_INFO << "remove dir ->>" << path.generic_string().c_str();
-  //  for (auto &item : boost::filesystem::recursive_directory_iterator(path)) {
-  //    if (boost::filesystem::is_regular_file(item.path())) {
-  //      boost::filesystem::remove(item.path());
-  //    }
-  //  }
   return true;
 }
-DfileSyntem::DfileSyntem() = default;
+DfileSyntem::DfileSyntem() : p_host_(), p_prot_(), p_name_(), p_password_() {
+  curl_global_init(CURL_GLOBAL_ALL);
+};
 
 DSYSTEM_E

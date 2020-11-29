@@ -128,5 +128,32 @@
     ],
     "editor.formatOnSave": true,
     "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, SortIncludes: false}",
-    "cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}"
+    "cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}",
+    "editor.tokenColorCustomizations": {
+        "textMateRules": [
+            {
+                "scope": "googletest.failed",
+                "settings": {
+                    "foreground": "#f00"
+                }
+            },
+            {
+                "scope": "googletest.passed",
+                "settings": {
+                    "foreground": "#0f0"
+                }
+            },
+            {
+                "scope": "googletest.run",
+                "settings": {
+                    "foreground": "#0f0"
+                }
+            }
+        ]
+    },
+    "gtest-adapter.debugConfig": [
+        "Doodle_debug",
+        "Doodle_Test"
+    ],
+    "gtest-adapter.supportLocation": true
 }

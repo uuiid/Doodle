@@ -1,11 +1,16 @@
-﻿#pragma once
+﻿/*
+ * @Author: your name
+ * @Date: 2020-09-03 10:07:41
+ * @LastEditTime: 2020-11-29 17:27:41
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\fileSystem\src\ftpsession.h
+ */
+#pragma once
 
 #include <fileSystem_global.h>
 
-#include "DfileSyntem.h"
-
-#include <curl/curl.h>
-#include <boost/property_tree/ptree.hpp>
+#include <src/DfileSyntem.h>
 class QFile;
 class QUrl;
 
@@ -19,14 +24,14 @@ struct oFileInfo {
 };
 
 class DSYSTEM_API ftpSession {
-
  public:
   ~ftpSession();
 
   bool down(const dstring &localFile, const dstring &remoteFile);
   bool downFolder(const dstring &localFile, const dstring &remoteFile);
   bool upload(const dstring &localFile, const dstring &remoteFile);
-  bool upload(const dstring &localFile, const dstring &remoteFile,bool backupFile);
+  bool upload(const dstring &localFile, const dstring &remoteFile,
+              bool backupFile);
   bool uploadFolder(const dstring &localFolder, const dstring &remoteFolder);
   bool rename(const dstring &oldName, const dstring &newName);
   oFileInfo fileInfo(const dstring &remoteFile);
@@ -34,29 +39,28 @@ class DSYSTEM_API ftpSession {
   std::vector<oFileInfo> list(const dstring &remoteFolder);
   bool createDir(const dstring &path);
   bool createDir(const std::vector<dstring> &path, bool allPath);
-  friend ftpSessionPtr DfileSyntem::session(const dstring &host,
-                                            int prot,
-                                            const dstring &name,
-                                            const dstring &password);
+  friend class DfileSyntem;
+
+  ftpSession();
 
  private:
-  ftpSession();
-  void setInfo(const dstring &host,
-               int prot,
-               const dstring &name,
+  void setInfo(const dstring &host, int prot, const dstring &name,
                const dstring &password);
-  static size_t writeFileCallbask(void *buff, size_t size, size_t nmemb, void *data);
-  static size_t readFileCallbask(void *buff, size_t size, size_t nmemb, void *data);
+  static size_t writeFileCallbask(void *buff, size_t size, size_t nmemb,
+                                  void *data);
+  static size_t readFileCallbask(void *buff, size_t size, size_t nmemb,
+                                 void *data);
   static size_t notCallbask(void *buff, size_t size, size_t nmemb, void *data);
-  static size_t writeStringCallbask(void *ptr, size_t size, size_t nmemb, void *data);
-  CURLcode perform();
+  static size_t writeStringCallbask(void *ptr, size_t size, size_t nmemb,
+                                    void *data);
+  int perform();
 
  private:
   std::shared_ptr<QFile> outfile;
   std::shared_ptr<QFile> inputfile;
   std::shared_ptr<QUrl> ptrUrl;
 
-  mutable CURL *curlSession;
+  mutable void *curlSession;
 };
 
 inline bool ftpSession::createDir(const dstring &path) {
