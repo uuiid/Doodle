@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-11-16 19:05:15
- * @LastEditTime: 2020-11-27 17:59:40
+ * @LastEditTime: 2020-11-30 10:53:01
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\main.cpp
@@ -16,6 +16,8 @@
 #include <QTextCodec>
 #include <iostream>
 #include <QtCore/QFile>
+#include <QtGui/QWindow>
+
 int main(int argc, char *argv[]) {
   QApplication q_application(argc, argv);
 

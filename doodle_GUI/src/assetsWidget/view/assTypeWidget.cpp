@@ -24,9 +24,9 @@ QWidget *fileTypeAssDelegate::createEditor(QWidget *parent,
   QStringList list;
   list << "sourceimages"
   << "scenes"
-  << QString("%1_UE4").arg(assClass->getAssClassQ())
+  << QString("%1_UE4").arg(assClass->getAssClassQ(true))
   << "rig"
-  << QString("%1_low").arg(assClass->getAssClassQ());
+  << QString("%1_low").arg(assClass->getAssClassQ(true));
 
   fileType->addItems(list);
 

@@ -45,7 +45,11 @@ bool ffmpegWrap::imageToVideo(const dpathList &image_path,
   DOODLE_LOG_INFO << QString::fromStdString(com_arg.str());
   auto env = boost::this_process::environment();
 
-  env["PATH"] += p_path_->generic_string();
+  if (boost::filesystem::is_directory(*p_path_))
+    env["PATH"] += p_path_->generic_string();
+  else if (boost::filesystem::is_regular_file(*p_path_))
+    env["PATH"] += p_path_->parent_path().generic_string();
+
   //  env["PATH"] += R"(c:\Windows\Fonts\)";
   boost::process::system(com_arg.str(), env);
 
@@ -80,7 +84,12 @@ bool ffmpegWrap::convertToVideo(const dpath &in_videoPath,
   DOODLE_LOG_INFO << QString::fromStdString(com_arg.str());
 
   auto env = boost::this_process::environment();
-  env["PATH"] += p_path_->generic_string();
+
+  if (boost::filesystem::is_directory(*p_path_))
+    env["PATH"] += p_path_->generic_string();
+  else if (boost::filesystem::is_regular_file(*p_path_))
+    env["PATH"] += p_path_->parent_path().generic_string();
+
   boost::process::system(com_arg.str(), env);
 
   return boost::filesystem::exists(k_out_path);
@@ -113,7 +122,12 @@ bool ffmpegWrap::connectVideo(const dpathList &in_videoPath,
   DOODLE_LOG_INFO << QString::fromStdString(com_arg.str());
 
   auto env = boost::this_process::environment();
-  env["PATH"] += p_path_->generic_string();
+
+  if (boost::filesystem::is_directory(*p_path_))
+    env["PATH"] += p_path_->generic_string();
+  else if (boost::filesystem::is_regular_file(*p_path_))
+    env["PATH"] += p_path_->parent_path().generic_string();
+
   try {
     boost::process::system(com_arg.str().c_str(), env);
   } catch (const boost::process::process_error &err) {

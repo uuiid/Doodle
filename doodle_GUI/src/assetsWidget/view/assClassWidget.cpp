@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-10-19 13:26:31
- * @LastEditTime: 2020-11-28 16:12:33
+ * @LastEditTime: 2020-11-30 13:23:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\src\assClassWidget.cpp
@@ -50,7 +50,7 @@ void assClassDelegate::updateEditorGeometry(QWidget* editor,
 }
 
 assClassWidget::assClassWidget(QWidget* parent)
-    : QListView(parent), p_model_(), p_menu_(nullptr) {
+    : QListView(parent), p_menu_(nullptr) {
   setStatusTip("右键添加文件");
   connect(this, &assClassWidget::clicked, this,
           &assClassWidget::_doodle_ass_emit);
@@ -59,15 +59,15 @@ assClassWidget::assClassWidget(QWidget* parent)
   setItemDelegate(new assClassDelegate(this));
 }
 void assClassWidget::setModel(QAbstractItemModel* model) {
-  auto t_model_ = dynamic_cast<assClassModel*>(model);
-  if (t_model_) p_model_ = t_model_;
+  // auto t_model_ = dynamic_cast<assClassModel*>(model);
+  // if (t_model_) p_model_ = t_model_;
   QAbstractItemView::setModel(model);
 }
 void assClassWidget::insertAss() {
   int raw = selectionModel()->currentIndex().row() + 1;
-  p_model_->insertRow(raw);
-  setCurrentIndex(p_model_->index(raw));  //设置当前索引
-  edit(p_model_->index(raw));             //编译当前添加
+  model()->insertRow(raw);
+  setCurrentIndex(model()->index(raw, 0));  //设置当前索引
+  edit(model()->index(raw, 0));             //编译当前添加
 }
 void assClassWidget::editAssName() {
   if (selectionModel()->hasSelection()) edit(selectionModel()->currentIndex());
@@ -75,14 +75,14 @@ void assClassWidget::editAssName() {
 
 void assClassWidget::deleteSQLFile() {
   if (doCore::coreDataManager::get().getAssInfoL().empty()) {
-    p_model_->removeRow(selectionModel()->currentIndex().row());
+    model()->removeRow(selectionModel()->currentIndex().row());
   } else
     QMessageBox::warning(this, tr("注意"), tr("这个条目中还有内容,无法删除"));
 }
 
 void assClassWidget::_doodle_ass_emit(const QModelIndex& index) {
   auto assClass =
-      p_model_->data(index, Qt::UserRole).value<doCore::assClassPtr>();
+      model()->data(index, Qt::UserRole).value<doCore::assClassPtr>();
   doCore::coreDataManager::get().setAssClassPtr(assClass);
   emit initEmited();
 }

@@ -49,7 +49,9 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
             var = shot->getSuffixesQ();
             break;
           case 4:
-            var = shot->getShotType()->getTypeQ();
+            if (shot->getShotType()) {
+              var = shot->getShotType()->getTypeQ();
+            }
             break;
           default:
             var = QVariant();
@@ -226,7 +228,7 @@ void shotTableModel::eachOne() {
 
   auto it = std::remove_if(
       listout.begin(), listout.end(), [=](const doCore::shotInfoPtr &ptr) {
-        if (ptr) {
+        if (ptr && ptr->getShotType()) {
           return !(
               boost::regex_search(ptr->getShotType()->getType(), *show_FBRex) ||
               boost::regex_search(ptr->getShotType()->getType(),

@@ -63,6 +63,7 @@ void mainWindows::doodle_init() {
   connect(prj, &QListWidget::itemClicked, p_setting_widget_,
           [=](QListWidgetItem *item) mutable {
             p_setting_widget_->setProject(item->text());
+            doCore::coreSet::getSet().reInit();
           });
 
   auto k_ass_dock = new QDockWidget(tr("资产"), centralWidget,

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-11-26 10:17:07
- * @LastEditTime: 2020-11-27 10:04:50
+ * @LastEditTime: 2020-11-30 14:46:30
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\synData.cpp
@@ -27,7 +27,8 @@ void synData::insert() {
   auto db = coreSql::getCoreSql().getConnection();
 
   idP = db->insert(sqlpp::insert_into(tab).set(
-      tab.path = toString(), tab.episodesId = p_episodes_->getIdP()));
+      tab.path = toString(), tab.episodesId = p_episodes_->getIdP(),
+      tab.projectId = coreSet::getSet().projectName().first));
   if (idP == 0) {
     DOODLE_LOG_INFO << "not install";
     throw std::runtime_error("not install");
@@ -46,7 +47,7 @@ synDataPtr synData::getAll(const episodesPtr &episodes) {
                    .where(tab.episodesId == episodes->getIdP()))) {
     ptr->idP = row.id;
     ptr->setSynPath(row.path);
-    ptr->setEpisodes(episodes::find(row.id));
+    ptr->setEpisodes(episodes::find(row.episodesId));
   }
 
   return ptr;

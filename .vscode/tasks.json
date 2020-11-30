@@ -28,9 +28,9 @@
             "command": "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe",
             "problemMatcher": [],
             "args": [
-                "anzhuang.iss"
+                "install_release/anzhuang.iss"
             ],
-            "group": "none"
+            "group": "none",
         }
     ]
 }

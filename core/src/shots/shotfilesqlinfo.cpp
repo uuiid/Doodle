@@ -359,7 +359,7 @@ void shotFileSqlInfo::setShotClass() {
 shotTypePtr shotFileSqlInfo::getShotType() {
   if (p_ptr_shTy)
     return p_ptr_shTy;
-  else if (p_shTy_id >= 0) {
+  else if (p_shTy_id > 0) {
     for (const auto& item : coreDataManager::get().getShotTypeL()) {
       if (item->getIdP() == p_shTy_id) {
         p_ptr_shTy = item;

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-08-08 17:45:24
- * @LastEditTime: 2020-11-28 20:51:11
+ * @LastEditTime: 2020-11-30 09:24:05
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\DoodleConfig.h.in
@@ -10,4 +10,5 @@
 // clang-format off
 #define Doodle_VERSION_MAJOR @Doodle_VERSION_MAJOR@
 #define Doodle_VERSION_MINOR @Doodle_VERSION_MINOR@
+#define Doodle_VERSION_REVIS @Doodle_VERSION_REVIS@
 // clang-format on

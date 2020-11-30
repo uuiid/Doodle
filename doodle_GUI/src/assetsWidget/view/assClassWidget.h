@@ -1,8 +1,8 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-10-19 13:26:31
- * @LastEditTime: 2020-11-28 16:04:32
- * @LastEditors: your name
+ * @LastEditTime: 2020-11-30 13:23:52
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\src\assClassWidget.h
  */
@@ -44,9 +44,6 @@ class assClassWidget : public QListView {
   void initEmited();
 
  private:
-  //模型指针
-  assClassModel* p_model_;
-
   QMenu* p_menu_;
 
  private slots:

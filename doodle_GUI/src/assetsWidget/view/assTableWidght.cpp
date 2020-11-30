@@ -255,7 +255,11 @@ void assTableWidght::createLightDir() {
 
       if (butten == QMessageBox::Yes) {
         auto uesyn = std::make_shared<doCore::ueSynArchive>();
-        uesyn->makeDir(eps_ptr);
+        auto future = std::async(std::launch::async, [=]() -> bool {
+          return uesyn->makeDir(eps_ptr);
+        });
+        updataManager::get().addQueue(future, "正在复制文件", 1000);
+        updataManager::get().run();
       }
     } else {
       QMessageBox::warning(this, tr("注意"), tr("请选择集数"));

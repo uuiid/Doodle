@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-03 09:10:01
- * @LastEditTime: 2020-11-29 17:27:56
+ * @LastEditTime: 2020-11-30 18:12:29
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\fileSystem\src\DfileSyntem.cpp
@@ -57,6 +57,9 @@ bool DfileSyntem::copy(const dpath &sourePath,
     boost::filesystem::create_directories(trange_path.parent_path());
 
   if (boost::filesystem::is_regular_file(sourePath)) {
+    auto backup_path = trange_path.parent_path() / "backup" / "dataTime" /
+                       trange_path.filename();
+
     boost::filesystem::copy_file(
         sourePath, trange_path,
         boost::filesystem::copy_option::overwrite_if_exists);

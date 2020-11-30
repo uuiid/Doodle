@@ -1,4 +1,12 @@
-﻿#pragma once
+﻿/*
+ * @Author: your name
+ * @Date: 2020-09-15 14:23:34
+ * @LastEditTime: 2020-11-30 14:06:01
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\assets\assClass.h
+ */
+#pragma once
 
 #include "core_global.h"
 
@@ -22,7 +30,7 @@ class CORE_API assClass : public coresqldata,
 
   std::string getAssClass() const;
   std::string getAssClass(const bool &isZNCH);
-  QString getAssClassQ();
+  QString getAssClassQ(bool isZNCH);
 
   void setAssClass(const std::string &value);
   void setAssClass(const std::string &value, const bool &isZNCH);
@@ -35,7 +43,7 @@ class CORE_API assClass : public coresqldata,
 
   znchNamePtr p_ptr_znch;
 };
-inline QString assClass::getAssClassQ() {
-  return QString::fromStdString(getAssClass(true));
+inline QString assClass::getAssClassQ(bool isZNCH) {
+  return QString::fromStdString(getAssClass(isZNCH));
 }
 CORE_NAMESPACE_E

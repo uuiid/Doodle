@@ -1,14 +1,12 @@
 /*
  * @Author: your name
  * @Date: 2020-09-28 14:13:33
- * @LastEditTime: 2020-10-09 15:06:20
+ * @LastEditTime: 2020-11-30 13:32:25
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\doodle_global.h
  */
 #pragma once
-
-
 
 #include <QtCore/qglobal.h>
 #include <QWidget>
@@ -16,9 +14,10 @@
 #include <QComboBox>
 #include <QSpinBox>
 
-
 #define DOODLE_NAMESPACE_S namespace doodle {
-#define DOODLE_NAMESPACE_E };
+#define DOODLE_NAMESPACE_E \
+  }                        \
+  ;
 
 // class QHBoxLayout;
 // class QComboBox;
@@ -47,6 +46,7 @@ class assDepWidget;
 
 class assClassModel;
 class assClassWidget;
+class assSortfilterModel;
 
 class assTypeModel;
 class assTypeWidget;

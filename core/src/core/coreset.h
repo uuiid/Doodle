@@ -5,17 +5,7 @@
 #include <boost/filesystem.hpp>
 CORE_NAMESPACE_S
 
-enum class dep {
-  None_,
-  Executive,
-  Light,
-  VFX,
-  modle,
-  rig,
-  Anm,
-  direct,
-  paint
-};
+enum class dep { None_, Executive, Light, VFX, modle, rig, Anm, direct, paint };
 
 struct synPath_struct {
   dpath local;
@@ -23,11 +13,10 @@ struct synPath_struct {
 };
 
 /*
-*全局静态设置类
-*/
+ *全局静态设置类
+ */
 
-class CORE_API coreSet{
-
+class CORE_API coreSet {
  public:
   static coreSet &getSet();
 
@@ -36,26 +25,27 @@ class CORE_API coreSet{
 
   //初始化函数
   void init();
+  void reInit();
   void initdb();
 
   //这个要改到其他地方
   //获得同步路径
   synPathListPtr getSynDir();
   //获得运行程序目录
-  static dpath program_location() ;
-  static dpath program_location(const dpath &path) ;
+  static dpath program_location();
+  static dpath program_location(const dpath &path);
 
   //同步目录时的本地路径
   [[nodiscard]] const dpath getSynPathLocale() const;
   void setSynPathLocale(const dpath &syn_path);
   void setSynPathLocale(const QString &syn_path);
-  //MySQL ip设置
+  // MySQL ip设置
   [[nodiscard]] dstring getIpMysql() const;
   void setIpMysql(const dstring &value);
-  //FTP ip
+  // FTP ip
   [[nodiscard]] dstring getIpFtp() const;
   void setIpFtp(const dstring &value);
-  //user设置
+  // user设置
   [[nodiscard]] dstring getUser() const;
   [[nodiscard]] dstring getUser_en() const;
   void setUser(const dstring &value);
@@ -73,30 +63,31 @@ class CORE_API coreSet{
   void setFreeFileSyn(const dstring &value);
   //项目名称设置
   dstring getProjectname();
-  [[nodiscard]] std::pair<int,std::string> projectName() const;
+  [[nodiscard]] std::pair<int, std::string> projectName() const;
   [[nodiscard]] dstringList getAllPrjName() const;
   void setProjectname(const std::string &value);
   void setProjectname(const QString &value);
 
-  //shot根路径
+  // shot根路径
   [[nodiscard]] dpath getShotRoot() const;
   void setShotRoot(const dpath &value);
-  //ass根路径
+  // ass根路径
   [[nodiscard]] dpath getAssRoot() const;
   void setAssRoot(const dpath &value);
-  //project根路径
+  // project根路径
   [[nodiscard]] dpath getPrjectRoot() const;
   void setPrjectRoot(const dpath &value);
   //缓存路径
   [[nodiscard]] dpath getCacheRoot() const;
 
-  //doc路径
+  // doc路径
   [[nodiscard]] dpath getDoc() const;
 
   void writeDoodleLocalSet();
 
   static dstringList getAllUser();
-  static bool subUser(const dstring& user_str);
+  static bool subUser(const dstring &user_str);
+
  private:
   //私有化构造函数
   coreSet();
@@ -108,11 +99,12 @@ class CORE_API coreSet{
   void getSetting();
   //转换为ip路径
   static dstring toIpPath(const dstring &path);
+
  private:
   const static dstring settingFileName;
-  //MySQL IP地址
+  // MySQL IP地址
   dstring ipMysql;
-  //FTP IP地址
+  // FTP IP地址
   dstring ipFTP;
   //用户名称
   dstring user;
@@ -125,13 +117,14 @@ class CORE_API coreSet{
 
   //项目名称
   dstring projectname;
-  std::pair<int,std::string> project;
+  std::pair<int, std::string> project;
+
  private:
   //内部属性
   dpathPtr synPath;
   dpathPtr synServer;
 
-  std::map<int,std::string> prjMap;
+  std::map<int, std::string> prjMap;
 
   dpathPtr shotRoot;
   dpathPtr assRoot;
@@ -146,14 +139,13 @@ inline QString coreSet::getDepartmentQ() const {
 inline void coreSet::setDepartment(const QString &value) {
   setDepartment(value.toStdString());
 }
-inline void  coreSet::setUser(const QString &value) {
+inline void coreSet::setUser(const QString &value) {
   setUser(value.toStdString());
 }
-inline void  coreSet::setSynPathLocale(const QString &syn_path) {
+inline void coreSet::setSynPathLocale(const QString &syn_path) {
   setSynPathLocale(dpath{syn_path.toStdString()});
 }
 inline void coreSet::setProjectname(const QString &value) {
   setProjectname(value.toStdString());
 }
 CORE_NAMESPACE_E
-

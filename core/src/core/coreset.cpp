@@ -43,6 +43,12 @@ void coreSet::init() {
   doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "");
 }
 
+void coreSet::reInit() {
+  initdb();
+  getServerSetting();
+  doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "");
+}
+
 void coreSet::initdb() {
   coreSql &sql = coreSql::getCoreSql();
   sql.initDB(ipMysql);
