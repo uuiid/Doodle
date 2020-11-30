@@ -65,4 +65,4 @@ cmake-build-debug/
 /.idea/
 /venv/
 /b_N*/
-/install_release
+/install*
