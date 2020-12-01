@@ -108,14 +108,14 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   if (copy_path_list.size() == 1) {
     auto path = copy_path_list.front();
     doSystem::DfileSyntem::copy(set.getPrjectRoot() / path,
-                                server / path.filename());
+                                server / path.filename(), false);
     doSystem::DfileSyntem::copy(
         set.getPrjectRoot() / path.parent_path() / DOODLE_CONTENT,
-        server / DOODLE_CONTENT);
+        server / DOODLE_CONTENT, false);
   } else if (copy_path_list.size() == 2) {
     for (auto &copy_path : copy_path_list) {
       doSystem::DfileSyntem::copy(set.getPrjectRoot() / copy_path,
-                                  server / copy_path.filename());
+                                  server / copy_path.filename(), false);
     }
   }
 

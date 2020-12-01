@@ -1,3 +1,11 @@
+/*
+ * @Author: your name
+ * @Date: 2020-09-02 13:21:54
+ * @LastEditTime: 2020-12-01 11:40:38
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\test\test_fileSystem.cpp
+ */
 #include "fileSystem_global.h"
 
 #include "src/DfileSyntem.h"
@@ -11,19 +19,16 @@
 #include <QDir>
 #include <boost/filesystem/operations.hpp>
 TEST(ftp, upload) {
-
   doSystem::ftpSessionPtr session = doSystem::DfileSyntem::getFTP().session("192.168.10.213",
                                                                             21,
                                                                             "dubuxiaoyaozhangyubin",
                                                                             "zhangyubin");
   ASSERT_TRUE(session->upload("D:/tmp/BuJu.1002.png", "/cache/test/test.png"));
-
 }
 TEST(ftp, down) {
   doSystem::ftpSessionPtr session = doSystem::DfileSyntem::getFTP().session("192.168.10.213",
                                                                             21, "", "");
   ASSERT_TRUE(session->down("D:/tmp/test.exe", "/dist/doodle.exe"));
-
 }
 
 TEST(ftp, getInfo) {
@@ -75,11 +80,17 @@ TEST(ftp, createFolder) {
                                                                             "zhangyubin");
   ASSERT_TRUE(session->createDir("/tmp/test/dddd"));
 }
-TEST(ftp, copy_dir) {
-  doSystem::DfileSyntem::copy(R"(D:/tmp/tt)", "D:/tmp/tt2");
+TEST(ftp, copy_dir_not_backup) {
+  doSystem::DfileSyntem::copy(R"(D:/tmp/tt)", "D:/tmp/tt2", false);
+}
+TEST(ftp, copy_dir_backup) {
+  doSystem::DfileSyntem::copy(R"(D:/tmp/tt)", "D:/tmp/tt2", true);
+}
+TEST(ftp, copy_file_backup) {
+  doSystem::DfileSyntem::copy(R"(D:/tmp/tt/doodle.exe)", "D:/tmp/tt3/doodle.exe", true);
 }
 TEST(ftp, copy_dir_ip) {
-  doSystem::DfileSyntem::copy(R"(\\192.168.10.253\Prism_projects\cache)", "D:/tmp/tt2");
+  doSystem::DfileSyntem::copy(R"(\\192.168.10.253\Prism_projects\cache)", "D:/tmp/tt2", false);
 }
 TEST(ftp, rename) {
   try {

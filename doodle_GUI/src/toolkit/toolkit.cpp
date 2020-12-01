@@ -141,7 +141,7 @@ void toolkit::installUePath(const std::string &path) {
   if (boost::filesystem::exists(ue_path)) {
     doSystem::DfileSyntem::removeDir(ue_path);
   }
-  doSystem::DfileSyntem::copy(sourePath, ue_path);
+  doSystem::DfileSyntem::copy(sourePath, ue_path, false);
 }
 
 bool toolkit::update() {

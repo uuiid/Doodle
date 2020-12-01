@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-02 09:59:06
- * @LastEditTime: 2020-11-29 16:11:11
+ * @LastEditTime: 2020-12-01 13:11:10
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\fileSystem\src\DfileSyntem.h
@@ -23,7 +23,9 @@ class DSYSTEM_API DfileSyntem {
   ftpSessionPtr session(const std::string &host, int prot,
                         const std::string &name, const std::string &password);
 
-  static bool copy(const dpath &sourePath, const dpath &trange_path) noexcept;
+  bool upload(const dpath &localFile, const dpath &remoteFile) noexcept;
+  bool down(const dpath &localFile, const dpath &remoteFile) noexcept;
+  static bool copy(const dpath &sourePath, const dpath &trange_path, bool backup) noexcept;
   static bool removeDir(const dpath &path);
 
  private:

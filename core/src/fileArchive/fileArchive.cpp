@@ -113,7 +113,7 @@ void fileArchive::_updata(const dpathList &pathList) {
   coreSet &set = coreSet::getSet();
 
   auto session = doSystem::DfileSyntem::getFTP().session();
-
+  //使用ftp上传
   int i = 0;
   for (auto &&item : p_cacheFilePath) {
     if (!session->upload((item.generic_string()), (p_Path[i].generic_string()),
