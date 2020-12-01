@@ -61,10 +61,13 @@ bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
   std::string mayaPY_path = "";
   if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
     env["PATH"] += R"(C:\Program Files\Autodesk\Maya2018\bin\)";
+    mayaPY_path = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
   } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
     env["PATH"] += R"(C:\Program Files\Autodesk\Maya2019\bin\)";
+    mayaPY_path = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
   } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
     env["PATH"] += R"(C:\Program Files\Autodesk\Maya2020\bin\)";
+    mayaPY_path = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
   } else {
     return false;
   }
@@ -84,7 +87,7 @@ bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
         false,
         0,  //CREATE_NEW_CONSOLE
         NULL,
-        R"(C:\Program Files\Autodesk\Maya2018\bin\)",  //R"("C:\Program Files\Autodesk\Maya2020\bin\")"
+        mayaPY_path.c_str(),  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
         &si,
         &pi);
     // CloseHandle(pi.hProcess);
