@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-12-01 15:47:51
- * @LastEditTime: 2020-12-01 19:17:58
+ * @LastEditTime: 2020-12-01 20:19:46
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \tools\src\main.cpp
@@ -94,27 +94,28 @@ runExport::runExport(const QString &command)
 
 void runExport::run() {
   auto env = boost::this_process::environment();
-  // auto run = QProcess();
-  // auto env = QProcessEnvironment::systemEnvironment();
-  // if (QDir(R"(C:\Program Files\Autodesk\Maya2018\bin\)").exists())
-  //   env.insert("PATH", R"(C:\Program Files\Autodesk\Maya2018\bin\)");
-  // else if (QDir(R"(C:\Program Files\Autodesk\Maya2019\bin\)").exists())
-  //   env.insert("PATH", R"(C:\Program Files\Autodesk\Maya2019\bin\)");
-  // else if (QDir(R"(C:\Program Files\Autodesk\Maya2020\bin\)").exists())
-  //   env.insert("PATH", R"(C:\Program Files\Autodesk\Maya2020\bin\)");
-  // run.setProcessEnvironment(env);
-  // run.start(p_command_);
-  // run.waitForFinished(-1);
+  auto paths = env["PATH"].to_vector();
   auto str_path = std::string{};
+  if (std::find_if(paths.begin(), paths.end(), [=](std::string &p) -> bool {
+        return (p.find(R"(C:\Program Files\Autodesk\Maya)") != p.npos);
+      }) == paths.end()) {
+    if (QDir(R"(C:\Program Files\Autodesk\Maya2018\bin\)").exists()) {
+      str_path = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
+      env["PATH"] += R"(C:\Program Files\Autodesk\Maya2018\bin\)";
+    } else if (QDir(R"(C:\Program Files\Autodesk\Maya2019\bin\)").exists()) {
+      str_path = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
+      env["PATH"] += R"(C:\Program Files\Autodesk\Maya2019\bin\)";
+    } else if (QDir(R"(C:\Program Files\Autodesk\Maya2020\bin\)").exists()) {
+      str_path = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
+      env["PATH"] += R"(C:\Program Files\Autodesk\Maya2020\bin\)";
+    }
+  }
   if (QDir(R"(C:\Program Files\Autodesk\Maya2018\bin\)").exists()) {
     str_path = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2018\bin\)";
   } else if (QDir(R"(C:\Program Files\Autodesk\Maya2019\bin\)").exists()) {
     str_path = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2019\bin\)";
   } else if (QDir(R"(C:\Program Files\Autodesk\Maya2020\bin\)").exists()) {
     str_path = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2020\bin\)";
   }
 
   STARTUPINFO si{};
