@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-28 14:13:33
- * @LastEditTime: 2020-11-30 13:32:25
+ * @LastEditTime: 2020-12-01 14:36:15
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\doodle_global.h

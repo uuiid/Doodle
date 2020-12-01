@@ -27,6 +27,7 @@ shotEditWidget::shotEditWidget(QWidget *parent)
   p_b_hboxLayout->setSpacing(0);
 
   p_spin = new QSpinBox(this);
+  p_spin->setRange(1, 999);
   p_combox = new QComboBox(this);
 
   p_b_hboxLayout->addWidget(p_spin);
