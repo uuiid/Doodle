@@ -16,6 +16,7 @@
 #include <QtCore/QDateTime>
 
 #include <magic_enum.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 DSYSTEM_S
 ftpSession::ftpSession() {
   ptrUrl = std::make_shared<QUrl>();
@@ -275,7 +276,7 @@ size_t ftpSession::writeStringCallbask(void *ptr, size_t size, size_t nmemb,
     return 0;
   auto *ptrlist = static_cast<QString *>(data);
   if (ptrlist != nullptr) {
-    ptrlist->append(QByteArray(reinterpret_cast<char *>(ptr), size * nmemb));
+    ptrlist->append(QByteArray(reinterpret_cast<char *>(ptr), boost::numeric_cast<int>(size * nmemb)));
     return size * nmemb;
   }
   return 0;
