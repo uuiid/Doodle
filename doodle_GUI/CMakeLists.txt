@@ -18,8 +18,8 @@ set(RESOURCE_SOURCE
 )
 
 qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
-
-add_executable(doodle WIN32
+#WIN32
+add_executable(doodle 
         doodle_global.h
         main.cpp
         ${TS_FILES}

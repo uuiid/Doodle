@@ -58,30 +58,33 @@ bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
       % shot_data.parent_path().generic_string();  //
 
   auto env = boost::this_process::environment();
-
-  // std::string mayaPY_path = "";
-  if (boost::filesystem::exists(R"(C:/Program Files/Autodesk/Maya2018/bin)")) {
-    env["PATH"] += R"(C:/Program Files/Autodesk/Maya2018/bin/)";
-  } else if (boost::filesystem::exists(R"(C:/Program Files/Autodesk/Maya2019/bin)")) {
-    env["PATH"] += R"(C:/Program Files/Autodesk/Maya2019/bin/)";
-  } else if (boost::filesystem::exists(R"(C:/Program Files/Autodesk/Maya2020/bin)")) {
-    env["PATH"] += R"(C:/Program Files/Autodesk/Maya2020/bin/)";
+  std::string mayaPY_path = "";
+  if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
+    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2018\bin\)";
+  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
+    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2019\bin\)";
+  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
+    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2020\bin\)";
   } else {
     return false;
   }
   DOODLE_LOG_INFO << "导出命令" << str.str().c_str();
-  STARTUPINFO si;
-  PROCESS_INFORMATION pi;
+
+  STARTUPINFO si{};
+  PROCESS_INFORMATION pi{};
+  ZeroMemory(&si, sizeof(si));
+  ZeroMemory(&pi, sizeof(pi));
   try {
-    CreateProcessA(
+    //使用windowsIPA创建子进程
+    CreateProcess(
         NULL,
         (char *)str.str().c_str(),
         NULL,
         NULL,
         false,
-        0,
+        0,  //CREATE_NEW_CONSOLE
         NULL,
-        NULL,
+        R"(C:\Program Files\Autodesk\Maya2018\bin\)",  //R"("C:\Program Files\Autodesk\Maya2020\bin\")"
         &si,
         &pi);
     // CloseHandle(pi.hProcess);
@@ -94,6 +97,9 @@ bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
     DOODLE_LOG_WARN << e.what() << '\n';
     return false;
   }
+  WaitForSingleObject(pi.hProcess, INFINITE);
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
 
   return boost::filesystem::exists(shot_data.parent_path() / "doodle_Export.json");
 }
