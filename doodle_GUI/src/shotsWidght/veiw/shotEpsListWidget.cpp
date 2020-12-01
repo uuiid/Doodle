@@ -20,8 +20,7 @@ episodesintDelegate::episodesintDelegate(QObject *parent)
     : QStyledItemDelegate(parent) {
 }
 
-episodesintDelegate::~episodesintDelegate()
-= default;
+episodesintDelegate::~episodesintDelegate() = default;
 
 QWidget *episodesintDelegate::createEditor(QWidget *parent,
                                            const QStyleOptionViewItem &option,
@@ -79,8 +78,7 @@ shotEpsListWidget::shotEpsListWidget(QWidget *parent)
           this, &shotEpsListWidget::_doodle_episodes_emit);
 }
 
-shotEpsListWidget::~shotEpsListWidget()
-= default;
+shotEpsListWidget::~shotEpsListWidget() = default;
 
 void shotEpsListWidget::insertEpisodes() {
   int raw = selectionModel()->currentIndex().row() + 1;
@@ -103,7 +101,7 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
   add_eps->setText(tr("添加集数"));
   add_eps->setStatusTip(tr("添加集数"));
   p_eps_Menu->addAction(add_eps);
-  if(selectionModel()->hasSelection()) {
+  if (selectionModel()->hasSelection()) {
     auto createMove = new QAction();
     createMove->setText(tr("制作整集拍屏"));
     connect(createMove, &QAction::triggered,
@@ -125,6 +123,7 @@ void shotEpsListWidget::setModel(QAbstractItemModel *model) {
   QAbstractItemView::setModel(model);
 }
 void shotEpsListWidget::creatEpsMov() {
+  emit initEmit();
   auto shotInfo = std::make_shared<doCore::shotFileSqlInfo>();
 
   const auto &kEps = selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>();

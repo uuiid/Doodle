@@ -66,3 +66,5 @@ cmake-build-debug/
 /venv/
 /b_N*/
 /install*
+/script/tools/.*
+/script/tools/b_Ninja_*
