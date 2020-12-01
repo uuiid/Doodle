@@ -1,4 +1,12 @@
-﻿//
+﻿/*
+ * @Author: your name
+ * @Date: 2020-10-28 14:09:08
+ * @LastEditTime: 2020-12-01 15:13:26
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\exeWrap\ffmpegWrap.h
+ */
+//
 // Created by teXiao on 2020/10/28.
 //
 
@@ -9,7 +17,7 @@ CORE_NAMESPACE_S
 
 class CORE_API ffmpegWrap {
  public:
-  explicit ffmpegWrap(const std::string& path);
+  explicit ffmpegWrap(const std::string &path);
 
   bool imageToVideo(const std::vector<QString> &image_path,
                     const QString &videoPath,
@@ -19,10 +27,14 @@ class CORE_API ffmpegWrap {
                     const std::string &subtitles) const;
   bool convertToVideo(const dpath &in_videoPath, const dpath &out_videoPath, const std::string &subtitles) const;
 
-  bool connectVideo(const dpathList& in_videoPath,const dpath &out_videoPath);
+  bool connectVideo(const dpathList &in_videoPath, const dpath &out_videoPath);
+
  private:
   std::shared_ptr<boost::filesystem::path> p_path_;
   std::shared_ptr<boost::filesystem::path> p_tmp_file_;
+
+ private:
+  bool runFFmpeg(const std::string &command) const;
 };
 
 CORE_NAMESPACE_E

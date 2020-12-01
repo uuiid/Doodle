@@ -43,15 +43,8 @@ bool ffmpegWrap::imageToVideo(const dpathList &image_path,
                  p_tmp_file_->generic_string() % subtitles % videoPath;
 
   DOODLE_LOG_INFO << QString::fromStdString(com_arg.str());
-  auto env = boost::this_process::environment();
 
-  if (boost::filesystem::is_directory(*p_path_))
-    env["PATH"] += p_path_->generic_string();
-  else if (boost::filesystem::is_regular_file(*p_path_))
-    env["PATH"] += p_path_->parent_path().generic_string();
-
-  //  env["PATH"] += R"(c:\Windows\Fonts\)";
-  boost::process::system(com_arg.str(), env);
+  runFFmpeg(com_arg.str());
 
   return boost::filesystem::exists(videoPath);
 }
@@ -83,14 +76,7 @@ bool ffmpegWrap::convertToVideo(const dpath &in_videoPath,
       in_videoPath % subtitles % out_videoPath;
   DOODLE_LOG_INFO << QString::fromStdString(com_arg.str());
 
-  auto env = boost::this_process::environment();
-
-  if (boost::filesystem::is_directory(*p_path_))
-    env["PATH"] += p_path_->generic_string();
-  else if (boost::filesystem::is_regular_file(*p_path_))
-    env["PATH"] += p_path_->parent_path().generic_string();
-
-  boost::process::system(com_arg.str(), env);
+  runFFmpeg(com_arg.str());
 
   return boost::filesystem::exists(k_out_path);
 }
@@ -123,18 +109,50 @@ bool ffmpegWrap::connectVideo(const dpathList &in_videoPath,
 
   auto env = boost::this_process::environment();
 
-  if (boost::filesystem::is_directory(*p_path_))
-    env["PATH"] += p_path_->generic_string();
-  else if (boost::filesystem::is_regular_file(*p_path_))
-    env["PATH"] += p_path_->parent_path().generic_string();
-
-  try {
-    boost::process::system(com_arg.str().c_str(), env);
-  } catch (const boost::process::process_error &err) {
-    DOODLE_LOG_WARN << err.what() << err.code().message().c_str();
-  }
+  runFFmpeg(com_arg.str());
 
   return boost::filesystem::exists(out_videoPath);
+}
+
+bool ffmpegWrap::runFFmpeg(const std::string &command) const {
+  auto env = boost::this_process::environment();
+  std::string ffmpeg_path = "";
+
+  if (boost::filesystem::is_directory(*p_path_)) {
+    env["PATH"] += p_path_->generic_string();
+    ffmpeg_path = p_path_->generic_string();
+  } else if (boost::filesystem::is_regular_file(*p_path_)) {
+    env["PATH"] += p_path_->parent_path().generic_string();
+    ffmpeg_path = p_path_->parent_path().generic_string();
+  }
+
+  STARTUPINFO si{};
+  PROCESS_INFORMATION pi{};
+  ZeroMemory(&si, sizeof(si));
+  ZeroMemory(&pi, sizeof(pi));
+
+  try {
+    //使用windowsIPA创建子进程
+    CreateProcess(
+        NULL,
+        (char *)command.c_str(),
+        NULL,
+        NULL,
+        false,
+        0,  //CREATE_NEW_CONSOLE
+        NULL,
+        ffmpeg_path.c_str(),  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
+        &si,
+        &pi);
+    // boost::process::system(command.c_str(), env);
+  } catch (const boost::process::process_error &err) {
+    DOODLE_LOG_WARN << err.what() << err.code().message().c_str();
+    return false;
+  }
+  WaitForSingleObject(pi.hProcess, INFINITE);
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+  return true;
 }
 
 CORE_NAMESPACE_E
