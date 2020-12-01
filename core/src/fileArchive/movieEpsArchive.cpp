@@ -1,8 +1,8 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-11-23 17:47:24
- * @LastEditTime: 2020-11-25 15:15:17
- * @LastEditors: your name
+ * @LastEditTime: 2020-12-01 14:00:09
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodlef:\source\qt_test\doodle\core\src\movieepsarchive.cpp
  */
@@ -20,11 +20,11 @@ CORE_NAMESPACE_S
 movieEpsArchive::movieEpsArchive(shotInfoPtr eps)
     : fileArchive(),
       p_info_ptr_(std::move(eps)) {
-
 }
 void movieEpsArchive::insertDB() {
   p_info_ptr_->setFileList(p_Path);
-  p_info_ptr_->setInfoP("整集拍屏文件");
+  if (p_info_ptr_->getInfoP().empty())
+    p_info_ptr_->setInfoP("整集拍屏文件");
   p_info_ptr_->insert();
 }
 void movieEpsArchive::_generateFilePath() {
@@ -42,11 +42,11 @@ bool movieEpsArchive::epsMove() {
   if (p_info_ptr_->getEpisdes()) {
     shotInfoPtrList list{};
     for (const auto &item : coreDataManager::get().getShotL()) {
-      auto info = shotFileSqlInfo::getAll(item,shotType::findShotType("flipbook"));
-        if (info.front()){
-          p_Path.push_back(info.front()->getFileList().front());
-        }
+      auto info = shotFileSqlInfo::getAll(item, shotType::findShotType("flipbook"));
+      if (info.front()) {
+        p_Path.push_back(info.front()->getFileList().front());
       }
+    }
     _down(p_cacheFilePath.front().parent_path());
     dpathList pathlist{};
     for (const auto &path : p_Path) {
@@ -55,18 +55,18 @@ bool movieEpsArchive::epsMove() {
         pathlist.push_back(path_mov);
     }
     auto ffmpeg = std::make_unique<ffmpegWrap>(findFFmpeg());
-    return ffmpeg->connectVideo(pathlist,p_cacheFilePath.front());
+    return ffmpeg->connectVideo(pathlist, p_cacheFilePath.front());
   } else {
     return false;
   }
 }
 bool movieEpsArchive::update() {
   p_info_ptr_->setShotType(shotType::findShotType("flipbook"));
-  if (epsMove()){
+  if (epsMove()) {
     p_soureFile = {p_cacheFilePath.front()};
     p_Path.clear();
     return fileArchive::update(p_soureFile);
-  } else{
+  } else {
     return false;
   }
 }

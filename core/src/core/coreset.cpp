@@ -40,13 +40,13 @@ void coreSet::init() {
   getServerSetting();
   getCacheDiskPath();
   DOODLE_LOG_INFO << "登录 : " << project.second.c_str();
-  doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "");
+  doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "", *prjectRoot);
 }
 
 void coreSet::reInit() {
   initdb();
   getServerSetting();
-  doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "");
+  doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "", *prjectRoot);
 }
 
 void coreSet::initdb() {

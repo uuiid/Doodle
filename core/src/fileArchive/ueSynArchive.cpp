@@ -15,6 +15,8 @@
 #include <src/sysData/synData.h>
 
 #include <boost/format.hpp>
+#include <boost/numeric/conversion/cast.hpp>
+
 CORE_NAMESPACE_S
 ueSynArchive::ueSynArchive()
     : fileArchive(), p_syn(std::make_shared<freeSynWrap>()), synpart() {}
@@ -65,10 +67,11 @@ dpath ueSynArchive::syn(const shotPtr &shot_) {
           set.getAssRoot() / "VFX" / item.server / DOODLE_CONTENT / "shot";
     }
     p_syn->addSynFile(syn_part_vfx);
+
     for (size_t i = syn_part_vfx.size();
          i < syn_part_vfx.size() + synpart.size(); ++i) {
-      p_syn->addSubSynchronize(i, freeSynWrap::syn_set::down, str.str());
-      p_syn->addSubIncludeExclude(i, {shotFstr}, {});
+      p_syn->addSubSynchronize(boost::numeric_cast<int>(i), freeSynWrap::syn_set::down, str.str());
+      p_syn->addSubIncludeExclude(boost::numeric_cast<int>(i), {shotFstr}, {});
     }
   }
   p_syn->run();

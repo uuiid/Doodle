@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-02 13:21:54
- * @LastEditTime: 2020-12-01 11:40:38
+ * @LastEditTime: 2020-12-01 13:55:41
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\test\test_fileSystem.cpp
@@ -22,18 +22,18 @@ TEST(ftp, upload) {
   doSystem::ftpSessionPtr session = doSystem::DfileSyntem::getFTP().session("192.168.10.213",
                                                                             21,
                                                                             "dubuxiaoyaozhangyubin",
-                                                                            "zhangyubin");
+                                                                            "zhangyubin", "");
   ASSERT_TRUE(session->upload("D:/tmp/BuJu.1002.png", "/cache/test/test.png"));
 }
 TEST(ftp, down) {
   doSystem::ftpSessionPtr session = doSystem::DfileSyntem::getFTP().session("192.168.10.213",
-                                                                            21, "", "");
+                                                                            21, "", "", "");
   ASSERT_TRUE(session->down("D:/tmp/test.exe", "/dist/doodle.exe"));
 }
 
 TEST(ftp, getInfo) {
   doSystem::ftpSessionPtr session = doSystem::DfileSyntem::getFTP().session("192.168.10.213",
-                                                                            21, "", "");
+                                                                            21, "", "", "");
   doSystem::oFileInfo info = session->fileInfo("/dist/doodle.exe");
   DOODLE_LOG_DEBUG << QDateTime::fromTime_t(info.fileMtime);
   DOODLE_LOG_DEBUG << (info.fileSize) / (1024 * 1024) << "/mb";
@@ -42,7 +42,7 @@ TEST(ftp, getInfo) {
 }
 TEST(ftp, getInfo_folder) {
   doSystem::ftpSessionPtr session = doSystem::DfileSyntem::getFTP().session("192.168.10.213",
-                                                                            21, "", "");
+                                                                            21, "", "", "");
   doSystem::oFileInfo info = session->fileInfo("/dist/");
   DOODLE_LOG_DEBUG << QDateTime::fromTime_t(info.fileMtime);
   DOODLE_LOG_DEBUG << (info.fileSize) / (1024 * 1024) << "/mb";
@@ -52,7 +52,7 @@ TEST(ftp, getInfo_folder) {
 
 TEST(ftp, getList) {
   doSystem::ftpSessionPtr session = doSystem::DfileSyntem::getFTP().session("192.168.10.213",
-                                                                            21, "", "");
+                                                                            21, "", "", "");
   std::vector<doSystem::oFileInfo> info = session->list("/dist/");
   for (unsigned int i = 0; i < info.size(); ++i) {
     DOODLE_LOG_DEBUG << "is folder" << info[i].isFolder;
@@ -62,7 +62,7 @@ TEST(ftp, getList) {
 TEST(ftp, downFolder) {
   //出错几率不高, 可能有极小一部分部分没有下载
   doSystem::ftpSessionPtr session = doSystem::DfileSyntem::getFTP().session("192.168.10.213",
-                                                                            21, "", "");
+                                                                            21, "", "", "");
   DOODLE_LOG_DEBUG << QDir::cleanPath("/dist/");
   ASSERT_TRUE(session->downFolder("D:/tmp/tt", "/dist/"));
 }
@@ -70,14 +70,14 @@ TEST(ftp, uploadFolder) {
   doSystem::ftpSessionPtr session = doSystem::DfileSyntem::getFTP().session("192.168.10.213",
                                                                             21,
                                                                             "dubuxiaoyaozhangyubin",
-                                                                            "zhangyubin");
+                                                                            "zhangyubin", "");
   ASSERT_TRUE(session->uploadFolder("D:/tmp/render", "/cache/test"));
 }
 TEST(ftp, createFolder) {
   doSystem::ftpSessionPtr session = doSystem::DfileSyntem::getFTP().session("192.168.10.213",
                                                                             21,
                                                                             "dubuxiaoyaozhangyubin",
-                                                                            "zhangyubin");
+                                                                            "zhangyubin", "");
   ASSERT_TRUE(session->createDir("/tmp/test/dddd"));
 }
 TEST(ftp, copy_dir_not_backup) {

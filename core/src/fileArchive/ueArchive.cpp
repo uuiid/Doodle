@@ -15,6 +15,8 @@ void ueArchive::insertDB() {
   p_info_->setFileList(list);
   auto info = std::dynamic_pointer_cast<assFileSqlInfo>(p_info_);
   info->setAssType(assType::findType(assType::e_type::UE4, true));
+  if (p_info_->getInfoP().empty())
+    p_info_->setInfoP("ue场景文件");
   p_info_->insert();
 }
 void ueArchive::_generateFilePath() {

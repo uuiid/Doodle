@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-02 09:59:06
- * @LastEditTime: 2020-12-01 13:11:10
+ * @LastEditTime: 2020-12-01 13:50:48
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\fileSystem\src\DfileSyntem.h
@@ -20,8 +20,11 @@ class DSYSTEM_API DfileSyntem {
 
   static DfileSyntem &getFTP();
   ftpSessionPtr session() const;
-  ftpSessionPtr session(const std::string &host, int prot,
-                        const std::string &name, const std::string &password);
+  ftpSessionPtr session(const std::string &host,
+                        int prot,
+                        const std::string &name,
+                        const std::string &password,
+                        const dpath &netWork_disk);
 
   bool upload(const dpath &localFile, const dpath &remoteFile) noexcept;
   bool down(const dpath &localFile, const dpath &remoteFile) noexcept;
@@ -34,6 +37,8 @@ class DSYSTEM_API DfileSyntem {
   int p_prot_;
   std::string p_name_;
   std::string p_password_;
+
+  dpath p_netWork_disk_;
 };
 
 DSYSTEM_E

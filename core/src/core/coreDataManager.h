@@ -8,9 +8,10 @@ CORE_NAMESPACE_S
 class CORE_API coreDataManager {
  public:
   //单例使用
-  static coreDataManager& get();
+  static coreDataManager &get();
   coreDataManager &operator=(const coreDataManager &s) = delete;
   coreDataManager(const coreDataManager &s) = delete;
+
  public:
   const episodesPtrList &getEpisodeL() const;
   void setEpisodeL(const episodesPtrList &eps);
@@ -21,14 +22,14 @@ class CORE_API coreDataManager {
 
   const shotPtrList &getShotL() const;
   void setShotL(const shotPtrList &shots);
-  void setShotL(const shotPtr  &shots);
+  void setShotL(const shotPtr &shots);
 
   const shotPtr &getShotPtr() const;
   void setShotPtr(const shotPtr &shot);
 
   const shotClassPtrList &getShotClassL() const;
   void setShotClassL(const shotClassPtrList &sh_c_las);
-  void setShotClassL(const shotClassPtr  &sh_c_las);
+  void setShotClassL(const shotClassPtr &sh_c_las);
 
   const shotClassPtr &getShotClassPtr() const;
   void setShotClassPtr(const shotClassPtr &sh_cl);
@@ -77,6 +78,7 @@ class CORE_API coreDataManager {
 
  private:
   coreDataManager();
+
  private:
   episodesPtrList p_eps_;
   episodesPtr p_ep_;

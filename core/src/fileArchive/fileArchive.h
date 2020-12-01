@@ -43,7 +43,6 @@ class CORE_API fileArchive{
   virtual void _generateFilePath() = 0;
   //下载文件
   virtual void _down(const dpath &localPath);
-  void login();
   static dstring findFFmpeg() ;
  protected:
   //复制的数据来源(本地)
@@ -54,9 +53,6 @@ class CORE_API fileArchive{
   dpathList p_Path;
   //状态
   state p_state_;
-
-  //ftp
-  doSystem::ftpSessionPtr p_session_;
 };
 
 CORE_NAMESPACE_E

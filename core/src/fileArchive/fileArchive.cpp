@@ -31,7 +31,6 @@ fileArchive::fileArchive()
     : p_soureFile(),
       p_cacheFilePath(),
       p_Path(),
-      p_session_(),
       p_state_(state::none) {}
 
 bool fileArchive::update(const dpath &path) {
@@ -112,12 +111,11 @@ void fileArchive::_updata(const dpathList &pathList) {
   assert(p_Path.size() == p_cacheFilePath.size());
   coreSet &set = coreSet::getSet();
 
-  auto session = doSystem::DfileSyntem::getFTP().session();
+  auto &session = doSystem::DfileSyntem::getFTP();
   //使用ftp上传
   int i = 0;
   for (auto &&item : p_cacheFilePath) {
-    if (!session->upload((item.generic_string()), (p_Path[i].generic_string()),
-                         true)) {
+    if (!session.upload(item, p_Path[i])) {
       p_state_ = state::fail;
       DOODLE_LOG_WARN << "无法上传文件" << (item).c_str();
       return;
@@ -126,15 +124,11 @@ void fileArchive::_updata(const dpathList &pathList) {
   }
 }
 void fileArchive::_down(const dpath &localPath) {
-  if (!p_session_) {
-    login();
-  }
-
+  auto &session = doSystem::DfileSyntem::getFTP();
   for (auto &&item : p_Path) {
     if (!boost::filesystem::exists(localPath))
       boost::filesystem::create_directories(localPath);
-    if (!p_session_->down((localPath / item.filename()).generic_string(),
-                          item.generic_string())) {
+    if (!session.down(localPath / item.filename(), item)) {
       DOODLE_LOG_WARN << "无法下载文件" << item.c_str();
       p_state_ = state::fail;
       continue;
@@ -155,13 +149,6 @@ bool fileArchive::generateCachePath() {
     p_cacheFilePath.push_back(path.generic_string());
   }
   return true;
-}
-void fileArchive::login() {
-  coreSet &set = coreSet::getSet();
-  DOODLE_LOG_INFO << "登录 : " << set.getProjectname().c_str()
-                  << set.getUser_en().c_str() << "\n"
-                  << set.getUser_en().c_str();
-  p_session_ = doSystem::DfileSyntem::getFTP().session();
 }
 
 CORE_NAMESPACE_E

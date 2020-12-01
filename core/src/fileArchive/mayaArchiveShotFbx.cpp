@@ -162,7 +162,9 @@ void mayaArchiveShotFbx::insertDB() {
   p_info_ptr_->setFileList(p_Path);
 
   p_info_ptr_->setShotType(doCore::shotType::findShotType("maya_export", true));
-  p_info_ptr_->setInfoP("导出fbx文件");
+  if (p_info_ptr_->getInfoP().empty()) {
+    p_info_ptr_->setInfoP("导出fbx文件");
+  }
   p_info_ptr_->insert();
 }
 

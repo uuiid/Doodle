@@ -93,6 +93,7 @@ using assInfoPtr = std::shared_ptr<assFileSqlInfo>;
 
 using fileSqlInfoPtr = std::shared_ptr<fileSqlInfo>;
 using synDataPtr = std::shared_ptr<synData>;
+using synDataPtrList = std::vector<synDataPtr>;
 //列表引用类
 
 using episodesPtrList = std::vector<episodesPtr>;

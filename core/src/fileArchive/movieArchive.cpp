@@ -1,3 +1,11 @@
+/*
+ * @Author: your name
+ * @Date: 2020-09-27 14:36:04
+ * @LastEditTime: 2020-12-01 14:00:03
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\fileArchive\movieArchive.cpp
+ */
 #include "movieArchive.h"
 #include "src/shots/shottype.h"
 
@@ -13,11 +21,11 @@ CORE_NAMESPACE_S
 movieArchive::movieArchive(fileSqlInfoPtr shot_info_ptr)
     : fileArchive(),
       p_info_ptr_(std::move(shot_info_ptr)) {
-
 }
 void movieArchive::insertDB() {
   p_info_ptr_->setFileList(p_Path);
-  p_info_ptr_->setInfoP("拍屏文件");
+  if (p_info_ptr_->getInfoP().empty())
+    p_info_ptr_->setInfoP("拍屏文件");
   p_info_ptr_->insert();
 }
 void movieArchive::_generateFilePath() {
@@ -30,11 +38,8 @@ bool movieArchive::makeMovie(const dpath &imageFolder) {
   auto ffmpeg = std::make_unique<ffmpegWrap>(findFFmpeg() + "/ffmpeg.exe");
   auto path = dpath(imageFolder);
   dpathList list;
-  for (auto &&item:boost::filesystem::directory_iterator(path)) {
-    if (item.path().extension() == ".png"
-        || item.path().extension() == ".jpg"
-        || item.path().extension() == ".tga"
-        || item.path().extension() == ".exr") {
+  for (auto &&item : boost::filesystem::directory_iterator(path)) {
+    if (item.path().extension() == ".png" || item.path().extension() == ".jpg" || item.path().extension() == ".tga" || item.path().extension() == ".exr") {
       list.push_back(item.path().string());
     }
   }
@@ -48,8 +53,7 @@ bool movieArchive::convertMovie(const dpath &moviePath) {
   return ffmpeg->convertToVideo(
       moviePath,
       p_cacheFilePath.front(),
-      boost::filesystem::basename(p_cacheFilePath.front())
-  );
+      boost::filesystem::basename(p_cacheFilePath.front()));
 }
 //bool movieArchive::update(const std::vector<QString> &filelist) {
 //  dpathList kdpath_list;
@@ -67,9 +71,9 @@ bool movieArchive::update(const dpathList &filelist) {
 
   bool isok = false;
   if (filelist.size() == 1) {
-    if (boost::filesystem::is_directory(filelist.front()))//QFileInfo().isDir()
+    if (boost::filesystem::is_directory(filelist.front()))  //QFileInfo().isDir()
       isok = makeMovie(filelist.front());
-    else if (boost::filesystem::is_regular_file(filelist.front()))//QFileInfo().isFile()
+    else if (boost::filesystem::is_regular_file(filelist.front()))  //QFileInfo().isFile()
       isok = convertMovie(filelist.front());
   } else {
     return false;

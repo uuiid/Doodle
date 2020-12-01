@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-03 09:10:01
- * @LastEditTime: 2020-12-01 13:12:26
+ * @LastEditTime: 2020-12-01 13:54:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\fileSystem\src\DfileSyntem.cpp
@@ -37,25 +37,30 @@ ftpSessionPtr DfileSyntem::session() const {
   return session;
 }
 
-ftpSessionPtr DfileSyntem::session(const std::string &host, int prot,
+ftpSessionPtr DfileSyntem::session(const std::string &host,
+                                   int prot,
                                    const std::string &name,
-                                   const std::string &password) {
+                                   const std::string &password,
+                                   const dpath &netWork_disk) {
   ftpSessionPtr session(new ftpSession());
   p_host_ = host;
   p_prot_ = prot;
   p_name_ = name;
   p_password_ = password;
+  if (!netWork_disk.empty()) {
+    p_netWork_disk_ = netWork_disk;
+  }
 
   session->setInfo(p_host_, p_prot_, p_name_, p_password_);
   return session;
 }
 
 bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile) noexcept {
-  return copy(localFile, remoteFile, true);
+  return copy(localFile, p_netWork_disk_ / remoteFile, true);
 }
 
 bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile) noexcept {
-  return copy(remoteFile, localFile, false);
+  return copy(p_netWork_disk_ / remoteFile, localFile, false);
 }
 
 bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool backup) noexcept {
