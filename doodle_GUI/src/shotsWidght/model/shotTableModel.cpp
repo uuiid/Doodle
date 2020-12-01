@@ -92,6 +92,12 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
         }
       }
       break;
+    case Qt::BackgroundColorRole:
+      if (shot->isInsert()) {
+        if (!shot->exist(false))
+          var = QColor("darkred");
+      }
+      break;
     case Qt::UserRole:
       var = QVariant::fromValue(shot);
     default:
