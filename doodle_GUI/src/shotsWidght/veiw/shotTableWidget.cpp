@@ -225,7 +225,9 @@ void shotTableWidget::exportFbx() {
   auto k_fileexport = std::make_shared<doCore::mayaArchiveShotFbx>(export_data);
   //开始导出
   auto fun = std::async(std::launch::async, [=]() -> bool {
-    return k_fileexport->update(data->getFileList().front());
+    auto result = k_fileexport->update(data->getFileList().front());
+    // if (!result) emit exportFbxError(DOTOS(data->getFileList().front().filename().generic_string()));
+    return result;
   });
   updataManager::get().addQueue(fun, "正在上传中", 2000);
   updataManager::get().run();
@@ -259,7 +261,10 @@ void shotTableWidget::submitFBFile(doCore::shotInfoPtr &info_ptr,
   auto k_movie = std::make_shared<doCore::moveShotA>(info_ptr);
   std::future<bool> k_fu;
   k_fu = std::async(std::launch::async,
-                    [=]() { return k_movie->update({path.toStdString()}); });
+                    [=]() {
+                      auto result = k_movie->update({path.toStdString()});
+                      return result;
+                    });
   updataManager::get().addQueue(k_fu, "正在上传中", 1000);
   updataManager::get().run();
 }

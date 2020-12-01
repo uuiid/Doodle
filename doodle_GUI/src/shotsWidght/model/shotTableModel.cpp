@@ -15,7 +15,7 @@ shotTableModel::shotTableModel(QObject *parent)
       p_shot_info_ptr_list_(),
       FBRex(std::make_unique<boost::regex>(R"(mp4|avi)")),
       mayaRex(std::make_unique<boost::regex>(R"(ma|ab)")),
-      show_mayaex(std::make_unique<boost::regex>(R"(Anm|Animation)")),
+      show_mayaex(std::make_unique<boost::regex>(R"(Anm|Animation|export)")),
       show_FBRex(std::make_unique<boost::regex>(R"(FB_|flipbook)")) {}
 int shotTableModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_shot_info_ptr_list_.size());
@@ -137,10 +137,8 @@ bool shotTableModel::setData(const QModelIndex &index, const QVariant &value,
     if (!value.toString().isEmpty() &&
         value.toString().toStdString() !=
             p_shot_info_ptr_list_[index.row()]->getInfoP().back()) {
-      DOODLE_LOG_INFO
-          << p_shot_info_ptr_list_[index.row()]->getInfoP().back().c_str();
-      p_shot_info_ptr_list_[index.row()]->setInfoP(
-          value.toString().toStdString());
+      DOODLE_LOG_INFO << p_shot_info_ptr_list_[index.row()]->getInfoP().back().c_str();
+      p_shot_info_ptr_list_[index.row()]->setInfoP(value.toString().toStdString());
       p_shot_info_ptr_list_[index.row()]->updateSQL();
       dataChanged(index, index);
       return true;
@@ -170,8 +168,7 @@ bool shotTableModel::insertRows(int position, int rows,
   for (int row = 0; row < rows; ++row) {
     p_shot_info_ptr_list_.insert(p_shot_info_ptr_list_.begin() + position,
                                  std::make_shared<doCore::shotFileSqlInfo>());
-    p_shot_info_ptr_list_[position]->setShot(
-        doCore::coreDataManager::get().getShotPtr());
+    p_shot_info_ptr_list_[position]->setShot(doCore::coreDataManager::get().getShotPtr());
   }
   endInsertRows();
   return true;
@@ -231,8 +228,7 @@ void shotTableModel::eachOne() {
         if (ptr && ptr->getShotType()) {
           return !(
               boost::regex_search(ptr->getShotType()->getType(), *show_FBRex) ||
-              boost::regex_search(ptr->getShotType()->getType(),
-                                  *show_mayaex) ||
+              boost::regex_search(ptr->getShotType()->getType(), *show_mayaex) ||
               boost::regex_search(ptr->getSuffixes(), *mayaRex));
         } else {
           return false;
@@ -244,8 +240,7 @@ void shotTableModel::eachOne() {
   listout.clear();
   doCore::shotTypePtrList typelist;
   for (const auto &i : list) {
-    if (std::find(typelist.begin(), typelist.end(), i->getShotType()) ==
-        typelist.end()) {
+    if (std::find(typelist.begin(), typelist.end(), i->getShotType()) == typelist.end()) {
       listout.push_back(i);
       typelist.push_back(i->getShotType());
     }
