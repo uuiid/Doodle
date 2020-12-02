@@ -12,8 +12,8 @@
 #include <iostream>
 
 CORE_NAMESPACE_S
-ffmpegWrap::ffmpegWrap()
-    : p_tmp_file_() {
+ffmpegWrap::ffmpegWrap(const std::string &path)
+    : p_path_(std::make_shared<boost::filesystem::path>(path)), p_tmp_file_() {
   p_tmp_file_ = std::make_shared<boost::filesystem::path>(
       boost::filesystem::temp_directory_path() /
       boost::filesystem::unique_path().filename());
@@ -115,9 +115,17 @@ bool ffmpegWrap::connectVideo(const dpathList &in_videoPath,
 }
 
 bool ffmpegWrap::runFFmpeg(const std::string &command) const {
-  for (const auto &item : boost::this_process::environment()["PATH"].to_vector()) {
-    DOODLE_LOG_INFO << item.c_str();
+  auto env = boost::this_process::environment();
+  std::string ffmpeg_path = "";
+
+  if (boost::filesystem::is_directory(*p_path_)) {
+    env["PATH"] += p_path_->generic_string();
+    ffmpeg_path = p_path_->generic_string();
+  } else if (boost::filesystem::is_regular_file(*p_path_)) {
+    env["PATH"] += p_path_->parent_path().generic_string();
+    ffmpeg_path = p_path_->parent_path().generic_string();
   }
+
   STARTUPINFO si{};
   PROCESS_INFORMATION pi{};
   ZeroMemory(&si, sizeof(si));
@@ -133,7 +141,7 @@ bool ffmpegWrap::runFFmpeg(const std::string &command) const {
         false,
         0,  //CREATE_NEW_CONSOLE
         NULL,
-        NULL,  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
+        ffmpeg_path.c_str(),  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
         &si,
         &pi);
     // boost::process::system(command.c_str(), env);
