@@ -1,3 +1,11 @@
+/*
+ * @Author: your name
+ * @Date: 2020-09-27 11:39:02
+ * @LastEditTime: 2020-12-02 14:30:34
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\fileArchive\fileArchive.h
+ */
 #pragma once
 
 #include "core_global.h"
@@ -7,11 +15,12 @@
 #include <fileSystem_global.h>
 CORE_NAMESPACE_S
 
-class CORE_API fileArchive{
+class CORE_API fileArchive {
  public:
   fileArchive();
-  ~fileArchive() = default;;
-  enum class state{
+  ~fileArchive() = default;
+  ;
+  enum class state {
     none = 0,
     success = 1,
     fail = 2,
@@ -34,7 +43,6 @@ class CORE_API fileArchive{
   //生成cachepath
   virtual bool generateCachePath();
 
-
   //提交到数据库
   virtual void insertDB() = 0;
   //上传文件
@@ -43,7 +51,7 @@ class CORE_API fileArchive{
   virtual void _generateFilePath() = 0;
   //下载文件
   virtual void _down(const dpath &localPath);
-  static dstring findFFmpeg() ;
+
  protected:
   //复制的数据来源(本地)
   dpathList p_soureFile;

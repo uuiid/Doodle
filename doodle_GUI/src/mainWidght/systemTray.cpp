@@ -99,6 +99,10 @@ PYTHONPATH+:= %1%/scripts
   k_string % maya_plug.generic_path().generic_string();
   auto docPath = doCore::coreSet::getSet().getDoc().parent_path() / "maya" /
                  "modules" / "Doodle.mod";
+  if (boost::filesystem::exists(docPath.parent_path())) {
+    boost::filesystem::create_directories(docPath.parent_path());
+  }
+
   boost::filesystem::ofstream k_out{};
   k_out.open(docPath);
   k_out << k_string.str();

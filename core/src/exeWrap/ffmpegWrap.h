@@ -17,7 +17,7 @@ CORE_NAMESPACE_S
 
 class CORE_API ffmpegWrap {
  public:
-  explicit ffmpegWrap(const std::string &path);
+  explicit ffmpegWrap();
 
   bool imageToVideo(const std::vector<QString> &image_path,
                     const QString &videoPath,
@@ -30,7 +30,7 @@ class CORE_API ffmpegWrap {
   bool connectVideo(const dpathList &in_videoPath, const dpath &out_videoPath);
 
  private:
-  std::shared_ptr<boost::filesystem::path> p_path_;
+
   std::shared_ptr<boost::filesystem::path> p_tmp_file_;
 
  private:

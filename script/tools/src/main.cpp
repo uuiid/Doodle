@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-12-01 15:47:51
- * @LastEditTime: 2020-12-01 20:19:46
+ * @LastEditTime: 2020-12-02 17:12:07
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \tools\src\main.cpp
@@ -76,14 +76,16 @@ void mayaAbcExport::exportFbxFile() {
   com_arg = com_arg.arg(p_pyPath_.fileName());
 
   auto fileList = p_dir.entryInfoList({"*.ma", "*.mb"});
+  QThreadPool::globalInstance()->setMaxThreadCount(5);
   for (auto &file : fileList) {
-    auto com = com_arg
-                   .arg(file.baseName())                                    //name
+    auto com = com_arg.arg(file.baseName())                                 //name
                    .arg(file.dir().absolutePath())                          //path
                    .arg(file.dir().absolutePath() + "/" + file.baseName())  //exportpath
                    .arg("." + file.suffix());                               //suffix
     qDebug() << com;
-    QThreadPool::globalInstance()->start(new runExport(com));
+    auto task = new runExport(com);
+    task->setAutoDelete(true);
+    QThreadPool::globalInstance()->start(task);
   }
 }
 

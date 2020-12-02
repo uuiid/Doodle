@@ -57,16 +57,12 @@ bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
       % boost::filesystem::extension(shot_data)    //
       % shot_data.parent_path().generic_string();  //
 
-  auto env = boost::this_process::environment();
   std::string mayaPY_path = "";
   if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2018\bin\)";
     mayaPY_path = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
   } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2019\bin\)";
     mayaPY_path = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
   } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2020\bin\)";
     mayaPY_path = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
   } else {
     return false;

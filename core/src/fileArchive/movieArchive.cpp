@@ -35,7 +35,7 @@ void movieArchive::_generateFilePath() {
     p_Path.push_back(p_info_ptr_->getFileList()[0].generic_string());
 }
 bool movieArchive::makeMovie(const dpath &imageFolder) {
-  auto ffmpeg = std::make_unique<ffmpegWrap>(findFFmpeg() + "/ffmpeg.exe");
+  auto ffmpeg = std::make_unique<ffmpegWrap>();
   auto path = dpath(imageFolder);
   dpathList list;
   for (auto &&item : boost::filesystem::directory_iterator(path)) {
@@ -49,7 +49,7 @@ bool movieArchive::makeMovie(const dpath &imageFolder) {
 }
 
 bool movieArchive::convertMovie(const dpath &moviePath) {
-  auto ffmpeg = std::make_unique<ffmpegWrap>(findFFmpeg() + "/ffmpeg.exe");
+  auto ffmpeg = std::make_unique<ffmpegWrap>();
   return ffmpeg->convertToVideo(
       moviePath,
       p_cacheFilePath.front(),

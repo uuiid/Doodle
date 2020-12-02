@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-01 16:51:51
- * @LastEditTime: 2020-12-01 19:20:48
+ * @LastEditTime: 2020-12-02 17:36:35
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \tools\src\sourePy.cpp
@@ -86,8 +86,7 @@ class rootObj:
 
     # 传入导出路径并导出
     def export(self, path):
-        self.pathFile = "{}/{}_{}.{}_{}.abc".format(path,
-                                                    self.seaneName(),
+        self.pathFile = "{}/{}.{}_{}.abc".format(path,
                                                     self.name(),
                                                     self.start,
                                                     self.end)

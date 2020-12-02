@@ -5,7 +5,15 @@
 #include <boost/filesystem.hpp>
 CORE_NAMESPACE_S
 
-enum class dep { None_, Executive, Light, VFX, modle, rig, Anm, direct, paint };
+enum class dep { None_,
+                 Executive,
+                 Light,
+                 VFX,
+                 modle,
+                 rig,
+                 Anm,
+                 direct,
+                 paint };
 
 struct synPath_struct {
   dpath local;
@@ -28,6 +36,7 @@ class CORE_API coreSet {
   void reInit();
   void initdb();
 
+  void appendEnvironment() const;
   //这个要改到其他地方
   //获得同步路径
   synPathListPtr getSynDir();

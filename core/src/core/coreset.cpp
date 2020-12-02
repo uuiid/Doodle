@@ -23,6 +23,9 @@
 #include <QtCore/QStorageInfo>
 #include <boost/dll.hpp>
 #include <fileSystem_cpp.h>
+
+#include <boost/process.hpp>
+#include <boost/dll/runtime_symbol_info.hpp>
 CORE_NAMESPACE_S
 
 const dstring coreSet::settingFileName = "doodle_conf.json";
@@ -39,6 +42,7 @@ void coreSet::init() {
   initdb();
   getServerSetting();
   getCacheDiskPath();
+  appendEnvironment();
   DOODLE_LOG_INFO << "登录 : " << project.second.c_str();
   doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "", *prjectRoot);
 }
@@ -52,6 +56,19 @@ void coreSet::reInit() {
 void coreSet::initdb() {
   coreSql &sql = coreSql::getCoreSql();
   sql.initDB(ipMysql);
+}
+
+void coreSet::appendEnvironment() const {
+  auto env = boost::this_process::environment();
+  auto this_process = program_location();
+  env["PATH"] += (this_process.parent_path() / "tools/ffmpeg/bin").generic_string();
+  if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
+    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2018\bin\)";
+  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
+    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2019\bin\)";
+  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
+    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2020\bin\)";
+  }
 }
 
 void coreSet::writeDoodleLocalSet() {

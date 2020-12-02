@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-11-23 17:47:24
- * @LastEditTime: 2020-12-01 14:00:09
+ * @LastEditTime: 2020-12-02 13:35:03
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodlef:\source\qt_test\doodle\core\src\movieepsarchive.cpp
@@ -54,7 +54,7 @@ bool movieEpsArchive::epsMove() {
       if (boost::filesystem::exists(path_mov))
         pathlist.push_back(path_mov);
     }
-    auto ffmpeg = std::make_unique<ffmpegWrap>(findFFmpeg());
+    auto ffmpeg = std::make_unique<ffmpegWrap>();
     return ffmpeg->connectVideo(pathlist, p_cacheFilePath.front());
   } else {
     return false;

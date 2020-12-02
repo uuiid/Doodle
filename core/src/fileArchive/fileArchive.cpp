@@ -19,14 +19,6 @@
 
 CORE_NAMESPACE_S
 
-dstring doCore::fileArchive::findFFmpeg() {
-  auto ffmpeg_exe = QDir::current();
-  ffmpeg_exe.cdUp();
-  ffmpeg_exe.cd(DOODLE_FFMPEG_PATH);
-  DOODLE_LOG_INFO << "找到ffmpeg" << ffmpeg_exe.absolutePath() << "\n"
-                  << ffmpeg_exe;
-  return ffmpeg_exe.path().toStdString();
-}
 fileArchive::fileArchive()
     : p_soureFile(),
       p_cacheFilePath(),
