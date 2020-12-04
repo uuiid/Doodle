@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
@@ -22,9 +22,13 @@ private:
 
     FReply BathImport( );
     FReply BathReameAss( );
-    TArray<FString> OpenFileDialog(const FString& DialogTitle, const FString& DefaultPath, const FString& FileTypes);
+	FReply importAbcFile( );
+	
+	
+	TArray<FString> OpenFileDialog(const FString& DialogTitle, const FString& DefaultPath, const FString& FileTypes);
     FString OpenDirDialog(const FString& DialogTitle,
                           const FString& DefaultPath);
+
    private:
     USkeletalMesh* copySoureSkinObj;
     UObject* copySoureGeoCache;

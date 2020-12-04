@@ -6,7 +6,7 @@
 #include "Factories/Factory.h"
 #include "EditorReimportHandler.h"
 
-#include "doodleAbcFactory.generated.h"
+#include "DoodleAbcFactory.generated.h"
 
 class FAbcImporter;
 class UAbcImportSettings;
@@ -17,7 +17,7 @@ class UAbcAssetImportData;
 class SAlembicImportOptions;
 
 /**
- * ×Ô¶¨ÒåabcÎÄ¼şµ¼Èë
+ * è‡ªå®šä¹‰abcæ–‡ä»¶å¯¼å…¥
  */
 
 UCLASS()
@@ -34,19 +34,19 @@ public:
 	UPROPERTY( )
 	bool bShowOption;
 
-	//¿ªÊ¼ uobj½Ó¿Ú
+	//å¼€å§‹ uobjæ¥å£
 	void PostInitProperties( );
-	//½áÊø½Ó¿Ú
+	//ç»“æŸæ¥å£
 
-	//¿ªÊ¼ ufactory ½Ó¿Ú 
+	//å¼€å§‹ ufactory æ¥å£ 
 	virtual FText GetDisplayName( ) const override;
 	virtual bool DoesSupportClass(UClass * Class)override;
-	//virtual UClass* ResolveSupportedClass( ) override;
+	virtual UClass* ResolveSupportedClass( ) override;
 	virtual bool FactoryCanImport(const FString& FileName) override;
 	virtual UObject * FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled) override;
-	//½áÊø½Ó¿Ú
+	//ç»“æŸæ¥å£
 
-	//¿ªÊ¼ÖØĞÂµ¼Èë½Ó¿Ú
+	//å¼€å§‹é‡æ–°å¯¼å…¥æ¥å£
 	virtual bool CanReimport(UObject* Obj, TArray<FString>& OutFilenames) override;
 	virtual void SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths) override;
 	virtual EReimportResult::Type Reimport(UObject* Obj) override;
@@ -54,14 +54,14 @@ public:
 	void ShowImportOptionsWindow(TSharedPtr<SAlembicImportOptions>& Options, FString FilePath, const FAbcImporter& Importer);
 
 	virtual int32 GetPriority( ) const override;
-	//½áÊøÖØĞÂµ¼Èë½Ó¿Ú
+	//ç»“æŸé‡æ–°å¯¼å…¥æ¥å£
 
 	/// <summary>
-	/// µ¼ÈëÎª¼¸ºÎ»º´æ
+	/// å¯¼å…¥ä¸ºå‡ ä½•ç¼“å­˜
 	/// </summary>
-	/// <param name="Importer">importµÄÊµÀı</param>
-	/// <param name="InParent">¼¸ºÎ»º´æµÄ¸¸Ïî×Ê²ú</param>
-	/// <param name="Flags">Îª¼¸ºÎ»º´æ´´½¨µÄ±êÖ¾</param>
+	/// <param name="Importer">importçš„å®ä¾‹</param>
+	/// <param name="InParent">å‡ ä½•ç¼“å­˜çš„çˆ¶é¡¹èµ„äº§</param>
+	/// <param name="Flags">ä¸ºå‡ ä½•ç¼“å­˜åˆ›å»ºçš„æ ‡å¿—</param>
 	/// <returns></returns>
 	UObject* ImportGeometryCache(FAbcImporter& Importer, UObject* InParent, EObjectFlags Flags);
 

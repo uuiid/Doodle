@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "doodleAbcFactory.h"
+#include "DoodleAbcFactory.h"
 
 #include "AbcImportSettings.h"
 #include "GeometryCache.h"
@@ -10,6 +10,10 @@
 #include "AbcImportLogger.h"
 #include "AbcAssetImportData.h"
 
+//abcæ–‡ä»¶è§£æä¾èµ–
+#include "AbcFile.h"
+
+#include "DoodleAlemblcCacheAsset.h"
 UdoodleAbcFactory::UdoodleAbcFactory( )
     :UFactory(),
     FReimportHandler(),
@@ -24,7 +28,7 @@ UdoodleAbcFactory::UdoodleAbcFactory( )
     bShowOption = false;
 
     Formats.Add(TEXT("abc;Doodle_Alembic"));
-    ImportPriority = 0.f;
+    ImportPriority = 101.f;
     AssetImportTask = NewObject<UAssetImportTask>( );
 }
 
@@ -45,15 +49,21 @@ bool UdoodleAbcFactory::DoesSupportClass(UClass* Class)
     return (Class == UGeometryCache::StaticClass( ));
 }
 
+UClass * UdoodleAbcFactory::ResolveSupportedClass()
+{
+	return UStaticMesh::StaticClass();
+}
+
 bool UdoodleAbcFactory::FactoryCanImport(const FString& FileName)
 {
-    //ÕâÀïÎªÊ²Ã´ÓĞÕâÃ´Ò»¾äÎÒËûÂèÒ²²»ÖªµÀ
+    //è¿™é‡Œä¸ºä»€ä¹ˆæœ‰è¿™ä¹ˆä¸€å¥æˆ‘ä¹Ÿä¸çŸ¥é“ä¸ºä»€ä¹ˆ
     const FString suff = FPaths::GetExtension(FileName);
 
     return (FPaths::GetExtension(FileName) == TEXT("abc"));
 }
 
-UObject* UdoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled)
+UObject* UdoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, 
+	EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled)
 {
     GEditor->GetEditorSubsystem<UImportSubsystem>( )->BroadcastAssetPreImport(this, InClass, InParent, InName, TEXT("doodle_abc"));
     FAbcImporter Import;
@@ -71,13 +81,13 @@ UObject* UdoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent
     ImportSettings->SamplingSettings.FrameStart = 1001;
     ImportSettings->SamplingSettings.FrameEnd = Import.GetEndFrameIndex( );
     bOutOperationCanceled = false;
-
-    UAbcImportSettings* scriptedStting = AssetImportTask ? Cast<UAbcImportSettings>(AssetImportTask->Options) : nullptr;
-    if (scriptedStting)
-    {
-        ImportSettings = scriptedStting;
-    }
-    //Êä³öÈÕÖ¾
+	//è¿™ä¸ªæ˜¯ç”¨æ¥è·å¾—uiçš„è®¾ç½®çš„, ç›´æ¥æ³¨é‡Šæ‰
+    //UAbcImportSettings* scriptedStting = AssetImportTask ? Cast<UAbcImportSettings>(AssetImportTask->Options) : nullptr;
+    //if (scriptedStting)
+    //{
+    //    ImportSettings = scriptedStting;
+    //}
+    //è¾“å‡ºæ—¥å¿—
     const FString PageName = "Importing " + InName.ToString( ) + ".abc";
 
     TArray<UObject*> ResultAssets;
@@ -90,7 +100,7 @@ UObject* UdoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent
         {
             NumThreads = FPlatformMisc::NumberOfCores( );
         }
-        //µ¼ÈëÎÄ¼ş
+        //å¯¼å…¥æ–‡ä»¶
         errorCode = Import.ImportTrackData(NumThreads, ImportSettings);
 
         if (errorCode != AbcImportError_NoError)
@@ -100,7 +110,7 @@ UObject* UdoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent
             return nullptr;
         }
         else
-        {//µ¼Èë¼¸ºÎ»º´æ
+        {//å¯¼å…¥å‡ ä½•ç¼“å­˜
             if (ImportSettings->ImportType == EAlembicImportType::GeometryCache)
             {
                 UObject* GeometryCache = ImportGeometryCache(Import, InParent, Flags);
@@ -125,7 +135,7 @@ UObject* UdoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent
 
         FAbcImportLogger::OutputMessages(PageName);
     }
-    //È·ÈÏ¸¸¼¶;
+    //ç¡®è®¤çˆ¶çº§;
     UObject* OutParent = (ResultAssets.Num( ) > 0 && InParent != ResultAssets[0]->GetOutermost( )) ? ResultAssets[0]->GetOutermost( ) : InParent;
     return (ResultAssets.Num( ) > 0) ? OutParent : nullptr;
 }
@@ -253,8 +263,8 @@ UObject* UdoodleAbcFactory::ImportGeometryCache(FAbcImporter& Importer, UObject*
         {
             Importer.UpdateAssetImportData(AssetImportData);
         }
-
-        return GeometryCache;
+		Cast<UDoodleAlemblcCacheAsset>(GeometryCache);
+        return Cast<UDoodleAlemblcCacheAsset>(GeometryCache);
     }
     else
     {

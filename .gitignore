@@ -68,3 +68,5 @@ cmake-build-debug/
 /install*
 /script/tools/.*
 /script/tools/b_Ninja_*
+*.exp
+/script/uePlug/*/Plugins/Doodle/Intermediate/*

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-01 16:51:51
- * @LastEditTime: 2020-12-02 17:36:35
+ * @LastEditTime: 2020-12-02 19:39:46
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \tools\src\sourePy.cpp
@@ -14,6 +14,7 @@ import re
 import os
 import maya.cmds
 import pymel.core
+import pymel.all
 import argparse
 import maya.standalone
 
@@ -26,7 +27,9 @@ parser.add_argument("--path", "-p", help="path attr")
 parser.add_argument("--exportpath", "-exp", help="export path attr")
 parser.add_argument("--suffix", "-su", help="suffix", default=".ma")
 args = parser.parse_args()
-
+if os.path.exists(os.path.dirname(args.path) + "/workspace.mel"):
+    pymel.all.workspace.open(os.path.dirname(args.path))
+    pymel.all.workspace.save()
 
 class doodle_log:
     def __init__(self):

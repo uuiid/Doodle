@@ -3,7 +3,7 @@
 //
 
 #include "ffmpegWrap.h"
-
+#include <src/core/coreset.h>
 #include "Logger.h"
 
 #include <boost/process.hpp>
@@ -12,8 +12,8 @@
 #include <iostream>
 
 CORE_NAMESPACE_S
-ffmpegWrap::ffmpegWrap(const std::string &path)
-    : p_path_(std::make_shared<boost::filesystem::path>(path)), p_tmp_file_() {
+ffmpegWrap::ffmpegWrap()
+    : p_tmp_file_() {
   p_tmp_file_ = std::make_shared<boost::filesystem::path>(
       boost::filesystem::temp_directory_path() /
       boost::filesystem::unique_path().filename());
@@ -116,15 +116,12 @@ bool ffmpegWrap::connectVideo(const dpathList &in_videoPath,
 
 bool ffmpegWrap::runFFmpeg(const std::string &command) const {
   auto env = boost::this_process::environment();
-  std::string ffmpeg_path = "";
-
-  if (boost::filesystem::is_directory(*p_path_)) {
-    env["PATH"] += p_path_->generic_string();
-    ffmpeg_path = p_path_->generic_string();
-  } else if (boost::filesystem::is_regular_file(*p_path_)) {
-    env["PATH"] += p_path_->parent_path().generic_string();
-    ffmpeg_path = p_path_->parent_path().generic_string();
-  }
+  auto paths = env["PATH"].to_vector();
+  std::string ffmpeg_path = (coreSet::getSet().program_location().parent_path() / "tools/ffmpeg/bin").generic_string();
+  if (std::find_if(paths.begin(), paths.end(), [=](std::string &p) -> bool {
+        return (p.find(R"(ffmpeg/bin)") != p.npos);
+      }) == paths.end())
+    env["PATH"] += (coreSet::getSet().program_location().parent_path() / "tools/ffmpeg/bin").generic_string();
 
   STARTUPINFO si{};
   PROCESS_INFORMATION pi{};

@@ -45,6 +45,9 @@ void coreSet::init() {
   appendEnvironment();
   DOODLE_LOG_INFO << "登录 : " << project.second.c_str();
   doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "", *prjectRoot);
+  if (!boost::filesystem::exists(getCacheRoot())) {
+    boost::filesystem::create_directories(getCacheRoot());
+  }
 }
 
 void coreSet::reInit() {

@@ -12,7 +12,7 @@
 	"SupportURL": "",
 	"EngineVersion": "4.25.0",
 	"CanContainContent": true,
-	"Installed": true,
+	"Installed": false,
 	"Modules": [
 		{
 			"Name": "doodle",

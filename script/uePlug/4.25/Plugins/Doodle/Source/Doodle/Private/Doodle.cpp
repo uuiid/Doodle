@@ -1,8 +1,8 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "doodle.h"
-#include "doodleStyle.h"
-#include "doodleCommands.h"
+#include "Doodle.h"
+#include "DoodleStyle.h"
+#include "DoodleCommands.h"
 #include "LevelEditor.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBox.h"
