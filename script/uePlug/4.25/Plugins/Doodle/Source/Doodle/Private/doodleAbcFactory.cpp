@@ -246,6 +246,10 @@ UObject* UdoodleAbcFactory::ImportGeometryCache(FAbcImporter& Importer, UObject*
     if (NumMeshes > 0)
     {
         UGeometryCache* GeometryCache = Importer.ImportAsGeometryCache(InParent, Flags);
+		if (Cast<UDoodleAlemblcCacheAsset>(GeometryCache) == nullptr)
+		{
+			UE_LOG(LogTemp, Log, TEXT("tran doodle Cache ------------>   not"));
+		}
 
         if (!GeometryCache)
         {
@@ -263,8 +267,7 @@ UObject* UdoodleAbcFactory::ImportGeometryCache(FAbcImporter& Importer, UObject*
         {
             Importer.UpdateAssetImportData(AssetImportData);
         }
-		Cast<UDoodleAlemblcCacheAsset>(GeometryCache);
-        return Cast<UDoodleAlemblcCacheAsset>(GeometryCache);
+        return GeometryCache;
     }
     else
     {

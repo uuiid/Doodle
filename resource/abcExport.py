@@ -23,6 +23,10 @@ if os.path.exists(os.path.dirname(args.path) + "/workspace.mel"):
     pymel.all.workspace.save()
 
 
+def NULLFUNCT():
+    return None
+
+
 class doodle_log:
     def __init__(self):
         self.log = []
@@ -31,7 +35,7 @@ class doodle_log:
     def write(self):
         if not os.path.exists(self.logPath):
             os.makedirs(self.logPath)
-        with open(os.path.join(self.logPath + "doodle_export_abc.json"), "w") as f:
+        with open(os.path.join(self.logPath, "doodle_export_abc.json"), "w") as f:
             f.write(
                 json.dumps(self.log,
                            ensure_ascii=False,
@@ -64,16 +68,23 @@ class rootObj:
         self.expotList = []
         self.mesh = None
         self.pathFile = None
+        self.split_seane_name = NULLFUNCT
+        self.split_obj_name = NULLFUNCT
 
     def __str__(self):
         return self.root.name().replace(":", "_")
 
     def name(self):
-        return self.root.name().replace(":", "_")
+        if self.split_obj_name(self.root):
+            return self.split_obj_name(self.root)
+        else:
+            return self.root.name().replace(":", "_")
 
-    @staticmethod
-    def seaneName():
-        return os.path.basename(pymel.core.sceneName()).split(".")[0]
+    def seaneName(self):
+        if self.split_seane_name():
+            return self.split_seane_name()
+        else:
+            return os.path.basename(pymel.core.sceneName()).split(".")[0]
 
     # 可调用过滤器对象
     def filter(self, fun):
@@ -144,6 +155,24 @@ def default_filter(maya_Obj):
     return True
 
 
+def splitSeaneName_xinLing():
+    name = os.path.basename(pymel.core.sceneName()).split(".")
+    try:
+        name = name[0]
+    except IndexError:
+        DLOG.log.append({name: "The scene name cannot be resolved"})
+    return name
+
+
+def splitMayaMeshName_xinLing(mayaObj):
+    name = mayaObj.name().replace(":", "_")
+    try:
+        name = "{}_{}".format(name.split("_")[2], name.split("_")[-1])
+    except IndexError:
+        DLOG.log.append({name: "The group name cannot be resolved"})
+    return name
+
+
 class run:
     def __init__(self):
         self.root_obj = []
@@ -154,7 +183,10 @@ class run:
             r_obj = rootObj(r_e)
             if r_obj.filter(abc_xingling) and default_filter(r_e):
                 print("get Root obj {}".format(r_e))
+                r_obj.split_obj_name = splitMayaMeshName_xinLing
+                r_obj.split_seane_name = splitSeaneName_xinLing
                 self.root_obj.append(r_obj)
+
         if not os.path.exists(self.root_path):
             os.makedirs(self.root_path)
 

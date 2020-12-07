@@ -31,8 +31,9 @@ public class doodle : ModuleRules
 
                 "ContentBrowser",
                 "EditorScriptingUtilities",
+				//鎴戠殑abc瀵煎叆
 				"GeometryCache",
-				"AlembicImporter",
+                "AlembicLibrary"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -52,11 +53,11 @@ public class doodle : ModuleRules
 
                 "ContentBrowser",
                 "EditorScriptingUtilities",
-				"GeometryCache",  //复制材质依赖
-				"AssetTools",     //资产工具 导入依赖
+				"GeometryCache",  //澶嶅埗鏉愯川渚濊禆
+				"AssetTools",     //璧勪骇宸ュ叿 瀵煎叆渚濊禆
 
-				"DesktopPlatform",//桌面依赖  打开文件对话框的依赖
-				"AlembicImporter",//abc导入依赖
+				"DesktopPlatform",//妗岄潰渚濊禆  鎵撳紑鏂囦欢瀵硅瘽妗嗙殑渚濊禆
+				"AlembicImporter",//abc瀵煎叆渚濊禆
 				"AlembicLibrary",
 				"RenderCore",
 

@@ -54,6 +54,11 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   install->addAction(install_ue4_plug_prj);
   install->addAction(install_ue4_plug);
 
+  auto modify_ue_cache_path = new QAction(menu);
+  modify_ue_cache_path->setText(tr("修改ue缓存位置"));
+  connect(modify_ue_cache_path, &QAction::triggered,
+          this, [this]() { toolkit::modifyUeCachePath(); });
+
   setting = new QAction(menu);
   setting->setText(tr("设置"));
   auto re_user = new QAction(menu);
@@ -61,7 +66,7 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   connect(re_user, &QAction::triggered, this, &systemTray::showRigister);
 
   auto update = new QAction(menu);
-  update->setText(tr("更新"));  // menu->addAction("更新");
+  update->setText(tr("更新"));
   update->connect(update, &QAction::triggered, this, &systemTray::upDoodle);
 
   auto k_exit_ = new QAction(menu);
@@ -74,6 +79,11 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   menu->addAction(fileSyn);
   menu->addAction(prj_widght);
   menu->addMenu(install);
+  menu->addAction(modify_ue_cache_path);
+
+  menu->addSeparator();
+
+  //设置和跟新
   menu->addAction(setting);
   menu->addAction(update);
 

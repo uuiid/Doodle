@@ -24,7 +24,7 @@
 
 //重命名资产
 #include "EditorAssetLibrary.h"
-#include "DoodleAbcFactory.h"
+
 
 //自定义abc导入
 #include "DoodleAbcFactory.h"

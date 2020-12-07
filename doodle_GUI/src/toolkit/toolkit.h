@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-11-16 15:39:08
- * @LastEditTime: 2020-11-27 17:21:31
+ * @LastEditTime: 2020-12-07 10:19:50
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\src\toolkit.h
@@ -17,9 +17,11 @@ class toolkit {
                        const bool &openEx);
   static void openPath(const doCore::dpath &path);
   static void installUePath(const std::string &path);
+  static void modifyUeCachePath();
   static bool update();
 
  private:
+  static doCore::dpath getUeInstallPath();
 };
 
 DOODLE_NAMESPACE_E

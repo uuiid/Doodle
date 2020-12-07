@@ -7,12 +7,10 @@
 UCLASS()
 class DOODLE_API UDoodleAlemblcCacheAsset :public UGeometryCache
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 public:
 
-
-
-	UPROPERTY(EditAnywhere, Category = DoodleCache)
+	UPROPERTY()
 	TArray<FString> materalName;
 private:
 

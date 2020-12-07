@@ -6,6 +6,8 @@
 #include "Factories/Factory.h"
 #include "EditorReimportHandler.h"
 
+#include "DoodleAbcImport.h"
+
 #include "DoodleAbcFactory.generated.h"
 
 class FAbcImporter;
