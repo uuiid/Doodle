@@ -1,8 +1,8 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-15 14:23:34
- * @LastEditTime: 2020-11-30 14:06:01
- * @LastEditors: your name
+ * @LastEditTime: 2020-12-08 20:45:40
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\assets\assClass.h
  */
@@ -42,6 +42,7 @@ class CORE_API assClass : public coresqldata,
   assDepPtr p_ass_dep_ptr_;
 
   znchNamePtr p_ptr_znch;
+  RTTR_ENABLE(coresqldata, std::enable_shared_from_this<assClass>);
 };
 inline QString assClass::getAssClassQ(bool isZNCH) {
   return QString::fromStdString(getAssClass(isZNCH));

@@ -1,6 +1,6 @@
 find_package(Qt5 CONFIG COMPONENTS Core Widgets QuickControls2 REQUIRED)
 find_package(Boost COMPONENTS regex REQUIRED)
-
+find_package(rttr CONFIG REQUIRED)
 #file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/framelesswindow/framelesswindow.h
 #        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/resource)
 #file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/framelesswindow/framelesswindow.cpp

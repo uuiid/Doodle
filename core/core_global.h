@@ -17,10 +17,17 @@
 #define CORE_API __declspec(dllimport)
 #endif
 
-#define CORE_NAMESPACE_S namespace doCore {
+#define CORE_NAMESPACE doCore
+#define CORE_NAMESPACE_S namespace CORE_NAMESPACE {
 #define CORE_NAMESPACE_E \
   }                      \
   ;
+
+#define DOODLE_RTTE_CLASS(nameSpace, className) (#nameSpace "::" #className)
+
+#define DOCORE_RTTE_CLASS(className) DOODLE_RTTE_CLASS(CORE_NAMESPACE, className)
+
+#define DOODLE_TOS(str) (#str)
 
 #define DOODLE_FFMPEG_PATH "tools/ffmpeg/bin"
 #define DOODLE_BACKUP "backup"

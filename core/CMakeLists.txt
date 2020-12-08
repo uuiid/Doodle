@@ -2,7 +2,7 @@
 find_package(Sqlpp11 REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
 find_package(pugixml CONFIG REQUIRED)
-
+find_package(rttr CONFIG REQUIRED)
 
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 
@@ -33,6 +33,7 @@ add_subdirectory(src)
 
 target_link_libraries(core PUBLIC Qt5::Core)
 target_link_libraries(core PUBLIC SqlppMySql)
+target_link_libraries(core PUBLIC RTTR::Core)
 
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
 target_link_libraries(core PUBLIC ${Boost_LIBRARIES})

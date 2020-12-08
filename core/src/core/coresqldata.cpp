@@ -1,17 +1,34 @@
-﻿#include "coresqldata.h"
+﻿/*
+ * @Author: your name
+ * @Date: 2020-09-18 17:14:11
+ * @LastEditTime: 2020-12-08 20:24:07
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\core\coresqldata.cpp
+ */
+#include "coresqldata.h"
 
-#include <QSqlQuery>
-#include <QVariant>
+#include <rttr/registration>
 
 CORE_NAMESPACE_S
+
+RTTR_REGISTRATION {
+  rttr::registration::class_<coresqldata>(DOCORE_RTTE_CLASS(coresqldata))  //DOCORE_RTTE_CLASS(coresqldata)
+      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr)
+      .property_readonly(DOODLE_TOS(getIdP), &coresqldata::getIdP)
+      .method(DOODLE_TOS(isNULL), &coresqldata::isNULL)
+      .method(DOODLE_TOS(isInsert), &coresqldata::isInsert);
+}
 
 coresqldata::coresqldata() {
   idP = -1;
 }
 
 qint64 coresqldata::getIdP() const {
-  if (idP > 0) return idP;
-  else return 0;
+  if (idP > 0)
+    return idP;
+  else
+    return 0;
 }
 
 bool coresqldata::isNULL() const {
