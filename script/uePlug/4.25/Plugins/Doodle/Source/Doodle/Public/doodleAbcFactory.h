@@ -65,7 +65,7 @@ public:
 	/// <param name="InParent">几何缓存的父项资产</param>
 	/// <param name="Flags">为几何缓存创建的标志</param>
 	/// <returns></returns>
-	UObject* ImportGeometryCache(FAbcImporter& Importer, UObject* InParent, EObjectFlags Flags);
+	UObject* ImportGeometryCache(FDoodleAbcImport & Importer, UObject* InParent, EObjectFlags Flags);
 
 	EReimportResult::Type ReimportGeometryCache(UGeometryCache* Cache);
 

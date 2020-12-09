@@ -13,6 +13,7 @@
 //abc文件解析依赖
 #include "AbcFile.h"
 
+#include "DoodleAbcImport.h"
 #include "DoodleAlemblcCacheAsset.h"
 UdoodleAbcFactory::UdoodleAbcFactory( )
     :UFactory(),
@@ -66,9 +67,9 @@ UObject* UdoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent
 	EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled)
 {
     GEditor->GetEditorSubsystem<UImportSubsystem>( )->BroadcastAssetPreImport(this, InClass, InParent, InName, TEXT("doodle_abc"));
-    FAbcImporter Import;
+    //FAbcImporter Import;
+	FDoodleAbcImport Import;
     EAbcImportError errorCode = Import.OpenAbcFileForImport(Filename);
-
     ImportSettings->bReimport = false;
 
     AdditionalImportedObjects.Empty( );
@@ -236,7 +237,7 @@ int32 UdoodleAbcFactory::GetPriority( ) const
     return ImportPriority;
 }
 
-UObject* UdoodleAbcFactory::ImportGeometryCache(FAbcImporter& Importer, UObject* InParent, EObjectFlags Flags)
+UObject* UdoodleAbcFactory::ImportGeometryCache(FDoodleAbcImport & Importer, UObject* InParent, EObjectFlags Flags)
 {
     // Flush commands before importing
     FlushRenderingCommands( );
@@ -245,8 +246,8 @@ UObject* UdoodleAbcFactory::ImportGeometryCache(FAbcImporter& Importer, UObject*
     // Check if the alembic file contained any meshes
     if (NumMeshes > 0)
     {
-        UGeometryCache* GeometryCache = Importer.ImportAsGeometryCache(InParent, Flags);
-		if (Cast<UDoodleAlemblcCacheAsset>(GeometryCache) == nullptr)
+        UGeometryCache* GeometryCache = Importer.ImportAsDoodleGeometryCache(InParent, Flags);
+		if (Cast<UDoodleAlemblcCache>(GeometryCache) == nullptr)
 		{
 			UE_LOG(LogTemp, Log, TEXT("tran doodle Cache ------------>   not"));
 		}
@@ -285,7 +286,7 @@ EReimportResult::Type UdoodleAbcFactory::ReimportGeometryCache(UGeometryCache* C
         return EReimportResult::Failed;
     }
 
-    FAbcImporter Importer;
+    FDoodleAbcImport Importer;
     EAbcImportError ErrorCode = Importer.OpenAbcFileForImport(CurrentFilename);
 
     if (ErrorCode != AbcImportError_NoError)
@@ -330,7 +331,7 @@ EReimportResult::Type UdoodleAbcFactory::ReimportGeometryCache(UGeometryCache* C
         return EReimportResult::Failed;
     }
 
-    UGeometryCache* GeometryCache = Importer.ReimportAsGeometryCache(Cache);
+    UGeometryCache* GeometryCache = Importer.ReimportAsDoodleGeometryCache(Cache);
 
     if (!GeometryCache)
     {
