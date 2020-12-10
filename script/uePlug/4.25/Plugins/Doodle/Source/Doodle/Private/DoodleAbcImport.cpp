@@ -167,7 +167,7 @@ UDoodleAlemblcCache * FDoodleAbcImport::ImportAsDoodleGeometryCache(UObject * In
 				}
 
 				///从这里开始就是我自己的添加骨骼物体的地方了
-				TFunction<void(int32,FAbcFile*)>tanFun =  [&GeometryCache](int32 frameIndex, FAbcFile* InAbcFile){
+				TFunction<void(int32,FAbcFile*)>tanFun =  [&GeometryCache,&SlowTask](int32 frameIndex, FAbcFile* InAbcFile){
 					for (FAbcTransform* tran:InAbcFile->GetTransforms()) {
 						auto matx =  tran->GetMatrix(frameIndex);//这里我们获得旋转矩阵
 						auto timeFrame = tran->GetTimeForFrameIndex(frameIndex) - InAbcFile->GetImportTimeOffset();//这里我们获得帧对应的时间(并减去时间偏移)
@@ -203,6 +203,9 @@ UDoodleAlemblcCache * FDoodleAbcImport::ImportAsDoodleGeometryCache(UObject * In
 
 							GeometryCache->tranAnm.Add(k_curve);
 						}
+					}
+					if (IsInGameThread()) {
+						SlowTask.EnterProgressFrame(1.0f);
 					}
 				};
 				
