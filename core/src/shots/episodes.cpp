@@ -9,7 +9,6 @@
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
 #include <boost/format.hpp>
-#include <src/core/coreDataManager.h>
 
 //反射使用
 #include <rttr/registration>
@@ -21,6 +20,7 @@ RTTR_REGISTRATION {
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
 
+DOODLE_INSRANCE_CPP(episodes);
 episodes::episodes()
     : coresqldata(),
       std::enable_shared_from_this<episodes>(),
@@ -38,6 +38,11 @@ void episodes::select(const qint64 &ID_) {
     p_int_episodes = row.episodes;
     idP = row.id;
   }
+  p_instance.insert({idP, this});
+}
+episodes::~episodes() {
+  if (isInsert())
+    p_instance.erase(idP);
 }
 
 void episodes::insert() {
@@ -55,7 +60,7 @@ void episodes::insert() {
     DOODLE_LOG_WARN << "无法插入集数" << p_int_episodes;
     throw std::runtime_error("not install eps");
   }
-  coreDataManager::get().setEpisodeL(shared_from_this());
+  p_instance.insert({idP, this});
 }
 void episodes::updateSQL() {
 }
@@ -82,8 +87,8 @@ episodesPtrList episodes::getAll() {
     eps->idP = row.id;
     eps->p_prj = row.projectId;
     list.push_back(eps);
+    p_instance.insert({eps->idP, eps.get()});
   }
-  coreDataManager::get().setEpisodeL(list);
   return list;
 }
 
@@ -92,12 +97,16 @@ void episodes::setEpisdes(const int64_t &value) {
 }
 
 episodesPtr episodes::find(int64_t episodes) {
-  for (auto &&eps_ptr : coreDataManager::get().getEpisodeL()) {
-    if (eps_ptr->idP == episodes) {
-      return eps_ptr;
+  for (auto &&eps_ptr : p_instance) {
+    if (eps_ptr.second->idP == episodes) {
+      return eps_ptr.second->shared_from_this();
     }
   }
   return nullptr;
+}
+
+const std::map<int64_t, episodes *> &episodes::Instances() {
+  return p_instance;
 }
 
 int64_t episodes::getEpisdes() const {

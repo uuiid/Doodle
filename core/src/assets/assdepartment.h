@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-11-06 09:22:09
- * @LastEditTime: 2020-12-14 13:28:21
+ * @LastEditTime: 2020-12-14 16:31:22
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\assets\assdepartment.h
@@ -21,7 +21,8 @@ class CORE_API assdepartment
       public std::enable_shared_from_this<assdepartment> {
  public:
   explicit assdepartment();
-  void select(const int64_t &ID_);
+  ~assdepartment();
+
   void insert() override;
   void updateSQL() override;
   void deleteSQL() override;
@@ -31,12 +32,15 @@ class CORE_API assdepartment
   [[nodiscard]] const QString getAssDepQ() const;
   void setAssDep(const std::string &s_ass_dep);
 
+  static std::map<int64_t, assdepartment *> &Instances();
+
   RTTR_ENABLE(coresqldata);
 
  private:
   int64_t i_prjID;
 
   std::string s_assDep;
+  DOODLE_INSRANCE(assdepartment);
 };
 
 CORE_NAMESPACE_E

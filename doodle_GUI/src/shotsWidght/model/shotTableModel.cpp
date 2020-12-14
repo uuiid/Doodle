@@ -13,6 +13,7 @@ DOODLE_NAMESPACE_S
 shotTableModel::shotTableModel(QObject *parent)
     : QAbstractTableModel(parent),
       p_shot_info_ptr_list_(),
+      p_tmp_shot_info_ptr_list_(),
       FBRex(std::make_unique<boost::regex>(R"(mp4|avi)")),
       mayaRex(std::make_unique<boost::regex>(R"(ma|ab)")),
       show_mayaex(std::make_unique<boost::regex>(R"(Anm|Animation|export)")),
@@ -183,10 +184,10 @@ void shotTableModel::init() {
   clear();
   auto shot = doCore::coreDataManager::get().getShotPtr();
   if (shot) {
-    p_shot_info_ptr_list_ = doCore::shotFileSqlInfo::getAll(shot);
+    p_tmp_shot_info_ptr_list_ = doCore::shotFileSqlInfo::getAll(shot);
   } else {
     auto eps = doCore::coreDataManager::get().getEpisodesPtr();
-    p_shot_info_ptr_list_ = doCore::shotFileSqlInfo::getAll(eps);
+    p_tmp_shot_info_ptr_list_ = doCore::shotFileSqlInfo::getAll(eps);
   }
 
   eachOne();
@@ -203,7 +204,7 @@ void shotTableModel::filter(bool useFilter) {
     doCore::shotInfoPtrList list;
     const auto shotTy = doCore::coreDataManager::get().getShotTypePtr();
     const auto shotCl = doCore::coreDataManager::get().getShotClassPtr();
-    for (const auto &info_l : doCore::coreDataManager::get().getShotInfoL()) {
+    for (const auto &info_l : p_tmp_shot_info_ptr_list_) {
       if (shotCl && shotTy) {
         if ((shotCl == info_l->getShotclass()) &&
             shotTy == info_l->getShotType())
@@ -227,7 +228,7 @@ void shotTableModel::filter(bool useFilter) {
 }
 void shotTableModel::eachOne() {
   std::vector<std::string> show{"Animation", "FB_VFX", "FB_Light", "flipbook"};
-  auto listout = doCore::coreDataManager::get().getShotInfoL();
+  auto listout = p_tmp_shot_info_ptr_list_;
 
   auto it = std::remove_if(
       listout.begin(), listout.end(), [=](const doCore::shotInfoPtr &ptr) {
@@ -252,7 +253,7 @@ void shotTableModel::eachOne() {
     }
   }
 
-  //  for (const auto &info_l : doCore::coreDataManager::get().getShotInfoL()) {
+  //  for (const auto &info_l : ) {
   //    auto item = std::find(show.begin(), show.end(),
   //    info_l->getShotType()->getType()); if (item != show.end()) {
   //      list.push_back(info_l);
@@ -271,7 +272,7 @@ void shotTableModel::setList(const doCore::shotInfoPtrList &list) {
   endInsertRows();
 }
 void shotTableModel::showAll() {
-  setList(doCore::coreDataManager::get().getShotInfoL());
+  setList(p_tmp_shot_info_ptr_list_);
 }
 
 DOODLE_NAMESPACE_E

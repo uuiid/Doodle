@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-10-19 13:26:31
- * @LastEditTime: 2020-12-14 13:34:54
+ * @LastEditTime: 2020-12-14 15:59:21
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\shotClass.h
@@ -17,6 +17,7 @@ class CORE_API shotClass : public coresqldata,
                            public std::enable_shared_from_this<shotClass> {
  public:
   shotClass();
+  ~shotClass();
   void select(const qint64 &ID_);
 
   enum class e_fileclass {
@@ -45,13 +46,15 @@ class CORE_API shotClass : public coresqldata,
   void setclass(const dstring &value);
   void setclass(const QString &value);
 
+  static const std::map<int64_t, shotClass *> &Instances();
+
  private:
   template <typename T>
   void batchSetAttr(T &row);
 
  private:
   e_fileclass p_fileclass;
-
+  DOODLE_INSRANCE(shotClass);
   RTTR_ENABLE(coresqldata)
 };
 inline QString shotClass::getClass_Qstr() const {

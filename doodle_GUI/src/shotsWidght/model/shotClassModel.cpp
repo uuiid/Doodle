@@ -138,10 +138,8 @@ void shotClassModel::clear() {
   endResetModel();
 }
 void shotClassModel::reInit() {
-  auto list = doCore::coreDataManager::get().getShotClassL();
   if (list_fileClass.empty()) return;
-  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list.size()) - 1);
-  list_fileClass = list;
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list_fileClass.size()) - 1);
   endInsertRows();
 }
 DOODLE_NAMESPACE_E

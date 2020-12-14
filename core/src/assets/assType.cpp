@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-11-06 13:15:08
- * @LastEditTime: 2020-12-14 13:30:12
+ * @LastEditTime: 2020-12-14 16:44:22
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\assType.cpp
@@ -22,7 +22,6 @@
 #include <sqlpp11/mysql/mysql.h>
 
 #include <stdexcept>
-#include <src/core/coreDataManager.h>
 #include <magic_enum.hpp>
 
 //反射使用
@@ -33,7 +32,7 @@ RTTR_REGISTRATION {
   rttr::registration::class_<assType>(DOCORE_RTTE_CLASS(assType))
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
-
+DOODLE_INSRANCE_CPP(assType);
 assType::assType()
     : coresqldata(),
       std::enable_shared_from_this<assType>(),
@@ -56,7 +55,7 @@ void assType::insert() {
     DOODLE_LOG_WARN << "无法插入asstype " << s_type.c_str();
     throw std::runtime_error("asstype");
   }
-  coreDataManager::get().setAssTypeL(shared_from_this());
+  p_instance.insert({idP, this});
 }
 void assType::updateSQL() {}
 void assType::deleteSQL() {
@@ -79,8 +78,8 @@ assTypePtrList assType::getAll() {
     at->idP = row.id;
     at->s_type = row.assType;
     ptr_list.push_back(at);
+    p_instance.insert({at->idP, at.get()});
   }
-  coreDataManager::get().setAssTypeL(ptr_list);
   return ptr_list;
 }
 const std::string &assType::getType() const { return s_type; }
@@ -90,8 +89,8 @@ bool assType::sortType(const assTypePtr &t1, const assTypePtr &t2) {
   return t1->s_type < t2->s_type;
 }
 assTypePtr assType::findType(const std::string &typeName) {
-  for (const auto &item : coreDataManager::get().getAssTypeL()) {
-    if (item->getType() == typeName) return item;
+  for (const auto &item : p_instance) {
+    if (item.second->getType() == typeName) return item.second->shared_from_this();
   }
   return nullptr;
 }
@@ -110,5 +109,9 @@ assTypePtr assType::findType(const e_type &typeName, bool autoInstall) {
   } else {
     return findType(name);
   }
+}
+
+const std::map<int64_t, assType *> &assType::Instances() {
+  return p_instance;
 }
 CORE_NAMESPACE_E

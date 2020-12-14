@@ -12,7 +12,6 @@
 #include <src/coreOrm/znch_sqlOrm.h>
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
-#include <src/core/coreDataManager.h>
 
 //反射使用
 #include <rttr/registration>
@@ -27,7 +26,7 @@ RTTR_REGISTRATION {
   rttr::registration::class_<assClass>(DOCORE_RTTE_CLASS(assClass))
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
-
+DOODLE_INSRANCE_CPP(assClass);
 assClass::assClass()
     : coresqldata(),
       std::enable_shared_from_this<assClass>(),
@@ -35,6 +34,10 @@ assClass::assClass()
       p_assDep_id(-1),
       p_ass_dep_ptr_(),
       p_ptr_znch() {}
+
+assClass::~assClass() {
+  if (isInsert()) p_instance.erase(idP);
+}
 
 void assClass::insert() {
   // id大于0就不逊要插入
@@ -51,8 +54,8 @@ void assClass::insert() {
   if (idP == 0) {
     throw std::runtime_error("not insert assclass");
   }
+  p_instance.insert({idP, this});
   if (p_ptr_znch) p_ptr_znch->insert();
-  coreDataManager::get().setAssClassL(shared_from_this());
 }
 
 void assClass::updateSQL() {
@@ -66,16 +69,6 @@ void assClass::deleteSQL() {
 
   auto db = coreSql::getCoreSql().getConnection();
   db->remove(sqlpp::remove_from(table).where(table.id == idP));
-  //我们需要在总的设置里面删除刚刚的指针
-  auto list = coreDataManager::get().getAssClassL();
-
-  list.erase(std::remove_if(list.begin(), list.end(),
-                            [=](assClassPtr &info) -> bool {
-                              return info == this->shared_from_this();
-                            }),
-             list.end());
-
-  coreDataManager::get().setAssClassL(list);
 }
 
 assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
@@ -105,10 +98,9 @@ assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
       assclass->p_ptr_znch->idP = row.znID;
       assclass->p_ptr_znch->nameEN = row.assName;
     }
-
+    p_instance.insert({assclass->idP, assclass.get()});
     list.push_back(assclass);
   }
-  coreDataManager::get().setAssClassL(list);
   return list;
 }
 
@@ -151,5 +143,7 @@ std::string assClass::getAssClass(const bool &isZNCH) {
 
   return str;
 }
-
+const std::map<int64_t, assClass *> &assClass::Instances() {
+  return p_instance;
+}
 CORE_NAMESPACE_E

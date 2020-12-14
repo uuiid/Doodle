@@ -1,7 +1,6 @@
 ﻿#include "shotfilesqlinfo.h"
 
 #include <Logger.h>
-#include <src/core/coreDataManager.h>
 #include <src/core/coreset.h>
 #include <src/core/coresql.h>
 #include <src/shots/episodes.h>
@@ -26,7 +25,7 @@ RTTR_REGISTRATION {
   rttr::registration::class_<shotFileSqlInfo>(DOCORE_RTTE_CLASS(shotFileSqlInfo))
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
-
+DOODLE_INSRANCE_CPP(shotFileSqlInfo);
 shotFileSqlInfo::shotFileSqlInfo()
     : fileSqlInfo(),
       std::enable_shared_from_this<shotFileSqlInfo>(),
@@ -38,7 +37,10 @@ shotFileSqlInfo::shotFileSqlInfo()
       p_ptr_shot(),
       p_ptr_shTy(),
       p_ptr_shcla() {}
-
+shotFileSqlInfo::~shotFileSqlInfo() {
+  if (isInsert())
+    p_instance.erase(idP);
+}
 void shotFileSqlInfo::select(const qint64& ID_) {
   doodle::Basefile tab{};
 
@@ -47,6 +49,7 @@ void shotFileSqlInfo::select(const qint64& ID_) {
            sqlpp::select(sqlpp::all_of(tab)).from(tab).where(tab.id == ID_))) {
     batchSetAttr(row);
   }
+  p_instance.insert({idP, this});
 }
 
 void shotFileSqlInfo::insert() {
@@ -73,7 +76,7 @@ void shotFileSqlInfo::insert() {
     DOODLE_LOG_WARN << fileStateP.c_str();
     throw std::runtime_error("");
   }
-  coreDataManager::get().setShotInfoL(shared_from_this());
+  p_instance.insert({idP, this});
 }
 
 void shotFileSqlInfo::updateSQL() {
@@ -115,12 +118,12 @@ shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr& EP_) {
                .from(tab)
                .where(tab.episodesId == EP_->getIdP() and tab.shotsId.is_null())
                .order_by(tab.filetime.desc()))) {
-    auto assInfo = std::make_shared<shotFileSqlInfo>();
-    assInfo->batchSetAttr(row);
-    assInfo->setEpisdes(EP_);
-    list.push_back(assInfo);
+    auto Info = std::make_shared<shotFileSqlInfo>();
+    Info->batchSetAttr(row);
+    Info->setEpisdes(EP_);
+    list.push_back(Info);
+    p_instance.insert({Info->idP, Info.get()});
   }
-  coreDataManager::get().setShotInfoL(list);
   return list;
 }
 
@@ -133,14 +136,14 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& sh_) {
                                 .from(tab)
                                 .where(tab.shotsId == sh_->getIdP())
                                 .order_by(tab.filetime.desc()))) {
-    auto assInfo = std::make_shared<shotFileSqlInfo>();
-    assInfo->batchSetAttr(row);
-    assInfo->setShot(sh_);
-    assInfo->exist(true);
-    list.push_back(assInfo);
+    auto Info = std::make_shared<shotFileSqlInfo>();
+    Info->batchSetAttr(row);
+    Info->setShot(sh_);
+    Info->exist(true);
+    list.push_back(Info);
+    p_instance.insert({Info->idP, Info.get()});
   }
 
-  coreDataManager::get().setShotInfoL(list);
   return list;
 }
 
@@ -158,27 +161,26 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& shot_ptr,
                           .limit(1u))
                   .front();
 
-  auto shotInfo = std::make_shared<shotFileSqlInfo>();
+  auto Info = std::make_shared<shotFileSqlInfo>();
   if (row._is_valid) {
-    //    shotInfo->batchSetAttr(row);
-
-    shotInfo->idP = row.id;
-    shotInfo->fileP = row.file.text;
-    shotInfo->fileSuffixesP = row.fileSuffixes.text;
-    shotInfo->userP = row.user.text;
-    shotInfo->versionP = row.version;
-    shotInfo->filepathP = row.FilePath_.text;
-    shotInfo->infoP = shotInfo->json_to_strList(row.infor.text);
-    shotInfo->fileStateP = row.filestate;
-    if (row.shotsId._is_valid) shotInfo->p_shot_id = row.shotsId;
+    Info->idP = row.id;
+    Info->fileP = row.file.text;
+    Info->fileSuffixesP = row.fileSuffixes.text;
+    Info->userP = row.user.text;
+    Info->versionP = row.version;
+    Info->filepathP = row.FilePath_.text;
+    Info->infoP = Info->json_to_strList(row.infor.text);
+    Info->fileStateP = row.filestate;
+    if (row.shotsId._is_valid) Info->p_shot_id = row.shotsId;
     if (row.shotClassId._is_valid) {
-      shotInfo->p_shCla_id = row.shotClassId;
-      shotInfo->getShotType();
+      Info->p_shCla_id = row.shotClassId;
+      Info->getShotType();
     }
-    if (row.shotTypeId._is_valid) shotInfo->p_shTy_id = row.shotTypeId;
+    if (row.shotTypeId._is_valid) Info->p_shTy_id = row.shotTypeId;
 
-    shotInfo->exist(true);
-    list.push_back(shotInfo);
+    Info->exist(true);
+    list.push_back(Info);
+    p_instance.insert({Info->idP, Info.get()});
   } else {
     list.push_back(nullptr);
   }
@@ -195,12 +197,12 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr& class_ptr) {
                                 .from(tab)
                                 .where(tab.shotClassId == class_ptr->getIdP())
                                 .order_by(tab.filetime.desc()))) {
-    auto assInfo = std::make_shared<shotFileSqlInfo>();
-    assInfo->batchSetAttr(row);
-    assInfo->exist(true);
-    list.push_back(assInfo);
+    auto Info = std::make_shared<shotFileSqlInfo>();
+    Info->batchSetAttr(row);
+    Info->exist(true);
+    list.push_back(Info);
+    p_instance.insert({Info->idP, Info.get()});
   }
-  coreDataManager::get().setShotInfoL(list);
   return list;
 }
 
@@ -213,13 +215,13 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotTypePtr& type_ptr) {
                                 .from(tab)
                                 .where(tab.shotTypeId == type_ptr->getIdP())
                                 .order_by(tab.filetime.desc()))) {
-    auto assInfo = std::make_shared<shotFileSqlInfo>();
-    assInfo->batchSetAttr(row);
-    assInfo->setShotType(type_ptr);
-    assInfo->exist(true);
-    list.push_back(assInfo);
+    auto Info = std::make_shared<shotFileSqlInfo>();
+    Info->batchSetAttr(row);
+    Info->setShotType(type_ptr);
+    Info->exist(true);
+    list.push_back(Info);
+    p_instance.insert({Info->idP, Info.get()});
   }
-  coreDataManager::get().setShotInfoL(list);
   return list;
 }
 
@@ -306,10 +308,17 @@ episodesPtr shotFileSqlInfo::getEpisdes() {
   if (p_ptr_eps) {
     return p_ptr_eps;
   } else if (p_eps_id >= 0) {
-    episodesPtr p_ = std::make_shared<episodes>();
-    p_->select(p_eps_id);
-    this->setEpisdes(p_);
-    return p_;
+    auto epi = episodes::Instances();
+    auto it = epi.find(p_eps_id);
+    if (it != epi.end())
+      p_ptr_eps = it->second->shared_from_this();
+    else {
+      episodesPtr p_ptr_eps = std::make_shared<episodes>();
+      p_ptr_eps->select(p_eps_id);
+    }
+
+    this->setEpisdes(p_ptr_eps);
+    return p_ptr_eps;
   }
   return nullptr;
 }
@@ -345,9 +354,9 @@ shotClassPtr shotFileSqlInfo::getShotclass() {
   if (p_ptr_shcla)
     return p_ptr_shcla;
   else if (p_shCla_id >= 0) {
-    for (const auto& item : coreDataManager::get().getShotClassL()) {
-      if (item->getIdP() == p_shCla_id) {
-        p_ptr_shcla = item;
+    for (const auto& item : shotClass::Instances()) {
+      if (item.second->getIdP() == p_shCla_id) {
+        p_ptr_shcla = item.second->shared_from_this();
         break;
       }
     }
@@ -367,9 +376,9 @@ shotTypePtr shotFileSqlInfo::getShotType() {
   if (p_ptr_shTy)
     return p_ptr_shTy;
   else if (p_shTy_id > 0) {
-    for (const auto& item : coreDataManager::get().getShotTypeL()) {
-      if (item->getIdP() == p_shTy_id) {
-        p_ptr_shTy = item;
+    for (const auto& item : shotType::Instances()) {
+      if (item.second->getIdP() == p_shTy_id) {
+        p_ptr_shTy = item.second->shared_from_this();
         break;
       }
     }
@@ -391,12 +400,14 @@ bool shotFileSqlInfo::sort(const shotInfoPtr& t1, const shotInfoPtr& t2) {
          (t1->getShotType()->getType() < t2->getShotType()->getType());
 }
 int shotFileSqlInfo::getVersionMax() {
-  for (const auto& info_l : coreDataManager::get().getShotInfoL()) {
-    if ((getShotType() == info_l->getShotType()) &&
-        (info_l->getShotclass() == shotClass::getCurrentClass()))
-      return info_l->versionP;
+  for (const auto& info_l : p_instance) {
+    if ((getShotType() == info_l.second->getShotType()) &&
+        (info_l.second->getShotclass() == shotClass::getCurrentClass()))
+      return info_l.second->versionP;
   }
   return 0;
 }
-
+const std::map<int64_t, shotFileSqlInfo*>& shotFileSqlInfo::Instances() {
+  return p_instance;
+}
 CORE_NAMESPACE_E

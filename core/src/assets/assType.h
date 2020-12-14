@@ -1,8 +1,8 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-11-06 13:15:08
- * @LastEditTime: 2020-12-14 11:43:36
- * @LastEditors: your name
+ * @LastEditTime: 2020-12-14 16:42:59
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\assets\assType.h
  */
@@ -49,10 +49,12 @@ class CORE_API assType
   [[nodiscard]] const QString getTypeQ() const;
   void setType(const std::string &string);
   void setType(const QString &string);
+  static const std::map<int64_t, assType *> &Instances();
 
  private:
   int64_t p_ass_class_id;
 
+  DOODLE_INSRANCE(assType);
   RTTR_ENABLE(coresqldata);
 };
 

@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-11-06 09:22:09
- * @LastEditTime: 2020-12-14 13:28:10
+ * @LastEditTime: 2020-12-14 16:41:51
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\assets\assdepartment.cpp
@@ -20,7 +20,6 @@
 
 #include <stdexcept>
 #include <memory>
-#include <src/core/coreDataManager.h>
 #include <QString>
 
 //反射使用
@@ -31,13 +30,18 @@ RTTR_REGISTRATION {
   rttr::registration::class_<assdepartment>(DOCORE_RTTE_CLASS(assdepartment))
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
-
+DOODLE_INSRANCE_CPP(assdepartment);
 assdepartment::assdepartment()
     : coresqldata(),
       std::enable_shared_from_this<assdepartment>(),
       i_prjID(-1),
       s_assDep("character") {
   i_prjID = coreSet::getSet().projectName().first;
+}
+
+assdepartment::~assdepartment() {
+  if (isInsert())
+    p_instance.erase(idP);
 }
 
 void assdepartment::insert() {
@@ -53,7 +57,7 @@ void assdepartment::insert() {
   if (idP == 0) {
     throw std::runtime_error("not install assDep");
   }
-  coreDataManager::get().setAssDepL(shared_from_this());
+  p_instance.insert({idP, this});
 }
 void assdepartment::updateSQL() {
 }
@@ -78,11 +82,12 @@ assDepPtrList assdepartment::getAll() {
     assdep->idP = row.id.value();
     assdep->i_prjID = row.projectId.value();
     list.push_back(assdep);
+    p_instance.insert({assdep->idP, assdep.get()});
   }
-  coreDataManager::get().setAssDepL(list);
   return list;
 }
-void assdepartment::select(const int64_t &ID_) {
+std::map<int64_t, assdepartment *> &assdepartment::Instances() {
+  return p_instance;
 }
 const QString assdepartment::getAssDepQ() const {
   return QString::fromStdString(getAssDep());

@@ -1,4 +1,12 @@
-﻿//
+﻿/*
+ * @Author: your name
+ * @Date: 2020-11-16 19:06:04
+ * @LastEditTime: 2020-12-14 17:34:21
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\doodle_GUI\src\shotsWidght\model\shotTableModel.h
+ */
+//
 // Created by teXiao on 2020/10/14.
 //
 #pragma once
@@ -11,7 +19,7 @@
 
 DOODLE_NAMESPACE_S
 class shotTableModel : public QAbstractTableModel {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit shotTableModel(QObject *parent = nullptr);
 
@@ -33,16 +41,18 @@ class shotTableModel : public QAbstractTableModel {
   void filter(bool useFilter);
   void clear();
   void showAll();
+
  private:
   void eachOne();
   void setList(const doCore::shotInfoPtrList &list);
+
  private:
   doCore::shotInfoPtrList p_shot_info_ptr_list_;
+  doCore::shotInfoPtrList p_tmp_shot_info_ptr_list_;
   std::unique_ptr<boost::regex> mayaRex;
   std::unique_ptr<boost::regex> FBRex;
   std::unique_ptr<boost::regex> show_FBRex;
   std::unique_ptr<boost::regex> show_mayaex;
-
 };
 
 DOODLE_NAMESPACE_E

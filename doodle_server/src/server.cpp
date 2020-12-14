@@ -11,11 +11,11 @@
 #include <boost/filesystem.hpp>
 DOODLE_NAMESPACE_S
 
-file_system::file_system()
+fileSystem::fileSystem()
     : p_project_roots() {
 }
 
-bool file_system::has(const std::string& project_name, const path_ptr& path) {
+bool fileSystem::has(const std::string& project_name, const path_ptr& path) {
   auto path_iter = p_project_roots.find(project_name);
   if (path_iter != p_project_roots.end())
     return boost::filesystem::exists(*(path_iter->second) / (*path));
@@ -23,19 +23,19 @@ bool file_system::has(const std::string& project_name, const path_ptr& path) {
     return false;
 }
 
-bool file_system::add(const std::string& project_name, const path_ptr& path) {
+bool fileSystem::add(const std::string& project_name, const path_ptr& path) {
   return false;
 }
 
-bool file_system::get(const std::string& project_name, const path_ptr& path) {
+bool fileSystem::get(const std::string& project_name, const path_ptr& path) {
   return false;
 }
 
-bool file_system::mata(const std::string& project_name, const path_ptr& path) {
+bool fileSystem::mata(const std::string& project_name, const path_ptr& path) {
   return false;
 }
 
-void file_system::setPrject(const std::pair<std::string, path_ptr>& project_root) {
+void fileSystem::setPrject(const std::pair<std::string, path_ptr>& project_root) {
   p_project_roots.insert(project_root);
 }
 

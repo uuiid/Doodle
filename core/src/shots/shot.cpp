@@ -1,7 +1,6 @@
 ﻿#include "shot.h"
 
 #include <Logger.h>
-#include <src/core/coreDataManager.h>
 #include <src/core/coresql.h>
 #include <src/shots/episodes.h>
 
@@ -23,6 +22,7 @@ RTTR_REGISTRATION {
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
 
+DOODLE_INSRANCE_CPP(shot);
 const std::vector<std::string> shot::e_shotAB_list = {"B", "C", "D", "E",
                                                       "F", "G", "H"};
 
@@ -33,6 +33,11 @@ shot::shot()
       p_qenm_shotab(e_shotAB::_),
       p_eps_id(-1),
       p_ptr_eps() {}
+
+shot::~shot() {
+  if (isInsert())
+    p_instance.erase(idP);
+}
 
 void shot::select(const qint64 &ID_) {
   doodle::Shots table{};
@@ -45,6 +50,7 @@ void shot::select(const qint64 &ID_) {
     setShotAb((dstring)row.shotab);
     p_eps_id = row.episodesId;
   }
+  p_instance.insert({idP, this});
 }
 
 void shot::insert() {
@@ -63,7 +69,7 @@ void shot::insert() {
     DOODLE_LOG_WARN << "无法插入镜头" << p_qint_shot_;
     throw std::runtime_error("not install shots");
   }
-  coreDataManager::get().setShotL(shared_from_this());
+  p_instance.insert({idP, this});
 }
 
 void shot::updateSQL() {}
@@ -89,8 +95,8 @@ shotPtrList shot::getAll(const episodesPtr &EP_) {
     item->setShotAb(row.shotab);
     item->setEpisodes(EP_);
     list.push_back(item);
+    p_instance.insert({item->idP, item.get()});
   }
-  coreDataManager::get().setShotL(list);
   return list;
 }
 
@@ -104,8 +110,15 @@ episodesPtr shot::getEpisodes() {
   if (p_ptr_eps)
     return p_ptr_eps;
   else {
-    p_ptr_eps = std::make_shared<episodes>();
-    p_ptr_eps->select(p_eps_id);
+    auto epi = episodes::Instances();
+    auto it = epi.find(p_eps_id);
+    if (it != epi.end())
+      p_ptr_eps = it->second->shared_from_this();
+    else {
+      p_ptr_eps = std::make_shared<episodes>();
+      p_ptr_eps->select(p_eps_id);
+    }
+    setEpisodes(p_ptr_eps);
     return p_ptr_eps;
   }
 }
@@ -155,5 +168,9 @@ dstring shot::getShotAb_str() const {
       break;
   }
   return str;
+}
+
+const std::map<int64_t, shot *> &shot::Instances() {
+  return p_instance;
 }
 CORE_NAMESPACE_E

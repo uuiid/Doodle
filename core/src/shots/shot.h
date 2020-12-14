@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-15 13:57:51
- * @LastEditTime: 2020-12-14 13:32:44
+ * @LastEditTime: 2020-12-14 15:56:58
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\shot.h
@@ -28,6 +28,7 @@ class CORE_API shot : public coresqldata,
   };
   const static std::vector<std::string> e_shotAB_list;
   shot();
+  ~shot();
   //使用id直接从数据库创建类
   void select(const qint64 &ID_);
 
@@ -61,13 +62,15 @@ class CORE_API shot : public coresqldata,
   //获得shot的数值
   int64_t getShot() const { return p_qint_shot_; };
 
+  static const std::map<int64_t, shot *> &Instances();
+
  private:
   int64_t p_qint_shot_;
   e_shotAB p_qenm_shotab;
 
   episodesPtr p_ptr_eps;
   int64_t p_eps_id;
-
+  DOODLE_INSRANCE(shot);
   RTTR_ENABLE(coresqldata)
 };
 inline void shot::setShot(const int64_t &sh, const QString &ab) {

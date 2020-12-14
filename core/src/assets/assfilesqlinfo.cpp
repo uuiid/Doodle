@@ -16,7 +16,6 @@
 #include <iostream>
 #include <boost/format.hpp>
 #include <boost/filesystem.hpp>
-#include <src/core/coreDataManager.h>
 
 //反射使用
 #include <rttr/registration>
@@ -26,7 +25,7 @@ RTTR_REGISTRATION {
   rttr::registration::class_<assFileSqlInfo>(DOCORE_RTTE_CLASS(assFileSqlInfo))
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
-
+DOODLE_INSRANCE_CPP(assFileSqlInfo);
 assFileSqlInfo::assFileSqlInfo()
     : fileSqlInfo(),
       std::enable_shared_from_this<assFileSqlInfo>(),
@@ -36,6 +35,11 @@ assFileSqlInfo::assFileSqlInfo()
       ass_type_id(-1),
       ass_class_id(-1) {}
 
+assFileSqlInfo::~assFileSqlInfo() {
+  if (isInsert())
+    p_instance.erase(idP);
+}
+
 void assFileSqlInfo::select(qint64 &ID_) {
   doodle::Basefile tab{};
 
@@ -43,6 +47,7 @@ void assFileSqlInfo::select(qint64 &ID_) {
   for (auto &&row : db->run(
            sqlpp::select(sqlpp::all_of(tab)).from(tab).where(tab.id == ID_))) {
     batchSetAttr(row);
+    p_instance.insert({idP, this});
   }
 }
 
@@ -67,7 +72,7 @@ void assFileSqlInfo::insert() {
     DOODLE_LOG_WARN << fileStateP.c_str();
     throw std::runtime_error("");
   }
-  coreDataManager::get().setAssInfoL(shared_from_this());
+  p_instance.insert({idP, this});
 }
 
 void assFileSqlInfo::updateSQL() {
@@ -83,15 +88,6 @@ void assFileSqlInfo::updateSQL() {
 
 void assFileSqlInfo::deleteSQL() {
   fileSqlInfo::deleteSQL();
-  auto list = coreDataManager::get().getAssInfoL();
-
-  list.erase(std::remove_if(list.begin(), list.end(),
-                            [=](assInfoPtr &info) -> bool {
-                              return info == this->shared_from_this();
-                            }),
-             list.end());
-
-  coreDataManager::get().setAssInfoL(list);
 }
 
 assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
@@ -109,8 +105,8 @@ assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
     assInfo->exist(true);
     list.push_back(assInfo);
     assInfo->setAssType();
+    p_instance.insert({assInfo->idP, assInfo.get()});
   }
-  coreDataManager::get().setAssInfoL(list);
   return list;
 }
 dpath assFileSqlInfo::generatePath(const std::string &programFolder) {
@@ -197,9 +193,9 @@ void assFileSqlInfo::setAssClass(const assClassPtr &class_ptr) {
 
 const assTypePtr &assFileSqlInfo::getAssType() {
   if (!p_type_ptr_) {
-    for (const auto &item : coreDataManager::get().getAssTypeL()) {
-      if (item->getIdP() == ass_type_id) {
-        p_type_ptr_ = item;
+    for (const auto &item : assType::Instances()) {
+      if (item.second->getIdP() == ass_type_id) {
+        p_type_ptr_ = item.second->shared_from_this();
         break;
       }
     }
@@ -208,10 +204,9 @@ const assTypePtr &assFileSqlInfo::getAssType() {
 }
 
 void assFileSqlInfo::setAssType() {
-  auto assTypeList = coreDataManager::get().getAssTypeL();
-  for (const auto &item : assTypeList) {
-    if (item->getIdP() == idP) {
-      p_type_ptr_ = item;
+  for (const auto &item : assType::Instances()) {
+    if (item.second->getIdP() == idP) {
+      p_type_ptr_ = item.second->shared_from_this();
       break;
     }
   }
@@ -241,10 +236,13 @@ bool assFileSqlInfo::sortType(const assInfoPtr &t1, const assInfoPtr &t2) {
   return t1->getAssType()->getType() < t2->getAssType()->getType();
 }
 int assFileSqlInfo::getMaxVecsion() {
-  for (const auto &info_l : coreDataManager::get().getAssInfoL()) {
-    if ((getAssType() == info_l->getAssType())) return info_l->versionP;
+  for (const auto &info_l : p_instance) {
+    if (getAssType() == info_l.second->getAssType())
+      return info_l.second->versionP;
   }
   return 0;
 }
-
+const std::map<int64_t, assFileSqlInfo *> &assFileSqlInfo::Instances() {
+  return p_instance;
+}
 CORE_NAMESPACE_E

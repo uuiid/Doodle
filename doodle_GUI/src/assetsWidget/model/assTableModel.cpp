@@ -239,10 +239,6 @@ bool assTableModel::removeRows(int position, int rows,
 }
 void assTableModel::init() {
   clear();
-  // p_ass_info_ptr_list_ =
-  doCore::assFileSqlInfo::getAll(
-      doCore::coreDataManager::get().getAssClassPtr());
-  //  if (tmp_list.empty()) return;
   eachOne();
 }
 void assTableModel::clear() {
@@ -254,7 +250,8 @@ void assTableModel::clear() {
 void assTableModel::eachOne() {
   doCore::assTypePtrList list;
   doCore::assInfoPtrList outlist;
-  for (const auto &item : doCore::coreDataManager::get().getAssInfoL()) {
+  for (const auto &item : doCore::assFileSqlInfo::getAll(
+           doCore::coreDataManager::get().getAssClassPtr())) {
     auto assty = item->getAssType();
     if (std::find(list.begin(), list.end(), assty) == list.end()) {
       outlist.push_back(item);
@@ -267,7 +264,8 @@ void assTableModel::eachOne() {
 void assTableModel::filter(bool useFilter) {
   if (useFilter) {
     doCore::assInfoPtrList outlist;
-    for (const auto &item : doCore::coreDataManager::get().getAssInfoL()) {
+    for (const auto &item : doCore::assFileSqlInfo::getAll(
+             doCore::coreDataManager::get().getAssClassPtr())) {
       auto assty = item->getAssType();
       if (assty == doCore::coreDataManager::get().getAssTypePtr()) {
         outlist.push_back(item);

@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-15 14:21:02
- * @LastEditTime: 2020-12-14 13:42:25
+ * @LastEditTime: 2020-12-14 16:03:12
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\shots\shottype.h
@@ -18,6 +18,7 @@ class CORE_API shotType : public coresqldata,
   RTTR_ENABLE(coresqldata)
  public:
   shotType();
+  ~shotType();
   void select(const qint64 &ID_);
 
   void insert() override;
@@ -38,6 +39,7 @@ class CORE_API shotType : public coresqldata,
   static shotTypePtr findShotType(const std::string &type_name);
   static shotTypePtr findShotType(const std::string &type_nmae,
                                   bool autoInstall);
+  static const std::map<int64_t, shotType *> &Instances();
 
  private:
   template <typename T>
@@ -55,6 +57,7 @@ class CORE_API shotType : public coresqldata,
 
   //指针id属性
   int64_t p_shotClass_id;
+  DOODLE_INSRANCE(shotType);
 };
 
 inline void shotType::setType(const QString &value) {

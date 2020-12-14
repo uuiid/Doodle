@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-15 10:57:56
- * @LastEditTime: 2020-12-14 13:38:23
+ * @LastEditTime: 2020-12-14 16:01:31
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\shotfilesqlinfo.h
@@ -18,6 +18,7 @@ class CORE_API shotFileSqlInfo
   RTTR_ENABLE(fileSqlInfo)
  public:
   shotFileSqlInfo();
+  ~shotFileSqlInfo();
   void select(const int64_t &ID_);
 
   void insert() override;
@@ -47,6 +48,7 @@ class CORE_API shotFileSqlInfo
   shotTypePtr getShotType();
   void setShotType(const shotTypePtr &fileType_);
   static bool sort(const shotInfoPtr &t1, const shotInfoPtr &t2);
+  static const std::map<int64_t, shotFileSqlInfo *> &Instances();
 
  private:
   static shotInfoPtrList getAll(const shotClassPtr &class_ptr);
@@ -67,6 +69,8 @@ class CORE_API shotFileSqlInfo
   shotPtr p_ptr_shot;
   shotClassPtr p_ptr_shcla;
   shotTypePtr p_ptr_shTy;
+
+  DOODLE_INSRANCE(shotFileSqlInfo);
 };
 
 CORE_NAMESPACE_E

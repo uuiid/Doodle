@@ -1,7 +1,6 @@
 ﻿#include "shotClass.h"
 
 #include <Logger.h>
-#include <src/core/coreDataManager.h>
 #include <src/core/coreset.h>
 #include <src/core/coresql.h>
 #include <src/shots/episodes.h>
@@ -23,11 +22,16 @@ RTTR_REGISTRATION {
   rttr::registration::class_<shotClass>(DOCORE_RTTE_CLASS(shotClass))
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
-
+DOODLE_INSRANCE_CPP(shotClass);
 shotClass::shotClass()
     : coresqldata(),
       std::enable_shared_from_this<shotClass>(),
       p_fileclass(e_fileclass::_) {}
+
+shotClass::~shotClass() {
+  if (isInsert())
+    p_instance.erase(idP);
+}
 
 void shotClass::select(const qint64 &ID_) {
   doodle::Shotclass table{};
@@ -38,6 +42,7 @@ void shotClass::select(const qint64 &ID_) {
     idP = row.id;
     setclass(row.shotClass);
   }
+  p_instance.insert({idP, this});
 }
 
 void shotClass::insert() {
@@ -53,7 +58,7 @@ void shotClass::insert() {
     DOODLE_LOG_WARN << "无法插入shot type" << getClass_str().c_str();
     throw std::runtime_error("not install shot");
   }
-  coreDataManager::get().setShotClassL(shared_from_this());
+  p_instance.insert({idP, this});
 }
 
 void shotClass::updateSQL() {
@@ -89,16 +94,16 @@ shotClassPtrList shotClass::getAll() {
     auto item = std::make_shared<shotClass>();
     item->batchSetAttr(row);
     list.push_back(item);
+    p_instance.insert({item->idP, item.get()});
   }
-  coreDataManager::get().setShotClassL(list);
   return list;
 }
 
 shotClassPtr shotClass::getCurrentClass() {
   shotClassPtr ptr = nullptr;
-  for (auto &item : coreDataManager::get().getShotClassL()) {
-    if (item->getClass_str() == coreSet::getSet().getDepartment()) {
-      ptr = item;
+  for (auto &item : p_instance) {
+    if (item.second->getClass_str() == coreSet::getSet().getDepartment()) {
+      ptr = item.second->shared_from_this();
       break;
     }
   }
@@ -128,5 +133,7 @@ void shotClass::setclass(const dstring &value) {
     throw std::runtime_error("not file class in enum");
   }
 }
-
+const std::map<int64_t, shotClass *> &shotClass::Instances() {
+  return p_instance;
+}
 CORE_NAMESPACE_E

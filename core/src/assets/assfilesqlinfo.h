@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-15 11:02:09
- * @LastEditTime: 2020-12-14 13:29:21
+ * @LastEditTime: 2020-12-14 16:38:34
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\assfilesqlinfo.h
@@ -18,6 +18,7 @@ class CORE_API assFileSqlInfo
       public std::enable_shared_from_this<assFileSqlInfo> {
  public:
   assFileSqlInfo();
+  ~assFileSqlInfo();
   void select(qint64 &ID_);
 
   void insert() override;
@@ -44,6 +45,8 @@ class CORE_API assFileSqlInfo
   void setAssType(const assTypePtr &type_ptr);
   static bool sortType(const assInfoPtr &t1, const assInfoPtr &t2);
 
+  static const std::map<int64_t, assFileSqlInfo *> &Instances();
+
  private:
   void setAssType();
   template <typename T>
@@ -57,7 +60,7 @@ class CORE_API assFileSqlInfo
   assDepPtr p_dep_ptr_;
   assClassPtr p_class_ptr_;
   assTypePtr p_type_ptr_;
-
+  DOODLE_INSRANCE(assFileSqlInfo);
   RTTR_ENABLE(fileSqlInfo)
 };
 

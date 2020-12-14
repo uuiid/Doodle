@@ -91,54 +91,74 @@ TEST_F(CoreTest, create_shotinfo) {
 TEST_F(CoreTest, get_shotinf) {
   doCore::episodesPtrList eplist;
   eplist = doCore::episodes::getAll();
-  if (!eplist.empty()) {
-    doCore::episodesPtr ep = eplist[0];
-    auto shlist = doCore::shot::getAll(eplist.front());
-    ASSERT_TRUE(!shlist.empty());
-    auto shclList = doCore::shotClass::getAll();
-    ASSERT_TRUE(!shclList.empty());
-    auto shtyList = doCore::shotType::getAll();
-    ASSERT_TRUE(!shtyList.empty());
-    auto sfList = doCore::shotFileSqlInfo::getAll(shlist.front());
-    ASSERT_TRUE(!sfList.empty());
+  ASSERT_TRUE(!eplist.empty());
+  std::cout << "episodes: " << eplist.front()->getEpisdes_str() << std::endl;
+  for (auto& i : doCore::episodes::Instances()) {
+    std::cout << " eps:" << i.second->getEpisdes_str();
+  }
+  std::cout << std::endl;
 
-    std::cout << "episodes: " << ep->getEpisdes_str() << std::endl;
-    std::cout << "shot:" << shlist[0]->getShotAndAb_str() << std::endl;
-    std::cout << "fileclass :" << shclList.front()->getClass_str() << std::endl;
-    std::cout << "filetype :" << shtyList.front()->getType() << std::endl;
-    std::cout << "shotinfo generatePath :" << sfList.front()->generatePath("test", ".mb") << std::endl;
-    for (auto& x : sfList.front()->getFileList()) {
-      std::cout << "shotinfo path :" << x.generic_string() << std::endl;
-    }
+  auto shlist = doCore::shot::getAll(eplist.front());
+  ASSERT_TRUE(!shlist.empty());
+  std::cout << "shot:" << shlist[0]->getShotAndAb_str() << std::endl;
+  for (auto&& i : doCore::shot::Instances()) {
+    std::cout << " shot:" << i.second->getShotAndAb_str();
+  }
+  std::cout << std::endl;
+
+  auto shclList = doCore::shotClass::getAll();
+  ASSERT_TRUE(!shclList.empty());
+  std::cout << "fileclass :" << shclList.front()->getClass_str() << std::endl;
+  for (auto&& i : doCore::shotClass::Instances()) {
+    std::cout << " fileclass:" << i.second->getClass_str();
+  }
+  std::cout << std::endl;
+
+  auto shtyList = doCore::shotType::getAll();
+  ASSERT_TRUE(!shtyList.empty());
+  std::cout << "filetype :" << shtyList.front()->getType() << std::endl;
+  for (auto&& i : doCore::shotType::Instances()) {
+    std::cout << " shottype:" << i.second->getType() << "\n\r"
+              << std::endl;
+  }
+
+  auto sfList = doCore::shotFileSqlInfo::getAll(shlist.front());
+  ASSERT_TRUE(!sfList.empty());
+  std::cout << "shotinfo generatePath :" << sfList.front()->generatePath("test", ".mb") << std::endl;
+  for (auto& i : doCore::shotFileSqlInfo::Instances()) {
+    std::cout << " shotinfo:" << i.second->getFileList().front() << "\n"
+              << std::endl;
+  }
+
+  for (auto& x : sfList.front()->getFileList()) {
+    std::cout << "shotinfo path :" << x.generic_string() << std::endl;
   }
 }
 
 TEST_F(CoreTest, create_assInfo) {
   auto fc_ = doCore::assdepartment::getAll();
+  ASSERT_TRUE(fc_.size() == 4);
+  doCore::assClassPtr af_(new doCore::assClass);
+  af_->setAssDep(fc_[0]);
+  af_->setAssClass("大小", true);
+  af_->insert();
 
-  if (fc_.size() == 4) {
-    doCore::assClassPtr af_(new doCore::assClass);
-    af_->setAssDep(fc_[0]);
-    af_->setAssClass("大小", true);
-    af_->insert();
+  doCore::assTypePtr ft_(new doCore::assType);
+  ft_->setType((std::string) "ffff");
+  ft_->insert();
 
-    doCore::assTypePtr ft_(new doCore::assType);
-    ft_->setType((std::string) "ffff");
-    ft_->insert();
+  doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
+  doCore::dpathList list;
+  sf_->setInfoP("test");
+  list.push_back("D:/tmp/etr.vdb");
+  sf_->setFileList(list);
+  sf_->setVersionP(1);
 
-    doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
-    doCore::dpathList list;
-    sf_->setInfoP("test");
-    list.push_back("D:/tmp/etr.vdb");
-    sf_->setFileList(list);
-    sf_->setVersionP(1);
+  sf_->insert();
 
-    sf_->insert();
-
-    sf_->deleteSQL();
-    ft_->deleteSQL();
-    af_->deleteSQL();
-  }
+  sf_->deleteSQL();
+  ft_->deleteSQL();
+  af_->deleteSQL();
 }
 
 TEST_F(CoreTest, get_assInf) {

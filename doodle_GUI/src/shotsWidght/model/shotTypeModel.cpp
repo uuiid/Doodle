@@ -24,11 +24,12 @@ QVariant shotTypeModel::data(const QModelIndex &index, int role) const {
     case Qt::DisplayRole:
     case Qt::EditRole: {
       var = p_type_ptr_list_[index.row()]->getTypeQ();
-    }
+    } break;
+    case Qt::UserRole:
+      var = QVariant::fromValue(p_type_ptr_list_[index.row()]);
       break;
-    case Qt::UserRole:var = QVariant::fromValue(p_type_ptr_list_[index.row()]);
+    default:
       break;
-    default:break;
   }
   return var;
 }
@@ -99,7 +100,7 @@ void shotTypeModel::clear() {
   endResetModel();
 }
 void shotTypeModel::reInit() {
-  auto tmp_fileTypeList = doCore::coreDataManager::get().getShotTypeL();
+  auto tmp_fileTypeList = doCore::shotType::getAll();
   if (tmp_fileTypeList.empty()) return;
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()) - 1);
   p_type_ptr_list_ = tmp_fileTypeList;

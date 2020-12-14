@@ -88,7 +88,6 @@ void assTypeModel::reInit() {
   if (p_file_type_ptr_list_.empty()) return;
   beginInsertRows(QModelIndex(), 0,
                   boost::numeric_cast<int>(p_file_type_ptr_list_.size()) - 1);
-  p_file_type_ptr_list_ = doCore::coreDataManager::get().getAssTypeL();
   endInsertRows();
 }
 void assTypeModel::clear() {

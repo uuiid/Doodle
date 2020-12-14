@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-12 19:17:30
- * @LastEditTime: 2020-12-14 10:40:55
+ * @LastEditTime: 2020-12-14 19:32:14
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_server\server.h
@@ -11,9 +11,9 @@
 #include <DoodleServer_global.h>
 
 DOODLE_NAMESPACE_S
-class file_system {
+class fileSystem {
  public:
-  file_system();
+  fileSystem();
   void setPrject(const std::pair<std::string, path_ptr> &project_root);
 
   bool has(const std::string &project_name, const path_ptr &path);
@@ -28,6 +28,7 @@ class file_system {
 class connection_Handler
     : public std::enable_shared_from_this<connection_Handler> {
  public:
+  connection_Handler(file_system_ptr);
   void operator()(const std::string &path, Server::connection_ptr conn,
                   bool server_body);
 };

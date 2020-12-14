@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-10-19 13:26:31
- * @LastEditTime: 2020-11-30 13:23:43
+ * @LastEditTime: 2020-12-14 17:49:32
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\src\assClassWidget.cpp
@@ -74,10 +74,13 @@ void assClassWidget::editAssName() {
 }
 
 void assClassWidget::deleteSQLFile() {
-  if (doCore::coreDataManager::get().getAssInfoL().empty()) {
-    model()->removeRow(selectionModel()->currentIndex().row());
-  } else
-    QMessageBox::warning(this, tr("注意"), tr("这个条目中还有内容,无法删除"));
+  for (auto&& i : doCore::assFileSqlInfo::Instances()) {
+    if (i.second->getAssClass() == doCore::coreDataManager::get().getAssClassPtr()) {
+      QMessageBox::warning(this, tr("注意"), tr("这个条目中还有内容,无法删除"));
+      return;
+    }
+  }
+  model()->removeRow(selectionModel()->currentIndex().row());
 }
 
 void assClassWidget::_doodle_ass_emit(const QModelIndex& index) {
