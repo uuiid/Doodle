@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-10-11 20:31:57
- * @LastEditTime: 2020-11-29 14:42:03
+ * @LastEditTime: 2020-12-10 19:55:41
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\test\main.cpp
@@ -27,7 +27,7 @@ class Environment : public ::testing::Environment {
 
 void Environment::SetUp() {
   set.init();
-  sql.initDB(set.getIpMysql(), "test_db");
+  // sql.initDB(set.getIpMysql(), "test_db");
 }
 
 void Environment::TearDown() {}

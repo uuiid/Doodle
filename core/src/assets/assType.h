@@ -1,4 +1,12 @@
-﻿//
+﻿/*
+ * @Author: your name
+ * @Date: 2020-11-06 13:15:08
+ * @LastEditTime: 2020-12-14 11:43:36
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\assets\assType.h
+ */
+//
 // Created by teXiao on 2020/11/6.
 //
 #pragma once
@@ -12,7 +20,7 @@ class CORE_API assType
     : public coresqldata,
       public std::enable_shared_from_this<assType> {
  public:
-  enum e_type{
+  enum e_type {
     UE4,
     scenes,
     rig,
@@ -20,6 +28,7 @@ class CORE_API assType
     sourceimages,
     screenshot,
   };
+
  public:
   explicit assType();
   void select(const int64_t &ID_);
@@ -29,18 +38,22 @@ class CORE_API assType
 
   static assTypePtrList getAll();
   static assTypePtr findType(const e_type &typeName, bool autoInstall);
-  static bool sortType(const assTypePtr &t1,const assTypePtr &t2);
+  static bool sortType(const assTypePtr &t1, const assTypePtr &t2);
+
  private:
-  static assTypePtr findType(const std::string& typeName);
+  static assTypePtr findType(const std::string &typeName);
   std::string s_type;
+
  public:
   [[nodiscard]] const std::string &getType() const;
   [[nodiscard]] const QString getTypeQ() const;
   void setType(const std::string &string);
   void setType(const QString &string);
+
  private:
   int64_t p_ass_class_id;
 
+  RTTR_ENABLE(coresqldata);
 };
 
 inline const QString assType::getTypeQ() const {

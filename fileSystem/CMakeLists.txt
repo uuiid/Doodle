@@ -1,7 +1,7 @@
-find_package(Qt5 CONFIG COMPONENTS Core REQUIRED)
-find_package(CURL CONFIG REQUIRED)
-find_package(Boost COMPONENTS filesystem REQUIRED)
-find_package(magic_enum CONFIG REQUIRED)
+# find_package(Qt5 CONFIG COMPONENTS Core REQUIRED)
+# find_package(CURL CONFIG REQUIRED)
+# find_package(Boost COMPONENTS filesystem REQUIRED)
+# find_package(magic_enum CONFIG REQUIRED)
 
 set(HEADER_FILES
         fileSystem_global.h

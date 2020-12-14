@@ -1,15 +1,15 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-15 11:02:09
- * @LastEditTime: 2020-11-28 15:49:34
- * @LastEditors: your name
+ * @LastEditTime: 2020-12-14 13:29:21
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\assfilesqlinfo.h
  */
 #pragma once
 
-#include "core_global.h"
-#include "src/fileDBInfo/filesqlinfo.h"
+#include <core_global.h>
+#include <src/fileDBInfo/filesqlinfo.h>
 
 CORE_NAMESPACE_S
 
@@ -57,6 +57,8 @@ class CORE_API assFileSqlInfo
   assDepPtr p_dep_ptr_;
   assClassPtr p_class_ptr_;
   assTypePtr p_type_ptr_;
+
+  RTTR_ENABLE(fileSqlInfo)
 };
 
 CORE_NAMESPACE_E

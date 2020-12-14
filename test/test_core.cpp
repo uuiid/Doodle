@@ -1,32 +1,14 @@
-﻿#include "src/core/coreset.h"
-#include "src/fileDBInfo/filesqlinfo.h"
-
-#include "src/shots/episodes.h"
-#include "src/shots/shot.h"
-#include "src/shots/shotClass.h"
-#include "src/shots/shottype.h"
-
-#include "src/assets/assClass.h"
-#include "src/assets/assType.h"
-#include "src/assets/assdepartment.h"
-#include "src/assets/assfilesqlinfo.h"
-#include "src/shots/shotfilesqlinfo.h"
-#include "src/fileArchive/moveShotA.h"
-#include "src/fileArchive/mayaArchive.h"
-
-#include <gtest/gtest.h>
+﻿#include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
 #include "Logger.h"
 
 #include <iostream>
 #include <memory>
-#include <src/fileArchive/movieArchive.h>
-#include <src/fileArchive/ueArchive.h>
-#include <src/fileArchive/ueSynArchive.h>
-#include <src/fileArchive/mayaArchiveShotFbx.h>
 
+#include <rttr/type>
+#include <core_doQt.h>
 class CoreTest : public ::testing::Test {
-protected:
+ protected:
   void SetUp() override;
   void TearDown() override;
 
@@ -35,66 +17,75 @@ protected:
 
 void CoreTest::SetUp() {
   set.init();
-  set.setProjectname((std::string)"dubuxiaoyao3");
+  set.setProjectname((std::string) "dubuxiaoyao3");
   set.initdb();
 }
 
-void CoreTest::TearDown() {
+void CoreTest::TearDown() {}
 
+TEST_F(CoreTest, setInfo) {
+  std::cout
+      << "sql ip : " << set.getIpMysql() << std::endl
+      << "ftp ip : " << set.getIpFtp() << std::endl
+      << "program_location : " << set.program_location() << std::endl
+      << "get syn path local : " << set.getSynPathLocale() << std::endl
+      << "user : " << set.getUser() << std::endl
+      << "user en : " << set.getUser_en() << std::endl
+      << "Department : " << set.getDepartment() << std::endl
+      << "syn freeSynfile : " << set.getFreeFileSyn() << std::endl
+      << "syn eps : " << set.getSyneps() << std::endl
+      << "doc root : " << set.getDoc() << std::endl
+      << "project root : " << set.getPrjectRoot() << std::endl
+      << "project : " << set.getProjectname() << std::endl
+      << "shot root : " << set.getShotRoot() << std::endl
+      << "ass root : " << set.getAssRoot() << std::endl
+      << "cache root : " << set.getCacheRoot() << std::endl;
 }
 
-TEST_F(CoreTest, tets_quert) {
-  std::cout << set.getCacheRoot().generic_string() << std::endl;
-  RecordProperty("cacheRoot", set.getCacheRoot().generic_string());
-}
-
-TEST_F(CoreTest, set_synpath) {
-  for (doCore::synPath_struct& p : set.getSynDir()) {
-    std::cout << "\n local -->" << p.local.generic_string()
-      << "\n server-->" << p.server.generic_string() << std::endl;;
+TEST_F(CoreTest, rttr_get_all_install) {
+  doCore::shotPtrList shotList;
+  for (unsigned int i = 0; i < 10; i++) {
+    auto s = std::make_shared<doCore::shot>();
+    s->setShot(i);
+    shotList.push_back(s);
   }
+  auto allShotClass = rttr::type::get_types();
+  for (auto&& i : allShotClass) {
+    std::cout << "name " << i.get_name() << std::endl;
+  }
+}
+
+TEST_F(CoreTest, find_dep_type) {
 }
 
 TEST_F(CoreTest, create_shotinfo) {
-  doCore::episodesPtrList eplist;
-  eplist = doCore::episodes::getAll();
-  if (!eplist.empty()) {
-    doCore::episodesPtr eps(new doCore::episodes());
-    eps->setEpisdes(11);
-    eps->insert();
+  doCore::episodesPtr eps(new doCore::episodes());
+  eps->setEpisdes(250);
+  eps->insert();
+  std::cout << "eps " << eps->getEpisdes() << std::endl;
+  std::cout << "eps id " << eps->getIdP() << std::endl;
 
-    doCore::shotPtr sh(new doCore::shot());
-    sh->setShot(10);
-    sh->setEpisodes(eps);
-    sh->insert();
+  doCore::shotPtr sh(new doCore::shot());
+  sh->setShot(10);
+  sh->setEpisodes(eps);
+  sh->insert();
+  std::cout << "sh " << sh->getShot() << std::endl;
+  std::cout << "sh id " << sh->getIdP() << std::endl;
 
-    doCore::shotClassPtr fc(new doCore::shotClass());
-    fc->setclass(doCore::shotClass::e_fileclass::VFX);
+  doCore::shotInfoPtr sf(new doCore::shotFileSqlInfo());
+  doCore::dpathList list;
+  sf->setInfoP("test");
+  list.push_back("D:/tmp/etr.vdb");
+  sf->setFileList(list);
+  sf->setVersionP(0);
+  sf->insert();
 
-    fc->insert();
+  std::cout << "info " << sf->getInfoP()[0] << std::endl;
+  std::cout << "path " << sf->getFileList()[0] << std::endl;
 
-    doCore::shotTypePtr ft(new doCore::shotType());
-    ft->setType((std::string)"test");
-
-    ft->insert();
-
-    doCore::shotInfoPtr sf(new doCore::shotFileSqlInfo());
-    doCore::dpathList list;
-    sf->setInfoP("test");
-    list.push_back("D:/tmp/etr.vdb");
-    sf->setFileList(list);
-    sf->setVersionP(0);
-
-    sf->setShotType(ft);
-    sf->insert();
-
-    sf->deleteSQL();
-    ft->deleteSQL();
-    fc->deleteSQL();
-    sh->deleteSQL();
-    eps->deleteSQL();
-
-  }
+  sf->deleteSQL();
+  sh->deleteSQL();
+  eps->deleteSQL();
 }
 
 TEST_F(CoreTest, get_shotinf) {
@@ -132,7 +123,7 @@ TEST_F(CoreTest, create_assInfo) {
     af_->insert();
 
     doCore::assTypePtr ft_(new doCore::assType);
-    ft_->setType((std::string)"ffff");
+    ft_->setType((std::string) "ffff");
     ft_->insert();
 
     doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
@@ -195,10 +186,8 @@ TEST_F(CoreTest, mayaExport_fbx) {
       shotinfo->setShotType(item);
       auto export_ = std::make_shared<doCore::mayaArchiveShotFbx>(shotinfo);
       ASSERT_TRUE(export_->update(shot.front()->getFileList().front()));
-
     }
   }
-
 }
 TEST_F(CoreTest, create_Move) {
   auto epslist = doCore::episodes::getAll();
@@ -209,7 +198,7 @@ TEST_F(CoreTest, create_Move) {
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
   auto up_move = std::make_shared<doCore::moveShotA>(shotinfo);
-  up_move->update({ "D:\\sc_064" });
+  up_move->update({"D:\\sc_064"});
 
   shotinfo->deleteSQL();
 }
@@ -223,7 +212,7 @@ TEST_F(CoreTest, convert_Move) {
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
   auto up_move = std::make_shared<doCore::moveShotA>(shotinfo);
-  up_move->update({ "D:\\DBXY_041_017_AN.mov" });
+  up_move->update({"D:\\DBXY_041_017_AN.mov"});
 
   shotinfo->deleteSQL();
 }
@@ -256,7 +245,7 @@ TEST_F(CoreTest, Synfile) {
 }
 TEST_F(CoreTest, Synfile_lisgt) {
   set.setSyneps(41);
-  set.setDepartment((std::string)"Light");
+  set.setDepartment((std::string) "Light");
   doCore::ueSynArchive().syn(nullptr);
 }
 TEST_F(CoreTest, Synfile_create_dir) {

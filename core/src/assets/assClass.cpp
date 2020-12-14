@@ -1,13 +1,11 @@
 ﻿#include "assClass.h"
-#include "src/core/coresql.h"
+#include <src/core/coresql.h>
 
-#include "assdepartment.h"
+#include <src/assets/assdepartment.h>
 
-#include "znchName.h"
+#include <src/assets/znchName.h>
 
-#include "Logger.h"
-
-#include <memory>
+#include <Logger.h>
 
 #include <stdexcept>
 #include <src/coreOrm/assclass_sqlOrm.h>
@@ -16,9 +14,19 @@
 #include <sqlpp11/mysql/mysql.h>
 #include <src/core/coreDataManager.h>
 
+//反射使用
+#include <rttr/registration>
+#include <memory>
+
+//注册sql库使用的外键
 SQLPP_ALIAS_PROVIDER(znID)
 
 CORE_NAMESPACE_S
+
+RTTR_REGISTRATION {
+  rttr::registration::class_<assClass>(DOCORE_RTTE_CLASS(assClass))
+      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
+}
 
 assClass::assClass()
     : coresqldata(),
@@ -27,19 +35,6 @@ assClass::assClass()
       p_assDep_id(-1),
       p_ass_dep_ptr_(),
       p_ptr_znch() {}
-
-void assClass::select(const qint64 &ID_) {
-  doodle::Assclass table{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row : db->run(sqlpp::select(sqlpp::all_of(table))
-                                .from(table)
-                                .where(table.id == ID_))) {
-    name = row.assName;
-    idP = row.id;
-    p_assDep_id = row.assdepId;
-  }
-}
 
 void assClass::insert() {
   // id大于0就不逊要插入

@@ -1,20 +1,21 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-15 10:57:56
- * @LastEditTime: 2020-11-26 17:58:43
- * @LastEditors: your name
+ * @LastEditTime: 2020-12-14 13:38:23
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\shotfilesqlinfo.h
  */
 #pragma once
 
-#include "src/fileDBInfo/filesqlinfo.h"
+#include <src/fileDBInfo/filesqlinfo.h>
 
 CORE_NAMESPACE_S
 
 class CORE_API shotFileSqlInfo
     : public std::enable_shared_from_this<shotFileSqlInfo>,
       public fileSqlInfo {
+  RTTR_ENABLE(fileSqlInfo)
  public:
   shotFileSqlInfo();
   void select(const int64_t &ID_);

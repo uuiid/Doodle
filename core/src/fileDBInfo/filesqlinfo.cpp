@@ -1,25 +1,57 @@
-﻿#include <boost/format.hpp>
+﻿#include "filesqlinfo.h"
+
+#include <boost/format.hpp>
 #include <memory>
 #include <iostream>
+//orm库
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
-#include "src/coreOrm/basefile_sqlOrm.h"
-#include "src/shots/shottype.h"
-#include "src/shots/shotClass.h"
-#include "src/shots/shot.h"
-#include "src/shots/episodes.h"
-#include "src/core/coresql.h"
-#include "src/shots/shotfilesqlinfo.h"
-#include "filesqlinfo.h"
+#include <src/coreOrm/basefile_sqlOrm.h>
 
-#include "src/core/coreset.h"
+#include <src/shots/shottype.h>
+#include <src/shots/shotClass.h>
+#include <src/shots/shot.h>
+#include <src/shots/episodes.h>
+#include <src/core/coresql.h>
+#include <src/shots/shotfilesqlinfo.h>
 
-#include "Logger.h"
+#include <src/core/coreset.h>
+
+#include <Logger.h>
 
 #include <nlohmann/json.hpp>
 #include <boost/filesystem.hpp>
 
+//反射使用
+#include <rttr/registration>
+
 CORE_NAMESPACE_S
+
+RTTR_REGISTRATION {
+  rttr::registration::class_<fileSqlInfo>(DOCORE_RTTE_CLASS(fileSqlInfo))
+      // .property("filelist", &fileSqlInfo::getFileList,
+      //           rttr::select_overload<void(const dpathList &)>(&fileSqlInfo::setFileList))
+      .property("version", &fileSqlInfo::getVersionP, &fileSqlInfo::setVersionP)
+      // .property("info", &fileSqlInfo::getInfoP, &fileSqlInfo::setInfoP)
+      .property_readonly("user", &fileSqlInfo::getUser)
+      .property_readonly("suffixes", &fileSqlInfo::getSuffixes)
+      .method("generatePath",
+              rttr::select_overload<dpath(const std::string &)>(&fileSqlInfo::generatePath))
+      .method("generatePath",
+              rttr::select_overload<dpath(const std::string &,
+                                          const std::string &)>(&fileSqlInfo::generatePath))
+      .method("generatePath",
+              rttr::select_overload<dpath(const std::string &,
+                                          const std::string &,
+                                          const std::string &)>(&fileSqlInfo::generatePath))
+      .method("generateFileName",
+              rttr::select_overload<dstring(const std::string &)>(&fileSqlInfo::generateFileName))
+      .method("generateFileName",
+              rttr::select_overload<dstring(const std::string &,
+                                            const std::string &)>(&fileSqlInfo::generateFileName))
+      .method("deleteSQL", &fileSqlInfo::deleteSQL)
+      .method("exist", &fileSqlInfo::exist);
+}
 
 fileSqlInfo::fileSqlInfo()
     : coresqldata(),
@@ -70,9 +102,9 @@ void fileSqlInfo::setFileList(const dstringList &filelist) {
   fileSuffixesP = boost::filesystem::extension(filelist[0]);
 }
 
-int fileSqlInfo::getVersionP() const { return versionP; }
+int64_t fileSqlInfo::getVersionP() const { return versionP; }
 
-void fileSqlInfo::setVersionP(const int64_t &value) { versionP = value; }
+void fileSqlInfo::setVersionP(const int64_t value) { versionP = value; }
 
 dstringList fileSqlInfo::getInfoP() const { return infoP; }
 

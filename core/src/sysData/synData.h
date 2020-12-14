@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-11-26 10:16:48
- * @LastEditTime: 2020-11-26 17:58:15
+ * @LastEditTime: 2020-12-14 13:43:11
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\synData.h
@@ -13,6 +13,7 @@
 CORE_NAMESPACE_S
 
 class CORE_API synData : public coresqldata {
+  RTTR_ENABLE(coresqldata)
  public:
   synData();
   void insert() override;

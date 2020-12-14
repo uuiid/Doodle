@@ -1,15 +1,15 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-10-19 13:26:31
- * @LastEditTime: 2020-11-26 17:58:53
- * @LastEditors: your name
+ * @LastEditTime: 2020-12-14 13:34:54
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\shotClass.h
  */
 #pragma once
 
-#include "core_global.h"
-#include "src/core/coresqldata.h"
+#include <core_global.h>
+#include <src/core/coresqldata.h>
 
 CORE_NAMESPACE_S
 
@@ -51,6 +51,8 @@ class CORE_API shotClass : public coresqldata,
 
  private:
   e_fileclass p_fileclass;
+
+  RTTR_ENABLE(coresqldata)
 };
 inline QString shotClass::getClass_Qstr() const {
   return QString::fromStdString(getClass_str());

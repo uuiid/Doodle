@@ -1,14 +1,14 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-18 17:14:11
- * @LastEditTime: 2020-12-08 19:44:14
+ * @LastEditTime: 2020-12-14 13:31:13
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\core\coresqldata.h
  */
 #pragma once
 
-#include "core_global.h"
+#include <core_global.h>
 #include <rttr/type>
 
 CORE_NAMESPACE_S

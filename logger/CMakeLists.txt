@@ -1,4 +1,4 @@
-find_package(Qt5 CONFIG COMPONENTS Core REQUIRED)
+# find_package(Qt5 CONFIG COMPONENTS Core REQUIRED)
 
 set(LOG_FILES 
 Logger.h

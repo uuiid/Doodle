@@ -3,6 +3,8 @@
 #include "core_global.h"
 #include <map>
 #include <boost/filesystem.hpp>
+
+#include <nlohmann/json.hpp>
 CORE_NAMESPACE_S
 
 enum class dep { None_,
@@ -29,7 +31,7 @@ class CORE_API coreSet {
   static coreSet &getSet();
 
   coreSet &operator=(const coreSet &s) = delete;
-  coreSet(const coreSet &s) = delete;
+  coreSet(const coreSet &s)            = delete;
 
   //初始化函数
   void init();
@@ -141,6 +143,9 @@ class CORE_API coreSet {
 
   dpathPtr cacheRoot;
   dpathPtr doc;
+
+  //  public:
+  //   NLOHMANN_DEFINE_TYPE_INTRUSIVE(coreSet,syneps, project);
 };
 inline QString coreSet::getDepartmentQ() const {
   return QString::fromStdString(getDepartment());

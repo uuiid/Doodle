@@ -1,15 +1,15 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-15 13:57:51
- * @LastEditTime: 2020-11-26 18:02:40
+ * @LastEditTime: 2020-12-14 13:32:44
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\shot.h
  */
 #pragma once
 
-#include "core_global.h"
-#include "src/core/coresqldata.h"
+#include <core_global.h>
+#include <src/core/coresqldata.h>
 
 CORE_NAMESPACE_S
 
@@ -67,6 +67,8 @@ class CORE_API shot : public coresqldata,
 
   episodesPtr p_ptr_eps;
   int64_t p_eps_id;
+
+  RTTR_ENABLE(coresqldata)
 };
 inline void shot::setShot(const int64_t &sh, const QString &ab) {
   setShot(sh, ab.toStdString());

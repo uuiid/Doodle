@@ -1,16 +1,25 @@
 ﻿#include "episodes.h"
 
-#include "src/core/coresql.h"
-#include "src/core/coreset.h"
+#include <src/core/coreset.h>
+#include <src/core/coresql.h>
 
-#include "Logger.h"
+#include <Logger.h>
 
-#include "src/coreOrm/episodes_sqlOrm.h"
+#include <src/coreOrm/episodes_sqlOrm.h>
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
 #include <boost/format.hpp>
 #include <src/core/coreDataManager.h>
+
+//反射使用
+#include <rttr/registration>
+
 CORE_NAMESPACE_S
+
+RTTR_REGISTRATION {
+  rttr::registration::class_<episodes>(DOCORE_RTTE_CLASS(episodes))
+      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
+}
 
 episodes::episodes()
     : coresqldata(),
@@ -22,11 +31,10 @@ episodes::episodes()
 void episodes::select(const qint64 &ID_) {
   doodle::Episodes table{};
   auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row:db->run(
-      sqlpp::select(sqlpp::all_of(table))
-          .from(table)
-          .where(table.id == ID_)
-  )) {
+  for (auto &&row : db->run(
+           sqlpp::select(sqlpp::all_of(table))
+               .from(table)
+               .where(table.id == ID_))) {
     p_int_episodes = row.episodes;
     idP = row.id;
   }
@@ -39,8 +47,8 @@ void episodes::insert() {
   auto db = coreSql::getCoreSql().getConnection();
 
   auto insert = sqlpp::insert_into(table)
-      .set(table.episodes = p_int_episodes,
-           table.projectId = p_prj);
+                    .set(table.episodes = p_int_episodes,
+                         table.projectId = p_prj);
 
   idP = db->insert(insert);
   if (idP == 0) {
@@ -64,12 +72,11 @@ episodesPtrList episodes::getAll() {
 
   doodle::Episodes table{};
   auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row:db->run(
-      sqlpp::select(sqlpp::all_of(table))
-          .from(table)
-          .where(table.projectId == coreSet::getSet().projectName().first)
-          .order_by(table.episodes.asc())
-  )) {
+  for (auto &&row : db->run(
+           sqlpp::select(sqlpp::all_of(table))
+               .from(table)
+               .where(table.projectId == coreSet::getSet().projectName().first)
+               .order_by(table.episodes.asc()))) {
     auto eps = std::make_shared<episodes>();
     eps->p_int_episodes = row.episodes;
     eps->idP = row.id;
@@ -85,9 +92,8 @@ void episodes::setEpisdes(const int64_t &value) {
 }
 
 episodesPtr episodes::find(int64_t episodes) {
-  for (auto &&eps_ptr : coreDataManager::get().getEpisodeL()){
-    if (eps_ptr->idP == episodes)
-    {
+  for (auto &&eps_ptr : coreDataManager::get().getEpisodeL()) {
+    if (eps_ptr->idP == episodes) {
       return eps_ptr;
     }
   }

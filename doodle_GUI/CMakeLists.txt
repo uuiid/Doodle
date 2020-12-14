@@ -1,6 +1,6 @@
-find_package(Qt5 CONFIG COMPONENTS Core Widgets QuickControls2 REQUIRED)
-find_package(Boost COMPONENTS regex REQUIRED)
-find_package(rttr CONFIG REQUIRED)
+# find_package(Qt5 CONFIG COMPONENTS Core Widgets QuickControls2 REQUIRED)
+# find_package(Boost COMPONENTS regex REQUIRED)
+# find_package(rttr CONFIG REQUIRED)
 #file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/framelesswindow/framelesswindow.h
 #        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/resource)
 #file(COPY ${PROJECT_SOURCE_DIR}/Qt-Frameless-Window-DarkStyle/framelesswindow/framelesswindow.cpp
@@ -26,6 +26,8 @@ add_executable(doodle WIN32
         ${RESOURE_FILE}
         )
 add_subdirectory(src)
+
+target_include_directories(doodle PRIVATE ${BOOST_INCLUDE_DIRS})
 
 target_link_libraries(doodle PRIVATE Qt5::Core)
 target_link_libraries(doodle PRIVATE Qt5::Widgets)

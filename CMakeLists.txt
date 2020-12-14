@@ -35,9 +35,27 @@ include_directories(${CMAKE_BINARY_DIR}/configure)
 #添加qt路径
 list(APPEND CMAKE_PREFIX_PATH $ENV{QT_MYROOT}/5.12.9/msvc2017_64)
 
-find_package(Qt5 CONFIG COMPONENTS Core Widgets Test LinguistTools REQUIRED)
-find_package(Boost REQUIRED COMPONENTS filesystem date_time)
+#首先搜索我们的自定义函数
+list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
+
+#寻找一些外部库
+find_package(Qt5 CONFIG COMPONENTS Core Widgets Sql Test QuickControls2 LinguistTools REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem date_time regex)
 find_package(CURL REQUIRED)
+find_package(Sqlpp11 REQUIRED)
+find_package(GTest CONFIG REQUIRED)
+find_package(FFMPEG  REQUIRED )
+find_package(rttr CONFIG REQUIRED)
+find_package(pugixml CONFIG REQUIRED)
+
+#这两个是我自己写的寻找库的方法
+find_package(SqlppSqlite REQUIRED)
+find_package(SqlppMySql REQUIRED)
+
+#仅头库
+find_package(magic_enum CONFIG REQUIRED)
+find_package(jsoncpp CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 #搜索qt 安装辅助程序
 find_program(WINQT windeployqt REQUIRED)
@@ -48,16 +66,13 @@ add_subdirectory(fileSystem)
 add_subdirectory(pinyin)
 add_subdirectory(core)
 add_subdirectory(doodle_GUI)
+add_subdirectory(doodle_server)
 
-
-#添加测试
-find_package(GTest CONFIG REQUIRED)
 
 enable_testing()
 add_subdirectory(test)
 #=====================安装打包过程===============================
-#首先搜索我们的自定义函数
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
+# list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(mypack)
 
 

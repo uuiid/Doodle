@@ -1,18 +1,27 @@
 ﻿#include "shot.h"
 
 #include <Logger.h>
-#include <sqlpp11/mysql/mysql.h>
-#include <sqlpp11/sqlpp11.h>
 #include <src/core/coreDataManager.h>
+#include <src/core/coresql.h>
+#include <src/shots/episodes.h>
 
 #include <boost/format.hpp>
 #include <magic_enum.hpp>
 #include <memory>
 
-#include "src/coreOrm/shots_sqlOrm.h"
-#include "src/core/coresql.h"
-#include "episodes.h"
+#include <sqlpp11/mysql/mysql.h>
+#include <sqlpp11/sqlpp11.h>
+#include <src/coreOrm/shots_sqlOrm.h>
+
+//反射使用
+#include <rttr/registration>
+
 CORE_NAMESPACE_S
+
+RTTR_REGISTRATION {
+  rttr::registration::class_<shot>(DOCORE_RTTE_CLASS(shot))
+      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
+}
 
 const std::vector<std::string> shot::e_shotAB_list = {"B", "C", "D", "E",
                                                       "F", "G", "H"};

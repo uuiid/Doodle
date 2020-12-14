@@ -14,7 +14,13 @@
 #include <iostream>
 #include <memory>
 
+//反射使用
+#include <rttr/registration>
 CORE_NAMESPACE_S
+RTTR_REGISTRATION {
+  rttr::registration::class_<shotType>(DOCORE_RTTE_CLASS(shotType))
+      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
+}
 
 shotType::shotType()
     : coresqldata(),

@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-11-06 13:15:08
- * @LastEditTime: 2020-11-28 14:54:55
+ * @LastEditTime: 2020-12-14 13:30:12
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\assType.cpp
@@ -11,20 +11,29 @@
 //
 
 #include "assType.h"
-#include "src/core/coresql.h"
+#include <src/core/coresql.h>
 #include <src/core/coreset.h>
-#include "assClass.h"
+#include <src/assets/assClass.h>
 
-#include "Logger.h"
+#include <Logger.h>
 
-#include "src/coreOrm/asstype_sqlOrm.h"
+#include <src/coreOrm/asstype_sqlOrm.h>
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
 
 #include <stdexcept>
 #include <src/core/coreDataManager.h>
 #include <magic_enum.hpp>
+
+//反射使用
+#include <rttr/registration>
+
 CORE_NAMESPACE_S
+RTTR_REGISTRATION {
+  rttr::registration::class_<assType>(DOCORE_RTTE_CLASS(assType))
+      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
+}
+
 assType::assType()
     : coresqldata(),
       std::enable_shared_from_this<assType>(),

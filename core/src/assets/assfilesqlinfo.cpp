@@ -1,15 +1,15 @@
 ﻿#include "assfilesqlinfo.h"
 
-#include "src/core/coreset.h"
-#include "src/core/coresql.h"
+#include <src/core/coreset.h>
+#include <src/core/coresql.h>
 
-#include "assdepartment.h"
-#include "assClass.h"
-#include "assType.h"
+#include <src/assets/assdepartment.h>
+#include <src/assets/assClass.h>
+#include <src/assets/assType.h>
 
-#include "Logger.h"
+#include <Logger.h>
 
-#include "src/coreOrm/basefile_sqlOrm.h"
+#include <src/coreOrm/basefile_sqlOrm.h>
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
 
@@ -17,7 +17,15 @@
 #include <boost/format.hpp>
 #include <boost/filesystem.hpp>
 #include <src/core/coreDataManager.h>
+
+//反射使用
+#include <rttr/registration>
 CORE_NAMESPACE_S
+
+RTTR_REGISTRATION {
+  rttr::registration::class_<assFileSqlInfo>(DOCORE_RTTE_CLASS(assFileSqlInfo))
+      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
+}
 
 assFileSqlInfo::assFileSqlInfo()
     : fileSqlInfo(),

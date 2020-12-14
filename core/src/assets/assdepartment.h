@@ -1,11 +1,19 @@
-﻿//
+﻿/*
+ * @Author: your name
+ * @Date: 2020-11-06 09:22:09
+ * @LastEditTime: 2020-12-14 13:28:21
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\assets\assdepartment.h
+ */
+//
 // Created by teXiao on 2020/11/6.
 //
 
 #pragma once
 
-#include "core_global.h"
-#include "src/core/coresqldata.h"
+#include <core_global.h>
+#include <src/core/coresqldata.h>
 
 CORE_NAMESPACE_S
 class CORE_API assdepartment
@@ -22,12 +30,13 @@ class CORE_API assdepartment
   [[nodiscard]] const std::string &getAssDep() const;
   [[nodiscard]] const QString getAssDepQ() const;
   void setAssDep(const std::string &s_ass_dep);
+
+  RTTR_ENABLE(coresqldata);
+
  private:
   int64_t i_prjID;
 
   std::string s_assDep;
-
 };
 
 CORE_NAMESPACE_E
-

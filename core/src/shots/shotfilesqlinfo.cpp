@@ -1,24 +1,31 @@
 ﻿#include "shotfilesqlinfo.h"
 
+#include <Logger.h>
+#include <src/core/coreDataManager.h>
+#include <src/core/coreset.h>
+#include <src/core/coresql.h>
+#include <src/shots/episodes.h>
+#include <src/shots/shot.h>
+#include <src/shots/shotClass.h>
+#include <src/shots/shottype.h>
+
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
-#include <src/core/coreDataManager.h>
+#include <src/coreOrm/basefile_sqlOrm.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <iostream>
 #include <memory>
 
-#include "Logger.h"
-#include "src/coreOrm/basefile_sqlOrm.h"
-#include "src/core/coreset.h"
-#include "src/core/coresql.h"
-#include "episodes.h"
-#include "shot.h"
-#include "shotClass.h"
-#include "shottype.h"
-
+//反射使用
+#include <rttr/registration>
 CORE_NAMESPACE_S
+
+RTTR_REGISTRATION {
+  rttr::registration::class_<shotFileSqlInfo>(DOCORE_RTTE_CLASS(shotFileSqlInfo))
+      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
+}
 
 shotFileSqlInfo::shotFileSqlInfo()
     : fileSqlInfo(),

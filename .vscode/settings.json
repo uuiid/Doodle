@@ -1,6 +1,7 @@
 {
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "files.associations": {
+        ".clang-format": "yaml",
         "qvariant": "cpp",
         "optional": "cpp",
         "algorithm": "cpp",
@@ -114,7 +115,9 @@
         "valarray": "cpp",
         "qdebug": "cpp",
         "*.in": "cpp",
-        "qlabel": "cpp"
+        "qlabel": "cpp",
+        "type": "cpp",
+        "registration": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",
@@ -129,6 +132,7 @@
     ],
     "editor.formatOnSave": true,
     "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, SortIncludes: false, ColumnLimit: 0}",
+    "C_Cpp.clang_format_style": "file",
     "cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}",
     "editor.tokenColorCustomizations": {
         "textMateRules": [

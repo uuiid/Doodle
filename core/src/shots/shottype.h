@@ -1,12 +1,21 @@
-﻿#pragma once
+﻿/*
+ * @Author: your name
+ * @Date: 2020-09-15 14:21:02
+ * @LastEditTime: 2020-12-14 13:42:25
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Doodle\core\src\shots\shottype.h
+ */
+#pragma once
 
-#include "core_global.h"
-#include "src/core/coresqldata.h"
+#include <core_global.h>
+#include <src/core/coresqldata.h>
 
 CORE_NAMESPACE_S
 
 class CORE_API shotType : public coresqldata,
                           public std::enable_shared_from_this<shotType> {
+  RTTR_ENABLE(coresqldata)
  public:
   shotType();
   void select(const qint64 &ID_);

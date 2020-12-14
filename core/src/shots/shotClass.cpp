@@ -1,21 +1,28 @@
 ﻿#include "shotClass.h"
 
 #include <Logger.h>
+#include <src/core/coreDataManager.h>
+#include <src/core/coreset.h>
+#include <src/core/coresql.h>
+#include <src/shots/episodes.h>
+#include <src/shots/shot.h>
+
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
-#include <src/core/coreDataManager.h>
 #include <src/coreOrm/shotclass_sqlOrm.h>
 
 #include <iostream>
 #include <magic_enum.hpp>
 #include <memory>
 
-#include "src/core/coreset.h"
-#include "src/core/coresql.h"
-#include "episodes.h"
-#include "shot.h"
-
+//反射使用
+#include <rttr/registration>
 CORE_NAMESPACE_S
+
+RTTR_REGISTRATION {
+  rttr::registration::class_<shotClass>(DOCORE_RTTE_CLASS(shotClass))
+      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
+}
 
 shotClass::shotClass()
     : coresqldata(),

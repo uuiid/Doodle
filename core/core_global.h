@@ -23,11 +23,11 @@
   }                      \
   ;
 
-#define DOODLE_RTTE_CLASS(nameSpace, className) (#nameSpace "::" #className)
+#define DOODLE_TOS(str) (#str)
+#define DOODLE_TOS_(str) #str
+#define DOODLE_RTTE_CLASS(nameSpace, className) (DOODLE_TOS_(nameSpace) "::" DOODLE_TOS_(className))
 
 #define DOCORE_RTTE_CLASS(className) DOODLE_RTTE_CLASS(CORE_NAMESPACE, className)
-
-#define DOODLE_TOS(str) (#str)
 
 #define DOODLE_FFMPEG_PATH "tools/ffmpeg/bin"
 #define DOODLE_BACKUP "backup"

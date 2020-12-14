@@ -1,8 +1,8 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-09-10 09:56:04
- * @LastEditTime: 2020-11-26 20:38:26
- * @LastEditors: your name
+ * @LastEditTime: 2020-12-14 13:31:45
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\filesqlinfo.h
  */
@@ -10,11 +10,6 @@
 
 #include "core_global.h"
 #include "src/core/coresqldata.h"
-
-#include <QVector>
-#include <QFileInfo>
-#include <QSharedPointer>
-#include <QWeakPointer>
 
 CORE_NAMESPACE_S
 
@@ -25,8 +20,8 @@ class CORE_API fileSqlInfo : public coresqldata {
   [[nodiscard]] dpathList getFileList() const;
   virtual void setFileList(const dpathList &filelist);
   virtual void setFileList(const dstringList &filelist);
-  [[nodiscard]] int getVersionP() const;
-  void setVersionP(const int64_t &value);
+  [[nodiscard]] int64_t getVersionP() const;
+  void setVersionP(const int64_t value);
 
   [[nodiscard]] dstringList getInfoP() const;
   void setInfoP(const dstring &value);
@@ -67,6 +62,8 @@ class CORE_API fileSqlInfo : public coresqldata {
  protected:
   [[nodiscard]] dstringList json_to_strList(const dstring &json_str) const;
   [[nodiscard]] dstring strList_tojson(const dstringList &str_list) const;
+
+  RTTR_ENABLE(coresqldata);
 };
 inline QString fileSqlInfo::getUserQ() const {
   return QString::fromStdString(getUser());

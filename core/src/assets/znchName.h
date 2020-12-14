@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 17:34:08
- * @LastEditTime: 2020-11-26 17:57:50
+ * @LastEditTime: 2020-12-14 11:45:20
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\znchName.h
@@ -37,6 +37,8 @@ class CORE_API znchName : public coresqldata {
   dopinyin::convertPtr con;
 
   assClass *p_ptr_assType;
+
+  RTTR_ENABLE(coresqldata)
 };
 
 CORE_NAMESPACE_E

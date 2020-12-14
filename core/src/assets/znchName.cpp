@@ -1,8 +1,8 @@
 /*
  * @Author: your name
  * @Date: 2020-10-19 13:26:31
- * @LastEditTime: 2020-11-26 17:56:15
- * @LastEditors: your name
+ * @LastEditTime: 2020-12-14 13:30:35
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\znchName.cpp
  */
@@ -13,14 +13,22 @@
 
 #include <stdexcept>
 
-#include "Logger.h"
-#include "src/assets/assClass.h"
-#include "src/coreOrm/znch_sqlOrm.h"
-#include "src/core/coreset.h"
-#include "src/core/coresql.h"
-#include "src/convert.h"
+#include <Logger.h>
+#include <src/assets/assClass.h>
+#include <src/coreOrm/znch_sqlOrm.h>
+#include <src/core/coreset.h>
+#include <src/core/coresql.h>
+#include <src/convert.h>
+
+//反射使用
+#include <rttr/registration>
 
 CORE_NAMESPACE_S
+
+RTTR_REGISTRATION {
+  rttr::registration::class_<znchName>(DOCORE_RTTE_CLASS(znchName))
+      .constructor<assClass *>()(rttr::policy::ctor::as_std_shared_ptr);
+}
 
 znchName::znchName(assClass *at_)
     : coresqldata(),

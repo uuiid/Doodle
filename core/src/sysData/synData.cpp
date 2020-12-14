@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-11-26 10:17:07
- * @LastEditTime: 2020-11-30 14:46:30
+ * @LastEditTime: 2020-12-14 13:43:48
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\synData.cpp
@@ -18,7 +18,17 @@
 
 #include <nlohmann/json.hpp>
 #include <stdexcept>
+
+//反射使用
+#include <rttr/registration>
+
 CORE_NAMESPACE_S
+
+RTTR_REGISTRATION {
+  rttr::registration::class_<episodes>(DOCORE_RTTE_CLASS(episodes))
+      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
+}
+
 synData::synData() : coresqldata(), p_path(), p_episodes_() {}
 void synData::insert() {
   if (isInsert()) return;

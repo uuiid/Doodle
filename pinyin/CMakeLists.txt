@@ -1,6 +1,6 @@
-find_package(Qt5 CONFIG COMPONENTS Core Sql REQUIRED)
-find_package(Sqlpp11 REQUIRED)
-find_package(SqlppSqlite REQUIRED)
+# find_package(Qt5 CONFIG COMPONENTS Core Sql REQUIRED)
+# find_package(Sqlpp11 REQUIRED)
+# find_package(SqlppSqlite REQUIRED)
 
 set(HEADER_FILES
     "src/convert.h"

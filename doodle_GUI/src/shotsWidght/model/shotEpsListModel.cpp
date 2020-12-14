@@ -52,6 +52,7 @@ Qt::ItemFlags shotEpsListModel::flags(const QModelIndex &index) const {
 }
 bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value,
                                int role) {
+  init();
   if (index.isValid() && role == Qt::EditRole) {
     //确认镜头不重复和没有提交
     bool isHasEps = false;
