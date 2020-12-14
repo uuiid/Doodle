@@ -36,8 +36,21 @@ coreSet &coreSet::getSet() {
 }
 
 void coreSet::init() {
-  std::string str = std::getenv("HOMEPATH");
-  *doc            = "C:" + str + "/Documents/doodle";
+  //这里我们手动做一些工作
+  char *k_path;
+  size_t k_path_len;
+  getenv_s(&k_path_len, NULL, 0, "HOMEPATH");
+  if (k_path_len == 0)
+    *doc = "C:/doodle/Documents/doodle";
+  k_path = (char *)malloc(k_path_len * sizeof(char));
+  if (!k_path)
+    *doc = "C:/doodle/Documents/doodle";
+  getenv_s(&k_path_len, k_path, k_path_len, "HOMEPATH");
+
+  std::string str(k_path);  //std::getenv("HOMEPATH")
+  free(k_path);
+
+  *doc = "C:" + str + "/Documents/doodle";
   getSetting();
   initdb();
   getServerSetting();
@@ -62,7 +75,7 @@ void coreSet::initdb() {
 }
 
 void coreSet::appendEnvironment() const {
-  auto env          = boost::this_process::environment();
+  auto env = boost::this_process::environment();
   auto this_process = program_location();
   env["PATH"] += (this_process.parent_path() / "tools/ffmpeg/bin").generic_string();
   if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
@@ -77,11 +90,11 @@ void coreSet::appendEnvironment() const {
 void coreSet::writeDoodleLocalSet() {
   nlohmann::json root;
 
-  root["user"]         = user;
-  root["department"]   = department;
-  root["synPath"]      = synPath->generic_string();
-  root["synEp"]        = syneps;
-  root["projectname"]  = project.second;
+  root["user"] = user;
+  root["department"] = department;
+  root["synPath"] = synPath->generic_string();
+  root["synEp"] = syneps;
+  root["projectname"] = project.second;
   root["FreeFileSync"] = freeFileSyn;
 
   boost::filesystem::ofstream outjosn;
@@ -91,21 +104,21 @@ void coreSet::writeDoodleLocalSet() {
 }
 
 coreSet::coreSet() {
-  ipMysql     = "192.168.10.213";
-  user        = "user";
-  department  = "VFX";
-  syneps      = 1;
+  ipMysql = "192.168.10.213";
+  user = "user";
+  department = "VFX";
+  syneps = 1;
   freeFileSyn = R"("C:\PROGRA~1\FREEFI~1\FreeFileSync.exe")";
-  project     = std::make_pair(1, "dubuxiaoyao3");
-  synPath     = std::make_shared<dpath>("D:/ue_prj");
-  synServer   = std::make_shared<dpath>("/03_Workflow/Assets");
+  project = std::make_pair(1, "dubuxiaoyao3");
+  synPath = std::make_shared<dpath>("D:/ue_prj");
+  synServer = std::make_shared<dpath>("/03_Workflow/Assets");
 
-  shotRoot   = std::make_shared<dpath>("/03_Workflow/Shots");
-  assRoot    = std::make_shared<dpath>("/03_Workflow/Assets");
+  shotRoot = std::make_shared<dpath>("/03_Workflow/Shots");
+  assRoot = std::make_shared<dpath>("/03_Workflow/Assets");
   prjectRoot = std::make_shared<dpath>("W:/");
 
   cacheRoot = std::make_shared<dpath>("C:/Doodle_cache");
-  doc       = std::make_shared<dpath>("C:/Doodle_cache");
+  doc = std::make_shared<dpath>("C:/Doodle_cache");
 }
 
 void coreSet::getSetting() {
@@ -129,10 +142,10 @@ void coreSet::getSetting() {
 
     project.second = root.value("synEp", 1);
 
-    freeFileSyn    = root.value("FreeFileSync",
+    freeFileSyn = root.value("FreeFileSync",
                              R"("C:\PROGRA~1\FREEFI~1\FreeFileSync.exe")");
     project.second = root.value("projectname", "dubuxiaoyao3");
-    syneps         = root.value("synEp", 1);
+    syneps = root.value("synEp", 1);
 
     DOODLE_LOG_INFO << "projectname" << project.second.c_str();
   }
@@ -218,9 +231,9 @@ void coreSet::getServerSetting() {
     DOODLE_LOG_INFO << raw.name.text << "--->" << raw.value.text;
   }
 
-  *shotRoot   = (map["shotRoot"]);
-  *assRoot    = (map["assetsRoot"]);
-  *synServer  = (map["synSever"]);
+  *shotRoot = (map["shotRoot"]);
+  *assRoot = (map["assetsRoot"]);
+  *synServer = (map["synSever"]);
   *prjectRoot = (map["project"]);
 
   if (map.find("IP_FTP") != map.end())
@@ -252,7 +265,7 @@ synPathListPtr coreSet::getSynDir() {
     }
     for (const auto &item : root) {
       synPath_struct fileSyn{};
-      fileSyn.local  = item.value("Right", "");
+      fileSyn.local = item.value("Right", "");
       fileSyn.server = item.value("Left", "");
       list.push_back(fileSyn);
     }
@@ -316,7 +329,7 @@ bool coreSet::subUser(const dstring &user_str) {
 
   auto pow =
       boost::algorithm::to_lower_copy(dopinyin::convert{}.toEn(user_str));
-  db->run(sqlpp::insert_into(table).set(table.user     = user_str,
+  db->run(sqlpp::insert_into(table).set(table.user = user_str,
                                         table.password = pow));
   return true;
 }
