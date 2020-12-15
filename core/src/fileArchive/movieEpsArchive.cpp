@@ -1,7 +1,7 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-11-23 17:47:24
- * @LastEditTime: 2020-12-14 16:52:42
+ * @LastEditTime: 2020-12-15 11:19:15
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodlef:\source\qt_test\doodle\core\src\movieepsarchive.cpp
@@ -40,10 +40,9 @@ bool movieEpsArchive::epsMove() {
   p_Path.clear();
   if (p_info_ptr_->getEpisdes()) {
     shotInfoPtrList list{};
-    for (const auto &item : shot::Instances()) {
-      if (item.second->getEpisodes() != p_info_ptr_->getEpisdes())
-        continue;
-      auto info = shotFileSqlInfo::getAll(item.second->shared_from_this(), shotType::findShotType("flipbook"));
+    shot::getAll(p_info_ptr_->getEpisdes());
+    for (const auto &item : shot::getAll(p_info_ptr_->getEpisdes())) {
+      auto info = shotFileSqlInfo::getAll(item, shotType::findShotType("flipbook"));
       if (info.front()) {
         p_Path.push_back(info.front()->getFileList().front());
       }
