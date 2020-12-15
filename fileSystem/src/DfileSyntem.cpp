@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-03 09:10:01
- * @LastEditTime: 2020-12-01 13:54:43
+ * @LastEditTime: 2020-12-15 20:52:24
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\fileSystem\src\DfileSyntem.cpp
@@ -20,7 +20,17 @@
 #include <src/ftpsession.h>
 #include <iostream>
 #include <iomanip>
-#include <ctime>
+// #include <ctime>
+
+/*保护data里面的宏__我他妈的*/
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+#include <date/date.h>
+/*保护data里面的宏__我他妈的*/
 
 #include <time.h>
 DSYSTEM_S
@@ -79,13 +89,14 @@ bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool ba
     // std::tm tm = *std::localtime(&t);
 
     //使用msvc_x64
-    struct tm k_tm;
-    time_t time_seconds = time(nullptr);
-    localtime_s(&k_tm, &time_seconds);
-
-    std::stringstream k_stringstream;
-    k_stringstream << std::put_time(&k_tm, "%Y_%m_%d_%H_%M_%S");
-    time_str = k_stringstream.str();
+    // struct tm k_tm;
+    // time_t time_seconds = time(nullptr);
+    // localtime_s(&k_tm, &time_seconds);
+    //使用c++14库
+    auto time = std::chrono::system_clock::now();
+    // std::stringstream k_stringstream;
+    // k_stringstream << std::put_time(time, "%Y_%m_%d_%H_%M_%S");
+    time_str = date::format("%Y_%m_%d_%H_%M_%S", time);
     backup_path = trange_path.parent_path() / "backup" / time_str /
                   trange_path.filename();
   }
