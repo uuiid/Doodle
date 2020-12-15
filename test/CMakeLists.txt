@@ -3,10 +3,17 @@ add_executable(test_my
         test_core.cpp
         test_fileSystem.cpp
         main.cpp
-        test_boost.cpp test_qtCore.cpp)
+        test_boost.cpp 
+        test_qtCore.cpp
+        test_server.cpp)
 #连接自己的库进行测试
 target_link_libraries(test_my
         PRIVATE core fileSystem pinyin logger)
+
+target_link_libraries(test_my
+        PRIVATE cppnetlib-uri cppnetlib-server-parsers cppnetlib-client-connections)
+
+target_compile_definitions(test_my PRIVATE _WIN32_WINNT=0x0A00)
 #连接谷歌测试框架
 target_link_libraries(test_my
         PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)

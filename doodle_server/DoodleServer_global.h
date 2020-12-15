@@ -26,6 +26,6 @@ using path_ptr = std::shared_ptr<boost::filesystem::path>;
 class Handler;
 using Server = boost::network::http::server<Handler>;
 class fileSystem;
-using file_system_ptr = std::shared_ptr<fileSystem>;
+using fileSystem_ptr = std::shared_ptr<fileSystem>;
 
 DOODLE_NAMESPACE_E

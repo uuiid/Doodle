@@ -18,6 +18,22 @@
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
         },
         {
+            "name": "Doodle_server",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/install/bin/doodleServer.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/install/bin",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${PATH};${workspaceFolder}/install/bin;C:/Program Files/Autodesk/Maya2018/bin/"
+                }
+            ],
+            "externalConsole": true,
+        },
+        {
             "name": "Doodle_Test",
             "type": "cppvsdbg",
             "request": "launch",
@@ -31,7 +47,7 @@
                     "value": "$PATH;"
                 }
             ],
-            "externalConsole": true,
+            "externalConsole": false,
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
         }
     ]

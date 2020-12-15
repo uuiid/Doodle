@@ -54,7 +54,7 @@ dpath ueSynArchive::syn(const shotPtr &shot_) {
   } else if (set.getDepartment() == "Light") {
     //同步light镜头
     for (int i = 0; i < synpart.size(); ++i) {
-      p_syn->addSubSynchronize(i, freeSynWrap::syn_set::twoWay, str.str());
+      p_syn->addSubSynchronize(i, freeSynWrap::syn_set::upload, str.str());
       p_syn->addSubIncludeExclude(i, {"*"}, {shotFstr});
     }
 

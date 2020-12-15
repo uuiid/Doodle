@@ -1,15 +1,14 @@
 ﻿/*
  * @Author: your name
  * @Date: 2020-10-11 20:31:57
- * @LastEditTime: 2020-12-10 19:55:41
+ * @LastEditTime: 2020-12-15 11:46:03
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\test\main.cpp
  */
-#include "core_global.h"
 #include <core_doQt.h>
 #include <src/core/coresql.h>
-#include "Logger.h"
+#include <Logger.h>
 
 #include <QCoreApplication>
 #include <QTextCodec>
