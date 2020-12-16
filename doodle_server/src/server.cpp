@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-12 19:17:38
- * @LastEditTime: 2020-12-15 20:59:16
+ * @LastEditTime: 2020-12-16 11:07:44
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_server\server.cpp
@@ -39,25 +39,33 @@ bool fileSystem::has(const std::string& project_name, const path_ptr& path) {
     return false;
 }
 
-bool fileSystem::add(const std::string& project_name, const path_ptr& path) {
+decltype(auto) fileSystem::add(const std::string& project_name, const path_ptr& path) {
   return false;
 }
 
-bool fileSystem::get(const std::string& project_name, const path_ptr& path) {
-  return false;
+decltype(auto) fileSystem::get(const std::string& project_name, const path_ptr& path) {
+  auto path_iter = p_project_roots.find(project_name);
+  if (path_iter != p_project_roots.end()) {
+    boost::filesystem::path k_path(*(path_iter->second) / (*path));
+    boost::filesystem::ifstream stream(k_path, std::ios::in | std::ios::binary);
+    if (stream.is_open()) {
+      return stream;
+    }
+  }
+  return boost::filesystem::ifstream{};
 }
 
 decltype(auto) fileSystem::mata(const std::string& project_name, const path_ptr& path) {
   std::map<std::string, std::string> handle{};
   auto path_iter = p_project_roots.find(project_name);
   if (path_iter != p_project_roots.end()) {
-    boost::filesystem::path path(*(path_iter->second) / (*path));
-    if (boost::filesystem::is_directory(path)) {
+    boost::filesystem::path k_path(*(path_iter->second) / (*path));
+    if (boost::filesystem::is_directory(k_path)) {
       handle.insert({"file_size", std::to_string(-1)});
     } else {
-      handle.insert({"file_size", std::to_string(boost::filesystem::file_size(path))});
+      handle.insert({"file_size", std::to_string(boost::filesystem::file_size(k_path))});
     }
-    auto tmp_time = boost::filesystem::last_write_time(path);
+    auto tmp_time = boost::filesystem::last_write_time(k_path);
 
     auto time = std::chrono::system_clock::from_time_t(tmp_time);
     handle.insert({"modify_time",
@@ -83,7 +91,7 @@ connection_Handler::connection_Handler(fileSystem_ptr f_ptr)
 void connection_Handler::operator()(const std::string& path, Server::connection_ptr conn,
                                     bool server_body) {
   static constexpr std::size_t MAX_INPUT_SIZE = 2 << 15;
-  static const boost::regex re(R"(([0-9|a-z|/]+)[\?]?[\?|\&]\bproject=([^&]+))");
+  static const boost::regex re(R"(([0-9|a-z|A-Z|/|_]+)[\?]?[\?|\&]\bproject=([^&]+))");
   boost::smatch match;
   if (boost::regex_search(path, match, re)) {
     if (match.size() >= 2) {
@@ -91,24 +99,46 @@ void connection_Handler::operator()(const std::string& path, Server::connection_
       std::string prj_name(match[2]);
       auto k_path = std::make_shared<boost::filesystem::path>(tmp_p);
       std::cout << k_path->generic_string() << ": " << prj_name << std::endl;
-      if (p_fileSystem->has(p_project_name, k_path)) {
+      if (p_fileSystem->has(prj_name, k_path)) {
         conn->set_headers(p_fileSystem->mata(prj_name, k_path));
         conn->set_status(Server::connection::ok);
         if (server_body)
-          send_file(k_path, conn);
-      } else {
-        static Server::response_header handle[] = {{"Connection", "close"},
-                                                   {"Content-Type", "text/plain"}};
-        conn->set_status(Server::connection::not_found);
-        conn->set_headers(boost::make_iterator_range(handle, handle + 2));
-        conn->write("File Not Found!");
+          // send_file(k_path, conn);
+          return;
       }
     }
   }
+  fail(conn);
 }
 
-void connection_Handler::send_file(const path_ptr& f_ptr,
+void connection_Handler::send_file(std::pair<void*, std::size_t> mmaped_region,
+                                   off_t offset,
                                    Server::connection_ptr conn) {
+  std::size_t adjusted_offset = offset + 4096;
+  off_t rightmost_bound = std::min(mmaped_region.second, adjusted_offset);
+  auto self = this->shared_from_this();
+  conn->write(
+      boost::asio::const_buffers_1(
+          static_cast<const char*>(mmaped_region.first) + offset,
+          rightmost_bound + offset),
+      [=](boost::system::error_code const& ec) {
+        self->handle_chunk(mmaped_region, rightmost_bound, conn, ec);
+      });
+}
+
+void connection_Handler::handle_chunk(std::pair<void*, std::size_t> mmaped_region, off_t offset,
+                                      Server::connection_ptr conn,
+                                      boost::system::error_code const& ec) {
+  assert(offset >= 0);
+  if (!ec && static_cast<std::size_t>(offset) < mmaped_region.second)
+    send_file(mmaped_region, offset, conn);
+}
+
+void connection_Handler::fail(Server::connection_ptr conn) {
+  static Server::response_header error_header[] = {"Connection", "close"};
+  conn->set_status(Server::connection::not_supported);
+  conn->set_headers(boost::make_iterator_range(error_header, error_header + 1));
+  conn->write("not find file.");
 }
 
 /* -------------------------------------------------------------------------- */
