@@ -19,19 +19,28 @@ int main(int argc, char const *argv[]) try {
   const std::string endpoint = R"(tcp://*:6666)";
 
   zmq::context_t context{32};
-  zmq::socket_t socket{context, zmq::socket_type::rep};
+  zmq::socket_t socket{context, zmq::socket_type::router};
   socket.bind(endpoint);
 
   //文件处理类
   auto fileSys = std::make_shared<doodle::fileSystem>();
   while (true) {
-    zmq::message_t message;
-    socket.recv(message, zmq::recv_flags::none);  //zmq::recv_flags::dontwait
-    std::cout << message << std::endl;
+    // zmq::message_t message;
+    zmq::multipart_t receive{};
 
+    receive.recv(socket, (int)zmq::recv_flags::none);
+
+    // socket.recv(message, zmq::recv_flags::none);  //zmq::recv_flags::dontwait
+    std::cout << receive << std::endl;
+    // message
+    // socket.send()
     // message.to_string();
-    auto p_path = std::make_shared<boost::filesystem::path>(message.to_string());
+    auto p_path = std::make_shared<boost::filesystem::path>(receive.back().to_string());
     if (fileSys->has("dubuxiaoyao3", p_path)) {
+      zmq::multipart_t reply{};
+      reply.push_back(receive.pop());
+      reply.push_back(zmq::message_t{});  //插入空帧?
+
       auto file = fileSys->get("dubuxiaoyao3", p_path);
       boost::filesystem::ifstream stream(*file, std::ifstream::in | std::ifstream::binary);
 
@@ -43,12 +52,14 @@ int main(int argc, char const *argv[]) try {
         source.open(parameters);
 
       std::cout << "da xiao " << source.size() << std::endl;
-      // std::cout.write(source.data(), source.size());
+      //在这个地方我们构造消息的主体
       zmq::message_t p_message{(void *)source.data(), source.size()};
+      reply.add(std::move(p_message));
+      reply.send(socket);
       // p_message
-      socket.send(p_message, zmq::send_flags::none);
+      // socket.send(p_message, zmq::send_flags::none);
     } else {
-      socket.send(message, zmq::send_flags::none);
+      receive.send(socket);
     }
   }
 
