@@ -100,8 +100,6 @@ void shotTypeModel::clear() {
   endResetModel();
 }
 void shotTypeModel::reInit() {
-  // p_type_ptr_list_.clear();
-  // auto tmp_fileTypeList = doCore::shotType::getAll();
   doCore::shotTypePtrList tmp_fileTypeList{};
   for (auto &tmp : doCore::shotType::Instances()) {
     tmp_fileTypeList.push_back(tmp.second->shared_from_this());

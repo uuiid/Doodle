@@ -40,7 +40,7 @@ list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 
 #寻找一些外部库
 find_package(Qt5 CONFIG COMPONENTS Core Widgets Sql Test QuickControls2 LinguistTools REQUIRED)
-find_package(Boost REQUIRED COMPONENTS filesystem date_time regex)
+find_package(Boost REQUIRED COMPONENTS filesystem date_time regex iostreams)
 find_package(CURL REQUIRED)
 find_package(Sqlpp11 REQUIRED)
 find_package(GTest CONFIG REQUIRED)

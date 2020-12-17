@@ -7,54 +7,47 @@
  * @FilePath: \Doodle\test\test_server.h
  */
 #include <gtest/gtest.h>
-#include <boost/network/protocol.hpp>
 #include <boost/filesystem.hpp>
+
+#include <zmq.hpp>
+#include <zmq_addon.hpp>
+
 TEST(doodleServer, client_base) {
-  boost::network::http::client client{};
-  // boost::network::http::client::request req("http://127.0.0.1:8000/ZhuiZhuXiaoXiang_ZL?project=dubuxiaoyao3");
-  boost::network::http::client::request req("http://www.boost.org");
-  req << boost::network::header("Connection", "close");
-  auto response = client.get(req);
-  //   std::cout << boost::network::http::headers(response.headers) << std::endl;
-  // response.status_message();
-  // response.status();
-  // auto handle2 = boost::network::http::headers(response);
-  auto headers = response.headers();
-  // auto body = response.body();
-  for (auto &&i : headers) {
-    std::cout << i.first << ": " << i.second << std::endl;
-  }
 }
 
 TEST(doodleServer, server_base) {
-  boost::network::http::client client{};
-  boost::network::http::client::request req("http://127.0.0.1:8000/");
-  req << boost::network::header("Connection", "close");
-  auto response = client.get(req);
-  auto headers = response.headers();
-  auto body = response.body();
-  for (auto &&i : headers) {
-    std::cout << i.first << ": " << i.second << std::endl;
-  }
-  std::cout << body << "\n"
-            << std::endl;
+  zmq::context_t context(1);
+  zmq::socket_t socket(context, zmq::socket_type::req);
+  std::cout << "Connecting to hello world server…" << std::endl;
+
+  socket.connect("tcp://127.0.0.1:6666");
+
+  zmq::message_t message{"CH015A.usd"};
+  socket.send(message, zmq::send_flags::none);
+
+  zmq::message_t reply{};
+  socket.recv(reply, zmq::recv_flags::none);
+
+  boost::filesystem::path path{"D:/tmp/test.file"};
+  boost::filesystem::ofstream stream(path, std::ios_base::binary);
+  stream.write(static_cast<char *>(reply.data()), reply.size());
 }
 
 TEST(doodleServer, buffer_stream) {
   // boost::filesystem::path k_path("F:/cppguide.xml");
-  boost::filesystem::path k_path("F:/doodle.exe");
-  boost::filesystem::ifstream stream(k_path, std::ios::in | std::ios::binary);
-  std::cout << stream.is_open() << std::endl;
+  // boost::filesystem::path k_path("F:/doodle.exe");
+  // boost::filesystem::ifstream stream(k_path, std::ios::in | std::ios::binary);
+  // std::cout << stream.is_open() << std::endl;
 
-  stream.seekg(0, std::ios::end);
-  auto length = stream.tellg();
-  stream.seekg(0, std::ios::beg);
-  if (length > 4096)
-    length = 4096;
+  // stream.seekg(0, std::ios::end);
+  // auto length = stream.tellg();
+  // stream.seekg(0, std::ios::beg);
+  // if (length > 4096)
+  //   length = 4096;
 
-  char *buffer = new char[length];
+  // char *buffer = new char[length];
 
-  stream.read(buffer, length);
-  boost::asio::const_buffer buff{buffer, sizeof(buffer)};
-  std::cout << std::string(static_cast<char *>(buffer), length) << std::endl;
+  // stream.read(buffer, length);
+  // boost::asio::const_buffer buff{buffer, sizeof(buffer)};
+  // std::cout << std::string(static_cast<char *>(buffer), length) << std::endl;
 }

@@ -39,23 +39,23 @@ bool fileSystem::has(const std::string& project_name, const path_ptr& path) {
     return false;
 }
 
-decltype(auto) fileSystem::add(const std::string& project_name, const path_ptr& path) {
+bool fileSystem::add(const std::string& project_name, const path_ptr& path) {
   return false;
 }
 
-decltype(auto) fileSystem::get(const std::string& project_name, const path_ptr& path) {
+path_ptr fileSystem::get(const std::string& project_name, const path_ptr& path) {
   auto path_iter = p_project_roots.find(project_name);
   if (path_iter != p_project_roots.end()) {
-    boost::filesystem::path k_path(*(path_iter->second) / (*path));
-    boost::filesystem::ifstream stream(k_path, std::ios::in | std::ios::binary);
+    auto k_path = std::make_shared<boost::filesystem::path>(*(path_iter->second) / (*path));
+    boost::filesystem::ifstream stream(*k_path, std::ios::in | std::ios::binary);
     if (stream.is_open()) {
-      return stream;
+      return k_path;
     }
   }
-  return boost::filesystem::ifstream{};
+  return nullptr;
 }
 
-decltype(auto) fileSystem::mata(const std::string& project_name, const path_ptr& path) {
+std::map<std::string, std::string> fileSystem::mata(const std::string& project_name, const path_ptr& path) {
   std::map<std::string, std::string> handle{};
   auto path_iter = p_project_roots.find(project_name);
   if (path_iter != p_project_roots.end()) {

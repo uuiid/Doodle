@@ -9,6 +9,8 @@
 
 #pragma once
 #include <DoodleServer_global.h>
+//后期希望可以去除
+// #include <boost/filesystem.hpp>
 
 DOODLE_NAMESPACE_S
 
@@ -18,9 +20,9 @@ class fileSystem {
   void setPrject(const std::pair<std::string, path_ptr> &project_root);
 
   bool has(const std::string &project_name, const path_ptr &path);
-  decltype(auto) add(const std::string &project_name, const path_ptr &path);
-  decltype(auto) get(const std::string &project_name, const path_ptr &path);
-  decltype(auto) mata(const std::string &project_name, const path_ptr &path);
+  bool add(const std::string &project_name, const path_ptr &path);
+  path_ptr get(const std::string &project_name, const path_ptr &path);
+  std::map<std::string, std::string> mata(const std::string &project_name, const path_ptr &path);
 
  private:
   std::map<std::string, path_ptr> p_project_roots;

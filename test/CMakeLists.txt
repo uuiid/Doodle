@@ -10,8 +10,11 @@ add_executable(test_my
 target_link_libraries(test_my
         PRIVATE core fileSystem pinyin logger)
 
-target_link_libraries(test_my
-        PRIVATE cppnetlib-uri cppnetlib-server-parsers cppnetlib-client-connections)
+#这个网络库不去连接
+# target_link_libraries(test_my
+#         PRIVATE cppnetlib-uri cppnetlib-server-parsers cppnetlib-client-connections)
+
+target_link_libraries(test_my PRIVATE cppzmq cppzmq-static)
 
 target_compile_definitions(test_my PRIVATE _WIN32_WINNT=0x0A00)
 #连接谷歌测试框架

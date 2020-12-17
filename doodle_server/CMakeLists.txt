@@ -17,7 +17,7 @@ target_link_libraries(doodleServer PRIVATE cppnetlib-uri cppnetlib-server-parser
 target_link_libraries(doodleServer PRIVATE cppzmq cppzmq-static)
 target_link_libraries(doodleServer PRIVATE date::date date::date-tz)
 
-target_link_libraries(doodleServer PRIVATE Boost::filesystem Boost::regex)
+target_link_libraries(doodleServer PRIVATE Boost::filesystem Boost::regex Boost::iostreams)
 
 target_compile_definitions(doodleServer PRIVATE _WIN32_WINNT=0x0A00)
 #安装基本组件
