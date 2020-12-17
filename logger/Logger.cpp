@@ -10,6 +10,8 @@
 #include <boost/log/exceptions.hpp>
 #include <boost/log/sinks.hpp>
 #include <boost/log/sinks/async_frontend.hpp>
+#include <boost/log/sinks/sync_frontend.hpp>
+
 #include <boost/log/expressions.hpp>
 #include <boost/log/support/date_time.hpp>
 
@@ -20,6 +22,10 @@
 #include <boost/filesystem.hpp>
 namespace Logger {
 using file_sink = boost::log::sinks::asynchronous_sink<boost::log::sinks::text_file_backend>;
+using sink_t = boost::log::sinks::synchronous_sink<boost::log::sinks::debug_output_backend>;
+// New macro that includes severity, filename and line number
+#define LOG_ADD_FILE boost::log::attribute_cast<boost::log::attributes::mutable_constant<std::string>>(::boost::log::trivial::logger::get().get_attributes()["File"]).set(__FILE__)
+#define LOG_ADD_LINE boost::log::attribute_cast<boost::log::attributes::mutable_constant<int>>(::boost::log::trivial::logger::get().get_attributes()["Line"]).set(__LINE__)
 
 // static QString gLogDir;
 // static int gLogMaxCount;
@@ -30,8 +36,9 @@ using file_sink = boost::log::sinks::asynchronous_sink<boost::log::sinks::text_f
 //                                const QMessageLogContext &context,
 //                                const QString &msg);
 
-static void boostLoggerInitAsyn(const std::string &logPath,
-                                std::size_t logMaxSize);
+static void
+boostLoggerInitAsyn(const std::string &logPath,
+                    std::size_t logMaxSize);
 
 void boostLoggerInitAsyn(const std::string &logPath,
                          std::size_t logMaxSize) {
@@ -80,6 +87,7 @@ void boostLoggerInitAsyn(const std::string &logPath,
   });
   sink->set_filter(boost::log::trivial::severity >= boost::log::trivial::debug);
 
+  sink->locked_backend()->auto_flush(true);
   boost::log::core::get()->add_global_attribute("TimeStamp", boost::log::attributes::local_clock());
   boost::log::core::get()->add_sink(sink);
 
@@ -88,6 +96,11 @@ void boostLoggerInitAsyn(const std::string &logPath,
   BOOST_LOG_TRIVIAL(debug)
       << "log日志文件初始化成功";
   boost::log::core::get()->flush();
+
+  //debug 记录器
+  boost::shared_ptr<sink_t> sink_t(new sink_t());
+  sink->set_filter(boost::log::expressions::is_debugger_present());
+  boost::log::core::get()->add_sink(sink_t);
 }
 
 void doodle_initLog(const std::string &logPath, std::size_t logMaxSize, bool async) {
