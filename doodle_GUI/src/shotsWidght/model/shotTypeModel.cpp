@@ -87,8 +87,8 @@ bool shotTypeModel::removeRows(int position, int rows, const QModelIndex &index)
   return true;
 }
 void shotTypeModel::init() {
-  auto tmp_fileTypeList = doCore::shotType::getAll();
   clear();
+  auto tmp_fileTypeList = doCore::shotType::getAll();
   if (tmp_fileTypeList.empty()) return;
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()) - 1);
   p_type_ptr_list_ = tmp_fileTypeList;
@@ -100,7 +100,13 @@ void shotTypeModel::clear() {
   endResetModel();
 }
 void shotTypeModel::reInit() {
-  auto tmp_fileTypeList = doCore::shotType::getAll();
+  // p_type_ptr_list_.clear();
+  // auto tmp_fileTypeList = doCore::shotType::getAll();
+  doCore::shotTypePtrList tmp_fileTypeList{};
+  for (auto &tmp : doCore::shotType::Instances()) {
+    tmp_fileTypeList.push_back(tmp.second->shared_from_this());
+  }
+
   if (tmp_fileTypeList.empty()) return;
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()) - 1);
   p_type_ptr_list_ = tmp_fileTypeList;

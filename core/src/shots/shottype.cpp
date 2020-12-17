@@ -27,6 +27,7 @@ shotType::shotType()
       p_shotClass_id(-1),
       p_Str_Type(),
       p_class_ptr_() {}
+
 shotType::~shotType() {
   if (isInsert())
     p_instance.erase(idP);

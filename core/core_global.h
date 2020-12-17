@@ -33,6 +33,10 @@
 #define DOODLE_INSRANCE_CPP(className) \
   std::map<int64_t, className *> className::p_instance {}
 
+#define DOODLE_DISABLE_COPY(className)   \
+  className(const className &) = delete; \
+  className &operator=(const className &) = delete;
+
 #define DOODLE_FFMPEG_PATH "tools/ffmpeg/bin"
 #define DOODLE_BACKUP "backup"
 #define DOODLE_CONTENT "Content"

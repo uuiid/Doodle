@@ -41,6 +41,8 @@ class CORE_API shotType : public coresqldata,
                                   bool autoInstall);
   static const std::map<int64_t, shotType *> &Instances();
 
+  DOODLE_DISABLE_COPY(shotType);
+
  private:
   template <typename T>
   void batchSetAttr(T &row);
