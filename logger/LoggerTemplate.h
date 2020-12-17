@@ -1,10 +1,8 @@
 ﻿#pragma once
-#include <QString>
 #include <string>
-namespace Logger
-{
-    const static QString logTemplate = u8R"logTemplate(
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+namespace Logger {
+const static std::string logTemplate =
+    u8R"logTemplate(<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "https://github.com/">
 <html>
 
@@ -50,36 +48,36 @@ namespace Logger
             color: #ebe5e5;
         }
 
-        .d,
-        .w,
-        .c,
-        .f,
-        .i {
+        .debug,
+        .warning,
+        .trace,
+        .fatal,
+        .info {
             padding: 3px;
             overflow: auto;
         }
 
-        .d {
+        .debug {
             background-color: #0f1011;
             color: #a8c1ce;
         }
 
-        .i {
+        .info {
             background-color: #294453;
             color: #a8c1ce;
         }
 
-        .w {
+        .warning {
             background-color: #7993a0;
             color: #1b2329;
         }
 
-        .c {
+        .trace {
             background-color: #ff952b;
             color: #1d2930;
         }
 
-        .f {
+        .fatal {
             background-color: #fc0808;
             color: #19242b;
         }
@@ -98,8 +96,8 @@ namespace Logger
         }
         function selectType() {
             var sel = document.getElementById("typeSelect");
-            const hideList = new Set(['d', 'i', 'w', 'c', 'f']);
-            if (sel.value === 'a') {
+            const hideList = new Set(['all','trace', 'debug', 'info', 'warning', 'error','fatal']);
+            if (sel.value === 'all') {
                 hideList.forEach(element => {
                     var list = document.querySelectorAll('.' + element);
                     list.forEach(objShow);
@@ -117,12 +115,13 @@ namespace Logger
         }
     </script>
     <select id="typeSelect" onchange="selectType()">
-        <option value='a' selected="selected">All</option>
-        <option value='d'>Debug</option>
-        <option value='i'>Info</option>
-        <option value='w'>Warning</option>
-        <option value='c'>Critical</option>
-        <option value='f'>Fatal</option>
+        <option value='all' selected="selected">All</option>
+        <option value='debug'>Debug</option>
+        <option value='info'>Info</option>
+        <option value='warning'>Warning</option>
+        <option value='error'>error</option>
+        <option value='trace'>Critical</option>
+        <option value='fatal'>Fatal</option>
     </select>
 )logTemplate";
 }

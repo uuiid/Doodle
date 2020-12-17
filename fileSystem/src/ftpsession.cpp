@@ -82,8 +82,8 @@ bool ftpSession::createDir(const std::vector<dstring> &path, bool allPath) {
 
         CURLcode err = static_cast<CURLcode>(perform());
         if (err != CURLE_OK && err != CURLE_QUOTE_ERROR) {
-          DOODLE_LOG_WARN << err << curl_easy_strerror(err)
-                          << ptrUrl->toString().toStdString().c_str();
+          DOODLE_LOG_WARN(err << curl_easy_strerror(err)
+                              << ptrUrl->toString().toStdString().c_str());
           break;
         }
         curl_slist_free_all(headerList);
@@ -95,8 +95,8 @@ bool ftpSession::createDir(const std::vector<dstring> &path, bool allPath) {
       curl_easy_setopt(curlSession, CURLOPT_POSTQUOTE, headerList);
       CURLcode err = static_cast<CURLcode>(perform());
       if (err != CURLE_OK && err != CURLE_QUOTE_ERROR)
-        DOODLE_LOG_WARN << err << curl_easy_strerror(err)
-                        << ptrUrl->toString().toStdString().c_str();
+        DOODLE_LOG_WARN(err << curl_easy_strerror(err)
+                            << ptrUrl->toString().toStdString().c_str());
     }
   }
   return true;
@@ -122,7 +122,7 @@ bool ftpSession::down(const dstring &localFile, const dstring &remoteFile) {
   CURLcode err = static_cast<CURLcode>(perform());
   outfile->close();
   if (err != CURLE_OK) {
-    DOODLE_LOG_WARN << err << curl_easy_strerror(err) << outfile->fileName();
+    DOODLE_LOG_WARN(err << curl_easy_strerror(err) << outfile->fileName().toStdString());
     outfile->remove();
     return false;
   }
@@ -224,7 +224,7 @@ std::vector<oFileInfo> ftpSession::list(const dstring &remoteFolder) {
   std::vector<oFileInfo> listInfo;
   CURLcode err = static_cast<CURLcode>(perform());
   if (err != CURLE_OK) {
-    DOODLE_LOG_WARN << curl_easy_strerror(err);
+    DOODLE_LOG_WARN(curl_easy_strerror(err));
     return listInfo;
   }
   QStringList::const_iterator iter_folder;
@@ -285,7 +285,7 @@ size_t ftpSession::writeStringCallbask(void *ptr, size_t size, size_t nmemb,
 int ftpSession::perform() {
   CURLcode err;
   err = curl_easy_perform(curlSession);
-  if (err != CURLE_OK) DOODLE_LOG_WARN << curl_easy_strerror(err);
+  if (err != CURLE_OK) DOODLE_LOG_WARN(curl_easy_strerror(err));
   return err;
 }
 
@@ -345,12 +345,12 @@ bool ftpSession::rename(const dstring &oldName, const dstring &newName) {
   struct curl_slist *ftpList = nullptr;
   boost::format str("%s %s");
   str % "RNFR" % oldName;
-  DOODLE_LOG_INFO << str.str().c_str();
+  DOODLE_LOG_INFO(str.str().c_str());
   ftpList = curl_slist_append(ftpList, str.str().c_str());
 
   str.clear();
   str % "RNTO" % newName;
-  DOODLE_LOG_INFO << str.str().c_str();
+  DOODLE_LOG_INFO(str.str().c_str());
   ftpList = curl_slist_append(ftpList, str.str().c_str());
 
   //创建上传设置

@@ -122,8 +122,9 @@ bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool ba
 
   } else {  //复制目录
     auto dregex = std::regex(sourePath.generic_string());
-    DOODLE_LOG_INFO << sourePath.generic_string().c_str() << "-->"
-                    << trange_path.generic_string().c_str();
+    DOODLE_LOG_INFO(sourePath.generic_string().c_str()
+                    << "-->"
+                    << trange_path.generic_string().c_str());
     backup_path = trange_path / "backup" / time_str;
     for (auto &item :
          boost::filesystem::recursive_directory_iterator(sourePath)) {

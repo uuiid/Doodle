@@ -72,7 +72,7 @@ dpathList fileSqlInfo::getFileList() const {
       list_.push_back(x.get<dstring>());
     }
   } catch (nlohmann::json::parse_error &error) {
-    DOODLE_LOG_INFO << error.what();
+    DOODLE_LOG_INFO(error.what());
     list_.push_back(filepathP);
   }
   return list_;
@@ -88,7 +88,7 @@ void fileSqlInfo::setFileList(const dpathList &filelist) {
 
 void fileSqlInfo::setFileList(const dstringList &filelist) {
   if (filelist.empty()) {
-    DOODLE_LOG_WARN << "传入空列表";
+    DOODLE_LOG_WARN("传入空列表");
     return;
   }
 
@@ -123,7 +123,7 @@ dstringList fileSqlInfo::json_to_strList(const dstring &json_str) const {
   try {
     root = nlohmann::json::parse(json_str);
   } catch (nlohmann::json::parse_error &err) {
-    DOODLE_LOG_INFO << err.what() << "无法解析";
+    DOODLE_LOG_INFO(err.what() << "无法解析");
   }
   if (!root.empty()) {
     for (auto &&x : root) {

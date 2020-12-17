@@ -150,7 +150,7 @@ void shotTableWidget::dropEvent(QDropEvent *event) {
   if (!event->mimeData()->hasUrls()) return enableBorder(false);
   if (event->mimeData()->urls().size() != 1) return enableBorder(false);
   auto url = event->mimeData()->urls()[0];
-  DOODLE_LOG_INFO << "文件拖入窗口" << url;
+  DOODLE_LOG_INFO("文件拖入窗口" << url.toString().toStdString());
 
   insertShot(url.toLocalFile());
   enableBorder(false);
@@ -179,7 +179,7 @@ void shotTableWidget::getSelectDir() {
   insertShot(path);
 }
 void shotTableWidget::insertShot(const QString &path) {
-  DOODLE_LOG_INFO << "提交文件";
+  DOODLE_LOG_INFO("提交文件");
   if (path.isEmpty()) return;
   auto pathInfo = QFileInfo(path);
   //插入新的数据

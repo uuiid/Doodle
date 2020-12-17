@@ -40,7 +40,7 @@ void synData::insert() {
       tab.path = toString(), tab.episodesId = p_episodes_->getIdP(),
       tab.projectId = coreSet::getSet().projectName().first));
   if (idP == 0) {
-    DOODLE_LOG_INFO << "not install";
+    DOODLE_LOG_INFO("not install");
     throw std::runtime_error("not install");
   }
 }
@@ -114,7 +114,7 @@ void synData::setSynPath(const std::string &json_str) {
       p_path.push_back(data);
     }
   } catch (nlohmann::json::parse_error &error) {
-    DOODLE_LOG_INFO << "not json" << error.what();
+    DOODLE_LOG_INFO("not json" << error.what());
   }
 }
 CORE_NAMESPACE_E

@@ -58,7 +58,7 @@ void shotType::insert() {
 
   idP = db->insert(insert);
   if (idP == 0) {
-    DOODLE_LOG_WARN << "无法插入shot type " << p_Str_Type.c_str();
+    DOODLE_LOG_WARN("无法插入shot type " << p_Str_Type.c_str());
     throw std::runtime_error("not install shot type");
   }
   p_instance.insert({idP, this});

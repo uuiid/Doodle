@@ -12,6 +12,9 @@ add_library(logger SHARED
     LoggerTemplate.h)
 
 target_link_libraries(logger PUBLIC Qt5::Core)
+target_link_libraries(logger PUBLIC Boost::log Boost::filesystem)
+
+
 target_compile_definitions(logger PRIVATE LOGGER_LIBRARY)
 
 target_include_directories(logger PUBLIC ${CMAKE_CURRENT_LIST_DIR})

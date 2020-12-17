@@ -46,7 +46,7 @@ bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
   boost::filesystem::copy(resou / "mayaExport.py", *p_temporary_file_);
 
   const auto mayapath = dstring{"mayapy.exe"};
-  DOODLE_LOG_INFO << "导出文件" << shot_data.string().c_str();
+  DOODLE_LOG_INFO("导出文件" << shot_data.string().c_str());
 
   boost::format str("%1% %2% --path %3% --name %4% --version %5% --suffix %6% --exportpath %7%");
   str % mayapath                                   //
@@ -67,7 +67,7 @@ bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
   } else {
     return false;
   }
-  DOODLE_LOG_INFO << "导出命令" << str.str().c_str();
+  DOODLE_LOG_INFO("导出命令" << str.str().c_str());
 
   STARTUPINFO si{};
   PROCESS_INFORMATION pi{};
@@ -93,7 +93,7 @@ bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
     // DOODLE_LOG_WARN << t;
     // DOODLE_LOG_WARN << QProcess::execute(QString::fromStdString(R"(")" + mayaPY_path + "/" + mayapath + R"(")"), comm);
   } catch (const std::exception &e) {
-    DOODLE_LOG_WARN << e.what() << '\n';
+    DOODLE_LOG_WARN(e.what() << '\n');
     return false;
   }
   WaitForSingleObject(pi.hProcess, INFINITE);
@@ -113,7 +113,7 @@ bool mayaArchiveShotFbx::readExportJson(const dpath &exportPath) {
 
   bool re = true;
   try {
-    DOODLE_LOG_INFO << kStringstream.str().c_str();
+    DOODLE_LOG_INFO(kStringstream.str().c_str());
     nlohmann::json root = nlohmann::json::parse(kStringstream.str());
     for (auto &item : root.items()) {
       auto str = item.value()[0].get<dstring>();
@@ -121,7 +121,7 @@ bool mayaArchiveShotFbx::readExportJson(const dpath &exportPath) {
     }
     re = true;
   } catch (nlohmann::json::parse_error &err) {
-    DOODLE_LOG_WARN << "not export maya fbx" << err.what();
+    DOODLE_LOG_WARN("not export maya fbx" << err.what());
     re = false;
   }
 

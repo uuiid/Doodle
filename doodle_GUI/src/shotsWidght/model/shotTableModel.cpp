@@ -144,7 +144,7 @@ bool shotTableModel::setData(const QModelIndex &index, const QVariant &value,
     if (!value.toString().isEmpty() &&
         value.toString().toStdString() !=
             p_shot_info_ptr_list_[index.row()]->getInfoP().back()) {
-      DOODLE_LOG_INFO << p_shot_info_ptr_list_[index.row()]->getInfoP().back().c_str();
+      DOODLE_LOG_INFO(p_shot_info_ptr_list_[index.row()]->getInfoP().back().c_str());
       p_shot_info_ptr_list_[index.row()]->setInfoP(value.toString().toStdString());
       p_shot_info_ptr_list_[index.row()]->updateSQL();
       dataChanged(index, index);

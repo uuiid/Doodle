@@ -73,7 +73,7 @@ void shotFileSqlInfo::insert() {
   if (p_shTy_id > 0) install.insert_list.add(tab.shotTypeId = p_shTy_id);
   idP = db->insert(install);
   if (idP == 0) {
-    DOODLE_LOG_WARN << fileStateP.c_str();
+    DOODLE_LOG_WARN(fileStateP.c_str());
     throw std::runtime_error("");
   }
   p_instance.insert({idP, this});

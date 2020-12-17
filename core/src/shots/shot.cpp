@@ -66,7 +66,7 @@ void shot::insert() {
       table.shotab = sqlpp::value_or_null<dstring>(getShotAb_str()));
   idP = db->insert(install);
   if (idP == 0) {
-    DOODLE_LOG_WARN << "无法插入镜头" << p_qint_shot_;
+    DOODLE_LOG_WARN("无法插入镜头" << p_qint_shot_);
     throw std::runtime_error("not install shots");
   }
   p_instance.insert({idP, this});

@@ -69,7 +69,7 @@ void assFileSqlInfo::insert() {
 
   idP = db->insert(install);
   if (idP == 0) {
-    DOODLE_LOG_WARN << fileStateP.c_str();
+    DOODLE_LOG_WARN(fileStateP.c_str());
     throw std::runtime_error("");
   }
   p_instance.insert({idP, this});

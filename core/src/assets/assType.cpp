@@ -52,7 +52,7 @@ void assType::insert() {
   idP = db->insert(insert);
 
   if (idP == 0) {
-    DOODLE_LOG_WARN << "无法插入asstype " << s_type.c_str();
+    DOODLE_LOG_WARN("无法插入asstype " << s_type.c_str());
     throw std::runtime_error("asstype");
   }
   p_instance.insert({idP, this});

@@ -64,7 +64,7 @@ bool movieArchive::convertMovie(const dpath &moviePath) {
 //}
 bool movieArchive::update(const dpathList &filelist) {
   p_soureFile = filelist;
-  DOODLE_LOG_INFO << filelist.front().c_str();
+  DOODLE_LOG_INFO(filelist.front().c_str());
   setInfoAttr();
   _generateFilePath();
   generateCachePath();

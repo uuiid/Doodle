@@ -20,8 +20,7 @@ DOODLE_NAMESPACE_S
 shotClassWidget::shotClassWidget(QWidget *parent)
     : QListView(parent),
       p_model_(nullptr),
-      p_fileClass_menu(nullptr){
-
+      p_fileClass_menu(nullptr) {
   setStatusTip(tr("使用右键直接添加部门类型"));
 
   connect(this, &shotClassWidget::clicked,
@@ -38,8 +37,7 @@ void shotClassWidget::insertFileClass() {
 
 void shotClassWidget::_doodle_fileclass_emit(const QModelIndex &index) {
   doCore::coreDataManager::get().setShotClassPtr(
-      index.data(Qt::UserRole).value<doCore::shotClassPtr>()
-      );
+      index.data(Qt::UserRole).value<doCore::shotClassPtr>());
   emit doodleUseFilter(true);
 }
 
@@ -64,7 +62,7 @@ void shotClassWidget::mousePressEvent(QMouseEvent *event) {
 //  }
 //  p_fileClass_menu->move(event->globalPos());
 //  p_fileClass_menu->show();
-//  DOODLE_LOG_INFO << "显示部门上下文菜单";
+//  DOODLE_LOG_INFO ( "显示部门上下文菜单");
 //}
 void shotClassWidget::setModel(QAbstractItemModel *model) {
   auto p_model = dynamic_cast<shotClassModel *>(model);

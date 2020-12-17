@@ -55,7 +55,7 @@ void shotClass::insert() {
       table.projectId = coreSet::getSet().projectName().first);
   idP = db->insert(install);
   if (idP == 0) {
-    DOODLE_LOG_WARN << "无法插入shot type" << getClass_str().c_str();
+    DOODLE_LOG_WARN("无法插入shot type" << getClass_str().c_str());
     throw std::runtime_error("not install shot");
   }
   p_instance.insert({idP, this});

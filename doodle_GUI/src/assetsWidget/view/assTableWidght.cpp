@@ -62,7 +62,7 @@ void assTableWidght::init() {
   horizontalHeader()->setHighlightSections(false);
 }
 void assTableWidght::insertAss(const QString &path) {
-  DOODLE_LOG_INFO << "获得路径: " << path;
+  DOODLE_LOG_INFO("获得路径: " << path.toStdString());
   auto pathInfo = QFileInfo(path);
   boost::regex reMaya("m[ab]");
   boost::regex reUe4("uproject");
@@ -74,7 +74,7 @@ void assTableWidght::insertAss(const QString &path) {
   auto text_info =
       QInputDialog::getText(this, tr("请输入备注"), tr("请输入文件备注"));
   data->setInfoP(text_info.toStdString());
-  DOODLE_LOG_INFO << pathInfo.suffix();
+  DOODLE_LOG_INFO(pathInfo.suffix().toStdString());
 
   if (boost::regex_match(pathInfo.suffix().toStdString(), reMaya)) {
     // maya文件
@@ -182,7 +182,7 @@ void assTableWidght::dropEvent(QDropEvent *event) {
   if (!event->mimeData()->hasUrls()) return enableBorder(false);
   if (event->mimeData()->urls().size() != 1) return enableBorder(false);
   auto url = event->mimeData()->urls()[0];
-  DOODLE_LOG_INFO << "文件拖入窗口" << url;
+  DOODLE_LOG_INFO("文件拖入窗口" << url.toString().toStdString());
 
   const QFileInfo &kFileInfo = QFileInfo(url.toLocalFile());
   enableBorder(false);

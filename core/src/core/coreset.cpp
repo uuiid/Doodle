@@ -56,7 +56,7 @@ void coreSet::init() {
   getServerSetting();
   getCacheDiskPath();
   appendEnvironment();
-  DOODLE_LOG_INFO << "登录 : " << project.second.c_str();
+  DOODLE_LOG_INFO("登录 : " << project.second.c_str());
   doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "", *prjectRoot);
   if (!boost::filesystem::exists(getCacheRoot())) {
     boost::filesystem::create_directories(getCacheRoot());
@@ -147,7 +147,7 @@ void coreSet::getSetting() {
     project.second = root.value("projectname", "dubuxiaoyao3");
     syneps = root.value("synEp", 1);
 
-    DOODLE_LOG_INFO << "projectname" << project.second.c_str();
+    DOODLE_LOG_INFO("projectname" << project.second.c_str());
   }
 }
 
@@ -228,7 +228,7 @@ void coreSet::getServerSetting() {
                                 .from(tab)
                                 .where(tab.projectId == project.first))) {
     map.insert(std::make_pair<std::string, std::string>(raw.name, raw.value));
-    DOODLE_LOG_INFO << raw.name.text << "--->" << raw.value.text;
+    DOODLE_LOG_INFO(raw.name.text << "--->" << raw.value.text);
   }
 
   *shotRoot = (map["shotRoot"]);
@@ -260,8 +260,8 @@ synPathListPtr coreSet::getSynDir() {
     try {
       root = nlohmann::json::parse(str);
     } catch (nlohmann::json::parse_error &err) {
-      DOODLE_LOG_INFO << err.what() << " "
-                      << "解析同步目录失败";
+      DOODLE_LOG_INFO(err.what() << " "
+                                 << "解析同步目录失败");
     }
     for (const auto &item : root) {
       synPath_struct fileSyn{};
@@ -269,7 +269,7 @@ synPathListPtr coreSet::getSynDir() {
       fileSyn.server = item.value("Left", "");
       list.push_back(fileSyn);
     }
-    DOODLE_LOG_INFO << QString::fromStdString(row.path);
+    DOODLE_LOG_INFO(row.path);
   }
   return list;
 }

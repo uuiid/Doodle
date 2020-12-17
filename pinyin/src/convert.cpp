@@ -13,7 +13,7 @@ PINYIN_NAMESPACE_S
 
 QTemporaryFile convert::tmpDBFile;
 
-convert::convert():isinitDB(false),re(),query(),dataBase(),sqlDBPath() {
+convert::convert() : isinitDB(false), re(), query(), dataBase(), sqlDBPath() {
   re = QSharedPointer<QRegularExpression>(new QRegularExpression());
 }
 
@@ -47,18 +47,18 @@ void convert::initDB() {
     dataBase.setDatabaseName(tmpDBFile.fileName());
   }
   if (!dataBase.open()) {
-    DOODLE_LOG_WARN << dataBase.lastError().text();
+    DOODLE_LOG_WARN(dataBase.lastError().text().toStdString());
     throw std::runtime_error(dataBase.lastError().text().toStdString());
   }
   dataBase.transaction();
   initQuery();
   initExp();
-//  isinitDB = true;
+  //  isinitDB = true;
 }
 
 void convert::initQuery() {
-//  if (!query)
-    query = QSharedPointer<QSqlQuery>(new QSqlQuery(dataBase));
+  //  if (!query)
+  query = QSharedPointer<QSqlQuery>(new QSqlQuery(dataBase));
 }
 
 void convert::initExp() {
@@ -85,7 +85,7 @@ QString convert::toEnOne(const QString &conStr) {
   QString sql = "SELECT en FROM pinyin WHERE znch='%1';";
   query->prepare(sql.arg(conStr));
   if (!query->exec()) {
-    DOODLE_LOG_WARN << query->lastError();
+    DOODLE_LOG_WARN(query->lastError().text().toStdString());
     throw std::runtime_error(QString("not quert %1").arg(conStr).toStdString());
   }
   QString enstr("");

@@ -76,7 +76,7 @@ bool shotClassModel::setData(const QModelIndex &index, const QVariant &value,
     if (isHas)
       return false;
     else {
-      DOODLE_LOG_CRIT << "注意将fileclass提交到数据库";
+      DOODLE_LOG_INFO("注意将fileclass提交到数据库");
       list_fileClass[index.row()]->setclass(value.toString());
       emit dataChanged(index, index, {role});
       return true;
@@ -98,7 +98,7 @@ bool shotClassModel::insertRows(int position, int rows,
   beginInsertRows(index, position, position + rows - 1);
   if (!isHas) {
     for (int row = 0; row < rows; ++row) {
-      DOODLE_LOG_INFO << "插入新的fileclass镜头";
+      DOODLE_LOG_INFO("插入新的fileclass镜头");
       list_fileClass.insert(list_fileClass.begin() + position,
                             std::make_shared<doCore::shotClass>());
       list_fileClass[position]->setclass(dep);
@@ -113,7 +113,7 @@ bool shotClassModel::removeRows(int position, int rows,
   beginRemoveRows(QModelIndex(), position, position + rows - 1);
 
   for (int row = 0; row < rows; ++row) {
-    DOODLE_LOG_INFO << "去除队列中的fileclass镜头";
+    DOODLE_LOG_INFO("去除队列中的fileclass镜头");
     list_fileClass.erase(list_fileClass.begin() + position);
   }
 

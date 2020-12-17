@@ -117,7 +117,8 @@
         "*.in": "cpp",
         "qlabel": "cpp",
         "type": "cpp",
-        "registration": "cpp"
+        "registration": "cpp",
+        "queue": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",
@@ -131,7 +132,7 @@
         }
     ],
     "editor.formatOnSave": true,
-    "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, SortIncludes: false, ColumnLimit: 0}",
+    "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, SortIncludes: false, ColumnLimit: 0,AlignConsecutiveAssignments: true,AlignAfterOpenBracket: Align}",
     "C_Cpp.clang_format_style": "file",
     "cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}",
     "editor.tokenColorCustomizations": {

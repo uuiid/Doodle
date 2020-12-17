@@ -53,8 +53,7 @@ void znchName::insert() {
 
   idP = db->insert(install);
   if (idP == 0) {
-    DOODLE_LOG_INFO << nameZNCH.c_str();
-    DOODLE_LOG_WARN << "not install znch";
+    DOODLE_LOG_WARN(nameZNCH.c_str() << "not install znch");
     throw std::runtime_error("not install znch");
   }
 }

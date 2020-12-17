@@ -29,15 +29,14 @@ void toolkit::openPath(const doCore::fileSqlInfoPtr &info_ptr,
   path_noral = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
   str % path_noral;
 
-  DOODLE_LOG_INFO << "打开路径: " << str.str().c_str();
+  DOODLE_LOG_INFO("打开路径: " << str.str().c_str());
   if (boost::filesystem::exists(path)) {
     if (openEx)
       boost::process::system(str.str().c_str());
     else
       QGuiApplication::clipboard()->setText(DOTOS(path.generic_string()));
   } else {
-    DOODLE_LOG_CRIT << QString::fromUtf8("没有在服务器中找到目录:\n %1")
-                           .arg(DOTOS(path.generic_string()));
+    DOODLE_LOG_INFO(" 没有在服务器中找到目录:" << path.generic_string());
     QMessageBox::warning(nullptr, QString::fromUtf8("没有目录"),
                          QString::fromUtf8("没有在服务器中找到目录:\n %1")
                              .arg(DOTOS(path.generic_string())),
@@ -56,12 +55,11 @@ void toolkit::openPath(const doCore::dpath &path_) {
 
   str % path_noral;
 
-  DOODLE_LOG_INFO << "打开路径: " << str.str().c_str();
+  DOODLE_LOG_INFO("打开路径: " << str.str().c_str());
   if (boost::filesystem::exists(path)) {
     boost::process::system(str.str().c_str());
   } else {
-    DOODLE_LOG_CRIT << QString::fromUtf8("没有在服务器中找到目录:\n %1")
-                           .arg(DOTOS(path.generic_string()));
+    DOODLE_LOG_INFO("没有在服务器中找到目录:" << path.generic_string());
     QMessageBox::warning(nullptr, QString::fromUtf8("没有目录"),
                          QString::fromUtf8("没有在服务器中找到目录:\n %1")
                              .arg(DOTOS(path.generic_string())),

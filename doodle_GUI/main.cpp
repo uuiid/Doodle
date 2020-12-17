@@ -17,8 +17,9 @@
 #include <iostream>
 #include <QtCore/QFile>
 #include <QtGui/QWindow>
+#include <QTextStream>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) try {
   QApplication q_application(argc, argv);
 
   //初始化log
@@ -27,6 +28,9 @@ int main(int argc, char *argv[]) {
   //  //设置本地编码
   //  QTextCodec *codec = QTextCodec::codecForName("GBK");
   //  QTextCodec::setCodecForLocale(codec);
+
+  BOOST_LOG_TRIVIAL(debug) << "test";
+
   //设置主题
   QFile darkStyle{":qdarkstyle/style.qss"};
   if (darkStyle.exists()) {
@@ -43,5 +47,9 @@ int main(int argc, char *argv[]) {
   auto mainWin = doodle::mainWindows();
   mainWin.show();
 
-  return q_application.exec();
+  q_application.exec();
+  boost::log::core::get()->remove_all_sinks();
+  return 0;
+} catch (...) {
+  boost::log::core::get()->remove_all_sinks();
 }

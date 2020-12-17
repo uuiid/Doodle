@@ -57,7 +57,7 @@ void episodes::insert() {
 
   idP = db->insert(insert);
   if (idP == 0) {
-    DOODLE_LOG_WARN << "无法插入集数" << p_int_episodes;
+    DOODLE_LOG_WARN("无法插入集数" << p_int_episodes);
     throw std::runtime_error("not install eps");
   }
   p_instance.insert({idP, this});

@@ -71,8 +71,9 @@ void fileArchive::copyToCache() const {
     if (p_soureFile[index] == p_cacheFilePath[index])
       continue;  //如果路径相同就跳过
 
-    DOODLE_LOG_INFO << p_soureFile[index].generic_string().c_str() << "-copy->"
-                    << p_cacheFilePath[index].generic_string().c_str();
+    DOODLE_LOG_INFO(p_soureFile[index].generic_string().c_str()
+                    << "-copy->"
+                    << p_cacheFilePath[index].generic_string().c_str());
     if (!boost::filesystem::exists(p_cacheFilePath[index].parent_path()))
       boost::filesystem::create_directories(
           p_cacheFilePath[index].parent_path());
@@ -109,7 +110,7 @@ void fileArchive::_updata(const dpathList &pathList) {
   for (auto &&item : p_cacheFilePath) {
     if (!session.upload(item, p_Path[i])) {
       p_state_ = state::fail;
-      DOODLE_LOG_WARN << "无法上传文件" << (item).c_str();
+      DOODLE_LOG_WARN("无法上传文件" << (item).c_str());
       return;
     }
     ++i;
@@ -121,7 +122,7 @@ void fileArchive::_down(const dpath &localPath) {
     if (!boost::filesystem::exists(localPath))
       boost::filesystem::create_directories(localPath);
     if (!session.down(localPath / item.filename(), item)) {
-      DOODLE_LOG_WARN << "无法下载文件" << item.c_str();
+      DOODLE_LOG_WARN("无法下载文件" << item.c_str());
       p_state_ = state::fail;
       continue;
     }

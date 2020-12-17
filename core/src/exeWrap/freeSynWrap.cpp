@@ -166,8 +166,8 @@ void freeSynWrap::copyGlobSetting() {
 bool freeSynWrap::write() {
   copyGlobSetting();
   boost::format str("doodle_%s.ffs_batch");
-  DOODLE_LOG_INFO
-      << boost::filesystem::unique_path("%%%%_%%").generic_string().c_str();
+  DOODLE_LOG_INFO(
+      boost::filesystem::unique_path("%%%%_%%").generic_string().c_str());
   str % boost::filesystem::unique_path("%%%%_%%").filename().generic_string();
 
   *p_tem_config = *p_tem_config / str.str();
@@ -176,7 +176,7 @@ bool freeSynWrap::write() {
   p_doc_->save(kofstem, "\t", pugi::format_default, pugi::encoding_utf8);
 
   kofstem.close();
-  DOODLE_LOG_INFO << "写入配置文件" << p_tem_config->generic_string().c_str();
+  DOODLE_LOG_INFO("写入配置文件" << p_tem_config->generic_string().c_str());
   return true;
 }
 
@@ -185,7 +185,7 @@ bool freeSynWrap::run() {
   write();
   auto com_arg = boost::format("FreeFileSync.exe %s %s");
   com_arg % p_tem_config->generic_string() % p_tem_golb_->generic_string();
-  DOODLE_LOG_INFO << "命令  " << com_arg.str().c_str();
+  DOODLE_LOG_INFO("命令  " << com_arg.str().c_str());
   auto env = boost::this_process::environment();
   env["PATH"] += R"(C:\Program Files\FreeFileSync\)";
 
@@ -216,14 +216,12 @@ dstring freeSynWrap::createIpPath(const dstring &val) {
   // auto &set = coreSet::getSet();
   // serverPath % (set.getProjectname() + set.getUser_en()) % set.getIpFtp() %
   //     val % encode64(set.getUser_en());
-
-  // DOODLE_LOG_INFO << serverPath.str().c_str();
   //不带密码的访问
   auto serverPath = boost::format("ftp://%s@%s:21%s");
   auto &set = coreSet::getSet();
   serverPath % set.getProjectname() % set.getIpFtp() % val;
 
-  DOODLE_LOG_INFO << serverPath.str().c_str();
+  DOODLE_LOG_INFO(serverPath.str().c_str());
   return serverPath.str();
 }
 

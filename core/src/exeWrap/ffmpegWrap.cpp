@@ -42,7 +42,7 @@ bool ffmpegWrap::imageToVideo(const dpathList &image_path,
                      "-c:v libx264 -pix_fmt yuv420p -s 1920*1080 %3%") %
                  p_tmp_file_->generic_string() % subtitles % videoPath;
 
-  DOODLE_LOG_INFO << QString::fromStdString(com_arg.str());
+  DOODLE_LOG_INFO(com_arg.str());
 
   runFFmpeg(com_arg.str());
 
@@ -74,7 +74,7 @@ bool ffmpegWrap::convertToVideo(const dpath &in_videoPath,
           "fontcolor=0xc62d1d:fontsize=44:x=10:y=10:shadowx=3:shadowy=3\" "
           "-acodec mp2 -s 1920*1080 %3%") %
       in_videoPath % subtitles % out_videoPath;
-  DOODLE_LOG_INFO << QString::fromStdString(com_arg.str());
+  DOODLE_LOG_INFO(com_arg.str());
 
   runFFmpeg(com_arg.str());
 
@@ -105,7 +105,7 @@ bool ffmpegWrap::connectVideo(const dpathList &in_videoPath,
                      "+faststart %2%") %
                  p_tmp_file_->generic_path().string() %
                  out_videoPath.generic_path().string();
-  DOODLE_LOG_INFO << QString::fromStdString(com_arg.str());
+  DOODLE_LOG_INFO(com_arg.str());
 
   auto env = boost::this_process::environment();
 
@@ -143,7 +143,7 @@ bool ffmpegWrap::runFFmpeg(const std::string &command) const {
         &pi);
     // boost::process::system(command.c_str(), env);
   } catch (const boost::process::process_error &err) {
-    DOODLE_LOG_WARN << err.what() << err.code().message().c_str();
+    DOODLE_LOG_WARN(err.what() << err.code().message().c_str());
     return false;
   }
   WaitForSingleObject(pi.hProcess, INFINITE);
