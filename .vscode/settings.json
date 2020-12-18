@@ -132,9 +132,6 @@
         }
     ],
     "editor.formatOnSave": true,
-    "terminal.integrated.shellArgs.windows": [
-        "/K chcp 65001 >nul"
-    ],
     "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, SortIncludes: false, ColumnLimit: 0,AlignConsecutiveAssignments: true,AlignAfterOpenBracket: Align}",
     "C_Cpp.clang_format_style": "{BasedOnStyle: Google, SortIncludes: false, ColumnLimit: 0,AlignConsecutiveAssignments: true,AlignAfterOpenBracket: Align}",
     "cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}",
