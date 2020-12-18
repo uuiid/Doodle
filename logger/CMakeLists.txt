@@ -11,7 +11,9 @@ add_library(logger SHARED
     Logger.cpp
     LoggerTemplate.h)
 
-target_link_libraries(logger PUBLIC Boost::log Boost::filesystem)
+target_link_libraries(logger PUBLIC Boost::log )
+#私有连接
+target_link_libraries(logger PRIVATE Boost::locale Boost::filesystem)
 
 target_compile_definitions(logger PRIVATE LOGGER_LIBRARY)
 

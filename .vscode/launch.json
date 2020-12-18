@@ -12,9 +12,13 @@
                 {
                     "name": "PATH",
                     "value": "$PATH;${workspaceFolder}/install/bin;C:/Program Files/Autodesk/Maya2018/bin/"
+                },
+                {
+                    "name": "squid",
+                    "value": "clam"
                 }
             ],
-            "externalConsole": true,
+            "externalConsole": false,
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
         },
         {

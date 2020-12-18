@@ -29,8 +29,6 @@ int main(int argc, char *argv[]) try {
   //  QTextCodec *codec = QTextCodec::codecForName("GBK");
   //  QTextCodec::setCodecForLocale(codec);
 
-  BOOST_LOG_TRIVIAL(debug) << "test";
-
   //设置主题
   QFile darkStyle{":qdarkstyle/style.qss"};
   if (darkStyle.exists()) {
@@ -52,4 +50,5 @@ int main(int argc, char *argv[]) try {
   return 0;
 } catch (...) {
   boost::log::core::get()->remove_all_sinks();
+  return 1;
 }

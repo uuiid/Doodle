@@ -15,6 +15,8 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/support/date_time.hpp>
 
+#include <boost/locale.hpp>
+
 #include <boost/dll.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -91,16 +93,17 @@ void boostLoggerInitAsyn(const std::string &logPath,
   boost::log::core::get()->add_global_attribute("TimeStamp", boost::log::attributes::local_clock());
   boost::log::core::get()->add_sink(sink);
 
-  boost::log::trivial::info;
-
-  BOOST_LOG_TRIVIAL(debug)
-      << "log日志文件初始化成功";
-  boost::log::core::get()->flush();
+  sink->imbue(boost::locale::generator()("zh_CN.UTF-8"));
 
   //debug 记录器
   boost::shared_ptr<sink_t> sink_t(new sink_t());
   sink->set_filter(boost::log::expressions::is_debugger_present());
   boost::log::core::get()->add_sink(sink_t);
+  sink_t->imbue(boost::locale::generator()("zh_CN.UTF-8"));
+
+  BOOST_LOG_TRIVIAL(debug)
+      << "log日志文件初始化成功";
+  boost::log::core::get()->flush();
 }
 
 void doodle_initLog(const std::string &logPath, std::size_t logMaxSize, bool async) {
