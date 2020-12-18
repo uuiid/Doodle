@@ -9,16 +9,11 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
-#include <map>
+#include <boost/network/include/http/server.hpp>
+
 namespace boost::filesystem {
 class path;
 };
-
-namespace zmq {
-class socket_t;
-}
 
 #define DOODLE doodle
 #define DOODLE_NAMESPACE_S namespace DOODLE {
@@ -27,14 +22,10 @@ class socket_t;
   ;
 
 DOODLE_NAMESPACE_S
-using path_ptr    = std::shared_ptr<boost::filesystem::path>;
-using sokcket_ptr = std::shared_ptr<zmq::socket_t>;
-
+using path_ptr = std::shared_ptr<boost::filesystem::path>;
 class Handler;
-// using Server = boost::network::http::server<Handler>;
+using Server = boost::network::http::server<Handler>;
 class fileSystem;
 using fileSystem_ptr = std::shared_ptr<fileSystem>;
 
-const static std::string endpoint    = R"(tcp://*:6666)";
-const static std::string proxy_point = R"(tcp://127.0.0.1:6667)";
 DOODLE_NAMESPACE_E
