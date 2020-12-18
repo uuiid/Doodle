@@ -9,11 +9,31 @@
 
 #pragma once
 #include <DoodleServer_global.h>
-//后期希望可以去除
-// #include <boost/filesystem.hpp>
-
+#include <chrono>
+#include <zmq.hpp>
+#include <boost/system/windows_error.hpp>
 DOODLE_NAMESPACE_S
+class RequestInfo {
+ public:
+  std::string path;
+  std::string method;
 
+  std::string username;
+  std::string password;
+};
+
+class FileInfo {
+ public:
+  //文件路径
+  std::string path;
+  //文件是文件夹
+  bool is_folder;
+
+  //文件大小
+  std::size_t size;
+  //时间修改时间
+  std::chrono::system_clock::time_point modifyTime;
+};
 class fileSystem {
  public:
   fileSystem();
@@ -32,14 +52,14 @@ class connection_Handler
     : public std::enable_shared_from_this<connection_Handler> {
  public:
   connection_Handler(fileSystem_ptr f_ptr);
-  void operator()(const std::string &path, Server::connection_ptr conn,
+  void operator()(const std::string &path, sokcket_ptr conn,
                   bool server_body);
-  void send_file(std::pair<void *, std::size_t> mmaped_region, off_t offset, Server::connection_ptr conn);
+  void send_file(std::pair<void *, std::size_t> mmaped_region, off_t offset, sokcket_ptr conn);
   void handle_chunk(std::pair<void *, std::size_t> mmaped_region, off_t offset,
-                    Server::connection_ptr conn,
+                    sokcket_ptr conn,
                     boost::system::error_code const &ec);
 
-  void fail(Server::connection_ptr conn);
+  void fail(sokcket_ptr conn);
 
  private:
   fileSystem_ptr p_fileSystem;
@@ -49,8 +69,7 @@ class connection_Handler
 class Handler {
  public:
   Handler(fileSystem_ptr f_ptr);
-  void operator()(Server::request const &req,
-                  const Server::connection_ptr &conn);
+  void operator()(zmq::context_t *context);
 
  private:
   fileSystem_ptr p_fileSystem;

@@ -13,8 +13,9 @@
 #include <QCoreApplication>
 #include <QTextCodec>
 #include <QSqlQuery>
-#include <gtest/gtest.h>
+#include <QTextStream>
 
+#include <gtest/gtest.h>
 #include <iostream>
 class Environment : public ::testing::Environment {
  public:
@@ -32,11 +33,11 @@ void Environment::SetUp() {
 void Environment::TearDown() {}
 
 int main(int argc, char *argv[]) {
-  //创建qt必要的运行事件循环
-  QCoreApplication app(argc, argv);
-  QCoreApplication::setAttribute(Qt::AA_Use96Dpi, true);
   //初始化log
   Logger::doodle_initLog();
+
+  //创建qt必要的运行事件循环
+  QCoreApplication app(argc, argv);
   //设置本地编码
   QTextCodec *codec = QTextCodec::codecForName("GBK");
   QTextCodec::setCodecForLocale(codec);
@@ -44,5 +45,7 @@ int main(int argc, char *argv[]) {
   //初始化测试环境
   ::testing::InitGoogleTest(&argc, argv);
   ::testing::AddGlobalTestEnvironment(new Environment);
-  return RUN_ALL_TESTS();
+  RUN_ALL_TESTS();
+  boost::log::core::get()->remove_all_sinks();
+  return 0;
 }

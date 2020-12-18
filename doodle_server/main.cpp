@@ -8,69 +8,42 @@
  */
 
 #include <server.h>
+//这是一个zmq包装
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
+// //我们想要使用boost包装 不过看不太懂源码,  先使用其他的..........
+// #include <azmq/actor.hpp>
+// #include <azmq/socket.hpp>
+// #include <azmq/message.hpp>
+// #include <azmq/option.hpp>
+// #include <azmq/context.hpp>
+// #include <azmq/signal.hpp>
 
-#include <boost/filesystem.hpp>
-#include <boost/iostreams/device/mapped_file.hpp>
-// #include <boost/network/utils/thread_pool.hpp>
+#include <thread>
+
+#include <iostream>
+#include <server.h>
 
 int main(int argc, char const *argv[]) try {
-  const std::string endpoint = R"(tcp://*:6666)";
+  //这里是正常的服务器
+  zmq::context_t context{7, 1023};
 
-  zmq::context_t context{32};
   zmq::socket_t socket{context, zmq::socket_type::router};
-  socket.bind(endpoint);
+  zmq::socket_t proxy_socket{context, zmq::socket_type::dealer};
+
+  socket.bind(doodle::endpoint);
+  proxy_socket.bind(doodle::proxy_point);
 
   //文件处理类
   auto fileSys = std::make_shared<doodle::fileSystem>();
-  while (true) {
-    // zmq::message_t message;
-    zmq::multipart_t receive{};
-
-    receive.recv(socket, (int)zmq::recv_flags::none);
-
-    // socket.recv(message, zmq::recv_flags::none);  //zmq::recv_flags::dontwait
-    std::cout << receive << std::endl;
-    // message
-    // socket.send()
-    // message.to_string();
-    auto p_path = std::make_shared<boost::filesystem::path>(receive.back().to_string());
-    if (fileSys->has("dubuxiaoyao3", p_path)) {
-      zmq::multipart_t reply{};
-      reply.push_back(receive.pop());
-      reply.push_back(zmq::message_t{});  //插入空帧?
-
-      auto file = fileSys->get("dubuxiaoyao3", p_path);
-      boost::filesystem::ifstream stream(*file, std::ifstream::in | std::ifstream::binary);
-
-      boost::iostreams::mapped_file_params parameters{file->generic_string()};
-      parameters.flags = boost::iostreams::mapped_file::mapmode::readonly;
-
-      boost::iostreams::mapped_file_source source{parameters};
-      if (!source.is_open())
-        source.open(parameters);
-
-      std::cout << "da xiao " << source.size() << std::endl;
-      //在这个地方我们构造消息的主体
-      zmq::message_t p_message{(void *)source.data(), source.size()};
-      reply.add(std::move(p_message));
-      reply.send(socket);
-      // p_message
-      // socket.send(p_message, zmq::send_flags::none);
-    } else {
-      receive.send(socket);
-    }
-  }
-
-  // auto fileSys = std::make_shared<doodle::fileSystem>();
-  // doodle::Handler handle(fileSys);
-  // doodle::Server::options options(handle);
-  // doodle::Server instance{
-  //     options.thread_pool(std::make_shared<boost::network::utils::thread_pool>(4))
-  //         .address("127.0.0.1")
-  //         .port("8000")};
-  // instance.run();
+  doodle::Handler h{fileSys};
+  std::thread thread{
+      [=](doodle::Handler &h_, zmq::context_t *context_k) {
+        h_(context_k);
+      },
+      h, &context};
+  //设置代理
+  zmq::proxy(socket, proxy_socket);
   return 0;
 } catch (const std::exception &error) {
   std::cout << error.what() << std::endl;
