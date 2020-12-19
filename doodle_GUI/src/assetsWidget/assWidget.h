@@ -15,9 +15,9 @@ class assWidght : public QWidget {
   Q_OBJECT
  public:
   explicit assWidght(QWidget *parent = nullptr);
- public slots:
+ public Q_SLOTS:
   void refresh();
- private slots:
+ private Q_SLOTS:
   void setFilterRegExp(const QString &filter);
 
  private:

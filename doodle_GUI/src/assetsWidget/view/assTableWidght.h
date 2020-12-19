@@ -25,6 +25,8 @@ class assTableWidght : public QTableView {
   explicit assTableWidght(QWidget* parent = nullptr);
 
   void setModel(QAbstractItemModel* model) override;
+ Q_SIGNALS:
+  void refreshClass();
 
  private:
   void init();
@@ -37,7 +39,7 @@ class assTableWidght : public QTableView {
   void insertAss(const QString& path);
   void enableBorder(const bool& isEnable);
 
- private slots:
+ private Q_SLOTS:
   void openFileDialog();
   void createLightDir();
 

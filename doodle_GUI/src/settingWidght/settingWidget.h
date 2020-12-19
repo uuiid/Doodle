@@ -13,11 +13,11 @@ class QListWidget;
 DOODLE_NAMESPACE_S
 
 class settingWidget : public QWidget {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit settingWidget(QWidget *parent = nullptr);
 
- public slots:
+ public Q_SLOTS:
   void setDepartment(const QString &dep);
   void setUser(const QString &user);
   void setLocaleSynPath(const QString &path);
@@ -25,8 +25,10 @@ class settingWidget : public QWidget {
   void setProject(const QString &prj);
   void save();
   void setInit();
+
  protected:
   void closeEvent(QCloseEvent *event) override;
+
  private:
   doCore::coreSet &p_set_ = doCore::coreSet::getSet();
 

@@ -50,7 +50,7 @@ bool assTypeModel::setData(const QModelIndex &index, const QVariant &value,
 
   if (!is_has) {
     p_file_type_ptr_list_[index.row()]->setType(value.toString());
-    emit dataChanged(index, index, {role});
+    dataChanged(index, index, {role});
     return true;
   }
   return false;

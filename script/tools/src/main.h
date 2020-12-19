@@ -24,7 +24,7 @@ class mayaAbcExport : public QWidget {
  public:
   mayaAbcExport(QWidget *parent = nullptr);
 
- private slots:
+ private Q_SLOTS:
   void openDialogGetDir();
   void setDirString(const QString &text);
   void exportFbxFile();

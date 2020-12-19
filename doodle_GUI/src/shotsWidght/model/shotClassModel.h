@@ -8,19 +8,19 @@
 
 #include <QAbstractListModel>
 
-
 #include "doodle_global.h"
 #include "core_global.h"
 
 DOODLE_NAMESPACE_S
 class shotClassModel : public QAbstractListModel {
- Q_OBJECT
+  Q_OBJECT
  private:
   doCore::shotClassPtrList list_fileClass;
 
  public:
   explicit shotClassModel(QObject *parent = nullptr);
-  ~shotClassModel() override = default;;
+  ~shotClassModel() override = default;
+  ;
 
   //返回总行数
   int rowCount(const QModelIndex &parent) const override;
@@ -39,7 +39,7 @@ class shotClassModel : public QAbstractListModel {
   bool insertRows(int position, int rows, const QModelIndex &index) override;
   bool removeRows(int position, int rows, const QModelIndex &index) override;
 
- public slots:
+ public Q_SLOTS:
   void init();
   void reInit();
   void clear();

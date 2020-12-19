@@ -13,20 +13,19 @@
 
 DOODLE_NAMESPACE_S
 fileTypeAssDelegate::fileTypeAssDelegate(QObject *parent) : QStyledItemDelegate(parent) {
-
 }
 QWidget *fileTypeAssDelegate::createEditor(QWidget *parent,
                                            const QStyleOptionViewItem &option,
                                            const QModelIndex &index) const {
-  auto * fileType = new QComboBox(parent);
+  auto *fileType = new QComboBox(parent);
 
   auto assClass = doCore::coreDataManager::get().getAssClassPtr();
   QStringList list;
   list << "sourceimages"
-  << "scenes"
-  << QString("%1_UE4").arg(assClass->getAssClassQ(true))
-  << "rig"
-  << QString("%1_low").arg(assClass->getAssClassQ(true));
+       << "scenes"
+       << QString("%1_UE4").arg(assClass->getAssClassQ(true))
+       << "rig"
+       << QString("%1_low").arg(assClass->getAssClassQ(true));
 
   fileType->addItems(list);
 
@@ -40,7 +39,7 @@ void fileTypeAssDelegate::setEditorData(QWidget *editor, const QModelIndex &inde
 void fileTypeAssDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const {
   auto *edit = dynamic_cast<QComboBox *>(editor);
 
-  auto value = edit->currentText();
+  auto value                      = edit->currentText();
   QMessageBox::StandardButton box = QMessageBox::information(dynamic_cast<QWidget *>(this->parent()),
                                                              tr("警告:"),
                                                              tr("将 %1 类型提交到服务器").arg(value),
@@ -55,17 +54,14 @@ void fileTypeAssDelegate::updateEditorGeometry(QWidget *editor, const QStyleOpti
   editor->setGeometry(option.rect);
 }
 
-
-
-
 assTypeWidget::assTypeWidget(QWidget *parent)
     : QListView(parent),
       p_type_ptr_list_(),
       p_menu_(nullptr),
       p_model_(nullptr) {
   setItemDelegate(new fileTypeAssDelegate(this));
-  connect(this,&assTypeWidget::clicked,
-          this,&assTypeWidget::_doodle_type_emit);
+  connect(this, &assTypeWidget::clicked,
+          this, &assTypeWidget::_doodle_type_emit);
 }
 void assTypeWidget::setModel(QAbstractItemModel *model) {
   auto k_model = dynamic_cast<assTypeModel *>(model);
@@ -75,16 +71,15 @@ void assTypeWidget::setModel(QAbstractItemModel *model) {
 }
 
 void assTypeWidget::inserttype() {
- int raw = selectionModel()->currentIndex().row();
- p_model_->insertRow(raw);
- setCurrentIndex(p_model_->index(raw));
- edit(p_model_->index(raw));
+  int raw = selectionModel()->currentIndex().row();
+  p_model_->insertRow(raw);
+  setCurrentIndex(p_model_->index(raw));
+  edit(p_model_->index(raw));
 }
 void assTypeWidget::_doodle_type_emit(const QModelIndex &index) {
   doCore::coreDataManager::get().setAssTypePtr(
-      index.data(Qt::UserRole).value<doCore::assTypePtr>()
-      );
-  emit doodleUseFilter(true);
+      index.data(Qt::UserRole).value<doCore::assTypePtr>());
+  doodleUseFilter(true);
 }
 void assTypeWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
@@ -92,7 +87,7 @@ void assTypeWidget::mousePressEvent(QMouseEvent *event) {
     clearSelection();
     p_model_->reInit();
     doCore::coreDataManager::get().setAssTypePtr(nullptr);
-    emit doodleUseFilter(false);
+    doodleUseFilter(false);
   }
 }
 //void assTypeWidget::contextMenuEvent(QContextMenuEvent *event) {

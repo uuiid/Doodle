@@ -115,7 +115,7 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
 void shotEpsListWidget::_doodle_episodes_emit(const QModelIndex &index) {
   doCore::coreDataManager::get().setEpisodesPtr(index.data(Qt::UserRole)
                                                     .value<doCore::episodesPtr>());
-  emit initEmit();
+  initEmit();
 }
 void shotEpsListWidget::setModel(QAbstractItemModel *model) {
   auto p_model = dynamic_cast<shotEpsListModel *>(model);
@@ -123,7 +123,7 @@ void shotEpsListWidget::setModel(QAbstractItemModel *model) {
   QAbstractItemView::setModel(model);
 }
 void shotEpsListWidget::creatEpsMov() {
-  emit initEmit();
+  initEmit();
   auto shotInfo = std::make_shared<doCore::shotFileSqlInfo>();
 
   const auto &kEps = selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>();

@@ -18,19 +18,20 @@
 DOODLE_NAMESPACE_S
 
 class shotClassWidget : public QListView {
- Q_OBJECT
+  Q_OBJECT
 
  public:
   explicit shotClassWidget(QWidget *parent = nullptr);
   ~shotClassWidget() override = default;
 
   void setModel(QAbstractItemModel *model) override;
+
  public:
   void clear();
- signals:
+ Q_SIGNALS:
   void doodleUseFilter(bool useFilter);
 
- private slots:
+ private Q_SLOTS:
   //添加fileclass
   void insertFileClass();
   //私有化fileclass发射

@@ -48,7 +48,7 @@ shotEditWidget::~shotEditWidget() = default;
 QMap<QString, QVariant> shotEditWidget::value() {
   QMap<QString, QVariant> map;
 
-  map["shot"] = p_spin->value();
+  map["shot"]   = p_spin->value();
   map["shotAb"] = p_combox->currentText();
   return map;
 }
@@ -85,7 +85,7 @@ QWidget *shotIntEnumDelegate::createEditor(QWidget *parent,
 void shotIntEnumDelegate::setEditorData(QWidget *editor,
                                         const QModelIndex &index) const {
   auto *shotedit = static_cast<shotEditWidget *>(editor);
-  auto map = index.data(Qt::EditRole).toMap();
+  auto map       = index.data(Qt::EditRole).toMap();
   shotedit->setValue(map);
 }
 
@@ -94,7 +94,7 @@ void shotIntEnumDelegate::setModelData(QWidget *editor,
                                        const QModelIndex &index) const {
   auto *shotedit = static_cast<shotEditWidget *>(editor);
 
-  QMap<QString, QVariant> data = shotedit->value();
+  QMap<QString, QVariant> data    = shotedit->value();
   QMessageBox::StandardButton box = QMessageBox::information(
       static_cast<QWidget *>(this->parent()), tr("警告:"),
       tr("将镜头 sc%1%2 提交到服务器")
@@ -144,7 +144,7 @@ void shotListWidget::insertShot() {
 void shotListWidget::_doodle_shot_emit(const QModelIndex &index) {
   doCore::coreDataManager::get().setShotPtr(
       index.data(Qt::UserRole).value<doCore::shotPtr>());
-  emit initEmit();
+  initEmit();
 }
 
 void shotListWidget::contextMenuEvent(QContextMenuEvent *event) {

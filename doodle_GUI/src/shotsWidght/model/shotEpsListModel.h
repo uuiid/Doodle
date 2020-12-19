@@ -12,7 +12,7 @@ DOODLE_NAMESPACE_S
  * @description: 自定义集数模型
  */
 class shotEpsListModel : public QAbstractListModel {
- Q_OBJECT
+  Q_OBJECT
  private:
   doCore::episodesPtrList eplist;
 
@@ -33,10 +33,9 @@ class shotEpsListModel : public QAbstractListModel {
   //添加数据
   bool insertRows(int position, int rows, const QModelIndex &index) override;
   bool removeRows(int position, int rows, const QModelIndex &index) override;
- public slots:
+ public Q_SLOTS:
   //刷新函数
   void init();
   void clear();
 };
 DOODLE_NAMESPACE_E
-

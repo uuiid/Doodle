@@ -24,6 +24,7 @@ class CORE_API synData : public coresqldata {
   episodesPtr getEpisodes();
 
   dpathPtr push_back(const assClassPtr &ass_class_ptr);
+  synPathListPtr getSynDir(bool abspath = true);
 
  private:
   std::string toString();

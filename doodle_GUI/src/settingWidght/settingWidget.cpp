@@ -27,20 +27,20 @@ settingWidget::settingWidget(QWidget *parent)
 
   auto p_user_label = new QLabel(this);
   p_user_label->setText(tr("用户名:"));
-  p_user_text = new QLineEdit(this);
+  p_user_text        = new QLineEdit(this);
   auto p_user_layout = new QHBoxLayout();
   p_user_layout->addWidget(p_user_label);
   p_user_layout->addWidget(p_user_text);
 
   auto p_syn_label = new QLabel(this);
   p_syn_label->setText(tr("同步目录:"));
-  p_syn_text = new QLineEdit(this);
+  p_syn_text        = new QLineEdit(this);
   auto p_syn_layout = new QHBoxLayout();
   p_syn_layout->addWidget(p_syn_label);
   p_syn_layout->addWidget(p_syn_text);
 
   auto p_eps_label = new QLabel(this);
-  p_eps_text = new QSpinBox(this);
+  p_eps_text       = new QSpinBox(this);
   p_eps_label->setText(tr("同步集数:"));
   auto p_eps_layout = new QHBoxLayout();
   p_eps_layout->addWidget(p_eps_label);
@@ -48,7 +48,7 @@ settingWidget::settingWidget(QWidget *parent)
 
   auto p_prj_label = new QLabel(this);
   p_prj_label->setText(tr("项目名称:"));
-  p_prj_text = new QComboBox(this);
+  p_prj_text        = new QComboBox(this);
   auto p_prj_layout = new QHBoxLayout();
   p_prj_layout->addWidget(p_prj_label);
   p_prj_layout->addWidget(p_prj_text);
@@ -59,7 +59,7 @@ settingWidget::settingWidget(QWidget *parent)
 
   auto p_save = new QPushButton(this);
   p_save->setText(tr("保存"));
-  connect(p_save,&QPushButton::clicked,
+  connect(p_save, &QPushButton::clicked,
           this, &settingWidget::save);
 
   auto p_same_layout = new QVBoxLayout();
@@ -72,27 +72,26 @@ settingWidget::settingWidget(QWidget *parent)
   p_same_layout->addWidget(p_save);
 
   p_syn_locale_path = new QListWidget(this);
-  p_syn_sever_path = new QListWidget(this);
+  p_syn_sever_path  = new QListWidget(this);
   p_layout->addLayout(p_same_layout);
   p_layout->addWidget(p_syn_locale_path);
   p_layout->addWidget(p_syn_sever_path);
 
   setInit();
 
-  connect(p_dep_text,&QComboBox::currentTextChanged,
+  connect(p_dep_text, &QComboBox::currentTextChanged,
           this, &settingWidget::setDepartment);
-  connect(p_user_text, & QLineEdit::textChanged,
+  connect(p_user_text, &QLineEdit::textChanged,
           this, &settingWidget::setUser);
-  connect(p_syn_text ,&QLineEdit::textChanged,
+  connect(p_syn_text, &QLineEdit::textChanged,
           this, &settingWidget::setLocaleSynPath);
   connect(p_prj_text, &QComboBox::currentTextChanged,
           this, &settingWidget::setProject);
   connect(p_eps_text, QOverload<int>::of(&QSpinBox::valueChanged),
-          this,&settingWidget::seteps);
-
-
+          this, &settingWidget::seteps);
 }
 void settingWidget::setInit() {
+  p_prj_text->clear();
   for (const auto &name : p_set_.getAllPrjName()) {
     p_prj_text->addItem(DOTOS(name));
   }
@@ -119,12 +118,18 @@ void settingWidget::setLocaleSynPath(const QString &path) {
 void settingWidget::seteps(int eps) {
   if (eps <= 0) return;
   p_set_.setSyneps(eps);
+  auto eps_ptr = doCore::episodes::find_by_eps(eps);
   p_syn_locale_path->clear();
   p_syn_sever_path->clear();
-  auto tmplist = p_set_.getSynDir();
-  for(auto &&x :tmplist){
-    p_syn_locale_path->addItem(DOTOS(x.local.generic_string()));
-    p_syn_sever_path->addItem(DOTOS(x.server.generic_string()));
+
+  if (eps_ptr) {
+    auto syneps = doCore::synData::getAll(eps_ptr);
+
+    auto tmplist = syneps->getSynDir();
+    for (auto &&x : tmplist) {
+      p_syn_locale_path->addItem(DOTOS(x.local.generic_string()));
+      p_syn_sever_path->addItem(DOTOS(x.server.generic_string()));
+    }
   }
 }
 void settingWidget::setProject(const QString &prj) {

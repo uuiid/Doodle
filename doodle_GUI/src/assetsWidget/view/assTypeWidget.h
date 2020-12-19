@@ -11,7 +11,7 @@
 #include <QListView>
 DOODLE_NAMESPACE_S
 
-class fileTypeAssDelegate : public QStyledItemDelegate{
+class fileTypeAssDelegate : public QStyledItemDelegate {
   Q_OBJECT
  public:
   explicit fileTypeAssDelegate(QObject *parent = nullptr);
@@ -27,18 +27,16 @@ class fileTypeAssDelegate : public QStyledItemDelegate{
                             const QModelIndex &index) const override;
 };
 
-
-
-
 class assTypeWidget : public QListView {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit assTypeWidget(QWidget *parent = nullptr);
 
   void setModel(QAbstractItemModel *model) override;
 
- signals:
+ Q_SIGNALS:
   void doodleUseFilter(bool useFilter);
+
  private:
   doCore::shotTypePtrList p_type_ptr_list_;
   //m模型指针
@@ -46,7 +44,7 @@ class assTypeWidget : public QListView {
   //菜单
   QMenu *p_menu_;
 
- private slots:
+ private Q_SLOTS:
   void inserttype();
   void _doodle_type_emit(const QModelIndex &index);
 

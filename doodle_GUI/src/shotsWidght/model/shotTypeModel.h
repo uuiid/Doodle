@@ -2,7 +2,6 @@
 // Created by teXiao on 2020/10/14.
 //
 
-
 #pragma once
 
 #include "doodle_global.h"
@@ -14,7 +13,7 @@
 DOODLE_NAMESPACE_S
 
 class shotTypeModel : public QAbstractListModel {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit shotTypeModel(QObject *parent = nullptr);
   ~shotTypeModel() override;
@@ -37,10 +36,11 @@ class shotTypeModel : public QAbstractListModel {
   //删除数据
   bool removeRows(int position, int rows, const QModelIndex &index) override;
 
- public slots:
+ public Q_SLOTS:
   void init();
   void reInit();
   void clear();
+
  private:
   doCore::shotTypePtrList p_type_ptr_list_;
 };

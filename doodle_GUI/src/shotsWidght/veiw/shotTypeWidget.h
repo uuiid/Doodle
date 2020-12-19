@@ -15,7 +15,7 @@
 DOODLE_NAMESPACE_S
 //-----------------------------------自定义委托---------------------------------------------//
 class fileTypeShotDelegate : public QStyledItemDelegate {
- Q_OBJECT
+  Q_OBJECT
 
  public:
   explicit fileTypeShotDelegate(QObject *parent = nullptr);
@@ -34,14 +34,14 @@ class fileTypeShotDelegate : public QStyledItemDelegate {
 
 //-----------------------------------自定义小部件---------------------------------------------//
 class shotTypeWidget : public QListView {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit shotTypeWidget(QWidget *parent = nullptr);
   ~shotTypeWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
   void clear();
- signals:
+ Q_SIGNALS:
   void doodleUseFilter(bool useFilter);
 
  private:
@@ -53,15 +53,15 @@ class shotTypeWidget : public QListView {
   QMenu *p_menu_;
   //上一级发射出来的指针
   doCore::shotClassPtr p_file_class_ptr_;
- private slots:
+ private Q_SLOTS:
   //添加filetype
   void insertFileType();
   //发射fileType
   void _doodle_type_emit(const QModelIndex &index);
+
  protected:
   void mousePressEvent(QMouseEvent *event) override;
   //void contextMenuEvent(QContextMenuEvent *event) override;
 };
 
 DOODLE_NAMESPACE_E
-

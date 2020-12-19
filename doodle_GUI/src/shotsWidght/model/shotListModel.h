@@ -16,7 +16,7 @@ DOODLE_NAMESPACE_S
  * @description: 这个时镜头的自定义模型
  */
 class shotListModel : public QAbstractListModel {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit shotListModel(QObject *parent = nullptr);
   ~shotListModel() override;
@@ -37,10 +37,11 @@ class shotListModel : public QAbstractListModel {
   bool insertRows(int position, int rows, const QModelIndex &index) override;
   //删除数据
   bool removeRows(int position, int rows, const QModelIndex &index) override;
- public slots:
+ public Q_SLOTS:
   //自定义创建函数
   void init();
   void clear();
+
  private:
   doCore::shotPtrList shotlist;
 };

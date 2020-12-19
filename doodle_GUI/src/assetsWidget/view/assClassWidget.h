@@ -40,13 +40,13 @@ class assClassWidget : public QListView {
   explicit assClassWidget(QWidget* parent = nullptr);
 
   void setModel(QAbstractItemModel* model) override;
- signals:
+ Q_SIGNALS:
   void initEmited();
 
  private:
   QMenu* p_menu_;
 
- private slots:
+ private Q_SLOTS:
   void insertAss();
   void editAssName();
   void deleteSQLFile();

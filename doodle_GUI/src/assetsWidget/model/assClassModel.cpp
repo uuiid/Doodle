@@ -62,7 +62,7 @@ bool assClassModel::setData(const QModelIndex &index, const QVariant &value,
       } else {
         ass->insert();
       }
-      emit dataChanged(index, index, {role});
+      dataChanged(index, index, {role});
       return true;
     }
   }

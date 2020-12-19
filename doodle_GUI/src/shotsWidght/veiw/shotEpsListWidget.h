@@ -11,7 +11,6 @@
 #include "doodle_global.h"
 #include "core_global.h"
 
-
 #include <QAbstractListModel>
 #include <QStyledItemDelegate>
 #include <QListView>
@@ -22,7 +21,7 @@ DOODLE_NAMESPACE_S
  * @description: 自定义集数委托
  */
 class episodesintDelegate : public QStyledItemDelegate {
- Q_OBJECT
+  Q_OBJECT
 
  private:
   /* data */
@@ -44,13 +43,13 @@ class episodesintDelegate : public QStyledItemDelegate {
 };
 
 class shotEpsListWidget : public QListView {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit shotEpsListWidget(QWidget *parent = nullptr);
   ~shotEpsListWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
- signals:
+ Q_SIGNALS:
   void initEmit();
 
  private:
@@ -58,11 +57,12 @@ class shotEpsListWidget : public QListView {
   episodesintDelegate *p_episodesListDelegate;
 
   QMenu *p_eps_Menu;
- private slots:
+ private Q_SLOTS:
   void insertEpisodes();
   void _doodle_episodes_emit(const QModelIndex &index);
 
   void creatEpsMov();
+
  protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
 };

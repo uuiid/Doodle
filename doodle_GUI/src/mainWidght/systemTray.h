@@ -20,9 +20,10 @@ class systemTray : public QSystemTrayIcon {
   Q_OBJECT
  public:
   explicit systemTray(mainWindows *parent = nullptr);
-  enum class installModel { peject, exeFile };
+  enum class installModel { peject,
+                            exeFile };
 
- private slots:
+ private Q_SLOTS:
   void synFile();
   void installMayaPlug();
   void installUe4Plug(const installModel &model);

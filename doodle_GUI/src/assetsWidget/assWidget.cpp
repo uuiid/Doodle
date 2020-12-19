@@ -41,16 +41,16 @@ assWidght::assWidght(QWidget *parent)
   p_ass_layout_->setSpacing(3);
   p_ass_layout_->setContentsMargins(0, 0, 0, 0);
 
-  p_ass_dep_model_ = new assDepModel(this);
+  p_ass_dep_model_   = new assDepModel(this);
   p_ass_class_model_ = new assClassModel(this);
-  p_ass_type_model_ = new assTypeModel(this);
+  p_ass_type_model_  = new assTypeModel(this);
   p_ass_table_model_ = new assTableModel(this);
 
   p_ass_dep_widget_ = new assDepWidget();
   p_ass_dep_widget_->setObjectName("p_file_class_ass_widget_");
   p_ass_dep_widget_->setModel(p_ass_dep_model_);
   //搜索框
-  auto k_filterLineEdit = new QLineEdit(this);
+  auto k_filterLineEdit      = new QLineEdit(this);
   auto k_filterLineEditLabel = new QLabel(this);
   k_filterLineEditLabel->setText(tr("过滤"));
 
@@ -86,6 +86,11 @@ assWidght::assWidght(QWidget *parent)
           &assTypeModel::reInit);
   connect(p_ass_class_widget_, &assClassWidget::initEmited, p_ass_type_model_,
           &assTypeModel::reInit);
+
+  //连接一些table的刷新
+  connect(p_ass_info_widght_, &assTableWidght::refreshClass,
+          p_ass_type_model_, &assTypeModel::init);
+
   //布局
   p_ass_layout_->addWidget(p_ass_dep_widget_, 0, 0, 1, 2);
   p_ass_layout_->addWidget(k_filterLineEditLabel, 1, 0, 1, 1);

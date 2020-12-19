@@ -21,7 +21,7 @@ void assDepWidget::_doodle_emit(const QModelIndex &index) {
   auto assdep = p_file_class_ass_model_->data(index, Qt::UserRole)
                     .value<doCore::assDepPtr>();
   doCore::coreDataManager::get().setAssDepPtr(assdep);
-  emit initEmit();
+  initEmit();
 }
 assDepWidget::~assDepWidget() = default;
 DOODLE_NAMESPACE_E

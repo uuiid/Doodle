@@ -36,7 +36,7 @@ void episodes::select(const qint64 &ID_) {
                .from(table)
                .where(table.id == ID_))) {
     p_int_episodes = row.episodes;
-    idP = row.id;
+    idP            = row.id;
   }
   p_instance.insert({idP, this});
 }
@@ -52,7 +52,7 @@ void episodes::insert() {
   auto db = coreSql::getCoreSql().getConnection();
 
   auto insert = sqlpp::insert_into(table)
-                    .set(table.episodes = p_int_episodes,
+                    .set(table.episodes  = p_int_episodes,
                          table.projectId = p_prj);
 
   idP = db->insert(insert);
@@ -82,10 +82,10 @@ episodesPtrList episodes::getAll() {
                .from(table)
                .where(table.projectId == coreSet::getSet().projectName().first)
                .order_by(table.episodes.asc()))) {
-    auto eps = std::make_shared<episodes>();
+    auto eps            = std::make_shared<episodes>();
     eps->p_int_episodes = row.episodes;
-    eps->idP = row.id;
-    eps->p_prj = row.projectId;
+    eps->idP            = row.id;
+    eps->p_prj          = row.projectId;
     list.push_back(eps);
     p_instance.insert({eps->idP, eps.get()});
   }
@@ -96,9 +96,18 @@ void episodes::setEpisdes(const int64_t &value) {
   p_int_episodes = value;
 }
 
-episodesPtr episodes::find(int64_t episodes) {
+episodesPtr episodes::find_by_id(int64_t id_) {
   for (auto &&eps_ptr : p_instance) {
-    if (eps_ptr.second->idP == episodes) {
+    if (eps_ptr.second->idP == id_) {
+      return eps_ptr.second->shared_from_this();
+    }
+  }
+  return nullptr;
+}
+
+episodesPtr episodes::find_by_eps(int64_t episodes_) {
+  for (auto &&eps_ptr : p_instance) {
+    if (eps_ptr.second->getEpisdes() == episodes_) {
       return eps_ptr.second->shared_from_this();
     }
   }

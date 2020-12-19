@@ -87,7 +87,7 @@ void assClassWidget::_doodle_ass_emit(const QModelIndex& index) {
   auto assClass =
       model()->data(index, Qt::UserRole).value<doCore::assClassPtr>();
   doCore::coreDataManager::get().setAssClassPtr(assClass);
-  emit initEmited();
+  initEmited();
 }
 void assClassWidget::contextMenuEvent(QContextMenuEvent* event) {
   if (p_menu_) {

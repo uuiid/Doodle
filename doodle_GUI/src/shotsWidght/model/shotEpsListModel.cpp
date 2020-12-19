@@ -67,7 +67,7 @@ bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value,
     else {
       eplist[index.row()]->setEpisdes(value.toInt());
       eplist[index.row()]->insert();
-      emit dataChanged(index, index, {role});
+      dataChanged(index, index, {role});
       return true;
     }
   }

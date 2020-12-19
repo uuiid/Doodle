@@ -14,7 +14,6 @@ DOODLE_NAMESPACE_S
 
 //-----------------------------------自定义委托---------------------------------------------//
 fileTypeShotDelegate::fileTypeShotDelegate(QObject *parent) : QStyledItemDelegate(parent) {
-
 }
 QWidget *fileTypeShotDelegate::createEditor(QWidget *parent,
                                             const QStyleOptionViewItem &option_view_item,
@@ -31,7 +30,7 @@ void fileTypeShotDelegate::setModelData(QWidget *editor,
   auto *shotedit = static_cast<QLineEdit *>(editor);
 
   auto data = shotedit->text();
-  auto box = QMessageBox::information(static_cast<QWidget *>(this->parent()),
+  auto box  = QMessageBox::information(static_cast<QWidget *>(this->parent()),
                                       tr("警告:"),
                                       tr("将种类 %1 提交到服务器").arg(data),
                                       QMessageBox::Yes | QMessageBox::Cancel);
@@ -46,8 +45,6 @@ void fileTypeShotDelegate::updateEditorGeometry(QWidget *editor,
   editor->setGeometry(option.rect);
 }
 fileTypeShotDelegate::~fileTypeShotDelegate() = default;
-
-
 
 //-----------------------------------自定义小部件---------------------------------------//
 
@@ -65,7 +62,6 @@ shotTypeWidget::shotTypeWidget(QWidget *parent)
 
   connect(this, &shotTypeWidget::clicked,
           this, &shotTypeWidget::_doodle_type_emit);
-
 }
 
 void shotTypeWidget::insertFileType() {
@@ -77,9 +73,8 @@ void shotTypeWidget::insertFileType() {
 }
 void shotTypeWidget::_doodle_type_emit(const QModelIndex &index) {
   doCore::coreDataManager::get().setShotTypePtr(
-      index.data(Qt::UserRole).value<doCore::shotTypePtr>()
-  );
-  emit doodleUseFilter(true);
+      index.data(Qt::UserRole).value<doCore::shotTypePtr>());
+  doodleUseFilter(true);
 }
 void shotTypeWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
@@ -118,8 +113,3 @@ void shotTypeWidget::clear() {
 shotTypeWidget::~shotTypeWidget() = default;
 
 DOODLE_NAMESPACE_E
-
-
-
-
-

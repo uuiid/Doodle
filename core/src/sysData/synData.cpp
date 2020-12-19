@@ -48,7 +48,7 @@ synDataPtr synData::getAll(const episodesPtr &episodes) {
   if (!episodes) return nullptr;
 
   doodle::Synfile tab{};
-  auto db = coreSql::getCoreSql().getConnection();
+  auto db  = coreSql::getCoreSql().getConnection();
   auto ptr = std::make_shared<synData>();
 
   for (const auto &row :
@@ -57,7 +57,7 @@ synDataPtr synData::getAll(const episodesPtr &episodes) {
                    .where(tab.episodesId == episodes->getIdP()))) {
     ptr->idP = row.id;
     ptr->setSynPath(row.path);
-    ptr->setEpisodes(episodes::find(row.episodesId));
+    ptr->setEpisodes(episodes::find_by_id(row.episodesId));
   }
 
   return ptr;
@@ -92,7 +92,27 @@ dpathPtr synData::push_back(const assClassPtr &ass_class_ptr) {
   }
   return std::make_shared<dpath>(data.server);
 }
+
+synPathListPtr synData::getSynDir(bool abspath) {
+  if (abspath) {
+    auto &set = coreSet::getSet();
+    synPathListPtr parts{};
+    for (auto &item : p_path) {
+      auto k_path  = synPath_struct();
+      k_path.local = set.getSynPathLocale() / set.projectName().second /
+                     item.local / DOODLE_CONTENT / "shot";
+      k_path.server = set.getAssRoot() / set.getDepartment() / item.server /
+                      DOODLE_CONTENT / "shot";
+      parts.push_back(k_path);
+    }
+    return parts;
+  }
+
+  return p_path;
+}
+
 episodesPtr synData::getEpisodes() { return p_episodes_; }
+
 void synData::setEpisodes(const episodesPtr &episodes_ptr) {
   p_episodes_ = episodes_ptr;
 }
@@ -110,7 +130,7 @@ void synData::setSynPath(const std::string &json_str) {
     for (auto &item : root) {
       synPath_struct data{};
       data.server = item.value("Left", "");
-      data.local = item.value("Right", "");
+      data.local  = item.value("Right", "");
       p_path.push_back(data);
     }
   } catch (nlohmann::json::parse_error &error) {

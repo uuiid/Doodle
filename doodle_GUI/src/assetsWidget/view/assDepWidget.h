@@ -9,21 +9,20 @@
 #include <QListView>
 DOODLE_NAMESPACE_S
 class assDepWidget : public QListView {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit assDepWidget(QWidget *parent = nullptr);
   ~assDepWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
 
- signals:
+ Q_SIGNALS:
   void initEmit();
 
  private:
-  assDepModel * p_file_class_ass_model_;
+  assDepModel *p_file_class_ass_model_;
 
- private slots:
-  void _doodle_emit(const  QModelIndex & index);
-
+ private Q_SLOTS:
+  void _doodle_emit(const QModelIndex &index);
 };
 DOODLE_NAMESPACE_E

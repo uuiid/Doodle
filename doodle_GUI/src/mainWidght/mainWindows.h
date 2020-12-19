@@ -15,7 +15,7 @@
 DOODLE_NAMESPACE_S
 
 class mainWindows : public QMainWindow {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit mainWindows(QWidget *parent = nullptr);
   //~mainWindows() override;
@@ -25,26 +25,25 @@ class mainWindows : public QMainWindow {
   void doodle_init();
   void doodle_createAction();
 
- public slots:
+ public Q_SLOTS:
   void openSetting();
 
  private:
-  QAction *exitAction;     // 退出软件
-  QAction *refreshAction;  // 刷新函数
-  QAction *openSetWindows; // 打开设置
+  QAction *exitAction;      // 退出软件
+  QAction *refreshAction;   // 刷新函数
+  QAction *openSetWindows;  // 打开设置
 
   QMenuBar *p_menu_bar_;  //菜单栏
-  QMenu *p_menu_;  //文件菜单
+  QMenu *p_menu_;         //文件菜单
   QStatusBar *p_status_bar_;
 
-  QWidget *centralWidget; //中心小部件
-  QVBoxLayout *p_b_box_layout_; //布局
+  QWidget *centralWidget;        //中心小部件
+  QVBoxLayout *p_b_box_layout_;  //布局
 
-  settingWidget * p_setting_widget_;
+  settingWidget *p_setting_widget_;
 
-//  assWidght * p_ass_widght_;
-//  shotWidget * p_shot_widget_;
-
+  //  assWidght * p_ass_widght_;
+  //  shotWidget * p_shot_widget_;
 };
 
 DOODLE_NAMESPACE_E

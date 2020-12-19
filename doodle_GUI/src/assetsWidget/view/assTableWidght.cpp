@@ -66,6 +66,8 @@ void assTableWidght::insertAss(const QString &path) {
   auto pathInfo = QFileInfo(path);
   boost::regex reMaya("m[ab]");
   boost::regex reUe4("uproject");
+  //插入数据之前先刷新一下
+  refreshClass();
 
   p_model_->insertRow(0, QModelIndex());
   auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
@@ -79,10 +81,10 @@ void assTableWidght::insertAss(const QString &path) {
   if (boost::regex_match(pathInfo.suffix().toStdString(), reMaya)) {
     // maya文件
     msgBox.setText(tr("请选择类型"));
-    auto modelFile = msgBox.addButton("模型文件", QMessageBox::AcceptRole);
-    auto rig = msgBox.addButton("绑定文件", QMessageBox::AcceptRole);
+    auto modelFile     = msgBox.addButton("模型文件", QMessageBox::AcceptRole);
+    auto rig           = msgBox.addButton("绑定文件", QMessageBox::AcceptRole);
     auto modelFile_low = msgBox.addButton("低模文件", QMessageBox::AcceptRole);
-    auto noButten = msgBox.addButton("取消", QMessageBox::NoRole);
+    auto noButten      = msgBox.addButton("取消", QMessageBox::NoRole);
 
     msgBox.exec();
 
@@ -213,7 +215,7 @@ void assTableWidght::enableBorder(const bool &isEnable) {
     setStyleSheet("");
 }
 void assTableWidght::createLightDir() {
-  auto widghtList = qApp->allWidgets();
+  auto widghtList                 = qApp->allWidgets();
   shotEpsListWidget *epsListModle = nullptr;
 
   for (auto &wid : widghtList) {
@@ -254,7 +256,7 @@ void assTableWidght::createLightDir() {
           QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
       if (butten == QMessageBox::Yes) {
-        auto uesyn = std::make_shared<doCore::ueSynArchive>();
+        auto uesyn  = std::make_shared<doCore::ueSynArchive>();
         auto future = std::async(std::launch::async, [=]() -> bool {
           return uesyn->makeDir(eps_ptr);
         });

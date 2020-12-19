@@ -9,16 +9,17 @@ class QPushButton;
 DOODLE_NAMESPACE_S
 
 class doodleRigister : public QWidget {
- Q_OBJECT
+  Q_OBJECT
  public:
-  explicit doodleRigister(QWidget * parent);
- private slots:
-  void setButten(const QString & text);
- void subUaer();
+  explicit doodleRigister(QWidget* parent);
+ private Q_SLOTS:
+  void setButten(const QString& text);
+  void subUaer();
+
  private:
   doCore::dstringList userList;
-  QPushButton * sub_butten;
-  QLineEdit * textEdit;
+  QPushButton* sub_butten;
+  QLineEdit* textEdit;
 };
 
 DOODLE_NAMESPACE_E

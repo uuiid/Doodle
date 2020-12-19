@@ -34,7 +34,8 @@ class CORE_API episodes : public coresqldata,
   QString getEpisdes_QStr() const;
   void setEpisdes(const int64_t &value);
 
-  static episodesPtr find(int64_t episodes);
+  static episodesPtr find_by_id(int64_t id_);
+  static episodesPtr find_by_eps(int64_t episodes_);
   static const std::map<int64_t, episodes *> &Instances();
 
  private:

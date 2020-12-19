@@ -78,7 +78,7 @@ bool shotClassModel::setData(const QModelIndex &index, const QVariant &value,
     else {
       DOODLE_LOG_INFO("注意将fileclass提交到数据库");
       list_fileClass[index.row()]->setclass(value.toString());
-      emit dataChanged(index, index, {role});
+      dataChanged(index, index, {role});
       return true;
     }
   }
@@ -88,7 +88,7 @@ bool shotClassModel::setData(const QModelIndex &index, const QVariant &value,
 bool shotClassModel::insertRows(int position, int rows,
                                 const QModelIndex &index) {
   bool isHas = false;
-  auto dep = doCore::coreSet::getSet().getDepartment();
+  auto dep   = doCore::coreSet::getSet().getDepartment();
   for (auto &&i : list_fileClass) {
     if (dep == i->getClass_str()) {
       isHas = true;

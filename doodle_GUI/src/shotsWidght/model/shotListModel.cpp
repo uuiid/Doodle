@@ -34,11 +34,11 @@ QVariant shotListModel::data(const QModelIndex &index, int role) const {
       var = shotlist[index.row()]->getShotAndAb_strQ();
       break;
     case Qt::EditRole: {
-      auto map = QMap<QString, QVariant>{{"shot", 1}, {"shotAb", ""}};
+      auto map         = QMap<QString, QVariant>{{"shot", 1}, {"shotAb", ""}};
       const auto &shot = shotlist[index.row()];
-      map["shot"] = shot->getShot();
-      map["shotAb"] = DOTOS(shot->getShotAb_str());
-      var = map;
+      map["shot"]      = shot->getShot();
+      map["shotAb"]    = DOTOS(shot->getShotAb_str());
+      var              = map;
       break;
     }
     case Qt::UserRole:
@@ -47,7 +47,6 @@ QVariant shotListModel::data(const QModelIndex &index, int role) const {
     default:
       break;
   }
-
 
   if (role == Qt::DisplayRole || role == Qt::EditRole) {
     return shotlist[index.row()]->getShotAndAb_strQ();
@@ -87,9 +86,7 @@ bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int
     //这个函数不设置AB镜
     bool isHasShot = false;
     for (auto &&x : shotlist) {
-      if ((infoMap["shot"].toInt() == x->getShot()
-          && infoMap["shotAb"].toString() == x->getShotAb_strQ())
-          && x->isInsert()) {
+      if ((infoMap["shot"].toInt() == x->getShot() && infoMap["shotAb"].toString() == x->getShotAb_strQ()) && x->isInsert()) {
         isHasShot = true;
         break;
       }
@@ -101,7 +98,7 @@ bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int
       shotlist[index.row()]->setShot(infoMap["shot"].toInt(), infoMap["shotAb"].toString());
       shotlist[index.row()]->setEpisodes(doCore::coreDataManager::get().getEpisodesPtr());
       shotlist[index.row()]->insert();
-      emit dataChanged(index, index, {role});
+      dataChanged(index, index, {role});
       return true;
     }
   }

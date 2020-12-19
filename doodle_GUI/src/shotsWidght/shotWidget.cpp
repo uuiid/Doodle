@@ -27,8 +27,8 @@ shotWidget::shotWidget(QWidget *parent)
   //创建模型
   p_episodes_list_model_ = new shotEpsListModel(this);
   p_episodes_list_model_->setObjectName(QString::fromUtf8("p_episodes_list_model_"));
-  p_shot_list_model_ = new shotListModel(this);
-  p_shot_type_model_ = new shotTypeModel(this);
+  p_shot_list_model_  = new shotListModel(this);
+  p_shot_type_model_  = new shotTypeModel(this);
   p_shot_class_model_ = new shotClassModel(this);
   p_shot_table_model_ = new shotTableModel(this);
 
@@ -43,7 +43,6 @@ shotWidget::shotWidget(QWidget *parent)
   p_episodes_list_widget_->setObjectName(
       QString::fromUtf8("p_episodes_list_widget_"));
   p_episodes_list_widget_->setModel(p_episodes_list_model_);
-
 
   //添加镜头小部件
   p_shot_list_widget_ = new shotListWidget();
@@ -91,6 +90,12 @@ shotWidget::shotWidget(QWidget *parent)
           p_shot_type_model_, &shotTypeModel::reInit);
   connect(p_shot_list_widget_, &shotListWidget::initEmit,
           p_shot_type_model_, &shotTypeModel::reInit);
+
+  //将table中发出的刷新部门和种类的信号连接一下
+  connect(p_shot_table_widget_, &shotTableWidget::refreshClassAndType,
+          p_shot_class_model_, &shotClassModel::init);
+  connect(p_shot_table_widget_, &shotTableWidget::refreshClassAndType,
+          p_shot_type_model_, &shotTypeModel::init);
 
   //将小部件添加到布局中
   p_shot_layout_->addWidget(p_episodes_list_widget_, 2);

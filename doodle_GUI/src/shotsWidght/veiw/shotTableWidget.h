@@ -28,7 +28,11 @@ class shotTableWidget : public QTableView {
   explicit shotTableWidget(QWidget *parent = nullptr);
 
   void setModel(QAbstractItemModel *model) override;
- private slots:
+
+ Q_SIGNALS:
+  void refreshClassAndType();
+
+ private Q_SLOTS:
 
   void getSelectPath();
   void getSelectDir();

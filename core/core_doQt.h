@@ -34,6 +34,8 @@
 #include <src/core/coreDataManager.h>
 #include <src/core/coreset.h>
 
+#include <src/sysData/synData.h>
+
 #ifdef DOODLE_QT
 #include <QtCore/QVariant>
 Q_DECLARE_METATYPE(doCore::episodesPtr)
@@ -47,4 +49,4 @@ Q_DECLARE_METATYPE(doCore::assClassPtr)
 Q_DECLARE_METATYPE(doCore::assTypePtr)
 Q_DECLARE_METATYPE(doCore::assInfoPtr)
 #define DOTOS(str) QString::fromStdString(str)
-#endif //DOODLE_QT
+#endif  //DOODLE_QT

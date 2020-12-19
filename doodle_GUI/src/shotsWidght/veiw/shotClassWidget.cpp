@@ -38,7 +38,7 @@ void shotClassWidget::insertFileClass() {
 void shotClassWidget::_doodle_fileclass_emit(const QModelIndex &index) {
   doCore::coreDataManager::get().setShotClassPtr(
       index.data(Qt::UserRole).value<doCore::shotClassPtr>());
-  emit doodleUseFilter(true);
+  doodleUseFilter(true);
 }
 
 void shotClassWidget::mousePressEvent(QMouseEvent *event) {

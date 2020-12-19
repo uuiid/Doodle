@@ -29,7 +29,7 @@ class shotEditWidget : public QWidget {
 
   QMap<QString, QVariant> value();
   void setValue(const QMap<QString, QVariant> &value);
- signals:
+ Q_SIGNALS:
   void editingFinished();
 
  private:
@@ -73,7 +73,7 @@ class shotListWidget : public QListView {
   ~shotListWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
- signals:
+ Q_SIGNALS:
   void initEmit();
 
  private:
@@ -85,7 +85,7 @@ class shotListWidget : public QListView {
   //上下文菜单
   QMenu *p_shot_menu;
 
- private slots:
+ private Q_SLOTS:
   //添加镜头号
   void insertShot();
   //同步镜头

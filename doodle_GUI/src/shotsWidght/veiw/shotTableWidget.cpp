@@ -182,6 +182,8 @@ void shotTableWidget::insertShot(const QString &path) {
   DOODLE_LOG_INFO("提交文件");
   if (path.isEmpty()) return;
   auto pathInfo = QFileInfo(path);
+  //插入数据之前先刷新一下
+  refreshClassAndType();
   //插入新的数据
   p_model_->insertRow(0, QModelIndex());
   auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
@@ -251,7 +253,7 @@ void shotTableWidget::doDubledSlots(const QModelIndex &index) {
 void shotTableWidget::submitMayaFile(doCore::shotInfoPtr &info_ptr,
                                      const QString &path) {
   auto file = std::make_shared<doCore::mayaArchive>(info_ptr);
-  auto fun = std::async(std::launch::async,
+  auto fun  = std::async(std::launch::async,
                         [=]() { return file->update(path.toStdString()); });
   updataManager::get().addQueue(fun, "正在上传中", 100);
   updataManager::get().run();
