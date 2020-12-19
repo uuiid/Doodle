@@ -121,10 +121,10 @@ void connection_Handler::operator()(const std::string& path, Server::connection_
 }
 
 void connection_Handler::send_file(const mappedFile_ptr& mapFile,
-                                   off_t offset,
+                                   std::size_t offset,
                                    Server::connection_ptr conn) {
   std::size_t adjusted_offset = offset + 4096;
-  off_t rightmost_bound       = std::min(mapFile->size(), adjusted_offset);
+  std::size_t rightmost_bound = std::min(mapFile->size(), adjusted_offset);
   auto self                   = this->shared_from_this();
   conn->write(
       boost::asio::const_buffers_1(
@@ -135,7 +135,7 @@ void connection_Handler::send_file(const mappedFile_ptr& mapFile,
       });
 }
 
-void connection_Handler::handle_chunk(const mappedFile_ptr& mapFile, off_t offset,
+void connection_Handler::handle_chunk(const mappedFile_ptr& mapFile, std::size_t offset,
                                       Server::connection_ptr conn,
                                       boost::system::error_code const& ec) {
   assert(offset >= 0);

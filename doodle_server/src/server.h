@@ -34,8 +34,8 @@ class connection_Handler
   connection_Handler(fileSystem_ptr f_ptr);
   void operator()(const std::string &path, Server::connection_ptr conn,
                   bool server_body);
-  void send_file(const mappedFile_ptr &mmaped_region, off_t offset, Server::connection_ptr conn);
-  void handle_chunk(const mappedFile_ptr &mmaped_region, off_t offset,
+  void send_file(const mappedFile_ptr &mmaped_region, std::size_t offset, Server::connection_ptr conn);
+  void handle_chunk(const mappedFile_ptr &mmaped_region, std::size_t offset,
                     Server::connection_ptr conn,
                     boost::system::error_code const &ec);
 
