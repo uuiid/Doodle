@@ -31,30 +31,14 @@ TEST(doodleServer, server_base) {
   boost::network::http::client::request req("http://127.0.0.1:8000/");
   req << boost::network::header("Connection", "close");
   auto response = client.get(req);
-  auto headers = response.headers();
-  auto body = response.body();
+  auto headers  = response.headers();
+  auto body     = response.body();
   for (auto &&i : headers) {
     std::cout << i.first << ": " << i.second << std::endl;
   }
-  std::cout << body << "\n"
+  std::cout << body
             << std::endl;
 }
 
-TEST(doodleServer, buffer_stream) {
-  // boost::filesystem::path k_path("F:/cppguide.xml");
-  boost::filesystem::path k_path("F:/doodle.exe");
-  boost::filesystem::ifstream stream(k_path, std::ios::in | std::ios::binary);
-  std::cout << stream.is_open() << std::endl;
-
-  stream.seekg(0, std::ios::end);
-  auto length = stream.tellg();
-  stream.seekg(0, std::ios::beg);
-  if (length > 4096)
-    length = 4096;
-
-  char *buffer = new char[length];
-
-  stream.read(buffer, length);
-  boost::asio::const_buffer buff{buffer, sizeof(buffer)};
-  std::cout << std::string(static_cast<char *>(buffer), length) << std::endl;
+TEST(doodleServer, downFile) {
 }
