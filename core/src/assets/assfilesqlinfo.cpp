@@ -36,7 +36,7 @@ assFileSqlInfo::assFileSqlInfo()
       ass_class_id(-1) {}
 
 assFileSqlInfo::~assFileSqlInfo() {
-  if (isInsert()  || p_instance[idP] == this)
+  if (isInsert() || p_instance[idP] == this)
     p_instance.erase(idP);
 }
 
@@ -47,7 +47,7 @@ void assFileSqlInfo::select(qint64 &ID_) {
   for (auto &&row : db->run(
            sqlpp::select(sqlpp::all_of(tab)).from(tab).where(tab.id == ID_))) {
     batchSetAttr(row);
-    p_instance.insert({idP, this});
+    p_instance[idP] = this;
   }
 }
 
@@ -55,7 +55,7 @@ void assFileSqlInfo::insert() {
   if (idP > 0) return;
   doodle::Basefile tab{};
 
-  auto db = coreSql::getCoreSql().getConnection();
+  auto db      = coreSql::getCoreSql().getConnection();
   auto install = sqlpp::dynamic_insert_into(*db, tab).dynamic_set(
       tab.file = fileP, tab.fileSuffixes = fileSuffixesP, tab.user = userP,
       tab.version = versionP, tab.FilePath_ = filepathP,
@@ -72,14 +72,14 @@ void assFileSqlInfo::insert() {
     DOODLE_LOG_WARN(fileStateP.c_str());
     throw std::runtime_error("");
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
 }
 
 void assFileSqlInfo::updateSQL() {
   if (idP < 0) return;
   doodle::Basefile tab{};
 
-  auto db = coreSql::getCoreSql().getConnection();
+  auto db     = coreSql::getCoreSql().getConnection();
   auto updata = sqlpp::update(tab);
   updata.set(tab.infor = strList_tojson(infoP), tab.filestate = fileStateP)
       .where(tab.id == idP);
@@ -105,7 +105,7 @@ assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
     assInfo->exist(true);
     list.push_back(assInfo);
     assInfo->setAssType();
-    p_instance.insert({assInfo->idP, assInfo.get()});
+    p_instance[assInfo->idP] = assInfo.get();
   }
   return list;
 }
@@ -219,14 +219,14 @@ void assFileSqlInfo::setAssType(const assTypePtr &type_ptr) {
 }
 template <typename T>
 void assFileSqlInfo::batchSetAttr(const T &row) {
-  idP = row.id;
-  fileP = row.file;
+  idP           = row.id;
+  fileP         = row.file;
   fileSuffixesP = row.fileSuffixes;
-  userP = row.user;
-  versionP = row.version;
-  filepathP = row.FilePath_;
-  infoP = json_to_strList(row.infor);
-  fileStateP = row.filestate;
+  userP         = row.user;
+  versionP      = row.version;
+  filepathP     = row.FilePath_;
+  infoP         = json_to_strList(row.infor);
+  fileStateP    = row.filestate;
 
   if (row.assClassId._is_valid) ass_class_id = row.assClassId;
 

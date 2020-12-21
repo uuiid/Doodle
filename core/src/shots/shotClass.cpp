@@ -43,7 +43,7 @@ void shotClass::select(const qint64 &ID_) {
     idP = row.id;
     setclass(row.shotClass);
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
 }
 
 void shotClass::insert() {

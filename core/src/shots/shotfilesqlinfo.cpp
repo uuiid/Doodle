@@ -49,7 +49,7 @@ void shotFileSqlInfo::select(const qint64& ID_) {
            sqlpp::select(sqlpp::all_of(tab)).from(tab).where(tab.id == ID_))) {
     batchSetAttr(row);
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
 }
 
 void shotFileSqlInfo::insert() {
@@ -78,7 +78,7 @@ void shotFileSqlInfo::insert() {
     DOODLE_LOG_WARN(fileStateP.c_str());
     throw std::runtime_error("");
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
 }
 
 void shotFileSqlInfo::updateSQL() {
@@ -124,7 +124,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr& EP_) {
     Info->batchSetAttr(row);
     Info->setEpisdes(EP_);
     list.push_back(Info);
-    p_instance.insert({Info->idP, Info.get()});
+    p_instance[Info->idP] = Info.get();
   }
   return list;
 }
@@ -143,7 +143,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& sh_) {
     Info->setShot(sh_);
     Info->exist(true);
     list.push_back(Info);
-    p_instance.insert({Info->idP, Info.get()});
+    p_instance[Info->idP] = Info.get();
   }
 
   return list;
@@ -182,7 +182,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& shot_ptr,
 
     Info->exist(true);
     list.push_back(Info);
-    p_instance.insert({Info->idP, Info.get()});
+    p_instance[Info->idP] = Info.get();
   } else {
     list.push_back(nullptr);
   }
@@ -203,7 +203,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr& class_ptr) {
     Info->batchSetAttr(row);
     Info->exist(true);
     list.push_back(Info);
-    p_instance.insert({Info->idP, Info.get()});
+    p_instance[Info->idP] = Info.get();
   }
   return list;
 }
@@ -222,7 +222,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotTypePtr& type_ptr) {
     Info->setShotType(type_ptr);
     Info->exist(true);
     list.push_back(Info);
-    p_instance.insert({Info->idP, Info.get()});
+    p_instance[Info->idP] = Info.get();
   }
   return list;
 }

@@ -46,7 +46,7 @@ void assType::insert() {
   auto db = coreSql::getCoreSql().getConnection();
   auto insert =
       sqlpp::insert_into(table).columns(table.assType, table.projectId);
-  insert.values.add(table.assType = s_type,
+  insert.values.add(table.assType   = s_type,
                     table.projectId = coreSet::getSet().projectName().first);
 
   idP = db->insert(insert);
@@ -55,7 +55,7 @@ void assType::insert() {
     DOODLE_LOG_WARN("无法插入asstype " << s_type.c_str());
     throw std::runtime_error("asstype");
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
 }
 void assType::updateSQL() {}
 void assType::deleteSQL() {
@@ -74,11 +74,11 @@ assTypePtrList assType::getAll() {
                .from(table)
                .where(table.projectId == coreSet::getSet().projectName().first)
                .order_by(table.assType.desc()))) {
-    auto at = std::make_shared<assType>();
-    at->idP = row.id;
+    auto at    = std::make_shared<assType>();
+    at->idP    = row.id;
     at->s_type = row.assType;
     ptr_list.push_back(at);
-    p_instance.insert({at->idP, at.get()});
+    p_instance[at->idP] = at.get();
   }
   return ptr_list;
 }

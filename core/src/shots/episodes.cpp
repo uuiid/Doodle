@@ -38,7 +38,7 @@ void episodes::select(const qint64 &ID_) {
     p_int_episodes = row.episodes;
     idP            = row.id;
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
 }
 episodes::~episodes() {
   if (isInsert() || p_instance[idP] == this)
@@ -60,7 +60,7 @@ void episodes::insert() {
     DOODLE_LOG_WARN("无法插入集数" << p_int_episodes);
     throw std::runtime_error("not install eps");
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
 }
 void episodes::updateSQL() {
 }
@@ -87,7 +87,7 @@ episodesPtrList episodes::getAll() {
     eps->idP            = row.id;
     eps->p_prj          = row.projectId;
     list.push_back(eps);
-    p_instance.insert({eps->idP, eps.get()});
+    p_instance[eps->idP] = eps.get();
   }
   return list;
 }

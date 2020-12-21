@@ -50,7 +50,7 @@ void shot::select(const qint64 &ID_) {
     setShotAb((dstring)row.shotab);
     p_eps_id = row.episodesId;
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
 }
 
 void shot::insert() {
@@ -69,7 +69,7 @@ void shot::insert() {
     DOODLE_LOG_WARN("无法插入镜头" << p_qint_shot_);
     throw std::runtime_error("not install shots");
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
 }
 
 void shot::updateSQL() {}
@@ -95,7 +95,7 @@ shotPtrList shot::getAll(const episodesPtr &EP_) {
     item->setShotAb(row.shotab);
     item->setEpisodes(EP_);
     list.push_back(item);
-    p_instance.insert({item->idP, item.get()});
+    p_instance[item->idP] = item.get();
   }
   return list;
 }

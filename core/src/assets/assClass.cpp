@@ -54,7 +54,7 @@ void assClass::insert() {
   if (idP == 0) {
     throw std::runtime_error("not insert assclass");
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
   if (p_ptr_znch) p_ptr_znch->insert();
 }
 
@@ -98,7 +98,7 @@ assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
       assclass->p_ptr_znch->idP      = row.znID;
       assclass->p_ptr_znch->nameEN   = row.assName;
     }
-    p_instance.insert({assclass->idP, assclass.get()});
+    p_instance[assclass->idP] = assclass.get();
     list.push_back(assclass);
   }
   return list;

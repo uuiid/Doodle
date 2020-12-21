@@ -41,7 +41,7 @@ void shotType::select(const qint64 &ID_) {
                                 .from(table)
                                 .where(table.id == ID_))) {
     batchSetAttr(row);
-    p_instance.insert({idP, this});
+    p_instance[idP] = this;
   }
 }
 
@@ -61,7 +61,7 @@ void shotType::insert() {
     DOODLE_LOG_WARN("无法插入shot type " << p_Str_Type.c_str());
     throw std::runtime_error("not install shot type");
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
 }
 
 void shotType::updateSQL() {
@@ -104,7 +104,7 @@ shotTypePtrList shotType::getAll() {
     auto shCl = shotClass::Instances().find(item->idP);
     if (shCl != shotClass::Instances().end())
       item->setShotClass(shCl->second->shared_from_this());
-    p_instance.insert({item->idP, item.get()});
+    p_instance[item->idP] = item.get();
     list.push_back(item);
   }
 
