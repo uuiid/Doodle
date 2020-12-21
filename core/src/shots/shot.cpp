@@ -35,7 +35,7 @@ shot::shot()
       p_ptr_eps() {}
 
 shot::~shot() {
-  if (isInsert())
+  if (isInsert() || p_instance[idP] == this)
     p_instance.erase(idP);
 }
 
@@ -45,7 +45,7 @@ void shot::select(const qint64 &ID_) {
   for (auto &&row : db->run(sqlpp::select(sqlpp::all_of(table))
                                 .from(table)
                                 .where(table.id == ID_))) {
-    idP = row.id;
+    idP          = row.id;
     p_qint_shot_ = row.shot;
     setShotAb((dstring)row.shotab);
     p_eps_id = row.episodesId;
@@ -57,7 +57,7 @@ void shot::insert() {
   if (idP > 0) return;
 
   doodle::Shots table{};
-  auto db = coreSql::getCoreSql().getConnection();
+  auto db      = coreSql::getCoreSql().getConnection();
   auto install = sqlpp::insert_into(table).columns(table.episodesId, table.shot,
                                                    table.shotab);
 
@@ -89,8 +89,8 @@ shotPtrList shot::getAll(const episodesPtr &EP_) {
                    .from(table)
                    .where(table.episodesId == EP_->getIdP())
                    .order_by(table.shot.asc(), table.shotab.asc()))) {
-    auto item = std::make_shared<shot>();
-    item->idP = row.id;
+    auto item          = std::make_shared<shot>();
+    item->idP          = row.id;
     item->p_qint_shot_ = row.shot;
     item->setShotAb(row.shotab);
     item->setEpisodes(EP_);
@@ -102,7 +102,7 @@ shotPtrList shot::getAll(const episodesPtr &EP_) {
 
 void shot::setEpisodes(const episodesPtr &value) {
   if (!value) return;
-  p_eps_id = value->getIdP();
+  p_eps_id  = value->getIdP();
   p_ptr_eps = value;
 }
 
@@ -111,7 +111,7 @@ episodesPtr shot::getEpisodes() {
     return p_ptr_eps;
   else {
     auto epi = episodes::Instances();
-    auto it = epi.find(p_eps_id);
+    auto it  = epi.find(p_eps_id);
     if (it != epi.end())
       p_ptr_eps = it->second->shared_from_this();
     else {
@@ -124,7 +124,7 @@ episodesPtr shot::getEpisodes() {
 }
 
 void shot::setShot(const int64_t &sh, const e_shotAB &ab) {
-  p_qint_shot_ = sh;
+  p_qint_shot_  = sh;
   p_qenm_shotab = ab;
 }
 

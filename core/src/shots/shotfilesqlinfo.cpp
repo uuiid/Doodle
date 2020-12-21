@@ -38,7 +38,7 @@ shotFileSqlInfo::shotFileSqlInfo()
       p_ptr_shTy(),
       p_ptr_shcla() {}
 shotFileSqlInfo::~shotFileSqlInfo() {
-  if (isInsert())
+  if (isInsert() || p_instance[idP] == this)
     p_instance.erase(idP);
 }
 void shotFileSqlInfo::select(const qint64& ID_) {

@@ -29,7 +29,7 @@ shotType::shotType()
       p_class_ptr_() {}
 
 shotType::~shotType() {
-  if (isInsert())
+  if (isInsert() || p_instance[idP] == this)
     p_instance.erase(idP);
 }
 void shotType::select(const qint64 &ID_) {

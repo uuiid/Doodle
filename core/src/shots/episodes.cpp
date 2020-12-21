@@ -41,7 +41,7 @@ void episodes::select(const qint64 &ID_) {
   p_instance.insert({idP, this});
 }
 episodes::~episodes() {
-  if (isInsert())
+  if (isInsert() || p_instance[idP] == this)
     p_instance.erase(idP);
 }
 

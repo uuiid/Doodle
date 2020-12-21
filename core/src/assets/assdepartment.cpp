@@ -40,7 +40,7 @@ assdepartment::assdepartment()
 }
 
 assdepartment::~assdepartment() {
-  if (isInsert())
+  if (isInsert() || p_instance[idP] == this)
     p_instance.erase(idP);
 }
 
@@ -52,7 +52,7 @@ void assdepartment::insert() {
 
   auto insert = sqlpp::insert_into(table).columns(table.projectId, table.assDep);
   insert.values.add(table.projectId = i_prjID,
-                    table.assDep = s_assDep);
+                    table.assDep    = s_assDep);
   idP = db->insert(insert);
   if (idP == 0) {
     throw std::runtime_error("not install assDep");
@@ -77,10 +77,10 @@ assDepPtrList assdepartment::getAll() {
            sqlpp::select(sqlpp::all_of(table))
                .from(table)
                .where(table.projectId == coreSet::getSet().projectName().first))) {
-    auto assdep = std::make_shared<assdepartment>();
+    auto assdep      = std::make_shared<assdepartment>();
     assdep->s_assDep = row.assDep.value();
-    assdep->idP = row.id.value();
-    assdep->i_prjID = row.projectId.value();
+    assdep->idP      = row.id.value();
+    assdep->i_prjID  = row.projectId.value();
     list.push_back(assdep);
     p_instance.insert({assdep->idP, assdep.get()});
   }

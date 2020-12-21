@@ -36,7 +36,7 @@ assFileSqlInfo::assFileSqlInfo()
       ass_class_id(-1) {}
 
 assFileSqlInfo::~assFileSqlInfo() {
-  if (isInsert())
+  if (isInsert()  || p_instance[idP] == this)
     p_instance.erase(idP);
 }
 

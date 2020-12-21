@@ -1,4 +1,7 @@
-﻿#include <src/shotsWidght/shotWidget.h>
+﻿#include "shotWidget.h"
+
+#include <core_doQt.h>
+
 #include <src/shotsWidght/model/shotEpsListModel.h>
 #include <src/shotsWidght/model/shotListModel.h>
 #include <src/shotsWidght/model/shotTableModel.h>
@@ -11,7 +14,7 @@
 #include <src/shotsWidght/veiw/shotTypeWidget.h>
 DOODLE_NAMESPACE_S
 
-shotWidget::shotWidget(QWidget *parent)
+shotWidget::shotWidget(QWidget* parent)
     : QWidget(parent),
       p_shot_table_model_(),
       p_shot_type_widget_(),
@@ -112,6 +115,17 @@ void shotWidget::refresh() {
 
   p_shot_list_model_->clear();
   p_shot_table_model_->clear();
+
+  try {
+    auto shotClass = doCore::shotClass::getCurrentClass();
+  } catch (const std::runtime_error& e) {
+    auto shotClass = std::make_shared<doCore::shotClass>();
+    shotClass->setclass(doCore::coreSet::getSet().getDepartmentQ());
+    shotClass->insert();
+    p_shot_class_model_->init();
+    p_shot_type_model_->init();
+    std::cerr << e.what() << '\n';
+  }
 }
 
 DOODLE_NAMESPACE_E

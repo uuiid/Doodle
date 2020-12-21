@@ -30,7 +30,7 @@ shotClass::shotClass()
 
 shotClass::~shotClass() {
   DOODLE_LOG_DEBUG(p_instance.size());
-  if (isInsert())
+  if (isInsert() && p_instance[idP] == this)
     p_instance.erase(idP);
 }
 
@@ -59,7 +59,7 @@ void shotClass::insert() {
     DOODLE_LOG_WARN("无法插入shot type" << getClass_str().c_str());
     throw std::runtime_error("not install shot");
   }
-  p_instance.insert({idP, this});
+  p_instance[idP] = this;
 }
 
 void shotClass::updateSQL() {
@@ -95,7 +95,7 @@ shotClassPtrList shotClass::getAll() {
     auto item = std::make_shared<shotClass>();
     item->batchSetAttr(row);
     list.push_back(item);
-    p_instance.insert({item->idP, item.get()});
+    p_instance[item->idP] = item.get();
   }
   DOODLE_LOG_DEBUG("loaded fileClasses " << list.size());
   return list;
@@ -104,6 +104,7 @@ shotClassPtrList shotClass::getAll() {
 shotClassPtr shotClass::getCurrentClass() {
   shotClassPtr ptr = nullptr;
   for (auto &item : p_instance) {
+    DOODLE_LOG_DEBUG("current class " << item.second->getClass_str() << " current dep " << coreSet::getSet().getDepartment());
     if (item.second->getClass_str() == coreSet::getSet().getDepartment()) {
       ptr = item.second->shared_from_this();
       break;

@@ -36,7 +36,7 @@ assClass::assClass()
       p_ptr_znch() {}
 
 assClass::~assClass() {
-  if (isInsert()) p_instance.erase(idP);
+  if (isInsert() || p_instance[idP] == this) p_instance.erase(idP);
 }
 
 void assClass::insert() {
@@ -90,13 +90,13 @@ assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
     auto assclass = std::make_shared<assClass>();
 
     assclass->name = row.assName;
-    assclass->idP = row.id;
+    assclass->idP  = row.id;
     assclass->setAssDep(ass_dep_ptr);
     if (row.localname._is_valid) {
-      assclass->p_ptr_znch = std::make_shared<znchName>(assclass.get());
+      assclass->p_ptr_znch           = std::make_shared<znchName>(assclass.get());
       assclass->p_ptr_znch->nameZNCH = row.localname;
-      assclass->p_ptr_znch->idP = row.znID;
-      assclass->p_ptr_znch->nameEN = row.assName;
+      assclass->p_ptr_znch->idP      = row.znID;
+      assclass->p_ptr_znch->nameEN   = row.assName;
     }
     p_instance.insert({assclass->idP, assclass.get()});
     list.push_back(assclass);
@@ -113,7 +113,7 @@ assDepPtr assClass::getAssDep() const {
 
 void assClass::setAssDep(const assDepPtr &value) {
   p_ass_dep_ptr_ = value;
-  p_assDep_id = value->getIdP();
+  p_assDep_id    = value->getIdP();
 }
 
 void assClass::setAssClass(const std::string &value) {
