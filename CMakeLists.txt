@@ -65,6 +65,18 @@ find_package(cppzmq CONFIG REQUIRED)
 find_package(cppnetlib CONFIG REQUIRED)
 find_package(civetweb CONFIG REQUIRED)
 
+#google序列化库
+find_package(protobuf CONFIG REQUIRED)
+# target_link_libraries(main 
+# PRIVATE protobuf::libprotoc 
+# protobuf::libprotobuf
+# protobuf::libprotobuf-lite)
+#Google rpc库
+find_package(gRPC CONFIG REQUIRED)
+#target_link_libraries(main PRIVATE gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts)
+#target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
+
+
 #搜索qt 安装辅助程序
 find_program(WINQT windeployqt REQUIRED)
 

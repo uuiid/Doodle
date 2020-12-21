@@ -8,7 +8,10 @@ add_library(core SHARED
         ${RESOURE_FILE}
         )
 
+add_subdirectory(proto)
 add_subdirectory(src)
+
+
 
 target_link_libraries(core PUBLIC Qt5::Core)
 target_link_libraries(core PUBLIC SqlppMySql)
