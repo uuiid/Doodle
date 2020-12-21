@@ -21,22 +21,22 @@
 #define DOODLE_LOG_DEBUG(message)                                              \
   BOOST_LOG_TRIVIAL(debug)                                                     \
       << "  " << __FILE__ << "  " << __FUNCTION__ << "  " << __LINE__ << " \n" \
-      << message;
+      << message << "\n";
 
 #define DOODLE_LOG_INFO(message)                                               \
   BOOST_LOG_TRIVIAL(info)                                                      \
       << "  " << __FILE__ << "  " << __FUNCTION__ << "  " << __LINE__ << " \n" \
-      << message;
+      << message << "\n";
 
 #define DOODLE_LOG_WARN(message)                                               \
   BOOST_LOG_TRIVIAL(warning)                                                   \
       << "  " << __FILE__ << "  " << __FUNCTION__ << "  " << __LINE__ << " \n" \
-      << message;
+      << message << "\n";
 
 #define DOODLE_LOG_ERROR(message)                                              \
   BOOST_LOG_TRIVIAL(error)                                                     \
       << "  " << __FILE__ << "  " << __FUNCTION__ << "  " << __LINE__ << " \n" \
-      << message;
+      << message << "\n";
 
 namespace Logger {
 

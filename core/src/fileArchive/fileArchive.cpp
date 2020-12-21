@@ -20,7 +20,8 @@
 CORE_NAMESPACE_S
 
 fileArchive::fileArchive()
-    : p_soureFile(),
+    : p_custom_path(),
+      p_soureFile(),
       p_cacheFilePath(),
       p_Path(),
       p_state_(state::none) {}
@@ -37,12 +38,21 @@ bool fileArchive::update(const dpathList &filelist) {
     p_soureFile = filelist;
   }
   _generateFilePath();
+
+  if (!p_custom_path.empty() || p_soureFile.size() == p_custom_path.size()) {
+    p_Path = p_custom_path;
+  }
+
   //获得缓存路径
   generateCachePath();
 
   if (!isInCache()) {
     copyToCache();
   }
+
+  if (useUpdataCheck())
+    updataCheck();
+
   _updata(p_cacheFilePath);
   insertDB();
   return true;
@@ -52,6 +62,9 @@ dpath fileArchive::down(const dstring &path) {
   //获得缓存路径
   generateCachePath();
   _down(path);
+  if (useDowndataCheck())
+    downdataCheck();
+
   return {path};
 }
 
@@ -62,6 +75,32 @@ dpath fileArchive::down() {
   _down(p_cacheFilePath.front().parent_path());
   return p_cacheFilePath.front();
 }
+
+bool fileArchive::useUpdataCheck() const {
+  return false;
+}
+
+bool fileArchive::updataCheck() const {
+  return false;
+}
+
+bool fileArchive::useDowndataCheck() const {
+  return false;
+}
+
+bool fileArchive::downdataCheck() const {
+  return false;
+}
+
+void fileArchive::setUseCustomPath(const dpathList &custom_path) {
+  if (custom_path.size() == p_soureFile.size())
+    p_custom_path = custom_path;
+  else {
+    DOODLE_LOG_ERROR("not custom path " << custom_path.front());
+    throw std::runtime_error("not custom path");
+  }
+}
+
 //保护功能
 void fileArchive::copyToCache() const {
   assert(p_soureFile.size() == p_cacheFilePath.size());
@@ -104,7 +143,7 @@ void fileArchive::_updata(const dpathList &pathList) {
   assert(p_Path.size() == p_cacheFilePath.size());
   coreSet &set = coreSet::getSet();
 
-  auto &session = doSystem::DfileSyntem::getFTP();
+  auto &session = doSystem::DfileSyntem::get();
   //使用ftp上传
   int i = 0;
   for (auto &&item : p_cacheFilePath) {
@@ -117,7 +156,7 @@ void fileArchive::_updata(const dpathList &pathList) {
   }
 }
 void fileArchive::_down(const dpath &localPath) {
-  auto &session = doSystem::DfileSyntem::getFTP();
+  auto &session = doSystem::DfileSyntem::get();
   for (auto &&item : p_Path) {
     if (!boost::filesystem::exists(localPath))
       boost::filesystem::create_directories(localPath);
@@ -133,6 +172,7 @@ bool fileArchive::update() {
   return true;
 }
 fileArchive::state fileArchive::isState() const { return p_state_; }
+
 bool fileArchive::generateCachePath() {
   //获得缓存路径
   p_cacheFilePath.clear();

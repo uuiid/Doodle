@@ -1,13 +1,14 @@
 ﻿$Net = New-Object -ComObject WScript.Network
 $Net.RemoveNetworkDrive("X:")
 $Net.RemoveNetworkDrive("V:")
+$Net.RemoveNetworkDrive("W:")
+$Net.RemoveNetworkDrive("Y:")
 $Net.RemoveNetworkDrive("U:")
 $Net.RemoveNetworkDrive("T:")
-$Net.RemoveNetworkDrive("Y:")
 
+$Net.MapNetworkDrive("X:", '\\192.168.10.250\public\changanhuanjie')
 $Net.MapNetworkDrive("Y:", '\\192.168.10.250\public\动画共享')
 $Net.MapNetworkDrive("W:", '\\192.168.10.250\public\Prism_projects')
-$Net.MapNetworkDrive("X:", '\\192.168.10.250\public\changanhuanjie')
 $Net.MapNetworkDrive("V:", '\\192.168.10.250\public\DuBuXiaoYao_3')
 $Net.MapNetworkDrive("U:", '\\192.168.10.250\public\WanYuFengShen')
 $Net.MapNetworkDrive("T:", '\\192.168.10.250\public\KuangShenMoZun')

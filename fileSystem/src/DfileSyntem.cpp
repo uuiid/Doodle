@@ -36,7 +36,7 @@
 DSYSTEM_S
 DfileSyntem::~DfileSyntem() { curl_global_cleanup(); }
 
-DfileSyntem &DfileSyntem::getFTP() {
+DfileSyntem &DfileSyntem::get() {
   static DfileSyntem install;
   return install;
 }
@@ -53,9 +53,9 @@ ftpSessionPtr DfileSyntem::session(const std::string &host,
                                    const std::string &password,
                                    const dpath &netWork_disk) {
   ftpSessionPtr session(new ftpSession());
-  p_host_ = host;
-  p_prot_ = prot;
-  p_name_ = name;
+  p_host_     = host;
+  p_prot_     = prot;
+  p_name_     = name;
   p_password_ = password;
   if (!netWork_disk.empty()) {
     p_netWork_disk_ = netWork_disk;
@@ -82,7 +82,7 @@ bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool ba
   if (!boost::filesystem::exists(trange_path.parent_path()))
     boost::filesystem::create_directories(trange_path.parent_path());
   dpath backup_path = "";
-  dstring time_str = "";
+  dstring time_str  = "";
   if (backup) {
     // //使用std
     // std::time_t t = std::time(nullptr);
@@ -96,7 +96,7 @@ bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool ba
     auto time = std::chrono::system_clock::now();
     // std::stringstream k_stringstream;
     // k_stringstream << std::put_time(time, "%Y_%m_%d_%H_%M_%S");
-    time_str = date::format("%Y_%m_%d_%H_%M_%S", time);
+    time_str    = date::format("%Y_%m_%d_%H_%M_%S", time);
     backup_path = trange_path.parent_path() / "backup" / time_str /
                   trange_path.filename();
   }

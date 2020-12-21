@@ -15,15 +15,15 @@
 #include <fileSystem_global.h>
 CORE_NAMESPACE_S
 
-class CORE_API fileArchive {
+class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
  public:
   fileArchive();
   ~fileArchive() = default;
   ;
   enum class state {
-    none = 0,
+    none    = 0,
     success = 1,
-    fail = 2,
+    fail    = 2,
   };
 
   [[nodiscard]] state isState() const;
@@ -31,8 +31,18 @@ class CORE_API fileArchive {
   virtual bool update(const dpath &path);
   virtual bool update(const dpathList &filelist);
   virtual bool update();
+
   virtual dpath down(const dstring &path);
   virtual dpath down();
+
+  virtual bool useUpdataCheck() const;
+  virtual bool updataCheck() const;
+  virtual bool useDowndataCheck() const;
+  virtual bool downdataCheck() const;
+
+  virtual void setUseCustomPath(const dpathList &custom_path);
+
+  DOODLE_DISABLE_COPY(fileArchive);
 
  protected:
   //复制到和缓存文件夹
@@ -53,6 +63,9 @@ class CORE_API fileArchive {
   virtual void _down(const dpath &localPath);
 
  protected:
+  dpathList p_custom_path;
+
+  fileSqlInfoPtr p_db_data;
   //复制的数据来源(本地)
   dpathList p_soureFile;
   //缓存路径

@@ -17,6 +17,9 @@ class settingWidget : public QWidget {
  public:
   explicit settingWidget(QWidget *parent = nullptr);
 
+ Q_SIGNALS:
+  void projectChanged();
+
  public Q_SLOTS:
   void setDepartment(const QString &dep);
   void setUser(const QString &user);

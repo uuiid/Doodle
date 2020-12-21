@@ -128,8 +128,8 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   boost::format shot(DOODLE_SHFORMAT);
   dstringList listcreates{"Checkpoint", "Light", "Ren"};
   dstringList listDep{"Light", "VFX"};
-  auto session = doSystem::DfileSyntem::getFTP().session();
-  server = set.getAssRoot() / set.getDepartment() / *create_path /
+  auto session = doSystem::DfileSyntem::get().session();
+  server       = set.getAssRoot() / set.getDepartment() / *create_path /
            DOODLE_CONTENT / "shot" / episodes_ptr->getEpisdes_str();
   session->createDir(server.generic_string());
 

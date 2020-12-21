@@ -57,7 +57,7 @@ void coreSet::init() {
   getCacheDiskPath();
   appendEnvironment();
   DOODLE_LOG_INFO("登录 : " << project.second.c_str());
-  doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "", *prjectRoot);
+  doSystem::DfileSyntem::get().session(ipFTP, 21, project.second, "", *prjectRoot);
   if (!boost::filesystem::exists(getCacheRoot())) {
     boost::filesystem::create_directories(getCacheRoot());
   }
@@ -66,7 +66,7 @@ void coreSet::init() {
 void coreSet::reInit() {
   initdb();
   getServerSetting();
-  doSystem::DfileSyntem::getFTP().session(ipFTP, 21, project.second, "", *prjectRoot);
+  doSystem::DfileSyntem::get().session(ipFTP, 21, project.second, "", *prjectRoot);
 }
 
 void coreSet::initdb() {
@@ -306,6 +306,8 @@ void coreSet::setProjectname(const std::string &value) {
     return mo.second == value;
   });
   if (result != prjMap.end()) project = *result;
+
+  DOODLE_LOG_INFO(project.first << project.second);
 }
 dpath coreSet::program_location() {
   return boost::filesystem::path{boost::dll::program_location()}.parent_path();

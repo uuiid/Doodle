@@ -13,11 +13,11 @@
 
 CORE_NAMESPACE_S
 
-class CORE_API coresqldata {
+class CORE_API coresqldata : public boost::noncopyable_::noncopyable {
  public:
   coresqldata();
 
-  virtual void insert() = 0;
+  virtual void insert()    = 0;
   virtual void updateSQL() = 0;
   virtual void deleteSQL() = 0;
 

@@ -29,6 +29,7 @@ shotClass::shotClass()
       p_fileclass(e_fileclass::_) {}
 
 shotClass::~shotClass() {
+  DOODLE_LOG_DEBUG(p_instance.size());
   if (isInsert())
     p_instance.erase(idP);
 }
@@ -49,7 +50,7 @@ void shotClass::insert() {
   if (idP > 0) return;
 
   doodle::Shotclass table{};
-  auto db = coreSql::getCoreSql().getConnection();
+  auto db      = coreSql::getCoreSql().getConnection();
   auto install = sqlpp::insert_into(table).set(
       table.shotClass = getClass_str(),
       table.projectId = coreSet::getSet().projectName().first);
@@ -96,6 +97,7 @@ shotClassPtrList shotClass::getAll() {
     list.push_back(item);
     p_instance.insert({item->idP, item.get()});
   }
+  DOODLE_LOG_DEBUG("loaded fileClasses " << list.size());
   return list;
 }
 
@@ -108,9 +110,8 @@ shotClassPtr shotClass::getCurrentClass() {
     }
   }
   if (!ptr) {
-    ptr = std::make_shared<shotClass>();
-    ptr->setclass(coreSet::getSet().getDepartment());
-    ptr->insert();
+    DOODLE_LOG_ERROR("find not shot class " << coreSet::getSet().getDepartment())
+    throw std::runtime_error("");
   }
 
   return ptr;

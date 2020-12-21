@@ -11,7 +11,7 @@
 #include "doodle_global.h"
 
 #include <QMainWindow>
-
+class QListWidget;
 DOODLE_NAMESPACE_S
 
 class mainWindows : public QMainWindow {
@@ -27,6 +27,7 @@ class mainWindows : public QMainWindow {
 
  public Q_SLOTS:
   void openSetting();
+  void setProject();
 
  private:
   QAction *exitAction;      // 退出软件
@@ -41,7 +42,7 @@ class mainWindows : public QMainWindow {
   QVBoxLayout *p_b_box_layout_;  //布局
 
   settingWidget *p_setting_widget_;
-
+  QListWidget *p_project_list;
   //  assWidght * p_ass_widght_;
   //  shotWidget * p_shot_widget_;
 };

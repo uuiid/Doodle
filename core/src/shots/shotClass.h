@@ -21,15 +21,15 @@ class CORE_API shotClass : public coresqldata,
   void select(const qint64 &ID_);
 
   enum class e_fileclass {
-    _ = 0,
+    _         = 0,
     Executive = 1,
-    Light = 2,
-    VFX = 3,
-    modle = 4,
-    rig = 5,
-    Anm = 6,
-    direct = 7,
-    paint = 8,
+    Light     = 2,
+    VFX       = 3,
+    modle     = 4,
+    rig       = 5,
+    Anm       = 6,
+    direct    = 7,
+    paint     = 8,
   };
 
   void insert() override;
@@ -47,6 +47,7 @@ class CORE_API shotClass : public coresqldata,
   void setclass(const QString &value);
 
   static const std::map<int64_t, shotClass *> &Instances();
+  DOODLE_DISABLE_COPY(shotClass);
 
  private:
   template <typename T>

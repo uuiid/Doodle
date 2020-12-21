@@ -13,12 +13,12 @@
 #include <core_global.h>
 
 CORE_NAMESPACE_S
-class CORE_API coreDataManager {
+class CORE_API coreDataManager : public boost::noncopyable_::noncopyable {
  public:
   //单例使用
   static coreDataManager &get();
   coreDataManager &operator=(const coreDataManager &s) = delete;
-  coreDataManager(const coreDataManager &s) = delete;
+  coreDataManager(const coreDataManager &s)            = delete;
 
  public:
   const episodesPtr &getEpisodesPtr() const;

@@ -97,7 +97,7 @@ void boostLoggerInitAsyn(const std::string &logPath,
 
   //debug 记录器
   boost::shared_ptr<sink_t> sink_t(new sink_t());
-  sink->set_filter(boost::log::expressions::is_debugger_present());
+  sink->set_filter(boost::log::expressions::is_debugger_present() && (boost::log::trivial::severity >= boost::log::trivial::debug));
   boost::log::core::get()->add_sink(sink_t);
   sink_t->imbue(boost::locale::generator()("zh_CN.UTF-8"));
 

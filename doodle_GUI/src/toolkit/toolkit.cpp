@@ -114,7 +114,7 @@ void toolkit::modifyUeCachePath() {
   auto ue_path = getUeInstallPath();
   if (ue_path.empty()) return;
 
-  ue_path = ue_path / "Engine/Config/BaseEngine.ini";
+  ue_path          = ue_path / "Engine/Config/BaseEngine.ini";
   auto source_path = doCore::coreSet::getSet().program_location().parent_path() /
                      "resource/BaseEngine.ini";
   if (boost::filesystem::exists(source_path)) {
@@ -123,9 +123,9 @@ void toolkit::modifyUeCachePath() {
 }
 
 bool toolkit::update() {
-  auto &set = doCore::coreSet::getSet();
-  auto session = doSystem::DfileSyntem::getFTP().session(set.getIpFtp(), 21,
-                                                         "anonymous", "", doCore::dpath{});
+  auto &set    = doCore::coreSet::getSet();
+  auto session = doSystem::DfileSyntem::get().session(set.getIpFtp(), 21,
+                                                      "anonymous", "", doCore::dpath{});
 
   auto exe_path = set.getCacheRoot() / "doodle.exe";
   session->down(exe_path.generic_string(), "/dist/doodle.exe");

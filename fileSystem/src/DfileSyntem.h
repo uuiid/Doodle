@@ -18,7 +18,7 @@ class DSYSTEM_API DfileSyntem {
   DfileSyntem(const DfileSyntem &) = delete;
   DfileSyntem &operator=(const DfileSyntem &s) = delete;
 
-  static DfileSyntem &getFTP();
+  static DfileSyntem &get();
   ftpSessionPtr session() const;
   ftpSessionPtr session(const std::string &host,
                         int prot,

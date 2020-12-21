@@ -49,12 +49,12 @@ void shotType::insert() {
   if (isInsert()) return;
   doodle::Shottype table{};
 
-  auto db = coreSql::getCoreSql().getConnection();
+  auto db     = coreSql::getCoreSql().getConnection();
   auto insert = sqlpp::insert_into(table).columns(
       table.shotType, table.shotClassId, table.projectId);
-  insert.values.add(table.shotType = p_Str_Type,
+  insert.values.add(table.shotType    = p_Str_Type,
                     table.shotClassId = p_shotClass_id,
-                    table.projectId = coreSet::getSet().projectName().first);
+                    table.projectId   = coreSet::getSet().projectName().first);
 
   idP = db->insert(insert);
   if (idP == 0) {
@@ -84,8 +84,8 @@ void shotType::deleteSQL() {
 
 template <typename T>
 void shotType::batchSetAttr(T &row) {
-  idP = row.id;
-  p_Str_Type = row.shotType;
+  idP            = row.id;
+  p_Str_Type     = row.shotType;
   p_shotClass_id = row.shotClassId;
 }
 
@@ -118,7 +118,7 @@ dstring shotType::getType() const { return p_Str_Type; }
 void shotType::setShotClass(const shotClassPtr &fileclass_) {
   if (!fileclass_) return;
   p_shotClass_id = fileclass_->getIdP();
-  p_class_ptr_ = fileclass_;
+  p_class_ptr_   = fileclass_;
 }
 
 shotClassPtr shotType::getFileClass() {
@@ -139,7 +139,7 @@ shotClassPtr shotType::getFileClass() {
 
 shotTypePtr shotType::findShotType(const std::string &type_name) {
   shotTypePtr ptr = nullptr;
-  if (p_instance.empty()) shotType::getAll();
+  // if (p_instance.empty()) shotType::getAll();
   //&&
   //        item->getFileClass() == shotClass::getCurrentClass()
   for (auto &item : p_instance) {

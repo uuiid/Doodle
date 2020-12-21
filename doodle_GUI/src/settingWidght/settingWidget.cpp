@@ -3,6 +3,8 @@
 //
 
 #include "settingWidget.h"
+#include <Logger.h>
+
 #include <core_doQt.h>
 #include <QLabel>
 #include <QLineEdit>
@@ -92,6 +94,8 @@ settingWidget::settingWidget(QWidget *parent)
 }
 void settingWidget::setInit() {
   p_prj_text->clear();
+  p_prj_text->disconnect(this);
+
   for (const auto &name : p_set_.getAllPrjName()) {
     p_prj_text->addItem(DOTOS(name));
   }
@@ -99,8 +103,15 @@ void settingWidget::setInit() {
   p_user_text->setText(DOTOS(p_set_.getUser()));
   p_syn_text->setText(DOTOS(p_set_.getSynPathLocale().generic_string()));
   p_eps_text->setValue(p_set_.getSyneps());
-  p_prj_text->setCurrentText(DOTOS(p_set_.getProjectname()));
+
+  DOODLE_LOG_DEBUG(p_set_.getProjectname());
+  auto index = p_prj_text->findText(DOTOS(p_set_.getProjectname()));
+
+  p_prj_text->setCurrentIndex(index);
   seteps(p_set_.getSyneps());
+
+  connect(p_prj_text, &QComboBox::currentTextChanged,
+          this, &settingWidget::setProject);
 }
 void settingWidget::setDepartment(const QString &dep) {
   p_set_.setDepartment(dep);
@@ -134,6 +145,7 @@ void settingWidget::seteps(int eps) {
 }
 void settingWidget::setProject(const QString &prj) {
   p_set_.setProjectname(prj);
+  projectChanged();
 }
 void settingWidget::closeEvent(QCloseEvent *event) {
   save();

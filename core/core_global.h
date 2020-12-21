@@ -11,6 +11,8 @@
 #include <iostream>
 #include <memory>
 
+#include <boost/core/noncopyable.hpp>
+
 #if defined(CORE_LIBRARY)
 #define CORE_API __declspec(dllexport)
 #else
@@ -94,36 +96,36 @@ class movieEpsArchive;
 class synData;
 
 //共享指针引用类
-using shotPtr = std::shared_ptr<shot>;
-using episodesPtr = std::shared_ptr<episodes>;
+using shotPtr      = std::shared_ptr<shot>;
+using episodesPtr  = std::shared_ptr<episodes>;
 using shotClassPtr = std::shared_ptr<shotClass>;
-using shotTypePtr = std::shared_ptr<shotType>;
-using shotInfoPtr = std::shared_ptr<shotFileSqlInfo>;
+using shotTypePtr  = std::shared_ptr<shotType>;
+using shotInfoPtr  = std::shared_ptr<shotFileSqlInfo>;
 
-using assDepPtr = std::shared_ptr<assdepartment>;
+using assDepPtr   = std::shared_ptr<assdepartment>;
 using assClassPtr = std::shared_ptr<assClass>;
 using znchNamePtr = std::shared_ptr<znchName>;
-using assTypePtr = std::shared_ptr<assType>;
-using assInfoPtr = std::shared_ptr<assFileSqlInfo>;
+using assTypePtr  = std::shared_ptr<assType>;
+using assInfoPtr  = std::shared_ptr<assFileSqlInfo>;
 
 using fileSqlInfoPtr = std::shared_ptr<fileSqlInfo>;
-using synDataPtr = std::shared_ptr<synData>;
+using synDataPtr     = std::shared_ptr<synData>;
 using synDataPtrList = std::vector<synDataPtr>;
 //列表引用类
 
-using episodesPtrList = std::vector<episodesPtr>;
-using shotPtrList = std::vector<shotPtr>;
+using episodesPtrList  = std::vector<episodesPtr>;
+using shotPtrList      = std::vector<shotPtr>;
 using shotClassPtrList = std::vector<shotClassPtr>;
-using shotTypePtrList = std::vector<shotTypePtr>;
-using shotInfoPtrList = std::vector<shotInfoPtr>;
-using assDepPtrList = std::vector<assDepPtr>;
+using shotTypePtrList  = std::vector<shotTypePtr>;
+using shotInfoPtrList  = std::vector<shotInfoPtr>;
+using assDepPtrList    = std::vector<assDepPtr>;
 
 using assClassPtrList = std::vector<assClassPtr>;
-using assTypePtrList = std::vector<assTypePtr>;
-using assInfoPtrList = std::vector<assInfoPtr>;
+using assTypePtrList  = std::vector<assTypePtr>;
+using assInfoPtrList  = std::vector<assInfoPtr>;
 struct synPath_struct;
 using synPath_structPtr = std::shared_ptr<synPath_struct>;
-using synPathListPtr = std::vector<synPath_struct>;
+using synPathListPtr    = std::vector<synPath_struct>;
 class fileArchive;
 
 using fileArchivePtr = std::shared_ptr<fileArchive>;
@@ -133,13 +135,13 @@ class mayaArchiveShotFbx;
 
 using mayaArchiveShotFbxPtr = std::shared_ptr<mayaArchiveShotFbx>;
 
-using dstring = std::string;
+using dstring    = std::string;
 using stringList = std::vector<QString>;
 
 using dstringList = std::vector<std::string>;
 
-using dpath = boost::filesystem::path;
-using dpathPtr = std::shared_ptr<dpath>;
+using dpath     = boost::filesystem::path;
+using dpathPtr  = std::shared_ptr<dpath>;
 using dpathList = std::vector<dpath>;
 
 using freeSynWrapPtr = std::shared_ptr<freeSynWrap>;

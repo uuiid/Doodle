@@ -56,7 +56,7 @@ void shotFileSqlInfo::insert() {
   if (idP > 0) return;
   doodle::Basefile tab{};
 
-  auto db = coreSql::getCoreSql().getConnection();
+  auto db      = coreSql::getCoreSql().getConnection();
   auto install = sqlpp::dynamic_insert_into(*db, tab).dynamic_set(
       tab.file = fileP, tab.fileSuffixes = fileSuffixesP, tab.user = userP,
       tab.version = versionP, tab.FilePath_ = filepathP,
@@ -66,6 +66,8 @@ void shotFileSqlInfo::insert() {
     install.insert_list.add(tab.infor = strList_tojson(infoP));
   if (p_shot_id > 0) install.insert_list.add(tab.shotsId = p_shot_id);
   if (p_eps_id > 0) install.insert_list.add(tab.episodesId = p_eps_id);
+
+  DOODLE_LOG_DEBUG(shotClass::getCurrentClass()->getClass_str() << " id " << shotClass::getCurrentClass()->getIdP());
 
   install.insert_list.add(tab.shotClassId =
                               shotClass::getCurrentClass()->getIdP());
@@ -83,7 +85,7 @@ void shotFileSqlInfo::updateSQL() {
   if (idP < 0) return;
   doodle::Basefile tab{};
 
-  auto db = coreSql::getCoreSql().getConnection();
+  auto db     = coreSql::getCoreSql().getConnection();
   auto updata = sqlpp::update(tab);
   updata.set(tab.infor = strList_tojson(infoP), tab.filestate = fileStateP)
       .where(tab.id == idP);
@@ -92,14 +94,14 @@ void shotFileSqlInfo::updateSQL() {
 
 template <typename T>
 void shotFileSqlInfo::batchSetAttr(T& row) {
-  idP = row.id;
-  fileP = row.file;
+  idP           = row.id;
+  fileP         = row.file;
   fileSuffixesP = row.fileSuffixes;
-  userP = row.user;
-  versionP = row.version;
-  filepathP = row.FilePath_;
-  infoP = json_to_strList(row.infor);
-  fileStateP = row.filestate;
+  userP         = row.user;
+  versionP      = row.version;
+  filepathP     = row.FilePath_;
+  infoP         = json_to_strList(row.infor);
+  fileStateP    = row.filestate;
   if (row.shotsId._is_valid) p_shot_id = row.shotsId;
   if (row.shotClassId._is_valid) {
     p_shCla_id = row.shotClassId;
@@ -152,7 +154,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& shot_ptr,
   doodle::Basefile tab{};
   shotInfoPtrList list;
 
-  auto db = coreSql::getCoreSql().getConnection();
+  auto db   = coreSql::getCoreSql().getConnection();
   auto& row = db->run(sqlpp::select(sqlpp::all_of(tab))
                           .from(tab)
                           .where(tab.shotsId == shot_ptr->getIdP() and
@@ -163,14 +165,14 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& shot_ptr,
 
   auto Info = std::make_shared<shotFileSqlInfo>();
   if (row._is_valid) {
-    Info->idP = row.id;
-    Info->fileP = row.file.text;
+    Info->idP           = row.id;
+    Info->fileP         = row.file.text;
     Info->fileSuffixesP = row.fileSuffixes.text;
-    Info->userP = row.user.text;
-    Info->versionP = row.version;
-    Info->filepathP = row.FilePath_.text;
-    Info->infoP = Info->json_to_strList(row.infor.text);
-    Info->fileStateP = row.filestate;
+    Info->userP         = row.user.text;
+    Info->versionP      = row.version;
+    Info->filepathP     = row.FilePath_.text;
+    Info->infoP         = Info->json_to_strList(row.infor.text);
+    Info->fileStateP    = row.filestate;
     if (row.shotsId._is_valid) Info->p_shot_id = row.shotsId;
     if (row.shotClassId._is_valid) {
       Info->p_shCla_id = row.shotClassId;
@@ -309,7 +311,7 @@ episodesPtr shotFileSqlInfo::getEpisdes() {
     return p_ptr_eps;
   } else if (p_eps_id >= 0) {
     auto epi = episodes::Instances();
-    auto it = epi.find(p_eps_id);
+    auto it  = epi.find(p_eps_id);
     if (it != epi.end())
       p_ptr_eps = it->second->shared_from_this();
     else {
@@ -327,7 +329,7 @@ void shotFileSqlInfo::setEpisdes(const episodesPtr& eps_) {
   if (!eps_) return;
 
   p_ptr_eps = eps_;
-  p_eps_id = eps_->getIdP();
+  p_eps_id  = eps_->getIdP();
 }
 
 shotPtr shotFileSqlInfo::getShot() {
@@ -345,7 +347,7 @@ shotPtr shotFileSqlInfo::getShot() {
 void shotFileSqlInfo::setShot(const shotPtr& shot_) {
   if (!shot_) return;
   p_ptr_shot = shot_;
-  p_shot_id = shot_->getIdP();
+  p_shot_id  = shot_->getIdP();
 
   setEpisdes(shot_->getEpisodes());
 }
@@ -366,10 +368,14 @@ shotClassPtr shotFileSqlInfo::getShotclass() {
 }
 
 void shotFileSqlInfo::setShotClass() {
-  auto value = shotClass::getCurrentClass();
-  if (!value) return;
-  p_shCla_id = value->getIdP();
-  p_ptr_shcla = value;
+  try {
+    auto value = shotClass::getCurrentClass();
+    if (!value) return;
+    p_shCla_id  = value->getIdP();
+    p_ptr_shcla = value;
+  } catch (const std::runtime_error& err) {
+    DOODLE_LOG_WARN(err.what());
+  }
 }
 
 shotTypePtr shotFileSqlInfo::getShotType() {
@@ -388,7 +394,7 @@ shotTypePtr shotFileSqlInfo::getShotType() {
 }
 void shotFileSqlInfo::setShotType(const shotTypePtr& fileType_) {
   if (!fileType_) return;
-  p_shTy_id = fileType_->getIdP();
+  p_shTy_id  = fileType_->getIdP();
   p_ptr_shTy = fileType_;
 
   versionP = getVersionMax() + 1;
@@ -401,9 +407,13 @@ bool shotFileSqlInfo::sort(const shotInfoPtr& t1, const shotInfoPtr& t2) {
 }
 int shotFileSqlInfo::getVersionMax() {
   for (const auto& info_l : p_instance) {
-    if ((getShotType() == info_l.second->getShotType()) &&
-        (info_l.second->getShotclass() == shotClass::getCurrentClass()))
-      return info_l.second->versionP;
+    try {
+      if ((getShotType() == info_l.second->getShotType()) &&
+          (info_l.second->getShotclass() == shotClass::getCurrentClass()))
+        return info_l.second->versionP;
+    } catch (const std::runtime_error& e) {
+      std::cerr << e.what() << '\n';
+    }
   }
   return 0;
 }
