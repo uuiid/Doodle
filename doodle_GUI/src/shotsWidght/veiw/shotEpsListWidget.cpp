@@ -1,6 +1,8 @@
 ﻿#include "shotEpsListWidget.h"
 
-#include "src/shotsWidght/model/shotEpsListModel.h"
+#include <Logger.h>
+
+#include <src/shotsWidght/model/shotEpsListModel.h>
 #include <core_doQt.h>
 
 #include <QSpinBox>
@@ -46,6 +48,11 @@ void episodesintDelegate::setModelData(QWidget *editor,
   spinbox->interpretText();
   int value = spinbox->value();
 
+  if (index.data(Qt::EditRole).toInt() == value) {
+    model->setData(index, value, Qt::EditRole);
+    return;
+  }
+
   QMessageBox::StandardButton box = QMessageBox::information(static_cast<QWidget *>(this->parent()),
                                                              tr("警告:"), tr("将第 %1 集提交到服务器").arg(value),
                                                              QMessageBox::Yes | QMessageBox::Cancel);
@@ -83,6 +90,7 @@ shotEpsListWidget::~shotEpsListWidget() = default;
 void shotEpsListWidget::insertEpisodes() {
   int raw = selectionModel()->currentIndex().row() + 1;
   model()->insertRow(raw, selectionModel()->currentIndex());
+  p_episodesListModel->setEditorData();
   //设置当前行的选择
   setCurrentIndex(p_episodesListModel->index(raw));
   edit(p_episodesListModel->index(raw));
@@ -101,12 +109,30 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
   add_eps->setText(tr("添加集数"));
   add_eps->setStatusTip(tr("添加集数"));
   p_eps_Menu->addAction(add_eps);
+
   if (selectionModel()->hasSelection()) {
     auto createMove = new QAction();
     createMove->setText(tr("制作整集拍屏"));
     connect(createMove, &QAction::triggered,
             this, &shotEpsListWidget::creatEpsMov);
     p_eps_Menu->addAction(createMove);
+
+    p_eps_Menu->addSection(tr("注意"));
+
+    auto modify_eps = new QAction();
+    connect(modify_eps, &QAction::triggered,
+            [=]() {
+              //设置当前行的选择
+              p_episodesListModel->setEditorData();
+              edit(selectionModel()->currentIndex());
+            });
+    modify_eps->setText(tr("修改集数"));
+    p_eps_Menu->addAction(modify_eps);
+
+    auto k_deleteEpsiodes = new QAction();
+    connect(k_deleteEpsiodes, &QAction::triggered, [=]() { this->deleteEpsiodes(); });
+    k_deleteEpsiodes->setText(tr("删除集数"));
+    p_eps_Menu->addAction(k_deleteEpsiodes);
   }
   p_eps_Menu->move(event->globalPos());
   p_eps_Menu->show();
@@ -123,14 +149,35 @@ void shotEpsListWidget::setModel(QAbstractItemModel *model) {
   QAbstractItemView::setModel(model);
 }
 void shotEpsListWidget::creatEpsMov() {
-  initEmit();
-  auto shotInfo = std::make_shared<doCore::shotFileSqlInfo>();
+  if (!doCore::shotFileSqlInfo::Instances().empty()) {
+    initEmit();
+    auto shotInfo = std::make_shared<doCore::shotFileSqlInfo>();
 
-  const auto &kEps = selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>();
-  if (kEps) {
-    shotInfo->setEpisdes(kEps);
-    auto move = std::make_unique<doCore::movieEpsArchive>(shotInfo);
-    move->update();
+    const auto &kEps = selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>();
+    if (kEps) {
+      shotInfo->setEpisdes(kEps);
+      auto move = std::make_unique<doCore::movieEpsArchive>(shotInfo);
+      move->update();
+    }
+  } else {
+    QMessageBox::warning(this, tr("注意: "),
+                         tr("这个集数上没有上传拍屏"));
+    auto data = selectionModel()->currentIndex().data(Qt::UserRole);
+    auto eps  = data.value<doCore::episodesPtr>();
+    DOODLE_LOG_INFO(" 这个集数上没有上传拍屏: " << eps->getEpisdes_str());
   }
+}
+
+void shotEpsListWidget::deleteEpsiodes() {
+  if (selectionModel()->hasSelection())
+    if (doCore::shot::Instances().empty() && doCore::shotFileSqlInfo::Instances().empty()) {
+      p_episodesListModel->removeRow(selectionModel()->currentIndex().row());
+    } else {
+      auto data = selectionModel()->currentIndex().data(Qt::UserRole);
+      auto eps  = data.value<doCore::episodesPtr>();
+      DOODLE_LOG_INFO(" 这个条目内还有内容,  无法删除: " << eps->getEpisdes_str());
+      QMessageBox::warning(this, tr("注意: "),
+                           tr("这个条目内还有内容,  无法删除"));
+    }
 }
 DOODLE_NAMESPACE_E

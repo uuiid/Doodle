@@ -12,7 +12,9 @@
 DOODLE_NAMESPACE_S
 
 shotEpsListModel::shotEpsListModel(QObject *parent)
-    : QAbstractListModel(parent), eplist() {
+    : QAbstractListModel(parent),
+      eplist(),
+      useEdit(false) {
   init();
 }
 shotEpsListModel::~shotEpsListModel() = default;
@@ -44,7 +46,7 @@ QVariant shotEpsListModel::data(const QModelIndex &index, int role) const {
 Qt::ItemFlags shotEpsListModel::flags(const QModelIndex &index) const {
   if (!index.isValid()) return Qt::ItemIsEnabled;
 
-  if (eplist[index.row()]->isInsert())
+  if (eplist[index.row()]->isInsert() && !useEdit)
     return QAbstractListModel::flags(index);
   else
     return Qt::ItemIsEditable | Qt::ItemIsEnabled |
@@ -52,24 +54,20 @@ Qt::ItemFlags shotEpsListModel::flags(const QModelIndex &index) const {
 }
 bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value,
                                int role) {
-  init();
+  useEdit = false;
   if (index.isValid() && role == Qt::EditRole) {
+    auto findeps = std::find_if(eplist.begin(), eplist.end(),
+                                [=](const doCore::episodesPtr &eps) -> bool {
+                                  return eps->getEpisdes() == value.toInt();
+                                });
     //确认镜头不重复和没有提交
-    bool isHasEps = false;
-    for (auto &&x : eplist) {
-      if (value.toInt() == x->getEpisdes() && x->isInsert()) {
-        isHasEps = true;
-        break;
-      }
-    }
-    if (isHasEps)
-      return false;
-    else {
+    if (findeps == eplist.end()) {
       eplist[index.row()]->setEpisdes(value.toInt());
-      eplist[index.row()]->insert();
+      eplist[index.row()]->updateSQL();
       dataChanged(index, index, {role});
       return true;
     }
+    return false;
   }
   return false;
 }
@@ -79,6 +77,7 @@ bool shotEpsListModel::insertRows(int position, int rows,
   for (int row = 0; row < rows; ++row) {
     eplist.insert(eplist.begin() + position,
                   std::make_shared<doCore::episodes>());
+    eplist[position]->insert();
   }
   endInsertRows();
   return true;
@@ -87,10 +86,15 @@ bool shotEpsListModel::removeRows(int position, int rows,
                                   const QModelIndex &index) {
   beginRemoveRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
+    eplist[position]->deleteSQL();
     eplist.erase(eplist.begin() + position);
   }
   endRemoveRows();
   return true;
+}
+
+void shotEpsListModel::setEditorData() {
+  useEdit = true;
 }
 void shotEpsListModel::init() {
   clear();

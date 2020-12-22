@@ -6,14 +6,6 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\core\src\core\coresql.cpp
  */
-/*
- * @Author: your name
- * @Date: 2020-09-10 14:59:48
- * @LastEditTime: 2020-11-29 14:10:23
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \Doodle\core\src\coresql.cpp
- */
 #include "coresql.h"
 
 #include <Logger.h>
@@ -44,11 +36,17 @@ coreSql &coreSql::getCoreSql() {
 }
 
 void coreSql::initDB() {
-  config->user = "Effects";
+  config->user     = "Effects";
   config->password = "Effects";
-  config->host = ip;
-  config->port = 3306;
+  config->host     = ip;
+  config->port     = 3306;
+
+  //在这里我们使用宏去控制测试数据库
+#ifdef NDEBUG
   config->database = "doodle_main";
+#else
+  config->database = "test_db";
+#endif  // defined
   config->debug = false;
 }
 dstring coreSql::getThreadId() {

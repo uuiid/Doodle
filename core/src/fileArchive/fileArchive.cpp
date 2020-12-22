@@ -23,7 +23,7 @@ fileArchive::fileArchive()
     : p_custom_path(),
       p_soureFile(),
       p_cacheFilePath(),
-      p_Path(),
+      p_server_path(),
       p_state_(state::none) {}
 
 bool fileArchive::update(const dpath &path) {
@@ -40,7 +40,7 @@ bool fileArchive::update(const dpathList &filelist) {
   _generateFilePath();
 
   if (!p_custom_path.empty() || p_soureFile.size() == p_custom_path.size()) {
-    p_Path = p_custom_path;
+    p_server_path = p_custom_path;
   }
 
   //获得缓存路径
@@ -140,14 +140,14 @@ bool fileArchive::isInCache() {
   return has;
 }
 void fileArchive::_updata(const dpathList &pathList) {
-  assert(p_Path.size() == p_cacheFilePath.size());
+  assert(p_server_path.size() == p_cacheFilePath.size());
   coreSet &set = coreSet::getSet();
 
   auto &session = doSystem::DfileSyntem::get();
   //使用ftp上传
   int i = 0;
   for (auto &&item : p_cacheFilePath) {
-    if (!session.upload(item, p_Path[i])) {
+    if (!session.upload(item, p_server_path[i])) {
       p_state_ = state::fail;
       DOODLE_LOG_WARN("无法上传文件" << (item).c_str());
       return;
@@ -157,7 +157,7 @@ void fileArchive::_updata(const dpathList &pathList) {
 }
 void fileArchive::_down(const dpath &localPath) {
   auto &session = doSystem::DfileSyntem::get();
-  for (auto &&item : p_Path) {
+  for (auto &&item : p_server_path) {
     if (!boost::filesystem::exists(localPath))
       boost::filesystem::create_directories(localPath);
     if (!session.down(localPath / item.filename(), item)) {
@@ -177,7 +177,7 @@ bool fileArchive::generateCachePath() {
   //获得缓存路径
   p_cacheFilePath.clear();
   coreSet &set = coreSet::getSet();
-  for (auto &&item : p_Path) {  //这个是下载 要获得p_path服务器路径
+  for (auto &&item : p_server_path) {  //这个是下载 要获得p_path服务器路径
     auto path = set.getCacheRoot() / item;
     p_cacheFilePath.push_back(path.generic_string());
   }

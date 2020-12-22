@@ -33,11 +33,11 @@ mayaArchiveShotFbx::mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr)
 void mayaArchiveShotFbx::_generateFilePath() {
   if (!p_soureFile.empty())
     for (auto &k_i : p_soureFile)
-      p_Path.push_back(p_info_ptr_->generatePath("export_fbx") /
-                       k_i.filename());
+      p_server_path.push_back(p_info_ptr_->generatePath("export_fbx") /
+                              k_i.filename());
   else if (!p_info_ptr_->getFileList().empty())
     for (auto &&item : p_info_ptr_->getFileList())
-      p_Path.push_back(item.string());
+      p_server_path.push_back(item.string());
 }
 bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
   auto resou = boost::filesystem::current_path().parent_path() / "resource";
@@ -132,8 +132,8 @@ bool mayaArchiveShotFbx::update(const dpath &shot_data) {
   p_info_ptr_->setShotType(shotType::findShotType("maya_export"));
   //获得缓存路径并下载文件
   auto cache_path = p_info_ptr_->generatePath("export_fbx");
-  cache_path = coreSet::getSet().getCacheRoot() / cache_path;
-  p_Path = {shot_data};
+  cache_path      = coreSet::getSet().getCacheRoot() / cache_path;
+  p_server_path   = {shot_data};
   _down({cache_path});
 
   //确认导出成功
@@ -144,7 +144,7 @@ bool mayaArchiveShotFbx::update(const dpath &shot_data) {
     p_state_ = state::fail;
     return false;
   }
-  p_Path.clear();
+  p_server_path.clear();
   p_cacheFilePath.clear();
   //开始上传文件
   _generateFilePath();
@@ -155,7 +155,7 @@ bool mayaArchiveShotFbx::update(const dpath &shot_data) {
   return true;
 }
 void mayaArchiveShotFbx::insertDB() {
-  p_info_ptr_->setFileList(p_Path);
+  p_info_ptr_->setFileList(p_server_path);
 
   p_info_ptr_->setShotType(doCore::shotType::findShotType("maya_export", true));
   if (p_info_ptr_->getInfoP().empty()) {
