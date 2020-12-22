@@ -64,17 +64,16 @@ void assTableWidght::init() {
 void assTableWidght::insertAss(const QString &path) {
   DOODLE_LOG_INFO("获得路径: " << path.toStdString());
   auto pathInfo = QFileInfo(path);
-  boost::regex reMaya("m[ab]");
-  boost::regex reUe4("uproject");
-  //插入数据之前先刷新一下
-  refreshClass();
+  static boost::regex reMaya("m[ab]");
+  static boost::regex reUe4("uproject");
 
   p_model_->insertRow(0, QModelIndex());
   auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
                   .value<doCore::assInfoPtr>();
+  //选择提示
   QMessageBox msgBox;
-  auto text_info =
-      QInputDialog::getText(this, tr("请输入备注"), tr("请输入文件备注"));
+  auto text_info = QInputDialog::getText(this, tr("请输入备注"), tr("请输入文件备注"));
+
   data->setInfoP(text_info.toStdString());
   DOODLE_LOG_INFO(pathInfo.suffix().toStdString());
 
@@ -89,18 +88,16 @@ void assTableWidght::insertAss(const QString &path) {
     msgBox.exec();
 
     if (msgBox.clickedButton() == modelFile) {
-      data->setAssType(
-          doCore::assType::findType(doCore::assType::e_type::scenes, true));
+      data->setAssType(doCore::assType::findType(doCore::assType::e_type::scenes, true));
     } else if (msgBox.clickedButton() == rig) {
-      data->setAssType(
-          doCore::assType::findType(doCore::assType::e_type::rig, true));
+      data->setAssType(doCore::assType::findType(doCore::assType::e_type::rig, true));
     } else if (msgBox.clickedButton() == modelFile_low) {
-      data->setAssType(
-          doCore::assType::findType(doCore::assType::e_type::scenes_low, true));
+      data->setAssType(doCore::assType::findType(doCore::assType::e_type::scenes_low, true));
     } else if (msgBox.clickedButton() == noButten) {
       p_model_->removeRow(0);
       return;
     }
+    data              = std::get<doCore::assInfoPtr>(data->findSimilar());
     auto maya_archive = std::make_shared<doCore::mayaArchive>(data);
 
     auto future = std::async(std::launch::async, [=]() -> bool {

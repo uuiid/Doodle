@@ -58,10 +58,13 @@ void shotFileSqlInfo::insert() {
 
   auto db      = coreSql::getCoreSql().getConnection();
   auto install = sqlpp::dynamic_insert_into(*db, tab).dynamic_set(
-      tab.file = fileP, tab.fileSuffixes = fileSuffixesP, tab.user = userP,
-      tab.version = versionP, tab.FilePath_ = filepathP,
-      tab.filestate = sqlpp::value_or_null(fileStateP),
-      tab.projectId = coreSet::getSet().projectName().first);
+      tab.file         = fileP,
+      tab.fileSuffixes = fileSuffixesP,
+      tab.user         = userP,
+      tab.version      = versionP,
+      tab.FilePath_    = filepathP,
+      tab.filestate    = sqlpp::value_or_null(fileStateP),
+      tab.projectId    = coreSet::getSet().projectName().first);
   if (!infoP.empty())
     install.insert_list.add(tab.infor = strList_tojson(infoP));
   if (p_shot_id > 0) install.insert_list.add(tab.shotsId = p_shot_id);
@@ -87,7 +90,12 @@ void shotFileSqlInfo::updateSQL() {
 
   auto db     = coreSql::getCoreSql().getConnection();
   auto updata = sqlpp::update(tab);
-  updata.set(tab.infor = strList_tojson(infoP), tab.filestate = fileStateP)
+  updata.set(tab.infor        = strList_tojson(infoP),
+             tab.filestate    = fileStateP,
+             tab.FilePath_    = filepathP,
+             tab.file         = fileP,
+             tab.fileSuffixes = fileSuffixesP,
+             tab.version      = versionP)
       .where(tab.id == idP);
   db->update(updata);
 }
@@ -304,6 +312,23 @@ dstring shotFileSqlInfo::generateFileName(const dstring& suffixes,
   name % prefix;
   name % generateFileName(suffixes);
   return name.str();
+}
+
+dataInfoPtr shotFileSqlInfo::findSimilar() {
+  auto it =
+      std::find_if(
+          p_instance.begin(), p_instance.end(),
+          [=](std::pair<const int64_t, shotFileSqlInfo*> info) -> bool {
+            return info.second->p_eps_id == p_eps_id &&
+                   info.second->p_shot_id == p_shot_id &&
+                   info.second->p_shTy_id == p_shTy_id &&
+                   info.second->p_shCla_id == p_shCla_id;
+          });
+  if (it != p_instance.end()) {
+    return it->second->shared_from_this();
+  } else {
+    return shared_from_this();
+  }
 }
 
 episodesPtr shotFileSqlInfo::getEpisdes() {

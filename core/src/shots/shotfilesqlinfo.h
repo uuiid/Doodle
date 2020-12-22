@@ -36,6 +36,8 @@ class CORE_API shotFileSqlInfo
   dstring generateFileName(const dstring &suffixes) override;
   dstring generateFileName(const dstring &suffixes,
                            const dstring &prefix) override;
+
+  virtual dataInfoPtr findSimilar() override;
   //外键查询
   episodesPtr getEpisdes();
 

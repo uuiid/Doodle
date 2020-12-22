@@ -17,7 +17,11 @@ void ueArchive::insertDB() {
   info->setAssType(assType::findType(assType::e_type::UE4, true));
   if (p_info_->getInfoP().empty())
     p_info_->setInfoP("ue场景文件");
-  p_info_->insert();
+
+  if (p_info_->isInsert())
+    p_info_->updateSQL();
+  else
+    p_info_->insert();
 }
 void ueArchive::_generateFilePath() {
   if (!p_soureFile.empty()) {

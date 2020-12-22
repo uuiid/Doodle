@@ -217,6 +217,21 @@ void assFileSqlInfo::setAssType(const assTypePtr &type_ptr) {
 
   versionP = getMaxVecsion() + 1;
 }
+
+dataInfoPtr assFileSqlInfo::findSimilar() {
+  auto it =
+      std::find_if(
+          p_instance.begin(), p_instance.end(),
+          [=](std::pair<const int64_t, assFileSqlInfo *> &part) -> bool {
+            return part.second->p_dep_ptr_ == p_dep_ptr_ &&
+                   part.second->ass_class_id == ass_class_id &&
+                   part.second->ass_type_id == ass_type_id;
+          });
+  if (it != p_instance.end())
+    return it->second->shared_from_this();
+  else
+    return shared_from_this();
+}
 template <typename T>
 void assFileSqlInfo::batchSetAttr(const T &row) {
   idP           = row.id;

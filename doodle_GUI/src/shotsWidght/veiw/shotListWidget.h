@@ -88,6 +88,12 @@ class shotListWidget : public QListView {
  private Q_SLOTS:
   //添加镜头号
   void insertShot();
+  //批量添加镜头
+  void insertShotBatch();
+
+  //删除镜头
+  void deleteShot();
+
   //同步镜头
   void synShot();
   //私有的镜头点击发射事件

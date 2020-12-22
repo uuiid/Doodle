@@ -19,6 +19,8 @@
 #include <QtGui/QWindow>
 #include <QTextStream>
 
+#include <exception>
+
 int main(int argc, char *argv[]) try {
   QApplication q_application(argc, argv);
 
@@ -48,7 +50,8 @@ int main(int argc, char *argv[]) try {
   q_application.exec();
   boost::log::core::get()->remove_all_sinks();
   return 0;
-} catch (...) {
+} catch (const std::exception &err) {
+  DOODLE_LOG_ERROR(err.what());
   boost::log::core::get()->remove_all_sinks();
   return 1;
 }

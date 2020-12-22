@@ -77,6 +77,8 @@ shotEpsListWidget::shotEpsListWidget(QWidget *parent)
       p_episodesListDelegate(nullptr),
       p_eps_Menu(nullptr) {
   p_episodesListDelegate = new episodesintDelegate(this);
+
+  setEditTriggers(QAbstractItemView::EditKeyPressed);
   setItemDelegate(p_episodesListDelegate);
 
   setStatusTip(tr("集数栏 注意不要添加错误的集数"));
@@ -90,7 +92,7 @@ shotEpsListWidget::~shotEpsListWidget() = default;
 void shotEpsListWidget::insertEpisodes() {
   int raw = selectionModel()->currentIndex().row() + 1;
   model()->insertRow(raw, selectionModel()->currentIndex());
-  p_episodesListModel->setEditorData();
+
   //设置当前行的选择
   setCurrentIndex(p_episodesListModel->index(raw));
   edit(p_episodesListModel->index(raw));
@@ -123,7 +125,6 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
     connect(modify_eps, &QAction::triggered,
             [=]() {
               //设置当前行的选择
-              p_episodesListModel->setEditorData();
               edit(selectionModel()->currentIndex());
             });
     modify_eps->setText(tr("修改集数"));

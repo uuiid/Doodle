@@ -1,8 +1,4 @@
-﻿//
-// Created by teXiao on 2020/10/13.
-//
-
-#include "shotTableWidget.h"
+﻿#include "shotTableWidget.h"
 
 #include <core_doQt.h>
 #include <src/toolkit/toolkit.h>

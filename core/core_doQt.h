@@ -48,5 +48,6 @@ Q_DECLARE_METATYPE(doCore::assDepPtr)
 Q_DECLARE_METATYPE(doCore::assClassPtr)
 Q_DECLARE_METATYPE(doCore::assTypePtr)
 Q_DECLARE_METATYPE(doCore::assInfoPtr)
+
 #define DOTOS(str) QString::fromStdString(str)
 #endif  //DOODLE_QT

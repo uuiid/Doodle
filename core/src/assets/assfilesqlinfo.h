@@ -43,8 +43,10 @@ class CORE_API assFileSqlInfo
 
   const assTypePtr &getAssType();
   void setAssType(const assTypePtr &type_ptr);
-  static bool sortType(const assInfoPtr &t1, const assInfoPtr &t2);
 
+  virtual dataInfoPtr findSimilar() override;
+
+  static bool sortType(const assInfoPtr &t1, const assInfoPtr &t2);
   static const std::map<int64_t, assFileSqlInfo *> &Instances();
 
  private:

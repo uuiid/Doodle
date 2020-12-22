@@ -26,7 +26,11 @@ void movieArchive::insertDB() {
   p_info_ptr_->setFileList(p_server_path);
   if (p_info_ptr_->getInfoP().empty())
     p_info_ptr_->setInfoP("拍屏文件");
-  p_info_ptr_->insert();
+
+  if (p_info_ptr_->isInsert())
+    p_info_ptr_->updateSQL();
+  else
+    p_info_ptr_->insert();
 }
 void movieArchive::_generateFilePath() {
   if (!p_soureFile.empty())

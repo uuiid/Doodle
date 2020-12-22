@@ -30,6 +30,7 @@ class shotListModel : public QAbstractListModel {
 
   //设置编辑标识
   [[nodiscard]] Qt::ItemFlags flags(const QModelIndex &index) const override;
+
   //设置数据(内部使用 QMap[shot] 和 QMap[shotAb] 获得传入信息)
   bool setData(const QModelIndex &index, const QVariant &value, int role) override;
 
@@ -37,6 +38,7 @@ class shotListModel : public QAbstractListModel {
   bool insertRows(int position, int rows, const QModelIndex &index) override;
   //删除数据
   bool removeRows(int position, int rows, const QModelIndex &index) override;
+
  public Q_SLOTS:
   //自定义创建函数
   void init();

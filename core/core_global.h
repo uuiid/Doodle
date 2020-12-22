@@ -10,7 +10,7 @@
 #include <vector>
 #include <iostream>
 #include <memory>
-
+#include <variant>
 #include <boost/core/noncopyable.hpp>
 
 #if defined(CORE_LIBRARY)
@@ -146,6 +146,18 @@ using dpathList = std::vector<dpath>;
 
 using freeSynWrapPtr = std::shared_ptr<freeSynWrap>;
 
+using dataInfoPtr = std::variant<
+    episodesPtr,
+    shotPtr,
+    shotClassPtr,
+    shotTypePtr,
+    shotInfoPtr,
+
+    assDepPtr,
+    assClassPtr,
+    assTypePtr,
+    znchNamePtr,
+    assInfoPtr>;
 CORE_NAMESPACE_E
 
 // Q_DECLARE_METATYPE(doCore::shotInfoPtr)

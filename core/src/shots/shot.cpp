@@ -72,7 +72,14 @@ void shot::insert() {
   p_instance[idP] = this;
 }
 
-void shot::updateSQL() {}
+void shot::updateSQL() {
+  doodle::Shots table{};
+  auto db = coreSql::getCoreSql().getConnection();
+  db->update(sqlpp::update(table)
+                 .set(table.shot   = p_qint_shot_,
+                      table.shotab = sqlpp::value_or_null<dstring>(getShotAb_str()))
+                 .where(table.id == idP));
+}
 
 void shot::deleteSQL() {
   doodle::Shots table{};

@@ -13,8 +13,7 @@ DOODLE_NAMESPACE_S
 
 shotEpsListModel::shotEpsListModel(QObject *parent)
     : QAbstractListModel(parent),
-      eplist(),
-      useEdit(false) {
+      eplist() {
   init();
 }
 shotEpsListModel::~shotEpsListModel() = default;
@@ -46,15 +45,14 @@ QVariant shotEpsListModel::data(const QModelIndex &index, int role) const {
 Qt::ItemFlags shotEpsListModel::flags(const QModelIndex &index) const {
   if (!index.isValid()) return Qt::ItemIsEnabled;
 
-  if (eplist[index.row()]->isInsert() && !useEdit)
-    return QAbstractListModel::flags(index);
-  else
-    return Qt::ItemIsEditable | Qt::ItemIsEnabled |
-           QAbstractListModel::flags(index);
+  // if (eplist[index.row()]->isInsert())
+  //   return QAbstractListModel::flags(index);
+  // else
+  return Qt::ItemIsEditable | Qt::ItemIsEnabled |
+         QAbstractListModel::flags(index);
 }
 bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value,
                                int role) {
-  useEdit = false;
   if (index.isValid() && role == Qt::EditRole) {
     auto findeps = std::find_if(eplist.begin(), eplist.end(),
                                 [=](const doCore::episodesPtr &eps) -> bool {
@@ -93,9 +91,6 @@ bool shotEpsListModel::removeRows(int position, int rows,
   return true;
 }
 
-void shotEpsListModel::setEditorData() {
-  useEdit = true;
-}
 void shotEpsListModel::init() {
   clear();
   auto tmp_eps = doCore::episodes::getAll();

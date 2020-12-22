@@ -34,18 +34,25 @@ class CORE_API fileSqlInfo : public coresqldata {
 
   [[nodiscard]] dstring getUser() const;
   [[nodiscard]] QString getUserQ() const;
+  //生成路径(只有路径)
   virtual dpath generatePath(const std::string &programFodler) = 0;
+  //生成路径带文件名称
   virtual dpath generatePath(const dstring &programFolder,
                              const dstring &suffixes) = 0;
+  //生成路径在文件名称中添加前缀
   virtual dpath generatePath(const dstring &programFolder,
                              const dstring &suffixes,
                              const dstring &prefix) = 0;
+  //生成文件名称
   virtual dstring generateFileName(const dstring &suffixes) = 0;
   virtual dstring generateFileName(const dstring &suffixes,
-                                   const dstring &prefix) = 0;
+                                   const dstring &prefix)   = 0;
+  //删除条目
   virtual void deleteSQL() override;
 
   virtual bool exist(bool refresh);
+  //寻找到和自身一样约束的数据库条目
+  virtual dataInfoPtr findSimilar() = 0;
 
  protected:
   //属性包装

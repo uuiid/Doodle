@@ -47,14 +47,7 @@ QVariant shotListModel::data(const QModelIndex &index, int role) const {
     default:
       break;
   }
-
-  if (role == Qt::DisplayRole || role == Qt::EditRole) {
-    return shotlist[index.row()]->getShotAndAb_strQ();
-  } else if (role == Qt::UserRole) {
-    return QVariant::fromValue(shotlist[index.row()]);
-  } else {
-    return QVariant();
-  }
+  return var;
 }
 
 QVariant shotListModel::headerData(int section,
@@ -73,10 +66,10 @@ Qt::ItemFlags shotListModel::flags(const QModelIndex &index) const {
   if (!index.isValid())
     return Qt::ItemIsEnabled;
 
-  if (shotlist[index.row()]->isInsert())
-    return QAbstractListModel::flags(index);
-  else
-    return Qt::ItemIsEditable | Qt::ItemIsEnabled | QAbstractListModel::flags(index);
+  // if (shotlist[index.row()]->isInsert())
+  //   return QAbstractListModel::flags(index);
+  // else
+  return Qt::ItemIsEditable | Qt::ItemIsEnabled | QAbstractListModel::flags(index);
 }
 
 bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int role) {
@@ -84,23 +77,23 @@ bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int
   if (index.isValid() && role == Qt::EditRole) {
     //确认镜头不重复和没有提交
     //这个函数不设置AB镜
-    bool isHasShot = false;
-    for (auto &&x : shotlist) {
-      if ((infoMap["shot"].toInt() == x->getShot() && infoMap["shotAb"].toString() == x->getShotAb_strQ()) && x->isInsert()) {
-        isHasShot = true;
-        break;
-      }
-    }
 
-    if (isHasShot)
-      return false;
-    else {
+    auto find_shot = std::find_if(
+        shotlist.begin(), shotlist.end(),
+        [=](doCore::shotPtr &shot_ptr) -> bool {
+          return infoMap["shot"].toInt() == shot_ptr->getShot() &&
+                 infoMap["shotAb"].toString() == shot_ptr->getShotAb_strQ() &&
+                 shot_ptr->isInsert();
+        });
+
+    if (find_shot == shotlist.end()) {
       shotlist[index.row()]->setShot(infoMap["shot"].toInt(), infoMap["shotAb"].toString());
-      shotlist[index.row()]->setEpisodes(doCore::coreDataManager::get().getEpisodesPtr());
-      shotlist[index.row()]->insert();
+      shotlist[index.row()]->updateSQL();
       dataChanged(index, index, {role});
       return true;
     }
+
+    return false;
   }
   return false;
 }
@@ -109,7 +102,10 @@ bool shotListModel::insertRows(int position, int rows, const QModelIndex &index)
   beginInsertRows(QModelIndex(), position, position + rows - 1);
 
   for (int row = 0; row < rows; ++row) {
-    shotlist.insert(shotlist.begin() + position, std::make_shared<doCore::shot>());
+    auto shot = std::make_shared<doCore::shot>();
+    shot->setEpisodes(doCore::coreDataManager::get().getEpisodesPtr());
+    shot->insert();
+    shotlist.insert(shotlist.begin() + position, shot);
   }
   endInsertRows();
   return true;
@@ -118,6 +114,7 @@ bool shotListModel::insertRows(int position, int rows, const QModelIndex &index)
 bool shotListModel::removeRows(int position, int rows, const QModelIndex &index) {
   beginRemoveRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
+    shotlist[position]->deleteSQL();
     shotlist.erase(shotlist.begin() + position);
   }
   endRemoveRows();
@@ -125,9 +122,7 @@ bool shotListModel::removeRows(int position, int rows, const QModelIndex &index)
 }
 void shotListModel::init() {
   doCore::shotPtrList tmp_shot_list = doCore::shot::getAll(doCore::coreDataManager::get().getEpisodesPtr());
-
   clear();
-
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_shot_list.size()));
   shotlist = tmp_shot_list;
   endInsertRows();

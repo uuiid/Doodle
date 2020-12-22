@@ -112,13 +112,11 @@ coreSet::coreSet() {
   project     = std::make_pair(1, "dubuxiaoyao3");
   synPath     = std::make_shared<dpath>("D:/ue_prj");
   synServer   = std::make_shared<dpath>("/03_Workflow/Assets");
-
-  shotRoot   = std::make_shared<dpath>("/03_Workflow/Shots");
-  assRoot    = std::make_shared<dpath>("/03_Workflow/Assets");
-  prjectRoot = std::make_shared<dpath>("W:/");
-
-  cacheRoot = std::make_shared<dpath>("C:/Doodle_cache");
-  doc       = std::make_shared<dpath>("C:/Doodle_cache");
+  shotRoot    = std::make_shared<dpath>("/03_Workflow/Shots");
+  assRoot     = std::make_shared<dpath>("/03_Workflow/Assets");
+  prjectRoot  = std::make_shared<dpath>("W:/");
+  cacheRoot   = std::make_shared<dpath>("C:/Doodle_cache");
+  doc         = std::make_shared<dpath>("C:/Doodle_cache");
 }
 
 void coreSet::getSetting() {
@@ -134,14 +132,10 @@ void coreSet::getSetting() {
 
     inJosn.close();
 
-    user = root.value("user", "");
-
-    department = root.value("department", "VFX");
-
-    *synPath = root.value("synPath", "D:/ue_prj");
-
+    user           = root.value("user", "");
+    department     = root.value("department", "VFX");
+    *synPath       = root.value("synPath", "D:/ue_prj");
     project.second = root.value("synEp", 1);
-
     freeFileSyn    = root.value("FreeFileSync",
                              R"("C:\PROGRA~1\FREEFI~1\FreeFileSync.exe")");
     project.second = root.value("projectname", "dubuxiaoyao3");

@@ -160,6 +160,7 @@ bool shotTableModel::setData(const QModelIndex &index, const QVariant &value,
     return false;
   }
 }
+
 Qt::ItemFlags shotTableModel::flags(const QModelIndex &index) const {
   if (index.column() == 1)
     return Qt::ItemIsEditable | Qt::ItemIsEnabled |
@@ -186,7 +187,7 @@ void shotTableModel::init() {
   if (shot) {
     p_tmp_shot_info_ptr_list_ = doCore::shotFileSqlInfo::getAll(shot);
   } else {
-    auto eps = doCore::coreDataManager::get().getEpisodesPtr();
+    auto eps                  = doCore::coreDataManager::get().getEpisodesPtr();
     p_tmp_shot_info_ptr_list_ = doCore::shotFileSqlInfo::getAll(eps);
   }
 
