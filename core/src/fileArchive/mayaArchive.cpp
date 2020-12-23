@@ -35,7 +35,7 @@ void mayaArchive::setUseCustomPath(const dpathPtr& custom_path) {
 }
 
 void mayaArchive::insertDB() {
-  p_info_ptr_->setFileList(p_Path);
+  p_info_ptr_->setFileList(p_ServerPath);
   if (p_info_ptr_->getInfoP().empty()) {
     p_info_ptr_->setInfoP("maya动画文件");
   }
@@ -46,13 +46,17 @@ void mayaArchive::insertDB() {
 }
 void mayaArchive::_generateFilePath() {
   if (!p_soureFile.empty()) {
-    p_Path.push_back(
+    if (isServerzinsideDir(p_soureFile.front())) {
+      p_ServerPath.push_back(p_soureFile.front());
+      return;
+    }
+    p_ServerPath.push_back(
         p_info_ptr_->generatePath(
             "Scenefiles",
             boost::filesystem::extension(p_soureFile[0])));
   } else if (!p_info_ptr_->getFileList().empty()) {
     for (auto&& item : p_info_ptr_->getFileList()) {
-      p_Path.push_back(item);
+      p_ServerPath.push_back(item);
     }
   }
 }

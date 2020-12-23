@@ -393,11 +393,13 @@ shotClassPtr shotFileSqlInfo::getShotclass() {
   if (p_ptr_shcla)
     return p_ptr_shcla;
   else if (p_shCla_id >= 0) {
-    for (const auto& item : shotClass::Instances()) {
-      if (item.second->getIdP() == p_shCla_id) {
-        p_ptr_shcla = item.second->shared_from_this();
-        break;
-      }
+    auto& k_instance = shotClass::Instances();
+    auto it          = std::find_if(k_instance.begin(), k_instance.end(),
+                           [=](const std::pair<int64_t, shotClass*>& item) -> bool {
+                             return item.second->getIdP() == p_shCla_id;
+                           });
+    if (it != k_instance.end()) {
+      p_ptr_shcla = it->second->shared_from_this();
     }
     return p_ptr_shcla;
   }

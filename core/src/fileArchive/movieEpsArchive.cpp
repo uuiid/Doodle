@@ -21,7 +21,7 @@ movieEpsArchive::movieEpsArchive(shotInfoPtr eps)
       p_info_ptr_(std::move(eps)) {
 }
 void movieEpsArchive::insertDB() {
-  p_info_ptr_->setFileList(p_Path);
+  p_info_ptr_->setFileList(p_ServerPath);
   if (p_info_ptr_->getInfoP().empty())
     p_info_ptr_->setInfoP("整集拍屏文件");
 
@@ -32,28 +32,28 @@ void movieEpsArchive::insertDB() {
 }
 void movieEpsArchive::_generateFilePath() {
   if (!p_soureFile.empty()) {
-    p_Path.push_back(p_info_ptr_->generatePath("movie", ".mp4").generic_string());
+    p_ServerPath.push_back(p_info_ptr_->generatePath("movie", ".mp4").generic_string());
   } else if (!p_info_ptr_->getFileList().empty()) {
-    p_Path.push_back(p_info_ptr_->getFileList()[0].generic_string());
+    p_ServerPath.push_back(p_info_ptr_->getFileList()[0].generic_string());
   }
 }
 bool movieEpsArchive::epsMove() {
-  p_Path.push_back(p_info_ptr_->generatePath("movie", ".mp4").generic_string());
+  p_ServerPath.push_back(p_info_ptr_->generatePath("movie", ".mp4").generic_string());
   generateCachePath();
-  p_soureFile = p_Path;
-  p_Path.clear();
+  p_soureFile = p_ServerPath;
+  p_ServerPath.clear();
   if (p_info_ptr_->getEpisdes()) {
     shotInfoPtrList list{};
     shot::getAll(p_info_ptr_->getEpisdes());
     for (const auto &item : shot::getAll(p_info_ptr_->getEpisdes())) {
       auto info = shotFileSqlInfo::getAll(item, shotType::findShotType("flipbook"));
       if (info.front()) {
-        p_Path.push_back(info.front()->getFileList().front());
+        p_ServerPath.push_back(info.front()->getFileList().front());
       }
     }
     _down(p_cacheFilePath.front().parent_path());
     dpathList pathlist{};
-    for (const auto &path : p_Path) {
+    for (const auto &path : p_ServerPath) {
       auto path_mov = p_cacheFilePath.front().parent_path() / path.filename();
       if (boost::filesystem::exists(path_mov))
         pathlist.push_back(path_mov);
@@ -68,7 +68,7 @@ bool movieEpsArchive::update() {
   p_info_ptr_->setShotType(shotType::findShotType("flipbook"));
   if (epsMove()) {
     p_soureFile = {p_cacheFilePath.front()};
-    p_Path.clear();
+    p_ServerPath.clear();
     return fileArchive::update(p_soureFile);
   } else {
     return false;

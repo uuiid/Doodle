@@ -62,6 +62,9 @@ class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
   //下载文件
   virtual void _down(const dpath &localPath);
 
+  //文件在服务器目录中
+  virtual bool isServerzinsideDir(const dpath &localPath);
+
  protected:
   dpathList p_custom_path;
 
@@ -71,7 +74,7 @@ class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
   //缓存路径
   dpathList p_cacheFilePath;
   //这个是服务器路径(服务器)
-  dpathList p_Path;
+  dpathList p_ServerPath;
   //状态
   state p_state_;
 };

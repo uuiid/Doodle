@@ -23,7 +23,7 @@ fileArchive::fileArchive()
     : p_custom_path(),
       p_soureFile(),
       p_cacheFilePath(),
-      p_Path(),
+      p_ServerPath(),
       p_state_(state::none) {}
 
 bool fileArchive::update(const dpath &path) {
@@ -40,7 +40,7 @@ bool fileArchive::update(const dpathList &filelist) {
   _generateFilePath();
 
   if (!p_custom_path.empty() || p_soureFile.size() == p_custom_path.size()) {
-    p_Path = p_custom_path;
+    p_ServerPath = p_custom_path;
   }
 
   //获得缓存路径
@@ -140,24 +140,27 @@ bool fileArchive::isInCache() {
   return has;
 }
 void fileArchive::_updata(const dpathList &pathList) {
-  assert(p_Path.size() == p_cacheFilePath.size());
+  assert(p_ServerPath.size() == p_cacheFilePath.size());
   coreSet &set = coreSet::getSet();
 
   auto &session = doSystem::DfileSyntem::get();
+
   //使用ftp上传
-  int i = 0;
-  for (auto &&item : p_cacheFilePath) {
-    if (!session.upload(item, p_Path[i])) {
-      p_state_ = state::fail;
-      DOODLE_LOG_WARN("无法上传文件" << (item).c_str());
-      return;
+  for (size_t i = 0; i < p_cacheFilePath.size(); ++i) {
+    if (p_cacheFilePath[i] != p_ServerPath[i]) {
+      if (!session.upload(p_cacheFilePath[i], p_ServerPath[i])) {
+        p_state_ = state::fail;
+        DOODLE_LOG_WARN("无法上传文件" << p_cacheFilePath[i].c_str());
+        return;
+      }
+    } else {
+      DOODLE_LOG_WARN("已经在服务器上只需要记录,  不需要上传");
     }
-    ++i;
   }
 }
 void fileArchive::_down(const dpath &localPath) {
   auto &session = doSystem::DfileSyntem::get();
-  for (auto &&item : p_Path) {
+  for (auto &&item : p_ServerPath) {
     if (!boost::filesystem::exists(localPath))
       boost::filesystem::create_directories(localPath);
     if (!session.down(localPath / item.filename(), item)) {
@@ -165,6 +168,16 @@ void fileArchive::_down(const dpath &localPath) {
       p_state_ = state::fail;
       continue;
     }
+  }
+}
+
+bool fileArchive::isServerzinsideDir(const dpath &localPath) {
+  auto &set        = coreSet::getSet();
+  auto projectRoot = set.getPrjectRoot();
+  if (projectRoot.has_root_name() && localPath.has_root_name()) {
+    return projectRoot.root_name() == localPath.root_name();
+  } else {
+    return false;
   }
 }
 bool fileArchive::update() {
@@ -177,7 +190,7 @@ bool fileArchive::generateCachePath() {
   //获得缓存路径
   p_cacheFilePath.clear();
   coreSet &set = coreSet::getSet();
-  for (auto &&item : p_Path) {  //这个是下载 要获得p_path服务器路径
+  for (auto &&item : p_ServerPath) {  //这个是下载 要获得p_path服务器路径
     auto path = set.getCacheRoot() / item;
     p_cacheFilePath.push_back(path.generic_string());
   }
