@@ -90,14 +90,18 @@ void shotFileSqlInfo::updateSQL() {
 
   auto db     = coreSql::getCoreSql().getConnection();
   auto updata = sqlpp::update(tab);
-  updata.set(tab.infor        = strList_tojson(infoP),
-             tab.filestate    = fileStateP,
-             tab.FilePath_    = filepathP,
-             tab.file         = fileP,
-             tab.fileSuffixes = fileSuffixesP,
-             tab.version      = versionP)
-      .where(tab.id == idP);
-  db->update(updata);
+  try {
+    db->update(
+        updata.set(tab.infor        = strList_tojson(infoP),
+                   tab.filestate    = fileStateP,
+                   tab.FilePath_    = filepathP,
+                   tab.file         = fileP,
+                   tab.fileSuffixes = fileSuffixesP,
+                   tab.version      = versionP)
+            .where(tab.id == idP));
+  } catch (const sqlpp::exception& err) {
+    DOODLE_LOG_WARN(err.what());
+  }
 }
 
 template <typename T>
@@ -322,9 +326,17 @@ dataInfoPtr shotFileSqlInfo::findSimilar() {
             return info.second->p_eps_id == p_eps_id &&
                    info.second->p_shot_id == p_shot_id &&
                    info.second->p_shTy_id == p_shTy_id &&
-                   info.second->p_shCla_id == p_shCla_id;
+                   info.second->p_shCla_id == p_shCla_id &&
+                   info.second->idP > 0;
           });
   if (it != p_instance.end()) {
+    it->second->fileP         = fileP;
+    it->second->filepathP     = filepathP;
+    it->second->fileStateP    = fileStateP;
+    it->second->fileSuffixesP = fileSuffixesP;
+    it->second->versionP      = versionP;
+    it->second->infoP         = infoP;
+
     return it->second->shared_from_this();
   } else {
     return shared_from_this();
@@ -434,9 +446,11 @@ int shotFileSqlInfo::getVersionMax() {
   for (const auto& info_l : p_instance) {
     try {
       if ((getShotType() == info_l.second->getShotType()) &&
-          (info_l.second->getShotclass() == shotClass::getCurrentClass()))
+          (info_l.second->getShotclass() == shotClass::getCurrentClass()) &&
+          info_l.second->idP > 0)
         return info_l.second->versionP;
     } catch (const std::runtime_error& e) {
+      return 0;
       std::cerr << e.what() << '\n';
     }
   }

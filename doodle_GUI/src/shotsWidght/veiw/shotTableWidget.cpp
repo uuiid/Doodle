@@ -92,6 +92,13 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
                 &shotTableWidget::exportFbx);
         p_menu_->addAction(k_exportFbx);
       }
+
+      p_menu_->addSeparator();
+      auto k_deleteShot = new QAction();
+      k_deleteShot->setText(tr("删除条目"));
+      connect(k_deleteShot, &QAction::triggered,
+              this, &shotTableWidget::deleteShot);
+      p_menu_->addAction(k_deleteShot);
     }
   } else if (doCore::coreDataManager::get().getEpisodesPtr()) {
     if (selectionModel()->hasSelection()) {
@@ -246,14 +253,17 @@ void shotTableWidget::doDubledSlots(const QModelIndex &index) {
 }
 void shotTableWidget::submitMayaFile(doCore::shotInfoPtr &info_ptr,
                                      const QString &path) {
+  info_ptr  = std::get<doCore::shotInfoPtr>(info_ptr->findSimilar());
   auto file = std::make_shared<doCore::mayaArchive>(info_ptr);
   auto fun  = std::async(std::launch::async,
                         [=]() { return file->update(path.toStdString()); });
   updataManager::get().addQueue(fun, "正在上传中", 100);
   updataManager::get().run();
 }
+
 void shotTableWidget::submitFBFile(doCore::shotInfoPtr &info_ptr,
                                    const QString &path) {
+  info_ptr     = std::get<doCore::shotInfoPtr>(info_ptr->findSimilar());
   auto k_movie = std::make_shared<doCore::moveShotA>(info_ptr);
   std::future<bool> k_fu;
   k_fu = std::async(std::launch::async,
@@ -263,6 +273,14 @@ void shotTableWidget::submitFBFile(doCore::shotInfoPtr &info_ptr,
                     });
   updataManager::get().addQueue(k_fu, "正在上传中", 1000);
   updataManager::get().run();
+}
+
+void shotTableWidget::deleteShot() {
+  if (selectionModel()->hasSelection()) {
+    auto data = selectionModel()->currentIndex().data(Qt::UserRole);
+    data.value<doCore::shotInfoPtr>()->deleteSQL();
+    p_model_->init();
+  }
 }
 
 DOODLE_NAMESPACE_E

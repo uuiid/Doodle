@@ -75,10 +75,14 @@ void shot::insert() {
 void shot::updateSQL() {
   doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
-  db->update(sqlpp::update(table)
-                 .set(table.shot   = p_qint_shot_,
-                      table.shotab = sqlpp::value_or_null<dstring>(getShotAb_str()))
-                 .where(table.id == idP));
+  try {
+    db->update(sqlpp::update(table)
+                   .set(table.shot   = p_qint_shot_,
+                        table.shotab = sqlpp::value_or_null<dstring>(getShotAb_str()))
+                   .where(table.id == idP));
+  } catch (const sqlpp::exception &err) {
+    DOODLE_LOG_WARN(err.what());
+  }
 }
 
 void shot::deleteSQL() {

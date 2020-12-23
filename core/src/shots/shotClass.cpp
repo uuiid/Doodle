@@ -66,9 +66,13 @@ void shotClass::updateSQL() {
   if (idP < 0) return;
   doodle::Shotclass table{};
   auto db = coreSql::getCoreSql().getConnection();
-  db->update(sqlpp::update(table)
-                 .set(table.shotClass = getClass_str())
-                 .where(table.id == idP));
+  try {
+    db->update(sqlpp::update(table)
+                   .set(table.shotClass = getClass_str())
+                   .where(table.id == idP));
+  } catch (const std::exception &err) {
+    DOODLE_LOG_WARN(err.what());
+  }
 }
 
 void shotClass::deleteSQL() {

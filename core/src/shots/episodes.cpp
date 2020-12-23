@@ -63,6 +63,17 @@ void episodes::insert() {
   p_instance[idP] = this;
 }
 void episodes::updateSQL() {
+  if (isInsert()) {
+    doodle::Episodes table{};
+    auto db = coreSql::getCoreSql().getConnection();
+    try {
+      db->update(sqlpp::update(table)
+                     .set(table.episodes = p_int_episodes)
+                     .where(table.id == idP));
+    } catch (const sqlpp::exception &err) {
+      DOODLE_LOG_WARN(err.what());
+    }
+  }
 }
 
 void episodes::deleteSQL() {

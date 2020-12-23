@@ -44,11 +44,15 @@ coreSql &coreSql::getCoreSql() {
 }
 
 void coreSql::initDB() {
-  config->user = "Effects";
+  config->user     = "Effects";
   config->password = "Effects";
-  config->host = ip;
-  config->port = 3306;
+  config->host     = ip;
+  config->port     = 3306;
+#ifdef NDEBUG
   config->database = "doodle_main";
+#else
+  config->database = "test_db";
+#endif  //NDEBUG
   config->debug = false;
 }
 dstring coreSql::getThreadId() {

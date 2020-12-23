@@ -81,9 +81,12 @@ void assFileSqlInfo::updateSQL() {
 
   auto db     = coreSql::getCoreSql().getConnection();
   auto updata = sqlpp::update(tab);
-  updata.set(tab.infor = strList_tojson(infoP), tab.filestate = fileStateP)
-      .where(tab.id == idP);
-  db->update(updata);
+  try {
+    db->update(updata.set(tab.infor = strList_tojson(infoP), tab.filestate = fileStateP)
+                   .where(tab.id == idP));
+  } catch (const sqlpp::exception &e) {
+    DOODLE_LOG_ERROR(e.what());
+  }
 }
 
 void assFileSqlInfo::deleteSQL() {
@@ -225,11 +228,18 @@ dataInfoPtr assFileSqlInfo::findSimilar() {
           [=](std::pair<const int64_t, assFileSqlInfo *> &part) -> bool {
             return part.second->p_dep_ptr_ == p_dep_ptr_ &&
                    part.second->ass_class_id == ass_class_id &&
-                   part.second->ass_type_id == ass_type_id;
+                   part.second->ass_type_id == ass_type_id &&
+                   part.second->idP > 0;
           });
-  if (it != p_instance.end())
+  if (it != p_instance.end()) {
+    it->second->fileP         = fileP;
+    it->second->filepathP     = filepathP;
+    it->second->fileStateP    = fileStateP;
+    it->second->fileSuffixesP = fileSuffixesP;
+    it->second->versionP      = versionP;
+    it->second->infoP         = infoP;
     return it->second->shared_from_this();
-  else
+  } else
     return shared_from_this();
 }
 template <typename T>
@@ -252,7 +262,7 @@ bool assFileSqlInfo::sortType(const assInfoPtr &t1, const assInfoPtr &t2) {
 }
 int assFileSqlInfo::getMaxVecsion() {
   for (const auto &info_l : p_instance) {
-    if (getAssType() == info_l.second->getAssType())
+    if (getAssType() == info_l.second->getAssType() && info_l.second->idP > 0)
       return info_l.second->versionP;
   }
   return 0;

@@ -29,9 +29,6 @@ class shotTableWidget : public QTableView {
 
   void setModel(QAbstractItemModel *model) override;
 
- Q_SIGNALS:
-  void refreshClassAndType();
-
  private Q_SLOTS:
 
   void getSelectPath();
@@ -44,6 +41,8 @@ class shotTableWidget : public QTableView {
   static void submitMayaFile(doCore::shotInfoPtr &info_ptr,
                              const QString &path);
   static void submitFBFile(doCore::shotInfoPtr &info_ptr, const QString &path);
+
+  void deleteShot();
 
  protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
