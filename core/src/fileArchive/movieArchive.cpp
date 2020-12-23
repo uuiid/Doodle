@@ -23,20 +23,20 @@ movieArchive::movieArchive(fileSqlInfoPtr shot_info_ptr)
       p_info_ptr_(std::move(shot_info_ptr)) {
 }
 void movieArchive::insertDB() {
-  p_info_ptr_->setFileList(p_server_path);
+  p_info_ptr_->setFileList(p_Path);
   if (p_info_ptr_->getInfoP().empty())
     p_info_ptr_->setInfoP("拍屏文件");
   p_info_ptr_->insert();
 }
 void movieArchive::_generateFilePath() {
   if (!p_soureFile.empty())
-    p_server_path.push_back(p_info_ptr_->generatePath("movie", ".mp4").generic_string());
+    p_Path.push_back(p_info_ptr_->generatePath("movie", ".mp4").generic_string());
   else if (!p_info_ptr_->getFileList().empty())
-    p_server_path.push_back(p_info_ptr_->getFileList()[0].generic_string());
+    p_Path.push_back(p_info_ptr_->getFileList()[0].generic_string());
 }
 bool movieArchive::makeMovie(const dpath &imageFolder) {
   auto ffmpeg = std::make_unique<ffmpegWrap>();
-  auto path   = dpath(imageFolder);
+  auto path = dpath(imageFolder);
   dpathList list;
   for (auto &&item : boost::filesystem::directory_iterator(path)) {
     if (item.path().extension() == ".png" || item.path().extension() == ".jpg" || item.path().extension() == ".tga" || item.path().extension() == ".exr") {

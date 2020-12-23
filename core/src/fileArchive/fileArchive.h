@@ -71,7 +71,7 @@ class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
   //缓存路径
   dpathList p_cacheFilePath;
   //这个是服务器路径(服务器)
-  dpathList p_server_path;
+  dpathList p_Path;
   //状态
   state p_state_;
 };

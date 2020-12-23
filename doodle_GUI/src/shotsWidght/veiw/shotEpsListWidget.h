@@ -63,9 +63,6 @@ class shotEpsListWidget : public QListView {
 
   void creatEpsMov();
 
- private:
-  void deleteEpsiodes();
-
  protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
 };
