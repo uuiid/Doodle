@@ -62,8 +62,8 @@ dpath fileArchive::down(const dstring &path) {
   //获得缓存路径
   generateCachePath();
   _down(path);
-  if (useDowndataCheck())
-    downdataCheck();
+  if (useDownloadCheck())
+    downloadCheck();
 
   return {path};
 }
@@ -84,11 +84,11 @@ bool fileArchive::updataCheck() const {
   return false;
 }
 
-bool fileArchive::useDowndataCheck() const {
+bool fileArchive::useDownloadCheck() const {
   return false;
 }
 
-bool fileArchive::downdataCheck() const {
+bool fileArchive::downloadCheck() const {
   return false;
 }
 

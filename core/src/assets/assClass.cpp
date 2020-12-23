@@ -33,10 +33,12 @@ assClass::assClass()
       name(),
       p_assDep_id(-1),
       p_ass_dep_ptr_(),
-      p_ptr_znch() {}
+      p_ptr_znch() {
+  p_instance.insert(this);
+}
 
 assClass::~assClass() {
-  if (isInsert() || p_instance[idP] == this) p_instance.erase(idP);
+  p_instance.erase(this);
 }
 
 void assClass::insert() {
@@ -54,7 +56,6 @@ void assClass::insert() {
   if (idP == 0) {
     throw std::runtime_error("not insert assclass");
   }
-  p_instance[idP] = this;
   if (p_ptr_znch) p_ptr_znch->insert();
 }
 
@@ -98,7 +99,6 @@ assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
       assclass->p_ptr_znch->idP      = row.znID;
       assclass->p_ptr_znch->nameEN   = row.assName;
     }
-    p_instance[assclass->idP] = assclass.get();
     list.push_back(assclass);
   }
   return list;
@@ -143,7 +143,7 @@ std::string assClass::getAssClass(const bool &isZNCH) {
 
   return str;
 }
-const std::map<int64_t, assClass *> &assClass::Instances() {
+const std::unordered_set<assClass *> assClass::Instances() {
   return p_instance;
 }
 CORE_NAMESPACE_E

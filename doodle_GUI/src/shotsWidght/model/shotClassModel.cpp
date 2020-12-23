@@ -141,11 +141,11 @@ void shotClassModel::reInit() {
   auto shotClass = doCore::shotClass::Instances();
   doCore::shotClassPtrList shotClassPtrList{};
   for (auto &shot : shotClass) {
-    shotClassPtrList.push_back(shot.second->shared_from_this());
+    shotClassPtrList.push_back(shot->shared_from_this());
   }
   if (list_fileClass.empty() || shotClassPtrList.empty()) return;
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(shotClassPtrList.size()) - 1);
-  list_fileClass = shotClassPtrList;
+  // list_fileClass = shotClassPtrList;
   endInsertRows();
 }
 DOODLE_NAMESPACE_E

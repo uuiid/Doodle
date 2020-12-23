@@ -26,12 +26,12 @@ DOODLE_INSRANCE_CPP(shotClass);
 shotClass::shotClass()
     : coresqldata(),
       std::enable_shared_from_this<shotClass>(),
-      p_fileclass(e_fileclass::_) {}
+      p_fileclass(e_fileclass::_) {
+  p_instance.insert(this);
+}
 
 shotClass::~shotClass() {
-  DOODLE_LOG_DEBUG(p_instance.size());
-  if (isInsert() && p_instance[idP] == this)
-    p_instance.erase(idP);
+  p_instance.erase(this);
 }
 
 void shotClass::select(const qint64 &ID_) {
@@ -43,7 +43,6 @@ void shotClass::select(const qint64 &ID_) {
     idP = row.id;
     setclass(row.shotClass);
   }
-  p_instance[idP] = this;
 }
 
 void shotClass::insert() {
@@ -59,7 +58,6 @@ void shotClass::insert() {
     DOODLE_LOG_WARN("无法插入shot type" << getClass_str().c_str());
     throw std::runtime_error("not install shot");
   }
-  p_instance[idP] = this;
 }
 
 void shotClass::updateSQL() {
@@ -99,7 +97,7 @@ shotClassPtrList shotClass::getAll() {
     auto item = std::make_shared<shotClass>();
     item->batchSetAttr(row);
     list.push_back(item);
-    p_instance[item->idP] = item.get();
+    p_instance.insert(item.get());
   }
   DOODLE_LOG_DEBUG("loaded fileClasses " << list.size());
   return list;
@@ -108,9 +106,9 @@ shotClassPtrList shotClass::getAll() {
 shotClassPtr shotClass::getCurrentClass() {
   shotClassPtr ptr = nullptr;
   for (auto &item : p_instance) {
-    DOODLE_LOG_DEBUG("current class " << item.second->getClass_str() << " current dep " << coreSet::getSet().getDepartment());
-    if (item.second->getClass_str() == coreSet::getSet().getDepartment()) {
-      ptr = item.second->shared_from_this();
+    DOODLE_LOG_DEBUG("current class " << item->getClass_str() << " current dep " << coreSet::getSet().getDepartment());
+    if (item->getClass_str() == coreSet::getSet().getDepartment()) {
+      ptr = item->shared_from_this();
       break;
     }
   }
@@ -139,7 +137,7 @@ void shotClass::setclass(const dstring &value) {
     throw std::runtime_error("not file class in enum");
   }
 }
-const std::map<int64_t, shotClass *> &shotClass::Instances() {
+const std::unordered_set<shotClass *> shotClass::Instances() {
   return p_instance;
 }
 CORE_NAMESPACE_E

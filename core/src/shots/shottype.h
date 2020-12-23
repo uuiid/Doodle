@@ -39,7 +39,7 @@ class CORE_API shotType : public coresqldata,
   static shotTypePtr findShotType(const std::string &type_name);
   static shotTypePtr findShotType(const std::string &type_nmae,
                                   bool autoInstall);
-  static const std::map<int64_t, shotType *> &Instances();
+  static const std::unordered_set<shotType *> Instances();
 
   DOODLE_DISABLE_COPY(shotType);
 

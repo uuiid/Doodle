@@ -49,11 +49,11 @@ void coreSql::initDB() {
   config->host     = ip;
   config->port     = 3306;
 #ifdef NDEBUG
-  config->database = "doodle_main";
 #else
   config->database = "test_db";
 #endif  //NDEBUG
-  config->debug = false;
+  config->database = "doodle_main";
+  config->debug    = false;
 }
 dstring coreSql::getThreadId() {
   //使用线程id创建不一样的名字

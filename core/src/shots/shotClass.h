@@ -46,7 +46,7 @@ class CORE_API shotClass : public coresqldata,
   void setclass(const dstring &value);
   void setclass(const QString &value);
 
-  static const std::map<int64_t, shotClass *> &Instances();
+  static const std::unordered_set<shotClass *> Instances();
 
   DOODLE_DISABLE_COPY(shotClass);
 

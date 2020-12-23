@@ -33,11 +33,12 @@ assFileSqlInfo::assFileSqlInfo()
       p_class_ptr_(),
       p_dep_ptr_(),
       ass_type_id(-1),
-      ass_class_id(-1) {}
+      ass_class_id(-1) {
+  p_instance.insert(this);
+}
 
 assFileSqlInfo::~assFileSqlInfo() {
-  if (isInsert() || p_instance[idP] == this)
-    p_instance.erase(idP);
+  p_instance.erase(this);
 }
 
 void assFileSqlInfo::select(qint64 &ID_) {
@@ -47,7 +48,6 @@ void assFileSqlInfo::select(qint64 &ID_) {
   for (auto &&row : db->run(
            sqlpp::select(sqlpp::all_of(tab)).from(tab).where(tab.id == ID_))) {
     batchSetAttr(row);
-    p_instance[idP] = this;
   }
 }
 
@@ -72,7 +72,6 @@ void assFileSqlInfo::insert() {
     DOODLE_LOG_WARN(fileStateP.c_str());
     throw std::runtime_error("");
   }
-  p_instance[idP] = this;
 }
 
 void assFileSqlInfo::updateSQL() {
@@ -108,7 +107,6 @@ assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
     assInfo->exist(true);
     list.push_back(assInfo);
     assInfo->setAssType();
-    p_instance[assInfo->idP] = assInfo.get();
   }
   return list;
 }
@@ -197,8 +195,8 @@ void assFileSqlInfo::setAssClass(const assClassPtr &class_ptr) {
 const assTypePtr &assFileSqlInfo::getAssType() {
   if (!p_type_ptr_) {
     for (const auto &item : assType::Instances()) {
-      if (item.second->getIdP() == ass_type_id) {
-        p_type_ptr_ = item.second->shared_from_this();
+      if (item->getIdP() == ass_type_id) {
+        p_type_ptr_ = item->shared_from_this();
         break;
       }
     }
@@ -208,8 +206,8 @@ const assTypePtr &assFileSqlInfo::getAssType() {
 
 void assFileSqlInfo::setAssType() {
   for (const auto &item : assType::Instances()) {
-    if (item.second->getIdP() == idP) {
-      p_type_ptr_ = item.second->shared_from_this();
+    if (item->getIdP() == idP) {
+      p_type_ptr_ = item->shared_from_this();
       break;
     }
   }
@@ -225,20 +223,20 @@ dataInfoPtr assFileSqlInfo::findSimilar() {
   auto it =
       std::find_if(
           p_instance.begin(), p_instance.end(),
-          [=](std::pair<const int64_t, assFileSqlInfo *> &part) -> bool {
-            return part.second->p_dep_ptr_ == p_dep_ptr_ &&
-                   part.second->ass_class_id == ass_class_id &&
-                   part.second->ass_type_id == ass_type_id &&
-                   part.second->idP > 0;
+          [=](assFileSqlInfo *part) -> bool {
+            return part->p_dep_ptr_ == p_dep_ptr_ &&
+                   part->ass_class_id == ass_class_id &&
+                   part->ass_type_id == ass_type_id &&
+                   part->idP > 0;
           });
   if (it != p_instance.end()) {
-    it->second->fileP         = fileP;
-    it->second->filepathP     = filepathP;
-    it->second->fileStateP    = fileStateP;
-    it->second->fileSuffixesP = fileSuffixesP;
-    it->second->versionP      = versionP;
-    it->second->infoP         = infoP;
-    return it->second->shared_from_this();
+    (*it)->fileP         = fileP;
+    (*it)->filepathP     = filepathP;
+    (*it)->fileStateP    = fileStateP;
+    (*it)->fileSuffixesP = fileSuffixesP;
+    (*it)->versionP      = versionP;
+    (*it)->infoP         = infoP;
+    return (*it)->shared_from_this();
   } else
     return shared_from_this();
 }
@@ -262,12 +260,12 @@ bool assFileSqlInfo::sortType(const assInfoPtr &t1, const assInfoPtr &t2) {
 }
 int assFileSqlInfo::getMaxVecsion() {
   for (const auto &info_l : p_instance) {
-    if (getAssType() == info_l.second->getAssType() && info_l.second->idP > 0)
-      return info_l.second->versionP;
+    if (getAssType() == info_l->getAssType() && info_l->idP > 0)
+      return info_l->versionP;
   }
   return 0;
 }
-const std::map<int64_t, assFileSqlInfo *> &assFileSqlInfo::Instances() {
+const std::unordered_set<assFileSqlInfo *> assFileSqlInfo::Instances() {
   return p_instance;
 }
 CORE_NAMESPACE_E

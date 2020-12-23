@@ -37,8 +37,8 @@ class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
 
   virtual bool useUpdataCheck() const;
   virtual bool updataCheck() const;
-  virtual bool useDowndataCheck() const;
-  virtual bool downdataCheck() const;
+  virtual bool useDownloadCheck() const;
+  virtual bool downloadCheck() const;
 
   virtual void setUseCustomPath(const dpathList &custom_path);
 

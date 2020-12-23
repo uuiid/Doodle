@@ -37,7 +37,13 @@ assType::assType()
     : coresqldata(),
       std::enable_shared_from_this<assType>(),
       s_type(),
-      p_ass_class_id(-1) {}
+      p_ass_class_id(-1) {
+  p_instance.insert(this);
+}
+
+assType::~assType() {
+  p_instance.erase(this);
+}
 void assType::insert() {
   if (idP > 0) return;
   // if (p_ass_class_id <= 0) return;
@@ -55,7 +61,6 @@ void assType::insert() {
     DOODLE_LOG_WARN("无法插入asstype " << s_type.c_str());
     throw std::runtime_error("asstype");
   }
-  p_instance[idP] = this;
 }
 void assType::updateSQL() {}
 void assType::deleteSQL() {
@@ -78,7 +83,6 @@ assTypePtrList assType::getAll() {
     at->idP    = row.id;
     at->s_type = row.assType;
     ptr_list.push_back(at);
-    p_instance[at->idP] = at.get();
   }
   return ptr_list;
 }
@@ -90,7 +94,7 @@ bool assType::sortType(const assTypePtr &t1, const assTypePtr &t2) {
 }
 assTypePtr assType::findType(const std::string &typeName) {
   for (const auto &item : p_instance) {
-    if (item.second->getType() == typeName) return item.second->shared_from_this();
+    if (item->getType() == typeName) return item->shared_from_this();
   }
   return nullptr;
 }
@@ -111,7 +115,7 @@ assTypePtr assType::findType(const e_type &typeName, bool autoInstall) {
   }
 }
 
-const std::map<int64_t, assType *> &assType::Instances() {
+const std::unordered_set<assType *> assType::Instances() {
   return p_instance;
 }
 CORE_NAMESPACE_E

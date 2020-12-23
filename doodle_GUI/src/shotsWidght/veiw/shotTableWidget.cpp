@@ -120,6 +120,13 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
                           false);
       });
       p_menu_->addAction(k_copyClip);
+
+      p_menu_->addSeparator();
+      auto k_deleteShot = new QAction();
+      k_deleteShot->setText(tr("删除条目"));
+      connect(k_deleteShot, &QAction::triggered,
+              this, &shotTableWidget::deleteShot);
+      p_menu_->addAction(k_deleteShot);
     }
   }
 

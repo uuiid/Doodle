@@ -150,7 +150,8 @@ void shotEpsListWidget::setModel(QAbstractItemModel *model) {
   QAbstractItemView::setModel(model);
 }
 void shotEpsListWidget::creatEpsMov() {
-  if (!doCore::shotFileSqlInfo::Instances().empty()) {
+  auto p_instance = doCore::shot::Instances();
+  if (!p_instance.empty()) {
     initEmit();
     auto shotInfo = std::make_shared<doCore::shotFileSqlInfo>();
 

@@ -26,11 +26,12 @@ shotType::shotType()
       std::enable_shared_from_this<shotType>(),
       p_shotClass_id(-1),
       p_Str_Type(),
-      p_class_ptr_() {}
+      p_class_ptr_() {
+  p_instance.insert(this);
+}
 
 shotType::~shotType() {
-  if (isInsert() || p_instance[idP] == this)
-    p_instance.erase(idP);
+  p_instance.erase(this);
 }
 void shotType::select(const qint64 &ID_) {
   doodle::Shottype table{};
@@ -41,7 +42,6 @@ void shotType::select(const qint64 &ID_) {
                                 .from(table)
                                 .where(table.id == ID_))) {
     batchSetAttr(row);
-    p_instance[idP] = this;
   }
 }
 
@@ -61,7 +61,6 @@ void shotType::insert() {
     DOODLE_LOG_WARN("无法插入shot type " << p_Str_Type.c_str());
     throw std::runtime_error("not install shot type");
   }
-  p_instance[idP] = this;
 }
 
 void shotType::updateSQL() {
@@ -101,10 +100,15 @@ shotTypePtrList shotType::getAll() {
                .order_by(table.shotType.desc()))) {
     auto item = std::make_shared<shotType>();
     item->batchSetAttr(row);
-    auto shCl = shotClass::Instances().find(item->idP);
-    if (shCl != shotClass::Instances().end())
-      item->setShotClass(shCl->second->shared_from_this());
-    p_instance[item->idP] = item.get();
+    auto k_shot_instance = shotClass::Instances();
+    auto find_item =
+        std::find_if(
+            k_shot_instance.begin(), k_shot_instance.end(),
+            [=](shotClass *ptr)
+                -> bool { return ptr->getIdP() == item->p_shotClass_id; });
+
+    if (find_item != k_shot_instance.end())
+      item->setShotClass((*find_item)->shared_from_this());
     list.push_back(item);
   }
 
@@ -126,8 +130,8 @@ shotClassPtr shotType::getFileClass() {
     return p_class_ptr_;
   else if (p_shotClass_id > 0) {
     for (auto &i : shotClass::Instances()) {
-      if (i.second->getIdP() == p_shotClass_id) {
-        p_class_ptr_ = i.second->shared_from_this();
+      if (i->getIdP() == p_shotClass_id) {
+        p_class_ptr_ = i->shared_from_this();
         break;
       }
     }
@@ -143,8 +147,8 @@ shotTypePtr shotType::findShotType(const std::string &type_name) {
   //&&
   //        item->getFileClass() == shotClass::getCurrentClass()
   for (auto &item : p_instance) {
-    if (item.second->getType() == type_name) {
-      ptr = item.second->shared_from_this();
+    if (item->getType() == type_name) {
+      ptr = item->shared_from_this();
       break;
     }
   }
@@ -162,7 +166,7 @@ shotTypePtr shotType::findShotType(const std::string &type_nmae,
   }
   return ptr;
 }
-const std::map<int64_t, shotType *> &shotType::Instances() {
+const std::unordered_set<shotType *> shotType::Instances() {
   return p_instance;
 }
 CORE_NAMESPACE_E

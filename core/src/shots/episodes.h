@@ -36,7 +36,7 @@ class CORE_API episodes : public coresqldata,
 
   static episodesPtr find_by_id(int64_t id_);
   static episodesPtr find_by_eps(int64_t episodes_);
-  static const std::map<int64_t, episodes *> &Instances();
+  static const std::unordered_set<episodes *> Instances();
 
  private:
   int64_t p_int_episodes;

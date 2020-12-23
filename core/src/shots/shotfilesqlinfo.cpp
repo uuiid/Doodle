@@ -36,10 +36,12 @@ shotFileSqlInfo::shotFileSqlInfo()
       p_ptr_eps(),
       p_ptr_shot(),
       p_ptr_shTy(),
-      p_ptr_shcla() {}
+      p_ptr_shcla() {
+  p_instance.insert(this);
+}
+
 shotFileSqlInfo::~shotFileSqlInfo() {
-  if (isInsert() || p_instance[idP] == this)
-    p_instance.erase(idP);
+  p_instance.erase(this);
 }
 void shotFileSqlInfo::select(const qint64& ID_) {
   doodle::Basefile tab{};
@@ -49,7 +51,6 @@ void shotFileSqlInfo::select(const qint64& ID_) {
            sqlpp::select(sqlpp::all_of(tab)).from(tab).where(tab.id == ID_))) {
     batchSetAttr(row);
   }
-  p_instance[idP] = this;
 }
 
 void shotFileSqlInfo::insert() {
@@ -81,7 +82,6 @@ void shotFileSqlInfo::insert() {
     DOODLE_LOG_WARN(fileStateP.c_str());
     throw std::runtime_error("");
   }
-  p_instance[idP] = this;
 }
 
 void shotFileSqlInfo::updateSQL() {
@@ -136,7 +136,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr& EP_) {
     Info->batchSetAttr(row);
     Info->setEpisdes(EP_);
     list.push_back(Info);
-    p_instance[Info->idP] = Info.get();
+    p_instance.insert(Info.get());
   }
   return list;
 }
@@ -155,7 +155,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& sh_) {
     Info->setShot(sh_);
     Info->exist(true);
     list.push_back(Info);
-    p_instance[Info->idP] = Info.get();
+    p_instance.insert(Info.get());
   }
 
   return list;
@@ -194,7 +194,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& shot_ptr,
 
     Info->exist(true);
     list.push_back(Info);
-    p_instance[Info->idP] = Info.get();
+    p_instance.insert(Info.get());
   } else {
     list.push_back(nullptr);
   }
@@ -215,7 +215,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr& class_ptr) {
     Info->batchSetAttr(row);
     Info->exist(true);
     list.push_back(Info);
-    p_instance[Info->idP] = Info.get();
+    p_instance.insert(Info.get());
   }
   return list;
 }
@@ -234,7 +234,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotTypePtr& type_ptr) {
     Info->setShotType(type_ptr);
     Info->exist(true);
     list.push_back(Info);
-    p_instance[Info->idP] = Info.get();
+    p_instance.insert(Info.get());
   }
   return list;
 }
@@ -322,22 +322,26 @@ dataInfoPtr shotFileSqlInfo::findSimilar() {
   auto it =
       std::find_if(
           p_instance.begin(), p_instance.end(),
-          [=](std::pair<const int64_t, shotFileSqlInfo*> info) -> bool {
-            return info.second->p_eps_id == p_eps_id &&
-                   info.second->p_shot_id == p_shot_id &&
-                   info.second->p_shTy_id == p_shTy_id &&
-                   info.second->p_shCla_id == p_shCla_id &&
-                   info.second->idP > 0;
+          [=](shotFileSqlInfo* info) -> bool {
+            if (info)
+              return info->p_eps_id == p_eps_id &&
+                     info->p_shot_id == p_shot_id &&
+                     info->p_shTy_id == p_shTy_id &&
+                     info->p_shCla_id == p_shCla_id &&
+                     info->idP > 0;
+            else
+              return false;
           });
-  if (it != p_instance.end()) {
-    it->second->fileP         = fileP;
-    it->second->filepathP     = filepathP;
-    it->second->fileStateP    = fileStateP;
-    it->second->fileSuffixesP = fileSuffixesP;
-    it->second->versionP      = versionP;
-    it->second->infoP         = infoP;
 
-    return it->second->shared_from_this();
+  if (it != p_instance.end()) {
+    (*it)->fileP         = fileP;
+    (*it)->filepathP     = filepathP;
+    (*it)->fileStateP    = fileStateP;
+    (*it)->fileSuffixesP = fileSuffixesP;
+    (*it)->versionP      = versionP;
+    (*it)->infoP         = infoP;
+
+    return (*it)->shared_from_this();
   } else {
     return shared_from_this();
   }
@@ -348,11 +352,15 @@ episodesPtr shotFileSqlInfo::getEpisdes() {
     return p_ptr_eps;
   } else if (p_eps_id >= 0) {
     auto epi = episodes::Instances();
-    auto it  = epi.find(p_eps_id);
-    if (it != epi.end())
-      p_ptr_eps = it->second->shared_from_this();
-    else {
-      episodesPtr p_ptr_eps = std::make_shared<episodes>();
+
+    auto eps_iter =
+        std::find_if(epi.begin(), epi.end(),
+                     [=](episodes* ptr) -> bool { return ptr->getIdP() == p_eps_id; });
+    if (eps_iter != epi.end()) {
+      p_ptr_eps = (*eps_iter)->shared_from_this();
+
+    } else {
+      p_ptr_eps = std::make_shared<episodes>();
       p_ptr_eps->select(p_eps_id);
     }
 
@@ -395,11 +403,11 @@ shotClassPtr shotFileSqlInfo::getShotclass() {
   else if (p_shCla_id >= 0) {
     auto& k_instance = shotClass::Instances();
     auto it          = std::find_if(k_instance.begin(), k_instance.end(),
-                           [=](const std::pair<int64_t, shotClass*>& item) -> bool {
-                             return item.second->getIdP() == p_shCla_id;
+                           [=](shotClass* item) -> bool {
+                             return item->getIdP() == p_shCla_id;
                            });
     if (it != k_instance.end()) {
-      p_ptr_shcla = it->second->shared_from_this();
+      p_ptr_shcla = (*it)->shared_from_this();
     }
     return p_ptr_shcla;
   }
@@ -422,8 +430,8 @@ shotTypePtr shotFileSqlInfo::getShotType() {
     return p_ptr_shTy;
   else if (p_shTy_id > 0) {
     for (const auto& item : shotType::Instances()) {
-      if (item.second->getIdP() == p_shTy_id) {
-        p_ptr_shTy = item.second->shared_from_this();
+      if (item->getIdP() == p_shTy_id) {
+        p_ptr_shTy = item->shared_from_this();
         break;
       }
     }
@@ -446,19 +454,20 @@ bool shotFileSqlInfo::sort(const shotInfoPtr& t1, const shotInfoPtr& t2) {
 }
 int shotFileSqlInfo::getVersionMax() {
   for (const auto& info_l : p_instance) {
-    try {
-      if ((getShotType() == info_l.second->getShotType()) &&
-          (info_l.second->getShotclass() == shotClass::getCurrentClass()) &&
-          info_l.second->idP > 0)
-        return info_l.second->versionP;
-    } catch (const std::runtime_error& e) {
-      return 0;
-      std::cerr << e.what() << '\n';
-    }
+    if (info_l != nullptr)
+      try {
+        if ((getShotType() == info_l->getShotType()) &&
+            (info_l->getShotclass() == shotClass::getCurrentClass()) &&
+            info_l->idP > 0)
+          return info_l->versionP;
+      } catch (const std::runtime_error& e) {
+        return 0;
+        std::cerr << e.what() << '\n';
+      }
   }
   return 0;
 }
-const std::map<int64_t, shotFileSqlInfo*>& shotFileSqlInfo::Instances() {
+const std::unordered_set<shotFileSqlInfo*> shotFileSqlInfo::Instances() {
   return p_instance;
 }
 CORE_NAMESPACE_E

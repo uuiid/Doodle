@@ -21,6 +21,8 @@ movieEpsArchive::movieEpsArchive(shotInfoPtr eps)
       p_info_ptr_(std::move(eps)) {
 }
 void movieEpsArchive::insertDB() {
+  p_info_ptr_ = std::get<shotInfoPtr>(p_info_ptr_->findSimilar());
+
   p_info_ptr_->setFileList(p_ServerPath);
   if (p_info_ptr_->getInfoP().empty())
     p_info_ptr_->setInfoP("整集拍屏文件");

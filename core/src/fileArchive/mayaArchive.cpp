@@ -11,6 +11,7 @@
 
 #include "Logger.h"
 #include <boost/filesystem.hpp>
+
 CORE_NAMESPACE_S
 mayaArchive::mayaArchive(fileSqlInfoPtr shot_data)
     : p_info_ptr_(std::move(shot_data)) {}
@@ -23,11 +24,11 @@ bool mayaArchive::updataCheck() const {
   return true;
 }
 
-bool mayaArchive::useDowndataCheck() const {
+bool mayaArchive::useDownloadCheck() const {
   return true;
 }
 
-bool mayaArchive::downdataCheck() const {
+bool mayaArchive::downloadCheck() const {
   return true;
 }
 

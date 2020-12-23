@@ -32,11 +32,12 @@ shot::shot()
       p_qint_shot_(-1),
       p_qenm_shotab(e_shotAB::_),
       p_eps_id(-1),
-      p_ptr_eps() {}
+      p_ptr_eps() {
+  p_instance.insert(this);
+}
 
 shot::~shot() {
-  if (isInsert() || p_instance[idP] == this)
-    p_instance.erase(idP);
+  p_instance.erase(this);
 }
 
 void shot::select(const qint64 &ID_) {
@@ -50,7 +51,6 @@ void shot::select(const qint64 &ID_) {
     setShotAb((dstring)row.shotab);
     p_eps_id = row.episodesId;
   }
-  p_instance[idP] = this;
 }
 
 void shot::insert() {
@@ -69,7 +69,6 @@ void shot::insert() {
     DOODLE_LOG_WARN("无法插入镜头" << p_qint_shot_);
     throw std::runtime_error("not install shots");
   }
-  p_instance[idP] = this;
 }
 
 void shot::updateSQL() {
@@ -106,7 +105,6 @@ shotPtrList shot::getAll(const episodesPtr &EP_) {
     item->setShotAb(row.shotab);
     item->setEpisodes(EP_);
     list.push_back(item);
-    p_instance[item->idP] = item.get();
   }
   return list;
 }
@@ -122,13 +120,17 @@ episodesPtr shot::getEpisodes() {
     return p_ptr_eps;
   else {
     auto epi = episodes::Instances();
-    auto it  = epi.find(p_eps_id);
-    if (it != epi.end())
-      p_ptr_eps = it->second->shared_from_this();
-    else {
+    auto eps_iter =
+        std::find_if(epi.begin(), epi.end(),
+                     [=](episodes *ptr) -> bool { return ptr->getIdP() == p_eps_id; });
+    if (eps_iter != epi.end()) {
+      p_ptr_eps = (*eps_iter)->shared_from_this();
+
+    } else {
       p_ptr_eps = std::make_shared<episodes>();
       p_ptr_eps->select(p_eps_id);
     }
+
     setEpisodes(p_ptr_eps);
     return p_ptr_eps;
   }
@@ -181,7 +183,7 @@ dstring shot::getShotAb_str() const {
   return str;
 }
 
-const std::map<int64_t, shot *> &shot::Instances() {
+const std::unordered_set<shot *> shot::Instances() {
   return p_instance;
 }
 CORE_NAMESPACE_E

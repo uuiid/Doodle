@@ -62,7 +62,7 @@ class CORE_API shot : public coresqldata,
   //获得shot的数值
   int64_t getShot() const { return p_qint_shot_; };
 
-  static const std::map<int64_t, shot *> &Instances();
+  static const std::unordered_set<shot *> Instances();
 
  private:
   int64_t p_qint_shot_;

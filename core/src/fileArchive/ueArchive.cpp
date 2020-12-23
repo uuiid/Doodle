@@ -9,6 +9,7 @@
 CORE_NAMESPACE_S
 ueArchive::ueArchive(doCore::fileSqlInfoPtr data)
     : p_info_(std::move(data)), p_syn(std::make_shared<freeSynWrap>()) {}
+
 void ueArchive::insertDB() {
   dpathList list = p_ServerPath;
   list.push_back(p_ServerPath.front().parent_path() / DOODLE_CONTENT);
@@ -23,8 +24,12 @@ void ueArchive::insertDB() {
   else
     p_info_->insert();
 }
+
 void ueArchive::_generateFilePath() {
   if (!p_soureFile.empty()) {
+    if (isServerzinsideDir(p_soureFile.front())) {
+      p_ServerPath.push_back(p_soureFile.front());
+    }
     p_ServerPath.push_back(p_info_->generatePath(
         "Scenefiles", boost::filesystem::extension(p_soureFile.front())));
   } else if (!p_info_->getFileList().empty())
@@ -35,6 +40,7 @@ void ueArchive::_generateFilePath() {
 }
 void ueArchive::_updata(const dpathList &pathList) {
   assert(p_ServerPath.size() == p_cacheFilePath.size());
+  if (p_ServerPath == p_soureFile) return;
   fileArchive::_updata({pathList.front()});
   synPath_struct syn_path_struct{};
   syn_path_struct.local  = p_soureFile.front().parent_path() / DOODLE_CONTENT;

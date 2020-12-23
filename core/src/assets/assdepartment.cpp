@@ -37,11 +37,11 @@ assdepartment::assdepartment()
       i_prjID(-1),
       s_assDep("character") {
   i_prjID = coreSet::getSet().projectName().first;
+  p_instance.insert(this);
 }
 
 assdepartment::~assdepartment() {
-  if (isInsert() || p_instance[idP] == this)
-    p_instance.erase(idP);
+  p_instance.erase(this);
 }
 
 void assdepartment::insert() {
@@ -57,7 +57,6 @@ void assdepartment::insert() {
   if (idP == 0) {
     throw std::runtime_error("not install assDep");
   }
-  p_instance[idP] = this;
 }
 void assdepartment::updateSQL() {
 }
@@ -82,11 +81,10 @@ assDepPtrList assdepartment::getAll() {
     assdep->idP      = row.id.value();
     assdep->i_prjID  = row.projectId.value();
     list.push_back(assdep);
-    p_instance[assdep->idP] = assdep.get();
   }
   return list;
 }
-std::map<int64_t, assdepartment *> &assdepartment::Instances() {
+std::unordered_set<assdepartment *> assdepartment::Instances() {
   return p_instance;
 }
 const QString assdepartment::getAssDepQ() const {

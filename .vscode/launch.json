@@ -1,6 +1,17 @@
 {
     "configurations": [
         {
+            "name": "Python: 当前文件",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--path='C:/Users/teXiao/Documents/maya/projects/default/scenes/test_uv_set_and_mat.ma'",
+                "--exportpath='C:/Users/teXiao/Documents/maya/projects/default/scenes'"
+            ]
+        },
+        {
             "name": "Doodle_debug",
             "type": "cppvsdbg",
             "request": "launch",

@@ -94,7 +94,7 @@ TEST_F(CoreTest, get_shotinf) {
   ASSERT_TRUE(!eplist.empty());
   std::cout << "episodes: " << eplist.front()->getEpisdes_str() << std::endl;
   for (auto& i : doCore::episodes::Instances()) {
-    std::cout << " eps:" << i.second->getEpisdes_str();
+    std::cout << " eps:" << i->getEpisdes_str();
   }
   std::cout << std::endl;
 
@@ -102,7 +102,7 @@ TEST_F(CoreTest, get_shotinf) {
   ASSERT_TRUE(!shlist.empty());
   std::cout << "shot:" << shlist[0]->getShotAndAb_str() << std::endl;
   for (auto&& i : doCore::shot::Instances()) {
-    std::cout << " shot:" << i.second->getShotAndAb_str();
+    std::cout << " shot:" << i->getShotAndAb_str();
   }
   std::cout << std::endl;
 
@@ -110,7 +110,7 @@ TEST_F(CoreTest, get_shotinf) {
   ASSERT_TRUE(!shclList.empty());
   std::cout << "fileclass :" << shclList.front()->getClass_str() << std::endl;
   for (auto&& i : doCore::shotClass::Instances()) {
-    std::cout << " fileclass:" << i.second->getClass_str();
+    std::cout << " fileclass:" << i->getClass_str();
   }
   std::cout << std::endl;
 
@@ -118,7 +118,7 @@ TEST_F(CoreTest, get_shotinf) {
   ASSERT_TRUE(!shtyList.empty());
   std::cout << "filetype :" << shtyList.front()->getType() << std::endl;
   for (auto&& i : doCore::shotType::Instances()) {
-    std::cout << " shottype:" << i.second->getType() << "\n\r"
+    std::cout << " shottype:" << i->getType() << "\n\r"
               << std::endl;
   }
 
@@ -126,7 +126,7 @@ TEST_F(CoreTest, get_shotinf) {
   ASSERT_TRUE(!sfList.empty());
   std::cout << "shotinfo generatePath :" << sfList.front()->generatePath("test", ".mb") << std::endl;
   for (auto& i : doCore::shotFileSqlInfo::Instances()) {
-    std::cout << " shotinfo:" << i.second->getFileList().front() << "\n"
+    std::cout << " shotinfo:" << i->getFileList().front() << "\n"
               << std::endl;
   }
 
@@ -166,7 +166,7 @@ TEST_F(CoreTest, get_assInf) {
   for (auto&& x : list_fileClass) {
     std::cout << "fileclass :" << x->getAssDep() << std::endl;
   }
-  auto test = doCore::assClass::getAll(list_fileClass[0]);
+  auto test               = doCore::assClass::getAll(list_fileClass[0]);
   doCore::assClassPtr af_ = test[0];
   std::cout << "asstype :" << af_->getAssClass(true) << std::endl;
   RecordProperty("asstype", af_->getAssClass(true));
@@ -181,10 +181,10 @@ TEST_F(CoreTest, get_assInf) {
 }
 
 TEST_F(CoreTest, up_maya_file) {
-  auto epslist = doCore::episodes::getAll();
-  auto shotList = doCore::shot::getAll(epslist.front());
+  auto epslist     = doCore::episodes::getAll();
+  auto shotList    = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList = doCore::shotType::getAll();
+  auto shtypeList  = doCore::shotType::getAll();
 
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
@@ -194,14 +194,14 @@ TEST_F(CoreTest, up_maya_file) {
   shotinfo->deleteSQL();
 }
 TEST_F(CoreTest, mayaExport_fbx) {
-  auto epslist = doCore::episodes::getAll();
-  auto shotList = doCore::shot::getAll(epslist.front());
+  auto epslist     = doCore::episodes::getAll();
+  auto shotList    = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList = doCore::shotType::getAll();
+  auto shtypeList  = doCore::shotType::getAll();
 
   for (const auto& item : shtypeList) {
     if (item->getType() == "fbx") {
-      auto shot = doCore::shotFileSqlInfo::getAll(shotList.front());
+      auto shot     = doCore::shotFileSqlInfo::getAll(shotList.front());
       auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
       shotinfo->setShotType(item);
       auto export_ = std::make_shared<doCore::mayaArchiveShotFbx>(shotinfo);
@@ -210,10 +210,10 @@ TEST_F(CoreTest, mayaExport_fbx) {
   }
 }
 TEST_F(CoreTest, create_Move) {
-  auto epslist = doCore::episodes::getAll();
-  auto shotList = doCore::shot::getAll(epslist.front());
+  auto epslist     = doCore::episodes::getAll();
+  auto shotList    = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList = doCore::shotType::getAll();
+  auto shtypeList  = doCore::shotType::getAll();
 
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
@@ -224,10 +224,10 @@ TEST_F(CoreTest, create_Move) {
 }
 
 TEST_F(CoreTest, convert_Move) {
-  auto epslist = doCore::episodes::getAll();
-  auto shotList = doCore::shot::getAll(epslist.front());
+  auto epslist     = doCore::episodes::getAll();
+  auto shotList    = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList = doCore::shotType::getAll();
+  auto shtypeList  = doCore::shotType::getAll();
 
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
@@ -237,10 +237,10 @@ TEST_F(CoreTest, convert_Move) {
   shotinfo->deleteSQL();
 }
 TEST_F(CoreTest, Synfile_up_ue) {
-  auto epslist = doCore::episodes::getAll();
-  auto shotList = doCore::shot::getAll(epslist.front());
+  auto epslist     = doCore::episodes::getAll();
+  auto shotList    = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList = doCore::shotType::getAll();
+  auto shtypeList  = doCore::shotType::getAll();
 
   auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
@@ -249,13 +249,13 @@ TEST_F(CoreTest, Synfile_up_ue) {
   up_move->update(R"(F:\Users\teXiao\Documents\Unreal Projects\test_tt\test_tt.uproject)");
 }
 TEST_F(CoreTest, Synfile_dow_ue) {
-  auto epslist = doCore::episodes::getAll();
-  auto shotList = doCore::shot::getAll(epslist.front());
+  auto epslist     = doCore::episodes::getAll();
+  auto shotList    = doCore::shot::getAll(epslist.front());
   auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList = doCore::shotType::getAll();
+  auto shtypeList  = doCore::shotType::getAll();
 
   auto shotinfoList = doCore::shotFileSqlInfo::getAll(shotList.front());
-  auto up_move = std::make_shared<doCore::ueArchive>(shotinfoList.front());
+  auto up_move      = std::make_shared<doCore::ueArchive>(shotinfoList.front());
   up_move->down(R"(F:\Users\)");
   shotinfoList.front()->deleteSQL();
 }

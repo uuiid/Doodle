@@ -101,8 +101,9 @@ bool ffmpegWrap::connectVideo(const dpathList &in_videoPath,
   //"
   auto com_arg = boost::format(
                      "ffmpeg.exe -r 25 -f concat -safe 0 -i \"%1%\" "
-                     "-c:v libx264 -pix_fmt yuv420p -s 1920*1080 -movflags "
-                     "+faststart %2%") %
+                     "-codec copy -s 1920*1080"
+                     //  "-c:v libx264 -pix_fmt yuv420p -s 1920*1080 -movflags "
+                     " %2%") %
                  p_tmp_file_->generic_path().string() %
                  out_videoPath.generic_path().string();
   DOODLE_LOG_INFO(com_arg.str());
@@ -115,8 +116,8 @@ bool ffmpegWrap::connectVideo(const dpathList &in_videoPath,
 }
 
 bool ffmpegWrap::runFFmpeg(const std::string &command) const {
-  auto env = boost::this_process::environment();
-  auto paths = env["PATH"].to_vector();
+  auto env                = boost::this_process::environment();
+  auto paths              = env["PATH"].to_vector();
   std::string ffmpeg_path = (coreSet::getSet().program_location().parent_path() / "tools/ffmpeg/bin").generic_string();
   if (std::find_if(paths.begin(), paths.end(), [=](std::string &p) -> bool {
         return (p.find(R"(ffmpeg/bin)") != p.npos);

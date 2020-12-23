@@ -23,7 +23,10 @@ movieArchive::movieArchive(fileSqlInfoPtr shot_info_ptr)
       p_info_ptr_(std::move(shot_info_ptr)) {
 }
 void movieArchive::insertDB() {
+  p_info_ptr_ = std::get<fileSqlInfoPtr>(p_info_ptr_->findSimilar());
+
   p_info_ptr_->setFileList(p_ServerPath);
+
   if (p_info_ptr_->getInfoP().empty())
     p_info_ptr_->setInfoP("拍屏文件");
 

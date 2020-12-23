@@ -8,6 +8,7 @@
 #include <QtCore/qglobal.h>
 #include <QtCore/QString>
 #include <vector>
+#include <unordered_set>
 #include <iostream>
 #include <memory>
 #include <variant>
@@ -31,9 +32,9 @@
 
 #define DOCORE_RTTE_CLASS(className) DOODLE_RTTE_CLASS(CORE_NAMESPACE, className)
 
-#define DOODLE_INSRANCE(className) static std::map<int64_t, className *> p_instance
+#define DOODLE_INSRANCE(className) static std::unordered_set<className *> p_instance
 #define DOODLE_INSRANCE_CPP(className) \
-  std::map<int64_t, className *> className::p_instance {}
+  std::unordered_set<className *> className::p_instance {}
 
 #define DOODLE_DISABLE_COPY(className)   \
   className(const className &) = delete; \
@@ -147,6 +148,8 @@ using dpathList = std::vector<dpath>;
 using freeSynWrapPtr = std::shared_ptr<freeSynWrap>;
 
 using dataInfoPtr = std::variant<
+    fileSqlInfoPtr,
+
     episodesPtr,
     shotPtr,
     shotClassPtr,

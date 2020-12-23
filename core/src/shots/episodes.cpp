@@ -26,6 +26,7 @@ episodes::episodes()
       std::enable_shared_from_this<episodes>(),
       p_int_episodes(-1),
       p_prj(coreSet::getSet().projectName().first) {
+  p_instance.insert(this);
 }
 
 void episodes::select(const qint64 &ID_) {
@@ -38,11 +39,9 @@ void episodes::select(const qint64 &ID_) {
     p_int_episodes = row.episodes;
     idP            = row.id;
   }
-  p_instance[idP] = this;
 }
 episodes::~episodes() {
-  if (isInsert() || p_instance[idP] == this)
-    p_instance.erase(idP);
+  p_instance.erase(this);
 }
 
 void episodes::insert() {
@@ -60,7 +59,6 @@ void episodes::insert() {
     DOODLE_LOG_WARN("无法插入集数" << p_int_episodes);
     throw std::runtime_error("not install eps");
   }
-  p_instance[idP] = this;
 }
 void episodes::updateSQL() {
   if (isInsert()) {
@@ -98,7 +96,6 @@ episodesPtrList episodes::getAll() {
     eps->idP            = row.id;
     eps->p_prj          = row.projectId;
     list.push_back(eps);
-    p_instance[eps->idP] = eps.get();
   }
   return list;
 }
@@ -109,8 +106,8 @@ void episodes::setEpisdes(const int64_t &value) {
 
 episodesPtr episodes::find_by_id(int64_t id_) {
   for (auto &&eps_ptr : p_instance) {
-    if (eps_ptr.second->idP == id_) {
-      return eps_ptr.second->shared_from_this();
+    if (eps_ptr->idP == id_) {
+      return eps_ptr->shared_from_this();
     }
   }
   return nullptr;
@@ -118,14 +115,14 @@ episodesPtr episodes::find_by_id(int64_t id_) {
 
 episodesPtr episodes::find_by_eps(int64_t episodes_) {
   for (auto &&eps_ptr : p_instance) {
-    if (eps_ptr.second->getEpisdes() == episodes_) {
-      return eps_ptr.second->shared_from_this();
+    if (eps_ptr->getEpisdes() == episodes_) {
+      return eps_ptr->shared_from_this();
     }
   }
   return nullptr;
 }
 
-const std::map<int64_t, episodes *> &episodes::Instances() {
+const std::unordered_set<episodes *> episodes::Instances() {
   return p_instance;
 }
 

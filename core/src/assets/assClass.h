@@ -34,7 +34,7 @@ class CORE_API assClass : public coresqldata,
   void setAssClass(const std::string &value);
   void setAssClass(const std::string &value, const bool &isZNCH);
 
-  static const std::map<int64_t, assClass *> &Instances();
+  static const std::unordered_set<assClass *> Instances();
 
  private:
   std::string name;

@@ -31,6 +31,7 @@ class CORE_API assType
 
  public:
   explicit assType();
+  ~assType();
   void select(const int64_t &ID_);
   void insert() override;
   void updateSQL() override;
@@ -49,7 +50,7 @@ class CORE_API assType
   [[nodiscard]] const QString getTypeQ() const;
   void setType(const std::string &string);
   void setType(const QString &string);
-  static const std::map<int64_t, assType *> &Instances();
+  static const std::unordered_set<assType *> Instances();
 
  private:
   int64_t p_ass_class_id;

@@ -18,6 +18,7 @@ parser.add_argument("--path", "-p", help="path attr")
 parser.add_argument("--exportpath", "-exp", help="export path attr")
 parser.add_argument("--suffix", "-su", help="suffix", default=".ma")
 args = parser.parse_args()
+
 if os.path.exists(os.path.dirname(args.path) + "/workspace.mel"):
     pymel.all.workspace.open(os.path.dirname(args.path))
     pymel.all.workspace.save()

@@ -75,7 +75,7 @@ void assClassWidget::editAssName() {
 
 void assClassWidget::deleteSQLFile() {
   for (auto&& i : doCore::assFileSqlInfo::Instances()) {
-    if (i.second->getAssClass() == doCore::coreDataManager::get().getAssClassPtr()) {
+    if (i->getAssClass() == doCore::coreDataManager::get().getAssClassPtr()) {
       QMessageBox::warning(this, tr("注意"), tr("这个条目中还有内容,无法删除"));
       return;
     }

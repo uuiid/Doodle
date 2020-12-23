@@ -50,7 +50,7 @@ class CORE_API shotFileSqlInfo
   shotTypePtr getShotType();
   void setShotType(const shotTypePtr &fileType_);
   static bool sort(const shotInfoPtr &t1, const shotInfoPtr &t2);
-  static const std::map<int64_t, shotFileSqlInfo *> &Instances();
+  static const std::unordered_set<shotFileSqlInfo *> Instances();
 
  private:
   static shotInfoPtrList getAll(const shotClassPtr &class_ptr);

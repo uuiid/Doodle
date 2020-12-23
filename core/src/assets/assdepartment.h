@@ -32,7 +32,7 @@ class CORE_API assdepartment
   [[nodiscard]] const QString getAssDepQ() const;
   void setAssDep(const std::string &s_ass_dep);
 
-  static std::map<int64_t, assdepartment *> &Instances();
+  static std::unordered_set<assdepartment *> Instances();
 
   RTTR_ENABLE(coresqldata);
 

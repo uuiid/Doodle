@@ -12,8 +12,8 @@ class CORE_API mayaArchive : public fileArchive {
   virtual bool useUpdataCheck() const override;
   virtual bool updataCheck() const override;
 
-  virtual bool useDowndataCheck() const override;
-  virtual bool downdataCheck() const override;
+  virtual bool useDownloadCheck() const override;
+  virtual bool downloadCheck() const override;
 
   void setUseCustomPath(const dpathPtr& custom_path);
 
