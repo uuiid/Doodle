@@ -5,7 +5,6 @@
 #include "src/fileArchive/fileArchive.h"
 
 CORE_NAMESPACE_S
-
 class CORE_API mayaArchive : public fileArchive {
  public:
   explicit mayaArchive(fileSqlInfoPtr shot_data);

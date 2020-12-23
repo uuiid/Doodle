@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2020-09-02 13:21:54
- * @LastEditTime: 2020-12-01 13:55:41
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \Doodle\test\test_fileSystem.cpp
- */
 #include "fileSystem_global.h"
 
 #include "src/DfileSyntem.h"

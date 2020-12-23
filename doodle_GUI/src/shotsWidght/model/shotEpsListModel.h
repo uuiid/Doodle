@@ -15,7 +15,6 @@ class shotEpsListModel : public QAbstractListModel {
   Q_OBJECT
  private:
   doCore::episodesPtrList eplist;
-  bool useEdit;
 
  public:
   explicit shotEpsListModel(QObject *parent = nullptr);
@@ -34,8 +33,6 @@ class shotEpsListModel : public QAbstractListModel {
   //添加数据
   bool insertRows(int position, int rows, const QModelIndex &index) override;
   bool removeRows(int position, int rows, const QModelIndex &index) override;
-
-  void setEditorData();
  public Q_SLOTS:
   //刷新函数
   void init();
