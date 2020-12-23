@@ -178,8 +178,6 @@ void shotTableWidget::insertShot(const QString &path) {
   DOODLE_LOG_INFO("提交文件");
   if (path.isEmpty()) return;
   auto pathInfo = QFileInfo(path);
-  //插入数据之前先刷新一下
-  // refreshClassAndType();
   //插入新的数据
   p_model_->insertRow(0, QModelIndex());
   auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
