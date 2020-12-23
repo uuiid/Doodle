@@ -24,7 +24,7 @@
 #include <boost/filesystem.hpp>
 namespace Logger {
 using file_sink = boost::log::sinks::asynchronous_sink<boost::log::sinks::text_file_backend>;
-using sink_t = boost::log::sinks::synchronous_sink<boost::log::sinks::debug_output_backend>;
+using sink_t    = boost::log::sinks::synchronous_sink<boost::log::sinks::debug_output_backend>;
 // New macro that includes severity, filename and line number
 #define LOG_ADD_FILE boost::log::attribute_cast<boost::log::attributes::mutable_constant<std::string>>(::boost::log::trivial::logger::get().get_attributes()["File"]).set(__FILE__)
 #define LOG_ADD_LINE boost::log::attribute_cast<boost::log::attributes::mutable_constant<int>>(::boost::log::trivial::logger::get().get_attributes()["Line"]).set(__LINE__)
@@ -52,26 +52,27 @@ void boostLoggerInitAsyn(const std::string &logPath,
   else
     appdata = tmp;
 
-  // boost::log::add_file_log(
-  //     boost::log::keywords::file_name = appdata / "doodle" / "log" / "doodle_%Y_%m_%d_%H_%M_%S.%5N.html",
-  //     boost::log::keywords::rotation_size = 10 * 1024 * 1024,
-  //     boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_interval(boost::posix_time::hours(1)),
-  //     boost::log::keywords::format =
-  //         boost::log::expressions::stream
-  //         << boost::log::trivial::severity << "\t"
-  //         << boost::log::expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S") << "\t"
-  //         << boost::log::expressions::smessage
-  //         << "\r\n");
-  // boost::log::core::get()->set_filter(
-  //     boost::log::trivial::severity >= boost::log::trivial::debug);
+    // boost::log::add_file_log(
+    //     boost::log::keywords::file_name = appdata / "doodle" / "log" / "doodle_%Y_%m_%d_%H_%M_%S.%5N.html",
+    //     boost::log::keywords::rotation_size = 10 * 1024 * 1024,
+    //     boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_interval(boost::posix_time::hours(1)),
+    //     boost::log::keywords::format =
+    //         boost::log::expressions::stream
+    //         << boost::log::trivial::severity << "\t"
+    //         << boost::log::expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S") << "\t"
+    //         << boost::log::expressions::smessage
+    //         << "\r\n");
+    // boost::log::core::get()->set_filter(
+    //     boost::log::trivial::severity >= boost::log::trivial::debug);
 
+#ifdef NDEBUG
   boost::shared_ptr<file_sink> sink{new file_sink{
-      boost::log::keywords::target = appdata / boost::filesystem::basename(boost::dll::program_location()) / "log",
-      boost::log::keywords::file_name = appdata / boost::filesystem::basename(boost::dll::program_location()) / "log" / logPath,
-      boost::log::keywords::rotation_size = 10 * 1024 * 1024,
+      boost::log::keywords::target              = appdata / boost::filesystem::basename(boost::dll::program_location()) / "log",
+      boost::log::keywords::file_name           = appdata / boost::filesystem::basename(boost::dll::program_location()) / "log" / logPath,
+      boost::log::keywords::rotation_size       = 10 * 1024 * 1024,
       boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_interval(boost::posix_time::hours(1)),
-      boost::log::keywords::max_size = logMaxSize,
-      boost::log::keywords::max_files = 1024}};
+      boost::log::keywords::max_size            = logMaxSize,
+      boost::log::keywords::max_files           = 1024}};
   // clang-format off
   sink->set_formatter(
       boost::log::expressions::stream
@@ -94,13 +95,13 @@ void boostLoggerInitAsyn(const std::string &logPath,
   boost::log::core::get()->add_sink(sink);
 
   sink->imbue(boost::locale::generator()("zh_CN.UTF-8"));
-
+#else
   //debug 记录器
   boost::shared_ptr<sink_t> sink_t(new sink_t());
   sink->set_filter(boost::log::expressions::is_debugger_present() && (boost::log::trivial::severity >= boost::log::trivial::debug));
   boost::log::core::get()->add_sink(sink_t);
   sink_t->imbue(boost::locale::generator()("zh_CN.UTF-8"));
-
+#endif  //NDEBUG
   BOOST_LOG_TRIVIAL(debug)
       << "log日志文件初始化成功";
   boost::log::core::get()->flush();

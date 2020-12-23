@@ -85,12 +85,17 @@ shotEpsListWidget::~shotEpsListWidget() = default;
 void shotEpsListWidget::insertEpisodes() {
   int raw = selectionModel()->currentIndex().row() + 1;
   model()->insertRow(raw, selectionModel()->currentIndex());
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 
   == == == =
 >>>>>>> Stashed changes
                //设置当前行的选择
       setCurrentIndex(p_episodesListModel->index(raw));
+  == == == =
+               //设置当前行的选择
+      setCurrentIndex(p_episodesListModel->index(raw));
+>>>>>>> stash
   edit(p_episodesListModel->index(raw));
 }
 
@@ -113,6 +118,7 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
     connect(createMove, &QAction::triggered, this,
             &shotEpsListWidget::creatEpsMov);
     p_eps_Menu->addAction(createMove);
+<<<<<<< HEAD
 
     p_eps_Menu->addSection(tr("注意"));
 
@@ -129,6 +135,8 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
             [=]() { this->deleteEpsiodes(); });
     k_deleteEpsiodes->setText(tr("删除集数"));
     p_eps_Menu->addAction(k_deleteEpsiodes);
+    == == == =
+>>>>>>> stash
   }
   p_eps_Menu->move(event->globalPos());
   p_eps_Menu->show();
@@ -148,10 +156,16 @@ void shotEpsListWidget::creatEpsMov() {
   initEmit();
   auto shotInfo = std::make_shared<doCore::shotFileSqlInfo>();
 
+<<<<<<< HEAD
   const auto &kEps = selectionModel()
                          ->currentIndex()
                          .data(Qt::UserRole)
                          .value<doCore::episodesPtr>();
+  == == == = const auto &kEps = selectionModel()
+                                    ->currentIndex()
+                                    .data(Qt::UserRole)
+                                    .value<doCore::episodesPtr>();
+>>>>>>> stash
   if (kEps) {
     shotInfo->setEpisdes(kEps);
     auto move = std::make_unique<doCore::movieEpsArchive>(shotInfo);

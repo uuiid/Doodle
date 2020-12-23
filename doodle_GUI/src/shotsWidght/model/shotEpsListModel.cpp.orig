@@ -12,7 +12,12 @@
 DOODLE_NAMESPACE_S
 
 shotEpsListModel::shotEpsListModel(QObject *parent)
+<<<<<<< HEAD
+    : QAbstractListModel(parent),
+      eplist() {
+=======
     : QAbstractListModel(parent), eplist() {
+>>>>>>> stash
   init();
 }
 shotEpsListModel::~shotEpsListModel() = default;
@@ -54,9 +59,8 @@ Qt::ItemFlags shotEpsListModel::flags(const QModelIndex &index) const {
 }
 bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value,
                                int role) {
-  == == ==
-      = if (eplist[index.row()]->isInsert()) return QAbstractListModel::flags(
-          index);
+  == == == =
+               if (eplist[index.row()]->isInsert()) return QAbstractListModel::flags(index);
   else return Qt::ItemIsEditable | Qt::ItemIsEnabled |
       QAbstractListModel::flags(index);
 }
@@ -64,11 +68,12 @@ bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value,
                                int role) {
   init();
 >>>>>>> Stashed changes
-  == == ==
-      = if (eplist[index.row()]->isInsert()) return QAbstractListModel::flags(
-          index);
-  else return Qt::ItemIsEditable | Qt::ItemIsEnabled |
-      QAbstractListModel::flags(index);
+=======
+  if (eplist[index.row()]->isInsert())
+    return QAbstractListModel::flags(index);
+  else
+    return Qt::ItemIsEditable | Qt::ItemIsEnabled |
+           QAbstractListModel::flags(index);
 }
 bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value,
                                int role) {
@@ -119,21 +124,22 @@ bool shotEpsListModel::removeRows(int position, int rows,
 == == == =
 >>>>>>> Stashed changes
              void shotEpsListModel::init() {
-  == == == = void shotEpsListModel::init() {
+=======
+void shotEpsListModel::init() {
 >>>>>>> stash
-    clear();
-    auto tmp_eps = doCore::episodes::getAll();
-    if (tmp_eps.empty()) return;
-    beginInsertRows(QModelIndex(), 0,
-                    boost::numeric_cast<int>(tmp_eps.size()) - 1);
-    eplist = tmp_eps;
-    endInsertRows();
-  }
-  void shotEpsListModel::clear() {
-    if (eplist.empty()) return;
-    beginResetModel();
-    eplist.clear();
-    endResetModel();
-    doCore::coreDataManager::get().setEpisodesPtr(nullptr);
-  }
-  DOODLE_NAMESPACE_E
+  clear();
+  auto tmp_eps = doCore::episodes::getAll();
+  if (tmp_eps.empty()) return;
+  beginInsertRows(QModelIndex(), 0,
+                  boost::numeric_cast<int>(tmp_eps.size()) - 1);
+  eplist = tmp_eps;
+  endInsertRows();
+}
+void shotEpsListModel::clear() {
+  if (eplist.empty()) return;
+  beginResetModel();
+  eplist.clear();
+  endResetModel();
+  doCore::coreDataManager::get().setEpisodesPtr(nullptr);
+}
+DOODLE_NAMESPACE_E
