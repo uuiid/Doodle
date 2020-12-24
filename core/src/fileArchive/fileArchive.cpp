@@ -147,7 +147,7 @@ void fileArchive::_updata(const dpathList &pathList) {
 
   //使用ftp上传
   for (size_t i = 0; i < p_cacheFilePath.size(); ++i) {
-    if (p_cacheFilePath[i] != p_ServerPath[i]) {
+    if (p_cacheFilePath[i] != set.getPrjectRoot() / p_ServerPath[i]) {
       if (!session.upload(p_cacheFilePath[i], p_ServerPath[i])) {
         p_state_ = state::fail;
         DOODLE_LOG_WARN("无法上传文件" << p_cacheFilePath[i].c_str());

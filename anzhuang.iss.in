@@ -13,11 +13,11 @@ AppPublisher=My Company, Inc.
 AppPublisherURL=http://www.example.com/
 AppSupportURL=http://www.example.com/
 AppUpdatesURL=http://www.example.com/
-DefaultDirName={commonpf64}\uuiid\doodle@Doodle_VERSION_MAJOR@
+DefaultDirName={userappdata}\uuiid\doodle@Doodle_VERSION_MAJOR@
 DisableDirPage=yes
 DefaultGroupName=doodle
 DisableProgramGroupPage=yes
-OutputDir=F:\doodle\dist
+OutputDir=F:\doodle\dist_
 OutputBaseFilename=doodle
 Compression=lzma
 SolidCompression=yes
@@ -40,7 +40,7 @@ Name: "{commondesktop}\djv"; Filename: "{app}\tools\djv\bin\djv.exe"; Tasks: des
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\doodle"; Filename: "{app}\bin\doodle.exe"; Tasks: quicklaunchicon
 
 [Run]
-Filename: "{app}\bin\doodle.exe"; Description: "{cm:LaunchProgram,doodle}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\bin\doodle.exe"; Description: "{cm:LaunchProgram,doodle}"; Flags: nowait postinstall runhidden
 
 [LangOptions]
 LanguageID=$0804

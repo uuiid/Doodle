@@ -101,6 +101,7 @@ void shotIntEnumDelegate::setModelData(QWidget *editor,
   QMap<QString, QVariant> data = shotedit->value();
   if (map == data) {
     model->setData(index, data, Qt::EditRole);
+    return;
   }
 
   QMessageBox::StandardButton box = QMessageBox::information(
@@ -167,7 +168,15 @@ void shotListWidget::insertShotBatch() {
 }
 
 void shotListWidget::deleteShot() {
-  p_model_->removeRow(selectionModel()->currentIndex().row());
+  if (selectionModel()->hasSelection()) {
+    if (doCore::shotFileSqlInfo::Instances().empty()) {
+      p_model_->removeRow(selectionModel()->currentIndex().row());
+    } else {
+      DOODLE_LOG_INFO(" 这个条目内还有内容,  无法删除: ");
+      QMessageBox::warning(this, tr("注意: "),
+                           tr("这个条目内还有内容,  无法删除"));
+    }
+  }
 }
 
 void shotListWidget::_doodle_shot_emit(const QModelIndex &index) {
@@ -203,10 +212,11 @@ void shotListWidget::contextMenuEvent(QContextMenuEvent *event) {
         auto synShot = p_shot_menu->addAction("同步镜头");
         connect(synShot, &QAction::triggered, this, &shotListWidget::synShot);
       }
-
+      p_shot_menu->addSeparator();
       //添加镜头删除和修改
       auto k_shot_delete = p_shot_menu->addAction(tr("删除镜头"));
-      connect(k_shot_delete, &QAction::triggered, this, &shotListWidget::deleteShot);
+      connect(k_shot_delete, &QAction::triggered,
+              this, &shotListWidget::deleteShot);
       auto k_shot_modify = p_shot_menu->addAction(tr("修改镜头"));
       connect(k_shot_modify, &QAction::triggered, [=]() {
         edit(selectionModel()->currentIndex());

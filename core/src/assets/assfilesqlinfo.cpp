@@ -81,8 +81,15 @@ void assFileSqlInfo::updateSQL() {
   auto db     = coreSql::getCoreSql().getConnection();
   auto updata = sqlpp::update(tab);
   try {
-    db->update(updata.set(tab.infor = strList_tojson(infoP), tab.filestate = fileStateP)
-                   .where(tab.id == idP));
+    db->update(
+        updata.set(
+                  tab.infor        = strList_tojson(infoP),
+                  tab.filestate    = fileStateP,
+                  tab.FilePath_    = filepathP,
+                  tab.file         = fileP,
+                  tab.fileSuffixes = fileSuffixesP,
+                  tab.version      = versionP)
+            .where(tab.id == idP));
   } catch (const sqlpp::exception &e) {
     DOODLE_LOG_ERROR(e.what());
   }

@@ -148,7 +148,6 @@ using dpathList = std::vector<dpath>;
 using freeSynWrapPtr = std::shared_ptr<freeSynWrap>;
 
 using dataInfoPtr = std::variant<
-    fileSqlInfoPtr,
 
     episodesPtr,
     shotPtr,

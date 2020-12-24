@@ -114,11 +114,12 @@
         "regex": "cpp",
         "valarray": "cpp",
         "qdebug": "cpp",
-        "*.in": "cpp",
+        "*.in": "plaintext",
         "qlabel": "cpp",
         "type": "cpp",
         "registration": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "qstring": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",

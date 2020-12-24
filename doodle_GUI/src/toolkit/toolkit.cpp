@@ -129,7 +129,7 @@ bool toolkit::update() {
 
   auto exe_path = set.getCacheRoot() / "doodle.exe";
   session->down(exe_path.generic_string(), "/dist/doodle.exe");
-  boost::process::spawn(exe_path);
+  boost::process::spawn(exe_path, "/SILENT", "/NOCANCEL");
   qApp->quit();
   return true;
 }

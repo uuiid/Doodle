@@ -99,6 +99,8 @@ class CORE_API coreSet {
   static dstringList getAllUser();
   static bool subUser(const dstring &user_str);
 
+  static dstring toIpPath(const dstring &path);
+
  private:
   //私有化构造函数
   coreSet();
@@ -109,7 +111,6 @@ class CORE_API coreSet {
   //获得本地的有限设置
   void getSetting();
   //转换为ip路径
-  static dstring toIpPath(const dstring &path);
 
  private:
   const static dstring settingFileName;

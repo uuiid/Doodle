@@ -10,6 +10,8 @@
 #include <QApplication>
 
 #include <QMenu>
+#include <QTimer>
+
 #include <src/toolkit/toolkit.h>
 #include <boost/format.hpp>
 #include <QtWidgets/qfiledialog.h>
@@ -22,11 +24,15 @@
 DOODLE_NAMESPACE_S
 systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   setToolTip(tr("doodle 文件 %1.%2.%3")
-                 .arg(Doodle_VERSION_MINOR)
                  .arg(Doodle_VERSION_MAJOR)
+                 .arg(Doodle_VERSION_MINOR)
                  .arg(Doodle_VERSION_REVIS));
 
-  auto menu = new QMenu(parent);
+  auto timer = new QTimer(this);
+  connect(timer, &QTimer::timeout, this, &systemTray::upDoodle);
+  timer->start(14400000);
+
+  auto menu    = new QMenu(parent);
   auto fileSyn = new QAction(menu);
   fileSyn->setText(tr("同步文件"));
 
@@ -139,7 +145,7 @@ void systemTray::showRigister() {
 }
 
 void systemTray::upDoodle() {
-  auto fun = std::async(std::launch::async, &toolkit::update);
+  auto fun      = std::async(std::launch::async, &toolkit::update);
   auto &manager = updataManager::get();
   manager.addQueue(fun, "正在下载中", 100);
   manager.run();

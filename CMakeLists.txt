@@ -3,10 +3,13 @@
 project(Doodle LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
+#设置qt自动参数
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+
+#设置不使用qt_key
+add_definitions(-DQT_NO_KEYWORDS)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -25,9 +28,9 @@ option(RUN_COPY    "run copy tools"     OFF)
 
 
 #配置版本文件
-set(Doodle_VERSION_MAJOR 1)
-set(Doodle_VERSION_MINOR 2) 
-set(Doodle_VERSION_REVIS 3)
+set(Doodle_VERSION_MAJOR 2)
+set(Doodle_VERSION_MINOR 1) 
+set(Doodle_VERSION_REVIS 7)
 configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)
 configure_file(anzhuang.iss.in ${CMAKE_INSTALL_PREFIX}/anzhuang.iss)
 include_directories(${CMAKE_BINARY_DIR}/configure)

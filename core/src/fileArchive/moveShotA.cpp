@@ -17,6 +17,11 @@ CORE_NAMESPACE_S
 moveShotA::moveShotA(shotInfoPtr shot_info_ptr)
     : movieArchive(std::move(shot_info_ptr)) {
 }
+
+void moveShotA::insertDB() {
+  p_info_ptr_ = std::get<shotInfoPtr>(p_info_ptr_->findSimilar());
+  movieArchive::insertDB();
+}
 void doCore::moveShotA::setInfoAttr() {
   auto info = std::dynamic_pointer_cast<shotFileSqlInfo>(p_info_ptr_);
   if (p_info_ptr_->getInfoP().empty()) {

@@ -148,7 +148,7 @@ void coreSet::getSetting() {
 dstring coreSet::toIpPath(const dstring &path) {
   static boost::regex exp("^[A-Z]:");
 
-  if (boost::regex_match(path, exp)) {
+  if (boost::regex_search(path, exp)) {
     return path.substr(2);
   }
   return path;

@@ -57,6 +57,7 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 .vs/
 #Nuget packages folder
+#我们自己的构建文件
 packages/
 out/
 cmake-build-debug/
@@ -68,5 +69,8 @@ cmake-build-debug/
 /install*
 /script/tools/.*
 /script/tools/b_Ninja_*
+
 *.exp
 /script/uePlug/*/Plugins/Doodle/Intermediate/*
+#忽略python文件
+*.pyc

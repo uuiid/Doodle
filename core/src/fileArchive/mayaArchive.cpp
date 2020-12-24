@@ -7,9 +7,10 @@
  * @FilePath: \Doodle\core\src\fileArchive\mayaArchive.cpp
  */
 #include "mayaArchive.h"
-#include "src/shots/shotfilesqlinfo.h"
+#include <src/core/coreset.h>
+#include <src/shots/shotfilesqlinfo.h>
 
-#include "Logger.h"
+#include <Logger.h>
 #include <boost/filesystem.hpp>
 
 CORE_NAMESPACE_S
@@ -48,7 +49,8 @@ void mayaArchive::insertDB() {
 void mayaArchive::_generateFilePath() {
   if (!p_soureFile.empty()) {
     if (isServerzinsideDir(p_soureFile.front())) {
-      p_ServerPath.push_back(p_soureFile.front());
+      auto str = coreSet::toIpPath(p_soureFile.front().generic_string());
+      p_ServerPath.push_back(str);
       return;
     }
     p_ServerPath.push_back(
