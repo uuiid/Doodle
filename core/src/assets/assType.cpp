@@ -32,7 +32,10 @@ RTTR_REGISTRATION {
   rttr::registration::class_<assType>(DOCORE_RTTE_CLASS(assType))
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
+
 DOODLE_INSRANCE_CPP(assType);
+boost::signals2::signal<void()> assType::insertChanged{};
+
 assType::assType()
     : coresqldata(),
       std::enable_shared_from_this<assType>(),
@@ -61,6 +64,7 @@ void assType::insert() {
     DOODLE_LOG_WARN("无法插入asstype " << s_type.c_str());
     throw std::runtime_error("asstype");
   }
+  insertChanged();
 }
 void assType::updateSQL() {}
 void assType::deleteSQL() {

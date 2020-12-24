@@ -14,6 +14,8 @@
 #include "core_global.h"
 
 #include <src/core/coresqldata.h>
+#include <boost/signals2.hpp>
+
 CORE_NAMESPACE_S
 
 class CORE_API assType
@@ -40,6 +42,9 @@ class CORE_API assType
   static assTypePtrList getAll();
   static assTypePtr findType(const e_type &typeName, bool autoInstall);
   static bool sortType(const assTypePtr &t1, const assTypePtr &t2);
+
+  //这个信号用来发出更改
+  static boost::signals2::signal<void()> insertChanged;
 
  private:
   static assTypePtr findType(const std::string &typeName);

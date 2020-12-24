@@ -19,6 +19,7 @@ target_link_libraries(core PUBLIC RTTR::Core)
 
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
 target_link_libraries(core PUBLIC ${Boost_LIBRARIES})
+# target_link_libraries(core PUBLIC Boost::signals2)
 
 target_link_libraries(core PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
 target_link_libraries(core PUBLIC pugixml)

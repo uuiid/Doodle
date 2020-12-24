@@ -11,6 +11,7 @@
 #include <core_global.h>
 #include <src/core/coresqldata.h>
 
+#include <boost/signals2.hpp>
 CORE_NAMESPACE_S
 
 class CORE_API shotType : public coresqldata,
@@ -42,6 +43,8 @@ class CORE_API shotType : public coresqldata,
   static const std::unordered_set<shotType *> Instances();
 
   DOODLE_DISABLE_COPY(shotType);
+
+  static boost::signals2::signal<void()> insertChanged;
 
  private:
   template <typename T>
