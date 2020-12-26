@@ -52,8 +52,6 @@ Qt::ItemFlags shotEpsListModel::flags(const QModelIndex &index) const {
 }
 bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value,
                                int role) {
-  init();
-
   if (index.isValid() && role == Qt::EditRole) {
     //确认镜头不重复和没有提交
     bool isHasEps = false;
@@ -67,7 +65,7 @@ bool shotEpsListModel::setData(const QModelIndex &index, const QVariant &value,
       return false;
     else {
       eplist[index.row()]->setEpisdes(value.toInt());
-      eplist[index.row()]->insert();
+      eplist[index.row()]->updateSQL();
       dataChanged(index, index, {role});
       return true;
     }
@@ -78,8 +76,10 @@ bool shotEpsListModel::insertRows(int position, int rows,
                                   const QModelIndex &index) {
   beginInsertRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
+    auto eps = std::make_shared<doCore::episodes>();
+    eps->insert();
     eplist.insert(eplist.begin() + position,
-                  std::make_shared<doCore::episodes>());
+                  eps);
   }
   endInsertRows();
   return true;
@@ -88,6 +88,8 @@ bool shotEpsListModel::removeRows(int position, int rows,
                                   const QModelIndex &index) {
   beginRemoveRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
+    auto eps = eplist[position];
+    eps->deleteSQL();
     eplist.erase(eplist.begin() + position);
   }
   endRemoveRows();

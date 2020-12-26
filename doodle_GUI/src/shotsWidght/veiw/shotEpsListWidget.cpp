@@ -90,8 +90,8 @@ shotEpsListWidget::shotEpsListWidget(QWidget *parent)
 shotEpsListWidget::~shotEpsListWidget() = default;
 
 void shotEpsListWidget::insertEpisodes() {
-  int raw = selectionModel()->currentIndex().row() + 1;
-  model()->insertRow(raw, selectionModel()->currentIndex());
+  int raw = selectionModel()->currentIndex().row();
+  model()->insertRow(raw, QModelIndex());
 
   //设置当前行的选择
   setCurrentIndex(p_episodesListModel->index(raw));
