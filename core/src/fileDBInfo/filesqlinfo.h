@@ -18,8 +18,10 @@ class CORE_API fileSqlInfo : public coresqldata {
   //属性设置和查询
   fileSqlInfo();
   [[nodiscard]] dpathList getFileList() const;
+  [[nodiscard]] dpathList getFileList();
   virtual void setFileList(const dpathList &filelist);
   virtual void setFileList(const dstringList &filelist);
+
   [[nodiscard]] int64_t getVersionP() const;
   void setVersionP(const int64_t value);
 
@@ -48,6 +50,8 @@ class CORE_API fileSqlInfo : public coresqldata {
   virtual dstring generateFileName(const dstring &suffixes,
                                    const dstring &prefix)   = 0;
   //删除条目
+  virtual void insert() override;
+  virtual void updateSQL() override;
   virtual void deleteSQL() override;
 
   virtual bool exist(bool refresh);
@@ -66,7 +70,13 @@ class CORE_API fileSqlInfo : public coresqldata {
   std::string fileStateP;
   bool p_b_exist;
 
+ private:
+  //解析器包装
+  pathParsingPtr p_parser;
+  dpathList p_pathlist;
+
  protected:
+  void parsepath(const std::string &pathstr);
   [[nodiscard]] dstringList json_to_strList(const dstring &json_str) const;
   [[nodiscard]] dstring strList_tojson(const dstringList &str_list) const;
 

@@ -20,6 +20,8 @@ class toolkit {
   static void modifyUeCachePath();
   static bool update();
 
+  static bool deleteUeCache();
+
  private:
   static doCore::dpath getUeInstallPath();
 };

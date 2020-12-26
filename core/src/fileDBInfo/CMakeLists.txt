@@ -2,9 +2,11 @@
         core
         PUBLIC
         filesqlinfo.h
+        pathParsing.h
 )
 target_sources(
         core
         PRIVATE
         filesqlinfo.cpp
+        pathParsing.cpp
 )

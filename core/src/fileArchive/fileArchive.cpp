@@ -20,8 +20,7 @@
 CORE_NAMESPACE_S
 
 fileArchive::fileArchive()
-    : p_custom_path(),
-      p_soureFile(),
+    : p_soureFile(),
       p_cacheFilePath(),
       p_ServerPath(),
       p_state_(state::none) {}
@@ -38,10 +37,6 @@ bool fileArchive::update(const dpathList &filelist) {
     p_soureFile = filelist;
   }
   _generateFilePath();
-
-  if (!p_custom_path.empty() || p_soureFile.size() == p_custom_path.size()) {
-    p_ServerPath = p_custom_path;
-  }
 
   //获得缓存路径
   generateCachePath();
@@ -90,15 +85,6 @@ bool fileArchive::useDownloadCheck() const {
 
 bool fileArchive::downloadCheck() const {
   return false;
-}
-
-void fileArchive::setUseCustomPath(const dpathList &custom_path) {
-  if (custom_path.size() == p_soureFile.size())
-    p_custom_path = custom_path;
-  else {
-    DOODLE_LOG_ERROR("not custom path " << custom_path.front());
-    throw std::runtime_error("not custom path");
-  }
 }
 
 //保护功能

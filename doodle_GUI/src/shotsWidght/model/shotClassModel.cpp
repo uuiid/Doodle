@@ -12,7 +12,9 @@
 
 DOODLE_NAMESPACE_S
 shotClassModel::shotClassModel(QObject *parent)
-    : QAbstractListModel(parent), list_fileClass() {}
+    : QAbstractListModel(parent), list_fileClass() {
+  doCore::shotClass::insertChanged.connect(boost::bind(&shotClassModel::reInit, this));
+}
 
 int shotClassModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(list_fileClass.size());
@@ -138,14 +140,18 @@ void shotClassModel::clear() {
   endResetModel();
 }
 void shotClassModel::reInit() {
+  // if (list_fileClass.empty()) return;
+
   auto shotClass = doCore::shotClass::Instances();
   doCore::shotClassPtrList shotClassPtrList{};
   for (auto &shot : shotClass) {
-    shotClassPtrList.push_back(shot->shared_from_this());
+    if (shot)
+      shotClassPtrList.push_back(shot->shared_from_this());
   }
-  if (list_fileClass.empty() || shotClassPtrList.empty()) return;
+  if (shotClassPtrList.empty()) return;
+
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(shotClassPtrList.size()) - 1);
-  // list_fileClass = shotClassPtrList;
+  list_fileClass = shotClassPtrList;
   endInsertRows();
 }
 DOODLE_NAMESPACE_E

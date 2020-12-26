@@ -10,7 +10,10 @@
 #include <memory>
 DOODLE_NAMESPACE_S
 assTypeModel::assTypeModel(QObject *parent)
-    : QAbstractListModel(parent), p_file_type_ptr_list_() {}
+    : QAbstractListModel(parent), p_file_type_ptr_list_() {
+  doCore::assType::insertChanged.connect(boost::bind(&assTypeModel::reInit, this));
+}
+
 int assTypeModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_file_type_ptr_list_.size());
 }
@@ -85,9 +88,19 @@ void assTypeModel::init() {
   endInsertRows();
 }
 void assTypeModel::reInit() {
-  if (p_file_type_ptr_list_.empty()) return;
+  // if (p_file_type_ptr_list_.empty()) return;
+  auto k_instance = doCore::assType::Instances();
+  doCore::assTypePtrList list;
+  for (auto &&i : k_instance) {
+    if (i)
+      list.push_back(i->shared_from_this());
+  }
+  if (list.empty())
+    return;
+
   beginInsertRows(QModelIndex(), 0,
-                  boost::numeric_cast<int>(p_file_type_ptr_list_.size()) - 1);
+                  boost::numeric_cast<int>(list.size()) - 1);
+  p_file_type_ptr_list_ = list;
   endInsertRows();
 }
 void assTypeModel::clear() {

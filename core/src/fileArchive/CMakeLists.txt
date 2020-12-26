@@ -9,6 +9,7 @@
         movieEpsArchive.h
         ueArchive.h
         ueSynArchive.h
+        imageArchive.h
 )
 target_sources(
         core
@@ -21,4 +22,5 @@ target_sources(
         movieEpsArchive.cpp
         ueArchive.cpp
         ueSynArchive.cpp
+        imageArchive.cpp
 )

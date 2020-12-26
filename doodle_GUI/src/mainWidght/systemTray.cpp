@@ -6,6 +6,7 @@
 #include "mainWindows.h"
 #include "src/settingWidght/settingWidget.h"
 
+#include <Logger.h>
 #include <core_doQt.h>
 #include <QApplication>
 
@@ -64,6 +65,9 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   modify_ue_cache_path->setText(tr("修改ue缓存位置"));
   connect(modify_ue_cache_path, &QAction::triggered,
           this, [this]() { toolkit::modifyUeCachePath(); });
+  auto delete_ue_cahce = new QAction(tr("清除ue缓存"));
+  connect(delete_ue_cahce, &QAction::triggered,
+          &toolkit::deleteUeCache);
 
   setting = new QAction(menu);
   setting->setText(tr("设置"));
@@ -86,7 +90,7 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   menu->addAction(prj_widght);
   menu->addMenu(install);
   menu->addAction(modify_ue_cache_path);
-
+  menu->addAction(delete_ue_cahce);
   menu->addSeparator();
 
   //设置和跟新

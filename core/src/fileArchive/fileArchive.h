@@ -40,8 +40,6 @@ class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
   virtual bool useDownloadCheck() const;
   virtual bool downloadCheck() const;
 
-  virtual void setUseCustomPath(const dpathList &custom_path);
-
   DOODLE_DISABLE_COPY(fileArchive);
 
  protected:
@@ -66,8 +64,6 @@ class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
   virtual bool isServerzinsideDir(const dpath &localPath);
 
  protected:
-  dpathList p_custom_path;
-
   fileSqlInfoPtr p_db_data;
   //复制的数据来源(本地)
   dpathList p_soureFile;

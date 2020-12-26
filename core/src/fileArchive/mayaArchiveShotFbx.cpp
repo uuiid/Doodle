@@ -129,7 +129,7 @@ bool mayaArchiveShotFbx::readExportJson(const dpath &exportPath) {
 }
 bool mayaArchiveShotFbx::update(const dpath &shot_data) {
   if (shot_data.empty()) return false;
-  p_info_ptr_->setShotType(shotType::findShotType("maya_export"));
+  p_info_ptr_->setShotType(shotType::findShotType("maya_export", true));
   //获得缓存路径并下载文件
   auto cache_path = p_info_ptr_->generatePath("export_fbx");
   cache_path      = coreSet::getSet().getCacheRoot() / cache_path;
@@ -150,18 +150,6 @@ bool mayaArchiveShotFbx::update(const dpath &shot_data) {
   p_ServerPath.clear();
   p_cacheFilePath.clear();
   //开始上传文件
-
-  {
-    nlohmann::json root{};
-    for (auto &&i : p_ServerPath) {
-      root.push_back(i.generic_string());
-    }
-    auto k_fileList = p_soureFile.front().parent_path() / "doodle_file_list.json";
-    boost::filesystem::ofstream file{k_fileList};
-    file << root.dump();
-    p_soureFile.push_back(k_fileList);
-  }
-
   _generateFilePath();
   p_cacheFilePath = p_soureFile;
   _updata(p_soureFile);
@@ -173,7 +161,7 @@ void mayaArchiveShotFbx::insertDB() {
   p_info_ptr_->setShotType(doCore::shotType::findShotType("maya_export", true));
   p_info_ptr_ = std::get<doCore::shotInfoPtr>(p_info_ptr_->findSimilar());
 
-  p_info_ptr_->setFileList({p_ServerPath.front().parent_path() / "doodle_file_list.json"});
+  p_info_ptr_->setFileList(p_ServerPath);
   if (p_info_ptr_->getInfoP().empty()) {
     p_info_ptr_->setInfoP("导出fbx文件");
   }

@@ -11,6 +11,9 @@
 #include <core_global.h>
 #include <src/fileDBInfo/filesqlinfo.h>
 
+//导入boost信号
+#include <boost/signals2.hpp>
+
 CORE_NAMESPACE_S
 
 class CORE_API assFileSqlInfo
@@ -48,6 +51,9 @@ class CORE_API assFileSqlInfo
 
   static bool sortType(const assInfoPtr &t1, const assInfoPtr &t2);
   static const std::unordered_set<assFileSqlInfo *> Instances();
+
+  static boost::signals2::signal<void()> insertChanged;
+  static boost::signals2::signal<void()> updateChanged;
 
  private:
   void setAssType();

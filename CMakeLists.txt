@@ -29,7 +29,7 @@ option(RUN_COPY    "run copy tools"     OFF)
 
 #配置版本文件
 set(Doodle_VERSION_MAJOR 2)
-set(Doodle_VERSION_MINOR 1) 
+set(Doodle_VERSION_MINOR 2) 
 set(Doodle_VERSION_REVIS 7)
 configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)
 configure_file(anzhuang.iss.in ${CMAKE_INSTALL_PREFIX}/anzhuang.iss)

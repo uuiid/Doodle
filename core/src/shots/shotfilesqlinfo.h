@@ -10,6 +10,8 @@
 
 #include <src/fileDBInfo/filesqlinfo.h>
 
+//导入boost信号
+#include <boost/signals2.hpp>
 CORE_NAMESPACE_S
 
 class CORE_API shotFileSqlInfo
@@ -51,6 +53,9 @@ class CORE_API shotFileSqlInfo
   void setShotType(const shotTypePtr &fileType_);
   static bool sort(const shotInfoPtr &t1, const shotInfoPtr &t2);
   static const std::unordered_set<shotFileSqlInfo *> Instances();
+
+  static boost::signals2::signal<void()> insertChanged;
+  static boost::signals2::signal<void()> updateChanged;
 
  private:
   static shotInfoPtrList getAll(const shotClassPtr &class_ptr);

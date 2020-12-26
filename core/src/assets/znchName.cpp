@@ -48,7 +48,7 @@ void znchName::insert() {
   auto db = coreSql::getCoreSql().getConnection();
   auto install =
       sqlpp::insert_into(table).columns(table.localname, table.assClassId);
-  install.values.add(table.localname = nameZNCH,
+  install.values.add(table.localname  = nameZNCH,
                      table.assClassId = p_ptr_assType->getIdP());
 
   idP = db->insert(install);
@@ -79,7 +79,13 @@ void znchName::deleteSQL() {
 void znchName::setName(const std::string &name_, const bool &isZNCH) {
   if (!con) con = dopinyin::convertPtr(new dopinyin::convert);
   nameZNCH = name_;
-  nameEN = con->toEn(name_);
+  auto str = con->toEn(name_);
+
+  if (str.size() > 18) {
+    str.erase(str.begin() + 10, str.end() - 6);
+  }
+
+  nameEN = str;
 }
 
 std::string znchName::getName() const {

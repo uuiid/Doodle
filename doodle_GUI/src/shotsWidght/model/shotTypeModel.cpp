@@ -9,7 +9,9 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
-shotTypeModel::shotTypeModel(QObject *parent) : QAbstractListModel(parent) {}
+shotTypeModel::shotTypeModel(QObject *parent) : QAbstractListModel(parent) {
+  doCore::shotType::insertChanged.connect(boost::bind(&shotTypeModel::reInit, this));
+}
 
 int shotTypeModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_type_ptr_list_.size());
@@ -102,12 +104,13 @@ void shotTypeModel::clear() {
 void shotTypeModel::reInit() {
   doCore::shotTypePtrList tmp_fileTypeList{};
   for (auto &tmp : doCore::shotType::Instances()) {
-    tmp_fileTypeList.push_back(tmp->shared_from_this());
+    if (tmp)
+      tmp_fileTypeList.push_back(tmp->shared_from_this());
   }
 
   if (tmp_fileTypeList.empty()) return;
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()) - 1);
-  // p_type_ptr_list_ = tmp_fileTypeList;
+  p_type_ptr_list_ = tmp_fileTypeList;
   endInsertRows();
 }
 

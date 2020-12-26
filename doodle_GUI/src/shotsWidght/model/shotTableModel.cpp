@@ -17,7 +17,11 @@ shotTableModel::shotTableModel(QObject *parent)
       FBRex(std::make_unique<boost::regex>(R"(mp4|avi)")),
       mayaRex(std::make_unique<boost::regex>(R"(ma|ab)")),
       show_mayaex(std::make_unique<boost::regex>(R"(Anm|Animation|export)")),
-      show_FBRex(std::make_unique<boost::regex>(R"(FB_|flipbook)")) {}
+      show_FBRex(std::make_unique<boost::regex>(R"(FB_|flipbook)")) {
+  doCore::shotFileSqlInfo::insertChanged.connect([this]() { this->init(); });
+  doCore::shotFileSqlInfo::updateChanged.connect([this]() { this->init(); });
+}
+
 int shotTableModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_shot_info_ptr_list_.size());
 }
@@ -193,10 +197,21 @@ void shotTableModel::init() {
 
   eachOne();
 }
+
+void shotTableModel::reInit() {
+  auto shot = doCore::coreDataManager::get().getShotPtr();
+  for (auto &&x : doCore::shotFileSqlInfo::Instances()) {
+    if (x->getShot() == shot) {
+      p_tmp_shot_info_ptr_list_.push_back(x->shared_from_this());
+    }
+  }
+  eachOne();
+}
 void shotTableModel::clear() {
   if (p_shot_info_ptr_list_.empty()) return;
   beginResetModel();
   p_shot_info_ptr_list_.clear();
+  p_tmp_shot_info_ptr_list_.clear();
   endResetModel();
 }
 void shotTableModel::filter(bool useFilter) {

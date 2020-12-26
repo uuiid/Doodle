@@ -19,6 +19,7 @@
 #include "src/shotsWidght/model/shotTableModel.h"
 #include <future>
 #include <src/toolkit/updataManager.h>
+
 DOODLE_NAMESPACE_S
 //-----------------------------------自定义shot小部件---------------------------------------------//
 shotTableWidget::shotTableWidget(QWidget *parent)
@@ -254,8 +255,10 @@ void shotTableWidget::doClickedSlots(const QModelIndex &index) {
 void shotTableWidget::doDubledSlots(const QModelIndex &index) {
   auto info = index.data(Qt::UserRole).value<doCore::shotInfoPtr>();
   if (info) {
-    auto path = info->getFileList().front();
-    toolkit::openPath(path);
+    if (index.column() != 1) {
+      auto path = info->getFileList().front();
+      toolkit::openPath(path);
+    }
   }
 }
 void shotTableWidget::submitMayaFile(doCore::shotInfoPtr &info_ptr,

@@ -28,6 +28,8 @@ class DSYSTEM_API DfileSyntem {
 
   bool upload(const dpath &localFile, const dpath &remoteFile) noexcept;
   bool down(const dpath &localFile, const dpath &remoteFile) noexcept;
+  bool exists(const dpath &remoteFile) const noexcept;
+  std::unique_ptr<std::fstream> open(const dpath &remoteFile, std::ios_base::openmode mode) const noexcept;
   static bool copy(const dpath &sourePath, const dpath &trange_path, bool backup) noexcept;
   static bool removeDir(const dpath &path);
 

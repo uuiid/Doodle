@@ -31,6 +31,8 @@
 #include <src/fileArchive/ueArchive.h>
 #include <src/fileArchive/ueSynArchive.h>
 #include <src/fileArchive/movieEpsArchive.h>
+#include <src/fileArchive/imageArchive.h>
+
 #include <src/core/coreDataManager.h>
 #include <src/core/coreset.h>
 

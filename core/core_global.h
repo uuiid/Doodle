@@ -95,6 +95,7 @@ class assFileSqlInfo;
 class freeSynWrap;
 class movieEpsArchive;
 class synData;
+class pathParsing;
 
 //共享指针引用类
 using shotPtr      = std::shared_ptr<shot>;
@@ -111,9 +112,11 @@ using assInfoPtr  = std::shared_ptr<assFileSqlInfo>;
 
 using fileSqlInfoPtr = std::shared_ptr<fileSqlInfo>;
 using synDataPtr     = std::shared_ptr<synData>;
-using synDataPtrList = std::vector<synDataPtr>;
+
+using pathParsingPtr = std::shared_ptr<pathParsing>;
 //列表引用类
 
+using synDataPtrList   = std::vector<synDataPtr>;
 using episodesPtrList  = std::vector<episodesPtr>;
 using shotPtrList      = std::vector<shotPtr>;
 using shotClassPtrList = std::vector<shotClassPtr>;

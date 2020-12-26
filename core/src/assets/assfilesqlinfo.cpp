@@ -25,7 +25,11 @@ RTTR_REGISTRATION {
   rttr::registration::class_<assFileSqlInfo>(DOCORE_RTTE_CLASS(assFileSqlInfo))
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
+
 DOODLE_INSRANCE_CPP(assFileSqlInfo);
+boost::signals2::signal<void()> assFileSqlInfo::insertChanged{};
+boost::signals2::signal<void()> assFileSqlInfo::updateChanged{};
+
 assFileSqlInfo::assFileSqlInfo()
     : fileSqlInfo(),
       std::enable_shared_from_this<assFileSqlInfo>(),
@@ -68,10 +72,12 @@ void assFileSqlInfo::insert() {
   if (ass_type_id > 0) install.insert_list.add(tab.assTypeId = ass_type_id);
 
   idP = db->insert(install);
+  fileSqlInfo::insert();
   if (idP == 0) {
     DOODLE_LOG_WARN(fileStateP.c_str());
     throw std::runtime_error("");
   }
+  insertChanged();
 }
 
 void assFileSqlInfo::updateSQL() {
@@ -90,9 +96,11 @@ void assFileSqlInfo::updateSQL() {
                   tab.fileSuffixes = fileSuffixesP,
                   tab.version      = versionP)
             .where(tab.id == idP));
+    fileSqlInfo::updateSQL();
   } catch (const sqlpp::exception &e) {
     DOODLE_LOG_ERROR(e.what());
   }
+  updateChanged();
 }
 
 void assFileSqlInfo::deleteSQL() {

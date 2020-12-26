@@ -25,7 +25,11 @@ RTTR_REGISTRATION {
   rttr::registration::class_<shotFileSqlInfo>(DOCORE_RTTE_CLASS(shotFileSqlInfo))
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
+
+boost::signals2::signal<void()> shotFileSqlInfo::insertChanged{};
+boost::signals2::signal<void()> shotFileSqlInfo::updateChanged{};
 DOODLE_INSRANCE_CPP(shotFileSqlInfo);
+
 shotFileSqlInfo::shotFileSqlInfo()
     : fileSqlInfo(),
       std::enable_shared_from_this<shotFileSqlInfo>(),
@@ -78,10 +82,12 @@ void shotFileSqlInfo::insert() {
 
   if (p_shTy_id > 0) install.insert_list.add(tab.shotTypeId = p_shTy_id);
   idP = db->insert(install);
+  fileSqlInfo::insert();
   if (idP == 0) {
     DOODLE_LOG_WARN(fileStateP.c_str());
     throw std::runtime_error("");
   }
+  insertChanged();
 }
 
 void shotFileSqlInfo::updateSQL() {
@@ -99,9 +105,11 @@ void shotFileSqlInfo::updateSQL() {
                    tab.fileSuffixes = fileSuffixesP,
                    tab.version      = versionP)
             .where(tab.id == idP));
+    fileSqlInfo::updateSQL();
   } catch (const sqlpp::exception& err) {
     DOODLE_LOG_WARN(err.what());
   }
+  updateChanged();
 }
 
 template <typename T>
@@ -114,7 +122,9 @@ void shotFileSqlInfo::batchSetAttr(T& row) {
   filepathP     = row.FilePath_;
   infoP         = json_to_strList(row.infor);
   fileStateP    = row.filestate;
+
   if (row.shotsId._is_valid) p_shot_id = row.shotsId;
+
   if (row.shotClassId._is_valid) {
     p_shCla_id = row.shotClassId;
     getShotType();

@@ -49,12 +49,16 @@ class assTableWidght : public QTableView {
   void deleteSQLFile();
 
  protected:
+ //上下文菜单
   void contextMenuEvent(QContextMenuEvent* event) override;
-  //拖拽函数
 
+  //拖拽函数
   void dragMoveEvent(QDragMoveEvent* event) override;
+  //拖拽函数
   void dragLeaveEvent(QDragLeaveEvent* event) override;
+  //拖拽函数
   void dragEnterEvent(QDragEnterEvent* event) override;
+  //拖拽函数
   void dropEvent(QDropEvent* event) override;
 };
 

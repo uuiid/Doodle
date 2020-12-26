@@ -73,6 +73,26 @@ bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile) noexcept
   return copy(p_netWork_disk_ / remoteFile, localFile, false);
 }
 
+bool DfileSyntem::exists(const dpath &remoteFile) const noexcept {
+  try {
+    return boost::filesystem::exists(p_netWork_disk_ / remoteFile);
+  } catch (std::exception &e) {
+    DOODLE_LOG_INFO(e.what());
+    return false;
+  }
+}
+
+std::unique_ptr<std::fstream> DfileSyntem::open(const dpath &remoteFile, std::ios_base::openmode mode) const noexcept {
+  if (!exists(remoteFile)) {
+    boost::filesystem::create_directories(p_netWork_disk_ / remoteFile.parent_path());
+  }
+  auto file = std::unique_ptr<std::fstream>(new boost::filesystem::fstream(p_netWork_disk_ / remoteFile, mode));
+  if (!file->is_open()) {
+    file->open(remoteFile.generic_string(), mode);
+  }
+  return file;
+}
+
 bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool backup) noexcept {
   //创建线程池多线程复制
   boost::asio::thread_pool pool(std::thread::hardware_concurrency());

@@ -19,7 +19,6 @@
 #include <QtWidgets/qmessagebox.h>
 
 #include <src/assetsWidget/model/assTableModel.h>
-#include <src/imageArchive.h>
 #include <src/shotsWidght/veiw/shotEpsListWidget.h>
 #include <src/toolkit/toolkit.h>
 
@@ -66,7 +65,7 @@ void assTableWidght::insertAss(const QString &path) {
   auto pathInfo = QFileInfo(path);
   static boost::regex reMaya("m[ab]");
   static boost::regex reUe4("uproject");
-
+  static boost::regex reImage(R"((jpe?g|png|tga))");
   p_model_->insertRow(0, QModelIndex());
   auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
                   .value<doCore::assInfoPtr>();
@@ -76,55 +75,77 @@ void assTableWidght::insertAss(const QString &path) {
 
   data->setInfoP(text_info.toStdString());
   DOODLE_LOG_INFO(pathInfo.suffix().toStdString());
-
-  if (boost::regex_match(pathInfo.suffix().toStdString(), reMaya)) {
-    // maya文件
-    msgBox.setText(tr("请选择类型"));
-    auto modelFile     = msgBox.addButton("模型文件", QMessageBox::AcceptRole);
-    auto rig           = msgBox.addButton("绑定文件", QMessageBox::AcceptRole);
-    auto modelFile_low = msgBox.addButton("低模文件", QMessageBox::AcceptRole);
-    auto noButten      = msgBox.addButton("取消", QMessageBox::NoRole);
-
-    msgBox.exec();
-
-    if (msgBox.clickedButton() == modelFile) {
-      data->setAssType(doCore::assType::findType(doCore::assType::e_type::scenes, true));
-    } else if (msgBox.clickedButton() == rig) {
-      data->setAssType(doCore::assType::findType(doCore::assType::e_type::rig, true));
-    } else if (msgBox.clickedButton() == modelFile_low) {
-      data->setAssType(doCore::assType::findType(doCore::assType::e_type::scenes_low, true));
-    } else if (msgBox.clickedButton() == noButten) {
+  if (pathInfo.isDir()) {
+    if (pathInfo.dir().isEmpty()) {
       p_model_->removeRow(0);
       return;
+    } else {
+      auto image_file = msgBox.addButton("贴图文件", QMessageBox::AcceptRole);
+      auto noButten   = msgBox.addButton("取消", QMessageBox::NoRole);
+      msgBox.exec();
+      if (msgBox.clickedButton() == image_file) {
+        data->setAssType(
+            doCore::assType::findType(doCore::assType::e_type::screenshot, true));
+        data              = std::get<doCore::assInfoPtr>(data->findSimilar());
+        auto imageArchive = std::make_shared<doCore::imageArchive>(data);
+        imageArchive->update(path.toStdString());
+
+      } else {
+        p_model_->removeRow(0);
+        return;
+      }
     }
-    data              = std::get<doCore::assInfoPtr>(data->findSimilar());
-    auto maya_archive = std::make_shared<doCore::mayaArchive>(data);
 
-    auto future = std::async(std::launch::async, [=]() -> bool {
-      auto result = maya_archive->update(path.toStdString());
-      this->p_model_->init();
-      return result;
-    });
-    //打开后台传输
-    updataManager::get().addQueue(future, "正在上传中", 100);
-    updataManager::get().run();
+  } else if (pathInfo.isFile()) {  //确认是文件的情况下//我们测试文件类型
+    if (boost::regex_match(pathInfo.suffix().toStdString(), reMaya)) {
+      // maya文件
+      msgBox.setText(tr("请选择类型"));
+      auto modelFile     = msgBox.addButton("模型文件", QMessageBox::AcceptRole);
+      auto rig           = msgBox.addButton("绑定文件", QMessageBox::AcceptRole);
+      auto modelFile_low = msgBox.addButton("低模文件", QMessageBox::AcceptRole);
+      auto noButten      = msgBox.addButton("取消", QMessageBox::NoRole);
 
-  } else if (boost::regex_search(pathInfo.suffix().toStdString(), reUe4)) {
-    // ue4文件
-    data->setAssType(
-        doCore::assType::findType(doCore::assType::e_type::UE4, true));
-    auto ue4_archice = std::make_shared<doCore::ueArchive>(data);
-    ue4_archice->update(path.toStdString());
+      msgBox.exec();
+
+      if (msgBox.clickedButton() == modelFile) {
+        data->setAssType(doCore::assType::findType(doCore::assType::e_type::scenes, true));
+      } else if (msgBox.clickedButton() == rig) {
+        data->setAssType(doCore::assType::findType(doCore::assType::e_type::rig, true));
+      } else if (msgBox.clickedButton() == modelFile_low) {
+        data->setAssType(doCore::assType::findType(doCore::assType::e_type::scenes_low, true));
+      } else if (msgBox.clickedButton() == noButten) {
+        p_model_->removeRow(0);
+        return;
+      }
+      data              = std::get<doCore::assInfoPtr>(data->findSimilar());
+      auto maya_archive = std::make_shared<doCore::mayaArchive>(data);
+
+      auto future = std::async(std::launch::async, [=]() -> bool {
+        auto result = maya_archive->update(path.toStdString());
+        return result;
+      });
+      //打开后台传输
+      updataManager::get().addQueue(future, "正在上传中", 100);
+      updataManager::get().run();
+
+    } else if (boost::regex_search(pathInfo.suffix().toStdString(), reUe4)) {  // ue4文件
+      data->setAssType(
+          doCore::assType::findType(doCore::assType::e_type::UE4, true));
+      auto ue4_archice = std::make_shared<doCore::ueArchive>(data);
+      ue4_archice->update(path.toStdString());
+    } else {
+      p_model_->removeRow(0);
+      //    auto image_archice = std::make_shared<doCore::imageArchive>(data);
+      return;
+    }
   } else {
-    //图片文件
-    data->setAssType(
-        doCore::assType::findType(doCore::assType::e_type::screenshot, true));
     p_model_->removeRow(0);
     //    auto image_archice = std::make_shared<doCore::imageArchive>(data);
     return;
   }
   p_model_->filter(false);
 }
+
 void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
   //只有在菜单指针为空 并且 持有上一级的的情况下才进行显示菜单
   if (p_menu_) {
@@ -168,6 +189,7 @@ void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
   p_menu_->move(event->globalPos());
   p_menu_->show();
 }
+
 void assTableWidght::openFileDialog() {
   auto path = QFileDialog::getOpenFileName(
       this, tr("提交文件"), QString(),
@@ -176,6 +198,7 @@ void assTableWidght::openFileDialog() {
   if (path.isNull()) return;
   insertAss(path);
 }
+
 void assTableWidght::dropEvent(QDropEvent *event) {
   QAbstractItemView::dropEvent(event);
   if (!event->mimeData()->hasUrls()) return enableBorder(false);
@@ -273,8 +296,10 @@ void assTableWidght::doClickedSlots(const QModelIndex &index) {
 void assTableWidght::doDubledSlots(const QModelIndex &index) {
   auto assinfo = index.data(Qt::UserRole).value<doCore::assInfoPtr>();
   if (assinfo) {
-    auto path = assinfo->getFileList().front();
-    toolkit::openPath(path);
+    if (index.column() != 1) {
+      auto path = assinfo->getFileList().front();
+      toolkit::openPath(path);
+    }
   }
 }
 

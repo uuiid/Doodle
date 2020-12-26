@@ -6,7 +6,6 @@
 
 #include <core_doQt.h>
 
-#include <QJsonArray>
 #include <boost/numeric/conversion/cast.hpp>
 #include <memory>
 
@@ -18,7 +17,11 @@ assTableModel::assTableModel(QObject *parent)
       p_ass_info_ptr_list_(),
       mayaRex(std::make_shared<boost::regex>(R"(scenes)")),
       ue4Rex(std::make_shared<boost::regex>(R"(_UE4)")),
-      rigRex(std::make_shared<boost::regex>(R"(rig)")) {}
+      rigRex(std::make_shared<boost::regex>(R"(rig)")) {
+  doCore::assFileSqlInfo::insertChanged.connect([this]() { this->reInit(); });
+  doCore::assFileSqlInfo::updateChanged.connect([this]() { this->reInit(); });
+}
+
 int assTableModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_ass_info_ptr_list_.size());
 }
@@ -234,12 +237,29 @@ bool assTableModel::removeRows(int position, int rows,
     if (ass) ass->deleteSQL();
     p_ass_info_ptr_list_.erase(p_ass_info_ptr_list_.begin() + position);
   }
+  doCore::coreDataManager::get().setAssInfoPtr(nullptr);
   endRemoveRows();
   return true;
 }
 void assTableModel::init() {
   clear();
   eachOne();
+}
+
+void assTableModel::reInit() {
+  doCore::assTypePtrList list;
+  doCore::assInfoPtrList outlist;
+  auto assClass = doCore::coreDataManager::get().getAssClassPtr();
+  for (const auto &item : doCore::assFileSqlInfo::Instances()) {
+    auto assty = item->getAssType();
+    if (std::find(list.begin(), list.end(), assty) == list.end() &&
+        item->getAssClass() == assClass) {
+      outlist.push_back(item->shared_from_this());
+      list.push_back(assty);
+    }
+  }
+  std::sort(outlist.begin(), outlist.end(), &doCore::assFileSqlInfo::sortType);
+  setList(outlist);
 }
 void assTableModel::clear() {
   if (p_ass_info_ptr_list_.empty()) return;

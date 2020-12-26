@@ -119,7 +119,8 @@
         "type": "cpp",
         "registration": "cpp",
         "queue": "cpp",
-        "qstring": "cpp"
+        "qstring": "cpp",
+        "qjsonarray": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",
@@ -162,5 +163,8 @@
     "python.formatting.autopep8Args": [
         "--ignore",
         "E402"
-    ]
+    ],
+    "editor.tabSize": 2,
+    "workbench.editor.limit.enabled": true,
+    "workbench.editor.limit.value": 4
 }

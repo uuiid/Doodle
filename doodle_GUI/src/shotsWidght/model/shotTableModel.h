@@ -38,6 +38,7 @@ class shotTableModel : public QAbstractTableModel {
   bool insertRows(int position, int rows, const QModelIndex &parent) override;
 
   void init();
+  void reInit();
   void filter(bool useFilter);
   void clear();
   void showAll();

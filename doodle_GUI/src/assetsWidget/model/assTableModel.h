@@ -35,7 +35,9 @@ class assTableModel : public QAbstractTableModel {
   //修改数据
   bool insertRows(int position, int rows, const QModelIndex &parent) override;
   bool removeRows(int position, int rows, const QModelIndex &parent) override;
+  
   void init();
+  void reInit();
   void filter(bool useFilter);
   void clear();
 

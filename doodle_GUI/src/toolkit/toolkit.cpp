@@ -13,12 +13,16 @@
 #include <QtCore/qsettings.h>
 #include <src/ftpsession.h>
 
+#include <boost/format.hpp>
+#include <boost/process.hpp>
+
 #include <string>
 #include <regex>
 DOODLE_NAMESPACE_S
 
 void toolkit::openPath(const doCore::fileSqlInfoPtr &info_ptr,
                        const bool &openEx) {
+  
   auto path = doCore::coreSet::getSet().getPrjectRoot() /
               info_ptr->getFileList()[0].parent_path();
 
@@ -132,6 +136,30 @@ bool toolkit::update() {
   boost::process::spawn(exe_path, "/SILENT", "/NOCANCEL");
   qApp->quit();
   return true;
+}
+
+bool toolkit::deleteUeCache() {
+  boost::format str{R"(%1%\UnrealEngine)"};
+  char *k_path;
+  size_t k_path_len;
+  getenv_s(&k_path_len, NULL, 0, "LOCALAPPDATA");
+  if (k_path_len == 0) return false;
+  k_path = (char *)malloc(k_path_len * sizeof(char));
+  if (!k_path) return false;
+
+  getenv_s(&k_path_len, k_path, k_path_len, "LOCALAPPDATA");
+  std::string k_str(k_path);
+  str % k_str;
+  free(k_path);
+
+  try {
+    DOODLE_LOG_INFO("delete Folder : " << str.str());
+    boost::filesystem::remove_all(str.str());
+    return true;
+  } catch (const std::exception &e) {
+    DOODLE_LOG_ERROR(e.what());
+    return false;
+  }
 }
 
 doCore::dpath toolkit::getUeInstallPath() {
