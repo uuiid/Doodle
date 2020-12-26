@@ -125,8 +125,7 @@ void shotIntEnumDelegate::updateEditorGeometry(
   editor->setGeometry(option.rect);
 }
 
-/* ------------------------------- 自定义shot小部件
- * ------------------------------- */
+/* ------------------------------- 自定义shot小部件 ------------------------------- */
 shotListWidget::shotListWidget(QWidget *parent)
     : QListView(parent),
       p_model_(nullptr),
