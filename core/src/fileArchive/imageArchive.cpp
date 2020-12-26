@@ -44,8 +44,10 @@ void imageArchive::insertDB() {
 void imageArchive::_generateFilePath() {
   if (!p_soureFile.empty()) {
     if (isServerzinsideDir(p_soureFile.front().generic_wstring())) {
-      auto str = coreSet::toIpPath(p_soureFile.front().generic_string());
-      p_ServerPath.push_back(str);
+      for (auto &&item : p_soureFile) {
+        auto str = coreSet::toIpPath(item.generic_string());
+        p_ServerPath.push_back(str);
+      }
       return;
     }
 
