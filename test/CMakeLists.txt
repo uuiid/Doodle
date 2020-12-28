@@ -1,5 +1,4 @@
-﻿
-add_executable(test_my
+﻿add_executable(test_my
         test_core.cpp
         test_fileSystem.cpp
         main.cpp

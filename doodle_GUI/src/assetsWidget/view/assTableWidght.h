@@ -25,8 +25,9 @@ class assTableWidght : public QTableView {
   explicit assTableWidght(QWidget* parent = nullptr);
 
   void setModel(QAbstractItemModel* model) override;
+
  Q_SIGNALS:
-  void refreshClass();
+  void setFilterRole(const filterState& filter);
 
  private:
   void init();
@@ -49,7 +50,7 @@ class assTableWidght : public QTableView {
   void deleteSQLFile();
 
  protected:
- //上下文菜单
+  //上下文菜单
   void contextMenuEvent(QContextMenuEvent* event) override;
 
   //拖拽函数

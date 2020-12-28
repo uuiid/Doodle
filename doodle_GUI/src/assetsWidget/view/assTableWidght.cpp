@@ -31,12 +31,13 @@
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QProgressDialog>
 #include <QtWidgets/QPushButton>
+
 #include <future>
 #include <string>
 
 DOODLE_NAMESPACE_S
 assTableWidght::assTableWidght(QWidget *parent)
-    : QTableView(parent), p_menu_(nullptr), p_model_(nullptr) {
+    : QTableView(parent), p_menu_(nullptr) {
   setSelectionBehavior(QAbstractItemView::SelectRows);   //行选
   setSelectionMode(QAbstractItemView::SingleSelection);  //单选
   setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -49,8 +50,6 @@ assTableWidght::assTableWidght(QWidget *parent)
           &assTableWidght::doDubledSlots);
 }
 void assTableWidght::setModel(QAbstractItemModel *model) {
-  auto k_model_ = dynamic_cast<assTableModel *>(model);
-  if (k_model_) p_model_ = k_model_;
   QTableView::setModel(model);
   init();
 }
@@ -66,9 +65,8 @@ void assTableWidght::insertAss(const QString &path) {
   static boost::regex reMaya("m[ab]");
   static boost::regex reUe4("uproject");
   static boost::regex reImage(R"((jpe?g|png|tga))");
-  p_model_->insertRow(0, QModelIndex());
-  auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
-                  .value<doCore::assInfoPtr>();
+  model()->insertRow(0, QModelIndex());
+  auto data = model()->data(model()->index(0, 4), Qt::UserRole).value<doCore::assInfoPtr>();
   //选择提示
   QMessageBox msgBox;
   auto text_info = QInputDialog::getText(this, tr("请输入备注"), tr("请输入文件备注"));
@@ -77,7 +75,7 @@ void assTableWidght::insertAss(const QString &path) {
   DOODLE_LOG_INFO(pathInfo.suffix().toStdString());
   if (pathInfo.isDir()) {
     if (pathInfo.dir().isEmpty()) {
-      p_model_->removeRow(0);
+      model()->removeRow(0);
       return;
     } else {
       auto image_file = msgBox.addButton("贴图文件", QMessageBox::AcceptRole);
@@ -91,7 +89,7 @@ void assTableWidght::insertAss(const QString &path) {
         imageArchive->update(path.toStdString());
 
       } else {
-        p_model_->removeRow(0);
+        model()->removeRow(0);
         return;
       }
     }
@@ -114,7 +112,7 @@ void assTableWidght::insertAss(const QString &path) {
       } else if (msgBox.clickedButton() == modelFile_low) {
         data->setAssType(doCore::assType::findType(doCore::assType::e_type::scenes_low, true));
       } else if (msgBox.clickedButton() == noButten) {
-        p_model_->removeRow(0);
+        model()->removeRow(0);
         return;
       }
       data              = std::get<doCore::assInfoPtr>(data->findSimilar());
@@ -134,16 +132,15 @@ void assTableWidght::insertAss(const QString &path) {
       auto ue4_archice = std::make_shared<doCore::ueArchive>(data);
       ue4_archice->update(path.toStdString());
     } else {
-      p_model_->removeRow(0);
+      model()->removeRow(0);
       //    auto image_archice = std::make_shared<doCore::imageArchive>(data);
       return;
     }
   } else {
-    p_model_->removeRow(0);
+    model()->removeRow(0);
     //    auto image_archice = std::make_shared<doCore::imageArchive>(data);
     return;
   }
-  p_model_->filter(false);
 }
 
 void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
@@ -158,10 +155,9 @@ void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
   connect(sub_file, &QAction::triggered, this, &assTableWidght::openFileDialog);
   p_menu_->addAction(sub_file);
 
-  auto index = p_model_->index(selectionModel()->currentIndex().row(),
-                               4);  //获得模型索引
-
   if (selectionModel()->hasSelection()) {
+    auto index      = model()->index(selectionModel()->currentIndex().row(),
+                                4);  //获得模型索引
     auto k_openFile = new QAction();
     k_openFile->setText("打开文件所在位置");
     connect(k_openFile, &QAction::triggered, this, [=] {
@@ -308,6 +304,6 @@ void assTableWidght::deleteSQLFile() {
   auto str_delete = QInputDialog::getText(this, tr("输入delete删除条目"),
                                           tr("输入: "), QLineEdit::Password);
   if (str_delete == "delete")
-    p_model_->removeRow(selectionModel()->currentIndex().row());
+    model()->removeRow(selectionModel()->currentIndex().row());
 }
 DOODLE_NAMESPACE_E

@@ -18,6 +18,7 @@
 #include <src/assetsWidget/model/assTypeModel.h>
 #include <src/assetsWidget/view/assTypeWidget.h>
 #include <src/assetsWidget/model/assSortfilterModel.h>
+#include <src/assetsWidget/model/assTableFilterModel.h>
 
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QLabel>
@@ -57,39 +58,40 @@ assWidght::assWidght(QWidget *parent)
   //代理排序模型
   p_ass_sortfilter_model_ = new assSortfilterModel(this);
   p_ass_sortfilter_model_->setSourceModel(p_ass_class_model_);
-  connect(k_filterLineEdit, &QLineEdit::textChanged, this,
-          &assWidght::setFilterRegExp);
+  connect(k_filterLineEdit, &QLineEdit::textChanged,
+          this, &assWidght::setFilterRegExp);
+
+  //table过滤模型
+  auto p_ass_table_filter_model_ = new assTableFilterModel(this);
+  p_ass_table_filter_model_->setSourceModel(p_ass_table_model_);
 
   //来源模型
   p_ass_class_widget_ = new assClassWidget();
   p_ass_class_widget_->setObjectName("p_ass_class_widget_");
   p_ass_class_widget_->setModel(p_ass_sortfilter_model_);
-  connect(p_ass_dep_widget_, &assDepWidget::initEmit, p_ass_class_model_,
-          &assClassModel::init);
+  connect(p_ass_dep_widget_, &assDepWidget::initEmit,
+          p_ass_class_model_, &assClassModel::init);
 
   p_ass_info_widght_ = new assTableWidght();
   p_ass_info_widght_->setObjectName("p_ass_table_widght_");
-  p_ass_info_widght_->setModel(p_ass_table_model_);
-  connect(p_ass_class_widget_, &assClassWidget::initEmited, p_ass_table_model_,
-          &assTableModel::init);
-  connect(p_ass_dep_widget_, &assDepWidget::initEmit, p_ass_table_model_,
-          &assTableModel::clear);
+  p_ass_info_widght_->setModel(p_ass_table_filter_model_);
+  connect(p_ass_class_widget_, &assClassWidget::initEmited,
+          p_ass_table_model_, &assTableModel::init);
+  connect(p_ass_dep_widget_, &assDepWidget::initEmit,
+          p_ass_table_model_, &assTableModel::clear);
 
   p_ass_type_widget_ = new assTypeWidget();
   p_ass_type_widget_->setObjectName("p_ass_type_widget_");
   p_ass_type_widget_->setModel(p_ass_type_model_);
   connect(p_ass_type_widget_, &assTypeWidget::doodleUseFilter,
-          p_ass_table_model_, &assTableModel::filter);
-  connect(p_ass_class_widget_, &assClassWidget::initEmited, p_ass_type_model_,
-          &assTypeModel::reInit);
-  connect(p_ass_dep_widget_, &assDepWidget::initEmit, p_ass_type_model_,
-          &assTypeModel::reInit);
-  connect(p_ass_class_widget_, &assClassWidget::initEmited, p_ass_type_model_,
-          &assTypeModel::reInit);
+          p_ass_table_filter_model_, &assTableFilterModel::useFilter);
 
-  //连接一些table的刷新
-  connect(p_ass_info_widght_, &assTableWidght::refreshClass,
-          p_ass_type_model_, &assTypeModel::init);
+  connect(p_ass_class_widget_, &assClassWidget::initEmited,
+          p_ass_type_model_, &assTypeModel::reInit);
+  connect(p_ass_dep_widget_, &assDepWidget::initEmit,
+          p_ass_type_model_, &assTypeModel::reInit);
+  connect(p_ass_class_widget_, &assClassWidget::initEmited,
+          p_ass_type_model_, &assTypeModel::reInit);
 
   //布局
   p_ass_layout_->addWidget(p_ass_dep_widget_, 0, 0, 1, 2);
@@ -118,8 +120,8 @@ void assWidght::refresh() {
 }
 
 void assWidght::setFilterRegExp(const QString &filter) {
-  auto reExp = QRegExp(filter, Qt::CaseInsensitive, QRegExp::FixedString);
-  p_ass_sortfilter_model_->setFilterRegExp(reExp);
+  //   auto reExp = QRegExp(filter, Qt::CaseInsensitive, QRegExp::FixedString);
+  p_ass_sortfilter_model_->setFilterRegularExpression(filter);
 }
 
 DOODLE_NAMESPACE_E

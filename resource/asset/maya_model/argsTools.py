@@ -21,7 +21,7 @@ ARGS = arg_string()
 
 class doodle_log:
     def __init__(self):
-        self.log = []
+        self.log = ""
         self.logPath = ARGS.exportpath
 
     def write(self):

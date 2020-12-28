@@ -6,6 +6,7 @@
         assSortfilterModel.h
         assTypeModel.h
         assTableModel.h
+        assTableFilterModel.h
 
 )
 target_sources(
@@ -16,4 +17,5 @@ target_sources(
         assSortfilterModel.cpp
         assTypeModel.cpp
         assTableModel.cpp
+        assTableFilterModel.cpp
 )

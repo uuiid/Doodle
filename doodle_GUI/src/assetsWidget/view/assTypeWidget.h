@@ -35,7 +35,7 @@ class assTypeWidget : public QListView {
   void setModel(QAbstractItemModel *model) override;
 
  Q_SIGNALS:
-  void doodleUseFilter(bool useFilter);
+  void doodleUseFilter(const filterState &useFilter);
 
  private:
   doCore::shotTypePtrList p_type_ptr_list_;

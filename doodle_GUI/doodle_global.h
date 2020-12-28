@@ -23,6 +23,11 @@
 // class QComboBox;
 
 DOODLE_NAMESPACE_S
+enum class filterState {
+  useFilter,
+  notFilter,
+  showAll,
+};
 
 class shotEpsListModel;
 class episodesintDelegate;

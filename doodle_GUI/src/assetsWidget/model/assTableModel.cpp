@@ -243,22 +243,22 @@ bool assTableModel::removeRows(int position, int rows,
 }
 void assTableModel::init() {
   clear();
-  eachOne();
+  doCore::assInfoPtrList outlist;
+  for (const auto &item : doCore::assFileSqlInfo::getAll(
+           doCore::coreDataManager::get().getAssClassPtr())) {
+    auto assty = item->getAssType();
+    outlist.push_back(item);
+  }
+  setList(outlist);
 }
 
 void assTableModel::reInit() {
-  doCore::assTypePtrList list;
   doCore::assInfoPtrList outlist;
   auto assClass = doCore::coreDataManager::get().getAssClassPtr();
   for (const auto &item : doCore::assFileSqlInfo::Instances()) {
     auto assty = item->getAssType();
-    if (std::find(list.begin(), list.end(), assty) == list.end() &&
-        item->getAssClass() == assClass) {
-      outlist.push_back(item->shared_from_this());
-      list.push_back(assty);
-    }
+    outlist.push_back(item->shared_from_this());
   }
-  std::sort(outlist.begin(), outlist.end(), &doCore::assFileSqlInfo::sortType);
   setList(outlist);
 }
 void assTableModel::clear() {
@@ -266,35 +266,6 @@ void assTableModel::clear() {
   beginResetModel();
   p_ass_info_ptr_list_.clear();
   endResetModel();
-}
-void assTableModel::eachOne() {
-  doCore::assTypePtrList list;
-  doCore::assInfoPtrList outlist;
-  for (const auto &item : doCore::assFileSqlInfo::getAll(
-           doCore::coreDataManager::get().getAssClassPtr())) {
-    auto assty = item->getAssType();
-    if (std::find(list.begin(), list.end(), assty) == list.end()) {
-      outlist.push_back(item);
-      list.push_back(assty);
-    }
-  }
-  std::sort(outlist.begin(), outlist.end(), &doCore::assFileSqlInfo::sortType);
-  setList(outlist);
-}
-void assTableModel::filter(bool useFilter) {
-  if (useFilter) {
-    doCore::assInfoPtrList outlist;
-    for (const auto &item : doCore::assFileSqlInfo::getAll(
-             doCore::coreDataManager::get().getAssClassPtr())) {
-      auto assty = item->getAssType();
-      if (assty == doCore::coreDataManager::get().getAssTypePtr()) {
-        outlist.push_back(item);
-      }
-    }
-    setList(outlist);
-  } else {
-    eachOne();
-  }
 }
 void assTableModel::setList(doCore::assInfoPtrList &list) {
   if (list.empty()) {

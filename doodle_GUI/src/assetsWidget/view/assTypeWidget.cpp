@@ -79,15 +79,16 @@ void assTypeWidget::inserttype() {
 void assTypeWidget::_doodle_type_emit(const QModelIndex &index) {
   doCore::coreDataManager::get().setAssTypePtr(
       index.data(Qt::UserRole).value<doCore::assTypePtr>());
-  doodleUseFilter(true);
+  doodleUseFilter(filterState::useFilter);
 }
 void assTypeWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
   if (!indexAt(event->pos()).isValid()) {
     clearSelection();
-    p_model_->reInit();
+    update();
+    // p_model_->reInit();
     doCore::coreDataManager::get().setAssTypePtr(nullptr);
-    doodleUseFilter(false);
+    doodleUseFilter(filterState::notFilter);
   }
 }
 //void assTypeWidget::contextMenuEvent(QContextMenuEvent *event) {

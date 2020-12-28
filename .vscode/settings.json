@@ -120,7 +120,8 @@
         "registration": "cpp",
         "queue": "cpp",
         "qstring": "cpp",
-        "qjsonarray": "cpp"
+        "qjsonarray": "cpp",
+        "qsortfilterproxymodel": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",
@@ -166,5 +167,5 @@
     ],
     "editor.tabSize": 2,
     "workbench.editor.limit.enabled": true,
-    "workbench.editor.limit.value": 4
+    "workbench.editor.limit.value": 8
 }

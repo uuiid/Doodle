@@ -22,7 +22,7 @@ bool assSortfilterModel::filterAcceptsRow(
                      .value<doCore::assClassPtr>();
   if (ass_ptr) {
     auto str = ass_ptr->getAssClassQ(false);
-    auto t = str.contains(filterRegExp());
+    auto t   = str.contains(filterRegularExpression());
     return t;
 
     // return ass_ptr->getAssClassQ(false).contains(filterRegExp());
