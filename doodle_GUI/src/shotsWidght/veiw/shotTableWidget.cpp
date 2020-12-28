@@ -1,6 +1,6 @@
 ﻿#include "shotTableWidget.h"
 
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include <src/toolkit/toolkit.h>
 #include <boost/process.hpp>
 

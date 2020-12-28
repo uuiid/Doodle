@@ -3,7 +3,7 @@
 //
 
 #include "shotClassModel.h"
-#include <core_doQt.h>
+#include < core_Cpp.h>
 
 #include <memory>
 #include "Logger.h"

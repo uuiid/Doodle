@@ -4,7 +4,7 @@
 
 #include "assTypeModel.h"
 
-#include <core_doQt.h>
+#include < core_Cpp.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <memory>

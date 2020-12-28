@@ -3,7 +3,7 @@
 #include <Logger.h>
 
 #include <src/shotsWidght/model/shotEpsListModel.h>
-#include <core_doQt.h>
+#include < core_Cpp.h>
 
 #include <QSpinBox>
 #include <QMenu>

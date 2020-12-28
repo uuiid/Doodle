@@ -7,7 +7,7 @@
  * @FilePath: \Doodle\doodle_GUI\src\assetsWidget\model\assSortfilterModel.cpp
  */
 #include <src/assetsWidget/model/assSortfilterModel.h>
-#include <core_doQt.h>
+#include < core_Cpp.h>
 DOODLE_NAMESPACE_S
 assSortfilterModel::assSortfilterModel(QObject *parent)
     : QSortFilterProxyModel(parent) {

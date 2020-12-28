@@ -5,7 +5,7 @@
 #include <iostream>
 #include <memory>
 
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include "shotEpsListModel.h"
 
 #include <boost/numeric/conversion/cast.hpp>

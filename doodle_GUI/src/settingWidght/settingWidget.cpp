@@ -5,7 +5,7 @@
 #include "settingWidget.h"
 #include <Logger.h>
 
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>

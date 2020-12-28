@@ -1,6 +1,6 @@
 ﻿#include "shotWidget.h"
 
-#include <core_doQt.h>
+#include < core_Cpp.h>
 
 #include <src/shotsWidght/model/shotEpsListModel.h>
 #include <src/shotsWidght/model/shotListModel.h>

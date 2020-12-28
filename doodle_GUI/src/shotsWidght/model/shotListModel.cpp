@@ -5,7 +5,7 @@
 #include "shotListModel.h"
 
 #include <memory>
-#include <core_doQt.h>
+#include < core_Cpp.h>
 
 #include "Logger.h"
 #include <boost/numeric/conversion/cast.hpp>

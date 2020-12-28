@@ -2,7 +2,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/process.hpp>
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include <Logger.h>
 #include <QtCore/QDir>
 #include <QtGui/qclipboard.h>

@@ -3,7 +3,7 @@
 //
 
 #include "doodleRigister.h"
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/qpushbutton.h>
 DOODLE_NAMESPACE_S

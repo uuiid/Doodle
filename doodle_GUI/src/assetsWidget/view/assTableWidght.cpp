@@ -9,7 +9,7 @@
 
 // clang-format on
 
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include <boost/regex.hpp>
 #include <boost/process.hpp>
 #include <Logger.h>

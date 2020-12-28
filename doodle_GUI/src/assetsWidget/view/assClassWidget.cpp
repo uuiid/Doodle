@@ -11,7 +11,7 @@
 //
 
 #include "assClassWidget.h"
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include <src/assetsWidget/model/assClassModel.h>
 #include <QtGui/qevent.h>
 #include <QtWidgets/qapplication.h>

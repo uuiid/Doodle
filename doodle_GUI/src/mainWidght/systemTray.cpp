@@ -7,7 +7,7 @@
 #include "src/settingWidght/settingWidget.h"
 
 #include <Logger.h>
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include <QApplication>
 
 #include <QMenu>

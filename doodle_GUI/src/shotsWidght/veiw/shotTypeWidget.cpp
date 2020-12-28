@@ -1,7 +1,7 @@
 ﻿//
 // Created by teXiao on 2020/10/12.
 //
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include "src/shotsWidght/model/shotTypeModel.h"
 #include "shotTypeWidget.h"
 

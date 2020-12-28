@@ -4,7 +4,7 @@
  * @LastEditTime: 2020-11-26 16:06:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
- * @FilePath: \Doodle\core\core_doQt.h
+ * @FilePath: \Doodle\core\ core_Cpp.h
  */
 //
 // Created by teXiao on 2020/11/13.

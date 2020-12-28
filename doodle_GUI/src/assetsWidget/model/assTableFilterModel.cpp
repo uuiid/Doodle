@@ -1,5 +1,5 @@
 #include "assTableFilterModel.h"
-#include <core_doQt.h>
+#include < core_Cpp.h>
 DOODLE_NAMESPACE_S
 
 assTableFilterModel::assTableFilterModel(QObject *parent)
@@ -17,22 +17,23 @@ void assTableFilterModel::useFilter(const filterState &useFilter) {
 
 bool assTableFilterModel::filterAcceptsRow(int source_row,
                                            const QModelIndex &source_parent) const {
-  auto assData = sourceModel()
-                     ->index(source_row, 0)
-                     .data(Qt::UserRole)
-                     .value<assInfoPtr>();
+  auto k_Data = sourceModel()
+                    ->index(source_row, 0)
+                    .data(Qt::UserRole)
+                    .value<assInfoPtr>();
 
   auto k_ass = assFileSqlInfo::Instances();
 
-  auto k_item = std::find_if(k_ass.begin(), k_ass.end(), [=](assFileSqlInfo *item) -> bool {
-    return item->getAssType() == assData->getAssType() &&
-           item->getAssClass() == assData->getAssClass();
-  });
+  auto k_item = std::find_if(k_ass.begin(), k_ass.end(),
+                             [=](assFileSqlInfo *item) -> bool {
+                               return item->getAssType() == k_Data->getAssType() &&
+                                      item->getAssClass() == k_Data->getAssClass();
+                             });
   switch (p_useFilter_e) {
     case filterState::notFilter:
-      return (*k_item) == assData.get();
+      return (*k_item) == k_Data.get();
     case filterState::useFilter:
-      return assData->getAssType() == coreDataManager::get().getAssTypePtr();
+      return k_Data->getAssType() == coreDataManager::get().getAssTypePtr();
     case filterState::showAll:
       return true;
     default:

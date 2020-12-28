@@ -5,7 +5,7 @@
 #include "assClassModel.h"
 
 #include <memory>
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
 assClassModel::assClassModel(QObject *parent)
@@ -96,7 +96,7 @@ bool assClassModel::removeRows(int position, int rows,
 void assClassModel::init() {
   clear();
   auto tmp_list =
-       assClass::getAll( coreDataManager::get().getAssDepPtr());
+      assClass::getAll(coreDataManager::get().getAssDepPtr());
   if (!tmp_list.empty()) {
     beginInsertRows(QModelIndex(), 0,
                     boost::numeric_cast<int>(tmp_list.size()) - 1);
@@ -109,7 +109,7 @@ void assClassModel::clear() {
   beginResetModel();
   p_ass_info_ptr_list_.clear();
   endResetModel();
-   coreDataManager::get().setAssClassPtr(nullptr);
+  coreDataManager::get().setAssClassPtr(nullptr);
 }
 assClassModel::~assClassModel() = default;
 

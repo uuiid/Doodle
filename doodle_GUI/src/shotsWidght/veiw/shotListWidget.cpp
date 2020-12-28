@@ -1,6 +1,6 @@
 ﻿#include "shotListWidget.h"
 
-#include <core_doQt.h>
+#include < core_Cpp.h>
 
 #include <Logger.h>
 #include <src/shotsWidght/model/shotListModel.h>

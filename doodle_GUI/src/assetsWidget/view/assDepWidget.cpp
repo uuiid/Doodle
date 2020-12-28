@@ -2,7 +2,7 @@
 // Created by teXiao on 2020/10/15.
 //
 
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include <src/assetsWidget/model/assDepModel.h>
 #include <src/assetsWidget/view/assDepWidget.h>
 

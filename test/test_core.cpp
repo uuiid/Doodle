@@ -6,7 +6,7 @@
 #include <memory>
 
 #include <rttr/type>
-#include <core_doQt.h>
+#include < core_Cpp.h>
 class CoreTest : public ::testing::Test {
  protected:
   void SetUp() override;

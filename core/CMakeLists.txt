@@ -4,7 +4,7 @@ qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 
 add_library(core SHARED
         core_global.h
-        core_doQt.h
+        core_Cpp.h
         ${RESOURE_FILE}
         )
 

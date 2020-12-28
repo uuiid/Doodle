@@ -5,7 +5,7 @@
 #include "assTypeWidget.h"
 
 #include "src/assetsWidget/model/assTypeModel.h"
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include <QMenu>
 
 #include <QContextMenuEvent>

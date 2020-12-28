@@ -1,7 +1,7 @@
 ﻿//
 // Created by teXiao on 2020/10/14.
 //
-#include <core_doQt.h>
+#include < core_Cpp.h>
 #include "assDepModel.h"
 #include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S

@@ -5,7 +5,7 @@
 
 #include <memory>
 
-#include <core_doQt.h>
+#include < core_Cpp.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
