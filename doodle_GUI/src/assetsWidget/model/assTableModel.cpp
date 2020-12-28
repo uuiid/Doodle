@@ -243,13 +243,10 @@ bool assTableModel::removeRows(int position, int rows,
 }
 void assTableModel::init() {
   clear();
-  doCore::assInfoPtrList outlist;
-  for (const auto &item : doCore::assFileSqlInfo::getAll(
-           doCore::coreDataManager::get().getAssClassPtr())) {
-    auto assty = item->getAssType();
-    outlist.push_back(item);
-  }
-  setList(outlist);
+  auto list = doCore::assFileSqlInfo::getAll(
+      doCore::coreDataManager::get().getAssClassPtr());
+
+  setList(list);
 }
 
 void assTableModel::reInit() {
