@@ -45,6 +45,6 @@ class shotListModel : public QAbstractListModel {
   void clear();
 
  private:
-  doCore::shotPtrList shotlist;
+   shotPtrList shotlist;
 };
 DOODLE_NAMESPACE_E

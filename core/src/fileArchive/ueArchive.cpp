@@ -7,7 +7,7 @@
 #include "src/fileDBInfo/filesqlinfo.h"
 #include "src/exeWrap/freeSynWrap.h"
 CORE_NAMESPACE_S
-ueArchive::ueArchive(doCore::fileSqlInfoPtr data)
+ueArchive::ueArchive(fileSqlInfoPtr data)
     : p_info_(std::move(data)), p_syn(std::make_shared<freeSynWrap>()) {}
 
 void ueArchive::insertDB() {

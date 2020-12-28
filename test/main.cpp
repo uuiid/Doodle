@@ -21,8 +21,8 @@ class Environment : public ::testing::Environment {
  public:
   void SetUp() override;
   void TearDown() override;
-  doCore::coreSet &set = doCore::coreSet::getSet();
-  doCore::coreSql &sql = doCore::coreSql::getCoreSql();
+  doodle::coreSet &set = doodle::coreSet::getSet();
+  doodle::coreSql &sql = doodle::coreSql::getCoreSql();
 };
 
 void Environment::SetUp() {

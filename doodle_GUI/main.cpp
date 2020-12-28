@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) try {
   }
   q_application.setWindowIcon(QIcon(":/resource/icon.png"));
   //初始化设置
-  doCore::coreSet &set = doCore::coreSet::getSet();
+  auto &set = doodle::coreSet::getSet();
   set.init();
   QApplication::setQuitOnLastWindowClosed(false);
 

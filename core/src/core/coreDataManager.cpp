@@ -13,7 +13,7 @@
 #include "coreDataManager.h"
 
 CORE_NAMESPACE_S
-coreDataManager &doCore::coreDataManager::get() {
+coreDataManager &coreDataManager::get() {
   static coreDataManager install;
   return install;
 }

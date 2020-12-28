@@ -76,7 +76,7 @@ bool shotEpsListModel::insertRows(int position, int rows,
                                   const QModelIndex &index) {
   beginInsertRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
-    auto eps = std::make_shared<doCore::episodes>();
+    auto eps = std::make_shared< episodes>();
     eps->insert();
     eplist.insert(eplist.begin() + position,
                   eps);
@@ -98,7 +98,7 @@ bool shotEpsListModel::removeRows(int position, int rows,
 
 void shotEpsListModel::init() {
   clear();
-  auto tmp_eps = doCore::episodes::getAll();
+  auto tmp_eps =  episodes::getAll();
   if (tmp_eps.empty()) return;
   beginInsertRows(QModelIndex(), 0,
                   boost::numeric_cast<int>(tmp_eps.size()) - 1);
@@ -110,6 +110,6 @@ void shotEpsListModel::clear() {
   beginResetModel();
   eplist.clear();
   endResetModel();
-  doCore::coreDataManager::get().setEpisodesPtr(nullptr);
+   coreDataManager::get().setEpisodesPtr(nullptr);
 }
 DOODLE_NAMESPACE_E

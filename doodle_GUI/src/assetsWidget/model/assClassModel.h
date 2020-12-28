@@ -30,7 +30,7 @@ class assClassModel : public QAbstractListModel {
   void clear();
 
  private:
-  doCore::assClassPtrList p_ass_info_ptr_list_;
+   assClassPtrList p_ass_info_ptr_list_;
 
 };
 DOODLE_NAMESPACE_E

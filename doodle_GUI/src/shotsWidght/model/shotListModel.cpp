@@ -80,7 +80,7 @@ bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int
 
     auto find_shot = std::find_if(
         shotlist.begin(), shotlist.end(),
-        [=](doCore::shotPtr &shot_ptr) -> bool {
+        [=](shotPtr &shot_ptr) -> bool {
           return infoMap["shot"].toInt() == shot_ptr->getShot() &&
                  infoMap["shotAb"].toString() == shot_ptr->getShotAb_strQ() &&
                  shot_ptr->isInsert();
@@ -102,10 +102,10 @@ bool shotListModel::insertRows(int position, int rows, const QModelIndex &index)
   beginInsertRows(QModelIndex(), position, position + rows - 1);
 
   for (int row = 0; row < rows; ++row) {
-    auto shot = std::make_shared<doCore::shot>();
-    shot->setEpisodes(doCore::coreDataManager::get().getEpisodesPtr());
-    shot->insert();
-    shotlist.insert(shotlist.begin() + position, shot);
+    auto k_shot = std::make_shared<shot>();
+    k_shot->setEpisodes(coreDataManager::get().getEpisodesPtr());
+    k_shot->insert();
+    shotlist.insert(shotlist.begin() + position, k_shot);
   }
   endInsertRows();
   return true;
@@ -121,7 +121,7 @@ bool shotListModel::removeRows(int position, int rows, const QModelIndex &index)
   return true;
 }
 void shotListModel::init() {
-  doCore::shotPtrList tmp_shot_list = doCore::shot::getAll(doCore::coreDataManager::get().getEpisodesPtr());
+  shotPtrList tmp_shot_list = shot::getAll(coreDataManager::get().getEpisodesPtr());
   clear();
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_shot_list.size()));
   shotlist = tmp_shot_list;
@@ -132,7 +132,7 @@ void shotListModel::clear() {
   beginResetModel();
   shotlist.clear();
   endResetModel();
-  doCore::coreDataManager::get().setShotPtr(nullptr);
+  coreDataManager::get().setShotPtr(nullptr);
 }
 
 DOODLE_NAMESPACE_E

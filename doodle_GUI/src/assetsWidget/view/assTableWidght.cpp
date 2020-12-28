@@ -66,7 +66,7 @@ void assTableWidght::insertAss(const QString &path) {
   static boost::regex reUe4("uproject");
   static boost::regex reImage(R"((jpe?g|png|tga))");
   model()->insertRow(0, QModelIndex());
-  auto data = model()->data(model()->index(0, 4), Qt::UserRole).value<doCore::assInfoPtr>();
+  auto data = model()->data(model()->index(0, 4), Qt::UserRole).value<assInfoPtr>();
   //选择提示
   QMessageBox msgBox;
   auto text_info = QInputDialog::getText(this, tr("请输入备注"), tr("请输入文件备注"));
@@ -83,10 +83,10 @@ void assTableWidght::insertAss(const QString &path) {
       msgBox.exec();
       if (msgBox.clickedButton() == image_file) {
         data->setAssType(
-            doCore::assType::findType(doCore::assType::e_type::screenshot, true));
-        data              = std::get<doCore::assInfoPtr>(data->findSimilar());
-        auto imageArchive = std::make_shared<doCore::imageArchive>(data);
-        imageArchive->update(path.toStdString());
+            assType::findType(assType::e_type::screenshot, true));
+        data                = std::get<assInfoPtr>(data->findSimilar());
+        auto k_imageArchive = std::make_shared<imageArchive>(data);
+        k_imageArchive->update(path.toStdString());
 
       } else {
         model()->removeRow(0);
@@ -106,17 +106,17 @@ void assTableWidght::insertAss(const QString &path) {
       msgBox.exec();
 
       if (msgBox.clickedButton() == modelFile) {
-        data->setAssType(doCore::assType::findType(doCore::assType::e_type::scenes, true));
+        data->setAssType(assType::findType(assType::e_type::scenes, true));
       } else if (msgBox.clickedButton() == rig) {
-        data->setAssType(doCore::assType::findType(doCore::assType::e_type::rig, true));
+        data->setAssType(assType::findType(assType::e_type::rig, true));
       } else if (msgBox.clickedButton() == modelFile_low) {
-        data->setAssType(doCore::assType::findType(doCore::assType::e_type::scenes_low, true));
+        data->setAssType(assType::findType(assType::e_type::scenes_low, true));
       } else if (msgBox.clickedButton() == noButten) {
         model()->removeRow(0);
         return;
       }
-      data              = std::get<doCore::assInfoPtr>(data->findSimilar());
-      auto maya_archive = std::make_shared<doCore::mayaArchive>(data);
+      data              = std::get<assInfoPtr>(data->findSimilar());
+      auto maya_archive = std::make_shared<mayaArchive>(data);
 
       auto future = std::async(std::launch::async, [=]() -> bool {
         auto result = maya_archive->update(path.toStdString());
@@ -128,17 +128,17 @@ void assTableWidght::insertAss(const QString &path) {
 
     } else if (boost::regex_search(pathInfo.suffix().toStdString(), reUe4)) {  // ue4文件
       data->setAssType(
-          doCore::assType::findType(doCore::assType::e_type::UE4, true));
-      auto ue4_archice = std::make_shared<doCore::ueArchive>(data);
+          assType::findType(assType::e_type::UE4, true));
+      auto ue4_archice = std::make_shared<ueArchive>(data);
       ue4_archice->update(path.toStdString());
     } else {
       model()->removeRow(0);
-      //    auto image_archice = std::make_shared<doCore::imageArchive>(data);
+      //    auto image_archice = std::make_shared< imageArchive>(data);
       return;
     }
   } else {
     model()->removeRow(0);
-    //    auto image_archice = std::make_shared<doCore::imageArchive>(data);
+    //    auto image_archice = std::make_shared< imageArchive>(data);
     return;
   }
 }
@@ -161,7 +161,7 @@ void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
     auto k_openFile = new QAction();
     k_openFile->setText("打开文件所在位置");
     connect(k_openFile, &QAction::triggered, this, [=] {
-      toolkit::openPath(index.data(Qt::UserRole).value<doCore::assInfoPtr>(),
+      toolkit::openPath(index.data(Qt::UserRole).value<assInfoPtr>(),
                         true);
     });
     p_menu_->addAction(k_openFile);
@@ -172,8 +172,8 @@ void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
             &assTableWidght::deleteSQLFile);
     p_menu_->addAction(k_deleteFile);
 
-    if (index.data(Qt::UserRole).value<doCore::assInfoPtr>()->getAssType() ==
-        doCore::assType::findType(doCore::assType::e_type::UE4, false)) {
+    if (index.data(Qt::UserRole).value<assInfoPtr>()->getAssType() ==
+        assType::findType(assType::e_type::UE4, false)) {
       auto k_createDir = new QAction();
       k_createDir->setText("创建灯光文件夹");
       connect(k_createDir, &QAction::triggered, this,
@@ -247,16 +247,16 @@ void assTableWidght::createLightDir() {
       auto eps_ptr = epsListModle->selectionModel()
                          ->currentIndex()
                          .data(Qt::UserRole)
-                         .value<doCore::episodesPtr>();
+                         .value<episodesPtr>();
 
       auto ass_ptr = selectionModel()
                          ->currentIndex()
                          .data(Qt::UserRole)
-                         .value<doCore::assInfoPtr>();
+                         .value<assInfoPtr>();
       auto file_exit = true;
       if (ass_ptr) {
         file_exit = boost::filesystem::exists(
-            doCore::coreSet::getSet().getPrjectRoot() /
+            coreSet::getSet().getPrjectRoot() /
             ass_ptr->getFileList().front());
       }
       if (!file_exit) {
@@ -272,7 +272,7 @@ void assTableWidght::createLightDir() {
           QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
       if (butten == QMessageBox::Yes) {
-        auto uesyn  = std::make_shared<doCore::ueSynArchive>();
+        auto uesyn  = std::make_shared<ueSynArchive>();
         auto future = std::async(std::launch::async, [=]() -> bool {
           return uesyn->makeDir(eps_ptr);
         });
@@ -285,12 +285,12 @@ void assTableWidght::createLightDir() {
   }
 }
 void assTableWidght::doClickedSlots(const QModelIndex &index) {
-  auto assinfo = index.data(Qt::UserRole).value<doCore::assInfoPtr>();
-  if (assinfo) doCore::coreDataManager::get().setAssInfoPtr(assinfo);
+  auto assinfo = index.data(Qt::UserRole).value<assInfoPtr>();
+  if (assinfo) coreDataManager::get().setAssInfoPtr(assinfo);
 }
 
 void assTableWidght::doDubledSlots(const QModelIndex &index) {
-  auto assinfo = index.data(Qt::UserRole).value<doCore::assInfoPtr>();
+  auto assinfo = index.data(Qt::UserRole).value<assInfoPtr>();
   if (assinfo) {
     if (index.column() != 1) {
       auto path = assinfo->getFileList().front();

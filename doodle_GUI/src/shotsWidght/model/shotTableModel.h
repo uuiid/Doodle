@@ -45,11 +45,11 @@ class shotTableModel : public QAbstractTableModel {
 
  private:
   void eachOne();
-  void setList(const doCore::shotInfoPtrList &list);
+  void setList(const  shotInfoPtrList &list);
 
  private:
-  doCore::shotInfoPtrList p_shot_info_ptr_list_;
-  doCore::shotInfoPtrList p_tmp_shot_info_ptr_list_;
+   shotInfoPtrList p_shot_info_ptr_list_;
+   shotInfoPtrList p_tmp_shot_info_ptr_list_;
   std::unique_ptr<boost::regex> mayaRex;
   std::unique_ptr<boost::regex> FBRex;
   std::unique_ptr<boost::regex> show_FBRex;

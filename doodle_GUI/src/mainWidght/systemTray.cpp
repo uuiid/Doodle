@@ -104,12 +104,12 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   setContextMenu(menu);
 }
 void systemTray::synFile() {
-  auto syn = std::make_unique<doCore::ueSynArchive>();
+  auto syn = std::make_unique<ueSynArchive>();
   syn->syn(nullptr);
 }
 
 void systemTray::installMayaPlug() {
-  auto maya_plug = doCore::coreSet::getSet().program_location().parent_path() /
+  auto maya_plug = coreSet::getSet().program_location().parent_path() /
                    "plug/maya_plug";
   boost::format k_string{R"(+ doodle_main.py 1.1 %1%
 MYMODULE_LOCATION:= %1%
@@ -117,7 +117,7 @@ PATH+:= %1%/scripts;%1%/plug-ins
 PYTHONPATH+:= %1%/scripts
 )"};
   k_string % maya_plug.generic_path().generic_string();
-  auto docPath = doCore::coreSet::getSet().getDoc().parent_path() / "maya" /
+  auto docPath = coreSet::getSet().getDoc().parent_path() / "maya" /
                  "modules" / "Doodle.mod";
   if (!boost::filesystem::exists(docPath.parent_path())) {
     boost::filesystem::create_directories(docPath.parent_path());

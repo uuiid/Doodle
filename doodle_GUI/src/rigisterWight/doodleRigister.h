@@ -17,7 +17,7 @@ class doodleRigister : public QWidget {
   void subUaer();
 
  private:
-  doCore::dstringList userList;
+   dstringList userList;
   QPushButton* sub_butten;
   QLineEdit* textEdit;
 };

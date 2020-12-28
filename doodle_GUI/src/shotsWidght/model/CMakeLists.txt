@@ -6,6 +6,7 @@
         shotClassModel.h
         shotTypeModel.h
         shotTableModel.h
+        shotTableFilterModel.h
 )
 target_sources(
         doodle
@@ -15,4 +16,5 @@ target_sources(
         shotClassModel.cpp
         shotTypeModel.cpp
         shotTableModel.cpp
+        shotTableFilterModel.cpp
 )

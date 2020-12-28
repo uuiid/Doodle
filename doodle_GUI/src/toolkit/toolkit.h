@@ -13,9 +13,9 @@
 DOODLE_NAMESPACE_S
 class toolkit {
  public:
-  static void openPath(const doCore::fileSqlInfoPtr &info_ptr,
+  static void openPath(const  fileSqlInfoPtr &info_ptr,
                        const bool &openEx);
-  static void openPath(const doCore::dpath &path);
+  static void openPath(const  dpath &path);
   static void installUePath(const std::string &path);
   static void modifyUeCachePath();
   static bool update();
@@ -23,7 +23,7 @@ class toolkit {
   static bool deleteUeCache();
 
  private:
-  static doCore::dpath getUeInstallPath();
+  static  dpath getUeInstallPath();
 };
 
 DOODLE_NAMESPACE_E

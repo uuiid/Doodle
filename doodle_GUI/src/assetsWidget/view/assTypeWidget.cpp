@@ -19,7 +19,7 @@ QWidget *fileTypeAssDelegate::createEditor(QWidget *parent,
                                            const QModelIndex &index) const {
   auto *fileType = new QComboBox(parent);
 
-  auto assClass = doCore::coreDataManager::get().getAssClassPtr();
+  auto assClass =  coreDataManager::get().getAssClassPtr();
   QStringList list;
   list << "sourceimages"
        << "scenes"
@@ -77,8 +77,8 @@ void assTypeWidget::inserttype() {
   edit(p_model_->index(raw));
 }
 void assTypeWidget::_doodle_type_emit(const QModelIndex &index) {
-  doCore::coreDataManager::get().setAssTypePtr(
-      index.data(Qt::UserRole).value<doCore::assTypePtr>());
+   coreDataManager::get().setAssTypePtr(
+      index.data(Qt::UserRole).value< assTypePtr>());
   doodleUseFilter(filterState::useFilter);
 }
 void assTypeWidget::mousePressEvent(QMouseEvent *event) {
@@ -87,7 +87,7 @@ void assTypeWidget::mousePressEvent(QMouseEvent *event) {
     clearSelection();
     update();
     // p_model_->reInit();
-    doCore::coreDataManager::get().setAssTypePtr(nullptr);
+     coreDataManager::get().setAssTypePtr(nullptr);
     doodleUseFilter(filterState::notFilter);
   }
 }

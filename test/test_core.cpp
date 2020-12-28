@@ -12,7 +12,7 @@ class CoreTest : public ::testing::Test {
   void SetUp() override;
   void TearDown() override;
 
-  doCore::coreSet& set = doCore::coreSet::getSet();
+  doodle::coreSet& set = doodle::coreSet::getSet();
 };
 
 void CoreTest::SetUp() {
@@ -43,9 +43,9 @@ TEST_F(CoreTest, setInfo) {
 }
 
 TEST_F(CoreTest, rttr_get_all_install) {
-  doCore::shotPtrList shotList;
+  doodle::shotPtrList shotList;
   for (unsigned int i = 0; i < 10; i++) {
-    auto s = std::make_shared<doCore::shot>();
+    auto s = std::make_shared<doodle::shot>();
     s->setShot(i);
     shotList.push_back(s);
   }
@@ -59,21 +59,21 @@ TEST_F(CoreTest, find_dep_type) {
 }
 
 TEST_F(CoreTest, create_shotinfo) {
-  doCore::episodesPtr eps(new doCore::episodes());
+  doodle::episodesPtr eps(new doodle::episodes());
   eps->setEpisdes(250);
   eps->insert();
   std::cout << "eps " << eps->getEpisdes() << std::endl;
   std::cout << "eps id " << eps->getIdP() << std::endl;
 
-  doCore::shotPtr sh(new doCore::shot());
+  doodle::shotPtr sh(new doodle::shot());
   sh->setShot(10);
   sh->setEpisodes(eps);
   sh->insert();
   std::cout << "sh " << sh->getShot() << std::endl;
   std::cout << "sh id " << sh->getIdP() << std::endl;
 
-  doCore::shotInfoPtr sf(new doCore::shotFileSqlInfo());
-  doCore::dpathList list;
+  doodle::shotInfoPtr sf(new doodle::shotFileSqlInfo());
+  doodle::dpathList list;
   sf->setInfoP("test");
   list.push_back("D:/tmp/etr.vdb");
   sf->setFileList(list);
@@ -89,43 +89,43 @@ TEST_F(CoreTest, create_shotinfo) {
 }
 
 TEST_F(CoreTest, get_shotinf) {
-  doCore::episodesPtrList eplist;
-  eplist = doCore::episodes::getAll();
+  doodle::episodesPtrList eplist;
+  eplist = doodle::episodes::getAll();
   ASSERT_TRUE(!eplist.empty());
   std::cout << "episodes: " << eplist.front()->getEpisdes_str() << std::endl;
-  for (auto& i : doCore::episodes::Instances()) {
+  for (auto& i : doodle::episodes::Instances()) {
     std::cout << " eps:" << i->getEpisdes_str();
   }
   std::cout << std::endl;
 
-  auto shlist = doCore::shot::getAll(eplist.front());
+  auto shlist = doodle::shot::getAll(eplist.front());
   ASSERT_TRUE(!shlist.empty());
   std::cout << "shot:" << shlist[0]->getShotAndAb_str() << std::endl;
-  for (auto&& i : doCore::shot::Instances()) {
+  for (auto&& i : doodle::shot::Instances()) {
     std::cout << " shot:" << i->getShotAndAb_str();
   }
   std::cout << std::endl;
 
-  auto shclList = doCore::shotClass::getAll();
+  auto shclList = doodle::shotClass::getAll();
   ASSERT_TRUE(!shclList.empty());
   std::cout << "fileclass :" << shclList.front()->getClass_str() << std::endl;
-  for (auto&& i : doCore::shotClass::Instances()) {
+  for (auto&& i : doodle::shotClass::Instances()) {
     std::cout << " fileclass:" << i->getClass_str();
   }
   std::cout << std::endl;
 
-  auto shtyList = doCore::shotType::getAll();
+  auto shtyList = doodle::shotType::getAll();
   ASSERT_TRUE(!shtyList.empty());
   std::cout << "filetype :" << shtyList.front()->getType() << std::endl;
-  for (auto&& i : doCore::shotType::Instances()) {
+  for (auto&& i : doodle::shotType::Instances()) {
     std::cout << " shottype:" << i->getType() << "\n\r"
               << std::endl;
   }
 
-  auto sfList = doCore::shotFileSqlInfo::getAll(shlist.front());
+  auto sfList = doodle::shotFileSqlInfo::getAll(shlist.front());
   ASSERT_TRUE(!sfList.empty());
   std::cout << "shotinfo generatePath :" << sfList.front()->generatePath("test", ".mb") << std::endl;
-  for (auto& i : doCore::shotFileSqlInfo::Instances()) {
+  for (auto& i : doodle::shotFileSqlInfo::Instances()) {
     std::cout << " shotinfo:" << i->getFileList().front() << "\n"
               << std::endl;
   }
@@ -136,19 +136,19 @@ TEST_F(CoreTest, get_shotinf) {
 }
 
 TEST_F(CoreTest, create_assInfo) {
-  auto fc_ = doCore::assdepartment::getAll();
+  auto fc_ = doodle::assdepartment::getAll();
   ASSERT_TRUE(fc_.size() == 4);
-  doCore::assClassPtr af_(new doCore::assClass);
+  doodle::assClassPtr af_(new doodle::assClass);
   af_->setAssDep(fc_[0]);
   af_->setAssClass("大小", true);
   af_->insert();
 
-  doCore::assTypePtr ft_(new doCore::assType);
+  doodle::assTypePtr ft_(new doodle::assType);
   ft_->setType((std::string) "ffff");
   ft_->insert();
 
-  doCore::assInfoPtr sf_(new doCore::assFileSqlInfo);
-  doCore::dpathList list;
+  doodle::assInfoPtr sf_(new doodle::assFileSqlInfo);
+  doodle::dpathList list;
   sf_->setInfoP("test");
   list.push_back("D:/tmp/etr.vdb");
   sf_->setFileList(list);
@@ -162,114 +162,114 @@ TEST_F(CoreTest, create_assInfo) {
 }
 
 TEST_F(CoreTest, get_assInf) {
-  auto list_fileClass = doCore::assdepartment::getAll();
+  auto list_fileClass = doodle::assdepartment::getAll();
   for (auto&& x : list_fileClass) {
     std::cout << "fileclass :" << x->getAssDep() << std::endl;
   }
-  auto test               = doCore::assClass::getAll(list_fileClass[0]);
-  doCore::assClassPtr af_ = test[0];
+  auto test               = doodle::assClass::getAll(list_fileClass[0]);
+  doodle::assClassPtr af_ = test[0];
   std::cout << "asstype :" << af_->getAssClass(true) << std::endl;
   RecordProperty("asstype", af_->getAssClass(true));
   // QTextCodec *code = QTextCodec::codecForName("GBK");
   // std::cout << "asstype :" <<code->fromUnicode(af_->getAssClass(af_)) << std::endl;
 
-  doCore::assTypePtr ft_ = doCore::assType::getAll()[0];
+  doodle::assTypePtr ft_ = doodle::assType::getAll()[0];
   std::cout << "filetype :" << ft_->getType() << std::endl;
 
-  doCore::assInfoPtr ai_ = doCore::assFileSqlInfo::getAll(af_)[0];
+  doodle::assInfoPtr ai_ = doodle::assFileSqlInfo::getAll(af_)[0];
   std::cout << "assinfo path :" << ai_->generatePath("test", ".mb") << std::endl;
 }
 
 TEST_F(CoreTest, up_maya_file) {
-  auto epslist     = doCore::episodes::getAll();
-  auto shotList    = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList  = doCore::shotType::getAll();
+  auto epslist     = doodle::episodes::getAll();
+  auto shotList    = doodle::shot::getAll(epslist.front());
+  auto shclassList = doodle::shotClass::getAll();
+  auto shtypeList  = doodle::shotType::getAll();
 
-  auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
+  auto shotinfo = std::make_shared<doodle::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
-  auto maya = std::make_shared<doCore::mayaArchive>(shotinfo);
+  auto maya = std::make_shared<doodle::mayaArchive>(shotinfo);
   maya->update("D:/DBXY_004_035.mb");
 
   shotinfo->deleteSQL();
 }
 TEST_F(CoreTest, mayaExport_fbx) {
-  auto epslist     = doCore::episodes::getAll();
-  auto shotList    = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList  = doCore::shotType::getAll();
+  auto epslist     = doodle::episodes::getAll();
+  auto shotList    = doodle::shot::getAll(epslist.front());
+  auto shclassList = doodle::shotClass::getAll();
+  auto shtypeList  = doodle::shotType::getAll();
 
   for (const auto& item : shtypeList) {
     if (item->getType() == "fbx") {
-      auto shot     = doCore::shotFileSqlInfo::getAll(shotList.front());
-      auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
+      auto shot     = doodle::shotFileSqlInfo::getAll(shotList.front());
+      auto shotinfo = std::make_shared<doodle::shotFileSqlInfo>();
       shotinfo->setShotType(item);
-      auto export_ = std::make_shared<doCore::mayaArchiveShotFbx>(shotinfo);
+      auto export_ = std::make_shared<doodle::mayaArchiveShotFbx>(shotinfo);
       ASSERT_TRUE(export_->update(shot.front()->getFileList().front()));
     }
   }
 }
 TEST_F(CoreTest, create_Move) {
-  auto epslist     = doCore::episodes::getAll();
-  auto shotList    = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList  = doCore::shotType::getAll();
+  auto epslist     = doodle::episodes::getAll();
+  auto shotList    = doodle::shot::getAll(epslist.front());
+  auto shclassList = doodle::shotClass::getAll();
+  auto shtypeList  = doodle::shotType::getAll();
 
-  auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
+  auto shotinfo = std::make_shared<doodle::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
-  auto up_move = std::make_shared<doCore::moveShotA>(shotinfo);
+  auto up_move = std::make_shared<doodle::moveShotA>(shotinfo);
   up_move->update({"D:\\sc_064"});
 
   shotinfo->deleteSQL();
 }
 
 TEST_F(CoreTest, convert_Move) {
-  auto epslist     = doCore::episodes::getAll();
-  auto shotList    = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList  = doCore::shotType::getAll();
+  auto epslist     = doodle::episodes::getAll();
+  auto shotList    = doodle::shot::getAll(epslist.front());
+  auto shclassList = doodle::shotClass::getAll();
+  auto shtypeList  = doodle::shotType::getAll();
 
-  auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
+  auto shotinfo = std::make_shared<doodle::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
-  auto up_move = std::make_shared<doCore::moveShotA>(shotinfo);
+  auto up_move = std::make_shared<doodle::moveShotA>(shotinfo);
   up_move->update({"D:\\DBXY_041_017_AN.mov"});
 
   shotinfo->deleteSQL();
 }
 TEST_F(CoreTest, Synfile_up_ue) {
-  auto epslist     = doCore::episodes::getAll();
-  auto shotList    = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList  = doCore::shotType::getAll();
+  auto epslist     = doodle::episodes::getAll();
+  auto shotList    = doodle::shot::getAll(epslist.front());
+  auto shclassList = doodle::shotClass::getAll();
+  auto shtypeList  = doodle::shotType::getAll();
 
-  auto shotinfo = std::make_shared<doCore::shotFileSqlInfo>();
+  auto shotinfo = std::make_shared<doodle::shotFileSqlInfo>();
   shotinfo->setShotType(shtypeList.front());
 
-  auto up_move = std::make_shared<doCore::ueArchive>(shotinfo);
+  auto up_move = std::make_shared<doodle::ueArchive>(shotinfo);
   up_move->update(R"(F:\Users\teXiao\Documents\Unreal Projects\test_tt\test_tt.uproject)");
 }
 TEST_F(CoreTest, Synfile_dow_ue) {
-  auto epslist     = doCore::episodes::getAll();
-  auto shotList    = doCore::shot::getAll(epslist.front());
-  auto shclassList = doCore::shotClass::getAll();
-  auto shtypeList  = doCore::shotType::getAll();
+  auto epslist     = doodle::episodes::getAll();
+  auto shotList    = doodle::shot::getAll(epslist.front());
+  auto shclassList = doodle::shotClass::getAll();
+  auto shtypeList  = doodle::shotType::getAll();
 
-  auto shotinfoList = doCore::shotFileSqlInfo::getAll(shotList.front());
-  auto up_move      = std::make_shared<doCore::ueArchive>(shotinfoList.front());
+  auto shotinfoList = doodle::shotFileSqlInfo::getAll(shotList.front());
+  auto up_move      = std::make_shared<doodle::ueArchive>(shotinfoList.front());
   up_move->down(R"(F:\Users\)");
   shotinfoList.front()->deleteSQL();
 }
 TEST_F(CoreTest, Synfile) {
   set.setSyneps(41);
-  doCore::ueSynArchive().syn(nullptr);
+  doodle::ueSynArchive().syn(nullptr);
 }
 TEST_F(CoreTest, Synfile_lisgt) {
   set.setSyneps(41);
   set.setDepartment((std::string) "Light");
-  doCore::ueSynArchive().syn(nullptr);
+  doodle::ueSynArchive().syn(nullptr);
 }
 TEST_F(CoreTest, Synfile_create_dir) {
   set.setSyneps(41);
   set.setAssRoot("/tmp/tt");
-  // doCore::ueSynArchive().makeDir(<#initializer#>);
+  //  ueSynArchive().makeDir(<#initializer#>);
 }

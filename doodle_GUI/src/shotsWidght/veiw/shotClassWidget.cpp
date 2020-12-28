@@ -36,8 +36,8 @@ void shotClassWidget::insertFileClass() {
 }
 
 void shotClassWidget::_doodle_fileclass_emit(const QModelIndex &index) {
-  doCore::coreDataManager::get().setShotClassPtr(
-      index.data(Qt::UserRole).value<doCore::shotClassPtr>());
+   coreDataManager::get().setShotClassPtr(
+      index.data(Qt::UserRole).value< shotClassPtr>());
   doodleUseFilter(true);
 }
 
@@ -73,7 +73,7 @@ void shotClassWidget::setModel(QAbstractItemModel *model) {
 void shotClassWidget::clear() {
   clearSelection();
   p_model_->reInit();
-  doCore::coreDataManager::get().setShotClassPtr(nullptr);
+   coreDataManager::get().setShotClassPtr(nullptr);
   doodleUseFilter(false);
 }
 

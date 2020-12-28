@@ -19,7 +19,7 @@ bool assSortfilterModel::filterAcceptsRow(
   auto ass_ptr = sourceModel()
                      ->index(source_row, 0)
                      .data(Qt::UserRole)
-                     .value<doCore::assClassPtr>();
+                     .value< assClassPtr>();
   if (ass_ptr) {
     auto str = ass_ptr->getAssClassQ(false);
     auto t   = str.contains(filterRegularExpression());

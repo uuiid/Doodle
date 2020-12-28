@@ -20,11 +20,11 @@ bool assTableFilterModel::filterAcceptsRow(int source_row,
   auto assData = sourceModel()
                      ->index(source_row, 0)
                      .data(Qt::UserRole)
-                     .value<doCore::assInfoPtr>();
+                     .value<assInfoPtr>();
 
-  auto k_ass = doCore::assFileSqlInfo::Instances();
+  auto k_ass = assFileSqlInfo::Instances();
 
-  auto k_item = std::find_if(k_ass.begin(), k_ass.end(), [=](doCore::assFileSqlInfo *item) -> bool {
+  auto k_item = std::find_if(k_ass.begin(), k_ass.end(), [=](assFileSqlInfo *item) -> bool {
     return item->getAssType() == assData->getAssType() &&
            item->getAssClass() == assData->getAssClass();
   });
@@ -32,7 +32,7 @@ bool assTableFilterModel::filterAcceptsRow(int source_row,
     case filterState::notFilter:
       return (*k_item) == assData.get();
     case filterState::useFilter:
-      return assData->getAssType() == doCore::coreDataManager::get().getAssTypePtr();
+      return assData->getAssType() == coreDataManager::get().getAssTypePtr();
     case filterState::showAll:
       return true;
     default:
@@ -41,10 +41,10 @@ bool assTableFilterModel::filterAcceptsRow(int source_row,
 }
 
 bool assTableFilterModel::lessThan(const QModelIndex &left, const QModelIndex &right) const {
-  auto k_left  = left.data(Qt::UserRole).value<doCore::assInfoPtr>();
-  auto k_right = right.data(Qt::UserRole).value<doCore::assInfoPtr>();
+  auto k_left  = left.data(Qt::UserRole).value<assInfoPtr>();
+  auto k_right = right.data(Qt::UserRole).value<assInfoPtr>();
   if (k_left || k_right) {
-    return doCore::assFileSqlInfo::sortType(k_left, k_right);
+    return assFileSqlInfo::sortType(k_left, k_right);
   } else {
     return false;
   }

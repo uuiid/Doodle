@@ -41,7 +41,7 @@ void shotTableWidget::init() {
 void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
   if (!p_menu_) p_menu_ = new QMenu(this);
   p_menu_->clear();
-  if (doCore::coreDataManager::get().getShotPtr()) {
+  if ( coreDataManager::get().getShotPtr()) {
     //上传文件
     auto k_sub_file = new QAction();
     connect(k_sub_file, &QAction::triggered, this,
@@ -69,7 +69,7 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
       auto k_openFile = new QAction();
       k_openFile->setText(tr("打开文件所在位置"));
       connect(k_openFile, &QAction::triggered, this, [=] {
-        toolkit::openPath(index.data(Qt::UserRole).value<doCore::shotInfoPtr>(),
+        toolkit::openPath(index.data(Qt::UserRole).value< shotInfoPtr>(),
                           true);
       });
       p_menu_->addAction(k_openFile);
@@ -78,13 +78,13 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
       k_copyClip->setText(tr("复制到剪贴板"));
 
       connect(k_copyClip, &QAction::triggered, this, [=] {
-        toolkit::openPath(index.data(Qt::UserRole).value<doCore::shotInfoPtr>(),
+        toolkit::openPath(index.data(Qt::UserRole).value< shotInfoPtr>(),
                           false);
       });
       p_menu_->addAction(k_copyClip);
 
       const auto suffix =
-          index.data(Qt::UserRole).value<doCore::shotInfoPtr>()->getSuffixes();
+          index.data(Qt::UserRole).value< shotInfoPtr>()->getSuffixes();
       if (suffix == ".ma" || suffix == ".mb") {
         //导出fbx脚本
         auto k_exportFbx = new QAction();
@@ -101,14 +101,14 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
               this, &shotTableWidget::deleteShot);
       p_menu_->addAction(k_deleteShot);
     }
-  } else if (doCore::coreDataManager::get().getEpisodesPtr()) {
+  } else if ( coreDataManager::get().getEpisodesPtr()) {
     if (selectionModel()->hasSelection()) {
       auto index = p_model_->index(selectionModel()->currentIndex().row(), 4);
       //打开文件位置
       auto k_openFile = new QAction();
       k_openFile->setText(tr("打开文件所在位置"));
       connect(k_openFile, &QAction::triggered, this, [=] {
-        toolkit::openPath(index.data(Qt::UserRole).value<doCore::shotInfoPtr>(),
+        toolkit::openPath(index.data(Qt::UserRole).value< shotInfoPtr>(),
                           true);
       });
       p_menu_->addAction(k_openFile);
@@ -117,7 +117,7 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
       k_copyClip->setText(tr("复制到剪贴板"));
 
       connect(k_copyClip, &QAction::triggered, this, [=] {
-        toolkit::openPath(index.data(Qt::UserRole).value<doCore::shotInfoPtr>(),
+        toolkit::openPath(index.data(Qt::UserRole).value< shotInfoPtr>(),
                           false);
       });
       p_menu_->addAction(k_copyClip);
@@ -196,15 +196,15 @@ void shotTableWidget::insertShot(const QString &path) {
   //插入新的数据
   p_model_->insertRow(0, QModelIndex());
   auto data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
-                  .value<doCore::shotInfoPtr>();
+                  .value< shotInfoPtr>();
 
   if (pathInfo.isFile()) {
     if (pathInfo.suffix() == "ma" || pathInfo.suffix() == "mb") {  // maya文件
-      data->setShotType(doCore::shotType::findShotType("Animation", true));
+      data->setShotType( shotType::findShotType("Animation", true));
       submitMayaFile(data, path);
     } else if (pathInfo.suffix() == "mp4" || pathInfo.suffix() == "avi" ||
                pathInfo.suffix() == "mov") {  //拖拽文件(拍屏已经是视频文件)
-      data->setShotType(doCore::shotType::findShotType("flipbook", true));
+      data->setShotType( shotType::findShotType("flipbook", true));
       submitFBFile(data, path);
     }
   } else if (pathInfo.isDir()) {  //拖动路径(拍屏所在路径)
@@ -212,7 +212,7 @@ void shotTableWidget::insertShot(const QString &path) {
       p_model_->removeRow(0, QModelIndex());
       return;
     }
-    data->setShotType(doCore::shotType::findShotType("flipbook", true));
+    data->setShotType( shotType::findShotType("flipbook", true));
     submitFBFile(data, path);
   }
   //更新列表
@@ -224,16 +224,16 @@ void shotTableWidget::exportFbx() {
   //获得选择数据
   auto index = p_model_->index(selectionModel()->currentIndex().row(), 4);
 
-  auto data = index.data(Qt::UserRole).value<doCore::shotInfoPtr>();
+  auto data = index.data(Qt::UserRole).value< shotInfoPtr>();
   if (!data) return;
 
   p_model_->insertRow(0, QModelIndex());
 
   auto export_data = p_model_->data(p_model_->index(0, 4), Qt::UserRole)
-                         .value<doCore::shotInfoPtr>();
+                         .value< shotInfoPtr>();
 
   //创建上传类
-  auto k_fileexport = std::make_shared<doCore::mayaArchiveShotFbx>(export_data);
+  auto k_fileexport = std::make_shared< mayaArchiveShotFbx>(export_data);
   //开始导出
   auto fun = std::async(std::launch::async, [=]() -> bool {
     auto result = k_fileexport->update(data->getFileList().front());
@@ -248,12 +248,12 @@ void shotTableWidget::exportFbx() {
 }
 
 void shotTableWidget::doClickedSlots(const QModelIndex &index) {
-  auto info = index.data(Qt::UserRole).value<doCore::shotInfoPtr>();
-  if (info) doCore::coreDataManager::get().setShotInfoPtr(info);
+  auto info = index.data(Qt::UserRole).value< shotInfoPtr>();
+  if (info)  coreDataManager::get().setShotInfoPtr(info);
 }
 
 void shotTableWidget::doDubledSlots(const QModelIndex &index) {
-  auto info = index.data(Qt::UserRole).value<doCore::shotInfoPtr>();
+  auto info = index.data(Qt::UserRole).value< shotInfoPtr>();
   if (info) {
     if (index.column() != 1) {
       auto path = info->getFileList().front();
@@ -261,20 +261,20 @@ void shotTableWidget::doDubledSlots(const QModelIndex &index) {
     }
   }
 }
-void shotTableWidget::submitMayaFile(doCore::shotInfoPtr &info_ptr,
+void shotTableWidget::submitMayaFile( shotInfoPtr &info_ptr,
                                      const QString &path) {
-  info_ptr  = std::get<doCore::shotInfoPtr>(info_ptr->findSimilar());
-  auto file = std::make_shared<doCore::mayaArchive>(info_ptr);
+  info_ptr  = std::get< shotInfoPtr>(info_ptr->findSimilar());
+  auto file = std::make_shared< mayaArchive>(info_ptr);
   auto fun  = std::async(std::launch::async,
                         [=]() { return file->update(path.toStdString()); });
   updataManager::get().addQueue(fun, "正在上传中", 100);
   updataManager::get().run();
 }
 
-void shotTableWidget::submitFBFile(doCore::shotInfoPtr &info_ptr,
+void shotTableWidget::submitFBFile( shotInfoPtr &info_ptr,
                                    const QString &path) {
-  info_ptr     = std::get<doCore::shotInfoPtr>(info_ptr->findSimilar());
-  auto k_movie = std::make_shared<doCore::moveShotA>(info_ptr);
+  info_ptr     = std::get< shotInfoPtr>(info_ptr->findSimilar());
+  auto k_movie = std::make_shared< moveShotA>(info_ptr);
   std::future<bool> k_fu;
   k_fu = std::async(std::launch::async,
                     [=]() {
@@ -288,7 +288,7 @@ void shotTableWidget::submitFBFile(doCore::shotInfoPtr &info_ptr,
 void shotTableWidget::deleteShot() {
   if (selectionModel()->hasSelection()) {
     auto data = selectionModel()->currentIndex().data(Qt::UserRole);
-    data.value<doCore::shotInfoPtr>()->deleteSQL();
+    data.value< shotInfoPtr>()->deleteSQL();
     p_model_->init();
   }
 }

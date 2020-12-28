@@ -20,7 +20,7 @@
 #define CORE_API __declspec(dllimport)
 #endif
 
-#define CORE_NAMESPACE doCore
+#define CORE_NAMESPACE doodle
 #define CORE_NAMESPACE_S namespace CORE_NAMESPACE {
 #define CORE_NAMESPACE_E \
   }                      \
@@ -165,4 +165,4 @@ using dataInfoPtr = std::variant<
     assInfoPtr>;
 CORE_NAMESPACE_E
 
-// Q_DECLARE_METATYPE(doCore::shotInfoPtr)
+// Q_DECLARE_METATYPE( shotInfoPtr)

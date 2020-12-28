@@ -41,10 +41,10 @@ class assTableModel : public QAbstractTableModel {
   void clear();
 
  private:
-  void setList(doCore::assInfoPtrList &list);
+  void setList(assInfoPtrList &list);
 
  private:
-  doCore::assInfoPtrList p_ass_info_ptr_list_;
+  assInfoPtrList p_ass_info_ptr_list_;
   std::shared_ptr<boost::regex> mayaRex;
   std::shared_ptr<boost::regex> ue4Rex;
   std::shared_ptr<boost::regex> rigRex;

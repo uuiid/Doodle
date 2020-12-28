@@ -20,10 +20,10 @@
 #include <regex>
 DOODLE_NAMESPACE_S
 
-void toolkit::openPath(const doCore::fileSqlInfoPtr &info_ptr,
+void toolkit::openPath(const  fileSqlInfoPtr &info_ptr,
                        const bool &openEx) {
   
-  auto path = doCore::coreSet::getSet().getPrjectRoot() /
+  auto path =  coreSet::getSet().getPrjectRoot() /
               info_ptr->getFileList()[0].parent_path();
 
   boost::format str("explorer.exe \"%s\"");
@@ -48,8 +48,8 @@ void toolkit::openPath(const doCore::fileSqlInfoPtr &info_ptr,
   }
 }
 
-void toolkit::openPath(const doCore::dpath &path_) {
-  auto path = doCore::coreSet::getSet().getPrjectRoot() / path_;
+void toolkit::openPath(const  dpath &path_) {
+  auto path =  coreSet::getSet().getPrjectRoot() / path_;
 
   boost::format str("explorer.exe \"%s\"");
   auto path_noral =
@@ -79,11 +79,11 @@ void toolkit::installUePath(const std::string &path) {
 
     //判断并选择来源
     if (std::regex_search(ue_path.generic_string(), std::regex{"4.25"})) {
-      sourePath = doCore::coreSet::getSet().program_location().parent_path() /
+      sourePath =  coreSet::getSet().program_location().parent_path() /
                   "plug/uePlug/4.25/Plugins/Doodle";
     } else if (std::regex_search(ue_path.generic_string(),
                                  std::regex{"4.26"})) {
-      sourePath = doCore::coreSet::getSet().program_location().parent_path() /
+      sourePath =  coreSet::getSet().program_location().parent_path() /
                   "plug/uePlug/4.26/Plugins/Doodle";
     } else {
       QMessageBox::warning(nullptr, QString::fromUtf8("注意"),
@@ -99,10 +99,10 @@ void toolkit::installUePath(const std::string &path) {
         QInputDialog::getItem(nullptr, "选择安装ue插件的版本", "路径", list)
             .toFloat();
     if (ue_version == 4.25) {
-      sourePath = doCore::coreSet::getSet().program_location().parent_path() /
+      sourePath =  coreSet::getSet().program_location().parent_path() /
                   "plug/uePlug/4.25/Plugins/Doodle";
     } else {
-      sourePath = doCore::coreSet::getSet().program_location().parent_path() /
+      sourePath =  coreSet::getSet().program_location().parent_path() /
                   "plug/uePlug/4.26/Plugins/Doodle";
     }
     ue_path = boost::filesystem::path{path}.parent_path() / "Plugins/Doodle";
@@ -119,7 +119,7 @@ void toolkit::modifyUeCachePath() {
   if (ue_path.empty()) return;
 
   ue_path          = ue_path / "Engine/Config/BaseEngine.ini";
-  auto source_path = doCore::coreSet::getSet().program_location().parent_path() /
+  auto source_path =  coreSet::getSet().program_location().parent_path() /
                      "resource/BaseEngine.ini";
   if (boost::filesystem::exists(source_path)) {
     doSystem::DfileSyntem::copy(source_path, ue_path, true);
@@ -127,9 +127,9 @@ void toolkit::modifyUeCachePath() {
 }
 
 bool toolkit::update() {
-  auto &set    = doCore::coreSet::getSet();
+  auto &set    =  coreSet::getSet();
   auto session = doSystem::DfileSyntem::get().session(set.getIpFtp(), 21,
-                                                      "anonymous", "", doCore::dpath{});
+                                                      "anonymous", "",  dpath{});
 
   auto exe_path = set.getCacheRoot() / "doodle.exe";
   session->down(exe_path.generic_string(), "/dist/doodle.exe");
@@ -162,14 +162,14 @@ bool toolkit::deleteUeCache() {
   }
 }
 
-doCore::dpath toolkit::getUeInstallPath() {
+ dpath toolkit::getUeInstallPath() {
   boost::filesystem::path ue_path;
   boost::filesystem::path sourePath;
 
   auto uePath_key =
       QSettings{R"(HKEY_LOCAL_MACHINE\SOFTWARE\EpicGames\Unreal Engine)",
                 QSettings::NativeFormat};
-  doCore::dpathList dpath_list;
+   dpathList dpath_list;
   for (const auto &item : uePath_key.childGroups()) {
     auto setting_ue = QSettings(
         QString(R"(HKEY_LOCAL_MACHINE\SOFTWARE\EpicGames\Unreal Engine\%1)")
@@ -179,7 +179,7 @@ doCore::dpath toolkit::getUeInstallPath() {
     dpath_list.push_back(kPath.toString().toStdString());
   }
   dpath_list.erase(std::remove_if(dpath_list.begin(), dpath_list.end(),
-                                  [=](doCore::dpath &dpath) {
+                                  [=]( dpath &dpath) {
                                     return !boost::filesystem::exists(dpath);
                                   }),
                    dpath_list.end());

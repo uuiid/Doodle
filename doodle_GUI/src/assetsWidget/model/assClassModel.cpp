@@ -55,7 +55,7 @@ bool assClassModel::setData(const QModelIndex &index, const QVariant &value,
   if (!is_has) {
     if (ass->getAssClass(true) != value.toString().toStdString()) {
       ass->setAssClass(value.toString().toStdString());
-      ass->setAssDep(doCore::coreDataManager::get().getAssDepPtr());
+      ass->setAssDep(coreDataManager::get().getAssDepPtr());
 
       if (ass->isInsert()) {
         ass->updateSQL();
@@ -73,9 +73,9 @@ bool assClassModel::insertRows(int position, int rows,
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     p_ass_info_ptr_list_.insert(p_ass_info_ptr_list_.begin() + position,
-                                std::make_shared<doCore::assClass>());
+                                std::make_shared<assClass>());
     p_ass_info_ptr_list_[position]->setAssDep(
-        doCore::coreDataManager::get().getAssDepPtr());
+        coreDataManager::get().getAssDepPtr());
   }
   endInsertRows();
   return true;
@@ -96,7 +96,7 @@ bool assClassModel::removeRows(int position, int rows,
 void assClassModel::init() {
   clear();
   auto tmp_list =
-      doCore::assClass::getAll(doCore::coreDataManager::get().getAssDepPtr());
+       assClass::getAll( coreDataManager::get().getAssDepPtr());
   if (!tmp_list.empty()) {
     beginInsertRows(QModelIndex(), 0,
                     boost::numeric_cast<int>(tmp_list.size()) - 1);
@@ -109,7 +109,7 @@ void assClassModel::clear() {
   beginResetModel();
   p_ass_info_ptr_list_.clear();
   endResetModel();
-  doCore::coreDataManager::get().setAssClassPtr(nullptr);
+   coreDataManager::get().setAssClassPtr(nullptr);
 }
 assClassModel::~assClassModel() = default;
 

@@ -57,7 +57,7 @@ settingWidget::settingWidget(QWidget *parent)
 
   auto p_syn_exe_path = new QLabel(this);
   p_syn_exe_path->setText(tr("同步软件安装目录 : %1")
-                              .arg(DOTOS(doCore::coreSet::getSet().getFreeFileSyn())));
+                              .arg(DOTOS( coreSet::getSet().getFreeFileSyn())));
 
   auto p_save = new QPushButton(this);
   p_save->setText(tr("保存"));
@@ -129,12 +129,12 @@ void settingWidget::setLocaleSynPath(const QString &path) {
 void settingWidget::seteps(int eps) {
   if (eps <= 0) return;
   p_set_.setSyneps(eps);
-  auto eps_ptr = doCore::episodes::find_by_eps(eps);
+  auto eps_ptr =  episodes::find_by_eps(eps);
   p_syn_locale_path->clear();
   p_syn_sever_path->clear();
 
   if (eps_ptr) {
-    auto syneps = doCore::synData::getAll(eps_ptr);
+    auto syneps =  synData::getAll(eps_ptr);
 
     auto tmplist = syneps->getSynDir();
     for (auto &&x : tmplist) {

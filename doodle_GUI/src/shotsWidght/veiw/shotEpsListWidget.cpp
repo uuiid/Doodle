@@ -140,8 +140,8 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
 }
 
 void shotEpsListWidget::_doodle_episodes_emit(const QModelIndex &index) {
-  doCore::coreDataManager::get().setEpisodesPtr(index.data(Qt::UserRole)
-                                                    .value<doCore::episodesPtr>());
+   coreDataManager::get().setEpisodesPtr(index.data(Qt::UserRole)
+                                                    .value< episodesPtr>());
   initEmit();
 }
 void shotEpsListWidget::setModel(QAbstractItemModel *model) {
@@ -150,33 +150,33 @@ void shotEpsListWidget::setModel(QAbstractItemModel *model) {
   QAbstractItemView::setModel(model);
 }
 void shotEpsListWidget::creatEpsMov() {
-  auto p_instance = doCore::shot::Instances();
+  auto p_instance =  shot::Instances();
   if (!p_instance.empty()) {
     initEmit();
-    auto shotInfo = std::make_shared<doCore::shotFileSqlInfo>();
+    auto shotInfo = std::make_shared< shotFileSqlInfo>();
 
-    const auto &kEps = selectionModel()->currentIndex().data(Qt::UserRole).value<doCore::episodesPtr>();
+    const auto &kEps = selectionModel()->currentIndex().data(Qt::UserRole).value< episodesPtr>();
     if (kEps) {
       shotInfo->setEpisdes(kEps);
-      auto move = std::make_unique<doCore::movieEpsArchive>(shotInfo);
+      auto move = std::make_unique< movieEpsArchive>(shotInfo);
       move->update();
     }
   } else {
     QMessageBox::warning(this, tr("注意: "),
                          tr("这个集数上没有上传拍屏"));
     auto data = selectionModel()->currentIndex().data(Qt::UserRole);
-    auto eps  = data.value<doCore::episodesPtr>();
+    auto eps  = data.value< episodesPtr>();
     DOODLE_LOG_INFO(" 这个集数上没有上传拍屏: " << eps->getEpisdes_str());
   }
 }
 
 void shotEpsListWidget::deleteEpsiodes() {
   if (selectionModel()->hasSelection())
-    if (doCore::shot::Instances().empty() && doCore::shotFileSqlInfo::Instances().empty()) {
+    if ( shot::Instances().empty() &&  shotFileSqlInfo::Instances().empty()) {
       p_episodesListModel->removeRow(selectionModel()->currentIndex().row());
     } else {
       auto data = selectionModel()->currentIndex().data(Qt::UserRole);
-      auto eps  = data.value<doCore::episodesPtr>();
+      auto eps  = data.value< episodesPtr>();
       DOODLE_LOG_INFO(" 这个条目内还有内容,  无法删除: " << eps->getEpisdes_str());
       QMessageBox::warning(this, tr("注意: "),
                            tr("这个条目内还有内容,  无法删除"));

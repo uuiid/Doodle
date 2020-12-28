@@ -31,6 +31,6 @@ class assTypeModel : public QAbstractListModel {
   void reInit();
  private:
   void clear();
-  doCore::assTypePtrList p_file_type_ptr_list_;
+   assTypePtrList p_file_type_ptr_list_;
 };
 DOODLE_NAMESPACE_E

@@ -18,8 +18,8 @@ assTableModel::assTableModel(QObject *parent)
       mayaRex(std::make_shared<boost::regex>(R"(scenes)")),
       ue4Rex(std::make_shared<boost::regex>(R"(_UE4)")),
       rigRex(std::make_shared<boost::regex>(R"(rig)")) {
-  doCore::assFileSqlInfo::insertChanged.connect([this]() { this->reInit(); });
-  doCore::assFileSqlInfo::updateChanged.connect([this]() { this->reInit(); });
+  assFileSqlInfo::insertChanged.connect([this]() { this->reInit(); });
+  assFileSqlInfo::updateChanged.connect([this]() { this->reInit(); });
 }
 
 int assTableModel::rowCount(const QModelIndex &parent) const {
@@ -199,8 +199,8 @@ bool assTableModel::setData(const QModelIndex &index, const QVariant &value,
         break;
       }
     case Qt::UserRole:
-      if (!value.canConvert<doCore::assInfoPtr>()) return false;
-      p_ass_info_ptr_list_[index.row()] = value.value<doCore::assInfoPtr>();
+      if (!value.canConvert<assInfoPtr>()) return false;
+      p_ass_info_ptr_list_[index.row()] = value.value<assInfoPtr>();
       dataChanged(index, index);
       break;
     default:
@@ -221,9 +221,9 @@ bool assTableModel::insertRows(int position, int rows,
   //  beginInsertColumns(QModelIndex(), 0, 4);
   for (int row = 0; row < rows; ++row) {
     p_ass_info_ptr_list_.insert(p_ass_info_ptr_list_.begin() + position,
-                                std::make_shared<doCore::assFileSqlInfo>());
+                                std::make_shared<assFileSqlInfo>());
     p_ass_info_ptr_list_[position]->setAssClass(
-        doCore::coreDataManager::get().getAssClassPtr());
+        coreDataManager::get().getAssClassPtr());
   }
   //  endInsertColumns();
   endInsertRows();
@@ -237,21 +237,21 @@ bool assTableModel::removeRows(int position, int rows,
     if (ass) ass->deleteSQL();
     p_ass_info_ptr_list_.erase(p_ass_info_ptr_list_.begin() + position);
   }
-  doCore::coreDataManager::get().setAssInfoPtr(nullptr);
+  coreDataManager::get().setAssInfoPtr(nullptr);
   endRemoveRows();
   return true;
 }
 void assTableModel::init() {
   clear();
-  auto list = doCore::assFileSqlInfo::getAll(
-      doCore::coreDataManager::get().getAssClassPtr());
+  auto list = assFileSqlInfo::getAll(
+      coreDataManager::get().getAssClassPtr());
 
   setList(list);
 }
 
 void assTableModel::reInit() {
-  doCore::assInfoPtrList outlist;
-  for (const auto &item : doCore::assFileSqlInfo::Instances()) {
+  assInfoPtrList outlist;
+  for (const auto &item : assFileSqlInfo::Instances()) {
     outlist.push_back(item->shared_from_this());
   }
   setList(outlist);
@@ -262,7 +262,7 @@ void assTableModel::clear() {
   p_ass_info_ptr_list_.clear();
   endResetModel();
 }
-void assTableModel::setList(doCore::assInfoPtrList &list) {
+void assTableModel::setList(assInfoPtrList &list) {
   if (list.empty()) {
     clear();
     return;

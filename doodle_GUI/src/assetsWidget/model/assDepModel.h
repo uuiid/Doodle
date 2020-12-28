@@ -23,7 +23,7 @@ class assDepModel : public QAbstractListModel {
  void clear();
 
  private:
-  doCore::assDepPtrList p_class_ptr_list_;
+   assDepPtrList p_class_ptr_list_;
 };
 
 DOODLE_NAMESPACE_E

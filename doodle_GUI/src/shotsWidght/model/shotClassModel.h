@@ -24,7 +24,7 @@ class shotClassModel : public QAbstractListModel {
   int rowCount(const QModelIndex &parent) const override;
   //返回数据
   QVariant data(const QModelIndex &index, int role) const override;
-  [[nodiscard]] doCore::shotClassPtr dataRow(const QModelIndex &index) const;
+  [[nodiscard]]  shotClassPtr dataRow(const QModelIndex &index) const;
   //返回标题
   QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
@@ -43,6 +43,6 @@ class shotClassModel : public QAbstractListModel {
   void clear();
 
  private:
-  doCore::shotClassPtrList list_fileClass;
+   shotClassPtrList list_fileClass;
 };
 DOODLE_NAMESPACE_E

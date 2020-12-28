@@ -11,7 +11,7 @@
 DOODLE_NAMESPACE_S
 assTypeModel::assTypeModel(QObject *parent)
     : QAbstractListModel(parent), p_file_type_ptr_list_() {
-  doCore::assType::insertChanged.connect(boost::bind(&assTypeModel::reInit, this));
+   assType::insertChanged.connect(boost::bind(&assTypeModel::reInit, this));
 }
 
 int assTypeModel::rowCount(const QModelIndex &parent) const {
@@ -63,7 +63,7 @@ bool assTypeModel::insertRows(int position, int rows,
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     p_file_type_ptr_list_.insert(p_file_type_ptr_list_.begin() + position,
-                                 std::make_shared<doCore::assType>());
+                                 std::make_shared< assType>());
   }
   endInsertRows();
   return true;
@@ -79,7 +79,7 @@ bool assTypeModel::removeRows(int position, int rows,
 }
 void assTypeModel::init() {
   clear();
-  const auto tmp_list = doCore::assType::getAll();
+  const auto tmp_list =  assType::getAll();
   if (tmp_list.empty()) return;
 
   beginInsertRows(QModelIndex(), 0,
@@ -89,8 +89,8 @@ void assTypeModel::init() {
 }
 void assTypeModel::reInit() {
   // if (p_file_type_ptr_list_.empty()) return;
-  auto k_instance = doCore::assType::Instances();
-  doCore::assTypePtrList list;
+  auto k_instance =  assType::Instances();
+   assTypePtrList list;
   for (auto &&i : k_instance) {
     if (i)
       list.push_back(i->shared_from_this());

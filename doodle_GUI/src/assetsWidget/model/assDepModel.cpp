@@ -27,7 +27,7 @@ QVariant assDepModel::data(const QModelIndex &index, int role) const {
 }
 void assDepModel::init() {
   clear();
-  auto tmp_List  = doCore::assdepartment::getAll();
+  auto tmp_List  =  assdepartment::getAll();
   beginInsertRows(QModelIndex(),0,boost::numeric_cast<int>(tmp_List.size())-1);
   p_class_ptr_list_ = tmp_List;
   endInsertRows();
@@ -38,7 +38,7 @@ void assDepModel::clear() {
     p_class_ptr_list_.clear();
     endResetModel();
   }
-  doCore::coreDataManager::get().setAssDepPtr(nullptr);
+   coreDataManager::get().setAssDepPtr(nullptr);
 }
 assDepModel::~assDepModel() = default;
 

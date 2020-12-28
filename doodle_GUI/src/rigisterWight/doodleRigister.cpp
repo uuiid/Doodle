@@ -11,14 +11,13 @@ doodleRigister::doodleRigister(QWidget *parent)
     : QWidget(parent),
       sub_butten(new QPushButton()),
       textEdit(new QLineEdit()),
-      userList(doCore::coreSet::getAllUser()) {
-  auto layer = new QVBoxLayout(this);
-  auto layer2 = new QHBoxLayout();
+      userList(coreSet::getAllUser()) {
+  auto layer       = new QVBoxLayout(this);
+  auto layer2      = new QHBoxLayout();
   auto quit_butten = new QPushButton();
   sub_butten->setText(tr("注册"));
   sub_butten->setEnabled(false);
   quit_butten->setText(tr("取消"));
-
 
   connect(textEdit, &QLineEdit::textChanged,
           this, &doodleRigister::setButten);
@@ -31,12 +30,9 @@ doodleRigister::doodleRigister(QWidget *parent)
 
   layer->addWidget(textEdit);
   layer->addLayout(layer2);
-
-
 }
 void doodleRigister::setButten(const QString &text) {
-  if ((std::find(userList.begin(), userList.end(), text.toStdString()) != userList.end())
-  || text.isEmpty() || text.isEmpty()) {
+  if ((std::find(userList.begin(), userList.end(), text.toStdString()) != userList.end()) || text.isEmpty() || text.isEmpty()) {
     sub_butten->setEnabled(false);
   } else {
     sub_butten->setEnabled(true);
@@ -45,7 +41,7 @@ void doodleRigister::setButten(const QString &text) {
 void doodleRigister::subUaer() {
   auto user = textEdit->text().toStdString();
   if (user.empty()) return;
-  doCore::coreSet::subUser(user);
+  coreSet::subUser(user);
   close();
 }
 

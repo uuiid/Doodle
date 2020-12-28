@@ -14,7 +14,7 @@ DOODLE_NAMESPACE_S
 class shotEpsListModel : public QAbstractListModel {
   Q_OBJECT
  private:
-  doCore::episodesPtrList eplist;
+   episodesPtrList eplist;
 
  public:
   explicit shotEpsListModel(QObject *parent = nullptr);

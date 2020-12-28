@@ -38,9 +38,9 @@ class shotTableWidget : public QTableView {
   void doClickedSlots(const QModelIndex &index);
   void doDubledSlots(const QModelIndex &index);
 
-  static void submitMayaFile(doCore::shotInfoPtr &info_ptr,
+  static void submitMayaFile( shotInfoPtr &info_ptr,
                              const QString &path);
-  static void submitFBFile(doCore::shotInfoPtr &info_ptr, const QString &path);
+  static void submitFBFile( shotInfoPtr &info_ptr, const QString &path);
 
   void deleteShot();
 
@@ -53,7 +53,7 @@ class shotTableWidget : public QTableView {
   void dropEvent(QDropEvent *event) override;
 
  private:
-  doCore::shotTypePtr p_type_ptr_;
+   shotTypePtr p_type_ptr_;
   shotTableModel *p_model_;
 
   QMenu *p_menu_;

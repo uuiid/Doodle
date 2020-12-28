@@ -158,8 +158,8 @@ bool mayaArchiveShotFbx::update(const dpath &shot_data) {
   return true;
 }
 void mayaArchiveShotFbx::insertDB() {
-  p_info_ptr_->setShotType(doCore::shotType::findShotType("maya_export", true));
-  p_info_ptr_ = std::get<doCore::shotInfoPtr>(p_info_ptr_->findSimilar());
+  p_info_ptr_->setShotType(shotType::findShotType("maya_export", true));
+  p_info_ptr_ = std::get<shotInfoPtr>(p_info_ptr_->findSimilar());
 
   p_info_ptr_->setFileList(p_ServerPath);
   if (p_info_ptr_->getInfoP().empty()) {

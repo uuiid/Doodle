@@ -18,8 +18,8 @@ shotTableModel::shotTableModel(QObject *parent)
       mayaRex(std::make_unique<boost::regex>(R"(ma|ab)")),
       show_mayaex(std::make_unique<boost::regex>(R"(Anm|Animation|export)")),
       show_FBRex(std::make_unique<boost::regex>(R"(FB_|flipbook)")) {
-  doCore::shotFileSqlInfo::insertChanged.connect([this]() { this->init(); });
-  doCore::shotFileSqlInfo::updateChanged.connect([this]() { this->init(); });
+   shotFileSqlInfo::insertChanged.connect([this]() { this->init(); });
+   shotFileSqlInfo::updateChanged.connect([this]() { this->init(); });
 }
 
 int shotTableModel::rowCount(const QModelIndex &parent) const {
@@ -156,8 +156,8 @@ bool shotTableModel::setData(const QModelIndex &index, const QVariant &value,
     }
     return false;
   } else if (role == Qt::UserRole) {
-    if (!value.canConvert<doCore::shotInfoPtr>()) return false;
-    p_shot_info_ptr_list_[index.row()] = value.value<doCore::shotInfoPtr>();
+    if (!value.canConvert< shotInfoPtr>()) return false;
+    p_shot_info_ptr_list_[index.row()] = value.value< shotInfoPtr>();
     dataChanged(index, index);
     return true;
   } else {
@@ -179,28 +179,28 @@ bool shotTableModel::insertRows(int position, int rows,
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     p_shot_info_ptr_list_.insert(p_shot_info_ptr_list_.begin() + position,
-                                 std::make_shared<doCore::shotFileSqlInfo>());
-    p_shot_info_ptr_list_[position]->setShot(doCore::coreDataManager::get().getShotPtr());
+                                 std::make_shared< shotFileSqlInfo>());
+    p_shot_info_ptr_list_[position]->setShot( coreDataManager::get().getShotPtr());
   }
   endInsertRows();
   return true;
 }
 void shotTableModel::init() {
   clear();
-  auto shot = doCore::coreDataManager::get().getShotPtr();
+  auto shot =  coreDataManager::get().getShotPtr();
   if (shot) {
-    p_tmp_shot_info_ptr_list_ = doCore::shotFileSqlInfo::getAll(shot);
+    p_tmp_shot_info_ptr_list_ =  shotFileSqlInfo::getAll(shot);
   } else {
-    auto eps                  = doCore::coreDataManager::get().getEpisodesPtr();
-    p_tmp_shot_info_ptr_list_ = doCore::shotFileSqlInfo::getAll(eps);
+    auto eps                  =  coreDataManager::get().getEpisodesPtr();
+    p_tmp_shot_info_ptr_list_ =  shotFileSqlInfo::getAll(eps);
   }
 
   eachOne();
 }
 
 void shotTableModel::reInit() {
-  auto shot = doCore::coreDataManager::get().getShotPtr();
-  for (auto &&x : doCore::shotFileSqlInfo::Instances()) {
+  auto shot =  coreDataManager::get().getShotPtr();
+  for (auto &&x :  shotFileSqlInfo::Instances()) {
     if (x->getShot() == shot) {
       p_tmp_shot_info_ptr_list_.push_back(x->shared_from_this());
     }
@@ -217,9 +217,9 @@ void shotTableModel::clear() {
 void shotTableModel::filter(bool useFilter) {
   clear();
   if (useFilter) {
-    doCore::shotInfoPtrList list;
-    const auto shotTy = doCore::coreDataManager::get().getShotTypePtr();
-    const auto shotCl = doCore::coreDataManager::get().getShotClassPtr();
+     shotInfoPtrList list;
+    const auto shotTy =  coreDataManager::get().getShotTypePtr();
+    const auto shotCl =  coreDataManager::get().getShotClassPtr();
     for (const auto &info_l : p_tmp_shot_info_ptr_list_) {
       if (shotCl && shotTy) {
         if ((shotCl == info_l->getShotclass()) &&
@@ -247,7 +247,7 @@ void shotTableModel::eachOne() {
   auto listout = p_tmp_shot_info_ptr_list_;
 
   auto it = std::remove_if(
-      listout.begin(), listout.end(), [=](const doCore::shotInfoPtr &ptr) {
+      listout.begin(), listout.end(), [=](const  shotInfoPtr &ptr) {
         if (ptr && ptr->getShotType()) {
           return !(
               boost::regex_search(ptr->getShotType()->getType(), *show_FBRex) ||
@@ -258,10 +258,10 @@ void shotTableModel::eachOne() {
         }
       });
 
-  doCore::shotInfoPtrList list;
+   shotInfoPtrList list;
   list.assign(listout.begin(), it);
   listout.clear();
-  doCore::shotTypePtrList typelist;
+   shotTypePtrList typelist;
   for (const auto &i : list) {
     if (std::find(typelist.begin(), typelist.end(), i->getShotType()) == typelist.end()) {
       listout.push_back(i);
@@ -278,7 +278,7 @@ void shotTableModel::eachOne() {
   //  }
   setList(listout);
 }
-void shotTableModel::setList(const doCore::shotInfoPtrList &list) {
+void shotTableModel::setList(const  shotInfoPtrList &list) {
   clear();
   if (list.empty()) {
     return;

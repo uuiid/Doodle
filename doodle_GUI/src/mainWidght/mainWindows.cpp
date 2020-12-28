@@ -49,7 +49,7 @@ void mainWindows::doodle_init() {
   //开始设置项目小部件
   p_project_list = new QListWidget(centralWidget);
   p_project_list->setObjectName("prj");
-  for (const auto &name : doCore::coreSet::getSet().getAllPrjName()) {
+  for (const auto &name :  coreSet::getSet().getAllPrjName()) {
     p_project_list->addItem(QString::fromStdString(name));
   }
   p_project_list->setFlow(QListView::LeftToRight);
@@ -64,8 +64,8 @@ void mainWindows::doodle_init() {
   //连接项目更改设置
   connect(p_project_list, &QListWidget::itemClicked,
           [=](QListWidgetItem *item) mutable {
-            doCore::coreSet::getSet().setProjectname(item->text());
-            doCore::coreSet::getSet().reInit();
+             coreSet::getSet().setProjectname(item->text());
+             coreSet::getSet().reInit();
           });
 
   auto k_ass_dock    = new QDockWidget(tr("资产"), centralWidget,
@@ -160,7 +160,7 @@ void mainWindows::openSetting() {
 }
 
 void mainWindows::setProject() {
-  auto list = p_project_list->findItems(QString::fromStdString(doCore::coreSet::getSet().getProjectname()),
+  auto list = p_project_list->findItems(QString::fromStdString( coreSet::getSet().getProjectname()),
                                         Qt::MatchExactly);
   if (!list.isEmpty()) {
     DOODLE_LOG_INFO(list.at(0)->text().toStdString());

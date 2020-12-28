@@ -111,11 +111,11 @@ void shotWidget::refresh() {
   p_shot_table_model_->clear();
 
   try {
-    auto shotClass = doCore::shotClass::getCurrentClass();
+    auto k_shotClass = shotClass::getCurrentClass();
   } catch (const std::runtime_error& e) {
-    auto shotClass = std::make_shared<doCore::shotClass>();
-    shotClass->setclass(doCore::coreSet::getSet().getDepartmentQ());
-    shotClass->insert();
+    auto k_shotClass = std::make_shared<shotClass>();
+    k_shotClass->setclass(coreSet::getSet().getDepartmentQ());
+    k_shotClass->insert();
     p_shot_class_model_->init();
     p_shot_type_model_->init();
     std::cerr << e.what() << '\n';
