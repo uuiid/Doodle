@@ -31,7 +31,7 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
 
   auto timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &systemTray::upDoodle);
-  timer->start(14400000);
+  timer->start(1000 * 60 * 60 * 24);
 
   auto menu    = new QMenu(parent);
   auto fileSyn = new QAction(menu);

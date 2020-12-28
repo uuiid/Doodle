@@ -251,9 +251,7 @@ void assTableModel::init() {
 
 void assTableModel::reInit() {
   doCore::assInfoPtrList outlist;
-  auto assClass = doCore::coreDataManager::get().getAssClassPtr();
   for (const auto &item : doCore::assFileSqlInfo::Instances()) {
-    auto assty = item->getAssType();
     outlist.push_back(item->shared_from_this());
   }
   setList(outlist);
