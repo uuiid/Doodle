@@ -25,8 +25,7 @@ bool assTableFilterModel::filterAcceptsRow(int source_row,
   switch (p_useFilter_e) {
     case filterState::notFilter: {
       auto k_ass = assFileSqlInfo::Instances();
-      //这个实例在库中查询出来后就是按照先后顺序排序的
-      //所以直接找到这个数据在这个类的序列中是否是第一个就可以直接确定最高版本
+
       auto k_item = std::find_if(k_ass.begin(), k_ass.end(),
                                  [=](assFileSqlInfo *item) -> bool {
                                    return item->getAssType() == k_Data->getAssType() &&

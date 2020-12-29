@@ -20,8 +20,6 @@ bool shotTableFilterModel::filterAcceptsRow(int source_row,
   switch (p_useFilter_e) {
     case filterState::notFilter: {
       auto k_list = shotFileSqlInfo::Instances();
-      //这个实例在库中查询出来后就是按照先后顺序排序的
-      //所以直接找到这个数据在这个类的序列中是否是第一个就可以直接确定最高版本
       auto k_item = std::find_if(k_list.begin(), k_list.end(),
                                  [=](shotFileSqlInfo *item) -> bool {
                                    return item->getEpisdes() == k_Data->getEpisdes() &&
