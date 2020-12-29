@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
-import re
-import os
 
-from pymel.core.nodetypes import Instancer
+
 import pymel.core
 import pymel.all
+import maya.mel
 
-import sys
 # # import inspect
 # # __Doodle__ = os.path.dirname(inspect.getsourcefile(lambda: 0))
 # # __Doodle__ = os.path.dirname(os.path.dirname(__Doodle__))
@@ -46,30 +44,34 @@ class materal():
         grp = self.maya_obj.shadingGroups()
         if grp:
             self.shader_group = self.maya_obj.shadingGroups()[0]
+            self.shader = self.shader_group.name()
 
     def chick(self):
-        print("materal name : {} shader group name: {} \n".format(
+        print("_" * 20)
+        print("materal name : {} \nshader group name: {} ".format(
             self.name,
             self.shader_group))
         self.isOk = (self.shader_group == "{}SG".format(self.name))
-        print("is {} match\n".format(self.isOk))
+        print("is {} match".format(self.isOk))
         if not self.isOk:
             self.repairName()
         self.repairMateralFace()
 
     def repairName(self):
-        self.shader_group.rename("{}SG".format(self.name))
+        try:
+            self.shader_group.rename("{}SG".format(self.name))
+            self.shader = self.shader_group.name()
+        except:
+            pass
 
     def repairMateralFace(self):
         polys = pymel.core.sets(self.shader_group, query=True)
-        print("\n materal obj")
+        print("materal obj: ")
         for poly in polys:
             if poly.__class__.__name__ == "Mesh":
                 pymel.core.sets(self.shader_group, clear=poly, edit=True)
                 pymel.core.sets(self.shader_group, add=poly.faces, edit=True)
-                print(pymel.core.sets(self.shader_group, query=True))
             print(pymel.core.sets(self.shader_group, query=True))
-        print("\n")
 
     def isSurfaceMaterial(self):
         # 获得分类是表面材质
@@ -89,8 +91,15 @@ class uvmap():
 
     def _getMapName_(self):
         self.name = pymel.core.polyUVSet(self.maya_obj, q=True, allUVSets=True)
+        print("_" * 20)
+        print("get obj {}".format(self.maya_obj.name()))
+        print("uv maps: ")
+        print(self.name)
         if len(self.name) > 1:
+            self.MultipleUvMap = True
+        else:
             self.MultipleUvMap = False
+        print("set MultipleUvMap {}".format(self.MultipleUvMap))
 
     def toJson(self):
         return dict(name=self.name, MultipleUvMap=self.MultipleUvMap)
@@ -99,26 +108,42 @@ class uvmap():
 class geometryInfo:
     PentagonalSurface = True
     name = "geometry"
-    map = []
+    map = None
     materals = []
 
-    def __init__(self, maya_obj):
-        self.maya_obj = maya_obj
+    def __init__(self, maya_mesh_obj):
+        self.maya_mesh_obj = maya_mesh_obj
+        self.name = maya_mesh_obj.getTransform().name()
         self._getMaterals_()
         self._getUvMap_()
 
     def _getMaterals_(self):
-        pymel.core.select(self.maya_obj)
-        pymel.core.hyperShade(shaderNetworksSelectMaterialNodes=True)
+        # pymel.core.select(self.maya_mesh_obj)
+        # pymel.core.select(self.maya_mesh_obj.outputs())
+        pymel.core.select(clear=True)
+        for s in self.maya_mesh_obj.outputs():
+            if(s.__class__ == pymel.all.ShadingEngine):
+                pymel.core.select(s.surfaceShader.inputs(), add=True)
+            # pymel.all.ShadingEngine
+        # for s in self.maya_mesh_obj.outputs():
+        #     pymel.core.select(s.surfaceShader.inputs(), add=True)
+        # pymel.core.hyperShade(shaderNetworksSelectMaterialNodes=True)
         shader = pymel.core.ls(sl=True, materials=True)
         self.materals = [materal(s) for s in shader]
 
     def _getUvMap_(self):
-        self.map.append(uvmap(self.maya_obj))
+        self.map = uvmap(self.maya_mesh_obj)
 
     def chick(self):
         for materal in self.materals:
             materal.chick()
+        pymel.core.select(self.maya_mesh_obj)
+        self.muFace = maya.mel.eval(
+            "polyCleanup 1 1 1  0 1 0 0 0  0 0.1 0 0.1 0 0.1;")
+        if self.muFace:
+            self.PentagonalSurface = False
+        else:
+            self.PentagonalSurface = True
 
     def toJson(self):
         return dict(
@@ -152,12 +177,13 @@ class chickFile():
             poly.chick()
 
     def __call__(self, log_obj=None):
+        print(self.geometrys)
         self.selectAllPolygons()
         self.chick()
         if log_obj:
             log_obj.log = json.dumps(self.__chcik_geo__, cls=JsonEncoder)
             log_obj.write()
+        pymel.core.saveFile()
 
 
 run = chickFile
-run()()

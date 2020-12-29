@@ -1,4 +1,6 @@
 import argparse
+import os
+import json
 
 
 class arg_string:
@@ -24,17 +26,18 @@ class doodle_log:
         self.log = ""
         self.logPath = ARGS.exportpath
 
-    def write(self):
+    def write(self, name="doodle.json"):
         if not os.path.exists(self.logPath):
             os.makedirs(self.logPath)
-        with open(os.path.join(self.logPath, "doodle_export_abc.json"), "w") as f:
-            f.write(
-                json.dumps(self.log,
-                           ensure_ascii=False,
-                           indent=4,
-                           separators=(',', ':')
-                           )
-            )
+        with open(os.path.join(self.logPath, name), "w") as f:
+            f.write(self.log
+                    )
+
+            # json.dumps(self.log,
+            #            ensure_ascii=False,
+            #            indent=4,
+            #            separators=(',', ':')
+            #            )
 
 
 DLOG = doodle_log()
