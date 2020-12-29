@@ -29,6 +29,9 @@ class shotTableWidget : public QTableView {
 
   void setModel(QAbstractItemModel *model) override;
 
+ Q_SIGNALS:
+  void useFilter(const filterState &state);
+
  private Q_SLOTS:
 
   void getSelectPath();
@@ -38,9 +41,9 @@ class shotTableWidget : public QTableView {
   void doClickedSlots(const QModelIndex &index);
   void doDubledSlots(const QModelIndex &index);
 
-  static void submitMayaFile( shotInfoPtr &info_ptr,
+  static void submitMayaFile(shotInfoPtr &info_ptr,
                              const QString &path);
-  static void submitFBFile( shotInfoPtr &info_ptr, const QString &path);
+  static void submitFBFile(shotInfoPtr &info_ptr, const QString &path);
 
   void deleteShot();
 
@@ -53,7 +56,7 @@ class shotTableWidget : public QTableView {
   void dropEvent(QDropEvent *event) override;
 
  private:
-   shotTypePtr p_type_ptr_;
+  shotTypePtr p_type_ptr_;
   shotTableModel *p_model_;
 
   QMenu *p_menu_;

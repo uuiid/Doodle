@@ -39,17 +39,13 @@ class shotTableModel : public QAbstractTableModel {
 
   void init();
   void reInit();
-  void filter(bool useFilter);
   void clear();
-  void showAll();
 
  private:
-  void eachOne();
-  void setList(const  shotInfoPtrList &list);
+  void setList(const shotInfoPtrList &list);
 
  private:
-   shotInfoPtrList p_shot_info_ptr_list_;
-   shotInfoPtrList p_tmp_shot_info_ptr_list_;
+  shotInfoPtrList p_shot_info_ptr_list_;
   std::unique_ptr<boost::regex> mayaRex;
   std::unique_ptr<boost::regex> FBRex;
   std::unique_ptr<boost::regex> show_FBRex;

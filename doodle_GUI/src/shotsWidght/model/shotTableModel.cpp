@@ -13,13 +13,12 @@ DOODLE_NAMESPACE_S
 shotTableModel::shotTableModel(QObject *parent)
     : QAbstractTableModel(parent),
       p_shot_info_ptr_list_(),
-      p_tmp_shot_info_ptr_list_(),
       FBRex(std::make_unique<boost::regex>(R"(mp4|avi)")),
       mayaRex(std::make_unique<boost::regex>(R"(ma|ab)")),
       show_mayaex(std::make_unique<boost::regex>(R"(Anm|Animation|export)")),
       show_FBRex(std::make_unique<boost::regex>(R"(FB_|flipbook)")) {
-   shotFileSqlInfo::insertChanged.connect([this]() { this->init(); });
-   shotFileSqlInfo::updateChanged.connect([this]() { this->init(); });
+  shotFileSqlInfo::insertChanged.connect([this]() { this->init(); });
+  shotFileSqlInfo::updateChanged.connect([this]() { this->init(); });
 }
 
 int shotTableModel::rowCount(const QModelIndex &parent) const {
@@ -156,8 +155,8 @@ bool shotTableModel::setData(const QModelIndex &index, const QVariant &value,
     }
     return false;
   } else if (role == Qt::UserRole) {
-    if (!value.canConvert< shotInfoPtr>()) return false;
-    p_shot_info_ptr_list_[index.row()] = value.value< shotInfoPtr>();
+    if (!value.canConvert<shotInfoPtr>()) return false;
+    p_shot_info_ptr_list_[index.row()] = value.value<shotInfoPtr>();
     dataChanged(index, index);
     return true;
   } else {
@@ -179,106 +178,40 @@ bool shotTableModel::insertRows(int position, int rows,
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     p_shot_info_ptr_list_.insert(p_shot_info_ptr_list_.begin() + position,
-                                 std::make_shared< shotFileSqlInfo>());
-    p_shot_info_ptr_list_[position]->setShot( coreDataManager::get().getShotPtr());
+                                 std::make_shared<shotFileSqlInfo>());
+    p_shot_info_ptr_list_[position]->setShot(coreDataManager::get().getShotPtr());
   }
   endInsertRows();
   return true;
 }
 void shotTableModel::init() {
   clear();
-  auto shot =  coreDataManager::get().getShotPtr();
+  auto shot = coreDataManager::get().getShotPtr();
   if (shot) {
-    p_tmp_shot_info_ptr_list_ =  shotFileSqlInfo::getAll(shot);
+    setList(shotFileSqlInfo::getAll(shot));
   } else {
-    auto eps                  =  coreDataManager::get().getEpisodesPtr();
-    p_tmp_shot_info_ptr_list_ =  shotFileSqlInfo::getAll(eps);
+    auto eps = coreDataManager::get().getEpisodesPtr();
+    setList(shotFileSqlInfo::getAll(eps));
   }
-
-  eachOne();
 }
 
 void shotTableModel::reInit() {
-  auto shot =  coreDataManager::get().getShotPtr();
-  for (auto &&x :  shotFileSqlInfo::Instances()) {
+  auto shot = coreDataManager::get().getShotPtr();
+  shotInfoPtrList k_list;
+  for (auto &&x : shotFileSqlInfo::Instances()) {
     if (x->getShot() == shot) {
-      p_tmp_shot_info_ptr_list_.push_back(x->shared_from_this());
+      k_list.push_back(x->shared_from_this());
     }
   }
-  eachOne();
+  setList(k_list);
 }
 void shotTableModel::clear() {
   if (p_shot_info_ptr_list_.empty()) return;
   beginResetModel();
   p_shot_info_ptr_list_.clear();
-  p_tmp_shot_info_ptr_list_.clear();
   endResetModel();
 }
-void shotTableModel::filter(bool useFilter) {
-  clear();
-  if (useFilter) {
-     shotInfoPtrList list;
-    const auto shotTy =  coreDataManager::get().getShotTypePtr();
-    const auto shotCl =  coreDataManager::get().getShotClassPtr();
-    for (const auto &info_l : p_tmp_shot_info_ptr_list_) {
-      if (shotCl && shotTy) {
-        if ((shotCl == info_l->getShotclass()) &&
-            shotTy == info_l->getShotType())
-          list.push_back(info_l);
-      } else if (shotCl) {
-        if (shotCl == info_l->getShotclass()) list.push_back(info_l);
-      } else if (shotTy) {
-        if (shotTy == info_l->getShotType()) list.push_back(info_l);
-      }
-      //      if (
-      //          (!shotCl || (shotCl == info_l->getShotclass()))
-      //              && (!shotTy || (shotTy == info_l->getShotType()))
-      //          ) {
-      //        list.push_back(info_l);
-      //      }
-    }
-    setList(list);
-  } else {
-    eachOne();
-  }
-}
-void shotTableModel::eachOne() {
-  std::vector<std::string> show{"Animation", "FB_VFX", "FB_Light", "flipbook"};
-  auto listout = p_tmp_shot_info_ptr_list_;
-
-  auto it = std::remove_if(
-      listout.begin(), listout.end(), [=](const  shotInfoPtr &ptr) {
-        if (ptr && ptr->getShotType()) {
-          return !(
-              boost::regex_search(ptr->getShotType()->getType(), *show_FBRex) ||
-              boost::regex_search(ptr->getShotType()->getType(), *show_mayaex) ||
-              boost::regex_search(ptr->getSuffixes(), *mayaRex));
-        } else {
-          return false;
-        }
-      });
-
-   shotInfoPtrList list;
-  list.assign(listout.begin(), it);
-  listout.clear();
-   shotTypePtrList typelist;
-  for (const auto &i : list) {
-    if (std::find(typelist.begin(), typelist.end(), i->getShotType()) == typelist.end()) {
-      listout.push_back(i);
-      typelist.push_back(i->getShotType());
-    }
-  }
-
-  //  for (const auto &info_l : ) {
-  //    auto item = std::find(show.begin(), show.end(),
-  //    info_l->getShotType()->getType()); if (item != show.end()) {
-  //      list.push_back(info_l);
-  //      show.erase(item);
-  //    }
-  //  }
-  setList(listout);
-}
-void shotTableModel::setList(const  shotInfoPtrList &list) {
+void shotTableModel::setList(const shotInfoPtrList &list) {
   clear();
   if (list.empty()) {
     return;
@@ -286,9 +219,6 @@ void shotTableModel::setList(const  shotInfoPtrList &list) {
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list.size()) - 1);
   p_shot_info_ptr_list_ = list;
   endInsertRows();
-}
-void shotTableModel::showAll() {
-  setList(p_tmp_shot_info_ptr_list_);
 }
 
 DOODLE_NAMESPACE_E

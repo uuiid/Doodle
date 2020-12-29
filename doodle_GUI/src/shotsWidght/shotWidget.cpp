@@ -1,6 +1,6 @@
 ﻿#include "shotWidget.h"
 
-#include < core_Cpp.h>
+#include <core_Cpp.h>
 
 #include <src/shotsWidght/model/shotEpsListModel.h>
 #include <src/shotsWidght/model/shotListModel.h>
@@ -12,6 +12,7 @@
 #include <src/shotsWidght/veiw/shotTableWidget.h>
 #include <src/shotsWidght/veiw/shotClassWidget.h>
 #include <src/shotsWidght/veiw/shotTypeWidget.h>
+#include <src/shotsWidght/model/shotTableFilterModel.h>
 DOODLE_NAMESPACE_S
 
 shotWidget::shotWidget(QWidget* parent)
@@ -34,6 +35,9 @@ shotWidget::shotWidget(QWidget* parent)
   p_shot_type_model_  = new shotTypeModel(this);
   p_shot_class_model_ = new shotClassModel(this);
   p_shot_table_model_ = new shotTableModel(this);
+  //创建代理模型
+  auto k_shot_filter_model_ = new shotTableFilterModel(this);
+  k_shot_filter_model_->setSourceModel(p_shot_table_model_);
 
   //设置基本布局
   p_shot_layout_ = new QHBoxLayout(this);
@@ -63,7 +67,7 @@ shotWidget::shotWidget(QWidget* parent)
   //添加shotTable
   p_shot_table_widget_ = new shotTableWidget();
   p_shot_table_widget_->setObjectName("p_shot_table_widget_");
-  p_shot_table_widget_->setModel(p_shot_table_model_);
+  p_shot_table_widget_->setModel(k_shot_filter_model_);
   connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
           p_shot_table_model_, &shotTableModel::init);
   connect(p_shot_list_widget_, &shotListWidget::initEmit,
@@ -76,7 +80,7 @@ shotWidget::shotWidget(QWidget* parent)
   layout_1->addWidget(p_shot_class_widget_);
 
   connect(p_shot_class_widget_, &shotClassWidget::doodleUseFilter,
-          p_shot_table_model_, &shotTableModel::filter);
+          k_shot_filter_model_, &shotTableFilterModel::useFilter);
   connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
           p_shot_class_model_, &shotClassModel::reInit);
   connect(p_shot_list_widget_, &shotListWidget::initEmit,
@@ -88,7 +92,7 @@ shotWidget::shotWidget(QWidget* parent)
   p_shot_type_widget_->setModel(p_shot_type_model_);
   layout_1->addWidget(p_shot_type_widget_);
   connect(p_shot_type_widget_, &shotTypeWidget::doodleUseFilter,
-          p_shot_table_model_, &shotTableModel::filter);
+          k_shot_filter_model_, &shotTableFilterModel::useFilter);
   connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
           p_shot_type_model_, &shotTypeModel::reInit);
   connect(p_shot_list_widget_, &shotListWidget::initEmit,

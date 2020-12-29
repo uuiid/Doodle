@@ -36,9 +36,9 @@ void shotClassWidget::insertFileClass() {
 }
 
 void shotClassWidget::_doodle_fileclass_emit(const QModelIndex &index) {
-   coreDataManager::get().setShotClassPtr(
-      index.data(Qt::UserRole).value< shotClassPtr>());
-  doodleUseFilter(true);
+  coreDataManager::get().setShotClassPtr(
+      index.data(Qt::UserRole).value<shotClassPtr>());
+  doodleUseFilter(filterState::useFilter);
 }
 
 void shotClassWidget::mousePressEvent(QMouseEvent *event) {
@@ -64,17 +64,12 @@ void shotClassWidget::mousePressEvent(QMouseEvent *event) {
 //  p_fileClass_menu->show();
 //  DOODLE_LOG_INFO ( "显示部门上下文菜单");
 //}
-void shotClassWidget::setModel(QAbstractItemModel *model) {
-  auto p_model = dynamic_cast<shotClassModel *>(model);
-  if (p_model)
-    p_model_ = p_model;
-  QAbstractItemView::setModel(model);
-}
+
 void shotClassWidget::clear() {
   clearSelection();
-  p_model_->reInit();
-   coreDataManager::get().setShotClassPtr(nullptr);
-  doodleUseFilter(false);
+  update();
+  coreDataManager::get().setShotClassPtr(nullptr);
+  doodleUseFilter(filterState::notFilter);
 }
 
 DOODLE_NAMESPACE_E

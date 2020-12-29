@@ -39,10 +39,9 @@ class shotTypeWidget : public QListView {
   explicit shotTypeWidget(QWidget *parent = nullptr);
   ~shotTypeWidget() override;
 
-  void setModel(QAbstractItemModel *model) override;
   void clear();
  Q_SIGNALS:
-  void doodleUseFilter(bool useFilter);
+  void doodleUseFilter(const filterState &state);
 
  private:
   //模型
@@ -52,7 +51,7 @@ class shotTypeWidget : public QListView {
   //上下文菜单
   QMenu *p_menu_;
   //上一级发射出来的指针
-   shotClassPtr p_file_class_ptr_;
+  shotClassPtr p_file_class_ptr_;
  private Q_SLOTS:
   //添加filetype
   void insertFileType();

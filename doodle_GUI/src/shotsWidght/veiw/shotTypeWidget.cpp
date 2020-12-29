@@ -23,7 +23,7 @@ QWidget *fileTypeShotDelegate::createEditor(QWidget *parent,
 }
 void fileTypeShotDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const {
   auto *edit = static_cast<QLineEdit *>(editor);
-  edit->setText( coreSet::getSet().getDepartmentQ());
+  edit->setText(coreSet::getSet().getDepartmentQ());
 }
 void fileTypeShotDelegate::setModelData(QWidget *editor,
                                         QAbstractItemModel *model, const QModelIndex &index) const {
@@ -72,9 +72,9 @@ void shotTypeWidget::insertFileType() {
   edit(p_file_type_shot_model_->index(row));
 }
 void shotTypeWidget::_doodle_type_emit(const QModelIndex &index) {
-   coreDataManager::get().setShotTypePtr(
-      index.data(Qt::UserRole).value< shotTypePtr>());
-  doodleUseFilter(true);
+  coreDataManager::get().setShotTypePtr(
+      index.data(Qt::UserRole).value<shotTypePtr>());
+  doodleUseFilter(filterState::useFilter);
 }
 void shotTypeWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
@@ -97,17 +97,11 @@ void shotTypeWidget::mousePressEvent(QMouseEvent *event) {
 //  p_menu_->show();
 //}
 
-void shotTypeWidget::setModel(QAbstractItemModel *model) {
-  auto p_model = dynamic_cast<shotTypeModel *>(model);
-  if (p_model)
-    p_file_type_shot_model_ = p_model;
-  QAbstractItemView::setModel(model);
-}
 void shotTypeWidget::clear() {
   clearSelection();
-  p_file_type_shot_model_->reInit();
-   coreDataManager::get().setShotTypePtr(nullptr);
-  doodleUseFilter(false);
+  update();
+  coreDataManager::get().setShotTypePtr(nullptr);
+  doodleUseFilter(filterState::notFilter);
 }
 
 shotTypeWidget::~shotTypeWidget() = default;

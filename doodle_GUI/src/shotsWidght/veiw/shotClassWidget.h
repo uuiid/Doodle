@@ -24,12 +24,10 @@ class shotClassWidget : public QListView {
   explicit shotClassWidget(QWidget *parent = nullptr);
   ~shotClassWidget() override = default;
 
-  void setModel(QAbstractItemModel *model) override;
-
  public:
   void clear();
  Q_SIGNALS:
-  void doodleUseFilter(bool useFilter);
+  void doodleUseFilter(const filterState &state);
 
  private Q_SLOTS:
   //添加fileclass
