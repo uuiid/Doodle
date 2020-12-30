@@ -1,0 +1,10 @@
+target_sources(
+        doodle
+        PUBLIC
+        queueManager.h
+)
+target_sources(
+        doodle
+        PRIVATE
+        queueManager.cpp
+)
