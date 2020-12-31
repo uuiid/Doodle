@@ -271,7 +271,13 @@ void assFileSqlInfo::batchSetAttr(const T &row) {
   if (row.assTypeId._is_valid) ass_type_id = row.assTypeId;
 }
 bool assFileSqlInfo::sortType(const assInfoPtr &t1, const assInfoPtr &t2) {
-  return t1->getAssType()->getType() < t2->getAssType()->getType();
+  auto t1_type = t1->getAssType();
+  auto t2_type = t2->getAssType();
+  if (t1_type && t2_type) {
+    return t1_type->getType() < t2_type->getType();
+  } else {
+    return false;
+  }
 }
 int assFileSqlInfo::getMaxVecsion() {
   for (const auto &info_l : p_instance) {

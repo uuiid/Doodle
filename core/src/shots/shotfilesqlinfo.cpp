@@ -458,9 +458,16 @@ void shotFileSqlInfo::setShotType(const shotTypePtr& fileType_) {
   setShotClass();
 }
 bool shotFileSqlInfo::sort(const shotInfoPtr& t1, const shotInfoPtr& t2) {
-  return (t1->getShotclass()->getClass_str() <
-          t2->getShotclass()->getClass_str()) &&
-         (t1->getShotType()->getType() < t2->getShotType()->getType());
+  auto t1_class = t1->getShotclass();
+  auto t2_class = t2->getShotclass();
+  auto t1_type  = t1->getShotType();
+  auto t2_type  = t2->getShotType();
+  if (t1_class && t2_class && t1_type && t2_type) {
+    return t1_class->getClass_str() < t2_class->getClass_str() &&
+           t1_type->getType() < t2_type->getType();
+  } else {
+    return false;
+  }
 }
 int shotFileSqlInfo::getVersionMax() {
   for (const auto& info_l : p_instance) {

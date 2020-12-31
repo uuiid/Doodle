@@ -44,6 +44,7 @@ assTableWidght::assTableWidght(QWidget *parent)
   setShowGrid(false);
   setFrameShape(QFrame::NoFrame);
   setAcceptDrops(true);
+
   connect(this, &assTableWidght::clicked, this,
           &assTableWidght::doClickedSlots);
   connect(this, &assTableWidght::doubleClicked, this,

@@ -6,10 +6,10 @@
 #include <QtCore/QAbstractListModel>
 
 DOODLE_NAMESPACE_S
-class queueManagerModel {
+class queueManagerModel : public QAbstractListModel {
+  Q_OBJECT
  public:
-  queueManagerModel(/* args */);
-  ~queueManagerModel();
+  explicit queueManagerModel(QObject *parent = nullptr);
 
  private:
 };

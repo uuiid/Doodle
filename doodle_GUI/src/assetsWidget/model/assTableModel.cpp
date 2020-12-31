@@ -259,7 +259,9 @@ void assTableModel::reInit() {
 void assTableModel::clear() {
   if (p_ass_info_ptr_list_.empty()) return;
   beginResetModel();
+  // beginRemoveRows(QModelIndex(), 0, boost::numeric_cast<int>(p_ass_info_ptr_list_.size() - 1));
   p_ass_info_ptr_list_.clear();
+  // endRemoveRows();
   endResetModel();
 }
 void assTableModel::setList(assInfoPtrList &list) {
