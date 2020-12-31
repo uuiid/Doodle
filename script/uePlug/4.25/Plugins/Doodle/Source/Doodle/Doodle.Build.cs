@@ -28,14 +28,13 @@ public class doodle : ModuleRules
 			new string[]
 			{
 				"Core",
-
-                "ContentBrowser",
-                "EditorScriptingUtilities",
+        "ContentBrowser",
+        "EditorScriptingUtilities",
 				//我的abc导入
 				"GeometryCache",
-                "AlembicLibrary",
-                "AlembicLibrary",
-                "Engine",//几何缓存的骨骼依赖
+        "AlembicLibrary",
+        "AlembicLibrary",
+        "Engine",//几何缓存的骨骼依赖
 				"UnrealEd" //创建actor工厂类需要
 				// ... add other public dependencies that you statically link with here ...
 			}
@@ -54,8 +53,8 @@ public class doodle : ModuleRules
 				"Slate",
 				"SlateCore",
 
-                "ContentBrowser",
-                "EditorScriptingUtilities",
+        "ContentBrowser",
+        "EditorScriptingUtilities",
 				"GeometryCache",  //复制材质依赖
 				"AssetTools",     //资产工具 导入依赖
 
