@@ -43,9 +43,12 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
             var = QString("v%1").arg(shot->getVersionP(), 4, 10,
                                      QLatin1Char('0'));
             break;
-          case 1:
-            var = DOTOS(shot->getInfoP().back());
+          case 1: {
+            auto info = shot->getInfoP();
+            if (!info.empty())
+              var = DOTOS(info.back());
             break;
+          }
           case 2:
             var = shot->getUserQ();
             break;

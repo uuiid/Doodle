@@ -66,8 +66,16 @@ void assTableWidght::insertAss(const QString &path) {
   static boost::regex reMaya("m[ab]");
   static boost::regex reUe4("uproject");
   static boost::regex reImage(R"((jpe?g|png|tga))");
+
+  assInfoPtr data{};
+  connect(model(), &QAbstractItemModel::rowsInserted, this,
+          [&data, this](const QModelIndex &index, int row, int column) {
+            data = model()->data(model()->index(row, 0), Qt::UserRole).value<assInfoPtr>();
+          });
+
   model()->insertRow(0, QModelIndex());
-  auto data = model()->data(model()->index(0, 4), Qt::UserRole).value<assInfoPtr>();
+  disconnect(model(), &QAbstractItemModel::rowsInserted, this, nullptr);
+
   //选择提示
   QMessageBox msgBox;
   auto text_info = QInputDialog::getText(this, tr("请输入备注"), tr("请输入文件备注"));
@@ -83,8 +91,7 @@ void assTableWidght::insertAss(const QString &path) {
       auto noButten   = msgBox.addButton("取消", QMessageBox::NoRole);
       msgBox.exec();
       if (msgBox.clickedButton() == image_file) {
-        data->setAssType(
-            assType::findType(assType::e_type::screenshot, true));
+        data->setAssType(assType::findType(assType::e_type::screenshot, true));
         data                = std::get<assInfoPtr>(data->findSimilar());
         auto k_imageArchive = std::make_shared<imageArchive>(data);
         k_imageArchive->update(path.toStdString());
@@ -128,8 +135,9 @@ void assTableWidght::insertAss(const QString &path) {
       updataManager::get().run();
 
     } else if (boost::regex_search(pathInfo.suffix().toStdString(), reUe4)) {  // ue4文件
-      data->setAssType(
-          assType::findType(assType::e_type::UE4, true));
+      data->setAssType(assType::findType(assType::e_type::UE4, true));
+
+      data             = std::get<assInfoPtr>(data->findSimilar());
       auto ue4_archice = std::make_shared<ueArchive>(data);
       ue4_archice->update(path.toStdString());
     } else {

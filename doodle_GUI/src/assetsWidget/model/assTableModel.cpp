@@ -222,8 +222,7 @@ bool assTableModel::insertRows(int position, int rows,
   for (int row = 0; row < rows; ++row) {
     p_ass_info_ptr_list_.insert(p_ass_info_ptr_list_.begin() + position,
                                 std::make_shared<assFileSqlInfo>());
-    p_ass_info_ptr_list_[position]->setAssClass(
-        coreDataManager::get().getAssClassPtr());
+    p_ass_info_ptr_list_[position]->setAssClass(coreDataManager::get().getAssClassPtr());
   }
   //  endInsertColumns();
   endInsertRows();
@@ -265,8 +264,8 @@ void assTableModel::clear() {
   endResetModel();
 }
 void assTableModel::setList(assInfoPtrList &list) {
+  clear();
   if (list.empty()) {
-    clear();
     return;
   }
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list.size()) - 1);

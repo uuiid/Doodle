@@ -192,8 +192,16 @@ void shotTableWidget::insertShot(const QString &path) {
   if (path.isEmpty()) return;
   auto pathInfo = QFileInfo(path);
   //插入新的数据
+
+  shotInfoPtr data{};
+  connect(model(), &QAbstractItemModel::rowsInserted, this,
+          [&data, this](const QModelIndex &index, int row, int column) {
+            data = model()->data(model()->index(row, 0), Qt::UserRole).value<shotInfoPtr>();
+          });
   model()->insertRow(0, QModelIndex());
-  auto data = model()->data(model()->index(0, 4), Qt::UserRole).value<shotInfoPtr>();
+  disconnect(model(), &QAbstractItemModel::rowsInserted, this, nullptr);
+
+  // auto data = model()->data(model()->index(0, 4), Qt::UserRole).value<shotInfoPtr>();
 
   if (pathInfo.isFile()) {
     if (pathInfo.suffix() == "ma" || pathInfo.suffix() == "mb") {  // maya文件

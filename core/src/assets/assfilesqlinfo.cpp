@@ -238,7 +238,7 @@ dataInfoPtr assFileSqlInfo::findSimilar() {
   auto it =
       std::find_if(
           p_instance.begin(), p_instance.end(),
-          [=](assFileSqlInfo *part) -> bool {
+          [=](const assFileSqlInfo *part) -> bool {
             return part->p_dep_ptr_ == p_dep_ptr_ &&
                    part->ass_class_id == ass_class_id &&
                    part->ass_type_id == ass_type_id &&
