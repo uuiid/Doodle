@@ -28,22 +28,21 @@ shotWidget::shotWidget(QWidget* parent)
       p_shot_class_model_(),
       p_shot_layout_(),
       p_shot_type_model_() {
-  //创建模型
-  p_episodes_list_model_ = new shotEpsListModel(this);
-  p_episodes_list_model_->setObjectName(QString::fromUtf8("p_episodes_list_model_"));
-  p_shot_list_model_  = new shotListModel(this);
-  p_shot_type_model_  = new shotTypeModel(this);
-  p_shot_class_model_ = new shotClassModel(this);
-  p_shot_table_model_ = new shotTableModel(this);
-  //创建代理模型
-  auto k_shot_filter_model_ = new shotTableFilterModel(this);
-  k_shot_filter_model_->setSourceModel(p_shot_table_model_);
-
   //设置基本布局
   p_shot_layout_ = new QHBoxLayout(this);
   p_shot_layout_->setSpacing(3);
   p_shot_layout_->setContentsMargins(0, 0, 0, 0);
   p_shot_layout_->setObjectName(QString::fromUtf8("p_shot_layout_"));
+  //创建模型
+  p_episodes_list_model_ = new shotEpsListModel();
+  p_episodes_list_model_->setObjectName(QString::fromUtf8("p_episodes_list_model_"));
+  p_shot_list_model_  = new shotListModel();
+  p_shot_type_model_  = new shotTypeModel();
+  p_shot_class_model_ = new shotClassModel();
+  p_shot_table_model_ = new shotTableModel();
+  //创建代理模型
+  auto k_shot_filter_model_ = new shotTableFilterModel();
+  k_shot_filter_model_->setSourceModel(p_shot_table_model_);
 
   //创建集数小部件
   p_episodes_list_widget_ = new shotEpsListWidget();
@@ -55,9 +54,6 @@ shotWidget::shotWidget(QWidget* parent)
   p_shot_list_widget_ = new shotListWidget();
   p_shot_list_widget_->setObjectName(QString::fromUtf8("p_shot_list_widget_"));
   p_shot_list_widget_->setModel(p_shot_list_model_);
-  //连接集数和镜头的更新
-  connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
-          p_shot_list_model_, &shotListModel::init);
 
   //添加部门小部件和种类小部件的布局
   auto layout_1 = new QVBoxLayout();
@@ -68,10 +64,6 @@ shotWidget::shotWidget(QWidget* parent)
   p_shot_table_widget_ = new shotTableWidget();
   p_shot_table_widget_->setObjectName("p_shot_table_widget_");
   p_shot_table_widget_->setModel(k_shot_filter_model_);
-  connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
-          p_shot_table_model_, &shotTableModel::init);
-  connect(p_shot_list_widget_, &shotListWidget::initEmit,
-          p_shot_table_model_, &shotTableModel::init);
 
   //添加部门小部件
   p_shot_class_widget_ = new shotClassWidget();
@@ -81,10 +73,6 @@ shotWidget::shotWidget(QWidget* parent)
 
   connect(p_shot_class_widget_, &shotClassWidget::doodleUseFilter,
           k_shot_filter_model_, &shotTableFilterModel::useFilter);
-  connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
-          p_shot_class_model_, &shotClassModel::reInit);
-  connect(p_shot_list_widget_, &shotListWidget::initEmit,
-          p_shot_class_model_, &shotClassModel::reInit);
 
   //添加种类小部件
   p_shot_type_widget_ = new shotTypeWidget();
@@ -93,10 +81,42 @@ shotWidget::shotWidget(QWidget* parent)
   layout_1->addWidget(p_shot_type_widget_);
   connect(p_shot_type_widget_, &shotTypeWidget::doodleUseFilter,
           k_shot_filter_model_, &shotTableFilterModel::useFilter);
-  connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
-          p_shot_type_model_, &shotTypeModel::reInit);
+
   connect(p_shot_list_widget_, &shotListWidget::initEmit,
-          p_shot_type_model_, &shotTypeModel::reInit);
+          this, [=]() {
+            auto& mData = coreDataManager::get();
+            mData.setShotClassPtr(nullptr);
+            mData.setShotTypePtr(nullptr);
+            mData.setShotInfoPtr(nullptr);
+
+            k_shot_filter_model_->useFilter(filterState::notFilter);
+
+            p_shot_type_widget_->clear();
+            p_shot_class_widget_->clear();
+
+            p_shot_class_model_->reInit();
+            p_shot_type_model_->reInit();
+            p_shot_table_model_->init();
+          });
+
+  connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
+          this, [=]() {
+            auto& mData = coreDataManager::get();
+            mData.setShotPtr(nullptr);
+            mData.setShotClassPtr(nullptr);
+            mData.setShotTypePtr(nullptr);
+            mData.setShotInfoPtr(nullptr);
+
+            //连接集数和镜头的更新
+            p_shot_type_widget_->clear();
+            p_shot_class_widget_->clear();
+
+            p_shot_class_model_->reInit();
+            p_shot_type_model_->reInit();
+
+            p_shot_list_model_->init();
+            p_shot_table_model_->init();
+          });
 
   //将小部件添加到布局中
   p_shot_layout_->addWidget(p_episodes_list_widget_, 2);
@@ -107,6 +127,13 @@ shotWidget::shotWidget(QWidget* parent)
   setMinimumWidth(500);
 }
 void shotWidget::refresh() {
+  auto& mData = coreDataManager::get();
+  mData.setEpisodesPtr(nullptr);
+  mData.setShotPtr(nullptr);
+  mData.setShotClassPtr(nullptr);
+  mData.setShotTypePtr(nullptr);
+  mData.setShotInfoPtr(nullptr);
+
   p_episodes_list_model_->init();
   p_shot_class_model_->init();
   p_shot_type_model_->init();

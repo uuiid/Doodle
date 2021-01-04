@@ -22,7 +22,6 @@ class shotClassWidget : public QListView {
 
  public:
   explicit shotClassWidget(QWidget *parent = nullptr);
-  ~shotClassWidget() override = default;
 
  public:
   void clear();

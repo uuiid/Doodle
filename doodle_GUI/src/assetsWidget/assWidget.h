@@ -17,8 +17,6 @@ class assWidght : public QWidget {
   explicit assWidght(QWidget *parent = nullptr);
  public Q_SLOTS:
   void refresh();
- private Q_SLOTS:
-  void setFilterRegExp(const QString &filter);
 
  private:
   //这些都是资产变量

@@ -17,8 +17,7 @@ class shotClassModel : public QAbstractListModel {
 
  public:
   explicit shotClassModel(QObject *parent = nullptr);
-  ~shotClassModel() override = default;
-  ;
+
 
   //返回总行数
   int rowCount(const QModelIndex &parent) const override;

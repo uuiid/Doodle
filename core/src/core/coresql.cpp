@@ -37,7 +37,7 @@ void coreSql::initDB() {
   config->database = "doodle_main";
 #else
   config->database = "test_db";
-  // config->database = "doodle_main";
+  config->database = "doodle_main";
 #endif  //NDEBUG
   config->debug = false;
 }

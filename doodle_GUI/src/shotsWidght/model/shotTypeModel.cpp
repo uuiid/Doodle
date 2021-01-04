@@ -10,7 +10,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
 shotTypeModel::shotTypeModel(QObject *parent) : QAbstractListModel(parent) {
-   shotType::insertChanged.connect(boost::bind(&shotTypeModel::reInit, this));
+  shotType::insertChanged.connect(boost::bind(&shotTypeModel::reInit, this));
 }
 
 int shotTypeModel::rowCount(const QModelIndex &parent) const {
@@ -36,7 +36,7 @@ QVariant shotTypeModel::data(const QModelIndex &index, int role) const {
   return var;
 }
 
- shotTypePtr shotTypeModel::daraRow(const QModelIndex &index) const {
+shotTypePtr shotTypeModel::daraRow(const QModelIndex &index) const {
   if (!index.isValid()) return nullptr;
   return p_type_ptr_list_[index.row()];
 }
@@ -75,7 +75,7 @@ bool shotTypeModel::insertRows(int position, int rows, const QModelIndex &index)
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     p_type_ptr_list_.insert(p_type_ptr_list_.begin() + position,
-                            std::make_shared< shotType>());
+                            std::make_shared<shotType>());
   }
   endInsertRows();
   return true;
@@ -90,7 +90,7 @@ bool shotTypeModel::removeRows(int position, int rows, const QModelIndex &index)
 }
 void shotTypeModel::init() {
   clear();
-  auto tmp_fileTypeList =  shotType::getAll();
+  auto tmp_fileTypeList = shotType::getAll();
   if (tmp_fileTypeList.empty()) return;
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()) - 1);
   p_type_ptr_list_ = tmp_fileTypeList;
@@ -102,8 +102,8 @@ void shotTypeModel::clear() {
   endResetModel();
 }
 void shotTypeModel::reInit() {
-   shotTypePtrList tmp_fileTypeList{};
-  for (auto &tmp :  shotType::Instances()) {
+  shotTypePtrList tmp_fileTypeList{};
+  for (auto &tmp : shotType::Instances()) {
     if (tmp)
       tmp_fileTypeList.push_back(tmp->shared_from_this());
   }
@@ -113,7 +113,5 @@ void shotTypeModel::reInit() {
   p_type_ptr_list_ = tmp_fileTypeList;
   endInsertRows();
 }
-
-shotTypeModel::~shotTypeModel() = default;
 
 DOODLE_NAMESPACE_E

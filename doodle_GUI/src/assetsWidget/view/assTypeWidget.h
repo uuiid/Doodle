@@ -38,7 +38,6 @@ class assTypeWidget : public QListView {
   void doodleUseFilter(const filterState &useFilter);
 
  private:
-   shotTypePtrList p_type_ptr_list_;
   //m模型指针
   assTypeModel *p_model_;
   //菜单

@@ -12,8 +12,9 @@
 
 DOODLE_NAMESPACE_S
 shotClassModel::shotClassModel(QObject *parent)
-    : QAbstractListModel(parent), list_fileClass() {
-   shotClass::insertChanged.connect(boost::bind(&shotClassModel::reInit, this));
+    : QAbstractListModel(parent),
+      list_fileClass() {
+  shotClass::insertChanged.connect(boost::bind(&shotClassModel::reInit, this));
 }
 
 int shotClassModel::rowCount(const QModelIndex &parent) const {
@@ -38,7 +39,7 @@ QVariant shotClassModel::data(const QModelIndex &index, int role) const {
   return var;
 }
 
- shotClassPtr shotClassModel::dataRow(const QModelIndex &index) const {
+shotClassPtr shotClassModel::dataRow(const QModelIndex &index) const {
   if (!index.isValid()) return nullptr;
   if (index.row() >= list_fileClass.size()) return nullptr;
   return list_fileClass[index.row()];
@@ -90,7 +91,7 @@ bool shotClassModel::setData(const QModelIndex &index, const QVariant &value,
 bool shotClassModel::insertRows(int position, int rows,
                                 const QModelIndex &index) {
   bool isHas = false;
-  auto dep   =  coreSet::getSet().getDepartment();
+  auto dep   = coreSet::getSet().getDepartment();
   for (auto &&i : list_fileClass) {
     if (dep == i->getClass_str()) {
       isHas = true;
@@ -102,7 +103,7 @@ bool shotClassModel::insertRows(int position, int rows,
     for (int row = 0; row < rows; ++row) {
       DOODLE_LOG_INFO("插入新的fileclass镜头");
       list_fileClass.insert(list_fileClass.begin() + position,
-                            std::make_shared< shotClass>());
+                            std::make_shared<shotClass>());
       list_fileClass[position]->setclass(dep);
     }
   }
@@ -124,7 +125,7 @@ bool shotClassModel::removeRows(int position, int rows,
 }
 
 void shotClassModel::init() {
-  auto fileClassPtrList =  shotClass::getAll();
+  auto fileClassPtrList = shotClass::getAll();
   clear();
   if (fileClassPtrList.empty()) return;
   beginInsertRows(QModelIndex(), 0,
@@ -142,8 +143,8 @@ void shotClassModel::clear() {
 void shotClassModel::reInit() {
   // if (list_fileClass.empty()) return;
 
-  auto shotClass =  shotClass::Instances();
-   shotClassPtrList shotClassPtrList{};
+  auto shotClass = shotClass::Instances();
+  shotClassPtrList shotClassPtrList{};
   for (auto &shot : shotClass) {
     if (shot)
       shotClassPtrList.push_back(shot->shared_from_this());

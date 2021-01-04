@@ -60,7 +60,7 @@ dpathList pathParsing::getPath(const std::string& pathstr) {
       }
 
     } catch (const nlohmann::json::parse_error& err) {
-      DOODLE_LOG_INFO(err.what());
+      // DOODLE_LOG_INFO(err.what());
       auto& fileSys = doSystem::DfileSyntem::get();
 
       //先判断存在性
@@ -80,7 +80,7 @@ dpathList pathParsing::getPath(const std::string& pathstr) {
             }
             file->close();
           } catch (const nlohmann::json::parse_error& err) {
-            DOODLE_LOG_INFO(err.what());
+            // DOODLE_LOG_INFO(err.what());
             list.push_back(pathstr);
           }
         } else {

@@ -16,12 +16,11 @@ class shotTypeModel : public QAbstractListModel {
   Q_OBJECT
  public:
   explicit shotTypeModel(QObject *parent = nullptr);
-  ~shotTypeModel() override;
   //返回总行数
   [[nodiscard]] int rowCount(const QModelIndex &parent) const override;
 
   [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override;
-  [[nodiscard]]  shotTypePtr daraRow(const QModelIndex &index) const;
+  [[nodiscard]] shotTypePtr daraRow(const QModelIndex &index) const;
 
   //返回标头
   [[nodiscard]] QVariant headerData(int section,
@@ -42,6 +41,6 @@ class shotTypeModel : public QAbstractListModel {
   void clear();
 
  private:
-   shotTypePtrList p_type_ptr_list_;
+  shotTypePtrList p_type_ptr_list_;
 };
 DOODLE_NAMESPACE_E

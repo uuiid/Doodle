@@ -98,6 +98,7 @@ void shotTypeWidget::mousePressEvent(QMouseEvent *event) {
 //}
 
 void shotTypeWidget::clear() {
+  selectionModel()->clearSelection();
   clearSelection();
   update();
   coreDataManager::get().setShotTypePtr(nullptr);

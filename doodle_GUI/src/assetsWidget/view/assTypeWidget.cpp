@@ -19,7 +19,7 @@ QWidget *fileTypeAssDelegate::createEditor(QWidget *parent,
                                            const QModelIndex &index) const {
   auto *fileType = new QComboBox(parent);
 
-  auto assClass =  coreDataManager::get().getAssClassPtr();
+  auto assClass = coreDataManager::get().getAssClassPtr();
   QStringList list;
   list << "sourceimages"
        << "scenes"
@@ -56,7 +56,6 @@ void fileTypeAssDelegate::updateEditorGeometry(QWidget *editor, const QStyleOpti
 
 assTypeWidget::assTypeWidget(QWidget *parent)
     : QListView(parent),
-      p_type_ptr_list_(),
       p_menu_(nullptr),
       p_model_(nullptr) {
   setItemDelegate(new fileTypeAssDelegate(this));
@@ -77,17 +76,18 @@ void assTypeWidget::inserttype() {
   edit(p_model_->index(raw));
 }
 void assTypeWidget::_doodle_type_emit(const QModelIndex &index) {
-   coreDataManager::get().setAssTypePtr(
-      index.data(Qt::UserRole).value< assTypePtr>());
+  coreDataManager::get().setAssTypePtr(
+      index.data(Qt::UserRole).value<assTypePtr>());
   doodleUseFilter(filterState::useFilter);
 }
 void assTypeWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
   if (!indexAt(event->pos()).isValid()) {
+    selectionModel()->clearSelection();
     clearSelection();
     update();
     // p_model_->reInit();
-     coreDataManager::get().setAssTypePtr(nullptr);
+    coreDataManager::get().setAssTypePtr(nullptr);
     doodleUseFilter(filterState::notFilter);
   }
 }

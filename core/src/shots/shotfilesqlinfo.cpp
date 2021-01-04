@@ -81,6 +81,7 @@ void shotFileSqlInfo::insert() {
                               shotClass::getCurrentClass()->getIdP());
 
   if (p_shTy_id > 0) install.insert_list.add(tab.shotTypeId = p_shTy_id);
+
   idP = db->insert(install);
   fileSqlInfo::insert();
   if (idP == 0) {
@@ -105,6 +106,7 @@ void shotFileSqlInfo::updateSQL() {
                    tab.fileSuffixes = fileSuffixesP,
                    tab.version      = versionP)
             .where(tab.id == idP));
+
     fileSqlInfo::updateSQL();
   } catch (const sqlpp::exception& err) {
     DOODLE_LOG_WARN(err.what());
@@ -147,6 +149,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr& EP_) {
     Info->setEpisdes(EP_);
     list.push_back(Info);
     p_instance.insert(Info.get());
+    Info->exist(true);
   }
   return list;
 }
@@ -164,6 +167,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& sh_) {
     Info->batchSetAttr(row);
     Info->setShot(sh_);
     Info->exist(true);
+
     list.push_back(Info);
     p_instance.insert(Info.get());
   }
