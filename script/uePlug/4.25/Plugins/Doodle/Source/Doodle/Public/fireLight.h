@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -31,9 +31,13 @@ class DOODLE_API AfireLight : public AActor {
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Doodle_Light", DisplayName = "LightCurve")
   FRuntimeFloatCurve p_LocalLightCurve;
 
-  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Doodle_Light", DisplayName = "PointLight")
+  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle_Light", DisplayName = "PointLight")
   ULocalLightComponent* p_LocalLight;
 
+  UFUNCTION(BlueprintCallable, meta = (CallInEditor = "true", OverrideNativeName = "切换", Category = "Doodle_Light", Tooltip = "切换点光源和聚光灯"))
+  virtual void SearchLight();
+
+  //覆盖用来在编辑器中运行
   virtual bool ShouldTickIfViewportsOnly() const override;
 
  protected:

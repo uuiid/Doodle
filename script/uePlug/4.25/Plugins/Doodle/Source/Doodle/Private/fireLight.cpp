@@ -3,6 +3,8 @@
 #include "fireLight.h"
 
 #include "Components/PointLightComponent.h"
+#include "Components/SpotLightComponent.h"
+
 // Sets default values
 AfireLight::AfireLight() {
   // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -48,10 +50,30 @@ void AfireLight::Tick(float DeltaTime) {
   noise           = p_LocalLightCurve.GetRichCurveConst()->Eval(time_model) * noise;
 
   // 设置灯光亮度
-  p_LocalLight->SetIntensity(noise);
+  if (p_LocalLight)
+    p_LocalLight->SetIntensity(noise);
   // p_LocalLight->SetLightBrightness(noise * 1000);
   // debug宏
   // UE_LOG(LogTemp, Log, TEXT("%f"), time_modesl);
+}
+
+void AfireLight::SearchLight() {
+  ULocalLightComponent* light;
+  if (p_LocalLight->GetClass() == UPointLightComponent::StaticClass()) {
+    light = NewObject<USpotLightComponent>(this, TEXT("Light_Spot"));
+  } else {
+    light = NewObject<UPointLightComponent>(this, TEXT("Light_Point"));
+  }
+  light->RegisterComponent();
+
+  auto light_Transform = p_LocalLight->GetComponentTransform();
+  light->SetWorldTransform(light_Transform);
+
+  SetRootComponent(light);
+  p_LocalLight->UnregisterComponent();
+  p_LocalLight->DestroyComponent();
+  // light->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+  p_LocalLight = light;
 }
 
 bool AfireLight::ShouldTickIfViewportsOnly() const {
