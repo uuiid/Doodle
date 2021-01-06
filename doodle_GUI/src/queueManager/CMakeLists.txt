@@ -1,10 +1,12 @@
+add_subdirectory(model)
+add_subdirectory(view)
 target_sources(
         doodle
         PUBLIC
-        queueManager.h
+        queueManagerWidget.h
 )
 target_sources(
         doodle
         PRIVATE
-        queueManager.cpp
+        queueManagerWidget.cpp
 )

@@ -29,6 +29,7 @@ QVariant shotListModel::data(const QModelIndex &index, int role) const {
 
   if (index.row() >= shotlist.size())
     return var;
+
   switch (role) {
     case Qt::DisplayRole:
       var = shotlist[index.row()]->getShotAndAb_strQ();

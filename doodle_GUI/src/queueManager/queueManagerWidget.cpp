@@ -1,0 +1,9 @@
+#include "queueManager.h"
+
+DOODLE_NAMESPACE_S
+
+queueManagerWidget::queueManagerWidget(QWidget *parent)
+    : QWidget(parent) {
+}
+
+DOODLE_NAMESPACE_E

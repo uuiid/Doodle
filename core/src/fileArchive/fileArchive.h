@@ -18,8 +18,8 @@ CORE_NAMESPACE_S
 class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
  public:
   fileArchive();
-  ~fileArchive() = default;
-  ;
+  virtual ~fileArchive() = default;
+
   enum class state {
     none    = 0,
     success = 1,
