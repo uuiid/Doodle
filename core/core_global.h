@@ -7,6 +7,7 @@
 
 #include <QtCore/qglobal.h>
 #include <QtCore/QString>
+
 #include <vector>
 #include <unordered_set>
 #include <iostream>
@@ -49,6 +50,7 @@
 #if __has_cpp_attribute(nodiscard) && \
     !(defined(__clang__) && (__cplusplus < 201703L))
 #define DOODLE_NODISCARD [[nodiscard]]
+
 #endif
 #if __has_cpp_attribute(no_unique_address) && \
     !(defined(__GNUC__) && (__cplusplus < 201100))
@@ -96,6 +98,9 @@ class freeSynWrap;
 class movieEpsArchive;
 class synData;
 class pathParsing;
+
+class queueData;
+using queueDataPtr = std::shared_ptr<queueData>;
 
 //共享指针引用类
 using shotPtr      = std::shared_ptr<shot>;

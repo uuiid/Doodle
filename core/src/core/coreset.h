@@ -30,9 +30,7 @@ class CORE_API coreSet {
  public:
   static coreSet &getSet();
 
-  coreSet &operator=(const coreSet &s) = delete;
-  coreSet(const coreSet &s)            = delete;
-
+  DOODLE_DISABLE_COPY(coreSet)
   //初始化函数
   void init();
   void reInit();

@@ -1,11 +1,18 @@
 #include "queueData.h"
 
+#include <src/core/queueManager.h>
+
 DOODLE_NAMESPACE_S
 queueData::queueData(futureB&& f)
     : p_fu(std::move(f)),
       p_name("Queue"),
       p_progress(0),
       p_string() {
+  submit();
+}
+
+bool queueData::submit() {
+  queueManager::Get().append(shared_from_this());
 }
 
 void queueData::appendInfo(const std::string& str) noexcept {

@@ -5,16 +5,14 @@
 #include <boost/signals2.hpp>
 
 DOODLE_NAMESPACE_S
-class CORE_API queueData {
+class CORE_API queueData : public std::enable_shared_from_this<queueData> {
   using futureB = std::future<bool>;
 
  public:
+  //在每次创建出来时都会自动提交到队列管理器中
   queueData(futureB&& f);
 
   // boost::signals2::signal<void(int)> progress;
-
-  // 提交信息
-  bool submit();
 
   //添加信息
   void appendInfo(const std::string& str) noexcept;
@@ -30,10 +28,13 @@ class CORE_API queueData {
   const std::string& Name() const noexcept;
 
  private:
+  // 提交信息
+  bool submit();
+
+ private:
   std::future<bool> p_fu;
   std::string p_name;
   std::string p_string;
   int p_progress;
 };
-
 DOODLE_NAMESPACE_E

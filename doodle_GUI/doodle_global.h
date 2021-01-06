@@ -16,11 +16,6 @@
 #include <QComboBox>
 #include <QSpinBox>
 
-// #define DOODLE_NAMESPACE_S namespace doodle {
-// #define DOODLE_NAMESPACE_E \
-//   }                        \
-//   ;
-
 // class QHBoxLayout;
 // class QComboBox;
 
