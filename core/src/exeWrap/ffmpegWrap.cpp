@@ -11,7 +11,7 @@
 #include <boost/format.hpp>
 #include <iostream>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 ffmpegWrap::ffmpegWrap()
     : p_tmp_file_() {
   p_tmp_file_ = std::make_shared<boost::filesystem::path>(
@@ -153,4 +153,4 @@ bool ffmpegWrap::runFFmpeg(const std::string &command) const {
   return true;
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

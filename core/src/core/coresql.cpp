@@ -9,7 +9,7 @@
 
 #include <thread>
 #include <stdexcept>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 coreSql::coreSql()
     : isInit(false),
       ip(),
@@ -58,4 +58,4 @@ void coreSql::initDB(const dstring &ip_) {
   initDB();
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

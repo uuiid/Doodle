@@ -17,7 +17,7 @@
 #include <utility>
 #include "src/shots/shotfilesqlinfo.h"
 #include "src/fileArchive/fileArchive.h"
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 movieArchive::movieArchive(fileSqlInfoPtr shot_info_ptr)
     : fileArchive(),
       p_info_ptr_(std::move(shot_info_ptr)) {
@@ -94,4 +94,4 @@ bool movieArchive::update(const dpathList &filelist) {
   return isok;
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

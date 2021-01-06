@@ -15,7 +15,7 @@
 #include <core_global.h>
 #include <src/core/coresqldata.h>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 class CORE_API assdepartment
     : public coresqldata,
       public std::enable_shared_from_this<assdepartment> {
@@ -43,4 +43,4 @@ class CORE_API assdepartment
   DOODLE_INSRANCE(assdepartment);
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

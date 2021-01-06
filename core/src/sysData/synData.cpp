@@ -22,7 +22,7 @@
 //反射使用
 #include <rttr/registration>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
   rttr::registration::class_<episodes>(DOCORE_RTTE_CLASS(episodes))
@@ -137,4 +137,4 @@ void synData::setSynPath(const std::string &json_str) {
     DOODLE_LOG_INFO("not json" << error.what());
   }
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

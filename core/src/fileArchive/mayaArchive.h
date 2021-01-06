@@ -4,7 +4,7 @@
 
 #include "src/fileArchive/fileArchive.h"
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 class CORE_API mayaArchive : public fileArchive {
  public:
   explicit mayaArchive(fileSqlInfoPtr shot_data);
@@ -25,4 +25,4 @@ class CORE_API mayaArchive : public fileArchive {
   fileSqlInfoPtr p_info_ptr_;
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

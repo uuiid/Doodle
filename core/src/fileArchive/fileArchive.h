@@ -13,7 +13,7 @@
 // #include <QVector>
 #include <boost/filesystem.hpp>
 #include <fileSystem_global.h>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
  public:
@@ -75,4 +75,4 @@ class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
   state p_state_;
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

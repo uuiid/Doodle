@@ -6,7 +6,7 @@
 #include "src/core/coreset.h"
 #include "src/fileDBInfo/filesqlinfo.h"
 #include "src/exeWrap/freeSynWrap.h"
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 ueArchive::ueArchive(fileSqlInfoPtr data)
     : p_info_(std::move(data)), p_syn(std::make_shared<freeSynWrap>()) {}
 
@@ -75,4 +75,4 @@ void ueArchive::_down(const dpath &localPath) {
   p_cacheFilePath.pop_back();
   fileArchive::_down(localPath);
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

@@ -12,7 +12,7 @@
 
 //导入boost信号
 #include <boost/signals2.hpp>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API shotFileSqlInfo
     : public std::enable_shared_from_this<shotFileSqlInfo>,
@@ -80,4 +80,4 @@ class CORE_API shotFileSqlInfo
   DOODLE_INSRANCE(shotFileSqlInfo);
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

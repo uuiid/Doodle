@@ -11,7 +11,7 @@
 #include <core_global.h>
 #include <src/core/coresqldata.h>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API shot : public coresqldata,
                       public std::enable_shared_from_this<shot> {
@@ -82,4 +82,4 @@ inline QString shot::getShotAndAb_strQ() const {
 inline QString shot::getShotAb_strQ() const {
   return QString::fromStdString(getShotAb_str());
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

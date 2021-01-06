@@ -24,7 +24,7 @@
 
 //反射使用
 #include <rttr/registration>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
   rttr::registration::class_<assdepartment>(DOCORE_RTTE_CLASS(assdepartment))
@@ -91,4 +91,4 @@ const QString assdepartment::getAssDepQ() const {
   return QString::fromStdString(getAssDep());
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

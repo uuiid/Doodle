@@ -12,7 +12,7 @@
 #include <src/core/coresqldata.h>
 
 #include <boost/signals2.hpp>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API shotClass : public coresqldata,
                            public std::enable_shared_from_this<shotClass> {
@@ -68,4 +68,4 @@ inline QString shotClass::getClass_Qstr() const {
 inline void shotClass::setclass(const QString &value) {
   setclass(value.toStdString());
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

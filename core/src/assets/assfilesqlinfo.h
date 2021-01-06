@@ -14,7 +14,7 @@
 //导入boost信号
 #include <boost/signals2.hpp>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API assFileSqlInfo
     : public fileSqlInfo,
@@ -72,4 +72,4 @@ class CORE_API assFileSqlInfo
   RTTR_ENABLE(fileSqlInfo)
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

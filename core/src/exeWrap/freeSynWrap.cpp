@@ -17,7 +17,7 @@
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/format.hpp>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 freeSynWrap::freeSynWrap()
     : hasInclude(false),
       p_tem_golb_(
@@ -230,4 +230,4 @@ freeSynWrap::~freeSynWrap() {
   //  boost::filesystem::remove(*p_tem_golb_);
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

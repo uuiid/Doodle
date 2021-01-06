@@ -17,7 +17,7 @@
 #include <boost/filesystem.hpp>
 #include <regex>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 fileArchive::fileArchive()
     : p_soureFile(),
@@ -183,4 +183,4 @@ bool fileArchive::generateCachePath() {
   return true;
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

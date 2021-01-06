@@ -9,7 +9,7 @@
 
 #include <sstream>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 pathParsing::pathParsing()
     : p_path_row() {
 }
@@ -114,4 +114,4 @@ dpathList pathParsing::operator()() {
   return dpathList();
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

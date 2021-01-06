@@ -3,7 +3,7 @@
 #include "core_global.h"
 #include <stdexcept>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 //----------------------------------------------------------------
 class CORE_API doodle_notFile : public std::runtime_error {
@@ -38,4 +38,4 @@ class CORE_API doodle_FindErrorInfo : public std::runtime_error {
   doodle_FindErrorInfo(const std::string &err) : std::runtime_error(err){};
   virtual const char *what() const noexcept override;
 };
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

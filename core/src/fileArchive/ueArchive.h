@@ -11,7 +11,7 @@
 #include "core_global.h"
 #include "src/fileArchive/fileArchive.h"
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 class CORE_API ueArchive : public fileArchive {
  public:
   explicit ueArchive(fileSqlInfoPtr data);
@@ -30,4 +30,4 @@ class CORE_API ueArchive : public fileArchive {
   freeSynWrapPtr p_syn;
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

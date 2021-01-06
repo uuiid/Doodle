@@ -1,6 +1,6 @@
 #include "queueData.h"
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 queueData::queueData(futureB&& f)
     : p_fu(std::move(f)),
       p_name("Queue"),
@@ -8,11 +8,11 @@ queueData::queueData(futureB&& f)
       p_string() {
 }
 
-void queueData::appendInfo(const std::string& str) {
+void queueData::appendInfo(const std::string& str) noexcept {
   p_string.append(str);
 }
 
-const std::string& queueData::Info() const {
+const std::string& queueData::Info() const noexcept {
   return p_string;
 }
 
@@ -20,16 +20,16 @@ const int& queueData::progress() const noexcept {
   return p_progress;
 }
 
-const queueData::futureB& queueData::future() const {
+const queueData::futureB& queueData::future() const noexcept {
   return p_fu;
 }
 
-void queueData::setName(const std::string& name) {
+void queueData::setName(const std::string& name) noexcept {
   p_name = name;
 }
 
-const std::string& queueData::Name() const {
+const std::string& queueData::Name() const noexcept {
   return p_name;
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

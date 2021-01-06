@@ -4,7 +4,7 @@
 
 #include <boost/signals2.hpp>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 class CORE_API queueData {
   using futureB = std::future<bool>;
 
@@ -36,4 +36,4 @@ class CORE_API queueData {
   int p_progress;
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

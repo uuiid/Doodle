@@ -13,7 +13,7 @@
 //反射使用
 #include <rttr/registration>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
   rttr::registration::class_<episodes>(DOCORE_RTTE_CLASS(episodes))
@@ -139,4 +139,4 @@ QString episodes::getEpisdes_QStr() const {
   return QString::fromStdString(getEpisdes_str());
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

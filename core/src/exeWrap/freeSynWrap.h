@@ -8,7 +8,7 @@ class xml_document;
 class xml_node;
 }  // namespace pugi
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 class CORE_API freeSynWrap : public boost::noncopyable_::noncopyable {
  public:
   freeSynWrap();
@@ -52,4 +52,4 @@ class CORE_API freeSynWrap : public boost::noncopyable_::noncopyable {
   dpathPtr p_tem_golb_;
   dpathPtr p_tem_config;
 };
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

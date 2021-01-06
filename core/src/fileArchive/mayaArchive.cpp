@@ -13,7 +13,7 @@
 #include <Logger.h>
 #include <boost/filesystem.hpp>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 mayaArchive::mayaArchive(fileSqlInfoPtr shot_data)
     : p_info_ptr_(std::move(shot_data)) {}
 
@@ -64,4 +64,4 @@ void mayaArchive::_generateFilePath() {
   }
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

@@ -23,7 +23,7 @@
 //反射使用
 #include <rttr/registration>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
   rttr::registration::class_<znchName>(DOCORE_RTTE_CLASS(znchName))
@@ -97,4 +97,4 @@ std::string znchName::getName() const {
     return "";
 }
 std::string znchName::pinyin() const { return nameEN; }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

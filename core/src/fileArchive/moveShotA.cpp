@@ -13,7 +13,7 @@
 #include "src/fileDBInfo/filesqlinfo.h"
 #include "src/shots/shotfilesqlinfo.h"
 #include <src/shots/shottype.h>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 moveShotA::moveShotA(shotInfoPtr shot_info_ptr)
     : movieArchive(std::move(shot_info_ptr)) {
 }
@@ -28,4 +28,4 @@ void moveShotA::setInfoAttr() {
     p_info_ptr_->setInfoP("镜头拍屏");
   }
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

@@ -19,7 +19,7 @@
 
 //反射使用
 #include <rttr/registration>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
   rttr::registration::class_<shotFileSqlInfo>(DOCORE_RTTE_CLASS(shotFileSqlInfo))
@@ -491,4 +491,4 @@ int shotFileSqlInfo::getVersionMax() {
 const std::unordered_set<shotFileSqlInfo*> shotFileSqlInfo::Instances() {
   return p_instance;
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

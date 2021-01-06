@@ -16,7 +16,7 @@
 #include <src/core/coresqldata.h>
 #include <boost/signals2.hpp>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API assType
     : public coresqldata,
@@ -70,4 +70,4 @@ inline const QString assType::getTypeQ() const {
 inline void assType::setType(const QString &string) {
   setType(string.toStdString());
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

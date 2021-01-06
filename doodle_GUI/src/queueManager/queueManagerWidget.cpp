@@ -1,4 +1,4 @@
-#include "queueManager.h"
+#include "queueManagerWidget.h"
 
 DOODLE_NAMESPACE_S
 

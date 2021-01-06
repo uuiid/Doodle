@@ -20,7 +20,7 @@
 //注册sql库使用的外键
 SQLPP_ALIAS_PROVIDER(znID)
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
   rttr::registration::class_<assClass>(DOCORE_RTTE_CLASS(assClass))
@@ -146,4 +146,4 @@ std::string assClass::getAssClass(const bool &isZNCH) {
 const std::unordered_set<assClass *> assClass::Instances() {
   return p_instance;
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

@@ -5,7 +5,7 @@
 #include <boost/filesystem.hpp>
 
 #include <nlohmann/json.hpp>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 enum class dep { None_,
                  Executive,
@@ -163,4 +163,4 @@ inline void coreSet::setSynPathLocale(const QString &syn_path) {
 inline void coreSet::setProjectname(const QString &value) {
   setProjectname(value.toStdString());
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

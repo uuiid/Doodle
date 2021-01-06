@@ -6,7 +6,7 @@
 #include "core_global.h"
 #include "src/fileArchive/fileArchive.h"
 #include <map>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 class CORE_API mayaArchiveShotFbx : public fileArchive {
  public:
 
@@ -27,4 +27,4 @@ class CORE_API mayaArchiveShotFbx : public fileArchive {
   bool readExportJson(const dpath &exportPath);
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

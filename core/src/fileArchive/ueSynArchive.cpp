@@ -17,7 +17,7 @@
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 ueSynArchive::ueSynArchive()
     : fileArchive(), p_syn(std::make_shared<freeSynWrap>()), synpart() {}
 void ueSynArchive::insertDB() {}
@@ -151,4 +151,4 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   }
   return true;
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

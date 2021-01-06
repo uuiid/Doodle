@@ -19,7 +19,7 @@
 
 //反射使用
 #include <rttr/registration>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
   rttr::registration::class_<assFileSqlInfo>(DOCORE_RTTE_CLASS(assFileSqlInfo))
@@ -289,4 +289,4 @@ int assFileSqlInfo::getMaxVecsion() {
 const std::unordered_set<assFileSqlInfo *> assFileSqlInfo::Instances() {
   return p_instance;
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

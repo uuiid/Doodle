@@ -13,7 +13,7 @@
 #include <src/assets/assClass.h>
 #include <src/core/coresqldata.h>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API znchName : public coresqldata {
  public:
@@ -41,4 +41,4 @@ class CORE_API znchName : public coresqldata {
   RTTR_ENABLE(coresqldata)
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

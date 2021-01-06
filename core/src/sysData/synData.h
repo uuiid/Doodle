@@ -10,7 +10,7 @@
 
 #include <core_global.h>
 #include <src/core/coresqldata.h>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API synData : public coresqldata {
   RTTR_ENABLE(coresqldata)
@@ -35,4 +35,4 @@ class CORE_API synData : public coresqldata {
   assClassPtrList p_class_list_;
   synPathListPtr p_path;
 };
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

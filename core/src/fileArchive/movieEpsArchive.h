@@ -5,7 +5,7 @@
 #include <core_global.h>
 #include <src/fileArchive/fileArchive.h>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API movieEpsArchive : public fileArchive {
  public:
@@ -22,4 +22,4 @@ class CORE_API movieEpsArchive : public fileArchive {
 };
 
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

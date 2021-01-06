@@ -11,7 +11,7 @@
 #include "core_global.h"
 #include "src/core/coresqldata.h"
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API fileSqlInfo : public coresqldata {
  public:
@@ -88,4 +88,4 @@ inline QString fileSqlInfo::getUserQ() const {
 inline QString fileSqlInfo::getSuffixesQ() const {
   return QString::fromStdString(getSuffixes());
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

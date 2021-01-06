@@ -15,7 +15,7 @@
 //反射使用
 #include <rttr/registration>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
   rttr::registration::class_<shot>(DOCORE_RTTE_CLASS(shot))
@@ -186,4 +186,4 @@ dstring shot::getShotAb_str() const {
 const std::unordered_set<shot *> shot::Instances() {
   return p_instance;
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

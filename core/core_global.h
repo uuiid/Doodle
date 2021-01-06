@@ -20,17 +20,17 @@
 #define CORE_API __declspec(dllimport)
 #endif
 
-#define CORE_NAMESPACE doodle
-#define CORE_NAMESPACE_S namespace CORE_NAMESPACE {
-#define CORE_NAMESPACE_E \
-  }                      \
+#define DOODLE_NAMESPACE doodle
+#define DOODLE_NAMESPACE_S namespace DOODLE_NAMESPACE {
+#define DOODLE_NAMESPACE_E \
+  }                        \
   ;
 
 #define DOODLE_TOS(str) (#str)
 #define DOODLE_TOS_(str) #str
 #define DOODLE_RTTE_CLASS(nameSpace, className) (DOODLE_TOS_(nameSpace) "::" DOODLE_TOS_(className))
 
-#define DOCORE_RTTE_CLASS(className) DOODLE_RTTE_CLASS(CORE_NAMESPACE, className)
+#define DOCORE_RTTE_CLASS(className) DOODLE_RTTE_CLASS(DOODLE_NAMESPACE, className)
 
 #define DOODLE_INSRANCE(className) static std::unordered_set<className *> p_instance
 #define DOODLE_INSRANCE_CPP(className) \
@@ -73,7 +73,7 @@ class path;
 
 class QFileInfo;
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 using mysqlConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
 
 //使用一些其他方便的引用类型
@@ -163,6 +163,6 @@ using dataInfoPtr = std::variant<
     assTypePtr,
     znchNamePtr,
     assInfoPtr>;
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E
 
 // Q_DECLARE_METATYPE( shotInfoPtr)

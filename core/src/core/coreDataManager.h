@@ -12,7 +12,7 @@
 
 #include <core_global.h>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 class CORE_API coreDataManager : public boost::noncopyable_::noncopyable {
  public:
   //单例使用
@@ -63,4 +63,4 @@ class CORE_API coreDataManager : public boost::noncopyable_::noncopyable {
   assTypePtr p_assType_;
   assInfoPtr p_assInfo_;
 };
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

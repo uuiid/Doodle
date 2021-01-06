@@ -1,6 +1,5 @@
 #include "queueManager.h"
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 queueManager::queueManager() {
 }
-CORE_NAMESPACE_E
-
+DOODLE_NAMESPACE_E

@@ -24,23 +24,29 @@ QVariant queueListModel::data(const QModelIndex &index, int role) const {
     default:
       break;
   }
+  return var;
 }
 
 QVariant queueListModel::headerData(int section,
                                     Qt::Orientation orientation,
                                     int role) const {
+  return QVariant();
 }
 
 Qt::ItemFlags queueListModel::flags(const QModelIndex &index) const {
+  return 0;
 }
 
 bool queueListModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+  return false;
 }
 
 bool queueListModel::insertRows(int position, int rows, const QModelIndex &index) {
+  return false;
 }
 
 bool queueListModel::removeRows(int position, int rows, const QModelIndex &index) {
+  return false;
 }
 
 DOODLE_NAMESPACE_E

@@ -15,7 +15,7 @@
 #include <src/shots/shot.h>
 #include <src/shots/shottype.h>
 #include <src/exeWrap/ffmpegWrap.h>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 movieEpsArchive::movieEpsArchive(shotInfoPtr eps)
     : fileArchive(),
       p_info_ptr_(std::move(eps)) {
@@ -77,4 +77,4 @@ bool movieEpsArchive::update() {
   }
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

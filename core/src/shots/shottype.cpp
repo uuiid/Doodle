@@ -15,7 +15,7 @@
 
 //反射使用
 #include <rttr/registration>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 RTTR_REGISTRATION {
   rttr::registration::class_<shotType>(DOCORE_RTTE_CLASS(shotType))
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
@@ -172,4 +172,4 @@ shotTypePtr shotType::findShotType(const std::string &type_nmae,
 const std::unordered_set<shotType *> shotType::Instances() {
   return p_instance;
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

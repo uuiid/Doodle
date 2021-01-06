@@ -10,7 +10,7 @@
 
 #include <rttr/registration>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
   rttr::registration::class_<coresqldata>(DOCORE_RTTE_CLASS(coresqldata))  //DOCORE_RTTE_CLASS(coresqldata)
@@ -35,4 +35,4 @@ bool coresqldata::isNULL() const {
   return idP <= 0;
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

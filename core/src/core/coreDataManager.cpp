@@ -12,7 +12,7 @@
 
 #include "coreDataManager.h"
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 coreDataManager &coreDataManager::get() {
   static coreDataManager install;
   return install;
@@ -92,4 +92,4 @@ void coreDataManager::setAssInfoPtr(const assInfoPtr &ass_info) {
   p_assInfo_ = ass_info;
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

@@ -27,7 +27,7 @@
 
 #include <memory>
 #include <iostream>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
   rttr::registration::class_<fileSqlInfo>(DOCORE_RTTE_CLASS(fileSqlInfo))
@@ -218,4 +218,4 @@ void fileSqlInfo::parsepath(const std::string &pathstr) {
   p_pathlist = p_parser->getPath(pathstr);
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

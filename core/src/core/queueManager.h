@@ -2,7 +2,7 @@
 
 #include <core_global.h>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 class queueManager {
  public:
   queueManager();
@@ -10,4 +10,4 @@ class queueManager {
  private:
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

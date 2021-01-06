@@ -26,7 +26,7 @@
 
 #include <boost/process.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 const dstring coreSet::settingFileName = "doodle_conf.json";
 
@@ -331,4 +331,4 @@ bool coreSet::subUser(const dstring &user_str) {
                                         table.password = pow));
   return true;
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

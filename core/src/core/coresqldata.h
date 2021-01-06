@@ -11,7 +11,7 @@
 #include <core_global.h>
 #include <rttr/type>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API coresqldata : public boost::noncopyable_::noncopyable {
  public:
@@ -34,4 +34,4 @@ class CORE_API coresqldata : public boost::noncopyable_::noncopyable {
 
 bool coresqldata::isInsert() const { return !isNULL(); }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

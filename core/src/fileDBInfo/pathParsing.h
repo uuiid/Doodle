@@ -2,7 +2,7 @@
 
 #include <core_global.h>
 #include <boost/filesystem.hpp>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API pathParsing {
  public:
@@ -20,4 +20,4 @@ class CORE_API pathParsing {
   dpath p_path_row;
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

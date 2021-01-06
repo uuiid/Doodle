@@ -1,6 +1,6 @@
 #include "doException.h"
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 const char *doodle_notFile::what() const noexcept {
   std::string str("file not exists : ");
@@ -31,4 +31,4 @@ const char *doodle_FindErrorInfo::what() const noexcept {
   str = str + std::runtime_error::what();
   return str.c_str();
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

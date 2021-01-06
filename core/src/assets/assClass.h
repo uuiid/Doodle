@@ -12,7 +12,7 @@
 
 #include "src/core/coresqldata.h"
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API assClass : public coresqldata,
                           public std::enable_shared_from_this<assClass> {
@@ -49,4 +49,4 @@ class CORE_API assClass : public coresqldata,
 inline QString assClass::getAssClassQ(bool isZNCH) {
   return QString::fromStdString(getAssClass(isZNCH));
 }
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

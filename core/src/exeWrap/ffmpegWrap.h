@@ -13,7 +13,7 @@
 #include "core_global.h"
 #include <boost/filesystem/path.hpp>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 class CORE_API ffmpegWrap : public boost::noncopyable_::noncopyable {
  public:
@@ -36,4 +36,4 @@ class CORE_API ffmpegWrap : public boost::noncopyable_::noncopyable {
   bool runFFmpeg(const std::string &command) const;
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

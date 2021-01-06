@@ -3,7 +3,7 @@
 #include <src/fileDBInfo/filesqlinfo.h>
 #include <regex>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 imageArchive::imageArchive(fileSqlInfoPtr f_ptr)
     : fileArchive() {
   p_db_data = std::move(f_ptr);
@@ -61,4 +61,4 @@ void imageArchive::_generateFilePath() {
   }
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

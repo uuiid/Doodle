@@ -21,7 +21,7 @@
 #include <filesystem>
 
 #include <QtCore/QProcess>
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 mayaArchiveShotFbx::mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr)
     : fileArchive(),
@@ -171,4 +171,4 @@ void mayaArchiveShotFbx::insertDB() {
     p_info_ptr_->insert();
 }
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E

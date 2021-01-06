@@ -2,7 +2,7 @@
 
 #include <core_global.h>
 
-CORE_NAMESPACE_S
+DOODLE_NAMESPACE_S
 
 /*
  * 数据库连接类
@@ -33,4 +33,4 @@ class CORE_API coreSql {
   dstring dataName;
 };
 
-CORE_NAMESPACE_E
+DOODLE_NAMESPACE_E
