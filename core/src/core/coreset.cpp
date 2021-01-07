@@ -272,7 +272,7 @@ void coreSet::getCacheDiskPath() {
   for (QStorageInfo &x : QStorageInfo::mountedVolumes()) {
     if (x.isValid() && x.isReady()) {
       if (!x.isReadOnly()) {
-        if (((double)x.bytesAvailable() / (double)x.bytesTotal() > 0.5f) &&
+        if (((double)x.bytesAvailable() / (double)x.bytesTotal() > 0.02f) &&
             (!x.isRoot())) {
           *cacheRoot = x.rootPath().toStdString() + "Doodle_cache";
           break;
