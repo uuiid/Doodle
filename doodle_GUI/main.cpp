@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) try {
   QApplication::setQuitOnLastWindowClosed(false);
 
   auto mainWin = doodle::mainWindows();
-  mainWin.show();
+  mainWin.showMaximized();
 
   q_application.exec();
   boost::log::core::get()->remove_all_sinks();
