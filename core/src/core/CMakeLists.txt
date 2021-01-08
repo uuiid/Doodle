@@ -5,8 +5,7 @@
         coreset.h
         coresql.h
         coresqldata.h
-        queueData.h
-        queueManager.h
+
 )
 target_sources(
         core
@@ -15,7 +14,6 @@ target_sources(
         coreset.cpp
         coresql.cpp
         coresqldata.cpp
-        queueData.cpp
-        queueManager.cpp
+
 
 )

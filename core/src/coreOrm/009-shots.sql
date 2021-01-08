@@ -1,4 +1,4 @@
-create table shots
+create table if not exists shots
 (
 	id bigint auto_increment,
 	shot bigint null,

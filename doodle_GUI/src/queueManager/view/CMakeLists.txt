@@ -2,11 +2,9 @@ target_sources(
         doodle
         PUBLIC
         queueListWidget.h
-        queueInfoWidget.h
 )
 target_sources(
         doodle
         PRIVATE
         queueListWidget.cpp
-        queueInfoWidget.cpp
 )

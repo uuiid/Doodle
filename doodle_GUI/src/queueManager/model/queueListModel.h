@@ -21,16 +21,13 @@ class queueListModel : public QAbstractListModel {
   //设置编辑标识
   [[nodiscard]] Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-  //设置数据(内部使用 QMap[shot] 和 QMap[shotAb] 获得传入信息)
-  bool setData(const QModelIndex &index, const QVariant &value, int role) override;
-
-  //插入数据
-  bool insertRows(int position, int rows, const QModelIndex &index) override;
-  //删除数据
-  bool removeRows(int position, int rows, const QModelIndex &index) override;
+  void init();
 
  private:
-  std::vector<std::pair<std::future<bool>, std::string>> p_updataQueue;
+  void clear();
+  void DoodleProgressChanged(const queueDataPtr &data);
+
+  std::vector<queueDataPtr> p_updataQueue;
 };
 
 DOODLE_NAMESPACE_E

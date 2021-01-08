@@ -31,7 +31,7 @@ bool assTableFilterModel::filterAcceptsRow(int source_row,
                                    return item->getAssType() == k_Data->getAssType() &&
                                           item->getAssClass() == k_Data->getAssClass();
                                  });
-      return (*k_item) == k_Data.get();
+      return (*k_item)->getIdP() == k_Data->getIdP();
       break;
     }
 

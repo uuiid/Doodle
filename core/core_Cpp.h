@@ -38,6 +38,9 @@
 
 #include <src/sysData/synData.h>
 
+#include <src/queueData/queueManager.h>
+#include <src/queueData/queueData.h>
+
 #ifdef DOODLE_QT
 #include <QtCore/QVariant>
 Q_DECLARE_METATYPE(doodle::episodesPtr)
@@ -50,6 +53,9 @@ Q_DECLARE_METATYPE(doodle::assDepPtr)
 Q_DECLARE_METATYPE(doodle::assClassPtr)
 Q_DECLARE_METATYPE(doodle::assTypePtr)
 Q_DECLARE_METATYPE(doodle::assInfoPtr)
+
+Q_DECLARE_METATYPE(doodle::queueDataPtr)
+// Q_DECLARE_METATYPE(doodle::dataInfoPtr)
 
 #define DOTOS(str) QString::fromStdString(str)
 #endif  //DOODLE_QT

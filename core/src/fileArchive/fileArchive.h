@@ -13,6 +13,9 @@
 // #include <QVector>
 #include <boost/filesystem.hpp>
 #include <fileSystem_global.h>
+
+#include <boost/signals2.hpp>
+
 DOODLE_NAMESPACE_S
 
 class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
@@ -25,6 +28,9 @@ class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
     success = 1,
     fail    = 2,
   };
+
+  boost::signals2::signal<void(int)> updateChanged;
+  boost::signals2::signal<void(std::string)> infoChanged;
 
   [[nodiscard]] state isState() const;
 

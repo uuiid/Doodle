@@ -131,8 +131,11 @@ void assTableWidght::insertAss(const QString &path) {
         return result;
       });
       //打开后台传输
-      updataManager::get().addQueue(future, "正在上传中", 100);
-      updataManager::get().run();
+      auto k_queue = std::make_shared<queueData>(future);
+      k_queue->setName(std::string{"上传文件中 : "}.append(data->getAssType()->getType()));
+      maya_archive->updateChanged.connect([=](int i) { k_queue->setProgress(i); });
+      maya_archive->infoChanged.connect([=](std::string name) { k_queue->appendInfo(name); });
+      k_queue->submit();
 
     } else if (boost::regex_search(pathInfo.suffix().toStdString(), reUe4)) {  // ue4文件
       data->setAssType(assType::findType(assType::e_type::UE4, true));

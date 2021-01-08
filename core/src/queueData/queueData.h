@@ -10,26 +10,27 @@ class CORE_API queueData : public std::enable_shared_from_this<queueData> {
 
  public:
   //在每次创建出来时都会自动提交到队列管理器中
-  queueData(futureB&& f);
+  explicit queueData(futureB& f);
 
-  // boost::signals2::signal<void(int)> progress;
-
+  boost::signals2::signal<void()> ProgressChanged;
+  boost::signals2::signal<void(std::string)> InfoChanged;
+  boost::signals2::signal<void()> finishEd;
   //添加信息
   void appendInfo(const std::string& str) noexcept;
   const std::string& Info() const noexcept;
 
-  const int& progress() const noexcept;
+  const int& Progress() const noexcept;
+  void setProgress(const int value) noexcept;
 
   // 获得异步结果
-  const futureB& future() const noexcept;
+  const futureB& Future() const noexcept;
 
   // 设置名称(标题)
   void setName(const std::string& name) noexcept;
   const std::string& Name() const noexcept;
 
- private:
   // 提交信息
-  bool submit();
+  void submit();
 
  private:
   std::future<bool> p_fu;

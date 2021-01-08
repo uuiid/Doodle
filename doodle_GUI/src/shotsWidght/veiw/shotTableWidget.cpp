@@ -241,11 +241,11 @@ void shotTableWidget::exportFbx() {
   //开始导出
   auto fun = std::async(std::launch::async, [=]() -> bool {
     auto result = k_fileexport->update(data->getFileList().front());
-    // if (!result) emit exportFbxError(DOTOS(data->getFileList().front().filename().generic_string()));
     return result;
   });
-  updataManager::get().addQueue(fun, "正在上传中", 2000);
-  updataManager::get().run();
+
+  auto k_queue = std::make_shared<queueData>(fun);
+  k_queue->setName("导出上传fbx");
 
   // //更新列表
   // model()->init();
@@ -271,22 +271,28 @@ void shotTableWidget::submitMayaFile(shotInfoPtr &info_ptr,
   auto file = std::make_shared<mayaArchive>(info_ptr);
   auto fun  = std::async(std::launch::async,
                         [=]() { return file->update(path.toStdString()); });
-  updataManager::get().addQueue(fun, "正在上传中", 100);
-  updataManager::get().run();
+
+  auto k_queue = std::make_shared<queueData>(fun);
+  k_queue->setName("上传maya 文件");
+  file->updateChanged.connect([=](int i) { k_queue->setProgress(i); });
+  file->infoChanged.connect([=](std::string name) { k_queue->appendInfo(name); });
+  k_queue->submit();
 }
 
 void shotTableWidget::submitFBFile(shotInfoPtr &info_ptr,
                                    const QString &path) {
   info_ptr     = std::get<shotInfoPtr>(info_ptr->findSimilar());
   auto k_movie = std::make_shared<moveShotA>(info_ptr);
-  std::future<bool> k_fu;
-  k_fu = std::async(std::launch::async,
-                    [=]() {
-                      auto result = k_movie->update({path.toStdString()});
-                      return result;
-                    });
-  updataManager::get().addQueue(k_fu, "正在上传中", 1000);
-  updataManager::get().run();
+  auto k_fun   = std::async(std::launch::async,
+                          [=]() {
+                            auto result = k_movie->update({path.toStdString()});
+                            return result;
+                          });
+  auto k_queue = std::make_shared<queueData>(k_fun);
+  k_queue->setName("上传拍屏文件");
+  k_movie->updateChanged.connect([=](int i) { k_queue->setProgress(i); });
+  k_movie->infoChanged.connect([=](std::string name) { k_queue->appendInfo(name); });
+  k_queue->submit();
 }
 
 void shotTableWidget::deleteShot() {

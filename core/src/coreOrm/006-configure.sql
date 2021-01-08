@@ -1,4 +1,4 @@
-create table configure
+create table if not exists configure
 (
 	id bigint auto_increment,
 	name varchar(128) null,

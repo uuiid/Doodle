@@ -17,8 +17,8 @@ shotTableModel::shotTableModel(QObject *parent)
       mayaRex(std::make_unique<boost::regex>(R"(ma|ab)")),
       show_mayaex(std::make_unique<boost::regex>(R"(Anm|Animation|export)")),
       show_FBRex(std::make_unique<boost::regex>(R"(FB_|flipbook)")) {
-  shotFileSqlInfo::insertChanged.connect([this]() { this->init(); });
-  shotFileSqlInfo::updateChanged.connect([this]() { this->init(); });
+  shotFileSqlInfo::insertChanged.connect(5, [this]() { this->init(); });
+  shotFileSqlInfo::updateChanged.connect(5, [this]() { this->reInit(); });
 }
 
 int shotTableModel::rowCount(const QModelIndex &parent) const {
@@ -177,7 +177,6 @@ Qt::ItemFlags shotTableModel::flags(const QModelIndex &index) const {
 
 bool shotTableModel::insertRows(int position, int rows,
                                 const QModelIndex &parent) {
-  //  auto version = p_shot_info_ptr_list_[0]->getVersionP();
   beginInsertRows(QModelIndex(), position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
     p_shot_info_ptr_list_.insert(p_shot_info_ptr_list_.begin() + position,
@@ -185,6 +184,18 @@ bool shotTableModel::insertRows(int position, int rows,
     p_shot_info_ptr_list_[position]->setShot(coreDataManager::get().getShotPtr());
   }
   endInsertRows();
+  return true;
+}
+
+bool shotTableModel::removeRows(int position, int rows, const QModelIndex &parent) {
+  beginRemoveRows(QModelIndex(), position, position + rows - 1);
+  for (int row = 0; row < rows; ++row) {
+    auto it = p_shot_info_ptr_list_[position];
+    if (it)
+      it->deleteSQL();
+    p_shot_info_ptr_list_.erase(p_shot_info_ptr_list_.begin() + position);
+  }
+  endRemoveRows();
   return true;
 }
 void shotTableModel::init() {
@@ -199,7 +210,12 @@ void shotTableModel::init() {
 }
 
 void shotTableModel::reInit() {
-  auto shot = coreDataManager::get().getShotPtr();
+  //这里要清除一部分选择控制
+  auto &manager = coreDataManager::get();
+  manager.setShotInfoPtr(nullptr);
+
+  auto shot = manager.getShotPtr();
+  // cleasasssr();
   shotInfoPtrList k_list;
   for (auto &&x : shotFileSqlInfo::Instances()) {
     if (x->getShot() == shot) {

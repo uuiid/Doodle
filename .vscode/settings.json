@@ -121,7 +121,9 @@
         "queue": "cpp",
         "qstring": "cpp",
         "qjsonarray": "cpp",
-        "qsortfilterproxymodel": "cpp"
+        "qsortfilterproxymodel": "cpp",
+        "qprogressbar": "cpp",
+        "qstyleoptionprogressbar": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",

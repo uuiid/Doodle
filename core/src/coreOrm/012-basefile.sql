@@ -1,4 +1,4 @@
-create table basefile
+create table if not exists basefile
 (
 	id bigint auto_increment,
 	file varchar(128) null,
@@ -8,7 +8,7 @@ create table basefile
 	_file_path_ varchar(4096) null,
 	infor varchar(4096) null,
 	filestate varchar(64) null,
-	filetime datetime default CURRENT_TIMESTAMP null,
+	filetime datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
 	assClass_id bigint null,
 	assType_id bigint null,
 	episodes_id bigint null,

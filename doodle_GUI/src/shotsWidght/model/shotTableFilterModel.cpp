@@ -17,6 +17,8 @@ bool shotTableFilterModel::filterAcceptsRow(int source_row,
                     ->index(source_row, 0)
                     .data(Qt::UserRole)
                     .value<shotInfoPtr>();
+  if (!k_Data) return false;
+
   switch (p_useFilter_e) {
     case filterState::notFilter: {
       auto k_list = shotFileSqlInfo::Instances();
@@ -27,7 +29,9 @@ bool shotTableFilterModel::filterAcceptsRow(int source_row,
                                           item->getShotclass() == k_Data->getShotclass() &&
                                           item->getShotType() == k_Data->getShotType();
                                  });
-      return (*k_item) == k_Data.get();
+      if ((*k_item)->isNULL()) return true;
+
+      return (*k_item)->getIdP() == k_Data->getIdP();
       break;
     };
 

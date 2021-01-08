@@ -1,8 +1,16 @@
 #include "queueListModel.h"
+
+#include <core_Cpp.h>
+
 #include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
 queueListModel::queueListModel(QObject *parent)
     : QAbstractListModel(parent) {
+  queueManager::appendEnd.connect([this](queueDataPtr ptr) {
+    ptr->ProgressChanged.connect([=]() { this->DoodleProgressChanged(ptr); });
+    this->init();
+  });
+  queueManager::removeData.connect([this]() { this->init(); });
 }
 
 int queueListModel::rowCount(const QModelIndex &parent) const {
@@ -18,9 +26,13 @@ QVariant queueListModel::data(const QModelIndex &index, int role) const {
     return var;
 
   switch (role) {
+    case Qt::EditRole:
     case Qt::DisplayRole:
+      var = QString::fromStdString(p_updataQueue[index.row()]->Name());
       break;
-
+    case Qt::UserRole:
+      var = QVariant::fromValue(p_updataQueue[index.row()]);
+      break;
     default:
       break;
   }
@@ -34,19 +46,31 @@ QVariant queueListModel::headerData(int section,
 }
 
 Qt::ItemFlags queueListModel::flags(const QModelIndex &index) const {
-  return 0;
+  return QAbstractListModel::flags(index) | Qt::ItemIsEnabled;
 }
 
-bool queueListModel::setData(const QModelIndex &index, const QVariant &value, int role) {
-  return false;
+void queueListModel::init() {
+  auto data = queueManager::Get().Queue();
+
+  clear();
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(data.size()) - 1);
+  p_updataQueue = data;
+  endInsertRows();
 }
 
-bool queueListModel::insertRows(int position, int rows, const QModelIndex &index) {
-  return false;
+void queueListModel::clear() {
+  beginResetModel();
+  p_updataQueue.clear();
+  endResetModel();
 }
 
-bool queueListModel::removeRows(int position, int rows, const QModelIndex &index) {
-  return false;
+void queueListModel::DoodleProgressChanged(const queueDataPtr &data) {
+  auto rule = std::find(p_updataQueue.begin(), p_updataQueue.end(), data);
+  if (rule != p_updataQueue.end()) {
+    auto k_row   = std::distance(p_updataQueue.begin(), rule);
+    auto k_index = index(k_row);
+    dataChanged(k_index, k_index);
+  }
 }
 
 DOODLE_NAMESPACE_E

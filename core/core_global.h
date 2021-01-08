@@ -156,7 +156,6 @@ using dpathList = std::vector<dpath>;
 using freeSynWrapPtr = std::shared_ptr<freeSynWrap>;
 
 using dataInfoPtr = std::variant<
-
     episodesPtr,
     shotPtr,
     shotClassPtr,
@@ -167,7 +166,9 @@ using dataInfoPtr = std::variant<
     assClassPtr,
     assTypePtr,
     znchNamePtr,
-    assInfoPtr>;
+    assInfoPtr,
+
+    queueDataPtr>;
 DOODLE_NAMESPACE_E
 
 // Q_DECLARE_METATYPE( shotInfoPtr)
