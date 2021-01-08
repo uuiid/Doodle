@@ -262,7 +262,7 @@ dpath shotFileSqlInfo::generatePath(const dstring& programFolder) {
 
   //第三次格式化添加镜头字符串
   auto shot = getShot();
-  if (shot) path = path / shot->getShot_str();
+  if (shot) path = path / shot->getShotAndAb_str();
 
   //第四次格式化添加程序文件夹
   path = path / programFolder;
