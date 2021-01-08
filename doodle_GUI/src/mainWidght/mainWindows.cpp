@@ -14,6 +14,7 @@
 #include <QtWidgets/qsizepolicy.h>
 
 #include <src/queueManager/queueManagerWidget.h>
+
 DOODLE_NAMESPACE_S
 
 mainWindows::mainWindows(QWidget *parent)
@@ -93,16 +94,16 @@ void mainWindows::doodle_init() {
   connect(p_project_list, &QListWidget::itemClicked,
           p_shot_widget_, &shotWidget::refresh);
 
-  //进度可拖拽窗口
-  auto k_queue_dock = new QDockWidget(tr("队列"), centralWidget);
-  auto k_queue      = new queueManagerWidget();
-  k_queue_dock->setWidget(k_queue);
-  addDockWidget(Qt::BottomDockWidgetArea, k_queue_dock);
+  // //进度可拖拽窗口
+  // auto k_queue_dock = new QDockWidget(tr("队列"), centralWidget);
+  // auto k_queue      = new queueManagerWidget();
+  // k_queue_dock->setWidget(k_queue);
+  // addDockWidget(Qt::BottomDockWidgetArea, k_queue_dock);
 
   //分割窗口
   splitDockWidget(k_ass_dock, k_shot_dock, Qt::Horizontal);
   //合并窗口
-  tabifyDockWidget(k_queue_dock, k_shot_dock);
+  // tabifyDockWidget(k_queue_dock, k_shot_dock);
   // tabifyDockWidget(k_ass_dock, k_shot_dock);
   // tabifyDockWidget(k_ass_dock, k_queue_dock);
 
@@ -110,7 +111,7 @@ void mainWindows::doodle_init() {
   auto k_win_drok = p_menu_bar_->addMenu("窗口");
   k_win_drok->addAction(k_ass_dock->toggleViewAction());
   k_win_drok->addAction(k_shot_dock->toggleViewAction());
-  k_win_drok->addAction(k_queue_dock->toggleViewAction());
+  // k_win_drok->addAction(k_queue_dock->toggleViewAction());
 
   //添加托盘图标
   auto tray = new systemTray(this);

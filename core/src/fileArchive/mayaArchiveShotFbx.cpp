@@ -20,7 +20,6 @@
 #include <sstream>
 #include <filesystem>
 
-#include <QtCore/QProcess>
 DOODLE_NAMESPACE_S
 
 mayaArchiveShotFbx::mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr)

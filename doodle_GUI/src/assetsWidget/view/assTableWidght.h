@@ -49,6 +49,8 @@ class assTableWidght : public QTableView {
 
   void deleteSQLFile();
 
+  void chickFile(const assInfoPtr& file);
+
  protected:
   //上下文菜单
   void contextMenuEvent(QContextMenuEvent* event) override;

@@ -304,7 +304,7 @@ void coreSet::setProjectname(const std::string &value) {
   DOODLE_LOG_INFO(project.first << project.second);
 }
 dpath coreSet::program_location() {
-  return boost::filesystem::path{boost::dll::program_location()}.parent_path();
+  return boost::dll::program_location().parent_path();
 }
 dpath coreSet::program_location(const dpath &path) {
   return program_location() / path;

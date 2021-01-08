@@ -12,7 +12,12 @@
 
 #include <Logger.h>
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 
+#include <boost/process.hpp>
+#include <sstream>
+#include <filesystem>
+#include <stdexcept>
 DOODLE_NAMESPACE_S
 mayaArchive::mayaArchive(fileSqlInfoPtr shot_data)
     : p_info_ptr_(std::move(shot_data)) {}
@@ -31,6 +36,45 @@ bool mayaArchive::useDownloadCheck() const {
 
 bool mayaArchive::downloadCheck() const {
   return true;
+}
+
+bool mayaArchive::CheckMaterialAndMapSet() const {
+  auto resou = coreSet::program_location().parent_path() /
+               "resource" / "asset" /
+               "maya_model" / "chick_maya_run.py";
+  // static const auto tmpFile = boost::filesystem::temp_directory_path();
+  // auto runPath              = tmpFile / boost::filesystem::unique_path("%%%%_%%%%.py");
+  // boost::filesystem::copy_file(resou, runPath);
+
+  boost::format str("mayapy.exe %1% --path=%2% --exportpath=%3%");
+  str % resou.generic_string()                                   //
+      % p_cacheFilePath.front().generic_string()                 //
+      % p_cacheFilePath.front().parent_path().generic_string();  //
+
+  std::string mayaPY_path = "";
+  if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
+    mayaPY_path = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
+  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
+    mayaPY_path = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
+  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
+    mayaPY_path = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
+  } else {
+    return false;
+  }
+  DOODLE_LOG_INFO("导出命令" << str.str().c_str());
+  try {
+    auto t = boost::process::system(str.str().c_str());
+  } catch (const std::exception& err) {
+    DOODLE_LOG_WARN(err.what() << '\n');
+    return false;
+  }
+
+  //获得信息
+  auto result = p_cacheFilePath.front().parent_path() / "doodle.json";
+  if (boost::filesystem::exists(result)) {
+    return true;
+  }
+  return false;
 }
 
 void mayaArchive::setUseCustomPath(const dpathPtr& custom_path) {

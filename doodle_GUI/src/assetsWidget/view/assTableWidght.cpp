@@ -131,11 +131,8 @@ void assTableWidght::insertAss(const QString &path) {
         return result;
       });
       //打开后台传输
-      auto k_queue = std::make_shared<queueData>(future);
-      k_queue->setName(std::string{"上传文件中 : "}.append(data->getAssType()->getType()));
-      maya_archive->updateChanged.connect([=](int i) { k_queue->setProgress(i); });
-      maya_archive->infoChanged.connect([=](std::string name) { k_queue->appendInfo(name); });
-      k_queue->submit();
+      updataManager::get().addQueue(future, "正在上传中", 100);
+      updataManager::get().run();
 
     } else if (boost::regex_search(pathInfo.suffix().toStdString(), reUe4)) {  // ue4文件
       data->setAssType(assType::findType(assType::e_type::UE4, true));
@@ -168,29 +165,37 @@ void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
   p_menu_->addAction(sub_file);
 
   if (selectionModel()->hasSelection()) {
-    auto index      = model()->index(selectionModel()->currentIndex().row(),
+    auto index  = model()->index(selectionModel()->currentIndex().row(),
                                 4);  //获得模型索引
-    auto k_openFile = new QAction();
-    k_openFile->setText("打开文件所在位置");
-    connect(k_openFile, &QAction::triggered, this, [=] {
-      toolkit::openPath(index.data(Qt::UserRole).value<assInfoPtr>(),
-                        true);
-    });
-    p_menu_->addAction(k_openFile);
+    auto k_data = index.data(Qt::UserRole).value<assInfoPtr>();
+    if (k_data) {
+      auto k_openFile = new QAction();
+      k_openFile->setText("打开文件所在位置");
+      connect(k_openFile, &QAction::triggered, this, [=] {
+        toolkit::openPath(k_data,
+                          true);
+      });
+      p_menu_->addAction(k_openFile);
 
-    auto k_deleteFile = new QAction();
-    k_deleteFile->setText("删除(小心 别错)");
-    connect(k_deleteFile, &QAction::triggered, this,
-            &assTableWidght::deleteSQLFile);
-    p_menu_->addAction(k_deleteFile);
+      auto k_deleteFile = new QAction();
+      k_deleteFile->setText("删除(小心 别错)");
+      connect(k_deleteFile, &QAction::triggered, this,
+              &assTableWidght::deleteSQLFile);
+      p_menu_->addAction(k_deleteFile);
 
-    if (index.data(Qt::UserRole).value<assInfoPtr>()->getAssType() ==
-        assType::findType(assType::e_type::UE4, false)) {
-      auto k_createDir = new QAction();
-      k_createDir->setText("创建灯光文件夹");
-      connect(k_createDir, &QAction::triggered, this,
-              &assTableWidght::createLightDir);
-      p_menu_->addAction(k_createDir);
+      if (k_data->getAssType() == assType::findType(assType::e_type::UE4, false)) {
+        auto k_createDir = new QAction();
+        k_createDir->setText("创建灯光文件夹");
+        connect(k_createDir, &QAction::triggered, this,
+                &assTableWidght::createLightDir);
+        p_menu_->addAction(k_createDir);
+      } else if (k_data->getAssType() == assType::findType(assType::e_type::rig, false) ||
+                 k_data->getAssType() == assType::findType(assType::e_type::scenes, false)) {
+        auto k_chick = new QAction();
+        k_chick->setText("检查模型和材质");
+        connect(k_chick, &QAction::triggered, [this, k_data]() { this->chickFile(k_data); });
+        p_menu_->addAction(k_chick);
+      }
     }
   }
 
@@ -317,5 +322,14 @@ void assTableWidght::deleteSQLFile() {
                                           tr("输入: "), QLineEdit::Password);
   if (str_delete == "delete")
     model()->removeRow(selectionModel()->currentIndex().row());
+}
+
+void assTableWidght::chickFile(const assInfoPtr &file) {
+  if (file->getAssType() == assType::findType(assType::e_type::rig, false) ||
+      file->getAssType() == assType::findType(assType::e_type::scenes, false)) {
+    auto fileArchive = std::make_shared<mayaArchive>(file);
+    fileArchive->down();
+    fileArchive->CheckMaterialAndMapSet();
+  }
 }
 DOODLE_NAMESPACE_E
