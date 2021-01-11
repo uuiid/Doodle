@@ -3,10 +3,12 @@
         PUBLIC
         filesqlinfo.h
         pathParsing.h
+        CommentInfo.h
 )
 target_sources(
         core
         PRIVATE
         filesqlinfo.cpp
         pathParsing.cpp
+        CommentInfo.cpp
 )
