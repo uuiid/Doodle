@@ -1,4 +1,4 @@
-#include "doException.h"
+#include "Exception.h"
 
 DOODLE_NAMESPACE_S
 
@@ -31,4 +31,11 @@ const char *doodle_FindErrorInfo::what() const noexcept {
   str = str + std::runtime_error::what();
   return str.c_str();
 }
+
+const char *doodle_nullptr::what() const noexcept {
+  std::string str("nullptr err : ");
+  str = str + std::runtime_error::what();
+  return str.c_str();
+}
+
 DOODLE_NAMESPACE_E
