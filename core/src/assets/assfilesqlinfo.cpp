@@ -94,7 +94,8 @@ void assFileSqlInfo::updateSQL() {
                   tab.FilePath_    = filepathP,
                   tab.file         = fileP,
                   tab.fileSuffixes = fileSuffixesP,
-                  tab.version      = versionP)
+                  tab.version      = versionP,
+                  tab.user         = userP)
             .where(tab.id == idP));
     fileSqlInfo::updateSQL();
   } catch (const sqlpp::exception &e) {
@@ -251,6 +252,7 @@ dataInfoPtr assFileSqlInfo::findSimilar() {
     (*it)->fileSuffixesP = fileSuffixesP;
     (*it)->versionP      = versionP;
     (*it)->infoP         = infoP;
+    (*it)->userP         = userP;
     return (*it)->shared_from_this();
   } else
     return shared_from_this();
