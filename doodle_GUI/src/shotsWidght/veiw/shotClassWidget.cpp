@@ -37,7 +37,7 @@ void shotClassWidget::insertFileClass() {
 
 void shotClassWidget::_doodle_fileclass_emit(const QModelIndex &index) {
   coreDataManager::get().setShotClassPtr(
-      index.data(Qt::UserRole).value<shotClassPtr>());
+      index.data(Qt::UserRole).value<shotClass *>()->shared_from_this());
   doodleUseFilter(filterState::useFilter);
 }
 

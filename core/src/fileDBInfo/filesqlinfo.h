@@ -65,20 +65,16 @@ class CORE_API fileSqlInfo : public coresqldata {
   std::string fileSuffixesP;
   std::string userP;
   int versionP;
-  std::string filepathP;
-  dstringList infoP;
   std::string fileStateP;
   bool p_b_exist;
 
  private:
-  //解析器包装
-  pathParsingPtr p_parser;
-  dpathList p_pathlist;
+ protected:
+  pathParsingPtr p_parser_path;
+  CommentInfoPtr p_parser_info;
 
  protected:
-  void parsepath(const std::string &pathstr);
-  [[nodiscard]] dstringList json_to_strList(const dstring &json_str) const;
-  [[nodiscard]] dstring strList_tojson(const dstringList &str_list) const;
+  void write();
 
   RTTR_ENABLE(coresqldata);
 };

@@ -42,7 +42,7 @@ shotEditWidget::shotEditWidget(QWidget *parent)
   p_b_hboxLayout->setSpacing(0);
 
   p_combox->addItem(QString(""));
-  for (auto &&i :  shot::e_shotAB_list) {
+  for (auto &&i : shot::e_shotAB_list) {
     p_combox->addItem(QString::fromStdString(i));
   }
 }
@@ -168,7 +168,7 @@ void shotListWidget::insertShotBatch() {
 
 void shotListWidget::deleteShot() {
   if (selectionModel()->hasSelection()) {
-    if ( shotFileSqlInfo::Instances().empty()) {
+    if (shotFileSqlInfo::Instances().empty()) {
       p_model_->removeRow(selectionModel()->currentIndex().row());
     } else {
       DOODLE_LOG_INFO(" 这个条目内还有内容,  无法删除: ");
@@ -179,14 +179,14 @@ void shotListWidget::deleteShot() {
 }
 
 void shotListWidget::_doodle_shot_emit(const QModelIndex &index) {
-   coreDataManager::get().setShotPtr(
-      index.data(Qt::UserRole).value< shotPtr>());
+  coreDataManager::get().setShotPtr(
+      index.data(Qt::UserRole).value<shot *>()->shared_from_this());
   initEmit();
 }
 
 void shotListWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_shot_menu = new QMenu(this);
-  if ( coreDataManager::get().getEpisodesPtr()) {
+  if (coreDataManager::get().getEpisodesPtr()) {
     auto action = new QAction(this);
 
     connect(action, &QAction::triggered, this, &shotListWidget::insertShot);
@@ -206,7 +206,7 @@ void shotListWidget::contextMenuEvent(QContextMenuEvent *event) {
       auto shot_ = selectionModel()
                        ->currentIndex()
                        .data(Qt::UserRole)
-                       .value< shotPtr>();
+                       .value<shot *>();
       if (shot_) {
         auto synShot = p_shot_menu->addAction("同步镜头");
         connect(synShot, &QAction::triggered, this, &shotListWidget::synShot);
@@ -235,9 +235,9 @@ void shotListWidget::synShot() {
   auto shot_ = selectionModel()
                    ->currentIndex()
                    .data(Qt::UserRole)
-                   .value< shotPtr>();
-  auto eps_ptr =  coreDataManager::get().getEpisodesPtr();
-   coreSet::getSet().setSyneps(eps_ptr->getEpisdes());
-   ueSynArchive().syn(shot_);
+                   .value<shot *>();
+  auto eps_ptr = coreDataManager::get().getEpisodesPtr();
+  coreSet::getSet().setSyneps(eps_ptr->getEpisdes());
+  ueSynArchive().syn(shot_->shared_from_this());
 }
 DOODLE_NAMESPACE_E

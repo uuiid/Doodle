@@ -41,9 +41,12 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
             var =
                 QString("v%1").arg(ass->getVersionP(), 4, 10, QLatin1Char('0'));
             break;
-          case 1:
-            var = DOTOS(ass->getInfoP().back());
+          case 1: {
+            auto info = ass->getInfoP();
+            if (!info.empty())
+              var = DOTOS(info.back());
             break;
+          }
           case 2:
             var = DOTOS(ass->getUser());
             break;
@@ -121,7 +124,7 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
       }
       break;
     case Qt::UserRole:
-      var = QVariant::fromValue(ass);
+      var = QVariant::fromValue(ass.get());
       break;
     case Qt::BackgroundColorRole: {
       if (ass->isInsert()) {
@@ -199,8 +202,8 @@ bool assTableModel::setData(const QModelIndex &index, const QVariant &value,
         break;
       }
     case Qt::UserRole:
-      if (!value.canConvert<assInfoPtr>()) return false;
-      p_ass_info_ptr_list_[index.row()] = value.value<assInfoPtr>();
+      // if (!value.canConvert<assInfoPtr>()) return false;
+      // p_ass_info_ptr_list_[index.row()] = value.value<assInfoPtr>();
       dataChanged(index, index);
       break;
     default:
@@ -236,7 +239,6 @@ bool assTableModel::removeRows(int position, int rows,
     if (ass) ass->deleteSQL();
     p_ass_info_ptr_list_.erase(p_ass_info_ptr_list_.begin() + position);
   }
-  coreDataManager::get().setAssInfoPtr(nullptr);
   endRemoveRows();
   return true;
 }

@@ -1,4 +1,5 @@
 ﻿#include "assfilesqlinfo.h"
+#include <src/Exception/Exception.h>
 
 #include <src/core/coreset.h>
 #include <src/core/coresql.h>
@@ -7,6 +8,8 @@
 #include <src/assets/assClass.h>
 #include <src/assets/assType.h>
 
+#include <src/fileDBInfo/CommentInfo.h>
+#include <src/fileDBInfo/pathParsing.h>
 #include <Logger.h>
 
 #include <src/coreOrm/basefile_sqlOrm.h>
@@ -19,6 +22,7 @@
 
 //反射使用
 #include <rttr/registration>
+
 DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
@@ -57,16 +61,24 @@ void assFileSqlInfo::select(qint64 &ID_) {
 
 void assFileSqlInfo::insert() {
   if (idP > 0) return;
+  write();
+
   doodle::Basefile tab{};
 
   auto db      = coreSql::getCoreSql().getConnection();
   auto install = sqlpp::dynamic_insert_into(*db, tab).dynamic_set(
-      tab.file = fileP, tab.fileSuffixes = fileSuffixesP, tab.user = userP,
-      tab.version = versionP, tab.FilePath_ = filepathP,
-      tab.filestate = sqlpp::value_or_null(fileStateP),
-      tab.projectId = coreSet::getSet().projectName().first);
-  if (!infoP.empty())
-    install.insert_list.add(tab.infor = strList_tojson(infoP));
+      tab.file         = fileP,
+      tab.fileSuffixes = fileSuffixesP,
+      tab.user         = userP,
+      tab.version      = versionP,
+      tab.FilePath_    = p_parser_path->DBInfo(),
+      tab.filestate    = sqlpp::value_or_null(fileStateP),
+      tab.projectId    = coreSet::getSet().projectName().first);
+
+  if (p_parser_info) {
+    install.insert_list.add(tab.infor = p_parser_info->DBInfo());
+  } else
+    throw nullptr_error{"assFileSqlInfo :"};
   if (ass_class_id > 0) install.insert_list.add(tab.assClassId = ass_class_id);
 
   if (ass_type_id > 0) install.insert_list.add(tab.assTypeId = ass_type_id);
@@ -83,15 +95,16 @@ void assFileSqlInfo::insert() {
 void assFileSqlInfo::updateSQL() {
   if (idP < 0) return;
   doodle::Basefile tab{};
+  write();
 
   auto db     = coreSql::getCoreSql().getConnection();
   auto updata = sqlpp::update(tab);
   try {
     db->update(
         updata.set(
-                  tab.infor        = strList_tojson(infoP),
+                  tab.infor        = p_parser_info->DBInfo(),
                   tab.filestate    = fileStateP,
-                  tab.FilePath_    = filepathP,
+                  tab.FilePath_    = p_parser_path->DBInfo(),
                   tab.file         = fileP,
                   tab.fileSuffixes = fileSuffixesP,
                   tab.version      = versionP,
@@ -134,11 +147,17 @@ dpath assFileSqlInfo::generatePath(const std::string &programFolder) {
 
   //第二次添加类型
   auto dep = getAssDep();
-  if (dep) path = path / dep->getAssDep();
+  if (dep)
+    path = path / dep->getAssDep();
+  else
+    throw nullptr_error("assFileSqlInfo err");
 
   //第三次格式化添加  ass_type
   auto as_cls = getAssClass();
-  if (as_cls) path = path / as_cls->getAssClass();
+  if (as_cls)
+    path = path / as_cls->getAssClass();
+  else
+    throw nullptr_error("assFileSqlInfo err");
 
   //第四次次格式化程序文件夹
   path = path / programFolder;
@@ -147,7 +166,8 @@ dpath assFileSqlInfo::generatePath(const std::string &programFolder) {
   auto as_ty = getAssType();
   if (as_ty) {
     path = path / as_ty->getType();
-  }
+  } else
+    throw nullptr_error("assFileSqlInfo err");
 
   return path;
 }
@@ -169,7 +189,7 @@ dstring assFileSqlInfo::generateFileName(const dstring &suffixes) {
   if (as_cl)
     format % as_cl->getAssClass();
   else
-    format % "";
+    throw nullptr_error("assFileSqlInfo err");
 
   auto as_ty = getAssType();
   if (as_ty) {
@@ -178,7 +198,8 @@ dstring assFileSqlInfo::generateFileName(const dstring &suffixes) {
     else
       format % "";
   } else
-    format % "";
+    throw nullptr_error("assFileSqlInfo err");
+
   format % suffixes;
 
   return format.str();
@@ -247,11 +268,11 @@ dataInfoPtr assFileSqlInfo::findSimilar() {
           });
   if (it != p_instance.end()) {
     (*it)->fileP         = fileP;
-    (*it)->filepathP     = filepathP;
+    (*it)->p_parser_path = p_parser_path;
     (*it)->fileStateP    = fileStateP;
     (*it)->fileSuffixesP = fileSuffixesP;
     (*it)->versionP      = versionP;
-    (*it)->infoP         = infoP;
+    (*it)->p_parser_info = p_parser_info;
     (*it)->userP         = userP;
     return (*it)->shared_from_this();
   } else
@@ -264,12 +285,12 @@ void assFileSqlInfo::batchSetAttr(const T &row) {
   fileSuffixesP = row.fileSuffixes;
   userP         = row.user;
   versionP      = row.version;
-  filepathP     = row.FilePath_;
-  infoP         = json_to_strList(row.infor);
   fileStateP    = row.filestate;
 
-  if (row.assClassId._is_valid) ass_class_id = row.assClassId;
+  p_parser_info->Info(row.infor);
+  p_parser_path->Path(row.FilePath_);
 
+  if (row.assClassId._is_valid) ass_class_id = row.assClassId;
   if (row.assTypeId._is_valid) ass_type_id = row.assTypeId;
 }
 bool assFileSqlInfo::sortType(const assInfoPtr &t1, const assInfoPtr &t2) {

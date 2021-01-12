@@ -106,7 +106,7 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
       }
       break;
     case Qt::UserRole:
-      var = QVariant::fromValue(shot);
+      var = QVariant::fromValue(shot.get());
     default:
       break;
   }
@@ -158,8 +158,8 @@ bool shotTableModel::setData(const QModelIndex &index, const QVariant &value,
     }
     return false;
   } else if (role == Qt::UserRole) {
-    if (!value.canConvert<shotInfoPtr>()) return false;
-    p_shot_info_ptr_list_[index.row()] = value.value<shotInfoPtr>();
+    // if (!value.canConvert<shotInfoPtr>()) return false;
+    // p_shot_info_ptr_list_[index.row()] = value.value<shotInfoPtr>();
     dataChanged(index, index);
     return true;
   } else {
@@ -193,6 +193,7 @@ bool shotTableModel::removeRows(int position, int rows, const QModelIndex &paren
     auto it = p_shot_info_ptr_list_[position];
     if (it)
       it->deleteSQL();
+    coreDataManager::get().setAssInfoPtr(nullptr);
     p_shot_info_ptr_list_.erase(p_shot_info_ptr_list_.begin() + position);
   }
   endRemoveRows();

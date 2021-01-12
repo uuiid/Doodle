@@ -8,6 +8,10 @@
 #include <src/shots/shotClass.h>
 #include <src/shots/shottype.h>
 
+#include <src/fileDBInfo/CommentInfo.h>
+#include <src/fileDBInfo/pathParsing.h>
+#include <src/Exception/Exception.h>
+
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
 #include <src/coreOrm/basefile_sqlOrm.h>
@@ -60,6 +64,7 @@ void shotFileSqlInfo::select(const qint64& ID_) {
 void shotFileSqlInfo::insert() {
   if (idP > 0) return;
   doodle::Basefile tab{};
+  write();
 
   auto db      = coreSql::getCoreSql().getConnection();
   auto install = sqlpp::dynamic_insert_into(*db, tab).dynamic_set(
@@ -67,11 +72,15 @@ void shotFileSqlInfo::insert() {
       tab.fileSuffixes = fileSuffixesP,
       tab.user         = userP,
       tab.version      = versionP,
-      tab.FilePath_    = filepathP,
+      tab.FilePath_    = p_parser_path->DBInfo(),
       tab.filestate    = sqlpp::value_or_null(fileStateP),
       tab.projectId    = coreSet::getSet().projectName().first);
-  if (!infoP.empty())
-    install.insert_list.add(tab.infor = strList_tojson(infoP));
+
+  if (p_parser_info) {
+    install.insert_list.add(tab.infor = p_parser_info->DBInfo());
+  } else
+    throw nullptr_error("shotFileSqlInfo err");
+
   if (p_shot_id > 0) install.insert_list.add(tab.shotsId = p_shot_id);
   if (p_eps_id > 0) install.insert_list.add(tab.episodesId = p_eps_id);
 
@@ -98,10 +107,12 @@ void shotFileSqlInfo::updateSQL() {
   auto db     = coreSql::getCoreSql().getConnection();
   auto updata = sqlpp::update(tab);
   try {
+    p_parser_info->write();
+
     db->update(
-        updata.set(tab.infor        = strList_tojson(infoP),
+        updata.set(tab.infor        = p_parser_info->DBInfo(),
                    tab.filestate    = fileStateP,
-                   tab.FilePath_    = filepathP,
+                   tab.FilePath_    = p_parser_path->DBInfo(),
                    tab.file         = fileP,
                    tab.fileSuffixes = fileSuffixesP,
                    tab.version      = versionP,
@@ -109,7 +120,7 @@ void shotFileSqlInfo::updateSQL() {
             .where(tab.id == idP));
 
     fileSqlInfo::updateSQL();
-  } catch (const sqlpp::exception& err) {
+  } catch (const nullptr_error& err) {
     DOODLE_LOG_WARN(err.what());
   }
   updateChanged();
@@ -122,9 +133,10 @@ void shotFileSqlInfo::batchSetAttr(T& row) {
   fileSuffixesP = row.fileSuffixes;
   userP         = row.user;
   versionP      = row.version;
-  filepathP     = row.FilePath_;
-  infoP         = json_to_strList(row.infor);
   fileStateP    = row.filestate;
+
+  p_parser_info->Info(row.infor);
+  p_parser_path->Path(row.FilePath_);
 
   if (row.shotsId._is_valid) p_shot_id = row.shotsId;
 
@@ -149,6 +161,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr& EP_) {
     Info->batchSetAttr(row);
     Info->setEpisdes(EP_);
     list.push_back(Info);
+
     p_instance.insert(Info.get());
     Info->exist(true);
   }
@@ -197,9 +210,11 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& shot_ptr,
     Info->fileSuffixesP = row.fileSuffixes.text;
     Info->userP         = row.user.text;
     Info->versionP      = row.version;
-    Info->filepathP     = row.FilePath_.text;
-    Info->infoP         = Info->json_to_strList(row.infor.text);
     Info->fileStateP    = row.filestate;
+
+    Info->p_parser_path->Path(row.FilePath_);
+    Info->p_parser_info->Info(row.infor.text);
+
     if (row.shotsId._is_valid) Info->p_shot_id = row.shotsId;
     if (row.shotClassId._is_valid) {
       Info->p_shCla_id = row.shotClassId;
@@ -350,11 +365,11 @@ dataInfoPtr shotFileSqlInfo::findSimilar() {
 
   if (it != p_instance.end()) {
     (*it)->fileP         = fileP;
-    (*it)->filepathP     = filepathP;
+    (*it)->p_parser_path = p_parser_path;
     (*it)->fileStateP    = fileStateP;
     (*it)->fileSuffixesP = fileSuffixesP;
     (*it)->versionP      = versionP;
-    (*it)->infoP         = infoP;
+    (*it)->p_parser_info = p_parser_info;
     (*it)->userP         = userP;
 
     return (*it)->shared_from_this();

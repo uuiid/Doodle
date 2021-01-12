@@ -20,7 +20,7 @@ bool assTableFilterModel::filterAcceptsRow(int source_row,
   auto k_Data = sourceModel()
                     ->index(source_row, 0)
                     .data(Qt::UserRole)
-                    .value<assInfoPtr>();
+                    .value<assFileSqlInfo *>();
 
   switch (p_useFilter_e) {
     case filterState::notFilter: {
@@ -49,10 +49,10 @@ bool assTableFilterModel::filterAcceptsRow(int source_row,
 }
 
 bool assTableFilterModel::lessThan(const QModelIndex &left, const QModelIndex &right) const {
-  auto k_left  = left.data(Qt::UserRole).value<assInfoPtr>();
-  auto k_right = right.data(Qt::UserRole).value<assInfoPtr>();
+  auto k_left  = left.data(Qt::UserRole).value<assFileSqlInfo *>();
+  auto k_right = right.data(Qt::UserRole).value<assFileSqlInfo *>();
   if (k_left && k_right) {
-    return assFileSqlInfo::sortType(k_left, k_right);
+    return assFileSqlInfo::sortType(k_left->shared_from_this(), k_right->shared_from_this());
   } else {
     return false;
   }

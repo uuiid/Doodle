@@ -24,7 +24,7 @@ QVariant assClassModel::data(const QModelIndex &index, int role) const {
       var = DOTOS(p_ass_info_ptr_list_[index.row()]->getAssClass(true));
       break;
     case Qt::UserRole:
-      var = QVariant::fromValue(p_ass_info_ptr_list_[index.row()]);
+      var = QVariant::fromValue(p_ass_info_ptr_list_[index.row()].get());
     default:
       break;
   }

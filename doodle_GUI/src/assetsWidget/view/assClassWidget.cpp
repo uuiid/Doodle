@@ -74,8 +74,8 @@ void assClassWidget::editAssName() {
 }
 
 void assClassWidget::deleteSQLFile() {
-  for (auto&& i :  assFileSqlInfo::Instances()) {
-    if (i->getAssClass() ==  coreDataManager::get().getAssClassPtr()) {
+  for (auto&& i : assFileSqlInfo::Instances()) {
+    if (i->getAssClass() == coreDataManager::get().getAssClassPtr()) {
       QMessageBox::warning(this, tr("注意"), tr("这个条目中还有内容,无法删除"));
       return;
     }
@@ -84,9 +84,9 @@ void assClassWidget::deleteSQLFile() {
 }
 
 void assClassWidget::_doodle_ass_emit(const QModelIndex& index) {
-  auto assClass =
-      model()->data(index, Qt::UserRole).value< assClassPtr>();
-   coreDataManager::get().setAssClassPtr(assClass);
+  auto k_assClass =
+      model()->data(index, Qt::UserRole).value<assClass*>();
+  coreDataManager::get().setAssClassPtr(k_assClass->shared_from_this());
   initEmited();
 }
 void assClassWidget::contextMenuEvent(QContextMenuEvent* event) {
@@ -95,7 +95,7 @@ void assClassWidget::contextMenuEvent(QContextMenuEvent* event) {
   } else {
     p_menu_ = new QMenu(this);
   }
-  if ( coreDataManager::get().getAssDepPtr()) {
+  if (coreDataManager::get().getAssDepPtr()) {
     auto* add_ass = new QAction(p_menu_);
     connect(add_ass, &QAction::triggered, this, &assClassWidget::insertAss);
     add_ass->setText(tr("添加资产"));

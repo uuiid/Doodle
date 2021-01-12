@@ -9,6 +9,8 @@ class CORE_API queueData : public std::enable_shared_from_this<queueData> {
   using futureB = std::future<bool>;
 
  public:
+  DOODLE_DISABLE_COPY(queueData);
+
   //在每次创建出来时都会自动提交到队列管理器中
   explicit queueData(futureB& f);
 

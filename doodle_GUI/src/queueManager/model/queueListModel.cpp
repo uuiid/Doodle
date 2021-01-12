@@ -31,7 +31,7 @@ QVariant queueListModel::data(const QModelIndex &index, int role) const {
       var = QString::fromStdString(p_updataQueue[index.row()]->Name());
       break;
     case Qt::UserRole:
-      var = QVariant::fromValue(p_updataQueue[index.row()]);
+      var = QVariant::fromValue(p_updataQueue[index.row()].get());
       break;
     default:
       break;

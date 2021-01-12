@@ -43,7 +43,7 @@ QVariant shotListModel::data(const QModelIndex &index, int role) const {
       break;
     }
     case Qt::UserRole:
-      var = QVariant::fromValue(shotlist[index.row()]);
+      var = QVariant::fromValue(shotlist[index.row()].get());
       break;
     default:
       break;

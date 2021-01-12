@@ -43,18 +43,18 @@
 
 #ifdef DOODLE_QT
 #include <QtCore/QVariant>
-Q_DECLARE_METATYPE(doodle::episodesPtr)
-Q_DECLARE_METATYPE(doodle::shotPtr)
-Q_DECLARE_METATYPE(doodle::shotClassPtr)
-Q_DECLARE_METATYPE(doodle::shotTypePtr)
-Q_DECLARE_METATYPE(doodle::shotInfoPtr)
+Q_DECLARE_METATYPE(doodle::episodes *)
+Q_DECLARE_METATYPE(doodle::shot *)
+Q_DECLARE_METATYPE(doodle::shotClass *)
+Q_DECLARE_METATYPE(doodle::shotType *)
+Q_DECLARE_METATYPE(doodle::shotFileSqlInfo *)
 
-Q_DECLARE_METATYPE(doodle::assDepPtr)
-Q_DECLARE_METATYPE(doodle::assClassPtr)
-Q_DECLARE_METATYPE(doodle::assTypePtr)
-Q_DECLARE_METATYPE(doodle::assInfoPtr)
+Q_DECLARE_METATYPE(doodle::assdepartment *)
+Q_DECLARE_METATYPE(doodle::assClass *)
+Q_DECLARE_METATYPE(doodle::assType *)
+Q_DECLARE_METATYPE(doodle::assFileSqlInfo *)
 
-Q_DECLARE_METATYPE(doodle::queueDataPtr)
+Q_DECLARE_METATYPE(doodle::queueData *)
 // Q_DECLARE_METATYPE(doodle::dataInfoPtr)
 
 #define DOTOS(str) QString::fromStdString(str)

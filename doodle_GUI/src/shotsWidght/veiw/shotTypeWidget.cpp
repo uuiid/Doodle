@@ -73,7 +73,7 @@ void shotTypeWidget::insertFileType() {
 }
 void shotTypeWidget::_doodle_type_emit(const QModelIndex &index) {
   coreDataManager::get().setShotTypePtr(
-      index.data(Qt::UserRole).value<shotTypePtr>());
+      index.data(Qt::UserRole).value<shotType *>()->shared_from_this());
   doodleUseFilter(filterState::useFilter);
 }
 void shotTypeWidget::mousePressEvent(QMouseEvent *event) {

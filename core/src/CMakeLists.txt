@@ -1,7 +1,7 @@
 ﻿add_subdirectory(assets)
 add_subdirectory(core)
 add_subdirectory(coreOrm)
-add_subdirectory(doException)
+add_subdirectory(Exception)
 add_subdirectory(exeWrap)
 add_subdirectory(fileArchive)
 add_subdirectory(fileDBInfo)

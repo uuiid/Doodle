@@ -123,7 +123,8 @@
         "qjsonarray": "cpp",
         "qsortfilterproxymodel": "cpp",
         "qprogressbar": "cpp",
-        "qstyleoptionprogressbar": "cpp"
+        "qstyleoptionprogressbar": "cpp",
+        "qmetaobject": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",

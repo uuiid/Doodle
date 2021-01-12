@@ -69,7 +69,7 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
       auto k_openFile = new QAction();
       k_openFile->setText(tr("打开文件所在位置"));
       connect(k_openFile, &QAction::triggered, this, [=] {
-        toolkit::openPath(index.data(Qt::UserRole).value<shotInfoPtr>(),
+        toolkit::openPath(index.data(Qt::UserRole).value<shotFileSqlInfo *>()->shared_from_this(),
                           true);
       });
       p_menu_->addAction(k_openFile);
@@ -78,13 +78,13 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
       k_copyClip->setText(tr("复制到剪贴板"));
 
       connect(k_copyClip, &QAction::triggered, this, [=] {
-        toolkit::openPath(index.data(Qt::UserRole).value<shotInfoPtr>(),
+        toolkit::openPath(index.data(Qt::UserRole).value<shotFileSqlInfo *>()->shared_from_this(),
                           false);
       });
       p_menu_->addAction(k_copyClip);
 
       const auto suffix =
-          index.data(Qt::UserRole).value<shotInfoPtr>()->getSuffixes();
+          index.data(Qt::UserRole).value<shotFileSqlInfo *>()->getSuffixes();
       if (suffix == ".ma" || suffix == ".mb") {
         //导出fbx脚本
         auto k_exportFbx = new QAction();
@@ -108,7 +108,7 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
       auto k_openFile = new QAction();
       k_openFile->setText(tr("打开文件所在位置"));
       connect(k_openFile, &QAction::triggered, this, [=] {
-        toolkit::openPath(index.data(Qt::UserRole).value<shotInfoPtr>(),
+        toolkit::openPath(index.data(Qt::UserRole).value<shotFileSqlInfo *>()->shared_from_this(),
                           true);
       });
       p_menu_->addAction(k_openFile);
@@ -117,7 +117,7 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
       k_copyClip->setText(tr("复制到剪贴板"));
 
       connect(k_copyClip, &QAction::triggered, this, [=] {
-        toolkit::openPath(index.data(Qt::UserRole).value<shotInfoPtr>(),
+        toolkit::openPath(index.data(Qt::UserRole).value<shotFileSqlInfo *>()->shared_from_this(),
                           false);
       });
       p_menu_->addAction(k_copyClip);
@@ -196,7 +196,7 @@ void shotTableWidget::insertShot(const QString &path) {
   shotInfoPtr data{};
   connect(model(), &QAbstractItemModel::rowsInserted, this,
           [&data, this](const QModelIndex &index, int row, int column) {
-            data = model()->data(model()->index(row, 0), Qt::UserRole).value<shotInfoPtr>();
+            data = model()->data(model()->index(row, 0), Qt::UserRole).value<shotFileSqlInfo *>()->shared_from_this();
           });
   model()->insertRow(0, QModelIndex());
   disconnect(model(), &QAbstractItemModel::rowsInserted, this, nullptr);
@@ -229,15 +229,15 @@ void shotTableWidget::exportFbx() {
   //获得选择数据
   auto index = model()->index(selectionModel()->currentIndex().row(), 4);
 
-  auto data = index.data(Qt::UserRole).value<shotInfoPtr>();
+  auto data = index.data(Qt::UserRole).value<shotFileSqlInfo *>();
   if (!data) return;
 
   model()->insertRow(0, QModelIndex());
 
-  auto export_data = model()->data(model()->index(0, 4), Qt::UserRole).value<shotInfoPtr>();
+  auto export_data = model()->data(model()->index(0, 4), Qt::UserRole).value<shotFileSqlInfo *>();
 
   //创建上传类
-  auto k_fileexport = std::make_shared<mayaArchiveShotFbx>(export_data);
+  auto k_fileexport = std::make_shared<mayaArchiveShotFbx>(export_data->shared_from_this());
   //开始导出
   auto fun = std::async(std::launch::async, [=]() -> bool {
     auto result = k_fileexport->update(data->getFileList().front());
@@ -252,12 +252,12 @@ void shotTableWidget::exportFbx() {
 }
 
 void shotTableWidget::doClickedSlots(const QModelIndex &index) {
-  auto info = index.data(Qt::UserRole).value<shotInfoPtr>();
-  if (info) coreDataManager::get().setShotInfoPtr(info);
+  auto info = index.data(Qt::UserRole).value<shotFileSqlInfo *>();
+  if (info) coreDataManager::get().setShotInfoPtr(info->shared_from_this());
 }
 
 void shotTableWidget::doDubledSlots(const QModelIndex &index) {
-  auto info = index.data(Qt::UserRole).value<shotInfoPtr>();
+  auto info = index.data(Qt::UserRole).value<shotFileSqlInfo *>();
   if (info) {
     if (index.column() != 1) {
       auto path = info->getFileList().front();

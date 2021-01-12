@@ -70,7 +70,7 @@ void assTableWidght::insertAss(const QString &path) {
   assInfoPtr data{};
   connect(model(), &QAbstractItemModel::rowsInserted, this,
           [&data, this](const QModelIndex &index, int row, int column) {
-            data = model()->data(model()->index(row, 0), Qt::UserRole).value<assInfoPtr>();
+            data = model()->data(model()->index(row, 0), Qt::UserRole).value<assFileSqlInfo *>()->shared_from_this();
           });
 
   model()->insertRow(0, QModelIndex());
@@ -167,12 +167,12 @@ void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
   if (selectionModel()->hasSelection()) {
     auto index  = model()->index(selectionModel()->currentIndex().row(),
                                 4);  //获得模型索引
-    auto k_data = index.data(Qt::UserRole).value<assInfoPtr>();
+    auto k_data = index.data(Qt::UserRole).value<assFileSqlInfo *>();
     if (k_data) {
       auto k_openFile = new QAction();
       k_openFile->setText("打开文件所在位置");
       connect(k_openFile, &QAction::triggered, this, [=] {
-        toolkit::openPath(k_data,
+        toolkit::openPath(k_data->shared_from_this(),
                           true);
       });
       p_menu_->addAction(k_openFile);
@@ -193,7 +193,7 @@ void assTableWidght::contextMenuEvent(QContextMenuEvent *event) {
                  k_data->getAssType() == assType::findType(assType::e_type::scenes, false)) {
         auto k_chick = new QAction();
         k_chick->setText("检查模型和材质");
-        connect(k_chick, &QAction::triggered, [this, k_data]() { this->chickFile(k_data); });
+        connect(k_chick, &QAction::triggered, [this, k_data]() { this->chickFile(k_data->shared_from_this()); });
         p_menu_->addAction(k_chick);
       }
     }
@@ -264,12 +264,12 @@ void assTableWidght::createLightDir() {
       auto eps_ptr = epsListModle->selectionModel()
                          ->currentIndex()
                          .data(Qt::UserRole)
-                         .value<episodesPtr>();
+                         .value<episodes *>();
 
       auto ass_ptr = selectionModel()
                          ->currentIndex()
                          .data(Qt::UserRole)
-                         .value<assInfoPtr>();
+                         .value<assFileSqlInfo *>();
       auto file_exit = true;
       if (ass_ptr) {
         file_exit = boost::filesystem::exists(
@@ -291,7 +291,7 @@ void assTableWidght::createLightDir() {
       if (butten == QMessageBox::Yes) {
         auto uesyn  = std::make_shared<ueSynArchive>();
         auto future = std::async(std::launch::async, [=]() -> bool {
-          return uesyn->makeDir(eps_ptr);
+          return uesyn->makeDir(eps_ptr->shared_from_this());
         });
         updataManager::get().addQueue(future, "正在复制文件", 1000);
         updataManager::get().run();
@@ -302,12 +302,12 @@ void assTableWidght::createLightDir() {
   }
 }
 void assTableWidght::doClickedSlots(const QModelIndex &index) {
-  auto assinfo = index.data(Qt::UserRole).value<assInfoPtr>();
-  if (assinfo) coreDataManager::get().setAssInfoPtr(assinfo);
+  auto assinfo = index.data(Qt::UserRole).value<assFileSqlInfo *>();
+  if (assinfo) coreDataManager::get().setAssInfoPtr(assinfo->shared_from_this());
 }
 
 void assTableWidght::doDubledSlots(const QModelIndex &index) {
-  auto assinfo = index.data(Qt::UserRole).value<assInfoPtr>();
+  auto assinfo = index.data(Qt::UserRole).value<assFileSqlInfo *>();
   if (assinfo) {
     if (index.column() != 1) {
       auto path = assinfo->getFileList().front();

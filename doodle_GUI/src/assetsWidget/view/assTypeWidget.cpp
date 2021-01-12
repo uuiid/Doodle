@@ -77,7 +77,7 @@ void assTypeWidget::inserttype() {
 }
 void assTypeWidget::_doodle_type_emit(const QModelIndex &index) {
   coreDataManager::get().setAssTypePtr(
-      index.data(Qt::UserRole).value<assTypePtr>());
+      index.data(Qt::UserRole).value<assType *>()->shared_from_this());
   doodleUseFilter(filterState::useFilter);
 }
 void assTypeWidget::mousePressEvent(QMouseEvent *event) {

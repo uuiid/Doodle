@@ -19,8 +19,8 @@ void assDepWidget::setModel(QAbstractItemModel *model) {
 }
 void assDepWidget::_doodle_emit(const QModelIndex &index) {
   auto assdep = p_file_class_ass_model_->data(index, Qt::UserRole)
-                    .value< assDepPtr>();
-   coreDataManager::get().setAssDepPtr(assdep);
+                    .value<assdepartment *>();
+  coreDataManager::get().setAssDepPtr(assdep->shared_from_this());
   initEmit();
 }
 assDepWidget::~assDepWidget() = default;

@@ -28,7 +28,7 @@ QVariant shotTypeModel::data(const QModelIndex &index, int role) const {
       var = p_type_ptr_list_[index.row()]->getTypeQ();
     } break;
     case Qt::UserRole:
-      var = QVariant::fromValue(p_type_ptr_list_[index.row()]);
+      var = QVariant::fromValue(p_type_ptr_list_[index.row()].get());
       break;
     default:
       break;

@@ -7,17 +7,24 @@ DOODLE_NAMESPACE_S
 class CORE_API pathParsing {
  public:
   //禁止隐式转换
-  explicit pathParsing();
-  ~pathParsing() = default;
+  explicit pathParsing(fileSqlInfo* file);
 
-  // dpathList getPath();
-  dpathList getPath(const std::string& pathstr);
-  void write(const dpathList& path_value);
-  void write(const dpathList& path_value, const dpath filePath);
-  dpathList operator()();
+  // 数据库使用方案
+  dpathList Path(const std::string& pathstr);
+
+  // 正常情况下是这个
+  dpathList Path() const;
+  void setPath(const dpathList& path);
+
+  void write();
+
+  //上传到数据库时，使用这个
+  std::string DBInfo() const;
 
  private:
-  dpath p_path_row;
+  fileSqlInfo* p_file_Archive;
+  dpathPtr p_path_row;
+  dpathList p_path_list;
 };
 
 DOODLE_NAMESPACE_E

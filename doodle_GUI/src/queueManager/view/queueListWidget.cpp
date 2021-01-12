@@ -15,7 +15,7 @@ void QueueListDelegate::paint(QPainter *painter,
                               const QModelIndex &index) const {
   if (!index.isValid()) return;
 
-  auto k_queue = index.data(Qt::UserRole).value<queueDataPtr>();
+  auto k_queue = index.data(Qt::UserRole).value<queueData *>();
   if (!k_queue) return;
 
   QStyleOptionProgressBar progress;

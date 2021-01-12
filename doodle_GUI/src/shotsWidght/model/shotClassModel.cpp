@@ -31,7 +31,7 @@ QVariant shotClassModel::data(const QModelIndex &index, int role) const {
       var = list_fileClass[index.row()]->getClass_Qstr();
       break;
     case Qt::UserRole:
-      var = QVariant::fromValue(list_fileClass[index.row()]);
+      var = QVariant::fromValue(list_fileClass[index.row()].get());
       break;
     default:
       break;

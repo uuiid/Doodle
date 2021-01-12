@@ -16,7 +16,7 @@ bool shotTableFilterModel::filterAcceptsRow(int source_row,
   auto k_Data = sourceModel()
                     ->index(source_row, 0)
                     .data(Qt::UserRole)
-                    .value<shotInfoPtr>();
+                    .value<shotFileSqlInfo *>();
   if (!k_Data) return false;
 
   switch (p_useFilter_e) {
@@ -51,10 +51,10 @@ bool shotTableFilterModel::filterAcceptsRow(int source_row,
 }
 
 bool shotTableFilterModel::lessThan(const QModelIndex &left, const QModelIndex &right) const {
-  auto k_left  = left.data(Qt::UserRole).value<shotInfoPtr>();
-  auto k_right = right.data(Qt::UserRole).value<shotInfoPtr>();
+  auto k_left  = left.data(Qt::UserRole).value<shotFileSqlInfo *>();
+  auto k_right = right.data(Qt::UserRole).value<shotFileSqlInfo *>();
   if (k_left && k_right) {
-    return shotFileSqlInfo::sort(k_left, k_right);
+    return shotFileSqlInfo::sort(k_left->shared_from_this(), k_right->shared_from_this());
   } else {
     return false;
   }

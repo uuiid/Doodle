@@ -6,6 +6,8 @@
 #define _WIN32_WINNT 0x0A00
 
 #include <QtCore/qglobal.h>
+// #include <QtCore/qobject.h>
+// #include <QtCore/QMetaObject>
 #include <QtCore/QString>
 
 #include <vector>
@@ -101,6 +103,9 @@ class pathParsing;
 
 class queueData;
 using queueDataPtr = std::shared_ptr<queueData>;
+//评论类
+class CommentInfo;
+using CommentInfoPtr = std::shared_ptr<CommentInfo>;
 
 //共享指针引用类
 using shotPtr      = std::shared_ptr<shot>;
