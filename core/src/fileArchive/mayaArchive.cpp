@@ -72,6 +72,31 @@ bool mayaArchive::CheckMaterialAndMapSet() const {
   //获得信息
   auto result = p_cacheFilePath.front().parent_path() / "doodle.json";
   if (boost::filesystem::exists(result)) {
+    nlohmann::json root{};
+    boost::filesystem::ifstream stream{result, std::ios_base::in};
+    try {
+      stream >> root;
+    } catch (const nlohmann::json::parse_error& err) {
+      DOODLE_LOG_ERROR(err.what());
+      return false;
+    }
+
+    std::string result{};
+    for (const auto& item : root) {
+      result.append("\n名称已经自动修复")
+          .append("\n网格名称 ：")
+          .append(item["name"].get<std::string>())
+          .append("\n五边面： ")
+          .append(item["PentagonalSurface"].get<bool>() ? "true" : "false")
+          .append("\n多Uv： ");
+      if (item["map"]["MultipleUvMap"].get<bool>()) {
+        result.append("是");
+      } else {
+        result.append("否");
+      }
+    }
+    p_info_ptr_->setInfoP(result);
+    
     return true;
   }
   return false;
