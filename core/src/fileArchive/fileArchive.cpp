@@ -70,7 +70,6 @@ dpath fileArchive::down(const dstring &path) {
 }
 
 dpath fileArchive::down() {
-
   _generateFilePath();
   //获得缓存路径
   generateCachePath();
@@ -125,8 +124,9 @@ bool fileArchive::isInCache() {
       if (!boost::filesystem::exists(p_cacheFilePath[index].parent_path())) {
         //首先测试是否存在目录,不存在直接返回
         has &= false;
-      } else {  //如果存在就看文件是否存在,
-                //存在就删除(boost::filesystem::exists(p_cacheFilePath[index].parent_path()))
+      } else {
+        //如果存在就看文件是否存在,
+        //存在就删除(boost::filesystem::exists(p_cacheFilePath[index].parent_path()))
         if (p_cacheFilePath[index] == p_soureFile[index])
           has &= true;
         else {
@@ -147,7 +147,6 @@ void fileArchive::_updata(const dpathList &pathList) {
 
   auto &session = doSystem::DfileSyntem::get();
 
-  //使用ftp上传
   const auto k_size = p_cacheFilePath.size();
   for (size_t i = 0; i < k_size; ++i) {
     updateChanged(k_size / 50);

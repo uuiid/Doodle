@@ -136,8 +136,8 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
         if (index.column() == 1) {
           QString tooltip{};
           for (auto &&tex : ass->getInfoP()) {
-            if (tex == ass->getInfoP().back()) continue;
-            tooltip.append(DOTOS(tex));
+            tooltip.push_front(DOTOS(tex));
+            tooltip.push_front("\n=====================\n");
           }
           var = tooltip;
         }

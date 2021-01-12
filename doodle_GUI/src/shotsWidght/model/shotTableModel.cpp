@@ -92,8 +92,8 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
         if (index.column() == 1) {
           QString tooltip{};
           for (auto &&tex : shot->getInfoP()) {
-            if (tex == shot->getInfoP().back()) continue;
-            tooltip.append(DOTOS(tex));
+            tooltip.push_front(DOTOS(tex));
+            tooltip.push_front("\n=====================\n");
           }
           var = tooltip;
         }

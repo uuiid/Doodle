@@ -328,8 +328,9 @@ void assTableWidght::chickFile(const assInfoPtr &file) {
   if (file->getAssType() == assType::findType(assType::e_type::rig, false) ||
       file->getAssType() == assType::findType(assType::e_type::scenes, false)) {
     auto fileArchive = std::make_shared<mayaArchive>(file);
-    fileArchive->down();
+    auto downFile    = fileArchive->down();
     fileArchive->CheckMaterialAndMapSet();
+    fileArchive->update();
   }
 }
 DOODLE_NAMESPACE_E
