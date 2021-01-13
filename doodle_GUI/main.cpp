@@ -52,6 +52,7 @@ int main(int argc, char *argv[]) try {
   return 0;
 } catch (const std::exception &err) {
   DOODLE_LOG_ERROR(err.what());
+  doodle::coreSet::getSet().writeDoodleLocalSet();
   boost::log::core::get()->remove_all_sinks();
   return 1;
 }

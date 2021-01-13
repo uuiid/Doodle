@@ -38,10 +38,7 @@ class settingWidget : public QWidget {
   QComboBox *p_dep_text;
   QLineEdit *p_user_text;
   QLineEdit *p_syn_text;
-  QSpinBox *p_eps_text;
   QComboBox *p_prj_text;
-  QListWidget *p_syn_locale_path;
-  QListWidget *p_syn_sever_path;
 };
 
 DOODLE_NAMESPACE_E

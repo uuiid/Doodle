@@ -17,7 +17,7 @@ DOODLE_NAMESPACE_S
 class CORE_API ueSynArchive : public fileArchive {
  public:
   ueSynArchive();
-  dpath syn(const shotPtr& shot_);
+  dpath syn(const episodesPtr& episodes_ptr, const shotPtr& shot_ptr);
   bool update() override;
   bool makeDir(const episodesPtr& episodes_ptr);
 

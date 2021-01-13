@@ -24,7 +24,6 @@ class systemTray : public QSystemTrayIcon {
                             exeFile };
 
  private Q_SLOTS:
-  void synFile();
   void installMayaPlug();
   void installUe4Plug(const installModel &model);
   void doodleQuery();

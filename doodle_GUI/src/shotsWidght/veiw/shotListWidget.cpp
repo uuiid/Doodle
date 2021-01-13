@@ -238,6 +238,6 @@ void shotListWidget::synShot() {
                    .value<shot *>();
   auto eps_ptr = coreDataManager::get().getEpisodesPtr();
   coreSet::getSet().setSyneps(eps_ptr->getEpisdes());
-  ueSynArchive().syn(shot_->shared_from_this());
+  ueSynArchive().syn(eps_ptr, shot_->shared_from_this());
 }
 DOODLE_NAMESPACE_E

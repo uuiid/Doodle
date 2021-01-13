@@ -4,6 +4,9 @@
 
 #include "ueSynArchive.h"
 
+#include <Logger.h>
+#include <src/shots/episodes.h>
+
 #include <src/DfileSyntem.h>
 #include <src/assets/assfilesqlinfo.h>
 #include <src/core/coreDataManager.h>
@@ -22,27 +25,21 @@ ueSynArchive::ueSynArchive()
     : fileArchive(), p_syn(std::make_shared<freeSynWrap>()), synpart() {}
 void ueSynArchive::insertDB() {}
 void ueSynArchive::_generateFilePath() {}
-dpath ueSynArchive::syn(const shotPtr &shot_) {
+
+dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr) {
   auto &set = coreSet::getSet();
   boost::format str("/03_Workflow/Assets/%s/backup");
   str % set.getDepartment();
-  synpart = set.getSynDir();
-  if (synpart.empty()) {
-    return {};
-  }
 
-  //  boost::format eps(DOODLE_EPFORMAT);
-  //  eps % set.getSyneps();
+  auto k_synData = synData::getAll(episodes_ptr);
+
+  synpart = k_synData->getSynDir(true);
+  if (synpart.empty()) return {};
+
   dstring shotFstr = "*\\VFX\\*";
-  if (shot_) {
+  if (shot_ptr) {
     boost::format shotFlliter(R"(*c%04i\Checkpoint\VFX\*)");
-    shotFstr = (shotFlliter % shot_->getShot()).str();
-  }
-  for (auto &item : synpart) {
-    item.local = set.getSynPathLocale() / set.projectName().second /
-                 item.local / DOODLE_CONTENT / "shot";
-    item.server = set.getAssRoot() / set.getDepartment() / item.server /
-                  DOODLE_CONTENT / "shot";
+    shotFstr = (shotFlliter % shot_ptr->getShot()).str();
   }
 
   p_syn->addSynFile(synpart);
@@ -59,7 +56,7 @@ dpath ueSynArchive::syn(const shotPtr &shot_) {
     }
 
     //下载vfx镜头
-    auto syn_part_vfx = set.getSynDir();
+    auto syn_part_vfx = k_synData->getSynDir();
     for (auto &item : syn_part_vfx) {
       item.local = set.getSynPathLocale() / set.projectName().second /
                    item.local / DOODLE_CONTENT / "shot";
@@ -80,7 +77,6 @@ dpath ueSynArchive::syn(const shotPtr &shot_) {
 }
 
 bool ueSynArchive::update() {
-  syn(nullptr);
   return true;
 }
 bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {

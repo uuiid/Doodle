@@ -33,9 +33,7 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   connect(timer, &QTimer::timeout, this, &systemTray::upDoodle);
   timer->start(1000 * 60 * 60 * 24);
 
-  auto menu    = new QMenu(parent);
-  auto fileSyn = new QAction(menu);
-  fileSyn->setText(tr("同步文件"));
+  auto menu = new QMenu(parent);
 
   auto prj_widght = new QAction(menu);
   prj_widght->setText(tr("项目管理器"));
@@ -82,11 +80,9 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   auto k_exit_ = new QAction(menu);
   k_exit_->setText(tr("退出"));
 
-  connect(fileSyn, &QAction::triggered, this, &systemTray::synFile);
   connect(k_exit_, &QAction::triggered, this, &systemTray::doodleQuery);
   connect(prj_widght, &QAction::triggered, parent, &mainWindows::show);
   connect(setting, &QAction::triggered, parent, &mainWindows::openSetting);
-  menu->addAction(fileSyn);
   menu->addAction(prj_widght);
   menu->addMenu(install);
   menu->addAction(modify_ue_cache_path);
@@ -102,10 +98,6 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   menu->addAction(k_exit_);
 
   setContextMenu(menu);
-}
-void systemTray::synFile() {
-  auto syn = std::make_unique<ueSynArchive>();
-  syn->syn(nullptr);
 }
 
 void systemTray::installMayaPlug() {
@@ -140,6 +132,7 @@ void systemTray::installUe4Plug(const systemTray::installModel &model) {
 }
 void systemTray::doodleQuery() {
   dynamic_cast<mainWindows *>(parent())->close();
+  doodle::coreSet::getSet().writeDoodleLocalSet();
   setVisible(false);
   qApp->quit();
 }
@@ -149,6 +142,7 @@ void systemTray::showRigister() {
 }
 
 void systemTray::upDoodle() {
+  doodle::coreSet::getSet().writeDoodleLocalSet();
   auto fun      = std::async(std::launch::async, &toolkit::update);
   auto &manager = updataManager::get();
   manager.addQueue(fun, "正在下载中", 100);

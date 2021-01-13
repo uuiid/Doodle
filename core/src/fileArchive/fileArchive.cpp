@@ -137,7 +137,7 @@ bool fileArchive::isInCache() {
     }
   }
   updateChanged(1);
-  infoChanged(std::string{"测试文件是否在缓存位置上 : "}.append(has ? "true" : "false"));
+  DOODLE_LOG_INFO(std::string{"测试文件是否在缓存位置上 : "}.append(has ? "true" : "false"));
   return has;
 }
 
@@ -183,10 +183,10 @@ bool fileArchive::isServerzinsideDir(const dpath &localPath) {
   auto &set        = coreSet::getSet();
   auto projectRoot = set.getPrjectRoot();
   if (projectRoot.has_root_name() && localPath.has_root_name()) {
-    infoChanged("判断为服务器路径");
+    DOODLE_LOG_INFO("判断为服务器路径");
     return projectRoot.root_name() == localPath.root_name();
   } else {
-    infoChanged("判断为本地路径");
+    DOODLE_LOG_INFO("判断为本地路径");
     return false;
   }
 }
@@ -201,7 +201,7 @@ bool fileArchive::update() {
 fileArchive::state fileArchive::isState() const { return p_state_; }
 
 bool fileArchive::generateCachePath() {
-  infoChanged("获得缓存路径");
+  DOODLE_LOG_INFO("获得缓存路径");
   updateChanged(5);
 
   //获得缓存路径

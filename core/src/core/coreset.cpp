@@ -11,9 +11,6 @@
 #include <src/coreOrm/synfile_sqlOrm.h>
 #include <src/coreOrm/user_sqlOrm.h>
 #include <src/coreOrm/episodes_sqlOrm.h>
-#include <boost/filesystem.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/regex.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -21,11 +18,18 @@
 #include <fstream>
 
 #include <QtCore/QStorageInfo>
-#include <boost/dll.hpp>
+
 #include <fileSystem_cpp.h>
 
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
 #include <boost/process.hpp>
+#include <boost/dll.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
+
+#include <magic_enum.hpp>
+
 DOODLE_NAMESPACE_S
 
 const dstring coreSet::settingFileName = "doodle_conf.json";
@@ -91,7 +95,7 @@ void coreSet::writeDoodleLocalSet() {
   nlohmann::json root;
 
   root["user"]         = user;
-  root["department"]   = department;
+  root["department"]   = getDepartment();
   root["synPath"]      = synPath->generic_string();
   root["synEp"]        = syneps;
   root["projectname"]  = project.second;
@@ -103,20 +107,22 @@ void coreSet::writeDoodleLocalSet() {
   outjosn.close();
 }
 
-coreSet::coreSet() {
-  ipMysql     = "192.168.10.213";
-  user        = "user";
-  department  = "VFX";
-  syneps      = 1;
-  freeFileSyn = R"("C:\PROGRA~1\FREEFI~1\FreeFileSync.exe")";
-  project     = std::make_pair(1, "dubuxiaoyao3");
-  synPath     = std::make_shared<dpath>("D:/ue_prj");
-  synServer   = std::make_shared<dpath>("/03_Workflow/Assets");
-  shotRoot    = std::make_shared<dpath>("/03_Workflow/Shots");
-  assRoot     = std::make_shared<dpath>("/03_Workflow/Assets");
-  prjectRoot  = std::make_shared<dpath>("W:/");
-  cacheRoot   = std::make_shared<dpath>("C:/Doodle_cache");
-  doc         = std::make_shared<dpath>("C:/Doodle_cache");
+coreSet::coreSet()
+    : ipMysql("192.168.10.213"),
+      ipFTP("192.168.10.213"),
+      user("user"),
+      department(Department::VFX),
+      syneps(1),
+      freeFileSyn(R"("C:\PROGRA~1\FREEFI~1\FreeFileSync.exe")"),
+      projectname("dubuxiaoyao3"),
+      project(std::make_pair(1, "dubuxiaoyao3")),
+      synPath(std::make_shared<dpath>("D:/ue_prj")),
+      prjMap(),
+      shotRoot(std::make_shared<dpath>("/03_Workflow/Shots")),
+      assRoot(std::make_shared<dpath>("/03_Workflow/Assets")),
+      prjectRoot(std::make_shared<dpath>("W:/")),
+      cacheRoot(std::make_shared<dpath>("C:/Doodle_cache")),
+      doc(std::make_shared<dpath>("C:/Doodle_cache")) {
 }
 
 void coreSet::getSetting() {
@@ -125,15 +131,12 @@ void coreSet::getSetting() {
     boost::filesystem::ifstream inJosn;
     inJosn.open((*doc / settingFileName), std::ifstream::binary);
 
-    nlohmann::json root;
-    std::stringstream instr;
-    instr << inJosn.rdbuf();
-    instr >> root;
-
+    nlohmann::json root = nlohmann::json::parse(inJosn);
     inJosn.close();
 
-    user           = root.value("user", "");
-    department     = root.value("department", "VFX");
+    user           = root.value("user", "uset_tmp");
+    auto k_dep     = root.value("department", "VFX");
+    department     = magic_enum::enum_cast<Department>(k_dep).value_or(Department::VFX);
     *synPath       = root.value("synPath", "D:/ue_prj");
     project.second = root.value("synEp", 1);
     freeFileSyn    = root.value("FreeFileSync",
@@ -154,16 +157,20 @@ dstring coreSet::toIpPath(const dstring &path) {
   return path;
 }
 
-dstring coreSet::getDepartment() const { return department; }
+dstring coreSet::getDepartment() const {
+  return std::string{magic_enum::enum_name(department)};
+}
 
-void coreSet::setDepartment(const dstring &value) { department = value; }
+void coreSet::setDepartment(const dstring &value) {
+  department = magic_enum::enum_cast<Department>(value).value_or(Department::VFX);
+}
 
 dstring coreSet::getUser() const { return user; }
 
 dstring coreSet::getUser_en() const {
   dopinyin::convert con;
   return boost::algorithm::to_lower_copy(
-      con.toEn(user));  // QString::fromStdString().toLower();
+      con.toEn(user));
 }
 
 void coreSet::setUser(const dstring &value) { user = value; }
@@ -225,47 +232,14 @@ void coreSet::getServerSetting() {
     DOODLE_LOG_INFO(raw.name.text << "--->" << raw.value.text << "\n");
   }
 
-  *shotRoot   = (map["shotRoot"]);
-  *assRoot    = (map["assetsRoot"]);
-  *synServer  = (map["synSever"]);
-  *prjectRoot = (map["project"]);
+  *shotRoot   = map["shotRoot"];
+  *assRoot    = map["assetsRoot"];
+  *prjectRoot = map["project"];
 
   if (map.find("IP_FTP") != map.end())
     ipFTP = (map["IP_FTP"]);
   else
     ipFTP = ipMysql;
-}
-
-synPathListPtr coreSet::getSynDir() {
-  auto db = coreSql::getCoreSql().getConnection();
-  doodle::Synfile table{};
-  doodle::Episodes epTable{};
-
-  nlohmann::json root;
-
-  synPathListPtr list;
-
-  for (auto &&row :
-       db->run(sqlpp::select(table.path)
-                   .from(table.join(epTable).on(table.episodesId == epTable.id))
-                   .where(epTable.episodes == syneps and
-                          epTable.projectId == project.first))) {
-    dstring str = row.path;
-    try {
-      root = nlohmann::json::parse(str);
-    } catch (nlohmann::json::parse_error &err) {
-      DOODLE_LOG_INFO(err.what() << " "
-                                 << "解析同步目录失败");
-    }
-    for (const auto &item : root) {
-      synPath_struct fileSyn{};
-      fileSyn.local  = item.value("Right", "");
-      fileSyn.server = item.value("Left", "");
-      list.push_back(fileSyn);
-    }
-    DOODLE_LOG_INFO(row.path);
-  }
-  return list;
 }
 
 void coreSet::getCacheDiskPath() {
@@ -281,6 +255,7 @@ void coreSet::getCacheDiskPath() {
     }
   }
 }
+
 dstringList coreSet::getAllPrjName() const {
   dstringList list;
   for (auto &&prj : prjMap) {

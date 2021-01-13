@@ -113,11 +113,23 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_eps_Menu->addAction(add_eps);
 
   if (selectionModel()->hasSelection()) {
+    auto eps_ptr = selectionModel()->currentIndex().data(Qt::UserRole).value<episodes *>();
+    if (!eps_ptr) return;
+
     auto createMove = new QAction();
     createMove->setText(tr("制作整集拍屏"));
     connect(createMove, &QAction::triggered,
             this, &shotEpsListWidget::creatEpsMov);
     p_eps_Menu->addAction(createMove);
+
+    auto syneps = new QAction();
+    syneps->setText(tr("同步集数"));
+    connect(syneps, &QAction::triggered,
+            this, [eps_ptr]() {
+              std::make_shared<ueSynArchive>()->syn(eps_ptr->shared_from_this(), nullptr);
+            });
+    // syneps->setToolTip();
+    p_eps_Menu->addAction(syneps);
 
     p_eps_Menu->addSection(tr("注意"));
 

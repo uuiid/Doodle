@@ -13,8 +13,10 @@
 #include <Logger.h>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
-
 #include <boost/process.hpp>
+
+#include <nlohmann/json.hpp>
+
 #include <sstream>
 #include <filesystem>
 #include <stdexcept>

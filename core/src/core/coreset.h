@@ -4,10 +4,9 @@
 #include <map>
 #include <boost/filesystem.hpp>
 
-#include <nlohmann/json.hpp>
 DOODLE_NAMESPACE_S
 
-enum class dep { None_,
+enum class Department { None_,
                  Executive,
                  Light,
                  VFX,
@@ -39,7 +38,7 @@ class CORE_API coreSet {
   void appendEnvironment() const;
   //这个要改到其他地方
   //获得同步路径
-  synPathListPtr getSynDir();
+  // synPathListPtr getSynDir();
   //获得运行程序目录
   static dpath program_location();
   static dpath program_location(const dpath &path);
@@ -119,7 +118,7 @@ class CORE_API coreSet {
   //用户名称
   dstring user;
   //部门
-  dstring department;
+  Department department;
   //同步集数
   int syneps;
   //同步文件的文件运行程序
@@ -132,7 +131,6 @@ class CORE_API coreSet {
  private:
   //内部属性
   dpathPtr synPath;
-  dpathPtr synServer;
 
   std::map<int, std::string> prjMap;
 
