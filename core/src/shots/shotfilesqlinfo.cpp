@@ -107,7 +107,7 @@ void shotFileSqlInfo::updateSQL() {
   auto db     = coreSql::getCoreSql().getConnection();
   auto updata = sqlpp::update(tab);
   try {
-    p_parser_info->write();
+    write();
 
     db->update(
         updata.set(tab.infor        = p_parser_info->DBInfo(),
