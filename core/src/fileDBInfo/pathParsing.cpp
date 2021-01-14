@@ -30,6 +30,9 @@ dpathList pathParsing::Path(const std::string& pathstr) {
    */
   dpath path{pathstr};
 
+  if (pathstr.empty())
+    throw std::runtime_error("字符串空");
+
   auto& fileSys = doSystem::DfileSyntem::get();
 
   if (fileSys.exists(pathstr) && path.extension() == ".json") {
