@@ -171,6 +171,7 @@ void shotEpsListWidget::creatEpsMov() {
     const auto &kEps = selectionModel()->currentIndex().data(Qt::UserRole).value<episodes *>();
     if (kEps) {
       shotInfo->setEpisdes(kEps->shared_from_this());
+
       auto move = std::make_unique<movieEpsArchive>(shotInfo);
       move->update();
     }

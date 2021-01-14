@@ -212,7 +212,7 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& shot_ptr,
     Info->versionP      = row.version;
     Info->fileStateP    = row.filestate;
 
-    Info->p_parser_path->Path(row.FilePath_);
+    Info->p_parser_path->Path(row.FilePath_.text);
     Info->p_parser_info->Info(row.infor.text);
 
     if (row.shotsId._is_valid) Info->p_shot_id = row.shotsId;
@@ -355,9 +355,9 @@ dataInfoPtr shotFileSqlInfo::findSimilar() {
           [=](shotFileSqlInfo* info) -> bool {
             if (info)
               return info->p_eps_id == p_eps_id &&
-                     info->p_shot_id == p_shot_id &&
-                     info->p_shTy_id == p_shTy_id &&
-                     info->p_shCla_id == p_shCla_id &&
+                     info->p_shot_id == std::max(p_shot_id, (qint64)0) &&
+                     info->p_shTy_id == std::max(p_shTy_id, (qint64)0) &&
+                     info->p_shCla_id == std::max(p_shCla_id, (qint64)0) &&
                      info->idP > 0;
             else
               return false;
