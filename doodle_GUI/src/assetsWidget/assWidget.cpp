@@ -62,7 +62,8 @@ assWidght::assWidght(QWidget *parent)
   p_ass_sortfilter_model_->setSourceModel(p_ass_class_model_);
   connect(k_filterLineEdit, &QLineEdit::textChanged,
           this, [=](const QString &filter) {
-            p_ass_sortfilter_model_->setFilterRegularExpression(filter);
+            auto tmp = QRegularExpression{filter, QRegularExpression::CaseInsensitiveOption};
+            p_ass_sortfilter_model_->setFilterRegularExpression(tmp);
           });
 
   //table过滤模型
