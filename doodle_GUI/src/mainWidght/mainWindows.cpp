@@ -53,19 +53,23 @@ void mainWindows::doodle_init() {
   p_b_box_layout_->setObjectName(QString::fromUtf8("p_b_box_layout_"));
 
   //开始设置项目小部件
-  p_project_list = new QListWidget(centralWidget);
+  p_project_list = new QListWidget();
   p_project_list->setObjectName("prj");
   for (const auto &name : coreSet::getSet().getAllPrjName()) {
     p_project_list->addItem(QString::fromStdString(name));
   }
   p_project_list->setFlow(QListView::LeftToRight);
   p_project_list->setFixedHeight(50);  //设置固定大小
-  p_project_list->setFixedWidth(1200);
+  // p_project_list->setMaximumHeight(50);
+  // p_project_list->setFixedWidth(1200);
+
+  p_project_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   p_project_list->setCurrentItem(p_project_list->item(0));
 
   p_b_box_layout_->addWidget(p_project_list);
-  p_b_box_layout_->setSizeConstraint(
-      QLayout::SetFixedSize);  //设置不需要调整大小
+  // p_b_box_layout_->setAlignment(Qt::AlignCenter);
+
+  p_b_box_layout_->setSizeConstraint(QLayout::SetMaximumSize);  //设置不需要调整大小
   p_setting_widget_ = new settingWidget(centralWidget);
   //连接项目更改设置
   connect(p_project_list, &QListWidget::itemClicked,
@@ -93,6 +97,9 @@ void mainWindows::doodle_init() {
   addDockWidget(Qt::BottomDockWidgetArea, k_shot_dock);
   connect(p_project_list, &QListWidget::itemClicked,
           p_shot_widget_, &shotWidget::refresh);
+
+  p_shot_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  p_ass_widght_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
   // //进度可拖拽窗口
   // auto k_queue_dock = new QDockWidget(tr("队列"), centralWidget);

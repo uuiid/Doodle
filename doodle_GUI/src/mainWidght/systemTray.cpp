@@ -81,7 +81,7 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   k_exit_->setText(tr("退出"));
 
   connect(k_exit_, &QAction::triggered, this, &systemTray::doodleQuery);
-  connect(prj_widght, &QAction::triggered, parent, &mainWindows::show);
+  connect(prj_widght, &QAction::triggered, parent, &mainWindows::showMaximized);
   connect(setting, &QAction::triggered, parent, &mainWindows::openSetting);
   menu->addAction(prj_widght);
   menu->addMenu(install);

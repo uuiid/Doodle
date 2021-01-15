@@ -1,15 +1,4 @@
-﻿/*
- * @Author: your name
- * @Date: 2020-11-10 10:28:32
- * @LastEditTime: 2020-12-01 13:59:48
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \Doodle\core\src\fileArchive\moveShotA.cpp
- */
-//
-// Created by teXiao on 2020/11/10.
-//
-#include "moveShotA.h"
+﻿#include "moveShotA.h"
 #include "src/fileDBInfo/filesqlinfo.h"
 #include "src/shots/shotfilesqlinfo.h"
 #include <src/shots/shottype.h>

@@ -170,5 +170,18 @@
     ],
     "editor.tabSize": 2,
     "workbench.editor.limit.enabled": true,
-    "workbench.editor.limit.value": 8
+    "workbench.editor.limit.value": 8,
+    "editor.fontFamily": "Fira Code",
+    "editor.fontLigatures": true,
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        ".idea": true,
+        ".vs": true,
+        "b_Ninja*": true,
+        "install*": true
+    }
 }
