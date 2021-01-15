@@ -41,7 +41,7 @@ void imageArchive::insertDB() {
   }
 }
 
-void imageArchive::_generateFilePath() {
+void imageArchive::imp_generateFilePath() {
   if (!p_soureFile.empty()) {
     if (isServerzinsideDir(p_soureFile.front().generic_wstring())) {
       for (auto &&item : p_soureFile) {

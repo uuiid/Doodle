@@ -51,11 +51,12 @@ class materal():
         print("materal name : {} \nshader group name: {} ".format(
             self.name,
             self.shader_group))
-        self.isOk = (self.shader_group == "{}SG".format(self.name))
-        print("is {} match".format(self.isOk))
-        if not self.isOk:
-            self.repairName()
+        # self.isOk = (self.shader_group == "{}SG".format(self.name))
+        # print("is {} match".format(self.isOk))
+        # if not self.isOk:
+        #     self.repairName()
         self.repairMateralFace()
+        self.reName()
 
     def repairName(self):
         try:
@@ -64,6 +65,13 @@ class materal():
         except:
             pass
 
+    def reName(self):
+        try:
+            self.maya_obj.rename("{}Mat".format(self.name))
+            self.shader_group.rename(self.name)
+        except:
+            print("-------->!!!!! shi_Bai")
+
     def repairMateralFace(self):
         polys = pymel.core.sets(self.shader_group, query=True)
         print("materal obj: ")
@@ -71,7 +79,6 @@ class materal():
             if poly.__class__.__name__ == "Mesh":
                 pymel.core.sets(self.shader_group, remove=poly, edit=True)
                 pymel.core.sets(self.shader_group, add=poly.faces, edit=True)
-            print(pymel.core.sets(self.shader_group, query=True))
 
     def isSurfaceMaterial(self):
         # 获得分类是表面材质
@@ -95,8 +102,10 @@ class uvmap():
         print("get obj {}".format(self.maya_obj.name()))
         print("uv maps: ")
         print(self.name)
+
         if not self.name:
             return
+
         if len(self.name) > 1:
             self.MultipleUvMap = True
         else:
@@ -140,12 +149,12 @@ class geometryInfo:
         for materal in self.materals:
             materal.chick()
         pymel.core.select(self.maya_mesh_obj)
-        self.muFace = maya.mel.eval(
-            "polyCleanup 1 1 1  0 1 0 0 0  0 0.1 0 0.1 0 0.1;")
-        if self.muFace:
-            self.PentagonalSurface = False
-        else:
-            self.PentagonalSurface = True
+        # self.muFace = maya.mel.eval(
+        #     "polyCleanup 1 1 1  0 1 0 0 0  0 0.1 0 0.1 0 0.1;")
+        # if self.muFace:
+        #     self.PentagonalSurface = False
+        # else:
+        #     self.PentagonalSurface = True
 
     def toJson(self):
         return dict(
@@ -171,7 +180,7 @@ class chickFile():
         pass
 
     def selectAllPolygons(self):
-        self.geometrys = pymel.core.ls(geometry=True)
+        self.geometrys = pymel.core.ls(sl=True)
         self.__chcik_geo__ = [geometryInfo(g) for g in self.geometrys]
 
     def chick(self):
@@ -185,7 +194,7 @@ class chickFile():
         if log_obj:
             log_obj.log = json.dumps(self.__chcik_geo__, cls=JsonEncoder)
             log_obj.write()
-        pymel.core.saveFile()
+        # pymel.core.saveFile()
 
 
 run = chickFile

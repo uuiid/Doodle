@@ -32,7 +32,7 @@ void movieEpsArchive::insertDB() {
   else
     p_info_ptr_->insert();
 }
-void movieEpsArchive::_generateFilePath() {
+void movieEpsArchive::imp_generateFilePath() {
   if (!p_soureFile.empty()) {
     p_ServerPath.push_back(p_info_ptr_->generatePath("movie", ".mp4").generic_string());
   } else if (!p_info_ptr_->getFileList().empty()) {
@@ -53,7 +53,7 @@ bool movieEpsArchive::epsMove() {
         p_ServerPath.push_back(info.front()->getFileList().front());
       }
     }
-    _down(p_cacheFilePath.front().parent_path());
+    imp_down(p_cacheFilePath.front().parent_path());
     dpathList pathlist{};
     for (const auto &path : p_ServerPath) {
       auto path_mov = p_cacheFilePath.front().parent_path() / path.filename();

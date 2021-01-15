@@ -33,7 +33,7 @@ void movieArchive::insertDB() {
   else
     p_info_ptr_->insert();
 }
-void movieArchive::_generateFilePath() {
+void movieArchive::imp_generateFilePath() {
   if (!p_soureFile.empty())
     p_ServerPath.push_back(p_info_ptr_->generatePath("movie", ".mp4").generic_string());
   else if (!p_info_ptr_->getFileList().empty())
@@ -71,7 +71,7 @@ bool movieArchive::update(const dpathList &filelist) {
   p_soureFile = filelist;
   DOODLE_LOG_INFO(filelist.front().c_str());
   setInfoAttr();
-  _generateFilePath();
+  imp_generateFilePath();
   generateCachePath();
 
   bool isok = false;
@@ -86,7 +86,7 @@ bool movieArchive::update(const dpathList &filelist) {
 
   if (isok) {
     p_state_ = state::success;
-    _updata(p_cacheFilePath);
+    imp_updata(p_cacheFilePath);
     insertDB();
   } else
     p_state_ = state::fail;

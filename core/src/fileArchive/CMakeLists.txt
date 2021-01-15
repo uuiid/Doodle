@@ -10,6 +10,7 @@
         ueArchive.h
         ueSynArchive.h
         imageArchive.h
+        ScreenshotArchive.h
 )
 target_sources(
         core
@@ -23,4 +24,5 @@ target_sources(
         ueArchive.cpp
         ueSynArchive.cpp
         imageArchive.cpp
+        ScreenshotArchive.cpp
 )

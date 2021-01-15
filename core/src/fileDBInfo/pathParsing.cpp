@@ -46,6 +46,7 @@ dpathList pathParsing::Path(const std::string& pathstr) {
           p_path_list.push_back(i.get<std::string>());
       }
     } catch (const nlohmann::json::parse_error& err) {
+      std::cout << err.what() << std::endl;
       p_path_list.push_back(pathstr);
     }
     file->close();
@@ -59,6 +60,7 @@ dpathList pathParsing::Path(const std::string& pathstr) {
       }
 
     } catch (const nlohmann::json::parse_error& err) {
+      std::cout << err.what() << std::endl;
       p_path_list.push_back(pathstr);
     }
   }

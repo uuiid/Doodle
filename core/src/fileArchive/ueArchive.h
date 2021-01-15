@@ -18,10 +18,10 @@ class CORE_API ueArchive : public fileArchive {
 
  protected:
   void insertDB() override;
-  void _generateFilePath() override;
+  void imp_generateFilePath() override;
 
-  void _updata(const dpathList &pathList) override;
-  void _down(const dpath &localPath) override;
+  void imp_updata(const dpathList &pathList) override;
+  void imp_down(const dpath &localPath) override;
 
  protected:
   fileSqlInfoPtr p_info_;

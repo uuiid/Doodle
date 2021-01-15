@@ -20,7 +20,7 @@ class CORE_API mayaArchive : public fileArchive {
 
  protected:
   void insertDB() override;
-  void _generateFilePath() override;
+  void imp_generateFilePath() override;
 
  private:
   fileSqlInfoPtr p_info_ptr_;

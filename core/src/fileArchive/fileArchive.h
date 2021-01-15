@@ -60,11 +60,11 @@ class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
   //提交到数据库
   virtual void insertDB() = 0;
   //上传文件
-  virtual void _updata(const dpathList &pathList);
+  virtual void imp_updata(const dpathList &pathList);
   //组合需要的路径  包括来源  缓存和服务器路径
-  virtual void _generateFilePath() = 0;
+  virtual void imp_generateFilePath() = 0;
   //下载文件
-  virtual void _down(const dpath &localPath);
+  virtual void imp_down(const dpath &localPath);
 
   //文件在服务器目录中
   virtual bool isServerzinsideDir(const dpath &localPath);

@@ -23,20 +23,27 @@ class DlsShelf(shelfBase._shelf):
     #     self.cloth_to_fbx = None
 
     def build(self):
-        self.addButon("export_cam", icon="icons/OUTcam.png", command=self.exportCam)
-        self.addButon("export_abc", icon="icons/OUTabc.png", command=self.exportAbc)
-        self.addButon("back_cam", icon="icons/back_cam.png", command=self.BakeAimCam)
+        # self.addButon("export_cam", icon="icons/OUTcam.png", command=self.exportCam)
+        self.addButon("export_abc", icon="icons/OUTabc.png",
+                      command=self.exportAbc)
+        self.addButon("back_cam", icon="icons/back_cam.png",
+                      command=self.BakeAimCam)
 
-        self.addButon("remesh", icon="icons/remesh.png", command=self.polyremesh)
+        self.addButon("remesh", icon="icons/remesh.png",
+                      command=self.polyremesh)
 
         self.addButon("clear", icon="icons/clear.png", command=self.clearScane)
-        self.addButon("CLoth_to_Fbx", icon="icons/cloth_to_fbx.png", command=self.clothToFbx)
-        self.addButon("delect Weight", icon="icons/ue_delete_weight.png", command=self.deleteWeightPoint)
+        self.addButon("CLoth_to_Fbx", icon="icons/cloth_to_fbx.png",
+                      command=self.clothToFbx)
+        self.addButon("delect Weight", icon="icons/ue_delete_weight.png",
+                      command=self.deleteWeightPoint)
         self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
                       command=self.deleteAttr)
-        self.addButon("export usd", icon="icons/export_usd.png", command=self.exportUSD)
+        self.addButon("export usd", icon="icons/export_usd.png",
+                      command=self.exportUSD)
         self.addButon("repair", icon="icons/repair", command=self.repair)
-        self.addButon("randomColor", icon="icons/randomColor.png", command=self.randomColor)
+        self.addButon("randomColor", icon="icons/randomColor.png",
+                      command=self.randomColor)
 
     def polyremesh(self):
         self.re()
@@ -80,14 +87,15 @@ class DlsShelf(shelfBase._shelf):
     def repair(self):
         import pymel.core
         import re
-        f = pymel.core.listReferences();
+        f = pymel.core.listReferences()
         for i in f:
             print(i)
             if (re.match(r"V:/03_Workflow/Assets/[P,p]rop", i.__str__())):
                 if (re.match(r"V:/03_Workflow/Assets/[P,p]rops", i.__str__())):
                     continue
                 try:
-                    i.load(re.sub(r"V:/03_Workflow/Assets/[P,p]rop", r"V:/03_Workflow/Assets/props", i.__str__()))
+                    i.load(re.sub(
+                        r"V:/03_Workflow/Assets/[P,p]rop", r"V:/03_Workflow/Assets/props", i.__str__()))
                 except:
                     pass
 

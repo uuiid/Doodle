@@ -14,7 +14,7 @@ class CORE_API movieEpsArchive : public fileArchive {
 
  protected:
   void insertDB() override;
-  void _generateFilePath() override;
+  void imp_generateFilePath() override;
  private:
   shotInfoPtr p_info_ptr_;
  private:

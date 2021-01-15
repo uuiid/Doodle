@@ -26,7 +26,7 @@ void ueArchive::insertDB() {
     p_info_->insert();
 }
 
-void ueArchive::_generateFilePath() {
+void ueArchive::imp_generateFilePath() {
   if (!p_soureFile.empty()) {
     //先检查一下是不是自定义的路径  是的话直接不拷贝
     if (isServerzinsideDir(p_soureFile.front())) {
@@ -47,12 +47,12 @@ void ueArchive::_generateFilePath() {
   //  if (p_soureFile.size() == 1)
   //      p_soureFile.push_back(p_soureFile.front().parent_path() / "Content");
 }
-void ueArchive::_updata(const dpathList &pathList) {
+void ueArchive::imp_updata(const dpathList &pathList) {
   assert(p_ServerPath.size() == p_cacheFilePath.size());
   //这里先上传ue文件 比较一下是不是自定义路径如果是就直接算是上传完成
   if (p_soureFile.front() == coreSet::getSet().getPrjectRoot() / p_ServerPath.front())
     return;
-  fileArchive::_updata({pathList.front()});
+  fileArchive::imp_updata({pathList.front()});
 
   //这里开始同步ue文件
   synPath_struct syn_path_struct{};
@@ -63,7 +63,7 @@ void ueArchive::_updata(const dpathList &pathList) {
                              p_ServerPath.front().parent_path() / DOODLE_BACKUP);
   p_syn->run();
 }
-void ueArchive::_down(const dpath &localPath) {
+void ueArchive::imp_down(const dpath &localPath) {
   synPath_struct syn_path_struct{};
   syn_path_struct.server = p_ServerPath.back();
   syn_path_struct.local  = localPath.parent_path() / DOODLE_CONTENT;
@@ -73,6 +73,6 @@ void ueArchive::_down(const dpath &localPath) {
   p_syn->run();
   p_ServerPath.pop_back();
   p_cacheFilePath.pop_back();
-  fileArchive::_down(localPath);
+  fileArchive::imp_down(localPath);
 }
 DOODLE_NAMESPACE_E

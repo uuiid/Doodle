@@ -23,7 +23,7 @@ class CORE_API ueSynArchive : public fileArchive {
 
  protected:
   void insertDB() override;
-  void _generateFilePath() override;
+  void imp_generateFilePath() override;
 
  private:
   freeSynWrapPtr p_syn;

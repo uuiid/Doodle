@@ -12,7 +12,7 @@ class CORE_API movieArchive : public fileArchive {
   //  bool update(const std::vector<QString> &filelist);
  protected:
   virtual void insertDB() override;
-  virtual void _generateFilePath() override;
+  virtual void imp_generateFilePath() override;
 
   virtual void setInfoAttr() = 0;
 

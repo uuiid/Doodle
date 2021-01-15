@@ -48,7 +48,7 @@ bool mayaArchive::CheckMaterialAndMapSet() const {
   // auto runPath              = tmpFile / boost::filesystem::unique_path("%%%%_%%%%.py");
   // boost::filesystem::copy_file(resou, runPath);
 
-  boost::format str("mayapy.exe %1% --path=%2% --exportpath=%3%");
+  boost::format str(R"(mayapy.exe "%1%" --path=%2% --exportpath=%3%)");
   str % resou.generic_string()                                   //
       % p_cacheFilePath.front().generic_string()                 //
       % p_cacheFilePath.front().parent_path().generic_string();  //
@@ -63,13 +63,36 @@ bool mayaArchive::CheckMaterialAndMapSet() const {
   } else {
     return false;
   }
+
+  auto env = boost::this_process::environment();
+  env["PATH"] += mayaPY_path;
+
   DOODLE_LOG_INFO("导出命令" << str.str().c_str());
+  STARTUPINFO si{};
+  PROCESS_INFORMATION pi{};
+  ZeroMemory(&si, sizeof(si));
+  ZeroMemory(&pi, sizeof(pi));
   try {
-    auto t = boost::process::system(str.str().c_str());
+    //使用windowsIPA创建子进程
+    CreateProcess(
+        NULL,
+        (char*)str.str().c_str(),
+        NULL,
+        NULL,
+        false,
+        0,  //CREATE_NEW_CONSOLE
+        NULL,
+        mayaPY_path.c_str(),  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
+        &si,
+        &pi);
+
   } catch (const std::exception& err) {
     DOODLE_LOG_WARN(err.what() << '\n');
     return false;
   }
+  WaitForSingleObject(pi.hProcess, INFINITE);
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
 
   //获得信息
   auto result = p_cacheFilePath.front().parent_path() / "doodle.json";
@@ -90,7 +113,7 @@ bool mayaArchive::CheckMaterialAndMapSet() const {
           .append(item["name"].get<std::string>())
           .append("\n五边面： ")
           .append(item["PentagonalSurface"].get<bool>() ? "true" : "false")
-          .append("\n多Uv： ");
+          .append("\n多uv集： ");
       if (item["map"]["MultipleUvMap"].get<bool>()) {
         result.append("是");
       } else {
@@ -118,7 +141,8 @@ void mayaArchive::insertDB() {
   else
     p_info_ptr_->insert();
 }
-void mayaArchive::_generateFilePath() {
+
+void mayaArchive::imp_generateFilePath() {
   if (!p_soureFile.empty()) {
     if (isServerzinsideDir(p_soureFile.front())) {
       auto str = coreSet::toIpPath(p_soureFile.front().generic_string());

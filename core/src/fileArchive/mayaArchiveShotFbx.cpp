@@ -29,7 +29,7 @@ mayaArchiveShotFbx::mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr)
           std::make_shared<dpath>(boost::filesystem::temp_directory_path())) {
   *p_temporary_file_ = *p_temporary_file_ / boost::filesystem::unique_path();
 }
-void mayaArchiveShotFbx::_generateFilePath() {
+void mayaArchiveShotFbx::imp_generateFilePath() {
   if (!p_soureFile.empty())
     for (auto &k_i : p_soureFile)
       p_ServerPath.push_back(p_info_ptr_->generatePath("export_fbx") /
@@ -133,7 +133,7 @@ bool mayaArchiveShotFbx::update(const dpath &shot_data) {
   auto cache_path = p_info_ptr_->generatePath("export_fbx");
   cache_path      = coreSet::getSet().getCacheRoot() / cache_path;
   p_ServerPath    = {shot_data};
-  _down({cache_path});
+  imp_down({cache_path});
 
   //确认导出成功
   if (!exportFbx(cache_path / shot_data.filename())) {
@@ -149,9 +149,9 @@ bool mayaArchiveShotFbx::update(const dpath &shot_data) {
   p_ServerPath.clear();
   p_cacheFilePath.clear();
   //开始上传文件
-  _generateFilePath();
+  imp_generateFilePath();
   p_cacheFilePath = p_soureFile;
-  _updata(p_soureFile);
+  imp_updata(p_soureFile);
   insertDB();
   p_state_ = state::success;
   return true;

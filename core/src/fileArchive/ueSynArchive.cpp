@@ -24,7 +24,7 @@ DOODLE_NAMESPACE_S
 ueSynArchive::ueSynArchive()
     : fileArchive(), p_syn(std::make_shared<freeSynWrap>()), synpart() {}
 void ueSynArchive::insertDB() {}
-void ueSynArchive::_generateFilePath() {}
+void ueSynArchive::imp_generateFilePath() {}
 
 dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr) {
   auto &set = coreSet::getSet();

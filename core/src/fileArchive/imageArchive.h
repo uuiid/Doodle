@@ -12,7 +12,7 @@ class CORE_API imageArchive : public fileArchive {
 
  protected:
   void insertDB() override;
-  void _generateFilePath() override;
+  void imp_generateFilePath() override;
 };
 
 DOODLE_NAMESPACE_E

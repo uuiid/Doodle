@@ -15,6 +15,7 @@
 
 #include "Logger.h"
 #include <boost/filesystem.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 #include <regex>
 
 DOODLE_NAMESPACE_S
@@ -41,7 +42,7 @@ bool fileArchive::update(const dpathList &filelist) {
   }
 
   infoChanged("生成路径中");
-  _generateFilePath();
+  imp_generateFilePath();
 
   //获得缓存路径
   generateCachePath();
@@ -53,16 +54,16 @@ bool fileArchive::update(const dpathList &filelist) {
   if (useUpdataCheck())
     updataCheck();
 
-  _updata(p_cacheFilePath);
+  imp_updata(p_cacheFilePath);
   insertDB();
   // updateChanged(100);
   return true;
 }
 dpath fileArchive::down(const dstring &path) {
-  _generateFilePath();
+  imp_generateFilePath();
   //获得缓存路径
   generateCachePath();
-  _down(path);
+  imp_down(path);
   if (useDownloadCheck())
     downloadCheck();
 
@@ -70,10 +71,10 @@ dpath fileArchive::down(const dstring &path) {
 }
 
 dpath fileArchive::down() {
-  _generateFilePath();
+  imp_generateFilePath();
   //获得缓存路径
   generateCachePath();
-  _down(p_cacheFilePath.front().parent_path());
+  imp_down(p_cacheFilePath.front().parent_path());
   return p_cacheFilePath.front();
 }
 
@@ -141,7 +142,7 @@ bool fileArchive::isInCache() {
   return has;
 }
 
-void fileArchive::_updata(const dpathList &pathList) {
+void fileArchive::imp_updata(const dpathList &pathList) {
   assert(p_ServerPath.size() == p_cacheFilePath.size());
   coreSet &set = coreSet::getSet();
 
@@ -149,7 +150,7 @@ void fileArchive::_updata(const dpathList &pathList) {
 
   const auto k_size = p_cacheFilePath.size();
   for (size_t i = 0; i < k_size; ++i) {
-    updateChanged(k_size / 50);
+    updateChanged(boost::numeric_cast<int>(k_size) / 50);
     if (p_cacheFilePath[i] != set.getPrjectRoot() / p_ServerPath[i]) {
       if (!session.upload(p_cacheFilePath[i], p_ServerPath[i])) {
         p_state_ = state::fail;
@@ -162,7 +163,7 @@ void fileArchive::_updata(const dpathList &pathList) {
     }
   }
 }
-void fileArchive::_down(const dpath &localPath) {
+void fileArchive::imp_down(const dpath &localPath) {
   auto &session = doSystem::DfileSyntem::get();
   infoChanged("开始下载");
 
@@ -191,9 +192,8 @@ bool fileArchive::isServerzinsideDir(const dpath &localPath) {
   }
 }
 bool fileArchive::update() {
-  infoChanged("直接插入数据库， 不复制路径");
-  DOODLE_LOG_INFO("直接插入数据库， 不复制路径");
-
+  DOODLE_LOG_INFO("按照原样上传路径");
+  imp_updata(p_cacheFilePath);
   insertDB();
   updateChanged(100);
   return true;

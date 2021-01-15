@@ -2,9 +2,11 @@
         doodle
         PUBLIC
         settingWidget.h
+        SynFolderListWidght.h
 )
 target_sources(
         doodle
         PRIVATE
         settingWidget.cpp
+        SynFolderListWidght.cpp
 )

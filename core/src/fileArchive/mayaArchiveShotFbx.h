@@ -16,7 +16,7 @@ class CORE_API mayaArchiveShotFbx : public fileArchive {
 
  protected:
   void insertDB() override;
-  void _generateFilePath() override;
+  void imp_generateFilePath() override;
  private:
   //数据库文件类
   shotInfoPtr p_info_ptr_;

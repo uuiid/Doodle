@@ -30,7 +30,7 @@ option(RUN_COPY    "run copy tools"     OFF)
 #配置版本文件
 set(Doodle_VERSION_MAJOR 2)
 set(Doodle_VERSION_MINOR 2) 
-set(Doodle_VERSION_REVIS 22)
+set(Doodle_VERSION_REVIS 24)
 configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)
 configure_file(anzhuang.iss.in ${CMAKE_INSTALL_PREFIX}/anzhuang.iss)
 include_directories(${CMAKE_BINARY_DIR}/configure)
@@ -90,6 +90,7 @@ add_subdirectory(pinyin)
 add_subdirectory(core)
 add_subdirectory(doodle_GUI)
 add_subdirectory(doodle_server)
+add_subdirectory(plug)
 
 
 enable_testing()

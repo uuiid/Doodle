@@ -10,6 +10,9 @@ import os
 from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
+import scripts.chick_maya_model
+
+reload(scripts.chick_maya_model)
 
 
 class exportUe:
@@ -45,7 +48,7 @@ class exportUe:
             except NameError:
                 print("not get episodes and shots")
 
-    def createPath(self,suffix,extype):
+    def createPath(self, suffix, extype):
         for sel in self.selects:
             namesp = sel.namespace()
             if namesp:
@@ -53,39 +56,39 @@ class exportUe:
         try:
             namesp = namesp.split(":")[-2].replace("_", "-")
         except:
-            namesp =""
+            namesp = ""
 
-        if suffix not in ["abc","fbx"]:
+        if suffix not in ["abc", "fbx"]:
             return
-        if self.selects[0] in pymel.core.ls(type="camera",l=True):
+        if self.selects[0] in pymel.core.ls(type="camera", l=True):
             namesp = ""
             extype = "cam"
 
         self.path = "{root_}/03_Workflow/shots/ep{eps:0>3d}/" \
                     "sc{shot:0>4d}{shotab}/Scenefiles/{dep}/{aim}" \
             .format(
-            eps=self._eps,
-            shot=self._shot,
-            shotab=self._shotab,
-            dep=self.filename.split("_")[3],
-            aim=self.filename.split("_")[4],
-            root_=self.root
-        )
+                eps=self._eps,
+                shot=self._shot,
+                shotab=self._shotab,
+                dep=self.filename.split("_")[3],
+                aim=self.filename.split("_")[4],
+                root_=self.root
+            )
         self.makePath()
         filecom = self.filename.split("_")
         self.name = "{f1}_{f2}_{f3}_{f4}_{f5}_export-{oa}_{ns}_.{st}-{end}.{su}"\
-        .format(
-            f1=filecom[0],
-            f2=filecom[1],
-            f3=filecom[2],
-            f4=filecom[3],
-            f5=filecom[4],
-            oa=extype,
-            ns=namesp,
-            st=self.start,
-            end=self.end,
-            su=suffix
-        )
+            .format(
+                f1=filecom[0],
+                f2=filecom[1],
+                f3=filecom[2],
+                f4=filecom[3],
+                f5=filecom[4],
+                oa=extype,
+                ns=namesp,
+                st=self.start,
+                end=self.end,
+                su=suffix
+            )
         print("path --> {}".format(self.path))
         print("name --> {}".format(self.name))
 
@@ -97,7 +100,7 @@ class exportUe:
         else:
             print(self.path + " yi Zai")
 
-    def export(self,nump):
+    def export(self, nump):
         self.selects = pymel.core.selected()
         if not self.selects:
             return
@@ -105,31 +108,35 @@ class exportUe:
             return
         self.analyseFileName()
 
-
         if nump == "two":
             self.createPath("fbx", "repair")
-            exMesh = pymel.core.duplicate(self.selects)
-            exMesh = pymel.core.polyUnite(exMesh)
-            pymel.core.currentTime(self.end, update=True, edit=True)
+            # exMesh = pymel.core.duplicate(self.selects)
+            # exMesh = pymel.core.polyUnite(exMesh)
+            # pymel.core.currentTime(self.end, update=True, edit=True)
         else:
-            self.createPath("fbx","cam")
-        pymel.core.mel.eval("FBXExportBakeComplexAnimation -v true")
-        pymel.core.mel.eval("FBXExportSmoothingGroups -v true")
-        pymel.core.mel.eval("FBXExportConstraints -v true")
-        pymel.core.mel.FBXExport(f="{}/{}".format(self.path,self.name),s=True)
+            self.createPath("fbx", "cam")
+            pymel.core.mel.eval("FBXExportBakeComplexAnimation -v true")
+            pymel.core.mel.eval("FBXExportSmoothingGroups -v true")
+            pymel.core.mel.eval("FBXExportConstraints -v true")
+            pymel.core.mel.FBXExport(
+                f="{}/{}".format(self.path, self.name), s=True)
 
         if nump == "two":
-            self.createPath("abc","repair")
-            exAbc = pymel.core.polyUnite(self.selects)[0]
-            abcexmashs = "-root |{}".format(exAbc)
-            # for exmash in exAbc:
-            #     abcexmashs = "{} -root {}".format(abcexmashs,exmash)
+            scripts.chick_maya_model.run()()
+
+            self.createPath("abc", "repair")
+            # exAbc = pymel.core.polyUnite(self.selects)[0]
+            # abcexmashs = "-root |{}".format(exAbc)
+            abcexmashs = ""
+            for exmash in self.selects:
+                abcexmashs = "{} -root {}".format(abcexmashs,
+                                                  exmash.fullPathName())
             # -stripNamespaces
             abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
-                .format(f0="{}/{}".format(self.path,self.name).replace("\\", "/"), f1=self.start, f2=self.end, mash=abcexmashs)
+                .format(f0="{}/{}".format(self.path, self.name).replace("\\", "/"), f1=self.start, f2=self.end, mash=abcexmashs)
+            print(abcExportCom)
             pymel.core.mel.eval(abcExportCom)
         print(self.path)
-
 
     def getRoot(self):
         box = QtWidgets.QMessageBox()
@@ -163,4 +170,3 @@ class exportUe:
             elif box.clickedButton() == my_quit_:
                 return False
         return True
-
