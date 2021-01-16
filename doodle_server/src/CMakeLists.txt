@@ -1,3 +1,6 @@
+add_subdirectory(fileSystem)
+
+
 target_sources(doodleServer
 PUBLIC
 server.h)
