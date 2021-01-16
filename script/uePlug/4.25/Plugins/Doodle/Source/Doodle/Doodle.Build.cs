@@ -62,7 +62,8 @@ public class doodle : ModuleRules
 				"AlembicImporter",//abc导入依赖
 				"AlembicLibrary",
 				"RenderCore",
-
+				
+				"AIModule"//这个是ai控制使用的
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
