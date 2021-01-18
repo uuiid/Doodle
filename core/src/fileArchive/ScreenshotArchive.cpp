@@ -25,7 +25,7 @@ void ScreenshotArchive::imp_generateFilePath() {
   if (!p_soureFile.empty()) {
     p_ServerPath.push_back(
         p_info_ptr_->generatePath(
-            "Scenefiles", ".png"));
+            "doodle", ".png"));
   } else if (!p_info_ptr_->getFileList().empty()) {
     for (auto&& item : p_info_ptr_->getFileList()) {
       p_ServerPath.push_back(item);
