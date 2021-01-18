@@ -36,23 +36,27 @@ dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr
   synpart = k_synData->getSynDir(true);
   if (synpart.empty()) return {};
 
-  dstring shotFstr = "*\\VFX\\*";
+  dstring k_shotVFXstr   = "*\\VFX\\*";
+  dstring k_shotLightstr = "*";
   if (shot_ptr) {
     boost::format shotFlliter(R"(*c%04i\Checkpoint\VFX\*)");
-    shotFstr = (shotFlliter % shot_ptr->getShot()).str();
+    boost::format k_shotLight(R"(*c%04i)");
+
+    k_shotVFXstr   = (shotFlliter % shot_ptr->getShot()).str();
+    k_shotLightstr = (k_shotLight % shot_ptr->getShot()).str();
   }
 
   p_syn->addSynFile(synpart);
   p_syn->setVersioningFolder(freeSynWrap::syn_set::twoWay, str.str());
   if (set.getDepartment() == "VFX") {
     //设置同步方式
-    p_syn->addInclude({shotFstr});
+    p_syn->addInclude({k_shotVFXstr});
 
   } else if (set.getDepartment() == "Light") {
     //同步light镜头
     for (int i = 0; i < synpart.size(); ++i) {
       p_syn->addSubSynchronize(i, freeSynWrap::syn_set::upload, str.str());
-      p_syn->addSubIncludeExclude(i, {"*"}, {shotFstr});
+      p_syn->addSubIncludeExclude(i, {k_shotLightstr}, {k_shotVFXstr});
     }
 
     //下载vfx镜头
@@ -68,7 +72,7 @@ dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr
     for (size_t i = syn_part_vfx.size();
          i < syn_part_vfx.size() + synpart.size(); ++i) {
       p_syn->addSubSynchronize(boost::numeric_cast<int>(i), freeSynWrap::syn_set::down, str.str());
-      p_syn->addSubIncludeExclude(boost::numeric_cast<int>(i), {shotFstr}, {});
+      p_syn->addSubIncludeExclude(boost::numeric_cast<int>(i), {k_shotVFXstr}, {});
     }
   }
   p_syn->run();
