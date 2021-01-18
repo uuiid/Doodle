@@ -40,7 +40,7 @@ class CORE_API find_error_info : public std::runtime_error {
   virtual const char *what() const noexcept override;
 };
 // 空指针错误
-class nullptr_error : public std::runtime_error {
+class CORE_API nullptr_error : public std::runtime_error {
  public:
   nullptr_error(const std::string &err) : std::runtime_error(err){};
   virtual const char *what() const noexcept override;
