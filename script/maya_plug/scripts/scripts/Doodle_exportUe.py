@@ -123,14 +123,15 @@ class exportUe:
 
         if nump == "two":
             scripts.chick_maya_model.run()()
-
+            # self.margeMatMesh()
             self.createPath("abc", "repair")
-            # exAbc = pymel.core.polyUnite(self.selects)[0]
-            # abcexmashs = "-root |{}".format(exAbc)
-            abcexmashs = ""
-            for exmash in self.selects:
-                abcexmashs = "{} -root {}".format(abcexmashs,
-                                                  exmash.fullPathName())
+
+            exAbc = pymel.core.polyUnite(self.selects)[0]
+            abcexmashs = "-root {}".format(exAbc.fullPathName())
+            # abcexmashs = ""
+            # for exmash in self.exAbc:
+            #     abcexmashs = "{} -root {}".format(abcexmashs,
+            #                                       exmash.fullPathName())
             # -stripNamespaces
             abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
                 .format(f0="{}/{}".format(self.path, self.name).replace("\\", "/"), f1=self.start, f2=self.end, mash=abcexmashs)
