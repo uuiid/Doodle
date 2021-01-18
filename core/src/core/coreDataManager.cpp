@@ -89,7 +89,7 @@ const assInfoPtr &coreDataManager::getAssInfoPtr() const {
   return p_assInfo_;
 }
 void coreDataManager::setAssInfoPtr(const assInfoPtr &ass_info) {
-  // p_assInfo_ = ass_info;
+  p_assInfo_ = ass_info;
 }
 
 DOODLE_NAMESPACE_E

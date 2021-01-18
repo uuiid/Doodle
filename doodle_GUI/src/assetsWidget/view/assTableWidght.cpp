@@ -303,7 +303,8 @@ void assTableWidght::createLightDir() {
 }
 void assTableWidght::doClickedSlots(const QModelIndex &index) {
   auto assinfo = index.data(Qt::UserRole).value<assFileSqlInfo *>();
-  if (assinfo) coreDataManager::get().setAssInfoPtr(assinfo->shared_from_this());
+  if (assinfo)
+    coreDataManager::get().setAssInfoPtr(assinfo->shared_from_this());
 }
 
 void assTableWidght::doDubledSlots(const QModelIndex &index) {

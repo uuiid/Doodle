@@ -20,7 +20,7 @@ class ScreenshotWidght : public QWidget {
   QPushButton* p_butten;
   QLabel* p_image;
   ScreenshotAction* p_action;
-  std::weak_ptr<fileArchive> p_file_archive;
+  std::weak_ptr<fileSqlInfo> p_file_archive;
 };
 
 DOODLE_NAMESPACE_E
