@@ -61,6 +61,7 @@ settingWidget::settingWidget(QWidget *parent)
   p_same_layout->addLayout(p_dep_layout);
   p_same_layout->addLayout(p_user_layout);
   p_same_layout->addLayout(p_prj_layout);
+  p_same_layout->addLayout(p_syn_layout);
   p_same_layout->addWidget(p_syn_exe_path);
   p_same_layout->addWidget(p_save);
 

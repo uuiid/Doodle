@@ -193,7 +193,7 @@ bool shotTableModel::removeRows(int position, int rows, const QModelIndex &paren
     auto it = p_shot_info_ptr_list_[position];
     if (it)
       it->deleteSQL();
-    coreDataManager::get().setAssInfoPtr(nullptr);
+    coreDataManager::get().setShotInfoPtr(nullptr);
     p_shot_info_ptr_list_.erase(p_shot_info_ptr_list_.begin() + position);
   }
   endRemoveRows();

@@ -1,1 +1,2 @@
+*.cpp filter=gitignore
 . !text !filter !merge !diff

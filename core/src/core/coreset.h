@@ -6,15 +6,17 @@
 
 DOODLE_NAMESPACE_S
 
-enum class Department { None_,
-                 Executive,
-                 Light,
-                 VFX,
-                 modle,
-                 rig,
-                 Anm,
-                 direct,
-                 paint };
+enum class Department {
+  None_,
+  Executive,
+  Light,
+  VFX,
+  modle,
+  rig,
+  Anm,
+  direct,
+  paint
+};
 
 struct synPath_struct {
   dpath local;
@@ -36,9 +38,7 @@ class CORE_API coreSet {
   void initdb();
 
   void appendEnvironment() const;
-  //这个要改到其他地方
-  //获得同步路径
-  // synPathListPtr getSynDir();
+
   //获得运行程序目录
   static dpath program_location();
   static dpath program_location(const dpath &path);

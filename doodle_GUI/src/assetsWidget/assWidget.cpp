@@ -22,6 +22,8 @@
 #include <src/assetsWidget/model/assSortfilterModel.h>
 #include <src/assetsWidget/model/assTableFilterModel.h>
 
+#include <src/ScreenshotWidght/ScreenshotWidght.h>
+
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QLabel>
 
@@ -82,12 +84,16 @@ assWidght::assWidght(QWidget *parent)
   p_ass_type_widget_ = new assTypeWidget();
   p_ass_type_widget_->setObjectName("p_ass_type_widget_");
   p_ass_type_widget_->setModel(p_ass_type_model_);
+
+  //截图小部件
+  auto k_screen = new ScreenshotWidght();
+
   //清除过滤器和以前的选择
   connect(p_ass_class_widget_, &assClassWidget::initEmited,
           [=]() {
             auto &mData = coreDataManager::get();
             mData.setAssInfoPtr(nullptr);
-            mData.setAssInfoPtr(nullptr);
+            mData.setAssTypePtr(nullptr);
             p_ass_table_filter_model_->useFilter(filterState::notFilter);
             p_ass_type_model_->reInit();
             p_ass_table_model_->init();
@@ -111,13 +117,17 @@ assWidght::assWidght(QWidget *parent)
   p_ass_layout_->addWidget(p_ass_dep_widget_, 0, 0, 1, 2);
   p_ass_layout_->addWidget(k_filterLineEditLabel, 1, 0, 1, 1);
   p_ass_layout_->addWidget(k_filterLineEdit, 1, 1, 1, 1);
-  p_ass_layout_->addWidget(p_ass_class_widget_, 2, 0, 1, 2);
-  p_ass_layout_->addWidget(p_ass_info_widght_, 0, 2, -1, 1);
-  p_ass_layout_->addWidget(p_ass_type_widget_, 0, 3, -1, 1);
+  p_ass_layout_->addWidget(p_ass_class_widget_, 2, 0, 2, 2);
+  p_ass_layout_->addWidget(p_ass_info_widght_, 0, 2, 3, 1);
+  p_ass_layout_->addWidget(p_ass_type_widget_, 0, 3, 3, 1);
+  p_ass_layout_->addWidget(k_screen, 3, 2, 1, 2);
 
+  // 竖
   p_ass_layout_->setRowStretch(0, 1);
   p_ass_layout_->setRowStretch(1, 3);
-  p_ass_layout_->setRowStretch(2, 10);
+  p_ass_layout_->setRowStretch(2, 4);
+  p_ass_layout_->setRowStretch(3, 6);
+  // 横
   p_ass_layout_->setColumnStretch(0, 1);
   p_ass_layout_->setColumnStretch(1, 3);
   p_ass_layout_->setColumnStretch(2, 10);
