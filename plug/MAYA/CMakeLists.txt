@@ -9,9 +9,9 @@ if(WIN32)
   set(OPEN_MAYA OpenMaya.lib)
 endif()
 
-unset(MAYA_BASE_DIR CACHE )
-unset(MAYA_INCLUDE_DIR CACHE )
-unset(MAYA_LIBRARY_DIR CACHE )
+# unset(MAYA_BASE_DIR CACHE )
+# unset(MAYA_INCLUDE_DIR CACHE )
+# unset(MAYA_LIBRARY_DIR CACHE )
 
 find_path(MAYA_BASE_DIR
   include/maya/MFn.h
