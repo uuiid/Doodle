@@ -58,6 +58,9 @@ class assTableWidght;
 
 class settingWidget;
 
+class ScreenshotWidght;
+class ScreenshotAction;
+
 class shotWidget;
 class assWidght;
 class mainWindows;

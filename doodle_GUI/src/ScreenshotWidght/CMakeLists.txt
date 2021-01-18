@@ -1,0 +1,12 @@
+target_sources(
+        doodle
+        PUBLIC
+        ScreenshotAction.h
+        ScreenshotWidght.h
+)
+target_sources(
+        doodle
+        PRIVATE
+        ScreenshotAction.cpp
+        ScreenshotWidght.cpp
+)

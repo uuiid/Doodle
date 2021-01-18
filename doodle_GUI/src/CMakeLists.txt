@@ -2,6 +2,7 @@
 add_subdirectory(mainWidght)
 add_subdirectory(queueManager)
 add_subdirectory(rigisterWight)
+add_subdirectory(ScreenshotWidght)
 add_subdirectory(settingWidght)
 add_subdirectory(shotsWidght)
 add_subdirectory(toolkit)

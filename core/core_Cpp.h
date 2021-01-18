@@ -38,6 +38,8 @@
 
 #include <src/sysData/synData.h>
 
+#include <src/fileArchive/ScreenshotArchive.h>
+
 #include <src/queueData/queueManager.h>
 #include <src/queueData/queueData.h>
 

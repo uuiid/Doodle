@@ -3,12 +3,10 @@
         PUBLIC
         toolkit.h
         updataManager.h
-        ScreenshotAction.h
 )
 target_sources(
         doodle
         PRIVATE
         toolkit.cpp
         updataManager.cpp
-        ScreenshotAction.cpp
 )
