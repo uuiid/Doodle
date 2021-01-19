@@ -174,7 +174,7 @@ TEST_F(CoreTest, get_assInf) {
   // std::cout << "asstype :" <<code->fromUnicode(af_->getAssClass(af_)) << std::endl;
 
   doodle::assTypePtr ft_ = doodle::assType::getAll()[0];
-  std::cout << "filetype :" << ft_->getType() << std::endl;
+  std::cout << "filetype :" << ft_->getTypeS() << std::endl;
 
   doodle::assInfoPtr ai_ = doodle::assFileSqlInfo::getAll(af_)[0];
   std::cout << "assinfo path :" << ai_->generatePath("test", ".mb") << std::endl;

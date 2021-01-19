@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) try {
   set.init();
   QApplication::setQuitOnLastWindowClosed(false);
 
-    auto mainWin = std::make_unique<doodle::mainWindows>();
+  auto mainWin = std::make_unique<doodle::mainWindows>();
   mainWin->showMaximized();
 
   q_application.exec();
@@ -52,6 +52,10 @@ int main(int argc, char *argv[]) try {
   return 0;
 } catch (const std::exception &err) {
   DOODLE_LOG_ERROR(err.what());
+  doodle::coreSet::getSet().writeDoodleLocalSet();
+  boost::log::core::get()->remove_all_sinks();
+  return 1;
+} catch (...) {
   doodle::coreSet::getSet().writeDoodleLocalSet();
   boost::log::core::get()->remove_all_sinks();
   return 1;

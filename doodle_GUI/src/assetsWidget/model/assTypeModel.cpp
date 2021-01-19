@@ -31,52 +31,53 @@ QVariant assTypeModel::data(const QModelIndex &index, int role) const {
   return var;
 }
 Qt::ItemFlags assTypeModel::flags(const QModelIndex &index) const {
-  if (!index.isValid()) return Qt::ItemIsEditable;
-  if (index.row() >= p_file_type_ptr_list_.size()) return Qt::ItemIsEditable;
+  // if (!index.isValid()) return Qt::ItemIsEditable;
+  // if (index.row() >= p_file_type_ptr_list_.size()) return Qt::ItemIsEditable;
 
-  if (p_file_type_ptr_list_[index.row()]->isInsert())
-    return QAbstractListModel::flags(index);
-  else
-    return Qt::ItemIsEditable | Qt::ItemIsEnabled |
-           QAbstractListModel::flags(index);
+  // if (p_file_type_ptr_list_[index.row()]->isInsert())
+  //   return QAbstractListModel::flags(index);
+  // else
+  //   return Qt::ItemIsEditable | Qt::ItemIsEnabled |
+  //          QAbstractListModel::flags(index);
+  return QAbstractListModel::flags(index);
 }
-bool assTypeModel::setData(const QModelIndex &index, const QVariant &value,
-                           int role) {
-  if (!index.isValid()) return false;
-  bool is_has = false;
-  for (auto &&item : p_file_type_ptr_list_) {
-    if (value.toString() == item->getTypeQ()) {
-      is_has = true;
-      break;
-    }
-  }
+// bool assTypeModel::setData(const QModelIndex &index, const QVariant &value,
+//                            int role) {
+//   if (!index.isValid()) return false;
+//   bool is_has = false;
+//   for (auto &&item : p_file_type_ptr_list_) {
+//     if (value.toString() == item->getTypeQ()) {
+//       is_has = true;
+//       break;
+//     }
+//   }
 
-  if (!is_has) {
-    p_file_type_ptr_list_[index.row()]->setType(value.toString());
-    dataChanged(index, index, {role});
-    return true;
-  }
-  return false;
-}
-bool assTypeModel::insertRows(int position, int rows,
-                              const QModelIndex &index) {
-  beginInsertRows(QModelIndex(), position, position + rows - 1);
-  for (int row = 0; row < rows; ++row) {
-    p_file_type_ptr_list_.insert(p_file_type_ptr_list_.begin() + position,
-                                 std::make_shared<assType>());
-  }
-  endInsertRows();
-  return true;
-}
-bool assTypeModel::removeRows(int position, int rows,
-                              const QModelIndex &index) {
-  beginRemoveRows(QModelIndex(), position, position + rows - 1);
-  for (int row = 0; row < rows; ++row) {
-    p_file_type_ptr_list_.erase(p_file_type_ptr_list_.begin() + position);
-  }
-  endRemoveRows();
-  return false;
-}
+//   if (!is_has) {
+//     p_file_type_ptr_list_[index.row()]->setType(value.toString());
+//     dataChanged(index, index, {role});
+//     return true;
+//   }
+//   return false;
+// }
+// bool assTypeModel::insertRows(int position, int rows,
+//                               const QModelIndex &index) {
+//   beginInsertRows(QModelIndex(), position, position + rows - 1);
+//   for (int row = 0; row < rows; ++row) {
+//     p_file_type_ptr_list_.insert(p_file_type_ptr_list_.begin() + position,
+//                                  std::make_shared<assType>());
+//   }
+//   endInsertRows();
+//   return true;
+// }
+// bool assTypeModel::removeRows(int position, int rows,
+//                               const QModelIndex &index) {
+//   beginRemoveRows(QModelIndex(), position, position + rows - 1);
+//   for (int row = 0; row < rows; ++row) {
+//     p_file_type_ptr_list_.erase(p_file_type_ptr_list_.begin() + position);
+//   }
+//   endRemoveRows();
+//   return false;
+// }
 void assTypeModel::init() {
   clear();
   const auto tmp_list = assType::getAll();

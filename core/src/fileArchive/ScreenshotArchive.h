@@ -6,7 +6,7 @@
 
 DOODLE_NAMESPACE_S
 
-class ScreenshotArchive : public fileArchive {
+class CORE_API ScreenshotArchive : public fileArchive {
  public:
   ScreenshotArchive(fileSqlInfoPtr info_ptr);
 

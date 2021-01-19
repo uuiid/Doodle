@@ -23,18 +23,19 @@ class CORE_API assType
       public std::enable_shared_from_this<assType> {
  public:
   enum e_type {
-    UE4,
     scenes,
+    UE4,
     rig,
     scenes_low,
     sourceimages,
     screenshot,
+    presetLight,
+    None
   };
 
  public:
   explicit assType();
   ~assType();
-  void select(const int64_t &ID_);
   void insert() override;
   void updateSQL() override;
   void deleteSQL() override;
@@ -48,13 +49,15 @@ class CORE_API assType
 
  private:
   static assTypePtr findType(const std::string &typeName);
-  std::string s_type;
+  e_type s_type;
 
  public:
-  [[nodiscard]] const std::string &getType() const;
+  // std::tuple<e_type, std::string> getType() const;
+  [[nodiscard]] const std::string getTypeS() const;
+  [[nodiscard]] const e_type &getType_enum() const;
+  [[nodiscard]] void setType(const e_type &type_enum);
   [[nodiscard]] const QString getTypeQ() const;
   void setType(const std::string &string);
-  void setType(const QString &string);
   static const std::unordered_set<assType *> Instances();
 
  private:
@@ -65,9 +68,6 @@ class CORE_API assType
 };
 
 inline const QString assType::getTypeQ() const {
-  return QString::fromStdString(getType());
-}
-inline void assType::setType(const QString &string) {
-  setType(string.toStdString());
+  return QString::fromStdString(getTypeS());
 }
 DOODLE_NAMESPACE_E

@@ -55,13 +55,13 @@ void assType::insert() {
   auto db = coreSql::getCoreSql().getConnection();
   auto insert =
       sqlpp::insert_into(table).columns(table.assType, table.projectId);
-  insert.values.add(table.assType   = s_type,
+  insert.values.add(table.assType   = std::string{magic_enum::enum_name(s_type)},
                     table.projectId = coreSet::getSet().projectName().first);
 
   idP = db->insert(insert);
 
   if (idP == 0) {
-    DOODLE_LOG_WARN("无法插入asstype " << s_type.c_str());
+    DOODLE_LOG_WARN("无法插入asstype " << magic_enum::enum_name(s_type));
     throw std::runtime_error("asstype");
   }
   insertChanged();
@@ -85,38 +85,60 @@ assTypePtrList assType::getAll() {
                .order_by(table.assType.desc()))) {
     auto at    = std::make_shared<assType>();
     at->idP    = row.id;
-    at->s_type = row.assType;
+    auto k_ty  = magic_enum::enum_cast<e_type>(row.assType.text);
+    at->s_type = k_ty.value_or(e_type::None);
     ptr_list.push_back(at);
   }
   return ptr_list;
 }
-const std::string &assType::getType() const { return s_type; }
-void assType::setType(const std::string &string) { assType::s_type = string; }
-void assType::select(const int64_t &ID_) {}
+
+const std::string assType::getTypeS() const {
+  return std::string{magic_enum::enum_name(s_type)};
+}
+
+const assType::e_type &assType::getType_enum() const {
+  return s_type;
+}
+
+void assType::setType(const e_type &type_enum) {
+  s_type = type_enum;
+}
+
+void assType::setType(const std::string &string) {
+  s_type = magic_enum::enum_cast<e_type>(string).value_or(e_type::None);
+}
+
 bool assType::sortType(const assTypePtr &t1, const assTypePtr &t2) {
   return t1->s_type < t2->s_type;
 }
 assTypePtr assType::findType(const std::string &typeName) {
   for (const auto &item : p_instance) {
-    if (item->getType() == typeName) return item->shared_from_this();
+    if (item->getTypeS() == typeName) return item->shared_from_this();
   }
   return nullptr;
 }
 assTypePtr assType::findType(const e_type &typeName, bool autoInstall) {
   std::string name{magic_enum::enum_name(typeName)};
-  if (autoInstall) {
-    auto asstype = findType(name);
-    if (asstype)
-      return asstype;
-    else {
+  auto k_asstype =
+      std::find_if(
+          p_instance.begin(),
+          p_instance.end(),
+          [=](assType *as_tmp)
+              -> bool {
+            return as_tmp->s_type == typeName;
+          });
+
+  if (k_asstype != p_instance.end())
+    return (*k_asstype)->shared_from_this();
+  else {
+    if (autoInstall) {
       auto type = std::make_shared<assType>();
-      type->setType(name);
+      type->setType(typeName);
       type->insert();
       return type;
     }
-  } else {
-    return findType(name);
   }
+  return nullptr;
 }
 
 const std::unordered_set<assType *> assType::Instances() {

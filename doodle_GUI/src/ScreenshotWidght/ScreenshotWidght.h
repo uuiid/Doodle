@@ -13,7 +13,7 @@ class ScreenshotWidght : public QWidget {
  public:
   ScreenshotWidght(QWidget* parent = nullptr);
 
-  void createScreenshot();
+  virtual void createScreenshot();
   void showImage();
 
  private:

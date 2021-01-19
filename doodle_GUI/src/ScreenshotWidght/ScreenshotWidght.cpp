@@ -32,30 +32,44 @@ ScreenshotWidght::ScreenshotWidght(QWidget *parent)
 }
 
 void ScreenshotWidght::createScreenshot() {
-  // if (p_file_archive.expired()) return;
+  if (p_file_archive.expired()) return;
 
-  // auto k_file = p_file_archive.lock();
+  auto k_file  = p_file_archive.lock();
+  auto k_image = std::make_unique<ScreenshotArchive>(k_file);
+  auto k_cache = coreSet::getSet().getCacheRoot() / k_file->generatePath("doodle", ".png");
 
-  // auto k_image = std::make_shared<ScreenshotArchive>(k_file);
-
-  // k_image->update("");
   p_action        = new ScreenshotAction(this);
   auto windowList = QGuiApplication::topLevelWindows();
+  auto winMain    = QGuiApplication::instance()->findChild<QWidget *>("mainWindows");
 
-  auto winMain = QGuiApplication::instance()->findChild<QWidget *>("mainWindows");
-
+  //隐藏主窗口
   for (auto &&win : windowList) {
     if (win->objectName() == "mainWindowsWindow")
       win->hide();
   }
-  p_action->screenShot("D:/tmp/rear.png");
+
+  p_action->screenShot(k_cache);
+
+  // 显示主窗口
   for (auto &&win : windowList) {
     if (win->objectName() == "mainWindowsWindow")
       win->showMaximized();
   }
+  k_image->update(k_cache);
 }
 
 void ScreenshotWidght::showImage() {
+  if (p_file_archive.expired()) return;
+
+  auto k_file  = p_file_archive.lock();
+  auto k_image = std::make_unique<ScreenshotArchive>(k_file);
+  auto k_cache = k_image->down();
+
+  auto k_pix = QPixmap();
+  if (k_pix.load(QString::fromStdString(k_cache.generic_string())))
+    p_image->setPixmap(k_pix);
+  else {
+  }
 }
 
 DOODLE_NAMESPACE_E

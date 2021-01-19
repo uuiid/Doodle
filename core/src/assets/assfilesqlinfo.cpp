@@ -165,7 +165,7 @@ dpath assFileSqlInfo::generatePath(const std::string &programFolder) {
   //第五次添加fileType
   auto as_ty = getAssType();
   if (as_ty) {
-    path = path / as_ty->getType();
+    path = path / as_ty->getTypeS();
   } else
     throw nullptr_error("assFileSqlInfo err");
 
@@ -193,8 +193,8 @@ dstring assFileSqlInfo::generateFileName(const dstring &suffixes) {
 
   auto as_ty = getAssType();
   if (as_ty) {
-    if (as_ty->getType() == "rig")
-      format % as_ty->getType();
+    if (as_ty->getTypeS() == "rig")
+      format % as_ty->getTypeS();
     else
       format % "";
   } else
@@ -297,7 +297,7 @@ bool assFileSqlInfo::sortType(const assInfoPtr &t1, const assInfoPtr &t2) {
   auto t1_type = t1->getAssType();
   auto t2_type = t2->getAssType();
   if (t1_type && t2_type) {
-    return t1_type->getType() < t2_type->getType();
+    return t1_type->getTypeS() < t2_type->getTypeS();
   } else {
     return false;
   }

@@ -25,6 +25,7 @@ assTableModel::assTableModel(QObject *parent)
 int assTableModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_ass_info_ptr_list_.size());
 }
+
 int assTableModel::columnCount(const QModelIndex &parent) const { return 5; }
 
 QVariant assTableModel::data(const QModelIndex &index, int role) const {
@@ -106,14 +107,14 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
     case Qt::DecorationRole:
       if (ass->isInsert()) {
         if (ass->getAssType()) {
-          if (boost::regex_match(ass->getAssType()->getType(), *(mayaRex)) &&
+          if (boost::regex_match(ass->getAssType()->getTypeS(), *(mayaRex)) &&
               index.column() == 3) {
             var = QIcon(":/resource/mayaIcon.png");
-          } else if (boost::regex_match(ass->getAssType()->getType(),
+          } else if (boost::regex_match(ass->getAssType()->getTypeS(),
                                         *(ue4Rex)) &&
                      index.column() == 3) {
             var = QIcon(":/resource/ue4Icon.png");
-          } else if (boost::regex_match(ass->getAssType()->getType(),
+          } else if (boost::regex_match(ass->getAssType()->getTypeS(),
                                         *(rigRex)) &&
                      index.column() == 3) {
             var = QColor("lightblue");
@@ -149,6 +150,7 @@ QVariant assTableModel::data(const QModelIndex &index, int role) const {
   }
   return var;
 }
+
 QVariant assTableModel::headerData(int section, Qt::Orientation orientation,
                                    int role) const {
   QString str;
@@ -177,6 +179,7 @@ QVariant assTableModel::headerData(int section, Qt::Orientation orientation,
     str = QString(section);
   return str;
 }
+
 bool assTableModel::setData(const QModelIndex &index, const QVariant &value,
                             int role) {
   if (!index.isValid()) return false;
@@ -201,16 +204,12 @@ bool assTableModel::setData(const QModelIndex &index, const QVariant &value,
       } else {
         break;
       }
-    case Qt::UserRole:
-      // if (!value.canConvert<assInfoPtr>()) return false;
-      // p_ass_info_ptr_list_[index.row()] = value.value<assInfoPtr>();
-      dataChanged(index, index);
-      break;
     default:
       break;
   }
   return false;
 }
+
 Qt::ItemFlags assTableModel::flags(const QModelIndex &index) const {
   if (index.column() == 1)
     return Qt::ItemIsEditable | Qt::ItemIsEnabled |
@@ -260,9 +259,7 @@ void assTableModel::reInit() {
 void assTableModel::clear() {
   if (p_ass_info_ptr_list_.empty()) return;
   beginResetModel();
-  // beginRemoveRows(QModelIndex(), 0, boost::numeric_cast<int>(p_ass_info_ptr_list_.size() - 1));
   p_ass_info_ptr_list_.clear();
-  // endRemoveRows();
   endResetModel();
 }
 void assTableModel::setList(assInfoPtrList &list) {
