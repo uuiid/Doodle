@@ -26,5 +26,7 @@ class ScreenshotAction : public QDialog {
   QPoint p_start_pos;
   QPoint p_end_pos;
   QBitmap p_mask;
+
+  std::string p_save_path;
 };
 DOODLE_NAMESPACE_E

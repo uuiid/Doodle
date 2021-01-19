@@ -9,6 +9,8 @@
 #include <QtGui/qevent.h>
 #include <QtGui/qpainter.h>
 
+#include <boost/filesystem.hpp>
+
 DOODLE_NAMESPACE_S
 
 ScreenshotAction::ScreenshotAction(QWidget *parent)
@@ -17,20 +19,17 @@ ScreenshotAction::ScreenshotAction(QWidget *parent)
       p_screen(nullptr),
       p_start_pos(),
       p_end_pos(),
-      p_mask() {
-  setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+      p_mask(),
+      p_save_path("C:/doodle.png") {
+  setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Window);
   setMouseTracking(true);
 }
 
 void ScreenshotAction::screenShot(const dpath &save_path) {
-  p_isDrawing_b = false;
-  p_screen      = nullptr;
-  p_start_pos   = QPoint();
-  p_end_pos     = QPoint();
-  p_mask.clear();
 
+  p_save_path = save_path.generic_string();
   setStyleSheet(R"(background-color:black;)");
-  setWindowOpacity(0.5);
+  setWindowOpacity(0.8);
 
   p_screen = QGuiApplication::screenAt(QCursor::pos());
   if (!p_screen) {
@@ -44,22 +43,24 @@ void ScreenshotAction::screenShot(const dpath &save_path) {
   setCursor(Qt::CrossCursor);
 
   p_mask = QBitmap(p_screen->geometry().size());
-  p_mask.fill(Qt::black);
+  p_mask.fill(Qt::color1);
   show();
   exec();
 }
 
 void ScreenshotAction::paintEvent(QPaintEvent *event) {
   if (p_isDrawing_b) {
-    auto k_painter = QPainter(this);
+    auto k_pix     = p_mask.copy();  //创建绘制位图
+    auto k_painter = QPainter(&k_pix);
     auto k_pen     = QPen();
     k_pen.setStyle(Qt::NoPen);
     k_painter.setPen(k_pen);
-    auto k_bush = QBrush(Qt::white);
+    // 此处是为零小部件不可见
+    auto k_bush = QBrush(Qt::color0);
     k_painter.setBrush(k_bush);
     k_painter.drawRect(QRect{p_start_pos, p_end_pos});
 
-    setMask(p_mask);
+    setMask(QBitmap(k_pix));
   }
 }
 
@@ -97,10 +98,10 @@ void ScreenshotAction::mouseReleaseEvent(QMouseEvent *event) {
   if (event->button() == Qt::LeftButton) {
     p_end_pos = event->pos();
 
-    auto pixmap = p_screen->grabWindow(winId(),
+    auto pixmap = p_screen->grabWindow(0,
                                        p_start_pos.x(), p_start_pos.y(),
-                                       p_end_pos.x(), p_end_pos.y());
-    pixmap.save("D:/tmp/test01", "PNG", 100);
+                                       p_end_pos.x() - p_start_pos.x(), p_end_pos.y() - p_start_pos.y());
+    pixmap.save(QString::fromStdString(p_save_path));
     close();
   }
 }

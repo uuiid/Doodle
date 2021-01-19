@@ -35,14 +35,15 @@ mainWindows::mainWindows(QWidget *parent)
 
 void mainWindows::doodle_init() {
   //初始化自身
-  if (objectName().isEmpty()) setObjectName(QString::fromUtf8("mainWindows"));
+  /* if (objectName().isEmpty())  */
+  setObjectName(QString{"mainWindows"});
 
   // resize(1200, 800);
   setWindowTitle(tr("项目管理器"));
 
   //设置中央小部件
   centralWidget = new QWidget(this);
-  centralWidget->setObjectName(QString::fromUtf8("mainWindows"));
+  centralWidget->setObjectName(QString::fromUtf8("mainWindowsCentral"));
   //添加中央小部件
   setCentralWidget(centralWidget);
 
