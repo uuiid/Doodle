@@ -20,6 +20,12 @@
 #include <QTextStream>
 
 #include <exception>
+// DOODLE_NAMESPACE_S
+// void doodleQuitClear() {
+//   coreSet::getSet().writeDoodleLocalSet();
+//   boost::log::core::get()->remove_all_sinks();
+// }
+// DOODLE_NAMESPACE_E
 
 int main(int argc, char *argv[]) try {
   QApplication q_application(argc, argv);

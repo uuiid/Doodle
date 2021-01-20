@@ -23,6 +23,9 @@ class systemTray : public QSystemTrayIcon {
   enum class installModel { peject,
                             exeFile };
 
+ Q_SIGNALS:
+  void quit();
+
  private Q_SLOTS:
   void installMayaPlug();
   void installUe4Plug(const installModel &model);

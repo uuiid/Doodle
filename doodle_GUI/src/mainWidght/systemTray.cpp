@@ -98,6 +98,9 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   menu->addAction(k_exit_);
 
   setContextMenu(menu);
+
+  connect(this, &systemTray::quit,
+          qApp, &QApplication::quit, Qt::QueuedConnection);
 }
 
 void systemTray::installMayaPlug() {
@@ -134,7 +137,7 @@ void systemTray::doodleQuery() {
   dynamic_cast<mainWindows *>(parent())->close();
   doodle::coreSet::getSet().writeDoodleLocalSet();
   setVisible(false);
-  qApp->quit();
+  quit();
 }
 void systemTray::showRigister() {
   auto rigister = new doodleRigister(nullptr);
@@ -143,7 +146,11 @@ void systemTray::showRigister() {
 
 void systemTray::upDoodle() {
   doodle::coreSet::getSet().writeDoodleLocalSet();
-  auto fun      = std::async(std::launch::async, &toolkit::update);
+  auto fun      = std::async(std::launch::async, [this]() -> bool {
+    toolkit::update();
+    quit();
+    return true;
+  });
   auto &manager = updataManager::get();
   manager.addQueue(fun, "正在下载中", 100);
   manager.run();
