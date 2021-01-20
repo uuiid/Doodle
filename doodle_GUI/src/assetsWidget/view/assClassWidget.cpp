@@ -84,10 +84,9 @@ void assClassWidget::deleteSQLFile() {
 }
 
 void assClassWidget::_doodle_ass_emit(const QModelIndex& index) {
-  auto k_assClass =
-      model()->data(index, Qt::UserRole).value<assClass*>();
+  auto k_assClass = model()->data(index, Qt::UserRole).value<assClass*>();
   coreDataManager::get().setAssClassPtr(k_assClass->shared_from_this());
-  initEmited();
+  chickItem(k_assClass->shared_from_this());
 }
 void assClassWidget::contextMenuEvent(QContextMenuEvent* event) {
   if (p_menu_) {

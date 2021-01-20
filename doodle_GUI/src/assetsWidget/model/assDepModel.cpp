@@ -39,6 +39,14 @@ void assDepModel::clear() {
   }
   coreDataManager::get().setAssDepPtr(nullptr);
 }
+
+void assDepModel::setList(const assDepPtrList &setList) {
+  clear();
+  if (setList.empty()) return;
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(setList.size()) - 1);
+  p_class_ptr_list_ = setList;
+  endInsertRows();
+}
 assDepModel::~assDepModel() = default;
 
 DOODLE_NAMESPACE_E

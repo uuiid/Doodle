@@ -76,9 +76,11 @@ void assTypeWidget::inserttype() {
   edit(p_model_->index(raw));
 }
 void assTypeWidget::_doodle_type_emit(const QModelIndex &index) {
-  coreDataManager::get().setAssTypePtr(
-      index.data(Qt::UserRole).value<assType *>()->shared_from_this());
-  doodleUseFilter(filterState::useFilter);
+  auto k_asstype = index.data(Qt::UserRole).value<assType *>();
+  if (k_asstype) {
+    coreDataManager::get().setAssTypePtr(k_asstype->shared_from_this());
+    chickItem(k_asstype->shared_from_this(), filterState::useFilter);
+  }
 }
 void assTypeWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
@@ -88,7 +90,7 @@ void assTypeWidget::mousePressEvent(QMouseEvent *event) {
     update();
     // p_model_->reInit();
     coreDataManager::get().setAssTypePtr(nullptr);
-    doodleUseFilter(filterState::notFilter);
+    chickItem(nullptr, filterState::useFilter);
   }
 }
 //void assTypeWidget::contextMenuEvent(QContextMenuEvent *event) {

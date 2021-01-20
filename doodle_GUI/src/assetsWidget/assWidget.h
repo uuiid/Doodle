@@ -15,6 +15,7 @@ class assWidght : public QWidget {
   Q_OBJECT
  public:
   explicit assWidght(QWidget *parent = nullptr);
+
  public Q_SLOTS:
   void refresh();
 

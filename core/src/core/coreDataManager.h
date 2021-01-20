@@ -9,6 +9,7 @@
 //
 // Created by teXiao on 2020/11/12.
 //
+#pragma once
 
 #include <core_global.h>
 

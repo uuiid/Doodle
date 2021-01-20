@@ -22,11 +22,12 @@
 #include <src/assetsWidget/model/assSortfilterModel.h>
 #include <src/assetsWidget/model/assTableFilterModel.h>
 
-#include <src/ScreenshotWidght/ScreenshotWidght.h>
+#include <src/assetsWidget/AssScreenShotWidght.h>
 
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QLabel>
 
+#include <core_Cpp.h>
 DOODLE_NAMESPACE_S
 
 assWidght::assWidght(QWidget *parent)
@@ -62,11 +63,6 @@ assWidght::assWidght(QWidget *parent)
   //代理排序模型
   p_ass_sortfilter_model_ = new assSortfilterModel();
   p_ass_sortfilter_model_->setSourceModel(p_ass_class_model_);
-  connect(k_filterLineEdit, &QLineEdit::textChanged,
-          this, [=](const QString &filter) {
-            auto tmp = QRegularExpression{filter, QRegularExpression::CaseInsensitiveOption};
-            p_ass_sortfilter_model_->setFilterRegularExpression(tmp);
-          });
 
   //table过滤模型
   auto p_ass_table_filter_model_ = new assTableFilterModel();
@@ -86,32 +82,70 @@ assWidght::assWidght(QWidget *parent)
   p_ass_type_widget_->setModel(p_ass_type_model_);
 
   //截图小部件
-  auto k_screen = new ScreenshotWidght();
+  auto k_screen = new AssScreenShotWidght();
+
+  //assclass过滤器
+  connect(k_filterLineEdit, &QLineEdit::textChanged,
+          this, [=](const QString &filter) {
+            auto tmp = QRegularExpression{filter, QRegularExpression::CaseInsensitiveOption};
+            p_ass_sortfilter_model_->setFilterRegularExpression(tmp);
+          });
 
   //清除过滤器和以前的选择
-  connect(p_ass_class_widget_, &assClassWidget::initEmited,
-          [=]() {
-            auto &mData = coreDataManager::get();
-            mData.setAssInfoPtr(nullptr);
-            mData.setAssTypePtr(nullptr);
-            p_ass_table_filter_model_->useFilter(filterState::notFilter);
-            p_ass_type_model_->reInit();
-            p_ass_table_model_->init();
-          });
-  //开始重新填词模型
-  connect(p_ass_type_widget_, &assTypeWidget::doodleUseFilter,
-          p_ass_table_filter_model_, &assTableFilterModel::useFilter);
+  p_ass_dep_widget_->chickItem.connect(
+      [=](const assDepPtr &tmp_) {
+        auto &mData = coreDataManager::get();
+        mData.setAssDepPtr(tmp_);
+        mData.setAssClassPtr(nullptr);
+        mData.setAssInfoPtr(nullptr);
+        mData.setAssTypePtr(nullptr);
+        p_ass_table_model_->clear();
 
-  connect(p_ass_dep_widget_, &assDepWidget::initEmit,
-          this, [=]() {
-            auto &mData = coreDataManager::get();
-            mData.setAssClassPtr(nullptr);
-            mData.setAssInfoPtr(nullptr);
-            mData.setAssTypePtr(nullptr);
-            p_ass_table_model_->clear();
-            p_ass_class_model_->init();
-            p_ass_type_model_->reInit();
-          });
+        auto list = assClass::getAll(tmp_);
+        p_ass_class_model_->setList(list);
+      });
+
+  p_ass_class_widget_->chickItem.connect(
+      [=](const assClassPtr &tmp_) {
+        auto &mData = coreDataManager::get();
+        mData.setAssClassPtr(tmp_);
+        mData.setAssInfoPtr(nullptr);
+        mData.setAssTypePtr(nullptr);
+
+        auto list = assFileSqlInfo::getAll(tmp_);
+        p_ass_table_filter_model_->useFilter(filterState::notFilter, nullptr);
+        p_ass_table_model_->setList(list);
+      });
+
+  // 过滤模型
+  p_ass_type_widget_->chickItem.connect(
+      [=](const assTypePtr &t1, const filterState &state) {
+        p_ass_table_filter_model_->useFilter(state, t1);
+      });
+  // connect(p_ass_dep_widget_, &assDepWidget::initEmit,
+  //         this, [=]() {
+  //           auto &mData = coreDataManager::get();
+  //           mData.setAssClassPtr(nullptr);
+  //           mData.setAssInfoPtr(nullptr);
+  //           mData.setAssTypePtr(nullptr);
+  //           p_ass_table_model_->clear();
+  //           p_ass_class_model_->init();
+  //           p_ass_type_model_->reInit();
+  //         });
+
+  // connect(p_ass_class_widget_, &assClassWidget::initEmited,
+  //         [=]() {
+  //           auto &mData = coreDataManager::get();
+  //           mData.setAssInfoPtr(nullptr);
+  //           mData.setAssTypePtr(nullptr);
+  //           p_ass_table_filter_model_->useFilter(filterState::notFilter);
+  //           p_ass_type_model_->reInit();
+  //           p_ass_table_model_->init();
+  //         });
+
+  //开始重新填词模型
+  // connect(p_ass_type_widget_, &assTypeWidget::doodleUseFilter,
+  //         p_ass_table_filter_model_, &assTableFilterModel::useFilter);
 
   //布局
   p_ass_layout_->addWidget(p_ass_dep_widget_, 0, 0, 1, 2);
@@ -143,8 +177,11 @@ void assWidght::refresh() {
   mData.setAssInfoPtr(nullptr);
   mData.setAssTypePtr(nullptr);
 
-  p_ass_dep_model_->init();
-  p_ass_type_model_->init();
+  auto list_dep  = assdepartment::getAll();
+  auto list_type = assType::getAll();
+
+  p_ass_dep_model_->setList(list_dep);
+  p_ass_type_model_->setList(list_type);
   p_ass_class_model_->clear();
   p_ass_table_model_->clear();
 }

@@ -10,8 +10,9 @@ assTableFilterModel::assTableFilterModel(QObject *parent)
   sort(0);
 }
 
-void assTableFilterModel::useFilter(const filterState &useFilter) {
+void assTableFilterModel::useFilter(const filterState &useFilter, const assTypePtr &ass_t) {
   p_useFilter_e = useFilter;
+  p_type        = ass_t;
   invalidate();
 }
 
@@ -36,7 +37,7 @@ bool assTableFilterModel::filterAcceptsRow(int source_row,
     }
 
     case filterState::useFilter:
-      return k_Data->getAssType() == coreDataManager::get().getAssTypePtr();
+      return k_Data->getAssType() == p_type;
       break;
 
     case filterState::showAll:

@@ -17,6 +17,7 @@
 #include "core_global.h"
 #include "doodle_global.h"
 
+#include <boost/signals2.hpp>
 DOODLE_NAMESPACE_S
 class assClassDelegate : public QStyledItemDelegate {
   Q_OBJECT
@@ -40,8 +41,9 @@ class assClassWidget : public QListView {
   explicit assClassWidget(QWidget* parent = nullptr);
 
   void setModel(QAbstractItemModel* model) override;
- Q_SIGNALS:
-  void initEmited();
+
+  boost::signals2::signal<void(const assClassPtr&)> chickItem;
+
 
  private:
   QMenu* p_menu_;

@@ -18,8 +18,8 @@ assTableModel::assTableModel(QObject *parent)
       mayaRex(std::make_shared<boost::regex>(R"(scenes)")),
       ue4Rex(std::make_shared<boost::regex>(R"(_UE4)")),
       rigRex(std::make_shared<boost::regex>(R"(rig)")) {
-  assFileSqlInfo::insertChanged.connect(5, [this]() { this->reInit(); });
-  assFileSqlInfo::updateChanged.connect(5, [this]() { this->reInit(); });
+  // assFileSqlInfo::insertChanged.connect(5, [this]() { this->reInit(); });
+  // assFileSqlInfo::updateChanged.connect(5, [this]() { this->reInit(); });
 }
 
 int assTableModel::rowCount(const QModelIndex &parent) const {

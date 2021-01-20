@@ -9,6 +9,8 @@
 
 #include <QStyledItemDelegate>
 #include <QListView>
+
+#include <boost/signals2.hpp>
 DOODLE_NAMESPACE_S
 
 class fileTypeAssDelegate : public QStyledItemDelegate {
@@ -34,8 +36,7 @@ class assTypeWidget : public QListView {
 
   void setModel(QAbstractItemModel *model) override;
 
- Q_SIGNALS:
-  void doodleUseFilter(const filterState &useFilter);
+  boost::signals2::signal<void(const assTypePtr &, const filterState &)> chickItem;
 
  private:
   //m模型指针

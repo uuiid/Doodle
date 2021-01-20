@@ -72,4 +72,8 @@ void ScreenshotWidght::showImage() {
   }
 }
 
+void ScreenshotWidght::disableButten(bool disable) {
+  p_butten->setEnabled(disable);
+}
+
 DOODLE_NAMESPACE_E

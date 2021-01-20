@@ -15,9 +15,9 @@ class assDepWidget : public QListView {
   ~assDepWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
+  boost::signals2::signal<void(const assDepPtr &)> chickItem;
 
- Q_SIGNALS:
-  void initEmit();
+
 
  private:
   assDepModel *p_file_class_ass_model_;

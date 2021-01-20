@@ -16,10 +16,14 @@ class ScreenshotWidght : public QWidget {
   virtual void createScreenshot();
   void showImage();
 
+  void disableButten(bool disable);
+  // virtual void setIndexInfo(const std::shared_ptr<coresqldata>& typeptr) = 0;
  private:
-  QPushButton* p_butten;
   QLabel* p_image;
   ScreenshotAction* p_action;
+  QPushButton* p_butten;
+
+ protected:
   std::weak_ptr<fileSqlInfo> p_file_archive;
 };
 

@@ -30,6 +30,8 @@ class assTypeModel : public QAbstractListModel {
   void init();
   void reInit();
 
+  void setList(const assTypePtrList &setList);
+
  private:
   void clear();
   assTypePtrList p_file_type_ptr_list_;

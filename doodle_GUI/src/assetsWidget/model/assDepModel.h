@@ -11,7 +11,7 @@
 
 DOODLE_NAMESPACE_S
 class assDepModel : public QAbstractListModel {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit assDepModel(QObject *parent = nullptr);
   ~assDepModel() override;
@@ -19,11 +19,12 @@ class assDepModel : public QAbstractListModel {
   [[nodiscard]] int rowCount(const QModelIndex &parent) const override;
   [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override;
 
- void init();
- void clear();
+  void init();
+  void clear();
+  void setList(const assDepPtrList &setList);
 
  private:
-   assDepPtrList p_class_ptr_list_;
+  assDepPtrList p_class_ptr_list_;
 };
 
 DOODLE_NAMESPACE_E

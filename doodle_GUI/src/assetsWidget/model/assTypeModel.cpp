@@ -104,6 +104,16 @@ void assTypeModel::reInit() {
   p_file_type_ptr_list_ = list;
   endInsertRows();
 }
+
+void assTypeModel::setList(const assTypePtrList &setList) {
+  clear();
+  if (setList.empty()) return;
+
+  beginInsertRows(QModelIndex(), 0,
+                  boost::numeric_cast<int>(setList.size()) - 1);
+  p_file_type_ptr_list_ = setList;
+  endInsertRows();
+}
 void assTypeModel::clear() {
   if (p_file_type_ptr_list_.empty()) return;
 

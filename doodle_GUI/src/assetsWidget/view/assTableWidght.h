@@ -16,6 +16,9 @@
 #include <doodle_global.h>
 
 #include <QTableView>
+
+#include <boost/signals2.hpp>
+
 #include <future>
 class QProgressDialog;
 DOODLE_NAMESPACE_S
@@ -25,6 +28,8 @@ class assTableWidght : public QTableView {
   explicit assTableWidght(QWidget* parent = nullptr);
 
   void setModel(QAbstractItemModel* model) override;
+
+  boost::signals2::signal<void(const assInfoPtr&)> chickItem;
 
  Q_SIGNALS:
   void setFilterRole(const filterState& filter);

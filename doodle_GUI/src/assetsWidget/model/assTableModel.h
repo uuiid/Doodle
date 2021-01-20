@@ -45,9 +45,9 @@ class assTableModel : public QAbstractTableModel {
   void reInit();
   void clear();
 
- private:
   void setList(assInfoPtrList &list);
 
+ private:
  private:
   assInfoPtrList p_ass_info_ptr_list_;
   // std::shared_ptr<boost::signals2::connection> p_connection_insert;

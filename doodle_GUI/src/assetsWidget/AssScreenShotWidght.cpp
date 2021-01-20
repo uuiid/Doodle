@@ -7,14 +7,16 @@ AssScreenShotWidght::AssScreenShotWidght(QWidget *parent)
     : ScreenshotWidght(parent) {
 }
 
-void AssScreenShotWidght::setIndexInfo(const assClassPtr &ass_class_ptr) {
-  auto list = assFileSqlInfo::Instances();
+void AssScreenShotWidght::setIndexInfo(const assInfoPtrList &list) {
   auto k_file =
-      std::find_if(list.begin(), list.end(),
-                   [ass_class_ptr](assFileSqlInfo *ass_) {
-                     return ass_->getAssClass() == ass_class_ptr &&
-                            ass_->getAssType()->getTypeS() == "";
-                   });
+      std::find_if(
+          list.begin(), list.end(),
+          [](assInfoPtr ass_) {
+            return ass_->getAssType()->getType_enum() == assType::e_type::screenshot;
+          });
+  if (k_file != list.end()) {
+    p_file_archive = (*k_file);
+  }
 }
 
 DOODLE_NAMESPACE_E

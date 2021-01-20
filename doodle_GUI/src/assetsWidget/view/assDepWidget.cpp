@@ -17,11 +17,13 @@ void assDepWidget::setModel(QAbstractItemModel *model) {
   if (model_) p_file_class_ass_model_ = model_;
   QAbstractItemView::setModel(model);
 }
+
 void assDepWidget::_doodle_emit(const QModelIndex &index) {
   auto assdep = p_file_class_ass_model_->data(index, Qt::UserRole)
                     .value<assdepartment *>();
+
+  chickItem(assdep->shared_from_this());
   coreDataManager::get().setAssDepPtr(assdep->shared_from_this());
-  initEmit();
 }
 assDepWidget::~assDepWidget() = default;
 DOODLE_NAMESPACE_E

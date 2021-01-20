@@ -6,10 +6,12 @@
 #include "doodle_global.h"
 #include "core_global.h"
 
+#include <boost/signals2.hpp>
+
 #include <QAbstractListModel>
 DOODLE_NAMESPACE_S
 class assClassModel : public QAbstractListModel {
- Q_OBJECT
+  Q_OBJECT
  public:
   explicit assClassModel(QObject *parent = nullptr);
   ~assClassModel() override;
@@ -29,8 +31,9 @@ class assClassModel : public QAbstractListModel {
   void init();
   void clear();
 
- private:
-   assClassPtrList p_ass_info_ptr_list_;
+  void setList(const assClassPtrList &setList);
 
+ private:
+  assClassPtrList p_ass_info_ptr_list_;
 };
 DOODLE_NAMESPACE_E

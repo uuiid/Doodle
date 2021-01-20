@@ -111,6 +111,16 @@ void assClassModel::clear() {
   endResetModel();
   coreDataManager::get().setAssClassPtr(nullptr);
 }
+
+void assClassModel::setList(const assClassPtrList &setList) {
+  clear();
+
+  if (!setList.empty()) {
+    beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(setList.size()) - 1);
+    p_ass_info_ptr_list_ = setList;
+    endInsertRows();
+  }
+}
 assClassModel::~assClassModel() = default;
 
 DOODLE_NAMESPACE_E

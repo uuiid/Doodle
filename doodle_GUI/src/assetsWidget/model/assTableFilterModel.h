@@ -11,7 +11,7 @@ class assTableFilterModel : public QSortFilterProxyModel {
  public:
   explicit assTableFilterModel(QObject *parent = nullptr);
 
-  void useFilter(const filterState &useFilter);
+  void useFilter(const filterState &useFilter, const assTypePtr &ass_t);
 
  protected:
   bool filterAcceptsRow(int source_row,
@@ -20,6 +20,7 @@ class assTableFilterModel : public QSortFilterProxyModel {
 
  private:
   filterState p_useFilter_e;
+  assTypePtr p_type;
 };
 
 DOODLE_NAMESPACE_E
