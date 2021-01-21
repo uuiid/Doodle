@@ -31,8 +31,8 @@ RTTR_REGISTRATION {
 }
 
 DOODLE_INSRANCE_CPP(assFileSqlInfo);
-boost::signals2::signal<void()> assFileSqlInfo::insertChanged{};
-boost::signals2::signal<void()> assFileSqlInfo::updateChanged{};
+boost::signals2::signal<void(const assInfoPtr &)> assFileSqlInfo::insertChanged{};
+boost::signals2::signal<void(const assInfoPtr &)> assFileSqlInfo::updateChanged{};
 
 assFileSqlInfo::assFileSqlInfo()
     : fileSqlInfo(),
@@ -89,7 +89,7 @@ void assFileSqlInfo::insert() {
     DOODLE_LOG_WARN(fileStateP.c_str());
     throw std::runtime_error("");
   }
-  insertChanged();
+  insertChanged(shared_from_this());
 }
 
 void assFileSqlInfo::updateSQL() {
@@ -114,7 +114,7 @@ void assFileSqlInfo::updateSQL() {
   } catch (const sqlpp::exception &e) {
     DOODLE_LOG_ERROR(e.what());
   }
-  updateChanged();
+  updateChanged(shared_from_this());
 }
 
 void assFileSqlInfo::deleteSQL() {
@@ -268,12 +268,15 @@ dataInfoPtr assFileSqlInfo::findSimilar() {
           });
   if (it != p_instance.end()) {
     (*it)->fileP         = fileP;
-    (*it)->p_parser_path = p_parser_path;
     (*it)->fileStateP    = fileStateP;
     (*it)->fileSuffixesP = fileSuffixesP;
     (*it)->versionP      = versionP;
-    (*it)->p_parser_info = p_parser_info;
     (*it)->userP         = userP;
+    (*it)->p_parser_info = p_parser_info;
+    (*it)->p_parser_path = p_parser_path;
+
+    p_parser_info->setFileSql(*it);
+    p_parser_path->setFileSql(*it);
     return (*it)->shared_from_this();
   } else
     return shared_from_this();

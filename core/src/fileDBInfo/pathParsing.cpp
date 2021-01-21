@@ -98,4 +98,8 @@ std::string pathParsing::DBInfo() const {
   }
 }
 
+void pathParsing::setFileSql(fileSqlInfo* file) {
+  p_file_Archive = file;
+}
+
 DOODLE_NAMESPACE_E

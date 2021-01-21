@@ -1,5 +1,6 @@
 #include "ScreenshotWidght.h"
 
+#include <src/Exception/Exception.h>
 #include <core_Cpp.h>
 #include <Logger.h>
 #include <src/ScreenshotWidght/ScreenshotAction.h>
@@ -21,7 +22,7 @@ ScreenshotWidght::ScreenshotWidght(QWidget *parent)
   auto layout = new QVBoxLayout(this);
 
   p_butten->setText("点击截图");
-  p_image->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  p_image->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   p_image->setAlignment(Qt::AlignCenter);
 
   connect(p_butten, &QPushButton::clicked,
@@ -42,6 +43,10 @@ void ScreenshotWidght::createScreenshot() {
   auto windowList = QGuiApplication::topLevelWindows();
   auto winMain    = QGuiApplication::instance()->findChild<QWidget *>("mainWindows");
 
+  if (!boost::filesystem::exists(k_cache.parent_path())) {
+    boost::filesystem::create_directories(k_cache.parent_path());
+  }
+
   //隐藏主窗口
   for (auto &&win : windowList) {
     if (win->objectName() == "mainWindowsWindow")
@@ -56,6 +61,12 @@ void ScreenshotWidght::createScreenshot() {
       win->showMaximized();
   }
   k_image->update(k_cache);
+
+  auto k_pix = QPixmap();
+  if (k_pix.load(QString::fromStdString(k_cache.generic_string())))
+    p_image->setPixmap(k_pix.scaled(p_image->geometry().size(), Qt::KeepAspectRatio));
+  else {
+  }
 }
 
 void ScreenshotWidght::showImage() {
@@ -64,12 +75,21 @@ void ScreenshotWidght::showImage() {
   auto k_file  = p_file_archive.lock();
   auto k_image = std::make_unique<ScreenshotArchive>(k_file);
   auto k_cache = k_image->down();
-
+  if (!boost::filesystem::exists(k_cache)) {
+    DOODLE_LOG_WARN("没有文件： " << k_cache.generic_string())
+    throw not_file_error(k_cache.generic_string());
+  }
   auto k_pix = QPixmap();
   if (k_pix.load(QString::fromStdString(k_cache.generic_string())))
-    p_image->setPixmap(k_pix);
+    p_image->setPixmap(k_pix.scaled(p_image->geometry().size(), Qt::KeepAspectRatio));
   else {
+    clearImage();
   }
+}
+
+void ScreenshotWidght::clearImage() {
+  p_image->clear();
+  p_image->setText(QString::fromUtf8("请截图"));
 }
 
 void ScreenshotWidght::disableButten(bool disable) {

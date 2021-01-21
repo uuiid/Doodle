@@ -365,12 +365,15 @@ dataInfoPtr shotFileSqlInfo::findSimilar() {
 
   if (it != p_instance.end()) {
     (*it)->fileP         = fileP;
-    (*it)->p_parser_path = p_parser_path;
     (*it)->fileStateP    = fileStateP;
     (*it)->fileSuffixesP = fileSuffixesP;
     (*it)->versionP      = versionP;
-    (*it)->p_parser_info = p_parser_info;
     (*it)->userP         = userP;
+    (*it)->p_parser_info = p_parser_info;
+    (*it)->p_parser_path = p_parser_path;
+
+    p_parser_info->setFileSql(*it);
+    p_parser_path->setFileSql(*it);
 
     return (*it)->shared_from_this();
   } else {

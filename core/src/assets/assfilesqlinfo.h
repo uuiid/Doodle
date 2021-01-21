@@ -52,8 +52,8 @@ class CORE_API assFileSqlInfo
   static bool sortType(const assInfoPtr &t1, const assInfoPtr &t2);
   static const std::unordered_set<assFileSqlInfo *> Instances();
 
-  static boost::signals2::signal<void()> insertChanged;
-  static boost::signals2::signal<void()> updateChanged;
+  static boost::signals2::signal<void(const assInfoPtr &)> insertChanged;
+  static boost::signals2::signal<void(const assInfoPtr &)> updateChanged;
 
  private:
   void setAssType();

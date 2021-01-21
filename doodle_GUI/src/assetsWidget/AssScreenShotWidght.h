@@ -1,5 +1,6 @@
 #pragma once
 
+#include <core_global.h>
 #include <doodle_global.h>
 #include <src/ScreenshotWidght/ScreenshotWidght.h>
 
@@ -10,9 +11,13 @@ class AssScreenShotWidght : public ScreenshotWidght {
  public:
   AssScreenShotWidght(QWidget *parent = nullptr);
 
-  void setIndexInfo(const assInfoPtrList &list);
+  void setAssInfo(const std::weak_ptr<assClass> &ass_class_ptr);
+
+  void createScreenshot() override;
+  void setimageInfo(const assInfoPtrList &list);
 
  private:
+  std::weak_ptr<assClass> p_ass_class;
 };
 
 DOODLE_NAMESPACE_E

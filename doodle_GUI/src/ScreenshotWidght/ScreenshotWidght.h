@@ -15,6 +15,7 @@ class ScreenshotWidght : public QWidget {
 
   virtual void createScreenshot();
   void showImage();
+  void clearImage();
 
   void disableButten(bool disable);
   // virtual void setIndexInfo(const std::shared_ptr<coresqldata>& typeptr) = 0;

@@ -21,6 +21,8 @@ class CORE_API pathParsing {
   //上传到数据库时，使用这个
   std::string DBInfo() const;
 
+  void setFileSql(fileSqlInfo* file);
+
  private:
   fileSqlInfo* p_file_Archive;
   dpathPtr p_path_row;

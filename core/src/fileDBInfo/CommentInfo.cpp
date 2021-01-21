@@ -95,4 +95,8 @@ std::string CommentInfo::DBInfo() const {
   }
 }
 
+void CommentInfo::setFileSql(fileSqlInfo *file) {
+  p_file_Archive = file;
+}
+
 DOODLE_NAMESPACE_E

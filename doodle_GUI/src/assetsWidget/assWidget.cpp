@@ -103,6 +103,7 @@ assWidght::assWidght(QWidget *parent)
 
         auto list = assClass::getAll(tmp_);
         p_ass_class_model_->setList(list);
+        k_screen->clearImage();
       });
 
   p_ass_class_widget_->chickItem.connect(
@@ -115,6 +116,8 @@ assWidght::assWidght(QWidget *parent)
         auto list = assFileSqlInfo::getAll(tmp_);
         p_ass_table_filter_model_->useFilter(filterState::notFilter, nullptr);
         p_ass_table_model_->setList(list);
+        k_screen->setimageInfo(list);
+        k_screen->setAssInfo(tmp_);
       });
 
   // 过滤模型

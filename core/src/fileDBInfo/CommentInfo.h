@@ -18,6 +18,8 @@ class CommentInfo {
   // 上传数据库是需要的信息
   std::string DBInfo() const;
 
+  void setFileSql(fileSqlInfo *file);
+
  private:
   fileSqlInfo *p_file_Archive;
   dpathPtr p_path;

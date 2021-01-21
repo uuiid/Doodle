@@ -10,6 +10,8 @@ class CORE_API ScreenshotArchive : public fileArchive {
  public:
   ScreenshotArchive(fileSqlInfoPtr info_ptr);
 
+  std::unique_ptr<std::fstream> loadImage();
+
  protected:
   void insertDB() override;
   void imp_generateFilePath() override;

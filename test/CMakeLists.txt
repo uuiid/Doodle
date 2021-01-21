@@ -4,11 +4,18 @@
         main.cpp
         test_boost.cpp 
         test_qtCore.cpp
-        test_server.cpp)
+        test_server.cpp
+        test_std.cpp)
 #连接自己的库进行测试
 target_link_libraries(test_my
         PRIVATE core fileSystem pinyin logger)
 
+find_library(DOODLE_MAR 
+mpr.lib
+REQUIRED
+) 
+message("${DOODLE_MAR}")
+target_link_libraries(test_my PRIVATE ${DOODLE_MAR})
 #这个网络库不去连接
 # target_link_libraries(test_my
 #         PRIVATE cppnetlib-uri cppnetlib-server-parsers cppnetlib-client-connections)

@@ -18,8 +18,12 @@ assTableModel::assTableModel(QObject *parent)
       mayaRex(std::make_shared<boost::regex>(R"(scenes)")),
       ue4Rex(std::make_shared<boost::regex>(R"(_UE4)")),
       rigRex(std::make_shared<boost::regex>(R"(rig)")) {
-  // assFileSqlInfo::insertChanged.connect(5, [this]() { this->reInit(); });
-  // assFileSqlInfo::updateChanged.connect(5, [this]() { this->reInit(); });
+  assFileSqlInfo::insertChanged.connect(5, [this](const assInfoPtr &t1) {
+    this->doodle_dataInsert(t1);
+  });
+  assFileSqlInfo::updateChanged.connect(5, [this](const assInfoPtr &t1) {
+    this->doodle_dataChande(t1);
+  });
 }
 
 int assTableModel::rowCount(const QModelIndex &parent) const {
@@ -241,21 +245,7 @@ bool assTableModel::removeRows(int position, int rows,
   endRemoveRows();
   return true;
 }
-void assTableModel::init() {
-  clear();
-  auto list = assFileSqlInfo::getAll(
-      coreDataManager::get().getAssClassPtr());
 
-  setList(list);
-}
-
-void assTableModel::reInit() {
-  assInfoPtrList outlist;
-  for (const auto &item : assFileSqlInfo::Instances()) {
-    outlist.push_back(item->shared_from_this());
-  }
-  setList(outlist);
-}
 void assTableModel::clear() {
   if (p_ass_info_ptr_list_.empty()) return;
   beginResetModel();
@@ -269,6 +259,27 @@ void assTableModel::setList(assInfoPtrList &list) {
   }
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list.size()) - 1);
   p_ass_info_ptr_list_ = list;
+  endInsertRows();
+}
+
+void assTableModel::doodle_dataChande(const assInfoPtr &i) {
+  auto it =
+      std::find_if(p_ass_info_ptr_list_.begin(), p_ass_info_ptr_list_.end(),
+                   [=](assInfoPtr &d) -> bool {
+                     return d == i;
+                   });
+  if (it != p_ass_info_ptr_list_.end()) {
+    auto k_index = std::distance(p_ass_info_ptr_list_.begin(), it);
+
+    dataChanged(index(k_index, 0), index(k_index, 4));
+  }
+}
+
+void assTableModel::doodle_dataInsert(const assInfoPtr &i) {
+  auto k_size = boost::numeric_cast<int>(p_ass_info_ptr_list_.size());
+
+  beginInsertRows(QModelIndex(), k_size, k_size);
+  p_ass_info_ptr_list_.push_back(i);
   endInsertRows();
 }
 

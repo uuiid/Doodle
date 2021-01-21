@@ -41,11 +41,10 @@ class assTableModel : public QAbstractTableModel {
   bool insertRows(int position, int rows, const QModelIndex &parent) override;
   bool removeRows(int position, int rows, const QModelIndex &parent) override;
 
-  void init();
-  void reInit();
   void clear();
-
   void setList(assInfoPtrList &list);
+  void doodle_dataChande(const assInfoPtr &i);
+  void doodle_dataInsert(const assInfoPtr &i);
 
  private:
  private:

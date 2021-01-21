@@ -41,15 +41,12 @@ class CORE_API assType
   void deleteSQL() override;
 
   static assTypePtrList getAll();
+  //寻找想要的type类型，找不到就插入
   static assTypePtr findType(const e_type &typeName, bool autoInstall);
   static bool sortType(const assTypePtr &t1, const assTypePtr &t2);
 
   //这个信号用来发出更改
   static boost::signals2::signal<void()> insertChanged;
-
- private:
-  static assTypePtr findType(const std::string &typeName);
-  e_type s_type;
 
  public:
   // std::tuple<e_type, std::string> getType() const;
@@ -59,6 +56,10 @@ class CORE_API assType
   [[nodiscard]] const QString getTypeQ() const;
   void setType(const std::string &string);
   static const std::unordered_set<assType *> Instances();
+
+ private:
+  static assTypePtr findType(const std::string &typeName);
+  e_type s_type;
 
  private:
   int64_t p_ass_class_id;
