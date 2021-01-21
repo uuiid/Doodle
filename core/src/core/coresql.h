@@ -2,7 +2,10 @@
 
 #include <core_global.h>
 
+// #include <sqlpp11/sqlpp11.h>
 DOODLE_NAMESPACE_S
+
+// SQLPP_ALIAS_PROVIDER(basefile_time)
 
 /*
  * 数据库连接类
@@ -12,7 +15,7 @@ class CORE_API coreSql {
  public:
   static coreSql &getCoreSql();
   coreSql &operator=(const coreSql &s) = delete;
-  coreSql(const coreSql &s) = delete;
+  coreSql(const coreSql &s)            = delete;
 
   ~coreSql();
 

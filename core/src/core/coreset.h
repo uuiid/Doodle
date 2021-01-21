@@ -69,6 +69,7 @@ class CORE_API coreSet {
   //获得freesyn同步软件设置
   [[nodiscard]] dstring getFreeFileSyn() const;
   void setFreeFileSyn(const dstring &value);
+
   //项目名称设置
   dstring getProjectname();
   [[nodiscard]] std::pair<int, std::string> projectName() const;
@@ -125,7 +126,6 @@ class CORE_API coreSet {
   dstring freeFileSyn;
 
   //项目名称
-  dstring projectname;
   std::pair<int, std::string> project;
 
  private:

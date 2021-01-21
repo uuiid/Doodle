@@ -35,11 +35,12 @@ void coreSql::initDB() {
   config->port     = 3306;
 #ifdef NDEBUG
   config->database = "doodle_main";
+  config->debug    = false;
 #else
-  config->database = "test_db";      //#gitignore
-  config->database = "doodle_main";  //#gitignore
+  config->database = "test_db";  //#gitignore
+  // config->database = "doodle_main";  //#gitignore
+  config->debug = true;
 #endif  //NDEBUG
-  config->debug = false;
 }
 dstring coreSql::getThreadId() {
   //使用线程id创建不一样的名字

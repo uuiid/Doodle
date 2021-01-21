@@ -114,7 +114,6 @@ coreSet::coreSet()
       department(Department::VFX),
       syneps(1),
       freeFileSyn(R"("C:\PROGRA~1\FREEFI~1\FreeFileSync.exe")"),
-      projectname("dubuxiaoyao3"),
       project(std::make_pair(1, "dubuxiaoyao3")),
       synPath(std::make_shared<dpath>("D:/ue_prj")),
       prjMap(),

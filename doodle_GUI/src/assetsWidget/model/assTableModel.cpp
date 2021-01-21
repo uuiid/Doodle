@@ -268,6 +268,7 @@ void assTableModel::doodle_dataChande(const assInfoPtr &i) {
                    [=](assInfoPtr &d) -> bool {
                      return d == i;
                    });
+
   if (it != p_ass_info_ptr_list_.end()) {
     auto k_index = std::distance(p_ass_info_ptr_list_.begin(), it);
 
@@ -277,10 +278,12 @@ void assTableModel::doodle_dataChande(const assInfoPtr &i) {
 
 void assTableModel::doodle_dataInsert(const assInfoPtr &i) {
   auto k_size = boost::numeric_cast<int>(p_ass_info_ptr_list_.size());
-
-  beginInsertRows(QModelIndex(), k_size, k_size);
-  p_ass_info_ptr_list_.push_back(i);
-  endInsertRows();
+  //如果是当前资产的更改就插入
+  if (i->getAssClass() == coreDataManager::get().getAssClassPtr()) {
+    beginInsertRows(QModelIndex(), k_size, k_size);
+    p_ass_info_ptr_list_.push_back(i);
+    endInsertRows();
+  }
 }
 
 DOODLE_NAMESPACE_E

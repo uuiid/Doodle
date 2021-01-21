@@ -70,6 +70,8 @@ class CORE_API shot : public coresqldata,
 
   episodesPtr p_ptr_eps;
   int64_t p_eps_id;
+
+  bool isDeadline;
   DOODLE_INSRANCE(shot);
   RTTR_ENABLE(coresqldata)
 };

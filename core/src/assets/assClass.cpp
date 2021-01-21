@@ -10,6 +10,8 @@
 #include <stdexcept>
 #include <src/coreOrm/assclass_sqlOrm.h>
 #include <src/coreOrm/znch_sqlOrm.h>
+#include <src/coreOrm/basefile_sqlOrm.h>
+
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
 
@@ -18,14 +20,15 @@
 #include <memory>
 
 //注册sql库使用的外键
-SQLPP_ALIAS_PROVIDER(znID)
 
 DOODLE_NAMESPACE_S
+SQLPP_ALIAS_PROVIDER(znID)
 
 RTTR_REGISTRATION {
   rttr::registration::class_<assClass>(DOCORE_RTTE_CLASS(assClass))
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
+
 DOODLE_INSRANCE_CPP(assClass);
 assClass::assClass()
     : coresqldata(),
@@ -77,17 +80,31 @@ assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
 
   doodle::Znch znNa{};
   doodle::Assclass table{};  //.left_outer_join(znNa)
+  doodle::Basefile base_file{};
   auto db = coreSql::getCoreSql().getConnection();
-  // sqlpp::all_of(table),sqlpp::all_of(znNa)
 
+  auto quert =
+      sqlpp::select(table.id, table.assdepId, table.assName,
+                    znNa.localname, znNa.id.as(znID))
+          .where(table.assdepId == ass_dep_ptr->getIdP())
+          .from(table.left_outer_join(znNa)
+                    .on(table.id == znNa.assClassId))
+          .flags(sqlpp::distinct)
+          .order_by(table.assName.asc());
+
+  /*
+      sqlpp::select(table.id, table.assdepId, table.assName,
+                    znNa.localname, znNa.id.as(znID), base_file.filetime.as(basefile_time))
+          .where(table.assdepId == ass_dep_ptr->getIdP())
+          .from(table.left_outer_join(znNa)
+                    .on(table.id == znNa.assClassId)  //
+                    .left_outer_join(base_file)
+                    .on(table.id == base_file.assClassId))
+          .flags(sqlpp::distinct)
+          .order_by(table.assName.asc());
+  */
   for (auto &&row :
-       db->run(sqlpp::select(table.id, table.assdepId, table.assName,
-                             znNa.localname, znNa.id.as(znID))
-                   .where(table.assdepId == ass_dep_ptr->getIdP())
-                   .from(table.left_outer_join(znNa).on(table.id ==
-                                                        znNa.assClassId))
-                   .flags(sqlpp::distinct)
-                   .order_by(table.assName.asc()))) {
+       db->run(quert)) {
     auto assclass = std::make_shared<assClass>();
 
     assclass->name = row.assName;
@@ -99,6 +116,7 @@ assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
       assclass->p_ptr_znch->idP      = row.znID;
       assclass->p_ptr_znch->nameEN   = row.assName;
     }
+
     list.push_back(assclass);
   }
   return list;

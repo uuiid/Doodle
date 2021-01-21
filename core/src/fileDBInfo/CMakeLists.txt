@@ -4,6 +4,7 @@
         filesqlinfo.h
         pathParsing.h
         CommentInfo.h
+        ModifySQLDate.h
 )
 target_sources(
         core
@@ -11,4 +12,5 @@ target_sources(
         filesqlinfo.cpp
         pathParsing.cpp
         CommentInfo.cpp
+        ModifySQLDate.cpp
 )

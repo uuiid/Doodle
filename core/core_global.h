@@ -101,6 +101,7 @@ class movieEpsArchive;
 class synData;
 class pathParsing;
 
+class ShotModifySQLDate;
 class queueData;
 using queueDataPtr = std::shared_ptr<queueData>;
 //评论类

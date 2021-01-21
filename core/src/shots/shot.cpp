@@ -1,5 +1,6 @@
 ﻿#include "shot.h"
-
+#include <src/Exception/Exception.h>
+#include <src/shots/ShotModifySQLDate.h>
 #include <Logger.h>
 #include <src/core/coresql.h>
 #include <src/shots/episodes.h>
@@ -91,6 +92,7 @@ void shot::deleteSQL() {
 }
 
 shotPtrList shot::getAll(const episodesPtr &EP_) {
+  EP_->p_shot_modify->selectModify();
   shotPtrList list{};
   doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
@@ -104,6 +106,7 @@ shotPtrList shot::getAll(const episodesPtr &EP_) {
     item->p_qint_shot_ = row.shot;
     item->setShotAb(row.shotab);
     item->setEpisodes(EP_);
+    item->isDeadline = EP_->p_shot_modify->inDeadline(item->idP);
     list.push_back(item);
   }
   return list;
@@ -127,8 +130,10 @@ episodesPtr shot::getEpisodes() {
       p_ptr_eps = (*eps_iter)->shared_from_this();
 
     } else {
-      p_ptr_eps = std::make_shared<episodes>();
-      p_ptr_eps->select(p_eps_id);
+      throw nullptr_error(std::string{"shot id :"}
+                              .append(std::to_string(getIdP()))
+                              .append("  ")
+                              .append(getShotAndAb_str()));
     }
 
     setEpisodes(p_ptr_eps);

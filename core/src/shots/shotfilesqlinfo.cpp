@@ -1,5 +1,5 @@
 ﻿#include "shotfilesqlinfo.h"
-
+#include <src/Exception/Exception.h>
 #include <Logger.h>
 #include <src/core/coreset.h>
 #include <src/core/coresql.h>
@@ -394,8 +394,10 @@ episodesPtr shotFileSqlInfo::getEpisdes() {
       p_ptr_eps = (*eps_iter)->shared_from_this();
 
     } else {
-      p_ptr_eps = std::make_shared<episodes>();
-      p_ptr_eps->select(p_eps_id);
+      throw nullptr_error(std::string("shotfileInfo id : ")
+                              .append(std::to_string(getIdP()))
+                              .append("  ")
+                              .append(getUser()));
     }
 
     this->setEpisdes(p_ptr_eps);

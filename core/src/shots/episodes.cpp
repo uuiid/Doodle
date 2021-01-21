@@ -2,6 +2,7 @@
 
 #include <src/core/coreset.h>
 #include <src/core/coresql.h>
+#include <src/shots/ShotModifySQLDate.h>
 
 #include <Logger.h>
 
@@ -25,21 +26,12 @@ episodes::episodes()
     : coresqldata(),
       std::enable_shared_from_this<episodes>(),
       p_int_episodes(-1),
-      p_prj(coreSet::getSet().projectName().first) {
+      p_prj(coreSet::getSet().projectName().first),
+      p_shot_modify() {
+  p_shot_modify = std::make_shared<ShotModifySQLDate>(weak_from_this());
   p_instance.insert(this);
 }
 
-void episodes::select(const qint64 &ID_) {
-  doodle::Episodes table{};
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row : db->run(
-           sqlpp::select(sqlpp::all_of(table))
-               .from(table)
-               .where(table.id == ID_))) {
-    p_int_episodes = row.episodes;
-    idP            = row.id;
-  }
-}
 episodes::~episodes() {
   p_instance.erase(this);
 }
@@ -97,6 +89,7 @@ episodesPtrList episodes::getAll() {
     eps->p_prj          = row.projectId;
     list.push_back(eps);
   }
+
   return list;
 }
 

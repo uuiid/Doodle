@@ -6,6 +6,7 @@
         shotClass.h
         shottype.h
         shotfilesqlinfo.h
+        ShotModifySQLDate.h
 )
 target_sources(
         core
@@ -15,4 +16,5 @@ target_sources(
         shotClass.cpp
         shottype.cpp
         shotfilesqlinfo.cpp
+        ShotModifySQLDate.cpp
 )

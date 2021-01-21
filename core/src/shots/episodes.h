@@ -21,8 +21,6 @@ class CORE_API episodes : public coresqldata,
   explicit episodes();
   ~episodes();
 
-  void select(const qint64 &ID_);
-
   void insert() override;
   void updateSQL() override;
   void deleteSQL() override;
@@ -37,11 +35,14 @@ class CORE_API episodes : public coresqldata,
   static episodesPtr find_by_id(int64_t id_);
   static episodesPtr find_by_eps(int64_t episodes_);
   static const std::unordered_set<episodes *> Instances();
+  //声明友元类
+  friend shot;
 
  private:
   int64_t p_int_episodes;
   int64_t p_prj;
 
+  std::shared_ptr<ShotModifySQLDate> p_shot_modify;
   DOODLE_INSRANCE(episodes);
 };
 

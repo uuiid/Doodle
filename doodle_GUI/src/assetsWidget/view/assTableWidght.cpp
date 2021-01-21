@@ -67,14 +67,9 @@ void assTableWidght::insertAss(const QString &path) {
   static boost::regex reUe4("uproject");
   static boost::regex reImage(R"((jpe?g|png|tga))");
 
-  assInfoPtr data{};
-  connect(model(), &QAbstractItemModel::rowsInserted, this,
-          [&data, this](const QModelIndex &index, int row, int column) {
-            data = model()->data(model()->index(row, 0), Qt::UserRole).value<assFileSqlInfo *>()->shared_from_this();
-          });
-
-  model()->insertRow(0, QModelIndex());
-  disconnect(model(), &QAbstractItemModel::rowsInserted, this, nullptr);
+  //我们直接创建数据，在数据被提交到数据库的时候会发出信号插入到模型中去
+  auto data = std::make_shared<assFileSqlInfo>();
+  data->setAssClass(coreDataManager::get().getAssClassPtr());
 
   //选择提示
   QMessageBox msgBox;
