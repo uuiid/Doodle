@@ -18,8 +18,13 @@ message io_stream{
     in = 0;
     out = 1;
   }
-  uint64 size = 2;
+  length len = 2;
   google.protobuf.Any stream = 3;
+}
+
+message length{
+  uint64 size = 1;
+  uint64 size = 2;
 }
 
 message copy_info{
