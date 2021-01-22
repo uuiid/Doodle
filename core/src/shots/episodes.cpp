@@ -28,7 +28,6 @@ episodes::episodes()
       p_int_episodes(-1),
       p_prj(coreSet::getSet().projectName().first),
       p_shot_modify() {
-  p_shot_modify = std::make_shared<ShotModifySQLDate>(weak_from_this());
   p_instance.insert(this);
 }
 
@@ -88,6 +87,7 @@ episodesPtrList episodes::getAll() {
     eps->idP            = row.id;
     eps->p_prj          = row.projectId;
     list.push_back(eps);
+    eps->p_shot_modify = std::make_shared<ShotModifySQLDate>(eps->weak_from_this());
   }
 
   return list;
@@ -95,6 +95,10 @@ episodesPtrList episodes::getAll() {
 
 void episodes::setEpisdes(const int64_t &value) {
   p_int_episodes = value;
+}
+
+std::shared_ptr<ShotModifySQLDate> episodes::ShotModifySqlDate() const {
+  return p_shot_modify;
 }
 
 episodesPtr episodes::find_by_id(int64_t id_) {

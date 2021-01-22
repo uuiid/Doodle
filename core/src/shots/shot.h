@@ -62,6 +62,8 @@ class CORE_API shot : public coresqldata,
   //获得shot的数值
   int64_t getShot() const { return p_qint_shot_; };
 
+  bool inDeadline() const;
+
   static const std::unordered_set<shot *> Instances();
 
  private:
@@ -71,7 +73,7 @@ class CORE_API shot : public coresqldata,
   episodesPtr p_ptr_eps;
   int64_t p_eps_id;
 
-  bool isDeadline;
+  bool p_inDeadline;
   DOODLE_INSRANCE(shot);
   RTTR_ENABLE(coresqldata)
 };

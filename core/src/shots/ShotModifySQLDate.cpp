@@ -9,6 +9,17 @@
 #include <src/core/coreset.h>
 #include <src/core/coresql.h>
 
+#include <chrono>
+// /*保护data里面的宏__我他妈的*/
+// #ifdef min
+// #undef min
+// #endif
+// #ifdef max
+// #undef max
+// #endif
+// #include <date/date.h>
+// /*保护data里面的宏__我他妈的*/
+
 DOODLE_NAMESPACE_S
 
 ShotModifySQLDate::ShotModifySQLDate(std::weak_ptr<episodes> &eps)
@@ -18,17 +29,24 @@ ShotModifySQLDate::ShotModifySQLDate(std::weak_ptr<episodes> &eps)
 void ShotModifySQLDate::selectModify() {
   if (p_eps.expired()) throw nullptr_error("episodes nullptr");
   auto k_eps = p_eps.lock();
+
+  int64_t id{0};
   if (k_eps->isInsert())
-    auto id = k_eps->getIdP();
+    id = k_eps->getIdP();
   else
     throw insert_error_info("eps not insert");
 
   Basefile tab{};
 
+  auto hours = std::chrono::hours(24 * 3);
+  auto now   = std::chrono::system_clock().now() - hours;
+
   auto db    = coreSql::getCoreSql().getConnection();
   auto query = sqlpp::select(tab.shotsId)
-                   .where(tab.id == id and tab.filetime >= "2021-01-19")
+                   .from(tab)
+                   .where(tab.episodesId == id and tab.filetime >= now)
                    .flags(sqlpp::distinct);
+
   for (auto &&row : db->run(query)) {
     row.shotsId.value();
     if (!row.shotsId.is_null())

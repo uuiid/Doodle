@@ -23,8 +23,8 @@ message io_stream{
 }
 
 message length{
-  uint64 size = 1;
-  uint64 size = 2;
+  uint64 start = 1;
+  uint64 end = 2;
 }
 
 message copy_info{

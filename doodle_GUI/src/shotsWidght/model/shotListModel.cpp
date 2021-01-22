@@ -26,24 +26,28 @@ QVariant shotListModel::data(const QModelIndex &index, int role) const {
   auto var = QVariant();
   if (!index.isValid())
     return var;
-
   if (index.row() >= shotlist.size())
     return var;
 
+  auto k_shot = shotlist[index.row()];
+
   switch (role) {
     case Qt::DisplayRole:
-      var = shotlist[index.row()]->getShotAndAb_strQ();
+      var = k_shot->getShotAndAb_strQ();
       break;
     case Qt::EditRole: {
       auto map         = QMap<QString, QVariant>{{"shot", 1}, {"shotAb", ""}};
-      const auto &shot = shotlist[index.row()];
+      const auto &shot = k_shot;
       map["shot"]      = shot->getShot();
       map["shotAb"]    = DOTOS(shot->getShotAb_str());
       var              = map;
       break;
     }
     case Qt::UserRole:
-      var = QVariant::fromValue(shotlist[index.row()].get());
+      var = QVariant::fromValue(k_shot.get());
+      break;
+    case Qt::BackgroundColorRole:
+      var = k_shot->inDeadline() ? QColor{Qt::darkGreen} : QVariant{};
       break;
     default:
       break;
@@ -76,9 +80,6 @@ Qt::ItemFlags shotListModel::flags(const QModelIndex &index) const {
 bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int role) {
   QMap infoMap = value.toMap();
   if (index.isValid() && role == Qt::EditRole) {
-    //确认镜头不重复和没有提交
-    //这个函数不设置AB镜
-
     auto find_shot = std::find_if(
         shotlist.begin(), shotlist.end(),
         [=](shotPtr &shot_ptr) -> bool {

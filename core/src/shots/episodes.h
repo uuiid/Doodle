@@ -31,12 +31,12 @@ class CORE_API episodes : public coresqldata,
   dstring getEpisdes_str() const;
   QString getEpisdes_QStr() const;
   void setEpisdes(const int64_t &value);
+  std::shared_ptr<ShotModifySQLDate> ShotModifySqlDate() const;
 
   static episodesPtr find_by_id(int64_t id_);
   static episodesPtr find_by_eps(int64_t episodes_);
   static const std::unordered_set<episodes *> Instances();
   //声明友元类
-  friend shot;
 
  private:
   int64_t p_int_episodes;

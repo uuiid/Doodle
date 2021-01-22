@@ -9,7 +9,7 @@ class ModifySQLDate {
   ModifySQLDate();
 
   virtual void selectModify() = 0;
-  virtual bool inDeadline(const int64_t& info_id);
+  virtual bool inDeadline(const int64_t& info_id) const noexcept;
 
  protected:
   std::set<int64_t> p_set_id;

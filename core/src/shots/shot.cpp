@@ -33,7 +33,8 @@ shot::shot()
       p_qint_shot_(-1),
       p_qenm_shotab(e_shotAB::_),
       p_eps_id(-1),
-      p_ptr_eps() {
+      p_ptr_eps(),
+      p_inDeadline(false) {
   p_instance.insert(this);
 }
 
@@ -92,7 +93,7 @@ void shot::deleteSQL() {
 }
 
 shotPtrList shot::getAll(const episodesPtr &EP_) {
-  EP_->p_shot_modify->selectModify();
+  EP_->ShotModifySqlDate()->selectModify();
   shotPtrList list{};
   doodle::Shots table{};
   auto db = coreSql::getCoreSql().getConnection();
@@ -106,7 +107,7 @@ shotPtrList shot::getAll(const episodesPtr &EP_) {
     item->p_qint_shot_ = row.shot;
     item->setShotAb(row.shotab);
     item->setEpisodes(EP_);
-    item->isDeadline = EP_->p_shot_modify->inDeadline(item->idP);
+    item->p_inDeadline = EP_->ShotModifySqlDate()->inDeadline(item->idP);
     list.push_back(item);
   }
   return list;
@@ -186,6 +187,10 @@ dstring shot::getShotAb_str() const {
       break;
   }
   return str;
+}
+
+bool shot::inDeadline() const {
+  return p_inDeadline;
 }
 
 const std::unordered_set<shot *> shot::Instances() {
