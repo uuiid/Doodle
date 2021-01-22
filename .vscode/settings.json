@@ -181,7 +181,7 @@
         "**/.DS_Store": true,
         ".idea": true,
         ".vs": true,
-        "b_Ninja*": true,
+        "b_Ninja*": false,
         "install*": true
     }
 }

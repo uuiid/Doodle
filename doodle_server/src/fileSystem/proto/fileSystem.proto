@@ -1,20 +1,15 @@
 syntax = "proto3";
-// import "google/protobuf/timestamp.proto"
-package doodle.fileSys;
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/Any.proto";
 
+package doodle.filesys;
 //定义服务器
-service filesystem{
-  rpc exist(path) returns (bool){};
-  rpc createFolder(path) returns (bool){};
-  rpc open(path) returns (io_stream){};
-  rpc copy(copy_info) returns (bool){};
-}
 
 message path{
   string path_str = 1;
-  optional bool is_Folder = 2;
-  optional uint64 size = 3;
-  optional timestamp modifyTime =4;  
+  bool is_Folder = 2;
+  uint64 size = 3;
+  google.protobuf.Timestamp modifyTime =4;  
 }
 
 message io_stream{
@@ -23,13 +18,19 @@ message io_stream{
     in = 0;
     out = 1;
   }
-  optional uint64 size = 2;
-  optional Any stream = 3;
+  uint64 size = 2;
+  google.protobuf.Any stream = 3;
 }
 
 message copy_info{
   path soure = 1;
   path trange = 2;
-
+  
 }
 
+service filesystem{
+  rpc exist(path) returns (path){};
+  rpc createFolder(path) returns (path){};
+  rpc open(path) returns (io_stream){};
+  rpc copy(copy_info) returns (path){};
+}
