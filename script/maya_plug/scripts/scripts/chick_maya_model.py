@@ -129,18 +129,22 @@ class geometryInfo:
         self._getUvMap_()
 
     def _getMaterals_(self):
-        # pymel.core.select(self.maya_mesh_obj)
+        pymel.core.select(self.maya_mesh_obj, replace=True)
         # pymel.core.select(self.maya_mesh_obj.outputs())
-        pymel.core.select(clear=True)
-        for s in self.maya_mesh_obj.outputs():
-            if(s.__class__ == pymel.all.ShadingEngine):
-                pymel.core.select(s.surfaceShader.inputs(), add=True)
-            # pymel.all.ShadingEngine
+        # pymel.core.select(clear=True)
+        # for s in self.maya_mesh_obj.outputs():
+        #     if(s.__class__ == pymel.all.ShadingEngine):
+        #         pymel.core.select(s.surfaceShader.inputs(), add=True)
+        # pymel.all.ShadingEngine
         # for s in self.maya_mesh_obj.outputs():
         #     pymel.core.select(s.surfaceShader.inputs(), add=True)
-        # pymel.core.hyperShade(shaderNetworksSelectMaterialNodes=True)
-        shader = pymel.core.ls(sl=True, materials=True)
-        self.materals = [materal(s) for s in shader]
+        pymel.core.hyperShade(shaderNetworksSelectMaterialNodes=True)
+        for shd in pymel.core.selected(materials=True):
+            if [c for c in shd.classification() if 'shader/surface' in c]:
+                self.materals.append(materal(shd))
+
+        if not self.materals:
+            raise AssertionError()
 
     def _getUvMap_(self):
         self.map = uvmap(self.maya_mesh_obj)

@@ -133,7 +133,7 @@ class exportUe:
             #     abcexmashs = "{} -root {}".format(abcexmashs,
             #                                       exmash.fullPathName())
             # -stripNamespaces
-            abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
+            abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
                 .format(f0="{}/{}".format(self.path, self.name).replace("\\", "/"), f1=self.start, f2=self.end, mash=abcexmashs)
             print(abcExportCom)
             pymel.core.mel.eval(abcExportCom)
