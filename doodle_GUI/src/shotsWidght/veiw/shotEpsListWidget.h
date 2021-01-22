@@ -15,6 +15,7 @@
 #include <QStyledItemDelegate>
 #include <QListView>
 
+#include <boost/signals2.hpp>
 DOODLE_NAMESPACE_S
 
 /**
@@ -49,8 +50,8 @@ class shotEpsListWidget : public QListView {
   ~shotEpsListWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
- Q_SIGNALS:
-  void initEmit();
+
+  boost::signals2::signal<void(const episodesPtr &)> chickItem;
 
  private:
   shotEpsListModel *p_episodesListModel;
@@ -59,7 +60,7 @@ class shotEpsListWidget : public QListView {
   QMenu *p_eps_Menu;
  private Q_SLOTS:
   void insertEpisodes();
-  void _doodle_episodes_emit(const QModelIndex &index);
+  void _doodle_clicked_emit(const QModelIndex &index);
 
   void creatEpsMov();
 

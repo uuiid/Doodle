@@ -139,7 +139,7 @@ shotListWidget::shotListWidget(QWidget *parent)
   setStatusTip(tr("镜头栏 右键添加镜头"));
 
   connect(this, &shotListWidget::clicked, this,
-          &shotListWidget::_doodle_shot_emit);
+          &shotListWidget::_doodle_clicked_emit);
 }
 
 shotListWidget::~shotListWidget() = default;
@@ -178,10 +178,10 @@ void shotListWidget::deleteShot() {
   }
 }
 
-void shotListWidget::_doodle_shot_emit(const QModelIndex &index) {
-  coreDataManager::get().setShotPtr(
-      index.data(Qt::UserRole).value<shot *>()->shared_from_this());
-  initEmit();
+void shotListWidget::_doodle_clicked_emit(const QModelIndex &index) {
+  auto info = index.data(Qt::UserRole).value<shot *>();
+  if (info)
+    chickItem(info->shared_from_this());
 }
 
 void shotListWidget::contextMenuEvent(QContextMenuEvent *event) {

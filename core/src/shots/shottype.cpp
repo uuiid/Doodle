@@ -22,7 +22,8 @@ RTTR_REGISTRATION {
 }
 //初始化一些静态属性
 DOODLE_INSRANCE_CPP(shotType);
-boost::signals2::signal<void()> shotType::insertChanged{};
+
+boost::signals2::signal<void(const shotTypePtr &)> shotType::insertChanged{};
 shotType::shotType()
     : coresqldata(),
       std::enable_shared_from_this<shotType>(),
@@ -63,7 +64,7 @@ void shotType::insert() {
     DOODLE_LOG_WARN("无法插入shot type " << p_Str_Type.c_str());
     throw std::runtime_error("not install shot type");
   }
-  insertChanged();
+  insertChanged(shared_from_this());
 }
 
 void shotType::updateSQL() {

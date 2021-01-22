@@ -11,7 +11,7 @@
 DOODLE_NAMESPACE_S
 assTypeModel::assTypeModel(QObject *parent)
     : QAbstractListModel(parent), p_file_type_ptr_list_() {
-  assType::insertChanged.connect(boost::bind(&assTypeModel::reInit, this));
+  // assType::insertChanged.connect(boost::bind(&assTypeModel::reInit, this));
 }
 
 int assTypeModel::rowCount(const QModelIndex &parent) const {
@@ -78,32 +78,7 @@ Qt::ItemFlags assTypeModel::flags(const QModelIndex &index) const {
 //   endRemoveRows();
 //   return false;
 // }
-void assTypeModel::init() {
-  clear();
-  const auto tmp_list = assType::getAll();
-  if (tmp_list.empty()) return;
 
-  beginInsertRows(QModelIndex(), 0,
-                  boost::numeric_cast<int>(tmp_list.size()) - 1);
-  p_file_type_ptr_list_ = tmp_list;
-  endInsertRows();
-}
-void assTypeModel::reInit() {
-  // if (p_file_type_ptr_list_.empty()) return;
-  auto k_instance = assType::Instances();
-  assTypePtrList list;
-  for (auto &&i : k_instance) {
-    if (i)
-      list.push_back(i->shared_from_this());
-  }
-  if (list.empty())
-    return;
-
-  beginInsertRows(QModelIndex(), 0,
-                  boost::numeric_cast<int>(list.size()) - 1);
-  p_file_type_ptr_list_ = list;
-  endInsertRows();
-}
 
 void assTypeModel::setList(const assTypePtrList &setList) {
   clear();

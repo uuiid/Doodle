@@ -61,7 +61,7 @@ shotTypeWidget::shotTypeWidget(QWidget *parent)
   setStatusTip("种类  使用右键添加");
 
   connect(this, &shotTypeWidget::clicked,
-          this, &shotTypeWidget::_doodle_type_emit);
+          this, &shotTypeWidget::_doodle_chicked_emit);
 }
 
 void shotTypeWidget::insertFileType() {
@@ -71,38 +71,23 @@ void shotTypeWidget::insertFileType() {
   setCurrentIndex(p_file_type_shot_model_->index(row));
   edit(p_file_type_shot_model_->index(row));
 }
-void shotTypeWidget::_doodle_type_emit(const QModelIndex &index) {
-  coreDataManager::get().setShotTypePtr(
-      index.data(Qt::UserRole).value<shotType *>()->shared_from_this());
-  doodleUseFilter(filterState::useFilter);
+void shotTypeWidget::_doodle_chicked_emit(const QModelIndex &index) {
+  auto info = index.data(Qt::UserRole).value<shotType *>();
+  if (info)
+    doodleUseFilter(info->shared_from_this(), filterState::useFilter);
 }
 void shotTypeWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
   if (!indexAt(event->pos()).isValid()) {
     clear();
+    doodleUseFilter(nullptr, filterState::notFilter);
   }
 }
-//void shotTypeWidget::contextMenuEvent(QContextMenuEvent * event) {
-//  p_menu_ = new QMenu(this);
-//  if (p_file_class_ptr_){
-//    auto *action = new QAction(this);
-//
-//    connect(action, &QAction::triggered,
-//            this, &shotTypeWidget::insertFileType);
-//    action->setText(tr("添加种类"));
-//    action->setToolTip(tr("添加镜头"));
-//    p_menu_->addAction(action);
-//  }
-//  p_menu_->move(event->globalPos());
-//  p_menu_->show();
-//}
 
 void shotTypeWidget::clear() {
   selectionModel()->clearSelection();
   clearSelection();
   update();
-  coreDataManager::get().setShotTypePtr(nullptr);
-  doodleUseFilter(filterState::notFilter);
 }
 
 shotTypeWidget::~shotTypeWidget() = default;

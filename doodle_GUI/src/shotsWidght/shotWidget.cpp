@@ -71,52 +71,56 @@ shotWidget::shotWidget(QWidget* parent)
   p_shot_class_widget_->setModel(p_shot_class_model_);
   layout_1->addWidget(p_shot_class_widget_);
 
-  connect(p_shot_class_widget_, &shotClassWidget::doodleUseFilter,
-          k_shot_filter_model_, &shotTableFilterModel::useFilter);
-
   //添加种类小部件
   p_shot_type_widget_ = new shotTypeWidget();
   p_shot_type_widget_->setObjectName("p_shot_type_widget_");
   p_shot_type_widget_->setModel(p_shot_type_model_);
   layout_1->addWidget(p_shot_type_widget_);
-  connect(p_shot_type_widget_, &shotTypeWidget::doodleUseFilter,
-          k_shot_filter_model_, &shotTableFilterModel::useFilter);
 
-  connect(p_shot_list_widget_, &shotListWidget::initEmit,
-          this, [=]() {
-            auto& mData = coreDataManager::get();
-            mData.setShotClassPtr(nullptr);
-            mData.setShotTypePtr(nullptr);
-            mData.setShotInfoPtr(nullptr);
+  // 连接两个过滤器
+  p_shot_class_widget_->doodleUseFilter
+      .connect([=](const doodle::shotClassPtr& shot_class, const doodle::filterState& fiter) {
+        coreDataManager::get().setShotClassPtr(shot_class);
+        k_shot_filter_model_->useFilter(fiter);
+      });
+  p_shot_type_widget_->doodleUseFilter
+      .connect([=](const doodle::shotTypePtr& shot_type, const doodle::filterState& fiter) {
+        coreDataManager::get().setShotTypePtr(shot_type);
+        k_shot_filter_model_->useFilter(fiter);
+      });
 
-            k_shot_filter_model_->useFilter(filterState::notFilter);
+  //连接镜头点击
+  p_episodes_list_widget_->chickItem.connect(
+      [=](const episodesPtr& eps) {
+        auto& mData = coreDataManager::get();
+        mData.setEpisodesPtr(eps);
+        mData.setShotPtr(nullptr);
+        mData.setShotClassPtr(nullptr);
+        mData.setShotTypePtr(nullptr);
+        mData.setShotInfoPtr(nullptr);
 
-            p_shot_type_widget_->clear();
-            p_shot_class_widget_->clear();
+        p_shot_type_widget_->clear();
+        p_shot_class_widget_->clear();
 
-            p_shot_class_model_->reInit();
-            p_shot_type_model_->reInit();
-            p_shot_table_model_->init();
-          });
+        k_shot_filter_model_->useFilter(filterState::notFilter);
+        p_shot_list_model_->setList(shot::getAll(eps));
+        p_shot_table_model_->setList(shotFileSqlInfo::getAll(eps));
+      });
+  p_shot_list_widget_->chickItem.connect(
+      [=](const shotPtr& sh_) {
+        auto& mData = coreDataManager::get();
+        mData.setShotPtr(sh_);
+        mData.setShotClassPtr(nullptr);
+        mData.setShotTypePtr(nullptr);
+        mData.setShotInfoPtr(nullptr);
 
-  connect(p_episodes_list_widget_, &shotEpsListWidget::initEmit,
-          this, [=]() {
-            auto& mData = coreDataManager::get();
-            mData.setShotPtr(nullptr);
-            mData.setShotClassPtr(nullptr);
-            mData.setShotTypePtr(nullptr);
-            mData.setShotInfoPtr(nullptr);
+        p_shot_type_widget_->clear();
+        p_shot_class_widget_->clear();
 
-            //连接集数和镜头的更新
-            p_shot_type_widget_->clear();
-            p_shot_class_widget_->clear();
+        k_shot_filter_model_->useFilter(filterState::notFilter);
 
-            p_shot_class_model_->reInit();
-            p_shot_type_model_->reInit();
-
-            p_shot_list_model_->init();
-            p_shot_table_model_->init();
-          });
+        p_shot_table_model_->setList(shotFileSqlInfo::getAll(sh_));
+      });
 
   //将小部件添加到布局中
   p_shot_layout_->addWidget(p_episodes_list_widget_, 2);
@@ -134,9 +138,9 @@ void shotWidget::refresh() {
   mData.setShotTypePtr(nullptr);
   mData.setShotInfoPtr(nullptr);
 
-  p_episodes_list_model_->init();
-  p_shot_class_model_->init();
-  p_shot_type_model_->init();
+  p_episodes_list_model_->setList(episodes::getAll());
+  p_shot_class_model_->setList(shotClass::getAll());
+  p_shot_type_model_->setList(shotType::getAll());
 
   p_shot_list_model_->clear();
   p_shot_table_model_->clear();
@@ -147,8 +151,6 @@ void shotWidget::refresh() {
     auto k_shotClass = std::make_shared<shotClass>();
     k_shotClass->setclass(coreSet::getSet().getDepartmentQ());
     k_shotClass->insert();
-    p_shot_class_model_->init();
-    p_shot_type_model_->init();
     std::cerr << e.what() << '\n';
   }
 }

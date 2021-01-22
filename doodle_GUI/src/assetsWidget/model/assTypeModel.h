@@ -27,9 +27,6 @@ class assTypeModel : public QAbstractListModel {
   // //删除数据
   // bool removeRows(int position, int rows, const QModelIndex &index) override;
 
-  void init();
-  void reInit();
-
   void setList(const assTypePtrList &setList);
 
  private:

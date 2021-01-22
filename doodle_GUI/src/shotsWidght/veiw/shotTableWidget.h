@@ -19,6 +19,8 @@
 #include <QTableView>
 #include <src/fileArchive/movieArchive.h>
 
+#include <boost/signals2.hpp>
+
 class QProgressDialog;
 DOODLE_NAMESPACE_S
 
@@ -29,8 +31,8 @@ class shotTableWidget : public QTableView {
 
   void setModel(QAbstractItemModel *model) override;
 
- Q_SIGNALS:
-  void useFilter(const filterState &state);
+  boost::signals2::signal<void(const shotTypePtr &, const filterState &)> doodleUseFilter;
+  boost::signals2::signal<void(const shotInfoPtr &)> chickItem;
 
  private Q_SLOTS:
 
@@ -38,8 +40,8 @@ class shotTableWidget : public QTableView {
   void getSelectDir();
   void exportFbx();
 
-  void doClickedSlots(const QModelIndex &index);
-  void doDubledSlots(const QModelIndex &index);
+  void doodle_clicked_emit_(const QModelIndex &index);
+  void doodle_double_emit_(const QModelIndex &index);
 
   static void submitMayaFile(shotInfoPtr &info_ptr,
                              const QString &path);

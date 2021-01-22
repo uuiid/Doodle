@@ -39,12 +39,10 @@ class shotListModel : public QAbstractListModel {
   //删除数据
   bool removeRows(int position, int rows, const QModelIndex &index) override;
 
- public Q_SLOTS:
-  //自定义创建函数
-  void init();
+  void setList(const shotPtrList &list);
   void clear();
 
  private:
-   shotPtrList shotlist;
+  shotPtrList p_shot_ptr_list;
 };
 DOODLE_NAMESPACE_E

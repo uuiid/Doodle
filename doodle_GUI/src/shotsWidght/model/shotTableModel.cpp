@@ -17,14 +17,16 @@ shotTableModel::shotTableModel(QObject *parent)
       mayaRex(std::make_unique<boost::regex>(R"(ma|ab)")),
       show_mayaex(std::make_unique<boost::regex>(R"(Anm|Animation|export)")),
       show_FBRex(std::make_unique<boost::regex>(R"(FB_|flipbook)")) {
-  shotFileSqlInfo::insertChanged.connect(5, [this]() { this->init(); });
-  shotFileSqlInfo::updateChanged.connect(5, [this]() { this->reInit(); });
+  // shotFileSqlInfo::insertChanged.connect(5, [this]() { this->init(); });
+  // shotFileSqlInfo::updateChanged.connect(5, [this]() { this->reInit(); });
 }
 
 int shotTableModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_shot_info_ptr_list_.size());
 }
+
 int shotTableModel::columnCount(const QModelIndex &parent) const { return 5; }
+
 QVariant shotTableModel::data(const QModelIndex &index, int role) const {
   auto var = QVariant();
   if (!index.isValid()) return var;
@@ -112,8 +114,8 @@ QVariant shotTableModel::data(const QModelIndex &index, int role) const {
   }
   return var;
 }
-QVariant shotTableModel::headerData(int section, Qt::Orientation orientation,
-                                    int role) const {
+
+QVariant shotTableModel::headerData(int section, Qt::Orientation orientation, int role) const {
   QString str;
   if (orientation == Qt::Horizontal) {
     switch (section) {
@@ -141,8 +143,7 @@ QVariant shotTableModel::headerData(int section, Qt::Orientation orientation,
   return str;
 }
 
-bool shotTableModel::setData(const QModelIndex &index, const QVariant &value,
-                             int role) {
+bool shotTableModel::setData(const QModelIndex &index, const QVariant &value, int role) {
   if (!index.isValid()) return false;
   if (index.row() >= p_shot_info_ptr_list_.size()) return false;
 
@@ -199,32 +200,7 @@ bool shotTableModel::removeRows(int position, int rows, const QModelIndex &paren
   endRemoveRows();
   return true;
 }
-void shotTableModel::init() {
-  clear();
-  auto shot = coreDataManager::get().getShotPtr();
-  if (shot) {
-    setList(shotFileSqlInfo::getAll(shot));
-  } else {
-    auto eps = coreDataManager::get().getEpisodesPtr();
-    setList(shotFileSqlInfo::getAll(eps));
-  }
-}
 
-void shotTableModel::reInit() {
-  //这里要清除一部分选择控制
-  auto &manager = coreDataManager::get();
-  manager.setShotInfoPtr(nullptr);
-
-  auto shot = manager.getShotPtr();
-  // cleasasssr();
-  shotInfoPtrList k_list;
-  for (auto &&x : shotFileSqlInfo::Instances()) {
-    if (x->getShot() == shot) {
-      k_list.push_back(x->shared_from_this());
-    }
-  }
-  setList(k_list);
-}
 void shotTableModel::clear() {
   if (p_shot_info_ptr_list_.empty()) return;
   beginResetModel();
@@ -239,6 +215,29 @@ void shotTableModel::setList(const shotInfoPtrList &list) {
   beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list.size()) - 1);
   p_shot_info_ptr_list_ = list;
   endInsertRows();
+}
+
+void shotTableModel::doodle_dataChande(const shotInfoPtr &item) {
+  auto it = std::find_if(
+      p_shot_info_ptr_list_.begin(), p_shot_info_ptr_list_.end(),
+      [=](shotInfoPtr &i) -> bool {
+        return i == item;
+      });
+  if (it != p_shot_info_ptr_list_.end()) {
+    auto k_index = std::distance(p_shot_info_ptr_list_.begin(), it);
+
+    dataChanged(index(k_index, 0), index(k_index, 4));
+  }
+}
+
+void shotTableModel::doodle_dataInsert(const shotInfoPtr &item) {
+  auto k_size = boost::numeric_cast<int>(p_shot_info_ptr_list_.size());
+
+  if (item->getShot() == coreDataManager::get().getShotPtr()) {
+    beginInsertRows(QModelIndex(), k_size, k_size);
+    p_shot_info_ptr_list_.push_back(item);
+    endInsertRows();
+  }
 }
 
 DOODLE_NAMESPACE_E

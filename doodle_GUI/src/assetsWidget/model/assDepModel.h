@@ -19,7 +19,7 @@ class assDepModel : public QAbstractListModel {
   [[nodiscard]] int rowCount(const QModelIndex &parent) const override;
   [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override;
 
-  void init();
+
   void clear();
   void setList(const assDepPtrList &setList);
 

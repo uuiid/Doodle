@@ -13,25 +13,28 @@
 DOODLE_NAMESPACE_S
 shotClassModel::shotClassModel(QObject *parent)
     : QAbstractListModel(parent),
-      list_fileClass() {
-  shotClass::insertChanged.connect(boost::bind(&shotClassModel::reInit, this));
+      p_shot_class_list_() {
+  shotClass::insertChanged.connect(
+      [this](const shotClassPtr &item) {
+        doodle_dataInsert(item);
+      });
 }
 
 int shotClassModel::rowCount(const QModelIndex &parent) const {
-  return boost::numeric_cast<int>(list_fileClass.size());
+  return boost::numeric_cast<int>(p_shot_class_list_.size());
 }
 
 QVariant shotClassModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid()) return QVariant();
-  if (index.row() >= list_fileClass.size()) return QVariant();
+  if (index.row() >= p_shot_class_list_.size()) return QVariant();
   auto var = QVariant();
   switch (role) {
     case Qt::DisplayRole:
     case Qt::EditRole:
-      var = list_fileClass[index.row()]->getClass_Qstr();
+      var = p_shot_class_list_[index.row()]->getClass_Qstr();
       break;
     case Qt::UserRole:
-      var = QVariant::fromValue(list_fileClass[index.row()].get());
+      var = QVariant::fromValue(p_shot_class_list_[index.row()].get());
       break;
     default:
       break;
@@ -41,8 +44,8 @@ QVariant shotClassModel::data(const QModelIndex &index, int role) const {
 
 shotClassPtr shotClassModel::dataRow(const QModelIndex &index) const {
   if (!index.isValid()) return nullptr;
-  if (index.row() >= list_fileClass.size()) return nullptr;
-  return list_fileClass[index.row()];
+  if (index.row() >= p_shot_class_list_.size()) return nullptr;
+  return p_shot_class_list_[index.row()];
 }
 
 QVariant shotClassModel::headerData(int section, Qt::Orientation orientation,
@@ -58,7 +61,7 @@ QVariant shotClassModel::headerData(int section, Qt::Orientation orientation,
 Qt::ItemFlags shotClassModel::flags(const QModelIndex &index) const {
   if (!index.isValid()) return Qt::ItemIsEnabled;
 
-  if (list_fileClass[index.row()]->isInsert())
+  if (p_shot_class_list_[index.row()]->isInsert())
     return QAbstractListModel::flags(index);
   else
     return Qt::ItemIsEnabled | QAbstractListModel::flags(index);
@@ -69,7 +72,7 @@ bool shotClassModel::setData(const QModelIndex &index, const QVariant &value,
   if (index.isValid() && role == Qt::EditRole) {
     //确认没有重复的fileclass
     bool isHas = false;
-    for (auto &&i : list_fileClass) {
+    for (auto &&i : p_shot_class_list_) {
       if (value.toString() == i->getClass_Qstr() || i->isInsert()) {
         isHas = true;
         break;
@@ -80,7 +83,7 @@ bool shotClassModel::setData(const QModelIndex &index, const QVariant &value,
       return false;
     else {
       DOODLE_LOG_INFO("注意将fileclass提交到数据库");
-      list_fileClass[index.row()]->setclass(value.toString());
+      p_shot_class_list_[index.row()]->setclass(value.toString());
       dataChanged(index, index, {role});
       return true;
     }
@@ -92,7 +95,7 @@ bool shotClassModel::insertRows(int position, int rows,
                                 const QModelIndex &index) {
   bool isHas = false;
   auto dep   = coreSet::getSet().getDepartment();
-  for (auto &&i : list_fileClass) {
+  for (auto &&i : p_shot_class_list_) {
     if (dep == i->getClass_str()) {
       isHas = true;
       break;
@@ -102,9 +105,9 @@ bool shotClassModel::insertRows(int position, int rows,
   if (!isHas) {
     for (int row = 0; row < rows; ++row) {
       DOODLE_LOG_INFO("插入新的fileclass镜头");
-      list_fileClass.insert(list_fileClass.begin() + position,
-                            std::make_shared<shotClass>());
-      list_fileClass[position]->setclass(dep);
+      p_shot_class_list_.insert(p_shot_class_list_.begin() + position,
+                                std::make_shared<shotClass>());
+      p_shot_class_list_[position]->setclass(dep);
     }
   }
   endInsertRows();
@@ -117,42 +120,33 @@ bool shotClassModel::removeRows(int position, int rows,
 
   for (int row = 0; row < rows; ++row) {
     DOODLE_LOG_INFO("去除队列中的fileclass镜头");
-    list_fileClass.erase(list_fileClass.begin() + position);
+    p_shot_class_list_.erase(p_shot_class_list_.begin() + position);
   }
 
   endRemoveRows();
   return true;
 }
 
-void shotClassModel::init() {
-  auto fileClassPtrList = shotClass::getAll();
-  clear();
-  if (fileClassPtrList.empty()) return;
-  beginInsertRows(QModelIndex(), 0,
-                  boost::numeric_cast<int>(fileClassPtrList.size()) - 1);
-  list_fileClass = fileClassPtrList;
-  endInsertRows();
-}
-
 void shotClassModel::clear() {
-  if (list_fileClass.empty()) return;
+  if (p_shot_class_list_.empty()) return;
   beginResetModel();
-  list_fileClass.clear();
+  p_shot_class_list_.clear();
   endResetModel();
 }
-void shotClassModel::reInit() {
-  // if (list_fileClass.empty()) return;
 
-  auto shotClass = shotClass::Instances();
-  shotClassPtrList shotClassPtrList{};
-  for (auto &shot : shotClass) {
-    if (shot)
-      shotClassPtrList.push_back(shot->shared_from_this());
-  }
-  if (shotClassPtrList.empty()) return;
+void shotClassModel::setList(const shotClassPtrList &list) {
+  clear();
+  if (list.empty()) return;
 
-  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(shotClassPtrList.size()) - 1);
-  list_fileClass = shotClassPtrList;
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list.size()) - 1);
+  p_shot_class_list_ = list;
+  endInsertRows(); 
+}
+
+void shotClassModel::doodle_dataInsert(const shotClassPtr &item) {
+  auto k_size = boost::numeric_cast<int>(p_shot_class_list_.size());
+  beginInsertRows(QModelIndex(), k_size, k_size);
+  p_shot_class_list_.push_back(item);
   endInsertRows();
 }
 DOODLE_NAMESPACE_E

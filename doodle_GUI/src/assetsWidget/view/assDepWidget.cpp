@@ -10,7 +10,7 @@ DOODLE_NAMESPACE_S
 assDepWidget::assDepWidget(QWidget *parent)
     : QListView(parent), p_file_class_ass_model_(nullptr) {
   setFlow(QListView::LeftToRight);
-  connect(this, &assDepWidget::clicked, this, &assDepWidget::_doodle_emit);
+  connect(this, &assDepWidget::clicked, this, &assDepWidget::_doodle_chicked_emit);
 }
 void assDepWidget::setModel(QAbstractItemModel *model) {
   auto model_ = dynamic_cast<assDepModel *>(model);
@@ -18,7 +18,7 @@ void assDepWidget::setModel(QAbstractItemModel *model) {
   QAbstractItemView::setModel(model);
 }
 
-void assDepWidget::_doodle_emit(const QModelIndex &index) {
+void assDepWidget::_doodle_chicked_emit(const QModelIndex &index) {
   auto assdep = p_file_class_ass_model_->data(index, Qt::UserRole)
                     .value<assdepartment *>();
 

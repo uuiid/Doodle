@@ -84,7 +84,7 @@ shotEpsListWidget::shotEpsListWidget(QWidget *parent)
   setStatusTip(tr("集数栏 注意不要添加错误的集数"));
 
   connect(this, &shotEpsListWidget::clicked,
-          this, &shotEpsListWidget::_doodle_episodes_emit);
+          this, &shotEpsListWidget::_doodle_clicked_emit);
 }
 
 shotEpsListWidget::~shotEpsListWidget() = default;
@@ -119,7 +119,10 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
     auto createMove = new QAction();
     createMove->setText(tr("制作整集拍屏"));
     connect(createMove, &QAction::triggered,
-            this, &shotEpsListWidget::creatEpsMov);
+            this, [this, eps_ptr]() {
+              chickItem(eps_ptr->shared_from_this());
+              this->creatEpsMov();
+            });
     p_eps_Menu->addAction(createMove);
 
     auto syneps = new QAction();
@@ -151,11 +154,10 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
   p_eps_Menu->show();
 }
 
-void shotEpsListWidget::_doodle_episodes_emit(const QModelIndex &index) {
-  coreDataManager::get().setEpisodesPtr(index.data(Qt::UserRole)
-                                            .value<episodes *>()
-                                            ->shared_from_this());
-  initEmit();
+void shotEpsListWidget::_doodle_clicked_emit(const QModelIndex &index) {
+  auto info = index.data(Qt::UserRole).value<episodes *>();
+  if (info)
+    chickItem(info->shared_from_this());
 }
 void shotEpsListWidget::setModel(QAbstractItemModel *model) {
   auto p_model = dynamic_cast<shotEpsListModel *>(model);
@@ -165,7 +167,6 @@ void shotEpsListWidget::setModel(QAbstractItemModel *model) {
 void shotEpsListWidget::creatEpsMov() {
   auto p_instance = shot::Instances();
   if (!p_instance.empty()) {
-    initEmit();
     auto shotInfo = std::make_shared<shotFileSqlInfo>();
 
     const auto &kEps = selectionModel()->currentIndex().data(Qt::UserRole).value<episodes *>();

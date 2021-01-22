@@ -17,12 +17,10 @@ class assDepWidget : public QListView {
   void setModel(QAbstractItemModel *model) override;
   boost::signals2::signal<void(const assDepPtr &)> chickItem;
 
-
-
  private:
   assDepModel *p_file_class_ass_model_;
 
  private Q_SLOTS:
-  void _doodle_emit(const QModelIndex &index);
+  void _doodle_chicked_emit(const QModelIndex &index);
 };
 DOODLE_NAMESPACE_E

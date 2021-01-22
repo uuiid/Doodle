@@ -29,9 +29,9 @@ shotTableWidget::shotTableWidget(QWidget *parent)
   setAcceptDrops(true);
 
   connect(this, &shotTableWidget::clicked, this,
-          &shotTableWidget::doClickedSlots);
+          &shotTableWidget::doodle_clicked_emit_);
   connect(this, &shotTableWidget::doubleClicked, this,
-          &shotTableWidget::doDubledSlots);
+          &shotTableWidget::doodle_double_emit_);
 }
 void shotTableWidget::init() {
   horizontalHeader()->setVisible(true);
@@ -58,7 +58,7 @@ void shotTableWidget::contextMenuEvent(QContextMenuEvent *event) {
 
     auto k_show_all = new QAction();
     connect(k_show_all, &QAction::triggered, this,
-            [=]() { this->useFilter(filterState::showAll); });
+            [=]() { this->doodleUseFilter(nullptr, filterState::showAll); });
     k_show_all->setText("显示所有");
     p_menu_->addAction(k_show_all);
 
@@ -251,12 +251,13 @@ void shotTableWidget::exportFbx() {
   // model()->init();
 }
 
-void shotTableWidget::doClickedSlots(const QModelIndex &index) {
+void shotTableWidget::doodle_clicked_emit_(const QModelIndex &index) {
   auto info = index.data(Qt::UserRole).value<shotFileSqlInfo *>();
-  if (info) coreDataManager::get().setShotInfoPtr(info->shared_from_this());
+  if (info)
+    chickItem(info->shared_from_this());
 }
 
-void shotTableWidget::doDubledSlots(const QModelIndex &index) {
+void shotTableWidget::doodle_double_emit_(const QModelIndex &index) {
   auto info = index.data(Qt::UserRole).value<shotFileSqlInfo *>();
   if (info) {
     if (index.column() != 1) {

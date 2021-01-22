@@ -18,12 +18,11 @@ class shotClassModel : public QAbstractListModel {
  public:
   explicit shotClassModel(QObject *parent = nullptr);
 
-
   //返回总行数
   int rowCount(const QModelIndex &parent) const override;
   //返回数据
   QVariant data(const QModelIndex &index, int role) const override;
-  [[nodiscard]]  shotClassPtr dataRow(const QModelIndex &index) const;
+  [[nodiscard]] shotClassPtr dataRow(const QModelIndex &index) const;
   //返回标题
   QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
@@ -36,12 +35,14 @@ class shotClassModel : public QAbstractListModel {
   bool insertRows(int position, int rows, const QModelIndex &index) override;
   bool removeRows(int position, int rows, const QModelIndex &index) override;
 
- public Q_SLOTS:
-  void init();
-  void reInit();
   void clear();
+  void setList(const shotClassPtrList &list);
+
 
  private:
-   shotClassPtrList list_fileClass;
+  void doodle_dataInsert(const shotClassPtr &item);
+
+ private:
+  shotClassPtrList p_shot_class_list_;
 };
 DOODLE_NAMESPACE_E

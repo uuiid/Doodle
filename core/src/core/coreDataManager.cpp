@@ -17,6 +17,11 @@ coreDataManager &coreDataManager::get() {
   static coreDataManager install;
   return install;
 }
+
+const coreDataManager& coreDataManager::getConst() 
+{
+  return get();
+}
 coreDataManager::coreDataManager()
     : p_shot_(),
       p_assType_(),

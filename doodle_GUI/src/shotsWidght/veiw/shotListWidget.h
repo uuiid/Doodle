@@ -14,7 +14,7 @@
 
 #include <QStyledItemDelegate>
 #include <QListView>
-
+#include <boost/signals2.hpp>
 DOODLE_NAMESPACE_S
 
 /**
@@ -73,8 +73,8 @@ class shotListWidget : public QListView {
   ~shotListWidget() override;
 
   void setModel(QAbstractItemModel *model) override;
- Q_SIGNALS:
-  void initEmit();
+
+  boost::signals2::signal<void(const shotPtr &)> chickItem;
 
  private:
   //私有变量
@@ -97,7 +97,7 @@ class shotListWidget : public QListView {
   //同步镜头
   void synShot();
   //私有的镜头点击发射事件
-  void _doodle_shot_emit(const QModelIndex &index);
+  void _doodle_clicked_emit(const QModelIndex &index);
 
  protected:
   void contextMenuEvent(QContextMenuEvent *event) override;

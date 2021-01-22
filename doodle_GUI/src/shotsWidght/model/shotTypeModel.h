@@ -35,10 +35,12 @@ class shotTypeModel : public QAbstractListModel {
   //删除数据
   bool removeRows(int position, int rows, const QModelIndex &index) override;
 
- public Q_SLOTS:
-  void init();
-  void reInit();
+  void setList(const shotTypePtrList &List);
+
   void clear();
+
+ private:
+  void doodle_dataInsert(const shotTypePtr &item);
 
  private:
   shotTypePtrList p_type_ptr_list_;

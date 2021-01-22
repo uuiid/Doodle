@@ -9,7 +9,7 @@
 #include "Logger.h"
 #include "src/shotsWidght/model/shotClassModel.h"
 #include "shotClassWidget.h"
-#include < core_Cpp.h>
+#include <core_Cpp.h>
 
 #include <QMenu>
 #include <QContextMenuEvent>
@@ -24,7 +24,7 @@ shotClassWidget::shotClassWidget(QWidget *parent)
   setStatusTip(tr("使用右键直接添加部门类型"));
 
   connect(this, &shotClassWidget::clicked,
-          this, &shotClassWidget::_doodle_fileclass_emit);
+          this, &shotClassWidget::_doodle_chicked_emit);
 }
 
 void shotClassWidget::insertFileClass() {
@@ -35,16 +35,17 @@ void shotClassWidget::insertFileClass() {
   edit(p_model_->index(kRow));
 }
 
-void shotClassWidget::_doodle_fileclass_emit(const QModelIndex &index) {
-  coreDataManager::get().setShotClassPtr(
-      index.data(Qt::UserRole).value<shotClass *>()->shared_from_this());
-  doodleUseFilter(filterState::useFilter);
+void shotClassWidget::_doodle_chicked_emit(const QModelIndex &index) {
+  auto info = index.data(Qt::UserRole).value<shotClass *>();
+  if (info)
+    doodleUseFilter(info->shared_from_this(), filterState::useFilter);
 }
 
 void shotClassWidget::mousePressEvent(QMouseEvent *event) {
   QListView::mousePressEvent(event);
   if (!indexAt(event->pos()).isValid()) {
     clear();
+    doodleUseFilter(nullptr, filterState::notFilter);
   }
 }
 
@@ -69,8 +70,6 @@ void shotClassWidget::clear() {
   selectionModel()->clearSelection();
   clearSelection();
   update();
-  coreDataManager::get().setShotClassPtr(nullptr);
-  doodleUseFilter(filterState::notFilter);
 }
 
 DOODLE_NAMESPACE_E

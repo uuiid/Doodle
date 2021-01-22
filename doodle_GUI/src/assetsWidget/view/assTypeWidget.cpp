@@ -60,7 +60,7 @@ assTypeWidget::assTypeWidget(QWidget *parent)
       p_model_(nullptr) {
   setItemDelegate(new fileTypeAssDelegate(this));
   connect(this, &assTypeWidget::clicked,
-          this, &assTypeWidget::_doodle_type_emit);
+          this, &assTypeWidget::_doodle_clicked_emit);
 }
 void assTypeWidget::setModel(QAbstractItemModel *model) {
   auto k_model = dynamic_cast<assTypeModel *>(model);
@@ -75,10 +75,9 @@ void assTypeWidget::inserttype() {
   setCurrentIndex(p_model_->index(raw));
   edit(p_model_->index(raw));
 }
-void assTypeWidget::_doodle_type_emit(const QModelIndex &index) {
+void assTypeWidget::_doodle_clicked_emit(const QModelIndex &index) {
   auto k_asstype = index.data(Qt::UserRole).value<assType *>();
   if (k_asstype) {
-    coreDataManager::get().setAssTypePtr(k_asstype->shared_from_this());
     chickItem(k_asstype->shared_from_this(), filterState::useFilter);
   }
 }
@@ -89,7 +88,6 @@ void assTypeWidget::mousePressEvent(QMouseEvent *event) {
     clearSelection();
     update();
     // p_model_->reInit();
-    coreDataManager::get().setAssTypePtr(nullptr);
     chickItem(nullptr, filterState::useFilter);
   }
 }

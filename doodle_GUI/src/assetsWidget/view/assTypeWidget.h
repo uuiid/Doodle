@@ -46,7 +46,7 @@ class assTypeWidget : public QListView {
 
  private Q_SLOTS:
   void inserttype();
-  void _doodle_type_emit(const QModelIndex &index);
+  void _doodle_clicked_emit(const QModelIndex &index);
 
  protected:
   void mousePressEvent(QMouseEvent *event) override;

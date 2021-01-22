@@ -53,7 +53,7 @@ assClassWidget::assClassWidget(QWidget* parent)
     : QListView(parent), p_menu_(nullptr) {
   setStatusTip("右键添加文件");
   connect(this, &assClassWidget::clicked, this,
-          &assClassWidget::_doodle_ass_emit);
+          &assClassWidget::doodle_clicked_emit);
 
   setEditTriggers(QAbstractItemView::NoEditTriggers);
   setItemDelegate(new assClassDelegate(this));
@@ -83,10 +83,10 @@ void assClassWidget::deleteSQLFile() {
   model()->removeRow(selectionModel()->currentIndex().row());
 }
 
-void assClassWidget::_doodle_ass_emit(const QModelIndex& index) {
+void assClassWidget::doodle_clicked_emit(const QModelIndex& index) {
   auto k_assClass = model()->data(index, Qt::UserRole).value<assClass*>();
-  coreDataManager::get().setAssClassPtr(k_assClass->shared_from_this());
-  chickItem(k_assClass->shared_from_this());
+  if (k_assClass)
+    chickItem(k_assClass->shared_from_this());
 }
 void assClassWidget::contextMenuEvent(QContextMenuEvent* event) {
   if (p_menu_) {

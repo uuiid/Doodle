@@ -10,7 +10,10 @@
 #include <boost/numeric/conversion/cast.hpp>
 DOODLE_NAMESPACE_S
 shotTypeModel::shotTypeModel(QObject *parent) : QAbstractListModel(parent) {
-  shotType::insertChanged.connect(boost::bind(&shotTypeModel::reInit, this));
+  shotType::insertChanged.connect(
+      [this](const shotTypePtr &item) {
+        doodle_dataInsert(item);
+      });
 }
 
 int shotTypeModel::rowCount(const QModelIndex &parent) const {
@@ -88,30 +91,26 @@ bool shotTypeModel::removeRows(int position, int rows, const QModelIndex &index)
   endRemoveRows();
   return true;
 }
-void shotTypeModel::init() {
+
+void shotTypeModel::setList(const shotTypePtrList &List) {
   clear();
-  auto tmp_fileTypeList = shotType::getAll();
-  if (tmp_fileTypeList.empty()) return;
-  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()) - 1);
-  p_type_ptr_list_ = tmp_fileTypeList;
+  if (List.empty()) return;
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(List.size()) - 1);
+  p_type_ptr_list_ = List;
   endInsertRows();
 }
+
+void shotTypeModel::doodle_dataInsert(const shotTypePtr &item) {
+  auto k_size = boost::numeric_cast<int>(p_type_ptr_list_.size());
+  beginInsertRows(QModelIndex(), k_size, k_size);
+  p_type_ptr_list_.push_back(item);
+  endInsertRows();
+}
+
 void shotTypeModel::clear() {
   beginResetModel();
   p_type_ptr_list_.clear();
   endResetModel();
-}
-void shotTypeModel::reInit() {
-  shotTypePtrList tmp_fileTypeList{};
-  for (auto &tmp : shotType::Instances()) {
-    if (tmp)
-      tmp_fileTypeList.push_back(tmp->shared_from_this());
-  }
-
-  if (tmp_fileTypeList.empty()) return;
-  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_fileTypeList.size()) - 1);
-  p_type_ptr_list_ = tmp_fileTypeList;
-  endInsertRows();
 }
 
 DOODLE_NAMESPACE_E

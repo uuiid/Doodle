@@ -13,23 +13,23 @@ DOODLE_NAMESPACE_S
 
 shotListModel::shotListModel(QObject *parent)
     : QAbstractListModel(parent),
-      shotlist() {
+      p_shot_ptr_list() {
 }
 
 shotListModel::~shotListModel() = default;
 
 int shotListModel::rowCount(const QModelIndex &parent) const {
-  return boost::numeric_cast<int>(shotlist.size());
+  return boost::numeric_cast<int>(p_shot_ptr_list.size());
 }
 
 QVariant shotListModel::data(const QModelIndex &index, int role) const {
   auto var = QVariant();
   if (!index.isValid())
     return var;
-  if (index.row() >= shotlist.size())
+  if (index.row() >= p_shot_ptr_list.size())
     return var;
 
-  auto k_shot = shotlist[index.row()];
+  auto k_shot = p_shot_ptr_list[index.row()];
 
   switch (role) {
     case Qt::DisplayRole:
@@ -81,16 +81,16 @@ bool shotListModel::setData(const QModelIndex &index, const QVariant &value, int
   QMap infoMap = value.toMap();
   if (index.isValid() && role == Qt::EditRole) {
     auto find_shot = std::find_if(
-        shotlist.begin(), shotlist.end(),
+        p_shot_ptr_list.begin(), p_shot_ptr_list.end(),
         [=](shotPtr &shot_ptr) -> bool {
           return infoMap["shot"].toInt() == shot_ptr->getShot() &&
                  infoMap["shotAb"].toString() == shot_ptr->getShotAb_strQ() &&
                  shot_ptr->isInsert();
         });
 
-    if (find_shot == shotlist.end()) {
-      shotlist[index.row()]->setShot(infoMap["shot"].toInt(), infoMap["shotAb"].toString());
-      shotlist[index.row()]->updateSQL();
+    if (find_shot == p_shot_ptr_list.end()) {
+      p_shot_ptr_list[index.row()]->setShot(infoMap["shot"].toInt(), infoMap["shotAb"].toString());
+      p_shot_ptr_list[index.row()]->updateSQL();
       dataChanged(index, index, {role});
       return true;
     }
@@ -107,7 +107,7 @@ bool shotListModel::insertRows(int position, int rows, const QModelIndex &index)
     auto k_shot = std::make_shared<shot>();
     k_shot->setEpisodes(coreDataManager::get().getEpisodesPtr());
     k_shot->insert();
-    shotlist.insert(shotlist.begin() + position, k_shot);
+    p_shot_ptr_list.insert(p_shot_ptr_list.begin() + position, k_shot);
   }
   endInsertRows();
   return true;
@@ -116,23 +116,25 @@ bool shotListModel::insertRows(int position, int rows, const QModelIndex &index)
 bool shotListModel::removeRows(int position, int rows, const QModelIndex &index) {
   beginRemoveRows(index, position, position + rows - 1);
   for (int row = 0; row < rows; ++row) {
-    shotlist[position]->deleteSQL();
-    shotlist.erase(shotlist.begin() + position);
+    p_shot_ptr_list[position]->deleteSQL();
+    p_shot_ptr_list.erase(p_shot_ptr_list.begin() + position);
   }
   endRemoveRows();
   return true;
 }
-void shotListModel::init() {
-  shotPtrList tmp_shot_list = shot::getAll(coreDataManager::get().getEpisodesPtr());
+
+void shotListModel::setList(const shotPtrList &list) {
   clear();
-  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(tmp_shot_list.size()));
-  shotlist = tmp_shot_list;
+  if (list.empty()) return;
+  beginInsertRows(QModelIndex(), 0, boost::numeric_cast<int>(list.size()) - 1);
+  p_shot_ptr_list = list;
   endInsertRows();
 }
+
 void shotListModel::clear() {
-  if (shotlist.empty()) return;
+  if (p_shot_ptr_list.empty()) return;
   beginResetModel();
-  shotlist.clear();
+  p_shot_ptr_list.clear();
   endResetModel();
   coreDataManager::get().setShotPtr(nullptr);
 }

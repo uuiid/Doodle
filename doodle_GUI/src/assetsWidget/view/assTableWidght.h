@@ -49,8 +49,8 @@ class assTableWidght : public QTableView {
   void openFileDialog();
   void createLightDir();
 
-  void doClickedSlots(const QModelIndex& index);
-  void doDubledSlots(const QModelIndex& index);
+  void doodle_clicked_emit_(const QModelIndex& index);
+  void doodle_double_emit_(const QModelIndex& index);
 
   void deleteSQLFile();
 

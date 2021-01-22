@@ -18,6 +18,7 @@ class CORE_API coreDataManager : public boost::noncopyable_::noncopyable {
  public:
   //单例使用
   static coreDataManager &get();
+  static const coreDataManager &getConst();
   coreDataManager &operator=(const coreDataManager &s) = delete;
   coreDataManager(const coreDataManager &s)            = delete;
 

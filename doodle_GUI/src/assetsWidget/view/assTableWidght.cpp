@@ -46,9 +46,9 @@ assTableWidght::assTableWidght(QWidget *parent)
   setAcceptDrops(true);
 
   connect(this, &assTableWidght::clicked, this,
-          &assTableWidght::doClickedSlots);
+          &assTableWidght::doodle_clicked_emit_);
   connect(this, &assTableWidght::doubleClicked, this,
-          &assTableWidght::doDubledSlots);
+          &assTableWidght::doodle_double_emit_);
 }
 void assTableWidght::setModel(QAbstractItemModel *model) {
   QTableView::setModel(model);
@@ -296,15 +296,14 @@ void assTableWidght::createLightDir() {
     }
   }
 }
-void assTableWidght::doClickedSlots(const QModelIndex &index) {
+void assTableWidght::doodle_clicked_emit_(const QModelIndex &index) {
   auto assinfo = index.data(Qt::UserRole).value<assFileSqlInfo *>();
   if (assinfo) {
-    coreDataManager::get().setAssInfoPtr(assinfo->shared_from_this());
     chickItem(assinfo->shared_from_this());
   }
 }
 
-void assTableWidght::doDubledSlots(const QModelIndex &index) {
+void assTableWidght::doodle_double_emit_(const QModelIndex &index) {
   auto assinfo = index.data(Qt::UserRole).value<assFileSqlInfo *>();
   if (assinfo) {
     if (index.column() != 1) {

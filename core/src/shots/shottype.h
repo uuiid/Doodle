@@ -44,7 +44,7 @@ class CORE_API shotType : public coresqldata,
 
   DOODLE_DISABLE_COPY(shotType);
 
-  static boost::signals2::signal<void()> insertChanged;
+  static boost::signals2::signal<void(const shotTypePtr &)> insertChanged;
 
  private:
   template <typename T>

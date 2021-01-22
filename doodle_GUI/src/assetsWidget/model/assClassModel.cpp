@@ -93,17 +93,7 @@ bool assClassModel::removeRows(int position, int rows,
   endRemoveRows();
   return true;
 }
-void assClassModel::init() {
-  clear();
-  auto tmp_list =
-      assClass::getAll(coreDataManager::get().getAssDepPtr());
-  if (!tmp_list.empty()) {
-    beginInsertRows(QModelIndex(), 0,
-                    boost::numeric_cast<int>(tmp_list.size()) - 1);
-    p_ass_info_ptr_list_ = tmp_list;
-    endInsertRows();
-  }
-}
+
 void assClassModel::clear() {
   if (p_ass_info_ptr_list_.empty()) return;
   beginResetModel();

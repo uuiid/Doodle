@@ -24,7 +24,7 @@ RTTR_REGISTRATION {
 }
 
 DOODLE_INSRANCE_CPP(shotClass);
-boost::signals2::signal<void()> shotClass::insertChanged{};
+boost::signals2::signal<void(const shotClassPtr &)> shotClass::insertChanged{};
 
 shotClass::shotClass()
     : coresqldata(),
@@ -61,7 +61,7 @@ void shotClass::insert() {
     DOODLE_LOG_WARN("无法插入shot type" << getClass_str().c_str());
     throw std::runtime_error("not install shot");
   }
-  insertChanged();
+  insertChanged(shared_from_this());
 }
 
 void shotClass::updateSQL() {

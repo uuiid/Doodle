@@ -44,7 +44,6 @@ class assClassWidget : public QListView {
 
   boost::signals2::signal<void(const assClassPtr&)> chickItem;
 
-
  private:
   QMenu* p_menu_;
 
@@ -53,7 +52,7 @@ class assClassWidget : public QListView {
   void editAssName();
   void deleteSQLFile();
 
-  void _doodle_ass_emit(const QModelIndex& index);
+  void doodle_clicked_emit(const QModelIndex& index);
 
  protected:
   void contextMenuEvent(QContextMenuEvent* event) override;

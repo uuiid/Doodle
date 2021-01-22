@@ -15,6 +15,7 @@
 #include <QAbstractListModel>
 #include <QStyledItemDelegate>
 
+#include <boost/signals2.hpp>
 DOODLE_NAMESPACE_S
 
 class shotClassWidget : public QListView {
@@ -25,14 +26,13 @@ class shotClassWidget : public QListView {
 
  public:
   void clear();
- Q_SIGNALS:
-  void doodleUseFilter(const filterState &state);
+  boost::signals2::signal<void(const shotClassPtr &, const filterState &)> doodleUseFilter;
 
  private Q_SLOTS:
   //添加fileclass
   void insertFileClass();
   //私有化fileclass发射
-  void _doodle_fileclass_emit(const QModelIndex &index);
+  void _doodle_chicked_emit(const QModelIndex &index);
 
  protected:
   void mousePressEvent(QMouseEvent *event) override;

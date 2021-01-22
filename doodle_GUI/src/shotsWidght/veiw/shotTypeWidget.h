@@ -12,6 +12,8 @@
 #include <QStyledItemDelegate>
 #include <QListView>
 
+#include <boost/signals2.hpp>
+
 DOODLE_NAMESPACE_S
 //-----------------------------------自定义委托---------------------------------------------//
 class fileTypeShotDelegate : public QStyledItemDelegate {
@@ -40,8 +42,7 @@ class shotTypeWidget : public QListView {
   ~shotTypeWidget() override;
 
   void clear();
- Q_SIGNALS:
-  void doodleUseFilter(const filterState &state);
+  boost::signals2::signal<void(const shotTypePtr &, const filterState &)> doodleUseFilter;
 
  private:
   //模型
@@ -56,7 +57,7 @@ class shotTypeWidget : public QListView {
   //添加filetype
   void insertFileType();
   //发射fileType
-  void _doodle_type_emit(const QModelIndex &index);
+  void _doodle_chicked_emit(const QModelIndex &index);
 
  protected:
   void mousePressEvent(QMouseEvent *event) override;

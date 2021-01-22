@@ -38,13 +38,14 @@ class shotTableModel : public QAbstractTableModel {
   bool insertRows(int position, int rows, const QModelIndex &parent) override;
   bool removeRows(int position, int rows, const QModelIndex &parent) override;
 
-  void init();
-  void reInit();
   void clear();
 
- private:
   void setList(const shotInfoPtrList &list);
 
+  void doodle_dataChande(const shotInfoPtr &item);
+  void doodle_dataInsert(const shotInfoPtr &item);
+
+ private:
  private:
   shotInfoPtrList p_shot_info_ptr_list_;
   std::unique_ptr<boost::regex> mayaRex;
