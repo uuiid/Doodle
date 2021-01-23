@@ -94,15 +94,23 @@ dpathPtr synData::push_back(const assClassPtr &ass_class_ptr) {
 }
 
 synPathListPtr synData::getSynDir(bool abspath) {
+  auto &set = coreSet::getSet();
+  synPathListPtr parts{};
   if (abspath) {
-    auto &set = coreSet::getSet();
-    synPathListPtr parts{};
     for (auto &item : p_path) {
       auto k_path  = synPath_struct();
       k_path.local = set.getSynPathLocale() / set.projectName().second /
                      item.local / DOODLE_CONTENT / "shot";
       k_path.server = set.getAssRoot() / set.getDepartment() / item.server /
                       DOODLE_CONTENT / "shot";
+      parts.push_back(k_path);
+    }
+    return parts;
+  } else {
+    for (auto &item : p_path) {
+      auto k_path   = synPath_struct();
+      k_path.local  = item.local / DOODLE_CONTENT / "shot";
+      k_path.server = item.server / DOODLE_CONTENT / "shot";
       parts.push_back(k_path);
     }
     return parts;
