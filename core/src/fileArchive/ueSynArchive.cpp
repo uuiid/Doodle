@@ -62,8 +62,8 @@ dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr
     //下载vfx镜头
     auto syn_part_vfx = k_synData->getSynDir(false);
     for (auto &item : syn_part_vfx) {
-      item.local  = set.getSynPathLocale() / set.projectName().second / item.local / DOODLE_CONTENT / "shot";
-      item.server = set.getAssRoot() / "VFX" / item.server / DOODLE_CONTENT / "shot";
+      item.local  = set.getSynPathLocale() / set.projectName().second / item.local ;
+      item.server = set.getAssRoot() / "VFX" / item.server ;
     }
     p_syn->addSynFile(syn_part_vfx);
 
