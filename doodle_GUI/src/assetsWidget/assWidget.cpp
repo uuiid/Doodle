@@ -119,7 +119,10 @@ assWidght::assWidght(QWidget *parent)
         k_screen->setimageInfo(list);
         k_screen->setAssInfo(tmp_);
       });
-
+  p_ass_info_widght_->chickItem.connect([=](const assInfoPtr &tmp_) {
+    auto &mData = coreDataManager::get();
+    mData.setAssInfoPtr(tmp_);
+  });
   // 过滤模型
   p_ass_type_widget_->chickItem.connect(
       [=](const assTypePtr &t1, const filterState &state) {
