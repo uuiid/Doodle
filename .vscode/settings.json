@@ -124,7 +124,8 @@
         "qsortfilterproxymodel": "cpp",
         "qprogressbar": "cpp",
         "qstyleoptionprogressbar": "cpp",
-        "qmetaobject": "cpp"
+        "qmetaobject": "cpp",
+        "*.inc": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",
@@ -171,7 +172,7 @@
     "editor.tabSize": 2,
     "workbench.editor.limit.enabled": true,
     "workbench.editor.limit.value": 8,
-    "editor.fontFamily": "Fira Code",
+    "editor.fontFamily": " 'Fira Code',Consolas, monospace",
     "editor.fontLigatures": true,
     "files.exclude": {
         "**/.git": true,

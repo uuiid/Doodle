@@ -9,16 +9,12 @@
 
 #pragma once
 
-#include <boost/network/include/http/server.hpp>
+// #include <boost/network/include/http/server.hpp>
 
 namespace boost {
 
 namespace filesystem {
 class path;
-};
-
-namespace iostreams {
-class mapped_file_source;
 };
 };  // namespace boost
 
@@ -29,12 +25,6 @@ class mapped_file_source;
   ;
 
 DOODLE_NAMESPACE_S
-using path_ptr       = std::shared_ptr<boost::filesystem::path>;
-using mappedFile_ptr = std::shared_ptr<boost::iostreams::mapped_file_source>;
 
-class Handler;
-using Server = boost::network::http::server<Handler>;
-class fileSystem;
-using fileSystem_ptr = std::shared_ptr<fileSystem>;
 
 DOODLE_NAMESPACE_E

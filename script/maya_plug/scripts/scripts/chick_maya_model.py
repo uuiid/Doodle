@@ -55,7 +55,7 @@ class materal():
         # print("is {} match".format(self.isOk))
         # if not self.isOk:
         #     self.repairName()
-        self.repairMateralFace()
+        # self.repairMateralFace()
         self.reName()
 
     def repairName(self):
@@ -151,7 +151,11 @@ class geometryInfo:
 
     def chick(self):
         for materal in self.materals:
-            materal.chick()
+            try:
+                materal.chick()
+            except:
+                pass
+
         pymel.core.select(self.maya_mesh_obj)
         # self.muFace = maya.mel.eval(
         #     "polyCleanup 1 1 1  0 1 0 0 0  0 0.1 0 0.1 0 0.1;")

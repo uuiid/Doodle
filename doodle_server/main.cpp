@@ -8,17 +8,11 @@
  */
 
 #include <server.h>
+#include <exception>
+#include <iostream>
 // #include <boost/network/utils/thread_pool.hpp>
 
 int main(int argc, char const *argv[]) try {
-  auto fileSys = std::make_shared<doodle::fileSystem>();
-  doodle::Handler handle(fileSys);
-  doodle::Server::options options(handle);
-  doodle::Server instance{
-      options.thread_pool(std::make_shared<boost::network::utils::thread_pool>(4))
-          .address("127.0.0.1")
-          .port("8000")};
-  instance.run();
   return 0;
 } catch (const std::exception &error) {
   std::cout << error.what() << std::endl;

@@ -23,6 +23,9 @@ target_link_libraries(doodleServer PRIVATE nlohmann_json nlohmann_json::nlohmann
 
 target_link_libraries(doodleServer PRIVATE Boost::filesystem Boost::regex Boost::iostreams)
 
+
+# target_link_libraries(doodleServer PRIVATE gRPC::grpc++_alts)
+target_link_libraries(doodleServer PRIVATE gRPC::grpc++)
 target_compile_definitions(doodleServer PRIVATE _WIN32_WINNT=0x0A00)
 #安装基本组件
 install(TARGETS doodleServer
