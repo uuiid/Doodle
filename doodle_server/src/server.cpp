@@ -38,23 +38,39 @@ grpc::Status fileSystem::exist(grpc::ServerContext* context, const filesys::path
   auto k_path = boost::filesystem::path{request->path_str()};
   response->set_path_str(request->path_str());
   try {
-    auto k_path_folder = boost::filesystem::exists(k_path);
-    
+    auto k_path_exists = boost::filesystem::exists(k_path);
+    bool k_path_folder{false};
+    uint64_t k_size{0};
+    if (k_path_exists) {
+      k_path_folder = boost::filesystem::is_directory(k_path);
+      k_size        = boost::filesystem::file_size(k_path);
+    }
+    response->set_exist(k_path_exists);
+    response->set_is_folder(k_path_folder);
+    response->set_size(k_size);
+
   } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
   }
+
+
+  return grpc::Status::OK;
 }
 
 grpc::Status fileSystem::createFolder(::grpc::ServerContext* context, const filesys::path* request, filesys::path* response) {
+  return grpc::Status::OK;
 }
 
 grpc::Status fileSystem::rename(::grpc::ServerContext* context, const filesys::path* request, filesys::path* response) {
+  return grpc::Status::OK;
 }
 
 grpc::Status fileSystem::open(::grpc::ServerContext* context, ::grpc::ServerReaderWriter<filesys::io_stream, filesys::io_stream>* stream) {
+  return grpc::Status::OK;
 }
 
 grpc::Status fileSystem::copy(::grpc::ServerContext* context, const filesys::copy_info* request, filesys::path* response) {
+  return grpc::Status::OK;
 }
 
 DOODLE_NAMESPACE_E

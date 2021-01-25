@@ -10,11 +10,15 @@
 #pragma once
 #include <DoodleServer_global.h>
 // #include <fileSystem.pb.h>
+
+//在这里我们使用一些预处理指令
+#pragma warning(push)
+#pragma warning(disable : 4251)
+#pragma warning(disable : 4996)
 #include <fileSystem.grpc.pb.h>
 #include <fileSystem.pb.h>
-//后期希望可以去除
-// #include <boost/filesystem.hpp>
-// #include <doodle_test.pb.h>
+#pragma warning(pop)
+
 DOODLE_NAMESPACE_S
 
 class fileSystem final : public filesys::filesystem::Service {
