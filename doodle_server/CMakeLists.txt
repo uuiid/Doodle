@@ -8,14 +8,12 @@ add_executable(doodleServer
 add_subdirectory(src)
 
 target_include_directories(doodleServer PRIVATE ${Boost_INCLUDE_DIR})
-target_include_directories(doodleServer
-PUBLIC
-${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(doodleServer PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 #两个网络服务器库, 用一个
-target_link_libraries(doodleServer PRIVATE cppnetlib-uri 
-                        cppnetlib-server-parsers 
-                        cppnetlib-client-connections)# boost网络基础库
+# target_link_libraries(doodleServer PRIVATE cppnetlib-uri 
+#                         cppnetlib-server-parsers 
+#                         cppnetlib-client-connections)# boost网络基础库
 target_link_libraries(doodleServer PRIVATE cppzmq cppzmq-static) # zmq消息库,主要
 
 target_link_libraries(doodleServer PRIVATE date::date date::date-tz) #时间库

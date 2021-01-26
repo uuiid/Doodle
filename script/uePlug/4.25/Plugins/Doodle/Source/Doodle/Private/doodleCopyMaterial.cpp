@@ -302,7 +302,7 @@ FReply DoodleCopyMat::BathImport() {
       }
     }
     importTaskList.Add(AssetImportTask);
-    UEditorAssetLibrary::SaveDirectory("/Game/Shot");
+    UEditorAssetLibrary::SaveDirectory("/Game/shot");
   }
   assetTools.ImportAssetTasks(importTaskList);
   return FReply::Handled();

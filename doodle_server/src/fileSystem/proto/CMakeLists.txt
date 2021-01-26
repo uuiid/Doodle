@@ -25,13 +25,13 @@ ${CMAKE_CURRENT_BINARY_DIR})
 
 target_sources(doodleServer
   PUBLIC
-  ${PROTO_HEADER}
+  # ${PROTO_HEADER}
   # ${CMAKE_CURRENT_BINARY_DIR}/fileSystem.grpc.pb.h
   # ${CMAKE_CURRENT_BINARY_DIR}/doodle_test.pb.h
 )
 target_sources(doodleServer
   PRIVATE
-  ${PROTO_SOURCES}
+  # ${PROTO_SOURCES}
   # ${CMAKE_CURRENT_BINARY_DIR}/fileSystem.grpc.pb.cc
   # ${CMAKE_CURRENT_BINARY_DIR}/doodle_test.pb.cc
 )

@@ -9,68 +9,126 @@
 
 #include "server.h"
 #include <boost/filesystem.hpp>
-#include <boost/network.hpp>
-#include <boost/network/uri.hpp>
+// #include <boost/network.hpp>
+// #include <boost/network/uri.hpp>
 #include <boost/regex.hpp>
 
+#include <zmq.hpp>
+#include <zmq_addon.hpp>
 //这里我们导入文件映射内存类
 #include <boost/iostreams/device/mapped_file.hpp>
 
-/*保护data里面的宏__我他妈的*/
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
-#include <date/date.h>
-/*保护data里面的宏__我他妈的*/
+#include <thread>
 
-#include <chrono>
 DOODLE_NAMESPACE_S
-fileSystem::fileSystem() {
+Path::Path(std::string& str)
+    : p_path(nullptr),
+      p_exist(false),
+      p_isDir(false),
+      p_size(0),
+      p_time(boost::posix_time::min_date_time) {
+  p_path = std::make_shared<boost::filesystem::path>(str);
+  scanningInfo();
 }
 
-fileSystem::~fileSystem() {
+Path::Path()
+    : p_path(nullptr),
+      p_exist(false),
+      p_isDir(false),
+      p_size(0),
+      p_time(boost::posix_time::min_date_time) {
 }
 
-grpc::Status fileSystem::exist(grpc::ServerContext* context, const filesys::path* request, filesys::path* response) {
-  auto k_path = boost::filesystem::path{request->path_str()};
-  response->set_path_str(request->path_str());
-  try {
-    auto k_path_exists = boost::filesystem::exists(k_path);
-    bool k_path_folder{false};
-    uint64_t k_size{0};
-    if (k_path_exists) {
-      k_path_folder = boost::filesystem::is_directory(k_path);
-      k_size        = boost::filesystem::file_size(k_path);
-    }
-    response->set_exist(k_path_exists);
-    response->set_is_folder(k_path_folder);
-    response->set_size(k_size);
+Path::~Path() {
+}
 
-  } catch (const std::exception& e) {
-    std::cerr << e.what() << '\n';
+bool Path::exists() const {
+  return p_exist;
+}
+
+bool Path::isDirectory() const {
+  return p_isDir;
+}
+
+uint64_t Path::size() const {
+  return p_size;
+}
+
+void Path::scanningInfo() {
+  p_exist = boost::filesystem::exists(*p_path);
+  if (p_exist) {
+    p_isDir = boost::filesystem::is_directory(*p_path);
+    p_size  = boost::filesystem::file_size(*p_path);
+    p_time  = boost::posix_time::from_time_t(boost::filesystem::last_write_time(*p_path));
   }
-
-
-  return grpc::Status::OK;
 }
 
-grpc::Status fileSystem::createFolder(::grpc::ServerContext* context, const filesys::path* request, filesys::path* response) {
-  return grpc::Status::OK;
+boost::posix_time::ptime Path::modifyTime() const {
+  return p_time;
 }
 
-grpc::Status fileSystem::rename(::grpc::ServerContext* context, const filesys::path* request, filesys::path* response) {
-  return grpc::Status::OK;
+void Path::to_json(nlohmann::json& j, const Path& p) {
+  // date::parse()
+  auto str = boost::posix_time::to_iso_string(p.modifyTime());
+  j        = nlohmann::json{
+      {"path", p.p_path->generic_string()},
+      {"exists", p.exists()},
+      {"isDirectory", p.isDirectory()},
+      {"size", p.size()},
+      {"modifyTime", str}  //
+  };
 }
 
-grpc::Status fileSystem::open(::grpc::ServerContext* context, ::grpc::ServerReaderWriter<filesys::io_stream, filesys::io_stream>* stream) {
-  return grpc::Status::OK;
+void Path::from_json(const nlohmann::json& j, Path& p) {
+  auto str = j.at("path").get<std::string>();
+  p.p_path = std::make_shared<boost::filesystem::path>(str);
+}
+boost::filesystem::path* Path::path() const {
+  return p_path.get();
 }
 
-grpc::Status fileSystem::copy(::grpc::ServerContext* context, const filesys::copy_info* request, filesys::path* response) {
-  return grpc::Status::OK;
+void Path::setPath(const std::string& path_str) {
+  p_path = std::make_shared<boost::filesystem::path>(path_str);
+}
+
+Handler::Handler() {
+}
+
+void Handler::operator()(zmq::context_t* context) {
+  zmq::socket_t socket{*context, zmq::socket_type::router};
+
+  socket.connect(proxy_point);
+  while (true) {
+    zmq::multipart_t k_request{socket};
+
+    std::cout << "thread id: " << std::this_thread::get_id() << std::endl;
+    std::cout << k_request << std::endl;
+    zmq::multipart_t k_reply{};
+    const auto k_size = k_request.size();
+    for (int i = 0; i < k_size; ++i) {
+      if (k_request.front().size() != 0) {
+        k_reply.push_back(k_request.pop());  //插入地址
+      } else {
+        k_request.pop();                      //弹出空帧
+        k_reply.push_back(zmq::message_t{});  //插入空帧
+        break;
+      }
+    }
+
+    auto str = k_request.pop().to_string();  //转换内容
+    nlohmann::json root;
+    try {
+      root = nlohmann::json::parse(str);
+      root.at("class");
+
+    } catch (const std::exception& e) {
+      std::cerr << e.what() << '\n';
+      root["error"] = e.what();
+    }
+
+    k_reply.push_back(zmq::message_t{root.dump()});
+    k_reply.send(socket);
+  };
 }
 
 DOODLE_NAMESPACE_E

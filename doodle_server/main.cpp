@@ -7,29 +7,33 @@
  * @FilePath: \Doodle\doodle_server\main.cpp
  */
 
-#include <server.h>
+#include <zmq.hpp>
+#include <src/server.h>
+
 #include <exception>
 #include <iostream>
-#include <src/server.h>
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#pragma warning(disable : 4996)
-#include <grpc/grpc.h>
-#include <grpc++/grpc++.h>
-#pragma warning(pop)
-// #include <boost/network/utils/thread_pool.hpp>
-
+#include <thread>
 int main(int argc, char const *argv[]) try {
-  std::string server{"127.0.0.1:50051"};
-  doodle::fileSystem filesystem{};
+  zmq::context_t context{7, 1023};
 
-  grpc::ServerBuilder builder;
+  zmq::socket_t socket{context, zmq::socket_type::router};
+  zmq::socket_t proxy_socket{context, zmq::socket_type::dealer};
 
-  builder.AddListeningPort(server, grpc::InsecureServerCredentials());
-  builder.RegisterService(&filesystem);
+  socket.bind(doodle::endpoint);
+  proxy_socket.bind(doodle::proxy_point);
 
-  std::unique_ptr<grpc::Server> s{builder.BuildAndStart()};
-  s->Wait();
+  auto k_handler = doodle::Handler{};
+  std::thread t{
+      [=](doodle::Handler h, zmq::context_t *c) {
+        h(c);
+      },
+      k_handler, &context};
+  // std::thread t2{
+  //     [=](doodle::Handler h, zmq::context_t *c) {
+  //       h(c);
+  //     },
+  //     k_handler, &context};
+  zmq::proxy(socket, proxy_socket);
 
   return 0;
 } catch (const std::exception &error) {

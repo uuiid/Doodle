@@ -7,37 +7,27 @@
  * @FilePath: \Doodle\test\test_server.h
  */
 #include <gtest/gtest.h>
-#include <boost/network/protocol.hpp>
-#include <boost/filesystem.hpp>
+#include <zmq.hpp>
+#include <zmq_addon.hpp>
+#include <nlohmann/json.hpp>
 TEST(doodleServer, client_base) {
-  boost::network::http::client client{};
-  // boost::network::http::client::request req("http://127.0.0.1:8000/ZhuiZhuXiaoXiang_ZL?project=dubuxiaoyao3");
-  boost::network::http::client::request req("http://www.boost.org");
-  req << boost::network::header("Connection", "close");
-  auto response = client.get(req);
-  //   std::cout << boost::network::http::headers(response.headers) << std::endl;
-  // response.status_message();
-  // response.status();
-  // auto handle2 = boost::network::http::headers(response);
-  auto headers = response.headers();
-  // auto body = response.body();
-  for (auto &&i : headers) {
-    std::cout << i.first << ": " << i.second << std::endl;
-  }
+  zmq::context_t context{1};
+
+  zmq::socket_t socket{context, zmq::socket_type::req};
+  socket.connect(R"(tcp://127.0.0.1:6666)");
+  nlohmann::json root;
+  root["test"] = "test_message";
+
+  zmq::message_t message{root.dump()};
+  std::cout << message << std::endl;
+  socket.send(message, zmq::send_flags::none);
+
+  zmq::message_t reply{};
+  socket.recv(reply, zmq::recv_flags::none);
+  std::cout << reply << std::endl;
 }
 
 TEST(doodleServer, server_base) {
-  boost::network::http::client client{};
-  boost::network::http::client::request req("http://127.0.0.1:8000/");
-  req << boost::network::header("Connection", "close");
-  auto response = client.get(req);
-  auto headers  = response.headers();
-  auto body     = response.body();
-  for (auto &&i : headers) {
-    std::cout << i.first << ": " << i.second << std::endl;
-  }
-  std::cout << body
-            << std::endl;
 }
 
 TEST(doodleServer, downFile) {

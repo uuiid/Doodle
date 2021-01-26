@@ -9,32 +9,52 @@
 
 #pragma once
 #include <DoodleServer_global.h>
-// #include <fileSystem.pb.h>
 
-//在这里我们使用一些预处理指令
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#pragma warning(disable : 4996)
-#include <fileSystem.grpc.pb.h>
-#include <fileSystem.pb.h>
-#pragma warning(pop)
-
+#include <boost/date_time.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <nlohmann/json.hpp>
 DOODLE_NAMESPACE_S
 
-class fileSystem final : public filesys::filesystem::Service {
- public:
-  explicit fileSystem();
-  ~fileSystem() override;
-  grpc::Status exist(grpc::ServerContext* context, const filesys::path* request, filesys::path* response) override;
-  grpc::Status createFolder(grpc::ServerContext* context, const filesys::path* request, filesys::path* response) override;
-  grpc::Status rename(grpc::ServerContext* context, const filesys::path* request, filesys::path* response) override;
-  grpc::Status open(grpc::ServerContext* context, grpc::ServerReaderWriter<filesys::io_stream, filesys::io_stream>* stream) override;
-  grpc::Status copy(grpc::ServerContext* context, const filesys::copy_info* request, filesys::path* response) override;
+enum class fileOptions {
+  createFolder = 0,
+  getInfo      = 1,
+  update       = 2,
+  down         = 3,
 };
 
-// class fileSystem final : public filesys::filesystem::AsyncService {
-//  public:
-//   explicit fileSystem();
-//   ~fileSystem() override;
-// };
+class Path {
+ public:
+  Path(std::string& str);
+  Path();
+  virtual ~Path();
+
+  boost::filesystem::path* path() const;
+  void setPath(const std::string& path_str);
+  bool exists() const;
+  bool isDirectory() const;
+  uint64_t size() const;
+
+  void scanningInfo();
+
+  boost::posix_time::ptime modifyTime() const;
+
+  static void to_json(nlohmann::json& j, const Path& p);
+  static void from_json(const nlohmann::json& j, Path& p);
+
+ private:
+  std::shared_ptr<boost::filesystem::path> p_path;
+
+  bool p_exist;
+  bool p_isDir;
+  uint64_t p_size;
+  boost::posix_time::ptime p_time;
+};
+
+class Handler {
+ public:
+  Handler();
+
+  void operator()(zmq::context_t* context);
+};
+
 DOODLE_NAMESPACE_E

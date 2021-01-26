@@ -8,7 +8,9 @@
  */
 
 #pragma once
-
+#include <string>
+#include <memory>
+#include <map>
 // #include <boost/network/include/http/server.hpp>
 
 namespace boost {
@@ -18,6 +20,10 @@ class path;
 };
 };  // namespace boost
 
+namespace zmq {
+class context_t;
+}
+
 #define DOODLE doodle
 #define DOODLE_NAMESPACE_S namespace DOODLE {
 #define DOODLE_NAMESPACE_E \
@@ -25,6 +31,7 @@ class path;
   ;
 
 DOODLE_NAMESPACE_S
-
+const static std::string endpoint    = R"(tcp://*:6666)";
+const static std::string proxy_point = R"(tcp://127.0.0.1:6667)";
 
 DOODLE_NAMESPACE_E
