@@ -1,0 +1,5 @@
+#include <src/seting.h>
+
+DOODLE_NAMESPACE_S
+
+DOODLE_NAMESPACE_E

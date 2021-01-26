@@ -3,11 +3,15 @@ add_subdirectory(fileSystem)
 
 target_sources(doodleServer
 PUBLIC
-server.h)
+server.h
+Project.h
+seting.h)
 
 target_sources(doodleServer
 PRIVATE
-server.cpp)
+server.cpp
+Project.cpp
+seting.cpp)
 
 target_include_directories(doodleServer
 PUBLIC

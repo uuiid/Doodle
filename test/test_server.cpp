@@ -17,18 +17,41 @@ TEST(doodleServer, client_base) {
   socket.connect(R"(tcp://127.0.0.1:6666)");
   nlohmann::json root;
   root["test"] = "test_message";
+  root.cbegin();
+  zmq::message_t message{root.dump()};
+  std::cout << message << std::endl;
+  socket.send(message, zmq::send_flags::none);
+
+  zmq::message_t reply{};
+
+  auto r_size = socket.recv(reply, zmq::recv_flags::none);
+
+  std::cout << "size :" << r_size.value_or(0) << "\n"
+            << reply << std::endl;
+}
+
+TEST(doodleServer, server_base) {
+  zmq::context_t context{1};
+
+  zmq::socket_t socket{context, zmq::socket_type::req};
+  socket.connect(R"(tcp://127.0.0.1:6666)");
+  nlohmann::json root;
+  root["test"]         = "test_message";
+  root["class"]        = "filesystem";
+  root["function"]     = "getInfo";
+  root["body"]["path"] = "D:/tmp/DBXY_041_017_AN.mov";
 
   zmq::message_t message{root.dump()};
   std::cout << message << std::endl;
   socket.send(message, zmq::send_flags::none);
 
   zmq::message_t reply{};
-  socket.recv(reply, zmq::recv_flags::none);
-  std::cout << reply << std::endl;
+
+  auto r_size = socket.recv(reply, zmq::recv_flags::none);
+
+  std::cout << "size :" << r_size.value_or(0) << "\n"
+            << reply << std::endl;
 }
 
-TEST(doodleServer, server_base) {
-}
-
-TEST(doodleServer, downFile) {
+TEST(doodleServer, createFolder) {
 }

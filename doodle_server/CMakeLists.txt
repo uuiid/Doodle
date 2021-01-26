@@ -6,6 +6,7 @@ add_executable(doodleServer
                 main.cpp)
 
 add_subdirectory(src)
+add_subdirectory(share)
 
 target_include_directories(doodleServer PRIVATE ${Boost_INCLUDE_DIR})
 target_include_directories(doodleServer PUBLIC ${CMAKE_CURRENT_LIST_DIR})
@@ -18,7 +19,7 @@ target_link_libraries(doodleServer PRIVATE cppzmq cppzmq-static) # zmq消息库,
 
 target_link_libraries(doodleServer PRIVATE date::date date::date-tz) #时间库
 target_link_libraries(doodleServer PRIVATE nlohmann_json nlohmann_json::nlohmann_json) #json库
-
+target_link_libraries(doodleServer PRIVATE magic_enum::magic_enum)
 target_link_libraries(doodleServer PRIVATE Boost::filesystem Boost::regex Boost::iostreams)
 
 
