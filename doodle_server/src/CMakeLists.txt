@@ -5,13 +5,15 @@ target_sources(doodleServer
 PUBLIC
 server.h
 Project.h
-seting.h)
+seting.h
+FileSystem.h)
 
 target_sources(doodleServer
 PRIVATE
 server.cpp
 Project.cpp
-seting.cpp)
+seting.cpp
+FileSystem.cpp)
 
 target_include_directories(doodleServer
 PUBLIC

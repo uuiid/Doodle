@@ -16,12 +16,8 @@ class Seting {
   Seting& operator=(const Seting&) = delete;
 
   static Seting& Get() noexcept;
+
+  void init() const;
 };
-
-Seting::Seting() {
-}
-
-Seting::~Seting() {
-}
 
 DOODLE_NAMESPACE_E

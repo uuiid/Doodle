@@ -24,6 +24,7 @@ class Handler {
   Handler();
 
   void operator()(zmq::context_t* context);
+  // zmq::multipart_t handleMessage(zmq::multipart_t* message);
 };
 
 DOODLE_NAMESPACE_E

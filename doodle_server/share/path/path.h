@@ -4,7 +4,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 DOODLE_NAMESPACE_S
-
+class IoFile;
 class Path {
  public:
   Path(std::string& str);
@@ -18,6 +18,9 @@ class Path {
 
   bool createFolder() const;
 
+  bool read(char* buffer, uint64_t size, uint64_t offset);
+  bool write(char* buffer, uint64_t size, uint64_t offset);
+
   uint64_t size() const;
 
   void scanningInfo();
@@ -30,12 +33,15 @@ class Path {
  private:
   void to_json(nlohmann::json& j) const;
   void from_json(const nlohmann::json& j);
+
   std::shared_ptr<boost::filesystem::path> p_path;
+  std::shared_ptr<boost::filesystem::path> p_prj_path;
 
   bool p_exist;
   bool p_isDir;
   uint64_t p_size;
   boost::posix_time::ptime p_time;
+  std::shared_ptr<IoFile> p_file;
 };
 
 inline static void to_json(nlohmann::json& j, const Path& p) {

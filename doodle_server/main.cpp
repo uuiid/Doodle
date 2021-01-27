@@ -8,12 +8,16 @@
  */
 
 #include <zmq.hpp>
+#include <src/seting.h>
 #include <src/server.h>
 
 #include <exception>
 #include <iostream>
 #include <thread>
 int main(int argc, char const *argv[]) try {
+  auto &set = doodle::Seting::Get();
+  set.init();
+
   zmq::context_t context{7, 1023};
 
   zmq::socket_t socket{context, zmq::socket_type::router};
@@ -28,11 +32,11 @@ int main(int argc, char const *argv[]) try {
         h(c);
       },
       k_handler, &context};
-  // std::thread t2{
-  //     [=](doodle::Handler h, zmq::context_t *c) {
-  //       h(c);
-  //     },
-  //     k_handler, &context};
+  std::thread t2{
+      [=](doodle::Handler h, zmq::context_t *c) {
+        h(c);
+      },
+      k_handler, &context};
   zmq::proxy(socket, proxy_socket);
 
   return 0;
