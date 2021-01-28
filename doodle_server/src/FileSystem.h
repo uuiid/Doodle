@@ -30,6 +30,7 @@ class FileSystem {
   static FileSystem& Get() noexcept;
 
   std::shared_ptr<IoFile> open(const std::shared_ptr<boost::filesystem::path>& path);
+  bool rename(const boost::filesystem::path* source, const boost::filesystem::path* target);
 
  private:
   friend class IoFile;

@@ -22,9 +22,33 @@ std::shared_ptr<IoFile> FileSystem::open(const std::shared_ptr<boost::filesystem
   if (file != p_fm.end()) {
     return (*file)->shared_from_this();
   } else {
+    if (!boost::filesystem::exists(*path)) {
+      boost::filesystem::fstream f{*path, std::ios::out | std::ios::binary};
+    }
     auto k_p = std::make_shared<IoFile>(path);
     p_fm.push_back(k_p.get());
     return k_p;
+  }
+}
+
+bool FileSystem::rename(const boost::filesystem::path* source, const boost::filesystem::path* target) {
+  std::unique_lock lock{p_mutex};  //加锁
+  auto file = std::find_if(p_fm.begin(), p_fm.end(),
+                           [=](const IoFile* f) {
+                             return f->p_path.get() == source;
+                           });
+  if (file == p_fm.end()) {
+    if (!boost::filesystem::exists(target->parent_path())) {
+      boost::filesystem::create_directories(target->parent_path());
+    }
+    if (boost::filesystem::exists(*source)) {
+      boost::filesystem::rename(*source, *target);
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
   }
 }
 
@@ -38,7 +62,7 @@ IoFile::IoFile(std::shared_ptr<boost::filesystem::path> path)
       p_path(std::move(path)),
       p_file() {
   if (!p_file.is_open()) {
-    p_file.open(p_path->generic_string(), std::ios::in | std::ios::out | std::ios::binary);
+    p_file.open(p_path->generic_string(), std::ios::out | std::ios::in | std::ios::binary);
   }
 }
 

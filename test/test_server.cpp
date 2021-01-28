@@ -8,6 +8,7 @@
  */
 #include <gtest/gtest.h>
 #include <fstream>
+#include <boost/filesystem.hpp>
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
 #include <nlohmann/json.hpp>
@@ -97,18 +98,18 @@ TEST(doodleServer, downFile) {
   root["body"]["path"]    = "/cache/BiManMan_UE4.7z";
   root["body"]["project"] = "test";
 
-  // k_muMsg.push_back(zmq::message_t{}); //推入空帧
   k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
   k_muMsg.send(socket);
 
   k_muMsg.recv(socket);
-  // k_muMsg.pop();  //弹出空帧
+
 
   root = nlohmann::json::parse(k_muMsg.pop().to_string());
   std::fstream file{};
   file.open("D:/tmp/test_server/test.7z", std::ios::out | std::ios::binary);
 
-  if (root["error"] == "ok") {
+  std::cout << root << std::endl;
+  if (root["status"] == "ok") {
     if (!root["body"]["isDirectory"] && root["body"]["exists"]) {
       auto size = root["body"]["size"].get<size_t>();
 
@@ -130,8 +131,8 @@ TEST(doodleServer, downFile) {
         k_muMsg.recv(socket);
         // k_muMsg.pop();  //弹出空帧
         root = nlohmann::json::parse(k_muMsg.pop().to_string());
-        ASSERT_TRUE(root["error"] == "ok");
-        auto d            = k_muMsg.pop();
+        ASSERT_TRUE(root["status"] == "ok");
+        auto d = k_muMsg.pop();
         file.write((char*)d.data(), d.size());
       }
 
@@ -168,15 +169,115 @@ TEST(doodleServer, downFile) {
       // }
     }
   }
-  std::cout << root.dump() << std::endl;
+}
 
-  // for (size_t i = 0; i < 5; ++i) {
-  //   k_muMsg.push_back(zmq::message_t{});
-  //   k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
-  //   k_muMsg.send(socket);
+TEST(doodleServer, updataFile) {
+  zmq::context_t context{1};
 
-  //   k_muMsg.recv(socket);
-  //   std::cout << k_muMsg << std::endl;
-  //   k_muMsg.clear();
-  // }
+  zmq::socket_t socket{context, zmq::socket_type::req};
+  socket.connect(R"(tcp://127.0.0.1:6666)");
+  nlohmann::json root;
+
+  zmq::multipart_t k_muMsg{};
+
+  root["test"]            = "test_message";
+  root["class"]           = "filesystem";
+  root["function"]        = "getInfo";
+  root["body"]["path"]    = "/cache/tset_updata_server.7z";
+  root["body"]["project"] = "test";
+
+  k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+  k_muMsg.send(socket);
+
+  k_muMsg.recv(socket);
+
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  std::fstream file{};
+  file.open("D:/tmp/test_server/test.7z", std::ios::in | std::ios::binary);
+  if (root["status"] == "ok") {
+    if (true /* !root["body"]["exists"] */) {
+      auto size = boost::filesystem::file_size("D:/tmp/test_server/test.7z");
+
+      const off_t off{8000000};
+      const uint64_t period{size / off};
+
+      for (size_t i = 0; i <= period; ++i) {
+        auto end = std::min(off * (i + 1), size);
+        root.clear();
+        root["class"]           = "filesystem";
+        root["function"]        = "update";
+        root["body"]["path"]    = "/cache/tset_updata_server.7z";
+        root["body"]["project"] = "test";
+        root["body"]["start"]   = i * off;
+        root["body"]["end"]     = end;
+        k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+
+        auto data = zmq::message_t{off};
+        file.seekg(i * off);
+        file.read((char*)data.data(), off);
+        k_muMsg.push_back(std::move(data));
+
+        k_muMsg.send(socket);
+        k_muMsg.recv(socket);
+        // k_muMsg.pop();  //弹出空帧
+        root = nlohmann::json::parse(k_muMsg.pop().to_string());
+        ASSERT_TRUE(root["status"] == "ok");
+      }
+    }
+  }
+}
+
+TEST(doodleServer, rename) {
+  zmq::context_t context{1};
+
+  zmq::socket_t socket{context, zmq::socket_type::req};
+  socket.connect(R"(tcp://127.0.0.1:6666)");
+  nlohmann::json root;
+
+  zmq::multipart_t k_muMsg{};
+
+  root["test"]                      = "test_message";
+  root["class"]                     = "filesystem";
+  root["function"]                  = "rename";
+  root["body"]["source"]["path"]    = "/cache/tset_updata_server.7z";
+  root["body"]["source"]["project"] = "test";
+  root["body"]["target"]["path"]    = "/cache/tmp/tset_updata_server.7z";
+  root["body"]["target"]["project"] = "test";
+
+  k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+  k_muMsg.send(socket);
+
+  k_muMsg.recv(socket);
+
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  std::cout << root << std::endl;
+  ASSERT_TRUE(root["status"] == "ok");
+}
+
+TEST(doodleServer, list) {
+  zmq::context_t context{1};
+
+  zmq::socket_t socket{context, zmq::socket_type::req};
+  socket.connect(R"(tcp://127.0.0.1:6666)");
+  nlohmann::json root;
+
+  zmq::multipart_t k_muMsg{};
+
+  root["test"]            = "test_message";
+  root["class"]           = "filesystem";
+  root["function"]        = "list";
+  root["body"]["path"]    = "/cache/";
+  root["body"]["project"] = "test";
+
+  k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+  k_muMsg.send(socket);
+
+  k_muMsg.recv(socket);
+
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  for (auto&& it : root["body"]) {
+    std::cout << it << std::endl;
+  }
+  std::cout << root["status"] << std::endl;
+  ASSERT_TRUE(root["status"] == "ok");
 }

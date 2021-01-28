@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <optional>
 DOODLE_NAMESPACE_S
 class IoFile;
 class Path {
@@ -20,6 +21,9 @@ class Path {
 
   bool read(char* buffer, uint64_t size, uint64_t offset);
   bool write(char* buffer, uint64_t size, uint64_t offset);
+  bool rename(const Path& newName);
+
+  std::optional<std::vector<std::shared_ptr<Path>>> list() const;
 
   uint64_t size() const;
 

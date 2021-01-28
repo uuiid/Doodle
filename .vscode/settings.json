@@ -140,7 +140,6 @@
             "cwd": "${workspaceFolder}"
         }
     ],
-    "editor.formatOnSave": true,
     "C_Cpp.clang_format_style": "{BasedOnStyle: Google, SortIncludes: false, ColumnLimit: 0,AlignConsecutiveAssignments: true,AlignAfterOpenBracket: Align}",
     "cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}",
     "editor.tokenColorCustomizations": {
@@ -185,5 +184,6 @@
         ".vs": true,
         "b_Ninja*": false,
         "install*": true
-    }
+    },
+    "editor.formatOnType": true
 }

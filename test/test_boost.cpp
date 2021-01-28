@@ -7,6 +7,7 @@
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <boost/filesystem.hpp>
 #include <gtest/gtest.h>
 #include <boost/regex.hpp>
 
@@ -24,17 +25,29 @@ std::string decode64(const std::string &val) {
   });
 }
 
-TEST(dboost ,test_encode){
-  std::cout << encode64("zhangyubin") <<std::endl;
-  ASSERT_TRUE(encode64("zhangyubin")=="emhhbmd5dWJpbg==");
+TEST(dboost, test_encode) {
+  std::cout << encode64("zhangyubin") << std::endl;
+  ASSERT_TRUE(encode64("zhangyubin") == "emhhbmd5dWJpbg==");
 }
 
-TEST(dboost, test_decode){
-  ASSERT_TRUE(decode64("MTIzNDU=")=="12345");
+TEST(dboost, test_decode) {
+  ASSERT_TRUE(decode64("MTIzNDU=") == "12345");
 }
 
-TEST(dboost,test_rex){
+TEST(dboost, test_rex) {
   auto rex = boost::regex(R"(Anm|Animation)");
-  ASSERT_TRUE(boost::regex_match("Anm",rex));
+  ASSERT_TRUE(boost::regex_match("Anm", rex));
 }
 
+TEST(dboost, normalize_path) {
+  boost::filesystem::path root("c:\\some\\deep\\application\\folder");
+  boost::filesystem::path subdir("..\\configuration\\instance");
+  boost::filesystem::path cfgfile("..\\instance\\myfile.cfg");
+
+  boost::filesystem::path tmp(root / subdir / cfgfile);
+
+  std::cout << "normalize : " << tmp.normalize().generic_string() << "\n"
+            << "lexically_normal :" << tmp.lexically_normal().generic_string() << std::endl;
+
+            
+}
