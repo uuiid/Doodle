@@ -7,7 +7,7 @@ add_library(core SHARED
         core_Cpp.h
         ${RESOURE_FILE}
         )
-
+add_subdirectory(filesystem)
 add_subdirectory(proto)
 add_subdirectory(src)
 
