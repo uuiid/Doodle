@@ -1,5 +1,3 @@
-
-
 #pragma once
 #include <DoodleServer_global.h>
 

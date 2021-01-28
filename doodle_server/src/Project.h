@@ -12,7 +12,7 @@ class Project {
   Project(const Project&) = delete;
   Project& operator=(const Project&) = delete;
 
-  std::shared_ptr<boost::filesystem::path> findPath(const std::string& project_name) const;
+  std::shared_ptr<fileSys::path> findPath(const std::string& project_name) const;
 
   static Project& Get() noexcept;
 
@@ -24,7 +24,7 @@ class Project {
 
   Project();
   virtual ~Project();
-  std::map<std::string, std::shared_ptr<boost::filesystem::path>> p_project;
+  std::map<std::string, std::shared_ptr<fileSys::path>> p_project;
 };
 
 DOODLE_NAMESPACE_E

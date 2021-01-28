@@ -12,12 +12,13 @@
 #include <memory>
 #include <map>
 // #include <boost/network/include/http/server.hpp>
-
+#include <filesystem>
 namespace boost {
 
 namespace filesystem {
 class path;
 };
+
 };  // namespace boost
 
 namespace zmq {
@@ -31,6 +32,7 @@ class context_t;
   ;
 
 DOODLE_NAMESPACE_S
+namespace fileSys                    = boost::filesystem;
 const static std::string endpoint    = R"(tcp://*:6666)";
 const static std::string proxy_point = R"(tcp://127.0.0.1:6667)";
 

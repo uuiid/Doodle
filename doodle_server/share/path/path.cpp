@@ -3,6 +3,7 @@
 
 #include <src/FileSystem.h>
 #include <boost/filesystem.hpp>
+#include <chrono>
 DOODLE_NAMESPACE_S
 Path::Path(std::string& str)
     : p_path(nullptr),
@@ -11,14 +12,14 @@ Path::Path(std::string& str)
       p_isDir(false),
       p_size(0),
       p_time(boost::posix_time::min_date_time) {
-  p_path     = std::make_shared<boost::filesystem::path>(str);
-  p_prj_path = std::make_shared<boost::filesystem::path>("");
+  p_path     = std::make_shared<fileSys::path>(str);
+  p_prj_path = std::make_shared<fileSys::path>("");
   scanningInfo();
 }
 
 Path::Path()
-    : p_path(std::make_shared<boost::filesystem::path>("")),
-      p_prj_path(std::make_shared<boost::filesystem::path>("")),
+    : p_path(std::make_shared<fileSys::path>("")),
+      p_prj_path(std::make_shared<fileSys::path>("")),
       p_exist(false),
       p_isDir(false),
       p_size(0),
@@ -38,19 +39,19 @@ bool Path::isDirectory() const {
 }
 
 bool Path::createFolder() const {
-  return boost::filesystem::create_directories(*p_path);
+  return fileSys::create_directories(*p_path);
 }
 
 bool Path::read(char* buffer, uint64_t size, uint64_t offset) {
   if (!p_file) {
-    p_file = FileSystem::Get().open(std::make_shared<boost::filesystem::path>(*p_path));
+    p_file = FileSystem::Get().open(std::make_shared<fileSys::path>(*p_path));
   }
   return p_file->read(buffer, size, offset);
 }
 
 bool Path::write(char* buffer, uint64_t size, uint64_t offset) {
   if (!p_file) {
-    p_file = FileSystem::Get().open(std::make_shared<boost::filesystem::path>(*p_path));
+    p_file = FileSystem::Get().open(std::make_shared<fileSys::path>(*p_path));
   }
   return p_file->write(buffer, size, offset);
 }
@@ -69,15 +70,16 @@ bool Path::rename(const Path& newName) {
 std::optional<std::vector<std::shared_ptr<Path>>> Path::list() const {
   if (p_isDir) {
     std::vector<std::shared_ptr<Path>> paths{};
-    for (auto&& it : boost::filesystem::directory_iterator(*p_path)) {
+    for (auto&& it : fileSys::directory_iterator(*p_path)) {
       auto k_path        = std::make_shared<Path>();
       *(k_path->p_path)  = it.path();
       k_path->p_prj_path = p_prj_path;
       k_path->p_exist    = true;
-      k_path->p_isDir    = boost::filesystem::is_directory(it.path());
-      k_path->p_time     = boost::posix_time::from_time_t(boost::filesystem::last_write_time(it.path()));
+      k_path->p_isDir    = fileSys::is_directory(it.path());
+      auto ftime         = fileSys::last_write_time(it.path());
+      k_path->p_time     = boost::posix_time::from_time_t(ftime);
       if (!k_path->p_isDir) {
-        k_path->p_size = boost::filesystem::file_size(it.path());
+        k_path->p_size = fileSys::file_size(it.path());
       }
       paths.push_back(k_path);
     }
@@ -92,12 +94,12 @@ uint64_t Path::size() const {
 }
 
 void Path::scanningInfo() {
-  p_exist = boost::filesystem::exists(*p_path);
+  p_exist = fileSys::exists(*p_path);
   if (p_exist) {
-    p_isDir = boost::filesystem::is_directory(*p_path);
-    p_time  = boost::posix_time::from_time_t(boost::filesystem::last_write_time(*p_path));
+    p_isDir = fileSys::is_directory(*p_path);
+    p_time  = boost::posix_time::from_time_t(fileSys::last_write_time(*p_path));
     if (!p_isDir) {
-      p_size = boost::filesystem::file_size(*p_path);
+      p_size = fileSys::file_size(*p_path);
     }
   }
 }
@@ -128,7 +130,7 @@ void Path::to_json(nlohmann::json& j) const {
 void Path::from_json(const nlohmann::json& j) {
   p_prj_path = Project::Get().findPath(j.at("project").get<std::string>());
   auto str   = j.at("path").get<std::string>();
-  p_path     = std::make_shared<boost::filesystem::path>(*p_prj_path / str);
+  p_path     = std::make_shared<fileSys::path>(*p_prj_path / str);
 }
 
 DOODLE_NAMESPACE_E

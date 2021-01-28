@@ -5,7 +5,7 @@ DOODLE_NAMESPACE_S
 Project::Project() {
 }
 
-std::shared_ptr<boost::filesystem::path> Project::findPath(const std::string& project_name) const {
+std::shared_ptr<fileSys::path> Project::findPath(const std::string& project_name) const {
   auto path = p_project.find(project_name);
   if (path != p_project.end())
     return path->second;
@@ -21,7 +21,7 @@ Project& Project::Get() noexcept {
 void Project::from_json(const nlohmann::json& j) {
   for (auto k_p : j.items()) {
     p_project.insert({k_p.key(),
-                      std::make_shared<boost::filesystem::path>(
+                      std::make_shared<fileSys::path>(
                           k_p.value().get<std::string>())});
   }
 }

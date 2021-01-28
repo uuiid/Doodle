@@ -8,7 +8,7 @@
 DOODLE_NAMESPACE_S
 class IoFile : public std::enable_shared_from_this<IoFile> {
  public:
-  IoFile(std::shared_ptr<boost::filesystem::path> path);
+  IoFile(std::shared_ptr<fileSys::path> path);
   ~IoFile();
 
   bool read(char* buffer, uint64_t size, uint64_t offset);
@@ -18,7 +18,7 @@ class IoFile : public std::enable_shared_from_this<IoFile> {
   friend class FileSystem;
 
   std::mutex p_mutex;
-  std::shared_ptr<boost::filesystem::path> p_path;
+  std::shared_ptr<fileSys::path> p_path;
   std::fstream p_file;
 };
 
@@ -29,8 +29,8 @@ class FileSystem {
 
   static FileSystem& Get() noexcept;
 
-  std::shared_ptr<IoFile> open(const std::shared_ptr<boost::filesystem::path>& path);
-  bool rename(const boost::filesystem::path* source, const boost::filesystem::path* target);
+  std::shared_ptr<IoFile> open(const std::shared_ptr<fileSys::path>& path);
+  bool rename(const fileSys::path* source, const fileSys::path* target);
 
  private:
   friend class IoFile;

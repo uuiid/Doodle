@@ -18,8 +18,8 @@ void Seting::init() const {
   nlohmann::json root;
 
   auto k_config = boost::dll::program_location().parent_path() / "config" / "config.json";
-  if (boost::filesystem::exists(k_config)) {
-    boost::filesystem::ifstream file{k_config, std::ios::in};
+  if (fileSys::exists(k_config)) {
+    fileSys::ifstream file{k_config, std::ios::in};
     if (file.is_open()) {
       root = nlohmann::json::parse(file);
       prj.from_json(root["project"]);

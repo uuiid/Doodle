@@ -11,7 +11,7 @@ FileSystem& FileSystem::Get() noexcept {
   return k_instance;
 }
 
-std::shared_ptr<IoFile> FileSystem::open(const std::shared_ptr<boost::filesystem::path>& path) {
+std::shared_ptr<IoFile> FileSystem::open(const std::shared_ptr<fileSys::path>& path) {
   std::unique_lock lock{p_mutex};  //加锁
 
   auto file = std::find_if(p_fm.begin(), p_fm.end(),
@@ -22,8 +22,8 @@ std::shared_ptr<IoFile> FileSystem::open(const std::shared_ptr<boost::filesystem
   if (file != p_fm.end()) {
     return (*file)->shared_from_this();
   } else {
-    if (!boost::filesystem::exists(*path)) {
-      boost::filesystem::fstream f{*path, std::ios::out | std::ios::binary};
+    if (!fileSys::exists(*path)) {
+      fileSys::fstream f{*path, std::ios::out | std::ios::binary};
     }
     auto k_p = std::make_shared<IoFile>(path);
     p_fm.push_back(k_p.get());
@@ -31,18 +31,18 @@ std::shared_ptr<IoFile> FileSystem::open(const std::shared_ptr<boost::filesystem
   }
 }
 
-bool FileSystem::rename(const boost::filesystem::path* source, const boost::filesystem::path* target) {
+bool FileSystem::rename(const fileSys::path* source, const fileSys::path* target) {
   std::unique_lock lock{p_mutex};  //加锁
   auto file = std::find_if(p_fm.begin(), p_fm.end(),
                            [=](const IoFile* f) {
                              return f->p_path.get() == source;
                            });
   if (file == p_fm.end()) {
-    if (!boost::filesystem::exists(target->parent_path())) {
-      boost::filesystem::create_directories(target->parent_path());
+    if (!fileSys::exists(target->parent_path())) {
+      fileSys::create_directories(target->parent_path());
     }
-    if (boost::filesystem::exists(*source)) {
-      boost::filesystem::rename(*source, *target);
+    if (fileSys::exists(*source)) {
+      fileSys::rename(*source, *target);
       return true;
     } else {
       return false;
@@ -57,7 +57,7 @@ FileSystem::FileSystem()
       p_fm() {
 }
 
-IoFile::IoFile(std::shared_ptr<boost::filesystem::path> path)
+IoFile::IoFile(std::shared_ptr<fileSys::path> path)
     : p_mutex(),
       p_path(std::move(path)),
       p_file() {
