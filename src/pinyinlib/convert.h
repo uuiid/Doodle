@@ -15,9 +15,6 @@ class PINYIN_EXPORT convert {
  private:
   convert();
   ~convert();
-
- private:
-  std::vector<std::string> p_list;
 };
 
 DNAMESPACE_E

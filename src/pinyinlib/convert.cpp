@@ -8,7 +8,7 @@
 #include <regex>
 
 PINYIN_NAMESPACE_S
-
+static std::vector<std::string> pinyin_list{};
 convert::convert() {
   const auto &resource = bin2cpp::getPinyinDataFile();
   resource.getBuffer();
@@ -17,7 +17,7 @@ convert::convert() {
   auto iter = std::sregex_token_iterator(
       ZhongWenToPinYin.begin(), ZhongWenToPinYin.end(), regex, -1);
   while (iter != std::sregex_token_iterator{}) {
-    p_list.push_back(*iter);
+    pinyin_list.push_back(*iter);
     ++iter;
   }
 }
@@ -30,7 +30,7 @@ std::string convert::toEn(const std::string &conStr) {
   std::string result{};
   for (auto data : datas) {
     if (data >= 0x4e00 && data <= 0x9fa5) {
-      result.append(p_list[data - 0x4e00]);
+      result.append(pinyin_list[data - 0x4e00]);
     } else {
       result.append(boost::locale::conv::utf_to_utf<char>(std::wstring{data}));
     }
