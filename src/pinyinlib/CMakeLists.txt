@@ -3,7 +3,7 @@
 
 add_library(pinyin SHARED)
 add_custom_target(pinyin_RESOURE_FILE
-        COMMAND ${BIN2CPP} --file=${CMAKE_CURRENT_LIST_DIR}/resource/zhtopy.txt --output=${CMAKE_CURRENT_BINARY_DIR} --headerfile=doodlePinyin.h --identifier=pinyinData
+        COMMAND ${BIN2CPP} --file=${CMAKE_CURRENT_LIST_DIR}/zhtopy.txt --output=${CMAKE_CURRENT_BINARY_DIR} --headerfile=doodlePinyin.h --identifier=pinyinData
         BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.h ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.cpp
         )
 
