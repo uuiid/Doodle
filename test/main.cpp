@@ -6,9 +6,9 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\test\main.cpp
  */
-#include <core_Cpp.h>
-#include <src/core/coresql.h>
-#include <Logger.h>
+#include <corelib/core_Cpp.h>
+#include <corelib/core/coresql.h>
+#include <loggerlib/Logger.h>
 
 #include <QCoreApplication>
 #include <QTextCodec>

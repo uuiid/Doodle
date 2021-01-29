@@ -94,7 +94,7 @@ add_subdirectory(plug)
 add_subdirectory(src)
 
 enable_testing()
-# add_subdirectory(test)
+add_subdirectory(test)
 #=====================安装打包过程===============================
 # list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(mypack)

@@ -1,9 +1,6 @@
-#include "fileSystem_global.h"
+#include <fileSystem/fileSystem_cpp.h>
 
-#include "src/DfileSyntem.h"
-#include "src/ftpsession.h"
-
-#include "Logger.h"
+#include <loggerlib/Logger.h>
 #include <QFileInfo>
 #include <QDateTime>
 #include <gtest/gtest.h>

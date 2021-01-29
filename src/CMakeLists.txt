@@ -11,6 +11,9 @@ add_subdirectory(loggerlib)
 add_subdirectory(pinyinlib)
 
 
+target_include_directories(core PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(pinyin PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(logger PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 
 

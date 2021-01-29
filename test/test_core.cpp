@@ -1,12 +1,12 @@
 ﻿#include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
-#include "Logger.h"
+#include <loggerlib/Logger.h>
 
 #include <iostream>
 #include <memory>
 
 #include <rttr/type>
-#include < core_Cpp.h>
+#include <corelib/core_Cpp.h>
 class CoreTest : public ::testing::Test {
  protected:
   void SetUp() override;
