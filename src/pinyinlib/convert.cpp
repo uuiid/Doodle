@@ -1,98 +1,47 @@
 #include "convert.h"
-
+#include <boost/locale.hpp>
 #include <loggerlib/logger.h>
+#include <doodlePinyin.h>
 
-#include <QSqlError>
-
-#include <QDebug>
-#include <QTemporaryFile>
-
-#include <thread>
 #include <stdexcept>
+#include <thread>
+#include <regex>
+
 PINYIN_NAMESPACE_S
 
-QTemporaryFile convert::tmpDBFile;
-
-convert::convert() : isinitDB(false), re(), query(), dataBase(), sqlDBPath() {
-  re = QSharedPointer<QRegularExpression>(new QRegularExpression());
+convert::convert() {
+  const auto &resource = bin2cpp::getPinyinDataFile();
+  resource.getBuffer();
+  std::string ZhongWenToPinYin{resource.getBuffer(), resource.getSize()};
+  std::regex regex{R"(\s)"};
+  auto iter = std::sregex_token_iterator(
+      ZhongWenToPinYin.begin(), ZhongWenToPinYin.end(), regex, -1);
+  while (iter != std::sregex_token_iterator{}) {
+    p_list.push_back(*iter);
+    ++iter;
+  }
 }
 
 convert::~convert() {
-  dataBase.close();
 }
 
 std::string convert::toEn(const std::string &conStr) {
-  if (!isinitDB)
-    initDB();
-  QRegularExpressionMatchIterator iter = re->globalMatch(QString::fromStdString(conStr));
-  QString enStr                        = QString::fromStdString(conStr);
-  while (iter.hasNext()) {
-    QRegularExpressionMatch matchStr = iter.next();
-    enStr                            = enStr.replace(matchStr.captured(), toEnOne(matchStr.captured()));
-  }
-  return enStr.toStdString();
-}
-
-void convert::initDB() {
-  if (!createDB())
-    throw std::runtime_error("not search DB");
-  //使用线程id创建不一样的名字
-  auto thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
-  auto db_name   = QString("%1%2").arg("sqlite_pinyin_db").arg(thread_id);
-
-  if (QSqlDatabase::contains(db_name)) {
-    dataBase = QSqlDatabase::database(db_name);
-  } else {
-    dataBase = QSqlDatabase::addDatabase("QSQLITE", db_name);
-    dataBase.setDatabaseName(tmpDBFile.fileName());
-  }
-  if (!dataBase.open()) {
-    DOODLE_LOG_WARN(dataBase.lastError().text().toStdString());
-    throw std::runtime_error(dataBase.lastError().text().toStdString());
-  }
-  dataBase.transaction();
-  initQuery();
-  initExp();
-  //  isinitDB = true;
-}
-
-void convert::initQuery() {
-  //  if (!query)
-  query = QSharedPointer<QSqlQuery>(new QSqlQuery(dataBase));
-}
-
-void convert::initExp() {
-  re->setPattern("[\u4e00-\u9fa5]");
-}
-
-bool convert::createDB() {
-  if (tmpDBFile.exists())
-    return true;
-  if (tmpDBFile.open()) {
-    QFile tmp(":/pinyin/pinyin.db");
-    if (tmp.open(QIODevice::ReadOnly)) {
-      tmpDBFile.write(tmp.readAll());
+  auto datas = boost::locale::conv::to_utf<wchar_t>(conStr, "UTF-8");
+  std::string result{};
+  for (auto data : datas) {
+    if (data >= 0x4e00 && data <= 0x9fa5) {
+      result.append(p_list[data - 0x4e00]);
+    } else {
+      result.append(boost::locale::conv::utf_to_utf<char>(std::wstring{data}));
     }
-    tmp.close();
-  } else {
-    return false;
   }
-  tmpDBFile.close();
-  return true;
+  DOODLE_LOG_INFO(conStr << " to " << result);
+  return result;
 }
 
-QString convert::toEnOne(const QString &conStr) {
-  QString sql = "SELECT en FROM pinyin WHERE znch='%1';";
-  query->prepare(sql.arg(conStr));
-  if (!query->exec()) {
-    DOODLE_LOG_WARN(query->lastError().text().toStdString());
-    throw std::runtime_error(QString("not quert %1").arg(conStr).toStdString());
-  }
-  QString enstr("");
-  if (query->next()) {
-    enstr = query->value(0).toString();
-  }
-  return enstr.left(enstr.size() - 1);
+convert &convert::Get() noexcept {
+  static convert instance;
+  return instance;
 }
 
 DNAMESPACE_E

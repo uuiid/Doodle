@@ -1,11 +1,7 @@
 #include <pinyinlib/convert.h>
-#include <QtDebug>
+#include <gtest/gtest.h>
 
-test_convert::test_convert() {
-}
-
-void test_convert::test_conver() {
-  dopinyin::convert con = dopinyin::convert();
-  QString trs           = con.toEn("aa大小d多少");
-  qDebug() << trs;
+TEST(pinyinlib, convert) {
+  auto trs = dopinyin::convert::Get().toEn("aa大.?小d多dd53少");
+  std::cout << trs << std::endl;
 }

@@ -34,7 +34,6 @@ class CORE_API znchName : public coresqldata {
  private:
   std::string nameZNCH;
   std::string nameEN;
-  dopinyin::convertPtr con;
 
   assClass *p_ptr_assType;
 

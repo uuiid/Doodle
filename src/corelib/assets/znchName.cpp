@@ -34,7 +34,6 @@ znchName::znchName(assClass *at_)
     : coresqldata(),
       nameEN(),
       nameZNCH(),
-      con(dopinyin::convertPtr()),
       p_ptr_assType(at_) {}
 
 void znchName::setName(const std::string &name_) { nameEN = name_; }
@@ -77,9 +76,8 @@ void znchName::deleteSQL() {
 }
 
 void znchName::setName(const std::string &name_, const bool &isZNCH) {
-  if (!con) con = dopinyin::convertPtr(new dopinyin::convert);
   nameZNCH = name_;
-  auto str = con->toEn(name_);
+  auto str = dopinyin::convert::Get().toEn(name_);
 
   if (str.size() > 18) {
     str.erase(str.begin() + 10, str.end() - 6);

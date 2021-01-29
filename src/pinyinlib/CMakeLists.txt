@@ -1,24 +1,28 @@
-set(RESOURE_FILE
-        ${CMAKE_CURRENT_LIST_DIR}/resource/resource.qrc)
 
-qt5_add_resources(RESOURE_FILE ${CMAKE_CURRENT_LIST_DIR}/resource/resource.qrc)
 
-add_library(pinyin SHARED ${RESOURE_FILE})
+
+add_library(pinyin SHARED)
+add_custom_target(pinyin_RESOURE_FILE
+        COMMAND ${BIN2CPP} --file=${CMAKE_CURRENT_LIST_DIR}/resource/zhtopy.txt --output=${CMAKE_CURRENT_BINARY_DIR} --headerfile=doodlePinyin.h --identifier=pinyinData
+        BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.h ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.cpp
+        )
 
 target_sources(pinyin
         PUBLIC
         convert.h
         pinyin_global.h
+        ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.h
         )
 target_sources(pinyin
         PRIVATE
         convert.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.cpp
 )
 
 
-target_link_libraries(pinyin PUBLIC Qt5::Core Qt5::Sql)
-target_link_libraries(pinyin PUBLIC SqlppSqlite)
-target_link_libraries(pinyin PUBLIC logger)
+target_link_libraries(pinyin PRIVATE Boost::locale)
+target_link_libraries(pinyin PRIVATE logger)
+
 target_compile_definitions(pinyin PRIVATE PINYIN_LIBRARY)
 
 

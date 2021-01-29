@@ -25,3 +25,11 @@ TEST(qtcore, settinf_key) {
     std::cout << path.toString().toStdString() << "\n";
   }
 }
+
+TEST(qtcore, tounicode) {
+  const auto data = QString("中");
+  std::cout << data.unicode() << std::endl;
+  std::cout << data.at(0).unicode() << std::endl;
+  std::cout << data.size() << std::endl;
+  std::cout << QString::number(data.at(0).unicode(), 10).toInt();
+}

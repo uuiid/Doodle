@@ -12,7 +12,6 @@
 
 #include <QCoreApplication>
 #include <QTextCodec>
-#include <QSqlQuery>
 #include <QTextStream>
 
 #include <gtest/gtest.h>

@@ -48,6 +48,7 @@ TEST(dboost, normalize_path) {
 
   std::cout << "normalize : " << tmp.normalize().generic_string() << "\n"
             << "lexically_normal :" << tmp.lexically_normal().generic_string() << std::endl;
+}
 
-            
+TEST(dboost, toUtf8) {
 }

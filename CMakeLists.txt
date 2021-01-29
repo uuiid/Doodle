@@ -82,7 +82,10 @@ find_package(gRPC CONFIG REQUIRED)
 
 #搜索qt 安装辅助程序
 find_program(WINQT windeployqt REQUIRED)
-
+find_program(BIN2CPP bin2cpp REQUIRED
+HINTS 
+bin2cpp-2.3.0-win32/bin
+)
 # add_subdirectory(logger)
 # add_subdirectory(fileSystem)
 #add_subdirectory(fileSyn)

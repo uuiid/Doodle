@@ -1,35 +1,23 @@
 ﻿#pragma once
 
 #include "pinyinlib/pinyin_global.h"
-#include <QSqlDatabase>
-#include <QSharedPointer>
-#include <QRegularExpression>
-#include <QSqlQuery>
-#include <QDir>
 
 PINYIN_NAMESPACE_S
 
 class PINYIN_EXPORT convert {
  public:
+  std::string toEn(const std::string &conStr);
+  static convert &Get() noexcept;
+
+  convert &operator=(const convert &) = delete;
+  convert(const convert &)            = delete;
+
+ private:
   convert();
   ~convert();
-  std::string toEn(const std::string &conStr);
 
  private:
-  void initDB();
-  void initQuery();
-  void initExp();
-  bool createDB();
-  QString toEnOne(const QString &conStr);
-
- private:
-  QSqlDatabase dataBase;
-  QSharedPointer<QDir> sqlDBPath;
-  QSharedPointer<QRegularExpression> re;
-  QSharedPointer<QSqlQuery> query;
-
-  bool isinitDB;
-  static QTemporaryFile tmpDBFile;
+  std::vector<std::string> p_list;
 };
 
 DNAMESPACE_E

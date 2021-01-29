@@ -2,7 +2,10 @@
 #include <fstream>
 #include <corelib/core_Cpp.h>
 #include <Windows.h>
+#include <iostream>
+#include <locale>
 
+#include <boost/locale.hpp>
 TEST(DSTD, map_netDir) {
   NETRESOURCE resources{};
   resources.dwType       = RESOURCETYPE_DISK;
@@ -40,10 +43,15 @@ TEST(DSTD, readBigFile) {
   int64_t count{0};
   file.seekg(2152000000, std::ios::beg);
   file.read(data.data(), off);
-  // for (size_t i = 0; i < 342; ++i) {
-  //   if (!file.good()) break;
-  // }
-
   if (file.fail())
     std::cout << "err : " << count << std::endl;
+}
+
+TEST(DSTD, std_locale) {
+  auto data = boost::locale::conv::to_utf<wchar_t>("中", "UTF-8");
+  std::cout << data.size() << std::endl;
+  std::cout << data.at(0) << std::endl;
+  std::cout << data.data() << std::endl;
+  const std::string data2{};
+  // data2
 }

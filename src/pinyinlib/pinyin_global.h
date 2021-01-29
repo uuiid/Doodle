@@ -1,22 +1,18 @@
 ﻿#pragma once
 
-
-#include <QtCore/qglobal.h>
-#include <QSharedPointer>
+#include <string>
+#include <memory>
+#include <vector>
 
 #if defined(PINYIN_LIBRARY)
-#  define PINYIN_EXPORT Q_DECL_EXPORT
+#define PINYIN_EXPORT __declspec(dllexport)
 #else
-#  define PINYIN_EXPORT Q_DECL_IMPORT
+#define PINYIN_EXPORT __declspec(dllimport)
 #endif
 
 #define PINYIN_NAMESPACE_S namespace dopinyin {
 #define DNAMESPACE_E }
 
 PINYIN_NAMESPACE_S
-
 class convert;
-
-typedef QSharedPointer<convert> convertPtr;
-
 DNAMESPACE_E

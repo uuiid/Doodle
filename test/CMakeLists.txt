@@ -1,7 +1,8 @@
 ﻿add_executable(test_my
+        main.cpp
+        test_convert.cpp
         test_core.cpp
         test_fileSystem.cpp
-        main.cpp
         test_boost.cpp 
         test_qtCore.cpp
         test_server.cpp
@@ -26,6 +27,9 @@ target_compile_definitions(test_my PRIVATE _WIN32_WINNT=0x0A00)
 #连接谷歌测试框架
 target_link_libraries(test_my
         PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+
+target_link_libraries(test_my PRIVATE Boost::locale)
+
 # include(CTest)
 enable_testing()
 include(GoogleTest)

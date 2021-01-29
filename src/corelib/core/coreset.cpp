@@ -167,9 +167,8 @@ void coreSet::setDepartment(const dstring &value) {
 dstring coreSet::getUser() const { return user; }
 
 dstring coreSet::getUser_en() const {
-  dopinyin::convert con;
   return boost::algorithm::to_lower_copy(
-      con.toEn(user));
+      dopinyin::convert::Get().toEn(user));
 }
 
 void coreSet::setUser(const dstring &value) { user = value; }
@@ -300,7 +299,7 @@ bool coreSet::subUser(const dstring &user_str) {
   doodle::User table{};
 
   auto pow =
-      boost::algorithm::to_lower_copy(dopinyin::convert{}.toEn(user_str));
+      boost::algorithm::to_lower_copy(dopinyin::convert::Get().toEn(user_str));
   db->run(sqlpp::insert_into(table).set(table.user     = user_str,
                                         table.password = pow));
   return true;
