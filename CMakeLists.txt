@@ -83,18 +83,18 @@ find_package(gRPC CONFIG REQUIRED)
 #搜索qt 安装辅助程序
 find_program(WINQT windeployqt REQUIRED)
 
-add_subdirectory(logger)
-add_subdirectory(fileSystem)
+# add_subdirectory(logger)
+# add_subdirectory(fileSystem)
 #add_subdirectory(fileSyn)
-add_subdirectory(pinyin)
-add_subdirectory(core)
-add_subdirectory(doodle_GUI)
-add_subdirectory(doodle_server)
+# add_subdirectory(pinyin)
+# add_subdirectory(core)
+# add_subdirectory(doodle_GUI)
+# add_subdirectory(doodle_server)
 add_subdirectory(plug)
-
+add_subdirectory(src)
 
 enable_testing()
-add_subdirectory(test)
+# add_subdirectory(test)
 #=====================安装打包过程===============================
 # list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(mypack)

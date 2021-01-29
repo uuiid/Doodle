@@ -4,7 +4,9 @@
       "name": "x64-Debug",
       "generator": "Ninja",
       "configurationType": "Debug",
-      "inheritEnvironments": [ "msvc_x64" ],
+      "inheritEnvironments": [
+        "msvc_x64"
+      ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\install",
       "cmakeCommandArgs": "",
@@ -27,7 +29,9 @@
       "cmakeCommandArgs": "-DRUN_QT_TOOL=ON -DRUN_fixup=ON -DRUN_COPY=ON",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x64" ],
+      "inheritEnvironments": [
+        "msvc_x64"
+      ],
       "variables": [
         {
           "name": "Qt5_DIR",

@@ -1,8 +1,0 @@
-﻿<!DOCTYPE RCC>
-<RCC version="1.0">
-    <qresource prefix="/">
-        <file>resource/_GlobalSettings.xml</file>
-        <file>resource/template.ffs_batch</file>
-        <file>resource/mayaExport.py</file>
-    </qresource>
-</RCC>
