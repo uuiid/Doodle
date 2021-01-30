@@ -9,17 +9,21 @@
 #pragma once
 
 #include <fileSystem/fileSystem_global.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <nlohmann/json.hpp>
+#include <shared_mutex>
 
 namespace zmq {
 class context_t;
 };
 
 DSYSTEM_S
+class Path;
 
 class DSYSTEM_API DfileSyntem {
  public:
-  ~DfileSyntem();
   DfileSyntem(const DfileSyntem &) = delete;
+  ~DfileSyntem();
   DfileSyntem &operator=(const DfileSyntem &s) = delete;
 
   static DfileSyntem &get();
@@ -29,23 +33,34 @@ class DSYSTEM_API DfileSyntem {
                const std::string &password,
                const std::string &prijectName);
 
-  bool upload(const dpath &localFile, const dpath &remoteFile) noexcept;
-  bool down(const dpath &localFile, const dpath &remoteFile) noexcept;
-  bool exists(const dpath &remoteFile) const noexcept;
-  std::unique_ptr<std::fstream> open(const dpath &remoteFile, std::ios_base::openmode mode) const noexcept;
+  bool upload(const dpath &localFile, const dpath &remoteFile, bool force = true) noexcept;
+  bool down(const dpath &localFile, const dpath &remoteFile, bool force = true) noexcept;
+  bool exists(const dpath &remoteFile) noexcept;
+  bool createDir(const dpath &remoteFile) noexcept;
 
+  std::shared_ptr<std::string> readFileToString(const dpath &remoteFile);
+  bool writeFile(const dpath &remoteFile, const std::shared_ptr<std::string> &data);
   static bool copy(const dpath &sourePath, const dpath &trange_path, bool backup) noexcept;
-  static bool removeDir(const dpath &path);
 
  private:
+  static bool removeDir(const dpath &path);
+  bool updateFile(const dpath &localFile, const dpath &remoteFile, bool force = true, const dpath &backUpPath = "");
+  bool downFile(const dpath &localFile, const dpath &remoteFile, bool force = true);
+  std::unique_ptr<Path> getInfo(const dpath *path);
+
   DfileSyntem();
   std::string p_host_;
   int p_prot_;
+
+  std::string tmp_host_prot;
+
   std::string p_name_;
   std::string p_password_;
 
   std::string p_ProjectName;
   std::unique_ptr<zmq::context_t> p_context_;
+
+  std::shared_mutex mutex_;
 };
 
 DSYSTEM_E

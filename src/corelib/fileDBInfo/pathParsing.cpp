@@ -20,13 +20,13 @@ pathParsing::pathParsing(fileSqlInfo* file)
 }
 
 dpathList pathParsing::Path(const std::string& pathstr) {
-  /**
-   *情况一：
-   **传入路径
-   *情况二：
-   **传入json
-   *情况三：
-   **传入字符串 
+  /* *
+   * 情况一：
+   * *传入路径
+   * 情况二：
+   * *传入json
+   * 情况三：
+   * *传入字符串 
    */
   dpath path{pathstr};
 
@@ -36,11 +36,11 @@ dpathList pathParsing::Path(const std::string& pathstr) {
   auto& fileSys = doSystem::DfileSyntem::get();
 
   if (fileSys.exists(pathstr) && path.extension() == ".json") {
-    auto file = fileSys.open(path, std::ios_base::in);
+    auto file = fileSys.readFileToString(path);
 
     nlohmann::json root{};
     try {
-      (*file) >> root;
+      root = nlohmann::json::parse(*file);
       for (auto&& i : root) {
         if (i.is_string())
           p_path_list.push_back(i.get<std::string>());
@@ -49,7 +49,7 @@ dpathList pathParsing::Path(const std::string& pathstr) {
       std::cout << err.what() << std::endl;
       p_path_list.push_back(pathstr);
     }
-    file->close();
+
   } else {
     try {
       //如果是pathjson流就直接解析
@@ -86,8 +86,9 @@ void pathParsing::write() {
   } catch (const nullptr_error& err) {
     DOODLE_LOG_ERROR(err.what());
   }
-  auto file = doSystem::DfileSyntem::get().open(*p_path_row, std::ios_base::out);
-  (*file) << root.dump();
+  auto strPtr = std::make_shared<std::string>();
+  strPtr->append(root.dump());
+  doSystem::DfileSyntem::get().writeFile(*p_path_row, strPtr);
 }
 
 std::string pathParsing::DBInfo() const {

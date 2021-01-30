@@ -6,26 +6,25 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\fileSystem\src\DfileSyntem.cpp
  */
+
 #include "DfileSyntem.h"
-#include <curl/curl.h>
+#include <fileSystem/system/Path.h>
+#include <fileSystem/system/ftpsession.h>
+#include <magic_enum.hpp>
 
 #include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 
 #include <loggerlib/Logger.h>
-#include <QUrl>
 #include <regex>
 #include <stdexcept>
 
-#include <fileSystem/system/ftpsession.h>
-#include <iostream>
-#include <iomanip>
-// #include <ctime>
-
+#include <nlohmann/json.hpp>
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
 
-/*保护data里面的宏__我他妈的*/
+// /*保护data里面的宏__我他妈的*/
 #ifdef min
 #undef min
 #endif
@@ -33,11 +32,13 @@
 #undef max
 #endif
 #include <date/date.h>
-/*保护data里面的宏__我他妈的*/
-
+// /*保护data里面的宏__我他妈的*/
 #include <time.h>
+#include <iostream>
+#include <queue>
 DSYSTEM_S
-DfileSyntem::~DfileSyntem() { curl_global_cleanup(); }
+
+DfileSyntem::~DfileSyntem() {}
 
 DfileSyntem &DfileSyntem::get() {
   static DfileSyntem install;
@@ -49,39 +50,190 @@ void DfileSyntem::session(const std::string &host,
                           const std::string &name,
                           const std::string &password,
                           const std::string &prijectName) {
+  std::unique_lock<std::shared_mutex> lock(mutex_);
+
   p_host_       = host;
   p_prot_       = prot;
   p_name_       = name;
   p_password_   = password;
   p_ProjectName = prijectName;
+
+  boost::format str{"tcp://%s:%d"};
+  str % host % prot;
+  tmp_host_prot = str.str();
 }
 
-bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile) noexcept {
-  return copy(localFile, p_ProjectName / remoteFile, true);
-}
+bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) noexcept {
+  //创建线程池多线程复制
+  boost::asio::thread_pool pool(4);
 
-bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile) noexcept {
-  return copy(p_ProjectName / remoteFile, localFile, false);
-}
+  auto time     = std::chrono::system_clock::now();
+  auto time_str = date::format("%Y_%m_%d_%H_%M_%S", time);
 
-bool DfileSyntem::exists(const dpath &remoteFile) const noexcept {
-  try {
-    return boost::filesystem::exists(p_ProjectName / remoteFile);
-  } catch (std::exception &e) {
-    DOODLE_LOG_INFO(e.what());
-    return false;
+  if (fileSys::is_directory(localFile)) {
+    auto dregex      = std::regex(remoteFile.generic_string());
+    auto backup_path = remoteFile.parent_path() / "backup" / time_str;
+    for (auto &&item : fileSys::recursive_directory_iterator(localFile)) {
+      auto targetPath = std::regex_replace(
+          item.path().generic_string(), dregex, remoteFile.generic_string());
+
+      if (fileSys::is_regular_file(item.path())) {
+        boost::asio::post(pool, [=]() {
+          updateFile(item.path(), targetPath, false, backup_path);
+        });
+      }
+    }
+    return true;
+  } else {
+    auto backup_path = remoteFile.parent_path() / "backup" / time_str / remoteFile.filename();
+    return updateFile(localFile, remoteFile, false, backup_path);
   }
 }
 
-std::unique_ptr<std::fstream> DfileSyntem::open(const dpath &remoteFile, std::ios_base::openmode mode) const noexcept {
-  if (!exists(remoteFile)) {
-    boost::filesystem::create_directories(p_ProjectName / remoteFile.parent_path());
+bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) noexcept {
+  //创建线程池多线程复制
+  boost::asio::thread_pool pool(4);
+
+  zmq::socket_t socket{*p_context_, zmq::socket_type::req};
+  nlohmann::json root;
+  zmq::multipart_t k_muMsg{};
+  std::string project_name{};
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    socket.connect(tmp_host_prot);
+    project_name = p_ProjectName;
   }
-  auto file = std::unique_ptr<std::fstream>(new boost::filesystem::fstream(p_ProjectName / remoteFile, mode));
-  if (!file->is_open()) {
-    file->open(remoteFile.generic_string(), mode);
+
+  auto serverPath = getInfo(&remoteFile);
+  std::queue<Path> pathQueue;
+  pathQueue.push(*serverPath);
+
+  while (pathQueue.empty()) {
+    if (pathQueue.front().isDirectory()) {
+      root.clear();
+      root["class"]           = "filesystem";
+      root["function"]        = magic_enum::enum_name(fileOptions::list);
+      root["body"]["path"]    = pathQueue.front().path()->generic_string();
+      root["body"]["project"] = project_name;
+
+      k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+      k_muMsg.send(socket);
+
+      k_muMsg.recv(socket);
+      root = nlohmann::json::parse(k_muMsg.pop().to_string());
+      for (auto &&item : root["body"]) {
+        pathQueue.push(item.get<Path>());
+      }
+    } else {
+      downFile(localFile, pathQueue.front().path()->generic_string(), false);
+    }
+    pathQueue.pop();
   }
-  return file;
+  return true;
+}
+
+bool DfileSyntem::exists(const dpath &remoteFile) noexcept {
+  auto serverPath = getInfo(&remoteFile);
+  return serverPath->Exist();
+}
+
+bool DfileSyntem::createDir(const dpath &remoteFile) noexcept {
+  zmq::socket_t socket{*p_context_, zmq::socket_type::req};
+  nlohmann::json root;
+  std::string prjectName{};
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    socket.connect(tmp_host_prot);
+    prjectName = p_ProjectName;
+  }
+  root["class"]           = "filesystem";
+  root["function"]        = magic_enum::enum_name(fileOptions::createFolder);
+  root["body"]["project"] = prjectName;
+  root["body"]["path"]    = remoteFile.generic_string();
+
+  zmq::multipart_t k_muMsg{};
+  k_muMsg.push_back(zmq::message_t{root.dump()});
+  k_muMsg.send(socket);
+
+  k_muMsg.recv(socket);
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  if (root["status"] != "ok") return false;
+  auto serverPath = root["body"].get<Path>();
+  return serverPath.Exist();
+}
+
+std::shared_ptr<std::string> DfileSyntem::readFileToString(const dpath &remoteFile) {
+  zmq::socket_t socket{*p_context_, zmq::socket_type::req};
+  std::string prjectName{};
+  auto str = std::make_shared<std::string>();
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    socket.connect(tmp_host_prot);
+    prjectName = p_ProjectName;
+  }
+  nlohmann::json root;
+  zmq::multipart_t k_muMsg{};
+
+  auto serverPath = getInfo(&remoteFile);
+  if (serverPath->Exist() && !serverPath->isDirectory()) {
+    auto size = root["body"]["size"].get<uint64_t>();
+    const uint64_t period{size / off};
+    for (uint64_t i = 0; i <= period; ++i) {
+      auto end = std::min(off * (i + 1), size);
+      root.clear();
+
+      root["class"]           = "filesystem";
+      root["function"]        = magic_enum::enum_name(fileOptions::down);
+      root["body"]["path"]    = remoteFile.generic_string();
+      root["body"]["project"] = prjectName;
+      root["body"]["start"]   = i * off;
+      root["body"]["end"]     = end;
+      k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+      k_muMsg.send(socket);
+
+      k_muMsg.recv(socket);
+      root = nlohmann::json::parse(k_muMsg.pop().to_string());
+      if (root["status"] != "ok") return false;
+      auto data = k_muMsg.pop();
+      str->append(data.to_string());
+    }
+  }
+  return str;
+}
+
+bool DfileSyntem::writeFile(const dpath &remoteFile, const std::shared_ptr<std::string> &data) {
+  zmq::socket_t socket{*p_context_, zmq::socket_type::req};
+  std::string prjectName{};
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    socket.connect(tmp_host_prot);
+    prjectName = p_ProjectName;
+  }
+  nlohmann::json root;
+  zmq::multipart_t k_muMsg{};
+
+  auto serverPath = getInfo(&remoteFile);
+  auto size       = data->size();
+  const uint64_t period{size / off};
+  for (uint64_t i = 0; i <= period; ++i) {
+    auto end = std::min(off * (i + 1), size);
+    root.clear();
+
+    root["class"]           = "filesystem";
+    root["function"]        = magic_enum::enum_name(fileOptions::down);
+    root["body"]["path"]    = remoteFile.generic_string();
+    root["body"]["project"] = prjectName;
+    root["body"]["start"]   = i * off;
+    root["body"]["end"]     = end;
+    k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+    k_muMsg.push_back(std::move(zmq::message_t{data->data(), end - (i * off)}));
+    k_muMsg.send(socket);
+
+    k_muMsg.recv(socket);
+    root = nlohmann::json::parse(k_muMsg.pop().to_string());
+    if (root["status"] != "ok") return false;
+  }
+  return true;
 }
 
 bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool backup) noexcept {
@@ -95,14 +247,6 @@ bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool ba
   dpath backup_path = "";
   dstring time_str  = "";
   if (backup) {
-    // //使用std
-    // std::time_t t = std::time(nullptr);
-    // std::tm tm = *std::localtime(&t);
-
-    //使用msvc_x64
-    // struct tm k_tm;
-    // time_t time_seconds = time(nullptr);
-    // localtime_s(&k_tm, &time_seconds);
     //使用c++14库
     auto time = std::chrono::system_clock::now();
     // std::stringstream k_stringstream;
@@ -170,17 +314,156 @@ bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool ba
   return true;
 }
 bool DfileSyntem::removeDir(const dpath &path) {
-  boost::filesystem::remove_all(path);
+  throw std::runtime_error("not is function");
+  return false;
+}
+
+bool DfileSyntem::updateFile(const dpath &localFile, const dpath &remoteFile, bool force, const dpath &backUpPath) {
+  zmq::socket_t socket{*p_context_, zmq::socket_type::req};
+  std::string prjectName{};
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    socket.connect(tmp_host_prot);
+    prjectName = p_ProjectName;
+  }
+  nlohmann::json root;
+  zmq::multipart_t k_muMsg{};
+
+  auto serverPath = getInfo(&remoteFile);
+
+  //如果强制是false 并且服务器上存在文件， 并且修改时间服务器大于等于本地 那么直接忽略
+  auto modifyTime = boost::posix_time::from_time_t(boost::filesystem::last_write_time(localFile));
+  if (!force && serverPath->Exist() && serverPath->modifyTime() >= modifyTime) {
+    return true;
+  }
+
+  // 在这里移动备份文件
+  root.clear();
+  root["class"]                     = "filesystem";
+  root["function"]                  = magic_enum::enum_name(fileOptions::rename);
+  root["body"]["source"]["path"]    = remoteFile.generic_string();
+  root["body"]["source"]["project"] = prjectName;
+  root["body"]["target"]["path"]    = backUpPath.generic_string();
+  root["body"]["target"]["project"] = prjectName;
+  k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+  k_muMsg.send(socket);
+
+  k_muMsg.recv(socket);
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  if (root["status"] != "ok") return false;
+
+  //===========================
+  std::fstream file{localFile.generic_string(), std::ios::in | std::ios::binary};
+  if (!file.is_open()) file.open(localFile.generic_string(), std::ios::in | std::ios::binary);
+  auto size = boost::filesystem::file_size(localFile);
+
+  const uint64_t period{size / off};
+  for (uint64_t i = 0; i <= period; ++i) {
+    auto end = std::min(off * (i + 1), size);
+    root.clear();
+    root["class"]           = "filesystem";
+    root["function"]        = magic_enum::enum_name(fileOptions::update);
+    root["body"]["path"]    = remoteFile.generic_string();
+    root["body"]["project"] = prjectName;
+    root["body"]["start"]   = i * off;
+    root["body"]["end"]     = end;
+    k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+
+    auto data = zmq::message_t{off};
+    file.seekg(i * off);
+    file.read((char *)data.data(), off);
+    k_muMsg.push_back(std::move(data));
+
+    k_muMsg.send(socket);
+    k_muMsg.recv(socket);
+
+    root = nlohmann::json::parse(k_muMsg.pop().to_string());
+    if (root["status"] != "ok")
+      return false;
+  }
   return true;
 }
+
+bool DfileSyntem::downFile(const dpath &localFile, const dpath &remoteFile, bool force) {
+  zmq::socket_t socket{*p_context_, zmq::socket_type::req};
+  std::string prjectName{};
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    socket.connect(tmp_host_prot);
+    prjectName = p_ProjectName;
+  }
+  nlohmann::json root;
+  zmq::multipart_t k_muMsg{};
+
+  auto serverPath = getInfo(&remoteFile);
+
+  //如果强制是false 并且服务器上存在文件， 并且修改时间服务器小于等于本地 那么直接忽略
+  auto modifyTime = boost::posix_time::from_time_t(boost::filesystem::last_write_time(localFile));
+  if (!force && serverPath->Exist() && serverPath->modifyTime() <= modifyTime) {
+    return true;
+  }
+
+  std::fstream file{localFile.generic_string(), std::ios::out | std::ios::binary};
+  if (!file.is_open()) file.open(localFile.generic_string(), std::ios::out | std::ios::binary);
+
+  auto size = root["body"]["size"].get<uint64_t>();
+  const uint64_t period{size / off};
+  for (uint64_t i = 0; i <= period; ++i) {
+    auto end = std::min(off * (i + 1), size);
+    root.clear();
+
+    root["class"]           = "filesystem";
+    root["function"]        = magic_enum::enum_name(fileOptions::down);
+    root["body"]["path"]    = remoteFile.generic_string();
+    root["body"]["project"] = prjectName;
+    root["body"]["start"]   = i * off;
+    root["body"]["end"]     = end;
+    k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+    k_muMsg.send(socket);
+
+    k_muMsg.recv(socket);
+    root = nlohmann::json::parse(k_muMsg.pop().to_string());
+    if (root["status"] != "ok") return false;
+    auto data = k_muMsg.pop();
+    file.write((char *)data.data(), data.size());
+  }
+  return true;
+}
+
+std::unique_ptr<Path> DfileSyntem::getInfo(const dpath *path) {
+  auto k_path = std::make_unique<Path>();
+  zmq::socket_t socket{*p_context_, zmq::socket_type::req};
+  nlohmann::json root;
+  std::string prjectName{};
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    socket.connect(tmp_host_prot);
+    prjectName = p_ProjectName;
+  }
+  root["body"]["project"] = prjectName;
+  root["class"]           = "filesystem";
+  root["function"]        = magic_enum::enum_name(fileOptions::getInfo);
+  root["body"]["path"]    = path->generic_string();
+
+  zmq::multipart_t k_muMsg{};
+  k_muMsg.push_back(zmq::message_t{root.dump()});
+  k_muMsg.send(socket);
+
+  k_muMsg.recv(socket);
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  if (root["status"] != "ok") return false;
+  *k_path = root["body"].get<Path>();
+  return k_path;
+}
+
 DfileSyntem::DfileSyntem()
     : p_host_(),
       p_prot_(),
+      tmp_host_prot(),
       p_name_(),
       p_password_(),
       p_ProjectName(),
-      p_context_(std::make_unique<zmq::context_t>(4)) {
-  curl_global_init(CURL_GLOBAL_ALL);
-};
+      p_context_(std::make_unique<zmq::context_t>(4)),
+      mutex_(){};
 
 DSYSTEM_E

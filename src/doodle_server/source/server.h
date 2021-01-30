@@ -32,6 +32,9 @@ enum class fileOptions {
  * *注意：
  * *多一帧作为二进制数据， 不放到json中为了快速序列化
  * 
+ * *path类需要：
+ * *["path"] -> 路径
+ * *["project"] -> 项目名称
  */
 class Handler {
  public:

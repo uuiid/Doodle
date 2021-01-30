@@ -8,8 +8,8 @@ DOODLE_NAMESPACE_S
 class IoFile;
 class Path {
  public:
-  Path(std::string& str);
   Path();
+  Path(std::string& str);
   virtual ~Path();
 
   fileSys::path* path() const;
@@ -31,10 +31,11 @@ class Path {
 
   boost::posix_time::ptime modifyTime() const;
 
+ private:
   friend void to_json(nlohmann::json& j, const Path& p);
   friend void from_json(const nlohmann::json& j, Path& p);
+  friend class nlohmann::basic_json<>;
 
- private:
   void to_json(nlohmann::json& j) const;
   void from_json(const nlohmann::json& j);
 

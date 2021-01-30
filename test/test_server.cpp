@@ -103,7 +103,6 @@ TEST(doodleServer, downFile) {
 
   k_muMsg.recv(socket);
 
-
   root = nlohmann::json::parse(k_muMsg.pop().to_string());
   std::fstream file{};
   file.open("D:/tmp/test_server/test.7z", std::ios::out | std::ios::binary);
@@ -119,7 +118,6 @@ TEST(doodleServer, downFile) {
       for (size_t i = 0; i <= period; ++i) {
         auto end = std::min(off * (i + 1), size);
         root.clear();
-        root["test"]            = "test_message";
         root["class"]           = "filesystem";
         root["function"]        = "down";
         root["body"]["path"]    = "/cache/BiManMan_UE4.7z";  // "/cache/BiManMan_UE4.7z";
@@ -194,36 +192,33 @@ TEST(doodleServer, updataFile) {
   root = nlohmann::json::parse(k_muMsg.pop().to_string());
   std::fstream file{};
   file.open("D:/tmp/test_server/test.7z", std::ios::in | std::ios::binary);
-  if (root["status"] == "ok") {
-    if (true /* !root["body"]["exists"] */) {
-      auto size = boost::filesystem::file_size("D:/tmp/test_server/test.7z");
+  ASSERT_TRUE(root["status"] == "ok");
+  auto size = boost::filesystem::file_size("D:/tmp/test_server/test.7z");
 
-      const off_t off{8000000};
-      const uint64_t period{size / off};
+  const uint64_t off{8000000};
+  const uint64_t period{size / off};
 
-      for (size_t i = 0; i <= period; ++i) {
-        auto end = std::min(off * (i + 1), size);
-        root.clear();
-        root["class"]           = "filesystem";
-        root["function"]        = "update";
-        root["body"]["path"]    = "/cache/tset_updata_server.7z";
-        root["body"]["project"] = "test";
-        root["body"]["start"]   = i * off;
-        root["body"]["end"]     = end;
-        k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+  for (size_t i = 0; i <= period; ++i) {
+    auto end = std::min(off * (i + 1), size);
+    root.clear();
+    root["class"]           = "filesystem";
+    root["function"]        = "update";
+    root["body"]["path"]    = "/cache/tset_updata_server.7z";
+    root["body"]["project"] = "test";
+    root["body"]["start"]   = i * off;
+    root["body"]["end"]     = end;
+    k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
 
-        auto data = zmq::message_t{off};
-        file.seekg(i * off);
-        file.read((char*)data.data(), off);
-        k_muMsg.push_back(std::move(data));
+    auto data = zmq::message_t{off};
+    file.seekg(i * off);
+    file.read((char*)data.data(), off);
+    k_muMsg.push_back(std::move(data));
 
-        k_muMsg.send(socket);
-        k_muMsg.recv(socket);
-        // k_muMsg.pop();  //弹出空帧
-        root = nlohmann::json::parse(k_muMsg.pop().to_string());
-        ASSERT_TRUE(root["status"] == "ok");
-      }
-    }
+    k_muMsg.send(socket);
+    k_muMsg.recv(socket);
+    // k_muMsg.pop();  //弹出空帧
+    root = nlohmann::json::parse(k_muMsg.pop().to_string());
+    ASSERT_TRUE(root["status"] == "ok");
   }
 }
 
@@ -236,7 +231,6 @@ TEST(doodleServer, rename) {
 
   zmq::multipart_t k_muMsg{};
 
-  root["test"]                      = "test_message";
   root["class"]                     = "filesystem";
   root["function"]                  = "rename";
   root["body"]["source"]["path"]    = "/cache/tset_updata_server.7z";
@@ -263,7 +257,6 @@ TEST(doodleServer, list) {
 
   zmq::multipart_t k_muMsg{};
 
-  root["test"]            = "test_message";
   root["class"]           = "filesystem";
   root["function"]        = "list";
   root["body"]["path"]    = "/cache/";

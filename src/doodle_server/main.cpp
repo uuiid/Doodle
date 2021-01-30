@@ -27,16 +27,14 @@ int main(int argc, char const *argv[]) try {
   proxy_socket.bind(doodle::proxy_point);
 
   auto k_handler = doodle::Handler{};
-  std::thread t{
-      [=](doodle::Handler h, zmq::context_t *c) {
-        h(c);
-      },
-      k_handler, &context};
-  std::thread t2{
-      [=](doodle::Handler h, zmq::context_t *c) {
-        h(c);
-      },
-      k_handler, &context};
+
+  for (int i = 0; i < 8; ++i) {
+    std::thread t{
+        [=](doodle::Handler h, zmq::context_t *c) {
+          h(c);
+        },
+        k_handler, &context};
+  }
   zmq::proxy(socket, proxy_socket);
 
   return 0;

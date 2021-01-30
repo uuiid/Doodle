@@ -23,6 +23,8 @@ std::shared_ptr<IoFile> FileSystem::open(const std::shared_ptr<fileSys::path>& p
     return (*file)->shared_from_this();
   } else {
     if (!fileSys::exists(*path)) {
+      if (!fileSys::exists(path->parent_path()))
+        fileSys::create_directories(path->parent_path());
       fileSys::fstream f{*path, std::ios::out | std::ios::binary};
     }
     auto k_p = std::make_shared<IoFile>(path);

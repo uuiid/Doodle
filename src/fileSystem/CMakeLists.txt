@@ -7,6 +7,7 @@ set(HEADER_FILES
         fileSystem_global.h
         system/DfileSyntem.h
         system/ftpsession.h
+        system/Path.h
         )
 
 add_library(fileSystem SHARED
@@ -14,6 +15,7 @@ add_library(fileSystem SHARED
 
         system/DfileSyntem.cpp
         system/ftpsession.cpp
+        system/Path.cpp
         fileSystem_cpp.h
         )
 

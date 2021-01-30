@@ -22,12 +22,16 @@
 #define DSYSTEM_S namespace doSystem {
 #define DSYSTEM_E }
 
-DSYSTEM_S
+namespace boost::filesystem {
+class path;
+}
 
+DSYSTEM_S
+namespace fileSys = boost::filesystem;
 class DfileSyntem;
 class ftpSession;
 typedef std::shared_ptr<ftpSession> ftpSessionPtr;
 using dstring = std::string;
 using dpath   = boost::filesystem::path;
-
+const static uint64_t off{8000000};
 DSYSTEM_E

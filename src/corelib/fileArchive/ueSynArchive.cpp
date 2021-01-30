@@ -126,23 +126,23 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   boost::format shot(DOODLE_SHFORMAT);
   dstringList listcreates{"Checkpoint", "Light", "Ren"};
   dstringList listDep{"Light", "VFX"};
-  auto session = doSystem::DfileSyntem::get().session();
-  server       = set.getAssRoot() / set.getDepartment() / *create_path /
+  auto &session = doSystem::DfileSyntem::get();
+  server        = set.getAssRoot() / set.getDepartment() / *create_path /
            DOODLE_CONTENT / "shot" / episodes_ptr->getEpisdes_str();
-  session->createDir(server.generic_string());
+  session.createDir(server.generic_string());
 
   for (int kI = 0; kI < 120; ++kI) {
     auto ks1 = server / (shot % kI).str();
-    session->createDir({ks1.generic_string()}, false);
+    session.createDir({ks1.generic_string()});
 
     for (const auto &listcreate : listcreates) {
       auto ks3 = ks1 / listcreate;
-      session->createDir({ks3.generic_string()}, false);
+      session.createDir({ks3.generic_string()});
 
       if (listcreate == *listcreates.begin()) {
         for (const auto &list_dep : listDep) {
           auto ks2 = ks3 / list_dep;
-          session->createDir({ks2.generic_string()}, false);
+          session.createDir({ks2.generic_string()});
         }
       }
     }

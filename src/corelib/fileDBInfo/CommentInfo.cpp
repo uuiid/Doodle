@@ -30,13 +30,13 @@ std::vector<std::string> CommentInfo::Info(const std::string &pathStr) {
   auto &fileSys = doSystem::DfileSyntem::get();
 
   if (fileSys.exists(path) && path.extension() == ".json") {  //传入路径的情况
-    auto file = fileSys.open(path, std::ios_base::in);
+    auto file = fileSys.readFileToString(path);
 
     *p_path = path;
     nlohmann::json root{};
 
     try {
-      (*file) >> root;
+      root = nlohmann::json::parse(*file);
       for (auto it : root) {
         p_info_list.push_back(it.get<std::string>());
       }
@@ -81,10 +81,9 @@ void CommentInfo::write() {
   } catch (const nullptr_error &err) {
     DOODLE_LOG_ERROR(err.what());
   }
-  auto file = doSystem::DfileSyntem::get().open(*p_path,
-                                                std::ios_base::out);
-
-  (*file) << root.dump();
+  auto strPtr = std::make_shared<std::string>();
+  strPtr->append(root.dump());
+  doSystem::DfileSyntem::get().writeFile(*p_path, strPtr);
 }
 
 std::string CommentInfo::DBInfo() const {
