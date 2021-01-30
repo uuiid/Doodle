@@ -10,6 +10,7 @@ add_subdirectory(share)
 
 
 target_include_directories(doodleServer PRIVATE ${Boost_INCLUDE_DIR})
+target_link_libraries(doodleServer PRIVATE logger)
 target_link_libraries(doodleServer PRIVATE cppzmq cppzmq-static) # zmq消息库,主要
 
 target_link_libraries(doodleServer PRIVATE date::date date::date-tz) #时间库

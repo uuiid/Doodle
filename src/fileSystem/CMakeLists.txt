@@ -25,6 +25,7 @@ target_link_libraries(fileSystem PRIVATE CURL::libcurl)
 target_link_libraries(fileSystem PRIVATE magic_enum::magic_enum)
 target_link_libraries(fileSystem PRIVATE logger)
 target_link_libraries(fileSystem PRIVATE date::date date::date-tz)
+target_link_libraries(fileSystem PRIVATE cppzmq cppzmq-static)
 #编译宏
 target_compile_definitions(fileSystem PRIVATE _WIN32_WINNT=0x0A00)
 target_compile_definitions(fileSystem PRIVATE FILESYSTEM_LIBRARY)

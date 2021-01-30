@@ -2,6 +2,7 @@
 #include <doodle_server/source/Project.h>
 
 #include <doodle_server/source/FileSystem.h>
+#include <loggerlib/Logger.h>
 #include <boost/filesystem.hpp>
 #include <chrono>
 DOODLE_NAMESPACE_S
@@ -43,6 +44,9 @@ bool Path::createFolder() const {
 }
 
 bool Path::read(char* buffer, uint64_t size, uint64_t offset) {
+  DOODLE_LOG_INFO(p_path->generic_string()
+                  << "size :" << size
+                  << "offset : " << offset);
   if (!p_file) {
     p_file = FileSystem::Get().open(std::make_shared<fileSys::path>(*p_path));
   }
@@ -50,6 +54,9 @@ bool Path::read(char* buffer, uint64_t size, uint64_t offset) {
 }
 
 bool Path::write(char* buffer, uint64_t size, uint64_t offset) {
+  DOODLE_LOG_INFO(p_path->generic_string()
+                  << "size :" << size
+                  << "offset : " << offset);
   if (!p_file) {
     p_file = FileSystem::Get().open(std::make_shared<fileSys::path>(*p_path));
   }
@@ -57,6 +64,9 @@ bool Path::write(char* buffer, uint64_t size, uint64_t offset) {
 }
 
 bool Path::rename(const Path& newName) {
+  DOODLE_LOG_INFO(p_path->generic_path()
+                  << " --> "
+                  << newName.p_path->generic_string());
   auto status = FileSystem::Get()
                     .rename(p_path.get(), newName.p_path.get());
   if (status) {
@@ -68,6 +78,7 @@ bool Path::rename(const Path& newName) {
 }
 
 std::optional<std::vector<std::shared_ptr<Path>>> Path::list() const {
+  DOODLE_LOG_INFO(p_path->generic_path());
   if (p_isDir) {
     std::vector<std::shared_ptr<Path>> paths{};
     for (auto&& it : fileSys::directory_iterator(*p_path)) {
@@ -94,6 +105,7 @@ uint64_t Path::size() const {
 }
 
 void Path::scanningInfo() {
+  DOODLE_LOG_INFO(p_path->generic_string())
   p_exist = fileSys::exists(*p_path);
   if (p_exist) {
     p_isDir = fileSys::is_directory(*p_path);

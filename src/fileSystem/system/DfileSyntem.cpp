@@ -22,6 +22,9 @@
 #include <iomanip>
 // #include <ctime>
 
+#include <zmq.hpp>
+#include <zmq_addon.hpp>
+
 /*保护data里面的宏__我他妈的*/
 #ifdef min
 #undef min
@@ -41,41 +44,29 @@ DfileSyntem &DfileSyntem::get() {
   return install;
 }
 
-ftpSessionPtr DfileSyntem::session() const {
-  auto session = std::make_shared<ftpSession>();
-  session->setInfo(p_host_, p_prot_, p_name_, p_password_);
-  return session;
-}
-
-ftpSessionPtr DfileSyntem::session(const std::string &host,
-                                   int prot,
-                                   const std::string &name,
-                                   const std::string &password,
-                                   const dpath &netWork_disk) {
-  ftpSessionPtr session(new ftpSession());
-  p_host_     = host;
-  p_prot_     = prot;
-  p_name_     = name;
-  p_password_ = password;
-  if (!netWork_disk.empty()) {
-    p_netWork_disk_ = netWork_disk;
-  }
-
-  session->setInfo(p_host_, p_prot_, p_name_, p_password_);
-  return session;
+void DfileSyntem::session(const std::string &host,
+                          int prot,
+                          const std::string &name,
+                          const std::string &password,
+                          const std::string &prijectName) {
+  p_host_       = host;
+  p_prot_       = prot;
+  p_name_       = name;
+  p_password_   = password;
+  p_ProjectName = prijectName;
 }
 
 bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile) noexcept {
-  return copy(localFile, p_netWork_disk_ / remoteFile, true);
+  return copy(localFile, p_ProjectName / remoteFile, true);
 }
 
 bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile) noexcept {
-  return copy(p_netWork_disk_ / remoteFile, localFile, false);
+  return copy(p_ProjectName / remoteFile, localFile, false);
 }
 
 bool DfileSyntem::exists(const dpath &remoteFile) const noexcept {
   try {
-    return boost::filesystem::exists(p_netWork_disk_ / remoteFile);
+    return boost::filesystem::exists(p_ProjectName / remoteFile);
   } catch (std::exception &e) {
     DOODLE_LOG_INFO(e.what());
     return false;
@@ -84,9 +75,9 @@ bool DfileSyntem::exists(const dpath &remoteFile) const noexcept {
 
 std::unique_ptr<std::fstream> DfileSyntem::open(const dpath &remoteFile, std::ios_base::openmode mode) const noexcept {
   if (!exists(remoteFile)) {
-    boost::filesystem::create_directories(p_netWork_disk_ / remoteFile.parent_path());
+    boost::filesystem::create_directories(p_ProjectName / remoteFile.parent_path());
   }
-  auto file = std::unique_ptr<std::fstream>(new boost::filesystem::fstream(p_netWork_disk_ / remoteFile, mode));
+  auto file = std::unique_ptr<std::fstream>(new boost::filesystem::fstream(p_ProjectName / remoteFile, mode));
   if (!file->is_open()) {
     file->open(remoteFile.generic_string(), mode);
   }
@@ -182,7 +173,13 @@ bool DfileSyntem::removeDir(const dpath &path) {
   boost::filesystem::remove_all(path);
   return true;
 }
-DfileSyntem::DfileSyntem() : p_host_(), p_prot_(), p_name_(), p_password_() {
+DfileSyntem::DfileSyntem()
+    : p_host_(),
+      p_prot_(),
+      p_name_(),
+      p_password_(),
+      p_ProjectName(),
+      p_context_(std::make_unique<zmq::context_t>(4)) {
   curl_global_init(CURL_GLOBAL_ALL);
 };
 

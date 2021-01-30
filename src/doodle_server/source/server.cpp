@@ -8,15 +8,15 @@
  */
 
 #include "server.h"
-// #include <boost/network.hpp>
-// #include <boost/network/uri.hpp>
+
 #include <doodle_server/share/path/path.h>
+
+#include <loggerlib/Logger.h>
 #include <magic_enum.hpp>
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
 
 #include <boost/filesystem.hpp>
-// #include <boost/regex.hpp>
 
 #include <thread>
 
@@ -32,9 +32,7 @@ void Handler::operator()(zmq::context_t* context) {
   while (true) {
     zmq::multipart_t k_request{socket};  //传入消息
     zmq::multipart_t k_reply{};          //回复消息
-
-    std::cout << k_request << std::endl;
-    std::cout << "thread id: " << std::this_thread::get_id() << std::endl;
+    DOODLE_LOG_INFO("thread id: " << std::this_thread::get_id());
     //处理消息
     auto str = std::move(processMessage(&k_request, &k_reply));
 
@@ -72,7 +70,7 @@ void Handler::operator()(zmq::context_t* context) {
         }
       }
     } catch (const std::exception& e) {
-      std::cerr << e.what() << '\n';
+      DOODLE_LOG_WARN(e.what());
       result["status"] = e.what();
       k_reply.push_back(zmq::message_t{result.dump()});
     }
@@ -131,6 +129,7 @@ void Handler::update(nlohmann::json* root, zmq::multipart_t* request_message, zm
   if (path.write((char*)data.data(), end - start, start)) {
     result["status"] = "ok";
   } else {
+    DOODLE_LOG_WARN("error : File write failed ,The file may be occupied")
     result["status"] = "error : File write failed ,The file may be occupied";
   }
   reply_message->push_back(zmq::message_t{result.dump()});
@@ -158,6 +157,7 @@ void Handler::down(nlohmann::json* root, zmq::multipart_t* reply_message) {
   }     //
   else  //如果失败就不返回结果帧
   {
+    DOODLE_LOG_WARN("error :file occupied for reading")
     result["status"] = "error :file occupied for reading";
     reply_message->push_back(zmq::message_t{result.dump()});
   }
@@ -171,6 +171,7 @@ void Handler::rename(nlohmann::json* root, zmq::multipart_t* reply_message) {
   if (source.rename(target)) {
     result["status"] = "ok";
   } else {
+    DOODLE_LOG_WARN("error : not rename")
     result["status"] = "error: not rename";
   }
   result["body"] = source;

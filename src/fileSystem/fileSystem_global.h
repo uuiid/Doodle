@@ -14,9 +14,9 @@
 #include <string>
 
 #if defined(FILESYSTEM_LIBRARY)
-#define DSYSTEM_API Q_DECL_EXPORT
+#define DSYSTEM_API __declspec(dllexport)
 #else
-#define DSYSTEM_API Q_DECL_IMPORT
+#define DSYSTEM_API __declspec(dllimport)
 #endif
 
 #define DSYSTEM_S namespace doSystem {
@@ -28,6 +28,6 @@ class DfileSyntem;
 class ftpSession;
 typedef std::shared_ptr<ftpSession> ftpSessionPtr;
 using dstring = std::string;
-using dpath = boost::filesystem::path;
+using dpath   = boost::filesystem::path;
 
 DSYSTEM_E
