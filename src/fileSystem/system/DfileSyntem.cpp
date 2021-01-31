@@ -34,6 +34,7 @@
 #endif
 #include <date/date.h>
 // /*保护data里面的宏__我他妈的*/
+#include <future>
 #include <time.h>
 #include <iostream>
 #include <queue>
@@ -67,11 +68,11 @@ void DfileSyntem::session(const std::string &host,
 }
 
 bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) {
-  //创建线程池多线程复制
-  boost::asio::thread_pool pool(4);
-
   auto time     = std::chrono::system_clock::now();
   auto time_str = date::format("%Y_%m_%d_%H_%M_%S", time);
+
+  //创建线程池多线程复制
+  std::queue<std::future<bool>> queue;
 
   if (fileSys::is_directory(localFile)) {
     auto dregex      = std::regex(localFile.generic_string());
@@ -81,10 +82,19 @@ bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool f
           item.path().generic_string(), dregex, remoteFile.generic_string());
 
       if (fileSys::is_regular_file(item.path())) {
-        boost::asio::post(pool, [=]() {
-          updateFile(item.path(), targetPath, false, backup_path);
+        auto fun = std::async(std::launch::async, [=]() -> bool {
+          return updateFile(item.path(), targetPath, false, backup_path);
         });
+        queue.push(std::move(fun));
+        if (queue.size() > 4) {
+          queue.front().wait();
+          queue.pop();
+        }
       }
+    }
+    while (!queue.empty()) {
+      queue.front().wait();
+      queue.pop();
     }
     return true;
   } else {
@@ -95,7 +105,7 @@ bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool f
 
 bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) {
   //创建线程池多线程复制
-  boost::asio::thread_pool pool(4);
+  std::queue<std::future<bool>> threadpool;
 
   zmq::socket_t socket{*p_context_, zmq::socket_type::req};
   nlohmann::json root;
@@ -109,9 +119,11 @@ bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile, bool for
 
   auto serverPath = getInfo(&remoteFile);
   std::queue<Path> pathQueue;
-  pathQueue.push(*serverPath);
+  Path tmp_ = *serverPath;
+  pathQueue.push(tmp_);
 
-  while (pathQueue.empty()) {
+  auto dregex = std::regex(remoteFile.generic_string());
+  while (!pathQueue.empty()) {
     if (pathQueue.front().isDirectory()) {
       root.clear();
       root["class"]           = "filesystem";
@@ -128,9 +140,26 @@ bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile, bool for
         pathQueue.push(item.get<Path>());
       }
     } else {
-      downFile(localFile, pathQueue.front().path()->generic_string(), false);
+      auto targetPath = std::regex_replace(
+          pathQueue.front().path()->generic_string(), dregex, localFile.generic_string());
+
+      auto fun = std::async(std::launch::async, [=]() -> bool {
+        return downFile(targetPath, pathQueue.front().path()->generic_string(), false);
+      });
+      threadpool.push(std::move(fun));
+      if (threadpool.size() > 4) {
+        threadpool.front().wait();
+        threadpool.pop();
+      }
     }
     pathQueue.pop();
+  }
+  while (!threadpool.empty()) {
+    if (threadpool.front().valid()) {
+      threadpool.front().wait();
+      auto tmp = threadpool.front().get();
+    }
+    threadpool.pop();
   }
   return true;
 }
@@ -402,16 +431,22 @@ bool DfileSyntem::downFile(const dpath &localFile, const dpath &remoteFile, bool
 
   auto serverPath = getInfo(&remoteFile);
 
+  if (!boost::filesystem::exists(localFile.parent_path())) {
+    boost::filesystem::create_directories(localFile.parent_path());
+  }
+
   //如果强制是false 并且服务器上存在文件， 并且修改时间服务器小于等于本地 那么直接忽略
-  auto modifyTime = boost::posix_time::from_time_t(boost::filesystem::last_write_time(localFile));
-  if (!force && serverPath->Exist() && serverPath->modifyTime() <= modifyTime) {
-    return true;
+  if (boost::filesystem::exists(localFile)) {
+    auto modifyTime = boost::posix_time::from_time_t(boost::filesystem::last_write_time(localFile));
+    if (!force && serverPath->Exist() && serverPath->modifyTime() <= modifyTime) {
+      return true;
+    }
   }
 
   std::fstream file{localFile.generic_string(), std::ios::out | std::ios::binary};
   if (!file.is_open()) file.open(localFile.generic_string(), std::ios::out | std::ios::binary);
 
-  auto size = root["body"]["size"].get<uint64_t>();
+  auto size = serverPath->size();
   const uint64_t period{size / off};
   for (uint64_t i = 0; i <= period; ++i) {
     auto end = std::min(off * (i + 1), size);
