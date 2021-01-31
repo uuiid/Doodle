@@ -33,14 +33,14 @@ class DSYSTEM_API DfileSyntem {
                const std::string &password,
                const std::string &prijectName);
 
-  bool upload(const dpath &localFile, const dpath &remoteFile, bool force = true) noexcept;
-  bool down(const dpath &localFile, const dpath &remoteFile, bool force = true) noexcept;
-  bool exists(const dpath &remoteFile) noexcept;
-  bool createDir(const dpath &remoteFile) noexcept;
+  bool upload(const dpath &localFile, const dpath &remoteFile, bool force = true) ;
+  bool down(const dpath &localFile, const dpath &remoteFile, bool force = true) ;
+  bool exists(const dpath &remoteFile) ;
+  bool createDir(const dpath &remoteFile) ;
 
   std::shared_ptr<std::string> readFileToString(const dpath &remoteFile);
   bool writeFile(const dpath &remoteFile, const std::shared_ptr<std::string> &data);
-  static bool copy(const dpath &sourePath, const dpath &trange_path, bool backup) noexcept;
+  static bool copy(const dpath &sourePath, const dpath &trange_path, bool backup) ;
 
  private:
   static bool removeDir(const dpath &path);

@@ -21,6 +21,7 @@
 #include <stdexcept>
 
 #include <nlohmann/json.hpp>
+
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
 
@@ -38,7 +39,9 @@
 #include <queue>
 DSYSTEM_S
 
-DfileSyntem::~DfileSyntem() {}
+DfileSyntem::~DfileSyntem() {
+  // zsys_shutdown();
+}
 
 DfileSyntem &DfileSyntem::get() {
   static DfileSyntem install;
@@ -63,7 +66,7 @@ void DfileSyntem::session(const std::string &host,
   tmp_host_prot = str.str();
 }
 
-bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) noexcept {
+bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) {
   //创建线程池多线程复制
   boost::asio::thread_pool pool(4);
 
@@ -71,7 +74,7 @@ bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool f
   auto time_str = date::format("%Y_%m_%d_%H_%M_%S", time);
 
   if (fileSys::is_directory(localFile)) {
-    auto dregex      = std::regex(remoteFile.generic_string());
+    auto dregex      = std::regex(localFile.generic_string());
     auto backup_path = remoteFile.parent_path() / "backup" / time_str;
     for (auto &&item : fileSys::recursive_directory_iterator(localFile)) {
       auto targetPath = std::regex_replace(
@@ -90,7 +93,7 @@ bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool f
   }
 }
 
-bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) noexcept {
+bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) {
   //创建线程池多线程复制
   boost::asio::thread_pool pool(4);
 
@@ -132,12 +135,12 @@ bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile, bool for
   return true;
 }
 
-bool DfileSyntem::exists(const dpath &remoteFile) noexcept {
+bool DfileSyntem::exists(const dpath &remoteFile) {
   auto serverPath = getInfo(&remoteFile);
   return serverPath->Exist();
 }
 
-bool DfileSyntem::createDir(const dpath &remoteFile) noexcept {
+bool DfileSyntem::createDir(const dpath &remoteFile) {
   zmq::socket_t socket{*p_context_, zmq::socket_type::req};
   nlohmann::json root;
   std::string prjectName{};
@@ -236,7 +239,7 @@ bool DfileSyntem::writeFile(const dpath &remoteFile, const std::shared_ptr<std::
   return true;
 }
 
-bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool backup) noexcept {
+bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool backup) {
   //创建线程池多线程复制
   boost::asio::thread_pool pool(std::thread::hardware_concurrency());
   //验证文件存在
@@ -337,20 +340,22 @@ bool DfileSyntem::updateFile(const dpath &localFile, const dpath &remoteFile, bo
     return true;
   }
 
-  // 在这里移动备份文件
-  root.clear();
-  root["class"]                     = "filesystem";
-  root["function"]                  = magic_enum::enum_name(fileOptions::rename);
-  root["body"]["source"]["path"]    = remoteFile.generic_string();
-  root["body"]["source"]["project"] = prjectName;
-  root["body"]["target"]["path"]    = backUpPath.generic_string();
-  root["body"]["target"]["project"] = prjectName;
-  k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
-  k_muMsg.send(socket);
+  if (serverPath->Exist()) {
+    // 在这里移动备份文件
+    root.clear();
+    root["class"]                     = "filesystem";
+    root["function"]                  = magic_enum::enum_name(fileOptions::rename);
+    root["body"]["source"]["path"]    = remoteFile.generic_string();
+    root["body"]["source"]["project"] = prjectName;
+    root["body"]["target"]["path"]    = backUpPath.generic_string();
+    root["body"]["target"]["project"] = prjectName;
+    k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+    k_muMsg.send(socket);
 
-  k_muMsg.recv(socket);
-  root = nlohmann::json::parse(k_muMsg.pop().to_string());
-  if (root["status"] != "ok") return false;
+    k_muMsg.recv(socket);
+    root = nlohmann::json::parse(k_muMsg.pop().to_string());
+    if (root["status"] != "ok") return false;
+  }
 
   //===========================
   std::fstream file{localFile.generic_string(), std::ios::in | std::ios::binary};
@@ -369,9 +374,9 @@ bool DfileSyntem::updateFile(const dpath &localFile, const dpath &remoteFile, bo
     root["body"]["end"]     = end;
     k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
 
-    auto data = zmq::message_t{off};
+    auto data = zmq::message_t{end - (i * off)};
     file.seekg(i * off);
-    file.read((char *)data.data(), off);
+    file.read((char *)data.data(), end - (i * off));
     k_muMsg.push_back(std::move(data));
 
     k_muMsg.send(socket);

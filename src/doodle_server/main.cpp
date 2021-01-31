@@ -14,6 +14,7 @@
 #include <exception>
 #include <iostream>
 #include <thread>
+#include <queue>
 int main(int argc, char const *argv[]) try {
   auto &set = doodle::Seting::Get();
   set.init();
@@ -28,12 +29,14 @@ int main(int argc, char const *argv[]) try {
 
   auto k_handler = doodle::Handler{};
 
+  std::queue<std::thread> thread_pool;
   for (int i = 0; i < 8; ++i) {
     std::thread t{
         [=](doodle::Handler h, zmq::context_t *c) {
           h(c);
         },
         k_handler, &context};
+    thread_pool.push(std::move(t));
   }
   zmq::proxy(socket, proxy_socket);
 

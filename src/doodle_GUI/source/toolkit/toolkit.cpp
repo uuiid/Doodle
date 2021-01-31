@@ -109,7 +109,7 @@ void toolkit::installUePath(const std::string &path) {
   }
 
   if (boost::filesystem::exists(ue_path)) {
-    doSystem::DfileSyntem::removeDir(ue_path);
+    boost::filesystem::remove_all(ue_path);
   }
   doSystem::DfileSyntem::copy(sourePath, ue_path, false);
 }
@@ -127,12 +127,11 @@ void toolkit::modifyUeCachePath() {
 }
 
 bool toolkit::update() {
-  auto &set    = coreSet::getSet();
-  auto session = doSystem::DfileSyntem::get().session(set.getIpFtp(), 21,
-                                                      "anonymous", "", dpath{});
+  auto &set     = coreSet::getSet();
+  auto &session = doSystem::DfileSyntem::get();
 
   auto exe_path = set.getCacheRoot() / "doodle.exe";
-  session->down(exe_path.generic_string(), "/dist/doodle.exe");
+  session.down(exe_path.generic_string(), "/doodle/dist/doodle.exe");
   boost::process::spawn(exe_path, "/SILENT", "/NOCANCEL");
   // qApp->quit();
   return true;
