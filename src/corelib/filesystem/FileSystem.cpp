@@ -38,6 +38,7 @@
 #include <queue>
 
 DOODLE_NAMESPACE_S
+DfileSyntem *DfileSyntem::install = nullptr;
 
 DfileSyntem::~DfileSyntem() {
   // zsys_shutdown();
@@ -49,8 +50,9 @@ DfileSyntem &DfileSyntem::get() {
 }
 
 std::unique_ptr<DfileSyntem> DfileSyntem::create() {
-  auto k_install = std::make_unique<DfileSyntem>();
-  install        = k_install.get();
+  auto k_install = std::unique_ptr<DfileSyntem>(new DfileSyntem);
+
+  install = k_install.get();
   return k_install;
 }
 
@@ -75,7 +77,6 @@ void DfileSyntem::session(const std::string &host,
 bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) {
   auto time     = std::chrono::system_clock::now();
   auto time_str = date::format("%Y_%m_%d_%H_%M_%S", time);
-
 
   //创建线程池多线程复制
   std::queue<std::future<bool>> queue;
@@ -274,6 +275,40 @@ bool DfileSyntem::writeFile(const dpath &remoteFile, const std::shared_ptr<std::
   return true;
 }
 
+bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path) {
+  zmq::socket_t socket{*p_context_, zmq::socket_type::req};
+  std::string prjectName{};
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    socket.connect(tmp_host_prot);
+    prjectName = p_ProjectName;
+  }
+  nlohmann::json root;
+  zmq::multipart_t k_muMsg{};
+
+  auto serverPath = getInfo(&sourePath);
+  if (!serverPath->Exist()) return false;
+
+  root.clear();
+
+  root["class"]                     = "filesystem";
+  root["function"]                  = magic_enum::enum_name(fileOptions::copy);
+  root["body"]["source"]["path"]    = sourePath.generic_string();
+  root["body"]["source"]["project"] = prjectName;
+  root["body"]["target"]["path"]    = trange_path.generic_string();
+  root["body"]["target"]["project"] = prjectName;
+  k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+  k_muMsg.send(socket);
+
+  k_muMsg.recv(socket);
+
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  if (root["status"] != "ok") {
+    std::runtime_error(root.dump());
+  }
+  return true;
+}
+
 bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool backup) {
   //创建线程池多线程复制
   boost::asio::thread_pool pool(std::thread::hardware_concurrency());
@@ -351,6 +386,7 @@ bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool ba
 
   return true;
 }
+
 bool DfileSyntem::removeDir(const dpath &path) {
   throw std::runtime_error("not is function");
   return false;

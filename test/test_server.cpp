@@ -274,3 +274,29 @@ TEST(doodleServer, list) {
   std::cout << root["status"] << std::endl;
   ASSERT_TRUE(root["status"] == "ok");
 }
+
+TEST(doodleServer, copyfile) {
+  zmq::context_t context{1};
+
+  zmq::socket_t socket{context, zmq::socket_type::req};
+  socket.connect(R"(tcp://127.0.0.1:6666)");
+  nlohmann::json root;
+
+  zmq::multipart_t k_muMsg{};
+
+  root["class"]                     = "filesystem";
+  root["function"]                  = "copy";
+  root["body"]["source"]["path"]    = "/cache/tset_updata_server.7z";
+  root["body"]["source"]["project"] = "test";
+  root["body"]["target"]["path"]    = "/cache/tmp/tset_updata_server.7z";
+  root["body"]["target"]["project"] = "test";
+
+  k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+  k_muMsg.send(socket);
+
+  k_muMsg.recv(socket);
+
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  std::cout << root << std::endl;
+  ASSERT_TRUE(root["status"] == "ok");
+}

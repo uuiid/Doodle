@@ -77,6 +77,14 @@ bool Path::rename(const Path& newName) {
   return status;
 }
 
+bool Path::copy(const Path& target) {
+  DOODLE_LOG_INFO(p_path->generic_path()
+                  << " --> "
+                  << target.p_path->generic_string());
+  auto status = FileSystem::Get().copy(p_path.get(), target.p_path.get());
+  return status;
+}
+
 std::optional<std::vector<std::shared_ptr<Path>>> Path::list() const {
   DOODLE_LOG_INFO(p_path->generic_path());
   if (p_isDir) {

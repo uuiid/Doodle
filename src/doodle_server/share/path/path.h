@@ -22,6 +22,7 @@ class Path {
   bool read(char* buffer, uint64_t size, uint64_t offset);
   bool write(char* buffer, uint64_t size, uint64_t offset);
   bool rename(const Path& newName);
+  bool copy(const Path& target);
 
   std::optional<std::vector<std::shared_ptr<Path>>> list() const;
 

@@ -102,17 +102,18 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   auto &set = coreSet::getSet();
 
   dstringList list;
+  auto &session = DfileSyntem::get();
   //复制灯光需要的文件夹
   auto server = set.getPrjectRoot() / set.getAssRoot() / set.getDepartment() /
                 *create_path;
   auto copy_path_list = soure_ptr->getFileList();
   if (copy_path_list.size() == 1) {
     auto path = copy_path_list.front();
-    DfileSyntem::copy(set.getPrjectRoot() / path, server / path.filename(), false);
-    DfileSyntem::copy(set.getPrjectRoot() / path.parent_path() / DOODLE_CONTENT, server / DOODLE_CONTENT, false);
+    session.copy(set.getPrjectRoot() / path, server / path.filename());
+    session.copy(set.getPrjectRoot() / path.parent_path() / DOODLE_CONTENT, server / DOODLE_CONTENT);
   } else if (copy_path_list.size() == 2) {
     for (auto &copy_path : copy_path_list) {
-      DfileSyntem::copy(set.getPrjectRoot() / copy_path, server / copy_path.filename(), false);
+      session.copy(set.getPrjectRoot() / copy_path, server / copy_path.filename());
     }
   }
 
@@ -122,8 +123,7 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   boost::format shot(DOODLE_SHFORMAT);
   dstringList listcreates{"Checkpoint", "Light", "Ren"};
   dstringList listDep{"Light", "VFX"};
-  auto &session = DfileSyntem::get();
-  server        = set.getAssRoot() / set.getDepartment() / *create_path /
+  server = set.getAssRoot() / set.getDepartment() / *create_path /
            DOODLE_CONTENT / "shot" / episodes_ptr->getEpisdes_str();
   session.createDir(server.generic_string());
 

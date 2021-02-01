@@ -9,7 +9,7 @@
         test_std.cpp)
 #连接自己的库进行测试
 target_link_libraries(test_my
-        PRIVATE core fileSystem pinyin logger)
+        PRIVATE core pinyin logger)
 
 find_library(DOODLE_MAR 
 mpr.lib

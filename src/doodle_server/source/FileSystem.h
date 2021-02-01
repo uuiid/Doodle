@@ -31,6 +31,7 @@ class FileSystem {
 
   std::shared_ptr<IoFile> open(const std::shared_ptr<fileSys::path>& path);
   bool rename(const fileSys::path* source, const fileSys::path* target);
+  bool copy(const fileSys::path* source, const fileSys::path* target);
 
  private:
   friend class IoFile;

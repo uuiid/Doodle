@@ -5,6 +5,7 @@
 #include <boost/filesystem.hpp>
 // #include <boost/iostreams/stream.hpp>
 // #include <boost/iostreams/device/mapped_file.hpp>
+#include <regex>
 DOODLE_NAMESPACE_S
 FileSystem& FileSystem::Get() noexcept {
   static FileSystem k_instance;
@@ -34,17 +35,61 @@ std::shared_ptr<IoFile> FileSystem::open(const std::shared_ptr<fileSys::path>& p
 }
 
 bool FileSystem::rename(const fileSys::path* source, const fileSys::path* target) {
-  std::unique_lock lock{p_mutex};  //加锁
-  auto file = std::find_if(p_fm.begin(), p_fm.end(),
-                           [=](const IoFile* f) {
-                             return f->p_path.get() == source;
-                           });
+  std::vector<doodle::IoFile*>::iterator file{};
+  {
+    std::unique_lock lock{p_mutex};  //加锁
+    file = std::find_if(p_fm.begin(), p_fm.end(),
+                        [=](const IoFile* f) {
+                          return f->p_path.get() == source;
+                        });
+  }
   if (file == p_fm.end()) {
     if (!fileSys::exists(target->parent_path())) {
       fileSys::create_directories(target->parent_path());
     }
     if (fileSys::exists(*source)) {
       fileSys::rename(*source, *target);
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+}
+
+bool FileSystem::copy(const fileSys::path* source, const fileSys::path* target) {
+  std::vector<doodle::IoFile*>::iterator file{};
+  {
+    std::unique_lock lock{p_mutex};  //加锁
+    file = std::find_if(p_fm.begin(), p_fm.end(),
+                        [=](const IoFile* f) {
+                          return f->p_path.get() == source;
+                        });
+  }
+  if (file == p_fm.end()) {
+    if (!fileSys::exists(target->parent_path())) {
+      fileSys::create_directories(target->parent_path());
+    }
+    if (fileSys::exists(*source)) {
+      if (fileSys::is_regular_file(*source)) {
+        fileSys::copy_file(*source, *target, fileSys::copy_option::overwrite_if_exists);
+      } else {
+        auto regex = std::regex(source->generic_string());
+
+        for (auto&& iter : fileSys::recursive_directory_iterator(*source)) {
+          if (fileSys::is_regular_file(iter.path())) {
+            fileSys::path k_target = std::regex_replace(
+                iter.path().generic_string(), regex, target->generic_string());
+
+            if (!fileSys::exists(k_target.parent_path())) {
+              fileSys::create_directories(k_target.parent_path());
+            }
+
+            fileSys::copy_file(iter.path(), k_target, fileSys::copy_option::overwrite_if_exists);
+          }
+        }
+      }
       return true;
     } else {
       return false;

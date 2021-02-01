@@ -12,7 +12,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <nlohmann/json.hpp>
 #include <shared_mutex>
-
+#include <boost/filesystem.hpp>
 namespace zmq {
 class context_t;
 };
@@ -41,11 +41,12 @@ class CORE_API DfileSyntem {
 
   std::shared_ptr<std::string> readFileToString(const dpath &remoteFile);
   bool writeFile(const dpath &remoteFile, const std::shared_ptr<std::string> &data);
+  bool copy(const dpath &sourePath, const dpath &trange_path);
   static bool copy(const dpath &sourePath, const dpath &trange_path, bool backup);
 
  private:
   static bool removeDir(const dpath &path);
-  bool updateFile(const dpath &localFile, const dpath &remoteFile, bool force = true, const dpath &backUpPath = "");
+  bool updateFile(const dpath &localFile, const dpath &remoteFile, bool force = true, const dpath &backUpPath = dpath{});
   bool downFile(const dpath &localFile, const dpath &remoteFile, bool force = true);
   std::unique_ptr<Path> getInfo(const dpath *path);
 

@@ -37,6 +37,7 @@ enum class fileOptions {
   down         = 3,
   rename       = 4,
   list         = 5,
+  copy         = 6,
 };
 void to_json(nlohmann::json &j, const Path &p);
 void from_json(const nlohmann::json &j, Path &p);

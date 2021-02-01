@@ -63,6 +63,9 @@ void Handler::operator()(zmq::context_t* context) {
           case fileOptions::list: {
             list(&root, &k_reply);
           } break;
+          case fileOptions::copy: {
+            copy(&root, &k_reply);
+          }
           default: {
             result["status"] = "error: The command could not be found";
             k_reply.push_back(zmq::message_t{result.dump()});
@@ -195,8 +198,18 @@ void Handler::list(nlohmann::json* root, zmq::multipart_t* reply_message) {
   reply_message->push_back(zmq::message_t{result.dump()});
 }
 
-void Handler::copy(nlohmann::json* root, zmq::multipart_t* reply_message) 
-{
-  
+void Handler::copy(nlohmann::json* root, zmq::multipart_t* reply_message) {
+  auto source = (*root)["body"]["source"].get<Path>();
+  auto target = (*root)["body"]["target"].get<Path>();
+
+  nlohmann::json result;
+  if (source.copy(target)) {
+    result["status"] = "ok";
+  } else {
+    DOODLE_LOG_WARN("error : not copy")
+    result["status"] = "error: not copy";
+  }
+  result["body"] = source;
+  reply_message->push_back(zmq::message_t{result.dump()});
 }
 DOODLE_NAMESPACE_E

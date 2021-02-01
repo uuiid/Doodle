@@ -6,7 +6,11 @@ set(RESOURCE_SOURCE
 
 qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 
-add_executable(doodle WIN32 ${RESOURE_FILE})
+add_executable(doodle WIN32 ${RESOURE_FILE}
+
+main.cpp
+doodle_global.h
+)
 #
 # add_executable(doodle WIN32
 #         doodle_global.h
@@ -14,12 +18,7 @@ add_executable(doodle WIN32 ${RESOURE_FILE})
 #         ${TS_FILES}
 #         ${RESOURE_FILE}
 #         )
-target_sources(
-        doodle
-        PUBLIC
-        main.cpp
-        doodle_global.h
-)
+
 add_subdirectory(source)
 
 target_include_directories(doodle PRIVATE ${BOOST_INCLUDE_DIRS})

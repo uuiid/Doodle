@@ -1,13 +1,5 @@
 #include <corelib/filesystem/FileSystem.h>
-
-#include <loggerlib/Logger.h>
-
-#include <QFileInfo>
-#include <QDateTime>
 #include <gtest/gtest.h>
-
-#include <QDir>
-#include <boost/filesystem/operations.hpp>
 
 TEST(fileclient, uploadFile) {
   auto &file = doodle::DfileSyntem::get();
@@ -41,4 +33,10 @@ TEST(fileclient, exists) {
   auto &file = doodle::DfileSyntem::get();
   file.session("192.168.10.213", 6666, "", "", "test");
   ASSERT_TRUE(file.exists("/cache/tmp/Content"));
+}
+
+TEST(fileclient, copy) {
+  auto &file = doodle::DfileSyntem::get();
+  file.session("192.168.10.213", 6666, "", "", "test");
+  ASSERT_TRUE(file.copy("/cache/tmp/Content", "/cache/tmp/Content2"));
 }

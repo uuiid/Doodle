@@ -1,10 +1,7 @@
-﻿add_library(core SHARED)
-
-
-target_sources(core
- PUBLIC
+﻿add_library(core SHARED
 core_global.h
 core_Cpp.h)
+
 
 add_subdirectory(assets)
 add_subdirectory(core)
@@ -27,7 +24,7 @@ target_link_libraries(core PUBLIC ${Boost_LIBRARIES})
 # target_link_libraries(core PUBLIC Boost::signals2)
 
 target_link_libraries(core PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
-target_link_libraries(core PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
+target_link_libraries(core PRIVATE cppzmq cppzmq-static)
 target_link_libraries(core PUBLIC pugixml)
 target_link_libraries(core PUBLIC pinyin)
 target_link_libraries(core PUBLIC logger)

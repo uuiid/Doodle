@@ -69,6 +69,8 @@ class Handler {
   //* 同时如果是文件的话就会只放一个请求的路径
   void list(nlohmann::json* root, zmq::multipart_t* reply_message);
 
+  //* root["body"]["source"] ->这里放来源path类的序列化
+  //* root["body"]["trange"] ->这里放目标path类的序列化
   void copy(nlohmann::json* root, zmq::multipart_t* reply_message);
 };
 
