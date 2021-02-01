@@ -11,11 +11,17 @@
 #include <doodle_server/source/seting.h>
 #include <doodle_server/source/server.h>
 
+// #include <Windows.h>
+#include <loggerlib/Logger.h>
+
 #include <exception>
 #include <iostream>
 #include <thread>
 #include <queue>
 int main(int argc, char const *argv[]) try {
+  //初始化log
+  Logger::doodle_initLog();
+
   auto &set = doodle::Seting::Get();
   set.init();
 
@@ -39,9 +45,10 @@ int main(int argc, char const *argv[]) try {
     thread_pool.push(std::move(t));
   }
   zmq::proxy(socket, proxy_socket);
-
+  // boost::log::core::get()->remove_all_sinks();
   return 0;
 } catch (const std::exception &error) {
   std::cout << error.what() << std::endl;
+  boost::log::core::get()->remove_all_sinks();
   return 1;
 }

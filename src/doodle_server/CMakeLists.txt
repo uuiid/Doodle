@@ -1,7 +1,8 @@
 
 # find_package(Boost COMPONENTS filesystem regex REQUIRED)
 
-add_executable(doodleServer 
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+add_executable(doodleServer  
                 DoodleServer_global.h
                 main.cpp)
 
@@ -22,6 +23,9 @@ target_link_libraries(doodleServer PRIVATE Boost::filesystem Boost::regex Boost:
 # target_link_libraries(doodleServer PRIVATE gRPC::grpc++_alts)
 # target_link_libraries(doodleServer PRIVATE gRPC::grpc++)
 target_compile_definitions(doodleServer PRIVATE _WIN32_WINNT=0x0A00)
+# target_link_options(doodleServer PRIVATE "/ENTRY:mainCRTStartup")
+# target_compile_definitions(doodleServer PRIVATE _WINDOWS)
+# set_target_properties(doodleServer PROPERTIES WIN32_EXECUTABLE FALSE)
 #安装基本组件
 install(TARGETS doodleServer
         DESTINATION bin)

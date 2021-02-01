@@ -127,7 +127,8 @@
         "qmetaobject": "cpp",
         "*.inc": "cpp",
         "cinttypes": "cpp",
-        "qdir": "cpp"
+        "qdir": "cpp",
+        "core": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",

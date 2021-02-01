@@ -11,9 +11,9 @@
 //
 
 #include "updataManager.h"
+#include <loggerlib/Logger.h>
 #include <QtWidgets/QProgressDialog>
 #include <QtCore/QTimer>
-
 #include <thread>
 DOODLE_NAMESPACE_S
 updataManager &doodle::updataManager::get() {
@@ -26,16 +26,23 @@ updataManager::updataManager()
 }
 void updataManager::chickQueue() {
   for (const auto &item : p_updataFtpQueue) {
-    if (item.first.wait_for(std::chrono::microseconds(1)) ==
-        std::future_status::ready) {
-      item.second->maximum();
+    try {
+      if (item.first.wait_for(std::chrono::microseconds(1)) ==
+          std::future_status::ready) {
+        item.second->maximum();
+        item.second->setValue(100);
+        // std::this_thread::sleep_for(std::chrono::microseconds(300));
+        item.second->close();
+        item.second->deleteLater();
+      } else {
+        if (item.second->value() < 99)
+          item.second->setValue(item.second->value() + 1);
+      }
+    } catch (const std::exception &e) {
       item.second->setValue(100);
-      // std::this_thread::sleep_for(std::chrono::microseconds(300));
       item.second->close();
       item.second->deleteLater();
-    } else {
-      if (item.second->value() < 99)
-        item.second->setValue(item.second->value() + 1);
+      DOODLE_LOG_WARN(e.what());
     }
   }
   p_updataFtpQueue.erase(

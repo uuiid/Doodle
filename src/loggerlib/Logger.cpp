@@ -65,6 +65,10 @@ void boostLoggerInitAsyn(const std::string &logPath,
   // boost::log::core::get()->set_filter(
   //     boost::log::trivial::severity >= boost::log::trivial::debug);
 
+  if (!boost::filesystem::exists(appdata / boost::filesystem::basename(boost::dll::program_location()) / "log")) {
+    boost::filesystem::create_directories(appdata / boost::filesystem::basename(boost::dll::program_location()) / "log");
+  }
+
   boost::shared_ptr<file_sink> sink{new file_sink{
       boost::log::keywords::target              = appdata / boost::filesystem::basename(boost::dll::program_location()) / "log",
       boost::log::keywords::file_name           = appdata / boost::filesystem::basename(boost::dll::program_location()) / "log" / logPath,
@@ -110,117 +114,5 @@ void boostLoggerInitAsyn(const std::string &logPath,
 
 void doodle_initLog(const std::string &logPath, std::size_t logMaxSize, bool async) {
   boostLoggerInitAsyn(logPath, logMaxSize);
-  // if (async) {
-  //   qInstallMessageHandler(outputMessageAsync);
-  // } else {
-  //   qInstallMessageHandler(outputMessage);
-  // }
-  // QStringList gListDir =
-  //     QStandardPaths::standardLocations(QStandardPaths::AppDataLocation);
-  // if (!gListDir.isEmpty()) {
-  //   gLogDir = gListDir[0] + "/" + logPath;
-  // }
-  // gLogMaxCount = logMaxCount;
-  // QDir dir(gLogDir);
-  // if (!dir.exists()) {
-  //   dir.mkpath(dir.absolutePath());
-  // }
-  // QStringList infoList = dir.entryList(QDir::Files, QDir::Name);
-  // while (infoList.size() > gLogMaxCount) {
-  //   dir.remove(infoList.first());
-  //   infoList.removeFirst();
-  // }
 }
-
-// static void outputMessageAsync(QtMsgType type,
-//                                const QMessageLogContext &context,
-//                                const QString &msg) {
-//   static const QString messageTemp = QString("<div class=\"%1\">%2</div>\r\n");
-//   static const char typeList[] = {'d', 'w', 'c', 'f', 'i'};
-//   static QMutex mutex;
-//   static QFile file;
-//   static QTextStream textStream;
-//   static uint count = 0;
-//   static const uint maxCount = 512;
-//   Q_UNUSED(context);
-//   QDateTime dt = QDateTime::currentDateTime();
-//   //每小时一个文件
-//   QString fileNameDt = dt.toString("yyyy-MM-dd-hh");
-
-//   //每分钟一个文件
-//   // QString fileNameDt = dt.toString("yyyy-MM-dd_hh_mm");
-
-//   QString contentDt = dt.toString("yyyy-MM-dd hh:mm:ss");
-//   QString message = QString("%1 %2").arg(contentDt).arg(msg);
-//   QString htmlMessage =
-//       messageTemp.arg(typeList[static_cast<int>(type)]).arg(message);
-//   QString newfileName = QString("%1/%2_log.html").arg(gLogDir).arg(fileNameDt);
-//   mutex.lock();
-//   if (file.fileName() != newfileName) {
-//     if (file.isOpen()) {
-//       file.close();
-//     }
-//     file.setFileName(newfileName);
-//     bool exist = file.exists();
-//     file.open(QIODevice::WriteOnly | QIODevice::Append);
-//     textStream.setDevice(&file);
-//     textStream.setCodec("UTF-8");
-//     if (!exist) {
-//       textStream << QString::fromStdString(logTemplate) << "\r\n";
-//     }
-//   }
-//   textStream << htmlMessage;
-//   textStream.flush();
-//   count += static_cast<uint>(htmlMessage.length());
-//   if (count >= maxCount) {
-//     file.close();
-//     file.open(QIODevice::WriteOnly | QIODevice::Append);
-//   }
-//   mutex.unlock();
-// #ifdef Q_OS_WIN
-//   // ::OutputDebugString(reinterpret_cast<LPCSTR>(message.toStdWString().data()));
-//   // ::OutputDebugString(reinterpret_cast<LPCSTR>(L"\r\n"));
-// #else
-//   fprintf(stderr, message.toStdString().data());
-// #endif
-// }
-// static void outputMessage(QtMsgType type, const QMessageLogContext &context,
-//                           const QString &msg) {
-//   static const QString messageTemp = QString("<div class=\"%1\">%2</div>\r\n");
-//   static const char typeList[] = {'d', 'w', 'c', 'f', 'i'};
-//   static QMutex mutex;
-
-//   Q_UNUSED(context);
-//   QDateTime dt = QDateTime::currentDateTime();
-
-//   //每小时一个文件
-//   QString fileNameDt = dt.toString("yyyy-MM-dd_hh");
-
-//   //每分钟一个文件
-//   // QString fileNameDt = dt.toString("yyyy-MM-dd_hh_mm");
-
-//   QString contentDt = dt.toString("yyyy-MM-dd hh:mm:ss");
-//   QString message = QString("%1 %2").arg(contentDt).arg(msg);
-//   QString htmlMessage =
-//       messageTemp.arg(typeList[static_cast<int>(type)]).arg(message);
-//   QFile file(QString("%1/%2_log.html").arg(gLogDir).arg(fileNameDt));
-//   mutex.lock();
-
-//   bool exist = file.exists();
-//   file.open(QIODevice::WriteOnly | QIODevice::Append);
-//   QTextStream textStream(&file);
-//   textStream.setCodec("UTF-8");
-//   if (!exist) {
-//     textStream << QString::fromStdString(logTemplate) << "\r\n";
-//   }
-//   textStream << htmlMessage;
-//   file.close();
-//   mutex.unlock();
-// #ifdef Q_OS_WIN
-//   ::OutputDebugString(reinterpret_cast<LPCSTR>(message.toStdWString().data()));
-//   ::OutputDebugString(reinterpret_cast<LPCSTR>(L"\r\n"));
-// #else
-//   fprintf(stderr, message.toStdString().data());
-// #endif
-// }
 }  // namespace Logger
