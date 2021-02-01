@@ -78,6 +78,8 @@ class path;
 class QFileInfo;
 
 DOODLE_NAMESPACE_S
+namespace fileSys = boost::filesystem;
+const static uint64_t off{8000000};
 using mysqlConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
 
 //使用一些其他方便的引用类型

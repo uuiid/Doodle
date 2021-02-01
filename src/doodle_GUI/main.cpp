@@ -10,6 +10,7 @@
 
 #include <doodle_GUI/source/mainWidght/mainWindows.h>
 #include <loggerlib/Logger.h>
+#include <corelib/filesystem/FileSystem.h>
 //必要导入
 #include <QApplication>
 #include <QTextCodec>
@@ -27,11 +28,14 @@
 // DOODLE_NAMESPACE_E
 
 int main(int argc, char *argv[]) try {
-  QApplication q_application(argc, argv);
-
   //初始化log
   Logger::doodle_initLog();
+  //初始化文件管理器
+  auto filesystem = doodle::DfileSyntem::create();
 
+  QApplication q_application(argc, argv);
+
+  
   //  //设置本地编码
   //  QTextCodec *codec = QTextCodec::codecForName("GBK");
   //  QTextCodec::setCodecForLocale(codec);

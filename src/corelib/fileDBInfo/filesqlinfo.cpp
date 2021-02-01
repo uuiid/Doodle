@@ -12,7 +12,7 @@
 
 #include <loggerlib/Logger.h>
 
-#include <fileSystem/fileSystem_cpp.h>
+#include <corelib/filesystem/FileSystem.h>
 
 //orm库
 #include <sqlpp11/mysql/mysql.h>
@@ -132,7 +132,7 @@ bool fileSqlInfo::exist(bool refresh) {
   if (refresh) {
     p_b_exist = true;
     for (const auto &path : getFileList()) {
-      p_b_exist &= doSystem::DfileSyntem::get().exists(path);
+      p_b_exist &= DfileSyntem::get().exists(path);
     }
   }
   return p_b_exist;

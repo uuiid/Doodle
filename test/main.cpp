@@ -9,7 +9,7 @@
 #include <corelib/core_Cpp.h>
 #include <corelib/core/coresql.h>
 #include <loggerlib/Logger.h>
-
+#include <corelib/filesystem/FileSystem.h>
 #include <QCoreApplication>
 #include <QTextCodec>
 #include <QTextStream>
@@ -34,6 +34,7 @@ void Environment::TearDown() {}
 int main(int argc, char *argv[]) {
   //初始化log
   Logger::doodle_initLog();
+  auto filesystem = doodle::DfileSyntem::create();
 
   //创建qt必要的运行事件循环
   QCoreApplication app(argc, argv);

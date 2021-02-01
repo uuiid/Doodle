@@ -16,6 +16,7 @@ enum class fileOptions {
   down         = 3,
   rename       = 4,
   list         = 5,
+  copy         = 6,
 };
 
 /**
@@ -67,6 +68,8 @@ class Handler {
   //* 回复时在root["body"]中会放path的列表
   //* 同时如果是文件的话就会只放一个请求的路径
   void list(nlohmann::json* root, zmq::multipart_t* reply_message);
+
+  void copy(nlohmann::json* root, zmq::multipart_t* reply_message);
 };
 
 DOODLE_NAMESPACE_E

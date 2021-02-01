@@ -12,7 +12,7 @@
 #include <corelib/core/coreset.h>
 
 // ftp模块导入
-#include <fileSystem/fileSystem_cpp.h>
+#include <corelib/filesystem/FileSystem.h>
 
 #include <loggerlib/Logger.h>
 #include <boost/filesystem.hpp>
@@ -147,7 +147,7 @@ void fileArchive::imp_updata(const dpathList &pathList) {
   assert(p_ServerPath.size() == p_cacheFilePath.size());
   coreSet &set = coreSet::getSet();
 
-  auto &session = doSystem::DfileSyntem::get();
+  auto &session = DfileSyntem::get();
 
   const auto k_size = p_cacheFilePath.size();
   for (size_t i = 0; i < k_size; ++i) {
@@ -165,7 +165,7 @@ void fileArchive::imp_updata(const dpathList &pathList) {
   }
 }
 void fileArchive::imp_down(const dpath &localPath) {
-  auto &session = doSystem::DfileSyntem::get();
+  auto &session = DfileSyntem::get();
   infoChanged("开始下载");
 
   for (auto &&item : p_ServerPath) {

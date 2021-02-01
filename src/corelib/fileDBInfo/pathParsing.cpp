@@ -5,7 +5,7 @@
 
 #include <corelib/core/coreset.h>
 
-#include <fileSystem/fileSystem_cpp.h>
+#include <corelib/filesystem/FileSystem.h>
 #include <loggerlib/Logger.h>
 #include <nlohmann/json.hpp>
 #include <boost/filesystem.hpp>
@@ -33,7 +33,7 @@ dpathList pathParsing::Path(const std::string& pathstr) {
   if (pathstr.empty())
     throw std::runtime_error("字符串空");
 
-  auto& fileSys = doSystem::DfileSyntem::get();
+  auto& fileSys = DfileSyntem::get();
 
   if (fileSys.exists(pathstr) && path.extension() == ".json") {
     auto file = fileSys.readFileToString(path);
@@ -88,7 +88,7 @@ void pathParsing::write() {
   }
   auto strPtr = std::make_shared<std::string>();
   strPtr->append(root.dump());
-  doSystem::DfileSyntem::get().writeFile(*p_path_row, strPtr);
+  DfileSyntem::get().writeFile(*p_path_row, strPtr);
 }
 
 std::string pathParsing::DBInfo() const {

@@ -194,4 +194,9 @@ void Handler::list(nlohmann::json* root, zmq::multipart_t* reply_message) {
   result["status"] = "ok";
   reply_message->push_back(zmq::message_t{result.dump()});
 }
+
+void Handler::copy(nlohmann::json* root, zmq::multipart_t* reply_message) 
+{
+  
+}
 DOODLE_NAMESPACE_E

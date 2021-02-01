@@ -7,7 +7,7 @@
 #include <loggerlib/Logger.h>
 #include <corelib/shots/episodes.h>
 
-#include <fileSystem/fileSystem_cpp.h>
+#include <corelib/filesystem/FileSystem.h>
 
 #include <corelib/assets/assfilesqlinfo.h>
 #include <corelib/core/coreDataManager.h>
@@ -108,15 +108,11 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   auto copy_path_list = soure_ptr->getFileList();
   if (copy_path_list.size() == 1) {
     auto path = copy_path_list.front();
-    doSystem::DfileSyntem::copy(set.getPrjectRoot() / path,
-                                server / path.filename(), false);
-    doSystem::DfileSyntem::copy(
-        set.getPrjectRoot() / path.parent_path() / DOODLE_CONTENT,
-        server / DOODLE_CONTENT, false);
+    DfileSyntem::copy(set.getPrjectRoot() / path, server / path.filename(), false);
+    DfileSyntem::copy(set.getPrjectRoot() / path.parent_path() / DOODLE_CONTENT, server / DOODLE_CONTENT, false);
   } else if (copy_path_list.size() == 2) {
     for (auto &copy_path : copy_path_list) {
-      doSystem::DfileSyntem::copy(set.getPrjectRoot() / copy_path,
-                                  server / copy_path.filename(), false);
+      DfileSyntem::copy(set.getPrjectRoot() / copy_path, server / copy_path.filename(), false);
     }
   }
 
@@ -126,7 +122,7 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   boost::format shot(DOODLE_SHFORMAT);
   dstringList listcreates{"Checkpoint", "Light", "Ren"};
   dstringList listDep{"Light", "VFX"};
-  auto &session = doSystem::DfileSyntem::get();
+  auto &session = DfileSyntem::get();
   server        = set.getAssRoot() / set.getDepartment() / *create_path /
            DOODLE_CONTENT / "shot" / episodes_ptr->getEpisdes_str();
   session.createDir(server.generic_string());

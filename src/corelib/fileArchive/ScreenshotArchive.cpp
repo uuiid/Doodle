@@ -1,7 +1,7 @@
 #include "ScreenshotArchive.h"
 
 #include <loggerlib/Logger.h>
-#include <fileSystem/fileSystem_cpp.h>
+#include <corelib/filesystem/FileSystem.h>
 
 #include <corelib/fileDBInfo/filesqlinfo.h>
 #include <corelib/Exception/Exception.h>
@@ -28,7 +28,7 @@ std::unique_ptr<std::fstream> ScreenshotArchive::loadImage() {
 }
 
 void ScreenshotArchive::insertDB() {
-  if (!doSystem::DfileSyntem::get().exists(p_ServerPath.front())) {
+  if (!DfileSyntem::get().exists(p_ServerPath.front())) {
     DOODLE_LOG_WARN("没有文件： " << p_ServerPath.front().generic_string())
     throw not_file_error(p_ServerPath.front().generic_string());
   }

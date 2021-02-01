@@ -6,7 +6,7 @@
 
 #include <loggerlib/Logger.h>
 #include <corelib/core/coreset.h>
-#include <fileSystem/fileSystem_cpp.h>
+#include <corelib/filesystem/FileSystem.h>
 #include <nlohmann/json.hpp>
 
 DOODLE_NAMESPACE_S
@@ -27,7 +27,7 @@ std::vector<std::string> CommentInfo::Info(const std::string &pathStr) {
    */
 
   dpath path{pathStr};
-  auto &fileSys = doSystem::DfileSyntem::get();
+  auto &fileSys = DfileSyntem::get();
 
   if (fileSys.exists(path) && path.extension() == ".json") {  //传入路径的情况
     auto file = fileSys.readFileToString(path);
@@ -83,7 +83,7 @@ void CommentInfo::write() {
   }
   auto strPtr = std::make_shared<std::string>();
   strPtr->append(root.dump());
-  doSystem::DfileSyntem::get().writeFile(*p_path, strPtr);
+  DfileSyntem::get().writeFile(*p_path, strPtr);
 }
 
 std::string CommentInfo::DBInfo() const {

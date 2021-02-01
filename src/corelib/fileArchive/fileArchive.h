@@ -12,7 +12,6 @@
 // #include <QFileInfo>
 // #include <QVector>
 #include <boost/filesystem.hpp>
-#include <fileSystem/fileSystem_global.h>
 
 #include <boost/signals2.hpp>
 
