@@ -15,10 +15,12 @@
 #include <boost/filesystem.hpp>
 namespace zmq {
 class context_t;
-};
+class socket_t;
+};  // namespace zmq
 
 DOODLE_NAMESPACE_S
 class Path;
+class fileDowUpdateOptions;
 
 class CORE_API DfileSyntem {
  public:
@@ -35,7 +37,9 @@ class CORE_API DfileSyntem {
                const std::string &prijectName);
 
   bool upload(const dpath &localFile, const dpath &remoteFile, bool force = false);
+  bool upload(const std::shared_ptr<fileDowUpdateOptions> &option);
   bool down(const dpath &localFile, const dpath &remoteFile, bool force = false);
+  bool down(const std::shared_ptr<fileDowUpdateOptions> &option);
   bool exists(const dpath &remoteFile);
   bool createDir(const dpath &remoteFile);
 
@@ -48,7 +52,9 @@ class CORE_API DfileSyntem {
   static bool removeDir(const dpath &path);
   bool updateFile(const dpath &localFile, const dpath &remoteFile, bool force = true, const dpath &backUpPath = dpath{});
   bool downFile(const dpath &localFile, const dpath &remoteFile, bool force = true);
-  std::unique_ptr<Path> getInfo(const dpath *path);
+
+  std::vector<std::shared_ptr<Path>> listFiles(zmq::socket_t *socket, const fileSys::path *path);
+  std::shared_ptr<Path> getInfo(zmq::socket_t *socket, const dpath *path);
 
   DfileSyntem();
   static DfileSyntem *install;

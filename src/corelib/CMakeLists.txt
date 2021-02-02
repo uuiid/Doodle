@@ -14,6 +14,7 @@ add_subdirectory(filesystem)
 add_subdirectory(queueData)
 add_subdirectory(shots)
 add_subdirectory(sysData)
+add_subdirectory(threadPool)
 
 target_link_libraries(core PUBLIC Qt5::Core)
 target_link_libraries(core PUBLIC SqlppMySql)

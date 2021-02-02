@@ -3,6 +3,7 @@ target_sources(
   PUBLIC
   Path.h
   FileSystem.h
+  fileSync.h
 )
 
 target_sources(
@@ -10,4 +11,5 @@ target_sources(
   PRIVATE
   Path.cpp
   FileSystem.cpp
+  fileSync.cpp
 )
