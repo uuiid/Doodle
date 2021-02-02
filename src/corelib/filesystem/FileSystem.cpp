@@ -322,8 +322,7 @@ bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool ba
   if (backup) {
     //使用c++14库
     auto time = std::chrono::system_clock::now();
-    // std::stringstream k_stringstream;
-    // k_stringstream << std::put_time(time, "%Y_%m_%d_%H_%M_%S");
+
     time_str    = date::format("%Y_%m_%d_%H_%M_%S", time);
     backup_path = trange_path.parent_path() / "backup" / time_str /
                   trange_path.filename();

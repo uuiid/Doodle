@@ -8,8 +8,8 @@
  */
 #pragma once
 
-#include "corelib/core_global.h"
-#include "corelib/core/coresqldata.h"
+#include <corelib/core_global.h>
+#include <corelib/core/coresqldata.h>
 
 DOODLE_NAMESPACE_S
 

@@ -9,8 +9,7 @@
 #pragma once
 
 #include "corelib/core_global.h"
-// #include <QFileInfo>
-// #include <QVector>
+
 #include <boost/filesystem.hpp>
 
 #include <boost/signals2.hpp>

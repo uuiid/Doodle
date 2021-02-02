@@ -79,7 +79,7 @@ dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr
 }
 
 bool ueSynArchive::update() {
-  return true;
+  return false;
 }
 bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   auto synClass = synData::getAll(episodes_ptr);

@@ -2,11 +2,9 @@
 
 #include <corelib/shots/shotfilesqlinfo.h>
 #include <utility>
-#include <QtCore/QDir>
 #include <corelib/exeWrap/ffmpegWrap.h>
 #include <corelib/shots/shottype.h>
 #include <corelib/fileArchive/movieArchive.h>
-#include <QFileInfo>
 
 //设置导入
 #include <corelib/core/coreset.h>

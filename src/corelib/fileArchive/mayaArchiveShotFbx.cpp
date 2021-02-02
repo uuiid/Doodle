@@ -6,17 +6,19 @@
 #include <corelib/shots/shotfilesqlinfo.h>
 #include <corelib/shots/shotClass.h>
 #include <corelib/shots/shottype.h>
-
 #include <corelib/shots/episodes.h>
 #include <corelib/shots/shot.h>
+#include <corelib/core/coreset.h>
+
 #include <loggerlib/Logger.h>
 
-#include <corelib/core/coreset.h>
-#include <stdexcept>
+#include <boost/process.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
+
 #include <nlohmann/json.hpp>
-#include <boost/process.hpp>
+
+#include <stdexcept>
 #include <sstream>
 #include <filesystem>
 

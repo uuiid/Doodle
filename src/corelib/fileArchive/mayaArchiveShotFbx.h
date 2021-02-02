@@ -3,8 +3,8 @@
 //
 
 #pragma once
-#include "corelib/core_global.h"
-#include "corelib/fileArchive/fileArchive.h"
+#include <corelib/core_global.h>
+#include <corelib/fileArchive/fileArchive.h>
 #include <map>
 DOODLE_NAMESPACE_S
 class CORE_API mayaArchiveShotFbx : public fileArchive {

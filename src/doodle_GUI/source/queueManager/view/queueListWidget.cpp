@@ -27,12 +27,13 @@ void QueueListDelegate::paint(QPainter *painter,
   progress.maximum       = 100;
   progress.textAlignment = Qt::AlignCenter;
   progress.textVisible   = true;
-  // progress.styleObject
+  progress.styleObject   = option.styleObject;
 
   int progress_int  = k_queue->Progress();
   progress.progress = progress_int < 0 ? 0 : progress_int;
   progress.text     = QString::fromStdString(k_queue->Name());
   QApplication::style()->drawControl(QStyle::CE_ProgressBar, &progress, painter);
+
   //   progress.render(painter);
   //   painter->restore();
 }

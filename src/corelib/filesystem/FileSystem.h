@@ -34,8 +34,8 @@ class CORE_API DfileSyntem {
                const std::string &password,
                const std::string &prijectName);
 
-  bool upload(const dpath &localFile, const dpath &remoteFile, bool force = true);
-  bool down(const dpath &localFile, const dpath &remoteFile, bool force = true);
+  bool upload(const dpath &localFile, const dpath &remoteFile, bool force = false);
+  bool down(const dpath &localFile, const dpath &remoteFile, bool force = false);
   bool exists(const dpath &remoteFile);
   bool createDir(const dpath &remoteFile);
 

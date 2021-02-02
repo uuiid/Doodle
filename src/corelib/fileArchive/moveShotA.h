@@ -3,8 +3,8 @@
 //
 #pragma once
 
-#include "corelib/core_global.h"
-#include "movieArchive.h"
+#include <corelib/core_global.h>
+#include <corelib/fileArchive/movieArchive.h>
 
 DOODLE_NAMESPACE_S
 class CORE_API moveShotA : public movieArchive {

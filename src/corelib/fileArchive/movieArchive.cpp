@@ -9,13 +9,14 @@
 #include "movieArchive.h"
 #include <corelib/shots/shottype.h>
 #include <corelib/exeWrap/ffmpegWrap.h>
-#include <loggerlib/Logger.h>
-
-#include <QtCore/QDir>
-#include <boost/filesystem.hpp>
-#include <utility>
 #include <corelib/shots/shotfilesqlinfo.h>
 #include <corelib/fileArchive/fileArchive.h>
+
+#include <loggerlib/Logger.h>
+
+#include <boost/filesystem.hpp>
+
+#include <utility>
 DOODLE_NAMESPACE_S
 movieArchive::movieArchive(fileSqlInfoPtr shot_info_ptr)
     : fileArchive(),
