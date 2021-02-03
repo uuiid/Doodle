@@ -39,19 +39,19 @@ void fileDowUpdateOptions::setForce(const bool& Force) noexcept {
   p_force = Force;
 }
 
-const std::vector<std::regex>& fileDowUpdateOptions::Include() const noexcept {
+const std::vector<fileDowUpdateOptions::regex_ptr>& fileDowUpdateOptions::Include() const noexcept {
   return p_includeRegex;
 }
 
-void fileDowUpdateOptions::setInclude(const std::vector<std::regex>& Include) noexcept {
+void fileDowUpdateOptions::setInclude(const std::vector<fileDowUpdateOptions::regex_ptr>& Include) noexcept {
   p_includeRegex = Include;
 }
 
-const std::vector<std::regex>& fileDowUpdateOptions::Exclude() const noexcept {
+const std::vector<fileDowUpdateOptions::regex_ptr>& fileDowUpdateOptions::Exclude() const noexcept {
   return p_excludeRegex;
 }
 
-void fileDowUpdateOptions::setExclude(const std::vector<std::regex>& Exclude) noexcept {
+void fileDowUpdateOptions::setExclude(const std::vector<fileDowUpdateOptions::regex_ptr>& Exclude) noexcept {
   p_excludeRegex = Exclude;
 }
 

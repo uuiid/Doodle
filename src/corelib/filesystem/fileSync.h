@@ -11,6 +11,8 @@ class CORE_API fileDowUpdateOptions {
   fileDowUpdateOptions();
   ~fileDowUpdateOptions();
 
+  using regex_ptr = std::shared_ptr<std::regex>;
+
   const fileSys::path &locaPath() const noexcept;
   void setlocaPath(const fileSys::path &locaPath) noexcept;
 
@@ -20,19 +22,19 @@ class CORE_API fileDowUpdateOptions {
   const bool &Force() const noexcept;
   void setForce(const bool &Force) noexcept;
 
-  const std::vector<std::regex> &Include() const noexcept;
-  void setInclude(const std::vector<std::regex> &Include) noexcept;
+  const std::vector<regex_ptr> &Include() const noexcept;
+  void setInclude(const std::vector<regex_ptr> &Include) noexcept;
 
-  const std::vector<std::regex> &Exclude() const noexcept;
-  void setExclude(const std::vector<std::regex> &Exclude) noexcept;
+  const std::vector<regex_ptr> &Exclude() const noexcept;
+  void setExclude(const std::vector<regex_ptr> &Exclude) noexcept;
 
  private:
   std::shared_ptr<fileSys::path> p_localFile;
   std::shared_ptr<fileSys::path> p_remoteFile;
 
   bool p_force;
-  std::vector<std::regex> p_includeRegex;
-  std::vector<std::regex> p_excludeRegex;
+  std::vector<regex_ptr> p_includeRegex;
+  std::vector<regex_ptr> p_excludeRegex;
 };
 
 DOODLE_NAMESPACE_E

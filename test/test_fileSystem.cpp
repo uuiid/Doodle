@@ -18,6 +18,18 @@ TEST(fileclient, uploadFolder) {
                           "/cache/tmp/Content", false));
 }
 
+TEST(fileclient, uploadFolderRegex) {
+  auto &file = doodle::DfileSyntem::get();
+  file.session("192.168.10.213", 6666, "", "", "test");
+  auto tmp = std::make_shared<doodle::fileDowUpdateOptions>();
+  tmp->setlocaPath("F:/Users/teXiao/Documents/Unreal_Projects/test_fire_light/Content");
+  tmp->setremotePath("/cache/tmp/Content");
+  tmp->setInclude({std::make_shared<std::regex>("Shot")});
+  tmp->setExclude({std::make_shared<std::regex>("Shot/shot_ep001_sc0009_")});
+
+  ASSERT_TRUE(file.upload(tmp));
+}
+
 TEST(fileclient, downFoluploadFele) {
   auto &file = doodle::DfileSyntem::get();
   file.session("192.168.10.213", 6666, "", "", "test");
@@ -36,8 +48,8 @@ TEST(fileclient, downFoluploadFolderRegex) {
   auto tmp = std::make_shared<doodle::fileDowUpdateOptions>();
   tmp->setlocaPath("F:/Users/teXiao/Documents/Unreal_Projects/tmp");
   tmp->setremotePath("/cache/test");
-  tmp->setInclude({std::regex(".*")});
-  tmp->setExclude({std::regex("back*")});
+  tmp->setInclude({std::make_shared<std::regex>(".*")});
+  tmp->setExclude({std::make_shared<std::regex>("back*")});
 
   ASSERT_TRUE(file.down(tmp));
 }

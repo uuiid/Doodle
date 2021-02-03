@@ -11,6 +11,7 @@
 #include <corelib/filesystem/fileSync.h>
 #include <corelib/filesystem/Path.h>
 #include <corelib/threadPool/ThreadPool.h>
+#include <corelib/Exception/Exception.h>
 #include <magic_enum.hpp>
 
 #include <boost/asio.hpp>
@@ -43,11 +44,10 @@ DOODLE_NAMESPACE_S
 DfileSyntem *DfileSyntem::install = nullptr;
 
 DfileSyntem::~DfileSyntem() {
-  // zsys_shutdown();
 }
 
 DfileSyntem &DfileSyntem::get() {
-  if (!install) std::runtime_error("not create file system");
+  if (!install) nullptr_error("not create file system");
   return *install;
 }
 
@@ -77,43 +77,60 @@ void DfileSyntem::session(const std::string &host,
 }
 
 bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) {
+  auto option = std::make_shared<fileDowUpdateOptions>();
+  option->setlocaPath(localFile);
+  option->setremotePath(remoteFile);
+  option->setForce(force);
+  upload(option);
+}
+
+bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
   auto time     = std::chrono::system_clock::now();
   auto time_str = date::format("%Y_%m_%d_%H_%M_%S", time);
 
   //创建线程池多线程复制
-  std::queue<std::future<bool>> queue;
+  ThreadPool thread_pool{4};
+  std::vector<std::future<bool>> result;
 
-  if (fileSys::is_directory(localFile)) {
-    auto dregex      = std::regex(localFile.generic_string());
-    auto backup_path = remoteFile.parent_path() / "backup" / time_str;
-    for (auto &&item : fileSys::recursive_directory_iterator(localFile)) {
+  if (fileSys::is_directory(option->locaPath())) {
+    auto dregex      = std::regex(option->locaPath().generic_string());
+    auto backup_path = option->remotePath().parent_path() / "backup" / time_str;
+    for (auto &&item : fileSys::recursive_directory_iterator(option->locaPath())) {
       auto targetPath = std::regex_replace(
-          item.path().generic_string(), dregex, remoteFile.generic_string());
+          item.path().generic_string(), dregex, "");
+      auto k_include = true;
+      auto k_exclude = false;
 
+      for (auto &&item : option->Include()) {
+        k_include &= std::regex_search(targetPath, *item);
+      }
       if (fileSys::is_regular_file(item.path())) {
-        auto fun = std::async(std::launch::async, [=]() -> bool {
-          return updateFile(item.path(), targetPath, false, backup_path);
-        });
-        queue.push(std::move(fun));
-        if (queue.size() > 4) {
-          queue.front().wait();
-          queue.pop();
+        if (k_include) {
+          for (auto &&item : option->Exclude()) {
+            k_exclude |= std::regex_search(targetPath, *item);
+          }
+          if (!k_exclude) {
+            auto path = option->remotePath() / targetPath;
+            result.emplace_back(
+                thread_pool.enqueue([=]() -> bool {
+                  return updateFile(item.path(), path, false, backup_path);
+                }));
+          }
         }
       }
     }
-    while (!queue.empty()) {
-      queue.front().wait();
-      queue.pop();
+
+    for (auto &&item : result) {
+      item.get();
     }
     return true;
   } else {
-    auto backup_path = remoteFile.parent_path() / "backup" / time_str / remoteFile.filename();
-    return updateFile(localFile, remoteFile, false, backup_path);
+    auto backup_path = option->remotePath().parent_path() /
+                       "backup" /
+                       time_str /
+                       option->remotePath().filename();
+    return updateFile(option->locaPath(), option->remotePath(), false, backup_path);
   }
-}
-
-bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
-  return false;
 }
 
 bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) {
@@ -151,11 +168,11 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
       auto k_include = true;
       auto k_exclude = false;
       for (auto &&item : option->Include()) {
-        k_include &= std::regex_match(targetPath, item);
+        k_include &= std::regex_search(targetPath, *item);
       }
       if (k_include) {
         for (auto &&item : option->Exclude()) {
-          k_exclude |= std::regex_match(targetPath, item);
+          k_exclude |= std::regex_search(targetPath, *item);
         }
         if (!k_exclude) {
           auto path = option->locaPath() / targetPath;
