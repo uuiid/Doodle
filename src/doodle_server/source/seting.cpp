@@ -1,7 +1,11 @@
 #include <doodle_server/source/seting.h>
 #include <doodle_server/source/Project.h>
+
+#include <loggerlib/Logger.h>
+
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/filesystem.hpp>
+
 DOODLE_NAMESPACE_S
 
 Seting::Seting() {
@@ -19,9 +23,11 @@ void Seting::init() const {
 
   auto k_config = boost::dll::program_location().parent_path() / "config" / "config.json";
   if (fileSys::exists(k_config)) {
+    DOODLE_LOG_INFO("load config file " << k_config);
     fileSys::ifstream file{k_config, std::ios::in};
     if (file.is_open()) {
       root = nlohmann::json::parse(file);
+      DOODLE_LOG_INFO(root);
       prj.from_json(root["project"]);
     }
   } else {
@@ -30,6 +36,7 @@ void Seting::init() const {
     root["changanhuanjie"] = "X:\\";
     root["KuangShenMoZun"] = "T:\\";
     root["WanYuFengShen"]  = "U:\\";
+    DOODLE_LOG_INFO("not config file ,use default config " << root);
     prj.from_json(root);
   }
 }

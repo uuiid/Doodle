@@ -32,7 +32,7 @@ void Handler::operator()(zmq::context_t* context) {
   while (true) {
     zmq::multipart_t k_request{socket};  //传入消息
     zmq::multipart_t k_reply{};          //回复消息
-    DOODLE_LOG_INFO("thread id: " << std::this_thread::get_id());
+    // DOODLE_LOG_INFO("thread id: " << std::this_thread::get_id());
     //处理消息
     auto str = std::move(processMessage(&k_request, &k_reply));
 

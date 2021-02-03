@@ -45,8 +45,8 @@ bool Path::createFolder() const {
 
 bool Path::read(char* buffer, uint64_t size, uint64_t offset) {
   DOODLE_LOG_INFO(p_path->generic_string()
-                  << "size :" << size
-                  << "offset : " << offset);
+                  << " size: " << size
+                  << " offset: " << offset);
   if (!p_file) {
     p_file = FileSystem::Get().open(std::make_shared<fileSys::path>(*p_path));
   }
@@ -55,8 +55,8 @@ bool Path::read(char* buffer, uint64_t size, uint64_t offset) {
 
 bool Path::write(char* buffer, uint64_t size, uint64_t offset) {
   DOODLE_LOG_INFO(p_path->generic_string()
-                  << "size :" << size
-                  << "offset : " << offset);
+                  << " size: " << size
+                  << " offset: " << offset);
   if (!p_file) {
     p_file = FileSystem::Get().open(std::make_shared<fileSys::path>(*p_path));
   }
@@ -65,7 +65,7 @@ bool Path::write(char* buffer, uint64_t size, uint64_t offset) {
 
 bool Path::rename(const Path& newName) {
   DOODLE_LOG_INFO(p_path->generic_path()
-                  << " --> "
+                  << " rename --> "
                   << newName.p_path->generic_string());
   auto status = FileSystem::Get()
                     .rename(p_path.get(), newName.p_path.get());
@@ -79,7 +79,7 @@ bool Path::rename(const Path& newName) {
 
 bool Path::copy(const Path& target) {
   DOODLE_LOG_INFO(p_path->generic_path()
-                  << " --> "
+                  << " copy file --> "
                   << target.p_path->generic_string());
   auto status = FileSystem::Get().copy(p_path.get(), target.p_path.get());
   return status;
