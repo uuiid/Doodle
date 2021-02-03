@@ -17,7 +17,7 @@ const static std::string logTemplate =
             margin-left: 20px;
             font-size: 14px;
             font-family: Arial, sans-serif, sans;
-            white-space: pre-wrap;
+            /* white-space: pre-wrap; */
         }
 
         a {
@@ -92,7 +92,7 @@ const static std::string logTemplate =
         }
         function objShow(obj) {
             obj.style.display="block";
-            obj.style.whiteSpace = "pre-wrap";
+            // obj.style.whiteSpace = "pre-wrap";
         }
         function selectType() {
             var sel = document.getElementById("typeSelect");

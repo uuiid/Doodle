@@ -3,7 +3,7 @@
 #include <loggerlib/Logger.h>
 
 #include <doodle_GUI/source/shotsWidght/model/shotEpsListModel.h>
-#include < core_Cpp.h>
+#include <core_Cpp.h>
 
 #include <QSpinBox>
 #include <QMenu>

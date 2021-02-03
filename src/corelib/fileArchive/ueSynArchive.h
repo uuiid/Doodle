@@ -14,6 +14,9 @@
 #include <corelib/fileArchive/fileArchive.h>
 
 DOODLE_NAMESPACE_S
+
+
+
 class CORE_API ueSynArchive : public fileArchive {
  public:
   ueSynArchive();
@@ -26,7 +29,6 @@ class CORE_API ueSynArchive : public fileArchive {
   void imp_generateFilePath() override;
 
  private:
-  freeSynWrapPtr p_syn;
   synPathListPtr synpart;
 };
 

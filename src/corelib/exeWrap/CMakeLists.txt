@@ -2,11 +2,11 @@
         core
         PUBLIC
         ffmpegWrap.h
-        freeSynWrap.h
+        # freeSynWrap.h
 )
 target_sources(
         core
         PRIVATE
         ffmpegWrap.cpp
-        freeSynWrap.cpp
+        # freeSynWrap.cpp
 )

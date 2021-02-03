@@ -111,7 +111,7 @@ void toolkit::installUePath(const std::string &path) {
   if (boost::filesystem::exists(ue_path)) {
     boost::filesystem::remove_all(ue_path);
   }
-  DfileSyntem::copy(sourePath, ue_path, false);
+  DfileSyntem::localCopy(sourePath, ue_path, false);
 }
 
 void toolkit::modifyUeCachePath() {
@@ -122,7 +122,7 @@ void toolkit::modifyUeCachePath() {
   auto source_path = coreSet::getSet().program_location().parent_path() /
                      "resource/BaseEngine.ini";
   if (boost::filesystem::exists(source_path)) {
-    DfileSyntem::copy(source_path, ue_path, true);
+    DfileSyntem::localCopy(source_path, ue_path, true);
   }
 }
 

@@ -11,6 +11,9 @@
 #include <doodle_GUI/source/mainWidght/mainWindows.h>
 #include <loggerlib/Logger.h>
 #include <corelib/filesystem/FileSystem.h>
+#include <boost/filesystem.hpp>
+#include <boost/locale.hpp>
+
 //必要导入
 #include <QApplication>
 #include <QTextCodec>
@@ -32,10 +35,11 @@ int main(int argc, char *argv[]) try {
   Logger::doodle_initLog();
   //初始化文件管理器
   auto filesystem = doodle::DfileSyntem::create();
+  //设置一下文件系统后端
+  boost::filesystem::path::imbue(boost::locale::generator()("zh_CN.UTF-8"));
 
   QApplication q_application(argc, argv);
 
-  
   //  //设置本地编码
   //  QTextCodec *codec = QTextCodec::codecForName("GBK");
   //  QTextCodec::setCodecForLocale(codec);

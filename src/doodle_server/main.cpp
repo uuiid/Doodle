@@ -10,7 +10,8 @@
 #include <zmq.hpp>
 #include <doodle_server/source/seting.h>
 #include <doodle_server/source/server.h>
-
+#include <boost/filesystem.hpp>
+#include <boost/locale.hpp>
 // #include <Windows.h>
 #include <loggerlib/Logger.h>
 
@@ -21,6 +22,8 @@
 int main(int argc, char const *argv[]) try {
   //初始化log
   Logger::doodle_initLog();
+  //设置一下文件系统后端
+  boost::filesystem::path::imbue(boost::locale::generator()("zh_CN.UTF-8"));
 
   auto &set = doodle::Seting::Get();
   set.init();

@@ -109,7 +109,7 @@ IoFile::IoFile(std::shared_ptr<fileSys::path> path)
       p_path(std::move(path)),
       p_file() {
   if (!p_file.is_open()) {
-    p_file.open(p_path->generic_string(), std::ios::out | std::ios::in | std::ios::binary);
+    p_file = boost::filesystem::fstream(*p_path, std::ios::out | std::ios::in | std::ios::binary);
   }
 }
 
@@ -146,6 +146,11 @@ bool IoFile::write(char* buffer, uint64_t size, uint64_t offset) {
     } else {
       return false;
     }
+    std::cout << "bad: " << p_file.bad()
+              << " eof: " << p_file.eof()
+              << " fail: " << p_file.fail()
+              << " id open: " << p_file.is_open()
+              << std::endl;
   }
   return p_file.good();
 }

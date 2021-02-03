@@ -7,6 +7,7 @@ DOODLE_NAMESPACE_S
 fileDowUpdateOptions::fileDowUpdateOptions()
     : p_localFile(std::make_shared<fileSys::path>()),
       p_remoteFile(std::make_shared<fileSys::path>()),
+      p_backup(nullptr),
       p_force(false),
       p_includeRegex(),
       p_excludeRegex() {
@@ -29,6 +30,19 @@ const fileSys::path& fileDowUpdateOptions::remotePath() const noexcept {
 
 void fileDowUpdateOptions::setremotePath(const fileSys::path& remotePath) noexcept {
   *p_remoteFile = remotePath;
+}
+
+const bool fileDowUpdateOptions::hasBackup() const noexcept {
+  return p_backup != nullptr;
+}
+
+const fileSys::path& fileDowUpdateOptions::backupPath() const noexcept {
+  return *p_backup;
+}
+
+void fileDowUpdateOptions::setbackupPath(const fileSys::path& backupPath) noexcept {
+  if (!p_backup) p_backup = std::make_unique<fileSys::path>();
+  *p_backup = backupPath;
 }
 
 const bool& fileDowUpdateOptions::Force() const noexcept {

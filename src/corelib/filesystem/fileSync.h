@@ -19,6 +19,10 @@ class CORE_API fileDowUpdateOptions {
   const fileSys::path &remotePath() const noexcept;
   void setremotePath(const fileSys::path &remotePath) noexcept;
 
+  const bool hasBackup() const noexcept;
+  const fileSys::path &backupPath() const noexcept;
+  void setbackupPath(const fileSys::path &backupPath) noexcept;
+
   const bool &Force() const noexcept;
   void setForce(const bool &Force) noexcept;
 
@@ -31,6 +35,7 @@ class CORE_API fileDowUpdateOptions {
  private:
   std::shared_ptr<fileSys::path> p_localFile;
   std::shared_ptr<fileSys::path> p_remoteFile;
+  std::shared_ptr<fileSys::path> p_backup;
 
   bool p_force;
   std::vector<regex_ptr> p_includeRegex;

@@ -8,12 +8,12 @@
 #include <corelib/shots/episodes.h>
 
 #include <corelib/filesystem/FileSystem.h>
+#include <corelib/filesystem/fileSync.h>
 
 #include <corelib/assets/assfilesqlinfo.h>
 #include <corelib/core/coreDataManager.h>
 #include <corelib/core/coreset.h>
 #include <corelib/shots/episodes.h>
-#include <corelib/exeWrap/freeSynWrap.h>
 #include <corelib/shots/shot.h>
 #include <corelib/sysData/synData.h>
 
@@ -22,7 +22,7 @@
 
 DOODLE_NAMESPACE_S
 ueSynArchive::ueSynArchive()
-    : fileArchive(), p_syn(std::make_shared<freeSynWrap>()), synpart() {}
+    : fileArchive(), synpart() {}
 void ueSynArchive::insertDB() {}
 void ueSynArchive::imp_generateFilePath() {}
 
@@ -33,9 +33,11 @@ dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr
 
   auto k_synData = synData::getAll(episodes_ptr);
 
+  //获得同步文件夹对
   synpart = k_synData->getSynDir(true);
   if (synpart.empty()) return {};
 
+  // 添加同步文件夹过滤器
   dstring k_shotVFXstr   = "*\\VFX\\*";
   dstring k_shotLightstr = "*";
   if (shot_ptr) {
@@ -45,36 +47,38 @@ dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr
     k_shotVFXstr   = (shotFlliter % shot_ptr->getShot()).str();
     k_shotLightstr = (k_shotLight % shot_ptr->getShot()).str();
   }
+  // 开始同步文件夹
+  auto lists = std::vector<std::shared_ptr<fileDowUpdateOptions>>{};
+  for (auto &&iter : synpart) {
+    auto option = std::make_shared<fileDowUpdateOptions>();
+    option->setbackupPath(str.str());
+    if (set.getDepartment() == "VFX") {
+      option->setlocaPath(iter.local);
+      option->setremotePath(iter.server);
+      option->setInclude({std::make_shared<std::regex>(k_shotVFXstr)});
+    } else if (set.getDepartment() == "Light") {
+      option->setlocaPath(iter.local);
+      option->setremotePath(iter.server);
 
-  p_syn->addSynFile(synpart);
-  p_syn->setVersioningFolder(freeSynWrap::syn_set::twoWay, str.str());
-  if (set.getDepartment() == "VFX") {
-    //设置同步方式
-    p_syn->addInclude({k_shotVFXstr});
-
-  } else if (set.getDepartment() == "Light") {
-    //同步light镜头
-    for (int i = 0; i < synpart.size(); ++i) {
-      p_syn->addSubSynchronize(i, freeSynWrap::syn_set::upload, str.str());
-      p_syn->addSubIncludeExclude(i, {k_shotLightstr}, {k_shotVFXstr});
+      option->setInclude({std::make_shared<std::regex>(k_shotLightstr)});
+      option->setExclude({std::make_shared<std::regex>(k_shotVFXstr)});
     }
-
-    //下载vfx镜头
+    lists.push_back(option);
+  }
+  if (set.getDepartment() == "Light") {
     auto syn_part_vfx = k_synData->getSynDir(false);
-    for (auto &item : syn_part_vfx) {
-      item.local  = set.getSynPathLocale() / set.projectName().second / item.local;
-      item.server = set.getAssRoot() / "VFX" / item.server;
-    }
-    p_syn->addSynFile(syn_part_vfx);
+    for (auto &&item : syn_part_vfx) {
+      //下载vfx镜头
+      auto option_light = std::make_shared<fileDowUpdateOptions>();
+      //设置背负路径
+      option_light->setbackupPath(str.str());
+      option_light->setlocaPath(set.getSynPathLocale() / set.projectName().second / item.local);
+      option_light->setremotePath(item.server = set.getAssRoot() / "VFX" / item.server);
 
-    for (size_t i = syn_part_vfx.size();
-         i < syn_part_vfx.size() + synpart.size(); ++i) {
-      p_syn->addSubSynchronize(boost::numeric_cast<int>(i), freeSynWrap::syn_set::down, str.str());
-      p_syn->addSubIncludeExclude(boost::numeric_cast<int>(i), {k_shotVFXstr}, {});
+      option_light->setInclude({std::make_shared<std::regex>(k_shotVFXstr)});
+      lists.push_back(option_light);
     }
   }
-  p_syn->run();
-
   return {};
 }
 

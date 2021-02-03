@@ -26,8 +26,6 @@ class CORE_API ueArchive : public fileArchive {
  protected:
   fileSqlInfoPtr p_info_;
 
- private:
-  freeSynWrapPtr p_syn;
 };
 
 DOODLE_NAMESPACE_E

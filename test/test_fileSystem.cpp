@@ -1,5 +1,6 @@
 #include <corelib/filesystem/fileSync.h>
 #include <corelib/filesystem/FileSystem.h>
+#include <boost/locale.hpp>
 #include <gtest/gtest.h>
 #include <regex>
 TEST(fileclient, uploadFile) {
@@ -8,6 +9,17 @@ TEST(fileclient, uploadFile) {
 
   ASSERT_TRUE(file.upload("F:/doodle.exe",
                           "/cache/tmp/Content/test.mp4", false));
+}
+
+TEST(fileclient, uploadFileUTF8) {
+  auto &file = doodle::DfileSyntem::get();
+  file.session("192.168.10.213", 6666, "", "", "test");
+
+  auto soure  = boost::locale::conv::to_utf<char>("F:/测试文件.mp4", "UTF-8");
+  auto trange = boost::locale::conv::to_utf<char>("/cache/tmp/Content/测试文件.mp4", "UTF-8");
+
+  ASSERT_TRUE(file.upload(soure,
+                          trange, false));
 }
 
 TEST(fileclient, uploadFolder) {

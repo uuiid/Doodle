@@ -46,7 +46,7 @@ class CORE_API DfileSyntem {
   std::shared_ptr<std::string> readFileToString(const dpath &remoteFile);
   bool writeFile(const dpath &remoteFile, const std::shared_ptr<std::string> &data);
   bool copy(const dpath &sourePath, const dpath &trange_path);
-  static bool copy(const dpath &sourePath, const dpath &trange_path, bool backup);
+  static bool localCopy(const dpath &sourePath, const dpath &trange_path, bool backup);
 
  private:
   static bool removeDir(const dpath &path);

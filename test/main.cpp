@@ -10,6 +10,8 @@
 #include <corelib/core/coresql.h>
 #include <loggerlib/Logger.h>
 #include <corelib/filesystem/FileSystem.h>
+
+#include <boost/locale.hpp>
 #include <QCoreApplication>
 #include <QTextCodec>
 #include <QTextStream>
@@ -35,6 +37,9 @@ int main(int argc, char *argv[]) {
   //初始化log
   Logger::doodle_initLog();
   auto filesystem = doodle::DfileSyntem::create();
+
+  //设置一下文件系统后端
+  boost::filesystem::path::imbue(boost::locale::generator()("zh_CN.UTF-8"));
 
   //创建qt必要的运行事件循环
   QCoreApplication app(argc, argv);

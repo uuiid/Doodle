@@ -81,7 +81,7 @@ bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool f
   option->setlocaPath(localFile);
   option->setremotePath(remoteFile);
   option->setForce(force);
-  upload(option);
+  return upload(option);
 }
 
 bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
@@ -95,6 +95,10 @@ bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
   if (fileSys::is_directory(option->locaPath())) {
     auto dregex      = std::regex(option->locaPath().generic_string());
     auto backup_path = option->remotePath().parent_path() / "backup" / time_str;
+    //测试是否具有备份路径
+    if (option->hasBackup())
+      backup_path = option->backupPath() / time_str;
+
     for (auto &&item : fileSys::recursive_directory_iterator(option->locaPath())) {
       auto targetPath = std::regex_replace(
           item.path().generic_string(), dregex, "");
@@ -144,6 +148,8 @@ bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile, bool for
 bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
   //创建线程池多线程复制
   ThreadPool thread_pool{4};
+  auto time     = std::chrono::system_clock::now();
+  auto time_str = date::format("%Y_%m_%d_%H_%M_%S", time);
 
   std::vector<std::future<bool>> result;
   zmq::socket_t socket{*p_context_, zmq::socket_type::req};
@@ -152,7 +158,11 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
   std::queue<std::shared_ptr<Path>> pathQueue;
   pathQueue.push(serverPath);
 
-  auto dregex = std::regex(option->remotePath().generic_string());
+  auto dregex      = std::regex(option->remotePath().generic_string());
+  auto backup_path = option->remotePath().parent_path() / "backup" / time_str;
+  if (option->hasBackup())
+    backup_path = option->backupPath() / time_str;
+
   while (!pathQueue.empty()) {
     if (pathQueue.front()->isDirectory()) {
       auto list = listFiles(&socket, pathQueue.front()->path().get());
@@ -176,12 +186,23 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
         }
         if (!k_exclude) {
           auto path = option->locaPath() / targetPath;
-          result.emplace_back(
-              thread_pool.enqueue([=]() -> bool {
-                return downFile(path,
-                                pathQueue.front()->path()->generic_string(),
-                                option->Force());
-              }));
+
+          if (fileSys::exists(path)) {
+            result.emplace_back(
+                thread_pool.enqueue([=]() -> bool {
+                  updateFile(path, backup_path, {});
+                  return downFile(path,
+                                  pathQueue.front()->path()->generic_string(),
+                                  option->Force());
+                }));
+          } else {
+            result.emplace_back(
+                thread_pool.enqueue([=]() -> bool {
+                  return downFile(path,
+                                  pathQueue.front()->path()->generic_string(),
+                                  option->Force());
+                }));
+          }
         }
       }
     }
@@ -282,7 +303,7 @@ bool DfileSyntem::writeFile(const dpath &remoteFile, const std::shared_ptr<std::
     root.clear();
 
     root["class"]           = "filesystem";
-    root["function"]        = magic_enum::enum_name(fileOptions::down);
+    root["function"]        = magic_enum::enum_name(fileOptions::update);
     root["body"]["path"]    = remoteFile.generic_string();
     root["body"]["project"] = prjectName;
     root["body"]["start"]   = i * off;
@@ -332,7 +353,7 @@ bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path) {
   return true;
 }
 
-bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path, bool backup) {
+bool DfileSyntem::localCopy(const dpath &sourePath, const dpath &trange_path, bool backup) {
   //创建线程池多线程复制
   boost::asio::thread_pool pool(std::thread::hardware_concurrency());
   //验证文件存在
@@ -428,14 +449,23 @@ bool DfileSyntem::updateFile(const dpath &localFile, const dpath &remoteFile, bo
   auto serverPath = getInfo(&socket, &remoteFile);
 
   //如果强制是false 并且服务器上存在文件， 并且修改时间服务器大于等于本地 那么直接忽略
-  auto modifyTime = boost::posix_time::from_time_t(boost::filesystem::last_write_time(localFile));
+  boost::posix_time::ptime modifyTime{};
+  try {
+    modifyTime = boost::posix_time::from_time_t(boost::filesystem::last_write_time(localFile));
+  } catch (boost::filesystem::filesystem_error &err) {
+    DOODLE_LOG_ERROR(err.what());
+    return false;
+  }
+
   if (!force && serverPath->Exist() && serverPath->modifyTime() >= modifyTime) {
     return true;
   }
+
   // 如果在服务器上存在同名目录就直接返回失败
   if (serverPath->isDirectory()) return false;
 
-  if (serverPath->Exist()) {
+  //这里要检查服务器上的路径是否有文件和 备份文件夹是否为空
+  if (serverPath->Exist() && (!backUpPath.empty())) {
     // 在这里移动备份文件
     root.clear();
     root["class"]                     = "filesystem";
@@ -453,7 +483,7 @@ bool DfileSyntem::updateFile(const dpath &localFile, const dpath &remoteFile, bo
   }
 
   //===========================
-  std::fstream file{localFile.generic_string(), std::ios::in | std::ios::binary};
+  fileSys::fstream file{localFile, std::ios::in | std::ios::binary};
   if (!file.is_open()) file.open(localFile.generic_string(), std::ios::in | std::ios::binary);
   auto size = boost::filesystem::file_size(localFile);
 
@@ -512,7 +542,7 @@ bool DfileSyntem::downFile(const dpath &localFile, const dpath &remoteFile, bool
     boost::filesystem::create_directories(localFile.parent_path());
   }
   // 准备下载文件
-  std::fstream file{localFile.generic_string(), std::ios::out | std::ios::binary};
+  fileSys::fstream file{localFile, std::ios::out | std::ios::binary};
   if (!file.is_open()) file.open(localFile.generic_string(), std::ios::out | std::ios::binary);
 
   auto size = serverPath->size();

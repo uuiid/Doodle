@@ -98,7 +98,7 @@ class assClass;
 class znchName;
 class assType;
 class assFileSqlInfo;
-class freeSynWrap;
+
 class movieEpsArchive;
 class synData;
 class pathParsing;
@@ -160,8 +160,6 @@ using dstringList = std::vector<std::string>;
 using dpath     = boost::filesystem::path;
 using dpathPtr  = std::shared_ptr<dpath>;
 using dpathList = std::vector<dpath>;
-
-using freeSynWrapPtr = std::shared_ptr<freeSynWrap>;
 
 using dataInfoPtr = std::variant<
     episodesPtr,

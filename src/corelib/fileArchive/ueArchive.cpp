@@ -5,10 +5,11 @@
 
 #include <corelib/core/coreset.h>
 #include <corelib/fileDBInfo/filesqlinfo.h>
-#include <corelib/exeWrap/freeSynWrap.h>
+#include <corelib/filesystem/FileSystem.h>
+#include <corelib/filesystem/fileSync.h>
 DOODLE_NAMESPACE_S
 ueArchive::ueArchive(fileSqlInfoPtr data)
-    : p_info_(std::move(data)), p_syn(std::make_shared<freeSynWrap>()) {}
+    : p_info_(std::move(data)) {}
 
 void ueArchive::insertDB() {
   dpathList list = p_ServerPath;
@@ -55,22 +56,19 @@ void ueArchive::imp_updata(const dpathList &pathList) {
   fileArchive::imp_updata({pathList.front()});
 
   //这里开始同步ue文件
-  synPath_struct syn_path_struct{};
-  syn_path_struct.local  = p_soureFile.front().parent_path() / DOODLE_CONTENT;
-  syn_path_struct.server = p_ServerPath.front().parent_path() / DOODLE_CONTENT;
-  p_syn->addSynFile({syn_path_struct});
-  p_syn->setVersioningFolder(freeSynWrap::syn_set::upload,
-                             p_ServerPath.front().parent_path() / DOODLE_BACKUP);
-  p_syn->run();
+  auto option = std::make_shared<fileDowUpdateOptions>();
+  option->setlocaPath(p_soureFile.front().parent_path() / DOODLE_CONTENT);
+  option->setremotePath(p_ServerPath.front().parent_path() / DOODLE_CONTENT);
+  auto &fsys = DfileSyntem::get();
+  fsys.upload(option);
 }
 void ueArchive::imp_down(const dpath &localPath) {
-  synPath_struct syn_path_struct{};
-  syn_path_struct.server = p_ServerPath.back();
-  syn_path_struct.local  = localPath.parent_path() / DOODLE_CONTENT;
-  p_syn->addSynFile({syn_path_struct});
-  p_syn->setVersioningFolder(freeSynWrap::syn_set::down,
-                             p_ServerPath.front().parent_path() / DOODLE_BACKUP);
-  p_syn->run();
+  auto option = std::make_shared<fileDowUpdateOptions>();
+  option->setlocaPath(localPath.parent_path() / DOODLE_CONTENT);
+  option->setremotePath(p_ServerPath.back());
+  auto &fsys = DfileSyntem::get();
+  fsys.down(option);
+
   p_ServerPath.pop_back();
   p_cacheFilePath.pop_back();
   fileArchive::imp_down(localPath);
