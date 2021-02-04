@@ -263,22 +263,9 @@ std::shared_ptr<std::string> DfileSyntem::readFileToString(const dpath &remoteFi
     const uint64_t period{size / off};
     for (uint64_t i = 0; i <= period; ++i) {
       auto end = std::min(off * (i + 1), size);
-      root.clear();
 
-      root["class"]           = "filesystem";
-      root["function"]        = magic_enum::enum_name(fileOptions::down);
-      root["body"]["path"]    = remoteFile.generic_string();
-      root["body"]["project"] = prjectName;
-      root["body"]["start"]   = i * off;
-      root["body"]["end"]     = end;
-      k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
-      k_muMsg.send(socket);
-
-      k_muMsg.recv(socket);
-      root = nlohmann::json::parse(k_muMsg.pop().to_string());
-      if (root["status"] != "ok") return false;
-      auto data = k_muMsg.pop();
-      str->append(data.to_string());
+      auto k_data = imp_down(&remoteFile, &socket, i * off, end - (i * off));
+      str->append(k_data->to_string());
     }
   }
   return str;
@@ -299,22 +286,10 @@ bool DfileSyntem::writeFile(const dpath &remoteFile, const std::shared_ptr<std::
   auto size       = data->size();
   const uint64_t period{size / off};
   for (uint64_t i = 0; i <= period; ++i) {
-    auto end = std::min(off * (i + 1), size);
-    root.clear();
-
-    root["class"]           = "filesystem";
-    root["function"]        = magic_enum::enum_name(fileOptions::update);
-    root["body"]["path"]    = remoteFile.generic_string();
-    root["body"]["project"] = prjectName;
-    root["body"]["start"]   = i * off;
-    root["body"]["end"]     = end;
-    k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
-    k_muMsg.push_back(std::move(zmq::message_t{data->data(), end - (i * off)}));
-    k_muMsg.send(socket);
-
-    k_muMsg.recv(socket);
-    root = nlohmann::json::parse(k_muMsg.pop().to_string());
-    if (root["status"] != "ok") return false;
+    auto end       = std::min(off * (i + 1), size);
+    auto k_message = zmq::message_t{*data};
+    auto k_r       = imp_update(&k_message, &remoteFile, &socket, i * off, end - (i * off));
+    if (!k_r) return false;
   }
   return true;
 }
@@ -490,26 +465,13 @@ bool DfileSyntem::updateFile(const dpath &localFile, const dpath &remoteFile, bo
   const uint64_t period{size / off};
   for (uint64_t i = 0; i <= period; ++i) {
     auto end = std::min(off * (i + 1), size);
-    root.clear();
-    root["class"]           = "filesystem";
-    root["function"]        = magic_enum::enum_name(fileOptions::update);
-    root["body"]["path"]    = remoteFile.generic_string();
-    root["body"]["project"] = prjectName;
-    root["body"]["start"]   = i * off;
-    root["body"]["end"]     = end;
-    k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
 
     auto data = zmq::message_t{end - (i * off)};
     file.seekg(i * off);
     file.read((char *)data.data(), end - (i * off));
-    k_muMsg.push_back(std::move(data));
 
-    k_muMsg.send(socket);
-    k_muMsg.recv(socket);
-
-    root = nlohmann::json::parse(k_muMsg.pop().to_string());
-    if (root["status"] != "ok")
-      return false;
+    auto r = imp_update(&data, &remoteFile, &socket, (i * off), end - (i * off));
+    if (!r) return false;
   }
   return true;
 }
@@ -549,24 +511,75 @@ bool DfileSyntem::downFile(const dpath &localFile, const dpath &remoteFile, bool
   const uint64_t period{size / off};
   for (uint64_t i = 0; i <= period; ++i) {
     auto end = std::min(off * (i + 1), size);
-    root.clear();
 
-    root["class"]           = "filesystem";
-    root["function"]        = magic_enum::enum_name(fileOptions::down);
-    root["body"]["path"]    = remoteFile.generic_string();
-    root["body"]["project"] = prjectName;
-    root["body"]["start"]   = i * off;
-    root["body"]["end"]     = end;
-    k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
-    k_muMsg.send(socket);
-
-    k_muMsg.recv(socket);
-    root = nlohmann::json::parse(k_muMsg.pop().to_string());
-    if (root["status"] != "ok") return false;
-    auto data = k_muMsg.pop();
-    file.write((char *)data.data(), data.size());
+    auto k_data = imp_down(&remoteFile, &socket, i * off, end - (i * off));
+    if (k_data)
+      file.write((char *)k_data->data(), k_data->size());
   }
   return true;
+}
+
+bool DfileSyntem::imp_update(zmq::message_t *data,
+                             const fileSys::path *path,
+                             zmq::socket_t *socket,
+                             const uint64_t &start,
+                             const uint64_t &off) {
+  nlohmann::json root;
+  zmq::multipart_t k_muMsg{};
+
+  std::string prjectName{};
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    prjectName = p_ProjectName;
+  }
+
+  root["class"]           = "filesystem";
+  root["function"]        = magic_enum::enum_name(fileOptions::update);
+  root["body"]["path"]    = path->generic_string();
+  root["body"]["project"] = prjectName;
+  root["body"]["start"]   = start;
+  root["body"]["end"]     = start + off;
+
+  k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+  k_muMsg.push_back(std::move(*data));
+
+  k_muMsg.send(*socket);
+
+  k_muMsg.recv(*socket);
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  if (root["status"] != "ok") return false;
+  return true;
+}
+
+std::shared_ptr<zmq::message_t> DfileSyntem::imp_down(const fileSys::path *path,
+                                                      zmq::socket_t *socket,
+                                                      const uint64_t &start, const uint64_t &off) {
+  nlohmann::json root;
+  zmq::multipart_t k_muMsg{};
+
+  auto result = std::make_shared<zmq::message_t>();
+
+  std::string prjectName{};
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    prjectName = p_ProjectName;
+  }
+
+  root["class"]           = "filesystem";
+  root["function"]        = magic_enum::enum_name(fileOptions::down);
+  root["body"]["path"]    = path->generic_string();
+  root["body"]["project"] = prjectName;
+  root["body"]["start"]   = start;
+  root["body"]["end"]     = start + off;
+
+  k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+  k_muMsg.send(*socket);
+
+  k_muMsg.recv(*socket);
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  if (root["status"] != "ok") return nullptr;
+  *result = k_muMsg.pop();
+  return result;
 }
 
 std::vector<std::shared_ptr<Path>> DfileSyntem::listFiles(zmq::socket_t *socket, const fileSys::path *path) {

@@ -16,6 +16,7 @@
 namespace zmq {
 class context_t;
 class socket_t;
+class message_t;
 };  // namespace zmq
 
 DOODLE_NAMESPACE_S
@@ -52,6 +53,14 @@ class CORE_API DfileSyntem {
   static bool removeDir(const dpath &path);
   bool updateFile(const dpath &localFile, const dpath &remoteFile, bool force = true, const dpath &backUpPath = dpath{});
   bool downFile(const dpath &localFile, const dpath &remoteFile, bool force = true);
+
+  bool imp_update(zmq::message_t *data,
+                  const fileSys::path *path,
+                  zmq::socket_t *socket, const uint64_t &state, const uint64_t &off);
+
+  std::shared_ptr<zmq::message_t> imp_down(const fileSys::path *path,
+                                           zmq::socket_t *socket,
+                                           const uint64_t &state, const uint64_t &off);
 
   std::vector<std::shared_ptr<Path>> listFiles(zmq::socket_t *socket, const fileSys::path *path);
   std::shared_ptr<Path> getInfo(zmq::socket_t *socket, const dpath *path);
