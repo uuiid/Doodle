@@ -10,5 +10,6 @@
 // clang-format off
 #define Doodle_VERSION_MAJOR @Doodle_VERSION_MAJOR@
 #define Doodle_VERSION_MINOR @Doodle_VERSION_MINOR@
-#define Doodle_VERSION_REVIS @Doodle_VERSION_REVIS@
+#define Doodle_VERSION_PATCH @Doodle_VERSION_PATCH@
+#define Doodle_VERSION_TWEAK @Doodle_VERSION_TWEAK@
 // clang-format on

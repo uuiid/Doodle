@@ -1,6 +1,8 @@
 ﻿cmake_minimum_required(VERSION 3.14)
 
-project(Doodle LANGUAGES CXX)
+project(Doodle
+        VERSION 2.3.1.0
+        LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 #设置qt自动参数
@@ -28,9 +30,7 @@ option(RUN_COPY    "run copy tools"     OFF)
 
 
 #配置版本文件
-set(Doodle_VERSION_MAJOR 2)
-set(Doodle_VERSION_MINOR 3) 
-set(Doodle_VERSION_REVIS 0)
+
 configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)
 configure_file(anzhuang.iss.in ${CMAKE_INSTALL_PREFIX}/anzhuang.iss)
 include_directories(${CMAKE_BINARY_DIR}/configure)

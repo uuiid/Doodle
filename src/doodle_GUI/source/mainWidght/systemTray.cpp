@@ -23,10 +23,11 @@
 #include <future>
 DOODLE_NAMESPACE_S
 systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
-  setToolTip(tr("doodle 文件 %1.%2.%3")
+  setToolTip(tr("doodle 文件 %1.%2.%3.%4")
                  .arg(Doodle_VERSION_MAJOR)
                  .arg(Doodle_VERSION_MINOR)
-                 .arg(Doodle_VERSION_REVIS));
+                 .arg(Doodle_VERSION_PATCH)
+                 .arg(Doodle_VERSION_TWEAK));
 
   auto timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &systemTray::upDoodle);
