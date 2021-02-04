@@ -134,7 +134,12 @@ void assTableWidght::insertAss(const QString &path) {
 
       data             = std::get<assInfoPtr>(data->findSimilar());
       auto ue4_archice = std::make_shared<ueArchive>(data);
-      ue4_archice->update(path.toStdString());
+
+      auto future = std::async(std::launch::async, [=]() -> bool {
+        return ue4_archice->update(path.toStdString());
+      });
+      updataManager::get().addQueue(future, "正在上传中", 100);
+      updataManager::get().run();
     } else {
       model()->removeRow(0);
       //    auto image_archice = std::make_shared< imageArchive>(data);

@@ -186,11 +186,15 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
         }
         if (!k_exclude) {
           auto path = option->locaPath() / targetPath;
+          // auto local_modifyTime = fileSys::exists(path) ? boost::posix_time::from_time_t(
+          //                                   boost::filesystem::last_write_time(path))
+          //                             : boost::posix_time::min_date_time;
+          // auto server_time      = pathQueue.front()->modifyTime();
 
-          if (fileSys::exists(path)) {
+          if (fileSys::exists(path) && option->hasBackup()) {
             result.emplace_back(
                 thread_pool.enqueue([=]() -> bool {
-                  updateFile(path, backup_path, {});
+                  updateFile(path, backup_path / path.filename(), {});
                   return downFile(path,
                                   pathQueue.front()->path()->generic_string(),
                                   option->Force());
@@ -285,6 +289,8 @@ bool DfileSyntem::writeFile(const dpath &remoteFile, const std::shared_ptr<std::
   auto serverPath = getInfo(&socket, &remoteFile);
   auto size       = data->size();
   const uint64_t period{size / off};
+  if (serverPath->Exist())
+    imp_rename_backup(&socket, serverPath->path().get());
   for (uint64_t i = 0; i <= period; ++i) {
     auto end       = std::min(off * (i + 1), size);
     auto k_message = zmq::message_t{*data};
@@ -503,6 +509,11 @@ bool DfileSyntem::downFile(const dpath &localFile, const dpath &remoteFile, bool
   if (!boost::filesystem::exists(localFile.parent_path())) {
     boost::filesystem::create_directories(localFile.parent_path());
   }
+  //着这里本地文件如果存在就删除
+  if (fileSys::exists(localFile)) {
+    fileSys::remove(localFile);
+  }
+
   // 准备下载文件
   fileSys::fstream file{localFile, std::ios::out | std::ios::binary};
   if (!file.is_open()) file.open(localFile.generic_string(), std::ios::out | std::ios::binary);
@@ -580,6 +591,38 @@ std::shared_ptr<zmq::message_t> DfileSyntem::imp_down(const fileSys::path *path,
   if (root["status"] != "ok") return nullptr;
   *result = k_muMsg.pop();
   return result;
+}
+
+void DfileSyntem::imp_rename(zmq::socket_t *socket,
+                             const fileSys::path *source, const fileSys::path *target) {
+  nlohmann::json root;
+  zmq::multipart_t k_muMsg{};
+  std::string prjectName{};
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    prjectName = p_ProjectName;
+  }
+  // 在这里移动备份文件
+  root.clear();
+  root["class"]                     = "filesystem";
+  root["function"]                  = magic_enum::enum_name(fileOptions::rename);
+  root["body"]["source"]["path"]    = source->generic_string();
+  root["body"]["source"]["project"] = prjectName;
+  root["body"]["target"]["path"]    = target->generic_string();
+  root["body"]["target"]["project"] = prjectName;
+  k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
+  k_muMsg.send(*socket);
+  k_muMsg.recv(*socket);
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  if (root["status"] != "ok") std::runtime_error("not rename file");
+}
+
+void DfileSyntem::imp_rename_backup(zmq::socket_t *socket,
+                                    const fileSys::path *source) {
+  auto time     = std::chrono::system_clock::now();
+  auto time_str = date::format("%Y_%m_%d_%H_%M_%S", time);
+  auto path     = source->parent_path() / "backup" / time_str;
+  imp_rename(socket, source, &path);
 }
 
 std::vector<std::shared_ptr<Path>> DfileSyntem::listFiles(zmq::socket_t *socket, const fileSys::path *path) {

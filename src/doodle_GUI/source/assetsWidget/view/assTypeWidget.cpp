@@ -5,7 +5,7 @@
 #include "assTypeWidget.h"
 
 #include <doodle_GUI/source/assetsWidget/model/assTypeModel.h>
-#include < core_Cpp.h>
+#include <core_Cpp.h>
 #include <QMenu>
 
 #include <QContextMenuEvent>

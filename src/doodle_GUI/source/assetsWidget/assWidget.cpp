@@ -102,6 +102,7 @@ assWidght::assWidght(QWidget *parent)
         mData.setAssInfoPtr(nullptr);
         mData.setAssTypePtr(nullptr);
 
+        p_ass_type_widget_->clearSelection();
         auto list = assFileSqlInfo::getAll(tmp_);
         p_ass_table_filter_model_->useFilter(filterState::notFilter, nullptr);
         p_ass_table_model_->setList(list);

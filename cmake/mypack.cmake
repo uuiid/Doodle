@@ -1,8 +1,8 @@
 function(CPACKIFW_COMMON)
     set(CPACK_PACKAGE_NAME Doodle)
-    set(CPACK_PACKAGE_FILE_NAME installer)
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Installation Tool")
-    set(CPACK_PACKAGE_VERSION "1.0.0") # Version of installer
+    # set(CPACK_PACKAGE_FILE_NAME doodle)
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "doodle")
+    # set(CPACK_PACKAGE_VERSION "1.0.0") # Version of installer
     set(CPACK_IFW_PACKAGE_START_MENU_DIRECTORY Qt_CPackIFW)
     set(CPACK_GENERATOR IFW)
     set(CPACK_IFW_VERBOSE ON)

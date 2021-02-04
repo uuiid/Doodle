@@ -95,7 +95,8 @@ class shotListWidget : public QListView {
   void deleteShot();
 
   //同步镜头
-  void synShot();
+  void downShot();
+  void uploadShot();
   //私有的镜头点击发射事件
   void _doodle_clicked_emit(const QModelIndex &index);
 

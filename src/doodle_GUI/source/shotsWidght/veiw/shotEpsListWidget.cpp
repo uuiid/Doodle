@@ -125,17 +125,25 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
             });
     p_eps_Menu->addAction(createMove);
 
-    auto syneps = new QAction();
-    syneps->setText(tr("同步集数"));
-    connect(syneps, &QAction::triggered,
+    auto k_downEps = new QAction();
+    k_downEps->setText(tr("下载本集ue文件"));
+    connect(k_downEps, &QAction::triggered,
             this, [eps_ptr]() {
-              std::make_shared<ueSynArchive>()->syn(eps_ptr->shared_from_this(), nullptr);
+              std::make_shared<ueSynArchive>()->down(eps_ptr->shared_from_this(), nullptr);
             });
-    // syneps->setToolTip();
-    p_eps_Menu->addAction(syneps);
+    // k_downEps->setToolTip();
+    p_eps_Menu->addAction(k_downEps);
+
+    auto k_uploadEps = new QAction();
+    k_uploadEps->setText(tr("上传本集ue文件"));
+    connect(k_uploadEps, &QAction::triggered,
+            this, [eps_ptr]() {
+              std::make_shared<ueSynArchive>()->update(eps_ptr->shared_from_this(), nullptr);
+            });
+    // k_uploadEps->setToolTip();
+    p_eps_Menu->addAction(k_uploadEps);
 
     p_eps_Menu->addSection(tr("注意"));
-
     auto modify_eps = new QAction();
     connect(modify_eps, &QAction::triggered,
             [=]() {

@@ -160,5 +160,5 @@ endif(RUN_fixup)
 
 
 
-# include(CPack)
+include(CPack)
 # ${projectDir}\out\install\${name}

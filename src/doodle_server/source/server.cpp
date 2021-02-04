@@ -118,7 +118,9 @@ void Handler::createFolder(nlohmann::json* root, zmq::multipart_t* reply_message
   reply_message->push_back(zmq::message_t{result.dump()});
 }
 
-void Handler::update(nlohmann::json* root, zmq::multipart_t* request_message, zmq::multipart_t* reply_message) {
+void Handler::update(nlohmann::json* root,
+                     zmq::multipart_t* request_message,
+                     zmq::multipart_t* reply_message) {
   auto path  = (*root)["body"].get<Path>();
   auto start = (*root)["body"]["start"].get<uint64_t>();
   auto end   = (*root)["body"]["end"].get<uint64_t>();

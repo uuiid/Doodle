@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <iostream>
 #include <locale>
+#include <regex>
 
 #include <boost/locale.hpp>
 TEST(DSTD, map_netDir) {
@@ -54,4 +55,8 @@ TEST(DSTD, std_locale) {
   std::cout << data.data() << std::endl;
   const std::string data2{};
   // data2
+}
+
+TEST(DSTD, regex) {
+  std::regex regex{"."};
 }

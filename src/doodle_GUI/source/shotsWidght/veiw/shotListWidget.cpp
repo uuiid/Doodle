@@ -208,8 +208,10 @@ void shotListWidget::contextMenuEvent(QContextMenuEvent *event) {
                        .data(Qt::UserRole)
                        .value<shot *>();
       if (shot_) {
-        auto synShot = p_shot_menu->addAction("同步镜头");
-        connect(synShot, &QAction::triggered, this, &shotListWidget::synShot);
+        auto k_downShot = p_shot_menu->addAction("下载ue镜头");
+        connect(k_downShot, &QAction::triggered, this, &shotListWidget::downShot);
+        auto k_uploadShot = p_shot_menu->addAction("上传ue镜头");
+        connect(k_uploadShot, &QAction::triggered, this, &shotListWidget::uploadShot);
       }
       p_shot_menu->addSeparator();
       //添加镜头删除和修改
@@ -231,13 +233,23 @@ void shotListWidget::setModel(QAbstractItemModel *model) {
   QAbstractItemView::setModel(model);
 }
 
-void shotListWidget::synShot() {
+void shotListWidget::downShot() {
   auto shot_ = selectionModel()
                    ->currentIndex()
                    .data(Qt::UserRole)
                    .value<shot *>();
   auto eps_ptr = coreDataManager::get().getEpisodesPtr();
   coreSet::getSet().setSyneps(eps_ptr->getEpisdes());
-  ueSynArchive().syn(eps_ptr, shot_->shared_from_this());
+  ueSynArchive().down(eps_ptr, shot_->shared_from_this());
+}
+
+void shotListWidget::uploadShot() {
+  auto shot_ = selectionModel()
+                   ->currentIndex()
+                   .data(Qt::UserRole)
+                   .value<shot *>();
+  auto eps_ptr = coreDataManager::get().getEpisodesPtr();
+  coreSet::getSet().setSyneps(eps_ptr->getEpisdes());
+  ueSynArchive().update(eps_ptr, shot_->shared_from_this());
 }
 DOODLE_NAMESPACE_E

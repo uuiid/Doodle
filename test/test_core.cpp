@@ -8,8 +8,6 @@
 #include <rttr/type>
 #include <corelib/core_Cpp.h>
 
-
-
 class CoreTest : public ::testing::Test {
  protected:
   void SetUp() override;
@@ -264,12 +262,12 @@ TEST_F(CoreTest, Synfile_dow_ue) {
 }
 TEST_F(CoreTest, Synfile) {
   set.setSyneps(41);
-  doodle::ueSynArchive().syn(nullptr, nullptr);
+  doodle::ueSynArchive().down(nullptr, nullptr);
 }
 TEST_F(CoreTest, Synfile_lisgt) {
   set.setSyneps(41);
   set.setDepartment((std::string) "Light");
-  doodle::ueSynArchive().syn(nullptr, nullptr);
+  doodle::ueSynArchive().down(nullptr, nullptr);
 }
 TEST_F(CoreTest, Synfile_create_dir) {
   set.setSyneps(41);

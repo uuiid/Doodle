@@ -15,6 +15,8 @@
 #include <QtWidgets/QProgressDialog>
 #include <QtCore/QTimer>
 #include <thread>
+
+#include <QtWidgets/qmessagebox.h>
 DOODLE_NAMESPACE_S
 updataManager &doodle::updataManager::get() {
   static updataManager manager{};
@@ -25,15 +27,20 @@ updataManager::updataManager()
   connect(p_timer_, &QTimer::timeout, this, &updataManager::chickQueue);
 }
 void updataManager::chickQueue() {
-  for (const auto &item : p_updataFtpQueue) {
+  for (auto &item : p_updataFtpQueue) {
     try {
       if (item.first.wait_for(std::chrono::microseconds(1)) ==
           std::future_status::ready) {
+        if (!(item.first.get())) {
+          DOODLE_LOG_INFO("任务失败");
+        }
+
         item.second->maximum();
         item.second->setValue(100);
         // std::this_thread::sleep_for(std::chrono::microseconds(300));
         item.second->close();
         item.second->deleteLater();
+        item.second = nullptr;
       } else {
         if (item.second->value() < 99)
           item.second->setValue(item.second->value() + 1);
@@ -42,6 +49,7 @@ void updataManager::chickQueue() {
       item.second->setValue(100);
       item.second->close();
       item.second->deleteLater();
+      item.second = nullptr;
       DOODLE_LOG_WARN(e.what());
     }
   }
@@ -49,8 +57,7 @@ void updataManager::chickQueue() {
       std::remove_if(
           p_updataFtpQueue.begin(), p_updataFtpQueue.end(),
           [this](std::pair<std::future<bool>, QProgressDialog *> &part) {
-            return part.first.wait_for(std::chrono::microseconds(10)) ==
-                   std::future_status::ready;
+            return part.second == nullptr;
           }),
       p_updataFtpQueue.end());
   if (p_updataFtpQueue.empty()) {

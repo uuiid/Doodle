@@ -62,6 +62,10 @@ class CORE_API DfileSyntem {
                                            zmq::socket_t *socket,
                                            const uint64_t &state, const uint64_t &off);
 
+  void imp_rename(zmq::socket_t *socket,
+                  const fileSys::path *soure, const fileSys::path *target);
+  void imp_rename_backup(zmq::socket_t *socket,
+                         const fileSys::path *source);
   std::vector<std::shared_ptr<Path>> listFiles(zmq::socket_t *socket, const fileSys::path *path);
   std::shared_ptr<Path> getInfo(zmq::socket_t *socket, const dpath *path);
 

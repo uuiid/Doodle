@@ -23,6 +23,12 @@ DOODLE_NAMESPACE_S
 
 void toolkit::openPath(const fileSqlInfoPtr &info_ptr,
                        const bool &openEx) {
+  if (info_ptr->getFileList().empty()) {
+    DOODLE_LOG_INFO("没有找到目录");
+    QMessageBox::warning(nullptr, QString::fromUtf8("没有目录"),
+                         QString::fromUtf8("没有找到目录 "),
+                         QMessageBox::Yes);
+  }
   auto path = coreSet::getSet().getPrjectRoot() /
               info_ptr->getFileList()[0].parent_path();
 

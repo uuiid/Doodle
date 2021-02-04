@@ -38,6 +38,67 @@ dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr
   if (synpart.empty()) return {};
 
   // 添加同步文件夹过滤器
+  dstring k_shotVFXstr   = "*/VFX/*";
+  dstring k_shotLightstr = ".";
+  if (shot_ptr) {
+    boost::format shotFlliter(R"(*c%04i/Checkpoint/VFX/*)");
+    boost::format k_shotLight(R"(*c%04i)");
+
+    k_shotVFXstr   = (shotFlliter % shot_ptr->getShot()).str();
+    k_shotLightstr = (k_shotLight % shot_ptr->getShot()).str();
+  }
+  // 开始同步文件夹
+  auto lists = std::vector<std::shared_ptr<fileDowUpdateOptions>>{};
+  for (auto &&iter : synpart) {
+    auto option = std::make_shared<fileDowUpdateOptions>();
+    option->setbackupPath(str.str());
+    if (set.getDepartment() == "VFX") {
+      option->setlocaPath(iter.local);
+      option->setremotePath(iter.server);
+      option->setInclude({std::make_shared<std::regex>(k_shotVFXstr)});
+    } else if (set.getDepartment() == "Light") {
+      option->setlocaPath(iter.local);
+      option->setremotePath(iter.server);
+
+      option->setInclude({std::make_shared<std::regex>(k_shotLightstr)});
+      option->setExclude({std::make_shared<std::regex>(k_shotVFXstr)});
+    }
+    option->setbackupPath(str.str());
+    lists.push_back(option);
+  }
+  if (set.getDepartment() == "Light") {
+    auto syn_part_vfx = k_synData->getSynDir(false);
+    for (auto &&item : syn_part_vfx) {
+      //下载vfx镜头
+      auto option_light = std::make_shared<fileDowUpdateOptions>();
+      //设置背负路径
+      option_light->setbackupPath(str.str());
+      option_light->setlocaPath(set.getSynPathLocale() / set.projectName().second / item.local);
+      option_light->setremotePath(item.server = set.getAssRoot() / "VFX" / item.server);
+
+      option_light->setInclude({std::make_shared<std::regex>(k_shotVFXstr)});
+      option_light->setbackupPath(str.str());
+      lists.push_back(option_light);
+    }
+  }
+  for (auto &&item : lists) {
+    DfileSyntem::get().down(item);
+  }
+  return {};
+}
+
+bool ueSynArchive::update(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr) {
+  auto &set = coreSet::getSet();
+  boost::format str("/03_Workflow/Assets/%s/backup");
+  str % set.getDepartment();
+
+  auto k_synData = synData::getAll(episodes_ptr);
+
+  //获得同步文件夹对
+  synpart = k_synData->getSynDir(true);
+  if (synpart.empty()) return {};
+
+  // 添加同步文件夹过滤器
   dstring k_shotVFXstr   = "*\\VFX\\*";
   dstring k_shotLightstr = "*";
   if (shot_ptr) {
@@ -63,6 +124,7 @@ dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr
       option->setInclude({std::make_shared<std::regex>(k_shotLightstr)});
       option->setExclude({std::make_shared<std::regex>(k_shotVFXstr)});
     }
+    option->setbackupPath(str.str());
     lists.push_back(option);
   }
   if (set.getDepartment() == "Light") {
@@ -76,14 +138,75 @@ dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr
       option_light->setremotePath(item.server = set.getAssRoot() / "VFX" / item.server);
 
       option_light->setInclude({std::make_shared<std::regex>(k_shotVFXstr)});
+      option_light->setbackupPath(str.str());
       lists.push_back(option_light);
     }
   }
-  return {};
+  for (auto &&item : lists) {
+    DfileSyntem::get().upload(item);
+  }
+  return true;
 }
 
-bool ueSynArchive::update() {
-  return false;
+dpath ueSynArchive::down(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr) {
+  auto &set = coreSet::getSet();
+  boost::format str("/03_Workflow/Assets/%s/backup");
+  str % set.getDepartment();
+
+  auto k_synData = synData::getAll(episodes_ptr);
+
+  //获得同步文件夹对
+  synpart = k_synData->getSynDir(true);
+  if (synpart.empty()) return {};
+
+  // 添加同步文件夹过滤器
+  dstring k_shotVFXstr   = "/VFX/";
+  dstring k_shotLightstr = ".";
+  if (shot_ptr) {
+    boost::format shotFlliter(R"(c%04i/Checkpoint/VFX/)");
+    boost::format k_shotLight(R"(c%04i)");
+
+    k_shotVFXstr   = (shotFlliter % shot_ptr->getShot()).str();
+    k_shotLightstr = (k_shotLight % shot_ptr->getShot()).str();
+  }
+  // 开始同步文件夹
+  auto lists = std::vector<std::shared_ptr<fileDowUpdateOptions>>{};
+  for (auto &&iter : synpart) {
+    auto option = std::make_shared<fileDowUpdateOptions>();
+    option->setbackupPath(str.str());
+    if (set.getDepartment() == "VFX") {
+      option->setlocaPath(iter.local);
+      option->setremotePath(iter.server);
+      option->setInclude({std::make_shared<std::regex>(k_shotVFXstr)});
+    } else if (set.getDepartment() == "Light") {
+      option->setlocaPath(iter.local);
+      option->setremotePath(iter.server);
+
+      option->setInclude({std::make_shared<std::regex>(k_shotLightstr)});
+      option->setExclude({std::make_shared<std::regex>(k_shotVFXstr)});
+    }
+    option->setbackupPath(str.str());
+    lists.push_back(option);
+  }
+  if (set.getDepartment() == "Light") {
+    auto syn_part_vfx = k_synData->getSynDir(false);
+    for (auto &&item : syn_part_vfx) {
+      //下载vfx镜头
+      auto option_light = std::make_shared<fileDowUpdateOptions>();
+      //设置背负路径
+      option_light->setbackupPath(str.str());
+      option_light->setlocaPath(set.getSynPathLocale() / set.projectName().second / item.local);
+      option_light->setremotePath(item.server = set.getAssRoot() / "VFX" / item.server);
+
+      option_light->setInclude({std::make_shared<std::regex>(k_shotVFXstr)});
+      option_light->setbackupPath(str.str());
+      lists.push_back(option_light);
+    }
+  }
+  for (auto &&item : lists) {
+    DfileSyntem::get().down(item);
+  }
+  return {};
 }
 bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   auto synClass = synData::getAll(episodes_ptr);

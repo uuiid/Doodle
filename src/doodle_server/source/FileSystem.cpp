@@ -146,11 +146,11 @@ bool IoFile::write(char* buffer, uint64_t size, uint64_t offset) {
     } else {
       return false;
     }
-    std::cout << "bad: " << p_file.bad()
-              << " eof: " << p_file.eof()
-              << " fail: " << p_file.fail()
-              << " id open: " << p_file.is_open()
-              << std::endl;
+    // std::cout << "bad: " << p_file.bad()
+    //           << " eof: " << p_file.eof()
+    //           << " fail: " << p_file.fail()
+    //           << " id open: " << p_file.is_open()
+    //           << std::endl;
   }
   return p_file.good();
 }
