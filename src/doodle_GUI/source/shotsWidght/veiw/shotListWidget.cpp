@@ -4,6 +4,7 @@
 
 #include <loggerlib/Logger.h>
 #include <doodle_GUI/source/shotsWidght/model/shotListModel.h>
+#include <doodle_GUI/source/toolkit/updataManager.h>
 
 #include <QtCore/QString>
 #include <QSpinBox>
@@ -240,7 +241,13 @@ void shotListWidget::downShot() {
                    .value<shot *>();
   auto eps_ptr = coreDataManager::get().getEpisodesPtr();
   coreSet::getSet().setSyneps(eps_ptr->getEpisdes());
-  ueSynArchive().down(eps_ptr, shot_->shared_from_this());
+  auto ue  = std::make_shared<ueSynArchive>();
+  auto fun = std::async(std::launch::async,
+                        [=]() -> bool { 
+                          ue->down(eps_ptr, shot_->shared_from_this());
+                         return true; });
+  updataManager::get().addQueue(fun, "正在下载中", 10000);
+  updataManager::get().run();
 }
 
 void shotListWidget::uploadShot() {
@@ -250,6 +257,11 @@ void shotListWidget::uploadShot() {
                    .value<shot *>();
   auto eps_ptr = coreDataManager::get().getEpisodesPtr();
   coreSet::getSet().setSyneps(eps_ptr->getEpisdes());
-  ueSynArchive().update(eps_ptr, shot_->shared_from_this());
+  auto ue  = std::make_shared<ueSynArchive>();
+  auto fun = std::async(std::launch::async,
+                        [=]() -> bool { ue->update(eps_ptr, shot_->shared_from_this());
+                         return true; });
+  updataManager::get().addQueue(fun, "正在下载中", 10000);
+  updataManager::get().run();
 }
 DOODLE_NAMESPACE_E

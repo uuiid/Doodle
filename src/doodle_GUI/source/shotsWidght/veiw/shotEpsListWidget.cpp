@@ -3,6 +3,7 @@
 #include <loggerlib/Logger.h>
 
 #include <doodle_GUI/source/shotsWidght/model/shotEpsListModel.h>
+#include <doodle_GUI/source/toolkit/updataManager.h>
 #include <core_Cpp.h>
 
 #include <QSpinBox>
@@ -129,7 +130,13 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
     k_downEps->setText(tr("下载本集ue文件"));
     connect(k_downEps, &QAction::triggered,
             this, [eps_ptr]() {
-              std::make_shared<ueSynArchive>()->down(eps_ptr->shared_from_this(), nullptr);
+              auto fun = std::async(std::launch::async,
+                                    [=]() -> bool {
+                                      std::make_shared<ueSynArchive>()->down(eps_ptr->shared_from_this(), nullptr);
+                                      return true;
+                                    });
+              updataManager::get().addQueue(fun, "正在下载中", 10000);
+              updataManager::get().run();
             });
     // k_downEps->setToolTip();
     p_eps_Menu->addAction(k_downEps);
@@ -138,7 +145,13 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
     k_uploadEps->setText(tr("上传本集ue文件"));
     connect(k_uploadEps, &QAction::triggered,
             this, [eps_ptr]() {
-              std::make_shared<ueSynArchive>()->update(eps_ptr->shared_from_this(), nullptr);
+              auto fun = std::async(std::launch::async,
+                                    [=]() -> bool {
+                                      std::make_shared<ueSynArchive>()->update(eps_ptr->shared_from_this(), nullptr);
+                                      return true;
+                                    });
+              updataManager::get().addQueue(fun, "正在上传中", 10000);
+              updataManager::get().run();
             });
     // k_uploadEps->setToolTip();
     p_eps_Menu->addAction(k_uploadEps);

@@ -102,13 +102,17 @@ void mainWindows::doodle_init() {
   p_shot_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   p_ass_widght_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-  // //进度可拖拽窗口
-  // auto k_queue_dock = new QDockWidget(tr("队列"), centralWidget);
-  // auto k_queue      = new queueManagerWidget();
-  // k_queue_dock->setWidget(k_queue);
-  // addDockWidget(Qt::BottomDockWidgetArea, k_queue_dock);
+  //进度可拖拽窗口
+  auto k_queue_dock = new QDockWidget(centralWidget, Qt::Window | Qt::WindowStaysOnTopHint | Qt::X11BypassWindowManagerHint | Qt::FramelessWindowHint);
+  // k_queue_dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+  k_queue_dock->setTitleBarWidget(new QWidget(k_queue_dock));
+
+  auto k_queue = new queueManagerWidget();
+  k_queue_dock->setWidget(k_queue);
+  addDockWidget(Qt::BottomDockWidgetArea, k_queue_dock);
 
   //分割窗口
+  splitDockWidget(k_ass_dock, k_queue_dock, Qt::Vertical);
   splitDockWidget(k_ass_dock, k_shot_dock, Qt::Horizontal);
   //合并窗口
   // tabifyDockWidget(k_queue_dock, k_shot_dock);
@@ -119,7 +123,7 @@ void mainWindows::doodle_init() {
   auto k_win_drok = p_menu_bar_->addMenu("窗口");
   k_win_drok->addAction(k_ass_dock->toggleViewAction());
   k_win_drok->addAction(k_shot_dock->toggleViewAction());
-  // k_win_drok->addAction(k_queue_dock->toggleViewAction());
+  k_win_drok->addAction(k_queue_dock->toggleViewAction());
 
   //添加托盘图标
   auto tray = new systemTray(this);

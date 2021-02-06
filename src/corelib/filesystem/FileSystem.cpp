@@ -115,6 +115,9 @@ bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
           }
           if (!k_exclude) {
             auto path = option->remotePath() / targetPath;
+            //这里是添加log信号
+            auto logstr = item.path().generic_string() + " --> updata -->  " + path.generic_string();
+            filelog(logstr);
             result.emplace_back(
                 thread_pool.enqueue([=]() -> bool {
                   return updateFile(item.path(), path, false, backup_path);
@@ -191,19 +194,23 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
           //                             : boost::posix_time::min_date_time;
           // auto server_time      = pathQueue.front()->modifyTime();
 
+          //这里是添加log信号
+          auto str = pathQueue.front()->path()->generic_string() + " --> down --> " + path.generic_string();
+          filelog(str);
+
           if (fileSys::exists(path) && option->hasBackup()) {
             result.emplace_back(
                 thread_pool.enqueue([=]() -> bool {
                   updateFile(path, backup_path / path.filename(), {});
                   return downFile(path,
-                                  pathQueue.front()->path()->generic_string(),
+                                  *(pathQueue.front()->path()),
                                   option->Force());
                 }));
           } else {
             result.emplace_back(
                 thread_pool.enqueue([=]() -> bool {
                   return downFile(path,
-                                  pathQueue.front()->path()->generic_string(),
+                                  *(pathQueue.front()->path()),
                                   option->Force());
                 }));
           }
@@ -245,6 +252,7 @@ bool DfileSyntem::createDir(const dpath &remoteFile) {
   k_muMsg.recv(socket);
   root = nlohmann::json::parse(k_muMsg.pop().to_string());
   if (root["status"] != "ok") return false;
+  filelog("create dir --> " + remoteFile.generic_string());
   auto serverPath = root["body"].get<Path>();
   return serverPath.Exist();
 }
@@ -291,8 +299,10 @@ bool DfileSyntem::writeFile(const dpath &remoteFile, const std::shared_ptr<std::
   const uint64_t period{size / off};
   if (serverPath->Exist())
     imp_rename_backup(&socket, serverPath->path().get());
+
   for (uint64_t i = 0; i <= period; ++i) {
-    auto end       = std::min(off * (i + 1), size);
+    auto end = std::min(off * (i + 1), size);
+
     auto k_message = zmq::message_t{*data};
     auto k_r       = imp_update(&k_message, &remoteFile, &socket, i * off, end - (i * off));
     if (!k_r) return false;
@@ -469,7 +479,9 @@ bool DfileSyntem::updateFile(const dpath &localFile, const dpath &remoteFile, bo
   auto size = boost::filesystem::file_size(localFile);
 
   const uint64_t period{size / off};
+  fileStreamLog("update file : " + remoteFile.generic_string());
   for (uint64_t i = 0; i <= period; ++i) {
+    fileStreamLog(remoteFile.filename().generic_string() + " : " + std::to_string((period ? double(i) / period : 1) * 100));
     auto end = std::min(off * (i + 1), size);
 
     auto data = zmq::message_t{end - (i * off)};
@@ -520,7 +532,10 @@ bool DfileSyntem::downFile(const dpath &localFile, const dpath &remoteFile, bool
 
   auto size = serverPath->size();
   const uint64_t period{size / off};
+  // 发射日志
+  fileStreamLog("write file " + localFile.generic_string() + "");
   for (uint64_t i = 0; i <= period; ++i) {
+    fileStreamLog(remoteFile.filename().generic_string() + " : " + std::to_string((period ? double(i) / period : 1) * 100));
     auto end = std::min(off * (i + 1), size);
 
     auto k_data = imp_down(&remoteFile, &socket, i * off, end - (i * off));

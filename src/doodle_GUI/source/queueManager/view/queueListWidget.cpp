@@ -43,4 +43,24 @@ queueListWidget::queueListWidget(QWidget *parent)
   setItemDelegate(new QueueListDelegate(this));
 }
 
+QueueSyntaxHighlighter::QueueSyntaxHighlighter(QTextDocument *parent)
+    : QSyntaxHighlighter(parent) {
+}
+
+void QueueSyntaxHighlighter::highlightBlock(const QString &text) {
+  static QRegularExpression expressions{R"(write file|--> updata -->|--> down -->|create dir --> |update file|write file)"};
+  static QRegularExpression expressionsnum{R"( : \d+\.\d+)"};
+
+  auto iter    = expressions.globalMatch(text);
+  auto iternum = expressionsnum.globalMatch(text);
+  while (iter.hasNext()) {
+    auto match = iter.next();
+    setFormat(match.capturedStart(), match.capturedLength(), Qt::red);
+  }
+  while (iternum.hasNext()) {
+    auto match = iternum.next();
+    setFormat(match.capturedStart(), match.capturedLength(), Qt::green);
+  }
+}
+
 DOODLE_NAMESPACE_E

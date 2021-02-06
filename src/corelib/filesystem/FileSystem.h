@@ -13,6 +13,9 @@
 #include <nlohmann/json.hpp>
 #include <shared_mutex>
 #include <boost/filesystem.hpp>
+
+#include <boost/signals2.hpp>
+
 namespace zmq {
 class context_t;
 class socket_t;
@@ -36,6 +39,9 @@ class CORE_API DfileSyntem {
                const std::string &name,
                const std::string &password,
                const std::string &prijectName);
+
+  boost::signals2::signal<void(const std::string &)> filelog;
+  boost::signals2::signal<void(const std::string &)> fileStreamLog;
 
   bool upload(const dpath &localFile, const dpath &remoteFile, bool force = false);
   bool upload(const std::shared_ptr<fileDowUpdateOptions> &option);
