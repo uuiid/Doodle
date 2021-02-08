@@ -75,6 +75,7 @@ void boostLoggerInitAsyn(const std::string &logPath,
       boost::log::keywords::rotation_size       = 1024 * 1024,
       boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_interval(boost::posix_time::hours(1)),
       boost::log::keywords::max_size            = logMaxSize,
+      boost::log::keywords::min_free_space      = 100 * 1024 * 1024,
       boost::log::keywords::max_files           = 1024}};
   // clang-format off
   sink->set_formatter(

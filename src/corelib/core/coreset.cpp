@@ -226,8 +226,8 @@ void coreSet::getServerSetting() {
   for (auto &&raw : db->run(sqlpp::select(tab.name, tab.value)
                                 .from(tab)
                                 .where(tab.projectId == project.first))) {
-    map.insert(std::make_pair<std::string, std::string>(raw.name, raw.value));
-    DOODLE_LOG_INFO(raw.name.text << "--->" << raw.value.text << "\n");
+        map.insert(std::make_pair<std::string, std::string>(raw.name.text, raw.value.text));
+    DOODLE_LOG_INFO(raw.name.text << "  --->  " << raw.value.text << "\n");
   }
 
   *shotRoot   = map["shotRoot"];

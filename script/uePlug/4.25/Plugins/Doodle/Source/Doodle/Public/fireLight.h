@@ -19,13 +19,13 @@ class DOODLE_API AfireLight : public AActor {
   // Sets default values for this actor's properties
   AfireLight();
 
-  UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Doodle_light")
+  UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Doodle_light", meta = (UIMin = "0", UIMax = "100"))
   float Speed = 1.0f;
 
-  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Doodle_Light")
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Doodle_Light", meta = (UIMin = "0"))
   float luminanceMax = 75.0f;
 
-  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Doodle_Light")
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Doodle_Light", meta = (UIMin = "0"))
   float luminanceMin = 5.0f;
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Doodle_Light", DisplayName = "LightCurve")

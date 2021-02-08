@@ -3,6 +3,7 @@
 #include "Doodle.h"
 #include "DoodleStyle.h"
 #include "DoodleCommands.h"
+
 #include "LevelEditor.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBox.h"

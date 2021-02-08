@@ -16,7 +16,7 @@ TEST(doodleServer, client_base) {
   zmq::context_t context{1};
 
   zmq::socket_t socket{context, zmq::socket_type::req};
-  socket.connect(R"(tcp://127.0.0.1:6666)");
+  socket.connect(R"(tcp://192.168.10.250:6666)");
   nlohmann::json root;
   root["test"] = "test_message";
   root.cbegin();
@@ -36,7 +36,7 @@ TEST(doodleServer, server_base) {
   zmq::context_t context{1};
 
   zmq::socket_t socket{context, zmq::socket_type::req};
-  socket.connect(R"(tcp://127.0.0.1:6666)");
+  socket.connect(R"(tcp://192.168.10.250:6666)");
   nlohmann::json root;
   root["test"]            = "test_message";
   root["class"]           = "filesystem";
@@ -60,7 +60,7 @@ TEST(doodleServer, createFolder) {
   zmq::context_t context{1};
 
   zmq::socket_t socket{context, zmq::socket_type::req};
-  socket.connect(R"(tcp://127.0.0.1:6666)");
+  socket.connect(R"(tcp://192.168.10.250:6666)");
 
   for (size_t i = 0; i < 5; i++) {
     nlohmann::json root;
@@ -87,7 +87,7 @@ TEST(doodleServer, downFile) {
   zmq::context_t context{1};
 
   zmq::socket_t socket{context, zmq::socket_type::req};
-  socket.connect(R"(tcp://127.0.0.1:6666)");
+  socket.connect(R"(tcp://192.168.10.250:6666)");
   nlohmann::json root;
 
   zmq::multipart_t k_muMsg{};
@@ -173,7 +173,7 @@ TEST(doodleServer, updataFile) {
   zmq::context_t context{1};
 
   zmq::socket_t socket{context, zmq::socket_type::req};
-  socket.connect(R"(tcp://127.0.0.1:6666)");
+  socket.connect(R"(tcp://192.168.10.250:6666)");
   nlohmann::json root;
 
   zmq::multipart_t k_muMsg{};
@@ -226,7 +226,7 @@ TEST(doodleServer, rename) {
   zmq::context_t context{1};
 
   zmq::socket_t socket{context, zmq::socket_type::req};
-  socket.connect(R"(tcp://127.0.0.1:6666)");
+  socket.connect(R"(tcp://192.168.10.250:6666)");
   nlohmann::json root;
 
   zmq::multipart_t k_muMsg{};
@@ -252,15 +252,15 @@ TEST(doodleServer, list) {
   zmq::context_t context{1};
 
   zmq::socket_t socket{context, zmq::socket_type::req};
-  socket.connect(R"(tcp://127.0.0.1:6666)");
+  socket.connect(R"(tcp://192.168.10.250:6666)");
   nlohmann::json root;
 
   zmq::multipart_t k_muMsg{};
 
   root["class"]           = "filesystem";
   root["function"]        = "list";
-  root["body"]["path"]    = "/cache/";
-  root["body"]["project"] = "test";
+  root["body"]["path"]    = "/";
+  root["body"]["project"] = "doodle";
 
   k_muMsg.push_back(std::move(zmq::message_t{root.dump()}));
   k_muMsg.send(socket);
@@ -279,7 +279,7 @@ TEST(doodleServer, copyfile) {
   zmq::context_t context{1};
 
   zmq::socket_t socket{context, zmq::socket_type::req};
-  socket.connect(R"(tcp://127.0.0.1:6666)");
+  socket.connect(R"(tcp://192.168.10.250:6666)");
   nlohmann::json root;
 
   zmq::multipart_t k_muMsg{};
