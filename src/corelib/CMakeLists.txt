@@ -26,7 +26,7 @@ target_link_libraries(core PUBLIC ${Boost_LIBRARIES})
 
 target_link_libraries(core PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
 target_link_libraries(core PRIVATE cppzmq cppzmq-static)
-target_link_libraries(core PUBLIC pugixml)
+# target_link_libraries(core PUBLIC pugixml)
 target_link_libraries(core PUBLIC pinyin)
 target_link_libraries(core PUBLIC logger)
 

@@ -62,21 +62,12 @@ class DOODLE_API ADoodleDirectionalLightDome : public AActor {
   UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadOnly, Category = Light)
   FLightingChannels LightingChannels;
 
-  /** Sprite for static light in the editor. */
-  UPROPERTY(transient)
-  UTexture2D* StaticEditorTexture;
-
-  /** Sprite scaling for static light in the editor. */
-  UPROPERTY(transient)
-  float StaticEditorTextureScale;
-
-  /** Sprite for dynamic light in the editor. */
-  UPROPERTY(transient)
-  UTexture2D* DynamicEditorTexture;
-
-  /** Sprite scaling for dynamic light in the editor. */
-  UPROPERTY(transient)
-  float DynamicEditorTextureScale;
+  /** 
+	 * Filter color of the light.
+	 * Note that this can change the light's effective intensity.
+	 */
+  UPROPERTY(BlueprintReadOnly, interp, Category = Light, meta = (HideAlphaChannel))
+  FColor LightColor;
 
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle_Light", DisplayName = "lightArray")
   TArray<UDirectionalLightComponent*> p_array_light;

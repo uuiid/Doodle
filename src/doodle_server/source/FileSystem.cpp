@@ -5,6 +5,7 @@
 #include <boost/filesystem.hpp>
 // #include <boost/iostreams/stream.hpp>
 // #include <boost/iostreams/device/mapped_file.hpp>
+#include <loggerlib/Logger.h>
 #include <regex>
 DOODLE_NAMESPACE_S
 FileSystem& FileSystem::Get() noexcept {
@@ -43,19 +44,20 @@ bool FileSystem::rename(const fileSys::path* source, const fileSys::path* target
                           return f->p_path.get() == source;
                         });
   }
-  if (file == p_fm.end()) {
-    if (!fileSys::exists(target->parent_path())) {
-      fileSys::create_directories(target->parent_path());
-    }
-    if (fileSys::exists(*source)) {
-      fileSys::rename(*source, *target);
-      return true;
-    } else {
-      return false;
-    }
-  } else {
+  if (file != p_fm.end()) return false;
+  if (!fileSys::exists(*source)) return false;
+
+  if (!fileSys::exists(target->parent_path())) {
+    fileSys::create_directories(target->parent_path());
+  }
+
+  try {
+    fileSys::rename(*source, *target);
+  } catch (fileSys::filesystem_error& err) {
+    DOODLE_LOG_WARN(err.what());
     return false;
   }
+  return true;
 }
 
 bool FileSystem::copy(const fileSys::path* source, const fileSys::path* target) {

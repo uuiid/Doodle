@@ -187,5 +187,7 @@
         "b_Ninja*": false,
         "install*": true
     },
-    "editor.formatOnType": true
+    "editor.formatOnType": true,
+    "editor.wordWrap": "on",
+    "codegnuglobal.executable": "C:\\glo582wb\\bin\\global.exe"
 }

@@ -7,8 +7,8 @@
 #include "Math/UnrealMathUtility.h"
 //我自己定义的运行时曲线需要的头文件
 #include "Curves/CurveFloat.h"
-//添加构造函数助手类加载编辑器显示图标
-#include "UObject/ConstructorHelpers.h"
+//添加编辑器显示图标
+#include "Components/ArrowComponent.h"
 // Sets default values
 ADoodleDirectionalLightDome::ADoodleDirectionalLightDome()
     : p_longitude(FRuntimeFloatCurve{}),
@@ -21,6 +21,7 @@ ADoodleDirectionalLightDome::ADoodleDirectionalLightDome()
       LightSourceAngle(10),
       LightSourceSoftAngle(10),
       LightingChannels(),
+      LightColor(255, 255, 255),
       p_array_light() {
   // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
   PrimaryActorTick.bCanEverTick = true;
@@ -112,18 +113,31 @@ ADoodleDirectionalLightDome::ADoodleDirectionalLightDome()
       }
     }
   }
-  static ConstructorHelpers::FObjectFinder<UTexture2D> StaticTexture(TEXT("/Engine/EditorResources/LightIcons/SkyLight"));
-  StaticEditorTexture       = StaticTexture.Object;
-  StaticEditorTextureScale  = 1.0f;
-  DynamicEditorTexture      = StaticTexture.Object;
-  DynamicEditorTextureScale = 1.0f;
+
+  auto x_com = CreateDefaultSubobject<UArrowComponent>("x_com");
+  x_com->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+  x_com->SetArrowColor({1, 0, 0});
+  x_com->SetWorldRotation({0, 0, 0});
+
+  auto y_com = CreateDefaultSubobject<UArrowComponent>("y_com");
+  y_com->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+  y_com->SetArrowColor({0, 1, 0});
+  y_com->SetWorldRotation({0, 90, 0});
+
+  auto z_com = CreateDefaultSubobject<UArrowComponent>("z_com");
+  z_com->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+  z_com->SetArrowColor({0, 0, 1});
+  z_com->SetWorldRotation({90, 0, 0});
+
   set_light();
 }
 void ADoodleDirectionalLightDome::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangeEvent) {
   Super::PostEditChangeProperty(PropertyChangeEvent);
-  auto name = PropertyChangeEvent.GetPropertyName();
+  auto name2 = PropertyChangeEvent.GetPropertyName();
+  auto name  = PropertyChangeEvent.MemberProperty ? PropertyChangeEvent.MemberProperty->GetFName() : NAME_None;
+  // UE_LOG(LogTemp, Log, TEXT("chick name: %s"), *(name.ToString()));
+  // UE_LOG(LogTemp, Log, TEXT("chick MemberProperty: %s"), *(name2.ToString()));
 
-  UE_LOG(LogTemp, Log, TEXT("chick name: %s"), *(name.ToString()));
   if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_longitude) ||     //
       name == GET_MEMBER_NAME_CHECKED(ThisClass, p_latitude) ||      //
       name == GET_MEMBER_NAME_CHECKED(ThisClass, p_light_max) ||     //
@@ -131,7 +145,7 @@ void ADoodleDirectionalLightDome::PostEditChangeProperty(struct FPropertyChanged
       name == GET_MEMBER_NAME_CHECKED(ThisClass, p_night) ||         //
       name == GET_MEMBER_NAME_CHECKED(ThisClass, p_specular_min) ||  //
       name == GET_MEMBER_NAME_CHECKED(ThisClass, p_specular_curve)) {
-    UE_LOG(LogTemp, Log, TEXT("set property: %s"), *(name.ToString()));
+    // UE_LOG(LogTemp, Log, TEXT("set property: %s"), *(name.ToString()));
     set_light();
   } else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, LightSourceAngle)) {
     for (auto&& light : p_array_light) {
@@ -141,16 +155,17 @@ void ADoodleDirectionalLightDome::PostEditChangeProperty(struct FPropertyChanged
     for (auto&& light : p_array_light) {
       light->LightSourceSoftAngle = LightSourceSoftAngle;
     }
-  } else if (
-      name == FName(L"bChannel0") ||
-      name == FName(L"bChannel1") ||
-      name == FName(L"bChannel2")) {
-    UE_LOG(LogTemp, Log, TEXT("set property : %s"), *(name.ToString()));
+  } else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, LightingChannels)) {
+    // UE_LOG(LogTemp, Log, TEXT("set property : %s"), *(name.ToString()));
     for (auto&& light : p_array_light) {
       light->SetLightingChannels(
           LightingChannels.bChannel0,
           LightingChannels.bChannel1,
           LightingChannels.bChannel2);
+    }
+  } else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, LightColor)) {
+    for (auto&& light : p_array_light) {
+      light->SetLightColor(LightColor);
     }
   }
 }

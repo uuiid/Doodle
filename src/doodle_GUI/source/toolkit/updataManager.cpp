@@ -15,7 +15,7 @@
 #include <QtWidgets/QProgressDialog>
 #include <QtCore/QTimer>
 #include <thread>
-
+#include <future>
 #include <QtWidgets/qmessagebox.h>
 DOODLE_NAMESPACE_S
 updataManager &doodle::updataManager::get() {
@@ -29,8 +29,8 @@ updataManager::updataManager()
 void updataManager::chickQueue() {
   for (auto &item : p_updataFtpQueue) {
     try {
-      if (item.first.wait_for(std::chrono::microseconds(1)) ==
-          std::future_status::ready) {
+      if (item.first.wait_for(std::chrono::microseconds(1)) == std::future_status::ready ||
+          item.first.valid() == false) {
         if (!(item.first.get())) {
           DOODLE_LOG_INFO("任务失败");
         }
@@ -51,6 +51,12 @@ void updataManager::chickQueue() {
       item.second->deleteLater();
       item.second = nullptr;
       DOODLE_LOG_WARN(e.what());
+    } catch (...) {
+      item.second->setValue(100);
+      item.second->close();
+      item.second->deleteLater();
+      item.second = nullptr;
+      DOODLE_LOG_WARN("未知错误");
     }
   }
   p_updataFtpQueue.erase(

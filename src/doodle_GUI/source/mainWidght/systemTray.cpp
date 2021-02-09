@@ -1,8 +1,8 @@
 ﻿//
 // Created by teXiao on 2020/10/19.
 //
-
 #include "systemTray.h"
+#include <DoodleConfig.h>
 #include <doodle_GUI/source/mainWidght/mainWindows.h>
 #include <doodle_GUI/source/settingWidght/settingWidget.h>
 #include <loggerlib/Logger.h>

@@ -114,13 +114,16 @@ bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
             k_exclude |= std::regex_search(targetPath, *item);
           }
           if (!k_exclude) {
-            auto path = option->remotePath() / targetPath;
+            auto path            = option->remotePath() / targetPath;
+            auto tmp_backup_path = backup_path / targetPath;
+            
             //这里是添加log信号
             auto logstr = item.path().generic_string() + " --> updata -->  " + path.generic_string();
+
             filelog(logstr);
             result.emplace_back(
                 thread_pool.enqueue([=]() -> bool {
-                  return updateFile(item.path(), path, false, backup_path);
+                  return updateFile(item.path(), path, false, tmp_backup_path);
                 }));
           }
         }

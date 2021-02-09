@@ -37,10 +37,10 @@ void coreSql::initDB() {
   config->database = "doodle_main";
   config->debug    = false;
 #else
-  config->database = "test_db";  //#gitignore
-  // config->database = "doodle_main";  //#gitignore
-  config->debug = true;
-  // config->debug = false;
+  // config->database = "test_db";  //#gitignore
+  config->database = "doodle_main";  //#gitignore
+  // config->debug    = true;
+  config->debug = false;
 #endif  //NDEBUG
 }
 dstring coreSql::getThreadId() {

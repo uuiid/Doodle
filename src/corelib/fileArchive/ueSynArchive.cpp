@@ -99,11 +99,11 @@ bool ueSynArchive::update(const episodesPtr &episodes_ptr, const shotPtr &shot_p
   if (synpart.empty()) return {};
 
   // 添加同步文件夹过滤器
-  dstring k_shotVFXstr   = "*\\VFX\\*";
-  dstring k_shotLightstr = "*";
+  dstring k_shotVFXstr   = "/VFX/";
+  dstring k_shotLightstr = ".";
   if (shot_ptr) {
-    boost::format shotFlliter(R"(*c%04i\Checkpoint\VFX\*)");
-    boost::format k_shotLight(R"(*c%04i)");
+    boost::format shotFlliter(R"(c%04i/Checkpoint/VFX/)");
+    boost::format k_shotLight(R"(c%04i)");
 
     k_shotVFXstr   = (shotFlliter % shot_ptr->getShot()).str();
     k_shotLightstr = (k_shotLight % shot_ptr->getShot()).str();

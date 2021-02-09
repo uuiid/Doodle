@@ -1,7 +1,5 @@
 ﻿#pragma once
 
-#include <DoodleConfig.h>
-
 #define _SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING 1
 #define _WIN32_WINNT 0x0A00
 
