@@ -11,11 +11,12 @@
 #include <corelib/core_global.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <nlohmann/json.hpp>
-#include <shared_mutex>
 #include <boost/filesystem.hpp>
 
 #include <boost/signals2.hpp>
 
+#include <shared_mutex>
+#include <optional>
 namespace zmq {
 class context_t;
 class socket_t;
@@ -73,7 +74,8 @@ class CORE_API DfileSyntem {
   void imp_rename_backup(zmq::socket_t *socket,
                          const fileSys::path *source);
   std::vector<std::shared_ptr<Path>> listFiles(zmq::socket_t *socket, const fileSys::path *path);
-  std::shared_ptr<Path> getInfo(zmq::socket_t *socket, const dpath *path);
+  std::optional<std::shared_ptr<Path>> getInfo(zmq::socket_t *socket, const dpath *path);
+
 
   DfileSyntem();
   static DfileSyntem *install;

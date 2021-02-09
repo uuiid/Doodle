@@ -116,7 +116,7 @@ bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
           if (!k_exclude) {
             auto path            = option->remotePath() / targetPath;
             auto tmp_backup_path = backup_path / targetPath;
-            
+
             //这里是添加log信号
             auto logstr = item.path().generic_string() + " --> updata -->  " + path.generic_string();
 
@@ -160,7 +160,9 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
   std::vector<std::future<bool>> result;
   zmq::socket_t socket{*p_context_, zmq::socket_type::req};
 
-  auto serverPath = getInfo(&socket, &(option->remotePath()));
+  auto k_result = getInfo(&socket, &(option->remotePath()));
+  if (!k_result.has_value()) return false;
+  auto serverPath = k_result.value();
   std::queue<std::shared_ptr<Path>> pathQueue;
   pathQueue.push(serverPath);
 
@@ -230,8 +232,8 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
 
 bool DfileSyntem::exists(const dpath &remoteFile) {
   zmq::socket_t socket{*p_context_, zmq::socket_type::req};
-  auto serverPath = getInfo(&socket, &remoteFile);
-  return serverPath->Exist();
+  auto result = getInfo(&socket, &remoteFile);
+  return result ? result.value()->Exist() : false;
 }
 
 bool DfileSyntem::createDir(const dpath &remoteFile) {
@@ -272,7 +274,10 @@ std::shared_ptr<std::string> DfileSyntem::readFileToString(const dpath &remoteFi
   nlohmann::json root;
   zmq::multipart_t k_muMsg{};
 
-  auto serverPath = getInfo(&socket, &remoteFile);
+  auto result = getInfo(&socket, &remoteFile);
+  if (!result) return str;
+
+  auto serverPath = result.value();
   if (serverPath->Exist() && !serverPath->isDirectory()) {
     auto size = serverPath->size();
     const uint64_t period{size / off};
@@ -297,7 +302,10 @@ bool DfileSyntem::writeFile(const dpath &remoteFile, const std::shared_ptr<std::
   nlohmann::json root;
   zmq::multipart_t k_muMsg{};
 
-  auto serverPath = getInfo(&socket, &remoteFile);
+  auto result = getInfo(&socket, &remoteFile);
+  if (!result) return false;
+
+  auto serverPath = result.value();
   auto size       = data->size();
   const uint64_t period{size / off};
   if (serverPath->Exist())
@@ -324,7 +332,10 @@ bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path) {
   nlohmann::json root;
   zmq::multipart_t k_muMsg{};
 
-  auto serverPath = getInfo(&socket, &sourePath);
+  auto result = getInfo(&socket, &sourePath);
+  if (!result) return false;
+
+  auto serverPath = result.value();
   if (!serverPath->Exist()) return false;
 
   root.clear();
@@ -440,7 +451,9 @@ bool DfileSyntem::updateFile(const dpath &localFile, const dpath &remoteFile, bo
   nlohmann::json root;
   zmq::multipart_t k_muMsg{};
 
-  auto serverPath = getInfo(&socket, &remoteFile);
+  auto result = getInfo(&socket, &remoteFile);
+  if (!result) return false;
+  auto serverPath = result.value();
 
   //如果强制是false 并且服务器上存在文件， 并且修改时间服务器大于等于本地 那么直接忽略
   boost::posix_time::ptime modifyTime{};
@@ -508,7 +521,9 @@ bool DfileSyntem::downFile(const dpath &localFile, const dpath &remoteFile, bool
   nlohmann::json root;
   zmq::multipart_t k_muMsg{};
 
-  auto serverPath = getInfo(&socket, &remoteFile);
+  auto result = getInfo(&socket, &remoteFile);
+  if (!result) return false;
+  auto serverPath = result.value();
 
   // * 存在性检查和文件时间点检查
   if (serverPath->isDirectory()) return false;
@@ -670,7 +685,7 @@ std::vector<std::shared_ptr<Path>> DfileSyntem::listFiles(zmq::socket_t *socket,
   return paths;
 }
 
-std::shared_ptr<Path> DfileSyntem::getInfo(zmq::socket_t *socket, const dpath *path) {
+std::optional<std::shared_ptr<Path>> DfileSyntem::getInfo(zmq::socket_t *socket, const dpath *path) {
   auto k_path = std::make_unique<Path>();
   nlohmann::json root;
   std::string prjectName{};
@@ -685,12 +700,15 @@ std::shared_ptr<Path> DfileSyntem::getInfo(zmq::socket_t *socket, const dpath *p
   root["body"]["path"]    = path->generic_string();
 
   zmq::multipart_t k_muMsg{};
+  std::cout << root << std::endl;
   k_muMsg.push_back(zmq::message_t{root.dump()});
   k_muMsg.send(*socket);
 
   k_muMsg.recv(*socket);
   root = nlohmann::json::parse(k_muMsg.pop().to_string());
-  if (root["status"] != "ok") return nullptr;
+  std::cout << root << std::endl;
+  if (root["status"] != "ok")
+    return {};
   *k_path = root["body"].get<Path>();
   return k_path;
 }

@@ -38,10 +38,9 @@ TEST(doodleServer, server_base) {
   zmq::socket_t socket{context, zmq::socket_type::req};
   socket.connect(R"(tcp://192.168.10.250:6666)");
   nlohmann::json root;
-  root["test"]            = "test_message";
   root["class"]           = "filesystem";
   root["function"]        = "getInfo";
-  root["body"]["path"]    = "/cache/BiManMan_UE4.7z";
+  root["body"]["path"]    = "/6-moxing/BG/HaoHuaDaJiuLouNeiJing/Mod/HaoHuaDaJiuLouNeiJing_Mod.ma";
   root["body"]["project"] = "test";
 
   zmq::message_t message{root.dump()};
