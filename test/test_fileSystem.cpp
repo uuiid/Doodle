@@ -56,12 +56,12 @@ TEST(fileclient, downFoluploadFolder) {
 
 TEST(fileclient, downFoluploadFolderRegex) {
   auto &file = doodle::DfileSyntem::get();
-  file.session("192.168.10.213", 6666, "", "", "test");
+  file.session("192.168.10.250", 6666, "", "", "test");
   auto tmp = std::make_shared<doodle::fileDowUpdateOptions>();
-  tmp->setlocaPath("F:/Users/teXiao/Documents/Unreal_Projects/tmp");
-  tmp->setremotePath("/cache/test");
-  tmp->setInclude({std::make_shared<std::regex>(".*")});
-  tmp->setExclude({std::make_shared<std::regex>("back*")});
+  tmp->setlocaPath("F:/Users/teXiao/Documents/Unreal_Projects/tmp/doodle.exe");
+  tmp->setremotePath("/doodle/dist/doodle.exe");
+  // tmp->setInclude({std::make_shared<std::regex>(".*")});
+  // tmp->setExclude({std::make_shared<std::regex>("back*")});
 
   ASSERT_TRUE(file.down(tmp));
 }

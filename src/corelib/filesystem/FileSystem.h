@@ -50,6 +50,7 @@ class CORE_API DfileSyntem {
   bool down(const std::shared_ptr<fileDowUpdateOptions> &option);
   bool exists(const dpath &remoteFile);
   bool createDir(const dpath &remoteFile);
+  bool createDir(const std::vector<dpath> &paths);
 
   std::shared_ptr<std::string> readFileToString(const dpath &remoteFile);
   bool writeFile(const dpath &remoteFile, const std::shared_ptr<std::string> &data);
@@ -61,6 +62,8 @@ class CORE_API DfileSyntem {
   bool updateFile(const dpath &localFile, const dpath &remoteFile, bool force = true, const dpath &backUpPath = dpath{});
   bool downFile(const dpath &localFile, const dpath &remoteFile, bool force = true);
 
+  bool imp_createDir(const fileSys::path *path,
+                     zmq::socket_t *socket);
   bool imp_update(zmq::message_t *data,
                   const fileSys::path *path,
                   zmq::socket_t *socket, const uint64_t &state, const uint64_t &off);
@@ -75,7 +78,6 @@ class CORE_API DfileSyntem {
                          const fileSys::path *source);
   std::vector<std::shared_ptr<Path>> listFiles(zmq::socket_t *socket, const fileSys::path *path);
   std::optional<std::shared_ptr<Path>> getInfo(zmq::socket_t *socket, const dpath *path);
-
 
   DfileSyntem();
   static DfileSyntem *install;

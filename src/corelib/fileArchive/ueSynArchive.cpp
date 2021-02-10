@@ -19,6 +19,7 @@
 
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
+#include <corelib/threadPool/ThreadPool.h>
 
 DOODLE_NAMESPACE_S
 ueSynArchive::ueSynArchive()
@@ -231,16 +232,16 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   dstringList list;
   auto &session = DfileSyntem::get();
   //复制灯光需要的文件夹
-  auto server = set.getPrjectRoot() / set.getAssRoot() / set.getDepartment() /
+  auto server = set.getAssRoot() / set.getDepartment() /
                 *create_path;
   auto copy_path_list = soure_ptr->getFileList();
   if (copy_path_list.size() == 1) {
     auto path = copy_path_list.front();
-    session.copy(set.getPrjectRoot() / path, server / path.filename());
-    session.copy(set.getPrjectRoot() / path.parent_path() / DOODLE_CONTENT, server / DOODLE_CONTENT);
+    session.copy(path, server / path.filename());
+    session.copy(path.parent_path() / DOODLE_CONTENT, server / DOODLE_CONTENT);
   } else if (copy_path_list.size() == 2) {
     for (auto &copy_path : copy_path_list) {
-      session.copy(set.getPrjectRoot() / copy_path, server / copy_path.filename());
+      session.copy(copy_path, server / copy_path.filename());
     }
   }
 
@@ -252,20 +253,16 @@ bool ueSynArchive::makeDir(const episodesPtr &episodes_ptr) {
   dstringList listDep{"Light", "VFX"};
   server = set.getAssRoot() / set.getDepartment() / *create_path /
            DOODLE_CONTENT / "shot" / episodes_ptr->getEpisdes_str();
-  session.createDir(server.generic_string());
 
   for (int kI = 0; kI < 120; ++kI) {
     auto ks1 = server / (shot % kI).str();
-    session.createDir({ks1.generic_string()});
-
     for (const auto &listcreate : listcreates) {
       auto ks3 = ks1 / listcreate;
-      session.createDir({ks3.generic_string()});
-
+      session.createDir(ks3);
       if (listcreate == *listcreates.begin()) {
         for (const auto &list_dep : listDep) {
           auto ks2 = ks3 / list_dep;
-          session.createDir({ks2.generic_string()});
+          session.createDir(ks2);
         }
       }
     }

@@ -238,28 +238,27 @@ bool DfileSyntem::exists(const dpath &remoteFile) {
 
 bool DfileSyntem::createDir(const dpath &remoteFile) {
   zmq::socket_t socket{*p_context_, zmq::socket_type::req};
-  nlohmann::json root;
-  std::string prjectName{};
-  {
-    std::shared_lock<std::shared_mutex> lock{mutex_};
-    socket.connect(tmp_host_prot);
-    prjectName = p_ProjectName;
-  }
-  root["class"]           = "filesystem";
-  root["function"]        = magic_enum::enum_name(fileOptions::createFolder);
-  root["body"]["project"] = prjectName;
-  root["body"]["path"]    = remoteFile.generic_string();
-
   zmq::multipart_t k_muMsg{};
-  k_muMsg.push_back(zmq::message_t{root.dump()});
-  k_muMsg.send(socket);
+  return imp_createDir(&remoteFile, &socket);
+}
 
-  k_muMsg.recv(socket);
-  root = nlohmann::json::parse(k_muMsg.pop().to_string());
-  if (root["status"] != "ok") return false;
-  filelog("create dir --> " + remoteFile.generic_string());
-  auto serverPath = root["body"].get<Path>();
-  return serverPath.Exist();
+bool DfileSyntem::createDir(const std::vector<dpath> &paths) {
+  //创建线程池多线程复制
+  ThreadPool thread_pool{4};
+  //收集结果
+  std::vector<std::future<bool>> result;
+
+  for (auto &&item : paths) {
+    result.emplace_back(
+        thread_pool.enqueue([=]() -> bool {
+          return createDir(item);
+        }));
+  }
+  auto b_r = true;
+  for (auto &&item : result) {
+    b_r &= item.get();
+  }
+  return b_r;
 }
 
 std::shared_ptr<std::string> DfileSyntem::readFileToString(const dpath &remoteFile) {
@@ -561,6 +560,31 @@ bool DfileSyntem::downFile(const dpath &localFile, const dpath &remoteFile, bool
       file.write((char *)k_data->data(), k_data->size());
   }
   return true;
+}
+
+bool DfileSyntem::imp_createDir(const fileSys::path *path,
+                                zmq::socket_t *socket) {
+  nlohmann::json root;
+  std::string prjectName{};
+  {
+    std::shared_lock<std::shared_mutex> lock{mutex_};
+    prjectName = p_ProjectName;
+  }
+  root["class"]           = "filesystem";
+  root["function"]        = magic_enum::enum_name(fileOptions::createFolder);
+  root["body"]["project"] = prjectName;
+  root["body"]["path"]    = path->generic_string();
+
+  zmq::multipart_t k_muMsg{};
+  k_muMsg.push_back(zmq::message_t{root.dump()});
+  k_muMsg.send(*socket);
+
+  k_muMsg.recv(*socket);
+  root = nlohmann::json::parse(k_muMsg.pop().to_string());
+  filelog("create dir --> " + path->generic_string());
+
+  if (root["status"] != "ok") throw std::runtime_error("zmq err " + root["status"].get<std::string>());
+  return root["body"].get<Path>().Exist();
 }
 
 bool DfileSyntem::imp_update(zmq::message_t *data,
