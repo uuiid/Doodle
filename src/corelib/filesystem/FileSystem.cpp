@@ -710,7 +710,7 @@ std::vector<std::shared_ptr<Path>> DfileSyntem::listFiles(zmq::socket_t *socket,
 }
 
 std::optional<std::shared_ptr<Path>> DfileSyntem::getInfo(zmq::socket_t *socket, const dpath *path) {
-  auto k_path = std::make_unique<Path>();
+    auto k_path = std::make_unique<Path>();
   nlohmann::json root;
   std::string prjectName{};
   {
@@ -724,13 +724,15 @@ std::optional<std::shared_ptr<Path>> DfileSyntem::getInfo(zmq::socket_t *socket,
   root["body"]["path"]    = path->generic_string();
 
   zmq::multipart_t k_muMsg{};
-  std::cout << root << std::endl;
+
+  // std::cout << root << std::endl;
   k_muMsg.push_back(zmq::message_t{root.dump()});
   k_muMsg.send(*socket);
 
   k_muMsg.recv(*socket);
   root = nlohmann::json::parse(k_muMsg.pop().to_string());
-  std::cout << root << std::endl;
+
+  // std::cout << root << std::endl;
   if (root["status"] != "ok")
     return {};
   *k_path = root["body"].get<Path>();

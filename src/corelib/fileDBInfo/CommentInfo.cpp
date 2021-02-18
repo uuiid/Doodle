@@ -25,6 +25,7 @@ std::vector<std::string> CommentInfo::Info(const std::string &pathStr) {
    *情况三：
    **传入字符串 
    */
+  if (pathStr.empty()) return {};
 
   dpath path{pathStr};
   auto &fileSys = DfileSyntem::get();

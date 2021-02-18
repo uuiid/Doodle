@@ -61,7 +61,7 @@ void coreSet::init() {
   getCacheDiskPath();
   appendEnvironment();
   DOODLE_LOG_INFO("登录 : " << project.second.c_str());
-  DfileSyntem::get().session(ipFTP, 6666, project.second, "", project.second);
+  DfileSyntem::get().session(ipFTP /* ipFTP */, 6666, project.second, "", project.second);
   if (!boost::filesystem::exists(getCacheRoot())) {
     boost::filesystem::create_directories(getCacheRoot());
   }
@@ -70,7 +70,7 @@ void coreSet::init() {
 void coreSet::reInit() {
   initdb();
   getServerSetting();
-  DfileSyntem::get().session(ipFTP, 21, project.second, "", project.second);
+  DfileSyntem::get().session(ipFTP /* ipFTP */, 6666, project.second, "", project.second);
 }
 
 void coreSet::initdb() {
@@ -226,7 +226,7 @@ void coreSet::getServerSetting() {
   for (auto &&raw : db->run(sqlpp::select(tab.name, tab.value)
                                 .from(tab)
                                 .where(tab.projectId == project.first))) {
-        map.insert(std::make_pair<std::string, std::string>(raw.name.text, raw.value.text));
+    map.insert(std::make_pair<std::string, std::string>(raw.name.text, raw.value.text));
     DOODLE_LOG_INFO(raw.name.text << "  --->  " << raw.value.text << "\n");
   }
 
