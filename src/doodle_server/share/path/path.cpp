@@ -93,13 +93,7 @@ std::optional<std::vector<std::shared_ptr<Path>>> Path::list() const {
       auto k_path        = std::make_shared<Path>();
       *(k_path->p_path)  = it.path();
       k_path->p_prj_path = p_prj_path;
-      k_path->p_exist    = true;
-      k_path->p_isDir    = fileSys::is_directory(it.path());
-      auto ftime         = fileSys::last_write_time(it.path());
-      k_path->p_time     = boost::posix_time::from_time_t(ftime);
-      if (!k_path->p_isDir) {
-        k_path->p_size = fileSys::file_size(it.path());
-      }
+      k_path->scanningInfo();
       paths.push_back(k_path);
     }
     return paths;
@@ -117,7 +111,11 @@ void Path::scanningInfo() {
   p_exist = fileSys::exists(*p_path);
   if (p_exist) {
     p_isDir = fileSys::is_directory(*p_path);
-    p_time  = boost::posix_time::from_time_t(fileSys::last_write_time(*p_path));
+    try {
+      p_time = boost::posix_time::from_time_t(fileSys::last_write_time(*p_path));
+    } catch (const fileSys::filesystem_error& e) {
+      DOODLE_LOG_ERROR(e.what());
+    }
     if (!p_isDir) {
       p_size = fileSys::file_size(*p_path);
     }
