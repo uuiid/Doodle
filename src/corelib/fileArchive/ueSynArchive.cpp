@@ -118,7 +118,9 @@ bool ueSynArchive::update(const episodesPtr &episodes_ptr, const shotPtr &shot_p
       option->setlocaPath(iter.local);
       option->setremotePath(iter.server);
       option->setInclude({std::make_shared<std::regex>(k_shotVFXstr)});
-    } else if (set.getDepartment() == "Light") {
+    }
+    //这一部分是上传灯光中的特效文件到灯光文件夹  需要
+    else if (set.getDepartment() == "Light") {
       option->setlocaPath(iter.local);
       option->setremotePath(iter.server);
 
@@ -179,28 +181,29 @@ dpath ueSynArchive::down(const episodesPtr &episodes_ptr, const shotPtr &shot_pt
       option->setlocaPath(iter.local);
       option->setremotePath(iter.server);
       option->setInclude({std::make_shared<std::regex>(k_shotVFXstr)});
-    } else if (set.getDepartment() == "Light") {
-      option->setlocaPath(iter.local);
-      option->setremotePath(iter.server);
 
-      option->setInclude({std::make_shared<std::regex>(k_shotLightstr)});
-      option->setExclude({std::make_shared<std::regex>(k_shotVFXstr)});
+      option->setbackupPath(str.str());
+      lists.push_back(option);
     }
-    option->setbackupPath(str.str());
-    lists.push_back(option);
+    //这一部分是下载灯光文件,默认情况是不下载
+    //  else if (set.getDepartment() == "Light") {
+    //   option->setlocaPath(iter.local);
+    //   option->setremotePath(iter.server);
+
+    //   option->setInclude({std::make_shared<std::regex>(k_shotLightstr)});
+    //   option->setExclude({std::make_shared<std::regex>(k_shotVFXstr)});
+    // }
   }
   if (set.getDepartment() == "Light") {
     auto syn_part_vfx = k_synData->getSynDir(false);
     for (auto &&item : syn_part_vfx) {
       //下载vfx镜头
       auto option_light = std::make_shared<fileDowUpdateOptions>();
-      //设置背负路径
-      option_light->setbackupPath(str.str());
+      //设置备份路径
       option_light->setlocaPath(set.getSynPathLocale() / set.projectName().second / item.local);
       option_light->setremotePath(item.server = set.getAssRoot() / "VFX" / item.server);
 
       option_light->setInclude({std::make_shared<std::regex>(k_shotVFXstr)});
-      option_light->setbackupPath(str.str());
       lists.push_back(option_light);
     }
   }

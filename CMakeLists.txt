@@ -93,7 +93,7 @@ bin2cpp-2.3.0-win32/bin
 # add_subdirectory(core)
 # add_subdirectory(doodle_GUI)
 # add_subdirectory(doodle_server)
-add_subdirectory(plug)
+# add_subdirectory(plug)
 add_subdirectory(src)
 
 enable_testing()

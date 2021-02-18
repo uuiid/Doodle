@@ -5,40 +5,37 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 DOODLE_NAMESPACE_S
+
+namespace FileSystem {
 class CORE_API Path {
  public:
-  Path(const std::string &pathstr);
   Path();
-  virtual ~Path();
-
-  const bool &Exist() const noexcept;
-  const bool &isDirectory() const noexcept;
-  const uint64_t &size() const noexcept;
-  const boost::posix_time::ptime &modifyTime() const noexcept;
+  Path(std::string str);
+  Path(std::shared_ptr<fileSys::path> path);
 
   const std::shared_ptr<fileSys::path> &path() const noexcept;
   void setPath(const std::shared_ptr<fileSys::path> &Path_) noexcept;
+
+  void scanningInfo();
+
+  const bool &exists() const;
+  const bool &isDirectory() const;
+  const uint64_t &size() const;
+  const std::chrono::time_point<std::chrono::system_clock> &modifyTime() const;
+
+  void rename(const Path &path);
+  void copy(const Path &target);
+  void create();
+  std::vector<std::shared_ptr<Path>> list();
+  std::unique_ptr<std::fstream> open(std::ios_base::openmode modle);
 
  private:
   std::shared_ptr<fileSys::path> p_path;
   bool p_exist;
   bool p_isDir;
   uint64_t p_size;
-  boost::posix_time::ptime p_time;
+  std::chrono::time_point<std::chrono::system_clock> p_time;
+};
 
-  friend void to_json(nlohmann::json &j, const Path &p);
-  friend void from_json(const nlohmann::json &j, Path &p);
-  friend class nlohmann::basic_json<>;
-};
-enum class fileOptions {
-  getInfo      = 0,
-  createFolder = 1,
-  update       = 2,
-  down         = 3,
-  rename       = 4,
-  list         = 5,
-  copy         = 6,
-};
-void to_json(nlohmann::json &j, const Path &p);
-void from_json(const nlohmann::json &j, Path &p);
+};  // namespace FileSystem
 DOODLE_NAMESPACE_E

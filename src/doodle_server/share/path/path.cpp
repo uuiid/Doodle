@@ -111,11 +111,17 @@ void Path::scanningInfo() {
   p_exist = fileSys::exists(*p_path);
   if (p_exist) {
     p_isDir = fileSys::is_directory(*p_path);
+
     try {
       p_time = boost::posix_time::from_time_t(fileSys::last_write_time(*p_path));
     } catch (const fileSys::filesystem_error& e) {
       DOODLE_LOG_ERROR(e.what());
+    } catch (const std::exception& e) {
+      DOODLE_LOG_ERROR(e.what());
+    } catch (...) {
+      DOODLE_LOG_ERROR("未知异常: ");
     }
+
     if (!p_isDir) {
       p_size = fileSys::file_size(*p_path);
     }

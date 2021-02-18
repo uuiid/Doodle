@@ -1,0 +1,1 @@
+find_package(Maya 2020 REQUIRED)

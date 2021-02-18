@@ -62,22 +62,13 @@ class CORE_API DfileSyntem {
   bool updateFile(const dpath &localFile, const dpath &remoteFile, bool force = true, const dpath &backUpPath = dpath{});
   bool downFile(const dpath &localFile, const dpath &remoteFile, bool force = true);
 
-  bool imp_createDir(const fileSys::path *path,
-                     zmq::socket_t *socket);
-  bool imp_update(zmq::message_t *data,
-                  const fileSys::path *path,
-                  zmq::socket_t *socket, const uint64_t &state, const uint64_t &off);
+  bool imp_createDir(const FileSystem::Path &path);
 
-  std::shared_ptr<zmq::message_t> imp_down(const fileSys::path *path,
-                                           zmq::socket_t *socket,
-                                           const uint64_t &state, const uint64_t &off);
+  void imp_rename(const FileSystem::Path &soure, const FileSystem::Path &target);
+  void imp_rename_backup(const FileSystem::Path &source);
 
-  void imp_rename(zmq::socket_t *socket,
-                  const fileSys::path *soure, const fileSys::path *target);
-  void imp_rename_backup(zmq::socket_t *socket,
-                         const fileSys::path *source);
-  std::vector<std::shared_ptr<Path>> listFiles(zmq::socket_t *socket, const fileSys::path *path);
-  std::optional<std::shared_ptr<Path>> getInfo(zmq::socket_t *socket, const dpath *path);
+  std::vector<std::shared_ptr<FileSystem::Path>> listFiles(const FileSystem::Path &path);
+  std::shared_ptr<FileSystem::Path> getInfo(const FileSystem::Path &path);
 
   DfileSyntem();
   static DfileSyntem *install;
