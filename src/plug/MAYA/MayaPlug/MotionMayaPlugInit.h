@@ -5,17 +5,24 @@
 
 #include <maya/MPxCommand.h>
 
-class doodletest : public MPxCommand {
- public:
-  doodletest(){};
-  virtual ~doodletest(){};
-
-  static void* create() {
-    return new doodletest();
-  };
-
-  virtual MStatus doIt(const MArgList& list) override {
-    MGlobal::displayInfo("how word");
-    return MStatus::kFailure;
-  };
+namespace doodle::motion::ui {
+class MotionMainUI;
 };
+
+namespace doodle::MayaPlug {
+class doodleCreate : public MPxCommand {
+ public:
+  doodleCreate();
+  virtual ~doodleCreate();
+
+  static void* create();
+
+  virtual MStatus doIt(const MArgList& list) override;
+  virtual bool isUndoable() const override;
+
+  static void clear_();
+
+ private:
+  static doodle::motion::ui::MotionMainUI* p_ui;
+};
+}  // namespace doodle::MayaPlug

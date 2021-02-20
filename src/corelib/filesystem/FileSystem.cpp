@@ -321,7 +321,6 @@ bool DfileSyntem::localCopy(const dpath &sourePath, const dpath &trange_path, bo
   dpath backup_path = "";
   dstring time_str  = "";
   if (backup) {
-    //使用c++14库
     auto time = std::chrono::system_clock::now();
 
     time_str    = date::format("%Y_%m_%d_%H_%M_%S", time);

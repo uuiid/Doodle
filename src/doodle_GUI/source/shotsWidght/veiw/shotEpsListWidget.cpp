@@ -138,8 +138,7 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
               updataManager::get().addQueue(fun, "正在下载中", 10000);
               updataManager::get().run();
             });
-    // k_downEps->setToolTip();
-    p_eps_Menu->addAction(k_downEps);
+    // p_eps_Menu->addAction(k_downEps);
 
     auto k_uploadEps = new QAction();
     k_uploadEps->setText(tr("上传本集ue文件"));
@@ -153,8 +152,7 @@ void shotEpsListWidget::contextMenuEvent(QContextMenuEvent *event) {
               updataManager::get().addQueue(fun, "正在上传中", 10000);
               updataManager::get().run();
             });
-    // k_uploadEps->setToolTip();
-    p_eps_Menu->addAction(k_uploadEps);
+    // p_eps_Menu->addAction(k_uploadEps);
 
     p_eps_Menu->addSection(tr("注意"));
     auto modify_eps = new QAction();

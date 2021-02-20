@@ -2,22 +2,43 @@
 
 #include <Maya/MApiNamespace.h>
 #include <Maya/MObject.h>
-#include <Maya/MFnPlugin.h>
 
-MStatus initializePlugin(MObject obj) {
-  /**
-   * @brief 添加插件注册方法
-   */
-  MStatus status = MStatus::MStatusCode::kFailure;
-  MFnPlugin k_plugin{obj, "1.0", "Any"};
+#include <lib/ui/MotionMainUI.h>
 
-  status = k_plugin.registerCommand("doodletest", doodletest::create);
-  return status;
+namespace doodle::MayaPlug {
+
+doodle::motion::ui::MotionMainUI* doodleCreate::p_ui{nullptr};
+
+doodleCreate::doodleCreate()
+    : MPxCommand() {
 }
 
-MStatus uninitializePlugin(MObject obj) {
-  MStatus status = MStatus::MStatusCode::kFailure;
-  MFnPlugin k_plugin{obj};
-  status = k_plugin.deregisterCommand("doodletest");
-  return status;
+doodleCreate::~doodleCreate() {
 }
+
+void* doodleCreate::create() {
+  return new doodleCreate();
+}
+
+MStatus doodleCreate::doIt(const MArgList& list) {
+  if (!p_ui) {
+    p_ui = new doodle::motion::ui::MotionMainUI();
+  }
+
+  p_ui->showNormal();
+  p_ui->raise();
+
+  return MStatus::kFailure;
+}
+
+bool doodleCreate::isUndoable() const {
+  return false;
+}
+
+void doodleCreate::clear_() {
+  delete p_ui;
+}
+
+}  // namespace doodle::MayaPlug
+
+////////////////////////////////

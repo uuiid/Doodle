@@ -8,3 +8,8 @@
 #define MOTIONGLOBAL_API __declspec(dllimport)
 #endif
 
+#include <filesystem>
+
+namespace doodle {
+namespace FSys = std::filesystem;
+}

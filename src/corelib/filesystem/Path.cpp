@@ -99,14 +99,13 @@ void Path::copy(const Path &target) {
   }
   if (target.p_time == p_time && target.p_size == p_size)
     return;
-  //我们要在目标时间比来源时间晚的时候才复制和
+  //我们在不同的时候就复制
   else  // if (target.p_time < p_time)
     fileSys::copy_file(*p_path, *(target.p_path), fileSys::copy_option::overwrite_if_exists);
 }
 
 void Path::create() {
-  if (p_isDir)
-    fileSys::create_directories(*p_path);
+  fileSys::create_directories(*p_path);
 }
 
 std::vector<std::shared_ptr<Path>> Path::list() {

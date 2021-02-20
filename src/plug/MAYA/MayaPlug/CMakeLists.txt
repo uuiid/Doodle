@@ -2,6 +2,7 @@ find_package(Maya 2020 REQUIRED)
 
 set(doodle_motion_Mplug_CPP
 MotionMayaPlugInit.cpp
+MayaPlug.cpp
 )
 
 set(doodle_motion_Mplug_HEADER
