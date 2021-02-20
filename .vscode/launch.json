@@ -29,7 +29,7 @@
                     "value": "clam"
                 }
             ],
-            "externalConsole": false,
+            "console": "integratedTerminal",
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
         },
         {
@@ -46,7 +46,7 @@
                     "value": "${PATH};"
                 }
             ],
-            "externalConsole": false,
+            "console": "integratedTerminal",
         },
         {
             "name": "Doodle_Test",
@@ -62,7 +62,7 @@
                     "value": "$PATH;"
                 }
             ],
-            "externalConsole": false,
+            "console": "integratedTerminal",
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
         }
     ]

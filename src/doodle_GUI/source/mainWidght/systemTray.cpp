@@ -147,8 +147,10 @@ void systemTray::showRigister() {
 void systemTray::upDoodle() {
   doodle::coreSet::getSet().writeDoodleLocalSet();
   auto fun      = std::async(std::launch::async, [this]() -> bool {
-    toolkit::update();
-    quit();
+    if (toolkit::update())
+      quit();
+    else
+      setVisible(true);
     return true;
   });
   auto &manager = updataManager::get();

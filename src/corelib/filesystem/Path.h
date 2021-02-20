@@ -3,6 +3,7 @@
 #include <corelib/core_global.h>
 #include <nlohmann/json.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <chrono>
 
 DOODLE_NAMESPACE_S
 
@@ -35,6 +36,8 @@ class CORE_API Path {
   bool p_isDir;
   uint64_t p_size;
   std::chrono::time_point<std::chrono::system_clock> p_time;
+  bool p_long_path;
+  const static fileSys::path p_prefix;
 };
 
 };  // namespace FileSystem

@@ -7,7 +7,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{3B2A275E-0B9F-4C34-A5A1-AD540C89F0D0}
 AppName=doodle
-AppVersion=@Doodle_VERSION_MAJOR@.@Doodle_VERSION_MINOR@.@Doodle_VERSION_REVIS@
+AppVersion=@Doodle_VERSION_MAJOR@.@Doodle_VERSION_MINOR@.@Doodle_VERSION_PATCH@.@Doodle_VERSION_TWEAK@
 ;AppVerName=doodle 0.1.1
 AppPublisher=My Company, Inc.
 AppPublisherURL=http://www.example.com/

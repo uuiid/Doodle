@@ -17,11 +17,12 @@
 
 #include <shared_mutex>
 #include <optional>
-namespace zmq {
-class context_t;
-class socket_t;
-class message_t;
-};  // namespace zmq
+
+// namespace zmq {
+// class context_t;
+// class socket_t;
+// class message_t;
+// };  // namespace zmq
 
 DOODLE_NAMESPACE_S
 class Path;
@@ -59,16 +60,6 @@ class CORE_API DfileSyntem {
 
  private:
   static bool removeDir(const dpath &path);
-  bool updateFile(const dpath &localFile, const dpath &remoteFile, bool force = true, const dpath &backUpPath = dpath{});
-  bool downFile(const dpath &localFile, const dpath &remoteFile, bool force = true);
-
-  bool imp_createDir(const FileSystem::Path &path);
-
-  void imp_rename(const FileSystem::Path &soure, const FileSystem::Path &target);
-  void imp_rename_backup(const FileSystem::Path &source);
-
-  std::vector<std::shared_ptr<FileSystem::Path>> listFiles(const FileSystem::Path &path);
-  std::shared_ptr<FileSystem::Path> getInfo(const FileSystem::Path &path);
 
   DfileSyntem();
   static DfileSyntem *install;
@@ -82,7 +73,6 @@ class CORE_API DfileSyntem {
   std::string p_password_;
 
   std::string p_ProjectName;
-  std::unique_ptr<zmq::context_t> p_context_;
 
   std::shared_mutex mutex_;
 };

@@ -29,7 +29,10 @@ void AssScreenShotWidght::setimageInfo(const assInfoPtrList &list) {
       std::find_if(
           list.begin(), list.end(),
           [](assInfoPtr ass_) {
-            return ass_->getAssType()->getType_enum() == assType::e_type::screenshot;
+            if (ass_->getAssType())
+              return ass_->getAssType()->getType_enum() == assType::e_type::screenshot;
+            else
+              return false;
           });
   if (k_file != list.end()) {
     p_file_archive = (*k_file);

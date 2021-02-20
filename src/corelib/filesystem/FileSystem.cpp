@@ -12,6 +12,7 @@
 #include <corelib/filesystem/Path.h>
 #include <corelib/threadPool/ThreadPool.h>
 #include <corelib/Exception/Exception.h>
+#include <corelib/core/coreset.h>
 #include <magic_enum.hpp>
 
 #include <boost/asio.hpp>
@@ -21,8 +22,8 @@
 #include <nlohmann/json.hpp>
 #include <loggerlib/Logger.h>
 
-#include <zmq.hpp>
-#include <zmq_addon.hpp>
+// #include <zmq.hpp>
+// #include <zmq_addon.hpp>
 // /*保护data里面的宏__我他妈的*/
 #ifdef min
 #undef min
@@ -87,6 +88,7 @@ bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool f
 bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
   auto time     = std::chrono::system_clock::now();
   auto time_str = date::format("%Y_%m_%d_%H_%M_%S", time);
+  auto &set     = coreSet::getSet();
 
   //创建线程池多线程复制
   ThreadPool thread_pool{4};
@@ -94,10 +96,13 @@ bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
 
   if (fileSys::is_directory(option->locaPath())) {
     auto dregex      = std::regex(option->locaPath().generic_string());
-    auto backup_path = option->remotePath().parent_path() / "backup" / time_str;
+    auto backup_path = set.getPrjectRoot() /
+                       option->remotePath().parent_path() /
+                       "backup" /
+                       time_str;
     //测试是否具有备份路径
     if (option->hasBackup())
-      backup_path = option->backupPath() / time_str;
+      backup_path = set.getPrjectRoot() / option->backupPath() / time_str;
 
     for (auto &&item : fileSys::recursive_directory_iterator(option->locaPath())) {
       auto targetPath = std::regex_replace(
@@ -114,16 +119,21 @@ bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
             k_exclude |= std::regex_search(targetPath, *item);
           }
           if (!k_exclude) {
-            auto path            = option->remotePath() / targetPath;
+            auto path            = set.getPrjectRoot() / option->remotePath() / targetPath;
             auto tmp_backup_path = backup_path / targetPath;
 
-            //这里是添加log信号
-            auto logstr = item.path().generic_string() + " --> updata -->  " + path.generic_string();
-
-            filelog(logstr);
             result.emplace_back(
                 thread_pool.enqueue([=]() -> bool {
-                  return updateFile(item.path(), path, false, tmp_backup_path);
+                  //这里是添加log信号
+                  auto logstr = item.path().generic_string() + " --> updata -->  " + path.generic_string();
+
+                  filelog(logstr);
+                  FileSystem::Path path_tmp{item.path().generic_string()};
+                  FileSystem::Path path_tmp_rem{path.generic_string()};
+                  // if (path_tmp_rem.exists())
+                  //   path_tmp_rem.copy(tmp_backup_path.generic_string());
+                  path_tmp.copy(path_tmp_rem);
+                  return true;
                 }));
           }
         }
@@ -135,11 +145,17 @@ bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
     }
     return true;
   } else {
-    auto backup_path = option->remotePath().parent_path() /
+    auto backup_path = set.getPrjectRoot() /
+                       option->remotePath().parent_path() /
                        "backup" /
                        time_str /
                        option->remotePath().filename();
-    return updateFile(option->locaPath(), option->remotePath(), false, backup_path);
+    FileSystem::Path p_loca_tmp{option->locaPath().generic_string()};
+    FileSystem::Path p_remo_tmp{(set.getPrjectRoot() / option->remotePath()).generic_string()};
+    if (p_remo_tmp.exists())
+      p_remo_tmp.copy({backup_path.generic_string()});
+    p_loca_tmp.copy(p_remo_tmp);
+    return true;
   }
 }
 
@@ -154,27 +170,29 @@ bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile, bool for
 bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
   //创建线程池多线程复制
   ThreadPool thread_pool{4};
-  auto time     = std::chrono::system_clock::now();
-  auto time_str = date::format("%Y_%m_%d_%H_%M_%S", time);
+  auto time         = std::chrono::system_clock::now();
+  auto time_str     = date::format("%Y_%m_%d_%H_%M_%S", time);
+  auto &set         = coreSet::getSet();
+  auto k_remotePath = set.getPrjectRoot() / option->remotePath();
 
   std::vector<std::future<bool>> result;
-  auto serverPath = std::make_shared<FileSystem::Path>(option->remotePath().generic_string());
+  auto serverPath = std::make_shared<FileSystem::Path>(k_remotePath.generic_string());
 
   if (!serverPath->exists()) return false;
   std::queue<std::shared_ptr<FileSystem::Path>> pathQueue;
   pathQueue.push(serverPath);
 
-  auto dregex      = std::regex(option->remotePath().generic_string());
-  auto backup_path = option->remotePath().parent_path() / "backup" / time_str;
+  auto dregex      = std::regex(k_remotePath.generic_string());
+  auto backup_path = k_remotePath.parent_path() / "backup" / time_str;
   if (option->hasBackup())
-    backup_path = option->backupPath() / time_str;
+    backup_path = set.getPrjectRoot() / option->backupPath() / time_str;
 
+  auto list = pathQueue.front()->list();
+  for (auto &&item : list) {
+    pathQueue.push(item);
+  }
   while (!pathQueue.empty()) {
     if (pathQueue.front()->isDirectory()) {
-      auto list = pathQueue.front()->list();
-      for (auto &&item : list) {
-        pathQueue.push(item);
-      }
     } else {
       auto targetPath = std::regex_replace(
           pathQueue.front()->path()->generic_string(),
@@ -191,30 +209,31 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
           k_exclude |= std::regex_search(targetPath, *item);
         }
         if (!k_exclude) {
-          auto path = option->locaPath() / targetPath;
+          auto path     = option->locaPath() / targetPath;
+          auto path_ptr = std::make_shared<FileSystem::Path>(path.generic_string());
           // auto local_modifyTime = fileSys::exists(path) ? boost::posix_time::from_time_t(
           //                                   boost::filesystem::last_write_time(path))
           //                             : boost::posix_time::min_date_time;
           // auto server_time      = pathQueue.front()->modifyTime();
+          auto path_queue_front = pathQueue.front();
 
-          //这里是添加log信号
-          auto str = pathQueue.front()->path()->generic_string() + " --> down --> " + path.generic_string();
-          filelog(str);
-
-          if (fileSys::exists(path) && option->hasBackup()) {
+          if (path_ptr->exists() && option->hasBackup()) {
             result.emplace_back(
                 thread_pool.enqueue([=]() -> bool {
-                  updateFile(path, backup_path / targetPath, {});
-                  return downFile(path,
-                                  *(pathQueue.front()->path()),
-                                  option->Force());
+                  auto str = path_queue_front->path()->generic_string() + " --> down --> " + path.generic_string();
+                  filelog(str);
+                  // path_ptr->copy((backup_path / targetPath).generic_string());
+                  path_queue_front->copy(*path_ptr);
+                  return true;
                 }));
           } else {
             result.emplace_back(
                 thread_pool.enqueue([=]() -> bool {
-                  return downFile(path,
-                                  *(pathQueue.front()->path()),
-                                  option->Force());
+                  //这里是添加log信号
+                  auto str = path_queue_front->path()->generic_string() + " --> down --> " + path.generic_string();
+                  filelog(str);
+                  path_queue_front->copy({*path_ptr});
+                  return true;
                 }));
           }
         }
@@ -229,13 +248,15 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
 }
 
 bool DfileSyntem::exists(const dpath &remoteFile) {
-  zmq::socket_t socket{*p_context_, zmq::socket_type::req};
-  auto result = FileSystem::Path{remoteFile.generic_string()};
+  auto &set = coreSet::getSet();
+
+  auto result = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
   return result.exists();
 }
 
 bool DfileSyntem::createDir(const dpath &remoteFile) {
-  auto result = FileSystem::Path{remoteFile.generic_string()};
+  auto &set   = coreSet::getSet();
+  auto result = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
   result.create();
   return true;
 }
@@ -260,7 +281,8 @@ bool DfileSyntem::createDir(const std::vector<dpath> &paths) {
 }
 
 std::shared_ptr<std::string> DfileSyntem::readFileToString(const dpath &remoteFile) {
-  auto path   = FileSystem::Path{remoteFile.generic_string()};
+  auto &set   = coreSet::getSet();
+  auto path   = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
   auto result = path.open(std::ios_base::in);
   std::stringstream k_stringstream;
   k_stringstream << result->rdbuf();
@@ -269,15 +291,22 @@ std::shared_ptr<std::string> DfileSyntem::readFileToString(const dpath &remoteFi
 }
 
 bool DfileSyntem::writeFile(const dpath &remoteFile, const std::shared_ptr<std::string> &data) {
-  auto path   = FileSystem::Path{remoteFile.generic_string()};
-  auto result = path.open(std::ios_base::in | std::ios::binary);
+  auto &set = coreSet::getSet();
+
+  auto path   = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
+  auto result = path.open(std::ios_base::out | std::ios::binary);
   result->write(data->data(), data->size());
   return true;
 }
 
 bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path) {
-  auto path = FileSystem::Path{sourePath.generic_string()};
-  path.copy({trange_path.generic_string()});
+  auto &set = coreSet::getSet();
+
+  auto path = FileSystem::Path{(set.getPrjectRoot() / sourePath).generic_string()};
+  if (path.isDirectory()) {
+    localCopy(set.getPrjectRoot() / sourePath, set.getPrjectRoot() / trange_path, false);
+  } else
+    path.copy({(set.getPrjectRoot() / trange_path).generic_string()});
   return true;
 }
 
@@ -370,7 +399,6 @@ DfileSyntem::DfileSyntem()
       p_name_(),
       p_password_(),
       p_ProjectName(),
-      p_context_(std::make_unique<zmq::context_t>(4)),
       mutex_(){};
 
 DOODLE_NAMESPACE_E

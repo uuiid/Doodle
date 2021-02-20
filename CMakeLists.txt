@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.14)
 
 project(Doodle
-        VERSION 2.3.1.7
+        VERSION 2.3.1.9
         LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -127,18 +127,18 @@ endforeach(_var)
 
 
 if(RUN_COPY)
-        #复制资源
-        install(DIRECTORY ${CMAKE_SOURCE_DIR}/resource/
-        DESTINATION resource)
-        #复制tool
-        install(DIRECTORY ${CMAKE_SOURCE_DIR}/tools/
-        DESTINATION tools)
-        #复制我自己写的一些工具
-        install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/Cmd_tool
-        DESTINATION tools)
-        #复制插件
-        install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya_plug
-        DESTINATION plug)
+        # #复制资源
+        # install(DIRECTORY ${CMAKE_SOURCE_DIR}/resource/
+        # DESTINATION resource)
+        # #复制tool
+        # install(DIRECTORY ${CMAKE_SOURCE_DIR}/tools/
+        # DESTINATION tools)
+        # #复制我自己写的一些工具
+        # install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/Cmd_tool
+        # DESTINATION tools)
+        # #复制插件
+        # install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya_plug
+        # DESTINATION plug)
         install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug
         DESTINATION plug) 
 endif(RUN_COPY)

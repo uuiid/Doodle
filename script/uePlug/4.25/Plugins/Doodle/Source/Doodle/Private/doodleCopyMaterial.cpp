@@ -277,11 +277,11 @@ FReply DoodleCopyMat::BathImport() {
       // fbxImport->bImportMesh = true;
       auto fbxFactory                                                   = NewObject<UFbxFactory>();
       fbxFactory->ImportUI->bImportAnimations                           = true;
-      fbxFactory->ImportUI->bImportAsSkeletal                           = false;
-      fbxFactory->ImportUI->bImportMesh                                 = false;
+      fbxFactory->ImportUI->bImportAsSkeletal                           = true;
+      fbxFactory->ImportUI->bImportMesh                                 = true;
       fbxFactory->ImportUI->MeshTypeToImport                            = FBXIT_SkeletalMesh;
       fbxFactory->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
-      fbxFactory->ImportUI->bImportMaterials                            = false;
+      fbxFactory->ImportUI->bImportMaterials                            = true;
       fbxFactory->ImportUI->bImportTextures                             = false;
       AssetImportTask->Factory                                          = fbxFactory;
 

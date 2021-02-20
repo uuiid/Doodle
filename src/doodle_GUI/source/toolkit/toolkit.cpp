@@ -137,11 +137,14 @@ bool toolkit::update() {
   auto &session = DfileSyntem::get();
 
   auto exe_path = set.getCacheRoot() / "doodle.exe";
-  session.session(set.getIpFtp(), 6666, "", "", "doodle");
-  session.down(exe_path.generic_string(), "/doodle/dist/doodle.exe");
-  boost::process::spawn(exe_path, "/SILENT", "/NOCANCEL");
-  // qApp->quit();
-  return true;
+  if (session.exists("W:/")) {
+    session.localCopy("W:\\doodle\\dist\\doodle.exe",
+                      exe_path.generic_string(), false);
+    boost::process::spawn(exe_path, "/SILENT", "/NOCANCEL");
+    // qApp->quit();
+    return true;
+  } else
+    return false;
 }
 
 bool toolkit::deleteUeCache() {

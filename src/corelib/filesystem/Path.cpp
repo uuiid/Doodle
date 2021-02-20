@@ -6,12 +6,16 @@
 
 DOODLE_NAMESPACE_S
 namespace FileSystem {
+
+const fileSys::path Path::p_prefix{R"(\\?\)"};
+
 Path::Path()
-    : p_path(),
+    : p_path(std::make_shared<fileSys::path>()),
       p_exist(false),
       p_isDir(false),
       p_size((uint64_t)0),
-      p_time(std::chrono::system_clock::from_time_t(0)) {
+      p_time(std::chrono::system_clock::from_time_t(0)),
+      p_long_path(false) {
 }
 
 Path::Path(std::string str)
@@ -19,7 +23,8 @@ Path::Path(std::string str)
       p_exist(false),
       p_isDir(false),
       p_size((uint64_t)0),
-      p_time(std::chrono::system_clock::from_time_t(0)) {
+      p_time(std::chrono::system_clock::from_time_t(0)),
+      p_long_path(p_path->size() > _MAX_PATH) {
   this->scanningInfo();
 }
 
@@ -28,7 +33,8 @@ Path::Path(std::shared_ptr<fileSys::path> path)
       p_exist(false),
       p_isDir(false),
       p_size((uint64_t)0),
-      p_time(std::chrono::system_clock::from_time_t(0)) {
+      p_time(std::chrono::system_clock::from_time_t(0)),
+      p_long_path(p_path->size() > _MAX_PATH) {
   this->scanningInfo();
 }
 
@@ -37,7 +43,8 @@ const std::shared_ptr<fileSys::path> &Path::path() const noexcept {
 }
 
 void Path::setPath(const std::shared_ptr<fileSys::path> &Path_) noexcept {
-  p_path = Path_;
+  p_path      = Path_;
+  p_long_path = p_path->size() > _MAX_PATH;
   scanningInfo();
 }
 
@@ -46,9 +53,12 @@ void Path::scanningInfo() {
   p_exist = fileSys::exists(*p_path);
   if (p_exist) {
     p_isDir = fileSys::is_directory(*p_path);
-
-    p_time = std::chrono::system_clock::from_time_t(
-        fileSys::last_write_time(*p_path));
+    if (!p_long_path)
+      p_time = std::chrono::system_clock::from_time_t(
+          fileSys::last_write_time(*p_path));
+    else
+      p_time = std::chrono::system_clock::from_time_t(
+          fileSys::last_write_time(p_prefix / (*p_path)));
 
     if (!p_isDir) {
       p_size = fileSys::file_size(*p_path);
@@ -81,16 +91,17 @@ void Path::rename(const Path &path) {
 }
 
 void Path::copy(const Path &target) {
-  scanningInfo();
   if (!p_exist) return;
-  if (!fileSys::exists(*(target.p_path))) return;
+  // if (fileSys::exists(*(target.p_path))) return;
 
   if (!fileSys::exists(target.p_path->parent_path())) {
     fileSys::create_directories(target.p_path->parent_path());
   }
-
-  fileSys::copy(*p_path, *(target.p_path));
-  p_path = target.p_path;
+  if (target.p_time == p_time && target.p_size == p_size)
+    return;
+  //我们要在目标时间比来源时间晚的时候才复制和
+  else  // if (target.p_time < p_time)
+    fileSys::copy_file(*p_path, *(target.p_path), fileSys::copy_option::overwrite_if_exists);
 }
 
 void Path::create() {
@@ -102,7 +113,7 @@ std::vector<std::shared_ptr<Path>> Path::list() {
   DOODLE_LOG_INFO(p_path->generic_string());
   std::vector<std::shared_ptr<Path>> Paths{};
   if (p_isDir) {
-    for (auto &it : fileSys::directory_iterator(*p_path)) {
+    for (auto &it : fileSys::recursive_directory_iterator(*p_path)) {
       auto k_path       = std::make_shared<Path>();
       *(k_path->p_path) = it.path();
       k_path->scanningInfo();
@@ -113,6 +124,9 @@ std::vector<std::shared_ptr<Path>> Path::list() {
 }
 
 std::unique_ptr<std::fstream> Path::open(std::ios_base::openmode modle) {
+  if (!fileSys::exists(p_path->parent_path()))
+    fileSys::create_directories(p_path->parent_path());
+
   auto fileptr = std::make_unique<fileSys::fstream>(*p_path, modle);
   if (!fileptr->is_open())
     fileptr->open(*p_path, modle);

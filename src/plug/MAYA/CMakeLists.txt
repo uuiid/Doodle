@@ -1,1 +1,2 @@
-find_package(Maya 2020 REQUIRED)
+add_subdirectory(lib)
+add_subdirectory(MayaPlug)

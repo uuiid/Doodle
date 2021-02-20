@@ -45,6 +45,7 @@ The following cache variables may also be set:
 # 这个包设置${MAYA_INCLUDE_DIR}
 #         ${MAYA_LIBRARY_DIR}
 #         ${MAYA_LIBRARY}
+#         ${MAYA_QT5_LIBRARY}
 #这三个变量
 
 # set(MAYA_INCLUDE_DIR "" CACHE PATH "maya头文件目录")
@@ -203,7 +204,7 @@ foreach(MAYA_QT5_LIB ${MAYA_LIBS_TO_QT_FIND})
   NO_DEFAULT_PATH
   )
   if(MAYA_QT_${MAYA_QT5_LIB}_LIBRARY)
-    list(APPEND MAYA_QT5_LIBRARY MAYA_QT_${MAYA_QT5_LIB}_LIBRARY)
+    list(APPEND MAYA_QT5_LIBRARY ${MAYA_QT_${MAYA_QT5_LIB}_LIBRARY})
   endif()
 endforeach()
 
@@ -211,12 +212,6 @@ endforeach()
 
 include(FindPackageHandleStandardArgs)
 
-if(MAYA_INCLUDE_DIR AND MAYA_LIBRARY_DIR)
-  message("maya 找到开发组件 \"${MAYA_INCLUDE_DIR}\" \"${MAYA_LIBRARY_DIR}\"")
-  foreach(TMPL_ ${MAYA_LIBRARY})
-    message("找到maya库 ${TMPL_}")
-  endforeach()
-endif()
 
 find_package_handle_standard_args(Maya
     FOUND_VAR 
