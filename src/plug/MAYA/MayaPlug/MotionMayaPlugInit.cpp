@@ -2,6 +2,7 @@
 
 #include <Maya/MApiNamespace.h>
 #include <Maya/MObject.h>
+#include <Maya/MQtUtil.h>
 
 #include <lib/ui/MotionMainUI.h>
 
@@ -22,7 +23,8 @@ void* doodleCreate::create() {
 
 MStatus doodleCreate::doIt(const MArgList& list) {
   if (!p_ui) {
-    p_ui = new doodle::motion::ui::MotionMainUI();
+    auto mayaMainUI = MQtUtil::mainWindow();
+    p_ui            = new doodle::motion::ui::MotionMainUI(mayaMainUI);
   }
 
   p_ui->showNormal();
@@ -36,6 +38,7 @@ bool doodleCreate::isUndoable() const {
 }
 
 void doodleCreate::clear_() {
+  p_ui->deleteLater();
   delete p_ui;
 }
 

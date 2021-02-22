@@ -5,6 +5,7 @@
 #include <QtWidgets/qlabel.h>
 #include <QtWidgets/qlineedit.h>
 #include <QtWidgets/qpushbutton.h>
+#include <QtWidgets/qfiledialog.h>
 
 namespace doodle::motion::ui {
 MotionSettingWidget::MotionSettingWidget(QWidget *parent)
@@ -24,7 +25,7 @@ MotionSettingWidget::MotionSettingWidget(QWidget *parent)
   button_open_path->setObjectName("button_open_path");
   auto butten_return_up = new QPushButton();
   butten_return_up->setObjectName("butten_return_up");
-  butten_return_up->setText("返回");
+  butten_return_up->setText("返回并保存");
 
   label_lib_root->setText("动作库根路径");
   label_user->setText("制作人");
@@ -33,14 +34,37 @@ MotionSettingWidget::MotionSettingWidget(QWidget *parent)
 
   //链接返回函数
   connect(butten_return_up, &QPushButton::clicked,
-          this, [=]() { this->ReturnUp(); });
-  //链接设置姓名函数
-  connect(lineEdit_root, &QLineEdit::textChanged,
-          this, [=](const QString &str) {
+          this, [=]() {
             auto &set = doodle::motion::kernel::MotionSetting::Get();
-            set.setMotionLibRoot(str.toStdU16String());
+            set.save();
+            this->ReturnUp();
           });
   //链接设置根路径函数
+  connect(lineEdit_root, &QLineEdit::textEdited,
+          this, [=](const QString &str) {
+            auto &set = doodle::motion::kernel::MotionSetting::Get();
+            set.setMotionLibRoot(FSys::path{str.toStdString()});
+          });
+  //链接根路径按钮函数
+  connect(button_open_path, &QPushButton::clicked, this,
+          [=]() {
+            auto &set   = doodle::motion::kernel::MotionSetting::Get();
+            QString dir = QFileDialog::getExistingDirectory(
+                this, tr("Open"),
+                QString::fromStdString(set.MotionLibRoot().generic_string()),
+                QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+            if (dir.isEmpty()) return;
+
+            lineEdit_root->setText(dir);
+            set.setMotionLibRoot(dir.toStdString());
+          });
+
+  //链接设置姓名函数
+  connect(lineEdit_user, &QLineEdit::textEdited, this,
+          [=](const QString &string) {
+            auto &set = doodle::motion::kernel::MotionSetting::Get();
+            set.setUser(string.toStdString());
+          });
 
   layout->addWidget(label_lib_root, 0, 0, 1, 1);
   layout->addWidget(label_user, 1, 0, 1, 1);

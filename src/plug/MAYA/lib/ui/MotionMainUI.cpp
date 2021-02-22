@@ -19,6 +19,7 @@ MotionMainUI::MotionMainUI(QWidget *parent, Qt::WindowFlags flags)
   resize(1200, 800);
 
   setWindowTitle("doodle动作库");
+
   //设置中央小部件
   p_centralWidget = new QWidget(this);
   p_centralWidget->setObjectName("doodleMotionCentralWidght");
@@ -50,4 +51,5 @@ void MotionMainUI::setMotionLib() {
 void MotionMainUI::openMotionLib() {
   p_setting_widget->hide();
 }
+
 }  // namespace doodle::motion::ui

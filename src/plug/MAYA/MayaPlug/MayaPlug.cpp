@@ -28,6 +28,7 @@ def doodleCreateMenu():
   //添加菜单项
   k_plugin.addMenuItem("CreateWindows", pythonResult, "doodleCreate", "", false, nullptr, &status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+  //注册命令
   status = k_plugin.registerCommand("doodleCreate", doodle::MayaPlug::doodleCreate::create);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   return status;

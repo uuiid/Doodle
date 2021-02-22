@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <lib/MotionGlobal.h>
 
 #include <QtCore/qobject.h>
@@ -10,6 +11,7 @@ class QGridLayout;
 
 namespace doodle::motion::ui {
 class MotionSettingWidget;
+
 class MOTIONGLOBAL_API MotionMainUI : public QMainWindow {
   Q_OBJECT
  public:
@@ -21,7 +23,7 @@ class MOTIONGLOBAL_API MotionMainUI : public QMainWindow {
  private:
   QGridLayout* p_layout;
   QWidget* p_centralWidget;
-  doodle::motion::ui::MotionSettingWidget* p_setting_widget;
+  MotionSettingWidget* p_setting_widget;
 };
 
 }  // namespace doodle::motion::ui
