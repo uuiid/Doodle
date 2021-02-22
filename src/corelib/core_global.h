@@ -13,8 +13,9 @@
 #include <iostream>
 #include <memory>
 #include <variant>
+#include <regex>
 #include <boost/core/noncopyable.hpp>
-
+#include <boost/filesystem.hpp>
 #if defined(CORE_LIBRARY)
 #define CORE_API __declspec(dllexport)
 #else

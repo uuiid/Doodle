@@ -1,6 +1,21 @@
-﻿add_library(core SHARED
+﻿set(core_HEADER 
+        pathParser/PathParser.h
+
+)
+set(core_CPP
+
+)
+
+
+
+add_library(core SHARED
+${core_HEADER}
+${core_CPP}
+
 core_global.h
-core_Cpp.h)
+core_Cpp.h
+
+)
 
 
 add_subdirectory(assets)
