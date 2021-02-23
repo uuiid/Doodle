@@ -15,7 +15,7 @@
 
 #include <loggerlib/Logger.h>
 #include <corelib/assets/assClass.h>
-#include <corelib/coreOrm/znch_sqlOrm.h>
+
 #include <corelib/core/coreset.h>
 #include <corelib/core/coresql.h>
 #include <pinyinlib/convert.h>
@@ -31,7 +31,7 @@ RTTR_REGISTRATION {
 }
 
 znchName::znchName(assClass *at_)
-    : coresqldata(),
+    : CoreData(),
       nameEN(),
       nameZNCH(),
       p_ptr_assType(at_) {}
@@ -39,40 +39,14 @@ znchName::znchName(assClass *at_)
 void znchName::setName(const std::string &name_) { nameEN = name_; }
 
 void znchName::insert() {
-  if (p_ptr_assType == nullptr) return;
-  if (idP > 0) return;
-
-  doodle::Znch table{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-  auto install =
-      sqlpp::insert_into(table).columns(table.localname, table.assClassId);
-  install.values.add(table.localname  = nameZNCH,
-                     table.assClassId = p_ptr_assType->getIdP());
-
-  idP = db->insert(install);
-  if (idP == 0) {
-    DOODLE_LOG_WARN(nameZNCH.c_str() << "not install znch");
-    throw std::runtime_error("not install znch");
-  }
 }
 
 void znchName::select() {}
 
 void znchName::updateSQL() {
-  if (idP <= 0) return;
-
-  doodle::Znch table{};
-  auto db = coreSql::getCoreSql().getConnection();
-  db->update(sqlpp::update(table)
-                 .set(table.localname = nameZNCH)
-                 .where(table.id == idP));
 }
 
 void znchName::deleteSQL() {
-  doodle::Znch table{};
-  auto db = coreSql::getCoreSql().getConnection();
-  db->remove(sqlpp::remove_from(table).where(table.id == idP));
 }
 
 void znchName::setName(const std::string &name_, const bool &isZNCH) {

@@ -1,38 +1,110 @@
 ﻿set(core_HEADER 
-        pathParser/PathParser.h
+        assets/assClass.h
+        assets/assdepartment.h
+        assets/assfilesqlinfo.h
+        assets/assType.h
+        assets/znchName.h
 
-)
+        core/coreDataManager.h
+        core/coreset.h
+        core/coresql.h
+        core/CoreData.h
+        core/Project.h
+
+        coreOrm/doodleConfig_sqlOrm.h
+        coreOrm/PathParser_sqlOrm.h
+        coreOrm/zh_ch_sqlOrm.h
+
+        Exception/Exception.h
+
+        exeWrap/ffmpegWrap.h
+
+        fileArchive/fileArchive.h
+        fileArchive/imageArchive.h
+        fileArchive/mayaArchive.h
+        fileArchive/mayaArchiveShotFbx.h
+        fileArchive/moveShotA.h
+        fileArchive/movieArchive.h
+        fileArchive/movieEpsArchive.h
+        fileArchive/ScreenshotArchive.h
+        fileArchive/ueArchive.h
+        fileArchive/ueSynArchive.h
+        filesystem/fileSync.h
+        filesystem/FileSystem.h
+        filesystem/Path.h
+
+        queueData/queueData.h
+        queueData/queueManager.h
+
+        shots/episodes.h
+        shots/shot.h
+        shots/shotClass.h
+        shots/shotfilesqlinfo.h
+        shots/ShotModifySQLDate.h
+        shots/shottype.h
+
+        sysData/synData.h
+
+        core/PathParser.h
+        threadPool/ThreadPool.h
+
+        )
+
 set(core_CPP
+        assets/assClass.cpp
+        assets/assdepartment.cpp
+        assets/assfilesqlinfo.cpp
+        assets/assType.cpp
+        assets/znchName.cpp
 
-)
+        core/coreDataManager.cpp
+        core/coreset.cpp
+        core/coresql.cpp
+        core/CoreData.cpp
+        core/Project.cpp
 
+        Exception/Exception.cpp
+        
+        exeWrap/ffmpegWrap.cpp
+        
+        fileArchive/fileArchive.cpp
+        fileArchive/imageArchive.cpp
+        fileArchive/mayaArchive.cpp
+        fileArchive/mayaArchiveShotFbx.cpp
+        fileArchive/moveShotA.cpp
+        fileArchive/movieArchive.cpp
+        fileArchive/movieEpsArchive.cpp
+        fileArchive/ScreenshotArchive.cpp
+        fileArchive/ueArchive.cpp
+        fileArchive/ueSynArchive.cpp
+        filesystem/fileSync.cpp
+        filesystem/FileSystem.cpp
+        filesystem/Path.cpp
+        
+        queueData/queueData.cpp
+        queueData/queueManager.cpp
 
-
+        shots/episodes.cpp
+        shots/shot.cpp
+        shots/shotClass.cpp
+        shots/shotfilesqlinfo.cpp
+        shots/ShotModifySQLDate.cpp
+        shots/shottype.cpp
+        
+        sysData/synData.cpp
+        core/PathParser.cpp
+        )
 add_library(core SHARED
 ${core_HEADER}
 ${core_CPP}
-
 core_global.h
 core_Cpp.h
 
 )
 
 
-add_subdirectory(assets)
-add_subdirectory(core)
-add_subdirectory(coreOrm)
-add_subdirectory(Exception)
-add_subdirectory(exeWrap)
-add_subdirectory(fileArchive)
-add_subdirectory(fileDBInfo)
-add_subdirectory(filesystem)
-add_subdirectory(queueData)
-add_subdirectory(shots)
-add_subdirectory(sysData)
-add_subdirectory(threadPool)
-
 target_link_libraries(core PUBLIC Qt5::Core)
-target_link_libraries(core PUBLIC SqlppMySql)
+target_link_libraries(core PUBLIC SqlppSqlite)
 target_link_libraries(core PUBLIC RTTR::Core)
 
 target_link_libraries(core PUBLIC magic_enum::magic_enum)

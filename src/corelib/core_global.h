@@ -65,10 +65,10 @@
 #define DOODLE_NO_UNIQUE_ADDRESS
 #endif
 
-namespace sqlpp::mysql {
+namespace sqlpp::sqlite3 {
 class connection;
 struct connection_config;
-}  // namespace sqlpp::mysql
+}  // namespace sqlpp::sqlite3
 
 namespace boost::filesystem {
 class path;
@@ -79,7 +79,7 @@ class QFileInfo;
 DOODLE_NAMESPACE_S
 namespace fileSys = boost::filesystem;
 const static uint64_t off{8000000};
-using mysqlConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
+using mysqlConnPtr = std::unique_ptr<sqlpp::sqlite3::connection>;
 
 //使用一些其他方便的引用类型
 

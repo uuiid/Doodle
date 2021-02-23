@@ -6,10 +6,6 @@
 #include <corelib/shots/episodes.h>
 #include <corelib/shots/shot.h>
 
-#include <sqlpp11/mysql/mysql.h>
-#include <sqlpp11/sqlpp11.h>
-#include <corelib/coreOrm/shotclass_sqlOrm.h>
-
 #include <iostream>
 #include <magic_enum.hpp>
 #include <memory>
@@ -27,7 +23,7 @@ DOODLE_INSRANCE_CPP(shotClass);
 boost::signals2::signal<void(const shotClassPtr &)> shotClass::insertChanged{};
 
 shotClass::shotClass()
-    : coresqldata(),
+    : CoreData(),
       std::enable_shared_from_this<shotClass>(),
       p_fileclass(e_fileclass::_) {
   p_instance.insert(this);
@@ -38,49 +34,15 @@ shotClass::~shotClass() {
 }
 
 void shotClass::select(const qint64 &ID_) {
-  doodle::Shotclass table{};
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row : db->run(sqlpp::select(sqlpp::all_of(table))
-                                .from(table)
-                                .where(table.id == ID_))) {
-    idP = row.id;
-    setclass(row.shotClass);
-  }
 }
 
 void shotClass::insert() {
-  if (idP > 0) return;
-
-  doodle::Shotclass table{};
-  auto db      = coreSql::getCoreSql().getConnection();
-  auto install = sqlpp::insert_into(table).set(
-      table.shotClass = getClass_str(),
-      table.projectId = coreSet::getSet().projectName().first);
-  idP = db->insert(install);
-  if (idP == 0) {
-    DOODLE_LOG_WARN("无法插入shot type" << getClass_str().c_str());
-    throw std::runtime_error("not install shot");
-  }
-  insertChanged(shared_from_this());
 }
 
 void shotClass::updateSQL() {
-  if (idP < 0) return;
-  doodle::Shotclass table{};
-  auto db = coreSql::getCoreSql().getConnection();
-  try {
-    db->update(sqlpp::update(table)
-                   .set(table.shotClass = getClass_str())
-                   .where(table.id == idP));
-  } catch (const std::exception &err) {
-    DOODLE_LOG_WARN(err.what());
-  }
 }
 
 void shotClass::deleteSQL() {
-  doodle::Shotclass table{};
-  auto db = coreSql::getCoreSql().getConnection();
-  db->remove(sqlpp::remove_from(table).where(table.id == idP));
 }
 template <typename T>
 void shotClass::batchSetAttr(T &row) {
@@ -89,22 +51,6 @@ void shotClass::batchSetAttr(T &row) {
 }
 
 shotClassPtrList shotClass::getAll() {
-  shotClassPtrList list{};
-
-  doodle::Shotclass table{};
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row : db->run(
-           sqlpp::select(sqlpp::all_of(table))
-               .from(table)
-               .where(table.projectId == coreSet::getSet().projectName().first)
-               .order_by(table.shotClass.desc()))) {
-    auto item = std::make_shared<shotClass>();
-    item->batchSetAttr(row);
-    list.push_back(item);
-    p_instance.insert(item.get());
-  }
-  DOODLE_LOG_DEBUG("loaded fileClasses " << list.size());
-  return list;
 }
 
 shotClassPtr shotClass::getCurrentClass() {

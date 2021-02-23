@@ -1,1 +1,0 @@
-target_sources(core PUBLIC ThreadPool.h)

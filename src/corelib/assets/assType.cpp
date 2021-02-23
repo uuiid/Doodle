@@ -17,7 +17,6 @@
 
 #include <loggerlib/Logger.h>
 
-#include <corelib/coreOrm/asstype_sqlOrm.h>
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
 
@@ -37,7 +36,7 @@ DOODLE_INSRANCE_CPP(assType);
 boost::signals2::signal<void()> assType::insertChanged{};
 
 assType::assType()
-    : coresqldata(),
+    : CoreData(),
       std::enable_shared_from_this<assType>(),
       s_type(),
       p_ass_class_id(-1) {
@@ -48,48 +47,11 @@ assType::~assType() {
   p_instance.erase(this);
 }
 void assType::insert() {
-  if (idP > 0) return;
-  // if (p_ass_class_id <= 0) return;
-
-  doodle::Asstype table{};
-  auto db = coreSql::getCoreSql().getConnection();
-  auto insert =
-      sqlpp::insert_into(table).columns(table.assType, table.projectId);
-  insert.values.add(table.assType   = std::string{magic_enum::enum_name(s_type)},
-                    table.projectId = coreSet::getSet().projectName().first);
-
-  idP = db->insert(insert);
-
-  if (idP == 0) {
-    DOODLE_LOG_WARN("无法插入asstype " << magic_enum::enum_name(s_type));
-    throw std::runtime_error("asstype");
-  }
-  insertChanged();
 }
 void assType::updateSQL() {}
 void assType::deleteSQL() {
-  doodle::Asstype table{};
-  auto db = coreSql::getCoreSql().getConnection();
-  db->remove(sqlpp::remove_from(table).where(table.id == idP));
 }
 assTypePtrList assType::getAll() {
-  assTypePtrList ptr_list;
-
-  doodle::Asstype table{};
-  auto db = coreSql::getCoreSql().getConnection();
-
-  for (auto &&row : db->run(
-           sqlpp::select(sqlpp::all_of(table))
-               .from(table)
-               .where(table.projectId == coreSet::getSet().projectName().first)
-               .order_by(table.assType.desc()))) {
-    auto at    = std::make_shared<assType>();
-    at->idP    = row.id;
-    auto k_ty  = magic_enum::enum_cast<e_type>(row.assType.text);
-    at->s_type = k_ty.value_or(e_type::None);
-    ptr_list.push_back(at);
-  }
-  return ptr_list;
 }
 
 const std::string assType::getTypeS() const {

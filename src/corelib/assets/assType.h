@@ -13,13 +13,13 @@
 
 #include "corelib/core_global.h"
 
-#include <corelib/core/coresqldata.h>
+#include <corelib/core/CoreData.h>
 #include <boost/signals2.hpp>
 
 DOODLE_NAMESPACE_S
 
 class CORE_API assType
-    : public coresqldata,
+    : public CoreData,
       public std::enable_shared_from_this<assType> {
  public:
   enum e_type {
@@ -65,7 +65,7 @@ class CORE_API assType
   int64_t p_ass_class_id;
 
   DOODLE_INSRANCE(assType);
-  RTTR_ENABLE(coresqldata);
+  RTTR_ENABLE(CoreData);
 };
 
 inline const QString assType::getTypeQ() const {

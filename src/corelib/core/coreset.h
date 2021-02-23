@@ -47,45 +47,26 @@ class CORE_API coreSet {
   [[nodiscard]] const dpath getSynPathLocale() const;
   void setSynPathLocale(const dpath &syn_path);
   void setSynPathLocale(const QString &syn_path);
-  // MySQL ip设置
-  [[nodiscard]] dstring getIpMysql() const;
-  void setIpMysql(const dstring &value);
-  // FTP ip
-  [[nodiscard]] dstring getIpFtp() const;
-  void setIpFtp(const dstring &value);
+
   // user设置
   [[nodiscard]] dstring getUser() const;
   [[nodiscard]] dstring getUser_en() const;
   void setUser(const dstring &value);
-  void setUser(const QString &value);
+
   //部门设置
   [[nodiscard]] dstring getDepartment() const;
-  [[nodiscard]] QString getDepartmentQ() const;
   void setDepartment(const dstring &value);
-  void setDepartment(const QString &value);
+
   //同步集数设置
   [[nodiscard]] int getSyneps() const;
   void setSyneps(int value);
-  //获得freesyn同步软件设置
-  [[nodiscard]] dstring getFreeFileSyn() const;
-  void setFreeFileSyn(const dstring &value);
 
   //项目名称设置
   dstring getProjectname();
   [[nodiscard]] std::pair<int, std::string> projectName() const;
   [[nodiscard]] dstringList getAllPrjName() const;
   void setProjectname(const std::string &value);
-  void setProjectname(const QString &value);
 
-  // shot根路径
-  [[nodiscard]] dpath getShotRoot() const;
-  void setShotRoot(const dpath &value);
-  // ass根路径
-  [[nodiscard]] dpath getAssRoot() const;
-  void setAssRoot(const dpath &value);
-  // project根路径
-  [[nodiscard]] dpath getPrjectRoot() const;
-  void setPrjectRoot(const dpath &value);
   //缓存路径
   [[nodiscard]] dpath getCacheRoot() const;
 
@@ -93,9 +74,6 @@ class CORE_API coreSet {
   [[nodiscard]] dpath getDoc() const;
 
   void writeDoodleLocalSet();
-
-  static dstringList getAllUser();
-  static bool subUser(const dstring &user_str);
 
   static dstring toIpPath(const dstring &path);
 
@@ -112,51 +90,20 @@ class CORE_API coreSet {
 
  private:
   const static dstring settingFileName;
-  // MySQL IP地址
-  dstring ipMysql;
-  // FTP IP地址
-  dstring ipFTP;
+
   //用户名称
   dstring user;
   //部门
   Department department;
-  //同步集数
-  int syneps;
-  //同步文件的文件运行程序
-  dstring freeFileSyn;
 
   //项目名称
-  std::pair<int, std::string> project;
+  std::string project;
+  
+  fileSys::path synPath;
 
- private:
-  //内部属性
-  dpathPtr synPath;
+  fileSys::path cacheRoot;
+  fileSys::path doc;
 
-  std::map<int, std::string> prjMap;
-
-  dpathPtr shotRoot;
-  dpathPtr assRoot;
-  dpathPtr prjectRoot;
-
-  dpathPtr cacheRoot;
-  dpathPtr doc;
-
-  //  public:
-  //   NLOHMANN_DEFINE_TYPE_INTRUSIVE(coreSet,syneps, project);
 };
-inline QString coreSet::getDepartmentQ() const {
-  return QString::fromStdString(getDepartment());
-}
-inline void coreSet::setDepartment(const QString &value) {
-  setDepartment(value.toStdString());
-}
-inline void coreSet::setUser(const QString &value) {
-  setUser(value.toStdString());
-}
-inline void coreSet::setSynPathLocale(const QString &syn_path) {
-  setSynPathLocale(dpath{syn_path.toStdString()});
-}
-inline void coreSet::setProjectname(const QString &value) {
-  setProjectname(value.toStdString());
-}
+
 DOODLE_NAMESPACE_E

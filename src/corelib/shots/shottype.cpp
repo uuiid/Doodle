@@ -1,9 +1,10 @@
 ﻿#include "shottype.h"
 
 #include <loggerlib/Logger.h>
+
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
-#include <corelib/coreOrm/shottype_sqlOrm.h>
+
 #include <corelib/core/coreset.h>
 #include <corelib/core/coresql.h>
 #include <corelib/shots/episodes.h>
@@ -25,7 +26,7 @@ DOODLE_INSRANCE_CPP(shotType);
 
 boost::signals2::signal<void(const shotTypePtr &)> shotType::insertChanged{};
 shotType::shotType()
-    : coresqldata(),
+    : CoreData(),
       std::enable_shared_from_this<shotType>(),
       p_shotClass_id(-1),
       p_Str_Type(),
@@ -37,52 +38,15 @@ shotType::~shotType() {
   p_instance.erase(this);
 }
 void shotType::select(const qint64 &ID_) {
-  doodle::Shottype table{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-
-  for (auto &&row : db->run(sqlpp::select(sqlpp::all_of(table))
-                                .from(table)
-                                .where(table.id == ID_))) {
-    batchSetAttr(row);
-  }
 }
 
 void shotType::insert() {
-  if (isInsert()) return;
-  doodle::Shottype table{};
-
-  auto db     = coreSql::getCoreSql().getConnection();
-  auto insert = sqlpp::insert_into(table).columns(
-      table.shotType, table.shotClassId, table.projectId);
-  insert.values.add(table.shotType    = p_Str_Type,
-                    table.shotClassId = p_shotClass_id,
-                    table.projectId   = coreSet::getSet().projectName().first);
-
-  idP = db->insert(insert);
-  if (idP == 0) {
-    DOODLE_LOG_WARN("无法插入shot type " << p_Str_Type.c_str());
-    throw std::runtime_error("not install shot type");
-  }
-  insertChanged(shared_from_this());
 }
 
 void shotType::updateSQL() {
-  if (isNULL()) return;
-  doodle::Shottype table{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-
-  db->update(sqlpp::update(table)
-                 .set(table.shotType = p_Str_Type)
-                 .where(table.id == idP));
 }
 
 void shotType::deleteSQL() {
-  doodle::Shottype table{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-  db->remove(sqlpp::remove_from(table).where(table.id == idP));
 }
 
 template <typename T>
@@ -93,30 +57,6 @@ void shotType::batchSetAttr(T &row) {
 }
 
 shotTypePtrList shotType::getAll() {
-  doodle::Shottype table{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-  shotTypePtrList list;
-  for (auto &&row : db->run(
-           sqlpp::select(sqlpp::all_of(table))
-               .from(table)
-               .where(table.projectId == coreSet::getSet().projectName().first)
-               .order_by(table.shotType.desc()))) {
-    auto item = std::make_shared<shotType>();
-    item->batchSetAttr(row);
-    auto k_shot_instance = shotClass::Instances();
-    auto find_item =
-        std::find_if(
-            k_shot_instance.begin(), k_shot_instance.end(),
-            [=](shotClass *ptr)
-                -> bool { return ptr->getIdP() == item->p_shotClass_id; });
-
-    if (find_item != k_shot_instance.end())
-      item->setShotClass((*find_item)->shared_from_this());
-    list.push_back(item);
-  }
-
-  return list;
 }
 
 void shotType::setType(const dstring &value) { p_Str_Type = value; }

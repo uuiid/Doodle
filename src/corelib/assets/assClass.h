@@ -10,11 +10,11 @@
 
 #include "corelib/core_global.h"
 
-#include "corelib/core/coresqldata.h"
+#include "corelib/core/CoreData.h"
 
 DOODLE_NAMESPACE_S
 
-class CORE_API assClass : public coresqldata,
+class CORE_API assClass : public CoreData,
                           public std::enable_shared_from_this<assClass> {
  public:
   assClass();
@@ -44,7 +44,7 @@ class CORE_API assClass : public coresqldata,
 
   znchNamePtr p_ptr_znch;
   DOODLE_INSRANCE(assClass);
-  RTTR_ENABLE(coresqldata);
+  RTTR_ENABLE(CoreData);
 };
 inline QString assClass::getAssClassQ(bool isZNCH) {
   return QString::fromStdString(getAssClass(isZNCH));

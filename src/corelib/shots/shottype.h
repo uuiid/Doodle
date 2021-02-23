@@ -9,14 +9,14 @@
 #pragma once
 
 #include <corelib/core_global.h>
-#include <corelib/core/coresqldata.h>
+#include <corelib/core/CoreData.h>
 
 #include <boost/signals2.hpp>
 DOODLE_NAMESPACE_S
 
-class CORE_API shotType : public coresqldata,
+class CORE_API shotType : public CoreData,
                           public std::enable_shared_from_this<shotType> {
-  RTTR_ENABLE(coresqldata)
+  RTTR_ENABLE(CoreData)
  public:
   shotType();
   ~shotType();

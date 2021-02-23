@@ -13,11 +13,11 @@
 #pragma once
 
 #include <corelib/core_global.h>
-#include <corelib/core/coresqldata.h>
+#include <corelib/core/CoreData.h>
 
 DOODLE_NAMESPACE_S
 class CORE_API assdepartment
-    : public coresqldata,
+    : public CoreData,
       public std::enable_shared_from_this<assdepartment> {
  public:
   explicit assdepartment();
@@ -34,7 +34,7 @@ class CORE_API assdepartment
 
   static std::unordered_set<assdepartment *> Instances();
 
-  RTTR_ENABLE(coresqldata);
+  RTTR_ENABLE(CoreData);
 
  private:
   int64_t i_prjID;

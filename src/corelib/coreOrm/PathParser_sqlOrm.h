@@ -42,18 +42,18 @@ namespace doodle
       };
       using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::require_insert>;
     };
-    struct Root
+    struct RefClass
     {
       struct _alias_t
       {
-        static constexpr const char _literal[] =  "root";
+        static constexpr const char _literal[] =  "refClass";
         using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
         template<typename T>
         struct _member_t
           {
-            T root;
-            T& operator()() { return root; }
-            const T& operator()() const { return root; }
+            T refClass;
+            T& operator()() { return refClass; }
+            const T& operator()() const { return refClass; }
           };
       };
       using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::require_insert>;
@@ -106,15 +106,32 @@ namespace doodle
       };
       using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
     };
+    struct Format
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "format";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T format;
+            T& operator()() { return format; }
+            const T& operator()() const { return format; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::require_insert>;
+    };
   } // namespace PathParser_
 
   struct PathParser: sqlpp::table_t<PathParser,
                PathParser_::Id,
                PathParser_::ClassPath,
-               PathParser_::Root,
+               PathParser_::RefClass,
                PathParser_::Regex,
                PathParser_::Prefix,
-               PathParser_::Suffix>
+               PathParser_::Suffix,
+               PathParser_::Format>
   {
     struct _alias_t
     {

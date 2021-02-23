@@ -9,13 +9,13 @@
 #pragma once
 
 #include <corelib/core_global.h>
-#include <corelib/core/coresqldata.h>
+#include <corelib/core/CoreData.h>
 
 DOODLE_NAMESPACE_S
 
-class CORE_API episodes : public coresqldata,
+class CORE_API episodes : public CoreData,
                           public std::enable_shared_from_this<episodes> {
-  RTTR_ENABLE(coresqldata)
+  RTTR_ENABLE(CoreData)
 
  public:
   explicit episodes();

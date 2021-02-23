@@ -29,7 +29,7 @@ RTTR_REGISTRATION {
       .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
 }
 
-synData::synData() : coresqldata(), p_path(), p_episodes_() {}
+synData::synData() : CoreData(), p_path(), p_episodes_() {}
 void synData::insert() {
   if (isInsert()) return;
 

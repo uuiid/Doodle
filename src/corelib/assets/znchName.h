@@ -11,11 +11,11 @@
 #include <corelib/core_global.h>
 #include <pinyinlib/pinyin_global.h>
 #include <corelib/assets/assClass.h>
-#include <corelib/core/coresqldata.h>
+#include <corelib/core/CoreData.h>
 
 DOODLE_NAMESPACE_S
 
-class CORE_API znchName : public coresqldata {
+class CORE_API znchName : public CoreData {
  public:
   explicit znchName(assClass *at_);
 
@@ -37,7 +37,7 @@ class CORE_API znchName : public coresqldata {
 
   assClass *p_ptr_assType;
 
-  RTTR_ENABLE(coresqldata)
+  RTTR_ENABLE(CoreData)
 };
 
 DOODLE_NAMESPACE_E

@@ -12,7 +12,6 @@
 #include <corelib/fileDBInfo/pathParsing.h>
 #include <loggerlib/Logger.h>
 
-#include <corelib/coreOrm/basefile_sqlOrm.h>
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/mysql/mysql.h>
 
@@ -50,71 +49,12 @@ assFileSqlInfo::~assFileSqlInfo() {
 }
 
 void assFileSqlInfo::select(qint64 &ID_) {
-  doodle::Basefile tab{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row : db->run(
-           sqlpp::select(sqlpp::all_of(tab)).from(tab).where(tab.id == ID_))) {
-    batchSetAttr(row);
-  }
 }
 
 void assFileSqlInfo::insert() {
-  if (idP > 0) return;
-  write();
-
-  doodle::Basefile tab{};
-
-  auto db      = coreSql::getCoreSql().getConnection();
-  auto install = sqlpp::dynamic_insert_into(*db, tab).dynamic_set(
-      tab.file         = fileP,
-      tab.fileSuffixes = fileSuffixesP,
-      tab.user         = userP,
-      tab.version      = versionP,
-      tab.FilePath_    = p_parser_path->DBInfo(),
-      tab.filestate    = sqlpp::value_or_null(fileStateP),
-      tab.projectId    = coreSet::getSet().projectName().first);
-
-  if (p_parser_info) {
-    install.insert_list.add(tab.infor = p_parser_info->DBInfo());
-  } else
-    throw nullptr_error{"assFileSqlInfo :"};
-  if (ass_class_id > 0) install.insert_list.add(tab.assClassId = ass_class_id);
-
-  if (ass_type_id > 0) install.insert_list.add(tab.assTypeId = ass_type_id);
-
-  idP = db->insert(install);
-  fileSqlInfo::insert();
-  if (idP == 0) {
-    DOODLE_LOG_WARN(fileStateP.c_str());
-    throw std::runtime_error("");
-  }
-  insertChanged(shared_from_this());
 }
 
 void assFileSqlInfo::updateSQL() {
-  if (idP < 0) return;
-  doodle::Basefile tab{};
-  write();
-
-  auto db     = coreSql::getCoreSql().getConnection();
-  auto updata = sqlpp::update(tab);
-  try {
-    db->update(
-        updata.set(
-                  tab.infor        = p_parser_info->DBInfo(),
-                  tab.filestate    = fileStateP,
-                  tab.FilePath_    = p_parser_path->DBInfo(),
-                  tab.file         = fileP,
-                  tab.fileSuffixes = fileSuffixesP,
-                  tab.version      = versionP,
-                  tab.user         = userP)
-            .where(tab.id == idP));
-    fileSqlInfo::updateSQL();
-  } catch (const sqlpp::exception &e) {
-    DOODLE_LOG_ERROR(e.what());
-  }
-  updateChanged(shared_from_this());
 }
 
 void assFileSqlInfo::deleteSQL() {
@@ -122,22 +62,6 @@ void assFileSqlInfo::deleteSQL() {
 }
 
 assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
-  doodle::Basefile tab{};
-  assInfoPtrList list;
-
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto &&row : db->run(sqlpp::select(sqlpp::all_of(tab))
-                                .from(tab)
-                                .where(tab.assClassId == AT_->getIdP())
-                                .order_by(tab.filetime.desc()))) {
-    auto assInfo = std::make_shared<assFileSqlInfo>();
-    assInfo->batchSetAttr(row);
-    assInfo->setAssClass(AT_);
-    assInfo->exist(true);
-    list.push_back(assInfo);
-    assInfo->setAssType();
-  }
-  return list;
 }
 dpath assFileSqlInfo::generatePath(const std::string &programFolder) {
   //  QString path("%1/%2/%3/%4/%5");

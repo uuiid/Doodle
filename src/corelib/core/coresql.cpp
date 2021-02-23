@@ -4,7 +4,8 @@
 #include <loggerlib/Logger.h>
 
 #include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/mysql/mysql.h>
+#include <sqlpp11/sqlite3/sqlite3.h>
+
 #include <boost/format.hpp>
 
 #include <thread>
@@ -12,14 +13,8 @@
 DOODLE_NAMESPACE_S
 coreSql::coreSql()
     : isInit(false),
-      ip(),
-      dataName(),
-      config(std::make_shared<sqlpp::mysql::connection_config>()) {}
-
-void coreSql::initDB(const dstring &ip_str, const dstring &dataName) {
-  initDB(ip_str);
-  config->database = "test_db";
-}
+      p_path(),
+      config(std::make_shared<sqlpp::sqlite3::connection_config>()) {}
 
 coreSql::~coreSql() = default;
 
@@ -29,18 +24,12 @@ coreSql &coreSql::getCoreSql() {
 }
 
 void coreSql::initDB() {
-  config->user     = "Effects";
-  config->password = "Effects";
-  config->host     = ip;
-  config->port     = 3306;
+  config->flags            = SQLITE_OPEN_READWRITE;
+  config->path_to_database = p_path;
 #ifdef NDEBUG
-  config->database = "doodle_main";
-  config->debug    = false;
-#else
-  // config->database = "test_db";  //#gitignore
-  config->database = "doodle_main";  //#gitignore
-  // config->debug    = true;
   config->debug = false;
+#else
+  config->debug = true;
 #endif  //NDEBUG
 }
 dstring coreSql::getThreadId() {
@@ -53,10 +42,10 @@ dstring coreSql::getThreadId() {
 }
 
 mysqlConnPtr coreSql::getConnection() {
-  return std::make_unique<sqlpp::mysql::connection>(config);
+  return std::make_unique<sqlpp::sqlite3::connection>(config);
 }
-void coreSql::initDB(const dstring &ip_) {
-  ip = ip_;
+void coreSql::initDB(const dstring &path) {
+  p_path = path + "/config/doodleConfig.db";
   initDB();
 }
 

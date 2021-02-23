@@ -2,10 +2,11 @@ create table PathParser
 (
 	id INTEGER not null,
 	ClassPath TEXT not null,
-	root TEXT not null,
+	refClass TEXT not null,
 	regex TEXT not null,
 	prefix TEXT,
 	suffix TEXT,
+	format TEXT not null,
 	primary key (id)
 );
 

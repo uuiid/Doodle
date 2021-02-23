@@ -9,11 +9,11 @@
 #pragma once
 
 #include <corelib/core_global.h>
-#include <corelib/core/coresqldata.h>
+#include <corelib/core/CoreData.h>
 
 DOODLE_NAMESPACE_S
 
-class CORE_API fileSqlInfo : public coresqldata {
+class CORE_API fileSqlInfo : public CoreData {
  public:
   //属性设置和查询
   fileSqlInfo();
@@ -76,7 +76,7 @@ class CORE_API fileSqlInfo : public coresqldata {
  protected:
   void write();
 
-  RTTR_ENABLE(coresqldata);
+  RTTR_ENABLE(CoreData);
 };
 inline QString fileSqlInfo::getUserQ() const {
   return QString::fromStdString(getUser());

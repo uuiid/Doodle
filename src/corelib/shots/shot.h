@@ -9,11 +9,11 @@
 #pragma once
 
 #include <corelib/core_global.h>
-#include <corelib/core/coresqldata.h>
+#include <corelib/core/CoreData.h>
 
 DOODLE_NAMESPACE_S
 
-class CORE_API shot : public coresqldata,
+class CORE_API shot : public CoreData,
                       public std::enable_shared_from_this<shot> {
  public:
   enum class e_shotAB {
@@ -75,7 +75,7 @@ class CORE_API shot : public coresqldata,
 
   bool p_inDeadline;
   DOODLE_INSRANCE(shot);
-  RTTR_ENABLE(coresqldata)
+  RTTR_ENABLE(CoreData)
 };
 inline void shot::setShot(const int64_t &sh, const QString &ab) {
   setShot(sh, ab.toStdString());

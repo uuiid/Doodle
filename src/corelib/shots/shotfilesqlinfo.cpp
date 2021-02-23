@@ -12,10 +12,6 @@
 #include <corelib/fileDBInfo/pathParsing.h>
 #include <corelib/Exception/Exception.h>
 
-#include <sqlpp11/mysql/mysql.h>
-#include <sqlpp11/sqlpp11.h>
-#include <corelib/coreOrm/basefile_sqlOrm.h>
-
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <iostream>
@@ -52,78 +48,12 @@ shotFileSqlInfo::~shotFileSqlInfo() {
   p_instance.erase(this);
 }
 void shotFileSqlInfo::select(const qint64& ID_) {
-  doodle::Basefile tab{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto&& row : db->run(
-           sqlpp::select(sqlpp::all_of(tab)).from(tab).where(tab.id == ID_))) {
-    batchSetAttr(row);
-  }
 }
 
 void shotFileSqlInfo::insert() {
-  if (idP > 0) return;
-  doodle::Basefile tab{};
-  write();
-
-  auto db      = coreSql::getCoreSql().getConnection();
-  auto install = sqlpp::dynamic_insert_into(*db, tab).dynamic_set(
-      tab.file         = fileP,
-      tab.fileSuffixes = fileSuffixesP,
-      tab.user         = userP,
-      tab.version      = versionP,
-      tab.FilePath_    = p_parser_path->DBInfo(),
-      tab.filestate    = sqlpp::value_or_null(fileStateP),
-      tab.projectId    = coreSet::getSet().projectName().first);
-
-  if (p_parser_info) {
-    install.insert_list.add(tab.infor = p_parser_info->DBInfo());
-  } else
-    throw nullptr_error("shotFileSqlInfo err");
-
-  if (p_shot_id > 0) install.insert_list.add(tab.shotsId = p_shot_id);
-  if (p_eps_id > 0) install.insert_list.add(tab.episodesId = p_eps_id);
-
-  DOODLE_LOG_DEBUG(shotClass::getCurrentClass()->getClass_str() << " id " << shotClass::getCurrentClass()->getIdP());
-
-  install.insert_list.add(tab.shotClassId =
-                              shotClass::getCurrentClass()->getIdP());
-
-  if (p_shTy_id > 0) install.insert_list.add(tab.shotTypeId = p_shTy_id);
-
-  idP = db->insert(install);
-  fileSqlInfo::insert();
-  if (idP == 0) {
-    DOODLE_LOG_WARN(fileStateP.c_str());
-    throw std::runtime_error("");
-  }
-  insertChanged();
 }
 
 void shotFileSqlInfo::updateSQL() {
-  if (idP < 0) return;
-  doodle::Basefile tab{};
-
-  auto db     = coreSql::getCoreSql().getConnection();
-  auto updata = sqlpp::update(tab);
-  try {
-    write();
-
-    db->update(
-        updata.set(tab.infor        = p_parser_info->DBInfo(),
-                   tab.filestate    = fileStateP,
-                   tab.FilePath_    = p_parser_path->DBInfo(),
-                   tab.file         = fileP,
-                   tab.fileSuffixes = fileSuffixesP,
-                   tab.version      = versionP,
-                   tab.user         = userP)
-            .where(tab.id == idP));
-
-    fileSqlInfo::updateSQL();
-  } catch (const nullptr_error& err) {
-    DOODLE_LOG_WARN(err.what());
-  }
-  updateChanged();
 }
 
 template <typename T>
@@ -148,125 +78,19 @@ void shotFileSqlInfo::batchSetAttr(T& row) {
 }
 
 shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr& EP_) {
-  doodle::Basefile tab{};
-  shotInfoPtrList list{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto&& row : db->run(
-           sqlpp::select(sqlpp::all_of(tab))
-               .from(tab)
-               .where(tab.episodesId == EP_->getIdP() and tab.shotsId.is_null())
-               .order_by(tab.filetime.desc()))) {
-    auto Info = std::make_shared<shotFileSqlInfo>();
-    Info->batchSetAttr(row);
-    Info->setEpisdes(EP_);
-    list.push_back(Info);
-
-    p_instance.insert(Info.get());
-    Info->exist(true);
-  }
-  return list;
 }
 
 shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& sh_) {
-  doodle::Basefile tab{};
-  shotInfoPtrList list;
-
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto&& row : db->run(sqlpp::select(sqlpp::all_of(tab))
-                                .from(tab)
-                                .where(tab.shotsId == sh_->getIdP())
-                                .order_by(tab.filetime.desc()))) {
-    auto Info = std::make_shared<shotFileSqlInfo>();
-    Info->batchSetAttr(row);
-    Info->setShot(sh_);
-    Info->exist(true);
-
-    list.push_back(Info);
-    p_instance.insert(Info.get());
-  }
-
-  return list;
 }
 
 shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& shot_ptr,
                                         const shotTypePtr& type_ptr) {
-  doodle::Basefile tab{};
-  shotInfoPtrList list;
-
-  auto db   = coreSql::getCoreSql().getConnection();
-  auto& row = db->run(sqlpp::select(sqlpp::all_of(tab))
-                          .from(tab)
-                          .where(tab.shotsId == shot_ptr->getIdP() and
-                                 tab.shotTypeId == type_ptr->getIdP())
-                          .order_by(tab.filetime.desc())
-                          .limit(1u))
-                  .front();
-
-  auto Info = std::make_shared<shotFileSqlInfo>();
-  if (row._is_valid) {
-    Info->idP           = row.id;
-    Info->fileP         = row.file.text;
-    Info->fileSuffixesP = row.fileSuffixes.text;
-    Info->userP         = row.user.text;
-    Info->versionP      = row.version;
-    Info->fileStateP    = row.filestate;
-
-    Info->p_parser_path->Path(row.FilePath_.text);
-    Info->p_parser_info->Info(row.infor.text);
-
-    if (row.shotsId._is_valid) Info->p_shot_id = row.shotsId;
-    if (row.shotClassId._is_valid) {
-      Info->p_shCla_id = row.shotClassId;
-      Info->getShotType();
-    }
-    if (row.shotTypeId._is_valid) Info->p_shTy_id = row.shotTypeId;
-
-    Info->exist(true);
-    list.push_back(Info);
-    p_instance.insert(Info.get());
-  } else {
-    list.push_back(nullptr);
-  }
-  return list;
-  //  return {};
 }
 
 shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr& class_ptr) {
-  doodle::Basefile tab{};
-  shotInfoPtrList list;
-
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto&& row : db->run(sqlpp::select(sqlpp::all_of(tab))
-                                .from(tab)
-                                .where(tab.shotClassId == class_ptr->getIdP())
-                                .order_by(tab.filetime.desc()))) {
-    auto Info = std::make_shared<shotFileSqlInfo>();
-    Info->batchSetAttr(row);
-    Info->exist(true);
-    list.push_back(Info);
-    p_instance.insert(Info.get());
-  }
-  return list;
 }
 
 shotInfoPtrList shotFileSqlInfo::getAll(const shotTypePtr& type_ptr) {
-  doodle::Basefile tab{};
-  shotInfoPtrList list;
-
-  auto db = coreSql::getCoreSql().getConnection();
-  for (auto&& row : db->run(sqlpp::select(sqlpp::all_of(tab))
-                                .from(tab)
-                                .where(tab.shotTypeId == type_ptr->getIdP())
-                                .order_by(tab.filetime.desc()))) {
-    auto Info = std::make_shared<shotFileSqlInfo>();
-    Info->batchSetAttr(row);
-    Info->setShotType(type_ptr);
-    Info->exist(true);
-    list.push_back(Info);
-    p_instance.insert(Info.get());
-  }
-  return list;
 }
 
 dpath shotFileSqlInfo::generatePath(const dstring& programFolder) {

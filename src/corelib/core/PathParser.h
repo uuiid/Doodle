@@ -10,10 +10,7 @@ class PathParser {
   std::string p_prefix;       //这个是根目录对应的前缀
   std::string p_suffix;       //这个是根目录对应的后缀
  public:
-  PathParser();
+  PathParser(fileSys::path path);
 };
-
-PathParser::PathParser() {
-}
 
 }  // namespace doodle::pathParser

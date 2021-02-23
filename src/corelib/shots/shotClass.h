@@ -9,12 +9,12 @@
 #pragma once
 
 #include <corelib/core_global.h>
-#include <corelib/core/coresqldata.h>
+#include <corelib/core/CoreData.h>
 
 #include <boost/signals2.hpp>
 DOODLE_NAMESPACE_S
 
-class CORE_API shotClass : public coresqldata,
+class CORE_API shotClass : public CoreData,
                            public std::enable_shared_from_this<shotClass> {
  public:
   shotClass();
@@ -60,7 +60,7 @@ class CORE_API shotClass : public coresqldata,
  private:
   e_fileclass p_fileclass;
   DOODLE_INSRANCE(shotClass);
-  RTTR_ENABLE(coresqldata)
+  RTTR_ENABLE(CoreData)
 };
 inline QString shotClass::getClass_Qstr() const {
   return QString::fromStdString(getClass_str());

@@ -9,11 +9,11 @@
 #pragma once
 
 #include <corelib/core_global.h>
-#include <corelib/core/coresqldata.h>
+#include <corelib/core/CoreData.h>
 DOODLE_NAMESPACE_S
 
-class CORE_API synData : public coresqldata {
-  RTTR_ENABLE(coresqldata)
+class CORE_API synData : public CoreData {
+  RTTR_ENABLE(CoreData)
  public:
   synData();
   void insert() override;

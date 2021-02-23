@@ -19,8 +19,7 @@ class CORE_API coreSql {
 
   ~coreSql();
 
-  void initDB(const dstring &ip_str, const dstring &dataName);
-  void initDB(const dstring &ip_);
+  void initDB(const dstring &path);
   mysqlConnPtr getConnection();
 
  private:
@@ -29,11 +28,10 @@ class CORE_API coreSql {
   coreSql();
 
  private:
-  std::shared_ptr<sqlpp::mysql::connection_config> config;
+  std::shared_ptr<sqlpp::sqlite3::connection_config> config;
 
   bool isInit = false;
-  dstring ip;
-  dstring dataName;
+  dstring p_path;
 };
 
 DOODLE_NAMESPACE_E

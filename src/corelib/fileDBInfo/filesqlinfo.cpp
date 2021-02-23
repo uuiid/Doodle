@@ -57,7 +57,7 @@ RTTR_REGISTRATION {
 }
 
 fileSqlInfo::fileSqlInfo()
-    : coresqldata(),
+    : CoreData(),
       versionP(0),
       fileSuffixesP(),
       fileP(),
