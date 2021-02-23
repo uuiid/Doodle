@@ -30,11 +30,11 @@ class CORE_API shotFileSqlInfo
   static shotInfoPtrList getAll(const shotPtr &shot_ptr,
                                 const shotTypePtr &type_ptr);
   static shotInfoPtrList getAll(const episodesPtr &EP_);
-  dpath generatePath(const dstring &programFolder) override;
-  dpath generatePath(const dstring &programFolder,
-                     const dstring &suffixes) override;
-  dpath generatePath(const dstring &programFolder, const dstring &suffixes,
-                     const dstring &prefix) override;
+  fileSys::path generatePath(const dstring &programFolder) override;
+  fileSys::path generatePath(const dstring &programFolder,
+                             const dstring &suffixes) override;
+  fileSys::path generatePath(const dstring &programFolder, const dstring &suffixes,
+                             const dstring &prefix) override;
   dstring generateFileName(const dstring &suffixes) override;
   dstring generateFileName(const dstring &suffixes,
                            const dstring &prefix) override;

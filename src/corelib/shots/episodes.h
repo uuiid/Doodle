@@ -21,9 +21,7 @@ class CORE_API episodes : public CoreData,
   explicit episodes();
   ~episodes();
 
-  void insert() override;
-  void updateSQL() override;
-  void deleteSQL() override;
+
 
   static episodesPtrList getAll();
 

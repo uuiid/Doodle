@@ -18,10 +18,7 @@ class CORE_API CoreData : public boost::noncopyable_::noncopyable {
 
  public:
   CoreData();
-
-  virtual void insert()    = 0;
-  virtual void updateSQL() = 0;
-  virtual void deleteSQL() = 0;
+  virtual bool setInfo(const std::string &value) = 0;
 };
 
 DOODLE_NAMESPACE_E

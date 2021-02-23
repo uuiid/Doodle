@@ -22,18 +22,16 @@ class CORE_API assFileSqlInfo
  public:
   assFileSqlInfo();
   ~assFileSqlInfo();
-  void select(qint64 &ID_);
 
-  void insert() override;
-  void updateSQL() override;
-  void deleteSQL() override;
+  bool setInfo(const std::string &value) override;
+
   static assInfoPtrList getAll(const assClassPtr &AT_);
 
-  dpath generatePath(const std::string &programFolder) override;
-  dpath generatePath(const dstring &programFolder,
-                     const dstring &suffixes) override;
-  dpath generatePath(const dstring &programFolder, const dstring &suffixes,
-                     const dstring &prefix) override;
+  fileSys::path generatePath(const std::string &programFolder) override;
+  fileSys::path generatePath(const dstring &programFolder,
+                             const dstring &suffixes) override;
+  fileSys::path generatePath(const dstring &programFolder, const dstring &suffixes,
+                             const dstring &prefix) override;
   dstring generateFileName(const dstring &suffixes) override;
   dstring generateFileName(const dstring &suffixes,
                            const dstring &prefix) override;
@@ -62,9 +60,6 @@ class CORE_API assFileSqlInfo
   int getMaxVecsion();
 
  private:
-  int64_t ass_class_id;
-  int64_t ass_type_id;
-
   assDepPtr p_dep_ptr_;
   assClassPtr p_class_ptr_;
   assTypePtr p_type_ptr_;

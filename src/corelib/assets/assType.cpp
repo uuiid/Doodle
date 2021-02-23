@@ -46,11 +46,7 @@ assType::assType()
 assType::~assType() {
   p_instance.erase(this);
 }
-void assType::insert() {
-}
-void assType::updateSQL() {}
-void assType::deleteSQL() {
-}
+
 assTypePtrList assType::getAll() {
 }
 
@@ -96,7 +92,6 @@ assTypePtr assType::findType(const e_type &typeName, bool autoInstall) {
     if (autoInstall) {
       auto type = std::make_shared<assType>();
       type->setType(typeName);
-      type->insert();
       return type;
     }
   }

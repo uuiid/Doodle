@@ -5,6 +5,7 @@
 #include <boost/filesystem.hpp>
 
 DOODLE_NAMESPACE_S
+class Project;
 
 enum class Department {
   None_,
@@ -19,8 +20,8 @@ enum class Department {
 };
 
 struct synPath_struct {
-  dpath local;
-  dpath server;
+  fileSys::path local;
+  fileSys::path server;
 };
 
 /*
@@ -40,13 +41,12 @@ class CORE_API coreSet {
   void appendEnvironment() const;
 
   //获得运行程序目录
-  static dpath program_location();
-  static dpath program_location(const dpath &path);
+  static fileSys::path program_location();
+  static fileSys::path program_location(const fileSys::path &path);
 
   //同步目录时的本地路径
-  [[nodiscard]] const dpath getSynPathLocale() const;
-  void setSynPathLocale(const dpath &syn_path);
-  void setSynPathLocale(const QString &syn_path);
+  [[nodiscard]] const fileSys::path getSynPathLocale() const;
+  void setSynPathLocale(const fileSys::path &syn_path);
 
   // user设置
   [[nodiscard]] dstring getUser() const;
@@ -62,16 +62,15 @@ class CORE_API coreSet {
   void setSyneps(int value);
 
   //项目名称设置
-  dstring getProjectname();
-  [[nodiscard]] std::pair<int, std::string> projectName() const;
-  [[nodiscard]] dstringList getAllPrjName() const;
-  void setProjectname(const std::string &value);
+  std::shared_ptr<Project> getProject();
+  std::vector<std::string> getAllProjectNames();
+  void setProject(const fileSys::path &projectRoot);
 
   //缓存路径
-  [[nodiscard]] dpath getCacheRoot() const;
+  [[nodiscard]] fileSys::path getCacheRoot() const;
 
   // doc路径
-  [[nodiscard]] dpath getDoc() const;
+  [[nodiscard]] fileSys::path getDoc() const;
 
   void writeDoodleLocalSet();
 
@@ -91,19 +90,18 @@ class CORE_API coreSet {
  private:
   const static dstring settingFileName;
 
+  //项目名称
+  std::map<fileSys::path, std::shared_ptr<Project>> p_projects;
+
   //用户名称
   dstring user;
   //部门
   Department department;
 
-  //项目名称
-  std::string project;
-  
   fileSys::path synPath;
 
   fileSys::path cacheRoot;
   fileSys::path doc;
-
 };
 
 DOODLE_NAMESPACE_E

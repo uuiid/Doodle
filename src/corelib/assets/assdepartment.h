@@ -23,13 +23,10 @@ class CORE_API assdepartment
   explicit assdepartment();
   ~assdepartment();
 
-  void insert() override;
-  void updateSQL() override;
-  void deleteSQL() override;
+  bool setInfo(const std::string &value) override;
 
   static assDepPtrList getAll();
   [[nodiscard]] const std::string &getAssDep() const;
-  [[nodiscard]] const QString getAssDepQ() const;
   void setAssDep(const std::string &s_ass_dep);
 
   static std::unordered_set<assdepartment *> Instances();
@@ -37,8 +34,6 @@ class CORE_API assdepartment
   RTTR_ENABLE(CoreData);
 
  private:
-  int64_t i_prjID;
-
   std::string s_assDep;
   DOODLE_INSRANCE(assdepartment);
 };

@@ -62,7 +62,7 @@ void ueArchive::imp_updata(const dpathList &pathList) {
   auto &fsys = DfileSyntem::get();
   fsys.upload(option);
 }
-void ueArchive::imp_down(const dpath &localPath) {
+void ueArchive::imp_down(const fileSys::path &localPath) {
   auto option = std::make_shared<fileDowUpdateOptions>();
   option->setlocaPath(localPath.parent_path() / DOODLE_CONTENT);
   option->setremotePath(p_ServerPath.back());

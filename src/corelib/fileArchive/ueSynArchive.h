@@ -19,11 +19,11 @@ class CORE_API ueSynArchive : public fileArchive {
  public:
   ueSynArchive();
   bool update(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr);
-  dpath down(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr);
+  fileSys::path down(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr);
   bool makeDir(const episodesPtr &episodes_ptr);
 
  protected:
-  dpath syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr);
+  fileSys::path syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr);
   void insertDB() override;
   void imp_generateFilePath() override;
 

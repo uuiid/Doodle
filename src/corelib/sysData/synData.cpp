@@ -90,7 +90,7 @@ dpathPtr synData::push_back(const assClassPtr &ass_class_ptr) {
   if (iter == p_path.end()) {
     p_path.push_back(data);
   }
-  return std::make_shared<dpath>(data.server);
+  return std::make_shared<fileSys::path>(data.server);
 }
 
 synPathListPtr synData::getSynDir(bool abspath) {

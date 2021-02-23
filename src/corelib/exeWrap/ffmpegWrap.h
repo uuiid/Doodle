@@ -23,11 +23,11 @@ class CORE_API ffmpegWrap : public boost::noncopyable_::noncopyable {
                     const QString &videoPath,
                     const QString &subtitles) const;
   bool imageToVideo(const dpathList &image_path,
-                    const dpath &videoPath,
+                    const fileSys::path &videoPath,
                     const std::string &subtitles) const;
-  bool convertToVideo(const dpath &in_videoPath, const dpath &out_videoPath, const std::string &subtitles) const;
+  bool convertToVideo(const fileSys::path &in_videoPath, const fileSys::path &out_videoPath, const std::string &subtitles) const;
 
-  bool connectVideo(const dpathList &in_videoPath, const dpath &out_videoPath);
+  bool connectVideo(const dpathList &in_videoPath, const fileSys::path &out_videoPath);
 
  private:
   std::shared_ptr<boost::filesystem::path> p_tmp_file_;

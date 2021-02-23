@@ -32,12 +32,12 @@ class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
 
   [[nodiscard]] state isState() const;
 
-  virtual bool update(const dpath &path);
+  virtual bool update(const fileSys::path &path);
   virtual bool update(const dpathList &filelist);
   virtual bool update();
 
-  virtual dpath down(const dstring &path);
-  virtual dpath down();
+  virtual fileSys::path down(const dstring &path);
+  virtual fileSys::path down();
 
   virtual bool useUpdataCheck() const;
   virtual bool updataCheck() const;
@@ -62,10 +62,10 @@ class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
   //组合需要的路径  包括来源  缓存和服务器路径
   virtual void imp_generateFilePath() = 0;
   //下载文件
-  virtual void imp_down(const dpath &localPath);
+  virtual void imp_down(const fileSys::path &localPath);
 
   //文件在服务器目录中
-  virtual bool isServerzinsideDir(const dpath &localPath);
+  virtual bool isServerzinsideDir(const fileSys::path &localPath);
 
  protected:
   fileSqlInfoPtr p_db_data;

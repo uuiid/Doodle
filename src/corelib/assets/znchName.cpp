@@ -38,16 +38,6 @@ znchName::znchName(assClass *at_)
 
 void znchName::setName(const std::string &name_) { nameEN = name_; }
 
-void znchName::insert() {
-}
-
-void znchName::select() {}
-
-void znchName::updateSQL() {
-}
-
-void znchName::deleteSQL() {
-}
 
 void znchName::setName(const std::string &name_, const bool &isZNCH) {
   nameZNCH = name_;

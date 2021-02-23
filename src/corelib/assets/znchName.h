@@ -19,11 +19,7 @@ class CORE_API znchName : public CoreData {
  public:
   explicit znchName(assClass *at_);
 
-  void insert() override;
-  void updateSQL() override;
-  void deleteSQL() override;
-  void select();
-
+ 
   void setName(const std::string &name_);
   void setName(const std::string &name_, const bool &isZNCH);
   [[nodiscard]] std::string getName() const;

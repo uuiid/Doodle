@@ -93,9 +93,9 @@ shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr& class_ptr) {
 shotInfoPtrList shotFileSqlInfo::getAll(const shotTypePtr& type_ptr) {
 }
 
-dpath shotFileSqlInfo::generatePath(const dstring& programFolder) {
+fileSys::path shotFileSqlInfo::generatePath(const dstring& programFolder) {
   //第一次格式化添加根路径
-  dpath path = coreSet::getSet().getShotRoot();
+  fileSys::path path = coreSet::getSet().getShotRoot();
 
   //第二次格式化添加集数字符串
   path = path / getEpisdes()->getEpisdes_str();
@@ -116,14 +116,14 @@ dpath shotFileSqlInfo::generatePath(const dstring& programFolder) {
   return path;
 }
 
-dpath shotFileSqlInfo::generatePath(const dstring& programFolder,
-                                    const dstring& suffixes) {
+fileSys::path shotFileSqlInfo::generatePath(const dstring& programFolder,
+                                            const dstring& suffixes) {
   return generatePath(programFolder) / generateFileName(suffixes);
 }
 
-dpath shotFileSqlInfo::generatePath(const dstring& programFolder,
-                                    const dstring& suffixes,
-                                    const dstring& prefix) {
+fileSys::path shotFileSqlInfo::generatePath(const dstring& programFolder,
+                                            const dstring& suffixes,
+                                            const dstring& prefix) {
   return generatePath(programFolder) / generateFileName(suffixes, prefix);
 }
 

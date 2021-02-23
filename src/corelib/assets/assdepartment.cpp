@@ -35,9 +35,7 @@ DOODLE_INSRANCE_CPP(assdepartment);
 assdepartment::assdepartment()
     : CoreData(),
       std::enable_shared_from_this<assdepartment>(),
-      i_prjID(-1),
       s_assDep("character") {
-  i_prjID = coreSet::getSet().projectName().first;
   p_instance.insert(this);
 }
 
@@ -45,12 +43,6 @@ assdepartment::~assdepartment() {
   p_instance.erase(this);
 }
 
-void assdepartment::insert() {
-}
-void assdepartment::updateSQL() {
-}
-void assdepartment::deleteSQL() {
-}
 const std::string &assdepartment::getAssDep() const {
   return s_assDep;
 }
@@ -61,9 +53,6 @@ assDepPtrList assdepartment::getAll() {
 }
 std::unordered_set<assdepartment *> assdepartment::Instances() {
   return p_instance;
-}
-const QString assdepartment::getAssDepQ() const {
-  return QString::fromStdString(getAssDep());
 }
 
 DOODLE_NAMESPACE_E

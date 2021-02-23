@@ -7,8 +7,8 @@ DOODLE_NAMESPACE_S
 class CORE_API movieArchive : public fileArchive {
  public:
   explicit movieArchive(fileSqlInfoPtr shot_info_ptr);
-  bool makeMovie(const dpath &imageFolder);
-  bool convertMovie(const dpath &moviePath);
+  bool makeMovie(const fileSys::path &imageFolder);
+  bool convertMovie(const fileSys::path &moviePath);
   bool update(const dpathList &filelist) override;
   //  bool update(const std::vector<QString> &filelist);
  protected:

@@ -27,7 +27,7 @@ ueSynArchive::ueSynArchive()
 void ueSynArchive::insertDB() {}
 void ueSynArchive::imp_generateFilePath() {}
 
-dpath ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr) {
+fileSys::path ueSynArchive::syn(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr) {
   auto &set = coreSet::getSet();
   boost::format str("/03_Workflow/Assets/%s/backup");
   str % set.getDepartment();
@@ -151,7 +151,7 @@ bool ueSynArchive::update(const episodesPtr &episodes_ptr, const shotPtr &shot_p
   return true;
 }
 
-dpath ueSynArchive::down(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr) {
+fileSys::path ueSynArchive::down(const episodesPtr &episodes_ptr, const shotPtr &shot_ptr) {
   auto &set = coreSet::getSet();
   boost::format str("/03_Workflow/Assets/%s/backup");
   str % set.getDepartment();

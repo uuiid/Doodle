@@ -45,21 +45,21 @@ class CORE_API DfileSyntem {
   boost::signals2::signal<void(const std::string &)> filelog;
   boost::signals2::signal<void(const std::string &)> fileStreamLog;
 
-  bool upload(const dpath &localFile, const dpath &remoteFile, bool force = false);
+  bool upload(const fileSys::path &localFile, const fileSys::path &remoteFile, bool force = false);
   bool upload(const std::shared_ptr<fileDowUpdateOptions> &option);
-  bool down(const dpath &localFile, const dpath &remoteFile, bool force = false);
+  bool down(const fileSys::path &localFile, const fileSys::path &remoteFile, bool force = false);
   bool down(const std::shared_ptr<fileDowUpdateOptions> &option);
-  bool exists(const dpath &remoteFile);
-  bool createDir(const dpath &remoteFile);
-  bool createDir(const std::vector<dpath> &paths);
+  bool exists(const fileSys::path &remoteFile);
+  bool createDir(const fileSys::path &remoteFile);
+  bool createDir(const std::vector<fileSys::path> &paths);
 
-  std::shared_ptr<std::string> readFileToString(const dpath &remoteFile);
-  bool writeFile(const dpath &remoteFile, const std::shared_ptr<std::string> &data);
-  bool copy(const dpath &sourePath, const dpath &trange_path);
-  static bool localCopy(const dpath &sourePath, const dpath &trange_path, bool backup);
+  std::shared_ptr<std::string> readFileToString(const fileSys::path &remoteFile);
+  bool writeFile(const fileSys::path &remoteFile, const std::shared_ptr<std::string> &data);
+  bool copy(const fileSys::path &sourePath, const fileSys::path &trange_path);
+  static bool localCopy(const fileSys::path &sourePath, const fileSys::path &trange_path, bool backup);
 
  private:
-  static bool removeDir(const dpath &path);
+  static bool removeDir(const fileSys::path &path);
 
   DfileSyntem();
   static DfileSyntem *install;

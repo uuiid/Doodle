@@ -22,9 +22,6 @@ class CORE_API shotType : public CoreData,
   ~shotType();
   void select(const qint64 &ID_);
 
-  void insert() override;
-  void updateSQL() override;
-  void deleteSQL() override;
   //根据fileclass外键查询filetype
   static shotTypePtrList getAll();
 

@@ -128,7 +128,9 @@
         "*.inc": "cpp",
         "cinttypes": "cpp",
         "qdir": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "qtguidepends": "cpp",
+        "qtwidgetsdepends": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",

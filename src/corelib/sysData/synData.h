@@ -16,9 +16,7 @@ class CORE_API synData : public CoreData {
   RTTR_ENABLE(CoreData)
  public:
   synData();
-  void insert() override;
-  void updateSQL() override;
-  void deleteSQL() override;
+
   static synDataPtr getAll(const episodesPtr &episodes);
   void setEpisodes(const episodesPtr &episodes_ptr);
   episodesPtr getEpisodes();

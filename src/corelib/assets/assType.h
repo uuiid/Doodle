@@ -36,9 +36,8 @@ class CORE_API assType
  public:
   explicit assType();
   ~assType();
-  void insert() override;
-  void updateSQL() override;
-  void deleteSQL() override;
+
+  bool setInfo(const std::string &value) override;
 
   static assTypePtrList getAll();
   //寻找想要的type类型，找不到就插入
@@ -53,7 +52,7 @@ class CORE_API assType
   [[nodiscard]] const std::string getTypeS() const;
   [[nodiscard]] const e_type &getType_enum() const;
   [[nodiscard]] void setType(const e_type &type_enum);
-  [[nodiscard]] const QString getTypeQ() const;
+
   void setType(const std::string &string);
   static const std::unordered_set<assType *> Instances();
 
@@ -68,7 +67,4 @@ class CORE_API assType
   RTTR_ENABLE(CoreData);
 };
 
-inline const QString assType::getTypeQ() const {
-  return QString::fromStdString(getTypeS());
-}
 DOODLE_NAMESPACE_E

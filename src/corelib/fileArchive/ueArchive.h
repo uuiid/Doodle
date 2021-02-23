@@ -21,11 +21,10 @@ class CORE_API ueArchive : public fileArchive {
   void imp_generateFilePath() override;
 
   void imp_updata(const dpathList &pathList) override;
-  void imp_down(const dpath &localPath) override;
+  void imp_down(const fileSys::path &localPath) override;
 
  protected:
   fileSqlInfoPtr p_info_;
-
 };
 
 DOODLE_NAMESPACE_E

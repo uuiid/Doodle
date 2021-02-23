@@ -24,13 +24,11 @@ class CORE_API coreSql {
 
  private:
   void initDB();
-  dstring getThreadId();
   coreSql();
 
  private:
   std::shared_ptr<sqlpp::sqlite3::connection_config> config;
 
-  bool isInit = false;
   dstring p_path;
 };
 

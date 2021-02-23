@@ -25,7 +25,7 @@ fileArchive::fileArchive()
       p_ServerPath(),
       p_state_(state::none) {}
 
-bool fileArchive::update(const dpath &path) {
+bool fileArchive::update(const fileSys::path &path) {
   updateChanged(1);
 
   dpathList tmp;
@@ -58,7 +58,7 @@ bool fileArchive::update(const dpathList &filelist) {
   // updateChanged(100);
   return true;
 }
-dpath fileArchive::down(const dstring &path) {
+fileSys::path fileArchive::down(const dstring &path) {
   imp_generateFilePath();
   //获得缓存路径
   generateCachePath();
@@ -69,7 +69,7 @@ dpath fileArchive::down(const dstring &path) {
   return {path};
 }
 
-dpath fileArchive::down() {
+fileSys::path fileArchive::down() {
   imp_generateFilePath();
   //获得缓存路径
   generateCachePath();
@@ -162,7 +162,7 @@ void fileArchive::imp_updata(const dpathList &pathList) {
     }
   }
 }
-void fileArchive::imp_down(const dpath &localPath) {
+void fileArchive::imp_down(const fileSys::path &localPath) {
   auto &session = DfileSyntem::get();
   infoChanged("开始下载");
 
@@ -179,7 +179,7 @@ void fileArchive::imp_down(const dpath &localPath) {
   }
 }
 
-bool fileArchive::isServerzinsideDir(const dpath &localPath) {
+bool fileArchive::isServerzinsideDir(const fileSys::path &localPath) {
   auto &set        = coreSet::getSet();
   auto projectRoot = set.getPrjectRoot();
   if (projectRoot.has_root_name() && localPath.has_root_name()) {

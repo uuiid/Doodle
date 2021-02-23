@@ -12,8 +12,7 @@
 #include <stdexcept>
 DOODLE_NAMESPACE_S
 coreSql::coreSql()
-    : isInit(false),
-      p_path(),
+    : p_path(),
       config(std::make_shared<sqlpp::sqlite3::connection_config>()) {}
 
 coreSql::~coreSql() = default;
@@ -31,14 +30,6 @@ void coreSql::initDB() {
 #else
   config->debug = true;
 #endif  //NDEBUG
-}
-dstring coreSql::getThreadId() {
-  //使用线程id创建不一样的名字
-  auto thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
-  boost::format str("db_%s");
-  str % thread_id;
-
-  return str.str();
 }
 
 mysqlConnPtr coreSql::getConnection() {

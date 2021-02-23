@@ -28,7 +28,7 @@ mayaArchiveShotFbx::mayaArchiveShotFbx(shotInfoPtr &shot_info_ptr)
     : fileArchive(),
       p_info_ptr_(shot_info_ptr),
       p_temporary_file_(
-          std::make_shared<dpath>(boost::filesystem::temp_directory_path())) {
+          std::make_shared<fileSys::path>(boost::filesystem::temp_directory_path())) {
   *p_temporary_file_ = *p_temporary_file_ / boost::filesystem::unique_path();
 }
 void mayaArchiveShotFbx::imp_generateFilePath() {
@@ -40,7 +40,7 @@ void mayaArchiveShotFbx::imp_generateFilePath() {
     for (auto &&item : p_info_ptr_->getFileList())
       p_ServerPath.push_back(item.string());
 }
-bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
+bool mayaArchiveShotFbx::exportFbx(const fileSys::path &shot_data) {
   auto resou = boost::filesystem::current_path().parent_path() / "resource";
 
   //复制出导出脚本
@@ -103,7 +103,7 @@ bool mayaArchiveShotFbx::exportFbx(const dpath &shot_data) {
 
   return boost::filesystem::exists(shot_data.parent_path() / "doodle_Export.json");
 }
-bool mayaArchiveShotFbx::readExportJson(const dpath &exportPath) {
+bool mayaArchiveShotFbx::readExportJson(const fileSys::path &exportPath) {
   auto k_s_file = exportPath / "doodle_Export.json";
   //读取文件
   boost::filesystem::ifstream kIfstream{};
@@ -128,7 +128,7 @@ bool mayaArchiveShotFbx::readExportJson(const dpath &exportPath) {
 
   return re;
 }
-bool mayaArchiveShotFbx::update(const dpath &shot_data) {
+bool mayaArchiveShotFbx::update(const fileSys::path &shot_data) {
   if (shot_data.empty()) return false;
   p_info_ptr_->setShotType(shotType::findShotType("maya_export", true));
   //获得缓存路径并下载文件

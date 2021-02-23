@@ -15,7 +15,7 @@
 DOODLE_NAMESPACE_S
 pathParsing::pathParsing(fileSqlInfo* file)
     : p_file_Archive(file),
-      p_path_row(std::make_shared<dpath>()),
+      p_path_row(std::make_shared<fileSys::path>()),
       p_path_list() {
 }
 
@@ -28,7 +28,7 @@ dpathList pathParsing::Path(const std::string& pathstr) {
    * 情况三：
    * *传入字符串 
    */
-  dpath path{pathstr};
+  fileSys::path path{pathstr};
 
   if (pathstr.empty())
     throw std::runtime_error("字符串空");
@@ -72,7 +72,7 @@ dpathList pathParsing::Path() const {
   return p_path_list;
 }
 
-void pathParsing::setPath(const dpathList& path) {
+void pathParsing::setPath(const fileSys::pathList& path) {
   p_path_list = path;
 }
 

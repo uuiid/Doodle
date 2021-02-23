@@ -39,9 +39,9 @@ void movieArchive::imp_generateFilePath() {
   else if (!p_info_ptr_->getFileList().empty())
     p_ServerPath.push_back(p_info_ptr_->getFileList()[0].generic_string());
 }
-bool movieArchive::makeMovie(const dpath &imageFolder) {
+bool movieArchive::makeMovie(const fileSys::path &imageFolder) {
   auto ffmpeg = std::make_unique<ffmpegWrap>();
-  auto path   = dpath(imageFolder);
+  auto path   = fileSys::path(imageFolder);
   dpathList list;
   for (auto &&item : boost::filesystem::directory_iterator(path)) {
     if (item.path().extension() == ".png" || item.path().extension() == ".jpg" || item.path().extension() == ".tga" || item.path().extension() == ".exr") {
@@ -53,7 +53,7 @@ bool movieArchive::makeMovie(const dpath &imageFolder) {
                               boost::filesystem::basename(p_cacheFilePath.front()));
 }
 
-bool movieArchive::convertMovie(const dpath &moviePath) {
+bool movieArchive::convertMovie(const fileSys::path &moviePath) {
   auto ffmpeg = std::make_unique<ffmpegWrap>();
   return ffmpeg->convertToVideo(
       moviePath,

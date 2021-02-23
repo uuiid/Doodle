@@ -13,6 +13,7 @@
 #include <fstream>
 
 #include <corelib/filesystem/FileSystem.h>
+#include <corelib/core/Project.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
@@ -93,7 +94,7 @@ coreSet::coreSet()
 
 void coreSet::getSetting() {
   if (boost::filesystem::exists(doc / settingFileName)) {
-    dpath strFile(doc / settingFileName);
+    fileSys::path strFile(doc / settingFileName);
     boost::filesystem::ifstream inJosn;
     inJosn.open(doc / settingFileName, std::ifstream::binary);
 
@@ -124,6 +125,15 @@ void coreSet::setDepartment(const dstring &value) {
   department = magic_enum::enum_cast<Department>(value).value_or(Department::VFX);
 }
 
+std::vector<std::string> coreSet::getAllProjectNames() {
+  std::vector<std::string> list{};
+  for (auto &&it : p_projects) {
+    auto pr = it.second->Name();
+    list.emplace_back(std::move(pr));
+  }
+  return list;
+}
+
 dstring coreSet::getUser() const { return user; }
 
 dstring coreSet::getUser_en() const {
@@ -133,11 +143,9 @@ dstring coreSet::getUser_en() const {
 
 void coreSet::setUser(const dstring &value) { user = value; }
 
-dpath coreSet::getDoc() const { return doc; }
+fileSys::path coreSet::getDoc() const { return doc; }
 
-dpath coreSet::getCacheRoot() const { return cacheRoot; }
-
-dstring coreSet::getProjectname() { return project; }
+fileSys::path coreSet::getCacheRoot() const { return cacheRoot; }
 
 void coreSet::getServerSetting() {
   //获得项目个数
@@ -148,27 +156,36 @@ void coreSet::getServerSetting() {
 }
 
 void coreSet::getCacheDiskPath() {
-  const static std::vector<std::string> dirs{"D:/", "E:/", "F:/", "G:/"};
+  const static std::vector<std::string> dirs{"D:/",
+                                             "E:/",
+                                             "F:/",
+                                             "G:/",
+                                             "H:/",
+                                             "I:/",
+                                             "J:/",
+                                             "K:/",
+                                             "L:/"};
   for (auto &dir : dirs) {
     if (fileSys::exists(dir)) {
-      cacheRoot = dir + "Doodle_cache";
-      break;
+      auto info = fileSys::space(dir);
+      if (((float)info.available / (float)info.available) > 0.05) {
+        cacheRoot = dir + "Doodle_cache";
+        break;
+      }
     }
   }
 }
 
-const dpath coreSet::getSynPathLocale() const { return synPath; }
+const fileSys::path coreSet::getSynPathLocale() const { return synPath; }
 
-void coreSet::setSynPathLocale(const dpath &syn_path) {
+void coreSet::setSynPathLocale(const fileSys::path &syn_path) {
   synPath = syn_path;
 }
 
-void coreSet::setProjectname(const std::string &value) {
-}
-dpath coreSet::program_location() {
+fileSys::path coreSet::program_location() {
   return boost::dll::program_location().parent_path();
 }
-dpath coreSet::program_location(const dpath &path) {
+fileSys::path coreSet::program_location(const fileSys::path &path) {
   return program_location() / path;
 }
 

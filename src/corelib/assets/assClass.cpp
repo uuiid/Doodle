@@ -31,7 +31,6 @@ assClass::assClass()
     : CoreData(),
       std::enable_shared_from_this<assClass>(),
       name(),
-      p_assDep_id(-1),
       p_ass_dep_ptr_(),
       p_ptr_znch() {
   p_instance.insert(this);
@@ -41,17 +40,7 @@ assClass::~assClass() {
   p_instance.erase(this);
 }
 
-void assClass::insert() {
-  // id大于0就不逊要插入
-  if (idP > 0) return;
-}
-
-void assClass::updateSQL() {
-  //转发只更新中文名称
-  p_ptr_znch->updateSQL();
-}
-
-void assClass::deleteSQL() {
+bool assClass::setInfo(const std::string &value) {
 }
 
 assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
@@ -66,7 +55,6 @@ assDepPtr assClass::getAssDep() const {
 
 void assClass::setAssDep(const assDepPtr &value) {
   p_ass_dep_ptr_ = value;
-  p_assDep_id    = value->getIdP();
 }
 
 void assClass::setAssClass(const std::string &value) {

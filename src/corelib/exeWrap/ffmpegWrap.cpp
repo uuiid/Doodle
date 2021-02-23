@@ -19,7 +19,7 @@ ffmpegWrap::ffmpegWrap()
       boost::filesystem::unique_path().filename());
 }
 bool ffmpegWrap::imageToVideo(const dpathList &image_path,
-                              const dpath &videoPath,
+                              const fileSys::path &videoPath,
                               const std::string &subtitles) const {
   boost::filesystem::ofstream fileOpen(*p_tmp_file_);
 
@@ -52,14 +52,14 @@ bool ffmpegWrap::imageToVideo(const dpathList &image_path,
 bool ffmpegWrap::imageToVideo(const std::vector<QString> &image_path,
                               const QString &videoPath,
                               const QString &subtitles) const {
-  std::vector<dpath> k_image_path;
+  std::vector<fileSys::path> k_image_path;
   k_image_path.clear();
   for (auto &&x : image_path) k_image_path.emplace_back(x.toStdString());
   return imageToVideo(k_image_path, videoPath.toStdString(),
                       subtitles.toStdString());
 }
-bool ffmpegWrap::convertToVideo(const dpath &in_videoPath,
-                                const dpath &out_videoPath,
+bool ffmpegWrap::convertToVideo(const fileSys::path &in_videoPath,
+                                const fileSys::path &out_videoPath,
                                 const std::string &subtitles) const {
   boost::filesystem::path k_out_path(out_videoPath);
   if (!boost::filesystem::exists(k_out_path.parent_path()))
@@ -81,7 +81,7 @@ bool ffmpegWrap::convertToVideo(const dpath &in_videoPath,
   return boost::filesystem::exists(k_out_path);
 }
 bool ffmpegWrap::connectVideo(const dpathList &in_videoPath,
-                              const dpath &out_videoPath) {
+                              const fileSys::path &out_videoPath) {
   boost::filesystem::ofstream fileOpen(*p_tmp_file_);
 
   for (auto &&item : in_videoPath) {

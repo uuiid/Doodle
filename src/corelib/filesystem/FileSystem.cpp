@@ -77,7 +77,7 @@ void DfileSyntem::session(const std::string &host,
   tmp_host_prot = str.str();
 }
 
-bool DfileSyntem::upload(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) {
+bool DfileSyntem::upload(const fileSys::path &localFile, const fileSys::path &remoteFile, bool force /*=true */) {
   auto option = std::make_shared<fileDowUpdateOptions>();
   option->setlocaPath(localFile);
   option->setremotePath(remoteFile);
@@ -159,7 +159,7 @@ bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
   }
 }
 
-bool DfileSyntem::down(const dpath &localFile, const dpath &remoteFile, bool force /*=true */) {
+bool DfileSyntem::down(const fileSys::path &localFile, const fileSys::path &remoteFile, bool force /*=true */) {
   auto tmp_options = std::make_shared<fileDowUpdateOptions>();
   tmp_options->setForce(force);
   tmp_options->setlocaPath(localFile);
@@ -247,21 +247,21 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
   return true;
 }
 
-bool DfileSyntem::exists(const dpath &remoteFile) {
+bool DfileSyntem::exists(const fileSys::path &remoteFile) {
   auto &set = coreSet::getSet();
 
   auto result = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
   return result.exists();
 }
 
-bool DfileSyntem::createDir(const dpath &remoteFile) {
+bool DfileSyntem::createDir(const fileSys::path &remoteFile) {
   auto &set   = coreSet::getSet();
   auto result = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
   result.create();
   return true;
 }
 
-bool DfileSyntem::createDir(const std::vector<dpath> &paths) {
+bool DfileSyntem::createDir(const std::vector<fileSys::path> &paths) {
   //创建线程池多线程复制
   ThreadPool thread_pool{4};
   //收集结果
@@ -280,7 +280,7 @@ bool DfileSyntem::createDir(const std::vector<dpath> &paths) {
   return b_r;
 }
 
-std::shared_ptr<std::string> DfileSyntem::readFileToString(const dpath &remoteFile) {
+std::shared_ptr<std::string> DfileSyntem::readFileToString(const fileSys::path &remoteFile) {
   auto &set   = coreSet::getSet();
   auto path   = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
   auto result = path.open(std::ios_base::in);
@@ -290,7 +290,7 @@ std::shared_ptr<std::string> DfileSyntem::readFileToString(const dpath &remoteFi
   return str;
 }
 
-bool DfileSyntem::writeFile(const dpath &remoteFile, const std::shared_ptr<std::string> &data) {
+bool DfileSyntem::writeFile(const fileSys::path &remoteFile, const std::shared_ptr<std::string> &data) {
   auto &set = coreSet::getSet();
 
   auto path   = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
@@ -299,7 +299,7 @@ bool DfileSyntem::writeFile(const dpath &remoteFile, const std::shared_ptr<std::
   return true;
 }
 
-bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path) {
+bool DfileSyntem::copy(const fileSys::path &sourePath, const fileSys::path &trange_path) {
   auto &set = coreSet::getSet();
 
   auto path = FileSystem::Path{(set.getPrjectRoot() / sourePath).generic_string()};
@@ -310,7 +310,7 @@ bool DfileSyntem::copy(const dpath &sourePath, const dpath &trange_path) {
   return true;
 }
 
-bool DfileSyntem::localCopy(const dpath &sourePath, const dpath &trange_path, bool backup) {
+bool DfileSyntem::localCopy(const fileSys::path &sourePath, const fileSys::path &trange_path, bool backup) {
   //创建线程池多线程复制
   boost::asio::thread_pool pool(std::thread::hardware_concurrency());
   //验证文件存在
@@ -318,8 +318,8 @@ bool DfileSyntem::localCopy(const dpath &sourePath, const dpath &trange_path, bo
   if (!boost::filesystem::exists(sourePath)) return false;
   if (!boost::filesystem::exists(trange_path.parent_path()))
     boost::filesystem::create_directories(trange_path.parent_path());
-  dpath backup_path = "";
-  dstring time_str  = "";
+  fileSys::path backup_path = "";
+  dstring time_str          = "";
   if (backup) {
     auto time = std::chrono::system_clock::now();
 
@@ -356,7 +356,7 @@ bool DfileSyntem::localCopy(const dpath &sourePath, const dpath &trange_path, bo
     for (auto &item :
          boost::filesystem::recursive_directory_iterator(sourePath)) {
       if (boost::filesystem::is_regular_file(item.path())) {
-        dpath basic_string = std::regex_replace(
+        fileSys::path basic_string = std::regex_replace(
             item.path().generic_string(), dregex, trange_path.generic_string());
         boost::asio::post(pool, [=]() {
           if (!boost::filesystem::exists(basic_string.parent_path()))
@@ -367,7 +367,7 @@ bool DfileSyntem::localCopy(const dpath &sourePath, const dpath &trange_path, bo
               boost::filesystem::copy_option::overwrite_if_exists);
         });
         if (backup) {
-          dpath basic_backup_path = std::regex_replace(
+          fileSys::path basic_backup_path = std::regex_replace(
               item.path().generic_string(), dregex, backup_path.generic_string());
           boost::asio::post(pool, [=]() {
             if (!boost::filesystem::exists(basic_backup_path.parent_path()))
@@ -386,7 +386,7 @@ bool DfileSyntem::localCopy(const dpath &sourePath, const dpath &trange_path, bo
   return true;
 }
 
-bool DfileSyntem::removeDir(const dpath &path) {
+bool DfileSyntem::removeDir(const fileSys::path &path) {
   throw std::runtime_error("not is function");
   return false;
 }

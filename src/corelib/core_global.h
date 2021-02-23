@@ -3,11 +3,6 @@
 #define _SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING 1
 #define _WIN32_WINNT 0x0A00
 
-#include <QtCore/qglobal.h>
-// #include <QtCore/qobject.h>
-// #include <QtCore/QMetaObject>
-#include <QtCore/QString>
-
 #include <vector>
 #include <unordered_set>
 #include <iostream>
@@ -151,14 +146,12 @@ class mayaArchiveShotFbx;
 
 using mayaArchiveShotFbxPtr = std::shared_ptr<mayaArchiveShotFbx>;
 
-using dstring    = std::string;
-using stringList = std::vector<QString>;
+using dstring = std::string;
 
 using dstringList = std::vector<std::string>;
 
-using dpath     = boost::filesystem::path;
-using dpathPtr  = std::shared_ptr<dpath>;
-using dpathList = std::vector<dpath>;
+using dpathPtr  = std::shared_ptr<fileSys::path>;
+using dpathList = std::vector<fileSys::path>;
 
 using dataInfoPtr = std::variant<
     episodesPtr,
@@ -171,9 +164,8 @@ using dataInfoPtr = std::variant<
     assClassPtr,
     assTypePtr,
     znchNamePtr,
-    assInfoPtr,
-
-    queueDataPtr>;
+    assInfoPtr>;
+    
 DOODLE_NAMESPACE_E
 
 // Q_DECLARE_METATYPE( shotInfoPtr)

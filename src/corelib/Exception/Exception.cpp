@@ -38,4 +38,22 @@ const char *nullptr_error::what() const noexcept {
   return str.c_str();
 }
 
+const char *rttr_error::what() const noexcept {
+  std::string str("rttr err: ");
+  str = str + std::runtime_error::what();
+  return str.c_str();
+}
+
+const char *rttr_not_class::what() const noexcept {
+  std::string str("rttr not class: ");
+  str = str + std::runtime_error::what();
+  return str.c_str();
+}
+
+const char *rttr_method_invoke_class::what() const noexcept {
+  std::string str("rttr invoke : ");
+  str = str + std::runtime_error::what();
+  return str.c_str();
+}
+
 DOODLE_NAMESPACE_E

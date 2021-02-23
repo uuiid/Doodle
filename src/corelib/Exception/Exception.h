@@ -39,11 +39,29 @@ class CORE_API find_error_info : public std::runtime_error {
   find_error_info(const std::string &err) : std::runtime_error(err){};
   virtual const char *what() const noexcept override;
 };
+
 // 空指针错误
 class CORE_API nullptr_error : public std::runtime_error {
  public:
   nullptr_error(const std::string &err) : std::runtime_error(err){};
   virtual const char *what() const noexcept override;
 };
+//-------------------------rttr 反射没有类型错误---------------
+class CORE_API rttr_error : public std::runtime_error {
+ public:
+  rttr_error(const std::string &err) : std::runtime_error(err){};
+  virtual const char *what() const noexcept override;
+};
 
+class CORE_API rttr_not_class : public rttr_error {
+ public:
+  rttr_not_class(const std::string &err) : rttr_error(err){};
+  virtual const char *what() const noexcept override;
+};
+
+class CORE_API rttr_method_invoke_class : public rttr_error {
+ public:
+  rttr_method_invoke_class(const std::string &err) : rttr_error(err){};
+  virtual const char *what() const noexcept override;
+};
 DOODLE_NAMESPACE_E

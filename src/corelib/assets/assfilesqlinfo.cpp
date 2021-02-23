@@ -38,9 +38,7 @@ assFileSqlInfo::assFileSqlInfo()
       std::enable_shared_from_this<assFileSqlInfo>(),
       p_type_ptr_(),
       p_class_ptr_(),
-      p_dep_ptr_(),
-      ass_type_id(-1),
-      ass_class_id(-1) {
+      p_dep_ptr_() {
   p_instance.insert(this);
 }
 
@@ -48,26 +46,13 @@ assFileSqlInfo::~assFileSqlInfo() {
   p_instance.erase(this);
 }
 
-void assFileSqlInfo::select(qint64 &ID_) {
-}
-
-void assFileSqlInfo::insert() {
-}
-
-void assFileSqlInfo::updateSQL() {
-}
-
-void assFileSqlInfo::deleteSQL() {
-  fileSqlInfo::deleteSQL();
-}
-
 assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
 }
-dpath assFileSqlInfo::generatePath(const std::string &programFolder) {
+fileSys::path assFileSqlInfo::generatePath(const std::string &programFolder) {
   //  QString path("%1/%2/%3/%4/%5");
 
   //第一次 格式化添加根目录
-  dpath path = coreSet::getSet().getAssRoot();
+  fileSys::path path = "";  //coreSet::getSet().getAssRoot();
 
   //第二次添加类型
   auto dep = getAssDep();
@@ -96,14 +81,14 @@ dpath assFileSqlInfo::generatePath(const std::string &programFolder) {
   return path;
 }
 
-dpath assFileSqlInfo::generatePath(const dstring &programFolder,
-                                   const dstring &suffixes) {
+fileSys::path assFileSqlInfo::generatePath(const dstring &programFolder,
+                                           const dstring &suffixes) {
   return generatePath(programFolder) / generateFileName(suffixes);
 }
 
-dpath assFileSqlInfo::generatePath(const dstring &programFolder,
-                                   const dstring &suffixes,
-                                   const dstring &prefix) {
+fileSys::path assFileSqlInfo::generatePath(const dstring &programFolder,
+                                           const dstring &suffixes,
+                                           const dstring &prefix) {
   return generatePath(programFolder) / generateFileName(suffixes, prefix);
 }
 
@@ -148,33 +133,16 @@ const assClassPtr &assFileSqlInfo::getAssClass() { return p_class_ptr_; }
 void assFileSqlInfo::setAssClass(const assClassPtr &class_ptr) {
   if (!class_ptr) return;
   p_class_ptr_ = class_ptr;
-  ass_class_id = class_ptr->getIdP();
 
   setAssDep(class_ptr->getAssDep());
 }
 
 const assTypePtr &assFileSqlInfo::getAssType() {
-  if (!p_type_ptr_) {
-    for (const auto &item : assType::Instances()) {
-      if (item->getIdP() == ass_type_id) {
-        p_type_ptr_ = item->shared_from_this();
-        break;
-      }
-    }
-  }
-  return p_type_ptr_;
 }
 
 void assFileSqlInfo::setAssType() {
-  for (const auto &item : assType::Instances()) {
-    if (item->getIdP() == idP) {
-      p_type_ptr_ = item->shared_from_this();
-      break;
-    }
-  }
 }
 void assFileSqlInfo::setAssType(const assTypePtr &type_ptr) {
-  ass_type_id = type_ptr->getIdP();
   p_type_ptr_ = type_ptr;
 
   versionP = getMaxVecsion() + 1;
@@ -185,10 +153,7 @@ dataInfoPtr assFileSqlInfo::findSimilar() {
       std::find_if(
           p_instance.begin(), p_instance.end(),
           [=](const assFileSqlInfo *part) -> bool {
-            return part->p_dep_ptr_ == p_dep_ptr_ &&
-                   part->ass_class_id == ass_class_id &&
-                   part->ass_type_id == ass_type_id &&
-                   part->idP > 0;
+            return part->p_dep_ptr_ == p_dep_ptr_;
           });
   if (it != p_instance.end()) {
     (*it)->fileP         = fileP;
@@ -231,7 +196,7 @@ bool assFileSqlInfo::sortType(const assInfoPtr &t1, const assInfoPtr &t2) {
 }
 int assFileSqlInfo::getMaxVecsion() {
   for (const auto &info_l : p_instance) {
-    if (getAssType() == info_l->getAssType() && info_l->idP > 0)
+    if (getAssType() == info_l->getAssType())
       return info_l->versionP;
   }
   return 0;

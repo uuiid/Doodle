@@ -12,7 +12,7 @@
 DOODLE_NAMESPACE_S
 CommentInfo::CommentInfo(fileSqlInfo *file)
     : p_file_Archive(file),
-      p_path(std::make_shared<dpath>()),
+      p_path(std::make_shared<fileSys::path>()),
       p_info_list() {
 }
 
@@ -27,7 +27,7 @@ std::vector<std::string> CommentInfo::Info(const std::string &pathStr) {
    */
   if (pathStr.empty()) return {};
 
-  dpath path{pathStr};
+  fileSys::path path{pathStr};
   auto &fileSys = DfileSyntem::get();
 
   if (fileSys.exists(path) && path.extension() == ".json") {  //传入路径的情况

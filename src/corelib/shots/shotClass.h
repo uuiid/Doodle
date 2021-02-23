@@ -33,10 +33,6 @@ class CORE_API shotClass : public CoreData,
     paint     = 8,
   };
 
-  void insert() override;
-  void updateSQL() override;
-  void deleteSQL() override;
-
   static shotClassPtrList getAll();
   static shotClassPtr getCurrentClass();
 
