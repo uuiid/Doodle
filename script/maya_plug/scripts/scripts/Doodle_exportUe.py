@@ -149,6 +149,10 @@ class exportUe:
         chan_butten.setText("changAnHuanJie")
         box.addButton(chan_butten, QtWidgets.QMessageBox.AcceptRole)
 
+        kuang_butten = QtWidgets.QPushButton()
+        kuang_butten.setText("kuangShengMoZhun")
+        box.addButton(kuang_butten, QtWidgets.QMessageBox.AcceptRole)
+
         user = QtWidgets.QPushButton()
         user.setText("custom")
         box.addButton(user, QtWidgets.QMessageBox.AcceptRole)
@@ -165,6 +169,10 @@ class exportUe:
             elif box.clickedButton() == chan_butten:
                 self.root = "X:"
                 break
+            elif box.clickedButton() == kuang_butten:
+                self.root = "T:"
+                break
+
             elif box.clickedButton() == user:
                 self.root = QtWidgets.QFileDialog().getExistingDirectory()
                 break
