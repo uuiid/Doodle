@@ -19,9 +19,7 @@ class CORE_API ffmpegWrap : public boost::noncopyable_::noncopyable {
  public:
   explicit ffmpegWrap();
 
-  bool imageToVideo(const std::vector<QString> &image_path,
-                    const QString &videoPath,
-                    const QString &subtitles) const;
+
   bool imageToVideo(const dpathList &image_path,
                     const fileSys::path &videoPath,
                     const std::string &subtitles) const;

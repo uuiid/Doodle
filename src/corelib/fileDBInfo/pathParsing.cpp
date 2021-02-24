@@ -72,7 +72,7 @@ dpathList pathParsing::Path() const {
   return p_path_list;
 }
 
-void pathParsing::setPath(const fileSys::pathList& path) {
+void pathParsing::setPath(const dpathList& path) {
   p_path_list = path;
 }
 

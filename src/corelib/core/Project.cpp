@@ -1,5 +1,6 @@
 #include <corelib/core/Project.h>
 #include <corelib/core/PathParser.h>
+
 namespace doodle {
 Project::Project(fileSys::path path)
     : p_root(),
@@ -23,6 +24,14 @@ const std::string& Project::Name() const noexcept {
 
 void Project::setName(const std::string& Name) noexcept {
   p_name = Name;
+}
+
+const fileSys::path& Project::Root() const noexcept {
+  return p_root;
+}
+
+void Project::setRoot(const fileSys::path& Root) noexcept {
+  p_root = Root;
 }
 
 }  // namespace doodle

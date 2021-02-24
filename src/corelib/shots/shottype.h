@@ -20,16 +20,15 @@ class CORE_API shotType : public CoreData,
  public:
   shotType();
   ~shotType();
-  void select(const qint64 &ID_);
 
   //根据fileclass外键查询filetype
   static shotTypePtrList getAll();
 
+  bool setInfo(const std::string &value) override;
+
   void setType(const dstring &value);
-  void setType(const QString &value);
   //获得本身的字符串属性
   dstring getType() const;
-  QString getTypeQ() const;
   //获得外键连接的实体对象 shotclass
   shotClassPtr getFileClass();
 
@@ -44,9 +43,6 @@ class CORE_API shotType : public CoreData,
   static boost::signals2::signal<void(const shotTypePtr &)> insertChanged;
 
  private:
-  template <typename T>
-  void batchSetAttr(T &row);
-
   //设置和连接外键 shotclass
   void setShotClass(const shotClassPtr &fileclass_);
 
@@ -62,10 +58,4 @@ class CORE_API shotType : public CoreData,
   DOODLE_INSRANCE(shotType);
 };
 
-inline void shotType::setType(const QString &value) {
-  setType(value.toStdString());
-}
-inline QString shotType::getTypeQ() const {
-  return QString::fromStdString(getType());
-}
 DOODLE_NAMESPACE_E

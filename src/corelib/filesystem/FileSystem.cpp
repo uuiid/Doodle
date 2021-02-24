@@ -13,6 +13,7 @@
 #include <corelib/threadPool/ThreadPool.h>
 #include <corelib/Exception/Exception.h>
 #include <corelib/core/coreset.h>
+#include <corelib/core/Project.h>
 #include <magic_enum.hpp>
 
 #include <boost/asio.hpp>
@@ -96,13 +97,13 @@ bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
 
   if (fileSys::is_directory(option->locaPath())) {
     auto dregex      = std::regex(option->locaPath().generic_string());
-    auto backup_path = set.getPrjectRoot() /
+    auto backup_path = set.getProject()->Root() /
                        option->remotePath().parent_path() /
                        "backup" /
                        time_str;
     //测试是否具有备份路径
     if (option->hasBackup())
-      backup_path = set.getPrjectRoot() / option->backupPath() / time_str;
+      backup_path = set.getProject()->Root() / option->backupPath() / time_str;
 
     for (auto &&item : fileSys::recursive_directory_iterator(option->locaPath())) {
       auto targetPath = std::regex_replace(
@@ -119,7 +120,7 @@ bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
             k_exclude |= std::regex_search(targetPath, *item);
           }
           if (!k_exclude) {
-            auto path            = set.getPrjectRoot() / option->remotePath() / targetPath;
+            auto path            = set.getProject()->Root() / option->remotePath() / targetPath;
             auto tmp_backup_path = backup_path / targetPath;
 
             result.emplace_back(
@@ -145,13 +146,13 @@ bool DfileSyntem::upload(const std::shared_ptr<fileDowUpdateOptions> &option) {
     }
     return true;
   } else {
-    auto backup_path = set.getPrjectRoot() /
+    auto backup_path = set.getProject()->Root() /
                        option->remotePath().parent_path() /
                        "backup" /
                        time_str /
                        option->remotePath().filename();
     FileSystem::Path p_loca_tmp{option->locaPath().generic_string()};
-    FileSystem::Path p_remo_tmp{(set.getPrjectRoot() / option->remotePath()).generic_string()};
+    FileSystem::Path p_remo_tmp{(set.getProject()->Root() / option->remotePath()).generic_string()};
     if (p_remo_tmp.exists())
       p_remo_tmp.copy({backup_path.generic_string()});
     p_loca_tmp.copy(p_remo_tmp);
@@ -173,7 +174,7 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
   auto time         = std::chrono::system_clock::now();
   auto time_str     = date::format("%Y_%m_%d_%H_%M_%S", time);
   auto &set         = coreSet::getSet();
-  auto k_remotePath = set.getPrjectRoot() / option->remotePath();
+  auto k_remotePath = set.getProject()->Root() / option->remotePath();
 
   std::vector<std::future<bool>> result;
   auto serverPath = std::make_shared<FileSystem::Path>(k_remotePath.generic_string());
@@ -185,7 +186,7 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
   auto dregex      = std::regex(k_remotePath.generic_string());
   auto backup_path = k_remotePath.parent_path() / "backup" / time_str;
   if (option->hasBackup())
-    backup_path = set.getPrjectRoot() / option->backupPath() / time_str;
+    backup_path = set.getProject()->Root() / option->backupPath() / time_str;
 
   auto list = pathQueue.front()->list();
   for (auto &&item : list) {
@@ -250,13 +251,13 @@ bool DfileSyntem::down(const std::shared_ptr<fileDowUpdateOptions> &option) {
 bool DfileSyntem::exists(const fileSys::path &remoteFile) {
   auto &set = coreSet::getSet();
 
-  auto result = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
+  auto result = FileSystem::Path{(set.getProject()->Root() / remoteFile).generic_string()};
   return result.exists();
 }
 
 bool DfileSyntem::createDir(const fileSys::path &remoteFile) {
   auto &set   = coreSet::getSet();
-  auto result = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
+  auto result = FileSystem::Path{(set.getProject()->Root() / remoteFile).generic_string()};
   result.create();
   return true;
 }
@@ -282,7 +283,7 @@ bool DfileSyntem::createDir(const std::vector<fileSys::path> &paths) {
 
 std::shared_ptr<std::string> DfileSyntem::readFileToString(const fileSys::path &remoteFile) {
   auto &set   = coreSet::getSet();
-  auto path   = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
+  auto path   = FileSystem::Path{(set.getProject()->Root() / remoteFile).generic_string()};
   auto result = path.open(std::ios_base::in);
   std::stringstream k_stringstream;
   k_stringstream << result->rdbuf();
@@ -293,7 +294,7 @@ std::shared_ptr<std::string> DfileSyntem::readFileToString(const fileSys::path &
 bool DfileSyntem::writeFile(const fileSys::path &remoteFile, const std::shared_ptr<std::string> &data) {
   auto &set = coreSet::getSet();
 
-  auto path   = FileSystem::Path{(set.getPrjectRoot() / remoteFile).generic_string()};
+  auto path   = FileSystem::Path{(set.getProject()->Root() / remoteFile).generic_string()};
   auto result = path.open(std::ios_base::out | std::ios::binary);
   result->write(data->data(), data->size());
   return true;
@@ -302,11 +303,11 @@ bool DfileSyntem::writeFile(const fileSys::path &remoteFile, const std::shared_p
 bool DfileSyntem::copy(const fileSys::path &sourePath, const fileSys::path &trange_path) {
   auto &set = coreSet::getSet();
 
-  auto path = FileSystem::Path{(set.getPrjectRoot() / sourePath).generic_string()};
+  auto path = FileSystem::Path{(set.getProject()->Root() / sourePath).generic_string()};
   if (path.isDirectory()) {
-    localCopy(set.getPrjectRoot() / sourePath, set.getPrjectRoot() / trange_path, false);
+    localCopy(set.getProject()->Root() / sourePath, set.getProject()->Root() / trange_path, false);
   } else
-    path.copy({(set.getPrjectRoot() / trange_path).generic_string()});
+    path.copy({(set.getProject()->Root() / trange_path).generic_string()});
   return true;
 }
 

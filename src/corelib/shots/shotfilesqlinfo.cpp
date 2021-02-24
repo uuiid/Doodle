@@ -47,55 +47,27 @@ shotFileSqlInfo::shotFileSqlInfo()
 shotFileSqlInfo::~shotFileSqlInfo() {
   p_instance.erase(this);
 }
-void shotFileSqlInfo::select(const qint64& ID_) {
-}
 
-void shotFileSqlInfo::insert() {
-}
-
-void shotFileSqlInfo::updateSQL() {
-}
-
-template <typename T>
-void shotFileSqlInfo::batchSetAttr(T& row) {
-  idP           = row.id;
-  fileP         = row.file;
-  fileSuffixesP = row.fileSuffixes;
-  userP         = row.user;
-  versionP      = row.version;
-  fileStateP    = row.filestate;
-
-  p_parser_info->Info(row.infor);
-  p_parser_path->Path(row.FilePath_);
-
-  if (row.shotsId._is_valid) p_shot_id = row.shotsId;
-
-  if (row.shotClassId._is_valid) {
-    p_shCla_id = row.shotClassId;
-    getShotType();
-  }
-  if (row.shotTypeId._is_valid) p_shTy_id = row.shotTypeId;
+bool shotFileSqlInfo::setInfo(const std::string& value) {
+  return true;
 }
 
 shotInfoPtrList shotFileSqlInfo::getAll(const episodesPtr& EP_) {
+  return {};
 }
 
 shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& sh_) {
+  return {};
 }
 
 shotInfoPtrList shotFileSqlInfo::getAll(const shotPtr& shot_ptr,
                                         const shotTypePtr& type_ptr) {
-}
-
-shotInfoPtrList shotFileSqlInfo::getAll(const shotClassPtr& class_ptr) {
-}
-
-shotInfoPtrList shotFileSqlInfo::getAll(const shotTypePtr& type_ptr) {
+  return {};
 }
 
 fileSys::path shotFileSqlInfo::generatePath(const dstring& programFolder) {
   //第一次格式化添加根路径
-  fileSys::path path = coreSet::getSet().getShotRoot();
+  fileSys::path path = {};  //coreSet::getSet().getShotRoot();
 
   //第二次格式化添加集数字符串
   path = path / getEpisdes()->getEpisdes_str();
@@ -173,112 +145,44 @@ dstring shotFileSqlInfo::generateFileName(const dstring& suffixes,
 }
 
 dataInfoPtr shotFileSqlInfo::findSimilar() {
-  auto it =
-      std::find_if(
-          p_instance.begin(), p_instance.end(),
-          [=](shotFileSqlInfo* info) -> bool {
-            if (info)
-              return info->p_eps_id == p_eps_id &&
-                     info->p_shot_id == std::max(p_shot_id, (qint64)0) &&
-                     info->p_shTy_id == std::max(p_shTy_id, (qint64)0) &&
-                     info->p_shCla_id == std::max(p_shCla_id, (qint64)0) &&
-                     info->idP > 0;
-            else
-              return false;
-          });
-
-  if (it != p_instance.end()) {
-    (*it)->fileP         = fileP;
-    (*it)->fileStateP    = fileStateP;
-    (*it)->fileSuffixesP = fileSuffixesP;
-    (*it)->versionP      = versionP;
-    (*it)->userP         = userP;
-    (*it)->p_parser_info = p_parser_info;
-    (*it)->p_parser_path = p_parser_path;
-
-    p_parser_info->setFileSql(*it);
-    p_parser_path->setFileSql(*it);
-
-    return (*it)->shared_from_this();
-  } else {
-    return shared_from_this();
-  }
+  return {};
 }
 
 episodesPtr shotFileSqlInfo::getEpisdes() {
   if (p_ptr_eps) {
     return p_ptr_eps;
-  } else if (p_eps_id >= 0) {
-    auto epi = episodes::Instances();
-
-    auto eps_iter =
-        std::find_if(epi.begin(), epi.end(),
-                     [=](episodes* ptr) -> bool { return ptr->getIdP() == p_eps_id; });
-    if (eps_iter != epi.end()) {
-      p_ptr_eps = (*eps_iter)->shared_from_this();
-
-    } else {
-      throw nullptr_error(std::string("shotfileInfo id : ")
-                              .append(std::to_string(getIdP()))
-                              .append("  ")
-                              .append(getUser()));
-    }
-
-    this->setEpisdes(p_ptr_eps);
-    return p_ptr_eps;
+  } else {
+    throw nullptr_error("");
   }
-  return nullptr;
 }
 
 void shotFileSqlInfo::setEpisdes(const episodesPtr& eps_) {
   if (!eps_) return;
 
   p_ptr_eps = eps_;
-  p_eps_id  = eps_->getIdP();
 }
 
 shotPtr shotFileSqlInfo::getShot() {
-  if (p_ptr_shot != nullptr) {
-    return p_ptr_shot;
-  } else if (p_shot_id >= 0) {
-    shotPtr p_ = std::make_shared<shot>();
-    p_->select(p_shot_id);
-    p_ptr_shot = p_;
-    return p_;
-  }
-  return nullptr;
+  if (!p_ptr_shot) throw nullptr_error("");
+  return p_ptr_shot;
 }
 
 void shotFileSqlInfo::setShot(const shotPtr& shot_) {
   if (!shot_) return;
   p_ptr_shot = shot_;
-  p_shot_id  = shot_->getIdP();
 
   setEpisdes(shot_->getEpisodes());
 }
 
 shotClassPtr shotFileSqlInfo::getShotclass() {
-  if (p_ptr_shcla)
-    return p_ptr_shcla;
-  else if (p_shCla_id >= 0) {
-    auto& k_instance = shotClass::Instances();
-    auto it          = std::find_if(k_instance.begin(), k_instance.end(),
-                           [=](shotClass* item) -> bool {
-                             return item->getIdP() == p_shCla_id;
-                           });
-    if (it != k_instance.end()) {
-      p_ptr_shcla = (*it)->shared_from_this();
-    }
-    return p_ptr_shcla;
-  }
-  return nullptr;
+  if (!p_ptr_shcla) throw nullptr_error("");
+  return p_ptr_shcla;
 }
 
 void shotFileSqlInfo::setShotClass() {
   try {
     auto value = shotClass::getCurrentClass();
     if (!value) return;
-    p_shCla_id  = value->getIdP();
     p_ptr_shcla = value;
   } catch (const std::runtime_error& err) {
     DOODLE_LOG_WARN(err.what());
@@ -286,22 +190,11 @@ void shotFileSqlInfo::setShotClass() {
 }
 
 shotTypePtr shotFileSqlInfo::getShotType() {
-  if (p_ptr_shTy)
-    return p_ptr_shTy;
-  else if (p_shTy_id > 0) {
-    for (const auto& item : shotType::Instances()) {
-      if (item->getIdP() == p_shTy_id) {
-        p_ptr_shTy = item->shared_from_this();
-        break;
-      }
-    }
-    return p_ptr_shTy;
-  }
-  return nullptr;
+  if (!p_ptr_shTy) throw nullptr_error("");
+  return p_ptr_shTy;
 }
 void shotFileSqlInfo::setShotType(const shotTypePtr& fileType_) {
   if (!fileType_) return;
-  p_shTy_id  = fileType_->getIdP();
   p_ptr_shTy = fileType_;
 
   versionP = getVersionMax() + 1;
@@ -324,8 +217,7 @@ int shotFileSqlInfo::getVersionMax() {
     if (info_l != nullptr)
       try {
         if ((getShotType() == info_l->getShotType()) &&
-            (info_l->getShotclass() == shotClass::getCurrentClass()) &&
-            info_l->idP > 0)
+            (info_l->getShotclass() == shotClass::getCurrentClass()))
           return info_l->versionP;
       } catch (const std::runtime_error& e) {
         return 0;

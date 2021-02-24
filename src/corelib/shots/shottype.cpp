@@ -2,17 +2,12 @@
 
 #include <loggerlib/Logger.h>
 
-#include <sqlpp11/mysql/mysql.h>
-#include <sqlpp11/sqlpp11.h>
-
 #include <corelib/core/coreset.h>
 #include <corelib/core/coresql.h>
 #include <corelib/shots/episodes.h>
 #include <corelib/shots/shot.h>
 #include <corelib/shots/shotClass.h>
-
-#include <iostream>
-#include <memory>
+#include <corelib/Exception/Exception.h>
 
 //反射使用
 #include <rttr/registration>
@@ -28,7 +23,6 @@ boost::signals2::signal<void(const shotTypePtr &)> shotType::insertChanged{};
 shotType::shotType()
     : CoreData(),
       std::enable_shared_from_this<shotType>(),
-      p_shotClass_id(-1),
       p_Str_Type(),
       p_class_ptr_() {
   p_instance.insert(this);
@@ -37,26 +31,9 @@ shotType::shotType()
 shotType::~shotType() {
   p_instance.erase(this);
 }
-void shotType::select(const qint64 &ID_) {
-}
-
-void shotType::insert() {
-}
-
-void shotType::updateSQL() {
-}
-
-void shotType::deleteSQL() {
-}
-
-template <typename T>
-void shotType::batchSetAttr(T &row) {
-  idP            = row.id;
-  p_Str_Type     = row.shotType;
-  p_shotClass_id = row.shotClassId;
-}
 
 shotTypePtrList shotType::getAll() {
+  return {};
 }
 
 void shotType::setType(const dstring &value) { p_Str_Type = value; }
@@ -65,24 +42,14 @@ dstring shotType::getType() const { return p_Str_Type; }
 
 void shotType::setShotClass(const shotClassPtr &fileclass_) {
   if (!fileclass_) return;
-  p_shotClass_id = fileclass_->getIdP();
-  p_class_ptr_   = fileclass_;
+  p_class_ptr_ = fileclass_;
 }
 
 shotClassPtr shotType::getFileClass() {
   if (p_class_ptr_)
     return p_class_ptr_;
-  else if (p_shotClass_id > 0) {
-    for (auto &i : shotClass::Instances()) {
-      if (i->getIdP() == p_shotClass_id) {
-        p_class_ptr_ = i->shared_from_this();
-        break;
-      }
-    }
-    return p_class_ptr_;
-  } else {
-    return nullptr;
-  }
+  else
+    throw nullptr_error("shotClassPtr err");
 }
 
 shotTypePtr shotType::findShotType(const std::string &type_name) {
@@ -96,7 +63,11 @@ shotTypePtr shotType::findShotType(const std::string &type_name) {
       break;
     }
   }
+
   return ptr;
+}
+bool shotType::setInfo(const std::string &value) {
+  return true;
 }
 
 shotTypePtr shotType::findShotType(const std::string &type_nmae,
@@ -106,7 +77,6 @@ shotTypePtr shotType::findShotType(const std::string &type_nmae,
     ptr = std::make_shared<shotType>();
     ptr->setType(type_nmae);
     ptr->setShotClass(shotClass::getCurrentClass());
-    ptr->insert();
   }
   return ptr;
 }

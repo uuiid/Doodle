@@ -49,15 +49,6 @@ bool ffmpegWrap::imageToVideo(const dpathList &image_path,
   return boost::filesystem::exists(videoPath);
 }
 
-bool ffmpegWrap::imageToVideo(const std::vector<QString> &image_path,
-                              const QString &videoPath,
-                              const QString &subtitles) const {
-  std::vector<fileSys::path> k_image_path;
-  k_image_path.clear();
-  for (auto &&x : image_path) k_image_path.emplace_back(x.toStdString());
-  return imageToVideo(k_image_path, videoPath.toStdString(),
-                      subtitles.toStdString());
-}
 bool ffmpegWrap::convertToVideo(const fileSys::path &in_videoPath,
                                 const fileSys::path &out_videoPath,
                                 const std::string &subtitles) const {

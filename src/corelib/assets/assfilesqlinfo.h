@@ -55,8 +55,6 @@ class CORE_API assFileSqlInfo
 
  private:
   void setAssType();
-  template <typename T>
-  void batchSetAttr(const T &row);
   int getMaxVecsion();
 
  private:

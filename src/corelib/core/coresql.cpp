@@ -33,7 +33,7 @@ void coreSql::initDB() {
 }
 
 mysqlConnPtr coreSql::getConnection() {
-  return std::make_unique<sqlpp::sqlite3::connection>(config);
+  return std::make_unique<sqlpp::sqlite3::connection>(*config);
 }
 void coreSql::initDB(const dstring &path) {
   p_path = path + "/config/doodleConfig.db";

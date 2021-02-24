@@ -37,10 +37,6 @@ void ScreenshotArchive::insertDB() {
   if (p_info_ptr_->getInfoP().empty()) {
     p_info_ptr_->setInfoP("截图文件");
   }
-  if (p_info_ptr_->isInsert())
-    p_info_ptr_->updateSQL();
-  else
-    p_info_ptr_->insert();
 }
 
 void ScreenshotArchive::imp_generateFilePath() {

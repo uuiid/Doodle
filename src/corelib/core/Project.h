@@ -9,7 +9,7 @@ namespace pathParser {
 class PathParser;
 }
 
-class Project {
+class CORE_API Project {
  private:
   fileSys::path p_root;
   std::string p_name;
@@ -24,6 +24,8 @@ class Project {
   const std::string& Name() const noexcept;
   void setName(const std::string& Name) noexcept;
 
+  const fileSys::path& Root() const noexcept;
+  void setRoot(const fileSys::path& Root) noexcept;
 };
 
 }  // namespace doodle

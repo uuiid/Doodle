@@ -21,10 +21,8 @@ class CORE_API shotFileSqlInfo
  public:
   shotFileSqlInfo();
   ~shotFileSqlInfo();
-  void select(const int64_t &ID_);
 
-  void insert() override;
-  void updateSQL() override;
+  bool setInfo(const std::string &value) override;
 
   static shotInfoPtrList getAll(const shotPtr &sh_);
   static shotInfoPtrList getAll(const shotPtr &shot_ptr,
@@ -58,19 +56,15 @@ class CORE_API shotFileSqlInfo
   static boost::signals2::signal<void()> updateChanged;
 
  private:
-  static shotInfoPtrList getAll(const shotClassPtr &class_ptr);
-  static shotInfoPtrList getAll(const shotTypePtr &type_ptr);
+
   void setShotClass();
   int getVersionMax();
-  //循环获得查询结果
-  template <typename T>
-  void batchSetAttr(T &row);
 
  private:
-  qint64 p_eps_id;
-  qint64 p_shot_id;
-  qint64 p_shCla_id;
-  qint64 p_shTy_id;
+  int64_t p_eps_id;
+  int64_t p_shot_id;
+  int64_t p_shCla_id;
+  int64_t p_shTy_id;
 
   episodesPtr p_ptr_eps;
   shotPtr p_ptr_shot;

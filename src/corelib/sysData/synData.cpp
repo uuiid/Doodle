@@ -7,10 +7,9 @@
  * @FilePath: \Doodle\core\src\synData.cpp
  */
 #include <loggerlib/Logger.h>
-#include <sqlpp11/mysql/mysql.h>
+#include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 #include <corelib/assets/assClass.h>
-#include <corelib/coreOrm/synfile_sqlOrm.h>
 #include <corelib/core/coreset.h>
 #include <corelib/core/coresql.h>
 #include <corelib/shots/episodes.h>
@@ -30,54 +29,7 @@ RTTR_REGISTRATION {
 }
 
 synData::synData() : CoreData(), p_path(), p_episodes_() {}
-void synData::insert() {
-  if (isInsert()) return;
 
-  doodle::Synfile tab{};
-  auto db = coreSql::getCoreSql().getConnection();
-
-  idP = db->insert(sqlpp::insert_into(tab).set(
-      tab.path = toString(), tab.episodesId = p_episodes_->getIdP(),
-      tab.projectId = coreSet::getSet().projectName().first));
-  if (idP == 0) {
-    DOODLE_LOG_INFO("not install");
-    throw std::runtime_error("not install");
-  }
-}
-synDataPtr synData::getAll(const episodesPtr &episodes) {
-  if (!episodes) return nullptr;
-
-  doodle::Synfile tab{};
-  auto db  = coreSql::getCoreSql().getConnection();
-  auto ptr = std::make_shared<synData>();
-
-  for (const auto &row :
-       db->run(sqlpp::select(sqlpp::all_of(tab))
-                   .from(tab)
-                   .where(tab.episodesId == episodes->getIdP()))) {
-    ptr->idP = row.id;
-    ptr->setSynPath(row.path);
-    ptr->setEpisodes(episodes::find_by_id(row.episodesId));
-  }
-
-  return ptr;
-}
-void synData::updateSQL() {
-  if (isNULL()) return;
-
-  doodle::Synfile tab{};
-  auto db = coreSql::getCoreSql().getConnection();
-
-  db->update(
-      sqlpp::update(tab).set(tab.path = toString()).where(tab.id == idP));
-}
-void synData::deleteSQL() {
-  if (isNULL()) return;
-  doodle::Synfile tab{};
-  auto db = coreSql::getCoreSql().getConnection();
-
-  db->remove(sqlpp::remove_from(tab).where(tab.id == idP));
-}
 dpathPtr synData::push_back(const assClassPtr &ass_class_ptr) {
   auto data = synPath_struct{};
   data.server =
@@ -94,55 +46,57 @@ dpathPtr synData::push_back(const assClassPtr &ass_class_ptr) {
 }
 
 synPathListPtr synData::getSynDir(bool abspath) {
-  auto &set = coreSet::getSet();
-  synPathListPtr parts{};
-  if (abspath) {
-    for (auto &item : p_path) {
-      auto k_path  = synPath_struct();
-      k_path.local = set.getSynPathLocale() / set.projectName().second /
-                     item.local / DOODLE_CONTENT / "shot";
-      k_path.server = set.getAssRoot() / set.getDepartment() / item.server /
-                      DOODLE_CONTENT / "shot";
-      parts.push_back(k_path);
-    }
-    return parts;
-  } else {
-    for (auto &item : p_path) {
-      auto k_path   = synPath_struct();
-      k_path.local  = item.local / DOODLE_CONTENT / "shot";
-      k_path.server = item.server / DOODLE_CONTENT / "shot";
-      parts.push_back(k_path);
-    }
-    return parts;
-  }
+  //   auto &set = coreSet::getSet();
+  //   synPathListPtr parts{};
+  //   if (abspath) {
+  //     for (auto &item : p_path) {
+  //       auto k_path  = synPath_struct();
+  //       k_path.local = set.getSynPathLocale() / set.projectName().second /
+  //                      item.local / DOODLE_CONTENT / "shot";
+  //       k_path.server = set.getAssRoot() / set.getDepartment() / item.server /
+  //                       DOODLE_CONTENT / "shot";
+  //       parts.push_back(k_path);
+  //     }
+  //     return parts;
+  //   } else {
+  //     for (auto &item : p_path) {
+  //       auto k_path   = synPath_struct();
+  //       k_path.local  = item.local / DOODLE_CONTENT / "shot";
+  //       k_path.server = item.server / DOODLE_CONTENT / "shot";
+  //       parts.push_back(k_path);
+  //     }
+  //     return parts;
+  //   }
 
-  return p_path;
+  //   return p_path;
+  return {};
 }
 
 episodesPtr synData::getEpisodes() { return p_episodes_; }
 
 void synData::setEpisodes(const episodesPtr &episodes_ptr) {
-  p_episodes_ = episodes_ptr;
+  // p_episodes_ = episodes_ptr;
 }
 std::string synData::toString() {
-  nlohmann::json root{};
-  for (const auto &path : p_path) {
-    root.push_back({{"Left", path.local.generic_string()},
-                    {"Right", path.server.generic_string()}});
-  }
-  return root.dump();
+  // nlohmann::json root{};
+  // for (const auto &path : p_path) {
+  //   root.push_back({{"Left", path.local.generic_string()},
+  //                   {"Right", path.server.generic_string()}});
+  // }
+  // return root.dump();
+  return {};
 }
 void synData::setSynPath(const std::string &json_str) {
-  try {
-    auto root = nlohmann::json::parse(json_str);
-    for (auto &item : root) {
-      synPath_struct data{};
-      data.server = item.value("Left", "");
-      data.local  = item.value("Right", "");
-      p_path.push_back(data);
-    }
-  } catch (nlohmann::json::parse_error &error) {
-    DOODLE_LOG_INFO("not json" << error.what());
-  }
+  // try {
+  //   auto root = nlohmann::json::parse(json_str);
+  //   for (auto &item : root) {
+  //     synPath_struct data{};
+  //     data.server = item.value("Left", "");
+  //     data.local  = item.value("Right", "");
+  //     p_path.push_back(data);
+  //   }
+  // } catch (nlohmann::json::parse_error &error) {
+  //   DOODLE_LOG_INFO("not json" << error.what());
+  // }
 }
 DOODLE_NAMESPACE_E

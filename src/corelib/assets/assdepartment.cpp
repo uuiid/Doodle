@@ -14,13 +14,6 @@
 #include <corelib/core/coreset.h>
 #include <corelib/core/coresql.h>
 
-#include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/mysql/mysql.h>
-
-#include <stdexcept>
-#include <memory>
-#include <QString>
-
 //反射使用
 #include <rttr/registration>
 DOODLE_NAMESPACE_S
@@ -43,6 +36,11 @@ assdepartment::~assdepartment() {
   p_instance.erase(this);
 }
 
+bool assdepartment::setInfo(const std::string &value) {
+  setAssDep(value);
+  return true;
+}
+
 const std::string &assdepartment::getAssDep() const {
   return s_assDep;
 }
@@ -50,6 +48,7 @@ void assdepartment::setAssDep(const std::string &s_ass_dep) {
   s_assDep = s_ass_dep;
 }
 assDepPtrList assdepartment::getAll() {
+  return {};
 }
 std::unordered_set<assdepartment *> assdepartment::Instances() {
   return p_instance;

@@ -18,7 +18,7 @@
 #include <loggerlib/Logger.h>
 
 #include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/mysql/mysql.h>
+#include <sqlpp11/sqlite3/sqlite3.h>
 
 #include <stdexcept>
 #include <magic_enum.hpp>
@@ -47,7 +47,12 @@ assType::~assType() {
   p_instance.erase(this);
 }
 
+bool assType::setInfo(const std::string &value) {
+  return true;
+}
+
 assTypePtrList assType::getAll() {
+  return {};
 }
 
 const std::string assType::getTypeS() const {

@@ -14,11 +14,6 @@
 
 #include <corelib/filesystem/FileSystem.h>
 
-//orm库
-#include <sqlpp11/mysql/mysql.h>
-#include <sqlpp11/sqlpp11.h>
-#include <corelib/coreOrm/basefile_sqlOrm.h>
-
 #include <boost/format.hpp>
 #include <nlohmann/json.hpp>
 #include <boost/filesystem.hpp>
@@ -52,7 +47,6 @@ RTTR_REGISTRATION {
       .method("generateFileName",
               rttr::select_overload<dstring(const std::string &,
                                             const std::string &)>(&fileSqlInfo::generateFileName))
-      .method("deleteSQL", &fileSqlInfo::deleteSQL)
       .method("exist", &fileSqlInfo::exist);
 }
 
@@ -111,22 +105,7 @@ void fileSqlInfo::setFileStateP(const dstring &value) { fileStateP = value; }
 
 dstring fileSqlInfo::getUser() const { return userP; }
 
-void fileSqlInfo::insert() {
-  exist(true);
-}
-
-void fileSqlInfo::updateSQL() {
-  exist(true);
-}
-
 dstring fileSqlInfo::getSuffixes() const { return fileSuffixesP; }
-
-void fileSqlInfo::deleteSQL() {
-  doodle::Basefile tab{};
-
-  auto db = coreSql::getCoreSql().getConnection();
-  db->remove(sqlpp::remove_from(tab).where(tab.id == idP));
-}
 
 bool fileSqlInfo::exist(bool refresh) {
   if (refresh) {

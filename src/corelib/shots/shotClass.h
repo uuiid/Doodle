@@ -19,7 +19,7 @@ class CORE_API shotClass : public CoreData,
  public:
   shotClass();
   ~shotClass();
-  void select(const qint64 &ID_);
+  void select(const int64_t &ID_);
 
   enum class e_fileclass {
     _         = 0,
@@ -32,16 +32,15 @@ class CORE_API shotClass : public CoreData,
     direct    = 7,
     paint     = 8,
   };
+  bool setInfo(const std::string &value) override;
 
   static shotClassPtrList getAll();
   static shotClassPtr getCurrentClass();
 
   [[nodiscard]] dstring getClass_str() const;
-  [[nodiscard]] QString getClass_Qstr() const;
   [[nodiscard]] e_fileclass getClass() const;
   void setclass(const e_fileclass &value);
   void setclass(const dstring &value);
-  void setclass(const QString &value);
 
   static const std::unordered_set<shotClass *> Instances();
 
@@ -50,18 +49,10 @@ class CORE_API shotClass : public CoreData,
   static boost::signals2::signal<void(const shotClassPtr &)> insertChanged;
 
  private:
-  template <typename T>
-  void batchSetAttr(T &row);
-
  private:
   e_fileclass p_fileclass;
   DOODLE_INSRANCE(shotClass);
   RTTR_ENABLE(CoreData)
 };
-inline QString shotClass::getClass_Qstr() const {
-  return QString::fromStdString(getClass_str());
-}
-inline void shotClass::setclass(const QString &value) {
-  setclass(value.toStdString());
-}
+
 DOODLE_NAMESPACE_E

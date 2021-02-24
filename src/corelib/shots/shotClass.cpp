@@ -6,9 +6,7 @@
 #include <corelib/shots/episodes.h>
 #include <corelib/shots/shot.h>
 
-#include <iostream>
 #include <magic_enum.hpp>
-#include <memory>
 
 //反射使用
 #include <rttr/registration>
@@ -33,24 +31,12 @@ shotClass::~shotClass() {
   p_instance.erase(this);
 }
 
-void shotClass::select(const qint64 &ID_) {
-}
-
-void shotClass::insert() {
-}
-
-void shotClass::updateSQL() {
-}
-
-void shotClass::deleteSQL() {
-}
-template <typename T>
-void shotClass::batchSetAttr(T &row) {
-  idP = row.id;
-  setclass(row.shotClass);
+bool shotClass::setInfo(const std::string &value) {
+  return true;
 }
 
 shotClassPtrList shotClass::getAll() {
+  return {};
 }
 
 shotClassPtr shotClass::getCurrentClass() {

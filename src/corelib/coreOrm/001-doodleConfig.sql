@@ -1,8 +1,8 @@
 create table doodleConfig
 (
 	id INTEGER not null,
-	localRoot TEXT not null,
-	projectName TEXT not null,
+	doodleKey TEXT not null,
+	doodleValue TEXT not null,
 	primary key (id)
 );
 

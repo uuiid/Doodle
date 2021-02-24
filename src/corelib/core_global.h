@@ -150,8 +150,12 @@ using dstring = std::string;
 
 using dstringList = std::vector<std::string>;
 
-using dpathPtr  = std::shared_ptr<fileSys::path>;
-using dpathList = std::vector<fileSys::path>;
+using dpathPtr     = std::shared_ptr<fileSys::path>;
+using dpathListPtr = std::vector<dpathPtr>;
+using dpathList    = std::vector<fileSys::path>;
+
+class Project;
+using projectPtr = std::shared_ptr<Project>;
 
 using dataInfoPtr = std::variant<
     episodesPtr,
@@ -165,7 +169,5 @@ using dataInfoPtr = std::variant<
     assTypePtr,
     znchNamePtr,
     assInfoPtr>;
-    
-DOODLE_NAMESPACE_E
 
-// Q_DECLARE_METATYPE( shotInfoPtr)
+DOODLE_NAMESPACE_E

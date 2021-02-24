@@ -21,7 +21,7 @@ QVariant assClassModel::data(const QModelIndex &index, int role) const {
   switch (role) {
     case Qt::EditRole:
     case Qt::DisplayRole:
-      var = DOTOS(p_ass_info_ptr_list_[index.row()]->getAssClass(true));
+      var = QString::fromStdString(p_ass_info_ptr_list_[index.row()]->getAssClass());
       break;
     case Qt::UserRole:
       var = QVariant::fromValue(p_ass_info_ptr_list_[index.row()].get());
@@ -45,7 +45,7 @@ bool assClassModel::setData(const QModelIndex &index, const QVariant &value,
   if (!index.isValid()) return false;
   bool is_has = false;
   for (auto &&item : p_ass_info_ptr_list_) {
-    if (value.toString().toStdString() == item->getAssClass(true) ||
+    if (value.toString().toStdString() == item->getAssClass() ||
         value.toString().toStdString() == item->getAssClass()) {
       is_has = true;
       break;
@@ -53,16 +53,11 @@ bool assClassModel::setData(const QModelIndex &index, const QVariant &value,
   }
   auto ass = p_ass_info_ptr_list_[index.row()];
   if (!is_has) {
-    if (ass->getAssClass(true) != value.toString().toStdString()) {
+    if (ass->getAssClass() != value.toString().toStdString()) {
       ass->setAssClass(value.toString().toStdString());
       ass->setAssDep(coreDataManager::get().getAssDepPtr());
 
-      if (ass->isInsert()) {
-        ass->updateSQL();
-      } else {
-        ass->insert();
-      }
-      dataChanged(index, index, {role});
+      Changed(index, index, {role});
       return true;
     }
   }
@@ -86,7 +81,6 @@ bool assClassModel::removeRows(int position, int rows,
   for (int row = 0; row < rows; ++row) {
     auto assClass = p_ass_info_ptr_list_[position];
     if (assClass) {
-      assClass->deleteSQL();
       p_ass_info_ptr_list_.erase(p_ass_info_ptr_list_.begin() + position);
     }
   }

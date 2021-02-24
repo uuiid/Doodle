@@ -8,7 +8,7 @@
 
 //设置导入
 #include <corelib/core/coreset.h>
-
+#include <corelib/core/Project.h>
 // ftp模块导入
 #include <corelib/filesystem/FileSystem.h>
 
@@ -150,7 +150,7 @@ void fileArchive::imp_updata(const dpathList &pathList) {
   const auto k_size = p_cacheFilePath.size();
   for (size_t i = 0; i < k_size; ++i) {
     updateChanged(boost::numeric_cast<int>(k_size) / 50);
-    if (p_cacheFilePath[i] != set.getPrjectRoot() / p_ServerPath[i]) {
+    if (p_cacheFilePath[i] != set.getProject()->Root() / p_ServerPath[i]) {
       if (!session.upload(p_cacheFilePath[i], p_ServerPath[i])) {
         p_state_ = state::fail;
         DOODLE_LOG_WARN("无法上传文件" << p_cacheFilePath[i].c_str());
@@ -181,7 +181,7 @@ void fileArchive::imp_down(const fileSys::path &localPath) {
 
 bool fileArchive::isServerzinsideDir(const fileSys::path &localPath) {
   auto &set        = coreSet::getSet();
-  auto projectRoot = set.getPrjectRoot();
+  auto projectRoot = set.getProject()->Root();
   if (projectRoot.has_root_name() && localPath.has_root_name()) {
     DOODLE_LOG_INFO("判断为服务器路径");
     return projectRoot.root_name() == localPath.root_name();

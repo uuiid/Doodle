@@ -2,8 +2,8 @@
 
 #include <corelib/assets/assType.h>
 #include <corelib/assets/assfilesqlinfo.h>
-
 #include <corelib/core/coreset.h>
+#include <corelib/core/Project.h>
 #include <corelib/fileDBInfo/filesqlinfo.h>
 #include <corelib/filesystem/FileSystem.h>
 #include <corelib/filesystem/fileSync.h>
@@ -20,11 +20,6 @@ void ueArchive::insertDB() {
   info->setAssType(assType::findType(assType::e_type::UE4, true));
   if (p_info_->getInfoP().empty())
     p_info_->setInfoP("ue场景文件");
-
-  if (p_info_->isInsert())
-    p_info_->updateSQL();
-  else
-    p_info_->insert();
 }
 
 void ueArchive::imp_generateFilePath() {
@@ -51,7 +46,7 @@ void ueArchive::imp_generateFilePath() {
 void ueArchive::imp_updata(const dpathList &pathList) {
   assert(p_ServerPath.size() == p_cacheFilePath.size());
   //这里先上传ue文件 比较一下是不是自定义路径如果是就直接算是上传完成
-  if (p_soureFile.front() == coreSet::getSet().getPrjectRoot() / p_ServerPath.front())
+  if (p_soureFile.front() == coreSet::getSet().getProject()->Root() / p_ServerPath.front())
     return;
   fileArchive::imp_updata({pathList.front()});
 

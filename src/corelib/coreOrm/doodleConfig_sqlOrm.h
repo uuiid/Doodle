@@ -26,34 +26,34 @@ namespace doodle
       };
       using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::require_insert>;
     };
-    struct LocalRoot
+    struct DoodleKey
     {
       struct _alias_t
       {
-        static constexpr const char _literal[] =  "localRoot";
+        static constexpr const char _literal[] =  "doodleKey";
         using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
         template<typename T>
         struct _member_t
           {
-            T localRoot;
-            T& operator()() { return localRoot; }
-            const T& operator()() const { return localRoot; }
+            T doodleKey;
+            T& operator()() { return doodleKey; }
+            const T& operator()() const { return doodleKey; }
           };
       };
       using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::require_insert>;
     };
-    struct ProjectName
+    struct DoodleValue
     {
       struct _alias_t
       {
-        static constexpr const char _literal[] =  "projectName";
+        static constexpr const char _literal[] =  "doodleValue";
         using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
         template<typename T>
         struct _member_t
           {
-            T projectName;
-            T& operator()() { return projectName; }
-            const T& operator()() const { return projectName; }
+            T doodleValue;
+            T& operator()() { return doodleValue; }
+            const T& operator()() const { return doodleValue; }
           };
       };
       using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::require_insert>;
@@ -62,8 +62,8 @@ namespace doodle
 
   struct DoodleConfig: sqlpp::table_t<DoodleConfig,
                DoodleConfig_::Id,
-               DoodleConfig_::LocalRoot,
-               DoodleConfig_::ProjectName>
+               DoodleConfig_::DoodleKey,
+               DoodleConfig_::DoodleValue>
   {
     struct _alias_t
     {

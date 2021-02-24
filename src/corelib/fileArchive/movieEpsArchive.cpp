@@ -27,10 +27,7 @@ void movieEpsArchive::insertDB() {
   if (p_info_ptr_->getInfoP().empty())
     p_info_ptr_->setInfoP("整集拍屏文件");
 
-  if (p_info_ptr_->isInsert())
-    p_info_ptr_->updateSQL();
-  else
-    p_info_ptr_->insert();
+ 
 }
 void movieEpsArchive::imp_generateFilePath() {
   if (!p_soureFile.empty()) {

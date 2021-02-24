@@ -166,10 +166,6 @@ void mayaArchiveShotFbx::insertDB() {
   if (p_info_ptr_->getInfoP().empty()) {
     p_info_ptr_->setInfoP("导出fbx文件");
   }
-  if (p_info_ptr_->isInsert())
-    p_info_ptr_->updateSQL();
-  else
-    p_info_ptr_->insert();
 }
 
 DOODLE_NAMESPACE_E

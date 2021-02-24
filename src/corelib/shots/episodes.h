@@ -21,13 +21,12 @@ class CORE_API episodes : public CoreData,
   explicit episodes();
   ~episodes();
 
-
-
   static episodesPtrList getAll();
+
+  bool setInfo(const std::string &value) override;
 
   int64_t getEpisdes() const;
   dstring getEpisdes_str() const;
-  QString getEpisdes_QStr() const;
   void setEpisdes(const int64_t &value);
   std::shared_ptr<ShotModifySQLDate> ShotModifySqlDate() const;
 
@@ -38,7 +37,7 @@ class CORE_API episodes : public CoreData,
 
  private:
   int64_t p_int_episodes;
-  int64_t p_prj;
+  projectPtr p_prj;
 
   std::shared_ptr<ShotModifySQLDate> p_shot_modify;
   DOODLE_INSRANCE(episodes);

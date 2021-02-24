@@ -1,11 +1,11 @@
 ﻿#pragma once
 
-#include "corelib/core_global.h"
+#include <corelib/core_global.h>
+#include <corelib/core/Project.h>
 #include <map>
 #include <boost/filesystem.hpp>
 
 DOODLE_NAMESPACE_S
-class Project;
 
 enum class Department {
   None_,

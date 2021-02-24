@@ -13,7 +13,7 @@
 #include <loggerlib/Logger.h>
 
 #include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/mysql/mysql.h>
+#include <sqlpp11/sqlite3/sqlite3.h>
 
 #include <iostream>
 #include <boost/format.hpp>
@@ -46,7 +46,12 @@ assFileSqlInfo::~assFileSqlInfo() {
   p_instance.erase(this);
 }
 
+bool assFileSqlInfo::setInfo(const std::string &value) {
+  return true;
+}
+
 assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
+  return {};
 }
 fileSys::path assFileSqlInfo::generatePath(const std::string &programFolder) {
   //  QString path("%1/%2/%3/%4/%5");
@@ -138,6 +143,7 @@ void assFileSqlInfo::setAssClass(const assClassPtr &class_ptr) {
 }
 
 const assTypePtr &assFileSqlInfo::getAssType() {
+  return p_type_ptr_;
 }
 
 void assFileSqlInfo::setAssType() {
@@ -170,21 +176,7 @@ dataInfoPtr assFileSqlInfo::findSimilar() {
   } else
     return shared_from_this();
 }
-template <typename T>
-void assFileSqlInfo::batchSetAttr(const T &row) {
-  idP           = row.id;
-  fileP         = row.file;
-  fileSuffixesP = row.fileSuffixes;
-  userP         = row.user;
-  versionP      = row.version;
-  fileStateP    = row.filestate;
 
-  p_parser_info->Info(row.infor);
-  p_parser_path->Path(row.FilePath_);
-
-  if (row.assClassId._is_valid) ass_class_id = row.assClassId;
-  if (row.assTypeId._is_valid) ass_type_id = row.assTypeId;
-}
 bool assFileSqlInfo::sortType(const assInfoPtr &t1, const assInfoPtr &t2) {
   auto t1_type = t1->getAssType();
   auto t2_type = t2->getAssType();

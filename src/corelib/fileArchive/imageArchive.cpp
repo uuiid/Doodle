@@ -34,11 +34,6 @@ void imageArchive::insertDB() {
   if (p_db_data->getInfoP().empty()) {
     p_db_data->setInfoP("图片文件");
   }
-  if (p_db_data->isInsert()) {
-    p_db_data->updateSQL();
-  } else {
-    p_db_data->insert();
-  }
 }
 
 void imageArchive::imp_generateFilePath() {

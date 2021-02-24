@@ -1,6 +1,6 @@
 ﻿#include "coreset.h"
 #include <corelib/core/coresql.h>
-
+#include <corelib/core/Project.h>
 #include <pinyinlib/convert.h>
 #include <loggerlib/Logger.h>
 
@@ -123,6 +123,10 @@ dstring coreSet::getDepartment() const {
 
 void coreSet::setDepartment(const dstring &value) {
   department = magic_enum::enum_cast<Department>(value).value_or(Department::VFX);
+}
+
+std::shared_ptr<Project> coreSet::getProject() {
+  return p_projects[""];
 }
 
 std::vector<std::string> coreSet::getAllProjectNames() {

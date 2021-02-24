@@ -47,7 +47,10 @@
 
         core/PathParser.h
         threadPool/ThreadPool.h
-
+        fileDBInfo/CommentInfo.h
+        fileDBInfo/filesqlinfo.h
+        fileDBInfo/pathParsing.h
+        fileDBInfo/ModifySQLDate.h
         )
 
 set(core_CPP
@@ -93,6 +96,11 @@ set(core_CPP
         
         sysData/synData.cpp
         core/PathParser.cpp
+        fileDBInfo/CommentInfo.cpp
+        fileDBInfo/filesqlinfo.cpp
+        fileDBInfo/pathParsing.cpp
+        fileDBInfo/ModifySQLDate.cpp
+
         )
 add_library(core SHARED
 ${core_HEADER}
@@ -103,7 +111,6 @@ core_Cpp.h
 )
 
 
-target_link_libraries(core PUBLIC Qt5::Core)
 target_link_libraries(core PUBLIC SqlppSqlite)
 target_link_libraries(core PUBLIC RTTR::Core)
 

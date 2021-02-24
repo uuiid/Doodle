@@ -10,6 +10,7 @@ add_executable(doodle WIN32 ${RESOURE_FILE}
 
 main.cpp
 doodle_global.h
+core_cpp_qt.h
 )
 #
 # add_executable(doodle WIN32

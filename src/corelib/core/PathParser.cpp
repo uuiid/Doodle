@@ -39,7 +39,7 @@ std::vector<std::reference_wrapper<rttr::variant>> PathParser::parser(const file
       if (!k_reply) throw rttr_method_invoke_class(p_class);
 
       //推入结果
-      list.emplace_back(std::move(k_reply));
+      list.emplace_back(std::ref(k_reply));
     }
   }
   return list;

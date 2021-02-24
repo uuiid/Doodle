@@ -8,7 +8,7 @@
  */
 #include "znchName.h"
 
-#include <sqlpp11/mysql/mysql.h>
+#include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 
 #include <stdexcept>
@@ -36,8 +36,11 @@ znchName::znchName(assClass *at_)
       nameZNCH(),
       p_ptr_assType(at_) {}
 
-void znchName::setName(const std::string &name_) { nameEN = name_; }
+bool znchName::setInfo(const std::string &value) {
+  return true;
+}
 
+void znchName::setName(const std::string &name_) { nameEN = name_; }
 
 void znchName::setName(const std::string &name_, const bool &isZNCH) {
   nameZNCH = name_;

@@ -40,48 +40,24 @@ shot::~shot() {
   p_instance.erase(this);
 }
 
-void shot::select(const qint64 &ID_) {
-}
-
-void shot::insert() {
-}
-
-void shot::updateSQL() {
-}
-
-void shot::deleteSQL() {
+bool shot::setInfo(const std::string &value) {
+  return true;
 }
 
 shotPtrList shot::getAll(const episodesPtr &EP_) {
+  return {};
 }
 
 void shot::setEpisodes(const episodesPtr &value) {
   if (!value) return;
-  p_eps_id  = value->getIdP();
   p_ptr_eps = value;
 }
 
 episodesPtr shot::getEpisodes() {
   if (p_ptr_eps)
     return p_ptr_eps;
-  else {
-    auto epi = episodes::Instances();
-    auto eps_iter =
-        std::find_if(epi.begin(), epi.end(),
-                     [=](episodes *ptr) -> bool { return ptr->getIdP() == p_eps_id; });
-    if (eps_iter != epi.end()) {
-      p_ptr_eps = (*eps_iter)->shared_from_this();
-
-    } else {
-      throw nullptr_error(std::string{"shot id :"}
-                              .append(std::to_string(getIdP()))
-                              .append("  ")
-                              .append(getShotAndAb_str()));
-    }
-
-    setEpisodes(p_ptr_eps);
-    return p_ptr_eps;
-  }
+  else
+    throw nullptr_error("");
 }
 
 void shot::setShot(const int64_t &sh, const e_shotAB &ab) {

@@ -29,11 +29,8 @@ class CORE_API shot : public CoreData,
   const static std::vector<std::string> e_shotAB_list;
   shot();
   ~shot();
-  //使用id直接从数据库创建类
-  void select(const int64_t &ID_);
 
-  //数据库语句发出
-
+  bool setInfo(const std::string &value) override;
   //使用episodes 的外键约束创建多个类
   static shotPtrList getAll(const episodesPtr &EP_);
 
@@ -71,5 +68,7 @@ class CORE_API shot : public CoreData,
   DOODLE_INSRANCE(shot);
   RTTR_ENABLE(CoreData)
 };
+
+
 
 DOODLE_NAMESPACE_E

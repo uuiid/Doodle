@@ -14,13 +14,12 @@
 #include <corelib/core_global.h>
 
 DOODLE_NAMESPACE_S
-class CORE_API coreDataManager : public boost::noncopyable_::noncopyable {
+class CORE_API coreDataManager {
  public:
   //单例使用
   static coreDataManager &get();
   static const coreDataManager &getConst();
-  coreDataManager &operator=(const coreDataManager &s) = delete;
-  coreDataManager(const coreDataManager &s)            = delete;
+  DOODLE_DISABLE_COPY(coreDataManager);
 
  public:
   const episodesPtr &getEpisodesPtr() const;
