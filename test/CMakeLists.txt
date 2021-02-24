@@ -22,7 +22,7 @@ target_link_libraries(test_my PRIVATE ${DOODLE_MAR})
 #         PRIVATE cppnetlib-uri cppnetlib-server-parsers cppnetlib-client-connections)
 
 target_link_libraries(test_my PRIVATE cppzmq cppzmq-static)
-
+target_link_libraries(test_my PRIVATE Qt5::Core)
 target_compile_definitions(test_my PRIVATE _WIN32_WINNT=0x0A00)
 #连接谷歌测试框架
 target_link_libraries(test_my

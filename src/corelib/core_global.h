@@ -11,6 +11,10 @@
 #include <regex>
 #include <boost/core/noncopyable.hpp>
 #include <boost/filesystem.hpp>
+
+#pragma warning(disable : 4251)
+#pragma warning(disable : 4275)
+
 #if defined(CORE_LIBRARY)
 #define CORE_API __declspec(dllexport)
 #else
@@ -74,7 +78,7 @@ class QFileInfo;
 DOODLE_NAMESPACE_S
 namespace fileSys = boost::filesystem;
 const static uint64_t off{8000000};
-using mysqlConnPtr = std::unique_ptr<sqlpp::sqlite3::connection>;
+using ConnPtr = std::unique_ptr<sqlpp::sqlite3::connection>;
 
 //使用一些其他方便的引用类型
 

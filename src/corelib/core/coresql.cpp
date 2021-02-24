@@ -32,7 +32,7 @@ void coreSql::initDB() {
 #endif  //NDEBUG
 }
 
-mysqlConnPtr coreSql::getConnection() {
+ConnPtr coreSql::getConnection() {
   return std::make_unique<sqlpp::sqlite3::connection>(*config);
 }
 void coreSql::initDB(const dstring &path) {

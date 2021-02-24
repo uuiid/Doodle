@@ -12,7 +12,7 @@
         core/Project.h
 
         coreOrm/doodleConfig_sqlOrm.h
-        coreOrm/PathParser_sqlOrm.h
+        coreOrm/PathParserData_sqlOrm.h
         coreOrm/zh_ch_sqlOrm.h
 
         Exception/Exception.h

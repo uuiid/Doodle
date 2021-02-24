@@ -36,7 +36,6 @@ class CORE_API coreSet {
   //初始化函数
   void init();
   void reInit();
-  void initdb();
 
   void appendEnvironment() const;
 
@@ -63,8 +62,8 @@ class CORE_API coreSet {
 
   //项目名称设置
   std::shared_ptr<Project> getProject();
-  std::vector<std::string> getAllProjectNames();
-  void setProject(const fileSys::path &projectRoot);
+  std::vector<std::shared_ptr<Project>> getAllProjects();
+  void setProject(const std::shared_ptr<Project> &projectRoot);
 
   //缓存路径
   [[nodiscard]] fileSys::path getCacheRoot() const;
@@ -85,14 +84,13 @@ class CORE_API coreSet {
   void getServerSetting();
   //获得本地的有限设置
   void getSetting();
-  //转换为ip路径
 
  private:
   const static dstring settingFileName;
 
   //项目名称
   std::map<fileSys::path, std::shared_ptr<Project>> p_projects;
-
+  std::shared_ptr<Project> p_currentProject;
   //用户名称
   dstring user;
   //部门

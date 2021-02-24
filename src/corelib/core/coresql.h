@@ -20,7 +20,7 @@ class CORE_API coreSql {
   ~coreSql();
 
   void initDB(const dstring &path);
-  mysqlConnPtr getConnection();
+  ConnPtr getConnection();
 
  private:
   void initDB();

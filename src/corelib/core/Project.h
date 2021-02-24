@@ -12,6 +12,10 @@ class PathParser;
 class CORE_API Project {
  private:
   fileSys::path p_root;
+
+  std::vector<std::shared_ptr<fileSys::path>> p_ass_Root;
+  std::vector<std::shared_ptr<fileSys::path>> p_shotRoot;
+
   std::string p_name;
   std::vector<std::shared_ptr<pathParser::PathParser>> p_path_parsers;
 
@@ -26,6 +30,12 @@ class CORE_API Project {
 
   const fileSys::path& Root() const noexcept;
   void setRoot(const fileSys::path& Root) noexcept;
+
+  const std::vector<std::shared_ptr<fileSys::path>>& AssRoot() const noexcept;
+  void setAssRoot(const std::vector<std::shared_ptr<fileSys::path>>& AssRoot) noexcept;
+
+  const std::vector<std::shared_ptr<fileSys::path>>& ShotRoot() const noexcept;
+  void setShotRoot(const std::vector<std::shared_ptr<fileSys::path>>& ShotRoot) noexcept;
 };
 
 }  // namespace doodle

@@ -6,7 +6,6 @@
 #include <regex>
 TEST(fileclient, uploadFile) {
   auto &set = doodle::coreSet::getSet();
-  set.setPrjectRoot("W:/");
 
   auto &file = doodle::DfileSyntem::get();
   file.session("192.168.10.213", 6666, "", "", "test");
@@ -16,8 +15,7 @@ TEST(fileclient, uploadFile) {
 }
 
 TEST(fileclient, uploadFileUTF8) {
-  auto &set = doodle::coreSet::getSet();
-  set.setPrjectRoot("W:/");
+  auto &set  = doodle::coreSet::getSet();
   auto &file = doodle::DfileSyntem::get();
   file.session("192.168.10.213", 6666, "", "", "test");
 
@@ -30,7 +28,6 @@ TEST(fileclient, uploadFileUTF8) {
 
 TEST(fileclient, uploadFolder) {
   auto &set = doodle::coreSet::getSet();
-  set.setPrjectRoot("W:/");
 
   auto &file = doodle::DfileSyntem::get();
   file.session("192.168.10.213", 6666, "", "", "test");
@@ -41,7 +38,6 @@ TEST(fileclient, uploadFolder) {
 
 TEST(fileclient, uploadFolderRegex) {
   auto &set = doodle::coreSet::getSet();
-  set.setPrjectRoot("W:/");
 
   auto &file = doodle::DfileSyntem::get();
   file.session("192.168.10.213", 6666, "", "", "test");
@@ -56,7 +52,6 @@ TEST(fileclient, uploadFolderRegex) {
 
 TEST(fileclient, downFoluploadFele) {
   auto &set = doodle::coreSet::getSet();
-  set.setPrjectRoot("W:/");
 
   auto &file = doodle::DfileSyntem::get();
   file.session("192.168.10.213", 6666, "", "", "test");
@@ -66,7 +61,6 @@ TEST(fileclient, downFoluploadFele) {
 
 TEST(fileclient, downFoluploadFolder) {
   auto &set = doodle::coreSet::getSet();
-  set.setPrjectRoot("V:/");
 
   auto &file = doodle::DfileSyntem::get();
   file.session("192.168.10.213", 6666, "", "", "test");
@@ -77,7 +71,6 @@ TEST(fileclient, downFoluploadFolder) {
 
 TEST(fileclient, downFoluploadFolderRegex) {
   auto &set = doodle::coreSet::getSet();
-  set.setPrjectRoot("W:/");
 
   auto &file = doodle::DfileSyntem::get();
   file.session("192.168.10.250", 6666, "", "", "test");
@@ -92,7 +85,6 @@ TEST(fileclient, downFoluploadFolderRegex) {
 
 TEST(fileclient, exists) {
   auto &set = doodle::coreSet::getSet();
-  set.setPrjectRoot("W:/");
 
   auto &file = doodle::DfileSyntem::get();
   file.session("192.168.10.213", 6666, "", "", "test");
@@ -101,7 +93,6 @@ TEST(fileclient, exists) {
 
 TEST(fileclient, copy) {
   auto &set = doodle::coreSet::getSet();
-  set.setPrjectRoot("W:/");
 
   auto &file = doodle::DfileSyntem::get();
   file.session("192.168.10.213", 6666, "", "", "test");

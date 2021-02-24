@@ -42,7 +42,7 @@ void coreSet::init() {
 
   doc = fileSys::path{pManager} / "doodle";
   getSetting();
-
+  coreSql &sql = coreSql::getCoreSql();
   getCacheDiskPath();
   appendEnvironment();
 
@@ -52,10 +52,6 @@ void coreSet::init() {
 }
 
 void coreSet::reInit() {
-}
-
-void coreSet::initdb() {
-  coreSql &sql = coreSql::getCoreSql();
 }
 
 void coreSet::appendEnvironment() const {
@@ -85,7 +81,9 @@ void coreSet::writeDoodleLocalSet() {
 }
 
 coreSet::coreSet()
-    : user("user"),
+    : p_projects(),
+      p_currentProject(),
+      user("user"),
       department(Department::VFX),
       synPath("D:/ue_prj"),
       cacheRoot("C:/Doodle_cache"),
@@ -93,10 +91,11 @@ coreSet::coreSet()
 }
 
 void coreSet::getSetting() {
-  if (boost::filesystem::exists(doc / settingFileName)) {
-    fileSys::path strFile(doc / settingFileName);
+  static fileSys::path k_settingFileName = doc / settingFileName;
+  if (boost::filesystem::exists(k_settingFileName)) {
+    fileSys::path strFile(k_settingFileName);
     boost::filesystem::ifstream inJosn;
-    inJosn.open(doc / settingFileName, std::ifstream::binary);
+    inJosn.open(k_settingFileName, std::ifstream::binary);
 
     nlohmann::json root = nlohmann::json::parse(inJosn);
     inJosn.close();
@@ -105,12 +104,20 @@ void coreSet::getSetting() {
     auto k_dep = root.value("department", "VFX");
     department = magic_enum::enum_cast<Department>(k_dep).value_or(Department::VFX);
     synPath    = root.value("synPath", "D:/ue_prj");
+    try {
+      for (auto &&it : root.at("Projects")) {
+        fileSys::path k_path = it.at("path").get<std::string>();
+        p_projects.insert({k_path,
+                           std::make_shared<Project>(k_path)});
+      }
+    } catch (const nlohmann::json::out_of_range &e) {
+      DOODLE_LOG_WARN(e.what());
+    }
   }
 }
 
 dstring coreSet::toIpPath(const dstring &path) {
   static boost::regex exp("^[A-Z]:");
-
   if (boost::regex_search(path, exp)) {
     return path.substr(2);
   }
@@ -126,16 +133,34 @@ void coreSet::setDepartment(const dstring &value) {
 }
 
 std::shared_ptr<Project> coreSet::getProject() {
-  return p_projects[""];
+  return p_currentProject;
 }
 
-std::vector<std::string> coreSet::getAllProjectNames() {
-  std::vector<std::string> list{};
-  for (auto &&it : p_projects) {
-    auto pr = it.second->Name();
-    list.emplace_back(std::move(pr));
+std::vector<std::shared_ptr<Project>> coreSet::getAllProjects() {
+  std::vector<std::shared_ptr<Project>> result{};
+  for (auto &&pair : p_projects) {
+    result.emplace_back(pair.second);
   }
-  return list;
+  return result;
+}
+
+// std::vector<std::string> coreSet::getAllProjectNames() {
+//   std::vector<std::string> list{};
+//   for (auto &&it : p_projects) {
+//     auto pr = it.second->Name();
+//     list.emplace_back(std::move(pr));
+//   }
+//   return list;
+// }
+
+void coreSet::setProject(const std::shared_ptr<Project> &projectRoot) {
+  auto it = p_projects.find(projectRoot->Root());
+  if (it != p_projects.end()) {
+    p_currentProject = it->second;
+  } else {
+    p_currentProject = projectRoot;
+    p_projects.insert({projectRoot->Root(), projectRoot});
+  }
 }
 
 dstring coreSet::getUser() const { return user; }

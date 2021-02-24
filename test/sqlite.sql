@@ -1,6 +1,0 @@
--- SQLite
-
-CREATE TABLE configure (
-id INTEGER NOT NULL,
-PRIMARY KEY (id AUTOINCREMENT)
-)

@@ -3,8 +3,7 @@
 #include <corelib/Exception/Exception.h>
 namespace doodle::pathParser {
 PathParser::PathParser()
-    : p_class_root(),
-      p_class(),
+    : p_class(),
       p_prefix(),
       p_suffix(),
       p_regex(){
