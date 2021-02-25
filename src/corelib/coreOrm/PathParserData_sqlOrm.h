@@ -122,6 +122,22 @@ namespace doodle
       };
       using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
     };
+    struct Parent
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "parent";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T parent;
+            T& operator()() { return parent; }
+            const T& operator()() const { return parent; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
   } // namespace PathParserData_
 
   struct PathParserData: sqlpp::table_t<PathParserData,
@@ -131,7 +147,8 @@ namespace doodle
                PathParserData_::Prefix,
                PathParserData_::Suffix,
                PathParserData_::Method,
-               PathParserData_::Arg>
+               PathParserData_::Arg,
+               PathParserData_::Parent>
   {
     struct _alias_t
     {

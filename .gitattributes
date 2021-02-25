@@ -1,2 +1,4 @@
-*.cpp filter=gitignore
+# *.cpp filter=gitignore
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.exe filter=lfs diff=lfs merge=lfs -text
 . !text !filter !merge !diff

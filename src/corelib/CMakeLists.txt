@@ -14,6 +14,7 @@
         coreOrm/doodleConfig_sqlOrm.h
         coreOrm/PathParserData_sqlOrm.h
         coreOrm/zh_ch_sqlOrm.h
+        coreOrm/class_alias_sqlOrm.h
 
         Exception/Exception.h
 
@@ -51,6 +52,7 @@
         fileDBInfo/filesqlinfo.h
         fileDBInfo/pathParsing.h
         fileDBInfo/ModifySQLDate.h
+
         )
 
 set(core_CPP
@@ -116,11 +118,9 @@ target_link_libraries(core PUBLIC RTTR::Core)
 
 target_link_libraries(core PUBLIC magic_enum::magic_enum)
 target_link_libraries(core PUBLIC ${Boost_LIBRARIES})
-# target_link_libraries(core PUBLIC Boost::signals2)
+
 
 target_link_libraries(core PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
-target_link_libraries(core PRIVATE cppzmq cppzmq-static)
-# target_link_libraries(core PUBLIC pugixml)
 target_link_libraries(core PUBLIC pinyin)
 target_link_libraries(core PUBLIC logger)
 

@@ -49,11 +49,11 @@ assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
     for (size_t i = 0; i < roots.size(); ++i) {
       auto lists = path_parser[i]->parser(*roots[i]);
       for (auto &&item : lists) {
-        if (item.get().can_convert(rttr::type::get<assClass>())) {
-          auto &ass = item.get().get_value<assClass>();
-          ass.setAssDep(ass_dep_ptr);
-          ass_list.push_back(ass.shared_from_this());
-        }
+        // if (item.get().can_convert(rttr::type::get<assClass>())) {
+        //   auto &ass = item.get().get_value<assClass>();
+        //   ass.setAssDep(ass_dep_ptr);
+        //   ass_list.push_back(ass.shared_from_this());
+        // }
       }
     }
   }

@@ -5,7 +5,7 @@
         test_fileSystem.cpp
         test_boost.cpp 
         test_qtCore.cpp
-        test_server.cpp
+        # test_server.cpp
         test_std.cpp)
 #连接自己的库进行测试
 target_link_libraries(test_my
@@ -15,11 +15,8 @@ find_library(DOODLE_MAR
 mpr.lib
 REQUIRED
 ) 
-message("${DOODLE_MAR}")
+
 target_link_libraries(test_my PRIVATE ${DOODLE_MAR})
-#这个网络库不去连接
-# target_link_libraries(test_my
-#         PRIVATE cppnetlib-uri cppnetlib-server-parsers cppnetlib-client-connections)
 
 target_link_libraries(test_my PRIVATE cppzmq cppzmq-static)
 target_link_libraries(test_my PRIVATE Qt5::Core)
@@ -33,7 +30,9 @@ target_link_libraries(test_my PRIVATE Boost::locale)
 # include(CTest)
 enable_testing()
 include(GoogleTest)
-add_test(test_doodle test_my)
+gtest_discover_tests(test_my
+WORKING_DIRECTORY f:/Source/qt_test/Doodle/install/bin
+)
 
 #安装基本组件
 install(TARGETS test_my

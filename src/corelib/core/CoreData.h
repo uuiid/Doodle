@@ -27,7 +27,6 @@ class CORE_API CoreData {
  public:
   CoreData();
   virtual bool setInfo(const std::string &value) = 0;
-
   // template <typename T, typename U>
   // static std::vector<std::shared_ptr<T>> getAll(const std::shared_ptr<U> &core_data_ptr);
 

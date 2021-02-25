@@ -19,6 +19,14 @@ DOODLE_NAMESPACE_S
 class CORE_API assdepartment
     : public CoreData,
       public std::enable_shared_from_this<assdepartment> {
+ private:
+  std::string p_assDep;
+  DOODLE_INSRANCE(assdepartment);
+
+  std::vector<std::string> p_alias;
+
+  bool merge(const std::shared_ptr<assdepartment> &other);
+
  public:
   explicit assdepartment();
   ~assdepartment();
@@ -32,10 +40,6 @@ class CORE_API assdepartment
   static std::unordered_set<assdepartment *> Instances();
 
   RTTR_ENABLE(CoreData);
-
- private:
-  std::string s_assDep;
-  DOODLE_INSRANCE(assdepartment);
 };
 
 DOODLE_NAMESPACE_E

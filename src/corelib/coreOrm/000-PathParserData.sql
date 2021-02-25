@@ -7,7 +7,9 @@ create table PathParserData
 	suffix TEXT,
 	method TEXT,
 	arg TEXT,
-	primary key (id)
+	parent int,
+	primary key (id),
+	foreign key (parent) references PathParserData
 );
 
 create unique index PathParser_id_index

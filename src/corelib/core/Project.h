@@ -17,13 +17,16 @@ class CORE_API Project {
   std::vector<std::shared_ptr<fileSys::path>> p_shotRoot;
 
   std::string p_name;
-  std::vector<std::shared_ptr<pathParser::PathParser>> p_path_parsers;
+  std::map<int64_t, std::shared_ptr<pathParser::PathParser>> p_path_parsers;
 
   using pathParserList = std::vector<std::shared_ptr<pathParser::PathParser>>;
 
  public:
   Project(fileSys::path path);
   pathParserList findParser(const rttr::type& type_ptr);
+
+  const std::map<int64_t, std::string> getClassNames(const rttr::type& type_ptr) const;
+  const std::multimap<std::string, std::string> getAlias(const rttr::type& type_ptr) const;
 
   const std::string& Name() const noexcept;
   void setName(const std::string& Name) noexcept;

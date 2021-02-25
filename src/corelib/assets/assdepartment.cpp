@@ -15,6 +15,10 @@
 #include <corelib/core/coresql.h>
 #include <corelib/core/PathParser.h>
 
+#include <sqlpp11/sqlpp11.h>
+#include <sqlpp11/sqlite3/sqlite3.h>
+#include <corelib/coreOrm/pathStart_sqlOrm.h>
+
 //反射使用
 #include <rttr/registration>
 DOODLE_NAMESPACE_S
@@ -29,12 +33,21 @@ DOODLE_INSRANCE_CPP(assdepartment);
 assdepartment::assdepartment()
     : CoreData(),
       std::enable_shared_from_this<assdepartment>(),
-      s_assDep("character") {
+      p_assDep("character") {
   p_instance.insert(this);
 }
 
 assdepartment::~assdepartment() {
   p_instance.erase(this);
+}
+
+bool assdepartment::merge(const std::shared_ptr<assdepartment> &other) {
+  auto it = std::find(p_alias.begin(), p_alias.end(), other->p_assDep);
+  if (it == p_alias.end()) return false;
+
+  for (auto &&item : other->p_roots)
+    this->p_roots.push_back(item);
+  return true;
 }
 
 bool assdepartment::setInfo(const std::string &value) {
@@ -43,29 +56,55 @@ bool assdepartment::setInfo(const std::string &value) {
 }
 
 const std::string &assdepartment::getAssDep() const {
-  return s_assDep;
+  return p_assDep;
 }
 void assdepartment::setAssDep(const std::string &s_ass_dep) {
-  s_assDep = s_ass_dep;
+  p_assDep = s_ass_dep;
 }
 assDepPtrList assdepartment::getAll() {
   auto &set = coreSet::getSet();
 
-  auto roots       = set.getProject()->AssRoot();
+  auto db = coreSql::getCoreSql().getConnection();
+
+  PathStart table{};
+  auto sql = sqlpp::select(sqlpp::all_of(table))
+                 .from(table)
+                 .where(table.rootKey == "assRoot");
+  //安装名称创建 dep
+  assDepPtrList ass_list{};
+
+  //这里获得dep的别名
+  auto alias = coreSet::getSet().getProject()->getAlias(rttr::type::get<assdepartment>());
+  for (auto &&item : set.getProject()->getClassNames(rttr::type::get<assdepartment>())) {
+    ass_list.push_back(std::make_shared<assdepartment>());
+    ass_list.back()->p_assDep = item.second;
+
+    auto find_it = alias.equal_range(item.second);
+    for (auto it = find_it.first; it != find_it.second; ++it) {
+      ass_list.back()->p_alias.emplace_back(it->second);
+    }
+  }
+
   auto path_parser = set.getProject()->findParser(rttr::type::get<assdepartment>());
 
-  assDepPtrList ass_list{};
-  if (roots.size() == path_parser.size()) {
-    for (size_t i = 0; i < roots.size(); ++i) {
-      auto lists = path_parser[i]->parser(*roots[i]);
-      for (auto &&item : lists) {
-        if (item.get().can_convert(rttr::type::get<assdepartment>())) {
-          auto &ass = item.get().get_value<assdepartment>();
-          ass_list.push_back(ass.shared_from_this());
-        }
+  for (auto &&row : (*db)(sql)) {
+    int64_t k_id = row.id.value();
+    auto it      = std::find_if(path_parser.begin(), path_parser.end(),
+                           [=](std::shared_ptr<pathParser::PathParser> &parser) {
+                             return parser->ID() == k_id;
+                           });
+    if (it == path_parser.end()) continue;
+
+    //在这里解析一次路径  返回解析结果
+    auto lists = (*it)->parser(fileSys::path{row.root.value()});
+    for (auto &&it : lists) {
+      for (auto &&k_ass : ass_list) {
+        auto &k_it = it.get().get_value<assdepartment>();
+        k_ass->merge(k_it.shared_from_this());
       }
     }
   }
+
   return ass_list;
 }
 std::unordered_set<assdepartment *> assdepartment::Instances() {
