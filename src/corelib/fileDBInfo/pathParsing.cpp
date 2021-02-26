@@ -1,6 +1,6 @@
 #include "pathParsing.h"
 
-#include <corelib/fileDBInfo/filesqlinfo.h>
+#include <corelib/core/FileInfo.h>
 #include <corelib/Exception/Exception.h>
 #include <corelib/core/coreset.h>
 #include <corelib/filesystem/FileSystem.h>

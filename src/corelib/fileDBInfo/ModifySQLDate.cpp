@@ -1,7 +1,7 @@
 #include "ModifySQLDate.h"
 
 #include <corelib/Exception/Exception.h>
-#include <corelib/fileDBInfo/filesqlinfo.h>
+#include <corelib/core/FileInfo.h>
 
 DOODLE_NAMESPACE_S
 

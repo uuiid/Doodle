@@ -49,21 +49,14 @@ Project::Project(fileSys::path path)
 
   auto sql2 = sqlpp::select(sqlpp::all_of(table_parser))
                   .from(table_parser)
-                  .order_by(table_parser.id.asc(), table_parser.parent.asc())
+                  .order_by(table_parser.id.asc())
                   .unconditionally();
 
   for (auto&& row : (*db)(sql2)) {
-    auto k_parser      = std::make_shared<pathParser::PathParser>();
+    auto k_parser      = std::make_shared<pathParser::PathParser>(row.refClass.value(), row.regex.value());
     k_parser->p_id     = row.id.value();
-    k_parser->p_class  = row.refClass.value();
     k_parser->p_prefix = row.prefix.value();
-    k_parser->p_regex  = row.regex.value();
-    k_parser->p_suffix = row.suffix.value();
     p_path_parsers.insert({k_parser->p_id, k_parser});
-    if (!row.parent.is_null()) {
-      auto it                    = p_path_parsers.find(row.parent.value());
-      it->second->p_child_parser = k_parser;
-    }
   }
 }
 

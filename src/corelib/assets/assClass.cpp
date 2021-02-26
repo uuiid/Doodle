@@ -45,18 +45,18 @@ assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
   auto path_parser = set.getProject()->findParser(rttr::type::get<assClass>());
 
   assClassPtrList ass_list{};
-  if (roots.size() == path_parser.size()) {
-    for (size_t i = 0; i < roots.size(); ++i) {
-      auto lists = path_parser[i]->parser(*roots[i]);
-      for (auto &&item : lists) {
-        // if (item.get().can_convert(rttr::type::get<assClass>())) {
-        //   auto &ass = item.get().get_value<assClass>();
-        //   ass.setAssDep(ass_dep_ptr);
-        //   ass_list.push_back(ass.shared_from_this());
-        // }
+
+  for (auto &parser : path_parser) {
+    parser->getClassInstance.connect([]() { return std::make_shared<assClass>(); });
+    for (auto &p_r : roots) {
+      auto &ass_s = parser->parser(*p_r);
+      for (auto &ass : ass_s) {
+        ass_list.push_back(std::dynamic_pointer_cast<assClass>(ass));
+        ass_list.back()->setAssDep(ass_dep_ptr);
       }
     }
   }
+
   return ass_list;
 }
 

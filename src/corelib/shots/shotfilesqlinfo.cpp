@@ -49,6 +49,7 @@ shotFileSqlInfo::~shotFileSqlInfo() {
 }
 
 bool shotFileSqlInfo::setInfo(const std::string& value) {
+  fileSuffixesP = value;
   return true;
 }
 

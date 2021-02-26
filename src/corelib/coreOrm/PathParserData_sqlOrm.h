@@ -72,70 +72,6 @@ namespace doodle
             const T& operator()() const { return prefix; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
-    };
-    struct Suffix
-    {
-      struct _alias_t
-      {
-        static constexpr const char _literal[] =  "suffix";
-        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-        template<typename T>
-        struct _member_t
-          {
-            T suffix;
-            T& operator()() { return suffix; }
-            const T& operator()() const { return suffix; }
-          };
-      };
-      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
-    };
-    struct Method
-    {
-      struct _alias_t
-      {
-        static constexpr const char _literal[] =  "method";
-        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-        template<typename T>
-        struct _member_t
-          {
-            T method;
-            T& operator()() { return method; }
-            const T& operator()() const { return method; }
-          };
-      };
-      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
-    };
-    struct Arg
-    {
-      struct _alias_t
-      {
-        static constexpr const char _literal[] =  "arg";
-        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-        template<typename T>
-        struct _member_t
-          {
-            T arg;
-            T& operator()() { return arg; }
-            const T& operator()() const { return arg; }
-          };
-      };
-      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
-    };
-    struct Parent
-    {
-      struct _alias_t
-      {
-        static constexpr const char _literal[] =  "parent";
-        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-        template<typename T>
-        struct _member_t
-          {
-            T parent;
-            T& operator()() { return parent; }
-            const T& operator()() const { return parent; }
-          };
-      };
       using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
     };
   } // namespace PathParserData_
@@ -144,11 +80,7 @@ namespace doodle
                PathParserData_::Id,
                PathParserData_::RefClass,
                PathParserData_::Regex,
-               PathParserData_::Prefix,
-               PathParserData_::Suffix,
-               PathParserData_::Method,
-               PathParserData_::Arg,
-               PathParserData_::Parent>
+               PathParserData_::Prefix>
   {
     struct _alias_t
     {

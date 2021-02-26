@@ -188,5 +188,6 @@
         ".vs": true,
         "b_Ninja*": false,
         "install*": true
-    }
+    },
+    "hlsl-client.trace.server": "messages"
 }

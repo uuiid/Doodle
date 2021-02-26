@@ -1,5 +1,5 @@
 ﻿#include "moveShotA.h"
-#include <corelib/fileDBInfo/filesqlinfo.h>
+#include <corelib/core/FileInfo.h>
 #include <corelib/shots/shotfilesqlinfo.h>
 #include <corelib/shots/shottype.h>
 DOODLE_NAMESPACE_S

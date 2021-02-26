@@ -1,4 +1,4 @@
-﻿#include "filesqlinfo.h"
+﻿#include "FileInfo.h"
 #include <corelib/fileDBInfo/pathParsing.h>
 
 #include <corelib/core/coreset.h>

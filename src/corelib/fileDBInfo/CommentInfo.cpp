@@ -1,5 +1,5 @@
 #include "CommentInfo.h"
-#include <corelib/fileDBInfo/filesqlinfo.h>
+#include <corelib/core/FileInfo.h>
 #include <corelib/Exception/Exception.h>
 
 #include <loggerlib/Logger.h>

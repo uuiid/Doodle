@@ -4,7 +4,7 @@
 #include <corelib/assets/assfilesqlinfo.h>
 #include <corelib/core/coreset.h>
 #include <corelib/core/Project.h>
-#include <corelib/fileDBInfo/filesqlinfo.h>
+#include <corelib/core/FileInfo.h>
 #include <corelib/filesystem/FileSystem.h>
 #include <corelib/filesystem/fileSync.h>
 DOODLE_NAMESPACE_S

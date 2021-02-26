@@ -9,7 +9,7 @@
 #pragma once
 
 #include <corelib/core_global.h>
-#include <corelib/fileDBInfo/filesqlinfo.h>
+#include <corelib/core/FileInfo.h>
 
 //导入boost信号
 #include <boost/signals2.hpp>

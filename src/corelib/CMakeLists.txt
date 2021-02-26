@@ -2,7 +2,6 @@
         assets/assClass.h
         assets/assdepartment.h
         assets/assfilesqlinfo.h
-        assets/assType.h
         assets/znchName.h
 
         core/coreDataManager.h
@@ -49,9 +48,11 @@
         core/PathParser.h
         threadPool/ThreadPool.h
         fileDBInfo/CommentInfo.h
-        fileDBInfo/filesqlinfo.h
         fileDBInfo/pathParsing.h
         fileDBInfo/ModifySQLDate.h
+        core/FileInfo.h
+
+        assets/assType.h
 
         )
 
@@ -59,7 +60,6 @@ set(core_CPP
         assets/assClass.cpp
         assets/assdepartment.cpp
         assets/assfilesqlinfo.cpp
-        assets/assType.cpp
         assets/znchName.cpp
 
         core/coreDataManager.cpp
@@ -99,9 +99,11 @@ set(core_CPP
         sysData/synData.cpp
         core/PathParser.cpp
         fileDBInfo/CommentInfo.cpp
-        fileDBInfo/filesqlinfo.cpp
         fileDBInfo/pathParsing.cpp
         fileDBInfo/ModifySQLDate.cpp
+
+        core/FileInfo.cpp
+        assets/assType.cpp
 
         )
 add_library(core SHARED

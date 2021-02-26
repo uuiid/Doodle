@@ -1,6 +1,6 @@
 #include "imageArchive.h"
 #include <corelib/core/coreset.h>
-#include <corelib/fileDBInfo/filesqlinfo.h>
+#include <corelib/core/FileInfo.h>
 #include <regex>
 
 DOODLE_NAMESPACE_S

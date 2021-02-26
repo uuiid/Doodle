@@ -8,7 +8,7 @@
  */
 #pragma once
 
-#include <corelib/fileDBInfo/filesqlinfo.h>
+#include <corelib/core/FileInfo.h>
 
 //导入boost信号
 #include <boost/signals2.hpp>
@@ -56,7 +56,6 @@ class CORE_API shotFileSqlInfo
   static boost::signals2::signal<void()> updateChanged;
 
  private:
-
   void setShotClass();
   int getVersionMax();
 

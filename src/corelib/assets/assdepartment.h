@@ -25,7 +25,7 @@ class CORE_API assdepartment
 
   std::vector<std::string> p_alias;
 
-  bool merge(const std::shared_ptr<assdepartment> &other);
+  bool merge(const assdepartment &other);
 
  public:
   explicit assdepartment();

@@ -41,11 +41,11 @@ assdepartment::~assdepartment() {
   p_instance.erase(this);
 }
 
-bool assdepartment::merge(const std::shared_ptr<assdepartment> &other) {
-  auto it = std::find(p_alias.begin(), p_alias.end(), other->p_assDep);
+bool assdepartment::merge(const assdepartment &other) {
+  auto it = std::find(p_alias.begin(), p_alias.end(), other.p_assDep);
   if (it == p_alias.end()) return false;
 
-  for (auto &&item : other->p_roots)
+  for (auto &&item : other.p_roots)
     this->p_roots.push_back(item);
   return true;
 }
@@ -63,8 +63,8 @@ void assdepartment::setAssDep(const std::string &s_ass_dep) {
 }
 assDepPtrList assdepartment::getAll() {
   auto &set = coreSet::getSet();
-
-  auto db = coreSql::getCoreSql().getConnection();
+  auto root = set.getProject()->Root();
+  auto db   = coreSql::getCoreSql().getConnection();
 
   PathStart table{};
   auto sql = sqlpp::select(sqlpp::all_of(table))
@@ -88,19 +88,19 @@ assDepPtrList assdepartment::getAll() {
   auto path_parser = set.getProject()->findParser(rttr::type::get<assdepartment>());
 
   for (auto &&row : (*db)(sql)) {
-    int64_t k_id = row.id.value();
+    int64_t k_id = row.Parser.value();
     auto it      = std::find_if(path_parser.begin(), path_parser.end(),
                            [=](std::shared_ptr<pathParser::PathParser> &parser) {
                              return parser->ID() == k_id;
                            });
     if (it == path_parser.end()) continue;
-
+    auto k_sh_si = (*it)->getClassInstance.connect([]() -> std::shared_ptr<assdepartment> { return std::make_shared<assdepartment>(); });
     //在这里解析一次路径  返回解析结果
-    auto lists = (*it)->parser(fileSys::path{row.root.value()});
+    auto lists = (*it)->parser(root / row.root.value());
     for (auto &&it : lists) {
       for (auto &&k_ass : ass_list) {
-        auto &k_it = it.get().get_value<assdepartment>();
-        k_ass->merge(k_it.shared_from_this());
+        auto &k_it = std::dynamic_pointer_cast<assdepartment>(it);
+        k_ass->merge(*k_it);
       }
     }
   }
