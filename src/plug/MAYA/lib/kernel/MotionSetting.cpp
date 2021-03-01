@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <ShlObj.h>
 namespace doodle::motion::kernel {
+std::string MotionSetting::ConfigName = "DoodleMotion.config";
 
 MotionSetting& MotionSetting::Get() {
   static MotionSetting install;
@@ -17,6 +18,10 @@ const FSys::path& MotionSetting::MotionLibRoot() const noexcept {
 }
 
 void MotionSetting::setMotionLibRoot(const FSys::path& MotionLibRoot) noexcept {
+  if (!FSys::exists(p_motion_path / ConfigName)) {
+    
+    this->createMotionProject();
+  }
   p_motion_path = MotionLibRoot;
 }
 
@@ -26,6 +31,14 @@ const std::string& MotionSetting::User() const noexcept {
 
 void MotionSetting::setUser(const std::string& User) noexcept {
   p_user_name = User;
+}
+
+const std::string& MotionSetting::MotionName() const noexcept {
+  return p_motion_name;
+}
+
+void MotionSetting::setMotionName(const std::string& MotionName) noexcept {
+  p_motion_name = MotionName;
 }
 
 void MotionSetting::save() {
@@ -38,7 +51,8 @@ void MotionSetting::save() {
 MotionSetting::MotionSetting()
     : p_setting_path(),
       p_motion_path(),
-      p_user_name("user") {
+      p_user_name("user"),
+      p_motion_name() {
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, NULL, &pManager);
   if (!pManager) std::runtime_error("无法找到保存路径");
@@ -59,6 +73,18 @@ MotionSetting::MotionSetting()
     if (!file.is_open()) std::runtime_error("无法打开文件");
     file << to_json();
   }
+}
+
+void MotionSetting::createMotionProject() {
+  auto db_root = p_motion_path / ConfigName;
+  if (FSys::exists(db_root)) return;
+
+  nlohmann::json root{};
+  root["name"] = p_motion_name;
+
+  std::fstream file{db_root, std::ios::out};
+  if (!file.is_open()) return;
+  file << root.dump();
 }
 
 void MotionSetting::from_json(const nlohmann::json& j) {

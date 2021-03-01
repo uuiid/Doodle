@@ -3,8 +3,7 @@
 //
 #include "systemTray.h"
 #include <DoodleConfig.h>
-#include <doodle_GUI/source/mainWidght/mainWindows.h>
-#include <doodle_GUI/source/settingWidght/settingWidget.h>
+
 #include <loggerlib/Logger.h>
 #include <core_Cpp.h>
 #include <QApplication>
@@ -15,10 +14,9 @@
 #include <QtWidgets/qfiledialog.h>
 #include <boost/process.hpp>
 
-#include <doodle_GUI/source/toolkit/toolkit.h>
-#include <doodle_GUI/source/rigisterWight/doodleRigister.h>
 #include <doodle_GUI/source/toolkit/updataManager.h>
-
+#include <doodle_GUI/source/mainWidght/mainWindows.h>
+#include <doodle_GUI/source/toolkit/toolkit.h>
 #include <future>
 DOODLE_NAMESPACE_S
 systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
@@ -68,9 +66,6 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
 
   setting = new QAction(menu);
   setting->setText(tr("设置"));
-  auto re_user = new QAction(menu);
-  re_user->setText(tr("注册"));
-  connect(re_user, &QAction::triggered, this, &systemTray::showRigister);
 
   auto update = new QAction(menu);
   update->setText(tr("更新"));
@@ -93,7 +88,6 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   menu->addAction(update);
 
   menu->addSeparator();
-  menu->addAction(re_user);
   menu->addAction(k_exit_);
 
   setContextMenu(menu);
@@ -139,8 +133,6 @@ void systemTray::doodleQuery() {
   quit();
 }
 void systemTray::showRigister() {
-  auto rigister = new doodleRigister(nullptr);
-  rigister->show();
 }
 
 void systemTray::upDoodle() {

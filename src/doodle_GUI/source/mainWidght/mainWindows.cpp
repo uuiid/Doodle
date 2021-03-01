@@ -8,7 +8,8 @@
 
 #include <QtWidgets/qdockwidget.h>
 #include <QtWidgets/qsizepolicy.h>
-
+#include <doodle_GUI/source/mainWidght/DragPushBUtton.h>
+#include <doodle_GUI/source/mainWidght/systemTray.h>
 DOODLE_NAMESPACE_S
 
 mainWindows::mainWindows(QWidget *parent)
@@ -41,7 +42,22 @@ void mainWindows::doodle_init() {
   //添加中央小部件
   setCentralWidget(centralWidget);
 
-  auto layout = new QGridLayout(centralWidget);
+  auto layout        = new QGridLayout(centralWidget);
+  auto exMaya_button = new DragPushBUtton();
+  exMaya_button->setText(tr("从maya导出相机和文件"));
+  exMaya_button->setToolTip(tr(R"(注意:
+请把导出文件拖拽到此处, 可以拖拽多个文件, 会依照顺序导出
+默认导出路径是在文件所在的目录
+)"));
+
+  layout->addWidget(exMaya_button);
+
+  //托盘创建
+  auto tray = new systemTray(this);
+  tray->showMessage("doodle", "hello");
+  tray->setIcon(QIcon(":/resource/icon.png"));
+  tray->setVisible(true);
+  tray->show();
 }
 
 void mainWindows::doodle_createAction() {

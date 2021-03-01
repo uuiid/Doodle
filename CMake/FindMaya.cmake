@@ -53,6 +53,7 @@ The following cache variables may also be set:
 
 if(WIN32)
   set(MAYA_DEFAULT_LOCATION "C:/Program Files/Autodesk/Maya${Maya_FIND_VERSION}")
+  set(MAYA_FBX_LOCATION "C:/Program Files/Autodesk/FBX/FBX SDK/${Maya_FIND_VERSION}.0.1")
   set(OPEN_MAYA OpenMaya.lib)
 endif()
 

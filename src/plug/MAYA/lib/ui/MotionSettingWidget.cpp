@@ -1,6 +1,8 @@
 #include <lib/ui/MotionSettingWidget.h>
 #include <lib/kernel/MotionSetting.h>
 
+#include <maya/MGlobal.h>
+
 #include <QtWidgets/qboxlayout.h>
 #include <QtWidgets/qlabel.h>
 #include <QtWidgets/qlineedit.h>

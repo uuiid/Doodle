@@ -79,7 +79,7 @@ find_package(gRPC CONFIG REQUIRED)
 #target_link_libraries(main PRIVATE gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts)
 #target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
 
-
+find_package(Autodesk_FBX 2020 REQUIRED)
 #搜索qt 安装辅助程序
 find_program(WINQT windeployqt REQUIRED)
 find_program(BIN2CPP bin2cpp REQUIRED

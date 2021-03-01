@@ -30,9 +30,9 @@ target_link_libraries(test_my PRIVATE Boost::locale)
 # include(CTest)
 enable_testing()
 include(GoogleTest)
-gtest_discover_tests(test_my
-WORKING_DIRECTORY f:/Source/qt_test/Doodle/install/bin
-)
+# gtest_discover_tests(test_my
+# WORKING_DIRECTORY f:/Source/qt_test/Doodle/install/bin
+# )
 
 #安装基本组件
 install(TARGETS test_my

@@ -17,10 +17,15 @@ class MotionSetting {
   const std::string& User() const noexcept;
   void setUser(const std::string& User) noexcept;
 
+  const std::string& MotionName() const noexcept;
+  void setMotionName(const std::string& MotionName) noexcept;
+
   void save();
 
  private:
   MotionSetting();
+
+  void createMotionProject();
 
   void from_json(const nlohmann::json& j);
   nlohmann::json to_json();
@@ -30,5 +35,8 @@ class MotionSetting {
 
   FSys::path p_motion_path;
   std::string p_user_name;
+  std::string p_motion_name;
+
+  static std::string ConfigName;
 };
 }  // namespace doodle::motion::kernel

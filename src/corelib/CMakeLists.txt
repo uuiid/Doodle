@@ -53,7 +53,7 @@
         core/FileInfo.h
 
         assets/assType.h
-
+        FileWarp/MayaFile.h
         )
 
 set(core_CPP
@@ -104,6 +104,7 @@ set(core_CPP
 
         core/FileInfo.cpp
         assets/assType.cpp
+        FileWarp/MayaFile.cpp
 
         )
 add_library(core SHARED
