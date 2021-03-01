@@ -45,8 +45,8 @@ bool assdepartment::merge(const assdepartment &other) {
   auto it = std::find(p_alias.begin(), p_alias.end(), other.p_assDep);
   if (it == p_alias.end()) return false;
 
-  for (auto &&item : other.p_roots)
-    this->p_roots.push_back(item);
+  // for (auto &&item : other.p_roots)
+    // this->p_roots.push_back(item);
   return true;
 }
 

@@ -1,4 +1,4 @@
-﻿#include "mainWindows.h"
+#include "mainWindows.h"
 //logger是boost库使用者，放到qt上面能好点
 #include <loggerlib/Logger.h>
 
@@ -6,14 +6,8 @@
 #include <QMenuBar>
 #include <QStatusBar>
 
-#include <doodle_GUI/source/assetsWidget/assWidget.h>
-#include <doodle_GUI/source/settingWidght/settingWidget.h>
-#include <doodle_GUI/source/shotsWidght/shotWidget.h>
-#include <doodle_GUI/source/mainWidght/systemTray.h>
 #include <QtWidgets/qdockwidget.h>
 #include <QtWidgets/qsizepolicy.h>
-
-#include <doodle_GUI/source/queueManager/queueManagerWidget.h>
 
 DOODLE_NAMESPACE_S
 
@@ -39,7 +33,7 @@ void mainWindows::doodle_init() {
   setObjectName(QString{"mainWindows"});
 
   // resize(1200, 800);
-  setWindowTitle(tr("项目管理器"));
+  setWindowTitle(tr("工具箱"));
 
   //设置中央小部件
   centralWidget = new QWidget(this);
@@ -47,102 +41,7 @@ void mainWindows::doodle_init() {
   //添加中央小部件
   setCentralWidget(centralWidget);
 
-  //设置基本布局
-  p_b_box_layout_ = new QVBoxLayout(centralWidget);
-  p_b_box_layout_->setSpacing(0);
-  p_b_box_layout_->setContentsMargins(0, 0, 0, 0);
-  p_b_box_layout_->setObjectName(QString::fromUtf8("p_b_box_layout_"));
-
-  //开始设置项目小部件
-  p_project_list = new QListWidget();
-  p_project_list->setObjectName("prj");
-  for (const auto &name : coreSet::getSet().getAllPrjName()) {
-    p_project_list->addItem(QString::fromStdString(name));
-  }
-  p_project_list->setFlow(QListView::LeftToRight);
-  p_project_list->setFixedHeight(50);  //设置固定大小
-  // p_project_list->setMaximumHeight(50);
-  // p_project_list->setFixedWidth(1200);
-
-  p_project_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  p_project_list->setCurrentItem(p_project_list->item(0));
-
-  p_b_box_layout_->addWidget(p_project_list);
-  // p_b_box_layout_->setAlignment(Qt::AlignCenter);
-
-  p_b_box_layout_->setSizeConstraint(QLayout::SetMaximumSize);  //设置不需要调整大小
-  p_setting_widget_ = new settingWidget(centralWidget);
-  //连接项目更改设置
-  connect(p_project_list, &QListWidget::itemClicked,
-          [=](QListWidgetItem *item) mutable {
-            coreSet::getSet().setProjectname(item->text());
-            coreSet::getSet().reInit();
-          });
-
-  //资产可拖拽窗口
-  auto k_ass_dock    = new QDockWidget(tr("资产"), centralWidget,
-                                    Qt::WindowStaysOnTopHint |
-                                        Qt::X11BypassWindowManagerHint |
-                                        Qt::FramelessWindowHint);
-  auto p_ass_widght_ = new assWidght();
-  k_ass_dock->setWidget(p_ass_widght_);
-  addDockWidget(Qt::BottomDockWidgetArea, k_ass_dock);
-  connect(p_project_list, &QListWidget::itemClicked, p_ass_widght_,
-          [=]() mutable { p_ass_widght_->refresh(); });
-  //  p_b_box_layout_->addWidget(k_ass_dock, 18);
-
-  // 镜头可拖拽窗口
-  auto k_shot_dock    = new QDockWidget(tr("镜头"), centralWidget);
-  auto p_shot_widget_ = new shotWidget();
-  k_shot_dock->setWidget(p_shot_widget_);
-  addDockWidget(Qt::BottomDockWidgetArea, k_shot_dock);
-  connect(p_project_list, &QListWidget::itemClicked,
-          p_shot_widget_, &shotWidget::refresh);
-
-  p_shot_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  p_ass_widght_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-  //进度可拖拽窗口
-  auto k_queue_dock = new QDockWidget(centralWidget, Qt::Window | Qt::WindowStaysOnTopHint | Qt::X11BypassWindowManagerHint | Qt::FramelessWindowHint);
-  // k_queue_dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
-  k_queue_dock->setTitleBarWidget(new QWidget(k_queue_dock));
-
-  auto k_queue = new queueManagerWidget();
-  k_queue_dock->setWidget(k_queue);
-  addDockWidget(Qt::BottomDockWidgetArea, k_queue_dock);
-
-  //分割窗口
-  splitDockWidget(k_ass_dock, k_queue_dock, Qt::Vertical);
-  splitDockWidget(k_ass_dock, k_shot_dock, Qt::Horizontal);
-  //合并窗口
-  // tabifyDockWidget(k_queue_dock, k_shot_dock);
-  // tabifyDockWidget(k_ass_dock, k_shot_dock);
-  // tabifyDockWidget(k_ass_dock, k_queue_dock);
-
-  //添加显示选项
-  auto k_win_drok = p_menu_bar_->addMenu("窗口");
-  k_win_drok->addAction(k_ass_dock->toggleViewAction());
-  k_win_drok->addAction(k_shot_dock->toggleViewAction());
-  k_win_drok->addAction(k_queue_dock->toggleViewAction());
-
-  //添加托盘图标
-  auto tray = new systemTray(this);
-  tray->showMessage("doodle", "hello");
-  tray->setIcon(QIcon(":/resource/icon.png"));
-  tray->setVisible(true);
-  tray->show();
-
-  p_ass_widght_->refresh();
-  p_shot_widget_->refresh();
-  connect(p_setting_widget_, &settingWidget::projectChanged,
-          this, [=]() {
-            this->setProject();
-            p_ass_widght_->refresh();
-            p_shot_widget_->refresh();
-          });
-
-  //最后初始化一些其他函数
-  setProject();
+  auto layout = new QGridLayout(centralWidget);
 }
 
 void mainWindows::doodle_createAction() {
@@ -188,16 +87,8 @@ void mainWindows::doodle_createAction() {
 }
 
 void mainWindows::openSetting() {
-  p_setting_widget_->setInit();
-  p_setting_widget_->show();
 }
 
 void mainWindows::setProject() {
-  auto list = p_project_list->findItems(QString::fromStdString(coreSet::getSet().getProjectname()),
-                                        Qt::MatchExactly);
-  if (!list.isEmpty()) {
-    DOODLE_LOG_INFO(list.at(0)->text().toStdString());
-    p_project_list->setCurrentItem(list.at(0));
-  }
 }
 DOODLE_NAMESPACE_E

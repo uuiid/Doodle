@@ -56,23 +56,23 @@ TEST_F(CoreTest, rttr_get_all_install) {
 }
 
 TEST_F(CoreTest, find_dep_type) {
-  auto dep_list = doodle::assdepartment::getAll();
-  for (auto&& it : dep_list) {
-    std::cout << "dep : " << it->getAssDep() << std::endl;
-    for (auto&& p : it->Roots()) {
-      std::cout << p->generic_string() << std::endl;
-    }
-    auto cl_list = doodle::assClass::getAll(it);
-    for (auto it_cl : cl_list) {
-      std::cout << std::setfill(' ') << std::setw(20) << "ass class : " << std::setw(35) << it_cl->getAssClass();
-      for (auto&& p1 : it_cl->Roots())
-        std::cout << " root : " << p1->generic_string() << std::endl;
-      auto f_list = doodle::assFileSqlInfo::getAll(it_cl);
-      for (auto k_f : f_list) {
-        std::cout << std::setfill(' ') << std::setw(40) << "file : " << k_f->getSuffixes();
-      }
-    }
-  }
+  // auto dep_list = doodle::assdepartment::getAll();
+  // for (auto&& it : dep_list) {
+  //   std::cout << "dep : " << it->getAssDep() << std::endl;
+  //   for (auto&& p : it->Roots()) {
+  //     std::cout << p->generic_string() << std::endl;
+  //   }
+  //   auto cl_list = doodle::assClass::getAll(it);
+  //   for (auto it_cl : cl_list) {
+  //     std::cout << std::setfill(' ') << std::setw(15) << "ass class : " << std::setw(35) << it_cl->getAssClass();
+  //     for (auto&& p1 : it_cl->Roots())
+  //       std::cout << " root : " << p1->generic_string() << std::endl;
+  //     auto f_list = doodle::assFileSqlInfo::getAll(it_cl);
+  //     for (auto k_f : f_list) {
+  //       std::cout << std::setfill(' ') << std::setw(13) << "file : " << k_f->getSuffixes() << std::endl;
+  //     }
+  //   }
+  // }
 }
 
 TEST_F(CoreTest, create_shotinfo) {

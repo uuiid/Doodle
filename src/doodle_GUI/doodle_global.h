@@ -9,6 +9,7 @@
 #pragma once
 
 #include <core_global.h>
+#include <core_cpp_qt.h>
 
 #include <QtCore/qglobal.h>
 #include <QWidget>
@@ -64,7 +65,5 @@ class ScreenshotAction;
 class shotWidget;
 class assWidght;
 class mainWindows;
-
-
 
 DOODLE_NAMESPACE_E

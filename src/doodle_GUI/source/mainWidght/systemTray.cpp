@@ -6,19 +6,18 @@
 #include <doodle_GUI/source/mainWidght/mainWindows.h>
 #include <doodle_GUI/source/settingWidght/settingWidget.h>
 #include <loggerlib/Logger.h>
-#include < core_Cpp.h>
+#include <core_Cpp.h>
 #include <QApplication>
 
 #include <QMenu>
 #include <QTimer>
-
-#include <doodle_GUI/source/toolkit/toolkit.h>
 #include <boost/format.hpp>
 #include <QtWidgets/qfiledialog.h>
+#include <boost/process.hpp>
+
+#include <doodle_GUI/source/toolkit/toolkit.h>
 #include <doodle_GUI/source/rigisterWight/doodleRigister.h>
 #include <doodle_GUI/source/toolkit/updataManager.h>
-
-#include <boost/process.hpp>
 
 #include <future>
 DOODLE_NAMESPACE_S
@@ -36,7 +35,7 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
   auto menu = new QMenu(parent);
 
   auto prj_widght = new QAction(menu);
-  prj_widght->setText(tr("项目管理器"));
+  prj_widght->setText(tr("工具箱"));
 
   auto install = new QMenu(menu);
   install->setTitle(tr("安装插件"));

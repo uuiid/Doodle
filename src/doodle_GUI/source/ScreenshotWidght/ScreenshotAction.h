@@ -12,7 +12,7 @@ class ScreenshotAction : public QDialog {
  public:
   ScreenshotAction(QWidget *parent = nullptr);
 
-  void screenShot(const dpath &save_path);
+  void screenShot(const fileSys::path &save_path);
 
  protected:
   void paintEvent(QPaintEvent *event) override;

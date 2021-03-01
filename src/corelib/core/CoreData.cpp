@@ -14,18 +14,19 @@ DOODLE_NAMESPACE_S
 
 RTTR_REGISTRATION {
   rttr::registration::class_<CoreData>(DOCORE_RTTE_CLASS(CoreData))  //DOCORE_RTTE_CLASS(CoreData)
-      .method(DOODLE_TOS(setInfo), &CoreData::setInfo)               // .constructor<>()(rttr::policy::ctor::as_std_shared_ptr)
-      .property(DOODLE_TOS(p_roots), &CoreData::Roots, &CoreData::setRoots);
+      // .method(DOODLE_TOS(setInfo), &CoreData::setInfo)               // .constructor<>()(rttr::policy::ctor::as_std_shared_ptr)
+      // .property(DOODLE_TOS(p_roots), &CoreData::Roots, &CoreData::setRoots)
+      ;
 }
 CoreData::CoreData()
     : p_roots() {
 }
 
-const dpathListPtr& CoreData::Roots() const noexcept {
+const fileSys::path& CoreData::Root() const noexcept {
   return p_roots;
 }
 
-void CoreData::setRoots(const dpathListPtr& Roots) noexcept {
+void CoreData::setRoot(const fileSys::path& Roots) noexcept {
   p_roots = Roots;
 }
 

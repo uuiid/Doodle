@@ -16,7 +16,7 @@
 
 #include <boost/format.hpp>
 #include <boost/process.hpp>
-
+#include <loggerlib/Logger.h>
 #include <string>
 #include <regex>
 DOODLE_NAMESPACE_S
@@ -29,8 +29,8 @@ void toolkit::openPath(const fileSqlInfoPtr &info_ptr,
                          QString::fromUtf8("没有找到目录 "),
                          QMessageBox::Yes);
   }
-  auto path = coreSet::getSet().getPrjectRoot() /
-              info_ptr->getFileList()[0].parent_path();
+  auto path =
+      info_ptr->getFileList()[0].parent_path();
 
   boost::format str("explorer.exe \"%s\"");
   auto path_noral =
@@ -44,18 +44,18 @@ void toolkit::openPath(const fileSqlInfoPtr &info_ptr,
     if (openEx)
       boost::process::system(str.str().c_str());
     else
-      QGuiApplication::clipboard()->setText(DOTOS(path.generic_string()));
+      QGuiApplication::clipboard()->setText(QString::fromStdString(path.generic_string()));
   } else {
     DOODLE_LOG_INFO(" 没有在服务器中找到目录:" << path.generic_string());
     QMessageBox::warning(nullptr, QString::fromUtf8("没有目录"),
                          QString::fromUtf8("没有在服务器中找到目录:\n %1")
-                             .arg(DOTOS(path.generic_string())),
+                             .arg(QString::fromStdString(path.generic_string())),
                          QMessageBox::Yes);
   }
 }
 
-void toolkit::openPath(const dpath &path_) {
-  auto path = coreSet::getSet().getPrjectRoot() / path_;
+void toolkit::openPath(const fileSys::path &path_) {
+  auto path = path_;
 
   boost::format str("explorer.exe \"%s\"");
   auto path_noral =
@@ -72,7 +72,7 @@ void toolkit::openPath(const dpath &path_) {
     DOODLE_LOG_INFO("没有在服务器中找到目录:" << path.generic_string());
     QMessageBox::warning(nullptr, QString::fromUtf8("没有目录"),
                          QString::fromUtf8("没有在服务器中找到目录:\n %1")
-                             .arg(DOTOS(path.generic_string())),
+                             .arg(QString::fromStdString(path.generic_string())),
                          QMessageBox::Yes);
   }
 }
@@ -171,7 +171,7 @@ bool toolkit::deleteUeCache() {
   }
 }
 
-dpath toolkit::getUeInstallPath() {
+fileSys::path toolkit::getUeInstallPath() {
   boost::filesystem::path ue_path;
   boost::filesystem::path sourePath;
 
@@ -188,7 +188,7 @@ dpath toolkit::getUeInstallPath() {
     dpath_list.push_back(kPath.toString().toStdString());
   }
   dpath_list.erase(std::remove_if(dpath_list.begin(), dpath_list.end(),
-                                  [=](dpath &dpath) {
+                                  [=](fileSys::path &dpath) {
                                     return !boost::filesystem::exists(dpath);
                                   }),
                    dpath_list.end());
@@ -201,7 +201,7 @@ dpath toolkit::getUeInstallPath() {
   //获得选择目标
   QStringList list;
   for (const auto &item : dpath_list) {
-    list.push_back(DOTOS(item.generic_string()));
+    list.push_back(QString::fromStdString(item.generic_string()));
   }
   ue_path = QInputDialog::getItem(nullptr, "选择ue版本", "路径", list)
                 .toStdString();

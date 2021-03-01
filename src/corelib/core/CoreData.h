@@ -19,19 +19,19 @@ class PathParser;
 }
 
 class CORE_API CoreData {
-  RTTR_ENABLE();
+  RTTR_ENABLE()
 
  protected:
-  std::vector<std::shared_ptr<fileSys::path>> p_roots;
+  fileSys::path p_roots;
 
  public:
   CoreData();
   virtual bool setInfo(const std::string &value) = 0;
 
-  DOODLE_DISABLE_COPY(CoreData)
+  DOODLE_DISABLE_COPY(CoreData);
 
-  const dpathListPtr &Roots() const noexcept;
-  virtual void setRoots(const dpathListPtr &Roots) noexcept;
+  const fileSys::path &Root() const noexcept;
+  virtual void setRoot(const fileSys::path &Roots) noexcept;
 };
 
 DOODLE_NAMESPACE_E

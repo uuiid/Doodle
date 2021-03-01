@@ -39,25 +39,25 @@ bool assClass::setInfo(const std::string &value) {
 }
 
 assClassPtrList assClass::getAll(const assDepPtr &ass_dep_ptr) {
-  auto &set = coreSet::getSet();
+  // auto &set = coreSet::getSet();
 
-  auto roots       = ass_dep_ptr->Roots();
-  auto path_parser = set.getProject()->findParser(rttr::type::get<assClass>());
+  // auto roots       = ass_dep_ptr->Roots();
+  // auto path_parser = set.getProject()->findParser(rttr::type::get<assClass>());
 
-  assClassPtrList ass_list{};
+  // assClassPtrList ass_list{};
 
-  for (auto &parser : path_parser) {
-    parser->getClassInstance.connect([]() { return std::make_shared<assClass>(); });
-    for (auto &p_r : roots) {
-      auto &ass_s = parser->parser(*p_r);
-      for (auto &ass : ass_s) {
-        ass_list.push_back(std::dynamic_pointer_cast<assClass>(ass));
-        ass_list.back()->setAssDep(ass_dep_ptr);
-      }
-    }
-  }
+  // for (auto &parser : path_parser) {
+  //   parser->getClassInstance.connect([]() { return std::make_shared<assClass>(); });
+  //   for (auto &p_r : roots) {
+  //     auto &ass_s = parser->parser(*p_r);
+  //     for (auto &ass : ass_s) {
+  //       ass_list.push_back(std::dynamic_pointer_cast<assClass>(ass));
+  //       ass_list.back()->setAssDep(ass_dep_ptr);
+  //     }
+  //   }
+  // }
 
-  return ass_list;
+  return {};
 }
 
 assDepPtr assClass::getAssDep() const {
@@ -72,21 +72,22 @@ void assClass::setAssDep(const assDepPtr &value) {
 }
 
 void assClass::setAssClass(const std::string &value) {
-  if (!p_ptr_znch) {
-    p_ptr_znch = std::make_shared<znchName>(this);
-  }
+  name = value;
+  // if (!p_ptr_znch) {
+  //   p_ptr_znch = std::make_shared<znchName>(this);
+  // }
 
-  p_ptr_znch->setName(value, true);
-  name = p_ptr_znch->pinyin();
+  // p_ptr_znch->setName(value, true);
+  // name = p_ptr_znch->pinyin();
 }
 
 std::string assClass::getAssClass() const {
   std::string str;
-  if (!p_ptr_znch)
-    throw nullptr_error("");
+  // if (!p_ptr_znch)
+  //   throw nullptr_error("");
 
-  str = p_ptr_znch->getName();
-  return str;
+  // str = p_ptr_znch->getName();
+  return name;
 }
 const std::unordered_set<assClass *> assClass::Instances() {
   return p_instance;

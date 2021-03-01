@@ -52,28 +52,31 @@ bool assFileSqlInfo::setInfo(const std::string &value) {
 }
 
 assInfoPtrList assFileSqlInfo::getAll(const assClassPtr &AT_) {
-  auto &set = coreSet::getSet();
-  auto path = AT_->Roots();
-  if (path.empty()) return {};
+  // auto &set = coreSet::getSet();
+  // auto path = AT_->Roots();
+  // if (path.empty()) return {};
 
-  for (auto p : fileSys::directory_iterator(*path.front())) {
-    path.emplace_back(std::make_shared<fileSys::path>(p.path()));
-  }
-  auto path_parser = set.getProject()->findParser(rttr::type::get<assFileSqlInfo>());
+  // for (auto p : fileSys::directory_iterator(*path.front())) {
+  //   if (fileSys::is_directory(p.path()))
+  //     path.emplace_back(std::make_shared<fileSys::path>(p.path()));
+  // }
+  // auto path_parser = set.getProject()->findParser(rttr::type::get<assFileSqlInfo>());
 
-  assInfoPtrList lists{};
-  for (auto k_parser : path_parser) {
-    for (auto k_p : path) {
-      auto ass_list = k_parser->parser(*k_p);
-      for (auto ass : ass_list) {
-        auto k = std::dynamic_pointer_cast<assFileSqlInfo>(ass);
-        k->setAssClass(AT_);
-        lists.emplace_back(k);
-      }
-    }
-  }
+  // assInfoPtrList lists{};
+  // for (auto k_parser : path_parser) {
+  //   k_parser->getClassInstance.connect([]() { return std::make_shared<assFileSqlInfo>(); });
+  //   for (auto k_p : path) {
+  //     auto ass_list = k_parser->parser(*k_p);
+  //     for (auto ass : ass_list) {
+  //       auto k = std::dynamic_pointer_cast<assFileSqlInfo>(ass);
+  //       k->setAssClass(AT_);
+  //       lists.emplace_back(k);
+  //     }
+  //   }
+  // }
 
-  return lists;
+  // return lists;
+  return {};
 }
 fileSys::path assFileSqlInfo::generatePath(const std::string &programFolder) {
   //  QString path("%1/%2/%3/%4/%5");

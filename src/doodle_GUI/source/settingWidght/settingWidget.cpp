@@ -48,10 +48,6 @@ settingWidget::settingWidget(QWidget *parent)
   p_prj_layout->addWidget(p_prj_label);
   p_prj_layout->addWidget(p_prj_text);
 
-  auto p_syn_exe_path = new QLabel();
-  p_syn_exe_path->setText(tr("同步软件安装目录 : %1")
-                              .arg(DOTOS(coreSet::getSet().getFreeFileSyn())));
-
   auto p_save = new QPushButton();
   p_save->setText(tr("保存"));
   connect(p_save, &QPushButton::clicked,
@@ -62,7 +58,7 @@ settingWidget::settingWidget(QWidget *parent)
   p_same_layout->addLayout(p_user_layout);
   p_same_layout->addLayout(p_prj_layout);
   p_same_layout->addLayout(p_syn_layout);
-  p_same_layout->addWidget(p_syn_exe_path);
+
   p_same_layout->addWidget(p_save);
 
   p_layout->addLayout(p_same_layout);
@@ -79,36 +75,12 @@ settingWidget::settingWidget(QWidget *parent)
           this, &settingWidget::setProject);
 }
 void settingWidget::setInit() {
-  p_prj_text->clear();
-  p_prj_text->disconnect(this);
-
-  for (const auto &name : p_set_.getAllPrjName()) {
-    p_prj_text->addItem(DOTOS(name));
-  }
-  p_dep_text->setCurrentText(DOTOS(p_set_.getDepartment()));
-  p_user_text->setText(DOTOS(p_set_.getUser()));
-  p_syn_text->setText(DOTOS(p_set_.getSynPathLocale().generic_string()));
-
-  DOODLE_LOG_DEBUG(p_set_.getProjectname());
-  auto index = p_prj_text->findText(DOTOS(p_set_.getProjectname()));
-
-  p_prj_text->setCurrentIndex(index);
-
-  connect(p_prj_text, &QComboBox::currentTextChanged,
-          this, &settingWidget::setProject);
 }
 void settingWidget::setDepartment(const QString &dep) {
-  p_set_.setDepartment(dep);
 }
 void settingWidget::setUser(const QString &user) {
-  p_set_.setUser(user);
 }
 void settingWidget::setLocaleSynPath(const QString &path) {
-  if (path.isEmpty()) return;
-  auto syn_dir = QDir(path);
-  if (syn_dir.exists())
-    syn_dir.mkpath(syn_dir.path());
-  p_set_.setSynPathLocale(path);
 }
 void settingWidget::seteps(int eps) {
   // if (eps <= 0) return;
@@ -128,8 +100,6 @@ void settingWidget::seteps(int eps) {
   // }
 }
 void settingWidget::setProject(const QString &prj) {
-  p_set_.setProjectname(prj);
-  projectChanged();
 }
 void settingWidget::closeEvent(QCloseEvent *event) {
   save();

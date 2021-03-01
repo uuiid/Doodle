@@ -43,8 +43,8 @@ std::vector<std::shared_ptr<CoreData>> PathParser::parser(const fileSys::path& r
       auto k_path = it.path();
 
       auto k_in = getClassInstance().get();
-      k_in->setInfo(k_str);
-      k_in->setRoots(std::vector<std::shared_ptr<fileSys::path>>{std::make_shared<fileSys::path>(k_path)});
+      // k_in->setInfo(k_str);
+      // k_in->setRoots(std::make_shared<fileSys::path>(k_path));
 
       //推入结果
       list.push_back(k_in);

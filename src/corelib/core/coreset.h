@@ -56,10 +56,6 @@ class CORE_API coreSet {
   [[nodiscard]] dstring getDepartment() const;
   void setDepartment(const dstring &value);
 
-  //同步集数设置
-  [[nodiscard]] int getSyneps() const;
-  void setSyneps(int value);
-
   //项目名称设置
   std::shared_ptr<Project> getProject();
   std::vector<std::shared_ptr<Project>> getAllProjects();
