@@ -21,6 +21,7 @@ class MOTIONGLOBAL_API MotionMainUI : public QMainWindow {
   void openMotionLib();
 
  private:
+  void createMainWidget();
   QGridLayout* p_layout;
   QWidget* p_centralWidget;
   MotionSettingWidget* p_setting_widget;

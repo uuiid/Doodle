@@ -58,6 +58,7 @@ MotionSettingWidget::MotionSettingWidget(QWidget *parent)
             if (dir.isEmpty()) return;
 
             lineEdit_root->setText(dir);
+            set.setMotionName("doodle_motion");
             set.setMotionLibRoot(dir.toStdString());
           });
 

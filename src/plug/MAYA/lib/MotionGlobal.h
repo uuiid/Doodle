@@ -10,6 +10,10 @@
 
 #include <filesystem>
 
+#define DOODLE_DISABLE_COPY(className)   \
+  className(const className &) = delete; \
+  className &operator=(const className &) = delete;
+
 namespace doodle {
 namespace FSys = std::filesystem;
 }

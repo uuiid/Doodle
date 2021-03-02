@@ -1,0 +1,33 @@
+#pragma once
+
+#include <MotionGlobal.h>
+#include <QtCore/QVariant>
+namespace doodle::motion::ui {
+class TreeDirItem;
+using TreeDirItemPtr = std::shared_ptr<TreeDirItem>;
+
+class TreeDirItem : public std::enable_shared_from_this<TreeDirItem> {
+ private:
+  std::string p_dir;
+  std::weak_ptr<TreeDirItem> p_parent;
+  std::vector<TreeDirItemPtr> p_child_items;
+
+ public:
+  explicit TreeDirItem();
+  explicit TreeDirItem(std::string dir, TreeDirItemPtr parent = nullptr);
+  const std::string& Dir() const noexcept;
+  void setDir(const std::string& Dir) noexcept;
+
+  const TreeDirItemPtr& Parent() const noexcept;
+  void setParent(const TreeDirItemPtr& Parent) noexcept;
+
+  size_t GetChildCount() const noexcept;
+  TreeDirItemPtr GetChild(size_t index) const noexcept;
+  size_t row() const noexcept;
+
+  DOODLE_DISABLE_COPY(TreeDirItem);
+};
+
+}  // namespace doodle::motion::ui
+
+Q_DECLARE_METATYPE(doodle::motion::ui::TreeDirItem*)

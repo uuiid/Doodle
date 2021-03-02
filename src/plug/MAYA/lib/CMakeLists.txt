@@ -7,7 +7,10 @@ ui/MotionMainUI.cpp
 ui/MotionSettingWidget.cpp
 ui/MotionLibWidget.cpp
 ui/model/MotionModel.cpp
+ui/model/TreeDirModel.cpp
+ui/model/TreeDirItem.cpp
 ui/view/MotionView.cpp
+ui/view/TreeDirView.cpp
 
 
 kernel/MotionSetting.cpp
@@ -20,7 +23,10 @@ ui/MotionMainUI.h
 ui/MotionSettingWidget.h
 ui/MotionLibWidget.h
 ui/model/MotionModel.h
+ui/model/TreeDirModel.h
+ui/model/TreeDirItem.h
 ui/view/MotionView.h
+ui/view/TreeDirView.h
 
 kernel/MotionSetting.h
 kernel/MotionFile.h
@@ -44,7 +50,7 @@ target_link_libraries(doodle_motion PRIVATE nlohmann_json nlohmann_json::nlohman
 #链接fbx库
 target_link_libraries(doodle_motion PRIVATE Autodesk_FBX)
 
-target_link_libraries(doodle_motion PRIVATE SqlppSqlite)
+# target_link_libraries(doodle_motion PRIVATE SqlppSqlite)
 
 target_include_directories(doodle_motion PRIVATE ${MAYA_INCLUDE_DIR})
 

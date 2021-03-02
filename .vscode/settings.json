@@ -131,7 +131,8 @@
         "core": "cpp",
         "qtguidepends": "cpp",
         "qtwidgetsdepends": "cpp",
-        "qapplication": "cpp"
+        "qapplication": "cpp",
+        "qtreeview": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",

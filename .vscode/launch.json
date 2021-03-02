@@ -1,6 +1,12 @@
 {
     "configurations": [
         {
+            "name": "Maya_plug_debug",
+            "type": "cppvsdbg",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        },
+        {
             "name": "Python: 当前文件",
             "type": "python",
             "request": "launch",

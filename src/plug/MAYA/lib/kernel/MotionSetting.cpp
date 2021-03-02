@@ -18,11 +18,10 @@ const FSys::path& MotionSetting::MotionLibRoot() const noexcept {
 }
 
 void MotionSetting::setMotionLibRoot(const FSys::path& MotionLibRoot) noexcept {
+  p_motion_path = MotionLibRoot;
   if (!FSys::exists(p_motion_path / ConfigName)) {
-    
     this->createMotionProject();
   }
-  p_motion_path = MotionLibRoot;
 }
 
 const std::string& MotionSetting::User() const noexcept {
@@ -85,6 +84,10 @@ void MotionSetting::createMotionProject() {
   std::fstream file{db_root, std::ios::out};
   if (!file.is_open()) return;
   file << root.dump();
+
+  FSys::create_directories(p_motion_path / "etc");
+  FSys::create_directories(p_motion_path / "fbx");
+  FSys::create_directories(p_motion_path / "gif");
 }
 
 void MotionSetting::from_json(const nlohmann::json& j) {
