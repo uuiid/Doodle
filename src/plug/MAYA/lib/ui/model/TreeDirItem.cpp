@@ -10,7 +10,7 @@ TreeDirItem::TreeDirItem(std::string dir, TreeDirItemPtr parent)
       p_parent() {
   if (parent) {
     p_parent = parent;
-    parent->p_child_items.emplace_back(shared_from_this());
+    parent->p_child_items.push_back(shared_from_this());
   }
 }
 
@@ -22,11 +22,12 @@ void TreeDirItem::setDir(const std::string& Dir) noexcept {
   p_dir = Dir;
 }
 
-const TreeDirItemPtr& TreeDirItem::Parent() const noexcept {
+const TreeDirItemPtr TreeDirItem::Parent() const noexcept {
   return p_parent.lock();
 }
 
 void TreeDirItem::setParent(const TreeDirItemPtr& Parent) noexcept {
+  Parent->p_child_items.emplace_back(shared_from_this());
   p_parent = Parent;
 }
 

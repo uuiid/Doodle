@@ -18,7 +18,7 @@ class TreeDirItem : public std::enable_shared_from_this<TreeDirItem> {
   const std::string& Dir() const noexcept;
   void setDir(const std::string& Dir) noexcept;
 
-  const TreeDirItemPtr& Parent() const noexcept;
+  const TreeDirItemPtr Parent() const noexcept;
   void setParent(const TreeDirItemPtr& Parent) noexcept;
 
   size_t GetChildCount() const noexcept;
@@ -30,4 +30,4 @@ class TreeDirItem : public std::enable_shared_from_this<TreeDirItem> {
 
 }  // namespace doodle::motion::ui
 
-Q_DECLARE_METATYPE(doodle::motion::ui::TreeDirItem*)
+Q_DECLARE_METATYPE(doodle::motion::ui::TreeDirItem *)

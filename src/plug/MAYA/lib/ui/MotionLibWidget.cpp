@@ -14,7 +14,7 @@ MotionLibWidget::MotionLibWidget(QWidget *parent)
   auto k_tree_model   = new TreeDirModel(this);
   auto k_motion_model = new MotionModel(this);
 
-  auto k_tree_view   = new TreeDirView();
+  auto k_tree_view   = new QTreeView();
   auto k_motion_view = new MotionView();
 
   k_tree_view->setModel(k_tree_model);

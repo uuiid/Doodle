@@ -56,12 +56,11 @@ void MotionMainUI::setMotionLib() {
 
 void MotionMainUI::openMotionLib() {
   p_setting_widget->hide();
-}
-
-void MotionMainUI::createMainWidget() {
   auto k_motion = new MotionLibWidget();
   p_layout->addWidget(k_motion);
   k_motion->show();
 }
+
+
 
 }  // namespace doodle::motion::ui

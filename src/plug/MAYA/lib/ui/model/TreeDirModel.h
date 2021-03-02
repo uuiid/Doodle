@@ -11,6 +11,8 @@ class TreeDirModel : public QAbstractItemModel {
  private:
   TreeDirItemPtr p_root;
 
+  TreeDirItemPtr getItem(const QModelIndex &index) const;
+
  public:
   TreeDirModel(QObject *parent = nullptr);
 
