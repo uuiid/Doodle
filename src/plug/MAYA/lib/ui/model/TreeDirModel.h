@@ -25,6 +25,21 @@ class TreeDirModel : public QAbstractItemModel {
   [[nodiscard]] QModelIndex parent(const QModelIndex &index) const override;
   [[nodiscard]] int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   [[nodiscard]] int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+
+  //创建可编辑模型
+  bool setData(const QModelIndex &index, const QVariant &value,
+               int role = Qt::EditRole) override;
+  // bool setHeaderData(int section, Qt::Orientation orientation,
+  //                    const QVariant &value, int role = Qt::EditRole) override;
+
+  bool insertColumns(int position, int columns,
+                     const QModelIndex &parent = QModelIndex()) override;
+  bool removeColumns(int position, int columns,
+                     const QModelIndex &parent = QModelIndex()) override;
+  bool insertRows(int position, int rows,
+                  const QModelIndex &parent = QModelIndex()) override;
+  bool removeRows(int position, int rows,
+                  const QModelIndex &parent = QModelIndex()) override;
 };
 
 }  // namespace doodle::motion::ui

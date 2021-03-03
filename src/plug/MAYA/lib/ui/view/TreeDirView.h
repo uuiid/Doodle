@@ -9,6 +9,14 @@ class TreeDirView : public QTreeView {
  public:
   TreeDirView(QWidget* parent = nullptr);
   ~TreeDirView();
+
+ protected:
+  //上下文菜单
+  void contextMenuEvent(QContextMenuEvent* event) override;
+
+ private:
+  void createDir();
+  void editDir();
 };
 
 }  // namespace doodle::motion::ui

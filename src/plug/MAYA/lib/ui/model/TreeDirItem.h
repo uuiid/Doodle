@@ -14,7 +14,7 @@ class TreeDirItem : public std::enable_shared_from_this<TreeDirItem> {
 
  public:
   explicit TreeDirItem();
-  explicit TreeDirItem(std::string dir, TreeDirItemPtr parent = nullptr);
+  explicit TreeDirItem(std::string dir);
   const std::string& Dir() const noexcept;
   void setDir(const std::string& Dir) noexcept;
 
@@ -23,11 +23,16 @@ class TreeDirItem : public std::enable_shared_from_this<TreeDirItem> {
 
   size_t GetChildCount() const noexcept;
   TreeDirItemPtr GetChild(size_t index) const noexcept;
-  size_t row() const noexcept;
+
+  TreeDirItemPtr MakeChild(int position, std::string&& name) noexcept;
+  bool removeChild(const TreeDirItemPtr point);
+
+  size_t ChildNumber() const noexcept;
 
   DOODLE_DISABLE_COPY(TreeDirItem);
 };
 
 }  // namespace doodle::motion::ui
 
-Q_DECLARE_METATYPE(doodle::motion::ui::TreeDirItem *)
+Q_DECLARE_OPAQUE_POINTER(doodle::motion::ui::TreeDirItem)
+// Q_DECLARE_METATYPE(doodle::motion::ui::TreeDirItem)

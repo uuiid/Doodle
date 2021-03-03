@@ -1,17 +1,17 @@
 #include <lib/ui/model/TreeDirItem.h>
+
+#include <iostream>
 namespace doodle::motion::ui {
 TreeDirItem::TreeDirItem()
-    : p_dir(),
+    : std::enable_shared_from_this<TreeDirItem>(),
+      p_dir(),
       p_parent() {
 }
 
-TreeDirItem::TreeDirItem(std::string dir, TreeDirItemPtr parent)
-    : p_dir(std::move(dir)),
+TreeDirItem::TreeDirItem(std::string dir)
+    : std::enable_shared_from_this<TreeDirItem>(),
+      p_dir(std::move(dir)),
       p_parent() {
-  if (parent) {
-    p_parent = parent;
-    parent->p_child_items.push_back(shared_from_this());
-  }
 }
 
 const std::string& TreeDirItem::Dir() const noexcept {
@@ -41,7 +41,23 @@ TreeDirItemPtr TreeDirItem::GetChild(size_t index) const noexcept {
   return p_child_items.at(index);
 }
 
-size_t TreeDirItem::row() const noexcept {
+TreeDirItemPtr TreeDirItem::MakeChild(int position, std::string&& name) noexcept {
+  auto child = std::make_shared<TreeDirItem>(std::move(name));
+  this->p_child_items.insert(this->p_child_items.begin() + position,
+                             child);
+  child->p_parent = this->shared_from_this();
+
+  return child;
+}
+
+bool TreeDirItem::removeChild(const TreeDirItemPtr point) {
+  auto it = std::find(this->p_child_items.begin(), this->p_child_items.end(), point);
+  if (it == p_child_items.end()) return false;
+  this->p_child_items.erase(it);
+  return true;
+}
+
+size_t TreeDirItem::ChildNumber() const noexcept {
   auto k_p = p_parent.lock();
   if (!k_p) return 0;
   auto k_it = std::find(k_p->p_child_items.begin(),

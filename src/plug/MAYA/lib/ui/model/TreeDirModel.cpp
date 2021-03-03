@@ -15,28 +15,22 @@ TreeDirItemPtr TreeDirModel::getItem(const QModelIndex &index) const {
 TreeDirModel::TreeDirModel(QObject *parent)
     : QAbstractItemModel(parent),
       p_root(std::make_shared<TreeDirItem>("")) {
-  // auto tmp = std::make_shared<TreeDirItem>("test");
-  // tmp->setParent(p_root);
-  // tmp = std::make_shared<TreeDirItem>("test");
-  // tmp->setParent(p_root);
-  // tmp = std::make_shared<TreeDirItem>("test");
-  // tmp->setParent(p_root);
-  // tmp = std::make_shared<TreeDirItem>("test");
-  // tmp->setParent(p_root);
-  // tmp = std::make_shared<TreeDirItem>("test");
-  // tmp->setParent(p_root);
+  auto tmp = p_root->MakeChild(0, "test");
+  p_root->MakeChild(0, "test");
+  p_root->MakeChild(0, "test");
+  p_root->MakeChild(0, "test");
+  p_root->MakeChild(0, "test");
 
-  // tmp = std::make_shared<TreeDirItem>("test");
-  // tmp->setParent(p_root->GetChild(1));
-  // tmp = std::make_shared<TreeDirItem>("test");
-  // tmp->setParent(p_root->GetChild(1));
+  tmp->MakeChild(0, "test2");
+  tmp->MakeChild(0, "test2");
+  tmp->MakeChild(0, "test2");
+  auto tmp2 = tmp->MakeChild(0, "test2");
 
-  // tmp = std::make_shared<TreeDirItem>("test2");
-  // tmp->setParent(p_root->GetChild(2));
-  // tmp = std::make_shared<TreeDirItem>("test3");
-  // tmp->setParent(p_root->GetChild(2));
-  // tmp = std::make_shared<TreeDirItem>("test4");
-  // tmp->setParent(p_root->GetChild(2));
+  tmp2->MakeChild(0, "test3");
+  tmp2->MakeChild(0, "test3");
+  tmp2->MakeChild(0, "test3");
+  tmp2->MakeChild(0, "test3");
+  tmp2->MakeChild(0, "test3");
 }
 
 QVariant TreeDirModel::data(const QModelIndex &index, int role) const {
@@ -59,7 +53,7 @@ QVariant TreeDirModel::data(const QModelIndex &index, int role) const {
 Qt::ItemFlags TreeDirModel::flags(const QModelIndex &index) const {
   if (!index.isValid())
     return Qt::NoItemFlags;
-  return QAbstractItemModel::flags(index);
+  return QAbstractItemModel::flags(index) | Qt::ItemIsEnabled | Qt::ItemIsEditable;
 }
 
 QVariant TreeDirModel::headerData(int section, Qt::Orientation orientation,
@@ -100,7 +94,7 @@ QModelIndex TreeDirModel::parent(const QModelIndex &index) const {
   if (k_parent == p_root || !k_parent)  //
     return k_index;
 
-  return createIndex(boost::numeric_cast<int>(k_parent->row()), 0, k_parent.get());
+  return createIndex(boost::numeric_cast<int>(k_parent->ChildNumber()), 0, k_parent.get());
 }
 
 int TreeDirModel::rowCount(const QModelIndex &parent) const {
@@ -116,5 +110,61 @@ int TreeDirModel::columnCount(const QModelIndex &parent) const {
     return 1;
   else
     return 1;
+}
+
+bool TreeDirModel::setData(const QModelIndex &index, const QVariant &value,
+                           int role) {
+  auto k_item = getItem(index);
+
+  auto k_r = true;
+  switch (role) {
+    case Qt::EditRole: {
+      if (value.toString().isEmpty()) {
+        k_r = false;
+        break;
+      }
+      k_item->setDir(value.toString().toStdString());
+      dataChanged(index, index, {Qt::EditRole});
+      break;
+    }
+    default:
+      k_r = false;
+      break;
+  }
+  return k_r;
+}
+
+bool TreeDirModel::insertColumns(int position, int columns, const QModelIndex &parent) {
+  return false;
+}
+bool TreeDirModel::removeColumns(int position, int columns, const QModelIndex &parent) {
+  return false;
+}
+bool TreeDirModel::insertRows(int position, int rows, const QModelIndex &parent) {
+  auto k_parent  = getItem(parent);
+  auto k_request = true;
+  beginInsertRows(parent, position, position + rows - 1);
+  for (auto i = 0; i < rows; ++i) {
+    auto k_ptr = k_parent->MakeChild(position + i, "");
+    k_request &= (bool)k_ptr;
+  }
+  endInsertRows();
+
+  return k_request;
+}
+bool TreeDirModel::removeRows(int position, int rows, const QModelIndex &parent) {
+  auto k_parent  = getItem(parent);
+  auto k_request = true;
+  beginRemoveRows(parent, position, position + rows - 1);
+  for (auto i = 0; i < rows; ++i) {
+    auto k_data = k_parent->GetChild(position + i);
+    if (k_data) {
+      auto k_rus = k_parent->removeChild(k_data);
+      k_request &= k_rus;
+    } else
+      k_request &= false;
+  }
+  endRemoveRows();
+  return k_request;
 }
 }  // namespace doodle::motion::ui
