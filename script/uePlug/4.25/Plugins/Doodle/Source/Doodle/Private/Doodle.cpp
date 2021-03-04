@@ -16,6 +16,7 @@
 //我们自己自定义的类
 #include "fireLight.h"
 #include "DoodleDirectionalLightDome.h"
+#include "DoodleCopySpline.h"
 static const FName doodleTabName("doodle");
 
 #define LOCTEXT_NAMESPACE "FdoodleModule"
@@ -54,6 +55,10 @@ void FdoodleModule::StartupModule() {
   IPlacementModeModule::Get().RegisterPlaceableItem(
       info.UniqueHandle,
       MakeShareable(new FPlaceableItem(nullptr, FAssetData{ADoodleDirectionalLightDome::StaticClass()})));
+
+  IPlacementModeModule::Get().RegisterPlaceableItem(
+      info.UniqueHandle,
+      MakeShareable(new FPlaceableItem(nullptr, FAssetData{ADoodleCopySpline::StaticClass()})));
 }
 
 void FdoodleModule::ShutdownModule() {

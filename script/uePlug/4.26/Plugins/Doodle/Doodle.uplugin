@@ -17,12 +17,16 @@
 		{
 			"Name": "doodle",
 			"Type": "Editor",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "PostEngineInit"
 		}
 	],
 	"Plugins": [
 		{
 			"Name": "EditorScriptingUtilities",
+			"Enabled": true
+		},
+		{
+			"Name": "AlembicImporter",
 			"Enabled": true
 		},
 		{
