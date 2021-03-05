@@ -4,10 +4,10 @@
 #include <QtGui/qcolor.h>
 
 namespace doodle::motion::ui {
-MotionModel::MotionModel(QObject *parent) : QAbstractListModel(parent) {
+MotionModel::MotionModel(QObject *parent)
+    : QAbstractListModel(parent),
+      p_lists() {
 }
-
-
 
 int MotionModel::rowCount(const QModelIndex &parent) const {
   return boost::numeric_cast<int>(p_lists.size());
@@ -54,15 +54,39 @@ bool MotionModel::setData(const QModelIndex &index, const QVariant &value, int r
 }
 
 bool MotionModel::insertRows(int position, int rows, const QModelIndex &index) {
-  return false;
+  beginInsertRows(index, position, position + rows - 1);
+  for (auto i = 0; i < rows; ++i) {
+    auto k_data = std::make_shared<kernel::MotionFile>();
+    this->p_lists.insert(this->p_lists.begin() + position + i, k_data);
+  }
+  endInsertRows();
+  return true;
 }
 
 bool MotionModel::removeRows(int position, int rows, const QModelIndex &index) {
-  return false;
+  if ((position + rows) >= this->p_lists.size()) return false;
+
+  beginRemoveRows(index, position, position + rows - 1);
+  for (auto i = 0; i < rows; ++i) {
+    auto k_data = this->p_lists.at(position + i);
+    auto k_it   = std::find(this->p_lists.begin(), this->p_lists.end(), k_data);
+    this->p_lists.erase(k_it);
+  }
+  endRemoveRows();
+  return true;
+}
+
+bool MotionModel::insertData(int position, const kernel::MotionFilePtr &data) {
+  beginInsertRows(QModelIndex(), position, position + 1);
+  this->p_lists.insert(this->p_lists.begin() + position, data);
+  endInsertRows();
+  return true;
 }
 
 void MotionModel::setLists(const std::vector<kernel::MotionFilePtr> &lists) {
+  beginResetModel();
   p_lists = lists;
+  endResetModel();
 }
 
 }  // namespace doodle::motion::ui

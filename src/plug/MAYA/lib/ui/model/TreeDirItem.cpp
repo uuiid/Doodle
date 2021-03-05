@@ -3,26 +3,39 @@
 
 #include <iostream>
 #include <regex>
-
+#include <boost/locale.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 namespace doodle::motion::ui {
 TreeDirItem::TreeDirItem()
     : std::enable_shared_from_this<TreeDirItem>(),
       p_dir(),
-      p_parent() {
+      p_parent(),
+      benignRemoveRows(),
+      endRemoveRows(),
+      benignInsertRows(),
+      endInsertRows() {
 }
 
-TreeDirItem::TreeDirItem(std::string dir)
+TreeDirItem::TreeDirItem(FSys::path dir)
     : std::enable_shared_from_this<TreeDirItem>(),
       p_dir(std::move(dir)),
-      p_parent() {
+      p_parent(),
+      benignRemoveRows(),
+      endRemoveRows(),
+      benignInsertRows(),
+      endInsertRows() {
 }
 
-const FSys::path TreeDirItem::Dir() const noexcept {
+const FSys::path TreeDirItem::Dir(bool hasRoot) const noexcept {
+  auto k_d = FSys::path{};
+  if (hasRoot)
+    k_d = kernel::MotionSetting::Get().MotionLibRoot();
   if (p_parent.expired()) {
-    return kernel::MotionSetting::Get().MotionLibRoot() / p_dir;
+    k_d = k_d / p_dir;
   } else {
-    return p_parent.lock()->Dir() / p_dir;
+    k_d = p_parent.lock()->Dir() / p_dir;
   }
+  return k_d.lexically_normal();
 }
 
 void TreeDirItem::setDir(const FSys::path& Dir) noexcept {
@@ -41,7 +54,7 @@ void TreeDirItem::setParent(const TreeDirItemPtr& Parent) noexcept {
 variant TreeDirItem::Data(int column) {
   auto require = variant{};
   if (column == 0) {
-    require = p_dir.generic_string();
+    require = p_dir.generic_u8string();
   }
   return require;
 }
@@ -52,10 +65,12 @@ void TreeDirItem::setData(int column, const variant& Data) {
   if (column == 0) {
     auto k_dir  = this->Dir();
     auto k_data = std::get<std::string>(Data);
+    auto k_wstr = boost::locale::conv::to_utf<wchar_t>(k_data, "UTF-8");
     if (FSys::exists(k_dir) && !p_dir.empty()) {
-      FSys::rename(k_dir, k_dir.parent_path() / k_data);
+      FSys::rename(k_dir, k_dir.parent_path() / k_wstr);
+      p_dir = k_wstr;
     } else {
-      p_dir = k_data;
+      p_dir = k_wstr;
       this->makeDir();
     }
   }
@@ -84,17 +99,24 @@ TreeDirItemPtr TreeDirItem::MakeChild(int position, std::string&& name) noexcept
   if (!name.empty()) {
     child->makeDir();
   }
+
+  benignInsertRows(position, 1);
   this->p_child_items.insert(this->p_child_items.begin() + position,
                              child);
   child->p_parent = this->shared_from_this();
+  endInsertRows();
 
   return child;
 }
 
 bool TreeDirItem::removeChild(const TreeDirItemPtr point) {
-  auto it = std::find(this->p_child_items.begin(), this->p_child_items.end(), point);
-  if (it == p_child_items.end()) return false;
-  this->p_child_items.erase(it);
+  auto k_it = std::find(this->p_child_items.begin(), this->p_child_items.end(), point);
+  if (k_it == p_child_items.end()) return false;
+
+  benignRemoveRows(std::distance(this->p_child_items.begin(), k_it), 1);
+  this->p_child_items.erase(k_it);
+  endRemoveRows();
+
   return true;
 }
 
@@ -110,18 +132,35 @@ size_t TreeDirItem::ChildNumber() const noexcept {
 }
 
 void TreeDirItem::refreshChild() {
-  auto p_dir = this->Dir();
+  auto k_dir = this->Dir();
 
-  std::regex k_regex{p_dir.generic_string()};
+  benignRemoveRows(0, boost::numeric_cast<int>(p_child_items.size()));
   p_child_items.clear();
+  endRemoveRows();
 
-  for (auto it : FSys::directory_iterator(p_dir)) {
+  auto test = FSys::directory_iterator(k_dir);
+
+  decltype(p_child_items) k_list{};
+
+  //开始扫描目录
+  for (auto& it : FSys::directory_iterator(k_dir)) {
     if (it.is_directory()) {
-      auto k_str        = std::regex_replace(it.path().generic_string(), k_regex, "");
+      auto k_str        = it.path().filename();
       auto k_child      = std::make_shared<TreeDirItem>(k_str);
       k_child->p_parent = this->shared_from_this();
-      p_child_items.emplace_back(std::move(k_child));
+      k_list.emplace_back(std::move(k_child));
     }
+  }
+
+  benignInsertRows(0, boost::numeric_cast<int>(k_list.size()));
+  p_child_items = k_list;
+  endInsertRows();
+}
+
+void TreeDirItem::recursiveRefreshChild() {
+  this->refreshChild();
+  for (auto&& item : p_child_items) {
+    item->recursiveRefreshChild();
   }
 }
 

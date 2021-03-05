@@ -1,10 +1,12 @@
 #pragma once
 
 #include <MotionGlobal.h>
+
+#include <boost/signals2.hpp>
+
 #include <QtCore/QVariant>
+
 namespace doodle::motion::ui {
-class TreeDirItem;
-using TreeDirItemPtr = std::shared_ptr<TreeDirItem>;
 
 class TreeDirItem : public std::enable_shared_from_this<TreeDirItem> {
  private:
@@ -14,8 +16,8 @@ class TreeDirItem : public std::enable_shared_from_this<TreeDirItem> {
 
  public:
   explicit TreeDirItem();
-  explicit TreeDirItem(std::string dir);
-  const FSys::path Dir() const noexcept;
+  explicit TreeDirItem(FSys::path dir);
+  const FSys::path Dir(bool hasRoot = true) const noexcept;
   void setDir(const FSys::path& Dir) noexcept;
 
   const TreeDirItemPtr Parent() const noexcept;
@@ -35,7 +37,15 @@ class TreeDirItem : public std::enable_shared_from_this<TreeDirItem> {
   size_t ChildNumber() const noexcept;
 
   void refreshChild();
+  //秭归扫描子目录
+  void recursiveRefreshChild();
   void makeDir();
+
+  boost::signals2::signal<void(const int start, const int size)> benignRemoveRows;
+  boost::signals2::signal<void()> endRemoveRows;
+  boost::signals2::signal<void(const int start, const int size)> benignInsertRows;
+  boost::signals2::signal<void()> endInsertRows;
+
   DOODLE_DISABLE_COPY(TreeDirItem);
 };
 

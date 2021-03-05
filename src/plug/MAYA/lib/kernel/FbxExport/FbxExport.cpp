@@ -1,7 +1,8 @@
 #include <lib/kernel/FbxExport/FbxExport.h>
+#include <lib/kernel/Exception.h>
 
 #include <maya/MGlobal.h>
-
+#include <maya/MSelectionList.h>
 // #include <fbxsdk.h>
 #include <fstream>
 namespace doodle::motion::kernel {
@@ -23,6 +24,14 @@ FbxExport::FbxExport(FSys::path path) {
 
 MStatus FbxExport::FbxExportMEL(FSys::path path) {
   MStatus status = MStatus::MStatusCode::kFailure;
+
+  MSelectionList k_list{};
+
+  status = MGlobal::getActiveSelectionList(k_list);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+
+  if (k_list.isEmpty()) throw FbxFileError("没有选择对象");
+
   MString k_mel{};
   k_mel += R"(FBXExportInputConnections -v false;
 FBXExportConstraints -v false;
@@ -33,15 +42,17 @@ FBXExportSkins -v false;
 FBXExportShapes -v false;
 FBXExportLights -v false;
 FBXExportInstances -v false;
-FBXExport -f ^1s -s;
+FBXExport -f "^1s" -s;
 )";
   MString k_file_path{};
 
   status = k_file_path.setUTF8(path.generic_u8string().c_str());
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  status = k_mel.format(k_file_path);
+  status = k_mel.format(k_mel, k_file_path);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+
+  MGlobal::displayInfo(k_mel);
 
   status = MGlobal::executeCommand(k_mel);
   CHECK_MSTATUS_AND_RETURN_IT(status);

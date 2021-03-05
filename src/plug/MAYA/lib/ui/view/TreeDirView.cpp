@@ -9,8 +9,11 @@
 
 namespace doodle::motion::ui {
 TreeDirView::TreeDirView(QWidget* parent)
-    : QTreeView(parent) {
+    : QTreeView(parent),
+      sig_chickItem() {
   setUniformRowHeights(true);
+  connect(this, &TreeDirView::clicked,
+          this, &TreeDirView::doodleChicked);
 }
 
 TreeDirView::~TreeDirView() {
@@ -18,13 +21,20 @@ TreeDirView::~TreeDirView() {
 
 void TreeDirView::contextMenuEvent(QContextMenuEvent* event) {
   auto menu       = new QMenu(this);
-  auto add_active = menu->addAction("创建目录");
+  auto add_active = menu->addAction(tr("创建目录"));
   connect(add_active, &QAction::triggered,
           this, &TreeDirView::createDir);
   if (this->selectionModel()->hasSelection()) {
-    auto edit_active = menu->addAction("编辑项目");
+    auto edit_active = menu->addAction(tr("编辑项目"));
     connect(edit_active, &QAction::triggered,
             this, &TreeDirView::editDir);
+
+    auto refresh_active = menu->addAction(tr("刷新子项"));
+    connect(refresh_active, &QAction::triggered,
+            this, [=]() {
+              auto k_model = dynamic_cast<TreeDirModel*>(this->model());
+              k_model->refreshChild(this->selectionModel()->currentIndex());
+            });
   }
 
   menu->move(event->globalPos());
@@ -52,5 +62,11 @@ void TreeDirView::editDir() {
   if (!this->selectionModel()->hasSelection()) return;
   auto k_index = this->selectionModel()->currentIndex();
   edit(k_index);
+}
+
+void TreeDirView::doodleChicked(const QModelIndex& index) {
+  auto l_data = static_cast<TreeDirItem*>(index.internalPointer())->shared_from_this();
+  if (!l_data) return;
+  sig_chickItem(l_data->Dir(), index);
 }
 }  // namespace doodle::motion::ui

@@ -14,8 +14,9 @@ TreeDirItemPtr TreeDirModel::getItem(const QModelIndex &index) const {
 
 TreeDirModel::TreeDirModel(QObject *parent)
     : QAbstractItemModel(parent),
-      p_root(std::make_shared<TreeDirItem>("")) {
-  p_root->refreshChild();
+      p_root(std::make_shared<TreeDirItem>("etc")) {
+  p_root->recursiveRefreshChild();
+
   // auto tmp = p_root->MakeChild(0, "test");
   // p_root->MakeChild(0, "test");
   // p_root->MakeChild(0, "test");
@@ -113,7 +114,8 @@ int TreeDirModel::columnCount(const QModelIndex &parent) const {
 // bool TreeDirModel::hasChildren(const QModelIndex &parent) const {
 //   auto k_ = getItem(parent);
 //   k_->refreshChild();
-//   return k_->GetChildCount() > 0;
+//   // return k_->GetChildCount() > 0;
+//   return true;
 // }
 
 bool TreeDirModel::setData(const QModelIndex &index, const QVariant &value,
@@ -171,5 +173,27 @@ bool TreeDirModel::removeRows(int position, int rows, const QModelIndex &parent)
   endRemoveRows();
   return k_request;
 }
+void TreeDirModel::refreshChild(const QModelIndex &index) {
+  auto k_data = getItem(index);
 
+  auto k_sigCon_bi = k_data->benignInsertRows.connect([=](const int start, const int size) {
+    this->beginInsertRows(index, start, size);
+  });
+  auto k_sigCon_ei = k_data->endInsertRows.connect([=]() {
+    this->endInsertRows();
+  });
+  auto k_sigCon_br = k_data->benignRemoveRows.connect([=](const int start, const int size) {
+    this->beginRemoveRows(index, start, size);
+  });
+  auto k_sigCon_er = k_data->endRemoveRows.connect([=]() {
+    this->endRemoveRows();
+  });
+
+  k_data->refreshChild();
+
+  k_sigCon_bi.connected();
+  k_sigCon_br.connected();
+  k_sigCon_ei.connected();
+  k_sigCon_er.connected();
+}
 }  // namespace doodle::motion::ui

@@ -8,6 +8,7 @@ class MotionFile;
 using MotionFilePtr = std::shared_ptr<MotionFile>;
 class MotionFile {
  private:
+  FSys::path p_file;
   FSys::path p_Fbx_file;
   FSys::path p_Gif_file;
   std::string p_title;
@@ -20,23 +21,20 @@ class MotionFile {
  public:
   DOODLE_DISABLE_COPY(MotionFile);
 
-  explicit MotionFile(FSys::path path);
+  explicit MotionFile();
 
   const FSys::path& FbxFile() const noexcept;
-  void setFbxFile(const FSys::path& FbxFile) noexcept;
-
   const FSys::path& GifFile() const noexcept;
-  void setGifFile(const FSys::path& GifFile) noexcept;
-
   const std::string& UserName() const noexcept;
-  void setUserName(const std::string& UserName) noexcept;
 
   const std::string& Info() const noexcept;
   void setInfo(const std::string& Info) noexcept;
 
   const std::string& Title() const noexcept;
   void setTitle(const std::string& Title) noexcept;
-  static std::vector<MotionFilePtr> FindMotionFiles(const std::string& path);
+
+  static std::vector<MotionFilePtr> getAll(const FSys::path& path);
+  void createFbxFile(const FSys::path& relativePath);
 };
 
 }  // namespace doodle::motion::kernel

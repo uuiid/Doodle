@@ -25,6 +25,9 @@ class MotionModel : public QAbstractListModel {
   //删除数据
   bool removeRows(int position, int rows, const QModelIndex &index) override;
 
+  //我们自定义的插入数据
+  bool insertData(int position, const kernel::MotionFilePtr &data);
+
   void setLists(const std::vector<kernel::MotionFilePtr> &lists);
 };
 

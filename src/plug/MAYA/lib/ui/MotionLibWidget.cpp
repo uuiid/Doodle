@@ -1,5 +1,7 @@
 #include <lib/ui/MotionLibWidget.h>
 
+#include <lib/ui/model/TreeDirItem.h>
+
 #include <lib/ui/model/TreeDirModel.h>
 #include <lib/ui/model/MotionModel.h>
 #include <lib/ui/view/MotionView.h>
@@ -24,5 +26,13 @@ MotionLibWidget::MotionLibWidget(QWidget *parent)
   layout->addWidget(k_motion_view, 0, 1, 1, 1);
   layout->setColumnStretch(0, 1);
   layout->setColumnStretch(1, 5);
+
+  k_tree_view->sig_chickItem.connect(
+      [k_motion_model, k_motion_view](const FSys::path &path, const QModelIndex &index) {
+        auto k_lists = kernel::MotionFile::getAll(path);
+        k_motion_model->setLists(k_lists);
+        auto k_data = static_cast<TreeDirItem *>(index.internalPointer())->shared_from_this();
+        k_motion_view->setTreeNode(k_data);
+      });
 }
 }  // namespace doodle::motion::ui

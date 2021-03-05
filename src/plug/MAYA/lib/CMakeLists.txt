@@ -16,6 +16,7 @@ ui/view/TreeDirView.cpp
 kernel/MotionSetting.cpp
 kernel/MotionFile.cpp
 kernel/FbxExport/FbxExport.cpp
+kernel/Exception.cpp
 )
 
 set(doodle_motion_HEADER
@@ -31,6 +32,8 @@ ui/view/TreeDirView.h
 kernel/MotionSetting.h
 kernel/MotionFile.h
 kernel/FbxExport/FbxExport.h
+kernel/BoostUuidWarp.h
+kernel/Exception.h
 )
 
 
@@ -48,7 +51,11 @@ target_include_directories(doodle_motion PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
 target_link_libraries(doodle_motion PUBLIC ${MAYA_LIBRARY} ${MAYA_QT5_LIBRARY})
 target_link_libraries(doodle_motion PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
 #链接fbx库
-target_link_libraries(doodle_motion PRIVATE Autodesk_FBX)
+target_link_libraries(doodle_motion PRIVATE 
+Autodesk_FBX
+Boost::locale
+
+)
 
 # target_link_libraries(doodle_motion PRIVATE SqlppSqlite)
 
@@ -56,6 +63,8 @@ target_include_directories(doodle_motion PRIVATE ${MAYA_INCLUDE_DIR})
 
 target_compile_definitions(doodle_motion PRIVATE MOTIONGLOBAL_LIBRARY)
 target_compile_options(doodle_motion PUBLIC /utf-8)
+
+
 #调试发布版本需要
 target_compile_options(doodle_motion PRIVATE /Zi)
 target_link_options(doodle_motion PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF) 
