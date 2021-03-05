@@ -47,8 +47,7 @@ MStatus uninitializePlugin(MObject obj) {
 
   //这一部分是删除菜单项的
   MString pythonResult{};
-  MGlobal::executePythonCommand(R"(
-import maya.cmds
+  MGlobal::executePythonCommand(R"(import maya.cmds
 def doodleDeleteMenu():
     for me in maya.cmds.lsUI(menus=True,long=True):
     	  if maya.cmds.menu(me,q=True,label=True) == "doodle":

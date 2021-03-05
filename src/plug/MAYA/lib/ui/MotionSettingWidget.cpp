@@ -34,6 +34,10 @@ MotionSettingWidget::MotionSettingWidget(QWidget *parent)
 
   button_open_path->setText("...");
 
+  auto &set = kernel::MotionSetting::Get();
+  lineEdit_user->setText(QString::fromStdString(set.User()));
+  lineEdit_root->setText(QString::fromStdString(set.MotionLibRoot().generic_string()));
+
   //链接返回函数
   connect(butten_return_up, &QPushButton::clicked,
           this, [=]() {

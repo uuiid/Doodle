@@ -14,16 +14,18 @@ class MotionSettingWidget;
 
 class MOTIONGLOBAL_API MotionMainUI : public QMainWindow {
   Q_OBJECT
- public:
-  explicit MotionMainUI(QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
-
-  void setMotionLib();
-  void openMotionLib();
-
- private:
   QGridLayout* p_layout;
   QWidget* p_centralWidget;
   MotionSettingWidget* p_setting_widget;
+
+ public:
+  explicit MotionMainUI(QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
+  ~MotionMainUI();
+  void openSettingMotionLib();
+  void openMotionLib();
+
+ private:
+  void createMenu();
 };
 
 }  // namespace doodle::motion::ui

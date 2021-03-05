@@ -8,6 +8,7 @@
 #define MOTIONGLOBAL_API __declspec(dllimport)
 #endif
 
+#include <variant>
 #include <filesystem>
 
 #define DOODLE_DISABLE_COPY(className)   \
@@ -16,4 +17,8 @@
 
 namespace doodle {
 namespace FSys = std::filesystem;
-}
+using variant  = std::variant<
+    std::string,  //
+    int64_t       //
+    >;
+}  // namespace doodle

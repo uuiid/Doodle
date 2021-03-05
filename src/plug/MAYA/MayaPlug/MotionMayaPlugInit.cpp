@@ -38,8 +38,10 @@ bool doodleCreate::isUndoable() const {
 }
 
 void doodleCreate::clear_() {
-  p_ui->deleteLater();
-  delete p_ui;
+  if (p_ui) {
+    p_ui->deleteLater();
+    delete p_ui;
+  }
 }
 
 }  // namespace doodle::MayaPlug

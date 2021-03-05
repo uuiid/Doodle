@@ -56,6 +56,9 @@ target_include_directories(doodle_motion PRIVATE ${MAYA_INCLUDE_DIR})
 
 target_compile_definitions(doodle_motion PRIVATE MOTIONGLOBAL_LIBRARY)
 target_compile_options(doodle_motion PUBLIC /utf-8)
+#调试发布版本需要
+target_compile_options(doodle_motion PRIVATE /Zi)
+target_link_options(doodle_motion PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF) 
 
 install(
   TARGETS doodle_motion
@@ -64,6 +67,6 @@ install(
 #安装调试文件
 install(FILES $<TARGET_PDB_FILE:doodle_motion>
         DESTINATION plug/maya_plug/plug-ins
-        CONFIGURATIONS Debug
+        # CONFIGURATIONS Debug
         )
 

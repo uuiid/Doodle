@@ -15,22 +15,23 @@ TreeDirItemPtr TreeDirModel::getItem(const QModelIndex &index) const {
 TreeDirModel::TreeDirModel(QObject *parent)
     : QAbstractItemModel(parent),
       p_root(std::make_shared<TreeDirItem>("")) {
-  auto tmp = p_root->MakeChild(0, "test");
-  p_root->MakeChild(0, "test");
-  p_root->MakeChild(0, "test");
-  p_root->MakeChild(0, "test");
-  p_root->MakeChild(0, "test");
+  p_root->refreshChild();
+  // auto tmp = p_root->MakeChild(0, "test");
+  // p_root->MakeChild(0, "test");
+  // p_root->MakeChild(0, "test");
+  // p_root->MakeChild(0, "test");
+  // p_root->MakeChild(0, "test");
 
-  tmp->MakeChild(0, "test2");
-  tmp->MakeChild(0, "test2");
-  tmp->MakeChild(0, "test2");
-  auto tmp2 = tmp->MakeChild(0, "test2");
+  // tmp->MakeChild(0, "test2");
+  // tmp->MakeChild(0, "test2");
+  // tmp->MakeChild(0, "test2");
+  // auto tmp2 = tmp->MakeChild(0, "test2");
 
-  tmp2->MakeChild(0, "test3");
-  tmp2->MakeChild(0, "test3");
-  tmp2->MakeChild(0, "test3");
-  tmp2->MakeChild(0, "test3");
-  tmp2->MakeChild(0, "test3");
+  // tmp2->MakeChild(0, "test3");
+  // tmp2->MakeChild(0, "test3");
+  // tmp2->MakeChild(0, "test3");
+  // tmp2->MakeChild(0, "test3");
+  // tmp2->MakeChild(0, "test3");
 }
 
 QVariant TreeDirModel::data(const QModelIndex &index, int role) const {
@@ -41,7 +42,7 @@ QVariant TreeDirModel::data(const QModelIndex &index, int role) const {
 
   switch (role) {
     case Qt::DisplayRole: {
-      var = QString::fromStdString(k_d->Dir());
+      var = QString::fromStdString(std::get<std::string>(k_d->Data(index.column())));
       break;
     }
     default:
@@ -71,7 +72,7 @@ QModelIndex TreeDirModel::index(int row, int column, const QModelIndex &parent) 
   //                      "\nrow: " + parent.row() +
   //                      "\nvalid: " + parent.isValid());
   if (!this->hasIndex(row, column, parent)) {
-    MGlobal::displayInfo(MString{"has index"});
+    MGlobal::displayInfo(MString{"not has index"});
     return k_index;
   }
 
@@ -106,11 +107,14 @@ int TreeDirModel::rowCount(const QModelIndex &parent) const {
 }
 
 int TreeDirModel::columnCount(const QModelIndex &parent) const {
-  if (parent.isValid())
-    return 1;
-  else
-    return 1;
+  return boost::numeric_cast<int>(p_root->columnCount());
 }
+
+// bool TreeDirModel::hasChildren(const QModelIndex &parent) const {
+//   auto k_ = getItem(parent);
+//   k_->refreshChild();
+//   return k_->GetChildCount() > 0;
+// }
 
 bool TreeDirModel::setData(const QModelIndex &index, const QVariant &value,
                            int role) {
@@ -123,7 +127,7 @@ bool TreeDirModel::setData(const QModelIndex &index, const QVariant &value,
         k_r = false;
         break;
       }
-      k_item->setDir(value.toString().toStdString());
+      k_item->setData(index.column(), value.toString().toStdString());
       dataChanged(index, index, {Qt::EditRole});
       break;
     }
@@ -167,4 +171,5 @@ bool TreeDirModel::removeRows(int position, int rows, const QModelIndex &parent)
   endRemoveRows();
   return k_request;
 }
+
 }  // namespace doodle::motion::ui

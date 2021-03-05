@@ -6,7 +6,7 @@
 #include <lib/ui/view/TreeDirView.h>
 
 #include <QtWidgets/qgridlayout.h>
-
+#include <QtWidgets/qfilesystemmodel.h>
 namespace doodle::motion::ui {
 MotionLibWidget::MotionLibWidget(QWidget *parent)
     : QWidget(parent) {

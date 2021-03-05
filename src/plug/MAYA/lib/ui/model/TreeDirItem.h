@@ -8,18 +8,23 @@ using TreeDirItemPtr = std::shared_ptr<TreeDirItem>;
 
 class TreeDirItem : public std::enable_shared_from_this<TreeDirItem> {
  private:
-  std::string p_dir;
+  FSys::path p_dir;
   std::weak_ptr<TreeDirItem> p_parent;
   std::vector<TreeDirItemPtr> p_child_items;
 
  public:
   explicit TreeDirItem();
   explicit TreeDirItem(std::string dir);
-  const std::string& Dir() const noexcept;
-  void setDir(const std::string& Dir) noexcept;
+  const FSys::path Dir() const noexcept;
+  void setDir(const FSys::path& Dir) noexcept;
 
   const TreeDirItemPtr Parent() const noexcept;
   void setParent(const TreeDirItemPtr& Parent) noexcept;
+
+  variant Data(int column);
+  void setData(int column, const variant& Data);
+  size_t columnCount() const noexcept;
+  void removeColumn(int column);
 
   size_t GetChildCount() const noexcept;
   TreeDirItemPtr GetChild(size_t index) const noexcept;
@@ -29,6 +34,8 @@ class TreeDirItem : public std::enable_shared_from_this<TreeDirItem> {
 
   size_t ChildNumber() const noexcept;
 
+  void refreshChild();
+  void makeDir();
   DOODLE_DISABLE_COPY(TreeDirItem);
 };
 
