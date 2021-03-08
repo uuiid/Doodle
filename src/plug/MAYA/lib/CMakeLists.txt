@@ -15,11 +15,17 @@ ui/view/TreeDirView.cpp
 
 kernel/MotionSetting.cpp
 kernel/MotionFile.cpp
-kernel/FbxExport/FbxExport.cpp
+kernel/Maya/FbxExport.cpp
 kernel/Exception.cpp
+kernel/Maya/Screenshot.cpp
+kernel/Maya/MayaRenderOpenGL.cpp
+kernel/Maya/MayaVideo.h
 )
 
 set(doodle_motion_HEADER
+kernel/BoostUuidWarp.h
+kernel/doodleFFmpeg.h
+
 ui/MotionMainUI.h
 ui/MotionSettingWidget.h
 ui/MotionLibWidget.h
@@ -31,9 +37,11 @@ ui/view/TreeDirView.h
 
 kernel/MotionSetting.h
 kernel/MotionFile.h
-kernel/FbxExport/FbxExport.h
-kernel/BoostUuidWarp.h
+kernel/Maya/FbxExport.h
 kernel/Exception.h
+kernel/Maya/Screenshot.h
+kernel/Maya/MayaRenderOpenGL.h
+kernel/Maya/MayaVideo.cpp
 )
 
 
@@ -48,13 +56,14 @@ add_library(doodle_motion SHARED
 
 target_include_directories(doodle_motion PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
 
+
 target_link_libraries(doodle_motion PUBLIC ${MAYA_LIBRARY} ${MAYA_QT5_LIBRARY})
 target_link_libraries(doodle_motion PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
 #链接fbx库
 target_link_libraries(doodle_motion PRIVATE 
 Autodesk_FBX
 Boost::locale
-
+${FFMPEG_LIBRARIES}
 )
 
 # target_link_libraries(doodle_motion PRIVATE SqlppSqlite)

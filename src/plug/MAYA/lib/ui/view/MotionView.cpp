@@ -43,6 +43,8 @@ void MotionView::createFbxAction(const FSys::path& path) {
 
   auto k_name = QInputDialog::getText(this, tr("请输入名称 "), tr("名称:"));
 
+  if (k_name.isEmpty()) return;
+
   auto k_FbxFile = std::make_shared<kernel::MotionFile>();
   k_FbxFile->setTitle(k_name.toStdString());
   try {

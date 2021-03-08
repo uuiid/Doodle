@@ -24,7 +24,7 @@ QVariant MotionModel::data(const QModelIndex &index, int role) const {
       var = QString::fromStdString(k_data->Title());
       break;
     }
-    case Qt::BackgroundRole:
+    case Qt::DecorationRole:
       var = QColor{Qt::darkRed};
       break;
     default:

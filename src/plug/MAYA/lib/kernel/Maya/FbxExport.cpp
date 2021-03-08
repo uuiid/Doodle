@@ -1,4 +1,4 @@
-#include <lib/kernel/FbxExport/FbxExport.h>
+#include <lib/kernel/Maya/FbxExport.h>
 #include <lib/kernel/Exception.h>
 
 #include <maya/MGlobal.h>

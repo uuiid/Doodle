@@ -33,7 +33,7 @@ const FSys::path TreeDirItem::Dir(bool hasRoot) const noexcept {
   if (p_parent.expired()) {
     k_d = k_d / p_dir;
   } else {
-    k_d = p_parent.lock()->Dir() / p_dir;
+    k_d = p_parent.lock()->Dir(hasRoot) / p_dir;
   }
   return k_d.lexically_normal();
 }

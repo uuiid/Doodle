@@ -87,7 +87,7 @@ void MotionSetting::createMotionProject() {
 
   FSys::create_directories(p_motion_path / "etc");
   FSys::create_directories(p_motion_path / "fbx");
-  FSys::create_directories(p_motion_path / "gif");
+  FSys::create_directories(p_motion_path / "image");
 }
 
 void MotionSetting::from_json(const nlohmann::json& j) {

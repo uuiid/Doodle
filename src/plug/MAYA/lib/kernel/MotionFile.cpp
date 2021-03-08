@@ -1,10 +1,10 @@
 #include <lib/kernel/MotionFile.h>
 
-#include <lib/kernel/FbxExport/FbxExport.h>
+#include <lib/kernel/Maya/FbxExport.h>
 #include <lib/kernel/MotionSetting.h>
 #include <lib/kernel/Exception.h>
 #include <lib/kernel/BoostUuidWarp.h>
-
+#include <lib/kernel/Maya/Screenshot.h>
 #include <nlohmann/json.hpp>
 
 #include <fstream>
@@ -97,9 +97,22 @@ void MotionFile::createFbxFile(const FSys::path& relativePath) {
     auto& set = MotionSetting::Get();
 
     //产生路径和创建路径
-    auto k_path_fbx  = set.MotionLibRoot() / "fbx" / relativePath / (k_uuid_str + ".fbx");
-    auto k_path_josn = set.MotionLibRoot() / relativePath / (k_uuid_str + ".json");
-    auto k_path_gif  = set.MotionLibRoot() / "gif" / relativePath / (k_uuid_str + ".gif");
+    auto k_path_fbx  = set.MotionLibRoot() / "fbx";
+    auto k_path_josn = set.MotionLibRoot() / "etc";
+    auto k_path_gif  = set.MotionLibRoot() / "image";
+
+    for (auto&& k_pathItem : relativePath) {
+      if (k_pathItem == *(relativePath.begin()))
+        continue;
+      k_path_fbx /= k_pathItem;
+      k_path_josn /= k_pathItem;
+      k_path_gif /= k_pathItem;
+    }
+
+    k_path_fbx /= (k_uuid_str + ".fbx");
+    k_path_josn /= (k_uuid_str + ".json");
+    k_path_gif /= (k_uuid_str + ".png");
+
     if (!FSys::exists(k_path_fbx.parent_path()))
       FSys::create_directories(k_path_fbx.parent_path());
     if (!FSys::exists(k_path_josn.parent_path()))
@@ -108,8 +121,11 @@ void MotionFile::createFbxFile(const FSys::path& relativePath) {
       FSys::create_directories(k_path_gif.parent_path());
 
     //导出fbx
-    auto k_status = FbxExport::FbxExportMEL(k_path_fbx);
-    if (k_status != MStatus::MStatusCode::kSuccess) throw FbxFileError("无法导出文件");
+    // auto k_status = FbxExport::FbxExportMEL(k_path_fbx);
+    // if (k_status != MStatus::MStatusCode::kSuccess) throw FbxFileError("无法导出文件");
+    auto k_screen = Screenshot{k_path_gif};
+    if (!k_path_gif.empty())
+      k_screen.save(MTime{0, MTime::uiUnit()}, MTime{30, MTime::uiUnit()});
 
     this->p_file     = std::move(k_path_josn);
     this->p_Fbx_file = std::move(k_path_fbx);
