@@ -58,10 +58,10 @@ void MayaRenderOpenGL::captureCallback(MHWRender::MDrawContext& context, void* c
 
   MString k_tmp{};
   if (!k_ok) {
-    k_tmp.setUTF8("无法对目标进行颜色渲染");
+    k_tmp.setUTF8("无法对目标进行颜色渲染: ");
     MGlobal::displayError(k_tmp + fileName);
   } else {
-    k_tmp.setUTF8("捕获的颜色渲染目标到");
+    k_tmp.setUTF8("捕获的颜色渲染目标到: ");
     MGlobal::displayInfo(k_tmp + fileName);
   }
 }

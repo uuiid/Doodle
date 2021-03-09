@@ -25,6 +25,7 @@ void MayaVideo::save() {
   // auto p_path = FSys::path{"D:/tmp"} / "doodle";
   if (!FSys::exists(p_path))
     FSys::create_directories(p_path);
+
   p_view->getFileName.connect([=](const MTime& time) -> MString {
     MString fileName{};
     MString k_tmp{};
@@ -49,7 +50,7 @@ void MayaVideo::save() {
   p_view->save(MAnimControl::animationStartTime(), MAnimControl::animationEndTime());
 
   for (auto&& it : p_file_image)
-    if (FSys::exists(*it))
+    if (!FSys::exists(*it))
       throw MayaError("not create file " + it->generic_u8string());
 
   p_ffmpeg->imageToVideo(p_file_image, p_file, MFileIO::currentFile().asUTF8());
