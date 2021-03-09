@@ -111,7 +111,7 @@ void MotionFile::createFbxFile(const FSys::path& relativePath) {
 
     k_path_fbx /= (k_uuid_str + ".fbx");
     k_path_josn /= (k_uuid_str + ".json");
-    k_path_gif /= (k_uuid_str + ".png");
+    k_path_gif /= (k_uuid_str + ".mp4");
 
     if (!FSys::exists(k_path_fbx.parent_path()))
       FSys::create_directories(k_path_fbx.parent_path());

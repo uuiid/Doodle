@@ -3,6 +3,8 @@
 #include <lib/kernel/Exception.h>
 #include <lib/kernel/doodleFFmpeg.h>
 
+#include <lib/kernel/Maya/MayaVideo.h>
+
 // #include <boost/format.hpp>
 #include <sstream>
 
@@ -39,6 +41,9 @@ void Screenshot::save(const MTime& start, const MTime& end) {
 
   auto k_view = M3dView::active3dView(&k_status);
   DOODLE_MAYA_CHICK(k_status);
+
+  //创建视频输出
+  // p_video = std::make_unique<MayaVideo>(p_file, p_width, p_height);
 
   k_render->addNotification(&captureCallback,
                             p_post_render_notification_name,
@@ -89,7 +94,7 @@ void Screenshot::captureCallback(MHWRender::MDrawContext& context, void* clientD
   fileName += str.str().c_str();
 
   k_tmp.setUTF8(k_this->p_file.extension().generic_u8string().c_str());
-  fileName += k_tmp;
+  fileName += ".png";
 
   const auto& k_color_target = context.getCurrentColorRenderTarget();
   auto k_ok                  = false;
@@ -99,7 +104,12 @@ void Screenshot::captureCallback(MHWRender::MDrawContext& context, void* clientD
     auto k_tex        = context.copyCurrentColorRenderTargetToTexture();
     if (k_tex) {
       auto status = k_texManager->saveTexture(k_tex, fileName);
-      k_ok        = (status == MStatus::kSuccess);
+      // auto k_rowPitch   = 0;
+      // auto k_slicePitch = size_t{0};
+      // auto k_data       = k_tex->rawData(k_rowPitch, k_slicePitch);
+      // k_this->p_video->addFrame(k_data, 4);
+
+      k_ok = (status == MStatus::kSuccess);
 
       k_texManager->releaseTexture(k_tex);
     }
