@@ -130,7 +130,7 @@ bool ffmpegWrap::runFFmpeg(const std::string &command) const {
         false,
         0,  //CREATE_NEW_CONSOLE
         NULL,
-        ffmpeg_path.c_str(),  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
+        ffmpeg_path.c_str(),  //
         &si,
         &pi);
     // boost::process::system(command.c_str(), env);

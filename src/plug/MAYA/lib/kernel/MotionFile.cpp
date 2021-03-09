@@ -5,6 +5,7 @@
 #include <lib/kernel/Exception.h>
 #include <lib/kernel/BoostUuidWarp.h>
 #include <lib/kernel/Maya/Screenshot.h>
+#include <lib/kernel/Maya/MayaVideo.h>
 #include <nlohmann/json.hpp>
 
 #include <fstream>
@@ -12,20 +13,22 @@
 
 namespace doodle::motion::kernel {
 void MotionFile::from_json(const nlohmann::json& j) {
-  p_Fbx_file  = j["Fbx_file"].get<std::string>();
-  p_Gif_file  = j["Gif_file"].get<std::string>();
-  p_title     = j["title"].get<std::string>();
-  p_user_name = j["User_name"].get<std::string>();
-  p_info      = j["Info"].get<std::string>();
+  p_Fbx_file   = j["Fbx_file"].get<std::string>();
+  p_Gif_file   = j["Gif_file"].get<std::string>();
+  p_video_file = j["Video_file"].get<std::string>();
+  p_title      = j["title"].get<std::string>();
+  p_user_name  = j["User_name"].get<std::string>();
+  p_info       = j["Info"].get<std::string>();
 }
 
 nlohmann::json MotionFile::to_json() {
   nlohmann::json root{};
-  root["Fbx_file"]  = p_Fbx_file.generic_u8string();
-  root["Gif_file"]  = p_Gif_file.generic_u8string();
-  root["title"]     = p_title;
-  root["User_name"] = p_user_name;
-  root["Info"]      = p_info;
+  root["Fbx_file"]   = p_Fbx_file.generic_u8string();
+  root["Gif_file"]   = p_Gif_file.generic_u8string();
+  root["Video_file"] = p_video_file.generic_u8string();
+  root["title"]      = p_title;
+  root["User_name"]  = p_user_name;
+  root["Info"]       = p_info;
   return root;
 }
 
@@ -33,6 +36,7 @@ MotionFile::MotionFile()
     : p_file(),
       p_Fbx_file(),
       p_Gif_file(),
+      p_video_file(),
       p_title(),
       p_user_name(MotionSetting::Get().User()),
       p_info() {
@@ -97,9 +101,10 @@ void MotionFile::createFbxFile(const FSys::path& relativePath) {
     auto& set = MotionSetting::Get();
 
     //产生路径和创建路径
-    auto k_path_fbx  = set.MotionLibRoot() / "fbx";
-    auto k_path_josn = set.MotionLibRoot() / "etc";
-    auto k_path_gif  = set.MotionLibRoot() / "image";
+    auto k_path_fbx   = set.MotionLibRoot() / "fbx";
+    auto k_path_josn  = set.MotionLibRoot() / "etc";
+    auto k_path_gif   = set.MotionLibRoot() / "image";
+    auto k_path_video = set.MotionLibRoot() / "video";
 
     for (auto&& k_pathItem : relativePath) {
       if (k_pathItem == *(relativePath.begin()))
@@ -107,29 +112,34 @@ void MotionFile::createFbxFile(const FSys::path& relativePath) {
       k_path_fbx /= k_pathItem;
       k_path_josn /= k_pathItem;
       k_path_gif /= k_pathItem;
+      k_path_video /= k_pathItem;
     }
 
     k_path_fbx /= (k_uuid_str + ".fbx");
     k_path_josn /= (k_uuid_str + ".json");
-    k_path_gif /= (k_uuid_str + ".mp4");
+    k_path_gif /= (k_uuid_str + ".png");
+    k_path_video /= (k_uuid_str + ".mp4");
 
-    if (!FSys::exists(k_path_fbx.parent_path()))
-      FSys::create_directories(k_path_fbx.parent_path());
-    if (!FSys::exists(k_path_josn.parent_path()))
-      FSys::create_directories(k_path_josn.parent_path());
-    if (!FSys::exists(k_path_gif.parent_path()))
-      FSys::create_directories(k_path_gif.parent_path());
+    for (auto& k_tmp : std::vector<FSys::path>{k_path_fbx,
+                                               k_path_josn,
+                                               k_path_gif,
+                                               k_path_video}) {
+      if (!FSys::exists(k_tmp.parent_path()))
+        FSys::create_directories(k_tmp.parent_path());
+    }
 
     //导出fbx
-    // auto k_status = FbxExport::FbxExportMEL(k_path_fbx);
-    // if (k_status != MStatus::MStatusCode::kSuccess) throw FbxFileError("无法导出文件");
-    auto k_screen = Screenshot{k_path_gif};
-    if (!k_path_gif.empty())
-      k_screen.save(MTime{0, MTime::uiUnit()}, MTime{30, MTime::uiUnit()});
+    auto k_status = FbxExport::FbxExportMEL(k_path_fbx);
+    if (k_status != MStatus::MStatusCode::kSuccess) throw FbxFileError("无法导出文件");
+    // auto k_screen = Screenshot{k_path_gif};
+    // k_screen.save();
+    auto k_video = MayaVideo{k_path_video};
+    k_video.save();
 
-    this->p_file     = std::move(k_path_josn);
-    this->p_Fbx_file = std::move(k_path_fbx);
-    this->p_Gif_file = std::move(k_path_gif);
+    this->p_file       = std::move(k_path_josn);
+    this->p_Fbx_file   = std::move(k_path_fbx);
+    this->p_Gif_file   = std::move(k_path_gif);
+    this->p_video_file = std::move(k_path_video);
   }
 
   //写出配置文件

@@ -21,9 +21,18 @@ using variant  = std::variant<
     std::string,  //
     int64_t       //
     >;
-namespace motion::ui {
+
+namespace motion {
+namespace ui {
+
 class TreeDirItem;
 using TreeDirItemPtr = std::shared_ptr<TreeDirItem>;
-};  // namespace motion::ui
 
+}  // namespace ui
+namespace kernel {
+class MayaRenderOpenGL;
+class FFmpegWarp;
+
+}  // namespace kernel
+}  // namespace motion
 }  // namespace doodle

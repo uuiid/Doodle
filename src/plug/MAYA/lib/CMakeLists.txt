@@ -19,7 +19,8 @@ kernel/Maya/FbxExport.cpp
 kernel/Exception.cpp
 kernel/Maya/Screenshot.cpp
 kernel/Maya/MayaRenderOpenGL.cpp
-kernel/Maya/MayaVideo.h
+kernel/Maya/MayaVideo.cpp
+kernel/ExeWarp/FFmpegWarp.cpp
 )
 
 set(doodle_motion_HEADER
@@ -41,7 +42,8 @@ kernel/Maya/FbxExport.h
 kernel/Exception.h
 kernel/Maya/Screenshot.h
 kernel/Maya/MayaRenderOpenGL.h
-kernel/Maya/MayaVideo.cpp
+kernel/Maya/MayaVideo.h
+kernel/ExeWarp/FFmpegWarp.h
 )
 
 
@@ -63,7 +65,8 @@ target_link_libraries(doodle_motion PRIVATE nlohmann_json nlohmann_json::nlohman
 target_link_libraries(doodle_motion PRIVATE 
 Autodesk_FBX
 Boost::locale
-${FFMPEG_LIBRARIES}
+Boost::filesystem
+# ${FFMPEG_LIBRARIES}
 )
 
 # target_link_libraries(doodle_motion PRIVATE SqlppSqlite)
@@ -73,6 +76,7 @@ target_include_directories(doodle_motion PRIVATE ${MAYA_INCLUDE_DIR})
 target_compile_definitions(doodle_motion PRIVATE MOTIONGLOBAL_LIBRARY)
 target_compile_options(doodle_motion PUBLIC /utf-8)
 
+target_compile_definitions(doodle_motion PRIVATE _WIN32_WINNT=0x0A00)
 
 #调试发布版本需要
 target_compile_options(doodle_motion PRIVATE /Zi)

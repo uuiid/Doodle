@@ -11,6 +11,8 @@ class MotionFile {
   FSys::path p_file;
   FSys::path p_Fbx_file;
   FSys::path p_Gif_file;
+  FSys::path p_video_file;
+
   std::string p_title;
   std::string p_user_name;
   std::string p_info;
