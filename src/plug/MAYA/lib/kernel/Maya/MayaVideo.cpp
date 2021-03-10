@@ -53,8 +53,8 @@ void MayaVideo::save() {
     if (!FSys::exists(*it))
       throw MayaError("not create file " + it->generic_u8string());
 
-  p_ffmpeg->imageToVideo(p_file_image, p_file, MFileIO::currentFile().asUTF8());
-  if (FSys::exists(p_file)) throw FFmpegError("nor create file" + p_file.generic_u8string());
+  p_ffmpeg->imageToVideo(p_file_image, p_file, "doodle");
+  if (FSys::exists(p_file)) throw NotFileError("nor create file" + p_file.generic_u8string());
 }
 
 MayaVideo::~MayaVideo() {

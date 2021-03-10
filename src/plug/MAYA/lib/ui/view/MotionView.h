@@ -30,6 +30,8 @@ class MotionView : public QListView {
 
  private:
   void createFbxAction(const FSys::path& path);
+  void updateIcon();
+  void updateVideo();
 };
 
 }  // namespace doodle::motion::ui

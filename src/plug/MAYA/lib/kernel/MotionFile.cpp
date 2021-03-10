@@ -32,6 +32,13 @@ nlohmann::json MotionFile::to_json() {
   return root;
 }
 
+void MotionFile::save() {
+  auto k_file = std::fstream{this->p_file, std::ios::out | std::ios::binary};
+  if (!k_file.is_open()) std::runtime_error("无法打开文件");
+
+  k_file << this->to_json();
+}
+
 MotionFile::MotionFile()
     : p_file(),
       p_Fbx_file(),
@@ -42,12 +49,28 @@ MotionFile::MotionFile()
       p_info() {
 }
 
+MotionFile::~MotionFile() {
+  this->save();
+}
+
 const FSys::path& MotionFile::FbxFile() const noexcept {
   return p_Fbx_file;
 }
 
-const FSys::path& MotionFile::GifFile() const noexcept {
+const bool MotionFile::hasIconFile() const noexcept {
+  return FSys::exists(p_Gif_file);
+}
+
+const FSys::path& MotionFile::IconFile() const noexcept {
   return p_Gif_file;
+}
+
+const bool MotionFile::hasvideoFile() const noexcept {
+  return FSys::exists(p_Gif_file);
+}
+
+const FSys::path& MotionFile::VideoFile() const noexcept {
+  return p_video_file;
 }
 
 const std::string& MotionFile::UserName() const noexcept {
@@ -131,22 +154,31 @@ void MotionFile::createFbxFile(const FSys::path& relativePath) {
     //导出fbx
     auto k_status = FbxExport::FbxExportMEL(k_path_fbx);
     if (k_status != MStatus::MStatusCode::kSuccess) throw FbxFileError("无法导出文件");
-    // auto k_screen = Screenshot{k_path_gif};
-    // k_screen.save();
-    auto k_video = MayaVideo{k_path_video};
-    k_video.save();
+    if (!FSys::exists(k_path_fbx)) throw FbxFileError("未找到导出文件");
 
     this->p_file       = std::move(k_path_josn);
     this->p_Fbx_file   = std::move(k_path_fbx);
     this->p_Gif_file   = std::move(k_path_gif);
     this->p_video_file = std::move(k_path_video);
+
+    this->createIconFile();
+    this->createVideoFile();
   }
 
   //写出配置文件
-  auto k_file = std::fstream{this->p_file, std::ios::out | std::ios::binary};
-  if (!k_file.is_open()) std::runtime_error("无法打开文件");
+  this->save();
+}
 
-  k_file << this->to_json();
+void MotionFile::createIconFile() {
+  if (!FSys::exists(this->p_Fbx_file)) throw FbxFileError("未找到导出文件");
+  auto k_screen = Screenshot{p_Gif_file};
+  k_screen.save();
+}
+
+void MotionFile::createVideoFile() {
+  if (!FSys::exists(this->p_Fbx_file)) throw FbxFileError("未找到导出文件");
+  auto k_video = MayaVideo{p_video_file};
+  k_video.save();
 }
 
 }  // namespace doodle::motion::kernel

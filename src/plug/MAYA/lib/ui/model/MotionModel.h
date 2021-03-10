@@ -4,6 +4,7 @@
 
 #include <QtCore/QAbstractListModel>
 #include <lib/kernel/MotionFile.h>
+
 namespace doodle::motion::ui {
 class MotionModel : public QAbstractListModel {
   Q_OBJECT

@@ -2,8 +2,9 @@
 
 #include <lib/ui/model/TreeDirModel.h>
 
-#include <QtWidgets/qmenu.h>
 #include <QtGui/QContextMenuEvent>
+
+#include <QtWidgets/qmenu.h>
 #include <QtWidgets/qinputdialog.h>
 #include <QtWidgets/qmessagebox.h>
 
@@ -45,12 +46,15 @@ void TreeDirView::createDir() {
   auto k_model = dynamic_cast<TreeDirModel*>(this->model());
 
   auto k_index = QModelIndex();
-  if (this->selectionModel()->hasSelection()) {
-    k_index = this->selectionModel()->currentIndex();
-  }
+  // if (this->selectionModel()->hasSelection()) {
+  //   k_index = this->selectionModel()->currentIndex();
+  // }
 
   auto k_str = QInputDialog::getText(this, tr("创建类别"), tr("类别"));
+  //条件创建
   if (k_str.isEmpty()) return;
+  if (k_str == "etc") QMessageBox::warning(this, tr("失败"), tr("名称不可为 etc"));
+
   auto k_insert_bool = k_model->insertRow(0, k_index);
   if (k_insert_bool)
     k_model->setData(k_model->index(0, 0, k_index), k_str, Qt::EditRole);

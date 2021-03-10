@@ -28,4 +28,14 @@ class FFmpegError : public std::runtime_error {
   FFmpegError(const std::string &err) : std::runtime_error(err){};
   virtual const char *what() const noexcept override;
 };
+
+class NotFileError : public std::runtime_error {
+  FSys::path p_file;
+
+ public:
+  NotFileError(const FSys::path &err)
+      : std::runtime_error(""),
+        p_file(std::move(err)){};
+  virtual const char *what() const noexcept override;
+};
 }  // namespace doodle::motion

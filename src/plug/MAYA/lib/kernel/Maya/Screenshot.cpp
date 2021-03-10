@@ -22,22 +22,23 @@ Screenshot::Screenshot(FSys::path path)
 void Screenshot::save() {
   p_view->getFileName.connect([=](const MTime& time) -> MString {
     MString fileName{};
-    MString k_tmp{};
-    k_tmp.setUTF8(this->p_file.parent_path().generic_u8string().c_str());
-    fileName += k_tmp;
-    fileName += "/";
-    k_tmp.setUTF8(this->p_file.stem().generic_u8string().c_str());
-    fileName += k_tmp;
+    // MString k_tmp{};
+    // k_tmp.setUTF8(this->p_file.parent_path().generic_u8string().c_str());
+    // fileName += k_tmp;
+    // fileName += "/";
+    // k_tmp.setUTF8(this->p_file.stem().generic_u8string().c_str());
+    // fileName += k_tmp;
     // fileName += ".";
     // std::stringstream str{};
     // str << std::setw(5) << std::setfill('0') << (time.value());
     // fileName += str.str().c_str();
 
-    k_tmp.setUTF8(this->p_file.extension().generic_u8string().c_str());
-    fileName += k_tmp;
+    // k_tmp.setUTF8(this->p_file.generic_u8string().c_str());
+    fileName.setUTF8(this->p_file.generic_u8string().c_str());
     return fileName;
   });
   p_view->save(MAnimControl::currentTime(), MAnimControl::currentTime());
+  if (!FSys::exists(p_file)) throw NotFileError(p_file);
 }
 
 // void Screenshot::captureCallback(MHWRender::MDrawContext& context, void* clientData) {

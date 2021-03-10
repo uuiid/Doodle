@@ -42,7 +42,7 @@ class TreeDirModel : public QAbstractItemModel {
   bool removeRows(int position, int rows,
                   const QModelIndex &parent = QModelIndex()) override;
 
-  void refreshChild(const QModelIndex & index);
+  void refreshChild(const QModelIndex &index);
 };
 
 }  // namespace doodle::motion::ui

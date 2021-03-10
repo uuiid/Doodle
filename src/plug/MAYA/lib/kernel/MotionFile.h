@@ -20,13 +20,19 @@ class MotionFile {
   void from_json(const nlohmann::json& j);
   nlohmann::json to_json();
 
+  void save();
+
  public:
   DOODLE_DISABLE_COPY(MotionFile);
 
   explicit MotionFile();
+  ~MotionFile();
 
   const FSys::path& FbxFile() const noexcept;
-  const FSys::path& GifFile() const noexcept;
+  const bool hasIconFile() const noexcept;
+  const FSys::path& IconFile() const noexcept;
+  const bool hasvideoFile() const noexcept;
+  const FSys::path& VideoFile() const noexcept;
   const std::string& UserName() const noexcept;
 
   const std::string& Info() const noexcept;
@@ -36,7 +42,15 @@ class MotionFile {
   void setTitle(const std::string& Title) noexcept;
 
   static std::vector<MotionFilePtr> getAll(const FSys::path& path);
+  //创建fbx这个是必须调用的
   void createFbxFile(const FSys::path& relativePath);
+  //在创建fbx后要更改时调用
+  void createIconFile();
+  void createVideoFile();
 };
 
 }  // namespace doodle::motion::kernel
+
+#include <QtCore/QVariant>
+Q_DECLARE_OPAQUE_POINTER(doodle::motion::kernel::MotionFile)
+Q_DECLARE_METATYPE(doodle::motion::kernel::MotionFile*)

@@ -1,9 +1,9 @@
 #include <lib/ui/view/MotionView.h>
 
 #include <lib/kernel/Exception.h>
+#include <lib/kernel/MotionFile.h>
 
 #include <lib/ui/model/TreeDirItem.h>
-#include <lib/kernel/MotionFile.h>
 #include <lib/ui/model/MotionModel.h>
 
 #include <QtWidgets/qmenu.h>
@@ -17,6 +17,8 @@ MotionView::MotionView(QWidget* parent)
       p_TreeDirItem() {
   this->setViewMode(QListView::ViewMode::IconMode);
   this->setFlow(QListView::Flow::LeftToRight);
+  this->setUniformItemSizes(true);
+  // this->setGridSize(QSize{128, 128});
 }
 
 void MotionView::setTreeNode(const decltype(p_TreeDirItem)& item) {
@@ -26,13 +28,20 @@ void MotionView::setTreeNode(const decltype(p_TreeDirItem)& item) {
 void MotionView::contextMenuEvent(QContextMenuEvent* event) {
   if (!p_TreeDirItem) return;
 
-  auto menu         = new QMenu(this);
+  auto menu = new QMenu(this);
+
   auto k_create_fbx = menu->addAction(tr("创建动作"));
   connect(k_create_fbx, &QAction::triggered,
           this, [this]() {
             auto k_path = this->p_TreeDirItem->Dir(false);
             this->createFbxAction(k_path);
           });
+  if (selectionModel()->hasSelection()) {
+    auto k_create_icon = menu->addAction(tr("更新图标"));
+    connect(k_create_icon, &QAction::triggered, this, &MotionView::updateIcon);
+    auto k_create_video = menu->addAction(tr("更新视频"));
+    connect(k_create_video, &QAction::triggered, this, &MotionView::updateVideo);
+  }
   menu->move(event->globalPos());
   menu->show();
 }
@@ -51,9 +60,43 @@ void MotionView::createFbxAction(const FSys::path& path) {
     k_FbxFile->createFbxFile(path);
   } catch (const FbxFileError& err) {
     QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(err.what()));
+  } catch (const MayaError& err) {
+    QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(err.what()));
+  } catch (const MayaNullptrError& err) {
+    QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(err.what()));
+  } catch (const FFmpegError& err) {
+    QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(err.what()));
+  } catch (const NotFileError& err) {
+    QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(err.what()));
   }
 
   k_model->insertData(0, k_FbxFile);
+}
+
+void MotionView::updateIcon() {
+  auto k_selectModel = selectionModel();
+  if (!k_selectModel->hasSelection()) return;
+
+  auto k_data = k_selectModel->currentIndex().data(Qt::UserRole).value<kernel::MotionFile*>();
+  if (!k_data) QMessageBox::warning(this, QString::fromUtf8("注意: "), tr("没有找到选择"));
+  try {
+    k_data->createIconFile();
+  } catch (const NotFileError& err) {
+    QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(err.what()));
+  }
+}
+
+void MotionView::updateVideo() {
+  auto k_selectModel = selectionModel();
+  if (!k_selectModel->hasSelection()) return;
+
+  auto k_data = k_selectModel->currentIndex().data(Qt::UserRole).value<kernel::MotionFile*>();
+  if (!k_data) QMessageBox::warning(this, QString::fromUtf8("注意: "), tr("没有找到选择"));
+  try {
+    k_data->createVideoFile();
+  } catch (const NotFileError& err) {
+    QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(err.what()));
+  }
 }
 
 }  // namespace doodle::motion::ui
