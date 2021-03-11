@@ -50,7 +50,6 @@ MotionFile::MotionFile()
 }
 
 MotionFile::~MotionFile() {
-  this->save();
 }
 
 const FSys::path& MotionFile::FbxFile() const noexcept {
@@ -83,6 +82,7 @@ const std::string& MotionFile::Info() const noexcept {
 
 void MotionFile::setInfo(const std::string& Info) noexcept {
   p_info = Info;
+  this->save();
 }
 
 const std::string& MotionFile::Title() const noexcept {
@@ -91,6 +91,7 @@ const std::string& MotionFile::Title() const noexcept {
 
 void MotionFile::setTitle(const std::string& Title) noexcept {
   p_title = Title;
+  this->save();
 }
 
 std::vector<MotionFilePtr> MotionFile::getAll(const FSys::path& path) {
