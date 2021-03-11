@@ -6,7 +6,9 @@
         test_boost.cpp 
         test_qtCore.cpp
         # test_server.cpp
-        test_std.cpp)
+        test_std.cpp
+        test_ffmpeg.cpp
+        )
 #连接自己的库进行测试
 target_link_libraries(test_my
         PRIVATE core pinyin logger)
@@ -25,7 +27,11 @@ target_compile_definitions(test_my PRIVATE _WIN32_WINNT=0x0A00)
 target_link_libraries(test_my
         PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 
-target_link_libraries(test_my PRIVATE Boost::locale)
+target_link_libraries(test_my PRIVATE
+ Boost::locale
+ ${FFMPEG_LIBRARIES}
+ 
+ )
 
 # include(CTest)
 enable_testing()
