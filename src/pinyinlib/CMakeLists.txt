@@ -13,6 +13,9 @@ add_library(pinyin SHARED
 ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.h
 )
+set_target_properties(pinyin 
+PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 add_dependencies(pinyin pinyin_RESOURE_FILE)
 
 
@@ -33,21 +36,3 @@ target_link_libraries(pinyin PRIVATE logger)
 
 target_compile_definitions(pinyin PRIVATE PINYIN_LIBRARY)
 
-
-#安装基本组件
-install(TARGETS pinyin
-        DESTINATION bin)
-
-#安装调试文件
-install(FILES $<TARGET_PDB_FILE:pinyin>
-        DESTINATION bin
-        CONFIGURATIONS Debug)
-
-if(RUN_QT_TOOL)
-        #运行qt
-        install(CODE "
-        execute_process(
-        COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin $<TARGET_FILE:pinyin>
-        )
-        ")  
-endif(RUN_QT_TOOL)

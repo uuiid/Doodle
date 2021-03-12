@@ -34,13 +34,12 @@ TEST(ffmpeg, imageSequeTovideo) {
   // codec = avcodec_find_encoder(AV_CODEC_ID_PNG);
   codec = avcodec_find_encoder(AV_CODEC_ID_PNG);
   ASSERT_TRUE(codec);
-  oformat_context->streams[0] = avformat_new_stream(oformat_context, codec);
-  ASSERT_TRUE(oformat_context->streams[0]);
+  auto stream = avformat_new_stream(oformat_context, codec);
+  ASSERT_TRUE(stream);
 
   AVCodecContext* codec_context = nullptr;
   codec_context                 = avcodec_alloc_context3(codec);
   if (oformat_context->oformat->flags & AVFMT_GLOBALHEADER)
-    // stream->codecpar->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     codec_context->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
   codec_context->time_base = av_make_q(1, 25);
   codec_context->framerate = av_make_q(25, 1);
@@ -57,7 +56,7 @@ TEST(ffmpeg, imageSequeTovideo) {
 
   // stream->codecpar->pix_fmt   = AV_PIX_FMT_YUV420P;
   // stream->codecpar->codec_tag = 0;
-  error = avcodec_parameters_from_context(oformat_context->streams[0]->codecpar, codec_context);
+  error = avcodec_parameters_from_context(stream->codecpar, codec_context);
   ASSERT_TRUE(error >= 0);
 
   av_dump_format(oformat_context, 0, out_filename, 1);
@@ -82,7 +81,7 @@ TEST(ffmpeg, imageSequeTovideo) {
   av_init_packet(packet);
   packet->flags |= AV_PKT_FLAG_KEY;
 
-  packet->stream_index = oformat_context->streams[0]->index;
+  packet->stream_index = stream->index;
   const std::filesystem::path path{R"(D:\tmp\tmp)"};
   std::fstream file{};
   int i = 0;
@@ -96,16 +95,16 @@ TEST(ffmpeg, imageSequeTovideo) {
       // packet->size = fread(mydata, 1, 2048 * 2048, file_);
       packet->size = (int)it_p.file_size();
       file.read((char*)mydata, packet->size);
-      packet->data = mydata;
-      packet->pts  = i;
-      // packet->dts  = 1;
+      packet->data     = mydata;
+      packet->pts      = AV_NOPTS_VALUE;
+      packet->duration = 1;
 
       file.close();
       // fclose(file_);
 
-      error = av_interleaved_write_frame(oformat_context, packet);
+      error = av_write_frame(oformat_context, packet);
       ASSERT_TRUE(error >= 0);
-      av_packet_unref(packet);
+      // av_packet_unref(packet);
       ++i;
       std::cout << "write " << it_p /* << " \n\n " << mydata */ << "\n\nimage to stream" << std::endl;
     }

@@ -3,7 +3,7 @@
 project(Doodle
         VERSION 2.3.1.9
         LANGUAGES CXX)
-
+# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 #设置qt自动参数
 set(CMAKE_AUTOUIC ON)
@@ -36,24 +36,24 @@ configure_file(anzhuang.iss.in ${CMAKE_INSTALL_PREFIX}/anzhuang.iss)
 include_directories(${CMAKE_BINARY_DIR}/configure)
 
 #添加qt路径
-list(APPEND CMAKE_PREFIX_PATH $ENV{QT_MYROOT}/5.12.9/msvc2017_64)
+# list(APPEND CMAKE_PREFIX_PATH $ENV{QT_MYROOT}/5.12.9/msvc2017_64)
 
 #首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 
 #寻找一些外部库
-find_package(Qt5 CONFIG COMPONENTS Core Widgets Sql Test QuickControls2 LinguistTools REQUIRED)
-find_package(Boost REQUIRED COMPONENTS filesystem date_time regex iostreams log locale)
-find_package(CURL REQUIRED)
+find_package(Qt5 CONFIG COMPONENTS Core Widgets LinguistTools  REQUIRED)
+find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time regex iostreams log locale)
+# find_package(CURL REQUIRED)
 find_package(Sqlpp11 REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 find_package(FFMPEG  REQUIRED )
 find_package(rttr CONFIG REQUIRED)
-find_package(pugixml CONFIG REQUIRED)
+# find_package(pugixml CONFIG REQUIRED)
 
 #这两个是我自己写的寻找库的方法
 find_package(SqlppSqlite REQUIRED)
-find_package(SqlppMySql REQUIRED)
+# find_package(SqlppMySql REQUIRED)
 
 #仅头库
 find_package(magic_enum CONFIG REQUIRED)
@@ -63,25 +63,26 @@ find_package(date CONFIG REQUIRED)
 
 #服务器库
 #应该会用其中一个
-find_package(cppzmq CONFIG REQUIRED)
+# find_package(cppzmq CONFIG REQUIRED)
 
-find_package(cppnetlib CONFIG REQUIRED)
-find_package(civetweb CONFIG REQUIRED)
+# find_package(cppnetlib CONFIG REQUIRED)
+# find_package(civetweb CONFIG REQUIRED)
 
 #google序列化库
-find_package(protobuf CONFIG REQUIRED)
+# find_package(protobuf CONFIG REQUIRED)
 # target_link_libraries(main 
 # PRIVATE protobuf::libprotoc 
 # protobuf::libprotobuf
 # protobuf::libprotobuf-lite)
 #Google rpc库
-find_package(gRPC CONFIG REQUIRED)
+# find_package(gRPC CONFIG REQUIRED)
 #target_link_libraries(main PRIVATE gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts)
 #target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
 
 find_package(Autodesk_FBX 2020 REQUIRED)
 #搜索qt 安装辅助程序
-find_program(WINQT windeployqt REQUIRED)
+# find_program(WINQT qt5::windeployqt REQUIRED)
+set(WINQT qt5::windeployqt)
 find_program(BIN2CPP bin2cpp REQUIRED
 HINTS 
 bin2cpp-2.3.0-win32/bin

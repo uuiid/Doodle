@@ -114,6 +114,8 @@ core_global.h
 core_Cpp.h
 
 )
+set_target_properties(core 
+PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
 target_link_libraries(core PUBLIC SqlppSqlite)
@@ -132,21 +134,3 @@ target_compile_definitions(core PUBLIC DOODLE_QT)
 
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-
-#---------------------------------------------------安装----------------------------------------------------------------
-#安装基本组件
-install(TARGETS core
-        DESTINATION bin)
-#安装调试文件
-install(FILES $<TARGET_PDB_FILE:core>
-        DESTINATION bin
-        CONFIGURATIONS Debug)
-        
-if(RUN_QT_TOOL)
-        #运行qt
-        install(CODE "
-        execute_process(
-        COMMAND ${WINQT} --compiler-runtime --dir ${CMAKE_INSTALL_PREFIX}/bin ${CMAKE_INSTALL_PREFIX}/bin/core.dll
-        )
-        ")
-endif(RUN_QT_TOOL)

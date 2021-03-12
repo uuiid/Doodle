@@ -5,6 +5,10 @@
 add_executable(doodleServer  
                 DoodleServer_global.h
                 main.cpp)
+set_target_properties(doodleServer 
+PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+
 
 add_subdirectory(source)
 add_subdirectory(share)
@@ -26,11 +30,4 @@ target_compile_definitions(doodleServer PRIVATE _WIN32_WINNT=0x0A00)
 # target_link_options(doodleServer PRIVATE "/ENTRY:mainCRTStartup")
 # target_compile_definitions(doodleServer PRIVATE _WINDOWS)
 # set_target_properties(doodleServer PROPERTIES WIN32_EXECUTABLE FALSE)
-#安装基本组件
-install(TARGETS doodleServer
-        DESTINATION bin)
-#安装调试文件
-install(FILES $<TARGET_PDB_FILE:doodleServer>
-        DESTINATION bin
-        CONFIGURATIONS Debug)
 

@@ -1,0 +1,21 @@
+{
+  "name": "doodle",
+  "description": [
+    "this is doodle exe projet .",
+    "has maya plug ,ue plug and exe file"
+  ],
+  "version": "2.3.1.9",
+  "$default-features-explanation": "Users using this library transitively will get all backends automatically",
+  "default-features": [],
+  "features": {},
+  "dependencies": [
+    "boost",
+    "gtest",
+    "rttr",
+    "magic-enum",
+    "nlohmann-json",
+    "sqlpp11",
+    "sqlpp11-connector-sqlite3",
+    "date"
+  ]
+}

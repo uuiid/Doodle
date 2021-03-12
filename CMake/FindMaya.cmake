@@ -101,7 +101,7 @@ set(MAYA_LIBS_TO_FIND
     OpenMayaUI
     Image
     Foundation
-    IMFbase
+    # IMFbase
     cg
     cgGL
     clew

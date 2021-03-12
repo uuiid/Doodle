@@ -9,6 +9,10 @@
         test_std.cpp
         test_ffmpeg.cpp
         )
+
+set_target_properties(test_my 
+PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 #连接自己的库进行测试
 target_link_libraries(test_my
         PRIVATE core pinyin logger)
@@ -20,7 +24,7 @@ REQUIRED
 
 target_link_libraries(test_my PRIVATE ${DOODLE_MAR})
 
-target_link_libraries(test_my PRIVATE cppzmq cppzmq-static)
+# target_link_libraries(test_my PRIVATE cppzmq cppzmq-static)
 target_link_libraries(test_my PRIVATE Qt5::Core)
 target_compile_definitions(test_my PRIVATE _WIN32_WINNT=0x0A00)
 #连接谷歌测试框架
