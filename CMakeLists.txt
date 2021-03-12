@@ -3,7 +3,7 @@
 project(Doodle
         VERSION 2.3.1.9
         LANGUAGES CXX)
-# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 #设置qt自动参数
 set(CMAKE_AUTOUIC ON)
@@ -35,8 +35,8 @@ configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)
 configure_file(anzhuang.iss.in ${CMAKE_INSTALL_PREFIX}/anzhuang.iss)
 include_directories(${CMAKE_BINARY_DIR}/configure)
 
-#添加qt路径
-# list(APPEND CMAKE_PREFIX_PATH $ENV{QT_MYROOT}/5.12.9/msvc2017_64)
+# #添加qt路径
+# list(APPEND CMAKE_PREFIX_PATH F:/Qt/5.12.9/msvc2017_64)
 
 #首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
@@ -82,19 +82,11 @@ find_package(date CONFIG REQUIRED)
 find_package(Autodesk_FBX 2020 REQUIRED)
 #搜索qt 安装辅助程序
 # find_program(WINQT qt5::windeployqt REQUIRED)
-set(WINQT qt5::windeployqt)
 find_program(BIN2CPP bin2cpp REQUIRED
 HINTS 
 bin2cpp-2.3.0-win32/bin
 )
-# add_subdirectory(logger)
-# add_subdirectory(fileSystem)
-#add_subdirectory(fileSyn)
-# add_subdirectory(pinyin)
-# add_subdirectory(core)
-# add_subdirectory(doodle_GUI)
-# add_subdirectory(doodle_server)
-# add_subdirectory(plug)
+
 add_subdirectory(src)
 
 enable_testing()
@@ -118,9 +110,9 @@ endif(RUN_fixup)
 set(DOODLEAPPS ${CMAKE_INSTALL_PREFIX}/bin/doodle.exe)  # paths to executables
 set(TESTAPPS ${CMAKE_INSTALL_PREFIX}/bin/test_my.exe)
 
-get_filename_component(fixdir ${WINQT} DIRECTORY)
+# get_filename_component(fixdir ${WINQT} DIRECTORY)
 
-list(APPEND DIRS ${fixdir})
+
 list(APPEND DIRS ${CMAKE_INSTALL_PREFIX}/lib)
 foreach(_var in LISTS ${CMAKE_FIND_ROOT_PATH})
      list(APPEND DIRS ${_var}/bin)

@@ -13,7 +13,10 @@ add_library(doodle_motion_Mplug MODULE
   ${doodle_motion_Mplug_CPP}
   ${doodle_motion_Mplug_HEADER}
 )
-
+set_target_properties(doodle_motion_Mplug PROPERTIES 
+RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya
+LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya
+)
 target_include_directories(doodle_motion_Mplug PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
 
 target_link_libraries(doodle_motion_Mplug PRIVATE doodle_motion)
@@ -44,15 +47,3 @@ target_compile_definitions(
 #   PRIVATE
 #   /MD
 # )
-
-#安装基本组件
-install(
-  TARGETS doodle_motion_Mplug
-  DESTINATION plug/maya_plug/plug-ins
-)
-#安装调试文件
-install(FILES $<TARGET_PDB_FILE:doodle_motion_Mplug>
-        DESTINATION plug/maya_plug/plug-ins
-        CONFIGURATIONS Debug
-        )
-

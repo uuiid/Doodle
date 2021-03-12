@@ -5,24 +5,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "doodle_Test",
-            "type": "shell",
-            "command": "${workspaceFolder}/build/test/Debug/test_my.exe",
-            "problemMatcher": [],
-            "args": [
-                "--gtest_output=xml:${workspaceFolder}/build/test.xml"
-            ],
-            "options": {
-                "env": {
-                    "PATH": "$PATH;"
-                }
-            },
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            }
-        },
-        {
             "label": "pack",
             "type": "shell",
             "command": "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe",

@@ -143,7 +143,7 @@
     "testMate.cpp.test.advancedExecutables": [
         {
             "name": "test_my",
-            "pattern": "install/**/test_my.exe",
+            "pattern": "**/test_my.exe",
             "cwd": "${workspaceFolder}"
         }
     ],

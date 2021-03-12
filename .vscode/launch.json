@@ -21,10 +21,10 @@
             "name": "Doodle_debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/install/bin/doodle.exe",
+            "program": "${command:cmake.launchTargetPath}",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/install/bin",
+            "cwd": "${command:cmake.launchTargetDirectory}",
             "environment": [
                 {
                     "name": "PATH",
@@ -33,39 +33,6 @@
                 {
                     "name": "squid",
                     "value": "clam"
-                }
-            ],
-            "console": "integratedTerminal",
-            "visualizerFile": "${workspaceFolder}/qt5.natvis"
-        },
-        {
-            "name": "Doodle_server",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceRoot}/install/bin/doodleServer.exe",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/install/bin",
-            "environment": [
-                {
-                    "name": "PATH",
-                    "value": "${PATH};"
-                }
-            ],
-            "console": "integratedTerminal",
-        },
-        {
-            "name": "Doodle_Test",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/install/bin/test_my.exe",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/install/bin",
-            "environment": [
-                {
-                    "name": "PATH",
-                    "value": "$PATH;"
                 }
             ],
             "console": "integratedTerminal",
