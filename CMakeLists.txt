@@ -82,9 +82,21 @@ find_package(date CONFIG REQUIRED)
 find_package(Autodesk_FBX 2020 REQUIRED)
 #搜索qt 安装辅助程序
 # find_program(WINQT qt5::windeployqt REQUIRED)
+
+#下载自定义嵌入文件
+include(ExternalProject)
+ExternalProject_Add(bin2cpp_prj 
+        URL https://github.com/end2endzone/bin2cpp/releases/download/2.3.0/bin2cpp-2.3.0-win32.zip
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ""
+        TEST_COMMAND ""
+)
+
+
 find_program(BIN2CPP bin2cpp REQUIRED
 HINTS 
-bin2cpp-2.3.0-win32/bin
+${CMAKE_BINARY_DIR}/bin2cpp_prj-prefix/src/bin2cpp_prj/bin
 )
 
 add_subdirectory(src)
