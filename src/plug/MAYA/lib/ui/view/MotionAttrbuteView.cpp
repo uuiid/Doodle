@@ -35,7 +35,7 @@ MotionAttrbuteView::MotionAttrbuteView(QWidget* parent)
   layout->addWidget(k_tiles_label, 1, 0, 1, 1);
   layout->addWidget(p_tiles_text, 1, 1, 1, 1);
   //显示制作人
-  layout->addWidget(k_user_label, 2, 1, 1, 1);
+  layout->addWidget(k_user_label, 2, 0, 1, 1);
   layout->addWidget(p_user_label, 2, 1, 1, 1);
   //显示注释
   layout->addWidget(k_info_label, 3, 0, 1, 1);

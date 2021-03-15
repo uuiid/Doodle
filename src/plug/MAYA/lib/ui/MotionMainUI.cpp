@@ -30,7 +30,9 @@ MotionMainUI::MotionMainUI(QWidget *parent, Qt::WindowFlags flags)
   setCentralWidget(p_centralWidget);
   //创建布局
   p_layout = new QGridLayout(p_centralWidget);
-
+  p_layout->setHorizontalSpacing(0);
+  p_layout->setVerticalSpacing(0);
+  p_layout->setSpacing(0);
   //创建设置面板
   p_setting_widget = new doodle::motion::ui::MotionSettingWidget(p_centralWidget);
   auto rootPath    = doodle::motion::kernel::MotionSetting::Get().MotionLibRoot();
