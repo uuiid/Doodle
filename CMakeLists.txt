@@ -97,7 +97,7 @@ ExternalProject_Add(bin2cpp_prj
         TEST_COMMAND ""
 )
 ExternalProject_Get_property(bin2cpp_prj SOURCE_DIR)
-message("Source dir of bin2cpp_prj = ${SOURCE_DIR}")
+# message("Source dir of bin2cpp_prj = ${SOURCE_DIR}")
 set(BIN2CPP ${SOURCE_DIR}/bin/bin2cpp.exe)
 
 

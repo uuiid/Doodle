@@ -1,11 +1,33 @@
 #include <lib/ui/model/MotionModel.h>
 
-
 #include <boost/numeric/conversion/cast.hpp>
 #include <QtGui/qcolor.h>
 #include <QtGui/qicon.h>
-
+#include <QtWidgets/qmessagebox.h>
+#include <QtWidgets/qapplication.h>
 namespace doodle::motion::ui {
+
+void MotionModel::doodleBindData(const kernel::MotionFilePtr &data) {
+  data->dataChanged.connect([=](const kernel::MotionFile *k_data, const int index) {
+    auto k_it = std::find_if(
+        this->p_lists.begin(), this->p_lists.end(),
+        [=](const kernel::MotionFilePtr &p) {
+          return p.get() == k_data;
+        });
+    auto k_index  = std::distance(this->p_lists.begin(), k_it);
+    auto k_Qindex = this->index(k_index, 0);
+    this->dataChanged(k_Qindex, k_Qindex);
+  });
+  data->notDeleteFile.connect([=](const FSys::path &path) {
+    auto app = qApp->topLevelWidgets().at(0);
+    if (app) {
+      QMessageBox::warning(
+          app, tr("注意 :"),
+          QString{"重要: 没有权限删除此项"} + QString::fromStdString(path.generic_u8string()));
+    }
+  });
+}
+
 MotionModel::MotionModel(QObject *parent)
     : QAbstractListModel(parent),
       p_lists() {
@@ -90,8 +112,10 @@ bool MotionModel::removeRows(int position, int rows, const QModelIndex &index) {
 
 bool MotionModel::insertData(int position, const kernel::MotionFilePtr &data) {
   beginInsertRows(QModelIndex(), position, position + 1);
-  this->p_lists.insert(this->p_lists.begin() + position, data);
+  auto it = this->p_lists.insert(this->p_lists.begin() + position, data);
   endInsertRows();
+  this->doodleBindData(data);
+
   return true;
 }
 
@@ -99,6 +123,9 @@ void MotionModel::setLists(const std::vector<kernel::MotionFilePtr> &lists) {
   beginResetModel();
   p_lists = lists;
   endResetModel();
+  for (auto &&item : this->p_lists) {
+    this->doodleBindData(item);
+  }
 }
 
 }  // namespace doodle::motion::ui

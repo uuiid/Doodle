@@ -14,7 +14,8 @@
 namespace doodle::motion::ui {
 MotionView::MotionView(QWidget* parent)
     : QListView(parent),
-      p_TreeDirItem() {
+      p_TreeDirItem(),
+      sig_chickItem() {
   this->setViewMode(QListView::ViewMode::IconMode);
   this->setFlow(QListView::Flow::LeftToRight);
   this->setUniformItemSizes(true);
@@ -99,4 +100,9 @@ void MotionView::updateVideo() {
   }
 }
 
+void MotionView::doodleChicked(const QModelIndex& index) {
+  auto k_data = index.data(Qt::UserRole).value<kernel::MotionFile*>();
+  if (!k_data) return;
+  sig_chickItem(k_data->shared_from_this());
+}
 }  // namespace doodle::motion::ui

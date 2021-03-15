@@ -9,7 +9,7 @@
 namespace doodle::motion::ui {
 
 class TreeDirItem : public std::enable_shared_from_this<TreeDirItem> {
- private:
+  private:
   FSys::path p_dir;
   std::weak_ptr<TreeDirItem> p_parent;
   std::vector<TreeDirItemPtr> p_child_items;

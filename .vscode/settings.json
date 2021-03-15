@@ -133,7 +133,8 @@
         "qtwidgetsdepends": "cpp",
         "qapplication": "cpp",
         "qtreeview": "cpp",
-        "qabstractitemmodel": "cpp"
+        "qabstractitemmodel": "cpp",
+        "any": "cpp"
     },
     "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",

@@ -3,10 +3,12 @@
 #include <MotionGlobal.h>
 #include <nlohmann/json_fwd.hpp>
 
+#include <boost/signals2.hpp>
+
 namespace doodle::motion::kernel {
-class MotionFile;
-using MotionFilePtr = std::shared_ptr<MotionFile>;
-class MotionFile {
+
+
+class MotionFile : public std::enable_shared_from_this<MotionFile> {
  private:
   FSys::path p_file;
   FSys::path p_Fbx_file;
@@ -27,14 +29,16 @@ class MotionFile {
 
   explicit MotionFile();
   ~MotionFile();
-
+  // 0 .dataChangded
   const FSys::path& FbxFile() const noexcept;
   const bool hasIconFile() const noexcept;
+  // 1 .dataChangded
   const FSys::path& IconFile() const noexcept;
   const bool hasvideoFile() const noexcept;
+  // 2 .dataChangded
   const FSys::path& VideoFile() const noexcept;
   const std::string& UserName() const noexcept;
-
+  // 3 .dataChangded
   const std::string& Info() const noexcept;
   void setInfo(const std::string& Info) noexcept;
 
@@ -47,6 +51,9 @@ class MotionFile {
   //在创建fbx后要更改时调用
   void createIconFile();
   void createVideoFile();
+
+  boost::signals2::signal<void(const MotionFile*, const int&)> dataChanged;
+  boost::signals2::signal<void(const FSys::path&)> notDeleteFile;
 };
 using MotionFile_QVar = MotionFile*;
 }  // namespace doodle::motion::kernel

@@ -46,7 +46,9 @@ MotionFile::MotionFile()
       p_video_file(),
       p_title(),
       p_user_name(MotionSetting::Get().User()),
-      p_info() {
+      p_info(),
+      dataChanged(),
+      notDeleteFile() {
 }
 
 MotionFile::~MotionFile() {
@@ -165,6 +167,10 @@ void MotionFile::createFbxFile(const FSys::path& relativePath) {
     this->createVideoFile();
   }
 
+  this->dataChanged(this, 0);
+  this->dataChanged(this, 1);
+  this->dataChanged(this, 2);
+
   //写出配置文件
   this->save();
 }
@@ -173,21 +179,44 @@ void MotionFile::createIconFile() {
   if (!FSys::exists(this->p_Fbx_file)) throw FbxFileError("未找到导出文件");
   // p_Gif_file.replace_filename();
   auto k_file = p_Gif_file;
-  if (FSys::exists(p_Gif_file))
-    p_Gif_file.replace_filename(boost::uuids::to_string(MotionSetting::Get().random_generator()) + ".png");
+  // if (FSys::exists(p_Gif_file))
+  p_Gif_file.replace_filename(boost::uuids::to_string(MotionSetting::Get().random_generator()) + ".png");
 
   auto k_screen = Screenshot{p_Gif_file};
   k_screen.save();
+  this->save();
 
   //在这里可能抛出无法删除的异常放在最后
   if (FSys::exists(k_file))
-    FSys::remove(k_file);
+    try {
+      FSys::remove(k_file);
+    } catch (const FSys::filesystem_error& err) {
+      std::cout << err.what() << std::endl;
+      this->notDeleteFile(k_file);
+    }
+  this->dataChanged(this, 1);
 }
 
 void MotionFile::createVideoFile() {
   if (!FSys::exists(this->p_Fbx_file)) throw FbxFileError("未找到导出文件");
+
+  //暂存临时变量
+  auto k_file = p_video_file;
+  // if (FSys::exists(p_video_file))
+  p_video_file.replace_filename(boost::uuids::to_string(MotionSetting::Get().random_generator()) + ".mp4");
+  //保存视频文件
   auto k_video = MayaVideo{p_video_file};
   k_video.save();
+  this->save();
+
+  if (FSys::exists(k_file))
+    try {
+      FSys::remove(k_file);
+    } catch (const FSys::filesystem_error& err) {
+      std::cout << err.what() << std::endl;
+      this->notDeleteFile(k_file);
+    }
+  this->dataChanged(this, 2);
 }
 
 }  // namespace doodle::motion::kernel

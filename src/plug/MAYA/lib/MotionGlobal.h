@@ -33,6 +33,10 @@ namespace kernel {
 class MayaRenderOpenGL;
 class FFmpegWarp;
 
+class PlayerMotion;
+using PlayerMotionPtr = std::shared_ptr<PlayerMotion>;
+class MotionFile;
+using MotionFilePtr = std::shared_ptr<MotionFile>;
 }  // namespace kernel
 }  // namespace motion
 }  // namespace doodle

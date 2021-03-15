@@ -1,6 +1,7 @@
 #pragma once
 
 #include <MotionGlobal.h>
+#include <boost/signals2.hpp>
 
 #include <QtWidgets/QListView>
 
@@ -14,6 +15,8 @@ class MotionView : public QListView {
   MotionView(QWidget* parent = nullptr);
 
   void setTreeNode(const decltype(p_TreeDirItem)& item);
+
+  boost::signals2::signal<void(const kernel::MotionFilePtr& data)> sig_chickItem;
 
  protected:
   //上下文菜单
@@ -32,6 +35,8 @@ class MotionView : public QListView {
   void createFbxAction(const FSys::path& path);
   void updateIcon();
   void updateVideo();
+
+  void doodleChicked(const QModelIndex& index);
 };
 
 }  // namespace doodle::motion::ui

@@ -5,11 +5,15 @@
 #include <QtCore/QAbstractListModel>
 #include <lib/kernel/MotionFile.h>
 
+#include <boost/signals2.hpp>
+
 namespace doodle::motion::ui {
 class MotionModel : public QAbstractListModel {
   Q_OBJECT
  private:
   std::vector<kernel::MotionFilePtr> p_lists;
+
+  void doodleBindData(const kernel::MotionFilePtr &data);
 
  public:
   MotionModel(QObject *parent = nullptr);
