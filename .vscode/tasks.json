@@ -23,6 +23,19 @@
                 "--path=C:/Users/teXiao/Documents/maya/projects/default/scenes/test_uv_set_and_mat.ma",
                 "--exportpath=C:/Users/teXiao/Documents/maya/projects/default/scenes"
             ]
+        },
+        {
+            "label": "cpack",
+            "type": "shell",
+            "command": "cpack.exe",
+            "args": [],
+            "group": "none",
+            "options": {
+                "cwd": "${workspaceFolder}/b_Ninja_VS19_Ni_64_qt515_Release",
+                "env": {
+                    "PATH": "%PATH%;C:/Program Files/CMake/bin"
+                }
+            }
         }
     ]
 }

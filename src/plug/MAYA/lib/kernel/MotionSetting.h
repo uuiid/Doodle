@@ -1,5 +1,6 @@
 #pragma once
 #include <lib/MotionGlobal.h>
+#include <lib/kernel/BoostUuidWarp.h>
 #include <filesystem>
 #include <map>
 
@@ -22,6 +23,8 @@ class MotionSetting {
 
   void save();
 
+  const boost::uuids::uuid random_generator();
+
  private:
   MotionSetting();
 
@@ -37,6 +40,7 @@ class MotionSetting {
   std::string p_user_name;
   std::string p_motion_name;
 
+  boost::uuids::random_generator p_uuid;
   static std::string ConfigName;
 };
 }  // namespace doodle::motion::kernel

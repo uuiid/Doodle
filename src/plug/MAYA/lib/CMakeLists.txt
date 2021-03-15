@@ -98,7 +98,6 @@ kernel/ExeWarp/FFmpegWarp.cpp
 
 set(doodle_motion_HEADER
 kernel/BoostUuidWarp.h
-kernel/doodleFFmpeg.h
 
 ui/MotionMainUI.h
 ui/MotionSettingWidget.h
@@ -132,23 +131,29 @@ add_library(doodle_motion SHARED
 # 设置一些属性,包括没有自动运行的moc以及安装位置
 set_target_properties(doodle_motion PROPERTIES 
 AUTOMOC OFF
-RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya
+RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
 )
 
 
 
 
 target_include_directories(doodle_motion PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
-target_include_directories(doodle_motion PUBLIC ${MAYA_INCLUDE_DIR})
+target_include_directories(doodle_motion PUBLIC 
+${MAYA_INCLUDE_DIR}
+${OpenCV_INCLUDE_DIRS}
+)
 
 
 target_link_libraries(doodle_motion PUBLIC ${MAYA_LIBRARY} ${MAYA_QT5_LIBRARY})
-target_link_libraries(doodle_motion PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
+target_link_libraries(doodle_motion PRIVATE )
 #链接fbx库
 target_link_libraries(doodle_motion PRIVATE 
 Autodesk_FBX
 Boost::locale
 Boost::filesystem
+${OpenCV_LIBS}
+nlohmann_json 
+nlohmann_json::nlohmann_json
 # ${FFMPEG_LIBRARIES}
 )
 
@@ -164,13 +169,13 @@ target_compile_definitions(doodle_motion PRIVATE _WIN32_WINNT=0x0A00)
 target_compile_options(doodle_motion PRIVATE /Zi)
 target_link_options(doodle_motion PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF) 
 
-install(
-  TARGETS doodle_motion
-  DESTINATION plug/maya_plug/plug-ins
-)
-#安装调试文件
-install(FILES $<TARGET_PDB_FILE:doodle_motion>
-        DESTINATION plug/maya_plug/plug-ins
-        # CONFIGURATIONS Debug
-        )
+# install(
+#   TARGETS doodle_motion
+#   DESTINATION plug/maya_plug/plug-ins
+# )
+# #安装调试文件
+# install(FILES $<TARGET_PDB_FILE:doodle_motion>
+#         DESTINATION plug/maya_plug/plug-ins
+#         # CONFIGURATIONS Debug
+#         )
 

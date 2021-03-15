@@ -14,8 +14,8 @@ add_library(doodle_motion_Mplug MODULE
   ${doodle_motion_Mplug_HEADER}
 )
 set_target_properties(doodle_motion_Mplug PROPERTIES 
-RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya
-LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya
+RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
 )
 target_include_directories(doodle_motion_Mplug PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
 
@@ -24,7 +24,6 @@ target_include_directories(doodle_motion_Mplug PRIVATE ${MAYA_INCLUDE_DIR})
 
 
 #设置maya插件后缀名
-
 set_target_properties(
   doodle_motion_Mplug PROPERTIES SUFFIX ".mll"
 )

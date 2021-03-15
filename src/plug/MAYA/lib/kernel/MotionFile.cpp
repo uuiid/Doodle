@@ -119,8 +119,7 @@ std::vector<MotionFilePtr> MotionFile::getAll(const FSys::path& path) {
 void MotionFile::createFbxFile(const FSys::path& relativePath) {
   {
     //这个域中是创建临时变量导出文件
-    auto k_uuid     = boost::uuids::random_generator{}();
-    auto k_uuid_str = boost::uuids::to_string(k_uuid);
+    auto k_uuid_str = boost::uuids::to_string(MotionSetting::Get().random_generator());
 
     auto& set = MotionSetting::Get();
 
@@ -172,8 +171,17 @@ void MotionFile::createFbxFile(const FSys::path& relativePath) {
 
 void MotionFile::createIconFile() {
   if (!FSys::exists(this->p_Fbx_file)) throw FbxFileError("未找到导出文件");
+  // p_Gif_file.replace_filename();
+  auto k_file = p_Gif_file;
+  if (FSys::exists(p_Gif_file))
+    p_Gif_file.replace_filename(boost::uuids::to_string(MotionSetting::Get().random_generator()) + ".png");
+
   auto k_screen = Screenshot{p_Gif_file};
   k_screen.save();
+
+  //在这里可能抛出无法删除的异常放在最后
+  if (FSys::exists(k_file))
+    FSys::remove(k_file);
 }
 
 void MotionFile::createVideoFile() {

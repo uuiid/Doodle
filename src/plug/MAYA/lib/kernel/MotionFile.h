@@ -48,9 +48,9 @@ class MotionFile {
   void createIconFile();
   void createVideoFile();
 };
-
+using MotionFile_QVar = MotionFile*;
 }  // namespace doodle::motion::kernel
 
 #include <QtCore/QVariant>
 Q_DECLARE_OPAQUE_POINTER(doodle::motion::kernel::MotionFile)
-Q_DECLARE_METATYPE(doodle::motion::kernel::MotionFile*)
+Q_DECLARE_METATYPE(doodle::motion::kernel::MotionFile_QVar)

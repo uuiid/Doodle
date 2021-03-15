@@ -1,6 +1,5 @@
 #include <lib/kernel/Maya/MayaVideo.h>
 
-#include <lib/kernel/doodleFFmpeg.h>
 #include <lib/kernel/Exception.h>
 #include <lib/kernel/Maya/MayaRenderOpenGL.h>
 #include <lib/kernel/ExeWarp/FFmpegWarp.h>

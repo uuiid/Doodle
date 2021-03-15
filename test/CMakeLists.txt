@@ -7,7 +7,7 @@
         test_qtCore.cpp
         # test_server.cpp
         test_std.cpp
-        test_ffmpeg.cpp
+        test_opencv.cpp
         )
 
 set_target_properties(test_my 
@@ -33,8 +33,7 @@ target_link_libraries(test_my
 
 target_link_libraries(test_my PRIVATE
  Boost::locale
- ${FFMPEG_LIBRARIES}
- 
+ ${OpenCV_LIBS}
  )
 
 # include(CTest)

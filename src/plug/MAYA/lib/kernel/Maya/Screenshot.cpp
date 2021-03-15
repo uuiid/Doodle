@@ -1,7 +1,6 @@
 #include <lib/kernel/Maya/Screenshot.h>
 
 #include <lib/kernel/Exception.h>
-#include <lib/kernel/doodleFFmpeg.h>
 #include <lib/kernel/Maya/MayaRenderOpenGL.h>
 
 #include <sstream>

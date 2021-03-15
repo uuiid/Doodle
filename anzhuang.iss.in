@@ -28,7 +28,7 @@ Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescrip
 
 [Files]
 Source: "bin\doodle.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "*";Excludes :"*.lib"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs replacesameversion
+Source: "plug"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs replacesameversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

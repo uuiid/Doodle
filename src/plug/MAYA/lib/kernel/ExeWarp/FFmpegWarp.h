@@ -6,8 +6,6 @@ class FFmpegWarp {
  private:
   FSys::path p_file;
 
-  bool runFFmpeg(const std::string &command) const;
-
  public:
   FFmpegWarp();
   ~FFmpegWarp();

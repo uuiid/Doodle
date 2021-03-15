@@ -47,11 +47,16 @@ void MotionSetting::save() {
   file << to_json().dump();
 }
 
+const boost::uuids::uuid MotionSetting::random_generator() {
+  return p_uuid();
+}
+
 MotionSetting::MotionSetting()
     : p_setting_path(),
       p_motion_path(),
       p_user_name("user"),
-      p_motion_name() {
+      p_motion_name(),
+      p_uuid(boost::uuids::random_generator{}) {
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, NULL, &pManager);
   if (!pManager) std::runtime_error("无法找到保存路径");

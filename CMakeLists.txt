@@ -10,6 +10,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+
 #设置不使用qt_key
 add_definitions(-DQT_NO_KEYWORDS)
 
@@ -32,7 +33,7 @@ option(RUN_COPY    "run copy tools"     OFF)
 #配置版本文件
 
 configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)
-configure_file(anzhuang.iss.in ${CMAKE_INSTALL_PREFIX}/anzhuang.iss)
+configure_file(anzhuang.iss.in ${CMAKE_BINARY_DIR}/anzhuang.iss)
 include_directories(${CMAKE_BINARY_DIR}/configure)
 
 # #添加qt路径
@@ -50,6 +51,9 @@ find_package(GTest CONFIG REQUIRED)
 find_package(FFMPEG  REQUIRED )
 find_package(rttr CONFIG REQUIRED)
 # find_package(pugixml CONFIG REQUIRED)
+
+# 寻找opencv
+find_package(OpenCV CONFIG REQUIRED)
 
 #这两个是我自己写的寻找库的方法
 find_package(SqlppSqlite REQUIRED)
@@ -92,12 +96,11 @@ ExternalProject_Add(bin2cpp_prj
         INSTALL_COMMAND ""
         TEST_COMMAND ""
 )
+ExternalProject_Get_property(bin2cpp_prj SOURCE_DIR)
+message("Source dir of bin2cpp_prj = ${SOURCE_DIR}")
+set(BIN2CPP ${SOURCE_DIR}/bin/bin2cpp.exe)
 
 
-find_program(BIN2CPP bin2cpp REQUIRED
-HINTS 
-${CMAKE_BINARY_DIR}/bin2cpp_prj-prefix/src/bin2cpp_prj/bin
-)
 
 add_subdirectory(src)
 
@@ -105,7 +108,7 @@ enable_testing()
 add_subdirectory(test)
 #=====================安装打包过程===============================
 # list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
-include(mypack)
+# include(mypack)
 
 
 #====================一些非qt组件的搜索和安装=============
@@ -116,16 +119,6 @@ if(RUN_fixup)
         include(InstallRequiredSystemLibraries)
 endif(RUN_fixup)
 
-
-
-#第二中验证加搜索方式
-set(DOODLEAPPS ${CMAKE_INSTALL_PREFIX}/bin/doodle.exe)  # paths to executables
-set(TESTAPPS ${CMAKE_INSTALL_PREFIX}/bin/test_my.exe)
-
-# get_filename_component(fixdir ${WINQT} DIRECTORY)
-
-
-list(APPEND DIRS ${CMAKE_INSTALL_PREFIX}/lib)
 foreach(_var in LISTS ${CMAKE_FIND_ROOT_PATH})
      list(APPEND DIRS ${_var}/bin)
 endforeach(_var)
@@ -153,17 +146,16 @@ if(RUN_fixup)
         #最后实现camke修复
         install(CODE "
         include(BundleUtilities)
-        fixup_bundle(\"${DOODLEAPPS}\"   \"\"   \"${DIRS}\")
+        fixup_bundle(\"$<TARGET_FILE:doodle>\"   \"\"   \"${DIRS}\")
         ")
-        if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
-                install(CODE "
-                include(BundleUtilities)
-                fixup_bundle(\"${TESTAPPS}\"   \"\"   \"${DIRS}\")
-                ") 
-        endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
 endif(RUN_fixup)
 
 
+# install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/ DESTINATION plug)
+# install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/ DESTINATION bin
+# PATTERN "*.manifest" EXCLUDE )
 
-include(CPack)
-# ${projectDir}\out\install\${name}
+
+set(CPACK_GENERATOR "WIX")
+
+include(CPack REQUIRED)
