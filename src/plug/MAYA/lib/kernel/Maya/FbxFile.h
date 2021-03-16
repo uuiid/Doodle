@@ -4,10 +4,11 @@
 
 #include <Maya/MGlobal.h>
 namespace doodle::motion::kernel {
-class FbxExport {
+class FbxFile {
  public:
-  FbxExport(FSys::path path);
-  static MStatus FbxExportMEL(FSys::path path);
-  ~FbxExport();
+  FbxFile(FSys::path path);
+  static void FbxExportMEL(FSys::path path);
+  static void FbxImportMEL(FSys::path path);
+  ~FbxFile();
 };
 }  // namespace doodle::motion::kernel

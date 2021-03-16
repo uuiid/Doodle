@@ -14,7 +14,7 @@ ui/view/MotionAttrbuteView.cpp
 
 kernel/MotionSetting.cpp
 kernel/MotionFile.cpp
-kernel/Maya/FbxExport.cpp
+kernel/Maya/FbxFile.cpp
 kernel/Exception.cpp
 kernel/Maya/Screenshot.cpp
 kernel/Maya/MayaRenderOpenGL.cpp
@@ -39,7 +39,7 @@ ui/view/MotionAttrbuteView.h
 
 kernel/MotionSetting.h
 kernel/MotionFile.h
-kernel/Maya/FbxExport.h
+kernel/Maya/FbxFile.h
 kernel/Exception.h
 kernel/Maya/Screenshot.h
 kernel/Maya/MayaRenderOpenGL.h

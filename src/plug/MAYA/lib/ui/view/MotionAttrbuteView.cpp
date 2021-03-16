@@ -6,11 +6,13 @@
 #include <QtWidgets/qlabel.h>
 #include <QtWidgets/qtextedit.h>
 #include <QtWidgets/qlineedit.h>
+#include <QtWidgets/qplaintextedit.h>
 
 #include <QtGui/qimage.h>
+#include <QtWidgets/qmessagebox.h>
 // #include <QtMultimedia/qmediaplayer.h>
 
-#include <QtCore/qdebug.h>
+// #include <QtCore/qdebug.h>
 
 namespace doodle::motion::ui {
 
@@ -20,8 +22,10 @@ MotionAttrbuteView::MotionAttrbuteView(QWidget* parent)
       p_MotionPlayer(std::make_shared<kernel::PlayerMotion>()),
       p_image(new QLabel()),
       p_user_label(new QLabel(tr("匿名"))),
-      p_info_text(new QTextEdit()),
-      p_tiles_text(new QLineEdit(tr("无"))) {
+      p_info_text(new QPlainTextEdit()),
+      p_tiles_text(new QLineEdit(tr("无"))),
+      p_tiles_connection(),
+      p_info_connection() {
   auto layout = new QGridLayout(this);
 
   auto k_tiles_label = new QLabel(tr("名称: "));
@@ -67,10 +71,34 @@ void MotionAttrbuteView::setMotionFile(const kernel::MotionFilePtr& data) {
   this->p_MotionPlayer->setFile(p_MotionFile->VideoFile());
   this->p_tiles_text->setText(QString::fromStdString(p_MotionFile->Title()));
   this->p_user_label->setText(QString::fromStdString(p_MotionFile->UserName()));
-  this->p_info_text->setText(QString::fromStdString(p_MotionFile->Info()));
+  this->p_info_text->setPlainText(QString::fromStdString(p_MotionFile->Info()));
+
+  //连接一些槽
+  p_tiles_connection = this->connect(
+      this->p_tiles_text, &QLineEdit::textEdited,
+      [this](const QString& str) {
+        if (str.length() > 16) {
+          QMessageBox::warning(this, tr("警告"), tr("题目名称太长"));
+        } else {
+          this->p_MotionFile->setTitle(str.toStdString());
+        }
+      });
+  p_info_connection = this->connect(
+      this->p_info_text, &QPlainTextEdit::textChanged,
+      [this] {
+        auto str = this->p_info_text->toPlainText();
+        if (str.length() > 2048) {
+          QMessageBox::warning(this, tr("警告"), tr("备注太长了"));
+        } else {
+          this->p_MotionFile->setInfo(str.toStdString());
+        }
+      });
 }
 
 void MotionAttrbuteView::doodleClear() {
+  this->p_tiles_text->disconnect(p_tiles_connection);
+  this->p_info_text->disconnect(p_info_connection);
+
   this->p_MotionPlayer->stop_Player();
   this->p_image->clear();
   this->p_tiles_text->clear();

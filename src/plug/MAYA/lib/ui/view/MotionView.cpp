@@ -39,6 +39,11 @@ void MotionView::contextMenuEvent(QContextMenuEvent* event) {
             this->createFbxAction(k_path);
           });
   if (selectionModel()->hasSelection()) {
+    auto k_import_fbx = menu->addAction(tr("导入文件"));
+    connect(k_import_fbx, &QAction::triggered, this, &MotionView::importFbxAction);
+
+    menu->addSeparator();
+
     auto k_create_icon = menu->addAction(tr("更新图标"));
     connect(k_create_icon, &QAction::triggered, this, &MotionView::updateIcon);
     auto k_create_video = menu->addAction(tr("更新视频"));
@@ -97,6 +102,20 @@ void MotionView::updateVideo() {
   try {
     k_data->createVideoFile();
   } catch (const NotFileError& err) {
+    QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(err.what()));
+  }
+}
+
+void MotionView::importFbxAction() {
+  auto k_selectModel = selectionModel();
+  if (!k_selectModel->hasSelection()) return;
+
+  auto k_data = k_selectModel->currentIndex().data(Qt::UserRole).value<kernel::MotionFile*>();
+  if (!k_data) QMessageBox::warning(this, QString::fromUtf8("注意: "), tr("没有找到选择"));
+
+  try {
+    k_data->importFbxFile();
+  } catch (const FbxFileError& err) {
     QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(err.what()));
   }
 }

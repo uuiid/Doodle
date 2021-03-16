@@ -35,6 +35,7 @@ class MotionView : public QListView {
   void createFbxAction(const FSys::path& path);
   void updateIcon();
   void updateVideo();
+  void importFbxAction();
 
   void doodleChicked(const QModelIndex& index);
 };

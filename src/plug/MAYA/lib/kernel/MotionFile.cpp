@@ -1,6 +1,6 @@
 #include <lib/kernel/MotionFile.h>
 
-#include <lib/kernel/Maya/FbxExport.h>
+#include <lib/kernel/Maya/FbxFile.h>
 #include <lib/kernel/MotionSetting.h>
 #include <lib/kernel/Exception.h>
 #include <lib/kernel/BoostUuidWarp.h>
@@ -161,8 +161,8 @@ void MotionFile::createFbxFile(const FSys::path& relativePath) {
     }
 
     //导出fbx
-    auto k_status = FbxExport::FbxExportMEL(k_path_fbx);
-    if (k_status != MStatus::MStatusCode::kSuccess) throw FbxFileError("无法导出文件");
+    FbxFile::FbxExportMEL(k_path_fbx);
+
     if (!FSys::exists(k_path_fbx)) throw FbxFileError("未找到导出文件");
 
     this->p_file       = std::move(k_path_josn);
@@ -180,6 +180,12 @@ void MotionFile::createFbxFile(const FSys::path& relativePath) {
 
   //写出配置文件
   this->save();
+}
+
+void MotionFile::importFbxFile() {
+  if (!FSys::exists(this->p_Fbx_file)) throw FbxFileError("未找到导出文件");
+
+  FbxFile::FbxImportMEL(p_Fbx_file);
 }
 
 void MotionFile::createIconFile() {

@@ -34,18 +34,8 @@ TEST(DSTD, dir) {
   std::cout << r << std::endl;
 }
 
-TEST(DSTD, readBigFile) {
-  std::fstream file{};
-  file.open("W:\\cache\\BiManMan_UE4.7z", std::ios::in | std::ios::out | std::ios::binary);
-
-  std::string data{};
-  const uint64_t off{8000000};
-  data.resize(off);
-  int64_t count{0};
-  file.seekg(2152000000, std::ios::beg);
-  file.read(data.data(), off);
-  if (file.fail())
-    std::cout << "err : " << count << std::endl;
+TEST(DSTD, stdStringLocale) {
+  
 }
 
 TEST(DSTD, std_locale) {

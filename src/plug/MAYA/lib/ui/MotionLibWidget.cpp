@@ -10,6 +10,8 @@
 
 #include <QtWidgets/qgridlayout.h>
 #include <QtWidgets/qfilesystemmodel.h>
+#include <QtCore/qsortfilterproxymodel.h>
+
 namespace doodle::motion::ui {
 MotionLibWidget::MotionLibWidget(QWidget *parent)
     : QWidget(parent) {
@@ -22,7 +24,9 @@ MotionLibWidget::MotionLibWidget(QWidget *parent)
   auto k_attr_vire   = new MotionAttrbuteView();
 
   k_tree_view->setModel(k_tree_model);
-  k_motion_view->setModel(k_motion_model);
+  auto k_motion_sort = new QSortFilterProxyModel(this);
+  k_motion_sort->setSourceModel(k_motion_model);
+  k_motion_view->setModel(k_motion_sort);
 
   layout->addWidget(k_tree_view, 0, 0, 1, 1);
   layout->addWidget(k_motion_view, 0, 1, 1, 1);

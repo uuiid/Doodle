@@ -7,7 +7,6 @@
 
 namespace doodle::motion::kernel {
 
-
 class MotionFile : public std::enable_shared_from_this<MotionFile> {
  private:
   FSys::path p_file;
@@ -48,6 +47,8 @@ class MotionFile : public std::enable_shared_from_this<MotionFile> {
   static std::vector<MotionFilePtr> getAll(const FSys::path& path);
   //创建fbx这个是必须调用的
   void createFbxFile(const FSys::path& relativePath);
+  //导入fbx调用
+  void importFbxFile();
   //在创建fbx后要更改时调用
   void createIconFile();
   void createVideoFile();

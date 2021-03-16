@@ -2,15 +2,14 @@
 
 #include <MotionGlobal.h>
 
-#include <QtCore/QAbstractListModel>
 #include <lib/kernel/MotionFile.h>
-
 #include <boost/signals2.hpp>
 
+#include <QtCore/QAbstractListModel>
+#include <QtCore/qsortfilterproxymodel.h>
 namespace doodle::motion::ui {
 class MotionModel : public QAbstractListModel {
   Q_OBJECT
- private:
   std::vector<kernel::MotionFilePtr> p_lists;
 
   void doodleBindData(const kernel::MotionFilePtr &data);
@@ -36,4 +35,13 @@ class MotionModel : public QAbstractListModel {
   void setLists(const std::vector<kernel::MotionFilePtr> &lists);
 };
 
+class MotionFileSortFilter : public QSortFilterProxyModel {
+  Q_OBJECT
+
+ public:
+  MotionFileSortFilter(QObject *parent = nullptr);
+
+ protected:
+  bool lessThan(const QModelIndex &index1, const QModelIndex &index) const override;
+};
 }  // namespace doodle::motion::ui
