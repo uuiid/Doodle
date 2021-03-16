@@ -34,8 +34,8 @@ MotionMainUI::MotionMainUI(QWidget *parent, Qt::WindowFlags flags)
   p_layout->setVerticalSpacing(0);
   p_layout->setSpacing(0);
   //创建设置面板
-  p_setting_widget = new doodle::motion::ui::MotionSettingWidget(p_centralWidget);
-  auto rootPath    = doodle::motion::kernel::MotionSetting::Get().MotionLibRoot();
+  p_setting_widget = new MotionSettingWidget(p_centralWidget);
+  auto rootPath    = kernel::MotionSetting::Get().MotionLibRoot();
   //这里我们使设置成为一个窗口
   p_setting_widget->setWindowFlags(Qt::Window);
   if (rootPath.empty()) {
@@ -52,13 +52,13 @@ MotionMainUI::~MotionMainUI() {
 void MotionMainUI::openSettingMotionLib() {
   //断开上次的所有链接
   // disconnect(p_setting_widget,
-  //            &doodle::motion::ui::MotionSettingWidget::ReturnUp,
+  //            &MotionSettingWidget::ReturnUp,
   //            nullptr, nullptr);
   //链接返回代码
   connect(p_setting_widget,
-          &doodle::motion::ui::MotionSettingWidget::ReturnUp,
+          &MotionSettingWidget::ReturnUp,
           this, [=]() {
-            doodle::motion::kernel::MotionSetting::Get().save();
+            kernel::MotionSetting::Get().save();
             p_setting_widget->hide();
           });
   p_setting_widget->resize(800, 1200);
@@ -91,7 +91,7 @@ void MotionMainUI::createMenu() {
 
   //链接保存按钮
   connect(k_save_action, &QAction::triggered,
-          this, [=]() { doodle::motion::kernel::MotionSetting::Get().save(); });
+          this, [=]() { kernel::MotionSetting::Get().save(); });
   //链接打开设置按钮
   connect(k_open_stting_action, &QAction::triggered,
           p_setting_widget, &MotionSettingWidget::show);

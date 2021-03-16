@@ -20,23 +20,29 @@ void PlayerMotion::readFrame() {
   }
 
   auto image = QImage{};
-  if (p_frame.channels() == 3) {
-    auto frame = cv::Mat{};
-    cv::cvtColor(p_frame, frame, cv::COLOR_BGR2RGB);
-    image = QImage{
-        (const unsigned char *)frame.data,
-        frame.cols,
-        frame.rows,
-        QImage::Format_RGB888};
-  } else {
-    image = QImage{
-        (const unsigned char *)p_frame.data,
-        p_frame.cols,
-        p_frame.rows,
-        QImage::Format::Format_Indexed8};
-  }
-
-  fileImage(image);
+  auto frame = cv::Mat{};
+  cv::cvtColor(p_frame, frame, cv::COLOR_BGR2RGB);
+  auto k_image = QImage{
+      (const unsigned char *)frame.data,
+      frame.cols,
+      frame.rows,
+      (int)frame.step,
+      QImage::Format_RGB888};
+  // image = k_image.copy();
+  fileImage(k_image.copy());
+  // if (p_frame.channels() == 3) {
+  // } else {
+  //   auto k_image = QImage{
+  //       (const unsigned char *)p_frame.data,
+  //       p_frame.cols,
+  //       p_frame.rows,
+  //       (int)p_frame.step,
+  //       QImage::Format::Format_Indexed8};
+  //   fileImage(k_image.copy());
+  // }
+  // if (!image.isNull()) {
+  //   // auto k_image = image;
+  // }
 }
 
 PlayerMotion::PlayerMotion()
@@ -46,7 +52,7 @@ PlayerMotion::PlayerMotion()
       p_thread_stop(false),
       p_stop_player(true),
       p_video_file(),
-      p_video(),
+      p_video(std::make_shared<cv::VideoCapture>()),
       p_frame(),
       p_delay(1) {
   p_thread = std::thread{[this] {
@@ -65,10 +71,13 @@ PlayerMotion::PlayerMotion()
 }
 
 void PlayerMotion::startPlayer() {
-  if (!FSys::exists(p_video_file)) throw NotFileError(p_video_file);
+  if (!FSys::exists(p_video_file.generic_wstring()))
+    throw NotFileError(p_video_file);
+
   {  //开始获得锁
     std::unique_lock<std::mutex> lock(p_mutex);
-    p_video->open(p_video_file.generic_u8string());
+    if (!p_video->open(p_video_file.generic_string()))
+      throw MotionError("not open file " + p_video_file.generic_u8string());
 
     auto fps = p_video->get(cv::CAP_PROP_FPS);
     p_delay  = 1000 / fps;
@@ -83,7 +92,8 @@ void PlayerMotion::stop_Player() {
   {
     std::unique_lock<std::mutex> lock(p_mutex);
     p_stop_player = true;
-    this->p_video->release();
+    if (this->p_video->isOpened())
+      this->p_video->release();
   }
   p_condition.notify_one();
 }

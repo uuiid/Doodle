@@ -43,7 +43,7 @@ include_directories(${CMAKE_BINARY_DIR}/configure)
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 
 #寻找一些外部库
-find_package(Qt5 CONFIG COMPONENTS Core Widgets LinguistTools  REQUIRED)
+find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
 find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time regex iostreams log locale)
 # find_package(CURL REQUIRED)
 find_package(Sqlpp11 REQUIRED)

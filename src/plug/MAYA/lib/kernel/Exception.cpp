@@ -1,5 +1,11 @@
 #include <lib/kernel/Exception.h>
 namespace doodle::motion {
+const char* MotionError::what() const noexcept {
+  std::string str("Motion error : ");
+  str = str + std::runtime_error::what();
+  return str.c_str();
+}
+
 const char* FbxFileError::what() const noexcept {
   std::string str("fbx error : ");
   str = str + std::runtime_error::what();

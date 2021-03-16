@@ -12,7 +12,7 @@
 #include <corelib/filesystem/FileSystem.h>
 
 #include <boost/locale.hpp>
-#include <QCoreApplication>
+#include <QtWidgets/qapplication.h>
 #include <QTextCodec>
 #include <QTextStream>
 
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
   boost::filesystem::path::imbue(boost::locale::generator()("zh_CN.UTF-8"));
 
   //创建qt必要的运行事件循环
-  QCoreApplication app(argc, argv);
+  QApplication app(argc, argv);
   //设置本地编码
   QTextCodec *codec = QTextCodec::codecForName("GBK");
   QTextCodec::setCodecForLocale(codec);

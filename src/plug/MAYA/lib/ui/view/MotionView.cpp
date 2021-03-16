@@ -20,6 +20,7 @@ MotionView::MotionView(QWidget* parent)
   this->setFlow(QListView::Flow::LeftToRight);
   this->setUniformItemSizes(true);
   // this->setGridSize(QSize{128, 128});
+  connect(this, &MotionView::clicked, this, &MotionView::doodleChicked);
 }
 
 void MotionView::setTreeNode(const decltype(p_TreeDirItem)& item) {
@@ -101,8 +102,15 @@ void MotionView::updateVideo() {
 }
 
 void MotionView::doodleChicked(const QModelIndex& index) {
-  auto k_data = index.data(Qt::UserRole).value<kernel::MotionFile*>();
-  if (!k_data) return;
+  if (!index.isValid()) return;
+  auto k_user_data = index.data(Qt::UserRole);
+
+  if (!k_user_data.canConvert<kernel::MotionFile*>())
+    return;
+
+  auto k_data = k_user_data.value<kernel::MotionFile*>();
+  if (!k_data)
+    return;
   sig_chickItem(k_data->shared_from_this());
 }
 }  // namespace doodle::motion::ui

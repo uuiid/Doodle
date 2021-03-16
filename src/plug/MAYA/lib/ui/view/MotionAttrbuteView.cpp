@@ -10,25 +10,24 @@
 #include <QtGui/qimage.h>
 // #include <QtMultimedia/qmediaplayer.h>
 
+#include <QtCore/qdebug.h>
+
 namespace doodle::motion::ui {
+
 MotionAttrbuteView::MotionAttrbuteView(QWidget* parent)
     : QWidget(parent),
       p_MotionFile(),
       p_MotionPlayer(std::make_shared<kernel::PlayerMotion>()),
-      p_image(),
-      p_user_label(),
-      p_info_text(),
-      p_tiles_text() {
+      p_image(new QLabel()),
+      p_user_label(new QLabel(tr("匿名"))),
+      p_info_text(new QTextEdit()),
+      p_tiles_text(new QLineEdit(tr("无"))) {
   auto layout = new QGridLayout(this);
 
   auto k_tiles_label = new QLabel(tr("名称: "));
   auto k_user_label  = new QLabel(tr("制作人: "));
   auto k_info_label  = new QLabel(tr("信息: "));
 
-  auto p_image      = new QLabel();
-  auto p_user_label = new QLabel(tr("匿名"));
-  auto p_info_text  = new QTextEdit();
-  auto p_tiles_text = new QLineEdit(tr("无"));
   //显示视频
   layout->addWidget(p_image, 0, 0, 1, 2);
   //显示标题
@@ -41,6 +40,18 @@ MotionAttrbuteView::MotionAttrbuteView(QWidget* parent)
   layout->addWidget(k_info_label, 3, 0, 1, 1);
   layout->addWidget(p_info_text, 4, 0, 1, 2);
 
+  //设置显示图片缩放政策
+  p_image->setBackgroundRole(QPalette::Base);
+  p_image->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+  // p_image->setScaledContents(true);
+
+  p_MotionPlayer->fileImage.connect(
+      [this](QImage& image) {
+        auto k_ = image.scaled(this->p_image->size(), Qt::KeepAspectRatio);
+        this->doodleSetImage(QPixmap::fromImage(k_));
+      });
+  connect(this, &MotionAttrbuteView::doodleSetImage,
+          p_image, &QLabel::setPixmap, Qt::QueuedConnection);
   layout->setRowStretch(0, 10);
   layout->setRowStretch(1, 1);
   layout->setRowStretch(2, 1);
@@ -53,6 +64,18 @@ MotionAttrbuteView::MotionAttrbuteView(QWidget* parent)
 
 void MotionAttrbuteView::setMotionFile(const kernel::MotionFilePtr& data) {
   p_MotionFile = data;
+  this->p_MotionPlayer->setFile(p_MotionFile->VideoFile());
+  this->p_tiles_text->setText(QString::fromStdString(p_MotionFile->Title()));
+  this->p_user_label->setText(QString::fromStdString(p_MotionFile->UserName()));
+  this->p_info_text->setText(QString::fromStdString(p_MotionFile->Info()));
+}
+
+void MotionAttrbuteView::doodleClear() {
+  this->p_MotionPlayer->stop_Player();
+  this->p_image->clear();
+  this->p_tiles_text->clear();
+  this->p_user_label->clear();
+  this->p_info_text->clear();
 }
 
 }  // namespace doodle::motion::ui

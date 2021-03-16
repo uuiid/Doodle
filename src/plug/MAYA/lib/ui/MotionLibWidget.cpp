@@ -32,11 +32,12 @@ MotionLibWidget::MotionLibWidget(QWidget *parent)
   layout->setColumnStretch(2, 3);
 
   k_tree_view->sig_chickItem.connect(
-      [k_motion_model, k_motion_view](const FSys::path &path, const QModelIndex &index) {
+      [k_motion_model, k_motion_view, k_attr_vire](const FSys::path &path, const QModelIndex &index) {
         auto k_lists = kernel::MotionFile::getAll(path);
         k_motion_model->setLists(k_lists);
         auto k_data = static_cast<TreeDirItem *>(index.internalPointer())->shared_from_this();
         k_motion_view->setTreeNode(k_data);
+        k_attr_vire->doodleClear();
       });
 
   k_motion_view->sig_chickItem.connect(

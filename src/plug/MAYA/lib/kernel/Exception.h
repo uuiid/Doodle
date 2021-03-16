@@ -3,6 +3,11 @@
 #include <lib/MotionGlobal.h>
 
 namespace doodle::motion {
+class MotionError : public std::runtime_error {
+ public:
+  MotionError(const std::string &err) : std::runtime_error(err){};
+  virtual const char *what() const noexcept override;
+};
 
 //fbx文件导出错误
 class FbxFileError : public std::runtime_error {

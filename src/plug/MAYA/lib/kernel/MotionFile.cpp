@@ -11,14 +11,21 @@
 #include <fstream>
 #include <iostream>
 
+#include <boost/locale.hpp>
 namespace doodle::motion::kernel {
 void MotionFile::from_json(const nlohmann::json& j) {
-  p_Fbx_file   = j["Fbx_file"].get<std::string>();
-  p_Gif_file   = j["Gif_file"].get<std::string>();
-  p_video_file = j["Video_file"].get<std::string>();
-  p_title      = j["title"].get<std::string>();
-  p_user_name  = j["User_name"].get<std::string>();
-  p_info       = j["Info"].get<std::string>();
+  auto str   = j["Fbx_file"].get<std::string>();
+  p_Fbx_file = boost::locale::conv::to_utf<wchar_t>(str, "UTF-8");
+
+  str        = j["Gif_file"].get<std::string>();
+  p_Gif_file = boost::locale::conv::to_utf<wchar_t>(str, "UTF-8");
+
+  str          = j["Video_file"].get<std::string>();
+  p_video_file = boost::locale::conv::to_utf<wchar_t>(str, "UTF-8");
+
+  p_title     = j["title"].get<std::string>();
+  p_user_name = j["User_name"].get<std::string>();
+  p_info      = j["Info"].get<std::string>();
 }
 
 nlohmann::json MotionFile::to_json() {

@@ -34,6 +34,8 @@ target_link_libraries(test_my
 target_link_libraries(test_my PRIVATE
  Boost::locale
  ${OpenCV_LIBS}
+ Qt5::Gui
+ Qt5::Widgets
  )
 
 # include(CTest)

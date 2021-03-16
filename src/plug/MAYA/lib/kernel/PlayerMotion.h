@@ -42,7 +42,7 @@ class PlayerMotion {
   void stop_Player();
 
   void setFile(const FSys::path& file);
-  boost::signals2::signal<void(const QImage&)> fileImage;
+  boost::signals2::signal<void(QImage&)> fileImage;
 
   ~PlayerMotion();
 };

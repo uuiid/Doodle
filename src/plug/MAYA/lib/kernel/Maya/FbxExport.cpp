@@ -33,7 +33,8 @@ MStatus FbxExport::FbxExportMEL(FSys::path path) {
   if (k_list.isEmpty()) throw FbxFileError("没有选择对象");
 
   MString k_mel{};
-  k_mel += R"(FBXExportInputConnections -v false;
+  k_mel += R"(loadPlugin "fbxmaya";
+FBXExportInputConnections -v false;
 FBXExportConstraints -v false;
 FBXExportCameras -v false;
 FBXExportBakeComplexAnimation  -v true;
