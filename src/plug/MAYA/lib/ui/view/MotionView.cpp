@@ -54,7 +54,10 @@ void MotionView::contextMenuEvent(QContextMenuEvent* event) {
 }
 
 void MotionView::createFbxAction(const FSys::path& path) {
-  auto k_model = dynamic_cast<MotionModel*>(this->model());
+  auto k_sort_model = dynamic_cast<QSortFilterProxyModel*>(this->model());
+  if (!k_sort_model) return;
+
+  auto k_model = dynamic_cast<MotionModel*>(k_sort_model->sourceModel());
   if (!k_model) return;
 
   auto k_name = QInputDialog::getText(this, tr("请输入名称 "), tr("名称:"));
@@ -76,7 +79,6 @@ void MotionView::createFbxAction(const FSys::path& path) {
   } catch (const NotFileError& err) {
     QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(err.what()));
   }
-
   k_model->insertData(0, k_FbxFile);
 }
 

@@ -18,13 +18,15 @@ MotionLibWidget::MotionLibWidget(QWidget *parent)
   auto layout         = new QGridLayout(this);
   auto k_tree_model   = new TreeDirModel(this);
   auto k_motion_model = new MotionModel(this);
+  auto k_motion_sort  = new MotionModelSortFilter(this);
 
   auto k_tree_view   = new TreeDirView();
   auto k_motion_view = new MotionView();
   auto k_attr_vire   = new MotionAttrbuteView();
 
+  k_motion_sort->sort(0);
+
   k_tree_view->setModel(k_tree_model);
-  auto k_motion_sort = new QSortFilterProxyModel(this);
   k_motion_sort->setSourceModel(k_motion_model);
   k_motion_view->setModel(k_motion_sort);
 
@@ -36,11 +38,15 @@ MotionLibWidget::MotionLibWidget(QWidget *parent)
   layout->setColumnStretch(2, 3);
 
   k_tree_view->sig_chickItem.connect(
-      [k_motion_model, k_motion_view, k_attr_vire](const FSys::path &path, const QModelIndex &index) {
+      [k_motion_model, k_motion_view, k_attr_vire, k_motion_sort](const FSys::path &path, const QModelIndex &index) {
+        //设置显示模型和排序
         auto k_lists = kernel::MotionFile::getAll(path);
         k_motion_model->setLists(k_lists);
+        k_motion_sort->sort(0);
+        //设置视图持有的根项目
         auto k_data = static_cast<TreeDirItem *>(index.internalPointer())->shared_from_this();
         k_motion_view->setTreeNode(k_data);
+        //清除详细视图显示
         k_attr_vire->doodleClear();
       });
 

@@ -35,13 +35,13 @@ class MotionModel : public QAbstractListModel {
   void setLists(const std::vector<kernel::MotionFilePtr> &lists);
 };
 
-class MotionFileSortFilter : public QSortFilterProxyModel {
+class MotionModelSortFilter : public QSortFilterProxyModel {
   Q_OBJECT
 
  public:
-  MotionFileSortFilter(QObject *parent = nullptr);
+  MotionModelSortFilter(QObject *parent = nullptr);
 
  protected:
-  bool lessThan(const QModelIndex &index1, const QModelIndex &index) const override;
+  bool lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const override;
 };
 }  // namespace doodle::motion::ui

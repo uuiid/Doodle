@@ -5,6 +5,7 @@
 #include <Maya/MQtUtil.h>
 
 #include <lib/ui/MotionMainUI.h>
+#include <QtWidgets/QMessageBox>
 
 namespace doodle::MayaPlug {
 
@@ -24,7 +25,13 @@ void* doodleCreate::create() {
 MStatus doodleCreate::doIt(const MArgList& list) {
   if (!p_ui) {
     auto mayaMainUI = MQtUtil::mainWindow();
-    p_ui            = new doodle::motion::ui::MotionMainUI(mayaMainUI);
+    try {
+      p_ui = new doodle::motion::ui::MotionMainUI(mayaMainUI);
+    } catch (const FSys::filesystem_error& err) {
+      QMessageBox::warning(mayaMainUI, "错误:", QString{"无法找到目录: \n"}.append(QString::fromLocal8Bit(err.what())));
+      MGlobal::displayError(err.what());
+      return MStatus::kFailure;
+    }
   }
 
   p_ui->showNormal();

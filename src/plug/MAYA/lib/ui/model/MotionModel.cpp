@@ -128,4 +128,18 @@ void MotionModel::setLists(const std::vector<kernel::MotionFilePtr> &lists) {
   }
 }
 
+//这个是排序代理模型
+MotionModelSortFilter::MotionModelSortFilter(QObject *parent)
+    : QSortFilterProxyModel(parent) {
+}
+
+bool MotionModelSortFilter::lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const {
+  if (!source_left.isValid()) return false;
+  if (!source_right.isValid()) return false;
+
+  auto left  = sourceModel()->data(source_left, Qt::DisplayRole).toString();
+  auto right = sourceModel()->data(source_right, Qt::DisplayRole).toString();
+  return left < right;
+}
+
 }  // namespace doodle::motion::ui
