@@ -2,6 +2,7 @@
 
 project(Doodle
         VERSION 2.3.1.9
+        DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -31,9 +32,7 @@ option(RUN_COPY    "run copy tools"     OFF)
 
 
 #配置版本文件
-
 configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)
-configure_file(anzhuang.iss.in ${CMAKE_BINARY_DIR}/anzhuang.iss)
 include_directories(${CMAKE_BINARY_DIR}/configure)
 
 # #添加qt路径
@@ -51,6 +50,8 @@ find_package(GTest CONFIG REQUIRED)
 find_package(FFMPEG  REQUIRED )
 find_package(rttr CONFIG REQUIRED)
 # find_package(pugixml CONFIG REQUIRED)
+
+find_package(Doxygen REQUIRED)
 
 # 寻找opencv
 find_package(OpenCV CONFIG REQUIRED)
@@ -100,6 +101,20 @@ ExternalProject_Get_property(bin2cpp_prj SOURCE_DIR)
 # message("Source dir of bin2cpp_prj = ${SOURCE_DIR}")
 set(BIN2CPP ${SOURCE_DIR}/bin/bin2cpp.exe)
 
+#添加文档生成
+set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
+set(DOXYGEN_WARNINGS NO)
+set(DOXYGEN_WARN_IF_UNDOCUMENTED NO)
+set(DOXYGEN_WARN_IF_DOC_ERROR NO)
+set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
+set(DOXYGEN_EXCLUDE_PATTERNS 
+*/.idea
+*/.vs
+*/b_Ninja_VS*
+*/venv)
+doxygen_add_docs(Doxygen
+${PROJECT_SOURCE_DIR}
+)
 
 
 add_subdirectory(src)
