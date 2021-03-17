@@ -46,9 +46,9 @@ void TreeDirView::createDir() {
   auto k_model = dynamic_cast<TreeDirModel*>(this->model());
 
   auto k_index = QModelIndex();
-  // if (this->selectionModel()->hasSelection()) {
-  //   k_index = this->selectionModel()->currentIndex();
-  // }
+  if (this->selectionModel()->hasSelection()) {
+    k_index = this->selectionModel()->currentIndex();
+  }
 
   auto k_str = QInputDialog::getText(this, tr("创建类别"), tr("类别"));
   //条件创建
