@@ -11,12 +11,14 @@ class QGridLayout;
 
 namespace doodle::motion::ui {
 class MotionSettingWidget;
+class MotionLibWidget;
 
 class MOTIONGLOBAL_API MotionMainUI : public QMainWindow {
   Q_OBJECT
   QGridLayout* p_layout;
   QWidget* p_centralWidget;
   MotionSettingWidget* p_setting_widget;
+  MotionLibWidget* p_motion;
 
  public:
   explicit MotionMainUI(QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());

@@ -1,7 +1,7 @@
 #include <maya/MGlobal.h>
 
+#include <lib/kernel/MotionSetting.h>
 #include <lib/ui/model/TreeDirModel.h>
-
 #include <boost/numeric/conversion/cast.hpp>
 namespace doodle::motion::ui {
 TreeDirItemPtr TreeDirModel::getItem(const QModelIndex &index) const {
@@ -15,7 +15,7 @@ TreeDirItemPtr TreeDirModel::getItem(const QModelIndex &index) const {
 TreeDirModel::TreeDirModel(QObject *parent)
     : QAbstractItemModel(parent),
       p_root(std::make_shared<TreeDirItem>("etc")) {
-  p_root->recursiveRefreshChild();
+  kernel::MotionSetting::Get().InitProject.connect([this] { this->doodleInit(); });
 
   // auto tmp = p_root->MakeChild(0, "test");
   // p_root->MakeChild(0, "test");
@@ -195,5 +195,11 @@ void TreeDirModel::refreshChild(const QModelIndex &index) {
   k_sigCon_br.connected();
   k_sigCon_ei.connected();
   k_sigCon_er.connected();
+}
+
+void TreeDirModel::doodleInit() {
+  beginResetModel();
+  p_root->recursiveRefreshChild();
+  endResetModel();
 }
 }  // namespace doodle::motion::ui

@@ -43,6 +43,7 @@ class TreeDirModel : public QAbstractItemModel {
                   const QModelIndex &parent = QModelIndex()) override;
 
   void refreshChild(const QModelIndex &index);
+  void doodleInit();
 };
 
 }  // namespace doodle::motion::ui

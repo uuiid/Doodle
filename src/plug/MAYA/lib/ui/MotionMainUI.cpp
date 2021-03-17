@@ -34,16 +34,17 @@ MotionMainUI::MotionMainUI(QWidget *parent, Qt::WindowFlags flags)
   p_layout->setVerticalSpacing(0);
   p_layout->setSpacing(0);
   //创建设置面板
-  p_setting_widget = new MotionSettingWidget(p_centralWidget);
-  auto rootPath    = kernel::MotionSetting::Get().MotionLibRoot();
+  p_setting_widget     = new MotionSettingWidget(p_centralWidget);
+  auto k_hasMotion_prj = kernel::MotionSetting::Get().openMotionProject();
   //这里我们使设置成为一个窗口
   p_setting_widget->setWindowFlags(Qt::Window);
-  if (rootPath.empty()) {
-    openSettingMotionLib();
-  }
   openMotionLib();
 
   createMenu();
+
+  if (!k_hasMotion_prj) {
+    openSettingMotionLib();
+  }
 }
 MotionMainUI::~MotionMainUI() {
   // delete p_setting_widget;
@@ -58,17 +59,16 @@ void MotionMainUI::openSettingMotionLib() {
   connect(p_setting_widget,
           &MotionSettingWidget::ReturnUp,
           this, [=]() {
-            kernel::MotionSetting::Get().save();
             p_setting_widget->hide();
           });
-  p_setting_widget->resize(800, 1200);
+  p_setting_widget->resize(800, 400);
   p_setting_widget->show();
 }
 
 void MotionMainUI::openMotionLib() {
-  auto k_motion = new MotionLibWidget();
-  p_layout->addWidget(k_motion);
-  k_motion->show();
+  p_motion = new MotionLibWidget();
+  p_layout->addWidget(p_motion);
+  p_motion->show();
 }
 
 void MotionMainUI::createMenu() {

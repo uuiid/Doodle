@@ -87,5 +87,6 @@ MotionSettingWidget::MotionSettingWidget(QWidget *parent)
   layout->setColumnStretch(0, 1);
   layout->setColumnStretch(1, 5);
   layout->setColumnStretch(2, 1);
+
 }
 }  // namespace doodle::motion::ui

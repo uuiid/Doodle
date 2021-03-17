@@ -5,6 +5,7 @@
 #include <map>
 
 #include <nlohmann/json_fwd.hpp>
+#include <boost/signals2.hpp>
 namespace doodle::motion::kernel {
 class MotionSetting {
  public:
@@ -12,6 +13,7 @@ class MotionSetting {
   MotionSetting& operator=(const MotionSetting&) = delete;
 
   static MotionSetting& Get();
+  bool openMotionProject();
   const FSys::path& MotionLibRoot() const noexcept;
   void setMotionLibRoot(const FSys::path& MotionLibRoot) noexcept;
 
@@ -24,6 +26,8 @@ class MotionSetting {
   void save();
 
   const boost::uuids::uuid random_generator();
+
+  boost::signals2::signal<void()> InitProject;
 
  private:
   MotionSetting();

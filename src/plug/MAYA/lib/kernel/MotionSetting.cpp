@@ -1,7 +1,10 @@
 #include <lib/kernel/MotionSetting.h>
 
+#include <lib/kernel/Exception.h>
+
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <iostream>
 
 #include <Windows.h>
 #include <ShlObj.h>
@@ -13,11 +16,28 @@ MotionSetting& MotionSetting::Get() {
   return install;
 }
 
+bool MotionSetting::openMotionProject() {
+  if (!FSys::exists(p_motion_path / ConfigName)) return false;
+
+  std::fstream file(p_motion_path / ConfigName, std::ios::in | std::ios::binary);
+  try {
+    auto root           = nlohmann::json::parse(file);
+    this->p_motion_name = root["name"].get<std::string>();
+  } catch (const nlohmann::json::parse_error& err) {
+    std::cout << err.what() << std::endl;
+    return false;
+  }
+  return true;
+}
+
 const FSys::path& MotionSetting::MotionLibRoot() const noexcept {
   return p_motion_path;
 }
 
 void MotionSetting::setMotionLibRoot(const FSys::path& MotionLibRoot) noexcept {
+  if (!FSys::exists(MotionLibRoot))
+    FSys::create_directories(MotionLibRoot);
+
   p_motion_path = MotionLibRoot;
   if (!FSys::exists(p_motion_path / ConfigName)) {
     this->createMotionProject();
@@ -45,6 +65,10 @@ void MotionSetting::save() {
 
   if (!file.is_open()) std::runtime_error("无法打开文件");
   file << to_json().dump();
+
+  if (!FSys::exists(p_motion_path / ConfigName)) {
+    this->createMotionProject();
+  }
 }
 
 const boost::uuids::uuid MotionSetting::random_generator() {
@@ -93,6 +117,8 @@ void MotionSetting::createMotionProject() {
   FSys::create_directories(p_motion_path / "etc");
   FSys::create_directories(p_motion_path / "fbx");
   FSys::create_directories(p_motion_path / "image");
+
+  InitProject();
 }
 
 void MotionSetting::from_json(const nlohmann::json& j) {
