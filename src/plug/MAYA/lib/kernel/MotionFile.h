@@ -53,6 +53,16 @@ class MotionFile : public std::enable_shared_from_this<MotionFile> {
   void createIconFile();
   void createVideoFile();
 
+  enum class InsideData {
+    FbxFile,
+    Title,
+    User,
+    Inco,
+    Video,
+    Info,
+  };
+
+  boost::signals2::signal<void(const MotionFile*, InsideData)> dataBeginChanged;
   boost::signals2::signal<void(const MotionFile*, const int&)> dataChanged;
   boost::signals2::signal<void(const FSys::path&)> notDeleteFile;
 };

@@ -54,6 +54,7 @@ MotionFile::MotionFile()
       p_title(),
       p_user_name(MotionSetting::Get().User()),
       p_info(),
+      dataBeginChanged(),
       dataChanged(),
       notDeleteFile() {
 }
@@ -212,6 +213,7 @@ void MotionFile::createIconFile() {
 
 void MotionFile::createVideoFile() {
   if (!FSys::exists(this->p_Fbx_file)) throw FbxFileError("未找到导出文件");
+  dataBeginChanged(this, InsideData::Video);
 
   //暂存临时变量
   auto k_file = p_video_file;

@@ -97,6 +97,7 @@ FBXImportCameras -v false;
 FBXImportConstraints -v false;
 FBXImportLights -v false;
 FBXImportShapes -v false;
+FBXImportMode -v add;
 
 FBXImport -file "^1s";
 )";

@@ -16,7 +16,6 @@ class MotionAttrbuteView : public QWidget {
   kernel::MotionFilePtr p_MotionFile;
   kernel::PlayerMotionPtr p_MotionPlayer;
 
-
   QLabel* p_image;
   QLabel* p_user_label;
   QPlainTextEdit* p_info_text;
@@ -24,6 +23,7 @@ class MotionAttrbuteView : public QWidget {
 
   QMetaObject::Connection p_info_connection;
   QMetaObject::Connection p_tiles_connection;
+  boost::signals2::connection p_play_connection;
  Q_SIGNALS:
   void doodleSetImage(const QPixmap& image);
 

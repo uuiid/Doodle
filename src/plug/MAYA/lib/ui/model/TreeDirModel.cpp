@@ -15,7 +15,8 @@ TreeDirItemPtr TreeDirModel::getItem(const QModelIndex &index) const {
 TreeDirModel::TreeDirModel(QObject *parent)
     : QAbstractItemModel(parent),
       p_root(std::make_shared<TreeDirItem>("etc")) {
-  kernel::MotionSetting::Get().InitProject.connect([this] { this->doodleInit(); });
+  kernel::MotionSetting::Get().InitProject.connect(
+      [this] { this->doodleInit(); });
 
   // auto tmp = p_root->MakeChild(0, "test");
   // p_root->MakeChild(0, "test");

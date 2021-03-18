@@ -41,9 +41,16 @@ MotionMainUI::MotionMainUI(QWidget *parent, Qt::WindowFlags flags)
   openMotionLib();
 
   createMenu();
+  connect(p_setting_widget,
+          &MotionSettingWidget::ReturnUp,
+          this, [=]() {
+            p_setting_widget->hide();
+          });
 
   if (!k_hasMotion_prj) {
     openSettingMotionLib();
+  } else {
+    kernel::MotionSetting::Get().InitProject();
   }
 }
 MotionMainUI::~MotionMainUI() {
@@ -56,11 +63,6 @@ void MotionMainUI::openSettingMotionLib() {
   //            &MotionSettingWidget::ReturnUp,
   //            nullptr, nullptr);
   //链接返回代码
-  connect(p_setting_widget,
-          &MotionSettingWidget::ReturnUp,
-          this, [=]() {
-            p_setting_widget->hide();
-          });
   p_setting_widget->resize(800, 400);
   p_setting_widget->show();
 }

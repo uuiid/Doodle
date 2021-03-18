@@ -97,8 +97,8 @@ target_compile_options(doodle_motion PUBLIC /utf-8)
 target_compile_definitions(doodle_motion PRIVATE _WIN32_WINNT=0x0A00)
 
 #调试发布版本需要
-target_compile_options(doodle_motion PRIVATE /Zi)
-target_link_options(doodle_motion PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF) 
+# target_compile_options(doodle_motion PRIVATE /Zi)
+# target_link_options(doodle_motion PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF) 
 
 # install(
 #   TARGETS doodle_motion

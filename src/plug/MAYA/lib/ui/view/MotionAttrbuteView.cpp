@@ -25,7 +25,8 @@ MotionAttrbuteView::MotionAttrbuteView(QWidget* parent)
       p_info_text(new QPlainTextEdit()),
       p_tiles_text(new QLineEdit(tr("无"))),
       p_tiles_connection(),
-      p_info_connection() {
+      p_info_connection(),
+      p_play_connection() {
   auto layout = new QGridLayout(this);
 
   auto k_tiles_label = new QLabel(tr("名称: "));
@@ -93,11 +94,17 @@ void MotionAttrbuteView::setMotionFile(const kernel::MotionFilePtr& data) {
           this->p_MotionFile->setInfo(str.toStdString());
         }
       });
+
+  p_play_connection = p_MotionFile->dataBeginChanged.connect(
+      [this](const kernel::MotionFile*, kernel::MotionFile::InsideData) {
+        this->p_MotionPlayer->stop_Player();
+      });
 }
 
 void MotionAttrbuteView::doodleClear() {
   this->p_tiles_text->disconnect(p_tiles_connection);
   this->p_info_text->disconnect(p_info_connection);
+  p_play_connection.disconnect();
 
   this->p_MotionPlayer->stop_Player();
   this->p_image->clear();
