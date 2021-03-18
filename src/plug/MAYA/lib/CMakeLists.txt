@@ -59,6 +59,30 @@ add_library(doodle_motion SHARED
   ${doodle_motion_HEADER}
   ${MAYA_MOC_FILE}
 )
+
+include(GenerateExportHeader)
+set(MY_CUSTOM_CONTENT "")
+#设置导出符号
+generate_export_header(doodle_motion
+EXPORT_MACRO_NAME DOODLE_MOTION_API
+CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
+#预编译头文件
+target_precompile_headers(doodle_motion
+PUBLIC
+<filesystem>
+<variant>
+<string>
+<memory>
+<chrono>
+<map>
+<iostream>
+<regex>
+<fstream>
+<mutex>
+<condition_variable>
+<future>
+)
+
 # 设置一些属性,包括没有自动运行的moc以及安装位置
 set_target_properties(doodle_motion PROPERTIES 
 AUTOMOC OFF
@@ -72,6 +96,7 @@ target_include_directories(doodle_motion PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
 target_include_directories(doodle_motion PUBLIC 
 ${MAYA_INCLUDE_DIR}
 ${OpenCV_INCLUDE_DIRS}
+${CMAKE_CURRENT_BINARY_DIR}
 )
 
 
@@ -91,7 +116,7 @@ nlohmann_json::nlohmann_json
 # target_link_libraries(doodle_motion PRIVATE SqlppSqlite)
 
 
-target_compile_definitions(doodle_motion PRIVATE MOTIONGLOBAL_LIBRARY)
+target_compile_definitions(doodle_motion PRIVATE MOTIONGLOBAL_LIBRARY doodle_motion_EXPORT)
 target_compile_options(doodle_motion PUBLIC /utf-8)
 
 target_compile_definitions(doodle_motion PRIVATE _WIN32_WINNT=0x0A00)

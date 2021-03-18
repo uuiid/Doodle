@@ -2,10 +2,6 @@
 
 #include <MotionGlobal.h>
 
-#include <mutex>
-#include <condition_variable>
-#include <future>
-
 #include <boost/signals2.hpp>
 
 #include <opencv2/opencv.hpp>

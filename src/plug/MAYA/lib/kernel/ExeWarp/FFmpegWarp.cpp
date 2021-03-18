@@ -4,9 +4,6 @@
 #include <lib/kernel/MotionSetting.h>
 #include <lib/kernel/Exception.h>
 
-#include <iostream>
-#include <fstream>
-
 #include <opencv2/video.hpp>
 #include <opencv2/opencv.hpp>
 

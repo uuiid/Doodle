@@ -2,9 +2,6 @@
 
 #include <lib/kernel/Exception.h>
 
-// #include <opencv2/opencv.hpp>
-#include <chrono>
-
 namespace doodle::motion::kernel {
 
 void PlayerMotion::readFrame() {

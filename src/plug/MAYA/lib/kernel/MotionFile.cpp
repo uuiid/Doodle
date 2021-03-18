@@ -8,9 +8,6 @@
 #include <lib/kernel/Maya/MayaVideo.h>
 #include <nlohmann/json.hpp>
 
-#include <fstream>
-#include <iostream>
-
 #include <boost/locale.hpp>
 namespace doodle::motion::kernel {
 void MotionFile::from_json(const nlohmann::json& j) {

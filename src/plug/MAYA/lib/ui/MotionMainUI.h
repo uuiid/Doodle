@@ -1,6 +1,6 @@
 #pragma once
 
-#include <memory>
+#include <doodle_motion_export.h>
 #include <lib/MotionGlobal.h>
 
 #include <QtCore/qobject.h>
@@ -13,7 +13,7 @@ namespace doodle::motion::ui {
 class MotionSettingWidget;
 class MotionLibWidget;
 
-class MOTIONGLOBAL_API MotionMainUI : public QMainWindow {
+class DOODLE_MOTION_API MotionMainUI : public QMainWindow {
   Q_OBJECT
   QGridLayout* p_layout;
   QWidget* p_centralWidget;

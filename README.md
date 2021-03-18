@@ -2,8 +2,8 @@
 这是一个项目文件管理软件
 
 其中包含一下几项  
-
-[maya动作库插件](doc/maya_motion_plug.md)  
+<!-- \image html doc/maya_motion/main_motion.jpg width=50% -->
+[动作库](doc/maya_motion_plug.md)  
 
 ![动作库](doc/maya_motion/main_motion.jpg)  
 

@@ -1,8 +1,6 @@
 #include <lib/ui/model/TreeDirItem.h>
 #include <lib/kernel/MotionSetting.h>
 
-#include <iostream>
-#include <regex>
 #include <boost/locale.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 namespace doodle::motion::ui {
