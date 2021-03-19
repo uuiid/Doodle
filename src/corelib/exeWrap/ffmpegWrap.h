@@ -15,10 +15,9 @@
 
 DOODLE_NAMESPACE_S
 
-class CORE_API ffmpegWrap : public boost::noncopyable_::noncopyable {
+class CORE_API ffmpegWrap {
  public:
   explicit ffmpegWrap();
-
 
   bool imageToVideo(const dpathList &image_path,
                     const fileSys::path &videoPath,
@@ -27,6 +26,7 @@ class CORE_API ffmpegWrap : public boost::noncopyable_::noncopyable {
 
   bool connectVideo(const dpathList &in_videoPath, const fileSys::path &out_videoPath);
 
+  DOODLE_DISABLE_COPY(ffmpegWrap)
  private:
   std::shared_ptr<boost::filesystem::path> p_tmp_file_;
 

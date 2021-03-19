@@ -2,9 +2,8 @@
 
 #include <corelib/core_global.h>
 #include <corelib/core/Project.h>
-#include <map>
 #include <boost/filesystem.hpp>
-
+#include <corelib/libWarp/BoostUuidWarp.h>
 DOODLE_NAMESPACE_S
 
 enum class Department {
@@ -71,6 +70,8 @@ class CORE_API coreSet {
 
   static dstring toIpPath(const dstring &path);
 
+  boost::uuids::uuid getUUID() ;
+
  private:
   //私有化构造函数
   coreSet();
@@ -83,6 +84,7 @@ class CORE_API coreSet {
 
  private:
   const static dstring settingFileName;
+  boost::uuids::random_generator p_uuid_gen;
 
   //项目名称
   std::map<fileSys::path, std::shared_ptr<Project>> p_projects;

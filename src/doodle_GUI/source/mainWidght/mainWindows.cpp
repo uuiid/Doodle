@@ -10,6 +10,7 @@
 #include <QtWidgets/qsizepolicy.h>
 #include <doodle_GUI/source/mainWidght/DragPushBUtton.h>
 #include <doodle_GUI/source/mainWidght/systemTray.h>
+
 DOODLE_NAMESPACE_S
 
 mainWindows::mainWindows(QWidget *parent)
@@ -42,15 +43,28 @@ void mainWindows::doodle_init() {
   //添加中央小部件
   setCentralWidget(centralWidget);
 
-  auto layout        = new QGridLayout(centralWidget);
-  auto exMaya_button = new DragPushBUtton();
-  exMaya_button->setText(tr("从maya导出相机和文件"));
-  exMaya_button->setToolTip(tr(R"(注意:
+  auto layout          = new QGridLayout(centralWidget);
+  auto k_exMaya_button = new DragPushBUtton();
+  //导出maya文件
+  k_exMaya_button->setText(tr("从maya导出相机和文件"));
+  k_exMaya_button->setToolTip(tr(R"(注意:
 请把导出文件拖拽到此处, 可以拖拽多个文件, 会依照顺序导出
 默认导出路径是在文件所在的目录
 )"));
+  // 创建视频
+  auto k_create_image = new DragPushBUtton();
+  k_create_image->setText(tr("从图片创建视频"));
+  k_create_image->setToolTip(tr(R"(注意:
+图片连接为视频时, 是按照名称来创建顺序的)"));
 
-  layout->addWidget(exMaya_button);
+  auto k_create_video = new DragPushBUtton();
+  k_create_video->setText(tr("连接视频"));
+  k_create_video->setToolTip(tr(R"(注意:
+连接拍屏时是按照文件名称排序的, 请一定要注意文件名称)"));
+
+  layout->addWidget(k_exMaya_button, 0, 0, 1, 1);
+  layout->addWidget(k_create_image, 1, 0, 1, 1);
+  layout->addWidget(k_create_video, 2, 0, 1, 1);
 
   //托盘创建
   auto tray = new systemTray(this);

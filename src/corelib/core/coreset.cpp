@@ -87,7 +87,8 @@ coreSet::coreSet()
       department(Department::VFX),
       synPath("D:/ue_prj"),
       cacheRoot("C:/Doodle_cache"),
-      doc("C:/Doodle_cache") {
+      doc("C:/Doodle_cache"),
+      p_uuid_gen() {
 }
 
 void coreSet::getSetting() {
@@ -122,6 +123,10 @@ dstring coreSet::toIpPath(const dstring &path) {
     return path.substr(2);
   }
   return path;
+}
+
+boost::uuids::uuid coreSet::getUUID() {
+  return p_uuid_gen();
 }
 
 dstring coreSet::getDepartment() const {

@@ -134,13 +134,10 @@
         "qapplication": "cpp",
         "qtreeview": "cpp",
         "qabstractitemmodel": "cpp",
-        "any": "cpp"
+        "any": "cpp",
+        "coroutine": "cpp"
     },
-    "qttools.injectNatvisFile": false,
     "testMate.cpp.log.logSentry": "disable_3",
-    "cmake.configureSettings": {
-        "gtest_build_samples": "ON",
-    },
     "testMate.cpp.test.advancedExecutables": [
         {
             "name": "test_my",
@@ -150,6 +147,7 @@
     ],
     "C_Cpp.clang_format_style": "{BasedOnStyle: Google, SortIncludes: false, ColumnLimit: 0,AlignConsecutiveAssignments: true,AlignAfterOpenBracket: Align}",
     "cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}",
+    "cmake.configureSettings": {},
     "editor.tokenColorCustomizations": {
         "textMateRules": [
             {
@@ -191,6 +189,5 @@
         "b_Ninja*": false,
         "install*": true
     },
-    "hlsl-client.trace.server": "messages",
     "C_Cpp.exclusionPolicy": "checkFilesAndFolders"
 }

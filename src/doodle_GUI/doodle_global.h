@@ -21,6 +21,7 @@
 // class QComboBox;
 
 DOODLE_NAMESPACE_S
+
 enum class filterState {
   useFilter,
   notFilter,

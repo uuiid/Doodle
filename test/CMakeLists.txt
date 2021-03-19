@@ -2,10 +2,8 @@
         main.cpp
         test_convert.cpp
         test_core.cpp
-        test_fileSystem.cpp
         test_boost.cpp 
         test_qtCore.cpp
-        # test_server.cpp
         test_std.cpp
         test_opencv.cpp
         )

@@ -16,7 +16,7 @@
 
 DOODLE_NAMESPACE_S
 
-class CORE_API fileArchive : public boost::noncopyable_::noncopyable {
+class CORE_API fileArchive {
  public:
   fileArchive();
   virtual ~fileArchive() = default;

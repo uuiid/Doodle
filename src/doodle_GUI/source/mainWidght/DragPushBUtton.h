@@ -1,6 +1,7 @@
 #include <doodle_GUI/doodle_global.h>
 
 #include <QtWidgets/qpushbutton.h>
+#include <boost/signals2.hpp>
 
 DOODLE_NAMESPACE_S
 
@@ -10,6 +11,8 @@ class DragPushBUtton : public QPushButton {
  private:
  public:
   DragPushBUtton(QWidget* parent = nullptr);
+
+  boost::signals2::signal<void(const std::vector<pathPtr>&)> handleFileFunction;
 
  protected:
   //上下文菜单

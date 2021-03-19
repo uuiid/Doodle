@@ -60,9 +60,9 @@ add_library(doodle_motion SHARED
   ${MAYA_MOC_FILE}
 )
 
+#设置导出符号
 include(GenerateExportHeader)
 set(MY_CUSTOM_CONTENT "")
-#设置导出符号
 generate_export_header(doodle_motion
 EXPORT_MACRO_NAME DOODLE_MOTION_API
 CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)

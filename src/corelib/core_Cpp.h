@@ -44,3 +44,5 @@
 #include <corelib/queueData/queueData.h>
 #include <corelib/core/PathParser.h>
 #include <corelib/core/Project.h>
+
+#include <corelib/FileWarp/MayaFile.h>

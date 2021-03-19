@@ -1,4 +1,55 @@
-﻿set(core_HEADER 
+﻿set(core_CPP
+        assets/assClass.cpp
+        assets/assdepartment.cpp
+        assets/assfilesqlinfo.cpp
+        assets/znchName.cpp
+
+        core/coreDataManager.cpp
+        core/coreset.cpp
+        core/coresql.cpp
+        core/CoreData.cpp
+        core/Project.cpp
+
+        Exception/Exception.cpp
+        
+        exeWrap/ffmpegWrap.cpp
+        
+        fileArchive/fileArchive.cpp
+        fileArchive/imageArchive.cpp
+        fileArchive/mayaArchive.cpp
+        fileArchive/mayaArchiveShotFbx.cpp
+        fileArchive/moveShotA.cpp
+        fileArchive/movieArchive.cpp
+        fileArchive/movieEpsArchive.cpp
+        fileArchive/ScreenshotArchive.cpp
+        fileArchive/ueArchive.cpp
+        fileArchive/ueSynArchive.cpp
+        filesystem/fileSync.cpp
+        filesystem/FileSystem.cpp
+        filesystem/Path.cpp
+        
+        queueData/queueData.cpp
+        queueData/queueManager.cpp
+
+        shots/episodes.cpp
+        shots/shot.cpp
+        shots/shotClass.cpp
+        shots/shotfilesqlinfo.cpp
+        shots/ShotModifySQLDate.cpp
+        shots/shottype.cpp
+        
+        sysData/synData.cpp
+        core/PathParser.cpp
+        fileDBInfo/CommentInfo.cpp
+        fileDBInfo/pathParsing.cpp
+        fileDBInfo/ModifySQLDate.cpp
+
+        core/FileInfo.cpp
+        assets/assType.cpp
+        FileWarp/MayaFile.cpp
+        FileWarp/ImageSequence.cpp
+)
+set(core_HEADER 
         assets/assClass.h
         assets/assdepartment.h
         assets/assfilesqlinfo.h
@@ -54,68 +105,66 @@
 
         assets/assType.h
         FileWarp/MayaFile.h
+        libWarp/BoostUuidWarp.h
+        FileWarp/ImageSequence.h
         )
 
-set(core_CPP
-        assets/assClass.cpp
-        assets/assdepartment.cpp
-        assets/assfilesqlinfo.cpp
-        assets/znchName.cpp
 
-        core/coreDataManager.cpp
-        core/coreset.cpp
-        core/coresql.cpp
-        core/CoreData.cpp
-        core/Project.cpp
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportFbx.h 
+                          ${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportFbx.cpp
+COMMAND ${BIN2CPP} --file=${CMAKE_CURRENT_LIST_DIR}/resource/mayaExport.py --output=. --headerfile=CoreResourceMayaExportFbx.h --identifier=CoreResourceMayaExportFbx --override 
+WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+DEPENDS resource/mayaExport.py
+COMMENT "bin2cpp create pinyin lib file"
+)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportAbc.h 
+                          ${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportAbc.cpp
+COMMAND ${BIN2CPP} --file=${CMAKE_CURRENT_LIST_DIR}/resource/abcExport.py --output=. --headerfile=CoreResourceMayaExportAbc.h --identifier=CoreResourceMayaExportAbc --override 
+WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+DEPENDS resource/abcExport.py
+COMMENT "bin2cpp create pinyin lib file"
+)
 
-        Exception/Exception.cpp
-        
-        exeWrap/ffmpegWrap.cpp
-        
-        fileArchive/fileArchive.cpp
-        fileArchive/imageArchive.cpp
-        fileArchive/mayaArchive.cpp
-        fileArchive/mayaArchiveShotFbx.cpp
-        fileArchive/moveShotA.cpp
-        fileArchive/movieArchive.cpp
-        fileArchive/movieEpsArchive.cpp
-        fileArchive/ScreenshotArchive.cpp
-        fileArchive/ueArchive.cpp
-        fileArchive/ueSynArchive.cpp
-        filesystem/fileSync.cpp
-        filesystem/FileSystem.cpp
-        filesystem/Path.cpp
-        
-        queueData/queueData.cpp
-        queueData/queueManager.cpp
-
-        shots/episodes.cpp
-        shots/shot.cpp
-        shots/shotClass.cpp
-        shots/shotfilesqlinfo.cpp
-        shots/ShotModifySQLDate.cpp
-        shots/shottype.cpp
-        
-        sysData/synData.cpp
-        core/PathParser.cpp
-        fileDBInfo/CommentInfo.cpp
-        fileDBInfo/pathParsing.cpp
-        fileDBInfo/ModifySQLDate.cpp
-
-        core/FileInfo.cpp
-        assets/assType.cpp
-        FileWarp/MayaFile.cpp
-
-        )
 add_library(core SHARED
 ${core_HEADER}
 ${core_CPP}
+${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportFbx.h 
+${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportFbx.cpp
+${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportAbc.h 
+${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportAbc.cpp
 core_global.h
 core_Cpp.h
-
 )
+
+
+
 set_target_properties(core 
 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+#设置导出符号
+include(GenerateExportHeader)
+set(MY_CUSTOM_CONTENT "")
+generate_export_header(core
+EXPORT_MACRO_NAME CORE_API
+CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
+#预编译头文件
+target_precompile_headers(core
+PUBLIC
+<filesystem>
+<variant>
+<string>
+<memory>
+<chrono>
+<map>
+<iostream>
+<regex>
+<fstream>
+<mutex>
+<condition_variable>
+<future>
+<vector>
+<unordered_set>
+)
 
 
 target_link_libraries(core PUBLIC SqlppSqlite)
@@ -129,8 +178,12 @@ target_link_libraries(core PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
 target_link_libraries(core PUBLIC pinyin)
 target_link_libraries(core PUBLIC logger)
 
-target_compile_definitions(core PRIVATE CORE_LIBRARY)
+target_compile_definitions(core PRIVATE CORE_LIBRARY core_EXPORT)
 target_compile_definitions(core PUBLIC DOODLE_QT)
 
-target_include_directories(core PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+target_include_directories(core PUBLIC 
+${CMAKE_CURRENT_LIST_DIR})
+
+target_include_directories(core PUBLIC 
+${CMAKE_CURRENT_BINARY_DIR})
+

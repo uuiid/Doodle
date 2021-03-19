@@ -14,11 +14,19 @@ class CoreTest : public ::testing::Test {
   void TearDown() override;
 
   doodle::coreSet& set = doodle::coreSet::getSet();
+
+  doodle::FSys::path p_maya_path;
+  doodle::FSys::path p_image_path;
+  doodle::FSys::path p_voide_path;
 };
 
 void CoreTest::SetUp() {
-  auto prj = std::make_shared<doodle::Project>("V:/");
-  set.setProject(prj);
+  // auto prj = std::make_shared<doodle::Project>("W:/");
+  // set.setProject(prj);
+
+  p_maya_path  = R"(D:\shot_ep016_sc0032_Anm_Animation_v0001_zhengshanshan.ma)";
+  p_image_path = R"(D:\sc_064)";
+  p_voide_path = R"(D:\video)";
 }
 
 void CoreTest::TearDown() {
@@ -75,7 +83,9 @@ TEST_F(CoreTest, find_dep_type) {
   // }
 }
 
-TEST_F(CoreTest, create_shotinfo) {
+TEST_F(CoreTest, export_maya) {
+  auto mayafile = doodle::MayaFile{};
+  mayafile.exportFbxFile(p_maya_path);
 }
 
 TEST_F(CoreTest, get_shotinf) {
