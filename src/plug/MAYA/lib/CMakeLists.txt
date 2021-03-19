@@ -87,8 +87,8 @@ PUBLIC
 set_target_properties(doodle_motion PROPERTIES 
 AUTOMOC OFF
 RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+OUTPUT_NAME doodle_motion_2020
 )
-
 
 
 
