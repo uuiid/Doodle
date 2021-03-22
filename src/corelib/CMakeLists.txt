@@ -199,7 +199,8 @@ ${OpenCV_LIBS}
 
 
 target_compile_definitions(core PRIVATE CORE_LIBRARY core_EXPORT)
-target_compile_definitions(core PUBLIC DOODLE_QT)
+target_compile_definitions(core PUBLIC DOODLE_QT NOMINMAX)
+
 
 target_include_directories(core PUBLIC 
 ${CMAKE_CURRENT_LIST_DIR}

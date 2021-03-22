@@ -62,8 +62,6 @@ TEST(DSTD, u8stringAndString) {
   std::cout << typeid(std::filesystem::path).name() << std::endl;
   std::cout << typeid(std::cout).name() << std::endl;
 }
-#undef min
-#undef max
 
 TEST(DSTD, file_last_time) {
   auto file = std::filesystem::path{u8"D:/test2.mp4"};

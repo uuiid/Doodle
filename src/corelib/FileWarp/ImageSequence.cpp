@@ -58,7 +58,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
   auto k_image         = cv::Mat{};
   auto k_image_resized = cv::Mat{};
   for (auto &&path : p_paths) {
-    k_image = cv::imread(path.generic_u8string());
+    k_image = cv::imread(path.generic_string());
     if (k_image.empty())
       throw std::runtime_error("open cv not read image");
     if (k_image.cols != 1280 || k_image.rows != 720)

@@ -29,5 +29,6 @@ target_sources(pinyin
 target_link_libraries(pinyin PRIVATE Boost::locale)
 target_link_libraries(pinyin PRIVATE logger)
 
-target_compile_definitions(pinyin PRIVATE PINYIN_LIBRARY)
+target_compile_definitions(pinyin 
+PRIVATE PINYIN_LIBRARY NOMINMAX)
 

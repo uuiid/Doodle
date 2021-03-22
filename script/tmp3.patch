@@ -1,0 +1,50 @@
+diff --git a/ports/opencv4/0009-fix-freetype.patch b/ports/opencv4/0009-fix-freetype.patch
+new file mode 100644
+index 000000000..0e22bec06
+--- /dev/null
++++ b/ports/opencv4/0009-fix-freetype.patch
+@@ -0,0 +1,32 @@
++diff --git a/modules/freetype/CMakeLists.txt b/modules/freetype/CMakeLists.txt
++index 6dd4aaf..0013d0d 100644
++--- a/modules/freetype/CMakeLists.txt
+++++ b/modules/freetype/CMakeLists.txt
++@@ -3,8 +3,25 @@ if(APPLE_FRAMEWORK)
++   ocv_module_disable(freetype)
++ endif()
++ 
++-ocv_check_modules(FREETYPE freetype2)
++-ocv_check_modules(HARFBUZZ harfbuzz)
+++find_package(Freetype REQUIRED)
+++set(HARFBUZZ_ROOT "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}" CACHE PATH "harfbuzz install root dir")
+++find_path(HARFBUZZ_INCLUDE_DIRS
+++NAMES hb-ft.h
+++PATH_SUFFIXES harfbuzz
+++HINTS ${HARFBUZZ_ROOT}/include)
+++if(CMAKE_BUILD_TYPE MATCHES "Debug" )
+++message("is debug")
+++find_library(HARFBUZZ_LIBRARIES
+++    NAMES harfbuzz
+++    HINTS ${HARFBUZZ_ROOT}/debug/lib)
+++else()
+++message("not is debug")
+++find_library(HARFBUZZ_LIBRARIES
+++    NAMES harfbuzz
+++    HINTS ${HARFBUZZ_ROOT}/lib)
+++endif()
+++find_package_handle_standard_args(HARFBUZZ
+++    DEFAULT_MSG HARFBUZZ_LIBRARIES HARFBUZZ_INCLUDE_DIRS)
++ 
++ if(OPENCV_INITIAL_PASS)
++   if(NOT FREETYPE_FOUND)
+diff --git a/ports/opencv4/portfile.cmake b/ports/opencv4/portfile.cmake
+index 33982df0e..812fcda9a 100644
+--- a/ports/opencv4/portfile.cmake
++++ b/ports/opencv4/portfile.cmake
+@@ -142,6 +142,7 @@ if("contrib" IN_LIST FEATURES)
+     HEAD_REF master
+     PATCHES
+       0007-fix-hdf5.patch
++      0009-fix-freetype.patch
+   )
+   set(BUILD_WITH_CONTRIB_FLAG "-DOPENCV_EXTRA_MODULES_PATH=${CONTRIB_SOURCE_PATH}/modules")
+ 

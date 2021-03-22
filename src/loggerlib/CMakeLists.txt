@@ -16,5 +16,5 @@ target_link_libraries(logger PUBLIC Boost::log )
 #私有连接
 target_link_libraries(logger PRIVATE Boost::locale Boost::filesystem)
 
-target_compile_definitions(logger PRIVATE LOGGER_LIBRARY)
+target_compile_definitions(logger PRIVATE LOGGER_LIBRARY NOMINMAX)
 
