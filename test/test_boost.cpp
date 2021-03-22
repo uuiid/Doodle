@@ -58,13 +58,15 @@ TEST(dboost, filesys_last_write_time) {
     std::cout << "0: " << boost::filesystem::last_write_time(source_path) << std::endl;
     std::cout << "1: " << boost::filesystem::last_write_time(soure) << std::endl;
 
-    boost::filesystem::path tmp_path{"F:/测试文件.mp4"};
+    boost::filesystem::path tmp_path{u8"F:/测试文件.mp4"};
     std::cout << "3: " << boost::filesystem::last_write_time(tmp_path) << std::endl;
-  } catch (const std::exception &e) {
+  } catch (const boost::filesystem::filesystem_error &e) {
     std::cout << e.what()
               << " \nutf : "
-              << boost::locale::conv::to_utf<char>(e.what(), "UTF-8")
+              << ""
               << std::endl;
+    auto str = boost::locale::conv::utf_to_utf<wchar_t>(e.code().message());
+    // auto wstr = std::wstring(e.code().message().c_str());
   }
   struct _stat64 fileInfo;
   if (_wstat64(source_path.generic_wstring().c_str(), &fileInfo) != 0) {
@@ -73,4 +75,16 @@ TEST(dboost, filesys_last_write_time) {
 
   std::cout << "\n"
             << fileInfo.st_mtime << std::endl;
+}
+
+TEST(dboost, boost_local_backend) {
+  auto local_backend = boost::locale::localization_backend_manager::global();
+  for (auto &&it : local_backend.get_all_backends()) {
+    std::cout << it << std::endl;
+  }
+}
+
+TEST(dboost, boost_form_utf) {
+  std::cout << boost::locale::conv::from_utf(std::string{"哈哈"}, "GBK") << std::endl;
+  std::cout << boost::locale::conv::to_utf<char>(std::string{"哈哈"}, "UTF-8") << std::endl;
 }

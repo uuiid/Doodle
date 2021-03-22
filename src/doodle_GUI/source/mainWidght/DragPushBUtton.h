@@ -12,7 +12,7 @@ class DragPushBUtton : public QPushButton {
  public:
   DragPushBUtton(QWidget* parent = nullptr);
 
-  boost::signals2::signal<void(const std::vector<pathPtr>&)> handleFileFunction;
+  boost::signals2::signal<void(const std::vector<FSys::path>&)> handleFileFunction;
 
  protected:
   //上下文菜单

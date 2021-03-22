@@ -25,31 +25,6 @@
 #include <iostream>
 DOODLE_NAMESPACE_S
 
-RTTR_REGISTRATION {
-  rttr::registration::class_<fileSqlInfo>(DOCORE_RTTE_CLASS(fileSqlInfo))
-      // .property("filelist", &fileSqlInfo::getFileList,
-      //           rttr::select_overload<void(const dpathList &)>(&fileSqlInfo::setFileList))
-      .property("version", &fileSqlInfo::getVersionP, &fileSqlInfo::setVersionP)
-      // .property("info", &fileSqlInfo::getInfoP, &fileSqlInfo::setInfoP)
-      .property_readonly("user", &fileSqlInfo::getUser)
-      .property_readonly("suffixes", &fileSqlInfo::getSuffixes)
-      .method("generatePath",
-              rttr::select_overload<fileSys::path(const std::string &)>(&fileSqlInfo::generatePath))
-      .method("generatePath",
-              rttr::select_overload<fileSys::path(const std::string &,
-                                                  const std::string &)>(&fileSqlInfo::generatePath))
-      .method("generatePath",
-              rttr::select_overload<fileSys::path(const std::string &,
-                                                  const std::string &,
-                                                  const std::string &)>(&fileSqlInfo::generatePath))
-      .method("generateFileName",
-              rttr::select_overload<dstring(const std::string &)>(&fileSqlInfo::generateFileName))
-      .method("generateFileName",
-              rttr::select_overload<dstring(const std::string &,
-                                            const std::string &)>(&fileSqlInfo::generateFileName))
-      .method("exist", &fileSqlInfo::exist);
-}
-
 fileSqlInfo::fileSqlInfo()
     : CoreData(),
       versionP(0),

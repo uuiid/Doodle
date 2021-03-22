@@ -21,10 +21,7 @@
 #include <rttr/registration>
 DOODLE_NAMESPACE_S
 
-RTTR_REGISTRATION {
-  rttr::registration::class_<shotFileSqlInfo>(DOCORE_RTTE_CLASS(shotFileSqlInfo))
-      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
-}
+
 
 boost::signals2::signal<void()> shotFileSqlInfo::insertChanged{};
 boost::signals2::signal<void()> shotFileSqlInfo::updateChanged{};

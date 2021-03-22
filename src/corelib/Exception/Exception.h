@@ -4,6 +4,20 @@
 #include <stdexcept>
 
 DOODLE_NAMESPACE_S
+// 空指针错误
+class CORE_API nullptr_error : public std::runtime_error {
+ public:
+  nullptr_error(const std::string &err) : std::runtime_error(err){};
+  virtual const char *what() const noexcept override;
+};
+// fileErr
+class CORE_API FileError : public std::runtime_error {
+  FSys::path p_path;
+
+ public:
+  FileError(FSys::path path, std::string message) : std::runtime_error(message), p_path(std::move(path)){};
+  virtual const char *what() const noexcept override;
+};
 
 //-------------------------没有文件错误-----------------------------
 class CORE_API not_file_error : public std::runtime_error {
@@ -40,12 +54,6 @@ class CORE_API find_error_info : public std::runtime_error {
   virtual const char *what() const noexcept override;
 };
 
-// 空指针错误
-class CORE_API nullptr_error : public std::runtime_error {
- public:
-  nullptr_error(const std::string &err) : std::runtime_error(err){};
-  virtual const char *what() const noexcept override;
-};
 //-------------------------rttr 反射没有类型错误---------------
 class CORE_API rttr_error : public std::runtime_error {
  public:

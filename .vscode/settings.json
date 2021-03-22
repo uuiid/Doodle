@@ -135,7 +135,10 @@
         "qtreeview": "cpp",
         "qabstractitemmodel": "cpp",
         "any": "cpp",
-        "coroutine": "cpp"
+        "coroutine": "cpp",
+        "qtwidgets": "cpp",
+        "bit": "cpp",
+        "stop_token": "cpp"
     },
     "testMate.cpp.log.logSentry": "disable_3",
     "testMate.cpp.test.advancedExecutables": [

@@ -166,24 +166,45 @@ PUBLIC
 <unordered_set>
 )
 
+# find_package(Freetype REQUIRED)
+# set(HARFBUZZ_ROOT "F:/vcpkg/installed/x64-windows" CACHE PATH "harfbuzz install root dir")
+# find_path(HARFBUZZ_INCLUDE_DIRS
+# NAMES hb-ft.h
+# PATH_SUFFIXES harfbuzz
+# HINTS ${HARFBUZZ_ROOT}/include)
+# if(CMAKE_BUILD_TYPE MATCHES "Debug" )
+# message("is debug")
+# find_library(HARFBUZZ_LIBRARIES
+#     NAMES harfbuzz
+#     HINTS ${HARFBUZZ_ROOT}/debug/lib)
+# else()
+# message("not is debug")
+# find_library(HARFBUZZ_LIBRARIES
+#     NAMES harfbuzz
+#     HINTS ${HARFBUZZ_ROOT}/lib)
+# endif()
+# find_package_handle_standard_args(HARFBUZZ
+#     DEFAULT_MSG HARFBUZZ_LIBRARIES HARFBUZZ_INCLUDE_DIRS)
 
-target_link_libraries(core PUBLIC SqlppSqlite)
-target_link_libraries(core PUBLIC RTTR::Core)
+target_link_libraries(core PUBLIC 
+SqlppSqlite
+RTTR::Core
+magic_enum::magic_enum
+${Boost_LIBRARIES}
+nlohmann_json nlohmann_json::nlohmann_json
+pinyin
+logger
+${OpenCV_LIBS}
+)
 
-target_link_libraries(core PUBLIC magic_enum::magic_enum)
-target_link_libraries(core PUBLIC ${Boost_LIBRARIES})
-
-
-target_link_libraries(core PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
-target_link_libraries(core PUBLIC pinyin)
-target_link_libraries(core PUBLIC logger)
 
 target_compile_definitions(core PRIVATE CORE_LIBRARY core_EXPORT)
 target_compile_definitions(core PUBLIC DOODLE_QT)
 
 target_include_directories(core PUBLIC 
-${CMAKE_CURRENT_LIST_DIR})
-
-target_include_directories(core PUBLIC 
-${CMAKE_CURRENT_BINARY_DIR})
+${CMAKE_CURRENT_LIST_DIR}
+${CMAKE_CURRENT_BINARY_DIR}
+PRIVATE
+${OpenCV_INCLUDE_DIRS}
+)
 

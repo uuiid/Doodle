@@ -69,7 +69,6 @@ class CORE_API fileSqlInfo : public CoreData {
  protected:
   void write();
 
-  RTTR_ENABLE(CoreData);
 };
 
 DOODLE_NAMESPACE_E

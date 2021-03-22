@@ -30,10 +30,10 @@ void DragPushBUtton::dropEvent(QDropEvent* event) {
   if (!event->mimeData()->hasUrls())
     return enableBorder(false);
   auto k_urls = event->mimeData()->urls();
-  auto k_list = std::vector<pathPtr>{};
+  auto k_list = std::vector<FSys::path>{};
   for (auto&& item : k_urls) {
     if (item.isLocalFile())
-      k_list.emplace_back(std::make_shared<FSys::path>(item.toLocalFile().toStdWString()));
+      k_list.emplace_back(item.toLocalFile().toStdString());
   }
   if (k_list.empty()) {
     QMessageBox::warning(this, tr("警告"), tr("无法找到拖入的文件信息"));

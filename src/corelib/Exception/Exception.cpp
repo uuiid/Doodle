@@ -38,6 +38,14 @@ const char *nullptr_error::what() const noexcept {
   return str.c_str();
 }
 
+const char *FileError::what() const noexcept {
+  auto str = std::string{"file error "};
+  str += std::runtime_error::what();
+  str += ": ";
+  str.append(p_path.generic_string());
+  return str.c_str();
+}
+
 const char *rttr_error::what() const noexcept {
   std::string str("rttr err: ");
   str = str + std::runtime_error::what();
