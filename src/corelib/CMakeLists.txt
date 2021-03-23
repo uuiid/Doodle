@@ -48,6 +48,7 @@
         assets/assType.cpp
         FileWarp/MayaFile.cpp
         FileWarp/ImageSequence.cpp
+        FileWarp/VideoSequence.cpp
 )
 set(core_HEADER 
         assets/assClass.h
@@ -107,6 +108,7 @@ set(core_HEADER
         FileWarp/MayaFile.h
         libWarp/BoostUuidWarp.h
         FileWarp/ImageSequence.h
+        FileWarp/VideoSequence.h
         )
 
 
@@ -164,6 +166,9 @@ PUBLIC
 <future>
 <vector>
 <unordered_set>
+<queue>
+<functional>
+<stdexcept>
 )
 
 # find_package(Freetype REQUIRED)

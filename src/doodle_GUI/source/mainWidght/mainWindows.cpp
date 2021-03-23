@@ -11,6 +11,8 @@
 #include <doodle_GUI/source/mainWidght/DragPushBUtton.h>
 #include <doodle_GUI/source/mainWidght/systemTray.h>
 
+#include <doodle_GUI/source/toolkit/MessageAndProgress.h>
+
 DOODLE_NAMESPACE_S
 
 mainWindows::mainWindows(QWidget *parent)
@@ -51,11 +53,23 @@ void mainWindows::doodle_init() {
 请把导出文件拖拽到此处, 可以拖拽多个文件, 会依照顺序导出
 默认导出路径是在文件所在的目录
 )"));
+
+  k_exMaya_button->handleFileFunction.connect([this](const std::vector<FSys::path> &paths) {
+    auto maya    = std::make_shared<MayaFile>();
+    auto process = new MessageAndProgress{this};
+    process->createProgress(maya);
+
+    std::thread{
+        [maya, paths]() { maya->batchExportFbxFile(paths); }}
+        .detach();
+  });
+
   // 创建视频
   auto k_create_image = new DragPushBUtton();
   k_create_image->setText(tr("从图片创建视频"));
   k_create_image->setToolTip(tr(R"(注意:
-图片连接为视频时, 是按照名称来创建顺序的)"));
+图片连接为视频时, 是按照名称来创建顺序的,
+可以同时拖拽多个图片文件夹, 按照每个文件夹一个视频合成)"));
 
   auto k_create_video = new DragPushBUtton();
   k_create_video->setText(tr("连接视频"));

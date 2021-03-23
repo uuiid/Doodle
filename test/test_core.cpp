@@ -8,6 +8,7 @@
 #include <rttr/type>
 #include <corelib/core_Cpp.h>
 #include <corelib/FileWarp/ImageSequence.h>
+#include <corelib/FileWarp/VideoSequence.h>
 
 class CoreTest : public ::testing::Test {
  protected:
@@ -18,7 +19,9 @@ class CoreTest : public ::testing::Test {
 
   doodle::FSys::path p_maya_path;
   doodle::FSys::path p_image_path;
-  doodle::FSys::path p_voide_path;
+  doodle::FSys::path p_video_path;
+  doodle::FSys::path p_video_path_out1;
+  doodle::FSys::path p_video_path_out2;
 };
 
 void CoreTest::SetUp() {
@@ -27,7 +30,10 @@ void CoreTest::SetUp() {
 
   p_maya_path  = R"(D:\shot_ep016_sc0032_Anm_Animation_v0001_zhengshanshan.ma)";
   p_image_path = R"(D:\sc_064)";
-  p_voide_path = R"(D:\video)";
+  p_video_path = R"(D:\video)";
+
+  p_video_path_out1 = R"(D:\voide\test1.mp4)";
+  p_video_path_out2 = R"(D:\voide\test2.mp4)";
 }
 
 void CoreTest::TearDown() {
@@ -83,9 +89,20 @@ TEST_F(CoreTest, export_maya) {
 }
 
 TEST_F(CoreTest, make_vide) {
-  auto video = doodle::ImageSequence{p_image_path, {"test"}};
-  video.createVideoFile("D:/test3.mp4");
+  auto video = doodle::ImageSequence{p_image_path, {"test_哈哈"}};
+  video.createVideoFile(p_video_path_out1);
 }
+
+TEST_F(CoreTest, connect_video) {
+  auto videos = std::vector<doodle::FSys::path>{};
+  for (auto v : doodle::FSys::directory_iterator(p_video_path)) {
+    videos.emplace_back(v.path());
+  }
+
+  auto video = doodle::VideoSequence{videos};
+  video.connectVideo(p_video_path_out2);
+}
+
 TEST_F(CoreTest, get_shotinf) {
 }
 

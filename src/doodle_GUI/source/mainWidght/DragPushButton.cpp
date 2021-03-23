@@ -41,7 +41,7 @@ void DragPushBUtton::dropEvent(QDropEvent* event) {
     try {
       this->handleFileFunction(k_list);
     } catch (const std::runtime_error& err) {
-      QMessageBox::warning(this, tr("警告"), tr("处理文件失败"));
+      QMessageBox::warning(this, tr("警告:"), QString::fromStdString(err.what()));
     }
   }
 

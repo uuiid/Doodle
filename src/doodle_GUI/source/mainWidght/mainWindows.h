@@ -16,6 +16,9 @@ DOODLE_NAMESPACE_S
 
 class mainWindows : public QMainWindow {
   Q_OBJECT
+ Q_SIGNALS:
+  void setProgress(int value);
+
  public:
   explicit mainWindows(QWidget *parent = nullptr);
   //~mainWindows() override;
