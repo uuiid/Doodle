@@ -9,17 +9,9 @@
 
 #include <magic_enum.hpp>
 
-//反射使用
-#include <rttr/registration>
-
 #include <memory>
 
 DOODLE_NAMESPACE_S
-
-RTTR_REGISTRATION {
-  rttr::registration::class_<shot>(DOCORE_RTTE_CLASS(shot))
-      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
-}
 
 DOODLE_INSRANCE_CPP(shot);
 const std::vector<std::string> shot::e_shotAB_list = {"B", "C", "D", "E",

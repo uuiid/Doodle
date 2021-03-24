@@ -5,7 +5,6 @@
 #include <iostream>
 #include <memory>
 
-#include <rttr/type>
 #include <corelib/core_Cpp.h>
 #include <corelib/FileWarp/ImageSequence.h>
 #include <corelib/FileWarp/VideoSequence.h>
@@ -52,35 +51,15 @@ TEST_F(CoreTest, getInfo) {
 
 TEST_F(CoreTest, getProjectInfo) {
   auto prj         = set.getProject();
-  auto path_parser = prj->findParser(rttr::type::get<doodle::assdepartment>());
-  std::cout
-      << "\n name : " << prj->Name()
-      << "\n root : " << prj->Root()
-      << "\n doc : " << path_parser[0]
-      << std::endl;
+  // auto path_parser = prj->findParser(rttr::type::get<doodle::assdepartment>());
+  // std::cout
+  //     << "\n name : " << prj->Name()
+  //     << "\n root : " << prj->Root()
+  //     << "\n doc : " << path_parser[0]
+  //     << std::endl;
 }
 
 TEST_F(CoreTest, setInfo) {
-}
-
-TEST_F(CoreTest, find_dep_type) {
-  // auto dep_list = doodle::assdepartment::getAll();
-  // for (auto&& it : dep_list) {
-  //   std::cout << "dep : " << it->getAssDep() << std::endl;
-  //   for (auto&& p : it->Roots()) {
-  //     std::cout << p->generic_string() << std::endl;
-  //   }
-  //   auto cl_list = doodle::assClass::getAll(it);
-  //   for (auto it_cl : cl_list) {
-  //     std::cout << std::setfill(' ') << std::setw(15) << "ass class : " << std::setw(35) << it_cl->getAssClass();
-  //     for (auto&& p1 : it_cl->Roots())
-  //       std::cout << " root : " << p1->generic_string() << std::endl;
-  //     auto f_list = doodle::assFileSqlInfo::getAll(it_cl);
-  //     for (auto k_f : f_list) {
-  //       std::cout << std::setfill(' ') << std::setw(13) << "file : " << k_f->getSuffixes() << std::endl;
-  //     }
-  //   }
-  // }
 }
 
 TEST_F(CoreTest, export_maya) {
@@ -101,31 +80,4 @@ TEST_F(CoreTest, connect_video) {
 
   auto video = doodle::VideoSequence{videos};
   video.connectVideo(p_video_path_out2);
-}
-
-TEST_F(CoreTest, get_shotinf) {
-}
-
-TEST_F(CoreTest, create_assInfo) {
-}
-
-TEST_F(CoreTest, get_assInf) {
-}
-
-TEST_F(CoreTest, up_maya_file) {
-}
-TEST_F(CoreTest, create_Move) {
-}
-
-TEST_F(CoreTest, convert_Move) {
-}
-TEST_F(CoreTest, Synfile_up_ue) {
-}
-TEST_F(CoreTest, Synfile_dow_ue) {
-}
-TEST_F(CoreTest, Synfile) {
-}
-TEST_F(CoreTest, Synfile_lisgt) {
-}
-TEST_F(CoreTest, Synfile_create_dir) {
 }

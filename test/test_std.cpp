@@ -13,9 +13,9 @@
 TEST(DSTD, map_netDir) {
   NETRESOURCE resources{};
   resources.dwType       = RESOURCETYPE_DISK;
-  resources.lpLocalName  = "S:";
+  resources.lpLocalName  = (LPSTR) "S:";
   resources.lpProvider   = 0;
-  resources.lpRemoteName = R"(\\192.168.10.250\public\CangFeng)";
+  resources.lpRemoteName = (LPSTR) R"(\\192.168.10.250\public\CangFeng)";
   DWORD r                = WNetAddConnection2(&resources, NULL, NULL,
                                CONNECT_TEMPORARY | CONNECT_INTERACTIVE | CONNECT_COMMANDLINE | CONNECT_CRED_RESET);
   if (r != NO_ERROR) {
@@ -43,8 +43,8 @@ TEST(DSTD, stdStringLocale) {
 TEST(DSTD, std_locale) {
   auto data = boost::locale::conv::to_utf<wchar_t>("中", "UTF-8");
   std::cout << data.size() << std::endl;
-  std::cout << data.at(0) << std::endl;
-  std::cout << data.data() << std::endl;
+  std::wcout << data.at(0) << std::endl;
+  std::wcout << data.data() << std::endl;
   const std::string data2{};
   // data2
 }
@@ -55,8 +55,9 @@ TEST(DSTD, regex) {
 
 TEST(DSTD, u8stringAndString) {
   std::filesystem::path str{"哈哈"};
+  // std::cout << std::string{str2.begin(), str2.end()} << std::endl;
   std::cout << str << std::endl;
-  std::cout << str.generic_u8string() << std::endl;
+  std::cout << std::string{str2.begin(), str2.end()} << std::endl;
   std::cout << str.generic_string() << std::endl;
   std::cout << "std::locale : " << std::locale{}.name().c_str() << std::endl;
   std::cout << typeid(std::filesystem::path).name() << std::endl;

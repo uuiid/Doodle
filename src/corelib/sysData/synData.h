@@ -13,7 +13,6 @@
 DOODLE_NAMESPACE_S
 
 class CORE_API synData : public CoreData {
-  RTTR_ENABLE(CoreData)
  public:
   synData();
 

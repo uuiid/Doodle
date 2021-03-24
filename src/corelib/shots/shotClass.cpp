@@ -8,14 +8,7 @@
 
 #include <magic_enum.hpp>
 
-//反射使用
-#include <rttr/registration>
 DOODLE_NAMESPACE_S
-
-RTTR_REGISTRATION {
-  rttr::registration::class_<shotClass>(DOCORE_RTTE_CLASS(shotClass))
-      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
-}
 
 DOODLE_INSRANCE_CPP(shotClass);
 boost::signals2::signal<void(const shotClassPtr &)> shotClass::insertChanged{};

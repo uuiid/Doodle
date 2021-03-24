@@ -16,7 +16,6 @@ DOODLE_NAMESPACE_S
 
 class CORE_API shotType : public CoreData,
                           public std::enable_shared_from_this<shotType> {
-  RTTR_ENABLE(CoreData)
  public:
   shotType();
   ~shotType();

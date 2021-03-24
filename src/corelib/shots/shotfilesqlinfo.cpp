@@ -17,8 +17,7 @@
 #include <iostream>
 #include <memory>
 
-//反射使用
-#include <rttr/registration>
+
 DOODLE_NAMESPACE_S
 
 

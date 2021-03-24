@@ -18,8 +18,6 @@
 #include <nlohmann/json.hpp>
 #include <boost/filesystem.hpp>
 
-//反射使用
-#include <rttr/registration>
 
 #include <memory>
 #include <iostream>

@@ -2,7 +2,6 @@
 #include <corelib/Exception/Exception.h>
 #include <corelib/core/CoreData.h>
 #include <queue>
-#include <rttr/type>
 namespace doodle::pathParser {
 PathParser::PathParser()
     : p_id(-1),

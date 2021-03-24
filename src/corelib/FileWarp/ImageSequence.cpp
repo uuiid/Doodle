@@ -54,6 +54,7 @@ bool ImageSequence::seanDir(const FSys::path &dir) {
       }
     }
   }
+  return true;
 }
 
 void ImageSequence::setText(const std::string &text) {

@@ -58,7 +58,7 @@ TEST(dboost, filesys_last_write_time) {
     std::cout << "0: " << boost::filesystem::last_write_time(source_path) << std::endl;
     std::cout << "1: " << boost::filesystem::last_write_time(soure) << std::endl;
 
-    boost::filesystem::path tmp_path{u8"F:/测试文件.mp4"};
+    boost::filesystem::path tmp_path{"F:/测试文件.mp4"};
     std::cout << "3: " << boost::filesystem::last_write_time(tmp_path) << std::endl;
   } catch (const boost::filesystem::filesystem_error &e) {
     std::cout << e.what()

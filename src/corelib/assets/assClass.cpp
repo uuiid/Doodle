@@ -9,15 +9,10 @@
 
 #include <loggerlib/Logger.h>
 
-//反射使用
-#include <rttr/registration>
+
 
 DOODLE_NAMESPACE_S
 
-RTTR_REGISTRATION {
-  rttr::registration::class_<assClass>(DOCORE_RTTE_CLASS(assClass))
-      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
-}
 
 DOODLE_INSRANCE_CPP(assClass);
 assClass::assClass()

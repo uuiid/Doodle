@@ -1,7 +1,6 @@
 #pragma once
 
 #include <corelib/core_global.h>
-#include <rttr/type>
 
 namespace doodle {
 
@@ -23,10 +22,10 @@ class CORE_API Project {
 
  public:
   Project(fileSys::path path);
-  pathParserList findParser(const rttr::type& type_ptr);
+  // pathParserList findParser(const rttr::type& type_ptr);
 
-  const std::map<int64_t, std::string> getClassNames(const rttr::type& type_ptr) const;
-  const std::multimap<std::string, std::string> getAlias(const rttr::type& type_ptr) const;
+  // const std::map<int64_t, std::string> getClassNames(const rttr::type& type_ptr) const;
+  // const std::multimap<std::string, std::string> getAlias(const rttr::type& type_ptr) const;
 
   const std::string& Name() const noexcept;
   void setName(const std::string& Name) noexcept;

@@ -62,11 +62,6 @@ set(core_HEADER
         core/CoreData.h
         core/Project.h
 
-        coreOrm/doodleConfig_sqlOrm.h
-        coreOrm/PathParserData_sqlOrm.h
-        coreOrm/zh_ch_sqlOrm.h
-        coreOrm/class_alias_sqlOrm.h
-
         Exception/Exception.h
 
         exeWrap/ffmpegWrap.h
@@ -193,7 +188,7 @@ PUBLIC
 
 target_link_libraries(core PUBLIC 
 SqlppSqlite
-RTTR::Core
+# RTTR::Core
 magic_enum::magic_enum
 ${Boost_LIBRARIES}
 nlohmann_json nlohmann_json::nlohmann_json

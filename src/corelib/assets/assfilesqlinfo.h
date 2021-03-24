@@ -62,7 +62,6 @@ class CORE_API assFileSqlInfo
   assClassPtr p_class_ptr_;
   assTypePtr p_type_ptr_;
   DOODLE_INSRANCE(assFileSqlInfo);
-  RTTR_ENABLE(fileSqlInfo)
 };
 
 DOODLE_NAMESPACE_E

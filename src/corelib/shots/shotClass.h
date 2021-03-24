@@ -52,7 +52,6 @@ class CORE_API shotClass : public CoreData,
  private:
   e_fileclass p_fileclass;
   DOODLE_INSRANCE(shotClass);
-  RTTR_ENABLE(CoreData)
 };
 
 DOODLE_NAMESPACE_E

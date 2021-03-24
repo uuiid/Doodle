@@ -17,20 +17,12 @@
 
 #include <loggerlib/Logger.h>
 
-#include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/sqlite3/sqlite3.h>
+
 
 #include <stdexcept>
 #include <magic_enum.hpp>
 
-//反射使用
-#include <rttr/registration>
-
 DOODLE_NAMESPACE_S
-RTTR_REGISTRATION {
-  rttr::registration::class_<assType>(DOCORE_RTTE_CLASS(assType))
-      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
-}
 
 DOODLE_INSRANCE_CPP(assType);
 boost::signals2::signal<void()> assType::insertChanged{};
