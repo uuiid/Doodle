@@ -44,7 +44,7 @@ const FSys::path MayaFile::createTmpFile() const {
   auto& k_file_py            = bin2cpp::getCoreResourceMayaExportFbxFile();
 
   {  //写入文件后直接关闭
-    std::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
+    FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
     file.write(k_file_py.getBuffer(), k_file_py.getSize());
   }
   return k_tmp_path;

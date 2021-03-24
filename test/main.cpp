@@ -15,6 +15,7 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
+#include <locale>
 class Environment : public ::testing::Environment {
  public:
   void SetUp() override;
@@ -31,6 +32,7 @@ void Environment::SetUp() {
 void Environment::TearDown() {}
 
 int main(int argc, char *argv[]) {
+  // std::setlocale(LC_ALL, "");
   //初始化log
   Logger::doodle_initLog();
 

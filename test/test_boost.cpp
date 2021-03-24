@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 #include <boost/regex.hpp>
 #include <boost/locale.hpp>
-
+#include <boost/format.hpp>
 std::string encode64(const std::string &val) {
   using namespace boost::archive::iterators;
   using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
@@ -87,4 +87,13 @@ TEST(dboost, boost_local_backend) {
 TEST(dboost, boost_form_utf) {
   std::cout << boost::locale::conv::from_utf(std::string{"哈哈"}, "GBK") << std::endl;
   std::cout << boost::locale::conv::to_utf<char>(std::string{"哈哈"}, "UTF-8") << std::endl;
+}
+
+TEST(dboost, boost_format) {
+  boost::format str{"ep%04d_sc%04d%s"};
+  str % 1 % 50 % "A";
+  std::cout << str.str() << std::endl;
+  str.clear();
+  str % -1 % -50 % "A";
+  std::cout << str.str() << std::endl;
 }

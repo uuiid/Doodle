@@ -81,6 +81,7 @@ PUBLIC
 <mutex>
 <condition_variable>
 <future>
+<boost/filesystem.hpp>
 )
 
 # 设置一些属性,包括没有自动运行的moc以及安装位置

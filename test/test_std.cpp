@@ -9,7 +9,9 @@
 #include <filesystem>
 #include <codecvt>
 
+#include <QtCore/QString>
 #include <boost/locale.hpp>
+// #include <boost/nowide/
 TEST(DSTD, map_netDir) {
   NETRESOURCE resources{};
   resources.dwType       = RESOURCETYPE_DISK;
@@ -54,12 +56,29 @@ TEST(DSTD, regex) {
 }
 
 TEST(DSTD, u8stringAndString) {
-  std::filesystem::path str{"哈哈"};
+  auto k_local = boost::locale::generator().generate("");
+  boost::filesystem::path::imbue(k_local);
+  // std::setlocale(LC_ALL, "zh_CN.UTF-8");
+  std::filesystem::path str{L"D:/哈哈/scoo+1235"};
+  boost::filesystem::path str_b{"D:/哈哈/scoo+1235"};
   // std::cout << std::string{str2.begin(), str2.end()} << std::endl;
-  std::cout << str << std::endl;
-  std::cout << std::string{str2.begin(), str2.end()} << std::endl;
-  std::cout << str.generic_string() << std::endl;
+  std::cout << "str: " << str << std::endl;
+  auto qstr = QString::fromLocal8Bit(str.generic_string().c_str());
+  std::cout << "QString::fromLocal8Bit --> .generic_string().c_str(): " << qstr.toStdString() << std::endl;
+  auto qstr2 = QString::fromStdString(str.generic_u8string());
+  std::cout << "QString::fromStdString --> .generic_u8string(): " << qstr2.toStdString() << std::endl;
+
+  std::cout << "generic_u8string: " << str.generic_u8string() << std::endl;
+  std::cout << "generic_string: " << str.generic_string() << std::endl;
+  std::cout << "boost conv: " << boost::locale::conv::utf_to_utf<char>(str.generic_wstring()) << std::endl;
+  std::cout << "boost path: " << str_b << std::endl;
+  std::cout << "boost path: " << str_b.generic_string() << std::endl;
+
+  std::filesystem::create_directories(str);
+
   std::cout << "std::locale : " << std::locale{}.name().c_str() << std::endl;
+  std::cout << "boost::locale : " << std::use_facet<boost::locale::info>(boost::locale::generator().generate("")).name() << std::endl;
+
   std::cout << typeid(std::filesystem::path).name() << std::endl;
   std::cout << typeid(std::cout).name() << std::endl;
 }
@@ -76,4 +95,26 @@ TEST(DSTD, file_last_time) {
   localtime_s(&k_tm, &time3);
   asctime_s(str.data(), 100, &k_tm);
   std::cout << str << std::endl;
+}
+
+TEST(DSTD, regerFind_eps_shot) {
+  std::regex k_exp_epis{R"(ep_?(\d+))", std::regex_constants::icase};
+  std::regex k_exp_shot{R"(sc_?(\d+)([a-z])?)", std::regex_constants::icase};
+  std::string str{R"(D:\Sc_064B\sc_064a\sc064\sc_064_\BuJu.1001.png)"};
+  std::string str_ep{R"(D:\Ep_064B\ep_064a\ep064\ep_064_\BuJu.1001.png)"};
+  std::smatch k_match{};
+  while (std::regex_search(str, k_match, k_exp_shot)) {
+    std::cout << "\n匹配:" << std::endl;
+    for (auto i = 0; i < k_match.size(); ++i)
+      std::cout << k_match[i].str() << std::endl;
+
+    str = k_match.suffix();
+  }
+  while (std::regex_search(str_ep, k_match, k_exp_epis)) {
+    std::cout << "\n匹配:" << std::endl;
+    for (auto i = 0; i < k_match.size(); ++i)
+      std::cout << k_match[i].str() << std::endl;
+
+    str_ep = k_match.suffix();
+  }
 }

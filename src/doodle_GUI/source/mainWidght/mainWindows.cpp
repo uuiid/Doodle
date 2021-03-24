@@ -68,8 +68,45 @@ void mainWindows::doodle_init() {
   auto k_create_image = new DragPushBUtton();
   k_create_image->setText(tr("从图片创建视频"));
   k_create_image->setToolTip(tr(R"(注意:
-图片连接为视频时, 是按照名称来创建顺序的,
-可以同时拖拽多个图片文件夹, 按照每个文件夹一个视频合成)"));
+图片连接为视频时, 是按图名称来创建顺序的,
+请注意为文件夹的名称和文件名称:
+可以从 sc01,sc_01,Sc01,SC_01这种名称中识别镜头号
+集数号可以是 ep 为前缀,
+只要存在与文件夹路径或者文件名称中就行)"));
+  k_create_image->handleFileFunction.connect([this](const std::vector<FSys::path> &paths) {
+    auto image   = std::make_shared<ImageSequence>(paths);
+    auto process = new MessageAndProgress{this};
+
+    process->createProgress(image);
+    auto path = paths.at(0).parent_path() / image->getEpisodesAndShot_str().append(".mp4");
+    std::thread{
+        [image, path]() {
+          image->createVideoFile(path);
+        }}
+        .detach();
+  });
+
+  //创建多个视频
+  auto k_create_dir_image = new DragPushBUtton();
+  k_create_dir_image->setText(tr("从多个文件夹创建视频"));
+  k_create_dir_image->setToolTip(tr(R"(注意:
+可以同时拖拽多个图片文件夹, 按照每个文件夹一个视频合成
+请注意为文件夹的名称和文件名称:
+可以从 sc01,sc_01,Sc01,SC_01这种名称中识别镜头号
+集数号可以是 ep 为前缀,
+只要存在与文件夹路径或者文件名称中就行
+)"));
+  k_create_dir_image->handleFileFunction.connect([this](const std::vector<FSys::path> &paths) {
+    auto bath    = std::make_shared<ImageSequenceBatch>(paths);
+    auto process = new MessageAndProgress{this};
+
+    process->createProgress(bath);
+    std::thread{
+        [bath] {
+          bath->batchCreateSequence();
+        }}
+        .detach();
+  });
 
   auto k_create_video = new DragPushBUtton();
   k_create_video->setText(tr("连接视频"));
@@ -78,7 +115,8 @@ void mainWindows::doodle_init() {
 
   layout->addWidget(k_exMaya_button, 0, 0, 1, 1);
   layout->addWidget(k_create_image, 1, 0, 1, 1);
-  layout->addWidget(k_create_video, 2, 0, 1, 1);
+  layout->addWidget(k_create_dir_image, 2, 0, 1, 1);
+  layout->addWidget(k_create_video, 3, 0, 1, 1);
 
   //托盘创建
   auto tray = new systemTray(this);

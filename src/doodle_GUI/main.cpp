@@ -31,6 +31,8 @@
 // DOODLE_NAMESPACE_E
 
 int main(int argc, char *argv[]) try {
+  auto k_local = boost::locale::generator().generate("");
+  boost::filesystem::path::imbue(k_local);
   //初始化log
   Logger::doodle_initLog();
   //初始化文件管理器
