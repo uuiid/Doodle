@@ -1,9 +1,10 @@
 ﻿cmake_minimum_required(VERSION 3.14)
 
 project(Doodle
-        VERSION 2.3.1.9
+        VERSION 2.5.1.9
         DESCRIPTION "动画制作中的一些辅助工具"
-        LANGUAGES CXX)
+        LANGUAGES CXX
+        HOMEPAGE_URL https://github.com/uuiid/Doodle)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 #设置qt自动参数
@@ -135,9 +136,7 @@ if(RUN_fixup)
         include(InstallRequiredSystemLibraries)
 endif(RUN_fixup)
 
-foreach(_var in LISTS ${CMAKE_FIND_ROOT_PATH})
-     list(APPEND DIRS ${_var}/bin)
-endforeach(_var)
+list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
 
 
 if(RUN_COPY)
@@ -151,8 +150,8 @@ if(RUN_COPY)
         # install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/Cmd_tool
         # DESTINATION tools)
         # #复制插件
-        # install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya_plug
-        # DESTINATION plug)
+        install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya_plug
+        DESTINATION plug)
         install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug
         DESTINATION plug) 
 endif(RUN_COPY)
@@ -167,11 +166,17 @@ if(RUN_fixup)
 endif(RUN_fixup)
 
 
-# install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/ DESTINATION plug)
-# install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/ DESTINATION bin
-# PATTERN "*.manifest" EXCLUDE )
+install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/ DESTINATION plug)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/ DESTINATION bin
+PATTERN "*.manifest" EXCLUDE )
 
 
 set(CPACK_GENERATOR "WIX")
-
+set(CPACK_PACKAGE_EXECUTABLES doodle;Doodle)
+set(CPACK_CREATE_DESKTOP_LINKS doodle)
+set(CPACK_PACKAGE_VENDOR uuiid)
+set(CPACK_PACKAGE_INSTALL_DIRECTORY uuiid)
+# set(CPACK_WIX_PRODUCT_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
+# set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
+# set(CPACK_WIX_CULTURES zh_CN)
 include(CPack REQUIRED)

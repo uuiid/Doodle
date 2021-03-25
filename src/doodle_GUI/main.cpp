@@ -31,14 +31,13 @@
 // DOODLE_NAMESPACE_E
 
 int main(int argc, char *argv[]) try {
+  //设置一下文件系统后端
   auto k_local = boost::locale::generator().generate("");
   boost::filesystem::path::imbue(k_local);
   //初始化log
   Logger::doodle_initLog();
   //初始化文件管理器
   auto filesystem = doodle::DfileSyntem::create();
-  //设置一下文件系统后端
-  boost::filesystem::path::imbue(boost::locale::generator()("zh_CN.UTF-8"));
 
   QApplication q_application(argc, argv);
 
@@ -53,7 +52,7 @@ int main(int argc, char *argv[]) try {
     QTextStream ts{&darkStyle};
     q_application.setStyleSheet(ts.readAll());
   }
-  q_application.setWindowIcon(QIcon(":/resource/icon.png"));
+  q_application.setWindowIcon(QIcon{":/resource/icon.ico"});
   //初始化设置
   auto &set = doodle::coreSet::getSet();
   set.init();

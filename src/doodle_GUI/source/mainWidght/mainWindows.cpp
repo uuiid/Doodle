@@ -121,7 +121,6 @@ void mainWindows::doodle_init() {
   //托盘创建
   auto tray = new systemTray(this);
   tray->showMessage("doodle", "hello");
-  tray->setIcon(QIcon(":/resource/icon.png"));
   tray->setVisible(true);
   tray->show();
 }

@@ -25,6 +25,7 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
                  .arg(Doodle_VERSION_MINOR)
                  .arg(Doodle_VERSION_PATCH)
                  .arg(Doodle_VERSION_TWEAK));
+  setIcon(qApp->windowIcon());
 
   auto timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &systemTray::upDoodle);
