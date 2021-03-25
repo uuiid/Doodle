@@ -18,11 +18,12 @@ MessageAndProgress::MessageAndProgress(QWidget* parent)
   connect(this, &MessageAndProgress::showMessage,
           this, &MessageAndProgress::createMessageDialog,
           Qt::QueuedConnection);
+  connect(this, &MessageAndProgress::showMessage,
+          this->p_progress_dialog, &QProgressDialog::close,
+          Qt::QueuedConnection);
 
   p_progress_dialog->setMinimum(0);
   p_progress_dialog->setMaximum(100);
 }
-
-
 
 }  // namespace doodle

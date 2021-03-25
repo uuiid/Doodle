@@ -23,6 +23,7 @@ ImageSequence::ImageSequence(decltype(p_paths) paths, decltype(p_Text) text)
       progress(),
       messagResult(),
       finished(),
+      stride(),
       p_eps(-1),
       p_shot(-1),
       p_shot_ab() {
@@ -35,6 +36,7 @@ ImageSequence::ImageSequence(FSys::path path_dir, decltype(p_Text) text)
       progress(),
       messagResult(),
       finished(),
+      stride(),
       p_eps(-1),
       p_shot(-1),
       p_shot_ab() {
@@ -146,6 +148,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
 
     cv::putText(k_image_resized, k_Text, cv::Point{30, 50}, cv::HersheyFonts::FONT_HERSHEY_TRIPLEX, double{1}, cv::Scalar{0, 0, 1});
     ++k_i;
+    this->stride(((float)1 / k_size_len) * (float)100);
     this->progress(boost::numeric_cast<int>((k_i / k_size_len) * 100));
 
     video << k_image_resized;
@@ -176,8 +179,11 @@ ImageSequenceBatch::ImageSequenceBatch(decltype(p_imageSequences) imageSequences
 
 void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
   if (p_imageSequences.empty()) return;
-  auto &set   = coreSet::getSet();
-  auto k_path = set.getCacheRoot() / boost::uuids::to_string(set.getUUID());
+  auto &set = coreSet::getSet();
+  //这里使用序列图的父路径加uuid防止重复
+  auto k_path = p_imageSequences[0]->getDir().parent_path() /
+                boost::uuids::to_string(set.getUUID());
+  // auto k_path = set.getCacheRoot() / boost::uuids::to_string(set.getUUID());
 
   //创建生成路径
   if (!out_dir.empty())
@@ -189,9 +195,18 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
   //创建线程池, 开始
   ThreadPool thread_pool{std::thread::hardware_concurrency()};
   std::map<FSys::path, std::future<void>> result{};
-
+  //创建锁
+  std::mutex p_mutex{};
+  auto k_i = float{1};
+  //添加进度回调函数
+  auto k_add_fun = boost::bind<void>([&p_mutex](float i, float *_1) {
+    std::unique_lock lock{p_mutex};
+    (*_1) += i;
+  },
+                                     boost::placeholders::_1, &k_i);
   for (auto im : p_imageSequences) {
     auto str = im->getEpisodesAndShot_str().append(".mp4");
+    im->stride.connect(k_add_fun);
 
     result.emplace(im->getDir(),
                    thread_pool.enqueue(
@@ -208,14 +223,17 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
   }
   auto status      = std::future_status{};
   auto it          = result.begin();
-  const auto k_len = boost::numeric_cast<float>(result.size());
-  auto k_i         = float{1};
+  const auto k_len = boost::numeric_cast<float>(p_imageSequences.size());
+
   while (!result.empty()) {
     status = it->second.wait_for(std::chrono::milliseconds{10});
+    {
+      std::unique_lock lock{p_mutex};
+      this->progress(boost::numeric_cast<int>(k_i / k_len));
+    }
     if (status == std::future_status::ready) {
       ++k_i;
 
-      this->progress(boost::numeric_cast<int>((k_i / k_len) * 100));
       boost::format k_msg{"%s : %s\n"};
       k_msg % it->first.generic_string();
       try {

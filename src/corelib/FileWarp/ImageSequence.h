@@ -31,6 +31,8 @@ class CORE_API ImageSequence {
   boost::signals2::signal<void(int)> progress;
   boost::signals2::signal<void(const std::string& message)> messagResult;
   boost::signals2::signal<void()> finished;
+
+  boost::signals2::signal<void(float)> stride;
 };
 
 using ImageSequencePtr = std::shared_ptr<ImageSequence>;
