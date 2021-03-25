@@ -1,5 +1,6 @@
 #include <lib/ui/model/TreeDirItem.h>
 #include <lib/kernel/MotionSetting.h>
+#include <lib/kernel/Exception.h>
 
 #include <boost/locale.hpp>
 #include <boost/numeric/conversion/cast.hpp>
@@ -79,7 +80,7 @@ size_t TreeDirItem::columnCount() const noexcept {
 }
 
 void TreeDirItem::removeColumn(int column) {
-  std::runtime_error("无法移除");
+  DoodleError("无法移除");
 }
 
 size_t TreeDirItem::GetChildCount() const noexcept {

@@ -12,6 +12,7 @@
 #pragma once
 
 #include <corelib/core_global.h>
+#include <corelib/Exception/Exception.h>
 
 #include <corelib/shots/episodes.h>
 #include <corelib/shots/shot.h>

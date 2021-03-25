@@ -1,5 +1,4 @@
 #include "ScreenshotArchive.h"
-
 #include <loggerlib/Logger.h>
 #include <corelib/filesystem/FileSystem.h>
 
@@ -49,7 +48,7 @@ void ScreenshotArchive::imp_generateFilePath() {
       p_ServerPath.push_back(item);
     }
   } else {
-    throw std::runtime_error("无法生成路径");
+    throw DoodleError("无法生成路径");
     DOODLE_LOG_WARN("无法生成路径");
   }
 }

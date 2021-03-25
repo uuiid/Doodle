@@ -12,6 +12,7 @@
 #include <doodle_GUI/source/mainWidght/systemTray.h>
 
 #include <doodle_GUI/source/toolkit/MessageAndProgress.h>
+#include <QtWidgets/QApplication>
 
 DOODLE_NAMESPACE_S
 
@@ -54,15 +55,20 @@ void mainWindows::doodle_init() {
 默认导出路径是在文件所在的目录
 )"));
 
-  k_exMaya_button->handleFileFunction.connect([this](const std::vector<FSys::path> &paths) {
-    auto maya    = std::make_shared<MayaFile>();
-    auto process = new MessageAndProgress{this};
-    process->createProgress(maya);
+  k_exMaya_button->handleFileFunction
+      .connect([this](const std::vector<FSys::path> &paths) {
+        try {
+          auto maya    = std::make_shared<MayaFile>();
+          auto process = new MessageAndProgress{this};
+          process->createProgress(maya);
 
-    std::thread{
-        [maya, paths]() { maya->batchExportFbxFile(paths); }}
-        .detach();
-  });
+          std::thread{
+              [maya, paths]() { maya->batchExportFbxFile(paths); }}
+              .detach();
+        } catch (const DoodleError &error) {
+          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
+        }
+      });
 
   // 创建视频
   auto k_create_image = new DragPushBUtton();
@@ -73,18 +79,24 @@ void mainWindows::doodle_init() {
 可以从 sc01,sc_01,Sc01,SC_01这种名称中识别镜头号
 集数号可以是 ep 为前缀,
 只要存在与文件夹路径或者文件名称中就行)"));
-  k_create_image->handleFileFunction.connect([this](const std::vector<FSys::path> &paths) {
-    auto image   = std::make_shared<ImageSequence>(paths);
-    auto process = new MessageAndProgress{this};
+  k_create_image->handleFileFunction
+      .connect([this](const std::vector<FSys::path> &paths) {
+        try {
+          auto image   = std::make_shared<ImageSequence>(paths);
+          auto process = new MessageAndProgress{this};
 
-    process->createProgress(image);
-    auto path = paths.at(0).parent_path() / image->getEpisodesAndShot_str().append(".mp4");
-    std::thread{
-        [image, path]() {
-          image->createVideoFile(path);
-        }}
-        .detach();
-  });
+          process->createProgress(image);
+          auto path = paths.at(0).parent_path() / image->getEpisodesAndShot_str().append(".mp4");
+          std::thread{
+              [image, path]() {
+                image->createVideoFile(path);
+              }}
+              .detach();
+        } catch (const DoodleError &error) {
+          DOODLE_LOG_INFO(error.what());
+          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
+        }
+      });
 
   //创建多个视频
   auto k_create_dir_image = new DragPushBUtton();
@@ -96,22 +108,43 @@ void mainWindows::doodle_init() {
 集数号可以是 ep 为前缀,
 只要存在与文件夹路径或者文件名称中就行
 )"));
-  k_create_dir_image->handleFileFunction.connect([this](const std::vector<FSys::path> &paths) {
-    auto bath    = std::make_shared<ImageSequenceBatch>(paths);
-    auto process = new MessageAndProgress{this};
+  k_create_dir_image->handleFileFunction
+      .connect([this](const std::vector<FSys::path> &paths) {
+        try {
+          auto bath    = std::make_shared<ImageSequenceBatch>(paths);
+          auto process = new MessageAndProgress{this};
 
-    process->createProgress(bath);
-    std::thread{
-        [bath] {
-          bath->batchCreateSequence();
-        }}
-        .detach();
-  });
+          process->createProgress(bath);
+          std::thread{
+              [bath] {
+                bath->batchCreateSequence();
+              }}
+              .detach();
+        } catch (const DoodleError &error) {
+          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
+        }
+      });
 
   auto k_create_video = new DragPushBUtton();
   k_create_video->setText(tr("连接视频"));
   k_create_video->setToolTip(tr(R"(注意:
 连接拍屏时是按照文件名称排序的, 请一定要注意文件名称)"));
+  k_create_video->handleFileFunction
+      .connect([this](const std::vector<FSys::path> &paths) {
+        try {
+          auto data    = std::make_shared<VideoSequence>(paths);
+          auto process = new MessageAndProgress{this};
+
+          process->createProgress(data);
+          std::thread{
+              [data] {
+                data->connectVideo();
+              }}
+              .detach();
+        } catch (const DoodleError &error) {
+          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
+        }
+      });
 
   layout->addWidget(k_exMaya_button, 0, 0, 1, 1);
   layout->addWidget(k_create_image, 1, 0, 1, 1);

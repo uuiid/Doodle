@@ -1,4 +1,6 @@
 #include <doodle_GUI/source/mainWidght/DragPushBUtton.h>
+#include <corelib/core_Cpp.h>
+
 #include <QtGui/QDragMoveEvent>
 #include <QtCore/QMimeData>
 #include <QtWidgets/qmessagebox.h>
@@ -40,7 +42,7 @@ void DragPushBUtton::dropEvent(QDropEvent* event) {
   } else {
     try {
       this->handleFileFunction(k_list);
-    } catch (const std::runtime_error& err) {
+    } catch (const DoodleError& err) {
       QMessageBox::warning(this, tr("警告:"), QString::fromStdString(err.what()));
     }
   }

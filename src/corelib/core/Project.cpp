@@ -37,7 +37,7 @@ Project::Project(fileSys::path path)
   // for (auto&& row : (*db)(sql_ps))
   //   p_shotRoot.emplace_back(std::make_shared<fileSys::path>(row.doodleValue.value()));
 
-  // if (p_root != path) throw std::runtime_error("目录无法对应");
+  // if (p_root != path) throw DoodleError("目录无法对应");
 
   // auto sql2 = sqlpp::select(sqlpp::all_of(table_parser))
   //                 .from(table_parser)

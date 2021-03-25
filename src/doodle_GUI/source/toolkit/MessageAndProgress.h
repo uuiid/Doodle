@@ -37,7 +37,5 @@ void MessageAndProgress::createProgress(std::shared_ptr<T> value) {
     this->showMessage();
   });
 
-  //设置开始显示进度
-  this->p_progress_dialog->setValue(1);
 }
 }  // namespace doodle

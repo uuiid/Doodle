@@ -61,7 +61,7 @@ void MotionSetting::setMotionName(const std::string& MotionName) noexcept {
 void MotionSetting::save() {
   FSys::fstream file{p_setting_path, std::ios::binary | std::ios::out};
 
-  if (!file.is_open()) std::runtime_error("无法打开文件");
+  if (!file.is_open()) DoodleError("无法打开文件");
   file << to_json().dump();
 
   if (!FSys::exists(p_motion_path / ConfigName)) {
@@ -81,14 +81,14 @@ MotionSetting::MotionSetting()
       p_uuid(boost::uuids::random_generator{}) {
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, NULL, &pManager);
-  if (!pManager) std::runtime_error("无法找到保存路径");
+  if (!pManager) DoodleError("无法找到保存路径");
 
   p_setting_path = FSys::path{pManager} /
                    "doodle" /
                    "doodleMotion.config.json";
   if (FSys::exists(p_setting_path)) {
     FSys::fstream file{p_setting_path, std::ios::binary | std::ios::in};
-    if (!file.is_open()) std::runtime_error("无法打开文件");
+    if (!file.is_open()) DoodleError("无法打开文件");
     auto root = nlohmann::json::parse(file);
     from_json(root);
   }
@@ -96,7 +96,7 @@ MotionSetting::MotionSetting()
   else {
     FSys::create_directories(p_setting_path.parent_path());
     FSys::fstream file{p_setting_path, std::ios::binary | std::ios::out};
-    if (!file.is_open()) std::runtime_error("无法打开文件");
+    if (!file.is_open()) DoodleError("无法打开文件");
     file << to_json();
   }
 }

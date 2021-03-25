@@ -22,8 +22,13 @@ MessageAndProgress::MessageAndProgress(QWidget* parent)
           this->p_progress_dialog, &QProgressDialog::close,
           Qt::QueuedConnection);
 
+  p_progress_dialog->setAutoClose(false);
+  p_progress_dialog->setAutoReset(false);
   p_progress_dialog->setMinimum(0);
   p_progress_dialog->setMaximum(100);
+
+  p_progress_dialog->setValue(1);
+  p_progress_dialog->show();
 }
 
 }  // namespace doodle

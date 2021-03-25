@@ -31,7 +31,7 @@ dpathList pathParsing::Path(const std::string& pathstr) {
   fileSys::path path{pathstr};
 
   if (pathstr.empty())
-    throw std::runtime_error("字符串空");
+    throw DoodleError("字符串空");
 
   auto& fileSys = DfileSyntem::get();
 

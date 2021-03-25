@@ -38,7 +38,7 @@ nlohmann::json MotionFile::to_json() {
 
 void MotionFile::save() {
   auto k_file = FSys::fstream{this->p_file, std::ios::out | std::ios::binary};
-  if (!k_file.is_open()) std::runtime_error("无法打开文件");
+  if (!k_file.is_open()) DoodleError("无法打开文件");
 
   k_file << this->to_json();
 }

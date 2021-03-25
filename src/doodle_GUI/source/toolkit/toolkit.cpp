@@ -178,9 +178,12 @@ bool toolkit::deleteUeCache() {
   try {
     DOODLE_LOG_INFO("delete Folder : " << str.str());
     boost::filesystem::remove_all(str.str());
+    QMessageBox::information(nullptr, ("信息"), ("完成缓存清除"));
     return true;
+
   } catch (const std::exception &e) {
     DOODLE_LOG_ERROR(e.what());
+    QMessageBox::information(nullptr, ("信息"), ("缓存清除失败"));
     return false;
   }
 }

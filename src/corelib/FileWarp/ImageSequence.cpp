@@ -25,6 +25,11 @@ ImageSequence::ImageSequence(decltype(p_paths) paths, decltype(p_Text) text)
       p_eps(-1),
       p_shot(-1),
       p_shot_ab() {
+  for (auto &path : p_paths) {
+    if (!FSys::is_regular_file(path)) {
+      throw DoodleError("不是文件, 无法识别");
+    }
+  }
   this->seanInfo();
 }
 
@@ -38,6 +43,11 @@ ImageSequence::ImageSequence(FSys::path path_dir, decltype(p_Text) text)
       p_shot_ab() {
   this->seanDir(path_dir);
   this->seanInfo();
+  for (auto &path : p_paths) {
+    if (!FSys::is_regular_file(path)) {
+      throw DoodleError("不是文件, 无法识别");
+    }
+  }
 }
 
 bool ImageSequence::hasSequence() {
@@ -89,6 +99,7 @@ bool ImageSequence::seanDir(const FSys::path &dir) {
       }
     }
   }
+  if (p_paths.empty()) throw DoodleError("空目录");
   return true;
 }
 
@@ -112,7 +123,7 @@ void ImageSequence::setText(const std::string &text) {
 }
 
 void ImageSequence::createVideoFile(const FSys::path &out_file) {
-  if (!this->hasSequence()) throw std::runtime_error{"not Sequence"};
+  if (!this->hasSequence()) throw DoodleError{"not Sequence"};
   std::this_thread::sleep_for(std::chrono::milliseconds{10});
   //检查父路径存在
   if (!FSys::exists(out_file.parent_path()))
@@ -136,7 +147,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
   for (auto &&path : p_paths) {
     k_image = cv::imread(path.generic_string());
     if (k_image.empty())
-      throw std::runtime_error("open cv not read image");
+      throw DoodleError("open cv not read image");
     if (k_image.cols != 1280 || k_image.rows != 720)
       cv::resize(k_image, k_image_resized, k_size);
     else
@@ -163,6 +174,8 @@ ImageSequenceBatch::ImageSequenceBatch(decltype(p_paths) dirs)
     if (FSys::is_directory(dir))
       p_imageSequences.emplace_back(
           std::make_shared<ImageSequence>(dir));
+    else
+      throw DoodleError("不是目录");
   }
 }
 
@@ -235,7 +248,7 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
       k_msg % it->first.generic_string();
       try {
         it->second.get();
-      } catch (const std::runtime_error &err) {
+      } catch (const DoodleError &err) {
         k_msg % std::string{"失败: "}.append(err.what());
       }
       if (k_msg.fed_args() == 1)

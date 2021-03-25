@@ -10,7 +10,7 @@ class CORE_API VideoSequence : public LongTerm {
  public:
   VideoSequence(decltype(p_paths) paths);
 
-  void connectVideo(const FSys::path& path);
+  void connectVideo(const FSys::path& path = {});
 };
 
 }  // namespace doodle

@@ -30,7 +30,7 @@ void MayaFile::findMaya() {
   } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
     p_path = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
   } else {
-    throw std::runtime_error("无法找到maya.exe");
+    throw DoodleError("无法找到maya.exe");
   }
   return;
 }
@@ -110,7 +110,7 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
       //添加进度
       this->progress(boost::numeric_cast<int>((k_pro / size) * 100));
       // try {
-      // } catch (const std::runtime_error& err) {
+      // } catch (const DoodleError& err) {
       //   //添加错误
       //   DOODLE_LOG_WARN(err.what());
       // }

@@ -380,7 +380,7 @@ bool DfileSyntem::localCopy(const fileSys::path &sourePath, const fileSys::path 
 }
 
 bool DfileSyntem::removeDir(const fileSys::path &path) {
-  throw std::runtime_error("not is function");
+  throw DoodleError("not is function");
   return false;
 }
 

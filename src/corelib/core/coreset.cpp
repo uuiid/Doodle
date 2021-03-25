@@ -1,11 +1,9 @@
 ﻿#include "coreset.h"
 #include <corelib/core/coresql.h>
 #include <corelib/core/Project.h>
+#include <corelib/Exception/Exception.h>
 #include <pinyinlib/convert.h>
 #include <loggerlib/Logger.h>
-
-#include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/sqlite3/sqlite3.h>
 
 #include <nlohmann/json.hpp>
 
@@ -38,7 +36,7 @@ void coreSet::init() {
   //获取环境变量
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, NULL, &pManager);
-  if (!pManager) std::runtime_error("无法找到保存路径");
+  if (!pManager) DoodleError("无法找到保存路径");
 
   doc = fileSys::path{pManager} / "doodle";
   getSetting();
