@@ -77,7 +77,7 @@ void ScreenshotWidght::showImage() {
   auto k_cache = k_image->down();
   if (!boost::filesystem::exists(k_cache)) {
     DOODLE_LOG_WARN("没有文件： " << k_cache.generic_string())
-    throw not_file_error(k_cache.generic_string());
+    throw FileError(k_cache.generic_string());
   }
   auto k_pix = QPixmap();
   if (k_pix.load(QString::fromStdString(k_cache.generic_string())))
