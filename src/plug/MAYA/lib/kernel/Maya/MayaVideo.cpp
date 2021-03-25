@@ -28,12 +28,12 @@ void MayaVideo::save() {
   p_view->getFileName.connect([=](const MTime& time) -> MString {
     MString fileName{};
     MString k_tmp{};
-    k_tmp.setUTF8(p_path.generic_u8string().c_str());
+    k_tmp.setUTF8(p_path.generic_string().c_str());
     fileName += k_tmp;
     fileName += "/";
 
     //添加uuid名称
-    k_tmp.setUTF8(this->p_file.stem().generic_u8string().c_str());
+    k_tmp.setUTF8(this->p_file.stem().generic_string().c_str());
     fileName += k_tmp;
     fileName += ".";
 
@@ -50,10 +50,10 @@ void MayaVideo::save() {
 
   for (auto&& it : p_file_image)
     if (!FSys::exists(*it))
-      throw MayaError("not create file " + it->generic_u8string());
+      throw MayaError("not create file " + it->generic_string());
 
   p_ffmpeg->imageToVideo(p_file_image, p_file, "doodle");
-  if (!FSys::exists(p_file)) throw NotFileError("nor create file" + p_file.generic_u8string());
+  if (!FSys::exists(p_file)) throw NotFileError("nor create file" + p_file.generic_string());
 }
 
 MayaVideo::~MayaVideo() {

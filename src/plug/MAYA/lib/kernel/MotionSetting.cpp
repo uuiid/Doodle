@@ -17,7 +17,7 @@ MotionSetting& MotionSetting::Get() {
 bool MotionSetting::openMotionProject() {
   if (!FSys::exists(p_motion_path / ConfigName)) return false;
 
-  std::fstream file(p_motion_path / ConfigName, std::ios::in | std::ios::binary);
+  FSys::fstream file(p_motion_path / ConfigName, std::ios::in | std::ios::binary);
   try {
     auto root           = nlohmann::json::parse(file);
     this->p_motion_name = root["name"].get<std::string>();
@@ -59,7 +59,7 @@ void MotionSetting::setMotionName(const std::string& MotionName) noexcept {
 }
 
 void MotionSetting::save() {
-  std::fstream file{p_setting_path, std::ios::binary | std::ios::out};
+  FSys::fstream file{p_setting_path, std::ios::binary | std::ios::out};
 
   if (!file.is_open()) std::runtime_error("无法打开文件");
   file << to_json().dump();
@@ -87,7 +87,7 @@ MotionSetting::MotionSetting()
                    "doodle" /
                    "doodleMotion.config.json";
   if (FSys::exists(p_setting_path)) {
-    std::fstream file{p_setting_path, std::ios::binary | std::ios::in};
+    FSys::fstream file{p_setting_path, std::ios::binary | std::ios::in};
     if (!file.is_open()) std::runtime_error("无法打开文件");
     auto root = nlohmann::json::parse(file);
     from_json(root);
@@ -95,7 +95,7 @@ MotionSetting::MotionSetting()
   //写入默认设置
   else {
     FSys::create_directories(p_setting_path.parent_path());
-    std::fstream file{p_setting_path, std::ios::binary | std::ios::out};
+    FSys::fstream file{p_setting_path, std::ios::binary | std::ios::out};
     if (!file.is_open()) std::runtime_error("无法打开文件");
     file << to_json();
   }
@@ -108,7 +108,7 @@ void MotionSetting::createMotionProject() {
   nlohmann::json root{};
   root["name"] = p_motion_name;
 
-  std::fstream file{db_root, std::ios::out};
+  FSys::fstream file{db_root, std::ios::out};
   if (!file.is_open()) return;
   file << root.dump();
 

@@ -32,7 +32,7 @@ const char* FFmpegError::what() const noexcept {
 
 const char* NotFileError::what() const noexcept {
   std::string str("not find File  : ");
-  str = str + p_file.generic_u8string() + std::runtime_error::what();
+  str = str + p_file.generic_string() + std::runtime_error::what();
   return str.c_str();
 }
 }  // namespace doodle::motion

@@ -75,7 +75,7 @@ FBXExport -f "^1s" -s;
 )";
   MString k_file_path{};
 
-  status = k_file_path.setUTF8(path.generic_u8string().c_str());
+  status = k_file_path.setUTF8(path.generic_string().c_str());
   if (status != MStatus::MStatusCode::kSuccess) throw FbxFileError("生成路径失败");
 
   status = k_mel.format(k_mel, k_file_path);
@@ -103,7 +103,7 @@ FBXImport -file "^1s";
 )";
   MString k_file_path{};
 
-  status = k_file_path.setUTF8(path.generic_u8string().c_str());
+  status = k_file_path.setUTF8(path.generic_string().c_str());
   if (status != MStatus::MStatusCode::kSuccess) throw FbxFileError("生成路径失败");
 
   status = k_mel.format(k_mel, k_file_path);

@@ -24,18 +24,18 @@ void Screenshot::save() {
   p_view->getFileName.connect([k_path](const MTime& time) -> MString {
     MString fileName{};
     // MString k_tmp{};
-    // k_tmp.setUTF8(this->p_file.parent_path().generic_u8string().c_str());
+    // k_tmp.setUTF8(this->p_file.parent_path().generic_string().c_str());
     // fileName += k_tmp;
     // fileName += "/";
-    // k_tmp.setUTF8(this->p_file.stem().generic_u8string().c_str());
+    // k_tmp.setUTF8(this->p_file.stem().generic_string().c_str());
     // fileName += k_tmp;
     // fileName += ".";
     // std::stringstream str{};
     // str << std::setw(5) << std::setfill('0') << (time.value());
     // fileName += str.str().c_str();
 
-    // k_tmp.setUTF8(this->p_file.generic_u8string().c_str());
-    fileName.setUTF8(k_path.generic_u8string().c_str());
+    // k_tmp.setUTF8(this->p_file.generic_string().c_str());
+    fileName.setUTF8(k_path.generic_string().c_str());
     return fileName;
   });
   p_view->save(MAnimControl::currentTime(), MAnimControl::currentTime());

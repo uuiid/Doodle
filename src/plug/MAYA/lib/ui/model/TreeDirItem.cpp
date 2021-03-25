@@ -52,7 +52,7 @@ void TreeDirItem::setParent(const TreeDirItemPtr& Parent) noexcept {
 variant TreeDirItem::Data(int column) {
   auto require = variant{};
   if (column == 0) {
-    require = p_dir.generic_u8string();
+    require = p_dir.generic_string();
   }
   return require;
 }
@@ -142,7 +142,7 @@ void TreeDirItem::refreshChild() {
 
   //开始扫描目录
   for (auto& it : FSys::directory_iterator(k_dir)) {
-    if (it.is_directory()) {
+    if (FSys::is_directory(it)) {
       auto k_str        = it.path().filename();
       auto k_child      = std::make_shared<TreeDirItem>(k_str);
       k_child->p_parent = this->shared_from_this();

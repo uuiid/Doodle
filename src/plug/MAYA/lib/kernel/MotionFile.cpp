@@ -27,9 +27,9 @@ void MotionFile::from_json(const nlohmann::json& j) {
 
 nlohmann::json MotionFile::to_json() {
   nlohmann::json root{};
-  root["Fbx_file"]   = p_Fbx_file.generic_u8string();
-  root["Gif_file"]   = p_Gif_file.generic_u8string();
-  root["Video_file"] = p_video_file.generic_u8string();
+  root["Fbx_file"]   = p_Fbx_file.generic_string();
+  root["Gif_file"]   = p_Gif_file.generic_string();
+  root["Video_file"] = p_video_file.generic_string();
   root["title"]      = p_title;
   root["User_name"]  = p_user_name;
   root["Info"]       = p_info;
@@ -37,7 +37,7 @@ nlohmann::json MotionFile::to_json() {
 }
 
 void MotionFile::save() {
-  auto k_file = std::fstream{this->p_file, std::ios::out | std::ios::binary};
+  auto k_file = FSys::fstream{this->p_file, std::ios::out | std::ios::binary};
   if (!k_file.is_open()) std::runtime_error("无法打开文件");
 
   k_file << this->to_json();
@@ -108,8 +108,8 @@ std::vector<MotionFilePtr> MotionFile::getAll(const FSys::path& path) {
 
   nlohmann::json k_json{};
   for (auto& item : FSys::directory_iterator(path)) {
-    if (item.is_regular_file() && item.path().extension() == ".json") {
-      std::fstream file{item.path(), std::ios::in};
+    if (FSys::is_regular_file(item) && item.path().extension() == ".json") {
+      FSys::fstream file{item.path(), std::ios::in};
       if (!file.is_open()) continue;
 
       k_json      = nlohmann::json::parse(file);
@@ -191,7 +191,8 @@ void MotionFile::createIconFile() {
   // p_Gif_file.replace_filename();
   auto k_file = p_Gif_file;
   // if (FSys::exists(p_Gif_file))
-  p_Gif_file.replace_filename(boost::uuids::to_string(MotionSetting::Get().random_generator()) + ".png");
+  p_Gif_file.remove_filename();
+  p_Gif_file /= (boost::uuids::to_string(MotionSetting::Get().random_generator()) + ".png");
 
   auto k_screen = Screenshot{p_Gif_file};
   k_screen.save();
@@ -215,7 +216,8 @@ void MotionFile::createVideoFile() {
   //暂存临时变量
   auto k_file = p_video_file;
   // if (FSys::exists(p_video_file))
-  p_video_file.replace_filename(boost::uuids::to_string(MotionSetting::Get().random_generator()) + ".mp4");
+  p_video_file.remove_filename();
+  p_video_file /= (boost::uuids::to_string(MotionSetting::Get().random_generator()) + ".mp4");
   //保存视频文件
   auto k_video = MayaVideo{p_video_file};
   k_video.save();
