@@ -97,3 +97,10 @@ TEST(dboost, boost_format) {
   str % -1 % -50 % "A";
   std::cout << str.str() << std::endl;
 }
+
+TEST(dboost, filesys_append) {
+  boost::filesystem::path path{"D:/tse/tset.txrt"};
+  // path.append(".backup");
+  path.replace_extension(".txt.backup");
+  std::cout << path << std::endl;
+}

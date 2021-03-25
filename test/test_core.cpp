@@ -21,6 +21,7 @@ class CoreTest : public ::testing::Test {
   doodle::FSys::path p_video_path;
   doodle::FSys::path p_video_path_out1;
   doodle::FSys::path p_video_path_out2;
+  doodle::FSys::path p_txt_path;
 };
 
 void CoreTest::SetUp() {
@@ -33,6 +34,7 @@ void CoreTest::SetUp() {
 
   p_video_path_out1 = R"(D:\voide\test1.mp4)";
   p_video_path_out2 = R"(D:\voide\test2.mp4)";
+  p_txt_path        = R"(D:\test.txt)";
 }
 
 void CoreTest::TearDown() {
@@ -50,7 +52,7 @@ TEST_F(CoreTest, getInfo) {
 }
 
 TEST_F(CoreTest, getProjectInfo) {
-  auto prj         = set.getProject();
+  auto prj = set.getProject();
   // auto path_parser = prj->findParser(rttr::type::get<doodle::assdepartment>());
   // std::cout
   //     << "\n name : " << prj->Name()
@@ -80,4 +82,21 @@ TEST_F(CoreTest, connect_video) {
 
   auto video = doodle::VideoSequence{videos};
   video.connectVideo(p_video_path_out2);
+}
+
+TEST_F(CoreTest, read_writ_file) {
+  doodle::FSys::fstream file{p_txt_path, std::ios::in};
+  std::string line{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
+
+  static std::string str{R"("%ENGINEVERSIONAGNOSTICUSERDIR%DerivedDataCache")"};
+  auto it = line.find(str);
+  while (it != std::string::npos) {
+    // std::cout << line << std::endl;
+    line.replace(it, str.size(), R"("%GAMEDIR%DerivedDataCache")");
+    // std::cout << line << std::endl;
+    it = line.find(str);
+  }
+  file.close();
+  file.open(p_txt_path, std::ios::out | std::ios::trunc);
+  file << line;
 }

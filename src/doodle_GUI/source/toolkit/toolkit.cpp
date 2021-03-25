@@ -121,15 +121,29 @@ void toolkit::installUePath(const std::string &path) {
 }
 
 void toolkit::modifyUeCachePath() {
+  //"%ENGINEVERSIONAGNOSTICUSERDIR%DerivedDataCache"
+  //替换为 "%GAMEDIR%DerivedDataCache"
   auto ue_path = getUeInstallPath();
   if (ue_path.empty()) return;
 
-  ue_path          = ue_path / "Engine/Config/BaseEngine.ini";
-  auto source_path = coreSet::getSet().program_location().parent_path() /
-                     "resource/BaseEngine.ini";
-  if (boost::filesystem::exists(source_path)) {
-    DfileSyntem::localCopy(source_path, ue_path, true);
+  ue_path = ue_path / "Engine/Config/BaseEngine.ini";
+  //做备份
+  FSys::copy(ue_path, FSys::path{ue_path}.replace_extension(".ini.backup"), FSys::copy_options::update_existing);
+
+  FSys::fstream file{ue_path, std::ios::in | std::ios::out | std::ios::binary};
+  std::string line{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
+
+  static std::string str{R"("%ENGINEVERSIONAGNOSTICUSERDIR%DerivedDataCache")"};
+  auto it = line.find(str);
+  while (it != std::string::npos) {
+    line.replace(it, str.size(), R"("%GAMEDIR%DerivedDataCache")");
+    it = line.find(str);
   }
+  file.close();
+  file.open(ue_path, std::ios::out | std::ios::trunc | std::ios::binary);
+  file << line;
+
+  QMessageBox::information(nullptr, ("信息"), ("完成修改 \n备份旧文件为 BaseEngine.ini.backup"));
 }
 
 bool toolkit::update() {
