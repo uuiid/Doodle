@@ -150,7 +150,7 @@ if(RUN_COPY)
         # install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/Cmd_tool
         # DESTINATION tools)
         # #复制插件
-        install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya_plug
+        install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya
         DESTINATION plug)
         install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug
         DESTINATION plug) 

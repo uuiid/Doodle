@@ -2,13 +2,11 @@
         doodle
         PRIVATE
         toolkit.cpp
-        updataManager.cpp
         MessageAndProgress.cpp
 )
 target_sources(
         doodle
         PUBLIC
         toolkit.h
-        updataManager.h
         MessageAndProgress.h
 )

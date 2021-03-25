@@ -25,15 +25,7 @@
 
 // #include <zmq.hpp>
 // #include <zmq_addon.hpp>
-// /*保护data里面的宏__我他妈的*/
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
 #include <date/date.h>
-// /*保护data里面的宏__我他妈的*/
 #include <stdexcept>
 #include <regex>
 #include <future>

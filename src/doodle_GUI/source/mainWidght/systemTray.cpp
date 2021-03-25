@@ -14,7 +14,6 @@
 #include <QtWidgets/qfiledialog.h>
 #include <boost/process.hpp>
 
-#include <doodle_GUI/source/toolkit/updataManager.h>
 #include <doodle_GUI/source/mainWidght/mainWindows.h>
 #include <doodle_GUI/source/toolkit/toolkit.h>
 #include <future>
@@ -99,7 +98,7 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
 
 void systemTray::installMayaPlug() {
   auto maya_plug = coreSet::getSet().program_location().parent_path() /
-                   "plug/maya_plug";
+                   "plug/maya";
   boost::format k_string{R"(+ doodle_main.py 1.1 %1%
 MYMODULE_LOCATION:= %1%
 PATH+:= %1%/scripts;%1%/plug-ins
@@ -137,19 +136,17 @@ void systemTray::showRigister() {
 }
 
 void systemTray::upDoodle() {
-  doodle::coreSet::getSet().writeDoodleLocalSet();
-  auto fun      = std::async(std::launch::async, [this]() -> bool {
-    if (toolkit::update())
-      quit();
-    else
-      setVisible(true);
-    return true;
-  });
-  auto &manager = updataManager::get();
-  manager.addQueue(fun, "正在下载中", 100);
-  manager.run();
-  dynamic_cast<mainWindows *>(parent())->close();
-  setVisible(false);
+  // doodle::coreSet::getSet().writeDoodleLocalSet();
+  // auto fun      = std::async(std::launch::async, [this]() -> bool {
+  //   if (toolkit::update())
+  //     quit();
+  //   else
+  //     setVisible(true);
+  //   return true;
+  // });
+
+  // dynamic_cast<mainWindows *>(parent())->close();
+  // setVisible(false);
 }
 
 DOODLE_NAMESPACE_E

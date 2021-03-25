@@ -24,12 +24,11 @@
         fileArchive/ScreenshotArchive.cpp
         fileArchive/ueArchive.cpp
         fileArchive/ueSynArchive.cpp
+        
         filesystem/fileSync.cpp
         filesystem/FileSystem.cpp
         filesystem/Path.cpp
-        
-        queueData/queueData.cpp
-        queueData/queueManager.cpp
+
 
         shots/episodes.cpp
         shots/shot.cpp
@@ -76,12 +75,10 @@ set(core_HEADER
         fileArchive/ScreenshotArchive.h
         fileArchive/ueArchive.h
         fileArchive/ueSynArchive.h
+
         filesystem/fileSync.h
         filesystem/FileSystem.h
         filesystem/Path.h
-
-        queueData/queueData.h
-        queueData/queueManager.h
 
         shots/episodes.h
         shots/shot.h

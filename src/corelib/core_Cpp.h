@@ -40,8 +40,6 @@
 
 #include <corelib/fileArchive/ScreenshotArchive.h>
 
-#include <corelib/queueData/queueManager.h>
-#include <corelib/queueData/queueData.h>
 #include <corelib/core/PathParser.h>
 #include <corelib/core/Project.h>
 
