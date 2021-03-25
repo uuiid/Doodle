@@ -1,9 +1,10 @@
 #pragma once
 #include <corelib/core_global.h>
+#include <corelib/threadPool/LongTerm.h>
 
 #include <boost/signals2.hpp>
 namespace doodle {
-class CORE_API ImageSequence {
+class CORE_API ImageSequence : public LongTerm {
   std::vector<FSys::path> p_paths;
   std::string p_Text;
   int p_eps;
@@ -28,16 +29,12 @@ class CORE_API ImageSequence {
   void setText(const std::string& text);
   void createVideoFile(const FSys::path& out_file);
 
-  boost::signals2::signal<void(int)> progress;
-  boost::signals2::signal<void(const std::string& message)> messagResult;
-  boost::signals2::signal<void()> finished;
-
   boost::signals2::signal<void(float)> stride;
 };
 
 using ImageSequencePtr = std::shared_ptr<ImageSequence>;
 
-class CORE_API ImageSequenceBatch {
+class CORE_API ImageSequenceBatch : public LongTerm {
   std::vector<FSys::path> p_paths;
   std::vector<ImageSequencePtr> p_imageSequences;
 
@@ -46,9 +43,6 @@ class CORE_API ImageSequenceBatch {
   ImageSequenceBatch(decltype(p_imageSequences) imageSequences);
   void batchCreateSequence(const FSys::path& out_files = {}) const;
 
-  boost::signals2::signal<void(int)> progress;
-  boost::signals2::signal<void(const std::string& message)> messagResult;
-  boost::signals2::signal<void()> finished;
 };
 
 }  // namespace doodle

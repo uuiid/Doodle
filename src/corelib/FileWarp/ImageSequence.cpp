@@ -18,11 +18,9 @@ std::string ImageSequence::clearString(const std::string &str) {
 }
 
 ImageSequence::ImageSequence(decltype(p_paths) paths, decltype(p_Text) text)
-    : p_paths(std::move(paths)),
+    : LongTerm(),
+      p_paths(std::move(paths)),
       p_Text(std::move(clearString(text))),
-      progress(),
-      messagResult(),
-      finished(),
       stride(),
       p_eps(-1),
       p_shot(-1),
@@ -31,11 +29,9 @@ ImageSequence::ImageSequence(decltype(p_paths) paths, decltype(p_Text) text)
 }
 
 ImageSequence::ImageSequence(FSys::path path_dir, decltype(p_Text) text)
-    : p_paths(),
+    : LongTerm(),
+      p_paths(),
       p_Text(std::move(clearString(text))),
-      progress(),
-      messagResult(),
-      finished(),
       stride(),
       p_eps(-1),
       p_shot(-1),
@@ -160,7 +156,8 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
 }
 
 ImageSequenceBatch::ImageSequenceBatch(decltype(p_paths) dirs)
-    : p_paths(std::move(dirs)),
+    : LongTerm(),
+      p_paths(std::move(dirs)),
       p_imageSequences() {
   for (auto &&dir : p_paths) {
     if (FSys::is_directory(dir))

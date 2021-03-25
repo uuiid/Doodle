@@ -3,7 +3,8 @@
 #include <opencv2/opencv.hpp>
 namespace doodle {
 VideoSequence::VideoSequence(decltype(p_paths) paths)
-    : p_paths(std::move(paths)) {
+    : LongTerm(),
+      p_paths(std::move(paths)) {
 }
 
 void VideoSequence::connectVideo(const FSys::path& out_path) {

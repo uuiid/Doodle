@@ -14,10 +14,8 @@
 
 DOODLE_NAMESPACE_S
 MayaFile::MayaFile(FSys::path mayaPath)
-    : p_path(std::move(mayaPath)),
-      progress(),
-      messagResult(),
-      finished() {
+    : LongTerm(),
+      p_path(std::move(mayaPath)) {
   findMaya();
 }
 

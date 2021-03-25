@@ -94,6 +94,7 @@ set(core_HEADER
 
         core/PathParser.h
         threadPool/ThreadPool.h
+        threadPool/LongTerm.h
         fileDBInfo/CommentInfo.h
         fileDBInfo/pathParsing.h
         fileDBInfo/ModifySQLDate.h

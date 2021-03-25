@@ -1,8 +1,9 @@
 #include <core_global.h>
 
+#include <corelib/threadPool/LongTerm.h>
 #include <boost/signals2.hpp>
 DOODLE_NAMESPACE_S
-class CORE_API MayaFile {
+class CORE_API MayaFile : public LongTerm {
  private:
   FSys::path p_path;
 
@@ -17,9 +18,6 @@ class CORE_API MayaFile {
 
   DOODLE_DISABLE_COPY(MayaFile)
 
-  boost::signals2::signal<void(int)> progress;
-  boost::signals2::signal<void(const std::string& message)> messagResult;
-  boost::signals2::signal<void()> finished;
 };
 
 DOODLE_NAMESPACE_E
