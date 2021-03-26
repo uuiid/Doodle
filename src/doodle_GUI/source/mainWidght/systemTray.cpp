@@ -99,9 +99,9 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
 void systemTray::installMayaPlug() {
   auto maya_plug = coreSet::getSet().program_location().parent_path() /
                    "plug/maya";
-// MYMODULE_LOCATION:= .
+  // MYMODULE_LOCATION:= .
   boost::format k_string{R"(+ doodle_main.py 1.1 .
-PATH+:= ./scripts;./plug-ins
+PATH+:= ./plug-ins;./scripts;
 PYTHONPATH+:= ./scripts
 )"};
   // k_string % maya_plug.generic_path().generic_string();
