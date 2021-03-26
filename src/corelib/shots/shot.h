@@ -66,7 +66,6 @@ class CORE_API shot : public CoreData,
 
   bool p_inDeadline;
   DOODLE_INSRANCE(shot);
-  RTTR_ENABLE(CoreData)
 };
 
 

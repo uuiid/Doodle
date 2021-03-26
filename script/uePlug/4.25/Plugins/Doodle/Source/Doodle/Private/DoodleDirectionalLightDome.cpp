@@ -22,7 +22,9 @@ ADoodleDirectionalLightDome::ADoodleDirectionalLightDome()
       LightSourceSoftAngle(10),
       LightingChannels(),
       LightColor(255, 255, 255),
-      p_array_light() {
+      p_array_light(),
+      p_castShadow(true),
+      p_shadowAmout(1) {
   // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
   PrimaryActorTick.bCanEverTick = true;
   auto rootComponent            = CreateDefaultSubobject<USceneComponent>("DefaultSceneRoot");
@@ -99,11 +101,12 @@ ADoodleDirectionalLightDome::ADoodleDirectionalLightDome()
           tmp_light1->SetLightBrightness(0.15);
         }
         tmp_light1->SetMobility(EComponentMobility::Stationary);
-        tmp_light1->CastShadows   = false;
-        tmp_light1->SpecularScale = 0;
-        tmp_light1->SetShadowAmount(0);
+        tmp_light1->CastShadows   = p_castShadow;
+        tmp_light1->SpecularScale = 1;
+        tmp_light1->SetShadowAmount(p_shadowAmout);
         tmp_light1->LightSourceAngle     = LightSourceAngle;
         tmp_light1->LightSourceSoftAngle = LightSourceSoftAngle;
+        tmp_light1->SetMobility(EComponentMobility::Type::Movable);
         //设置图标
         tmp_light1->StaticEditorTextureScale  = 0.0f;
         tmp_light1->StaticEditorTexture       = nullptr;
@@ -166,6 +169,14 @@ void ADoodleDirectionalLightDome::PostEditChangeProperty(struct FPropertyChanged
   } else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, LightColor)) {
     for (auto&& light : p_array_light) {
       light->SetLightColor(LightColor);
+    }
+  } else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_castShadow)) {
+    for (auto&& light : p_array_light) {
+      light->SetCastShadows(p_castShadow);
+    }
+  } else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_shadowAmout)) {
+    for (auto&& light : p_array_light) {
+      light->SetShadowAmount(p_shadowAmout);
     }
   }
 }

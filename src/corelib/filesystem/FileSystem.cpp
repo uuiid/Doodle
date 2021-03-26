@@ -25,15 +25,7 @@
 
 // #include <zmq.hpp>
 // #include <zmq_addon.hpp>
-// /*保护data里面的宏__我他妈的*/
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
 #include <date/date.h>
-// /*保护data里面的宏__我他妈的*/
 #include <stdexcept>
 #include <regex>
 #include <future>
@@ -388,7 +380,7 @@ bool DfileSyntem::localCopy(const fileSys::path &sourePath, const fileSys::path 
 }
 
 bool DfileSyntem::removeDir(const fileSys::path &path) {
-  throw std::runtime_error("not is function");
+  throw DoodleError("not is function");
   return false;
 }
 

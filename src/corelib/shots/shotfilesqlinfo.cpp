@@ -17,14 +17,7 @@
 #include <iostream>
 #include <memory>
 
-//反射使用
-#include <rttr/registration>
 DOODLE_NAMESPACE_S
-
-RTTR_REGISTRATION {
-  rttr::registration::class_<shotFileSqlInfo>(DOCORE_RTTE_CLASS(shotFileSqlInfo))
-      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
-}
 
 boost::signals2::signal<void()> shotFileSqlInfo::insertChanged{};
 boost::signals2::signal<void()> shotFileSqlInfo::updateChanged{};
@@ -185,7 +178,7 @@ void shotFileSqlInfo::setShotClass() {
     auto value = shotClass::getCurrentClass();
     if (!value) return;
     p_ptr_shcla = value;
-  } catch (const std::runtime_error& err) {
+  } catch (const DoodleError& err) {
     DOODLE_LOG_WARN(err.what());
   }
 }
@@ -220,7 +213,7 @@ int shotFileSqlInfo::getVersionMax() {
         if ((getShotType() == info_l->getShotType()) &&
             (info_l->getShotclass() == shotClass::getCurrentClass()))
           return info_l->versionP;
-      } catch (const std::runtime_error& e) {
+      } catch (const DoodleError& e) {
         return 0;
         std::cerr << e.what() << '\n';
       }

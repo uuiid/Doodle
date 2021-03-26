@@ -3,23 +3,13 @@
 #define _SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING 1
 #define _WIN32_WINNT 0x0A00
 
-#include <vector>
-#include <unordered_set>
-#include <iostream>
-#include <memory>
-#include <variant>
-#include <regex>
-#include <boost/core/noncopyable.hpp>
 #include <boost/filesystem.hpp>
+#include <core_export.h>
 
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
 
-#if defined(CORE_LIBRARY)
-#define CORE_API __declspec(dllexport)
-#else
-#define CORE_API __declspec(dllimport)
-#endif
+
 
 #define DOODLE_NAMESPACE doodle
 #define DOODLE_NAMESPACE_S namespace DOODLE_NAMESPACE {
@@ -41,28 +31,9 @@
   className(const className &) = delete; \
   className &operator=(const className &) = delete;
 
-#define DOODLE_FFMPEG_PATH "tools/ffmpeg/bin"
-#define DOODLE_BACKUP "backup"
 #define DOODLE_CONTENT "Content"
 #define DOODLE_EPFORMAT "ep%03i"
 #define DOODLE_SHFORMAT "sc%04i"
-
-#if __has_cpp_attribute(nodiscard) && \
-    !(defined(__clang__) && (__cplusplus < 201703L))
-#define DOODLE_NODISCARD [[nodiscard]]
-
-#endif
-#if __has_cpp_attribute(no_unique_address) && \
-    !(defined(__GNUC__) && (__cplusplus < 201100))
-#define DOODLE_NO_UNIQUE_ADDRESS [[no_unique_address]]
-#endif
-
-#ifndef DOODLE_NODISCARD
-#define DOODLE_NODISCARD
-#endif
-#ifndef DOODLE_NO_UNIQUE_ADDRESS
-#define DOODLE_NO_UNIQUE_ADDRESS
-#endif
 
 namespace sqlpp::sqlite3 {
 class connection;
@@ -73,10 +44,13 @@ namespace boost::filesystem {
 class path;
 }
 
-class QFileInfo;
-
+//开始我们的名称空间
 DOODLE_NAMESPACE_S
+namespace FSys    = boost::filesystem;
 namespace fileSys = boost::filesystem;
+
+using pathPtr = std::shared_ptr<FSys::path>;
+
 const static uint64_t off{8000000};
 using ConnPtr = std::unique_ptr<sqlpp::sqlite3::connection>;
 

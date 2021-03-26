@@ -15,7 +15,6 @@ DOODLE_NAMESPACE_S
 
 class CORE_API episodes : public CoreData,
                           public std::enable_shared_from_this<episodes> {
-  RTTR_ENABLE(CoreData)
 
  public:
   explicit episodes();

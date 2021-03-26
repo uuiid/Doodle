@@ -1,8 +1,14 @@
 #include <doodle_GUI/source/mainWidght/DragPushBUtton.h>
+#include <corelib/core_Cpp.h>
+
 #include <QtGui/QDragMoveEvent>
 #include <QtCore/QMimeData>
+#include <QtWidgets/qmessagebox.h>
+
 DOODLE_NAMESPACE_S
-DragPushBUtton::DragPushBUtton(QWidget* parent) : QPushButton(parent) {
+DragPushBUtton::DragPushBUtton(QWidget* parent)
+    : QPushButton(parent),
+      handleFileFunction() {
   setAcceptDrops(true);
 }
 
@@ -23,8 +29,25 @@ void DragPushBUtton::dragEnterEvent(QDragEnterEvent* event) {
 
 void DragPushBUtton::dropEvent(QDropEvent* event) {
   QPushButton::dropEvent(event);
-  if (!event->mimeData()->hasUrls()) return enableBorder(false);
-  if (event->mimeData()->urls().size() != 1) return enableBorder(false);
+  if (!event->mimeData()->hasUrls())
+    return enableBorder(false);
+  auto k_urls = event->mimeData()->urls();
+  auto k_list = std::vector<FSys::path>{};
+  for (auto&& item : k_urls) {
+    if (item.isLocalFile())
+      k_list.emplace_back(item.toLocalFile().toStdString());
+  }
+  if (k_list.empty()) {
+    QMessageBox::warning(this, tr("警告"), tr("无法找到拖入的文件信息"));
+  } else {
+    try {
+      this->handleFileFunction(k_list);
+    } catch (const DoodleError& err) {
+      QMessageBox::warning(this, tr("警告:"), QString::fromStdString(err.what()));
+    }
+  }
+
+  return enableBorder(false);
 }
 
 void DragPushBUtton::enableBorder(const bool& enabled) {

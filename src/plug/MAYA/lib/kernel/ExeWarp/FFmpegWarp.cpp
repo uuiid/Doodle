@@ -21,14 +21,14 @@ bool FFmpegWarp::imageToVideo(const std::vector<std::shared_ptr<FSys::path>> &im
                               const FSys::path &videoPath,
                               const std::string &subtitles) const {
   {
-    auto video = cv::VideoWriter{p_file.lexically_normal().generic_u8string(),
+    auto video = cv::VideoWriter{p_file.lexically_normal().generic_string(),
                                  cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
                                  25,
                                  cv::Size(1280, 720)};
     cv::Mat image;
 
     for (auto &&item : imagepaths) {
-      image = cv::imread(item->generic_u8string());
+      image = cv::imread(item->generic_string());
       video << image;
     }
   }

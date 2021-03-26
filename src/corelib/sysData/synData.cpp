@@ -18,15 +18,7 @@
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 
-//反射使用
-#include <rttr/registration>
-
 DOODLE_NAMESPACE_S
-
-RTTR_REGISTRATION {
-  rttr::registration::class_<episodes>(DOCORE_RTTE_CLASS(episodes))
-      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
-}
 
 synData::synData() : CoreData(), p_path(), p_episodes_() {}
 

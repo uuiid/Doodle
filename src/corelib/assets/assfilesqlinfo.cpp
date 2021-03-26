@@ -12,22 +12,12 @@
 #include <corelib/fileDBInfo/pathParsing.h>
 #include <loggerlib/Logger.h>
 
-#include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/sqlite3/sqlite3.h>
-
 #include <iostream>
 #include <boost/format.hpp>
 #include <boost/filesystem.hpp>
 #include <core/PathParser.h>
-//反射使用
-#include <rttr/registration>
 
 DOODLE_NAMESPACE_S
-
-RTTR_REGISTRATION {
-  rttr::registration::class_<assFileSqlInfo>(DOCORE_RTTE_CLASS(assFileSqlInfo))
-      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
-}
 
 DOODLE_INSRANCE_CPP(assFileSqlInfo);
 boost::signals2::signal<void(const assInfoPtr &)> assFileSqlInfo::insertChanged{};

@@ -32,16 +32,7 @@
             "args": [],
             "stopAtEntry": false,
             "cwd": "${command:cmake.launchTargetDirectory}",
-            "environment": [
-                {
-                    "name": "PATH",
-                    "value": "$PATH;"
-                },
-                {
-                    "name": "squid",
-                    "value": "clam"
-                }
-            ],
+            "environment": [],
             "console": "integratedTerminal",
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
         }

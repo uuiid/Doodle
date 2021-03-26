@@ -16,6 +16,14 @@
     "nlohmann-json",
     "sqlpp11",
     "sqlpp11-connector-sqlite3",
-    "date"
+    "date",
+    {
+      "name": "opencv",
+      "default-features": true,
+      "features": [
+        "ffmpeg",
+        "contrib"
+      ]
+    }
   ]
 }

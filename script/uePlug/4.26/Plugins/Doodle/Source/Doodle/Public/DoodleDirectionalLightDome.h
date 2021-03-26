@@ -38,6 +38,12 @@ class DOODLE_API ADoodleDirectionalLightDome : public AActor {
   UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = "Doodle_Light", DisplayName = "specular min", meta = (UIMin = "0"))
   float p_specular_min;
 
+  UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = "Doodle_Light", DisplayName = "投射阴影")
+  bool p_castShadow;
+
+  UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = "Doodle_Light", DisplayName = "阴影量", meta = (UIMin = "0", UIMax="1"))
+  float p_shadowAmout;
+
   // 镜像强度映射
   UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = "Doodle_Light", DisplayName = "light to specular", meta = (UIMin = "0"))
   FRuntimeFloatCurve p_specular_curve;

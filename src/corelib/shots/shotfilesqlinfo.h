@@ -17,7 +17,6 @@ DOODLE_NAMESPACE_S
 class CORE_API shotFileSqlInfo
     : public std::enable_shared_from_this<shotFileSqlInfo>,
       public fileSqlInfo {
-  RTTR_ENABLE(fileSqlInfo)
  public:
   shotFileSqlInfo();
   ~shotFileSqlInfo();

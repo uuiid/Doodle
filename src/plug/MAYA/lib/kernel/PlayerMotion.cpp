@@ -74,7 +74,7 @@ void PlayerMotion::startPlayer() {
   {  //开始获得锁
     std::unique_lock<std::mutex> lock(p_mutex);
     if (!p_video->open(p_video_file.generic_string()))
-      throw MotionError("not open file " + p_video_file.generic_u8string());
+      throw MotionError("not open file " + p_video_file.generic_string());
 
     auto fps = p_video->get(cv::CAP_PROP_FPS);
     p_delay  = 1000 / fps;

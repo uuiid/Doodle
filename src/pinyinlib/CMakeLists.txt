@@ -1,11 +1,9 @@
 
 
 
-add_custom_target(pinyin_RESOURE_FILE
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.h ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.cpp
 COMMAND ${BIN2CPP} --file=${CMAKE_CURRENT_LIST_DIR}/zhtopy.txt --output=. --headerfile=doodlePinyin.h --identifier=pinyinData
-BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.h ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.cpp
 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-SOURCES zhtopy.txt      
 COMMENT "bin2cpp create pinyin lib file"
 )
 
@@ -15,9 +13,6 @@ ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.h
 )
 set_target_properties(pinyin 
 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-add_dependencies(pinyin pinyin_RESOURE_FILE)
-
 
 target_sources(pinyin
         PUBLIC
@@ -34,5 +29,6 @@ target_sources(pinyin
 target_link_libraries(pinyin PRIVATE Boost::locale)
 target_link_libraries(pinyin PRIVATE logger)
 
-target_compile_definitions(pinyin PRIVATE PINYIN_LIBRARY)
+target_compile_definitions(pinyin 
+PRIVATE PINYIN_LIBRARY NOMINMAX)
 

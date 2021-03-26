@@ -7,15 +7,9 @@
 #include <loggerlib/Logger.h>
 #include <boost/format.hpp>
 
-//反射使用
-#include <rttr/registration>
 
 DOODLE_NAMESPACE_S
 
-RTTR_REGISTRATION {
-  rttr::registration::class_<episodes>(DOCORE_RTTE_CLASS(episodes))
-      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
-}
 
 DOODLE_INSRANCE_CPP(episodes);
 episodes::episodes()

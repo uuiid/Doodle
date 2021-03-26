@@ -9,13 +9,8 @@
 #include <corelib/shots/shotClass.h>
 #include <corelib/Exception/Exception.h>
 
-//反射使用
-#include <rttr/registration>
 DOODLE_NAMESPACE_S
-RTTR_REGISTRATION {
-  rttr::registration::class_<shotType>(DOCORE_RTTE_CLASS(shotType))
-      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
-}
+
 //初始化一些静态属性
 DOODLE_INSRANCE_CPP(shotType);
 

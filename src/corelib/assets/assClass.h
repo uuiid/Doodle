@@ -37,7 +37,6 @@ class CORE_API assClass : public CoreData,
 
   znchNamePtr p_ptr_znch;
   DOODLE_INSRANCE(assClass);
-  RTTR_ENABLE(CoreData);
 };
 
 DOODLE_NAMESPACE_E

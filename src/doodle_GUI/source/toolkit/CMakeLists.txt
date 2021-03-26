@@ -1,12 +1,12 @@
 ﻿target_sources(
         doodle
-        PUBLIC
-        toolkit.h
-        updataManager.h
+        PRIVATE
+        toolkit.cpp
+        MessageAndProgress.cpp
 )
 target_sources(
         doodle
-        PRIVATE
-        toolkit.cpp
-        updataManager.cpp
+        PUBLIC
+        toolkit.h
+        MessageAndProgress.h
 )

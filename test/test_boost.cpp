@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 #include <boost/regex.hpp>
 #include <boost/locale.hpp>
-
+#include <boost/format.hpp>
 std::string encode64(const std::string &val) {
   using namespace boost::archive::iterators;
   using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
@@ -60,11 +60,13 @@ TEST(dboost, filesys_last_write_time) {
 
     boost::filesystem::path tmp_path{"F:/测试文件.mp4"};
     std::cout << "3: " << boost::filesystem::last_write_time(tmp_path) << std::endl;
-  } catch (const std::exception &e) {
+  } catch (const boost::filesystem::filesystem_error &e) {
     std::cout << e.what()
               << " \nutf : "
-              << boost::locale::conv::to_utf<char>(e.what(), "UTF-8")
+              << ""
               << std::endl;
+    auto str = boost::locale::conv::utf_to_utf<wchar_t>(e.code().message());
+    // auto wstr = std::wstring(e.code().message().c_str());
   }
   struct _stat64 fileInfo;
   if (_wstat64(source_path.generic_wstring().c_str(), &fileInfo) != 0) {
@@ -73,4 +75,32 @@ TEST(dboost, filesys_last_write_time) {
 
   std::cout << "\n"
             << fileInfo.st_mtime << std::endl;
+}
+
+TEST(dboost, boost_local_backend) {
+  auto local_backend = boost::locale::localization_backend_manager::global();
+  for (auto &&it : local_backend.get_all_backends()) {
+    std::cout << it << std::endl;
+  }
+}
+
+TEST(dboost, boost_form_utf) {
+  std::cout << boost::locale::conv::from_utf(std::string{"哈哈"}, "GBK") << std::endl;
+  std::cout << boost::locale::conv::to_utf<char>(std::string{"哈哈"}, "UTF-8") << std::endl;
+}
+
+TEST(dboost, boost_format) {
+  boost::format str{"ep%04d_sc%04d%s"};
+  str % 1 % 50 % "A";
+  std::cout << str.str() << std::endl;
+  str.clear();
+  str % -1 % -50 % "A";
+  std::cout << str.str() << std::endl;
+}
+
+TEST(dboost, filesys_append) {
+  boost::filesystem::path path{"D:/tse/tset.txrt"};
+  // path.append(".backup");
+  path.replace_extension(".txt.backup");
+  std::cout << path << std::endl;
 }
