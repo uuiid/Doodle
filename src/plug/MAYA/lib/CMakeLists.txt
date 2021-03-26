@@ -102,7 +102,7 @@ ${CMAKE_CURRENT_BINARY_DIR}
 
 
 target_link_libraries(doodle_motion PUBLIC ${MAYA_LIBRARY} ${MAYA_QT5_LIBRARY})
-target_link_libraries(doodle_motion PRIVATE )
+
 #链接fbx库
 target_link_libraries(doodle_motion PRIVATE 
 Autodesk_FBX
