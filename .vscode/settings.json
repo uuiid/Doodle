@@ -194,5 +194,9 @@
         "b_Ninja*": false,
         "install*": true
     },
-    "C_Cpp.exclusionPolicy": "checkFilesAndFolders"
+    "C_Cpp.exclusionPolicy": "checkFilesAndFolders",
+    "git.autoRepositoryDetection": "subFolders",
+    "git.ignoredRepositories": [
+        "F:/Source/vcpkg"
+    ]
 }
