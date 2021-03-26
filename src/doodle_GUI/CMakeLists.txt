@@ -6,7 +6,8 @@ set(RESOURCE_SOURCE
 
 qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 
-add_executable(doodle WIN32 
+add_executable(doodle 
+WIN32 
 ${RESOURE_FILE}
 ${RESOURCE_SOURCE}
 win_exe.rc

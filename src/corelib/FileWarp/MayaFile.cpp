@@ -4,6 +4,8 @@
 #include <corelib/threadPool/ThreadPool.h>
 
 #include <boost/process.hpp>
+#include <boost/process/windows.hpp>
+
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <corelib/libWarp/BoostUuidWarp.h>
@@ -64,20 +66,52 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
   boost::format str{R"("%4%/mayapy.exe" %1% --path %2% --exportpath %3%)"};
   str % k_tmp_path.generic_string() % file_path.generic_string() % k_export_path.generic_string();
   str % p_path.generic_string();
+  // boost::format str{R"(%1% --path %2% --exportpath %3%)"};
+  // str % k_tmp_path.generic_string() % file_path.generic_string() % k_export_path.generic_string();
 
-  boost::process::ipstream k_in{};
-  auto k_env_ = boost::this_process::environment();
-  boost::process::environment k_env{};  // = k_env_;
-  k_env["PATH"] += p_path.generic_string();
-  boost::process::child k_c{str.str(), boost::process::std_out > k_in};
+  DOODLE_LOG_INFO(str.str());
 
-  auto str_r = std::string{};
-  while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
-    // std::cout << str_r << std::endl;
-    DOODLE_LOG_INFO(str_r);
+  STARTUPINFO si{};
+  PROCESS_INFORMATION pi{};
+  ZeroMemory(&si, sizeof(si));
+  ZeroMemory(&pi, sizeof(pi));
+
+  try {
+    //使用windowsIPA创建子进程
+    CreateProcess(
+        NULL,
+        (char*)str.str().c_str(),
+        NULL,
+        NULL,
+        false,
+        CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP,  //CREATE_NEW_CONSOLE
+        NULL,
+        p_path.generic_string().c_str(),  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
+        &si,
+        &pi);
+    // boost::process::system(command.c_str(), env);
+  } catch (const std::runtime_error& err) {
+    DOODLE_LOG_WARN(err.what());
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return false;
   }
+  WaitForSingleObject(pi.hProcess, INFINITE);
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+  // boost::process::ipstream k_in{};
+  // boost::process::system(str.str());
+  // boost::process::child k_c{str.str(), boost::process::windows::hide};
+  // boost::process::child k_c{boost::process::cmd = str.str(), boost::process::std_out > k_in, boost::process::windows::hide};
 
-  k_c.wait();
+  // auto str_r = std::string{};
+  // while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
+  //   // std::cout << str_r << std::endl;
+  //   DOODLE_LOG_INFO(str_r);
+  // }
+
+  // k_c.wait();
   FSys::remove(k_tmp_path);
   return true;
 }
