@@ -15,7 +15,7 @@ std::unique_ptr<std::fstream> ScreenshotArchive::loadImage() {
   down();
   if (!boost::filesystem::exists(p_cacheFilePath.front())) {
     DOODLE_LOG_WARN("没有文件： " << p_ServerPath.front().generic_string())
-    throw FileError(p_ServerPath.front().generic_string());
+    throw FileError(p_ServerPath.front().generic_string(), "没有文件");
   }
 
   auto p = std::make_unique<boost::filesystem::fstream>(
@@ -29,7 +29,7 @@ std::unique_ptr<std::fstream> ScreenshotArchive::loadImage() {
 void ScreenshotArchive::insertDB() {
   if (!DfileSyntem::get().exists(p_ServerPath.front())) {
     DOODLE_LOG_WARN("没有文件： " << p_ServerPath.front().generic_string())
-    throw FileError(p_ServerPath.front().generic_string());
+    throw FileError(p_ServerPath.front().generic_string(), "没有文件");
   }
 
   p_info_ptr_->setFileList(p_ServerPath);

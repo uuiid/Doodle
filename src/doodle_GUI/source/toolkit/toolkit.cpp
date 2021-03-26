@@ -31,12 +31,11 @@ void toolkit::openPath(const fileSqlInfoPtr &info_ptr,
   }
   auto path =
       info_ptr->getFileList()[0].parent_path();
-
+  boost::wformat wstr;
   boost::format str("explorer.exe \"%s\"");
-  auto path_noral =
-      boost::replace_all_copy(path.generic_path().generic_string(), "/", "\\");
-  path_noral = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
-  path_noral = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
+  auto path_noral = boost::replace_all_copy(path.generic_path().generic_string(), "/", "\\");
+  path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
+  path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
   str % path_noral;
 
   DOODLE_LOG_INFO("打开路径: " << str.str().c_str());
