@@ -8,22 +8,20 @@
  */
 #include <corelib/core_Cpp.h>
 #include <corelib/core/coresql.h>
-#include <loggerlib/Logger.h>
-#include <corelib/filesystem/FileSystem.h>
 
-#include <boost/locale.hpp>
+#include <loggerlib/Logger.h>
+
 #include <QtWidgets/qapplication.h>
-#include <QTextCodec>
-#include <QTextStream>
 
 #include <gtest/gtest.h>
 #include <iostream>
+#include <locale>
 class Environment : public ::testing::Environment {
  public:
   void SetUp() override;
   void TearDown() override;
   doodle::coreSet &set = doodle::coreSet::getSet();
-  doodle::coreSql &sql = doodle::coreSql::getCoreSql();
+  // doodle::coreSql &sql = doodle::coreSql::getCoreSql();
 };
 
 void Environment::SetUp() {
@@ -34,18 +32,12 @@ void Environment::SetUp() {
 void Environment::TearDown() {}
 
 int main(int argc, char *argv[]) {
+  // std::setlocale(LC_ALL, "");
   //初始化log
   Logger::doodle_initLog();
-  auto filesystem = doodle::DfileSyntem::create();
-
-  //设置一下文件系统后端
-  boost::filesystem::path::imbue(boost::locale::generator()("zh_CN.UTF-8"));
 
   //创建qt必要的运行事件循环
   QApplication app(argc, argv);
-  //设置本地编码
-  QTextCodec *codec = QTextCodec::codecForName("GBK");
-  QTextCodec::setCodecForLocale(codec);
 
   //初始化测试环境
   ::testing::InitGoogleTest(&argc, argv);

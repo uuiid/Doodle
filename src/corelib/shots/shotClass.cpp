@@ -1,5 +1,7 @@
 ﻿#include "shotClass.h"
 
+#include <corelib/Exception/Exception.h>
+
 #include <loggerlib/Logger.h>
 #include <corelib/core/coreset.h>
 #include <corelib/core/coresql.h>
@@ -8,14 +10,7 @@
 
 #include <magic_enum.hpp>
 
-//反射使用
-#include <rttr/registration>
 DOODLE_NAMESPACE_S
-
-RTTR_REGISTRATION {
-  rttr::registration::class_<shotClass>(DOCORE_RTTE_CLASS(shotClass))
-      .constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
-}
 
 DOODLE_INSRANCE_CPP(shotClass);
 boost::signals2::signal<void(const shotClassPtr &)> shotClass::insertChanged{};
@@ -50,7 +45,7 @@ shotClassPtr shotClass::getCurrentClass() {
   }
   if (!ptr) {
     DOODLE_LOG_ERROR("find not shot class " << coreSet::getSet().getDepartment())
-    throw std::runtime_error("");
+    throw DoodleError("");
   }
 
   return ptr;
@@ -70,7 +65,7 @@ void shotClass::setclass(const dstring &value) {
   if (tmp_fc.has_value()) {
     p_fileclass = tmp_fc.value();
   } else {
-    throw std::runtime_error("not file class in enum");
+    throw DoodleError("not file class in enum");
   }
 }
 const std::unordered_set<shotClass *> shotClass::Instances() {

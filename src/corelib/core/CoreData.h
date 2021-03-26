@@ -10,7 +10,7 @@
 
 #include <corelib/core_global.h>
 #include <corelib/core/coreset.h>
-#include <rttr/type>
+
 
 DOODLE_NAMESPACE_S
 
@@ -19,8 +19,6 @@ class PathParser;
 }
 
 class CORE_API CoreData {
-  RTTR_ENABLE()
-
  protected:
   fileSys::path p_roots;
 

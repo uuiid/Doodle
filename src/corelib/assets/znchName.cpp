@@ -8,8 +8,7 @@
  */
 #include "znchName.h"
 
-#include <sqlpp11/sqlite3/sqlite3.h>
-#include <sqlpp11/sqlpp11.h>
+
 
 #include <stdexcept>
 
@@ -20,15 +19,7 @@
 #include <corelib/core/coresql.h>
 #include <pinyinlib/convert.h>
 
-//反射使用
-#include <rttr/registration>
-
 DOODLE_NAMESPACE_S
-
-RTTR_REGISTRATION {
-  rttr::registration::class_<znchName>(DOCORE_RTTE_CLASS(znchName))
-      .constructor<assClass *>()(rttr::policy::ctor::as_std_shared_ptr);
-}
 
 znchName::znchName(assClass *at_)
     : CoreData(),

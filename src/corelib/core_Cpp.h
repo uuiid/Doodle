@@ -12,6 +12,7 @@
 #pragma once
 
 #include <corelib/core_global.h>
+#include <corelib/Exception/Exception.h>
 
 #include <corelib/shots/episodes.h>
 #include <corelib/shots/shot.h>
@@ -40,7 +41,9 @@
 
 #include <corelib/fileArchive/ScreenshotArchive.h>
 
-#include <corelib/queueData/queueManager.h>
-#include <corelib/queueData/queueData.h>
 #include <corelib/core/PathParser.h>
 #include <corelib/core/Project.h>
+
+#include <corelib/FileWarp/MayaFile.h>
+#include <corelib/FileWarp/ImageSequence.h>
+#include <corelib/FileWarp/VideoSequence.h>

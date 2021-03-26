@@ -8,16 +8,8 @@
  */
 #include "CoreData.h"
 
-#include <rttr/registration>
-
 DOODLE_NAMESPACE_S
 
-RTTR_REGISTRATION {
-  rttr::registration::class_<CoreData>(DOCORE_RTTE_CLASS(CoreData))  //DOCORE_RTTE_CLASS(CoreData)
-      // .method(DOODLE_TOS(setInfo), &CoreData::setInfo)               // .constructor<>()(rttr::policy::ctor::as_std_shared_ptr)
-      // .property(DOODLE_TOS(p_roots), &CoreData::Roots, &CoreData::setRoots)
-      ;
-}
 CoreData::CoreData()
     : p_roots() {
 }

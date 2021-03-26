@@ -64,7 +64,6 @@ class CORE_API assType
   int64_t p_ass_class_id;
 
   DOODLE_INSRANCE(assType);
-  RTTR_ENABLE(CoreData);
 };
 
 DOODLE_NAMESPACE_E

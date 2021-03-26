@@ -31,12 +31,11 @@ void toolkit::openPath(const fileSqlInfoPtr &info_ptr,
   }
   auto path =
       info_ptr->getFileList()[0].parent_path();
-
+  boost::wformat wstr;
   boost::format str("explorer.exe \"%s\"");
-  auto path_noral =
-      boost::replace_all_copy(path.generic_path().generic_string(), "/", "\\");
-  path_noral = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
-  path_noral = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
+  auto path_noral = boost::replace_all_copy(path.generic_path().generic_string(), "/", "\\");
+  path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
+  path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
   str % path_noral;
 
   DOODLE_LOG_INFO("打开路径: " << str.str().c_str());
@@ -121,15 +120,29 @@ void toolkit::installUePath(const std::string &path) {
 }
 
 void toolkit::modifyUeCachePath() {
+  //"%ENGINEVERSIONAGNOSTICUSERDIR%DerivedDataCache"
+  //替换为 "%GAMEDIR%DerivedDataCache"
   auto ue_path = getUeInstallPath();
   if (ue_path.empty()) return;
 
-  ue_path          = ue_path / "Engine/Config/BaseEngine.ini";
-  auto source_path = coreSet::getSet().program_location().parent_path() /
-                     "resource/BaseEngine.ini";
-  if (boost::filesystem::exists(source_path)) {
-    DfileSyntem::localCopy(source_path, ue_path, true);
+  ue_path = ue_path / "Engine/Config/BaseEngine.ini";
+  //做备份
+  FSys::copy(ue_path, FSys::path{ue_path}.replace_extension(".ini.backup"), FSys::copy_options::update_existing);
+
+  FSys::fstream file{ue_path, std::ios::in | std::ios::out | std::ios::binary};
+  std::string line{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
+
+  static std::string str{R"("%ENGINEVERSIONAGNOSTICUSERDIR%DerivedDataCache")"};
+  auto it = line.find(str);
+  while (it != std::string::npos) {
+    line.replace(it, str.size(), R"("%GAMEDIR%DerivedDataCache")");
+    it = line.find(str);
   }
+  file.close();
+  file.open(ue_path, std::ios::out | std::ios::trunc | std::ios::binary);
+  file << line;
+
+  QMessageBox::information(nullptr, ("信息"), ("完成修改 \n备份旧文件为 BaseEngine.ini.backup"));
 }
 
 bool toolkit::update() {
@@ -164,9 +177,12 @@ bool toolkit::deleteUeCache() {
   try {
     DOODLE_LOG_INFO("delete Folder : " << str.str());
     boost::filesystem::remove_all(str.str());
+    QMessageBox::information(nullptr, ("信息"), ("完成缓存清除"));
     return true;
+
   } catch (const std::exception &e) {
     DOODLE_LOG_ERROR(e.what());
+    QMessageBox::information(nullptr, ("信息"), ("缓存清除失败"));
     return false;
   }
 }

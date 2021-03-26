@@ -1,5 +1,4 @@
 #include "ScreenshotArchive.h"
-
 #include <loggerlib/Logger.h>
 #include <corelib/filesystem/FileSystem.h>
 
@@ -16,7 +15,7 @@ std::unique_ptr<std::fstream> ScreenshotArchive::loadImage() {
   down();
   if (!boost::filesystem::exists(p_cacheFilePath.front())) {
     DOODLE_LOG_WARN("没有文件： " << p_ServerPath.front().generic_string())
-    throw not_file_error(p_ServerPath.front().generic_string());
+    throw FileError(p_ServerPath.front().generic_string(), "没有文件");
   }
 
   auto p = std::make_unique<boost::filesystem::fstream>(
@@ -30,7 +29,7 @@ std::unique_ptr<std::fstream> ScreenshotArchive::loadImage() {
 void ScreenshotArchive::insertDB() {
   if (!DfileSyntem::get().exists(p_ServerPath.front())) {
     DOODLE_LOG_WARN("没有文件： " << p_ServerPath.front().generic_string())
-    throw not_file_error(p_ServerPath.front().generic_string());
+    throw FileError(p_ServerPath.front().generic_string(), "没有文件");
   }
 
   p_info_ptr_->setFileList(p_ServerPath);
@@ -49,7 +48,7 @@ void ScreenshotArchive::imp_generateFilePath() {
       p_ServerPath.push_back(item);
     }
   } else {
-    throw std::runtime_error("无法生成路径");
+    throw DoodleError("无法生成路径");
     DOODLE_LOG_WARN("无法生成路径");
   }
 }

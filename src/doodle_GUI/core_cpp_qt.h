@@ -12,5 +12,3 @@ Q_DECLARE_METATYPE(doodle::assClass *)
 Q_DECLARE_METATYPE(doodle::assType *)
 Q_DECLARE_METATYPE(doodle::assFileSqlInfo *)
 
-Q_DECLARE_METATYPE(doodle::queueData *)
-// Q_DECLARE_METATYPE(doodle::dataInfoPtr)

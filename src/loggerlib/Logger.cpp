@@ -64,14 +64,17 @@ void boostLoggerInitAsyn(const std::string &logPath,
   //         << "\r\n");
   // boost::log::core::get()->set_filter(
   //     boost::log::trivial::severity >= boost::log::trivial::debug);
-
-  if (!boost::filesystem::exists(appdata / boost::filesystem::basename(boost::dll::program_location()) / "log")) {
-    boost::filesystem::create_directories(appdata / boost::filesystem::basename(boost::dll::program_location()) / "log");
+  auto tmp_exe_name = boost::dll::program_location();
+  if (tmp_exe_name.empty())
+    tmp_exe_name = "/doodle.exe";
+  appdata /= tmp_exe_name.stem() / "log";
+  if (!boost::filesystem::exists(appdata)) {
+    boost::filesystem::create_directories(appdata);
   }
 
   boost::shared_ptr<file_sink> sink{new file_sink{
-      boost::log::keywords::target              = appdata / boost::filesystem::basename(boost::dll::program_location()) / "log",
-      boost::log::keywords::file_name           = appdata / boost::filesystem::basename(boost::dll::program_location()) / "log" / logPath,
+      boost::log::keywords::target              = appdata,
+      boost::log::keywords::file_name           = appdata / logPath,
       boost::log::keywords::rotation_size       = 1024 * 1024,
       boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_interval(boost::posix_time::hours(1)),
       boost::log::keywords::max_size            = logMaxSize,

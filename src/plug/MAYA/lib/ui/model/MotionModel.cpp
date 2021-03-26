@@ -23,7 +23,7 @@ void MotionModel::doodleBindData(const kernel::MotionFilePtr &data) {
     if (app) {
       QMessageBox::warning(
           app, tr("注意 :"),
-          QString{"重要: 没有权限删除此项"} + QString::fromStdString(path.generic_u8string()));
+          QString{"重要: 没有权限删除此项"} + QString::fromStdString(path.generic_string()));
     }
   });
 }
@@ -50,7 +50,7 @@ QVariant MotionModel::data(const QModelIndex &index, int role) const {
     }
     case Qt::DecorationRole: {
       if (k_data->hasIconFile()) {
-        auto k_icon = QIcon{QString::fromStdString(k_data->IconFile().generic_u8string())};
+        auto k_icon = QIcon{QString::fromStdString(k_data->IconFile().generic_string())};
         var         = k_icon.pixmap(QSize{128, 128});
       } else
         var = QColor{Qt::darkRed};

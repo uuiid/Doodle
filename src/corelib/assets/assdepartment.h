@@ -39,7 +39,6 @@ class CORE_API assdepartment
 
   static std::unordered_set<assdepartment *> Instances();
 
-  RTTR_ENABLE(CoreData);
 };
 
 DOODLE_NAMESPACE_E

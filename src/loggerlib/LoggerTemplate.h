@@ -2,7 +2,7 @@
 #include <string>
 namespace Logger {
 const static std::string logTemplate =
-    u8R"logTemplate(<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+    R"logTemplate(<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "https://github.com/">
 <html>
 

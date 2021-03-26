@@ -6,8 +6,10 @@ set(RESOURCE_SOURCE
 
 qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 
-add_executable(doodle WIN32 ${RESOURE_FILE}
-
+add_executable(doodle WIN32 
+${RESOURE_FILE}
+${RESOURCE_SOURCE}
+win_exe.rc
 main.cpp
 doodle_global.h
 core_cpp_qt.h
@@ -15,6 +17,29 @@ core_cpp_qt.h
 
 set_target_properties(doodle 
 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+#设置导出符号
+# include(GenerateExportHeader)
+# set(MY_CUSTOM_CONTENT "")
+# generate_export_header(doodle
+# EXPORT_MACRO_NAME DOODLE_API
+# CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
+#预编译头文件
+target_precompile_headers(doodle
+PUBLIC
+<filesystem>
+<variant>
+<string>
+<memory>
+<chrono>
+<map>
+<iostream>
+<regex>
+<fstream>
+<mutex>
+<condition_variable>
+<future>
+)
 
 #
 # add_executable(doodle WIN32

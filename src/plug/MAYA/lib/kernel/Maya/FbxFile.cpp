@@ -13,14 +13,14 @@ namespace doodle::motion::kernel {
 
 FbxFile::FbxFile(FSys::path path) {
   // FbxManager* manager = FbxManager::Create();
-  // if (!manager) throw std::runtime_error("无法初始化fbx经理");
+  // if (!manager) throw DoodleError("无法初始化fbx经理");
   // MString str{"Autodesk FBX SDK version ^1s\n"};
   // str.format(manager->GetVersion());
   // MGlobal::displayInfo(str);
 
   // auto iosetting = FbxIOSettings::Create(manager, IOSROOT);
   // auto scene     = FbxScene::Create(manager, "Doodle_aim");
-  // if (!scene) throw std::runtime_error("无法创建场景");
+  // if (!scene) throw DoodleError("无法创建场景");
 
   // auto export_ = FbxExporter::Create(manager, "");
   // export_->Initialize("");
@@ -75,7 +75,7 @@ FBXExport -f "^1s" -s;
 )";
   MString k_file_path{};
 
-  status = k_file_path.setUTF8(path.generic_u8string().c_str());
+  status = k_file_path.setUTF8(path.generic_string().c_str());
   if (status != MStatus::MStatusCode::kSuccess) throw FbxFileError("生成路径失败");
 
   status = k_mel.format(k_mel, k_file_path);
@@ -103,7 +103,7 @@ FBXImport -file "^1s";
 )";
   MString k_file_path{};
 
-  status = k_file_path.setUTF8(path.generic_u8string().c_str());
+  status = k_file_path.setUTF8(path.generic_string().c_str());
   if (status != MStatus::MStatusCode::kSuccess) throw FbxFileError("生成路径失败");
 
   status = k_mel.format(k_mel, k_file_path);

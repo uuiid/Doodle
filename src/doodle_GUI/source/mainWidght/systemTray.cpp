@@ -6,6 +6,7 @@
 
 #include <loggerlib/Logger.h>
 #include <core_Cpp.h>
+#include <corelib/filesystem/FileSystem.h>
 #include <QApplication>
 
 #include <QMenu>
@@ -13,8 +14,6 @@
 #include <boost/format.hpp>
 #include <QtWidgets/qfiledialog.h>
 #include <boost/process.hpp>
-
-#include <doodle_GUI/source/toolkit/updataManager.h>
 #include <doodle_GUI/source/mainWidght/mainWindows.h>
 #include <doodle_GUI/source/toolkit/toolkit.h>
 #include <future>
@@ -25,6 +24,7 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
                  .arg(Doodle_VERSION_MINOR)
                  .arg(Doodle_VERSION_PATCH)
                  .arg(Doodle_VERSION_TWEAK));
+  setIcon(qApp->windowIcon());
 
   auto timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &systemTray::upDoodle);
@@ -98,15 +98,16 @@ systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
 
 void systemTray::installMayaPlug() {
   auto maya_plug = coreSet::getSet().program_location().parent_path() /
-                   "plug/maya_plug";
-  boost::format k_string{R"(+ doodle_main.py 1.1 %1%
-MYMODULE_LOCATION:= %1%
-PATH+:= %1%/scripts;%1%/plug-ins
-PYTHONPATH+:= %1%/scripts
+                   "plug/maya";
+  // MYMODULE_LOCATION:= .
+  boost::format k_string{R"(+ doodle_main.py 1.1 .
+PATH+:= ./plug-ins;./scripts;
+PYTHONPATH+:= ./scripts
 )"};
-  k_string % maya_plug.generic_path().generic_string();
+  // k_string % maya_plug.generic_path().generic_string();
   auto docPath = coreSet::getSet().getDoc().parent_path() / "maya" /
                  "modules" / "Doodle.mod";
+  FSys::remove_all(docPath.parent_path());
   if (!boost::filesystem::exists(docPath.parent_path())) {
     boost::filesystem::create_directories(docPath.parent_path());
   }
@@ -115,6 +116,7 @@ PYTHONPATH+:= %1%/scripts
   k_out.open(docPath);
   k_out << k_string.str();
   k_out.close();
+  DfileSyntem::localCopy(maya_plug, docPath.parent_path(), false);
 }
 void systemTray::installUe4Plug(const systemTray::installModel &model) {
   if (model == systemTray::installModel::exeFile) {
@@ -136,19 +138,17 @@ void systemTray::showRigister() {
 }
 
 void systemTray::upDoodle() {
-  doodle::coreSet::getSet().writeDoodleLocalSet();
-  auto fun      = std::async(std::launch::async, [this]() -> bool {
-    if (toolkit::update())
-      quit();
-    else
-      setVisible(true);
-    return true;
-  });
-  auto &manager = updataManager::get();
-  manager.addQueue(fun, "正在下载中", 100);
-  manager.run();
-  dynamic_cast<mainWindows *>(parent())->close();
-  setVisible(false);
+  // doodle::coreSet::getSet().writeDoodleLocalSet();
+  // auto fun      = std::async(std::launch::async, [this]() -> bool {
+  //   if (toolkit::update())
+  //     quit();
+  //   else
+  //     setVisible(true);
+  //   return true;
+  // });
+
+  // dynamic_cast<mainWindows *>(parent())->close();
+  // setVisible(false);
 }
 
 DOODLE_NAMESPACE_E

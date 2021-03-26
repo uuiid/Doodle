@@ -1,4 +1,5 @@
 #include <lib/ui/MotionMainUI.h>
+#include <boost/locale.hpp>
 
 #include <lib/kernel/MotionSetting.h>
 
@@ -20,6 +21,7 @@ MotionMainUI::MotionMainUI(QWidget *parent, Qt::WindowFlags flags)
       p_layout(),
       p_centralWidget(),
       p_setting_widget() {
+  FSys::path::imbue(boost::locale::generator()(""));
   resize(1200, 800);
 
   setWindowTitle("doodle动作库");

@@ -60,9 +60,9 @@ add_library(doodle_motion SHARED
   ${MAYA_MOC_FILE}
 )
 
+#设置导出符号
 include(GenerateExportHeader)
 set(MY_CUSTOM_CONTENT "")
-#设置导出符号
 generate_export_header(doodle_motion
 EXPORT_MACRO_NAME DOODLE_MOTION_API
 CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
@@ -81,6 +81,7 @@ PUBLIC
 <mutex>
 <condition_variable>
 <future>
+<boost/filesystem.hpp>
 )
 
 # 设置一些属性,包括没有自动运行的moc以及安装位置
@@ -101,7 +102,7 @@ ${CMAKE_CURRENT_BINARY_DIR}
 
 
 target_link_libraries(doodle_motion PUBLIC ${MAYA_LIBRARY} ${MAYA_QT5_LIBRARY})
-target_link_libraries(doodle_motion PRIVATE )
+
 #链接fbx库
 target_link_libraries(doodle_motion PRIVATE 
 Autodesk_FBX
