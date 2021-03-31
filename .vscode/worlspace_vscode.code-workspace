@@ -7,6 +7,34 @@
 	],
 	"settings": {
 		"qttools.visualizerFile": "${workspaceFolder}/.vscode/qt5.natvis.xml",
-		"qttools.injectNatvisFile": false
+		"qttools.injectNatvisFile": false,
+		"workbench.editor.limit.enabled": true,
+		"workbench.editor.limit.value": 8,
+		"git.autoRepositoryDetection": "subFolders",
+		"git.ignoredRepositories": [
+			"F:/Source/vcpkg"
+		],
+		"editor.tokenColorCustomizations": {
+			"textMateRules": [
+				{
+					"scope": "googletest.failed",
+					"settings": {
+						"foreground": "#f00"
+					}
+				},
+				{
+					"scope": "googletest.passed",
+					"settings": {
+						"foreground": "#0f0"
+					}
+				},
+				{
+					"scope": "googletest.run",
+					"settings": {
+						"foreground": "#0f0"
+					}
+				}
+			]
+		},
 	}
 }

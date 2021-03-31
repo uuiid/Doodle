@@ -153,36 +153,14 @@
     "C_Cpp.clang_format_style": "{BasedOnStyle: Google, SortIncludes: false, ColumnLimit: 0,AlignConsecutiveAssignments: true,AlignAfterOpenBracket: Align}",
     "cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}",
     "cmake.configureSettings": {},
-    "editor.tokenColorCustomizations": {
-        "textMateRules": [
-            {
-                "scope": "googletest.failed",
-                "settings": {
-                    "foreground": "#f00"
-                }
-            },
-            {
-                "scope": "googletest.passed",
-                "settings": {
-                    "foreground": "#0f0"
-                }
-            },
-            {
-                "scope": "googletest.run",
-                "settings": {
-                    "foreground": "#0f0"
-                }
-            }
-        ]
-    },
+
     "python.envFile": "${workspaceFolder}/.env",
     "python.formatting.autopep8Args": [
         "--ignore",
         "E402"
     ],
     "editor.tabSize": 2,
-    "workbench.editor.limit.enabled": true,
-    "workbench.editor.limit.value": 8,
+
     "editor.fontFamily": " 'Fira Code',Consolas, monospace",
     "editor.fontLigatures": true,
     "files.exclude": {
@@ -195,8 +173,5 @@
         "install*": true
     },
     "C_Cpp.exclusionPolicy": "checkFilesAndFolders",
-    "git.autoRepositoryDetection": "subFolders",
-    "git.ignoredRepositories": [
-        "F:/Source/vcpkg"
-    ]
+
 }
