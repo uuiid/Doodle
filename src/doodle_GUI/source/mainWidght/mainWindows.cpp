@@ -46,6 +46,7 @@ void mainWindows::doodle_init() {
   //添加中央小部件
   setCentralWidget(centralWidget);
 
+  //创建导出maya按钮
   auto layout          = new QGridLayout(centralWidget);
   auto k_exMaya_button = new DragPushBUtton();
   //导出maya文件
@@ -145,6 +146,9 @@ void mainWindows::doodle_init() {
           QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
         }
       });
+
+  auto k_create_ue4File = new DragPushBUtton();
+  k_create_ue4File->setText(tr("创建ue4关卡序列"));
 
   layout->addWidget(k_exMaya_button, 0, 0, 1, 1);
   layout->addWidget(k_create_image, 1, 0, 1, 1);
