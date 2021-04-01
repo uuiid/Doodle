@@ -27,6 +27,9 @@ public:
 	virtual bool             HasAnySockets() const override;
 	virtual void             QuerySupportedSockets(TArray<FComponentSocketDescription>& qutSocket) const override;
 	/*结束USceneComponent接口*/
+
+	//使我们的函数每次调用
+	//virtual bool ShouldTickIfViewportsOnly() const override { return true; };
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
