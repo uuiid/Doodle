@@ -8,6 +8,7 @@
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
+
 void FdoodleEditorModule::StartupModule()
 {
 	// 在我们这里添加自定义放置类
@@ -38,3 +39,6 @@ void FdoodleEditorModule::ShutdownModule()
 		IPlacementModeModule::Get().UnregisterPlacementCategory("DoodleCategoryInfo");
 	}
 }
+
+
+IMPLEMENT_MODULE(FdoodleEditorModule, doodleEditor)

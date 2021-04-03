@@ -10,7 +10,7 @@
 
 class SDoodleToolListItem {
 public:
-	UActorFactory Factory;
+	UActorFactory* Factory;
 	FAssetData AssetData;
 	TOptional<int32> SortOrder;
 
@@ -50,5 +50,12 @@ public:
 
 	void Construct(const FArguments& InArgs);
 private:
-	TSharedPtr<SListView<TSharedPtr<SDoodleToolListItem>>>  DoodleClassList;
+	//创建项目函数
+	TSharedRef<ITableRow> MakeListViewWidget(TSharedPtr <SDoodleToolListItem> Item, const TSharedRef <STableViewBase>& OwnerTable);
+
+	//拖拽函数
+	FReply OnDraggingListViewWidget(const FGeometry& Geo, const FPointerEvent MouseEvent);
+
+	TSharedPtr<SListView<TSharedPtr<SDoodleToolListItem> > >  DoodleClassList;
+	TArray<TSharedPtr<SDoodleToolListItem> > p_list;
 };

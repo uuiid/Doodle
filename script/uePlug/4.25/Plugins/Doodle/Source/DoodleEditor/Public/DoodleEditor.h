@@ -3,15 +3,11 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-class FToolBarBuilder;
-class FMenuBuilder;
+//#include "DoodleEditor.generated.h"
 
 class FdoodleEditorModule : public IModuleInterface {
 public:
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-
-
-
 };

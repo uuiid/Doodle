@@ -47,7 +47,10 @@ public class doodleEditor : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"doodle"
+
+				"doodle",
+
+				"PlacementMode",//这个是创建面板用的
 			}
 			);
 

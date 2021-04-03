@@ -10,13 +10,9 @@
 #include "Widgets/Text/STextBlock.h"
 #include "ToolMenus.h"
 
-#include "IPlacementModeModule.h"
 
 #include "doodleCopyMaterial.h"
-//我们自己自定义的类
-#include "fireLight.h"
-#include "DoodleDirectionalLightDome.h"
-#include "DoodleCopySpline.h"
+
 static const FName doodleTabName("doodle");
 
 #define LOCTEXT_NAMESPACE "FdoodleModule"
@@ -39,27 +35,6 @@ void FdoodleModule::StartupModule() {
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FdoodleModule::RegisterMenus));
 
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(doodleTabName, FOnSpawnTab::CreateRaw(this, &FdoodleModule::OnSpawnPluginTab)).SetDisplayName(LOCTEXT("FdoodleTabTitle", "doodle")).SetMenuType(ETabSpawnerMenuType::Hidden);
-
-	// 在我们这里添加自定义放置类
-	FPlacementCategoryInfo info{
-		LOCTEXT("doodle", "doodle"),
-		"DoodleCategoryInfo",
-		TEXT("Adoodle"),
-		55,
-		true };
-	info.CustomGenerator = []()->TSharedRef<SWidget> {return SNew(SBox); };
-	IPlacementModeModule::Get().RegisterPlacementCategory(info);
-	IPlacementModeModule::Get().RegisterPlaceableItem(
-		info.UniqueHandle,
-		MakeShareable(new FPlaceableItem(nullptr, FAssetData{ AfireLight::StaticClass() })));
-
-	//IPlacementModeModule::Get().RegisterPlaceableItem(
-	//    info.UniqueHandle,
-	//    MakeShareable(new FPlaceableItem(nullptr, FAssetData{ADoodleDirectionalLightDome::StaticClass()})));
-
-	//IPlacementModeModule::Get().RegisterPlaceableItem(
-	//    info.UniqueHandle,
-	//    MakeShareable(new FPlaceableItem(nullptr, FAssetData{ADoodleCopySpline::StaticClass()})));
 }
 
 void FdoodleModule::ShutdownModule() {
@@ -75,10 +50,7 @@ void FdoodleModule::ShutdownModule() {
 	FdoodleCommands::Unregister();
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
-	//我们的卸载函数
-	if (IPlacementModeModule::IsAvailable()) {
-		IPlacementModeModule::Get().UnregisterPlacementCategory("DoodleCategoryInfo");
-	}
+
 }
 
 TSharedRef<SDockTab> FdoodleModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs) {
