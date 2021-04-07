@@ -11,6 +11,7 @@
 #include "AbcAssetImportData.h"
 
 #include "DoodleAbcImport.h"
+#include "Subsystems/ImportSubsystem.h"
 UDoodleAbcFactory::UDoodleAbcFactory()
 	:UFactory(),
 	ImportSettings(NewObject<UAbcImportSettings>()) {
