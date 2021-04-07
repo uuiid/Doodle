@@ -4,6 +4,7 @@
 #include <corelib/core/Project.h>
 #include <boost/filesystem.hpp>
 #include <corelib/libWarp/BoostUuidWarp.h>
+#include <corelib/core/Ue4Setting.h>
 DOODLE_NAMESPACE_S
 
 enum class Department {
@@ -66,11 +67,13 @@ class CORE_API coreSet {
   // doc路径
   [[nodiscard]] fileSys::path getDoc() const;
 
+  Ue4Setting &gettUe4Setting() const { return ue4_setting; };
+
   void writeDoodleLocalSet();
 
   static dstring toIpPath(const dstring &path);
 
-  boost::uuids::uuid getUUID() ;
+  boost::uuids::uuid getUUID();
 
  private:
   //私有化构造函数
@@ -98,6 +101,8 @@ class CORE_API coreSet {
 
   fileSys::path cacheRoot;
   fileSys::path doc;
+
+  Ue4Setting &ue4_setting;
 };
 
 DOODLE_NAMESPACE_E

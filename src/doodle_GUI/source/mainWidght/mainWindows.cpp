@@ -25,7 +25,7 @@ mainWindows::mainWindows(QWidget *parent)
       p_menu_(nullptr),
       p_status_bar_(nullptr),
       centralWidget(nullptr),
-      p_b_box_layout_(nullptr) {
+      p_layout(nullptr) {
   setDockNestingEnabled(true);
   //添加动作和菜单
   doodle_createAction();
@@ -47,7 +47,7 @@ void mainWindows::doodle_init() {
   setCentralWidget(centralWidget);
 
   //创建导出maya按钮
-  auto layout          = new QGridLayout(centralWidget);
+  p_layout             = new QGridLayout(centralWidget);
   auto k_exMaya_button = new DragPushBUtton();
   //导出maya文件
   k_exMaya_button->setText(tr("从maya导出相机和文件"));
@@ -149,11 +149,14 @@ void mainWindows::doodle_init() {
 
   auto k_create_ue4File = new DragPushBUtton();
   k_create_ue4File->setText(tr("创建ue4关卡序列"));
+  k_create_ue4File->setToolTip(tr(R"(注意:
+在创建是是没有ab镜的, 点击设置开始和结束的镜头号)"));
 
-  layout->addWidget(k_exMaya_button, 0, 0, 1, 1);
-  layout->addWidget(k_create_image, 1, 0, 1, 1);
-  layout->addWidget(k_create_dir_image, 2, 0, 1, 1);
-  layout->addWidget(k_create_video, 3, 0, 1, 1);
+  
+  p_layout->addWidget(k_exMaya_button, 0, 0, 1, 1);
+  p_layout->addWidget(k_create_image, 1, 0, 1, 1);
+  p_layout->addWidget(k_create_dir_image, 2, 0, 1, 1);
+  p_layout->addWidget(k_create_video, 3, 0, 1, 1);
 
   //托盘创建
   auto tray = new systemTray(this);

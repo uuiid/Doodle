@@ -16,6 +16,7 @@ DOODLE_NAMESPACE_S
 
 class mainWindows : public QMainWindow {
   Q_OBJECT
+
  Q_SIGNALS:
   void setProgress(int value);
 
@@ -42,7 +43,7 @@ class mainWindows : public QMainWindow {
   QStatusBar *p_status_bar_;
 
   QWidget *centralWidget;        //中心小部件
-  QVBoxLayout *p_b_box_layout_;  //布局
+  QGridLayout *p_layout;  //布局
 
   settingWidget *p_setting_widget_;
   QListWidget *p_project_list;

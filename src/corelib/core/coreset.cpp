@@ -86,7 +86,8 @@ coreSet::coreSet()
       synPath("D:/ue_prj"),
       cacheRoot("C:/Doodle_cache"),
       doc("C:/Doodle_cache"),
-      p_uuid_gen() {
+      p_uuid_gen(),
+      ue4_setting(Ue4Setting::Get()) {
 }
 
 void coreSet::getSetting() {

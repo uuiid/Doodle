@@ -48,6 +48,8 @@
         FileWarp/MayaFile.cpp
         FileWarp/ImageSequence.cpp
         FileWarp/VideoSequence.cpp
+        FileWarp/Ue4Project.cpp
+        core/Ue4Setting.h
 )
 set(core_HEADER 
         assets/assClass.h
@@ -102,6 +104,9 @@ set(core_HEADER
         libWarp/BoostUuidWarp.h
         FileWarp/ImageSequence.h
         FileWarp/VideoSequence.h
+        FileWarp/Ue4Project.h
+        libWarp/WinReg.hpp
+        core/Ue4Setting.h
         )
 
 
