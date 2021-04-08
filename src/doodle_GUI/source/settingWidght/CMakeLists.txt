@@ -1,8 +1,4 @@
-﻿target_sources(
-        doodle
-        PUBLIC
-        settingWidget.h
-)
+﻿
 target_sources(
         doodle
         PRIVATE

@@ -14,11 +14,7 @@ ${CMAKE_CURRENT_BINARY_DIR}/doodlePinyin.h
 set_target_properties(pinyin 
 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-target_sources(pinyin
-        PUBLIC
-        convert.h
-        pinyin_global.h
-        )
+
 
 target_sources(pinyin
         PRIVATE

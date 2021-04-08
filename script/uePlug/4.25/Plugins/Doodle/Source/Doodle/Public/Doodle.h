@@ -8,8 +8,9 @@
 class FToolBarBuilder;
 class FMenuBuilder;
 
-class FdoodleModule : public IModuleInterface {
- public:
+class FdoodleModule : public IModuleInterface
+{
+public:
   /** IModuleInterface implementation */
   virtual void StartupModule() override;
   virtual void ShutdownModule() override;
@@ -17,11 +18,11 @@ class FdoodleModule : public IModuleInterface {
   /** This function will be bound to Command (by default it will bring up plugin window) */
   void PluginButtonClicked();
 
- private:
+private:
   void RegisterMenus();
 
-  TSharedRef<class SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);
+  TSharedRef<class SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs &SpawnTabArgs);
 
- private:
+private:
   TSharedPtr<class FUICommandList> PluginCommands;
 };

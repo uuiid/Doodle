@@ -1,4 +1,4 @@
-#include "convert.h"
+#include <pinyinlib/convert.h>
 #include <boost/locale.hpp>
 #include <loggerlib/logger.h>
 #include <doodlePinyin.h>
