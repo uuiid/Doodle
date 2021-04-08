@@ -12,8 +12,6 @@ ${RESOURE_FILE}
 ${RESOURCE_SOURCE}
 win_exe.rc
 main.cpp
-doodle_global.h
-core_cpp_qt.h
 )
 
 set_target_properties(doodle 

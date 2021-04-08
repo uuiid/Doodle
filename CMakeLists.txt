@@ -120,7 +120,7 @@ ${PROJECT_SOURCE_DIR}
 
 
 add_subdirectory(src)
-
+add_subdirectory(include)
 enable_testing()
 add_subdirectory(test)
 #=====================安装打包过程===============================

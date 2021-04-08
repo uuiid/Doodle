@@ -1,6 +1,7 @@
-﻿#include "coreset.h"
+﻿#include <corelib/core/coreset.h>
+
 #include <corelib/core/coresql.h>
-#include <corelib/core/Project.h>
+
 #include <corelib/Exception/Exception.h>
 #include <pinyinlib/convert.h>
 #include <loggerlib/Logger.h>
@@ -9,9 +10,6 @@
 
 #include <stdexcept>
 #include <fstream>
-
-#include <corelib/filesystem/FileSystem.h>
-#include <corelib/core/Project.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
@@ -79,9 +77,7 @@ void coreSet::writeDoodleLocalSet() {
 }
 
 coreSet::coreSet()
-    : p_projects(),
-      p_currentProject(),
-      user("user"),
+    : user("user"),
       department(Department::VFX),
       synPath("D:/ue_prj"),
       cacheRoot("C:/Doodle_cache"),
@@ -104,15 +100,6 @@ void coreSet::getSetting() {
     auto k_dep = root.value("department", "VFX");
     department = magic_enum::enum_cast<Department>(k_dep).value_or(Department::VFX);
     synPath    = root.value("synPath", "D:/ue_prj");
-    try {
-      for (auto &&it : root.at("Projects")) {
-        fileSys::path k_path = it.at("path").get<std::string>();
-        p_projects.insert({k_path,
-                           std::make_shared<Project>(k_path)});
-      }
-    } catch (const nlohmann::json::out_of_range &e) {
-      DOODLE_LOG_WARN(e.what());
-    }
   }
 }
 
@@ -134,37 +121,6 @@ dstring coreSet::getDepartment() const {
 
 void coreSet::setDepartment(const dstring &value) {
   department = magic_enum::enum_cast<Department>(value).value_or(Department::VFX);
-}
-
-std::shared_ptr<Project> coreSet::getProject() {
-  return p_currentProject;
-}
-
-std::vector<std::shared_ptr<Project>> coreSet::getAllProjects() {
-  std::vector<std::shared_ptr<Project>> result{};
-  for (auto &&pair : p_projects) {
-    result.emplace_back(pair.second);
-  }
-  return result;
-}
-
-// std::vector<std::string> coreSet::getAllProjectNames() {
-//   std::vector<std::string> list{};
-//   for (auto &&it : p_projects) {
-//     auto pr = it.second->Name();
-//     list.emplace_back(std::move(pr));
-//   }
-//   return list;
-// }
-
-void coreSet::setProject(const std::shared_ptr<Project> &projectRoot) {
-  auto it = p_projects.find(projectRoot->Root());
-  if (it != p_projects.end()) {
-    p_currentProject = it->second;
-  } else {
-    p_currentProject = projectRoot;
-    p_projects.insert({projectRoot->Root(), projectRoot});
-  }
 }
 
 dstring coreSet::getUser() const { return user; }

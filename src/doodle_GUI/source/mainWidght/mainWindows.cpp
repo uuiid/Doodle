@@ -1,4 +1,4 @@
-#include "mainWindows.h"
+#include <doodle_GUI/source/mainWidght/mainWindows.h>
 //logger是boost库使用者，放到qt上面能好点
 #include <loggerlib/Logger.h>
 

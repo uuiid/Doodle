@@ -1,6 +1,9 @@
 #include <corelib/core/Ue4Setting.h>
 
 namespace doodle {
+Ue4Setting::Ue4Setting() {
+}
+
 Ue4Setting& Ue4Setting::Get() {
   static Ue4Setting install;
   return install;

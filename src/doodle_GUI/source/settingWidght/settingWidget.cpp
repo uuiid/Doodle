@@ -2,10 +2,10 @@
 // Created by teXiao on 2020/10/19.
 //
 
-#include "settingWidget.h"
+#include <doodle_GUI/source/settingWidght/settingWidget.h>
 #include <loggerlib/Logger.h>
 
-#include < core_Cpp.h>
+#include <corelib/core_Cpp.h>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>

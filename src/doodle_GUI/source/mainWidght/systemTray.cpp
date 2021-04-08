@@ -1,12 +1,12 @@
 ﻿//
 // Created by teXiao on 2020/10/19.
 //
-#include "systemTray.h"
+#include <doodle_GUI/source/mainWidght/systemTray.h>
 #include <DoodleConfig.h>
 
 #include <loggerlib/Logger.h>
-#include <core_Cpp.h>
-#include <corelib/filesystem/FileSystem.h>
+
+#include <corelib/core_Cpp.h>
 #include <QApplication>
 
 #include <QMenu>
@@ -116,7 +116,7 @@ PYTHONPATH+:= ./scripts
   k_out.open(docPath);
   k_out << k_string.str();
   k_out.close();
-  DfileSyntem::localCopy(maya_plug, docPath.parent_path(), false);
+  FileSystem::localCopy(maya_plug, docPath.parent_path(), false);
 }
 void systemTray::installUe4Plug(const systemTray::installModel &model) {
   if (model == systemTray::installModel::exeFile) {

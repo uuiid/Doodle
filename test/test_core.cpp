@@ -52,7 +52,7 @@ TEST_F(CoreTest, getInfo) {
 }
 
 TEST_F(CoreTest, getProjectInfo) {
-  auto prj = set.getProject();
+
   // auto path_parser = prj->findParser(rttr::type::get<doodle::assdepartment>());
   // std::cout
   //     << "\n name : " << prj->Name()
