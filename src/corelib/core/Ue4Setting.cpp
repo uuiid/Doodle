@@ -1,7 +1,11 @@
 #include <corelib/core/Ue4Setting.h>
 
 namespace doodle {
-Ue4Setting::Ue4Setting() {
+Ue4Setting::Ue4Setting()
+    : ue4_path(),
+      ue4_version("4.25"),
+      shot_start(0),
+      shot_end(100) {
 }
 
 Ue4Setting& Ue4Setting::Get() {
@@ -15,6 +19,10 @@ const std::string& Ue4Setting::Version() const noexcept {
 
 void Ue4Setting::setVersion(const std::string& Version) noexcept {
   ue4_version = Version;
+}
+
+bool Ue4Setting::hasPath() const {
+  return !ue4_path.empty();
 }
 
 const FSys::path& Ue4Setting::Path() const noexcept {

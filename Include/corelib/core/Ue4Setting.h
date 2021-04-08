@@ -3,9 +3,9 @@
 #include <corelib/core_global.h>
 
 namespace doodle {
-class Ue4Setting {
-  std::string ue4_version;
+class CORE_API Ue4Setting {
   FSys::path ue4_path;
+  std::string ue4_version;
   std::int32_t shot_start;
   std::int32_t shot_end;
 
@@ -19,6 +19,7 @@ class Ue4Setting {
   const std::string& Version() const noexcept;
   void setVersion(const std::string& Version) noexcept;
 
+  bool hasPath() const;
   const FSys::path& Path() const noexcept;
   void setPath(const FSys::path& Path) noexcept;
 

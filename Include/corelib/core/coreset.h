@@ -42,10 +42,6 @@ class CORE_API coreSet {
   static fileSys::path program_location();
   static fileSys::path program_location(const fileSys::path &path);
 
-  //同步目录时的本地路径
-  [[nodiscard]] const fileSys::path getSynPathLocale() const;
-  void setSynPathLocale(const fileSys::path &syn_path);
-
   // user设置
   [[nodiscard]] dstring getUser() const;
   [[nodiscard]] dstring getUser_en() const;

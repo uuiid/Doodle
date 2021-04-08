@@ -9,25 +9,25 @@
 #include <QWidget>
 #include <corelib/core/coreset.h>
 class QListWidget;
+class QPushButton;
+class QLineEdit;
+class QSpinBox;
+
 
 DOODLE_NAMESPACE_S
 
-class settingWidget : public QWidget {
+class SettingWidget : public QWidget {
   Q_OBJECT
  public:
-  explicit settingWidget(QWidget *parent = nullptr);
+  explicit SettingWidget(QWidget *parent = nullptr);
 
  Q_SIGNALS:
   void projectChanged();
 
  public Q_SLOTS:
-  void setDepartment(const QString &dep);
-  void setUser(const QString &user);
-  void setLocaleSynPath(const QString &path);
-  void seteps(int eps);
-  void setProject(const QString &prj);
-  void save();
+
   void setInit();
+  void save();
 
  protected:
   void closeEvent(QCloseEvent *event) override;
@@ -37,8 +37,11 @@ class settingWidget : public QWidget {
 
   QComboBox *p_dep_text;
   QLineEdit *p_user_text;
-  QLineEdit *p_syn_text;
-  QComboBox *p_prj_text;
+  QPushButton *p_save;
+  QLineEdit *p_ue_path;
+  QLineEdit *p_ue_version;
+  QSpinBox *p_ue_shot_start;
+  QSpinBox *p_ue_shot_end;
 };
 
 DOODLE_NAMESPACE_E

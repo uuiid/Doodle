@@ -8,12 +8,12 @@
 
 #include <QtWidgets/qdockwidget.h>
 #include <QtWidgets/qsizepolicy.h>
-#include <doodle_GUI/source/mainWidght/DragPushBUtton.h>
-#include <doodle_GUI/source/mainWidght/systemTray.h>
-
-#include <doodle_GUI/source/toolkit/MessageAndProgress.h>
 #include <QtWidgets/QApplication>
 
+#include <doodle_GUI/source/mainWidght/DragPushBUtton.h>
+#include <doodle_GUI/source/mainWidght/systemTray.h>
+#include <doodle_GUI/source/toolkit/MessageAndProgress.h>
+#include <doodle_GUI/source/SettingWidght/SettingWidget.h>
 DOODLE_NAMESPACE_S
 
 mainWindows::mainWindows(QWidget *parent)
@@ -25,7 +25,9 @@ mainWindows::mainWindows(QWidget *parent)
       p_menu_(nullptr),
       p_status_bar_(nullptr),
       centralWidget(nullptr),
-      p_layout(nullptr) {
+      p_layout(nullptr),
+      p_setting_widget_() {
+  p_setting_widget_ = new SettingWidget(this);
   setDockNestingEnabled(true);
   //添加动作和菜单
   doodle_createAction();
@@ -152,7 +154,6 @@ void mainWindows::doodle_init() {
   k_create_ue4File->setToolTip(tr(R"(注意:
 在创建是是没有ab镜的, 点击设置开始和结束的镜头号)"));
 
-  
   p_layout->addWidget(k_exMaya_button, 0, 0, 1, 1);
   p_layout->addWidget(k_create_image, 1, 0, 1, 1);
   p_layout->addWidget(k_create_dir_image, 2, 0, 1, 1);
@@ -208,6 +209,8 @@ void mainWindows::doodle_createAction() {
 }
 
 void mainWindows::openSetting() {
+  p_setting_widget_->setInit();
+  p_setting_widget_->show();
 }
 
 void mainWindows::setProject() {

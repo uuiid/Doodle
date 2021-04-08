@@ -45,7 +45,7 @@ class mainWindows : public QMainWindow {
   QWidget *centralWidget;        //中心小部件
   QGridLayout *p_layout;  //布局
 
-  settingWidget *p_setting_widget_;
+  SettingWidget *p_setting_widget_;
   QListWidget *p_project_list;
   //  assWidght * p_ass_widght_;
   //  shotWidget * p_shot_widget_;

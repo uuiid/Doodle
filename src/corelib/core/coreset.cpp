@@ -64,6 +64,10 @@ void coreSet::appendEnvironment() const {
 }
 
 void coreSet::writeDoodleLocalSet() {
+  if (ue4_setting.hasPath() && !FSys::exists(ue4_setting.Path() / "Engine/Binaries/Win64/UE4Editor.exe")) {
+    ue4_setting.setPath({});
+    throw FileError{ue4_setting.Path(), " 在路径中没有找到ue,不保存"};
+  }
   nlohmann::json root;
 
   root["user"]       = user;
@@ -163,12 +167,6 @@ void coreSet::getCacheDiskPath() {
       }
     }
   }
-}
-
-const fileSys::path coreSet::getSynPathLocale() const { return synPath; }
-
-void coreSet::setSynPathLocale(const fileSys::path &syn_path) {
-  synPath = syn_path;
 }
 
 fileSys::path coreSet::program_location() {

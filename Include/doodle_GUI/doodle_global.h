@@ -58,7 +58,7 @@ class assTypeWidget;
 class assTableModel;
 class assTableWidght;
 
-class settingWidget;
+class SettingWidget;
 
 class ScreenshotWidght;
 class ScreenshotAction;

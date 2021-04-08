@@ -2,7 +2,7 @@
 // Created by teXiao on 2020/10/19.
 //
 
-#include <doodle_GUI/source/settingWidght/settingWidget.h>
+#include <doodle_GUI/source/SettingWidght/SettingWidget.h>
 #include <loggerlib/Logger.h>
 
 #include <corelib/core_Cpp.h>
@@ -11,101 +11,115 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QtCore/QDir>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QGridLayout>
 
 DOODLE_NAMESPACE_S
-settingWidget::settingWidget(QWidget *parent)
+SettingWidget::SettingWidget(QWidget *parent)
     : QWidget(parent) {
   setWindowFlags(Qt::Window);
-  auto p_layout = new QHBoxLayout(this);
+  auto layout = new QGridLayout(this);
 
-  auto p_dep_label = new QLabel();
-  p_dep_label->setText(tr("部门:"));
-  p_dep_text = new QComboBox();
+  // 创建小部件
+  auto &set        = coreSet::getSet();
+  auto &ue_set     = Ue4Setting::Get();
+  auto p_dep_label = new QLabel(tr("部门:"));
+  p_dep_text       = new QComboBox();
   p_dep_text->addItems({"Executive",
-                        "Light", "VFX", "modle", "rig", "Anm", "direct", "paint"});
-  auto p_dep_layout = new QHBoxLayout();
-  p_dep_layout->addWidget(p_dep_label);
-  p_dep_layout->addWidget(p_dep_text);
+                        "Light", "VFX",
+                        "modle", "rig",
+                        "Anm", "direct",
+                        "paint"});
+  p_dep_text->setCurrentText(QString::fromStdString(set.getDepartment()));
 
-  auto p_user_label = new QLabel();
-  p_user_label->setText(tr("用户名:"));
-  p_user_text        = new QLineEdit();
-  auto p_user_layout = new QHBoxLayout();
-  p_user_layout->addWidget(p_user_label);
-  p_user_layout->addWidget(p_user_text);
+  auto p_user_label          = new QLabel(tr("用户名:"));
+  auto p_cache_label         = new QLabel("缓存路径");
+  auto p_user_doc_label      = new QLabel("查找到的文档路径");
+  auto p_ue_path_label       = new QLabel(tr("ue4 安装路径"));
+  auto p_ue_version_label    = new QLabel(tr("ue4 查找版本"));
+  auto p_ue_shot_start_label = new QLabel(tr("ue4 导入镜头开始"));
+  auto p_ue_shot_end_label   = new QLabel(tr("ue4 导入镜头结束"));
+  auto p_cache               = new QLabel(QString::fromStdString(
+      set.getCacheRoot().generic_string()));
+  auto p_user_doc            = new QLabel(QString::fromStdString(set.getDoc().generic_string()));
 
-  auto p_syn_label = new QLabel();
-  p_syn_label->setText(tr("同步目录:"));
-  p_syn_text        = new QLineEdit();
-  auto p_syn_layout = new QHBoxLayout();
-  p_syn_layout->addWidget(p_syn_label);
-  p_syn_layout->addWidget(p_syn_text);
+  p_user_text     = new QLineEdit(QString::fromStdString(set.getUser()));
+  p_save          = new QPushButton(tr("保存"));
+  p_ue_path       = new QLineEdit(QString::fromStdString(
+      ue_set.Path().generic_string()));
+  p_ue_version    = new QLineEdit(QString::fromStdString(
+      ue_set.Version()));
+  p_ue_shot_start = new QSpinBox();
+  p_ue_shot_end   = new QSpinBox();
 
-  auto p_prj_label = new QLabel();
-  p_prj_label->setText(tr("项目名称:"));
-  p_prj_text        = new QComboBox();
-  auto p_prj_layout = new QHBoxLayout();
-  p_prj_layout->addWidget(p_prj_label);
-  p_prj_layout->addWidget(p_prj_text);
+  p_ue_shot_start->setMinimum(0);
+  p_ue_shot_end->setMaximum(9999);
 
-  auto p_save = new QPushButton();
-  p_save->setText(tr("保存"));
+  // 创建布局
+  // 标签
+  layout->addWidget(p_dep_label, 0, 0, 1, 1);
+  layout->addWidget(p_user_label, 1, 0, 1, 1);
+  layout->addWidget(p_cache_label, 2, 0, 1, 1);
+  layout->addWidget(p_user_doc_label, 3, 0, 1, 1);
+  layout->addWidget(p_ue_path_label, 4, 0, 1, 1);
+  layout->addWidget(p_ue_version_label, 5, 0, 1, 1);
+  layout->addWidget(p_ue_shot_start_label, 6, 0, 1, 1);
+  layout->addWidget(p_ue_shot_end_label, 7, 0, 1, 1);
+
+  layout->addWidget(p_dep_text, 0, 1, 1, 1);
+  layout->addWidget(p_user_text, 1, 1, 1, 1);
+  layout->addWidget(p_cache, 2, 1, 1, 1);
+  layout->addWidget(p_user_doc, 3, 1, 1, 1);
+  layout->addWidget(p_ue_path, 4, 1, 1, 1);
+  layout->addWidget(p_ue_version, 5, 1, 1, 1);
+  layout->addWidget(p_ue_shot_start, 6, 1, 1, 1);
+  layout->addWidget(p_ue_shot_end, 7, 1, 1, 1);
+
+  layout->setColumnStretch(0, 1);
+  layout->setColumnStretch(1, 4);
+
+  // 连接更改函数
   connect(p_save, &QPushButton::clicked,
-          this, &settingWidget::save);
-
-  auto p_same_layout = new QVBoxLayout();
-  p_same_layout->addLayout(p_dep_layout);
-  p_same_layout->addLayout(p_user_layout);
-  p_same_layout->addLayout(p_prj_layout);
-  p_same_layout->addLayout(p_syn_layout);
-
-  p_same_layout->addWidget(p_save);
-
-  p_layout->addLayout(p_same_layout);
-
-  setInit();
+          this, [&set]() { set.writeDoodleLocalSet(); });
 
   connect(p_dep_text, &QComboBox::currentTextChanged,
-          this, &settingWidget::setDepartment);
-  connect(p_user_text, &QLineEdit::textChanged,
-          this, &settingWidget::setUser);
-  connect(p_syn_text, &QLineEdit::textChanged,
-          this, &settingWidget::setLocaleSynPath);
-  connect(p_prj_text, &QComboBox::currentTextChanged,
-          this, &settingWidget::setProject);
+          this, [&set](const QString &str) { set.setDepartment(str.toStdString()); });
+  connect(p_user_text, &QLineEdit::textEdited,
+          this, [&set](const QString &str) { set.setUser(str.toStdString()); });
+  connect(p_ue_path, &QLineEdit::textEdited,
+          this, [&ue_set, this](const QString &str) {
+            ue_set.setPath(str.toStdString());
+            this->p_ue_version->setDisabled(!str.isEmpty());
+          });
+  connect(p_ue_version, &QLineEdit::textEdited, this,
+          [&ue_set](const QString &str) { ue_set.setVersion(str.toStdString()); });
+  connect(p_ue_shot_start, qOverload<int>(&QSpinBox::valueChanged), this,
+          [&ue_set](int start) { ue_set.setShotStart(start); });
+  connect(p_ue_shot_end, qOverload<int>(&QSpinBox::valueChanged), this,
+          [&ue_set](int end) { ue_set.setShotEnd(end); });
 }
-void settingWidget::setInit() {
-}
-void settingWidget::setDepartment(const QString &dep) {
-}
-void settingWidget::setUser(const QString &user) {
-}
-void settingWidget::setLocaleSynPath(const QString &path) {
-}
-void settingWidget::seteps(int eps) {
-  // if (eps <= 0) return;
-  // p_set_.setSyneps(eps);
-  // auto eps_ptr =  episodes::find_by_eps(eps);
-  // p_syn_locale_path->clear();
-  // p_syn_sever_path->clear();
 
-  // if (eps_ptr) {
-  //   auto syneps =  synData::getAll(eps_ptr);
+void SettingWidget::setInit() {
+  auto &ue_set = Ue4Setting::Get();
+  p_dep_text->setCurrentText(QString::fromStdString(p_set_.getDepartment()));
+  p_user_text->setText(QString::fromStdString(p_set_.getUser()));
+  p_ue_path->setText(QString::fromStdString(ue_set.Path().generic_string()));
+  p_ue_version->setText(QString::fromStdString(ue_set.Version()));
+  p_ue_shot_start->setValue(ue_set.ShotStart());
+  p_ue_shot_end->setValue(ue_set.ShotEnd());
+}
 
-  //   auto tmplist = syneps->getSynDir();
-  //   for (auto &&x : tmplist) {
-  //     p_syn_locale_path->addItem(DOTOS(x.local.generic_string()));
-  //     p_syn_sever_path->addItem(DOTOS(x.server.generic_string()));
-  //   }
-  // }
+void SettingWidget::save() {
+  try {
+    p_set_.writeDoodleLocalSet();
+  } catch (const DoodleError &error) {
+    QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(error.what()));
+  }
 }
-void settingWidget::setProject(const QString &prj) {
-}
-void settingWidget::closeEvent(QCloseEvent *event) {
-  save();
+
+void SettingWidget::closeEvent(QCloseEvent *event) {
+  this->save();
   QWidget::closeEvent(event);
 }
-void settingWidget::save() {
-  p_set_.writeDoodleLocalSet();
-}
+
 DOODLE_NAMESPACE_E
