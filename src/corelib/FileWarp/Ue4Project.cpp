@@ -11,14 +11,14 @@ Ue4Project::Ue4Project(FSys::path project_path)
       p_ue_Project_path(std::move(project_path)) {
   auto& ue = Ue4Setting::Get();
   if (ue.hasPath()) {
-    p_ue_path = ue.Path() / "Engine/Binaries/Win64/UE4Editor.exe";
+    p_ue_path = ue.Path();
   } else {
     auto key_str = boost::wformat{LR"(SOFTWARE\EpicGames\Unreal Engine\%s)"};
     auto wv      = boost::locale::conv::utf_to_utf<wchar_t>(Ue4Setting::Get().Version());
     key_str % wv;
 
     auto key  = winreg::RegKey{HKEY_LOCAL_MACHINE, key_str.str()};
-    p_ue_path = FSys::path{key.GetStringValue(L"InstalledDirectory")} / "Engine/Binaries/Win64/UE4Editor.exe";
+    p_ue_path = FSys::path{key.GetStringValue(L"InstalledDirectory")};
   }
 }
 

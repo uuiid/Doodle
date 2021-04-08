@@ -4,6 +4,12 @@
 #include <boost/filesystem.hpp>
 #include <corelib/libWarp/BoostUuidWarp.h>
 #include <corelib/core/Ue4Setting.h>
+
+#include <cereal/cereal.hpp>
+#include <cereal/types/common.hpp>
+#include <cereal/types/string.hpp>
+#include <magic_enum.hpp>
+
 DOODLE_NAMESPACE_S
 
 enum class Department {
@@ -70,8 +76,6 @@ class CORE_API coreSet {
   coreSet();
   //获得缓存磁盘路径
   void getCacheDiskPath();
-  //获得服务器上的统一设置
-  void getServerSetting();
   //获得本地的有限设置
   void getSetting();
 
@@ -80,16 +84,42 @@ class CORE_API coreSet {
   boost::uuids::random_generator p_uuid_gen;
 
   //用户名称
-  dstring user;
+  std::string user;
   //部门
   Department department;
-
-  fileSys::path synPath;
 
   fileSys::path cacheRoot;
   fileSys::path doc;
 
   Ue4Setting &ue4_setting;
+
+  friend class cereal::access;
+
+  template <class Archive>
+  void save(Archive &ar, std::uint32_t const version) const;
+
+  template <class Archive>
+  void load(Archive &ar, std::uint32_t const version);
 };
 
+template <class Archive>
+void coreSet::save(Archive &ar, std::uint32_t const version) const {
+  ar(
+      cereal::make_nvp("user", user),
+      cereal::make_nvp("department", std::string{magic_enum::enum_name(department)}),
+      cereal::make_nvp("ue4_setting", ue4_setting));
+}
+
+template <class Archive>
+void coreSet::load(Archive &ar, std::uint32_t const version) {
+  std::string deps{};
+  ar(
+      user,
+      deps,
+      ue4_setting);
+  this->department = magic_enum::enum_cast<doodle::Department>(deps).value_or(doodle::Department::VFX);
+}
+
 DOODLE_NAMESPACE_E
+
+CEREAL_CLASS_VERSION(doodle::coreSet, 1);

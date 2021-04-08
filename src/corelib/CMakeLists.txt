@@ -80,6 +80,7 @@ PUBLIC
 target_link_libraries(core PUBLIC 
 SqlppSqlite
 # RTTR::Core
+cereal
 magic_enum::magic_enum
 ${Boost_LIBRARIES}
 nlohmann_json nlohmann_json::nlohmann_json

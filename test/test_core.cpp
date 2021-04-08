@@ -8,6 +8,10 @@
 #include <corelib/core_Cpp.h>
 #include <corelib/FileWarp/ImageSequence.h>
 #include <corelib/FileWarp/VideoSequence.h>
+#include <cereal/archives/json.hpp>
+#include <cereal/archives/portable_binary.hpp>
+#include <cereal/archives/binary.hpp>
+#include <sstream>
 
 class CoreTest : public ::testing::Test {
  protected:
@@ -40,25 +44,40 @@ void CoreTest::SetUp() {
 void CoreTest::TearDown() {
 }
 
-TEST_F(CoreTest, getInfo) {
+TEST_F(CoreTest, archive) {
+  auto& ue_set        = doodle::Ue4Setting::Get();
+  auto str_stream     = std::stringstream{};
+  auto str_stream_bin = std::stringstream{};
+  {
+    cereal::JSONOutputArchive json{str_stream};
+    json(cereal::make_nvp("mainset", set));
+    cereal::BinaryOutputArchive binary{str_stream_bin};
+    binary(set);
+  }
+
+  std::cout << str_stream.str() << std::endl;
+  // std::cout << str_stream_bin.str() << std::endl;
+  ue_set.setVersion("4.26");
+
+  {
+    cereal::JSONInputArchive json{str_stream};
+    json(cereal::make_nvp("mainset", set));
+    cereal::BinaryInputArchive binary{str_stream_bin};
+    binary(set);
+  }
   std::cout
       << "\nuser : " << set.getUser()
       << "\nuser_en : " << set.getUser_en()
       << "\ndoc : " << set.getDoc()
       << "\ncacheRoot : " << set.getCacheRoot()
       << "\ndoc : " << set.getDepartment()
-      << "\nsynpath : " << set.getSynPathLocale()
       << std::endl;
-}
-
-TEST_F(CoreTest, getProjectInfo) {
-
-  // auto path_parser = prj->findParser(rttr::type::get<doodle::assdepartment>());
-  // std::cout
-  //     << "\n name : " << prj->Name()
-  //     << "\n root : " << prj->Root()
-  //     << "\n doc : " << path_parser[0]
-  //     << std::endl;
+  std::cout
+      << "\nue path: " << ue_set.Path()
+      << "\nversipn: " << ue_set.Version()
+      << "\nue shot start: " << ue_set.ShotStart()
+      << "\nue shot end: " << ue_set.ShotEnd()
+      << std::endl;
 }
 
 TEST_F(CoreTest, setInfo) {

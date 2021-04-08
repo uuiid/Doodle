@@ -66,7 +66,7 @@ find_package(magic_enum CONFIG REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
-
+find_package(cereal CONFIG REQUIRED)
 #服务器库
 #应该会用其中一个
 # find_package(cppzmq CONFIG REQUIRED)

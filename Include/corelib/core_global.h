@@ -5,11 +5,10 @@
 
 #include <boost/filesystem.hpp>
 #include <core_export.h>
+#include <cereal/access.hpp>
 
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
-
-
 
 #define DOODLE_NAMESPACE doodle
 #define DOODLE_NAMESPACE_S namespace DOODLE_NAMESPACE {
@@ -34,6 +33,7 @@
 #define DOODLE_CONTENT "Content"
 #define DOODLE_EPFORMAT "ep%03i"
 #define DOODLE_SHFORMAT "sc%04i"
+#define DOODLE_UE_PATH "Engine/Binaries/Win64/UE4Editor.exe"
 
 namespace sqlpp::sqlite3 {
 class connection;
