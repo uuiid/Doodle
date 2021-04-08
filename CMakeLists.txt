@@ -41,6 +41,7 @@ include_directories(${CMAKE_BINARY_DIR}/configure)
 
 #首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
+include(CMakeRC)
 
 #寻找一些外部库
 find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
@@ -98,6 +99,16 @@ ExternalProject_Add(bin2cpp_prj
         INSTALL_COMMAND ""
         TEST_COMMAND ""
 )
+#下载自定义嵌入文件
+include(ExternalProject)
+ExternalProject_Add(cmrc_prj 
+        GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/cmrc_prj-prefix/src/cmrc_prj/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake
+        TEST_COMMAND ""
+)
+
 ExternalProject_Get_property(bin2cpp_prj SOURCE_DIR)
 # message("Source dir of bin2cpp_prj = ${SOURCE_DIR}")
 set(BIN2CPP ${SOURCE_DIR}/bin/bin2cpp.exe)

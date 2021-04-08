@@ -34,7 +34,9 @@
 #define DOODLE_EPFORMAT "ep%03i"
 #define DOODLE_SHFORMAT "sc%04i"
 #define DOODLE_UE_PATH "Engine/Binaries/Win64/UE4Editor.exe"
-
+//添加资源
+#include <cmrc/cmrc.hpp>
+CMRC_DECLARE(CoreResource);
 namespace sqlpp::sqlite3 {
 class connection;
 struct connection_config;

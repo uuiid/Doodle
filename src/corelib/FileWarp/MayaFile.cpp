@@ -10,7 +10,6 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <corelib/libWarp/BoostUuidWarp.h>
 
-#include <CoreResourceMayaExportFbx.h>
 
 #include <loggerlib/Logger.h>
 
@@ -41,11 +40,11 @@ const FSys::path MayaFile::createTmpFile() const {
   //开始写入临时文件
   const static auto tmp_path = FSys::temp_directory_path();
   auto k_tmp_path            = tmp_path / (boost::uuids::to_string(coreSet::getSet().getUUID()) + ".py");
-  auto& k_file_py            = bin2cpp::getCoreResourceMayaExportFbxFile();
+  auto k_file_py             = cmrc::CoreResource::get_filesystem().open("resource/mayaExport.py");
 
   {  //写入文件后直接关闭
     FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
-    file.write(k_file_py.getBuffer(), k_file_py.getSize());
+    file.write(k_file_py.begin(), k_file_py.size());
   }
   return k_tmp_path;
 }
