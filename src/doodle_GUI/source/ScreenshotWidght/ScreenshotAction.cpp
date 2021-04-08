@@ -1,5 +1,4 @@
-#include "ScreenshotAction.h"
-
+#include <doodle_GUI/source/ScreenshotWidght/ScreenshotAction.h>
 #include <corelib/Exception/Exception.h>
 
 #include <QtWidgets/qdesktopwidget.h>

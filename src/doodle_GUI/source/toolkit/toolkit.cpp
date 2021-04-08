@@ -2,15 +2,13 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/process.hpp>
-#include <core_Cpp.h>
+#include <corelib/core_Cpp.h>
 #include <loggerlib/Logger.h>
 #include <QtCore/QDir>
 #include <QtGui/qclipboard.h>
 #include <QtGui/QGuiApplication>
 #include <QtWidgets/qmessagebox.h>
 #include <QtWidgets/qinputdialog.h>
-
-#include <corelib/filesystem/FileSystem.h>
 
 #include <QtCore/qsettings.h>
 
@@ -21,37 +19,37 @@
 #include <regex>
 DOODLE_NAMESPACE_S
 
-void toolkit::openPath(const fileSqlInfoPtr &info_ptr,
-                       const bool &openEx) {
-  if (info_ptr->getFileList().empty()) {
-    DOODLE_LOG_INFO("没有找到目录");
-    QMessageBox::warning(nullptr, QString::fromUtf8("没有目录"),
-                         QString::fromUtf8("没有找到目录 "),
-                         QMessageBox::Yes);
-  }
-  auto path =
-      info_ptr->getFileList()[0].parent_path();
-  boost::wformat wstr;
-  boost::format str("explorer.exe \"%s\"");
-  auto path_noral = boost::replace_all_copy(path.generic_path().generic_string(), "/", "\\");
-  path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
-  path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
-  str % path_noral;
+// void toolkit::openPath(const fileSqlInfoPtr &info_ptr,
+//                        const bool &openEx) {
+//   if (info_ptr->getFileList().empty()) {
+//     DOODLE_LOG_INFO("没有找到目录");
+//     QMessageBox::warning(nullptr, QString::fromUtf8("没有目录"),
+//                          QString::fromUtf8("没有找到目录 "),
+//                          QMessageBox::Yes);
+//   }
+//   auto path =
+//       info_ptr->getFileList()[0].parent_path();
+//   boost::wformat wstr;
+//   boost::format str("explorer.exe \"%s\"");
+//   auto path_noral = boost::replace_all_copy(path.generic_path().generic_string(), "/", "\\");
+//   path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
+//   path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
+//   str % path_noral;
 
-  DOODLE_LOG_INFO("打开路径: " << str.str().c_str());
-  if (boost::filesystem::exists(path)) {
-    if (openEx)
-      boost::process::system(str.str().c_str());
-    else
-      QGuiApplication::clipboard()->setText(QString::fromStdString(path.generic_string()));
-  } else {
-    DOODLE_LOG_INFO(" 没有在服务器中找到目录:" << path.generic_string());
-    QMessageBox::warning(nullptr, QString::fromUtf8("没有目录"),
-                         QString::fromUtf8("没有在服务器中找到目录:\n %1")
-                             .arg(QString::fromStdString(path.generic_string())),
-                         QMessageBox::Yes);
-  }
-}
+//   DOODLE_LOG_INFO("打开路径: " << str.str().c_str());
+//   if (boost::filesystem::exists(path)) {
+//     if (openEx)
+//       boost::process::system(str.str().c_str());
+//     else
+//       QGuiApplication::clipboard()->setText(QString::fromStdString(path.generic_string()));
+//   } else {
+//     DOODLE_LOG_INFO(" 没有在服务器中找到目录:" << path.generic_string());
+//     QMessageBox::warning(nullptr, QString::fromUtf8("没有目录"),
+//                          QString::fromUtf8("没有在服务器中找到目录:\n %1")
+//                              .arg(QString::fromStdString(path.generic_string())),
+//                          QMessageBox::Yes);
+//   }
+// }
 
 void toolkit::openPath(const fileSys::path &path_) {
   auto path = path_;
@@ -116,7 +114,7 @@ void toolkit::installUePath(const std::string &path) {
   if (boost::filesystem::exists(ue_path)) {
     boost::filesystem::remove_all(ue_path);
   }
-  DfileSyntem::localCopy(sourePath, ue_path, false);
+  FileSystem::localCopy(sourePath, ue_path, false);
 }
 
 void toolkit::modifyUeCachePath() {
@@ -146,18 +144,7 @@ void toolkit::modifyUeCachePath() {
 }
 
 bool toolkit::update() {
-  auto &set     = coreSet::getSet();
-  auto &session = DfileSyntem::get();
-
-  auto exe_path = set.getCacheRoot() / "doodle.exe";
-  if (session.exists("W:/")) {
-    session.localCopy("W:\\doodle\\dist\\doodle.exe",
-                      exe_path.generic_string(), false);
-    boost::process::spawn(exe_path, "/SILENT", "/NOCANCEL");
-    // qApp->quit();
-    return true;
-  } else
-    return false;
+  return false;
 }
 
 bool toolkit::deleteUeCache() {

@@ -1,9 +1,4 @@
-target_sources(
-        doodle
-        PUBLIC
-        ScreenshotAction.h
-        ScreenshotWidght.h
-)
+
 target_sources(
         doodle
         PRIVATE

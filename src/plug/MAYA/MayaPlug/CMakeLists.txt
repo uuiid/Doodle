@@ -6,7 +6,7 @@ MayaPlug.cpp
 )
 
 set(doodle_motion_Mplug_HEADER
-MotionMayaPlugInit.h
+
 )
 
 add_library(doodle_motion_Mplug MODULE 
@@ -17,7 +17,7 @@ set_target_properties(doodle_motion_Mplug PROPERTIES
 RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
 LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
 )
-target_include_directories(doodle_motion_Mplug PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
+target_include_directories(doodle_motion_Mplug PUBLIC ${PROJECT_SOURCE_DIR}/include/plug/MAYA)
 
 target_link_libraries(doodle_motion_Mplug PRIVATE doodle_motion)
 target_include_directories(doodle_motion_Mplug PRIVATE ${MAYA_INCLUDE_DIR})

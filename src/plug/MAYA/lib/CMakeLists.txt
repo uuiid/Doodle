@@ -25,28 +25,25 @@ kernel/PlayerMotion.cpp
 )
 
 set(doodle_motion_HEADER
-kernel/BoostUuidWarp.h
-
-ui/MotionMainUI.h
-ui/MotionSettingWidget.h
-ui/MotionLibWidget.h
-ui/model/MotionModel.h
-ui/model/TreeDirModel.h
-ui/model/TreeDirItem.h
-ui/view/MotionView.h
-ui/view/TreeDirView.h
-ui/view/MotionAttrbuteView.h
-
-kernel/MotionSetting.h
-kernel/MotionFile.h
-kernel/Maya/FbxFile.h
-kernel/Exception.h
-kernel/Maya/Screenshot.h
-kernel/Maya/MayaRenderOpenGL.h
-kernel/Maya/MayaVideo.h
-kernel/ExeWarp/FFmpegWarp.h
-kernel/PlayerMotion.h
-
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/ExeWarp/FFmpegWarp.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/Maya/MayaRenderOpenGL.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/Maya/FbxFile.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/Maya/MayaVideo.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/Maya/Screenshot.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/BoostUuidWarp.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/Exception.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/MotionFile.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/MotionSetting.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/PlayerMotion.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/model/MotionModel.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/model/TreeDirItem.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/model/TreeDirModel.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/view/MotionAttrbuteView.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/view/MotionView.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/view/TreeDirView.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/MotionLibWidget.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/MotionMainUI.h
+${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/MotionSettingWidget.h
 )
 
 # 由于版本不一样所以使用特制版qt制作maya插件
@@ -54,7 +51,6 @@ Maya_qt5_wrap_cpp(MAYA_MOC_FILE ${doodle_motion_HEADER} )
 
 
 add_library(doodle_motion SHARED 
-  MotionGlobal.h
   ${doodle_motion_CPP}
   ${doodle_motion_HEADER}
   ${MAYA_MOC_FILE}
@@ -93,7 +89,7 @@ OUTPUT_NAME doodle_motion_2020
 
 
 
-target_include_directories(doodle_motion PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
+target_include_directories(doodle_motion PUBLIC ${PROJECT_SOURCE_DIR}/include/plug/MAYA)
 target_include_directories(doodle_motion PUBLIC 
 ${MAYA_INCLUDE_DIR}
 ${OpenCV_INCLUDE_DIRS}

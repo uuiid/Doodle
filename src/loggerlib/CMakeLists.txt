@@ -4,10 +4,7 @@ set_target_properties(logger
 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
-target_sources(logger PUBLIC 
-Logger.h
-LoggerTemplate.h
-)
+
 target_sources(logger PRIVATE
 Logger.cpp
 )

@@ -10,7 +10,6 @@
 
 #include <doodle_GUI/source/mainWidght/mainWindows.h>
 #include <loggerlib/Logger.h>
-#include <corelib/filesystem/FileSystem.h>
 #include <boost/filesystem.hpp>
 #include <boost/locale.hpp>
 
@@ -36,8 +35,7 @@ int main(int argc, char *argv[]) try {
   boost::filesystem::path::imbue(k_local);
   //初始化log
   Logger::doodle_initLog();
-  //初始化文件管理器
-  auto filesystem = doodle::DfileSyntem::create();
+
 
   QApplication q_application(argc, argv);
 

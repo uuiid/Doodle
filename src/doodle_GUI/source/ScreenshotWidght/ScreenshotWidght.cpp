@@ -1,9 +1,9 @@
-#include "ScreenshotWidght.h"
-
-#include <corelib/Exception/Exception.h>
-#include <core_Cpp.h>
-#include <loggerlib/Logger.h>
+#include <doodle_GUI/source/ScreenshotWidght/ScreenshotWidght.h>
 #include <doodle_GUI/source/ScreenshotWidght/ScreenshotAction.h>
+#include <corelib/Exception/Exception.h>
+
+#include <corelib/core_Cpp.h>
+#include <loggerlib/Logger.h>
 
 #include <QtWidgets/qpushbutton.h>
 #include <QtWidgets/qlabel.h>
@@ -33,58 +33,58 @@ ScreenshotWidght::ScreenshotWidght(QWidget *parent)
 }
 
 void ScreenshotWidght::createScreenshot() {
-  if (p_file_archive.expired()) return;
+  // if (p_file_archive.expired()) return;
 
-  auto k_file  = p_file_archive.lock();
-  auto k_image = std::make_unique<ScreenshotArchive>(k_file);
-  auto k_cache = coreSet::getSet().getCacheRoot() / k_file->generatePath("doodle", ".png");
+  // auto k_file  = p_file_archive.lock();
+  // auto k_image = std::make_unique<ScreenshotArchive>(k_file);
+  // auto k_cache = coreSet::getSet().getCacheRoot() / k_file->generatePath("doodle", ".png");
 
-  p_action        = new ScreenshotAction(this);
-  auto windowList = QGuiApplication::topLevelWindows();
-  auto winMain    = QGuiApplication::instance()->findChild<QWidget *>("mainWindows");
+  // p_action        = new ScreenshotAction(this);
+  // auto windowList = QGuiApplication::topLevelWindows();
+  // auto winMain    = QGuiApplication::instance()->findChild<QWidget *>("mainWindows");
 
-  if (!boost::filesystem::exists(k_cache.parent_path())) {
-    boost::filesystem::create_directories(k_cache.parent_path());
-  }
+  // if (!boost::filesystem::exists(k_cache.parent_path())) {
+  //   boost::filesystem::create_directories(k_cache.parent_path());
+  // }
 
-  //隐藏主窗口
-  for (auto &&win : windowList) {
-    if (win->objectName() == "mainWindowsWindow")
-      win->hide();
-  }
+  // //隐藏主窗口
+  // for (auto &&win : windowList) {
+  //   if (win->objectName() == "mainWindowsWindow")
+  //     win->hide();
+  // }
 
-  p_action->screenShot(k_cache);
+  // p_action->screenShot(k_cache);
 
-  // 显示主窗口
-  for (auto &&win : windowList) {
-    if (win->objectName() == "mainWindowsWindow")
-      win->showMaximized();
-  }
-  k_image->update(k_cache);
+  // // 显示主窗口
+  // for (auto &&win : windowList) {
+  //   if (win->objectName() == "mainWindowsWindow")
+  //     win->showMaximized();
+  // }
+  // // k_image->update(k_cache);
 
-  auto k_pix = QPixmap();
-  if (k_pix.load(QString::fromStdString(k_cache.generic_string())))
-    p_image->setPixmap(k_pix.scaled(p_image->geometry().size(), Qt::KeepAspectRatio));
-  else {
-  }
+  // auto k_pix = QPixmap();
+  // if (k_pix.load(QString::fromStdString(k_cache.generic_string())))
+  //   p_image->setPixmap(k_pix.scaled(p_image->geometry().size(), Qt::KeepAspectRatio));
+  // else {
+  // }
 }
 
 void ScreenshotWidght::showImage() {
-  if (p_file_archive.expired()) return;
+  // if (p_file_archive.expired()) return;
 
-  auto k_file  = p_file_archive.lock();
-  auto k_image = std::make_unique<ScreenshotArchive>(k_file);
-  auto k_cache = k_image->down();
-  if (!boost::filesystem::exists(k_cache)) {
-    DOODLE_LOG_WARN("没有文件： " << k_cache.generic_string())
-    throw FileError(k_cache.generic_string(), "没有文件");
-  }
-  auto k_pix = QPixmap();
-  if (k_pix.load(QString::fromStdString(k_cache.generic_string())))
-    p_image->setPixmap(k_pix.scaled(p_image->geometry().size(), Qt::KeepAspectRatio));
-  else {
-    clearImage();
-  }
+  // auto k_file  = p_file_archive.lock();
+  // auto k_image = std::make_unique<ScreenshotArchive>(k_file);
+  // auto k_cache = k_image->down();
+  // if (!boost::filesystem::exists(k_cache)) {
+  //   DOODLE_LOG_WARN("没有文件： " << k_cache.generic_string())
+  //   throw FileError(k_cache.generic_string(), "没有文件");
+  // }
+  // auto k_pix = QPixmap();
+  // if (k_pix.load(QString::fromStdString(k_cache.generic_string())))
+  //   p_image->setPixmap(k_pix.scaled(p_image->geometry().size(), Qt::KeepAspectRatio));
+  // else {
+  //   clearImage();
+  // }
 }
 
 void ScreenshotWidght::clearImage() {

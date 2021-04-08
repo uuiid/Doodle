@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.14)
 
 project(Doodle
-        VERSION 2.6.2.11
+        VERSION 2.6.4.11
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -120,7 +120,7 @@ ${PROJECT_SOURCE_DIR}
 
 
 add_subdirectory(src)
-
+add_subdirectory(include)
 enable_testing()
 add_subdirectory(test)
 #=====================安装打包过程===============================

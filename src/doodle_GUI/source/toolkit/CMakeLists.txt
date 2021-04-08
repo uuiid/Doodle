@@ -4,9 +4,3 @@
         toolkit.cpp
         MessageAndProgress.cpp
 )
-target_sources(
-        doodle
-        PUBLIC
-        toolkit.h
-        MessageAndProgress.h
-)
