@@ -20,3 +20,7 @@
 #include <corelib/FileWarp/VideoSequence.h>
 
 #include <corelib/FileSys/FileSystem>
+
+#include <corelib/Metadata/Project.h>
+#include <corelib/Metadata/Episodes.h>
+#include <corelib/Metadata/Shot.h>

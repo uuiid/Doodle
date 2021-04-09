@@ -44,7 +44,23 @@ struct connection_config;
 
 namespace boost::filesystem {
 class path;
+template <class Archive>
+void save(Archive &archive,
+          boost::filesystem::path const &path_) {
+  archive(path_.generic_string());
 }
+
+template <class Archive>
+void load(Archive &archive,
+          boost::filesystem::path &path_) {
+  std::string str;
+  archive(str);
+  path_ = path{str};
+}
+}  // namespace boost::filesystem
+
+
+
 
 //开始我们的名称空间
 DOODLE_NAMESPACE_S
@@ -135,19 +151,6 @@ using dpathListPtr = std::vector<dpathPtr>;
 using dpathList    = std::vector<fileSys::path>;
 
 class Project;
-using projectPtr = std::shared_ptr<Project>;
-
-using dataInfoPtr = std::variant<
-    episodesPtr,
-    shotPtr,
-    shotClassPtr,
-    shotTypePtr,
-    shotInfoPtr,
-
-    assDepPtr,
-    assClassPtr,
-    assTypePtr,
-    znchNamePtr,
-    assInfoPtr>;
+using ProjectPtr = std::shared_ptr<Project>;
 
 DOODLE_NAMESPACE_E

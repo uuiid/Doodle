@@ -8,7 +8,6 @@
  */
 #pragma once
 
-
 #include <doodle_GUI/doodle_global.h>
 #include <QMainWindow>
 class QListWidget;
@@ -31,7 +30,6 @@ class mainWindows : public QMainWindow {
 
  public Q_SLOTS:
   void openSetting();
-  void setProject();
 
  private:
   QAction *exitAction;      // 退出软件
@@ -42,10 +40,9 @@ class mainWindows : public QMainWindow {
   QMenu *p_menu_;         //文件菜单
   QStatusBar *p_status_bar_;
 
-  QWidget *centralWidget;        //中心小部件
-  QGridLayout *p_layout;  //布局
+  QWidget *centralWidget;  //中心小部件
+  QGridLayout *p_layout;   //布局
 
-  SettingWidget *p_setting_widget_;
   QListWidget *p_project_list;
   //  assWidght * p_ass_widght_;
   //  shotWidget * p_shot_widget_;

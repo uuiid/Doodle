@@ -45,7 +45,7 @@ class CORE_API Ue4Setting {
 template <class Archive>
 void Ue4Setting::save(Archive& ar, std::uint32_t const version) const {
   ar(
-      cereal::make_nvp("ue4_path", ue4_path.generic_string()),
+      cereal::make_nvp("ue4_path", ue4_path),
       cereal::make_nvp("ue4_version", ue4_version),
       cereal::make_nvp("shot_start", shot_start),
       cereal::make_nvp("shot_end", shot_end));
@@ -53,7 +53,7 @@ void Ue4Setting::save(Archive& ar, std::uint32_t const version) const {
 template <class Archive>
 void Ue4Setting::load(Archive& ar, std::uint32_t const version) {
   ar(
-      ue4_path.generic_string(),
+      ue4_path,
       ue4_version,
       shot_start,
       shot_end);

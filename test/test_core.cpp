@@ -61,7 +61,7 @@ TEST_F(CoreTest, archive) {
 
   {
     cereal::JSONInputArchive json{str_stream};
-    json(cereal::make_nvp("mainset", set));
+    json(set);
     cereal::BinaryInputArchive binary{str_stream_bin};
     binary(set);
   }

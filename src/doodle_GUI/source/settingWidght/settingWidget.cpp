@@ -3,6 +3,8 @@
 //
 
 #include <doodle_GUI/source/SettingWidght/SettingWidget.h>
+#include <doodle_GUI/source/SettingWidght/Model/ProjectModel.h>
+
 #include <loggerlib/Logger.h>
 
 #include <corelib/core_Cpp.h>
@@ -14,7 +16,29 @@
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/qinputdialog.h>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QErrorMessage>
+
 DOODLE_NAMESPACE_S
+
+static SettingWidget *doodle_SettingWidget = nullptr;
+
+SettingWidget *SettingWidget::Get() {
+  if (doodle_SettingWidget == nullptr) {
+    auto topWindwos = qApp->topLevelWidgets();
+    for (auto w : topWindwos) {
+      if (QMainWindow *mainW = qobject_cast<QMainWindow *>(w))
+        doodle_SettingWidget = new SettingWidget{mainW};
+    }
+    if (doodle_SettingWidget == nullptr) {
+      doodle_SettingWidget = new SettingWidget{};
+    }
+  }
+  return doodle_SettingWidget;
+}
+
 SettingWidget::SettingWidget(QWidget *parent)
     : QWidget(parent) {
   setWindowFlags(Qt::Window);
@@ -43,6 +67,15 @@ SettingWidget::SettingWidget(QWidget *parent)
       set.getCacheRoot().generic_string()));
   auto p_user_doc            = new QLabel(QString::fromStdString(set.getDoc().generic_string()));
   auto p_ue_open_path        = new QPushButton("...");
+  auto p_project_list_lable  = new QLabel{"项目列表"};
+  auto p_project_add         = new QPushButton("添加");
+  auto p_project_delete      = new QPushButton("删除");
+  p_project_list             = new QComboBox();
+  p_project_model            = new ProjectModel{this};
+  p_project_list->setModel(p_project_model);
+
+  // p_project_list->setItemDelegate(nullptr);
+
   p_ue_open_path->setToolTip(R"(这里要选择的目录是
 .egstore
 Engine
@@ -50,9 +83,9 @@ FeaturePacks
 Samples
 Templates
 这些目录的上一级)");
-
+  p_project_list->setModel(nullptr);
   p_user_text     = new QLineEdit(QString::fromStdString(set.getUser()));
-  p_save          = new QPushButton(tr("保存"));
+  p_save          = new QPushButton(tr("保存(测试数据并保存)"));
   p_ue_path       = new QLineEdit(QString::fromStdString(
       ue_set.Path().generic_string()));
   p_ue_version    = new QLineEdit(QString::fromStdString(
@@ -65,29 +98,42 @@ Templates
 
   // 创建布局
   // 标签
-  layout->addWidget(p_dep_label, 0, 0, 1, 2);
-  layout->addWidget(p_user_label, 1, 0, 1, 2);
-  layout->addWidget(p_cache_label, 2, 0, 1, 2);
-  layout->addWidget(p_user_doc_label, 3, 0, 1, 2);
-  layout->addWidget(p_ue_path_label, 4, 0, 1, 2);
-  layout->addWidget(p_ue_version_label, 5, 0, 1, 2);
-  layout->addWidget(p_ue_shot_start_label, 6, 0, 1, 2);
-  layout->addWidget(p_ue_shot_end_label, 7, 0, 1, 2);
 
-  layout->addWidget(p_ue_open_path, 4, 2, 1, 1);
+  //第一列
+  layout->addWidget(p_dep_label, 0, 0, 1, 1);
+  layout->addWidget(p_user_label, 1, 0, 1, 1);
+  layout->addWidget(p_cache_label, 2, 0, 1, 1);
+  layout->addWidget(p_user_doc_label, 3, 0, 1, 1);
+  layout->addWidget(p_project_list_lable, 4, 0, 1, 1);
+  layout->addWidget(p_ue_path_label, 5, 0, 1, 1);
+  layout->addWidget(p_ue_version_label, 6, 0, 1, 1);
+  layout->addWidget(p_ue_shot_start_label, 7, 0, 1, 1);
+  layout->addWidget(p_ue_shot_end_label, 8, 0, 1, 1);
 
-  layout->addWidget(p_dep_text, 0, 1, 1, 2);
-  layout->addWidget(p_user_text, 1, 1, 1, 2);
-  layout->addWidget(p_cache, 2, 1, 1, 2);
-  layout->addWidget(p_user_doc, 3, 1, 1, 2);
-  layout->addWidget(p_ue_path, 4, 1, 1, 1);
-  layout->addWidget(p_ue_version, 5, 1, 1, 2);
-  layout->addWidget(p_ue_shot_start, 6, 1, 1, 2);
-  layout->addWidget(p_ue_shot_end, 7, 1, 1, 2);
+  //第二列开始
+  layout->addWidget(p_dep_text, 0, 1, 1, 4);
+  layout->addWidget(p_user_text, 1, 1, 1, 4);
+  layout->addWidget(p_cache, 2, 1, 1, 4);
+  layout->addWidget(p_user_doc, 3, 1, 1, 4);
+  layout->addWidget(p_ue_version, 6, 1, 1, 4);
+  layout->addWidget(p_ue_shot_start, 7, 1, 1, 4);
+  layout->addWidget(p_ue_shot_end, 8, 1, 1, 4);
+  layout->addWidget(p_save, 9, 0, 1, 4);
+  // 这两个占据位置不是末尾
+  layout->addWidget(p_project_list, 4, 1, 1, 1);
+  layout->addWidget(p_ue_path, 5, 1, 1, 2);
+
+  //第三列开始
+  layout->addWidget(p_project_add, 4, 2, 1, 1);
+  layout->addWidget(p_ue_open_path, 5, 2, 1, 1);
+
+  // 第四列开始
+  layout->addWidget(p_project_delete, 4, 3, 1, 1);
 
   layout->setColumnStretch(0, 2);
   layout->setColumnStretch(1, 5);
   layout->setColumnStretch(2, 1);
+  layout->setColumnStretch(3, 1);
 
   // 连接更改函数
   connect(p_save, &QPushButton::clicked,
@@ -118,6 +164,12 @@ Templates
               this->p_ue_version->setDisabled(true);
             }
           });
+  connect(p_project_add, &QPushButton::clicked,
+          this, &SettingWidget::addPriject);
+  connect(p_project_list, qOverload<int>(&QComboBox::currentIndexChanged),
+          this, &SettingWidget::setProject);
+  connect(p_project_delete, &QPushButton::clicked,
+          this, &SettingWidget::deleteProject);
   resize({600, 200});
 }
 
@@ -129,6 +181,10 @@ void SettingWidget::setInit() {
   p_ue_version->setText(QString::fromStdString(ue_set.Version()));
   p_ue_shot_start->setValue(ue_set.ShotStart());
   p_ue_shot_end->setValue(ue_set.ShotEnd());
+
+  if (ue_set.hasPath())
+    p_ue_version->setDisabled(true);
+  p_project_list->setCurrentIndex(p_set_.getProjectIndex());
 }
 
 void SettingWidget::save() {
@@ -142,6 +198,39 @@ void SettingWidget::save() {
 void SettingWidget::closeEvent(QCloseEvent *event) {
   this->save();
   QWidget::closeEvent(event);
+}
+
+void SettingWidget::setProject(int index) {
+  if (index >= 0) {
+    auto k_prj = p_project_list->itemData(index, Qt::UserRole);
+    try {
+      p_set_.setProject_(k_prj.value<Project *>());
+    } catch (const DoodleError &error) {
+      QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(error.what()));
+    }
+  }
+}
+
+void SettingWidget::addPriject() {
+  auto path = QFileDialog::getExistingDirectory(this, QString{"项目目录"});
+  auto name = QInputDialog::getText(this, tr("项目"), tr("名称: "));
+  if (!path.isEmpty() && !name.isEmpty()) {
+    auto prj = std::make_shared<Project>(path.toStdString(), name.toStdString());
+    this->p_set_.installProject(prj);
+    p_project_model->init(this->p_set_.getAllProjects());
+  } else {
+    if (path.isEmpty())
+      QMessageBox::warning(this, QString::fromUtf8("注意: "), tr("没有找到路径, 无法添加"));
+    else if (name.isEmpty())
+      QMessageBox::warning(this, QString::fromUtf8("注意: "), tr("没有名称, 无法添加"));
+    else
+      QMessageBox::warning(this, QString::fromUtf8("注意: "), tr("未知原因, 无法添加"));
+  }
+  p_project_list->setCurrentIndex(p_set_.getProjectIndex());
+}
+
+void SettingWidget::deleteProject() {
+  p_project_model->removeRow(p_project_list->currentIndex());
 }
 
 DOODLE_NAMESPACE_E

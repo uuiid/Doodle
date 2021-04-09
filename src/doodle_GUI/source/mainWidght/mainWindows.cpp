@@ -25,9 +25,7 @@ mainWindows::mainWindows(QWidget *parent)
       p_menu_(nullptr),
       p_status_bar_(nullptr),
       centralWidget(nullptr),
-      p_layout(nullptr),
-      p_setting_widget_() {
-  p_setting_widget_ = new SettingWidget(this);
+      p_layout(nullptr) {
   setDockNestingEnabled(true);
   //添加动作和菜单
   doodle_createAction();
@@ -209,10 +207,9 @@ void mainWindows::doodle_createAction() {
 }
 
 void mainWindows::openSetting() {
-  p_setting_widget_->setInit();
-  p_setting_widget_->show();
+  auto setting = SettingWidget::Get();
+  setting->setInit();
+  setting->show();
 }
 
-void mainWindows::setProject() {
-}
 DOODLE_NAMESPACE_E

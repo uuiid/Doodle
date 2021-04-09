@@ -4,3 +4,4 @@ target_sources(
         PRIVATE
         settingWidget.cpp
 )
+add_subdirectory(Model)

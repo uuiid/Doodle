@@ -8,26 +8,29 @@
 #include <loggerlib/Logger.h>
 #include <QWidget>
 #include <corelib/core/coreset.h>
+
 class QListWidget;
 class QPushButton;
 class QLineEdit;
 class QSpinBox;
-
+class QComboBox;
 
 DOODLE_NAMESPACE_S
-
+class ProjectModel;
 class SettingWidget : public QWidget {
   Q_OBJECT
  public:
   explicit SettingWidget(QWidget *parent = nullptr);
 
- Q_SIGNALS:
-  void projectChanged();
+  static SettingWidget *Get();
 
  public Q_SLOTS:
 
   void setInit();
   void save();
+  void setProject(int index);
+  void addPriject();
+  void deleteProject();
 
  protected:
   void closeEvent(QCloseEvent *event) override;
@@ -42,6 +45,10 @@ class SettingWidget : public QWidget {
   QLineEdit *p_ue_version;
   QSpinBox *p_ue_shot_start;
   QSpinBox *p_ue_shot_end;
+
+  ProjectModel *p_project_model;
+
+  QComboBox *p_project_list;
 };
 
 DOODLE_NAMESPACE_E
