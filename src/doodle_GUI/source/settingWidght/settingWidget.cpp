@@ -13,7 +13,7 @@
 #include <QtCore/QDir>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QGridLayout>
-
+#include <QtWidgets/QFileDialog>
 DOODLE_NAMESPACE_S
 SettingWidget::SettingWidget(QWidget *parent)
     : QWidget(parent) {
@@ -42,6 +42,14 @@ SettingWidget::SettingWidget(QWidget *parent)
   auto p_cache               = new QLabel(QString::fromStdString(
       set.getCacheRoot().generic_string()));
   auto p_user_doc            = new QLabel(QString::fromStdString(set.getDoc().generic_string()));
+  auto p_ue_open_path        = new QPushButton("...");
+  p_ue_open_path->setToolTip(R"(这里要选择的目录是
+.egstore
+Engine
+FeaturePacks
+Samples
+Templates
+这些目录的上一级)");
 
   p_user_text     = new QLineEdit(QString::fromStdString(set.getUser()));
   p_save          = new QPushButton(tr("保存"));
@@ -57,26 +65,29 @@ SettingWidget::SettingWidget(QWidget *parent)
 
   // 创建布局
   // 标签
-  layout->addWidget(p_dep_label, 0, 0, 1, 1);
-  layout->addWidget(p_user_label, 1, 0, 1, 1);
-  layout->addWidget(p_cache_label, 2, 0, 1, 1);
-  layout->addWidget(p_user_doc_label, 3, 0, 1, 1);
-  layout->addWidget(p_ue_path_label, 4, 0, 1, 1);
-  layout->addWidget(p_ue_version_label, 5, 0, 1, 1);
-  layout->addWidget(p_ue_shot_start_label, 6, 0, 1, 1);
-  layout->addWidget(p_ue_shot_end_label, 7, 0, 1, 1);
+  layout->addWidget(p_dep_label, 0, 0, 1, 2);
+  layout->addWidget(p_user_label, 1, 0, 1, 2);
+  layout->addWidget(p_cache_label, 2, 0, 1, 2);
+  layout->addWidget(p_user_doc_label, 3, 0, 1, 2);
+  layout->addWidget(p_ue_path_label, 4, 0, 1, 2);
+  layout->addWidget(p_ue_version_label, 5, 0, 1, 2);
+  layout->addWidget(p_ue_shot_start_label, 6, 0, 1, 2);
+  layout->addWidget(p_ue_shot_end_label, 7, 0, 1, 2);
 
-  layout->addWidget(p_dep_text, 0, 1, 1, 1);
-  layout->addWidget(p_user_text, 1, 1, 1, 1);
-  layout->addWidget(p_cache, 2, 1, 1, 1);
-  layout->addWidget(p_user_doc, 3, 1, 1, 1);
+  layout->addWidget(p_ue_open_path, 4, 2, 1, 1);
+
+  layout->addWidget(p_dep_text, 0, 1, 1, 2);
+  layout->addWidget(p_user_text, 1, 1, 1, 2);
+  layout->addWidget(p_cache, 2, 1, 1, 2);
+  layout->addWidget(p_user_doc, 3, 1, 1, 2);
   layout->addWidget(p_ue_path, 4, 1, 1, 1);
-  layout->addWidget(p_ue_version, 5, 1, 1, 1);
-  layout->addWidget(p_ue_shot_start, 6, 1, 1, 1);
-  layout->addWidget(p_ue_shot_end, 7, 1, 1, 1);
+  layout->addWidget(p_ue_version, 5, 1, 1, 2);
+  layout->addWidget(p_ue_shot_start, 6, 1, 1, 2);
+  layout->addWidget(p_ue_shot_end, 7, 1, 1, 2);
 
-  layout->setColumnStretch(0, 1);
-  layout->setColumnStretch(1, 4);
+  layout->setColumnStretch(0, 2);
+  layout->setColumnStretch(1, 5);
+  layout->setColumnStretch(2, 1);
 
   // 连接更改函数
   connect(p_save, &QPushButton::clicked,
@@ -97,6 +108,17 @@ SettingWidget::SettingWidget(QWidget *parent)
           [&ue_set](int start) { ue_set.setShotStart(start); });
   connect(p_ue_shot_end, qOverload<int>(&QSpinBox::valueChanged), this,
           [&ue_set](int end) { ue_set.setShotEnd(end); });
+
+  connect(p_ue_open_path, &QPushButton::clicked, this,
+          [&ue_set, this]() {
+            auto path = QFileDialog::getExistingDirectory(this, QString{"ue安装目录"});
+            if (!path.isEmpty()) {
+              this->p_ue_path->setText(path);
+              ue_set.setPath(path.toStdString());
+              this->p_ue_version->setDisabled(true);
+            }
+          });
+  resize({600, 200});
 }
 
 void SettingWidget::setInit() {

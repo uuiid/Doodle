@@ -11,6 +11,7 @@ add_library(core SHARED
 add_subdirectory(core)
 add_subdirectory(FileWarp)
 add_subdirectory(FileSys)
+add_subdirectory(Metadata)
 
 set_target_properties(core 
 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
