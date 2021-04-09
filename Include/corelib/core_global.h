@@ -47,7 +47,7 @@ class path;
 template <class Archive>
 void save(Archive &archive,
           boost::filesystem::path const &path_) {
-  archive(path_.generic_string());
+  archive(cereal::make_nvp("path_string", path_.generic_string()));
 }
 
 template <class Archive>

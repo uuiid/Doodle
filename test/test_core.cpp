@@ -12,6 +12,7 @@
 #include <cereal/archives/portable_binary.hpp>
 #include <cereal/archives/binary.hpp>
 #include <sstream>
+#include <streambuf>
 
 class CoreTest : public ::testing::Test {
  protected:
@@ -45,18 +46,25 @@ void CoreTest::TearDown() {
 }
 
 TEST_F(CoreTest, archive) {
-  auto& ue_set        = doodle::Ue4Setting::Get();
-  auto str_stream     = std::stringstream{};
+  auto& ue_set    = doodle::Ue4Setting::Get();
+  auto str_stream = std::stringstream{};
+
   auto str_stream_bin = std::stringstream{};
   {
     cereal::JSONOutputArchive json{str_stream};
     json(cereal::make_nvp("mainset", set));
-    cereal::BinaryOutputArchive binary{str_stream_bin};
-    binary(set);
+    // cereal::BinaryOutputArchive binary{std::cout};
+    cereal::BinaryOutputArchive binary2{str_stream_bin};
+    binary2(set);
   }
 
   std::cout << str_stream.str() << std::endl;
-  // std::cout << str_stream_bin.str() << std::endl;
+  // for (auto it = std::istream_iterator<char>(str_stream_bin);
+  //      it == std::istream_iterator<char>();
+  //      ++it) {
+  //   std::cout << "\\x" << (*it) << " ";
+  // }
+  // std::cout << std::endl;
   ue_set.setVersion("4.26");
 
   {

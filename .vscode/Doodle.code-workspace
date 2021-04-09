@@ -130,7 +130,8 @@
 			"xtree": "cpp",
 			"xutility": "cpp",
 			"charconv": "cpp",
-			"span": "cpp"
+			"span": "cpp",
+			"stack": "cpp"
 		},
 	}
 }
