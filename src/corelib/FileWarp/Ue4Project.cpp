@@ -80,8 +80,10 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
     FSys::ofstream file{};
     auto k_shot_sequence_path = k_shot_path / k_shot_sequence;
     if (!FSys::exists(k_shot_sequence_path)) {
-      file.open(k_shot_sequence_path, std::ios::badbit | std::ios::out);
+      file.open(k_shot_sequence_path, std::ios::binary | std::ios::out);
       auto k_file = cmrc::CoreResource::get_filesystem().open("resource/NewLevelSequence.uasset");
+      if (!file.is_open())
+        throw DoodleError("无法打开文件");
       file.write(k_file.begin(), k_file.size());
       file.close();
     }
@@ -90,8 +92,10 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
     k_shot_lev           = k_shot_lev + "_lev" + k_shot_suffix.str() + ".umap";
     auto k_shot_lev_path = k_shot_path / k_shot_lev;
     if (!FSys::exists(k_shot_lev_path)) {
-      file.open(k_shot_lev_path, std::ios::badbit | std::ios::out);
+      file.open(k_shot_lev_path, std::ios::binary | std::ios::out);
       auto k_file = cmrc::CoreResource::get_filesystem().open("resource/NewWorld.umap");
+      if (!file.is_open())
+        throw DoodleError("无法打开文件");
       file.write(k_file.begin(), k_file.size());
       file.close();
     }
