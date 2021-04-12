@@ -51,7 +51,7 @@ DOODLE_NAMESPACE_S
 //   }
 // }
 
-void toolkit::openPath(const fileSys::path &path_) {
+void toolkit::openPath(const FSys::path &path_) {
   auto path = path_;
 
   boost::format str("explorer.exe \"%s\"");
@@ -174,14 +174,14 @@ bool toolkit::deleteUeCache() {
   }
 }
 
-fileSys::path toolkit::getUeInstallPath() {
+FSys::path toolkit::getUeInstallPath() {
   boost::filesystem::path ue_path;
   boost::filesystem::path sourePath;
 
   auto uePath_key =
       QSettings{R"(HKEY_LOCAL_MACHINE\SOFTWARE\EpicGames\Unreal Engine)",
                 QSettings::NativeFormat};
-  dpathList dpath_list;
+  std::vector<FSys::path> dpath_list;
   for (const auto &item : uePath_key.childGroups()) {
     auto setting_ue = QSettings(
         QString(R"(HKEY_LOCAL_MACHINE\SOFTWARE\EpicGames\Unreal Engine\%1)")
@@ -191,7 +191,7 @@ fileSys::path toolkit::getUeInstallPath() {
     dpath_list.push_back(kPath.toString().toStdString());
   }
   dpath_list.erase(std::remove_if(dpath_list.begin(), dpath_list.end(),
-                                  [=](fileSys::path &dpath) {
+                                  [=](FSys::path &dpath) {
                                     return !boost::filesystem::exists(dpath);
                                   }),
                    dpath_list.end());

@@ -4,6 +4,7 @@ cmrc_add_resource_library(
   resource/abcExport.py
   resource/mayaExport.py
   resource/NewLevelSequence.uasset
+  resource/NewWorld.umap
 )
 
 add_library(core SHARED

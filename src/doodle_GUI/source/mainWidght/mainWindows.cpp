@@ -14,6 +14,9 @@
 #include <doodle_GUI/source/mainWidght/systemTray.h>
 #include <doodle_GUI/source/toolkit/MessageAndProgress.h>
 #include <doodle_GUI/source/SettingWidght/SettingWidget.h>
+#include <doodle_GUI/source/Metadata/View/ShotListView.h>
+
+#include <boost/format.hpp>
 DOODLE_NAMESPACE_S
 
 mainWindows::mainWindows(QWidget *parent)
@@ -151,11 +154,30 @@ void mainWindows::doodle_init() {
   k_create_ue4File->setText(tr("创建ue4关卡序列"));
   k_create_ue4File->setToolTip(tr(R"(注意:
 在创建是是没有ab镜的, 点击设置开始和结束的镜头号)"));
+  connect(k_create_ue4File, &DragPushBUtton::clicked,
+          this, &mainWindows::openSetting);
+  k_create_ue4File->handleFileFunction
+      .connect([this](const std::vector<FSys::path> &paths) {
+        if (paths.size() != 1)
+          QMessageBox::warning(this, QString{"注意:"}, tr("请拖入一个项目"));
+        try {
+          auto ue              = std::make_shared<Ue4Project>(paths[0]);
+          auto [k_eps, k_shot] = ShotListDialog::getShotList(this);
+          ue->createShotFolder(k_shot);
+          QMessageBox::warning(this, QString{"注意:"}, tr("创建完成"));
+
+        } catch (const DoodleError &error) {
+          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
+        } catch (const std::exception &error) {
+          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
+        }
+      });
 
   p_layout->addWidget(k_exMaya_button, 0, 0, 1, 1);
   p_layout->addWidget(k_create_image, 1, 0, 1, 1);
   p_layout->addWidget(k_create_dir_image, 2, 0, 1, 1);
   p_layout->addWidget(k_create_video, 3, 0, 1, 1);
+  p_layout->addWidget(k_create_ue4File, 4, 0, 1, 1);
 
   //托盘创建
   auto tray = new systemTray(this);

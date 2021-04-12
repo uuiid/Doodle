@@ -2,7 +2,6 @@
 
 #include <doodle_GUI/doodle_global.h>
 
-
 #include <QtWidgets/qdialog.h>
 #include <QtGui/qbitmap.h>
 
@@ -13,7 +12,7 @@ class ScreenshotAction : public QDialog {
  public:
   ScreenshotAction(QWidget *parent = nullptr);
 
-  void screenShot(const fileSys::path &save_path);
+  void screenShot(const FSys::path &save_path);
 
  protected:
   void paintEvent(QPaintEvent *event) override;

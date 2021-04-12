@@ -39,6 +39,29 @@ std::string convert::toEn(const std::string &conStr) {
   return result;
 }
 
+std::string convert::toEn(const std::wstring &conStr) {
+  std::string result{};
+  for (auto data : conStr) {
+    if (data >= 0x4e00 && data <= 0x9fa5) {
+      result.append(pinyin_list[data - 0x4e00]);
+    } else {
+      result.append(boost::locale::conv::utf_to_utf<char>(std::wstring{data}));
+    }
+  }
+  DOODLE_LOG_INFO(conStr << " to " << result);
+  return result;
+}
+
+std::string convert::toEn(const wchar_t &conStr) {
+  std::string result{};
+  if (conStr >= 0x4e00 && conStr <= 0x9fa5) {
+    result.append(pinyin_list[conStr - 0x4e00]);
+  } else {
+    result.append(boost::locale::conv::utf_to_utf<char>(std::wstring{conStr}));
+  }
+  return result;
+}
+
 convert &convert::Get() noexcept {
   static convert instance;
   return instance;

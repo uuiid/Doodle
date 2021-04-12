@@ -19,6 +19,9 @@ class CORE_API Project {
   const FSys::path& Path() const noexcept;
   void setPath(const FSys::path& Path);
 
+  const std::string str() const;
+  const std::string ShortStr() const;
+
  private:
   friend class cereal::access;
 

@@ -17,8 +17,7 @@ ScreenshotWidght::ScreenshotWidght(QWidget *parent)
     : QWidget(parent),
       p_butten(new QPushButton()),
       p_image(new QLabel()),
-      p_action(nullptr),
-      p_file_archive() {
+      p_action(nullptr) {
   auto layout = new QVBoxLayout(this);
 
   p_butten->setText("点击截图");

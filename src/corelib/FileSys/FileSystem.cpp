@@ -18,8 +18,8 @@ void FileSystem::localCopy(const FSys::path& sourePath, const FSys::path& target
   if (!boost::filesystem::exists(sourePath)) throw FileError(sourePath, "不存在路径");
   if (!boost::filesystem::exists(targetPath.parent_path()))
     boost::filesystem::create_directories(targetPath.parent_path());
-  fileSys::path backup_path = "";
-  dstring time_str          = "";
+  FSys::path backup_path = "";
+  std::string time_str   = "";
   if (backup) {
     auto time = std::chrono::system_clock::now();
 
@@ -56,7 +56,7 @@ void FileSystem::localCopy(const FSys::path& sourePath, const FSys::path& target
     for (auto& item :
          boost::filesystem::recursive_directory_iterator(sourePath)) {
       if (boost::filesystem::is_regular_file(item.path())) {
-        fileSys::path basic_string = std::regex_replace(
+        FSys::path basic_string = std::regex_replace(
             item.path().generic_string(), dregex, targetPath.generic_string());
         boost::asio::post(pool, [=]() {
           if (!boost::filesystem::exists(basic_string.parent_path()))
@@ -67,7 +67,7 @@ void FileSystem::localCopy(const FSys::path& sourePath, const FSys::path& target
               boost::filesystem::copy_option::overwrite_if_exists);
         });
         if (backup) {
-          fileSys::path basic_backup_path = std::regex_replace(
+          FSys::path basic_backup_path = std::regex_replace(
               item.path().generic_string(), dregex, backup_path.generic_string());
           boost::asio::post(pool, [=]() {
             if (!boost::filesystem::exists(basic_backup_path.parent_path()))

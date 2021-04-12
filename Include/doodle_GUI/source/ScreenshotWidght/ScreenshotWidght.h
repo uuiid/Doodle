@@ -26,7 +26,6 @@ class ScreenshotWidght : public QWidget {
   QPushButton* p_butten;
 
  protected:
-  std::weak_ptr<fileSqlInfo> p_file_archive;
 };
 
 DOODLE_NAMESPACE_E

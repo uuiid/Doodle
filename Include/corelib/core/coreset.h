@@ -29,10 +29,6 @@ enum class Department {
   paint
 };
 
-struct synPath_struct {
-  fileSys::path local;
-  fileSys::path server;
-};
 
 /*
  *全局静态设置类
@@ -50,29 +46,30 @@ class CORE_API coreSet {
   void appendEnvironment() const;
 
   //获得运行程序目录
-  static fileSys::path program_location();
-  static fileSys::path program_location(const fileSys::path &path);
+  static FSys::path program_location();
+  static FSys::path program_location(const FSys::path &path);
 
   // user设置
-  [[nodiscard]] dstring getUser() const;
-  [[nodiscard]] dstring getUser_en() const;
-  void setUser(const dstring &value);
+  [[nodiscard]] std::string getUser() const;
+  [[nodiscard]] std::string getUser_en() const;
+  void setUser(const std::string &value);
 
   //部门设置
-  [[nodiscard]] dstring getDepartment() const;
-  void setDepartment(const dstring &value);
+  [[nodiscard]] std::string getDepartment() const;
+  [[nodiscard]] const Department &getDepartmentEnum() const;
+  void setDepartment(const std::string &value);
 
   //缓存路径
-  [[nodiscard]] fileSys::path getCacheRoot() const;
+  [[nodiscard]] FSys::path getCacheRoot() const;
 
   // doc路径
-  [[nodiscard]] fileSys::path getDoc() const;
+  [[nodiscard]] FSys::path getDoc() const;
 
   Ue4Setting &gettUe4Setting() const { return ue4_setting; };
 
   void writeDoodleLocalSet();
 
-  static dstring toIpPath(const dstring &path);
+  static std::string toIpPath(const std::string &path);
 
   boost::uuids::uuid getUUID();
 
@@ -94,7 +91,7 @@ class CORE_API coreSet {
   void getSetting();
 
  private:
-  const static dstring settingFileName;
+  const static std::string settingFileName;
   boost::uuids::random_generator p_uuid_gen;
 
   //用户名称
@@ -102,8 +99,8 @@ class CORE_API coreSet {
   //部门
   Department department;
 
-  fileSys::path cacheRoot;
-  fileSys::path doc;
+  FSys::path cacheRoot;
+  FSys::path doc;
 
   Ue4Setting &ue4_setting;
 

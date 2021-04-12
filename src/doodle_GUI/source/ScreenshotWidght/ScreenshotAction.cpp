@@ -24,7 +24,7 @@ ScreenshotAction::ScreenshotAction(QWidget *parent)
   setMouseTracking(true);
 }
 
-void ScreenshotAction::screenShot(const fileSys::path &save_path) {
+void ScreenshotAction::screenShot(const FSys::path &save_path) {
   p_save_path = save_path.generic_string();
   setStyleSheet(R"(background-color:black;)");
   setWindowOpacity(0.8);

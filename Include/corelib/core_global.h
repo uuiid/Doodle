@@ -31,8 +31,6 @@
   className &operator=(const className &) = delete;
 
 #define DOODLE_CONTENT "Content"
-#define DOODLE_EPFORMAT "ep%03i"
-#define DOODLE_SHFORMAT "sc%04i"
 #define DOODLE_UE_PATH "Engine/Binaries/Win64/UE4Editor.exe"
 //添加资源
 #include <cmrc/cmrc.hpp>
@@ -59,98 +57,20 @@ void load(Archive &archive,
 }
 }  // namespace boost::filesystem
 
-
-
-
 //开始我们的名称空间
 DOODLE_NAMESPACE_S
-namespace FSys    = boost::filesystem;
-namespace fileSys = boost::filesystem;
+namespace FSys = boost::filesystem;
 
 using pathPtr = std::shared_ptr<FSys::path>;
 
 const static uint64_t off{8000000};
 using ConnPtr = std::unique_ptr<sqlpp::sqlite3::connection>;
 
-//使用一些其他方便的引用类型
-
-class shot;
-class episodes;
-
-class shotClass;
-class shotType;
-
-class fileSqlInfo;
-class shotFileSqlInfo;
-
-class assdepartment;
-class assClass;
-class znchName;
-class assType;
-class assFileSqlInfo;
-
-class movieEpsArchive;
-class synData;
-class pathParsing;
-
-class ShotModifySQLDate;
-class queueData;
-using queueDataPtr = std::shared_ptr<queueData>;
-//评论类
-class CommentInfo;
-using CommentInfoPtr = std::shared_ptr<CommentInfo>;
-
-//共享指针引用类
-using shotPtr      = std::shared_ptr<shot>;
-using episodesPtr  = std::shared_ptr<episodes>;
-using shotClassPtr = std::shared_ptr<shotClass>;
-using shotTypePtr  = std::shared_ptr<shotType>;
-using shotInfoPtr  = std::shared_ptr<shotFileSqlInfo>;
-
-using assDepPtr   = std::shared_ptr<assdepartment>;
-using assClassPtr = std::shared_ptr<assClass>;
-using znchNamePtr = std::shared_ptr<znchName>;
-using assTypePtr  = std::shared_ptr<assType>;
-using assInfoPtr  = std::shared_ptr<assFileSqlInfo>;
-
-using fileSqlInfoPtr = std::shared_ptr<fileSqlInfo>;
-using synDataPtr     = std::shared_ptr<synData>;
-
-using pathParsingPtr = std::shared_ptr<pathParsing>;
-//列表引用类
-
-using synDataPtrList   = std::vector<synDataPtr>;
-using episodesPtrList  = std::vector<episodesPtr>;
-using shotPtrList      = std::vector<shotPtr>;
-using shotClassPtrList = std::vector<shotClassPtr>;
-using shotTypePtrList  = std::vector<shotTypePtr>;
-using shotInfoPtrList  = std::vector<shotInfoPtr>;
-using assDepPtrList    = std::vector<assDepPtr>;
-
-using assClassPtrList = std::vector<assClassPtr>;
-using assTypePtrList  = std::vector<assTypePtr>;
-using assInfoPtrList  = std::vector<assInfoPtr>;
-struct synPath_struct;
-using synPath_structPtr = std::shared_ptr<synPath_struct>;
-using synPathListPtr    = std::vector<synPath_struct>;
-class fileArchive;
-
-using fileArchivePtr = std::shared_ptr<fileArchive>;
-class mayaArchive;
-using mayaArchivePtr = std::shared_ptr<mayaArchive>;
-class mayaArchiveShotFbx;
-
-using mayaArchiveShotFbxPtr = std::shared_ptr<mayaArchiveShotFbx>;
-
-using dstring = std::string;
-
-using dstringList = std::vector<std::string>;
-
-using dpathPtr     = std::shared_ptr<fileSys::path>;
-using dpathListPtr = std::vector<dpathPtr>;
-using dpathList    = std::vector<fileSys::path>;
-
 class Project;
-using ProjectPtr = std::shared_ptr<Project>;
+class Episodes;
+class Shot;
+using ProjectPtr  = std::shared_ptr<Project>;
+using EpisodesPtr = std::shared_ptr<Episodes>;
+using ShotPtr     = std::shared_ptr<Shot>;
 
 DOODLE_NAMESPACE_E

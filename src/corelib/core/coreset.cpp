@@ -25,7 +25,7 @@
 
 DOODLE_NAMESPACE_S
 
-const dstring coreSet::settingFileName = "doodle_config.bin";
+const std::string coreSet::settingFileName = "doodle_config.bin";
 
 coreSet &coreSet::getSet() {
   static coreSet install;
@@ -39,7 +39,7 @@ void coreSet::init() {
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, NULL, &pManager);
   if (!pManager) DoodleError("无法找到保存路径");
 
-  doc = fileSys::path{pManager} / "doodle";
+  doc = FSys::path{pManager} / "doodle";
   getSetting();
   coreSql &sql = coreSql::getCoreSql();
   getCacheDiskPath();
@@ -77,9 +77,9 @@ void coreSet::writeDoodleLocalSet() {
 }
 
 void coreSet::getSetting() {
-  static fileSys::path k_settingFileName = doc / settingFileName;
+  static FSys::path k_settingFileName = doc / settingFileName;
   if (boost::filesystem::exists(k_settingFileName)) {
-    fileSys::path strFile(k_settingFileName);
+    FSys::path strFile(k_settingFileName);
     boost::filesystem::ifstream inJosn{k_settingFileName, std::ifstream::binary};
 
     cereal::PortableBinaryInputArchive incereal{inJosn};
@@ -97,7 +97,7 @@ coreSet::coreSet()
       p_project() {
 }
 
-dstring coreSet::toIpPath(const dstring &path) {
+std::string coreSet::toIpPath(const std::string &path) {
   static boost::regex exp("^[A-Z]:");
   if (boost::regex_search(path, exp)) {
     return path.substr(2);
@@ -109,26 +109,30 @@ boost::uuids::uuid coreSet::getUUID() {
   return p_uuid_gen();
 }
 
-dstring coreSet::getDepartment() const {
+std::string coreSet::getDepartment() const {
   return std::string{magic_enum::enum_name(department)};
 }
 
-void coreSet::setDepartment(const dstring &value) {
+const Department &coreSet::getDepartmentEnum() const {
+  return department;
+}
+
+void coreSet::setDepartment(const std::string &value) {
   department = magic_enum::enum_cast<Department>(value).value_or(Department::VFX);
 }
 
-dstring coreSet::getUser() const { return user; }
+std::string coreSet::getUser() const { return user; }
 
-dstring coreSet::getUser_en() const {
+std::string coreSet::getUser_en() const {
   return boost::algorithm::to_lower_copy(
       dopinyin::convert::Get().toEn(user));
 }
 
-void coreSet::setUser(const dstring &value) { user = value; }
+void coreSet::setUser(const std::string &value) { user = value; }
 
-fileSys::path coreSet::getDoc() const { return doc; }
+FSys::path coreSet::getDoc() const { return doc; }
 
-fileSys::path coreSet::getCacheRoot() const { return cacheRoot; }
+FSys::path coreSet::getCacheRoot() const { return cacheRoot; }
 
 bool coreSet::hasProject() {
   return !p_project_list.empty();
@@ -192,8 +196,8 @@ void coreSet::getCacheDiskPath() {
                                              "K:/",
                                              "L:/"};
   for (auto &dir : dirs) {
-    if (fileSys::exists(dir)) {
-      auto info = fileSys::space(dir);
+    if (FSys::exists(dir)) {
+      auto info = FSys::space(dir);
       if (((float)info.available / (float)info.available) > 0.05) {
         cacheRoot = dir + "Doodle_cache";
         break;
@@ -202,10 +206,10 @@ void coreSet::getCacheDiskPath() {
   }
 }
 
-fileSys::path coreSet::program_location() {
+FSys::path coreSet::program_location() {
   return boost::dll::program_location().parent_path();
 }
-fileSys::path coreSet::program_location(const fileSys::path &path) {
+FSys::path coreSet::program_location(const FSys::path &path) {
   return program_location() / path;
 }
 

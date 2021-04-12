@@ -131,7 +131,9 @@
 			"xutility": "cpp",
 			"charconv": "cpp",
 			"span": "cpp",
-			"stack": "cpp"
+			"stack": "cpp",
+			"hash_map": "cpp",
+			"hash_set": "cpp"
 		},
 	}
 }

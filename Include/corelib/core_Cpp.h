@@ -18,6 +18,7 @@
 #include <corelib/FileWarp/MayaFile.h>
 #include <corelib/FileWarp/ImageSequence.h>
 #include <corelib/FileWarp/VideoSequence.h>
+#include <corelib/FileWarp/Ue4Project.h>
 
 #include <corelib/FileSys/FileSystem>
 
