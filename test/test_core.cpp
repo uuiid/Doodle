@@ -27,19 +27,22 @@ class CoreTest : public ::testing::Test {
   doodle::FSys::path p_video_path_out1;
   doodle::FSys::path p_video_path_out2;
   doodle::FSys::path p_txt_path;
+  doodle::FSys::path p_ue4_path;
 };
 
 void CoreTest::SetUp() {
   // auto prj = std::make_shared<doodle::Project>("W:/");
   // set.setProject(prj);
 
-  p_maya_path  = R"(D:\shot_ep016_sc0032_Anm_Animation_v0001_zhengshanshan.ma)";
+  p_maya_path = R"(D:\shot_ep016_sc0032_Anm_Animation_v0001_zhengshanshan.ma)";
+
   p_image_path = R"(D:\sc_064)";
   p_video_path = R"(D:\video)";
 
   p_video_path_out1 = R"(D:\voide\test1.mp4)";
   p_video_path_out2 = R"(D:\voide\test2.mp4)";
   p_txt_path        = R"(D:\test.txt)";
+  p_ue4_path        = R"(F:\Users\teXiao\Documents\Unreal_Projects\test_tmp\test_tmp.uproject)";
 }
 
 void CoreTest::TearDown() {
@@ -88,7 +91,20 @@ TEST_F(CoreTest, archive) {
       << std::endl;
 }
 
-TEST_F(CoreTest, setInfo) {
+TEST_F(CoreTest, loadUe4ProjectFile) {
+  doodle::FSys::ifstream file{p_ue4_path};
+  auto str_stream = std::stringstream{};
+  auto ijson      = nlohmann::json::parse(file);
+
+  auto ueFile = ijson.get<doodle::Ue4ProjectFile>();
+  ueFile.Plugins.push_back(doodle::Ue4ProjectFilePulgins{"doodle", true});
+  nlohmann::json root = ueFile;
+  // json(ueFile);
+  std::cout
+      << ijson
+      << std::endl
+      << root
+      << std::endl;
 }
 
 TEST_F(CoreTest, export_maya) {

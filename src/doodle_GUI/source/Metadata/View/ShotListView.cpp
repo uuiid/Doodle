@@ -9,6 +9,7 @@
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QMessageBox>
+#include <QtWidgets/QPushButton>
 #include <QtGui/QContextMenuEvent>
 
 namespace doodle {
@@ -88,12 +89,16 @@ ShotListDialog::ShotListDialog(QWidget* parent)
   auto layout = new QGridLayout(this);
   auto k_eps  = new QSpinBox();
   k_eps->setValue(1);
-  p_shot_model     = new ShotListModel(this);
-  auto k_shot_vidw = new ShotListView();
+  p_shot_model       = new ShotListModel(this);
+  auto k_shot_vidw   = new ShotListView();
+  auto k_ok_butten   = new QPushButton(tr("确认"));
+  auto k_quit_butten = new QPushButton(tr("取消"));
   k_shot_vidw->setModel(p_shot_model);
 
-  layout->addWidget(k_eps, 0, 0, 1, 1);
-  layout->addWidget(k_shot_vidw, 1, 0, 1, 1);
+  layout->addWidget(k_eps, 0, 0, 1, 2);
+  layout->addWidget(k_shot_vidw, 1, 0, 1, 2);
+  layout->addWidget(k_ok_butten, 2, 0, 1, 1);
+  layout->addWidget(k_quit_butten, 2, 1, 1, 1);
 
   p_episodes = std::make_shared<Episodes>(1);
 
@@ -106,15 +111,26 @@ ShotListDialog::ShotListDialog(QWidget* parent)
 
   connect(k_eps, qOverload<int>(&QSpinBox::valueChanged), this,
           [this](int value) { this->p_episodes->setEpisodes_(value); });
-
+  connect(k_ok_butten, &QPushButton::clicked, this, &ShotListDialog::accept);
+  connect(k_quit_butten, &QPushButton::clicked, this, &ShotListDialog::reject);
   setLayout(layout);
+  
   setWindowTitle(tr("创建镜头"));
 }
 
 std::tuple<EpisodesPtr, std::vector<ShotPtr>> ShotListDialog::getShotList(QWidget* parent) {
   ShotListDialog k_dialog(parent);
-  k_dialog.exec();
-  return {k_dialog.p_shot_model->Episodes_(), k_dialog.p_shot_model->Shots_()};
+  auto result = k_dialog.exec();
+  switch (result) {
+    case QDialog::Accepted:
+      return {k_dialog.p_shot_model->Episodes_(), k_dialog.p_shot_model->Shots_()};
+      break;
+    case QDialog::Rejected:
+      return {};
+    default:
+      return {};
+      break;
+  }
 }
 
 }  // namespace doodle

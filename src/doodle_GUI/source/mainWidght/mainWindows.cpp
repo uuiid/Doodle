@@ -163,6 +163,10 @@ void mainWindows::doodle_init() {
         try {
           auto ue              = std::make_shared<Ue4Project>(paths[0]);
           auto [k_eps, k_shot] = ShotListDialog::getShotList(this);
+          if (k_shot.empty()) {
+            QMessageBox::warning(this, QString{"注意:"}, tr("取消创建"));
+            return;
+          }
           ue->createShotFolder(k_shot);
           QMessageBox::warning(this, QString{"注意:"}, tr("创建完成"));
 

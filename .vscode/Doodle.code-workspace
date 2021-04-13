@@ -135,5 +135,43 @@
 			"hash_map": "cpp",
 			"hash_set": "cpp"
 		},
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "pack",
+				"type": "shell",
+				"command": "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe",
+				"problemMatcher": [],
+				"args": [
+					"install_release/anzhuang.iss"
+				],
+				"group": "none",
+			},
+			{
+				"label": "doodle_python",
+				"type": "process",
+				"command": "c:\\Program Files\\Autodesk\\Maya2020\\bin\\mayapy.exe",
+				"args": [
+					"${file}",
+					"--path=C:/Users/teXiao/Documents/maya/projects/default/scenes/test_uv_set_and_mat.ma",
+					"--exportpath=C:/Users/teXiao/Documents/maya/projects/default/scenes"
+				]
+			},
+			{
+				"label": "cpack",
+				"type": "shell",
+				"command": "cpack.exe",
+				"args": [],
+				"group": "none",
+				"options": {
+					"cwd": "${workspaceFolder}/b_Ninja_VS19_Ni_64_qt515_Release",
+					"env": {
+						"PATH": "%PATH%;C:/Program Files/CMake/bin"
+					}
+				}
+			}
+		]
 	}
 }

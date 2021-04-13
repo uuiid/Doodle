@@ -3,8 +3,7 @@ cmrc_add_resource_library(
   CoreResource
   resource/abcExport.py
   resource/mayaExport.py
-  resource/NewLevelSequence.uasset
-  resource/NewWorld.umap
+
 )
 
 add_library(core SHARED
@@ -59,7 +58,7 @@ ${OpenCV_LIBS}
 )
 
 
-target_compile_definitions(core PRIVATE CORE_LIBRARY core_EXPORT)
+target_compile_definitions(core PRIVATE CORE_LIBRARY core_EXPORT WIN32_LEAN_AND_MEAN)
 target_compile_definitions(core PUBLIC DOODLE_QT NOMINMAX)
 
 
