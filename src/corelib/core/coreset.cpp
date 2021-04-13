@@ -67,6 +67,7 @@ void coreSet::appendEnvironment() const {
 }
 
 void coreSet::writeDoodleLocalSet() {
+  ue4_setting.testValue();
   if (ue4_setting.hasPath() && !FSys::exists(ue4_setting.Path() / DOODLE_UE_PATH)) {
     ue4_setting.setPath({});
     throw FileError{ue4_setting.Path(), " 在路径中没有找到ue,不保存"};

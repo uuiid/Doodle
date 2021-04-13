@@ -137,7 +137,14 @@ Templates
 
   // 连接更改函数
   connect(p_save, &QPushButton::clicked,
-          this, [&set]() { set.writeDoodleLocalSet(); });
+          this, [&set, &ue_set, this]() {
+            try {
+              set.writeDoodleLocalSet();
+            } catch (const std::exception &error) {
+              QMessageBox::warning(this, QString::fromUtf8("注意: "), tr(error.what()));
+            }
+            p_ue_path->setText(QString::fromStdString(ue_set.Path().generic_string()));
+          });
 
   connect(p_dep_text, &QComboBox::currentTextChanged,
           this, [&set](const QString &str) { set.setDepartment(str.toStdString()); });

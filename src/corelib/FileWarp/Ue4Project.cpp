@@ -1,6 +1,5 @@
 #include <corelib/FileWarp/Ue4Project.h>
 #include <corelib/Exception/Exception.h>
-#include <corelib/libWarp/WinReg.hpp>
 #include <corelib/core/Ue4Setting.h>
 #include <corelib/core/coreset.h>
 #include <corelib/Metadata/Shot.h>
@@ -8,6 +7,7 @@
 
 #include <loggerlib/Logger.h>
 
+#include <corelib/libWarp/WinReg.hpp>
 #include <boost/format.hpp>
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
@@ -22,17 +22,8 @@ Ue4Project::Ue4Project(FSys::path project_path)
     : p_ue_path(),
       p_ue_Project_path(std::move(project_path)),
       p_project(coreSet::getSet().Project_()) {
-  auto& ue = Ue4Setting::Get();
-  if (ue.hasPath()) {
-    p_ue_path = ue.Path();
-  } else {
-    auto key_str = boost::wformat{LR"(SOFTWARE\EpicGames\Unreal Engine\%s)"};
-    auto wv      = boost::locale::conv::utf_to_utf<wchar_t>(Ue4Setting::Get().Version());
-    key_str % wv;
-
-    auto key  = winreg::RegKey{HKEY_LOCAL_MACHINE, key_str.str()};
-    p_ue_path = FSys::path{key.GetStringValue(L"InstalledDirectory")};
-  }
+  auto& ue  = Ue4Setting::Get();
+  p_ue_path = ue.Path();
 }
 
 void Ue4Project::addUe4ProjectPlugins(const std::vector<std::string>& strs) const {

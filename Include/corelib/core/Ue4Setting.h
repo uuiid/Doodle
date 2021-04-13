@@ -31,7 +31,8 @@ class CORE_API Ue4Setting {
 
   const std::int32_t& ShotEnd() const noexcept;
   void setShotEnd(const std::int32_t& ShotEnd) noexcept;
-
+  
+  void testValue();
  private:
   friend class cereal::access;
 
