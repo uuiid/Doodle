@@ -47,7 +47,7 @@ void Ue4Project::addUe4ProjectPlugins(const std::vector<std::string>& strs) cons
 
 void Ue4Project::runPythonScript(const std::string& python_str) const {
   auto tmp_name = boost::uuids::to_string(coreSet::getSet().getUUID()) + ".py";
-  auto tmp_file = FSys::temp_directory_path() / "doodle" / tmp_name;
+  auto tmp_file = coreSet::getSet().getCacheRoot() / tmp_name;
 
   {  //写入文件
     FSys::ofstream k_ofile{tmp_file};
