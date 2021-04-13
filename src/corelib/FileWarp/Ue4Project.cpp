@@ -110,19 +110,28 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
   //创建镜头文件夹
   std::string python_str{R"(import unreal
 )"};
-  boost::format python_format_LevelSequence{R"(unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+  boost::format python_format_LevelSequence{R"(ass = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
     asset_name='%s',
     package_path='/Game/%s', 
     asset_class=unreal.LevelSequence, 
     factory=unreal.LevelSequenceFactoryNew())
+ass.make_range(1001,1200)
+ass.set_playback_start(1001)
+ass.set_playback_end(1200)
+
+ass.set_work_range_start(40)
+ass.set_work_range_end(30)
+
+ass.set_view_range_start(30)
+ass.set_view_range_end(30)
 unreal.EditorAssetLibrary.save_directory('/Game/')
 )"};
-  boost::format python_format_World{R"(ass = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+  boost::format python_format_World{R"(ass_lev = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
     asset_name='%1%', 
     package_path='/Game/%2%', 
     asset_class=unreal.World, 
     factory=unreal.WorldFactory())
-unreal.EditorLoadingAndSavingUtils.save_map(ass, "/Game/%2%/%1%")
+unreal.EditorLoadingAndSavingUtils.save_map(ass_lev, "/Game/%2%/%1%")
 )"};
 
   auto k_game_episodes_path = FSys::path{ContentShot} / inShotList[0]->Episodes_()->str();
