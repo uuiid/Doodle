@@ -1,7 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>resource/mayaIcon.png</file>
-        <file>resource/ue4Icon.png</file>
-        <file>resource/icon.ico</file>
-    </qresource>
-</RCC>

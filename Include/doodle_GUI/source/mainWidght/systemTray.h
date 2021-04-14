@@ -11,21 +11,18 @@
 //
 #pragma once
 #include <doodle_GUI/doodle_global.h>
-#include <QSystemTrayIcon>
 
 DOODLE_NAMESPACE_S
 
-class systemTray : public QSystemTrayIcon {
-  Q_OBJECT
+class systemTray {
  public:
-  explicit systemTray(mainWindows *parent = nullptr);
+  explicit systemTray();
   enum class installModel { peject,
                             exeFile };
 
- Q_SIGNALS:
   void quit();
 
- private Q_SLOTS:
+ private:
   void installMayaPlug();
   void installUe4Plug(const installModel &model);
   void doodleQuery();
@@ -33,6 +30,5 @@ class systemTray : public QSystemTrayIcon {
   void upDoodle();
 
  private:
-  QAction *setting;
 };
 DOODLE_NAMESPACE_E

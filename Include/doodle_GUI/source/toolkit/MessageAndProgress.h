@@ -1,22 +1,21 @@
 #pragma once
 
 #include <doodle_GUI/doodle_global.h>
-#include <QtWidgets/QMessageBox>
-#include <QtWidgets/QProgressDialog>
+
 
 namespace doodle {
-class MessageAndProgress : public QObject {
-  Q_OBJECT
+class MessageAndProgress{
+
   std::string p_message;
-  QProgressDialog* p_progress_dialog;
+
   void createMessageDialog();
- Q_SIGNALS:
+
 
   void progress(int value);
   void showMessage();
 
  public:
-  MessageAndProgress(QWidget* parent = nullptr);
+  MessageAndProgress();
 
   template <typename T>
   void createProgress(std::shared_ptr<T> value);

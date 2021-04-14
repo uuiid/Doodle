@@ -2,14 +2,6 @@
 //logger是boost库使用者，放到qt上面能好点
 #include <loggerlib/Logger.h>
 
-#include <QListWidget>
-#include <QMenuBar>
-#include <QStatusBar>
-
-#include <QtWidgets/qdockwidget.h>
-#include <QtWidgets/qsizepolicy.h>
-#include <QtWidgets/QApplication>
-
 #include <doodle_GUI/source/mainWidght/DragPushBUtton.h>
 #include <doodle_GUI/source/mainWidght/systemTray.h>
 #include <doodle_GUI/source/toolkit/MessageAndProgress.h>
@@ -17,225 +9,162 @@
 #include <doodle_GUI/source/Metadata/View/ShotListView.h>
 
 #include <boost/format.hpp>
+
+#include <wx/gbsizer.h>
 DOODLE_NAMESPACE_S
 
-mainWindows::mainWindows(QWidget *parent)
-    : QMainWindow(parent),
-      exitAction(nullptr),
-      refreshAction(nullptr),
-      openSetWindows(nullptr),
-      p_menu_bar_(nullptr),
-      p_menu_(nullptr),
-      p_status_bar_(nullptr),
-      centralWidget(nullptr),
-      p_layout(nullptr) {
-  setDockNestingEnabled(true);
-  //添加动作和菜单
-  doodle_createAction();
-  doodle_init();
+mainWindows::mainWindows()
+    : wxFrame(nullptr, wxID_ANY, {"doodle"}) {
+  SetMenuBar(new wxMenuBar{});
+  CreateStatusBar(1);
+  SetStatusText("doodle tools");
+
+  auto k_parent  = new wxPanel{this, wxID_ANY};
+  auto layout    = new wxBoxSizer{wxVERTICAL};
+  auto k_butten  = new wxButton{k_parent, wxID_ANY, "test"};
+  auto k_butten2 = new wxButton{k_parent, wxID_ANY, "test2"};
+  auto k_butten3 = new wxButton{k_parent, wxID_ANY, "test3"};
+  layout->Add(k_butten, /* wxGBPosition{0, 0}, wxGBSpan{1, 2}, */ wxSizerFlags{0}.Left().GetFlags());
+  layout->Add(k_butten2, /* wxGBPosition{1, 1}, wxGBSpan{1, 1}, */ wxSizerFlags{0}.Right().GetFlags());
+  layout->Add(k_butten3, /* wxGBPosition{1, 0}, wxGBSpan{1, 1}, */ wxSizerFlags{0}.Right().GetFlags());
+
+  k_parent->SetSizer(layout);
+  layout->SetSizeHints(this);
+
+  k_butten->DragAcceptFiles(true);
+
+  k_butten->Bind(
+      wxEVT_BUTTON,
+      [this](wxCommandEvent& event) {
+        auto k_ = wxMessageDialog{this, "ok", "ok"};
+        k_.ShowModal();
+        std::cout << "ok" << std::endl;
+      });
+  k_butten->Bind(
+      wxEVT_DROP_FILES,
+      [this](wxDropFilesEvent& event) {
+        if (event.GetNumberOfFiles() > 0) {
+          auto k_   = wxMessageDialog{this, "file: "};
+          auto k_s_ = event.GetFiles();
+          k_.SetMessage(k_s_[0]);
+          k_.ShowModal();
+        }
+      });
+
+  // Make a menubar
+  // wxMenu *file_menu = new wxMenu;
+
+  // file_menu->Append(LAYOUT_TEST_PROPORTIONS, "&Proportions demo...\tF1");
+  // file_menu->Append(LAYOUT_TEST_SIZER, "Test wx&FlexSizer...\tF2");
+  // file_menu->Append(LAYOUT_TEST_NB_SIZER, "Test &notebook sizers...\tF3");
+  // file_menu->Append(LAYOUT_TEST_GB_SIZER, "Test &gridbag sizer...\tF4");
+  // file_menu->Append(LAYOUT_TEST_SET_MINIMAL, "Test Set&ItemMinSize...\tF5");
+  // file_menu->Append(LAYOUT_TEST_NESTED, "Test nested sizer in a wxPanel...\tF6");
+  // file_menu->Append(LAYOUT_TEST_WRAP, "Test wrap sizers...\tF7");
+
+  // file_menu->AppendSeparator();
+  // file_menu->Append(LAYOUT_QUIT, "E&xit", "Quit program");
+
+  // wxMenu *help_menu = new wxMenu;
+  // help_menu->Append(LAYOUT_ABOUT, "&About", "About layout demo...");
+
+  // wxMenuBar *menu_bar = new wxMenuBar;
+
+  // menu_bar->Append(file_menu, "&File");
+  // menu_bar->Append(help_menu, "&Help");
+
+  // // Associate the menu bar with the frame
+  // SetMenuBar(menu_bar);
+
+  // CreateStatusBar(2);
+  // SetStatusText("wxWidgets layout demo");
+
+  // wxPanel *p = new wxPanel(this, wxID_ANY);
+
+  // we want to get a dialog that is stretchable because it
+  // has a text ctrl in the middle. at the bottom, we have
+  // two buttons which.
+
+  // wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
+
+  // // 1) top: create wxStaticText with minimum size equal to its default size
+  // topsizer->Add(
+  //     new wxStaticText(p, wxID_ANY, "An explanation (wxALIGN_RIGHT)."),
+  //     wxSizerFlags().Align(wxALIGN_RIGHT).Border(wxALL & ~wxBOTTOM, 5));
+  // topsizer->Add(
+  //     new wxStaticText(p, wxID_ANY, "An explanation (wxALIGN_LEFT)."),
+  //     wxSizerFlags().Align(wxALIGN_LEFT).Border(wxALL & ~wxBOTTOM, 5));
+  // topsizer->Add(
+  //     new wxStaticText(p, wxID_ANY, "An explanation (wxALIGN_CENTRE_HORIZONTAL)."),
+  //     wxSizerFlags().Align(wxALIGN_CENTRE_HORIZONTAL).Border(wxALL & ~wxBOTTOM, 5));
+
+  // // 2) top: create wxTextCtrl with minimum size (100x60)
+  // topsizer->Add(
+  //     new wxTextCtrl(p, wxID_ANY, "My text (wxEXPAND).", wxDefaultPosition, wxSize(100, 60), wxTE_MULTILINE),
+  //     wxSizerFlags(1).Expand().Border(wxALL, 5));
+
+  // // 2.5) Gratuitous test of wxStaticBoxSizers
+  // wxBoxSizer *statsizer = new wxStaticBoxSizer(
+  //     new wxStaticBox(p, wxID_ANY, "A wxStaticBoxSizer"), wxVERTICAL);
+  // statsizer->Add(
+  //     new wxStaticText(p, wxID_ANY, "And some TEXT inside it"),
+  //     wxSizerFlags().Border(wxALL, 30));
+  // topsizer->Add(
+  //     statsizer,
+  //     wxSizerFlags(1).Expand().Border(wxALL, 10));
+
+  // 2.7) And a test of wxGridSizer
+  // wxGridSizer *gridsizer = new wxGridSizer(2, 5, 5);
+  // gridsizer->Add(new wxStaticText(p, wxID_ANY, "Label"),
+  //                wxSizerFlags().Align(wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL));
+  // gridsizer->Add(new wxTextCtrl(p, wxID_ANY, "Grid sizer demo"),
+  //                wxSizerFlags(1).Align(wxGROW | wxALIGN_CENTER_VERTICAL));
+  // gridsizer->Add(new wxStaticText(p, wxID_ANY, "Another label"),
+  //                wxSizerFlags().Align(wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL));
+  // gridsizer->Add(new wxTextCtrl(p, wxID_ANY, "More text"),
+  //                wxSizerFlags(1).Align(wxGROW | wxALIGN_CENTER_VERTICAL));
+  // gridsizer->Add(new wxStaticText(p, wxID_ANY, "Final label"),
+  //                wxSizerFlags().Align(wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL));
+  // gridsizer->Add(new wxTextCtrl(p, wxID_ANY, "And yet more text"),
+  //                wxSizerFlags().Align(wxGROW | wxALIGN_CENTER_VERTICAL));
+  // topsizer->Add(
+  //     gridsizer,
+  //     wxSizerFlags().Proportion(1).Expand().Border(wxALL, 10));
+
+  // #if wxUSE_STATLINE
+  //   // 3) middle: create wxStaticLine with minimum size (3x3)
+  //   topsizer->Add(
+  //       new wxStaticLine(p, wxID_ANY, wxDefaultPosition, wxSize(3, 3), wxHORIZONTAL),
+  //       wxSizerFlags().Expand());
+  // #endif  // wxUSE_STATLINE
+
+  // 4) bottom: create two centred wxButtons
+  // wxBoxSizer *button_box = new wxBoxSizer(wxHORIZONTAL);
+  // button_box->Add(
+  //     new wxButton(p, wxID_ANY, "Two buttons in a box"),
+  //     wxSizerFlags().Border(wxALL, 7));
+  // button_box->Add(
+  //     new wxButton(p, wxID_ANY, "(wxCENTER)"),
+  //     wxSizerFlags().Border(wxALL, 7));
+
+  // topsizer->Add(button_box, wxSizerFlags().Center());
+
+  // p->SetSizer(topsizer);
+
+  // don't allow frame to get smaller than what the sizers tell it and also set
+  // the initial size as calculated by the sizers
+  // topsizer->SetSizeHints(this);
 }
 
-void mainWindows::doodle_init() {
-  //初始化自身
-  /* if (objectName().isEmpty())  */
-  setObjectName(QString{"mainWindows"});
+Doodle::Doodle(){
 
-  // resize(1200, 800);
-  setWindowTitle(tr("工具箱"));
+};
 
-  //设置中央小部件
-  centralWidget = new QWidget(this);
-  centralWidget->setObjectName(QString::fromUtf8("mainWindowsCentral"));
-  //添加中央小部件
-  setCentralWidget(centralWidget);
-
-  //创建导出maya按钮
-  p_layout             = new QGridLayout(centralWidget);
-  auto k_exMaya_button = new DragPushBUtton();
-  //导出maya文件
-  k_exMaya_button->setText(tr("从maya导出相机和文件"));
-  k_exMaya_button->setToolTip(tr(R"(注意:
-请把导出文件拖拽到此处, 可以拖拽多个文件, 会依照顺序导出
-默认导出路径是在文件所在的目录
-)"));
-
-  k_exMaya_button->handleFileFunction
-      .connect([this](const std::vector<FSys::path> &paths) {
-        try {
-          auto maya    = std::make_shared<MayaFile>();
-          auto process = new MessageAndProgress{this};
-          process->createProgress(maya);
-
-          std::thread{
-              [maya, paths]() { maya->batchExportFbxFile(paths); }}
-              .detach();
-        } catch (const DoodleError &error) {
-          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
-        }
-      });
-
-  // 创建视频
-  auto k_create_image = new DragPushBUtton();
-  k_create_image->setText(tr("从图片创建视频"));
-  k_create_image->setToolTip(tr(R"(注意:
-图片连接为视频时, 是按图名称来创建顺序的,
-请注意为文件夹的名称和文件名称:
-可以从 sc01,sc_01,Sc01,SC_01这种名称中识别镜头号
-集数号可以是 ep 为前缀,
-只要存在与文件夹路径或者文件名称中就行)"));
-  k_create_image->handleFileFunction
-      .connect([this](const std::vector<FSys::path> &paths) {
-        try {
-          auto image   = std::make_shared<ImageSequence>(paths);
-          auto process = new MessageAndProgress{this};
-
-          process->createProgress(image);
-          auto path = paths.at(0).parent_path() / image->getEpisodesAndShot_str().append(".mp4");
-          std::thread{
-              [image, path]() {
-                image->createVideoFile(path);
-              }}
-              .detach();
-        } catch (const DoodleError &error) {
-          DOODLE_LOG_INFO(error.what());
-          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
-        }
-      });
-
-  //创建多个视频
-  auto k_create_dir_image = new DragPushBUtton();
-  k_create_dir_image->setText(tr("从多个文件夹创建视频"));
-  k_create_dir_image->setToolTip(tr(R"(注意:
-可以同时拖拽多个图片文件夹, 按照每个文件夹一个视频合成
-请注意为文件夹的名称和文件名称:
-可以从 sc01,sc_01,Sc01,SC_01这种名称中识别镜头号
-集数号可以是 ep 为前缀,
-只要存在与文件夹路径或者文件名称中就行
-)"));
-  k_create_dir_image->handleFileFunction
-      .connect([this](const std::vector<FSys::path> &paths) {
-        try {
-          auto bath    = std::make_shared<ImageSequenceBatch>(paths);
-          auto process = new MessageAndProgress{this};
-
-          process->createProgress(bath);
-          std::thread{
-              [bath] {
-                bath->batchCreateSequence();
-              }}
-              .detach();
-        } catch (const DoodleError &error) {
-          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
-        }
-      });
-
-  auto k_create_video = new DragPushBUtton();
-  k_create_video->setText(tr("连接视频"));
-  k_create_video->setToolTip(tr(R"(注意:
-连接拍屏时是按照文件名称排序的, 请一定要注意文件名称)"));
-  k_create_video->handleFileFunction
-      .connect([this](const std::vector<FSys::path> &paths) {
-        try {
-          auto data    = std::make_shared<VideoSequence>(paths);
-          auto process = new MessageAndProgress{this};
-
-          process->createProgress(data);
-          std::thread{
-              [data] {
-                data->connectVideo();
-              }}
-              .detach();
-        } catch (const DoodleError &error) {
-          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
-        }
-      });
-
-  auto k_create_ue4File = new DragPushBUtton();
-  k_create_ue4File->setText(tr("创建ue4关卡序列"));
-  k_create_ue4File->setToolTip(tr(R"(注意:
-在创建是是没有ab镜的, 点击设置开始和结束的镜头号)"));
-  connect(k_create_ue4File, &DragPushBUtton::clicked,
-          this, &mainWindows::openSetting);
-  k_create_ue4File->handleFileFunction
-      .connect([this](const std::vector<FSys::path> &paths) {
-        if (paths.size() != 1)
-          QMessageBox::warning(this, QString{"注意:"}, tr("请拖入一个项目"));
-        try {
-          auto ue              = std::make_shared<Ue4Project>(paths[0]);
-          auto [k_eps, k_shot] = ShotListDialog::getShotList(this);
-          if (k_shot.empty()) {
-            QMessageBox::warning(this, QString{"注意:"}, tr("取消创建"));
-            return;
-          }
-          ue->createShotFolder(k_shot);
-          QMessageBox::warning(this, QString{"注意:"}, tr("创建完成"));
-
-        } catch (const DoodleError &error) {
-          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
-        } catch (const std::exception &error) {
-          QMessageBox::warning(this, QString{"注意:"}, QString::fromStdString(error.what()));
-        }
-      });
-
-  p_layout->addWidget(k_exMaya_button, 0, 0, 1, 1);
-  p_layout->addWidget(k_create_image, 1, 0, 1, 1);
-  p_layout->addWidget(k_create_dir_image, 2, 0, 1, 1);
-  p_layout->addWidget(k_create_video, 3, 0, 1, 1);
-  p_layout->addWidget(k_create_ue4File, 4, 0, 1, 1);
-
-  //托盘创建
-  auto tray = new systemTray(this);
-  tray->showMessage("doodle", "hello");
-  tray->setVisible(true);
-  tray->show();
-}
-
-void mainWindows::doodle_createAction() {
-  //添加菜单栏
-  p_menu_bar_ = new QMenuBar(this);
-  p_menu_bar_->setObjectName(QString::fromUtf8("p_menu_bar_"));
-  p_menu_bar_->setGeometry(QRect(0, 0, 640, 31));
-  this->setMenuBar(p_menu_bar_);
-
-  //添加菜单
-  p_menu_ = new QMenu(p_menu_bar_);
-  p_menu_->setObjectName(QString::fromUtf8("p_menu_"));
-  p_menu_->setTitle(tr("&File"));
-  p_menu_bar_->addAction(p_menu_->menuAction());
-
-  //添加菜单动作
-  refreshAction = new QAction(this);
-  refreshAction->setObjectName(QString::fromUtf8("refreshAction"));
-  refreshAction->setText(tr("Refresh"));
-  refreshAction->setStatusTip(tr("刷新"));
-  refreshAction->setToolTip(tr("Refresh"));
-  p_menu_->addAction(refreshAction);
-
-  openSetWindows = new QAction(this);
-  openSetWindows->setObjectName(QString::fromUtf8("openSetWindows"));
-  openSetWindows->setText(tr("Open Setting"));
-  openSetWindows->setStatusTip(tr("打开设置"));
-  openSetWindows->setToolTip(tr("Open Setting"));
-  connect(openSetWindows, &QAction::triggered, this, &mainWindows::openSetting);
-  p_menu_->addAction(openSetWindows);
-
-  exitAction = new QAction(this);
-  exitAction->setObjectName(QString::fromUtf8("exitAction"));
-  exitAction->setText(tr("Exit"));
-  exitAction->setStatusTip(tr("退出"));
-  exitAction->setToolTip(tr("Exit"));
-  p_menu_->addAction(exitAction);
-
-  //添加状态栏
-  p_status_bar_ = new QStatusBar(this);
-  p_status_bar_->setObjectName(QString::fromUtf8("p_status_bar_"));
-  setStatusBar(p_status_bar_);
-}
-
-void mainWindows::openSetting() {
-  auto setting = SettingWidget::Get();
-  setting->setInit();
-  setting->show();
+bool Doodle::OnInit() {
+  wxApp::OnInit();
+  auto k_mainWindows = new mainWindows{};
+  k_mainWindows->Show();
+  return true;
 }
 
 DOODLE_NAMESPACE_E

@@ -134,7 +134,8 @@
 			"stack": "cpp",
 			"hash_map": "cpp",
 			"hash_set": "cpp",
-			"*.ipp": "cpp"
+			"*.ipp": "cpp",
+			"qabstractlistmodel": "cpp"
 		},
 	},
 	"tasks": {

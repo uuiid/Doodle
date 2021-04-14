@@ -45,6 +45,7 @@ include(CMakeRC)
 
 #寻找一些外部库
 find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
+find_package(wxWidgets REQUIRED)
 find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time regex iostreams log locale)
 # find_package(CURL REQUIRED)
 find_package(Sqlpp11 REQUIRED)
@@ -134,6 +135,7 @@ add_subdirectory(src)
 add_subdirectory(include)
 enable_testing()
 add_subdirectory(test)
+add_subdirectory(tools)
 #=====================安装打包过程===============================
 # list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
 # include(mypack)
