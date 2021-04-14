@@ -1,3 +1,2 @@
+ID_DOODLE_ICON ICON "resource/icon.ico"
 #include "wx/msw/wx.rc"
-
-nameID ICON "resource/icon.ico"
