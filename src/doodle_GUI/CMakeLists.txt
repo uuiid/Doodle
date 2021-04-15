@@ -36,7 +36,7 @@ PUBLIC
 )
 
 add_subdirectory(source)
-
+target_compile_definitions(doodle PRIVATE wxUSE_STD_STRING wxUSE_UNICODE_WCHAR)
 target_include_directories(doodle PRIVATE ${BOOST_INCLUDE_DIRS} ${wxWidgets_INCLUDE_DIRS})
 
 target_link_libraries(doodle PRIVATE ${wxWidgets_LIBRARIES})

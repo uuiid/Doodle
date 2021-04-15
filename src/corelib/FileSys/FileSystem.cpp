@@ -1,4 +1,4 @@
-#include <corelib/FileSys/FileSystem>
+﻿#include <corelib/FileSys/FileSystem>
 #include <corelib/Exception/Exception.h>
 #include <magic_enum.hpp>
 

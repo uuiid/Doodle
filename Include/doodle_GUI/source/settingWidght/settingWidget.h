@@ -9,8 +9,11 @@
 
 #include <corelib/core/coreset.h>
 
+namespace doodle {
+class SettingWidght : public wxControl {
+  wxWindowIDRef p_;
 
-DOODLE_NAMESPACE_S
-
-
-DOODLE_NAMESPACE_E
+ public:
+  explicit SettingWidght(wxWindow* parent, wxWindowID id);
+};
+};  // namespace doodle

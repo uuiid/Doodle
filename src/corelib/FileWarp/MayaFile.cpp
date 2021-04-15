@@ -10,7 +10,6 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <corelib/libWarp/BoostUuidWarp.h>
 
-
 #include <loggerlib/Logger.h>
 
 DOODLE_NAMESPACE_S
@@ -133,7 +132,7 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
   auto it     = result.begin();
   auto size   = boost::numeric_cast<float>(result.size());
   auto k_pro  = float{0};
-  auto mess   = boost::format{"文件: %s --> %s \n"};
+  auto mess   = boost::format{"文件:%s-->%s\n"};
 
   while (!result.empty()) {
     status = it->second.wait_for(std::chrono::milliseconds{10});

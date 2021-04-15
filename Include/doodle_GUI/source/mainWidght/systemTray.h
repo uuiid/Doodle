@@ -12,23 +12,40 @@
 #pragma once
 #include <doodle_GUI/doodle_global.h>
 
-DOODLE_NAMESPACE_S
+#include <wx/taskbar.h>
 
-class systemTray {
+DOODLE_NAMESPACE_S
+class Doodle;
+class systemTray : public wxTaskBarIcon {
  public:
-  explicit systemTray();
+  explicit systemTray(wxTaskBarIconType iconType = wxTBI_DEFAULT_TYPE);
   enum class installModel { peject,
                             exeFile };
 
-  void quit();
+ protected:
+  virtual wxMenu* CreatePopupMenu() override;
 
  private:
   void installMayaPlug();
-  void installUe4Plug(const installModel &model);
+  void installUe4Plug(const installModel& model);
   void doodleQuery();
   void showRigister();
   void upDoodle();
 
  private:
+  wxWindowIDRef p_tool_id;
+  
+  wxWindowIDRef p_installMayaPlug_id;
+  wxWindowIDRef p_installUEPlug_id;
+  wxWindowIDRef p_installUEProjectPlug_id;
+
+  wxWindowIDRef p_deleteUECache_id;
+  wxWindowIDRef p_modifyUECache_id;
+
+  wxWindowIDRef p_setting_id;
+  wxWindowIDRef p_updata_id;
+  wxWindowIDRef p_quit_id;
 };
 DOODLE_NAMESPACE_E
+
+wxDECLARE_APP(doodle::Doodle);

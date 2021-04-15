@@ -11,8 +11,16 @@
 #include <doodle_GUI/doodle_global.h>
 
 DOODLE_NAMESPACE_S
+class SettingWidght;
+class systemTray;
 
 class mainWindows : public wxFrame {
+  wxWindowIDRef p_exmaya_id;
+  wxWindowIDRef p_create_image_id;
+  wxWindowIDRef p_create_dir_image_id;
+  wxWindowIDRef p_create_video_id;
+  wxWindowIDRef p_create_ue4File_id;
+
   void setProgress(int value);
 
  public:
@@ -21,13 +29,13 @@ class mainWindows : public wxFrame {
   DOODLE_DISABLE_COPY(mainWindows);
 
  private:
-  void doodle_init();
-  void doodle_createAction();
+  void exportMayaFile(const std::vector<FSys::path> paths);
+  void createVideoFile(const std::vector<FSys::path> paths);
+  void createVideoFileFormDir(const std::vector<FSys::path> paths);
+  void connectVideo(const std::vector<FSys::path> paths);
+  void createUe4Project(const std::vector<FSys::path> paths);
 
- public:
-  void openSetting();
-
- private:
+  std::vector<FSys::path> convertDropFile(wxDropFilesEvent& event);
 };
 
 class Doodle : public wxApp {
@@ -35,6 +43,14 @@ class Doodle : public wxApp {
   Doodle();
 
   virtual bool OnInit() override;
+  virtual int OnExit() override;
+
+  void openMainWindow();
+
+ private:
+  mainWindows* p_mainWindwos;
+  SettingWidght* p_setting_widget;
+  systemTray* p_systemTray;
 };
 
 DOODLE_NAMESPACE_E
