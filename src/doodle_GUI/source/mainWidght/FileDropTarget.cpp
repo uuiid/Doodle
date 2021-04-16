@@ -14,16 +14,13 @@ bool FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& in_f
 
     std::stringstream sstr{};
 
-    // auto str = in_file_names[i].ToStdString();
-    // auto buf = in_file_names[i].mb_str();
-    // std::string str(buf.length(), ' ');
-    // FSys::path tset{str};
-
+    DOODLE_LOG_ERROR(in_file_names[i].ToUTF8());
+    DOODLE_LOG_ERROR(FSys::path{in_file_names[i]});
     sstr << in_file_names[i];
     list.emplace_back(FSys::path{sstr.str()});
   }
 
-  this->handleFileFunction(list);
+  // this->handleFileFunction(list);
   return true;
 }
 }  // namespace doodle

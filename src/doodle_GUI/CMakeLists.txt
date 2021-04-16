@@ -38,8 +38,15 @@ PUBLIC
 add_subdirectory(source)
 target_compile_definitions(doodle PRIVATE wxUSE_STD_STRING wxUSE_UNICODE_WCHAR)
 target_include_directories(doodle PRIVATE ${BOOST_INCLUDE_DIRS} ${wxWidgets_INCLUDE_DIRS})
-
-target_link_libraries(doodle PRIVATE ${wxWidgets_LIBRARIES})
+# target_link_directories(doodle PRIVATE f:/Source/vcpkg/installed/x64-windows/debug/lib/)
+if(CMAKE_BUILD_TYPE EQUAL "Debug")
+target_link_libraries(doodle PRIVATE ${WX_based} ${WX_cored})
+message("${WX_based}")
+# else()
+# target_link_libraries(doodle PRIVATE ${WX_base} ${WX_core})
+# message("not Debug ${WX_based}")
+# message("not Debug ${CMAKE_BUILD_TYPE}")
+endif()
 
 
 target_link_libraries(doodle PUBLIC ${Boost_LIBRARIES})
