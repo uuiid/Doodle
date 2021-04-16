@@ -10,7 +10,7 @@
 
 #include <doodle_GUI/source/mainWidght/mainWindows.h>
 #include <doodle_GUI/source/toolkit/toolkit.h>
-#include <future>
+
 DOODLE_NAMESPACE_S
 
 systemTray::systemTray(wxTaskBarIconType iconType)

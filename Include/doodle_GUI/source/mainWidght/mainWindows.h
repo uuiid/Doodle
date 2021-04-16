@@ -35,7 +35,6 @@ class mainWindows : public wxFrame {
   void connectVideo(const std::vector<FSys::path> paths);
   void createUe4Project(const std::vector<FSys::path> paths);
 
-  std::vector<FSys::path> convertDropFile(wxDropFilesEvent& event);
 };
 
 class Doodle : public wxApp {

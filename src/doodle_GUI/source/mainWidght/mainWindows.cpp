@@ -125,26 +125,6 @@ void mainWindows::createUe4Project(const std::vector<FSys::path> paths) {
   // ue->createShotFolder(k_shot);
 }
 
-std::vector<FSys::path> mainWindows::convertDropFile(wxDropFilesEvent& event) {
-  std::vector<FSys::path> list;
-
-  const auto nums = event.GetNumberOfFiles();
-  if (nums > 0) {
-    // auto str = event.GetFiles();
-    for (int i = 0; i < nums; ++i) {
-      // auto wxstr = event.GetFiles()[i];
-      auto k_ = wxMessageDialog{this, "ok", event.GetFiles()[i]};
-      k_.ShowModal();
-      // auto stdstr = wxstr.ToStdString();
-      // auto buff = wxstr.mb_str();
-      // std::string str_{wxstr};
-      // auto str_ = std::string{buff.data(), buff.length()};
-      // list.emplace_back(FSys::path{wxstr});
-    }
-  }
-  return list;
-}
-
 Doodle::Doodle()
     : p_mainWindwos(nullptr),
       p_setting_widget(nullptr) {
@@ -152,13 +132,10 @@ Doodle::Doodle()
 };
 
 int Doodle::OnExit() {
-  // if (p_mainWindwos) {
-  //   p_mainWindwos->Destroy();
-  //   delete p_mainWindwos;
-  // }
   if (p_systemTray)
-    delete p_systemTray;
-  return 0;
+    p_systemTray->Destroy();
+
+  return wxApp::OnExit();
 }
 
 void Doodle::openMainWindow() {
@@ -167,7 +144,7 @@ void Doodle::openMainWindow() {
 
 bool Doodle::OnInit() {
   wxApp::OnInit();
-  wxLog::EnableLogging(false);
+  wxLog::EnableLogging(true);
 
   // AllocConsole();
   // // redirect unbuffered STDOUT to the console
@@ -197,6 +174,7 @@ bool Doodle::OnInit() {
 
   p_systemTray = new systemTray{};
   p_systemTray->SetIcon(wxICON(ID_DOODLE_ICON));
+
   p_mainWindwos->Show();
 
   return true;
