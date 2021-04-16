@@ -12,6 +12,9 @@
 #include <QtWidgets/QPushButton>
 #include <QtGui/QContextMenuEvent>
 
+// #include <QtCore/qobjectdefs.h>
+// #include <QTWarp/wobjectdefs.h>
+// #include <QTWarp/wobjectimpl.h>
 namespace doodle {
 
 ShotListView::ShotListView(QWidget* parent)
