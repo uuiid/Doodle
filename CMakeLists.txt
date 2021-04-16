@@ -92,15 +92,6 @@ find_package(Autodesk_FBX 2020 REQUIRED)
 
 #下载自定义嵌入文件
 include(ExternalProject)
-ExternalProject_Add(bin2cpp_prj 
-        URL https://github.com/end2endzone/bin2cpp/releases/download/2.3.0/bin2cpp-2.3.0-win32.zip
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ""
-        TEST_COMMAND ""
-)
-#下载自定义嵌入文件
-include(ExternalProject)
 ExternalProject_Add(cmrc_prj 
         GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
         CONFIGURE_COMMAND ""
@@ -109,9 +100,6 @@ ExternalProject_Add(cmrc_prj
         TEST_COMMAND ""
 )
 
-ExternalProject_Get_property(bin2cpp_prj SOURCE_DIR)
-# message("Source dir of bin2cpp_prj = ${SOURCE_DIR}")
-set(BIN2CPP ${SOURCE_DIR}/bin/bin2cpp.exe)
 
 #添加文档生成
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)

@@ -13,6 +13,9 @@
 #define PINYIN_NAMESPACE_S namespace dopinyin {
 #define DNAMESPACE_E }
 
+#include <cmrc/cmrc.hpp>
+CMRC_DECLARE(PinyinResource);
+
 PINYIN_NAMESPACE_S
 class convert;
 DNAMESPACE_E
