@@ -92,6 +92,8 @@ ShotListDialog::ShotListDialog(QWidget* parent)
   auto layout = new QGridLayout(this);
   auto k_eps  = new QSpinBox();
   k_eps->setValue(1);
+  k_eps->setMaximum(9999);
+  k_eps->setMinimum(0);
   p_shot_model       = new ShotListModel(this);
   auto k_shot_vidw   = new ShotListView();
   auto k_ok_butten   = new QPushButton(tr("确认"));
@@ -117,7 +119,7 @@ ShotListDialog::ShotListDialog(QWidget* parent)
   connect(k_ok_butten, &QPushButton::clicked, this, &ShotListDialog::accept);
   connect(k_quit_butten, &QPushButton::clicked, this, &ShotListDialog::reject);
   setLayout(layout);
-  
+
   setWindowTitle(tr("创建镜头"));
 }
 
