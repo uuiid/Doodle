@@ -52,20 +52,39 @@ mainWindows::mainWindows()
   //可以拖拽文件
   k_exMaya_button->DragAcceptFiles(true);
   auto k_dray = new FileDropTarget{};
-  k_dray->handleFileFunction.connect([this](const std::vector<FSys::path> paths) {
-    auto maya    = std::make_shared<MayaFile>();
-    auto process = new MessageAndProgress{this};
-    process->createProgress(maya);
-
-    std::thread{
-        [maya, paths]() { maya->batchExportFbxFile(paths); }}
-        .detach();
-  });
+  k_dray->handleFileFunction.connect(std::bind(&mainWindows::exportMayaFile, this, std::placeholders::_1));
   k_exMaya_button->SetDropTarget(k_dray);
+
   k_create_image->DragAcceptFiles(true);
+  k_dray = new FileDropTarget{};
+  k_dray->handleFileFunction.connect(std::bind(&mainWindows::createVideoFile, this, std::placeholders::_1));
+  k_create_image->SetDropTarget(k_dray);
+
   k_create_dir_image->DragAcceptFiles(true);
+  k_dray = new FileDropTarget{};
+  k_dray->handleFileFunction.connect(std::bind(&mainWindows::createVideoFileFormDir, this, std::placeholders::_1));
+  k_create_dir_image->SetDropTarget(k_dray);
+
   k_create_video->DragAcceptFiles(true);
+  k_dray = new FileDropTarget{};
+  k_dray->handleFileFunction.connect(std::bind(&mainWindows::connectVideo, this, std::placeholders::_1));
+  k_create_video->SetDropTarget(k_dray);
+
   k_create_ue4File->DragAcceptFiles(true);
+  k_dray = new FileDropTarget{};
+  k_dray->handleFileFunction.connect(std::bind(&mainWindows::createUe4Project, this, std::placeholders::_1));
+  k_create_ue4File->SetDropTarget(k_dray);
+
+  k_create_ue4File->Bind(
+      wxEVT_BUTTON,
+      [](wxCommandEvent& event) {
+        wxGetApp();
+      });
+  Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
+    this->Hide();
+    if (event.CanVeto())
+      event.Veto(false);
+  });
 }
 
 void mainWindows::exportMayaFile(const std::vector<FSys::path> paths) {
@@ -132,6 +151,8 @@ Doodle::Doodle()
 };
 
 int Doodle::OnExit() {
+  if (p_mainWindwos->Close(true))
+    p_mainWindwos->Destroy();
   if (p_systemTray)
     p_systemTray->Destroy();
 
@@ -142,32 +163,14 @@ void Doodle::openMainWindow() {
   p_mainWindwos->Show();
 }
 
+void Doodle::openSettingWindow() {
+  p_setting_widget->Show();
+}
+
 bool Doodle::OnInit() {
   wxApp::OnInit();
+  // wxApp::SetExitOnFrameDelete(false);
   wxLog::EnableLogging(true);
-
-  // AllocConsole();
-  // // redirect unbuffered STDOUT to the console
-  // auto lStdHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);
-  // auto hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-  // auto fp = _fdopen(hConHandle, "w");
-  // *stdout = *fp;
-  // setvbuf(stdout, NULL, _IONBF, 0);
-  // // redirect unbuffered STDIN to the console
-  // lStdHandle = (long)GetStdHandle(STD_INPUT_HANDLE);
-  // hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-  // fp = _fdopen(hConHandle, "r");
-  // *stdin = *fp;
-  // setvbuf(stdin, NULL, _IONBF, 0);
-  // // redirect unbuffered STDERR to the console
-  // lStdHandle = (long)GetStdHandle(STD_ERROR_HANDLE);
-  // hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-  // fp = _fdopen(hConHandle, "w");
-  // *stderr = *fp;
-  // setvbuf(stderr, NULL, _IONBF, 0);
-  // // make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog
-  // // point to console as well
-  // std::ios::sync_with_stdio();
 
   p_mainWindwos = new mainWindows{};
   p_mainWindwos->SetIcon(wxICON(ID_DOODLE_ICON));

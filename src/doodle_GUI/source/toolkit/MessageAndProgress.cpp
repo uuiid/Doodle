@@ -1,6 +1,5 @@
 #include <doodle_GUI/source/toolkit/MessageAndProgress.h>
-#include <boost/locale.hpp>
-
+#include <boost/format.hpp>
 namespace doodle {
 // IMPLEMENT_DYNAMIC_CLASS();
 // DEFINE_EVENT_TYPE(DOODLE_THREAD);
@@ -31,7 +30,11 @@ MessageAndProgress::MessageAndProgress(wxWindow* parent)
   p_progress->Bind(
       wxEVT_THREAD,
       [this](wxThreadEvent& event) {
-        p_progress->Update(event.GetInt());
+        // p_progress->set
+        boost::format str_f{"进行中... %d"};
+        str_f % event.GetInt();
+        auto str = wxString::FromUTF8(str_f.str().append(" %"));
+        p_progress->Update(event.GetInt(), str);
         event.Skip();
       });
 }

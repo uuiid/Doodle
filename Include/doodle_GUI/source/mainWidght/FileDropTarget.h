@@ -8,7 +8,7 @@ class FileDropTarget : public wxFileDropTarget {
 
  public:
   virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& in_file_names) override;
-
+  // virtual ~FileDropTarget();
   boost::signals2::signal<void(const std::vector<FSys::path>&)> handleFileFunction;
 };
 

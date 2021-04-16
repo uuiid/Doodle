@@ -25,7 +25,7 @@ class mainWindows : public wxFrame {
 
  public:
   explicit mainWindows();
-  //~mainWindows() override;
+
   DOODLE_DISABLE_COPY(mainWindows);
 
  private:
@@ -34,7 +34,6 @@ class mainWindows : public wxFrame {
   void createVideoFileFormDir(const std::vector<FSys::path> paths);
   void connectVideo(const std::vector<FSys::path> paths);
   void createUe4Project(const std::vector<FSys::path> paths);
-
 };
 
 class Doodle : public wxApp {
@@ -45,6 +44,7 @@ class Doodle : public wxApp {
   virtual int OnExit() override;
 
   void openMainWindow();
+  void openSettingWindow();
 
  private:
   mainWindows* p_mainWindwos;

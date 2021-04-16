@@ -36,6 +36,11 @@ wxMenu* systemTray::CreatePopupMenu() {
         wxGetApp().Exit();
       },
       p_quit_id);
+  menu->Bind(
+      wxEVT_MENU, [](wxCommandEvent& event) {
+        wxGetApp().openMainWindow();
+      },
+      p_tool_id);
   return menu;
 }
 
