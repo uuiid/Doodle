@@ -6,12 +6,6 @@
 
 #include <magic_enum.hpp>
 
-#include <QtWidgets/QMenu>
-#include <QtWidgets/QInputDialog>
-#include <QtWidgets/QMessageBox>
-#include <QtWidgets/QPushButton>
-#include <QtGui/QContextMenuEvent>
-
 // #include <QtCore/qobjectdefs.h>
 // #include <QTWarp/wobjectdefs.h>
 // #include <QTWarp/wobjectimpl.h>
