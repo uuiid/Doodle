@@ -135,9 +135,7 @@
 			"hash_map": "cpp",
 			"hash_set": "cpp",
 			"*.ipp": "cpp",
-			"qabstractlistmodel": "cpp",
-			"*.xpm": "cpp",
-			"*.inc": "cpp"
+			"qpushbutton": "cpp"
 		},
 	},
 	"tasks": {

@@ -56,6 +56,7 @@ class camera:
 
         if len(self.maya_cam.fullPath().split("|")) > 2:
             try:
+                print("back anm")
                 self.bakeAnm()
             except:
                 print("chneg gong back anm")
@@ -64,13 +65,14 @@ class camera:
                                                                    start=int(
                                                                        start),
                                                                    end=int(end))
+        pymel.core.select(self.maya_cam)
         maya.mel.eval("FBXExportBakeComplexStart -v {}".format(start))
         maya.mel.eval("FBXExportBakeComplexEnd -v {}".format(end))
         maya.mel.eval("FBXExportBakeComplexAnimation -v true")
         maya.mel.eval("FBXExportConstraints -v true")
         maya.mel.eval('FBXExport -f "{}" -s'.format(mel_name))
         print("camera erport ----> {}".format(mel_name))
-        log.addfile("camera", mel_name, args.version)
+        log.addfile("camera", mel_name, 0)
 
     def bakeAnm(self):
         pymel.core.parent(self.loa, self.maya_cam)
@@ -118,7 +120,7 @@ class camera:
         try:
             self.export()
         except:
-            print("chneg gong back anm")
+            print("not export")
 
 
 class export(object):

@@ -4,6 +4,8 @@
 #include <corelib/core_global.h>
 #include <nlohmann/json.hpp>
 
+#include <loggerlib/Logger.h>
+
 #include <cereal/types/common.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
@@ -46,7 +48,7 @@ class CORE_API Ue4ProjectFile {
     try {
       nlohmann_json_j.at("Plugins").get_to(nlohmann_json_t.Plugins);
     } catch (const nlohmann::json::exception& error) {
-      ;
+      DOODLE_LOG_INFO(error.what());
     }
   };
 };

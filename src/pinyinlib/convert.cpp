@@ -1,7 +1,6 @@
 #include <pinyinlib/convert.h>
 #include <boost/locale.hpp>
 #include <loggerlib/logger.h>
-#include <doodlePinyin.h>
 
 #include <stdexcept>
 #include <thread>
@@ -10,9 +9,9 @@
 PINYIN_NAMESPACE_S
 static std::vector<std::string> pinyin_list{};
 convert::convert() {
-  const auto &resource = bin2cpp::getPinyinDataFile();
-  resource.getBuffer();
-  std::string ZhongWenToPinYin{resource.getBuffer(), resource.getSize()};
+  const auto &resource = cmrc::PinyinResource::get_filesystem().open("zhtopy.txt");
+
+  std::string ZhongWenToPinYin{resource.begin(), resource.size()};
   std::regex regex{R"(\s)"};
   auto iter = std::sregex_token_iterator(
       ZhongWenToPinYin.begin(), ZhongWenToPinYin.end(), regex, -1);
