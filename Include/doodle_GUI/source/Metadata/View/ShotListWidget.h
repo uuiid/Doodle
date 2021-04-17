@@ -1,12 +1,17 @@
 #pragma once
 #include <doodle_GUI/doodle_global.h>
+#include <wx/listctrl.h>
 
 namespace doodle {
-class ShotListModel;
 
-class ShotListView {
+class ShotListWidget : public wxListCtrl {
+  EpisodesPtr p_episodes;
+  std::vector<ShotPtr> p_shots;
+
  public:
-  ShotListView();
+  explicit ShotListWidget(wxWindow *parent, wxWindowID id);
+
+  virtual wxString OnGetItemText(long item, long column) const override;
 
  private:
   void addShot();
@@ -17,7 +22,6 @@ class ShotListView {
 class ShotListDialog {
   EpisodesPtr p_episodes;
   std::vector<ShotPtr> p_shots;
-  ShotListModel* p_shot_model;
 
  public:
   ShotListDialog();

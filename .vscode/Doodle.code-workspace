@@ -10,6 +10,7 @@
 		"qttools.injectNatvisFile": false,
 		"workbench.editor.limit.enabled": true,
 		"workbench.editor.limit.value": 8,
+		"workbench.editor.closeEmptyGroups": false,
 		"git.autoRepositoryDetection": "subFolders",
 		"git.ignoredRepositories": [
 			"F:/Source/vcpkg"

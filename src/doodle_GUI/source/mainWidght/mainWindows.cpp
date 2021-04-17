@@ -8,7 +8,7 @@
 #include <doodle_GUI/source/mainWidght/systemTray.h>
 #include <doodle_GUI/source/toolkit/MessageAndProgress.h>
 #include <doodle_GUI/source/SettingWidght/SettingWidget.h>
-#include <doodle_GUI/source/Metadata/View/ShotListView.h>
+#include <doodle_GUI/source/Metadata/View/ShotListWidget.h>
 
 #include <boost/format.hpp>
 
@@ -77,8 +77,12 @@ mainWindows::mainWindows()
 
   k_create_ue4File->Bind(
       wxEVT_BUTTON,
-      [](wxCommandEvent& event) {
-        wxGetApp();
+      [this, k_parent](wxCommandEvent& event) {
+        auto test_f = new wxFrame(k_parent, wxID_ANY, "tset");
+
+        auto test = new ShotListWidget(test_f, wxID_ANY);
+        test_f->Show();
+        // wxGetApp();
       });
   Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
     this->Hide();
