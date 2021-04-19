@@ -21,7 +21,10 @@ ShotListWidget::ShotListWidget(wxWindow *parent, wxWindowID id)
 }
 
 wxString ShotListWidget::OnGetItemText(long item, long column) const {
-  return wxString::FromUTF8("test");
+  if (column == 0)
+    return wxString::FromUTF8("test");
+  else
+    return {};
 }
 
 void ShotListWidget::addShot() {

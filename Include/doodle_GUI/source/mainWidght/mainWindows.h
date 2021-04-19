@@ -46,6 +46,8 @@ class Doodle : public wxApp {
   void openMainWindow();
   void openSettingWindow();
 
+  // virtual bool OnExceptionInMainLoop() override;
+
  private:
   mainWindows* p_mainWindwos;
   SettingWidght* p_setting_widget;

@@ -129,7 +129,9 @@ std::string coreSet::getUser_en() const {
       dopinyin::convert::Get().toEn(user));
 }
 
-void coreSet::setUser(const std::string &value) { user = value; }
+void coreSet::setUser(const std::string &value) {
+  user = value;
+}
 
 FSys::path coreSet::getDoc() const { return doc; }
 
@@ -183,7 +185,7 @@ void coreSet::deleteProject(const Project *Project_) {
 int coreSet::getProjectIndex() const {
   auto it    = std::find(p_project_list.begin(), p_project_list.end(), p_project);
   auto index = std::distance(p_project_list.begin(), it);
-  return boost::numeric_cast<int>(index);
+  return boost::numeric_cast<int>(index - 1);
 }
 
 void coreSet::getCacheDiskPath() {

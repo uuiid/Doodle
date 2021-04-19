@@ -28,24 +28,23 @@ mainWindows::mainWindows()
   // CreateStatusBar(1);
   // SetStatusText("doodle tools");
 
-  auto k_parent = new wxPanel{this, wxID_ANY};
   //创建总布局
   auto layout = new wxBoxSizer{wxVERTICAL};
   //创建按钮
-  auto k_exMaya_button    = new wxButton{k_parent, p_exmaya_id, _((wxString::FromUTF8("从maya导出相机和文件")))};
-  auto k_create_image     = new wxButton{k_parent, p_create_image_id, _((wxString::FromUTF8("从图片创建视频")))};
-  auto k_create_dir_image = new wxButton{k_parent, p_create_dir_image_id, _((wxString::FromUTF8("从多个文件夹创建视频")))};
-  auto k_create_video     = new wxButton{k_parent, p_create_video_id, _((wxString::FromUTF8("连接视频")))};
-  auto k_create_ue4File   = new wxButton{k_parent, p_create_ue4File_id, _((wxString::FromUTF8("创建ue4关卡序列")))};
+  auto k_exMaya_button    = new wxButton{this, p_exmaya_id, _((wxString::FromUTF8("从maya导出相机和文件")))};
+  auto k_create_image     = new wxButton{this, p_create_image_id, _((wxString::FromUTF8("从图片创建视频")))};
+  auto k_create_dir_image = new wxButton{this, p_create_dir_image_id, _((wxString::FromUTF8("从多个文件夹创建视频")))};
+  auto k_create_video     = new wxButton{this, p_create_video_id, _((wxString::FromUTF8("连接视频")))};
+  auto k_create_ue4File   = new wxButton{this, p_create_ue4File_id, _((wxString::FromUTF8("创建ue4关卡序列")))};
   //布局
-  layout->Add(k_exMaya_button, wxSizerFlags{0}.Expand().Left());
-  layout->Add(k_create_image, wxSizerFlags{0}.Expand().Left());
-  layout->Add(k_create_dir_image, wxSizerFlags{0}.Expand().Left());
-  layout->Add(k_create_video, wxSizerFlags{0}.Expand().Left());
-  layout->Add(k_create_ue4File, wxSizerFlags{0}.Expand().Left());
+  layout->Add(k_exMaya_button, wxSizerFlags{0}.Expand().Border(wxALL, 0));
+  layout->Add(k_create_image, wxSizerFlags{0}.Expand().Border(wxALL, 0));
+  layout->Add(k_create_dir_image, wxSizerFlags{0}.Expand().Border(wxALL, 0));
+  layout->Add(k_create_video, wxSizerFlags{0}.Expand().Border(wxALL, 0));
+  layout->Add(k_create_ue4File, wxSizerFlags{0}.Expand().Border(wxALL, 0));
 
   //设置布局调整
-  k_parent->SetSizer(layout);
+  SetSizer(layout);
   //设置最小值
   layout->SetSizeHints(this);
 
@@ -77,12 +76,12 @@ mainWindows::mainWindows()
 
   k_create_ue4File->Bind(
       wxEVT_BUTTON,
-      [this, k_parent](wxCommandEvent& event) {
-        auto test_f = new wxFrame(k_parent, wxID_ANY, "tset");
+      [this](wxCommandEvent& event) {
+        // auto test_f = new wxFrame(this, wxID_ANY, "tset");
 
-        auto test = new ShotListWidget(test_f, wxID_ANY);
-        test_f->Show();
-        // wxGetApp();
+        // auto test = new ShotListWidget(test_f, wxID_ANY);
+        // test_f->Show();
+        wxGetApp().openSettingWindow();
       });
   Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
     this->Hide();
@@ -171,6 +170,17 @@ void Doodle::openSettingWindow() {
   p_setting_widget->Show();
 }
 
+// bool Doodle::OnExceptionInMainLoop() {
+//   this->Exception();
+//   try {
+//     throw;
+//   } catch (const std::exception& error) {
+//     auto dig    = wxMessageDialog{p_mainWindwos, wxString::FromUTF8(error.what()), wxString::FromUTF8("错误")};
+//     auto result = dig.ShowModal();
+//     return result == wxID_OK;
+//   }
+// }
+
 bool Doodle::OnInit() {
   wxApp::OnInit();
   // wxApp::SetExitOnFrameDelete(false);
@@ -181,7 +191,7 @@ bool Doodle::OnInit() {
 
   p_systemTray = new systemTray{};
   p_systemTray->SetIcon(wxICON(ID_DOODLE_ICON));
-
+  p_setting_widget = new SettingWidght{p_mainWindwos, wxID_ANY};
   p_mainWindwos->Show();
 
   return true;
