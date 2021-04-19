@@ -16,23 +16,10 @@ DOODLE_NAMESPACE_S
 MayaFile::MayaFile(FSys::path mayaPath)
     : LongTerm(),
       p_path(std::move(mayaPath)) {
-  findMaya();
-}
-
-void MayaFile::findMaya() {
-  if (FSys::exists(p_path))
-    return;
-
-  if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
-    p_path = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
-  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
-    p_path = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
-  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
-    p_path = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
-  } else {
-    throw DoodleError("无法找到maya.exe");
-  }
-  return;
+  if (!FSys::exists(p_path) && coreSet::getSet().hasMaya())
+    p_path = coreSet::getSet().MayaPath();
+  else
+    throw DoodleError{"无法找到maya启动器"};
 }
 
 const FSys::path MayaFile::createTmpFile() const {

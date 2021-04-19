@@ -15,10 +15,11 @@ class toolkit {
   // static void openPath(const fileSqlInfoPtr &info_ptr,
   //                      const bool &openEx);
   static void openPath(const FSys::path &path);
-  static void installUePath(const std::string &path);
-  static void modifyUeCachePath();
+  static void installUePath(const FSys::path &path);
+  static void installMayaPath();
   static bool update();
 
+  static void modifyUeCachePath();
   static bool deleteUeCache();
 
  private:

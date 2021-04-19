@@ -3,7 +3,6 @@
 //
 
 #include <doodle_GUI/source/SettingWidght/SettingWidget.h>
-#include <doodle_GUI/source/SettingWidght/Model/ProjectModel.h>
 
 #include <loggerlib/Logger.h>
 
@@ -21,6 +20,8 @@ void SettingWidght::InitSetting() {
   p_user->SetValue(wxstr);
   p_cache_Text->SetLabelText(wxString::FromUTF8(set.getCacheRoot().generic_string()));
   p_Doc->SetLabelText(wxString::FromUTF8(set.getDoc().generic_string()));
+  p_Maya->SetValue(wxString::FromUTF8(set.MayaPath().generic_string()));
+
   //设置project项目
   p_Project->Clear();
   for (auto prj : set.getAllProjects())
@@ -41,6 +42,7 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
       p_user_id(NewControlId()),
       p_cache_Text_id(NewControlId()),
       p_Doc_id(NewControlId()),
+      p_Maya_id(NewControlId()),
       p_Project_id(NewControlId()),
       p_Project_delete_id(NewControlId()),
       p_Project_add_id(NewControlId()),
@@ -53,6 +55,7 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
       p_user(),
       p_cache_Text(),
       p_Doc(),
+      p_Maya(),
       p_Project(),
       p_ue_path(),
       p_ue_version(),
@@ -96,6 +99,13 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
               wxSizerFlags{0}.Expand());
   layout->Add(130, 20, 0, 0, 0);
   layout->Add(130, 20, 0, 0, 0);
+  //maya路径
+  layout->Add(new wxStaticText{this, wxID_ANY, wxString::FromUTF8("maya路径: ")}, wxSizerFlags{0}.Expand());
+  p_Maya = new wxTextCtrl{this, p_Maya_id};
+  layout->Add(p_Maya, wxSizerFlags{0}.Expand());
+  auto k_maya_butten = new wxButton{this, wxID_ANY, wxString::FromUTF8("...")};
+  layout->Add(k_maya_butten, wxSizerFlags{0}.Expand());
+  layout->Add(130, 20, 0, 0, 0);
 
   //项目列表
   layout->Add(new wxStaticText{this, wxID_ANY, wxString::FromUTF8("项目: ")}, wxSizerFlags{0}.Expand());
@@ -111,7 +121,8 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
   layout->Add(new wxStaticText{this, wxID_ANY, wxString::FromUTF8("ue安装路径")}, wxSizerFlags{0}.Expand());
   p_ue_path = new wxTextCtrl{this, p_ue_path_id};
   layout->Add(p_ue_path, wxSizerFlags{0}.Expand());
-  layout->Add(130, 20, 0, 0, 0);
+  auto k_ue_butten = new wxButton{this, wxID_ANY, wxString::FromUTF8("...")};
+  layout->Add(k_ue_butten, wxSizerFlags{0}.Expand());
   layout->Add(130, 20, 0, 0, 0);
 
   //ue查找版本
@@ -158,6 +169,20 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
   p_user->Bind(wxEVT_TEXT, [&set, this](wxCommandEvent& event) {
     set.setUser(p_user->GetValue().ToStdString(wxConvUTF8));
   });
+  //maya路径
+  p_Maya->Bind(wxEVT_TEXT, [&set, this](wxCommandEvent& event) {
+    set.setMayaPath(p_Maya->GetValue().ToStdString(wxConvUTF8));
+  });
+  k_maya_butten->Bind(wxEVT_BUTTON, [&set, this](wxCommandEvent& event) {
+    auto k_dir_dig = wxDirDialog{this, wxString::FromUTF8("maya路径")};
+    if (k_dir_dig.ShowModal() != wxID_OK)
+      return;
+    auto path_str = k_dir_dig.GetPath();
+    p_Maya->SetValue(path_str);
+    FSys::path path{path_str.ToStdString(wxConvUTF8)};
+    set.setMayaPath(path);
+  });
+
   p_Project->Bind(wxEVT_COMBOBOX, [&set, this](wxCommandEvent& event) {
     auto index = p_Project->GetSelection();
     auto prj   = p_Project->GetClientData(index);
@@ -168,6 +193,17 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
     p_ue_version->Enable(value.empty());
     set.gettUe4Setting().setPath(value.ToStdString(wxConvUTF8));
   });
+  k_ue_butten->Bind(wxEVT_BUTTON, [&set, this](wxCommandEvent& event) {
+    auto k_dir_dig = wxDirDialog{this, wxString::FromUTF8("ue路径")};
+    if (k_dir_dig.ShowModal() != wxID_OK)
+      return;
+    auto path_str = k_dir_dig.GetPath();
+    p_ue_path->SetValue(path_str);
+    FSys::path path{path_str.ToStdString(wxConvUTF8)};
+    set.gettUe4Setting().setPath(path);
+    p_ue_version->Enable(false);
+  });
+
   p_ue_version->Bind(wxEVT_TEXT, [&set, this](wxCommandEvent& event) {
     auto value = p_ue_version->GetValue();
     set.gettUe4Setting().setVersion(value.ToStdString(wxConvUTF8));

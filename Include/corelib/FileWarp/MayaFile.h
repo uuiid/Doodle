@@ -7,7 +7,6 @@ class CORE_API MayaFile : public LongTerm {
  private:
   FSys::path p_path;
 
-  void findMaya();
   const FSys::path createTmpFile() const;
   bool checkFile();
 

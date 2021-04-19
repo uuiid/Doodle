@@ -29,7 +29,6 @@ enum class Department {
   paint
 };
 
-
 /*
  *全局静态设置类
  */
@@ -43,11 +42,15 @@ class CORE_API coreSet {
   void init();
   void reInit();
 
-  void appendEnvironment() const;
+  void findMaya();
 
   //获得运行程序目录
   static FSys::path program_location();
   static FSys::path program_location(const FSys::path &path);
+
+  bool hasMaya() const noexcept;
+  const FSys::path &MayaPath() const noexcept;
+  void setMayaPath(const FSys::path &in_MayaPath) noexcept;
 
   // user设置
   [[nodiscard]] std::string getUser() const;
@@ -106,6 +109,7 @@ class CORE_API coreSet {
 
   std::vector<std::shared_ptr<Project>> p_project_list;
   std::shared_ptr<Project> p_project;
+  FSys::path p_mayaPath;
 
   //这里是序列化的代码
   friend class cereal::access;
@@ -124,6 +128,7 @@ void coreSet::save(Archive &ar, std::uint32_t const version) const {
       cereal::make_nvp("ue4_setting", ue4_setting));
   ar(cereal::make_nvp("project", p_project_list),
      cereal::make_nvp("current project", p_project));
+  ar(cereal::make_nvp("maya_Path", p_mayaPath));
 }
 
 template <class Archive>
@@ -139,8 +144,10 @@ void coreSet::load(Archive &ar, std::uint32_t const version) {
   if (version > 1) {
     ar(p_project_list, p_project);
   }
+  if (version > 2)
+    ar(p_mayaPath);
 }
 
 DOODLE_NAMESPACE_E
 
-CEREAL_CLASS_VERSION(doodle::coreSet, 2);
+CEREAL_CLASS_VERSION(doodle::coreSet, 3);

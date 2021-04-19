@@ -15,6 +15,7 @@ class SettingWidght : public wxFrame {
   wxWindowIDRef p_user_id;
   wxWindowIDRef p_cache_Text_id;
   wxWindowIDRef p_Doc_id;
+  wxWindowIDRef p_Maya_id;
   wxWindowIDRef p_Project_id;
   wxWindowIDRef p_Project_delete_id;
   wxWindowIDRef p_Project_add_id;
@@ -28,6 +29,7 @@ class SettingWidght : public wxFrame {
   wxTextCtrl* p_user;
   wxStaticText* p_cache_Text;
   wxStaticText* p_Doc;
+  wxTextCtrl* p_Maya;
   wxComboBox* p_Project;
   wxTextCtrl* p_ue_path;
   wxTextCtrl* p_ue_version;

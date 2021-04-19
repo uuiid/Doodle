@@ -27,20 +27,114 @@ systemTray::systemTray(wxTaskBarIconType iconType)
 }
 
 wxMenu* systemTray::CreatePopupMenu() {
-  auto menu = new wxMenu();
+  auto menu = new wxMenu{};
 
   menu->Append(p_tool_id, _(wxString::FromUTF8("工具箱")), _(wxString::FromUTF8("打开工具箱")));
+  menu->Append(p_setting_id, _(wxString::FromUTF8("打开设置")));
+  menu->AppendSeparator();
+
+  auto menu_install = new wxMenu{};
+  menu->AppendSubMenu(menu_install, _(wxString::FromUTF8("插件安装")));
+  menu_install->Append(p_installMayaPlug_id, _(wxString::FromUTF8("安装maya插件")));
+  menu_install->Append(p_installUEPlug_id, _(wxString::FromUTF8("安装ue插件")));
+  menu_install->Append(p_installUEProjectPlug_id, _(wxString::FromUTF8("安装ue项目插件")));
+
+  menu->AppendSeparator();
+  menu->Append(p_deleteUECache_id, _(wxString::FromUTF8("删除ue4缓存")));
+  menu->Append(p_modifyUECache_id, _(wxString::FromUTF8("修改ue4缓存位置")));
+
+  menu->AppendSeparator();
+  menu->Append(p_updata_id, _(wxString::FromUTF8("更新")));
+
   menu->Append(p_quit_id, _(wxString::FromUTF8("退出")));
-  Bind(
-      wxEVT_MENU, [](wxCommandEvent& event) -> void {
-        wxGetApp().Exit();
-      },
-      p_quit_id);
+
+  //打开工具箱
   menu->Bind(
       wxEVT_MENU, [](wxCommandEvent& event) {
         wxGetApp().openMainWindow();
       },
       p_tool_id);
+  //打开设置
+  menu->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        wxGetApp().openSettingWindow();
+      },
+      p_setting_id);
+  //安装ue插件到总体
+  menu_install->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        auto& ueset = coreSet::getSet().gettUe4Setting();
+        if (ueset.hasPath())
+          toolkit::installUePath(ueset.Path() / "Engine");
+        else
+          wxMessageDialog{wxGetApp().GetTopWindow(),
+                          wxString::FromUTF8("在设置中找不到ue位置")}
+              .ShowModal();
+      },
+      p_installUEPlug_id);
+  //安装ue插件到项目
+  menu_install->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        auto file_dig = wxFileDialog{
+            wxGetApp().GetTopWindow(),
+            wxString::FromUTF8("ue项目选择"),
+            wxEmptyString,
+            wxEmptyString,
+            wxString::FromUTF8("files (*.uproject)|*.uproject")};
+        auto result = file_dig.ShowModal();
+        if (result == wxID_OK) {
+          FSys::path path{file_dig.GetPath().ToStdString(wxConvUTF8)};
+          toolkit::installUePath(path.parent_path());
+        }
+      },
+      p_installUEProjectPlug_id);
+  //安装maya插件
+  menu_install->Bind(
+      wxEVT_MENU,
+      [this](wxCommandEvent& event) {
+        toolkit::installMayaPath();
+      },
+      p_installMayaPlug_id);
+  //删除ue缓存
+  menu->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        try {
+          toolkit::deleteUeCache();
+        } catch (const std::exception& error) {
+          wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8(error.what())}.ShowModal();
+          return;
+        }
+        wxMessageDialog{wxGetApp().GetTopWindow(),
+                        wxString::FromUTF8("完成删除")}
+            .ShowModal();
+      },
+      p_deleteUECache_id);
+  //修改ue缓存
+  menu->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        try {
+          toolkit::modifyUeCachePath();
+        } catch (const std::exception& error) {
+          wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8(error.what())}.ShowModal();
+          return;
+        }
+        wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8("完成修改")}.ShowModal();
+      },
+      p_modifyUECache_id);
+
+  //更新
+  menu->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8("暂时不支持动态更新")}.ShowModal();
+      },
+      p_updata_id);
+  //退出
+  menu->Bind(
+      wxEVT_MENU, [](wxCommandEvent& event) -> void {
+        wxGetApp().Exit();
+      },
+      p_quit_id);
+
   return menu;
 }
 

@@ -40,30 +40,39 @@ void coreSet::init() {
   if (!pManager) DoodleError("无法找到保存路径");
 
   doc = FSys::path{pManager} / "doodle";
+  findMaya();
   getSetting();
   coreSql &sql = coreSql::getCoreSql();
   getCacheDiskPath();
-  appendEnvironment();
 
-  if (!boost::filesystem::exists(getCacheRoot())) {
-    boost::filesystem::create_directories(getCacheRoot());
+  if (!FSys::exists(getCacheRoot())) {
+    FSys::create_directories(getCacheRoot());
   }
 }
 
 void coreSet::reInit() {
 }
 
-void coreSet::appendEnvironment() const {
-  auto env          = boost::this_process::environment();
-  auto this_process = program_location();
-  env["PATH"] += (this_process.parent_path() / "tools/ffmpeg/bin").generic_string();
-  if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2018\bin\)";
-  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2019\bin\)";
-  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2020\bin\)";
+void coreSet::findMaya() {
+  if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
+    p_mayaPath = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
+  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
+    p_mayaPath = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
+  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
+    p_mayaPath = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
   }
+}
+
+bool coreSet::hasMaya() const noexcept {
+  return !p_mayaPath.empty();
+}
+
+const FSys::path &coreSet::MayaPath() const noexcept {
+  return p_mayaPath;
+}
+
+void coreSet::setMayaPath(const FSys::path &in_MayaPath) noexcept {
+  p_mayaPath = in_MayaPath;
 }
 
 void coreSet::writeDoodleLocalSet() {
@@ -72,16 +81,16 @@ void coreSet::writeDoodleLocalSet() {
     ue4_setting.setPath({});
     throw FileError{ue4_setting.Path(), " 在路径中没有找到ue,不保存"};
   }
-  boost::filesystem::ofstream outjosn{doc / settingFileName, std::ifstream::binary};
+  FSys::ofstream outjosn{doc / settingFileName, std::ifstream::binary};
   cereal::PortableBinaryOutputArchive out{outjosn};
   out(*this);
 }
 
 void coreSet::getSetting() {
   static FSys::path k_settingFileName = doc / settingFileName;
-  if (boost::filesystem::exists(k_settingFileName)) {
+  if (FSys::exists(k_settingFileName)) {
     FSys::path strFile(k_settingFileName);
-    boost::filesystem::ifstream inJosn{k_settingFileName, std::ifstream::binary};
+    FSys::ifstream inJosn{k_settingFileName, std::ifstream::binary};
 
     cereal::PortableBinaryInputArchive incereal{inJosn};
     incereal(*this);
@@ -95,7 +104,8 @@ coreSet::coreSet()
       p_uuid_gen(),
       ue4_setting(Ue4Setting::Get()),
       p_project_list(),
-      p_project() {
+      p_project(),
+      p_mayaPath() {
 }
 
 std::string coreSet::toIpPath(const std::string &path) {

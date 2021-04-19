@@ -188,6 +188,7 @@ bool Doodle::OnInit() {
 
   p_mainWindwos = new mainWindows{};
   p_mainWindwos->SetIcon(wxICON(ID_DOODLE_ICON));
+  this->SetTopWindow(p_mainWindwos);
 
   p_systemTray = new systemTray{};
   p_systemTray->SetIcon(wxICON(ID_DOODLE_ICON));
