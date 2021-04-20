@@ -1,4 +1,5 @@
 #include <corelib/core/Ue4Setting.h>
+#include <corelib/Exception/Exception.h>
 
 #include <corelib/libWarp/WinReg.hpp>
 #include <boost/format.hpp>
@@ -53,6 +54,9 @@ void Ue4Setting::setShotEnd(const std::int32_t& ShotEnd) noexcept {
 }
 
 void Ue4Setting::testValue() {
+  if (shot_end >= shot_start) {
+    throw DoodleError{"结束镜头小于开始镜头!"};
+  }
   if (ue4_path.empty()) {
     auto key_str = boost::wformat{LR"(SOFTWARE\EpicGames\Unreal Engine\%s)"};  //InstalledDirectory
     auto wv      = boost::locale::conv::utf_to_utf<wchar_t>(Ue4Setting::Get().Version());

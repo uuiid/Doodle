@@ -239,7 +239,13 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
     set.setProject_(reinterpret_cast<Project*>(p_Project->GetClientData(selection)));
   });
 
-  Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
+  Bind(wxEVT_CLOSE_WINDOW, [&set, this](wxCloseEvent& event) {
+    try {
+      set.writeDoodleLocalSet();
+    } catch (const std::exception& error) {
+      wxMessageDialog{this, error.what(), wxString::FromUTF8("错误")}.ShowModal();
+    }
+
     this->Hide();
     if (event.CanVeto())
       event.Veto(false);

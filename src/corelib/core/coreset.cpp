@@ -81,6 +81,10 @@ void coreSet::writeDoodleLocalSet() {
     ue4_setting.setPath({});
     throw FileError{ue4_setting.Path(), " 在路径中没有找到ue,不保存"};
   }
+  if (!FSys::exists(p_mayaPath / "maya.exe")) {
+    throw FileError{p_mayaPath, " 在路径中没有找到maya,不保存"};
+  }
+
   FSys::ofstream outjosn{doc / settingFileName, std::ifstream::binary};
   cereal::PortableBinaryOutputArchive out{outjosn};
   out(*this);
