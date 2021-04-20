@@ -24,7 +24,8 @@ MayaFile::MayaFile(FSys::path mayaPath)
 
 const FSys::path MayaFile::createTmpFile() const {
   //开始写入临时文件
-  const static auto tmp_path = FSys::temp_directory_path();
+
+  const static auto tmp_path = coreSet::getSet().getCacheRoot("maya");
   auto k_tmp_path            = tmp_path / (boost::uuids::to_string(coreSet::getSet().getUUID()) + ".py");
   auto k_file_py             = cmrc::CoreResource::get_filesystem().open("resource/mayaExport.py");
 

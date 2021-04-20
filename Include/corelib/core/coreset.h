@@ -64,6 +64,7 @@ class CORE_API coreSet {
 
   //缓存路径
   [[nodiscard]] FSys::path getCacheRoot() const;
+  [[nodiscard]] FSys::path getCacheRoot(const FSys::path &path) const;
 
   // doc路径
   [[nodiscard]] FSys::path getDoc() const;

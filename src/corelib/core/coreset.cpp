@@ -149,7 +149,16 @@ void coreSet::setUser(const std::string &value) {
 
 FSys::path coreSet::getDoc() const { return doc; }
 
-FSys::path coreSet::getCacheRoot() const { return cacheRoot; }
+FSys::path coreSet::getCacheRoot() const {
+  return cacheRoot;
+}
+
+FSys::path coreSet::getCacheRoot(const FSys::path &in_path) const {
+  auto path = cacheRoot / in_path;
+  if (!FSys::exists(path))
+    FSys::create_directories(path);
+  return path;
+}
 
 bool coreSet::hasProject() {
   return !p_project_list.empty();

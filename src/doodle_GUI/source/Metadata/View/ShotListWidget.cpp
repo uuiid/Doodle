@@ -166,20 +166,24 @@ ShotListDialog::ShotListDialog(wxWindow *parent, wxWindowID id)
 
   k_ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event) { this->EndModal(wxID_OK); });
   k_no->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event) { this->EndModal(wxID_CANCEL); });
+  k_eps->Bind(wxEVT_SPINCTRL, [this](wxCommandEvent &event) {
+    auto value = event.GetInt();
+    this->p_episodes->setEpisodes_(value);
+  });
 }
 
 std::tuple<EpisodesPtr, std::vector<ShotPtr>> ShotListDialog::getShotList() {
-  auto eps = std::make_shared<Episodes>(1);
-  std::vector<ShotPtr> k_shot{};
-  auto &set        = coreSet::getSet();
-  const auto k_len = set.gettUe4Setting().ShotEnd();
+  auto shotDig = ShotListDialog{wxGetApp().GetTopWindow()};
+
+  shotDig.p_episodes = std::make_shared<Episodes>(1);
+  auto &set          = coreSet::getSet();
+  const auto k_len   = set.gettUe4Setting().ShotEnd();
   for (auto i = set.gettUe4Setting().ShotStart(); i < k_len; ++i) {
-    k_shot.emplace_back(std::make_shared<Shot>(i, std::string{}, eps));
+    shotDig.p_shots.emplace_back(std::make_shared<Shot>(i, std::string{}, shotDig.p_episodes));
   }
 
-  auto shotDig = ShotListDialog{wxGetApp().GetTopWindow()};
-  shotDig.p_shots_widget->setEpisodes(eps);
-  shotDig.p_shots_widget->setShots(k_shot);
+  shotDig.p_shots_widget->setEpisodes(shotDig.p_episodes);
+  shotDig.p_shots_widget->setShots(shotDig.p_shots);
 
   if (shotDig.ShowModal() == wxID_OK) {
     return {shotDig.p_shots_widget->Episodes_(), shotDig.p_shots_widget->Shots_()};
