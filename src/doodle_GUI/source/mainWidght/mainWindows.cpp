@@ -37,11 +37,11 @@ mainWindows::mainWindows()
   auto k_create_video     = new wxButton{this, p_create_video_id, _((wxString::FromUTF8("连接视频")))};
   auto k_create_ue4File   = new wxButton{this, p_create_ue4File_id, _((wxString::FromUTF8("创建ue4关卡序列")))};
   //布局
-  layout->Add(k_exMaya_button, wxSizerFlags{0}.Expand().Border(wxALL, 0));
-  layout->Add(k_create_image, wxSizerFlags{0}.Expand().Border(wxALL, 0));
-  layout->Add(k_create_dir_image, wxSizerFlags{0}.Expand().Border(wxALL, 0));
-  layout->Add(k_create_video, wxSizerFlags{0}.Expand().Border(wxALL, 0));
-  layout->Add(k_create_ue4File, wxSizerFlags{0}.Expand().Border(wxALL, 0));
+  layout->Add(k_exMaya_button, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
+  layout->Add(k_create_image, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
+  layout->Add(k_create_dir_image, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
+  layout->Add(k_create_video, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
+  layout->Add(k_create_ue4File, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
 
   //设置布局调整
   SetSizer(layout);
@@ -106,6 +106,11 @@ mainWindows::mainWindows()
     if (event.CanVeto())
       event.Veto(false);
   });
+
+  //调整大小
+  this->Layout();
+  this->Center(wxBOTH);
+  this->SetSize(wxSize{400, 350});
 }
 
 void mainWindows::exportMayaFile(const std::vector<FSys::path> paths) {
