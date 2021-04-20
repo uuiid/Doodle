@@ -143,3 +143,17 @@ TEST_F(CoreTest, read_writ_file) {
   file.open(p_txt_path, std::ios::out | std::ios::trunc);
   file << line;
 }
+
+TEST_F(CoreTest, shot_com) {
+  auto shot1  = doodle::Shot{0};
+  auto shot2  = doodle::Shot{2};
+  auto shot3  = doodle::Shot{3};
+  auto shot4  = doodle::Shot{4};
+  auto shot11 = doodle::Shot{11};
+  auto shot6  = doodle::Shot{6};
+  auto shot6a = doodle::Shot{6, "a"};
+  ASSERT_TRUE(shot1 < shot2);
+  ASSERT_TRUE(shot6 < shot6a);
+  ASSERT_TRUE(shot1 < shot11);
+  ASSERT_TRUE(shot2 < shot11);
+}

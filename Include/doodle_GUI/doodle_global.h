@@ -11,16 +11,13 @@
 #include <corelib/core_global.h>
 #include <doodle_GUI/core_cpp_qt.h>
 
-// class QHBoxLayout;
-// class QComboBox;
-
 DOODLE_NAMESPACE_S
-
+class Doodle;
 enum class filterState {
   useFilter,
   notFilter,
   showAll,
 };
 
-
 DOODLE_NAMESPACE_E
+wxDECLARE_APP(doodle::Doodle);

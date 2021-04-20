@@ -15,7 +15,7 @@
 #include <wx/taskbar.h>
 
 DOODLE_NAMESPACE_S
-class Doodle;
+
 class systemTray : public wxTaskBarIcon {
  public:
   explicit systemTray(wxTaskBarIconType iconType = wxTBI_DEFAULT_TYPE);
@@ -34,7 +34,7 @@ class systemTray : public wxTaskBarIcon {
 
  private:
   wxWindowIDRef p_tool_id;
-  
+
   wxWindowIDRef p_installMayaPlug_id;
   wxWindowIDRef p_installUEPlug_id;
   wxWindowIDRef p_installUEProjectPlug_id;
@@ -47,5 +47,3 @@ class systemTray : public wxTaskBarIcon {
   wxWindowIDRef p_quit_id;
 };
 DOODLE_NAMESPACE_E
-
-wxDECLARE_APP(doodle::Doodle);

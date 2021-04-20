@@ -50,9 +50,20 @@ mainWindows::mainWindows()
 
   //可以拖拽文件
   k_exMaya_button->DragAcceptFiles(true);
+  k_exMaya_button->Bind(wxEVT_DROP_FILES, [this](wxDropFilesEvent& event) {
+    const auto num = event.GetNumberOfFiles();
+    std::vector<FSys::path> path{};
+    auto wxPath = event.GetFiles();
+    if (num > 0) {
+      for (auto i = 0; i < num; ++i)
+        path.emplace_back(wxPath[i].ToStdString(wxConvUTF8));
+    }
+    this->exportMayaFile(path);
+  });
+
   auto k_dray = new FileDropTarget{};
-  k_dray->handleFileFunction.connect(std::bind(&mainWindows::exportMayaFile, this, std::placeholders::_1));
-  k_exMaya_button->SetDropTarget(k_dray);
+  // k_dray->handleFileFunction.connect(std::bind(&mainWindows::exportMayaFile, this, std::placeholders::_1));
+  // k_exMaya_button->SetDropTarget(k_dray);
 
   k_create_image->DragAcceptFiles(true);
   k_dray = new FileDropTarget{};
@@ -70,19 +81,26 @@ mainWindows::mainWindows()
   k_create_video->SetDropTarget(k_dray);
 
   k_create_ue4File->DragAcceptFiles(true);
-  k_dray = new FileDropTarget{};
-  k_dray->handleFileFunction.connect(std::bind(&mainWindows::createUe4Project, this, std::placeholders::_1));
-  k_create_ue4File->SetDropTarget(k_dray);
+  // k_dray = new FileDropTarget{};
+  // k_dray->handleFileFunction.connect(std::bind(&mainWindows::createUe4Project, this, std::placeholders::_1));
+  // k_create_ue4File->SetDropTarget(k_dray);
+  k_create_ue4File->Bind(wxEVT_DROP_FILES, [this](wxDropFilesEvent& event) {
+    const auto num = event.GetNumberOfFiles();
+    std::vector<FSys::path> path{};
+    auto wxPath = event.GetFiles();
+    if (num > 0) {
+      for (auto i = 0; i < num; ++i)
+        path.emplace_back(wxPath[i].ToStdString(wxConvUTF8));
+    }
+    this->createUe4Project(path);
+  });
 
   k_create_ue4File->Bind(
       wxEVT_BUTTON,
       [this](wxCommandEvent& event) {
-        // auto test_f = new wxFrame(this, wxID_ANY, "tset");
-
-        // auto test = new ShotListWidget(test_f, wxID_ANY);
-        // test_f->Show();
         wxGetApp().openSettingWindow();
       });
+
   Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
     this->Hide();
     if (event.CanVeto())
@@ -138,13 +156,19 @@ void mainWindows::connectVideo(const std::vector<FSys::path> paths) {
 }
 
 void mainWindows::createUe4Project(const std::vector<FSys::path> paths) {
-  auto ue = std::make_shared<Ue4Project>(paths[0]);
-  // auto [k_eps, k_shot] = ShotListDialog::getShotList(this);
-  // if (k_shot.empty()) {
-  //   QMessageBox::warning(this, QString{"注意:"}, tr("取消创建"));
-  //   return;
-  // }
-  // ue->createShotFolder(k_shot);
+  try {
+    auto ue              = std::make_shared<Ue4Project>(paths[0]);
+    auto [k_eps, k_shot] = ShotListDialog::getShotList();
+    if (k_shot.empty()) {
+      wxMessageDialog{this, wxString::FromUTF8("用户取消创建")}.ShowModal();
+      return;
+    }
+    ue->createShotFolder(k_shot);
+  } catch (const std::exception& error) {
+    DOODLE_LOG_INFO(error.what());
+    return;
+  }
+  wxMessageDialog{this, wxString::FromUTF8("成功创建")}.ShowModal();
 }
 
 Doodle::Doodle()

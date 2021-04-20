@@ -29,6 +29,8 @@ class CORE_API Shot {
   void setEpisodes_(const EpisodesPtr& Episodes_) noexcept;
 
   std::string str() const;
+
+  bool operator<(const Shot& R) const { return std::tie(p_shot, p_shot_ab) < std::tie(R.p_shot, R.p_shot_ab); };
 };
 
 }  // namespace doodle
