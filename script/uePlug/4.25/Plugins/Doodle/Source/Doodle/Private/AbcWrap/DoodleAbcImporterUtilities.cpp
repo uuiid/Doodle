@@ -1,41 +1,22 @@
 ﻿#include "AbcWrap/DoodleAbcImporterUtilities.h"
 
+#include "AbcWrap/AbcFile.h"
+#include "AbcWrap/DoodleAbcImport.h"
+#include "AbcWrap/IAbcPolyMesh.h"
+
 #include "Stats/StatsMisc.h"
 
-#include "AbcFile.h"
-#include "AbcImporter.h"
-#include "AbcPolyMesh.h"
 #include "AssetRegistryModule.h"
 #include "Materials/Material.h"
 
-#if PLATFORM_WINDOWS
-#include "Windows/WindowsHWrapper.h"
-#endif
-
-#if PLATFORM_WINDOWS
-#include "Windows/AllowWindowsPlatformTypes.h"
-#endif
-
-THIRD_PARTY_INCLUDES_START
-#include <Alembic/AbcCoreHDF5/All.h>
-#include <Alembic/AbcCoreOgawa/All.h>
-#include <Alembic/AbcCoreFactory/All.h>
-#include <Alembic/AbcCoreAbstract/TimeSampling.h>
-#include <Alembic/AbcCoreHDF5/All.h>
-#include <Alembic/Abc/All.h>
-#include <Alembic/AbcGeom/All.h>
-#include <Alembic/Abc/IObject.h>
-THIRD_PARTY_INCLUDES_END
-
-//#if PLATFORM_WINDOWS
-//#include "Windows/HideWindowsPlatformTypes.h"
-//#endif
-
 #include "Rendering/SkeletalMeshLODModel.h"
+
+#include "AbcWrap/AbcWarpHeader.h"
 
 //#define LOCTEXT_NAMESPACE "DoodleAbcImporterUtilities"
 
-void DoodleAbcImporterUtilities::AppendMeshSample(FAbcMeshSample* MeshSampleOne, const FAbcMeshSample* MeshSampleTwo) {
+void DoodleAbcImporterUtilities::AppendMeshSample(doodle::FAbcMeshSample *MeshSampleOne, const doodle::FAbcMeshSample *MeshSampleTwo)
+{
 	const uint32 VertexOffset = MeshSampleOne->Vertices.Num();
 	MeshSampleOne->Vertices.Append(MeshSampleTwo->Vertices);
 
@@ -54,7 +35,7 @@ void DoodleAbcImporterUtilities::AppendMeshSample(FAbcMeshSample* MeshSampleOne,
 	MeshSampleOne->TangentX.Append(MeshSampleTwo->TangentX);
 	MeshSampleOne->TangentY.Append(MeshSampleTwo->TangentY);
 
-	// Append valid number of UVs and zero padding for unavailable UV channels	
+	// Append valid number of UVs and zero padding for unavailable UV channels
 	if (MeshSampleTwo->NumUVSets >= MeshSampleOne->NumUVSets)
 	{
 		for (uint32 UVIndex = 1; UVIndex < MeshSampleTwo->NumUVSets; ++UVIndex)
@@ -77,7 +58,7 @@ void DoodleAbcImporterUtilities::AppendMeshSample(FAbcMeshSample* MeshSampleOne,
 	MeshSampleOne->UVs[0].Append(MeshSampleTwo->UVs[0]);
 
 	MeshSampleOne->Colors.Append(MeshSampleTwo->Colors);
-	// Currently not used but will still merge	
+	// Currently not used but will still merge
 	/*MeshSampleOne->Visibility.Append(MeshSampleTwo->Visibility);
 	MeshSampleOne->VisibilityIndices.Append(MeshSampleTwo->VisibilityIndices);*/
 
@@ -102,7 +83,8 @@ void DoodleAbcImporterUtilities::AppendMeshSample(FAbcMeshSample* MeshSampleOne,
 	MeshSampleOne->NumMaterials += (MeshSampleTwo->NumMaterials != 0) ? MeshSampleTwo->NumMaterials : 1;
 }
 
-void DoodleAbcImporterUtilities::GeometryCacheDataForMeshSample(FGeometryCacheMeshData& OutMeshData, const FAbcMeshSample* MeshSample, const uint32 MaterialOffset) {
+void DoodleAbcImporterUtilities::GeometryCacheDataForMeshSample(FGeometryCacheMeshData &OutMeshData, const doodle::FAbcMeshSample *MeshSample, const uint32 MaterialOffset)
+{
 	OutMeshData.BoundingBox = FBox(MeshSample->Vertices);
 
 	// We currently always have everything except motion vectors
@@ -127,11 +109,13 @@ void DoodleAbcImporterUtilities::GeometryCacheDataForMeshSample(FGeometryCacheMe
 	OutMeshData.TextureCoordinates.AddZeroed(MeshSample->Normals.Num());
 	OutMeshData.Colors.AddZeroed(MeshSample->Normals.Num());
 
-	for (int32 TriangleIndex = 0; TriangleIndex < NumTriangles; ++TriangleIndex) {
+	for (int32 TriangleIndex = 0; TriangleIndex < NumTriangles; ++TriangleIndex)
+	{
 		const int32 SectionIndex = MeshSample->MaterialIndices[TriangleIndex];
-		TArray<uint32>& Section = SectionIndices[SectionIndex];
+		TArray<uint32> &Section = SectionIndices[SectionIndex];
 
-		for (int32 VertexIndex = 0; VertexIndex < 3; ++VertexIndex) {
+		for (int32 VertexIndex = 0; VertexIndex < 3; ++VertexIndex)
+		{
 			const int32 CornerIndex = (TriangleIndex * 3) + VertexIndex;
 			const int32 Index = MeshSample->Indices[CornerIndex];
 
@@ -147,12 +131,14 @@ void DoodleAbcImporterUtilities::GeometryCacheDataForMeshSample(FGeometryCacheMe
 		}
 	}
 
-	TArray<uint32>& Indices = OutMeshData.Indices;
-	for (uint32 SectionIndex = 0; SectionIndex < NumSections; ++SectionIndex) {
+	TArray<uint32> &Indices = OutMeshData.Indices;
+	for (uint32 SectionIndex = 0; SectionIndex < NumSections; ++SectionIndex)
+	{
 		// Sometimes empty sections seem to be in the file, filter these out
 		// as empty batches are not allowed by the geometry cache (They ultimately trigger checks in the renderer)
 		// and it seems pretty nasty to filter them out post decode in-game
-		if (!SectionIndices[SectionIndex].Num()) {
+		if (!SectionIndices[SectionIndex].Num())
+		{
 			continue;
 		}
 
@@ -167,28 +153,37 @@ void DoodleAbcImporterUtilities::GeometryCacheDataForMeshSample(FGeometryCacheMe
 	}
 }
 
-void DoodleAbcImporterUtilities::MergePolyMeshesToMeshData(int32 FrameIndex, int32 FrameStart, const TArray<FAbcPolyMesh*>& PolyMeshes, const TArray<FString>& UniqueFaceSetNames, FGeometryCacheMeshData& MeshData, int32& PreviousNumVertices, bool& bConstantTopology) {
-	FAbcMeshSample MergedSample;
+void DoodleAbcImporterUtilities::MergePolyMeshesToMeshData(int32 FrameIndex, int32 FrameStart, const TArray<doodle::IAbcPolyMesh *> &PolyMeshes, const TArray<FString> &UniqueFaceSetNames, FGeometryCacheMeshData &MeshData, int32 &PreviousNumVertices, bool &bConstantTopology)
+{
+	doodle::FAbcMeshSample MergedSample;
 
-	for (FAbcPolyMesh* PolyMesh : PolyMeshes) {
-		if (PolyMesh->bShouldImport) {
+	for (auto PolyMesh : PolyMeshes)
+	{
+		if (PolyMesh->bShouldImport)
+		{
 			const int32 Offset = MergedSample.MaterialIndices.Num();
 			const int32 MaterialIndexOffset = MergedSample.NumMaterials;
 			bConstantTopology = bConstantTopology && PolyMesh->bConstantTopology;
-			if (PolyMesh->GetVisibility(FrameIndex)) {
-				const FAbcMeshSample* Sample = PolyMesh->GetSample(FrameIndex);
+			if (PolyMesh->GetVisibility(FrameIndex))
+			{
+				const doodle::FAbcMeshSample *Sample = PolyMesh->GetSample(FrameIndex);
 				DoodleAbcImporterUtilities::AppendMeshSample(&MergedSample, Sample);
-				if (PolyMesh->FaceSetNames.Num() == 0) {
+				if (PolyMesh->FaceSetNames.Num() == 0)
+				{
 					FMemory::Memzero(MergedSample.MaterialIndices.GetData() + Offset, (MergedSample.MaterialIndices.Num() - Offset) * sizeof(int32));
 				}
-				else {
-					for (int32 Index = Offset; Index < MergedSample.MaterialIndices.Num(); ++Index) {
-						int32& MaterialIndex = MergedSample.MaterialIndices[Index];
-						if (PolyMesh->FaceSetNames.IsValidIndex(MaterialIndex - MaterialIndexOffset)) {
+				else
+				{
+					for (int32 Index = Offset; Index < MergedSample.MaterialIndices.Num(); ++Index)
+					{
+						int32 &MaterialIndex = MergedSample.MaterialIndices[Index];
+						if (PolyMesh->FaceSetNames.IsValidIndex(MaterialIndex - MaterialIndexOffset))
+						{
 							int32 FaceSetMaterialIndex = UniqueFaceSetNames.IndexOfByKey(PolyMesh->FaceSetNames[MaterialIndex - MaterialIndexOffset]);
 							MaterialIndex = FaceSetMaterialIndex != INDEX_NONE ? FaceSetMaterialIndex : 0;
 						}
-						else {
+						else
+						{
 							MaterialIndex = 0;
 						}
 					}
@@ -197,7 +192,8 @@ void DoodleAbcImporterUtilities::MergePolyMeshesToMeshData(int32 FrameIndex, int
 		}
 	}
 
-	if (FrameIndex > FrameStart) {
+	if (FrameIndex > FrameStart)
+	{
 		bConstantTopology &= (PreviousNumVertices == MergedSample.Vertices.Num());
 	}
 	PreviousNumVertices = MergedSample.Vertices.Num();
@@ -208,19 +204,25 @@ void DoodleAbcImporterUtilities::MergePolyMeshesToMeshData(int32 FrameIndex, int
 	DoodleAbcImporterUtilities::GeometryCacheDataForMeshSample(MeshData, &MergedSample, 0);
 }
 
-UMaterialInterface* DoodleAbcImporterUtilities::RetrieveMaterial(FAbcFile& AbcFile, const FString& MaterialName, UObject* InParent, EObjectFlags Flags) {
-	UMaterialInterface* Material = nullptr;
-	UMaterialInterface** CachedMaterial = AbcFile.GetMaterialByName(MaterialName);
-	if (CachedMaterial) {
+UMaterialInterface *DoodleAbcImporterUtilities::RetrieveMaterial(doodle::FAbcFile &AbcFile, const FString &MaterialName, UObject *InParent, EObjectFlags Flags)
+{
+	UMaterialInterface *Material = nullptr;
+	UMaterialInterface **CachedMaterial = AbcFile.GetMaterialByName(MaterialName);
+	if (CachedMaterial)
+	{
 		Material = *CachedMaterial;
 		// Material could have been deleted if we're overriding/reimporting an asset
-		if (Material->IsValidLowLevel()) {
-			if (Material->GetOuter() == GetTransientPackage()) {
-				UMaterial* ExistingTypedObject = FindObject<UMaterial>(InParent, *MaterialName);
-				if (!ExistingTypedObject) {
+		if (Material->IsValidLowLevel())
+		{
+			if (Material->GetOuter() == GetTransientPackage())
+			{
+				UMaterial *ExistingTypedObject = FindObject<UMaterial>(InParent, *MaterialName);
+				if (!ExistingTypedObject)
+				{
 					// This is in for safety, as we do not expect this to happen
-					UObject* ExistingObject = FindObject<UObject>(InParent, *MaterialName);
-					if (ExistingObject) {
+					UObject *ExistingObject = FindObject<UObject>(InParent, *MaterialName);
+					if (ExistingObject)
+					{
 						return nullptr;
 					}
 
@@ -228,20 +230,23 @@ UMaterialInterface* DoodleAbcImporterUtilities::RetrieveMaterial(FAbcFile& AbcFi
 					Material->SetFlags(Flags);
 					FAssetRegistryModule::AssetCreated(Material);
 				}
-				else {
+				else
+				{
 					ExistingTypedObject->PreEditChange(nullptr);
 					Material = ExistingTypedObject;
 				}
 			}
 		}
-		else {
+		else
+		{
 			// In this case recreate the material
 			Material = NewObject<UMaterial>(InParent, *MaterialName);
 			Material->SetFlags(Flags);
 			FAssetRegistryModule::AssetCreated(Material);
 		}
 	}
-	else {
+	else
+	{
 		Material = UMaterial::GetDefaultMaterial(MD_Surface);
 		check(Material);
 	}

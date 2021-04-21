@@ -1,20 +1,23 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "AbcWrap/DoodleAbcFactory.h"
 #include "AbcWrap/DoodleGeometryBonesActor.h"
+#include "AbcWrap/DoodleAbcImport.h"
+#include "AbcWrap/DoodleAbcImportSetting.h"
 
 #include "GeometryCache.h"
-#include "AbcImporter.h"
-#include "AssetImportTask.h"
-#include "AbcImportLogger.h"
-#include "AbcAssetImportData.h"
+#include "Editor.h"
 
-#include "DoodleAbcImport.h"
+#include "AssetImportTask.h"
+
+#include "AbcWrap/DoodleAbcAssetImportData.h"
+
 #include "Subsystems/ImportSubsystem.h"
+#include "Engine/StaticMesh.h"
 UDoodleAbcFactory::UDoodleAbcFactory()
-	:UFactory(),
-	ImportSettings(NewObject<UAbcImportSettings>()) {
+	: UFactory(),
+	  ImportSettings(NewObject<UAbcDoodleImportSettings>())
+{
 	bCreateNew = false;
 	bEditAfterNew = true;
 	SupportedClass = nullptr;
@@ -30,7 +33,8 @@ UDoodleAbcFactory::UDoodleAbcFactory()
 void UDoodleAbcFactory::PostInitProperties()
 {
 	Super::PostInitProperties();
-	ImportSettings = UAbcImportSettings::Get();
+
+	ImportSettings = UAbcDoodleImportSettings::Get();
 }
 
 FText UDoodleAbcFactory::GetDisplayName() const
@@ -38,17 +42,17 @@ FText UDoodleAbcFactory::GetDisplayName() const
 	return NSLOCTEXT("doodle", "doodleAbc", "Alembic");
 }
 
-bool UDoodleAbcFactory::DoesSupportClass(UClass* Class)
+bool UDoodleAbcFactory::DoesSupportClass(UClass *Class)
 {
 	return (Class == UGeometryCache::StaticClass());
 }
 
-UClass* UDoodleAbcFactory::ResolveSupportedClass()
+UClass *UDoodleAbcFactory::ResolveSupportedClass()
 {
 	return UStaticMesh::StaticClass();
 }
 
-bool UDoodleAbcFactory::FactoryCanImport(const FString& FileName)
+bool UDoodleAbcFactory::FactoryCanImport(const FString &FileName)
 {
 	//这里为什么有这么一句我也不知道为什么
 	const FString suff = FPaths::GetExtension(FileName);
@@ -56,9 +60,9 @@ bool UDoodleAbcFactory::FactoryCanImport(const FString& FileName)
 	return (FPaths::GetExtension(FileName) == TEXT("abc"));
 }
 
-UObject* UDoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName,
-	EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn,
-	bool& bOutOperationCanceled)
+UObject *UDoodleAbcFactory::FactoryCreateFile(UClass *InClass, UObject *InParent, FName InName,
+											  EObjectFlags Flags, const FString &Filename, const TCHAR *Parms, FFeedbackContext *Warn,
+											  bool &bOutOperationCanceled)
 {
 	GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetPreImport(this, InClass, InParent, InName, TEXT("doodle_abc"));
 
@@ -69,7 +73,7 @@ UObject* UDoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent
 	ImportSettings->bReimport = false;
 
 	AdditionalImportedObjects.Empty();
-	if (errorCode != AbcImportError_NoError)
+	if (!errorCode)
 	{
 		GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetPostImport(this, nullptr);
 		return nullptr;
@@ -86,7 +90,7 @@ UObject* UDoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent
 	//输出日志
 	const FString PageName = "Importing " + InName.ToString() + ".abc";
 
-	TArray<UObject*> ResultAssets;
+	TArray<UObject *> ResultAssets;
 	if (!bOutOperationCanceled)
 	{
 		GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetPreImport(this, InClass, InParent, InName, TEXT("ABC"));
@@ -99,17 +103,17 @@ UObject* UDoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent
 		//导入文件
 		errorCode = Import.ImportTrackData(NumThreads, ImportSettings);
 
-		if (errorCode != AbcImportError_NoError)
+		if (!errorCode)
 		{
 			GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetPostImport(this, nullptr);
-			FAbcImportLogger::OutputMessages(PageName);
+			// FAbcImportLogger::OutputMessages(PageName);
 			return nullptr;
 		}
 		else
-		{//导入几何缓存
-			if (ImportSettings->ImportType == EAlembicImportType::GeometryCache)
+		{ //导入几何缓存
+			if (ImportSettings->ImportType == EDooAlembicImportType::GeometryCache)
 			{
-				UObject* GeometryCache = ImportGeometryCache(Import, InParent, Flags);
+				UObject *GeometryCache = ImportGeometryCache(Import, InParent, Flags);
 				if (GeometryCache)
 				{
 					ResultAssets.Add(GeometryCache);
@@ -118,7 +122,7 @@ UObject* UDoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent
 		}
 
 		AdditionalImportedObjects.Reserve(ResultAssets.Num());
-		for (UObject* obj : ResultAssets)
+		for (UObject *obj : ResultAssets)
 		{
 			if (obj)
 			{
@@ -129,14 +133,14 @@ UObject* UDoodleAbcFactory::FactoryCreateFile(UClass* InClass, UObject* InParent
 			}
 		}
 
-		FAbcImportLogger::OutputMessages(PageName);
+		// FAbcImportLogger::OutputMessages(PageName);
 	}
 	//确认父级;
-	UObject* OutParent = (ResultAssets.Num() > 0 && InParent != ResultAssets[0]->GetOutermost()) ? ResultAssets[0]->GetOutermost() : InParent;
+	UObject *OutParent = (ResultAssets.Num() > 0 && InParent != ResultAssets[0]->GetOutermost()) ? ResultAssets[0]->GetOutermost() : InParent;
 	return (ResultAssets.Num() > 0) ? OutParent : nullptr;
 }
 
-UObject* UDoodleAbcFactory::ImportGeometryCache(FDoodleAbcImport& Importer, UObject* InParent, EObjectFlags Flags)
+UObject *UDoodleAbcFactory::ImportGeometryCache(FDoodleAbcImport &Importer, UObject *InParent, EObjectFlags Flags)
 {
 	// Flush commands before importing
 	FlushRenderingCommands();
@@ -145,7 +149,7 @@ UObject* UDoodleAbcFactory::ImportGeometryCache(FDoodleAbcImport& Importer, UObj
 	// Check if the alembic file contained any meshes
 	if (NumMeshes > 0)
 	{
-		UDoodleGeometryCacheBones* GeometryCache = Importer.ImportAsDoodleGeometryCache(InParent, Flags);
+		UDoodleGeometryCacheBones *GeometryCache = Importer.ImportAsDoodleGeometryCache(InParent, Flags);
 		//if (Cast<UDoodleAlemblcCache>(GeometryCache) == nullptr)
 		//{
 		//	UE_LOG(LogTemp, Log, TEXT("tran doodle Cache ------------>   not"));
@@ -157,12 +161,13 @@ UObject* UDoodleAbcFactory::ImportGeometryCache(FDoodleAbcImport& Importer, UObj
 		}
 
 		// Setup asset import data
-		if (!GeometryCache->p_GeometryCache->AssetImportData || !GeometryCache->p_GeometryCache->AssetImportData->IsA<UAbcAssetImportData>())
+		if (!GeometryCache->p_GeometryCache->AssetImportData ||
+			!GeometryCache->p_GeometryCache->AssetImportData->IsA<UDoodleAbcAssetImportData>())
 		{
-			GeometryCache->p_GeometryCache->AssetImportData = NewObject<UAbcAssetImportData>(GeometryCache->p_GeometryCache);
+			GeometryCache->p_GeometryCache->AssetImportData = NewObject<UDoodleAbcAssetImportData>(GeometryCache->p_GeometryCache);
 		}
 		GeometryCache->p_GeometryCache->AssetImportData->Update(UFactory::CurrentFilename);
-		UAbcAssetImportData* AssetImportData = Cast<UAbcAssetImportData>(GeometryCache->p_GeometryCache->AssetImportData);
+		UDoodleAbcAssetImportData *AssetImportData = Cast<UDoodleAbcAssetImportData>(GeometryCache->p_GeometryCache->AssetImportData);
 		if (AssetImportData)
 		{
 			Importer.UpdateAssetImportData(AssetImportData);

@@ -3,15 +3,19 @@
 #include "CoreMinimal.h"
 #include "Misc/EnumClassFlags.h"
 #include "AbcWarpHeader.h"
+#include "IAbcObject.h"
 
-class UAbcImportSettings;
+class UAbcDoodleImportSettings;
 class UMaterialInterface;
+class IMeshUtilities;
+
 namespace doodle
 {
 
 	class IAbcObject;
 	class IAbcPolyMesh;
 	class IAbcTransform;
+
 	class FAbcFile
 	{
 		Alembic::AbcCoreFactory::IFactory Factory;
@@ -50,11 +54,11 @@ namespace doodle
 		float ImportLength;
 
 		//材料集名称
-		std::vector<FString> materalName;
+		TArray<FString> materalName;
 		const FString FilePath;
 
 		//mesh工具
-		IMeshUtilities* MeshUtilities;
+		IMeshUtilities *MeshUtilities;
 
 		void TraverseAbcHierarchy(const Alembic::Abc::IObject &InObject, IAbcObject *InParent);
 
@@ -63,11 +67,35 @@ namespace doodle
 		~FAbcFile();
 
 		//打开文件
-		bool openFile();
-
+		bool Open();
+		//! 这里所有的方法都要创建
+		const FString GetFilePath() const { return {}; };
 		//导入文件
-		bool Import();
+		bool Import(UAbcDoodleImportSettings *InImportSettings) { return {}; };
+		//获得最大帧
+		const int32 GetMaxFrameIndex() const { return {}; };
+		const float GetImportTimeOffset() const { return {}; };
+		const float GetImportLength() const { return {}; };
+		//获得几何体
+		const TArray<IAbcPolyMesh *> &GetPolyMeshes() const
+		{
+			static TArray<IAbcPolyMesh *> t;
+			return t;
+		};
+		const TArray<IAbcTransform *> &GetTransforms() const
+		{
+			static TArray<IAbcTransform *> t;
+			return t;
+		};
+		//返回abc文件中的几何体数量
+		const int32 GetNumPolyMeshes() const { return {}; };
+		//查看是否是异构拓扑
+		const bool ContainsHeterogeneousMeshes() const { return {}; };
+		//获得材质名称
+		const TArray<FString> &GetUniqueFaceSetNames() const { return materalName; };
+		/*返回面集材质名称的材质 , 找不到返回null*/
+		UMaterialInterface **GetMaterialByName(const FString &InMaterialName) { return {}; };
 
-		void ProcessFrames(TFunctionRef<void(int32, FAbcFile *)> InCallback);
+		void ProcessFrames(TFunctionRef<void(int32, FAbcFile *)> InCallback, const EFrameReadFlags InFlags){};
 	};
 }

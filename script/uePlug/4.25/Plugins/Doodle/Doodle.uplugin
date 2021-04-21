@@ -10,7 +10,7 @@
 	"DocsURL": "",
 	"MarketplaceURL": "",
 	"SupportURL": "",
-	"EngineVersion": "4.25.4",
+	"EngineVersion": "4.25.0",
 	"CanContainContent": true,
 	"Installed": false,
 	"Modules": [
@@ -19,8 +19,7 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"WhitelistPlatforms": [
-				"Win64",
-				"Mac"
+				"Win64"
 			]
 		},
 		{
@@ -28,8 +27,7 @@
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit",
 			"WhitelistPlatforms": [
-				"Win64",
-				"Mac"
+				"Win64"
 			]
 		}
 	],

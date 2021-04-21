@@ -8,8 +8,6 @@
 #include "Materials/MaterialInterface.h"
 
 //批量导入
-#include "AbcImportSettings.h"
-#include "AbcImporter.h"
 #include "AssetImportTask.h"
 #include "AssetToolsModule.h"
 #include "DesktopPlatformModule.h"
@@ -45,62 +43,62 @@ void DoodleCopyMat::Construct(const FArguments& Arg) {
 		]
 	.ToolTipText_Lambda([=]() -> FText {
 		return FText::FromString(TEXT("获得选中物体"));
-	})] +
+		})] +
 
 		SHorizontalBox::Slot()
-		.AutoWidth()
-		.HAlign(HAlign_Left)
-		.Padding(FMargin(
-			1.f,
-			1.f))[SNew(SButton)  //创建按钮
-		.OnClicked(this,
-			&DoodleCopyMat::CopyMateral)  //添加回调函数
-		[SNew(STextBlock)
-		.Text(FText::FromString(
-			TEXT("复制材质列表")))  //按钮中的字符
-		]
-	.ToolTipText_Lambda([=]() -> FText {
-		return FText::FromString(
-			TEXT("复制选中物体的材质列表"));
-	})] +
+			.AutoWidth()
+			.HAlign(HAlign_Left)
+			.Padding(FMargin(
+				1.f,
+				1.f))[SNew(SButton)  //创建按钮
+			.OnClicked(this,
+				&DoodleCopyMat::CopyMateral)  //添加回调函数
+			[SNew(STextBlock)
+			.Text(FText::FromString(
+				TEXT("复制材质列表")))  //按钮中的字符
+			]
+		.ToolTipText_Lambda([=]() -> FText {
+			return FText::FromString(
+				TEXT("复制选中物体的材质列表"));
+			})] +
 
-		SHorizontalBox::Slot()
-		.AutoWidth()
-		.HAlign(HAlign_Left)
-		.Padding(FMargin(1.f, 1.f))
-		[SNew(SButton)
-		.OnClicked(this, &DoodleCopyMat::BathImport)  // 批量导入
-		[SNew(STextBlock)
-		.Text(FText::FromString(TEXT("批量导入")))]
-	.ToolTipText_Lambda([=]() -> FText {
-		return FText::FromString(TEXT("批量导入fbx和abc文件"));
-	})] +
+			SHorizontalBox::Slot()
+				.AutoWidth()
+				.HAlign(HAlign_Left)
+				.Padding(FMargin(1.f, 1.f))
+				[SNew(SButton)
+				.OnClicked(this, &DoodleCopyMat::BathImport)  // 批量导入
+				[SNew(STextBlock)
+				.Text(FText::FromString(TEXT("批量导入")))]
+			.ToolTipText_Lambda([=]() -> FText {
+				return FText::FromString(TEXT("批量导入fbx和abc文件"));
+				})] +
 
-		SHorizontalBox::Slot()
-		.AutoWidth()
-		.HAlign(HAlign_Left)
-		.Padding(FMargin(1.f, 1.f))
-		[SNew(SButton)
-		.OnClicked(this, &DoodleCopyMat::BathReameAss)  //批量重命名
-		[SNew(STextBlock)
-		.Text(FText::FromString(TEXT("批量修改材质名称")))]
-	.ToolTipText_Lambda([=]() -> FText {
-		return FText::FromString(TEXT(
-			"选中骨骼物体,会将材料名称和骨骼物体的插槽名称统一"));
-	})] +
+				SHorizontalBox::Slot()
+					.AutoWidth()
+					.HAlign(HAlign_Left)
+					.Padding(FMargin(1.f, 1.f))
+					[SNew(SButton)
+					.OnClicked(this, &DoodleCopyMat::BathReameAss)  //批量重命名
+					[SNew(STextBlock)
+					.Text(FText::FromString(TEXT("批量修改材质名称")))]
+				.ToolTipText_Lambda([=]() -> FText {
+					return FText::FromString(TEXT(
+						"选中骨骼物体,会将材料名称和骨骼物体的插槽名称统一"));
+					})] +
 
-		SHorizontalBox::Slot()
-		.AutoWidth()
-		.HAlign(HAlign_Left)
-		.Padding(FMargin(1.f, 1.f))
-		[SNew(SButton)
-		.OnClicked(this, &DoodleCopyMat::importAbcFile)
-		[SNew(STextBlock)
-		.Text(FText::FromString(TEXT("alembic 导入")))]
-	.ToolTipText_Lambda([=]() -> FText {
-		return FText::FromString(
-			TEXT("自定义abc导入,带插槽, 有材质名称显示"));
-	})]];
+					SHorizontalBox::Slot()
+						.AutoWidth()
+						.HAlign(HAlign_Left)
+						.Padding(FMargin(1.f, 1.f))
+						[SNew(SButton)
+						.OnClicked(this, &DoodleCopyMat::importAbcFile)
+						[SNew(STextBlock)
+						.Text(FText::FromString(TEXT("alembic 导入")))]
+					.ToolTipText_Lambda([=]() -> FText {
+						return FText::FromString(
+							TEXT("自定义abc导入,带插槽, 有材质名称显示"));
+						})]];
 }
 
 void DoodleCopyMat::AddReferencedObjects(FReferenceCollector& collector) {
@@ -207,105 +205,105 @@ FReply DoodleCopyMat::CopyMateral() {
 }
 
 FReply DoodleCopyMat::BathImport() {
-	FlushRenderingCommands();
-	auto fileName =
-		OpenFileDialog("Bath import abc file", "", " import files|*.abc;*.fbx");
+	//FlushRenderingCommands();
+	//auto fileName =
+	//	OpenFileDialog("Bath import abc file", "", " import files|*.abc;*.fbx");
 
-	IAssetTools& assetTools =
-		FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools")
-		.Get();  //获得资产工具
+	//IAssetTools& assetTools =
+	//	FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools")
+	//	.Get();  //获得资产工具
 
-	FRegexPattern myPattern_abc(TEXT(R"re(ep(\d+)_sc(\d+)_.*_.(\d+)-(\d+))re"));
-	FRegexPattern myPattern_fbx(TEXT(R"re(ep(\d+)_sc(\d+)_.*_)re"));
+	//FRegexPattern myPattern_abc(TEXT(R"re(ep(\d+)_sc(\d+)_.*_.(\d+)-(\d+))re"));
+	//FRegexPattern myPattern_fbx(TEXT(R"re(ep(\d+)_sc(\d+)_.*_)re"));
 
-	TArray<UAssetImportTask*> importTaskList;
-	for (auto& name : fileName) {
-		auto fnames = FPaths::GetBaseFilename(name);
+	//TArray<UAssetImportTask*> importTaskList;
+	//for (auto& name : fileName) {
+	//	auto fnames = FPaths::GetBaseFilename(name);
 
-		FString uePath;
-		UE_LOG(LogTemp, Log, TEXT("文件名 %s"), *fnames);
+	//	FString uePath;
+	//	UE_LOG(LogTemp, Log, TEXT("文件名 %s"), *fnames);
 
-		auto AssetImportTask = NewObject<UAssetImportTask>();
-		AssetImportTask->bAutomated = true;
-		AssetImportTask->bReplaceExisting = true;
-		AssetImportTask->bReplaceExistingSettings = true;
-		AssetImportTask->bSave = true;
-		AssetImportTask->DestinationPath = "/Game/Shot";
-		AssetImportTask->Filename = name;
+	//	auto AssetImportTask = NewObject<UAssetImportTask>();
+	//	AssetImportTask->bAutomated = true;
+	//	AssetImportTask->bReplaceExisting = true;
+	//	AssetImportTask->bReplaceExistingSettings = true;
+	//	AssetImportTask->bSave = true;
+	//	AssetImportTask->DestinationPath = "/Game/Shot";
+	//	AssetImportTask->Filename = name;
 
-		if (FPaths::GetExtension(name) == "abc") {
-			FRegexMatcher myMatch(myPattern_abc, fnames);
-			auto abcImportTask = UAbcImportSettings::Get();
-			abcImportTask->ImportType = EAlembicImportType::GeometryCache;
-			abcImportTask->GeometryCacheSettings.bApplyConstantTopologyOptimizations =
-				true;
-			abcImportTask->GeometryCacheSettings.bFlattenTracks = true;
-			abcImportTask->GeometryCacheSettings.CompressedPositionPrecision = 0.01f;
-			abcImportTask->SamplingSettings.FrameStart = 1001;
-			abcImportTask->SamplingSettings.FrameEnd = 1200;
-			abcImportTask->SamplingSettings.bSkipEmpty = true;
-			abcImportTask->SamplingSettings.FrameSteps = 25.f;
-			abcImportTask->ConversionSettings.bFlipV = true;
-			abcImportTask->ConversionSettings.Preset = EAbcConversionPreset::Maya;
-			abcImportTask->ConversionSettings.Scale = FVector{ 1.f, -1.f, 1.f };
-			abcImportTask->ConversionSettings.Rotation = FVector{ 90.f, 0.f, 0.f };
-			abcImportTask->MaterialSettings.bFindMaterials = true;
+	//	if (FPaths::GetExtension(name) == "abc") {
+	//		FRegexMatcher myMatch(myPattern_abc, fnames);
+	//		auto abcImportTask = UAbcImportSettings::Get();
+	//		abcImportTask->ImportType = EAlembicImportType::GeometryCache;
+	//		abcImportTask->GeometryCacheSettings.bApplyConstantTopologyOptimizations =
+	//			true;
+	//		abcImportTask->GeometryCacheSettings.bFlattenTracks = true;
+	//		abcImportTask->GeometryCacheSettings.CompressedPositionPrecision = 0.01f;
+	//		abcImportTask->SamplingSettings.FrameStart = 1001;
+	//		abcImportTask->SamplingSettings.FrameEnd = 1200;
+	//		abcImportTask->SamplingSettings.bSkipEmpty = true;
+	//		abcImportTask->SamplingSettings.FrameSteps = 25.f;
+	//		abcImportTask->ConversionSettings.bFlipV = true;
+	//		abcImportTask->ConversionSettings.Preset = EAbcConversionPreset::Maya;
+	//		abcImportTask->ConversionSettings.Scale = FVector{ 1.f, -1.f, 1.f };
+	//		abcImportTask->ConversionSettings.Rotation = FVector{ 90.f, 0.f, 0.f };
+	//		abcImportTask->MaterialSettings.bFindMaterials = true;
 
-			if (myMatch.FindNext()) {
-				auto eps = FCString::Atoi(*myMatch.GetCaptureGroup(1));
-				auto shot = FCString::Atoi(*myMatch.GetCaptureGroup(2));
-				auto start_f = FCString::Atoi(*myMatch.GetCaptureGroup(3));
-				auto end_f = FCString::Atoi(*myMatch.GetCaptureGroup(4));
+	//		if (myMatch.FindNext()) {
+	//			auto eps = FCString::Atoi(*myMatch.GetCaptureGroup(1));
+	//			auto shot = FCString::Atoi(*myMatch.GetCaptureGroup(2));
+	//			auto start_f = FCString::Atoi(*myMatch.GetCaptureGroup(3));
+	//			auto end_f = FCString::Atoi(*myMatch.GetCaptureGroup(4));
 
-				UE_LOG(LogTemp, Log, TEXT("集数 %s"), *(myMatch.GetCaptureGroup(1)));
-				UE_LOG(LogTemp, Log, TEXT("镜头号 %s"), *(myMatch.GetCaptureGroup(2)));
-				UE_LOG(LogTemp, Log, TEXT("开始帧 %s"), *(myMatch.GetCaptureGroup(3)));
-				UE_LOG(LogTemp, Log, TEXT("结束帧 %s"), *(myMatch.GetCaptureGroup(4)));
-				uePath =
-					FString::Printf(TEXT("/Game/Shot/Ep%03i/Sc%04i/Ren"), eps, shot);
-				UE_LOG(LogTemp, Log, TEXT("导入路径 %s"), *(uePath));
-				AssetImportTask->DestinationPath = uePath;
-				abcImportTask->SamplingSettings.FrameEnd = end_f;
-			}
-			AssetImportTask->Options = abcImportTask;
-			// assetTools.ImportAssetTasks(TArray<UAssetImportTask*>{AssetImportTask});
-		}
-		else if (FPaths::GetExtension(name) == "fbx") {
-			FRegexMatcher myMatch(myPattern_fbx, fnames);
-			// auto fbxImport = NewObject<UFbxImportUI>( );
-			// fbxImport->bImportAnimations = true;
-			// fbxImport->bImportAsSkeletal = true;
-			// fbxImport->bImportMesh = true;
-			auto fbxFactory = NewObject<UFbxFactory>();
-			fbxFactory->ImportUI->bImportAnimations = true;
-			fbxFactory->ImportUI->bImportAsSkeletal = true;
-			fbxFactory->ImportUI->bImportMesh = true;
-			fbxFactory->ImportUI->MeshTypeToImport = FBXIT_SkeletalMesh;
-			fbxFactory->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
-			fbxFactory->ImportUI->bImportMaterials = true;
-			fbxFactory->ImportUI->bImportTextures = false;
-			AssetImportTask->Factory = fbxFactory;
+	//			UE_LOG(LogTemp, Log, TEXT("集数 %s"), *(myMatch.GetCaptureGroup(1)));
+	//			UE_LOG(LogTemp, Log, TEXT("镜头号 %s"), *(myMatch.GetCaptureGroup(2)));
+	//			UE_LOG(LogTemp, Log, TEXT("开始帧 %s"), *(myMatch.GetCaptureGroup(3)));
+	//			UE_LOG(LogTemp, Log, TEXT("结束帧 %s"), *(myMatch.GetCaptureGroup(4)));
+	//			uePath =
+	//				FString::Printf(TEXT("/Game/Shot/Ep%03i/Sc%04i/Ren"), eps, shot);
+	//			UE_LOG(LogTemp, Log, TEXT("导入路径 %s"), *(uePath));
+	//			AssetImportTask->DestinationPath = uePath;
+	//			abcImportTask->SamplingSettings.FrameEnd = end_f;
+	//		}
+	//		AssetImportTask->Options = abcImportTask;
+	//		// assetTools.ImportAssetTasks(TArray<UAssetImportTask*>{AssetImportTask});
+	//	}
+	//	else if (FPaths::GetExtension(name) == "fbx") {
+	//		FRegexMatcher myMatch(myPattern_fbx, fnames);
+	//		// auto fbxImport = NewObject<UFbxImportUI>( );
+	//		// fbxImport->bImportAnimations = true;
+	//		// fbxImport->bImportAsSkeletal = true;
+	//		// fbxImport->bImportMesh = true;
+	//		auto fbxFactory = NewObject<UFbxFactory>();
+	//		fbxFactory->ImportUI->bImportAnimations = true;
+	//		fbxFactory->ImportUI->bImportAsSkeletal = true;
+	//		fbxFactory->ImportUI->bImportMesh = true;
+	//		fbxFactory->ImportUI->MeshTypeToImport = FBXIT_SkeletalMesh;
+	//		fbxFactory->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
+	//		fbxFactory->ImportUI->bImportMaterials = true;
+	//		fbxFactory->ImportUI->bImportTextures = false;
+	//		AssetImportTask->Factory = fbxFactory;
 
-			if (myMatch.FindNext()) {
-				auto eps = FCString::Atoi(*myMatch.GetCaptureGroup(1));
-				auto shot = FCString::Atoi(*myMatch.GetCaptureGroup(2));
-				// auto start_f = FCString::Atoi(*myMatch.GetCaptureGroup(3));
-				// auto end_f = FCString::Atoi(*myMatch.GetCaptureGroup(4));
-				UE_LOG(LogTemp, Log, TEXT("集数 %s"), *(myMatch.GetCaptureGroup(1)));
-				UE_LOG(LogTemp, Log, TEXT("镜头号 %s"), *(myMatch.GetCaptureGroup(2)));
-				// UE_LOG(LogTemp, Log, TEXT("开始帧 %s"),
-				// *(myMatch.GetCaptureGroup(3))); UE_LOG(LogTemp, Log, TEXT("结束帧
-				// %s"), *(myMatch.GetCaptureGroup(4)));
-				uePath =
-					FString::Printf(TEXT("/Game/Shot/ep%03i/sc%04i/Ren"), eps, shot);
-				UE_LOG(LogTemp, Log, TEXT("导入路径 %s"), *(uePath));
-				AssetImportTask->DestinationPath = uePath;
-			}
-		}
-		importTaskList.Add(AssetImportTask);
-		UEditorAssetLibrary::SaveDirectory("/Game/shot");
-	}
-	assetTools.ImportAssetTasks(importTaskList);
+	//		if (myMatch.FindNext()) {
+	//			auto eps = FCString::Atoi(*myMatch.GetCaptureGroup(1));
+	//			auto shot = FCString::Atoi(*myMatch.GetCaptureGroup(2));
+	//			// auto start_f = FCString::Atoi(*myMatch.GetCaptureGroup(3));
+	//			// auto end_f = FCString::Atoi(*myMatch.GetCaptureGroup(4));
+	//			UE_LOG(LogTemp, Log, TEXT("集数 %s"), *(myMatch.GetCaptureGroup(1)));
+	//			UE_LOG(LogTemp, Log, TEXT("镜头号 %s"), *(myMatch.GetCaptureGroup(2)));
+	//			// UE_LOG(LogTemp, Log, TEXT("开始帧 %s"),
+	//			// *(myMatch.GetCaptureGroup(3))); UE_LOG(LogTemp, Log, TEXT("结束帧
+	//			// %s"), *(myMatch.GetCaptureGroup(4)));
+	//			uePath =
+	//				FString::Printf(TEXT("/Game/Shot/ep%03i/sc%04i/Ren"), eps, shot);
+	//			UE_LOG(LogTemp, Log, TEXT("导入路径 %s"), *(uePath));
+	//			AssetImportTask->DestinationPath = uePath;
+	//		}
+	//	}
+	//	importTaskList.Add(AssetImportTask);
+	//	UEditorAssetLibrary::SaveDirectory("/Game/shot");
+	//}
+	//assetTools.ImportAssetTasks(importTaskList);
 	return FReply::Handled();
 }
 
@@ -351,60 +349,60 @@ FReply DoodleCopyMat::BathReameAss() {
 }
 
 FReply DoodleCopyMat::importAbcFile() {
-	FlushRenderingCommands();
-	auto fileName = OpenFileDialog("Bath import abc file", "", " import files | *.abc");
-	//解析文件名称
-	FRegexPattern myPattern_abc(TEXT(R"re(ep(\d+)_sc(\d+)_.*_.(\d+)-(\d+))re"));
-	//FRegexPattern myPattern_fbx(TEXT(R"re(ep(\d+)_sc(\d+)_.*_)re"));
-	IAssetTools& assetTools =
-		FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();//获得资产工具
-	auto abcImportFactory = NewObject<UDoodleAbcFactory>();
-	auto AssetImportTask = NewObject<UAssetImportTask>();
-	TArray<UAssetImportTask*> importTaskList;
-	for (auto& name : fileName) {
-		auto fnames = FPaths::GetBaseFilename(name);
-		FRegexMatcher myMatch(myPattern_abc, fnames);
-		FString uePath;
-		UE_LOG(LogTemp, Log, TEXT("文件名 %s"), *fnames);
-		AssetImportTask->bAutomated = true;
-		AssetImportTask->bReplaceExisting = true;
-		AssetImportTask->bReplaceExistingSettings = true;
-		AssetImportTask->bSave = true;
-		AssetImportTask->DestinationPath = "/Game/Shot";
-		AssetImportTask->Filename = name;
-		AssetImportTask->Factory = abcImportFactory;
-		auto abcImportTask = UAbcImportSettings::Get();
-		abcImportTask->ImportType = EAlembicImportType::GeometryCache;
-		abcImportTask->GeometryCacheSettings.bApplyConstantTopologyOptimizations
-			= true; 	abcImportTask->GeometryCacheSettings.bFlattenTracks = true;
-		abcImportTask->GeometryCacheSettings.CompressedPositionPrecision =
-			0.01f; 	abcImportTask->SamplingSettings.FrameStart = 1001;
-		abcImportTask->SamplingSettings.FrameEnd = 1200;
-		abcImportTask->SamplingSettings.bSkipEmpty = true;
-		abcImportTask->SamplingSettings.FrameSteps = 25.f;
-		abcImportTask->ConversionSettings.bFlipV = true;
-		abcImportTask->ConversionSettings.Preset = EAbcConversionPreset::Maya;
-		abcImportTask->ConversionSettings.Scale = FVector{ 1.f, -1.f, 1.f };
-		abcImportTask->ConversionSettings.Rotation = FVector{ 90.f, 0.f, 0.f };
-		abcImportTask->MaterialSettings.bFindMaterials = true;
-		if (myMatch.FindNext()) {
-			auto eps = FCString::Atoi(*myMatch.GetCaptureGroup(1));
-			auto shot = FCString::Atoi(*myMatch.GetCaptureGroup(2));
-			auto start_f = FCString::Atoi(*myMatch.GetCaptureGroup(3));
-			auto end_f = FCString::Atoi(*myMatch.GetCaptureGroup(4));
-			UE_LOG(LogTemp, Log, TEXT("集数 %s"), *(myMatch.GetCaptureGroup(1)));
-			UE_LOG(LogTemp, Log, TEXT("镜头号 %s"), *(myMatch.GetCaptureGroup(2)));
-			UE_LOG(LogTemp, Log, TEXT("开始帧 %s"), *(myMatch.GetCaptureGroup(3)));
-			UE_LOG(LogTemp, Log, TEXT("结束帧 %s"), *(myMatch.GetCaptureGroup(4)));
-			uePath = FString::Printf(TEXT("/Game/Shot/ep%03i/sc%04i/Ren"), eps, shot);
-			UE_LOG(LogTemp, Log, TEXT("导入路径 %s"), *(uePath));
-			AssetImportTask->DestinationPath = uePath;
-			abcImportTask->SamplingSettings.FrameEnd = end_f;
-		}
-		AssetImportTask->Options = abcImportTask;
-		importTaskList.Add(AssetImportTask);
-	}
-	assetTools.ImportAssetTasks(importTaskList);
+	//FlushRenderingCommands();
+	//auto fileName = OpenFileDialog("Bath import abc file", "", " import files | *.abc");
+	////解析文件名称
+	//FRegexPattern myPattern_abc(TEXT(R"re(ep(\d+)_sc(\d+)_.*_.(\d+)-(\d+))re"));
+	////FRegexPattern myPattern_fbx(TEXT(R"re(ep(\d+)_sc(\d+)_.*_)re"));
+	//IAssetTools& assetTools =
+	//	FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();//获得资产工具
+	//auto abcImportFactory = NewObject<UDoodleAbcFactory>();
+	//auto AssetImportTask = NewObject<UAssetImportTask>();
+	//TArray<UAssetImportTask*> importTaskList;
+	//for (auto& name : fileName) {
+	//	auto fnames = FPaths::GetBaseFilename(name);
+	//	FRegexMatcher myMatch(myPattern_abc, fnames);
+	//	FString uePath;
+	//	UE_LOG(LogTemp, Log, TEXT("文件名 %s"), *fnames);
+	//	AssetImportTask->bAutomated = true;
+	//	AssetImportTask->bReplaceExisting = true;
+	//	AssetImportTask->bReplaceExistingSettings = true;
+	//	AssetImportTask->bSave = true;
+	//	AssetImportTask->DestinationPath = "/Game/Shot";
+	//	AssetImportTask->Filename = name;
+	//	AssetImportTask->Factory = abcImportFactory;
+	//	auto abcImportTask = UAbcImportSettings::Get();
+	//	abcImportTask->ImportType = EAlembicImportType::GeometryCache;
+	//	abcImportTask->GeometryCacheSettings.bApplyConstantTopologyOptimizations
+	//		= true; 	abcImportTask->GeometryCacheSettings.bFlattenTracks = true;
+	//	abcImportTask->GeometryCacheSettings.CompressedPositionPrecision =
+	//		0.01f; 	abcImportTask->SamplingSettings.FrameStart = 1001;
+	//	abcImportTask->SamplingSettings.FrameEnd = 1200;
+	//	abcImportTask->SamplingSettings.bSkipEmpty = true;
+	//	abcImportTask->SamplingSettings.FrameSteps = 25.f;
+	//	abcImportTask->ConversionSettings.bFlipV = true;
+	//	abcImportTask->ConversionSettings.Preset = EAbcConversionPreset::Maya;
+	//	abcImportTask->ConversionSettings.Scale = FVector{ 1.f, -1.f, 1.f };
+	//	abcImportTask->ConversionSettings.Rotation = FVector{ 90.f, 0.f, 0.f };
+	//	abcImportTask->MaterialSettings.bFindMaterials = true;
+	//	if (myMatch.FindNext()) {
+	//		auto eps = FCString::Atoi(*myMatch.GetCaptureGroup(1));
+	//		auto shot = FCString::Atoi(*myMatch.GetCaptureGroup(2));
+	//		auto start_f = FCString::Atoi(*myMatch.GetCaptureGroup(3));
+	//		auto end_f = FCString::Atoi(*myMatch.GetCaptureGroup(4));
+	//		UE_LOG(LogTemp, Log, TEXT("集数 %s"), *(myMatch.GetCaptureGroup(1)));
+	//		UE_LOG(LogTemp, Log, TEXT("镜头号 %s"), *(myMatch.GetCaptureGroup(2)));
+	//		UE_LOG(LogTemp, Log, TEXT("开始帧 %s"), *(myMatch.GetCaptureGroup(3)));
+	//		UE_LOG(LogTemp, Log, TEXT("结束帧 %s"), *(myMatch.GetCaptureGroup(4)));
+	//		uePath = FString::Printf(TEXT("/Game/Shot/ep%03i/sc%04i/Ren"), eps, shot);
+	//		UE_LOG(LogTemp, Log, TEXT("导入路径 %s"), *(uePath));
+	//		AssetImportTask->DestinationPath = uePath;
+	//		abcImportTask->SamplingSettings.FrameEnd = end_f;
+	//	}
+	//	AssetImportTask->Options = abcImportTask;
+	//	importTaskList.Add(AssetImportTask);
+	//}
+	//assetTools.ImportAssetTasks(importTaskList);
 
 	return FReply::Handled();
 }
