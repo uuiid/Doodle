@@ -18,7 +18,16 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-msvc-x64",
             "configurationProvider": "ms-vscode.cmake-tools",
-            "compileCommands": "${workspaceFolder}/b_Ninja_VS19_Ni_64_qt515_Debug/compile_commands.json"
+            "compileCommands": "${workspaceFolder}/b_Ninja_VS19_Ni_64_qt515_Debug/compile_commands.json",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/test",
+                    "${workspaceFolder}/Include",
+                    "${vcpkgRoot}/x64-windows/include"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db"
+            }
         }
     ],
     "version": 4
