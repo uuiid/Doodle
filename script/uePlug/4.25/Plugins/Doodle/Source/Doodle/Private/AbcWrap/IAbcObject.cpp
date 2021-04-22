@@ -37,9 +37,9 @@ namespace doodle
                 const auto boundCenter = BoundsBox.center();
 
                 const FBoxSphereBounds converts{
-                    FVector{boundCenter.x, boundCenter.y, boundCenter.z},
-                    FVector{boundSize.x * 0.5f, boundSize.y * 0.5f, boundSize.z * 0.5f},
-                    const float{boundSize.length() * 0.5f}};
+                    FVector{(float)boundCenter.x, (float)boundCenter.y, (float)boundCenter.z},
+                    FVector{(float)boundSize.x * 0.5f, (float)boundSize.y * 0.5f, (float)boundSize.z * 0.5f},
+                    (const float)boundSize.length() * 0.5f};
                 Bounds = (SampleIndex == 0) ? converts : Bounds + converts;
             }
         }
@@ -61,7 +61,7 @@ namespace doodle
         auto startTime = TimeSampler->getSampleTime(0);
         auto samplingType = TimeSampler->getTimeSamplingType();
 
-        auto startFrame = FMath::Max<int32>(FMath::CeilToInt(startTime / float{samplingType.getTimePerCycle()}), 0);
+        auto startFrame = FMath::Max<int32>(FMath::CeilToInt(startTime / (float)samplingType.getTimePerCycle()), 0);
         return {startTime, startFrame};
     }
 

@@ -32,8 +32,6 @@ public class doodle : ModuleRules
 				"EditorScriptingUtilities",
                 //我的abc导入
                 "GeometryCache",
-
-				"AlembicLibrary",
 				"Engine",//几何缓存的骨骼依赖
                 "UnrealEd", //创建actor工厂类需要
                 // ... add other public dependencies that you statically link with here ...
@@ -70,10 +68,9 @@ public class doodle : ModuleRules
                 "AssetTools",     //资产工具 导入依赖
 
                 "DesktopPlatform",//桌面依赖  打开文件对话框的依赖
-                "AlembicImporter",//abc导入依赖
-                "AlembicLibrary",
 				"RenderCore",
-
+				////abc批量导入需要
+                //"AlembicLibrary",
 				"AIModule",//这个是ai控制使用的
                 "PlacementMode",//这个是创建面板用的
                 "AssetRegistry"//资源注册表模块

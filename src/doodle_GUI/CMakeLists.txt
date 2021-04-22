@@ -1,10 +1,4 @@
 
-set(RESOURCE_SOURCE
-        resource.qrc
-        style.qrc
-)
-
-qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 
 add_executable(doodle 
 WIN32 
@@ -38,29 +32,28 @@ PUBLIC
 <mutex>
 <condition_variable>
 <future>
+<wx/wx.h>
 )
 
-#
-# add_executable(doodle WIN32
-#         doodle_global.h
-#         main.cpp
-#         ${TS_FILES}
-#         ${RESOURE_FILE}
-#         )
-
 add_subdirectory(source)
+target_compile_definitions(doodle PRIVATE wxUSE_STD_STRING wxUSE_UNICODE_WCHAR)
+target_include_directories(doodle PRIVATE ${BOOST_INCLUDE_DIRS} ${wxWidgets_INCLUDE_DIRS})
+# target_link_directories(doodle PRIVATE f:/Source/vcpkg/installed/x64-windows/debug/lib/)
+add_custom_target(tset_gen 
+COMMAND ${CMAKE_COMMAND} -E echo $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
+)
 
-target_include_directories(doodle PRIVATE ${BOOST_INCLUDE_DIRS})
+target_link_libraries(doodle 
+PRIVATE
+ $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
+ $<IF:$<CONFIG:Debug>,${WX_cored},${WX_core}>
+ )
 
-target_link_libraries(doodle PRIVATE Qt5::Core)
-target_link_libraries(doodle PRIVATE Qt5::Widgets)
-# target_link_libraries(doodle PRIVATE Qt5::QuickControls2)
+
 
 target_link_libraries(doodle PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(doodle PRIVATE core)
 target_link_libraries(doodle PRIVATE logger)
-
-qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 
 
 

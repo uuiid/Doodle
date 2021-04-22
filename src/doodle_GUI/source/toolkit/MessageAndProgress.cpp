@@ -1,34 +1,42 @@
 #include <doodle_GUI/source/toolkit/MessageAndProgress.h>
-
+#include <boost/format.hpp>
 namespace doodle {
-void MessageAndProgress::createMessageDialog() {
-  QMessageBox::information(
-      dynamic_cast<QWidget*>(this->parent()),
-      tr("结果:"),
-      QString::fromStdString(p_message));
-}
+// IMPLEMENT_DYNAMIC_CLASS();
+// DEFINE_EVENT_TYPE(DOODLE_THREAD);
+MessageAndProgress::MessageAndProgress(wxWindow* parent)
+    : p_message(),
+      p_progress(),
+      p_message_dialog(),
+      p_mess_id(wxWindow::NewControlId()),
+      p_prog_id(wxWindow::NewControlId()),
+      p_t_id(wxWindow::NewControlId()) {
+  p_progress = new wxProgressDialog{
+      wxString::FromUTF8("作业进度"),
+      wxString::FromUTF8("进行中..."),
+      100,
+      parent,
+      wxPD_AUTO_HIDE | wxPD_CAN_ABORT};
+  p_progress->SetId(p_prog_id);
+  p_message_dialog = new wxMessageDialog{parent, wxString::FromUTF8("完成作业")};
+  p_message_dialog->SetId(p_mess_id);
+  p_message_dialog->SetEvtHandlerEnabled(true);
 
-MessageAndProgress::MessageAndProgress(QWidget* parent)
-    : QObject(parent),
-      p_message(),
-      p_progress_dialog(new QProgressDialog(parent)) {
-  connect(this, &MessageAndProgress::progress,
-          p_progress_dialog, &QProgressDialog::setValue,
-          Qt::QueuedConnection);
-  connect(this, &MessageAndProgress::showMessage,
-          this, &MessageAndProgress::createMessageDialog,
-          Qt::QueuedConnection);
-  connect(this, &MessageAndProgress::showMessage,
-          this->p_progress_dialog, &QProgressDialog::close,
-          Qt::QueuedConnection);
-
-  p_progress_dialog->setAutoClose(false);
-  p_progress_dialog->setAutoReset(false);
-  p_progress_dialog->setMinimum(0);
-  p_progress_dialog->setMaximum(100);
-
-  p_progress_dialog->setValue(1);
-  p_progress_dialog->show();
+  p_message_dialog->Bind(
+      wxEVT_THREAD,
+      [this](wxThreadEvent& event) {
+        p_message_dialog->SetMessage(wxString::FromUTF8(this->p_message));
+        p_message_dialog->ShowModal();
+      });
+  p_progress->Bind(
+      wxEVT_THREAD,
+      [this](wxThreadEvent& event) {
+        // p_progress->set
+        boost::format str_f{"进行中... %d"};
+        str_f % event.GetInt();
+        auto str = wxString::FromUTF8(str_f.str().append(" %"));
+        p_progress->Update(event.GetInt(), str);
+        event.Skip();
+      });
 }
 
 }  // namespace doodle

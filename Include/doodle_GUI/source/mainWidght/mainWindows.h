@@ -8,47 +8,50 @@
  */
 #pragma once
 
-
 #include <doodle_GUI/doodle_global.h>
-#include <QMainWindow>
-class QListWidget;
+
 DOODLE_NAMESPACE_S
+class SettingWidght;
+class systemTray;
 
-class mainWindows : public QMainWindow {
-  Q_OBJECT
+class mainWindows : public wxFrame {
+  wxWindowIDRef p_exmaya_id;
+  wxWindowIDRef p_create_image_id;
+  wxWindowIDRef p_create_dir_image_id;
+  wxWindowIDRef p_create_video_id;
+  wxWindowIDRef p_create_ue4File_id;
 
- Q_SIGNALS:
   void setProgress(int value);
 
  public:
-  explicit mainWindows(QWidget *parent = nullptr);
-  //~mainWindows() override;
-  Q_DISABLE_COPY(mainWindows);
+  explicit mainWindows();
+
+  DOODLE_DISABLE_COPY(mainWindows);
 
  private:
-  void doodle_init();
-  void doodle_createAction();
+  void exportMayaFile(const std::vector<FSys::path> paths);
+  void createVideoFile(const std::vector<FSys::path> paths);
+  void createVideoFileFormDir(const std::vector<FSys::path> paths);
+  void connectVideo(const std::vector<FSys::path> paths);
+  void createUe4Project(const std::vector<FSys::path> paths);
+};
 
- public Q_SLOTS:
-  void openSetting();
-  void setProject();
+class Doodle : public wxApp {
+ public:
+  Doodle();
+
+  virtual bool OnInit() override;
+  virtual int OnExit() override;
+
+  void openMainWindow();
+  void openSettingWindow();
+
+  // virtual bool OnExceptionInMainLoop() override;
 
  private:
-  QAction *exitAction;      // 退出软件
-  QAction *refreshAction;   // 刷新函数
-  QAction *openSetWindows;  // 打开设置
-
-  QMenuBar *p_menu_bar_;  //菜单栏
-  QMenu *p_menu_;         //文件菜单
-  QStatusBar *p_status_bar_;
-
-  QWidget *centralWidget;        //中心小部件
-  QGridLayout *p_layout;  //布局
-
-  settingWidget *p_setting_widget_;
-  QListWidget *p_project_list;
-  //  assWidght * p_ass_widght_;
-  //  shotWidget * p_shot_widget_;
+  mainWindows* p_mainWindwos;
+  SettingWidght* p_setting_widget;
+  systemTray* p_systemTray;
 };
 
 DOODLE_NAMESPACE_E

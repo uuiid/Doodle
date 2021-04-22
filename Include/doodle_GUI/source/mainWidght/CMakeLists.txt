@@ -1,6 +1,6 @@
 target_sources(doodle 
 PUBLIC
-DragPushBUtton.h
+FileDropTarget.h
 mainWindows.h
 systemTray.h
 )

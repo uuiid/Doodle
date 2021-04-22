@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
+#include "Animation/AnimCurveTypes.h"
+
 #include "DoodleGeometryCacheCurveAsset.generated.h"
 
 //USTRUCT()
@@ -28,16 +30,12 @@ class DOODLE_API UDoodleGeometryCacheCurveAsset : public UObject
 	//GENERATED_BODY()
 	GENERATED_UCLASS_BODY()
 public:
-
-	TArray<FTransformCurve>& GetTranAnm();
+	TArray<FTransformCurve> &GetTranAnm();
 	//UDoodleGeometryCacheCurveAsset();
 
 	UPROPERTY(EditAnywhere, Category = doodle)
-		TArray<FString> materalName;
-
+	TArray<FString> materalName;
 
 	UPROPERTY()
-		TArray<FTransformCurve> tranAnm;
+	TArray<FTransformCurve> tranAnm;
 };
-
-

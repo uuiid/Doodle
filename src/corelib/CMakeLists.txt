@@ -1,30 +1,17 @@
 ﻿
+cmrc_add_resource_library(
+  CoreResource
+  resource/abcExport.py
+  resource/mayaExport.py
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportFbx.h 
-                          ${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportFbx.cpp
-COMMAND ${BIN2CPP} --file=${CMAKE_CURRENT_LIST_DIR}/resource/mayaExport.py --output=. --headerfile=CoreResourceMayaExportFbx.h --identifier=CoreResourceMayaExportFbx --override 
-WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-DEPENDS resource/mayaExport.py
-COMMENT "bin2cpp create pinyin lib file"
-)
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportAbc.h 
-                          ${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportAbc.cpp
-COMMAND ${BIN2CPP} --file=${CMAKE_CURRENT_LIST_DIR}/resource/abcExport.py --output=. --headerfile=CoreResourceMayaExportAbc.h --identifier=CoreResourceMayaExportAbc --override 
-WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-DEPENDS resource/abcExport.py
-COMMENT "bin2cpp create pinyin lib file"
 )
 
 add_library(core SHARED
-${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportFbx.h 
-${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportFbx.cpp
-${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportAbc.h 
-${CMAKE_CURRENT_BINARY_DIR}/CoreResourceMayaExportAbc.cpp
-
 )
 add_subdirectory(core)
 add_subdirectory(FileWarp)
 add_subdirectory(FileSys)
+add_subdirectory(Metadata)
 
 set_target_properties(core 
 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -57,29 +44,11 @@ PUBLIC
 <stdexcept>
 )
 
-# find_package(Freetype REQUIRED)
-# set(HARFBUZZ_ROOT "F:/vcpkg/installed/x64-windows" CACHE PATH "harfbuzz install root dir")
-# find_path(HARFBUZZ_INCLUDE_DIRS
-# NAMES hb-ft.h
-# PATH_SUFFIXES harfbuzz
-# HINTS ${HARFBUZZ_ROOT}/include)
-# if(CMAKE_BUILD_TYPE MATCHES "Debug" )
-# message("is debug")
-# find_library(HARFBUZZ_LIBRARIES
-#     NAMES harfbuzz
-#     HINTS ${HARFBUZZ_ROOT}/debug/lib)
-# else()
-# message("not is debug")
-# find_library(HARFBUZZ_LIBRARIES
-#     NAMES harfbuzz
-#     HINTS ${HARFBUZZ_ROOT}/lib)
-# endif()
-# find_package_handle_standard_args(HARFBUZZ
-#     DEFAULT_MSG HARFBUZZ_LIBRARIES HARFBUZZ_INCLUDE_DIRS)
-
 target_link_libraries(core PUBLIC 
 SqlppSqlite
+CoreResource
 # RTTR::Core
+cereal
 magic_enum::magic_enum
 ${Boost_LIBRARIES}
 nlohmann_json nlohmann_json::nlohmann_json
@@ -89,7 +58,7 @@ ${OpenCV_LIBS}
 )
 
 
-target_compile_definitions(core PRIVATE CORE_LIBRARY core_EXPORT)
+target_compile_definitions(core PRIVATE CORE_LIBRARY core_EXPORT WIN32_LEAN_AND_MEAN)
 target_compile_definitions(core PUBLIC DOODLE_QT NOMINMAX)
 
 

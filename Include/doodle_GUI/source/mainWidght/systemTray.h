@@ -11,28 +11,39 @@
 //
 #pragma once
 #include <doodle_GUI/doodle_global.h>
-#include <QSystemTrayIcon>
+
+#include <wx/taskbar.h>
 
 DOODLE_NAMESPACE_S
 
-class systemTray : public QSystemTrayIcon {
-  Q_OBJECT
+class systemTray : public wxTaskBarIcon {
  public:
-  explicit systemTray(mainWindows *parent = nullptr);
+  explicit systemTray(wxTaskBarIconType iconType = wxTBI_DEFAULT_TYPE);
   enum class installModel { peject,
                             exeFile };
 
- Q_SIGNALS:
-  void quit();
+ protected:
+  virtual wxMenu* CreatePopupMenu() override;
 
- private Q_SLOTS:
+ private:
   void installMayaPlug();
-  void installUe4Plug(const installModel &model);
+  void installUe4Plug(const installModel& model);
   void doodleQuery();
   void showRigister();
   void upDoodle();
 
  private:
-  QAction *setting;
+  wxWindowIDRef p_tool_id;
+
+  wxWindowIDRef p_installMayaPlug_id;
+  wxWindowIDRef p_installUEPlug_id;
+  wxWindowIDRef p_installUEProjectPlug_id;
+
+  wxWindowIDRef p_deleteUECache_id;
+  wxWindowIDRef p_modifyUECache_id;
+
+  wxWindowIDRef p_setting_id;
+  wxWindowIDRef p_updata_id;
+  wxWindowIDRef p_quit_id;
 };
 DOODLE_NAMESPACE_E

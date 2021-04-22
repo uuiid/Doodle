@@ -16,9 +16,9 @@
 #include "Async/ParallelFor.h"
 #include "MeshUtilities.h"
 
-#include "AbcImportLogger.h"
-#include "AbcImportSettings.h"
-#include "AbcPolyMesh.h"
+// #include "AbcWrap/AbcImportLogger.h"
+#include "AbcWrap/DoodleAbcImportSetting.h"
+#include "AbcWrap/IAbcPolyMesh.h"
 
 enum class EDoodleSampleReadFlags : uint8
 {
@@ -32,13 +32,20 @@ enum class EDoodleSampleReadFlags : uint8
 };
 ENUM_CLASS_FLAGS(EDoodleSampleReadFlags);
 
+namespace doodle
+{
+	class FAbcMeshSample;
+	class FAbcFile;
+
+};
+
 namespace DoodleAbcImporterUtilities
 {
 
-	void AppendMeshSample(FAbcMeshSample *MeshSampleOne, const FAbcMeshSample *MeshSampleTwo);
+	void AppendMeshSample(doodle::FAbcMeshSample *MeshSampleOne, const doodle::FAbcMeshSample *MeshSampleTwo);
 
 	/** Generates and populates a FGeometryCacheMeshData instance from and for the given mesh sample */
-	void GeometryCacheDataForMeshSample(FGeometryCacheMeshData &OutMeshData, const FAbcMeshSample *MeshSample, const uint32 MaterialOffset);
+	void GeometryCacheDataForMeshSample(FGeometryCacheMeshData &OutMeshData, const doodle::FAbcMeshSample *MeshSample, const uint32 MaterialOffset);
 
 	/**
 	 * Merges the given PolyMeshes at the given FrameIndex into a GeometryCacheMeshData
@@ -51,8 +58,8 @@ namespace DoodleAbcImporterUtilities
 	 * @param PreviousNumVertices	The number of vertices in the merged PolyMeshes, used to determine if its topology is constant between 2 frames
 	 * @param bConstantTopology		Flag to indicate if the merged PolyMeshes has constant topology
 	 */
-	void MergePolyMeshesToMeshData(int32 FrameIndex, int32 FrameStart, const TArray<FAbcPolyMesh *> &PolyMeshes, const TArray<FString> &UniqueFaceSetNames, FGeometryCacheMeshData &MeshData, int32 &PreviousNumVertices, bool &bConstantTopology);
+	void MergePolyMeshesToMeshData(int32 FrameIndex, int32 FrameStart, const TArray<doodle::IAbcPolyMesh *> &PolyMeshes, const TArray<FString> &UniqueFaceSetNames, FGeometryCacheMeshData &MeshData, int32 &PreviousNumVertices, bool &bConstantTopology);
 
 	/** Retrieves a material from an AbcFile according to the given name and resaves it into the parent package */
-	UMaterialInterface *RetrieveMaterial(FAbcFile &AbcFile, const FString &MaterialName, UObject *InParent, EObjectFlags Flags);
+	UMaterialInterface *RetrieveMaterial(doodle::FAbcFile &AbcFile, const FString &MaterialName, UObject *InParent, EObjectFlags Flags);
 }

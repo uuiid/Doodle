@@ -12,7 +12,7 @@ class Path {
   Path(std::string& str);
   virtual ~Path();
 
-  fileSys::path* path() const;
+  FSys::path* path() const;
   void setPath(const std::string& path_str);
   bool exists() const;
   bool isDirectory() const;
@@ -40,8 +40,8 @@ class Path {
   void to_json(nlohmann::json& j) const;
   void from_json(const nlohmann::json& j);
 
-  std::shared_ptr<fileSys::path> p_path;
-  std::shared_ptr<fileSys::path> p_prj_path;
+  std::shared_ptr<FSys::path> p_path;
+  std::shared_ptr<FSys::path> p_prj_path;
 
   bool p_exist;
   bool p_isDir;

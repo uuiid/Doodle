@@ -13,14 +13,14 @@ Path::Path(std::string& str)
       p_isDir(false),
       p_size(0),
       p_time(boost::posix_time::min_date_time) {
-  p_path     = std::make_shared<fileSys::path>(str);
-  p_prj_path = std::make_shared<fileSys::path>("");
+  p_path     = std::make_shared<FSys::path>(str);
+  p_prj_path = std::make_shared<FSys::path>("");
   scanningInfo();
 }
 
 Path::Path()
-    : p_path(std::make_shared<fileSys::path>("")),
-      p_prj_path(std::make_shared<fileSys::path>("")),
+    : p_path(std::make_shared<FSys::path>("")),
+      p_prj_path(std::make_shared<FSys::path>("")),
       p_exist(false),
       p_isDir(false),
       p_size(0),
@@ -40,7 +40,7 @@ bool Path::isDirectory() const {
 }
 
 bool Path::createFolder() const {
-  return fileSys::create_directories(*p_path);
+  return FSys::create_directories(*p_path);
 }
 
 bool Path::read(char* buffer, uint64_t size, uint64_t offset) {
@@ -48,7 +48,7 @@ bool Path::read(char* buffer, uint64_t size, uint64_t offset) {
                   << " size: " << size
                   << " offset: " << offset);
   if (!p_file) {
-    p_file = FileSystem::Get().open(std::make_shared<fileSys::path>(*p_path));
+    p_file = FileSystem::Get().open(std::make_shared<FSys::path>(*p_path));
   }
   return p_file->read(buffer, size, offset);
 }
@@ -58,7 +58,7 @@ bool Path::write(char* buffer, uint64_t size, uint64_t offset) {
                   << " size: " << size
                   << " offset: " << offset);
   if (!p_file) {
-    p_file = FileSystem::Get().open(std::make_shared<fileSys::path>(*p_path));
+    p_file = FileSystem::Get().open(std::make_shared<FSys::path>(*p_path));
   }
   return p_file->write(buffer, size, offset);
 }
@@ -89,7 +89,7 @@ std::optional<std::vector<std::shared_ptr<Path>>> Path::list() const {
   DOODLE_LOG_INFO(p_path->generic_path());
   if (p_isDir) {
     std::vector<std::shared_ptr<Path>> paths{};
-    for (auto&& it : fileSys::directory_iterator(*p_path)) {
+    for (auto&& it : FSys::directory_iterator(*p_path)) {
       auto k_path        = std::make_shared<Path>();
       *(k_path->p_path)  = it.path();
       k_path->p_prj_path = p_prj_path;
@@ -108,13 +108,13 @@ uint64_t Path::size() const {
 
 void Path::scanningInfo() {
   DOODLE_LOG_INFO(p_path->generic_string())
-  p_exist = fileSys::exists(*p_path);
+  p_exist = FSys::exists(*p_path);
   if (p_exist) {
-    p_isDir = fileSys::is_directory(*p_path);
+    p_isDir = FSys::is_directory(*p_path);
 
     try {
-      p_time = boost::posix_time::from_time_t(fileSys::last_write_time(*p_path));
-    } catch (const fileSys::filesystem_error& e) {
+      p_time = boost::posix_time::from_time_t(FSys::last_write_time(*p_path));
+    } catch (const FSys::filesystem_error& e) {
       DOODLE_LOG_ERROR(e.what());
     } catch (const std::exception& e) {
       DOODLE_LOG_ERROR(e.what());
@@ -123,7 +123,7 @@ void Path::scanningInfo() {
     }
 
     if (!p_isDir) {
-      p_size = fileSys::file_size(*p_path);
+      p_size = FSys::file_size(*p_path);
     }
   }
 }
@@ -154,7 +154,7 @@ void Path::to_json(nlohmann::json& j) const {
 void Path::from_json(const nlohmann::json& j) {
   p_prj_path = Project::Get().findPath(j.at("project").get<std::string>());
   auto str   = j.at("path").get<std::string>();
-  p_path     = std::make_shared<fileSys::path>(*p_prj_path / str);
+  p_path     = std::make_shared<FSys::path>(*p_prj_path / str);
 }
 
 DOODLE_NAMESPACE_E

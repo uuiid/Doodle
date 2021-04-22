@@ -6,39 +6,41 @@
 #include <doodle_GUI/doodle_global.h>
 
 #include <loggerlib/Logger.h>
-#include <QWidget>
+
 #include <corelib/core/coreset.h>
-class QListWidget;
 
-DOODLE_NAMESPACE_S
+namespace doodle {
+class SettingWidght : public wxFrame {
+  wxWindowIDRef p_dep_id;
+  wxWindowIDRef p_user_id;
+  wxWindowIDRef p_cache_Text_id;
+  wxWindowIDRef p_Doc_id;
+  wxWindowIDRef p_Maya_id;
+  wxWindowIDRef p_Project_id;
+  wxWindowIDRef p_Project_delete_id;
+  wxWindowIDRef p_Project_add_id;
+  wxWindowIDRef p_ue_path_id;
+  wxWindowIDRef p_ue_version_id;
+  wxWindowIDRef p_ue_shot_start_id;
+  wxWindowIDRef p_ue_shot_end_id;
+  wxWindowIDRef p_save_id;
 
-class settingWidget : public QWidget {
-  Q_OBJECT
+  wxComboBox* p_dep;
+  wxTextCtrl* p_user;
+  wxStaticText* p_cache_Text;
+  wxStaticText* p_Doc;
+  wxTextCtrl* p_Maya;
+  wxComboBox* p_Project;
+  wxTextCtrl* p_ue_path;
+  wxTextCtrl* p_ue_version;
+  wxSpinCtrl* p_ue_shot_start;
+  wxSpinCtrl* p_ue_shot_end;
+
+  void InitSetting();
+  void InsertProject();
  public:
-  explicit settingWidget(QWidget *parent = nullptr);
+  explicit SettingWidght(wxWindow* parent, wxWindowID id);
 
- Q_SIGNALS:
-  void projectChanged();
-
- public Q_SLOTS:
-  void setDepartment(const QString &dep);
-  void setUser(const QString &user);
-  void setLocaleSynPath(const QString &path);
-  void seteps(int eps);
-  void setProject(const QString &prj);
-  void save();
-  void setInit();
-
- protected:
-  void closeEvent(QCloseEvent *event) override;
-
- private:
-  coreSet &p_set_ = coreSet::getSet();
-
-  QComboBox *p_dep_text;
-  QLineEdit *p_user_text;
-  QLineEdit *p_syn_text;
-  QComboBox *p_prj_text;
+  void AddProject();
 };
-
-DOODLE_NAMESPACE_E
+};  // namespace doodle

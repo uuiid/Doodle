@@ -35,7 +35,7 @@ void coreSql::initDB() {
 ConnPtr coreSql::getConnection() {
   return std::make_unique<sqlpp::sqlite3::connection>(*config);
 }
-void coreSql::initDB(const dstring &path) {
+void coreSql::initDB(const std::string &path) {
   p_path = path + "/config/doodleConfig.db";
   initDB();
 }

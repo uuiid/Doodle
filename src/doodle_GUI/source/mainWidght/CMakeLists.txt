@@ -4,6 +4,5 @@ target_sources(
         PRIVATE
         mainWindows.cpp
         systemTray.cpp
-        DragPushButton.cpp
-
+        FileDropTarget.cpp
 )

@@ -5,150 +5,152 @@
 #include <DoodleConfig.h>
 
 #include <loggerlib/Logger.h>
-
 #include <corelib/core_Cpp.h>
-#include <QApplication>
-
-#include <QMenu>
-#include <QTimer>
 #include <boost/format.hpp>
-#include <QtWidgets/qfiledialog.h>
-#include <boost/process.hpp>
+
 #include <doodle_GUI/source/mainWidght/mainWindows.h>
 #include <doodle_GUI/source/toolkit/toolkit.h>
-#include <future>
+
 DOODLE_NAMESPACE_S
-systemTray::systemTray(mainWindows *parent) : QSystemTrayIcon(parent) {
-  setToolTip(tr("doodle 文件 %1.%2.%3.%4")
-                 .arg(Doodle_VERSION_MAJOR)
-                 .arg(Doodle_VERSION_MINOR)
-                 .arg(Doodle_VERSION_PATCH)
-                 .arg(Doodle_VERSION_TWEAK));
-  setIcon(qApp->windowIcon());
 
-  auto timer = new QTimer(this);
-  connect(timer, &QTimer::timeout, this, &systemTray::upDoodle);
-  timer->start(1000 * 60 * 60 * 24);
+systemTray::systemTray(wxTaskBarIconType iconType)
+    : wxTaskBarIcon(iconType),
+      p_tool_id(wxWindow::NewControlId()),
+      p_installMayaPlug_id(wxWindow::NewControlId()),
+      p_installUEPlug_id(wxWindow::NewControlId()),
+      p_installUEProjectPlug_id(wxWindow::NewControlId()),
+      p_deleteUECache_id(wxWindow::NewControlId()),
+      p_modifyUECache_id(wxWindow::NewControlId()),
+      p_setting_id(wxWindow::NewControlId()),
+      p_updata_id(wxWindow::NewControlId()),
+      p_quit_id(wxWindow::NewControlId()) {
+}
 
-  auto menu = new QMenu(parent);
+wxMenu* systemTray::CreatePopupMenu() {
+  auto menu = new wxMenu{};
 
-  auto prj_widght = new QAction(menu);
-  prj_widght->setText(tr("工具箱"));
+  menu->Append(p_tool_id, _(wxString::FromUTF8("工具箱")), _(wxString::FromUTF8("打开工具箱")));
+  menu->Append(p_setting_id, _(wxString::FromUTF8("打开设置")));
+  menu->AppendSeparator();
 
-  auto install = new QMenu(menu);
-  install->setTitle(tr("安装插件"));
-  auto install_maya_plug = new QAction(install);
-  install_maya_plug->setText(tr("安装maya插件"));
-  connect(install_maya_plug, &QAction::triggered, this,
-          &systemTray::installMayaPlug);
+  auto menu_install = new wxMenu{};
+  menu->AppendSubMenu(menu_install, _(wxString::FromUTF8("插件安装")));
+  menu_install->Append(p_installMayaPlug_id, _(wxString::FromUTF8("安装maya插件")));
+  menu_install->Append(p_installUEPlug_id, _(wxString::FromUTF8("安装ue插件")));
+  menu_install->Append(p_installUEProjectPlug_id, _(wxString::FromUTF8("安装ue项目插件")));
 
-  auto install_ue4_plug_prj = new QAction(install);
-  install_ue4_plug_prj->setText(tr("安装ue4插件(项目)"));
-  connect(install_ue4_plug_prj, &QAction::triggered, this,
-          [=]() { this->installUe4Plug(systemTray::installModel::peject); });
+  menu->AppendSeparator();
+  menu->Append(p_deleteUECache_id, _(wxString::FromUTF8("删除ue4缓存")));
+  menu->Append(p_modifyUECache_id, _(wxString::FromUTF8("修改ue4缓存位置")));
 
-  auto install_ue4_plug = new QAction(install);
-  install_ue4_plug->setText(tr("安装ue4插件"));
-  connect(install_ue4_plug, &QAction::triggered, this,
-          [=]() { this->installUe4Plug(systemTray::installModel::exeFile); });
+  menu->AppendSeparator();
+  menu->Append(p_updata_id, _(wxString::FromUTF8("更新")));
 
-  install->addAction(install_maya_plug);
-  install->addAction(install_ue4_plug_prj);
-  install->addAction(install_ue4_plug);
+  menu->Append(p_quit_id, _(wxString::FromUTF8("退出")));
 
-  auto modify_ue_cache_path = new QAction(menu);
-  modify_ue_cache_path->setText(tr("修改ue缓存位置"));
-  connect(modify_ue_cache_path, &QAction::triggered,
-          this, [this]() { toolkit::modifyUeCachePath(); });
-  auto delete_ue_cahce = new QAction(tr("清除ue缓存"));
-  connect(delete_ue_cahce, &QAction::triggered,
-          &toolkit::deleteUeCache);
+  //打开工具箱
+  menu->Bind(
+      wxEVT_MENU, [](wxCommandEvent& event) {
+        wxGetApp().openMainWindow();
+      },
+      p_tool_id);
+  //打开设置
+  menu->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        wxGetApp().openSettingWindow();
+      },
+      p_setting_id);
+  //安装ue插件到总体
+  menu_install->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        auto& ueset = coreSet::getSet().gettUe4Setting();
+        if (ueset.hasPath())
+          toolkit::installUePath(ueset.Path() / "Engine");
+        else
+          wxMessageDialog{wxGetApp().GetTopWindow(),
+                          wxString::FromUTF8("在设置中找不到ue位置")}
+              .ShowModal();
+      },
+      p_installUEPlug_id);
+  //安装ue插件到项目
+  menu_install->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        auto file_dig = wxFileDialog{
+            wxGetApp().GetTopWindow(),
+            wxString::FromUTF8("ue项目选择"),
+            wxEmptyString,
+            wxEmptyString,
+            wxString::FromUTF8("files (*.uproject)|*.uproject")};
+        auto result = file_dig.ShowModal();
+        if (result == wxID_OK) {
+          FSys::path path{file_dig.GetPath().ToStdString(wxConvUTF8)};
+          toolkit::installUePath(path.parent_path());
+        }
+      },
+      p_installUEProjectPlug_id);
+  //安装maya插件
+  menu_install->Bind(
+      wxEVT_MENU,
+      [this](wxCommandEvent& event) {
+        toolkit::installMayaPath();
+      },
+      p_installMayaPlug_id);
+  //删除ue缓存
+  menu->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        try {
+          toolkit::deleteUeCache();
+        } catch (const std::exception& error) {
+          wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8(error.what())}.ShowModal();
+          return;
+        }
+        wxMessageDialog{wxGetApp().GetTopWindow(),
+                        wxString::FromUTF8("完成删除")}
+            .ShowModal();
+      },
+      p_deleteUECache_id);
+  //修改ue缓存
+  menu->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        try {
+          toolkit::modifyUeCachePath();
+        } catch (const std::exception& error) {
+          wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8(error.what())}.ShowModal();
+          return;
+        }
+        wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8("完成修改")}.ShowModal();
+      },
+      p_modifyUECache_id);
 
-  setting = new QAction(menu);
-  setting->setText(tr("设置"));
+  //更新
+  menu->Bind(
+      wxEVT_MENU, [this](wxCommandEvent& event) {
+        wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8("暂时不支持动态更新")}.ShowModal();
+      },
+      p_updata_id);
+  //退出
+  menu->Bind(
+      wxEVT_MENU, [](wxCommandEvent& event) -> void {
+        wxGetApp().Exit();
+      },
+      p_quit_id);
 
-  auto update = new QAction(menu);
-  update->setText(tr("更新"));
-  update->connect(update, &QAction::triggered, this, &systemTray::upDoodle);
-
-  auto k_exit_ = new QAction(menu);
-  k_exit_->setText(tr("退出"));
-
-  connect(k_exit_, &QAction::triggered, this, &systemTray::doodleQuery);
-  connect(prj_widght, &QAction::triggered, parent, &mainWindows::showMaximized);
-  connect(setting, &QAction::triggered, parent, &mainWindows::openSetting);
-  menu->addAction(prj_widght);
-  menu->addMenu(install);
-  menu->addAction(modify_ue_cache_path);
-  menu->addAction(delete_ue_cahce);
-  menu->addSeparator();
-
-  //设置和跟新
-  menu->addAction(setting);
-  menu->addAction(update);
-
-  menu->addSeparator();
-  menu->addAction(k_exit_);
-
-  setContextMenu(menu);
-
-  connect(this, &systemTray::quit,
-          qApp, &QApplication::quit, Qt::QueuedConnection);
+  return menu;
 }
 
 void systemTray::installMayaPlug() {
-  auto maya_plug = coreSet::getSet().program_location().parent_path() /
-                   "plug/maya";
-  // MYMODULE_LOCATION:= .
-  boost::format k_string{R"(+ doodle_main.py 1.1 .
-PATH+:= ./plug-ins;./scripts;
-PYTHONPATH+:= ./scripts
-)"};
-  // k_string % maya_plug.generic_path().generic_string();
-  auto docPath = coreSet::getSet().getDoc().parent_path() / "maya" /
-                 "modules" / "Doodle.mod";
-  FSys::remove_all(docPath.parent_path());
-  if (!boost::filesystem::exists(docPath.parent_path())) {
-    boost::filesystem::create_directories(docPath.parent_path());
-  }
+}
 
-  boost::filesystem::ofstream k_out{};
-  k_out.open(docPath);
-  k_out << k_string.str();
-  k_out.close();
-  FileSystem::localCopy(maya_plug, docPath.parent_path(), false);
+void systemTray::installUe4Plug(const installModel& model) {
 }
-void systemTray::installUe4Plug(const systemTray::installModel &model) {
-  if (model == systemTray::installModel::exeFile) {
-    toolkit::installUePath(std::string{});
-  } else {
-    auto path = QFileDialog::getOpenFileName(nullptr, "选择ue项目", "",
-                                             "files (*.uproject)");
-    if (path.isEmpty() || path.isNull()) return;
-    toolkit::installUePath(path.toStdString());
-  }
-}
-void systemTray::doodleQuery() {
-  dynamic_cast<mainWindows *>(parent())->close();
-  doodle::coreSet::getSet().writeDoodleLocalSet();
-  setVisible(false);
-  quit();
-}
+
 void systemTray::showRigister() {
 }
 
-void systemTray::upDoodle() {
-  // doodle::coreSet::getSet().writeDoodleLocalSet();
-  // auto fun      = std::async(std::launch::async, [this]() -> bool {
-  //   if (toolkit::update())
-  //     quit();
-  //   else
-  //     setVisible(true);
-  //   return true;
-  // });
+void systemTray::doodleQuery() {
+}
 
-  // dynamic_cast<mainWindows *>(parent())->close();
-  // setVisible(false);
+void systemTray::upDoodle() {
 }
 
 DOODLE_NAMESPACE_E

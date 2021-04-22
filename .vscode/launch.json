@@ -14,14 +14,14 @@
             "console": "externalTerminal"
         },
         {
-            "name": "Python: 当前文件",
+            "name": "Python export",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "--path=C:/Users/teXiao/Documents/maya/projects/default/scenes/test_uv_set_and_mat.ma",
-                "--exportpath=C:/Users/teXiao/Documents/maya/projects/default/scenes"
+                "--path=D:/tmp/shot_ep38-sc0098_anm_Animation_v0001.ma",
+                "--exportpath=D:/tmp/shot_ep38-sc0098_anm_Animation_v0001"
             ]
         },
         {

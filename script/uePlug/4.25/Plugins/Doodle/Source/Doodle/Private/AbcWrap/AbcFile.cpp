@@ -88,7 +88,7 @@ namespace doodle
     {
     }
 
-    bool FAbcFile::openFile()
+    bool FAbcFile::Open()
     {
         Factory.setPolicy(Alembic::Abc::ErrorHandler::kThrowPolicy);
         Factory.setOgawaNumStreams(12);

@@ -22,9 +22,9 @@ void Seting::init() const {
   nlohmann::json root;
 
   auto k_config = boost::dll::program_location().parent_path() / "config" / "config.json";
-  if (fileSys::exists(k_config)) {
+  if (FSys::exists(k_config)) {
     DOODLE_LOG_INFO("load config file " << k_config);
-    fileSys::ifstream file{k_config, std::ios::in};
+    FSys::ifstream file{k_config, std::ios::in};
     if (file.is_open()) {
       root = nlohmann::json::parse(file);
       DOODLE_LOG_INFO(root);

@@ -22,23 +22,23 @@ namespace doodle
         friend class FAbcFile;
 
     protected:
-        //这个obj的名称
+        /*这个obj的名称*/
         FString Name;
 
         IAbcObject *parent;
         const FAbcFile *File;
         const Alembic::Abc::IObject Object;
 
-        //是否是常量
+        //是否是常量//
         bool bConstant;
-        //最大时间和最小时间
+        //最大时间和最小时间//
         float MinTime;
         float MaxTime;
 
-        //开始帧索引
+        //开始帧索引//
         int32 StartFrameIndex;
 
-        //abc采样
+        //abc采样//
         int32 NumSamples;
 
         float FrameTimes[MaxNumberOfResidentSamples];
@@ -54,7 +54,9 @@ namespace doodle
         virtual ~IAbcObject() {}
 
         const FString &GetName() const { return Name; }
-        float GetTimeForFrameIndex(const int32 FrameIndex) const;
+        //! 这里记得创建方法
+        float GetTimeForFrameIndex(const int32 FrameIndex) const { return {}; };
+        
         float GetTimeForFirstData() const { return MinTime; }
         float GetTimeForLastData() const { return MaxTime; }
         int32 GetFrameIndexForFirstData() const { return StartFrameIndex; }

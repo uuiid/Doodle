@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.14)
 
 project(Doodle
-        VERSION 2.6.4.11
+        VERSION 2.7.4.2
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -41,9 +41,11 @@ include_directories(${CMAKE_BINARY_DIR}/configure)
 
 #首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
+include(CMakeRC)
 
 #寻找一些外部库
 find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
+find_package(wxWidgets REQUIRED)
 find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time regex iostreams log locale)
 # find_package(CURL REQUIRED)
 find_package(Sqlpp11 REQUIRED)
@@ -66,7 +68,7 @@ find_package(magic_enum CONFIG REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
-
+find_package(cereal CONFIG REQUIRED)
 #服务器库
 #应该会用其中一个
 # find_package(cppzmq CONFIG REQUIRED)
@@ -91,16 +93,14 @@ find_package(Autodesk_FBX 2020 REQUIRED)
 
 #下载自定义嵌入文件
 include(ExternalProject)
-ExternalProject_Add(bin2cpp_prj 
-        URL https://github.com/end2endzone/bin2cpp/releases/download/2.3.0/bin2cpp-2.3.0-win32.zip
+ExternalProject_Add(cmrc_prj 
+        GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
         CONFIGURE_COMMAND ""
         BUILD_COMMAND ""
-        INSTALL_COMMAND ""
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/cmrc_prj-prefix/src/cmrc_prj/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake
         TEST_COMMAND ""
 )
-ExternalProject_Get_property(bin2cpp_prj SOURCE_DIR)
-# message("Source dir of bin2cpp_prj = ${SOURCE_DIR}")
-set(BIN2CPP ${SOURCE_DIR}/bin/bin2cpp.exe)
+
 
 #添加文档生成
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
@@ -123,6 +123,7 @@ add_subdirectory(src)
 add_subdirectory(include)
 enable_testing()
 add_subdirectory(test)
+add_subdirectory(tools)
 #=====================安装打包过程===============================
 # list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
 # include(mypack)

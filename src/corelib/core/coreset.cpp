@@ -20,9 +20,12 @@
 
 #include <magic_enum.hpp>
 #include <ShlObj.h>
+#include <cereal/cereal.hpp>
+#include <cereal/archives/portable_binary.hpp>
+
 DOODLE_NAMESPACE_S
 
-const dstring coreSet::settingFileName = "doodle_conf.json";
+const std::string coreSet::settingFileName = "doodle_config.bin";
 
 coreSet &coreSet::getSet() {
   static coreSet install;
@@ -36,74 +39,80 @@ void coreSet::init() {
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, NULL, &pManager);
   if (!pManager) DoodleError("无法找到保存路径");
 
-  doc = fileSys::path{pManager} / "doodle";
+  doc = FSys::path{pManager} / "doodle";
+  findMaya();
   getSetting();
   coreSql &sql = coreSql::getCoreSql();
   getCacheDiskPath();
-  appendEnvironment();
 
-  if (!boost::filesystem::exists(getCacheRoot())) {
-    boost::filesystem::create_directories(getCacheRoot());
+  if (!FSys::exists(getCacheRoot())) {
+    FSys::create_directories(getCacheRoot());
   }
 }
 
 void coreSet::reInit() {
 }
 
-void coreSet::appendEnvironment() const {
-  auto env          = boost::this_process::environment();
-  auto this_process = program_location();
-  env["PATH"] += (this_process.parent_path() / "tools/ffmpeg/bin").generic_string();
-  if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2018\bin\)";
-  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2019\bin\)";
-  } else if (boost::filesystem::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
-    env["PATH"] += R"(C:\Program Files\Autodesk\Maya2020\bin\)";
+void coreSet::findMaya() {
+  if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
+    p_mayaPath = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
+  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
+    p_mayaPath = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
+  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
+    p_mayaPath = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
   }
+}
+
+bool coreSet::hasMaya() const noexcept {
+  return !p_mayaPath.empty();
+}
+
+const FSys::path &coreSet::MayaPath() const noexcept {
+  return p_mayaPath;
+}
+
+void coreSet::setMayaPath(const FSys::path &in_MayaPath) noexcept {
+  p_mayaPath = in_MayaPath;
 }
 
 void coreSet::writeDoodleLocalSet() {
-  nlohmann::json root;
+  ue4_setting.testValue();
+  if (ue4_setting.hasPath() && !FSys::exists(ue4_setting.Path() / DOODLE_UE_PATH)) {
+    ue4_setting.setPath({});
+    throw FileError{ue4_setting.Path(), " 在路径中没有找到ue,不保存"};
+  }
+  if (!FSys::exists(p_mayaPath / "maya.exe")) {
+    throw FileError{p_mayaPath, " 在路径中没有找到maya,不保存"};
+  }
 
-  root["user"]       = user;
-  root["department"] = getDepartment();
-  root["synPath"]    = synPath.generic_string();
-
-  boost::filesystem::ofstream outjosn;
-  outjosn.open(doc / settingFileName, std::ifstream::binary);
-  outjosn << root.dump();
-  outjosn.close();
-}
-
-coreSet::coreSet()
-    : user("user"),
-      department(Department::VFX),
-      synPath("D:/ue_prj"),
-      cacheRoot("C:/Doodle_cache"),
-      doc("C:/Doodle_cache"),
-      p_uuid_gen(),
-      ue4_setting(Ue4Setting::Get()) {
+  FSys::ofstream outjosn{doc / settingFileName, std::ifstream::binary};
+  cereal::PortableBinaryOutputArchive out{outjosn};
+  out(*this);
 }
 
 void coreSet::getSetting() {
-  static fileSys::path k_settingFileName = doc / settingFileName;
-  if (boost::filesystem::exists(k_settingFileName)) {
-    fileSys::path strFile(k_settingFileName);
-    boost::filesystem::ifstream inJosn;
-    inJosn.open(k_settingFileName, std::ifstream::binary);
+  static FSys::path k_settingFileName = doc / settingFileName;
+  if (FSys::exists(k_settingFileName)) {
+    FSys::path strFile(k_settingFileName);
+    FSys::ifstream inJosn{k_settingFileName, std::ifstream::binary};
 
-    nlohmann::json root = nlohmann::json::parse(inJosn);
-    inJosn.close();
-
-    user       = root.value("user", "uset_tmp");
-    auto k_dep = root.value("department", "VFX");
-    department = magic_enum::enum_cast<Department>(k_dep).value_or(Department::VFX);
-    synPath    = root.value("synPath", "D:/ue_prj");
+    cereal::PortableBinaryInputArchive incereal{inJosn};
+    incereal(*this);
   }
 }
+coreSet::coreSet()
+    : user("user"),
+      department(Department::VFX),
+      cacheRoot("C:/Doodle_cache"),
+      doc("C:/Doodle_cache"),
+      p_uuid_gen(),
+      ue4_setting(Ue4Setting::Get()),
+      p_project_list(),
+      p_project(),
+      p_mayaPath() {
+}
 
-dstring coreSet::toIpPath(const dstring &path) {
+std::string coreSet::toIpPath(const std::string &path) {
   static boost::regex exp("^[A-Z]:");
   if (boost::regex_search(path, exp)) {
     return path.substr(2);
@@ -115,33 +124,91 @@ boost::uuids::uuid coreSet::getUUID() {
   return p_uuid_gen();
 }
 
-dstring coreSet::getDepartment() const {
+std::string coreSet::getDepartment() const {
   return std::string{magic_enum::enum_name(department)};
 }
 
-void coreSet::setDepartment(const dstring &value) {
+const Department &coreSet::getDepartmentEnum() const {
+  return department;
+}
+
+void coreSet::setDepartment(const std::string &value) {
   department = magic_enum::enum_cast<Department>(value).value_or(Department::VFX);
 }
 
-dstring coreSet::getUser() const { return user; }
+std::string coreSet::getUser() const { return user; }
 
-dstring coreSet::getUser_en() const {
+std::string coreSet::getUser_en() const {
   return boost::algorithm::to_lower_copy(
       dopinyin::convert::Get().toEn(user));
 }
 
-void coreSet::setUser(const dstring &value) { user = value; }
+void coreSet::setUser(const std::string &value) {
+  user = value;
+}
 
-fileSys::path coreSet::getDoc() const { return doc; }
+FSys::path coreSet::getDoc() const { return doc; }
 
-fileSys::path coreSet::getCacheRoot() const { return cacheRoot; }
+FSys::path coreSet::getCacheRoot() const {
+  return cacheRoot;
+}
 
-void coreSet::getServerSetting() {
-  //获得项目个数
+FSys::path coreSet::getCacheRoot(const FSys::path &in_path) const {
+  auto path = cacheRoot / in_path;
+  if (!FSys::exists(path))
+    FSys::create_directories(path);
+  return path;
+}
 
-  // *shotRoot   = map["shotRoot"];
-  // *assRoot    = map["assetsRoot"];
-  // *prjectRoot = map["project"];
+bool coreSet::hasProject() {
+  return !p_project_list.empty();
+}
+
+std::vector<ProjectPtr> coreSet::getAllProjects() const {
+  return p_project_list;
+}
+void coreSet::installProject(const ProjectPtr &Project_) {
+  p_project_list.emplace_back(Project_);
+}
+
+const ProjectPtr &coreSet::Project_() const {
+  if (!p_project)
+    throw nullptr_error{"没有项目"};
+  return p_project;
+}
+
+void coreSet::setProject_(const ProjectPtr &Project_) {
+  p_project = Project_;
+  auto it   = std::find(p_project_list.begin(), p_project_list.end(), Project_);
+  if (it == p_project_list.end()) {
+    p_project_list.emplace_back(Project_);
+  }
+}
+
+void coreSet::setProject_(const Project *Project_) {
+  auto it = std::find_if(p_project_list.begin(), p_project_list.end(),
+                         [Project_](ProjectPtr &prj) { return Project_ == prj.get(); });
+  if (it != p_project_list.end()) {
+    p_project = *it;
+  } else {
+    throw DoodleError{"无法找到项目"};
+  }
+}
+
+void coreSet::deleteProject(const Project *Project_) {
+  auto it = std::find_if(p_project_list.begin(), p_project_list.end(),
+                         [Project_](ProjectPtr &prj) { return Project_ == prj.get(); });
+  if (it != p_project_list.end()) {
+    p_project_list.erase(it);
+  } else {
+    throw DoodleError{"无法找到项目"};
+  }
+}
+
+int coreSet::getProjectIndex() const {
+  auto it    = std::find(p_project_list.begin(), p_project_list.end(), p_project);
+  auto index = std::distance(p_project_list.begin(), it);
+  return boost::numeric_cast<int>(index - 1);
 }
 
 void coreSet::getCacheDiskPath() {
@@ -155,8 +222,8 @@ void coreSet::getCacheDiskPath() {
                                              "K:/",
                                              "L:/"};
   for (auto &dir : dirs) {
-    if (fileSys::exists(dir)) {
-      auto info = fileSys::space(dir);
+    if (FSys::exists(dir)) {
+      auto info = FSys::space(dir);
       if (((float)info.available / (float)info.available) > 0.05) {
         cacheRoot = dir + "Doodle_cache";
         break;
@@ -165,16 +232,10 @@ void coreSet::getCacheDiskPath() {
   }
 }
 
-const fileSys::path coreSet::getSynPathLocale() const { return synPath; }
-
-void coreSet::setSynPathLocale(const fileSys::path &syn_path) {
-  synPath = syn_path;
-}
-
-fileSys::path coreSet::program_location() {
+FSys::path coreSet::program_location() {
   return boost::dll::program_location().parent_path();
 }
-fileSys::path coreSet::program_location(const fileSys::path &path) {
+FSys::path coreSet::program_location(const FSys::path &path) {
   return program_location() / path;
 }
 

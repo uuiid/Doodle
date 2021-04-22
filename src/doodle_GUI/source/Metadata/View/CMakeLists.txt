@@ -1,0 +1,3 @@
+target_sources(doodle
+PRIVATE
+ShotListWidget.cpp)

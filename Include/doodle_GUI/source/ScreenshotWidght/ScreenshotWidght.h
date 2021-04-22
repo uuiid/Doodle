@@ -2,31 +2,20 @@
 
 #include <doodle_GUI/doodle_global.h>
 
-#include <QtWidgets/qwidget.h>
-
-class QLabel;
-class QPushButton;
-
 DOODLE_NAMESPACE_S
 
-class ScreenshotWidght : public QWidget {
-  Q_OBJECT
+class ScreenshotWidght {
  public:
-  ScreenshotWidght(QWidget* parent = nullptr);
+  ScreenshotWidght();
 
   virtual void createScreenshot();
   void showImage();
   void clearImage();
 
   void disableButten(bool disable);
-  // virtual void setIndexInfo(const std::shared_ptr<coresqldata>& typeptr) = 0;
- private:
-  QLabel* p_image;
-  ScreenshotAction* p_action;
-  QPushButton* p_butten;
 
+ private:
  protected:
-  std::weak_ptr<fileSqlInfo> p_file_archive;
 };
 
 DOODLE_NAMESPACE_E

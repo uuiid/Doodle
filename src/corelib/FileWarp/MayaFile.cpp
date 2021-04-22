@@ -10,42 +10,28 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <corelib/libWarp/BoostUuidWarp.h>
 
-#include <CoreResourceMayaExportFbx.h>
-
 #include <loggerlib/Logger.h>
 
 DOODLE_NAMESPACE_S
 MayaFile::MayaFile(FSys::path mayaPath)
     : LongTerm(),
       p_path(std::move(mayaPath)) {
-  findMaya();
-}
-
-void MayaFile::findMaya() {
-  if (FSys::exists(p_path))
-    return;
-
-  if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
-    p_path = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
-  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
-    p_path = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
-  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
-    p_path = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
-  } else {
-    throw DoodleError("无法找到maya.exe");
-  }
-  return;
+  if (!FSys::exists(p_path) && coreSet::getSet().hasMaya())
+    p_path = coreSet::getSet().MayaPath();
+  else
+    throw DoodleError{"无法找到maya启动器"};
 }
 
 const FSys::path MayaFile::createTmpFile() const {
   //开始写入临时文件
-  const static auto tmp_path = FSys::temp_directory_path();
+
+  const static auto tmp_path = coreSet::getSet().getCacheRoot("maya");
   auto k_tmp_path            = tmp_path / (boost::uuids::to_string(coreSet::getSet().getUUID()) + ".py");
-  auto& k_file_py            = bin2cpp::getCoreResourceMayaExportFbxFile();
+  auto k_file_py             = cmrc::CoreResource::get_filesystem().open("resource/mayaExport.py");
 
   {  //写入文件后直接关闭
     FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
-    file.write(k_file_py.getBuffer(), k_file_py.getSize());
+    file.write(k_file_py.begin(), k_file_py.size());
   }
   return k_tmp_path;
 }
@@ -134,7 +120,7 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
   auto it     = result.begin();
   auto size   = boost::numeric_cast<float>(result.size());
   auto k_pro  = float{0};
-  auto mess   = boost::format{"文件: %s --> %s \n"};
+  auto mess   = boost::format{"文件:%s-->%s\n"};
 
   while (!result.empty()) {
     status = it->second.wait_for(std::chrono::milliseconds{10});

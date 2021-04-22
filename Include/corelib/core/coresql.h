@@ -19,7 +19,7 @@ class CORE_API coreSql {
 
   ~coreSql();
 
-  void initDB(const dstring &path);
+  void initDB(const std::string &path);
   ConnPtr getConnection();
 
  private:
@@ -29,7 +29,7 @@ class CORE_API coreSql {
  private:
   std::shared_ptr<sqlpp::sqlite3::connection_config> config;
 
-  dstring p_path;
+  std::string p_path;
 };
 
 DOODLE_NAMESPACE_E

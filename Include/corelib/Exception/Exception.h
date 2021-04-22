@@ -18,7 +18,9 @@ class CORE_API FileError : public DoodleError {
   FSys::path p_path;
 
  public:
-  FileError(FSys::path path, std::string message) : DoodleError(message), p_path(std::move(path)){};
+  FileError(FSys::path path, std::string message)
+      : DoodleError(path.generic_string().append(message)),
+       p_path(std::move(path)){};
 };
 //doodl err
 

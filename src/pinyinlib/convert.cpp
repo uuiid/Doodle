@@ -1,7 +1,6 @@
 #include <pinyinlib/convert.h>
 #include <boost/locale.hpp>
 #include <loggerlib/logger.h>
-#include <doodlePinyin.h>
 
 #include <stdexcept>
 #include <thread>
@@ -10,9 +9,9 @@
 PINYIN_NAMESPACE_S
 static std::vector<std::string> pinyin_list{};
 convert::convert() {
-  const auto &resource = bin2cpp::getPinyinDataFile();
-  resource.getBuffer();
-  std::string ZhongWenToPinYin{resource.getBuffer(), resource.getSize()};
+  const auto &resource = cmrc::PinyinResource::get_filesystem().open("zhtopy.txt");
+
+  std::string ZhongWenToPinYin{resource.begin(), resource.size()};
   std::regex regex{R"(\s)"};
   auto iter = std::sregex_token_iterator(
       ZhongWenToPinYin.begin(), ZhongWenToPinYin.end(), regex, -1);
@@ -36,6 +35,29 @@ std::string convert::toEn(const std::string &conStr) {
     }
   }
   DOODLE_LOG_INFO(conStr << " to " << result);
+  return result;
+}
+
+std::string convert::toEn(const std::wstring &conStr) {
+  std::string result{};
+  for (auto data : conStr) {
+    if (data >= 0x4e00 && data <= 0x9fa5) {
+      result.append(pinyin_list[data - 0x4e00]);
+    } else {
+      result.append(boost::locale::conv::utf_to_utf<char>(std::wstring{data}));
+    }
+  }
+  DOODLE_LOG_INFO(conStr << " to " << result);
+  return result;
+}
+
+std::string convert::toEn(const wchar_t &conStr) {
+  std::string result{};
+  if (conStr >= 0x4e00 && conStr <= 0x9fa5) {
+    result.append(pinyin_list[conStr - 0x4e00]);
+  } else {
+    result.append(boost::locale::conv::utf_to_utf<char>(std::wstring{conStr}));
+  }
   return result;
 }
 
