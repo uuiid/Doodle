@@ -26,6 +26,28 @@ TEST(DSTD, map_netDir) {
   ASSERT_TRUE(r == NO_ERROR);
 }
 
+TEST(DSTD, gset_netDir_name) {
+  TCHAR szDeviceName[150];
+  DWORD dwResult, cchBuff = sizeof(szDeviceName);
+
+  dwResult = WNetGetConnection("V:", szDeviceName, &cchBuff);
+
+  ASSERT_TRUE(dwResult == NO_ERROR);
+
+  std::cout << szDeviceName << std::endl;
+  auto rules_n = SetVolumeLabel("V:\\", "test");
+  if (rules_n == 0) {
+    auto err = GetLastError();
+    std::cout << err << std::endl;
+  }
+  ASSERT_TRUE(rules_n != 0);
+
+  char VolumeName[80];
+  auto rules = GetVolumeInformation("V:\\", VolumeName, sizeof(VolumeName), NULL, NULL, NULL, NULL, 0);
+  ASSERT_TRUE(rules);
+  std::cout << VolumeName << std::endl;
+}
+
 TEST(DSTD, canclel_netDir) {
   DWORD r = WNetCancelConnection2("S:", CONNECT_UPDATE_PROFILE, true);
   if (r != NO_ERROR) {

@@ -208,7 +208,7 @@ void coreSet::deleteProject(const Project *Project_) {
 int coreSet::getProjectIndex() const {
   auto it    = std::find(p_project_list.begin(), p_project_list.end(), p_project);
   auto index = std::distance(p_project_list.begin(), it);
-  return boost::numeric_cast<int>(index - 1);
+  return boost::numeric_cast<int>(index);
 }
 
 void coreSet::getCacheDiskPath() {

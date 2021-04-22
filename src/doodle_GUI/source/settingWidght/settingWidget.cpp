@@ -183,6 +183,7 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
     set.setMayaPath(path);
   });
 
+  //项目选择
   p_Project->Bind(wxEVT_COMBOBOX, [&set, this](wxCommandEvent& event) {
     auto index = p_Project->GetSelection();
     auto prj   = p_Project->GetClientData(index);
