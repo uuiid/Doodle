@@ -59,7 +59,7 @@ class camera:
                 print("back anm")
                 self.bakeAnm()
             except:
-                print("chneg gong back anm")
+                print("back camera fail")
         mel_name = "{path}/{name}_camera_{start}-{end}.fbx".format(path=args.exportpath,
                                                                    name=doodle_filename,
                                                                    start=int(
@@ -84,8 +84,12 @@ class camera:
         self.newCam.setDisplayResolution(True)
         self.newCam.setDisplayGateMask(True)
 
-        maya.mel.eval('setAttr "{}.displayGateMaskOpacity" 1;'.format(
-            self.maya_cam.getShape().longName()))
+        print(self.maya_cam.getShape().longName())
+        try:
+            maya.mel.eval('setAttr "{}.displayGateMaskOpacity" 1;'.format(
+                self.maya_cam.getShape().longName()))
+        except:
+            print("""Cannot set door mask transparency""")
         self.newCam.setOverscan(1)
 
         # 这个是最后要命名的新相机的名称
@@ -154,7 +158,7 @@ for index, export in enumerate(exports):
 cameras = pymel.core.ls(type='camera', l=True)
 
 for camer in cameras:
-    camera(camer)()
+    camera(camer.getTransform())()
 
 with open(myfile, "w") as f:
     f.write(json.dumps(log.__dict__, ensure_ascii=False,

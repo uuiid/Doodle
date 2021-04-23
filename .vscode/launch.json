@@ -1,6 +1,21 @@
 {
     "configurations": [
         {
+            "name": "mayapy debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "c:\\Program Files\\Autodesk\\Maya2020\\bin\\mayapy.exe",
+            "args": [
+                "${workspaceFolder}\\src\\corelib\\resource\\mayaExport.py",
+                "--path=F:/data/ep05/KSMZ_010_098_AN.ma",
+                "--exportpath=F:/data/ep05/KSMZ_010_098_AN"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
             "name": "maya",
             "type": "cppvsdbg",
             "request": "launch",
@@ -17,11 +32,12 @@
             "name": "Python export",
             "type": "python",
             "request": "launch",
+            "python": "c:\\Program Files\\Autodesk\\Maya2020\\bin\\mayapy.exe",
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "--path=D:/tmp/shot_ep38-sc0098_anm_Animation_v0001.ma",
-                "--exportpath=D:/tmp/shot_ep38-sc0098_anm_Animation_v0001"
+                "--path=F:/data/ep05/KSMZ_010_098_AN.ma",
+                "--exportpath=F:/data/ep05/KSMZ_010_098_AN"
             ]
         },
         {

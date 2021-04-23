@@ -1,4 +1,6 @@
-﻿if ( (Test-Connection "192.168.10.250" -Count 1 -Delay 1 -Quiet) -and (Test-Path -Path "\\192.168.10.250\public\changanhuanjie") ) {
+﻿Write-Host("正在测试服务器 .... 请等待..")
+
+if ( (Test-Connection "192.168.10.250" -Count 1 -Delay 1 -Quiet) -and (Test-Path -Path "\\192.168.10.250\public\changanhuanjie") ) {
   $Net_MAPS = @(
     @("X:", "\\192.168.10.250\public\changanhuanjie", "长安幻街"),
     @("V:", "\\192.168.10.250\public\DuBuXiaoYao_3", "独步逍遥v3"),
@@ -22,6 +24,7 @@ elseif ( (Test-Connection "192.168.10.218" -Count 1 -Delay 1 -Quiet) -and (Test-
 else {
   exit
 }
+Write-Host("测试完成:")
 $Net = New-Object -ComObject WScript.Network
 $Net_List = $Net.EnumNetworkDrives();
 $rename = new-object -ComObject Shell.Application

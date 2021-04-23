@@ -62,8 +62,7 @@ mainWindows::mainWindows()
   });
 
   auto k_dray = new FileDropTarget{};
-  // k_dray->handleFileFunction.connect(std::bind(&mainWindows::exportMayaFile, this, std::placeholders::_1));
-  // k_exMaya_button->SetDropTarget(k_dray);
+
 
   k_create_image->DragAcceptFiles(true);
   k_dray = new FileDropTarget{};
@@ -81,9 +80,6 @@ mainWindows::mainWindows()
   k_create_video->SetDropTarget(k_dray);
 
   k_create_ue4File->DragAcceptFiles(true);
-  // k_dray = new FileDropTarget{};
-  // k_dray->handleFileFunction.connect(std::bind(&mainWindows::createUe4Project, this, std::placeholders::_1));
-  // k_create_ue4File->SetDropTarget(k_dray);
   k_create_ue4File->Bind(wxEVT_DROP_FILES, [this](wxDropFilesEvent& event) {
     const auto num = event.GetNumberOfFiles();
     std::vector<FSys::path> path{};
