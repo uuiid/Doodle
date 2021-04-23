@@ -106,6 +106,8 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
     package_path='/Game/%s', 
     asset_class=unreal.LevelSequence, 
     factory=unreal.LevelSequenceFactoryNew())
+ass.set_display_rate(unreal.FrameRate(25,1))
+
 ass.make_range(1001,1200)
 ass.set_playback_start(1001)
 ass.set_playback_end(1200)

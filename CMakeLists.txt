@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.14)
 
 project(Doodle
-        VERSION 2.7.4.2
+        VERSION 2.7.8.2
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)

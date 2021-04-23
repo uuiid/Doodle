@@ -5,6 +5,7 @@ WIN32
 ${RESOURE_FILE}
 ${RESOURCE_SOURCE}
 win_exe.rc
+doodle.manifest
 main.cpp
 )
 

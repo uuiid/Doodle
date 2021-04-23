@@ -6,6 +6,7 @@
         test_qtCore.cpp
         test_std.cpp
         test_opencv.cpp
+        doodle_test.manifest
         )
 
 set_target_properties(test_my 
