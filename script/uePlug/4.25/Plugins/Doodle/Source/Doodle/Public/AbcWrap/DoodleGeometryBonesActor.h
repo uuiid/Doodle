@@ -19,11 +19,10 @@ public:
 	ADoodleGeometryBonesActor();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "doodle几何缓存骨骼引用")
-		UDoodleCacheBonesComponent* p_GeoCache_bones;
+	UDoodleCacheBonesComponent *p_GeoCache_bones;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "几何缓存")
-		UGeometryCacheComponent* p_GeoCache;
-
+	UGeometryCacheComponent *p_GeoCache;
 
 protected:
 	// Called when the game starts or when spawned
@@ -32,5 +31,4 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
 };

@@ -81,3 +81,4 @@ cmake-build-debug/
 /.vscode/BROWSE.VC.DB
 /.vscode/BROWSE.VC.DB-shm
 /.vscode/BROWSE.VC.DB-wal
+**/Plugins/Doodle/Binaries/**

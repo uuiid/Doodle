@@ -4,9 +4,9 @@ using UnrealBuildTool;
 //using System.IO;
 
 //这个模块只是用来创建不同时间段加载用的, 所以只用依赖这一个
-public class doodleEditor : ModuleRules
+public class doodleUI : ModuleRules
 {
-    public doodleEditor(ReadOnlyTargetRules Target) : base(Target)
+    public doodleUI(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
@@ -31,7 +31,6 @@ public class doodleEditor : ModuleRules
                 "Core",
                 "ContentBrowser",
                 "EditorScriptingUtilities",
-                "UnrealEd"
 
             }
             );
@@ -48,10 +47,11 @@ public class doodleEditor : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
-                "doodle"
 
+                "doodle",
 
-            }
+                "PlacementMode",//这个是创建面板用的
+			}
             );
 
 
