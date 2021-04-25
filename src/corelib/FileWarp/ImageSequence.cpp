@@ -6,7 +6,6 @@
 #include <opencv2/opencv.hpp>
 #include <pinyinlib/convert.h>
 
-#include <boost/numeric/conversion/cast.hpp>
 #include <boost/format.hpp>
 namespace doodle {
 std::string ImageSequence::clearString(const std::string &str) {
@@ -17,7 +16,7 @@ std::string ImageSequence::clearString(const std::string &str) {
   return str_r;
 }
 
-ImageSequence::ImageSequence(decltype(p_paths) paths, decltype(p_Text) text)
+ImageSequence::ImageSequence(std::vector<FSys::path> paths, const std::string& text)
     : LongTerm(),
       p_paths(std::move(paths)),
       p_Text(std::move(clearString(text))),
@@ -33,7 +32,7 @@ ImageSequence::ImageSequence(decltype(p_paths) paths, decltype(p_Text) text)
   this->seanInfo();
 }
 
-ImageSequence::ImageSequence(FSys::path path_dir, decltype(p_Text) text)
+ImageSequence::ImageSequence(const FSys::path& path_dir, const std::string& text)
     : LongTerm(),
       p_paths(),
       p_Text(std::move(clearString(text))),
@@ -209,12 +208,12 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
   std::mutex p_mutex{};
   auto k_i = float{1};
   //添加进度回调函数
-  auto k_add_fun = boost::bind<void>([&p_mutex](float i, float *_1) {
+  auto k_add_fun = std::bind<void>([&p_mutex](float i, float *_1) {
     std::unique_lock lock{p_mutex};
     (*_1) += i;
   },
-                                     boost::placeholders::_1, &k_i);
-  for (auto im : p_imageSequences) {
+   std::placeholders::_1, &k_i);
+  for (const auto& im : p_imageSequences) {
     auto str = im->getEpisodesAndShot_str().append(".mp4");
     im->stride.connect(k_add_fun);
 
@@ -231,7 +230,7 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
                          im->createVideoFile(path);
                        }));
   }
-  auto status      = std::future_status{};
+  std::future_status status{};
   auto it          = result.begin();
   const auto k_len = boost::numeric_cast<float>(p_imageSequences.size());
 

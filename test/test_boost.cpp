@@ -41,7 +41,7 @@ TEST(dboost, test_rex) {
 }
 
 TEST(dboost, normalize_path) {
-  boost::filesystem::path root("c:\\some\\deep\\application\\folder");
+  boost::filesystem::path root(R"(c:\some\deep\application\folder)");
   boost::filesystem::path subdir("..\\configuration\\instance");
   boost::filesystem::path cfgfile("..\\instance\\myfile.cfg");
 

@@ -5,7 +5,6 @@
 #include <corelib/Metadata/Shot.h>
 #include <corelib/Metadata/Episodes.h>
 
-#include <loggerlib/Logger.h>
 
 #include <corelib/libWarp/WinReg.hpp>
 #include <boost/format.hpp>
@@ -63,7 +62,7 @@ void Ue4Project::runPythonScript(const std::string& python_str) const {
       % "pythonscript"                      //运行ue命令名称
       % tmp_file.generic_string()           //python脚本路径
       ;
-  DOODLE_LOG_INFO(command.str());
+  DOODLE_LOG_INFO(command.str())
   boost::process::child k_c{command.str()};
   k_c.wait();
   FSys::remove(tmp_file);
@@ -128,7 +127,7 @@ unreal.EditorLoadingAndSavingUtils.save_map(ass_lev, "/Game/%2%/%1%")
 )"};
 
   auto k_game_episodes_path = FSys::path{ContentShot} / inShotList[0]->Episodes_()->str();
-  for (auto k_shot : inShotList) {
+  for (const auto& k_shot : inShotList) {
     boost::format k_shot_str{"%s%04d_%s"};
     k_shot_str %
         this->p_project->ShortStr() %
@@ -148,7 +147,7 @@ unreal.EditorLoadingAndSavingUtils.save_map(ass_lev, "/Game/%2%/%1%")
     k_shot_suffix % k_dep.front();
 
     auto k_shot_sequence = k_shot_str.str();
-    k_shot_sequence      = k_shot_sequence + k_shot_suffix.str();
+    k_shot_sequence += k_shot_suffix.str();
 
     FSys::ofstream file{};
     auto k_shot_sequence_path = k_shot_path / (k_shot_sequence + ".uasset");
@@ -159,7 +158,7 @@ unreal.EditorLoadingAndSavingUtils.save_map(ass_lev, "/Game/%2%/%1%")
     }
 
     auto k_shot_lev      = k_shot_str.str();
-    k_shot_lev           = k_shot_lev + "_lev" + k_shot_suffix.str();
+    k_shot_lev           += "_lev" + k_shot_suffix.str();
     auto k_shot_lev_path = k_shot_path / (k_shot_lev + ".umap");
     if (!FSys::exists(k_shot_lev_path)) {
       python_format_World % k_shot_lev % k_game_shot_path.generic_string();

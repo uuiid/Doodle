@@ -4,7 +4,6 @@
 #include <corelib/core/coreset.h>
 
 #include <opencv2/opencv.hpp>
-#include <boost/numeric/conversion/cast.hpp>
 #include <boost/format.hpp>
 
 namespace doodle {
@@ -31,29 +30,29 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
   if (!FSys::exists(k_out_path.parent_path()))
     FSys::create_directories(k_out_path.parent_path());
 
-  auto k_voide_input   = cv::VideoCapture{};
-  auto k_voide_out     = cv::VideoWriter{k_out_path.generic_string(),
-                                     cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
-                                     25,
-                                     cv::Size(1280, 720)};
+  auto k_video_input   = cv::VideoCapture{};
+  auto k_video_out     = cv::VideoWriter{k_out_path.generic_string(),
+                                         cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
+                                         25,
+                                         cv::Size(1280, 720)};
   auto k_image         = cv::Mat{};
   auto k_image_resized = cv::Mat{};
   const static cv::Size k_size{1280, 720};
   const auto k_len = boost::numeric_cast<float>(p_paths.size());
   auto k_i         = float{0};
-  for (auto path : p_paths) {
-    if (k_voide_input.open(path.generic_string())) {
+  for (const auto& path : p_paths) {
+    if (k_video_input.open(path.generic_string())) {
       //获得总帧数
-      auto k_frame_count = k_voide_input.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT);
+      auto k_frame_count = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT);
 
-      while (k_voide_input.read(k_image)) {
-        auto k_frame = k_voide_input.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
+      while (k_video_input.read(k_image)) {
+        auto k_frame = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
         if (k_image.cols != 1280 || k_image.rows != 720)
           cv::resize(k_image, k_image_resized, k_size);
         else
           k_image_resized = k_image;
 
-        k_voide_out << k_image_resized;
+        k_video_out << k_image_resized;
         this->progress(
             boost::numeric_cast<int>(
                 (

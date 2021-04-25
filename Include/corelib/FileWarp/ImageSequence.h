@@ -17,8 +17,8 @@ class CORE_API ImageSequence : public LongTerm {
   void seanInfo();
 
  public:
-  ImageSequence(decltype(p_paths) path, decltype(p_Text) text = {});
-  ImageSequence(FSys::path path_dir, decltype(p_Text) text = {});
+  ImageSequence(std::vector<FSys::path> path, const std::string& text = {});
+  ImageSequence(const FSys::path& path_dir, const std::string& text = {});
 
   bool hasSequence();
 

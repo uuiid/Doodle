@@ -1,4 +1,4 @@
-﻿{
+{
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
@@ -12,11 +12,11 @@
 	"SupportURL": "",
 	"EngineVersion": "4.25.0",
 	"CanContainContent": true,
-	"Installed": false,
+	"Installed": true,
 	"Modules": [
 		{
 			"Name": "doodle",
-			"Type": "Runtime",
+			"Type": "EditorAndProgram",
 			"LoadingPhase": "Default",
 			"WhitelistPlatforms": [
 				"Win64"
@@ -24,14 +24,6 @@
 		},
 		{
 			"Name": "doodleEditor",
-			"Type": "Editor",
-			"LoadingPhase": "Default",
-			"WhitelistPlatforms": [
-				"Win64"
-			]
-		},
-		{
-			"Name": "doodleUI",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit",
 			"WhitelistPlatforms": [

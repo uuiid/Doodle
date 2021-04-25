@@ -4,11 +4,8 @@
 #include <corelib/threadPool/ThreadPool.h>
 
 #include <boost/process.hpp>
-#include <boost/process/windows.hpp>
 
 #include <boost/format.hpp>
-#include <boost/numeric/conversion/cast.hpp>
-#include <corelib/libWarp/BoostUuidWarp.h>
 
 #include <loggerlib/Logger.h>
 
@@ -22,7 +19,7 @@ MayaFile::MayaFile(FSys::path mayaPath)
     throw DoodleError{"无法找到maya启动器"};
 }
 
-const FSys::path MayaFile::createTmpFile() const {
+FSys::path MayaFile::createTmpFile() const {
   //开始写入临时文件
 
   const static auto tmp_path = coreSet::getSet().getCacheRoot("maya");
@@ -55,7 +52,7 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
   // boost::format str{R"(%1% --path %2% --exportpath %3%)"};
   // str % k_tmp_path.generic_string() % file_path.generic_string() % k_export_path.generic_string();
 
-  DOODLE_LOG_INFO(str.str());
+  DOODLE_LOG_INFO(str.str())
 
   STARTUPINFO si{};
   PROCESS_INFORMATION pi{};
@@ -65,19 +62,19 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
   try {
     //使用windowsIPA创建子进程
     CreateProcess(
-        NULL,
+        nullptr,
         (char*)str.str().c_str(),
-        NULL,
-        NULL,
+        nullptr,
+        nullptr,
         false,
         CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP,  //CREATE_NEW_CONSOLE
-        NULL,
+        nullptr,
         p_path.generic_string().c_str(),  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
         &si,
         &pi);
     // boost::process::system(command.c_str(), env);
   } catch (const std::runtime_error& err) {
-    DOODLE_LOG_WARN(err.what());
+    DOODLE_LOG_WARN(err.what())
     WaitForSingleObject(pi.hProcess, INFINITE);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -116,7 +113,7 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
                    })});
     }
   }
-  auto status = std::future_status{};
+  std::future_status status{};
   auto it     = result.begin();
   auto size   = boost::numeric_cast<float>(result.size());
   auto k_pro  = float{0};

@@ -13,7 +13,7 @@ Shot::Shot()
 Shot::Shot(decltype(p_shot) in_shot,
            decltype(p_shot_ab) in_shot_ab,
            decltype(p_episodes) in_episodes)
-    : p_shot(std::move(in_shot)),
+    : p_shot(in_shot),
       p_shot_ab(std::move(in_shot_ab)),
       p_episodes(std::move(in_episodes)) {
   if (p_shot < 0)
@@ -38,7 +38,7 @@ const std::string& Shot::ShotAb() const noexcept {
 void Shot::setShotAb(const std::string& ShotAb) noexcept {
   p_shot_ab = ShotAb;
 }
-const EpisodesPtr Shot::Episodes_() const noexcept {
+EpisodesPtr Shot::Episodes_() const noexcept {
   return p_episodes.lock();
 }
 

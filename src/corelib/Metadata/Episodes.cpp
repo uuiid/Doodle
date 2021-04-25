@@ -26,6 +26,7 @@ void Episodes::setEpisodes_(const int64_t& Episodes_) {
 
 std::string Episodes::str() const {
   boost::format eps_str{"ep%04i"};
+
   eps_str % p_episodes;
   return eps_str.str();
 }

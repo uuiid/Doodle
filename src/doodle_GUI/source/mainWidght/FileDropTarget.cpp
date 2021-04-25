@@ -3,12 +3,10 @@
 #include <loggerlib/Logger.h>
 
 #include <corelib/core_Cpp.h>
-#include <sstream>
+
 namespace doodle {
 
-// FileDropTarget::~FileDropTarget() {
-//   DOODLE_LOG_INFO("~FileDropTarget");
-// }
+
 
 bool FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& in_file_names) {
   std::vector<FSys::path> list{};

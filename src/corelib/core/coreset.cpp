@@ -11,16 +11,14 @@
 #include <stdexcept>
 #include <fstream>
 
-#include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
 #include <boost/process.hpp>
 #include <boost/dll.hpp>
-#include <boost/dll/runtime_symbol_info.hpp>
 
 #include <magic_enum.hpp>
 #include <ShlObj.h>
-#include <cereal/cereal.hpp>
+
 #include <cereal/archives/portable_binary.hpp>
 
 DOODLE_NAMESPACE_S
@@ -35,9 +33,10 @@ coreSet &coreSet::getSet() {
 void coreSet::init() {
   //这里我们手动做一些工作
   //获取环境变量
+
   PWSTR pManager;
-  SHGetKnownFolderPath(FOLDERID_Documents, NULL, NULL, &pManager);
-  if (!pManager) DoodleError("无法找到保存路径");
+  SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
+  if (!pManager) throw DoodleError("无法找到保存路径");
 
   doc = FSys::path{pManager} / "doodle";
   findMaya();

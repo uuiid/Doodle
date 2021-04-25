@@ -29,11 +29,11 @@ class mainWindows : public wxFrame {
   DOODLE_DISABLE_COPY(mainWindows);
 
  private:
-  void exportMayaFile(const std::vector<FSys::path> paths);
-  void createVideoFile(const std::vector<FSys::path> paths);
-  void createVideoFileFormDir(const std::vector<FSys::path> paths);
-  void connectVideo(const std::vector<FSys::path> paths);
-  void createUe4Project(const std::vector<FSys::path> paths);
+  void exportMayaFile(const std::vector<FSys::path>& paths);
+  void createVideoFile(const std::vector<FSys::path>& paths);
+  void createVideoFileFormDir(const std::vector<FSys::path>& paths);
+  void connectVideo(const std::vector<FSys::path>& paths);
+  void createUe4Project(const std::vector<FSys::path>& paths);
 };
 
 class Doodle : public wxApp {

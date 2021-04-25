@@ -35,12 +35,12 @@ void Project::setPath(const FSys::path& Path) {
   p_path = Path;
 }
 
-const std::string Project::str() const {
+std::string Project::str() const {
   return boost::algorithm::to_lower_copy(
       dopinyin::convert::Get().toEn(this->p_name));
 }
 
-const std::string Project::ShortStr() const {
+std::string Project::ShortStr() const {
   auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
   auto& k_pingYin = dopinyin::convert::Get();
   std::string str{};

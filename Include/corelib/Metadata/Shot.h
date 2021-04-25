@@ -25,7 +25,7 @@ class CORE_API Shot {
   const decltype(p_shot_ab)& ShotAb() const noexcept;
   void setShotAb(const decltype(p_shot_ab)& ShotAb) noexcept;
 
-  const EpisodesPtr Episodes_() const noexcept;
+  EpisodesPtr Episodes_() const noexcept;
   void setEpisodes_(const EpisodesPtr& Episodes_) noexcept;
 
   std::string str() const;

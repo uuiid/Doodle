@@ -1,12 +1,9 @@
 ﻿#include <corelib/FileSys/FileSystem>
 #include <corelib/Exception/Exception.h>
-#include <magic_enum.hpp>
 
 #include <boost/asio.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 
-#include <nlohmann/json.hpp>
 #include <loggerlib/Logger.h>
 #include <date/date.h>
 namespace doodle {
@@ -18,8 +15,8 @@ void FileSystem::localCopy(const FSys::path& sourePath, const FSys::path& target
   if (!boost::filesystem::exists(sourePath)) throw FileError(sourePath, "不存在路径");
   if (!boost::filesystem::exists(targetPath.parent_path()))
     boost::filesystem::create_directories(targetPath.parent_path());
-  FSys::path backup_path = "";
-  std::string time_str   = "";
+  FSys::path backup_path{};
+  std::string time_str{};
   if (backup) {
     auto time = std::chrono::system_clock::now();
 
