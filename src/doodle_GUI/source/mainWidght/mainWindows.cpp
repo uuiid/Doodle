@@ -12,7 +12,7 @@
 
 #include <boost/format.hpp>
 
-
+#include <DoodleConfig.h>
 DOODLE_NAMESPACE_S
 
 mainWindows::mainWindows()
@@ -214,7 +214,13 @@ bool Doodle::OnInit() {
   this->SetTopWindow(p_mainWindwos);
 
   p_systemTray = new systemTray{};
-  p_systemTray->SetIcon(wxICON(ID_DOODLE_ICON));
+  p_systemTray->SetIcon(wxICON(ID_DOODLE_ICON),
+                        wxString::Format(
+                            wxString{"doodle-%d.%d.%d.%d"},
+                            Doodle_VERSION_MAJOR,
+                            Doodle_VERSION_MINOR,
+                            Doodle_VERSION_PATCH,
+                            Doodle_VERSION_TWEAK));
   p_setting_widget = new SettingWidght{p_mainWindwos, wxID_ANY};
   p_mainWindwos->Show();
 
