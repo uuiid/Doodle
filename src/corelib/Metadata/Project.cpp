@@ -2,9 +2,11 @@
 #include <corelib/Metadata/Project.h>
 #include <corelib/Exception/Exception.h>
 
+#include <loggerlib/Logger.h>
 #include <pinyinlib/convert.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
+
 namespace doodle {
 
 Project::Project()
@@ -48,6 +50,7 @@ std::string Project::ShortStr() const {
     auto k_s_front = k_pingYin.toEn(s).front();
     str.append(&k_s_front, 1);
   }
+  DOODLE_LOG_INFO(str);
   return boost::algorithm::to_upper_copy(str.substr(0, 2));
 }
 
