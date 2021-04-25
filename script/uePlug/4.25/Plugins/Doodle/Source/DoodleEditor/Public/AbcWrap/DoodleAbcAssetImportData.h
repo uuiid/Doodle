@@ -6,7 +6,7 @@
 #include "DoodleAbcAssetImportData.generated.h"
 
 UCLASS()
-class DOODLE_API UDoodleAbcAssetImportData : public UAssetImportData
+class DOODLEEDITOR_API UDoodleAbcAssetImportData : public UAssetImportData
 {
     GENERATED_UCLASS_BODY()
 public:

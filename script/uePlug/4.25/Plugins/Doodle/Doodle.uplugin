@@ -16,7 +16,7 @@
 	"Modules": [
 		{
 			"Name": "doodle",
-			"Type": "EditorAndProgram",
+			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"WhitelistPlatforms": [
 				"Win64"
@@ -24,6 +24,14 @@
 		},
 		{
 			"Name": "doodleEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
+		},
+		{
+			"Name": "doodleUI",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit",
 			"WhitelistPlatforms": [

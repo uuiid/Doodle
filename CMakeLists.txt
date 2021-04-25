@@ -7,6 +7,8 @@ project(Doodle
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+#设置产生编译数据库
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 #设置qt自动参数
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -182,3 +184,6 @@ set(CPACK_WIX_UPGRADE_GUID 96068D94-08C8-412B-9292-6DE8453E61B3)
 # set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 # set(CPACK_WIX_CULTURES zh_CN)
 include(CPack REQUIRED)
+
+add_custom_target(cpack_${PROJECT_NAME}
+        COMMAND ${CMAKE_CPACK_COMMAND} --build ${PROJECT_BINARY_DIR} --target package )

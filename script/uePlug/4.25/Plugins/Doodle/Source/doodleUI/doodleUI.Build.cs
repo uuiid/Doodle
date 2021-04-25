@@ -49,7 +49,7 @@ public class doodleUI : ModuleRules
                 "SlateCore",
 
                 "doodle",
-
+                "doodleEditor",
                 "PlacementMode",//这个是创建面板用的
 			}
             );

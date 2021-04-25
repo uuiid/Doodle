@@ -6,7 +6,8 @@
 #include "Components/SplineComponent.h"
 // Sets default values
 ADoodleCurveCrowd::ADoodleCurveCrowd()
-    : ACharacter() {
+    : ACharacter()
+{
   // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
   PrimaryActorTick.bCanEverTick = true;
 
@@ -21,23 +22,25 @@ ADoodleCurveCrowd::ADoodleCurveCrowd()
   p_spline = CreateDefaultSubobject<USplineComponent>("Spline");
   p_spline->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
   p_spline->SetWorldTransform(GetRootComponent()->GetComponentTransform());
-
 }
 
 // Called when the game starts or when spawned
-void ADoodleCurveCrowd::BeginPlay() {
+void ADoodleCurveCrowd::BeginPlay()
+{
   Super::BeginPlay();
 }
 
 // Called every frame
-void ADoodleCurveCrowd::Tick(float DeltaTime) {
+void ADoodleCurveCrowd::Tick(float DeltaTime)
+{
   Super::Tick(DeltaTime);
-  auto controller = Cast<AAIController>(GetController());
-  if (controller) {
-    //   controller->MoveTo();
-  }
+  // auto controller = Cast<AAIController>(GetController());
+  // if (controller) {
+  //   //   controller->MoveTo();
+  // }
 }
 // Called to bind functionality to input
-void ADoodleCurveCrowd::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
+void ADoodleCurveCrowd::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent)
+{
   Super::SetupPlayerInputComponent(PlayerInputComponent);
 }

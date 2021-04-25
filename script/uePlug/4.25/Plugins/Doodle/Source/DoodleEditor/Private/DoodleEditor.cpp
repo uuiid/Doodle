@@ -1,44 +1,102 @@
 ﻿#include "DoodleEditor.h"
 
-#include "fireLight.h"
-#include "DoodleDirectionalLightDome.h"
-#include "DoodleCopySpline.h"
+#include "DoodleStyle.h"
+#include "DoodleCommands.h"
 
-#include "IPlacementModeModule.h"
+#include "LevelEditor.h"
+#include "Widgets/Docking/SDockTab.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Text/STextBlock.h"
+#include "ToolMenus.h"
+
+#include "doodleCopyMaterial.h"
+// #include "fireLight.h"
+// #include "DoodleDirectionalLightDome.h"
+// #include "DoodleCopySpline.h"
+
+// #include "IPlacementModeModule.h"
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
 
 void FdoodleEditorModule::StartupModule()
 {
-	// 在我们这里添加自定义放置类
-	FPlacementCategoryInfo info{
-		LOCTEXT("doodle", "doodle"),
-		"DoodleCategoryInfo",
-		TEXT("Adoodle"),
-		55,
-		true };
-	IPlacementModeModule::Get().RegisterPlacementCategory(info);
-	IPlacementModeModule::Get().RegisterPlaceableItem(
-		info.UniqueHandle,
-		MakeShareable(new FPlaceableItem(nullptr, FAssetData{ AfireLight::StaticClass() })));
+    FdoodleStyle::Initialize();
+    FdoodleStyle::ReloadTextures();
 
-	IPlacementModeModule::Get().RegisterPlaceableItem(
-		info.UniqueHandle,
-		MakeShareable(new FPlaceableItem(nullptr, FAssetData{ ADoodleDirectionalLightDome::StaticClass() })));
+    FdoodleCommands::Register();
 
-	IPlacementModeModule::Get().RegisterPlaceableItem(
-		info.UniqueHandle,
-		MakeShareable(new FPlaceableItem(nullptr, FAssetData{ ADoodleCopySpline::StaticClass() })));
+    PluginCommands = MakeShareable(new FUICommandList);
+
+    PluginCommands->MapAction(
+        FdoodleCommands::Get().OpenPluginWindow,
+        FExecuteAction::CreateRaw(this, &FdoodleEditorModule::PluginButtonClicked),
+        FCanExecuteAction());
+
+    UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FdoodleEditorModule::RegisterMenus));
+
+    FGlobalTabmanager::Get()->RegisterNomadTabSpawner(doodleTabName, FOnSpawnTab::CreateRaw(this, &FdoodleEditorModule::OnSpawnPluginTab)).SetDisplayName(LOCTEXT("FdoodleTabTitle", "doodle")).SetMenuType(ETabSpawnerMenuType::Hidden);
 }
 
 void FdoodleEditorModule::ShutdownModule()
 {
-	//我们的卸载函数
-	if (IPlacementModeModule::IsAvailable()) {
-		IPlacementModeModule::Get().UnregisterPlacementCategory("DoodleCategoryInfo");
-	}
+    UToolMenus::UnRegisterStartupCallback(this);
+
+    UToolMenus::UnregisterOwner(this);
+
+    FdoodleStyle::Shutdown();
+
+    FdoodleCommands::Unregister();
+
+    FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
+}
+TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(const FSpawnTabArgs &SpawnTabArgs)
+{
+    FText WidgetText = FText::Format(
+        LOCTEXT("WindowWidgetText", "Add code to {0} in {1} to override this window's contents"),
+        FText::FromString(TEXT("FdoodleEditorModule::OnSpawnPluginTab")),
+        FText::FromString(TEXT("doodle.cpp")));
+
+    return SNew(SDockTab)
+        .TabRole(ETabRole::NomadTab)
+            [
+                // Put your tab content here!
+                SNew(SBox)
+                    .HAlign(HAlign_Left)
+                    .VAlign(VAlign_Top)
+                        [SNew(DoodleCopyMat) //这里创建我们自己的界面
+    ]];
 }
 
+void FdoodleEditorModule::PluginButtonClicked()
+{
+    FGlobalTabmanager::Get()->InvokeTab(doodleTabName);
+}
 
+void FdoodleEditorModule::RegisterMenus()
+{
+    // Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
+    FToolMenuOwnerScoped OwnerScoped(this);
+
+    {
+        UToolMenu *Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
+        {
+            FToolMenuSection &Section = Menu->FindOrAddSection("WindowLayout");
+            Section.AddMenuEntryWithCommandList(FdoodleCommands::Get().OpenPluginWindow, PluginCommands);
+        }
+    }
+
+    {
+        UToolMenu *ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar");
+        {
+            FToolMenuSection &Section = ToolbarMenu->FindOrAddSection("Settings");
+            {
+                FToolMenuEntry &Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FdoodleCommands::Get().OpenPluginWindow));
+                Entry.SetCommandList(PluginCommands);
+            }
+        }
+    }
+}
+
+#undef LOCTEXT_NAMESPACE
 IMPLEMENT_MODULE(FdoodleEditorModule, doodleEditor)

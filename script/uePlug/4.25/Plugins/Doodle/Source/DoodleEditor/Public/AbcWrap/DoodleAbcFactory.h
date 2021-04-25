@@ -14,7 +14,7 @@ class UAbcDoodleImportSettings;
  * 这个是我们自定义的abc导入工厂
  */
 UCLASS()
-class DOODLE_API UDoodleAbcFactory : public UFactory
+class DOODLEEDITOR_API UDoodleAbcFactory : public UFactory
 {
 	GENERATED_BODY()
 public:

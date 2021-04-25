@@ -14,7 +14,7 @@ namespace doodle
 class UDoodleAlemblcCache;
 class UDoodleGeometryCacheBones;
 
-class DOODLE_API FDoodleAbcImport
+class DOODLEEDITOR_API FDoodleAbcImport
 {
 public:
 	FDoodleAbcImport();

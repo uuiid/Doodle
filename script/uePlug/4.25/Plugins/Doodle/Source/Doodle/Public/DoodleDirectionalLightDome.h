@@ -12,10 +12,11 @@
 #include "DoodleDirectionalLightDome.generated.h"
 class UDirectionalLightComponent;
 UCLASS()
-class DOODLE_API ADoodleDirectionalLightDome : public AActor {
+class DOODLE_API ADoodleDirectionalLightDome : public AActor
+{
   GENERATED_BODY()
 
- public:
+public:
   // Sets default values for this actor's properties
   ADoodleDirectionalLightDome();
   // 经度曲线  竖线
@@ -41,7 +42,7 @@ class DOODLE_API ADoodleDirectionalLightDome : public AActor {
   UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = "Doodle_Light", DisplayName = "投射阴影")
   bool p_castShadow;
 
-  UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = "Doodle_Light", DisplayName = "阴影量", meta = (UIMin = "0", UIMax="1"))
+  UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = "Doodle_Light", DisplayName = "阴影量", meta = (UIMin = "0", UIMax = "1"))
   float p_shadowAmout;
 
   // 镜像强度映射
@@ -76,18 +77,20 @@ class DOODLE_API ADoodleDirectionalLightDome : public AActor {
   FColor LightColor;
 
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle_Light", DisplayName = "lightArray")
-  TArray<UDirectionalLightComponent*> p_array_light;
+  TArray<UDirectionalLightComponent *> p_array_light;
 
-  void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangeEvent) override;
+#if WITH_EDITOR
+  void PostEditChangeProperty(FPropertyChangedEvent &PropertyChangeEvent) override;
+#endif //WITH_EDITOR
 
- protected:
+protected:
   // Called when the game starts or when spawned
   virtual void BeginPlay() override;
 
- private:
+private:
   void set_light();
 
- public:
+public:
   // Called every frame
   // virtual void Tick(float DeltaTime) override;
 };

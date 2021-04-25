@@ -11,7 +11,7 @@ class USplineComponent;
 class UInstancedStaticMeshComponent;
 
 UCLASS()
-class DOODLE_API ADoodleCopySpline : public AActor {
+class DOODLEEDITOR_API ADoodleCopySpline : public AActor {
   GENERATED_BODY()
 
  public:
@@ -38,7 +38,10 @@ class DOODLE_API ADoodleCopySpline : public AActor {
   UFUNCTION(BlueprintCallable, meta = (CallInEditor = "true", OverrideNativeName = "特殊复制", Category = "Doodle", Tooltip = "沿曲线复制点"))
   virtual void CopyAActore();
 
-  virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangeEvent) override;
+#if WITH_EDITOR
+  virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangeEvent) override;
+#endif //WITH_EDITOR
+
   // virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangeEvent) override;
   // virtual void PostInterpChange(FProperty* PropertyThatChanged) override;
 
