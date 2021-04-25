@@ -1,9 +1,8 @@
 #include <pinyinlib/convert.h>
 #include <boost/locale.hpp>
-#include <loggerlib/logger.h>
+#include <loggerlib/Logger.h>
 
 #include <stdexcept>
-#include <thread>
 #include <regex>
 
 PINYIN_NAMESPACE_S

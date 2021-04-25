@@ -2,7 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/b_Ninja_VS19_Ni_64_qt515_Debug/cmrc_prj-prefix/src/cmrc_prj" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/b_Ninja_VS19_Ni_64_qt515_Release/cmrc_prj-prefix/src/cmrc_prj" vcs="Git" />
   </component>
 </project>
