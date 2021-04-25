@@ -7,8 +7,6 @@ project(Doodle
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-#设置产生编译数据库
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 #设置qt自动参数
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)

@@ -24,8 +24,8 @@ void SettingWidght::InitSetting() {
 
   //设置project项目
   p_Project->Clear();
-  for (auto prj : set.getAllProjects())
-    p_Project->Append(prj->Name(), prj.get());
+  for (const auto& prj : set.getAllProjects())
+    p_Project->Append(wxString::FromUTF8(prj->Name()), prj.get());
   p_Project->SetSelection(set.getProjectIndex());
 
   if (set.gettUe4Setting().hasPath())
@@ -263,7 +263,7 @@ void SettingWidght::AddProject() {
     if (result == wxID_OK) {
       auto text = text_dialog.GetValue();
       if (!text.empty()) {
-        auto prj = std::make_shared<Project>(path.ToStdString(wxConvUTF8), text);
+        auto prj = std::make_shared<Project>(path.ToStdString(wxConvUTF8), text.ToStdString(wxConvUTF8));
         coreSet::getSet().installProject(prj);
         p_Project->Append(text, prj.get());
       }
