@@ -52,23 +52,25 @@ void Ue4Project::runPythonScript(const std::string& python_str) const {
     FSys::ofstream k_ofile{tmp_file};
     k_ofile << python_str;
   }
-
-  auto k_ue4_cmd = p_ue_path / UE4PATH;
-  if (!FSys::exists(k_ue4_cmd))
-    throw DoodleError{"找不到ue运行文件"};
-  boost::format command{R"("%s" "%s" -run=%s -script="%s")"};
-  command % k_ue4_cmd.generic_string()      //ue路径
-      % p_ue_Project_path.generic_string()  //项目路径
-      % "pythonscript"                      //运行ue命令名称
-      % tmp_file.generic_string()           //python脚本路径
-      ;
-  DOODLE_LOG_INFO(command.str())
-  boost::process::child k_c{command.str()};
-  k_c.wait();
+  runPythonScript(tmp_file);
   FSys::remove(tmp_file);
 }
 
 void Ue4Project::runPythonScript(const FSys::path& python_file) const {
+  auto k_ue4_cmd = p_ue_path / UE4PATH;
+  if (!FSys::exists(k_ue4_cmd))
+    throw DoodleError{"找不到ue运行文件"};
+//  boost::format command{R"("%s" "%s" -run=%s -script="%s")"};
+  boost::format command{R"("%s" "%s" -ExecutePythonScript="%s")"};
+
+  command % k_ue4_cmd.generic_string()      //ue路径
+      % p_ue_Project_path.generic_string()  //项目路径
+//      % "pythonscript"                      //运行ue命令名称
+      % python_file.generic_string()           //python脚本路径
+      ;
+  DOODLE_LOG_INFO(command.str())
+  boost::process::child k_c{command.str()};
+  k_c.wait();
 }
 
 void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
@@ -97,76 +99,64 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
       FSys::create_directories(p_episodes_vfx_name);
   }
 
-  //创建镜头文件夹
-  std::string python_str{R"(import unreal
-)"};
-  boost::format python_format_LevelSequence{R"(ass = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
-    asset_name='%s',
-    package_path='/Game/%s', 
-    asset_class=unreal.LevelSequence, 
-    factory=unreal.LevelSequenceFactoryNew())
-ass.set_display_rate(unreal.FrameRate(25,1))
+  auto k_tmp_file_path = coreSet::getSet().getCacheRoot("ue4_lev")
+      / boost::uuids::to_string(coreSet::getSet().getUUID()).append(".py");
 
-ass.make_range(1001,1200)
-ass.set_playback_start(1001)
-ass.set_playback_end(1200)
-
-ass.set_work_range_start(40)
-ass.set_work_range_end(30)
-
-ass.set_view_range_start(30)
-ass.set_view_range_end(30)
-unreal.EditorAssetLibrary.save_directory('/Game/')
-)"};
-  boost::format python_format_World{R"(ass_lev = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
-    asset_name='%1%', 
-    package_path='/Game/%2%', 
-    asset_class=unreal.World, 
-    factory=unreal.WorldFactory())
-unreal.EditorLoadingAndSavingUtils.save_map(ass_lev, "/Game/%2%/%1%")
-)"};
-
-  auto k_game_episodes_path = FSys::path{ContentShot} / inShotList[0]->Episodes_()->str();
-  for (const auto& k_shot : inShotList) {
-    boost::format k_shot_str{"%s%04d_%s"};
-    k_shot_str %
-        this->p_project->ShortStr() %
-        k_shot->Episodes_()->Episodes_() %
-        k_shot->str();
-
-    auto k_shot_path      = k_episodes_path / k_shot_str.str();
-    auto k_game_shot_path = k_game_episodes_path / k_shot_str.str();
-    if (!FSys::exists(k_shot_path))
-      FSys::create_directory(k_shot_path);
-
-    FSys::create_directory(k_shot_path / k_dep);
-
-    //添加关卡序列和定序器
-
-    boost::format k_shot_suffix{"_%s"};
-    k_shot_suffix % k_dep.front();
-
-    auto k_shot_sequence = k_shot_str.str();
-    k_shot_sequence += k_shot_suffix.str();
-
-    FSys::ofstream file{};
-    auto k_shot_sequence_path = k_shot_path / (k_shot_sequence + ".uasset");
-    if (!FSys::exists(k_shot_sequence_path)) {
-      python_format_LevelSequence % k_shot_sequence % k_game_shot_path.generic_string();
-      python_str.append(python_format_LevelSequence.str());
-      python_format_LevelSequence.clear();
-    }
-
-    auto k_shot_lev      = k_shot_str.str();
-    k_shot_lev           += "_lev" + k_shot_suffix.str();
-    auto k_shot_lev_path = k_shot_path / (k_shot_lev + ".umap");
-    if (!FSys::exists(k_shot_lev_path)) {
-      python_format_World % k_shot_lev % k_game_shot_path.generic_string();
-      python_str.append(python_format_World.str());
-      python_format_World.clear();
-    }
+  { //写入临时文件
+    auto tmp_f = cmrc::CoreResource::get_filesystem().open("resource/Ue4CraeteLevel.py");
+    FSys::fstream file{k_tmp_file_path,std::ios_base::out | std::ios::binary};
+    file.write(tmp_f.begin(),tmp_f.size());
   }
-  this->runPythonScript(python_str);
+
+  {  //这个是后续追加写入
+    FSys::fstream file{k_tmp_file_path, std::ios_base::out | std::ios_base::app};
+    boost::format python_format{R"(doodle_lve("%s", "%s/", "%s", "%s/")())"};
+
+    file << std::endl;
+
+    auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0]->Episodes_()->str();
+    for (const auto &k_shot : inShotList) {
+      boost::format k_shot_str{"%s%04d_%s"};
+      k_shot_str %
+          this->p_project->ShortStr() %
+          k_shot->Episodes_()->Episodes_() %
+          k_shot->str();
+
+      auto k_shot_path = k_episodes_path / k_shot_str.str();
+      auto k_game_shot_path = k_game_episodes_path / k_shot_str.str();
+      if (!FSys::exists(k_shot_path))
+        FSys::create_directory(k_shot_path);
+
+      FSys::create_directory(k_shot_path / k_dep);
+
+      //添加关卡序列和定序器
+
+      boost::format k_shot_suffix{"_%s"};
+      k_shot_suffix % k_dep.front();
+
+      auto k_shot_sequence = k_shot_str.str();
+      k_shot_sequence += k_shot_suffix.str();
+
+      auto k_shot_sequence_path = k_shot_path / (k_shot_sequence + ".uasset");
+      auto k_shot_lev = k_shot_str.str();
+      k_shot_lev += "_lev" + k_shot_suffix.str();
+      auto k_shot_lev_path = k_shot_path / (k_shot_lev + ".umap");
+
+      if (!FSys::exists(k_shot_sequence_path) && !FSys::exists(k_shot_lev_path)) {
+        python_format
+            % k_shot_lev
+            % k_game_shot_path.generic_string()
+            % k_shot_sequence
+            % k_game_shot_path.generic_string();
+
+        file << python_format.str() << std::endl;
+        python_format.clear();
+      }
+    }
+//    file << "time.sleep(3)" << std::endl;
+  }
+
+  this->runPythonScript(k_tmp_file_path);
 }
 
 }  // namespace doodle

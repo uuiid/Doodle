@@ -12,6 +12,8 @@
 #include <boost/regex.hpp>
 #include <boost/locale.hpp>
 #include <boost/format.hpp>
+
+#include <corelib/core_Cpp.h>
 std::string encode64(const std::string &val) {
   using namespace boost::archive::iterators;
   using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
@@ -103,4 +105,10 @@ TEST(dboost, filesys_append) {
   // path.append(".backup");
   path.replace_extension(".txt.backup");
   std::cout << path << std::endl;
+}
+
+TEST(dboost, uuiid_path){
+//  doodle::FSys::path path{"tset/sdsa/"};
+//  path /= doodle::coreSet::getSet().getUUID();
+//  std::cout << path << std::endl;
 }

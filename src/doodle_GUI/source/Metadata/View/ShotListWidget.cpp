@@ -8,7 +8,6 @@
 #include <doodle_GUI/source/mainWidght/mainWindows.h>
 #include <wx/numdlg.h>
 
-#include <wx/numdlg.h>
 
 namespace doodle {
 

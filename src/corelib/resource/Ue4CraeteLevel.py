@@ -1,5 +1,5 @@
 import unreal
-
+import time
 
 class doodle_lve:
     def __init__(self, ass_lev_name, ass_lev_path, ass_name, ass_path):
@@ -120,6 +120,3 @@ class doodle_lve:
         self.create_camera()
         self.create_level_visibility()
         self.save()
-
-
-doodle_lve("tset_lev", "/Game/Dev/", "tset", "/Game/Dev/")()
