@@ -38,11 +38,11 @@ PUBLIC
 
 add_subdirectory(source)
 target_compile_definitions(doodle PRIVATE wxUSE_STD_STRING wxUSE_UNICODE_WCHAR)
-target_include_directories(doodle PRIVATE ${BOOST_INCLUDE_DIRS} ${wxWidgets_INCLUDE_DIRS})
+#target_include_directories(doodle PRIVATE ${BOOST_INCLUDE_DIRS} ${wxWidgets_INCLUDE_DIRS})
 # target_link_directories(doodle PRIVATE f:/Source/vcpkg/installed/x64-windows/debug/lib/)
-add_custom_target(tset_gen 
-COMMAND ${CMAKE_COMMAND} -E echo $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
-)
+#add_custom_target(tset_gen
+#COMMAND ${CMAKE_COMMAND} -E echo $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
+#)
 
 target_link_libraries(doodle 
 PRIVATE
@@ -55,6 +55,3 @@ PRIVATE
 target_link_libraries(doodle PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(doodle PRIVATE core)
 target_link_libraries(doodle PRIVATE logger)
-
-
-

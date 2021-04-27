@@ -50,5 +50,17 @@ std::string Shot::str() const {
   str_shot % p_shot % p_shot_ab;
   return str_shot.str();
 }
+bool Shot::operator<(const Shot &rhs) const {
+  return std::tie(p_shot, p_shot_ab) < std::tie(rhs.p_shot, rhs.p_shot_ab);
+}
+bool Shot::operator>(const Shot &rhs) const {
+  return rhs < *this;
+}
+bool Shot::operator<=(const Shot &rhs) const {
+  return !(rhs < *this);
+}
+bool Shot::operator>=(const Shot &rhs) const {
+  return !(*this < rhs);
+}
 
 }  // namespace doodle

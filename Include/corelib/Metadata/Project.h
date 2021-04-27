@@ -1,11 +1,14 @@
 #pragma once
 #include <corelib/core_global.h>
 
+#include <corelib/Metadata/Metadata.h>
+
+
 #include <cereal/cereal.hpp>
 #include <cereal/types/common.hpp>
 #include <cereal/types/string.hpp>
 namespace doodle {
-class CORE_API Project {
+class CORE_API Project : public Metadata{
   std::string p_name;
   FSys::path p_path;
 
@@ -13,13 +16,13 @@ class CORE_API Project {
   Project();
   Project(FSys::path in_path, std::string in_name);
 
-  const std::string& Name() const noexcept;
+  [[nodiscard]] const std::string& Name() const noexcept;
   void setName(const std::string& Name) noexcept;
 
-  const FSys::path& Path() const noexcept;
+  [[nodiscard]] const FSys::path& Path() const noexcept;
   void setPath(const FSys::path& Path);
 
-  std::string str() const;
+  std::string str() const override;
   std::string ShortStr() const;
 
  private:
@@ -36,7 +39,8 @@ template <class Archive>
 void Project::save(Archive& ar, std::uint32_t const version) const {
   ar(
       cereal::make_nvp("name", p_name),
-      cereal::make_nvp("path", p_path));
+      cereal::make_nvp("path", p_path)
+      );
 }
 
 template <class Archive>

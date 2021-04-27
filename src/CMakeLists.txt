@@ -10,13 +10,7 @@ add_subdirectory(doodle_GUI)
 # add_subdirectory(doodle_server)
 add_subdirectory(plug)
 
-target_include_directories(core PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_include_directories(pinyin PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_include_directories(logger PUBLIC ${PROJECT_SOURCE_DIR}/include)
+#target_include_directories(core PUBLIC ${PROJECT_SOURCE_DIR}/include)
+#target_include_directories(pinyin PUBLIC ${PROJECT_SOURCE_DIR}/include)
+#target_include_directories(logger PUBLIC ${PROJECT_SOURCE_DIR}/include)
 # target_include_directories(fileSystem PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-
-
-
-
-
-

@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.14)
 
 project(Doodle
-        VERSION 2.7.14.2
+        VERSION 2.7.16.2
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -118,7 +118,7 @@ doxygen_add_docs(Doxygen
 ${PROJECT_SOURCE_DIR}
 )
 
-
+include_directories(${PROJECT_SOURCE_DIR}/include)
 add_subdirectory(src)
 add_subdirectory(include)
 enable_testing()

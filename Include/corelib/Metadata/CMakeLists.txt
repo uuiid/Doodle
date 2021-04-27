@@ -1,7 +1,10 @@
 target_sources(
-  core
-  PUBLIC
-  Episodes.h
-  Project.h
-  Shot.h
+        core
+        PUBLIC
+        Episodes.h
+        Project.h
+        Shot.h
+        Assets.h
+        Metadata.h
+        ProjectSet.h
 )
