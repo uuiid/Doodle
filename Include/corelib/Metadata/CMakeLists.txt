@@ -6,5 +6,4 @@ target_sources(
         Shot.h
         Assets.h
         Metadata.h
-        ProjectSet.h
 )

@@ -14,6 +14,6 @@ class CORE_API Episodes : public Metadata{
   const int64_t &Episodes_() const noexcept;
   void setEpisodes_(const int64_t &Episodes_);
 
-  std::string str() const override;
+  [[nodiscard]] std::string str() const override;
 };
 }  // namespace doodle

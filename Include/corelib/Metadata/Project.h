@@ -22,8 +22,8 @@ class CORE_API Project : public Metadata{
   [[nodiscard]] const FSys::path& Path() const noexcept;
   void setPath(const FSys::path& Path);
 
-  std::string str() const override;
-  std::string ShortStr() const;
+  [[nodiscard]] std::string str() const override;
+  [[nodiscard]] std::string ShortStr() const;
 
  private:
   friend class cereal::access;

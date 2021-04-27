@@ -6,5 +6,5 @@ target_sources(
         Shot.cpp
         Assets.cpp
         Metadata.cpp
-        ProjectSet.cpp
+
 )

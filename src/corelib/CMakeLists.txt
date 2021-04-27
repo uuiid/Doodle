@@ -62,9 +62,9 @@ target_compile_definitions(core PRIVATE CORE_LIBRARY core_EXPORT WIN32_LEAN_AND_
 target_compile_definitions(core PUBLIC DOODLE_QT NOMINMAX _WIN32_WINNT=0x0A00)
 
 
-#target_include_directories(core PUBLIC
+target_include_directories(core PUBLIC
 #        ${CMAKE_CURRENT_LIST_DIR}
-#        ${CMAKE_CURRENT_BINARY_DIR}
-#        PRIVATE
+        PUBLIC
+        ${CMAKE_CURRENT_BINARY_DIR}
 #        ${OpenCV_INCLUDE_DIRS}
-#        )
+        )

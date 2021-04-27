@@ -10,7 +10,10 @@
 
 namespace doodle {
 class CORE_API Assets : public Metadata{
+  std::string p_nmae;
+
  public:
+  explicit Assets(std::string in_name);
   std::string str() const override;
-}
+};
 }

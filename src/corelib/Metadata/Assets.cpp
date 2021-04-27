@@ -3,6 +3,12 @@
 //
 
 #include <corelib/Metadata/Assets.h>
-std::string doodle::Assets::str() const {
+namespace doodle {
+Assets::Assets(std::string in_name)
+    : p_name(std::move(in_name)) {}
+
+std::string Assets::str() const {
   return std::string();
+}
+
 }

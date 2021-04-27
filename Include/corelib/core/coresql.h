@@ -11,20 +11,23 @@ DOODLE_NAMESPACE_S
  * 数据库连接类
  * 全局静态类
  */
+enum class sqlOpenMode{
+  readOnly,
+  write,
+  create
+};
+
 class CORE_API coreSql {
  public:
-  static coreSql &getCoreSql();
-  coreSql &operator=(const coreSql &s) = delete;
-  coreSql(const coreSql &s)            = delete;
+  coreSql();
+  DOODLE_DISABLE_COPY(coreSql)
 
-  ~coreSql();
-
-  void initDB(const std::string &path);
+  void initDB(sqlOpenMode flags);
   ConnPtr getConnection();
+  ConnPtr getConnection(sqlOpenMode flags);
 
  private:
   void initDB();
-  coreSql();
 
  private:
   std::shared_ptr<sqlpp::sqlite3::connection_config> config;

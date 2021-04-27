@@ -14,12 +14,6 @@ coreSql::coreSql()
     : p_path(),
       config(std::make_shared<sqlpp::sqlite3::connection_config>()) {}
 
-coreSql::~coreSql() = default;
-
-coreSql &coreSql::getCoreSql() {
-  static coreSql install;
-  return install;
-}
 
 void coreSql::initDB() {
   config->flags            = SQLITE_OPEN_READWRITE;
@@ -34,9 +28,18 @@ void coreSql::initDB() {
 ConnPtr coreSql::getConnection() {
   return std::make_unique<sqlpp::sqlite3::connection>(*config);
 }
-void coreSql::initDB(const std::string &path) {
-  p_path = path + "/config/doodleConfig.db";
-  initDB();
+void coreSql::initDB(sqlOpenMode flags) {
+  switch (flags) {
+    case sqlOpenMode::readOnly:
+      break;
+    case sqlOpenMode::write:
+      break;
+    case sqlOpenMode::create:
+      break;
+  }
+}
+ConnPtr coreSql::getConnection(sqlOpenMode flags) {
+  return doodle::ConnPtr();
 }
 
 DOODLE_NAMESPACE_E
