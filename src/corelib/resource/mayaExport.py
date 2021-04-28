@@ -60,6 +60,9 @@ class camera:
                 self.bakeAnm()
             except:
                 print("back camera fail")
+        else:
+            pymel.core.bakeResults(self.maya_cam, sm=True, t=(start, end))
+
         mel_name = "{path}/{name}_camera_{start}-{end}.fbx".format(path=args.exportpath,
                                                                    name=doodle_filename,
                                                                    start=int(
