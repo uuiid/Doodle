@@ -1,2 +1,0 @@
-#add_subdirectory(corelib)
-#add_subdirectory(doodle_GUI)

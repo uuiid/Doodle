@@ -17,12 +17,7 @@ coreSql::coreSql()
 
 void coreSql::initDB() {
   config->flags            = SQLITE_OPEN_READWRITE;
-  config->path_to_database = p_path;
-#ifdef NDEBUG
-  config->debug = false;
-#else
-  config->debug = true;
-#endif  //NDEBUG
+
 }
 
 ConnPtr coreSql::getConnection() {
@@ -30,13 +25,20 @@ ConnPtr coreSql::getConnection() {
 }
 void coreSql::initDB(sqlOpenMode flags) {
   switch (flags) {
-    case sqlOpenMode::readOnly:
+    case sqlOpenMode::readOnly: config->flags = SQLITE_OPEN_READONLY;
       break;
-    case sqlOpenMode::write:
+    case sqlOpenMode::write: config->flags = SQLITE_OPEN_READWRITE;
       break;
-    case sqlOpenMode::create:
+    case sqlOpenMode::create: config->flags = SQLITE_OPEN_CREATE;
       break;
   }
+  config->path_to_database = p_path;
+#ifdef NDEBUG
+  config->debug = false;
+#else
+  config->debug = true;
+#endif  //NDEBUG
+
 }
 ConnPtr coreSql::getConnection(sqlOpenMode flags) {
   return doodle::ConnPtr();

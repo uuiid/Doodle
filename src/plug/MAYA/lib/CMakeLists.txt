@@ -25,25 +25,25 @@ kernel/PlayerMotion.cpp
 )
 
 set(doodle_motion_HEADER
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/ExeWarp/FFmpegWarp.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/Maya/MayaRenderOpenGL.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/Maya/FbxFile.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/Maya/MayaVideo.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/Maya/Screenshot.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/BoostUuidWarp.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/Exception.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/MotionFile.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/MotionSetting.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/kernel/PlayerMotion.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/model/MotionModel.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/model/TreeDirItem.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/model/TreeDirModel.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/view/MotionAttrbuteView.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/view/MotionView.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/view/TreeDirView.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/MotionLibWidget.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/MotionMainUI.h
-${PROJECT_SOURCE_DIR}/Include/plug/MAYA/lib/ui/MotionSettingWidget.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/kernel/ExeWarp/FFmpegWarp.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/kernel/Maya/MayaRenderOpenGL.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/kernel/Maya/FbxFile.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/kernel/Maya/MayaVideo.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/kernel/Maya/Screenshot.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/kernel/BoostUuidWarp.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/kernel/Exception.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/kernel/MotionFile.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/kernel/MotionSetting.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/kernel/PlayerMotion.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/ui/model/MotionModel.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/ui/model/TreeDirItem.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/ui/model/TreeDirModel.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/ui/view/MotionAttrbuteView.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/ui/view/MotionView.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/ui/view/TreeDirView.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/ui/MotionLibWidget.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/ui/MotionMainUI.h
+${PROJECT_SOURCE_DIR}/src/plug/MAYA/lib/ui/MotionSettingWidget.h
 )
 
 # 由于版本不一样所以使用特制版qt制作maya插件
@@ -131,4 +131,3 @@ target_compile_definitions(doodle_motion PRIVATE _WIN32_WINNT=0x0A00)
 #         DESTINATION plug/maya_plug/plug-ins
 #         # CONFIGURATIONS Debug
 #         )
-

@@ -7,6 +7,9 @@ PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 target_sources(logger PRIVATE
 Logger.cpp
+        PUBLIC
+        Logger.h
+        LoggerTemplate.h
 )
 
 target_link_libraries(logger PUBLIC Boost::log )
@@ -14,4 +17,3 @@ target_link_libraries(logger PUBLIC Boost::log )
 target_link_libraries(logger PRIVATE Boost::locale Boost::filesystem)
 
 target_compile_definitions(logger PRIVATE LOGGER_LIBRARY NOMINMAX)
-

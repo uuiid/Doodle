@@ -11,6 +11,9 @@ set_target_properties(pinyin
 target_sources(pinyin
         PRIVATE
         convert.cpp
+        PUBLIC
+        convert.h
+        pinyin_global.h
         )
 
 target_link_libraries(pinyin

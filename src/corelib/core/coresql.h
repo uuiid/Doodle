@@ -17,6 +17,7 @@ enum class sqlOpenMode{
   create
 };
 
+
 class CORE_API coreSql {
  public:
   coreSql();

@@ -7,7 +7,8 @@ cmrc_add_resource_library(
 )
 
 add_library(core SHARED
-        )
+        core_Cpp.h
+        core_global.h)
 add_subdirectory(core)
 add_subdirectory(FileWarp)
 add_subdirectory(FileSys)

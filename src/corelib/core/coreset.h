@@ -94,7 +94,7 @@ class CORE_API coreSet {
   //获得本地的有限设置
   void getSetting();
 
-  static std::string configFileName() ;
+  static std::string configFileName();
  private:
   boost::uuids::random_generator p_uuid_gen;
 

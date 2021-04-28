@@ -35,6 +35,7 @@ option(RUN_COPY    "run copy tools"     OFF)
 #配置版本文件
 configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)
 include_directories(${CMAKE_BINARY_DIR}/configure)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # #添加qt路径
 # list(APPEND CMAKE_PREFIX_PATH F:/Qt/5.12.9/msvc2017_64)
@@ -118,9 +119,8 @@ doxygen_add_docs(Doxygen
 ${PROJECT_SOURCE_DIR}
 )
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
 add_subdirectory(src)
-add_subdirectory(include)
+
 enable_testing()
 add_subdirectory(test)
 add_subdirectory(tools)

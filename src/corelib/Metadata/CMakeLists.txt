@@ -7,4 +7,9 @@ target_sources(
         Assets.cpp
         Metadata.cpp
 
+        Assets.h
+        Episodes.h
+        Metadata.h
+        Project.h
+        Shot.h
 )
