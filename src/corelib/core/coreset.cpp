@@ -1,15 +1,9 @@
 ﻿#include <corelib/core/coreset.h>
-
-#include <corelib/core/coresql.h>
-
 #include <corelib/Exception/Exception.h>
 #include <pinyinlib/convert.h>
 #include <loggerlib/Logger.h>
 
 #include <nlohmann/json.hpp>
-
-#include <stdexcept>
-#include <fstream>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
@@ -22,8 +16,6 @@
 #include <cereal/archives/portable_binary.hpp>
 
 DOODLE_NAMESPACE_S
-
-const std::string coreSet::settingFileName = "doodle_config.bin";
 
 coreSet &coreSet::getSet() {
   static coreSet install;
@@ -43,7 +35,7 @@ void coreSet::init() {
     FSys::create_directories(doc);
   findMaya();
   getSetting();
-  coreSql &sql = coreSql::getCoreSql();
+
   getCacheDiskPath();
 
   if (!FSys::exists(getCacheRoot())) {
@@ -86,13 +78,13 @@ void coreSet::writeDoodleLocalSet() {
     throw FileError{p_mayaPath, " 在路径中没有找到maya,不保存"};
   }
 
-  FSys::ofstream outjosn{doc / settingFileName, std::ifstream::binary};
+  FSys::ofstream outjosn{doc / configFileName(), std::ifstream::binary};
   cereal::PortableBinaryOutputArchive out{outjosn};
   out(*this);
 }
 
 void coreSet::getSetting() {
-  static FSys::path k_settingFileName = doc / settingFileName;
+  static FSys::path k_settingFileName = doc / configFileName();
   if (FSys::exists(k_settingFileName)) {
     FSys::path strFile(k_settingFileName);
     FSys::ifstream inJosn{k_settingFileName, std::ifstream::binary};
@@ -238,6 +230,10 @@ FSys::path coreSet::program_location() {
 }
 FSys::path coreSet::program_location(const FSys::path &path) {
   return program_location() / path;
+}
+std::string coreSet::configFileName() {
+  static std::string str{"doodle_config.bin"}
+  return str;
 }
 
 DOODLE_NAMESPACE_E

@@ -8,7 +8,7 @@
 
 
 #include <thread>
-#include <stdexcept>
+
 DOODLE_NAMESPACE_S
 coreSql::coreSql()
     : p_path(),
