@@ -1,5 +1,7 @@
 target_sources(
-  core
-  PRIVATE
-  FileSystem.cpp
+        core
+        PUBLIC
+        FileSystem.h
+        PRIVATE
+        FileSystem.cpp
 )

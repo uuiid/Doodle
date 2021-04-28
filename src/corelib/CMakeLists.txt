@@ -64,7 +64,7 @@ target_compile_definitions(core PUBLIC DOODLE_QT NOMINMAX _WIN32_WINNT=0x0A00)
 
 
 target_include_directories(core PUBLIC
-#        ${CMAKE_CURRENT_LIST_DIR}
+        ${PROJECT_SOURCE_DIR}/src
         PUBLIC
         ${CMAKE_CURRENT_BINARY_DIR}
 #        ${OpenCV_INCLUDE_DIRS}

@@ -232,7 +232,7 @@ FSys::path coreSet::program_location(const FSys::path &path) {
   return program_location() / path;
 }
 std::string coreSet::configFileName() {
-  static std::string str{"doodle_config.bin"}
+  static std::string str{"doodle_config.bin"};
   return str;
 }
 

@@ -21,6 +21,6 @@ target_link_libraries(pinyin
         Boost::locale
         logger
         PinyinResource)
-
+target_include_directories(pinyin PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_compile_definitions(pinyin
         PRIVATE PINYIN_LIBRARY NOMINMAX)
