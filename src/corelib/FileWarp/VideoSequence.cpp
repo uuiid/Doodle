@@ -39,6 +39,10 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
   const static cv::Size k_size{1280, 720};
   const auto k_len = boost::numeric_cast<float>(p_paths.size());
   auto k_i = float{0};
+  // 这里开始排序
+  std::sort(p_paths.begin(), p_paths.end(),
+            [](const FSys::path& k_l,const FSys::path& k_r){return k_l.stem() < k_r.stem();});
+
   for (const auto& path : p_paths) {
     if (k_video_input.open(path.generic_string())) {
       //获得总帧数

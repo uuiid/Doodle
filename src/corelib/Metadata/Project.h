@@ -8,14 +8,18 @@
 #include <cereal/types/common.hpp>
 #include <cereal/types/string.hpp>
 namespace doodle {
+/**
+ * 项目信息类
+ */
 class CORE_API Project : public Metadata{
   std::string p_name;
   FSys::path p_path;
-
  public:
   Project();
   Project(FSys::path in_path, std::string in_name);
 
+  /// 属性编辑
+  /// \return 项目名称属性
   [[nodiscard]] const std::string& Name() const noexcept;
   void setName(const std::string& Name) noexcept;
 

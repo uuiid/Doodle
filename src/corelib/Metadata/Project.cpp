@@ -1,11 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include <corelib/Metadata/Project.h>
 #include <corelib/Exception/Exception.h>
+#include <corelib/core/coresql.h>
 
 #include <loggerlib/Logger.h>
 #include <pinyinlib/convert.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
+
+#include <cereal/archives/portable_binary.hpp>
 
 namespace doodle {
 
@@ -43,14 +46,14 @@ std::string Project::str() const {
 }
 
 std::string Project::ShortStr() const {
-  auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
+  auto wstr = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
   auto& k_pingYin = dopinyin::convert::Get();
   std::string str{};
   for (auto s : wstr) {
     auto k_s_front = k_pingYin.toEn(s).front();
     str.append(&k_s_front, 1);
   }
-  DOODLE_LOG_INFO(str);
+  DOODLE_LOG_INFO(str)
   return boost::algorithm::to_upper_copy(str.substr(0, 2));
 }
 std::string Project::getConfigFileFolder() {
@@ -58,11 +61,19 @@ std::string Project::getConfigFileFolder() {
   return str;
 }
 std::string Project::getConfigFileName() {
-  static std::string str{"doodle_config.db"};
+  static std::string str{"doodle_config.dole"};
   return str;
 }
 
 void Project::makeProject() const {
+  auto k_path = p_path / getConfigFileFolder() / getConfigFileName();
+  if(FSys::exists(k_path.parent_path()))
+    FSys::create_directories(k_path.parent_path());
+
+  FSys::fstream k_fstream{k_path,std::ios::out | std::ios::binary};
+
+  cereal::PortableBinaryOutputArchive k_archive{k_fstream};
+  k_archive(*this);
 
 }
 

@@ -17,11 +17,11 @@ enum class sqlOpenMode{
 
 
 class CORE_API coreSql {
-  std::weak_ptr<Project> p_project;
+  Project* p_project;
   std::shared_ptr<sqlpp::sqlite3::connection_config> config;
 
  public:
-  explicit coreSql(std::weak_ptr<Project> in_project);
+  explicit coreSql(Project* in_project);
   DOODLE_DISABLE_COPY(coreSql)
 
   void initDB(sqlOpenMode flags);
