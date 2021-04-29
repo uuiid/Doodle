@@ -20,8 +20,7 @@ class CORE_API Shot : public Metadata {
   enum class ShotAbEnum { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
   // clang-format on
 
-  const decltype(p_shot) &
-  Shot_() const noexcept;
+  const decltype(p_shot) & Shot_() const noexcept;
   void setShot_(const decltype(p_shot) &Shot_);
 
   const decltype(p_shot_ab) &ShotAb() const noexcept;

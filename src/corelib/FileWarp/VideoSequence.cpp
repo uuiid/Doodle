@@ -12,8 +12,7 @@ VideoSequence::VideoSequence(decltype(p_paths) paths)
       p_paths(std::move(paths)) {
   for (auto&& path : p_paths) {
     auto ex = path.extension();
-    if (ex != ".mp4" ||
-        ex != ".avi")
+    if (ex != ".mp4" && ex != ".avi")
       throw DoodleError("不是MP4文件, 暂时不支持");
   }
 }
@@ -30,16 +29,16 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
   if (!FSys::exists(k_out_path.parent_path()))
     FSys::create_directories(k_out_path.parent_path());
 
-  auto k_video_input   = cv::VideoCapture{};
-  auto k_video_out     = cv::VideoWriter{k_out_path.generic_string(),
-                                         cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
-                                         25,
-                                         cv::Size(1280, 720)};
-  auto k_image         = cv::Mat{};
+  auto k_video_input = cv::VideoCapture{};
+  auto k_video_out = cv::VideoWriter{k_out_path.generic_string(),
+                                     cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
+                                     25,
+                                     cv::Size(1280, 720)};
+  auto k_image = cv::Mat{};
   auto k_image_resized = cv::Mat{};
   const static cv::Size k_size{1280, 720};
   const auto k_len = boost::numeric_cast<float>(p_paths.size());
-  auto k_i         = float{0};
+  auto k_i = float{0};
   for (const auto& path : p_paths) {
     if (k_video_input.open(path.generic_string())) {
       //获得总帧数

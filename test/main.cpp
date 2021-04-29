@@ -11,8 +11,6 @@
 
 #include <loggerlib/Logger.h>
 
-#include <QtWidgets/qapplication.h>
-
 #include <gtest/gtest.h>
 #include <iostream>
 #include <locale>
@@ -35,9 +33,6 @@ int main(int argc, char *argv[]) {
   // std::setlocale(LC_ALL, "");
   //初始化log
   Logger::doodle_initLog();
-
-  //创建qt必要的运行事件循环
-  QApplication app(argc, argv);
 
   //初始化测试环境
   ::testing::InitGoogleTest(&argc, argv);

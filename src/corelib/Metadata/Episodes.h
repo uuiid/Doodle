@@ -9,9 +9,9 @@ class CORE_API Episodes : public Metadata{
 
  public:
   Episodes();
-  Episodes(int64_t in_episodes);
+  explicit Episodes(int64_t in_episodes);
 
-  const int64_t &Episodes_() const noexcept;
+  [[nodiscard]] const int64_t &Episodes_() const noexcept;
   void setEpisodes_(const int64_t &Episodes_);
 
   [[nodiscard]] std::string str() const override;

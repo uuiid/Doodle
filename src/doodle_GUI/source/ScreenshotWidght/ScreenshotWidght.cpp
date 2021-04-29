@@ -5,12 +5,6 @@
 #include <corelib/core_Cpp.h>
 #include <loggerlib/Logger.h>
 
-#include <QtWidgets/qpushbutton.h>
-#include <QtWidgets/qlabel.h>
-#include <QtWidgets/qlayout.h>
-
-#include <QtWidgets/qapplication.h>
-#include <QtGui/qwindow.h>
 DOODLE_NAMESPACE_S
 
 DOODLE_NAMESPACE_E

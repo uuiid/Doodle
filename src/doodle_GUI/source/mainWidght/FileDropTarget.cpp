@@ -12,7 +12,7 @@ bool FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& in_f
   std::vector<FSys::path> list{};
   for (const auto& item : in_file_names) {
     DOODLE_LOG_ERROR("drag file: " << item);
-    list.emplace_back(FSys::path{item});
+    list.emplace_back(FSys::path{item.ToStdString(wxConvUTF8)});
   }
 
   this->handleFileFunction(list);

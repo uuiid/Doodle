@@ -32,9 +32,10 @@ MessageAndProgress::MessageAndProgress(wxWindow* parent)
       [this](wxThreadEvent& event) {
         // p_progress->set
         boost::format str_f{"进行中... %d"};
-        str_f % event.GetInt();
+        auto k_i = (event.GetInt() > 100) ? 100 :event.GetInt();
+        str_f % k_i;
         auto str = wxString::FromUTF8(str_f.str().append(" %"));
-        p_progress->Update(event.GetInt(), str);
+        p_progress->Update(k_i, str);
         event.Skip();
       });
 }

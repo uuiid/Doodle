@@ -62,4 +62,8 @@ std::string Project::getConfigFileName() {
   return str;
 }
 
+void Project::makeProject() const {
+
+}
+
 }  // namespace doodle

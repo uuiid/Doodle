@@ -9,7 +9,6 @@
 #include <filesystem>
 #include <codecvt>
 
-#include <QtCore/QString>
 #include <boost/locale.hpp>
 // #include <boost/nowide/
 TEST(DSTD, map_netDir) {
@@ -85,10 +84,6 @@ TEST(DSTD, u8stringAndString) {
   boost::filesystem::path str_b{"D:/哈哈/scoo+1235"};
   // std::cout << std::string{str2.begin(), str2.end()} << std::endl;
   std::cout << "str: " << str << std::endl;
-  auto qstr = QString::fromLocal8Bit(str.generic_string().c_str());
-  std::cout << "QString::fromLocal8Bit --> .generic_string().c_str(): " << qstr.toStdString() << std::endl;
-  auto qstr2 = QString::fromStdString(str.generic_u8string());
-  std::cout << "QString::fromStdString --> .generic_u8string(): " << qstr2.toStdString() << std::endl;
 
   std::cout << "generic_u8string: " << str.generic_u8string() << std::endl;
   std::cout << "generic_string: " << str.generic_string() << std::endl;

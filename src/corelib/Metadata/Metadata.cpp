@@ -17,4 +17,7 @@ const std::vector<MetadataPtr> &Metadata::GetPChildItems() const {
 void Metadata::SetPChildItems(const std::vector<MetadataPtr> &in_child_items) {
   p_child_items = in_child_items;
 }
+void Metadata::AddChildItem(const MetadataPtr &in_items) {
+  p_child_items.emplace_back(in_items);
+}
 }

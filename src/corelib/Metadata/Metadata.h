@@ -13,8 +13,10 @@ class CORE_API Metadata{
 
   [[nodiscard]] std::shared_ptr<Metadata> GetPParent() const;
   void SetPParent(const std::shared_ptr<Metadata> &in_parent);
+
   [[nodiscard]] const std::vector<MetadataPtr> &GetPChildItems() const;
   void SetPChildItems(const std::vector<MetadataPtr> &in_child_items);
+  void AddChildItem(const MetadataPtr& in_items);
 
   [[nodiscard]] virtual std::string str() const = 0;
 

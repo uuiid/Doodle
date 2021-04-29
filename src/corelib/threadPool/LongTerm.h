@@ -10,7 +10,7 @@ class LongTerm {
   LongTerm() : progress(),
                messagResult(),
                finished(){};
-  virtual ~LongTerm(){};
+  virtual ~LongTerm()= default;
 
   boost::signals2::signal<void(int)> progress;
   boost::signals2::signal<void(const std::string& message)> messagResult;

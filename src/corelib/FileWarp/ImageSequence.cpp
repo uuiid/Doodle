@@ -9,14 +9,14 @@
 #include <boost/format.hpp>
 namespace doodle {
 std::string ImageSequence::clearString(const std::string &str) {
-  auto &con  = dopinyin::convert::Get();
+  auto &con = dopinyin::convert::Get();
   auto str_r = std::string{};
-  str_r      = con.toEn(str);
+  str_r = con.toEn(str);
 
   return str_r;
 }
 
-ImageSequence::ImageSequence(std::vector<FSys::path> paths, const std::string& text)
+ImageSequence::ImageSequence(std::vector<FSys::path> paths, const std::string &text)
     : LongTerm(),
       p_paths(std::move(paths)),
       p_Text(std::move(clearString(text))),
@@ -32,7 +32,7 @@ ImageSequence::ImageSequence(std::vector<FSys::path> paths, const std::string& t
   this->seanInfo();
 }
 
-ImageSequence::ImageSequence(const FSys::path& path_dir, const std::string& text)
+ImageSequence::ImageSequence(const FSys::path &path_dir, const std::string &text)
     : LongTerm(),
       p_paths(),
       p_Text(std::move(clearString(text))),
@@ -130,18 +130,22 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
 
   const static cv::Size k_size{1280, 720};
 
-  auto video           = cv::VideoWriter{out_file.generic_string(),
+  auto video = cv::VideoWriter{out_file.generic_string(),
                                cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
                                25,
                                cv::Size(1280, 720)};
-  auto k_image         = cv::Mat{};
+  auto k_image = cv::Mat{};
   auto k_image_resized = cv::Mat{};
 
   auto k_size_len = boost::numeric_cast<float>(p_paths.size());
-  auto k_i        = float{0};
-  auto k_format   = boost::format{"%s %s :%s"};
+  auto k_i = float{0};
+  auto k_format = boost::format{"%s %s :%s"};
   k_format % p_Text % coreSet::getSet().getUser_en() % getEpisodesAndShot_str();
   auto k_Text = k_format.str();
+
+  //排序图片
+  std::sort(p_paths.begin(), p_paths.end(),
+            [](const FSys::path &k_r, const FSys::path &k_l) -> bool { return k_r.stem() < k_l.stem(); });
 
   for (auto &&path : p_paths) {
     k_image = cv::imread(path.generic_string());
@@ -152,7 +156,8 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
     else
       k_image_resized = k_image;
 
-    cv::putText(k_image_resized, k_Text, cv::Point{30, 50}, cv::HersheyFonts::FONT_HERSHEY_TRIPLEX, double{1}, cv::Scalar{0, 0, 1});
+    cv::putText(k_image_resized, k_Text, cv::Point{30, 50},
+                cv::HersheyFonts::FONT_HERSHEY_COMPLEX, double{1}, cv::Scalar{0, 0, 1});
     ++k_i;
     this->stride(((float)1 / k_size_len) * (float)100);
     this->progress(boost::numeric_cast<int>((k_i / k_size_len) * 100));
@@ -212,8 +217,8 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
     std::unique_lock lock{p_mutex};
     (*_1) += i;
   },
-   std::placeholders::_1, &k_i);
-  for (const auto& im : p_imageSequences) {
+                                   std::placeholders::_1, &k_i);
+  for (const auto &im : p_imageSequences) {
     auto str = im->getEpisodesAndShot_str().append(".mp4");
     im->stride.connect(k_add_fun);
 
@@ -231,7 +236,7 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
                        }));
   }
   std::future_status status{};
-  auto it          = result.begin();
+  auto it = result.begin();
   const auto k_len = boost::numeric_cast<float>(p_imageSequences.size());
 
   while (!result.empty()) {

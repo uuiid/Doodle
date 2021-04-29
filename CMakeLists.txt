@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.14)
 
 project(Doodle
-        VERSION 2.7.18.2
+        VERSION 2.7.20.2
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -28,8 +28,8 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 #添加选项
 option(RUN_QT_TOOL "run qt windeployqt" OFF)
-option(RUN_fixup   "run fixup "         OFF)
-option(RUN_COPY    "run copy tools"     OFF)
+option(RUN_fixup "run fixup " OFF)
+option(RUN_COPY "run copy tools" OFF)
 
 
 #配置版本文件
@@ -51,7 +51,7 @@ find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time regex iostreams
 # find_package(CURL REQUIRED)
 find_package(Sqlpp11 REQUIRED)
 find_package(GTest CONFIG REQUIRED)
-find_package(FFMPEG  REQUIRED )
+find_package(FFMPEG REQUIRED)
 find_package(rttr CONFIG REQUIRED)
 # find_package(pugixml CONFIG REQUIRED)
 
@@ -94,13 +94,13 @@ find_package(Autodesk_FBX 2020 REQUIRED)
 
 #下载自定义嵌入文件
 include(ExternalProject)
-ExternalProject_Add(cmrc_prj 
+ExternalProject_Add(cmrc_prj
         GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
         CONFIGURE_COMMAND ""
         BUILD_COMMAND ""
         INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/cmrc_prj-prefix/src/cmrc_prj/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake
         TEST_COMMAND ""
-)
+        )
 
 
 #添加文档生成
@@ -110,14 +110,14 @@ set(DOXYGEN_WARN_IF_UNDOCUMENTED NO)
 set(DOXYGEN_WARN_IF_DOC_ERROR NO)
 set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
 set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR})
-set(DOXYGEN_EXCLUDE_PATTERNS 
-*/.idea
-*/.vs
-*/b_Ninja_VS*
-*/venv)
+set(DOXYGEN_EXCLUDE_PATTERNS
+        */.idea
+        */.vs
+        */b_Ninja_VS*
+        */venv)
 doxygen_add_docs(Doxygen
-${PROJECT_SOURCE_DIR}
-)
+        ${PROJECT_SOURCE_DIR}
+        )
 
 add_subdirectory(src)
 
@@ -131,45 +131,46 @@ add_subdirectory(tools)
 
 #====================一些非qt组件的搜索和安装=============
 
-if(RUN_fixup)
-        #第一种搜索方式
-        set(CMAKE_INSTALL_UCRT_LIBRARIES "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64")
-        include(InstallRequiredSystemLibraries)
-endif(RUN_fixup)
+if (RUN_fixup)
+    #第一种搜索方式
+    set(CMAKE_INSTALL_UCRT_LIBRARIES "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64")
+    include(InstallRequiredSystemLibraries)
+endif (RUN_fixup)
 
 list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
 
 
-if(RUN_COPY)
-        # #复制资源
-        # install(DIRECTORY ${CMAKE_SOURCE_DIR}/resource/
-        # DESTINATION resource)
-        # #复制tool
-        # install(DIRECTORY ${CMAKE_SOURCE_DIR}/tools/
-        # DESTINATION tools)
-        # #复制我自己写的一些工具
-        # install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/Cmd_tool
-        # DESTINATION tools)
-        # #复制插件
-        install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya
-        DESTINATION plug)
-        install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug
-        DESTINATION plug) 
-endif(RUN_COPY)
+if (RUN_COPY)
+    # #复制资源
+    # install(DIRECTORY ${CMAKE_SOURCE_DIR}/resource/
+    # DESTINATION resource)
+    # #复制tool
+    # install(DIRECTORY ${CMAKE_SOURCE_DIR}/tools/
+    # DESTINATION tools)
+    # #复制我自己写的一些工具
+    # install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/Cmd_tool
+    # DESTINATION tools)
+    # #复制插件
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya
+            DESTINATION plug)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug
+            DESTINATION plug)
+endif (RUN_COPY)
 
 
-if(RUN_fixup)
-        #最后实现camke修复
-        install(CODE "
+if (RUN_fixup)
+    #最后实现camke修复
+    install(CODE "
         include(BundleUtilities)
         fixup_bundle(\"$<TARGET_FILE:doodle>\"   \"\"   \"${DIRS}\")
         ")
-endif(RUN_fixup)
+endif (RUN_fixup)
 
 
-install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/ DESTINATION plug)
+#install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/ DESTINATION plug)
 install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/ DESTINATION bin
-PATTERN "*.manifest" EXCLUDE )
+        #PATTERN "*.manifest" EXCLUDE
+        )
 
 
 set(CPACK_GENERATOR "WIX")
@@ -184,4 +185,4 @@ set(CPACK_WIX_UPGRADE_GUID 96068D94-08C8-412B-9292-6DE8453E61B3)
 include(CPack REQUIRED)
 
 add_custom_target(cpack_${PROJECT_NAME}
-        COMMAND ${CMAKE_CPACK_COMMAND} --build ${PROJECT_BINARY_DIR} --target package )
+        COMMAND ${CMAKE_CPACK_COMMAND} --build ${PROJECT_BINARY_DIR} --target package)

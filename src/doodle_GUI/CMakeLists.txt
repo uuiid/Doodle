@@ -7,6 +7,7 @@ add_executable(doodle
         win_exe.rc
         #doodle.manifest
         main.cpp
+
         )
 
 set_target_properties(doodle
