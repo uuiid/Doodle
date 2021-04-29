@@ -1,26 +1,19 @@
 ﻿
 #include <corelib/core/coresql.h>
-
+#include <corelib/Metadata/Project.h>
 #include <loggerlib/Logger.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
-
-
-#include <thread>
+#include <loggerlib/Logger.h>
+#include <corelib/Exception/Exception.h>
 
 DOODLE_NAMESPACE_S
-coreSql::coreSql()
-    : p_path(),
+coreSql::coreSql(std::weak_ptr<Project> in_project)
+    : p_project(std::move(in_project)),
       config(std::make_shared<sqlpp::sqlite3::connection_config>()) {}
 
-
-void coreSql::initDB() {
-  config->flags            = SQLITE_OPEN_READWRITE;
-
-}
-
-ConnPtr coreSql::getConnection() {
+ConnPtr coreSql::getConnection() const{
   return std::make_unique<sqlpp::sqlite3::connection>(*config);
 }
 void coreSql::initDB(sqlOpenMode flags) {
@@ -32,7 +25,12 @@ void coreSql::initDB(sqlOpenMode flags) {
     case sqlOpenMode::create: config->flags = SQLITE_OPEN_CREATE;
       break;
   }
-  config->path_to_database = p_path;
+  if (p_project.expired()) throw DoodleError{"无效prj指针"};
+  auto path = p_project.lock()->Path();
+  path /= Project::getConfigFileFolder();
+  path /= Project::getConfigFileName();
+  DOODLE_LOG_INFO("open db: " << path)
+  config->path_to_database = path.generic_string();
 #ifdef NDEBUG
   config->debug = false;
 #else
@@ -41,7 +39,8 @@ void coreSql::initDB(sqlOpenMode flags) {
 
 }
 ConnPtr coreSql::getConnection(sqlOpenMode flags) {
-  return doodle::ConnPtr();
+  initDB(flags);
+  return getConnection();
 }
 
 DOODLE_NAMESPACE_E

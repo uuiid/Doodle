@@ -25,6 +25,8 @@ class CORE_API Project : public Metadata{
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string ShortStr() const;
 
+  static std::string getConfigFileName();
+  static std::string getConfigFileFolder();
  private:
   friend class cereal::access;
 

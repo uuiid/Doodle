@@ -5,8 +5,6 @@
 // #include <sqlpp11/sqlpp11.h>
 DOODLE_NAMESPACE_S
 
-// SQLPP_ALIAS_PROVIDER(basefile_time)
-
 /*
  * 数据库连接类
  * 全局静态类
@@ -19,21 +17,17 @@ enum class sqlOpenMode{
 
 
 class CORE_API coreSql {
+  std::weak_ptr<Project> p_project;
+  std::shared_ptr<sqlpp::sqlite3::connection_config> config;
+
  public:
-  coreSql();
+  explicit coreSql(std::weak_ptr<Project> in_project);
   DOODLE_DISABLE_COPY(coreSql)
 
   void initDB(sqlOpenMode flags);
-  ConnPtr getConnection();
-  ConnPtr getConnection(sqlOpenMode flags);
+  [[nodiscard]] ConnPtr getConnection() const;
+  [[nodiscard]] ConnPtr getConnection(sqlOpenMode flags);
 
- private:
-  void initDB();
-
- private:
-  std::shared_ptr<sqlpp::sqlite3::connection_config> config;
-
-  std::string p_path;
 };
 
 DOODLE_NAMESPACE_E

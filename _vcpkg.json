@@ -17,6 +17,7 @@
     "sqlpp11",
     "sqlpp11-connector-sqlite3",
     "date",
+    "cereal",
     {
       "name": "opencv",
       "default-features": true,

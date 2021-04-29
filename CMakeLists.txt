@@ -8,9 +8,9 @@ project(Doodle
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 #设置qt自动参数
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
+#set(CMAKE_AUTOUIC ON)
+#set(CMAKE_AUTOMOC ON)
+#set(CMAKE_AUTORCC ON)
 
 
 #设置不使用qt_key
@@ -45,7 +45,7 @@ list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(CMakeRC)
 
 #寻找一些外部库
-find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
+#find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
 find_package(wxWidgets REQUIRED)
 find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time regex iostreams log locale)
 # find_package(CURL REQUIRED)
@@ -66,7 +66,7 @@ find_package(SqlppSqlite REQUIRED)
 
 #仅头库
 find_package(magic_enum CONFIG REQUIRED)
-find_package(jsoncpp CONFIG REQUIRED)
+#find_package(jsoncpp CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
 find_package(cereal CONFIG REQUIRED)

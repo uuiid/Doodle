@@ -48,8 +48,8 @@ class CORE_API coreSet {
   static FSys::path program_location();
   static FSys::path program_location(const FSys::path &path);
 
-  bool hasMaya() const noexcept;
-  const FSys::path &MayaPath() const noexcept;
+  [[nodiscard]] bool hasMaya() const noexcept;
+  [[nodiscard]] const FSys::path &MayaPath() const noexcept;
   void setMayaPath(const FSys::path &in_MayaPath) noexcept;
 
   // user设置

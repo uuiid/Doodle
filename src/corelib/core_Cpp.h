@@ -20,7 +20,7 @@
 #include <corelib/FileWarp/VideoSequence.h>
 #include <corelib/FileWarp/Ue4Project.h>
 
-#include <corelib/FileSys/FileSystem>
+#include <corelib/FileSys/FileSystem.h>
 
 #include <corelib/Metadata/Project.h>
 #include <corelib/Metadata/Episodes.h>

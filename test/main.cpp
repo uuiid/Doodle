@@ -26,7 +26,7 @@ class Environment : public ::testing::Environment {
 
 void Environment::SetUp() {
   set.init();
-  // sql.initDB(set.getIpMysql(), "test_db");
+
 }
 
 void Environment::TearDown() {}

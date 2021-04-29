@@ -24,7 +24,7 @@ REQUIRED
 target_link_libraries(test_my PRIVATE ${DOODLE_MAR})
 
 # target_link_libraries(test_my PRIVATE cppzmq cppzmq-static)
-target_link_libraries(test_my PRIVATE Qt5::Core)
+#target_link_libraries(test_my PRIVATE Qt5::Core)
 target_compile_definitions(test_my PRIVATE _WIN32_WINNT=0x0A00)
 #连接谷歌测试框架
 target_link_libraries(test_my
@@ -33,15 +33,13 @@ target_link_libraries(test_my
 target_link_libraries(test_my PRIVATE
  Boost::locale
  ${OpenCV_LIBS}
- Qt5::Gui
- Qt5::Widgets
  )
 
 # include(CTest)
 enable_testing()
 include(GoogleTest)
 # gtest_discover_tests(test_my
-# WORKING_DIRECTORY f:/Source/qt_test/Doodle/install/bin
+# WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/bin
 # )
 
 #安装基本组件
