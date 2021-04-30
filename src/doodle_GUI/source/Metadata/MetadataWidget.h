@@ -4,12 +4,18 @@
 
 #pragma once
 #include <doodle_global.h>
-
+class wxDataViewCtrl;
 namespace doodle {
 class MetadataWidget : public wxFrame {
   ProjectPtr p_project_ptr_;
+
+  wxWindowIDRef p_tree_id_;
+  wxWindowIDRef p_List_id_;
+
+  wxDataViewCtrl* p_tree_view_ctrl_;
+  wxDataViewCtrl* p_list_view_ctrl_;
  public:
-  explicit MetadataWidget();
+  explicit MetadataWidget(wxWindow* in_window,wxWindowID in_id);
 
   void CreateProject() const;
 

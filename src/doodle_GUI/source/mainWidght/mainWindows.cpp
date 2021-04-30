@@ -25,15 +25,14 @@ mainWindows::mainWindows()
   // SetMenuBar(new wxMenuBar{});
   // CreateStatusBar(1);
   // SetStatusText("doodle tools");
-
   //创建总布局
   auto layout = new wxBoxSizer{wxVERTICAL};
   //创建按钮
-  auto k_exMaya_button    = new wxButton{this, p_exmaya_id, _((ConvStr<wxString>("从maya导出相机和文件")))};
-  auto k_create_image     = new wxButton{this, p_create_image_id, _((ConvStr<wxString>("从图片创建视频")))};
-  auto k_create_dir_image = new wxButton{this, p_create_dir_image_id, _((ConvStr<wxString>("从多个文件夹创建视频")))};
-  auto k_create_video     = new wxButton{this, p_create_video_id, _((ConvStr<wxString>("连接视频")))};
-  auto k_create_ue4File   = new wxButton{this, p_create_ue4File_id, _((ConvStr<wxString>("创建ue4关卡序列")))};
+  auto k_exMaya_button    = new wxButton{this, p_exmaya_id, _(ConvStr<wxString>("从maya导出相机和文件"))};
+  auto k_create_image     = new wxButton{this, p_create_image_id, _(ConvStr<wxString>("从图片创建视频"))};
+  auto k_create_dir_image = new wxButton{this, p_create_dir_image_id, _(ConvStr<wxString>("从多个文件夹创建视频"))};
+  auto k_create_video     = new wxButton{this, p_create_video_id, _(ConvStr<wxString>("连接视频"))};
+  auto k_create_ue4File   = new wxButton{this, p_create_ue4File_id, _(ConvStr<wxString>("创建ue4关卡序列"))};
   //布局
   layout->Add(k_exMaya_button, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
   layout->Add(k_create_image, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);

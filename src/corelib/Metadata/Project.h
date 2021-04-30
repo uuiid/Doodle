@@ -16,7 +16,7 @@ class CORE_API Project : public Metadata {
 
  public:
   Project();
-  Project(FSys::path in_path, std::string in_name);
+  explicit Project(FSys::path in_path, std::string in_name = {});
 
   /// 属性编辑
   /// \return 项目名称属性

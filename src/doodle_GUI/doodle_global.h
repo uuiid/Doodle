@@ -24,17 +24,30 @@ SSC ConvStr(const SSN& str){
     return  SSC{str};
 }
 
-template <>
-std::string ConvStr(const wxString& str){
-    return str.ToStdString(wxConvUTF8);
+template<>
+std::string ConvStr(const wxString& str);
+
+template<>
+wxString ConvStr(const std::string& str);
+//模板特化一个指针类型的模板
+template <typename SSC,typename SSN>
+SSC ConvStr(const SSN* str){
+  return  SSC{str};
 }
+//继续特化一个char*的平常用的
+template<>
+wxString ConvStr(const char *(str));
 
-template <>
-wxString ConvStr(const std::string& str){
-    return wxString::FromUTF8(str);
-}
-
-
+//template <typename SSC,typename SSN,std::size_t N>
+//SSC ConvStr(const SSN (&str)[N]){
+//  return  SSC{str};
+//}
+//
+//继续特化一个char*的平常用的
+template<std::size_t N>
+wxString ConvStr(const char (&str)[N]){
+    return wxString::FromUTF8(str,N);
+};
 DOODLE_NAMESPACE_E
 
 wxDECLARE_APP(doodle::Doodle);

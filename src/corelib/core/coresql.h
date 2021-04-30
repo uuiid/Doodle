@@ -25,8 +25,8 @@ class CORE_API coreSql {
   DOODLE_DISABLE_COPY(coreSql)
 
   void initDB(sqlOpenMode flags);
-  [[nodiscard]] ConnPtr getConnection() const;
-  [[nodiscard]] ConnPtr getConnection(sqlOpenMode flags);
+//  [[nodiscard]] ConnPtr getConnection() const;
+//  [[nodiscard]] ConnPtr getConnection(sqlOpenMode flags);
 
 };
 

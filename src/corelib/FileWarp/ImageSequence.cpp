@@ -136,6 +136,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
                                cv::Size(1280, 720)};
   auto k_image = cv::Mat{};
   auto k_image_resized = cv::Mat{};
+  auto k_clone = cv::Mat{};
 
   auto k_size_len = boost::numeric_cast<float>(p_paths.size());
   auto k_i = float{0};
@@ -155,9 +156,34 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
       cv::resize(k_image, k_image_resized, k_size);
     else
       k_image_resized = k_image;
+    int baseLine{};
 
-    cv::putText(k_image_resized, k_Text, cv::Point{30, 50},
-                cv::HersheyFonts::FONT_HERSHEY_COMPLEX, double{1}, cv::Scalar{0, 0, 1});
+    {//创建水印
+      k_clone = k_image_resized.clone();
+      int fontFace = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+      double fontScale = 1;
+      int thickness = 2;
+      int baseline = 0;
+      auto textSize = cv::getTextSize(k_Text, fontFace,
+                                      fontScale, thickness, &baseline);
+      baseline += thickness;
+      textSize.width += baseline;
+      textSize.height += baseline;
+      // center the text
+      cv::Point textOrg((k_image_resized.cols - textSize.width) / 8,
+                        (k_image_resized.rows + textSize.height) / 8);
+
+      // draw the box
+      cv::rectangle(k_clone, textOrg + cv::Point(0, baseline),
+                    textOrg + cv::Point(textSize.width, -textSize.height),
+                    cv::Scalar(0, 0, 0), -1);
+
+      cv::addWeighted(k_clone, 0.7, k_image_resized, 0.3, 0, k_image_resized);
+      // then put the text itself
+      cv::putText(k_image_resized, k_Text, textOrg, fontFace, fontScale,
+                  cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+    }
+
     ++k_i;
     this->stride(((float)1 / k_size_len) * (float)100);
     this->progress(boost::numeric_cast<int>((k_i / k_size_len) * 100));

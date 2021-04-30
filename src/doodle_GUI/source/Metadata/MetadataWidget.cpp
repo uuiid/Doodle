@@ -8,7 +8,13 @@
 
 namespace doodle {
 
-MetadataWidget::MetadataWidget() {
+MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
+    : wxFrame(in_window, in_id, ConvStr<wxString>("Metadata")),
+      p_project_ptr_(),
+      p_tree_id_(NewControlId()),
+      p_List_id_(NewControlId()),
+      p_tree_view_ctrl_(),
+      p_list_view_ctrl_() {
 }
 void MetadataWidget::CreateProject() const {
   auto k_db = p_project_ptr_->Path() / Project::getConfigFileFolder() / Project::getConfigFileName();

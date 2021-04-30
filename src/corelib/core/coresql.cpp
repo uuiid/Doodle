@@ -10,12 +10,13 @@
 
 DOODLE_NAMESPACE_S
 coreSql::coreSql(Project* in_project)
-    : p_project(std::move(in_project)),
+    : p_project(in_project),
       config(/*std::make_shared<sqlpp::sqlite3::connection_config>()*/) {}
 
-ConnPtr coreSql::getConnection() const{
-//  return std::make_unique<sqlpp::sqlite3::connection>(*config);
-}
+//ConnPtr coreSql::getConnection() const{
+////  return std::make_unique<sqlpp::sqlite3::connection>(*config);
+//return {};
+//}
 void coreSql::initDB(sqlOpenMode flags) {
 //  switch (flags) {
 //    case sqlOpenMode::readOnly: config->flags = SQLITE_OPEN_READONLY;
@@ -42,8 +43,8 @@ void coreSql::initDB(sqlOpenMode flags) {
 //  initDB(flags);
 //  return getConnection();
 }
-ConnPtr coreSql::getConnection(sqlOpenMode flags) {
-//  return doodle::ConnPtr();
-}
+//ConnPtr coreSql::getConnection(sqlOpenMode flags) {
+////  return doodle::ConnPtr();
+//}
 
 DOODLE_NAMESPACE_E

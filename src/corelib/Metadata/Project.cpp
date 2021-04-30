@@ -90,6 +90,9 @@ bool Project::ChickProject() const {
 
   if (k_p.p_path != p_path)
     return false;
+
+  if(!FSys::exists(p_path / "_._root"))
+    FSys::create_directories(p_path / "_._root");;
   return true;
 }
 void Project::ReadProject()  {
