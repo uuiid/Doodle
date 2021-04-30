@@ -24,9 +24,9 @@ ShotListWidget::ShotListWidget(wxWindow *parent, wxWindowID id)
 
   this->Bind(wxEVT_CONTEXT_MENU, [this](wxContextMenuEvent &event) {
     auto menu = wxMenu{};
-    menu.Append(p_addShot_id, wxString::FromUTF8("添加镜头"));
-    menu.Append(p_addShotAb_id, wxString::FromUTF8("添加Ab镜头"));
-    menu.Append(p_removeShot_id, wxString::FromUTF8("删除镜头"));
+    menu.Append(p_addShot_id, ConvStr<wxString>("添加镜头"));
+    menu.Append(p_addShotAb_id, ConvStr<wxString>("添加Ab镜头"));
+    menu.Append(p_removeShot_id, ConvStr<wxString>("删除镜头"));
 
     menu.Bind(
         wxEVT_MENU,
@@ -52,7 +52,7 @@ ShotListWidget::ShotListWidget(wxWindow *parent, wxWindowID id)
 
 wxString ShotListWidget::OnGetItemText(long item, long column) const {
   if (column == 0)
-    return wxString::FromUTF8(p_shots[item]->str());
+    return ConvStr<wxString>(p_shots[item]->str());
   else
     return {};
 }
@@ -79,9 +79,9 @@ void ShotListWidget::addShot() {
 
   auto shot_dig = wxNumberEntryDialog{
       this,
-      wxString::FromUTF8("选择镜头号"),
-      wxString::FromUTF8("选择镜头号"),
-      wxString::FromUTF8("镜头号"),
+      ConvStr<wxString>("选择镜头号"),
+      ConvStr<wxString>("选择镜头号"),
+      ConvStr<wxString>("镜头号"),
       1, 0, 9999};
 
   if (shot_dig.ShowModal() == wxID_OK) {
@@ -105,14 +105,14 @@ void ShotListWidget::addShotAb() {
 
     auto shot_dig = wxSingleChoiceDialog{
         this,
-        wxString::FromUTF8("选择A镜号"),
-        wxString::FromUTF8("AB号"),
+        ConvStr<wxString>("选择A镜号"),
+        ConvStr<wxString>("AB号"),
         wxarrstr};
 
     if (shot_dig.ShowModal() == wxID_OK) {
       auto shotAB = shot_dig.GetStringSelection();
       auto shot   = p_shots[itemIndex]->Shot_();
-      p_shots.emplace_back(std::make_shared<Shot>(shot, shotAB.ToStdString(wxConvUTF8), p_episodes));
+      p_shots.emplace_back(std::make_shared<Shot>(shot, ConvStr<std::string>(shotAB), p_episodes));
       std::sort(p_shots.begin(), p_shots.end(), [](ShotPtr &L, ShotPtr &R) { return *L < *R; });
     }
     break;
@@ -134,7 +134,7 @@ void ShotListWidget::removeShot() {
 }
 
 ShotListDialog::ShotListDialog(wxWindow *parent, wxWindowID id)
-    : wxDialog(parent, id, wxString::FromUTF8("镜头信息"),
+    : wxDialog(parent, id, ConvStr<wxString>("镜头信息"),
                wxDefaultPosition,
                wxDefaultSize,
                wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
@@ -151,8 +151,8 @@ ShotListDialog::ShotListDialog(wxWindow *parent, wxWindowID id)
 
   auto sub_layout = new wxBoxSizer{wxHORIZONTAL};
 
-  auto k_ok = new wxButton{this, wxID_ANY, wxString::FromUTF8("确认")};
-  auto k_no = new wxButton{this, wxID_ANY, wxString::FromUTF8("取消")};
+  auto k_ok = new wxButton{this, wxID_ANY, ConvStr<wxString>("确认")};
+  auto k_no = new wxButton{this, wxID_ANY, ConvStr<wxString>("取消")};
   sub_layout->Add(k_ok, wxSizerFlags{0}.Expand())->SetProportion(1);
   sub_layout->Add(k_no, wxSizerFlags{0}.Expand())->SetProportion(1);
 

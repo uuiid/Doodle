@@ -39,7 +39,7 @@ void MessageAndProgress::createProgress(std::shared_ptr<T> value) {
   //连接完成信号
   value->finished.connect([this] {
     wxThreadEvent event{wxEVT_THREAD, p_t_id};
-    auto wxstr = wxString::FromUTF8(this->p_message);
+    auto wxstr = ConvStr<wxString>(this->p_message);
     event.SetString(wxstr);
     wxQueueEvent(this->p_message_dialog, event.Clone());
   });

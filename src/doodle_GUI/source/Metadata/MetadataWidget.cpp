@@ -18,13 +18,12 @@ void MetadataWidget::CreateProject() const {
     FSys::create_directories(k_db.parent_path());
 
   auto k_top_windows = wxGetApp().GetTopWindow();
-  auto k_text_dialog = wxTextEntryDialog{k_top_windows, wxString::FromUTF8("项目名称: ")};
+  auto k_text_dialog = wxTextEntryDialog{k_top_windows, ConvStr<wxString>("项目名称: ")};
   auto k_result = k_text_dialog.ShowModal();
   if (k_result == wxID_OK) {
     auto k_text = k_text_dialog.GetValue();
     p_project_ptr_->setName(k_text);
   }
-
   p_project_ptr_->makeProject();
 }
 }  // namespace doodle

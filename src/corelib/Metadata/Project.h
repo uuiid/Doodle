@@ -3,7 +3,6 @@
 
 #include <corelib/Metadata/Metadata.h>
 
-
 #include <cereal/cereal.hpp>
 #include <cereal/types/common.hpp>
 #include <cereal/types/string.hpp>
@@ -11,9 +10,10 @@ namespace doodle {
 /**
  * 项目信息类
  */
-class CORE_API Project : public Metadata{
+class CORE_API Project : public Metadata {
   std::string p_name;
   FSys::path p_path;
+
  public:
   Project();
   Project(FSys::path in_path, std::string in_name);
@@ -30,8 +30,12 @@ class CORE_API Project : public Metadata{
   [[nodiscard]] std::string ShortStr() const;
 
   void makeProject() const;
+  [[nodiscard]] bool ChickProject() const;
+  void ReadProject();
+
   static std::string getConfigFileName();
   static std::string getConfigFileFolder();
+
  private:
   friend class cereal::access;
 
@@ -46,8 +50,7 @@ template <class Archive>
 void Project::save(Archive& ar, std::uint32_t const version) const {
   ar(
       cereal::make_nvp("name", p_name),
-      cereal::make_nvp("path", p_path)
-      );
+      cereal::make_nvp("path", p_path));
 }
 
 template <class Archive>

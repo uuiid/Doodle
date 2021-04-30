@@ -19,5 +19,22 @@ enum class filterState {
   showAll,
 };
 
+template <typename SSC,typename SSN>
+SSC ConvStr(const SSN& str){
+    return  SSC{str};
+}
+
+template <>
+std::string ConvStr(const wxString& str){
+    return str.ToStdString(wxConvUTF8);
+}
+
+template <>
+wxString ConvStr(const std::string& str){
+    return wxString::FromUTF8(str);
+}
+
+
 DOODLE_NAMESPACE_E
+
 wxDECLARE_APP(doodle::Doodle);

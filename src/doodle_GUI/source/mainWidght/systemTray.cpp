@@ -29,24 +29,24 @@ systemTray::systemTray(wxTaskBarIconType iconType)
 wxMenu* systemTray::CreatePopupMenu() {
   auto menu = new wxMenu{};
 
-  menu->Append(p_tool_id, _(wxString::FromUTF8("工具箱")), _(wxString::FromUTF8("打开工具箱")));
-  menu->Append(p_setting_id, _(wxString::FromUTF8("打开设置")));
+  menu->Append(p_tool_id, _(ConvStr<wxString>("工具箱")), _(ConvStr<wxString>("打开工具箱")));
+  menu->Append(p_setting_id, _(ConvStr<wxString>("打开设置")));
   menu->AppendSeparator();
 
   auto menu_install = new wxMenu{};
-  menu->AppendSubMenu(menu_install, _(wxString::FromUTF8("插件安装")));
-  menu_install->Append(p_installMayaPlug_id, _(wxString::FromUTF8("安装maya插件")));
-  menu_install->Append(p_installUEPlug_id, _(wxString::FromUTF8("安装ue插件")));
-  menu_install->Append(p_installUEProjectPlug_id, _(wxString::FromUTF8("安装ue项目插件")));
+  menu->AppendSubMenu(menu_install, _(ConvStr<wxString>("插件安装")));
+  menu_install->Append(p_installMayaPlug_id, _(ConvStr<wxString>("安装maya插件")));
+  menu_install->Append(p_installUEPlug_id, _(ConvStr<wxString>("安装ue插件")));
+  menu_install->Append(p_installUEProjectPlug_id, _(ConvStr<wxString>("安装ue项目插件")));
 
   menu->AppendSeparator();
-  menu->Append(p_deleteUECache_id, _(wxString::FromUTF8("删除ue4缓存")));
-  menu->Append(p_modifyUECache_id, _(wxString::FromUTF8("修改ue4缓存位置")));
+  menu->Append(p_deleteUECache_id, _(ConvStr<wxString>("删除ue4缓存")));
+  menu->Append(p_modifyUECache_id, _(ConvStr<wxString>("修改ue4缓存位置")));
 
   menu->AppendSeparator();
-  menu->Append(p_updata_id, _(wxString::FromUTF8("更新")));
+  menu->Append(p_updata_id, _(ConvStr<wxString>("更新")));
 
-  menu->Append(p_quit_id, _(wxString::FromUTF8("退出")));
+  menu->Append(p_quit_id, _(ConvStr<wxString>("退出")));
 
   //打开工具箱
   menu->Bind(
@@ -68,7 +68,7 @@ wxMenu* systemTray::CreatePopupMenu() {
           toolkit::installUePath(ueset.Path() / "Engine");
         else
           wxMessageDialog{wxGetApp().GetTopWindow(),
-                          wxString::FromUTF8("在设置中找不到ue位置")}
+                          ConvStr<wxString>("在设置中找不到ue位置")}
               .ShowModal();
       },
       p_installUEPlug_id);
@@ -77,13 +77,13 @@ wxMenu* systemTray::CreatePopupMenu() {
       wxEVT_MENU, [this](wxCommandEvent& event) {
         auto file_dig = wxFileDialog{
             wxGetApp().GetTopWindow(),
-            wxString::FromUTF8("ue项目选择"),
+            ConvStr<wxString>("ue项目选择"),
             wxEmptyString,
             wxEmptyString,
-            wxString::FromUTF8("files (*.uproject)|*.uproject")};
+            ConvStr<wxString>("files (*.uproject)|*.uproject")};
         auto result = file_dig.ShowModal();
         if (result == wxID_OK) {
-          FSys::path path{file_dig.GetPath().ToStdString(wxConvUTF8)};
+          FSys::path path{ConvStr<std::string>(file_dig.GetPath())};
           toolkit::installUePath(path.parent_path());
         }
       },
@@ -101,11 +101,11 @@ wxMenu* systemTray::CreatePopupMenu() {
         try {
           toolkit::deleteUeCache();
         } catch (const std::exception& error) {
-          wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8(error.what())}.ShowModal();
+          wxMessageDialog{wxGetApp().GetTopWindow(), ConvStr<wxString>(error.what())}.ShowModal();
           return;
         }
         wxMessageDialog{wxGetApp().GetTopWindow(),
-                        wxString::FromUTF8("完成删除")}
+                        ConvStr<wxString>("完成删除")}
             .ShowModal();
       },
       p_deleteUECache_id);
@@ -115,17 +115,17 @@ wxMenu* systemTray::CreatePopupMenu() {
         try {
           toolkit::modifyUeCachePath();
         } catch (const std::exception& error) {
-          wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8(error.what())}.ShowModal();
+          wxMessageDialog{wxGetApp().GetTopWindow(), ConvStr<wxString>(error.what())}.ShowModal();
           return;
         }
-        wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8("完成修改")}.ShowModal();
+        wxMessageDialog{wxGetApp().GetTopWindow(), ConvStr<wxString>("完成修改")}.ShowModal();
       },
       p_modifyUECache_id);
 
   //更新
   menu->Bind(
       wxEVT_MENU, [this](wxCommandEvent& event) {
-        wxMessageDialog{wxGetApp().GetTopWindow(), wxString::FromUTF8("暂时不支持动态更新")}.ShowModal();
+        wxMessageDialog{wxGetApp().GetTopWindow(), ConvStr<wxString>("暂时不支持动态更新")}.ShowModal();
       },
       p_updata_id);
   //退出

@@ -67,14 +67,44 @@ std::string Project::getConfigFileName() {
 
 void Project::makeProject() const {
   auto k_path = p_path / getConfigFileFolder() / getConfigFileName();
-  if(FSys::exists(k_path.parent_path()))
+  if (FSys::exists(k_path.parent_path()))
     FSys::create_directories(k_path.parent_path());
 
-  FSys::fstream k_fstream{k_path,std::ios::out | std::ios::binary};
+  FSys::fstream k_fstream{k_path, std::ios::out | std::ios::binary};
 
   cereal::PortableBinaryOutputArchive k_archive{k_fstream};
   k_archive(*this);
 
+  FSys::create_directories(p_path / "_._root");
+}
+bool Project::ChickProject() const {
+  auto k_path = p_path / getConfigFileFolder() / getConfigFileName();
+
+  if (!FSys::exists(k_path)) return false;
+
+  Project k_p;
+  FSys::fstream k_fstream{k_path, std::ios::in | std::ios::binary};
+
+  cereal::PortableBinaryInputArchive k_archive{k_fstream};
+  k_archive(k_p);
+
+  if (k_p.p_path != p_path)
+    return false;
+  return true;
+}
+void Project::ReadProject()  {
+  auto k_path = p_path / getConfigFileFolder() / getConfigFileName();
+
+  if (!FSys::exists(k_path)) return ;
+
+  Project k_p;
+  FSys::fstream k_fstream{k_path, std::ios::in | std::ios::binary};
+
+  cereal::PortableBinaryInputArchive k_archive{k_fstream};
+  k_archive(k_p);
+
+  if (k_p.p_path == p_path)
+    p_name = k_p.p_name;
 }
 
 }  // namespace doodle

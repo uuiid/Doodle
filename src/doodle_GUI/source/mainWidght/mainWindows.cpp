@@ -29,11 +29,11 @@ mainWindows::mainWindows()
   //创建总布局
   auto layout = new wxBoxSizer{wxVERTICAL};
   //创建按钮
-  auto k_exMaya_button    = new wxButton{this, p_exmaya_id, _((wxString::FromUTF8("从maya导出相机和文件")))};
-  auto k_create_image     = new wxButton{this, p_create_image_id, _((wxString::FromUTF8("从图片创建视频")))};
-  auto k_create_dir_image = new wxButton{this, p_create_dir_image_id, _((wxString::FromUTF8("从多个文件夹创建视频")))};
-  auto k_create_video     = new wxButton{this, p_create_video_id, _((wxString::FromUTF8("连接视频")))};
-  auto k_create_ue4File   = new wxButton{this, p_create_ue4File_id, _((wxString::FromUTF8("创建ue4关卡序列")))};
+  auto k_exMaya_button    = new wxButton{this, p_exmaya_id, _((ConvStr<wxString>("从maya导出相机和文件")))};
+  auto k_create_image     = new wxButton{this, p_create_image_id, _((ConvStr<wxString>("从图片创建视频")))};
+  auto k_create_dir_image = new wxButton{this, p_create_dir_image_id, _((ConvStr<wxString>("从多个文件夹创建视频")))};
+  auto k_create_video     = new wxButton{this, p_create_video_id, _((ConvStr<wxString>("连接视频")))};
+  auto k_create_ue4File   = new wxButton{this, p_create_ue4File_id, _((ConvStr<wxString>("创建ue4关卡序列")))};
   //布局
   layout->Add(k_exMaya_button, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
   layout->Add(k_create_image, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
@@ -54,7 +54,7 @@ mainWindows::mainWindows()
     auto wxPath = event.GetFiles();
     if (num > 0) {
       for (auto i = 0; i < num; ++i)
-        path.emplace_back(wxPath[i].ToStdString(wxConvUTF8));
+        path.emplace_back(ConvStr<std::string>(wxPath[i]));
     }
     this->exportMayaFile(path);
   });
@@ -84,7 +84,7 @@ mainWindows::mainWindows()
     auto wxPath = event.GetFiles();
     if (num > 0) {
       for (auto i = 0; i < num; ++i)
-        path.emplace_back(wxPath[i].ToStdString(wxConvUTF8));
+        path.emplace_back(ConvStr<std::string>(wxPath[i]));
     }
     this->createUe4Project(path);
   });
@@ -159,7 +159,7 @@ void mainWindows::createUe4Project(const std::vector<FSys::path>& paths) {
     auto ue              = std::make_shared<Ue4Project>(paths[0]);
     auto [k_eps, k_shot] = ShotListDialog::getShotList();
     if (k_shot.empty()) {
-      wxMessageDialog{this, wxString::FromUTF8("用户取消创建")}.ShowModal();
+      wxMessageDialog{this, ConvStr<wxString>("用户取消创建")}.ShowModal();
       return;
     }
     ue->createShotFolder(k_shot);
@@ -167,7 +167,7 @@ void mainWindows::createUe4Project(const std::vector<FSys::path>& paths) {
     DOODLE_LOG_INFO(error.what());
     return;
   }
-  wxMessageDialog{this, wxString::FromUTF8("成功创建")}.ShowModal();
+  wxMessageDialog{this, ConvStr<wxString>("成功创建")}.ShowModal();
 }
 
 Doodle::Doodle()
@@ -198,7 +198,7 @@ void Doodle::openSettingWindow() {
 //   try {
 //     throw;
 //   } catch (const std::exception& error) {
-//     auto dig    = wxMessageDialog{p_mainWindwos, wxString::FromUTF8(error.what()), wxString::FromUTF8("错误")};
+//     auto dig    = wxMessageDialog{p_mainWindwos, ConvStr<wxString>(error.what()), ConvStr<wxString>("错误")};
 //     auto result = dig.ShowModal();
 //     return result == wxID_OK;
 //   }
