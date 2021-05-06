@@ -1,9 +1,11 @@
-﻿#pragma once
+#pragma once
 
 #include <core_export.h>
 
 #include <boost/filesystem.hpp>
 #include <cereal/access.hpp>
+#include <cereal/cereal.hpp>
+
 
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)

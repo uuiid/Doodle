@@ -1,4 +1,4 @@
-﻿#include <corelib/FileWarp/VideoSequence.h>
+#include <corelib/FileWarp/VideoSequence.h>
 #include <corelib/Exception/Exception.h>
 
 #include <corelib/core/coreset.h>

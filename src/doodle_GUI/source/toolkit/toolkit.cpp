@@ -1,10 +1,8 @@
-﻿#include <doodle_GUI/source/toolkit/toolkit.h>
+#include <doodle_GUI/source/toolkit/toolkit.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
 #include <corelib/core_Cpp.h>
-
-#include <loggerlib/Logger.h>
 
 #include <boost/format.hpp>
 
@@ -21,7 +19,7 @@ void toolkit::installMayaPath() {
   auto mayadoc = coreSet::getSet().getDoc().parent_path();
   mayadoc /= "maya/modules";
 
-  auto sourePath = coreSet::getSet().program_location().parent_path();
+  auto sourePath = coreSet::program_location().parent_path();
   sourePath /= "plug/maya";
 
   if (!FSys::exists(mayadoc)) {
@@ -76,8 +74,8 @@ bool toolkit::deleteUeCache() {
   //这里我们手动做一些工作
   //获取环境变量
   PWSTR pManager;
-  SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, NULL, &pManager);
-  if (!pManager) DoodleError("无法找到保存路径");
+  SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, nullptr, &pManager);
+  if (!pManager) throw DoodleError("无法找到保存路径");
 
   FSys::path path{pManager};
   path /= "UnrealEngine";

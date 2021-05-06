@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "pinyinlib/pinyin_global.h"
 

@@ -1,4 +1,4 @@
-﻿//
+//
 // Created by teXiao on 2020/10/19.
 //
 #include <doodle_GUI/source/mainWidght/systemTray.h>
@@ -138,19 +138,6 @@ wxMenu* systemTray::CreatePopupMenu() {
   return menu;
 }
 
-void systemTray::installMayaPlug() {
-}
 
-void systemTray::installUe4Plug(const installModel& model) {
-}
-
-void systemTray::showRigister() {
-}
-
-void systemTray::doodleQuery() {
-}
-
-void systemTray::upDoodle() {
-}
 
 DOODLE_NAMESPACE_E

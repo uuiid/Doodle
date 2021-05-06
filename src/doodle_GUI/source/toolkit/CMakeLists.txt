@@ -1,4 +1,4 @@
-﻿target_sources(
+target_sources(
         doodle
         PRIVATE
         toolkit.cpp

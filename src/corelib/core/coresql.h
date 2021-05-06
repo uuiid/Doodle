@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <corelib/core_global.h>
 

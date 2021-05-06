@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @Author: your name
  * @Date: 2020-10-19 19:24:47
  * @LastEditTime: 2020-11-27 11:27:23
@@ -24,13 +24,6 @@ class systemTray : public wxTaskBarIcon {
 
  protected:
   virtual wxMenu* CreatePopupMenu() override;
-
- private:
-  void installMayaPlug();
-  void installUe4Plug(const installModel& model);
-  void doodleQuery();
-  void showRigister();
-  void upDoodle();
 
  private:
   wxWindowIDRef p_tool_id;

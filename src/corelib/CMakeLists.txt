@@ -1,4 +1,4 @@
-﻿
+
 cmrc_add_resource_library(
         CoreResource
         resource/abcExport.py

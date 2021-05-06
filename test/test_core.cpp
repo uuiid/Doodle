@@ -1,4 +1,4 @@
-﻿#include <gtest/gtest.h>
+#include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
 #include <loggerlib/Logger.h>
 

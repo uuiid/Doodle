@@ -1,4 +1,4 @@
-﻿
+
 #include <corelib/core/coresql.h>
 #include <corelib/Metadata/Project.h>
 #include <loggerlib/Logger.h>

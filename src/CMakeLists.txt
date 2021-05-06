@@ -1,4 +1,4 @@
-﻿# set(RESOURCE_SOURCE
+# set(RESOURCE_SOURCE
 #         core_resource.qrc)
 # qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 

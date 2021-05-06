@@ -1,4 +1,4 @@
-﻿#include <loggerlib/Logger.h>
+#include <loggerlib/Logger.h>
 #include <loggerlib/LoggerTemplate.h>
 
 //windows头

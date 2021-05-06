@@ -1,4 +1,4 @@
-﻿add_subdirectory(mainWidght)
+add_subdirectory(mainWidght)
 add_subdirectory(toolkit)
 add_subdirectory(ScreenshotWidght)
 add_subdirectory(settingWidght)

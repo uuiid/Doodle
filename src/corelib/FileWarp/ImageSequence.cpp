@@ -1,4 +1,4 @@
-﻿#include <corelib/FileWarp/ImageSequence.h>
+#include <corelib/FileWarp/ImageSequence.h>
 #include <corelib/Exception/Exception.h>
 #include <corelib/core/coreset.h>
 #include <corelib/threadPool/ThreadPool.h>

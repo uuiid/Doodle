@@ -1,4 +1,4 @@
-﻿#include <corelib/core/coreset.h>
+#include <corelib/core/coreset.h>
 #include <corelib/Exception/Exception.h>
 #include <pinyinlib/convert.h>
 #include <loggerlib/Logger.h>

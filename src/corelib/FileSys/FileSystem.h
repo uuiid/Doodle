@@ -1,4 +1,4 @@
-﻿//
+//
 // Created by teXiao on 2021/4/28.
 //
 #pragma once
@@ -8,7 +8,7 @@
 namespace doodle {
 class CORE_API FileSystem {
     public:
-    static void localCopy(const FSys::path& sourePath, const FSys::path& targetPath, const bool backup);
+    static void localCopy(const FSys::path& in_sourcePath, const FSys::path& targetPath, bool backup);
 };
 
 }  // namespace doodle
