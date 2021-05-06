@@ -2,7 +2,7 @@
 // Created by teXiao on 2020/10/19.
 //
 
-#include <doodle_GUI/source/SettingWidght/settingWidget.h>
+#include <doodle_GUI/source/SettingWidght/SettingWidget.h>
 
 #include <loggerlib/Logger.h>
 
@@ -186,7 +186,7 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
   //项目选择
   p_Project->Bind(wxEVT_COMBOBOX, [&set, this](wxCommandEvent& event) {
     auto index = p_Project->GetSelection();
-    auto prj = p_Project->GetClientData(index);
+    auto prj   = p_Project->GetClientData(index);
     set.setProject_(reinterpret_cast<Project*>(prj));
   });
   p_ue_path->Bind(wxEVT_TEXT, [&set, this](wxCommandEvent& event) {
@@ -230,12 +230,12 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
   k_Project_add->Bind(wxEVT_BUTTON, [this](wxCommandEvent& event) { this->AddProject(); });
   k_Project_delete->Bind(wxEVT_BUTTON, [&set, this](wxCommandEvent& event) {
     auto value = p_Project->GetSelection();
-    auto prj = p_Project->GetClientData(value);
+    auto prj   = p_Project->GetClientData(value);
 
     set.deleteProject(reinterpret_cast<Project*>(prj));
     p_Project->Delete(value);
     auto selection = value - 1;
-    selection = selection > 0 ? selection : 0;
+    selection      = selection > 0 ? selection : 0;
     p_Project->SetSelection(selection);
     set.setProject_(reinterpret_cast<Project*>(p_Project->GetClientData(selection)));
   });
@@ -255,16 +255,18 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
 
 void SettingWidght::AddProject() {
   auto path_dialog = wxDirDialog{this, ConvStr<wxString>("选择项目根目录: "), wxEmptyString, wxRESIZE_BORDER};
-  auto result = path_dialog.ShowModal();
+  auto result      = path_dialog.ShowModal();
   if (result == wxID_OK) {
-    auto path = path_dialog.GetPath();
-    auto prj = std::make_shared<Project>(ConvStr<std::string>(path));
-    if (!prj->ChickProject()) {
-      wxMessageDialog{this, ConvStr<wxString>("没有找到项目必须的配置文件")}.ShowModal();
-    } else {
-      prj->ReadProject();
-      p_Project->Append(prj->Name(), prj.get());
-      DOODLE_LOG_DEBUG("load project: " << prj->Name() << "  path: " << prj->Path())
+    auto path        = path_dialog.GetPath();
+    auto text_dialog = wxTextEntryDialog{this, ConvStr<wxString>("项目名称: ")};
+    result           = text_dialog.ShowModal();
+    if (result == wxID_OK) {
+      auto text = text_dialog.GetValue();
+      if (!text.empty()) {
+        auto prj = std::make_shared<Project>(ConvStr<std::string>(path), ConvStr<std::string>(text));
+        coreSet::getSet().installProject(prj);
+        p_Project->Append(text, prj.get());
+      }
     }
   }
 }
