@@ -13,3 +13,4 @@ target_sources(
         Project.h
         Shot.h
 )
+add_subdirectory(Label)

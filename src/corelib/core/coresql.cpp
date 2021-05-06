@@ -18,6 +18,7 @@ coreSql::coreSql(Project* in_project)
 //return {};
 //}
 void coreSql::initDB(sqlOpenMode flags) {
+
 //  switch (flags) {
 //    case sqlOpenMode::readOnly: config->flags = SQLITE_OPEN_READONLY;
 //      break;

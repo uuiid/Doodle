@@ -8,7 +8,7 @@ cmrc_add_resource_library(
 
 add_library(core SHARED
         core_Cpp.h
-        core_global.h)
+        core_global.h Metadata/label/LabelNode.cpp Metadata/label/LabelNode.h)
 add_subdirectory(core)
 add_subdirectory(FileWarp)
 add_subdirectory(FileSys)
@@ -56,6 +56,7 @@ target_link_libraries(core PUBLIC
         pinyin
         logger
         ${OpenCV_LIBS}
+        EnTT::EnTT
         )
 
 

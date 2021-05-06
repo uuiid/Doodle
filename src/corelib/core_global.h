@@ -61,10 +61,14 @@ class Shot;
 class Metadata;
 class Assets;
 class coreSql;
+class LabelNode;
+
 using ProjectPtr = std::shared_ptr<Project>;
 using EpisodesPtr = std::shared_ptr<Episodes>;
 using ShotPtr = std::shared_ptr<Shot>;
 using MetadataPtr = std::shared_ptr<Metadata>;
 using AssetsPtr = std::shared_ptr<Assets>;
 using coreSqlPtr = std::shared_ptr<coreSql>;
+using LabelNodePtr = std::shared_ptr<LabelNode>;
+
 DOODLE_NAMESPACE_E

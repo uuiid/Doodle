@@ -13,6 +13,7 @@ class CORE_API Assets : public Metadata{
   std::string p_name;
 
  public:
+  Assets();
   explicit Assets(std::string in_name);
   std::string str() const override;
 };
