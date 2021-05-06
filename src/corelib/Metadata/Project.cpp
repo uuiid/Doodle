@@ -75,7 +75,7 @@ void Project::makeProject() const {
   cereal::PortableBinaryOutputArchive k_archive{k_fstream};
   k_archive(*this);
 
-  FSys::create_directories(p_path / "_._root");
+  FSys::create_directories(DBRoot());
 }
 bool Project::ChickProject() const {
   auto k_path = p_path / getConfigFileFolder() / getConfigFileName();
@@ -91,8 +91,8 @@ bool Project::ChickProject() const {
   if (k_p.p_path != p_path)
     return false;
 
-  if(!FSys::exists(p_path / "_._root"))
-    FSys::create_directories(p_path / "_._root");;
+  if(!FSys::exists(DBRoot()))
+    FSys::create_directories(DBRoot());;
   return true;
 }
 void Project::ReadProject()  {
@@ -108,6 +108,9 @@ void Project::ReadProject()  {
 
   if (k_p.p_path == p_path)
     p_name = k_p.p_name;
+}
+FSys::path Project::DBRoot() const {
+  return p_path / "_._root";
 }
 
 }  // namespace doodle

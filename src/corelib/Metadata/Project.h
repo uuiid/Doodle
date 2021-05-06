@@ -26,6 +26,8 @@ class CORE_API Project : public Metadata {
   [[nodiscard]] const FSys::path& Path() const noexcept;
   void setPath(const FSys::path& Path);
 
+  [[nodiscard]] FSys::path DBRoot() const;
+
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string ShortStr() const;
 
