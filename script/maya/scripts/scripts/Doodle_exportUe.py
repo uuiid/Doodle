@@ -63,10 +63,10 @@ class exportUe:
         if self.selects[0] in pymel.core.ls(type="camera", l=True):
             namesp = ""
             extype = "cam"
-
-        self.path = "{root_}/03_Workflow/shots/ep{eps:0>3d}/" \
-                    "sc{shot:0>4d}{shotab}/Scenefiles/{dep}/{aim}" \
-            .format(
+        try:
+            self.path = "{root_}/03_Workflow/shots/ep{eps:0>3d}/" \
+                        "sc{shot:0>4d}{shotab}/Scenefiles/{dep}/{aim}" \
+                .format(
                 eps=self._eps,
                 shot=self._shot,
                 shotab=self._shotab,
@@ -74,10 +74,10 @@ class exportUe:
                 aim=self.filename.split("_")[4],
                 root_=self.root
             )
-        self.makePath()
-        filecom = self.filename.split("_")
-        self.name = "{f1}_{f2}_{f3}_{f4}_{f5}_export-{oa}_{ns}_.{st}-{end}.{su}"\
-            .format(
+            self.makePath()
+            filecom = self.filename.split("_")
+            self.name = "{f1}_{f2}_{f3}_{f4}_{f5}_export-{oa}_{ns}_.{st}-{end}.{su}" \
+                .format(
                 f1=filecom[0],
                 f2=filecom[1],
                 f3=filecom[2],
@@ -89,6 +89,9 @@ class exportUe:
                 end=self.end,
                 su=suffix
             )
+        except IndexError:
+            self.path = self.root
+            self.name = "{}_{}_{}.{st}-{end}.abc".format(self.filename, extype, namesp, st=self.start, end=self.end)
         print("path --> {}".format(self.path))
         print("name --> {}".format(self.name))
 
@@ -134,24 +137,14 @@ class exportUe:
             #                                       exmash.fullPathName())
             # -stripNamespaces
             abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
-                .format(f0="{}/{}".format(self.path, self.name).replace("\\", "/"), f1=self.start, f2=self.end, mash=abcexmashs)
+                .format(f0="{}/{}".format(self.path, self.name).replace("\\", "/"), f1=self.start, f2=self.end,
+                        mash=abcexmashs)
             print(abcExportCom)
             pymel.core.mel.eval(abcExportCom)
         print(self.path)
 
     def getRoot(self):
         box = QtWidgets.QMessageBox()
-        dubu_Butten = QtWidgets.QPushButton()
-        dubu_Butten.setText("duBuXiaoYao")
-        box.addButton(dubu_Butten, QtWidgets.QMessageBox.AcceptRole)
-
-        chan_butten = QtWidgets.QPushButton()
-        chan_butten.setText("changAnHuanJie")
-        box.addButton(chan_butten, QtWidgets.QMessageBox.AcceptRole)
-
-        kuang_butten = QtWidgets.QPushButton()
-        kuang_butten.setText("kuangShengMoZhun")
-        box.addButton(kuang_butten, QtWidgets.QMessageBox.AcceptRole)
 
         user = QtWidgets.QPushButton()
         user.setText("custom")
@@ -163,17 +156,7 @@ class exportUe:
 
         box.exec_()
         while 1:
-            if box.clickedButton() == dubu_Butten:
-                self.root = "V:"
-                break
-            elif box.clickedButton() == chan_butten:
-                self.root = "X:"
-                break
-            elif box.clickedButton() == kuang_butten:
-                self.root = "T:"
-                break
-
-            elif box.clickedButton() == user:
+            if box.clickedButton() == user:
                 self.root = QtWidgets.QFileDialog().getExistingDirectory()
                 break
             elif box.clickedButton() == my_quit_:
