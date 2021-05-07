@@ -8,7 +8,7 @@
 #include <corelib/core_Cpp.h>
 #include <boost/format.hpp>
 
-#include <doodle_GUI/source/mainWidght/mainWindows.h>
+#include <doodle_GUI/main.h>
 #include <doodle_GUI/source/toolkit/toolkit.h>
 
 DOODLE_NAMESPACE_S

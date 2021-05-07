@@ -11,8 +11,10 @@ namespace doodle{
 
 
 class AssDirTree :public wxDataViewModel{
+  std::vector<ProjectPtr> p_Root;
  public:
   explicit AssDirTree();
+
   [[nodiscard]] unsigned int GetColumnCount() const override;
   [[nodiscard]] wxString GetColumnType(unsigned int col) const override;
   void GetValue(wxVariant& variant, const wxDataViewItem& item, unsigned int col) const override;

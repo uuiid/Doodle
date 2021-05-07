@@ -5,7 +5,7 @@
 
 #include <magic_enum.hpp>
 #include <wx/spinctrl.h>
-#include <doodle_GUI/source/mainWidght/mainWindows.h>
+#include <doodle_GUI/main.h>
 #include <wx/numdlg.h>
 
 
@@ -98,16 +98,16 @@ void ShotListWidget::addShotAb() {
 
   long itemIndex = -1;
   while ((itemIndex = GetNextItem(itemIndex, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED)) != wxNOT_FOUND) {
-    wxArrayString wxarrstr{};
+    wxArrayString k_wx_array_string{};
     for (auto e : magic_enum::enum_names<Shot::ShotAbEnum>()) {
-      wxarrstr.Add(std::string{e});
+      k_wx_array_string.Add(std::string{e});
     }
 
     auto shot_dig = wxSingleChoiceDialog{
         this,
         ConvStr<wxString>("选择A镜号"),
         ConvStr<wxString>("AB号"),
-        wxarrstr};
+        k_wx_array_string};
 
     if (shot_dig.ShowModal() == wxID_OK) {
       auto shotAB = shot_dig.GetStringSelection();

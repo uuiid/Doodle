@@ -9,10 +9,10 @@
 #include <doodle_GUI/source/toolkit/MessageAndProgress.h>
 #include <doodle_GUI/source/SettingWidght/settingWidget.h>
 #include <doodle_GUI/source/Metadata/View/ShotListWidget.h>
-
+#include <doodle_GUI/main.h>
 #include <boost/format.hpp>
 
-#include <DoodleConfig.h>
+
 DOODLE_NAMESPACE_S
 
 mainWindows::mainWindows()
@@ -167,63 +167,6 @@ void mainWindows::createUe4Project(const std::vector<FSys::path>& paths) {
     return;
   }
   wxMessageDialog{this, ConvStr<wxString>("成功创建")}.ShowModal();
-}
-
-Doodle::Doodle()
-    : p_mainWindwos(nullptr),
-      p_setting_widget(nullptr) {
-  ;
-};
-
-int Doodle::OnExit() {
-  if (p_mainWindwos->Close(true))
-    p_mainWindwos->Destroy();
-  if (p_systemTray)
-    p_systemTray->Destroy();
-
-  return wxApp::OnExit();
-}
-
-void Doodle::openMainWindow() {
-  p_mainWindwos->Show();
-}
-
-void Doodle::openSettingWindow() {
-  p_setting_widget->Show();
-}
-
-// bool Doodle::OnExceptionInMainLoop() {
-//   this->Exception();
-//   try {
-//     throw;
-//   } catch (const std::exception& error) {
-//     auto dig    = wxMessageDialog{p_mainWindwos, ConvStr<wxString>(error.what()), ConvStr<wxString>("错误")};
-//     auto result = dig.ShowModal();
-//     return result == wxID_OK;
-//   }
-// }
-
-bool Doodle::OnInit() {
-  wxApp::OnInit();
-  // wxApp::SetExitOnFrameDelete(false);
-  wxLog::EnableLogging(true);
-
-  p_mainWindwos = new mainWindows{};
-  p_mainWindwos->SetIcon(wxICON(ID_DOODLE_ICON));
-  this->SetTopWindow(p_mainWindwos);
-
-  p_systemTray = new systemTray{};
-  p_systemTray->SetIcon(wxICON(ID_DOODLE_ICON),
-                        wxString::Format(
-                            wxString{"doodle-%d.%d.%d.%d"},
-                            Doodle_VERSION_MAJOR,
-                            Doodle_VERSION_MINOR,
-                            Doodle_VERSION_PATCH,
-                            Doodle_VERSION_TWEAK));
-  p_setting_widget = new SettingWidght{p_mainWindwos, wxID_ANY};
-  p_mainWindwos->Show();
-
-  return true;
 }
 
 DOODLE_NAMESPACE_E

@@ -11,9 +11,6 @@
 #include <doodle_GUI/doodle_global.h>
 
 DOODLE_NAMESPACE_S
-class SettingWidght;
-class systemTray;
-
 class mainWindows : public wxFrame {
   wxWindowIDRef p_exmaya_id;
   wxWindowIDRef p_create_image_id;
@@ -36,22 +33,6 @@ class mainWindows : public wxFrame {
   void createUe4Project(const std::vector<FSys::path>& paths);
 };
 
-class Doodle : public wxApp {
- public:
-  Doodle();
 
-  virtual bool OnInit() override;
-  virtual int OnExit() override;
-
-  void openMainWindow();
-  void openSettingWindow();
-
-  // virtual bool OnExceptionInMainLoop() override;
-
- private:
-  mainWindows* p_mainWindwos;
-  SettingWidght* p_setting_widget;
-  systemTray* p_systemTray;
-};
 
 DOODLE_NAMESPACE_E

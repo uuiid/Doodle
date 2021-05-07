@@ -6,6 +6,7 @@ add_executable(doodle
         ${RESOURCE_SOURCE}
         win_exe.rc
         #doodle.manifest
+        main.h
         main.cpp
         doodle_global.cpp
         )

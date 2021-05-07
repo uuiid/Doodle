@@ -20,4 +20,10 @@ void Metadata::SetPChildItems(const std::vector<MetadataPtr> &in_child_items) {
 void Metadata::AddChildItem(const MetadataPtr &in_items) {
   p_child_items.emplace_back(in_items);
 }
+bool Metadata::HasParent() const {
+  return !p_parent.expired();
+}
+bool Metadata::HasChild() const {
+  return !p_child_items.empty();
+}
 }
