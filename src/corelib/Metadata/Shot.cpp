@@ -5,7 +5,8 @@
 namespace doodle {
 
 Shot::Shot()
-    : p_shot(-1),
+    : Metadata(),
+      p_shot(-1),
       p_shot_ab(),
       p_episodes() {
 }
@@ -13,7 +14,8 @@ Shot::Shot()
 Shot::Shot(decltype(p_shot) in_shot,
            decltype(p_shot_ab) in_shot_ab,
            decltype(p_episodes) in_episodes)
-    : p_shot(in_shot),
+    : Metadata(),
+      p_shot(in_shot),
       p_shot_ab(std::move(in_shot_ab)),
       p_episodes(std::move(in_episodes)) {
   if (p_shot < 0)
@@ -50,16 +52,16 @@ std::string Shot::str() const {
   str_shot % p_shot % p_shot_ab;
   return str_shot.str();
 }
-bool Shot::operator<(const Shot &rhs) const {
+bool Shot::operator<(const Shot& rhs) const {
   return std::tie(p_shot, p_shot_ab) < std::tie(rhs.p_shot, rhs.p_shot_ab);
 }
-bool Shot::operator>(const Shot &rhs) const {
+bool Shot::operator>(const Shot& rhs) const {
   return rhs < *this;
 }
-bool Shot::operator<=(const Shot &rhs) const {
+bool Shot::operator<=(const Shot& rhs) const {
   return !(rhs < *this);
 }
-bool Shot::operator>=(const Shot &rhs) const {
+bool Shot::operator>=(const Shot& rhs) const {
   return !(*this < rhs);
 }
 

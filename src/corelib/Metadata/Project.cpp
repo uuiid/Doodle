@@ -56,15 +56,18 @@ std::string Project::ShortStr() const {
   DOODLE_LOG_INFO(str)
   return boost::algorithm::to_upper_copy(str.substr(0, 2));
 }
+std::string Project::ShowStr() const {
+  return this->p_name;
+}
 std::string Project::getConfigFileFolder() {
   static std::string str{"doodle_config"};
   return str;
 }
+
 std::string Project::getConfigFileName() {
   static std::string str{"doodle_config.dole"};
   return str;
 }
-
 void Project::makeProject() const {
   auto k_path = p_path / getConfigFileFolder() / getConfigFileName();
   if (FSys::exists(k_path.parent_path()))

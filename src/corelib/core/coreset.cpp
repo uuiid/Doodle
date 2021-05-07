@@ -100,6 +100,7 @@ coreSet::coreSet()
       doc("C:/Doodle_cache"),
       p_uuid_gen(),
       ue4_setting(Ue4Setting::Get()),
+      p_matadata_setting_(MetadataSet::Get()),
       p_project_list(),
       p_project(),
       p_mayaPath() {
@@ -151,57 +152,6 @@ FSys::path coreSet::getCacheRoot(const FSys::path &in_path) const {
   if (!FSys::exists(path))
     FSys::create_directories(path);
   return path;
-}
-
-bool coreSet::hasProject() {
-  return !p_project_list.empty();
-}
-
-std::vector<ProjectPtr> coreSet::getAllProjects() const {
-  return p_project_list;
-}
-void coreSet::installProject(const ProjectPtr &Project_) {
-  p_project_list.emplace_back(Project_);
-}
-
-const ProjectPtr &coreSet::Project_() const {
-  if (!p_project)
-    throw nullptr_error{"没有项目"};
-  return p_project;
-}
-
-void coreSet::setProject_(const ProjectPtr &Project_) {
-  p_project = Project_;
-  auto it   = std::find(p_project_list.begin(), p_project_list.end(), Project_);
-  if (it == p_project_list.end()) {
-    p_project_list.emplace_back(Project_);
-  }
-}
-
-void coreSet::setProject_(const Project *Project_) {
-  auto it = std::find_if(p_project_list.begin(), p_project_list.end(),
-                         [Project_](ProjectPtr &prj) { return Project_ == prj.get(); });
-  if (it != p_project_list.end()) {
-    p_project = *it;
-  } else {
-    throw DoodleError{"无法找到项目"};
-  }
-}
-
-void coreSet::deleteProject(const Project *Project_) {
-  auto it = std::find_if(p_project_list.begin(), p_project_list.end(),
-                         [Project_](ProjectPtr &prj) { return Project_ == prj.get(); });
-  if (it != p_project_list.end()) {
-    p_project_list.erase(it);
-  } else {
-    throw DoodleError{"无法找到项目"};
-  }
-}
-
-int coreSet::getProjectIndex() const {
-  auto it    = std::find(p_project_list.begin(), p_project_list.end(), p_project);
-  auto index = std::distance(p_project_list.begin(), it);
-  return boost::numeric_cast<int>(index);
 }
 
 void coreSet::getCacheDiskPath() {

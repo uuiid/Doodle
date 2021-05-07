@@ -3,6 +3,7 @@
 #include <corelib/core_global.h>
 #include <corelib/libWarp/BoostUuidWarp.h>
 #include <corelib/core/Ue4Setting.h>
+#include <corelib/core/MetadataSet.h>
 #include <corelib/Metadata/Project.h>
 
 #include <cereal/cereal.hpp>
@@ -69,22 +70,14 @@ class CORE_API coreSet {
   // doc路径
   [[nodiscard]] FSys::path getDoc() const;
 
-  Ue4Setting &gettUe4Setting() const { return ue4_setting; };
+  [[nodiscard]] Ue4Setting &gettUe4Setting() const { return ue4_setting; };
+  [[nodiscard]] MetadataSet &GetMetadataSet() const { return p_matadata_setting_; };
 
   void writeDoodleLocalSet();
 
   static std::string toIpPath(const std::string &path);
 
   boost::uuids::uuid getUUID();
-
-  bool hasProject();
-  std::vector<ProjectPtr> getAllProjects() const;
-  void installProject(const ProjectPtr &Project_);
-  const ProjectPtr &Project_() const;
-  void setProject_(const ProjectPtr &Project_);
-  void setProject_(const Project *Project_);
-  void deleteProject(const Project *Project_);
-  int getProjectIndex() const;
 
  private:
   //私有化构造函数
@@ -95,6 +88,7 @@ class CORE_API coreSet {
   void getSetting();
 
   static std::string configFileName();
+
  private:
   boost::uuids::random_generator p_uuid_gen;
 
@@ -107,6 +101,7 @@ class CORE_API coreSet {
   FSys::path doc;
 
   Ue4Setting &ue4_setting;
+  MetadataSet &p_matadata_setting_;
 
   std::vector<std::shared_ptr<Project>> p_project_list;
   std::shared_ptr<Project> p_project;
@@ -125,30 +120,35 @@ template <class Archive>
 void coreSet::save(Archive &ar, std::uint32_t const version) const {
   ar(
       cereal::make_nvp("user", user),
-      cereal::make_nvp("department", std::string{magic_enum::enum_name(department)}),
-      cereal::make_nvp("ue4_setting", ue4_setting));
-  ar(cereal::make_nvp("project", p_project_list),
-     cereal::make_nvp("current project", p_project));
-  ar(cereal::make_nvp("maya_Path", p_mayaPath));
+      cereal::make_nvp("department", department),
+      cereal::make_nvp("ue4_setting", ue4_setting),
+      cereal::make_nvp("project", p_project_list),
+      cereal::make_nvp("current project", p_project),
+      cereal::make_nvp("maya_Path", p_mayaPath));
 }
 
 template <class Archive>
 void coreSet::load(Archive &ar, std::uint32_t const version) {
-  std::string deps{};
-  ar(
-      user,
-      deps,
-      ue4_setting);
-
-  this->department = magic_enum::enum_cast<doodle::Department>(deps).value_or(doodle::Department::VFX);
-
-  if (version > 1) {
-    ar(p_project_list, p_project);
+  if (version == 4) {
+    ar(
+        user,
+        department,
+        ue4_setting,
+        p_project_list,
+        p_project,
+        p_mayaPath);
   }
-  if (version > 2)
-    ar(p_mayaPath);
 }
 
 DOODLE_NAMESPACE_E
-
+namespace cereal {
+template <class Archive>
+std::string save_minimal(Archive const &, doodle::Department const &department) {
+  return std::string{magic_enum::enum_name(department)};
+}
+template <class Archive>
+void load_minimal(Archive const &, doodle::Department &department, std::string const &value) {
+  department = magic_enum::enum_cast<doodle::Department>(value).value_or(doodle::Department::VFX);
+};
+}  // namespace cereal
 CEREAL_CLASS_VERSION(doodle::coreSet, 3);

@@ -5,11 +5,13 @@
 namespace doodle {
 
 Episodes::Episodes()
-    : p_episodes(-1) {
+    : Metadata(),
+      p_episodes(-1) {
 }
 
 Episodes::Episodes(int64_t in_episodes)
-    : p_episodes(in_episodes) {
+    : Metadata(),
+      p_episodes(in_episodes) {
   if (p_episodes < 0)
     throw DoodleError("集数无法为负");
 }

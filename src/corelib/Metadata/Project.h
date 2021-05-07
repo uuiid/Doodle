@@ -30,6 +30,7 @@ class CORE_API Project : public Metadata {
 
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string ShortStr() const;
+  [[nodiscard]] std::string ShowStr() const override;
 
   void makeProject() const;
   [[nodiscard]] bool ChickProject() const;

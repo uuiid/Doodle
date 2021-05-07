@@ -20,7 +20,7 @@ const std::string Ue4Project::UE4PATH     = "Engine/Binaries/Win64/UE4Editor-Cmd
 Ue4Project::Ue4Project(FSys::path project_path)
     : p_ue_path(),
       p_ue_Project_path(std::move(project_path)),
-      p_project(coreSet::getSet().Project_()) {
+      p_project(MetadataSet::Get().Project_()) {
   auto& ue  = Ue4Setting::Get();
   p_ue_path = ue.Path();
 }

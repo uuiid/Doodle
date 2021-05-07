@@ -2,13 +2,12 @@
 // Created by teXiao on 2020/10/19.
 //
 #include <doodle_GUI/source/mainWidght/systemTray.h>
-#include <DoodleConfig.h>
 
 #include <loggerlib/Logger.h>
 #include <corelib/core_Cpp.h>
 #include <boost/format.hpp>
 
-#include <doodle_GUI/source/mainWidght/mainWindows.h>
+#include <doodle_GUI/main.h>
 #include <doodle_GUI/source/toolkit/toolkit.h>
 
 DOODLE_NAMESPACE_S
@@ -56,16 +55,16 @@ wxMenu* systemTray::CreatePopupMenu() {
       p_tool_id);
   //打开设置
   menu->Bind(
-      wxEVT_MENU, [this](wxCommandEvent& event) {
+      wxEVT_MENU, [](wxCommandEvent& event) {
         wxGetApp().openSettingWindow();
       },
       p_setting_id);
   //安装ue插件到总体
   menu_install->Bind(
-      wxEVT_MENU, [this](wxCommandEvent& event) {
-        auto& ueset = coreSet::getSet().gettUe4Setting();
-        if (ueset.hasPath())
-          toolkit::installUePath(ueset.Path() / "Engine");
+      wxEVT_MENU, [](wxCommandEvent& event) {
+        auto& k_ue_4_setting = coreSet::getSet().gettUe4Setting();
+        if (k_ue_4_setting.hasPath())
+          toolkit::installUePath(k_ue_4_setting.Path() / "Engine");
         else
           wxMessageDialog{wxGetApp().GetTopWindow(),
                           ConvStr<wxString>("在设置中找不到ue位置")}
@@ -74,7 +73,7 @@ wxMenu* systemTray::CreatePopupMenu() {
       p_installUEPlug_id);
   //安装ue插件到项目
   menu_install->Bind(
-      wxEVT_MENU, [this](wxCommandEvent& event) {
+      wxEVT_MENU, [](wxCommandEvent& event) {
         auto file_dig = wxFileDialog{
             wxGetApp().GetTopWindow(),
             ConvStr<wxString>("ue项目选择"),
@@ -91,13 +90,13 @@ wxMenu* systemTray::CreatePopupMenu() {
   //安装maya插件
   menu_install->Bind(
       wxEVT_MENU,
-      [this](wxCommandEvent& event) {
+      [](wxCommandEvent& event) {
         toolkit::installMayaPath();
       },
       p_installMayaPlug_id);
   //删除ue缓存
   menu->Bind(
-      wxEVT_MENU, [this](wxCommandEvent& event) {
+      wxEVT_MENU, [](wxCommandEvent& event) {
         try {
           toolkit::deleteUeCache();
         } catch (const std::exception& error) {
@@ -111,7 +110,7 @@ wxMenu* systemTray::CreatePopupMenu() {
       p_deleteUECache_id);
   //修改ue缓存
   menu->Bind(
-      wxEVT_MENU, [this](wxCommandEvent& event) {
+      wxEVT_MENU, [](wxCommandEvent& event) {
         try {
           toolkit::modifyUeCachePath();
         } catch (const std::exception& error) {
@@ -124,7 +123,7 @@ wxMenu* systemTray::CreatePopupMenu() {
 
   //更新
   menu->Bind(
-      wxEVT_MENU, [this](wxCommandEvent& event) {
+      wxEVT_MENU, [](wxCommandEvent& event) {
         wxMessageDialog{wxGetApp().GetTopWindow(), ConvStr<wxString>("暂时不支持动态更新")}.ShowModal();
       },
       p_updata_id);
