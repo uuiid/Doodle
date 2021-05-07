@@ -24,9 +24,9 @@ void SettingWidght::InitSetting() {
 
   //设置project项目
   p_Project->Clear();
-  for (const auto& prj : set.getAllProjects())
+  for (const auto& prj : MetadataSet::Get().getAllProjects())
     p_Project->Append(ConvStr<wxString>(prj->Name()), prj.get());
-  p_Project->SetSelection(set.getProjectIndex());
+  p_Project->SetSelection(MetadataSet::Get().getProjectIndex());
 
   if (set.gettUe4Setting().hasPath())
     p_ue_path->SetValue(ConvStr<wxString>(set.gettUe4Setting().Path().generic_string()));
@@ -187,7 +187,7 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
   p_Project->Bind(wxEVT_COMBOBOX, [&set, this](wxCommandEvent& event) {
     auto index = p_Project->GetSelection();
     auto prj   = p_Project->GetClientData(index);
-    set.setProject_(reinterpret_cast<Project*>(prj));
+    MetadataSet::Get().setProject_(reinterpret_cast<Project*>(prj));
   });
   p_ue_path->Bind(wxEVT_TEXT, [&set, this](wxCommandEvent& event) {
     auto value = p_ue_path->GetValue();
@@ -232,12 +232,12 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
     auto value = p_Project->GetSelection();
     auto prj   = p_Project->GetClientData(value);
 
-    set.deleteProject(reinterpret_cast<Project*>(prj));
+    MetadataSet::Get().deleteProject(reinterpret_cast<Project*>(prj));
     p_Project->Delete(value);
     auto selection = value - 1;
     selection      = selection > 0 ? selection : 0;
     p_Project->SetSelection(selection);
-    set.setProject_(reinterpret_cast<Project*>(p_Project->GetClientData(selection)));
+    MetadataSet::Get().setProject_(reinterpret_cast<Project*>(p_Project->GetClientData(selection)));
   });
 
   Bind(wxEVT_CLOSE_WINDOW, [&set, this](wxCloseEvent& event) {
@@ -264,7 +264,7 @@ void SettingWidght::AddProject() {
       auto text = text_dialog.GetValue();
       if (!text.empty()) {
         auto prj = std::make_shared<Project>(ConvStr<std::string>(path), ConvStr<std::string>(text));
-        coreSet::getSet().installProject(prj);
+        MetadataSet::Get().installProject(prj);
         p_Project->Append(text, prj.get());
       }
     }
