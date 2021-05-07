@@ -64,4 +64,3 @@ unsigned int AssDirTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
   }
   return children.size();
 }
-}  // namespace doodle
