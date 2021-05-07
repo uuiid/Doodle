@@ -5,7 +5,7 @@
 #pragma once
 #include <corelib/core_global.h>
 namespace doodle {
-class MetadataSet {
+class CORE_API MetadataSet {
   MetadataSet();
   std::vector<ProjectPtr> p_project_list;
   std::shared_ptr<Project> p_project;
@@ -16,7 +16,7 @@ class MetadataSet {
   [[nodiscard]] bool hasProject();
   [[nodiscard]] std::vector<ProjectPtr> getAllProjects() const;
   void installProject(const ProjectPtr &Project_);
-  [[maybe_unused]] const ProjectPtr &Project_() const;
+  [[nodiscard]] const ProjectPtr &Project_() const;
   void setProject_(const ProjectPtr &Project_);
   void setProject_(const Project *Project_);
   void deleteProject(const Project *Project_);

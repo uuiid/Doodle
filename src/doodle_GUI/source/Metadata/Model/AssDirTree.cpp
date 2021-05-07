@@ -49,7 +49,7 @@ bool AssDirTree::IsContainer(const wxDataViewItem& item) const {
 }
 
 unsigned int AssDirTree::GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const {
-//  DOLE_CHECK(item, 0);
+  //  DOLE_CHECK(item, 0);
 
   auto k_item = reinterpret_cast<Metadata*>(item.GetID());
   if (!k_item) {
@@ -63,4 +63,5 @@ unsigned int AssDirTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
     }
   }
   return children.size();
+}
 }
