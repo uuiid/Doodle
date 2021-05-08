@@ -75,11 +75,13 @@ class CORE_API coreSet {
 
   void writeDoodleLocalSet();
 
-  static std::string toIpPath(const std::string &path);
 
   boost::uuids::uuid getUUID();
+  std::string getUUIDStr() ;
+  static void hideFolder(const FSys::path& path);
 
  private:
+  static std::string toIpPath(const std::string &path);
   //私有化构造函数
   coreSet();
   //获得缓存磁盘路径

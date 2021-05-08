@@ -35,6 +35,19 @@ class CORE_API Shot : public Metadata {
   bool operator>(const Shot &rhs) const;
   bool operator<=(const Shot &rhs) const;
   bool operator>=(const Shot &rhs) const;
-};
 
+ private:
+  friend class cereal::access;
+  template <class Archive>
+  void serialize(Archive& ar, std::uint32_t const version);
+};
+template <class Archive>
+void Shot::serialize(Archive &ar, const std::uint32_t version) {
+  if(version == 1)
+    ar(
+        cereal::make_nvp("Metadata",cereal::base_class<Metadata>(this)),
+        p_shot,
+        p_shot_ab
+        );
+}
 }  // namespace doodle

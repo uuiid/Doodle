@@ -61,6 +61,8 @@ class Metadata;
 class Assets;
 class coreSql;
 class LabelNode;
+class AssetsFile;
+class MetadataFactory;
 
 using ProjectPtr = std::shared_ptr<Project>;
 using EpisodesPtr = std::shared_ptr<Episodes>;
@@ -69,5 +71,7 @@ using MetadataPtr = std::shared_ptr<Metadata>;
 using AssetsPtr = std::shared_ptr<Assets>;
 using coreSqlPtr = std::shared_ptr<coreSql>;
 using LabelNodePtr = std::shared_ptr<LabelNode>;
+using AssetsFilePtr = std::shared_ptr<AssetsFile>;
+using MetadataFactoryPtr = std::shared_ptr<MetadataFactory>;
 
 DOODLE_NAMESPACE_E

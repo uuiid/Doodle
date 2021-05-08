@@ -14,7 +14,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
 #设置不使用qt_key
-add_definitions(-DQT_NO_KEYWORDS)
+add_compile_definitions(QT_NO_KEYWORDS UNICODE _UNICODE)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

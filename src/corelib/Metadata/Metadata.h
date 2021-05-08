@@ -5,11 +5,16 @@
 #pragma once
 #include <corelib/core_global.h>
 
+#include <cereal/types/polymorphic.hpp>
 namespace doodle {
 class CORE_API Metadata {
  protected:
   std::weak_ptr<Metadata> p_parent;
   std::vector<MetadataPtr> p_child_items;
+
+  std::string p_Root;
+  std::string p_Name;
+  std::string p_parent_uuid;
 
  public:
   Metadata();
@@ -25,5 +30,24 @@ class CORE_API Metadata {
 
   [[nodiscard]] virtual std::string str() const = 0;
   [[nodiscard]] virtual std::string ShowStr() const;
+
+  [[nodiscard]] virtual const std::string &GetRoot() const;
+  [[nodiscard]] virtual const std::string &GetRoot();
+  [[nodiscard]] virtual const std::string &GetName() const;
+  [[nodiscard]] virtual const std::string &GetName();
+  //  [[nodiscard]] virtual FSys::path FolderPath() const;
+
+  template <class Archive>
+  void serialize(Archive &ar, std::uint32_t const version);
 };
+
+template <class Archive>
+void Metadata::serialize(Archive &ar, std::uint32_t const version) {
+  if (version == 1)
+    ar(
+        cereal::make_nvp("UUID_Root", p_Root),
+        cereal::make_nvp("UUID_name", p_Name),
+        cereal::make_nvp("UUID_parent", p_parent_uuid));
+}
 }  // namespace doodle
+CEREAL_CLASS_VERSION(doodle::Metadata, 1)

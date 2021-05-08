@@ -46,9 +46,9 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
     return false;
   auto k_tmp_path = this->createTmpFile();
   //生成命令
-  boost::format str{R"("%4%/mayapy.exe" %1% --path %2% --exportpath %3%)"};
-  str % k_tmp_path.generic_string() % file_path.generic_string() % k_export_path.generic_string();
-  str % p_path.generic_string();
+  boost::wformat str{LR"("%4%/mayapy.exe" %1% --path %2% --exportpath %3%)"};
+  str % k_tmp_path.generic_wstring() % file_path.generic_wstring() % k_export_path.generic_wstring();
+  str % p_path.generic_wstring();
   // boost::format str{R"(%1% --path %2% --exportpath %3%)"};
   // str % k_tmp_path.generic_string() % file_path.generic_string() % k_export_path.generic_string();
 
@@ -63,13 +63,13 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
     //使用windowsIPA创建子进程
     CreateProcess(
         nullptr,
-        (char*)str.str().c_str(),
+        (wchar_t *)str.str().c_str(),
         nullptr,
         nullptr,
         false,
         CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP,  //CREATE_NEW_CONSOLE
         nullptr,
-        p_path.generic_string().c_str(),  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
+        p_path.generic_wstring().c_str(),  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
         &si,
         &pi);
     // boost::process::system(command.c_str(), env);

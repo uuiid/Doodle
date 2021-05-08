@@ -26,7 +26,6 @@ class CORE_API Project : public Metadata {
   [[nodiscard]] const FSys::path& Path() const noexcept;
   void setPath(const FSys::path& Path);
 
-  [[nodiscard]] FSys::path DBRoot() const;
 
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string ShortStr() const;
@@ -34,12 +33,16 @@ class CORE_API Project : public Metadata {
 
   void makeProject() const;
   [[nodiscard]] bool ChickProject() const;
-  void ReadProject();
+
+  void load(const MetadataFactoryPtr& in_factory);
+  void save(const MetadataFactoryPtr& in_factory);
 
   static std::string getConfigFileName();
   static std::string getConfigFileFolder();
 
  private:
+  [[nodiscard]] FSys::path DBRoot() const;
+
   friend class cereal::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version);
@@ -51,7 +54,14 @@ void Project::serialize(Archive& ar, std::uint32_t const version) {
     ar(
         cereal::make_nvp("name", p_name),
         cereal::make_nvp("path", p_path));
+  if(version ==2)
+    ar(
+        cereal::make_nvp("Metadata",cereal::base_class<Metadata>(this)),
+        cereal::make_nvp("name", p_name),
+        cereal::make_nvp("path", p_path)
+        );
 }
 
 }  // namespace doodle
-CEREAL_CLASS_VERSION(doodle::Project, 1);
+CEREAL_REGISTER_TYPE(doodle::Project)
+CEREAL_CLASS_VERSION(doodle::Project, 2);

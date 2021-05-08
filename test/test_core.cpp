@@ -6,12 +6,11 @@
 #include <memory>
 
 #include <corelib/core_Cpp.h>
-#include <corelib/FileWarp/ImageSequence.h>
-#include <corelib/FileWarp/VideoSequence.h>
+
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/portable_binary.hpp>
 #include <cereal/archives/binary.hpp>
-#include <sstream>
+
 #include <streambuf>
 
 class CoreTest : public ::testing::Test {
@@ -41,15 +40,15 @@ void CoreTest::SetUp() {
 
   p_video_path_out1 = R"(D:\voide\test1.mp4)";
   p_video_path_out2 = R"(D:\voide\test2.mp4)";
-  p_txt_path        = R"(D:\test.txt)";
-  p_ue4_path        = R"(F:\Users\teXiao\Documents\Unreal_Projects\test_tmp\test_tmp.uproject)";
+  p_txt_path = R"(D:\test.txt)";
+  p_ue4_path = R"(F:\Users\teXiao\Documents\Unreal_Projects\test_tmp\test_tmp.uproject)";
 }
 
 void CoreTest::TearDown() {
 }
 
 TEST_F(CoreTest, archive) {
-  auto& ue_set    = doodle::Ue4Setting::Get();
+  auto& ue_set = doodle::Ue4Setting::Get();
   auto str_stream = std::stringstream{};
 
   auto str_stream_bin = std::stringstream{};
@@ -58,6 +57,9 @@ TEST_F(CoreTest, archive) {
     json(cereal::make_nvp("mainset", set));
     // cereal::BinaryOutputArchive binary{std::cout};
     cereal::BinaryOutputArchive binary2{str_stream_bin};
+
+    doodle::MetadataSet::Get().installProject(std::make_shared<doodle::Project>(
+        "D:/", "test22333"));
     binary2(set);
   }
 
@@ -91,10 +93,18 @@ TEST_F(CoreTest, archive) {
       << std::endl;
 }
 
+TEST_F(CoreTest, load_save_meatdata) {
+  auto ptj = std::make_shared<doodle::Project>("D:/", "test_23333");
+
+  ptj->makeProject();
+
+
+}
+
 TEST_F(CoreTest, loadUe4ProjectFile) {
   doodle::FSys::ifstream file{p_ue4_path};
   auto str_stream = std::stringstream{};
-  auto ijson      = nlohmann::json::parse(file);
+  auto ijson = nlohmann::json::parse(file);
 
   auto ueFile = ijson.get<doodle::Ue4ProjectFile>();
   ueFile.Plugins.push_back(doodle::Ue4ProjectFilePulgins{"doodle", true});
@@ -143,4 +153,3 @@ TEST_F(CoreTest, read_writ_file) {
   file.open(p_txt_path, std::ios::out | std::ios::trunc);
   file << line;
 }
-

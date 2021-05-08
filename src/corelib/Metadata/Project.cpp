@@ -1,8 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include <corelib/Metadata/Project.h>
 #include <corelib/Exception/Exception.h>
-#include <corelib/core/coresql.h>
-
+#include <corelib/Metadata/MetadataFactory.h>
 #include <loggerlib/Logger.h>
 #include <pinyinlib/convert.h>
 #include <boost/algorithm/string.hpp>
@@ -60,7 +59,7 @@ std::string Project::ShowStr() const {
   return this->p_name;
 }
 std::string Project::getConfigFileFolder() {
-  static std::string str{"doodle_config"};
+  static std::string str{".doodle_config"};
   return str;
 }
 
@@ -72,6 +71,7 @@ void Project::makeProject() const {
   auto k_path = p_path / getConfigFileFolder() / getConfigFileName();
   if (FSys::exists(k_path.parent_path()))
     FSys::create_directories(k_path.parent_path());
+
 
   FSys::fstream k_fstream{k_path, std::ios::out | std::ios::binary};
 
@@ -98,22 +98,14 @@ bool Project::ChickProject() const {
     FSys::create_directories(DBRoot());;
   return true;
 }
-void Project::ReadProject()  {
-  auto k_path = p_path / getConfigFileFolder() / getConfigFileName();
-
-  if (!FSys::exists(k_path)) return ;
-
-  Project k_p;
-  FSys::fstream k_fstream{k_path, std::ios::in | std::ios::binary};
-
-  cereal::PortableBinaryInputArchive k_archive{k_fstream};
-  k_archive(k_p);
-
-  if (k_p.p_path == p_path)
-    p_name = k_p.p_name;
-}
 FSys::path Project::DBRoot() const {
   return p_path / "_._root";
+}
+void Project::save(const MetadataFactoryPtr& in_factory) {
+  in_factory->save(this);
+}
+void Project::load(const MetadataFactoryPtr& in_factory) {
+  in_factory->load(this);
 }
 
 }  // namespace doodle

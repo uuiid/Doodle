@@ -31,7 +31,7 @@ void coreSet::init() {
   if (!pManager) throw DoodleError("无法找到保存路径");
 
   doc = FSys::path{pManager} / "doodle";
-  if(!FSys::exists(doc))
+  if (!FSys::exists(doc))
     FSys::create_directories(doc);
   findMaya();
   getSetting();
@@ -184,6 +184,15 @@ FSys::path coreSet::program_location(const FSys::path &path) {
 std::string coreSet::configFileName() {
   static std::string str{"doodle_config.bin"};
   return str;
+}
+std::string coreSet::getUUIDStr() {
+  return boost::uuids::to_string(getUUID());
+}
+void coreSet::hideFolder(const FSys::path &path) {
+  auto attr = GetFileAttributes(path.generic_wstring().c_str());
+  if ((attr & FILE_ATTRIBUTE_HIDDEN) == 0) {
+    SetFileAttributes(path.generic_wstring().c_str(), attr | FILE_ATTRIBUTE_HIDDEN);
+  }
 }
 
 DOODLE_NAMESPACE_E
