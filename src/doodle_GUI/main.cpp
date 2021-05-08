@@ -37,14 +37,16 @@ int Doodle::OnExit() {
   return wxApp::OnExit();
 }
 
-void Doodle::openMainWindow() {
+void Doodle::openMainWindow() const{
   p_mainWindwos->Show();
 }
 
-void Doodle::openSettingWindow() {
+void Doodle::openSettingWindow() const{
   p_setting_widget->Show();
 }
-
+void Doodle::openMetadaWindow() const{
+  p_metadata_widget->Show();
+}
 // bool Doodle::OnExceptionInMainLoop() {
 //   this->Exception();
 //   try {
@@ -76,11 +78,12 @@ bool Doodle::OnInit() {
   p_setting_widget = new SettingWidght{p_mainWindwos, wxID_ANY};
   p_mainWindwos->Show();
 
-  auto test = new MetadataWidget{p_mainWindwos,wxID_ANY};
-  test->Show();
+  p_metadata_widget = new MetadataWidget{p_mainWindwos,wxID_ANY};
+  p_metadata_widget->Show();
 
   return true;
 }
+
 } // namespace doodle
 
 

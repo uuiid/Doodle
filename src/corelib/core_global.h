@@ -5,7 +5,8 @@
 #include <boost/filesystem.hpp>
 #include <cereal/access.hpp>
 #include <cereal/cereal.hpp>
-
+#include <cereal/types/common.hpp>
+#include <cereal/types/string.hpp>
 
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
@@ -31,23 +32,21 @@ class connection;
 struct connection_config;
 }  // namespace sqlpp::sqlite3
 
-// 添加boost::filesystem path 序列化储存
-namespace boost::filesystem {
-class path;
-template <class Archive>
-void save(Archive &archive,
-          boost::filesystem::path const &path_) {
-  archive(cereal::make_nvp("path_string", path_.generic_string()));
-}
 
+
+//// 添加boost::filesystem path 序列化储存
+namespace boost::filesystem{
 template <class Archive>
-void load(Archive &archive,
-          boost::filesystem::path &path_) {
-  std::string str;
-  archive(str);
-  path_ = path{str};
+std::string save_minimal(Archive const &, boost::filesystem::path const &path) {
+  return path.generic_string();
 }
-}  // namespace boost::filesystem
+template <class Archive>
+void load_minimal(Archive const &, boost::filesystem::path &path, std::string const &value) {
+  path = value;
+};
+}// namespace boost::filesystem
+
+
 
 //开始我们的名称空间
 DOODLE_NAMESPACE_S

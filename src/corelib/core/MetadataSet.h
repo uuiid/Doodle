@@ -4,6 +4,8 @@
 
 #pragma once
 #include <corelib/core_global.h>
+
+#include <boost/signals2.hpp>
 namespace doodle {
 class CORE_API MetadataSet {
   MetadataSet();
@@ -23,6 +25,23 @@ class CORE_API MetadataSet {
   [[nodiscard]] int getProjectIndex() const;
 
   DOODLE_DISABLE_COPY(MetadataSet)
-};
 
+  boost::signals2::signal<void (const Project *,int)> sig_Projectdelete;
+  boost::signals2::signal<void (const Project *,int)> sig_projectChange;
+  boost::signals2::signal<void (const Project *,int)> sig_projectAdd;
+ private:
+  //这里是序列化的代码
+  friend class cereal::access;
+  template <class Archive>
+  void serialize(Archive &ar, std::uint32_t const version);
+  int getIntex(const std::vector<ProjectPtr>::const_iterator &it) const;
+};
+template <class Archive>
+void MetadataSet::serialize(Archive &ar, const std::uint32_t version){
+  ar(
+      cereal::make_nvp("project_list",p_project_list),
+      cereal::make_nvp("project",p_project)
+      );
+}
 }  // namespace doodle
+CEREAL_CLASS_VERSION(doodle::MetadataSet, 4);

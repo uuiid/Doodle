@@ -37,6 +37,12 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
   k_layout->Add(p_tree_view_ctrl_,wxSizerFlags{0}.Expand().Border(wxALL,0))->SetProportion(2);
   k_layout->Add(p_list_view_ctrl_,wxSizerFlags{0}.Expand().Border(wxALL,0))->SetProportion(3);
 
+  Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
+    this->Hide();
+    if (event.CanVeto())
+      event.Veto(false);
+  });
+
   SetSizer(k_layout);
   k_layout->SetSizeHints(this);
   this->Center();

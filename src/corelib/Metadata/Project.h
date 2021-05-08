@@ -41,26 +41,16 @@ class CORE_API Project : public Metadata {
 
  private:
   friend class cereal::access;
-
   template <class Archive>
-  void save(Archive& ar, std::uint32_t const version) const;
-
-  template <class Archive>
-  void load(Archive& ar, std::uint32_t const version);
+  void serialize(Archive& ar, std::uint32_t const version);
 };
 
 template <class Archive>
-void Project::save(Archive& ar, std::uint32_t const version) const {
-  ar(
-      cereal::make_nvp("name", p_name),
-      cereal::make_nvp("path", p_path));
-}
-
-template <class Archive>
-void Project::load(Archive& ar, std::uint32_t const version) {
-  ar(
-      p_name,
-      p_path);
+void Project::serialize(Archive& ar, std::uint32_t const version) {
+  if (version == 1)
+    ar(
+        cereal::make_nvp("name", p_name),
+        cereal::make_nvp("path", p_path));
 }
 
 }  // namespace doodle

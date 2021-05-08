@@ -18,8 +18,6 @@ class mainWindows : public wxFrame {
   wxWindowIDRef p_create_video_id;
   wxWindowIDRef p_create_ue4File_id;
 
-  void setProgress(int value);
-
  public:
   explicit mainWindows();
 

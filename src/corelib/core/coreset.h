@@ -110,35 +110,21 @@ class CORE_API coreSet {
   //这里是序列化的代码
   friend class cereal::access;
   template <class Archive>
-  void save(Archive &ar, std::uint32_t const version) const;
+  void serialize(Archive &ar, std::uint32_t const version);
 
-  template <class Archive>
-  void load(Archive &ar, std::uint32_t const version);
 };
 
 template <class Archive>
-void coreSet::save(Archive &ar, std::uint32_t const version) const {
+void coreSet::serialize(Archive &ar, std::uint32_t const version) {
+  if(version == 4)
   ar(
       cereal::make_nvp("user", user),
       cereal::make_nvp("department", department),
       cereal::make_nvp("ue4_setting", ue4_setting),
-      cereal::make_nvp("project", p_project_list),
-      cereal::make_nvp("current project", p_project),
+      cereal::make_nvp("matadata_setting", p_matadata_setting_),
       cereal::make_nvp("maya_Path", p_mayaPath));
 }
 
-template <class Archive>
-void coreSet::load(Archive &ar, std::uint32_t const version) {
-  if (version == 4) {
-    ar(
-        user,
-        department,
-        ue4_setting,
-        p_project_list,
-        p_project,
-        p_mayaPath);
-  }
-}
 
 DOODLE_NAMESPACE_E
 namespace cereal {
@@ -151,4 +137,4 @@ void load_minimal(Archive const &, doodle::Department &department, std::string c
   department = magic_enum::enum_cast<doodle::Department>(value).value_or(doodle::Department::VFX);
 };
 }  // namespace cereal
-CEREAL_CLASS_VERSION(doodle::coreSet, 3);
+CEREAL_CLASS_VERSION(doodle::coreSet, 4);
