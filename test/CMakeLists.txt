@@ -14,7 +14,7 @@ PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 #连接自己的库进行测试
 target_link_libraries(test_my
-        PRIVATE core pinyin logger)
+        PRIVATE DoodleLib)
 
 find_library(DOODLE_MAR 
 mpr.lib

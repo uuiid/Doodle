@@ -2,13 +2,7 @@
 
 add_executable(doodle
         WIN32
-        ${RESOURE_FILE}
-        ${RESOURCE_SOURCE}
-        win_exe.rc
         doodle.manifest
-        main.h
-        main.cpp
-        doodle_global.cpp
         )
 
 set_target_properties(doodle
@@ -38,7 +32,7 @@ target_precompile_headers(doodle
         <wx/wx.h>
         )
 
-add_subdirectory(source)
+#add_subdirectory(source)
 target_compile_definitions(doodle PRIVATE wxUSE_STD_STRING wxUSE_UNICODE_WCHAR)
 #target_include_directories(doodle PRIVATE ${BOOST_INCLUDE_DIRS} ${wxWidgets_INCLUDE_DIRS})
 # target_link_directories(doodle PRIVATE f:/Source/vcpkg/installed/x64-windows/debug/lib/)
@@ -54,6 +48,4 @@ target_link_libraries(doodle
         )
 
 
-target_link_libraries(doodle PUBLIC ${Boost_LIBRARIES})
-target_link_libraries(doodle PRIVATE core)
-target_link_libraries(doodle PRIVATE logger)
+target_link_libraries(doodle PRIVATE DoodleLib)

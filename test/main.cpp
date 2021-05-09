@@ -6,10 +6,7 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\test\main.cpp
  */
-#include <corelib/core_Cpp.h>
-#include <corelib/core/coresql.h>
-
-#include <loggerlib/Logger.h>
+#include <DoodleLib/DoodleLib.h>
 
 #include <gtest/gtest.h>
 #include <iostream>

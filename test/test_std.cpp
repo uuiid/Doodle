@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
 #include <fstream>
-#include <corelib/core_Cpp.h>
-#include <Windows.h>
+
 #include <iostream>
-#include <locale>
+
 #include <regex>
 #include <string>
 #include <filesystem>
-#include <codecvt>
+
 
 #include <boost/locale.hpp>
+#include <boost/filesystem/path.hpp>
 // #include <boost/nowide/
 TEST(DSTD, map_netDir) {
   NETRESOURCE resources{};

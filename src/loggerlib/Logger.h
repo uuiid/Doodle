@@ -45,7 +45,7 @@ namespace Logger {
 // #define DOODLE_LOG_WARN DOODLE_LOG_WARN_ << __FILE__ << __FUNCTION__ << __LINE__ << "\n"
 // #define DOODLE_LOG_ERROR DOODLE_LOG_ERROR_ << __FILE__ << __FUNCTION__ << __LINE__ << "\n"
 
-void LOGGER_API doodle_initLog(const std::string &logPath = "doodle_%Y_%m_%d_%H_%M.%5N.html",
+void DOODLELIB_API doodle_initLog(const std::string &logPath = "doodle_%Y_%m_%d_%H_%M.%5N.html",
                                std::size_t logMaxSize = 16 * 1024 * 1024, bool async = true);
 
 }  // namespace Logger

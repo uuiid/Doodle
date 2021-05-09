@@ -3,10 +3,11 @@
 # qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 
 
-add_subdirectory(loggerlib)
-add_subdirectory(pinyinlib)
-add_subdirectory(corelib)
+#add_subdirectory(loggerlib)
+#add_subdirectory(pinyinlib)
+#add_subdirectory(corelib)
 add_subdirectory(doodle_GUI)
+add_subdirectory(DoodleLib)
 # add_subdirectory(doodle_server)
 #add_subdirectory(plug)
 

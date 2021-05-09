@@ -1,0 +1,21 @@
+target_sources(
+        core
+        PRIVATE
+        Episodes.cpp
+        Project.cpp
+        Shot.cpp
+        Assets.cpp
+        Metadata.cpp
+        AssetsFile.cpp
+        MetadataFactory.cpp
+
+        PUBLIC
+        Assets.h
+        Episodes.h
+        Metadata.h
+        Project.h
+        Shot.h
+        AssetsFile.h
+        MetadataFactory.h
+)
+add_subdirectory(Label)

@@ -1,11 +1,9 @@
 #include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
-#include <loggerlib/Logger.h>
-
 #include <iostream>
 #include <memory>
 
-#include <corelib/core_Cpp.h>
+#include <DoodleLib/DoodleLib.h>
 
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/portable_binary.hpp>
