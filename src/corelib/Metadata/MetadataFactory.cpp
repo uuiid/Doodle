@@ -32,7 +32,8 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
         std::shared_ptr<Metadata> k_ptr;
         cereal::PortableBinaryInputArchive k_archive{k_fstream};
         k_archive(k_ptr);
-        in_metadata->AddChildItem(k_ptr);
+        if (in_metadata->checkParent(*in_metadata))
+          in_metadata->AddChildItem(k_ptr);
       }
       k_fstream.close();
     }
@@ -126,8 +127,8 @@ void MetadataFactory::save(const AssetsFile *in_assetsFile) const {
   auto k_path = this->GetRoot(k_ptr.get()) / in_assetsFile->GetName();
   save(in_assetsFile, k_path);
 }
-void MetadataFactory::save(const Metadata *in_metadata, const FSys::path &in_path ) const {
-  FSys::fstream file{in_path,std::ios::out|std::ios::binary};
+void MetadataFactory::save(const Metadata *in_metadata, const FSys::path &in_path) const {
+  FSys::fstream file{in_path, std::ios::out | std::ios::binary};
   cereal::PortableBinaryOutputArchive k_archive{file};
   k_archive(*in_metadata);
 }

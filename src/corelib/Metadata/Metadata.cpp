@@ -35,28 +35,32 @@ Metadata::Metadata()
     : p_parent(),
       p_child_items(),
       p_Root(coreSet::getSet().getUUIDStr()),
-      p_Name(coreSet::getSet().getUUIDStr()){
+      p_Name(coreSet::getSet().getUUIDStr()),
+      p_parent_uuid() {
 }
 Metadata::~Metadata() = default;
 const std::string &Metadata::GetRoot() const {
-  if(p_Root.empty())
+  if (p_Root.empty())
     throw DoodleError{"p_Root is empty"};
   return p_Root;
 }
-const std::string &Metadata::GetRoot()  {
-  if(p_Root.empty())
+const std::string &Metadata::GetRoot() {
+  if (p_Root.empty())
     p_Root = coreSet::getSet().getUUIDStr();
   return p_Root;
 }
 const std::string &Metadata::GetName() const {
-  if(p_Name.empty())
+  if (p_Name.empty())
     throw DoodleError{"p_Name is empty"};
   return p_Name;
 }
-const std::string &Metadata::GetName()  {
-  if(p_Name.empty())
+const std::string &Metadata::GetName() {
+  if (p_Name.empty())
     p_Name = coreSet::getSet().getUUIDStr();
   return p_Name;
+}
+bool Metadata::checkParent(const Metadata& in_metadata) const {
+  return p_parent_uuid == in_metadata.p_Root;
 }
 
 }  // namespace doodle
