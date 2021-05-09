@@ -27,6 +27,7 @@ class CoreTest : public ::testing::Test {
   doodle::FSys::path p_video_path_out2;
   doodle::FSys::path p_txt_path;
   doodle::FSys::path p_ue4_path;
+  doodle::FSys::path p_long_path;
 };
 
 void CoreTest::SetUp() {
@@ -42,6 +43,7 @@ void CoreTest::SetUp() {
   p_video_path_out2 = R"(D:\voide\test2.mp4)";
   p_txt_path = R"(D:\test.txt)";
   p_ue4_path = R"(F:\Users\teXiao\Documents\Unreal_Projects\test_tmp\test_tmp.uproject)";
+  p_long_path = R"(F:\Users\teXiao\Documents\Unreal_Projects\test_tmp\Content\Dev\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\NewMaterial.uasset)";
 }
 
 void CoreTest::TearDown() {
@@ -97,8 +99,6 @@ TEST_F(CoreTest, load_save_meatdata) {
   auto ptj = std::make_shared<doodle::Project>("D:/", "test_23333");
 
   ptj->makeProject();
-
-
 }
 
 TEST_F(CoreTest, loadUe4ProjectFile) {
@@ -152,4 +152,15 @@ TEST_F(CoreTest, read_writ_file) {
   file.close();
   file.open(p_txt_path, std::ios::out | std::ios::trunc);
   file << line;
+}
+TEST_F(CoreTest, long_path) {
+  using namespace doodle;
+  auto size = FSys::file_size(p_long_path);
+  auto last_write_time = FSys::last_write_time(p_long_path);
+  auto time = FSys::creation_time(p_long_path);
+  FSys::fstream file{p_long_path};
+  std::cout << "file size " << size << "\n"
+            << "lase write time " << last_write_time << "\n"
+            << "create time " << time << std::endl
+            << (file.is_open() ? "true" : "false") << std::endl;
 }
