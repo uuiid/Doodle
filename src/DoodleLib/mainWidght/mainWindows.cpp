@@ -1,17 +1,16 @@
 #include <DoodleLib/mainWidght/mainWindows.h>
 //logger是boost库使用者，放到qt上面能好点
+#include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/Logger/Logger.h>
-
+#include <DoodleLib/Metadata/View/ShotListWidget.h>
+#include <DoodleLib/SettingWidght/settingWidget.h>
 #include <DoodleLib/core_Cpp.h>
-
 #include <DoodleLib/mainWidght/FileDropTarget.h>
 #include <DoodleLib/mainWidght/systemTray.h>
 #include <DoodleLib/toolkit/MessageAndProgress.h>
-#include <DoodleLib/SettingWidght/settingWidget.h>
-#include <DoodleLib/Metadata/View/ShotListWidget.h>
-#include <DoodleLib/DoodleApp.h>
-#include <boost/format.hpp>
+#include <DoodleLib/mainWidght/MklinkWidget.h>
 
+#include <boost/format.hpp>
 
 DOODLE_NAMESPACE_S
 
@@ -21,7 +20,8 @@ mainWindows::mainWindows()
       p_create_image_id(NewControlId()),
       p_create_dir_image_id(NewControlId()),
       p_create_video_id(NewControlId()),
-      p_create_ue4File_id(NewControlId()) {
+      p_create_ue4File_id(NewControlId()),
+      p_mkLink_id(NewControlId()) {
   // SetMenuBar(new wxMenuBar{});
   // CreateStatusBar(1);
   // SetStatusText("doodle tools");
@@ -33,12 +33,14 @@ mainWindows::mainWindows()
   auto k_create_dir_image = new wxButton{this, p_create_dir_image_id, _(ConvStr<wxString>("从多个文件夹创建视频"))};
   auto k_create_video     = new wxButton{this, p_create_video_id, _(ConvStr<wxString>("连接视频"))};
   auto k_create_ue4File   = new wxButton{this, p_create_ue4File_id, _(ConvStr<wxString>("创建ue4关卡序列"))};
+  auto k_mkink            = new wxButton{this, p_mkLink_id, _(ConvStr<wxString>("映射连接文件夹"))};
   //布局
   layout->Add(k_exMaya_button, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
   layout->Add(k_create_image, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
   layout->Add(k_create_dir_image, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
   layout->Add(k_create_video, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
   layout->Add(k_create_ue4File, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
+  layout->Add(k_mkink, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
 
   //设置布局调整
   SetSizer(layout);
@@ -60,20 +62,19 @@ mainWindows::mainWindows()
 
   FileDropTarget* k_dray;
 
-
   k_create_image->DragAcceptFiles(true);
   k_dray = new FileDropTarget{};
-  k_dray->handleFileFunction.connect([this](auto && PH1) { createVideoFile(std::forward<decltype(PH1)>(PH1)); });
+  k_dray->handleFileFunction.connect([this](auto&& PH1) { createVideoFile(std::forward<decltype(PH1)>(PH1)); });
   k_create_image->SetDropTarget(k_dray);
 
   k_create_dir_image->DragAcceptFiles(true);
   k_dray = new FileDropTarget{};
-  k_dray->handleFileFunction.connect([this](auto && PH1) { createVideoFileFormDir(std::forward<decltype(PH1)>(PH1)); });
+  k_dray->handleFileFunction.connect([this](auto&& PH1) { createVideoFileFormDir(std::forward<decltype(PH1)>(PH1)); });
   k_create_dir_image->SetDropTarget(k_dray);
 
   k_create_video->DragAcceptFiles(true);
   k_dray = new FileDropTarget{};
-  k_dray->handleFileFunction.connect([this](auto && PH1) { connectVideo(std::forward<decltype(PH1)>(PH1)); });
+  k_dray->handleFileFunction.connect([this](auto&& PH1) { connectVideo(std::forward<decltype(PH1)>(PH1)); });
   k_create_video->SetDropTarget(k_dray);
 
   k_create_ue4File->DragAcceptFiles(true);
@@ -88,6 +89,9 @@ mainWindows::mainWindows()
     this->createUe4Project(path);
   });
 
+  k_mkink->Bind(wxEVT_BUTTON, [this](wxCommandEvent& event) {
+    MklinkWidget::mklink(this);
+  });
   k_create_ue4File->Bind(
       wxEVT_BUTTON,
       [](wxCommandEvent& event) {

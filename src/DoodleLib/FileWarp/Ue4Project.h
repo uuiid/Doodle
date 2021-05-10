@@ -66,6 +66,7 @@ class DOODLELIB_API Ue4Project {
   const static std::string Content;
   const static std::string ContentShot;
   const static std::string UE4PATH;
+  const static std::string Character;
   Ue4Project(FSys::path project_path);
   void createShotFolder(const std::vector<ShotPtr>& inShotList);
 };

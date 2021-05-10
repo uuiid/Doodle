@@ -42,6 +42,7 @@
         toolkit/MessageAndProgress.h
         toolkit/toolkit.h
         libWarp/WinReg.hpp
+        mainWidght/MklinkWidget.h
 
 )
 set(
@@ -79,5 +80,5 @@ set(
         SettingWidght/settingWidget.cpp
         toolkit/MessageAndProgress.cpp
         toolkit/toolkit.cpp
-
+        mainWidght/MklinkWidget.cpp
 )

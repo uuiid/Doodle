@@ -15,6 +15,7 @@ namespace doodle {
 const std::string Ue4Project::Content     = "Content";
 const std::string Ue4Project::ContentShot = "Shot";
 const std::string Ue4Project::UE4PATH     = "Engine/Binaries/Win64/UE4Editor-Cmd.exe";
+const std::string Ue4Project::Character   = "Character";
 
 Ue4Project::Ue4Project(FSys::path project_path)
     : p_ue_path(),
@@ -59,13 +60,13 @@ void Ue4Project::runPythonScript(const FSys::path& python_file) const {
   auto k_ue4_cmd = p_ue_path / UE4PATH;
   if (!FSys::exists(k_ue4_cmd))
     throw DoodleError{"找不到ue运行文件"};
-//  boost::format command{R"("%s" "%s" -run=%s -script="%s")"};
+  //  boost::format command{R"("%s" "%s" -run=%s -script="%s")"};
   boost::format command{R"("%s" "%s" -ExecutePythonScript="%s")"};
 
   command % k_ue4_cmd.generic_string()      //ue路径
       % p_ue_Project_path.generic_string()  //项目路径
-//      % "pythonscript"                      //运行ue命令名称
-      % python_file.generic_string()           //python脚本路径
+                                            //      % "pythonscript"                      //运行ue命令名称
+      % python_file.generic_string()        //python脚本路径
       ;
   DOODLE_LOG_INFO(command.str())
   boost::process::child k_c{command.str()};
@@ -98,13 +99,12 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
       FSys::create_directories(p_episodes_vfx_name);
   }
 
-  auto k_tmp_file_path = coreSet::getSet().getCacheRoot("ue4_lev")
-      / boost::uuids::to_string(coreSet::getSet().getUUID()).append(".py");
+  auto k_tmp_file_path = coreSet::getSet().getCacheRoot("ue4_lev") / boost::uuids::to_string(coreSet::getSet().getUUID()).append(".py");
 
-  { //写入临时文件
+  {  //写入临时文件
     auto tmp_f = cmrc::DoodleLibResource::get_filesystem().open("resource/Ue4CraeteLevel.py");
-    FSys::fstream file{k_tmp_file_path,std::ios_base::out | std::ios::binary};
-    file.write(tmp_f.begin(),tmp_f.size());
+    FSys::fstream file{k_tmp_file_path, std::ios_base::out | std::ios::binary};
+    file.write(tmp_f.begin(), tmp_f.size());
   }
 
   {  //这个是后续追加写入
@@ -114,14 +114,14 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
     file << std::endl;
 
     auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0]->Episodes_()->str();
-    for (const auto &k_shot : inShotList) {
+    for (const auto& k_shot : inShotList) {
       boost::format k_shot_str{"%s%04d_%s"};
       k_shot_str %
           this->p_project->ShortStr() %
           k_shot->Episodes_()->Episodes_() %
           k_shot->str();
 
-      auto k_shot_path = k_episodes_path / k_shot_str.str();
+      auto k_shot_path      = k_episodes_path / k_shot_str.str();
       auto k_game_shot_path = k_game_episodes_path / k_shot_str.str();
       if (!FSys::exists(k_shot_path))
         FSys::create_directory(k_shot_path);
@@ -137,22 +137,18 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
       k_shot_sequence += k_shot_suffix.str();
 
       auto k_shot_sequence_path = k_shot_path / (k_shot_sequence + ".uasset");
-      auto k_shot_lev = k_shot_str.str();
+      auto k_shot_lev           = k_shot_str.str();
       k_shot_lev += "_lev" + k_shot_suffix.str();
       auto k_shot_lev_path = k_shot_path / (k_shot_lev + ".umap");
 
       if (!FSys::exists(k_shot_sequence_path) && !FSys::exists(k_shot_lev_path)) {
-        python_format
-            % k_shot_lev
-            % k_game_shot_path.generic_string()
-            % k_shot_sequence
-            % k_game_shot_path.generic_string();
+        python_format % k_shot_lev % k_game_shot_path.generic_string() % k_shot_sequence % k_game_shot_path.generic_string();
 
         file << python_format.str() << std::endl;
         python_format.clear();
       }
     }
-//    file << "time.sleep(3)" << std::endl;
+    //    file << "time.sleep(3)" << std::endl;
   }
 
   this->runPythonScript(k_tmp_file_path);

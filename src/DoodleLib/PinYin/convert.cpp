@@ -1,4 +1,4 @@
-#include <PinYIn/convert.h>
+#include <PinYin/convert.h>
 #include <boost/locale.hpp>
 #include <Logger/Logger.h>
 
@@ -8,7 +8,7 @@
 namespace doodle {
 static std::vector<std::string> pinyin_list{};
 convert::convert() {
-  const auto &resource = cmrc::DoodleLibResource::get_filesystem().open("zhtopy.txt");
+  const auto &resource = cmrc::DoodleLibResource::get_filesystem().open("resource/zhtopy.txt");
 
   std::string ZhongWenToPinYin{resource.begin(), resource.size()};
   std::regex regex{R"(\s)"};
@@ -20,8 +20,7 @@ convert::convert() {
   }
 }
 
-convert::~convert() {
-}
+convert::~convert() = default;
 
 std::string convert::toEn(const std::string &conStr) {
   auto datas = boost::locale::conv::to_utf<wchar_t>(conStr, "UTF-8");

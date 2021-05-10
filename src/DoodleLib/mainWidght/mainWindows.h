@@ -17,6 +17,7 @@ class mainWindows : public wxFrame {
   wxWindowIDRef p_create_dir_image_id;
   wxWindowIDRef p_create_video_id;
   wxWindowIDRef p_create_ue4File_id;
+  wxWindowIDRef p_mkLink_id;
 
  public:
   explicit mainWindows();

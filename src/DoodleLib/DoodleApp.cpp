@@ -6,22 +6,21 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
-#include <core/coreset.h>
-
-#include <mainWidght/mainWindows.h>
-#include <mainWidght/systemTray.h>
-#include <SettingWidght/settingWidget.h>
-#include <DoodleApp.h>
-
 #include <DoodleConfig.h>
-#include <exception>
+#include <DoodleLib/DoodleApp.h>
+#include <DoodleLib/Metadata/MetadataWidget.h>
+#include <DoodleLib/SettingWidght/settingWidget.h>
+#include <DoodleLib/mainWidght/mainWindows.h>
+#include <DoodleLib/mainWidght/systemTray.h>
+#include <DoodleLib/mainWidght/MklinkWidget.h>
 
-#include <Metadata/MetadataWidget.h>
-//#include <DoodleLib/win_exe.rc>
+#include <exception>
+#include <wx/cmdline.h>
+#include <wx/wxprec.h>
 
 wxIMPLEMENT_APP_NO_MAIN(doodle::Doodle);
 
-namespace doodle{
+namespace doodle {
 Doodle::Doodle()
     : p_mainWindwos(nullptr),
       p_setting_widget(nullptr) {
@@ -37,15 +36,33 @@ int Doodle::OnExit() {
   return wxApp::OnExit();
 }
 
-void Doodle::openMainWindow() const{
+void Doodle::OnInitCmdLine(wxCmdLineParser& parser) {
+  // parser.SetSwitchChars(ConvStr<wxString>("-"));
+  wxApp::OnInitCmdLine(parser);
+  parser.AddOption(ConvStr<wxString>("fun"));
+}
+
+// bool Doodle::OnCmdLineParsed(wxCmdLineParser& parser) {
+//   auto fun = parser.Found(ConvStr<wxString>("fun"));
+//   return true;
+// }
+
+void Doodle::openMainWindow() const {
   p_mainWindwos->Show();
 }
 
-void Doodle::openSettingWindow() const{
+void Doodle::openSettingWindow() const {
   p_setting_widget->Show();
 }
-void Doodle::openMetadaWindow() const{
+void Doodle::openMetadaWindow() const {
   p_metadata_widget->Show();
+}
+
+void Doodle::runCommand()  {
+  auto mk  = MklinkWidget{nullptr, wxID_ANY};
+  auto k_r = mk.ShowModal();
+  this->Exit();
+  // return k_r == wxID_OK;
 }
 // bool Doodle::OnExceptionInMainLoop() {
 //   this->Exception();
@@ -59,11 +76,22 @@ void Doodle::openMetadaWindow() const{
 // }
 
 bool Doodle::OnInit() {
-  wxApp::OnInit();
+  if (!wxApp::OnInit())
+    return false;
+
   // wxApp::SetExitOnFrameDelete(false);
   wxLog::EnableLogging(true);
 
-  p_mainWindwos = new mainWindows{};
+  for (int i = 0; i < argc; ++i) {
+    DOODLE_LOG_INFO("arg " << i << ": " << argv[i]);
+  }
+
+  if (argc >= 2) {
+    runCommand();
+    return true;
+  }
+
+  p_mainWindwos        = new mainWindows{};
   const wxIcon& k_icon = wxICON(ID_DOODLE_ICON);
   p_mainWindwos->SetIcon(k_icon);
   this->SetTopWindow(p_mainWindwos);
@@ -79,10 +107,10 @@ bool Doodle::OnInit() {
   p_setting_widget = new SettingWidght{p_mainWindwos, wxID_ANY};
   p_mainWindwos->Show();
 
-  p_metadata_widget = new MetadataWidget{p_mainWindwos,wxID_ANY};
+  p_metadata_widget = new MetadataWidget{p_mainWindwos, wxID_ANY};
   p_metadata_widget->Show();
 
   return true;
 }
 
-} // namespace doodle
+}  // namespace doodle

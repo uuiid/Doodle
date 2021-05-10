@@ -94,6 +94,13 @@ std::string ConvStr(const wxString& str);
 
 template<>
 wxString ConvStr(const std::string& str);
+
+template<>
+wxString ConvStr(const FSys::path& str);
+
+template<>
+FSys::path ConvStr(const wxString& str);
+
 //模板特化一个指针类型的模板
 template <typename SSC,typename SSN>
 SSC ConvStr(const SSN* str){
@@ -113,6 +120,8 @@ template<std::size_t N>
 wxString ConvStr(const char (&str)[N]){
   return wxString::FromUTF8(str,N);
 };
+
+
 DOODLE_NAMESPACE_E
 
 wxDECLARE_APP(doodle::Doodle);

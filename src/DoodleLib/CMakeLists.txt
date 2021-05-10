@@ -52,8 +52,12 @@ target_precompile_headers(DoodleLib
         <queue>
         <functional>
         <stdexcept>
+        <Windows.h>
         <boost/process.hpp> # 这个头要在wx的前面才不会出错
-        <wx/wx.h>           # 因为wx中的setup.h 定义了一个pid宏 会影响boost中的处理
+        <wx/wx.h>           # 因为wx中的setup.h 定义了一个pid_t宏 会影响boost中的处理
+#        [["#ifdef pid_t"]]
+#        [["#undef pid_t"]]
+#        [["#endif"]]
         )
 
 target_link_libraries(DoodleLib PUBLIC
@@ -82,7 +86,7 @@ target_compile_definitions(DoodleLib PRIVATE
         wxUSE_STD_STRING
         wxUSE_UNICODE_WCHAR
         ) # WIN32_LEAN_AND_MEAN
-target_compile_definitions(DoodleLib PUBLIC _WIN32_WINNT=0x0A00)
+target_compile_definitions(DoodleLib PUBLIC _WIN32_WINNT=0x0A00 WIN32_LEAN_AND_MEAN)
 
 
 target_include_directories(DoodleLib

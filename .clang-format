@@ -1,4 +1,4 @@
 BasedOnStyle: Google
-SortIncludes: false
+SortIncludes: CaseInsensitive
 ColumnLimit: 0
 # AlignConsecutiveAssignments: true
