@@ -14,10 +14,10 @@
 #include <DoodleApp.h>
 
 #include <DoodleConfig.h>
-#include <boost/locale.hpp>
 #include <exception>
 
 #include <Metadata/MetadataWidget.h>
+//#include <DoodleLib/win_exe.rc>
 
 wxIMPLEMENT_APP_NO_MAIN(doodle::Doodle);
 
@@ -64,11 +64,12 @@ bool Doodle::OnInit() {
   wxLog::EnableLogging(true);
 
   p_mainWindwos = new mainWindows{};
-  p_mainWindwos->SetIcon(wxICON(ID_DOODLE_ICON));
+  const wxIcon& k_icon = wxICON(ID_DOODLE_ICON);
+  p_mainWindwos->SetIcon(k_icon);
   this->SetTopWindow(p_mainWindwos);
 
   p_systemTray = new systemTray{};
-  p_systemTray->SetIcon(wxICON(ID_DOODLE_ICON),
+  p_systemTray->SetIcon(k_icon,
                         wxString::Format(
                             wxString{"doodle-%d.%d.%d.%d"},
                             Doodle_VERSION_MAJOR,
@@ -85,32 +86,3 @@ bool Doodle::OnInit() {
 }
 
 } // namespace doodle
-
-
-extern "C" int WINAPI WinMain(HINSTANCE hInstance,
-                              HINSTANCE hPrevInstance,
-                              wxCmdLineArgType WXUNUSED(lpCmdLine),
-                              int nCmdShow) try {
-  //设置一下文件系统后端
-  auto k_local = boost::locale::generator().generate("");
-  boost::filesystem::path::imbue(k_local);
-  //初始化log
-  Logger::doodle_initLog();
-
-  //初始化设置
-  auto &set = doodle::coreSet::getSet();
-  set.init();
-  auto result = wxEntry(hInstance, hPrevInstance, NULL, nCmdShow);
-  boost::log::core::get()->remove_all_sinks();
-
-  return result;
-} catch (const std::exception &err) {
-  DOODLE_LOG_ERROR(err.what());
-  doodle::coreSet::getSet().writeDoodleLocalSet();
-  boost::log::core::get()->remove_all_sinks();
-  return 1;
-} catch (...) {
-  doodle::coreSet::getSet().writeDoodleLocalSet();
-  boost::log::core::get()->remove_all_sinks();
-  return 1;
-}

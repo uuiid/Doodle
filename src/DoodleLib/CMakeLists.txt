@@ -17,9 +17,9 @@ DOODLELIB_SOURCE=${DOODLELIB_SOURCE}")
 
 add_library(DoodleLib
         SHARED
+        winDoodleLib.rc
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
-        win_exe.rc
         DoodleLib.manifest
         )
 set_target_properties(DoodleLib

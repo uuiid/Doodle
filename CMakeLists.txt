@@ -163,7 +163,7 @@ if (RUN_fixup)
     #最后实现camke修复
     install(CODE "
         include(BundleUtilities)
-        fixup_bundle(\"$<TARGET_FILE:doodle>\"   \"\"   \"${DIRS}\")
+        fixup_bundle(\"$<TARGET_FILE:DoodleExe>\"   \"\"   \"${DIRS}\")
         ")
 endif (RUN_fixup)
 
@@ -175,8 +175,8 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/ DESTINATION bin
 
 
 set(CPACK_GENERATOR "WIX")
-set(CPACK_PACKAGE_EXECUTABLES doodle;Doodle)
-set(CPACK_CREATE_DESKTOP_LINKS doodle)
+set(CPACK_PACKAGE_EXECUTABLES DoodleExe;Doodle)
+set(CPACK_CREATE_DESKTOP_LINKS DoodleExe)
 set(CPACK_PACKAGE_VENDOR uuiid)
 set(CPACK_PACKAGE_INSTALL_DIRECTORY uuiid)
 set(CPACK_WIX_UPGRADE_GUID 96068D94-08C8-412B-9292-6DE8453E61B3)
