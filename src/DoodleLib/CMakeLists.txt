@@ -12,8 +12,6 @@ cmrc_add_resource_library(
 )
 
 include(DoodleLib.cmake)
-message("DOODLELIB_HEADER=${DOODLELIB_HEADER}
-DOODLELIB_SOURCE=${DOODLELIB_SOURCE}")
 
 add_library(DoodleLib
         SHARED
