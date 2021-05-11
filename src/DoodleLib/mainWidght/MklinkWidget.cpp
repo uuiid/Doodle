@@ -8,6 +8,7 @@
 #include <DoodleLib/core/coreset.h>
 
 #include <boost/format.hpp>
+#include <boost/locale.hpp>
 
 #include <shellapi.h>
 namespace doodle {
@@ -31,7 +32,7 @@ bool MklinkWidget::CreateLink() {
   auto k_s = p_source.parent_path() / Ue4Project::Content / Ue4Project::Character;
   auto k_t = p_target.parent_path() / Ue4Project::Content / Ue4Project::Character;
 
-  auto k_s_ip = coreSet::toIpPath(k_s.root_name()) / k_s.relative_path();
+  // auto k_r = coreSet::toIpPath(k_s.root_name()) / k_s.relative_path();
 
   boost::wformat str{LR"(-fun=mklink;%s;%s)"};
   str % k_s.generic_wstring() % k_t.generic_wstring();
@@ -42,7 +43,7 @@ bool MklinkWidget::CreateLink() {
   // boost::format str{R"(%1% --path %2% --exportpath %3%)"};
   // str % k_tmp_path.generic_string() % file_path.generic_string() % k_export_path.generic_string();
 
-  DOODLE_LOG_INFO(str.str())
+  DOODLE_LOG_INFO(boost::locale::conv::utf_to_utf<char>(str.str()))
 
   auto path_  = path.generic_wstring();
   auto path_c = path_.c_str();
