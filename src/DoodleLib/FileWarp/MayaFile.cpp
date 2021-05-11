@@ -63,7 +63,7 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
     //使用windowsIPA创建子进程
     CreateProcess(
         nullptr,
-        (wchar_t *)str.str().c_str(),
+        (wchar_t*)str.str().c_str(),
         nullptr,
         nullptr,
         false,
@@ -96,6 +96,7 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
 
   // k_c.wait();
   FSys::remove(k_tmp_path);
+  FSys::copy_file(file_path, k_export_path / file_path.filename(), FSys::copy_option::overwrite_if_exists);
   return true;
 }
 
@@ -114,10 +115,10 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
     }
   }
   std::future_status status{};
-  auto it     = result.begin();
-  auto size   = boost::numeric_cast<float>(result.size());
-  auto k_pro  = float{0};
-  auto mess   = boost::format{"文件:%s-->%s\n"};
+  auto it    = result.begin();
+  auto size  = boost::numeric_cast<float>(result.size());
+  auto k_pro = float{0};
+  auto mess  = boost::format{"文件:%s-->%s\n"};
 
   while (!result.empty()) {
     status = it->second.wait_for(std::chrono::milliseconds{10});
