@@ -107,10 +107,22 @@ TEST(dboost, filesys_append) {
   std::cout << path << std::endl;
 }
 
-TEST(dboost, path_append){
-  doodle::FSys::path p1{L"9-houqi\\模型库\\人物\\路人D\\Content\\Character"};
-  doodle::FSys::path p2{L"\\\\192.168.10.250\\public\\changanhuanjie"};
-  auto p = p2/p1;
-  std::cout << p << std::endl;
-
+TEST(dboost, path_append) {
+  doodle::FSys::path p1{L"D:\\9-houqi\\Content\\Character"};
+  doodle::FSys::path p2{L"D:/"};
+  std::cout << "root name: " << p1.root_name() << std::endl
+            << "root path: " << p1.root_path() << std::endl
+            << "root dir: " << p1.root_directory() << std::endl
+            << "relative path: " << p1.relative_path() << std::endl
+            << "p1.root_name() / p1.root_directory() / p1.relative_path(): "
+            << p1.root_name() / p1.root_directory() / p1.relative_path() << std::endl
+            << " D:\\9-houqi\\Content\\Character lexically_relative D:/ : "
+            << p1.lexically_relative(p2) << std::endl
+            << " D:/lexically_relative D:\\9-houqi\\Content\\Character  : "
+            << p2.lexically_relative(p1) << std::endl
+            << "D:\\9-houqi\\Content\\Character lexically_proximate D:/ : "
+            << p1.lexically_proximate(p2) << std::endl
+            << "D:/ lexically_proximate D:\\9-houqi\\Content\\Character : "
+            << p2.lexically_proximate(p1) << std::endl;
+  ;
 }
