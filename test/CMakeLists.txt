@@ -16,11 +16,6 @@ PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 target_link_libraries(test_my
         PRIVATE DoodleLib)
 
-find_library(DOODLE_MAR 
-mpr.lib
-REQUIRED
-) 
-
 target_link_libraries(test_my PRIVATE ${DOODLE_MAR})
 
 # target_link_libraries(test_my PRIVATE cppzmq cppzmq-static)

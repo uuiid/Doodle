@@ -22,7 +22,6 @@
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Logger/LoggerTemplate.h>
-#include <DoodleLib/mainWidght/FileDropTarget.h>
 #include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>
 #include <DoodleLib/Metadata/Assets.h>

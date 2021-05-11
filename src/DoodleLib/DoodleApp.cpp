@@ -17,6 +17,7 @@
 #include <exception>
 #include <wx/cmdline.h>
 #include <wx/wxprec.h>
+#include <boost/algorithm/string.hpp>
 
 wxIMPLEMENT_APP_NO_MAIN(doodle::Doodle);
 
@@ -58,11 +59,14 @@ void Doodle::openMetadaWindow() const {
   p_metadata_widget->Show();
 }
 
-void Doodle::runCommand()  {
-  auto mk  = MklinkWidget{nullptr, wxID_ANY};
-  auto k_r = mk.ShowModal();
-  this->Exit();
-  // return k_r == wxID_OK;
+void Doodle::runCommand() {
+  auto cmd = ConvStr<std::string>(argv[1]);
+  std::vector<std::string> str;
+  std::vector<std::string> str2;
+  boost::split(str, cmd, boost::is_any_of("="));
+  boost::split(str2, str[1], boost::is_any_of(";"));
+  MklinkWidget::mklink(str2[1], str2[2]);
+  Exit();
 }
 // bool Doodle::OnExceptionInMainLoop() {
 //   this->Exception();
@@ -108,7 +112,7 @@ bool Doodle::OnInit() {
   p_mainWindwos->Show();
 
   p_metadata_widget = new MetadataWidget{p_mainWindwos, wxID_ANY};
-  p_metadata_widget->Show();
+  // p_metadata_widget->Show();
 
   return true;
 }

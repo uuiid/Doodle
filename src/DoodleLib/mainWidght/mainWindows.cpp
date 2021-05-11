@@ -5,7 +5,6 @@
 #include <DoodleLib/Metadata/View/ShotListWidget.h>
 #include <DoodleLib/SettingWidght/settingWidget.h>
 #include <DoodleLib/core_Cpp.h>
-#include <DoodleLib/mainWidght/FileDropTarget.h>
 #include <DoodleLib/mainWidght/systemTray.h>
 #include <DoodleLib/toolkit/MessageAndProgress.h>
 #include <DoodleLib/mainWidght/MklinkWidget.h>
@@ -60,37 +59,33 @@ mainWindows::mainWindows()
     this->exportMayaFile(path);
   });
 
-  FileDropTarget* k_dray;
-
   k_create_image->DragAcceptFiles(true);
-  k_dray = new FileDropTarget{};
-  k_dray->handleFileFunction.connect([this](auto&& PH1) { createVideoFile(std::forward<decltype(PH1)>(PH1)); });
-  k_create_image->SetDropTarget(k_dray);
+  k_create_image->Bind(wxEVT_DROP_FILES, [this](wxDropFilesEvent& event) {
+    std::vector<FSys::path> path = convertPath(event);
+    this->createVideoFile(path);
+  });
 
   k_create_dir_image->DragAcceptFiles(true);
-  k_dray = new FileDropTarget{};
-  k_dray->handleFileFunction.connect([this](auto&& PH1) { createVideoFileFormDir(std::forward<decltype(PH1)>(PH1)); });
-  k_create_dir_image->SetDropTarget(k_dray);
+  k_create_dir_image->Bind(wxEVT_DROP_FILES, [this](wxDropFilesEvent& event) {
+    std::vector<FSys::path> path = convertPath(event);
+    this->createVideoFileFormDir(path);
+  });
 
   k_create_video->DragAcceptFiles(true);
-  k_dray = new FileDropTarget{};
-  k_dray->handleFileFunction.connect([this](auto&& PH1) { connectVideo(std::forward<decltype(PH1)>(PH1)); });
-  k_create_video->SetDropTarget(k_dray);
+  k_create_video->Bind(wxEVT_DROP_FILES, [this](wxDropFilesEvent& event) {
+    std::vector<FSys::path> path = convertPath(event);
+    this->connectVideo(path);
+  });
 
   k_create_ue4File->DragAcceptFiles(true);
   k_create_ue4File->Bind(wxEVT_DROP_FILES, [this](wxDropFilesEvent& event) {
-    const auto num = event.GetNumberOfFiles();
-    std::vector<FSys::path> path{};
-    auto wxPath = event.GetFiles();
-    if (num > 0) {
-      for (auto i = 0; i < num; ++i)
-        path.emplace_back(ConvStr<std::string>(wxPath[i]));
-    }
+    std::vector<FSys::path> path = convertPath(event);
     this->createUe4Project(path);
   });
 
   k_mkink->Bind(wxEVT_BUTTON, [this](wxCommandEvent& event) {
-    MklinkWidget::mklink(this);
+    auto mk  = MklinkWidget{this, wxID_ANY};
+    auto k_r = mk.ShowModal();
   });
   k_create_ue4File->Bind(
       wxEVT_BUTTON,
@@ -108,6 +103,17 @@ mainWindows::mainWindows()
   this->Layout();
   this->Center(wxBOTH);
   this->SetSize(wxSize{400, 350});
+}
+
+std::vector<FSys::path> mainWindows::convertPath(const wxDropFilesEvent& event) {
+  const auto num = event.GetNumberOfFiles();
+  std::vector<FSys::path> path{};
+  auto wxPath = event.GetFiles();
+  if (num > 0) {
+    for (auto i = 0; i < num; ++i)
+      path.emplace_back(ConvStr<std::string>(wxPath[i]));
+  }
+  return path;
 }
 
 void mainWindows::exportMayaFile(const std::vector<FSys::path>& paths) {

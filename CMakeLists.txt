@@ -54,6 +54,7 @@ find_package(Sqlpp11 REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 find_package(FFMPEG REQUIRED)
 find_package(rttr CONFIG REQUIRED)
+find_library(DOODLE_MAR mpr.lib REQUIRED)
 # find_package(pugixml CONFIG REQUIRED)
 
 find_package(Doxygen REQUIRED)

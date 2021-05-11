@@ -2,7 +2,6 @@
 #include <Exception/Exception.h>
 #include <PinYin/convert.h>
 
-
 #include <nlohmann/json.hpp>
 
 #include <boost/algorithm/string.hpp>
@@ -106,12 +105,24 @@ coreSet::coreSet()
       p_mayaPath() {
 }
 
-std::string coreSet::toIpPath(const std::string &path) {
-  static boost::regex exp("^[A-Z]:");
-  if (boost::regex_search(path, exp)) {
-    return path.substr(2);
+FSys::path coreSet::toIpPath(const FSys::path &path) {
+  std::wstring str{};
+  str.resize(MAX_PATH);
+  DWORD dwResult, cchBuff = str.size();
+  dwResult = WNetGetConnection(path.generic_wstring().c_str(), str.data(), &cchBuff);
+  switch (dwResult) {
+    case NO_ERROR:
+      break;
+    case ERROR_BUFFER_OVERFLOW: {
+      str.resize(cchBuff);
+      dwResult = WNetGetConnection(path.generic_wstring().c_str(), str.data(), &cchBuff);
+      break;
+    }
+    default: {
+      throw DoodleError{"错误代码：" + std::to_string(dwResult)};
+    } break;
   }
-  return path;
+  return {str};
 }
 
 boost::uuids::uuid coreSet::getUUID() {

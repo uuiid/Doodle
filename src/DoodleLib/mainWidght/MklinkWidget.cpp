@@ -6,6 +6,7 @@
 
 #include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/core/coreset.h>
+
 #include <boost/format.hpp>
 
 #include <shellapi.h>
@@ -26,23 +27,38 @@ FSys::path MklinkWidget::getFilePath(wxWindow* parent) {
 }
 
 bool MklinkWidget::CreateLink() {
+  //生成命令
   auto k_s = p_source.parent_path() / Ue4Project::Content / Ue4Project::Character;
   auto k_t = p_target.parent_path() / Ue4Project::Content / Ue4Project::Character;
 
-  if (FSys::exists(k_t.parent_path()))
-    FSys::create_directories(k_t.parent_path());
+  auto k_s_ip = coreSet::toIpPath(k_s.root_name()) / k_s.relative_path();
 
-  if (FSys::exists(k_s) && !FSys::exists(k_t)) {
-    auto k_r = CreateSymbolicLink(k_s.generic_wstring().c_str(), k_t.generic_wstring().c_str(), SYMBOLIC_LINK_FLAG_DIRECTORY);
-    if (k_r == 0) {
-      auto k_err = GetLastError();
-      wxMessageDialog{this, ConvStr<wxString>("出错了!(请提升为管理员试试)")}.ShowModal();
-      return false;
-    }
-    return true;
-  } else
-    wxMessageDialog{this, ConvStr<wxString>("来源不存在或者目标已存在! ")}.ShowModal();
-  return false;
+  boost::wformat str{LR"(-fun=mklink;%s;%s)"};
+  str % k_s.generic_wstring() % k_t.generic_wstring();
+
+  auto path = coreSet::getSet().program_location() / "doodleExe.exe";
+  // str % k_tmp_path.generic_wstring() % file_path.generic_wstring() % k_export_path.generic_wstring();
+  // str % p_path.generic_wstring();
+  // boost::format str{R"(%1% --path %2% --exportpath %3%)"};
+  // str % k_tmp_path.generic_string() % file_path.generic_string() % k_export_path.generic_string();
+
+  DOODLE_LOG_INFO(str.str())
+
+  auto path_  = path.generic_wstring();
+  auto path_c = path_.c_str();
+  auto str_   = str.str();
+  auto str_c  = str_.c_str();
+
+  SHELLEXECUTEINFO ShExecInfo = {sizeof(SHELLEXECUTEINFO), 0};
+  ShExecInfo.fMask            = SEE_MASK_NOCLOSEPROCESS;
+  ShExecInfo.nShow            = SW_SHOWNORMAL;
+  ShExecInfo.lpFile           = (LPCWSTR)path_c;
+  ShExecInfo.lpParameters     = (LPCWSTR)str_c;
+  ShExecInfo.lpVerb           = _T("runas");
+  ShellExecuteEx(&ShExecInfo);
+  WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
+  CloseHandle(ShExecInfo.hProcess);
+  return true;
 }
 
 MklinkWidget::MklinkWidget(wxWindow* parent, wxWindowID id)
@@ -78,14 +94,35 @@ MklinkWidget::MklinkWidget(wxWindow* parent, wxWindowID id)
   layout->SetSizeHints(this);
 
   k_soure_butten->Bind(wxEVT_BUTTON, [k_text_soure_ctrl, this](wxCommandEvent& event) {
-    auto path      = getFilePath(this);
-    this->p_source = path;
+    auto path = getFilePath(this);
+    if (!path.empty())
+      this->p_source = path;
     k_text_soure_ctrl->SetValue(ConvStr<wxString>(path));
   });
   k_target_butten->Bind(wxEVT_BUTTON, [k_text_target_ctrl, this](wxCommandEvent& event) {
-    auto path      = getFilePath(this);
-    this->p_target = path;
-    k_text_target_ctrl->SetValue(ConvStr<wxString>(path));
+    auto path = getFilePath(this);
+    if (!path.empty()) {
+      this->p_target = path;
+      k_text_target_ctrl->SetValue(ConvStr<wxString>(path));
+    }
+  });
+
+  //设置为可以拖拽
+  k_text_soure_ctrl->DragAcceptFiles(true);
+  k_text_soure_ctrl->Bind(wxEVT_DROP_FILES, [k_text_soure_ctrl, this](wxDropFilesEvent& event) {
+    auto k_num = event.GetNumberOfFiles();
+    if (k_num > 0) {
+      this->p_source = ConvStr<FSys::path>(event.GetFiles()[0]);
+      k_text_soure_ctrl->SetValue(event.GetFiles()[0]);
+    }
+  });
+  k_text_target_ctrl->DragAcceptFiles(true);
+  k_text_target_ctrl->Bind(wxEVT_DROP_FILES, [k_text_target_ctrl, this](wxDropFilesEvent& event) {
+    auto k_num = event.GetNumberOfFiles();
+    if (k_num > 0) {
+      this->p_target = ConvStr<FSys::path>(event.GetFiles()[0]);
+      k_text_target_ctrl->SetValue(event.GetFiles()[0]);
+    }
   });
 
   k_ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent& event) {
@@ -100,34 +137,14 @@ MklinkWidget::MklinkWidget(wxWindow* parent, wxWindowID id)
   layout->AddGrowableCol(1);
 }
 
-bool MklinkWidget::mklink(wxWindow* parent) {
-  // auto mk  = MklinkWidget{parent, wxID_ANY};
-  // auto k_r = mk.ShowModal();
-  // return k_r == wxID_OK;
-  //生成命令
-  boost::wformat str{LR"(-fun=mklink)"};
-  auto path = coreSet::getSet().program_location() / "doodleExe.exe";
-  // str % k_tmp_path.generic_wstring() % file_path.generic_wstring() % k_export_path.generic_wstring();
-  // str % p_path.generic_wstring();
-  // boost::format str{R"(%1% --path %2% --exportpath %3%)"};
-  // str % k_tmp_path.generic_string() % file_path.generic_string() % k_export_path.generic_string();
+bool MklinkWidget::mklink(const FSys::path& in_source, const FSys::path& in_target) {
+  if (FSys::exists(in_target)) {
+    wxMessageDialog{nullptr, ConvStr<wxString>("已经存在重名文件， 无法添加")}.ShowModal();
+    return false;
+  }
 
-  DOODLE_LOG_INFO(str.str())
-
-  auto path_  = path.generic_wstring();
-  auto path_c = path_.c_str();
-  auto str_   = str.str();
-  auto str_c  = str_.c_str();
-
-  SHELLEXECUTEINFO ShExecInfo = {sizeof(SHELLEXECUTEINFO), 0};
-  ShExecInfo.fMask            = SEE_MASK_NOCLOSEPROCESS;
-  ShExecInfo.nShow            = SW_SHOWNORMAL;
-  ShExecInfo.lpFile           = (LPCWSTR)path_c;
-  ShExecInfo.lpParameters     = (LPCWSTR)str_c;
-  ShExecInfo.lpVerb           = _T("runas");
-  ShellExecuteEx(&ShExecInfo);
-  WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
-  CloseHandle(ShExecInfo.hProcess);
+  FSys::create_directory_symlink(in_source, in_target);
+  wxMessageDialog{nullptr, ConvStr<wxString>("完成添加")}.ShowModal();
   return true;
 }
 }  // namespace doodle

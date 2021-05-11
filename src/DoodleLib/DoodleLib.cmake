@@ -19,7 +19,6 @@
         libWarp/BoostUuidWarp.h
         Logger/Logger.h
         Logger/LoggerTemplate.h
-        mainWidght/FileDropTarget.h
         mainWidght/mainWindows.h
         mainWidght/systemTray.h
         Metadata/Assets.h
@@ -60,7 +59,6 @@ set(
         FileWarp/Ue4Project.cpp
         FileWarp/VideoSequence.cpp
         Logger/Logger.cpp
-        mainWidght/FileDropTarget.cpp
         mainWidght/mainWindows.cpp
         mainWidght/systemTray.cpp
         Metadata/Assets.cpp

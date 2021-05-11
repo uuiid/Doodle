@@ -76,6 +76,9 @@ target_link_libraries(DoodleLib PUBLIC
         $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
         $<IF:$<CONFIG:Debug>,${WX_cored},${WX_core}>
         $<IF:$<CONFIG:Debug>,${WX_advd},${WX_adv}>
+        
+        PRIVATE 
+        ${DOODLE_MAR}
 
         )
 

@@ -25,13 +25,12 @@ class mainWindows : public wxFrame {
   DOODLE_DISABLE_COPY(mainWindows);
 
  private:
+  std::vector<FSys::path> convertPath(const wxDropFilesEvent& event);
   void exportMayaFile(const std::vector<FSys::path>& paths);
   void createVideoFile(const std::vector<FSys::path>& paths);
   void createVideoFileFormDir(const std::vector<FSys::path>& paths);
   void connectVideo(const std::vector<FSys::path>& paths);
   void createUe4Project(const std::vector<FSys::path>& paths);
 };
-
-
 
 DOODLE_NAMESPACE_E

@@ -75,13 +75,13 @@ class DOODLELIB_API coreSet {
 
   void writeDoodleLocalSet();
 
-
   boost::uuids::uuid getUUID();
-  std::string getUUIDStr() ;
-  static void hideFolder(const FSys::path& path);
+  std::string getUUIDStr();
+
+  static void hideFolder(const FSys::path &path);
+  static FSys::path toIpPath(const FSys::path &path);
 
  private:
-  static std::string toIpPath(const std::string &path);
   //私有化构造函数
   coreSet();
   //获得缓存磁盘路径
@@ -113,20 +113,18 @@ class DOODLELIB_API coreSet {
   friend class cereal::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
-
 };
 
 template <class Archive>
 void coreSet::serialize(Archive &ar, std::uint32_t const version) {
-  if(version == 4)
-  ar(
-      cereal::make_nvp("user", user),
-      cereal::make_nvp("department", department),
-      cereal::make_nvp("ue4_setting", ue4_setting),
-      cereal::make_nvp("matadata_setting", p_matadata_setting_),
-      cereal::make_nvp("maya_Path", p_mayaPath));
+  if (version == 4)
+    ar(
+        cereal::make_nvp("user", user),
+        cereal::make_nvp("department", department),
+        cereal::make_nvp("ue4_setting", ue4_setting),
+        cereal::make_nvp("matadata_setting", p_matadata_setting_),
+        cereal::make_nvp("maya_Path", p_mayaPath));
 }
-
 
 DOODLE_NAMESPACE_E
 namespace cereal {

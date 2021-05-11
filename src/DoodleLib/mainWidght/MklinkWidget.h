@@ -16,7 +16,7 @@ class MklinkWidget : public wxDialog {
 
  public:
   explicit MklinkWidget(wxWindow* parent, wxWindowID id = wxID_ANY);
-  static bool mklink(wxWindow* parent);
+  static bool mklink(const FSys::path& in_source, const FSys::path& in_target);
 };
 
 }  // namespace doodle
