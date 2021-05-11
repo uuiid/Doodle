@@ -2,7 +2,7 @@
 
 // #include <sstream>
 #include <iostream>
-#include <boost/filesystem.hpp>
+// #include <boost/filesystem.hpp>
 // #include <boost/iostreams/stream.hpp>
 // #include <boost/iostreams/device/mapped_file.hpp>
 #include <loggerlib/Logger.h>
@@ -75,7 +75,7 @@ bool FileSystem::copy(const FSys::path* source, const FSys::path* target) {
     }
     if (FSys::exists(*source)) {
       if (FSys::is_regular_file(*source)) {
-        FSys::copy_file(*source, *target, FSys::copy_option::overwrite_if_exists);
+        FSys::copy_file(*source, *target, FSys::copy_options::overwrite_existing);
       } else {
         auto regex = std::regex(source->generic_string());
 
@@ -88,7 +88,7 @@ bool FileSystem::copy(const FSys::path* source, const FSys::path* target) {
               FSys::create_directories(k_target.parent_path());
             }
 
-            FSys::copy_file(iter.path(), k_target, FSys::copy_option::overwrite_if_exists);
+            FSys::copy_file(iter.path(), k_target, FSys::copy_options::overwrite_existing);
           }
         }
       }

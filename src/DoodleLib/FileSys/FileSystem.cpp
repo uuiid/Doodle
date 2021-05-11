@@ -11,10 +11,10 @@ void FileSystem::localCopy(const FSys::path& in_sourcePath, const FSys::path& ta
   //创建线程池多线程复制
   boost::asio::thread_pool pool(std::thread::hardware_concurrency());
   //验证文件存在
-  // if (boost::filesystem::exists(targetPath)) return false;
-  if (!boost::filesystem::exists(in_sourcePath)) throw FileError(in_sourcePath, "不存在路径");
-  if (!boost::filesystem::exists(targetPath.parent_path()))
-    boost::filesystem::create_directories(targetPath.parent_path());
+  // if (FSys::exists(targetPath)) return false;
+  if (!FSys::exists(in_sourcePath)) throw FileError(in_sourcePath, "不存在路径");
+  if (!FSys::exists(targetPath.parent_path()))
+    FSys::create_directories(targetPath.parent_path());
   FSys::path backup_path{};
   std::string time_str{};
   if (backup) {
@@ -25,22 +25,22 @@ void FileSystem::localCopy(const FSys::path& in_sourcePath, const FSys::path& ta
                   targetPath.filename();
   }
 
-  if (boost::filesystem::is_regular_file(in_sourcePath)) {  //复制文件
-    if (!boost::filesystem::exists(targetPath.parent_path()))
-      boost::filesystem::create_directories(targetPath.parent_path());
+  if (FSys::is_regular_file(in_sourcePath)) {  //复制文件
+    if (!FSys::exists(targetPath.parent_path()))
+      FSys::create_directories(targetPath.parent_path());
     boost::asio::post(pool, [=]() {
-      boost::filesystem::copy_file(in_sourcePath, targetPath,
-                                   boost::filesystem::copy_option::overwrite_if_exists);
+      FSys::copy_file(in_sourcePath, targetPath,
+                      FSys::copy_options::overwrite_existing);
     });
 
     if (backup) {
-      if (!boost::filesystem::exists(backup_path.parent_path())) {
-        boost::filesystem::create_directories(backup_path.parent_path());
+      if (!FSys::exists(backup_path.parent_path())) {
+        FSys::create_directories(backup_path.parent_path());
       }
       boost::asio::post(pool, [=]() {
-        boost::filesystem::copy_file(
+        FSys::copy_file(
             in_sourcePath, backup_path,
-            boost::filesystem::copy_option::overwrite_if_exists);
+            FSys::copy_options::overwrite_existing);
       });
     }
 
@@ -51,28 +51,28 @@ void FileSystem::localCopy(const FSys::path& in_sourcePath, const FSys::path& ta
                     << targetPath.generic_string().c_str());
     backup_path = targetPath / "backup" / time_str;
     for (auto& item :
-         boost::filesystem::recursive_directory_iterator(in_sourcePath)) {
-      if (boost::filesystem::is_regular_file(item.path())) {
+         FSys::recursive_directory_iterator(in_sourcePath)) {
+      if (FSys::is_regular_file(item.path())) {
         FSys::path basic_string = std::regex_replace(
             item.path().generic_string(), dregex, targetPath.generic_string());
         boost::asio::post(pool, [=]() {
-          if (!boost::filesystem::exists(basic_string.parent_path()))
-            boost::filesystem::create_directories(basic_string.parent_path());
+          if (!FSys::exists(basic_string.parent_path()))
+            FSys::create_directories(basic_string.parent_path());
 
-          boost::filesystem::copy_file(
+          FSys::copy_file(
               item.path(), basic_string,
-              boost::filesystem::copy_option::overwrite_if_exists);
+              FSys::copy_options::overwrite_existing);
         });
         if (backup) {
           FSys::path basic_backup_path = std::regex_replace(
               item.path().generic_string(), dregex, backup_path.generic_string());
           boost::asio::post(pool, [=]() {
-            if (!boost::filesystem::exists(basic_backup_path.parent_path()))
-              boost::filesystem::create_directories(basic_backup_path.parent_path());
+            if (!FSys::exists(basic_backup_path.parent_path()))
+              FSys::create_directories(basic_backup_path.parent_path());
 
-            boost::filesystem::copy_file(
+            FSys::copy_file(
                 item.path(), basic_backup_path,
-                boost::filesystem::copy_option::overwrite_if_exists);
+                FSys::copy_options::overwrite_existing);
           });
         }
       }

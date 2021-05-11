@@ -107,8 +107,10 @@ TEST(dboost, filesys_append) {
   std::cout << path << std::endl;
 }
 
-TEST(dboost, uuiid_path){
-//  doodle::FSys::path path{"tset/sdsa/"};
-//  path /= doodle::coreSet::getSet().getUUID();
-//  std::cout << path << std::endl;
+TEST(dboost, path_append){
+  doodle::FSys::path p1{L"9-houqi\\模型库\\人物\\路人D\\Content\\Character"};
+  doodle::FSys::path p2{L"\\\\192.168.10.250\\public\\changanhuanjie"};
+  auto p = p2/p1;
+  std::cout << p << std::endl;
+
 }

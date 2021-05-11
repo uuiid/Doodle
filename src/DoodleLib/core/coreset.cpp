@@ -187,7 +187,7 @@ void coreSet::getCacheDiskPath() {
 }
 
 FSys::path coreSet::program_location() {
-  return boost::dll::program_location().parent_path();
+  return {boost::dll::program_location().parent_path().generic_string()};
 }
 FSys::path coreSet::program_location(const FSys::path &path) {
   return program_location() / path;

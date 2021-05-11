@@ -96,7 +96,7 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
 
   // k_c.wait();
   FSys::remove(k_tmp_path);
-  FSys::copy_file(file_path, k_export_path / file_path.filename(), FSys::copy_option::overwrite_if_exists);
+  FSys::copy_file(file_path, k_export_path / file_path.filename(), FSys::copy_options::overwrite_existing);
   return true;
 }
 

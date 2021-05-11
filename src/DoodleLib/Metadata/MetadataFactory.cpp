@@ -25,8 +25,8 @@ FSys::path MetadataFactory::GetRoot(const Metadata *in_metadata) const {
 }
 void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_config) const {
   FSys::fstream k_fstream{};
-  if (boost::filesystem::exists(k_config))
-    for (const auto &it : boost::filesystem::directory_iterator{k_config}) {
+  if (FSys::exists(k_config))
+    for (const auto &it : FSys::directory_iterator{k_config}) {
       k_fstream.open(it, std::ios::in | std::ios::binary);
       {
         std::shared_ptr<Metadata> k_ptr;
