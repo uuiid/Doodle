@@ -120,10 +120,11 @@ TEST_F(CoreTest, load_save_meatdata) {
     //加载文件
     auto ptj = std::make_shared<Project>("D:/");
     ptj->load(k_f);
+    std::cout << ptj->ShowStr() << std::endl;
     for (const auto& it : ptj->GetPChildItems()) {
-      std::cout << it->ShowStr() << std::endl;
-      for (const auto& it1 : ptj->GetPChildItems()) {
-        std::cout << "|-->" << it1->ShowStr() << std::endl;
+      std::cout << " |>" << it->ShowStr() << std::endl;
+      for (const auto& it1 : it->GetPChildItems()) {
+        std::cout << "   |>" << it1->ShowStr() << std::endl;
       }
     }
   }

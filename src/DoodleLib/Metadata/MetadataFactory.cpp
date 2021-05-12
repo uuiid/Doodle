@@ -33,7 +33,7 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
         std::shared_ptr<Metadata> k_ptr;
         cereal::PortableBinaryInputArchive k_archive{k_fstream};
         k_archive(k_ptr);
-        if (in_metadata->checkParent(*in_metadata))
+        if (k_ptr->checkParent(*in_metadata))
           k_ptr->SetPParent(in_metadata->shared_from_this());
       }
       k_fstream.close();

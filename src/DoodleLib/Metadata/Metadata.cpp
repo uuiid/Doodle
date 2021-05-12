@@ -40,7 +40,7 @@ std::shared_ptr<Metadata> Metadata::GetPParent() const {
 }
 void Metadata::SetPParent(const std::shared_ptr<Metadata> &in_parent) {
   //先去除掉原先的子
-  if (p_parent.expired())
+  if (HasParent())
     p_parent.lock()->RemoveChildItems(shared_from_this());
   //再添加
   p_parent      = in_parent;
