@@ -81,12 +81,6 @@ target_link_libraries(DoodleLib PUBLIC
         )
 
 
-target_compile_definitions(DoodleLib PRIVATE
-        DoodleLib_LIBRARY
-        DoodleLib_EXPORT
-        wxUSE_STD_STRING
-        wxUSE_UNICODE_WCHAR
-        ) # WIN32_LEAN_AND_MEAN
 target_compile_definitions(DoodleLib PUBLIC _WIN32_WINNT=0x0A00 WIN32_LEAN_AND_MEAN)
 
 
