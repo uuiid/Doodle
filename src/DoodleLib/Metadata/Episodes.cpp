@@ -1,5 +1,6 @@
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
 
 #include <boost/format.hpp>
 namespace doodle {
@@ -31,6 +32,17 @@ std::string Episodes::str() const {
 
   eps_str % p_episodes;
   return eps_str.str();
+}
+
+void Episodes::load(const MetadataFactoryPtr& in_factory) {
+  Metadata::load(in_factory);
+  in_factory->load(this);
+}
+
+void Episodes::save(const MetadataFactoryPtr& in_factory) {
+  Metadata::load(in_factory);
+
+  in_factory->save(this);
 }
 
 }  // namespace doodle

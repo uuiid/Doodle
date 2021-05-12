@@ -26,16 +26,13 @@ class DOODLELIB_API Project : public Metadata {
   [[nodiscard]] const FSys::path& Path() const noexcept;
   void setPath(const FSys::path& Path);
 
-
   [[nodiscard]] std::string str() const override;
-  [[nodiscard]] std::string ShortStr() const;
   [[nodiscard]] std::string ShowStr() const override;
 
-  void makeProject() const;
-  [[nodiscard]] bool ChickProject() const;
+  [[nodiscard]] std::string ShortStr() const;
 
-  void load(const MetadataFactoryPtr& in_factory);
-  void save(const MetadataFactoryPtr& in_factory);
+  void load(const MetadataFactoryPtr& in_factory) override;
+  void save(const MetadataFactoryPtr& in_factory) override;
 
   static std::string getConfigFileName();
   static std::string getConfigFileFolder();
@@ -54,12 +51,11 @@ void Project::serialize(Archive& ar, std::uint32_t const version) {
     ar(
         cereal::make_nvp("name", p_name),
         cereal::make_nvp("path", p_path));
-  if(version ==2)
+  if (version == 2)
     ar(
-        cereal::make_nvp("Metadata",cereal::base_class<Metadata>(this)),
+        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
         cereal::make_nvp("name", p_name),
-        cereal::make_nvp("path", p_path)
-        );
+        cereal::make_nvp("path", p_path));
 }
 
 }  // namespace doodle

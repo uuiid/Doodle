@@ -4,6 +4,9 @@
 #include <Metadata/MetadataFactory.h>
 #include <Logger/Logger.h>
 #include <PinYIn/convert.h>
+
+#include <core/coreset.h>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
 
@@ -45,7 +48,7 @@ std::string Project::str() const {
 }
 
 std::string Project::ShortStr() const {
-  auto wstr = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
+  auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
   auto& k_pingYin = convert::Get();
   std::string str{};
   for (auto s : wstr) {
@@ -67,44 +70,15 @@ std::string Project::getConfigFileName() {
   static std::string str{"doodle_config.dole"};
   return str;
 }
-void Project::makeProject() const {
-  auto k_path = p_path / getConfigFileFolder() / getConfigFileName();
-  if (FSys::exists(k_path.parent_path()))
-    FSys::create_directories(k_path.parent_path());
-
-
-  FSys::fstream k_fstream{k_path, std::ios::out | std::ios::binary};
-
-  cereal::PortableBinaryOutputArchive k_archive{k_fstream};
-  k_archive(*this);
-
-  FSys::create_directories(DBRoot());
-}
-bool Project::ChickProject() const {
-  auto k_path = p_path / getConfigFileFolder() / getConfigFileName();
-
-  if (!FSys::exists(k_path)) return false;
-
-  Project k_p;
-  FSys::fstream k_fstream{k_path, std::ios::in | std::ios::binary};
-
-  cereal::PortableBinaryInputArchive k_archive{k_fstream};
-  k_archive(k_p);
-
-  if (k_p.p_path != p_path)
-    return false;
-
-  if(!FSys::exists(DBRoot()))
-    FSys::create_directories(DBRoot());;
-  return true;
-}
 FSys::path Project::DBRoot() const {
   return p_path / "_._root";
 }
 void Project::save(const MetadataFactoryPtr& in_factory) {
+  Metadata::load(in_factory);
   in_factory->save(this);
 }
 void Project::load(const MetadataFactoryPtr& in_factory) {
+  Metadata::load(in_factory);
   in_factory->load(this);
 }
 

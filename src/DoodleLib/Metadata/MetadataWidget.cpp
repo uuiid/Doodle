@@ -13,6 +13,7 @@ namespace doodle {
 MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
     : wxFrame(in_window, in_id, ConvStr<wxString>("Metadata")),
       p_project_ptr_(),
+      p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()),
       p_tree_id_(NewControlId()),
       p_List_id_(NewControlId()),
       p_tree_view_ctrl_(),
@@ -61,6 +62,6 @@ void MetadataWidget::CreateProject() const {
     auto k_text = k_text_dialog.GetValue();
     p_project_ptr_->setName(k_text);
   }
-  p_project_ptr_->makeProject();
+  p_project_ptr_->save(p_metadata_flctory_ptr_);
 }
 }  // namespace doodle

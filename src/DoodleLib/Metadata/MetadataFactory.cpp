@@ -84,6 +84,7 @@ void MetadataFactory::save(const Project *in_project) const {
 
   if (FSys::exists(k_path.parent_path()))
     FSys::create_directories(k_path.parent_path());
+  coreSet::hideFolder(k_path.parent_path());
 
   FSys::fstream k_fstream{k_path, std::ios::out | std::ios::binary};
 

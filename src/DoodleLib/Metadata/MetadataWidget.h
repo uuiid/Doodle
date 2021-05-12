@@ -8,7 +8,7 @@ class wxDataViewCtrl;
 namespace doodle {
 class MetadataWidget : public wxFrame {
   ProjectPtr p_project_ptr_;
-
+  MetadataFactoryPtr p_metadata_flctory_ptr_;
   wxWindowIDRef p_tree_id_;
   wxWindowIDRef p_List_id_;
 

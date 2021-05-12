@@ -94,10 +94,25 @@ TEST_F(CoreTest, archive) {
 }
 
 TEST_F(CoreTest, load_save_meatdata) {
-  auto ptj = std::make_shared<doodle::Project>("D:/", "test_23333");
+  using namespace doodle;
+  {  //创建项目各各种标签
+    auto ptj = std::make_shared<Project>("D:/", "test_23333");
 
-  ptj->makeProject();
-  ptj->AddChildItem(std::make_shared<doodle::Episodes>(ptj, 10));
+    auto k_f = std::make_shared<MetadataFactory>();
+    ptj->save(k_f);
+    auto eps = std::make_shared<Episodes>(ptj, 10);
+    eps->save(k_f);
+    for (auto i = 0; i < 100; ++i) {
+      auto shot = std::make_shared<Shot>(eps, i);
+      shot->save(k_f);
+    }
+    auto k_ass      = std::make_shared<Assets>(k_f, "tset");
+    auto k_ass_file = std::make_shared<AssetsFile>(k_ass, "tset", "测试");
+  }
+
+  {
+    //加载文件
+  }
 }
 
 TEST_F(CoreTest, loadUe4ProjectFile) {

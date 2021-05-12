@@ -1,5 +1,6 @@
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
 
 #include <boost/format.hpp>
 namespace doodle {
@@ -53,6 +54,17 @@ std::string Shot::str() const {
   str_shot % p_shot % p_shot_ab;
   return str_shot.str();
 }
+
+void Shot::load(const MetadataFactoryPtr& in_factory) {
+  Metadata::load(in_factory);
+  in_factory->load(this);
+}
+
+void Shot::save(const MetadataFactoryPtr& in_factory) {
+  Metadata::load(in_factory);
+  in_factory->save(this);
+}
+
 bool Shot::operator<(const Shot& rhs) const {
   return std::tie(p_shot, p_shot_ab) < std::tie(rhs.p_shot, rhs.p_shot_ab);
 }

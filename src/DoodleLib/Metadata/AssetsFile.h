@@ -18,14 +18,17 @@ class AssetsFile : public Metadata {
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string ShowStr() const override;
 
+  void load(const MetadataFactoryPtr& in_factory) override;
+  void save(const MetadataFactoryPtr& in_factory) override;
+
  private:
   friend class cereal::access;
   template <class Archive>
-  void serialize(Archive &ar, std::uint32_t const version);
+  void serialize(Archive& ar, std::uint32_t const version);
 };
 
 template <class Archive>
-void AssetsFile::serialize(Archive &ar, const std::uint32_t version) {
+void AssetsFile::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 1)
     ar(
         cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),

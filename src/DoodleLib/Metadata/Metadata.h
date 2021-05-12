@@ -6,15 +6,28 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 
 #include <cereal/types/polymorphic.hpp>
+#include <cereal/types/memory.hpp>
+
 namespace doodle {
-class DOODLELIB_API Metadata {
+class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
  protected:
+  //弱父对象的指针
   std::weak_ptr<Metadata> p_parent;
+  //子对象的序列
   std::vector<MetadataPtr> p_child_items;
 
+  //这个时文件的根名称， 基本判断相同就直接比较他俩就行
   std::string p_Root;
+  //这个名称保存时的名称（文件名称这个不影响任何判断）
   std::string p_Name;
+  //这个时父对象的root
   std::string p_parent_uuid;
+
+  //这个是加载或者保存时的工厂
+  //这个工厂会在加载时记录
+  //或者在第一次保存时记录
+  //基本保证在使用时不空（从逻辑上）
+  MetadataFactoryPtr p_metadata_flctory_ptr_;
 
  public:
   Metadata();
@@ -26,6 +39,7 @@ class DOODLELIB_API Metadata {
 
   [[nodiscard]] bool HasChild() const;
   [[nodiscard]] const std::vector<MetadataPtr> &GetPChildItems() const;
+  bool RemoveChildItems(const MetadataPtr &in_child);
   void SetPChildItems(const std::vector<MetadataPtr> &in_child_items);
   void AddChildItem(const MetadataPtr &in_items);
 
@@ -40,6 +54,8 @@ class DOODLELIB_API Metadata {
 
   [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
 
+  virtual void load(const MetadataFactoryPtr &in_factory);
+  virtual void save(const MetadataFactoryPtr &in_factory);
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
 };
@@ -53,4 +69,5 @@ void Metadata::serialize(Archive &ar, std::uint32_t const version) {
         cereal::make_nvp("UUID_parent", p_parent_uuid));
 }
 }  // namespace doodle
+CEREAL_REGISTER_TYPE(doodle::Metadata)
 CEREAL_CLASS_VERSION(doodle::Metadata, 1)
