@@ -64,8 +64,8 @@ void Shot::SetPParent(const std::shared_ptr<Metadata>& in_parent) {
 }
 
 void Shot::load(const MetadataFactoryPtr& in_factory) {
-  Metadata::load(in_factory);
   in_factory->load(this);
+  Metadata::load(in_factory);
 }
 
 void Shot::save(const MetadataFactoryPtr& in_factory) {

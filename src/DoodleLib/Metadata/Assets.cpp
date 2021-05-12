@@ -32,8 +32,8 @@ void Assets::SetPParent(const std::shared_ptr<Metadata>& in_parent) {
 }
 
 void Assets::load(const MetadataFactoryPtr& in_factory) {
-  Metadata::load(in_factory);
   in_factory->load(this);
+  Metadata::load(in_factory);
 }
 
 void Assets::save(const MetadataFactoryPtr& in_factory) {

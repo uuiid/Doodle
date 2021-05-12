@@ -95,6 +95,10 @@ const std::string &Metadata::GetName() {
     p_Name = coreSet::getSet().getUUIDStr();
   return p_Name;
 }
+
+const MetadataFactoryPtr &Metadata::GetMetadataFactory() const {
+  return p_metadata_flctory_ptr_;
+}
 bool Metadata::checkParent(const Metadata &in_metadata) const {
   return p_parent_uuid == in_metadata.p_Root;
 }

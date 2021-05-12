@@ -100,20 +100,28 @@ TEST_F(CoreTest, load_save_meatdata) {
     auto ptj = std::make_shared<Project>("D:/", "test_23333");
 
     ptj->save(k_f);
+    ASSERT_TRUE(ptj->GetMetadataFactory() == k_f);
+
     auto eps = std::make_shared<Episodes>(ptj, 10);
     eps->SetPParent(ptj);
     eps->save(k_f);
+    ASSERT_TRUE(eps->GetMetadataFactory() == k_f);
+
     for (auto i = 0; i < 100; ++i) {
       auto shot = std::make_shared<Shot>(eps, i);
       shot->SetPParent(eps);
       shot->save(k_f);
+      ASSERT_TRUE(shot->GetMetadataFactory() == k_f);
     }
     auto k_ass = std::make_shared<Assets>(ptj, "tset");
     k_ass->SetPParent(ptj);
     k_ass->save(k_f);
+    ASSERT_TRUE(k_ass->GetMetadataFactory() == k_f);
+
     auto k_ass_file = std::make_shared<AssetsFile>(k_ass, "tset", "测试");
     k_ass_file->SetPParent(k_ass);
     k_ass_file->save(k_f);
+    ASSERT_TRUE(k_ass_file->GetMetadataFactory() == k_f);
   }
 
   {
@@ -121,13 +129,20 @@ TEST_F(CoreTest, load_save_meatdata) {
     auto ptj = std::make_shared<Project>("D:/");
     ptj->load(k_f);
     std::cout << ptj->ShowStr() << std::endl;
+    ASSERT_TRUE(ptj->GetMetadataFactory() == k_f);
+    ASSERT_TRUE(ptj->GetPChildItems().size() == 2);
+
     for (const auto& it : ptj->GetPChildItems()) {
       std::cout << " |>" << it->ShowStr() << std::endl;
+      it->load(k_f);
+      ASSERT_TRUE(it->GetMetadataFactory() == k_f);
+
       for (const auto& it1 : it->GetPChildItems()) {
         std::cout << "   |>" << it1->ShowStr() << std::endl;
       }
     }
   }
+  // FSys::remove_all(FSys::path{"D:/"} / Project::getConfigFileFolder());
 }
 
 TEST_F(CoreTest, loadUe4ProjectFile) {

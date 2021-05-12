@@ -52,6 +52,8 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   [[nodiscard]] virtual const std::string &GetName();
   //  [[nodiscard]] virtual FSys::path FolderPath() const;
 
+  const MetadataFactoryPtr& GetMetadataFactory() const;
+  
   [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
 
   virtual void load(const MetadataFactoryPtr &in_factory);
