@@ -30,7 +30,8 @@ class DOODLELIB_API Project : public Metadata {
   [[nodiscard]] std::string ShowStr() const override;
 
   [[nodiscard]] std::string ShortStr() const;
-
+  
+  virtual void SetPParent(const std::shared_ptr<Metadata> &in_parent) override;
   void load(const MetadataFactoryPtr& in_factory) override;
   void save(const MetadataFactoryPtr& in_factory) override;
 

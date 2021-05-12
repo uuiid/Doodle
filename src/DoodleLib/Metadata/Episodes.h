@@ -16,7 +16,8 @@ class DOODLELIB_API Episodes : public Metadata {
 
   [[nodiscard]] std::string str() const override;
 
-    void load(const MetadataFactoryPtr& in_factory) override;
+  virtual void SetPParent(const std::shared_ptr<Metadata> &in_parent) override;
+  void load(const MetadataFactoryPtr& in_factory) override;
   void save(const MetadataFactoryPtr& in_factory) override;
  private:
   friend class cereal::access;

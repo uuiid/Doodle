@@ -33,15 +33,15 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   Metadata();
   explicit Metadata(std::weak_ptr<Metadata> in_metadata);
   virtual ~Metadata();
-  [[nodiscard]] bool HasParent() const;
-  [[nodiscard]] std::shared_ptr<Metadata> GetPParent() const;
-  void SetPParent(const std::shared_ptr<Metadata> &in_parent);
+  [[nodiscard]] virtual bool HasParent() const;
+  [[nodiscard]] virtual std::shared_ptr<Metadata> GetPParent() const;
+  virtual void SetPParent(const std::shared_ptr<Metadata> &in_parent);
 
-  [[nodiscard]] bool HasChild() const;
-  [[nodiscard]] const std::vector<MetadataPtr> &GetPChildItems() const;
-  bool RemoveChildItems(const MetadataPtr &in_child);
-  void SetPChildItems(const std::vector<MetadataPtr> &in_child_items);
-  void AddChildItem(const MetadataPtr &in_items);
+  [[nodiscard]] virtual bool HasChild() const;
+  [[nodiscard]] virtual const std::vector<MetadataPtr> &GetPChildItems() const;
+  virtual bool RemoveChildItems(const MetadataPtr &in_child);
+  virtual void SetPChildItems(const std::vector<MetadataPtr> &in_child_items);
+  virtual void AddChildItem(const MetadataPtr &in_items);
 
   [[nodiscard]] virtual std::string str() const = 0;
   [[nodiscard]] virtual std::string ShowStr() const;

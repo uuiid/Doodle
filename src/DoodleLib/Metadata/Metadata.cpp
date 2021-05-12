@@ -5,6 +5,8 @@
 #include <DoodleLib/Metadata/Metadata.h>
 #include <core/coreset.h>
 #include <Exception/Exception.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
+
 namespace doodle {
 Metadata::Metadata()
     : p_parent(),
