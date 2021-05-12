@@ -107,10 +107,16 @@ TEST_F(CoreTest, load_save_meatdata) {
     eps->save(k_f);
     ASSERT_TRUE(eps->GetMetadataFactory() == k_f);
 
-    for (auto i = 0; i < 100; ++i) {
+    for (auto i = 0; i < 20; ++i) {
       auto shot = std::make_shared<Shot>(eps, i);
+
       shot->SetPParent(eps);
+      if (i % 5 == 0) {
+        shot->setShotAb(Shot::ShotAbEnum::A);
+      }
+
       shot->save(k_f);
+
       ASSERT_TRUE(shot->GetMetadataFactory() == k_f);
     }
     auto k_ass = std::make_shared<Assets>(ptj, "tset");

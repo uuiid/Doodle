@@ -86,4 +86,12 @@ bool Shot::operator>=(const Shot& rhs) const {
   return !(*this < rhs);
 }
 
+bool Shot::sort(const Metadata& in_rhs) const {
+  if (typeid(in_rhs) == typeid(*this)) {
+    return *this < (dynamic_cast<const Shot&>(in_rhs));
+  } else {
+    return str() < in_rhs.str();
+  }
+}
+
 }  // namespace doodle

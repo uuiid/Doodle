@@ -22,6 +22,14 @@ class DOODLELIB_API Assets : public Metadata {
   void load(const MetadataFactoryPtr& in_factory) override;
   void save(const MetadataFactoryPtr& in_factory) override;
 
+  bool operator<(const Assets& in_rhs) const;
+  bool operator>(const Assets& in_rhs) const;
+  bool operator<=(const Assets& in_rhs) const;
+  bool operator>=(const Assets& in_rhs) const;
+
+ protected:
+  virtual bool sort(const Metadata& in_rhs) const override;
+
  private:
   friend class cereal::access;
   template <class Archive>

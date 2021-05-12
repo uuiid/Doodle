@@ -89,5 +89,26 @@ void Project::load(const MetadataFactoryPtr& in_factory) {
   in_factory->load(this);
   Metadata::load(in_factory);
 }
+bool Project::operator<(const Project& in_rhs) const {
+  //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_path) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_path);
+  return std::tie(p_name, p_path) < std::tie(in_rhs.p_name, in_rhs.p_path);
+}
+bool Project::operator>(const Project& in_rhs) const {
+  return in_rhs < *this;
+}
+bool Project::operator<=(const Project& in_rhs) const {
+  return !(in_rhs < *this);
+}
+bool Project::operator>=(const Project& in_rhs) const {
+  return !(*this < in_rhs);
+}
+
+bool Project::sort(const Metadata& in_rhs) const {
+  if (typeid(in_rhs) == typeid(*this)) {
+    return *this < (dynamic_cast<const Project&>(in_rhs));
+  } else {
+    return str() < in_rhs.str();
+  }
+}
 
 }  // namespace doodle

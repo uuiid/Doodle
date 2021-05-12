@@ -71,6 +71,14 @@ bool Metadata::RemoveChildItems(const MetadataPtr &in_child) {
 void Metadata::AddChildItem(const MetadataPtr &in_items) {
   in_items->SetPParent(shared_from_this());
 }
+
+void Metadata::sortChildItems() {
+  std::sort(p_child_items.begin(), p_child_items.end(),
+            [](const MetadataPtr &r, const MetadataPtr &l) {
+              return *r < *l;
+            });
+}
+
 bool Metadata::HasParent() const {
   return !p_parent.expired();
 }
@@ -109,6 +117,18 @@ void Metadata::load(const MetadataFactoryPtr &in_factory) {
 
 void Metadata::save(const MetadataFactoryPtr &in_factory) {
   p_metadata_flctory_ptr_ = in_factory;
+}
+bool Metadata::operator<(const Metadata &in_rhs) const {
+  return this->sort(in_rhs);
+}
+bool Metadata::operator>(const Metadata &in_rhs) const {
+  return in_rhs < *this;
+}
+bool Metadata::operator<=(const Metadata &in_rhs) const {
+  return !(in_rhs < *this);
+}
+bool Metadata::operator>=(const Metadata &in_rhs) const {
+  return !(*this < in_rhs);
 }
 
 }  // namespace doodle

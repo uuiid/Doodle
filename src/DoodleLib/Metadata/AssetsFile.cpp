@@ -45,4 +45,26 @@ void AssetsFile::save(const MetadataFactoryPtr& in_factory) {
   Metadata::load(in_factory);
   in_factory->save(this);
 }
+bool AssetsFile::operator<(const AssetsFile& in_rhs) const {
+  return std::tie(p_name, p_ShowName, p_path_file) < std::tie(in_rhs.p_name, in_rhs.p_ShowName, in_rhs.p_path_file);
+  //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_ShowName, p_path_file) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_ShowName, in_rhs.p_path_file);
+}
+bool AssetsFile::operator>(const AssetsFile& in_rhs) const {
+  return in_rhs < *this;
+}
+bool AssetsFile::operator<=(const AssetsFile& in_rhs) const {
+  return !(in_rhs < *this);
+}
+bool AssetsFile::operator>=(const AssetsFile& in_rhs) const {
+  return !(*this < in_rhs);
+}
+
+bool AssetsFile::sort(const Metadata& in_rhs) const {
+  if (typeid(in_rhs) == typeid(*this)) {
+    return *this < (dynamic_cast<const AssetsFile&>(in_rhs));
+  } else {
+    return str() < in_rhs.str();
+  }
+}
+
 }  // namespace doodle

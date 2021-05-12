@@ -26,7 +26,7 @@ FSys::path MetadataFactory::GetRoot(const Metadata *in_metadata) const {
 }
 void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_config) const {
   FSys::fstream k_fstream{};
-  if (FSys::exists(k_config))
+  if (FSys::exists(k_config)) {
     for (const auto &it : FSys::directory_iterator{k_config}) {
       k_fstream.open(it, std::ios::in | std::ios::binary);
       {
@@ -38,6 +38,8 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
       }
       k_fstream.close();
     }
+    in_metadata->sortChildItems();
+  }
 }
 void MetadataFactory::load(Project *in_project) const {
   auto k_config_folder = in_project->Path() / Project::getConfigFileFolder();

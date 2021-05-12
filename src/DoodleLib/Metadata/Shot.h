@@ -2,9 +2,13 @@
 
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/Metadata.h>
-
+#include <magic_enum.hpp>
 namespace doodle {
 class DOODLELIB_API Shot : public Metadata {
+ public:
+  enum class ShotAbEnum;
+
+ private:
   int64_t p_shot;
   std::string p_shot_ab;
 
@@ -26,6 +30,9 @@ class DOODLELIB_API Shot : public Metadata {
 
   [[nodiscard]] const decltype(p_shot_ab) &ShotAb() const noexcept;
   void setShotAb(const decltype(p_shot_ab) &ShotAb) noexcept;
+  inline void setShotAb(const ShotAbEnum &ShotAb) {
+    setShotAb(std::string{magic_enum::enum_name(ShotAb)});
+  };
 
   [[nodiscard]] EpisodesPtr Episodes_() const noexcept;
   void setEpisodes_(const EpisodesPtr &Episodes_) noexcept;
@@ -41,6 +48,9 @@ class DOODLELIB_API Shot : public Metadata {
   bool operator<=(const Shot &rhs) const;
   bool operator>=(const Shot &rhs) const;
 
+ protected:
+  virtual bool sort(const Metadata &in_rhs) const override;
+
  private:
   friend class cereal::access;
   template <class Archive>
@@ -55,5 +65,17 @@ void Shot::serialize(Archive &ar, const std::uint32_t version) {
         p_shot_ab);
 }
 }  // namespace doodle
+
+namespace cereal {
+template <class Archive>
+std::string save_minimal(Archive const &, doodle::Shot::ShotAbEnum const &shotab) {
+  return std::string{magic_enum::enum_name(shotab)};
+}
+template <class Archive>
+void load_minimal(Archive const &, doodle::Shot::ShotAbEnum &shotab, std::string const &value) {
+  shotab = magic_enum::enum_cast<doodle::Shot::ShotAbEnum>(value).value_or(doodle::Shot::ShotAbEnum::A);
+};
+}  // namespace cereal
+
 CEREAL_REGISTER_TYPE(doodle::Shot)
 CEREAL_CLASS_VERSION(doodle::Shot, 1)

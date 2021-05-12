@@ -21,6 +21,13 @@ class DOODLELIB_API AssetsFile : public Metadata {
   virtual void SetPParent(const std::shared_ptr<Metadata>& in_parent) override;
   void load(const MetadataFactoryPtr& in_factory) override;
   void save(const MetadataFactoryPtr& in_factory) override;
+  bool operator<(const AssetsFile& in_rhs) const;
+  bool operator>(const AssetsFile& in_rhs) const;
+  bool operator<=(const AssetsFile& in_rhs) const;
+  bool operator>=(const AssetsFile& in_rhs) const;
+
+ protected:
+  virtual bool sort(const Metadata& in_rhs) const override;
 
  private:
   friend class cereal::access;
@@ -41,4 +48,4 @@ void AssetsFile::serialize(Archive& ar, const std::uint32_t version) {
 }  // namespace doodle
 
 CEREAL_REGISTER_TYPE(doodle::AssetsFile)
-CEREAL_CLASS_VERSION(doodle::AssetsFile,1)
+CEREAL_CLASS_VERSION(doodle::AssetsFile, 1)

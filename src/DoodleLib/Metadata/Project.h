@@ -37,6 +37,13 @@ class DOODLELIB_API Project : public Metadata {
 
   static std::string getConfigFileName();
   static std::string getConfigFileFolder();
+  bool operator<(const Project& in_rhs) const;
+  bool operator>(const Project& in_rhs) const;
+  bool operator<=(const Project& in_rhs) const;
+  bool operator>=(const Project& in_rhs) const;
+
+ protected:
+ virtual bool sort(const Metadata &in_rhs) const override;
 
  private:
   [[nodiscard]] FSys::path DBRoot() const;

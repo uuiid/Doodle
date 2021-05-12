@@ -52,5 +52,26 @@ void Episodes::save(const MetadataFactoryPtr& in_factory) {
 
   in_factory->save(this);
 }
+bool Episodes::operator<(const Episodes& in_rhs) const {
+  //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_episodes) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_episodes);
+  return std::tie(p_episodes) < std::tie(in_rhs.p_episodes);
+}
+bool Episodes::operator>(const Episodes& in_rhs) const {
+  return in_rhs < *this;
+}
+bool Episodes::operator<=(const Episodes& in_rhs) const {
+  return !(in_rhs < *this);
+}
+bool Episodes::operator>=(const Episodes& in_rhs) const {
+  return !(*this < in_rhs);
+}
+
+bool Episodes::sort(const Metadata& in_rhs) const {
+  if (typeid(in_rhs) == typeid(*this)) {
+    return *this < (dynamic_cast<const Episodes&>(in_rhs));
+  } else {
+    return str() < in_rhs.str();
+  }
+}
 
 }  // namespace doodle

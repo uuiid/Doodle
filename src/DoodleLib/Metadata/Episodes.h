@@ -19,6 +19,13 @@ class DOODLELIB_API Episodes : public Metadata {
   virtual void SetPParent(const std::shared_ptr<Metadata> &in_parent) override;
   void load(const MetadataFactoryPtr &in_factory) override;
   void save(const MetadataFactoryPtr &in_factory) override;
+  bool operator<(const Episodes &in_rhs) const;
+  bool operator>(const Episodes &in_rhs) const;
+  bool operator<=(const Episodes &in_rhs) const;
+  bool operator>=(const Episodes &in_rhs) const;
+
+ protected:
+ virtual bool sort(const Metadata &in_rhs) const override;
 
  private:
   friend class cereal::access;

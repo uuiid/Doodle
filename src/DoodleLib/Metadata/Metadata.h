@@ -28,6 +28,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   //或者在第一次保存时记录
   //基本保证在使用时不空（从逻辑上）
   MetadataFactoryPtr p_metadata_flctory_ptr_;
+  virtual bool sort(const Metadata &in_rhs) const = 0;
 
  public:
   Metadata();
@@ -42,6 +43,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   virtual bool RemoveChildItems(const MetadataPtr &in_child);
   virtual void SetPChildItems(const std::vector<MetadataPtr> &in_child_items);
   virtual void AddChildItem(const MetadataPtr &in_items);
+  virtual void sortChildItems();
 
   [[nodiscard]] virtual std::string str() const = 0;
   [[nodiscard]] virtual std::string ShowStr() const;
@@ -52,9 +54,14 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   [[nodiscard]] virtual const std::string &GetName();
   //  [[nodiscard]] virtual FSys::path FolderPath() const;
 
-  const MetadataFactoryPtr& GetMetadataFactory() const;
-  
+  const MetadataFactoryPtr &GetMetadataFactory() const;
+
   [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
+
+  virtual bool operator<(const Metadata &in_rhs) const;
+  virtual bool operator>(const Metadata &in_rhs) const;
+  virtual bool operator<=(const Metadata &in_rhs) const;
+  virtual bool operator>=(const Metadata &in_rhs) const;
 
   virtual void load(const MetadataFactoryPtr &in_factory);
   virtual void save(const MetadataFactoryPtr &in_factory);
