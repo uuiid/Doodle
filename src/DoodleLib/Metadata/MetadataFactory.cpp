@@ -13,6 +13,7 @@
 
 #include <core/coreset.h>
 #include <cereal/archives/portable_binary.hpp>
+#include <cereal/archives/json.hpp>
 
 namespace doodle {
 
@@ -33,7 +34,7 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
         cereal::PortableBinaryInputArchive k_archive{k_fstream};
         k_archive(k_ptr);
         if (in_metadata->checkParent(*in_metadata))
-          in_metadata->AddChildItem(k_ptr);
+          k_ptr->SetPParent(in_metadata->shared_from_this());
       }
       k_fstream.close();
     }
@@ -82,7 +83,7 @@ void MetadataFactory::save(const Project *in_project) const {
   auto k_config_folder = in_project->Path() / Project::getConfigFileFolder();
   auto k_path          = k_config_folder / Project::getConfigFileName();
 
-  if (FSys::exists(k_path.parent_path()))
+  if (!FSys::exists(k_path.parent_path()))
     FSys::create_directories(k_path.parent_path());
   coreSet::hideFolder(k_path.parent_path());
 
@@ -92,7 +93,7 @@ void MetadataFactory::save(const Project *in_project) const {
   k_archive(*in_project);
 
   auto k_Floder = k_config_folder / in_project->GetRoot();
-  if (FSys::exists(k_Floder))
+  if (!FSys::exists(k_Floder))
     FSys::create_directories(k_Floder);
 }
 
@@ -129,9 +130,12 @@ void MetadataFactory::save(const AssetsFile *in_assetsFile) const {
   save(in_assetsFile, k_path);
 }
 void MetadataFactory::save(const Metadata *in_metadata, const FSys::path &in_path) const {
+  auto p_p = in_path.parent_path();
+  if (!FSys::exists(p_p))
+    FSys::create_directory(p_p);
   FSys::fstream file{in_path, std::ios::out | std::ios::binary};
   cereal::PortableBinaryOutputArchive k_archive{file};
-  k_archive(*in_metadata);
+  k_archive(in_metadata->shared_from_this());
 }
 
 void MetadataFactory::modifyParent(const Project *in_project, const Metadata *in_old_parent) const {

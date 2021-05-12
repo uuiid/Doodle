@@ -55,5 +55,5 @@ void Shot::serialize(Archive &ar, const std::uint32_t version) {
         p_shot_ab);
 }
 }  // namespace doodle
-
+CEREAL_REGISTER_TYPE(doodle::Shot)
 CEREAL_CLASS_VERSION(doodle::Shot, 1)

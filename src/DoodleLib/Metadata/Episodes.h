@@ -17,8 +17,9 @@ class DOODLELIB_API Episodes : public Metadata {
   [[nodiscard]] std::string str() const override;
 
   virtual void SetPParent(const std::shared_ptr<Metadata> &in_parent) override;
-  void load(const MetadataFactoryPtr& in_factory) override;
-  void save(const MetadataFactoryPtr& in_factory) override;
+  void load(const MetadataFactoryPtr &in_factory) override;
+  void save(const MetadataFactoryPtr &in_factory) override;
+
  private:
   friend class cereal::access;
   template <class Archive>
@@ -32,4 +33,5 @@ void Episodes::serialize(Archive &ar, const std::uint32_t version) {
 }
 }  // namespace doodle
 
+CEREAL_REGISTER_TYPE(doodle::Episodes)
 CEREAL_CLASS_VERSION(doodle::Episodes, 1)

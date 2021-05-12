@@ -5,7 +5,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 namespace doodle {
-class MetadataFactory {
+class DOODLELIB_API MetadataFactory {
  public:
   MetadataFactory();
 

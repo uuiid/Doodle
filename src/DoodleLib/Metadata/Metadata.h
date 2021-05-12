@@ -70,4 +70,5 @@ void Metadata::serialize(Archive &ar, std::uint32_t const version) {
 }
 }  // namespace doodle
 CEREAL_REGISTER_TYPE(doodle::Metadata)
+// CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::Metadata>, doodle::Metadata)
 CEREAL_CLASS_VERSION(doodle::Metadata, 1)

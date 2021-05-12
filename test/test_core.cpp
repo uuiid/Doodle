@@ -95,23 +95,37 @@ TEST_F(CoreTest, archive) {
 
 TEST_F(CoreTest, load_save_meatdata) {
   using namespace doodle;
+  auto k_f = std::make_shared<MetadataFactory>();
   {  //创建项目各各种标签
     auto ptj = std::make_shared<Project>("D:/", "test_23333");
 
-    auto k_f = std::make_shared<MetadataFactory>();
     ptj->save(k_f);
     auto eps = std::make_shared<Episodes>(ptj, 10);
+    eps->SetPParent(ptj);
     eps->save(k_f);
     for (auto i = 0; i < 100; ++i) {
       auto shot = std::make_shared<Shot>(eps, i);
+      shot->SetPParent(eps);
       shot->save(k_f);
     }
-    auto k_ass      = std::make_shared<Assets>(k_f, "tset");
+    auto k_ass = std::make_shared<Assets>(ptj, "tset");
+    k_ass->SetPParent(ptj);
+    k_ass->save(k_f);
     auto k_ass_file = std::make_shared<AssetsFile>(k_ass, "tset", "测试");
+    k_ass_file->SetPParent(k_ass);
+    k_ass_file->save(k_f);
   }
 
   {
     //加载文件
+    auto ptj = std::make_shared<Project>("D:/");
+    ptj->load(k_f);
+    for (const auto& it : ptj->GetPChildItems()) {
+      std::cout << it->ShowStr() << std::endl;
+      for (const auto& it1 : ptj->GetPChildItems()) {
+        std::cout << "|-->" << it1->ShowStr() << std::endl;
+      }
+    }
   }
 }
 

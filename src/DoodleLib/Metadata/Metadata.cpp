@@ -9,7 +9,8 @@
 
 namespace doodle {
 Metadata::Metadata()
-    : p_parent(),
+    : std::enable_shared_from_this<Metadata>(),
+      p_parent(),
       p_child_items(),
       p_Root(coreSet::getSet().getUUIDStr()),
       p_Name(coreSet::getSet().getUUIDStr()),
@@ -18,13 +19,13 @@ Metadata::Metadata()
 }
 
 Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
-    : p_parent(std::move(in_metadata)),
+    : std::enable_shared_from_this<Metadata>(),
+      p_parent(std::move(in_metadata)),
       p_child_items(),
       p_Root(coreSet::getSet().getUUIDStr()),
       p_Name(coreSet::getSet().getUUIDStr()),
       p_parent_uuid(p_parent.lock()->p_Root),
       p_metadata_flctory_ptr_() {
-  SetPParent(p_parent.lock());
 }
 
 Metadata::~Metadata() = default;
@@ -39,7 +40,8 @@ std::shared_ptr<Metadata> Metadata::GetPParent() const {
 }
 void Metadata::SetPParent(const std::shared_ptr<Metadata> &in_parent) {
   //先去除掉原先的子
-  p_parent.lock()->RemoveChildItems(shared_from_this());
+  if (p_parent.expired())
+    p_parent.lock()->RemoveChildItems(shared_from_this());
   //再添加
   p_parent      = in_parent;
   p_parent_uuid = in_parent->GetRoot();
