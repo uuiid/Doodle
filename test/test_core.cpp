@@ -39,16 +39,16 @@ void CoreTest::SetUp() {
 
   p_video_path_out1 = R"(D:\voide\test1.mp4)";
   p_video_path_out2 = R"(D:\voide\test2.mp4)";
-  p_txt_path = R"(D:\test.txt)";
-  p_ue4_path = R"(F:\Users\teXiao\Documents\Unreal_Projects\test_tmp\test_tmp.uproject)";
-  p_long_path = R"(F:\Users\teXiao\Documents\Unreal_Projects\test_tmp\Content\Dev\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\NewMaterial.uasset)";
+  p_txt_path        = R"(D:\test.txt)";
+  p_ue4_path        = R"(F:\Users\teXiao\Documents\Unreal_Projects\test_tmp\test_tmp.uproject)";
+  p_long_path       = R"(F:\Users\teXiao\Documents\Unreal_Projects\test_tmp\Content\Dev\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\test_long_path\NewMaterial.uasset)";
 }
 
 void CoreTest::TearDown() {
 }
 
 TEST_F(CoreTest, archive) {
-  auto& ue_set = doodle::Ue4Setting::Get();
+  auto& ue_set    = doodle::Ue4Setting::Get();
   auto str_stream = std::stringstream{};
 
   auto str_stream_bin = std::stringstream{};
@@ -100,9 +100,11 @@ TEST_F(CoreTest, load_save_meatdata) {
 }
 
 TEST_F(CoreTest, loadUe4ProjectFile) {
+  ASSERT_TRUE(doodle::FSys::exists(p_ue4_path));
+
   doodle::FSys::ifstream file{p_ue4_path};
   auto str_stream = std::stringstream{};
-  auto ijson = nlohmann::json::parse(file);
+  auto ijson      = nlohmann::json::parse(file);
 
   auto ueFile = ijson.get<doodle::Ue4ProjectFile>();
   ueFile.Plugins.push_back(doodle::Ue4ProjectFilePulgins{"doodle", true});
@@ -116,16 +118,19 @@ TEST_F(CoreTest, loadUe4ProjectFile) {
 }
 
 TEST_F(CoreTest, export_maya) {
+  ASSERT_TRUE(doodle::FSys::exists(p_maya_path));
   auto mayafile = doodle::MayaFile{};
   mayafile.exportFbxFile(p_maya_path);
 }
 
 TEST_F(CoreTest, make_vide) {
+  ASSERT_TRUE(doodle::FSys::exists(p_image_path));
   auto video = doodle::ImageSequence{p_image_path, {"test_哈哈"}};
   video.createVideoFile(p_video_path_out1);
 }
 
 TEST_F(CoreTest, connect_video) {
+  ASSERT_TRUE(doodle::FSys::exists(p_video_path));
   auto videos = std::vector<doodle::FSys::path>{};
   for (auto v : doodle::FSys::directory_iterator(p_video_path)) {
     videos.emplace_back(v.path());
@@ -136,6 +141,7 @@ TEST_F(CoreTest, connect_video) {
 }
 
 TEST_F(CoreTest, read_writ_file) {
+  ASSERT_TRUE(doodle::FSys::exists(p_txt_path));
   doodle::FSys::fstream file{p_txt_path, std::ios::in};
   std::string line{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 
@@ -153,9 +159,11 @@ TEST_F(CoreTest, read_writ_file) {
 }
 TEST_F(CoreTest, long_path) {
   using namespace doodle;
-  auto size = FSys::file_size(p_long_path);
+  ASSERT_TRUE(FSys::exists(p_long_path));
+  
+  auto size            = FSys::file_size(p_long_path);
   auto last_write_time = FSys::last_write_time(p_long_path);
-  auto time = FSys::creation_time(p_long_path);
+  auto time            = FSys::creation_time(p_long_path);
   FSys::fstream file{p_long_path};
   std::cout << "file size " << size << "\n"
             << "lase write time " << last_write_time << "\n"
