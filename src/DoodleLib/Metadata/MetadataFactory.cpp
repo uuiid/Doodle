@@ -38,7 +38,7 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
       }
       k_fstream.close();
     }
-    in_metadata->sortChildItems();
+    // in_metadata->sortChildItems();
   }
 }
 void MetadataFactory::load(Project *in_project) const {
