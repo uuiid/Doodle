@@ -97,6 +97,7 @@ TEST_F(CoreTest, load_save_meatdata) {
   auto ptj = std::make_shared<doodle::Project>("D:/", "test_23333");
 
   ptj->makeProject();
+  ptj->AddChildItem(std::make_shared<doodle::Episodes>(ptj, 10));
 }
 
 TEST_F(CoreTest, loadUe4ProjectFile) {
@@ -160,7 +161,7 @@ TEST_F(CoreTest, read_writ_file) {
 TEST_F(CoreTest, long_path) {
   using namespace doodle;
   ASSERT_TRUE(FSys::exists(p_long_path));
-  
+
   auto size            = FSys::file_size(p_long_path);
   auto last_write_time = FSys::last_write_time(p_long_path);
   auto time            = FSys::creation_time(p_long_path);

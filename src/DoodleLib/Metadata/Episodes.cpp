@@ -9,8 +9,8 @@ Episodes::Episodes()
       p_episodes(-1) {
 }
 
-Episodes::Episodes(int64_t in_episodes)
-    : Metadata(),
+Episodes::Episodes(std::weak_ptr<Metadata> in_metadata, int64_t in_episodes)
+    : Metadata(std::move(in_metadata)),
       p_episodes(in_episodes) {
   if (p_episodes < 0)
     throw DoodleError("集数无法为负");

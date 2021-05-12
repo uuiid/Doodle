@@ -18,6 +18,7 @@ class DOODLELIB_API Metadata {
 
  public:
   Metadata();
+  explicit Metadata(std::weak_ptr<Metadata> in_metadata);
   virtual ~Metadata();
   [[nodiscard]] bool HasParent() const;
   [[nodiscard]] std::shared_ptr<Metadata> GetPParent() const;
@@ -37,7 +38,7 @@ class DOODLELIB_API Metadata {
   [[nodiscard]] virtual const std::string &GetName();
   //  [[nodiscard]] virtual FSys::path FolderPath() const;
 
-  [[nodiscard]] virtual bool checkParent(const Metadata& in_metadata) const;
+  [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);

@@ -17,6 +17,21 @@ class AssetsFile : public Metadata {
   explicit AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string name = {}, std::string showName = {});
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string ShowStr() const override;
+
+ private:
+  friend class cereal::access;
+  template <class Archive>
+  void serialize(Archive &ar, std::uint32_t const version);
 };
+
+template <class Archive>
+void AssetsFile::serialize(Archive &ar, const std::uint32_t version) {
+  if (version == 1)
+    ar(
+        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
+        p_name,
+        p_ShowName,
+        p_path_file);
+}
 
 }  // namespace doodle

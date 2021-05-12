@@ -11,10 +11,11 @@ Shot::Shot()
       p_episodes() {
 }
 
-Shot::Shot(decltype(p_shot) in_shot,
+Shot::Shot(std::weak_ptr<Metadata> in_metadata,
+           decltype(p_shot) in_shot,
            decltype(p_shot_ab) in_shot_ab,
-           decltype(p_episodes) in_episodes)
-    : Metadata(),
+           std::weak_ptr<Episodes> in_episodes)
+    : Metadata(std::move(in_metadata)),
       p_shot(in_shot),
       p_shot_ab(std::move(in_shot_ab)),
       p_episodes(std::move(in_episodes)) {

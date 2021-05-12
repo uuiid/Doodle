@@ -6,11 +6,34 @@
 #include <core/coreset.h>
 #include <Exception/Exception.h>
 namespace doodle {
+Metadata::Metadata()
+    : p_parent(),
+      p_child_items(),
+      p_Root(coreSet::getSet().getUUIDStr()),
+      p_Name(coreSet::getSet().getUUIDStr()),
+      p_parent_uuid() {
+}
+
+Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
+    : p_parent(std::move(in_metadata)),
+      p_child_items(),
+      p_Root(coreSet::getSet().getUUIDStr()),
+      p_Name(coreSet::getSet().getUUIDStr()),
+      p_parent_uuid(p_parent.lock()->p_Root) {
+}
+
+Metadata::~Metadata() = default;
+
+const std::string &Metadata::GetRoot() const {
+  if (p_Root.empty())
+    throw DoodleError{"p_Root is empty"};
+  return p_Root;
+}
 std::shared_ptr<Metadata> Metadata::GetPParent() const {
   return p_parent.lock();
 }
 void Metadata::SetPParent(const std::shared_ptr<Metadata> &in_parent) {
-  p_parent = in_parent;
+  p_parent      = in_parent;
   p_parent_uuid = in_parent->GetRoot();
 }
 const std::vector<MetadataPtr> &Metadata::GetPChildItems() const {
@@ -31,19 +54,6 @@ bool Metadata::HasChild() const {
 std::string Metadata::ShowStr() const {
   return str();
 }
-Metadata::Metadata()
-    : p_parent(),
-      p_child_items(),
-      p_Root(coreSet::getSet().getUUIDStr()),
-      p_Name(coreSet::getSet().getUUIDStr()),
-      p_parent_uuid() {
-}
-Metadata::~Metadata() = default;
-const std::string &Metadata::GetRoot() const {
-  if (p_Root.empty())
-    throw DoodleError{"p_Root is empty"};
-  return p_Root;
-}
 const std::string &Metadata::GetRoot() {
   if (p_Root.empty())
     p_Root = coreSet::getSet().getUUIDStr();
@@ -59,7 +69,7 @@ const std::string &Metadata::GetName() {
     p_Name = coreSet::getSet().getUUIDStr();
   return p_Name;
 }
-bool Metadata::checkParent(const Metadata& in_metadata) const {
+bool Metadata::checkParent(const Metadata &in_metadata) const {
   return p_parent_uuid == in_metadata.p_Root;
 }
 
