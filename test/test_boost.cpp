@@ -98,6 +98,9 @@ TEST(dboost, boost_format) {
   str.clear();
   str % -1 % -50 % "A";
   std::cout << str.str() << std::endl;
+
+  std::cout << boost::format{"\n\n %|=60s|"} % "create ok next load file" << std::endl;
+
 }
 
 TEST(dboost, filesys_append) {

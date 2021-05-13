@@ -10,7 +10,7 @@
 #include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Exception/Exception.h>
-
+#include <DoodleLib/Logger/Logger.h>
 #include <core/coreset.h>
 #include <cereal/archives/portable_binary.hpp>
 #include <cereal/archives/json.hpp>
@@ -35,6 +35,8 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
         k_archive(k_ptr);
         if (k_ptr->checkParent(*in_metadata))
           k_ptr->SetPParent(in_metadata->shared_from_this());
+        else
+          DOODLE_LOG_INFO("没有父子uuid核实出错" << k_ptr->ShowStr());
       }
       k_fstream.close();
     }
@@ -144,19 +146,23 @@ void MetadataFactory::modifyParent(const Project *in_project, const Metadata *in
 }
 
 void MetadataFactory::modifyParent(const Shot *in_shot, const Metadata *in_old_parent) const {
-  modifyParent(in_shot, in_old_parent);
+  modifyParent(dynamic_cast<const Metadata*>(in_shot), in_old_parent);
+  save(in_shot);
 }
 
 void MetadataFactory::modifyParent(const Episodes *in_episodes, const Metadata *in_old_parent) const {
-  modifyParent(in_episodes, in_old_parent);
+  modifyParent(dynamic_cast<const Metadata*>(in_episodes), in_old_parent);
+  save(in_episodes);
 }
 
 void MetadataFactory::modifyParent(const Assets *in_assets, const Metadata *in_old_parent) const {
-  modifyParent(in_assets, in_old_parent);
+  modifyParent(dynamic_cast<const Metadata*>(in_assets), in_old_parent);
+  save(in_assets);
 }
 
 void MetadataFactory::modifyParent(const AssetsFile *in_assetsFile, const Metadata *in_old_parent) const {
-  modifyParent(in_assetsFile, in_old_parent);
+  modifyParent(dynamic_cast<const Metadata*>(in_assetsFile), in_old_parent);
+  save(in_assetsFile);
 }
 
 void MetadataFactory::modifyParent(const Metadata *in_metadata, const Metadata *in_old_parent) const {

@@ -55,22 +55,14 @@ std::string Shot::str() const {
   return str_shot.str();
 }
 
-void Shot::SetPParent(const std::shared_ptr<Metadata>& in_parent) {
-  auto old_p = p_parent.lock();
-  Metadata::SetPParent(in_parent);
-  //在这里， 如果已经保存过或者已经是从磁盘中加载来时， 必然会持有工厂， 这个时候我们就要告诉工厂， 我们改变了父子关系
-  if (p_metadata_flctory_ptr_)
-    p_metadata_flctory_ptr_->modifyParent(this, old_p.get());
-}
-
 void Shot::load(const MetadataFactoryPtr& in_factory) {
   in_factory->load(this);
   p_metadata_flctory_ptr_ = in_factory;
 }
 
 void Shot::save(const MetadataFactoryPtr& in_factory) {
-  Metadata::load(in_factory);
   p_metadata_flctory_ptr_ = in_factory;
+  in_factory->save(this);
 }
 
 bool Shot::operator<(const Shot& rhs) const {
@@ -92,6 +84,10 @@ bool Shot::sort(const Metadata& in_rhs) const {
   } else {
     return str() < in_rhs.str();
   }
+}
+void Shot::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
+  if (p_metadata_flctory_ptr_)
+    p_metadata_flctory_ptr_->modifyParent(this, in_old_parent.get());
 }
 
 }  // namespace doodle

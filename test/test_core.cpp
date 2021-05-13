@@ -10,7 +10,7 @@
 #include <cereal/archives/binary.hpp>
 
 #include <streambuf>
-
+#include <boost/format.hpp>
 class CoreTest : public ::testing::Test {
  protected:
   void SetUp() override;
@@ -137,6 +137,7 @@ TEST_F(CoreTest, load_save_meatdata) {
     k_ass_file->save(k_f);
     ASSERT_TRUE(k_ass_file->GetMetadataFactory() == k_f);
   }
+  std::cout << boost::format{"\n\n %|=60s|"} % "create ok next load file" << std::endl;
 
   {
     //加载文件
@@ -171,30 +172,35 @@ TEST_F(CoreTest, load_save_meatdata) {
     auto t = *it_tc;
     auto t2 = *it_tp;
     t->SetPParent(t2);
-    ASSERT_TRUE((*it_tc)->GetPParent() == *it_tp);
+    ASSERT_TRUE(t->GetPParent() == t2);
   }
-
+  std::cout << boost::format{"\n\n %|=60s|"} % "tow load" << std::endl;
   {
     //加载文件
     auto ptj = std::make_shared<Project>("D:/");
     ptj->load(k_f);
     std::cout << ptj->ShowStr() << std::endl;
     ASSERT_TRUE(ptj->GetMetadataFactory() == k_f);
-    ASSERT_TRUE(ptj->GetPChildItems().size() == 3);
+    ASSERT_TRUE(ptj->GetPChildItems().size() == 2);
 
     for (const auto& it : ptj->GetPChildItems()) {
       std::cout << std::setw(4) << "|->" << it->ShowStr() << std::endl;
       it->load(k_f);
       ASSERT_TRUE(it->GetMetadataFactory() == k_f);
-
+      it->sortChildItems();
       for (const auto& it1 : it->GetPChildItems()) {
+        it1->load(k_f);
         std::cout << std::setw(7) << "|->" << it1->ShowStr() << std::endl;
+        for(const auto& it2 : it1->GetPChildItems()){
+          it2->load(k_f);
+          std::cout << std::setw(10) << "|->" << it2->ShowStr() << std::endl;
+        }
       }
     }
     auto& k_c  = ptj->GetPChildItems();
     auto it_tp = std::find_if(k_c.begin(), k_c.end(),
                               [](const MetadataPtr& ptr) {
-                                return ptr->GetName() == "ep0010";
+                                return ptr->str() == "ep0010";
                               });
     ASSERT_TRUE(it_tp != k_c.end());
     auto& k_c1 = (*it_tp)->GetPChildItems();
@@ -207,7 +213,7 @@ TEST_F(CoreTest, load_save_meatdata) {
     ASSERT_TRUE((*it_tc)->GetPParent() == *it_tp);
   }
 
-  // FSys::remove_all(FSys::path{"D:/"} / Project::getConfigFileFolder());
+   FSys::remove_all(FSys::path{"D:/"} / Project::getConfigFileFolder());
 }
 
 TEST_F(CoreTest, loadUe4ProjectFile) {

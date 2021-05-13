@@ -43,18 +43,21 @@ std::shared_ptr<Metadata> Metadata::GetPParent() const {
 void Metadata::SetPParent(const std::shared_ptr<Metadata> &in_parent) {
   // if(*in_parent == *this)
   //先去除掉原先的子
-    if (HasParent()) {
-      auto p_p = p_parent.lock();
-      auto it = std::find(p_p->p_child_items.begin(), p_p->p_child_items.end(), shared_from_this());
-      //    assert(it != p_p->p_child_items.end());
-      if (it != p_p->p_child_items.end())
-        p_parent.lock()->p_child_items.erase(it);
-    }
+  std::shared_ptr<Metadata> k_old{};
+  if (HasParent()) {
+    k_old = p_parent.lock();
+    auto it = std::find(k_old->p_child_items.begin(), k_old->p_child_items.end(), shared_from_this());
+    //    assert(it != p_p->p_child_items.end());
+    if (it != k_old->p_child_items.end())
+      p_parent.lock()->p_child_items.erase(it);
+  }
   //再添加
   DOODLE_LOG_INFO( "begin set parent: "<<in_parent->str())
   p_parent      = in_parent;
   p_parent_uuid = in_parent->GetRoot();
   in_parent->p_child_items.emplace_back(shared_from_this());
+  if (k_old)
+    modifyParent(k_old);
   DOODLE_LOG_INFO(in_parent->str())
 }
 const std::vector<MetadataPtr> &Metadata::GetPChildItems() const {

@@ -18,7 +18,6 @@ class DOODLELIB_API AssetsFile : public Metadata {
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string ShowStr() const override;
 
-  virtual void SetPParent(const std::shared_ptr<Metadata>& in_parent) override;
   void load(const MetadataFactoryPtr& in_factory) override;
   void save(const MetadataFactoryPtr& in_factory) override;
   bool operator<(const AssetsFile& in_rhs) const;
