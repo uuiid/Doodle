@@ -10,6 +10,10 @@ class systemTray;
 class mainWindows;
 class MetadataWidget;
 
+enum class funName{
+  mklink,
+};
+
 class DOODLELIB_API Doodle : public wxApp {
  public:
   Doodle();
@@ -17,7 +21,7 @@ class DOODLELIB_API Doodle : public wxApp {
   virtual bool OnInit() override;
   virtual int OnExit() override;
   void OnInitCmdLine(wxCmdLineParser& parser) override;
-  // bool OnCmdLineParsed(wxCmdLineParser& parser) override;
+   bool OnCmdLineParsed(wxCmdLineParser& parser) override;
 
   void openMainWindow() const;
   void openSettingWindow() const;
@@ -30,5 +34,6 @@ class DOODLELIB_API Doodle : public wxApp {
   SettingWidght* p_setting_widget;
   systemTray* p_systemTray;
   MetadataWidget* p_metadata_widget;
+  std::function<void()> p_run_fun;
 };
 }  // namespace doodle

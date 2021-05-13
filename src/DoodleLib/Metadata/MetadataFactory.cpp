@@ -27,6 +27,7 @@ FSys::path MetadataFactory::GetRoot(const Metadata *in_metadata) const {
 void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_config) const {
   FSys::fstream k_fstream{};
   if (FSys::exists(k_config)) {
+    in_metadata->clearChildItems();
     for (const auto &it : FSys::directory_iterator{k_config}) {
       k_fstream.open(it, std::ios::in | std::ios::binary);
       {
@@ -36,7 +37,7 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
         if (k_ptr->checkParent(*in_metadata))
           k_ptr->SetPParent(in_metadata->shared_from_this());
         else
-          DOODLE_LOG_INFO("没有父子uuid核实出错" << k_ptr->ShowStr());
+          DOODLE_LOG_INFO("父子uuid核实出错" << k_ptr->ShowStr());
       }
       k_fstream.close();
     }

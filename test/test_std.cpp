@@ -59,6 +59,15 @@ TEST(DSTD, dir) {
   auto r = 2740700278 / 8000000;
   std::cout << r << std::endl;
 }
+TEST(DSTD, num){
+#define DOODLE_tset_num(exp) #exp ": " <<std::to_string(exp)
+  std::cout << DOODLE_tset_num(10 % 2) << std::endl
+            << DOODLE_tset_num(11 % 2) << std::endl
+            << DOODLE_tset_num(10 / 2) << std::endl
+            << DOODLE_tset_num(11 / 2) << std::endl;
+
+#undef DOODLE_tset_num
+}
 
 TEST(DSTD, stdStringLocale) {
 }

@@ -16,6 +16,7 @@ const std::string Ue4Project::Content     = "Content";
 const std::string Ue4Project::ContentShot = "Shot";
 const std::string Ue4Project::UE4PATH     = "Engine/Binaries/Win64/UE4Editor-Cmd.exe";
 const std::string Ue4Project::Character   = "Character";
+const std::string Ue4Project::Prop        = "Prop";
 
 Ue4Project::Ue4Project(FSys::path project_path)
     : p_ue_path(),

@@ -40,6 +40,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
 
   [[nodiscard]] virtual bool HasChild() const;
   [[nodiscard]] virtual const std::vector<MetadataPtr> &GetPChildItems() const;
+  virtual void clearChildItems();
   virtual bool RemoveChildItems(const MetadataPtr &in_child);
   virtual void SetPChildItems(const std::vector<MetadataPtr> &in_child_items);
   virtual void AddChildItem(const MetadataPtr &in_items);

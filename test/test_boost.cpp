@@ -102,7 +102,14 @@ TEST(dboost, boost_format) {
   std::cout << boost::format{"\n\n %|=60s|"} % "create ok next load file" << std::endl;
 
 }
-
+TEST(dboost, split){
+  std::vector<std::string> str;
+  boost::split(str, "test;123;tt;22;", boost::is_any_of(";"),boost::token_compress_on);
+  std::cout << "size: " << str.size() << std::endl;
+  for(auto &sub: str){
+    std::cout << sub << std::endl;
+  }
+}
 TEST(dboost, filesys_append) {
   boost::filesystem::path path{"D:/tse/tset.txrt"};
   // path.append(".backup");

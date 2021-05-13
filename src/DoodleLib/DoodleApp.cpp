@@ -40,13 +40,37 @@ int Doodle::OnExit() {
 void Doodle::OnInitCmdLine(wxCmdLineParser& parser) {
   // parser.SetSwitchChars(ConvStr<wxString>("-"));
   wxApp::OnInitCmdLine(parser);
-  parser.AddOption(ConvStr<wxString>("fun"));
+  parser.AddSwitch("fun");
+  for (const auto& name : magic_enum::enum_names<funName>()) {
+    parser.AddOption(ConvStr<wxString>(std::string{name}));
+  }
 }
 
-// bool Doodle::OnCmdLineParsed(wxCmdLineParser& parser) {
-//   auto fun = parser.Found(ConvStr<wxString>("fun"));
-//   return true;
-// }
+ bool Doodle::OnCmdLineParsed(wxCmdLineParser& parser) {
+   wxString k_string{};
+   if(parser.Found("fun")) {
+     if (parser.Found(
+             ConvStr<wxString>(std::string(magic_enum::enum_name(funName::mklink))),
+             &k_string)) {
+       //创建功能
+       p_run_fun = [k_string]() {
+         std::vector<std::string> str;
+         boost::split(str, ConvStr<std::string>(k_string), boost::is_any_of(";"));
+         if (str.size() % 2 == 0) {
+           const auto k_size = str.size();
+           for (auto i = 0; i < k_size; ++i) {
+             MklinkWidget::mklink(str[i], str[i + 1]);
+             ++i;
+           }
+         }else{
+           DOODLE_LOG_INFO("来源和目标不匹配,无法映射");
+         }
+       };
+     }
+   }
+
+   return wxApp::OnCmdLineParsed(parser);
+ }
 
 void Doodle::openMainWindow() const {
   p_mainWindwos->Show();
@@ -60,12 +84,7 @@ void Doodle::openMetadaWindow() const {
 }
 
 void Doodle::runCommand() {
-  auto cmd = ConvStr<std::string>(argv[1]);
-  std::vector<std::string> str;
-  std::vector<std::string> str2;
-  boost::split(str, cmd, boost::is_any_of("="));
-  boost::split(str2, str[1], boost::is_any_of(";"));
-  MklinkWidget::mklink(str2[1], str2[2]);
+  p_run_fun();
   Exit();
 }
 // bool Doodle::OnExceptionInMainLoop() {
@@ -90,7 +109,7 @@ bool Doodle::OnInit() {
     DOODLE_LOG_INFO("arg " << i << ": " << argv[i]);
   }
 
-  if (argc >= 2) {
+  if (p_run_fun) {
     runCommand();
     return true;
   }

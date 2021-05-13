@@ -136,5 +136,8 @@ bool Metadata::operator<=(const Metadata &in_rhs) const {
 bool Metadata::operator>=(const Metadata &in_rhs) const {
   return !(*this < in_rhs);
 }
+void Metadata::clearChildItems() {
+  p_child_items.clear();
+}
 
 }  // namespace doodle
