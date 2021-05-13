@@ -39,7 +39,7 @@ class DOODLELIB_API Shot : public Metadata {
 
   [[nodiscard]] std::string str() const override;
 
-  virtual void SetPParent(const std::shared_ptr<Metadata> &in_parent) override;
+  void SetPParent(const std::shared_ptr<Metadata> &in_parent) override;
   void load(const MetadataFactoryPtr &in_factory) override;
   void save(const MetadataFactoryPtr &in_factory) override;
 
@@ -49,8 +49,8 @@ class DOODLELIB_API Shot : public Metadata {
   bool operator>=(const Shot &rhs) const;
 
  protected:
-  virtual bool sort(const Metadata &in_rhs) const override;
-
+  bool sort(const Metadata &in_rhs) const override;
+  void modifyParent(const std::shared_ptr<Metadata>& in_old_parent) override;
  private:
   friend class cereal::access;
   template <class Archive>

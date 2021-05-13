@@ -1,6 +1,5 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-
 #include <DoodleLib/Metadata/Metadata.h>
 
 #include <cereal/cereal.hpp>
@@ -30,8 +29,8 @@ class DOODLELIB_API Project : public Metadata {
   [[nodiscard]] std::string ShowStr() const override;
 
   [[nodiscard]] std::string ShortStr() const;
-  
-  virtual void SetPParent(const std::shared_ptr<Metadata> &in_parent) override;
+
+  virtual void SetPParent(const std::shared_ptr<Metadata>& in_parent) override;
   void load(const MetadataFactoryPtr& in_factory) override;
   void save(const MetadataFactoryPtr& in_factory) override;
 
@@ -43,7 +42,8 @@ class DOODLELIB_API Project : public Metadata {
   bool operator>=(const Project& in_rhs) const;
 
  protected:
- virtual bool sort(const Metadata &in_rhs) const override;
+  virtual bool sort(const Metadata& in_rhs) const override;
+  void modifyParent(const std::shared_ptr<Metadata>& in_old_parent) override;
 
  private:
   [[nodiscard]] FSys::path DBRoot() const;

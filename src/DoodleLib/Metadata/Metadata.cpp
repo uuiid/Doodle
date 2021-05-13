@@ -6,7 +6,9 @@
 #include <core/coreset.h>
 #include <Exception/Exception.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Logger/Logger.h>
 
+#include <cassert>
 namespace doodle {
 Metadata::Metadata()
     : std::enable_shared_from_this<Metadata>(),
@@ -39,19 +41,27 @@ std::shared_ptr<Metadata> Metadata::GetPParent() const {
   return p_parent.lock();
 }
 void Metadata::SetPParent(const std::shared_ptr<Metadata> &in_parent) {
+  // if(*in_parent == *this)
   //先去除掉原先的子
-  if (HasParent())
-    p_parent.lock()->RemoveChildItems(shared_from_this());
+    if (HasParent()) {
+      auto p_p = p_parent.lock();
+      auto it = std::find(p_p->p_child_items.begin(), p_p->p_child_items.end(), shared_from_this());
+      //    assert(it != p_p->p_child_items.end());
+      if (it != p_p->p_child_items.end())
+        p_parent.lock()->p_child_items.erase(it);
+    }
   //再添加
+  DOODLE_LOG_INFO( "begin set parent: "<<in_parent->str())
   p_parent      = in_parent;
   p_parent_uuid = in_parent->GetRoot();
-  p_parent.lock()->p_child_items.emplace_back(shared_from_this());
+  in_parent->p_child_items.emplace_back(shared_from_this());
+  DOODLE_LOG_INFO(in_parent->str())
 }
 const std::vector<MetadataPtr> &Metadata::GetPChildItems() const {
   return p_child_items;
 }
 void Metadata::SetPChildItems(const std::vector<MetadataPtr> &in_child_items) {
-  for (auto child : in_child_items) {
+  for (const auto& child : in_child_items) {
     child->SetPParent(shared_from_this());
   }
 }
@@ -111,13 +121,6 @@ bool Metadata::checkParent(const Metadata &in_metadata) const {
   return p_parent_uuid == in_metadata.p_Root;
 }
 
-void Metadata::load(const MetadataFactoryPtr &in_factory) {
-  p_metadata_flctory_ptr_ = in_factory;
-}
-
-void Metadata::save(const MetadataFactoryPtr &in_factory) {
-  p_metadata_flctory_ptr_ = in_factory;
-}
 bool Metadata::operator<(const Metadata &in_rhs) const {
   return this->sort(in_rhs);
 }

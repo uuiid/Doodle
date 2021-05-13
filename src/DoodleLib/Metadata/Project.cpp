@@ -82,12 +82,12 @@ FSys::path Project::DBRoot() const {
   return p_path / "_._root";
 }
 void Project::save(const MetadataFactoryPtr& in_factory) {
-  Metadata::load(in_factory);
+  p_metadata_flctory_ptr_ = in_factory;
   in_factory->save(this);
 }
 void Project::load(const MetadataFactoryPtr& in_factory) {
   in_factory->load(this);
-  Metadata::load(in_factory);
+  p_metadata_flctory_ptr_ = in_factory;
 }
 bool Project::operator<(const Project& in_rhs) const {
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_path) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_path);

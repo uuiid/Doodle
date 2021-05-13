@@ -29,7 +29,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   //基本保证在使用时不空（从逻辑上）
   MetadataFactoryPtr p_metadata_flctory_ptr_;
   virtual bool sort(const Metadata &in_rhs) const = 0;
-
+  virtual void modifyParent(const std::shared_ptr<Metadata>& in_old_parent) = 0;
  public:
   Metadata();
   explicit Metadata(std::weak_ptr<Metadata> in_metadata);
@@ -58,13 +58,14 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
 
   [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
 
+  //此处如果进行比较， 会自动转化为子类进行比较， 相同子类优化， 不同子类字符串比较
   virtual bool operator<(const Metadata &in_rhs) const;
   virtual bool operator>(const Metadata &in_rhs) const;
   virtual bool operator<=(const Metadata &in_rhs) const;
   virtual bool operator>=(const Metadata &in_rhs) const;
 
-  virtual void load(const MetadataFactoryPtr &in_factory);
-  virtual void save(const MetadataFactoryPtr &in_factory);
+  virtual void load(const MetadataFactoryPtr &in_factory) = 0;
+  virtual void save(const MetadataFactoryPtr &in_factory) = 0;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
 };

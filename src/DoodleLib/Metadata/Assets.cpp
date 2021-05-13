@@ -33,11 +33,11 @@ void Assets::SetPParent(const std::shared_ptr<Metadata>& in_parent) {
 
 void Assets::load(const MetadataFactoryPtr& in_factory) {
   in_factory->load(this);
-  Metadata::load(in_factory);
+  p_metadata_flctory_ptr_ = in_factory;
 }
 
 void Assets::save(const MetadataFactoryPtr& in_factory) {
-  Metadata::load(in_factory);
+  p_metadata_flctory_ptr_ = in_factory;
   in_factory->save(this);
 }
 bool Assets::operator<(const Assets& in_rhs) const {

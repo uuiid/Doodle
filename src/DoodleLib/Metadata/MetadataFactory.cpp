@@ -163,6 +163,8 @@ void MetadataFactory::modifyParent(const Metadata *in_metadata, const Metadata *
   auto k_old_path = GetRoot(in_old_parent) / in_metadata->GetName();
   auto k_new_path = GetRoot(in_metadata->GetPParent().get()) / in_metadata->GetName();
   if (FSys::exists(k_old_path) && !FSys::exists(k_new_path)) {
+    if (!FSys::exists(k_new_path.parent_path()))
+      FSys::create_directory(k_new_path.parent_path());
     FSys::rename(k_old_path, k_new_path);
   } else {
     throw DoodleError{"没有旧纪录或者新记录已存在"};

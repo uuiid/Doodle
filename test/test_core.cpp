@@ -95,6 +95,7 @@ TEST_F(CoreTest, archive) {
 
 TEST_F(CoreTest, load_save_meatdata) {
   using namespace doodle;
+  std::string k_test_root{};
   auto k_f = std::make_shared<MetadataFactory>();
   {  //创建项目各各种标签
     auto ptj = std::make_shared<Project>("D:/", "test_23333");
@@ -124,6 +125,13 @@ TEST_F(CoreTest, load_save_meatdata) {
     k_ass->save(k_f);
     ASSERT_TRUE(k_ass->GetMetadataFactory() == k_f);
 
+    k_ass = std::make_shared<Assets>(ptj, "test_m_parent");
+    k_ass->SetPParent(ptj);
+    k_ass->save(k_f);
+    ASSERT_TRUE(k_ass->GetMetadataFactory() == k_f);
+    ASSERT_TRUE(k_ass->GetPParent() == ptj);
+    k_test_root = k_ass->GetRoot();
+
     auto k_ass_file = std::make_shared<AssetsFile>(k_ass, "tset", "测试");
     k_ass_file->SetPParent(k_ass);
     k_ass_file->save(k_f);
@@ -136,18 +144,69 @@ TEST_F(CoreTest, load_save_meatdata) {
     ptj->load(k_f);
     std::cout << ptj->ShowStr() << std::endl;
     ASSERT_TRUE(ptj->GetMetadataFactory() == k_f);
-    ASSERT_TRUE(ptj->GetPChildItems().size() == 2);
+    ASSERT_TRUE(ptj->GetPChildItems().size() == 3);
 
     for (const auto& it : ptj->GetPChildItems()) {
-      std::cout << " |>" << it->ShowStr() << std::endl;
+      std::cout << std::setw(4) << "|->" << it->ShowStr() << std::endl;
       it->load(k_f);
       ASSERT_TRUE(it->GetMetadataFactory() == k_f);
 
       for (const auto& it1 : it->GetPChildItems()) {
-        std::cout << "   |>" << it1->ShowStr() << std::endl;
+        std::cout << std::setw(7) << "|->" << it1->ShowStr() << std::endl;
       }
     }
+    auto& k_c  = ptj->GetPChildItems();
+    auto it_tc = std::find_if(k_c.begin(), k_c.end(),
+                              [&k_test_root](const MetadataPtr& ptr) {
+                                return ptr->GetRoot() == k_test_root;
+                              });
+    ASSERT_TRUE(it_tc != k_c.end());
+    auto it_tp = std::find_if(k_c.begin(), k_c.end(),
+                              [](const MetadataPtr& ptr) {
+                                return ptr->str() == "ep0010";
+                              });
+    ASSERT_TRUE(it_tp != k_c.end());
+    ASSERT_TRUE((*it_tc)->GetPParent() == ptj);
+    ASSERT_TRUE((*it_tc)->GetMetadataFactory() == k_f);
+    auto t = *it_tc;
+    auto t2 = *it_tp;
+    t->SetPParent(t2);
+    ASSERT_TRUE((*it_tc)->GetPParent() == *it_tp);
   }
+
+  {
+    //加载文件
+    auto ptj = std::make_shared<Project>("D:/");
+    ptj->load(k_f);
+    std::cout << ptj->ShowStr() << std::endl;
+    ASSERT_TRUE(ptj->GetMetadataFactory() == k_f);
+    ASSERT_TRUE(ptj->GetPChildItems().size() == 3);
+
+    for (const auto& it : ptj->GetPChildItems()) {
+      std::cout << std::setw(4) << "|->" << it->ShowStr() << std::endl;
+      it->load(k_f);
+      ASSERT_TRUE(it->GetMetadataFactory() == k_f);
+
+      for (const auto& it1 : it->GetPChildItems()) {
+        std::cout << std::setw(7) << "|->" << it1->ShowStr() << std::endl;
+      }
+    }
+    auto& k_c  = ptj->GetPChildItems();
+    auto it_tp = std::find_if(k_c.begin(), k_c.end(),
+                              [](const MetadataPtr& ptr) {
+                                return ptr->GetName() == "ep0010";
+                              });
+    ASSERT_TRUE(it_tp != k_c.end());
+    auto& k_c1 = (*it_tp)->GetPChildItems();
+    auto it_tc = std::find_if(k_c1.begin(), k_c1.end(),
+                              [&k_test_root](const MetadataPtr& ptr) {
+                                return ptr->GetRoot() == k_test_root;
+                              });
+    ASSERT_TRUE(it_tc != k_c1.end());
+    ASSERT_TRUE((*it_tc)->GetPParent() != ptj);
+    ASSERT_TRUE((*it_tc)->GetPParent() == *it_tp);
+  }
+
   // FSys::remove_all(FSys::path{"D:/"} / Project::getConfigFileFolder());
 }
 

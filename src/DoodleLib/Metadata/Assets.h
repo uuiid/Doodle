@@ -29,6 +29,7 @@ class DOODLELIB_API Assets : public Metadata {
 
  protected:
   virtual bool sort(const Metadata& in_rhs) const override;
+  void modifyParent(const std::shared_ptr<Metadata> &in_old_parent) override;
 
  private:
   friend class cereal::access;
