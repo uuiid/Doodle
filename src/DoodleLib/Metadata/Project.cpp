@@ -6,6 +6,7 @@
 #include <PinYIn/convert.h>
 
 #include <core/coreset.h>
+#include <DoodleLib/Metadata/ContextMenu.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
@@ -107,6 +108,9 @@ void Project::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
   //在这里， 如果已经保存过或者已经是从磁盘中加载来时， 必然会持有工厂， 这个时候我们就要告诉工厂， 我们改变了父子关系
   if (p_metadata_flctory_ptr_)
     p_metadata_flctory_ptr_->modifyParent(this, in_old_parent.get());
+}
+void Project::createMenu(ContextMenu* in_contextMenu) {
+  in_contextMenu->createMenu(std::dynamic_pointer_cast<Project>(shared_from_this()));
 }
 
 }  // namespace doodle

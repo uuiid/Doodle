@@ -22,6 +22,7 @@ class DOODLELIB_API Episodes : public Metadata {
   bool operator>(const Episodes &in_rhs) const;
   bool operator<=(const Episodes &in_rhs) const;
   bool operator>=(const Episodes &in_rhs) const;
+  virtual void createMenu(ContextMenu *in_contextMenu) override;
 
  protected:
   virtual bool sort(const Metadata &in_rhs) const override;
