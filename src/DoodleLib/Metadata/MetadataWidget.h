@@ -17,10 +17,6 @@ class MetadataWidget : public wxFrame {
   wxDataViewCtrl* p_tree_view_ctrl_;
   wxDataViewCtrl* p_list_view_ctrl_;
 
-  void CreateProject();
-  void AddProject();
-  void deleteProject();
-
   void treeContextMenu(wxDataViewEvent& in_event);
   void listContextMenu(wxDataViewEvent& in_event);
 

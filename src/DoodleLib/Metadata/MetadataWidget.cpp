@@ -7,7 +7,7 @@
 #include <DoodleLib/Metadata/Model/AssDirTree.h>
 #include <DoodleLib/core_Cpp.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
-
+#include <DoodleLib/Metadata/ContextMenu.h>
 namespace doodle {
 
 MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
@@ -49,47 +49,17 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
   k_layout->SetSizeHints(this);
   this->Center();
 }
-void MetadataWidget::CreateProject()  {
-  auto k_db = p_project_ptr_->Path() / Project::getConfigFileFolder() / Project::getConfigFileName();
-  if (FSys::exists(k_db)) return;
 
-  if (!FSys::exists(k_db.parent_path()))
-    FSys::create_directories(k_db.parent_path());
-
-  auto k_top_windows = wxGetApp().GetTopWindow();
-  auto k_text_dialog = wxTextEntryDialog{k_top_windows, ConvStr<wxString>("项目名称: ")};
-  auto k_result      = k_text_dialog.ShowModal();
-  if (k_result == wxID_OK) {
-    auto k_text = k_text_dialog.GetValue();
-    p_project_ptr_->setName(k_text);
-  }
-  p_project_ptr_->save(p_metadata_flctory_ptr_);
-}
-void MetadataWidget::AddProject() {
-  auto path_dialog = wxDirDialog{this, ConvStr<wxString>("选择项目根目录: "), wxEmptyString, wxRESIZE_BORDER};
-  auto result      = path_dialog.ShowModal();
-  if (result != wxID_OK) return;
-  auto path = ConvStr<FSys::path>(path_dialog.GetPath());
-  if (path.empty()) return;
-  auto prj = std::make_shared<Project>(path);
-  prj->load(p_metadata_flctory_ptr_);
-  MetadataSet::Get().installProject(prj);
-}
-void MetadataWidget::deleteProject()  {
-  auto k_item = p_tree_view_ctrl_->GetCurrentItem();
-  if (!k_item.IsOk())
-    return;
-  auto k_root = reinterpret_cast<Project*>(k_item.GetID());
-  if (k_root)
-    MetadataSet::Get().deleteProject(k_root);
-}
 void MetadataWidget::treeContextMenu(wxDataViewEvent& in_event) {
-  wxWindowIDRef k_add_id{NewControlId()};
-  wxWindowIDRef k_delete_id{NewControlId()};
-  wxWindowIDRef k_create_id{NewControlId()};
-
   wxMenu k_wx_menu{};
-  k_wx_menu.Append(k_add_id, ConvStr<wxString>("添加项目"));
+  ContextMenu k_context_menu{this,&k_wx_menu};
+  auto k_data = in_event.GetItem();
+  if(k_data.IsOk()){
+    auto k_item = reinterpret_cast<Metadata*>(k_data.GetID());
+    k_item->createMenu(&k_context_menu);
+  } else{
+    k_context_menu.createMenuAfter();
+  }
   PopupMenu(&k_wx_menu);
 }
 void MetadataWidget::listContextMenu(wxDataViewEvent& in_event) {
