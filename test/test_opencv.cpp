@@ -4,7 +4,29 @@
 #include <opencv2/opencv.hpp>
 #include <filesystem>
 #include <fstream>
-
+wxImage wx_from_mat(cv::Mat &img) {
+  cv::Mat im2;
+  if (img.channels() == 1) {
+    cv::cvtColor(img, im2, cv::COLOR_GRAY2RGB);
+  } else if (img.channels() == 4) {
+    cv::cvtColor(img, im2, cv::COLOR_BGRA2RGB);
+  } else {
+    cv::cvtColor(img, im2, cv::COLOR_BGR2RGB);
+  }
+  long imsize = im2.rows * im2.cols * im2.channels();
+  wxImage wx(im2.cols, im2.rows, (unsigned char *)malloc(imsize), false);
+  unsigned char *s = im2.data;
+  unsigned char *d = wx.GetData();
+  for (long i = 0; i < imsize; i++) {
+    d[i] = s[i];
+  }
+  return wx;
+}
+cv::Mat mat_from_wx(wxImage &wx) {
+  cv::Mat im2(cv::Size(wx.GetWidth(), wx.GetHeight()), CV_8UC3, wx.GetData());
+  cvtColor(im2, im2, cv::COLOR_RGB2BGR);
+  return im2;
+}
 //#include <QtGui/qimage.h>
 //#include <QtCore/qdebug.h>
 //#include <QtWidgets/qlabel.h>
@@ -61,33 +83,33 @@ TEST(opencv, imageSequeTovideo) {
   }
 }
 TEST(opencv, videoToQimage) {
-//  const std::filesystem::path path{R"(test.mp4)"};
-//  std::fstream file{};
-//  int i = 0;
-//
-//  auto video = cv::VideoCapture("D:/test2.mp4");
-//
-//  auto label = QLabel();
-//  for (size_t i = 0; i < 10; ++i) {
-//    QImage q_image{};
-//    cv::Mat image;
-//    cv::Mat image2;
-//    if (!video.read(image))
-//      continue;
-//    cv::cvtColor(image, image2, cv::COLOR_BGR2RGB);
-//
-//    // cv::imshow("test", image);
-//    // q_image = cvMat2QImage(image);
-//    q_image = QImage{
-//        (const unsigned char *)image2.data,
-//        image2.cols,
-//        image2.rows,
-//        (int)image2.step,
-//        QImage::Format::Format_RGB888};
-//    auto test_image = q_image.copy();
-//    test_image.save(QString{"D:/tmp/qt/tset_"} + QString::number(i) + ".jpg");
-//    // label.setPixmap(QPixmap::fromImage(test_image));
-//    // label.show();
-//    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-//  }
+  //  const std::filesystem::path path{R"(test.mp4)"};
+  //  std::fstream file{};
+  //  int i = 0;
+  //
+  //  auto video = cv::VideoCapture("D:/test2.mp4");
+  //
+  //  auto label = QLabel();
+  //  for (size_t i = 0; i < 10; ++i) {
+  //    QImage q_image{};
+  //    cv::Mat image;
+  //    cv::Mat image2;
+  //    if (!video.read(image))
+  //      continue;
+  //    cv::cvtColor(image, image2, cv::COLOR_BGR2RGB);
+  //
+  //    // cv::imshow("test", image);
+  //    // q_image = cvMat2QImage(image);
+  //    q_image = QImage{
+  //        (const unsigned char *)image2.data,
+  //        image2.cols,
+  //        image2.rows,
+  //        (int)image2.step,
+  //        QImage::Format::Format_RGB888};
+  //    auto test_image = q_image.copy();
+  //    test_image.save(QString{"D:/tmp/qt/tset_"} + QString::number(i) + ".jpg");
+  //    // label.setPixmap(QPixmap::fromImage(test_image));
+  //    // label.show();
+  //    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  //  }
 }
