@@ -25,7 +25,7 @@ std::vector<ProjectPtr> MetadataSet::getAllProjects() const {
 
 void MetadataSet::installProject(const ProjectPtr &Project_) {
   p_project_list.emplace_back(Project_);
-  sig_projectAdd(Project_.get(), p_project_list.size() - 1);
+  sig_projectAdd(Project_.get(), boost::numeric_cast<int>(p_project_list.size()) - 1);
 }
 
 [[maybe_unused]] const ProjectPtr &MetadataSet::Project_() const {

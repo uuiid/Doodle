@@ -4,6 +4,8 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
+
+#include <wx/dataview.h>
 class wxDataViewCtrl;
 namespace doodle {
 class MetadataWidget : public wxFrame {
@@ -14,10 +16,17 @@ class MetadataWidget : public wxFrame {
 
   wxDataViewCtrl* p_tree_view_ctrl_;
   wxDataViewCtrl* p_list_view_ctrl_;
+
+  void CreateProject();
+  void AddProject();
+  void deleteProject();
+
+  void treeContextMenu(wxDataViewEvent& in_event);
+  void listContextMenu(wxDataViewEvent& in_event);
+
  public:
   explicit MetadataWidget(wxWindow* in_window,wxWindowID in_id);
 
-  void CreateProject() const;
 
 };
 

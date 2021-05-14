@@ -17,8 +17,6 @@ class SettingWidght : public wxFrame {
   wxWindowIDRef p_Doc_id;
   wxWindowIDRef p_Maya_id;
   wxWindowIDRef p_Project_id;
-  wxWindowIDRef p_Project_delete_id;
-  wxWindowIDRef p_Project_add_id;
   wxWindowIDRef p_ue_path_id;
   wxWindowIDRef p_ue_version_id;
   wxWindowIDRef p_ue_shot_start_id;
@@ -30,17 +28,14 @@ class SettingWidght : public wxFrame {
   wxStaticText* p_cache_Text;
   wxStaticText* p_Doc;
   wxTextCtrl* p_Maya;
-  wxComboBox* p_Project;
+  wxStaticText* p_Project;
   wxTextCtrl* p_ue_path;
   wxTextCtrl* p_ue_version;
   wxSpinCtrl* p_ue_shot_start;
   wxSpinCtrl* p_ue_shot_end;
 
   void InitSetting();
-  void InsertProject();
  public:
   explicit SettingWidght(wxWindow* parent, wxWindowID id);
-
-  void AddProject();
 };
 };  // namespace doodle

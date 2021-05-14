@@ -1,6 +1,7 @@
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/ContextMenu.h>
 
 #include <boost/format.hpp>
 namespace doodle {
@@ -88,6 +89,9 @@ bool Shot::sort(const Metadata& in_rhs) const {
 void Shot::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
   if (p_metadata_flctory_ptr_)
     p_metadata_flctory_ptr_->modifyParent(this, in_old_parent.get());
+}
+void Shot::createMenu(ContextMenu* in_contextMenu) {
+  in_contextMenu->createMenu(std::dynamic_pointer_cast<Shot>(shared_from_this()));
 }
 
 }  // namespace doodle

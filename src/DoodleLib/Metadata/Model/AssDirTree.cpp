@@ -25,7 +25,7 @@ void AssDirTree::GetValue(wxVariant& variant, const wxDataViewItem& item, unsign
   variant = ConvStr<wxString>("None");
   DOLE_CHECK(item, );
   auto str = reinterpret_cast<Metadata*>(item.GetID());
-  variant = ConvStr<wxString>(str->ShowStr());
+  variant  = ConvStr<wxString>(str->ShowStr());
 }
 
 bool AssDirTree::SetValue(const wxVariant& variant, const wxDataViewItem& item, unsigned int col) {
@@ -52,7 +52,8 @@ unsigned int AssDirTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
   //  DOLE_CHECK(item, 0);
 
   auto k_item = reinterpret_cast<Metadata*>(item.GetID());
-  if (!k_item) {
+  if (!item.IsOk()) {
+    //这里是空指针的情况， 即没有父级， 我们要使用根来确认
     for (const auto& k_t : p_Root) {
       children.Add(wxDataViewItem{k_t.get()});
     }
@@ -64,4 +65,4 @@ unsigned int AssDirTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
   }
   return children.size();
 }
-}
+}  // namespace doodle

@@ -139,5 +139,11 @@ bool Metadata::operator>=(const Metadata &in_rhs) const {
 void Metadata::clearChildItems() {
   p_child_items.clear();
 }
+const MetadataPtr Metadata::GetRootParent() {
+  if(p_parent.expired())
+    return shared_from_this();
+  else
+    return  p_parent.lock()->GetRootParent();
+}
 
 }  // namespace doodle

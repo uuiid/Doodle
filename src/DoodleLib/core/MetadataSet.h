@@ -34,7 +34,7 @@ class DOODLELIB_API MetadataSet {
   friend class cereal::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
-  int getIntex(const std::vector<ProjectPtr>::const_iterator &it) const;
+  [[nodiscard]] int getIntex(const std::vector<ProjectPtr>::const_iterator &it) const;
 };
 template <class Archive>
 void MetadataSet::serialize(Archive &ar, const std::uint32_t version){

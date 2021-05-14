@@ -82,12 +82,14 @@ class coreSql;
 class LabelNode;
 class AssetsFile;
 class MetadataFactory;
+class ContextMenu;
 
+using MetadataPtr        = std::shared_ptr<Metadata>;
 using ProjectPtr         = std::shared_ptr<Project>;
 using EpisodesPtr        = std::shared_ptr<Episodes>;
 using ShotPtr            = std::shared_ptr<Shot>;
-using MetadataPtr        = std::shared_ptr<Metadata>;
 using AssetsPtr          = std::shared_ptr<Assets>;
+using AssetsFilePtr      = std::shared_ptr<AssetsFile>;
 using coreSqlPtr         = std::shared_ptr<coreSql>;
 using LabelNodePtr       = std::shared_ptr<LabelNode>;
 using AssetsFilePtr      = std::shared_ptr<AssetsFile>;

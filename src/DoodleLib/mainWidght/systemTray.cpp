@@ -15,6 +15,7 @@ DOODLE_NAMESPACE_S
 systemTray::systemTray(wxTaskBarIconType iconType)
     : wxTaskBarIcon(iconType),
       p_tool_id(wxWindow::NewControlId()),
+      p_Meta_id(wxWindow::NewControlId()),
       p_installMayaPlug_id(wxWindow::NewControlId()),
       p_installUEPlug_id(wxWindow::NewControlId()),
       p_installUEProjectPlug_id(wxWindow::NewControlId()),
@@ -28,6 +29,7 @@ systemTray::systemTray(wxTaskBarIconType iconType)
 wxMenu* systemTray::CreatePopupMenu() {
   auto menu = new wxMenu{};
 
+  menu->Append(p_Meta_id, _(ConvStr<wxString>("主窗口")));
   menu->Append(p_tool_id, _(ConvStr<wxString>("工具箱")), _(ConvStr<wxString>("打开工具箱")));
   menu->Append(p_setting_id, _(ConvStr<wxString>("打开设置")));
   menu->AppendSeparator();
@@ -47,6 +49,12 @@ wxMenu* systemTray::CreatePopupMenu() {
 
   menu->Append(p_quit_id, _(ConvStr<wxString>("退出")));
 
+  //打开元数据窗口
+  menu->Bind(
+      wxEVT_MENU, [](wxCommandEvent& event) {
+        wxGetApp().openMetadaWindow();
+      },
+      p_Meta_id);
   //打开工具箱
   menu->Bind(
       wxEVT_MENU, [](wxCommandEvent& event) {
@@ -136,7 +144,5 @@ wxMenu* systemTray::CreatePopupMenu() {
 
   return menu;
 }
-
-
 
 DOODLE_NAMESPACE_E

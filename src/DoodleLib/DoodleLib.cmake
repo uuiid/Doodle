@@ -42,6 +42,8 @@
         toolkit/toolkit.h
         libWarp/WinReg.hpp
         mainWidght/MklinkWidget.h
+        Metadata/ContextMenu.h
+
 
 )
 set(
@@ -75,6 +77,7 @@ set(
         PinYin/convert.cpp
         ScreenshotWidght/ScreenshotAction.cpp
         ScreenshotWidght/ScreenshotWidght.cpp
+        Metadata/ContextMenu.cpp
         SettingWidght/settingWidget.cpp
         toolkit/MessageAndProgress.cpp
         toolkit/toolkit.cpp

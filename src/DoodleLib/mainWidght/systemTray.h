@@ -27,6 +27,7 @@ class systemTray : public wxTaskBarIcon {
 
  private:
   wxWindowIDRef p_tool_id;
+  wxWindowIDRef p_Meta_id;
 
   wxWindowIDRef p_installMayaPlug_id;
   wxWindowIDRef p_installUEPlug_id;
