@@ -103,7 +103,16 @@ ExternalProject_Add(cmrc_prj
         INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/cmrc_prj-prefix/src/cmrc_prj/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake
         TEST_COMMAND ""
         )
-
+#添加doxygen自定义css
+ExternalProject_Add(doxygen_css
+        GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
+        GIT_TAG origin/main
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/doxygen_css-prefix/src/doxygen_css/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css
+#        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/doxygen-awesome-css-prefix/src/doxygen-awesome-css/doxygen-awesome-sidebar-only.css ${PROJECT_SOURCE_DIR}/doc/css
+        TEST_COMMAND ""
+        )
 
 #添加文档生成
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
@@ -111,14 +120,15 @@ set(DOXYGEN_WARNINGS NO)
 set(DOXYGEN_WARN_IF_UNDOCUMENTED NO)
 set(DOXYGEN_WARN_IF_DOC_ERROR NO)
 set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
-set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR})
+set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR}/resource)
 set(DOXYGEN_EXCLUDE_PATTERNS
         */.idea
         */.vs
         */b_Ninja_VS*
+        */cmake-build*
         */venv)
 doxygen_add_docs(Doxygen
-        ${PROJECT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/src
         )
 
 add_subdirectory(src)
