@@ -50,6 +50,25 @@ void ContextMenu::AddProject() {
 }
 
 void ContextMenu::createMenu(const ProjectPtr& in_data) {
+  auto k_set_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("设为当前项目"));
+  p_menu->Bind(
+            wxEVT_MENU,
+            [in_data](wxCommandEvent& in_event){
+              MetadataSet::Get().setProject_(in_data);
+            },
+            k_set_prj->GetId()
+            );
+
+  auto k_delete_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("删除项目"));
+  p_menu->Bind(
+            wxEVT_MENU,
+            [in_data](wxCommandEvent& in_event){
+              MetadataSet::Get().deleteProject(in_data.get());
+            },
+            k_set_prj->GetId()
+            );
+
+
   this->createMenuAfter(std::dynamic_pointer_cast<Metadata>(in_data));
 }
 
@@ -79,11 +98,19 @@ void ContextMenu::createMenuAfter(const MetadataPtr& in_data)  {
   createMenuAfter();
 }
 void ContextMenu::createMenuAfter() {
-  auto k_create_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加项目"));
+  auto k_create_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("创建项目"));
   p_menu->Bind(
       wxEVT_MENU,
       [this](wxCommandEvent&in_event){
         this->CreateProject();
+      },
+      k_create_prj->GetId()
+  );
+  auto k_Add_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加项目"));
+  p_menu->Bind(
+      wxEVT_MENU,
+      [this](wxCommandEvent&in_event){
+        this->AddProject();
       },
       k_create_prj->GetId()
   );

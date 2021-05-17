@@ -11,6 +11,7 @@ namespace doodle {
 AssDirTree::AssDirTree()
     : wxDataViewModel(),
       p_Root(MetadataSet::Get().getAllProjects()) {
+
 }
 
 unsigned int AssDirTree::GetColumnCount() const {

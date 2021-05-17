@@ -31,6 +31,7 @@ void SettingWidght::InitSetting() {
   p_ue_version->SetValue(ConvStr<wxString>(set.gettUe4Setting().Version()));
   p_ue_shot_start->SetValue(set.gettUe4Setting().ShotStart());
   p_ue_shot_end->SetValue(set.gettUe4Setting().ShotEnd());
+
   set.GetMetadataSet().sig_projectChange.connect(
       [this](const Project* in_project, int in_i) {
         p_Project->SetLabelText(ConvStr<wxString>(in_project->ShowStr()));
