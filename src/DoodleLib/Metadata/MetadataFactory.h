@@ -5,6 +5,14 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 namespace doodle {
+/**
+  * 父亲负责加载孩子，在加载父亲时，孩子会同时加载完成， 这样， 父亲会知道是否加载玩成孩子
+  * 在保存时，保存路径是： prjRoot /父亲的root（uuid）/孩子的（root）uuid（文件）
+  * 这样，我们就形成了逻辑闭环
+  * 同时， 我们的父亲加载孩子时还会验证孩子的父子是否一致
+  *
+  * @warning 我们在更改父亲时， 要同时移动文件和保存更改
+  */
 class DOODLELIB_API MetadataFactory {
  public:
   MetadataFactory();
@@ -21,7 +29,7 @@ class DOODLELIB_API MetadataFactory {
   virtual void save(const Assets* in_assets) const;
   virtual void save(const AssetsFile* in_assetsFile) const;
 
-  //在项目中是没有父对象的，所以这里是什么都没有的空函数
+  ///在项目中是没有父对象的，所以这里是什么都没有的空函数
   virtual void modifyParent(const Project* in_project, const Metadata* in_old_parent) const;
 
   virtual void modifyParent(const Shot* in_shot, const Metadata* in_old_parent) const;

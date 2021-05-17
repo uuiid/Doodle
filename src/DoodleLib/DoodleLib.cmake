@@ -43,7 +43,7 @@
         libWarp/WinReg.hpp
         mainWidght/MklinkWidget.h
         Metadata/ContextMenu.h
-
+        Metadata/TimeDuration.h
 
 )
 set(
@@ -82,4 +82,6 @@ set(
         toolkit/MessageAndProgress.cpp
         toolkit/toolkit.cpp
         mainWidght/MklinkWidget.cpp
+        Metadata/TimeDuration.cpp
+
 )
