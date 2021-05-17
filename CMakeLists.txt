@@ -120,15 +120,18 @@ set(DOXYGEN_WARNINGS NO)
 set(DOXYGEN_WARN_IF_UNDOCUMENTED NO)
 set(DOXYGEN_WARN_IF_DOC_ERROR NO)
 set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
-set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR}/resource)
+set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR}/doc)
 set(DOXYGEN_EXCLUDE_PATTERNS
         */.idea
         */.vs
         */b_Ninja_VS*
         */cmake-build*
         */venv)
+set(DOXYGEN_GENERATE_TREEVIEW YES)
+set(DOXYGEN_HTML_EXTRA_STYLESHEET ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.css)
 doxygen_add_docs(Doxygen
         ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/doc
         )
 
 add_subdirectory(src)
