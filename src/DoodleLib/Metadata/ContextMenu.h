@@ -15,13 +15,13 @@ class ContextMenu {
   friend Assets;
   friend AssetsFile;
 
-  void createMenu(const ProjectPtr      &in_data) ;
-  void createMenu(const EpisodesPtr     &in_data) ;
-  void createMenu(const ShotPtr         &in_data) ;
-  void createMenu(const AssetsPtr       &in_data) ;
-  void createMenu(const AssetsFilePtr   &in_data) ;
+  wxMenu* createMenu(const ProjectPtr      &in_data);
+  wxMenu* createMenu(const EpisodesPtr     &in_data);
+  wxMenu* createMenu(const ShotPtr         &in_data);
+  wxMenu* createMenu(const AssetsPtr       &in_data);
+  wxMenu* createMenu(const AssetsFilePtr   &in_data);
 
-  void createMenuAfter(const MetadataPtr& in_data) ;
+  wxMenu* createMenuAfter(const MetadataPtr& in_data);
 
   void createProject();
   void addProject();
@@ -38,7 +38,8 @@ class ContextMenu {
    *  @param in_menu 这个是创建上下文菜单需要传入的菜单指针
    */
   explicit ContextMenu(wxWindow* in_parent,wxMenu* in_menu);
-  void createMenuAfter() ;
+  wxMenu* createMenuAfter();
+  std::string getShotAb() const;
 
 };
 

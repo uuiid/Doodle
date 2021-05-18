@@ -23,11 +23,11 @@ AssetsFile::AssetsFile()
       p_department(),
       p_comment() {
 }
-AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, FSys::path in_path, std::string name, std::string showName)
+AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in_path, std::string name, std::string showName)
     : Metadata(),
       p_name(std::move(name)),
       p_ShowName(std::move(showName)),
-      p_path_file(std::make_shared<AssetsPath>(std::move(in_path))),
+      p_path_file(std::make_shared<AssetsPath>(in_path)),
       p_time(),
       p_user(),
       p_department(),
@@ -109,5 +109,11 @@ const AssetsPathPtr& AssetsFile::getPathFile() const {
 }
 void AssetsFile::setPathFile(const AssetsPathPtr& in_pathFile) {
   p_path_file = in_pathFile;
+}
+Department AssetsFile::getDepartment() const {
+  return p_department;
+}
+void AssetsFile::setDepartment(Department in_department) {
+  p_department = in_department;
 }
 }  // namespace doodle

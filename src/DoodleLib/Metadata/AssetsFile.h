@@ -6,6 +6,9 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/core/coreset.h>
+
+#include <cereal/types/chrono.hpp>
+
 namespace doodle {
 class DOODLELIB_API AssetsFile : public Metadata {
   std::string p_name;
@@ -16,10 +19,9 @@ class DOODLELIB_API AssetsFile : public Metadata {
   Department p_department;
   std::vector<CommentPtr> p_comment;
 
-
  public:
   AssetsFile();
-  explicit AssetsFile(std::weak_ptr<Metadata> in_metadata, FSys::path in_path, std::string name = {}, std::string showName = {});
+  explicit AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in_path, std::string name = {}, std::string showName = {});
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string showStr() const override;
 
@@ -29,6 +31,8 @@ class DOODLELIB_API AssetsFile : public Metadata {
   void setUser(const std::string& in_user);
   const AssetsPathPtr& getPathFile() const;
   void setPathFile(const AssetsPathPtr& in_pathFile);
+  Department getDepartment() const;
+  void setDepartment(Department in_department);
 
   [[nodiscard]] const std::vector<CommentPtr>& getComment() const;
   void setComment(const std::vector<CommentPtr>& in_comment);
@@ -44,7 +48,7 @@ class DOODLELIB_API AssetsFile : public Metadata {
 
  protected:
   virtual bool sort(const Metadata& in_rhs) const override;
-  void modifyParent(const std::shared_ptr<Metadata> &in_old_parent) override;
+  void modifyParent(const std::shared_ptr<Metadata>& in_old_parent) override;
 
  private:
   friend class cereal::access;
@@ -57,9 +61,13 @@ void AssetsFile::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 1)
     ar(
         cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
-        p_name,
-        p_ShowName,
-        p_path_file);
+        CEREAL_NVP(p_name),
+        CEREAL_NVP(p_ShowName),
+        CEREAL_NVP(p_path_file),
+        CEREAL_NVP(p_time),
+        CEREAL_NVP(p_user),
+        CEREAL_NVP(p_department),
+        CEREAL_NVP(p_comment));
 }
 
 }  // namespace doodle

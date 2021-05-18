@@ -17,6 +17,17 @@ class DOODLELIB_API Comment {
   void setComment(const std::string& in_comment);
   [[nodiscard]] const std::string& getUser() const;
   void setUser(const std::string& in_user);
-};
 
+ private:
+  friend class cereal::access;
+  template <class Archive>
+  void serialize(Archive& ar, std::uint32_t const version);
+};
+template <class Archive>
+void Comment::serialize(Archive& ar, const std::uint32_t version) {
+  if(version == 1)
+    ar(CEREAL_NVP(p_comment),
+       CEREAL_NVP(p_user));
 }
+}
+CEREAL_CLASS_VERSION(doodle::Comment,1)

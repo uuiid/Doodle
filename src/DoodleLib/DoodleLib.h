@@ -44,3 +44,4 @@
 #include <DoodleLib/toolkit/MessageAndProgress.h>
 #include <DoodleLib/toolkit/toolkit.h>
 #include <DoodleLib/libWarp/WinReg.hpp>
+#include <DoodleLib/Metadata/Comment.h>
