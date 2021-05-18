@@ -5,7 +5,19 @@
 #include <DoodleLib/Metadata/MetadataWidget.h>
 #include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/Metadata/Model/AssDirTree.h>
-#include <DoodleLib/core_Cpp.h>
+#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/core/coreset.h>
+
+#include <DoodleLib/FileWarp/MayaFile.h>
+#include <DoodleLib/FileWarp/ImageSequence.h>
+#include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/FileWarp/Ue4Project.h>
+
+#include <DoodleLib/FileSys/FileSystem.h>
+
+#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
 namespace doodle {

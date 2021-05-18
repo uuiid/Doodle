@@ -3,7 +3,6 @@
         DoodleApp.h
         DoodleLib.h
         DoodleLib_fwd.h
-        core_Cpp.h
         core/coreset.h
         core/coresql.h
         core/MetadataSet.h
@@ -45,7 +44,7 @@
         Metadata/ContextMenu.h
         Metadata/TimeDuration.h
         Metadata/Comment.h
-
+        Metadata/AssetsPath.h
 )
 set(
         DOODLELIB_SOURCE
@@ -85,5 +84,6 @@ set(
         mainWidght/MklinkWidget.cpp
         Metadata/TimeDuration.cpp
         Metadata/Comment.cpp
+        Metadata/AssetsPath.cpp
 
 )

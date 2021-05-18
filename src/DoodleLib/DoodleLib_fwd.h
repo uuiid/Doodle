@@ -85,6 +85,7 @@ class MetadataFactory;
 class ContextMenu;
 class TimeDuration;
 class Comment;
+class AssetsPath;
 
 using MetadataPtr        = std::shared_ptr<Metadata>;
 using ProjectPtr         = std::shared_ptr<Project>;
@@ -98,6 +99,7 @@ using AssetsFilePtr      = std::shared_ptr<AssetsFile>;
 using MetadataFactoryPtr = std::shared_ptr<MetadataFactory>;
 using TimeDurationPtr    = std::shared_ptr<TimeDuration>;
 using CommentPtr         = std::shared_ptr<Comment>;
+using AssetsPathPtr      = std::shared_ptr<AssetsPath>;
 class Doodle;
 enum class filterState {
   useFilter,

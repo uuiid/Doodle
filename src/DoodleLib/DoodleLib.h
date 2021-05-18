@@ -6,7 +6,6 @@
 
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/DoodleApp.h>
-#include <DoodleLib/core_Cpp.h>
 #include <DoodleLib/core/coreset.h>
 #include <DoodleLib/core/coresql.h>
 #include <DoodleLib/core/MetadataSet.h>
@@ -26,6 +25,7 @@
 #include <DoodleLib/mainWidght/systemTray.h>
 #include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/AssetsPath.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>

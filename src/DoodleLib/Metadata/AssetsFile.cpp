@@ -3,7 +3,9 @@
 //
 
 #include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/AssetsPath.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
+///这个工厂类必须在所有导入的后面
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <PinYin/convert.h>
 
@@ -15,15 +17,17 @@ AssetsFile::AssetsFile()
     : Metadata(),
       p_name(),
       p_ShowName(),
+      p_path_file(),
       p_time(),
       p_user(),
       p_department(),
       p_comment() {
 }
-AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string name, std::string showName)
+AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, FSys::path in_path, std::string name, std::string showName)
     : Metadata(),
       p_name(std::move(name)),
       p_ShowName(std::move(showName)),
+      p_path_file(std::make_shared<AssetsPath>(std::move(in_path))),
       p_time(),
       p_user(),
       p_department(),
@@ -90,12 +94,7 @@ const std::string& AssetsFile::getUser() const {
 void AssetsFile::setUser(const std::string& in_user) {
   p_user = in_user;
 }
-const std::string& AssetsFile::getDepartment() const {
-  return p_department;
-}
-void AssetsFile::setDepartment(const std::string& in_department) {
-  p_department = in_department;
-}
+
 const std::vector<CommentPtr>& AssetsFile::getComment() const {
   return p_comment;
 }
@@ -104,5 +103,11 @@ void AssetsFile::setComment(const std::vector<CommentPtr>& in_comment) {
 }
 void AssetsFile::addComment(const CommentPtr& in_comment) {
   p_comment.emplace_back(in_comment);
+}
+const AssetsPathPtr& AssetsFile::getPathFile() const {
+  return p_path_file;
+}
+void AssetsFile::setPathFile(const AssetsPathPtr& in_pathFile) {
+  p_path_file = in_pathFile;
 }
 }  // namespace doodle
