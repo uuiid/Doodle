@@ -25,29 +25,29 @@ Shot::Shot(std::weak_ptr<Metadata> in_metadata,
     throw DoodleError{"shot无法为负"};
 }
 
-const int64_t& Shot::Shot_() const noexcept {
+const int64_t& Shot::getShot() const noexcept {
   return p_shot;
 }
 
-void Shot::setShot_(const int64_t& Shot_) {
-  if (Shot_ < 0)
+void Shot::setShot(const int64_t& in_shot) {
+  if (in_shot < 0)
     throw DoodleError{"shot无法为负"};
 
-  p_shot = Shot_;
+  p_shot = in_shot;
 }
 
-const std::string& Shot::ShotAb() const noexcept {
+const std::string& Shot::getShotAb() const noexcept {
   return p_shot_ab;
 }
 
 void Shot::setShotAb(const std::string& ShotAb) noexcept {
   p_shot_ab = ShotAb;
 }
-EpisodesPtr Shot::Episodes_() const noexcept {
+EpisodesPtr Shot::getEpisodesPtr() const noexcept {
   return p_episodes.lock();
 }
 
-void Shot::setEpisodes_(const EpisodesPtr& Episodes_) noexcept {
+void Shot::setEpisodesPtr(const EpisodesPtr& Episodes_) noexcept {
   p_episodes = Episodes_;
 }
 std::string Shot::str() const {

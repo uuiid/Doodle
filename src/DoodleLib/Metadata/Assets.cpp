@@ -20,7 +20,7 @@ Assets::Assets(std::weak_ptr<Metadata> in_metadata, std::string in_name)
 std::string Assets::str() const {
   return convert::Get().toEn(this->p_name);
 }
-std::string Assets::ShowStr() const {
+std::string Assets::showStr() const {
   return p_name;
 }
 

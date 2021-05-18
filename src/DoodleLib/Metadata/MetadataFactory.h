@@ -40,7 +40,7 @@ class DOODLELIB_API MetadataFactory {
  private:
   void modifyParent(const Metadata* in_metadata, const Metadata* in_old_parent) const;
   void loadChild(Metadata* in_metadata, const FSys::path& k_config) const;
-  FSys::path GetRoot(const Metadata* in_metadata) const;
+  FSys::path getRoot(const Metadata* in_metadata) const;
   void save(const Metadata* in_metadata, const FSys::path& in_path) const;
 };
 

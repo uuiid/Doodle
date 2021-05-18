@@ -25,7 +25,7 @@ Project::Project(FSys::path in_path, std::string in_name)
       p_path(std::move(in_path)) {
 }
 
-const std::string& Project::Name() const noexcept {
+const std::string& Project::getName() const noexcept {
   return p_name;
 }
 
@@ -33,7 +33,7 @@ void Project::setName(const std::string& Name) noexcept {
   p_path = Name;
 }
 
-const FSys::path& Project::Path() const noexcept {
+const FSys::path& Project::getPath() const noexcept {
   return p_path;
 }
 
@@ -48,7 +48,7 @@ std::string Project::str() const {
       convert::Get().toEn(this->p_name));
 }
 
-std::string Project::ShortStr() const {
+std::string Project::shortStr() const {
   auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
   auto& k_pingYin = convert::Get();
   std::string str{};
@@ -60,7 +60,7 @@ std::string Project::ShortStr() const {
   return boost::algorithm::to_upper_copy(str.substr(0, 2));
 }
 
-std::string Project::ShowStr() const {
+std::string Project::showStr() const {
   return this->p_name;
 }
 std::string Project::getConfigFileFolder() {

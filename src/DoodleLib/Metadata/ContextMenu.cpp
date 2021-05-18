@@ -19,7 +19,7 @@ ContextMenu::ContextMenu(wxWindow* in_parent,wxMenu* in_menu)
       p_menu(in_menu),
    p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()){
 }
-void ContextMenu::CreateProject()  {
+void ContextMenu::createProject()  {
   auto path_dialog = wxDirDialog{p_parent, ConvStr<wxString>("选择项目根目录: "), wxEmptyString, wxRESIZE_BORDER};
   auto result      = path_dialog.ShowModal();
   if (result != wxID_OK)
@@ -38,7 +38,7 @@ void ContextMenu::CreateProject()  {
   k_ptr->save(p_metadata_flctory_ptr_);
   MetadataSet::Get().installProject(k_ptr);
 }
-void ContextMenu::AddProject() {
+void ContextMenu::addProject() {
   auto path_dialog = wxDirDialog{p_parent, ConvStr<wxString>("选择项目根目录: "), wxEmptyString, wxRESIZE_BORDER};
   auto result      = path_dialog.ShowModal();
   if (result != wxID_OK) return;
@@ -102,7 +102,7 @@ void ContextMenu::createMenuAfter() {
   p_menu->Bind(
       wxEVT_MENU,
       [this](wxCommandEvent&in_event){
-        this->CreateProject();
+        this->createProject();
       },
       k_create_prj->GetId()
   );
@@ -110,7 +110,7 @@ void ContextMenu::createMenuAfter() {
   p_menu->Bind(
       wxEVT_MENU,
       [this](wxCommandEvent&in_event){
-        this->AddProject();
+        this->addProject();
       },
       k_create_prj->GetId()
   );

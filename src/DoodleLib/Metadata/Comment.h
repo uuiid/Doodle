@@ -13,10 +13,10 @@ class DOODLELIB_API Comment {
  public:
   Comment();
   explicit Comment(std::string in_str);
-  [[nodiscard]] const std::string& GetComment() const;
-  void SetComment(const std::string& in_comment);
-  [[nodiscard]] const std::string& GetUser() const;
-  void SetUser(const std::string& in_user);
+  [[nodiscard]] const std::string& getComment() const;
+  void setComment(const std::string& in_comment);
+  [[nodiscard]] const std::string& getUser() const;
+  void setUser(const std::string& in_user);
 };
 
 }

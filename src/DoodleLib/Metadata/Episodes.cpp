@@ -18,11 +18,11 @@ Episodes::Episodes(std::weak_ptr<Metadata> in_metadata, int64_t in_episodes)
     throw DoodleError("集数无法为负");
 }
 
-const int64_t& Episodes::Episodes_() const noexcept {
+const int64_t& Episodes::getEpisodes() const noexcept {
   return p_episodes;
 }
 
-void Episodes::setEpisodes_(const int64_t& Episodes_) {
+void Episodes::setEpisodes(const int64_t& Episodes_) {
   if (Episodes_ < 0)
     throw DoodleError("集数无法为负");
   p_episodes = Episodes_;

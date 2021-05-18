@@ -14,15 +14,25 @@ class DOODLELIB_API AssetsFile : public Metadata {
   std::chrono::time_point<std::chrono::system_clock> p_time;
   std::string p_user;
   std::string p_department;
+  std::vector<CommentPtr> p_comment;
 
 
  public:
   AssetsFile();
   explicit AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string name = {}, std::string showName = {});
   [[nodiscard]] std::string str() const override;
-  [[nodiscard]] std::string ShowStr() const override;
+  [[nodiscard]] std::string showStr() const override;
 
+  [[nodiscard]] const std::chrono::time_point<std::chrono::system_clock>& getTime() const;
+  void setTime(const std::chrono::time_point<std::chrono::system_clock>& in_time);
+  [[nodiscard]] const std::string& getUser() const;
+  void setUser(const std::string& in_user);
+  [[nodiscard]] const std::string& getDepartment() const;
+  void setDepartment(const std::string& in_department);
 
+  [[nodiscard]] const std::vector<CommentPtr>& getComment() const;
+  void setComment(const std::vector<CommentPtr>& in_comment);
+  void addComment(const CommentPtr& in_comment);
 
   void load(const MetadataFactoryPtr& in_factory) override;
   void save(const MetadataFactoryPtr& in_factory) override;

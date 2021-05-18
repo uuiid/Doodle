@@ -101,41 +101,41 @@ TEST_F(CoreTest, load_save_meatdata) {
     auto ptj = std::make_shared<Project>("D:/", "test_23333");
 
     ptj->save(k_f);
-    ASSERT_TRUE(ptj->GetMetadataFactory() == k_f);
+    ASSERT_TRUE(ptj->getMetadataFactory() == k_f);
 
     auto eps = std::make_shared<Episodes>(ptj, 10);
-    eps->SetParent(ptj);
+    eps->setParent(ptj);
     eps->save(k_f);
-    ASSERT_TRUE(eps->GetMetadataFactory() == k_f);
+    ASSERT_TRUE(eps->getMetadataFactory() == k_f);
 
     for (auto i = 0; i < 20; ++i) {
       auto shot = std::make_shared<Shot>(eps, i);
 
-      shot->SetParent(eps);
+      shot->setParent(eps);
       if (i % 5 == 0) {
         shot->setShotAb(Shot::ShotAbEnum::A);
       }
 
       shot->save(k_f);
 
-      ASSERT_TRUE(shot->GetMetadataFactory() == k_f);
+      ASSERT_TRUE(shot->getMetadataFactory() == k_f);
     }
     auto k_ass = std::make_shared<Assets>(ptj, "tset");
-    k_ass->SetParent(ptj);
+    k_ass->setParent(ptj);
     k_ass->save(k_f);
-    ASSERT_TRUE(k_ass->GetMetadataFactory() == k_f);
+    ASSERT_TRUE(k_ass->getMetadataFactory() == k_f);
 
     k_ass = std::make_shared<Assets>(ptj, "test_m_parent");
-    k_ass->SetParent(ptj);
+    k_ass->setParent(ptj);
     k_ass->save(k_f);
-    ASSERT_TRUE(k_ass->GetMetadataFactory() == k_f);
-    ASSERT_TRUE(k_ass->GetParent() == ptj);
-    k_test_root = k_ass->GetRoot();
+    ASSERT_TRUE(k_ass->getMetadataFactory() == k_f);
+    ASSERT_TRUE(k_ass->getParent() == ptj);
+    k_test_root = k_ass->getRoot();
 
     auto k_ass_file = std::make_shared<AssetsFile>(k_ass, "tset", "测试");
-    k_ass_file->SetParent(k_ass);
+    k_ass_file->setParent(k_ass);
     k_ass_file->save(k_f);
-    ASSERT_TRUE(k_ass_file->GetMetadataFactory() == k_f);
+    ASSERT_TRUE(k_ass_file->getMetadataFactory() == k_f);
   }
   std::cout << boost::format{"\n\n %|=60s|"} % "create ok next load file" << std::endl;
 
@@ -143,23 +143,23 @@ TEST_F(CoreTest, load_save_meatdata) {
     //加载文件
     auto ptj = std::make_shared<Project>("D:/");
     ptj->load(k_f);
-    std::cout << ptj->ShowStr() << std::endl;
-    ASSERT_TRUE(ptj->GetMetadataFactory() == k_f);
-    ASSERT_TRUE(ptj->GetChildItems().size() == 3);
+    std::cout << ptj->showStr() << std::endl;
+    ASSERT_TRUE(ptj->getMetadataFactory() == k_f);
+    ASSERT_TRUE(ptj->getChildItems().size() == 3);
 
-    for (const auto& it : ptj->GetChildItems()) {
-      std::cout << std::setw(4) << "|->" << it->ShowStr() << std::endl;
+    for (const auto& it : ptj->getChildItems()) {
+      std::cout << std::setw(4) << "|->" << it->showStr() << std::endl;
       it->load(k_f);
-      ASSERT_TRUE(it->GetMetadataFactory() == k_f);
+      ASSERT_TRUE(it->getMetadataFactory() == k_f);
 
-      for (const auto& it1 : it->GetChildItems()) {
-        std::cout << std::setw(7) << "|->" << it1->ShowStr() << std::endl;
+      for (const auto& it1 : it->getChildItems()) {
+        std::cout << std::setw(7) << "|->" << it1->showStr() << std::endl;
       }
     }
-    auto& k_c  = ptj->GetChildItems();
+    auto& k_c  = ptj->getChildItems();
     auto it_tc = std::find_if(k_c.begin(), k_c.end(),
                               [&k_test_root](const MetadataPtr& ptr) {
-                                return ptr->GetRoot() == k_test_root;
+                                return ptr->getRoot() == k_test_root;
                               });
     ASSERT_TRUE(it_tc != k_c.end());
     auto it_tp = std::find_if(k_c.begin(), k_c.end(),
@@ -167,50 +167,50 @@ TEST_F(CoreTest, load_save_meatdata) {
                                 return ptr->str() == "ep0010";
                               });
     ASSERT_TRUE(it_tp != k_c.end());
-    ASSERT_TRUE((*it_tc)->GetParent() == ptj);
-    ASSERT_TRUE((*it_tc)->GetMetadataFactory() == k_f);
+    ASSERT_TRUE((*it_tc)->getParent() == ptj);
+    ASSERT_TRUE((*it_tc)->getMetadataFactory() == k_f);
     auto t = *it_tc;
     auto t2 = *it_tp;
-    t->SetParent(t2);
-    ASSERT_TRUE(t->GetParent() == t2);
+    t->setParent(t2);
+    ASSERT_TRUE(t->getParent() == t2);
   }
   std::cout << boost::format{"\n\n %|=60s|"} % "tow load" << std::endl;
   {
     //加载文件
     auto ptj = std::make_shared<Project>("D:/");
     ptj->load(k_f);
-    std::cout << ptj->ShowStr() << std::endl;
-    ASSERT_TRUE(ptj->GetMetadataFactory() == k_f);
-    ASSERT_TRUE(ptj->GetChildItems().size() == 2);
+    std::cout << ptj->showStr() << std::endl;
+    ASSERT_TRUE(ptj->getMetadataFactory() == k_f);
+    ASSERT_TRUE(ptj->getChildItems().size() == 2);
 
-    for (const auto& it : ptj->GetChildItems()) {
-      std::cout << std::setw(4) << "|->" << it->ShowStr() << std::endl;
+    for (const auto& it : ptj->getChildItems()) {
+      std::cout << std::setw(4) << "|->" << it->showStr() << std::endl;
       it->load(k_f);
-      ASSERT_TRUE(it->GetMetadataFactory() == k_f);
+      ASSERT_TRUE(it->getMetadataFactory() == k_f);
       it->sortChildItems();
-      for (const auto& it1 : it->GetChildItems()) {
+      for (const auto& it1 : it->getChildItems()) {
         it1->load(k_f);
-        std::cout << std::setw(7) << "|->" << it1->ShowStr() << std::endl;
-        for(const auto& it2 : it1->GetChildItems()){
+        std::cout << std::setw(7) << "|->" << it1->showStr() << std::endl;
+        for(const auto& it2 : it1->getChildItems()){
           it2->load(k_f);
-          std::cout << std::setw(10) << "|->" << it2->ShowStr() << std::endl;
+          std::cout << std::setw(10) << "|->" << it2->showStr() << std::endl;
         }
       }
     }
-    auto& k_c  = ptj->GetChildItems();
+    auto& k_c  = ptj->getChildItems();
     auto it_tp = std::find_if(k_c.begin(), k_c.end(),
                               [](const MetadataPtr& ptr) {
                                 return ptr->str() == "ep0010";
                               });
     ASSERT_TRUE(it_tp != k_c.end());
-    auto& k_c1 = (*it_tp)->GetChildItems();
+    auto& k_c1 = (*it_tp)->getChildItems();
     auto it_tc = std::find_if(k_c1.begin(), k_c1.end(),
                               [&k_test_root](const MetadataPtr& ptr) {
-                                return ptr->GetRoot() == k_test_root;
+                                return ptr->getRoot() == k_test_root;
                               });
     ASSERT_TRUE(it_tc != k_c1.end());
-    ASSERT_TRUE((*it_tc)->GetParent() != ptj);
-    ASSERT_TRUE((*it_tc)->GetParent() == *it_tp);
+    ASSERT_TRUE((*it_tc)->getParent() != ptj);
+    ASSERT_TRUE((*it_tc)->getParent() == *it_tp);
   }
 
    FSys::remove_all(FSys::path{"D:/"} / Project::getConfigFileFolder());

@@ -25,17 +25,17 @@ class DOODLELIB_API Shot : public Metadata {
   enum class ShotAbEnum { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
   // clang-format on
 
-  [[nodiscard]] const decltype(p_shot) &Shot_() const noexcept;
-  void setShot_(const decltype(p_shot) &Shot_);
+  [[nodiscard]] const decltype(p_shot) &getShot() const noexcept;
+  void setShot(const decltype(p_shot) &in_shot);
 
-  [[nodiscard]] const decltype(p_shot_ab) &ShotAb() const noexcept;
+  [[nodiscard]] const decltype(p_shot_ab) &getShotAb() const noexcept;
   void setShotAb(const decltype(p_shot_ab) &ShotAb) noexcept;
   inline void setShotAb(const ShotAbEnum &ShotAb) {
     setShotAb(std::string{magic_enum::enum_name(ShotAb)});
   };
 
-  [[nodiscard]] EpisodesPtr Episodes_() const noexcept;
-  void setEpisodes_(const EpisodesPtr &Episodes_) noexcept;
+  [[nodiscard]] EpisodesPtr getEpisodesPtr() const noexcept;
+  void setEpisodesPtr(const EpisodesPtr &Episodes_) noexcept;
 
   [[nodiscard]] std::string str() const override;
   virtual void createMenu(ContextMenu *in_contextMenu) override;

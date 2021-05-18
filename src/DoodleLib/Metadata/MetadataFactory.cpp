@@ -19,9 +19,9 @@ namespace doodle {
 
 MetadataFactory::MetadataFactory() {
 }
-FSys::path MetadataFactory::GetRoot(const Metadata *in_metadata) const {
+FSys::path MetadataFactory::getRoot(const Metadata *in_metadata) const {
   auto k_prj    = coreSet::getSet().GetMetadataSet().Project_();
-  auto k_config = k_prj->Path() / Project::getConfigFileFolder() / in_metadata->GetRoot();
+  auto k_config = k_prj->getPath() / Project::getConfigFileFolder() / in_metadata->getRoot();
   return k_config;
 }
 void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_config) const {
@@ -35,9 +35,9 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
         cereal::PortableBinaryInputArchive k_archive{k_fstream};
         k_archive(k_ptr);
         if (k_ptr->checkParent(*in_metadata))
-          k_ptr->SetParent(in_metadata->shared_from_this());
+          k_ptr->setParent(in_metadata->shared_from_this());
         else
-          DOODLE_LOG_INFO("父子uuid核实出错" << k_ptr->ShowStr());
+          DOODLE_LOG_INFO("父子uuid核实出错" << k_ptr->showStr());
       }
       k_fstream.close();
     }
@@ -45,7 +45,7 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
   }
 }
 void MetadataFactory::load(Project *in_project) const {
-  auto k_config_folder = in_project->Path() / Project::getConfigFileFolder();
+  auto k_config_folder = in_project->getPath() / Project::getConfigFileFolder();
   auto k_path          = k_config_folder / Project::getConfigFileName();
 
   if (!FSys::exists(k_path))
@@ -59,33 +59,33 @@ void MetadataFactory::load(Project *in_project) const {
   }
   k_fstream.close();
 
-  if (k_p.Path() == in_project->Path())
+  if (k_p.getPath() == in_project->getPath())
     *in_project = k_p;
   else
     throw DoodleError{"Project inconsistency"};
 
-  auto k_config = GetRoot(in_project);
+  auto k_config = getRoot(in_project);
   loadChild(in_project, k_config);
 }
 void MetadataFactory::load(Shot *in_shot) const {
-  auto k_config = GetRoot(in_shot);
+  auto k_config = getRoot(in_shot);
   loadChild(in_shot, k_config);
 }
 void MetadataFactory::load(Episodes *in_episodes) const {
-  auto k_config = GetRoot(in_episodes);
+  auto k_config = getRoot(in_episodes);
   loadChild(in_episodes, k_config);
 }
 void MetadataFactory::load(Assets *in_assets) const {
-  auto k_config = GetRoot(in_assets);
+  auto k_config = getRoot(in_assets);
   loadChild(in_assets, k_config);
 }
 void MetadataFactory::load(AssetsFile *in_assetsFile) const {
-  auto k_config = GetRoot(in_assetsFile);
+  auto k_config = getRoot(in_assetsFile);
   loadChild(in_assetsFile, k_config);
 }
 
 void MetadataFactory::save(const Project *in_project) const {
-  auto k_config_folder = in_project->Path() / Project::getConfigFileFolder();
+  auto k_config_folder = in_project->getPath() / Project::getConfigFileFolder();
   auto k_path          = k_config_folder / Project::getConfigFileName();
 
   if (!FSys::exists(k_path.parent_path()))
@@ -97,41 +97,41 @@ void MetadataFactory::save(const Project *in_project) const {
   cereal::PortableBinaryOutputArchive k_archive{k_fstream};
   k_archive(*in_project);
 
-  auto k_Floder = k_config_folder / in_project->GetRoot();
+  auto k_Floder = k_config_folder / in_project->getRoot();
   if (!FSys::exists(k_Floder))
     FSys::create_directories(k_Floder);
 }
 
 void MetadataFactory::save(const Shot *in_shot) const {
-  if (!in_shot->HasParent())
+  if (!in_shot->hasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_shot->GetParent();
-  auto k_path = this->GetRoot(k_ptr.get()) / in_shot->GetName();
+  auto k_ptr  = in_shot->getParent();
+  auto k_path = this->getRoot(k_ptr.get()) / in_shot->getName();
   save(in_shot, k_path);
 }
 void MetadataFactory::save(const Episodes *in_episodes) const {
-  if (!in_episodes->HasParent())
+  if (!in_episodes->hasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_episodes->GetParent();
-  auto k_path = this->GetRoot(k_ptr.get()) / in_episodes->GetName();
+  auto k_ptr  = in_episodes->getParent();
+  auto k_path = this->getRoot(k_ptr.get()) / in_episodes->getName();
   save(in_episodes, k_path);
 }
 void MetadataFactory::save(const Assets *in_assets) const {
-  if (!in_assets->HasParent())
+  if (!in_assets->hasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_assets->GetParent();
-  auto k_path = this->GetRoot(k_ptr.get()) / in_assets->GetName();
+  auto k_ptr  = in_assets->getParent();
+  auto k_path = this->getRoot(k_ptr.get()) / in_assets->getName();
   save(in_assets, k_path);
 }
 void MetadataFactory::save(const AssetsFile *in_assetsFile) const {
-  if (!in_assetsFile->HasParent())
+  if (!in_assetsFile->hasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_assetsFile->GetParent();
-  auto k_path = this->GetRoot(k_ptr.get()) / in_assetsFile->GetName();
+  auto k_ptr  = in_assetsFile->getParent();
+  auto k_path = this->getRoot(k_ptr.get()) / in_assetsFile->getName();
   save(in_assetsFile, k_path);
 }
 void MetadataFactory::save(const Metadata *in_metadata, const FSys::path &in_path) const {
@@ -167,8 +167,8 @@ void MetadataFactory::modifyParent(const AssetsFile *in_assetsFile, const Metada
 }
 
 void MetadataFactory::modifyParent(const Metadata *in_metadata, const Metadata *in_old_parent) const {
-  auto k_old_path = GetRoot(in_old_parent) / in_metadata->GetName();
-  auto k_new_path = GetRoot(in_metadata->GetParent().get()) / in_metadata->GetName();
+  auto k_old_path = getRoot(in_old_parent) / in_metadata->getName();
+  auto k_new_path = getRoot(in_metadata->getParent().get()) / in_metadata->getName();
   if (FSys::exists(k_old_path) && !FSys::exists(k_new_path)) {
     if (!FSys::exists(k_new_path.parent_path()))
       FSys::create_directory(k_new_path.parent_path());

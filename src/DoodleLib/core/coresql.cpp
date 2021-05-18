@@ -28,7 +28,7 @@ void coreSql::initDB(sqlOpenMode flags) {
 //      break;
 //  }
 //  if (!p_project) throw DoodleError{"无效prj指针"};
-//  auto path = p_project->Path();
+//  auto path = p_project->getPath();
 //  path /= Project::getConfigFileFolder();
 //  path /= Project::getConfigFileName();
 //  DOODLE_LOG_INFO("open db: " << path)

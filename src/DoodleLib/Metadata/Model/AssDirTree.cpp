@@ -26,7 +26,7 @@ void AssDirTree::GetValue(wxVariant& variant, const wxDataViewItem& item, unsign
   variant = ConvStr<wxString>("None");
   DOLE_CHECK(item, );
   auto str = reinterpret_cast<Metadata*>(item.GetID());
-  variant  = ConvStr<wxString>(str->ShowStr());
+  variant  = ConvStr<wxString>(str->showStr());
 }
 
 bool AssDirTree::SetValue(const wxVariant& variant, const wxDataViewItem& item, unsigned int col) {
@@ -36,8 +36,8 @@ bool AssDirTree::SetValue(const wxVariant& variant, const wxDataViewItem& item, 
 wxDataViewItem AssDirTree::GetParent(const wxDataViewItem& item) const {
   DOLE_CHECK(item, wxDataViewItem{});
   const auto k_p_metadata = reinterpret_cast<Metadata*>(item.GetID());
-  if (k_p_metadata->HasChild())
-    return wxDataViewItem{k_p_metadata->GetParent().get()};
+  if (k_p_metadata->hasChild())
+    return wxDataViewItem{k_p_metadata->getParent().get()};
   else
     return wxDataViewItem{};
 }
@@ -46,7 +46,7 @@ bool AssDirTree::IsContainer(const wxDataViewItem& item) const {
   DOLE_CHECK(item, true);
 
   auto k_item = reinterpret_cast<Metadata*>(item.GetID());
-  return !k_item->HasChild();
+  return !k_item->hasChild();
 }
 
 unsigned int AssDirTree::GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const {
@@ -59,7 +59,7 @@ unsigned int AssDirTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
       children.Add(wxDataViewItem{k_t.get()});
     }
   } else {
-    const auto& k_child = k_item->GetChildItems();
+    const auto& k_child = k_item->getChildItems();
     for (const auto& k_t : k_child) {
       children.Add(wxDataViewItem{k_t.get()});
     }

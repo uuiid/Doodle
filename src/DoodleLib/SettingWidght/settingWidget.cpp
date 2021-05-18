@@ -23,7 +23,7 @@ void SettingWidght::InitSetting() {
   p_Maya->SetValue(ConvStr<wxString>(set.MayaPath().generic_string()));
 
   //设置project项目
-  p_Project->SetLabelText(ConvStr<wxString>(set.GetMetadataSet().Project_()->ShowStr()));
+  p_Project->SetLabelText(ConvStr<wxString>(set.GetMetadataSet().Project_()->showStr()));
 
   if (set.gettUe4Setting().hasPath())
     p_ue_path->SetValue(ConvStr<wxString>(set.gettUe4Setting().Path().generic_string()));
@@ -34,7 +34,7 @@ void SettingWidght::InitSetting() {
 
   set.GetMetadataSet().sig_projectChange.connect(
       [this](const Project* in_project, int in_i) {
-        p_Project->SetLabelText(ConvStr<wxString>(in_project->ShowStr()));
+        p_Project->SetLabelText(ConvStr<wxString>(in_project->showStr()));
       });
 }
 

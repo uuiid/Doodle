@@ -23,8 +23,8 @@ class ContextMenu {
 
   void createMenuAfter(const MetadataPtr& in_data) ;
 
-  void CreateProject();
-  void AddProject();
+  void createProject();
+  void addProject();
 
  public:
   /**

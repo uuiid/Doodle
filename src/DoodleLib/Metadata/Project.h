@@ -19,16 +19,16 @@ class DOODLELIB_API Project : public Metadata {
 
   /// 属性编辑
   /// \return 项目名称属性
-  [[nodiscard]] const std::string& Name() const noexcept;
+  [[nodiscard]] const std::string& getName() const noexcept;
   void setName(const std::string& Name) noexcept;
 
-  [[nodiscard]] const FSys::path& Path() const noexcept;
+  [[nodiscard]] const FSys::path& getPath() const noexcept;
   void setPath(const FSys::path& Path);
 
   [[nodiscard]] std::string str() const override;
-  [[nodiscard]] std::string ShowStr() const override;
+  [[nodiscard]] std::string showStr() const override;
 
-  [[nodiscard]] std::string ShortStr() const;
+  [[nodiscard]] std::string shortStr() const;
 
   void load(const MetadataFactoryPtr& in_factory) override;
   void save(const MetadataFactoryPtr& in_factory) override;

@@ -41,28 +41,28 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   explicit Metadata(std::weak_ptr<Metadata> in_metadata);
   virtual ~Metadata();
   ///设置父指针
-  [[nodiscard]] virtual bool HasParent() const;
+  [[nodiscard]] virtual bool hasParent() const;
   ///活动父指针
-  [[nodiscard]] virtual std::shared_ptr<Metadata> GetParent() const;
+  [[nodiscard]] virtual std::shared_ptr<Metadata> getParent() const;
 
   ///设置父指针
-  virtual void SetParent(const std::shared_ptr<Metadata> &in_parent);
+  virtual void setParent(const std::shared_ptr<Metadata> &in_parent);
 
   ///询问是否有孩子
-  [[nodiscard]] virtual bool HasChild() const;
+  [[nodiscard]] virtual bool hasChild() const;
   ///获得孩子
   /**
    * @return 孩子的列表
    */
-  [[nodiscard]] virtual const std::vector<MetadataPtr> &GetChildItems() const;
+  [[nodiscard]] virtual const std::vector<MetadataPtr> &getChildItems() const;
   ///清除所有孩子
   virtual void clearChildItems();
   ///去除其中一个孩子
-  virtual bool RemoveChildItems(const MetadataPtr &in_child);
+  virtual bool removeChildItems(const MetadataPtr &in_child);
   ///设置所有孩子
-  virtual void SetPChildItems(const std::vector<MetadataPtr> &in_child_items);
+  virtual void setChildItems(const std::vector<MetadataPtr> &in_child_items);
   ///添加一个孩子
-  virtual void AddChildItem(const MetadataPtr &in_items);
+  virtual void addChildItem(const MetadataPtr &in_items);
   ///排序一个孩子
   virtual void sortChildItems();
 
@@ -75,25 +75,25 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   /**
    * @return 有或者没有中文的字符串, 但是意思一定时很明了的
    */
-  [[nodiscard]] virtual std::string ShowStr() const;
+  [[nodiscard]] virtual std::string showStr() const;
 
   ///获得根uuid
   /**
    * @return 根uuid
    */
-  [[nodiscard]] virtual const std::string &GetRoot() const;
-  [[nodiscard]] virtual const std::string &GetRoot();
+  [[nodiscard]] virtual const std::string &getRoot() const;
+  [[nodiscard]] virtual const std::string &getRoot();
   ///获得名称,这个名称是文件名称
   /**
    * @return
    */
-  [[nodiscard]] virtual const std::string &GetName() const;
-  [[nodiscard]] virtual const std::string &GetName();
+  [[nodiscard]] virtual const std::string &getName() const;
+  [[nodiscard]] virtual const std::string &getName();
   ///这个会一直递归找到没有父级的根节点
   /**
    * @return 根节点(现在基本上是项目节点)
    */
-  [[nodiscard]] const MetadataPtr GetRootParent();
+  [[nodiscard]] const MetadataPtr getRootParent();
   virtual void createMenu(ContextMenu* in_contextMenu) = 0;
   //  [[nodiscard]] virtual FSys::path FolderPath() const;
 
@@ -101,7 +101,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   /**
    * @return
    */
-  const MetadataFactoryPtr &GetMetadataFactory() const;
+  const MetadataFactoryPtr &getMetadataFactory() const;
 
   ///检查父亲是否符合记录
   /**
