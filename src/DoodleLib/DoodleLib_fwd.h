@@ -83,6 +83,8 @@ class LabelNode;
 class AssetsFile;
 class MetadataFactory;
 class ContextMenu;
+class TimeDuration;
+class Comment;
 
 using MetadataPtr        = std::shared_ptr<Metadata>;
 using ProjectPtr         = std::shared_ptr<Project>;
@@ -94,7 +96,8 @@ using coreSqlPtr         = std::shared_ptr<coreSql>;
 using LabelNodePtr       = std::shared_ptr<LabelNode>;
 using AssetsFilePtr      = std::shared_ptr<AssetsFile>;
 using MetadataFactoryPtr = std::shared_ptr<MetadataFactory>;
-
+using TimeDurationPtr    = std::shared_ptr<TimeDuration>;
+using CommentPtr         = std::shared_ptr<Comment>;
 class Doodle;
 enum class filterState {
   useFilter,

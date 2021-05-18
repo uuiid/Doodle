@@ -44,6 +44,7 @@
         mainWidght/MklinkWidget.h
         Metadata/ContextMenu.h
         Metadata/TimeDuration.h
+        Metadata/Comment.h
 
 )
 set(
@@ -83,5 +84,6 @@ set(
         toolkit/toolkit.cpp
         mainWidght/MklinkWidget.cpp
         Metadata/TimeDuration.cpp
+        Metadata/Comment.cpp
 
 )
