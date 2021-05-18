@@ -37,7 +37,7 @@ wxDataViewItem AssDirTree::GetParent(const wxDataViewItem& item) const {
   DOLE_CHECK(item, wxDataViewItem{});
   const auto k_p_metadata = reinterpret_cast<Metadata*>(item.GetID());
   if (k_p_metadata->HasChild())
-    return wxDataViewItem{k_p_metadata->GetPParent().get()};
+    return wxDataViewItem{k_p_metadata->GetParent().get()};
   else
     return wxDataViewItem{};
 }
@@ -59,7 +59,7 @@ unsigned int AssDirTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
       children.Add(wxDataViewItem{k_t.get()});
     }
   } else {
-    const auto& k_child = k_item->GetPChildItems();
+    const auto& k_child = k_item->GetChildItems();
     for (const auto& k_t : k_child) {
       children.Add(wxDataViewItem{k_t.get()});
     }

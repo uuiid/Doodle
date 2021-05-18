@@ -9,12 +9,12 @@ namespace doodle {
 
 TimeDuration::TimeDuration()
     : p_start_point(std::chrono::system_clock::now()),
-      p_end_point(),
+      p_end_point(std::chrono::system_clock::now()),
       p_duration() {
 }
 TimeDuration::TimeDuration(time_point in_point)
     : p_start_point(in_point),
-      p_end_point(),
+      p_end_point(in_point),
       p_duration() {
 }
 

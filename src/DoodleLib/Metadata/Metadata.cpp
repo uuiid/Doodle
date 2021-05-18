@@ -37,10 +37,10 @@ const std::string &Metadata::GetRoot() const {
     throw DoodleError{"p_Root is empty"};
   return p_Root;
 }
-std::shared_ptr<Metadata> Metadata::GetPParent() const {
+std::shared_ptr<Metadata> Metadata::GetParent() const {
   return p_parent.lock();
 }
-void Metadata::SetPParent(const std::shared_ptr<Metadata> &in_parent) {
+void Metadata::SetParent(const std::shared_ptr<Metadata> &in_parent) {
   // if(*in_parent == *this)
   //先去除掉原先的子
   std::shared_ptr<Metadata> k_old{};
@@ -60,12 +60,12 @@ void Metadata::SetPParent(const std::shared_ptr<Metadata> &in_parent) {
     modifyParent(k_old);
   DOODLE_LOG_INFO(in_parent->str())
 }
-const std::vector<MetadataPtr> &Metadata::GetPChildItems() const {
+const std::vector<MetadataPtr> &Metadata::GetChildItems() const {
   return p_child_items;
 }
 void Metadata::SetPChildItems(const std::vector<MetadataPtr> &in_child_items) {
   for (const auto& child : in_child_items) {
-    child->SetPParent(shared_from_this());
+    child->SetParent(shared_from_this());
   }
 }
 
@@ -82,7 +82,7 @@ bool Metadata::RemoveChildItems(const MetadataPtr &in_child) {
 }
 
 void Metadata::AddChildItem(const MetadataPtr &in_items) {
-  in_items->SetPParent(shared_from_this());
+  in_items->SetParent(shared_from_this());
 }
 
 void Metadata::sortChildItems() {

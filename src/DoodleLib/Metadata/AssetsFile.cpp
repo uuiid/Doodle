@@ -12,12 +12,16 @@
 namespace doodle {
 
 AssetsFile::AssetsFile()
-    : Metadata() {
+    : Metadata(),
+      p_name(),
+      p_ShowName(),
+      p_time() {
 }
 AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string name, std::string showName)
     : Metadata(),
       p_name(std::move(name)),
-      p_ShowName(std::move(showName)) {
+      p_ShowName(std::move(showName)),
+      p_time(){
   p_parent = std::move(in_metadata);
   if (p_ShowName.empty())
     p_ShowName = convert::Get().toEn(p_name);

@@ -35,7 +35,7 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
         cereal::PortableBinaryInputArchive k_archive{k_fstream};
         k_archive(k_ptr);
         if (k_ptr->checkParent(*in_metadata))
-          k_ptr->SetPParent(in_metadata->shared_from_this());
+          k_ptr->SetParent(in_metadata->shared_from_this());
         else
           DOODLE_LOG_INFO("父子uuid核实出错" << k_ptr->ShowStr());
       }
@@ -106,7 +106,7 @@ void MetadataFactory::save(const Shot *in_shot) const {
   if (!in_shot->HasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_shot->GetPParent();
+  auto k_ptr  = in_shot->GetParent();
   auto k_path = this->GetRoot(k_ptr.get()) / in_shot->GetName();
   save(in_shot, k_path);
 }
@@ -114,7 +114,7 @@ void MetadataFactory::save(const Episodes *in_episodes) const {
   if (!in_episodes->HasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_episodes->GetPParent();
+  auto k_ptr  = in_episodes->GetParent();
   auto k_path = this->GetRoot(k_ptr.get()) / in_episodes->GetName();
   save(in_episodes, k_path);
 }
@@ -122,7 +122,7 @@ void MetadataFactory::save(const Assets *in_assets) const {
   if (!in_assets->HasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_assets->GetPParent();
+  auto k_ptr  = in_assets->GetParent();
   auto k_path = this->GetRoot(k_ptr.get()) / in_assets->GetName();
   save(in_assets, k_path);
 }
@@ -130,7 +130,7 @@ void MetadataFactory::save(const AssetsFile *in_assetsFile) const {
   if (!in_assetsFile->HasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_assetsFile->GetPParent();
+  auto k_ptr  = in_assetsFile->GetParent();
   auto k_path = this->GetRoot(k_ptr.get()) / in_assetsFile->GetName();
   save(in_assetsFile, k_path);
 }
@@ -168,7 +168,7 @@ void MetadataFactory::modifyParent(const AssetsFile *in_assetsFile, const Metada
 
 void MetadataFactory::modifyParent(const Metadata *in_metadata, const Metadata *in_old_parent) const {
   auto k_old_path = GetRoot(in_old_parent) / in_metadata->GetName();
-  auto k_new_path = GetRoot(in_metadata->GetPParent().get()) / in_metadata->GetName();
+  auto k_new_path = GetRoot(in_metadata->GetParent().get()) / in_metadata->GetName();
   if (FSys::exists(k_old_path) && !FSys::exists(k_new_path)) {
     if (!FSys::exists(k_new_path.parent_path()))
       FSys::create_directory(k_new_path.parent_path());

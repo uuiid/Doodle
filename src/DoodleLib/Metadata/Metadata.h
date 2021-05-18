@@ -31,10 +31,11 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   MetadataFactoryPtr p_metadata_flctory_ptr_;
   virtual bool sort(const Metadata &in_rhs) const = 0;
   virtual void modifyParent(const std::shared_ptr<Metadata>& in_old_parent) = 0;
+
  public:
   Metadata();
+  ///这个时直接创建对象的，其中会自动设置父指针
   /**
-   * 这个时直接创建对象的，其中会自动设置父指针
    * @param in_metadata 父指针输入
    */
   explicit Metadata(std::weak_ptr<Metadata> in_metadata);
@@ -42,17 +43,18 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   ///设置父指针
   [[nodiscard]] virtual bool HasParent() const;
   ///活动父指针
-  [[nodiscard]] virtual std::shared_ptr<Metadata> GetPParent() const;
+  [[nodiscard]] virtual std::shared_ptr<Metadata> GetParent() const;
+
   ///设置父指针
-  virtual void SetPParent(const std::shared_ptr<Metadata> &in_parent);
+  virtual void SetParent(const std::shared_ptr<Metadata> &in_parent);
 
   ///询问是否有孩子
   [[nodiscard]] virtual bool HasChild() const;
+  ///获得孩子
   /**
-   * 获得孩子
    * @return 孩子的列表
    */
-  [[nodiscard]] virtual const std::vector<MetadataPtr> &GetPChildItems() const;
+  [[nodiscard]] virtual const std::vector<MetadataPtr> &GetChildItems() const;
   ///清除所有孩子
   virtual void clearChildItems();
   ///去除其中一个孩子
@@ -64,45 +66,45 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   ///排序一个孩子
   virtual void sortChildItems();
 
+  ///这里时转换为字符串的, 这里不可以有中文
   /**
-   * 这里时转换为字符串的, 这里不可以有中文
    * @return 没有中文的字符串
    */
   [[nodiscard]] virtual std::string str() const = 0;
+  ///这里时显示的字符串, 极有可能有中文
   /**
-   * 这里时显示的字符串, 极有可能有中文
    * @return 有或者没有中文的字符串, 但是意思一定时很明了的
    */
   [[nodiscard]] virtual std::string ShowStr() const;
 
+  ///获得根uuid
   /**
-   * 获得根uuid
    * @return 根uuid
    */
   [[nodiscard]] virtual const std::string &GetRoot() const;
   [[nodiscard]] virtual const std::string &GetRoot();
+  ///获得名称,这个名称是文件名称
   /**
-   * 获得名称,这个名称是文件名称
    * @return
    */
   [[nodiscard]] virtual const std::string &GetName() const;
   [[nodiscard]] virtual const std::string &GetName();
+  ///这个会一直递归找到没有父级的根节点
   /**
-   * 这个会一直递归找到没有父级的根节点
    * @return 根节点(现在基本上是项目节点)
    */
   [[nodiscard]] const MetadataPtr GetRootParent();
   virtual void createMenu(ContextMenu* in_contextMenu) = 0;
   //  [[nodiscard]] virtual FSys::path FolderPath() const;
 
+  ///获得序列化他们的工厂
   /**
-   * 获得序列化他们的工厂
    * @return
    */
   const MetadataFactoryPtr &GetMetadataFactory() const;
 
+  ///检查父亲是否符合记录
   /**
-   * 检查父亲是否符合记录
    * @param in_metadata 输入父亲
    * @return 返回是否是这个的父亲
    */
@@ -116,12 +118,16 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   virtual bool operator<=(const Metadata &in_rhs) const;
   virtual bool operator>=(const Metadata &in_rhs) const;
 
+  ///这里是使用工厂进行加载和保存的函数
   /**
-   * 这里是使用工厂进行加载和保存的函数
    * 使用访问者模式
    * @param in_factory 序列化工厂
    */
   virtual void load(const MetadataFactoryPtr &in_factory) = 0;
+  /**
+   *
+   * @param in_factory 序列化工厂
+   */
   virtual void save(const MetadataFactoryPtr &in_factory) = 0;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
