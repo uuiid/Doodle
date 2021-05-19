@@ -139,7 +139,7 @@ std::string ContextMenu::getShotAb() const {
 }
 
 wxMenu* ContextMenu::createMenu(const AssetsPtr& in_data) {
-  auto k_ass = p_menu->Append(wxID_ANY, ConvStr<wxString>(""));
+  auto k_ass = p_menu->Append(wxID_ANY, ConvStr<wxString>("修改名称"));
   p_menu->Bind(
       wxEVT_MENU,
       [this, in_data](wxCommandEvent& in_event) {

@@ -51,20 +51,24 @@ void MetadataFactory::load(Project *in_project) const {
   auto k_path          = k_config_folder / Project::getConfigFileName();
 
   if (!FSys::exists(k_path))
-    throw DoodleError{"Project non-existent"};
+    throw DoodleError{"项目不存在"};
 
   Project k_p;
   FSys::fstream k_fstream{k_path, std::ios::in | std::ios::binary};
   {
     cereal::PortableBinaryInputArchive k_archive{k_fstream};
     k_archive(k_p);
+    if (k_p.getPath() != in_project->getPath())
+      throw DoodleError{"Project inconsistency"};
   }
   k_fstream.close();
 
-  if (k_p.getPath() == in_project->getPath()) {
-    in_project->setName(k_p.getName());
-  } else
-    throw DoodleError{"Project inconsistency"};
+  k_fstream.open(k_path, std::ios::in | std::ios::binary);
+  {
+    cereal::PortableBinaryInputArchive k_archive{k_fstream};
+    k_archive(*in_project);
+  }
+  k_fstream.close();
 
   auto k_config = getRoot(in_project);
   loadChild(in_project, k_config);

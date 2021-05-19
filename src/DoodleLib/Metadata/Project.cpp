@@ -30,7 +30,7 @@ const std::string& Project::getName() const noexcept {
 }
 
 void Project::setName(const std::string& Name) noexcept {
-  p_path = Name;
+  p_name = Name;
   saved(true);
 }
 
