@@ -74,5 +74,8 @@ void Episodes::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
 void Episodes::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<Episodes>(shared_from_this()));
 }
+void Episodes::deleteData(const MetadataFactoryPtr& in_factory) {
+  in_factory->deleteData(this);
+}
 
 }  // namespace doodle

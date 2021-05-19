@@ -45,6 +45,7 @@ class DOODLELIB_API AssetsFile : public Metadata {
   bool operator<=(const AssetsFile& in_rhs) const;
   bool operator>=(const AssetsFile& in_rhs) const;
   virtual void createMenu(ContextMenu* in_contextMenu) override;
+  virtual void deleteData(const MetadataFactoryPtr& in_factory) override;
 
  protected:
   virtual bool sort(const Metadata& in_rhs) const override;

@@ -42,7 +42,7 @@ class DOODLELIB_API Shot : public Metadata {
 
   void load(const MetadataFactoryPtr &in_factory) override;
   void save(const MetadataFactoryPtr &in_factory) override;
-
+  virtual void deleteData(const MetadataFactoryPtr &in_factory) override;
   bool operator<(const Shot &rhs) const;
   bool operator>(const Shot &rhs) const;
   bool operator<=(const Shot &rhs) const;

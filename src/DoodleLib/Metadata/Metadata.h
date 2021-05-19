@@ -10,6 +10,7 @@
 
 namespace doodle {
 class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
+  friend MetadataFactory;
  protected:
   ///弱父对象的指针
   std::weak_ptr<Metadata> p_parent;
@@ -29,6 +30,8 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
    * @warning 基本保证在使用时不空（从逻辑上）
    */
   MetadataFactoryPtr p_metadata_flctory_ptr_;
+
+
   virtual bool sort(const Metadata &in_rhs) const = 0;
   virtual void modifyParent(const std::shared_ptr<Metadata>& in_old_parent) = 0;
 
@@ -129,6 +132,11 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
    * @param in_factory 序列化工厂
    */
   virtual void save(const MetadataFactoryPtr &in_factory) = 0;
+  /**
+   * 删除这个数据
+   * @param in_factory 序列化工厂
+   */
+  virtual void deleteData(const MetadataFactoryPtr& in_factory) =0;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
 };

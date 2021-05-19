@@ -39,7 +39,7 @@ class ContextMenu {
    */
   explicit ContextMenu(wxWindow* in_parent,wxMenu* in_menu);
   wxMenu* createMenuAfter();
-  std::string getShotAb() const;
+  [[nodiscard]] std::string getShotAb() const;
 
 };
 

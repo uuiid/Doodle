@@ -179,4 +179,23 @@ void MetadataFactory::modifyParent(const Metadata *in_metadata, const Metadata *
     throw DoodleError{"没有旧纪录或者新记录已存在"};
   }
 }
+void MetadataFactory::deleteData(const Metadata* in_metadata) const {
+  auto k_root = getRoot(in_metadata->getParent().get()) / in_metadata->getName();
+  FSys::remove(k_root);
+}
+void MetadataFactory::deleteData(const Project *in_metadata) const {
+  deleteData(dynamic_cast<const Metadata*>(in_metadata));
+}
+void MetadataFactory::deleteData(const Shot *in_metadata) const {
+  deleteData(dynamic_cast<const Metadata*>(in_metadata));
+}
+void MetadataFactory::deleteData(const Episodes *in_metadata) const {
+  deleteData(dynamic_cast<const Metadata*>(in_metadata));
+}
+void MetadataFactory::deleteData(const Assets *in_metadata) const {
+  deleteData(dynamic_cast<const Metadata*>(in_metadata));
+}
+void MetadataFactory::deleteData(const AssetsFile *in_metadata) const {
+  deleteData(dynamic_cast<const Metadata*>(in_metadata));
+}
 }  // namespace doodle

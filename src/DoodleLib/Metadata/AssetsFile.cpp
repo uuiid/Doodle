@@ -116,4 +116,7 @@ Department AssetsFile::getDepartment() const {
 void AssetsFile::setDepartment(Department in_department) {
   p_department = in_department;
 }
+void AssetsFile::deleteData(const MetadataFactoryPtr& in_factory) {
+  in_factory->deleteData(this);
+}
 }  // namespace doodle

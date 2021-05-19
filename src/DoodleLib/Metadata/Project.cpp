@@ -112,5 +112,8 @@ void Project::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
 void Project::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<Project>(shared_from_this()));
 }
+void Project::deleteData(const MetadataFactoryPtr& in_factory) {
+  in_factory->deleteData(this);
+}
 
 }  // namespace doodle

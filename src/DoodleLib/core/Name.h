@@ -12,12 +12,12 @@ class Name {
   explicit Name(std::string in_string);
   explicit Name(std::string in_string, std::string in_ENUS);
 
-  [[nodiscard]] const std::string& GetName() const;
-  void SetName(const std::string& in_string);
-  void SetName(const std::string& in_string, const std::string& in_ENUS);
+  [[nodiscard]] const std::string& getName() const;
+  void setName(const std::string& in_string);
+  void setName(const std::string& in_string, const std::string& in_ENUS);
 
-  [[nodiscard]] const std::string& GetENUS() const;
-  void SetENUS(const std::string& in_string);
+  [[nodiscard]] const std::string& getEnus() const;
+  void setEnus(const std::string& in_string);
 };
 
 }  // namespace doodle

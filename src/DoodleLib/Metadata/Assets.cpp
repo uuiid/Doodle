@@ -15,7 +15,9 @@ Assets::Assets()
 
 Assets::Assets(std::weak_ptr<Metadata> in_metadata, std::string in_name)
     : Metadata(std::move(in_metadata)),
-      p_name(std::move(in_name)) {}
+      p_name(std::move(in_name)) {
+
+}
 
 std::string Assets::str() const {
   return convert::Get().toEn(this->p_name);
@@ -61,6 +63,21 @@ void Assets::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
 }
 void Assets::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<Assets>(shared_from_this()));
+}
+void Assets::deleteData(const MetadataFactoryPtr& in_factory) {
+  in_factory->deleteData(this);
+}
+const std::string& Assets::getName1() const {
+  return p_name;
+}
+void Assets::setName1(const std::string& in_name) {
+  p_name = in_name;
+}
+const std::string& Assets::getNameEnus() const {
+  return p_name_enus;
+}
+void Assets::setNameEnus(const std::string& in_nameEnus) {
+  p_name_enus = in_nameEnus;
 }
 
 }  // namespace doodle

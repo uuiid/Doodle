@@ -2,9 +2,9 @@
 // Created by TD on 2021/5/14.
 //
 
+#include <DoodleLib/Metadata/ContextMenu.h>
 #include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/AssetsFile.h>
-#include <DoodleLib/Metadata/ContextMenu.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
@@ -53,7 +53,7 @@ void ContextMenu::addProject() {
 
 wxMenu* ContextMenu::createMenu(const ProjectPtr& in_data) {
   auto k_set_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("设为当前项目"));
-  auto k_delete_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("删除项目"));
+  auto k_delete_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("清除项目"));
 
   p_menu->Bind(
       wxEVT_MENU,
@@ -72,6 +72,18 @@ wxMenu* ContextMenu::createMenu(const ProjectPtr& in_data) {
 }
 
 wxMenu* ContextMenu::createMenu(const EpisodesPtr& in_data) {
+  auto k_eps = p_menu->Append(wxID_ANY, ConvStr<wxString>("修改集数"));
+  p_menu->Bind(
+            wxEVT_MENU,
+            [this,in_data](wxCommandEvent& in_event){
+              auto k_num = wxGetNumberFromUser(ConvStr<wxString>("输入集数"),
+                                               ConvStr<wxString>(""),
+                                               ConvStr<wxString>("集数"),
+                                               1, 0, 9999, p_parent);
+              in_data->setEpisodes(k_num);
+            },
+            k_eps->GetId());
+
   return this->createMenuAfter(std::dynamic_pointer_cast<Metadata>(in_data));
 }
 
@@ -127,6 +139,18 @@ std::string ContextMenu::getShotAb() const {
 }
 
 wxMenu* ContextMenu::createMenu(const AssetsPtr& in_data) {
+  auto k_ass = p_menu->Append(wxID_ANY, ConvStr<wxString>(""));
+  p_menu->Bind(
+      wxEVT_MENU,
+      [this, in_data](wxCommandEvent& in_event) {
+        auto text = wxGetTextFromUser(ConvStr<wxString>("类别名称"),
+                                      ConvStr<wxString>("类别名称"),
+                                      ConvStr<wxString>("none"), p_parent);
+        if (text.empty())
+          return;
+        in_data->setName1(text);
+      },
+      k_ass->GetId());
   return this->createMenuAfter(std::dynamic_pointer_cast<Metadata>(in_data));
 }
 
@@ -135,6 +159,8 @@ wxMenu* ContextMenu::createMenu(const AssetsFilePtr& in_data) {
 }
 
 wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
+  p_menu->AppendSeparator();
+
   auto k_add_eps = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加集数"));
   auto k_add_shot = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加镜头"));
   auto k_add_ass = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加类别"));
@@ -171,8 +197,11 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
   return createMenuAfter();
 }
 wxMenu* ContextMenu::createMenuAfter() {
-  auto k_create_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("创建项目"));
+  p_menu->AppendSeparator();
+
   auto k_Add_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加项目"));
+  p_menu->AppendSeparator();
+  auto k_create_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("创建项目"));
 
   p_menu->Bind(
       wxEVT_MENU,

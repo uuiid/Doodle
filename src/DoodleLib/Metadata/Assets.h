@@ -10,6 +10,7 @@
 namespace doodle {
 class DOODLELIB_API Assets : public Metadata {
   std::string p_name;
+  std::string p_name_enus;
 
  public:
   Assets();
@@ -17,6 +18,11 @@ class DOODLELIB_API Assets : public Metadata {
 
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string showStr() const override;
+
+  const std::string& getName1() const;
+  void setName1(const std::string& in_name);
+  const std::string& getNameEnus() const;
+  void setNameEnus(const std::string& in_nameEnus);
 
   void load(const MetadataFactoryPtr& in_factory) override;
   void save(const MetadataFactoryPtr& in_factory) override;
@@ -26,6 +32,7 @@ class DOODLELIB_API Assets : public Metadata {
   bool operator<=(const Assets& in_rhs) const;
   bool operator>=(const Assets& in_rhs) const;
   virtual void createMenu(ContextMenu* in_contextMenu) override;
+  virtual void deleteData(const MetadataFactoryPtr& in_factory) override;
 
  protected:
   virtual bool sort(const Metadata& in_rhs) const override;

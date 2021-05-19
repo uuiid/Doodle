@@ -37,7 +37,14 @@ class DOODLELIB_API MetadataFactory {
   virtual void modifyParent(const Assets* in_assets, const Metadata* in_old_parent) const;
   virtual void modifyParent(const AssetsFile* in_assetsFile, const Metadata* in_old_parent) const;
 
+  virtual void deleteData(const Project* in_metadata) const;
+  virtual void deleteData(const Shot* in_metadata) const;
+  virtual void deleteData(const Episodes* in_metadata) const;
+  virtual void deleteData(const Assets* in_metadata) const;
+  virtual void deleteData(const AssetsFile* in_metadata) const;
  private:
+
+  virtual void deleteData(const Metadata* in_metadata) const;
   void modifyParent(const Metadata* in_metadata, const Metadata* in_old_parent) const;
   void loadChild(Metadata* in_metadata, const FSys::path& k_config) const;
   FSys::path getRoot(const Metadata* in_metadata) const;

@@ -14,22 +14,22 @@ Name::Name(std::string in_string, std::string in_ENUS)
     : p_string_(std::move(in_string)),
       p_ENUS(std::move(in_ENUS)) {
 }
-const std::string& Name::GetName() const {
+const std::string& Name::getName() const {
   return p_string_;
 }
-void Name::SetName(const std::string& in_string) {
+void Name::setName(const std::string& in_string) {
   p_string_ = in_string;
   p_ENUS    = convert::Get().toEn(p_string_);
 }
-const std::string& Name::GetENUS() const {
+const std::string& Name::getEnus() const {
   return p_ENUS;
 }
-void Name::SetName(const std::string& in_string, const std::string& in_ENUS) {
+void Name::setName(const std::string& in_string, const std::string& in_ENUS) {
   p_string_ = in_string;
   p_ENUS    = in_ENUS;
 }
 
-void Name::SetENUS(const std::string& in_string) {
+void Name::setEnus(const std::string& in_string) {
   p_ENUS = in_string;
 }
 
