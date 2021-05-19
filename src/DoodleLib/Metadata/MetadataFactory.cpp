@@ -2,27 +2,25 @@
 // Created by TD on 2021/5/7.
 //
 
-#include <DoodleLib/Metadata/MetadataFactory.h>
-
-#include <DoodleLib/Metadata/Episodes.h>
-#include <DoodleLib/Metadata/Shot.h>
-#include <DoodleLib/Metadata/AssetsFile.h>
-#include <DoodleLib/Metadata/Assets.h>
-#include <DoodleLib/Metadata/AssetsPath.h>
-#include <DoodleLib/Metadata/Comment.h>
-
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Metadata/Assets.h>
+#include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/AssetsPath.h>
+#include <DoodleLib/Metadata/Comment.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/Shot.h>
 
-#include <cereal/archives/portable_binary.hpp>
 #include <cereal/archives/json.hpp>
+#include <cereal/archives/portable_binary.hpp>
 
 namespace doodle {
 
 MetadataFactory::MetadataFactory() {
 }
 FSys::path MetadataFactory::getRoot(const Metadata *in_metadata) const {
-  auto k_prj    = coreSet::getSet().GetMetadataSet().Project_();
+  auto k_prj = coreSet::getSet().GetMetadataSet().Project_();
   auto k_config = k_prj->getPath() / Project::getConfigFileFolder() / in_metadata->getRoot();
   return k_config;
 }
@@ -48,7 +46,7 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
 }
 void MetadataFactory::load(Project *in_project) const {
   auto k_config_folder = in_project->getPath() / Project::getConfigFileFolder();
-  auto k_path          = k_config_folder / Project::getConfigFileName();
+  auto k_path = k_config_folder / Project::getConfigFileName();
 
   if (!FSys::exists(k_path))
     throw DoodleError{"项目不存在"};
@@ -92,7 +90,7 @@ void MetadataFactory::load(AssetsFile *in_assetsFile) const {
 
 void MetadataFactory::save(const Project *in_project) const {
   auto k_config_folder = in_project->getPath() / Project::getConfigFileFolder();
-  auto k_path          = k_config_folder / Project::getConfigFileName();
+  auto k_path = k_config_folder / Project::getConfigFileName();
 
   if (!FSys::exists(k_path.parent_path()))
     FSys::create_directories(k_path.parent_path());
@@ -112,7 +110,7 @@ void MetadataFactory::save(const Shot *in_shot) const {
   if (!in_shot->hasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_shot->getParent();
+  auto k_ptr = in_shot->getParent();
   auto k_path = this->getRoot(k_ptr.get()) / in_shot->getName();
   save(in_shot, k_path);
 }
@@ -120,7 +118,7 @@ void MetadataFactory::save(const Episodes *in_episodes) const {
   if (!in_episodes->hasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_episodes->getParent();
+  auto k_ptr = in_episodes->getParent();
   auto k_path = this->getRoot(k_ptr.get()) / in_episodes->getName();
   save(in_episodes, k_path);
 }
@@ -128,7 +126,7 @@ void MetadataFactory::save(const Assets *in_assets) const {
   if (!in_assets->hasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_assets->getParent();
+  auto k_ptr = in_assets->getParent();
   auto k_path = this->getRoot(k_ptr.get()) / in_assets->getName();
   save(in_assets, k_path);
 }
@@ -136,7 +134,7 @@ void MetadataFactory::save(const AssetsFile *in_assetsFile) const {
   if (!in_assetsFile->hasParent())
     throw DoodleError{"not find Project"};
 
-  auto k_ptr  = in_assetsFile->getParent();
+  auto k_ptr = in_assetsFile->getParent();
   auto k_path = this->getRoot(k_ptr.get()) / in_assetsFile->getName();
   save(in_assetsFile, k_path);
 }
@@ -153,22 +151,22 @@ void MetadataFactory::modifyParent(const Project *in_project, const Metadata *in
 }
 
 void MetadataFactory::modifyParent(const Shot *in_shot, const Metadata *in_old_parent) const {
-  modifyParent(dynamic_cast<const Metadata*>(in_shot), in_old_parent);
+  modifyParent(dynamic_cast<const Metadata *>(in_shot), in_old_parent);
   save(in_shot);
 }
 
 void MetadataFactory::modifyParent(const Episodes *in_episodes, const Metadata *in_old_parent) const {
-  modifyParent(dynamic_cast<const Metadata*>(in_episodes), in_old_parent);
+  modifyParent(dynamic_cast<const Metadata *>(in_episodes), in_old_parent);
   save(in_episodes);
 }
 
 void MetadataFactory::modifyParent(const Assets *in_assets, const Metadata *in_old_parent) const {
-  modifyParent(dynamic_cast<const Metadata*>(in_assets), in_old_parent);
+  modifyParent(dynamic_cast<const Metadata *>(in_assets), in_old_parent);
   save(in_assets);
 }
 
 void MetadataFactory::modifyParent(const AssetsFile *in_assetsFile, const Metadata *in_old_parent) const {
-  modifyParent(dynamic_cast<const Metadata*>(in_assetsFile), in_old_parent);
+  modifyParent(dynamic_cast<const Metadata *>(in_assetsFile), in_old_parent);
   save(in_assetsFile);
 }
 
@@ -183,23 +181,45 @@ void MetadataFactory::modifyParent(const Metadata *in_metadata, const Metadata *
     throw DoodleError{"没有旧纪录或者新记录已存在"};
   }
 }
-void MetadataFactory::deleteData(const Metadata* in_metadata) const {
+void MetadataFactory::deleteData(const Metadata *in_metadata) const {
   auto k_root = getRoot(in_metadata->getParent().get()) / in_metadata->getName();
   FSys::remove(k_root);
 }
 void MetadataFactory::deleteData(const Project *in_metadata) const {
-  deleteData(dynamic_cast<const Metadata*>(in_metadata));
+  deleteData(dynamic_cast<const Metadata *>(in_metadata));
 }
 void MetadataFactory::deleteData(const Shot *in_metadata) const {
-  deleteData(dynamic_cast<const Metadata*>(in_metadata));
+  deleteData(dynamic_cast<const Metadata *>(in_metadata));
 }
 void MetadataFactory::deleteData(const Episodes *in_metadata) const {
-  deleteData(dynamic_cast<const Metadata*>(in_metadata));
+  deleteData(dynamic_cast<const Metadata *>(in_metadata));
 }
 void MetadataFactory::deleteData(const Assets *in_metadata) const {
-  deleteData(dynamic_cast<const Metadata*>(in_metadata));
+  deleteData(dynamic_cast<const Metadata *>(in_metadata));
 }
 void MetadataFactory::deleteData(const AssetsFile *in_metadata) const {
-  deleteData(dynamic_cast<const Metadata*>(in_metadata));
+  deleteData(dynamic_cast<const Metadata *>(in_metadata));
+}
+bool MetadataFactory::hasChild(const Project *in_metadata) const {
+  return hasChild(dynamic_cast<const Metadata *>(in_metadata));
+}
+bool MetadataFactory::hasChild(const Shot *in_metadata) const {
+  return hasChild(dynamic_cast<const Metadata *>(in_metadata));
+}
+bool MetadataFactory::hasChild(const Episodes *in_metadata) const {
+  return hasChild(dynamic_cast<const Metadata *>(in_metadata));
+}
+bool MetadataFactory::hasChild(const Assets *in_metadata) const {
+  return hasChild(dynamic_cast<const Metadata *>(in_metadata));
+}
+bool MetadataFactory::hasChild(const AssetsFile *in_metadata) const {
+  return hasChild(dynamic_cast<const Metadata *>(in_metadata));
+}
+bool MetadataFactory::hasChild(const Metadata *in_metadata) const {
+  auto path = getRoot(in_metadata);
+  if (FSys::exists(path))
+    return FSys::directory_iterator{path} != FSys::directory_iterator{};
+  else
+    return false;
 }
 }  // namespace doodle

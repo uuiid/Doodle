@@ -69,6 +69,7 @@ void Metadata::setParent(const std::shared_ptr<Metadata> &in_parent) {
   DOODLE_LOG_INFO( "begin set parent: "<<in_parent->str())
   p_parent      = in_parent;
   p_parent_uuid = in_parent->getRoot();
+  p_metadata_flctory_ptr_ = in_parent->p_metadata_flctory_ptr_;
   in_parent->p_child_items.emplace_back(shared_from_this());
   if (k_old)
     modifyParent(k_old);
@@ -114,7 +115,13 @@ bool Metadata::hasParent() const {
   return !p_parent.expired();
 }
 bool Metadata::hasChild() const {
-  return !p_child_items.empty();
+  auto k_is = false;
+  if(p_child_items.empty()) {
+    if (p_metadata_flctory_ptr_)
+      k_is = p_metadata_flctory_ptr_->hasChild(this);
+  } else
+    k_is = true;
+  return k_is;
 }
 std::string Metadata::showStr() const {
   return str();

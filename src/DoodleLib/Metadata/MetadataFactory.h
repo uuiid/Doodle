@@ -42,6 +42,18 @@ class DOODLELIB_API MetadataFactory {
   virtual void deleteData(const Episodes* in_metadata) const;
   virtual void deleteData(const Assets* in_metadata) const;
   virtual void deleteData(const AssetsFile* in_metadata) const;
+
+//  virtual std::size_t childSize(const Project* in_metadata) const;
+//  virtual std::size_t childSize(const Shot* in_metadata) const;
+//  virtual std::size_t childSize(const Episodes* in_metadata) const;
+//  virtual std::size_t childSize(const Assets* in_metadata) const;
+//  virtual std::size_t childSize(const AssetsFile* in_metadata) const;
+  virtual bool hasChild(const Project* in_metadata) const;
+  virtual bool hasChild(const Shot* in_metadata) const;
+  virtual bool hasChild(const Episodes* in_metadata) const;
+  virtual bool hasChild(const Assets* in_metadata) const;
+  virtual bool hasChild(const AssetsFile* in_metadata) const;
+  virtual bool hasChild(const Metadata* in_metadata) const;
  private:
 
   virtual void deleteData(const Metadata* in_metadata) const;

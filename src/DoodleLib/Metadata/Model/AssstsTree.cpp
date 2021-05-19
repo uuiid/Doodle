@@ -63,9 +63,13 @@ unsigned int AssstsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
   if (!item.IsOk()) {
     //这里是空指针的情况， 即没有父级， 我们要使用根来确认
     for (const auto& k_t : p_Root) {
+      if(k_t == coreSet::getSet().GetMetadataSet().Project_())
+        k_t->load(p_metadata_flctory_ptr_);
       children.Add(wxDataViewItem{k_t.get()});
     }
   } else {
+    k_item->load(p_metadata_flctory_ptr_);
+    k_item->sortChildItems();
     const auto& k_child = k_item->getChildItems();
     for (const auto& k_t : k_child) {
       children.Add(wxDataViewItem{k_t.get()});
