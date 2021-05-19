@@ -12,14 +12,11 @@ class DOODLELIB_API Shot : public Metadata {
   int64_t p_shot;
   std::string p_shot_ab;
 
-  std::weak_ptr<Episodes> p_episodes;
-
  public:
   Shot();
   Shot(std::weak_ptr<Metadata> in_metadata,
        decltype(p_shot) in_shot,
-       decltype(p_shot_ab) in_shot_ab      = {},
-       std::weak_ptr<Episodes> in_episodes = {});
+       decltype(p_shot_ab) in_shot_ab      = {});
 
   // clang-format off
   enum class ShotAbEnum { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
@@ -34,7 +31,7 @@ class DOODLELIB_API Shot : public Metadata {
     setShotAb(std::string{magic_enum::enum_name(ShotAb)});
   };
 
-  [[nodiscard]] EpisodesPtr getEpisodesPtr() const noexcept;
+  [[nodiscard]] EpisodesPtr getEpisodesPtr() const;
   void setEpisodesPtr(const EpisodesPtr &Episodes_) noexcept;
 
   [[nodiscard]] std::string str() const override;
@@ -51,6 +48,8 @@ class DOODLELIB_API Shot : public Metadata {
  protected:
   bool sort(const Metadata &in_rhs) const override;
   void modifyParent(const std::shared_ptr<Metadata>& in_old_parent) override;
+  virtual void save() const override;
+
  private:
   friend class cereal::access;
   template <class Archive>

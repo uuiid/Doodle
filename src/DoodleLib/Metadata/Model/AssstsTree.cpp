@@ -2,50 +2,45 @@
 // Created by TD on 2021/5/6.
 //
 
-#include <DoodleLib/Metadata/Model/AssDirTree.h>
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/core/coreset.h>
-
-#include <DoodleLib/FileWarp/MayaFile.h>
 #include <DoodleLib/FileWarp/ImageSequence.h>
-#include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/FileWarp/Ue4Project.h>
-
-#include <DoodleLib/FileSys/FileSystem.h>
-
-#include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Episodes.h>
-#include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/Metadata/Model/AssstsTree.h>
+#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/core/coreset.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
 
 #define DOLE_CHECK(item, value) \
   if (!(item).IsOk()) return value;
 namespace doodle {
-AssDirTree::AssDirTree()
+AssstsTree::AssstsTree()
     : wxDataViewModel(),
-      p_Root(MetadataSet::Get().getAllProjects()) {
+      p_Root(MetadataSet::Get().getAllProjects()),
+      p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()){
 
 }
 
-unsigned int AssDirTree::GetColumnCount() const {
+unsigned int AssstsTree::GetColumnCount() const {
   return 1;
 }
 
-wxString AssDirTree::GetColumnType(unsigned int col) const {
+wxString AssstsTree::GetColumnType(unsigned int col) const {
   return "string";
 }
 
-void AssDirTree::GetValue(wxVariant& variant, const wxDataViewItem& item, unsigned int col) const {
+void AssstsTree::GetValue(wxVariant& variant, const wxDataViewItem& item, unsigned int col) const {
   variant = ConvStr<wxString>("None");
   DOLE_CHECK(item, );
   auto str = reinterpret_cast<Metadata*>(item.GetID());
   variant  = ConvStr<wxString>(str->showStr());
 }
 
-bool AssDirTree::SetValue(const wxVariant& variant, const wxDataViewItem& item, unsigned int col) {
+bool AssstsTree::SetValue(const wxVariant& variant, const wxDataViewItem& item, unsigned int col) {
   return false;
 }
 
-wxDataViewItem AssDirTree::GetParent(const wxDataViewItem& item) const {
+wxDataViewItem AssstsTree::GetParent(const wxDataViewItem& item) const {
   DOLE_CHECK(item, wxDataViewItem{});
   const auto k_p_metadata = reinterpret_cast<Metadata*>(item.GetID());
   if (k_p_metadata->hasChild())
@@ -54,14 +49,14 @@ wxDataViewItem AssDirTree::GetParent(const wxDataViewItem& item) const {
     return wxDataViewItem{};
 }
 
-bool AssDirTree::IsContainer(const wxDataViewItem& item) const {
+bool AssstsTree::IsContainer(const wxDataViewItem& item) const {
   DOLE_CHECK(item, true);
 
   auto k_item = reinterpret_cast<Metadata*>(item.GetID());
-  return !k_item->hasChild();
+  return k_item->hasChild();
 }
 
-unsigned int AssDirTree::GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const {
+unsigned int AssstsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const {
   //  DOLE_CHECK(item, 0);
 
   auto k_item = reinterpret_cast<Metadata*>(item.GetID());
@@ -78,4 +73,12 @@ unsigned int AssDirTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
   }
   return children.size();
 }
+void AssstsTree::connectSig(const MetadataPtr& in_metadata) const {
+  in_metadata->sig_childAdd.connect(
+      [](const MetadataPtr& this_, const MetadataPtr& child){
+
+      });
+}
 }  // namespace doodle
+
+#undef DOLE_CHECK

@@ -29,7 +29,7 @@
         Metadata/Project.h
         Metadata/Shot.h
         Metadata/Label/LabelNode.h
-        Metadata/Model/AssDirTree.h
+        Metadata/Model/AssstsTree.h
         Metadata/View/ShotListWidget.h
         PinYin/convert.h
         ScreenshotWidght/ScreenshotAction.h
@@ -72,7 +72,7 @@ set(
         Metadata/Project.cpp
         Metadata/Shot.cpp
         Metadata/Label/LabelNode.cpp
-        Metadata/Model/AssDirTree.cpp
+        Metadata/Model/AssstsTree.cpp
         Metadata/View/ShotListWidget.cpp
         PinYin/convert.cpp
         ScreenshotWidght/ScreenshotAction.cpp

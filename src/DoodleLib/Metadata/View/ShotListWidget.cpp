@@ -96,7 +96,7 @@ void ShotListWidget::addShot() {
 
   if (shot_dig.ShowModal() == wxID_OK) {
     auto shot = shot_dig.GetValue();
-    p_shots.emplace_back(std::make_shared<Shot>(p_episodes, shot, std::string{}, p_episodes));
+    p_shots.emplace_back(std::make_shared<Shot>(p_episodes, shot, std::string{}));
     std::sort(p_shots.begin(), p_shots.end(), [](ShotPtr &L, ShotPtr &R) { return *L < *R; });
   }
   SetItemCount(p_shots.size());
@@ -122,7 +122,7 @@ void ShotListWidget::addShotAb() {
     if (shot_dig.ShowModal() == wxID_OK) {
       auto shotAB = shot_dig.GetStringSelection();
       auto shot   = p_shots[itemIndex]->getShot();
-      p_shots.emplace_back(std::make_shared<Shot>(p_episodes, shot, ConvStr<std::string>(shotAB), p_episodes));
+      p_shots.emplace_back(std::make_shared<Shot>(p_episodes, shot, ConvStr<std::string>(shotAB)));
       std::sort(p_shots.begin(), p_shots.end(), [](ShotPtr &L, ShotPtr &R) { return *L < *R; });
     }
     break;
@@ -189,7 +189,7 @@ std::tuple<EpisodesPtr, std::vector<ShotPtr>> ShotListDialog::getShotList() {
   auto &set        = coreSet::getSet();
   const auto k_len = set.gettUe4Setting().ShotEnd();
   for (auto i = set.gettUe4Setting().ShotStart(); i < k_len; ++i) {
-    shotDig.p_shots.emplace_back(std::make_shared<Shot>(shotDig.p_episodes, i, std::string{}, shotDig.p_episodes));
+    shotDig.p_shots.emplace_back(std::make_shared<Shot>(shotDig.p_episodes, i, std::string{}));
   }
 
   shotDig.p_shots_widget->setEpisodes(shotDig.p_episodes);

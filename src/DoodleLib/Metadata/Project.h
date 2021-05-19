@@ -45,9 +45,10 @@ class DOODLELIB_API Project : public Metadata {
  protected:
   virtual bool sort(const Metadata& in_rhs) const override;
   void modifyParent(const std::shared_ptr<Metadata>& in_old_parent) override;
-
+  void save() const override;
  private:
   [[nodiscard]] FSys::path DBRoot() const;
+
 
   friend class cereal::access;
   template <class Archive>

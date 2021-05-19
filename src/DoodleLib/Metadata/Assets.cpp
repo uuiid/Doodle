@@ -72,12 +72,18 @@ const std::string& Assets::getName1() const {
 }
 void Assets::setName1(const std::string& in_name) {
   p_name = in_name;
+  save();
 }
 const std::string& Assets::getNameEnus() const {
   return p_name_enus;
 }
 void Assets::setNameEnus(const std::string& in_nameEnus) {
   p_name_enus = in_nameEnus;
+  save();
+}
+void Assets::save() const {
+  if(p_metadata_flctory_ptr_)
+    p_metadata_flctory_ptr_->save(this);
 }
 
 }  // namespace doodle

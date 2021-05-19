@@ -61,9 +61,9 @@ void MetadataFactory::load(Project *in_project) const {
   }
   k_fstream.close();
 
-  if (k_p.getPath() == in_project->getPath())
-    *in_project = k_p;
-  else
+  if (k_p.getPath() == in_project->getPath()) {
+    in_project->setName(k_p.getName());
+  } else
     throw DoodleError{"Project inconsistency"};
 
   auto k_config = getRoot(in_project);

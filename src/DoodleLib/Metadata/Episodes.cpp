@@ -26,6 +26,7 @@ void Episodes::setEpisodes(const int64_t& Episodes_) {
   if (Episodes_ < 0)
     throw DoodleError("集数无法为负");
   p_episodes = Episodes_;
+  save();
 }
 
 std::string Episodes::str() const {
@@ -76,6 +77,10 @@ void Episodes::createMenu(ContextMenu* in_contextMenu) {
 }
 void Episodes::deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
+}
+void Episodes::save() const {
+  if(p_metadata_flctory_ptr_)
+    p_metadata_flctory_ptr_->save(this);
 }
 
 }  // namespace doodle

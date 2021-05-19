@@ -7,13 +7,14 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <wx/dataview.h>
 namespace doodle{
-
-
-
-class AssDirTree :public wxDataViewModel{
+class AssstsTree :public wxDataViewModel{
+  
   std::vector<ProjectPtr> p_Root;
+  MetadataFactoryPtr p_metadata_flctory_ptr_;
+
+  void connectSig(const MetadataPtr& in_metadata) const;
  public:
-  explicit AssDirTree();
+  explicit AssstsTree();
 
   [[nodiscard]] unsigned int GetColumnCount() const override;
   [[nodiscard]] wxString GetColumnType(unsigned int col) const override;

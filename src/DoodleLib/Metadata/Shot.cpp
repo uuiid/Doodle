@@ -1,4 +1,5 @@
 #include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
@@ -9,18 +10,15 @@ namespace doodle {
 Shot::Shot()
     : Metadata(),
       p_shot(-1),
-      p_shot_ab(),
-      p_episodes() {
+      p_shot_ab() {
 }
 
 Shot::Shot(std::weak_ptr<Metadata> in_metadata,
            decltype(p_shot) in_shot,
-           decltype(p_shot_ab) in_shot_ab,
-           std::weak_ptr<Episodes> in_episodes)
+           decltype(p_shot_ab) in_shot_ab)
     : Metadata(std::move(in_metadata)),
       p_shot(in_shot),
-      p_shot_ab(std::move(in_shot_ab)),
-      p_episodes(std::move(in_episodes)) {
+      p_shot_ab(std::move(in_shot_ab)) {
   if (p_shot < 0)
     throw DoodleError{"shot无法为负"};
 }
@@ -34,6 +32,7 @@ void Shot::setShot(const int64_t& in_shot) {
     throw DoodleError{"shot无法为负"};
 
   p_shot = in_shot;
+  save();
 }
 
 const std::string& Shot::getShotAb() const noexcept {
@@ -42,13 +41,17 @@ const std::string& Shot::getShotAb() const noexcept {
 
 void Shot::setShotAb(const std::string& ShotAb) noexcept {
   p_shot_ab = ShotAb;
+  save();
 }
-EpisodesPtr Shot::getEpisodesPtr() const noexcept {
-  return p_episodes.lock();
+EpisodesPtr Shot::getEpisodesPtr() const {
+  auto k_ptr = std::dynamic_pointer_cast<Episodes>(getParent());
+  if(!k_ptr)
+    throw nullptr_error("没有集数");
+  return k_ptr;
 }
 
 void Shot::setEpisodesPtr(const EpisodesPtr& Episodes_) noexcept {
-  p_episodes = Episodes_;
+    setParent(Episodes_);
 }
 std::string Shot::str() const {
   boost::format str_shot{"sc%04i%s"};
@@ -63,7 +66,7 @@ void Shot::load(const MetadataFactoryPtr& in_factory) {
 
 void Shot::save(const MetadataFactoryPtr& in_factory) {
   p_metadata_flctory_ptr_ = in_factory;
-  in_factory->save(this);
+  save();
 }
 
 bool Shot::operator<(const Shot& rhs) const {
@@ -95,6 +98,10 @@ void Shot::createMenu(ContextMenu* in_contextMenu) {
 }
 void Shot::deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
+}
+void Shot::save() const {
+  if(p_metadata_flctory_ptr_)
+    p_metadata_flctory_ptr_->save(this);
 }
 
 }  // namespace doodle

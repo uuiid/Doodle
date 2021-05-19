@@ -31,6 +31,7 @@ const std::string& Project::getName() const noexcept {
 
 void Project::setName(const std::string& Name) noexcept {
   p_path = Name;
+  saved(true);
 }
 
 const FSys::path& Project::getPath() const noexcept {
@@ -41,6 +42,7 @@ void Project::setPath(const FSys::path& Path) {
   if (Path.empty())
     throw DoodleError{"项目路径不能为空"};
   p_path = Path;
+  saved(true);
 }
 
 std::string Project::str() const {
@@ -77,11 +79,13 @@ FSys::path Project::DBRoot() const {
 }
 void Project::save(const MetadataFactoryPtr& in_factory) {
   p_metadata_flctory_ptr_ = in_factory;
-  in_factory->save(this);
+  save();
+  saved();
 }
 void Project::load(const MetadataFactoryPtr& in_factory) {
   in_factory->load(this);
   p_metadata_flctory_ptr_ = in_factory;
+  loaded();
 }
 bool Project::operator<(const Project& in_rhs) const {
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_path) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_path);
@@ -114,6 +118,10 @@ void Project::createMenu(ContextMenu* in_contextMenu) {
 }
 void Project::deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
+}
+void Project::save() const {
+  if(p_metadata_flctory_ptr_)
+    p_metadata_flctory_ptr_->save(this);
 }
 
 }  // namespace doodle

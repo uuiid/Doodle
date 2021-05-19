@@ -7,10 +7,15 @@
 
 #include <cereal/types/polymorphic.hpp>
 #include <cereal/types/memory.hpp>
-
+#include <boost/signals2.hpp>
 namespace doodle {
 class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   friend MetadataFactory;
+  /// 需要加载
+  bool p_need_save;
+  /// 需要保存
+  bool p_need_load;
+
  protected:
   ///弱父对象的指针
   std::weak_ptr<Metadata> p_parent;
@@ -35,6 +40,18 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   virtual bool sort(const Metadata &in_rhs) const = 0;
   virtual void modifyParent(const std::shared_ptr<Metadata>& in_old_parent) = 0;
 
+  /// 设置为已经加载
+  virtual void loaded(bool in_need = false);
+  /// 设置为已经保存
+  virtual void saved(bool in_need = false);
+
+  /// 是已经加载过的
+  virtual bool isLoaded() const;
+  /// 是已经保存过的
+  virtual bool isSaved() const;
+
+  virtual void save() const = 0;
+
  public:
   Metadata();
   ///这个时直接创建对象的，其中会自动设置父指针
@@ -43,6 +60,8 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
    */
   explicit Metadata(std::weak_ptr<Metadata> in_metadata);
   virtual ~Metadata();
+  DOODLE_DISABLE_COPY(Metadata);
+
   ///设置父指针
   [[nodiscard]] virtual bool hasParent() const;
   ///活动父指针
@@ -96,7 +115,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   /**
    * @return 根节点(现在基本上是项目节点)
    */
-  [[nodiscard]] const MetadataPtr getRootParent();
+  [[nodiscard]] MetadataPtr getRootParent();
   virtual void createMenu(ContextMenu* in_contextMenu) = 0;
   //  [[nodiscard]] virtual FSys::path FolderPath() const;
 
@@ -113,6 +132,27 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
    */
   [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
 
+  ///本身进行更改时发出信号
+  boost::signals2::signal<
+      void (const MetadataPtr& this_ptr)
+      > sig_thisChange;
+  ///清除孩子时发出信号
+  boost::signals2::signal<
+      void (const MetadataPtr& this_ptr)
+      > sig_childClear;
+
+  ///添加孩子是发出信号,添加孩子发出的信号会比孩子更改父级发出的晚
+  boost::signals2::signal<
+      void (const MetadataPtr& this_ptr,const MetadataPtr& child_ptr)
+      > sig_childAdd;
+  ///整体替换时发出信号
+  boost::signals2::signal<
+      void (const MetadataPtr& this_ptr,const std::vector<MetadataPtr>& child_ptr)
+      > sig_childAddAll;
+  ///孩子删除时发出信号
+  boost::signals2::signal<
+      void (const MetadataPtr& this_ptr,const MetadataPtr& child_ptr)
+      > sig_childDelete;
   /**
    * @warning 此处如果进行比较， 会自动转化为子类进行比较， 相同子类优化， 不同子类字符串比较
    */

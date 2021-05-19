@@ -2,24 +2,21 @@
 // Created by TD on 2021/4/29.
 //
 
-#include <DoodleLib/Metadata/MetadataWidget.h>
 #include <DoodleLib/DoodleApp.h>
-#include <DoodleLib/Metadata/Model/AssDirTree.h>
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/core/coreset.h>
-
-#include <DoodleLib/FileWarp/MayaFile.h>
-#include <DoodleLib/FileWarp/ImageSequence.h>
-#include <DoodleLib/FileWarp/VideoSequence.h>
-#include <DoodleLib/FileWarp/Ue4Project.h>
-
 #include <DoodleLib/FileSys/FileSystem.h>
-
-#include <DoodleLib/Metadata/Project.h>
-#include <DoodleLib/Metadata/Episodes.h>
-#include <DoodleLib/Metadata/Shot.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/FileWarp/ImageSequence.h>
+#include <DoodleLib/FileWarp/MayaFile.h>
+#include <DoodleLib/FileWarp/Ue4Project.h>
+#include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/MetadataWidget.h>
+#include <DoodleLib/Metadata/Model/AssstsTree.h>
+#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/core/coreset.h>
 namespace doodle {
 
 MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
@@ -37,7 +34,7 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
   auto k_p_text_renderer = new wxDataViewTextRenderer{"string", wxDATAVIEW_CELL_EDITABLE};
   auto k_col             = new wxDataViewColumn{ConvStr<wxString>("标签树"), k_p_text_renderer, 0, 100};
   p_tree_view_ctrl_->AppendColumn(k_col);
-  p_tree_view_ctrl_->AssociateModel(new AssDirTree{});
+  p_tree_view_ctrl_->AssociateModel(new AssstsTree{});
   k_p_text_renderer = new wxDataViewTextRenderer{"string", wxDATAVIEW_CELL_EDITABLE};
   k_col             = new wxDataViewColumn{ConvStr<wxString>("文件"), k_p_text_renderer, 0, 100};
   p_list_view_ctrl_->AppendColumn(k_col);
