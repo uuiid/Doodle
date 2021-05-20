@@ -107,23 +107,23 @@ TEST_F(CoreTest, load_save_meatdata) {
 
     for (auto i = 2; i < 600; ++i) {
       auto eps = std::make_shared<Episodes>(ptj, i);
-      eps->setParent(ptj);
+      ptj->addChildItem(eps);
       eps->save(k_f);
       for (auto x = 1; x < 1000; ++x) {
         auto shot = std::make_shared<Shot>(eps, x);
-        shot->setParent(eps);
+        eps->addChildItem(shot);
         shot->save(k_f);
       }
     }
     auto eps = std::make_shared<Episodes>(ptj, 1);
-    eps->setParent(ptj);
+    ptj->addChildItem(eps);
     eps->save(k_f);
     ASSERT_TRUE(eps->getMetadataFactory() == k_f);
 
     for (auto i = 0; i < 1000; ++i) {
       auto shot = std::make_shared<Shot>(eps, i);
 
-      shot->setParent(eps);
+      eps->addChildItem(shot);
       if (i % 5 == 0) {
         shot->setShotAb(Shot::ShotAbEnum::A);
       }
@@ -133,12 +133,12 @@ TEST_F(CoreTest, load_save_meatdata) {
       ASSERT_TRUE(shot->getMetadataFactory() == k_f);
     }
     auto k_ass = std::make_shared<Assets>(ptj, "tset");
-    k_ass->setParent(ptj);
+    ptj->addChildItem(k_ass);
     k_ass->save(k_f);
     ASSERT_TRUE(k_ass->getMetadataFactory() == k_f);
 
     k_ass = std::make_shared<Assets>(ptj, "test_m_parent");
-    k_ass->setParent(ptj);
+    ptj->addChildItem(k_ass);
     k_ass->save(k_f);
     ASSERT_TRUE(k_ass->getMetadataFactory() == k_f);
     ASSERT_TRUE(k_ass->getParent() == ptj);
@@ -148,7 +148,7 @@ TEST_F(CoreTest, load_save_meatdata) {
                                                    "D:/ex1.ma",
                                                    "tset",
                                                    "测试");
-    k_ass_file->setParent(k_ass);
+    k_ass->addChildItem(k_ass_file);
     k_ass_file->save(k_f);
     ASSERT_TRUE(k_ass_file->getMetadataFactory() == k_f);
   }
@@ -186,7 +186,7 @@ TEST_F(CoreTest, load_save_meatdata) {
     ASSERT_TRUE((*it_tc)->getMetadataFactory() == k_f);
     auto t = *it_tc;
     auto t2 = *it_tp;
-    t->setParent(t2);
+    t2->addChildItem(t);
     ASSERT_TRUE(t->getParent() == t2);
   }
   std::cout << boost::format{"\n\n %|=60s|"} % "tow load" << std::endl;

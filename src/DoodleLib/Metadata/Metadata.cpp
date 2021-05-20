@@ -54,36 +54,14 @@ const std::string &Metadata::getRoot() const {
 std::shared_ptr<Metadata> Metadata::getParent() const {
   return p_parent.lock();
 }
-void Metadata::setParent(const std::shared_ptr<Metadata> &in_parent) {
-  // if(*in_parent == *this)
-  //先去除掉原先的子
-  std::shared_ptr<Metadata> k_old{};
-  if (hasParent()) {
-    k_old = p_parent.lock();
-    auto it = std::find(k_old->p_child_items.begin(), k_old->p_child_items.end(), shared_from_this());
-    //    assert(it != p_p->p_child_items.end());
-    if (it != k_old->p_child_items.end())
-      p_parent.lock()->p_child_items.erase(it);
-  }
-  //再添加
-  DOODLE_LOG_INFO( "begin set parent: "<<in_parent->str())
-  p_parent      = in_parent;
-  p_parent_uuid = in_parent->getRoot();
-  p_metadata_flctory_ptr_ = in_parent->p_metadata_flctory_ptr_;
-  in_parent->p_child_items.emplace_back(shared_from_this());
-  if (k_old)
-    modifyParent(k_old);
-  in_parent->sig_childAdd(in_parent,shared_from_this());
-  DOODLE_LOG_INFO(in_parent->str())
-}
 const std::vector<MetadataPtr> &Metadata::getChildItems() const {
   return p_child_items;
 }
 void Metadata::setChildItems(const std::vector<MetadataPtr> &in_child_items) {
   for (const auto& child : in_child_items) {
-    child->setParent(shared_from_this());
+    addChildItemNotSig(child);
   }
-  sig_childAddAll(shared_from_this(),in_child_items);
+  sig_childAddAll(in_child_items);
 }
 
 bool Metadata::removeChildItems(const MetadataPtr &in_child) {
@@ -93,15 +71,37 @@ bool Metadata::removeChildItems(const MetadataPtr &in_child) {
     in_child->p_parent_uuid.clear();
 
     p_child_items.erase(it);
-    sig_childDelete(shared_from_this(),in_child);
+    sig_childDelete(in_child);
     return true;
   } else
     return false;
 }
+void Metadata::addChildItemNotSig(const MetadataPtr &in_items) {
+  MetadataPtr k_old{};
+  ///先查看是否有父级关联
+  if(in_items->hasParent()){
+    ///有关联就直接将父级的所有权清除
+    k_old = in_items->p_parent.lock();
+    auto it = std::find(k_old->p_child_items.begin(),k_old->p_child_items.end(),in_items);
+    if(it != k_old->p_child_items.end()) {
+      k_old->p_child_items.erase(it);
+      k_old->sig_childDelete(shared_from_this());
+    }
+  }
 
+  /// 这里将所有的子级要继承的父级属性给上
+  in_items->p_parent = weak_from_this();
+  in_items->p_parent_uuid = p_Root;
+  in_items->p_metadata_flctory_ptr_ = p_metadata_flctory_ptr_;
+
+  p_child_items.emplace_back(in_items);
+
+  if(k_old && (k_old.get() != this))
+    in_items->modifyParent(k_old);
+}
 void Metadata::addChildItem(const MetadataPtr &in_items) {
-  in_items->setParent(shared_from_this());
-  sig_childAdd(shared_from_this(),in_items);
+  addChildItemNotSig(in_items);
+  sig_childAdd(in_items);
 }
 
 void Metadata::sortChildItems() {
@@ -187,5 +187,6 @@ bool Metadata::isLoaded() const {
 bool Metadata::isSaved() const {
   return !p_need_save;
 }
+
 
 }  // namespace doodle

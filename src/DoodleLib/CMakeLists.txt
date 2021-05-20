@@ -81,7 +81,12 @@ target_link_libraries(DoodleLib PUBLIC
         )
 
 
-target_compile_definitions(DoodleLib PUBLIC _WIN32_WINNT=0x0A00 WIN32_LEAN_AND_MEAN)
+target_compile_definitions(DoodleLib
+        PUBLIC
+        _WIN32_WINNT=0x0A00
+        WIN32_LEAN_AND_MEAN
+#        $<$<CONFIG:Debug>:_CRTDBG_MAP_ALLOC>
+        )
 
 
 target_include_directories(DoodleLib

@@ -51,7 +51,7 @@ EpisodesPtr Shot::getEpisodesPtr() const {
 }
 
 void Shot::setEpisodesPtr(const EpisodesPtr& Episodes_) noexcept {
-    setParent(Episodes_);
+    Episodes_->addChildItem(shared_from_this());
 }
 std::string Shot::str() const {
   boost::format str_shot{"sc%04i%s"};

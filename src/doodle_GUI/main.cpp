@@ -12,6 +12,7 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               HINSTANCE hPrevInstance,
                               wxCmdLineArgType WXUNUSED(lpCmdLine),
                               int nCmdShow) try {
+//  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
   //设置一下文件系统后端
   auto k_local = boost::locale::generator().generate("");
   boost::filesystem::path::imbue(k_local);

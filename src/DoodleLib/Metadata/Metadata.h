@@ -32,6 +32,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   /**
    * 这个是加载或者保存时的工厂
    * 这个工厂会在加载时记录, 或者在第一次保存时记录
+   * 同时在添加子物体时也会继承父级的工厂,在整个项目中工厂应该保持一致
    * @warning 基本保证在使用时不空（从逻辑上）
    */
   MetadataFactoryPtr p_metadata_flctory_ptr_;
@@ -52,6 +53,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
 
   virtual void save() const = 0;
 
+  virtual void addChildItemNotSig(const MetadataPtr &in_items); ///< 这个添加子物体时不会触发信号
  public:
   Metadata();
   ///这个时直接创建对象的，其中会自动设置父指针
@@ -62,96 +64,90 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   virtual ~Metadata();
   DOODLE_DISABLE_COPY(Metadata);
 
-  ///设置父指针
-  [[nodiscard]] virtual bool hasParent() const;
-  ///活动父指针
-  [[nodiscard]] virtual std::shared_ptr<Metadata> getParent() const;
+  [[nodiscard]] virtual bool hasParent() const;///< 设置父指针
 
-  ///设置父指针
-  virtual void setParent(const std::shared_ptr<Metadata> &in_parent);
+  [[nodiscard]] virtual std::shared_ptr<Metadata> getParent() const;///< 活动父指针
 
-  ///询问是否有孩子
-  [[nodiscard]] virtual bool hasChild() const;
-  ///获得孩子
+  [[nodiscard]] virtual bool hasChild() const;///< 询问是否有孩子
+
   /**
    * @return 孩子的列表
    */
-  [[nodiscard]] virtual const std::vector<MetadataPtr> &getChildItems() const;
-  ///清除所有孩子
-  virtual void clearChildItems();
-  ///去除其中一个孩子
-  virtual bool removeChildItems(const MetadataPtr &in_child);
-  ///设置所有孩子
-  virtual void setChildItems(const std::vector<MetadataPtr> &in_child_items);
-  ///添加一个孩子
-  virtual void addChildItem(const MetadataPtr &in_items);
-  ///排序一个孩子
-  virtual void sortChildItems();
+  [[nodiscard]] virtual const std::vector<MetadataPtr> &getChildItems() const;///< 获得孩子
 
-  ///这里时转换为字符串的, 这里不可以有中文
+  virtual void clearChildItems();///< 清除所有孩子
+
+  virtual bool removeChildItems(const MetadataPtr &in_child);///< 去除其中一个孩子
+
+  virtual void setChildItems(const std::vector<MetadataPtr> &in_child_items);///< 设置所有孩子
+
+  virtual void addChildItem(const MetadataPtr &in_items);///< 添加一个孩子
+
+  virtual void sortChildItems();///< 排序一个孩子
+
   /**
    * @return 没有中文的字符串
    */
-  [[nodiscard]] virtual std::string str() const = 0;
-  ///这里时显示的字符串, 极有可能有中文
+  [[nodiscard]] virtual std::string str() const = 0;///< 这里时转换为字符串的, 这里不可以有中文
+
   /**
    * @return 有或者没有中文的字符串, 但是意思一定时很明了的
    */
-  [[nodiscard]] virtual std::string showStr() const;
+  [[nodiscard]] virtual std::string showStr() const;///< 这里时显示的字符串, 极有可能有中文
 
-  ///获得根uuid
+
   /**
    * @return 根uuid
    */
-  [[nodiscard]] virtual const std::string &getRoot() const;
+  [[nodiscard]] virtual const std::string &getRoot() const;///< 获得根uuid
   [[nodiscard]] virtual const std::string &getRoot();
-  ///获得名称,这个名称是文件名称
+
   /**
    * @return
    */
-  [[nodiscard]] virtual const std::string &getName() const;
+  [[nodiscard]] virtual const std::string &getName() const;///< 获得名称,这个名称是文件名称
   [[nodiscard]] virtual const std::string &getName();
-  ///这个会一直递归找到没有父级的根节点
+
   /**
    * @return 根节点(现在基本上是项目节点)
    */
   [[nodiscard]] MetadataPtr getRootParent();
-  virtual void createMenu(ContextMenu* in_contextMenu) = 0;
+  virtual void createMenu(ContextMenu* in_contextMenu) = 0;///< 这个会一直递归找到没有父级的根节点
   //  [[nodiscard]] virtual FSys::path FolderPath() const;
 
-  ///获得序列化他们的工厂
+
   /**
    * @return
    */
-  const MetadataFactoryPtr &getMetadataFactory() const;
+  const MetadataFactoryPtr &getMetadataFactory() const;///< 获得序列化他们的工厂
 
-  ///检查父亲是否符合记录
+
   /**
    * @param in_metadata 输入父亲
    * @return 返回是否是这个的父亲
    */
-  [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
+  [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;///< 检查父亲是否符合记录
 
   ///本身进行更改时发出信号
   boost::signals2::signal<
-      void (const MetadataPtr& this_ptr)
+      void ()
       > sig_thisChange;
   ///清除孩子时发出信号
   boost::signals2::signal<
-      void (const MetadataPtr& this_ptr)
+      void ()
       > sig_childClear;
 
   ///添加孩子是发出信号,添加孩子发出的信号会比孩子更改父级发出的晚
   boost::signals2::signal<
-      void (const MetadataPtr& this_ptr,const MetadataPtr& child_ptr)
+      void (const MetadataPtr& child_ptr)
       > sig_childAdd;
   ///整体替换时发出信号
   boost::signals2::signal<
-      void (const MetadataPtr& this_ptr,const std::vector<MetadataPtr>& child_ptr)
+      void (const std::vector<MetadataPtr>& child_ptr)
       > sig_childAddAll;
   ///孩子删除时发出信号
   boost::signals2::signal<
-      void (const MetadataPtr& this_ptr,const MetadataPtr& child_ptr)
+      void (const MetadataPtr& child_ptr)
       > sig_childDelete;
   /**
    * @warning 此处如果进行比较， 会自动转化为子类进行比较， 相同子类优化， 不同子类字符串比较
@@ -164,6 +160,8 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   ///这里是使用工厂进行加载和保存的函数
   /**
    * 使用访问者模式
+   * @warning 注意,这里进行工厂加载是不触发任何的添加子物体和子物体更改等任何插槽的，
+   * 工厂在添加子物体时应该调用 Metadata::addChildItemNotSig(const MetadataPtr &) 方法
    * @param in_factory 序列化工厂
    */
   virtual void load(const MetadataFactoryPtr &in_factory) = 0;

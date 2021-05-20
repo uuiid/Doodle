@@ -12,7 +12,15 @@ class AssstsTree :public wxDataViewModel{
   std::vector<ProjectPtr> p_Root;
   MetadataFactoryPtr p_metadata_flctory_ptr_;
 
+  /**
+   *
+   * @param in_metadata 输入的要连接的数据
+   */
   void connectSig(const MetadataPtr& in_metadata) const;
+  std::function<void (const wxDataViewItem &parent, const wxDataViewItem &item)> slot_childAdd;
+  std::function<void (const wxDataViewItem &item)> slot_thisChange;
+  std::function<void (const wxDataViewItem &parent, const wxDataViewItem &item)> slot_childDelete;
+
  public:
   explicit AssstsTree();
 

@@ -34,9 +34,9 @@ void MetadataFactory::loadChild(Metadata *in_metadata, const FSys::path &k_confi
         std::shared_ptr<Metadata> k_ptr;
         cereal::PortableBinaryInputArchive k_archive{k_fstream};
         k_archive(k_ptr);
-        if (k_ptr->checkParent(*in_metadata))
-          k_ptr->setParent(in_metadata->shared_from_this());
-        else
+        if (k_ptr->checkParent(*in_metadata)) {
+          in_metadata->addChildItemNotSig(k_ptr);
+        } else
           DOODLE_LOG_INFO("父子uuid核实出错" << k_ptr->showStr());
       }
       k_fstream.close();

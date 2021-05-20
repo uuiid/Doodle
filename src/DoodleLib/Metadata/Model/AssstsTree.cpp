@@ -6,10 +6,10 @@
 #include <DoodleLib/FileWarp/ImageSequence.h>
 #include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Model/AssstsTree.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/core/coreset.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
 
 #define DOLE_CHECK(item, value) \
   if (!(item).IsOk()) return value;
@@ -17,8 +17,15 @@ namespace doodle {
 AssstsTree::AssstsTree()
     : wxDataViewModel(),
       p_Root(MetadataSet::Get().getAllProjects()),
-      p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()){
-
+      p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()),
+      slot_childAdd(),
+      slot_thisChange(),
+      slot_childDelete() {
+  slot_childAdd = [this](const wxDataViewItem& parent,
+                         const wxDataViewItem& item) { this->ItemAdded(parent, item); };
+  slot_thisChange = [this](const wxDataViewItem& item) { this->ItemChanged(item); };
+  slot_childDelete = [this](const wxDataViewItem& parent,
+                            const wxDataViewItem& item) { this->ItemDeleted(parent, item); };
 }
 
 unsigned int AssstsTree::GetColumnCount() const {
@@ -33,7 +40,7 @@ void AssstsTree::GetValue(wxVariant& variant, const wxDataViewItem& item, unsign
   variant = ConvStr<wxString>("None");
   DOLE_CHECK(item, );
   auto str = reinterpret_cast<Metadata*>(item.GetID());
-  variant  = ConvStr<wxString>(str->showStr());
+  variant = ConvStr<wxString>(str->showStr());
 }
 
 bool AssstsTree::SetValue(const wxVariant& variant, const wxDataViewItem& item, unsigned int col) {
@@ -63,8 +70,10 @@ unsigned int AssstsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
   if (!item.IsOk()) {
     //这里是空指针的情况， 即没有父级， 我们要使用根来确认
     for (const auto& k_t : p_Root) {
-      if(k_t == coreSet::getSet().GetMetadataSet().Project_())
+      if (k_t == coreSet::getSet().GetMetadataSet().Project_()) {
         k_t->load(p_metadata_flctory_ptr_);
+        connectSig(k_t);
+      }
       children.Add(wxDataViewItem{k_t.get()});
     }
   } else {
@@ -72,6 +81,7 @@ unsigned int AssstsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
     k_item->sortChildItems();
     const auto& k_child = k_item->getChildItems();
     for (const auto& k_t : k_child) {
+      connectSig(k_t);
       children.Add(wxDataViewItem{k_t.get()});
     }
   }
@@ -79,8 +89,16 @@ unsigned int AssstsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
 }
 void AssstsTree::connectSig(const MetadataPtr& in_metadata) const {
   in_metadata->sig_childAdd.connect(
-      [](const MetadataPtr& this_, const MetadataPtr& child){
-
+      [this, in_metadata](const MetadataPtr& child) {
+        this->slot_childAdd(wxDataViewItem{in_metadata.get()}, wxDataViewItem{child.get()});
+      });
+  in_metadata->sig_thisChange.connect(
+      [this, in_metadata]() {
+        this->slot_thisChange(wxDataViewItem{in_metadata.get()});
+      });
+  in_metadata->sig_childDelete.connect(
+      [this, in_metadata](const MetadataPtr& child) {
+        this->slot_childDelete(wxDataViewItem{in_metadata.get()}, wxDataViewItem{child.get()});
       });
 }
 }  // namespace doodle
