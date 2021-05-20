@@ -13,8 +13,8 @@ Metadata::Metadata()
     : std::enable_shared_from_this<Metadata>(),
       p_parent(),
       p_child_items(),
-      p_Root(coreSet::getSet().getUUIDStr()),
-      p_Name(coreSet::getSet().getUUIDStr()),
+      p_Root(std::move(coreSet::getSet().getUUIDStr())),
+      p_Name(std::move(coreSet::getSet().getUUIDStr())),
       p_parent_uuid(),
       p_metadata_flctory_ptr_(),
       sig_thisChange(),
@@ -30,8 +30,8 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
     : std::enable_shared_from_this<Metadata>(),
       p_parent(std::move(in_metadata)),
       p_child_items(),
-      p_Root(coreSet::getSet().getUUIDStr()),
-      p_Name(coreSet::getSet().getUUIDStr()),
+      p_Root(std::move(coreSet::getSet().getUUIDStr())),
+      p_Name(std::move(coreSet::getSet().getUUIDStr())),
       p_parent_uuid(p_parent.lock()->p_Root),
       p_metadata_flctory_ptr_(),
       sig_thisChange(),
@@ -128,7 +128,7 @@ std::string Metadata::showStr() const {
 }
 const std::string &Metadata::getRoot() {
   if (p_Root.empty())
-    p_Root = coreSet::getSet().getUUIDStr();
+    p_Root = std::move(coreSet::getSet().getUUIDStr());
   return p_Root;
 }
 const std::string &Metadata::getName() const {
@@ -138,7 +138,7 @@ const std::string &Metadata::getName() const {
 }
 const std::string &Metadata::getName() {
   if (p_Name.empty())
-    p_Name = coreSet::getSet().getUUIDStr();
+    p_Name = std::move(coreSet::getSet().getUUIDStr());
   return p_Name;
 }
 

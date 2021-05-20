@@ -4,7 +4,7 @@
 #include <DoodleLib/threadPool/ThreadPool.h>
 
 #include <opencv2/opencv.hpp>
-#include <PinYIn/convert.h>
+#include <PinYin/convert.h>
 
 #include <boost/format.hpp>
 namespace doodle {

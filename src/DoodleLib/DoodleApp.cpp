@@ -10,14 +10,14 @@
 #include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/Metadata/MetadataWidget.h>
 #include <DoodleLib/SettingWidght/settingWidget.h>
+#include <DoodleLib/mainWidght/MklinkWidget.h>
 #include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>
-#include <DoodleLib/mainWidght/MklinkWidget.h>
-
-#include <exception>
 #include <wx/cmdline.h>
 #include <wx/wxprec.h>
+
 #include <boost/algorithm/string.hpp>
+#include <exception>
 
 wxIMPLEMENT_APP_NO_MAIN(doodle::Doodle);
 
@@ -29,11 +29,9 @@ Doodle::Doodle()
 };
 
 int Doodle::OnExit() {
-  if (p_mainWindwos->Close(true))
-    p_mainWindwos->Destroy();
-  if (p_systemTray)
-    p_systemTray->Destroy();
-
+  p_mainWindwos->Destroy();
+  p_systemTray->Destroy();
+  coreSet::getSet().GetMetadataSet().clear();
   return wxApp::OnExit();
 }
 
@@ -46,31 +44,31 @@ void Doodle::OnInitCmdLine(wxCmdLineParser& parser) {
   }
 }
 
- bool Doodle::OnCmdLineParsed(wxCmdLineParser& parser) {
-   wxString k_string{};
-   if(parser.Found("fun")) {
-     if (parser.Found(
-             ConvStr<wxString>(std::string(magic_enum::enum_name(funName::mklink))),
-             &k_string)) {
-       //创建功能
-       p_run_fun = [k_string]() {
-         std::vector<std::string> str;
-         boost::split(str, ConvStr<std::string>(k_string), boost::is_any_of(";"));
-         if (str.size() % 2 == 0) {
-           const auto k_size = str.size();
-           for (auto i = 0; i < k_size; ++i) {
-             MklinkWidget::mklink(str[i], str[i + 1]);
-             ++i;
-           }
-         }else{
-           DOODLE_LOG_INFO("来源和目标不匹配,无法映射");
-         }
-       };
-     }
-   }
+bool Doodle::OnCmdLineParsed(wxCmdLineParser& parser) {
+  wxString k_string{};
+  if (parser.Found("fun")) {
+    if (parser.Found(
+            ConvStr<wxString>(std::string(magic_enum::enum_name(funName::mklink))),
+            &k_string)) {
+      //创建功能
+      p_run_fun = [k_string]() {
+        std::vector<std::string> str;
+        boost::split(str, ConvStr<std::string>(k_string), boost::is_any_of(";"));
+        if (str.size() % 2 == 0) {
+          const auto k_size = str.size();
+          for (auto i = 0; i < k_size; ++i) {
+            MklinkWidget::mklink(str[i], str[i + 1]);
+            ++i;
+          }
+        } else {
+          DOODLE_LOG_INFO("来源和目标不匹配,无法映射");
+        }
+      };
+    }
+  }
 
-   return wxApp::OnCmdLineParsed(parser);
- }
+  return wxApp::OnCmdLineParsed(parser);
+}
 
 void Doodle::openMainWindow() const {
   p_mainWindwos->Show();
@@ -114,7 +112,7 @@ bool Doodle::OnInit() {
     return true;
   }
 
-  p_mainWindwos        = new mainWindows{};
+  p_mainWindwos = new mainWindows{};
   const wxIcon& k_icon = wxICON(ID_DOODLE_ICON);
   p_mainWindwos->SetIcon(k_icon);
   this->SetTopWindow(p_mainWindwos);

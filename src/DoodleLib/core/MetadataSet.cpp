@@ -72,5 +72,8 @@ int MetadataSet::getProjectIndex() const {
   auto it = std::find(p_project_list.begin(), p_project_list.end(), p_project);
   return getIntex(it);
 }
+void MetadataSet::clear() {
+  p_project_list.clear();
+}
 
 }  // namespace doodle

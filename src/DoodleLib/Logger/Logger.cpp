@@ -1,6 +1,6 @@
 #include <Logger/Logger.h>
 #include <Logger/LoggerTemplate.h>
-
+#include <DoodleLib/DoodleLib_fwd.h>
 //windows头
 #include <windows.h>
 #include <Shlobj.h>
@@ -44,14 +44,14 @@ boostLoggerInitAsyn(const std::string &logPath,
 
 void boostLoggerInitAsyn(const std::string &logPath,
                          std::size_t logMaxSize) {
-  char tmp[256];
   boost::filesystem::path appdata{};
-  auto appdata_res = SHGetFolderPathA(0, CSIDL_APPDATA, 0, 0, tmp);
+  PWSTR pManager;
+  auto appdata_res = SHGetKnownFolderPath(FOLDERID_RoamingAppData, NULL, nullptr, &pManager);
   if (appdata_res != S_OK)
     appdata = boost::dll::program_location().parent_path();
   else
-    appdata = tmp;
-
+    appdata = boost::filesystem::path{pManager};
+  CoTaskMemFree(pManager);
   // boost::log::add_file_log(
   //     boost::log::keywords::file_name = appdata / "doodle" / "log" / "doodle_%Y_%m_%d_%H_%M_%S.%5N.html",
   //     boost::log::keywords::rotation_size = 10 * 1024 * 1024,
@@ -101,14 +101,14 @@ void boostLoggerInitAsyn(const std::string &logPath,
   boost::log::core::get()->add_global_attribute("TimeStamp", boost::log::attributes::local_clock());
   boost::log::core::get()->add_sink(sink);
 
-  sink->imbue(boost::locale::generator()("zh_CN.UTF-8"));
+  sink->imbue(boost::locale::generator()(""));//"zh_CN.UTF-8"
 #ifdef NDEBUG
 #else
   //debug 记录器
   boost::shared_ptr<sink_t> sink_t(new sink_t());
   sink->set_filter(boost::log::expressions::is_debugger_present() && (boost::log::trivial::severity >= boost::log::trivial::debug));
   boost::log::core::get()->add_sink(sink_t);
-  sink_t->imbue(boost::locale::generator()("zh_CN.UTF-8"));
+  sink_t->imbue(boost::locale::generator()(""));//"zh_CN.UTF-8"
 #endif  //NDEBUG
 
   BOOST_LOG_TRIVIAL(debug)

@@ -30,6 +30,8 @@ void coreSet::init() {
   if (!pManager) throw DoodleError("无法找到保存路径");
 
   doc = FSys::path{pManager} / "doodle";
+  CoTaskMemFree(pManager);
+
   if (!FSys::exists(doc))
     FSys::create_directories(doc);
   findMaya();
