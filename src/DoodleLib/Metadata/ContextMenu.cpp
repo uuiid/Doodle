@@ -167,6 +167,8 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
   auto k_add_shot = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加镜头"));
   auto k_add_ass = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加类别"));
 
+  auto k_delete = p_menu->Append(wxID_ANY, ConvStr<wxString>("删除"));
+
   p_menu->Bind(
       wxEVT_MENU, [in_data, this](wxCommandEvent& in_event) {
         auto eps = wxGetNumberFromUser(ConvStr<wxString>("输入集数"),
@@ -198,6 +200,24 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
         k_r->save(p_metadata_flctory_ptr_);
       },
       k_add_ass->GetId());
+
+  p_menu->Bind(wxEVT_MENU,[in_data,this](wxCommandEvent& in_event){
+    if(in_data->hasParent()){
+      if(in_data->hasChild())
+        wxMessageBox(ConvStr<wxString>("有子物体，无法删除"),
+                     ConvStr<wxString>("注意"),wxYES_NO|wxCANCEL,p_parent);
+      else{
+        auto k_p = in_data->getParent();
+        ///这里必须先删除再清除子物体
+        in_data->deleteData(p_metadata_flctory_ptr_);
+        k_p->removeChildItems(in_data->shared_from_this());
+      }
+    } else{
+      wxMessageBox(ConvStr<wxString>("这个是项目,无法删除"),
+          ConvStr<wxString>("注意"),wxYES|wxCANCEL,p_parent);
+    };
+  },
+      k_delete->GetId());
 
   return createMenuAfter();
 }

@@ -1,16 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-#include <Metadata/Project.h>
-#include <Exception/Exception.h>
-#include <Metadata/MetadataFactory.h>
-#include <Logger/Logger.h>
-#include <PinYIn/convert.h>
-
-#include <core/coreset.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
+#include <Exception/Exception.h>
+#include <Logger/Logger.h>
+#include <Metadata/MetadataFactory.h>
+#include <Metadata/Project.h>
+#include <PinYIn/convert.h>
+#include <core/coreset.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
-
 #include <cereal/archives/portable_binary.hpp>
 
 namespace doodle {
@@ -18,11 +16,13 @@ namespace doodle {
 Project::Project()
     : p_name(),
       p_path() {
+
 }
 
 Project::Project(FSys::path in_path, std::string in_name)
     : p_name(std::move(in_name)),
       p_path(std::move(in_path)) {
+
 }
 
 const std::string& Project::getName() const noexcept {
@@ -51,7 +51,7 @@ std::string Project::str() const {
 }
 
 std::string Project::shortStr() const {
-  auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
+  auto wstr = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
   auto& k_pingYin = convert::Get();
   std::string str{};
   for (auto s : wstr) {
@@ -78,13 +78,20 @@ FSys::path Project::DBRoot() const {
   return p_path / "_._root";
 }
 void Project::save(const MetadataFactoryPtr& in_factory) {
+  if (isSaved())
+    return;
   p_metadata_flctory_ptr_ = in_factory;
   save();
   saved();
 }
 void Project::load(const MetadataFactoryPtr& in_factory) {
-  in_factory->load(this);
+  if (isLoaded())
+    return;
+  /// 在这里先更改工厂属性, 因为在工厂中, 我们会调用
+  /// Metadata::addChildItemNotSig(const MetadataPtr &in_items)
+  /// 这个时候会将工厂属性传播到子物体中
   p_metadata_flctory_ptr_ = in_factory;
+  in_factory->load(this);
   loaded();
 }
 bool Project::operator<(const Project& in_rhs) const {
@@ -120,7 +127,7 @@ void Project::deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
 }
 void Project::save() const {
-  if(p_metadata_flctory_ptr_)
+  if (p_metadata_flctory_ptr_)
     p_metadata_flctory_ptr_->save(this);
 }
 

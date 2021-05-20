@@ -50,7 +50,7 @@ bool AssstsTree::SetValue(const wxVariant& variant, const wxDataViewItem& item, 
 wxDataViewItem AssstsTree::GetParent(const wxDataViewItem& item) const {
   DOLE_CHECK(item, wxDataViewItem{});
   const auto k_p_metadata = reinterpret_cast<Metadata*>(item.GetID());
-  if (k_p_metadata->hasChild())
+  if (k_p_metadata->hasParent())
     return wxDataViewItem{k_p_metadata->getParent().get()};
   else
     return wxDataViewItem{};

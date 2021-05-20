@@ -23,7 +23,7 @@ Metadata::Metadata()
       sig_childAddAll(),
       sig_childDelete(),
       p_need_save(true),
-      p_need_load(false){
+      p_need_load(true){
 }
 
 Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
@@ -40,7 +40,7 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
       sig_childAddAll(),
       sig_childDelete(),
       p_need_save(true),
-      p_need_load(false){
+      p_need_load(true){
 
 }
 

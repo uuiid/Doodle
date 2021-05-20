@@ -27,11 +27,15 @@ std::string Assets::showStr() const {
 }
 
 void Assets::load(const MetadataFactoryPtr& in_factory) {
-  in_factory->load(this);
+  if(isLoaded())
+    return;
   p_metadata_flctory_ptr_ = in_factory;
+  in_factory->load(this);
 }
 
 void Assets::save(const MetadataFactoryPtr& in_factory) {
+  if(isSaved())
+    return;
   p_metadata_flctory_ptr_ = in_factory;
   in_factory->save(this);
 }
@@ -57,7 +61,7 @@ bool Assets::sort(const Metadata& in_rhs) const {
   }
 }
 void Assets::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
-  //在这里， 如果已经保存过或者已经是从磁盘中加载来时， 必然会持有工厂， 这个时候我们就要告诉工厂， 我们改变了父子关系
+  ///在这里， 如果已经保存过或者已经是从磁盘中加载来时， 必然会持有工厂， 这个时候我们就要告诉工厂， 我们改变了父子关系
   if (p_metadata_flctory_ptr_)
     p_metadata_flctory_ptr_->modifyParent(this, in_old_parent.get());
 }

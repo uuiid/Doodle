@@ -45,11 +45,15 @@ std::string AssetsFile::showStr() const {
 }
 
 void AssetsFile::load(const MetadataFactoryPtr& in_factory) {
-  in_factory->load(this);
+  if(isLoaded())
+    return;
   p_metadata_flctory_ptr_ = in_factory;
+  in_factory->load(this);
 }
 
 void AssetsFile::save(const MetadataFactoryPtr& in_factory) {
+  if(isSaved())
+    return;
   p_metadata_flctory_ptr_ = in_factory;
   in_factory->save(this);
 }
