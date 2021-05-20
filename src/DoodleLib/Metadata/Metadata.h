@@ -81,7 +81,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
 
   virtual void setChildItems(const std::vector<MetadataPtr> &in_child_items);///< 设置所有孩子
 
-  virtual void addChildItem(const MetadataPtr &in_items);///< 添加一个孩子
+  virtual MetadataPtr addChildItem(const MetadataPtr &in_items);///< 添加一个孩子
 
   virtual void sortChildItems();///< 排序一个孩子
 

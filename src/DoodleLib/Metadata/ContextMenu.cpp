@@ -10,7 +10,6 @@
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
-#include <DoodleLib/core/MetadataSet.h>
 #include <wx/numdlg.h>
 #include <wx/textdlg.h>
 
@@ -90,16 +89,19 @@ wxMenu* ContextMenu::createMenu(const EpisodesPtr& in_data) {
 wxMenu* ContextMenu::createMenu(const ShotPtr& in_data) {
   //  auto k_DeleteShot = p_menu->Append(wxID_ANY, ConvStr<wxString>("删除镜头"));
 
+  auto k_add_shotab = p_menu->Append(wxID_ANY, ConvStr("添加ab镜头"));
+  p_menu->AppendSeparator();
   auto k_modify_shot = p_menu->Append(wxID_ANY, ConvStr<wxString>("修改镜头号"));
   auto k_modify_shotab = p_menu->Append(wxID_ANY,ConvStr("修改ab镜头"));
-  auto k_add_shotab = p_menu->Append(wxID_ANY, ConvStr("添加ab镜头"));
 
   p_menu->Bind(
       wxEVT_MENU,
       [this, in_data](wxCommandEvent& in_event) {
         auto k_shotAb = getShotAb();
         auto k_p = in_data->getParent();
-        k_p->addChildItem(std::make_shared<Shot>(k_p, in_data->getShot(), k_shotAb));
+        auto k_r = k_p->addChildItem(
+            std::make_shared<Shot>(k_p, in_data->getShot(), k_shotAb));
+        k_r->save(p_metadata_flctory_ptr_);
       },
       k_add_shotab->GetId());
   p_menu->Bind(
@@ -171,7 +173,8 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
                                        ConvStr<wxString>(""),
                                        ConvStr<wxString>("集数"),
                                        1, 0, 9999, p_parent);
-        in_data->addChildItem(std::make_shared<Episodes>(in_data, eps));
+        auto k_r = in_data->addChildItem(std::make_shared<Episodes>(in_data, eps));
+        k_r->save(p_metadata_flctory_ptr_);
       },
       k_add_eps->GetId());
   p_menu->Bind(
@@ -180,7 +183,8 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
                                         ConvStr<wxString>(""),
                                         ConvStr<wxString>("镜头"),
                                         1, 0, 9999, p_parent);
-        in_data->addChildItem(std::make_shared<Shot>(in_data, shot));
+        auto k_r = in_data->addChildItem(std::make_shared<Shot>(in_data, shot));
+        k_r->save(p_metadata_flctory_ptr_);
       },
       k_add_shot->GetId());
   p_menu->Bind(
@@ -190,7 +194,8 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
                                      ConvStr<wxString>("none"), p_parent);
         if (str.empty())
           return;
-        in_data->addChildItem(std::make_shared<Assets>(in_data, ConvStr<std::string>(str)));
+        auto k_r = in_data->addChildItem(std::make_shared<Assets>(in_data, ConvStr<std::string>(str)));
+        k_r->save(p_metadata_flctory_ptr_);
       },
       k_add_ass->GetId());
 

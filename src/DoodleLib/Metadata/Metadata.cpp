@@ -99,9 +99,10 @@ void Metadata::addChildItemNotSig(const MetadataPtr &in_items) {
   if(k_old && (k_old.get() != this))
     in_items->modifyParent(k_old);
 }
-void Metadata::addChildItem(const MetadataPtr &in_items) {
+MetadataPtr Metadata::addChildItem(const MetadataPtr &in_items) {
   addChildItemNotSig(in_items);
   sig_childAdd(in_items);
+  return in_items;
 }
 
 void Metadata::sortChildItems() {
