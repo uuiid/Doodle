@@ -2,25 +2,21 @@
 // Created by teXiao on 2020/10/19.
 //
 
-#include <DoodleLib/SettingWidght/SettingWidget.h>
-
-#include <DoodleLib/Logger/Logger.h>
-
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/core/coreset.h>
-
-#include <DoodleLib/FileWarp/MayaFile.h>
-#include <DoodleLib/FileWarp/ImageSequence.h>
-#include <DoodleLib/FileWarp/VideoSequence.h>
-#include <DoodleLib/FileWarp/Ue4Project.h>
-
 #include <DoodleLib/FileSys/FileSystem.h>
-
-#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/FileWarp/ImageSequence.h>
+#include <DoodleLib/FileWarp/MayaFile.h>
+#include <DoodleLib/FileWarp/Ue4Project.h>
+#include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
-#include <magic_enum.hpp>
+#include <DoodleLib/SettingWidght/SettingWidget.h>
+#include <DoodleLib/core/CoreSet.h>
 #include <wx/spinctrl.h>
+
+#include <magic_enum.hpp>
 DOODLE_NAMESPACE_S
 
 // static SettingWidget *doodle_SettingWidget = nullptr;

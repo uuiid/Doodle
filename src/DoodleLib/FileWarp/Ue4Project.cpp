@@ -1,11 +1,11 @@
-#include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/core/Ue4Setting.h>
-#include <DoodleLib/core/coreset.h>
-#include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/Metadata/Episodes.h>
-#include <DoodleLib/libWarp/WinReg.hpp>
+#include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/Ue4Setting.h>
 
+#include <DoodleLib/libWarp/WinReg.hpp>
 #include <boost/format.hpp>
 #include <boost/locale.hpp>
 #include <boost/process.hpp>

@@ -9,7 +9,7 @@
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Model/AssstsTree.h>
 #include <DoodleLib/Metadata/Project.h>
-#include <DoodleLib/core/coreset.h>
+#include <DoodleLib/core/CoreSet.h>
 
 #define DOLE_CHECK(item, value) \
   if (!(item).IsOk()) return value;

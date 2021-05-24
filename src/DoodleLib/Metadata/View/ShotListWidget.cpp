@@ -1,23 +1,20 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-#include <DoodleLib/Metadata/View/ShotListWidget.h>
-#include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/core/coreset.h>
-
-#include <DoodleLib/FileWarp/MayaFile.h>
-#include <DoodleLib/FileWarp/ImageSequence.h>
-#include <DoodleLib/FileWarp/VideoSequence.h>
-#include <DoodleLib/FileWarp/Ue4Project.h>
-
-#include <DoodleLib/FileSys/FileSystem.h>
-
-#include <DoodleLib/Metadata/Project.h>
-#include <DoodleLib/Metadata/Episodes.h>
-#include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/DoodleApp.h>
+#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/FileSys/FileSystem.h>
+#include <DoodleLib/FileWarp/ImageSequence.h>
+#include <DoodleLib/FileWarp/MayaFile.h>
+#include <DoodleLib/FileWarp/Ue4Project.h>
+#include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/Metadata/View/ShotListWidget.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <wx/numdlg.h>
+#include <wx/spinctrl.h>
 
 #include <magic_enum.hpp>
-#include <wx/spinctrl.h>
-#include <wx/numdlg.h>
 
 namespace doodle {
 

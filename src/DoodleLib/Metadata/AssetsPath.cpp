@@ -2,10 +2,9 @@
 // Created by TD on 2021/5/18.
 //
 
-#include <DoodleLib/Metadata/AssetsPath.h>
-
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/core/coreset.h>
+#include <DoodleLib/Metadata/AssetsPath.h>
+#include <DoodleLib/core/CoreSet.h>
 
 namespace doodle {
 AssetsPath::AssetsPath()

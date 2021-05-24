@@ -16,7 +16,7 @@
 #include <DoodleLib/Metadata/Model/AssstsTree.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
-#include <DoodleLib/core/coreset.h>
+#include <DoodleLib/core/CoreSet.h>
 namespace doodle {
 
 MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)

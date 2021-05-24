@@ -4,10 +4,8 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-
 #include <DoodleLib/Logger/Logger.h>
-
-#include <DoodleLib/core/coreset.h>
+#include <DoodleLib/core/CoreSet.h>
 
 namespace doodle {
 class SettingWidght : public wxFrame {

@@ -5,7 +5,7 @@
 #include <Metadata/MetadataFactory.h>
 #include <Metadata/Project.h>
 #include <PinYIn/convert.h>
-#include <core/coreset.h>
+#include <core/CoreSet.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>

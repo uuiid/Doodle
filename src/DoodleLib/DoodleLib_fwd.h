@@ -1,24 +1,43 @@
 ﻿#pragma once
 
-//#ifdef _DEBUG
-//    #define DEBUG_CLIENTBLOCK new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
-//#else
-//    #define DEBUG_CLIENTBLOCK
-//#endif
-//
-//#ifdef _DEBUG
-//      #define _CRTDBG_MAP_ALLOC
-//#include <stdlib.h>
-//#include <crtdbg.h>
-//
-//      #define new DEBUG_CLIENTBLOCK
-//#endif
+#include <chrono>
+#include <condition_variable>
+#include <filesystem>
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <future>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <regex>
+#include <stdexcept>
+#include <string>
+#include <unordered_set>
+#include <variant>
+#include <vector>
+
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+#include <wx/wx.h>
+#ifdef _CRT_SECURE_NO_WARNINGS
+#undef _CRT_SECURE_NO_WARNINGS
+#endif
+//<wx/wx.h># 这个头要在wx的前面才不会出错
+//<boost/process.hpp> # 因为wx中的setup.h 定义了一个pid_t宏 会影响boost中的处理
+#ifdef _
+#undef _
+#endif
+#ifdef pid_t
+#undef pid_t
+#endif
 
 #include <doodlelib_export.h>
 
 #include <boost/filesystem.hpp>
-#include <filesystem>
-
 #include <cereal/access.hpp>
 #include <cereal/cereal.hpp>
 #include <cereal/types/common.hpp>
@@ -26,6 +45,23 @@
 
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
+
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+#include <wx/wx.h>
+#ifdef _CRT_SECURE_NO_WARNINGS
+#undef _CRT_SECURE_NO_WARNINGS
+#endif
+//<wx/wx.h># 这个头要在wx的前面才不会出错
+//<boost/process.hpp> # 因为wx中的setup.h 定义了一个pid_t宏 会影响boost中的处理
+#ifdef _
+#undef _
+#endif
+#ifdef pid_t
+#undef pid_t
+#endif
+
 
 #define DOODLE_NAMESPACE doodle
 #define DOODLE_NAMESPACE_S namespace DOODLE_NAMESPACE {
@@ -43,7 +79,7 @@
 CMRC_DECLARE(DoodleLibResource);
 
 // 添加数据库连接项
-namespace sqlpp::sqlite3 {
+namespace sqlpp::mysql {
 class connection;
 struct connection_config;
 }  // namespace sqlpp::sqlite3
@@ -85,14 +121,14 @@ namespace FSys = boost::filesystem;
 // using ostream  = std::ostream;
 // }  // namespace FSys
 
-using ConnPtr = std::unique_ptr<sqlpp::sqlite3::connection>;
+using ConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
 
 class Project;
 class Episodes;
 class Shot;
 class Metadata;
 class Assets;
-class coreSql;
+class CoreSql;
 class LabelNode;
 class AssetsFile;
 class MetadataFactory;
@@ -107,7 +143,7 @@ using EpisodesPtr        = std::shared_ptr<Episodes>;
 using ShotPtr            = std::shared_ptr<Shot>;
 using AssetsPtr          = std::shared_ptr<Assets>;
 using AssetsFilePtr      = std::shared_ptr<AssetsFile>;
-using coreSqlPtr         = std::shared_ptr<coreSql>;
+using coreSqlPtr         = std::shared_ptr<CoreSql>;
 using LabelNodePtr       = std::shared_ptr<LabelNode>;
 using AssetsFilePtr      = std::shared_ptr<AssetsFile>;
 using MetadataFactoryPtr = std::shared_ptr<MetadataFactory>;

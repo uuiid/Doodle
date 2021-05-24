@@ -7,7 +7,7 @@ find_library(
 #set(SQLPPMYSQL_LIBRARY $ENV{VCPKG_MYROOT}/vcpkg/installed/x64-windows/debug/lib/sqlpp-mysql.lib)
 
 find_library(MySql_LIBRARY
-        NAMES libmysql.lib)
+        NAMES libmariadb.lib)
 
 message("SQLPPMYSQL_LIBRARY ${SQLPPMYSQL_LIBRARY}")
 message("MySql_LIBRARY ${MySql_LIBRARY}")

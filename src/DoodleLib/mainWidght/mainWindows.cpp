@@ -1,25 +1,22 @@
 #include <DoodleLib/mainWidght/mainWindows.h>
 //logger是boost库使用者，放到qt上面能好点
 #include <DoodleLib/DoodleApp.h>
+#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/FileSys/FileSystem.h>
+#include <DoodleLib/FileWarp/ImageSequence.h>
+#include <DoodleLib/FileWarp/MayaFile.h>
+#include <DoodleLib/FileWarp/Ue4Project.h>
+#include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Metadata/View/ShotListWidget.h>
 #include <DoodleLib/SettingWidght/settingWidget.h>
-#include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/core/coreset.h>
-
-#include <DoodleLib/FileWarp/MayaFile.h>
-#include <DoodleLib/FileWarp/ImageSequence.h>
-#include <DoodleLib/FileWarp/VideoSequence.h>
-#include <DoodleLib/FileWarp/Ue4Project.h>
-
-#include <DoodleLib/FileSys/FileSystem.h>
-
-#include <DoodleLib/Metadata/Project.h>
-#include <DoodleLib/Metadata/Episodes.h>
-#include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/mainWidght/MklinkWidget.h>
 #include <DoodleLib/mainWidght/systemTray.h>
 #include <DoodleLib/toolkit/MessageAndProgress.h>
-#include <DoodleLib/mainWidght/MklinkWidget.h>
 
 #include <boost/format.hpp>
 
@@ -39,12 +36,12 @@ mainWindows::mainWindows()
   //创建总布局
   auto layout = new wxBoxSizer{wxVERTICAL};
   //创建按钮
-  auto k_exMaya_button    = new wxButton{this, p_exmaya_id, _(ConvStr<wxString>("从maya导出相机和文件"))};
-  auto k_create_image     = new wxButton{this, p_create_image_id, _(ConvStr<wxString>("从图片创建视频"))};
-  auto k_create_dir_image = new wxButton{this, p_create_dir_image_id, _(ConvStr<wxString>("从多个文件夹创建视频"))};
-  auto k_create_video     = new wxButton{this, p_create_video_id, _(ConvStr<wxString>("连接视频"))};
-  auto k_create_ue4File   = new wxButton{this, p_create_ue4File_id, _(ConvStr<wxString>("创建ue4关卡序列"))};
-  auto k_mkink            = new wxButton{this, p_mkLink_id, _(ConvStr<wxString>("映射连接文件夹"))};
+  auto k_exMaya_button    = new wxButton{this, p_exmaya_id, ConvStr<wxString>("从maya导出相机和文件")};
+  auto k_create_image     = new wxButton{this, p_create_image_id, ConvStr<wxString>("从图片创建视频")};
+  auto k_create_dir_image = new wxButton{this, p_create_dir_image_id, ConvStr<wxString>("从多个文件夹创建视频")};
+  auto k_create_video     = new wxButton{this, p_create_video_id, ConvStr<wxString>("连接视频")};
+  auto k_create_ue4File   = new wxButton{this, p_create_ue4File_id, ConvStr<wxString>("创建ue4关卡序列")};
+  auto k_mkink            = new wxButton{this, p_mkLink_id, ConvStr<wxString>("映射连接文件夹")};
   //布局
   layout->Add(k_exMaya_button, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);
   layout->Add(k_create_image, wxSizerFlags{0}.Expand().Border(wxALL, 0))->SetProportion(1);

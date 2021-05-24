@@ -63,8 +63,8 @@ find_package(Doxygen REQUIRED)
 find_package(OpenCV CONFIG REQUIRED)
 
 #这两个是我自己写的寻找库的方法
-find_package(SqlppSqlite REQUIRED)
-# find_package(SqlppMySql REQUIRED)
+#find_package(SqlppSqlite REQUIRED)
+find_package(SqlppMySql REQUIRED)
 
 #仅头库
 find_package(magic_enum CONFIG REQUIRED)

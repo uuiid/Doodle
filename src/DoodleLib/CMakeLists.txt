@@ -12,7 +12,10 @@ cmrc_add_resource_library(
 )
 
 include(DoodleLib.cmake)
-
+#add_custom_command(
+#        OUTPUT DOODLE_SQL_HEADER
+#        COMMAND
+#)
 add_library(DoodleLib
         SHARED
         winDoodleLib.rc
@@ -27,39 +30,20 @@ set_target_properties(DoodleLib
 include(GenerateExportHeader)
 set(MY_CUSTOM_CONTENT "")
 
+
 generate_export_header(DoodleLib
         EXPORT_MACRO_NAME DOODLELIB_API
         CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
 #预编译头文件
 target_precompile_headers(DoodleLib
         PUBLIC
-        <filesystem>
-        <variant>
-        <string>
-        <memory>
-        <chrono>
-        <map>
-        <iostream>
-        <regex>
-        <fstream>
-        <mutex>
-        <condition_variable>
-        <future>
-        <vector>
-        <unordered_set>
-        <queue>
-        <functional>
-        <stdexcept>
-        <Windows.h>
-        <boost/process.hpp> # 这个头要在wx的前面才不会出错
-        <wx/wx.h>           # 因为wx中的setup.h 定义了一个pid_t宏 会影响boost中的处理
-#        [["#ifdef pid_t"]]
-#        [["#undef pid_t"]]
-#        [["#endif"]]
+        <DoodleLib/DoodleLib_fwd.h>
         )
+get_target_property(DOODLE_PCH_S DoodleLib PRECOMPILE_HEADERS )
+message(${DOODLE_PCH_S})
 
 target_link_libraries(DoodleLib PUBLIC
-        SqlppSqlite
+#        SqlppSqlite
         DoodleLibResource
         # RTTR::Core
         cereal
@@ -67,15 +51,16 @@ target_link_libraries(DoodleLib PUBLIC
         ${Boost_LIBRARIES}
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}
-        EnTT::EnTT
+#        EnTT::EnTT
 #        Boost::locale
 #        Boost::filesystem
 #        Boost::log
         $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
         $<IF:$<CONFIG:Debug>,${WX_cored},${WX_core}>
         $<IF:$<CONFIG:Debug>,${WX_advd},${WX_adv}>
-        
-        PRIVATE 
+        SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
+
+        PRIVATE
         ${DOODLE_MAR}
 
         )
@@ -85,6 +70,8 @@ target_compile_definitions(DoodleLib
         PUBLIC
         _WIN32_WINNT=0x0A00
         WIN32_LEAN_AND_MEAN
+        PRIVATE
+        _CRT_SECURE_NO_WARNINGS
 #        $<$<CONFIG:Debug>:_CRTDBG_MAP_ALLOC>
         )
 

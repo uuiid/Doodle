@@ -31,12 +31,12 @@
 #include <DoodleLib/ScreenshotWidght/ScreenshotAction.h>
 #include <DoodleLib/ScreenshotWidght/ScreenshotWidght.h>
 #include <DoodleLib/SettingWidght/settingWidget.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/CoreSql.h>
 #include <DoodleLib/core/MetadataSet.h>
 #include <DoodleLib/core/Name.h>
 #include <DoodleLib/core/ToolsSetting.h>
 #include <DoodleLib/core/Ue4Setting.h>
-#include <DoodleLib/core/coreset.h>
-#include <DoodleLib/core/coresql.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>

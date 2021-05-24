@@ -5,7 +5,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/Metadata.h>
-#include <DoodleLib/core/coreset.h>
+#include <DoodleLib/core/CoreSet.h>
 
 #include <cereal/types/chrono.hpp>
 

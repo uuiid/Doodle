@@ -1,6 +1,8 @@
 #include <Logger/Logger.h>
 #include <Logger/LoggerTemplate.h>
 #include <DoodleLib/DoodleLib_fwd.h>
+
+#include <boost/log/sinks.hpp>
 //windows头
 #include <windows.h>
 #include <Shlobj.h>

@@ -1,10 +1,9 @@
-#include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/core/CoreSet.h>
 
-#include <DoodleLib/core/coreset.h>
-
-#include <opencv2/opencv.hpp>
 #include <boost/format.hpp>
+#include <opencv2/opencv.hpp>
 
 namespace doodle {
 VideoSequence::VideoSequence(decltype(p_paths) paths)

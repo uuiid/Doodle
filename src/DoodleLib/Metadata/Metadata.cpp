@@ -2,11 +2,11 @@
 // Created by teXiao on 2021/4/27.
 //
 
-#include <DoodleLib/Metadata/Metadata.h>
-#include <core/coreset.h>
-#include <Exception/Exception.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <Exception/Exception.h>
+#include <core/CoreSet.h>
 
 namespace doodle {
 Metadata::Metadata()

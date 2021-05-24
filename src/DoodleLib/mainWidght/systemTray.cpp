@@ -1,26 +1,22 @@
 //
 // Created by teXiao on 2020/10/19.
 //
-#include <DoodleLib/mainWidght/systemTray.h>
-
-#include <DoodleLib/Logger/Logger.h>
-#include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/core/coreset.h>
-
-#include <DoodleLib/FileWarp/MayaFile.h>
-#include <DoodleLib/FileWarp/ImageSequence.h>
-#include <DoodleLib/FileWarp/VideoSequence.h>
-#include <DoodleLib/FileWarp/Ue4Project.h>
-
-#include <DoodleLib/FileSys/FileSystem.h>
-
-#include <DoodleLib/Metadata/Project.h>
-#include <DoodleLib/Metadata/Episodes.h>
-#include <DoodleLib/Metadata/Shot.h>
-#include <boost/format.hpp>
-
 #include <DoodleApp.h>
+#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/FileSys/FileSystem.h>
+#include <DoodleLib/FileWarp/ImageSequence.h>
+#include <DoodleLib/FileWarp/MayaFile.h>
+#include <DoodleLib/FileWarp/Ue4Project.h>
+#include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/mainWidght/systemTray.h>
 #include <toolkit/toolkit.h>
+
+#include <boost/format.hpp>
 
 DOODLE_NAMESPACE_S
 
@@ -41,25 +37,25 @@ systemTray::systemTray(wxTaskBarIconType iconType)
 wxMenu* systemTray::CreatePopupMenu() {
   auto menu = new wxMenu{};
 
-  menu->Append(p_Meta_id, _(ConvStr<wxString>("主窗口")));
-  menu->Append(p_tool_id, _(ConvStr<wxString>("工具箱")), _(ConvStr<wxString>("打开工具箱")));
-  menu->Append(p_setting_id, _(ConvStr<wxString>("打开设置")));
+  menu->Append(p_Meta_id, ConvStr<wxString>("主窗口"));
+  menu->Append(p_tool_id, ConvStr<wxString>("工具箱"), ConvStr<wxString>("打开工具箱"));
+  menu->Append(p_setting_id, ConvStr<wxString>("打开设置"));
   menu->AppendSeparator();
 
   auto menu_install = new wxMenu{};
-  menu->AppendSubMenu(menu_install, _(ConvStr<wxString>("插件安装")));
-  menu_install->Append(p_installMayaPlug_id, _(ConvStr<wxString>("安装maya插件")));
-  menu_install->Append(p_installUEPlug_id, _(ConvStr<wxString>("安装ue插件")));
-  menu_install->Append(p_installUEProjectPlug_id, _(ConvStr<wxString>("安装ue项目插件")));
+  menu->AppendSubMenu(menu_install, ConvStr<wxString>("插件安装"));
+  menu_install->Append(p_installMayaPlug_id, ConvStr<wxString>("安装maya插件"));
+  menu_install->Append(p_installUEPlug_id, ConvStr<wxString>("安装ue插件"));
+  menu_install->Append(p_installUEProjectPlug_id, ConvStr<wxString>("安装ue项目插件"));
 
   menu->AppendSeparator();
-  menu->Append(p_deleteUECache_id, _(ConvStr<wxString>("删除ue4缓存")));
-  menu->Append(p_modifyUECache_id, _(ConvStr<wxString>("修改ue4缓存位置")));
+  menu->Append(p_deleteUECache_id, ConvStr<wxString>("删除ue4缓存"));
+  menu->Append(p_modifyUECache_id, ConvStr<wxString>("修改ue4缓存位置"));
 
   menu->AppendSeparator();
-  menu->Append(p_updata_id, _(ConvStr<wxString>("更新")));
+  menu->Append(p_updata_id, ConvStr<wxString>("更新"));
 
-  menu->Append(p_quit_id, _(ConvStr<wxString>("退出")));
+  menu->Append(p_quit_id, ConvStr<wxString>("退出"));
 
   //打开元数据窗口
   menu->Bind(

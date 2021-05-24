@@ -1,12 +1,11 @@
-#include <DoodleLib/FileWarp/ImageSequence.h>
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/core/coreset.h>
+#include <DoodleLib/FileWarp/ImageSequence.h>
+#include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
-
-#include <opencv2/opencv.hpp>
 #include <PinYin/convert.h>
 
 #include <boost/format.hpp>
+#include <opencv2/opencv.hpp>
 namespace doodle {
 std::string ImageSequence::clearString(const std::string &str) {
   auto &con = convert::Get();

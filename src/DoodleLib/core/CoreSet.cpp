@@ -1,18 +1,16 @@
-#include <DoodleLib/core/coreset.h>
-#include <Exception/Exception.h>
-#include <PinYin/convert.h>
-
-#include <nlohmann/json.hpp>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/regex.hpp>
-#include <boost/process.hpp>
-#include <boost/dll.hpp>
-
-#include <magic_enum.hpp>
+#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/PinYin/convert.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/CoreSql.h>
 #include <ShlObj.h>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/dll.hpp>
+#include <boost/process.hpp>
+#include <boost/regex.hpp>
 #include <cereal/archives/portable_binary.hpp>
+#include <magic_enum.hpp>
+#include <nlohmann/json.hpp>
 
 DOODLE_NAMESPACE_S
 
@@ -22,9 +20,8 @@ coreSet &coreSet::getSet() {
 }
 
 void coreSet::init() {
-  //这里我们手动做一些工作
-  //获取环境变量
-
+  ///这里我们手动做一些工作
+  ///获取环境变量 FOLDERID_Documents
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
   if (!pManager) throw DoodleError("无法找到保存路径");
@@ -42,6 +39,9 @@ void coreSet::init() {
   if (!FSys::exists(getCacheRoot())) {
     FSys::create_directories(getCacheRoot());
   }
+
+  ///触发一次 CoreSql 初始化
+  CoreSql::Get();
 }
 
 void coreSet::reInit() {

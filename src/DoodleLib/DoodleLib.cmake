@@ -3,8 +3,8 @@
         DoodleApp.h
         DoodleLib.h
         DoodleLib_fwd.h
-        core/coreset.h
-        core/coresql.h
+        core/CoreSet.h
+        core/CoreSql.h
         core/MetadataSet.h
         core/Name.h
         core/ToolsSetting.h
@@ -50,8 +50,8 @@ set(
         DOODLELIB_SOURCE
         DoodleApp.cpp
         DoodleLib.cpp
-        core/coreset.cpp
-        core/coresql.cpp
+        core/CoreSet.cpp
+        core/CoreSql.cpp
         core/MetadataSet.cpp
         core/Name.cpp
         core/Ue4Setting.cpp

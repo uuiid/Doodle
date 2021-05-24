@@ -1,13 +1,11 @@
-#include <DoodleLib/FileWarp/MayaFile.h>
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/core/coreset.h>
+#include <DoodleLib/FileWarp/MayaFile.h>
+#include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
-
-#include <boost/process.hpp>
+#include <Logger/Logger.h>
 
 #include <boost/format.hpp>
-
-#include <Logger/Logger.h>
+#include <boost/process.hpp>
 
 DOODLE_NAMESPACE_S
 MayaFile::MayaFile(FSys::path mayaPath)
