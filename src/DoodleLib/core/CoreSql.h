@@ -1,7 +1,7 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-
+#include <sqlpp11/mysql/mysql.h>
 DOODLE_NAMESPACE_S
 
 class DOODLELIB_API CoreSql {

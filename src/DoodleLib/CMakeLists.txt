@@ -12,15 +12,19 @@ cmrc_add_resource_library(
 )
 
 include(DoodleLib.cmake)
+SET(ENV{VIRTUAL_ENV} "${PROJECT_SOURCE_DIR}/venv")
 #add_custom_command(
-#        OUTPUT DOODLE_SQL_HEADER
-#        COMMAND
+#        OUTPUT core/MetadataTabSql.h
+##        COMMAND venv/Scripts/Activate.bat
+#        COMMAND py $<TARGET_FILE:sqlpp11::ddl2cpp>  core/000-metadata.sql core/MetadataTabSql.h
 #)
+
 add_library(DoodleLib
         SHARED
         winDoodleLib.rc
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
+        core/MetadataTabSql.h
         DoodleLib.manifest
         )
 set_target_properties(DoodleLib
@@ -29,18 +33,17 @@ set_target_properties(DoodleLib
 #设置导出符号
 include(GenerateExportHeader)
 set(MY_CUSTOM_CONTENT "")
-
-
 generate_export_header(DoodleLib
         EXPORT_MACRO_NAME DOODLELIB_API
         CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
+
 #预编译头文件
 target_precompile_headers(DoodleLib
         PUBLIC
         <DoodleLib/DoodleLib_fwd.h>
         )
-get_target_property(DOODLE_PCH_S DoodleLib PRECOMPILE_HEADERS )
-message(${DOODLE_PCH_S})
+#get_target_property(DOODLE_PCH_S DoodleLib PRECOMPILE_HEADERS )
+#message(${DOODLE_PCH_S})
 
 target_link_libraries(DoodleLib PUBLIC
 #        SqlppSqlite

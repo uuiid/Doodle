@@ -1,4 +1,4 @@
-create table if not exists metadata
+create table if not exists metadataTab
 (
 	id bigint unsigned not null
 		primary key,
@@ -8,8 +8,8 @@ create table if not exists metadata
 );
 
 create index Metadata_id_index
-	on metadata (id);
+	on metadatatab (id);
 
 create index Metadata_parent_index
-	on metadata (parent);
+	on metadatatab (parent);
 

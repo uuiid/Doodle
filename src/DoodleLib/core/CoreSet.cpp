@@ -40,8 +40,9 @@ void coreSet::init() {
     FSys::create_directories(getCacheRoot());
   }
 
-  ///触发一次 CoreSql 初始化
-  CoreSql::Get();
+  ///触发一次 CoreSql 初始化并测试数据库连接
+  auto &k_sql = CoreSql::Get();
+  auto test_sql = k_sql.getConnection();
 }
 
 void coreSet::reInit() {

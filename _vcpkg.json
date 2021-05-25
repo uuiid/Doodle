@@ -15,7 +15,13 @@
     "magic-enum",
     "nlohmann-json",
     "sqlpp11",
-    "sqlpp11-connector-sqlite3",
+    {
+      "name": "sqlpp11-connector-mysql",
+      "default-features":false,
+      "features": [
+        "mysql"
+      ]
+    },
     "date",
     "cereal",
     {
