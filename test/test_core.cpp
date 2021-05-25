@@ -16,7 +16,7 @@ class CoreTest : public ::testing::Test {
   void SetUp() override;
   void TearDown() override;
 
-  doodle::coreSet& set = doodle::coreSet::getSet();
+  doodle::CoreSet& set = doodle::CoreSet::getSet();
 
   doodle::FSys::path p_maya_path;
   doodle::FSys::path p_image_path;
@@ -102,8 +102,8 @@ TEST_F(CoreTest, load_save_meatdata) {
 
     ptj->save(k_f);
     ASSERT_TRUE(ptj->getMetadataFactory() == k_f);
-    coreSet::getSet().GetMetadataSet().installProject(ptj);
-    coreSet::getSet().GetMetadataSet().setProject_(ptj);
+    CoreSet::getSet().GetMetadataSet().installProject(ptj);
+    CoreSet::getSet().GetMetadataSet().setProject_(ptj);
 
     for (auto i = 2; i < 600; ++i) {
       auto eps = std::make_shared<Episodes>(ptj, i);

@@ -14,12 +14,12 @@
 
 DOODLE_NAMESPACE_S
 
-coreSet &coreSet::getSet() {
-  static coreSet install;
+CoreSet &CoreSet::getSet() {
+  static CoreSet install;
   return install;
 }
 
-void coreSet::init() {
+void CoreSet::init() {
   ///这里我们手动做一些工作
   ///获取环境变量 FOLDERID_Documents
   PWSTR pManager;
@@ -45,10 +45,10 @@ void coreSet::init() {
   auto test_sql = k_sql.getConnection();
 }
 
-void coreSet::reInit() {
+void CoreSet::reInit() {
 }
 
-void coreSet::findMaya() {
+void CoreSet::findMaya() {
   if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
     p_mayaPath = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
   } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
@@ -58,19 +58,19 @@ void coreSet::findMaya() {
   }
 }
 
-bool coreSet::hasMaya() const noexcept {
+bool CoreSet::hasMaya() const noexcept {
   return !p_mayaPath.empty();
 }
 
-const FSys::path &coreSet::MayaPath() const noexcept {
+const FSys::path &CoreSet::MayaPath() const noexcept {
   return p_mayaPath;
 }
 
-void coreSet::setMayaPath(const FSys::path &in_MayaPath) noexcept {
+void CoreSet::setMayaPath(const FSys::path &in_MayaPath) noexcept {
   p_mayaPath = in_MayaPath;
 }
 
-void coreSet::writeDoodleLocalSet() {
+void CoreSet::writeDoodleLocalSet() {
   ue4_setting.testValue();
   if (ue4_setting.hasPath() && !FSys::exists(ue4_setting.Path() / DOODLE_UE_PATH)) {
     ue4_setting.setPath({});
@@ -85,7 +85,7 @@ void coreSet::writeDoodleLocalSet() {
   out(*this);
 }
 
-void coreSet::getSetting() {
+void CoreSet::getSetting() {
   static FSys::path k_settingFileName = doc / configFileName();
   if (FSys::exists(k_settingFileName)) {
     FSys::path strFile(k_settingFileName);
@@ -95,7 +95,7 @@ void coreSet::getSetting() {
     incereal(*this);
   }
 }
-coreSet::coreSet()
+CoreSet::CoreSet()
     : user("user"),
       department(Department::VFX),
       cacheRoot("C:/Doodle_cache"),
@@ -108,7 +108,7 @@ coreSet::coreSet()
       p_mayaPath() {
 }
 
-FSys::path coreSet::toIpPath(const FSys::path &path) {
+FSys::path CoreSet::toIpPath(const FSys::path &path) {
   std::wstring str{};
   str.resize(MAX_PATH);
   DWORD dwResult, cchBuff = str.size();
@@ -128,47 +128,47 @@ FSys::path coreSet::toIpPath(const FSys::path &path) {
   return {str};
 }
 
-boost::uuids::uuid coreSet::getUUID() {
+boost::uuids::uuid CoreSet::getUUID() {
   return p_uuid_gen();
 }
 
-std::string coreSet::getDepartment() const {
+std::string CoreSet::getDepartment() const {
   return std::string{magic_enum::enum_name(department)};
 }
 
-const Department &coreSet::getDepartmentEnum() const {
+const Department &CoreSet::getDepartmentEnum() const {
   return department;
 }
 
-void coreSet::setDepartment(const std::string &value) {
+void CoreSet::setDepartment(const std::string &value) {
   department = magic_enum::enum_cast<Department>(value).value_or(Department::VFX);
 }
 
-std::string coreSet::getUser() const { return user; }
+std::string CoreSet::getUser() const { return user; }
 
-std::string coreSet::getUser_en() const {
+std::string CoreSet::getUser_en() const {
   return boost::algorithm::to_lower_copy(
       convert::Get().toEn(user));
 }
 
-void coreSet::setUser(const std::string &value) {
+void CoreSet::setUser(const std::string &value) {
   user = value;
 }
 
-FSys::path coreSet::getDoc() const { return doc; }
+FSys::path CoreSet::getDoc() const { return doc; }
 
-FSys::path coreSet::getCacheRoot() const {
+FSys::path CoreSet::getCacheRoot() const {
   return cacheRoot;
 }
 
-FSys::path coreSet::getCacheRoot(const FSys::path &in_path) const {
+FSys::path CoreSet::getCacheRoot(const FSys::path &in_path) const {
   auto path = cacheRoot / in_path;
   if (!FSys::exists(path))
     FSys::create_directories(path);
   return path;
 }
 
-void coreSet::getCacheDiskPath() {
+void CoreSet::getCacheDiskPath() {
   const static std::vector<std::string> dirs{"D:/",
                                              "E:/",
                                              "F:/",
@@ -189,20 +189,20 @@ void coreSet::getCacheDiskPath() {
   }
 }
 
-FSys::path coreSet::program_location() {
+FSys::path CoreSet::program_location() {
   return {boost::dll::program_location().parent_path().generic_string()};
 }
-FSys::path coreSet::program_location(const FSys::path &path) {
+FSys::path CoreSet::program_location(const FSys::path &path) {
   return program_location() / path;
 }
-std::string coreSet::configFileName() {
+std::string CoreSet::configFileName() {
   static std::string str{"doodle_config.bin"};
   return str;
 }
-std::string coreSet::getUUIDStr() {
+std::string CoreSet::getUUIDStr() {
   return boost::uuids::to_string(getUUID());
 }
-void coreSet::hideFolder(const FSys::path &path) {
+void CoreSet::hideFolder(const FSys::path &path) {
   auto attr = GetFileAttributes(path.generic_wstring().c_str());
   if ((attr & FILE_ATTRIBUTE_HIDDEN) == 0) {
     SetFileAttributes(path.generic_wstring().c_str(), attr | FILE_ATTRIBUTE_HIDDEN);

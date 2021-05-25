@@ -78,7 +78,7 @@ wxMenu* systemTray::CreatePopupMenu() {
   //安装ue插件到总体
   menu_install->Bind(
       wxEVT_MENU, [](wxCommandEvent& event) {
-        auto& k_ue_4_setting = coreSet::getSet().gettUe4Setting();
+        auto& k_ue_4_setting = CoreSet::getSet().gettUe4Setting();
         if (k_ue_4_setting.hasPath())
           toolkit::installUePath(k_ue_4_setting.Path() / "Engine");
         else

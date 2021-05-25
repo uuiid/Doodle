@@ -27,7 +27,7 @@ FSys::path MklinkWidget::getFilePath(wxWindow* parent) {
 }
 
 bool MklinkWidget::CreateLink() {
-  // auto k_r = coreSet::toIpPath(k_s.root_name()) / k_s.relative_path();
+  // auto k_r = CoreSet::toIpPath(k_s.root_name()) / k_s.relative_path();
   //生成命令
   std::wstring com{L"-fun -mklink="};
   boost::wformat substr{LR"(%s;%s;)"};
@@ -46,7 +46,7 @@ bool MklinkWidget::CreateLink() {
     substr.clear();
   }
   com.pop_back();
-  auto path = coreSet::program_location() / "doodleExe.exe";
+  auto path = CoreSet::program_location() / "doodleExe.exe";
   // str % k_tmp_path.generic_wstring() % file_path.generic_wstring() % k_export_path.generic_wstring();
   // str % p_path.generic_wstring();
   // boost::format str{R"(%1% --path %2% --exportpath %3%)"};

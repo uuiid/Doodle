@@ -20,7 +20,7 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
   Logger::doodle_initLog();
 
   //初始化设置
-  auto &set = doodle::coreSet::getSet();
+  auto &set = doodle::CoreSet::getSet();
   set.init();
   auto result = wxEntry(hInstance, hPrevInstance, nullptr, nCmdShow);
   boost::log::core::get()->remove_all_sinks();
@@ -28,11 +28,11 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
   return result;
 } catch (const std::exception &err) {
   DOODLE_LOG_ERROR(err.what());
-  doodle::coreSet::getSet().writeDoodleLocalSet();
+  doodle::CoreSet::getSet().writeDoodleLocalSet();
   boost::log::core::get()->remove_all_sinks();
   return 1;
 } catch (...) {
-  doodle::coreSet::getSet().writeDoodleLocalSet();
+  doodle::CoreSet::getSet().writeDoodleLocalSet();
   boost::log::core::get()->remove_all_sinks();
   return 1;
 }

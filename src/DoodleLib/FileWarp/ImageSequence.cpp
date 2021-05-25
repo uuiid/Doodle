@@ -140,7 +140,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
   auto k_size_len = boost::numeric_cast<float>(p_paths.size());
   auto k_i = float{0};
   auto k_format = boost::format{"%s %s :%s"};
-  k_format % p_Text % coreSet::getSet().getUser_en() % getEpisodesAndShot_str();
+  k_format % p_Text % CoreSet::getSet().getUser_en() % getEpisodesAndShot_str();
   auto k_Text = k_format.str();
 
   //排序图片
@@ -218,7 +218,7 @@ ImageSequenceBatch::ImageSequenceBatch(decltype(p_imageSequences) imageSequences
 
 void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
   if (p_imageSequences.empty()) return;
-  auto &set = coreSet::getSet();
+  auto &set = CoreSet::getSet();
   //这里使用序列图的父路径加uuid防止重复
   auto k_path = p_imageSequences[0]->getDir().parent_path() /
                 boost::uuids::to_string(set.getUUID());
@@ -255,7 +255,7 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
                          auto path = k_path / str;
                          if (FSys::exists(path) || str == "ep0000_sc0000") {
                            path.remove_filename();
-                           path /= boost::uuids::to_string(coreSet::getSet().getUUID()).append(".mp4");
+                           path /= boost::uuids::to_string(CoreSet::getSet().getUUID()).append(".mp4");
                          }
                          im->createVideoFile(path);
                        }));

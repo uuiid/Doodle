@@ -22,10 +22,10 @@ void toolkit::openPath(const FSys::path &path) {
 }
 
 void toolkit::installMayaPath() {
-  auto mayadoc = coreSet::getSet().getDoc().parent_path();
+  auto mayadoc = CoreSet::getSet().getDoc().parent_path();
   mayadoc /= "maya/modules";
 
-  auto sourePath = coreSet::program_location().parent_path();
+  auto sourePath = CoreSet::program_location().parent_path();
   sourePath /= "plug/maya";
 
   if (!FSys::exists(mayadoc)) {
@@ -36,7 +36,7 @@ void toolkit::installMayaPath() {
 }
 
 void toolkit::installUePath(const FSys::path &path) {
-  auto &set      = coreSet::getSet();
+  auto &set      = CoreSet::getSet();
   auto sourePath = set.program_location().parent_path() /
                    "plug/uePlug/" /
                    set.gettUe4Setting().Version() /
@@ -58,7 +58,7 @@ bool toolkit::update() {
 }
 
 void toolkit::modifyUeCachePath() {
-  auto ue_path = coreSet::getSet().gettUe4Setting().Path() / "Engine/Config/BaseEngine.ini";
+  auto ue_path = CoreSet::getSet().gettUe4Setting().Path() / "Engine/Config/BaseEngine.ini";
   //做备份
   FSys::copy(ue_path, FSys::path{ue_path}.replace_extension(".ini.backup"), FSys::copy_options::update_existing);
   FSys::fstream file{ue_path, std::ios::in | std::ios::out | std::ios::binary};

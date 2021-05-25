@@ -34,11 +34,11 @@ enum class Department {
  *全局静态设置类
  */
 
-class DOODLELIB_API coreSet {
+class DOODLELIB_API CoreSet {
  public:
-  static coreSet &getSet();
+  static CoreSet &getSet();
 
-  DOODLE_DISABLE_COPY(coreSet)
+  DOODLE_DISABLE_COPY(CoreSet)
   //初始化函数
   void init();
   void reInit();
@@ -83,7 +83,7 @@ class DOODLELIB_API coreSet {
 
  private:
   //私有化构造函数
-  coreSet();
+  CoreSet();
   //获得缓存磁盘路径
   void getCacheDiskPath();
   //获得本地的有限设置
@@ -116,7 +116,7 @@ class DOODLELIB_API coreSet {
 };
 
 template <class Archive>
-void coreSet::serialize(Archive &ar, std::uint32_t const version) {
+void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
   if (version == 4)
     ar(
         cereal::make_nvp("user", user),
@@ -137,4 +137,4 @@ void load_minimal(Archive const &, doodle::Department &department, std::string c
   department = magic_enum::enum_cast<doodle::Department>(value).value_or(doodle::Department::VFX);
 };
 }  // namespace cereal
-CEREAL_CLASS_VERSION(doodle::coreSet, 4);
+CEREAL_CLASS_VERSION(doodle::CoreSet, 4);

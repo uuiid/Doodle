@@ -11,8 +11,8 @@ DOODLE_NAMESPACE_S
 MayaFile::MayaFile(FSys::path mayaPath)
     : LongTerm(),
       p_path(std::move(mayaPath)) {
-  if (!FSys::exists(p_path) && coreSet::getSet().hasMaya())
-    p_path = coreSet::getSet().MayaPath();
+  if (!FSys::exists(p_path) && CoreSet::getSet().hasMaya())
+    p_path = CoreSet::getSet().MayaPath();
   else
     throw DoodleError{"无法找到maya启动器"};
 }
@@ -20,8 +20,8 @@ MayaFile::MayaFile(FSys::path mayaPath)
 FSys::path MayaFile::createTmpFile() const {
   //开始写入临时文件
 
-  const static auto tmp_path = coreSet::getSet().getCacheRoot("maya");
-  auto k_tmp_path            = tmp_path / (boost::uuids::to_string(coreSet::getSet().getUUID()) + ".py");
+  const static auto tmp_path = CoreSet::getSet().getCacheRoot("maya");
+  auto k_tmp_path            = tmp_path / (boost::uuids::to_string(CoreSet::getSet().getUUID()) + ".py");
   auto k_file_py             = cmrc::DoodleLibResource::get_filesystem().open("resource/mayaExport.py");
 
   {  //写入文件后直接关闭

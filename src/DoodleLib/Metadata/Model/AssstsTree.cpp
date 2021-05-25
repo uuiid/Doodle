@@ -70,7 +70,7 @@ unsigned int AssstsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
   if (!item.IsOk()) {
     //这里是空指针的情况， 即没有父级， 我们要使用根来确认
     for (const auto& k_t : p_Root) {
-      if (k_t == coreSet::getSet().GetMetadataSet().Project_()) {
+      if (k_t == CoreSet::getSet().GetMetadataSet().Project_()) {
         k_t->load(p_metadata_flctory_ptr_);
         connectSig(k_t);
       }

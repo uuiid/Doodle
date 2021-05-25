@@ -31,7 +31,7 @@ Doodle::Doodle()
 int Doodle::OnExit() {
   p_mainWindwos->Destroy();
   p_systemTray->Destroy();
-  coreSet::getSet().GetMetadataSet().clear();
+  CoreSet::getSet().GetMetadataSet().clear();
   return wxApp::OnExit();
 }
 

@@ -19,7 +19,7 @@ VideoSequence::VideoSequence(decltype(p_paths) paths)
 void VideoSequence::connectVideo(const FSys::path& out_path) {
   //验证输出路径
   auto k_out_path = p_paths[0].parent_path() /
-                    boost::uuids::to_string(coreSet::getSet().getUUID()).append(".mp4");
+                    boost::uuids::to_string(CoreSet::getSet().getUUID()).append(".mp4");
 
   if (!out_path.empty())
     k_out_path = out_path;

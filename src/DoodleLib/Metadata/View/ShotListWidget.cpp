@@ -183,7 +183,7 @@ std::tuple<EpisodesPtr, std::vector<ShotPtr>> ShotListDialog::getShotList() {
 
   shotDig.p_episodes = std::make_shared<Episodes>();
   shotDig.p_episodes->setEpisodes(1);
-  auto &set        = coreSet::getSet();
+  auto &set        = CoreSet::getSet();
   const auto k_len = set.gettUe4Setting().ShotEnd();
   for (auto i = set.gettUe4Setting().ShotStart(); i < k_len; ++i) {
     shotDig.p_shots.emplace_back(std::make_shared<Shot>(shotDig.p_episodes, i, std::string{}));

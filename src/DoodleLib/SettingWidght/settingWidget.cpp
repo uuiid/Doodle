@@ -22,7 +22,7 @@ DOODLE_NAMESPACE_S
 // static SettingWidget *doodle_SettingWidget = nullptr;
 
 void SettingWidght::InitSetting() {
-  auto& set = coreSet::getSet();
+  auto& set = CoreSet::getSet();
   p_dep->SetSelection(magic_enum::enum_integer<Department>(set.getDepartmentEnum()));
   auto wxstr = ConvStr<wxString>(set.getUser());
   p_user->SetValue(wxstr);
@@ -69,7 +69,7 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
       p_ue_version(),
       p_ue_shot_start(),
       p_ue_shot_end() {
-  auto& set = coreSet::getSet();
+  auto& set = CoreSet::getSet();
   //创建布局
   auto layout = new wxFlexGridSizer{3};
   layout->AddGrowableCol(1);

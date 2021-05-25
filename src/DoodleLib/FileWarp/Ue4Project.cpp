@@ -46,8 +46,8 @@ void Ue4Project::addUe4ProjectPlugins(const std::vector<std::string>& strs) cons
 }
 
 void Ue4Project::runPythonScript(const std::string& python_str) const {
-  auto tmp_name = boost::uuids::to_string(coreSet::getSet().getUUID()) + ".py";
-  auto tmp_file = coreSet::getSet().getCacheRoot() / tmp_name;
+  auto tmp_name = boost::uuids::to_string(CoreSet::getSet().getUUID()) + ".py";
+  auto tmp_file = CoreSet::getSet().getCacheRoot() / tmp_name;
 
   {  //写入文件
     FSys::ofstream k_ofile{tmp_file};
@@ -86,7 +86,7 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
     FSys::create_directories(k_createDir);
   }
 
-  auto& set = coreSet::getSet();
+  auto& set = CoreSet::getSet();
   //创建集数文件夹
   auto k_episodes_path = k_createDir / inShotList[0]->getEpisodesPtr()->str();
   if (!FSys::exists(k_episodes_path))
@@ -100,7 +100,7 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
       FSys::create_directories(p_episodes_vfx_name);
   }
 
-  auto k_tmp_file_path = coreSet::getSet().getCacheRoot("ue4_lev") / boost::uuids::to_string(coreSet::getSet().getUUID()).append(".py");
+  auto k_tmp_file_path = CoreSet::getSet().getCacheRoot("ue4_lev") / boost::uuids::to_string(CoreSet::getSet().getUUID()).append(".py");
 
   {  //写入临时文件
     auto tmp_f = cmrc::DoodleLibResource::get_filesystem().open("resource/Ue4CraeteLevel.py");
