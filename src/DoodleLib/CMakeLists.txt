@@ -20,7 +20,7 @@ add_custom_command(
              ${CMAKE_CURRENT_LIST_DIR}/core/000-metadatatab.sql
              ${CMAKE_CURRENT_LIST_DIR}/core/MetadataTabSql
              doodle
-
+        MAIN_DEPENDENCY core/000-metadatatab.sql
 )
 add_custom_command(
         OUTPUT
@@ -36,6 +36,7 @@ add_custom_command(
         --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
         MetadataServer.proto
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        MAIN_DEPENDENCY rpc/MetadataServer.proto
 )
 add_library(DoodleLib
         SHARED
