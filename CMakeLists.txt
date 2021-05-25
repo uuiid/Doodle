@@ -53,7 +53,7 @@ find_package(EnTT CONFIG REQUIRED)
 find_package(Sqlpp11 REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 find_package(FFMPEG REQUIRED)
-find_package(rttr CONFIG REQUIRED)
+#find_package(rttr CONFIG REQUIRED)
 find_library(DOODLE_MAR mpr.lib REQUIRED)
 # find_package(pugixml CONFIG REQUIRED)
 
@@ -74,10 +74,10 @@ find_package(date CONFIG REQUIRED)
 find_package(cereal CONFIG REQUIRED)
 #服务器库
 #应该会用其中一个
-# find_package(cppzmq CONFIG REQUIRED)
+#find_package(cppzmq CONFIG REQUIRED)
 
-# find_package(cppnetlib CONFIG REQUIRED)
-# find_package(civetweb CONFIG REQUIRED)
+#find_package(cppnetlib CONFIG REQUIRED)
+#find_package(civetweb CONFIG REQUIRED)
 
 #google序列化库
 # find_package(protobuf CONFIG REQUIRED)
@@ -86,7 +86,13 @@ find_package(cereal CONFIG REQUIRED)
 # protobuf::libprotobuf
 # protobuf::libprotobuf-lite)
 #Google rpc库
-# find_package(gRPC CONFIG REQUIRED)
+#find_package(gRPC CONFIG REQUIRED)
+## Note: 8 target(s) were omitted.
+#target_link_libraries(main PRIVATE gRPC::gpr gRPC::upb gRPC::grpc gRPC::grpc++)
+#
+#find_package(modules CONFIG REQUIRED)
+#target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
+find_package(gRPC CONFIG REQUIRED)
 #target_link_libraries(main PRIVATE gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts)
 #target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
 

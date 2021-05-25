@@ -1,0 +1,23 @@
+﻿syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+package doodle;
+message DataDb{
+  uint64 id = 1;
+  string uuidPath = 2;
+  uint64 parent = 3;
+  google.protobuf.Timestamp update_time = 4;
+  google.protobuf.Any Metadata_cereal = 5;
+}
+
+message DataVector{
+  repeated DataDb data = 1;
+}
+
+service MetadataServer{
+  rpc GetProject(google.protobuf.Empty) returns (DataVector){};
+  rpc GetChild(DataDb) returns (DataVector){};
+}

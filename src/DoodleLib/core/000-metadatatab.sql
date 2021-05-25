@@ -3,7 +3,7 @@ create table if not exists metadataTab
 	id bigint unsigned not null
 		primary key,
 	parent bigint unsigned null,
-	path text null,
+	uuidPath text null,
 	update_time datetime default CURRENT_TIMESTAMP not null
 );
 

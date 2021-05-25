@@ -45,6 +45,8 @@
         Metadata/TimeDuration.h
         Metadata/Comment.h
         Metadata/AssetsPath.h
+        rpc/RpcClient.h
+        rpc/RpcServer.h
 )
 set(
         DOODLELIB_SOURCE
@@ -85,5 +87,9 @@ set(
         Metadata/TimeDuration.cpp
         Metadata/Comment.cpp
         Metadata/AssetsPath.cpp
+        rpc/RpcClient.cpp
+
+        rpc/RpcServer.cpp
+
 
 )

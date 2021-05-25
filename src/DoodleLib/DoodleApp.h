@@ -36,4 +36,5 @@ class DOODLELIB_API Doodle : public wxApp {
   MetadataWidget* p_metadata_widget;
   std::function<void()> p_run_fun;
 };
+
 }  // namespace doodle

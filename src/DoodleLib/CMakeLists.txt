@@ -12,19 +12,41 @@ cmrc_add_resource_library(
 )
 
 include(DoodleLib.cmake)
-SET(ENV{VIRTUAL_ENV} "${PROJECT_SOURCE_DIR}/venv")
-#add_custom_command(
-#        OUTPUT core/MetadataTabSql.h
-##        COMMAND venv/Scripts/Activate.bat
-#        COMMAND py $<TARGET_FILE:sqlpp11::ddl2cpp>  core/000-metadata.sql core/MetadataTabSql.h
-#)
+add_custom_command(
+        OUTPUT core/MetadataTabSql.h
+        COMMAND ${PROJECT_SOURCE_DIR}/venv/Scripts/Activate.bat
+        COMMAND py
+        ARGS $<TARGET_FILE:sqlpp11::ddl2cpp>
+             ${CMAKE_CURRENT_LIST_DIR}/core/000-metadatatab.sql
+             ${CMAKE_CURRENT_LIST_DIR}/core/MetadataTabSql
+             doodle
 
+)
+add_custom_command(
+        OUTPUT
+            ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.pb.h
+            ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.pb.cc
+            ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.h
+            ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.cc
+        COMMAND protobuf::protoc
+        ARGS --proto_path=${Z_VCPKG_ROOT_DIR}/installed/${VCPKG_TARGET_TRIPLET}/include
+        --proto_path=${CMAKE_CURRENT_LIST_DIR}/rpc
+        --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+        --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
+        --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
+        MetadataServer.proto
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+)
 add_library(DoodleLib
         SHARED
         winDoodleLib.rc
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
         core/MetadataTabSql.h
+        ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.pb.h
+        ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.pb.cc
+        ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.h
+        ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.cc
         DoodleLib.manifest
         )
 set_target_properties(DoodleLib
@@ -62,7 +84,9 @@ target_link_libraries(DoodleLib PUBLIC
         $<IF:$<CONFIG:Debug>,${WX_cored},${WX_core}>
         $<IF:$<CONFIG:Debug>,${WX_advd},${WX_adv}>
         SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
-
+#        cppzmq
+#        cppzmq-static
+        gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts
         PRIVATE
         ${DOODLE_MAR}
 
