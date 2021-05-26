@@ -142,7 +142,7 @@ TEST_F(CoreTest, load_save_meatdata) {
     k_ass->save(k_f);
     ASSERT_TRUE(k_ass->getMetadataFactory() == k_f);
     ASSERT_TRUE(k_ass->getParent() == ptj);
-    k_test_root = k_ass->getRoot();
+    k_test_root = k_ass->getUUID();
 
     auto k_ass_file = std::make_shared<AssetsFile>(k_ass,
                                                    "D:/ex1.ma",
@@ -174,7 +174,7 @@ TEST_F(CoreTest, load_save_meatdata) {
     auto& k_c  = ptj->getChildItems();
     auto it_tc = std::find_if(k_c.begin(), k_c.end(),
                               [&k_test_root](const MetadataPtr& ptr) {
-                                return ptr->getRoot() == k_test_root;
+                                return ptr->getUUID() == k_test_root;
                               });
     ASSERT_TRUE(it_tc != k_c.end());
     auto it_tp = std::find_if(k_c.begin(), k_c.end(),
@@ -221,7 +221,7 @@ TEST_F(CoreTest, load_save_meatdata) {
     auto& k_c1 = (*it_tp)->getChildItems();
     auto it_tc = std::find_if(k_c1.begin(), k_c1.end(),
                               [&k_test_root](const MetadataPtr& ptr) {
-                                return ptr->getRoot() == k_test_root;
+                                return ptr->getUUID() == k_test_root;
                               });
     ASSERT_TRUE(it_tc != k_c1.end());
     ASSERT_TRUE((*it_tc)->getParent() != ptj);

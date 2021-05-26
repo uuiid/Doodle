@@ -36,6 +36,7 @@ set(
 	core/Name.h
 	core/ToolsSetting.h
 	core/Ue4Setting.h
+	core/Util.h
 	libWarp/BoostUuidWarp.h
 	libWarp/WinReg.hpp
 	mainWidght/MklinkWidget.h
@@ -81,6 +82,7 @@ set(
 	core/MetadataSet.cpp
 	core/Name.cpp
 	core/Ue4Setting.cpp
+	core/Util.cpp
 	mainWidght/MklinkWidget.cpp
 	mainWidght/mainWindows.cpp
 	mainWidght/systemTray.cpp

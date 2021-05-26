@@ -17,9 +17,7 @@ class DOODLELIB_API Project : public Metadata {
   Project();
   explicit Project(FSys::path in_path, std::string in_name = {});
 
-  /// 属性编辑
-  /// \return 项目名称属性
-  [[nodiscard]] const std::string& getName() const noexcept;
+  const std::string& getName() const;
   void setName(const std::string& Name) noexcept;
 
   [[nodiscard]] const FSys::path& getPath() const noexcept;

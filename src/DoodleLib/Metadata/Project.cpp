@@ -25,10 +25,6 @@ Project::Project(FSys::path in_path, std::string in_name)
 
 }
 
-const std::string& Project::getName() const noexcept {
-  return p_name;
-}
-
 void Project::setName(const std::string& Name) noexcept {
   p_name = Name;
   saved(true);
@@ -129,6 +125,9 @@ void Project::deleteData(const MetadataFactoryPtr& in_factory) {
 void Project::save() const {
   if (p_metadata_flctory_ptr_)
     p_metadata_flctory_ptr_->save(this);
+}
+const std::string& Project::getName() const {
+  return p_name;
 }
 
 }  // namespace doodle

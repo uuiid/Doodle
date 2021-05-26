@@ -38,6 +38,7 @@
 #include <DoodleLib/core/Name.h>
 #include <DoodleLib/core/ToolsSetting.h>
 #include <DoodleLib/core/Ue4Setting.h>
+#include <DoodleLib/core/Util.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/libWarp/WinReg.hpp>
 #include <DoodleLib/mainWidght/MklinkWidget.h>

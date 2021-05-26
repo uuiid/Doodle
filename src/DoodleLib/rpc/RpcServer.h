@@ -20,9 +20,9 @@ class DOODLELIB_API RpcServer final : public MetadataServer::Service{
   RpcServer();
   grpc::Status GetProject(grpc::ServerContext* context, const google::protobuf::Empty* request, DataVector* response) override;
   grpc::Status GetChild(grpc::ServerContext* context, const DataDb* request, DataVector* response) override;
-  grpc::Status GetMetadata(grpc::ServerContext* context, const DataDb* request, DataMess* response) override;
-  grpc::Status InstallMetadata(grpc::ServerContext* context, const DataDb* request, DataMess* response) override;
-  grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataMess* response) override;
+  grpc::Status GetMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
+  grpc::Status InstallMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
+  grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
 
   DOODLE_DISABLE_COPY(RpcServer)
 

@@ -138,6 +138,7 @@ class Comment;
 class AssetsPath;
 
 using MetadataPtr        = std::shared_ptr<Metadata>;
+using MetadataConstPtr       = std::shared_ptr<const Metadata>;
 using ProjectPtr         = std::shared_ptr<Project>;
 using EpisodesPtr        = std::shared_ptr<Episodes>;
 using ShotPtr            = std::shared_ptr<Shot>;

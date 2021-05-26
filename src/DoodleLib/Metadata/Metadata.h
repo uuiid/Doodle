@@ -7,7 +7,11 @@
 
 #include <cereal/types/polymorphic.hpp>
 #include <cereal/types/memory.hpp>
+#include <cereal/types/optional.hpp>
+
 #include <boost/signals2.hpp>
+
+#include <optional>
 namespace doodle {
 class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   friend MetadataFactory;
@@ -23,12 +27,11 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   std::vector<MetadataPtr> p_child_items;
 
   ///这个时文件的根名称， 基本判断相同就直接比较他俩就行
-  std::string p_Root;
-  ///这个名称保存时的名称（文件名称这个不影响任何判断）
-  std::string p_Name;
+  uint64_t p_id;
   ///这个时父对象的root
-  std::string p_parent_uuid;
+  std::optional<uint64_t> p_parent_id;
 
+  std::string p_uuid;
   /**
    * 这个是加载或者保存时的工厂
    * 这个工厂会在加载时记录, 或者在第一次保存时记录
@@ -95,24 +98,15 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
    */
   [[nodiscard]] virtual std::string showStr() const;///< 这里时显示的字符串, 极有可能有中文
 
-
-  /**
-   * @return 根uuid
-   */
-  [[nodiscard]] virtual const std::string &getRoot() const;///< 获得根uuid
-  [[nodiscard]] virtual const std::string &getRoot();
-
-  /**
-   * @return
-   */
-  [[nodiscard]] virtual const std::string &getName() const;///< 获得名称,这个名称是文件名称
-  [[nodiscard]] virtual const std::string &getName();
+  [[nodiscard]] const std::string &getUUID();///< 获得uuid
+  [[nodiscard]] FSys::path getUrlUUID(); ///这个是获得所属项目的保持相对路径
 
   /**
    * @return 根节点(现在基本上是项目节点)
    */
-  [[nodiscard]] MetadataPtr getRootParent();
-  virtual void createMenu(ContextMenu* in_contextMenu) = 0;///< 这个会一直递归找到没有父级的根节点
+  [[nodiscard]] MetadataPtr getRootParent();///< 这个会一直递归找到没有父级的根节点
+
+  virtual void createMenu(ContextMenu* in_contextMenu) = 0;
   //  [[nodiscard]] virtual FSys::path FolderPath() const;
 
 
@@ -183,9 +177,10 @@ template <class Archive>
 void Metadata::serialize(Archive &ar, std::uint32_t const version) {
   if (version == 1)
     ar(
-        cereal::make_nvp("UUID_Root", p_Root),
-        cereal::make_nvp("UUID_name", p_Name),
-        cereal::make_nvp("UUID_parent", p_parent_uuid));
+        cereal::make_nvp("id", p_id),
+        cereal::make_nvp("parent_id", p_parent_id),
+        cereal::make_nvp("UUID", p_uuid))
+        ;
 }
 }  // namespace doodle
 CEREAL_REGISTER_TYPE(doodle::Metadata)

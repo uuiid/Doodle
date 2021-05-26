@@ -1,6 +1,6 @@
-create table if not exists metadataTab
+create table if not exists metadatatab
 (
-	id bigint unsigned not null
+	id bigint unsigned auto_increment
 		primary key,
 	parent bigint unsigned null,
 	uuidPath text null,

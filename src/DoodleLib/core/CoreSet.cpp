@@ -80,7 +80,7 @@ void CoreSet::writeDoodleLocalSet() {
     throw FileError{p_mayaPath, " 在路径中没有找到maya,不保存"};
   }
 
-  FSys::ofstream outjosn{doc / configFileName(), std::ifstream::binary};
+  FSys::ofstream outjosn{doc / configFileName(), std::ios::out | std::ios::binary};
   cereal::PortableBinaryOutputArchive out{outjosn};
   out(*this);
 }
