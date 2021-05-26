@@ -10,16 +10,20 @@
 namespace doodle {
 class RpcServer final : public MetadataServer::Service{
   CoreSet& p_set;
+  static std::unique_ptr<grpc::Server> p_Server;
 
-
-  [[nodiscard]] FSys::path getPath(const std::string & in_string) const;
+  [[nodiscard]] inline FSys::path getPath(const std::string & in_string) const;
 //  [[nodiscard]] FSys::path getPath(uint64_t id,const std::string& in_string)const;
  public:
   RpcServer();
-  ::grpc::Status GetProject(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::doodle::DataVector* response) override;
-  ::grpc::Status GetChild(::grpc::ServerContext* context, const ::doodle::DataDb* request, ::doodle::DataVector* response) override;
+  grpc::Status GetProject(grpc::ServerContext* context, const google::protobuf::Empty* request, DataVector* response) override;
+  grpc::Status GetChild(grpc::ServerContext* context, const DataDb* request, DataVector* response) override;
+  grpc::Status GetMetadata(grpc::ServerContext* context, const DataDb* request, DataMess* response) override;
+  grpc::Status InstallMetadata(grpc::ServerContext* context, const DataDb* request, DataMess* response) override;
+  grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataMess* response) override;
 
-  void runServer();
-  void stop();
+
+  static void runServer();
+  static void stop();
 };
 }

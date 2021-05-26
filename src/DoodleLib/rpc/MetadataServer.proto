@@ -17,7 +17,21 @@ message DataVector{
   repeated DataDb data = 1;
 }
 
+enum DateState{
+  OK = 0;
+  ERROR = 1;
+}
+
+message DataMess{
+  DataDb data = 1;
+  DateState error_state = 2;
+  string error = 3;
+}
+
 service MetadataServer{
   rpc GetProject(google.protobuf.Empty) returns (DataVector){};
   rpc GetChild(DataDb) returns (DataVector){};
+  rpc GetMetadata(DataDb) returns (DataMess){};
+  rpc InstallMetadata(DataDb) returns(DataMess){};
+  rpc DeleteMetadata(DataDb) returns(DataMess){};
 }
