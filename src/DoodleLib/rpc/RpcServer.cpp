@@ -2,18 +2,18 @@
 // Created by TD on 2021/5/25.
 //
 
-#include <DoodleLib/core/CoreSql.h>
-#include <DoodleLib/core/MetadataTabSql.h>
 #include <DoodleLib/rpc/RpcServer.h>
+#include <DoodleLib/core/CoreSql.h>
 #include <DoodleLib/Exception/Exception.h>
 #include <Logger/Logger.h>
 
+//#include <core/MetadataTabSql.h>
 #include <sqlpp11/sqlpp11.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/server_builder.h>
-#include <grpcpp/server_context.h>
-#include <grpcpp/server.h>
-#include <grpcpp/security/server_credentials.h>
+//#include <grpcpp/server_context.h>
+//#include <grpcpp/server.h>
+//#include <grpcpp/security/server_credentials.h>
 
 namespace doodle{
 
@@ -25,33 +25,33 @@ RpcServer::RpcServer()
 
 grpc::Status RpcServer::GetProject(grpc::ServerContext* context, const google::protobuf::Empty* request, DataVector* response) {
   auto k_conn = CoreSql::Get().getConnection();
-  MetadataTab k_tab{};
-
-  FSys::ifstream k_ifstream{};
-  for(const auto& row :(*k_conn)(sqlpp::select(sqlpp::all_of(k_tab))
-                                     .from(k_tab)
-                                     .where(k_tab.parent.is_null()))){
-    auto k_data = response->add_data();
-    k_data->set_id(row.id.value());
-    k_data->set_parent(row.parent.value());
-    k_data->set_uuidpath(std::string{row.uuidPath.value()});
-    k_data->update_time();
-    auto k_item = k_data->mutable_update_time();
-    /// 这个到时候还要重新斟酌一下，有没有更快的转换方案
-    auto k_time = std::chrono::system_clock::time_point{row.updateTime.value()};
-    auto time = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
-    *k_item = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
-
-
-    auto k_path = getPath(row.uuidPath.value());
-    auto k_size = FSys::file_size(k_path);
-    k_ifstream.open(k_path, std::ios::in | std::ios::binary);
-    if (k_ifstream.is_open()) {
-      auto k_any = k_data->mutable_metadata_cereal();
-//      k_any->set_type_url("metadata_cereal");
-      k_any->set_value(k_ifstream.rdbuf(),k_size);
-    }
-  }
+//  MetadataTab k_tab{};
+//
+//  FSys::ifstream k_ifstream{};
+//  for(const auto& row :(*k_conn)(sqlpp::select(sqlpp::all_of(k_tab))
+//                                     .from(k_tab)
+//                                     .where(k_tab.parent.is_null()))){
+//    auto k_data = response->add_data();
+//    k_data->set_id(row.id.value());
+//    k_data->set_parent(row.parent.value());
+//    k_data->set_uuidpath(std::string{row.uuidPath.value()});
+//    k_data->update_time();
+//    auto k_item = k_data->mutable_update_time();
+//    /// 这个到时候还要重新斟酌一下，有没有更快的转换方案
+//    auto k_time = std::chrono::system_clock::time_point{row.updateTime.value()};
+//    auto time = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
+//    *k_item = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
+//
+//
+//    auto k_path = getPath(row.uuidPath.value());
+//    auto k_size = FSys::file_size(k_path);
+//    k_ifstream.open(k_path, std::ios::in | std::ios::binary);
+//    if (k_ifstream.is_open()) {
+//      auto k_any = k_data->mutable_metadata_cereal();
+////      k_any->set_type_url("metadata_cereal");
+//      k_any->set_value(k_ifstream.rdbuf(),k_size);
+//    }
+//  }
 
   return {};
 }
@@ -69,7 +69,8 @@ void RpcServer::runServer() {
   k_builder.AddListeningPort(server_address,grpc::InsecureServerCredentials());
   k_builder.RegisterService(&service);
 
-  p_Server = k_builder.BuildAndStart();
+//  auto t = k_builder.BuildAndStart();
+  p_Server = std::move(k_builder.BuildAndStart());
   DOODLE_LOG_INFO("Server listening on " << server_address);
   p_Server->Wait();
 }

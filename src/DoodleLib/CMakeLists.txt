@@ -19,12 +19,12 @@ add_custom_target(
 
 include(DoodleLib.cmake)
 add_custom_command(
-        OUTPUT core/MetadataTabSql.h
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/core/MetadataTabSql.h
         COMMAND ${PROJECT_SOURCE_DIR}/venv/Scripts/Activate.bat
         COMMAND py
         ARGS $<TARGET_FILE:sqlpp11::ddl2cpp>
              ${CMAKE_CURRENT_LIST_DIR}/core/000-metadatatab.sql
-             ${CMAKE_CURRENT_LIST_DIR}/core/MetadataTabSql
+             ${CMAKE_CURRENT_BINARY_DIR}/core/MetadataTabSql
              doodle
         MAIN_DEPENDENCY core/000-metadatatab.sql
 )
@@ -49,25 +49,13 @@ add_library(DoodleLib
         winDoodleLib.rc
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
-        core/MetadataTabSql.h
+        ${CMAKE_CURRENT_BINARY_DIR}/core/MetadataTabSql.h
         ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.pb.h
         ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.pb.cc
         ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.h
         ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.cc
         DoodleLib.manifest
         )
-
-file(WRITE DoodleLib.h [[//
-// Created by TD on 2021/5/9.
-//
-
-#pragma once]] )
-foreach (_HEADER IN LISTS DOODLELIB_HEADER)
-    if (${_HEADER} STREQUAL DoodleLib.h)
-    else()
-        file(APPEND DoodleLib.h "\n#include <DoodleLib/${_HEADER}>")
-    endif ()
-endforeach ()
 
 set_target_properties(DoodleLib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -120,6 +108,7 @@ target_compile_definitions(DoodleLib
         PRIVATE
         _CRT_SECURE_NO_WARNINGS
 #        $<$<CONFIG:Debug>:_CRTDBG_MAP_ALLOC>
+        _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
         )
 
 

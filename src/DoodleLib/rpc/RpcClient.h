@@ -5,6 +5,8 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 namespace doodle{
-class RpcClient {
+class DOODLELIB_API RpcClient {
+ public:
+  RpcClient();
 };
 }

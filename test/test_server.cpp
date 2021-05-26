@@ -6,6 +6,9 @@
 #include <DoodleLib/DoodleLib.h>
 
 TEST(server, start_stop){
-
+  using namespace std::chrono_literals;
+  std::thread{[](){doodle::RpcServer::runServer();}}.detach();
+  std::this_thread::sleep_for(2s);
+  doodle::RpcServer::stop();
 }
 

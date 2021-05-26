@@ -4,11 +4,13 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <MetadataServer.grpc.pb.h.>
 #include <DoodleLib/core/CoreSet.h>
 
+#include <MetadataServer.grpc.pb.h.>
+
+
 namespace doodle {
-class RpcServer final : public MetadataServer::Service{
+class DOODLELIB_API RpcServer final : public MetadataServer::Service{
   CoreSet& p_set;
   static std::unique_ptr<grpc::Server> p_Server;
 
@@ -22,6 +24,7 @@ class RpcServer final : public MetadataServer::Service{
   grpc::Status InstallMetadata(grpc::ServerContext* context, const DataDb* request, DataMess* response) override;
   grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataMess* response) override;
 
+  DOODLE_DISABLE_COPY(RpcServer)
 
   static void runServer();
   static void stop();

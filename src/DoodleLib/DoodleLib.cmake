@@ -33,7 +33,6 @@ set(
 	core/CoreSet.h
 	core/CoreSql.h
 	core/MetadataSet.h
-	core/MetadataTabSql.h
 	core/Name.h
 	core/ToolsSetting.h
 	core/Ue4Setting.h

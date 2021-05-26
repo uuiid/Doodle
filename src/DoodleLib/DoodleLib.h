@@ -35,7 +35,6 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
 #include <DoodleLib/core/MetadataSet.h>
-#include <DoodleLib/core/MetadataTabSql.h>
 #include <DoodleLib/core/Name.h>
 #include <DoodleLib/core/ToolsSetting.h>
 #include <DoodleLib/core/Ue4Setting.h>
