@@ -11,6 +11,12 @@ cmrc_add_resource_library(
 
 )
 
+add_custom_target(
+        create_list_doodle_cmake
+        COMMAND ${CMAKE_COMMAND} -P ListFile.cmake
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+)
+
 include(DoodleLib.cmake)
 add_custom_command(
         OUTPUT core/MetadataTabSql.h
@@ -50,6 +56,19 @@ add_library(DoodleLib
         ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.cc
         DoodleLib.manifest
         )
+
+file(WRITE DoodleLib.h [[//
+// Created by TD on 2021/5/9.
+//
+
+#pragma once]] )
+foreach (_HEADER IN LISTS DOODLELIB_HEADER)
+    if (${_HEADER} STREQUAL DoodleLib.h)
+    else()
+        file(APPEND DoodleLib.h "\n#include <DoodleLib/${_HEADER}>")
+    endif ()
+endforeach ()
+
 set_target_properties(DoodleLib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 

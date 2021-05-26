@@ -6,6 +6,7 @@ add_executable(test_my
         test_qtCore.cpp
         test_std.cpp
         test_opencv.cpp
+        test_server.cpp
         doodle_test.manifest
         )
 
