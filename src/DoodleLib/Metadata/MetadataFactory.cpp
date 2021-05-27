@@ -12,6 +12,10 @@
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Shot.h>
 
+#include <DoodleLib/rpc/RpcClient.h>
+#include <grpcpp/grpcpp.h>
+
+
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/portable_binary.hpp>
 
@@ -90,21 +94,9 @@ void MetadataFactory::load(AssetsFile *in_assetsFile) const {
 }
 
 void MetadataFactory::save(const Project *in_project) const {
-  auto k_config_folder = in_project->getPath() / Project::getConfigFileFolder();
-  auto k_path = k_config_folder / Project::getConfigFileName();
-
-  if (!FSys::exists(k_path.parent_path()))
-    FSys::create_directories(k_path.parent_path());
-  CoreSet::hideFolder(k_path.parent_path());
-
-  FSys::fstream k_fstream{k_path, std::ios::out | std::ios::binary};
-
-  cereal::PortableBinaryOutputArchive k_archive{k_fstream};
-  k_archive(*in_project);
-
-  //  auto k_Floder = k_config_folder;
-  //  if (!FSys::exists(k_Floder))
-  //    FSys::create_directories(k_Floder);
+  auto k_rpc = RpcClient{grpc::CreateChannel("localhost:50051",
+                                             grpc::InsecureChannelCredentials())};
+  k_rpc.InstallMetadata(const_cast<Project*>(in_project)->shared_from_this());
 }
 
 void MetadataFactory::save(const Shot *in_shot) const {

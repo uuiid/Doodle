@@ -176,5 +176,8 @@ FSys::path Metadata::getUrlUUID() {
   name /= p_uuid;
   return name;
 }
+uint64_t Metadata::getId() const {
+  return p_id;
+}
 
 }  // namespace doodle

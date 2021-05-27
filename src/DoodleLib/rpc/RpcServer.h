@@ -29,4 +29,11 @@ class DOODLELIB_API RpcServer final : public MetadataServer::Service{
   static void runServer();
   static void stop();
 };
+class DOODLELIB_API RpcServerHelper{
+  static std::unique_ptr<grpc::Server> p_Server;
+
+ public:
+  static void runServer();
+  static void stop();
+};
 }

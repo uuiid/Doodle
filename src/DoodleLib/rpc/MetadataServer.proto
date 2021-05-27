@@ -18,15 +18,10 @@ message DataVector{
   repeated DataDb data = 1;
 }
 
-enum DateState{
-  OK = 0;
-  ERROR = 1;
-}
-
 service MetadataServer{
-  rpc GetProject(google.protobuf.Empty) returns (DataVector){};
-  rpc GetChild(DataDb) returns (DataVector){};
-  rpc GetMetadata(DataDb) returns (DataDb){};
-  rpc InstallMetadata(DataDb) returns(DataDb){};
-  rpc DeleteMetadata(DataDb) returns(DataDb){};
+  rpc GetProject(google.protobuf.Empty) returns (DataVector) {}
+  rpc GetChild(DataDb) returns (DataVector) {}
+  rpc GetMetadata(DataDb) returns (DataDb) {}
+  rpc InstallMetadata(DataDb) returns(DataDb) {}
+  rpc DeleteMetadata(DataDb) returns(DataDb) {}
 }

@@ -137,6 +137,9 @@ class TimeDuration;
 class Comment;
 class AssetsPath;
 
+class RpcClient;
+class RpcServer;
+
 using MetadataPtr        = std::shared_ptr<Metadata>;
 using MetadataConstPtr       = std::shared_ptr<const Metadata>;
 using ProjectPtr         = std::shared_ptr<Project>;

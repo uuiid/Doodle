@@ -21,7 +21,6 @@ class Environment : public ::testing::Environment {
 
 void Environment::SetUp() {
   set.init();
-
 }
 
 void Environment::TearDown() {}

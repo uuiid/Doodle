@@ -15,6 +15,8 @@
 namespace doodle {
 class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   friend MetadataFactory;
+  friend RpcClient;
+  friend RpcServer;
   /// 需要加载
   bool p_need_save;
   /// 需要保存
@@ -99,7 +101,9 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   [[nodiscard]] virtual std::string showStr() const;///< 这里时显示的字符串, 极有可能有中文
 
   [[nodiscard]] const std::string &getUUID();///< 获得uuid
-  [[nodiscard]] FSys::path getUrlUUID(); ///这个是获得所属项目的保持相对路径
+  [[nodiscard]] FSys::path getUrlUUID(); ///< 这个是获得所属项目的保持相对路径
+
+  uint64_t getId() const;///< 获得数据库id
 
   /**
    * @return 根节点(现在基本上是项目节点)
@@ -168,6 +172,9 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
    * 删除这个数据
    * @param in_factory 序列化工厂
    */
+
+  virtual void insert_into(const MetadataFactoryPtr& in_factory) = 0;
+
   virtual void deleteData(const MetadataFactoryPtr& in_factory) =0;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);

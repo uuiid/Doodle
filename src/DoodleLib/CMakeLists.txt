@@ -94,7 +94,7 @@ target_link_libraries(DoodleLib PUBLIC
         SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
 #        cppzmq
 #        cppzmq-static
-        gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts
+        gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
         PRIVATE
         ${DOODLE_MAR}
 

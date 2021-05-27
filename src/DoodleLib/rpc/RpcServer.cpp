@@ -18,7 +18,7 @@
 namespace doodle {
 
 std::unique_ptr<grpc::Server> RpcServer::p_Server{};
-
+std::unique_ptr<grpc::Server> RpcServerHelper::p_Server{};
 RpcServer::RpcServer()
     : p_set(CoreSet::getSet()) {
 }
@@ -60,7 +60,7 @@ void RpcServer::runServer() {
   ///检查p_server防止重复调用
   if (p_Server)
     return;
-  std::string server_address{"127.0.0.1:60999"};
+  std::string server_address{"localhost:50051"};
   RpcServer service{};
 
   grpc::ServerBuilder k_builder{};
@@ -118,11 +118,31 @@ grpc::Status RpcServer::InstallMetadata(grpc::ServerContext *context, const Data
 grpc::Status RpcServer::DeleteMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   return grpc::Status();
 }
-//FSys::path RpcServer::getPath(uint64_t id, const std::string& in_string) const {
-//  auto k_path = p_set.getCacheRoot();
-//  if (in_string.empty())
-//    throw DoodleError{"str 是空的"};
-//  return k_path / std::to_string(id) / in_string.substr(0, 3) / in_string;
-//}
+FSys::path RpcServer::getPath(uint64_t id, const std::string& in_string) const {
+  auto k_path = p_set.getCacheRoot();
+  if (in_string.empty())
+    throw DoodleError{"str 是空的"};
+  return k_path / std::to_string(id) / in_string.substr(0, 3) / in_string;
+}
 
+void RpcServerHelper::runServer() {
+  ///检查p_server防止重复调用
+  if (p_Server)
+    return;
+  std::string server_address{"localhost:50051"};
+  RpcServer service{};
+
+  grpc::ServerBuilder k_builder{};
+  k_builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+  k_builder.RegisterService(&service);
+
+  //  auto t = k_builder.BuildAndStart();
+  p_Server = std::move(k_builder.BuildAndStart());
+  DOODLE_LOG_INFO("Server listening on " << server_address);
+  p_Server->Wait();
+}
+void RpcServerHelper::stop() {
+  p_Server->Shutdown();
+  p_Server.reset();
+}
 }  // namespace doodle
