@@ -8,10 +8,10 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 class DOODLELIB_API MetadataSet {
+  friend CoreSet;
   MetadataSet();
   std::vector<ProjectPtr> p_project_list;
   std::shared_ptr<Project> p_project;
-
  public:
   static MetadataSet& Get();
 

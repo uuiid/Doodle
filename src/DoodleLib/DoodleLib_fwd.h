@@ -126,6 +126,7 @@ namespace FSys = boost::filesystem;
 
 using ConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
 
+class CoreSet;
 class Project;
 class Episodes;
 class Shot;

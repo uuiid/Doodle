@@ -52,6 +52,7 @@ void CoreSet::init() {
       grpc::CreateChannel("localhost:50051",
                           grpc::InsecureChannelCredentials()
       ));
+  p_matadata_setting_.p_project_list = p_rpc_clien->GetProject();
 }
 
 void CoreSet::reInit() {

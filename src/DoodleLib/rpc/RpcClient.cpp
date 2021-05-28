@@ -15,7 +15,10 @@
 namespace doodle {
 
 RpcClient::RpcClient(const std::shared_ptr<grpc::Channel>& in_channel)
-    : p_stub(MetadataServer::NewStub(in_channel)) {
+    : p_stub(MetadataServer::NewStub(in_channel)),
+      p_channel(in_channel){
+//  auto k_s = p_channel->GetState(true);
+
 }
 std::vector<ProjectPtr> RpcClient::GetProject() {
   grpc::ClientContext k_context{};
@@ -30,12 +33,6 @@ std::vector<ProjectPtr> RpcClient::GetProject() {
     MetadataPtr k_prj{};
     const auto k_data = k_t.metadata_cereal().value();
 
-//    FSys::fstream k_fstream{"D:/Doodle_cache/tmp.tmp",std::ios::binary | std::ios::out};
-//    k_fstream.write(k_data.data(),k_data.size());
-//    k_fstream.close();
-//    k_fstream.open("D:/Doodle_cache/tmp.tmp",std::ios::binary | std::ios::in);
-
-
     vector_container my_data{k_data.begin(), k_data.end()};
     {
       vector_istream k_istream{my_data};
@@ -48,7 +45,7 @@ std::vector<ProjectPtr> RpcClient::GetProject() {
     if (
         k_prj->p_id != k_t.id())
       continue;
-    k_out_list.emplace_back(k_prj);
+    k_out_list.emplace_back(std::dynamic_pointer_cast<Project>(k_prj));
   }
 
   return k_out_list;

@@ -15,7 +15,7 @@ namespace doodle{
  */
 class DOODLELIB_API RpcClient {
   std::unique_ptr<MetadataServer::Stub> p_stub;
-
+  std::shared_ptr<grpc::Channel> p_channel;
  public:
   explicit RpcClient( const std::shared_ptr<grpc::Channel>& in_channel);
 
