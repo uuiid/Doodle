@@ -15,10 +15,11 @@ CoreSql::CoreSql()
   config->password = "deve";
 #ifdef NDEBUG
   config->debug = true;
+  config->database = "doodle";
 #else
   config->debug = false;
+  config->database = "doodle_tset";
 #endif
-  config->database = "doodle";
 }
 
 ConnPtr CoreSql::getConnection() const{

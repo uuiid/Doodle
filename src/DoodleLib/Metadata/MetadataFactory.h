@@ -14,8 +14,12 @@ namespace doodle {
   * @warning 我们在更改父亲时， 要同时移动文件和保存更改
   */
 class DOODLELIB_API MetadataFactory {
+  RpcClientPtr p_rpcClien;
+
  public:
   MetadataFactory();
+
+  virtual std::vector<ProjectPtr> getAllProject() const;
 
   virtual void load(Project* in_project) const;
   virtual void load(Shot* in_shot) const;
@@ -54,8 +58,16 @@ class DOODLELIB_API MetadataFactory {
   virtual bool hasChild(const Assets* in_metadata) const;
   virtual bool hasChild(const AssetsFile* in_metadata) const;
   virtual bool hasChild(const Metadata* in_metadata) const;
+
+  virtual bool insert_into(Project* in_metadata) const;
+  virtual bool insert_into(Shot* in_metadata) const;
+  virtual bool insert_into(Episodes* in_metadata) const;
+  virtual bool insert_into(Assets* in_metadata) const;
+  virtual bool insert_into(AssetsFile* in_metadata) const;
+
  private:
 
+  virtual bool insert_into(Metadata* in_metadata) const;
   virtual void deleteData(const Metadata* in_metadata) const;
   void modifyParent(const Metadata* in_metadata, const Metadata* in_old_parent) const;
   void loadChild(Metadata* in_metadata, const FSys::path& k_config) const;

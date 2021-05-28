@@ -89,5 +89,8 @@ void Assets::save() const {
   if(p_metadata_flctory_ptr_)
     p_metadata_flctory_ptr_->save(this);
 }
+void Assets::insert_into(const MetadataFactoryPtr& in_factory) {
+  in_factory->insert_into(this);
+}
 
 }  // namespace doodle

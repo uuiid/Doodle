@@ -44,14 +44,17 @@ grpc::Status RpcServer::GetProject(grpc::ServerContext *context, const google::p
     auto k_path = getPath(row.uuidPath.value());
     auto k_size = FSys::file_size(k_path);
     k_ifstream.open(k_path, std::ios::in | std::ios::binary);
-    if (k_ifstream.is_open()) {
+    if (k_ifstream.is_open() && k_ifstream.good()) {
       auto k_any = k_data->mutable_metadata_cereal();
       //      k_any->set_type_url("metadata_cereal");
-      k_any->set_value(k_ifstream.rdbuf(), k_size);
+      k_any->set_value(std::string{
+          std::istreambuf_iterator<char>(k_ifstream),
+          std::istreambuf_iterator<char>()
+      });
     }
   }
 
-  return {};
+  return grpc::Status::OK;
 }
 grpc::Status RpcServer::GetChild(grpc::ServerContext *context, const DataDb *request, DataVector *response) {
   return {};
@@ -78,11 +81,6 @@ void RpcServer::stop() {
   p_Server.reset();
 }
 
-FSys::path RpcServer::getPath(const std::string &in_string) const {
-  if (in_string.empty())
-    throw DoodleError{"str 是空的"};
-  return p_set.getCacheRoot() / in_string;
-}
 grpc::Status RpcServer::GetMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   return grpc::Status();
 }
@@ -104,11 +102,12 @@ grpc::Status RpcServer::InstallMetadata(grpc::ServerContext *context, const Data
 
   auto path = getPath(request->uuidpath());
   if (!FSys::exists(path.parent_path()))
-    FSys::create_directory(path.parent_path());
+    FSys::create_directories(path.parent_path());
 
   FSys::ofstream k_file{path, std::ios::out | std::ios::binary};
   if (k_file.is_open()) {
-    k_file << request->metadata_cereal().value();
+    auto k_data = request->metadata_cereal().value();
+    k_file.write(k_data.data(),k_data.size());
   } else {
     return {grpc::StatusCode::FAILED_PRECONDITION, "打开文件错误"};
   }
@@ -117,12 +116,6 @@ grpc::Status RpcServer::InstallMetadata(grpc::ServerContext *context, const Data
 }
 grpc::Status RpcServer::DeleteMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   return grpc::Status();
-}
-FSys::path RpcServer::getPath(uint64_t id, const std::string& in_string) const {
-  auto k_path = p_set.getCacheRoot();
-  if (in_string.empty())
-    throw DoodleError{"str 是空的"};
-  return k_path / std::to_string(id) / in_string.substr(0, 3) / in_string;
 }
 
 void RpcServerHelper::runServer() {

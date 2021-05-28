@@ -2,8 +2,11 @@
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
+
+#include <DoodleLib/rpc/RpcClient.h>
 #include <ShlObj.h>
 
+#include <grpcpp/grpcpp.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
 #include <boost/process.hpp>
@@ -24,7 +27,8 @@ void CoreSet::init() {
   ///获取环境变量 FOLDERID_Documents
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
-  if (!pManager) throw DoodleError("无法找到保存路径");
+  if (!pManager)
+    throw DoodleError("无法找到保存路径");
 
   doc = FSys::path{pManager} / "doodle";
   CoTaskMemFree(pManager);
@@ -43,6 +47,11 @@ void CoreSet::init() {
   ///触发一次 CoreSql 初始化并测试数据库连接
   auto &k_sql = CoreSql::Get();
   auto test_sql = k_sql.getConnection();
+
+  p_rpc_clien = std::make_shared<RpcClient>(
+      grpc::CreateChannel("localhost:50051",
+                          grpc::InsecureChannelCredentials()
+      ));
 }
 
 void CoreSet::reInit() {
@@ -202,11 +211,8 @@ std::string CoreSet::configFileName() {
 std::string CoreSet::getUUIDStr() {
   return boost::uuids::to_string(getUUID());
 }
-void CoreSet::hideFolder(const FSys::path &path) {
-  auto attr = GetFileAttributes(path.generic_wstring().c_str());
-  if ((attr & FILE_ATTRIBUTE_HIDDEN) == 0) {
-    SetFileAttributes(path.generic_wstring().c_str(), attr | FILE_ATTRIBUTE_HIDDEN);
-  }
+RpcClientPtr CoreSet::getRpcChild() const {
+  return p_rpc_clien;
 }
 
 DOODLE_NAMESPACE_E

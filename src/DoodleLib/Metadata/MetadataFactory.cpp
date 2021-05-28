@@ -12,6 +12,8 @@
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Shot.h>
 
+#include <DoodleLib/core/CoreSet.h>
+
 #include <DoodleLib/rpc/RpcClient.h>
 #include <grpcpp/grpcpp.h>
 
@@ -21,7 +23,8 @@
 
 namespace doodle {
 
-MetadataFactory::MetadataFactory() {
+MetadataFactory::MetadataFactory()
+  :p_rpcClien(CoreSet::getSet().getRpcChild()){
 }
 FSys::path MetadataFactory::getRoot(const Metadata *in_metadata) const {
   //  auto k_prj = CoreSet::getSet().GetMetadataSet().Project_();
@@ -94,9 +97,9 @@ void MetadataFactory::load(AssetsFile *in_assetsFile) const {
 }
 
 void MetadataFactory::save(const Project *in_project) const {
-  auto k_rpc = RpcClient{grpc::CreateChannel("localhost:50051",
-                                             grpc::InsecureChannelCredentials())};
-  k_rpc.InstallMetadata(const_cast<Project*>(in_project)->shared_from_this());
+//  auto k_rpc = RpcClient{grpc::CreateChannel("localhost:50051",
+//                                             grpc::InsecureChannelCredentials())};
+//  k_rpc.InstallMetadata(const_cast<Project*>(in_project)->shared_from_this());
 }
 
 void MetadataFactory::save(const Shot *in_shot) const {
@@ -214,5 +217,32 @@ bool MetadataFactory::hasChild(const Metadata *in_metadata) const {
     return FSys::directory_iterator{path} != FSys::directory_iterator{};
   else
     return false;
+}
+bool MetadataFactory::insert_into(Project *in_metadata) const {
+  p_rpcClien->InstallMetadata(in_metadata->shared_from_this());
+  return true;
+}
+bool MetadataFactory::insert_into(Shot *in_metadata) const {
+  p_rpcClien->InstallMetadata(in_metadata->shared_from_this());
+  return true;
+}
+bool MetadataFactory::insert_into(Episodes *in_metadata) const {
+  p_rpcClien->InstallMetadata(in_metadata->shared_from_this());
+  return true;
+}
+bool MetadataFactory::insert_into(Assets *in_metadata) const {
+  p_rpcClien->InstallMetadata(in_metadata->shared_from_this());
+  return true;
+}
+bool MetadataFactory::insert_into(AssetsFile *in_metadata) const {
+  p_rpcClien->InstallMetadata(in_metadata->shared_from_this());
+  return true;
+}
+bool MetadataFactory::insert_into(Metadata *in_metadata) const {
+  p_rpcClien->InstallMetadata(in_metadata->shared_from_this());
+  return true;
+}
+std::vector<ProjectPtr> MetadataFactory::getAllProject() const {
+  return p_rpcClien->GetProject();
 }
 }  // namespace doodle

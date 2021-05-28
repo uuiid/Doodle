@@ -35,5 +35,12 @@ TEST(server, start_sercer){
 TEST_F(ServerTest, createPrj) {
   auto k_f = std::make_shared<doodle::MetadataFactory>();
   auto prj = std::make_shared<doodle::Project>("D:/","测试");
-  prj->save(k_f);
+  prj->insert_into(k_f);
+  std::cout << prj->getId() << std::endl;
+  prj = std::make_shared<doodle::Project>("D:/","测试2");
+  prj->insert_into(k_f);
+
+//  auto& k_m = doodle::MetadataSet::Get();
+//  k_m.Init();
+//  ASSERT_TRUE(k_m.getAllProjects().size() == 2);
 }

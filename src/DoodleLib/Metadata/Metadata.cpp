@@ -179,5 +179,11 @@ FSys::path Metadata::getUrlUUID() {
 uint64_t Metadata::getId() const {
   return p_id;
 }
+bool Metadata::operator==(const Metadata &in_rhs) const {
+  return std::tie(p_id) == std::tie(in_rhs.p_id);
+}
+bool Metadata::operator!=(const Metadata &in_rhs) const {
+  return !(in_rhs == *this);
+}
 
 }  // namespace doodle

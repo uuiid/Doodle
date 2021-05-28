@@ -64,12 +64,6 @@ TEST_F(CoreTest, archive) {
   }
 
   std::cout << str_stream.str() << std::endl;
-  // for (auto it = std::istream_iterator<char>(str_stream_bin);
-  //      it == std::istream_iterator<char>();
-  //      ++it) {
-  //   std::cout << "\\x" << (*it) << " ";
-  // }
-  // std::cout << std::endl;
   ue_set.setVersion("4.26");
 
   {
@@ -91,6 +85,38 @@ TEST_F(CoreTest, archive) {
       << "\nue shot start: " << ue_set.ShotStart()
       << "\nue shot end: " << ue_set.ShotEnd()
       << std::endl;
+}
+
+TEST_F(CoreTest, archive_polymorphism) {
+  auto str_stream = std::stringstream{};
+
+  auto k_m = std::make_shared<doodle::Project>("D:/","测试1");
+  doodle::MetadataPtr k_m2 = std::make_shared<doodle::Project>("D:/","测试2");
+
+
+  auto str_stream_bin = std::stringstream{};
+  {
+    cereal::JSONOutputArchive json{str_stream};
+    json(cereal::make_nvp("metadata1", k_m),
+         cereal::make_nvp("metadata12", k_m2)
+         );
+    // cereal::BinaryOutputArchive binary{std::cout};
+    cereal::BinaryOutputArchive binary2{str_stream_bin};
+    binary2(cereal::make_nvp("metadata1", k_m),
+            cereal::make_nvp("metadata12", k_m2));
+  }
+
+  std::cout << str_stream.str() << std::endl;
+
+  {
+    doodle::ProjectPtr k1;
+    doodle::MetadataPtr k2;
+
+    cereal::JSONInputArchive json{str_stream};
+    json(k1,k2);
+    cereal::BinaryInputArchive binary{str_stream_bin};
+    binary(k1,k2);
+  }
 }
 
 TEST_F(CoreTest, load_save_meatdata) {

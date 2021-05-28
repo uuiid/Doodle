@@ -40,6 +40,7 @@ class DOODLELIB_API AssetsFile : public Metadata {
 
   void load(const MetadataFactoryPtr& in_factory) override;
   void save(const MetadataFactoryPtr& in_factory) override;
+  virtual void insert_into(const MetadataFactoryPtr& in_factory) override;
   bool operator<(const AssetsFile& in_rhs) const;
   bool operator>(const AssetsFile& in_rhs) const;
   bool operator<=(const AssetsFile& in_rhs) const;

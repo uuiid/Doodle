@@ -38,7 +38,7 @@ class DOODLELIB_API Project : public Metadata {
   bool operator<=(const Project& in_rhs) const;
   bool operator>=(const Project& in_rhs) const;
 
-
+  virtual void insert_into(const MetadataFactoryPtr& in_factory) override;
 
   virtual void createMenu(ContextMenu* in_contextMenu) override;
   virtual void deleteData(const MetadataFactoryPtr& in_factory) override;

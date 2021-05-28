@@ -43,6 +43,9 @@
 #include <cereal/types/common.hpp>
 #include <cereal/types/string.hpp>
 
+#include <boost/iostreams/stream_buffer.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
 
@@ -141,7 +144,11 @@ class RpcClient;
 class RpcServer;
 
 using MetadataPtr        = std::shared_ptr<Metadata>;
-using MetadataConstPtr       = std::shared_ptr<const Metadata>;
+using MetadataConstPtr   = std::shared_ptr<const Metadata>;
+using RpcClientPtr       = std::shared_ptr<RpcClient>;
+using RpcServerPtr       = std::shared_ptr<RpcServer>;
+
+
 using ProjectPtr         = std::shared_ptr<Project>;
 using EpisodesPtr        = std::shared_ptr<Episodes>;
 using ShotPtr            = std::shared_ptr<Shot>;

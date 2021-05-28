@@ -15,6 +15,7 @@ class DOODLELIB_API MetadataSet {
  public:
   static MetadataSet& Get();
 
+  void Init();
   [[nodiscard]] bool hasProject();
   [[nodiscard]] std::vector<ProjectPtr> getAllProjects() const;
   void installProject(const ProjectPtr &Project_);
@@ -40,7 +41,6 @@ class DOODLELIB_API MetadataSet {
 template <class Archive>
 void MetadataSet::serialize(Archive &ar, const std::uint32_t version){
   ar(
-      cereal::make_nvp("project_list",p_project_list),
       cereal::make_nvp("project",p_project)
       );
 }

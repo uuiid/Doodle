@@ -4,6 +4,10 @@
 
 #include <core/MetadataSet.h>
 #include <Exception/Exception.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
+
+#include <rpc/RpcClient.h>
+
 #include <boost/numeric/conversion/cast.hpp>
 
 namespace doodle {
@@ -74,6 +78,9 @@ int MetadataSet::getProjectIndex() const {
 }
 void MetadataSet::clear() {
   p_project_list.clear();
+}
+void MetadataSet::Init() {
+  p_project_list = MetadataFactory{}.getAllProject();
 }
 
 }  // namespace doodle

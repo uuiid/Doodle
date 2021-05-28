@@ -154,7 +154,8 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   virtual bool operator>(const Metadata &in_rhs) const;
   virtual bool operator<=(const Metadata &in_rhs) const;
   virtual bool operator>=(const Metadata &in_rhs) const;
-
+  bool operator==(const Metadata &in_rhs) const;
+  bool operator!=(const Metadata &in_rhs) const;
   ///这里是使用工厂进行加载和保存的函数
   /**
    * 使用访问者模式
@@ -186,8 +187,7 @@ void Metadata::serialize(Archive &ar, std::uint32_t const version) {
     ar(
         cereal::make_nvp("id", p_id),
         cereal::make_nvp("parent_id", p_parent_id),
-        cereal::make_nvp("UUID", p_uuid))
-        ;
+        cereal::make_nvp("UUID", p_uuid));
 }
 }  // namespace doodle
 CEREAL_REGISTER_TYPE(doodle::Metadata)

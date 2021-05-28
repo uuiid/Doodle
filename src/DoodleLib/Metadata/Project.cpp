@@ -129,5 +129,8 @@ void Project::save() const {
 const std::string& Project::getName() const {
   return p_name;
 }
+void Project::insert_into(const MetadataFactoryPtr& in_factory) {
+  in_factory->insert_into(this);
+}
 
 }  // namespace doodle

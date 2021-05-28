@@ -78,9 +78,9 @@ class DOODLELIB_API CoreSet {
   boost::uuids::uuid getUUID();
   std::string getUUIDStr();
 
-  static void hideFolder(const FSys::path &path);
   static FSys::path toIpPath(const FSys::path &path);
 
+  RpcClientPtr getRpcChild() const;
  private:
   //私有化构造函数
   CoreSet();
@@ -108,6 +108,7 @@ class DOODLELIB_API CoreSet {
   std::vector<std::shared_ptr<Project>> p_project_list;
   std::shared_ptr<Project> p_project;
   FSys::path p_mayaPath;
+  RpcClientPtr p_rpc_clien;
 
   //这里是序列化的代码
   friend class cereal::access;
@@ -124,6 +125,12 @@ void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
         cereal::make_nvp("ue4_setting", ue4_setting),
         cereal::make_nvp("matadata_setting", p_matadata_setting_),
         cereal::make_nvp("maya_Path", p_mayaPath));
+  if (version == 5)
+    ar(
+        cereal::make_nvp("user", user),
+        cereal::make_nvp("department", department),
+        cereal::make_nvp("ue4_setting", ue4_setting),
+        cereal::make_nvp("maya_Path", p_mayaPath));
 }
 
 DOODLE_NAMESPACE_E
@@ -137,4 +144,4 @@ void load_minimal(Archive const &, doodle::Department &department, std::string c
   department = magic_enum::enum_cast<doodle::Department>(value).value_or(doodle::Department::VFX);
 };
 }  // namespace cereal
-CEREAL_CLASS_VERSION(doodle::CoreSet, 4);
+CEREAL_CLASS_VERSION(doodle::CoreSet, 5);

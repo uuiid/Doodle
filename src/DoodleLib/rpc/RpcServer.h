@@ -4,6 +4,7 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/core/CoreSet.h>
 
 #include <MetadataServer.grpc.pb.h.>
@@ -14,7 +15,11 @@ class DOODLELIB_API RpcServer final : public MetadataServer::Service{
   CoreSet& p_set;
   static std::unique_ptr<grpc::Server> p_Server;
 
-  [[nodiscard]] inline FSys::path getPath(const std::string & in_string) const;
+  [[nodiscard]] inline FSys::path getPath(const std::string & in_string) const{
+    if (in_string.empty())
+      throw DoodleError{"str 是空的"};
+    return p_set.getCacheRoot() / in_string;
+  };
 //  [[nodiscard]] FSys::path getPath(uint64_t id,const std::string& in_string)const;
  public:
   RpcServer();

@@ -30,6 +30,7 @@ set(
 	ScreenshotWidght/ScreenshotAction.h
 	ScreenshotWidght/ScreenshotWidght.h
 	SettingWidght/settingWidget.h
+	core/ContainerDevice.h
 	core/CoreSet.h
 	core/CoreSql.h
 	core/MetadataSet.h

@@ -18,6 +18,7 @@ class DOODLELIB_API Episodes : public Metadata {
 
   void load(const MetadataFactoryPtr &in_factory) override;
   void save(const MetadataFactoryPtr &in_factory) override;
+  virtual void insert_into(const MetadataFactoryPtr &in_factory) override;
   bool operator<(const Episodes &in_rhs) const;
   bool operator>(const Episodes &in_rhs) const;
   bool operator<=(const Episodes &in_rhs) const;

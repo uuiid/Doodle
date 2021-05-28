@@ -32,6 +32,7 @@
 #include <DoodleLib/ScreenshotWidght/ScreenshotAction.h>
 #include <DoodleLib/ScreenshotWidght/ScreenshotWidght.h>
 #include <DoodleLib/SettingWidght/settingWidget.h>
+#include <DoodleLib/core/ContainerDevice.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
 #include <DoodleLib/core/MetadataSet.h>
