@@ -2,11 +2,10 @@
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
-
 #include <DoodleLib/rpc/RpcClient.h>
 #include <ShlObj.h>
-
 #include <grpcpp/grpcpp.h>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
 #include <boost/process.hpp>
@@ -22,27 +21,10 @@ CoreSet &CoreSet::getSet() {
   return install;
 }
 
-void CoreSet::init() {
-  ///这里我们手动做一些工作
-  ///获取环境变量 FOLDERID_Documents
-  PWSTR pManager;
-  SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
-  if (!pManager)
-    throw DoodleError("无法找到保存路径");
-
-  doc = FSys::path{pManager} / "doodle";
-  CoTaskMemFree(pManager);
-
-  if (!FSys::exists(doc))
-    FSys::create_directories(doc);
+void CoreSet::guiInit() {
   findMaya();
   getSetting();
 
-  getCacheDiskPath();
-
-  if (!FSys::exists(getCacheRoot())) {
-    FSys::create_directories(getCacheRoot());
-  }
 
   ///触发一次 CoreSql 初始化并测试数据库连接
   auto &k_sql = CoreSql::Get();
@@ -50,8 +32,7 @@ void CoreSet::init() {
 
   p_rpc_clien = std::make_shared<RpcClient>(
       grpc::CreateChannel("localhost:50051",
-                          grpc::InsecureChannelCredentials()
-      ));
+                          grpc::InsecureChannelCredentials()));
   p_matadata_setting_.p_project_list = p_rpc_clien->GetProject();
 }
 
@@ -113,9 +94,24 @@ CoreSet::CoreSet()
       p_uuid_gen(),
       ue4_setting(Ue4Setting::Get()),
       p_matadata_setting_(MetadataSet::Get()),
-      p_project_list(),
-      p_project(),
       p_mayaPath() {
+
+  ///这里我们手动做一些工作
+  ///获取环境变量 FOLDERID_Documents
+  PWSTR pManager;
+  SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
+  if (!pManager)
+    throw DoodleError("无法找到保存路径");
+
+  doc = FSys::path{pManager} / "doodle";
+  CoTaskMemFree(pManager);
+
+  if (!FSys::exists(doc))
+    FSys::create_directories(doc);
+  getCacheDiskPath();
+  if (!FSys::exists(getCacheRoot())) {
+    FSys::create_directories(getCacheRoot());
+  }
 }
 
 FSys::path CoreSet::toIpPath(const FSys::path &path) {
@@ -214,6 +210,10 @@ std::string CoreSet::getUUIDStr() {
 }
 RpcClientPtr CoreSet::getRpcChild() const {
   return p_rpc_clien;
+}
+void CoreSet::clear() {
+  p_rpc_clien.reset();
+  p_matadata_setting_.clear();
 }
 
 DOODLE_NAMESPACE_E

@@ -3,11 +3,10 @@
 //
 
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/core/ContainerDevice.h>
-#include <DoodleLib/rpc/RpcClient.h>
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/Metadata/Project.h>
-
+#include <DoodleLib/core/ContainerDevice.h>
+#include <DoodleLib/rpc/RpcClient.h>
 #include <grpcpp/grpcpp.h>
 
 #include <cereal/archives/portable_binary.hpp>
@@ -16,9 +15,8 @@ namespace doodle {
 
 RpcClient::RpcClient(const std::shared_ptr<grpc::Channel>& in_channel)
     : p_stub(MetadataServer::NewStub(in_channel)),
-      p_channel(in_channel){
-//  auto k_s = p_channel->GetState(true);
-
+      p_channel(in_channel) {
+  //  auto k_s = p_channel->GetState(true);
 }
 std::vector<ProjectPtr> RpcClient::GetProject() {
   grpc::ClientContext k_context{};
@@ -41,10 +39,10 @@ std::vector<ProjectPtr> RpcClient::GetProject() {
       cereal::PortableBinaryInputArchive ar{k_istream};
       ar(k_prj);
     }
-
+    //检查和验证
     if (
         k_prj->p_id != k_t.id())
-      continue;
+      k_prj->p_id = k_t.id();
     k_out_list.emplace_back(std::dynamic_pointer_cast<Project>(k_prj));
   }
 
@@ -56,40 +54,40 @@ std::vector<MetadataPtr> RpcClient::GetChild(const MetadataConstPtr& in_metadata
 void RpcClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
 }
 void RpcClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
-    grpc::ClientContext k_context{};
-    DataDb k_in_db{};
-    k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
+  grpc::ClientContext k_context{};
+  DataDb k_in_db{};
+  k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
 
-    vector_container my_data{};
-    {
-      vector_iostream kt{my_data};
-      cereal::PortableBinaryOutputArchive k_archive{kt};
-      k_archive(in_metadataPtr);
-    }
+  vector_container my_data{};
+  {
+    vector_iostream kt{my_data};
+    cereal::PortableBinaryOutputArchive k_archive{kt};
+    k_archive(in_metadataPtr);
+  }
 
-    k_in_db.mutable_metadata_cereal()->set_value(my_data.data(),my_data.size());
+  k_in_db.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
 
-    DataDb k_out_db{};
-    auto k_status = p_stub->InstallMetadata(&k_context,k_in_db,&k_out_db);
-    if(k_status.ok()){
-      in_metadataPtr->p_id = k_out_db.id();
-    } else{
-      throw DoodleError{k_status.error_message()};
-    }
-//  auto path = FSys::path{"D:/Doodle_cache"} / in_metadataPtr->getUrlUUID();
-//  if (!FSys::exists(path.parent_path()))
-//    FSys::create_directories(path.parent_path());
-//  {
-//    FSys::ofstream k_fstream{path, std::ios::binary | std::ios::out};
-//    cereal::PortableBinaryOutputArchive k_archive{k_fstream};
-//    k_archive(in_metadataPtr);
-//  }
-//  {
-//    FSys::ifstream k_ifstream{path, std::ios::binary | std::ios::in};
-//    cereal::PortableBinaryInputArchive k_archive{k_ifstream};
-//    ProjectPtr k_ptr;
-//    k_archive(k_ptr);
-//  }
+  DataDb k_out_db{};
+  auto k_status = p_stub->InstallMetadata(&k_context, k_in_db, &k_out_db);
+  if (k_status.ok()) {
+    in_metadataPtr->p_id = k_out_db.id();
+  } else {
+    throw DoodleError{k_status.error_message()};
+  }
+  //  auto path = FSys::path{"D:/Doodle_cache"} / in_metadataPtr->getUrlUUID();
+  //  if (!FSys::exists(path.parent_path()))
+  //    FSys::create_directories(path.parent_path());
+  //  {
+  //    FSys::ofstream k_fstream{path, std::ios::binary | std::ios::out};
+  //    cereal::PortableBinaryOutputArchive k_archive{k_fstream};
+  //    k_archive(in_metadataPtr);
+  //  }
+  //  {
+  //    FSys::ifstream k_ifstream{path, std::ios::binary | std::ios::in};
+  //    cereal::PortableBinaryInputArchive k_archive{k_ifstream};
+  //    ProjectPtr k_ptr;
+  //    k_archive(k_ptr);
+  //  }
 }
 void RpcClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
 }

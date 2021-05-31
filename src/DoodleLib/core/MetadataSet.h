@@ -15,7 +15,7 @@ class DOODLELIB_API MetadataSet {
  public:
   static MetadataSet& Get();
 
-  void Init();
+
   [[nodiscard]] bool hasProject();
   [[nodiscard]] std::vector<ProjectPtr> getAllProjects() const;
   void installProject(const ProjectPtr &Project_);

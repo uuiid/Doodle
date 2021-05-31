@@ -1,0 +1,2 @@
+ID_DOODLE_ICON ICON "icon.ico"
+#include "wx/msw/wx.rc"

@@ -67,6 +67,28 @@ bool Doodle::OnCmdLineParsed(wxCmdLineParser& parser) {
     }
   }
 
+  if(p_run_fun){
+    p_run_fun = [this](){
+      p_mainWindwos = new mainWindows{};
+      const wxIcon& k_icon = wxICON(ID_DOODLE_ICON);
+      p_mainWindwos->SetIcon(k_icon);
+      this->SetTopWindow(p_mainWindwos);
+
+      p_systemTray = new systemTray{};
+      p_systemTray->SetIcon(k_icon,
+                            wxString::Format(
+                                wxString{"doodle-%d.%d.%d.%d"},
+                                Doodle_VERSION_MAJOR,
+                                Doodle_VERSION_MINOR,
+                                Doodle_VERSION_PATCH,
+                                Doodle_VERSION_TWEAK));
+      p_setting_widget = new SettingWidght{p_mainWindwos, wxID_ANY};
+      p_mainWindwos->Show();
+
+      p_metadata_widget = new MetadataWidget{p_mainWindwos, wxID_ANY};
+    };
+  }
+
   return wxApp::OnCmdLineParsed(parser);
 }
 
@@ -111,26 +133,6 @@ bool Doodle::OnInit() {
     runCommand();
     return true;
   }
-
-  p_mainWindwos = new mainWindows{};
-  const wxIcon& k_icon = wxICON(ID_DOODLE_ICON);
-  p_mainWindwos->SetIcon(k_icon);
-  this->SetTopWindow(p_mainWindwos);
-
-  p_systemTray = new systemTray{};
-  p_systemTray->SetIcon(k_icon,
-                        wxString::Format(
-                            wxString{"doodle-%d.%d.%d.%d"},
-                            Doodle_VERSION_MAJOR,
-                            Doodle_VERSION_MINOR,
-                            Doodle_VERSION_PATCH,
-                            Doodle_VERSION_TWEAK));
-  p_setting_widget = new SettingWidght{p_mainWindwos, wxID_ANY};
-  p_mainWindwos->Show();
-
-  p_metadata_widget = new MetadataWidget{p_mainWindwos, wxID_ANY};
-  // p_metadata_widget->Show();
-
   return true;
 }
 

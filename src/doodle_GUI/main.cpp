@@ -19,20 +19,23 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
   //初始化log
   Logger::doodle_initLog();
 
-  //初始化设置
+  ///@warning 初始化设置,在这里我们只初始化最基本的设置,即构造函数中的设置
+  ///在这里是没有复杂设置的, 比如一些客户端设置
   auto &set = doodle::CoreSet::getSet();
-  set.init();
+
   auto result = wxEntry(hInstance, hPrevInstance, nullptr, nCmdShow);
   boost::log::core::get()->remove_all_sinks();
-
+  set.clear();
   return result;
 } catch (const std::exception &err) {
   DOODLE_LOG_ERROR(err.what());
   doodle::CoreSet::getSet().writeDoodleLocalSet();
   boost::log::core::get()->remove_all_sinks();
+  doodle::CoreSet::getSet().clear();
   return 1;
 } catch (...) {
   doodle::CoreSet::getSet().writeDoodleLocalSet();
   boost::log::core::get()->remove_all_sinks();
+  doodle::CoreSet::getSet().clear();
   return 1;
 }

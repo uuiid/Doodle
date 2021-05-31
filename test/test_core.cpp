@@ -110,7 +110,7 @@ TEST_F(CoreTest, archive_polymorphism) {
 
   {
     doodle::ProjectPtr k1;
-    doodle::MetadataPtr k2;
+    doodle::ProjectPtr k2;
 
     cereal::JSONInputArchive json{str_stream};
     json(k1,k2);

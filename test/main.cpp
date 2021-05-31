@@ -35,5 +35,6 @@ int main(int argc, char *argv[]) {
   ::testing::AddGlobalTestEnvironment(new Environment);
   RUN_ALL_TESTS();
   boost::log::core::get()->remove_all_sinks();
+  doodle::CoreSet::getSet().clear();
   return 0;
 }

@@ -79,8 +79,5 @@ int MetadataSet::getProjectIndex() const {
 void MetadataSet::clear() {
   p_project_list.clear();
 }
-void MetadataSet::Init() {
-  p_project_list = MetadataFactory{}.getAllProject();
-}
 
 }  // namespace doodle

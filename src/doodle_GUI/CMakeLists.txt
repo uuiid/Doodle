@@ -3,8 +3,8 @@
 add_executable(DoodleExe
         WIN32
         doodle.manifest
-        main.cpp
         win_exe.rc
+        main.cpp
         )
 
 set_target_properties(DoodleExe

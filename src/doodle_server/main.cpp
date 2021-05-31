@@ -19,39 +19,37 @@
 #include <iostream>
 #include <thread>
 #include <queue>
-int main(int argc, char const *argv[]) try {
+#include <DoodleLib/DoodleLib.h>
+#include <boost/locale.hpp>
+extern "C" int WINAPI WinMain(HINSTANCE hInstance,
+                              HINSTANCE hPrevInstance,
+                              wxCmdLineArgType WXUNUSED(lpCmdLine),
+                              int nCmdShow) try {
+  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF );
+  //设置一下文件系统后端
+  auto k_local = boost::locale::generator().generate("");
+  boost::filesystem::path::imbue(k_local);
   //初始化log
   Logger::doodle_initLog();
-  //设置一下文件系统后端
-  boost::filesystem::path::imbue(boost::locale::generator()("zh_CN.UTF-8"));
 
-  auto &set = doodle::Seting::Get();
+  //初始化设置
+  auto &set = doodle::CoreSet::getSet();
   set.init();
 
-  zmq::context_t context{7, 1023};
+  auto result = wxEntry(hInstance, hPrevInstance, nullptr, nCmdShow);
 
-  zmq::socket_t socket{context, zmq::socket_type::router};
-  zmq::socket_t proxy_socket{context, zmq::socket_type::dealer};
-
-  socket.bind(doodle::endpoint);
-  proxy_socket.bind(doodle::proxy_point);
-
-  auto k_handler = doodle::Handler{};
-
-  std::queue<std::thread> thread_pool;
-  for (int i = 0; i < 8; ++i) {
-    std::thread t{
-        [=](doodle::Handler h, zmq::context_t *c) {
-          h(c);
-        },
-        k_handler, &context};
-    thread_pool.push(std::move(t));
-  }
-  zmq::proxy(socket, proxy_socket);
-  // boost::log::core::get()->remove_all_sinks();
-  return 0;
-} catch (const std::exception &error) {
-  std::cout << error.what() << std::endl;
   boost::log::core::get()->remove_all_sinks();
+  set.clear();
+  return result;
+} catch (const std::exception &err) {
+  DOODLE_LOG_ERROR(err.what());
+  doodle::CoreSet::getSet().writeDoodleLocalSet();
+  boost::log::core::get()->remove_all_sinks();
+  doodle::CoreSet::getSet().clear();
+  return 1;
+} catch (...) {
+  doodle::CoreSet::getSet().writeDoodleLocalSet();
+  boost::log::core::get()->remove_all_sinks();
+  doodle::CoreSet::getSet().clear();
   return 1;
 }

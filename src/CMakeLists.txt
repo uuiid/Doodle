@@ -4,7 +4,7 @@
 
 add_subdirectory(doodle_GUI)
 add_subdirectory(DoodleLib)
-# add_subdirectory(doodle_server)
+#add_subdirectory(doodle_server)
 #add_subdirectory(plug)
 
 #target_include_directories(core PUBLIC ${PROJECT_SOURCE_DIR}/include)

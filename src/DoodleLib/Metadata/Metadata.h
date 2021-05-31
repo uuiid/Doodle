@@ -13,6 +13,10 @@
 
 #include <optional>
 namespace doodle {
+/**
+ * @warning 这里这个基类是不进行cereal注册的要不然会序列化出错
+ *
+ */
 class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   friend MetadataFactory;
   friend RpcClient;
@@ -190,6 +194,7 @@ void Metadata::serialize(Archive &ar, std::uint32_t const version) {
         cereal::make_nvp("UUID", p_uuid));
 }
 }  // namespace doodle
-CEREAL_REGISTER_TYPE(doodle::Metadata)
-// CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::Metadata>, doodle::Metadata)
+
+//CEREAL_REGISTER_TYPE(doodle::Metadata)
+//CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::Metadata>, doodle::Metadata)
 CEREAL_CLASS_VERSION(doodle::Metadata, 1)

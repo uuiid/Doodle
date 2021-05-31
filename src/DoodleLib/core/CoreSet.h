@@ -39,9 +39,14 @@ class DOODLELIB_API CoreSet {
   static CoreSet &getSet();
 
   DOODLE_DISABLE_COPY(CoreSet)
-  //初始化函数
-  void init();
+  /**
+   * @brief 初始化gui设置
+   * 
+   */
+  void guiInit();
   void reInit();
+
+  void clear();
 
   void findMaya();
 
@@ -80,9 +85,12 @@ class DOODLELIB_API CoreSet {
 
   static FSys::path toIpPath(const FSys::path &path);
 
-  RpcClientPtr getRpcChild() const;
+  [[nodiscard]] RpcClientPtr getRpcChild() const;
  private:
-  //私有化构造函数
+  /**
+   * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
+   * 
+   */
   CoreSet();
   //获得缓存磁盘路径
   void getCacheDiskPath();
@@ -105,8 +113,6 @@ class DOODLELIB_API CoreSet {
   Ue4Setting &ue4_setting;
   MetadataSet &p_matadata_setting_;
 
-  std::vector<std::shared_ptr<Project>> p_project_list;
-  std::shared_ptr<Project> p_project;
   FSys::path p_mayaPath;
   RpcClientPtr p_rpc_clien;
 
