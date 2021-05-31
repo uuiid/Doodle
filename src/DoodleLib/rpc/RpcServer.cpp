@@ -40,8 +40,8 @@ grpc::Status RpcServer::GetProject(grpc::ServerContext *context, const google::p
     auto k_item = k_data->mutable_update_time();
     /// 这个到时候还要重新斟酌一下，有没有更快的转换方案
     auto k_time = std::chrono::system_clock::time_point{row.updateTime.value()};
-//    auto time   = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
-    *k_item     = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
+    //    auto time   = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
+    *k_item = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
 
     auto k_path = getPath(row.uuidPath.value());
     k_ifstream.open(k_path, std::ios::in | std::ios::binary);
@@ -49,14 +49,12 @@ grpc::Status RpcServer::GetProject(grpc::ServerContext *context, const google::p
       auto k_any = k_data->mutable_metadata_cereal();
       k_any->set_value(std::string{
           std::istreambuf_iterator<char>(k_ifstream),
-          std::istreambuf_iterator<char>()
-      });
-    } else{
+          std::istreambuf_iterator<char>()});
+    } else {
       continue;
     }
 
     k_ifstream.close();
-
   }
 
   return grpc::Status::OK;
@@ -65,25 +63,27 @@ grpc::Status RpcServer::GetChild(grpc::ServerContext *context, const DataDb *req
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
   auto k_date = response->mutable_data();
-  for(const auto& row : (*k_conn)(sqlpp::select(sqlpp::all_of(k_tab))
-                                   .from(k_tab)
-                                   .where(k_tab.parent == request->id()))){
+  for (const auto &row : (*k_conn)(sqlpp::select(sqlpp::all_of(k_tab))
+                                       .from(k_tab)
+                                       .where(k_tab.parent == request->id()))) {
     DataDb k_db{};
     k_db.set_id(row.id.value());
     k_db.mutable_parent()->set_value(row.parent.value());
     k_db.set_uuidpath(std::string{row.uuidPath.value()});
-    auto k_time = std::chrono::system_clock::time_point{row.updateTime.value()};
+    auto k_time      = std::chrono::system_clock::time_point{row.updateTime.value()};
     auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
     k_db.mutable_update_time()->CopyFrom(k_timestamp);
     k_date->Add(std::move(k_db));
   }
   return grpc::Status::OK;
 }
-void RpcServer::runServer() {
+void RpcServer::runServer(int port) {
   ///检查p_server防止重复调用
   if (p_Server)
     return;
-  std::string server_address{"localhost:50051"};
+  std::string server_address{"[::]:"};
+  server_address += std::to_string(port);
+
   RpcServer service{};
 
   grpc::ServerBuilder k_builder{};
@@ -97,36 +97,36 @@ void RpcServer::runServer() {
 }
 
 void RpcServer::stop() {
-  p_Server->Shutdown();
+  using namespace std::chrono_literals;
+  p_Server->Shutdown(google::protobuf::util::TimeUtil::SecondsToTimestamp(2));
+  std::this_thread::sleep_for(3s);
   p_Server.reset();
 }
 
 grpc::Status RpcServer::GetMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
-  for(const auto& row : (*k_conn)(sqlpp::select(sqlpp::all_of(k_tab))
-                                      .from(k_tab)
-                                      .where(k_tab.id == request->id()))){
+  for (const auto &row : (*k_conn)(sqlpp::select(sqlpp::all_of(k_tab))
+                                       .from(k_tab)
+                                       .where(k_tab.id == request->id()))) {
     ///设置一些普遍值
     response->set_id(row.id.value());
     response->mutable_parent()->set_value(row.parent.value());
-//    response->set_uuidpath(std::string{row.uuidPath.value()});
-//
-//    auto k_time = std::chrono::system_clock::time_point{row.updateTime.value()};
-//    auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
-//    response->mutable_update_time()->CopyFrom(k_timestamp);
-    FSys::ifstream k_ifstream{row.uuidPath.value(),std::ios::binary | std::ios::in};
+    //    response->set_uuidpath(std::string{row.uuidPath.value()});
+    //
+    //    auto k_time = std::chrono::system_clock::time_point{row.updateTime.value()};
+    //    auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
+    //    response->mutable_update_time()->CopyFrom(k_timestamp);
+    FSys::ifstream k_ifstream{row.uuidPath.value(), std::ios::binary | std::ios::in};
     if (k_ifstream.is_open() && k_ifstream.good()) {
       auto k_any = response->mutable_metadata_cereal();
       k_any->set_value(std::string{
           std::istreambuf_iterator<char>(k_ifstream),
-          std::istreambuf_iterator<char>()
-      });
-    } else{
+          std::istreambuf_iterator<char>()});
+    } else {
       /// 这里我们主动取消
       return grpc::Status::CANCELLED;
     }
-
   }
 
   return grpc::Status::OK;
@@ -154,7 +154,7 @@ grpc::Status RpcServer::InstallMetadata(grpc::ServerContext *context, const Data
   FSys::ofstream k_file{path, std::ios::out | std::ios::binary};
   if (k_file.is_open() && k_file.good()) {
     auto k_data = request->metadata_cereal().value();
-    k_file.write(k_data.data(),k_data.size());
+    k_file.write(k_data.data(), k_data.size());
   } else {
     return {grpc::StatusCode::FAILED_PRECONDITION, "打开文件错误"};
   }

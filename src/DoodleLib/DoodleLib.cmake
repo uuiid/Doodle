@@ -29,6 +29,7 @@ set(
 	PinYin/convert.h
 	ScreenshotWidght/ScreenshotAction.h
 	ScreenshotWidght/ScreenshotWidght.h
+	Server/ServerWidget.h
 	SettingWidght/settingWidget.h
 	core/ContainerDevice.h
 	core/CoreSet.h
@@ -77,6 +78,7 @@ set(
 	PinYin/convert.cpp
 	ScreenshotWidght/ScreenshotAction.cpp
 	ScreenshotWidght/ScreenshotWidght.cpp
+	Server/ServerWidget.cpp
 	SettingWidght/settingWidget.cpp
 	core/CoreSet.cpp
 	core/CoreSql.cpp

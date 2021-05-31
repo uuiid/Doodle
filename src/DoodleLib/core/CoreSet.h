@@ -78,6 +78,19 @@ class DOODLELIB_API CoreSet {
   [[nodiscard]] Ue4Setting &gettUe4Setting() const { return ue4_setting; };
   [[nodiscard]] MetadataSet &GetMetadataSet() const { return p_matadata_setting_; };
 
+  [[nodiscard]] int getSqlPort() const;
+  void setSqlPort(int in_sqlPort);
+  [[nodiscard]] const std::string &getSqlHost() const;
+  void setSqlHost(const std::string &in_sqlHost);
+  [[nodiscard]] const std::string &getSqlUser() const;
+  void setSqlUser(const std::string &in_sqlUser);
+  [[nodiscard]] const std::string &getSqlPassword() const;
+  void setSqlPassword(const std::string &in_sqlPassword);
+  [[nodiscard]] int getMetaRpcPort() const;
+  void setMetaRpcPort(int in_metaRpcPort);
+  [[nodiscard]] int getFileRpcPort() const;
+  void setFileRpcPort(int in_fileRpcPort);
+
   void writeDoodleLocalSet();
 
   boost::uuids::uuid getUUID();
@@ -86,6 +99,7 @@ class DOODLELIB_API CoreSet {
   static FSys::path toIpPath(const FSys::path &path);
 
   [[nodiscard]] RpcClientPtr getRpcChild() const;
+
  private:
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
@@ -115,6 +129,14 @@ class DOODLELIB_API CoreSet {
 
   FSys::path p_mayaPath;
   RpcClientPtr p_rpc_clien;
+
+  int p_sql_port;       ///< mysql 端口
+  int p_meta_rpc_port;  ///< 元数据端口
+  int p_file_rpc_port;    ///< filesys 文件传输端口
+
+  std::string p_sql_host;      ///< mysql数据库ip
+  std::string p_sql_user;      ///< mysql 用户名称
+  std::string p_sql_password;  ///< mysql 用户密码
 
   //这里是序列化的代码
   friend class cereal::access;

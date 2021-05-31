@@ -25,7 +25,7 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
 
   auto result = wxEntry(hInstance, hPrevInstance, nullptr, nCmdShow);
   boost::log::core::get()->remove_all_sinks();
-  set.clear();
+
   return result;
 } catch (const std::exception &err) {
   DOODLE_LOG_ERROR(err.what());

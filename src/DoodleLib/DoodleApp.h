@@ -35,6 +35,11 @@ class DOODLELIB_API Doodle : public wxApp {
   systemTray* p_systemTray;
   MetadataWidget* p_metadata_widget;
   std::function<void()> p_run_fun;
+
+  void guiInit();
+  void funMklink(const wxString& k_string) const;
+  void serverInit();
+
 };
 
 }  // namespace doodle

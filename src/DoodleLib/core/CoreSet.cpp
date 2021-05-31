@@ -25,9 +25,8 @@ void CoreSet::guiInit() {
   findMaya();
   getSetting();
 
-
   ///触发一次 CoreSql 初始化并测试数据库连接
-  auto &k_sql = CoreSql::Get();
+  auto &k_sql   = CoreSql::Get();
   auto test_sql = k_sql.getConnection();
 
   p_rpc_clien = std::make_shared<RpcClient>(
@@ -94,8 +93,13 @@ CoreSet::CoreSet()
       p_uuid_gen(),
       ue4_setting(Ue4Setting::Get()),
       p_matadata_setting_(MetadataSet::Get()),
-      p_mayaPath() {
-
+      p_mayaPath(),
+      p_sql_port(3306),
+      p_meta_rpc_port(60999),
+      p_file_rpc_port(60998),
+      p_sql_host("192.168.10.215"),
+      p_sql_user("deve"),
+      p_sql_password("deve") {
   ///这里我们手动做一些工作
   ///获取环境变量 FOLDERID_Documents
   PWSTR pManager;
@@ -214,6 +218,42 @@ RpcClientPtr CoreSet::getRpcChild() const {
 void CoreSet::clear() {
   p_rpc_clien.reset();
   p_matadata_setting_.clear();
+}
+int CoreSet::getSqlPort() const {
+  return p_sql_port;
+}
+void CoreSet::setSqlPort(int in_sqlPort) {
+  p_sql_port = in_sqlPort;
+}
+const std::string &CoreSet::getSqlHost() const {
+  return p_sql_host;
+}
+void CoreSet::setSqlHost(const std::string &in_sqlHost) {
+  p_sql_host = in_sqlHost;
+}
+const std::string &CoreSet::getSqlUser() const {
+  return p_sql_user;
+}
+void CoreSet::setSqlUser(const std::string &in_sqlUser) {
+  p_sql_user = in_sqlUser;
+}
+const std::string &CoreSet::getSqlPassword() const {
+  return p_sql_password;
+}
+void CoreSet::setSqlPassword(const std::string &in_sqlPassword) {
+  p_sql_password = in_sqlPassword;
+}
+int CoreSet::getMetaRpcPort() const {
+  return p_meta_rpc_port;
+}
+void CoreSet::setMetaRpcPort(int in_metaRpcPort) {
+  p_meta_rpc_port = in_metaRpcPort;
+}
+int CoreSet::getFileRpcPort() const {
+  return p_file_rpc_port;
+}
+void CoreSet::setFileRpcPort(int in_fileRpcPort) {
+  p_file_rpc_port = in_fileRpcPort;
 }
 
 DOODLE_NAMESPACE_E

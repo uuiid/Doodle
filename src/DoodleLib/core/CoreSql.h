@@ -15,8 +15,10 @@ class DOODLELIB_API CoreSql {
  public:
   DOODLE_DISABLE_COPY(CoreSql)
 
+  void Init();
   [[nodiscard]] static CoreSql& Get();
   [[nodiscard]] ConnPtr getConnection() const;
+
 };
 
 DOODLE_NAMESPACE_E

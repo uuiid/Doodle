@@ -31,6 +31,7 @@
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/ScreenshotWidght/ScreenshotAction.h>
 #include <DoodleLib/ScreenshotWidght/ScreenshotWidght.h>
+#include <DoodleLib/Server/ServerWidget.h>
 #include <DoodleLib/SettingWidght/settingWidget.h>
 #include <DoodleLib/core/ContainerDevice.h>
 #include <DoodleLib/core/CoreSet.h>
