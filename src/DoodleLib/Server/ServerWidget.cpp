@@ -80,6 +80,18 @@ void ServerWidget::bindServerWideget() const {
   p_sql_user->Bind(wxEVT_TEXT, [&set](wxCommandEvent& in_event) {
     set.setSqlUser(ConvStr<std::string>(in_event.GetString()));
   });
+  p_sql_password->Bind(wxEVT_TEXT, [&set](wxCommandEvent& in_event) {
+    set.setSqlPassword(ConvStr<std::string>(in_event.GetString()));
+  });
+  p_cache_root->Bind(wxEVT_TEXT, [&set](wxCommandEvent& in_event) {
+
+  });
+  p_meta_rpc_port->Bind(wxEVT_SPINCTRL, [&set](wxCommandEvent& in_event) {
+    set.setMetaRpcPort(in_event.GetInt());
+  });
+  p_file_rpc_port->Bind(wxEVT_SPINCTRL, [&set](wxCommandEvent& in_event) {
+    set.setFileRpcPort(in_event.GetInt());
+  });
 }
 
 }  // namespace doodle

@@ -71,11 +71,12 @@ class DOODLELIB_API CoreSet {
   //缓存路径
   [[nodiscard]] FSys::path getCacheRoot() const;
   [[nodiscard]] FSys::path getCacheRoot(const FSys::path &path) const;
+  void setCacheRoot(const FSys::path &path);
 
   // doc路径
   [[nodiscard]] FSys::path getDoc() const;
 
-  [[nodiscard]] Ue4Setting &gettUe4Setting() const { return ue4_setting; };
+  [[nodiscard]] Ue4Setting &gettUe4Setting() const { return p_ue4_setting; };
   [[nodiscard]] MetadataSet &GetMetadataSet() const { return p_matadata_setting_; };
 
   [[nodiscard]] int getSqlPort() const;
@@ -117,14 +118,14 @@ class DOODLELIB_API CoreSet {
   boost::uuids::random_generator p_uuid_gen;
 
   //用户名称
-  std::string user;
+  std::string p_user_;
   //部门
-  Department department;
+  Department p_department_;
 
-  FSys::path cacheRoot;
-  FSys::path doc;
+  FSys::path p_cache_root;
+  FSys::path p_doc;
 
-  Ue4Setting &ue4_setting;
+  Ue4Setting &p_ue4_setting;
   MetadataSet &p_matadata_setting_;
 
   FSys::path p_mayaPath;
@@ -132,7 +133,7 @@ class DOODLELIB_API CoreSet {
 
   int p_sql_port;       ///< mysql 端口
   int p_meta_rpc_port;  ///< 元数据端口
-  int p_file_rpc_port;    ///< filesys 文件传输端口
+  int p_file_rpc_port;  ///< filesys 文件传输端口
 
   std::string p_sql_host;      ///< mysql数据库ip
   std::string p_sql_user;      ///< mysql 用户名称
@@ -148,16 +149,16 @@ template <class Archive>
 void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
   if (version == 4)
     ar(
-        cereal::make_nvp("user", user),
-        cereal::make_nvp("department", department),
-        cereal::make_nvp("ue4_setting", ue4_setting),
+        cereal::make_nvp("user", p_user_),
+        cereal::make_nvp("department", p_department_),
+        cereal::make_nvp("ue4_setting", p_ue4_setting),
         cereal::make_nvp("matadata_setting", p_matadata_setting_),
         cereal::make_nvp("maya_Path", p_mayaPath));
   if (version == 5)
     ar(
-        cereal::make_nvp("user", user),
-        cereal::make_nvp("department", department),
-        cereal::make_nvp("ue4_setting", ue4_setting),
+        cereal::make_nvp("user", p_user_),
+        cereal::make_nvp("department", p_department_),
+        cereal::make_nvp("ue4_setting", p_ue4_setting),
         cereal::make_nvp("maya_Path", p_mayaPath));
 }
 

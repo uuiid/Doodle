@@ -61,22 +61,22 @@ void CoreSet::setMayaPath(const FSys::path &in_MayaPath) noexcept {
 }
 
 void CoreSet::writeDoodleLocalSet() {
-  ue4_setting.testValue();
-  if (ue4_setting.hasPath() && !FSys::exists(ue4_setting.Path() / DOODLE_UE_PATH)) {
-    ue4_setting.setPath({});
-    throw FileError{ue4_setting.Path(), " 在路径中没有找到ue,不保存"};
+  p_ue4_setting.testValue();
+  if (p_ue4_setting.hasPath() && !FSys::exists(p_ue4_setting.Path() / DOODLE_UE_PATH)) {
+    p_ue4_setting.setPath({});
+    throw FileError{p_ue4_setting.Path(), " 在路径中没有找到ue,不保存"};
   }
   if (!FSys::exists(p_mayaPath / "maya.exe")) {
     throw FileError{p_mayaPath, " 在路径中没有找到maya,不保存"};
   }
 
-  FSys::ofstream outjosn{doc / configFileName(), std::ios::out | std::ios::binary};
+  FSys::ofstream outjosn{p_doc / configFileName(), std::ios::out | std::ios::binary};
   cereal::PortableBinaryOutputArchive out{outjosn};
   out(*this);
 }
 
 void CoreSet::getSetting() {
-  static FSys::path k_settingFileName = doc / configFileName();
+  static FSys::path k_settingFileName = p_doc / configFileName();
   if (FSys::exists(k_settingFileName)) {
     FSys::path strFile(k_settingFileName);
     FSys::ifstream inJosn{k_settingFileName, std::ifstream::binary};
@@ -86,12 +86,12 @@ void CoreSet::getSetting() {
   }
 }
 CoreSet::CoreSet()
-    : user("user"),
-      department(Department::VFX),
-      cacheRoot("C:/Doodle_cache"),
-      doc("C:/Doodle_cache"),
+    : p_user_("user"),
+      p_department_(Department::VFX),
+      p_cache_root("C:/Doodle_cache"),
+      p_doc("C:/Doodle_cache"),
       p_uuid_gen(),
-      ue4_setting(Ue4Setting::Get()),
+      p_ue4_setting(Ue4Setting::Get()),
       p_matadata_setting_(MetadataSet::Get()),
       p_mayaPath(),
       p_sql_port(3306),
@@ -107,11 +107,11 @@ CoreSet::CoreSet()
   if (!pManager)
     throw DoodleError("无法找到保存路径");
 
-  doc = FSys::path{pManager} / "doodle";
+  p_doc = FSys::path{pManager} / "doodle";
   CoTaskMemFree(pManager);
 
-  if (!FSys::exists(doc))
-    FSys::create_directories(doc);
+  if (!FSys::exists(p_doc))
+    FSys::create_directories(p_doc);
   getCacheDiskPath();
   if (!FSys::exists(getCacheRoot())) {
     FSys::create_directories(getCacheRoot());
@@ -143,39 +143,43 @@ boost::uuids::uuid CoreSet::getUUID() {
 }
 
 std::string CoreSet::getDepartment() const {
-  return std::string{magic_enum::enum_name(department)};
+  return std::string{magic_enum::enum_name(p_department_)};
 }
 
 const Department &CoreSet::getDepartmentEnum() const {
-  return department;
+  return p_department_;
 }
 
 void CoreSet::setDepartment(const std::string &value) {
-  department = magic_enum::enum_cast<Department>(value).value_or(Department::VFX);
+  p_department_ = magic_enum::enum_cast<Department>(value).value_or(Department::VFX);
 }
 
-std::string CoreSet::getUser() const { return user; }
+std::string CoreSet::getUser() const { return p_user_; }
 
 std::string CoreSet::getUser_en() const {
   return boost::algorithm::to_lower_copy(
-      convert::Get().toEn(user));
+      convert::Get().toEn(p_user_));
 }
 
 void CoreSet::setUser(const std::string &value) {
-  user = value;
+  p_user_ = value;
 }
 
-FSys::path CoreSet::getDoc() const { return doc; }
+FSys::path CoreSet::getDoc() const { return p_doc; }
 
 FSys::path CoreSet::getCacheRoot() const {
-  return cacheRoot;
+  return p_cache_root;
 }
 
 FSys::path CoreSet::getCacheRoot(const FSys::path &in_path) const {
-  auto path = cacheRoot / in_path;
+  auto path = p_cache_root / in_path;
   if (!FSys::exists(path))
     FSys::create_directories(path);
   return path;
+}
+
+void CoreSet::setCacheRoot(const FSys::path &path) {
+  p_cache_root = path;
 }
 
 void CoreSet::getCacheDiskPath() {
@@ -192,7 +196,7 @@ void CoreSet::getCacheDiskPath() {
     if (FSys::exists(dir)) {
       auto info = FSys::space(dir);
       if (((float)info.available / (float)info.available) > 0.05) {
-        cacheRoot = dir + "Doodle_cache";
+        p_cache_root = dir + "Doodle_cache";
         break;
       }
     }
