@@ -27,6 +27,7 @@
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Metadata/TimeDuration.h>
+#include <DoodleLib/Metadata/View/ProjectManageWidget.h>
 #include <DoodleLib/Metadata/View/ShotListWidget.h>
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/ScreenshotWidght/ScreenshotAction.h>

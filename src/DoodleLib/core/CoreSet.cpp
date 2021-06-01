@@ -13,6 +13,8 @@
 #include <cereal/archives/portable_binary.hpp>
 #include <magic_enum.hpp>
 #include <nlohmann/json.hpp>
+#include <sqlpp11/mysql/mysql.h>
+
 
 DOODLE_NAMESPACE_S
 

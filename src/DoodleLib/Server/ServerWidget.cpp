@@ -1,6 +1,7 @@
 #include <DoodleLib/Server/ServerWidget.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/rpc/RpcServer.h>
+#include <DoodleLib/DoodleApp.h>
 
 #include <wx/spinctrl.h>
 
@@ -29,47 +30,75 @@ ServerWidget::ServerWidget()
       p_file_rpc_port(new wxSpinCtrl{this, NewControlId()}),
       p_start_rpc(new wxButton{this, NewControlId()}),
       p_reStart_rpc(new wxButton{this, NewControlId()}) {
-  auto layout = new wxFlexGridSizer{2};
+  p_sql_port->SetMin(0);
+  p_sql_port->SetMax(65535);
+
+  p_meta_rpc_port->SetMin(0);
+  p_meta_rpc_port->SetMax(65535);
+
+  p_file_rpc_port->SetMin(0);
+  p_file_rpc_port->SetMax(65535);
+
+  auto layout = new wxBoxSizer{wxVERTICAL};
   /// 布局函数
   layoutServerWidget(layout);
   /// 初始化值设置
   Init();
+  bindServerWideget();
+
+  Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
+    auto k_r = wxMessageDialog{
+        this,
+        ConvStr<wxString>("关闭服务器并关闭程序")}
+                   .ShowModal();
+    if (k_r == wxID_OK) {
+      RpcServer::stop();
+      wxGetApp().Exit();
+    } else {
+      if (event.CanVeto())
+        event.Veto(false);
+    }
+  });
 }
-void ServerWidget::layoutServerWidget(wxFlexGridSizer* layout) {
-  layout->Add(
-      new wxStaticText{this, NewControlId(), ConvStr<wxString>("mysql ip地址")},
-      wxSizerFlags{0}.Expand());
-  layout->Add(p_sql_host, wxSizerFlags{0}.Expand());
+void ServerWidget::layoutServerWidget(wxSizer* layout) {
+  auto k_layout = labelAndWidget("mysql ip地址: ", p_sql_host);
+  layout->Add(k_layout, wxSizerFlags{0}.Expand().Proportion(1));
+  k_layout = labelAndWidget("mysql 端口: ", p_sql_port);
+  layout->Add(k_layout, wxSizerFlags{0}.Expand().Proportion(1));
 
-  layout->Add(
-      new wxStaticText{this, NewControlId(), ConvStr<wxString>("mysql 端口")},
-      wxSizerFlags{0}.Expand());
-  layout->Add(p_sql_port, wxSizerFlags{0}.Expand());
+  k_layout = labelAndWidget("mysql 用户名: ", p_sql_user);
+  layout->Add(k_layout, wxSizerFlags{0}.Expand().Proportion(1));
 
-  layout->Add(
-      new wxStaticText{this, NewControlId(), ConvStr<wxString>("mysql 用户名")},
-      wxSizerFlags{0}.Expand());
-  layout->Add(p_sql_user, wxSizerFlags{0}.Expand());
+  k_layout = labelAndWidget("mysql 密码: ", p_sql_password);
+  layout->Add(k_layout, wxSizerFlags{0}.Expand().Proportion(1));
 
-  layout->Add(
-      new wxStaticText{this, NewControlId(), ConvStr<wxString>("mysql 密码")},
-      wxSizerFlags{0}.Expand());
-  layout->Add(p_sql_password, wxSizerFlags{0}.Expand());
+  k_layout = labelAndWidget("文件储存路径: ", p_cache_root);
+  layout->Add(k_layout, wxSizerFlags{0}.Expand().Proportion(1));
 
-  layout->Add(
-      new wxStaticText{this, NewControlId(), ConvStr<wxString>("文件储存路径")},
-      wxSizerFlags{0}.Expand());
-  layout->Add(p_cache_root, wxSizerFlags{0}.Expand());
+  k_layout = labelAndWidget("元数据rpc服务端口: ", p_meta_rpc_port);
+  layout->Add(k_layout, wxSizerFlags{0}.Expand().Proportion(1));
 
-  layout->Add(
-      new wxStaticText{this, NewControlId(), ConvStr<wxString>("元数据rpc服务端口")},
-      wxSizerFlags{0}.Expand());
-  layout->Add(p_meta_rpc_port, wxSizerFlags{0}.Expand());
+  k_layout = labelAndWidget("文件服务器rpc服务端口: ", p_file_rpc_port);
+  layout->Add(k_layout, wxSizerFlags{0}.Expand().Proportion(1));
 
-  layout->Add(
-      new wxStaticText{this, NewControlId(), ConvStr<wxString>("文件服务器rpc服务端口")},
-      wxSizerFlags{0}.Expand());
-  layout->Add(p_file_rpc_port, wxSizerFlags{0}.Expand());
+  auto h_layout = new wxBoxSizer{wxHORIZONTAL};
+  h_layout->Add(p_start_rpc, wxSizerFlags{0}.Expand().Proportion(1));
+  h_layout->Add(p_reStart_rpc, wxSizerFlags{0}.Expand().Proportion(1));
+
+  layout->Add(h_layout, wxSizerFlags{0}.Expand().Proportion(1));
+
+  SetSizer(layout);
+  layout->SetSizeHints(this);
+}
+
+wxSizer* ServerWidget::labelAndWidget(const std::string& in_label,
+                                      wxWindow* in_ctrl) {
+  auto k_layout = new wxBoxSizer{wxHORIZONTAL};
+  auto k_label  = new wxStaticText{this, NewControlId(), ConvStr<wxString>(in_label)};
+  k_label->SetMinSize({120, -1});
+  k_layout->Add(k_label, wxSizerFlags{0}.Expand());
+  k_layout->Add(in_ctrl, wxSizerFlags{0}.Expand().Proportion(1));
+  return k_layout;
 }
 void ServerWidget::bindServerWideget() const {
   auto& set = CoreSet::getSet();

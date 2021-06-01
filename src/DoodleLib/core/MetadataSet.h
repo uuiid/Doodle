@@ -31,6 +31,7 @@ class DOODLELIB_API MetadataSet {
   boost::signals2::signal<void (const Project *,int)> sig_Projectdelete;
   boost::signals2::signal<void (const Project *,int)> sig_projectChange;
   boost::signals2::signal<void (const Project *,int)> sig_projectAdd;
+  
  private:
   //这里是序列化的代码
   friend class cereal::access;

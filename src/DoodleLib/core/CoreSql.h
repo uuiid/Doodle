@@ -1,7 +1,8 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <sqlpp11/mysql/mysql.h>
+
+
 DOODLE_NAMESPACE_S
 /**
  * @brief 这个是sql连接单例， 负责配置生成sql连接

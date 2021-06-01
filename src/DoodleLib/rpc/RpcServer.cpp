@@ -12,11 +12,10 @@
 #include <cereal/archives/portable_binary.hpp>
 #include <core/MetadataTabSql.h>
 #include <sqlpp11/sqlpp11.h>
+#include <sqlpp11/mysql/mysql.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/server_builder.h>
-//#include <grpcpp/server_context.h>
-//#include <grpcpp/server.h>
-//#include <grpcpp/security/server_credentials.h>
+
 
 namespace doodle {
 

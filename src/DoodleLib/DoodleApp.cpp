@@ -40,9 +40,13 @@ Doodle::Doodle()
 };
 
 int Doodle::OnExit() {
-  p_mainWindwos->Destroy();
-  p_systemTray->Destroy();
+  if (p_mainWindwos)
+    p_mainWindwos->Destroy();
+  if (p_systemTray)
+    p_systemTray->Destroy();
+
   CoreSet::getSet().clear();
+  
   return wxApp::OnExit();
 }
 
@@ -70,15 +74,16 @@ bool Doodle::OnCmdLineParsed(wxCmdLineParser& parser) {
 
   if (parser.Found(staticValue::serverObj())) {
     p_run_fun = [this]() { serverInit(); };
+    return wxApp::OnCmdLineParsed(parser);
   }
 
-  if (p_run_fun) {
+  if (!p_run_fun) {
     p_run_fun = [this]() { guiInit(); };
   }
 
   return wxApp::OnCmdLineParsed(parser);
 }
-void Doodle::funMklink(const wxString& k_string) const {
+void Doodle::funMklink(const wxString& k_string) {
   std::vector<std::string> str;
   boost::split(str, ConvStr<std::string>(k_string), boost::is_any_of(";"));
   if (str.size() % 2 == 0) {
@@ -90,6 +95,7 @@ void Doodle::funMklink(const wxString& k_string) const {
   } else {
     DOODLE_LOG_INFO("来源和目标不匹配,无法映射");
   }
+  Exit();
 }
 void Doodle::guiInit() {
   CoreSet::getSet().guiInit();
@@ -123,10 +129,6 @@ void Doodle::openMetadaWindow() const {
   p_metadata_widget->Show();
 }
 
-void Doodle::runCommand() {
-  p_run_fun();
-  Exit();
-}
 // bool Doodle::OnExceptionInMainLoop() {
 //   this->Exception();
 //   try {
@@ -150,14 +152,14 @@ bool Doodle::OnInit() {
   }
 
   if (p_run_fun) {
-    runCommand();
+    p_run_fun();
     return true;
   }
   return true;
 }
 void Doodle::serverInit() {
   p_server_widget = new ServerWidget{};
-  p_server_widget;
+  p_server_widget->Show();
 }
 
 }  // namespace doodle

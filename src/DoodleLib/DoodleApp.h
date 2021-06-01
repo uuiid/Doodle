@@ -33,7 +33,6 @@ class DOODLELIB_API Doodle : public wxApp {
   // virtual bool OnExceptionInMainLoop() override;
 
  private:
-  void runCommand();
   mainWindows* p_mainWindwos;
   SettingWidght* p_setting_widget;
   systemTray* p_systemTray;
@@ -42,7 +41,7 @@ class DOODLELIB_API Doodle : public wxApp {
   std::function<void()> p_run_fun;
 
   void guiInit();
-  void funMklink(const wxString& k_string) const;
+  void funMklink(const wxString& k_string);
   void serverInit();
 };
 

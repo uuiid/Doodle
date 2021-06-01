@@ -17,7 +17,9 @@ class DOODLELIB_API ServerWidget : public wxFrame {
   wxButton* p_start_rpc;
   wxButton* p_reStart_rpc;
   void Init();
-  void layoutServerWidget(wxFlexGridSizer* layout);
+  void layoutServerWidget(wxSizer* layout);
+  wxSizer* labelAndWidget(const std::string& in_label,
+                      wxWindow* in_ctrl);
   void bindServerWideget() const;
 
  public:

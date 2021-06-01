@@ -25,7 +25,7 @@ void CoreSql::Init() {
   config->database = "doodle";
 #else
   config->debug    = true;
-  config->database = "doodle_tset";
+  config->database = "doodle_test";
 #endif
 }
 

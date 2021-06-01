@@ -25,6 +25,7 @@ set(
 	Metadata/Project.h
 	Metadata/Shot.h
 	Metadata/TimeDuration.h
+	Metadata/View/ProjectManageWidget.h
 	Metadata/View/ShotListWidget.h
 	PinYin/convert.h
 	ScreenshotWidght/ScreenshotAction.h
@@ -74,6 +75,7 @@ set(
 	Metadata/Project.cpp
 	Metadata/Shot.cpp
 	Metadata/TimeDuration.cpp
+	Metadata/View/ProjectManageWidget.cpp
 	Metadata/View/ShotListWidget.cpp
 	PinYin/convert.cpp
 	ScreenshotWidght/ScreenshotAction.cpp

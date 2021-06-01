@@ -47,7 +47,7 @@
             "program": "${command:cmake.launchTargetPath}",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
+            "cwd": "${workspaceFolder}/b_Ninja_VS19_Ni_64_qt515_Debug/bin",
             "environment": [],
             "console": "integratedTerminal",
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
@@ -61,7 +61,7 @@
                 "-server"
             ],
             "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
+            "cwd": "${workspaceFolder}/b_Ninja_VS19_Ni_64_qt515_Debug/bin",
             "environment": [],
             "console": "integratedTerminal",
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
