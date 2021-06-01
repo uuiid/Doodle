@@ -1,5 +1,7 @@
 #include <DoodleLib/Server/ServerWidget.h>
 #include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/rpc/RpcServer.h>
+
 #include <wx/spinctrl.h>
 
 namespace doodle {
@@ -84,13 +86,20 @@ void ServerWidget::bindServerWideget() const {
     set.setSqlPassword(ConvStr<std::string>(in_event.GetString()));
   });
   p_cache_root->Bind(wxEVT_TEXT, [&set](wxCommandEvent& in_event) {
-
+    set.setCacheRoot(ConvStr<std::string>(in_event.GetString()));
   });
   p_meta_rpc_port->Bind(wxEVT_SPINCTRL, [&set](wxCommandEvent& in_event) {
     set.setMetaRpcPort(in_event.GetInt());
   });
   p_file_rpc_port->Bind(wxEVT_SPINCTRL, [&set](wxCommandEvent& in_event) {
     set.setFileRpcPort(in_event.GetInt());
+  });
+  p_start_rpc->Bind(wxEVT_BUTTON, [&set](wxCommandEvent& in_evrnt) {
+    RpcServer::runServer(set.getMetaRpcPort());
+  });
+  p_reStart_rpc->Bind(wxEVT_BUTTON, [&set](wxCommandEvent& in_event) {
+    RpcServer::stop();
+    RpcServer::runServer(set.getMetaRpcPort());
   });
 }
 

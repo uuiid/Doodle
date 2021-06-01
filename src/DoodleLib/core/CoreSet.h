@@ -159,6 +159,7 @@ void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
         cereal::make_nvp("user", p_user_),
         cereal::make_nvp("department", p_department_),
         cereal::make_nvp("ue4_setting", p_ue4_setting),
+        cereal::make_nvp("matadata_setting", p_matadata_setting_),
         cereal::make_nvp("maya_Path", p_mayaPath));
 }
 

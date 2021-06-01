@@ -51,6 +51,20 @@
             "environment": [],
             "console": "integratedTerminal",
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
+        },
+        {
+            "name": "Doodle_server_debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [
+                "-server"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${command:cmake.launchTargetDirectory}",
+            "environment": [],
+            "console": "integratedTerminal",
+            "visualizerFile": "${workspaceFolder}/qt5.natvis"
         }
     ]
 }

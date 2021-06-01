@@ -93,13 +93,17 @@ void RpcServer::runServer(int port) {
   //  auto t = k_builder.BuildAndStart();
   p_Server = std::move(k_builder.BuildAndStart());
   DOODLE_LOG_INFO("Server listening on " << server_address);
-  p_Server->Wait();
 }
 
 void RpcServer::stop() {
+  if (!p_Server)
+    return;
   using namespace std::chrono_literals;
-  p_Server->Shutdown(google::protobuf::util::TimeUtil::SecondsToTimestamp(2));
-  std::this_thread::sleep_for(3s);
+  auto k_time = std::chrono::system_clock::now() + 2s;
+  
+  p_Server->Shutdown(k_time);
+  p_Server->Wait();
+  // std::this_thread::sleep_for(3s);
   p_Server.reset();
 }
 

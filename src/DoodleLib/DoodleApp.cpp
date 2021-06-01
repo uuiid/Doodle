@@ -13,6 +13,8 @@
 #include <DoodleLib/mainWidght/MklinkWidget.h>
 #include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>
+#include <DoodleLib/Server/ServerWidget.h>
+
 #include <wx/cmdline.h>
 #include <wx/wxprec.h>
 
@@ -22,9 +24,18 @@
 wxIMPLEMENT_APP_NO_MAIN(doodle::Doodle);
 
 namespace doodle {
+
+DOODLE_STR_S(fun)
+DOODLE_STR_S(server)
+
 Doodle::Doodle()
-    : p_mainWindwos(nullptr),
-      p_setting_widget(nullptr) {
+    : wxApp(),
+      p_mainWindwos(),
+      p_setting_widget(),
+      p_systemTray(),
+      p_metadata_widget(),
+      p_server_widget(),
+      p_run_fun() {
   ;
 };
 
@@ -38,33 +49,31 @@ int Doodle::OnExit() {
 void Doodle::OnInitCmdLine(wxCmdLineParser& parser) {
   // parser.SetSwitchChars(ConvStr<wxString>("-"));
   wxApp::OnInitCmdLine(parser);
-  parser.AddSwitch("fun");
+  parser.AddSwitch(staticValue::funObj());
   for (const auto& name : magic_enum::enum_names<funName>()) {
     parser.AddOption(ConvStr<wxString>(std::string{name}));
   }
+  parser.AddSwitch(staticValue::serverObj());
 }
 
 bool Doodle::OnCmdLineParsed(wxCmdLineParser& parser) {
   wxString k_string{};
-  if (parser.Found("fun")) {
+  if (parser.Found(staticValue::funObj())) {
     if (parser.Found(
             ConvStr<wxString>(std::string(magic_enum::enum_name(funName::mklink))),
             &k_string)) {
       //创建功能
-      p_run_fun = [k_string, this]() {
-        funMklink(k_string);
-      };
+      p_run_fun = [k_string, this]() { funMklink(k_string); };
       return wxApp::OnCmdLineParsed(parser);
     }
   }
 
-  if (parser.Found("server")) {
+  if (parser.Found(staticValue::serverObj())) {
+    p_run_fun = [this]() { serverInit(); };
   }
 
   if (p_run_fun) {
-    p_run_fun = [this]() {
-      guiInit();
-    };
+    p_run_fun = [this]() { guiInit(); };
   }
 
   return wxApp::OnCmdLineParsed(parser);
@@ -147,6 +156,8 @@ bool Doodle::OnInit() {
   return true;
 }
 void Doodle::serverInit() {
+  p_server_widget = new ServerWidget{};
+  p_server_widget;
 }
 
 }  // namespace doodle
