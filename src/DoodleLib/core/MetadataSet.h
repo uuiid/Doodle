@@ -26,6 +26,7 @@ class DOODLELIB_API MetadataSet {
   [[nodiscard]] int getProjectIndex() const;
 
   void clear();
+  void init();
   DOODLE_DISABLE_COPY(MetadataSet)
 
   boost::signals2::signal<void (const Project *,int)> sig_Projectdelete;

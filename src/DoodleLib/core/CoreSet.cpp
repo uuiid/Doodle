@@ -15,7 +15,6 @@
 #include <nlohmann/json.hpp>
 #include <sqlpp11/mysql/mysql.h>
 
-
 DOODLE_NAMESPACE_S
 
 CoreSet &CoreSet::getSet() {
@@ -34,7 +33,8 @@ void CoreSet::guiInit() {
   p_rpc_clien = std::make_shared<RpcClient>(
       grpc::CreateChannel("localhost:50051",
                           grpc::InsecureChannelCredentials()));
-  p_matadata_setting_.p_project_list = p_rpc_clien->GetProject();
+
+  p_matadata_setting_.init();
 }
 
 void CoreSet::reInit() {

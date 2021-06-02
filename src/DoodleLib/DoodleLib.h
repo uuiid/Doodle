@@ -24,6 +24,7 @@
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/MetadataWidget.h>
 #include <DoodleLib/Metadata/Model/AssstsTree.h>
+#include <DoodleLib/Metadata/Model/ProjectManage.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Metadata/TimeDuration.h>

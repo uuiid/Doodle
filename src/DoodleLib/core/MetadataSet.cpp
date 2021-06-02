@@ -5,6 +5,7 @@
 #include <core/MetadataSet.h>
 #include <Exception/Exception.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/core/CoreSet.h>
 
 #include <rpc/RpcClient.h>
 
@@ -46,8 +47,8 @@ void MetadataSet::setProject_(const ProjectPtr &Project_) {
   p_project = Project_;
   sig_projectChange(p_project.get(), getIntex(it));
 }
-int MetadataSet::getIntex(const std::vector<ProjectPtr>::const_iterator &it) const{
-  return boost::numeric_cast<int>(std::distance(p_project_list.begin(),it));
+int MetadataSet::getIntex(const std::vector<ProjectPtr>::const_iterator &it) const {
+  return boost::numeric_cast<int>(std::distance(p_project_list.begin(), it));
 }
 
 void MetadataSet::setProject_(const Project *Project_) {
@@ -78,6 +79,16 @@ int MetadataSet::getProjectIndex() const {
 }
 void MetadataSet::clear() {
   p_project_list.clear();
+}
+
+void MetadataSet::init() {
+  p_project_list = CoreSet::getSet().getRpcChild()->GetProject();
+  auto it        = std::find_if(p_project_list.begin(), p_project_list.end(),
+                         [this](const ProjectPtr &in_prj) { return in_prj->getId() == this->p_project->getId(); });
+  if (it != p_project_list.end())
+    p_project = *it;
+  else
+    p_project.reset();
 }
 
 }  // namespace doodle

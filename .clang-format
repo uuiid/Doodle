@@ -1,4 +1,5 @@
 BasedOnStyle: Google
-SortIncludes: CaseInsensitive
+# SortIncludes: CaseInsensitive
 ColumnLimit: 0
-# AlignConsecutiveAssignments: true
+AlignConsecutiveAssignments: true
+AlignAfterOpenBracket: Align

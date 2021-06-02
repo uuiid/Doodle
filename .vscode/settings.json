@@ -150,17 +150,14 @@
             "cwd": "${workspaceFolder}"
         }
     ],
-    "C_Cpp.clang_format_style": "{BasedOnStyle: Google, SortIncludes: false, ColumnLimit: 0,AlignConsecutiveAssignments: true,AlignAfterOpenBracket: Align}",
     "cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}",
     "cmake.configureSettings": {},
-
     "python.envFile": "${workspaceFolder}/.env",
     "python.formatting.autopep8Args": [
         "--ignore",
         "E402"
     ],
     "editor.tabSize": 2,
-
     "editor.fontFamily": " 'Fira Code',Consolas, monospace",
     "editor.fontLigatures": true,
     "files.exclude": {
@@ -169,9 +166,13 @@
         "**/.hg": true,
         ".idea": true,
         ".vs": true,
-        "b_Ninja*": false,
-        "install*": true
+        "b_Ninja_VS19_Ni_64_qt515_Debug": true,
+        "b_Ninja_VS19_Ni_64_qt515_Release": true,
+        "install*": true,
+        "cmake-build-debug-vs2019": true,
+        "cmake-build-release-vs2019": true,
+        ".vscode": true,
+        "venv": true
     },
-    "C_Cpp.exclusionPolicy": "checkFilesAndFolders",
-
+    "C_Cpp.exclusionPolicy": "checkFolders",
 }
