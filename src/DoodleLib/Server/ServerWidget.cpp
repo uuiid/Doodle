@@ -1,8 +1,7 @@
+#include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/Server/ServerWidget.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/rpc/RpcServer.h>
-#include <DoodleLib/DoodleApp.h>
-
 #include <wx/spinctrl.h>
 
 namespace doodle {
@@ -59,6 +58,7 @@ ServerWidget::ServerWidget()
         event.Veto(false);
     }
   });
+  // RpcServer::runServer(CoreSet::getSet().getMetaRpcPort());
 }
 void ServerWidget::layoutServerWidget(wxSizer* layout) {
   auto k_layout = labelAndWidget("mysql ip地址: ", p_sql_host);
@@ -89,6 +89,7 @@ void ServerWidget::layoutServerWidget(wxSizer* layout) {
 
   SetSizer(layout);
   layout->SetSizeHints(this);
+  this->Center();
 }
 
 wxSizer* ServerWidget::labelAndWidget(const std::string& in_label,

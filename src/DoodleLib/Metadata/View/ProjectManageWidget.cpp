@@ -8,10 +8,10 @@
 // #include <winrt/Windows.Foundation.Collections.h>
 #include <wx/dataview.h>
 namespace doodle {
-void ProjectManageWidget::contextMenu(wxDataViewEvent& in_event) {
-  wxMenu k_menu{};
-  auto add_prj = k_menu.AppendCheckItem(NewControlId(), ConvStr<wxString>(""));
-}
+// void ProjectManageWidget::contextMenu(wxDataViewEvent& in_event) {
+//   wxMenu k_menu{};
+//   auto add_prj = k_menu.AppendCheckItem(NewControlId(), ConvStr<wxString>(""));
+// }
 
 ProjectManageWidget::ProjectManageWidget(wxWindow* in_parent, MetadataFactoryPtr in_factory)
     : wxFrame(
@@ -45,7 +45,7 @@ ProjectManageWidget::ProjectManageWidget(wxWindow* in_parent, MetadataFactoryPtr
   layout->SetSizeHints(this);
   this->Center();
 
-  k_ctrl->Bind(wxEVT_DATAVIEW_ITEM_CONTEXT_MENU, &ProjectManageWidget::contextMenu, this);
+//   k_ctrl->Bind(wxEVT_DATAVIEW_ITEM_CONTEXT_MENU, &ProjectManageWidget::contextMenu, this);
 }
 
 }  // namespace doodle

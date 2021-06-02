@@ -72,6 +72,7 @@ bool ProjectManage::SetValue(const wxVariant& variant, const wxDataViewItem& ite
     default:
       break;
   }
+  return true;
 }
 
 unsigned int ProjectManage::GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const {
@@ -81,6 +82,7 @@ unsigned int ProjectManage::GetChildren(const wxDataViewItem& item, wxDataViewIt
   for (const auto& k_i : p_project) {
     children.Add(wxDataViewItem{k_i.get()});
   };
+  return p_project.size();
 }
 
 void ProjectManage::addProject(const ProjectPtr& prj) {

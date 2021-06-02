@@ -47,7 +47,7 @@
             "program": "${command:cmake.launchTargetPath}",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/b_Ninja_VS19_Ni_64_qt515_Debug/bin",
+            "cwd": "${command:cmake.getLaunchTargetDirectory}",
             "environment": [],
             "console": "integratedTerminal",
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
@@ -61,10 +61,16 @@
                 "-server"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/b_Ninja_VS19_Ni_64_qt515_Debug/bin",
+            "cwd": "${command:cmake.getLaunchTargetDirectory}",
             "environment": [],
             "console": "integratedTerminal",
             "visualizerFile": "${workspaceFolder}/qt5.natvis"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Doodle_sercer/client",
+            "configurations": ["Doodle_server_debug","Doodle_debug"]
         }
     ]
 }

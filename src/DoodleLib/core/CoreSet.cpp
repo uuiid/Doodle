@@ -1,19 +1,21 @@
 #include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
 #include <DoodleLib/rpc/RpcClient.h>
 #include <ShlObj.h>
 #include <grpcpp/grpcpp.h>
+#include <sqlpp11/mysql/mysql.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
+#include <boost/format.hpp>
 #include <boost/process.hpp>
 #include <boost/regex.hpp>
 #include <cereal/archives/portable_binary.hpp>
 #include <magic_enum.hpp>
 #include <nlohmann/json.hpp>
-#include <sqlpp11/mysql/mysql.h>
 
 DOODLE_NAMESPACE_S
 
@@ -30,8 +32,12 @@ void CoreSet::guiInit() {
   auto &k_sql   = CoreSql::Get();
   auto test_sql = k_sql.getConnection();
 
+  boost::format ip_ch{"%s:%i"};
+  ip_ch % "localhost" % p_meta_rpc_port;
+  DOODLE_LOG_DEBUG(ip_ch.str())
+
   p_rpc_clien = std::make_shared<RpcClient>(
-      grpc::CreateChannel("localhost:50051",
+      grpc::CreateChannel(ip_ch.str(),
                           grpc::InsecureChannelCredentials()));
 
   p_matadata_setting_.init();
@@ -96,6 +102,11 @@ CoreSet::CoreSet()
       p_ue4_setting(Ue4Setting::Get()),
       p_matadata_setting_(MetadataSet::Get()),
       p_mayaPath(),
+#ifdef NDEBUG
+      p_server_host("192.168.10.215"),
+#else
+      p_server_host("192.168.10.213"),
+#endif
       p_sql_port(3306),
       p_meta_rpc_port(60999),
       p_file_rpc_port(60998),

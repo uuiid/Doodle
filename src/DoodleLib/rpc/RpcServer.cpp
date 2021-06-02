@@ -2,20 +2,19 @@
 // Created by TD on 2021/5/25.
 //
 
-#include <DoodleLib/rpc/RpcServer.h>
 #include <DoodleLib/core/CoreSql.h>
+#include <DoodleLib/rpc/RpcServer.h>
 //#include <DoodleLib/Exception/Exception.h>
 //#include <DoodleLib/core/ContainerDevice.h>
 //#include <DoodleLib/Metadata/Metadata.h>
 #include <Logger/Logger.h>
-
-#include <cereal/archives/portable_binary.hpp>
 #include <core/MetadataTabSql.h>
-#include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/mysql/mysql.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/server_builder.h>
+#include <sqlpp11/mysql/mysql.h>
+#include <sqlpp11/sqlpp11.h>
 
+#include <cereal/archives/portable_binary.hpp>
 
 namespace doodle {
 
@@ -55,6 +54,10 @@ grpc::Status RpcServer::GetProject(grpc::ServerContext *context, const google::p
 
     k_ifstream.close();
   }
+  // /// 我们在数据库中没有任何项目时添加以前占位项目， 以防grpc出错
+  // if (response->data_size() == 0) {
+  //   response->add_data()->set_id(-1);
+  // }
 
   return grpc::Status::OK;
 }
@@ -80,7 +83,7 @@ void RpcServer::runServer(int port) {
   ///检查p_server防止重复调用
   if (p_Server)
     return;
-  std::string server_address{"[::]:"};
+  std::string server_address{"localhost:"};
   server_address += std::to_string(port);
 
   RpcServer service{};
@@ -92,6 +95,7 @@ void RpcServer::runServer(int port) {
   //  auto t = k_builder.BuildAndStart();
   p_Server = std::move(k_builder.BuildAndStart());
   DOODLE_LOG_INFO("Server listening on " << server_address);
+  p_Server->Wait();
 }
 
 void RpcServer::stop() {
@@ -99,7 +103,7 @@ void RpcServer::stop() {
     return;
   using namespace std::chrono_literals;
   auto k_time = std::chrono::system_clock::now() + 2s;
-  
+
   p_Server->Shutdown(k_time);
   p_Server->Wait();
   // std::this_thread::sleep_for(3s);

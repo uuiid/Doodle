@@ -175,4 +175,5 @@
         "venv": true
     },
     "C_Cpp.exclusionPolicy": "checkFolders",
+    "cmake.buildBeforeRun": false
 }

@@ -4,12 +4,12 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-
 #include <wx/dataview.h>
 class wxDataViewCtrl;
-class ProjectManage;
 
 namespace doodle {
+
+
 class MetadataWidget : public wxFrame {
   ProjectPtr p_project_ptr_;
   MetadataFactoryPtr p_metadata_flctory_ptr_;
