@@ -58,7 +58,7 @@ void AssetsFile::updata_db(const MetadataFactoryPtr& in_factory) {
   if (isInstall())
     p_metadata_flctory_ptr_->updata_db(this);
   else
-    p_metadata_flctory_ptr_->select_indb(this);
+    p_metadata_flctory_ptr_->insert_into(this);
 
   saved();
 }

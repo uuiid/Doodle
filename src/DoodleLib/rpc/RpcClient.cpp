@@ -3,8 +3,17 @@
 //
 
 #include <DoodleLib/Exception/Exception.h>
+// clang-format off
+#include <DoodleLib/Metadata/AssetsPath.h>
+#include <DoodleLib/Metadata/Comment.h>
+
 #include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/Assets.h>
+#include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/Metadata/Shot.h>
+// clang-format on
 #include <DoodleLib/core/ContainerDevice.h>
 #include <DoodleLib/rpc/RpcClient.h>
 #include <grpcpp/grpcpp.h>
@@ -92,9 +101,10 @@ void RpcClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
   auto k_data = k_out_db.metadata_cereal().value();
   vector_container my_data{k_data.begin(), k_data.end()};
   {
+    MetadataPtr k_ptr;
     vector_istream k_i{my_data};
     cereal::PortableBinaryInputArchive k_archive{k_i};
-    k_archive(in_metadataPtr);
+    k_archive(k_ptr);
   }
 
   in_metadataPtr->p_id = k_out_db.id();

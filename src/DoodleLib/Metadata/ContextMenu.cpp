@@ -51,21 +51,21 @@ void ContextMenu::addProject() {
 }
 
 wxMenu* ContextMenu::createMenu(const ProjectPtr& in_data) {
-  auto k_set_prj    = p_menu->Append(wxID_ANY, ConvStr<wxString>("设为当前项目"));
-  auto k_delete_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("清除项目"));
+  // auto k_set_prj    = p_menu->Append(wxID_ANY, ConvStr<wxString>("设为当前项目"));
+  // auto k_delete_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("清除项目"));
 
-  p_menu->Bind(
-      wxEVT_MENU,
-      [in_data](wxCommandEvent& in_event) {
-        MetadataSet::Get().setProject_(in_data);
-      },
-      k_set_prj->GetId());
-  p_menu->Bind(
-      wxEVT_MENU,
-      [in_data](wxCommandEvent& in_event) {
-        MetadataSet::Get().deleteProject(in_data.get());
-      },
-      k_set_prj->GetId());
+  // p_menu->Bind(
+  //     wxEVT_MENU,
+  //     [in_data](wxCommandEvent& in_event) {
+  //       MetadataSet::Get().setProject_(in_data);
+  //     },
+  //     k_set_prj->GetId());
+  // p_menu->Bind(
+  //     wxEVT_MENU,
+  //     [in_data](wxCommandEvent& in_event) {
+  //       MetadataSet::Get().deleteProject(in_data.get());
+  //     },
+  //     k_set_prj->GetId());
 
   return this->createMenuAfter(std::dynamic_pointer_cast<Metadata>(in_data));
 }
@@ -221,24 +221,24 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
   return createMenuAfter();
 }
 wxMenu* ContextMenu::createMenuAfter() {
-  p_menu->AppendSeparator();
+  // p_menu->AppendSeparator();
 
-  auto k_Add_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加项目"));
-  p_menu->AppendSeparator();
-  auto k_create_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("创建项目"));
+  // auto k_Add_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加项目"));
+  // p_menu->AppendSeparator();
+  // auto k_create_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("创建项目"));
 
-  p_menu->Bind(
-      wxEVT_MENU,
-      [this](wxCommandEvent& in_event) {
-        this->createProject();
-      },
-      k_create_prj->GetId());
-  p_menu->Bind(
-      wxEVT_MENU,
-      [this](wxCommandEvent& in_event) {
-        this->addProject();
-      },
-      k_create_prj->GetId());
+  // p_menu->Bind(
+  //     wxEVT_MENU,
+  //     [this](wxCommandEvent& in_event) {
+  //       this->createProject();
+  //     },
+  //     k_create_prj->GetId());
+  // p_menu->Bind(
+  //     wxEVT_MENU,
+  //     [this](wxCommandEvent& in_event) {
+  //       this->addProject();
+  //     },
+  //     k_create_prj->GetId());
   return this->p_menu;
 }
 
