@@ -80,7 +80,10 @@ void MetadataSet::clear() {
 
 void MetadataSet::init() {
   p_project_list = CoreSet::getSet().getRpcChild()->GetProject();
-  auto it        = std::find_if(p_project_list.begin(), p_project_list.end(),
+  if (!p_project)
+    return;
+
+  auto it = std::find_if(p_project_list.begin(), p_project_list.end(),
                          [this](const ProjectPtr &in_prj) { return in_prj->getId() == this->p_project->getId(); });
   if (it != p_project_list.end())
     p_project = *it;
