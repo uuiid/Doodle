@@ -157,6 +157,24 @@ grpc::Status RpcServer::DeleteMetadata(grpc::ServerContext *context, const DataD
   return grpc::Status::OK;
 }
 
+grpc::Status RpcServer::UpdataMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+  auto k_conn = CoreSql::Get().getConnection();
+  Metadatatab k_tab{};
+  if (request->has_parent())
+    (*k_conn)(
+        sqlpp::update(k_tab).where(k_tab.id == request->id()).set(k_tab.parent = request->parent().value()));
+
+  auto path = request->uuidpath();
+  FSys::ofstream k_file{path, std::ios::out | std::ios::binary};
+  if (k_file.is_open() && k_file.good()) {
+    auto k_data = request->metadata_cereal().value();
+    k_file.write(k_data.data(), k_data.size());
+  } else {
+    return {grpc::StatusCode::FAILED_PRECONDITION, "打开文件错误"};
+  }
+  return grpc::Status::OK;
+}
+
 RpcServerHandle::RpcServerHandle()
     : p_Server(),
       p_rpc_server(std::make_shared<RpcServer>()),

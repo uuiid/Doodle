@@ -29,6 +29,7 @@ class DOODLELIB_API RpcServer final : public MetadataServer::Service {
   grpc::Status GetMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
   grpc::Status InstallMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
   grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
+  grpc::Status UpdataMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
 
   DOODLE_DISABLE_COPY(RpcServer)
 };
@@ -36,11 +37,11 @@ class DOODLELIB_API RpcServer final : public MetadataServer::Service {
 class RpcServerHandle {
   std::unique_ptr<grpc::Server> p_Server;
 
-
   RpcServerPtr p_rpc_server;
   std::unique_ptr<grpc::ServerBuilder> p_build;
 
   std::thread p_thread;
+
  public:
   RpcServerHandle();
 
