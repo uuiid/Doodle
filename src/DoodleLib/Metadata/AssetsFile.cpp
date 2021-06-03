@@ -44,18 +44,23 @@ std::string AssetsFile::showStr() const {
   return p_ShowName;
 }
 
-void AssetsFile::load(const MetadataFactoryPtr& in_factory) {
-  if(isLoaded())
-    return;
+void AssetsFile::select_indb(const MetadataFactoryPtr& in_factory) {
   p_metadata_flctory_ptr_ = in_factory;
-  in_factory->load(this);
+  if (isLoaded())
+    return;
+  p_metadata_flctory_ptr_->select_indb(this);
 }
 
-void AssetsFile::save(const MetadataFactoryPtr& in_factory) {
-  if(isSaved())
-    return;
+void AssetsFile::updata_db(const MetadataFactoryPtr& in_factory) {
   p_metadata_flctory_ptr_ = in_factory;
-  in_factory->save(this);
+  if (isSaved())
+    return;
+  if (isInstall())
+    p_metadata_flctory_ptr_->updata_db(this);
+  else
+    p_metadata_flctory_ptr_->select_indb(this);
+
+  saved();
 }
 bool AssetsFile::operator<(const AssetsFile& in_rhs) const {
   return std::tie(p_name, p_ShowName, p_path_file) < std::tie(in_rhs.p_name, in_rhs.p_ShowName, in_rhs.p_path_file);
@@ -78,11 +83,6 @@ bool AssetsFile::sort(const Metadata& in_rhs) const {
     return str() < in_rhs.str();
   }
 }
-void AssetsFile::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
-  ///在这里， 如果已经保存过或者已经是从磁盘中加载来时， 必然会持有工厂， 这个时候我们就要告诉工厂， 我们改变了父子关系
-  if (p_metadata_flctory_ptr_)
-    p_metadata_flctory_ptr_->modifyParent(this, in_old_parent.get());
-}
 void AssetsFile::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<AssetsFile>(shared_from_this()));
 }
@@ -91,14 +91,14 @@ const std::chrono::time_point<std::chrono::system_clock>& AssetsFile::getTime() 
 }
 void AssetsFile::setTime(const std::chrono::time_point<std::chrono::system_clock>& in_time) {
   p_time = in_time;
-  save();
+  saved(true);
 }
 const std::string& AssetsFile::getUser() const {
   return p_user;
 }
 void AssetsFile::setUser(const std::string& in_user) {
   p_user = in_user;
-  save();
+  saved(true);
 }
 
 const std::vector<CommentPtr>& AssetsFile::getComment() const {
@@ -106,34 +106,31 @@ const std::vector<CommentPtr>& AssetsFile::getComment() const {
 }
 void AssetsFile::setComment(const std::vector<CommentPtr>& in_comment) {
   p_comment = in_comment;
-  save();
+  saved(true);
 }
 void AssetsFile::addComment(const CommentPtr& in_comment) {
   p_comment.emplace_back(in_comment);
-  save();
+  saved(true);
 }
 const AssetsPathPtr& AssetsFile::getPathFile() const {
   return p_path_file;
 }
 void AssetsFile::setPathFile(const AssetsPathPtr& in_pathFile) {
   p_path_file = in_pathFile;
-  save();
+  saved(true);
 }
 Department AssetsFile::getDepartment() const {
   return p_department;
 }
 void AssetsFile::setDepartment(Department in_department) {
   p_department = in_department;
-  save();
+  saved(true);
 }
 void AssetsFile::deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
 }
-void AssetsFile::save() const {
-  if(p_metadata_flctory_ptr_)
-    p_metadata_flctory_ptr_->save(this);
-}
 void AssetsFile::insert_into(const MetadataFactoryPtr& in_factory) {
   in_factory->insert_into(this);
+  saved();
 }
 }  // namespace doodle

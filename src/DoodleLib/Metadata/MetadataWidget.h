@@ -18,6 +18,7 @@ class MetadataWidget : public wxFrame {
 
   wxDataViewCtrl* p_tree_view_ctrl_;
   wxDataViewCtrl* p_list_view_ctrl_;
+  wxDataViewCtrl* p_project_view_ctrl_;
   wxObjectDataPtr<ProjectManage> p_project_model;
 
   void treeContextMenu(wxDataViewEvent& in_event);

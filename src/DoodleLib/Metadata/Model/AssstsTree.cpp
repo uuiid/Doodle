@@ -71,13 +71,13 @@ unsigned int AssstsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
     //这里是空指针的情况， 即没有父级， 我们要使用根来确认
     for (const auto& k_t : p_Root) {
       if (k_t == CoreSet::getSet().GetMetadataSet().Project_()) {
-        k_t->load(p_metadata_flctory_ptr_);
+        k_t->select_indb(p_metadata_flctory_ptr_);
         connectSig(k_t);
       }
       children.Add(wxDataViewItem{k_t.get()});
     }
   } else {
-    k_item->load(p_metadata_flctory_ptr_);
+    k_item->select_indb(p_metadata_flctory_ptr_);
     k_item->sortChildItems();
     const auto& k_child = k_item->getChildItems();
     for (const auto& k_t : k_child) {

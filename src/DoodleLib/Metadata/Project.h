@@ -28,8 +28,8 @@ class DOODLELIB_API Project : public Metadata {
 
   [[nodiscard]] std::string shortStr() const;
 
-  void load(const MetadataFactoryPtr& in_factory) override;
-  void save(const MetadataFactoryPtr& in_factory) override;
+  void select_indb(const MetadataFactoryPtr& in_factory) override;
+  void updata_db(const MetadataFactoryPtr& in_factory) override;
 
   static std::string getConfigFileName();
   static std::string getConfigFileFolder();
@@ -45,8 +45,7 @@ class DOODLELIB_API Project : public Metadata {
 
  protected:
   virtual bool sort(const Metadata& in_rhs) const override;
-  void modifyParent(const std::shared_ptr<Metadata>& in_old_parent) override;
-  void save() const override;
+
  private:
   [[nodiscard]] FSys::path DBRoot() const;
 

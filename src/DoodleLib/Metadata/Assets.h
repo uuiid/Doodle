@@ -24,8 +24,8 @@ class DOODLELIB_API Assets : public Metadata {
   const std::string& getNameEnus() const;
   void setNameEnus(const std::string& in_nameEnus);
 
-  void load(const MetadataFactoryPtr& in_factory) override;
-  void save(const MetadataFactoryPtr& in_factory) override;
+  void select_indb(const MetadataFactoryPtr& in_factory) override;
+  void updata_db(const MetadataFactoryPtr& in_factory) override;
   virtual void insert_into(const MetadataFactoryPtr& in_factory) override;
   bool operator<(const Assets& in_rhs) const;
   bool operator>(const Assets& in_rhs) const;
@@ -36,8 +36,6 @@ class DOODLELIB_API Assets : public Metadata {
 
  protected:
   virtual bool sort(const Metadata& in_rhs) const override;
-  void modifyParent(const std::shared_ptr<Metadata> &in_old_parent) override;
-  virtual void save() const override;
 
  private:
   friend class cereal::access;

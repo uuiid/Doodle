@@ -31,7 +31,9 @@ void SettingWidght::InitSetting() {
   p_Maya->SetValue(ConvStr<wxString>(set.MayaPath().generic_string()));
 
   //设置project项目
-  p_Project->SetLabelText(ConvStr<wxString>(set.GetMetadataSet().Project_()->showStr()));
+  auto k_prj = set.GetMetadataSet().Project_();
+  if (k_prj)
+    p_Project->SetLabelText(ConvStr<wxString>(k_prj->showStr()));
 
   if (set.gettUe4Setting().hasPath())
     p_ue_path->SetValue(ConvStr<wxString>(set.gettUe4Setting().Path().generic_string()));
@@ -115,7 +117,6 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
   p_Project = new wxStaticText{this, p_Project_id, ConvStr<wxString>("none")};
   layout->Add(p_Project, wxSizerFlags{0}.Expand());
   layout->Add(130, 20, 0, 0, 0);
-
 
   //ue安装路径
   layout->Add(new wxStaticText{this, wxID_ANY, ConvStr<wxString>("ue安装路径")}, wxSizerFlags{0}.Expand());

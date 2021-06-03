@@ -54,8 +54,12 @@ std::vector<MetadataPtr> RpcClient::GetChild(const MetadataConstPtr& in_metadata
 void RpcClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
 }
 void RpcClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
+  if (in_metadataPtr->isInstall())
+    return;
+
   grpc::ClientContext k_context{};
   DataDb k_in_db{};
+
   k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
 
   vector_container my_data{};
@@ -74,21 +78,10 @@ void RpcClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   } else {
     throw DoodleError{k_status.error_message()};
   }
-  //  auto path = FSys::path{"D:/Doodle_cache"} / in_metadataPtr->getUrlUUID();
-  //  if (!FSys::exists(path.parent_path()))
-  //    FSys::create_directories(path.parent_path());
-  //  {
-  //    FSys::ofstream k_fstream{path, std::ios::binary | std::ios::out};
-  //    cereal::PortableBinaryOutputArchive k_archive{k_fstream};
-  //    k_archive(in_metadataPtr);
-  //  }
-  //  {
-  //    FSys::ifstream k_ifstream{path, std::ios::binary | std::ios::in};
-  //    cereal::PortableBinaryInputArchive k_archive{k_ifstream};
-  //    ProjectPtr k_ptr;
-  //    k_archive(k_ptr);
-  //  }
 }
 void RpcClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
+}
+
+void RpcClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr) {
 }
 }  // namespace doodle

@@ -3,9 +3,9 @@
 //
 
 #include <DoodleLib/Metadata/Assets.h>
-#include <DoodleLib/PinYin/convert.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/PinYin/convert.h>
 
 namespace doodle {
 Assets::Assets()
@@ -16,7 +16,6 @@ Assets::Assets()
 Assets::Assets(std::weak_ptr<Metadata> in_metadata, std::string in_name)
     : Metadata(std::move(in_metadata)),
       p_name(std::move(in_name)) {
-
 }
 
 std::string Assets::str() const {
@@ -26,18 +25,27 @@ std::string Assets::showStr() const {
   return p_name;
 }
 
-void Assets::load(const MetadataFactoryPtr& in_factory) {
-  if(isLoaded())
+void Assets::select_indb(const MetadataFactoryPtr& in_factory) {
+  if (isLoaded())
     return;
   p_metadata_flctory_ptr_ = in_factory;
-  in_factory->load(this);
+  in_factory->select_indb(this);
 }
 
-void Assets::save(const MetadataFactoryPtr& in_factory) {
-  if(isSaved())
-    return;
+void Assets::updata_db(const MetadataFactoryPtr& in_factory) {
   p_metadata_flctory_ptr_ = in_factory;
-  in_factory->save(this);
+  if (isSaved())
+    return;
+  if (isInstall())
+    p_metadata_flctory_ptr_->updata_db(this);
+  else
+    p_metadata_flctory_ptr_->insert_into(this);
+  saved();
+}
+
+void Assets::insert_into(const MetadataFactoryPtr& in_factory) {
+  in_factory->insert_into(this);
+  saved();
 }
 bool Assets::operator<(const Assets& in_rhs) const {
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name);
@@ -60,11 +68,6 @@ bool Assets::sort(const Metadata& in_rhs) const {
     return str() < in_rhs.str();
   }
 }
-void Assets::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
-  ///在这里， 如果已经保存过或者已经是从磁盘中加载来时， 必然会持有工厂， 这个时候我们就要告诉工厂， 我们改变了父子关系
-  if (p_metadata_flctory_ptr_)
-    p_metadata_flctory_ptr_->modifyParent(this, in_old_parent.get());
-}
 void Assets::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<Assets>(shared_from_this()));
 }
@@ -76,21 +79,13 @@ const std::string& Assets::getName1() const {
 }
 void Assets::setName1(const std::string& in_name) {
   p_name = in_name;
-  save();
+  saved(true);
 }
 const std::string& Assets::getNameEnus() const {
   return p_name_enus;
 }
 void Assets::setNameEnus(const std::string& in_nameEnus) {
   p_name_enus = in_nameEnus;
-  save();
+  saved(true);
 }
-void Assets::save() const {
-  if(p_metadata_flctory_ptr_)
-    p_metadata_flctory_ptr_->save(this);
-}
-void Assets::insert_into(const MetadataFactoryPtr& in_factory) {
-  in_factory->insert_into(this);
-}
-
 }  // namespace doodle

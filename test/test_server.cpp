@@ -13,21 +13,19 @@ class ServerTest : public ::testing::Test {
 
 void ServerTest::SetUp() {
   //  using namespace std::chrono_literals;
-  //  std::thread{[]() { doodle::RpcServer::runServer(); }}.detach();
-  //  std::this_thread::sleep_for(1s);
+
 }
 
 void ServerTest::TearDown() {
-  //  doodle::RpcServer::stop();
+
 }
 
 TEST(server, start_stop) {
   using namespace std::chrono_literals;
-  std::thread{[]() { doodle::RpcServer::runServer(60999); }}.detach();
-  std::this_thread::sleep_for(1s);
+
 }
 TEST(server, start_sercer) {
-  doodle::RpcServer::runServer(60999);
+
 }
 
 TEST_F(ServerTest, createPrj) {

@@ -9,17 +9,17 @@
 #include <DoodleConfig.h>
 #include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/Metadata/MetadataWidget.h>
+#include <DoodleLib/Server/ServerWidget.h>
 #include <DoodleLib/SettingWidght/settingWidget.h>
 #include <DoodleLib/mainWidght/MklinkWidget.h>
 #include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>
-#include <DoodleLib/Server/ServerWidget.h>
-
 #include <wx/cmdline.h>
 #include <wx/wxprec.h>
 
 #include <boost/algorithm/string.hpp>
 #include <exception>
+#include <wx/windowptr.h>
 
 wxIMPLEMENT_APP_NO_MAIN(doodle::Doodle);
 
@@ -46,7 +46,7 @@ int Doodle::OnExit() {
     p_systemTray->Destroy();
 
   CoreSet::getSet().clear();
-  
+
   return wxApp::OnExit();
 }
 
@@ -116,6 +116,7 @@ void Doodle::guiInit() {
   p_mainWindwos->Show();
 
   p_metadata_widget = new MetadataWidget{p_mainWindwos, wxID_ANY};
+  p_metadata_widget->Show();
 }
 
 void Doodle::openMainWindow() const {

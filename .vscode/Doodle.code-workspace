@@ -133,7 +133,8 @@
 			"hash_set": "cpp",
 			"*.ipp": "cpp",
 			"qpushbutton": "cpp",
-			"*.inc": "cpp"
+			"*.inc": "cpp",
+			"format": "cpp"
 		},
 	},
 	"tasks": {

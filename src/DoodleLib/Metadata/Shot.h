@@ -37,8 +37,8 @@ class DOODLELIB_API Shot : public Metadata {
   [[nodiscard]] std::string str() const override;
   virtual void createMenu(ContextMenu *in_contextMenu) override;
 
-  void load(const MetadataFactoryPtr &in_factory) override;
-  void save(const MetadataFactoryPtr &in_factory) override;
+  void select_indb(const MetadataFactoryPtr &in_factory) override;
+  void updata_db(const MetadataFactoryPtr &in_factory) override;
   virtual void insert_into(const MetadataFactoryPtr &in_factory) override;
   virtual void deleteData(const MetadataFactoryPtr &in_factory) override;
   bool operator<(const Shot &rhs) const;
@@ -48,8 +48,6 @@ class DOODLELIB_API Shot : public Metadata {
 
  protected:
   bool sort(const Metadata &in_rhs) const override;
-  void modifyParent(const std::shared_ptr<Metadata>& in_old_parent) override;
-  virtual void save() const override;
 
  private:
   friend class cereal::access;

@@ -1,8 +1,8 @@
-#include <DoodleLib/Metadata/Shot.h>
-#include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/Shot.h>
 
 #include <boost/format.hpp>
 namespace doodle {
@@ -32,7 +32,7 @@ void Shot::setShot(const int64_t& in_shot) {
     throw DoodleError{"shot无法为负"};
 
   p_shot = in_shot;
-  save();
+  saved(true);
 }
 
 const std::string& Shot::getShotAb() const noexcept {
@@ -41,17 +41,17 @@ const std::string& Shot::getShotAb() const noexcept {
 
 void Shot::setShotAb(const std::string& ShotAb) noexcept {
   p_shot_ab = ShotAb;
-  save();
+  saved(true);
 }
 EpisodesPtr Shot::getEpisodesPtr() const {
   auto k_ptr = std::dynamic_pointer_cast<Episodes>(getParent());
-  if(!k_ptr)
+  if (!k_ptr)
     throw nullptr_error("没有集数");
   return k_ptr;
 }
 
 void Shot::setEpisodesPtr(const EpisodesPtr& Episodes_) noexcept {
-    Episodes_->addChildItem(shared_from_this());
+  Episodes_->addChildItem(shared_from_this());
 }
 std::string Shot::str() const {
   boost::format str_shot{"sc%04i%s"};
@@ -59,18 +59,23 @@ std::string Shot::str() const {
   return str_shot.str();
 }
 
-void Shot::load(const MetadataFactoryPtr& in_factory) {
-  if(isLoaded())
+void Shot::select_indb(const MetadataFactoryPtr& in_factory) {
+  if (isLoaded())
     return;
   p_metadata_flctory_ptr_ = in_factory;
-  in_factory->load(this);
+  in_factory->select_indb(this);
 }
 
-void Shot::save(const MetadataFactoryPtr& in_factory) {
-  if(isSaved())
+void Shot::updata_db(const MetadataFactoryPtr& in_factory) {
+  if (isSaved())
     return;
   p_metadata_flctory_ptr_ = in_factory;
-  save();
+
+  if (this->isInstall())
+    p_metadata_flctory_ptr_->updata_db(this);
+  else
+    p_metadata_flctory_ptr_->insert_into(this);
+  saved();
 }
 
 bool Shot::operator<(const Shot& rhs) const {
@@ -93,22 +98,15 @@ bool Shot::sort(const Metadata& in_rhs) const {
     return str() < in_rhs.str();
   }
 }
-void Shot::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
-  if (p_metadata_flctory_ptr_)
-    p_metadata_flctory_ptr_->modifyParent(this, in_old_parent.get());
-}
 void Shot::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<Shot>(shared_from_this()));
 }
 void Shot::deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
 }
-void Shot::save() const {
-  if(p_metadata_flctory_ptr_)
-    p_metadata_flctory_ptr_->save(this);
-}
 void Shot::insert_into(const MetadataFactoryPtr& in_factory) {
   in_factory->insert_into(this);
+  saved();
 }
 
 }  // namespace doodle

@@ -59,6 +59,7 @@ bool ProjectManage::SetValue(const wxVariant& variant, const wxDataViewItem& ite
   switch (col) {
     case 0: {
       k_prj->setName(str);
+      ValueChanged(item, 0);
       ValueChanged(item, 1);
     } break;
 
@@ -66,9 +67,11 @@ bool ProjectManage::SetValue(const wxVariant& variant, const wxDataViewItem& ite
       return false;
       break;
 
-    case 2:
+    case 2: {
       k_prj->setPath(str);
-
+      ValueChanged(item, 2);
+      break;
+    }
     default:
       break;
   }
@@ -88,6 +91,8 @@ unsigned int ProjectManage::GetChildren(const wxDataViewItem& item, wxDataViewIt
 void ProjectManage::addProject(const ProjectPtr& prj) {
   p_project_new.push_back(prj);
   p_project.push_back(prj);
+
+  ItemAdded({}, wxDataViewItem{prj.get()});
 }
 
 bool ProjectManage::removeProject(const ProjectPtr& prj) {
@@ -96,9 +101,15 @@ bool ProjectManage::removeProject(const ProjectPtr& prj) {
   if (it != p_project.end()) {
     p_project_remove.push_back(prj);
     p_project.erase(it);
+    if (it_n != p_project_new.end())
+      p_project_new.erase(it_n);
+    ItemDeleted({}, wxDataViewItem{(*it).get()});
+
     return true;
   } else if (it_n != p_project_new.end()) {
     p_project_new.erase(it_n);
+    ItemDeleted({}, wxDataViewItem{(*it).get()});
+
     return true;
   }
 
@@ -109,7 +120,7 @@ bool ProjectManage::removeProject(const ProjectPtr& prj) {
 void ProjectManage::submit(const MetadataFactoryPtr& in_factory) {
   auto& set = MetadataSet::Get();
   for (const auto& prj : p_project_new) {
-    prj->save(in_factory);
+    prj->updata_db(in_factory);
     set.installProject(prj);
   }
   for (const auto& prj : p_project_remove) {

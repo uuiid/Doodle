@@ -22,6 +22,8 @@ service MetadataServer{
   rpc GetProject(google.protobuf.Empty) returns (DataVector) {}
   rpc GetChild(DataDb) returns (DataVector) {}
   rpc GetMetadata(DataDb) returns (DataDb) {}
+
   rpc InstallMetadata(DataDb) returns(DataDb) {}
   rpc DeleteMetadata(DataDb) returns(DataDb) {}
+  rpc UpdataMetadata(DataDb) returns(DataDb) {}
 }

@@ -16,8 +16,8 @@ class DOODLELIB_API Episodes : public Metadata {
 
   [[nodiscard]] std::string str() const override;
 
-  void load(const MetadataFactoryPtr &in_factory) override;
-  void save(const MetadataFactoryPtr &in_factory) override;
+  void select_indb(const MetadataFactoryPtr &in_factory) override;
+  void updata_db(const MetadataFactoryPtr &in_factory) override;
   virtual void insert_into(const MetadataFactoryPtr &in_factory) override;
   bool operator<(const Episodes &in_rhs) const;
   bool operator>(const Episodes &in_rhs) const;
@@ -28,8 +28,6 @@ class DOODLELIB_API Episodes : public Metadata {
 
  protected:
   virtual bool sort(const Metadata &in_rhs) const override;
-  void modifyParent(const std::shared_ptr<Metadata> &in_old_parent) override;
-  virtual void save() const override;
 
  private:
   friend class cereal::access;

@@ -1,7 +1,7 @@
-#include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
 
 #include <boost/format.hpp>
 namespace doodle {
@@ -26,7 +26,7 @@ void Episodes::setEpisodes(const int64_t& Episodes_) {
   if (Episodes_ < 0)
     throw DoodleError("集数无法为负");
   p_episodes = Episodes_;
-  save();
+  saved(true);
 }
 
 std::string Episodes::str() const {
@@ -36,18 +36,24 @@ std::string Episodes::str() const {
   return eps_str.str();
 }
 
-void Episodes::load(const MetadataFactoryPtr& in_factory) {
-  if(isLoaded())
+void Episodes::select_indb(const MetadataFactoryPtr& in_factory) {
+  if (isLoaded())
     return;
   p_metadata_flctory_ptr_ = in_factory;
-  in_factory->load(this);
+  in_factory->select_indb(this);
 }
 
-void Episodes::save(const MetadataFactoryPtr& in_factory) {
-  if(isSaved())
-    return;
+void Episodes::updata_db(const MetadataFactoryPtr& in_factory) {
   p_metadata_flctory_ptr_ = in_factory;
-  in_factory->save(this);
+
+  if (isSaved())
+    return;
+
+  if (isInstall())
+    in_factory->updata_db(this);
+  else
+    in_factory->insert_into(this);
+  saved();
 }
 bool Episodes::operator<(const Episodes& in_rhs) const {
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_episodes) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_episodes);
@@ -70,23 +76,15 @@ bool Episodes::sort(const Metadata& in_rhs) const {
     return str() < in_rhs.str();
   }
 }
-void Episodes::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
-  //在这里， 如果已经保存过或者已经是从磁盘中加载来时， 必然会持有工厂， 这个时候我们就要告诉工厂， 我们改变了父子关系
-  if (p_metadata_flctory_ptr_)
-    p_metadata_flctory_ptr_->modifyParent(this, in_old_parent.get());
-}
 void Episodes::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<Episodes>(shared_from_this()));
 }
 void Episodes::deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
 }
-void Episodes::save() const {
-  if(p_metadata_flctory_ptr_)
-    p_metadata_flctory_ptr_->save(this);
-}
 void Episodes::insert_into(const MetadataFactoryPtr& in_factory) {
   in_factory->insert_into(this);
+  saved();
 }
 
 }  // namespace doodle

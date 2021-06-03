@@ -18,9 +18,10 @@
 
 namespace doodle {
 
-std::unique_ptr<grpc::Server> RpcServer::p_Server{};
 RpcServer::RpcServer()
-    : p_set(CoreSet::getSet()) {
+    : p_set(CoreSet::getSet()),
+      p_Server(),
+      p_thread() {
 }
 
 grpc::Status RpcServer::GetProject(grpc::ServerContext *context, const google::protobuf::Empty *request, DataVector *response) {
@@ -54,10 +55,6 @@ grpc::Status RpcServer::GetProject(grpc::ServerContext *context, const google::p
 
     k_ifstream.close();
   }
-  // /// 我们在数据库中没有任何项目时添加以前占位项目， 以防grpc出错
-  // if (response->data_size() == 0) {
-  //   response->add_data()->set_id(-1);
-  // }
 
   return grpc::Status::OK;
 }
@@ -78,36 +75,6 @@ grpc::Status RpcServer::GetChild(grpc::ServerContext *context, const DataDb *req
     k_date->Add(std::move(k_db));
   }
   return grpc::Status::OK;
-}
-void RpcServer::runServer(int port) {
-  ///检查p_server防止重复调用
-  if (p_Server)
-    return;
-  std::string server_address{"localhost:"};
-  server_address += std::to_string(port);
-
-  RpcServer service{};
-
-  grpc::ServerBuilder k_builder{};
-  k_builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-  k_builder.RegisterService(&service);
-
-  //  auto t = k_builder.BuildAndStart();
-  p_Server = std::move(k_builder.BuildAndStart());
-  DOODLE_LOG_INFO("Server listening on " << server_address);
-  p_Server->Wait();
-}
-
-void RpcServer::stop() {
-  if (!p_Server)
-    return;
-  using namespace std::chrono_literals;
-  auto k_time = std::chrono::system_clock::now() + 2s;
-
-  p_Server->Shutdown(k_time);
-  p_Server->Wait();
-  // std::this_thread::sleep_for(3s);
-  p_Server.reset();
 }
 
 grpc::Status RpcServer::GetMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
@@ -177,4 +144,41 @@ grpc::Status RpcServer::DeleteMetadata(grpc::ServerContext *context, const DataD
   return grpc::Status::OK;
 }
 
+RpcServerHandle::RpcServerHandle()
+    : p_Server(),
+      p_rpc_server(std::make_shared<RpcServer>()),
+      p_build(std::make_unique<grpc::ServerBuilder>()),
+      p_thread() {
+}
+
+void RpcServerHandle::runServer(int port) {
+  ///检查p_server防止重复调用
+  if (p_Server)
+    return;
+  std::string server_address{"[::]:"};
+  server_address += std::to_string(port);
+
+  p_build->AddListeningPort(server_address, grpc::InsecureServerCredentials());
+  p_build->RegisterService(p_rpc_server.get());
+
+  //  auto t = k_builder.BuildAndStart();
+  p_Server = std::move(p_build->BuildAndStart());
+  DOODLE_LOG_INFO("Server listening on " << server_address);
+  p_thread = std::thread{[this]() {
+    p_Server->Wait();
+  }};
+}
+
+void RpcServerHandle::stop() {
+  if (!p_Server)
+    return;
+  using namespace std::chrono_literals;
+  auto k_time = std::chrono::system_clock::now() + 2s;
+
+  p_Server->Shutdown(k_time);
+  if (p_thread.joinable())
+    p_thread.join();
+
+  p_Server.reset();
+}
 }  // namespace doodle

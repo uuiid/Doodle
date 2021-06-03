@@ -14,15 +14,13 @@
 namespace doodle {
 
 Project::Project()
-    : p_name(),
-      p_path() {
-
+    : p_name("none"),
+      p_path("C:/") {
 }
 
 Project::Project(FSys::path in_path, std::string in_name)
     : p_name(std::move(in_name)),
       p_path(std::move(in_path)) {
-
 }
 
 void Project::setName(const std::string& Name) noexcept {
@@ -47,7 +45,7 @@ std::string Project::str() const {
 }
 
 std::string Project::shortStr() const {
-  auto wstr = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
+  auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
   auto& k_pingYin = convert::Get();
   std::string str{};
   for (auto s : wstr) {
@@ -73,21 +71,24 @@ std::string Project::getConfigFileName() {
 FSys::path Project::DBRoot() const {
   return p_path / "_._root";
 }
-void Project::save(const MetadataFactoryPtr& in_factory) {
+void Project::updata_db(const MetadataFactoryPtr& in_factory) {
   if (isSaved())
     return;
   p_metadata_flctory_ptr_ = in_factory;
-  save();
+  if (isInstall())
+    p_metadata_flctory_ptr_->updata_db(this);
+  else
+    p_metadata_flctory_ptr_->select_indb(this);
   saved();
 }
-void Project::load(const MetadataFactoryPtr& in_factory) {
+void Project::select_indb(const MetadataFactoryPtr& in_factory) {
   if (isLoaded())
     return;
   /// 在这里先更改工厂属性, 因为在工厂中, 我们会调用
   /// Metadata::addChildItemNotSig(const MetadataPtr &in_items)
   /// 这个时候会将工厂属性传播到子物体中
   p_metadata_flctory_ptr_ = in_factory;
-  in_factory->load(this);
+  in_factory->select_indb(this);
   loaded();
 }
 bool Project::operator<(const Project& in_rhs) const {
@@ -111,26 +112,18 @@ bool Project::sort(const Metadata& in_rhs) const {
     return str() < in_rhs.str();
   }
 }
-void Project::modifyParent(const std::shared_ptr<Metadata>& in_old_parent) {
-  //在这里， 如果已经保存过或者已经是从磁盘中加载来时， 必然会持有工厂， 这个时候我们就要告诉工厂， 我们改变了父子关系
-  if (p_metadata_flctory_ptr_)
-    p_metadata_flctory_ptr_->modifyParent(this, in_old_parent.get());
-}
 void Project::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<Project>(shared_from_this()));
 }
 void Project::deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
 }
-void Project::save() const {
-  if (p_metadata_flctory_ptr_)
-    p_metadata_flctory_ptr_->save(this);
-}
 const std::string& Project::getName() const {
   return p_name;
 }
 void Project::insert_into(const MetadataFactoryPtr& in_factory) {
   in_factory->insert_into(this);
+  saved();
 }
 
 }  // namespace doodle

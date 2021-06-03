@@ -28,31 +28,27 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
       p_List_id_(NewControlId()),
       p_tree_view_ctrl_(),
       p_list_view_ctrl_(),
+      p_project_view_ctrl_(new wxDataViewCtrl{this, NewControlId()}),
       p_project_model(new ProjectManage{}) {
   auto k_layout = new wxBoxSizer{wxOrientation::wxVERTICAL};
 
-  auto k_ctrl = new wxDataViewCtrl{this, NewControlId()};
-
-  k_ctrl->AssociateModel(p_project_model.get());
-  k_ctrl->AppendTextColumn(
+  p_project_view_ctrl_->AssociateModel(p_project_model.get());
+  p_project_view_ctrl_->AppendTextColumn(
       ConvStr<wxString>("名称"),
       0,
-      wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
-  k_ctrl->AppendTextColumn(
+      wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE);
+  p_project_view_ctrl_->AppendTextColumn(
       ConvStr<wxString>("拼音名称"),
-      0,
-      wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
-  k_ctrl->AppendTextColumn(
+      1,
+      wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE);
+  p_project_view_ctrl_->AppendTextColumn(
       ConvStr<wxString>("路径"),
-      0,
-      wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
-  k_layout->Add(k_ctrl, wxSizerFlags{1}.Expand().Border(0));
-
-  auto k_butten = new wxButton{this, NewControlId(), ConvStr<wxString>("提交")};
-  k_layout->Add(k_butten, wxSizerFlags{0}.Expand().Border(0));
+      2,
+      wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE);
+  k_layout->Add(p_project_view_ctrl_, wxSizerFlags{1}.Expand().Border(0));
 
   /// 绑定各种函数
-  k_ctrl->Bind(wxEVT_DATAVIEW_ITEM_CONTEXT_MENU, &MetadataWidget::projectContextMenu, this);
+  p_project_view_ctrl_->Bind(wxEVT_DATAVIEW_ITEM_CONTEXT_MENU, &MetadataWidget::projectContextMenu, this);
   // p_tree_view_ctrl_ = new wxDataViewCtrl{this, p_tree_id_};
   // p_list_view_ctrl_ = new wxDataViewCtrl{this, p_List_id_};
 
@@ -110,25 +106,33 @@ void MetadataWidget::projectContextMenu(wxDataViewEvent& in_event) {
   auto k_sub_prj    = k_wx_menu.AppendCheckItem(NewControlId(), ConvStr<wxString>("提交项目"));
 
   k_wx_menu.Bind(
-      wxEVT_MENU, [](wxCommandEvent& in_event) {
-
+      wxEVT_MENU, [this, &in_event](wxCommandEvent& in_event_menu) {
       },
       k_set_prj->GetId());
   k_wx_menu.Bind(
-      wxEVT_MENU, [](wxCommandEvent& in_event) {
-
+      wxEVT_MENU, [this, &in_event](wxCommandEvent& in_event_menu) {
+        this->p_project_model->addProject(std::make_shared<Project>("C:/", "none"));
       },
       k_add_prj->GetId());
   k_wx_menu.Bind(
-      wxEVT_MENU, [](wxCommandEvent& in_event) {
+      wxEVT_MENU, [this, &in_event](wxCommandEvent& in_event_menu) {
+        if (!p_project_view_ctrl_->HasSelection())
+          return;
 
+        auto k_item = in_event.GetItem();
+        if (!k_item.IsOk())
+          return;
+        auto sele  = reinterpret_cast<Project*>(k_item.GetID());
+        auto k_prj = std::dynamic_pointer_cast<Project>(sele->shared_from_this());
+        this->p_project_model->removeProject(k_prj);
       },
       k_remove_prj->GetId());
   k_wx_menu.Bind(
-      wxEVT_MENU, [](wxCommandEvent& in_event) {
-
+      wxEVT_MENU, [this, &in_event](wxCommandEvent& in_event_menu) {
+        p_project_model->submit(this->p_metadata_flctory_ptr_);
       },
       k_sub_prj->GetId());
+
   PopupMenu(&k_wx_menu);
 }
 

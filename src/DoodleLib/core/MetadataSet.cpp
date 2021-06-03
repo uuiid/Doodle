@@ -2,11 +2,10 @@
 // Created by TD on 2021/5/7.
 //
 
-#include <core/MetadataSet.h>
-#include <Exception/Exception.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/core/CoreSet.h>
-
+#include <Exception/Exception.h>
+#include <core/MetadataSet.h>
 #include <rpc/RpcClient.h>
 
 #include <boost/numeric/conversion/cast.hpp>
@@ -34,8 +33,6 @@ void MetadataSet::installProject(const ProjectPtr &Project_) {
 }
 
 [[maybe_unused]] const ProjectPtr &MetadataSet::Project_() const {
-  if (!p_project)
-    throw nullptr_error{"没有项目"};
   return p_project;
 }
 

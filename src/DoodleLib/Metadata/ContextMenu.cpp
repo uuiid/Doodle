@@ -36,7 +36,7 @@ void ContextMenu::createProject() {
     return;
 
   auto k_ptr = std::make_shared<Project>(k_path, k_name);
-  k_ptr->save(p_metadata_flctory_ptr_);
+  k_ptr->updata_db(p_metadata_flctory_ptr_);
   MetadataSet::Get().installProject(k_ptr);
 }
 void ContextMenu::addProject() {
@@ -46,7 +46,7 @@ void ContextMenu::addProject() {
   auto path = ConvStr<FSys::path>(path_dialog.GetPath());
   if (path.empty()) return;
   auto prj = std::make_shared<Project>(path);
-  prj->load(p_metadata_flctory_ptr_);
+  prj->select_indb(p_metadata_flctory_ptr_);
   MetadataSet::Get().installProject(prj);
 }
 
@@ -101,7 +101,7 @@ wxMenu* ContextMenu::createMenu(const ShotPtr& in_data) {
         auto k_p      = in_data->getParent();
         auto k_r      = k_p->addChildItem(
             std::make_shared<Shot>(k_p, in_data->getShot(), k_shotAb));
-        k_r->save(p_metadata_flctory_ptr_);
+        k_r->updata_db(p_metadata_flctory_ptr_);
       },
       k_add_shotab->GetId());
   p_menu->Bind(
@@ -174,7 +174,7 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
                                        ConvStr<wxString>("集数"),
                                        1, 0, 9999, p_parent);
         auto k_r = in_data->addChildItem(std::make_shared<Episodes>(in_data, eps));
-        k_r->save(p_metadata_flctory_ptr_);
+        k_r->updata_db(p_metadata_flctory_ptr_);
       },
       k_add_eps->GetId());
   p_menu->Bind(
@@ -184,7 +184,7 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
                                         ConvStr<wxString>("镜头"),
                                         1, 0, 9999, p_parent);
         auto k_r  = in_data->addChildItem(std::make_shared<Shot>(in_data, shot));
-        k_r->save(p_metadata_flctory_ptr_);
+        k_r->updata_db(p_metadata_flctory_ptr_);
       },
       k_add_shot->GetId());
   p_menu->Bind(
@@ -195,7 +195,7 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
         if (str.empty())
           return;
         auto k_r = in_data->addChildItem(std::make_shared<Assets>(in_data, ConvStr<std::string>(str)));
-        k_r->save(p_metadata_flctory_ptr_);
+        k_r->updata_db(p_metadata_flctory_ptr_);
       },
       k_add_ass->GetId());
 

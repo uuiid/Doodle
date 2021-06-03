@@ -2,6 +2,7 @@
 #include <DoodleLib/Server/ServerWidget.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/rpc/RpcServer.h>
+#include <grpcpp/grpcpp.h>
 #include <wx/spinctrl.h>
 
 namespace doodle {
@@ -28,7 +29,8 @@ ServerWidget::ServerWidget()
       p_meta_rpc_port(new wxSpinCtrl{this, NewControlId()}),
       p_file_rpc_port(new wxSpinCtrl{this, NewControlId()}),
       p_start_rpc(new wxButton{this, NewControlId()}),
-      p_reStart_rpc(new wxButton{this, NewControlId()}) {
+      p_reStart_rpc(new wxButton{this, NewControlId()}),
+      p_rpc_server_handle(std::make_shared<RpcServerHandle>()) {
   p_sql_port->SetMin(0);
   p_sql_port->SetMax(65535);
 
@@ -51,14 +53,14 @@ ServerWidget::ServerWidget()
         ConvStr<wxString>("关闭服务器并关闭程序")}
                    .ShowModal();
     if (k_r == wxID_OK) {
-      RpcServer::stop();
+      p_rpc_server_handle->stop();
       wxGetApp().Exit();
     } else {
       if (event.CanVeto())
         event.Veto(false);
     }
   });
-  // RpcServer::runServer(CoreSet::getSet().getMetaRpcPort());
+  p_rpc_server_handle->runServer(CoreSet::getSet().getMetaRpcPort());
 }
 void ServerWidget::layoutServerWidget(wxSizer* layout) {
   auto k_layout = labelAndWidget("mysql ip地址: ", p_sql_host);
@@ -124,12 +126,12 @@ void ServerWidget::bindServerWideget() const {
   p_file_rpc_port->Bind(wxEVT_SPINCTRL, [&set](wxCommandEvent& in_event) {
     set.setFileRpcPort(in_event.GetInt());
   });
-  p_start_rpc->Bind(wxEVT_BUTTON, [&set](wxCommandEvent& in_evrnt) {
-    RpcServer::runServer(set.getMetaRpcPort());
+  p_start_rpc->Bind(wxEVT_BUTTON, [this, &set](wxCommandEvent& in_evrnt) {
+    p_rpc_server_handle->runServer(set.getMetaRpcPort());
   });
-  p_reStart_rpc->Bind(wxEVT_BUTTON, [&set](wxCommandEvent& in_event) {
-    RpcServer::stop();
-    RpcServer::runServer(set.getMetaRpcPort());
+  p_reStart_rpc->Bind(wxEVT_BUTTON, [&set, this](wxCommandEvent& in_event) {
+    p_rpc_server_handle->stop();
+    p_rpc_server_handle->runServer(set.getMetaRpcPort());
   });
 }
 

@@ -12,7 +12,9 @@
 namespace doodle {
 class DOODLELIB_API RpcServer final : public MetadataServer::Service {
   CoreSet& p_set;
-  static std::unique_ptr<grpc::Server> p_Server;
+  std::unique_ptr<grpc::Server> p_Server;
+
+  std::thread p_thread;
 
   [[nodiscard]] inline FSys::path getPath(const std::string& in_string) const {
     if (in_string.empty())
@@ -29,8 +31,20 @@ class DOODLELIB_API RpcServer final : public MetadataServer::Service {
   grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
 
   DOODLE_DISABLE_COPY(RpcServer)
+};
 
-  static void runServer(int port);
-  static void stop();
+class RpcServerHandle {
+  std::unique_ptr<grpc::Server> p_Server;
+
+
+  RpcServerPtr p_rpc_server;
+  std::unique_ptr<grpc::ServerBuilder> p_build;
+
+  std::thread p_thread;
+ public:
+  RpcServerHandle();
+
+  void runServer(int port);
+  void stop();
 };
 }  // namespace doodle

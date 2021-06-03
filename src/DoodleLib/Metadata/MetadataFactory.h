@@ -21,43 +21,11 @@ class DOODLELIB_API MetadataFactory {
 
   virtual std::vector<ProjectPtr> getAllProject() const;
 
-  virtual void load(Project* in_project) const;
-  virtual void load(Shot* in_shot) const;
-  virtual void load(Episodes* in_episodes) const;
-  virtual void load(Assets* in_assets) const;
-  virtual void load(AssetsFile* in_assetsFile) const;
-
-  virtual void save(const Project* in_project) const;
-  virtual void save(const Shot* in_shot) const;
-  virtual void save(const Episodes* in_episodes) const;
-  virtual void save(const Assets* in_assets) const;
-  virtual void save(const AssetsFile* in_assetsFile) const;
-
-  ///在项目中是没有父对象的，所以这里是什么都没有的空函数
-  virtual void modifyParent(const Project* in_project, const Metadata* in_old_parent) const;
-
-  virtual void modifyParent(const Shot* in_shot, const Metadata* in_old_parent) const;
-  virtual void modifyParent(const Episodes* in_episodes, const Metadata* in_old_parent) const;
-  virtual void modifyParent(const Assets* in_assets, const Metadata* in_old_parent) const;
-  virtual void modifyParent(const AssetsFile* in_assetsFile, const Metadata* in_old_parent) const;
-
-  virtual void deleteData(const Project* in_metadata) const;
-  virtual void deleteData(const Shot* in_metadata) const;
-  virtual void deleteData(const Episodes* in_metadata) const;
-  virtual void deleteData(const Assets* in_metadata) const;
-  virtual void deleteData(const AssetsFile* in_metadata) const;
-
-//  virtual std::size_t childSize(const Project* in_metadata) const;
-//  virtual std::size_t childSize(const Shot* in_metadata) const;
-//  virtual std::size_t childSize(const Episodes* in_metadata) const;
-//  virtual std::size_t childSize(const Assets* in_metadata) const;
-//  virtual std::size_t childSize(const AssetsFile* in_metadata) const;
-  virtual bool hasChild(const Project* in_metadata) const;
-  virtual bool hasChild(const Shot* in_metadata) const;
-  virtual bool hasChild(const Episodes* in_metadata) const;
-  virtual bool hasChild(const Assets* in_metadata) const;
-  virtual bool hasChild(const AssetsFile* in_metadata) const;
-  virtual bool hasChild(const Metadata* in_metadata) const;
+  virtual void select_indb(Project* in_project) const;
+  virtual void select_indb(Shot* in_shot) const;
+  virtual void select_indb(Episodes* in_episodes) const;
+  virtual void select_indb(Assets* in_assets) const;
+  virtual void select_indb(AssetsFile* in_assetsFile) const;
 
   virtual bool insert_into(Project* in_metadata) const;
   virtual bool insert_into(Shot* in_metadata) const;
@@ -65,14 +33,25 @@ class DOODLELIB_API MetadataFactory {
   virtual bool insert_into(Assets* in_metadata) const;
   virtual bool insert_into(AssetsFile* in_metadata) const;
 
- private:
+  virtual void updata_db(Project* in_project) const;
+  virtual void updata_db(Shot* in_shot) const;
+  virtual void updata_db(Episodes* in_episodes) const;
+  virtual void updata_db(Assets* in_assets) const;
+  virtual void updata_db(AssetsFile* in_assetsFile) const;
 
+  virtual void deleteData(const Project* in_metadata) const;
+  virtual void deleteData(const Shot* in_metadata) const;
+  virtual void deleteData(const Episodes* in_metadata) const;
+  virtual void deleteData(const Assets* in_metadata) const;
+  virtual void deleteData(const AssetsFile* in_metadata) const;
+
+  virtual bool hasChild(const Metadata* in_metadata) const;
+
+ private:
   virtual bool insert_into(Metadata* in_metadata) const;
   virtual void deleteData(const Metadata* in_metadata) const;
-  void modifyParent(const Metadata* in_metadata, const Metadata* in_old_parent) const;
-  void loadChild(Metadata* in_metadata, const FSys::path& k_config) const;
-  FSys::path getRoot(const Metadata* in_metadata) const;
-  void save(const Metadata* in_metadata, const FSys::path& in_path) const;
+  virtual void updata_db(MetadataPtr& in_metadata) const;
+  virtual void select_indb(MetadataPtr& in_metadata) const;
 };
 
 }  // namespace doodle

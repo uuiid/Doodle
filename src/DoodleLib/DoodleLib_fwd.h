@@ -167,13 +167,14 @@ class AssetsPath;
 class RpcClient;
 class RpcServer;
 class ProjectManage;
+class RpcServerHandle;
 
 
 using MetadataPtr        = std::shared_ptr<Metadata>;
 using MetadataConstPtr   = std::shared_ptr<const Metadata>;
 using RpcClientPtr       = std::shared_ptr<RpcClient>;
 using RpcServerPtr       = std::shared_ptr<RpcServer>;
-
+using RpcServerHandlePtr = std::shared_ptr<RpcServerHandle>;
 
 using ProjectPtr         = std::shared_ptr<Project>;
 using EpisodesPtr        = std::shared_ptr<Episodes>;
