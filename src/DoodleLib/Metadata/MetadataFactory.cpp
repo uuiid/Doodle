@@ -37,7 +37,8 @@ void MetadataFactory::updata_db(MetadataPtr &in_metadata) const {
 
 void MetadataFactory::select_indb(MetadataPtr &in_metadata) const {
   this->p_rpcClien->GetMetadata(in_metadata);
-  this->p_rpcClien->GetChild(in_metadata);
+  auto k_c = this->p_rpcClien->GetChild(in_metadata);
+  in_metadata->setChildItems(k_c);
 }
 
 void MetadataFactory::deleteData(const Metadata *in_metadata) const {

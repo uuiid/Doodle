@@ -23,7 +23,8 @@ Metadata::Metadata()
       sig_childAddAll(),
       sig_childDelete(),
       p_need_save(true),
-      p_need_load(true) {
+      p_need_load(true),
+      p_has_child(false) {
 }
 
 Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
@@ -40,7 +41,8 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
       sig_childAddAll(),
       sig_childDelete(),
       p_need_save(true),
-      p_need_load(true) {
+      p_need_load(true),
+      p_has_child(false) {
 }
 
 Metadata::~Metadata() = default;
@@ -56,6 +58,7 @@ void Metadata::setChildItems(const std::vector<MetadataPtr> &in_child_items) {
     addChildItemNotSig(child);
   }
   sig_childAddAll(in_child_items);
+  p_has_child = true;
 }
 
 bool Metadata::removeChildItems(const MetadataPtr &in_child) {
@@ -66,6 +69,7 @@ bool Metadata::removeChildItems(const MetadataPtr &in_child) {
 
     p_child_items.erase(it);
     sig_childDelete(in_child);
+    p_has_child = !p_child_items.empty();
     return true;
   } else
     return false;
@@ -75,24 +79,28 @@ void Metadata::addChildItemNotSig(const MetadataPtr &in_items) {
   ///先查看是否有父级关联
   if (in_items->hasParent()) {
     ///有关联就直接将父级的所有权清除
-    k_old = in_items->p_parent.lock();
+    k_old   = in_items->p_parent.lock();
     auto it = std::find(k_old->p_child_items.begin(), k_old->p_child_items.end(), in_items);
     if (it != k_old->p_child_items.end()) {
       k_old->p_child_items.erase(it);
       k_old->sig_childDelete(shared_from_this());
     }
+    k_old->p_has_child = !k_old->p_child_items.empty();
   }
 
   /// 这里将所有的子级要继承的父级属性给上
-  in_items->p_parent = weak_from_this();
-  in_items->p_parent_id = p_id;
+  in_items->p_parent                = weak_from_this();
+  in_items->p_parent_id             = p_id;
   in_items->p_metadata_flctory_ptr_ = p_metadata_flctory_ptr_;
 
   p_child_items.emplace_back(in_items);
 
   if (k_old && (k_old.get() != this))
     saved(true);
+
+  p_has_child = !p_child_items.empty();
 }
+
 MetadataPtr Metadata::addChildItem(const MetadataPtr &in_items) {
   addChildItemNotSig(in_items);
   sig_childAdd(in_items);
@@ -110,13 +118,13 @@ bool Metadata::hasParent() const {
   return !p_parent.expired();
 }
 bool Metadata::hasChild() const {
-  auto k_is = false;
-  if (p_child_items.empty()) {
-    if (p_metadata_flctory_ptr_)
-      k_is = p_metadata_flctory_ptr_->hasChild(this);
-  } else
-    k_is = true;
-  return k_is;
+  // auto k_is = false;
+  // if (p_child_items.empty()) {
+  //   if (p_metadata_flctory_ptr_)
+  //     k_is = p_metadata_flctory_ptr_->hasChild(this);
+  // } else
+  //   k_is = true;
+  return p_has_child;
 }
 std::string Metadata::showStr() const {
   return str();
@@ -147,7 +155,7 @@ bool Metadata::operator>=(const Metadata &in_rhs) const {
 void Metadata::clearChildItems() {
   p_child_items.clear();
 }
-MetadataPtr Metadata::getRootParent() {
+MetadataConstPtr Metadata::getRootParent() const {
   auto k_p = shared_from_this();
   while (!k_p->p_parent.expired()) {
     k_p = k_p->p_parent.lock()->getRootParent();
@@ -158,6 +166,7 @@ MetadataPtr Metadata::getRootParent() {
   //  else
   //    return p_parent.lock()->getRootParent();
 }
+
 void Metadata::loaded(bool in_need) {
   p_need_load = in_need;
 }
@@ -170,7 +179,7 @@ bool Metadata::isLoaded() const {
 bool Metadata::isSaved() const {
   return !p_need_save;
 }
-FSys::path Metadata::getUrlUUID() {
+FSys::path Metadata::getUrlUUID() const {
   auto name = FSys::path{getRootParent()->str()};
   name /= p_uuid.substr(0, 3);
   name /= p_uuid;

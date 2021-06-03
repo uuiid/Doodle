@@ -49,9 +49,55 @@ std::vector<ProjectPtr> RpcClient::GetProject() {
   return k_out_list;
 }
 std::vector<MetadataPtr> RpcClient::GetChild(const MetadataConstPtr& in_metadataPtr) {
-  return std::vector<MetadataPtr>();
+  grpc::ClientContext k_context{};
+  DataDb k_in_db{};
+  DataVector k_out_db{};
+
+  k_in_db.set_id(in_metadataPtr->getId());
+  k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
+
+  auto k_status = p_stub->GetChild(&k_context, k_in_db, &k_out_db);
+  if (!k_status.ok()) {
+    throw DoodleError{k_status.error_message()};
+  }
+
+  std::vector<MetadataPtr> list;
+  for (const auto& k_i : k_out_db.data()) {
+    MetadataPtr k_ptr;
+
+    auto k_data = k_i.metadata_cereal().value();
+    vector_container my_data{k_data.begin(), k_data.end()};
+    {
+      vector_istream k_i{my_data};
+      cereal::PortableBinaryInputArchive k_archive{k_i};
+      k_archive(k_ptr);
+    }
+    list.emplace_back(k_ptr);
+  }
+  return list;
 }
 void RpcClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
+  grpc::ClientContext k_context{};
+  DataDb k_in_db{};
+  DataDb k_out_db{};
+
+  k_in_db.set_id(in_metadataPtr->getId());
+  k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
+
+  auto k_status = p_stub->GetMetadata(&k_context, k_in_db, &k_out_db);
+  if (!k_status.ok()) {
+    throw DoodleError{k_status.error_message()};
+  }
+
+  auto k_data = k_out_db.metadata_cereal().value();
+  vector_container my_data{k_data.begin(), k_data.end()};
+  {
+    vector_istream k_i{my_data};
+    cereal::PortableBinaryInputArchive k_archive{k_i};
+    k_archive(in_metadataPtr);
+  }
+
+  in_metadataPtr->p_id = k_out_db.id();
 }
 void RpcClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   if (in_metadataPtr->isInstall())

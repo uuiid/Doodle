@@ -21,16 +21,16 @@ class DOODLELIB_API RpcClient {
 
   [[nodiscard]] std::vector<ProjectPtr> GetProject();
   /**
-   * @brief 这个函数时获得子项， 但是我们只获得数据库中的数据也就是id和父id填充数据
-   * 在想获得内部数据时我们要使用 RpcClient::GetMetadata 获得内部数据
+   * @brief 这个函数时获得子项， 但是我们获得数据库中的数据也就是id和父id填充数据并且也获取他们的序列化数据
    * 
    * @param in_metadataPtr 要获得子物体的物体的数据
    * @return std::vector<MetadataPtr>  子物体数据集合
    */
   [[nodiscard]] std::vector<MetadataPtr> GetChild(const MetadataConstPtr& in_metadataPtr);
+  
   /**
-   * @brief 这个不是获得是数据库中的数据， 时获得服务器中序列化的数据
-   * 这个函数和 RpcClient::GetChild 对应
+   * @brief 这个不是获得是数据库中的数据， 是获得服务器中序列化的数据
+   * 这个函数是 RpcClient::GetChild 的单项函数
    * 
    * @param in_metadataPtr 要获得的数据对象
    */

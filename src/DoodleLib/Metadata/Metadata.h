@@ -24,6 +24,8 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   /// 需要保存
   bool p_need_load;
 
+  bool p_has_child;
+
  protected:
   ///弱父对象的指针
   std::weak_ptr<Metadata> p_parent;
@@ -110,15 +112,16 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
    */
   [[nodiscard]] virtual std::string showStr() const;  ///< 这里时显示的字符串, 极有可能有中文
 
-  [[nodiscard]] const std::string &getUUID();  ///< 获得uuid
-  [[nodiscard]] FSys::path getUrlUUID();       ///< 这个是获得所属项目的保持相对路径
+  [[nodiscard]] const std::string &getUUID();   ///< 获得uuid
+  [[nodiscard]] FSys::path getUrlUUID() const;  ///< 这个是获得所属项目的保持相对路径
 
   uint64_t getId() const;  ///< 获得数据库id
 
   /**
+   * @brief  这个会一直递归找到没有父级的根节点
    * @return 根节点(现在基本上是项目节点)
    */
-  [[nodiscard]] MetadataPtr getRootParent();  ///< 这个会一直递归找到没有父级的根节点
+  [[nodiscard]] MetadataConstPtr getRootParent() const;  
 
   virtual void createMenu(ContextMenu *in_contextMenu) = 0;
   //  [[nodiscard]] virtual FSys::path FolderPath() const;
@@ -199,7 +202,8 @@ void Metadata::serialize(Archive &ar, std::uint32_t const version) {
     ar(
         cereal::make_nvp("id", p_id),
         cereal::make_nvp("parent_id", p_parent_id),
-        cereal::make_nvp("UUID", p_uuid));
+        cereal::make_nvp("UUID", p_uuid),
+        cereal::make_nvp("has_child", p_has_child));
 }
 }  // namespace doodle
 
