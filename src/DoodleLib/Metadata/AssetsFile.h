@@ -22,6 +22,8 @@ class DOODLELIB_API AssetsFile : public Metadata {
  public:
   AssetsFile();
   explicit AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in_path, std::string name = {}, std::string showName = {});
+  // ~AssetsFile();
+  
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string showStr() const override;
 

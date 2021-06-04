@@ -36,7 +36,8 @@ void MetadataFactory::updata_db(MetadataPtr &in_metadata) const {
 }
 
 void MetadataFactory::select_indb(MetadataPtr &in_metadata) const {
-  this->p_rpcClien->GetMetadata(in_metadata);
+  // if (!in_metadata->hasChild())
+  //   return;
   auto k_c = this->p_rpcClien->GetChild(in_metadata);
   in_metadata->setChildItems(k_c);
 }
@@ -54,6 +55,7 @@ bool MetadataFactory::hasChild(const Metadata *in_metadata) const {
 }
 
 void MetadataFactory::select_indb(Project *in_) const {
+  this->p_rpcClien->GetMetadata(in_->shared_from_this());
   select_indb(in_->shared_from_this());
 }
 void MetadataFactory::select_indb(Shot *in_) const {

@@ -18,6 +18,11 @@ Assets::Assets(std::weak_ptr<Metadata> in_metadata, std::string in_name)
       p_name(std::move(in_name)) {
 }
 
+// Assets::~Assets() {
+//   if (p_metadata_flctory_ptr_)
+//     updata_db(p_metadata_flctory_ptr_);
+// }
+
 std::string Assets::str() const {
   return convert::Get().toEn(this->p_name);
 }
@@ -30,6 +35,7 @@ void Assets::select_indb(const MetadataFactoryPtr& in_factory) {
     return;
   p_metadata_flctory_ptr_ = in_factory;
   in_factory->select_indb(this);
+  loaded();
 }
 
 void Assets::updata_db(const MetadataFactoryPtr& in_factory) {

@@ -18,6 +18,11 @@ Episodes::Episodes(std::weak_ptr<Metadata> in_metadata, int64_t in_episodes)
     throw DoodleError("集数无法为负");
 }
 
+// Episodes::~Episodes() {
+//   if (p_metadata_flctory_ptr_)
+//     updata_db(p_metadata_flctory_ptr_);
+// }
+
 const int64_t& Episodes::getEpisodes() const noexcept {
   return p_episodes;
 }
@@ -41,6 +46,7 @@ void Episodes::select_indb(const MetadataFactoryPtr& in_factory) {
     return;
   p_metadata_flctory_ptr_ = in_factory;
   in_factory->select_indb(this);
+  loaded();
 }
 
 void Episodes::updata_db(const MetadataFactoryPtr& in_factory) {

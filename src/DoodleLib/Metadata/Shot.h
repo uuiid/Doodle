@@ -17,7 +17,7 @@ class DOODLELIB_API Shot : public Metadata {
   Shot(std::weak_ptr<Metadata> in_metadata,
        decltype(p_shot) in_shot,
        decltype(p_shot_ab) in_shot_ab      = {});
-
+  
   // clang-format off
   enum class ShotAbEnum { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
   // clang-format on

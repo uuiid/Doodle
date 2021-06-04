@@ -24,7 +24,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   /// 需要保存
   bool p_need_load;
 
-  bool p_has_child;
+  uint64_t p_has_child;
 
  protected:
   ///弱父对象的指针
@@ -80,7 +80,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
 
   [[nodiscard]] virtual std::shared_ptr<Metadata> getParent() const;  ///< 活动父指针
   /**
-   * @brief 这个时查询是否具有子项的， 其中如果子项列表属性不空就直接判断有子项，否则则会查询工厂，询问子项
+   * @brief 这个时查询是否具有子项的(具有复杂的逻辑)
    * 
    * @return true 有子项
    * @return false 工厂和列表中均不具有子项
@@ -121,7 +121,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
    * @brief  这个会一直递归找到没有父级的根节点
    * @return 根节点(现在基本上是项目节点)
    */
-  [[nodiscard]] MetadataConstPtr getRootParent() const;  
+  [[nodiscard]] MetadataConstPtr getRootParent() const;
 
   virtual void createMenu(ContextMenu *in_contextMenu) = 0;
   //  [[nodiscard]] virtual FSys::path FolderPath() const;

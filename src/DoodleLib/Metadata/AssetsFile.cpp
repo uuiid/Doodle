@@ -37,6 +37,11 @@ AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in
     p_ShowName = convert::Get().toEn(p_name);
 }
 
+// AssetsFile::~AssetsFile() {
+//   if (p_metadata_flctory_ptr_)
+//     updata_db(p_metadata_flctory_ptr_);
+// }
+
 std::string AssetsFile::str() const {
   return p_name;
 }
@@ -49,6 +54,7 @@ void AssetsFile::select_indb(const MetadataFactoryPtr& in_factory) {
   if (isLoaded())
     return;
   p_metadata_flctory_ptr_->select_indb(this);
+  loaded();
 }
 
 void AssetsFile::updata_db(const MetadataFactoryPtr& in_factory) {

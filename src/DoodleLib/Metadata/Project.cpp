@@ -23,6 +23,8 @@ Project::Project(FSys::path in_path, std::string in_name)
       p_path(std::move(in_path)) {
 }
 
+
+
 void Project::setName(const std::string& Name) noexcept {
   p_name = Name;
   saved(true);
@@ -89,7 +91,6 @@ void Project::select_indb(const MetadataFactoryPtr& in_factory) {
   /// 这个时候会将工厂属性传播到子物体中
   p_metadata_flctory_ptr_ = in_factory;
   in_factory->select_indb(this);
-  loaded();
 }
 bool Project::operator<(const Project& in_rhs) const {
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_path) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_path);

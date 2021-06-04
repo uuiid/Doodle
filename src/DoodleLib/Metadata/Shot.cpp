@@ -23,6 +23,8 @@ Shot::Shot(std::weak_ptr<Metadata> in_metadata,
     throw DoodleError{"shot无法为负"};
 }
 
+
+
 const int64_t& Shot::getShot() const noexcept {
   return p_shot;
 }
@@ -64,6 +66,7 @@ void Shot::select_indb(const MetadataFactoryPtr& in_factory) {
     return;
   p_metadata_flctory_ptr_ = in_factory;
   in_factory->select_indb(this);
+  loaded();
 }
 
 void Shot::updata_db(const MetadataFactoryPtr& in_factory) {

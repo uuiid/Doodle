@@ -10,7 +10,8 @@ class DOODLELIB_API Episodes : public Metadata {
  public:
   Episodes();
   explicit Episodes(std::weak_ptr<Metadata> in_metadata, int64_t in_episodes);
-
+  // ~Episodes();
+  
   [[nodiscard]] const int64_t &getEpisodes() const noexcept;
   void setEpisodes(const int64_t &Episodes_);
 

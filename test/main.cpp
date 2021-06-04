@@ -7,8 +7,8 @@
  * @FilePath: \Doodle\test\main.cpp
  */
 #include <DoodleLib/DoodleLib.h>
-
 #include <gtest/gtest.h>
+
 #include <iostream>
 #include <locale>
 class Environment : public ::testing::Environment {
@@ -33,6 +33,5 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   ::testing::AddGlobalTestEnvironment(new Environment);
   RUN_ALL_TESTS();
-
   return 0;
 }

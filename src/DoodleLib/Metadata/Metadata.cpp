@@ -24,7 +24,7 @@ Metadata::Metadata()
       sig_childDelete(),
       p_need_save(true),
       p_need_load(true),
-      p_has_child(false) {
+      p_has_child(0) {
 }
 
 Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
@@ -42,7 +42,7 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
       sig_childDelete(),
       p_need_save(true),
       p_need_load(true),
-      p_has_child(false) {
+      p_has_child(0) {
 }
 
 Metadata::~Metadata() = default;
@@ -58,7 +58,8 @@ void Metadata::setChildItems(const std::vector<MetadataPtr> &in_child_items) {
     addChildItemNotSig(child);
   }
   sig_childAddAll(in_child_items);
-  p_has_child = true;
+  p_has_child = p_child_items.size();
+  saved(true);
 }
 
 bool Metadata::removeChildItems(const MetadataPtr &in_child) {
@@ -69,7 +70,8 @@ bool Metadata::removeChildItems(const MetadataPtr &in_child) {
 
     p_child_items.erase(it);
     sig_childDelete(in_child);
-    p_has_child = !p_child_items.empty();
+    p_has_child = p_child_items.size();
+    saved(true);
     return true;
   } else
     return false;
@@ -85,7 +87,7 @@ void Metadata::addChildItemNotSig(const MetadataPtr &in_items) {
       k_old->p_child_items.erase(it);
       k_old->sig_childDelete(shared_from_this());
     }
-    k_old->p_has_child = !k_old->p_child_items.empty();
+    k_old->p_has_child = k_old->p_child_items.size();
   }
 
   /// 这里将所有的子级要继承的父级属性给上
@@ -96,9 +98,10 @@ void Metadata::addChildItemNotSig(const MetadataPtr &in_items) {
   p_child_items.emplace_back(in_items);
 
   if (k_old && (k_old.get() != this))
-    saved(true);
+    in_items->saved(true);
 
-  p_has_child = !p_child_items.empty();
+  p_has_child = p_child_items.size();
+  saved(true);
 }
 
 MetadataPtr Metadata::addChildItem(const MetadataPtr &in_items) {
@@ -118,13 +121,10 @@ bool Metadata::hasParent() const {
   return !p_parent.expired();
 }
 bool Metadata::hasChild() const {
-  // auto k_is = false;
-  // if (p_child_items.empty()) {
-  //   if (p_metadata_flctory_ptr_)
-  //     k_is = p_metadata_flctory_ptr_->hasChild(this);
-  // } else
-  //   k_is = true;
-  return p_has_child;
+  if (p_child_items.empty())
+    return p_has_child > 0;
+  else
+    return p_child_items.empty();
 }
 std::string Metadata::showStr() const {
   return str();

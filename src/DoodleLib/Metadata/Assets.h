@@ -15,6 +15,7 @@ class DOODLELIB_API Assets : public Metadata {
  public:
   Assets();
   explicit Assets(std::weak_ptr<Metadata> in_metadata, std::string in_name);
+  // ~Assets();
 
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string showStr() const override;

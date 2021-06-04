@@ -14,6 +14,7 @@
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
 // clang-format on
+#include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/core/ContainerDevice.h>
 #include <DoodleLib/rpc/RpcClient.h>
 #include <grpcpp/grpcpp.h>
@@ -112,6 +113,7 @@ void RpcClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
     vector_istream k_i{my_data};
     cereal::PortableBinaryInputArchive k_archive{k_i};
     k_archive(k_ptr);
+    in_metadataPtr->p_has_child = k_ptr->p_has_child;
   }
 
   in_metadataPtr->p_id = k_out_db.id();
@@ -127,6 +129,9 @@ void RpcClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   if (in_metadataPtr->hasParent())
     k_in_db.mutable_parent()->set_value(in_metadataPtr->p_parent_id.value());
 
+  // #ifndef NDEBUG
+  DOODLE_LOG_DEBUG(in_metadataPtr->str() << " has child " << (in_metadataPtr->hasChild() ? "true" : "false"));
+  // #endif
   vector_container my_data{};
   {
     vector_iostream kt{my_data};
@@ -148,5 +153,30 @@ void RpcClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
 }
 
 void RpcClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr) {
+  if (!in_metadataPtr->isInstall())
+    return;
+
+  grpc::ClientContext k_context{};
+  DataDb k_in_db{};
+  k_in_db.set_id(in_metadataPtr->getId());
+  k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
+
+  if (in_metadataPtr->hasParent())
+    k_in_db.mutable_parent()->set_value(in_metadataPtr->p_parent_id.value());
+
+  vector_container my_data{};
+  {
+    vector_iostream kt{my_data};
+    cereal::PortableBinaryOutputArchive k_archive{kt};
+    k_archive(in_metadataPtr);
+  }
+
+  k_in_db.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
+
+  DataDb k_out_db{};
+  auto k_status = p_stub->UpdataMetadata(&k_context, k_in_db, &k_out_db);
+  if (!k_status.ok()) {
+    throw DoodleError{k_status.error_message()};
+  }
 }
 }  // namespace doodle
