@@ -7,6 +7,8 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/core/CoreSet.h>
 
+#include <DoodleLib/libWarp/cache.hpp>
+#include <DoodleLib/libWarp/lru_cache_policy.hpp>
 #include <MetadataServer.grpc.pb.h.>
 
 namespace doodle {
@@ -16,11 +18,17 @@ class DOODLELIB_API RpcServer final : public MetadataServer::Service {
 
   std::thread p_thread;
 
+  caches::fixed_sized_cache<std::string, std::string, caches::LRUCachePolicy<std::string>> p_cache;
+
   [[nodiscard]] inline FSys::path getPath(const std::string& in_string) const {
     if (in_string.empty())
       throw DoodleError{"str 是空的"};
     return p_set.getCacheRoot() / in_string;
   };
+
+  [[nodiscard]] std::string get_cache_and_file(const FSys::path& key);
+  [[nodiscard]] void put_cache_and_file(const FSys::path& key, const std::string& value);
+
   //  [[nodiscard]] FSys::path getPath(uint64_t id,const std::string& in_string)const;
  public:
   RpcServer();

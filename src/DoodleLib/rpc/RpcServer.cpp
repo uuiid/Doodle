@@ -31,17 +31,49 @@
 
 namespace doodle {
 
+std::string RpcServer::get_cache_and_file(const FSys::path &key) {
+  auto k_key = key.generic_string();
+
+  if (p_cache.Cached(k_key)) {
+    return p_cache.Get(k_key);
+  } else {
+    if (!FSys::exists(key.parent_path()))
+      FSys::create_directories(key.parent_path());
+    FSys::ifstream k_ifstream{k_key, std::ios::in | std::ios::binary};
+    if (k_ifstream.is_open() && k_ifstream.good()) {
+      auto str = std::string{
+          std::istreambuf_iterator<char>(k_ifstream),
+          std::istreambuf_iterator<char>()};
+      p_cache.Put(k_key, str);
+      return str;
+    } else
+      return {};
+  }
+}
+
+void RpcServer::put_cache_and_file(const FSys::path &key, const std::string &value) {
+  if (!FSys::exists(key.parent_path()))
+    FSys::create_directories(key.parent_path());
+
+  FSys::ofstream k_ofstream{key, std::ios::out | std::ios::binary};
+  k_ofstream.write(value.data(), value.size());
+  p_cache.Put(key.generic_string(), value);
+}
+
 RpcServer::RpcServer()
     : p_set(CoreSet::getSet()),
       p_Server(),
-      p_thread() {
+      p_thread(),
+      p_cache(1024 * 1024, caches::LRUCachePolicy<std::string>(), [this](const std::string &path, const std::string &value) {
+        FSys::ofstream k_ofstream{path, std::ios::out | std::ios::binary};
+        k_ofstream.write(value.data(), value.size());
+      }) {
 }
 
 grpc::Status RpcServer::GetProject(grpc::ServerContext *context, const google::protobuf::Empty *request, DataVector *response) {
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
 
-  FSys::ifstream k_ifstream{};
   for (const auto &row : (*k_conn)(sqlpp::select(sqlpp::all_of(k_tab))
                                        .from(k_tab)
                                        .where(k_tab.parent.is_null()))) {
@@ -56,17 +88,10 @@ grpc::Status RpcServer::GetProject(grpc::ServerContext *context, const google::p
     *k_item = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
 
     auto k_path = getPath(row.uuidPath.value());
-    k_ifstream.open(k_path, std::ios::in | std::ios::binary);
-    if (k_ifstream.is_open() && k_ifstream.good()) {
-      auto k_any = k_data->mutable_metadata_cereal();
-      k_any->set_value(std::string{
-          std::istreambuf_iterator<char>(k_ifstream),
-          std::istreambuf_iterator<char>()});
-    } else {
+    auto k_str  = get_cache_and_file(k_path);
+    if (k_str.empty())
       continue;
-    }
-
-    k_ifstream.close();
+    k_data->mutable_metadata_cereal()->set_value(std::move(k_str));
   }
 
   return grpc::Status::OK;
@@ -75,6 +100,7 @@ grpc::Status RpcServer::GetChild(grpc::ServerContext *context, const DataDb *req
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
   auto k_date = response->mutable_data();
+
   for (const auto &row : (*k_conn)(sqlpp::select(sqlpp::all_of(k_tab))
                                        .from(k_tab)
                                        .where(k_tab.parent == request->id()))) {
@@ -85,6 +111,15 @@ grpc::Status RpcServer::GetChild(grpc::ServerContext *context, const DataDb *req
     auto k_time      = std::chrono::system_clock::time_point{row.updateTime.value()};
     auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
     k_db.mutable_update_time()->CopyFrom(k_timestamp);
+
+    ///@warning 这里是要读取数据的，但是请记得添加缓存
+
+    auto k_path = getPath(row.uuidPath.value());
+    auto k_str  = get_cache_and_file(k_path);
+    if (k_str.empty())
+      continue;
+    k_db.mutable_metadata_cereal()->set_value(std::move(k_str));
+
     k_date->Add(std::move(k_db));
   }
   return grpc::Status::OK;
@@ -104,16 +139,13 @@ grpc::Status RpcServer::GetMetadata(grpc::ServerContext *context, const DataDb *
     //    auto k_time = std::chrono::system_clock::time_point{row.updateTime.value()};
     //    auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
     //    response->mutable_update_time()->CopyFrom(k_timestamp);
-    FSys::ifstream k_ifstream{row.uuidPath.value(), std::ios::binary | std::ios::in};
-    if (k_ifstream.is_open() && k_ifstream.good()) {
-      auto k_any = response->mutable_metadata_cereal();
-      k_any->set_value(std::string{
-          std::istreambuf_iterator<char>(k_ifstream),
-          std::istreambuf_iterator<char>()});
-    } else {
-      /// 这里我们主动取消
+
+    auto k_path = getPath(row.uuidPath.value());
+    auto k_str  = get_cache_and_file(k_path);
+    if (k_str.empty())
       return grpc::Status::CANCELLED;
-    }
+
+    response->mutable_metadata_cereal()->set_value(std::move(k_str));
   }
 
   return grpc::Status::OK;
@@ -135,16 +167,7 @@ grpc::Status RpcServer::InstallMetadata(grpc::ServerContext *context, const Data
   response->set_id(k_id);
 
   auto path = getPath(request->uuidpath());
-  if (!FSys::exists(path.parent_path()))
-    FSys::create_directories(path.parent_path());
-
-  FSys::ofstream k_file{path, std::ios::out | std::ios::binary};
-  if (k_file.is_open() && k_file.good()) {
-    auto k_data = request->metadata_cereal().value();
-    k_file.write(k_data.data(), k_data.size());
-  } else {
-    return {grpc::StatusCode::FAILED_PRECONDITION, "打开文件错误"};
-  }
+  put_cache_and_file(path, request->metadata_cereal().value());
 
   return grpc::Status::OK;
 }
@@ -152,8 +175,11 @@ grpc::Status RpcServer::DeleteMetadata(grpc::ServerContext *context, const DataD
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
 
+  if (!p_cache.Remove(getPath(request->uuidpath()).generic_string()))
+    return grpc::Status::CANCELLED;
   auto id = (*k_conn)(sqlpp::remove_from(k_tab).where(k_tab.id == request->id()));
   response->set_id(id);
+
   return grpc::Status::OK;
 }
 
@@ -164,14 +190,8 @@ grpc::Status RpcServer::UpdataMetadata(grpc::ServerContext *context, const DataD
     (*k_conn)(
         sqlpp::update(k_tab).where(k_tab.id == request->id()).set(k_tab.parent = request->parent().value()));
 
-  auto path = request->uuidpath();
-  FSys::ofstream k_file{path, std::ios::out | std::ios::binary};
-  if (k_file.is_open() && k_file.good()) {
-    auto k_data = request->metadata_cereal().value();
-    k_file.write(k_data.data(), k_data.size());
-  } else {
-    return {grpc::StatusCode::FAILED_PRECONDITION, "打开文件错误"};
-  }
+  auto path = getPath(request->uuidpath());
+  put_cache_and_file(path, request->metadata_cereal().value());
   return grpc::Status::OK;
 }
 

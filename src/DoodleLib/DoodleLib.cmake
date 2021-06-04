@@ -44,6 +44,11 @@ set(
 	core/Util.h
 	libWarp/BoostUuidWarp.h
 	libWarp/WinReg.hpp
+	libWarp/cache.hpp
+	libWarp/cache_policy.hpp
+	libWarp/fifo_cache_policy.hpp
+	libWarp/lfu_cache_policy.hpp
+	libWarp/lru_cache_policy.hpp
 	mainWidght/MklinkWidget.h
 	mainWidght/mainWindows.h
 	mainWidght/systemTray.h

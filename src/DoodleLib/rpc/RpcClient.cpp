@@ -81,6 +81,13 @@ std::vector<MetadataPtr> RpcClient::GetChild(const MetadataConstPtr& in_metadata
       cereal::PortableBinaryInputArchive k_archive{k_i};
       k_archive(k_ptr);
     }
+    if (k_ptr->p_id == 0) {
+      k_ptr->p_id = k_i.id();
+    } else {
+      if (k_ptr->p_id != k_i.id())
+        continue;
+    }
+
     list.emplace_back(k_ptr);
   }
   return list;
@@ -117,6 +124,8 @@ void RpcClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   DataDb k_in_db{};
 
   k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
+  if (in_metadataPtr->hasParent())
+    k_in_db.mutable_parent()->set_value(in_metadataPtr->p_parent_id.value());
 
   vector_container my_data{};
   {

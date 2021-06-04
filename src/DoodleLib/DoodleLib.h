@@ -46,6 +46,11 @@
 #include <DoodleLib/core/Util.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/libWarp/WinReg.hpp>
+#include <DoodleLib/libWarp/cache.hpp>
+#include <DoodleLib/libWarp/cache_policy.hpp>
+#include <DoodleLib/libWarp/fifo_cache_policy.hpp>
+#include <DoodleLib/libWarp/lfu_cache_policy.hpp>
+#include <DoodleLib/libWarp/lru_cache_policy.hpp>
 #include <DoodleLib/mainWidght/MklinkWidget.h>
 #include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>
