@@ -18,6 +18,14 @@ enum class funName {
 DOODLE_STR_S_DECLARE(fun)
 DOODLE_STR_S_DECLARE(server)
 
+class wxWindowDeleter final {
+ public:
+  void operator()(wxWindow* win) {
+    if (win)
+      win->Destroy();
+  }
+};
+
 class DOODLELIB_API Doodle : public wxApp {
  public:
   Doodle();
@@ -27,9 +35,9 @@ class DOODLELIB_API Doodle : public wxApp {
   void OnInitCmdLine(wxCmdLineParser& parser) override;
   bool OnCmdLineParsed(wxCmdLineParser& parser) override;
 
-  void openMainWindow() const;
-  void openSettingWindow() const;
-  void openMetadaWindow() const;
+  void openMainWindow() ;
+  void openSettingWindow() ;
+  void openMetadaWindow();
   // virtual bool OnExceptionInMainLoop() override;
 
  private:

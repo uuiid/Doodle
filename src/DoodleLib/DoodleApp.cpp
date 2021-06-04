@@ -15,11 +15,11 @@
 #include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>
 #include <wx/cmdline.h>
+#include <wx/windowptr.h>
 #include <wx/wxprec.h>
 
 #include <boost/algorithm/string.hpp>
 #include <exception>
-#include <wx/windowptr.h>
 
 wxIMPLEMENT_APP_NO_MAIN(doodle::Doodle);
 
@@ -99,8 +99,9 @@ void Doodle::funMklink(const wxString& k_string) {
 }
 void Doodle::guiInit() {
   CoreSet::getSet().guiInit();
-  p_mainWindwos        = new mainWindows{};
   const wxIcon& k_icon = wxICON(ID_DOODLE_ICON);
+
+  p_mainWindwos = new mainWindows{};
   p_mainWindwos->SetIcon(k_icon);
   SetTopWindow(p_mainWindwos);
 
@@ -119,14 +120,16 @@ void Doodle::guiInit() {
   p_metadata_widget->Show();
 }
 
-void Doodle::openMainWindow() const {
+void Doodle::openMainWindow() {
   p_mainWindwos->Show();
 }
 
-void Doodle::openSettingWindow() const {
+void Doodle::openSettingWindow() {
+  p_setting_widget = new SettingWidght{p_mainWindwos, wxID_ANY};
   p_setting_widget->Show();
 }
-void Doodle::openMetadaWindow() const {
+void Doodle::openMetadaWindow() {
+  p_metadata_widget = new MetadataWidget{p_mainWindwos, wxID_ANY};
   p_metadata_widget->Show();
 }
 

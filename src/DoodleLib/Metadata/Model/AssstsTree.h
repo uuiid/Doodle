@@ -21,7 +21,7 @@ class AssstsTree : public wxDataViewModel {
   std::function<void(const wxDataViewItem& parent, const wxDataViewItem& item)> slot_childDelete;
 
  public:
-  explicit AssstsTree(ProjectPtr in_project);
+  explicit AssstsTree(ProjectPtr in_project = {});
 
   [[nodiscard]] unsigned int GetColumnCount() const override;
   [[nodiscard]] wxString GetColumnType(unsigned int col) const override;

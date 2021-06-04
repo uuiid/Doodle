@@ -29,7 +29,8 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
       p_tree_view_ctrl_(new wxDataViewCtrl{this, p_tree_id_}),
       p_list_view_ctrl_(),
       p_project_view_ctrl_(new wxDataViewCtrl{this, NewControlId()}),
-      p_project_model(new ProjectManage{}) {
+      p_project_model(new ProjectManage{}),
+      p_assstsTree_model(new AssstsTree{}) {
   auto k_layout = new wxBoxSizer{wxOrientation::wxVERTICAL};
 
   p_project_view_ctrl_->AssociateModel(p_project_model.get());
@@ -51,7 +52,7 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
   p_project_view_ctrl_->Bind(wxEVT_DATAVIEW_ITEM_CONTEXT_MENU, &MetadataWidget::projectContextMenu, this);
 
   auto k_layout_1 = new wxBoxSizer{wxOrientation::wxHORIZONTAL};
-  k_layout->Add(k_layout_1, wxSizerFlags{1}.Expand().Border(wxDirection::wxALL, 0));
+  k_layout->Add(k_layout_1, wxSizerFlags{6}.Expand().Border(wxDirection::wxALL, 0));
 
   // p_list_view_ctrl_ = new wxDataViewCtrl{this, p_List_id_};
   p_tree_view_ctrl_->AppendTextColumn(
