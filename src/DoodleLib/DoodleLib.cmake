@@ -21,7 +21,8 @@ set(
 	Metadata/Metadata.h
 	Metadata/MetadataFactory.h
 	Metadata/MetadataWidget.h
-        Metadata/Model/AssetsTree.h
+	Metadata/Metadata_cpp.h
+	Metadata/Model/AssetsTree.h
 	Metadata/Model/ProjectManage.h
 	Metadata/Project.h
 	Metadata/Shot.h
@@ -32,7 +33,7 @@ set(
 	ScreenshotWidght/ScreenshotAction.h
 	ScreenshotWidght/ScreenshotWidght.h
 	Server/ServerWidget.h
-	SettingWidght/settingWidget.h
+	SettingWidght/SettingWidget.h
 	core/ContainerDevice.h
 	core/CoreSet.h
 	core/CoreSql.h
@@ -72,7 +73,7 @@ set(
 	Metadata/Metadata.cpp
 	Metadata/MetadataFactory.cpp
 	Metadata/MetadataWidget.cpp
-        Metadata/Model/AssetsTree.cpp
+	Metadata/Model/AssetsTree.cpp
 	Metadata/Model/ProjectManage.cpp
 	Metadata/Project.cpp
 	Metadata/Shot.cpp
@@ -83,7 +84,7 @@ set(
 	ScreenshotWidght/ScreenshotAction.cpp
 	ScreenshotWidght/ScreenshotWidght.cpp
 	Server/ServerWidget.cpp
-	SettingWidght/settingWidget.cpp
+	SettingWidght/SettingWidget.cpp
 	core/CoreSet.cpp
 	core/CoreSql.cpp
 	core/MetadataSet.cpp

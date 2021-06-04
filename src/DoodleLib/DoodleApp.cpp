@@ -10,7 +10,7 @@
 #include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/Metadata/MetadataWidget.h>
 #include <DoodleLib/Server/ServerWidget.h>
-#include <DoodleLib/SettingWidght/settingWidget.h>
+#include <DoodleLib/SettingWidght/SettingWidget.h>
 #include <DoodleLib/mainWidght/MklinkWidget.h>
 #include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>

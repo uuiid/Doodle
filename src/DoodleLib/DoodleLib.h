@@ -23,6 +23,7 @@
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/MetadataWidget.h>
+#include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/Metadata/Model/AssetsTree.h>
 #include <DoodleLib/Metadata/Model/ProjectManage.h>
 #include <DoodleLib/Metadata/Project.h>
@@ -34,7 +35,7 @@
 #include <DoodleLib/ScreenshotWidght/ScreenshotAction.h>
 #include <DoodleLib/ScreenshotWidght/ScreenshotWidght.h>
 #include <DoodleLib/Server/ServerWidget.h>
-#include <DoodleLib/SettingWidght/settingWidget.h>
+#include <DoodleLib/SettingWidght/SettingWidget.h>
 #include <DoodleLib/core/ContainerDevice.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
@@ -44,6 +45,7 @@
 #include <DoodleLib/core/Ue4Setting.h>
 #include <DoodleLib/core/Util.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
+#include <DoodleLib/libWarp/WinReg.hpp>
 #include <DoodleLib/mainWidght/MklinkWidget.h>
 #include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>
@@ -53,5 +55,3 @@
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <DoodleLib/toolkit/MessageAndProgress.h>
 #include <DoodleLib/toolkit/toolkit.h>
-
-#include <DoodleLib/libWarp/WinReg.hpp>
