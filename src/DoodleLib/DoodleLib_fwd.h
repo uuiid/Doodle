@@ -3,7 +3,6 @@
 #include <chrono>
 #include <condition_variable>
 #include <filesystem>
-#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <future>
@@ -38,13 +37,12 @@
 #include <doodlelib_export.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
 #include <cereal/access.hpp>
 #include <cereal/cereal.hpp>
 #include <cereal/types/common.hpp>
 #include <cereal/types/string.hpp>
-
-#include <boost/iostreams/stream_buffer.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
 
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
@@ -64,7 +62,6 @@
 #ifdef pid_t
 #undef pid_t
 #endif
-
 
 #define DOODLE_NAMESPACE doodle
 #define DOODLE_NAMESPACE_S namespace DOODLE_NAMESPACE {
@@ -108,7 +105,7 @@ CMRC_DECLARE(DoodleLibResource);
 namespace sqlpp::mysql {
 class connection;
 struct connection_config;
-}  // namespace sqlpp::sqlite3
+}  // namespace sqlpp::mysql
 
 //// 添加boost::filesystem path 序列化储存
 namespace boost::filesystem {
@@ -168,7 +165,7 @@ class RpcClient;
 class RpcServer;
 class ProjectManage;
 class RpcServerHandle;
-
+class AssstsTree;
 
 using MetadataPtr        = std::shared_ptr<Metadata>;
 using MetadataConstPtr   = std::shared_ptr<const Metadata>;

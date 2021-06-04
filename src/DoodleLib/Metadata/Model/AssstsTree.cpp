@@ -14,16 +14,16 @@
 #define DOLE_CHECK(item, value) \
   if (!(item).IsOk()) return value;
 namespace doodle {
-AssstsTree::AssstsTree()
+AssstsTree::AssstsTree(ProjectPtr in_project)
     : wxDataViewModel(),
-      p_Root(MetadataSet::Get().getAllProjects()),
+      p_Root(in_project),
       p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()),
       slot_childAdd(),
       slot_thisChange(),
       slot_childDelete() {
-  slot_childAdd = [this](const wxDataViewItem& parent,
+  slot_childAdd    = [this](const wxDataViewItem& parent,
                          const wxDataViewItem& item) { this->ItemAdded(parent, item); };
-  slot_thisChange = [this](const wxDataViewItem& item) { this->ItemChanged(item); };
+  slot_thisChange  = [this](const wxDataViewItem& item) { this->ItemChanged(item); };
   slot_childDelete = [this](const wxDataViewItem& parent,
                             const wxDataViewItem& item) { this->ItemDeleted(parent, item); };
 }
@@ -40,7 +40,7 @@ void AssstsTree::GetValue(wxVariant& variant, const wxDataViewItem& item, unsign
   variant = ConvStr<wxString>("None");
   DOLE_CHECK(item, );
   auto str = reinterpret_cast<Metadata*>(item.GetID());
-  variant = ConvStr<wxString>(str->showStr());
+  variant  = ConvStr<wxString>(str->showStr());
 }
 
 bool AssstsTree::SetValue(const wxVariant& variant, const wxDataViewItem& item, unsigned int col) {
@@ -67,25 +67,26 @@ unsigned int AssstsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
   //  DOLE_CHECK(item, 0);
 
   auto k_item = reinterpret_cast<Metadata*>(item.GetID());
-  if (!item.IsOk()) {
+
+  if (!item.IsOk() && p_Root) {
     //这里是空指针的情况， 即没有父级， 我们要使用根来确认
-    for (const auto& k_t : p_Root) {
-      if (k_t == CoreSet::getSet().GetMetadataSet().Project_()) {
-        k_t->select_indb(p_metadata_flctory_ptr_);
-        connectSig(k_t);
-      }
-      children.Add(wxDataViewItem{k_t.get()});
-    }
-  } else {
-    k_item->select_indb(p_metadata_flctory_ptr_);
-    k_item->sortChildItems();
-    const auto& k_child = k_item->getChildItems();
-    for (const auto& k_t : k_child) {
-      connectSig(k_t);
-      children.Add(wxDataViewItem{k_t.get()});
-    }
+    k_item = p_Root.get();
+  } else
+    return 0;
+  k_item->select_indb(p_metadata_flctory_ptr_);
+  k_item->sortChildItems();
+
+  const auto& k_child = k_item->getChildItems();
+  for (const auto& k_t : k_child) {
+    connectSig(k_t);
+    children.Add(wxDataViewItem{k_t.get()});
   }
   return children.size();
+}
+
+void AssstsTree::setRoot(const ProjectPtr& in_project) {
+  p_Root = in_project;
+  Cleared();
 }
 void AssstsTree::connectSig(const MetadataPtr& in_metadata) const {
   in_metadata->sig_childAdd.connect(

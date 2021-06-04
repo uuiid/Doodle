@@ -180,6 +180,9 @@ RpcServerHandle::RpcServerHandle()
       p_rpc_server(std::make_shared<RpcServer>()),
       p_build(std::make_unique<grpc::ServerBuilder>()),
       p_thread() {
+  grpc::ResourceQuota qu{"doodle_meta"};
+  qu.SetMaxThreads(4);
+  p_build->SetResourceQuota(qu);
 }
 
 void RpcServerHandle::runServer(int port) {
