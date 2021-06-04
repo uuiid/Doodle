@@ -13,7 +13,7 @@
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/MetadataWidget.h>
-#include <DoodleLib/Metadata/Model/AssstsTree.h>
+#include <DoodleLib/Metadata/Model/AssetsTree.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/core/CoreSet.h>
@@ -30,7 +30,7 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
       p_list_view_ctrl_(),
       p_project_view_ctrl_(new wxDataViewCtrl{this, NewControlId()}),
       p_project_model(new ProjectManage{}),
-      p_assstsTree_model(new AssstsTree{}) {
+      p_assstsTree_model(new AssetsTree{}) {
   auto k_layout = new wxBoxSizer{wxOrientation::wxVERTICAL};
 
   p_project_view_ctrl_->AssociateModel(p_project_model.get());
@@ -71,7 +71,7 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
   // auto k_p_text_renderer = new wxDataViewTextRenderer{"string", wxDATAVIEW_CELL_EDITABLE};
   // auto k_col             = new wxDataViewColumn{ConvStr<wxString>("标签树"), k_p_text_renderer, 0, 100};
   // p_tree_view_ctrl_->AppendColumn(k_col);
-  // p_tree_view_ctrl_->AssociateModel(new AssstsTree{});
+  // p_tree_view_ctrl_->AssociateModel(new AssetsTree{});
   // k_p_text_renderer = new wxDataViewTextRenderer{"string", wxDATAVIEW_CELL_EDITABLE};
   // k_col             = new wxDataViewColumn{ConvStr<wxString>("文件"), k_p_text_renderer, 0, 100};
   // p_list_view_ctrl_->AppendColumn(k_col);

@@ -165,7 +165,7 @@ class RpcClient;
 class RpcServer;
 class ProjectManage;
 class RpcServerHandle;
-class AssstsTree;
+class AssetsTree;
 
 using MetadataPtr        = std::shared_ptr<Metadata>;
 using MetadataConstPtr   = std::shared_ptr<const Metadata>;

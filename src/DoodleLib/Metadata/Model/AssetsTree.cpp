@@ -7,14 +7,14 @@
 #include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
-#include <DoodleLib/Metadata/Model/AssstsTree.h>
+#include <DoodleLib/Metadata/Model/AssetsTree.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/core/CoreSet.h>
 
 #define DOLE_CHECK(item, value) \
   if (!(item).IsOk()) return value;
 namespace doodle {
-AssstsTree::AssstsTree(ProjectPtr in_project)
+AssetsTree::AssetsTree(ProjectPtr in_project)
     : wxDataViewModel(),
       p_Root(in_project),
       p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()),
@@ -28,26 +28,26 @@ AssstsTree::AssstsTree(ProjectPtr in_project)
                             const wxDataViewItem& item) { this->ItemDeleted(parent, item); };
 }
 
-unsigned int AssstsTree::GetColumnCount() const {
+unsigned int AssetsTree::GetColumnCount() const {
   return 1;
 }
 
-wxString AssstsTree::GetColumnType(unsigned int col) const {
+wxString AssetsTree::GetColumnType(unsigned int col) const {
   return "string";
 }
 
-void AssstsTree::GetValue(wxVariant& variant, const wxDataViewItem& item, unsigned int col) const {
+void AssetsTree::GetValue(wxVariant& variant, const wxDataViewItem& item, unsigned int col) const {
   variant = ConvStr<wxString>("None");
   DOLE_CHECK(item, );
   auto str = reinterpret_cast<Metadata*>(item.GetID());
   variant  = ConvStr<wxString>(str->showStr());
 }
 
-bool AssstsTree::SetValue(const wxVariant& variant, const wxDataViewItem& item, unsigned int col) {
+bool AssetsTree::SetValue(const wxVariant& variant, const wxDataViewItem& item, unsigned int col) {
   return false;
 }
 
-wxDataViewItem AssstsTree::GetParent(const wxDataViewItem& item) const {
+wxDataViewItem AssetsTree::GetParent(const wxDataViewItem& item) const {
   DOLE_CHECK(item, wxDataViewItem{});
   const auto k_p_metadata = reinterpret_cast<Metadata*>(item.GetID());
   if (k_p_metadata->hasParent())
@@ -56,14 +56,14 @@ wxDataViewItem AssstsTree::GetParent(const wxDataViewItem& item) const {
     return wxDataViewItem{};
 }
 
-bool AssstsTree::IsContainer(const wxDataViewItem& item) const {
+bool AssetsTree::IsContainer(const wxDataViewItem& item) const {
   DOLE_CHECK(item, true);
 
   auto k_item = reinterpret_cast<Metadata*>(item.GetID());
   return k_item->hasChild();
 }
 
-unsigned int AssstsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const {
+unsigned int AssetsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const {
   //  DOLE_CHECK(item, 0);
 
   auto k_item = reinterpret_cast<Metadata*>(item.GetID());
@@ -84,11 +84,11 @@ unsigned int AssstsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
   return children.size();
 }
 
-void AssstsTree::setRoot(const ProjectPtr& in_project) {
+void AssetsTree::setRoot(const ProjectPtr& in_project) {
   p_Root = in_project;
   Cleared();
 }
-void AssstsTree::connectSig(const MetadataPtr& in_metadata) const {
+void AssetsTree::connectSig(const MetadataPtr& in_metadata) const {
   in_metadata->sig_childAdd.connect(
       [this, in_metadata](const MetadataPtr& child) {
         this->slot_childAdd(wxDataViewItem{in_metadata.get()}, wxDataViewItem{child.get()});

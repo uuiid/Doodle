@@ -7,7 +7,7 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <wx/dataview.h>
 namespace doodle {
-class AssstsTree : public wxDataViewModel {
+class AssetsTree : public wxDataViewModel {
   ProjectPtr p_Root;
   MetadataFactoryPtr p_metadata_flctory_ptr_;
 
@@ -21,7 +21,7 @@ class AssstsTree : public wxDataViewModel {
   std::function<void(const wxDataViewItem& parent, const wxDataViewItem& item)> slot_childDelete;
 
  public:
-  explicit AssstsTree(ProjectPtr in_project = {});
+  explicit AssetsTree(ProjectPtr in_project = {});
 
   [[nodiscard]] unsigned int GetColumnCount() const override;
   [[nodiscard]] wxString GetColumnType(unsigned int col) const override;

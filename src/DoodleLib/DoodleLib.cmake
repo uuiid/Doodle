@@ -21,7 +21,7 @@ set(
 	Metadata/Metadata.h
 	Metadata/MetadataFactory.h
 	Metadata/MetadataWidget.h
-	Metadata/Model/AssstsTree.h
+        Metadata/Model/AssetsTree.h
 	Metadata/Model/ProjectManage.h
 	Metadata/Project.h
 	Metadata/Shot.h
@@ -72,7 +72,7 @@ set(
 	Metadata/Metadata.cpp
 	Metadata/MetadataFactory.cpp
 	Metadata/MetadataWidget.cpp
-	Metadata/Model/AssstsTree.cpp
+        Metadata/Model/AssetsTree.cpp
 	Metadata/Model/ProjectManage.cpp
 	Metadata/Project.cpp
 	Metadata/Shot.cpp
