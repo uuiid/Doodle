@@ -27,12 +27,14 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
       p_tree_id_(NewControlId()),
       p_List_id_(NewControlId()),
       p_tree_view_ctrl_(new wxDataViewCtrl{this, p_tree_id_}),
-      p_list_view_ctrl_(),
+      p_list_view_ctrl_(new wxDataViewCtrl{this, p_List_id_}),
       p_project_view_ctrl_(new wxDataViewCtrl{this, NewControlId()}),
       p_project_model(new ProjectManage{}),
       p_assstsTree_model(new AssetsTree{}) {
-  auto k_layout = new wxBoxSizer{wxOrientation::wxVERTICAL};
+  auto k_layout   = new wxBoxSizer{wxOrientation::wxVERTICAL};
+  auto k_layout_1 = new wxBoxSizer{wxOrientation::wxHORIZONTAL};
 
+  // 项目树
   p_project_view_ctrl_->AssociateModel(p_project_model.get());
   p_project_view_ctrl_->AppendTextColumn(
       ConvStr<wxString>("名称"),
@@ -46,23 +48,28 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
       ConvStr<wxString>("路径"),
       2,
       wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE);
-  k_layout->Add(p_project_view_ctrl_, wxSizerFlags{1}.Expand().Border(0));
 
-  /// 绑定各种函数
-  p_project_view_ctrl_->Bind(wxEVT_DATAVIEW_ITEM_CONTEXT_MENU, &MetadataWidget::projectContextMenu, this);
-
-  auto k_layout_1 = new wxBoxSizer{wxOrientation::wxHORIZONTAL};
-  k_layout->Add(k_layout_1, wxSizerFlags{6}.Expand().Border(wxDirection::wxALL, 0));
-
-  // p_list_view_ctrl_ = new wxDataViewCtrl{this, p_List_id_};
+  // 标签树
   p_tree_view_ctrl_->AppendTextColumn(
       ConvStr<wxString>("标签树"), 0,
       wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
   p_tree_view_ctrl_->SetMinSize(wxSize{300, 600});
   p_tree_view_ctrl_->Bind(wxEVT_DATAVIEW_ITEM_CONTEXT_MENU, &MetadataWidget::treeContextMenu, this);
 
-  k_layout_1->Add(p_tree_view_ctrl_, wxSizerFlags{2}.Expand().Border(wxDirection::wxALL, 0));
+  // p_list_view_ctrl_->AppendTextColumn(
+  //     ConvStr<wxString>("id"), 0,
+  //     wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
 
+  /// 各种布局
+  k_layout->Add(p_project_view_ctrl_, wxSizerFlags{1}.Expand().Border(0));
+  k_layout->Add(k_layout_1, wxSizerFlags{6}.Expand().Border(wxDirection::wxALL, 0));
+  k_layout_1->Add(p_tree_view_ctrl_, wxSizerFlags{2}.Expand().Border(wxDirection::wxALL, 0));
+  k_layout_1->Add(p_list_view_ctrl_, wxSizerFlags{7}.Expand().Border(wxDirection::wxALL, 0));
+
+  /// 绑定各种函数
+  p_project_view_ctrl_->Bind(
+      wxEVT_DATAVIEW_ITEM_CONTEXT_MENU,
+      &MetadataWidget::projectContextMenu, this);
   p_tree_view_ctrl_->Bind(
       wxEVT_DATAVIEW_ITEM_CONTEXT_MENU,
       &MetadataWidget::treeContextMenu,

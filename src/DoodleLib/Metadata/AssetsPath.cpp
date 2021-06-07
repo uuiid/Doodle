@@ -18,9 +18,12 @@ const FSys::path &AssetsPath::getPath() const {
   return p_path;
 }
 void AssetsPath::setPath(const FSys::path &in_path) {
-  if(!FSys::exists(in_path))
+  if (!FSys::exists(in_path))
     throw DoodleError{"不存在文件"};
-  auto k_path = CoreSet::getSet().GetMetadataSet().Project_()->getPath();
+  auto k_prj = CoreSet::getSet().GetMetadataSet().Project_();
+  if (!k_prj)
+    return; 
+  auto k_path            = k_prj->getPath();
   const auto k_root_path = in_path.root_path();
   if (k_root_path == k_path)
     p_path = in_path.lexically_relative(k_path);

@@ -25,6 +25,7 @@
 #include <DoodleLib/Metadata/MetadataWidget.h>
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/Metadata/Model/AssetsTree.h>
+#include <DoodleLib/Metadata/Model/ListAttributeModel.h>
 #include <DoodleLib/Metadata/Model/ProjectManage.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
