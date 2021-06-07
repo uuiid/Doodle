@@ -18,8 +18,12 @@ class ListAttributeModel : public wxDataViewModel {
   [[nodiscard]] wxString GetColumnType(unsigned int col) const override;
   void GetValue(wxVariant& variant, const wxDataViewItem& item, unsigned int col) const override;
   bool SetValue(const wxVariant& variant, const wxDataViewItem& item, unsigned int col) override;
-  [[nodiscard]] wxDataViewItem GetParent(const wxDataViewItem& item) const override;
-  [[nodiscard]] bool IsContainer(const wxDataViewItem& item) const override;
+  [[nodiscard]] wxDataViewItem GetParent(const wxDataViewItem& item) const override {
+    return {};
+  };
+  [[nodiscard]] bool IsContainer(const wxDataViewItem& item) const override {
+    return !item.IsOk();
+  };
   unsigned int GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const override;
 
   virtual bool IsListModel() const override { return true; }

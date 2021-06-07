@@ -16,7 +16,7 @@
 namespace doodle {
 AssetsTree::AssetsTree(ProjectPtr in_project)
     : wxDataViewModel(),
-      p_Root(in_project),
+      p_Root(std::move(in_project)),
       p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()),
       slot_childAdd(),
       slot_thisChange(),
@@ -71,8 +71,9 @@ unsigned int AssetsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
   if (!item.IsOk() && p_Root) {
     //这里是空指针的情况， 即没有父级， 我们要使用根来确认
     k_item = p_Root.get();
-  } else
+  } else if (!p_Root) {
     return 0;
+  }
   k_item->select_indb(p_metadata_flctory_ptr_);
   k_item->sortChildItems();
 
@@ -86,7 +87,8 @@ unsigned int AssetsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
 
 void AssetsTree::setRoot(const ProjectPtr& in_project) {
   p_Root = in_project;
-  Cleared();
+  if (!Cleared())
+    throw DoodleError{"无法清除树中的项目"};
 }
 void AssetsTree::connectSig(const MetadataPtr& in_metadata) const {
   in_metadata->sig_childAdd.connect(

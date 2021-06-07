@@ -14,10 +14,12 @@
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/MetadataWidget.h>
 #include <DoodleLib/Metadata/Model/AssetsTree.h>
+#include <DoodleLib/Metadata/Model/ListAttributeModel.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/core/CoreSet.h>
-#include <doodlelib/Metadata/Model/ProjectManage.h>
+#include <Doodlelib/Metadata/Model/ProjectManage.h>
+
 namespace doodle {
 
 MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
@@ -30,12 +32,16 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
       p_list_view_ctrl_(new wxDataViewCtrl{this, p_List_id_}),
       p_project_view_ctrl_(new wxDataViewCtrl{this, NewControlId()}),
       p_project_model(new ProjectManage{}),
-      p_assstsTree_model(new AssetsTree{}) {
+      p_assstsTree_model(new AssetsTree{CoreSet::getSet().GetMetadataSet().Project_()}),
+      p_list_attribute_model(new ListAttributeModel{}) {
   auto k_layout   = new wxBoxSizer{wxOrientation::wxVERTICAL};
   auto k_layout_1 = new wxBoxSizer{wxOrientation::wxHORIZONTAL};
 
-  // 项目树
+  //设置模型
   p_project_view_ctrl_->AssociateModel(p_project_model.get());
+  p_tree_view_ctrl_->AssociateModel(p_assstsTree_model.get());
+  p_list_view_ctrl_->AssociateModel(p_list_attribute_model.get());
+  // 项目树
   p_project_view_ctrl_->AppendTextColumn(
       ConvStr<wxString>("名称"),
       0,
@@ -54,11 +60,25 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
       ConvStr<wxString>("标签树"), 0,
       wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
   p_tree_view_ctrl_->SetMinSize(wxSize{300, 600});
-  p_tree_view_ctrl_->Bind(wxEVT_DATAVIEW_ITEM_CONTEXT_MENU, &MetadataWidget::treeContextMenu, this);
 
-  // p_list_view_ctrl_->AppendTextColumn(
-  //     ConvStr<wxString>("id"), 0,
-  //     wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
+  p_list_view_ctrl_->AppendTextColumn(
+      ConvStr<wxString>("id"), 0,
+      wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
+  p_list_view_ctrl_->AppendTextColumn(
+      ConvStr<wxString>("版本"), 1,
+      wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
+  p_list_view_ctrl_->AppendTextColumn(
+      ConvStr<wxString>("名称"), 2,
+      wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
+  auto k_com_col = p_list_view_ctrl_->AppendTextColumn(
+      ConvStr<wxString>("评论"), 3,
+      wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE);
+  p_list_view_ctrl_->AppendDateColumn(
+      ConvStr<wxString>("时间"), 4,
+      wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE);
+  p_list_view_ctrl_->AppendTextColumn(
+      ConvStr<wxString>("制作人"), 5,
+      wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
 
   /// 各种布局
   k_layout->Add(p_project_view_ctrl_, wxSizerFlags{1}.Expand().Border(0));
@@ -70,10 +90,7 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
   p_project_view_ctrl_->Bind(
       wxEVT_DATAVIEW_ITEM_CONTEXT_MENU,
       &MetadataWidget::projectContextMenu, this);
-  p_tree_view_ctrl_->Bind(
-      wxEVT_DATAVIEW_ITEM_CONTEXT_MENU,
-      &MetadataWidget::treeContextMenu,
-      this);
+  p_tree_view_ctrl_->Bind(wxEVT_DATAVIEW_ITEM_CONTEXT_MENU, &MetadataWidget::treeContextMenu, this);
 
   // auto k_p_text_renderer = new wxDataViewTextRenderer{"string", wxDATAVIEW_CELL_EDITABLE};
   // auto k_col             = new wxDataViewColumn{ConvStr<wxString>("标签树"), k_p_text_renderer, 0, 100};

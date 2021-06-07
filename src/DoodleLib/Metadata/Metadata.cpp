@@ -130,10 +130,10 @@ bool Metadata::hasParent() const {
   return !p_parent.expired();
 }
 bool Metadata::hasChild() const {
-  if (p_child_items.empty())
     return p_has_child > 0;
-  else
-    return p_child_items.empty();
+  // if (p_child_items.empty())
+  // else
+  //   return p_child_items.empty();
 }
 std::string Metadata::showStr() const {
   return str();

@@ -18,12 +18,13 @@ class DOODLELIB_API AssetsFile : public Metadata {
   std::string p_user;
   Department p_department;
   std::vector<CommentPtr> p_comment;
+  std::uint64_t p_version;
 
  public:
   AssetsFile();
   explicit AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in_path, std::string name = {}, std::string showName = {});
   // ~AssetsFile();
-  
+
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string showStr() const override;
 
@@ -40,10 +41,10 @@ class DOODLELIB_API AssetsFile : public Metadata {
   void setComment(const std::vector<CommentPtr>& in_comment);
   void addComment(const CommentPtr& in_comment);
 
-  void _select_indb(const MetadataFactoryPtr& in_factory) override;
-  void _updata_db(const MetadataFactoryPtr& in_factory) override;
-  virtual void _insert_into(const MetadataFactoryPtr& in_factory) override;
-  virtual void _deleteData(const MetadataFactoryPtr& in_factory) override;
+  const std::uint64_t& getVersion() const noexcept;
+  std::string getVersionStr() const;
+  void setVersion(const std::uint64_t& in_Version) noexcept;
+
   bool operator<(const AssetsFile& in_rhs) const;
   bool operator>(const AssetsFile& in_rhs) const;
   bool operator<=(const AssetsFile& in_rhs) const;
@@ -51,6 +52,10 @@ class DOODLELIB_API AssetsFile : public Metadata {
   virtual void createMenu(ContextMenu* in_contextMenu) override;
 
  protected:
+  void _select_indb(const MetadataFactoryPtr& in_factory) override;
+  void _updata_db(const MetadataFactoryPtr& in_factory) override;
+  virtual void _insert_into(const MetadataFactoryPtr& in_factory) override;
+  virtual void _deleteData(const MetadataFactoryPtr& in_factory) override;
   virtual bool sort(const Metadata& in_rhs) const override;
 
  private:

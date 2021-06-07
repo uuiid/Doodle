@@ -38,16 +38,16 @@ class DOODLELIB_API Shot : public Metadata {
   [[nodiscard]] std::string str() const override;
   virtual void createMenu(ContextMenu *in_contextMenu) override;
 
-  void _select_indb(const MetadataFactoryPtr &in_factory) override;
-  void _updata_db(const MetadataFactoryPtr &in_factory) override;
-  virtual void _insert_into(const MetadataFactoryPtr &in_factory) override;
-  virtual void _deleteData(const MetadataFactoryPtr &in_factory) override;
   bool operator<(const Shot &rhs) const;
   bool operator>(const Shot &rhs) const;
   bool operator<=(const Shot &rhs) const;
   bool operator>=(const Shot &rhs) const;
 
  protected:
+  void _select_indb(const MetadataFactoryPtr &in_factory) override;
+  void _updata_db(const MetadataFactoryPtr &in_factory) override;
+  virtual void _insert_into(const MetadataFactoryPtr &in_factory) override;
+  virtual void _deleteData(const MetadataFactoryPtr &in_factory) override;
   bool sort(const Metadata &in_rhs) const override;
 
  private:

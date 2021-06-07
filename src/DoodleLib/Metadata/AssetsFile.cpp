@@ -9,6 +9,7 @@
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <PinYin/convert.h>
 
+#include <boost/format.hpp>
 #include <utility>
 
 namespace doodle {
@@ -98,6 +99,20 @@ void AssetsFile::setComment(const std::vector<CommentPtr>& in_comment) {
 void AssetsFile::addComment(const CommentPtr& in_comment) {
   p_comment.emplace_back(in_comment);
   saved(true);
+}
+
+const std::uint64_t& AssetsFile::getVersion() const noexcept {
+  return p_version;
+}
+
+std::string AssetsFile::getVersionStr() const {
+  boost::format str{"v%04i"};
+  str % p_version;
+  return str.str();
+}
+
+void AssetsFile::setVersion(const std::uint64_t& in_Version) noexcept {
+  p_version = in_Version;
 }
 const AssetsPathPtr& AssetsFile::getPathFile() const {
   return p_path_file;

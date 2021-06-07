@@ -3,7 +3,6 @@
 //
 
 #include <DoodleLib/Metadata/TimeDuration.h>
-
 #include <date/date.h>
 namespace doodle {
 
@@ -29,9 +28,9 @@ TimeDuration::time_point TimeDuration::endPoint() const {
   return p_end_point;
 }
 void TimeDuration::setEndPoint(const time_point& in_point) {
-  p_end_point = in_point;
+  p_end_point     = in_point;
   auto k_duration = p_end_point - p_start_point;
-  p_duration = std::chrono::duration_cast<std::chrono::minutes>(k_duration);
+  p_duration      = std::chrono::duration_cast<std::chrono::minutes>(k_duration);
 }
 
 std::chrono::minutes TimeDuration::duration() const {
