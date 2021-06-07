@@ -23,6 +23,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   bool p_need_save;
   /// 需要保存
   bool p_need_load;
+  bool p_updata_parent_id;
 
   uint64_t p_has_child;
 

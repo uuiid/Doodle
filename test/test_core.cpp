@@ -204,11 +204,11 @@ TEST_F(CoreTest, load_meatdata) {
   ASSERT_TRUE(it_tp != k_c.end());
   ASSERT_TRUE((*it_tc)->getParent() == ptj);
   ASSERT_TRUE((*it_tc)->getMetadataFactory() == k_f);
-  auto t  = *it_tc;
-  auto t2 = *it_tp;
-  t2->addChildItem(t);
-  t->updata_db(k_f);
-  ASSERT_TRUE(t->getParent() == t2);
+  auto tc = *it_tc;
+  auto tp = *it_tp;
+  tp->addChildItem(tc);
+  tc->updata_db(k_f);
+  ASSERT_TRUE(tc->getParent() == tp);
 }
 TEST_F(CoreTest, modify_meatdata) {
   using namespace doodle;

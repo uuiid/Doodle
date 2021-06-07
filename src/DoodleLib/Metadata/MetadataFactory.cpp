@@ -32,12 +32,12 @@ bool MetadataFactory::insert_into(Metadata *in_metadata) const {
   return true;
 }
 void MetadataFactory::updata_db(MetadataPtr &in_metadata) const {
-  this->p_rpcClien->UpdataMetadata(in_metadata);
+  this->p_rpcClien->UpdataMetadata(in_metadata, in_metadata->p_updata_parent_id);
 }
 
 void MetadataFactory::select_indb(MetadataPtr &in_metadata) const {
-  // if (!in_metadata->hasChild())
-  //   return;
+  if (!in_metadata->hasChild())
+    return;
   auto k_c = this->p_rpcClien->GetChild(in_metadata);
   in_metadata->setChildItems(k_c);
 }

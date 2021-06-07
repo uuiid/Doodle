@@ -24,6 +24,7 @@ Metadata::Metadata()
       sig_childDelete(),
       p_need_save(true),
       p_need_load(true),
+      p_updata_parent_id(false),
       p_has_child(0) {
 }
 
@@ -42,6 +43,7 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
       sig_childDelete(),
       p_need_save(true),
       p_need_load(true),
+      p_updata_parent_id(false),
       p_has_child(0) {
 }
 
@@ -70,7 +72,10 @@ bool Metadata::removeChildItems(const MetadataPtr &in_child) {
 
     p_child_items.erase(it);
     sig_childDelete(in_child);
-    p_has_child = p_child_items.size();
+
+    /// 这里基本上是开始设置各个属性值
+    p_has_child        = p_child_items.size();
+    p_updata_parent_id = true;
     in_child->saved(true);
     saved(true);
     return true;
@@ -98,8 +103,11 @@ void Metadata::addChildItemNotSig(const MetadataPtr &in_items) {
 
   p_child_items.emplace_back(in_items);
 
-  if (k_old && (k_old.get() != this))
+  /// 在这里如果父级和原先的父级不一样， 那么我们要同时记录子项要更新父id属性和要保存所有属性
+  if (k_old && (k_old.get() != this)) {
+    in_items->p_updata_parent_id = true;
     in_items->saved(true);
+  }
 
   p_has_child = p_child_items.size();
   saved(true);
@@ -172,6 +180,8 @@ void Metadata::loaded(bool in_need) {
   p_need_load = in_need;
 }
 void Metadata::saved(bool in_need) {
+  if (!in_need)
+    p_updata_parent_id = false;
   p_need_save = in_need;
 }
 bool Metadata::isLoaded() const {
@@ -210,6 +220,11 @@ void Metadata::updata_db(const MetadataFactoryPtr &in_factory) {
 
   if (isSaved())
     return;
+
+  ///在这里测试使用具有父级， 并且如果有父级， 还要更新父id， 那么就可以断定也要更新父级的记录
+  if (hasParent() && p_metadata_flctory_ptr_) {
+    p_parent.lock()->updata_db(in_factory);
+  }
 
   _updata_db(in_factory);
   saved();

@@ -27,7 +27,7 @@ class DOODLELIB_API RpcClient {
    * @return std::vector<MetadataPtr>  子物体数据集合
    */
   [[nodiscard]] std::vector<MetadataPtr> GetChild(const MetadataConstPtr& in_metadataPtr);
-  
+
   /**
    * @brief 这个不是获得是数据库中的数据， 是获得服务器中序列化的数据
    * 这个函数是 RpcClient::GetChild 的单项函数
@@ -45,5 +45,6 @@ class DOODLELIB_API RpcClient {
   void InstallMetadata(const MetadataPtr& in_metadataPtr);
   void DeleteMetadata(const MetadataConstPtr& in_metadataPtr);
   void UpdataMetadata(const MetadataConstPtr& in_metadataPtr);
+  void UpdataMetadata(const MetadataConstPtr& in_metadataPtr, bool b_updata_parent_id);
 };
 }  // namespace doodle

@@ -153,6 +153,10 @@ void RpcClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
 }
 
 void RpcClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr) {
+  UpdataMetadata(in_metadataPtr, false);
+}
+
+void RpcClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr, bool b_updata_parent_id) {
   if (!in_metadataPtr->isInstall())
     return;
 
@@ -161,7 +165,7 @@ void RpcClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr) {
   k_in_db.set_id(in_metadataPtr->getId());
   k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
 
-  if (in_metadataPtr->hasParent())
+  if (in_metadataPtr->hasParent() && b_updata_parent_id)
     k_in_db.mutable_parent()->set_value(in_metadataPtr->p_parent_id.value());
 
   vector_container my_data{};
