@@ -49,25 +49,6 @@ std::string AssetsFile::showStr() const {
   return p_ShowName;
 }
 
-void AssetsFile::select_indb(const MetadataFactoryPtr& in_factory) {
-  p_metadata_flctory_ptr_ = in_factory;
-  if (isLoaded())
-    return;
-  p_metadata_flctory_ptr_->select_indb(this);
-  loaded();
-}
-
-void AssetsFile::updata_db(const MetadataFactoryPtr& in_factory) {
-  p_metadata_flctory_ptr_ = in_factory;
-  if (isSaved())
-    return;
-  if (isInstall())
-    p_metadata_flctory_ptr_->updata_db(this);
-  else
-    p_metadata_flctory_ptr_->insert_into(this);
-
-  saved();
-}
 bool AssetsFile::operator<(const AssetsFile& in_rhs) const {
   return std::tie(p_name, p_ShowName, p_path_file) < std::tie(in_rhs.p_name, in_rhs.p_ShowName, in_rhs.p_path_file);
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_ShowName, p_path_file) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_ShowName, in_rhs.p_path_file);
@@ -132,11 +113,20 @@ void AssetsFile::setDepartment(Department in_department) {
   p_department = in_department;
   saved(true);
 }
-void AssetsFile::deleteData(const MetadataFactoryPtr& in_factory) {
+void AssetsFile::_select_indb(const MetadataFactoryPtr& in_factory) {
+  p_metadata_flctory_ptr_->select_indb(this);
+}
+
+void AssetsFile::_updata_db(const MetadataFactoryPtr& in_factory) {
+  if (isInstall())
+    p_metadata_flctory_ptr_->updata_db(this);
+  else
+    p_metadata_flctory_ptr_->insert_into(this);
+}
+void AssetsFile::_deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
 }
-void AssetsFile::insert_into(const MetadataFactoryPtr& in_factory) {
+void AssetsFile::_insert_into(const MetadataFactoryPtr& in_factory) {
   in_factory->insert_into(this);
-  saved();
 }
 }  // namespace doodle

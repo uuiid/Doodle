@@ -2,6 +2,7 @@
 
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/Metadata.h>
+
 #include <magic_enum.hpp>
 namespace doodle {
 class DOODLELIB_API Shot : public Metadata {
@@ -16,8 +17,8 @@ class DOODLELIB_API Shot : public Metadata {
   Shot();
   Shot(std::weak_ptr<Metadata> in_metadata,
        decltype(p_shot) in_shot,
-       decltype(p_shot_ab) in_shot_ab      = {});
-  
+       decltype(p_shot_ab) in_shot_ab = {});
+
   // clang-format off
   enum class ShotAbEnum { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
   // clang-format on
@@ -37,10 +38,10 @@ class DOODLELIB_API Shot : public Metadata {
   [[nodiscard]] std::string str() const override;
   virtual void createMenu(ContextMenu *in_contextMenu) override;
 
-  void select_indb(const MetadataFactoryPtr &in_factory) override;
-  void updata_db(const MetadataFactoryPtr &in_factory) override;
-  virtual void insert_into(const MetadataFactoryPtr &in_factory) override;
-  virtual void deleteData(const MetadataFactoryPtr &in_factory) override;
+  void _select_indb(const MetadataFactoryPtr &in_factory) override;
+  void _updata_db(const MetadataFactoryPtr &in_factory) override;
+  virtual void _insert_into(const MetadataFactoryPtr &in_factory) override;
+  virtual void _deleteData(const MetadataFactoryPtr &in_factory) override;
   bool operator<(const Shot &rhs) const;
   bool operator>(const Shot &rhs) const;
   bool operator<=(const Shot &rhs) const;

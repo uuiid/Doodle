@@ -66,6 +66,31 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
    */
   virtual void addChildItemNotSig(const MetadataPtr &in_items);
 
+  /**
+   * @brief 这里是使用工厂进行加载和保存的函数
+   * 使用访问者模式
+   * @warning 注意,这里进行工厂加载是不触发任何的添加子物体和子物体更改等任何插槽的，
+   *  工厂在添加子物体时应该调用 Metadata::addChildItemNotSig(const MetadataPtr &) 方法
+   * @param in_factory 序列化工厂
+   */
+  virtual void _select_indb(const MetadataFactoryPtr &in_factory) = 0;
+  /**
+   *
+   * @param in_factory 序列化工厂
+   */
+  virtual void _updata_db(const MetadataFactoryPtr &in_factory) = 0;
+  /**
+   * @brief  删除这个数据
+   * @param in_factory 序列化工厂
+   */
+  virtual void _deleteData(const MetadataFactoryPtr &in_factory) = 0;
+  /**
+   * @brief 插入函数
+   * 
+   * @param in_factory 
+   */
+  virtual void _insert_into(const MetadataFactoryPtr &in_factory) = 0;
+
  public:
   Metadata();
   ///这个时直接创建对象的，其中会自动设置父指针
@@ -174,23 +199,23 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
    *  工厂在添加子物体时应该调用 Metadata::addChildItemNotSig(const MetadataPtr &) 方法
    * @param in_factory 序列化工厂
    */
-  virtual void select_indb(const MetadataFactoryPtr &in_factory) = 0;
+  virtual void select_indb(const MetadataFactoryPtr &in_factory);
   /**
    *
    * @param in_factory 序列化工厂
    */
-  virtual void updata_db(const MetadataFactoryPtr &in_factory) = 0;
+  virtual void updata_db(const MetadataFactoryPtr &in_factory);
   /**
    * @brief  删除这个数据
    * @param in_factory 序列化工厂
    */
-  virtual void deleteData(const MetadataFactoryPtr &in_factory) = 0;
+  virtual void deleteData(const MetadataFactoryPtr &in_factory);
   /**
    * @brief 插入函数
    * 
    * @param in_factory 
    */
-  virtual void insert_into(const MetadataFactoryPtr &in_factory) = 0;
+  virtual void insert_into(const MetadataFactoryPtr &in_factory);
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);

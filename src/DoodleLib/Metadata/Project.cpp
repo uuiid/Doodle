@@ -23,8 +23,6 @@ Project::Project(FSys::path in_path, std::string in_name)
       p_path(std::move(in_path)) {
 }
 
-
-
 void Project::setName(const std::string& Name) noexcept {
   p_name = Name;
   saved(true);
@@ -73,25 +71,7 @@ std::string Project::getConfigFileName() {
 FSys::path Project::DBRoot() const {
   return p_path / "_._root";
 }
-void Project::updata_db(const MetadataFactoryPtr& in_factory) {
-  if (isSaved())
-    return;
-  p_metadata_flctory_ptr_ = in_factory;
-  if (isInstall())
-    p_metadata_flctory_ptr_->updata_db(this);
-  else
-    p_metadata_flctory_ptr_->insert_into(this);
-  saved();
-}
-void Project::select_indb(const MetadataFactoryPtr& in_factory) {
-  if (isLoaded())
-    return;
-  /// 在这里先更改工厂属性, 因为在工厂中, 我们会调用
-  /// Metadata::addChildItemNotSig(const MetadataPtr &in_items)
-  /// 这个时候会将工厂属性传播到子物体中
-  p_metadata_flctory_ptr_ = in_factory;
-  in_factory->select_indb(this);
-}
+
 bool Project::operator<(const Project& in_rhs) const {
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_path) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_path);
   return std::tie(p_name, p_path) < std::tie(in_rhs.p_name, in_rhs.p_path);
@@ -116,15 +96,23 @@ bool Project::sort(const Metadata& in_rhs) const {
 void Project::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<Project>(shared_from_this()));
 }
-void Project::deleteData(const MetadataFactoryPtr& in_factory) {
-  in_factory->deleteData(this);
-}
 const std::string& Project::getName() const {
   return p_name;
 }
-void Project::insert_into(const MetadataFactoryPtr& in_factory) {
+void Project::_deleteData(const MetadataFactoryPtr& in_factory) {
+  in_factory->deleteData(this);
+}
+void Project::_insert_into(const MetadataFactoryPtr& in_factory) {
   in_factory->insert_into(this);
-  saved();
+}
+void Project::_updata_db(const MetadataFactoryPtr& in_factory) {
+  if (isInstall())
+    p_metadata_flctory_ptr_->updata_db(this);
+  else
+    p_metadata_flctory_ptr_->insert_into(this);
+}
+void Project::_select_indb(const MetadataFactoryPtr& in_factory) {
+  in_factory->select_indb(this);
 }
 
 }  // namespace doodle

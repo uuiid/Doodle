@@ -28,9 +28,6 @@ class DOODLELIB_API Project : public Metadata {
 
   [[nodiscard]] std::string shortStr() const;
 
-  void select_indb(const MetadataFactoryPtr& in_factory) override;
-  void updata_db(const MetadataFactoryPtr& in_factory) override;
-
   static std::string getConfigFileName();
   static std::string getConfigFileFolder();
   bool operator<(const Project& in_rhs) const;
@@ -38,17 +35,17 @@ class DOODLELIB_API Project : public Metadata {
   bool operator<=(const Project& in_rhs) const;
   bool operator>=(const Project& in_rhs) const;
 
-  virtual void insert_into(const MetadataFactoryPtr& in_factory) override;
-
   virtual void createMenu(ContextMenu* in_contextMenu) override;
-  virtual void deleteData(const MetadataFactoryPtr& in_factory) override;
 
  protected:
+  void _select_indb(const MetadataFactoryPtr& in_factory) override;
+  void _updata_db(const MetadataFactoryPtr& in_factory) override;
+  virtual void _insert_into(const MetadataFactoryPtr& in_factory) override;
+  virtual void _deleteData(const MetadataFactoryPtr& in_factory) override;
   virtual bool sort(const Metadata& in_rhs) const override;
 
  private:
   [[nodiscard]] FSys::path DBRoot() const;
-
 
   friend class cereal::access;
   template <class Archive>

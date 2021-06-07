@@ -41,26 +41,6 @@ std::string Episodes::str() const {
   return eps_str.str();
 }
 
-void Episodes::select_indb(const MetadataFactoryPtr& in_factory) {
-  if (isLoaded())
-    return;
-  p_metadata_flctory_ptr_ = in_factory;
-  in_factory->select_indb(this);
-  loaded();
-}
-
-void Episodes::updata_db(const MetadataFactoryPtr& in_factory) {
-  p_metadata_flctory_ptr_ = in_factory;
-
-  if (isSaved())
-    return;
-
-  if (isInstall())
-    in_factory->updata_db(this);
-  else
-    in_factory->insert_into(this);
-  saved();
-}
 bool Episodes::operator<(const Episodes& in_rhs) const {
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_episodes) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_episodes);
   return std::tie(p_episodes) < std::tie(in_rhs.p_episodes);
@@ -85,12 +65,22 @@ bool Episodes::sort(const Metadata& in_rhs) const {
 void Episodes::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<Episodes>(shared_from_this()));
 }
-void Episodes::deleteData(const MetadataFactoryPtr& in_factory) {
+
+void Episodes::_select_indb(const MetadataFactoryPtr& in_factory) {
+  in_factory->select_indb(this);
+}
+
+void Episodes::_updata_db(const MetadataFactoryPtr& in_factory) {
+  if (isInstall())
+    in_factory->updata_db(this);
+  else
+    in_factory->insert_into(this);
+}
+void Episodes::_deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
 }
-void Episodes::insert_into(const MetadataFactoryPtr& in_factory) {
+void Episodes::_insert_into(const MetadataFactoryPtr& in_factory) {
   in_factory->insert_into(this);
-  saved();
 }
 
 }  // namespace doodle

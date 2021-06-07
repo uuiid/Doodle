@@ -54,9 +54,8 @@ std::string RpcServer::get_cache_and_file(const FSys::path &key) {
 void RpcServer::put_cache_and_file(const FSys::path &key, const std::string &value) {
   if (!FSys::exists(key.parent_path()))
     FSys::create_directories(key.parent_path());
-
-  FSys::ofstream k_ofstream{key, std::ios::out | std::ios::binary};
-  k_ofstream.write(value.data(), value.size());
+  // FSys::ofstream k_ofstream{key, std::ios::out | std::ios::binary};
+  // k_ofstream.write(value.data(), value.size());
   p_cache.Put(key.generic_string(), value);
 }
 

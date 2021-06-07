@@ -90,7 +90,11 @@ void CoreSet::getSetting() {
     FSys::ifstream inJosn{k_settingFileName, std::ifstream::binary};
 
     cereal::PortableBinaryInputArchive incereal{inJosn};
-    incereal(*this);
+    try {
+      incereal(*this);
+    } catch (const cereal::Exception &err) {
+      DOODLE_LOG_DEBUG(err.what());
+    }
   }
 }
 CoreSet::CoreSet()

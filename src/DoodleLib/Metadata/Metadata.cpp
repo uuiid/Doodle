@@ -71,6 +71,7 @@ bool Metadata::removeChildItems(const MetadataPtr &in_child) {
     p_child_items.erase(it);
     sig_childDelete(in_child);
     p_has_child = p_child_items.size();
+    in_child->saved(true);
     saved(true);
     return true;
   } else
@@ -193,6 +194,38 @@ bool Metadata::operator==(const Metadata &in_rhs) const {
 }
 bool Metadata::operator!=(const Metadata &in_rhs) const {
   return !(in_rhs == *this);
+}
+
+void Metadata::select_indb(const MetadataFactoryPtr &in_factory) {
+  p_metadata_flctory_ptr_ = in_factory;
+  if (isLoaded())
+    return;
+
+  _select_indb(in_factory);
+  loaded();
+}
+
+void Metadata::updata_db(const MetadataFactoryPtr &in_factory) {
+  p_metadata_flctory_ptr_ = in_factory;
+
+  if (isSaved())
+    return;
+
+  _updata_db(in_factory);
+  saved();
+}
+
+void Metadata::deleteData(const MetadataFactoryPtr &in_factory) {
+  p_metadata_flctory_ptr_ = in_factory;
+
+  _deleteData(in_factory);
+}
+
+void Metadata::insert_into(const MetadataFactoryPtr &in_factory) {
+  p_metadata_flctory_ptr_ = in_factory;
+
+  _insert_into(in_factory);
+  saved();
 }
 
 }  // namespace doodle

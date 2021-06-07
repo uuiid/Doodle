@@ -30,29 +30,6 @@ std::string Assets::showStr() const {
   return p_name;
 }
 
-void Assets::select_indb(const MetadataFactoryPtr& in_factory) {
-  if (isLoaded())
-    return;
-  p_metadata_flctory_ptr_ = in_factory;
-  in_factory->select_indb(this);
-  loaded();
-}
-
-void Assets::updata_db(const MetadataFactoryPtr& in_factory) {
-  p_metadata_flctory_ptr_ = in_factory;
-  if (isSaved())
-    return;
-  if (isInstall())
-    p_metadata_flctory_ptr_->updata_db(this);
-  else
-    p_metadata_flctory_ptr_->insert_into(this);
-  saved();
-}
-
-void Assets::insert_into(const MetadataFactoryPtr& in_factory) {
-  in_factory->insert_into(this);
-  saved();
-}
 bool Assets::operator<(const Assets& in_rhs) const {
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name);
   return std::tie(p_name) < std::tie(in_rhs.p_name);
@@ -77,9 +54,7 @@ bool Assets::sort(const Metadata& in_rhs) const {
 void Assets::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<Assets>(shared_from_this()));
 }
-void Assets::deleteData(const MetadataFactoryPtr& in_factory) {
-  in_factory->deleteData(this);
-}
+
 const std::string& Assets::getName1() const {
   return p_name;
 }
@@ -93,5 +68,22 @@ const std::string& Assets::getNameEnus() const {
 void Assets::setNameEnus(const std::string& in_nameEnus) {
   p_name_enus = in_nameEnus;
   saved(true);
+}
+void Assets::_select_indb(const MetadataFactoryPtr& in_factory) {
+  in_factory->select_indb(this);
+}
+
+void Assets::_updata_db(const MetadataFactoryPtr& in_factory) {
+  if (isInstall())
+    p_metadata_flctory_ptr_->updata_db(this);
+  else
+    p_metadata_flctory_ptr_->insert_into(this);
+}
+
+void Assets::_insert_into(const MetadataFactoryPtr& in_factory) {
+  in_factory->insert_into(this);
+}
+void Assets::_deleteData(const MetadataFactoryPtr& in_factory) {
+  in_factory->deleteData(this);
 }
 }  // namespace doodle

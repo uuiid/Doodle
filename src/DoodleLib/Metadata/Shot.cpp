@@ -23,8 +23,6 @@ Shot::Shot(std::weak_ptr<Metadata> in_metadata,
     throw DoodleError{"shot无法为负"};
 }
 
-
-
 const int64_t& Shot::getShot() const noexcept {
   return p_shot;
 }
@@ -60,27 +58,6 @@ std::string Shot::str() const {
   str_shot % p_shot % p_shot_ab;
   return str_shot.str();
 }
-
-void Shot::select_indb(const MetadataFactoryPtr& in_factory) {
-  if (isLoaded())
-    return;
-  p_metadata_flctory_ptr_ = in_factory;
-  in_factory->select_indb(this);
-  loaded();
-}
-
-void Shot::updata_db(const MetadataFactoryPtr& in_factory) {
-  if (isSaved())
-    return;
-  p_metadata_flctory_ptr_ = in_factory;
-
-  if (this->isInstall())
-    p_metadata_flctory_ptr_->updata_db(this);
-  else
-    p_metadata_flctory_ptr_->insert_into(this);
-  saved();
-}
-
 bool Shot::operator<(const Shot& rhs) const {
   return std::tie(p_shot, p_shot_ab) < std::tie(rhs.p_shot, rhs.p_shot_ab);
 }
@@ -104,12 +81,22 @@ bool Shot::sort(const Metadata& in_rhs) const {
 void Shot::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<Shot>(shared_from_this()));
 }
-void Shot::deleteData(const MetadataFactoryPtr& in_factory) {
+void Shot::_select_indb(const MetadataFactoryPtr& in_factory) {
+  in_factory->select_indb(this);
+}
+
+void Shot::_updata_db(const MetadataFactoryPtr& in_factory) {
+  if (this->isInstall())
+    p_metadata_flctory_ptr_->updata_db(this);
+  else
+    p_metadata_flctory_ptr_->insert_into(this);
+}
+
+void Shot::_deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
 }
-void Shot::insert_into(const MetadataFactoryPtr& in_factory) {
+void Shot::_insert_into(const MetadataFactoryPtr& in_factory) {
   in_factory->insert_into(this);
-  saved();
 }
 
 }  // namespace doodle

@@ -25,15 +25,15 @@ class DOODLELIB_API Assets : public Metadata {
   const std::string& getNameEnus() const;
   void setNameEnus(const std::string& in_nameEnus);
 
-  void select_indb(const MetadataFactoryPtr& in_factory) override;
-  void updata_db(const MetadataFactoryPtr& in_factory) override;
-  virtual void insert_into(const MetadataFactoryPtr& in_factory) override;
+  void _select_indb(const MetadataFactoryPtr& in_factory) override;
+  void _updata_db(const MetadataFactoryPtr& in_factory) override;
+  virtual void _insert_into(const MetadataFactoryPtr& in_factory) override;
+  virtual void _deleteData(const MetadataFactoryPtr& in_factory) override;
   bool operator<(const Assets& in_rhs) const;
   bool operator>(const Assets& in_rhs) const;
   bool operator<=(const Assets& in_rhs) const;
   bool operator>=(const Assets& in_rhs) const;
   virtual void createMenu(ContextMenu* in_contextMenu) override;
-  virtual void deleteData(const MetadataFactoryPtr& in_factory) override;
 
  protected:
   virtual bool sort(const Metadata& in_rhs) const override;
