@@ -37,7 +37,9 @@ void MetadataSet::installProject(const ProjectPtr &Project_) {
 }
 
 void MetadataSet::setProject_(const ProjectPtr &Project_) {
-  auto it = std::find(p_project_list.begin(), p_project_list.end(), Project_);
+  auto it = std::find_if(p_project_list.begin(), p_project_list.end(), [Project_](ProjectPtr &in_prj) {
+    return Project_.get() == in_prj.get();
+  });
   if (it == p_project_list.end()) {
     throw DoodleError("项目不在列表中");
   }

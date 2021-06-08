@@ -2,25 +2,30 @@
 // Created by TD on 2021/5/14.
 //
 
-#include <DoodleLib/Metadata/ContextMenu.h>
 #include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/ContextMenu.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/Model/AssetsTree.h>
+#include <DoodleLib/Metadata/Model/ListAttributeModel.h>
+#include <DoodleLib/Metadata/Model/ProjectManage.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
+#include <wx/dataview.h>
 #include <wx/numdlg.h>
 #include <wx/textdlg.h>
 
 namespace doodle {
 
-ContextMenu::ContextMenu(wxWindow* in_parent, wxMenu* in_menu)
+ContextMenu::ContextMenu(wxWindow* in_parent, wxMenu* in_menu, wxDataViewModel* in_model)
     : p_parent(in_parent),
       p_menu(in_menu),
-      p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()) {
+      p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()),
+      p_model(in_model) {
 }
-void ContextMenu::createProject() {
+ProjectPtr ContextMenu::createProject() {
   auto path_dialog = wxDirDialog{p_parent, ConvStr<wxString>("选择项目根目录: "), wxEmptyString, wxRESIZE_BORDER};
   auto result      = path_dialog.ShowModal();
   if (result != wxID_OK)
@@ -36,36 +41,35 @@ void ContextMenu::createProject() {
     return;
 
   auto k_ptr = std::make_shared<Project>(k_path, k_name);
-  k_ptr->updata_db(p_metadata_flctory_ptr_);
-  MetadataSet::Get().installProject(k_ptr);
-}
-void ContextMenu::addProject() {
-  auto path_dialog = wxDirDialog{p_parent, ConvStr<wxString>("选择项目根目录: "), wxEmptyString, wxRESIZE_BORDER};
-  auto result      = path_dialog.ShowModal();
-  if (result != wxID_OK) return;
-  auto path = ConvStr<FSys::path>(path_dialog.GetPath());
-  if (path.empty()) return;
-  auto prj = std::make_shared<Project>(path);
-  prj->select_indb(p_metadata_flctory_ptr_);
-  MetadataSet::Get().installProject(prj);
+  return k_ptr;
 }
 
 wxMenu* ContextMenu::createMenu(const ProjectPtr& in_data) {
-  // auto k_set_prj    = p_menu->Append(wxID_ANY, ConvStr<wxString>("设为当前项目"));
-  // auto k_delete_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("清除项目"));
+  auto k_add_prj    = p_menu->AppendCheckItem(wxWindow::NewControlId(), ConvStr<wxString>("添加项目"));
+  auto k_remove_prj = p_menu->AppendCheckItem(wxWindow::NewControlId(), ConvStr<wxString>("删除项目"));
+  auto k_sub_prj    = p_menu->AppendCheckItem(wxWindow::NewControlId(), ConvStr<wxString>("提交项目"));
 
-  // p_menu->Bind(
-  //     wxEVT_MENU,
-  //     [in_data](wxCommandEvent& in_event) {
-  //       MetadataSet::Get().setProject_(in_data);
-  //     },
-  //     k_set_prj->GetId());
-  // p_menu->Bind(
-  //     wxEVT_MENU,
-  //     [in_data](wxCommandEvent& in_event) {
-  //       MetadataSet::Get().deleteProject(in_data.get());
-  //     },
-  //     k_set_prj->GetId());
+  p_menu->Bind(
+      wxEVT_MENU, [this, in_data](wxCommandEvent& in_event_menu) {
+        auto k_model = dynamic_cast<ProjectManage*>(p_model);
+        if (k_model)
+          k_model->addProject(createProject());
+      },
+      k_add_prj->GetId());
+  p_menu->Bind(
+      wxEVT_MENU, [this, in_data](wxCommandEvent& in_event_menu) {
+        auto k_model = dynamic_cast<ProjectManage*>(p_model);
+        if (k_model)
+          k_model->removeProject(in_data);
+      },
+      k_remove_prj->GetId());
+  p_menu->Bind(
+      wxEVT_MENU, [this, in_data](wxCommandEvent& in_event_menu) {
+        auto k_model = dynamic_cast<ProjectManage*>(p_model);
+        if (k_model)
+          k_model->submit(this->p_metadata_flctory_ptr_);
+      },
+      k_sub_prj->GetId());
 
   return this->createMenuAfter(std::dynamic_pointer_cast<Metadata>(in_data));
 }
@@ -159,6 +163,9 @@ wxMenu* ContextMenu::createMenu(const AssetsFilePtr& in_data) {
 }
 
 wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
+  if (!dynamic_cast<AssetsTree*>(p_model))
+    return p_menu;
+
   p_menu->AppendSeparator();
 
   auto k_add_eps  = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加集数"));
@@ -221,24 +228,6 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
   return createMenuAfter();
 }
 wxMenu* ContextMenu::createMenuAfter() {
-  // p_menu->AppendSeparator();
-
-  // auto k_Add_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加项目"));
-  // p_menu->AppendSeparator();
-  // auto k_create_prj = p_menu->Append(wxID_ANY, ConvStr<wxString>("创建项目"));
-
-  // p_menu->Bind(
-  //     wxEVT_MENU,
-  //     [this](wxCommandEvent& in_event) {
-  //       this->createProject();
-  //     },
-  //     k_create_prj->GetId());
-  // p_menu->Bind(
-  //     wxEVT_MENU,
-  //     [this](wxCommandEvent& in_event) {
-  //       this->addProject();
-  //     },
-  //     k_create_prj->GetId());
   return this->p_menu;
 }
 

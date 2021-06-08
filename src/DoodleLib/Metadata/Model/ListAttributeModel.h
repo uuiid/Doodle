@@ -10,6 +10,7 @@
 namespace doodle {
 class ListAttributeModel : public wxDataViewModel {
   MetadataPtr p_metadata;
+  MetadataFactoryPtr p_metadata_flctory_ptr_;
 
  public:
   explicit ListAttributeModel();

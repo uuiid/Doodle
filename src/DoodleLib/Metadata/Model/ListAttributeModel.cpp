@@ -6,13 +6,15 @@
 
 #include <DoodleLib/Metadata/AssetsFile.h>
 #include <DoodleLib/Metadata/Comment.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
 #include <date/date.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 
 namespace doodle {
 ListAttributeModel::ListAttributeModel()
-    : p_metadata() {
+    : p_metadata(),
+      p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()) {
 }
 
 unsigned int ListAttributeModel::GetColumnCount() const {
@@ -125,12 +127,18 @@ unsigned int ListAttributeModel::GetChildren(const wxDataViewItem& item, wxDataV
     return 0;
   if (!p_metadata)
     return 0;
+  if (!p_metadata->hasChild())
+    return 0;
+
+  p_metadata->select_indb(p_metadata_flctory_ptr_);
+  p_metadata->sortChildItems();
 
   auto& k_c = p_metadata->getChildItems();
   for (const auto& k_i : k_c) {
-    children.emplace_back(wxDataViewItem{k_i.get()});
+    if (typeid(*k_i) == typeid(AssetsFile))
+      children.emplace_back(wxDataViewItem{k_i.get()});
   }
-  return k_c.size();
+  return children.size();
 }
 
 void ListAttributeModel::setRoot(const MetadataPtr& in_metadata_ptr) {

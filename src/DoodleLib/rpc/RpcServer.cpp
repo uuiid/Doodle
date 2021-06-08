@@ -175,7 +175,7 @@ grpc::Status RpcServer::DeleteMetadata(grpc::ServerContext *context, const DataD
   Metadatatab k_tab{};
 
   if (!p_cache.Remove(getPath(request->uuidpath()).generic_string()))
-    return grpc::Status::CANCELLED;
+    return {grpc::StatusCode::NOT_FOUND, "未找到缓存"};
   auto id = (*k_conn)(sqlpp::remove_from(k_tab).where(k_tab.id == request->id()));
   response->set_id(id);
 

@@ -12,9 +12,9 @@ class DOODLELIB_API MetadataSet {
   MetadataSet();
   std::vector<ProjectPtr> p_project_list;
   std::shared_ptr<Project> p_project;
- public:
-  static MetadataSet& Get();
 
+ public:
+  static MetadataSet &Get();
 
   [[nodiscard]] bool hasProject();
   [[nodiscard]] std::vector<ProjectPtr> getAllProjects() const;
@@ -29,10 +29,10 @@ class DOODLELIB_API MetadataSet {
   void init();
   DOODLE_DISABLE_COPY(MetadataSet)
 
-  boost::signals2::signal<void (const Project *,int)> sig_Projectdelete;
-  boost::signals2::signal<void (const Project *,int)> sig_projectChange;
-  boost::signals2::signal<void (const Project *,int)> sig_projectAdd;
-  
+  boost::signals2::signal<void(const Project *, int)> sig_Projectdelete;
+  boost::signals2::signal<void(Project *, int)> sig_projectChange;
+  boost::signals2::signal<void(const Project *, int)> sig_projectAdd;
+
  private:
   //这里是序列化的代码
   friend class cereal::access;
@@ -41,10 +41,9 @@ class DOODLELIB_API MetadataSet {
   [[nodiscard]] int getIntex(const std::vector<ProjectPtr>::const_iterator &it) const;
 };
 template <class Archive>
-void MetadataSet::serialize(Archive &ar, const std::uint32_t version){
+void MetadataSet::serialize(Archive &ar, const std::uint32_t version) {
   ar(
-      cereal::make_nvp("project",p_project)
-      );
+      cereal::make_nvp("project", p_project));
 }
 }  // namespace doodle
 CEREAL_CLASS_VERSION(doodle::MetadataSet, 4);

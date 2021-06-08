@@ -24,6 +24,8 @@ Project::Project(FSys::path in_path, std::string in_name)
 }
 
 void Project::setName(const std::string& Name) noexcept {
+  if (Name == p_name)
+    return;
   p_name = Name;
   saved(true);
 }
@@ -35,6 +37,9 @@ const FSys::path& Project::getPath() const noexcept {
 void Project::setPath(const FSys::path& Path) {
   if (Path.empty())
     throw DoodleError{"项目路径不能为空"};
+  if (p_path == Path)
+    return;
+
   p_path = Path;
   saved(true);
 }
