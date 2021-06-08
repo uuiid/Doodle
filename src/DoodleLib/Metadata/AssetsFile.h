@@ -76,9 +76,20 @@ void AssetsFile::serialize(Archive& ar, const std::uint32_t version) {
         CEREAL_NVP(p_user),
         CEREAL_NVP(p_department),
         CEREAL_NVP(p_comment));
+  if (version == 2)
+    ar(
+        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
+        CEREAL_NVP(p_name),
+        CEREAL_NVP(p_ShowName),
+        CEREAL_NVP(p_path_file),
+        CEREAL_NVP(p_time),
+        CEREAL_NVP(p_user),
+        CEREAL_NVP(p_department),
+        CEREAL_NVP(p_comment),
+        CEREAL_NVP(p_version));
 }
 
 }  // namespace doodle
 
 CEREAL_REGISTER_TYPE(doodle::AssetsFile)
-CEREAL_CLASS_VERSION(doodle::AssetsFile, 1)
+CEREAL_CLASS_VERSION(doodle::AssetsFile, 2)

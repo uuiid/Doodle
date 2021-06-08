@@ -29,16 +29,16 @@ ProjectPtr ContextMenu::createProject() {
   auto path_dialog = wxDirDialog{p_parent, ConvStr<wxString>("选择项目根目录: "), wxEmptyString, wxRESIZE_BORDER};
   auto result      = path_dialog.ShowModal();
   if (result != wxID_OK)
-    return;
+    return {};
   auto k_text_dialog = wxTextEntryDialog{p_parent, ConvStr<wxString>("项目名称: ")};
   auto k_result      = k_text_dialog.ShowModal();
   if (k_result != wxID_OK)
-    return;
+    return {};
 
   auto k_path = ConvStr<FSys::path>(path_dialog.GetPath());
   auto k_name = ConvStr<std::string>(k_text_dialog.GetValue());
   if (k_path.empty() || k_name.empty())
-    return;
+    return {};
 
   auto k_ptr = std::make_shared<Project>(k_path, k_name);
   return k_ptr;
@@ -52,8 +52,11 @@ wxMenu* ContextMenu::createMenu(const ProjectPtr& in_data) {
   p_menu->Bind(
       wxEVT_MENU, [this, in_data](wxCommandEvent& in_event_menu) {
         auto k_model = dynamic_cast<ProjectManage*>(p_model);
-        if (k_model)
-          k_model->addProject(createProject());
+        if (k_model) {
+          auto prj = createProject();
+          if (prj)
+            k_model->addProject(prj);
+        }
       },
       k_add_prj->GetId());
   p_menu->Bind(

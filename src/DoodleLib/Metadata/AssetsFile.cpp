@@ -22,7 +22,8 @@ AssetsFile::AssetsFile()
       p_time(),
       p_user(),
       p_department(),
-      p_comment() {
+      p_comment(),
+      p_version(0) {
 }
 AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in_path, std::string name, std::string showName)
     : Metadata(),
@@ -32,7 +33,8 @@ AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in
       p_time(),
       p_user(),
       p_department(),
-      p_comment() {
+      p_comment(),
+      p_version(0) {
   p_parent = std::move(in_metadata);
   if (p_ShowName.empty())
     p_ShowName = convert::Get().toEn(p_name);

@@ -29,13 +29,7 @@ wxString ListAttributeModel::GetColumnType(unsigned int col) const {
     case 1:
     case 2:
     case 3:
-      str = ConvStr("string");
-      break;
-
     case 4:
-      str = ConvStr("time");
-      break;
-
     case 5:
     default:
       str = ConvStr("string");
@@ -66,13 +60,14 @@ void ListAttributeModel::GetValue(wxVariant& variant, const wxDataViewItem& item
       auto& k_com = k_ass->getComment();
       if (k_com.empty())
         variant = ConvStr<wxString>("none");
-
-      variant = ConvStr<wxString>(k_com.back()->getComment());
+      else
+        variant = ConvStr<wxString>(k_com.back()->getComment());
     } break;
 
     case 4: {
       auto& time = k_ass->getTime();
-      variant    = wxDateTime{std::chrono::system_clock::to_time_t(time)};
+      auto str   = date::format("%D %T %Z", time);
+      variant    = ConvStr<wxString>(str);
     } break;
     case 5:
       variant = ConvStr<wxString>(k_ass->getUser());
@@ -107,11 +102,7 @@ bool ListAttributeModel::SetValue(const wxVariant& variant, const wxDataViewItem
     } break;
 
     case 4: {
-      auto k_time = variant.GetDateTime();
-      if (!k_time.IsValid())
-        break;
-      k_ass->setTime(std::chrono::system_clock::from_time_t(k_time.GetTicks()));
-      k_b = true;
+      k_b = false;
 
     } break;
     case 5:
