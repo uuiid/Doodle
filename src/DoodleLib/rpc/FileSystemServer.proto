@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
+// import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
-import "google/protobuf/wrappers.proto";
+// import "google/protobuf/wrappers.proto";
 
 package doodle;
 
@@ -15,14 +15,17 @@ message fileInfo{
   uint64 size = 5;
 }
 
+message fileData{
+  uint64 beg = 1;
+  uint64 end = 2;
+  google.protobuf.Any data = 3;
+}
+
 message fileStream{
   fileInfo info = 1;
-  string path = 2;
-  uint64 beg = 3;
-  uint64 end = 4;
-  google.protobuf.Any data = 5;
-
+  fileData data = 2;
 }
+
 
 service FileSystemServer{
   rpc GetInfo(fileInfo) returns (fileInfo) {}

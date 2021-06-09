@@ -2,7 +2,7 @@
 // Created by TD on 2021/5/25.
 //
 
-#include <DoodleLib/rpc/RpcServer.h>
+#include <DoodleLib/rpc/RpcMetadaataServer.h>
 
 // clang-format off
 #include <DoodleLib/Metadata/AssetsPath.h>
@@ -31,7 +31,7 @@
 
 namespace doodle {
 
-std::string RpcServer::get_cache_and_file(const FSys::path &key) {
+std::string RpcMetadaataServer::get_cache_and_file(const FSys::path &key) {
   auto k_key = key.generic_string();
 
   if (p_cache.Cached(k_key)) {
@@ -51,7 +51,7 @@ std::string RpcServer::get_cache_and_file(const FSys::path &key) {
   }
 }
 
-void RpcServer::put_cache_and_file(const FSys::path &key, const std::string &value) {
+void RpcMetadaataServer::put_cache_and_file(const FSys::path &key, const std::string &value) {
   if (!FSys::exists(key.parent_path()))
     FSys::create_directories(key.parent_path());
   // FSys::ofstream k_ofstream{key, std::ios::out | std::ios::binary};
@@ -59,7 +59,7 @@ void RpcServer::put_cache_and_file(const FSys::path &key, const std::string &val
   p_cache.Put(key.generic_string(), value);
 }
 
-RpcServer::RpcServer()
+RpcMetadaataServer::RpcMetadaataServer()
     : p_set(CoreSet::getSet()),
       p_Server(),
       p_thread(),
@@ -69,7 +69,7 @@ RpcServer::RpcServer()
       }) {
 }
 
-grpc::Status RpcServer::GetProject(grpc::ServerContext *context, const google::protobuf::Empty *request, DataVector *response) {
+grpc::Status RpcMetadaataServer::GetProject(grpc::ServerContext *context, const google::protobuf::Empty *request, DataVector *response) {
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
 
@@ -95,7 +95,7 @@ grpc::Status RpcServer::GetProject(grpc::ServerContext *context, const google::p
 
   return grpc::Status::OK;
 }
-grpc::Status RpcServer::GetChild(grpc::ServerContext *context, const DataDb *request, DataVector *response) {
+grpc::Status RpcMetadaataServer::GetChild(grpc::ServerContext *context, const DataDb *request, DataVector *response) {
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
   auto k_date = response->mutable_data();
@@ -124,7 +124,7 @@ grpc::Status RpcServer::GetChild(grpc::ServerContext *context, const DataDb *req
   return grpc::Status::OK;
 }
 
-grpc::Status RpcServer::GetMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+grpc::Status RpcMetadaataServer::GetMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
   for (const auto &row : (*k_conn)(sqlpp::select(sqlpp::all_of(k_tab))
@@ -149,7 +149,7 @@ grpc::Status RpcServer::GetMetadata(grpc::ServerContext *context, const DataDb *
 
   return grpc::Status::OK;
 }
-grpc::Status RpcServer::InstallMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
 
@@ -170,7 +170,7 @@ grpc::Status RpcServer::InstallMetadata(grpc::ServerContext *context, const Data
 
   return grpc::Status::OK;
 }
-grpc::Status RpcServer::DeleteMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
 
@@ -182,7 +182,7 @@ grpc::Status RpcServer::DeleteMetadata(grpc::ServerContext *context, const DataD
   return grpc::Status::OK;
 }
 
-grpc::Status RpcServer::UpdataMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+grpc::Status RpcMetadaataServer::UpdataMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
   if (request->has_parent())
@@ -196,7 +196,7 @@ grpc::Status RpcServer::UpdataMetadata(grpc::ServerContext *context, const DataD
 
 RpcServerHandle::RpcServerHandle()
     : p_Server(),
-      p_rpc_server(std::make_shared<RpcServer>()),
+      p_rpc_server(std::make_shared<RpcMetadaataServer>()),
       p_build(std::make_unique<grpc::ServerBuilder>()),
       p_thread() {
   grpc::ResourceQuota qu{"doodle_meta"};

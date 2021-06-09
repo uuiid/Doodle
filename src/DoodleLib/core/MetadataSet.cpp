@@ -6,7 +6,7 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <Exception/Exception.h>
 #include <core/MetadataSet.h>
-#include <rpc/RpcClient.h>
+#include <rpc/RpcMetadataClient.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 

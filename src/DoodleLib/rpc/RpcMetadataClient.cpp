@@ -16,19 +16,19 @@
 // clang-format on
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/core/ContainerDevice.h>
-#include <DoodleLib/rpc/RpcClient.h>
+#include <DoodleLib/rpc/RpcMetadataClient.h>
 #include <grpcpp/grpcpp.h>
 
 #include <cereal/archives/portable_binary.hpp>
 
 namespace doodle {
 
-RpcClient::RpcClient(const std::shared_ptr<grpc::Channel>& in_channel)
+RpcMetadataClient::RpcMetadataClient(const std::shared_ptr<grpc::Channel>& in_channel)
     : p_stub(MetadataServer::NewStub(in_channel)),
       p_channel(in_channel) {
   //  auto k_s = p_channel->GetState(true);
 }
-std::vector<ProjectPtr> RpcClient::GetProject() {
+std::vector<ProjectPtr> RpcMetadataClient::GetProject() {
   grpc::ClientContext k_context{};
   DataVector k_vector;
   std::vector<ProjectPtr> k_out_list{};
@@ -58,7 +58,7 @@ std::vector<ProjectPtr> RpcClient::GetProject() {
 
   return k_out_list;
 }
-std::vector<MetadataPtr> RpcClient::GetChild(const MetadataConstPtr& in_metadataPtr) {
+std::vector<MetadataPtr> RpcMetadataClient::GetChild(const MetadataConstPtr& in_metadataPtr) {
   grpc::ClientContext k_context{};
   DataDb k_in_db{};
   DataVector k_out_db{};
@@ -93,7 +93,7 @@ std::vector<MetadataPtr> RpcClient::GetChild(const MetadataConstPtr& in_metadata
   }
   return list;
 }
-void RpcClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
+void RpcMetadataClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
   grpc::ClientContext k_context{};
   DataDb k_in_db{};
   DataDb k_out_db{};
@@ -118,7 +118,7 @@ void RpcClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
 
   in_metadataPtr->p_id = k_out_db.id();
 }
-void RpcClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
+void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   if (in_metadataPtr->isInstall())
     return;
 
@@ -149,14 +149,14 @@ void RpcClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
     throw DoodleError{k_status.error_message()};
   }
 }
-void RpcClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
+void RpcMetadataClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
 }
 
-void RpcClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr) {
+void RpcMetadataClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr) {
   UpdataMetadata(in_metadataPtr, false);
 }
 
-void RpcClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr, bool b_updata_parent_id) {
+void RpcMetadataClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr, bool b_updata_parent_id) {
   if (!in_metadataPtr->isInstall())
     return;
 

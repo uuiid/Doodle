@@ -12,7 +12,7 @@
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/core/CoreSet.h>
-#include <DoodleLib/rpc/RpcClient.h>
+#include <DoodleLib/rpc/RpcMetadataClient.h>
 #include <grpcpp/grpcpp.h>
 
 #include <cereal/archives/json.hpp>

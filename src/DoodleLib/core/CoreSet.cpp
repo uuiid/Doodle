@@ -3,8 +3,9 @@
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
-#include <DoodleLib/rpc/RpcClient.h>
+#include <DoodleLib/rpc/RpcMetadataClient.h>
 #include <ShlObj.h>
+#include <google/protobuf/service.h>
 #include <grpcpp/grpcpp.h>
 #include <sqlpp11/mysql/mysql.h>
 
@@ -36,7 +37,7 @@ void CoreSet::guiInit() {
   ip_ch % "localhost" % p_meta_rpc_port;
   DOODLE_LOG_DEBUG(ip_ch.str())
 
-  p_rpc_clien = std::make_shared<RpcClient>(
+  p_rpc_clien = std::make_shared<RpcMetadataClient>(
       grpc::CreateChannel(ip_ch.str(),
                           grpc::InsecureChannelCredentials()));
 

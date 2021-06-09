@@ -12,7 +12,7 @@
 #include <MetadataServer.grpc.pb.h.>
 
 namespace doodle {
-class DOODLELIB_API RpcServer final : public MetadataServer::Service {
+class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service {
   CoreSet& p_set;
   std::unique_ptr<grpc::Server> p_Server;
 
@@ -31,7 +31,7 @@ class DOODLELIB_API RpcServer final : public MetadataServer::Service {
 
   //  [[nodiscard]] FSys::path getPath(uint64_t id,const std::string& in_string)const;
  public:
-  RpcServer();
+  RpcMetadaataServer();
   grpc::Status GetProject(grpc::ServerContext* context, const google::protobuf::Empty* request, DataVector* response) override;
   grpc::Status GetChild(grpc::ServerContext* context, const DataDb* request, DataVector* response) override;
   grpc::Status GetMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
@@ -39,7 +39,7 @@ class DOODLELIB_API RpcServer final : public MetadataServer::Service {
   grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
   grpc::Status UpdataMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
 
-  DOODLE_DISABLE_COPY(RpcServer)
+  DOODLE_DISABLE_COPY(RpcMetadaataServer)
 };
 
 class RpcServerHandle {

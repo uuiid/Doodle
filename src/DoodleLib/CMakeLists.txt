@@ -18,6 +18,7 @@ add_custom_target(
 )
 
 include(DoodleLib.cmake)
+
 add_custom_command(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/core/MetadataTabSql.h
         COMMAND ${PROJECT_SOURCE_DIR}/venv/Scripts/Activate.bat
@@ -34,6 +35,10 @@ add_custom_command(
             ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.pb.cc
             ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.h
             ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.cc
+            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.pb.h
+            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.pb.cc
+            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.grpc.pb.h
+            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.grpc.pb.cc
         COMMAND protobuf::protoc
         ARGS --proto_path=${Z_VCPKG_ROOT_DIR}/installed/${VCPKG_TARGET_TRIPLET}/include
         --proto_path=${CMAKE_CURRENT_LIST_DIR}/rpc
@@ -43,6 +48,24 @@ add_custom_command(
         MetadataServer.proto
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         MAIN_DEPENDENCY rpc/MetadataServer.proto
+)
+
+
+add_custom_command(
+        OUTPUT
+            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.pb.h
+            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.pb.cc
+            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.grpc.pb.h
+            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.grpc.pb.cc
+        COMMAND protobuf::protoc
+        ARGS --proto_path=${Z_VCPKG_ROOT_DIR}/installed/${VCPKG_TARGET_TRIPLET}/include
+        --proto_path=${CMAKE_CURRENT_LIST_DIR}/rpc
+        --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+        --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
+        --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
+        FileSystemServer.proto
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        MAIN_DEPENDENCY rpc/FileSystemServer.proto
 )
 add_library(DoodleLib
         SHARED
@@ -54,6 +77,10 @@ add_library(DoodleLib
         ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.pb.cc
         ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.h
         ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.cc
+        ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.pb.h
+        ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.pb.cc
+        ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.grpc.pb.h
+        ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.grpc.pb.cc
         DoodleLib.manifest
         )
 

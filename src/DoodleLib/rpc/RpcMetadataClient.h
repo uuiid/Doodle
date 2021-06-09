@@ -12,12 +12,12 @@ namespace doodle {
  * @brief rpc客户端
  * @warning 这个类在导出的时候使用会报错, 在grpc库中会报空指针错误, 所有不可以在外部使用
  */
-class DOODLELIB_API RpcClient {
+class DOODLELIB_API RpcMetadataClient {
   std::unique_ptr<MetadataServer::Stub> p_stub;
   std::shared_ptr<grpc::Channel> p_channel;
 
  public:
-  explicit RpcClient(const std::shared_ptr<grpc::Channel>& in_channel);
+  explicit RpcMetadataClient(const std::shared_ptr<grpc::Channel>& in_channel);
 
   [[nodiscard]] std::vector<ProjectPtr> GetProject();
   /**
@@ -30,7 +30,7 @@ class DOODLELIB_API RpcClient {
 
   /**
    * @brief 这个不是获得是数据库中的数据， 是获得服务器中序列化的数据
-   * 这个函数是 RpcClient::GetChild 的单项函数
+   * 这个函数是 RpcMetadataClient::GetChild 的单项函数
    * 
    * @param in_metadataPtr 要获得的数据对象
    */

@@ -161,8 +161,8 @@ class TimeDuration;
 class Comment;
 class AssetsPath;
 
-class RpcClient;
-class RpcServer;
+class RpcMetadataClient;
+class RpcMetadaataServer;
 class ProjectManage;
 class RpcServerHandle;
 class AssetsTree;
@@ -170,8 +170,8 @@ class ListAttributeModel;
 
 using MetadataPtr        = std::shared_ptr<Metadata>;
 using MetadataConstPtr   = std::shared_ptr<const Metadata>;
-using RpcClientPtr       = std::shared_ptr<RpcClient>;
-using RpcServerPtr       = std::shared_ptr<RpcServer>;
+using RpcClientPtr       = std::shared_ptr<RpcMetadataClient>;
+using RpcServerPtr       = std::shared_ptr<RpcMetadaataServer>;
 using RpcServerHandlePtr = std::shared_ptr<RpcServerHandle>;
 
 using ProjectPtr         = std::shared_ptr<Project>;

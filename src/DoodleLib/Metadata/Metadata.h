@@ -17,8 +17,8 @@ namespace doodle {
  */
 class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
   friend MetadataFactory;
-  friend RpcClient;
-  friend RpcServer;
+  friend RpcMetadataClient;
+  friend RpcMetadaataServer;
   /// 需要加载
   bool p_need_save;
   /// 需要保存

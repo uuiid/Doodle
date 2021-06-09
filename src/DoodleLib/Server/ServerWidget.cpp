@@ -1,7 +1,7 @@
 #include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/Server/ServerWidget.h>
 #include <DoodleLib/core/CoreSet.h>
-#include <DoodleLib/rpc/RpcServer.h>
+#include <DoodleLib/rpc/RpcMetadaataServer.h>
 #include <grpcpp/grpcpp.h>
 #include <wx/spinctrl.h>
 
