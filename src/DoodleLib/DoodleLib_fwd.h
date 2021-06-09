@@ -167,12 +167,17 @@ class ProjectManage;
 class RpcServerHandle;
 class AssetsTree;
 class ListAttributeModel;
+class RpcFileSystemClient;
+class RpcFileSystemServer;
 
 using MetadataPtr        = std::shared_ptr<Metadata>;
 using MetadataConstPtr   = std::shared_ptr<const Metadata>;
 using RpcClientPtr       = std::shared_ptr<RpcMetadataClient>;
 using RpcServerPtr       = std::shared_ptr<RpcMetadaataServer>;
 using RpcServerHandlePtr = std::shared_ptr<RpcServerHandle>;
+
+using RpcFileSystemServerPtr = std::shared_ptr<RpcFileSystemServer>;
+using RpcFileSystemClientPtr = std::shared_ptr<RpcFileSystemClient>;
 
 using ProjectPtr         = std::shared_ptr<Project>;
 using EpisodesPtr        = std::shared_ptr<Episodes>;

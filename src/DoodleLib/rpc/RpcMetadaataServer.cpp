@@ -2,7 +2,7 @@
 // Created by TD on 2021/5/25.
 //
 
-#include <DoodleLib/rpc/RpcMetadaataServer.h>
+#include "RpcMetadaataServer.h"
 
 // clang-format off
 #include <DoodleLib/Metadata/AssetsPath.h>

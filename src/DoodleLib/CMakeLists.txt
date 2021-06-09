@@ -35,10 +35,6 @@ add_custom_command(
             ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.pb.cc
             ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.h
             ${CMAKE_CURRENT_BINARY_DIR}/MetadataServer.grpc.pb.cc
-            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.pb.h
-            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.pb.cc
-            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.grpc.pb.h
-            ${CMAKE_CURRENT_BINARY_DIR}/FileSystemServer.grpc.pb.cc
         COMMAND protobuf::protoc
         ARGS --proto_path=${Z_VCPKG_ROOT_DIR}/installed/${VCPKG_TARGET_TRIPLET}/include
         --proto_path=${CMAKE_CURRENT_LIST_DIR}/rpc

@@ -7,34 +7,28 @@ import "google/protobuf/any.proto";
 
 package doodle;
 
-message fileInfo{
+message FileInfo{
   string path = 1;
-  bool idFolder = 2;
+  bool isFolder = 2;
   bool exist = 3;
   google.protobuf.Timestamp update_time = 4;
   uint64 size = 5;
 }
 
-message fileData{
-  uint64 beg = 1;
-  uint64 end = 2;
-  google.protobuf.Any data = 3;
-}
-
-message fileStream{
+message FileStream{
   fileInfo info = 1;
-  fileData data = 2;
+  google.protobuf.Any data = 2;
 }
 
 
 service FileSystemServer{
-  rpc GetInfo(fileInfo) returns (fileInfo) {}
+  rpc GetInfo(FileInfo) returns (FileInfo) {}
   
-  rpc GetSize(fileInfo) returns (fileInfo) {}
-  rpc IsFolder(fileInfo) returns (fileInfo) {}
-  rpc GetTimestamp(fileInfo) returns (fileInfo) {}
-  rpc IsExist(fileInfo) returns (fileInfo) {}
+  rpc IsExist(FileInfo) returns (FileInfo) {}
+  rpc GetSize(FileInfo) returns (FileInfo) {}
+  rpc IsFolder(FileInfo) returns (FileInfo) {}
+  rpc GetTimestamp(FileInfo) returns (FileInfo) {}
 
-  rpc Download(fileInfo) returns (stream fileStream) {}
-  rpc Upload(stream fileStream) returns (fileInfo) {}
+  rpc Download(FileInfo) returns (stream FileStream) {}
+  rpc Upload(stream FileStream) returns (FileInfo) {}
 }

@@ -34,7 +34,7 @@ void CoreSet::guiInit() {
   auto test_sql = k_sql.getConnection();
 
   boost::format ip_ch{"%s:%i"};
-  ip_ch % "localhost" % p_meta_rpc_port;
+  ip_ch % p_server_host % p_meta_rpc_port;
   DOODLE_LOG_DEBUG(ip_ch.str())
 
   p_rpc_clien = std::make_shared<RpcMetadataClient>(
