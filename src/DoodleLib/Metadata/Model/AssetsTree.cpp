@@ -18,6 +18,7 @@ AssetsTree::AssetsTree(ProjectPtr in_project)
     : wxDataViewModel(),
       p_Root(std::move(in_project)),
       p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()),
+      p_metadata_cuttent(),
       slot_childAdd(),
       slot_thisChange(),
       slot_childDelete() {
@@ -83,6 +84,30 @@ unsigned int AssetsTree::GetChildren(const wxDataViewItem& item, wxDataViewItemA
     children.Add(wxDataViewItem{k_t.get()});
   }
   return children.size();
+}
+
+bool AssetsTree::GetAttr(const wxDataViewItem& in_item, std::uint32_t in_col, wxDataViewItemAttr& attr) const {
+  if (!in_item.IsOk())
+    return false;
+
+  if (!p_metadata_cuttent)
+    return false;
+
+  auto k_item = reinterpret_cast<Metadata*>(in_item.GetID());
+  if (*p_metadata_cuttent == *k_item) {
+    attr.SetBackgroundColour({200, 75, 49});
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void AssetsTree::set_current(const MetadataPtr& in_item) {
+  auto k_i           = p_metadata_cuttent;
+  p_metadata_cuttent = in_item;
+  if (k_i) {
+    // ItemChanged(wxDataViewItem{k_i.get()});
+  }
 }
 
 void AssetsTree::setRoot(const ProjectPtr& in_project) {

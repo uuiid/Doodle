@@ -39,7 +39,8 @@ TEST_F(ServerTest, createPrj) {
   prj->insert_into(k_f);
 
   auto& k_m = doodle::MetadataSet::Get();
-  k_m.init();
+  doodle::CoreSet::getSet().guiInit();
+
   for (const auto& prj : k_m.getAllProjects()) {
     std::cout << "id: " << prj->getId() << "\n"
               << "uuid: " << prj->getUUID() << "\n"

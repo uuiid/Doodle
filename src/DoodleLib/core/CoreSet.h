@@ -1,20 +1,19 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/libWarp/BoostUuidWarp.h>
-#include <DoodleLib/core/Ue4Setting.h>
-#include <DoodleLib/core/MetadataSet.h>
 #include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/core/MetadataSet.h>
+#include <DoodleLib/core/Ue4Setting.h>
+#include <DoodleLib/libWarp/BoostUuidWarp.h>
 
+#include <boost/filesystem.hpp>
 #include <cereal/cereal.hpp>
+#include <cereal/types/base_class.hpp>
 #include <cereal/types/common.hpp>
+#include <cereal/types/memory.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
-#include <cereal/types/base_class.hpp>
-#include <cereal/types/memory.hpp>
-
 #include <magic_enum.hpp>
-#include <boost/filesystem.hpp>
 
 DOODLE_NAMESPACE_S
 
@@ -44,6 +43,7 @@ class DOODLELIB_API CoreSet {
    * 
    */
   void guiInit();
+
   void reInit();
 
   void clear();
@@ -131,8 +131,7 @@ class DOODLELIB_API CoreSet {
   FSys::path p_mayaPath;
   RpcClientPtr p_rpc_clien;
 
-  std::string p_server_host; ///< 我们自己的服务器ip
-
+  std::string p_server_host;  ///< 我们自己的服务器ip
 
   int p_sql_port;       ///< mysql 端口
   int p_meta_rpc_port;  ///< 元数据端口

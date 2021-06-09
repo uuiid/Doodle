@@ -19,15 +19,15 @@ ProjectManage::ProjectManage()
       p_project_remove() {
 }
 
-unsigned int ProjectManage::GetColumnCount() const {
+std::uint32_t ProjectManage::GetColumnCount() const {
   return 3;
 }
 
-wxString ProjectManage::GetColumnType(unsigned int col) const {
+wxString ProjectManage::GetColumnType(std::uint32_t col) const {
   return "string";
 }
 
-void ProjectManage::GetValue(wxVariant& variant, const wxDataViewItem& item, unsigned int col) const {
+void ProjectManage::GetValue(wxVariant& variant, const wxDataViewItem& item, std::uint32_t col) const {
   variant = ConvStr<wxString>("None");
   DOLE_CHECK(item, )
 
@@ -50,7 +50,7 @@ void ProjectManage::GetValue(wxVariant& variant, const wxDataViewItem& item, uns
   }
 }
 
-bool ProjectManage::SetValue(const wxVariant& variant, const wxDataViewItem& item, unsigned int col) {
+bool ProjectManage::SetValue(const wxVariant& variant, const wxDataViewItem& item, std::uint32_t col) {
   DOLE_CHECK(item, false);
 
   auto str   = ConvStr<std::string>(variant.GetString());
@@ -78,7 +78,25 @@ bool ProjectManage::SetValue(const wxVariant& variant, const wxDataViewItem& ite
   return true;
 }
 
-unsigned int ProjectManage::GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const {
+bool ProjectManage::GetAttr(const wxDataViewItem& in_item, std::uint32_t in_col, wxDataViewItemAttr& attr) const {
+  if (!in_item.IsOk())
+    return false;
+
+  auto& prj = MetadataSet::Get().Project_();
+  if (!prj)
+    return false;
+
+
+
+  auto k_prj = reinterpret_cast<Project*>(in_item.GetID());
+  if (*prj == *k_prj) {
+    attr.SetBackgroundColour(wxColour{200, 75, 49});
+    return true;
+  } else
+    return false;
+}
+
+std::uint32_t ProjectManage::GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const {
   if (item.IsOk())
     return 0;
 

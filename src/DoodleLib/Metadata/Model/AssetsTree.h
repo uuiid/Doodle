@@ -10,7 +10,7 @@ namespace doodle {
 class AssetsTree : public wxDataViewModel {
   ProjectPtr p_Root;
   MetadataFactoryPtr p_metadata_flctory_ptr_;
-
+  MetadataPtr p_metadata_cuttent;
   /**
    *
    * @param in_metadata 输入的要连接的数据
@@ -30,6 +30,9 @@ class AssetsTree : public wxDataViewModel {
   [[nodiscard]] wxDataViewItem GetParent(const wxDataViewItem& item) const override;
   [[nodiscard]] bool IsContainer(const wxDataViewItem& item) const override;
   unsigned int GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const override;
+
+  bool GetAttr(const wxDataViewItem& in_item, std::uint32_t in_col, wxDataViewItemAttr& attr) const override;
+  void set_current(const MetadataPtr& in_item);
 
   virtual bool IsListModel() const override { return false; }
 

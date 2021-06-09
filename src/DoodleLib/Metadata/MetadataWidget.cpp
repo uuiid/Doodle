@@ -25,7 +25,6 @@ namespace doodle {
 
 MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
     : wxFrame(in_window, in_id, ConvStr<wxString>("Metadata")),
-      p_project_ptr_(),
       p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()),
       p_tree_id_(NewControlId()),
       p_List_id_(NewControlId()),
@@ -121,6 +120,8 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
 
         auto k_m = reinterpret_cast<Metadata*>(item.GetID());
         this->p_assets_attribute_model->setRoot(k_m->shared_from_this());
+        this->p_assets_tree_model->set_current(k_m->shared_from_this());
+        this->p_assets_tree_view_ctrl_->Refresh(); 
       });
 
   MetadataSet::Get().sig_projectChange.connect(
@@ -139,6 +140,7 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
   SetSizer(k_layout);
   k_layout->SetSizeHints(this);
   this->Center();
+  MetadataSet::Get().setProject_(MetadataSet::Get().Project_());
 }
 
 void MetadataWidget::context_menu(wxDataViewEvent& in_event, wxDataViewModel* in_model) {
