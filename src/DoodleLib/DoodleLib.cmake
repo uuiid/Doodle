@@ -53,8 +53,10 @@ set(
 	mainWidght/MklinkWidget.h
 	mainWidght/mainWindows.h
 	mainWidght/systemTray.h
-		rpc/RpcMetadataClient.h
-        rpc/RpcMetadaataServer.h
+	rpc/RpcFileSystemClient.h
+	rpc/RpcFileSystemServer.h
+	rpc/RpcMetadaataServer.h
+	rpc/RpcMetadataClient.h
 	threadPool/LongTerm.h
 	threadPool/ThreadPool.h
 	toolkit/MessageAndProgress.h
@@ -101,8 +103,10 @@ set(
 	mainWidght/MklinkWidget.cpp
 	mainWidght/mainWindows.cpp
 	mainWidght/systemTray.cpp
-		rpc/RpcMetadataClient.cpp
-        rpc/RpcMetadaataServer.cpp
+	rpc/RpcFileSystemClient.cpp
+	rpc/RpcFileSystemServer.cpp
+	rpc/RpcMetadaataServer.cpp
+	rpc/RpcMetadataClient.cpp
 	toolkit/MessageAndProgress.cpp
 	toolkit/toolkit.cpp
 )
