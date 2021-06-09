@@ -43,9 +43,6 @@ void CoreSet::guiInit() {
   p_matadata_setting_.init();
 }
 
-void CoreSet::reInit() {
-}
-
 void CoreSet::findMaya() {
   if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
     p_mayaPath = R"(C:\Program Files\Autodesk\Maya2020\bin\)";

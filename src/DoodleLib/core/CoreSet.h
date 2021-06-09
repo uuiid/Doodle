@@ -44,8 +44,6 @@ class DOODLELIB_API CoreSet {
    */
   void guiInit();
 
-  void reInit();
-
   void clear();
 
   void findMaya();
