@@ -66,7 +66,7 @@ void ListAttributeModel::GetValue(wxVariant& variant, const wxDataViewItem& item
 
     case 4: {
       auto& time = k_ass->getTime();
-      auto str   = date::format("%D %T %Z", time);
+      auto str   = date::format("%Y/%m/%d %H:%M", time);
       variant    = ConvStr<wxString>(str);
     } break;
     case 5:
@@ -101,10 +101,7 @@ bool ListAttributeModel::SetValue(const wxVariant& variant, const wxDataViewItem
       k_b = true;
     } break;
 
-    case 4: {
-      k_b = false;
-
-    } break;
+    case 4:
     case 5:
     default:
       k_b = false;
