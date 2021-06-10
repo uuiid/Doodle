@@ -21,7 +21,7 @@
 namespace doodle {
 
 MetadataFactory::MetadataFactory()
-    : p_rpcClien(CoreSet::getSet().getRpcChild()) {
+    : p_rpcClien(CoreSet::getSet().getRpcMetadataClient()) {
 }
 std::vector<ProjectPtr> MetadataFactory::getAllProject() const {
   return p_rpcClien->GetProject();

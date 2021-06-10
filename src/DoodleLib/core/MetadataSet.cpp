@@ -81,7 +81,7 @@ void MetadataSet::clear() {
 }
 
 void MetadataSet::init() {
-  p_project_list = CoreSet::getSet().getRpcChild()->GetProject();
+  p_project_list = CoreSet::getSet().getRpcMetadataClient()->GetProject();
   if (!p_project)
     return;
 
