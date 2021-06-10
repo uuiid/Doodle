@@ -5,6 +5,7 @@
 #include "RpcFileSystemClient.h"
 
 #include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/core/CoreSet.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>
 
@@ -125,18 +126,18 @@ bool RpcFileSystemClient::Upload(const FSys::path& in_local_path, const FSys::pa
   auto k_in = p_stub->Upload(&k_context, &k_out_info);
 
   k_in->Write(k_in_info);
-  std::string k_value{};
-  static std::size_t s_size = 3 * 1024 * 1024;
-  k_value.resize(s_size);
+  auto s_size = CoreSet::getBlockSize();
 
   while (k_file) {
+    std::string k_value{};
+    k_value.resize(s_size);
     k_file.read(k_value.data(), s_size);
     auto k_s = k_file.gcount();
     if (k_s != s_size)
       k_value.resize(k_s);
 
     k_in_info.mutable_data()->set_value(std::move(k_value));
-    if (k_in->Write(k_in_info))
+    if (!k_in->Write(k_in_info))
       throw DoodleError{"write strame errors"};
   }
 

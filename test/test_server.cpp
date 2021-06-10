@@ -36,17 +36,17 @@ TEST(Server, dow_updata) {
   doodle::CoreSet::getSet().guiInit();
 
   auto k_ch = doodle::CoreSet::getSet().getRpcFileSystemClient();
-  k_ch->Upload("D:/WinDev2012Eval.VirtualBox.zip", "test/test.file.zip");
+  k_ch->Upload("D:/WinDev2012Eval.VirtualBox.7z", "test/test.file.7z");
   auto [k_t_ex, k_t_dir] = k_ch->IsFolder("test");
-  auto [k_f_ex, k_f_dir] = k_ch->IsFolder("test/test.file.zip");
-  std::cout << "is ex: " << k_ch->IsExist("test/test.file.zip")
-            << "test is ex: " << k_t_ex
-            << "test is folder: " << k_t_dir
-            << "test/test.file.zip is ex: " << k_t_ex
-            << "test/test.file.zip is folder: " << k_t_dir
-            << "test/test.file.zip time: " << date::format("%Y/%m/%d %H:%M", k_ch->GetTimestamp("test/test.file.zip"))
-            << "test/test.file.zip size: " << k_ch->GetSize("test/test.file.zip")
+  auto [k_f_ex, k_f_dir] = k_ch->IsFolder("test/test.file.7z");
+  std::cout << "is ex: " << k_ch->IsExist("test/test.file.7z") << "\n"
+            << "test is ex: " << k_t_ex << "\n"
+            << "test is folder: " << k_t_dir << "\n"
+            << "test/test.file.7z is ex: " << k_t_ex << "\n"
+            << "test/test.file.7z is folder: " << k_f_dir << "\n"
+            << "test/test.file.7z time: " << date::format("%Y/%m/%d %H:%M", k_ch->GetTimestamp("test/test.file.7z")) << "\n"
+            << "test/test.file.7z size: " << k_ch->GetSize("test/test.file.7z") << "\n"
             << std::endl;
 
-  k_ch->Download("D:/WinDev2012Eval_test.VirtualBox.zip", "test/test.file.zip");
+  k_ch->Download("D:/WinDev2012Eval_test.VirtualBox.7z", "test/test.file.7z");
 }

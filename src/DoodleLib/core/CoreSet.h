@@ -103,6 +103,11 @@ class DOODLELIB_API CoreSet {
   [[nodiscard]] RpcMetadataClientPtr getRpcMetadataClient() const;
   [[nodiscard]] RpcFileSystemClientPtr getRpcFileSystemClient() const;
 
+  static std::size_t getBlockSize() {
+    static std::size_t k_i{64 * 1024};
+    return k_i;
+  };
+
  private:
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的

@@ -42,6 +42,9 @@ std::vector<ProjectPtr> RpcMetadataClient::GetProject() {
     MetadataPtr k_prj{};
     const auto k_data = k_t.metadata_cereal().value();
 
+    if (k_data.empty())
+      throw DoodleError{"无法读取项目详细信息"};
+
     vector_container my_data{k_data.begin(), k_data.end()};
     {
       vector_istream k_istream{my_data};

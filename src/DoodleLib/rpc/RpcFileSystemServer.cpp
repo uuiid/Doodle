@@ -16,7 +16,7 @@ RpcFileSystemServer::RpcFileSystemServer()
 }
 
 grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
-  FSys::path k_path = request->path();
+  FSys::path k_path = p_set.getDataRoot() / request->path();
   auto k_ex         = FSys::exists(k_path);
   if (!k_ex)
     return grpc::Status::OK;
@@ -36,7 +36,7 @@ grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const Fi
 }
 
 grpc::Status RpcFileSystemServer::IsExist(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
-  FSys::path k_path = request->path();
+  FSys::path k_path = p_set.getDataRoot() / request->path();
   auto k_ex         = FSys::exists(k_path);
   response->set_exist(k_ex);
 
@@ -44,31 +44,29 @@ grpc::Status RpcFileSystemServer::IsExist(grpc::ServerContext* context, const Fi
 }
 
 grpc::Status RpcFileSystemServer::IsFolder(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
-  FSys::path k_path = request->path();
+  FSys::path k_path = p_set.getDataRoot() / request->path();
   auto k_ex         = FSys::exists(k_path);
   response->set_exist(k_ex);
   if (!k_ex)
     return grpc::Status::OK;
 
   auto k_dir = FSys::is_directory(k_path);
-  if (k_dir)
-    return grpc::Status::OK;
   response->set_isfolder(k_dir);
 
   return grpc::Status::OK;
 }
 
 grpc::Status RpcFileSystemServer::GetSize(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
-  FSys::path k_path = request->path();
+  FSys::path k_path = p_set.getDataRoot() / request->path();
   auto k_ex         = FSys::exists(k_path);
   response->set_exist(k_ex);
   if (!k_ex)
     return grpc::Status::OK;
 
   auto k_dir = FSys::is_directory(k_path);
+  response->set_isfolder(k_dir);
   if (k_dir)
     return grpc::Status::OK;
-  response->set_isfolder(k_dir);
 
   response->set_size(FSys::file_size(k_path));
 
@@ -76,16 +74,16 @@ grpc::Status RpcFileSystemServer::GetSize(grpc::ServerContext* context, const Fi
 }
 
 grpc::Status RpcFileSystemServer::GetTimestamp(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
-  FSys::path k_path = request->path();
+  FSys::path k_path = p_set.getDataRoot() / request->path();
   auto k_ex         = FSys::exists(k_path);
   response->set_exist(k_ex);
   if (!k_ex)
     return grpc::Status::OK;
 
   auto k_dir = FSys::is_directory(k_path);
+  response->set_isfolder(k_dir);
   if (k_dir)
     return grpc::Status::OK;
-  response->set_isfolder(k_dir);
 
   response->set_size(FSys::file_size(k_path));
   auto k_time        = FSys::last_write_time(k_path);
@@ -110,19 +108,19 @@ grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const F
   }
   std::istreambuf_iterator<char> k_iter{k_file};
 
-  std::string k_value{};
-  static std::size_t s_size = 3 * 1024 * 1024;
-  k_value.resize(s_size);
+  auto s_size = CoreSet::getBlockSize();
   FileStream k_stream{};
 
   while (k_file) {
+    std::string k_value{};
+    k_value.resize(s_size);
     k_file.read(k_value.data(), s_size);
     auto k_s = k_file.gcount();
     if (k_s != s_size)
       k_value.resize(k_s);
 
     k_stream.mutable_data()->set_value(std::move(k_value));
-    if (writer->Write(k_stream))
+    if (!writer->Write(k_stream))
       return grpc::Status::CANCELLED;
   }
 
