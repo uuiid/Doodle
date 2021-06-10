@@ -5,8 +5,7 @@
 
 namespace doodle {
 class RpcServerHandle {
-  std::unique_ptr<grpc::Server> p_metadata_Server;
-  std::unique_ptr<grpc::Server> p_file_system_Server;
+  std::unique_ptr<grpc::Server> p_Server;
 
   RpcMetadataServerPtr p_rpc_metadata_server;
   RpcFileSystemServerPtr p_rpc_file_system_server;
@@ -17,12 +16,11 @@ class RpcServerHandle {
  public:
   RpcServerHandle();
 
-  void runFileSystemServer(int port);
-  void stopFileSystemServer();
-  void runMetadataServer(int port);
-  void stopMetadataServer();
+  void registerFileSystemServer(int port);
+  void registerMetadataServer(int port);
 
   void runServer(int port_meta, int port_file_sys);
+  void runServer();
   void stop();
 };
 }  // namespace doodle

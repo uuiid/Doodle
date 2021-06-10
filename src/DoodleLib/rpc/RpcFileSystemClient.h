@@ -27,11 +27,17 @@ class DOODLELIB_API RpcFileSystemClient {
   std::tuple<std::size_t, bool, time_point, bool> GetInfo(const FSys::path& in_server_path);
 
   std::size_t GetSize(const FSys::path& in_server_path);
-  bool IsFolder(const FSys::path& in_server_path);
+  /**
+   * @brief 判断是否是文件夹
+   * 
+   * @param in_server_path 服务器路径
+   * @return std::tuple<bool,bool> 是否存在 ，是否是文件夹
+   */
+  std::tuple<bool, bool> IsFolder(const FSys::path& in_server_path);
   time_point GetTimestamp(const FSys::path& in_server_path);
   bool IsExist(const FSys::path& in_server_path);
-  bool Download(const FSys::path& in_local_path,const FSys::path& in_server_path );
-  bool Upload(const FSys::path& in_local_path,const FSys::path& in_server_path );
+  bool Download(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  bool Upload(const FSys::path& in_local_path, const FSys::path& in_server_path);
 };
 
 }  // namespace doodle

@@ -29,11 +29,24 @@ TEST(Server, createPrj) {
 
   ASSERT_TRUE(k_m.getAllProjects().size() == 2);
 }
+#include <date/date.h>
 
 TEST(Server, dow_updata) {
   using namespace doodle;
   doodle::CoreSet::getSet().guiInit();
 
   auto k_ch = doodle::CoreSet::getSet().getRpcFileSystemClient();
-  k_ch->Upload("");
+  k_ch->Upload("D:/WinDev2012Eval.VirtualBox.zip", "test/test.file.zip");
+  auto [k_t_ex, k_t_dir] = k_ch->IsFolder("test");
+  auto [k_f_ex, k_f_dir] = k_ch->IsFolder("test/test.file.zip");
+  std::cout << "is ex: " << k_ch->IsExist("test/test.file.zip")
+            << "test is ex: " << k_t_ex
+            << "test is folder: " << k_t_dir
+            << "test/test.file.zip is ex: " << k_t_ex
+            << "test/test.file.zip is folder: " << k_t_dir
+            << "test/test.file.zip time: " << date::format("%Y/%m/%d %H:%M", k_ch->GetTimestamp("test/test.file.zip"))
+            << "test/test.file.zip size: " << k_ch->GetSize("test/test.file.zip")
+            << std::endl;
+
+  k_ch->Download("D:/WinDev2012Eval_test.VirtualBox.zip", "test/test.file.zip");
 }

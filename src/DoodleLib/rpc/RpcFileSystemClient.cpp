@@ -42,7 +42,7 @@ std::size_t RpcFileSystemClient::GetSize(const FSys::path& in_path) {
   return k_out_info.size();
 }
 
-bool RpcFileSystemClient::IsFolder(const FSys::path& in_path) {
+std::tuple<bool, bool> RpcFileSystemClient::IsFolder(const FSys::path& in_path) {
   grpc::ClientContext k_context{};
 
   FileInfo k_in_info{};
@@ -52,7 +52,7 @@ bool RpcFileSystemClient::IsFolder(const FSys::path& in_path) {
   if (!status.ok())
     throw DoodleError{status.error_message()};
 
-  return k_out_info.isfolder();
+  return {k_out_info.exist(), k_out_info.isfolder()};
 }
 
 std::chrono::time_point<std::chrono::system_clock> RpcFileSystemClient::GetTimestamp(const FSys::path& in_path) {
