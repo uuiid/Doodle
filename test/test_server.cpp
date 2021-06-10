@@ -5,30 +5,8 @@
 #include <DoodleLib/DoodleLib.h>
 #include <grpcpp/grpcpp.h>
 #include <gtest/gtest.h>
-class ServerTest : public ::testing::Test {
- protected:
-  void SetUp() override;
-  void TearDown() override;
-};
 
-void ServerTest::SetUp() {
-  //  using namespace std::chrono_literals;
-
-}
-
-void ServerTest::TearDown() {
-
-}
-
-TEST(server, start_stop) {
-  using namespace std::chrono_literals;
-
-}
-TEST(server, start_sercer) {
-
-}
-
-TEST_F(ServerTest, createPrj) {
+TEST(Server, createPrj) {
   doodle::CoreSet::getSet().guiInit();
 
   auto k_f = std::make_shared<doodle::MetadataFactory>();
@@ -50,4 +28,12 @@ TEST_F(ServerTest, createPrj) {
   std::cout << std::endl;
 
   ASSERT_TRUE(k_m.getAllProjects().size() == 2);
+}
+
+TEST(Server, dow_updata) {
+  using namespace doodle;
+  doodle::CoreSet::getSet().guiInit();
+
+  auto k_ch = doodle::CoreSet::getSet().getRpcFileSystemClient();
+  k_ch->Upload("");
 }

@@ -82,20 +82,20 @@ bool RpcFileSystemClient::IsExist(const FSys::path& in_path) {
   return k_out_info.exist();
 }
 
-bool RpcFileSystemClient::Download(const FSys::path& in_path) {
-  if (FSys::exists(in_path.parent_path()))
-    FSys::create_directories(in_path.parent_path());
+bool RpcFileSystemClient::Download(const FSys::path& in_local_path, const FSys::path& in_server_path) {
+  if (FSys::exists(in_local_path.parent_path()))
+    FSys::create_directories(in_local_path.parent_path());
 
   grpc::ClientContext k_context{};
 
   FileInfo k_in_info{};
   FileStream k_out_info{};
 
-  FSys::ofstream k_file{in_path, std::ios::out | std::ios::binary};
+  FSys::ofstream k_file{in_local_path, std::ios::out | std::ios::binary};
   if (!k_file)
     throw DoodleError{"not create file"};
 
-  k_in_info.set_path(in_path.generic_string());
+  k_in_info.set_path(in_server_path.generic_string());
   auto k_out = p_stub->Download(&k_context, k_in_info);
 
   while (k_out->Read(&k_out_info)) {
@@ -111,17 +111,17 @@ bool RpcFileSystemClient::Download(const FSys::path& in_path) {
   return true;
 }
 
-bool RpcFileSystemClient::Upload(const FSys::path& in_path) {
+bool RpcFileSystemClient::Upload(const FSys::path& in_local_path, const FSys::path& in_server_path) {
   grpc::ClientContext k_context{};
 
   FileStream k_in_info{};
   FileInfo k_out_info{};
 
-  FSys::ifstream k_file{in_path, std::ios::in | std::ios::binary};
+  FSys::ifstream k_file{in_local_path, std::ios::in | std::ios::binary};
   if (!k_file)
     throw DoodleError{"not read file"};
 
-  k_in_info.mutable_info()->set_path(in_path.generic_string());
+  k_in_info.mutable_info()->set_path(in_server_path.generic_string());
   auto k_in = p_stub->Upload(&k_context, &k_out_info);
 
   k_in->Write(k_in_info);
