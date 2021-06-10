@@ -128,6 +128,7 @@ class DOODLELIB_API CoreSet {
 
   FSys::path p_mayaPath;
   RpcClientPtr p_rpc_clien;
+  
 
   std::string p_server_host;  ///< 我们自己的服务器ip
 

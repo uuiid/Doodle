@@ -16,7 +16,7 @@ message FileInfo{
 }
 
 message FileStream{
-  fileInfo info = 1;
+  FileInfo info = 1;
   google.protobuf.Any data = 2;
 }
 

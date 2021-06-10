@@ -15,9 +15,15 @@ class DOODLELIB_API RpcFileSystemClient {
 
  public:
   using time_point = std::chrono::time_point<std::chrono::system_clock>;
-  
-  explicit RpcFileSystemClient(const std::shared_ptr<grpc::Channel>& in_channel);
 
+  explicit RpcFileSystemClient(const std::shared_ptr<grpc::Channel>& in_channel);
+  /**
+   * @brief 获得远程服务器中的文件的基本信息
+   * 
+   * @param path 
+   * @return std::tuple<std::size_t,  bool,   time_point,  bool> 
+   *                      大小        是否存在   最后写入时间  是否是文件夹
+   */
   std::tuple<std::size_t, bool, time_point, bool> GetInfo(const FSys::path& path);
 
   std::size_t GetSize(const FSys::path& path);

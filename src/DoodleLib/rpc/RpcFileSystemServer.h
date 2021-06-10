@@ -8,7 +8,15 @@
 #include <FileSystemServer.grpc.pb.h>
 
 namespace doodle {
+
+
+
+  
 class DOODLELIB_API RpcFileSystemServer : public FileSystemServer::Service {
+
+
+  
+
  public:
   explicit RpcFileSystemServer();
 

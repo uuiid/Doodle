@@ -15,14 +15,14 @@ RpcFileSystemServer::RpcFileSystemServer() {
 grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
   FSys::path k_path = request->path();
   auto k_ex         = FSys::exists(k_path);
-  response->set_exist(k_ex);
   if (!k_ex)
     return grpc::Status::OK;
+  response->set_exist(k_ex);
 
   auto k_dir = FSys::is_directory(k_path);
+  response->set_isfolder(k_dir);
   if (k_dir)
     return grpc::Status::OK;
-  response->set_isfolder(k_dir);
 
   response->set_size(FSys::file_size(k_path));
   auto k_time        = FSys::last_write_time(k_path);
@@ -107,20 +107,44 @@ grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const F
   }
   std::istreambuf_iterator<char> k_iter{k_file};
 
-  std::string value{};
-
+  std::string k_value{};
+  static std::size_t s_size = 3 * 1024 * 1024;
+  k_value.resize(s_size);
   FileStream k_stream{};
-  for (; k_iter != std::istreambuf_iterator{}; ++k_iter) {
-    value.push_back(*k_iter);
-    if (value.size() == 3 * 1024 * 1024) {
-      writer->Write()
-    }
+
+  while (k_file) {
+    k_file.read(k_value.data(), s_size);
+    auto k_s = k_file.gcount();
+    if (k_s != s_size)
+      k_value.resize(k_s);
+
+    k_stream.mutable_data()->set_value(std::move(k_value));
+    if (writer->Write(k_stream))
+      return grpc::Status::CANCELLED;
   }
 
   return grpc::Status::OK;
 }
 
 grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::ServerReader<FileStream>* reader, FileInfo* response) {
+  FileStream k_file_stream{};
+  reader->Read(&k_file_stream);
+  FSys::path k_path = k_file_stream.info().path();
+  auto k_ex         = FSys::exists(k_path.parent_path());
+  if (!k_ex)
+    FSys::create_directories(k_path.parent_path());
+
+  auto k_dir = FSys::is_directory(k_path);
+  if (k_ex && k_dir)
+    return grpc::Status::CANCELLED;
+
+  FSys::ofstream k_file{k_path, std::ios::out | std::ios::binary};
+
+  while (reader->Read(&k_file_stream)) {
+    auto& str = k_file_stream.data().value();
+    k_file.write(str.data(), str.size());
+  }
+
   return grpc::Status::OK;
 }
 }  // namespace doodle
