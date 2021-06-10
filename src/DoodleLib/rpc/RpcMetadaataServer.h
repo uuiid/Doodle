@@ -45,7 +45,7 @@ class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service {
 class RpcServerHandle {
   std::unique_ptr<grpc::Server> p_Server;
 
-  RpcServerPtr p_rpc_server;
+  RpcMetadataServerPtr p_rpc_server;
   std::unique_ptr<grpc::ServerBuilder> p_build;
 
   std::thread p_thread;

@@ -231,7 +231,7 @@ std::string CoreSet::configFileName() {
 std::string CoreSet::getUUIDStr() {
   return boost::uuids::to_string(getUUID());
 }
-RpcClientPtr CoreSet::getRpcChild() const {
+RpcMetadataClientPtr CoreSet::getRpcChild() const {
   return p_rpc_clien;
 }
 void CoreSet::clear() {

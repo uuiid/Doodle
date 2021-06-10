@@ -97,7 +97,7 @@ class DOODLELIB_API CoreSet {
 
   static FSys::path toIpPath(const FSys::path &path);
 
-  [[nodiscard]] RpcClientPtr getRpcChild() const;
+  [[nodiscard]] RpcMetadataClientPtr getRpcChild() const;
 
  private:
   /**
@@ -127,7 +127,7 @@ class DOODLELIB_API CoreSet {
   MetadataSet &p_matadata_setting_;
 
   FSys::path p_mayaPath;
-  RpcClientPtr p_rpc_clien;
+  RpcMetadataClientPtr p_rpc_clien;
   
 
   std::string p_server_host;  ///< 我们自己的服务器ip

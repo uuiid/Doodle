@@ -170,27 +170,25 @@ class ListAttributeModel;
 class RpcFileSystemClient;
 class RpcFileSystemServer;
 
-using MetadataPtr        = std::shared_ptr<Metadata>;
-using MetadataConstPtr   = std::shared_ptr<const Metadata>;
-using RpcClientPtr       = std::shared_ptr<RpcMetadataClient>;
-using RpcServerPtr       = std::shared_ptr<RpcMetadaataServer>;
-using RpcServerHandlePtr = std::shared_ptr<RpcServerHandle>;
-
+using MetadataPtr            = std::shared_ptr<Metadata>;
+using MetadataConstPtr       = std::shared_ptr<const Metadata>;
+using RpcMetadataClientPtr   = std::shared_ptr<RpcMetadataClient>;
+using RpcMetadataServerPtr   = std::shared_ptr<RpcMetadaataServer>;
+using RpcServerHandlePtr     = std::shared_ptr<RpcServerHandle>;
 using RpcFileSystemServerPtr = std::shared_ptr<RpcFileSystemServer>;
 using RpcFileSystemClientPtr = std::shared_ptr<RpcFileSystemClient>;
-
-using ProjectPtr         = std::shared_ptr<Project>;
-using EpisodesPtr        = std::shared_ptr<Episodes>;
-using ShotPtr            = std::shared_ptr<Shot>;
-using AssetsPtr          = std::shared_ptr<Assets>;
-using AssetsFilePtr      = std::shared_ptr<AssetsFile>;
-using coreSqlPtr         = std::shared_ptr<CoreSql>;
-using LabelNodePtr       = std::shared_ptr<LabelNode>;
-using AssetsFilePtr      = std::shared_ptr<AssetsFile>;
-using MetadataFactoryPtr = std::shared_ptr<MetadataFactory>;
-using TimeDurationPtr    = std::shared_ptr<TimeDuration>;
-using CommentPtr         = std::shared_ptr<Comment>;
-using AssetsPathPtr      = std::shared_ptr<AssetsPath>;
+using ProjectPtr             = std::shared_ptr<Project>;
+using EpisodesPtr            = std::shared_ptr<Episodes>;
+using ShotPtr                = std::shared_ptr<Shot>;
+using AssetsPtr              = std::shared_ptr<Assets>;
+using AssetsFilePtr          = std::shared_ptr<AssetsFile>;
+using coreSqlPtr             = std::shared_ptr<CoreSql>;
+using LabelNodePtr           = std::shared_ptr<LabelNode>;
+using AssetsFilePtr          = std::shared_ptr<AssetsFile>;
+using MetadataFactoryPtr     = std::shared_ptr<MetadataFactory>;
+using TimeDurationPtr        = std::shared_ptr<TimeDuration>;
+using CommentPtr             = std::shared_ptr<Comment>;
+using AssetsPathPtr          = std::shared_ptr<AssetsPath>;
 class Doodle;
 enum class filterState {
   useFilter,

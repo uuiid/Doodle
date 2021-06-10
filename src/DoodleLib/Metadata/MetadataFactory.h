@@ -14,7 +14,7 @@ namespace doodle {
   * @warning 我们在更改父亲时， 要同时移动文件和保存更改
   */
 class DOODLELIB_API MetadataFactory {
-  RpcClientPtr p_rpcClien;
+  RpcMetadataClientPtr p_rpcClien;
 
  public:
   MetadataFactory();
