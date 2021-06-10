@@ -11,7 +11,7 @@ namespace doodle {
 
 class DOODLELIB_API RpcFileSystemClient {
   std::unique_ptr<FileSystemServer::Stub> p_stub;
-  std::shared_ptr<grpc::Channel> p_channel;
+  // std::shared_ptr<grpc::Channel> p_channel;
 
  public:
   using time_point = std::chrono::time_point<std::chrono::system_clock>;

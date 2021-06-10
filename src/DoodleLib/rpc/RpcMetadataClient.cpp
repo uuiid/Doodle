@@ -24,8 +24,9 @@
 namespace doodle {
 
 RpcMetadataClient::RpcMetadataClient(const std::shared_ptr<grpc::Channel>& in_channel)
-    : p_stub(MetadataServer::NewStub(in_channel)),
-      p_channel(in_channel) {
+    : p_stub(MetadataServer::NewStub(in_channel))
+// p_channel(in_channel)
+{
   //  auto k_s = p_channel->GetState(true);
 }
 std::vector<ProjectPtr> RpcMetadataClient::GetProject() {

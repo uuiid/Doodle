@@ -3,6 +3,7 @@
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
+#include <DoodleLib/rpc/RpcFileSystemClient.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
 #include <ShlObj.h>
 #include <google/protobuf/service.h>
@@ -37,7 +38,13 @@ void CoreSet::guiInit() {
   ip_ch % p_server_host % p_meta_rpc_port;
   DOODLE_LOG_DEBUG(ip_ch.str())
 
-  p_rpc_clien = std::make_shared<RpcMetadataClient>(
+  p_rpc_metadata_clien = std::make_shared<RpcMetadataClient>(
+      grpc::CreateChannel(ip_ch.str(),
+                          grpc::InsecureChannelCredentials()));
+  ip_ch.clear();
+  ip_ch % p_server_host % p_file_rpc_port;
+
+  p_rpc_file_system_client = std::make_shared<RpcFileSystemClient>(
       grpc::CreateChannel(ip_ch.str(),
                           grpc::InsecureChannelCredentials()));
 
@@ -104,6 +111,8 @@ CoreSet::CoreSet()
       p_ue4_setting(Ue4Setting::Get()),
       p_matadata_setting_(MetadataSet::Get()),
       p_mayaPath(),
+      p_rpc_metadata_clien(),
+      p_rpc_file_system_client(),
 #ifdef NDEBUG
       p_server_host("192.168.10.215"),
 #else
@@ -232,10 +241,14 @@ std::string CoreSet::getUUIDStr() {
   return boost::uuids::to_string(getUUID());
 }
 RpcMetadataClientPtr CoreSet::getRpcChild() const {
-  return p_rpc_clien;
+  return p_rpc_metadata_clien;
+}
+
+RpcFileSystemClientPtr CoreSet::getRpcFileSystemClient() const {
+  return p_rpc_file_system_client;
 }
 void CoreSet::clear() {
-  p_rpc_clien.reset();
+  p_rpc_metadata_clien.reset();
   p_matadata_setting_.clear();
 }
 int CoreSet::getSqlPort() const {

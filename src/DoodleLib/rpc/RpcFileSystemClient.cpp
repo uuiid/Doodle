@@ -10,8 +10,9 @@
 
 namespace doodle {
 RpcFileSystemClient::RpcFileSystemClient(const std::shared_ptr<grpc::Channel>& in_channel)
-    : p_stub(FileSystemServer::NewStub(in_channel)),
-      p_channel(in_channel) {
+    : p_stub(FileSystemServer::NewStub(in_channel))
+// p_channel(in_channel)
+{
 }
 
 std::tuple<std::size_t, bool, std::chrono::time_point<std::chrono::system_clock>, bool> RpcFileSystemClient::GetInfo(const FSys::path& in_path) {
