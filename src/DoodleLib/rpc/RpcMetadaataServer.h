@@ -42,18 +42,4 @@ class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service {
   DOODLE_DISABLE_COPY(RpcMetadaataServer)
 };
 
-class RpcServerHandle {
-  std::unique_ptr<grpc::Server> p_Server;
-
-  RpcMetadataServerPtr p_rpc_server;
-  std::unique_ptr<grpc::ServerBuilder> p_build;
-
-  std::thread p_thread;
-
- public:
-  RpcServerHandle();
-
-  void runServer(int port);
-  void stop();
-};
 }  // namespace doodle

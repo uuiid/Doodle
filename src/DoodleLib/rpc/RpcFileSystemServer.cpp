@@ -4,12 +4,15 @@
 
 #include "RpcFileSystemServer.h"
 
+#include <DoodleLib/core/CoreSet.h>
 #include <google/protobuf/util/time_util.h>
 
 #include <boost/format.hpp>
 
 namespace doodle {
-RpcFileSystemServer::RpcFileSystemServer() {
+RpcFileSystemServer::RpcFileSystemServer()
+    : FileSystemServer::Service(),
+      p_set(CoreSet::getSet()) {
 }
 
 grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
@@ -93,7 +96,7 @@ grpc::Status RpcFileSystemServer::GetTimestamp(grpc::ServerContext* context, con
 }
 
 grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const FileInfo* request, grpc::ServerWriter<FileStream>* writer) {
-  FSys::path k_path = request->path();
+  FSys::path k_path = p_set.getDataRoot() / request->path();
   auto k_ex         = FSys::exists(k_path);
   auto k_dir        = FSys::is_directory(k_path);
   if (!k_ex || k_dir)
@@ -129,7 +132,7 @@ grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const F
 grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::ServerReader<FileStream>* reader, FileInfo* response) {
   FileStream k_file_stream{};
   reader->Read(&k_file_stream);
-  FSys::path k_path = k_file_stream.info().path();
+  FSys::path k_path = p_set.getDataRoot() / k_file_stream.info().path();
   auto k_ex         = FSys::exists(k_path.parent_path());
   if (!k_ex)
     FSys::create_directories(k_path.parent_path());

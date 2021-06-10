@@ -5,17 +5,13 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/core/CoreSet.h>
 #include <FileSystemServer.grpc.pb.h>
 
 namespace doodle {
 
-
-
-  
 class DOODLELIB_API RpcFileSystemServer : public FileSystemServer::Service {
-
-
-  
+  CoreSet& p_set;
 
  public:
   explicit RpcFileSystemServer();

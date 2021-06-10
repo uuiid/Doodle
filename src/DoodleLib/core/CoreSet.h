@@ -71,6 +71,9 @@ class DOODLELIB_API CoreSet {
   [[nodiscard]] FSys::path getCacheRoot(const FSys::path &path) const;
   void setCacheRoot(const FSys::path &path);
 
+  FSys::path getDataRoot() const;
+  void setDataRoot(const FSys::path &in_path);
+
   // doc路径
   [[nodiscard]] FSys::path getDoc() const;
 
@@ -123,6 +126,7 @@ class DOODLELIB_API CoreSet {
 
   FSys::path p_cache_root;
   FSys::path p_doc;
+  FSys::path p_data_root;
 
   Ue4Setting &p_ue4_setting;
   MetadataSet &p_matadata_setting_;

@@ -57,6 +57,7 @@ set(
 	rpc/RpcFileSystemServer.h
 	rpc/RpcMetadaataServer.h
 	rpc/RpcMetadataClient.h
+	rpc/RpcServerHandle.h
 	threadPool/LongTerm.h
 	threadPool/ThreadPool.h
 	toolkit/MessageAndProgress.h
@@ -107,6 +108,7 @@ set(
 	rpc/RpcFileSystemServer.cpp
 	rpc/RpcMetadaataServer.cpp
 	rpc/RpcMetadataClient.cpp
+	rpc/RpcServerHandle.cpp
 	toolkit/MessageAndProgress.cpp
 	toolkit/toolkit.cpp
 )

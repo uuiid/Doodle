@@ -59,6 +59,7 @@
 #include <DoodleLib/rpc/RpcFileSystemServer.h>
 #include <DoodleLib/rpc/RpcMetadaataServer.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
+#include <DoodleLib/rpc/RpcServerHandle.h>
 #include <DoodleLib/threadPool/LongTerm.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <DoodleLib/toolkit/MessageAndProgress.h>

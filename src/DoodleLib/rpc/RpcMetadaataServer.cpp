@@ -194,44 +194,4 @@ grpc::Status RpcMetadaataServer::UpdataMetadata(grpc::ServerContext *context, co
   return grpc::Status::OK;
 }
 
-RpcServerHandle::RpcServerHandle()
-    : p_Server(),
-      p_rpc_server(std::make_shared<RpcMetadaataServer>()),
-      p_build(std::make_unique<grpc::ServerBuilder>()),
-      p_thread() {
-  grpc::ResourceQuota qu{"doodle_meta"};
-  qu.SetMaxThreads(4);
-  p_build->SetResourceQuota(qu);
-}
-
-void RpcServerHandle::runServer(int port) {
-  ///检查p_server防止重复调用
-  if (p_Server)
-    return;
-  std::string server_address{"[::]:"};
-  server_address += std::to_string(port);
-
-  p_build->AddListeningPort(server_address, grpc::InsecureServerCredentials());
-  p_build->RegisterService(p_rpc_server.get());
-
-  //  auto t = k_builder.BuildAndStart();
-  p_Server = std::move(p_build->BuildAndStart());
-  DOODLE_LOG_INFO("Server listening on " << server_address);
-  p_thread = std::thread{[this]() {
-    p_Server->Wait();
-  }};
-}
-
-void RpcServerHandle::stop() {
-  if (!p_Server)
-    return;
-  using namespace std::chrono_literals;
-  auto k_time = std::chrono::system_clock::now() + 2s;
-
-  p_Server->Shutdown(k_time);
-  if (p_thread.joinable())
-    p_thread.join();
-
-  p_Server.reset();
-}
 }  // namespace doodle

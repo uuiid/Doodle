@@ -1,7 +1,7 @@
 #include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/Server/ServerWidget.h>
 #include <DoodleLib/core/CoreSet.h>
-#include <DoodleLib/rpc/RpcMetadaataServer.h>
+#include <DoodleLib/rpc/RpcServerHandle.h>
 #include <grpcpp/grpcpp.h>
 #include <wx/spinctrl.h>
 
@@ -60,7 +60,7 @@ ServerWidget::ServerWidget()
         event.Veto(false);
     }
   });
-  p_rpc_server_handle->runServer(CoreSet::getSet().getMetaRpcPort());
+  p_rpc_server_handle->runServer(CoreSet::getSet().getMetaRpcPort(), CoreSet::getSet().getFileRpcPort());
 }
 void ServerWidget::layoutServerWidget(wxSizer* layout) {
   auto k_layout = labelAndWidget("mysql ip地址: ", p_sql_host);
@@ -127,11 +127,11 @@ void ServerWidget::bindServerWideget() const {
     set.setFileRpcPort(in_event.GetInt());
   });
   p_start_rpc->Bind(wxEVT_BUTTON, [this, &set](wxCommandEvent& in_evrnt) {
-    p_rpc_server_handle->runServer(set.getMetaRpcPort());
+    p_rpc_server_handle->runServer(set.getMetaRpcPort(), set.getFileRpcPort());
   });
   p_reStart_rpc->Bind(wxEVT_BUTTON, [&set, this](wxCommandEvent& in_event) {
     p_rpc_server_handle->stop();
-    p_rpc_server_handle->runServer(set.getMetaRpcPort());
+    p_rpc_server_handle->runServer(set.getMetaRpcPort(), set.getFileRpcPort());
   });
 }
 

@@ -105,8 +105,9 @@ void CoreSet::getSetting() {
 CoreSet::CoreSet()
     : p_user_("user"),
       p_department_(Department::VFX),
-      p_cache_root("C:/Doodle_cache"),
-      p_doc("C:/Doodle_cache"),
+      p_cache_root("C:/Doodle/cache"),
+      p_doc("C:/Doodle/doc"),
+      p_data_root("C:/Doodle/data"),
       p_uuid_gen(),
       p_ue4_setting(Ue4Setting::Get()),
       p_matadata_setting_(MetadataSet::Get()),
@@ -133,12 +134,16 @@ CoreSet::CoreSet()
 
   p_doc = FSys::path{pManager} / "doodle";
   CoTaskMemFree(pManager);
+  getCacheDiskPath();
+  p_data_root = p_cache_root.parent_path() / "data";
 
   if (!FSys::exists(p_doc))
     FSys::create_directories(p_doc);
-  getCacheDiskPath();
   if (!FSys::exists(getCacheRoot())) {
     FSys::create_directories(getCacheRoot());
+  }
+  if (!FSys::exists(getDataRoot())) {
+    FSys::create_directories(getDataRoot());
   }
 }
 
@@ -206,6 +211,14 @@ void CoreSet::setCacheRoot(const FSys::path &path) {
   p_cache_root = path;
 }
 
+FSys::path CoreSet::getDataRoot() const {
+  return p_data_root;
+}
+
+void CoreSet::setDataRoot(const FSys::path &in_path) {
+  p_data_root = in_path;
+}
+
 void CoreSet::getCacheDiskPath() {
   const static std::vector<std::string> dirs{"D:/",
                                              "E:/",
@@ -220,7 +233,7 @@ void CoreSet::getCacheDiskPath() {
     if (FSys::exists(dir)) {
       auto info = FSys::space(dir);
       if (((float)info.available / (float)info.available) > 0.05) {
-        p_cache_root = dir + "Doodle_cache";
+        p_cache_root = dir + "Doodle/cache";
         break;
       }
     }
