@@ -20,8 +20,6 @@ class DOODLELIB_API ServerWidget : public wxFrame {
   RpcServerHandlePtr p_rpc_server_handle;
   void Init();
   void layoutServerWidget(wxSizer* layout);
-  wxSizer* labelAndWidget(const std::string& in_label,
-                          wxWindow* in_ctrl);
   void bindServerWideget() const;
 
  public:

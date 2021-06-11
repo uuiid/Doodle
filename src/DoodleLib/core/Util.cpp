@@ -4,18 +4,12 @@
 
 #include "Util.h"
 namespace doodle{
-auto getStreamSize(std::istream& in_stream) -> decltype(in_stream.tellg()){
-  auto k_tellg = in_stream.tellg();
-  in_stream.seekg(std::ios::end);
-  auto size =  in_stream.tellg();
-  in_stream.seekg(k_tellg);
-  return size;
-}
-auto getStreamSize(std::ostream& in_stream) -> decltype(in_stream.tellp()){
-  auto k_tellg = in_stream.tellp();
-  in_stream.seekp(std::ios::end);
-  auto size =  in_stream.tellp();
-  in_stream.seekp(k_tellg);
-  return size;
+wxSizer* wxUtil::labelAndWidget(wxWindow* in_parent, const std::string& in_label, wxWindow* in_ctrl) {
+  auto k_layout = new wxBoxSizer{wxHORIZONTAL};
+  auto k_label  = new wxStaticText{in_parent, wxWindow::NewControlId(), ConvStr<wxString>(in_label)};
+  k_label->SetMinSize({120, -1});
+  k_layout->Add(k_label, wxSizerFlags{0}.Expand());
+  k_layout->Add(in_ctrl, wxSizerFlags{1}.Expand());
+  return k_layout;
 }
 }
