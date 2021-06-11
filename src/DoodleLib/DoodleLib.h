@@ -32,11 +32,12 @@
 #include <DoodleLib/Metadata/TimeDuration.h>
 #include <DoodleLib/Metadata/View/ProjectManageWidget.h>
 #include <DoodleLib/Metadata/View/ShotListWidget.h>
+#include <DoodleLib/Metadata/View/TimeWidget.h>
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/ScreenshotWidght/ScreenshotAction.h>
 #include <DoodleLib/ScreenshotWidght/ScreenshotWidght.h>
 #include <DoodleLib/Server/ServerWidget.h>
-#include <DoodleLib/SettingWidght/SettingWidget.h>
+#include <DoodleLib/SettingWidght/settingWidget.h>
 #include <DoodleLib/core/ContainerDevice.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>

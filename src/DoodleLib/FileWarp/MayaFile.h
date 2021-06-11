@@ -16,6 +16,7 @@ class DOODLELIB_API MayaFile : public LongTerm {
   bool exportFbxFile(const FSys::path& file_path, const FSys::path& export_path = {}) const;
   bool batchExportFbxFile(const std::vector<FSys::path>& file_path) const;
 
+  static [[nodiscard]] bool is_maya_file(const FSys::path& in_path);
   DOODLE_DISABLE_COPY(MayaFile)
 
 };

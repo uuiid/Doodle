@@ -12,6 +12,8 @@
 #include <cereal/types/base_class.hpp>
 #include <cereal/types/memory.hpp>
 namespace doodle {
+
+class DOODLELIB_API Ue4Project {
 class DOODLELIB_API Ue4ProjectFilePulgins {
  public:
   std::string Name;
@@ -19,7 +21,6 @@ class DOODLELIB_API Ue4ProjectFilePulgins {
 
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(Ue4ProjectFilePulgins, Name, Enabled)
 };
-
 class DOODLELIB_API Ue4ProjectFile {
  public:
   int32_t FileVersion;
@@ -53,7 +54,6 @@ class DOODLELIB_API Ue4ProjectFile {
   };
 };
 
-class DOODLELIB_API Ue4Project {
   FSys::path p_ue_path;
   FSys::path p_ue_Project_path;
   ProjectPtr p_project;
@@ -71,5 +71,7 @@ class DOODLELIB_API Ue4Project {
 
   Ue4Project(FSys::path project_path);
   void createShotFolder(const std::vector<ShotPtr>& inShotList);
+
+  static bool can_import_ue4(const FSys::path& in_path);
 };
 }  // namespace doodle

@@ -74,7 +74,7 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
   auto k_com_col = p_assets_attribute_view_ctrl_->AppendTextColumn(
       ConvStr<wxString>("评论"), 3,
       wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE);
-  p_assets_attribute_view_ctrl_->AppendTextColumn(
+  auto k_time_col = p_assets_attribute_view_ctrl_->AppendTextColumn(
       ConvStr<wxString>("时间"), 4,
       wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE);
   p_assets_attribute_view_ctrl_->AppendTextColumn(

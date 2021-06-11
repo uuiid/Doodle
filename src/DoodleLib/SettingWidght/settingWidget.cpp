@@ -226,6 +226,7 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
     } catch (const std::exception& error) {
       wxMessageDialog{this, error.what(), ConvStr<wxString>("错误")}.ShowModal();
     }
+    event.Skip();
   });
 }
 

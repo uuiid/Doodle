@@ -30,11 +30,12 @@ set(
 	Metadata/TimeDuration.h
 	Metadata/View/ProjectManageWidget.h
 	Metadata/View/ShotListWidget.h
+	Metadata/View/TimeWidget.h
 	PinYin/convert.h
 	ScreenshotWidght/ScreenshotAction.h
 	ScreenshotWidght/ScreenshotWidght.h
 	Server/ServerWidget.h
-	SettingWidght/SettingWidget.h
+	SettingWidght/settingWidget.h
 	core/ContainerDevice.h
 	core/CoreSet.h
 	core/CoreSql.h
@@ -90,11 +91,12 @@ set(
 	Metadata/TimeDuration.cpp
 	Metadata/View/ProjectManageWidget.cpp
 	Metadata/View/ShotListWidget.cpp
+	Metadata/View/TimeWidget.cpp
 	PinYin/convert.cpp
 	ScreenshotWidght/ScreenshotAction.cpp
 	ScreenshotWidght/ScreenshotWidght.cpp
 	Server/ServerWidget.cpp
-	SettingWidght/SettingWidget.cpp
+	SettingWidght/settingWidget.cpp
 	core/CoreSet.cpp
 	core/CoreSql.cpp
 	core/MetadataSet.cpp

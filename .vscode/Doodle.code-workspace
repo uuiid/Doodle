@@ -134,7 +134,8 @@
 			"*.ipp": "cpp",
 			"qpushbutton": "cpp",
 			"*.inc": "cpp",
-			"format": "cpp"
+			"format": "cpp",
+			"source_location": "cpp"
 		},
 	},
 	"tasks": {

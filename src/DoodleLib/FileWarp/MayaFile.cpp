@@ -151,5 +151,9 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
 bool MayaFile::checkFile() {
   return true;
 }
+bool MayaFile::is_maya_file(const FSys::path& in_path) {
+  auto k_e = in_path.extension();
+  return k_e == ".ma" || k_e == ".mb";
+}
 
 DOODLE_NAMESPACE_E

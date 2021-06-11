@@ -44,6 +44,9 @@ list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(CMakeRC)
 
 #寻找一些外部库
+#    find_package(unofficial-nana CONFIG REQUIRED)
+#    target_link_libraries(main PRIVATE unofficial::nana::nana)
+#
 #find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
 find_package(wxWidgets REQUIRED)
 find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time regex iostreams log locale iostreams)

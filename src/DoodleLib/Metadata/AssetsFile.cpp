@@ -25,6 +25,7 @@ AssetsFile::AssetsFile()
       p_comment(),
       p_version(0) {
 }
+
 AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in_path, std::string name, std::string showName)
     : Metadata(),
       p_name(std::move(name)),

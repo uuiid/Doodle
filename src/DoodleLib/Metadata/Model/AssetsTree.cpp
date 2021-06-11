@@ -98,16 +98,13 @@ bool AssetsTree::GetAttr(const wxDataViewItem& in_item, std::uint32_t in_col, wx
     attr.SetBackgroundColour({200, 75, 49});
     return true;
   } else {
-    return false;
+    attr.SetBackgroundColour({255, 255, 255});
+    return true;
   }
 }
 
 void AssetsTree::set_current(const MetadataPtr& in_item) {
-  auto k_i           = p_metadata_cuttent;
   p_metadata_cuttent = in_item;
-  if (k_i) {
-    // ItemChanged(wxDataViewItem{k_i.get()});
-  }
 }
 
 void AssetsTree::setRoot(const ProjectPtr& in_project) {

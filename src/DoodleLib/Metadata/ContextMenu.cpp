@@ -2,8 +2,10 @@
 // Created by TD on 2021/5/14.
 //
 
+#include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/AssetsPath.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Metadata.h>
@@ -13,6 +15,8 @@
 #include <DoodleLib/Metadata/Model/ProjectManage.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
+#include <FileWarp/MayaFile.h>
+#include <FileWarp/Ue4Project.h>
 #include <wx/dataview.h>
 #include <wx/numdlg.h>
 #include <wx/textdlg.h>
@@ -26,7 +30,7 @@ ContextMenu::ContextMenu(wxWindow* in_parent, wxMenu* in_menu, wxDataViewModel* 
       p_model(in_model) {
 }
 ProjectPtr ContextMenu::createProject() {
-  auto path_dialog = wxDirDialog{p_parent, ConvStr<wxString>("选择项目根目录: "), wxEmptyString, wxRESIZE_BORDER};
+  auto path_dialog = wxDirDialog{p_parent, ConvStr<wxString>("选择项目根目录: ")};  //, wxEmptyString, wxRESIZE_BORDER
   auto result      = path_dialog.ShowModal();
   if (result != wxID_OK)
     return {};
@@ -35,7 +39,7 @@ ProjectPtr ContextMenu::createProject() {
   if (k_result != wxID_OK)
     return {};
 
-  auto k_path = ConvStr<FSys::path>(path_dialog.GetPath());
+  auto k_path = ConvStr<std::string>(path_dialog.GetPath());
   auto k_name = ConvStr<std::string>(k_text_dialog.GetValue());
   if (k_path.empty() || k_name.empty())
     return {};
@@ -87,6 +91,7 @@ wxMenu* ContextMenu::createMenu(const EpisodesPtr& in_data) {
                                          ConvStr<wxString>("集数"),
                                          1, 0, 9999, p_parent);
         in_data->setEpisodes(k_num);
+        in_data->updata_db(this->p_metadata_flctory_ptr_);
       },
       k_eps->GetId());
 
@@ -119,6 +124,7 @@ wxMenu* ContextMenu::createMenu(const ShotPtr& in_data) {
                                         ConvStr<wxString>("镜头"),
                                         1, 0, 9999, p_parent);
         in_data->setShot(shot);
+        in_data->updata_db(this->p_metadata_flctory_ptr_);
       },
       k_modify_shot->GetId());
   p_menu->Bind(
@@ -126,6 +132,7 @@ wxMenu* ContextMenu::createMenu(const ShotPtr& in_data) {
       [this, in_data](wxCommandEvent& in_event) {
         auto k_shotAb = getShotAb();
         in_data->setShotAb(k_shotAb);
+        in_data->updata_db(this->p_metadata_flctory_ptr_);
       },
       k_modify_shotab->GetId());
 
@@ -156,12 +163,40 @@ wxMenu* ContextMenu::createMenu(const AssetsPtr& in_data) {
         if (text.empty())
           return;
         in_data->setName1(text);
+        in_data->updata_db(this->p_metadata_flctory_ptr_);
       },
       k_ass->GetId());
   return this->createMenuAfter(std::dynamic_pointer_cast<Metadata>(in_data));
 }
 
 wxMenu* ContextMenu::createMenu(const AssetsFilePtr& in_data) {
+  // auto k_path = wxGetTextFromUser(ConvStr<wxString>("类别名称"),
+  //                                 ConvStr<wxString>("类别名称"),
+  //                                 ConvStr<wxString>("none"), p_parent);
+  auto k_time = p_menu->Append(wxID_ANY, ConvStr<wxString>("修改时间"));
+  auto k_com  = p_menu->Append(wxID_ANY, ConvStr<wxString>("添加评论"));
+
+  p_menu->Bind(
+      wxEVT_MENU,
+      [](wxCommandEvent& in_event) {
+
+      },
+      k_time->GetId());
+  p_menu->Bind(
+      wxEVT_MENU, [](wxCommandEvent& in_event) {
+
+      },
+      k_com->GetId());
+
+  auto k_path = in_data->getPathFile()->getLocalPath();
+  if (MayaFile::is_maya_file(k_path)) {
+    p_menu->Append(wxID_ANY, ConvStr<wxString>("导出相机"));
+  }
+
+  if (Ue4Project::can_import_ue4(k_path)) {
+    p_menu->Append(wxID_ANY, ConvStr<wxString>("导入ue4"));
+  }
+
   return this->createMenuAfter(std::dynamic_pointer_cast<Metadata>(in_data));
 }
 
@@ -211,20 +246,24 @@ wxMenu* ContextMenu::createMenuAfter(const MetadataPtr& in_data) {
 
   p_menu->Bind(
       wxEVT_MENU, [in_data, this](wxCommandEvent& in_event) {
-        if (in_data->hasParent()) {
-          if (in_data->hasChild())
-            wxMessageBox(ConvStr<wxString>("有子物体，无法删除"),
-                         ConvStr<wxString>("注意"), wxYES_NO | wxCANCEL, p_parent);
-          else {
-            auto k_p = in_data->getParent();
-            ///这里必须先删除再清除子物体
-            in_data->deleteData(p_metadata_flctory_ptr_);
-            k_p->removeChildItems(in_data->shared_from_this());
-          }
-        } else {
-          wxMessageBox(ConvStr<wxString>("这个是项目,无法删除"),
-                       ConvStr<wxString>("注意"), wxYES | wxCANCEL, p_parent);
-        };
+        try {
+          if (in_data->hasParent()) {
+            if (in_data->hasChild())
+              wxMessageBox(ConvStr<wxString>("有子物体，无法删除"),
+                           ConvStr<wxString>("注意"), wxYES_NO | wxCANCEL, p_parent);
+            else {
+              auto k_p = in_data->getParent();
+              ///这里必须先删除再清除子物体
+              in_data->deleteData(p_metadata_flctory_ptr_);
+              k_p->removeChildItems(in_data->shared_from_this());
+            }
+          } else {
+            wxMessageBox(ConvStr<wxString>("这个是项目,无法删除"),
+                         ConvStr<wxString>("注意"), wxYES | wxCANCEL, p_parent);
+          };
+        } catch (const std::exception& err) {
+          DOODLE_LOG_DEBUG(err.what());
+        }
       },
       k_delete->GetId());
 

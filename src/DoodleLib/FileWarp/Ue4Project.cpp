@@ -154,5 +154,9 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
 
   this->runPythonScript(k_tmp_file_path);
 }
+bool Ue4Project::can_import_ue4(const FSys::path& in_path) {
+  auto k_e = in_path.extension();
+  return k_e == ".fbx" || k_e == ".abc";
+}
 
 }  // namespace doodle
