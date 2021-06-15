@@ -256,15 +256,15 @@ TEST_F(CoreTest, loadUe4ProjectFile) {
   auto str_stream = std::stringstream{};
   auto ijson      = nlohmann::json::parse(file);
 
-  auto ueFile = ijson.get<doodle::Ue4ProjectFile>();
-  ueFile.Plugins.push_back(doodle::Ue4ProjectFilePulgins{"doodle", true});
-  nlohmann::json root = ueFile;
-  // json(ueFile);
-  std::cout
-      << ijson
-      << std::endl
-      << root
-      << std::endl;
+  // auto ueFile = ijson.get<doodle::Ue4ProjectFile>();
+  // ueFile.Plugins.push_back(doodle::Ue4ProjectFilePulgins{"doodle", true});
+  // nlohmann::json root = ueFile;
+  // // json(ueFile);
+  // std::cout
+  //     << ijson
+  //     << std::endl
+  //     << root
+  //     << std::endl;
 }
 
 TEST_F(CoreTest, export_maya) {

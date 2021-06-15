@@ -1,22 +1,22 @@
+#include <DoodleLib/DoodleLib.h>
+#include <date/date.h>
 #include <gtest/gtest.h>
+
+#include <boost/filesystem/path.hpp>
+#include <boost/locale.hpp>
+#include <filesystem>
 #include <fstream>
-
 #include <iostream>
-
 #include <regex>
 #include <string>
-#include <filesystem>
 
-
-#include <boost/locale.hpp>
-#include <boost/filesystem/path.hpp>
 // #include <boost/nowide/
 TEST(DSTD, map_netDir) {
   NETRESOURCE resources{};
   resources.dwType       = RESOURCETYPE_DISK;
-  resources.lpLocalName  = (LPWSTR) L"S:";
+  resources.lpLocalName  = (LPWSTR)L"S:";
   resources.lpProvider   = 0;
-  resources.lpRemoteName = (LPWSTR) LR"(\\192.168.10.250\public\CangFeng)";
+  resources.lpRemoteName = (LPWSTR)LR"(\\192.168.10.250\public\CangFeng)";
   DWORD r                = WNetAddConnection2(&resources, NULL, NULL,
                                CONNECT_TEMPORARY | CONNECT_INTERACTIVE | CONNECT_COMMANDLINE | CONNECT_CRED_RESET);
   if (r != NO_ERROR) {
@@ -59,8 +59,8 @@ TEST(DSTD, dir) {
   auto r = 2740700278 / 8000000;
   std::cout << r << std::endl;
 }
-TEST(DSTD, num){
-#define DOODLE_tset_num(exp) #exp ": " <<std::to_string(exp)
+TEST(DSTD, num) {
+#define DOODLE_tset_num(exp) #exp ": " << std::to_string(exp)
   std::cout << DOODLE_tset_num(10 % 2) << std::endl
             << DOODLE_tset_num(11 % 2) << std::endl
             << DOODLE_tset_num(10 / 2) << std::endl
@@ -143,4 +143,18 @@ TEST(DSTD, regerFind_eps_shot) {
 
     str_ep = k_match.suffix();
   }
+}
+
+TEST(DSTD, date_check) {
+  using namespace date;
+
+  date::sys_days t{2010_y / 2 / 30};
+  std::cout << t << std::endl;
+
+  doodle::TimeDuration my_t{};
+  my_t.set_year(2012);
+  my_t.set_month(2);
+  my_t.set_day(60);
+  std::cout << my_t.getTime() << std::endl;
+  std::cout << my_t.get_day() << std::endl;
 }

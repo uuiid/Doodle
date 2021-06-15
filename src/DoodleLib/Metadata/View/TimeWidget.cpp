@@ -5,8 +5,8 @@
 #include "TimeWidget.h"
 
 #include <core/Util.h>
-#include <wx/spinctrl.h>
 #include <date/date.h>
+#include <wx/spinctrl.h>
 
 namespace doodle {
 
@@ -19,35 +19,31 @@ TimeWidget::TimeWidget(wxWindow* in_parent, std::chrono::time_point<std::chrono:
       p_hour_ctrl(new wxSpinCtrl{this, NewControlId()}),
       p_minute_ctrl(new wxSpinCtrl{this, NewControlId()}),
       p_second_ctrl(new wxSpinCtrl{this, NewControlId()}),
-      p_week_ctrl(new wxStaticText{this, NewControlId(),wxEmptyString}),
-      p_str_ctrl(new wxStaticText{this, NewControlId(),wxEmptyString})
-{
-  p_year_ctrl->SetRange(2000,3000);
-  p_month_ctrl->SetRange(1,12);
-  p_day_ctrl->SetRange(1,31);
-  p_hour_ctrl->SetRange(0,23);
-  p_minute_ctrl->SetRange(0,59);
-  p_second_ctrl->SetRange(0,59);
+      p_week_ctrl(new wxStaticText{this, NewControlId(), wxEmptyString}),
+      p_str_ctrl(new wxStaticText{this, NewControlId(), wxEmptyString}) {
+  p_year_ctrl->SetRange(2000, 3000);
+  p_month_ctrl->SetRange(1, 12);
+  p_day_ctrl->SetRange(1, 31);
+  p_hour_ctrl->SetRange(0, 23);
+  p_minute_ctrl->SetRange(0, 59);
+  p_second_ctrl->SetRange(0, 59);
 
   auto layout = wxBoxSizer(wxOrientation::wxVERTICAL);
-  auto k_l_ =  wxUtil::labelAndWidget(this,"年: ",p_year_ctrl);
-  layout.Add(k_l_,wxSizerFlags{1}.Expand());
-  k_l_ = wxUtil::labelAndWidget(this,"月: ",p_month_ctrl);
-  layout.Add(k_l_,wxSizerFlags{1}.Expand());
-  k_l_ = wxUtil::labelAndWidget(this,"日: ",p_day_ctrl);
-  layout.Add(k_l_,wxSizerFlags{1}.Expand());
-  k_l_ = wxUtil::labelAndWidget(this,"星期： ",p_week_ctrl);
-  layout.Add(k_l_,wxSizerFlags{1}.Expand());
-  k_l_ = wxUtil::labelAndWidget(this,"小时: ",p_hour_ctrl);
-  layout.Add(k_l_,wxSizerFlags{1}.Expand());
-  k_l_ = wxUtil::labelAndWidget(this,"分钟: ",p_minute_ctrl);
-  layout.Add(k_l_,wxSizerFlags{1}.Expand());
-  k_l_ = wxUtil::labelAndWidget(this,"秒: ",p_second_ctrl);
-  layout.Add(k_l_,wxSizerFlags{1}.Expand());
-  layout.Add(wxUtil::labelAndWidget(this,"预览: ",p_str_ctrl),wxSizerFlags{1}.Expand())
-
-
-
+  auto k_l_   = wxUtil::labelAndWidget(this, "年: ", p_year_ctrl);
+  layout.Add(k_l_, wxSizerFlags{1}.Expand());
+  k_l_ = wxUtil::labelAndWidget(this, "月: ", p_month_ctrl);
+  layout.Add(k_l_, wxSizerFlags{1}.Expand());
+  k_l_ = wxUtil::labelAndWidget(this, "日: ", p_day_ctrl);
+  layout.Add(k_l_, wxSizerFlags{1}.Expand());
+  k_l_ = wxUtil::labelAndWidget(this, "星期： ", p_week_ctrl);
+  layout.Add(k_l_, wxSizerFlags{1}.Expand());
+  k_l_ = wxUtil::labelAndWidget(this, "小时: ", p_hour_ctrl);
+  layout.Add(k_l_, wxSizerFlags{1}.Expand());
+  k_l_ = wxUtil::labelAndWidget(this, "分钟: ", p_minute_ctrl);
+  layout.Add(k_l_, wxSizerFlags{1}.Expand());
+  k_l_ = wxUtil::labelAndWidget(this, "秒: ", p_second_ctrl);
+  layout.Add(k_l_, wxSizerFlags{1}.Expand());
+  layout.Add(wxUtil::labelAndWidget(this, "预览: ", p_str_ctrl), wxSizerFlags{1}.Expand());
 }
 std::chrono::time_point<std::chrono::system_clock> TimeWidget::get_time() {
   return std::chrono::time_point<std::chrono::system_clock>();
@@ -63,12 +59,11 @@ void TimeWidget::init() {
   p_minute_ctrl->SetValue(k_hh_mm_ss.minutes().count());
   p_second_ctrl->SetValue(k_hh_mm_ss.seconds().count());
 
-
   {
     using namespace date;
     int k_h{3};
     std::chrono::hours k_hours{k_h};
-    sys_days tt{year{2015}/3/22};
+    sys_days tt{year{2015} / 3 / 22};
     p_time = tt + k_hours;
   }
 }

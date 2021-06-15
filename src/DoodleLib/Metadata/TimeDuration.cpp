@@ -27,36 +27,42 @@ std::uint16_t TimeDuration::get_year() const {
 }
 void TimeDuration::set_year(std::uint16_t in_year) {
   p_year = date::year{in_year};
+  disassemble();
 }
 std::uint16_t TimeDuration::get_month() const {
   return (std::uint32_t)p_month;
 }
 void TimeDuration::set_month(std::uint16_t in_month) {
   p_month = date::month{in_month};
+  disassemble();
 }
 std::uint16_t TimeDuration::get_day() const {
   return (std::uint32_t)p_day;
 }
 void TimeDuration::set_day(std::uint16_t in_day) {
   p_day = date::day{in_day};
+  disassemble();
 }
 std::uint16_t TimeDuration::get_hour() const {
   return p_hours.count();
 }
 void TimeDuration::set_hour(std::uint16_t in_hour) {
   p_hours = std::chrono::hours{in_hour};
+  disassemble();
 }
 std::uint16_t TimeDuration::get_minutes() const {
   return p_minutes.count();
 }
 void TimeDuration::set_minutes(std::uint16_t in_minutes) {
   p_minutes = std::chrono::minutes{in_minutes};
+  disassemble();
 }
 std::uint16_t TimeDuration::get_second() const {
   return p_seconds.count();
 }
 void TimeDuration::set_second(std::uint16_t in_second) {
   p_seconds = std::chrono::seconds{in_second};
+  disassemble();
 }
 
 template <>
@@ -99,10 +105,23 @@ std::int32_t TimeDuration::getWeek() const {
 }
 
 std::string TimeDuration::showStr() const {
-  return date::format("%Y/%m/%d %H:%M", getTime());;
+  return date::format("%Y/%m/%d %H:%M", getTime());
 }
 TimeDuration::time_point TimeDuration::getTime() const {
   return date::sys_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
+}
+
+void TimeDuration::disassemble() {
+  auto k_time = getTime();
+  auto k_dp   = date::floor<date::days>(k_time);
+  date::year_month_day k_day{k_dp};
+  date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(k_time - k_dp)};
+  p_year    = k_day.year();
+  p_month   = k_day.month();
+  p_day     = k_day.day();
+  p_hours   = k_hh_mm_ss.hours();
+  p_minutes = k_hh_mm_ss.minutes();
+  p_seconds = k_hh_mm_ss.seconds();
 }
 
 }  // namespace doodle
