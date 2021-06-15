@@ -6,8 +6,8 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 
 namespace doodle {
-class DOODLELIB_API TimeWidget : public wxFrame{
-  std::chrono::time_point<std::chrono::system_clock> p_time;
+class DOODLELIB_API TimeWidget : public wxDialog{
+  TimeDurationPtr p_time;
 
   wxSpinCtrl* p_year_ctrl;
   wxSpinCtrl* p_month_ctrl;
@@ -19,11 +19,19 @@ class DOODLELIB_API TimeWidget : public wxFrame{
   wxStaticText* p_week_ctrl;
   wxStaticText* p_str_ctrl;
 
-  void init();
- public:
-  explicit TimeWidget(wxWindow* in_parent,std::chrono::time_point<std::chrono::system_clock>& in_timePoint);
+  wxButton* p_button_ok;
+  wxButton* p_button_cancel;
 
-  static std::chrono::time_point<std::chrono::system_clock> get_time();
+
+  void init();
+  void bind_fun();
+  inline void set_week_text();
+  inline void set_str_text();
+
+ public:
+  explicit TimeWidget(wxWindow* in_parent,TimeDurationPtr& in_timePoint);
+
+  static  TimeDurationPtr get_time(wxWindow* in_parent);
 };
 
 }  // namespace doodle

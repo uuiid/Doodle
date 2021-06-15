@@ -118,10 +118,26 @@ ExternalProject_Add(doxygen_css
         CONFIGURE_COMMAND ""
         BUILD_COMMAND ""
         INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/doxygen_css-prefix/src/doxygen_css/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css
-#        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/doxygen-awesome-css-prefix/src/doxygen-awesome-css/doxygen-awesome-sidebar-only.css ${PROJECT_SOURCE_DIR}/doc/css
+        #        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/doxygen-awesome-css-prefix/src/doxygen-awesome-css/doxygen-awesome-sidebar-only.css ${PROJECT_SOURCE_DIR}/doc/css
+        TEST_COMMAND ""
+        )
+ExternalProject_Add(tzdata_prj
+        URL https://data.iana.org/time-zones/releases/tzdata2021a.tar.gz
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/tzdata_prj-prefix/src/tzdata_prj ${CMAKE_BINARY_DIR}/bin/tzdata
         TEST_COMMAND ""
         )
 
+ExternalProject_Add(windowsZones_prj
+        URL https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml
+#        DOWNLOAD_NAME windowsZones.xml
+        DOWNLOAD_NO_EXTRACT TRUE
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/windowsZones_prj-prefix/src/windowsZones.xml ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml
+        TEST_COMMAND ""
+        )
 #添加文档生成
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
 set(DOXYGEN_WARNINGS NO)

@@ -1,5 +1,6 @@
 #include <DoodleLib/DoodleLib.h>
 #include <date/date.h>
+#include <date/tz.h>
 #include <gtest/gtest.h>
 
 #include <boost/filesystem/path.hpp>
@@ -157,4 +158,16 @@ TEST(DSTD, date_check) {
   my_t.set_day(60);
   std::cout << my_t.getTime() << std::endl;
   std::cout << my_t.get_day() << std::endl;
+}
+
+TEST(DSTD, date_utc) {
+  using namespace date;
+  auto t       = std::chrono::system_clock::now();
+  auto local_t = make_zoned(current_zone(), std::chrono::system_clock::now());
+  std::cout << t << std::endl;
+  std::cout << local_t << std::endl;
+  std::cout << "local_t.get_sys_time(): " << local_t.get_sys_time()
+            << std::endl;
+  std::cout << R"(date::format("%Y/%m/%d %H:%M"): )" << date::format("%Y/%m/%d %H:%M", local_t)
+            << std::endl;
 }

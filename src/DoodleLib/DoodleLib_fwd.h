@@ -39,10 +39,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
-#include <cereal/access.hpp>
-#include <cereal/cereal.hpp>
-#include <cereal/types/common.hpp>
-#include <cereal/types/string.hpp>
+
 
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
@@ -107,17 +104,54 @@ class connection;
 struct connection_config;
 }  // namespace sqlpp::mysql
 
-//// 添加boost::filesystem path 序列化储存
-namespace boost::filesystem {
+
+#include <date/date.h>
+#include <cereal/access.hpp>
+#include <cereal/cereal.hpp>
+#include <cereal/types/common.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/memory.hpp>
+namespace cereal{
+
+template <class Archive> inline
+void save(Archive &ar, boost::filesystem::path const &path) {
+  ar(cereal::make_nvp("path",path.generic_string()));
+}
+template <class Archive> inline
+void load(Archive &ar, boost::filesystem::path &path) {
+  std::string str{};
+  ar(str);
+  path = boost::filesystem::path{str};
+
+};
+
 template <class Archive>
-std::string save_minimal(Archive const &, boost::filesystem::path const &path) {
-  return path.generic_string();
+std::int32_t save_minimal(Archive const & ar, date::year const& in_year){
+  return (int)in_year;
 }
 template <class Archive>
-void load_minimal(Archive const &, boost::filesystem::path &path, std::string const &value) {
-  path = value;
-};
-}  // namespace boost::filesystem
+void load_minimal(Archive const &, date::year &in_year, std::int32_t const &value) {
+  in_year = date::year{value};
+}
+
+template <class Archive>
+std::uint32_t save_minimal(Archive const& ar, date::month const& in_month){
+  return (std::uint32_t)in_month;
+}
+template <class Archive>
+void load_minimal(Archive const &, date::month &in_month, std::uint32_t const &value) {
+  in_month = date::month{value};
+}
+
+template <class Archive>
+std::uint32_t save_minimal(Archive const& ar, date::day const& in_day){
+  return (std::uint32_t)in_day;
+}
+template <class Archive>
+void load_minimal(Archive const &, date::day &in_day, std::uint32_t const &value) {
+  in_day = date::day{value};
+}
+}
 
 // namespace std::filesystem {
 // template <class Archive>
@@ -131,18 +165,16 @@ void load_minimal(Archive const &, boost::filesystem::path &path, std::string co
 // }  // namespace std::filesystem
 
 //开始我们的名称空间
-DOODLE_NAMESPACE_S
+namespace doodle {
 
-namespace FSys = boost::filesystem;
-
-// namespace FSys {
-// using namespace std::filesystem;
+namespace FSys {
+using namespace boost::filesystem;
 // using fstream  = std::fstream;
 // using istream  = std::istream;
 // using ifstream = std::ifstream;
 // using ofstream = std::ofstream;
 // using ostream  = std::ostream;
-// }  // namespace FSys
+}  // namespace FSys
 
 using ConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
 
@@ -233,6 +265,6 @@ wxString ConvStr(const char (&str)[N]) {
   return wxString::FromUTF8(str, N);
 };
 
-DOODLE_NAMESPACE_E
+}
 
 wxDECLARE_APP(doodle::Doodle);

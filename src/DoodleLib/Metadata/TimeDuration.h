@@ -5,15 +5,21 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <date/date.h>
+
+#include <cereal/types/chrono.hpp>
+
 namespace doodle {
 
 class DOODLELIB_API TimeDuration {
+  std::chrono::time_point<std::chrono::system_clock> p_time;
   date::year p_year;
   date::month p_month;
   date::day p_day;
   std::chrono::hours p_hours;
   std::chrono::minutes p_minutes;
   std::chrono::seconds p_seconds;
+
+  const date::time_zone* p_time_zone;
 
  public:
   using time_point = std::chrono::time_point<std::chrono::system_clock>;
@@ -52,10 +58,11 @@ class DOODLELIB_API TimeDuration {
 
  private:
   void disassemble();
+  void disassemble(const time_point& in_timePoint);
   //这里是序列化的代码
   friend class cereal::access;
   template <class Archive>
-  void serialize(Archive& ar, std::uint32_t const version);
+  void serialize(Archive& ar, const std::uint32_t version);
 };
 template <class Archive>
 void TimeDuration::serialize(Archive& ar, const std::uint32_t version) {
@@ -66,7 +73,9 @@ void TimeDuration::serialize(Archive& ar, const std::uint32_t version) {
         cereal::make_nvp("days", p_day),
         cereal::make_nvp("hours", p_hours),
         cereal::make_nvp("minutes", p_minutes),
-        cereal::make_nvp("seconds", p_seconds));
+        cereal::make_nvp("seconds", p_seconds),
+        cereal::make_nvp("time", p_time));
+  disassemble(p_time);
 }
 
 }  // namespace doodle

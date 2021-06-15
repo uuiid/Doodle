@@ -10,11 +10,13 @@
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/Metadata/Model/AssetsTree.h>
 #include <DoodleLib/Metadata/Model/ListAttributeModel.h>
 #include <DoodleLib/Metadata/Model/ProjectManage.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/Metadata/View/TimeWidget.h>
 #include <FileWarp/MayaFile.h>
 #include <FileWarp/Ue4Project.h>
 #include <wx/dataview.h>
@@ -178,13 +180,19 @@ wxMenu* ContextMenu::createMenu(const AssetsFilePtr& in_data) {
 
   p_menu->Bind(
       wxEVT_MENU,
-      [](wxCommandEvent& in_event) {
-
+      [in_data, this](wxCommandEvent& in_event) {
+        auto k_time = TimeWidget::get_time(p_parent);
+        if (k_time)
+          in_data->setTime(k_time);
       },
       k_time->GetId());
   p_menu->Bind(
-      wxEVT_MENU, [](wxCommandEvent& in_event) {
-
+      wxEVT_MENU, [in_data, this](wxCommandEvent& in_event) {
+        auto k_str = wxGetTextFromUser(ConvStr<wxString>("评论"),
+                                       ConvStr<wxString>("评论: "),
+                                       ConvStr<wxString>("none"), p_parent);
+        if (!k_str.empty())
+          in_data->addComment(std::make_shared<Comment>(ConvStr<wxString>(k_str)));
       },
       k_com->GetId());
 

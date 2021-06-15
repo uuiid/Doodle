@@ -65,7 +65,7 @@ void ListAttributeModel::GetValue(wxVariant& variant, const wxDataViewItem& item
     } break;
 
     case 4: {
-      auto& time = k_ass->getTime();
+      auto time = k_ass->getStdTime();
       auto str   = date::format("%Y/%m/%d %H:%M", time);
       variant    = ConvStr<wxString>(str);
     } break;

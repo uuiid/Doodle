@@ -6,6 +6,7 @@
 #include <DoodleLib/rpc/RpcFileSystemClient.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
 #include <ShlObj.h>
+#include <date/tz.h>
 #include <google/protobuf/service.h>
 #include <grpcpp/grpcpp.h>
 #include <sqlpp11/mysql/mysql.h>
@@ -145,6 +146,8 @@ CoreSet::CoreSet()
   if (!FSys::exists(getDataRoot())) {
     FSys::create_directories(getDataRoot());
   }
+  /// 在这里我们初始化date tz 时区数据库
+  date::set_install(program_location("tzdata").generic_string());
 }
 
 FSys::path CoreSet::toIpPath(const FSys::path &path) {

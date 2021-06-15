@@ -47,7 +47,7 @@ ServerWidget::ServerWidget()
   layoutServerWidget(layout);
   /// 初始化值设置
   Init();
-  bindServerWideget();
+  bindServerWidget();
 
   Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
     auto k_r = wxMessageDialog{
@@ -96,7 +96,7 @@ void ServerWidget::layoutServerWidget(wxSizer* layout) {
   this->Center();
 }
 
-void ServerWidget::bindServerWideget() const {
+void ServerWidget::bindServerWidget() const {
   auto& set = CoreSet::getSet();
   p_sql_host->Bind(wxEVT_TEXT, [&set](wxCommandEvent& in_event) {
     set.setSqlHost(ConvStr<std::string>(in_event.GetString()));

@@ -4,23 +4,30 @@
 
 #include <DoodleLib/Metadata/TimeDuration.h>
 #include <date/date.h>
+#include <date/tz.h>
+
 namespace doodle {
 
 TimeDuration::TimeDuration()
-    : p_year(),
+    : p_time(),
+      p_year(),
       p_month(),
       p_day(),
       p_hours(),
       p_minutes(),
-      p_seconds() {
+      p_seconds(),
+      p_time_zone(date::current_zone()) {
 }
 TimeDuration::TimeDuration(time_point in_point)
-    : p_year(),
+    : p_time(),
+      p_year(),
       p_month(),
       p_day(),
       p_hours(),
       p_minutes(),
-      p_seconds() {
+      p_seconds(),
+      p_time_zone(date::current_zone()) {
+  disassemble(in_point);
 }
 std::uint16_t TimeDuration::get_year() const {
   return (int)p_year;
@@ -108,14 +115,17 @@ std::string TimeDuration::showStr() const {
   return date::format("%Y/%m/%d %H:%M", getTime());
 }
 TimeDuration::time_point TimeDuration::getTime() const {
-  return date::sys_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
+  return p_time;
 }
 
 void TimeDuration::disassemble() {
-  auto k_time = getTime();
-  auto k_dp   = date::floor<date::days>(k_time);
+  disassemble((date::sys_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds));
+}
+void TimeDuration::disassemble(const TimeDuration::time_point& in_timePoint) {
+  p_time    = in_timePoint;
+  auto k_dp = date::floor<date::days>(in_timePoint);
   date::year_month_day k_day{k_dp};
-  date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(k_time - k_dp)};
+  date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(in_timePoint - k_dp)};
   p_year    = k_day.year();
   p_month   = k_day.month();
   p_day     = k_day.day();

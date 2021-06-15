@@ -99,6 +99,8 @@ target_precompile_headers(DoodleLib
 #message(${DOODLE_PCH_S})
 
 target_link_libraries(DoodleLib PUBLIC
+        date::date
+        date::date-tz
 #        SqlppSqlite
         DoodleLibResource
         # RTTR::Core

@@ -1,20 +1,15 @@
 ﻿//
 // Created by TD on 2021/5/7.
 //
-
+#include "MetadataFactory.h"
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Logger/Logger.h>
-#include <DoodleLib/Metadata/Assets.h>
-#include <DoodleLib/Metadata/AssetsFile.h>
-#include <DoodleLib/Metadata/AssetsPath.h>
-#include <DoodleLib/Metadata/Comment.h>
-#include <DoodleLib/Metadata/Episodes.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
-#include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/Metadata/Metadata_cpp.h>
+
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
-#include <grpcpp/grpcpp.h>
 
+#include <grpcpp/grpcpp.h>
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/portable_binary.hpp>
 

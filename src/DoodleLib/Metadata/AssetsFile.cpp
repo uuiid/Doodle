@@ -7,6 +7,7 @@
 #include <DoodleLib/Metadata/ContextMenu.h>
 ///这个工厂类必须在所有导入的后面
 #include <DoodleLib/Metadata/MetadataFactory.h>
+#include <Metadata/TimeDuration.h>
 #include <PinYin/convert.h>
 
 #include <boost/format.hpp>
@@ -19,7 +20,7 @@ AssetsFile::AssetsFile()
       p_name(),
       p_ShowName(),
       p_path_file(),
-      p_time(),
+      p_time(std::make_shared<TimeDuration>(std::chrono::system_clock::now())),
       p_user(),
       p_department(),
       p_comment(),
@@ -31,7 +32,7 @@ AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in
       p_name(std::move(name)),
       p_ShowName(std::move(showName)),
       p_path_file(std::make_shared<AssetsPath>(in_path)),
-      p_time(),
+      p_time(std::make_shared<TimeDuration>(std::chrono::system_clock::now())),
       p_user(),
       p_department(),
       p_comment(),
@@ -77,11 +78,11 @@ bool AssetsFile::sort(const Metadata& in_rhs) const {
 void AssetsFile::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<AssetsFile>(shared_from_this()));
 }
-const std::chrono::time_point<std::chrono::system_clock>& AssetsFile::getTime() const {
-  return p_time;
+std::chrono::time_point<std::chrono::system_clock> AssetsFile::getStdTime() const {
+  return p_time->getTime();
 }
-void AssetsFile::setTime(const std::chrono::time_point<std::chrono::system_clock>& in_time) {
-  p_time = in_time;
+void AssetsFile::setStdTime(const std::chrono::time_point<std::chrono::system_clock>& in_time) {
+  p_time = std::make_shared<TimeDuration>(in_time);
   saved(true);
 }
 const std::string& AssetsFile::getUser() const {
@@ -146,5 +147,11 @@ void AssetsFile::_deleteData(const MetadataFactoryPtr& in_factory) {
 }
 void AssetsFile::_insert_into(const MetadataFactoryPtr& in_factory) {
   in_factory->insert_into(this);
+}
+const TimeDurationPtr& AssetsFile::getTime() const {
+  return p_time;
+}
+void AssetsFile::setTime(const TimeDurationPtr& in_time) {
+  p_time = in_time;
 }
 }  // namespace doodle

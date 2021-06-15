@@ -14,7 +14,7 @@ class DOODLELIB_API AssetsFile : public Metadata {
   std::string p_name;
   std::string p_ShowName;
   AssetsPathPtr p_path_file;
-  std::chrono::time_point<std::chrono::system_clock> p_time;
+  TimeDurationPtr p_time;
   std::string p_user;
   Department p_department;
   std::vector<CommentPtr> p_comment;
@@ -28,8 +28,11 @@ class DOODLELIB_API AssetsFile : public Metadata {
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string showStr() const override;
 
-  [[nodiscard]] const std::chrono::time_point<std::chrono::system_clock>& getTime() const;
-  void setTime(const std::chrono::time_point<std::chrono::system_clock>& in_time);
+  [[nodiscard]] std::chrono::time_point<std::chrono::system_clock> getStdTime() const;
+  void setStdTime(const std::chrono::time_point<std::chrono::system_clock>& in_time);
+  [[nodiscard]] const TimeDurationPtr & getTime() const;
+  void setTime(const TimeDurationPtr & in_time);
+
   [[nodiscard]] const std::string& getUser() const;
   void setUser(const std::string& in_user);
   const AssetsPathPtr& getPathFile() const;

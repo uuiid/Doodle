@@ -3,6 +3,7 @@
 // clang-format off
 #include <DoodleLib/Metadata/AssetsPath.h>
 #include <DoodleLib/Metadata/Comment.h>
+#include <DoodleLib/Metadata/TimeDuration.h>
 
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/Metadata/Assets.h>

@@ -3,15 +3,16 @@
 //
 
 #include <DoodleLib/Metadata/Comment.h>
+#include <DoodleLib/core/CoreSet.h>
 namespace doodle {
 Comment::Comment()
     : p_comment(),
-      p_user() {
+      p_user(CoreSet::getSet().getUser()) {
 }
 
 Comment::Comment(std::string in_str)
     : p_comment(std::move(in_str)),
-      p_user() {
+      p_user(CoreSet::getSet().getUser()) {
 }
 
 const std::string& Comment::getComment() const {
