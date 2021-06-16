@@ -10,6 +10,10 @@
 #include <cereal/types/chrono.hpp>
 
 namespace doodle {
+/**
+  * @brief 这个类代表着服务端的文件条目
+  * 
+  */
 class DOODLELIB_API AssetsFile : public Metadata {
   std::string p_name;
   std::string p_ShowName;
@@ -21,7 +25,21 @@ class DOODLELIB_API AssetsFile : public Metadata {
   std::uint64_t p_version;
 
  public:
+  /**
+   * @brief 默认构造
+   * 
+   */
   AssetsFile();
+
+  /**
+   * @brief 构造一个条目并添加一些必要的属性
+   * 
+   * @param in_metadata 父条目,这个是必须的
+   * @param in_path 本地路径,这个在创建时会自动生成一个服务器路径(基本上是一个uuid路径) 
+   *                基本是调用 AssetsPath::setPath(const FSys::path &in_path)
+   * @param name 名称
+   * @param showName 显示名称 
+   */
   explicit AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in_path, std::string name = {}, std::string showName = {});
   // ~AssetsFile();
 
@@ -30,8 +48,8 @@ class DOODLELIB_API AssetsFile : public Metadata {
 
   [[nodiscard]] std::chrono::time_point<std::chrono::system_clock> getStdTime() const;
   void setStdTime(const std::chrono::time_point<std::chrono::system_clock>& in_time);
-  [[nodiscard]] const TimeDurationPtr & getTime() const;
-  void setTime(const TimeDurationPtr & in_time);
+  [[nodiscard]] const TimeDurationPtr& getTime() const;
+  void setTime(const TimeDurationPtr& in_time);
 
   [[nodiscard]] const std::string& getUser() const;
   void setUser(const std::string& in_user);
