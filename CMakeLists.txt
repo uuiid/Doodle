@@ -122,7 +122,7 @@ ExternalProject_Add(doxygen_css
         TEST_COMMAND ""
         )
 ExternalProject_Add(tzdata_prj
-        URL https://data.iana.org/time-zones/releases/tzdata2021a.tar.gz
+        URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
         CONFIGURE_COMMAND ""
         BUILD_COMMAND ""
         INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/tzdata_prj-prefix/src/tzdata_prj ${CMAKE_BINARY_DIR}/bin/tzdata
