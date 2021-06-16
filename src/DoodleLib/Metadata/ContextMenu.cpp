@@ -181,9 +181,11 @@ wxMenu* ContextMenu::createMenu(const AssetsFilePtr& in_data) {
   p_menu->Bind(
       wxEVT_MENU,
       [in_data, this](wxCommandEvent& in_event) {
-        auto k_time = TimeWidget::get_time(p_parent);
-        if (k_time)
+        auto k_time = TimeWidget::get_time(p_parent, in_data->getTime());
+        if (k_time) {
           in_data->setTime(k_time);
+          in_data->updata_db(this->p_metadata_flctory_ptr_);
+        }
       },
       k_time->GetId());
   p_menu->Bind(
@@ -191,8 +193,10 @@ wxMenu* ContextMenu::createMenu(const AssetsFilePtr& in_data) {
         auto k_str = wxGetTextFromUser(ConvStr<wxString>("评论"),
                                        ConvStr<wxString>("评论: "),
                                        ConvStr<wxString>("none"), p_parent);
-        if (!k_str.empty())
-          in_data->addComment(std::make_shared<Comment>(ConvStr<wxString>(k_str)));
+        if (!k_str.empty()) {
+          in_data->addComment(std::make_shared<Comment>(ConvStr<std::string>(k_str)));
+          in_data->updata_db(this->p_metadata_flctory_ptr_);
+        }
       },
       k_com->GetId());
 

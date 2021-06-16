@@ -28,6 +28,7 @@ class DOODLELIB_API TimeDuration {
   date::year p_year;
   date::month p_month;
   date::day p_day;
+
   std::chrono::hours p_hours;
   std::chrono::minutes p_minutes;
   std::chrono::seconds p_seconds;
@@ -71,14 +72,24 @@ class DOODLELIB_API TimeDuration {
   [[nodiscard]] std::int32_t getWeek() const;
 
   [[nodiscard]] std::string showStr() const;
-  [[nodiscard]] time_point getTime() const;
+  [[nodiscard]] time_point getUTCTime() const;
+  [[nodiscard]] std::chrono::time_point<date::local_t, std::chrono::seconds> getLocalTime() const;
+
+  template <class T, class P>
+  inline TimeDuration& operator-=(const std::chrono::duration<T, P>& _or) {
+    p_time -= _or;
+    disassemble(p_time);
+    return *this;
+  }
+
+  DOODLE_DISABLE_COPY(TimeDuration);
 
  private:
   void disassemble();
   template <class T, class DT = typename T::duration>
   void disassemble(const std::chrono::time_point<T, DT>& in_utc_timePoint) {
     throw DoodleError{"函数错误"};
-    	};
+  };
 
   template <>
   void disassemble(const std::chrono::time_point<std::chrono::system_clock>& in_utc_timePoint);

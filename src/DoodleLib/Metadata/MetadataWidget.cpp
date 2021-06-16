@@ -73,10 +73,10 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
       wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
   auto k_com_col = p_assets_attribute_view_ctrl_->AppendTextColumn(
       ConvStr<wxString>("评论"), 3,
-      wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE);
+      wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE, 250);
   auto k_time_col = p_assets_attribute_view_ctrl_->AppendTextColumn(
       ConvStr<wxString>("时间"), 4,
-      wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE);
+      wxDataViewCellMode::wxDATAVIEW_CELL_EDITABLE, 170);
   p_assets_attribute_view_ctrl_->AppendTextColumn(
       ConvStr<wxString>("制作人"), 5,
       wxDataViewCellMode::wxDATAVIEW_CELL_INERT);
@@ -121,7 +121,7 @@ MetadataWidget::MetadataWidget(wxWindow* in_window, wxWindowID in_id)
         auto k_m = reinterpret_cast<Metadata*>(item.GetID());
         this->p_assets_attribute_model->setRoot(k_m->shared_from_this());
         this->p_assets_tree_model->set_current(k_m->shared_from_this());
-        this->p_assets_tree_view_ctrl_->Refresh(); 
+        this->p_assets_tree_view_ctrl_->Refresh();
       });
 
   MetadataSet::Get().sig_projectChange.connect(

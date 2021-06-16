@@ -29,9 +29,9 @@ class DOODLELIB_API TimeWidget : public wxDialog{
   inline void set_str_text();
 
  public:
-  explicit TimeWidget(wxWindow* in_parent,TimeDurationPtr& in_timePoint);
+  explicit TimeWidget(wxWindow* in_parent,TimeDurationPtr in_timePoint);
 
-  static  TimeDurationPtr get_time(wxWindow* in_parent);
+  static  TimeDurationPtr get_time(wxWindow* in_parent,const TimeDurationPtr& in_time);
 };
 
 }  // namespace doodle

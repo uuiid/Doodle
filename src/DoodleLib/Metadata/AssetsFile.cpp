@@ -24,7 +24,7 @@ AssetsFile::AssetsFile()
       p_user(),
       p_department(),
       p_comment(),
-      p_version(0) {
+      p_version(1) {
 }
 
 AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in_path, std::string name, std::string showName)
@@ -36,7 +36,7 @@ AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in
       p_user(),
       p_department(),
       p_comment(),
-      p_version(0) {
+      p_version(1) {
   p_parent = std::move(in_metadata);
   if (p_ShowName.empty())
     p_ShowName = convert::Get().toEn(p_name);
@@ -79,7 +79,7 @@ void AssetsFile::createMenu(ContextMenu* in_contextMenu) {
   in_contextMenu->createMenu(std::dynamic_pointer_cast<AssetsFile>(shared_from_this()));
 }
 std::chrono::time_point<std::chrono::system_clock> AssetsFile::getStdTime() const {
-  return p_time->getTime();
+  return p_time->getUTCTime();
 }
 void AssetsFile::setStdTime(const std::chrono::time_point<std::chrono::system_clock>& in_time) {
   p_time = std::make_shared<TimeDuration>(in_time);
@@ -153,5 +153,6 @@ const TimeDurationPtr& AssetsFile::getTime() const {
 }
 void AssetsFile::setTime(const TimeDurationPtr& in_time) {
   p_time = in_time;
+  saved(true);
 }
 }  // namespace doodle

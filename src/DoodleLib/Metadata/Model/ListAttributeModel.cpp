@@ -7,6 +7,7 @@
 #include <DoodleLib/Metadata/AssetsFile.h>
 #include <DoodleLib/Metadata/Comment.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <date/date.h>
 
 #include <boost/numeric/conversion/cast.hpp>
@@ -65,9 +66,9 @@ void ListAttributeModel::GetValue(wxVariant& variant, const wxDataViewItem& item
     } break;
 
     case 4: {
-      auto time = k_ass->getStdTime();
-      auto str   = date::format("%Y/%m/%d %H:%M", time);
-      variant    = ConvStr<wxString>(str);
+      auto& k_time = k_ass->getTime();
+      if (k_time)
+        variant = ConvStr<wxString>(k_time->showStr());
     } break;
     case 5:
       variant = ConvStr<wxString>(k_ass->getUser());

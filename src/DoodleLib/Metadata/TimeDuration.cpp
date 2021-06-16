@@ -112,16 +112,18 @@ std::int32_t TimeDuration::getWeek() const {
 }
 
 std::string TimeDuration::showStr() const {
-  return date::format("%Y/%m/%d %H:%M", getTime());
+  return date::format("%Y/%m/%d %H:%M:%S", getLocalTime());
 }
-TimeDuration::time_point TimeDuration::getTime() const {
+TimeDuration::time_point TimeDuration::getUTCTime() const {
   return p_time;
 }
 
-void TimeDuration::disassemble() {
-  auto tt = date::local_days{p_year / p_month / p_day} + p_hours ;
+void TimeDuration::disassemble()  {
   auto k_time = date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
   disassemble(k_time);
+}
+std::chrono::time_point<date::local_t, std::chrono::seconds> TimeDuration::getLocalTime() const {
+  return date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
 }
 
 template <>

@@ -156,7 +156,7 @@ TEST(DSTD, date_check) {
   my_t.set_year(2012);
   my_t.set_month(2);
   my_t.set_day(60);
-  std::cout << my_t.getTime() << std::endl;
+  std::cout << my_t.getUTCTime() << std::endl;
   std::cout << my_t.get_day() << std::endl;
 }
 
