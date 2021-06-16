@@ -4,14 +4,27 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/Exception/Exception.h>
 #include <date/date.h>
+#include <date/tz.h>
 
 #include <cereal/types/chrono.hpp>
 
 namespace doodle {
-
+/**
+ * @brief 这是一个小的时间类
+ * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
+ */
 class DOODLELIB_API TimeDuration {
+  /**
+   * @brief 这个是内部的utc时间
+   * 
+   */
   std::chrono::time_point<std::chrono::system_clock> p_time;
+  /**
+   * @brief 这里是本地日期的年组件之一
+   * 
+   */
   date::year p_year;
   date::month p_month;
   date::day p_day;
@@ -19,12 +32,16 @@ class DOODLELIB_API TimeDuration {
   std::chrono::minutes p_minutes;
   std::chrono::seconds p_seconds;
 
+  /**
+   * @brief 这个是指向时区的指针
+   *  每次创建时都会重新获取当前的时区，并和系统时间组合为本地时间 
+   */
   const date::time_zone* p_time_zone;
 
  public:
   using time_point = std::chrono::time_point<std::chrono::system_clock>;
   TimeDuration();
-  explicit TimeDuration(time_point in_point);
+  explicit TimeDuration(time_point in_utc_timePoint);
 
   [[nodiscard]] std::uint16_t get_year() const;
   void set_year(std::uint16_t in_year);
@@ -58,7 +75,17 @@ class DOODLELIB_API TimeDuration {
 
  private:
   void disassemble();
-  void disassemble(const time_point& in_timePoint);
+  template <class T, class DT = typename T::duration>
+  void disassemble(const std::chrono::time_point<T, DT>& in_utc_timePoint) {
+    throw DoodleError{"函数错误"};
+    	};
+
+  template <>
+  void disassemble(const std::chrono::time_point<std::chrono::system_clock>& in_utc_timePoint);
+
+  template <>
+  void disassemble(const std::chrono::time_point<date::local_t, std::chrono::seconds>& in_utc_timePoint);
+
   //这里是序列化的代码
   friend class cereal::access;
   template <class Archive>
@@ -78,5 +105,10 @@ void TimeDuration::serialize(Archive& ar, const std::uint32_t version) {
   disassemble(p_time);
 }
 
+// class time_point : public std::chrono::time_point<std::chrono::system_clock> {
+//  public:
+//   time_point(){
+//   };
+// }
 }  // namespace doodle
 CEREAL_CLASS_VERSION(doodle::TimeDuration, 1)

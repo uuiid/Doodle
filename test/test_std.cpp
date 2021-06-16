@@ -162,12 +162,33 @@ TEST(DSTD, date_check) {
 
 TEST(DSTD, date_utc) {
   using namespace date;
-  auto t       = std::chrono::system_clock::now();
-  auto local_t = make_zoned(current_zone(), std::chrono::system_clock::now());
-  std::cout << t << std::endl;
-  std::cout << local_t << std::endl;
-  std::cout << "local_t.get_sys_time(): " << local_t.get_sys_time()
-            << std::endl;
-  std::cout << R"(date::format("%Y/%m/%d %H:%M"): )" << date::format("%Y/%m/%d %H:%M", local_t)
+  using namespace std::chrono_literals;
+  auto my_t       = std::chrono::system_clock::now();
+  auto my_local_t = make_zoned(current_zone(), std::chrono::system_clock::now());
+  
+  auto mt_tt = local_days{2021_y / 06 / 16} + 10h + 34min + 37s;
+
+  auto k_dp = date::floor<date::days>(my_local_t.get_local_time());
+  date::year_month_day k_day{k_dp};
+  date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(my_local_t.get_local_time() - k_dp)};
+
+  std::cout << my_t << "\n"
+            << my_local_t << "\n"
+            << "my_local_t.get_sys_time(): " << my_local_t.get_sys_time() << "\n"
+            << "my_local_t.get_local_time(): " << my_local_t.get_local_time() << "\n"
+            << R"(date::format("%Y/%m/%d %H:%M"): )" << date::format("%Y/%m/%d %H:%M", my_local_t) << "\n"
+            << "my_t to utc: " << to_utc_time(my_t) << "\n"
+            << "my_local_t to utc " << to_utc_time(my_local_t.get_sys_time()) << "\n"
+            << "make_zoned(current_zone(), mt_tt).get_sys_time(): " << make_zoned(current_zone(), mt_tt).get_sys_time() << "\n"
+            << "make_zoned(current_zone(), mt_tt).get_local_time(): " << make_zoned(current_zone(), mt_tt).get_local_time() << "\n"
+
+            << "\n"
+            << "year   : " << k_day.year() << "\n"
+            << "month  : " << k_day.month() << "\n"
+            << "day    : " << k_day.day() << "\n"
+            << "hours  : " << k_hh_mm_ss.hours() << "\n"
+            << "minutes: " << k_hh_mm_ss.minutes() << "\n"
+            << "seconds: " << k_hh_mm_ss.seconds() << "\n"
+
             << std::endl;
 }

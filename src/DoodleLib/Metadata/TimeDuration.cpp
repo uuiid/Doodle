@@ -18,7 +18,7 @@ TimeDuration::TimeDuration()
       p_seconds(),
       p_time_zone(date::current_zone()) {
 }
-TimeDuration::TimeDuration(time_point in_point)
+TimeDuration::TimeDuration(time_point in_utc_timePoint)
     : p_time(),
       p_year(),
       p_month(),
@@ -27,7 +27,7 @@ TimeDuration::TimeDuration(time_point in_point)
       p_minutes(),
       p_seconds(),
       p_time_zone(date::current_zone()) {
-  disassemble(in_point);
+  disassemble(in_utc_timePoint);
 }
 std::uint16_t TimeDuration::get_year() const {
   return (int)p_year;
@@ -119,13 +119,38 @@ TimeDuration::time_point TimeDuration::getTime() const {
 }
 
 void TimeDuration::disassemble() {
-  disassemble((date::sys_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds));
+  auto tt = date::local_days{p_year / p_month / p_day} + p_hours ;
+  auto k_time = date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
+  disassemble(k_time);
 }
-void TimeDuration::disassemble(const TimeDuration::time_point& in_timePoint) {
-  p_time    = in_timePoint;
-  auto k_dp = date::floor<date::days>(in_timePoint);
+
+template <>
+void TimeDuration::disassemble(const std::chrono::time_point<std::chrono::system_clock>& in_utc_timePoint) {
+  // date::locate_zone("");
+  // date::to_utc_time(p_time);
+  p_time       = in_utc_timePoint;
+  auto k_local = date::make_zoned(p_time_zone, in_utc_timePoint).get_local_time();
+
+  auto k_dp = date::floor<date::days>(k_local);
   date::year_month_day k_day{k_dp};
-  date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(in_timePoint - k_dp)};
+  date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(k_local - k_dp)};
+  p_year    = k_day.year();
+  p_month   = k_day.month();
+  p_day     = k_day.day();
+  p_hours   = k_hh_mm_ss.hours();
+  p_minutes = k_hh_mm_ss.minutes();
+  p_seconds = k_hh_mm_ss.seconds();
+}
+
+template <>
+void TimeDuration::disassemble(const std::chrono::time_point<date::local_t, std::chrono::seconds>& in_timePoint) {
+  auto k_      = date::make_zoned(p_time_zone, in_timePoint);
+  auto k_local = k_.get_local_time();
+  p_time       = k_.get_sys_time();
+
+  auto k_dp = date::floor<date::days>(k_local);
+  date::year_month_day k_day{k_dp};
+  date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(k_local - k_dp)};
   p_year    = k_day.year();
   p_month   = k_day.month();
   p_day     = k_day.day();
