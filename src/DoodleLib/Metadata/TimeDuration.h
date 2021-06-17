@@ -15,7 +15,7 @@ namespace doodle {
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
-class DOODLELIB_API TimeDuration {
+class DOODLELIB_API TimeDuration :public details::no_copy{
   /**
    * @brief 这个是内部的utc时间
    * 
@@ -82,7 +82,6 @@ class DOODLELIB_API TimeDuration {
     return *this;
   }
 
-  DOODLE_DISABLE_COPY(TimeDuration);
 
  private:
   void disassemble();

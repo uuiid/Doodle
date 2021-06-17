@@ -15,9 +15,6 @@ enum class funName {
   mklink,
 };
 
-DOODLE_STR_S_DECLARE(fun)
-DOODLE_STR_S_DECLARE(server)
-
 class wxWindowDeleter final {
  public:
   void operator()(wxWindow* win) {

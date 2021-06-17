@@ -12,7 +12,7 @@
 #include <MetadataServer.grpc.pb.h.>
 
 namespace doodle {
-class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service {
+class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service ,public details::no_copy{
   CoreSet& p_set;
   std::unique_ptr<grpc::Server> p_Server;
 
@@ -39,7 +39,6 @@ class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service {
   grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
   grpc::Status UpdataMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
 
-  DOODLE_DISABLE_COPY(RpcMetadaataServer)
 };
 
 }  // namespace doodle

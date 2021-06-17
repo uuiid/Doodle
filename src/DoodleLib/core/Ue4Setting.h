@@ -6,7 +6,7 @@
 #include <cereal/types/string.hpp>
 
 namespace doodle {
-class DOODLELIB_API Ue4Setting {
+class DOODLELIB_API Ue4Setting :public details::no_copy{
   FSys::path ue4_path;
   std::string ue4_version;
   std::int32_t shot_start;
@@ -15,7 +15,6 @@ class DOODLELIB_API Ue4Setting {
   Ue4Setting();
 
  public:
-  DOODLE_DISABLE_COPY(Ue4Setting);
 
   static Ue4Setting& Get();
 

@@ -5,6 +5,8 @@
 #pragma once
 #include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/DoodleLib_pch.h>
+#include <DoodleLib/DoodleMacro.h>
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/FileSys/FileSystem.h>
 #include <DoodleLib/FileWarp/ImageSequence.h>
@@ -50,13 +52,18 @@
 #include <DoodleLib/core/ToolsSetting.h>
 #include <DoodleLib/core/Ue4Setting.h>
 #include <DoodleLib/core/Util.h>
+#include <DoodleLib/core/static_value.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
+#include <DoodleLib/libWarp/CerealWarp.h>
 #include <DoodleLib/libWarp/WinReg.hpp>
 #include <DoodleLib/libWarp/cache.hpp>
 #include <DoodleLib/libWarp/cache_policy.hpp>
+#include <DoodleLib/libWarp/cmrcWarp.h>
 #include <DoodleLib/libWarp/fifo_cache_policy.hpp>
 #include <DoodleLib/libWarp/lfu_cache_policy.hpp>
 #include <DoodleLib/libWarp/lru_cache_policy.hpp>
+#include <DoodleLib/libWarp/sqlppWarp.h>
+#include <DoodleLib/libWarp/wxWidgetWarp.h>
 #include <DoodleLib/mainWidght/MklinkWidget.h>
 #include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>

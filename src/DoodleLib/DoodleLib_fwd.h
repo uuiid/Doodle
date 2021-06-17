@@ -4,6 +4,14 @@
 #include <DoodleLib/libWarp/sqlppWarp.h>
 //开始我们的名称空间
 namespace doodle {
+namespace details{
+class no_copy{
+ public:
+  no_copy() = default;
+  no_copy(const no_copy &) = delete;
+  no_copy &operator=(const no_copy &) = delete;
+};
+}
 
 namespace FSys {
 using namespace boost::filesystem;

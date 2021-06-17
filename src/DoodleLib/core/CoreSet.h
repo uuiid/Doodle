@@ -33,11 +33,9 @@ enum class Department {
  *全局静态设置类
  */
 
-class DOODLELIB_API CoreSet {
+class DOODLELIB_API CoreSet : public details::no_copy{
  public:
   static CoreSet &getSet();
-
-  DOODLE_DISABLE_COPY(CoreSet)
   /**
    * @brief 初始化gui设置
    * 

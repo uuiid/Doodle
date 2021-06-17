@@ -14,6 +14,7 @@
 #include <DoodleLib/mainWidght/MklinkWidget.h>
 #include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>
+#include <core/static_value.h>
 #include <wx/cmdline.h>
 #include <wx/windowptr.h>
 #include <wx/wxprec.h>
@@ -24,9 +25,6 @@
 wxIMPLEMENT_APP_NO_MAIN(doodle::Doodle);
 
 namespace doodle {
-
-DOODLE_STR_S(fun)
-DOODLE_STR_S(server)
 
 Doodle::Doodle()
     : wxApp(),
@@ -53,16 +51,16 @@ int Doodle::OnExit() {
 void Doodle::OnInitCmdLine(wxCmdLineParser& parser) {
   // parser.SetSwitchChars(ConvStr<wxString>("-"));
   wxApp::OnInitCmdLine(parser);
-  parser.AddSwitch(staticValue::funObj());
+  parser.AddSwitch(staticValue::fun_obj());
   for (const auto& name : magic_enum::enum_names<funName>()) {
     parser.AddOption(ConvStr<wxString>(std::string{name}));
   }
-  parser.AddSwitch(staticValue::serverObj());
+  parser.AddSwitch(staticValue::server_obj());
 }
 
 bool Doodle::OnCmdLineParsed(wxCmdLineParser& parser) {
   wxString k_string{};
-  if (parser.Found(staticValue::funObj())) {
+  if (parser.Found(staticValue::fun_obj())) {
     if (parser.Found(
             ConvStr<wxString>(std::string(magic_enum::enum_name(funName::mklink))),
             &k_string)) {
@@ -72,7 +70,7 @@ bool Doodle::OnCmdLineParsed(wxCmdLineParser& parser) {
     }
   }
 
-  if (parser.Found(staticValue::serverObj())) {
+  if (parser.Found(staticValue::server_obj())) {
     p_run_fun = [this]() { serverInit(); };
     return wxApp::OnCmdLineParsed(parser);
   }

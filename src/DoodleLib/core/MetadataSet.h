@@ -7,7 +7,7 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
-class DOODLELIB_API MetadataSet {
+class DOODLELIB_API MetadataSet :public details::no_copy{
   friend CoreSet;
   MetadataSet();
   std::vector<ProjectPtr> p_project_list;
@@ -28,8 +28,6 @@ class DOODLELIB_API MetadataSet {
   void setProject_(const Project *Project_);
   void deleteProject(const Project *Project_);
   [[nodiscard]] int getProjectIndex() const;
-
-  DOODLE_DISABLE_COPY(MetadataSet)
 
   boost::signals2::signal<void(const Project *, int)> sig_Projectdelete;
   boost::signals2::signal<void(Project *, int)> sig_projectChange;

@@ -8,3 +8,4 @@
 namespace doodle::wxUtil {
 wxSizer* labelAndWidget(wxWindow* in_parent, const std::string& in_label, wxWindow* in_ctrl);
 }  // namespace doodle
+

@@ -15,7 +15,7 @@ namespace doodle {
  * @warning 这里这个基类是不进行cereal注册的要不然会序列化出错
  *
  */
-class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
+class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata>, public details::no_copy {
   friend MetadataFactory;
   friend RpcMetadataClient;
   friend RpcMetadaataServer;
@@ -100,7 +100,6 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata> {
    */
   explicit Metadata(std::weak_ptr<Metadata> in_metadata);
   virtual ~Metadata();
-  DOODLE_DISABLE_COPY(Metadata);
 
   [[nodiscard]] virtual bool hasParent() const;  ///< 设置父指针
 

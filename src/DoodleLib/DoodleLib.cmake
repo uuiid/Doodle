@@ -3,6 +3,8 @@ set(
 	DoodleApp.h
 	DoodleLib.h
 	DoodleLib_fwd.h
+	DoodleLib_pch.h
+	DoodleMacro.h
 	Exception/Exception.h
 	FileSys/FileSystem.h
 	FileWarp/ImageSequence.h
@@ -48,13 +50,18 @@ set(
 	core/ToolsSetting.h
 	core/Ue4Setting.h
 	core/Util.h
+	core/static_value.h
 	libWarp/BoostUuidWarp.h
+	libWarp/CerealWarp.h
 	libWarp/WinReg.hpp
 	libWarp/cache.hpp
 	libWarp/cache_policy.hpp
+	libWarp/cmrcWarp.h
 	libWarp/fifo_cache_policy.hpp
 	libWarp/lfu_cache_policy.hpp
 	libWarp/lru_cache_policy.hpp
+	libWarp/sqlppWarp.h
+	libWarp/wxWidgetWarp.h
 	mainWidght/MklinkWidget.h
 	mainWidght/mainWindows.h
 	mainWidght/systemTray.h
@@ -111,6 +118,7 @@ set(
 	core/Name.cpp
 	core/Ue4Setting.cpp
 	core/Util.cpp
+	core/static_value.cpp
 	mainWidght/MklinkWidget.cpp
 	mainWidght/mainWindows.cpp
 	mainWidght/systemTray.cpp

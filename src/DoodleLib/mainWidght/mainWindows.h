@@ -11,7 +11,7 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 
 namespace doodle {
-class mainWindows : public wxFrame {
+class mainWindows : public wxFrame ,public details::no_copy{
   wxWindowIDRef p_exmaya_id;
   wxWindowIDRef p_create_image_id;
   wxWindowIDRef p_create_dir_image_id;
@@ -21,8 +21,6 @@ class mainWindows : public wxFrame {
 
  public:
   explicit mainWindows();
-
-  DOODLE_DISABLE_COPY(mainWindows);
 
  private:
   std::vector<FSys::path> convertPath(const wxDropFilesEvent& event);

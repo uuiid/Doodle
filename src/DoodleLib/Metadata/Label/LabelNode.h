@@ -12,6 +12,5 @@ class LabelNode {
   LabelNode();
 
   void test();
-//  DOODLE_DISABLE_COPY(LabelNode);
 };
 }  // namespace doodle

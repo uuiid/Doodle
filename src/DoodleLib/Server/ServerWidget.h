@@ -4,7 +4,7 @@
 #include <wx/wx.h>
 
 namespace doodle {
-class DOODLELIB_API ServerWidget : public wxFrame {
+class DOODLELIB_API ServerWidget : public wxFrame,public details::no_copy {
   wxSpinCtrl* p_sql_port;
   wxTextCtrl* p_sql_host;
   wxTextCtrl* p_sql_user;
@@ -24,7 +24,5 @@ class DOODLELIB_API ServerWidget : public wxFrame {
 
  public:
   explicit ServerWidget();
-
-  DOODLE_DISABLE_COPY(ServerWidget)
 };
 }  // namespace doodle

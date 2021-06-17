@@ -10,7 +10,7 @@
 
 namespace doodle {
 
-class DOODLELIB_API RpcFileSystemServer : public FileSystemServer::Service {
+class DOODLELIB_API RpcFileSystemServer : public FileSystemServer::Service,public details::no_copy {
   CoreSet& p_set;
 
  public:
@@ -44,7 +44,6 @@ class DOODLELIB_API RpcFileSystemServer : public FileSystemServer::Service {
                               grpc::ServerReader<FileStream>* reader,
                               FileInfo* response) override;
 
-  DOODLE_DISABLE_COPY(RpcFileSystemServer)
 };
 
 }  // namespace doodle

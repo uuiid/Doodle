@@ -4,7 +4,7 @@
 #include <DoodleLib/threadPool/LongTerm.h>
 #include <boost/signals2.hpp>
 namespace doodle {
-class DOODLELIB_API MayaFile : public LongTerm {
+class DOODLELIB_API MayaFile : public LongTerm , public details::no_copy{
  private:
   FSys::path p_path;
 
@@ -17,7 +17,6 @@ class DOODLELIB_API MayaFile : public LongTerm {
   bool batchExportFbxFile(const std::vector<FSys::path>& file_path) const;
 
   static [[nodiscard]] bool is_maya_file(const FSys::path& in_path);
-  DOODLE_DISABLE_COPY(MayaFile)
 
 };
 

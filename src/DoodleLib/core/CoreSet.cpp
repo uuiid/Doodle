@@ -5,6 +5,8 @@
 #include <DoodleLib/core/CoreSql.h>
 #include <DoodleLib/rpc/RpcFileSystemClient.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
+#include <DoodleLib/core/static_value.h>
+
 #include <ShlObj.h>
 #include <date/tz.h>
 #include <google/protobuf/service.h>
@@ -76,7 +78,7 @@ void CoreSet::setMayaPath(const FSys::path &in_MayaPath) noexcept {
 
 void CoreSet::writeDoodleLocalSet() {
   p_ue4_setting.testValue();
-  if (p_ue4_setting.hasPath() && !FSys::exists(p_ue4_setting.Path() / DOODLE_UE_PATH)) {
+  if (p_ue4_setting.hasPath() && !FSys::exists(p_ue4_setting.Path() / staticValue::ue_path_obj())) {
     p_ue4_setting.setPath({});
     throw FileError{p_ue4_setting.Path(), " 在路径中没有找到ue,不保存"};
   }
