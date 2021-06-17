@@ -1,25 +1,21 @@
 //
 // Created by TD on 2021/4/29.
 //
-
+#include "MetadataWidget.h"
 #include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/FileSys/FileSystem.h>
 #include <DoodleLib/FileWarp/ImageSequence.h>
-#include <DoodleLib/FileWarp/MayaFile.h>
 #include <DoodleLib/FileWarp/Ue4Project.h>
-#include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
-#include <DoodleLib/Metadata/MetadataWidget.h>
 #include <DoodleLib/Metadata/Model/AssetsTree.h>
 #include <DoodleLib/Metadata/Model/ListAttributeModel.h>
 #include <DoodleLib/Metadata/Model/ProjectManage.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/core/CoreSet.h>
-#include <Doodlelib/Metadata/Model/ProjectManage.h>
+
 
 namespace doodle {
 

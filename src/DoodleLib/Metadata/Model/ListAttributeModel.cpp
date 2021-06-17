@@ -14,7 +14,8 @@
 
 namespace doodle {
 ListAttributeModel::ListAttributeModel()
-    : p_metadata(),
+    : wxDataViewModel(),
+      p_metadata(),
       p_metadata_flctory_ptr_(std::make_shared<MetadataFactory>()) {
 }
 
