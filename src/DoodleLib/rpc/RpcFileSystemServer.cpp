@@ -6,7 +6,7 @@
 
 #include <DoodleLib/core/CoreSet.h>
 #include <google/protobuf/util/time_util.h>
-
+#include <Logger/Logger.h>
 #include <boost/format.hpp>
 
 namespace doodle {
@@ -17,6 +17,8 @@ RpcFileSystemServer::RpcFileSystemServer()
 
 grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
   FSys::path k_path = p_set.getDataRoot() / request->path();
+  DOODLE_LOG_DEBUG("get info path: " << k_path);
+
   auto k_ex         = FSys::exists(k_path);
   if (!k_ex)
     return grpc::Status::OK;
@@ -39,7 +41,7 @@ grpc::Status RpcFileSystemServer::IsExist(grpc::ServerContext* context, const Fi
   FSys::path k_path = p_set.getDataRoot() / request->path();
   auto k_ex         = FSys::exists(k_path);
   response->set_exist(k_ex);
-
+  DOODLE_LOG_DEBUG("get exist path: " << k_path);
   return grpc::Status::OK;
 }
 
@@ -52,7 +54,7 @@ grpc::Status RpcFileSystemServer::IsFolder(grpc::ServerContext* context, const F
 
   auto k_dir = FSys::is_directory(k_path);
   response->set_isfolder(k_dir);
-
+  DOODLE_LOG_DEBUG("get is dir path: " << k_path);
   return grpc::Status::OK;
 }
 
@@ -69,6 +71,8 @@ grpc::Status RpcFileSystemServer::GetSize(grpc::ServerContext* context, const Fi
     return grpc::Status::OK;
 
   response->set_size(FSys::file_size(k_path));
+
+  DOODLE_LOG_DEBUG("get size path: " << k_path);
 
   return grpc::Status::OK;
 }
@@ -90,6 +94,30 @@ grpc::Status RpcFileSystemServer::GetTimestamp(grpc::ServerContext* context, con
   auto k_google_time = google::protobuf::util::TimeUtil::TimeTToTimestamp(k_time);
   response->mutable_update_time()->CopyFrom(k_google_time);
 
+  DOODLE_LOG_DEBUG("get time path: " << k_path);
+
+  return grpc::Status::OK;
+}
+
+grpc::Status RpcFileSystemServer::GetList(grpc::ServerContext* context, const FileInfo* request, grpc::ServerWriter<FileInfo>* writer) {
+  auto k_root       = p_set.getDataRoot();
+  FSys::path k_path = p_set.getDataRoot() / request->path();
+
+  DOODLE_LOG_DEBUG("list info path: " << k_path);
+
+  auto k_ex         = FSys::exists(k_path);
+  auto k_dir        = FSys::is_directory(k_path);
+  if (!k_ex || !k_dir)
+    return grpc::Status::CANCELLED;
+
+  FileInfo k_info{};
+  for (const auto& k_it : FSys::directory_iterator{k_path}) {
+    k_info.set_path(std::move(k_it.path().lexically_relative(k_root).generic_string()));
+    k_info.set_exist(true);
+    k_info.set_isfolder(FSys::is_directory(k_it));
+    if(!writer->Write(k_info))
+      return grpc::Status::CANCELLED;
+  }
   return grpc::Status::OK;
 }
 
@@ -99,6 +127,9 @@ grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const F
   auto k_dir        = FSys::is_directory(k_path);
   if (!k_ex || k_dir)
     return grpc::Status::CANCELLED;
+
+  DOODLE_LOG_DEBUG("down path: " << k_path);
+
   FSys::ifstream k_file{k_path, std::ios::in | std::ios::binary};
 
   if (!k_file.is_open() || !k_file.good()) {
@@ -132,6 +163,9 @@ grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::Ser
   reader->Read(&k_file_stream);
   FSys::path k_path = p_set.getDataRoot() / k_file_stream.info().path();
   auto k_ex         = FSys::exists(k_path.parent_path());
+
+  DOODLE_LOG_DEBUG("upload path: " << k_path);
+
   if (!k_ex)
     FSys::create_directories(k_path.parent_path());
 
@@ -148,4 +182,5 @@ grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::Ser
 
   return grpc::Status::OK;
 }
+
 }  // namespace doodle

@@ -52,6 +52,7 @@ void CoreSet::guiInit() {
                           grpc::InsecureChannelCredentials()));
 
   p_matadata_setting_.init();
+//  p_rpc_file_system_client->IsExist("test");
 }
 
 void CoreSet::findMaya() {

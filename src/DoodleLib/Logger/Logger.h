@@ -32,7 +32,7 @@
       << "  " << __FILE__ << "  " << __FUNCTION__ << "  " << __LINE__ << " \n" \
       << message << "\n";
 
-namespace Logger {
+namespace doodle::Logger {
 
 // #define DOODLE_LOG_DEBUG DOODLE_LOG_DEBUG_ << __FILE__ << __FUNCTION__ << __LINE__ << "\n"
 // #define DOODLE_LOG_INFO DOODLE_LOG_INFO_ << __FILE__ << __FUNCTION__ << __LINE__ << "\n"

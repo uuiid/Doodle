@@ -28,6 +28,7 @@ service FileSystemServer{
   rpc GetSize(FileInfo) returns (FileInfo) {}
   rpc IsFolder(FileInfo) returns (FileInfo) {}
   rpc GetTimestamp(FileInfo) returns (FileInfo) {}
+  rpc GetList(FileInfo) returns (stream FileInfo) {}
 
   rpc Download(FileInfo) returns (stream FileStream) {}
   rpc Upload(stream FileStream) returns (FileInfo) {}

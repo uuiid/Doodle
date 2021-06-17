@@ -20,12 +20,12 @@ class Environment : public ::testing::Environment {
 
 void Environment::SetUp() {
   ///初始化log
-  Logger::doodle_initLog();
+  doodle::Logger::doodle_initLog();
 }
 
 void Environment::TearDown() {
-  boost::log::core::get()->remove_all_sinks();
   doodle::CoreSet::getSet().clear();
+  boost::log::core::get()->remove_all_sinks();
 }
 
 int main(int argc, char *argv[]) {

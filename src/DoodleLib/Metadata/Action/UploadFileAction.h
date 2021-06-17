@@ -5,9 +5,9 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-
+#include <DoodleLib/Metadata/Action/Action.h>
 namespace doodle {
-class UploadFileAction {
+class UploadFileAction : public Action {
 };
 
 }  // namespace doodle

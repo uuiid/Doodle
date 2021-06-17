@@ -1,17 +1,18 @@
 ﻿#pragma once
 
-#include <boost/filesystem.hpp>
 #include <DoodleLib/libWarp/sqlppWarp.h>
+
+#include <boost/filesystem.hpp>
 //开始我们的名称空间
 namespace doodle {
-namespace details{
-class no_copy{
+namespace details {
+class no_copy {
  public:
-  no_copy() = default;
+  no_copy()                = default;
   no_copy(const no_copy &) = delete;
   no_copy &operator=(const no_copy &) = delete;
 };
-}
+}  // namespace details
 
 namespace FSys {
 using namespace boost::filesystem;
@@ -51,6 +52,8 @@ class DragFilesFactory;
 class Action;
 class UploadDirAction;
 class UploadFileAction;
+class DoodleLib;
+class ThreadPool;
 
 using MetadataPtr            = std::shared_ptr<Metadata>;
 using MetadataConstPtr       = std::shared_ptr<const Metadata>;
@@ -75,9 +78,10 @@ using DragFilesFactoryPtr    = std::shared_ptr<DragFilesFactory>;
 using ActionPtr              = std::shared_ptr<Action>;
 using UploadDirActionPtr     = std::shared_ptr<UploadDirAction>;
 using UploadFileActionPtr    = std::shared_ptr<UploadFileAction>;
-
+using DoodleLibPtr           = std::unique_ptr<DoodleLib>;
+using ThreadPoolPtr          = std::shared_ptr<ThreadPool>;
 class Doodle;
-
+DoodleLibPtr make_doodle_lib();
 template <typename SSC, typename SSN>
 SSC ConvStr(const SSN &str) {
   return SSC{str};

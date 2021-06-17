@@ -73,5 +73,6 @@ class DOODLELIB_API Ue4ProjectFile {
   void createShotFolder(const std::vector<ShotPtr>& inShotList);
 
   static bool can_import_ue4(const FSys::path& in_path);
+  static bool is_ue4_file(const FSys::path& in_path);
 };
 }  // namespace doodle

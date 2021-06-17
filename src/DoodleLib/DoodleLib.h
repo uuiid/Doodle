@@ -47,6 +47,7 @@
 #include <DoodleLib/core/ContainerDevice.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
+#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/MetadataSet.h>
 #include <DoodleLib/core/Name.h>
 #include <DoodleLib/core/ToolsSetting.h>

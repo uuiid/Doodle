@@ -24,7 +24,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <boost/filesystem.hpp>
-namespace Logger {
+namespace doodle::Logger {
 using file_sink = boost::log::sinks::asynchronous_sink<boost::log::sinks::text_file_backend>;
 using sink_t    = boost::log::sinks::synchronous_sink<boost::log::sinks::debug_output_backend>;
 // New macro that includes severity, filename and line number

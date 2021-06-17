@@ -43,6 +43,7 @@ void CoreTest::SetUp() {
 }
 
 void CoreTest::TearDown() {
+  set.clear();
 }
 
 TEST_F(CoreTest, archive) {

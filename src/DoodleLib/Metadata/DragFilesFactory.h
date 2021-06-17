@@ -7,8 +7,14 @@
 
 namespace doodle {
 class DOODLELIB_API DragFilesFactory {
+  std::vector<FSys::path> p_paths;
+  bool p_has_action;
+
+  void runChick();
  public:
-  DragFilesFactory();
+  explicit DragFilesFactory(std::vector<FSys::path> in_paths);
+
+  bool has_action();
 
   ActionPtr get_action();
   ActionPtr operator()();

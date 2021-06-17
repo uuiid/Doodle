@@ -3,3 +3,8 @@
 //
 
 #include "UploadDirAction.h"
+namespace doodle{
+UploadDirAction::UploadDirAction() {}
+void UploadDirAction::run() {
+}
+}

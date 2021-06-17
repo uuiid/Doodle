@@ -17,7 +17,7 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
   auto k_local = boost::locale::generator().generate("");
   boost::filesystem::path::imbue(k_local);
   //初始化log
-  Logger::doodle_initLog();
+  doodle::Logger::doodle_initLog();
 
   ///@warning 初始化设置,在这里我们只初始化最基本的设置,即构造函数中的设置
   ///在这里是没有复杂设置的, 比如一些客户端设置

@@ -158,5 +158,9 @@ bool Ue4Project::can_import_ue4(const FSys::path& in_path) {
   auto k_e = in_path.extension();
   return k_e == ".fbx" || k_e == ".abc";
 }
+bool Ue4Project::is_ue4_file(const FSys::path& in_path) {
+  auto k_e = in_path.extension();
+  return k_e == ".uproject";
+}
 
 }  // namespace doodle

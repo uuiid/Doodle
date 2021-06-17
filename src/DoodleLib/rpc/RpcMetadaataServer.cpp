@@ -79,6 +79,8 @@ grpc::Status RpcMetadaataServer::GetProject(grpc::ServerContext *context, const 
     //    auto time   = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
     *k_item = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
 
+    DOODLE_LOG_DEBUG(row.id << row.uuidPath)
+
     auto k_path = getPath(row.uuidPath.value());
     auto k_str  = get_cache_and_file(k_path);
     if (k_str.empty())
@@ -112,6 +114,8 @@ grpc::Status RpcMetadaataServer::GetChild(grpc::ServerContext *context, const Da
       continue;
     k_db.mutable_metadata_cereal()->set_value(std::move(k_str));
 
+    DOODLE_LOG_DEBUG(row.id << row.uuidPath)
+
     k_date->Add(std::move(k_db));
   }
   return grpc::Status::OK;
@@ -137,6 +141,7 @@ grpc::Status RpcMetadaataServer::GetMetadata(grpc::ServerContext *context, const
     if (k_str.empty())
       return grpc::Status::CANCELLED;
 
+    DOODLE_LOG_DEBUG(row.id << row.uuidPath)
     response->mutable_metadata_cereal()->set_value(std::move(k_str));
   }
 
@@ -153,10 +158,13 @@ grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, c
   }
   auto k_id = (*k_conn)(k_in);
 
-  if (k_id < 0)
+  if (k_id < 0) {
+    DOODLE_LOG_DEBUG("插入数据库失败")
     return {grpc::StatusCode::RESOURCE_EXHAUSTED, "插入数据库失败"};
+  }
 
   response->set_id(k_id);
+  DOODLE_LOG_DEBUG(k_id)
 
   auto path = getPath(request->uuidpath());
   put_cache_and_file(path, request->metadata_cereal().value());
@@ -171,7 +179,7 @@ grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, co
     return {grpc::StatusCode::NOT_FOUND, "未找到缓存"};
   auto id = (*k_conn)(sqlpp::remove_from(k_tab).where(k_tab.id == request->id()));
   response->set_id(id);
-
+  DOODLE_LOG_DEBUG("delete id" << id)
   return grpc::Status::OK;
 }
 
@@ -184,6 +192,9 @@ grpc::Status RpcMetadaataServer::UpdataMetadata(grpc::ServerContext *context, co
 
   auto path = getPath(request->uuidpath());
   put_cache_and_file(path, request->metadata_cereal().value());
+
+  DOODLE_LOG_DEBUG("id"<< request->id() <<"update" << path)
+
   return grpc::Status::OK;
 }
 

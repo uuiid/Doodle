@@ -3,3 +3,6 @@
 //
 
 #include "Action.h"
+namespace doodle{
+Action::Action() {}
+}

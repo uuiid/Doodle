@@ -16,31 +16,35 @@ class DOODLELIB_API RpcFileSystemServer : public FileSystemServer::Service,publi
  public:
   explicit RpcFileSystemServer();
 
-  virtual grpc::Status GetInfo(grpc::ServerContext* context,
+  grpc::Status GetInfo(grpc::ServerContext* context,
                                const FileInfo* request,
                                FileInfo* response) override;
 
-  virtual grpc::Status IsExist(grpc::ServerContext* context,
+  grpc::Status IsExist(grpc::ServerContext* context,
                                const FileInfo* request,
                                FileInfo* response) override;
 
-  virtual grpc::Status IsFolder(grpc::ServerContext* context,
+  grpc::Status IsFolder(grpc::ServerContext* context,
                                 const FileInfo* request,
                                 FileInfo* response);
 
-  virtual grpc::Status GetSize(grpc::ServerContext* context,
+  grpc::Status GetSize(grpc::ServerContext* context,
                                const FileInfo* request,
                                FileInfo* response) override;
 
-  virtual grpc::Status GetTimestamp(grpc::ServerContext* context,
+  grpc::Status GetTimestamp(grpc::ServerContext* context,
                                     const FileInfo* request,
                                     FileInfo* response) override;
 
-  virtual grpc::Status Download(grpc::ServerContext* context,
+  grpc::Status GetList(grpc::ServerContext* context,
+                       const FileInfo* request,
+                       grpc::ServerWriter< FileInfo > * writer) override;
+
+  grpc::Status Download(grpc::ServerContext* context,
                                 const FileInfo* request,
                                 grpc::ServerWriter<FileStream>* writer) override;
 
-  virtual grpc::Status Upload(grpc::ServerContext* context,
+  grpc::Status Upload(grpc::ServerContext* context,
                               grpc::ServerReader<FileStream>* reader,
                               FileInfo* response) override;
 

@@ -140,6 +140,5 @@ target_compile_definitions(DoodleLib
 target_include_directories(DoodleLib
         PUBLIC
         ${CMAKE_CURRENT_BINARY_DIR}
-        PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         )

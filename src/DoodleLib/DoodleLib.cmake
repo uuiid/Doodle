@@ -45,6 +45,7 @@ set(
 	core/ContainerDevice.h
 	core/CoreSet.h
 	core/CoreSql.h
+	core/DoodleLib.h
 	core/MetadataSet.h
 	core/Name.h
 	core/ToolsSetting.h
@@ -114,6 +115,7 @@ set(
 	SettingWidght/settingWidget.cpp
 	core/CoreSet.cpp
 	core/CoreSql.cpp
+	core/DoodleLib.cpp
 	core/MetadataSet.cpp
 	core/Name.cpp
 	core/Ue4Setting.cpp
