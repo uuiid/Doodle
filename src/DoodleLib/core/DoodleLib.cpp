@@ -16,7 +16,7 @@ ThreadPoolPtr DoodleLib::get_thread_pool() {
   return doodle::ThreadPoolPtr();
 }
 DoodleLibPtr make_doodle_lib() {
-  auto ptr = std::make_unique<DoodleLib>();
+  auto ptr = std::unique_ptr<DoodleLib>(new DoodleLib{});
   DoodleLib::p_install = ptr.get();
   return ptr;
 }

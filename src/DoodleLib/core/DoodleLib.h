@@ -12,7 +12,6 @@ DoodleLibPtr make_doodle_lib();
 
 class DOODLELIB_API DoodleLib : public details::no_copy{
   friend DoodleLibPtr make_doodle_lib();
-  friend DoodleLibPtr std::make_unique<DoodleLib>();
   DoodleLib();
   static DoodleLib * p_install;
  public:
