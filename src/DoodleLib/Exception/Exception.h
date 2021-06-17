@@ -3,7 +3,7 @@
 #include "DoodleLib_fwd.h"
 #include <stdexcept>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 // 空指针错误
 class DOODLELIB_API DoodleError : public std::runtime_error {
  public:
@@ -24,4 +24,4 @@ class DOODLELIB_API FileError : public DoodleError {
 };
 //doodl err
 
-DOODLE_NAMESPACE_E
+}

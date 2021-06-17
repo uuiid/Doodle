@@ -16,7 +16,7 @@
 #include <boost/format.hpp>
 #include <regex>
 #include <string>
-DOODLE_NAMESPACE_S
+namespace doodle {
 
 void toolkit::openPath(const FSys::path &path) {
 }
@@ -122,4 +122,4 @@ bool toolkit::deleteUeCache() {
 //   }
 // }
 
-DOODLE_NAMESPACE_E
+}

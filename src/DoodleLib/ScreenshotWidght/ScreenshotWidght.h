@@ -2,7 +2,7 @@
 
 #include <DoodleLib/DoodleLib_fwd.h>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 
 class ScreenshotWidght {
  public:
@@ -18,4 +18,4 @@ class ScreenshotWidght {
  protected:
 };
 
-DOODLE_NAMESPACE_E
+}

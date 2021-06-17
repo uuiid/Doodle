@@ -14,7 +14,7 @@
 
 #include <wx/taskbar.h>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 
 class systemTray : public wxTaskBarIcon {
  public:
@@ -40,4 +40,4 @@ class systemTray : public wxTaskBarIcon {
   wxWindowIDRef p_updata_id;
   wxWindowIDRef p_quit_id;
 };
-DOODLE_NAMESPACE_E
+}

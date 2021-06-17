@@ -20,7 +20,7 @@
 #include <magic_enum.hpp>
 #include <nlohmann/json.hpp>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 
 CoreSet &CoreSet::getSet() {
   static CoreSet install;
@@ -304,4 +304,4 @@ void CoreSet::setFileRpcPort(int in_fileRpcPort) {
   p_file_rpc_port = in_fileRpcPort;
 }
 
-DOODLE_NAMESPACE_E
+}

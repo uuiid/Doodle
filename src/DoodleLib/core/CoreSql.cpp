@@ -6,7 +6,7 @@
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 CoreSql::CoreSql()
     : config(std::make_shared<sqlpp::mysql::connection_config>()) {
   Init();
@@ -36,4 +36,4 @@ CoreSql& CoreSql::Get() {
   return install;
 }
 
-DOODLE_NAMESPACE_E
+}

@@ -10,7 +10,7 @@
 
 #include <DoodleLib/DoodleLib_fwd.h>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 class mainWindows : public wxFrame {
   wxWindowIDRef p_exmaya_id;
   wxWindowIDRef p_create_image_id;
@@ -33,4 +33,4 @@ class mainWindows : public wxFrame {
   void createUe4Project(const std::vector<FSys::path>& paths);
 };
 
-DOODLE_NAMESPACE_E
+}

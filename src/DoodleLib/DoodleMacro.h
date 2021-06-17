@@ -4,12 +4,6 @@
 
 #pragma once
 
-#define DOODLE_NAMESPACE doodle
-#define DOODLE_NAMESPACE_S namespace DOODLE_NAMESPACE {
-#define DOODLE_NAMESPACE_E \
-  }                        \
-  ;
-
 #define DOODLE_DISABLE_COPY(className)   \
   className(const className &) = delete; \
   className &operator=(const className &) = delete;

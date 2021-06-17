@@ -9,7 +9,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 class toolkit {
  public:
   // static void openPath(const fileSqlInfoPtr &info_ptr,
@@ -26,4 +26,4 @@ class toolkit {
   static FSys::path getUeInstallPath();
 };
 
-DOODLE_NAMESPACE_E
+}

@@ -3,7 +3,7 @@
 
 #include <DoodleLib/threadPool/LongTerm.h>
 #include <boost/signals2.hpp>
-DOODLE_NAMESPACE_S
+namespace doodle {
 class DOODLELIB_API MayaFile : public LongTerm {
  private:
   FSys::path p_path;
@@ -21,4 +21,4 @@ class DOODLELIB_API MayaFile : public LongTerm {
 
 };
 
-DOODLE_NAMESPACE_E
+}

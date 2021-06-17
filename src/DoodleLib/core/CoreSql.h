@@ -3,7 +3,7 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 /**
  * @brief 这个是sql连接单例， 负责配置生成sql连接
  * 
@@ -22,4 +22,4 @@ class DOODLELIB_API CoreSql {
 
 };
 
-DOODLE_NAMESPACE_E
+}

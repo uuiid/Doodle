@@ -11,7 +11,7 @@
 #include <functional>
 #include <stdexcept>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 
 class ThreadPool {
  public:
@@ -90,4 +90,4 @@ inline ThreadPool::~ThreadPool() {
   for (std::thread& worker : workers)
     worker.join();
 }
-DOODLE_NAMESPACE_E
+}

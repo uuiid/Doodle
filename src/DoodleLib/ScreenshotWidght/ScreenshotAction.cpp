@@ -3,5 +3,5 @@
 
 #include <boost/filesystem.hpp>
 
-DOODLE_NAMESPACE_S
-DOODLE_NAMESPACE_E
+namespace doodle {
+}

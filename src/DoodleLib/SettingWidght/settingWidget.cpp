@@ -17,7 +17,7 @@
 #include <wx/spinctrl.h>
 
 #include <magic_enum.hpp>
-DOODLE_NAMESPACE_S
+namespace doodle {
 
 // static SettingWidget *doodle_SettingWidget = nullptr;
 
@@ -230,4 +230,4 @@ SettingWidght::SettingWidght(wxWindow* parent, wxWindowID id)
   });
 }
 
-DOODLE_NAMESPACE_E
+}

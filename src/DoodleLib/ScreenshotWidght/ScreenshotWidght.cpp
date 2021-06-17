@@ -4,6 +4,6 @@
 
 #include <DoodleLib/Logger/Logger.h>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 
-DOODLE_NAMESPACE_E
+}

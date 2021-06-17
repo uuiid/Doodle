@@ -20,7 +20,7 @@
 
 #include <boost/format.hpp>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 
 mainWindows::mainWindows()
     : wxFrame(nullptr, wxID_ANY, {"doodle"}),
@@ -188,4 +188,4 @@ void mainWindows::createUe4Project(const std::vector<FSys::path>& paths) {
   wxMessageDialog{this, ConvStr<wxString>("成功创建")}.ShowModal();
 }
 
-DOODLE_NAMESPACE_E
+}

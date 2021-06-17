@@ -18,7 +18,7 @@
 
 #include <boost/format.hpp>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 
 systemTray::systemTray(wxTaskBarIconType iconType)
     : wxTaskBarIcon(iconType),
@@ -153,4 +153,4 @@ wxMenu* systemTray::CreatePopupMenu() {
   return menu;
 }
 
-DOODLE_NAMESPACE_E
+}

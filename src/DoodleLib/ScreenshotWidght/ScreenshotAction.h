@@ -2,7 +2,7 @@
 
 #include <DoodleLib/DoodleLib_fwd.h>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 
 class ScreenshotAction {
  public:
@@ -15,4 +15,4 @@ class ScreenshotAction {
 
   std::string p_save_path;
 };
-DOODLE_NAMESPACE_E
+}

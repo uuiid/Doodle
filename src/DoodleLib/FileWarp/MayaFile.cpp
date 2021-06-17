@@ -7,7 +7,7 @@
 #include <boost/format.hpp>
 #include <boost/process.hpp>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 MayaFile::MayaFile(FSys::path mayaPath)
     : LongTerm(),
       p_path(std::move(mayaPath)) {
@@ -156,4 +156,4 @@ bool MayaFile::is_maya_file(const FSys::path& in_path) {
   return k_e == ".ma" || k_e == ".mb";
 }
 
-DOODLE_NAMESPACE_E
+}

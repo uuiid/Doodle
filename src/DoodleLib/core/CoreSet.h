@@ -15,7 +15,7 @@
 #include <cereal/types/vector.hpp>
 #include <magic_enum.hpp>
 
-DOODLE_NAMESPACE_S
+namespace doodle {
 
 enum class Department {
   None_,
@@ -174,7 +174,7 @@ void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
         cereal::make_nvp("maya_Path", p_mayaPath));
 }
 
-DOODLE_NAMESPACE_E
+}
 namespace cereal {
 template <class Archive>
 std::string save_minimal(Archive const &, doodle::Department const &department) {
