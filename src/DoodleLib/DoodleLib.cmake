@@ -11,11 +11,15 @@ set(
 	FileWarp/VideoSequence.h
 	Logger/Logger.h
 	Logger/LoggerTemplate.h
+	Metadata/Action/Action.h
+	Metadata/Action/UploadDirAction.h
+	Metadata/Action/UploadFileAction.h
 	Metadata/Assets.h
 	Metadata/AssetsFile.h
 	Metadata/AssetsPath.h
 	Metadata/Comment.h
 	Metadata/ContextMenu.h
+	Metadata/DragFilesFactory.h
 	Metadata/Episodes.h
 	Metadata/Label/LabelNode.h
 	Metadata/Metadata.h
@@ -73,11 +77,15 @@ set(
 	FileWarp/Ue4Project.cpp
 	FileWarp/VideoSequence.cpp
 	Logger/Logger.cpp
+	Metadata/Action/Action.cpp
+	Metadata/Action/UploadDirAction.cpp
+	Metadata/Action/UploadFileAction.cpp
 	Metadata/Assets.cpp
 	Metadata/AssetsFile.cpp
 	Metadata/AssetsPath.cpp
 	Metadata/Comment.cpp
 	Metadata/ContextMenu.cpp
+	Metadata/DragFilesFactory.cpp
 	Metadata/Episodes.cpp
 	Metadata/Label/LabelNode.cpp
 	Metadata/Metadata.cpp

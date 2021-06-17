@@ -5,7 +5,7 @@
 
 namespace doodle {
 class LongTerm {
- private:
+
  public:
   LongTerm() : progress(),
                messagResult(),

@@ -7,7 +7,7 @@ DOODLE_NAMESPACE_S
 // 空指针错误
 class DOODLELIB_API DoodleError : public std::runtime_error {
  public:
-  explicit DoodleError(std::string message) : std::runtime_error(std::move(message)){};
+  explicit DoodleError(const std::string& message) : std::runtime_error(message){};
 };
 class DOODLELIB_API nullptr_error : public DoodleError {
  public:

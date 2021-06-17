@@ -93,7 +93,7 @@ generate_export_header(DoodleLib
 #预编译头文件
 target_precompile_headers(DoodleLib
         PUBLIC
-        <DoodleLib/DoodleLib_fwd.h>
+        <DoodleLib/DoodleLib_pch.h>
         )
 #get_target_property(DOODLE_PCH_S DoodleLib PRECOMPILE_HEADERS )
 #message(${DOODLE_PCH_S})

@@ -12,4 +12,27 @@ wxSizer* wxUtil::labelAndWidget(wxWindow* in_parent, const std::string& in_label
   k_layout->Add(in_ctrl, wxSizerFlags{1}.Expand());
   return k_layout;
 }
+template <>
+std::string ConvStr(const wxString& str) {
+  return str.ToStdString(wxConvUTF8);
+}
+
+template <>
+wxString ConvStr(const std::string& str) {
+  return wxString::FromUTF8(str);
+}
+
+template <>
+wxString ConvStr(const char*(str)) {
+  return wxString::FromUTF8(str);
+}
+template <>
+wxString ConvStr(const FSys::path& str) {
+  return ConvStr<wxString>(str.generic_string());
+}
+
+template <>
+FSys::path ConvStr(const wxString& str) {
+  return {ConvStr<std::string>(str)};
+}
 }

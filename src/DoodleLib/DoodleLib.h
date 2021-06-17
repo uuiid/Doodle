@@ -13,11 +13,15 @@
 #include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Logger/LoggerTemplate.h>
+#include <DoodleLib/Metadata/Action/Action.h>
+#include <DoodleLib/Metadata/Action/UploadDirAction.h>
+#include <DoodleLib/Metadata/Action/UploadFileAction.h>
 #include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/AssetsFile.h>
 #include <DoodleLib/Metadata/AssetsPath.h>
 #include <DoodleLib/Metadata/Comment.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
+#include <DoodleLib/Metadata/DragFilesFactory.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Label/LabelNode.h>
 #include <DoodleLib/Metadata/Metadata.h>
