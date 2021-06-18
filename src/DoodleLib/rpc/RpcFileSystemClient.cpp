@@ -6,6 +6,9 @@
 
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/threadPool/ThreadPool.h>
+#include <Logger/Logger.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>
 
@@ -113,7 +116,7 @@ bool RpcFileSystemClient::IsExist(const FSys::path& in_path) {
   return k_out_info.exist();
 }
 
-bool RpcFileSystemClient::Download(const FSys::path& in_local_path, const FSys::path& in_server_path) {
+void RpcFileSystemClient::Download(const FSys::path& in_local_path, const FSys::path& in_server_path) {
   auto [k_ex, k_dir] = IsFolder(in_server_path);
   if (!k_ex)
     throw DoodleError{"服务器中不存在文件或者目录"};
@@ -125,7 +128,7 @@ bool RpcFileSystemClient::Download(const FSys::path& in_local_path, const FSys::
   }
 }
 
-bool RpcFileSystemClient::Upload(const FSys::path& in_local_path, const FSys::path& in_server_path) {
+void RpcFileSystemClient::Upload(const FSys::path& in_local_path, const FSys::path& in_server_path) {
   if (!FSys::exists(in_local_path))
     throw DoodleError{"本地中不存在文件或者目录"};
 
@@ -145,23 +148,112 @@ void RpcFileSystemClient::DownloadDir(const FSys::path& in_local_path, const FSy
   FileInfo k_out_info{};
 
   k_in_info.set_path(in_local_path.generic_string());
-  auto k_out = p_stub->GetList(&k_context,k_in_info);
+  auto k_out = p_stub->GetList(&k_context, k_in_info);
 
+  std::vector<std::pair<FSys::path,FSys::path> > path_list{};
+  auto k_prot = DoodleLib::Get().get_thread_pool();
+  std::vector<std::future<void>> k_list;
 
-  while (k_out->Read(&k_out_info)){
-
+  while (k_out->Read(&k_out_info)) {
+    FSys::path k_s_p = k_out_info.path();
+    FSys::path k_l_p = in_local_path / k_s_p.filename();
+    if (k_out_info.isfolder())
+      k_list.emplace_back(
+                k_prot->enqueue(
+                    [k_s_p,k_l_p,this](){ DownloadDir(k_s_p,k_l_p);}
+              )
+                );
+    else
+      k_list.emplace_back(
+          k_prot->enqueue(
+              [k_s_p,k_l_p,this](){ DownloadFile(k_s_p,k_l_p);}
+              )
+          );
   }
+
+  std::future_status k_status;
+  auto k_it = k_list.begin();
+  while (!k_list.empty()){
+    k_status = k_it->wait_for(std::chrono::milliseconds{100});
+    if(k_status == std::future_status::ready){
+      try {
+        k_it->get();
+      } catch (const std::runtime_error& error) {
+        DOODLE_LOG_DEBUG(error.what());
+      }
+      k_it = k_list.erase(k_it);
+    } else{
+      ++k_it;
+    }
+    if(k_it == k_list.end()){
+      k_it = k_list.end();
+    }
+  }
+
 
 }
 void RpcFileSystemClient::UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path) {
+  if (!FSys::exists(in_local_path))
+    throw DoodleError{"未找到上传文件夹"};
+
+  grpc::ClientContext k_context{};
+
+  FileInfo k_in_info{};
+  FileInfo k_out_info{};
+
+  std::vector<std::pair<FSys::path,FSys::path> > path_list{};
+  auto k_prot = DoodleLib::Get().get_thread_pool();
+  std::vector<std::future<void>> k_list;
+
+  for (const auto& k_it : FSys::directory_iterator(in_local_path)) {
+    FSys::path k_s_p = in_server_path / k_it.path().filename();
+    const FSys::path& k_l_p= k_it.path();
+
+    if(FSys::is_directory(k_it)){
+      k_list.emplace_back(
+          k_prot->enqueue(
+              [k_l_p,k_s_p,this](){
+                UploadDir(k_l_p,k_s_p);
+              }
+              )
+          );
+    } else{
+      k_list.emplace_back(
+          k_prot->enqueue(
+              [k_l_p,k_s_p,this](){
+                UploadFile(k_l_p,k_s_p);
+              }
+          )
+      );
+    }
+  }
+
+  std::future_status k_status{};
+  auto k_it = k_list.begin();
+  while (!k_list.empty()){
+    k_status = k_it->wait_for(std::chrono::milliseconds{100});
+    if(k_status == std::future_status::ready){
+      try {
+        k_it->get();
+      } catch (const std::runtime_error& error) {
+        DOODLE_LOG_DEBUG(error.what());
+      }
+      k_it = k_list.erase(k_it);
+    } else{
+      ++k_it;
+    }
+    if(k_it == k_list.end()){
+      k_it = k_list.end();
+    }
+  }
 }
 
 void RpcFileSystemClient::DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path) {
-  auto k_is_down = compare_file_is_down(in_local_path,in_server_path);
+  auto k_is_down = compare_file_is_down(in_local_path, in_server_path);
   if (!k_is_down)
     return;
 
-  if(!(*k_is_down))
+  if (!(*k_is_down))
     return;
 
   if (FSys::exists(in_local_path.parent_path()))
@@ -190,11 +282,11 @@ void RpcFileSystemClient::DownloadFile(const FSys::path& in_local_path, const FS
     throw DoodleError{status.error_message()};
 }
 void RpcFileSystemClient::UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path) {
-  auto k_is_down = compare_file_is_down(in_local_path,in_server_path);
+  auto k_is_down = compare_file_is_down(in_local_path, in_server_path);
   if (!k_is_down)
     return;
 
-  if(*k_is_down)
+  if (*k_is_down)
     return;
 
   grpc::ClientContext k_context{};
@@ -222,7 +314,7 @@ void RpcFileSystemClient::UploadFile(const FSys::path& in_local_path, const FSys
 
     k_in_info.mutable_data()->set_value(std::move(k_value));
     if (!k_in->Write(k_in_info))
-      throw DoodleError{"write strame errors"};
+      throw DoodleError{"write stream errors"};
   }
 }
 }  // namespace doodle

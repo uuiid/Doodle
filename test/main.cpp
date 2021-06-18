@@ -16,9 +16,12 @@ class Environment : public ::testing::Environment {
   void SetUp() override;
   void TearDown() override;
   doodle::CoreSet &set = doodle::CoreSet::getSet();
+  doodle::DoodleLibPtr p_lib;
 };
 
 void Environment::SetUp() {
+  p_lib = doodle::make_doodle_lib();
+
   ///初始化log
   doodle::Logger::doodle_initLog();
 }

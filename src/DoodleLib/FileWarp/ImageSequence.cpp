@@ -1,8 +1,10 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/FileWarp/ImageSequence.h>
 #include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <PinYin/convert.h>
+
 
 #include <boost/format.hpp>
 #include <opencv2/opencv.hpp>
@@ -232,7 +234,7 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
     FSys::create_directories(k_path);
 
   //创建线程池, 开始
-  ThreadPool thread_pool{std::thread::hardware_concurrency()};
+  auto k_pool = DoodleLib::Get().get_thread_pool();
   std::map<FSys::path, std::future<void>> result{};
   //创建锁
   std::mutex p_mutex{};
@@ -248,7 +250,7 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
     im->stride.connect(k_add_fun);
 
     result.emplace(im->getDir(),
-                   thread_pool.enqueue(
+                   k_pool->enqueue(
                        [k_path, str, im] {
                          // !从这里开始送入线程池, 防止线程检查重名式失败
                          //检查存在,如果存在就使用其他名称

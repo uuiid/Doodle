@@ -17,12 +17,12 @@ class DOODLELIB_API ImageSequence : public LongTerm {
   void seanInfo();
 
  public:
-  ImageSequence(std::vector<FSys::path> path, const std::string& text = {});
-  ImageSequence(const FSys::path& path_dir, const std::string& text = {});
+  explicit ImageSequence(std::vector<FSys::path> path, const std::string& text = {});
+  explicit ImageSequence(const FSys::path& path_dir, const std::string& text = {});
 
   bool hasSequence();
 
-  FSys::path getDir() const;
+  [[nodiscard]] FSys::path getDir() const;
 
   std::tuple<int, int, std::string> getEpisodesAndShot();
   std::string getEpisodesAndShot_str();
@@ -39,8 +39,8 @@ class DOODLELIB_API ImageSequenceBatch : public LongTerm {
   std::vector<ImageSequencePtr> p_imageSequences;
 
  public:
-  ImageSequenceBatch(decltype(p_paths) dirs);
-  ImageSequenceBatch(decltype(p_imageSequences) imageSequences);
+  explicit ImageSequenceBatch(decltype(p_paths) dirs);
+  explicit ImageSequenceBatch(decltype(p_imageSequences) imageSequences);
   void batchCreateSequence(const FSys::path& out_files = {}) const;
 
 };

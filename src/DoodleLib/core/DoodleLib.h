@@ -8,14 +8,15 @@
 
 namespace doodle{
 
-DoodleLibPtr make_doodle_lib();
-
 class DOODLELIB_API DoodleLib : public details::no_copy{
   friend DoodleLibPtr make_doodle_lib();
-  DoodleLib();
+
   static DoodleLib * p_install;
+  DoodleLib();
+
+  ThreadPoolPtr p_thread_pool;
  public:
-  DoodleLib& Get();
+  static DoodleLib& Get();
 
   ThreadPoolPtr get_thread_pool();
 };

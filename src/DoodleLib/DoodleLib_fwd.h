@@ -81,7 +81,7 @@ using UploadFileActionPtr    = std::shared_ptr<UploadFileAction>;
 using DoodleLibPtr           = std::unique_ptr<DoodleLib>;
 using ThreadPoolPtr          = std::shared_ptr<ThreadPool>;
 class Doodle;
-DoodleLibPtr make_doodle_lib();
+[[maybe_unused]] DoodleLibPtr make_doodle_lib();
 template <typename SSC, typename SSN>
 SSC ConvStr(const SSN &str) {
   return SSC{str};

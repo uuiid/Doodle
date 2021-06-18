@@ -59,14 +59,14 @@ class DOODLELIB_API RpcFileSystemClient {
    * @return true 下载完成
    * @return false 下载失败
    */
-  bool Download(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  void Download(const FSys::path& in_local_path, const FSys::path& in_server_path);
   /**
    * @brief 将文件上传到服务器中
    * @param in_local_path 本地路径
    * @param in_server_path 服务器路径
    * @return 上传结果
    */
-  bool Upload(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  void Upload(const FSys::path& in_local_path, const FSys::path& in_server_path);
 
   void DownloadDir(const FSys::path& in_local_path, const FSys::path& in_server_path);
   void UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path);
