@@ -186,7 +186,7 @@ void RpcFileSystemClient::DownloadDir(const FSys::path& in_local_path, const FSy
       ++k_it;
     }
     if(k_it == k_list.end()){
-      k_it = k_list.end();
+      k_it = k_list.begin();
     }
   }
 
@@ -243,7 +243,7 @@ void RpcFileSystemClient::UploadDir(const FSys::path& in_local_path, const FSys:
       ++k_it;
     }
     if(k_it == k_list.end()){
-      k_it = k_list.end();
+      k_it = k_list.begin();
     }
   }
 }

@@ -9,7 +9,7 @@
 namespace doodle{
 
 class DOODLELIB_API DoodleLib : public details::no_copy{
-  friend DoodleLibPtr make_doodle_lib();
+  friend DOODLELIB_API DoodleLibPtr make_doodle_lib();
 
   static DoodleLib * p_install;
   DoodleLib();
