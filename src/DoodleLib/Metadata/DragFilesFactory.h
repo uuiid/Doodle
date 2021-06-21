@@ -16,7 +16,7 @@ class DOODLELIB_API DragFilesFactory {
 
   bool has_action();
 
-  ActionPtr get_action();
-  ActionPtr operator()();
+  std::vector<ActionPtr> get_action();
+  std::vector<ActionPtr> operator()();
 };
 }  // namespace doodle

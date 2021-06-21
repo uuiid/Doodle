@@ -14,14 +14,13 @@
 #include <core/Ue4Setting.h>
 namespace doodle {
 DragFilesFactory::DragFilesFactory(std::vector<FSys::path> in_paths)
-    : p_paths(std::move(in_paths)),
-      p_has_action(false) {
+    : p_paths(std::move(in_paths)) {
 }
-ActionPtr DragFilesFactory::get_action() {
-  return ActionPtr();
+std::vector<ActionPtr> DragFilesFactory::get_action() {
+  return {};
 }
-ActionPtr DragFilesFactory::operator()() {
-  return ActionPtr();
+std::vector<ActionPtr> DragFilesFactory::operator()() {
+  return {};
 }
 bool DragFilesFactory::has_action() {
   return !p_action.empty();
@@ -33,6 +32,7 @@ void DragFilesFactory::runChick() {
     if (FSys::is_directory(k_path)) {
       p_action.emplace_back(std::make_shared<UploadDirAction>(
           std::make_any<FSys::path>(k_path)));
+
     } else {
       if (Ue4Project::is_ue4_file(k_path)) {
         std::vector<FSys::path> k_list{};
@@ -49,7 +49,10 @@ void DragFilesFactory::runChick() {
       }
     }
   } else {
-
+    p_action.emplace_back(
+        std::make_shared<UploadDirAndFileAction>(
+            std::make_any<std::vector<FSys::path>>(
+                p_paths)));
   }
 }
 
