@@ -237,7 +237,7 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
   auto k_pool = DoodleLib::Get().get_thread_pool();
   std::map<FSys::path, std::future<void>> result{};
   //创建锁
-  std::mutex p_mutex{};
+  std::recursive_mutex p_mutex{};
   auto k_i = float{1};
   //添加进度回调函数
   auto k_add_fun = std::bind<void>([&p_mutex](float i, float *_1) {

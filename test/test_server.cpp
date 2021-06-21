@@ -48,7 +48,7 @@ TEST(Server, dow_updata) {
             << "test/test.file.7z time: " << date::format("%Y/%m/%d %H:%M", k_ch->GetTimestamp("test/test.file.7z")) << "\n"
             << "test/test.file.7z size: " << k_ch->GetSize("test/test.file.7z") << "\n"
             << std::endl;
-
-  k_ch->Download("D:/WinDev2012Eval_test.VirtualBox.7z", "test/test.file.7z");
-  k_ch->Download("D:\\Kitchen_set2","test/tmp");
+  doodle::CoreSet::getSet().clear();
+//  k_ch->Download("D:/WinDev2012Eval_test.VirtualBox.7z", "test/test.file.7z");
+//  k_ch->Download("D:\\Kitchen_set2","test/tmp");
 }

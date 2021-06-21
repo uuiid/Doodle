@@ -8,27 +8,28 @@
 namespace doodle {
 RpcServerHandle::RpcServerHandle()
     : p_Server(),
-      p_rpc_metadata_server(std::make_shared<RpcMetadaataServer>()),
-      p_rpc_file_system_server(std::make_shared<RpcFileSystemServer>()),
+      p_rpc_metadata_server(),
+      p_rpc_file_system_server(),
       p_build(std::make_unique<grpc::ServerBuilder>()),
       p_thread() {
   grpc::ResourceQuota qu{"doodle_meta"};
-  qu.SetMaxThreads(4);
+  qu.SetMaxThreads(std::thread::hardware_concurrency());
   p_build->SetResourceQuota(qu);
 }
 
 void RpcServerHandle::registerFileSystemServer(int port) {
+  p_rpc_file_system_server = std::make_shared<RpcFileSystemServer>();
   std::string server_address{"[::]:"};
   server_address += std::to_string(port);
 
   p_build->AddListeningPort(server_address, grpc::InsecureServerCredentials());
   p_build->RegisterService(p_rpc_file_system_server.get());
 
-  //  auto t = k_builder.BuildAndStart();
   DOODLE_LOG_INFO("Server listening on " << server_address);
 }
 
 void RpcServerHandle::registerMetadataServer(int port) {
+  p_rpc_metadata_server = std::make_shared<RpcMetadaataServer>();
   std::string server_address{"[::]:"};
   server_address += std::to_string(port);
 
@@ -47,6 +48,8 @@ void RpcServerHandle::runServer(int port_meta, int port_file_sys) {
   registerFileSystemServer(port_file_sys);
 
   p_Server = std::move(p_build->BuildAndStart());
+  if (!p_Server)
+    throw DoodleError{"无法创建服务器"};
 
   p_thread = std::thread{[this]() {
     p_Server->Wait();

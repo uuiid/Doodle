@@ -18,8 +18,11 @@ namespace doodle {
  */
 class DOODLELIB_API RpcFileSystemClient {
   std::unique_ptr<FileSystemServer::Stub> p_stub;
+  std::recursive_mutex p_mutex;
   // std::shared_ptr<grpc::Channel> p_channel;
   std::optional<bool> compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  void _DownloadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, std::vector<std::future<void> >& k_future_list);
+  void _UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, std::vector<std::future<void> >& in_future_list);
 
  public:
   using time_point = std::chrono::time_point<std::chrono::system_clock>;
@@ -70,6 +73,7 @@ class DOODLELIB_API RpcFileSystemClient {
 
   void DownloadDir(const FSys::path& in_local_path, const FSys::path& in_server_path);
   void UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path);
+
   void DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path);
   void UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path);
 };

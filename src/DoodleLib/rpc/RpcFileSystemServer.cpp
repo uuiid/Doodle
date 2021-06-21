@@ -5,8 +5,9 @@
 #include "RpcFileSystemServer.h"
 
 #include <DoodleLib/core/CoreSet.h>
-#include <google/protobuf/util/time_util.h>
 #include <Logger/Logger.h>
+#include <google/protobuf/util/time_util.h>
+
 #include <boost/format.hpp>
 
 namespace doodle {
@@ -19,7 +20,7 @@ grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const Fi
   FSys::path k_path = p_set.getDataRoot() / request->path();
   DOODLE_LOG_DEBUG("get info path: " << k_path);
 
-  auto k_ex         = FSys::exists(k_path);
+  auto k_ex = FSys::exists(k_path);
   if (!k_ex)
     return grpc::Status::OK;
   response->set_exist(k_ex);
@@ -105,8 +106,8 @@ grpc::Status RpcFileSystemServer::GetList(grpc::ServerContext* context, const Fi
 
   DOODLE_LOG_DEBUG("list info path: " << k_path);
 
-  auto k_ex         = FSys::exists(k_path);
-  auto k_dir        = FSys::is_directory(k_path);
+  auto k_ex  = FSys::exists(k_path);
+  auto k_dir = FSys::is_directory(k_path);
   if (!k_ex || !k_dir)
     return grpc::Status::CANCELLED;
 
@@ -115,7 +116,7 @@ grpc::Status RpcFileSystemServer::GetList(grpc::ServerContext* context, const Fi
     k_info.set_path(std::move(k_it.path().lexically_relative(k_root).generic_string()));
     k_info.set_exist(true);
     k_info.set_isfolder(FSys::is_directory(k_it));
-    if(!writer->Write(k_info))
+    if (!writer->Write(k_info))
       return grpc::Status::CANCELLED;
   }
   return grpc::Status::OK;
@@ -130,29 +131,31 @@ grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const F
 
   DOODLE_LOG_DEBUG("down path: " << k_path);
 
-  FSys::ifstream k_file{k_path, std::ios::in | std::ios::binary};
+  {
+    FSys::ifstream k_file{k_path, std::ios::in | std::ios::binary};
 
-  if (!k_file.is_open() || !k_file.good()) {
-    boost::format error{"eofbit: %b; failbit: %b; badbit: %b;"};
-    error % k_file.eof() % k_file.fail() % k_file.bad();
-    return {grpc::StatusCode::RESOURCE_EXHAUSTED, error.str()};
-  }
-  std::istreambuf_iterator<char> k_iter{k_file};
+    if (!k_file.is_open() || !k_file.good()) {
+      boost::format error{"eofbit: %b; failbit: %b; badbit: %b;"};
+      error % k_file.eof() % k_file.fail() % k_file.bad();
+      return {grpc::StatusCode::RESOURCE_EXHAUSTED, error.str()};
+    }
+    //  std::istreambuf_iterator<char> k_iter{k_file};
 
-  auto s_size = CoreSet::getBlockSize();
-  FileStream k_stream{};
+    auto s_size = CoreSet::getBlockSize();
+    FileStream k_stream{};
 
-  while (k_file) {
-    std::string k_value{};
-    k_value.resize(s_size);
-    k_file.read(k_value.data(), s_size);
-    auto k_s = k_file.gcount();
-    if (k_s != s_size)
-      k_value.resize(k_s);
+    while (k_file) {
+      std::string k_value{};
+      k_value.resize(s_size);
+      k_file.read(k_value.data(), s_size);
+      auto k_s = k_file.gcount();
+      if (k_s != s_size)
+        k_value.resize(k_s);
 
-    k_stream.mutable_data()->set_value(std::move(k_value));
-    if (!writer->Write(k_stream))
-      return grpc::Status::CANCELLED;
+      k_stream.mutable_data()->set_value(std::move(k_value));
+      if (!writer->Write(k_stream))
+        return grpc::Status::CANCELLED;
+    }
   }
 
   return grpc::Status::OK;
@@ -170,14 +173,22 @@ grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::Ser
     FSys::create_directories(k_path.parent_path());
 
   auto k_dir = FSys::is_directory(k_path);
-  if (k_ex && k_dir)
-    return grpc::Status::CANCELLED;
+  if (k_dir)
+    return {grpc::StatusCode::CANCELLED,k_path.generic_string() + " is dir"};
 
-  FSys::ofstream k_file{k_path, std::ios::out | std::ios::binary};
+  {
+    FSys::ofstream k_file{k_path, std::ios::out | std::ios::binary};
 
-  while (reader->Read(&k_file_stream)) {
-    auto& str = k_file_stream.data().value();
-    k_file.write(str.data(), str.size());
+    if (!k_file.is_open() || !k_file.good()) {
+      boost::format error{"eofbit: %b; failbit: %b; badbit: %b;"};
+      error % k_file.eof() % k_file.fail() % k_file.bad();
+      return {grpc::StatusCode::RESOURCE_EXHAUSTED, error.str()};
+    }
+
+    while (reader->Read(&k_file_stream)) {
+      auto& str = k_file_stream.data().value();
+      k_file.write(str.data(), str.size());
+    }
   }
 
   return grpc::Status::OK;
