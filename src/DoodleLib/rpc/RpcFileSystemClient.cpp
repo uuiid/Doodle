@@ -60,7 +60,7 @@ std::tuple<std::size_t, bool, std::chrono::time_point<std::chrono::system_clock>
     throw DoodleError{status.error_message()};
 
   auto k_t = std::chrono::system_clock::from_time_t(google::protobuf::util::TimeUtil::TimestampToTimeT(k_out_info.update_time()));
-  return {k_out_info.size(), k_out_info.isfolder(), k_t, k_out_info.exist()};
+  return {k_out_info.size(), k_out_info.exist(), k_t, k_out_info.isfolder()};
 }
 
 std::size_t RpcFileSystemClient::GetSize(const FSys::path& in_path) {
@@ -147,7 +147,7 @@ void RpcFileSystemClient::_DownloadDir(const FSys::path& in_local_path, const FS
   FileInfo k_in_info{};
   FileInfo k_out_info{};
 
-  k_in_info.set_path(in_local_path.generic_string());
+  k_in_info.set_path(in_server_path.generic_string());
   auto k_out = p_stub->GetList(&k_context, k_in_info);
 
   auto k_prot = DoodleLib::Get().get_thread_pool();
@@ -156,7 +156,7 @@ void RpcFileSystemClient::_DownloadDir(const FSys::path& in_local_path, const FS
     FSys::path k_s_p = k_out_info.path();
     FSys::path k_l_p = in_local_path / k_s_p.filename();
     if (k_out_info.isfolder()) {
-      _DownloadDir(k_s_p, k_l_p, k_future_list);
+      _DownloadDir(k_l_p, k_s_p, k_future_list);
       //      std::unique_lock lock{p_mutex};
       //      k_future_list.emplace_back(
       //          k_prot->enqueue(
@@ -165,14 +165,19 @@ void RpcFileSystemClient::_DownloadDir(const FSys::path& in_local_path, const FS
       //              std::ref(k_future_list)));
 
     } else {
+      DOODLE_LOG_DEBUG("下载文件: " << k_l_p << " <----- " << k_s_p)
       std::unique_lock lock{p_mutex};
+
       k_future_list.emplace_back(
           k_prot->enqueue(
               [k_s_p, k_l_p, this]() {
-                DownloadFile(k_s_p, k_l_p);
+                DownloadFile(k_l_p, k_s_p);
               }));
     }
   }
+  auto status = k_out->Finish();
+  if (!status.ok())
+    throw DoodleError{status.error_message()};
 }
 void RpcFileSystemClient::_UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, std::vector<std::future<void>>& in_future_list) {
   if (!FSys::exists(in_local_path))
@@ -194,6 +199,7 @@ void RpcFileSystemClient::_UploadDir(const FSys::path& in_local_path, const FSys
       //              },
       //              std::ref(in_future_list)));
     } else {
+      DOODLE_LOG_DEBUG("上传文件: " << k_l_p << " -----> " << k_s_p)
       std::unique_lock lock{p_mutex};
       in_future_list.emplace_back(
           k_prot->enqueue(
@@ -273,8 +279,8 @@ void RpcFileSystemClient::UploadFile(const FSys::path& in_local_path, const FSys
     if (!k_in->Write(k_in_info))
       throw DoodleError{"write stream errors"};
   }
+  /// @warning 这里必须调用 WritesDone用来区分写入完成
   k_in->WritesDone();
-  // TODO!  这里有问题
   auto status = k_in->Finish();
   if (!status.ok())
     throw DoodleError{status.error_message()};

@@ -268,6 +268,7 @@ RpcFileSystemClientPtr CoreSet::getRpcFileSystemClient() const {
 }
 void CoreSet::clear() {
   p_rpc_metadata_clien.reset();
+  p_rpc_file_system_client.reset();
   p_matadata_setting_.clear();
 }
 int CoreSet::getSqlPort() const {

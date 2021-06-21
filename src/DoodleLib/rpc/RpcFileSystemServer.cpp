@@ -108,8 +108,13 @@ grpc::Status RpcFileSystemServer::GetList(grpc::ServerContext* context, const Fi
 
   auto k_ex  = FSys::exists(k_path);
   auto k_dir = FSys::is_directory(k_path);
-  if (!k_ex || !k_dir)
-    return grpc::Status::CANCELLED;
+  if (!k_ex || !k_dir) {
+    boost::format str{"路径: %s 存在: %b 是目录: %b"};
+    str % k_path % k_ex % k_dir;
+    DOODLE_LOG_DEBUG(str.str())
+    return {
+        grpc::StatusCode::CANCELLED, str.str()};
+  }
 
   FileInfo k_info{};
   for (const auto& k_it : FSys::directory_iterator{k_path}) {
@@ -174,7 +179,7 @@ grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::Ser
 
   auto k_dir = FSys::is_directory(k_path);
   if (k_dir)
-    return {grpc::StatusCode::CANCELLED,k_path.generic_string() + " is dir"};
+    return {grpc::StatusCode::CANCELLED, k_path.generic_string() + " is dir"};
 
   {
     FSys::ofstream k_file{k_path, std::ios::out | std::ios::binary};

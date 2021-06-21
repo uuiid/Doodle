@@ -49,6 +49,6 @@ TEST(Server, dow_updata) {
             << "test/test.file.7z size: " << k_ch->GetSize("test/test.file.7z") << "\n"
             << std::endl;
   doodle::CoreSet::getSet().clear();
-//  k_ch->Download("D:/WinDev2012Eval_test.VirtualBox.7z", "test/test.file.7z");
-//  k_ch->Download("D:\\Kitchen_set2","test/tmp");
+  k_ch->Download("D:/WinDev2012Eval_test.VirtualBox.7z", "test/test.file.7z");
+  k_ch->Download("D:\\Kitchen_set2","test/tmp");
 }
