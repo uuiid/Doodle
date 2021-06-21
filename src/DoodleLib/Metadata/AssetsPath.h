@@ -18,7 +18,7 @@ class DOODLELIB_API AssetsPath {
    * 
    * @param in_path 输入路径，这个会调用 AssetsPath::setPath(const FSys::path &in_path)
    */
-  explicit AssetsPath(const FSys::path &in_path);
+  explicit AssetsPath(const FSys::path &in_path,const MetadataConstPtr &in_metadata = {});
 
   [[nodiscard]] const FSys::path &getLocalPath() const;
   [[nodiscard]] const FSys::path &getServerPath() const;

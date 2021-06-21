@@ -15,6 +15,7 @@ set(
 	Logger/LoggerTemplate.h
 	Metadata/Action/Action.h
 	Metadata/Action/UploadDirAction.h
+	Metadata/Action/UploadDirAndFileAction.h
 	Metadata/Action/UploadFileAction.h
 	Metadata/Assets.h
 	Metadata/AssetsFile.h
@@ -87,6 +88,7 @@ set(
 	Logger/Logger.cpp
 	Metadata/Action/Action.cpp
 	Metadata/Action/UploadDirAction.cpp
+	Metadata/Action/UploadDirAndFileAction.cpp
 	Metadata/Action/UploadFileAction.cpp
 	Metadata/Assets.cpp
 	Metadata/AssetsFile.cpp

@@ -14,11 +14,14 @@ AssetsPath::AssetsPath()
       p_lexically_relative(),
       p_server_path() {
 }
-AssetsPath::AssetsPath(const FSys::path &in_path)
+AssetsPath::AssetsPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
     : p_local_path(),
       p_lexically_relative(),
       p_server_path() {
-  this->setPath(in_path);
+  if (in_metadata)
+    this->setPath(in_path, in_metadata);
+  else
+    setPath(in_path);
 }
 const FSys::path &AssetsPath::getLocalPath() const {
   return p_local_path;

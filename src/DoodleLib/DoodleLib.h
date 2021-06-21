@@ -17,6 +17,7 @@
 #include <DoodleLib/Logger/LoggerTemplate.h>
 #include <DoodleLib/Metadata/Action/Action.h>
 #include <DoodleLib/Metadata/Action/UploadDirAction.h>
+#include <DoodleLib/Metadata/Action/UploadDirAndFileAction.h>
 #include <DoodleLib/Metadata/Action/UploadFileAction.h>
 #include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/AssetsFile.h>
