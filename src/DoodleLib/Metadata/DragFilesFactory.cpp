@@ -20,7 +20,7 @@ std::vector<ActionPtr> DragFilesFactory::get_action() {
   return {};
 }
 std::vector<ActionPtr> DragFilesFactory::operator()() {
-  return {};
+  return p_action;
 }
 bool DragFilesFactory::has_action() {
   return !p_action.empty();
@@ -36,7 +36,7 @@ void DragFilesFactory::runChick() {
     } else {
       if (Ue4Project::is_ue4_file(k_path)) {
         std::vector<FSys::path> k_list{};
-        k_list.emplace_back(k_path);
+        k_list.push_back(k_path);
         k_list.emplace_back(k_path.parent_path() / Ue4Project::Content);
         p_action.emplace_back(
             std::make_shared<UploadDirAndFileAction>(
