@@ -54,7 +54,7 @@ void MetadataSet::setProject_(const Project *Project_) {
   auto it = std::find_if(p_project_list.begin(), p_project_list.end(),
                          [Project_](ProjectPtr &prj) { return Project_ == prj.get(); });
   if (it != p_project_list.end()) {
-    p_project = *it;
+    p_project.swap(*it);
     sig_projectChange(p_project.get(), getIntex(it));
   } else {
     throw DoodleError{"项目不在列表中"};

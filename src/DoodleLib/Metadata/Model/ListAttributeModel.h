@@ -30,6 +30,7 @@ class ListAttributeModel : public wxDataViewModel {
   virtual bool IsListModel() const override { return true; }
 
   void setRoot(const MetadataPtr& in_metadata_ptr);
+  MetadataPtr getRoot() const;
 };
 
 }  // namespace doodle

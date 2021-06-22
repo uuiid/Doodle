@@ -32,10 +32,11 @@ class AssetsTree : public wxDataViewModel {
   unsigned int GetChildren(const wxDataViewItem& item, wxDataViewItemArray& children) const override;
 
   bool GetAttr(const wxDataViewItem& in_item, std::uint32_t in_col, wxDataViewItemAttr& attr) const override;
-  void set_current(const MetadataPtr& in_item);
 
   virtual bool IsListModel() const override { return false; }
 
+  void set_current(const MetadataPtr& in_item);
   void setRoot(const ProjectPtr& in_project);
+
 };
 }  // namespace doodle

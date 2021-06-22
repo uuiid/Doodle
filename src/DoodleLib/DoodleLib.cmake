@@ -65,7 +65,7 @@ set(
 	libWarp/sqlppWarp.h
 	libWarp/wxWidgetWarp.h
 	mainWidght/MklinkWidget.h
-	mainWidght/mainWindows.h
+        mainWidght/tool_windows.h
 	mainWidght/systemTray.h
 	rpc/RpcFileSystemClient.h
 	rpc/RpcFileSystemServer.h
@@ -124,7 +124,7 @@ set(
 	core/Util.cpp
 	core/static_value.cpp
 	mainWidght/MklinkWidget.cpp
-	mainWidght/mainWindows.cpp
+        mainWidght/tool_windows.cpp
 	mainWidght/systemTray.cpp
 	rpc/RpcFileSystemClient.cpp
 	rpc/RpcFileSystemServer.cpp

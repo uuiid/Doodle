@@ -94,6 +94,7 @@ void Metadata::addChildItemNotSig(const MetadataPtr &in_items) {
       k_old->sig_childDelete(shared_from_this());
     }
     k_old->p_has_child = k_old->p_child_items.size();
+    DOODLE_LOG_DEBUG(fmt::format("更改子数据的父对象 id: {} --> id: {}", k_old->p_id, p_id))
   }
 
   /// 这里将所有的子级要继承的父级属性给上
@@ -111,6 +112,7 @@ void Metadata::addChildItemNotSig(const MetadataPtr &in_items) {
 
   p_has_child = p_child_items.size();
   saved(true);
+  DOODLE_LOG_INFO(fmt::format("插入子数据： {}", in_items->showStr()))
 }
 
 MetadataPtr Metadata::addChildItem(const MetadataPtr &in_items) {
@@ -130,7 +132,7 @@ bool Metadata::hasParent() const {
   return !p_parent.expired();
 }
 bool Metadata::hasChild() const {
-    return p_has_child > 0;
+  return p_has_child > 0;
   // if (p_child_items.empty())
   // else
   //   return p_child_items.empty();

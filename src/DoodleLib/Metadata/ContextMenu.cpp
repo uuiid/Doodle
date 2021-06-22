@@ -200,7 +200,7 @@ wxMenu* ContextMenu::createMenu(const AssetsFilePtr& in_data) {
       },
       k_com->GetId());
 
-  auto k_path = in_data->getPathFile()->getLocalPath();
+  auto k_path = in_data->getPathFile().begin()->getLocalPath();
   if (MayaFile::is_maya_file(k_path)) {
     p_menu->Append(wxID_ANY, ConvStr<wxString>("导出相机"));
   }

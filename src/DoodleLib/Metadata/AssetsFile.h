@@ -18,6 +18,7 @@ class DOODLELIB_API AssetsFile : public Metadata {
   std::string p_name;
   std::string p_ShowName;
   AssetsPathPtr p_path_file;
+  std::vector<AssetsPathPtr> p_path_files;
   TimeDurationPtr p_time;
   std::string p_user;
   Department p_department;
@@ -40,7 +41,7 @@ class DOODLELIB_API AssetsFile : public Metadata {
    * @param name 名称
    * @param showName 显示名称 
    */
-  explicit AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in_path, std::string name = {}, std::string showName = {});
+  explicit AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string showName, std::string Name = {});
   // ~AssetsFile();
 
   [[nodiscard]] std::string str() const override;
@@ -53,8 +54,8 @@ class DOODLELIB_API AssetsFile : public Metadata {
 
   [[nodiscard]] const std::string& getUser() const;
   void setUser(const std::string& in_user);
-  const AssetsPathPtr& getPathFile() const;
-  void setPathFile(const AssetsPathPtr& in_pathFile);
+  const std::vector<AssetsPathPtr>& getPathFile() const;
+  void setPathFile(const std::vector<AssetsPathPtr>& in_pathFile);
   Department getDepartment() const;
   void setDepartment(Department in_department);
 
@@ -108,9 +109,20 @@ void AssetsFile::serialize(Archive& ar, const std::uint32_t version) {
         CEREAL_NVP(p_department),
         CEREAL_NVP(p_comment),
         CEREAL_NVP(p_version));
+  if (version == 3)
+    ar(
+        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
+        CEREAL_NVP(p_name),
+        CEREAL_NVP(p_ShowName),
+        CEREAL_NVP(p_path_files),
+        CEREAL_NVP(p_time),
+        CEREAL_NVP(p_user),
+        CEREAL_NVP(p_department),
+        CEREAL_NVP(p_comment),
+        CEREAL_NVP(p_version));
 }
 
 }  // namespace doodle
 
 CEREAL_REGISTER_TYPE(doodle::AssetsFile)
-CEREAL_CLASS_VERSION(doodle::AssetsFile, 2)
+CEREAL_CLASS_VERSION(doodle::AssetsFile, 3)

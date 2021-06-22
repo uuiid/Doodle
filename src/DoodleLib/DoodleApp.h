@@ -7,7 +7,7 @@
 namespace doodle {
 class SettingWidght;
 class systemTray;
-class mainWindows;
+class tool_windows;
 class MetadataWidget;
 class ServerWidget;
 
@@ -18,7 +18,6 @@ enum class funName {
 class wxWindowDeleter final {
  public:
   void operator()(wxWindow* win) {
-    if (win)
       win->Destroy();
   }
 };
@@ -38,11 +37,12 @@ class DOODLELIB_API Doodle : public wxApp {
   // virtual bool OnExceptionInMainLoop() override;
 
  private:
-  mainWindows* p_mainWindwos;
+  tool_windows* p_tool_windows_;
   SettingWidght* p_setting_widget;
   systemTray* p_systemTray;
   MetadataWidget* p_metadata_widget;
   ServerWidget* p_server_widget;
+
   std::function<void()> p_run_fun;
 
   void guiInit();

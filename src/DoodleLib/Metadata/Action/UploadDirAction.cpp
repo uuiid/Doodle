@@ -22,6 +22,11 @@ UploadDirAction::UploadDirAction(std::any&& path)
 }
 void UploadDirAction::run(const MetadataPtr& in_data) {
   auto k_ch = CoreSet::getSet().getRpcFileSystemClient();
+  if (!p_any.has_value()) {
+    DOODLE_LOG_INFO("没有值")
+    throw DoodleError{"没有值"};
+  }
+
   if (p_any.type() != typeid(FSys::path))
     throw DoodleError{"动作喂入参数无效"};
 
@@ -33,9 +38,9 @@ void UploadDirAction::run(const MetadataPtr& in_data) {
     throw DoodleError{"无效的上传数据"};
   }
   auto k_ass_path = std::make_shared<AssetsPath>(k_path,in_data);
-  k_ass_file->setPathFile(k_ass_path);
+  k_ass_file->setPathFile({k_ass_path});
 
-  k_ch->UploadDir(k_ass_path->getLocalPath(),k_ass_path->getServerPath());
+  k_ch->Upload(k_ass_path->getLocalPath(),k_ass_path->getServerPath());
 }
 std::string UploadDirAction::class_name() {
   return p_name;

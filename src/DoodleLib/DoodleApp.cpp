@@ -12,12 +12,13 @@
 #include <DoodleLib/Server/ServerWidget.h>
 #include <DoodleLib/SettingWidght/SettingWidget.h>
 #include <DoodleLib/mainWidght/MklinkWidget.h>
-#include <DoodleLib/mainWidght/mainWindows.h>
 #include <DoodleLib/mainWidght/systemTray.h>
+#include <DoodleLib/mainWidght/tool_windows.h>
 #include <core/static_value.h>
+#include <fmt/ostream.h>
 #include <wx/cmdline.h>
 #include <wx/wxprec.h>
-#include <fmt/ostream.h>
+
 #include <boost/algorithm/string.hpp>
 #include <exception>
 
@@ -27,7 +28,7 @@ namespace doodle {
 
 Doodle::Doodle()
     : wxApp(),
-      p_mainWindwos(),
+      p_tool_windows_(),
       p_setting_widget(),
       p_systemTray(),
       p_metadata_widget(),
@@ -37,8 +38,8 @@ Doodle::Doodle()
 };
 
 int Doodle::OnExit() {
-  if (p_mainWindwos)
-    p_mainWindwos->Destroy();
+  if (p_tool_windows_)
+    p_tool_windows_->Destroy();
   if (p_systemTray)
     p_systemTray->Destroy();
 
@@ -98,9 +99,9 @@ void Doodle::guiInit() {
   CoreSet::getSet().guiInit();
   const wxIcon& k_icon = wxICON(ID_DOODLE_ICON);
 
-  p_mainWindwos = new mainWindows{};
-  p_mainWindwos->SetIcon(k_icon);
-  SetTopWindow(p_mainWindwos);
+  p_tool_windows_ = new tool_windows{};
+  p_tool_windows_->SetIcon(k_icon);
+  SetTopWindow(p_tool_windows_);
 
   p_systemTray = new systemTray{};
   p_systemTray->SetIcon(k_icon,
@@ -110,23 +111,23 @@ void Doodle::guiInit() {
                             Doodle_VERSION_MINOR,
                             Doodle_VERSION_PATCH,
                             Doodle_VERSION_TWEAK));
-  p_setting_widget = new SettingWidght{p_mainWindwos, wxID_ANY};
-  p_mainWindwos->Show();
+  p_setting_widget = new SettingWidght{p_tool_windows_, wxID_ANY};
+  p_tool_windows_->Show();
 
-  p_metadata_widget = new MetadataWidget{p_mainWindwos, wxID_ANY};
+  p_metadata_widget = new MetadataWidget{p_tool_windows_, wxID_ANY};
   p_metadata_widget->Show();
 }
 
 void Doodle::openMainWindow() {
-  p_mainWindwos->Show();
+  p_tool_windows_->Show();
 }
 
 void Doodle::openSettingWindow() {
-  p_setting_widget = new SettingWidght{p_mainWindwos, wxID_ANY};
+  p_setting_widget = new SettingWidght{p_tool_windows_, wxID_ANY};
   p_setting_widget->Show();
 }
 void Doodle::openMetadaWindow() {
-  p_metadata_widget = new MetadataWidget{p_mainWindwos, wxID_ANY};
+  p_metadata_widget = new MetadataWidget{p_tool_windows_, wxID_ANY};
   p_metadata_widget->Show();
 }
 
@@ -135,7 +136,7 @@ void Doodle::openMetadaWindow() {
 //   try {
 //     throw;
 //   } catch (const std::exception& error) {
-//     auto dig    = wxMessageDialog{p_mainWindwos, ConvStr<wxString>(error.what()), ConvStr<wxString>("错误")};
+//     auto dig    = wxMessageDialog{p_tool_windows_, ConvStr<wxString>(error.what()), ConvStr<wxString>("错误")};
 //     auto result = dig.ShowModal();
 //     return result == wxID_OK;
 //   }

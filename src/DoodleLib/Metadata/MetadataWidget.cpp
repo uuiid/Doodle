@@ -180,7 +180,7 @@ void MetadataWidget::drag_files(wxDropFilesEvent& in_event) {
     k_name   = ConvStr<std::string>(k_s);
     k_v      = 1;
   } else {
-    k_name = ConvStr<std::string>(k_tree_asss->showStr());
+    k_name = ConvStr<std::string>(k_tree_asss->getChildItems().back()->showStr());
     k_v    = k_tree_asss->getChildItems().size();
   }
 

@@ -164,7 +164,7 @@ grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, c
   }
 
   response->set_id(k_id);
-  DOODLE_LOG_DEBUG(k_id)
+  DOODLE_LOG_DEBUG(fmt::format("插入数据库 id: ",k_id))
 
   auto path = getPath(request->uuidpath());
   put_cache_and_file(path, request->metadata_cereal().value());

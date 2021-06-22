@@ -20,6 +20,7 @@ std::vector<ActionPtr> DragFilesFactory::get_action() {
   return {};
 }
 std::vector<ActionPtr> DragFilesFactory::operator()() {
+  runChick();
   return p_action;
 }
 bool DragFilesFactory::has_action() {

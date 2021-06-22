@@ -7,7 +7,7 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/core/CoreSet.h>
-
+#include <Logger/Logger.h>
 namespace doodle {
 AssetsPath::AssetsPath()
     : p_local_path(),
@@ -41,10 +41,10 @@ void AssetsPath::setPath(const FSys::path &in_path) {
 }
 
 void AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata) {
-  auto &k_set           = CoreSet::getSet();
-  auto k_prj            = k_set.GetMetadataSet().Project_();
-  FSys::path k_prj_path = k_prj->str();
+  auto &k_set = CoreSet::getSet();
+  auto k_prj  = k_set.GetMetadataSet().Project_();
 
+  /// 这里使用树,向上寻找,组合路径
   MetadataConstPtr k_m = in_metadata;
   FSys::path k_path{k_m->str()};
   while (k_m->hasParent()) {
@@ -52,8 +52,7 @@ void AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_m
     k_path = FSys::path{k_m->str()} / k_path;
   }
 
-  auto k_server_path = k_prj_path / k_path;
-  setPath(in_path, k_server_path);
+  setPath(in_path, k_path);
 }
 
 void AssetsPath::setPath(const FSys::path &in_local_path, const FSys::path &in_server_path) {
@@ -63,5 +62,6 @@ void AssetsPath::setPath(const FSys::path &in_local_path, const FSys::path &in_s
   const auto k_root_path = in_local_path.root_path();
   p_lexically_relative   = in_local_path.lexically_relative(k_root_path);
   p_server_path          = in_server_path;
+  DOODLE_LOG_INFO(fmt::format("本地路径: {}, 设置服务路径: {}, 相对路径: {} ", p_local_path, p_server_path, p_lexically_relative));
 }
 }  // namespace doodle

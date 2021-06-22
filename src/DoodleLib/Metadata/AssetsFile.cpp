@@ -5,6 +5,7 @@
 #include <DoodleLib/Metadata/AssetsFile.h>
 #include <DoodleLib/Metadata/AssetsPath.h>
 #include <DoodleLib/Metadata/ContextMenu.h>
+#include <core/CoreSet.h>
 ///这个工厂类必须在所有导入的后面
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <Metadata/TimeDuration.h>
@@ -20,26 +21,28 @@ AssetsFile::AssetsFile()
       p_name(),
       p_ShowName(),
       p_path_file(),
+      p_path_files(),
       p_time(std::make_shared<TimeDuration>(std::chrono::system_clock::now())),
-      p_user(),
-      p_department(),
+      p_user(CoreSet::getSet().getUser()),
+      p_department(CoreSet::getSet().getDepartmentEnum()),
       p_comment(),
       p_version(1) {
 }
 
-AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, const FSys::path& in_path, std::string name, std::string showName)
+AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string showName, std::string name)
     : Metadata(),
       p_name(std::move(name)),
       p_ShowName(std::move(showName)),
-      p_path_file(std::make_shared<AssetsPath>(in_path)),
+      p_path_file(std::make_shared<AssetsPath>()),
+      p_path_files(),
       p_time(std::make_shared<TimeDuration>(std::chrono::system_clock::now())),
-      p_user(),
-      p_department(),
+      p_user(CoreSet::getSet().getUser()),
+      p_department(CoreSet::getSet().getDepartmentEnum()),
       p_comment(),
       p_version(1) {
   p_parent = std::move(in_metadata);
-  if (p_ShowName.empty())
-    p_ShowName = convert::Get().toEn(p_name);
+  if (p_name.empty())
+    p_name = convert::Get().toEn(p_ShowName);
 }
 
 // AssetsFile::~AssetsFile() {
@@ -55,8 +58,8 @@ std::string AssetsFile::showStr() const {
 }
 
 bool AssetsFile::operator<(const AssetsFile& in_rhs) const {
-  return std::tie(p_name, p_ShowName, p_path_file) < std::tie(in_rhs.p_name, in_rhs.p_ShowName, in_rhs.p_path_file);
-  //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_ShowName, p_path_file) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_ShowName, in_rhs.p_path_file);
+  return std::tie(p_name, p_ShowName, p_version) < std::tie(in_rhs.p_name, in_rhs.p_ShowName, p_version);
+  //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_ShowName) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_ShowName);
 }
 bool AssetsFile::operator>(const AssetsFile& in_rhs) const {
   return in_rhs < *this;
@@ -118,11 +121,11 @@ std::string AssetsFile::getVersionStr() const {
 void AssetsFile::setVersion(const std::uint64_t& in_Version) noexcept {
   p_version = in_Version;
 }
-const AssetsPathPtr& AssetsFile::getPathFile() const {
-  return p_path_file;
+const std::vector<AssetsPathPtr>& AssetsFile::getPathFile() const {
+  return p_path_files;
 }
-void AssetsFile::setPathFile(const AssetsPathPtr& in_pathFile) {
-  p_path_file = in_pathFile;
+void AssetsFile::setPathFile(const std::vector<AssetsPathPtr>& in_pathFile) {
+  p_path_files = in_pathFile;
   saved(true);
 }
 Department AssetsFile::getDepartment() const {

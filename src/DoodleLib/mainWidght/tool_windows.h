@@ -4,14 +4,14 @@
  * @LastEditTime: 2020-10-09 16:23:08
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
- * @FilePath: \Doodle\doodle_GUI\src\mainWindows.h
+ * @FilePath: \Doodle\doodle_GUI\src\tool_windows.h
  */
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
 
 namespace doodle {
-class mainWindows : public wxFrame ,public details::no_copy{
+class tool_windows : public wxFrame ,public details::no_copy{
   wxWindowIDRef p_exmaya_id;
   wxWindowIDRef p_create_image_id;
   wxWindowIDRef p_create_dir_image_id;
@@ -20,7 +20,7 @@ class mainWindows : public wxFrame ,public details::no_copy{
   wxWindowIDRef p_mkLink_id;
 
  public:
-  explicit mainWindows();
+  explicit tool_windows();
 
  private:
   std::vector<FSys::path> convertPath(const wxDropFilesEvent& event);

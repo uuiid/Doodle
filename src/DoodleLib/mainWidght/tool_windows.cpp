@@ -1,4 +1,4 @@
-#include <DoodleLib/mainWidght/mainWindows.h>
+#include <DoodleLib/mainWidght/tool_windows.h>
 //logger是boost库使用者，放到qt上面能好点
 #include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/Exception/Exception.h>
@@ -22,7 +22,7 @@
 
 namespace doodle {
 
-mainWindows::mainWindows()
+tool_windows::tool_windows()
     : wxFrame(nullptr, wxID_ANY, {"doodle"}),
       p_exmaya_id(NewControlId()),
       p_create_image_id(NewControlId()),
@@ -114,7 +114,7 @@ mainWindows::mainWindows()
   this->SetSize(wxSize{400, 350});
 }
 
-std::vector<FSys::path> mainWindows::convertPath(const wxDropFilesEvent& event) {
+std::vector<FSys::path> tool_windows::convertPath(const wxDropFilesEvent& event) {
   const auto num = event.GetNumberOfFiles();
   std::vector<FSys::path> path{};
   auto wxPath = event.GetFiles();
@@ -125,7 +125,7 @@ std::vector<FSys::path> mainWindows::convertPath(const wxDropFilesEvent& event) 
   return path;
 }
 
-void mainWindows::exportMayaFile(const std::vector<FSys::path>& paths) {
+void tool_windows::exportMayaFile(const std::vector<FSys::path>& paths) {
   auto maya    = std::make_shared<MayaFile>();
   auto process = new MessageAndProgress{this};
   process->createProgress(maya);
@@ -135,7 +135,7 @@ void mainWindows::exportMayaFile(const std::vector<FSys::path>& paths) {
       .detach();
 }
 
-void mainWindows::createVideoFile(const std::vector<FSys::path>& paths) {
+void tool_windows::createVideoFile(const std::vector<FSys::path>& paths) {
   auto image   = std::make_shared<ImageSequence>(paths);
   auto process = new MessageAndProgress{this};
 
@@ -148,7 +148,7 @@ void mainWindows::createVideoFile(const std::vector<FSys::path>& paths) {
       .detach();
 }
 
-void mainWindows::createVideoFileFormDir(const std::vector<FSys::path>& paths) {
+void tool_windows::createVideoFileFormDir(const std::vector<FSys::path>& paths) {
   auto bath    = std::make_shared<ImageSequenceBatch>(paths);
   auto process = new MessageAndProgress{this};
 
@@ -160,7 +160,7 @@ void mainWindows::createVideoFileFormDir(const std::vector<FSys::path>& paths) {
       .detach();
 }
 
-void mainWindows::connectVideo(const std::vector<FSys::path>& paths) {
+void tool_windows::connectVideo(const std::vector<FSys::path>& paths) {
   auto data    = std::make_shared<VideoSequence>(paths);
   auto process = new MessageAndProgress{this};
 
@@ -172,7 +172,7 @@ void mainWindows::connectVideo(const std::vector<FSys::path>& paths) {
       .detach();
 }
 
-void mainWindows::createUe4Project(const std::vector<FSys::path>& paths) {
+void tool_windows::createUe4Project(const std::vector<FSys::path>& paths) {
   try {
     auto ue              = std::make_shared<Ue4Project>(paths[0]);
     auto [k_eps, k_shot] = ShotListDialog::getShotList();

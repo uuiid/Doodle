@@ -144,7 +144,6 @@ TEST_F(CoreTest, create_meatdata) {
           k_test_root = k_ass->getUUID();
 
           auto k_ass_file = std::make_shared<AssetsFile>(k_ass,
-                                                         "D:/ex1.ma",
                                                          "tset",
                                                          "测试");
           k_ass->addChildItem(k_ass_file);

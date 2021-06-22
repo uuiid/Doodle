@@ -135,5 +135,8 @@ void ListAttributeModel::setRoot(const MetadataPtr& in_metadata_ptr) {
   p_metadata = in_metadata_ptr;
   Cleared();
 }
+MetadataPtr ListAttributeModel::getRoot() const {
+  return p_metadata;
+}
 
 }  // namespace doodle
