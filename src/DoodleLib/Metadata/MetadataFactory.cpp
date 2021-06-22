@@ -50,37 +50,47 @@ bool MetadataFactory::hasChild(const Metadata *in_metadata) const {
 }
 
 void MetadataFactory::select_indb(Project *in_) const {
-  this->p_rpcClien->GetMetadata(in_->shared_from_this());
-  select_indb(in_->shared_from_this());
+  auto k_ptr = in_->shared_from_this();
+  this->p_rpcClien->GetMetadata(k_ptr);
+  select_indb(k_ptr);
 }
 void MetadataFactory::select_indb(Shot *in_) const {
-  select_indb(in_->shared_from_this());
+  auto k_ptr = in_->shared_from_this();
+  select_indb(k_ptr);
 }
 void MetadataFactory::select_indb(Episodes *in_) const {
-  select_indb(in_->shared_from_this());
+  auto k_ptr = in_->shared_from_this();
+  select_indb(k_ptr);
 }
 void MetadataFactory::select_indb(Assets *in_) const {
-  select_indb(in_->shared_from_this());
+  auto k_ptr = in_->shared_from_this();
+  select_indb(k_ptr);
 }
 void MetadataFactory::select_indb(AssetsFile *in_) const {
-  select_indb(in_->shared_from_this());
+  auto k_ptr = in_->shared_from_this();
+  select_indb(k_ptr);
 }
 
 void MetadataFactory::updata_db(Project *in_project) const {
-  this->updata_db(in_project->shared_from_this());
+  auto k_ptr = in_project->shared_from_this();
+  this->updata_db(k_ptr);
 }
 
 void MetadataFactory::updata_db(Shot *in_shot) const {
-  this->updata_db(in_shot->shared_from_this());
+  auto k_ptr = in_shot->shared_from_this();
+  this->updata_db(k_ptr);
 }
 void MetadataFactory::updata_db(Episodes *in_episodes) const {
-  this->updata_db(in_episodes->shared_from_this());
+  auto k_ptr = in_episodes->shared_from_this();
+  this->updata_db(k_ptr);
 }
 void MetadataFactory::updata_db(Assets *in_assets) const {
-  this->updata_db(in_assets->shared_from_this());
+  auto k_ptr = in_assets->shared_from_this();
+  this->updata_db(k_ptr);
 }
 void MetadataFactory::updata_db(AssetsFile *in_assetsFile) const {
-  this->updata_db(in_assetsFile->shared_from_this());
+  auto k_ptr = in_assetsFile->shared_from_this();
+  this->updata_db(k_ptr);
 }
 
 // void MetadataFactory::modifyParent(Metadata *in_metadata, const Metadata *in_old_parent) const {

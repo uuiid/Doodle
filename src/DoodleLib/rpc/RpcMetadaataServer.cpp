@@ -164,7 +164,7 @@ grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, c
   }
 
   response->set_id(k_id);
-  DOODLE_LOG_DEBUG(fmt::format("插入数据库 id: ",k_id))
+  DOODLE_LOG_DEBUG(fmt::format("插入数据库 id: ", k_id))
 
   auto path = getPath(request->uuidpath());
   put_cache_and_file(path, request->metadata_cereal().value());
@@ -175,11 +175,18 @@ grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, co
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
 
-  if (!p_cache.Remove(getPath(request->uuidpath()).generic_string()))
+  auto k_path = getPath(request->uuidpath());
+  if (!p_cache.Remove(k_path.generic_string()))
     return {grpc::StatusCode::NOT_FOUND, "未找到缓存"};
+
   auto id = (*k_conn)(sqlpp::remove_from(k_tab).where(k_tab.id == request->id()));
   response->set_id(id);
+
+  auto k_new_p = get_delete_path(request->uuidpath());
+  FSys::rename(k_path, k_new_p);
+
   DOODLE_LOG_DEBUG(fmt::format("delete id {}", id))
+  DOODLE_LOG_WARN(fmt::format("移动文件 {} ---> {}", k_path, k_new_p))
   return grpc::Status::OK;
 }
 

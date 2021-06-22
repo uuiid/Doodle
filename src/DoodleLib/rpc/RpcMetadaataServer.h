@@ -21,9 +21,16 @@ class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service ,p
   caches::fixed_sized_cache<std::string, std::string, caches::LRUCachePolicy<std::string>> p_cache;
 
   [[nodiscard]] inline FSys::path getPath(const std::string& in_string) const {
+    if (in_string.empty()) {
+      throw DoodleError{"str 是空的"};
+    }
+    return p_set.getCacheRoot() / in_string;
+  };
+
+  [[nodiscard]] inline FSys::path get_delete_path(const std::string& in_string) const {
     if (in_string.empty())
       throw DoodleError{"str 是空的"};
-    return p_set.getCacheRoot() / in_string;
+    return p_set.getCacheRoot() / "delete" / in_string;
   };
 
   [[nodiscard]] std::string get_cache_and_file(const FSys::path& key);
