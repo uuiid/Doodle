@@ -1,11 +1,10 @@
-#include <DoodleLib/FileSys/FileSystem.h>
 #include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/FileSys/FileSystem.h>
+#include <DoodleLib/Logger/Logger.h>
+#include <date/date.h>
 
 #include <boost/asio.hpp>
 #include <boost/format.hpp>
-
-#include <DoodleLib/Logger/Logger.h>
-#include <date/date.h>
 namespace doodle {
 void FileSystem::localCopy(const FSys::path& in_sourcePath, const FSys::path& targetPath, bool backup) {
   //创建线程池多线程复制
@@ -46,9 +45,9 @@ void FileSystem::localCopy(const FSys::path& in_sourcePath, const FSys::path& ta
 
   } else {  //复制目录
     auto dregex = std::regex(in_sourcePath.generic_string());
-    DOODLE_LOG_INFO(in_sourcePath.generic_string().c_str()
-                    << "-->"
-                    << targetPath.generic_string().c_str());
+    DOODLE_LOG_INFO(fmt::format("{} --> {}",
+                                in_sourcePath.generic_string().c_str(),
+                                targetPath.generic_string().c_str()));
     backup_path = targetPath / "backup" / time_str;
     for (auto& item :
          FSys::recursive_directory_iterator(in_sourcePath)) {

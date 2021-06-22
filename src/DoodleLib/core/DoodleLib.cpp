@@ -3,7 +3,8 @@
 //
 
 #include "DoodleLib.h"
-
+#include <Logger/Logger.h>
+#include <core/CoreSet.h>
 #include <threadPool/ThreadPool.h>
 namespace doodle {
 
@@ -22,5 +23,9 @@ ThreadPoolPtr DoodleLib::get_thread_pool() {
   auto ptr             = std::unique_ptr<DoodleLib>(new DoodleLib{});
   DoodleLib::p_install = ptr.get();
   return ptr;
+}
+DoodleLib::~DoodleLib() {
+  Logger::clear();
+  CoreSet::getSet().clear();
 }
 }  // namespace doodle

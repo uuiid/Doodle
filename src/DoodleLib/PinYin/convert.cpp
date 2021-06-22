@@ -1,9 +1,9 @@
-#include <PinYin/convert.h>
-#include <boost/locale.hpp>
 #include <Logger/Logger.h>
+#include <PinYin/convert.h>
 
-#include <stdexcept>
+#include <boost/locale.hpp>
 #include <regex>
+#include <stdexcept>
 
 namespace doodle {
 static std::vector<std::string> pinyin_list{};
@@ -32,7 +32,7 @@ std::string convert::toEn(const std::string &conStr) {
       result.append(boost::locale::conv::utf_to_utf<char>(std::wstring{data}));
     }
   }
-  DOODLE_LOG_INFO(conStr << " to " << result);
+  DOODLE_LOG_INFO(fmt::format("{} to {}", conStr, result));
   return result;
 }
 
@@ -45,7 +45,7 @@ std::string convert::toEn(const std::wstring &conStr) {
       result.append(boost::locale::conv::utf_to_utf<char>(std::wstring{data}));
     }
   }
-  DOODLE_LOG_INFO(conStr << " to " << result);
+  DOODLE_LOG_INFO(fmt::format("{} to {}", boost::locale::conv::utf_to_utf<char>(conStr), result));
   return result;
 }
 
@@ -64,4 +64,4 @@ convert &convert::Get() noexcept {
   return instance;
 }
 
-}
+}  // namespace doodle

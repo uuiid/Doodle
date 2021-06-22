@@ -16,6 +16,8 @@ class DOODLELIB_API DoodleLib : public details::no_copy{
 
   ThreadPoolPtr p_thread_pool;
  public:
+  virtual ~DoodleLib();
+
   static DoodleLib& Get();
 
   ThreadPoolPtr get_thread_pool();

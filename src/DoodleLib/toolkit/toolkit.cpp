@@ -49,7 +49,7 @@ void toolkit::installUePath(const FSys::path &path) {
     FSys::create_directories(targetPath);
   }
 
-  DOODLE_LOG_INFO("install plug : " << sourePath << " --> " << targetPath);
+  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}",sourePath,targetPath));
   FileSystem::localCopy(sourePath, targetPath, false);
 }
 
@@ -85,7 +85,7 @@ bool toolkit::deleteUeCache() {
 
   FSys::path path{pManager};
   path /= "UnrealEngine";
-  DOODLE_LOG_INFO("delete Folder : " << path);
+  DOODLE_LOG_INFO(fmt::format("delete Folder : {}",path));
   FSys::remove_all(path);
   return true;
 }

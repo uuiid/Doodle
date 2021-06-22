@@ -10,7 +10,6 @@
 #include <gtest/gtest.h>
 
 #include <iostream>
-#include <locale>
 class Environment : public ::testing::Environment {
  public:
   void SetUp() override;
@@ -28,7 +27,6 @@ void Environment::SetUp() {
 
 void Environment::TearDown() {
   doodle::CoreSet::getSet().clear();
-  boost::log::core::get()->remove_all_sinks();
 }
 
 int main(int argc, char *argv[]) {

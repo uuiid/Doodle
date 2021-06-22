@@ -18,7 +18,7 @@ RpcFileSystemServer::RpcFileSystemServer()
 
 grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
   FSys::path k_path = p_set.getDataRoot() / request->path();
-  DOODLE_LOG_DEBUG("get info path: " << k_path);
+  DOODLE_LOG_DEBUG(fmt::format("get info path: {}", k_path));
 
   auto k_ex = FSys::exists(k_path);
   if (!k_ex)
@@ -42,7 +42,7 @@ grpc::Status RpcFileSystemServer::IsExist(grpc::ServerContext* context, const Fi
   FSys::path k_path = p_set.getDataRoot() / request->path();
   auto k_ex         = FSys::exists(k_path);
   response->set_exist(k_ex);
-  DOODLE_LOG_DEBUG("get exist path: " << k_path);
+  DOODLE_LOG_DEBUG(fmt::format("get exist path: {}", k_path));
   return grpc::Status::OK;
 }
 
@@ -55,7 +55,7 @@ grpc::Status RpcFileSystemServer::IsFolder(grpc::ServerContext* context, const F
 
   auto k_dir = FSys::is_directory(k_path);
   response->set_isfolder(k_dir);
-  DOODLE_LOG_DEBUG("get is dir path: " << k_path);
+  DOODLE_LOG_DEBUG(("get is dir path: {}", k_path));
   return grpc::Status::OK;
 }
 
@@ -73,7 +73,7 @@ grpc::Status RpcFileSystemServer::GetSize(grpc::ServerContext* context, const Fi
 
   response->set_size(FSys::file_size(k_path));
 
-  DOODLE_LOG_DEBUG("get size path: " << k_path);
+  DOODLE_LOG_DEBUG(fmt::format("get size path: {}", k_path));
 
   return grpc::Status::OK;
 }
@@ -95,7 +95,7 @@ grpc::Status RpcFileSystemServer::GetTimestamp(grpc::ServerContext* context, con
   auto k_google_time = google::protobuf::util::TimeUtil::TimeTToTimestamp(k_time);
   response->mutable_update_time()->CopyFrom(k_google_time);
 
-  DOODLE_LOG_DEBUG("get time path: " << k_path);
+  DOODLE_LOG_DEBUG(fmt::format("get time path: {}", k_path));
 
   return grpc::Status::OK;
 }
@@ -104,16 +104,16 @@ grpc::Status RpcFileSystemServer::GetList(grpc::ServerContext* context, const Fi
   auto k_root       = p_set.getDataRoot();
   FSys::path k_path = p_set.getDataRoot() / request->path();
 
-  DOODLE_LOG_DEBUG("list info path: " << k_path);
+  DOODLE_LOG_DEBUG(fmt::format("list info path: {}", k_path));
 
   auto k_ex  = FSys::exists(k_path);
   auto k_dir = FSys::is_directory(k_path);
   if (!k_ex || !k_dir) {
     boost::format str{"路径: %s 存在: %b 是目录: %b"};
     str % k_path % k_ex % k_dir;
-    DOODLE_LOG_DEBUG(str.str())
+    DOODLE_LOG_DEBUG(fmt::format("路径: {} 存在: {} 是目录: {}", k_path, k_ex, k_dir))
     return {
-        grpc::StatusCode::CANCELLED, str.str()};
+        grpc::StatusCode::CANCELLED, fmt::format("路径: {} 存在: {} 是目录: {}", k_path, k_ex, k_dir)};
   }
 
   FileInfo k_info{};
@@ -134,15 +134,21 @@ grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const F
   if (!k_ex || k_dir)
     return grpc::Status::CANCELLED;
 
-  DOODLE_LOG_DEBUG("down path: " << k_path);
+  DOODLE_LOG_DEBUG(fmt::format("down path: {}", k_path));
 
   {
     FSys::ifstream k_file{k_path, std::ios::in | std::ios::binary};
 
     if (!k_file.is_open() || !k_file.good()) {
-      boost::format error{"eofbit: %b; failbit: %b; badbit: %b;"};
-      error % k_file.eof() % k_file.fail() % k_file.bad();
-      return {grpc::StatusCode::RESOURCE_EXHAUSTED, error.str()};
+      DOODLE_LOG_ERROR(fmt::format(
+          "eofbit: %b; failbit: %b; badbit: %b;", k_file.eof(),
+          k_file.fail(),
+          k_file.bad()))
+      return {grpc::StatusCode::RESOURCE_EXHAUSTED,
+              fmt::format(
+                  "eofbit: %b; failbit: %b; badbit: %b;", k_file.eof(),
+                  k_file.fail(),
+                  k_file.bad())};
     }
     //  std::istreambuf_iterator<char> k_iter{k_file};
 
@@ -172,7 +178,7 @@ grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::Ser
   FSys::path k_path = p_set.getDataRoot() / k_file_stream.info().path();
   auto k_ex         = FSys::exists(k_path.parent_path());
 
-  DOODLE_LOG_DEBUG("upload path: " << k_path);
+  DOODLE_LOG_DEBUG(fmt::format("upload path: {}", k_path));
 
   if (!k_ex)
     FSys::create_directories(k_path.parent_path());
@@ -185,9 +191,13 @@ grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::Ser
     FSys::ofstream k_file{k_path, std::ios::out | std::ios::binary};
 
     if (!k_file.is_open() || !k_file.good()) {
-      boost::format error{"eofbit: %b; failbit: %b; badbit: %b;"};
-      error % k_file.eof() % k_file.fail() % k_file.bad();
-      return {grpc::StatusCode::RESOURCE_EXHAUSTED, error.str()};
+      DOODLE_LOG_ERROR(fmt::format("eofbit: %b; failbit: %b; badbit: %b;", k_file.eof(),
+                                   k_file.fail(),
+                                   k_file.bad()))
+      return {grpc::StatusCode::RESOURCE_EXHAUSTED,
+              fmt::format("eofbit: %b; failbit: %b; badbit: %b;", k_file.eof(),
+                          k_file.fail(),
+                          k_file.bad())};
     }
 
     while (reader->Read(&k_file_stream)) {

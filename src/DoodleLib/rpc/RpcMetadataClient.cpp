@@ -127,7 +127,7 @@ void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
     k_in_db.mutable_parent()->set_value(in_metadataPtr->p_parent_id.value());
 
   // #ifndef NDEBUG
-  DOODLE_LOG_DEBUG(in_metadataPtr->str() << " has child " << (in_metadataPtr->hasChild() ? "true" : "false"));
+  DOODLE_LOG_DEBUG(fmt::format("{} 子物体 -> {} ",in_metadataPtr->str(),in_metadataPtr->hasChild()));
   // #endif
   vector_container my_data{};
   {

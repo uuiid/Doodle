@@ -5,6 +5,11 @@
 #include <boost/log/sinks.hpp>
 //windows头
 #include <Shlobj.h>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/msvc_sink.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/spdlog.h>
 #include <windows.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -42,82 +47,48 @@ boostLoggerInitAsyn(const std::string &logPath,
 
 void boostLoggerInitAsyn(const std::string &logPath,
                          std::size_t logMaxSize) {
-  boost::filesystem::path appdata{};
-  PWSTR pManager;
-  auto appdata_res = SHGetKnownFolderPath(FOLDERID_RoamingAppData, NULL, nullptr, &pManager);
-  if (appdata_res != S_OK)
-    appdata = boost::dll::program_location().parent_path();
-  else
-    appdata = boost::filesystem::path{pManager};
-  CoTaskMemFree(pManager);
-  // boost::log::add_file_log(
-  //     boost::log::keywords::file_name = appdata / "doodle" / "log" / "doodle_%Y_%m_%d_%H_%M_%S.%5N.html",
-  //     boost::log::keywords::rotation_size = 10 * 1024 * 1024,
-  //     boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_interval(boost::posix_time::hours(1)),
-  //     boost::log::keywords::format =
-  //         boost::log::expressions::stream
-  //         << boost::log::trivial::severity << "\t"
-  //         << boost::log::expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S") << "\t"
-  //         << boost::log::expressions::smessage
-  //         << "\r\n");
-  // boost::log::core::get()->set_filter(
-  //     boost::log::trivial::severity >= boost::log::trivial::debug);
-  auto tmp_exe_name = boost::dll::program_location();
-  if (tmp_exe_name.empty())
-    tmp_exe_name = "/doodle.exe";
-  appdata /= tmp_exe_name.stem() / "log";
+
+  auto appdata = boost::filesystem::current_path();
+  appdata /= logPath;
+  appdata /= "log";
   if (!boost::filesystem::exists(appdata)) {
     boost::filesystem::create_directories(appdata);
   }
+  appdata /= "logfile.txt";
 
-  boost::shared_ptr<boost::log::sinks::asynchronous_sink<boost::log::sinks::text_file_backend>>
-      sink{new boost::log::sinks::asynchronous_sink<boost::log::sinks::text_file_backend>{
-          boost::log::keywords::target              = appdata,
-          boost::log::keywords::file_name           = appdata / logPath,
-          boost::log::keywords::rotation_size       = 1024 * 1024,
-          boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_interval(boost::posix_time::hours(1)),
-          boost::log::keywords::max_size            = logMaxSize,
-          boost::log::keywords::min_free_space      = 100 * 1024 * 1024,
-          boost::log::keywords::max_files           = 1024}};
-  // clang-format off
-  sink->set_formatter(
-      boost::log::expressions::stream
-      << "<div class=\"" << boost::log::trivial::severity << "\">"
-      << boost::log::expressions::format_date_time<boost::posix_time::ptime>("TimeStamp","%Y-%m-%d %H:%M:%S")
-      << boost::log::expressions::smessage
-      << "</div>\n"
-      );//, "%H:%M:%S.%f"
-  // clang-format on
-  sink->locked_backend()->set_open_handler([=](boost::log::sinks::text_file_backend::stream_type &file) {
-    file << logTemplate;
-  });
-  sink->locked_backend()->set_close_handler([=](boost::log::sinks::text_file_backend::stream_type &file) {
-    file << " \n<body>";
-  });
-  sink->set_filter(boost::log::trivial::severity >= boost::log::trivial::debug);
-
-  sink->locked_backend()->auto_flush(true);
-  boost::log::core::get()->add_global_attribute("TimeStamp", boost::log::attributes::local_clock());
-  boost::log::core::get()->add_sink(sink);
-
-  sink->imbue(boost::locale::generator()(""));  //"zh_CN.UTF-8"
+  try {
+    using namespace std::chrono_literals;
+    spdlog::init_thread_pool(8192, 1);
 #ifdef NDEBUG
+    auto k_file  = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(appdata.generic_string(), 1024 * 1024, 100);
+    std::vector<spdlog::sink_ptr> sinks{k_file};
 #else
-  //debug 记录器
-  boost::shared_ptr<boost::log::sinks::synchronous_sink<boost::log::sinks::debug_output_backend>>
-      sink_t(new boost::log::sinks::synchronous_sink<boost::log::sinks::debug_output_backend>());
-  sink->set_filter(boost::log::expressions::is_debugger_present() && (boost::log::trivial::severity >= boost::log::trivial::debug));
-  boost::log::core::get()->add_sink(sink_t);
-  sink_t->imbue(boost::locale::generator()(""));  //"zh_CN.UTF-8"
+    auto k_debug = std::make_shared<spdlog::sinks::msvc_sink_mt>();
+    auto k_file  = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(appdata.generic_string(), 1024 * 1024, 100);
+    std::vector<spdlog::sink_ptr> sinks{k_file, k_debug};
 #endif  //NDEBUG
+    auto k_logger = std::make_shared<spdlog::async_logger>(
+        "doodle_lib", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    spdlog::register_logger(k_logger);
 
-  boost::log::add_common_attributes();
-  BOOST_LOG_TRIVIAL(debug)
-      << "log日志文件初始化成功";
-  boost::log::core::get()->flush();
+    spdlog::set_default_logger(k_logger);
+    spdlog::flush_every(3s);
+    spdlog::set_level(spdlog::level::debug);
+  } catch (const spdlog::spdlog_ex &spdlog_ex) {
+    std::cout << "日志初始化失败" << spdlog_ex.what() << std::endl;
+  }
+
+  SPDLOG_DEBUG(fmt::format("初始化gebug日志 {}","ok"));
+  SPDLOG_INFO(fmt::format("初始化信息日志 {}","ok"));
+  SPDLOG_WARN(fmt::format("初始化警告日志 {}","ok"));
+  SPDLOG_ERROR(fmt::format("初始化错误日志 {}","ok"));
+  spdlog::source_loc{};
 }
 
 void doodle_initLog(const std::string &logPath, std::size_t logMaxSize, bool async) {
   boostLoggerInitAsyn(logPath, logMaxSize);
+}
+void DOODLELIB_API clear() {
+  spdlog::shutdown();
 }
 }  // namespace doodle::Logger

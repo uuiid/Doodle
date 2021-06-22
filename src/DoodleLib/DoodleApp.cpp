@@ -16,9 +16,8 @@
 #include <DoodleLib/mainWidght/systemTray.h>
 #include <core/static_value.h>
 #include <wx/cmdline.h>
-#include <wx/windowptr.h>
 #include <wx/wxprec.h>
-
+#include <fmt/ostream.h>
 #include <boost/algorithm/string.hpp>
 #include <exception>
 
@@ -150,7 +149,8 @@ bool Doodle::OnInit() {
   wxLog::EnableLogging(true);
 
   for (int i = 0; i < argc; ++i) {
-    DOODLE_LOG_INFO("arg " << i << ": " << argv[i]);
+    auto k_= argv[i];
+    DOODLE_LOG_INFO(fmt::format("arg {}", argv[i]));
   }
 
   if (p_run_fun) {

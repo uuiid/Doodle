@@ -113,6 +113,7 @@ target_link_libraries(DoodleLib PUBLIC
 #        Boost::locale
 #        Boost::filesystem
 #        Boost::log
+        spdlog::spdlog
         $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
         $<IF:$<CONFIG:Debug>,${WX_cored},${WX_core}>
         $<IF:$<CONFIG:Debug>,${WX_advd},${WX_adv}>
@@ -130,9 +131,9 @@ target_compile_definitions(DoodleLib
         PUBLIC
         _WIN32_WINNT=0x0A00
         WIN32_LEAN_AND_MEAN
+        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         PRIVATE
         _CRT_SECURE_NO_WARNINGS
-#        $<$<CONFIG:Debug>:_CRTDBG_MAP_ALLOC>
         _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
         )
 

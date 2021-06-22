@@ -25,7 +25,7 @@ void RpcServerHandle::registerFileSystemServer(int port) {
   p_build->AddListeningPort(server_address, grpc::InsecureServerCredentials());
   p_build->RegisterService(p_rpc_file_system_server.get());
 
-  DOODLE_LOG_INFO("Server listening on " << server_address);
+  DOODLE_LOG_INFO(fmt::format("Server listening on {}",server_address));
 }
 
 void RpcServerHandle::registerMetadataServer(int port) {
@@ -36,7 +36,7 @@ void RpcServerHandle::registerMetadataServer(int port) {
   p_build->AddListeningPort(server_address, grpc::InsecureServerCredentials());
   p_build->RegisterService(p_rpc_metadata_server.get());
 
-  DOODLE_LOG_INFO("Server listening on " << server_address);
+  DOODLE_LOG_INFO(fmt::format("Server listening on {}",server_address));
 }
 
 void RpcServerHandle::runServer(int port_meta, int port_file_sys) {

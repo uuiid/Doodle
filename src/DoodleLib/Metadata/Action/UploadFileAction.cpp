@@ -6,11 +6,11 @@
 namespace doodle {
 UploadFileAction::UploadFileAction()
     : Action() {
-  p_name = "上传文件"
+  p_name = "上传文件";
 }
 UploadFileAction::UploadFileAction(std::any&& in_any)
     : Action(std::move(in_any)) {
-  p_name = "上传文件"
+  p_name = "上传文件";
 }
 std::string UploadFileAction::class_name() {
   return p_name;

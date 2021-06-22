@@ -9,3 +9,9 @@ TEST(pinyinlib, convert) {
   trs = doodle::convert::Get().toEn("李叶华");
   std::cout << trs << std::endl;
 }
+
+TEST(pinyinlib, fmt) {
+  std::cout << fmt::format(L"{}", std::wstring{L"test"}) << "\n"
+            << fmt::format("{:04d}", 2)
+            << std::endl;
+}

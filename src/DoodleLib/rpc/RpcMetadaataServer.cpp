@@ -79,7 +79,7 @@ grpc::Status RpcMetadaataServer::GetProject(grpc::ServerContext *context, const 
     //    auto time   = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
     *k_item = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
 
-    DOODLE_LOG_DEBUG(row.id << row.uuidPath)
+    DOODLE_LOG_DEBUG(fmt::format("id: {} uuidPath: {}", row.id.value(), row.uuidPath.value()))
 
     auto k_path = getPath(row.uuidPath.value());
     auto k_str  = get_cache_and_file(k_path);
@@ -114,7 +114,7 @@ grpc::Status RpcMetadaataServer::GetChild(grpc::ServerContext *context, const Da
       continue;
     k_db.mutable_metadata_cereal()->set_value(std::move(k_str));
 
-    DOODLE_LOG_DEBUG(row.id << row.uuidPath)
+    DOODLE_LOG_DEBUG(fmt::format("id: {} uuidPath: {}", row.id.value(), row.uuidPath.value()))
 
     k_date->Add(std::move(k_db));
   }
@@ -141,7 +141,7 @@ grpc::Status RpcMetadaataServer::GetMetadata(grpc::ServerContext *context, const
     if (k_str.empty())
       return grpc::Status::CANCELLED;
 
-    DOODLE_LOG_DEBUG(row.id << row.uuidPath)
+    DOODLE_LOG_DEBUG(fmt::format("id: {} uuidPath: {}", row.id.value(), row.uuidPath.value()))
     response->mutable_metadata_cereal()->set_value(std::move(k_str));
   }
 
@@ -179,7 +179,7 @@ grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, co
     return {grpc::StatusCode::NOT_FOUND, "未找到缓存"};
   auto id = (*k_conn)(sqlpp::remove_from(k_tab).where(k_tab.id == request->id()));
   response->set_id(id);
-  DOODLE_LOG_DEBUG("delete id" << id)
+  DOODLE_LOG_DEBUG(fmt::format("delete id {}", id))
   return grpc::Status::OK;
 }
 
@@ -193,8 +193,7 @@ grpc::Status RpcMetadaataServer::UpdataMetadata(grpc::ServerContext *context, co
   auto path = getPath(request->uuidpath());
   put_cache_and_file(path, request->metadata_cereal().value());
 
-  DOODLE_LOG_DEBUG("id"<< request->id() <<"update" << path)
-
+  DOODLE_LOG_DEBUG(fmt::format("id: {} update: {}", request->id(), path))
   return grpc::Status::OK;
 }
 

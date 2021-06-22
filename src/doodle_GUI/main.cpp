@@ -25,18 +25,13 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
   auto &set = doodle::CoreSet::getSet();
 
   auto result = wxEntry(hInstance, hPrevInstance, nullptr, nCmdShow);
-  boost::log::core::get()->remove_all_sinks();
 
   return result;
 } catch (const std::exception &err) {
   DOODLE_LOG_ERROR(err.what());
   doodle::CoreSet::getSet().writeDoodleLocalSet();
-  boost::log::core::get()->remove_all_sinks();
-  doodle::CoreSet::getSet().clear();
   return 1;
 } catch (...) {
   doodle::CoreSet::getSet().writeDoodleLocalSet();
-  boost::log::core::get()->remove_all_sinks();
-  doodle::CoreSet::getSet().clear();
   return 1;
 }

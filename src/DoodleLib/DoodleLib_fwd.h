@@ -3,6 +3,22 @@
 #include <DoodleLib/libWarp/sqlppWarp.h>
 
 #include <boost/filesystem.hpp>
+
+#include <fmt/format.h>
+
+
+namespace fmt{
+namespace FSys = boost::filesystem;
+template<>
+struct formatter<FSys::path>: formatter<string_view>{
+  template <typename FormatContext>
+  auto format(FSys::path in_path, FormatContext& ctx) {
+    return formatter<string_view>::format(in_path.generic_string(), ctx);
+  }
+};
+}
+
+
 //开始我们的名称空间
 namespace doodle {
 namespace details {
@@ -79,7 +95,7 @@ using DragFilesFactoryPtr       = std::shared_ptr<DragFilesFactory>;
 using ActionPtr                 = std::shared_ptr<Action>;
 using UploadDirActionPtr        = std::shared_ptr<UploadDirAction>;
 using UploadFileActionPtr       = std::shared_ptr<UploadFileAction>;
-usinf UploadDirAndFileActionPre = std::shared_ptr<UploadDirAndFileAction>;
+using UploadDirAndFileActionPre = std::shared_ptr<UploadDirAndFileAction>;
 using DoodleLibPtr              = std::unique_ptr<DoodleLib>;
 using ThreadPoolPtr             = std::shared_ptr<ThreadPool>;
 class Doodle;

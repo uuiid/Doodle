@@ -4,6 +4,7 @@
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <Logger/Logger.h>
 
+#include <boost/locale.hpp>
 #include <boost/format.hpp>
 #include <boost/process.hpp>
 
@@ -50,7 +51,7 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
   // boost::format str{R"(%1% --path %2% --exportpath %3%)"};
   // str % k_tmp_path.generic_string() % file_path.generic_string() % k_export_path.generic_string();
 
-  DOODLE_LOG_INFO(str.str())
+  DOODLE_LOG_INFO(fmt::format(" {} ", boost::locale::conv::utf_to_utf<char>(str.str())))
 
   STARTUPINFO si{};
   PROCESS_INFORMATION pi{};
