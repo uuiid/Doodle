@@ -9,7 +9,6 @@
 
 #include <boost/filesystem.hpp>
 #include <gtest/gtest.h>
-#include <boost/regex.hpp>
 #include <boost/locale.hpp>
 #include <boost/format.hpp>
 
@@ -35,11 +34,6 @@ TEST(dboost, test_encode) {
 
 TEST(dboost, test_decode) {
   ASSERT_TRUE(decode64("MTIzNDU=") == "12345");
-}
-
-TEST(dboost, test_rex) {
-  auto rex = boost::regex(R"(Anm|Animation)");
-  ASSERT_TRUE(boost::regex_match("Anm", rex));
 }
 
 TEST(dboost, normalize_path) {

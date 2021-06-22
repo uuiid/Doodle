@@ -17,7 +17,6 @@
 #include <boost/dll.hpp>
 #include <boost/format.hpp>
 #include <boost/process.hpp>
-#include <boost/regex.hpp>
 #include <cereal/archives/portable_binary.hpp>
 #include <magic_enum.hpp>
 #include <nlohmann/json.hpp>
