@@ -5,6 +5,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <wx/dataview.h>
+#include <boost/signals2.hpp>
 class wxDataViewCtrl;
 
 namespace doodle {
@@ -22,9 +23,12 @@ class MetadataWidget : public wxFrame {
   wxObjectDataPtr<AssetsTree> p_assets_tree_model;
   wxObjectDataPtr<ListAttributeModel> p_assets_attribute_model;
 
+  boost::signals2::connection p_conn;
+  void drag_files(wxDropFilesEvent& in_event);
   void context_menu(wxDataViewEvent& in_event,wxDataViewModel* in_model);
  public:
   explicit MetadataWidget(wxWindow* in_window, wxWindowID in_id);
+  virtual ~MetadataWidget();
 };
 
 }  // namespace doodle
