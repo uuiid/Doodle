@@ -1,23 +1,23 @@
 ﻿#pragma once
 
 #include <DoodleLib/libWarp/sqlppWarp.h>
+#include <fmt/format.h>
 
 #include <boost/filesystem.hpp>
 
-#include <fmt/format.h>
-
-
-namespace fmt{
+namespace fmt {
 namespace FSys = boost::filesystem;
-template<>
-struct formatter<FSys::path>: formatter<string_view>{
+template <class Char>
+struct formatter<FSys::path, Char> : formatter<basic_string_view<Char>,Char > {
   template <typename FormatContext>
-  auto format(FSys::path in_path, FormatContext& ctx) {
-    return formatter<string_view>::format(in_path.generic_string(), ctx);
+  auto format(const FSys::path &in_path, FormatContext &ctx) {
+    if constexpr (std::is_same_v<Char, char>)
+      return formatter<basic_string_view<Char> ,Char>::format(in_path.generic_string(), ctx);
+    else if constexpr (std::is_same_v<Char, wchar_t>)
+      return formatter<basic_string_view<Char> ,Char>::format(in_path.generic_wstring(), ctx);
   }
 };
-}
-
+}  // namespace fmt
 
 //开始我们的名称空间
 namespace doodle {

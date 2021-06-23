@@ -58,12 +58,11 @@ void Ue4Setting::testValue() {
     throw DoodleError{"结束镜头小于开始镜头!"};
   }
   if (ue4_path.empty()) {
-    auto key_str = boost::wformat{LR"(SOFTWARE\EpicGames\Unreal Engine\%s)"};  //InstalledDirectory
     auto wv      = boost::locale::conv::utf_to_utf<wchar_t>(Ue4Setting::Get().Version());
-    key_str % wv;
+    auto key_str = fmt::format(LR"(SOFTWARE\EpicGames\Unreal Engine\{})",wv);
 
     auto key = winreg::RegKey{HKEY_LOCAL_MACHINE};
-    key.Open(HKEY_LOCAL_MACHINE, key_str.str(), KEY_QUERY_VALUE);
+    key.Open(HKEY_LOCAL_MACHINE, key_str, KEY_QUERY_VALUE);
     ue4_path = FSys::path{key.GetStringValue(L"InstalledDirectory")};
   }
 }

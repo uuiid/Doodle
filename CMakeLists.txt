@@ -49,7 +49,7 @@ include(CMakeRC)
 #
 #find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
 find_package(wxWidgets REQUIRED)
-find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time regex iostreams log locale iostreams)
+find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time  log locale iostreams)
 find_package(EnTT CONFIG REQUIRED)
 # find_package(CURL REQUIRED)
 find_package(Sqlpp11 REQUIRED)

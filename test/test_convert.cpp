@@ -12,7 +12,9 @@ TEST(pinyinlib, convert) {
 
 TEST(pinyinlib, fmt) {
   std::cout << fmt::format(L"{}", std::wstring{L"test"}) << "\n"
-            << fmt::format("{:04d}", 2)
+            << fmt::format("{:04d}", 2) << "\n"
+            << fmt::format("{}", doodle::FSys::path{"test"}) << "\n"
+            << fmt::format(L"{}", doodle::FSys::path{L"还会"}) << "\n"
             << std::endl;
 }
 TEST(core, create_path) {

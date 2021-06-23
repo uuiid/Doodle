@@ -107,6 +107,8 @@ target_link_libraries(DoodleLib PUBLIC
         cereal
         magic_enum::magic_enum
         ${Boost_LIBRARIES}
+        Boost::locale
+        Boost::filesystem
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}
 #        EnTT::EnTT
