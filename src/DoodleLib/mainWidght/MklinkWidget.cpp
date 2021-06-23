@@ -35,8 +35,7 @@ bool MklinkWidget::CreateLink() {
     auto k_t = p_target.parent_path() / Ue4Project::Content / str_name;
     if (!FSys::exists(k_s)) {
       auto k_str       = fmt::format("来源{} 不存在,跳过添加", k_s);
-      auto k_wx_string = ConvStr<wxString>(k_str);
-      wxMessageDialog{this, ConvStr<wxString>(k_wx_string)}.ShowModal();
+      wxMessageDialog{this, ConvStr<wxString>(k_str)}.ShowModal();
       continue;
     }
     com += fmt::format(LR"({};{};)", k_s.generic_wstring(), k_t.generic_wstring());

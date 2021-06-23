@@ -102,6 +102,7 @@ class Doodle;
 [[maybe_unused]] DOODLELIB_API DoodleLibPtr make_doodle_lib();
 template <typename SSC, typename SSN>
 SSC ConvStr(const SSN &str) {
+  static_assert(false,"这个函数会出错");
   return SSC{str};
 }
 
