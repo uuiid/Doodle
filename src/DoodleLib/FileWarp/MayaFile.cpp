@@ -4,8 +4,8 @@
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <Logger/Logger.h>
 
+
 #include <boost/locale.hpp>
-#include <boost/format.hpp>
 #include <boost/process.hpp>
 
 namespace doodle {
@@ -45,13 +45,14 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
     return false;
   auto k_tmp_path = this->createTmpFile();
   //生成命令
-  boost::wformat str{LR"("%4%/mayapy.exe" %1% --path %2% --exportpath %3%)"};
-  str % k_tmp_path.generic_wstring() % file_path.generic_wstring() % k_export_path.generic_wstring();
-  str % p_path.generic_wstring();
-  // boost::format str{R"(%1% --path %2% --exportpath %3%)"};
-  // str % k_tmp_path.generic_string() % file_path.generic_string() % k_export_path.generic_string();
+  auto str_ = fmt::format(
+      LR"("{}/mayapy.exe" {} --path {} --exportpath {})",
+      p_path.generic_wstring(),
+      k_tmp_path.generic_wstring(),
+      file_path.generic_wstring(),
+      k_export_path.generic_wstring());
 
-  DOODLE_LOG_INFO(fmt::format(" {} ", boost::locale::conv::utf_to_utf<char>(str.str())))
+  DOODLE_LOG_INFO(fmt::format(" {} ", boost::locale::conv::utf_to_utf<char>(str_)))
 
   STARTUPINFO si{};
   PROCESS_INFORMATION pi{};
@@ -62,7 +63,7 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
     //使用windowsIPA创建子进程
     CreateProcess(
         nullptr,
-        (wchar_t*)str.str().c_str(),
+        (wchar_t*)str_.c_str(),
         nullptr,
         nullptr,
         false,
@@ -117,7 +118,6 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
   auto it    = result.begin();
   auto size  = boost::numeric_cast<float>(result.size());
   auto k_pro = float{0};
-  auto mess  = boost::format{"文件:%s-->%s\n"};
 
   while (!result.empty()) {
     status = it->second.wait_for(std::chrono::milliseconds{10});
@@ -131,10 +131,10 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
       //   //添加错误
       //   DOODLE_LOG_WARN(err.what());
       // }
-      mess % it->first % ((it->second.get()) ? "成功" : "失败");
+
       //发送消息
-      this->messagResult(mess.str());
-      mess.clear();
+      this->messagResult(fmt::format("文件:{} --> {}", it->first, ((it->second.get()) ? "成功" : "失败")));
+
       //擦除容器内数据
       it = result.erase(it);
     } else {
@@ -157,4 +157,4 @@ bool MayaFile::is_maya_file(const FSys::path& in_path) {
   return k_e == ".ma" || k_e == ".mb";
 }
 
-}
+}  // namespace doodle

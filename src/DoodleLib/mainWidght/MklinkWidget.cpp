@@ -8,7 +8,7 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <shellapi.h>
 
-#include <boost/format.hpp>
+
 #include <boost/locale.hpp>
 namespace doodle {
 FSys::path MklinkWidget::getFilePath(wxWindow* parent) {
@@ -30,27 +30,19 @@ bool MklinkWidget::CreateLink() {
   // auto k_r = CoreSet::toIpPath(k_s.root_name()) / k_s.relative_path();
   //生成命令
   std::wstring com{L"-fun -mklink="};
-  boost::wformat substr{LR"(%s;%s;)"};
-  for(const auto& str_name: std::vector<std::string>{Ue4Project::Character,Ue4Project::Prop}){
+  for (const auto& str_name : std::vector<std::string>{Ue4Project::Character, Ue4Project::Prop}) {
     auto k_s = p_source.parent_path() / Ue4Project::Content / str_name;
     auto k_t = p_target.parent_path() / Ue4Project::Content / str_name;
-    if(!FSys::exists(k_s)){
-      boost::format k_format{"来源 %s 不存在,跳过添加"} ;
-      k_format % k_s.generic_string();
-      auto k_wx_string = ConvStr<wxString>(k_format.str());
+    if (!FSys::exists(k_s)) {
+      auto k_str       = fmt::format("来源{} 不存在,跳过添加", k_s);
+      auto k_wx_string = ConvStr<wxString>(k_str);
       wxMessageDialog{this, ConvStr<wxString>(k_wx_string)}.ShowModal();
       continue;
     }
-    substr % k_s.generic_wstring() % k_t.generic_wstring();
-    com+=substr.str();
-    substr.clear();
+    com += fmt::format(LR"({};{};)", k_s.generic_wstring(), k_t.generic_wstring());
   }
   com.pop_back();
   auto path = CoreSet::program_location() / "doodleExe.exe";
-  // str % k_tmp_path.generic_wstring() % file_path.generic_wstring() % k_export_path.generic_wstring();
-  // str % p_path.generic_wstring();
-  // boost::format str{R"(%1% --path %2% --exportpath %3%)"};
-  // str % k_tmp_path.generic_string() % file_path.generic_string() % k_export_path.generic_string();
 
   DOODLE_LOG_INFO(boost::locale::conv::utf_to_utf<char>(com))
 
@@ -153,9 +145,9 @@ bool MklinkWidget::mklink(const FSys::path& in_source, const FSys::path& in_targ
   }
 
   FSys::create_directory_symlink(in_source, in_target);
-  auto str = boost::format{"完成添加:\n来源:%s \n目标:%s"} % in_source % in_target;
+  auto str      = fmt::format("完成添加:\n来源:{} \n目标:{}", in_source, in_target);
   auto k_dialog = wxMessageDialog{nullptr, ConvStr<wxString>("完成添加")};
-  k_dialog.SetExtendedMessage(ConvStr<wxString>(str.str()));
+  k_dialog.SetExtendedMessage(ConvStr<wxString>(str));
   k_dialog.ShowModal();
   return true;
 }

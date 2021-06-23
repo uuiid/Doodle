@@ -13,7 +13,7 @@
 #include <ShlObj.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
+
 #include <regex>
 #include <string>
 namespace doodle {
@@ -76,7 +76,6 @@ void toolkit::modifyUeCachePath() {
 }
 
 bool toolkit::deleteUeCache() {
-  boost::format str{R"(%1%\UnrealEngine)"};
   //这里我们手动做一些工作
   //获取环境变量
   PWSTR pManager;
@@ -101,7 +100,7 @@ bool toolkit::deleteUeCache() {
 //   auto path =
 //       info_ptr->getFileList()[0].parent_path();
 //   boost::wformat wstr;
-//   boost::format str("explorer.exe \"%s\"");
+//   str("explorer.exe \"%s\"");
 //   auto path_noral = boost::replace_all_copy(path.generic_path().generic_string(), "/", "\\");
 //   path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
 //   path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");

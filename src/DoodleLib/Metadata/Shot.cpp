@@ -4,7 +4,7 @@
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Shot.h>
 
-#include <boost/format.hpp>
+
 namespace doodle {
 
 Shot::Shot()
@@ -54,9 +54,7 @@ void Shot::setEpisodesPtr(const EpisodesPtr& Episodes_) noexcept {
   Episodes_->addChildItem(shared_from_this());
 }
 std::string Shot::str() const {
-  boost::format str_shot{"sc%04i%s"};
-  str_shot % p_shot % p_shot_ab;
-  return str_shot.str();
+  return fmt::format("sc{:04i}{}", p_shot, p_shot_ab);
 }
 bool Shot::operator<(const Shot& rhs) const {
   return std::tie(p_shot, p_shot_ab) < std::tie(rhs.p_shot, rhs.p_shot_ab);

@@ -15,7 +15,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
-#include <boost/format.hpp>
+
 #include <boost/process.hpp>
 #include <cereal/archives/portable_binary.hpp>
 #include <magic_enum.hpp>
@@ -36,18 +36,17 @@ void CoreSet::guiInit() {
   auto &k_sql   = CoreSql::Get();
   auto test_sql = k_sql.getConnection();
 
-  boost::format ip_ch{"%s:%i"};
-  ip_ch % p_server_host % p_meta_rpc_port;
-  DOODLE_LOG_DEBUG(ip_ch.str())
+  auto k_ip = fmt::format("{}:{:i}",p_server_host,p_meta_rpc_port);
+
+  DOODLE_LOG_DEBUG(k_ip)
 
   p_rpc_metadata_clien = std::make_shared<RpcMetadataClient>(
-      grpc::CreateChannel(ip_ch.str(),
+      grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
-  ip_ch.clear();
-  ip_ch % p_server_host % p_file_rpc_port;
 
+  k_ip = fmt::format("{}:{:i}",p_server_host,p_file_rpc_port);
   p_rpc_file_system_client = std::make_shared<RpcFileSystemClient>(
-      grpc::CreateChannel(ip_ch.str(),
+      grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 
   p_matadata_setting_.init();

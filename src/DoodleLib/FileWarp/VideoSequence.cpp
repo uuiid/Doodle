@@ -2,7 +2,7 @@
 #include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/core/CoreSet.h>
 
-#include <boost/format.hpp>
+
 #include <opencv2/opencv.hpp>
 
 namespace doodle {
@@ -28,19 +28,19 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
   if (!FSys::exists(k_out_path.parent_path()))
     FSys::create_directories(k_out_path.parent_path());
 
-  auto k_video_input = cv::VideoCapture{};
-  auto k_video_out = cv::VideoWriter{k_out_path.generic_string(),
+  auto k_video_input   = cv::VideoCapture{};
+  auto k_video_out     = cv::VideoWriter{k_out_path.generic_string(),
                                      cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
                                      25,
                                      cv::Size(1280, 720)};
-  auto k_image = cv::Mat{};
+  auto k_image         = cv::Mat{};
   auto k_image_resized = cv::Mat{};
   const static cv::Size k_size{1280, 720};
   const auto k_len = boost::numeric_cast<float>(p_paths.size());
-  auto k_i = float{0};
+  auto k_i         = float{0};
   // 这里开始排序
   std::sort(p_paths.begin(), p_paths.end(),
-            [](const FSys::path& k_l,const FSys::path& k_r){return k_l.stem() < k_r.stem();});
+            [](const FSys::path& k_l, const FSys::path& k_r) { return k_l.stem() < k_r.stem(); });
 
   for (const auto& path : p_paths) {
     if (k_video_input.open(path.generic_string())) {
@@ -69,9 +69,8 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
     }
     ++k_i;
   }
-  boost::format message{"完成视频 %s"};
-  message % k_out_path.generic_string();
-  this->messagResult(message.str());
+
+  this->messagResult(fmt::format("完成视频 {}", k_out_path));
   this->finished();
 }
 }  // namespace doodle

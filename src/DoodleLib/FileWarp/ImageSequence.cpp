@@ -3,16 +3,16 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
+#include <Logger/Logger.h>
 #include <PinYin/convert.h>
 
 
-#include <boost/format.hpp>
 #include <opencv2/opencv.hpp>
 namespace doodle {
 std::string ImageSequence::clearString(const std::string &str) {
-  auto &con = convert::Get();
+  auto &con  = convert::Get();
   auto str_r = std::string{};
-  str_r = con.toEn(str);
+  str_r      = con.toEn(str);
 
   return str_r;
 }
@@ -66,23 +66,18 @@ std::tuple<int, int, std::string> ImageSequence::getEpisodesAndShot() {
 }
 
 std::string ImageSequence::getEpisodesAndShot_str() {
-  boost::format str_eps{"ep%04d_"};
-  boost::format str_shots{"%ssc%04d%s"};
   std::string str{};
   if (p_eps > 0) {
-    str_eps % p_eps;
-    str = str_eps.str();
+    str = fmt::format("ep{:04d}_", p_eps);
   }
   if (p_shot > 0) {
-    str_shots % str % p_shot % p_shot_ab;
-    str = str_shots.str();
+    str = fmt::format("{}sc{04d}{}", str, p_shot, p_shot_ab);
   }
 
   if (str.empty())
     str = "ep_None_sc_None";
 
   return str;
-  // return {};
 }
 
 bool ImageSequence::seanDir(const FSys::path &dir) {
@@ -131,19 +126,18 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
 
   const static cv::Size k_size{1280, 720};
 
-  auto video = cv::VideoWriter{out_file.generic_string(),
+  auto video           = cv::VideoWriter{out_file.generic_string(),
                                cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
                                25,
                                cv::Size(1280, 720)};
-  auto k_image = cv::Mat{};
+  auto k_image         = cv::Mat{};
   auto k_image_resized = cv::Mat{};
-  auto k_clone = cv::Mat{};
+  auto k_clone         = cv::Mat{};
 
   auto k_size_len = boost::numeric_cast<float>(p_paths.size());
-  auto k_i = float{0};
-  auto k_format = boost::format{"%s %s :%s"};
-  k_format % p_Text % CoreSet::getSet().getUser_en() % getEpisodesAndShot_str();
-  auto k_Text = k_format.str();
+  auto k_i        = float{0};
+
+  auto k_Text = fmt::format("{} {} :{}", p_Text, CoreSet::getSet().getUser_en(), getEpisodesAndShot_str());
 
   //排序图片
   std::sort(p_paths.begin(), p_paths.end(),
@@ -159,13 +153,13 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
       k_image_resized = k_image;
     int baseLine{};
 
-    {//创建水印
-      k_clone = k_image_resized.clone();
-      int fontFace = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+    {  //创建水印
+      k_clone          = k_image_resized.clone();
+      int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
       double fontScale = 1;
-      int thickness = 2;
-      int baseline = 0;
-      auto textSize = cv::getTextSize(k_Text, fontFace,
+      int thickness    = 2;
+      int baseline     = 0;
+      auto textSize    = cv::getTextSize(k_Text, fontFace,
                                       fontScale, thickness, &baseline);
       baseline += thickness;
       textSize.width += baseline;
@@ -191,9 +185,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
 
     video << k_image_resized;
   }
-  boost::format message{"成功创建视频 %s"};
-  message % out_file.generic_string();
-  this->messagResult(message.str());
+  this->messagResult(fmt::format("成功创建视频 {}", out_file));
   this->finished();
 }
 
@@ -263,7 +255,7 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
                        }));
   }
   std::future_status status{};
-  auto it = result.begin();
+  auto it          = result.begin();
   const auto k_len = boost::numeric_cast<float>(p_imageSequences.size());
 
   while (!result.empty()) {
@@ -275,17 +267,15 @@ void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
     if (status == std::future_status::ready) {
       ++k_i;
 
-      boost::format k_msg{"%s : %s\n"};
-      k_msg % it->first.generic_string();
+      std::string mess{"成功"};
       try {
         it->second.get();
       } catch (const DoodleError &err) {
-        k_msg % std::string{"失败: "}.append(err.what());
+        mess = fmt::format("失败: {}", err.what());
+        DOODLE_LOG_INFO(mess)
       }
-      if (k_msg.fed_args() == 1)
-        k_msg % "成功";
 
-      this->messagResult(k_msg.str());
+      this->messagResult(mess);
       //这里要擦除数据
       it = result.erase(it);
     } else {

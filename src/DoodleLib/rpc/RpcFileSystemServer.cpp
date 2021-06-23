@@ -8,7 +8,7 @@
 #include <Logger/Logger.h>
 #include <google/protobuf/util/time_util.h>
 
-#include <boost/format.hpp>
+
 
 namespace doodle {
 RpcFileSystemServer::RpcFileSystemServer()
@@ -109,8 +109,6 @@ grpc::Status RpcFileSystemServer::GetList(grpc::ServerContext* context, const Fi
   auto k_ex  = FSys::exists(k_path);
   auto k_dir = FSys::is_directory(k_path);
   if (!k_ex || !k_dir) {
-    boost::format str{"路径: %s 存在: %b 是目录: %b"};
-    str % k_path % k_ex % k_dir;
     DOODLE_LOG_DEBUG(fmt::format("路径: {} 存在: {} 是目录: {}", k_path, k_ex, k_dir))
     return {
         grpc::StatusCode::CANCELLED, fmt::format("路径: {} 存在: {} 是目录: {}", k_path, k_ex, k_dir)};

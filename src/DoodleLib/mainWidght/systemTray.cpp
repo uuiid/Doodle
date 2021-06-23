@@ -16,7 +16,7 @@
 #include <DoodleLib/mainWidght/systemTray.h>
 #include <toolkit/toolkit.h>
 
-#include <boost/format.hpp>
+
 
 namespace doodle {
 

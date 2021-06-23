@@ -10,7 +10,7 @@
 #include <boost/filesystem.hpp>
 #include <gtest/gtest.h>
 #include <boost/locale.hpp>
-#include <boost/format.hpp>
+
 
 #include <DoodleLib/DoodleLib.h>
 std::string encode64(const std::string &val) {
@@ -85,17 +85,6 @@ TEST(dboost, boost_form_utf) {
   std::cout << boost::locale::conv::to_utf<char>(std::string{"哈哈"}, "UTF-8") << std::endl;
 }
 
-TEST(dboost, boost_format) {
-  boost::format str{"ep%04d_sc%04d%s"};
-  str % 1 % 50 % "A";
-  std::cout << str.str() << std::endl;
-  str.clear();
-  str % -1 % -50 % "A";
-  std::cout << str.str() << std::endl;
-
-  std::cout << boost::format{"\n\n %|=60s|"} % "create ok next load file" << std::endl;
-
-}
 TEST(dboost, split){
   std::vector<std::string> str;
   boost::split(str, "test;123;tt;22;", boost::is_any_of(";"),boost::token_compress_on);

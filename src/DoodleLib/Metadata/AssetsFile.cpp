@@ -11,7 +11,7 @@
 #include <Metadata/TimeDuration.h>
 #include <PinYin/convert.h>
 
-#include <boost/format.hpp>
+
 #include <utility>
 
 namespace doodle {
@@ -113,9 +113,7 @@ const std::uint64_t& AssetsFile::getVersion() const noexcept {
 }
 
 std::string AssetsFile::getVersionStr() const {
-  boost::format str{"v%04i"};
-  str % p_version;
-  return str.str();
+  return fmt::format("v{:04i}",p_version);
 }
 
 void AssetsFile::setVersion(const std::uint64_t& in_Version) noexcept {

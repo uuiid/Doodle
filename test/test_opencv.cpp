@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <opencv2/video.hpp>
-#include <opencv2/opencv.hpp>
 #include <filesystem>
 #include <fstream>
+#include <opencv2/opencv.hpp>
+#include <opencv2/video.hpp>
 wxImage wx_from_mat(cv::Mat &img) {
   cv::Mat im2;
   if (img.channels() == 1) {
@@ -82,34 +82,17 @@ TEST(opencv, imageSequeTovideo) {
     }
   }
 }
-TEST(opencv, videoToQimage) {
-  //  const std::filesystem::path path{R"(test.mp4)"};
-  //  std::fstream file{};
-  //  int i = 0;
-  //
-  //  auto video = cv::VideoCapture("D:/test2.mp4");
-  //
-  //  auto label = QLabel();
-  //  for (size_t i = 0; i < 10; ++i) {
-  //    QImage q_image{};
-  //    cv::Mat image;
-  //    cv::Mat image2;
-  //    if (!video.read(image))
-  //      continue;
-  //    cv::cvtColor(image, image2, cv::COLOR_BGR2RGB);
-  //
-  //    // cv::imshow("test", image);
-  //    // q_image = cvMat2QImage(image);
-  //    q_image = QImage{
-  //        (const unsigned char *)image2.data,
-  //        image2.cols,
-  //        image2.rows,
-  //        (int)image2.step,
-  //        QImage::Format::Format_RGB888};
-  //    auto test_image = q_image.copy();
-  //    test_image.save(QString{"D:/tmp/qt/tset_"} + QString::number(i) + ".jpg");
-  //    // label.setPixmap(QPixmap::fromImage(test_image));
-  //    // label.show();
-  //    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  //  }
+TEST(opencv, print_cv) {
+  const std::filesystem::path path{R"(D:\image_test\BuJu.1001.jpg)"};
+  auto k_mat = cv::imread(path.generic_string());
+  auto k_gbr = k_mat.row(1).col(1);
+  std::cout
+      << "1,1 bgr-> " << k_gbr << "\n"
+      << "info: " << k_mat.type() << "\n"
+      << "channels: " << k_mat.channels() << "\n"
+      << "elemSize: " << k_mat.elemSize() << "\n"
+      << "elemSize1: " << k_mat.elemSize1() << "\n"
+      << "step: " << k_mat.step << "\n"
+      << "step1: " << k_mat.step1() << "\n"
+      << std::endl;
 }

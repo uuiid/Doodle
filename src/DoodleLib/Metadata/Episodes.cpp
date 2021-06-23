@@ -3,7 +3,7 @@
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 
-#include <boost/format.hpp>
+
 namespace doodle {
 
 Episodes::Episodes()
@@ -35,10 +35,7 @@ void Episodes::setEpisodes(const int64_t& Episodes_) {
 }
 
 std::string Episodes::str() const {
-  boost::format eps_str{"ep%04i"};
-
-  eps_str % p_episodes;
-  return eps_str.str();
+  return fmt::format("ep{:04i}", p_episodes);
 }
 
 bool Episodes::operator<(const Episodes& in_rhs) const {
