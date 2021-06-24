@@ -31,7 +31,7 @@ grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const Fi
     return grpc::Status::OK;
 
   response->set_size(FSys::file_size(k_path));
-  auto k_time        = FSys::last_write_time(k_path);
+  auto k_time        = FSys::last_write_time_t(k_path);
   auto k_google_time = google::protobuf::util::TimeUtil::TimeTToTimestamp(k_time);
   response->mutable_update_time()->CopyFrom(k_google_time);
 
@@ -91,7 +91,7 @@ grpc::Status RpcFileSystemServer::GetTimestamp(grpc::ServerContext* context, con
     return grpc::Status::OK;
 
   response->set_size(FSys::file_size(k_path));
-  auto k_time        = FSys::last_write_time(k_path);
+  auto k_time        = FSys::last_write_time_t(k_path);
   auto k_google_time = google::protobuf::util::TimeUtil::TimeTToTimestamp(k_time);
   response->mutable_update_time()->CopyFrom(k_google_time);
 

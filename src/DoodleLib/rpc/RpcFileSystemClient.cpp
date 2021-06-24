@@ -17,7 +17,9 @@ std::tuple<std::optional<bool>, std::optional<bool>> RpcFileSystemClient::compar
   auto k_l_ex                            = FSys::exists(in_local_path);
   auto k_l_dir                           = k_l_ex ? FSys::is_directory(in_local_path) : false;
   auto k_l_sz                            = k_l_ex ? FSys::file_size(in_local_path) : 0;
-  auto k_l_ti                            = k_l_ex ? std::chrono::system_clock::from_time_t(FSys::last_write_time(in_local_path)) : std::chrono::time_point<std::chrono::system_clock>{};
+  auto k_l_ti                            = k_l_ex
+                                               ? FSys::last_write_time_point(in_local_path)
+                                               : std::chrono::time_point<std::chrono::system_clock>{};
   auto [k_s_sz, k_s_ex, k_s_ti, k_s_dir] = GetInfo(in_server_path);
   // TODO 在这里我们最好比较一下hash值确认文件相同
   if (k_l_ex && k_s_ex) {       /// 本地文件和服务器文件都存在

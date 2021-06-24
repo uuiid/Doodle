@@ -4,17 +4,18 @@
 #include <fmt/format.h>
 
 #include <boost/filesystem.hpp>
-
+//#include <ghc/filesystem.hpp>
+#include <stdexcept>
 namespace fmt {
-namespace FSys = boost::filesystem;
+namespace FSys = std::filesystem;
 template <class Char>
-struct formatter<FSys::path, Char> : formatter<basic_string_view<Char>,Char > {
+struct formatter<FSys::path, Char> : formatter<basic_string_view<Char>, Char> {
   template <typename FormatContext>
   auto format(const FSys::path &in_path, FormatContext &ctx) {
     if constexpr (std::is_same_v<Char, char>)
-      return formatter<basic_string_view<Char> ,Char>::format(in_path.generic_string(), ctx);
+      return formatter<basic_string_view<Char>, Char>::format(in_path.generic_string(), ctx);
     else if constexpr (std::is_same_v<Char, wchar_t>)
-      return formatter<basic_string_view<Char> ,Char>::format(in_path.generic_wstring(), ctx);
+      return formatter<basic_string_view<Char>, Char>::format(in_path.generic_wstring(), ctx);
   }
 };
 }  // namespace fmt
@@ -31,12 +32,34 @@ class no_copy {
 }  // namespace details
 
 namespace FSys {
-using namespace boost::filesystem;
-// using fstream  = std::fstream;
-// using istream  = std::istream;
-// using ifstream = std::ifstream;
-// using ofstream = std::ofstream;
-// using ostream  = std::ostream;
+
+using namespace std::filesystem;
+using fstream  = std::fstream;
+using istream  = std::istream;
+using ifstream = std::ifstream;
+using ofstream = std::ofstream;
+using ostream  = std::ostream;
+
+inline std::time_t last_write_time_t(const path &in_path) {
+  auto k_h = CreateFile(in_path.generic_wstring().c_str(), 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+  if (k_h == INVALID_HANDLE_VALUE)
+    throw std::runtime_error{"无效的文件路径"};
+  FILETIME k_f_l;
+  if (!GetFileTime(k_h, nullptr, nullptr, &k_f_l)) {
+    throw std::runtime_error{"无法获得写入时间"};
+  }
+  SYSTEMTIME k_stUTC;
+  ULARGE_INTEGER ull{};
+  ull.LowPart  = k_f_l.dwLowDateTime;
+  ull.HighPart = k_f_l.dwHighDateTime;
+
+  return static_cast<time_t>(ull.QuadPart / 10000000ULL - 11644473600ULL);
+}
+
+inline std::chrono::time_point<std::chrono::system_clock> last_write_time_point(const path &in_path) {
+  return std::chrono::system_clock::from_time_t(last_write_time_t(in_path));
+}
+
 }  // namespace FSys
 
 using ConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
@@ -102,7 +125,7 @@ class Doodle;
 [[maybe_unused]] DOODLELIB_API DoodleLibPtr make_doodle_lib();
 template <typename SSC, typename SSN>
 SSC ConvStr(const SSN &str) {
-  static_assert(false,"这个函数会出错");
+  static_assert(false, "这个函数会出错");
   return SSC{str};
 }
 

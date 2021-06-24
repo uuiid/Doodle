@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <boost/locale.hpp>
 #include <cereal/access.hpp>
 #include <cereal/cereal.hpp>
 #include <cereal/types/common.hpp>
@@ -12,14 +13,15 @@
 namespace cereal {
 
 template <class Archive>
-inline void save(Archive &ar, boost::filesystem::path const &path) {
+inline void save(Archive &ar, std::filesystem::path const &path) {
   ar(cereal::make_nvp("path", path.generic_string()));
 }
 template <class Archive>
-inline void load(Archive &ar, boost::filesystem::path &path) {
+inline void load(Archive &ar, std::filesystem::path &path) {
   std::string str{};
   ar(str);
-  path = boost::filesystem::path{str};
+
+  path = std::filesystem::path{boost::locale::conv::utf_to_utf<wchar_t>(str)};
 };
 
 template <class Archive>

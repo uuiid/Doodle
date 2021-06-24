@@ -33,6 +33,6 @@ wxString ConvStr(const FSys::path& str) {
 
 template <>
 FSys::path ConvStr(const wxString& str) {
-  return {ConvStr<std::string>(str)};
+  return {str.ToStdWstring()};
 }
 }

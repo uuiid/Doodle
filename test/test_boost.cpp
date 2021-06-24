@@ -1,18 +1,14 @@
 //
 // Created by teXiao on 2020/11/10.
 //
-
-#include <boost/archive/iterators/binary_from_base64.hpp>
-#include <boost/archive/iterators/base64_from_binary.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
-#include <boost/algorithm/string.hpp>
-
-#include <boost/filesystem.hpp>
-#include <gtest/gtest.h>
-#include <boost/locale.hpp>
-
-
 #include <DoodleLib/DoodleLib.h>
+#include <gtest/gtest.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/archive/iterators/base64_from_binary.hpp>
+#include <boost/archive/iterators/binary_from_base64.hpp>
+#include <boost/archive/iterators/transform_width.hpp>
+#include <date/date.h>
 std::string encode64(const std::string &val) {
   using namespace boost::archive::iterators;
   using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
@@ -48,29 +44,30 @@ TEST(dboost, normalize_path) {
 }
 
 TEST(dboost, filesys_last_write_time) {
-  auto soure = boost::locale::conv::to_utf<wchar_t>("F:/测试文件.mp4", "UTF-8");
-  boost::filesystem::path source_path{soure};
+  using namespace doodle;
+  FSys::path source_path{L"F:/测试文件.mp4"};
   try {
-    std::cout << "0: " << boost::filesystem::last_write_time(source_path) << std::endl;
-    std::cout << "1: " << boost::filesystem::last_write_time(soure) << std::endl;
+    std::cout << "0: " << date::format("%Y-%m-%d %X",FSys::last_write_time_point(source_path)) << std::endl;
 
-    boost::filesystem::path tmp_path{"F:/测试文件.mp4"};
-    std::cout << "3: " << boost::filesystem::last_write_time(tmp_path) << std::endl;
-  } catch (const boost::filesystem::filesystem_error &e) {
+  } catch (const FSys::filesystem_error &e) {
     std::cout << e.what()
               << " \nutf : "
               << ""
               << std::endl;
-    auto str = boost::locale::conv::utf_to_utf<wchar_t>(e.code().message());
-    // auto wstr = std::wstring(e.code().message().c_str());
   }
-  struct _stat64 fileInfo;
+  struct _stat64 fileInfo {};
   if (_wstat64(source_path.generic_wstring().c_str(), &fileInfo) != 0) {
     std::cout << "Error : not find last_write_time " << std::endl;
   }
+  auto k_t  = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
+  auto k_t4 = std::chrono::system_clock::from_time_t(FSys::last_write_time_t(source_path));
 
+  date::format("%Y-%m-%d %X",k_t);
   std::cout << "\n"
-            << fileInfo.st_mtime << std::endl;
+            << fileInfo.st_mtime << "\n"
+            << "k_t: " << date::format("%Y-%m-%d %X",k_t) << "\n"
+            << "k_t == k_t4: " << ((k_t == k_t4 ) ? "ok": "not")<< "\n"
+            << std::endl;
 }
 
 TEST(dboost, boost_local_backend) {
@@ -85,11 +82,11 @@ TEST(dboost, boost_form_utf) {
   std::cout << boost::locale::conv::to_utf<char>(std::string{"哈哈"}, "UTF-8") << std::endl;
 }
 
-TEST(dboost, split){
+TEST(dboost, split) {
   std::vector<std::string> str;
-  boost::split(str, "test;123;tt;22;", boost::is_any_of(";"),boost::token_compress_on);
+  boost::split(str, "test;123;tt;22;", boost::is_any_of(";"), boost::token_compress_on);
   std::cout << "size: " << str.size() << std::endl;
-  for(auto &sub: str){
+  for (auto &sub : str) {
     std::cout << sub << std::endl;
   }
 }
