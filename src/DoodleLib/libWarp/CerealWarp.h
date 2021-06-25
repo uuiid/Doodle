@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <boost/locale.hpp>
+//#include <boost/locale.hpp>
 #include <cereal/access.hpp>
 #include <cereal/cereal.hpp>
 #include <cereal/types/common.hpp>
@@ -20,8 +20,7 @@ template <class Archive>
 inline void load(Archive &ar, std::filesystem::path &path) {
   std::string str{};
   ar(str);
-
-  path = std::filesystem::path{boost::locale::conv::utf_to_utf<wchar_t>(str)};
+  path = std::filesystem::path{str};
 };
 
 template <class Archive>

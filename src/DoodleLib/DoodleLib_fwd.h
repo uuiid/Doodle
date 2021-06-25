@@ -2,23 +2,23 @@
 
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <fmt/format.h>
-
+#include <fmt/ostream.h>
 #include <boost/filesystem.hpp>
 //#include <ghc/filesystem.hpp>
 #include <stdexcept>
-namespace fmt {
-namespace FSys = std::filesystem;
-template <class Char>
-struct formatter<FSys::path, Char> : formatter<basic_string_view<Char>, Char> {
-  template <typename FormatContext>
-  auto format(const FSys::path &in_path, FormatContext &ctx) {
-    if constexpr (std::is_same_v<Char, char>)
-      return formatter<basic_string_view<Char>, Char>::format(in_path.generic_string(), ctx);
-    else if constexpr (std::is_same_v<Char, wchar_t>)
-      return formatter<basic_string_view<Char>, Char>::format(in_path.generic_wstring(), ctx);
-  }
-};
-}  // namespace fmt
+//namespace fmt {
+//namespace FSys = std::filesystem;
+//template <class Char>
+//struct formatter<FSys::path, Char> : formatter<basic_string_view<Char>, Char> {
+//  template <typename FormatContext>
+//  auto format(const FSys::path &in_path, FormatContext &ctx) {
+//    if constexpr (std::is_same_v<Char, char>)
+//      return formatter<basic_string_view<Char>, Char>::format(in_path.generic_string(), ctx);
+//    else if constexpr (std::is_same_v<Char, wchar_t>)
+//      return formatter<basic_string_view<Char>, Char>::format(in_path.generic_wstring(), ctx);
+//  }
+//};
+//}  // namespace fmt
 
 //开始我们的名称空间
 namespace doodle {
@@ -48,7 +48,6 @@ inline std::time_t last_write_time_t(const path &in_path) {
   if (!GetFileTime(k_h, nullptr, nullptr, &k_f_l)) {
     throw std::runtime_error{"无法获得写入时间"};
   }
-  SYSTEMTIME k_stUTC;
   ULARGE_INTEGER ull{};
   ull.LowPart  = k_f_l.dwLowDateTime;
   ull.HighPart = k_f_l.dwHighDateTime;

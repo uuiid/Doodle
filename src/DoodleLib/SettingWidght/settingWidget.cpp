@@ -12,7 +12,7 @@
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
-#include <DoodleLib/SettingWidght/SettingWidget.h>
+#include <DoodleLib/SettingWidght/settingWidget.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <wx/spinctrl.h>
 

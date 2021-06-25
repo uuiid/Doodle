@@ -35,7 +35,7 @@ void Episodes::setEpisodes(const int64_t& Episodes_) {
 }
 
 std::string Episodes::str() const {
-  return fmt::format("ep{:04i}", p_episodes);
+  return fmt::format("ep{:04d}", p_episodes);
 }
 
 bool Episodes::operator<(const Episodes& in_rhs) const {

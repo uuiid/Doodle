@@ -48,7 +48,10 @@ include(CMakeRC)
 #    target_link_libraries(main PRIVATE unofficial::nana::nana)
 #
 #find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
+#GUI 库
 find_package(wxWidgets REQUIRED)
+find_package(unofficial-nana CONFIG REQUIRED)
+
 find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time  log locale iostreams)
 find_package(EnTT CONFIG REQUIRED)
 # find_package(CURL REQUIRED)
@@ -75,7 +78,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
 find_package(cereal CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-
+find_package(cxxopts CONFIG REQUIRED)
 #服务器库
 #应该会用其中一个
 #find_package(cppzmq CONFIG REQUIRED)

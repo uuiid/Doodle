@@ -113,7 +113,7 @@ const std::uint64_t& AssetsFile::getVersion() const noexcept {
 }
 
 std::string AssetsFile::getVersionStr() const {
-  return fmt::format("v{:04i}",p_version);
+  return fmt::format("v{:04d}",p_version);
 }
 
 void AssetsFile::setVersion(const std::uint64_t& in_Version) noexcept {

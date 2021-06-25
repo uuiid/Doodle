@@ -116,16 +116,19 @@ target_link_libraries(DoodleLib PUBLIC
 #        Boost::filesystem
 #        Boost::log
         spdlog::spdlog
+        unofficial::nana::nana
         $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
         $<IF:$<CONFIG:Debug>,${WX_cored},${WX_core}>
         $<IF:$<CONFIG:Debug>,${WX_advd},${WX_adv}>
+
+        cxxopts::cxxopts
+
         SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
 #        cppzmq
 #        cppzmq-static
         gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
         PRIVATE
         ${DOODLE_MAR}
-
         )
 
 

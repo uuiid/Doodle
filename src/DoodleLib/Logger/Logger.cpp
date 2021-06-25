@@ -78,7 +78,6 @@ void boostLoggerInitAsyn(const std::string &logPath,
   SPDLOG_INFO(fmt::format("初始化信息日志 {}", "ok"));
   SPDLOG_WARN(fmt::format("初始化警告日志 {}", "ok"));
   SPDLOG_ERROR(fmt::format("初始化错误日志 {}", "ok"));
-  spdlog::source_loc{};
 }
 
 void doodle_initLog(const std::string &logPath, std::size_t logMaxSize, bool async) {

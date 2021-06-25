@@ -11,6 +11,8 @@ set(
 	FileWarp/MayaFile.h
 	FileWarp/Ue4Project.h
 	FileWarp/VideoSequence.h
+	Gui/main_windwos.h
+	Gui/setting_windwos.h
 	Logger/Logger.h
 	Logger/LoggerTemplate.h
 	Metadata/Action/Action.h
@@ -62,11 +64,12 @@ set(
 	libWarp/fifo_cache_policy.hpp
 	libWarp/lfu_cache_policy.hpp
 	libWarp/lru_cache_policy.hpp
+	libWarp/observable_container.h
 	libWarp/sqlppWarp.h
 	libWarp/wxWidgetWarp.h
 	mainWidght/MklinkWidget.h
-        mainWidght/tool_windows.h
 	mainWidght/systemTray.h
+	mainWidght/tool_windows.h
 	rpc/RpcFileSystemClient.h
 	rpc/RpcFileSystemServer.h
 	rpc/RpcMetadaataServer.h
@@ -85,6 +88,8 @@ set(
 	FileWarp/MayaFile.cpp
 	FileWarp/Ue4Project.cpp
 	FileWarp/VideoSequence.cpp
+	Gui/main_windwos.cpp
+	Gui/setting_windwos.cpp
 	Logger/Logger.cpp
 	Metadata/Action/Action.cpp
 	Metadata/Action/UploadDirAction.cpp
@@ -124,8 +129,8 @@ set(
 	core/Util.cpp
 	core/static_value.cpp
 	mainWidght/MklinkWidget.cpp
-        mainWidght/tool_windows.cpp
 	mainWidght/systemTray.cpp
+	mainWidght/tool_windows.cpp
 	rpc/RpcFileSystemClient.cpp
 	rpc/RpcFileSystemServer.cpp
 	rpc/RpcMetadaataServer.cpp
