@@ -62,6 +62,7 @@ set(
 	libWarp/cache_policy.hpp
 	libWarp/cmrcWarp.h
 	libWarp/fifo_cache_policy.hpp
+	libWarp/json_warp.h
 	libWarp/lfu_cache_policy.hpp
 	libWarp/lru_cache_policy.hpp
 	libWarp/observable_container.h

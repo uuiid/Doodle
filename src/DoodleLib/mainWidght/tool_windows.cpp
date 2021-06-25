@@ -99,7 +99,7 @@ tool_windows::tool_windows()
   k_create_ue4File->Bind(
       wxEVT_BUTTON,
       [](wxCommandEvent& event) {
-        wxGetApp().openSettingWindow();
+//        wxGetApp().openSettingWindow();
       });
 
   Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {

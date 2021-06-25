@@ -17,6 +17,16 @@
 namespace doodle {
 class DOODLELIB_API setting_windows : public nana::form {
   nana::place p_layout;
+  nana::label p_dep_label;
+  nana::label p_user_label;
+  nana::label p_cache_label;
+  nana::label p_doc_label;
+  nana::label p_maya_label;
+  nana::label p_ue_path_label;
+  nana::label p_ue_version_label;
+  nana::label p_ue_shot_start_label;
+  nana::label p_ue_shot_end_label;
+
   nana::combox p_dep;
   nana::textbox p_user;
   nana::label p_cache;

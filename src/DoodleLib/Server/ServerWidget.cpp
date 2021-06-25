@@ -50,17 +50,17 @@ ServerWidget::ServerWidget()
   bindServerWidget();
 
   Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
-    auto k_r = wxMessageDialog{
-        this,
-        ConvStr<wxString>("关闭服务器并关闭程序")}
-                   .ShowModal();
-    if (k_r == wxID_OK) {
-      p_rpc_server_handle->stop();
-      wxGetApp().Exit();
-    } else {
-      if (event.CanVeto())
-        event.Veto(false);
-    }
+//    auto k_r = wxMessageDialog{
+//        this,
+//        ConvStr<wxString>("关闭服务器并关闭程序")}
+//                   .ShowModal();
+//    if (k_r == wxID_OK) {
+//      p_rpc_server_handle->stop();
+//      wxGetApp().Exit();
+//    } else {
+//      if (event.CanVeto())
+//        event.Veto(false);
+//    }
   });
   p_rpc_server_handle->runServer(CoreSet::getSet().getMetaRpcPort(), CoreSet::getSet().getFileRpcPort());
 }

@@ -10,159 +10,145 @@
 #include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/Metadata/MetadataWidget.h>
 #include <DoodleLib/Server/ServerWidget.h>
-#include <DoodleLib/SettingWidght/SettingWidget.h>
+#include <DoodleLib/SettingWidght/settingWidget.h>
 #include <DoodleLib/mainWidght/MklinkWidget.h>
-#include <DoodleLib/mainWidght/systemTray.h>
 #include <DoodleLib/mainWidght/tool_windows.h>
-#include <core/static_value.h>
+#include <Gui/main_windows.h>
+#include <Gui/setting_windows.h>
 #include <fmt/ostream.h>
+#include <libWarp/json_warp.h>
+#include <rpc/RpcServerHandle.h>
+#include <shellapi.h>
 #include <wx/cmdline.h>
 #include <wx/wxprec.h>
 
 #include <boost/algorithm/string.hpp>
 #include <exception>
-
-wxIMPLEMENT_APP_NO_MAIN(doodle::Doodle);
-
+#include <nana/fwd.hpp>
+#include <nana/gui.hpp>
+#include <nlohmann/json.hpp>
 namespace doodle {
 
-Doodle::Doodle()
-    : wxApp(),
-      p_tool_windows_(),
-      p_setting_widget(),
-      p_systemTray(),
-      p_metadata_widget(),
-      p_server_widget(),
-      p_run_fun() {
-  ;
+class DOODLELIB_API command_line {
+ public:
+  int p_sql_port{};            ///< mysql 端口
+  int p_meta_rpc_port{};       ///< 元数据端口
+  int p_file_rpc_port{};       ///< filesys 文件传输端口
+  std::string p_sql_host;      ///< mysql数据库ip
+  std::string p_sql_user;      ///< mysql 用户名称
+  std::string p_sql_password;  ///< mysql 用户密码
+
+  std::vector<std::pair<FSys::path, FSys::path> > p_mk_link;
+
+  bool b_mklink{};
+  bool b_server{};
+
+  inline void get_set() {
+    auto& set       = CoreSet::getSet();
+    p_sql_port      = set.getSqlPort();
+    p_meta_rpc_port = set.getMetaRpcPort();
+    p_file_rpc_port = set.getFileRpcPort();
+    p_sql_host      = set.getSqlHost();
+    p_sql_user      = set.getSqlUser();
+    p_sql_password  = set.getSqlPassword();
+  };
+
+  inline void set_set() const {
+    auto& set = CoreSet::getSet();
+    set.setSqlPort(p_sql_port);
+    set.setMetaRpcPort(p_meta_rpc_port);
+    set.setFileRpcPort(p_file_rpc_port);
+    set.setSqlHost(p_sql_host);
+    set.setSqlUser(p_sql_user);
+    set.setSqlPassword(p_sql_password);
+  };
+
+  friend void to_json(nlohmann::json& nlohmann_json_j, const command_line& nlohmann_json_t) {
+    if (nlohmann_json_t.b_server) {
+      nlohmann_json_j["p_sql_port"]      = nlohmann_json_t.p_sql_port;
+      nlohmann_json_j["p_meta_rpc_port"] = nlohmann_json_t.p_meta_rpc_port;
+      nlohmann_json_j["p_file_rpc_port"] = nlohmann_json_t.p_file_rpc_port;
+      nlohmann_json_j["p_sql_host"]      = nlohmann_json_t.p_sql_host;
+      nlohmann_json_j["p_sql_user"]      = nlohmann_json_t.p_sql_user;
+      nlohmann_json_j["p_sql_password"]  = nlohmann_json_t.p_sql_password;
+    } else if (nlohmann_json_t.b_mklink) {
+      nlohmann_json_j["p_mk_link"] = nlohmann_json_t.p_mk_link;
+    }
+  };
+  friend void from_json(const nlohmann::json& nlohmann_json_j, command_line& nlohmann_json_t) {
+    try {
+      nlohmann_json_j.at("p_sql_port").get_to(nlohmann_json_t.p_sql_port);
+      nlohmann_json_j.at("p_meta_rpc_port").get_to(nlohmann_json_t.p_meta_rpc_port);
+      nlohmann_json_j.at("p_file_rpc_port").get_to(nlohmann_json_t.p_file_rpc_port);
+      nlohmann_json_j.at("p_sql_host").get_to(nlohmann_json_t.p_sql_host);
+      nlohmann_json_j.at("p_sql_user").get_to(nlohmann_json_t.p_sql_user);
+      nlohmann_json_j.at("p_sql_password").get_to(nlohmann_json_t.p_sql_password);
+    } catch (const nlohmann::json::exception& error) {
+      DOODLE_LOG_INFO(error.what());
+      nlohmann_json_t.b_server = false;
+    }
+    nlohmann_json_t.b_server = true;
+    try {
+      nlohmann_json_j.at("p_mk_link").get_to(nlohmann_json_t.p_mk_link);
+    } catch (const nlohmann::json::exception& error) {
+      DOODLE_LOG_INFO(error.what());
+      nlohmann_json_t.b_mklink = false;
+    }
+    nlohmann_json_t.b_mklink = true;
+  };
 };
 
-int Doodle::OnExit() {
-  if (p_tool_windows_)
-    p_tool_windows_->Destroy();
-  if (p_systemTray)
-    p_systemTray->Destroy();
-
-  CoreSet::getSet().clear();
-
-  return wxApp::OnExit();
+doodle_app::doodle_app()
+    : p_run_fun(),
+      p_rpc_server_handle(std::make_shared<RpcServerHandle>()),
+      p_setting_windows() {
+  init_opt();
 }
+void doodle_app::init() {
+  int k_argc;
+  auto k_argv = CommandLineToArgvW(GetCommandLine(), &k_argc);
 
-void Doodle::OnInitCmdLine(wxCmdLineParser& parser) {
-  // parser.SetSwitchChars(ConvStr<wxString>("-"));
-  wxApp::OnInitCmdLine(parser);
-  parser.AddSwitch(staticValue::fun_obj());
-  for (const auto& name : magic_enum::enum_names<funName>()) {
-    parser.AddOption(ConvStr<wxString>(std::string{name}));
-  }
-  parser.AddSwitch(staticValue::server_obj());
-}
-
-bool Doodle::OnCmdLineParsed(wxCmdLineParser& parser) {
-  wxString k_string{};
-  if (parser.Found(staticValue::fun_obj())) {
-    if (parser.Found(
-            ConvStr<wxString>(std::string(magic_enum::enum_name(funName::mklink))),
-            &k_string)) {
-      //创建功能
-      p_run_fun = [k_string, this]() { funMklink(k_string); };
-      return wxApp::OnCmdLineParsed(parser);
+  if (k_argc == 2) {
+    auto k_path = FSys::path(k_argv[1]);
+    FSys::ifstream k_file{k_path, std::ios::in};
+    if (!k_file)
+      return;
+    auto p_info = nlohmann::json::parse(k_file).get<command_line>();
+    if (p_info.b_mklink) {
+      p_run_fun = [p_info]() {
+        for (auto& k_p : p_info.p_mk_link) {
+          MklinkWidget::mklink(k_p.first, k_p.second);
+        }
+      };
+    } else if (p_info.b_server) {
+      p_run_fun = [this, p_info]() {
+        p_info.set_set();
+        auto& set = CoreSet::getSet();
+        p_rpc_server_handle->runServer(p_info.p_meta_rpc_port, p_info.p_file_rpc_port);
+      };
     }
+  } else if (k_argc == 1) {
+    p_run_fun = [this]() {
+      this->gui_run();
+    };
   }
-
-  if (parser.Found(staticValue::server_obj())) {
-    p_run_fun = [this]() { serverInit(); };
-    return wxApp::OnCmdLineParsed(parser);
-  }
-
-  if (!p_run_fun) {
-    p_run_fun = [this]() { guiInit(); };
-  }
-
-  return wxApp::OnCmdLineParsed(parser);
+  LocalFree(k_argv);
 }
-void Doodle::funMklink(const wxString& k_string) {
-  std::vector<std::string> str;
-  boost::split(str, ConvStr<std::string>(k_string), boost::is_any_of(";"));
-  if (str.size() % 2 == 0) {
-    const auto k_size = str.size();
-    for (auto i = 0; i < k_size; ++i) {
-      MklinkWidget::mklink(str[i], str[i + 1]);
-      ++i;
-    }
-  } else {
-    DOODLE_LOG_INFO("来源和目标不匹配,无法映射");
-  }
-  Exit();
-}
-void Doodle::guiInit() {
-  CoreSet::getSet().guiInit();
-  const wxIcon& k_icon = wxICON(ID_DOODLE_ICON);
-
-  p_tool_windows_ = new tool_windows{};
-  p_tool_windows_->SetIcon(k_icon);
-  SetTopWindow(p_tool_windows_);
-
-  p_systemTray = new systemTray{};
-  p_systemTray->SetIcon(k_icon,
-                        wxString::Format(
-                            wxString{"doodle-%d.%d.%d.%d"},
-                            Doodle_VERSION_MAJOR,
-                            Doodle_VERSION_MINOR,
-                            Doodle_VERSION_PATCH,
-                            Doodle_VERSION_TWEAK));
-  p_setting_widget = new SettingWidght{p_tool_windows_, wxID_ANY};
-  p_tool_windows_->Show();
-
-  p_metadata_widget = new MetadataWidget{p_tool_windows_, wxID_ANY};
-  p_metadata_widget->Show();
-}
-
-void Doodle::openMainWindow() {
-  p_tool_windows_->Show();
-}
-
-void Doodle::openSettingWindow() {
-  p_setting_widget = new SettingWidght{p_tool_windows_, wxID_ANY};
-  p_setting_widget->Show();
-}
-void Doodle::openMetadaWindow() {
-  p_metadata_widget = new MetadataWidget{p_tool_windows_, wxID_ANY};
-  p_metadata_widget->Show();
-}
-
-// bool Doodle::OnExceptionInMainLoop() {
-//   this->Exception();
-//   try {
-//     throw;
-//   } catch (const std::exception& error) {
-//     auto dig    = wxMessageDialog{p_tool_windows_, ConvStr<wxString>(error.what()), ConvStr<wxString>("错误")};
-//     auto result = dig.ShowModal();
-//     return result == wxID_OK;
-//   }
-// }
-
-bool Doodle::OnInit() {
-  if (!wxApp::OnInit())
-    return false;
-
-  // wxApp::SetExitOnFrameDelete(false);
-  wxLog::EnableLogging(true);
-
-  for (int i = 0; i < argc; ++i) {
-    auto k_= argv[i];
-    DOODLE_LOG_INFO(fmt::format("arg {}", argv[i]));
-  }
-
-  if (p_run_fun) {
+void doodle_app::run() {
+  init();
+  if (p_run_fun)
     p_run_fun();
-    return true;
-  }
-  return true;
 }
-void Doodle::serverInit() {
-  p_server_widget = new ServerWidget{};
-  p_server_widget->Show();
+void doodle_app::init_opt() {
+}
+void doodle_app::gui_run() {
+  CoreSet::getSet().guiInit();
+
+  main_windows k_main_windows{};
+  k_main_windows.show();
+//  p_setting_windows = std::make_shared<setting_windows>(k_main_windows);
+
+  nana::exec();
 }
 
 }  // namespace doodle

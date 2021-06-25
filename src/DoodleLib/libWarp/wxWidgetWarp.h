@@ -15,6 +15,11 @@
 #ifdef _
 #undef _
 #endif
+
 #ifdef pid_t
 #undef pid_t
+#endif
+
+#ifdef _CRT_SECURE_NO_DEPRECATE
+#undef _CRT_SECURE_NO_DEPRECATE
 #endif

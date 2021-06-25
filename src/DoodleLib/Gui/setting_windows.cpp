@@ -16,6 +16,15 @@ namespace doodle {
 setting_windows::setting_windows(nana::window in_window)
     : nana::form(in_window, nana::API::make_center(300, 400)),
       p_layout(*this),
+      p_dep_label(*this, "部门： "),
+      p_user_label(*this, "用户： "),
+      p_cache_label(*this, "缓存： "),
+      p_doc_label(*this, "文档： "),
+      p_maya_label(*this, "maya路径： "),
+      p_ue_path_label(*this, "ue路径： "),
+      p_ue_version_label(*this, "ue版本： "),
+      p_ue_shot_start_label(*this, "ue镜头默认开始： "),
+      p_ue_shot_end_label(*this, "ue镜头默认结束： "),
       p_dep(*this),
       p_user(*this),
       p_cache(*this),
@@ -38,31 +47,31 @@ setting_windows::setting_windows(nana::window in_window)
                   <ue_shot_end>
                    >)");
   p_layout.field("dep")
-      << nana::label{*this, "部门： "}
+      << p_dep_label
       << p_dep;
   p_layout.field("user")
-      << nana::label{*this, "用户： "}
+      << p_user_label
       << p_user;
   p_layout.field("cache")
-      << nana::label{*this, "缓存： "}
+      << p_cache_label
       << p_cache;
   p_layout.field("doc")
-      << nana::label{*this, "文档： "}
+      << p_doc_label
       << p_doc;
   p_layout.field("maya")
-      << nana::label{*this, "maya路径： "}
+      << p_maya_label
       << p_maya;
   p_layout.field("ue_path")
-      << nana::label{*this, "ue路径： "}
+      << p_ue_path_label
       << p_ue_path;
   p_layout.field("ue_version")
-      << nana::label{*this, "ue版本： "}
+      << p_ue_version_label
       << p_ue_version;
   p_layout.field("ue_shot_start")
-      << nana::label{*this, "ue镜头默认开始： "}
+      << p_ue_shot_start_label
       << p_ue_shot_start;
   p_layout.field("ue_shot_end")
-      << nana::label{*this, "ue镜头默认结束： "}
+      << p_ue_shot_end_label
       << p_ue_shot_end;
 
   p_dep.editable(false);
@@ -98,6 +107,8 @@ setting_windows::setting_windows(nana::window in_window)
     set.gettUe4Setting().setShotEnd(in_.widget.to_int());
   });
   init_setting();
+  p_layout.collocate();
+  events().destroy(nana::API::exit);
 }
 void setting_windows::init_setting() {
   auto& set = CoreSet::getSet();

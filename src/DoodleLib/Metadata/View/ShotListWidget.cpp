@@ -179,24 +179,24 @@ ShotListDialog::ShotListDialog(wxWindow *parent, wxWindowID id)
 }
 
 std::tuple<EpisodesPtr, std::vector<ShotPtr>> ShotListDialog::getShotList() {
-  auto shotDig = ShotListDialog{wxGetApp().GetTopWindow()};
-
-  shotDig.p_episodes = std::make_shared<Episodes>();
-  shotDig.p_episodes->setEpisodes(1);
-  auto &set        = CoreSet::getSet();
-  const auto k_len = set.gettUe4Setting().ShotEnd();
-  for (auto i = set.gettUe4Setting().ShotStart(); i < k_len; ++i) {
-    shotDig.p_shots.emplace_back(std::make_shared<Shot>(shotDig.p_episodes, i, std::string{}));
-  }
-
-  shotDig.p_shots_widget->setEpisodes(shotDig.p_episodes);
-  shotDig.p_shots_widget->setShots(shotDig.p_shots);
-
-  if (shotDig.ShowModal() == wxID_OK) {
-    return {shotDig.p_shots_widget->Episodes_(), shotDig.p_shots_widget->Shots_()};
-  } else {
+//  auto shotDig = ShotListDialog{wxGetApp().GetTopWindow()};
+//
+//  shotDig.p_episodes = std::make_shared<Episodes>();
+//  shotDig.p_episodes->setEpisodes(1);
+//  auto &set        = CoreSet::getSet();
+//  const auto k_len = set.gettUe4Setting().ShotEnd();
+//  for (auto i = set.gettUe4Setting().ShotStart(); i < k_len; ++i) {
+//    shotDig.p_shots.emplace_back(std::make_shared<Shot>(shotDig.p_episodes, i, std::string{}));
+//  }
+//
+//  shotDig.p_shots_widget->setEpisodes(shotDig.p_episodes);
+//  shotDig.p_shots_widget->setShots(shotDig.p_shots);
+//
+//  if (shotDig.ShowModal() == wxID_OK) {
+//    return {shotDig.p_shots_widget->Episodes_(), shotDig.p_shots_widget->Shots_()};
+//  } else {
     return {};
-  }
+//  }
 }
 
 }  // namespace doodle

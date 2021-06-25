@@ -23,7 +23,7 @@ class DOODLELIB_API Ue4ProjectFilePulgins {
 };
 class DOODLELIB_API Ue4ProjectFile {
  public:
-  int32_t FileVersion;
+  int32_t FileVersion{};
   std::string EngineAssociation;
   std::string Category;
   std::string Description;

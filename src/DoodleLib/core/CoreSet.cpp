@@ -45,6 +45,7 @@ void CoreSet::guiInit() {
                           grpc::InsecureChannelCredentials()));
 
   k_ip = fmt::format("{}:{:d}",p_server_host,p_file_rpc_port);
+  DOODLE_LOG_DEBUG(k_ip)
   p_rpc_file_system_client = std::make_shared<RpcFileSystemClient>(
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
