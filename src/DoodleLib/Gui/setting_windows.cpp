@@ -2,7 +2,7 @@
 // Created by TD on 2021/6/24.
 //
 
-#include "setting_windwos.h"
+#include "setting_windows.h"
 
 #include <DoodleLib/FileWarp/ImageSequence.h>
 #include <DoodleLib/FileWarp/Ue4Project.h>
@@ -13,7 +13,7 @@
 #include <magic_enum.hpp>
 namespace doodle {
 
-setting_windwos::setting_windwos(nana::window in_window)
+setting_windows::setting_windows(nana::window in_window)
     : nana::form(in_window, nana::API::make_center(300, 400)),
       p_layout(*this),
       p_dep(*this),
@@ -99,7 +99,7 @@ setting_windwos::setting_windwos(nana::window in_window)
   });
   init_setting();
 }
-void setting_windwos::init_setting() {
+void setting_windows::init_setting() {
   auto& set = CoreSet::getSet();
   p_dep.caption(set.getDepartment());
   p_user.reset(set.getUser());

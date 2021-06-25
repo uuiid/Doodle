@@ -11,8 +11,8 @@ set(
 	FileWarp/MayaFile.h
 	FileWarp/Ue4Project.h
 	FileWarp/VideoSequence.h
-	Gui/main_windwos.h
-	Gui/setting_windwos.h
+	Gui/main_windows.h
+	Gui/setting_windows.h
 	Logger/Logger.h
 	Logger/LoggerTemplate.h
 	Metadata/Action/Action.h
@@ -88,8 +88,8 @@ set(
 	FileWarp/MayaFile.cpp
 	FileWarp/Ue4Project.cpp
 	FileWarp/VideoSequence.cpp
-	Gui/main_windwos.cpp
-	Gui/setting_windwos.cpp
+	Gui/main_windows.cpp
+	Gui/setting_windows.cpp
 	Logger/Logger.cpp
 	Metadata/Action/Action.cpp
 	Metadata/Action/UploadDirAction.cpp
