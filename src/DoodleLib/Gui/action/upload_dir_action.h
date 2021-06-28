@@ -5,16 +5,15 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Metadata/Action/Action.h>
-
+#include <DoodleLib/Gui/action/action.h>
 
 namespace doodle {
-class DOODLELIB_API UploadDirAction :public Action{
+class DOODLELIB_API upload_dir_action :public action {
 
 
  public:
-  UploadDirAction();
-  explicit UploadDirAction(std::any && path);
+  upload_dir_action();
+  explicit upload_dir_action(std::any && path);
   void run(const MetadataPtr& in_data) override;
 
   std::string class_name() override;

@@ -17,10 +17,10 @@ set(
 	Gui/setting_windows.h
 	Logger/Logger.h
 	Logger/LoggerTemplate.h
-	Metadata/Action/Action.h
-	Metadata/Action/UploadDirAction.h
-	Metadata/Action/UploadDirAndFileAction.h
-	Metadata/Action/UploadFileAction.h
+		Gui/action/action.h
+		Gui/action/upload_dir_action.h
+		Gui/action/upload_dir_and_file_action.h
+		Gui/action/upload_file_action.h
 	Metadata/Assets.h
 	Metadata/AssetsFile.h
 	Metadata/AssetsPath.h
@@ -96,10 +96,10 @@ set(
 	Gui/main_windows.cpp
 	Gui/setting_windows.cpp
 	Logger/Logger.cpp
-	Metadata/Action/Action.cpp
-	Metadata/Action/UploadDirAction.cpp
-	Metadata/Action/UploadDirAndFileAction.cpp
-	Metadata/Action/UploadFileAction.cpp
+		Gui/action/action.cpp
+		Gui/action/upload_dir_action.cpp
+		Gui/action/upload_dir_and_file_action.cpp
+		Gui/action/upload_file_action.cpp
 	Metadata/Assets.cpp
 	Metadata/AssetsFile.cpp
 	Metadata/AssetsPath.cpp

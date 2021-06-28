@@ -2,7 +2,7 @@
 // Created by TD on 2021/6/17.
 //
 
-#include "UploadFileAction.h"
+#include "upload_dir_action.h"
 
 #include <DoodleLib/Exception/Exception.h>
 #include <Logger/Logger.h>
@@ -12,27 +12,24 @@
 
 
 namespace doodle {
-UploadFileAction::UploadFileAction()
-    : Action() {
-  p_name = "上传文件";
+upload_dir_action::upload_dir_action()
+    : action() {
+  p_name = "上传目录";
 }
-UploadFileAction::UploadFileAction(std::any&& in_any)
-    : Action(std::move(in_any)) {
-  p_name = "上传文件";
+upload_dir_action::upload_dir_action(std::any&& path)
+    : action(std::move(path)) {
+  p_name = "上传目录";
 }
-std::string UploadFileAction::class_name() {
-  return p_name;
-}
-void UploadFileAction::run(const MetadataPtr& in_data) {
+void upload_dir_action::run(const MetadataPtr& in_data) {
   auto k_ch = CoreSet::getSet().getRpcFileSystemClient();
   if (!p_any.has_value()) {
     DOODLE_LOG_INFO("没有值")
     throw DoodleError{"没有值"};
   }
-  if (p_any.type() != typeid(FSys::path)) {
-    DOODLE_LOG_DEBUG("动作喂入参数无效")
+
+  if (p_any.type() != typeid(FSys::path))
     throw DoodleError{"动作喂入参数无效"};
-  }
+
   auto k_path = std::any_cast<FSys::path>(p_any);
 
   auto k_ass_file = std::dynamic_pointer_cast<AssetsFile>(in_data);
@@ -45,8 +42,10 @@ void UploadFileAction::run(const MetadataPtr& in_data) {
 
   k_ch->Upload(k_ass_path->getLocalPath(),k_ass_path->getServerPath());
 }
-void UploadFileAction::operator()(const MetadataPtr& in_data) {
+std::string upload_dir_action::class_name() {
+  return p_name;
+}
+void upload_dir_action::operator()(const MetadataPtr& in_data) {
   run(in_data);
 }
-
 }  // namespace doodle

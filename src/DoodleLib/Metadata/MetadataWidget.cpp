@@ -16,7 +16,7 @@
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/core/CoreSet.h>
-#include <Metadata/Action/Action.h>
+#include <Gui/action/action.h>
 #include <Metadata/DragFilesFactory.h>
 #include <Metadata/Metadata_cpp.h>
 namespace doodle {

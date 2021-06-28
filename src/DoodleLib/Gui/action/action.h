@@ -16,7 +16,7 @@ namespace doodle {
  * 或者我们喂入一些函子也是可以的
  */
 
-class DOODLELIB_API Action : public details::no_copy {
+class DOODLELIB_API action : public details::no_copy {
   friend DragFilesFactory;
 
  protected:
@@ -26,8 +26,8 @@ class DOODLELIB_API Action : public details::no_copy {
   std::any p_any;
   std::string p_name;
  public:
-  Action();
-  explicit Action(std::any&& in_any);
+  action();
+  explicit action(std::any&& in_any);
 
   /**
    * @brief 这里是喂入函子的地方， 我们使用信号插槽模式

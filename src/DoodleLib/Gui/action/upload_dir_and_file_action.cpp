@@ -2,7 +2,7 @@
 // Created by TD on 2021/6/21.
 //
 
-#include "UploadDirAndFileAction.h"
+#include "upload_dir_and_file_action.h"
 
 #include <DoodleLib/Exception/Exception.h>
 #include <Logger/Logger.h>
@@ -10,18 +10,18 @@
 #include <Metadata/AssetsPath.h>
 #include <rpc/RpcFileSystemClient.h>
 
-doodle::UploadDirAndFileAction::UploadDirAndFileAction()
-    : Action() {
+doodle::upload_dir_and_file_action::upload_dir_and_file_action()
+    : action() {
   p_name = "上传多个路径";
 }
-doodle::UploadDirAndFileAction::UploadDirAndFileAction(std::any&& in_paths)
-    : Action(std::move(in_paths)) {
+doodle::upload_dir_and_file_action::upload_dir_and_file_action(std::any&& in_paths)
+    : action(std::move(in_paths)) {
   p_name = "上传多个路径";
 }
-std::string doodle::UploadDirAndFileAction::class_name() {
+std::string doodle::upload_dir_and_file_action::class_name() {
   return p_name;
 }
-void doodle::UploadDirAndFileAction::run(const doodle::MetadataPtr& in_data) {
+void doodle::upload_dir_and_file_action::run(const doodle::MetadataPtr& in_data) {
   auto k_ch = CoreSet::getSet().getRpcFileSystemClient();
   if (!p_any.has_value()) {
     DOODLE_LOG_INFO("没有值")
@@ -45,6 +45,6 @@ void doodle::UploadDirAndFileAction::run(const doodle::MetadataPtr& in_data) {
   }
   k_ass_file->setPathFile(k_list);
 }
-void doodle::UploadDirAndFileAction::operator()(const doodle::MetadataPtr& in_data) {
+void doodle::upload_dir_and_file_action::operator()(const doodle::MetadataPtr& in_data) {
   run(in_data);
 }

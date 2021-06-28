@@ -4,21 +4,21 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Metadata/Action/Action.h>
+#include <DoodleLib/Gui/action/action.h>
 namespace doodle {
 /**
  * @brief 这个类可以直接上传所有输入的文件夹和文件
  * @param in_paths 需要 std::vector<FSys::path>
  */
-class UploadDirAndFileAction : public Action {
+class upload_dir_and_file_action : public action {
  public:
-  UploadDirAndFileAction();
+  upload_dir_and_file_action();
 
   /**
    * @brief 这里我们需要 std::vector<FSys::path> 传入
    * @param in_paths 需要 std::vector<FSys::path> 传入
    */
-  explicit UploadDirAndFileAction(std::any && in_paths);
+  explicit upload_dir_and_file_action(std::any && in_paths);
 
   std::string class_name() override;
 
