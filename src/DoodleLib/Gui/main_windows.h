@@ -17,14 +17,16 @@
 #include <nana/gui/widgets/textbox.hpp>
 #include <nana/gui/widgets/widget.hpp>
 namespace doodle {
+class setting_windows;
 
 class DOODLELIB_API main_windows : public nana::form {
   nana::place p_layout;
   nana::menubar p_menubar;
   nana::menu p_menu;
+  std::shared_ptr<setting_windows> p_setting_windows;
 
  public:
   main_windows();
-
+  void create_menubar();
 };
 }  // namespace doodle

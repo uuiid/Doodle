@@ -14,7 +14,7 @@
 namespace doodle {
 
 setting_windows::setting_windows(nana::window in_window)
-    : nana::form(in_window, nana::API::make_center(300, 400)),
+    : nana::form(in_window, nana::API::make_center(in_window, 600, 260)),
       p_layout(*this),
       p_dep_label(*this, "部门： "),
       p_user_label(*this, "用户： "),
@@ -108,7 +108,14 @@ setting_windows::setting_windows(nana::window in_window)
   });
   init_setting();
   p_layout.collocate();
-  events().destroy(nana::API::exit);
+  events().destroy([&set, this](const nana::arg_destroy& in_) {
+    try {
+      set.writeDoodleLocalSet();
+    } catch (const std::runtime_error& error) {
+      nana::msgbox mes{*this, error.what()};
+      mes();
+    }
+  });
 }
 void setting_windows::init_setting() {
   auto& set = CoreSet::getSet();
