@@ -8,7 +8,6 @@
  */
 #pragma once
 // #include <QDebug>
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <spdlog/spdlog.h>
 
 #include <boost/log/core.hpp>

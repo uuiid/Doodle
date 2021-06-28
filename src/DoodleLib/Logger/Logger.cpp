@@ -1,4 +1,6 @@
 #include <DoodleLib/DoodleLib_fwd.h>
+
+#include <DoodleLib/DoodleLib_fwd.h>
 #include <Logger/Logger.h>
 #include <Logger/LoggerTemplate.h>
 #include <spdlog/async.h>

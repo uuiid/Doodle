@@ -25,4 +25,10 @@ void action::set_any() {
   }
   p_any = k_a.get();
 }
+std::string action::class_name() {
+  return p_name;
+}
+void action::operator()(const MetadataPtr& in_data) {
+  run(in_data);
+}
 }  // namespace doodle

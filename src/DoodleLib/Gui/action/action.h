@@ -50,10 +50,10 @@ class DOODLELIB_API action : public details::no_copy {
    * 这个函数基本上可以作为显示为菜单的函数
    * @return
    */
-  virtual std::string class_name() = 0;
+  virtual std::string class_name();
 
   virtual void run(const MetadataPtr& in_data)        = 0;
-  virtual void operator()(const MetadataPtr& in_data) = 0;
+  virtual void operator()(const MetadataPtr& in_data);
 };
 
 }  // namespace doodle

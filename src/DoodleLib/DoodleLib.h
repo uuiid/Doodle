@@ -15,6 +15,9 @@
 #include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/Gui/Metadata/project_widget.h>
 #include <DoodleLib/Gui/action/action.h>
+#include <DoodleLib/Gui/action/assets_action.h>
+#include <DoodleLib/Gui/action/assets_file_action.h>
+#include <DoodleLib/Gui/action/project_action.h>
 #include <DoodleLib/Gui/action/upload_dir_action.h>
 #include <DoodleLib/Gui/action/upload_dir_and_file_action.h>
 #include <DoodleLib/Gui/action/upload_file_action.h>
@@ -61,8 +64,14 @@
 #include <DoodleLib/core/static_value.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/libWarp/CerealWarp.h>
+#include <DoodleLib/libWarp/WinReg.hpp>
+#include <DoodleLib/libWarp/cache.hpp>
+#include <DoodleLib/libWarp/cache_policy.hpp>
 #include <DoodleLib/libWarp/cmrcWarp.h>
+#include <DoodleLib/libWarp/fifo_cache_policy.hpp>
 #include <DoodleLib/libWarp/json_warp.h>
+#include <DoodleLib/libWarp/lfu_cache_policy.hpp>
+#include <DoodleLib/libWarp/lru_cache_policy.hpp>
 #include <DoodleLib/libWarp/observable_container.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <DoodleLib/libWarp/wxWidgetWarp.h>
@@ -78,10 +87,3 @@
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <DoodleLib/toolkit/MessageAndProgress.h>
 #include <DoodleLib/toolkit/toolkit.h>
-
-#include <DoodleLib/libWarp/WinReg.hpp>
-#include <DoodleLib/libWarp/cache.hpp>
-#include <DoodleLib/libWarp/cache_policy.hpp>
-#include <DoodleLib/libWarp/fifo_cache_policy.hpp>
-#include <DoodleLib/libWarp/lfu_cache_policy.hpp>
-#include <DoodleLib/libWarp/lru_cache_policy.hpp>

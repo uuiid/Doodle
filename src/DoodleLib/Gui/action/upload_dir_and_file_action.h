@@ -20,7 +20,6 @@ class upload_dir_and_file_action : public action {
    */
   explicit upload_dir_and_file_action(std::any && in_paths);
 
-  std::string class_name() override;
 
 
   void run(const MetadataPtr& in_data) override;

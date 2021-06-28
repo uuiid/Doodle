@@ -12,15 +12,18 @@ set(
 	FileWarp/Ue4Project.h
 	FileWarp/VideoSequence.h
 	Gui/Metadata/project_widget.h
+	Gui/action/action.h
+	Gui/action/assets_action.h
+	Gui/action/assets_file_action.h
+	Gui/action/project_action.h
+	Gui/action/upload_dir_action.h
+	Gui/action/upload_dir_and_file_action.h
+	Gui/action/upload_file_action.h
 	Gui/factory/menu_factory.h
 	Gui/main_windows.h
 	Gui/setting_windows.h
 	Logger/Logger.h
 	Logger/LoggerTemplate.h
-		Gui/action/action.h
-		Gui/action/upload_dir_action.h
-		Gui/action/upload_dir_and_file_action.h
-		Gui/action/upload_file_action.h
 	Metadata/Assets.h
 	Metadata/AssetsFile.h
 	Metadata/AssetsPath.h
@@ -92,14 +95,17 @@ set(
 	FileWarp/Ue4Project.cpp
 	FileWarp/VideoSequence.cpp
 	Gui/Metadata/project_widget.cpp
+	Gui/action/action.cpp
+	Gui/action/assets_action.cpp
+	Gui/action/assets_file_action.cpp
+	Gui/action/project_action.cpp
+	Gui/action/upload_dir_action.cpp
+	Gui/action/upload_dir_and_file_action.cpp
+	Gui/action/upload_file_action.cpp
 	Gui/factory/menu_factory.cpp
 	Gui/main_windows.cpp
 	Gui/setting_windows.cpp
 	Logger/Logger.cpp
-		Gui/action/action.cpp
-		Gui/action/upload_dir_action.cpp
-		Gui/action/upload_dir_and_file_action.cpp
-		Gui/action/upload_file_action.cpp
 	Metadata/Assets.cpp
 	Metadata/AssetsFile.cpp
 	Metadata/AssetsPath.cpp

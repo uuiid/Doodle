@@ -12,7 +12,6 @@ class upload_file_action : public action {
   upload_file_action();
   explicit upload_file_action(std::any&& in_any);
 
-  virtual std::string class_name() override;
   virtual void run(const MetadataPtr& in_data) override;
   virtual void operator()(const MetadataPtr& in_data) override;
 };

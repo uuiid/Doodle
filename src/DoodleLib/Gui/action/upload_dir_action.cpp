@@ -42,9 +42,6 @@ void upload_dir_action::run(const MetadataPtr& in_data) {
 
   k_ch->Upload(k_ass_path->getLocalPath(),k_ass_path->getServerPath());
 }
-std::string upload_dir_action::class_name() {
-  return p_name;
-}
 void upload_dir_action::operator()(const MetadataPtr& in_data) {
   run(in_data);
 }

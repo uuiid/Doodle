@@ -22,6 +22,7 @@ project_widget::project_widget(nana::window in_window)
   p_list_box.events().selected([](const nana::arg_listbox& in_) {
     in_.item.value<ProjectPtr>();
   });
+//  nana::API::refresh_window(p_list_box);
 }
 nana::listbox& project_widget::get_listbox() {
   return p_list_box;

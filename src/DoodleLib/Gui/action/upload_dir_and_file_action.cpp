@@ -18,9 +18,7 @@ doodle::upload_dir_and_file_action::upload_dir_and_file_action(std::any&& in_pat
     : action(std::move(in_paths)) {
   p_name = "上传多个路径";
 }
-std::string doodle::upload_dir_and_file_action::class_name() {
-  return p_name;
-}
+
 void doodle::upload_dir_and_file_action::run(const doodle::MetadataPtr& in_data) {
   auto k_ch = CoreSet::getSet().getRpcFileSystemClient();
   if (!p_any.has_value()) {

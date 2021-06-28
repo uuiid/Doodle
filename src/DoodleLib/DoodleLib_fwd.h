@@ -6,6 +6,7 @@
 #include <boost/filesystem.hpp>
 //#include <ghc/filesystem.hpp>
 #include <stdexcept>
+#include <DoodleLib/Logger/Logger.h>
 //namespace fmt {
 //namespace FSys = std::filesystem;
 //template <class Char>

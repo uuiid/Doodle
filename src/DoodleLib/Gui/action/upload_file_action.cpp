@@ -20,9 +20,7 @@ upload_file_action::upload_file_action(std::any&& in_any)
     : action(std::move(in_any)) {
   p_name = "上传文件";
 }
-std::string upload_file_action::class_name() {
-  return p_name;
-}
+
 void upload_file_action::run(const MetadataPtr& in_data) {
   auto k_ch = CoreSet::getSet().getRpcFileSystemClient();
   if (!p_any.has_value()) {

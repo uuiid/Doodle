@@ -16,7 +16,6 @@ class DOODLELIB_API upload_dir_action :public action {
   explicit upload_dir_action(std::any && path);
   void run(const MetadataPtr& in_data) override;
 
-  std::string class_name() override;
   void operator()(const MetadataPtr& in_data) override;
 };
 
