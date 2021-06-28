@@ -8,6 +8,7 @@
 #include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Project.h>
+#include <Logger/Logger.h>
 #include <core/CoreSet.h>
 
 #include <magic_enum.hpp>
@@ -112,6 +113,7 @@ setting_windows::setting_windows(nana::window in_window)
     try {
       set.writeDoodleLocalSet();
     } catch (const std::runtime_error& error) {
+      DOODLE_LOG_WARN(error.what());
       nana::msgbox mes{*this, error.what()};
       mes();
     }

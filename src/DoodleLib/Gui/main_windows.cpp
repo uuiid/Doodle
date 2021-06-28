@@ -9,23 +9,38 @@
 #include <toolkit/toolkit.h>
 
 #include <nana/gui/filebox.hpp>
+#include <Gui/Metadata/project_widget.h>
 
 namespace doodle {
 
 main_windows::main_windows()
-    : nana::form(nana::API::make_center(500, 600)),
+    : nana::form(nana::API::make_center(1200, 1000)),
       p_layout(*this),
       p_menubar(*this),
       p_menu(),
+      p_project_listbox(std::make_shared<project_widget>(*this)),
+      p_ass_tree_box(*this),
+      p_attr_listbox(*this),
       p_setting_windows() {
   p_layout.div(
-      R"(<vertical <weight=23 menubar> >)");
+      R"(<vertical <weight=23 menubar>  <weight=20% project_listbox> | < <weight=30% ass_tree_box> | <attr_listbox > > >)");
   create_menubar();
 
 
 
 
+  p_attr_listbox.append_header("id");
+  p_attr_listbox.append_header("版本");
+  p_attr_listbox.append_header("名称");
+  p_attr_listbox.append_header("评论");
+  p_attr_listbox.append_header("时间");
+  p_attr_listbox.append_header("制作人");
+
+
   p_layout.field("menubar") << p_menubar;
+  p_layout.field("project_listbox") << p_project_listbox->get_listbox();
+  p_layout.field("ass_tree_box") << p_ass_tree_box;
+  p_layout.field("attr_listbox") << p_attr_listbox;
   p_layout.collocate();
 }
 void main_windows::create_menubar() {
@@ -58,9 +73,9 @@ void main_windows::create_menubar() {
   });
   k_tool_menu.append("安装ue项目插件", [this](nana::menu::item_proxy&) {
     auto k_file_dig = nana::filebox{*this, true};
-    k_file_dig.add_filter("ue project files","*.uproject;");
+    k_file_dig.add_filter("ue project files", "*.uproject;");
     auto k_f = k_file_dig();
-    if(!k_f.empty()){
+    if (!k_f.empty()) {
       toolkit::installUePath(k_f.at(0).parent_path());
     }
   });

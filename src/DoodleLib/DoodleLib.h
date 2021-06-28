@@ -13,6 +13,8 @@
 #include <DoodleLib/FileWarp/MayaFile.h>
 #include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/Gui/Metadata/project_widget.h>
+#include <DoodleLib/Gui/factory/menu_factory.h>
 #include <DoodleLib/Gui/main_windows.h>
 #include <DoodleLib/Gui/setting_windows.h>
 #include <DoodleLib/Logger/Logger.h>

@@ -11,6 +11,8 @@ set(
 	FileWarp/MayaFile.h
 	FileWarp/Ue4Project.h
 	FileWarp/VideoSequence.h
+	Gui/Metadata/project_widget.h
+	Gui/factory/menu_factory.h
 	Gui/main_windows.h
 	Gui/setting_windows.h
 	Logger/Logger.h
@@ -89,6 +91,8 @@ set(
 	FileWarp/MayaFile.cpp
 	FileWarp/Ue4Project.cpp
 	FileWarp/VideoSequence.cpp
+	Gui/Metadata/project_widget.cpp
+	Gui/factory/menu_factory.cpp
 	Gui/main_windows.cpp
 	Gui/setting_windows.cpp
 	Logger/Logger.cpp
