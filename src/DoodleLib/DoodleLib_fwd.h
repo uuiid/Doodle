@@ -1,5 +1,10 @@
 ﻿#pragma once
 
+#include <doodlelib_export.h>
+
+
+#define SPDLOG_FUNCTION static_cast<const char *>(__FUNCSIG__)
+
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -20,6 +25,8 @@
 //  }
 //};
 //}  // namespace fmt
+
+#include <Windows.h>
 
 //开始我们的名称空间
 namespace doodle {

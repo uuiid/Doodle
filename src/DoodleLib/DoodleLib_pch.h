@@ -22,9 +22,10 @@
 #include <variant>
 #include <vector>
 
+
 #include <DoodleLib/libWarp/wxWidgetWarp.h>
 
-#include <doodlelib_export.h>
+#include <DoodleLib/DoodleLib_fwd.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
@@ -43,5 +44,4 @@
 #include <date/date.h>
 
 #include <DoodleLib/libWarp/CerealWarp.h>
-#include <DoodleLib/DoodleLib_fwd.h>
 
