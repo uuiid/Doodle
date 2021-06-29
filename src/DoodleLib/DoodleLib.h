@@ -15,6 +15,7 @@
 #include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/Gui/Metadata/project_widget.h>
 #include <DoodleLib/Gui/action/action.h>
+#include <DoodleLib/Gui/action/action_import.h>
 #include <DoodleLib/Gui/action/assets_action.h>
 #include <DoodleLib/Gui/action/assets_file_action.h>
 #include <DoodleLib/Gui/action/project_action.h>
@@ -72,6 +73,7 @@
 #include <DoodleLib/libWarp/json_warp.h>
 #include <DoodleLib/libWarp/lfu_cache_policy.hpp>
 #include <DoodleLib/libWarp/lru_cache_policy.hpp>
+#include <DoodleLib/libWarp/nana_warp.h>
 #include <DoodleLib/libWarp/observable_container.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <DoodleLib/libWarp/wxWidgetWarp.h>

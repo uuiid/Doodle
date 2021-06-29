@@ -13,6 +13,7 @@ set(
 	FileWarp/VideoSequence.h
 	Gui/Metadata/project_widget.h
 	Gui/action/action.h
+	Gui/action/action_import.h
 	Gui/action/assets_action.h
 	Gui/action/assets_file_action.h
 	Gui/action/project_action.h
@@ -70,6 +71,7 @@ set(
 	libWarp/json_warp.h
 	libWarp/lfu_cache_policy.hpp
 	libWarp/lru_cache_policy.hpp
+	libWarp/nana_warp.h
 	libWarp/observable_container.h
 	libWarp/sqlppWarp.h
 	libWarp/wxWidgetWarp.h
@@ -139,6 +141,7 @@ set(
 	core/Ue4Setting.cpp
 	core/Util.cpp
 	core/static_value.cpp
+	libWarp/nana_warp.cpp
 	mainWidght/MklinkWidget.cpp
 	mainWidght/systemTray.cpp
 	mainWidght/tool_windows.cpp
