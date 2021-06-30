@@ -2,16 +2,17 @@
 
 #include <doodlelib_export.h>
 
-
 #define SPDLOG_FUNCTION static_cast<const char *>(__FUNCSIG__)
 
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+
 #include <boost/filesystem.hpp>
 //#include <ghc/filesystem.hpp>
-#include <stdexcept>
 #include <DoodleLib/Logger/Logger.h>
+
+#include <stdexcept>
 //namespace fmt {
 //namespace FSys = std::filesystem;
 //template <class Char>
@@ -37,6 +38,21 @@ class no_copy {
   no_copy(const no_copy &) = delete;
   no_copy &operator=(const no_copy &) = delete;
 };
+
+/**
+ * 这个是判断指针或者共享指针是什么类的帮助函数
+ * @tparam T 是否是这个类
+ * @tparam RT 传入的指针类型
+ * @param in_rt 输入的指针
+ * @return 是否是可以转换的
+ */
+template <class T, class RT>
+bool is_class(const RT &in_rt) {
+  if (!in_rt)
+    return false;
+  const auto &k_item = *in_rt;
+  return typeid(T) == typeid(k_item);
+}
 }  // namespace details
 
 namespace FSys {

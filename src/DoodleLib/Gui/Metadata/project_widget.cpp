@@ -4,17 +4,19 @@
 
 #include "project_widget.h"
 
+#include <Gui/action/action_import.h>
+#include <Gui/factory/menu_factory.h>
 #include <Metadata/AssetsFile.h>
 #include <Metadata/Comment.h>
 #include <Metadata/Project.h>
 #include <Metadata/TimeDuration.h>
 #include <core/MetadataSet.h>
 #include <libWarp/nana_warp.h>
-
 namespace doodle {
 
 project_widget::project_widget(nana::window in_window)
-    : p_list_box(in_window) {
+    : p_list_box(in_window),
+      p_menu() {
   p_list_box.append_header("名称");
   p_list_box.append_header("根目录");
   p_list_box.append_header("英文名称");
@@ -30,6 +32,21 @@ project_widget::project_widget(nana::window in_window)
   p_list_box.events().selected([](const nana::arg_listbox& in_) {
     in_.item.value<ProjectPtr>();
   });
+  p_list_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_) {
+    p_menu.clear();
+
+    menu_factory k_factory{in_.window_handle};
+    auto k_selected = p_list_box.selected();
+    MetadataPtr k_ptr{};
+    if (!k_selected.empty()) {
+      auto k_pair = k_selected.at(0);
+      k_ptr       = p_list_box.at(k_pair).value<ProjectPtr>();
+    }
+    k_factory.create_prj_action(k_ptr);
+    k_factory(p_menu, k_ptr);
+    p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
+  }});
+
   //  nana::API::refresh_window(p_list_box);
 }
 nana::listbox& project_widget::get_widget() {
@@ -65,6 +82,7 @@ nana::listbox::iresolver& operator>>(nana::listbox::iresolver& oor, AssetsFilePt
 }
 assets_widget::assets_widget(nana::window in_window)
     : p_tree_box(in_window),
+      p_menu(),
       p_root() {
   p_tree_box.events().selected([this](const nana::arg_treebox& in_) {
     auto k_ptr = in_.item.value<MetadataPtr>();
@@ -72,20 +90,33 @@ assets_widget::assets_widget(nana::window in_window)
       sig_selected(k_ptr);
     DOODLE_LOG_INFO("选中 {}", in_.item.key())
   });
+  p_tree_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_) {
+    p_menu.clear();
 
-  p_tree_box.events().expanded([this](const nana::arg_treebox& in_) {
-    auto k_proxy = in_.item;
-    DOODLE_LOG_INFO("扩展 {}", k_proxy.key())
-    details::draw_guard<nana::treebox> k_guard{p_tree_box};
-
-    k_proxy.clear();
-    auto k_me = k_proxy.value<MetadataPtr>();
-    k_me->select_indb();
-
-    for (auto& k_i : k_me->getChildItems()) {
-      k_proxy.append(k_i->str(), k_i->showStr(), k_i);
+    menu_factory k_factory{in_.window_handle};
+    auto k_selected = p_tree_box.selected();
+    MetadataPtr k_ptr{};
+    if (!k_selected.empty()) {
+      k_ptr       = k_selected.value<MetadataPtr>();
     }
-  });
+    k_factory.create_ass_action(k_ptr);
+    k_factory(p_menu, k_ptr);
+    p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
+  }});
+  p_tree_box.events()
+      .expanded([this](const nana::arg_treebox& in_) {
+        auto k_proxy = in_.item;
+        DOODLE_LOG_INFO("扩展 {}", k_proxy.key())
+        details::draw_guard<nana::treebox> k_guard{p_tree_box};
+
+        k_proxy.clear();
+        auto k_me = k_proxy.value<MetadataPtr>();
+        k_me->select_indb();
+
+        for (auto& k_i : k_me->getChildItems()) {
+          k_proxy.append(k_i->str(), k_i->showStr(), k_i);
+        }
+      });
 }
 void assets_widget::set_ass(const MetadataPtr& in_project_ptr) {
   p_tree_box.clear();
@@ -115,6 +146,7 @@ nana::treebox& assets_widget::get_widget() {
 
 assets_attr_widget::assets_attr_widget(nana::window in_window)
     : p_list_box(in_window),
+      p_menu(),
       p_assets() {
   p_list_box.append_header("id");
   p_list_box.append_header("版本");
@@ -122,6 +154,21 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
   p_list_box.append_header("评论", 200);
   p_list_box.append_header("时间", 130);
   p_list_box.append_header("制作人");
+
+  p_list_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_){
+    p_menu.clear();
+
+    menu_factory k_factory{in_.window_handle};
+    auto k_selected = p_list_box.selected();
+    MetadataPtr k_ptr{};
+    if (!k_selected.empty()) {
+      auto k_pair = k_selected.at(0);
+      k_ptr       = p_list_box.at(k_pair).value<ProjectPtr>();
+    }
+    k_factory.create_file_action(k_ptr);
+    k_factory(p_menu, k_ptr);
+    p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
+  }});
 }
 void assets_attr_widget::set_ass(const MetadataPtr& in_ptr) {
   p_list_box.clear();
@@ -139,7 +186,7 @@ void assets_attr_widget::set_ass(const MetadataPtr& in_ptr) {
   details::draw_guard<nana::listbox> k_guard{p_list_box};
 
   for (auto& k_i : in_ptr->getChildItems()) {
-    if (typeid(*k_i) != typeid(AssetsFile)) {
+    if (!details::is_class<AssetsFile>(k_i)) {
       DOODLE_LOG_WARN("项目不是文件项")
       continue;
     }

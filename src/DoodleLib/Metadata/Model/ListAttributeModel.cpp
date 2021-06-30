@@ -125,8 +125,7 @@ unsigned int ListAttributeModel::GetChildren(const wxDataViewItem& item, wxDataV
 
   auto& k_c = p_metadata->getChildItems();
   for (const auto& k_i : k_c) {
-    const auto& x = *k_i;
-    if (typeid(x) == typeid(AssetsFile))
+    if (details::is_class<AssetsFile>(k_i))
       children.emplace_back(wxDataViewItem{k_i.get()});
   }
   return children.size();

@@ -7,8 +7,8 @@
 
 #include <boost/signals2.hpp>
 #include <nana/gui/widgets/listbox.hpp>
+#include <nana/gui/widgets/menu.hpp>
 #include <nana/gui/widgets/treebox.hpp>
-
 namespace doodle {
 
 namespace details {
@@ -26,15 +26,24 @@ class draw_guard : public no_copy {
 };
 }  // namespace details
 
-
 nana::listbox::oresolver& operator<<(nana::listbox::oresolver& oor, const ProjectPtr& in_prj);
 nana::listbox::iresolver& operator>>(nana::listbox::iresolver& oor, ProjectPtr& in_prj);
 
-nana::listbox::oresolver& operator<<(nana::listbox::oresolver& oor, const AssetsFilePtr & in_file);
-nana::listbox::iresolver& operator>>(nana::listbox::iresolver& oor, AssetsFilePtr & in_file);
+nana::listbox::oresolver& operator<<(nana::listbox::oresolver& oor, const AssetsFilePtr& in_file);
+nana::listbox::iresolver& operator>>(nana::listbox::iresolver& oor, AssetsFilePtr& in_file);
+
+//class widget {
+// protected:
+//  nana::window _win;
+//
+// public:
+//  explicit widget(nana::window in_window) : _win(in_window){};
+//  virtual ~widget() = default;
+//};
+
 class DOODLELIB_API project_widget {
   nana::listbox p_list_box;
-
+  nana::menu p_menu;
  public:
   explicit project_widget(nana::window in_window);
 
@@ -45,6 +54,7 @@ class DOODLELIB_API assets_widget {
   nana::treebox p_tree_box;
 
   MetadataPtr p_root;
+  nana::menu p_menu;
 
  public:
   explicit assets_widget(nana::window in_window);
@@ -56,6 +66,7 @@ class DOODLELIB_API assets_widget {
 
 class DOODLELIB_API assets_attr_widget {
   nana::listbox p_list_box;
+  nana::menu p_menu;
 
   std::vector<AssetsFilePtr> p_assets;
 
