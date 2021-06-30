@@ -6,7 +6,7 @@
 #include <DoodleLib/rpc/RpcFileSystemClient.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
 #include <DoodleLib/core/static_value.h>
-
+#include <Metadata/MetadataFactory.h>
 #include <ShlObj.h>
 #include <date/tz.h>
 #include <google/protobuf/service.h>
@@ -50,6 +50,7 @@ void CoreSet::guiInit() {
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 
+//  p_metadata_factory  = std::make_shared<MetadataFactory>();
   p_matadata_setting_.init();
 //  p_rpc_file_system_client->IsExist("test");
 }
@@ -117,6 +118,7 @@ CoreSet::CoreSet()
       p_mayaPath(),
       p_rpc_metadata_clien(),
       p_rpc_file_system_client(),
+      p_metadata_factory(),
 #ifdef NDEBUG
       p_server_host("192.168.10.215"),
 #else
@@ -137,6 +139,7 @@ CoreSet::CoreSet()
 
   p_doc = FSys::path{pManager} / "doodle";
   CoTaskMemFree(pManager);
+
   getCacheDiskPath();
   p_data_root = p_cache_root.parent_path() / "data";
 
@@ -266,9 +269,10 @@ RpcFileSystemClientPtr CoreSet::getRpcFileSystemClient() const {
   return p_rpc_file_system_client;
 }
 void CoreSet::clear() {
+  p_metadata_factory.reset();
+  p_matadata_setting_.clear();
   p_rpc_metadata_clien.reset();
   p_rpc_file_system_client.reset();
-  p_matadata_setting_.clear();
 }
 int CoreSet::getSqlPort() const {
   return p_sql_port;
@@ -305,6 +309,9 @@ int CoreSet::getFileRpcPort() const {
 }
 void CoreSet::setFileRpcPort(int in_fileRpcPort) {
   p_file_rpc_port = in_fileRpcPort;
+}
+MetadataFactoryPtr CoreSet::get_metadata_factory() const {
+  return p_metadata_factory;
 }
 
 }

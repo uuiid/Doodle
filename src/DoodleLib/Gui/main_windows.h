@@ -22,16 +22,20 @@
 namespace doodle {
 class setting_windows;
 class project_widget;
+class assets_widget;
+class assets_attr_widget;
 
 class DOODLELIB_API main_windows : public nana::form {
   nana::place p_layout;
   nana::menubar p_menubar;
   nana::menu p_menu;
-//  nana::listbox p_project_listbox;
-  nana::treebox p_ass_tree_box;
-  nana::listbox p_attr_listbox;
+  //  nana::listbox p_project_listbox;
+  //  nana::treebox p_ass_tree_box;
+  //  nana::listbox p_attr_listbox;
   std::shared_ptr<setting_windows> p_setting_windows;
   std::shared_ptr<project_widget> p_project_listbox;
+  std::shared_ptr<assets_widget> p_ass_tree_box;
+  std::shared_ptr<assets_attr_widget> p_attr_listbox;
 
  public:
   main_windows();

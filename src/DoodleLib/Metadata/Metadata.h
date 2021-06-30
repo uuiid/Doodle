@@ -199,23 +199,23 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata>, pu
    *  工厂在添加子物体时应该调用 Metadata::addChildItemNotSig(const MetadataPtr &) 方法
    * @param in_factory 序列化工厂
    */
-  virtual void select_indb(const MetadataFactoryPtr &in_factory);
+  virtual void select_indb(const MetadataFactoryPtr &in_factory = {});
   /**
    *
    * @param in_factory 序列化工厂
    */
-  virtual void updata_db(const MetadataFactoryPtr &in_factory);
+  virtual void updata_db(const MetadataFactoryPtr &in_factory = {});
   /**
    * @brief  删除这个数据
    * @param in_factory 序列化工厂
    */
-  virtual void deleteData(const MetadataFactoryPtr &in_factory);
+  virtual void deleteData(const MetadataFactoryPtr &in_factory = {});
   /**
    * @brief 插入函数
    * 
    * @param in_factory 
    */
-  virtual void insert_into(const MetadataFactoryPtr &in_factory);
+  virtual void insert_into(const MetadataFactoryPtr &in_factory = {});
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);

@@ -33,7 +33,7 @@ enum class Department {
  *全局静态设置类
  */
 
-class DOODLELIB_API CoreSet : public details::no_copy{
+class DOODLELIB_API CoreSet : public details::no_copy {
  public:
   static CoreSet &getSet();
   /**
@@ -100,7 +100,7 @@ class DOODLELIB_API CoreSet : public details::no_copy{
 
   [[nodiscard]] RpcMetadataClientPtr getRpcMetadataClient() const;
   [[nodiscard]] RpcFileSystemClientPtr getRpcFileSystemClient() const;
-
+  [[nodiscard]] MetadataFactoryPtr get_metadata_factory() const;
   static std::size_t getBlockSize() {
     static std::size_t k_i{64 * 1024};
     return k_i;
@@ -137,7 +137,7 @@ class DOODLELIB_API CoreSet : public details::no_copy{
   FSys::path p_mayaPath;
   RpcMetadataClientPtr p_rpc_metadata_clien;
   RpcFileSystemClientPtr p_rpc_file_system_client;
-
+  MetadataFactoryPtr p_metadata_factory;
   std::string p_server_host;  ///< 我们自己的服务器ip
 
   int p_sql_port;       ///< mysql 端口
@@ -172,7 +172,7 @@ void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
         cereal::make_nvp("maya_Path", p_mayaPath));
 }
 
-}
+}  // namespace doodle
 namespace cereal {
 template <class Archive>
 std::string save_minimal(Archive const &, doodle::Department const &department) {

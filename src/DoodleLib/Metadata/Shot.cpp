@@ -54,7 +54,7 @@ void Shot::setEpisodesPtr(const EpisodesPtr& Episodes_) noexcept {
   Episodes_->addChildItem(shared_from_this());
 }
 std::string Shot::str() const {
-  return fmt::format("sc{:04i}{}", p_shot, p_shot_ab);
+  return fmt::format("sc{:04d}{}", p_shot, p_shot_ab);
 }
 bool Shot::operator<(const Shot& rhs) const {
   return std::tie(p_shot, p_shot_ab) < std::tie(rhs.p_shot, rhs.p_shot_ab);

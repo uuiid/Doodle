@@ -25,7 +25,7 @@ ThreadPoolPtr DoodleLib::get_thread_pool() {
   return ptr;
 }
 DoodleLib::~DoodleLib() {
-  Logger::clear();
   CoreSet::getSet().clear();
+  Logger::clear();
 }
 }  // namespace doodle

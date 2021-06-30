@@ -209,23 +209,25 @@ bool Metadata::operator!=(const Metadata &in_rhs) const {
 }
 
 void Metadata::select_indb(const MetadataFactoryPtr &in_factory) {
-  p_metadata_flctory_ptr_ = in_factory;
+  if (in_factory)
+    p_metadata_flctory_ptr_ = in_factory;
   if (isLoaded())
     return;
 
-  _select_indb(in_factory);
+  _select_indb(p_metadata_flctory_ptr_);
   loaded();
 }
 
 void Metadata::updata_db(const MetadataFactoryPtr &in_factory) {
-  p_metadata_flctory_ptr_ = in_factory;
+  if (in_factory)
+    p_metadata_flctory_ptr_ = in_factory;
 
   if (isSaved())
     return;
 
   ///在这里测试使用具有父级， 并且如果有父级， 还要更新父id， 那么就可以断定也要更新父级的记录
   if (hasParent() && p_metadata_flctory_ptr_) {
-    p_parent.lock()->updata_db(in_factory);
+    p_parent.lock()->updata_db(p_metadata_flctory_ptr_);
   }
 
   _updata_db(in_factory);
@@ -233,15 +235,17 @@ void Metadata::updata_db(const MetadataFactoryPtr &in_factory) {
 }
 
 void Metadata::deleteData(const MetadataFactoryPtr &in_factory) {
-  p_metadata_flctory_ptr_ = in_factory;
+  if (in_factory)
+    p_metadata_flctory_ptr_ = in_factory;
 
-  _deleteData(in_factory);
+  _deleteData(p_metadata_flctory_ptr_);
 }
 
 void Metadata::insert_into(const MetadataFactoryPtr &in_factory) {
-  p_metadata_flctory_ptr_ = in_factory;
+  if (in_factory)
+    p_metadata_flctory_ptr_ = in_factory;
 
-  _insert_into(in_factory);
+  _insert_into(p_metadata_flctory_ptr_);
   saved();
 }
 

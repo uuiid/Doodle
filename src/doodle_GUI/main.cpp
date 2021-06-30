@@ -13,7 +13,7 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               HINSTANCE hPrevInstance,
                               wxCmdLineArgType WXUNUSED(lpCmdLine),
                               int nCmdShow) try {
-//  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF );
+  //  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF );
   std::locale::global(std::locale{".UTF8"});
   std::wcout.imbue(std::locale{".UTF8"});
 
@@ -23,10 +23,11 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
   app.run();
   return 0;
 } catch (const std::exception &err) {
-  DOODLE_LOG_ERROR(err.what());
-  doodle::CoreSet::getSet().writeDoodleLocalSet();
+  std::cout << err.what() << std::endl;
+  //  DOODLE_LOG_ERROR(err.what());
+  //  doodle::CoreSet::getSet().writeDoodleLocalSet();
   return 1;
 } catch (...) {
-  doodle::CoreSet::getSet().writeDoodleLocalSet();
+  //  doodle::CoreSet::getSet().writeDoodleLocalSet();
   return 1;
 }

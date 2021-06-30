@@ -2,14 +2,14 @@
 // Created by TD on 2021/5/7.
 //
 #include "MetadataFactory.h"
+
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Metadata/Metadata_cpp.h>
-
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
-
 #include <grpcpp/grpcpp.h>
+
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/portable_binary.hpp>
 
@@ -18,27 +18,31 @@ namespace doodle {
 MetadataFactory::MetadataFactory()
     : p_rpcClien(CoreSet::getSet().getRpcMetadataClient()) {
 }
-std::vector<ProjectPtr> MetadataFactory::getAllProject() const {
-  return p_rpcClien->GetProject();
+std::vector<ProjectPtr> MetadataFactory::getAllProject() {
+  auto k_v = p_rpcClien.lock()->GetProject();
+  for (auto &k_i : k_v) {
+    k_i->p_metadata_flctory_ptr_ = this->shared_from_this();
+  }
+  return k_v;
 }
 
 bool MetadataFactory::insert_into(Metadata *in_metadata) const {
-  p_rpcClien->InstallMetadata(in_metadata->shared_from_this());
+  p_rpcClien.lock()->InstallMetadata(in_metadata->shared_from_this());
   return true;
 }
 void MetadataFactory::updata_db(MetadataPtr &in_metadata) const {
-  this->p_rpcClien->UpdataMetadata(in_metadata, in_metadata->p_updata_parent_id);
+  this->p_rpcClien.lock()->UpdataMetadata(in_metadata, in_metadata->p_updata_parent_id);
 }
 
 void MetadataFactory::select_indb(MetadataPtr &in_metadata) const {
   if (!in_metadata->hasChild())
     return;
-  auto k_c = this->p_rpcClien->GetChild(in_metadata);
+  auto k_c = this->p_rpcClien.lock()->GetChild(in_metadata);
   in_metadata->setChildItems(k_c);
 }
 
 void MetadataFactory::deleteData(const Metadata *in_metadata) const {
-  p_rpcClien->DeleteMetadata(in_metadata->shared_from_this());
+  p_rpcClien.lock()->DeleteMetadata(in_metadata->shared_from_this());
 }
 
 bool MetadataFactory::hasChild(const Metadata *in_metadata) const {
@@ -51,7 +55,7 @@ bool MetadataFactory::hasChild(const Metadata *in_metadata) const {
 
 void MetadataFactory::select_indb(Project *in_) const {
   auto k_ptr = in_->shared_from_this();
-  this->p_rpcClien->GetMetadata(k_ptr);
+  this->p_rpcClien.lock()->GetMetadata(k_ptr);
   select_indb(k_ptr);
 }
 void MetadataFactory::select_indb(Shot *in_) const {

@@ -3,6 +3,9 @@
 //
 
 #include "nana_warp.h"
+#include <date/date.h>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 namespace doodle {
 
 void menu_assist::operator()(const nana::arg_mouse& arg) {
@@ -22,4 +25,11 @@ void menu_assist::operator()(const nana::arg_mouse& arg) {
       return;
   }
 }
+//nana::listbox::oresolver& operator<<(nana::listbox::oresolver& oor, const std::chrono::time_point<std::chrono::system_clock>& in_time) {
+//  oor << date::format("", in_time);
+//  return oor;
+//}
+//nana::listbox::iresolver& operator>>(nana::listbox::iresolver& oor, std::chrono::time_point<std::chrono::system_clock>& in_time) {
+//  return oor;
+//}
 }  // namespace doodle

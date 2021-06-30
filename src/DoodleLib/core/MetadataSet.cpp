@@ -7,7 +7,7 @@
 #include <Exception/Exception.h>
 #include <core/MetadataSet.h>
 #include <rpc/RpcMetadataClient.h>
-
+#include <Metadata/MetadataFactory.h>
 #include <boost/numeric/conversion/cast.hpp>
 
 namespace doodle {
@@ -81,7 +81,8 @@ void MetadataSet::clear() {
 }
 
 void MetadataSet::init() {
-  p_project_list = CoreSet::getSet().getRpcMetadataClient()->GetProject();
+//  p_project_list = CoreSet::getSet().get_metadata_factory()->getAllProject();
+  p_project_list = std::make_shared<MetadataFactory>()->getAllProject();
   if (!p_project)
     return;
 

@@ -5,11 +5,11 @@
 #include "main_windows.h"
 
 #include <DoodleLib/Gui/setting_windows.h>
+#include <Gui/Metadata/project_widget.h>
 #include <core/CoreSet.h>
 #include <toolkit/toolkit.h>
 
 #include <nana/gui/filebox.hpp>
-#include <Gui/Metadata/project_widget.h>
 
 namespace doodle {
 
@@ -19,29 +19,28 @@ main_windows::main_windows()
       p_menubar(*this),
       p_menu(),
       p_project_listbox(std::make_shared<project_widget>(*this)),
-      p_ass_tree_box(*this),
-      p_attr_listbox(*this),
+      p_ass_tree_box(std::make_shared<assets_widget>(*this)),
+      p_attr_listbox(std::make_shared<assets_attr_widget>(*this)),
       p_setting_windows() {
   p_layout.div(
       R"(<vertical <weight=23 menubar>  <weight=20% project_listbox> | < <weight=30% ass_tree_box> | <attr_listbox > > >)");
   create_menubar();
 
-
-
-
-  p_attr_listbox.append_header("id");
-  p_attr_listbox.append_header("版本");
-  p_attr_listbox.append_header("名称");
-  p_attr_listbox.append_header("评论");
-  p_attr_listbox.append_header("时间");
-  p_attr_listbox.append_header("制作人");
-
-
   p_layout.field("menubar") << p_menubar;
-  p_layout.field("project_listbox") << p_project_listbox->get_listbox();
-  p_layout.field("ass_tree_box") << p_ass_tree_box;
-  p_layout.field("attr_listbox") << p_attr_listbox;
+  p_layout.field("project_listbox") << p_project_listbox->get_widget();
+  p_layout.field("ass_tree_box") << p_ass_tree_box->get_widget();
+  p_layout.field("attr_listbox") << p_attr_listbox->get_widget();
   p_layout.collocate();
+
+  p_project_listbox->get_widget().events().selected([this](const nana::arg_listbox& in_) {
+    auto k_prj = in_.item.value<ProjectPtr>();
+    if (!k_prj)
+      DOODLE_LOG_WARN("选中项目为空")
+    p_ass_tree_box->set_ass(k_prj);
+  });
+  p_ass_tree_box->sig_selected.connect([this](const MetadataPtr& in_ptr) {
+    this->p_attr_listbox->set_ass(in_ptr);
+  });
 }
 void main_windows::create_menubar() {
   auto& k_file_menu = p_menubar.push_back("文件");

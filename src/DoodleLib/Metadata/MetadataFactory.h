@@ -13,13 +13,13 @@ namespace doodle {
   *
   * @warning 我们在更改父亲时， 要同时移动文件和保存更改
   */
-class DOODLELIB_API MetadataFactory {
-  RpcMetadataClientPtr p_rpcClien;
+class DOODLELIB_API MetadataFactory : public std::enable_shared_from_this<MetadataFactory>{
+  std::weak_ptr<RpcMetadataClient> p_rpcClien;
 
  public:
   MetadataFactory();
 
-  virtual std::vector<ProjectPtr> getAllProject() const;
+  virtual std::vector<ProjectPtr> getAllProject();
 
   virtual void select_indb(Project* in_project) const;
   virtual void select_indb(Shot* in_shot) const;
