@@ -117,9 +117,9 @@ target_link_libraries(DoodleLib PUBLIC
 #        Boost::log
         spdlog::spdlog
         unofficial::nana::nana
-        $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
-        $<IF:$<CONFIG:Debug>,${WX_cored},${WX_core}>
-        $<IF:$<CONFIG:Debug>,${WX_advd},${WX_adv}>
+#        $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
+#        $<IF:$<CONFIG:Debug>,${WX_cored},${WX_core}>
+#        $<IF:$<CONFIG:Debug>,${WX_advd},${WX_adv}>
 
         cxxopts::cxxopts
 

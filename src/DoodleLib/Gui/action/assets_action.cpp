@@ -9,9 +9,8 @@
 #include <Metadata/Shot.h>
 namespace doodle {
 
-assset_create_action::assset_create_action(std::any&& in_any, MetadataFactoryPtr in_factory)
-    : action(std::move(in_any)),
-      p_factory(std::move(in_factory)) {
+assset_create_action::assset_create_action(std::any&& in_any)
+    : action(std::move(in_any)) {
   p_name = "创建类别";
 }
 void assset_create_action::run(const MetadataPtr& in_data) {
@@ -30,15 +29,14 @@ void assset_create_action::run(const MetadataPtr& in_data) {
   }
   auto k_a = std::make_shared<Assets>(in_data, k_s);
   in_data->addChildItem(k_a);
-  k_a->updata_db(p_factory);
+  k_a->updata_db(in_data->getMetadataFactory());
 }
 assset_create_action::assset_create_action() {
   p_name = "创建类别";
 }
 
-episode_create_action::episode_create_action(std::any&& in_any, MetadataFactoryPtr in_factory)
-    : action(std::move(in_any)),
-      p_factory(std::move(in_factory)) {
+episode_create_action::episode_create_action(std::any&& in_any)
+    : action(std::move(in_any)) {
   p_name = "创建集数";
 }
 void episode_create_action::run(const MetadataPtr& in_data) {
@@ -53,15 +51,14 @@ void episode_create_action::run(const MetadataPtr& in_data) {
   auto k_i    = std::any_cast<std::int32_t>(p_any);
   auto k_item = std::make_shared<Episodes>(in_data, k_i);
   in_data->addChildItem(k_item);
-  k_item->updata_db(p_factory);
+  k_item->updata_db(in_data->getMetadataFactory());
 }
 episode_create_action::episode_create_action() {
   p_name = "创建集数";
 }
 
-shot_create_action::shot_create_action(std::any&& in_any, MetadataFactoryPtr in_factory)
-    : action(std::move(in_any)),
-      p_factory(std::move(in_factory)) {
+shot_create_action::shot_create_action(std::any&& in_any)
+    : action(std::move(in_any)) {
   p_name = "创建镜头";
 }
 shot_create_action::shot_create_action() {
@@ -80,7 +77,7 @@ void shot_create_action::run(const MetadataPtr& in_data) {
   auto k_i    = std::any_cast<std::int32_t>(p_any);
   auto k_item = std::make_shared<Shot>(in_data, k_i);
   in_data->addChildItem(k_item);
-  k_item->updata_db(p_factory);
+  k_item->updata_db(in_data->getMetadataFactory());
 }
 
 assets_delete_action::assets_delete_action(std::any&& in_any) : action(std::move(in_any)) {

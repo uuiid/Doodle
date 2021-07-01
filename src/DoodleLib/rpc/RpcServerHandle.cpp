@@ -25,7 +25,7 @@ void RpcServerHandle::registerFileSystemServer(int port) {
   p_build->AddListeningPort(server_address, grpc::InsecureServerCredentials());
   p_build->RegisterService(p_rpc_file_system_server.get());
 
-  DOODLE_LOG_INFO(fmt::format("Server listening on {}",server_address));
+  DOODLE_LOG_INFO(fmt::format("Server listening on {}", server_address));
 }
 
 void RpcServerHandle::registerMetadataServer(int port) {
@@ -36,7 +36,7 @@ void RpcServerHandle::registerMetadataServer(int port) {
   p_build->AddListeningPort(server_address, grpc::InsecureServerCredentials());
   p_build->RegisterService(p_rpc_metadata_server.get());
 
-  DOODLE_LOG_INFO(fmt::format("Server listening on {}",server_address));
+  DOODLE_LOG_INFO(fmt::format("Server listening on {}", server_address));
 }
 
 void RpcServerHandle::runServer(int port_meta, int port_file_sys) {
@@ -55,19 +55,10 @@ void RpcServerHandle::runServer(int port_meta, int port_file_sys) {
     p_Server->Wait();
   }};
 }
-
-void RpcServerHandle::runServer() {
-  ///检查p_metadata_Server防止重复调用
-  if (p_Server)
-    return;
-
-  p_Server = std::move(p_build->BuildAndStart());
-
-  p_thread = std::thread{[this]() {
-    p_Server->Wait();
-  }};
+void RpcServerHandle::runServerWait(int port_meta, int port_file_sys) {
+  runServer(port_meta, port_file_sys);
+  p_thread.join();
 }
-
 void RpcServerHandle::stop() {
   using namespace std::chrono_literals;
   auto k_time = std::chrono::system_clock::now() + 2s;
@@ -78,4 +69,5 @@ void RpcServerHandle::stop() {
 
   p_Server.reset();
 }
+
 }  // namespace doodle

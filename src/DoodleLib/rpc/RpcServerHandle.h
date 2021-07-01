@@ -20,7 +20,7 @@ class RpcServerHandle {
   void registerMetadataServer(int port);
 
   void runServer(int port_meta, int port_file_sys);
-  void runServer();
+  void runServerWait(int port_meta, int port_file_sys);
   void stop();
 };
 }  // namespace doodle

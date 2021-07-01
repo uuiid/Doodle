@@ -31,13 +31,22 @@ namespace doodle {
 
 class DOODLELIB_API command_line {
  public:
-  int p_sql_port{};            ///< mysql 端口
-  int p_meta_rpc_port{};       ///< 元数据端口
-  int p_file_rpc_port{};       ///< filesys 文件传输端口
-  std::string p_sql_host;      ///< mysql数据库ip
-  std::string p_sql_user;      ///< mysql 用户名称
-  std::string p_sql_password;  ///< mysql 用户密码
-
+  int p_sql_port{3306};                      ///< mysql 端口
+  int p_meta_rpc_port{60999};                ///< 元数据端口
+  int p_file_rpc_port{60998};                ///< filesys 文件传输端口
+  std::string p_sql_host{"192.168.10.215"};  ///< mysql数据库ip
+  std::string p_sql_user{"deve"};            ///< mysql 用户名称
+  std::string p_sql_password{"deve"};        ///< mysql 用户密码
+  command_line()
+      : p_sql_port(3306),
+        p_meta_rpc_port(60999),
+        p_file_rpc_port(60998),
+        p_sql_host("192.168.10.215"),
+        p_sql_user("deve"),
+        p_sql_password("deve"),
+        p_mk_link(),
+        b_mklink(false),
+        b_server(false) {}
   std::vector<std::pair<FSys::path, FSys::path> > p_mk_link;
 
   bool b_mklink{};
@@ -64,37 +73,35 @@ class DOODLELIB_API command_line {
   };
 
   friend void to_json(nlohmann::json& nlohmann_json_j, const command_line& nlohmann_json_t) {
-    if (nlohmann_json_t.b_server) {
-      nlohmann_json_j["p_sql_port"]      = nlohmann_json_t.p_sql_port;
-      nlohmann_json_j["p_meta_rpc_port"] = nlohmann_json_t.p_meta_rpc_port;
-      nlohmann_json_j["p_file_rpc_port"] = nlohmann_json_t.p_file_rpc_port;
-      nlohmann_json_j["p_sql_host"]      = nlohmann_json_t.p_sql_host;
-      nlohmann_json_j["p_sql_user"]      = nlohmann_json_t.p_sql_user;
-      nlohmann_json_j["p_sql_password"]  = nlohmann_json_t.p_sql_password;
-    } else if (nlohmann_json_t.b_mklink) {
-      nlohmann_json_j["p_mk_link"] = nlohmann_json_t.p_mk_link;
-    }
+    nlohmann_json_j["b_server"]        = nlohmann_json_t.b_server;
+    nlohmann_json_j["b_mklink"]        = nlohmann_json_t.b_mklink;
+    nlohmann_json_j["p_sql_port"]      = nlohmann_json_t.p_sql_port;
+    nlohmann_json_j["p_meta_rpc_port"] = nlohmann_json_t.p_meta_rpc_port;
+    nlohmann_json_j["p_file_rpc_port"] = nlohmann_json_t.p_file_rpc_port;
+    nlohmann_json_j["p_sql_host"]      = nlohmann_json_t.p_sql_host;
+    nlohmann_json_j["p_sql_user"]      = nlohmann_json_t.p_sql_user;
+    nlohmann_json_j["p_sql_password"]  = nlohmann_json_t.p_sql_password;
+    nlohmann_json_j["p_mk_link"]       = nlohmann_json_t.p_mk_link;
   };
   friend void from_json(const nlohmann::json& nlohmann_json_j, command_line& nlohmann_json_t) {
     try {
-      nlohmann_json_j.at("p_sql_port").get_to(nlohmann_json_t.p_sql_port);
-      nlohmann_json_j.at("p_meta_rpc_port").get_to(nlohmann_json_t.p_meta_rpc_port);
-      nlohmann_json_j.at("p_file_rpc_port").get_to(nlohmann_json_t.p_file_rpc_port);
-      nlohmann_json_j.at("p_sql_host").get_to(nlohmann_json_t.p_sql_host);
-      nlohmann_json_j.at("p_sql_user").get_to(nlohmann_json_t.p_sql_user);
-      nlohmann_json_j.at("p_sql_password").get_to(nlohmann_json_t.p_sql_password);
+      nlohmann_json_j.at("b_server").get_to(nlohmann_json_t.b_server);
+      nlohmann_json_j.at("b_mklink").get_to(nlohmann_json_t.b_mklink);
+      if (nlohmann_json_t.b_server) {
+        nlohmann_json_j.at("p_sql_port").get_to(nlohmann_json_t.p_sql_port);
+        nlohmann_json_j.at("p_meta_rpc_port").get_to(nlohmann_json_t.p_meta_rpc_port);
+        nlohmann_json_j.at("p_file_rpc_port").get_to(nlohmann_json_t.p_file_rpc_port);
+        nlohmann_json_j.at("p_sql_host").get_to(nlohmann_json_t.p_sql_host);
+        nlohmann_json_j.at("p_sql_user").get_to(nlohmann_json_t.p_sql_user);
+        nlohmann_json_j.at("p_sql_password").get_to(nlohmann_json_t.p_sql_password);
+      }
+      if (nlohmann_json_t.b_mklink) {
+        nlohmann_json_j.at("p_mk_link").get_to(nlohmann_json_t.p_mk_link);
+      }
     } catch (const nlohmann::json::exception& error) {
       DOODLE_LOG_INFO(error.what());
       nlohmann_json_t.b_server = false;
     }
-    nlohmann_json_t.b_server = true;
-    try {
-      nlohmann_json_j.at("p_mk_link").get_to(nlohmann_json_t.p_mk_link);
-    } catch (const nlohmann::json::exception& error) {
-      DOODLE_LOG_INFO(error.what());
-      nlohmann_json_t.b_mklink = false;
-    }
-    nlohmann_json_t.b_mklink = true;
   };
 };
 
@@ -110,10 +117,20 @@ void doodle_app::init() {
 
   if (k_argc == 2) {
     auto k_path = FSys::path(k_argv[1]);
+    if (!exists(k_path)) {
+      DOODLE_LOG_WARN("没有找到配置文件: {}\n写入默认配置", k_path)
+      FSys::ofstream k_file{k_path, std::ios::out};
+      nlohmann::json k_json{};
+      command_line config{};
+      config.b_server = true;
+      k_json.emplace_back(config);
+      k_file << k_json;
+      return;
+    }
     FSys::ifstream k_file{k_path, std::ios::in};
     if (!k_file)
       return;
-    auto p_info = nlohmann::json::parse(k_file).get<command_line>();
+    auto p_info = nlohmann::json::parse(k_file)[0].get<command_line>();
     if (p_info.b_mklink) {
       p_run_fun = [p_info]() {
         for (auto& k_p : p_info.p_mk_link) {
@@ -125,6 +142,14 @@ void doodle_app::init() {
         p_info.set_set();
         auto& set = CoreSet::getSet();
         p_rpc_server_handle->runServer(p_info.p_meta_rpc_port, p_info.p_file_rpc_port);
+
+        nana::form _w{};
+        _w.caption("关闭窗口停止服务器");
+        _w.events().destroy([this](const nana::arg_destroy& in_) {
+          p_rpc_server_handle->stop();
+        });
+        _w.show();
+        nana::exec();
       };
     }
   } else if (k_argc == 1) {
@@ -146,7 +171,7 @@ void doodle_app::gui_run() {
 
   main_windows k_main_windows{};
   k_main_windows.show();
-//  p_setting_windows = std::make_shared<setting_windows>(k_main_windows);
+  //  p_setting_windows = std::make_shared<setting_windows>(k_main_windows);
 
   nana::exec();
 }

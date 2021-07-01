@@ -37,13 +37,13 @@ project_widget::project_widget(nana::window in_window)
 
     menu_factory k_factory{in_.window_handle};
     auto k_selected = p_list_box.selected();
-    MetadataPtr k_ptr{};
-    if (!k_selected.empty()) {
-      auto k_pair = k_selected.at(0);
-      k_ptr       = p_list_box.at(k_pair).value<ProjectPtr>();
-    }
+    if (k_selected.empty())
+      return;
+
+    auto k_pair = k_selected.at(0);
+    MetadataPtr k_ptr  = p_list_box.at(k_pair).value<ProjectPtr>();
     k_factory.create_prj_action(k_ptr);
-    k_factory(p_menu, k_ptr);
+    k_factory(p_menu);
     p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
   }});
 
@@ -95,12 +95,11 @@ assets_widget::assets_widget(nana::window in_window)
 
     menu_factory k_factory{in_.window_handle};
     auto k_selected = p_tree_box.selected();
-    MetadataPtr k_ptr{};
-    if (!k_selected.empty()) {
-      k_ptr       = k_selected.value<MetadataPtr>();
-    }
+    if (k_selected.empty())
+      return;
+    MetadataPtr k_ptr = k_selected.value<MetadataPtr>();
     k_factory.create_ass_action(k_ptr);
-    k_factory(p_menu, k_ptr);
+    k_factory(p_menu);
     p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
   }});
   p_tree_box.events()
@@ -155,18 +154,18 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
   p_list_box.append_header("时间", 130);
   p_list_box.append_header("制作人");
 
-  p_list_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_){
+  p_list_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_) {
     p_menu.clear();
 
     menu_factory k_factory{in_.window_handle};
     auto k_selected = p_list_box.selected();
-    MetadataPtr k_ptr{};
-    if (!k_selected.empty()) {
-      auto k_pair = k_selected.at(0);
-      k_ptr       = p_list_box.at(k_pair).value<ProjectPtr>();
-    }
+    if (!k_selected.empty())
+      return;
+
+    auto k_pair = k_selected.at(0);
+    MetadataPtr k_ptr  = p_list_box.at(k_pair).value<AssetsFilePtr>();
     k_factory.create_file_action(k_ptr);
-    k_factory(p_menu, k_ptr);
+    k_factory(p_menu);
     p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
   }});
 }

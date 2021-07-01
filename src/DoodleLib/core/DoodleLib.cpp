@@ -12,6 +12,7 @@ DoodleLib* DoodleLib::p_install = nullptr;
 
 DoodleLib::DoodleLib()
     : p_thread_pool(std::make_shared<ThreadPool>(4)) {
+  Logger::doodle_initLog();
 }
 DoodleLib& DoodleLib::Get() {
   return *p_install;

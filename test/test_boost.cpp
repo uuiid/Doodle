@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/locale.hpp>
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
@@ -23,14 +24,14 @@ std::string decode64(const std::string &val) {
   });
 }
 
-TEST(dboost, test_encode) {
-  std::cout << encode64("zhangyubin") << std::endl;
-  ASSERT_TRUE(encode64("zhangyubin") == "emhhbmd5dWJpbg==");
-}
-
-TEST(dboost, test_decode) {
-  ASSERT_TRUE(decode64("MTIzNDU=") == "12345");
-}
+//TEST(dboost, test_encode) {
+//  std::cout << encode64("zhangyubin") << std::endl;
+//  ASSERT_TRUE(encode64("zhangyubin") == "emhhbmd5dWJpbg==");
+//}
+//
+//TEST(dboost, test_decode) {
+//  ASSERT_TRUE(decode64("MTIzNDU=") == "12345");
+//}
 
 TEST(dboost, normalize_path) {
   boost::filesystem::path root(R"(c:\some\deep\application\folder)");

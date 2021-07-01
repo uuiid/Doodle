@@ -19,10 +19,15 @@ namespace doodle {
 menu_factory::menu_factory(nana::window in_window)
     : p_window(in_window),
       p_set(CoreSet::getSet()),
-      p_action() {
+      p_action(),
+      p_metadata() {
 }
 
 void menu_factory::create_prj_action(MetadataPtr& in_metadata) {
+  if (!in_metadata)
+    return;
+  p_metadata = in_metadata;
+
   auto k_create = p_action.emplace_back(std::make_shared<create_project_action>());
 
   k_create->sig_get_input.connect([this]() -> std::any {
@@ -47,9 +52,6 @@ void menu_factory::create_prj_action(MetadataPtr& in_metadata) {
   });
 
   //----------------------------------------------------------------
-
-  if (!in_metadata)
-    return;
 
   p_action.emplace_back(action_ptr{});
 
@@ -78,6 +80,10 @@ void menu_factory::create_prj_action(MetadataPtr& in_metadata) {
   });
 }
 void menu_factory::create_file_action(MetadataPtr& in_metadata) {
+  if (!in_metadata)
+    return;
+  p_metadata = in_metadata;
+
   auto k_c_f = p_action.emplace_back(std::make_shared<assfile_create_action>());
   k_c_f->sig_get_input.connect([this]() -> std::any {
     nana::inputbox msg{p_window, "创建: "};
@@ -85,8 +91,6 @@ void menu_factory::create_file_action(MetadataPtr& in_metadata) {
     msg.show_modal(name);
     return std::make_any<std::string>(name.value());
   });
-  if (!in_metadata)
-    return;
 
   p_action.emplace_back(action_ptr{});
 
@@ -119,6 +123,10 @@ void menu_factory::create_file_action(MetadataPtr& in_metadata) {
   auto k_s_d = p_action.emplace_back(std::make_shared<assfile_delete_action>());
 }
 void menu_factory::create_ass_action(MetadataPtr& in_metadata) {
+  if (!in_metadata)
+    return;
+  p_metadata = in_metadata;
+
   auto k_c_ass  = p_action.emplace_back(std::make_shared<assset_create_action>());
   auto k_c_eps  = p_action.emplace_back(std::make_shared<episode_create_action>());
   auto k_c_shot = p_action.emplace_back(std::make_shared<shot_create_action>());
@@ -142,8 +150,6 @@ void menu_factory::create_ass_action(MetadataPtr& in_metadata) {
     return std::make_any<std::int32_t>(k_i.value());
   });
 
-  if (!in_metadata)
-    return;
   p_action.emplace_back(action_ptr{});
   auto k_s_ass  = p_action.emplace_back(std::make_shared<assets_setname_action>());
   auto k_s_eps  = p_action.emplace_back(std::make_shared<episode_set_action>());
@@ -180,17 +186,20 @@ void menu_factory::create_ass_action(MetadataPtr& in_metadata) {
   auto k_d_ = p_action.emplace_back(std::make_shared<assets_delete_action>());
 }
 
-void menu_factory::operator()(nana::menu& in_menu, MetadataPtr& in_metadata) {
+void menu_factory::operator()(nana::menu& in_menu) {
+  MetadataPtr k_ptr         = p_metadata;
+  decltype(p_window) k_item = p_window;
+
   for (auto& k_i : p_action) {
     if (k_i)
       in_menu.append(
           k_i->class_name(),
-          [in_metadata, k_i, this](const nana::menu::item_proxy&) {
+          [k_i, k_ptr, k_item](const nana::menu::item_proxy&) {
             try {
-              (*k_i)(in_metadata);
+              (*k_i)(k_ptr);
             } catch (DoodleError& error) {
               DOODLE_LOG_WARN(error.what())
-              nana::msgbox k_msgbox{p_window, error.what()};
+              nana::msgbox k_msgbox{k_item, error.what()};
               k_msgbox.show();
             }
           });

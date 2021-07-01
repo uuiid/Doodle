@@ -14,7 +14,6 @@
 #include <sqlpp11/mysql/mysql.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/dll.hpp>
 
 #include <boost/process.hpp>
 #include <cereal/archives/portable_binary.hpp>
@@ -33,8 +32,8 @@ void CoreSet::guiInit() {
   getSetting();
 
   ///触发一次 CoreSql 初始化并测试数据库连接
-  auto &k_sql   = CoreSql::Get();
-  auto test_sql = k_sql.getConnection();
+//  auto &k_sql   = CoreSql::Get();
+//  auto test_sql = k_sql.getConnection();
 
   auto k_ip = fmt::format("{}:{:d}",p_server_host,p_meta_rpc_port);
 

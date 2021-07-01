@@ -309,14 +309,14 @@ TEST_F(CoreTest, read_writ_file) {
   file << line;
 }
 TEST_F(CoreTest, long_path) {
-//  using namespace doodle;
-//  ASSERT_TRUE(FSys::exists(p_long_path));
-//
-//  auto size            = FSys::file_size(p_long_path);
-//  auto last_write_time = FSys::con_time(FSys::last_write_time(p_long_path));
-//
-//  FSys::fstream file{p_long_path};
-//  std::cout << "file size " << size << "\n"
-//            << "lase write time " << last_write_time << "\n"
-//            << (file.is_open() ? "true" : "false") << std::endl;
+  using namespace doodle;
+  ASSERT_TRUE(FSys::exists(p_long_path));
+
+  auto size            = FSys::file_size(p_long_path);
+  auto last_write_time = FSys::last_write_time_t(p_long_path);
+
+  FSys::fstream file{p_long_path};
+  std::cout << "file size " << size << "\n"
+            << "lase write time " << last_write_time << "\n"
+            << (file.is_open() ? "true" : "false") << std::endl;
 }

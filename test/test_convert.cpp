@@ -31,7 +31,11 @@ TEST(core, create_path) {
             << " ServerPath: " << path.getServerPath() << "\n"
             << std::endl;
 }
-TEST(core, filesys_last_time){
-
-
+TEST(core, utf8_path) {
+  using namespace doodle;
+  std::locale::global(std::locale::classic());
+  std::cout << "FSys::make_path(\"哈哈\"): " << FSys::make_path("D:/哈哈").generic_string() << "\n"
+            << "FSys::path{\"哈哈\"}: " << FSys::path{"D:/哈哈"}.generic_string() << "\n"
+            << "FSys::path{L\"哈哈\"}: " << FSys::path{L"D:/哈哈"}.generic_string() << "\n"
+            << std::endl;
 }

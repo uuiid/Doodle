@@ -1,6 +1,4 @@
 #include <DoodleLib/DoodleLib_fwd.h>
-
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <Logger/Logger.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -38,12 +36,8 @@ class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
 using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
 //using msvc_doodle_sink_st = msvc_doodle_sink<spdlog::details::null_mutex>;
 
-static void
-boostLoggerInitAsyn(const std::string &logPath,
-                    std::size_t logMaxSize);
-
-void boostLoggerInitAsyn(const std::string &logPath,
-                         std::size_t logMaxSize) {
+static void boostLoggerInitAsyn(const std::string &logPath,
+                                std::size_t logMaxSize) {
   auto appdata = boost::filesystem::current_path();
   appdata /= logPath;
   appdata /= "log";
@@ -61,11 +55,12 @@ void boostLoggerInitAsyn(const std::string &logPath,
 #else
     auto k_debug = std::make_shared<msvc_doodle_sink_mt>();
 
-    auto k_file = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(appdata.generic_string(), 1024 * 1024, 100);
+    auto k_file = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(appdata.generic_string(), 1024 * 1024, 100, true);
     std::vector<spdlog::sink_ptr> sinks{k_file, k_debug};
 #endif  //NDEBUG
     auto k_logger = std::make_shared<spdlog::async_logger>(
         "doodle_lib", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+
     spdlog::register_logger(k_logger);
 
     spdlog::set_default_logger(k_logger);

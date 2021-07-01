@@ -8,9 +8,8 @@
 #include <Metadata/Project.h>
 #include <core/MetadataSet.h>
 namespace doodle {
-create_project_action::create_project_action(std::any&& in_any, MetadataFactoryPtr in_factory)
-    : action(std::move(in_any)),
-      p_factory(std::move(in_factory)) {
+create_project_action::create_project_action(std::any&& in_any)
+    : action(std::move(in_any)) {
   p_name = "创建项目";
 }
 
@@ -25,7 +24,7 @@ void create_project_action::run(const MetadataPtr& in_data) {
   auto [k_s, k_p] = std::any_cast<std::tuple<std::string, FSys::path> >(p_any);
 
   auto prj = std::make_shared<Project>(k_p, k_s);
-  prj->updata_db(p_factory);
+  prj->updata_db(in_data->getMetadataFactory());
   MetadataSet::Get().installProject(prj);
 }
 create_project_action::create_project_action() {

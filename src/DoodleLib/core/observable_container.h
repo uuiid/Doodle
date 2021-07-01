@@ -11,7 +11,7 @@
 
 namespace doodle {
 
-template <class container_type>
+template <class container_type = std::vector<std::string> >
 class observable_container : public container_type {
  public:
 //  using _container_type  = typename std::vector<std::string>;
@@ -28,6 +28,7 @@ class observable_container : public container_type {
   using _const_iterator         = typename container_type::const_iterator;
   using _reverse_iterator       = typename container_type::reverse_iterator;
   using _const_reverse_iterator = typename container_type::const_reverse_iterator;
+
   observable_container() : container_type(){};
   explicit observable_container(const _allocator_type& _al) : container_type(_al){};
   explicit observable_container(const _size_type _count, const _allocator_type& _al = _allocator_type{})
@@ -96,4 +97,5 @@ class observable_container : public container_type {
   boost::signals2::signal<void(_const_iterator where)> sig_resize;
 };
 using my_str = observable_container<std::vector<std::string>>;
+
 }  // namespace doodle

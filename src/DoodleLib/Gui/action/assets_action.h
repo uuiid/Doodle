@@ -9,28 +9,25 @@
 namespace doodle {
 
 class DOODLELIB_API assset_create_action : public action {
-  MetadataFactoryPtr p_factory;
 
  public:
   assset_create_action();
-  explicit assset_create_action(std::any&& in_any, MetadataFactoryPtr in_factory);
+  explicit assset_create_action(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
 
 class DOODLELIB_API episode_create_action : public action {
-  MetadataFactoryPtr p_factory;
 
  public:
   episode_create_action();
-  explicit episode_create_action(std::any&& in_any, MetadataFactoryPtr in_factory);
+  explicit episode_create_action(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
 class DOODLELIB_API shot_create_action : public action {
-  MetadataFactoryPtr p_factory;
 
  public:
   shot_create_action();
-  explicit shot_create_action(std::any&& in_any, MetadataFactoryPtr in_factory);
+  explicit shot_create_action(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
 

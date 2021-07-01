@@ -72,7 +72,7 @@ set(
 	libWarp/lfu_cache_policy.hpp
 	libWarp/lru_cache_policy.hpp
 	libWarp/nana_warp.h
-	libWarp/observable_container.h
+        core/observable_container.h
 	libWarp/sqlppWarp.h
 	libWarp/wxWidgetWarp.h
 	mainWidght/MklinkWidget.h

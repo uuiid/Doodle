@@ -14,11 +14,14 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               wxCmdLineArgType WXUNUSED(lpCmdLine),
                               int nCmdShow) try {
   //  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF );
-  std::locale::global(std::locale{".UTF8"});
-  std::wcout.imbue(std::locale{".UTF8"});
+//  std::locale::global(std::locale{".UTF8"});
+//  std::setlocale(LC_NUMERIC, "C");
+//  std::setlocale(LC_TIME, "C");
+//  std::setlocale(LC_MONETARY, "C");
+  std::locale::global(std::locale::classic());
+  //  std::wcout.imbue(std::locale{".UTF8"});
 
   auto doodleLib = doodle::make_doodle_lib();
-  //设置一下文件系统后端
   doodle::doodle_app app{};
   app.run();
   return 0;

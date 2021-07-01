@@ -11,9 +11,8 @@
 #include <Metadata/TimeDuration.h>
 namespace doodle {
 
-assfile_create_action::assfile_create_action(std::any&& in_any, MetadataFactoryPtr in_factory)
-    : action(std::move(in_any)),
-      p_factory(std::move(in_factory)) {
+assfile_create_action::assfile_create_action(std::any&& in_any)
+    : action(std::move(in_any)) {
   p_name = "创建资产文件";
 }
 void assfile_create_action::run(const MetadataPtr& in_data) {
@@ -26,7 +25,7 @@ void assfile_create_action::run(const MetadataPtr& in_data) {
   auto k_s    = std::any_cast<std::string>(p_any);
   auto k_item = std::make_shared<Assets>(in_data, k_s);
   in_data->addChildItem(k_item);
-  k_item->updata_db(p_factory);
+  k_item->updata_db(in_data->getMetadataFactory());
 }
 assfile_create_action::assfile_create_action() {
   p_name = "创建资产文件";

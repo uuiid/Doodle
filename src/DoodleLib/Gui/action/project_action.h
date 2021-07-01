@@ -7,7 +7,6 @@
 #include <DoodleLib/Gui/action/action.h>
 namespace doodle {
 class DOODLELIB_API create_project_action : public action {
-  MetadataFactoryPtr p_factory;
 
  public:
   create_project_action();
@@ -15,7 +14,7 @@ class DOODLELIB_API create_project_action : public action {
    * @param in_any 喂入的是 std::tuple<std::string,FSys::path> 值
    * @param in_factory 这个是创建项目的工厂指针
    */
-  explicit create_project_action(std::any&& in_any, MetadataFactoryPtr in_factory);
+  explicit create_project_action(std::any&& in_any);
   /**
    * @brief std::any 喂入的是 <std::tuple<std::string,FSys::path>  值
    * @param in_data 输入的是 project 数据

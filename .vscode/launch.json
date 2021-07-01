@@ -50,7 +50,6 @@
             "cwd": "${command:cmake.getLaunchTargetDirectory}",
             "environment": [],
             "console": "integratedTerminal",
-            "visualizerFile": "${workspaceFolder}/qt5.natvis"
         },
         {
             "name": "Doodle_server_debug",
@@ -64,13 +63,15 @@
             "cwd": "${command:cmake.getLaunchTargetDirectory}",
             "environment": [],
             "console": "integratedTerminal",
-            "visualizerFile": "${workspaceFolder}/qt5.natvis"
         }
     ],
     "compounds": [
         {
             "name": "Doodle_sercer/client",
-            "configurations": ["Doodle_server_debug","Doodle_debug"]
+            "configurations": [
+                "Doodle_server_debug",
+                "Doodle_debug"
+            ]
         }
     ]
 }
