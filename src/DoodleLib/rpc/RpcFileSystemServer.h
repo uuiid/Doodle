@@ -6,6 +6,8 @@
 
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/libWarp/protobuf_warp.h>
+
 #include <FileSystemServer.grpc.pb.h>
 
 namespace doodle {

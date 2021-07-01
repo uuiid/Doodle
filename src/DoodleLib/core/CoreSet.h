@@ -96,7 +96,7 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   boost::uuids::uuid getUUID();
   std::string getUUIDStr();
 
-  static FSys::path toIpPath(const FSys::path &path);
+  [[deprecated]] static FSys::path toIpPath(const FSys::path &path);
 
   [[nodiscard]] RpcMetadataClientPtr getRpcMetadataClient() const;
   [[nodiscard]] RpcFileSystemClientPtr getRpcFileSystemClient() const;

@@ -1,5 +1,4 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-#include <DoodleLib/Metadata/ContextMenu.h>
 #include <Exception/Exception.h>
 #include <Logger/Logger.h>
 #include <Metadata/MetadataFactory.h>
@@ -97,9 +96,6 @@ bool Project::sort(const Metadata& in_rhs) const {
   } else {
     return str() < in_rhs.str();
   }
-}
-void Project::createMenu(ContextMenu* in_contextMenu) {
-  in_contextMenu->createMenu(std::dynamic_pointer_cast<Project>(shared_from_this()));
 }
 const std::string& Project::getName() const {
   return p_name;

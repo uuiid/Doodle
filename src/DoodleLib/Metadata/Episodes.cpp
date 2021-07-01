@@ -1,5 +1,4 @@
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/Metadata/ContextMenu.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 
@@ -58,9 +57,6 @@ bool Episodes::sort(const Metadata& in_rhs) const {
   } else {
     return str() < in_rhs.str();
   }
-}
-void Episodes::createMenu(ContextMenu* in_contextMenu) {
-  in_contextMenu->createMenu(std::dynamic_pointer_cast<Episodes>(shared_from_this()));
 }
 
 void Episodes::_select_indb(const MetadataFactoryPtr& in_factory) {

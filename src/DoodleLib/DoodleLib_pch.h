@@ -23,7 +23,6 @@
 #include <vector>
 
 
-#include <DoodleLib/libWarp/wxWidgetWarp.h>
 
 #include <DoodleLib/DoodleLib_fwd.h>
 

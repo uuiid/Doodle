@@ -8,20 +8,13 @@
  */
 #include <DoodleConfig.h>
 #include <DoodleLib/DoodleApp.h>
-#include <DoodleLib/Metadata/MetadataWidget.h>
-#include <DoodleLib/Server/ServerWidget.h>
-#include <DoodleLib/SettingWidght/settingWidget.h>
-#include <DoodleLib/mainWidght/MklinkWidget.h>
-#include <DoodleLib/mainWidght/tool_windows.h>
 #include <Gui/main_windows.h>
 #include <Gui/setting_windows.h>
 #include <fmt/ostream.h>
 #include <libWarp/json_warp.h>
 #include <rpc/RpcServerHandle.h>
 #include <shellapi.h>
-#include <wx/cmdline.h>
-#include <wx/wxprec.h>
-
+#include <core/CoreSet.h>
 #include <boost/algorithm/string.hpp>
 #include <exception>
 #include <nana/fwd.hpp>
@@ -134,7 +127,7 @@ void doodle_app::init() {
     if (p_info.b_mklink) {
       p_run_fun = [p_info]() {
         for (auto& k_p : p_info.p_mk_link) {
-          MklinkWidget::mklink(k_p.first, k_p.second);
+//          MklinkWidget::mklink(k_p.first, k_p.second);
         }
       };
     } else if (p_info.b_server) {

@@ -11,7 +11,7 @@
 //#include <boost/locale.hpp>
 extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               HINSTANCE hPrevInstance,
-                              wxCmdLineArgType WXUNUSED(lpCmdLine),
+                              LPSTR strCmdLine,
                               int nCmdShow) try {
   //  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF );
 //  std::locale::global(std::locale{".UTF8"});

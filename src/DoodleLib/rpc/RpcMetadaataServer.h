@@ -9,6 +9,8 @@
 
 #include <DoodleLib/libWarp/cache.hpp>
 #include <DoodleLib/libWarp/lru_cache_policy.hpp>
+#include <DoodleLib/libWarp/protobuf_warp.h>
+
 #include <MetadataServer.grpc.pb.h.>
 
 namespace doodle {

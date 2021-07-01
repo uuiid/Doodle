@@ -148,7 +148,6 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata>, pu
    */
   [[nodiscard]] MetadataConstPtr getRootParent() const;
 
-  virtual void createMenu(ContextMenu *in_contextMenu) = 0;
   //  [[nodiscard]] virtual FSys::path FolderPath() const;
 
   /**

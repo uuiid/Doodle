@@ -4,7 +4,6 @@
 
 #include <DoodleLib/Metadata/AssetsFile.h>
 #include <DoodleLib/Metadata/AssetsPath.h>
-#include <DoodleLib/Metadata/ContextMenu.h>
 #include <core/CoreSet.h>
 ///这个工厂类必须在所有导入的后面
 #include <DoodleLib/Metadata/MetadataFactory.h>
@@ -77,9 +76,6 @@ bool AssetsFile::sort(const Metadata& in_rhs) const {
   } else {
     return str() < in_rhs.str();
   }
-}
-void AssetsFile::createMenu(ContextMenu* in_contextMenu) {
-  in_contextMenu->createMenu(std::dynamic_pointer_cast<AssetsFile>(shared_from_this()));
 }
 std::chrono::time_point<std::chrono::system_clock> AssetsFile::getStdTime() const {
   return p_time->getUTCTime();

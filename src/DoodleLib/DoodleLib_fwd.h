@@ -199,38 +199,5 @@ SSC ConvStr(const SSN &str) {
   return SSC{str};
 }
 
-template <>
-std::string ConvStr(const wxString &str);
-
-template <>
-wxString ConvStr(const std::string &str);
-
-template <>
-wxString ConvStr(const FSys::path &str);
-
-template <>
-FSys::path ConvStr(const wxString &str);
-
-//模板特化一个指针类型的模板
-template <typename SSC, typename SSN>
-SSC ConvStr(const SSN *str) {
-  return SSC{str};
-}
-//继续特化一个char*的平常用的
-template <>
-wxString ConvStr(const char *(str));
-
-//template <typename SSC,typename SSN,std::size_t N>
-//SSC ConvStr(const SSN (&str)[N]){
-//  return  SSC{str};
-//}
-//
-//继续特化一个char*的平常用的
-template <std::size_t N>
-wxString ConvStr(const char (&str)[N]) {
-  return wxString::FromUTF8(str, N);
-};
 
 }  // namespace doodle
-
-wxDECLARE_APP(doodle::Doodle);

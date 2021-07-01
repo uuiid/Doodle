@@ -6,7 +6,7 @@
     name="doodle"
     type="win32"
 />
-<description>wxWidgets application</description>
+<description>doodle application</description>
 <dependency>
     <dependentAssembly>
         <assemblyIdentity

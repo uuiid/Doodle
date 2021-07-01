@@ -29,7 +29,6 @@ class DOODLELIB_API Assets : public Metadata {
   bool operator>(const Assets& in_rhs) const;
   bool operator<=(const Assets& in_rhs) const;
   bool operator>=(const Assets& in_rhs) const;
-  virtual void createMenu(ContextMenu* in_contextMenu) override;
 
  protected:
   void _select_indb(const MetadataFactoryPtr& in_factory) override;

@@ -29,28 +29,16 @@ set(
 	Metadata/AssetsFile.h
 	Metadata/AssetsPath.h
 	Metadata/Comment.h
-	Metadata/ContextMenu.h
-	Metadata/DragFilesFactory.h
 	Metadata/Episodes.h
-	Metadata/Label/LabelNode.h
 	Metadata/Metadata.h
 	Metadata/MetadataFactory.h
-	Metadata/MetadataWidget.h
 	Metadata/Metadata_cpp.h
-	Metadata/Model/AssetsTree.h
-	Metadata/Model/ListAttributeModel.h
-	Metadata/Model/ProjectManage.h
 	Metadata/Project.h
 	Metadata/Shot.h
 	Metadata/TimeDuration.h
-	Metadata/View/ProjectManageWidget.h
-	Metadata/View/ShotListWidget.h
-	Metadata/View/TimeWidget.h
 	PinYin/convert.h
 	ScreenshotWidght/ScreenshotAction.h
 	ScreenshotWidght/ScreenshotWidght.h
-	Server/ServerWidget.h
-	SettingWidght/settingWidget.h
 	core/ContainerDevice.h
 	core/CoreSet.h
 	core/CoreSql.h
@@ -60,6 +48,7 @@ set(
 	core/ToolsSetting.h
 	core/Ue4Setting.h
 	core/Util.h
+	core/observable_container.h
 	core/static_value.h
 	libWarp/BoostUuidWarp.h
 	libWarp/CerealWarp.h
@@ -72,12 +61,8 @@ set(
 	libWarp/lfu_cache_policy.hpp
 	libWarp/lru_cache_policy.hpp
 	libWarp/nana_warp.h
-        core/observable_container.h
 	libWarp/sqlppWarp.h
 	libWarp/wxWidgetWarp.h
-	mainWidght/MklinkWidget.h
-	mainWidght/systemTray.h
-	mainWidght/tool_windows.h
 	rpc/RpcFileSystemClient.h
 	rpc/RpcFileSystemServer.h
 	rpc/RpcMetadaataServer.h
@@ -112,27 +97,15 @@ set(
 	Metadata/AssetsFile.cpp
 	Metadata/AssetsPath.cpp
 	Metadata/Comment.cpp
-	Metadata/ContextMenu.cpp
-	Metadata/DragFilesFactory.cpp
 	Metadata/Episodes.cpp
-	Metadata/Label/LabelNode.cpp
 	Metadata/Metadata.cpp
 	Metadata/MetadataFactory.cpp
-	Metadata/MetadataWidget.cpp
-	Metadata/Model/AssetsTree.cpp
-	Metadata/Model/ListAttributeModel.cpp
-	Metadata/Model/ProjectManage.cpp
 	Metadata/Project.cpp
 	Metadata/Shot.cpp
 	Metadata/TimeDuration.cpp
-	Metadata/View/ProjectManageWidget.cpp
-	Metadata/View/ShotListWidget.cpp
-	Metadata/View/TimeWidget.cpp
 	PinYin/convert.cpp
 	ScreenshotWidght/ScreenshotAction.cpp
 	ScreenshotWidght/ScreenshotWidght.cpp
-	Server/ServerWidget.cpp
-	SettingWidght/settingWidget.cpp
 	core/CoreSet.cpp
 	core/CoreSql.cpp
 	core/DoodleLib.cpp
@@ -142,9 +115,6 @@ set(
 	core/Util.cpp
 	core/static_value.cpp
 	libWarp/nana_warp.cpp
-	mainWidght/MklinkWidget.cpp
-	mainWidght/systemTray.cpp
-	mainWidght/tool_windows.cpp
 	rpc/RpcFileSystemClient.cpp
 	rpc/RpcFileSystemServer.cpp
 	rpc/RpcMetadaataServer.cpp

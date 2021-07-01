@@ -3,7 +3,6 @@
 //
 
 #include <DoodleLib/Metadata/Assets.h>
-#include <DoodleLib/Metadata/ContextMenu.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/PinYin/convert.h>
 
@@ -50,9 +49,6 @@ bool Assets::sort(const Metadata& in_rhs) const {
   } else {
     return str() < in_rhs.str();
   }
-}
-void Assets::createMenu(ContextMenu* in_contextMenu) {
-  in_contextMenu->createMenu(std::dynamic_pointer_cast<Assets>(shared_from_this()));
 }
 
 const std::string& Assets::getName1() const {
