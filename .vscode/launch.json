@@ -58,7 +58,7 @@
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "args": [
-                "-server"
+                "server_config.json"
             ],
             "stopAtEntry": false,
             "cwd": "${command:cmake.getLaunchTargetDirectory}",
