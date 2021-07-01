@@ -3,7 +3,6 @@
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/rpc/RpcFileSystemServer.h>
 #include <DoodleLib/rpc/RpcMetadaataServer.h>
-#include <grpcpp/grpcpp.h>
 
 namespace doodle {
 RpcServerHandle::RpcServerHandle()

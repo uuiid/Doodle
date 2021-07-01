@@ -20,13 +20,10 @@ class Environment : public ::testing::Environment {
 
 void Environment::SetUp() {
   p_lib = doodle::make_doodle_lib();
-
-  ///初始化log
-  doodle::Logger::doodle_initLog();
 }
 
 void Environment::TearDown() {
-  doodle::CoreSet::getSet().clear();
+
 }
 
 int main(int argc, char *argv[]) {

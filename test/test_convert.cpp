@@ -1,6 +1,9 @@
 #include <DoodleLib/DoodleLib.h>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 #include <gtest/gtest.h>
 
+#include <iostream>
 TEST(pinyinlib, convert) {
   auto trs = doodle::convert::Get().toEn("aa大.?小d多dd53少");
   std::cout << trs << std::endl;
@@ -11,10 +14,11 @@ TEST(pinyinlib, convert) {
 }
 
 TEST(pinyinlib, fmt) {
-  std::cout << fmt::format(L"{}", std::wstring{L"test"}) << "\n"
-            << fmt::format("{:04d}", 2) << "\n"
+  std::wcout << fmt::format(L"{}", std::wstring{L"test"}) << "\n"
+             << fmt::format(L"{}", doodle::FSys::path{L"还会"}) << "\n"
+             << std::endl;
+  std::cout << fmt::format("{:04d}", 2) << "\n"
             << fmt::format("{}", doodle::FSys::path{"test"}) << "\n"
-            << fmt::format(L"{}", doodle::FSys::path{L"还会"}) << "\n"
             << std::endl;
 }
 TEST(core, create_path) {

@@ -4,11 +4,7 @@
 
 #include "RpcMetadaataServer.h"
 
-// clang-format off
 #include <DoodleLib/Metadata/Metadata_cpp.h>
-
-// clang-format on
-
 #include <DoodleLib/core/CoreSql.h>
 //#include <DoodleLib/Exception/Exception.h>
 //#include <DoodleLib/core/ContainerDevice.h>
@@ -54,7 +50,6 @@ void RpcMetadaataServer::put_cache_and_file(const FSys::path &key, const std::st
 
 RpcMetadaataServer::RpcMetadaataServer()
     : p_set(CoreSet::getSet()),
-      p_Server(),
       p_thread(),
       p_cache(1024 * 1024, caches::LRUCachePolicy<std::string>(), [this](const std::string &path, const std::string &value) {
         FSys::ofstream k_ofstream{path, std::ios::out | std::ios::binary};

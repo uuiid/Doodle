@@ -10,7 +10,7 @@
 #include <iostream>
 #include <regex>
 #include <string>
-
+#include <Windows.h>
 // #include <boost/nowide/
 TEST(DSTD, map_netDir) {
   NETRESOURCE resources{};
@@ -34,7 +34,7 @@ TEST(DSTD, gset_netDir_name) {
 
   ASSERT_TRUE(dwResult == NO_ERROR);
 
-  std::cout << std::wstring{szDeviceName} << std::endl;
+  std::wcout << std::wstring{szDeviceName} << std::endl;
   auto rules_n = SetVolumeLabel(L"V:\\", L"test");
   if (rules_n == 0) {
     auto err = GetLastError();

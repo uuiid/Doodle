@@ -11,12 +11,11 @@
 #include <DoodleLib/libWarp/lru_cache_policy.hpp>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 
-#include <MetadataServer.grpc.pb.h.>
+#include <MetadataServer.grpc.pb.h>
 
 namespace doodle {
 class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service ,public details::no_copy{
   CoreSet& p_set;
-  std::unique_ptr<grpc::Server> p_Server;
 
   std::thread p_thread;
 
