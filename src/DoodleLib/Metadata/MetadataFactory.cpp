@@ -38,7 +38,7 @@ void MetadataFactory::select_indb(MetadataPtr &in_metadata) const {
   if (!in_metadata->hasChild())
     return;
   auto k_c = this->p_rpcClien.lock()->GetChild(in_metadata);
-  in_metadata->setChildItems(k_c);
+  in_metadata->child_item.swap_sig(k_c);
 }
 
 void MetadataFactory::deleteData(const Metadata *in_metadata) const {

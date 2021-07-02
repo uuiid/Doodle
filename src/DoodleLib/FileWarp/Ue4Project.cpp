@@ -21,7 +21,7 @@ const std::string Ue4Project::Prop        = "Prop";
 Ue4Project::Ue4Project(FSys::path project_path)
     : p_ue_path(),
       p_ue_Project_path(std::move(project_path)),
-      p_project(MetadataSet::Get().Project_()) {
+      p_project(CoreSet::getSet().get_project()) {
   auto& ue  = Ue4Setting::Get();
   p_ue_path = ue.Path();
 }

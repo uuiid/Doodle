@@ -10,7 +10,6 @@
 #include <Metadata/Comment.h>
 #include <Metadata/Project.h>
 #include <Metadata/TimeDuration.h>
-#include <core/MetadataSet.h>
 #include <libWarp/nana_warp.h>
 namespace doodle {
 
@@ -21,12 +20,11 @@ project_widget::project_widget(nana::window in_window)
   p_list_box.append_header("根目录");
   p_list_box.append_header("英文名称");
 
-  auto& set = MetadataSet::Get();
   p_list_box.clear();
 
   details::draw_guard<nana::listbox> k_guard{p_list_box};
 
-  for (auto& k_i : set.getAllProjects()) {
+  for (auto& k_i : CoreSet::getSet().p_project_vector) {
     p_list_box.at(0).append(k_i, true);
   }
   p_list_box.events().selected([](const nana::arg_listbox& in_) {
@@ -112,7 +110,7 @@ assets_widget::assets_widget(nana::window in_window)
         auto k_me = k_proxy.value<MetadataPtr>();
         k_me->select_indb();
 
-        for (auto& k_i : k_me->getChildItems()) {
+        for (auto& k_i : k_me->child_item) {
           k_proxy.append(k_i->str(), k_i->showStr(), k_i);
         }
       });
@@ -129,7 +127,7 @@ void assets_widget::set_ass(const MetadataPtr& in_project_ptr) {
 
   details::draw_guard<nana::treebox> k_guard{p_tree_box};
 
-  for (auto& k_i : in_project_ptr->getChildItems()) {
+  for (auto& k_i : in_project_ptr->child_item) {
     auto k_item = p_tree_box.insert(k_i->str(), k_i->showStr());
     k_item.value(k_i);
     DOODLE_LOG_INFO("树文件路径: {}", k_item.key());
@@ -184,7 +182,7 @@ void assets_attr_widget::set_ass(const MetadataPtr& in_ptr) {
 
   details::draw_guard<nana::listbox> k_guard{p_list_box};
 
-  for (auto& k_i : in_ptr->getChildItems()) {
+  for (auto& k_i : in_ptr->child_item) {
     if (!details::is_class<AssetsFile>(k_i)) {
       DOODLE_LOG_WARN("项目不是文件项")
       continue;

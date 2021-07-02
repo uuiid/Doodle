@@ -50,7 +50,7 @@ EpisodesPtr Shot::getEpisodesPtr() const {
 }
 
 void Shot::setEpisodesPtr(const EpisodesPtr& Episodes_) noexcept {
-  Episodes_->addChildItem(shared_from_this());
+  Episodes_->child_item.push_back_sig(shared_from_this());
 }
 std::string Shot::str() const {
   return fmt::format("sc{:04d}{}", p_shot, p_shot_ab);

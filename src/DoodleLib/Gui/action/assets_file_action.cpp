@@ -24,7 +24,8 @@ void assfile_create_action::run(const MetadataPtr& in_data) {
   }
   auto k_s    = std::any_cast<std::string>(p_any);
   auto k_item = std::make_shared<Assets>(in_data, k_s);
-  in_data->addChildItem(k_item);
+  in_data->child_item.push_back_sig(k_item);
+
   k_item->updata_db(in_data->getMetadataFactory());
 }
 assfile_create_action::assfile_create_action() {
@@ -74,7 +75,8 @@ assfile_delete_action::assfile_delete_action(std::any&& in_any) : action(std::mo
 }
 void assfile_delete_action::run(const MetadataPtr& in_data) {
   auto k_ass = std::dynamic_pointer_cast<AssetsFile>(in_data);
-  in_data->removeChildItems(k_ass);
+  auto k_p = k_ass->getParent();
+  k_p->child_item.erase_sig(k_ass);
   k_ass->deleteData(k_ass->getMetadataFactory());
 }
 assfile_delete_action::assfile_delete_action() {

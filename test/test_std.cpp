@@ -1,4 +1,5 @@
 #include <DoodleLib/DoodleLib.h>
+#include <Windows.h>
 #include <date/date.h>
 #include <date/tz.h>
 #include <gtest/gtest.h>
@@ -10,7 +11,6 @@
 #include <iostream>
 #include <regex>
 #include <string>
-#include <Windows.h>
 // #include <boost/nowide/
 TEST(DSTD, map_netDir) {
   NETRESOURCE resources{};
@@ -165,7 +165,7 @@ TEST(DSTD, date_utc) {
   using namespace std::chrono_literals;
   auto my_t       = std::chrono::system_clock::now();
   auto my_local_t = make_zoned(current_zone(), std::chrono::system_clock::now());
-  
+
   auto mt_tt = local_days{2021_y / 06 / 16} + 10h + 34min + 37s;
 
   auto k_dp = date::floor<date::days>(my_local_t.get_local_time());
@@ -191,4 +191,54 @@ TEST(DSTD, date_utc) {
             << "seconds: " << k_hh_mm_ss.seconds() << "\n"
 
             << std::endl;
+}
+
+TEST(DSTD, observable_container) {
+  using namespace doodle;
+  //  using my_str = observable_container<std::vector<std::string>, details::pre<std::vector<std::string> > >;
+  //  details::pre<std::vector<std::string> > k_pre{};
+  //  my_str test{&k_pre};
+
+  using my_str = observable_container<std::vector<std::string> >;
+  my_str test{};
+
+  test.sig_clear.connect([]() { std::cout << "clear" << std::endl; });
+  test.sig_insert.connect([](const std::string& val) { std::cout << val << std::endl; });
+  test.sig_erase.connect([](const std::string& val) { std::cout << val << std::endl; });
+  test.sig_push_back.connect([](const std::string& val) { std::cout << val << std::endl; });
+  test.sig_resize.connect([](std::size_t where) { std::cout << where << std::endl; });
+  test.sig_swap.connect([](const std::vector<std::string>& strs) {
+    for (auto& s : strs) {
+      std::cout << s << ",";
+    }
+    std::cout << std::endl;
+  });
+  test.push_back_sig({"test"});
+  test.push_back_sig({"tesat"});
+  test.push_back_sig({"22222"});
+  test.insert_sig(test.begin(), {"11111"});
+  test.erase_sig(test.begin());
+  test.resize_sig(2);
+  auto k_other = std::vector<std::string>{"1", "2", "3", "4"};
+  test.swap_sig(k_other);
+  test.clear_sig();
+}
+class TT {};
+
+TEST(DSTD, find) {
+  using namespace doodle;
+
+  using my_tt = observable_container<std::vector<std::shared_ptr<TT> > >;
+  auto ta1    = std::make_shared<TT>();
+  auto ta2    = std::make_shared<TT>();
+  auto ta3    = std::make_shared<TT>();
+
+  my_tt test{};
+  test.push_back(ta2);
+  test.push_back(ta3);
+  test.push_back(ta1);
+
+  test.push_back(std::shared_ptr<TT>{ta1});
+
+  test.erase_sig(std::shared_ptr<TT>{ta1});
 }

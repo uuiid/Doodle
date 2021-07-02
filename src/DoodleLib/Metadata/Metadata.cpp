@@ -12,39 +12,29 @@ namespace doodle {
 Metadata::Metadata()
     : std::enable_shared_from_this<Metadata>(),
       p_parent(),
-      p_child_items(),
       p_id(0),
       p_parent_id(),
       p_uuid(std::move(CoreSet::getSet().getUUIDStr())),
       p_metadata_flctory_ptr_(),
-      sig_thisChange(),
-      sig_childClear(),
-      sig_childAdd(),
-      sig_childAddAll(),
-      sig_childDelete(),
       p_need_save(true),
       p_need_load(true),
       p_updata_parent_id(false),
       p_has_child(0) {
+  install_slots();
 }
 
 Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
     : std::enable_shared_from_this<Metadata>(),
       p_parent(std::move(in_metadata)),
-      p_child_items(),
       p_id(0),
       p_parent_id(p_parent.lock()->p_id),
       p_uuid(std::move(CoreSet::getSet().getUUIDStr())),
       p_metadata_flctory_ptr_(),
-      sig_thisChange(),
-      sig_childClear(),
-      sig_childAdd(),
-      sig_childAddAll(),
-      sig_childDelete(),
       p_need_save(true),
       p_need_load(true),
       p_updata_parent_id(false),
       p_has_child(0) {
+  install_slots();
 }
 
 Metadata::~Metadata() = default;
@@ -52,77 +42,9 @@ Metadata::~Metadata() = default;
 std::shared_ptr<Metadata> Metadata::getParent() const {
   return p_parent.lock();
 }
-const std::vector<MetadataPtr> &Metadata::getChildItems() const {
-  return p_child_items;
-}
-void Metadata::setChildItems(const std::vector<MetadataPtr> &in_child_items) {
-  for (const auto &child : in_child_items) {
-    addChildItemNotSig(child);
-  }
-  sig_childAddAll(in_child_items);
-  p_has_child = p_child_items.size();
-  saved(true);
-}
-
-bool Metadata::removeChildItems(const MetadataPtr &in_child) {
-  auto it = std::find(p_child_items.begin(), p_child_items.end(), in_child);
-  if (it != p_child_items.end()) {
-    in_child->p_parent.reset();
-    in_child->p_parent_id.reset();
-
-    p_child_items.erase(it);
-    sig_childDelete(in_child);
-
-    /// 这里基本上是开始设置各个属性值
-    p_has_child        = p_child_items.size();
-    p_updata_parent_id = true;
-    in_child->saved(true);
-    saved(true);
-    return true;
-  } else
-    return false;
-}
-void Metadata::addChildItemNotSig(const MetadataPtr &in_items) {
-  MetadataPtr k_old{};
-  ///先查看是否有父级关联
-  if (in_items->hasParent()) {
-    ///有关联就直接将父级的所有权清除
-    k_old   = in_items->p_parent.lock();
-    auto it = std::find(k_old->p_child_items.begin(), k_old->p_child_items.end(), in_items);
-    if (it != k_old->p_child_items.end()) {
-      k_old->p_child_items.erase(it);
-      k_old->sig_childDelete(shared_from_this());
-    }
-    k_old->p_has_child = k_old->p_child_items.size();
-    DOODLE_LOG_DEBUG(fmt::format("更改子数据的父对象 id: {} --> id: {}", k_old->p_id, p_id))
-  }
-
-  /// 这里将所有的子级要继承的父级属性给上
-  in_items->p_parent                = weak_from_this();
-  in_items->p_parent_id             = p_id;
-  in_items->p_metadata_flctory_ptr_ = p_metadata_flctory_ptr_;
-
-  p_child_items.emplace_back(in_items);
-
-  /// 在这里如果父级和原先的父级不一样， 那么我们要同时记录子项要更新父id属性和要保存所有属性
-  if (k_old && (k_old.get() != this)) {
-    in_items->p_updata_parent_id = true;
-    in_items->saved(true);
-  }
-
-  p_has_child = p_child_items.size();
-  saved(true);
-  DOODLE_LOG_INFO(fmt::format("插入子数据： {}", in_items->showStr()))
-}
-
-MetadataPtr Metadata::addChildItem(const MetadataPtr &in_items) {
-  addChildItemNotSig(in_items);
-  sig_childAdd(in_items);
-  return in_items;
-}
 
 void Metadata::sortChildItems() {
-  std::sort(p_child_items.begin(), p_child_items.end(),
+  std::sort(child_item.begin(), child_item.end(),
             [](const MetadataPtr &r, const MetadataPtr &l) {
               return *r < *l;
             });
@@ -133,9 +55,6 @@ bool Metadata::hasParent() const {
 }
 bool Metadata::hasChild() const {
   return p_has_child > 0;
-  // if (p_child_items.empty())
-  // else
-  //   return p_child_items.empty();
 }
 std::string Metadata::showStr() const {
   return str();
@@ -162,9 +81,6 @@ bool Metadata::operator<=(const Metadata &in_rhs) const {
 }
 bool Metadata::operator>=(const Metadata &in_rhs) const {
   return !(*this < in_rhs);
-}
-void Metadata::clearChildItems() {
-  p_child_items.clear();
 }
 MetadataConstPtr Metadata::getRootParent() const {
   auto k_p = shared_from_this();
@@ -247,6 +163,51 @@ void Metadata::insert_into(const MetadataFactoryPtr &in_factory) {
 
   _insert_into(p_metadata_flctory_ptr_);
   saved();
+}
+void Metadata::install_slots() {
+  child_item.sig_begin_clear.connect([this]() {
+    for (const auto &k_i : this->child_item) {
+      k_i->p_id = 0;
+    }
+  });
+
+  child_item.sig_begin_insert.connect([this](const MetadataPtr &val) {
+    add_child(val);
+  });
+  child_item.sig_begin_erase.connect([this](const MetadataPtr &val) {
+    p_has_child = child_item.size() - 1;
+  });
+
+  child_item.sig_begin_push_back.connect([this](const MetadataPtr &val) {
+    add_child(val);
+  });
+
+  child_item.sig_begin_swap.connect([this](const std::vector<MetadataPtr> &val) {
+    for (auto &k_i : val) {
+      add_child(k_i);
+    }
+  });
+}
+void Metadata::add_child(const MetadataPtr &val) {
+  /// 先查看是否有父级关联
+  if (val->hasParent()) {
+    /// 有关联并且父物体不是指向自己的话
+    /// 那么我们要同时记录子项要更新父id属性和要保存所有属性
+    if (val->p_parent.lock() != shared_from_this()) {
+      /// 设置保存指向父的id需求
+      val->p_updata_parent_id = true;
+      /// 设置为需求保存
+      val->saved(true);
+      /// 在父物体上调用清除子物体信号
+      val->p_parent.lock()->child_item.erase_sig(val);
+    }
+  }
+  /// 这里将所有的子级要继承的父级属性给上
+  val->p_parent                = weak_from_this();
+  val->p_parent_id             = p_id;
+  val->p_metadata_flctory_ptr_ = p_metadata_flctory_ptr_;
+  p_has_child                  = child_item.size();
+  DOODLE_LOG_INFO(fmt::format("插入子数据： {}", val->showStr()))
 }
 
 }  // namespace doodle

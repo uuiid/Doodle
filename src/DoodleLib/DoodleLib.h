@@ -45,7 +45,6 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
 #include <DoodleLib/core/DoodleLib.h>
-#include <DoodleLib/core/MetadataSet.h>
 #include <DoodleLib/core/Name.h>
 #include <DoodleLib/core/ToolsSetting.h>
 #include <DoodleLib/core/Ue4Setting.h>
@@ -63,6 +62,7 @@
 #include <DoodleLib/libWarp/lfu_cache_policy.hpp>
 #include <DoodleLib/libWarp/lru_cache_policy.hpp>
 #include <DoodleLib/libWarp/nana_warp.h>
+#include <DoodleLib/libWarp/protobuf_warp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <DoodleLib/libWarp/wxWidgetWarp.h>
 #include <DoodleLib/rpc/RpcFileSystemClient.h>

@@ -2,8 +2,8 @@
 
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/Project.h>
-#include <DoodleLib/core/MetadataSet.h>
 #include <DoodleLib/core/Ue4Setting.h>
+#include <DoodleLib/core/observable_container.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 
 #include <boost/filesystem.hpp>
@@ -76,7 +76,6 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   [[nodiscard]] FSys::path getDoc() const;
 
   [[nodiscard]] Ue4Setting &gettUe4Setting() const { return p_ue4_setting; };
-  [[nodiscard]] MetadataSet &GetMetadataSet() const { return p_matadata_setting_; };
 
   [[nodiscard]] int getSqlPort() const;
   void setSqlPort(int in_sqlPort);
@@ -106,6 +105,11 @@ class DOODLELIB_API CoreSet : public details::no_copy {
     return k_i;
   };
 
+  using project_vector = std::vector<ProjectPtr>;
+  observable_container<project_vector> p_project_vector;
+  const ProjectPtr &get_project() const;
+  void set_project(const ProjectPtr &in_currProject);
+
  private:
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
@@ -132,7 +136,6 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   FSys::path p_data_root;
 
   Ue4Setting &p_ue4_setting;
-  MetadataSet &p_matadata_setting_;
 
   FSys::path p_mayaPath;
   RpcMetadataClientPtr p_rpc_metadata_clien;
@@ -147,6 +150,7 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   std::string p_sql_host;      ///< mysql数据库ip
   std::string p_sql_user;      ///< mysql 用户名称
   std::string p_sql_password;  ///< mysql 用户密码
+  ProjectPtr  p_curr_project;
 
   //这里是序列化的代码
   friend class cereal::access;
@@ -156,20 +160,13 @@ class DOODLELIB_API CoreSet : public details::no_copy {
 
 template <class Archive>
 void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
-  if (version == 4)
+  if (version == 6)
     ar(
         cereal::make_nvp("user", p_user_),
         cereal::make_nvp("department", p_department_),
         cereal::make_nvp("ue4_setting", p_ue4_setting),
-        cereal::make_nvp("matadata_setting", p_matadata_setting_),
-        cereal::make_nvp("maya_Path", p_mayaPath));
-  if (version == 5)
-    ar(
-        cereal::make_nvp("user", p_user_),
-        cereal::make_nvp("department", p_department_),
-        cereal::make_nvp("ue4_setting", p_ue4_setting),
-        cereal::make_nvp("matadata_setting", p_matadata_setting_),
-        cereal::make_nvp("maya_Path", p_mayaPath));
+        cereal::make_nvp("maya_Path", p_mayaPath),
+        cereal::make_nvp("p_curr_project",p_curr_project));
 }
 
 }  // namespace doodle
@@ -183,4 +180,4 @@ void load_minimal(Archive const &, doodle::Department &department, std::string c
   department = magic_enum::enum_cast<doodle::Department>(value).value_or(doodle::Department::VFX);
 };
 }  // namespace cereal
-CEREAL_CLASS_VERSION(doodle::CoreSet, 5);
+CEREAL_CLASS_VERSION(doodle::CoreSet, 6);

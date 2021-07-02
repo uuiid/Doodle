@@ -3,9 +3,9 @@
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
+#include <DoodleLib/core/static_value.h>
 #include <DoodleLib/rpc/RpcFileSystemClient.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
-#include <DoodleLib/core/static_value.h>
 #include <Metadata/MetadataFactory.h>
 #include <ShlObj.h>
 #include <date/tz.h>
@@ -14,7 +14,6 @@
 #include <sqlpp11/mysql/mysql.h>
 
 #include <boost/algorithm/string.hpp>
-
 #include <boost/process.hpp>
 #include <cereal/archives/portable_binary.hpp>
 #include <magic_enum.hpp>
@@ -32,10 +31,10 @@ void CoreSet::guiInit() {
   getSetting();
 
   ///触发一次 CoreSql 初始化并测试数据库连接
-//  auto &k_sql   = CoreSql::Get();
-//  auto test_sql = k_sql.getConnection();
+  //  auto &k_sql   = CoreSql::Get();
+  //  auto test_sql = k_sql.getConnection();
 
-  auto k_ip = fmt::format("{}:{:d}",p_server_host,p_meta_rpc_port);
+  auto k_ip = fmt::format("{}:{:d}", p_server_host, p_meta_rpc_port);
 
   DOODLE_LOG_DEBUG(k_ip)
 
@@ -43,15 +42,22 @@ void CoreSet::guiInit() {
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 
-  k_ip = fmt::format("{}:{:d}",p_server_host,p_file_rpc_port);
+  k_ip = fmt::format("{}:{:d}", p_server_host, p_file_rpc_port);
   DOODLE_LOG_DEBUG(k_ip)
   p_rpc_file_system_client = std::make_shared<RpcFileSystemClient>(
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 
-//  p_metadata_factory  = std::make_shared<MetadataFactory>();
-  p_matadata_setting_.init();
-//  p_rpc_file_system_client->IsExist("test");
+  p_project_vector = std::make_shared<MetadataFactory>()->getAllProject();
+  if (p_curr_project) {
+    auto it = std::find_if(p_project_vector.begin(), p_project_vector.end(),
+                           [this](const ProjectPtr &in_ptr) { return in_ptr->getId() == this->p_curr_project->getId(); });
+    if (it != p_project_vector.end())
+      p_curr_project = *it;
+    else
+      p_curr_project = p_project_vector.front();
+  } else
+    p_curr_project = p_project_vector.front();
 }
 
 void CoreSet::findMaya() {
@@ -113,7 +119,6 @@ CoreSet::CoreSet()
       p_data_root("C:/Doodle/data"),
       p_uuid_gen(),
       p_ue4_setting(Ue4Setting::Get()),
-      p_matadata_setting_(MetadataSet::Get()),
       p_mayaPath(),
       p_rpc_metadata_clien(),
       p_rpc_file_system_client(),
@@ -128,7 +133,9 @@ CoreSet::CoreSet()
       p_file_rpc_port(60998),
       p_sql_host("192.168.10.215"),
       p_sql_user("deve"),
-      p_sql_password("deve") {
+      p_sql_password("deve"),
+      p_project_vector(),
+      p_curr_project() {
   ///这里我们手动做一些工作
   ///获取环境变量 FOLDERID_Documents
   PWSTR pManager;
@@ -268,8 +275,9 @@ RpcFileSystemClientPtr CoreSet::getRpcFileSystemClient() const {
   return p_rpc_file_system_client;
 }
 void CoreSet::clear() {
+  p_project_vector.clear();
+  p_curr_project.reset();
   p_metadata_factory.reset();
-  p_matadata_setting_.clear();
   p_rpc_metadata_clien.reset();
   p_rpc_file_system_client.reset();
 }
@@ -312,5 +320,19 @@ void CoreSet::setFileRpcPort(int in_fileRpcPort) {
 MetadataFactoryPtr CoreSet::get_metadata_factory() const {
   return p_metadata_factory;
 }
-
+const ProjectPtr &CoreSet::get_project() const {
+  return p_curr_project;
 }
+void CoreSet::set_project(const ProjectPtr &in_currProject) {
+  auto it = std::find_if(
+      p_project_vector.begin(), p_project_vector.end(),
+      [in_currProject](const ProjectPtr &in_ptr) { return in_ptr->getId() == in_currProject->getId(); });
+  if (it == p_project_vector.end()) {
+    DOODLE_LOG_WARN("无法找到项目: {}", in_currProject->str());
+    throw DoodleError{fmt::format("无法找到项目: {}", in_currProject->str())};
+  }
+
+  p_curr_project = in_currProject;
+}
+
+}  // namespace doodle

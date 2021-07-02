@@ -57,9 +57,9 @@ TEST_F(CoreTest, archive) {
     json(cereal::make_nvp("mainset", set));
     // cereal::BinaryOutputArchive binary{std::cout};
     cereal::BinaryOutputArchive binary2{str_stream_bin};
-
-    doodle::MetadataSet::Get().installProject(std::make_shared<doodle::Project>(
+    doodle::CoreSet::getSet().p_project_vector.push_back_sig(std::make_shared<doodle::Project>(
         "D:/", "test22333"));
+
     binary2(set);
   }
 
@@ -125,20 +125,20 @@ TEST_F(CoreTest, create_meatdata) {
     auto ptj = std::make_shared<Project>("D:/", "test_23333");
     ptj->updata_db(k_f);
 
-    // auto ptj = set.GetMetadataSet().Project_();
     ASSERT_TRUE(ptj->getMetadataFactory() == k_f);
-    CoreSet::getSet().GetMetadataSet().installProject(ptj);
-    CoreSet::getSet().GetMetadataSet().setProject_(ptj);
+    CoreSet::getSet().p_project_vector.push_back_sig(ptj);
+    CoreSet::getSet().set_project(ptj);
 
     for (auto i = 1; i <= 10; ++i) {
       switch (i) {
         case 1: {
           auto k_ass = std::make_shared<Assets>(ptj, "tset");
-          ptj->addChildItem(k_ass);
+
+          ptj->child_item.push_back_sig(k_ass);
           k_ass->updata_db(k_f);
           ASSERT_TRUE(k_ass->getMetadataFactory() == k_f);
           k_ass = std::make_shared<Assets>(ptj, "test_m_parent");
-          ptj->addChildItem(k_ass);
+          ptj->child_item.push_back_sig(k_ass);
           k_ass->updata_db(k_f);
           ASSERT_TRUE(k_ass->getMetadataFactory() == k_f);
           ASSERT_TRUE(k_ass->getParent() == ptj);
@@ -147,7 +147,7 @@ TEST_F(CoreTest, create_meatdata) {
           auto k_ass_file = std::make_shared<AssetsFile>(k_ass,
                                                          "tset",
                                                          "测试");
-          k_ass->addChildItem(k_ass_file);
+          k_ass->child_item.push_back_sig(k_ass_file);
           k_ass_file->updata_db(k_f);
           ASSERT_TRUE(k_ass_file->getMetadataFactory() == k_f);
           continue;
@@ -155,11 +155,11 @@ TEST_F(CoreTest, create_meatdata) {
 
         default: {
           auto eps = std::make_shared<Episodes>(ptj, i);
-          ptj->addChildItem(eps);
+          ptj->child_item.push_back_sig(eps);
           eps->updata_db(k_f);
           for (auto x = 1; x < 30; ++x) {
             auto shot = std::make_shared<Shot>(eps, x);
-            eps->addChildItem(shot);
+            eps->child_item.push_back_sig(shot);
             shot->updata_db(k_f);
             if (i % 5 == 0) {
               shot->setShotAb(Shot::ShotAbEnum::A);
@@ -177,22 +177,22 @@ TEST_F(CoreTest, load_meatdata) {
   using namespace doodle;
   auto k_f = std::make_shared<MetadataFactory>();
   //加载文件
-  auto ptj = set.GetMetadataSet().Project_();
+  auto ptj = set.get_project();
   ptj->select_indb(k_f);
   std::cout << ptj->showStr() << std::endl;
   ASSERT_TRUE(ptj->getMetadataFactory() == k_f);
-  std::cout << ptj->getChildItems().size() << std::endl;
+  std::cout << ptj->child_item.size() << std::endl;
 
-  for (const auto& it : ptj->getChildItems()) {
+  for (const auto& it : ptj->child_item) {
     std::cout << std::setw(4) << "|->" << it->showStr() << std::endl;
     it->select_indb(k_f);
     ASSERT_TRUE(it->getMetadataFactory() == k_f);
 
-    for (const auto& it1 : it->getChildItems()) {
+    for (const auto& it1 : it->child_item) {
       std::cout << std::setw(7) << "|->" << it1->showStr() << std::endl;
     }
   }
-  auto& k_c  = ptj->getChildItems();
+  auto& k_c  = ptj->child_item;
   auto it_tc = std::find_if(k_c.begin(), k_c.end(),
                             [](const MetadataPtr& ptr) {
                               return ptr->str() == "test_m_parent";
@@ -207,7 +207,7 @@ TEST_F(CoreTest, load_meatdata) {
   ASSERT_TRUE((*it_tc)->getMetadataFactory() == k_f);
   auto tc = *it_tc;
   auto tp = *it_tp;
-  tp->addChildItem(tc);
+  tp->child_item.push_back_sig(tc);
   tc->updata_db(k_f);
   ASSERT_TRUE(tc->getParent() == tp);
 }
@@ -215,33 +215,33 @@ TEST_F(CoreTest, modify_meatdata) {
   using namespace doodle;
   auto k_f = std::make_shared<MetadataFactory>();
   //加载文件
-  auto ptj = set.GetMetadataSet().Project_();
+  auto ptj = set.get_project();
   ptj->select_indb(k_f);
   std::cout << ptj->showStr() << std::endl;
   ASSERT_TRUE(ptj->getMetadataFactory() == k_f);
-  std::cout << ptj->getChildItems().size() << std::endl;
+  std::cout << ptj->child_item.size() << std::endl;
 
-  for (const auto& it : ptj->getChildItems()) {
+  for (const auto& it : ptj->child_item) {
     std::cout << std::setw(4) << "|->" << it->showStr() << std::endl;
     it->select_indb(k_f);
     ASSERT_TRUE(it->getMetadataFactory() == k_f);
     it->sortChildItems();
-    for (const auto& it1 : it->getChildItems()) {
+    for (const auto& it1 : it->child_item) {
       it1->select_indb(k_f);
       std::cout << std::setw(7) << "|->" << it1->showStr() << std::endl;
-      for (const auto& it2 : it1->getChildItems()) {
+      for (const auto& it2 : it1->child_item) {
         it2->select_indb(k_f);
         std::cout << std::setw(10) << "|->" << it2->showStr() << std::endl;
       }
     }
   }
-  auto& k_c  = ptj->getChildItems();
+  auto& k_c  = ptj->child_item;
   auto it_tp = std::find_if(k_c.begin(), k_c.end(),
                             [](const MetadataPtr& ptr) {
                               return ptr->str() == "ep0010";
                             });
   ASSERT_TRUE(it_tp != k_c.end());
-  auto& k_c1 = (*it_tp)->getChildItems();
+  auto& k_c1 = (*it_tp)->child_item;
   auto it_tc = std::find_if(k_c1.begin(), k_c1.end(),
                             [](const MetadataPtr& ptr) {
                               return ptr->str() == "test_m_parent";

@@ -28,7 +28,8 @@ void assset_create_action::run(const MetadataPtr& in_data) {
     return;
   }
   auto k_a = std::make_shared<Assets>(in_data, k_s);
-  in_data->addChildItem(k_a);
+  in_data->child_item.push_back_sig(k_a);
+
   k_a->updata_db(in_data->getMetadataFactory());
 }
 assset_create_action::assset_create_action() {
@@ -50,7 +51,7 @@ void episode_create_action::run(const MetadataPtr& in_data) {
 
   auto k_i    = std::any_cast<std::int32_t>(p_any);
   auto k_item = std::make_shared<Episodes>(in_data, k_i);
-  in_data->addChildItem(k_item);
+  in_data->child_item.push_back_sig(k_item);
   k_item->updata_db(in_data->getMetadataFactory());
 }
 episode_create_action::episode_create_action() {
@@ -76,7 +77,7 @@ void shot_create_action::run(const MetadataPtr& in_data) {
 
   auto k_i    = std::any_cast<std::int32_t>(p_any);
   auto k_item = std::make_shared<Shot>(in_data, k_i);
-  in_data->addChildItem(k_item);
+  in_data->child_item.push_back_sig(k_item);
   k_item->updata_db(in_data->getMetadataFactory());
 }
 
@@ -86,7 +87,8 @@ assets_delete_action::assets_delete_action(std::any&& in_any) : action(std::move
 void assets_delete_action::run(const MetadataPtr& in_data) {
   in_data->deleteData(in_data->getMetadataFactory());
   auto k_p = in_data->getParent();
-  k_p->removeChildItems(in_data);
+
+  k_p->child_item.erase_sig(in_data);
 }
 assets_delete_action::assets_delete_action() {
   p_name = "删除";

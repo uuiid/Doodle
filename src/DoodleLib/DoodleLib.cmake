@@ -43,7 +43,6 @@ set(
 	core/CoreSet.h
 	core/CoreSql.h
 	core/DoodleLib.h
-	core/MetadataSet.h
 	core/Name.h
 	core/ToolsSetting.h
 	core/Ue4Setting.h
@@ -61,6 +60,7 @@ set(
 	libWarp/lfu_cache_policy.hpp
 	libWarp/lru_cache_policy.hpp
 	libWarp/nana_warp.h
+	libWarp/protobuf_warp.h
 	libWarp/sqlppWarp.h
 	libWarp/wxWidgetWarp.h
 	rpc/RpcFileSystemClient.h
@@ -109,7 +109,6 @@ set(
 	core/CoreSet.cpp
 	core/CoreSql.cpp
 	core/DoodleLib.cpp
-	core/MetadataSet.cpp
 	core/Name.cpp
 	core/Ue4Setting.cpp
 	core/Util.cpp

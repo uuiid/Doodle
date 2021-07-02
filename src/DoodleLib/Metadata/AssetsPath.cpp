@@ -33,7 +33,7 @@ const FSys::path &AssetsPath::getServerPath() const {
 void AssetsPath::setPath(const FSys::path &in_path) {
   auto &k_set       = CoreSet::getSet();
   auto uuid         = k_set.getUUIDStr();
-  auto k_prj        = k_set.GetMetadataSet().Project_();
+  auto k_prj        = k_set.get_project();
   FSys::path k_path = k_prj->str();
 
   auto k_server_path = k_path / uuid.substr(3) / uuid / in_path.filename();
@@ -42,7 +42,7 @@ void AssetsPath::setPath(const FSys::path &in_path) {
 
 void AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata) {
   auto &k_set = CoreSet::getSet();
-  auto k_prj  = k_set.GetMetadataSet().Project_();
+  auto k_prj  = k_set.get_project();
 
   /// 这里使用树,向上寻找,组合路径
   MetadataConstPtr k_m = in_metadata;

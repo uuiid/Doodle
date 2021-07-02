@@ -6,7 +6,7 @@
 
 #include <Logger/Logger.h>
 #include <Metadata/Project.h>
-#include <core/MetadataSet.h>
+#include <core/CoreSet.h>
 namespace doodle {
 create_project_action::create_project_action(std::any&& in_any)
     : action(std::move(in_any)) {
@@ -25,7 +25,8 @@ void create_project_action::run(const MetadataPtr& in_data) {
 
   auto prj = std::make_shared<Project>(k_p, k_s);
   prj->updata_db(in_data->getMetadataFactory());
-  MetadataSet::Get().installProject(prj);
+
+  CoreSet::getSet().p_project_vector.push_back_sig(prj);
 }
 create_project_action::create_project_action() {
   p_name = "创建项目";
@@ -42,7 +43,9 @@ delete_project_action::delete_project_action()
 void delete_project_action::run(const MetadataPtr& in_data) {
   auto k_prj = std::dynamic_pointer_cast<Project>(in_data);
 
-  MetadataSet::Get().deleteProject(k_prj.get());
+  auto& k_prj_v = CoreSet::getSet().p_project_vector;
+  k_prj_v.erase_sig(k_prj);
+
   in_data->deleteData(in_data->getMetadataFactory());
 }
 
@@ -83,10 +86,9 @@ void setpath_project_action::run(const MetadataPtr& in_data) {
   }
 
   auto k_path = std::any_cast<FSys::path>(p_any);
-  auto k_prj = std::dynamic_pointer_cast<Project>(in_data);
+  auto k_prj  = std::dynamic_pointer_cast<Project>(in_data);
   k_prj->setPath(k_path);
   k_prj->updata_db(k_prj->getMetadataFactory());
-
 }
 
 //set_str_project_action::set_str_project_action() {

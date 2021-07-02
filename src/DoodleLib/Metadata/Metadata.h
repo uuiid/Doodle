@@ -4,6 +4,7 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/core/observable_container.h>
 
 #include <boost/signals2.hpp>
 #include <cereal/types/memory.hpp>
@@ -15,7 +16,9 @@ namespace doodle {
  * @warning 这里这个基类是不进行cereal注册的要不然会序列化出错
  *
  */
-class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata>, public details::no_copy {
+class DOODLELIB_API Metadata
+    : public std::enable_shared_from_this<Metadata>,
+      public details::no_copy {
   friend MetadataFactory;
   friend RpcMetadataClient;
   friend RpcMetadaataServer;
@@ -27,11 +30,15 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata>, pu
 
   uint64_t p_has_child;
 
+
  protected:
+
+
+  void install_slots();
+  void add_child(const MetadataPtr &val);
+
   ///弱父对象的指针
   std::weak_ptr<Metadata> p_parent;
-  ///子对象的序列
-  std::vector<MetadataPtr> p_child_items;
 
   ///这个时文件的根名称， 基本判断相同就直接比较他俩就行
   uint64_t p_id;
@@ -60,18 +67,12 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata>, pu
   virtual bool isLoaded() const;
   /// 是已经保存过的
   virtual bool isSaved() const;
-  /**
-   * @brief 这个添加子物体时不会触发信号
-   * 
-   * @param in_items 子物体
-   */
-  virtual void addChildItemNotSig(const MetadataPtr &in_items);
 
   /**
    * @brief 这里是使用工厂进行加载和保存的函数
    * 使用访问者模式
    * @warning 注意,这里进行工厂加载是不触发任何的添加子物体和子物体更改等任何插槽的，
-   *  工厂在添加子物体时应该调用 Metadata::addChildItemNotSig(const MetadataPtr &) 方法
+   *   工厂在添加子物体时应该调用 observable_container:: 中不带_sig后缀的方法
    * @param in_factory 序列化工厂
    */
   virtual void _select_indb(const MetadataFactoryPtr &in_factory) = 0;
@@ -94,12 +95,14 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata>, pu
 
  public:
   Metadata();
-  ///这个时直接创建对象的，其中会自动设置父指针
   /**
+   * @brief 这个时直接创建对象的，其中会自动设置父指针
    * @param in_metadata 父指针输入
    */
   explicit Metadata(std::weak_ptr<Metadata> in_metadata);
   virtual ~Metadata();
+
+  observable_container<std::vector<MetadataPtr>> child_item;
 
   [[nodiscard]] virtual bool hasParent() const;  ///< 设置父指针
 
@@ -112,18 +115,6 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata>, pu
    */
   [[nodiscard]] virtual bool hasChild() const;
 
-  /**
-   * @return 孩子的列表
-   */
-  [[nodiscard]] virtual const std::vector<MetadataPtr> &getChildItems() const;  ///< 获得孩子
-
-  virtual void clearChildItems();  ///< 清除所有孩子
-
-  virtual bool removeChildItems(const MetadataPtr &in_child);  ///< 去除其中一个孩子
-
-  virtual void setChildItems(const std::vector<MetadataPtr> &in_child_items);  ///< 设置所有孩子
-
-  virtual MetadataPtr addChildItem(const MetadataPtr &in_items);  ///< 添加一个孩子
 
   virtual void sortChildItems();  ///< 排序一个孩子
 
@@ -151,37 +142,18 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata>, pu
   //  [[nodiscard]] virtual FSys::path FolderPath() const;
 
   /**
+   * @brief 获得序列化他们的工厂
    * @return
    */
-  const MetadataFactoryPtr &getMetadataFactory() const;  ///< 获得序列化他们的工厂
+  const MetadataFactoryPtr &getMetadataFactory() const;
 
   /**
+   * @brief 检查父亲是否符合记录
    * @param in_metadata 输入父亲
    * @return 返回是否是这个的父亲
    */
-  [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;  ///< 检查父亲是否符合记录
+  [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
 
-  ///本身进行更改时发出信号
-  boost::signals2::signal<
-      void()>
-      sig_thisChange;
-  ///清除孩子时发出信号
-  boost::signals2::signal<
-      void()>
-      sig_childClear;
-
-  ///添加孩子是发出信号,添加孩子发出的信号会比孩子更改父级发出的晚
-  boost::signals2::signal<
-      void(const MetadataPtr &child_ptr)>
-      sig_childAdd;
-  ///整体替换时发出信号
-  boost::signals2::signal<
-      void(const std::vector<MetadataPtr> &child_ptr)>
-      sig_childAddAll;
-  ///孩子删除时发出信号
-  boost::signals2::signal<
-      void(const MetadataPtr &child_ptr)>
-      sig_childDelete;
   /**
    * @warning 此处如果进行比较， 会自动转化为子类进行比较， 相同子类优化， 不同子类字符串比较
    */
@@ -195,7 +167,7 @@ class DOODLELIB_API Metadata : public std::enable_shared_from_this<Metadata>, pu
    * @brief 这里是使用工厂进行加载和保存的函数
    * 使用访问者模式
    * @warning 注意,这里进行工厂加载是不触发任何的添加子物体和子物体更改等任何插槽的，
-   *  工厂在添加子物体时应该调用 Metadata::addChildItemNotSig(const MetadataPtr &) 方法
+   *  工厂在添加子物体时应该调用 observable_container:: 中不带_sig后缀的方法
    * @param in_factory 序列化工厂
    */
   virtual void select_indb(const MetadataFactoryPtr &in_factory = {});

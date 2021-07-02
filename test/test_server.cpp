@@ -16,18 +16,17 @@ TEST(Server, createPrj) {
   prj = std::make_shared<doodle::Project>("D:/", "测试2");
   prj->insert_into(k_f);
 
-  auto& k_m = doodle::MetadataSet::Get();
   doodle::CoreSet::getSet().guiInit();
 
-  for (const auto& prj : k_m.getAllProjects()) {
-    std::cout << "id: " << prj->getId() << "\n"
-              << "uuid: " << prj->getUUID() << "\n"
-              << "name: " << prj->getName() << "\n"
-              << "path: " << prj->getPath() << "\n";
+  for (const auto& k_prj : doodle::CoreSet::getSet().p_project_vector) {
+    std::cout << "id: " << k_prj->getId() << "\n"
+              << "uuid: " << k_prj->getUUID() << "\n"
+              << "name: " << k_prj->getName() << "\n"
+              << "path: " << k_prj->getPath() << "\n";
   }
   std::cout << std::endl;
 
-  ASSERT_TRUE(k_m.getAllProjects().size() == 2);
+  ASSERT_TRUE(doodle::CoreSet::getSet().p_project_vector.size() == 2);
 }
 #include <date/date.h>
 
