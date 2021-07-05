@@ -37,8 +37,11 @@ void MetadataFactory::updata_db(MetadataPtr &in_metadata) const {
 void MetadataFactory::select_indb(MetadataPtr &in_metadata) const {
   if (!in_metadata->hasChild())
     return;
-  auto k_c = this->p_rpcClien.lock()->GetChild(in_metadata);
-  in_metadata->child_item.swap_sig(k_c);
+  auto k_c                = this->p_rpcClien.lock()->GetChild(in_metadata);
+  for (auto & k_i: k_c) {
+    in_metadata->add_child(k_i);
+  }
+  in_metadata->child_item = k_c;
 }
 
 void MetadataFactory::deleteData(const Metadata *in_metadata) const {

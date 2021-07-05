@@ -49,15 +49,16 @@ void CoreSet::guiInit() {
                           grpc::InsecureChannelCredentials()));
 
   p_project_vector = std::make_shared<MetadataFactory>()->getAllProject();
-  if (p_curr_project) {
-    auto it = std::find_if(p_project_vector.begin(), p_project_vector.end(),
-                           [this](const ProjectPtr &in_ptr) { return in_ptr->getId() == this->p_curr_project->getId(); });
-    if (it != p_project_vector.end())
-      p_curr_project = *it;
-    else
+  if (!p_project_vector.empty())
+    if (p_curr_project) {
+      auto it = std::find_if(p_project_vector.begin(), p_project_vector.end(),
+                             [this](const ProjectPtr &in_ptr) { return in_ptr->getId() == this->p_curr_project->getId(); });
+      if (it != p_project_vector.end())
+        p_curr_project = *it;
+      else
+        p_curr_project = p_project_vector.front();
+    } else
       p_curr_project = p_project_vector.front();
-  } else
-    p_curr_project = p_project_vector.front();
 }
 
 void CoreSet::findMaya() {

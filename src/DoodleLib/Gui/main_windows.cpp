@@ -55,7 +55,7 @@ void main_windows::create_menubar() {
     toolkit::installMayaPath();
     nana::msgbox mes{*this, "完成maya插件安装"};
     mes();
-     });
+  });
   k_tool_menu.append("安装ue插件", [this](nana::menu::item_proxy&) {
     try {
       auto& k_ue_setting = CoreSet::getSet().gettUe4Setting();

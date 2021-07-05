@@ -44,6 +44,8 @@ nana::listbox::iresolver& operator>>(nana::listbox::iresolver& oor, AssetsFilePt
 class DOODLELIB_API project_widget {
   nana::listbox p_list_box;
   nana::menu p_menu;
+
+
  public:
   explicit project_widget(nana::window in_window);
 
@@ -56,6 +58,10 @@ class DOODLELIB_API assets_widget {
   MetadataPtr p_root;
   nana::menu p_menu;
 
+  std::vector<boost::signals2::scoped_connection> p_conn;
+  void install_solt(const MetadataPtr& in_project_ptr);
+//  nana::treebox::item_proxy append_tree(nana::treebox::item_proxy& in_proxy, MetadataPtr& in_ptr);
+
  public:
   explicit assets_widget(nana::window in_window);
 
@@ -67,6 +73,7 @@ class DOODLELIB_API assets_widget {
 class DOODLELIB_API assets_attr_widget {
   nana::listbox p_list_box;
   nana::menu p_menu;
+  MetadataPtr p_root;
 
   std::vector<AssetsFilePtr> p_assets;
 

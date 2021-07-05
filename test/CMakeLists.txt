@@ -31,6 +31,11 @@ target_link_libraries(test_my PRIVATE
  ${OpenCV_LIBS}
  )
 
+target_compile_options(
+        test_my
+        PRIVATE
+        /bigobj
+)
 # include(CTest)
 enable_testing()
 include(GoogleTest)

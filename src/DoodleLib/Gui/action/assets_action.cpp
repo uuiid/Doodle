@@ -108,6 +108,8 @@ void episode_set_action::run(const MetadataPtr& in_data) {
 
   auto k_i   = std::any_cast<std::int32_t>(p_any);
   auto k_eps = std::dynamic_pointer_cast<Episodes>(in_data);
+  if(k_i == 0)
+    return;
   k_eps->setEpisodes(k_i);
   k_eps->updata_db(k_eps->getMetadataFactory());
 }
@@ -129,6 +131,8 @@ void shot_set_action::run(const MetadataPtr& in_data) {
 
   auto k_i    = std::any_cast<std::int32_t>(p_any);
   auto k_item = std::dynamic_pointer_cast<Shot>(in_data);
+  if(k_i == 0)
+    return;
   k_item->setShot(k_i);
   k_item->updata_db(k_item->getMetadataFactory());
 }
@@ -148,7 +152,7 @@ void shotab_set_action::run(const MetadataPtr& in_data) {
     return;
   }
 
-  auto k_s    = std::any_cast<Shot::ShotAbEnum>(p_any);
+  auto k_s    = std::any_cast<std::string>(p_any);
   auto k_item = std::dynamic_pointer_cast<Shot>(in_data);
   k_item->setShotAb(k_s);
   k_item->updata_db(k_item->getMetadataFactory());

@@ -49,8 +49,13 @@ void Assets::serialize(Archive& ar, const std::uint32_t version) {
     ar(
         cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
         p_name);
+  if (version == 2)
+    ar(
+        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
+        p_name,
+        p_name_enus);
 }
 }  // namespace doodle
 
 CEREAL_REGISTER_TYPE(doodle::Assets)
-CEREAL_CLASS_VERSION(doodle::Assets, 1)
+CEREAL_CLASS_VERSION(doodle::Assets, 2)

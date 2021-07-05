@@ -75,8 +75,8 @@ std::vector<MetadataPtr> RpcMetadataClient::GetChild(const MetadataConstPtr& in_
     auto k_data = k_i.metadata_cereal().value();
     vector_container my_data{k_data.begin(), k_data.end()};
     {
-      vector_istream k_i{my_data};
-      cereal::PortableBinaryInputArchive k_archive{k_i};
+      vector_istream k_v{my_data};
+      cereal::PortableBinaryInputArchive k_archive{k_v};
       k_archive(k_ptr);
     }
     if (k_ptr->p_id == 0) {

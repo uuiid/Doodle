@@ -19,7 +19,9 @@ Metadata::Metadata()
       p_need_save(true),
       p_need_load(true),
       p_updata_parent_id(false),
-      p_has_child(0) {
+      p_has_child(0),
+      child_item(),
+      user_date() {
   install_slots();
 }
 
@@ -33,7 +35,9 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
       p_need_save(true),
       p_need_load(true),
       p_updata_parent_id(false),
-      p_has_child(0) {
+      p_has_child(0),
+      child_item(),
+      user_date() {
   install_slots();
 }
 
@@ -59,7 +63,7 @@ bool Metadata::hasChild() const {
 std::string Metadata::showStr() const {
   return str();
 }
-const std::string &Metadata::getUUID() {
+const std::string &Metadata::getUUID() const {
   return p_uuid;
 }
 
@@ -109,7 +113,7 @@ bool Metadata::isSaved() const {
   return !p_need_save;
 }
 FSys::path Metadata::getUrlUUID() const {
-  auto name = FSys::path{getRootParent()->str()};
+  auto name = FSys::path{getRootParent()->getUUID()};
   name /= p_uuid.substr(0, 3);
   name /= p_uuid;
   return name;
@@ -169,23 +173,32 @@ void Metadata::install_slots() {
     for (const auto &k_i : this->child_item) {
       k_i->p_id = 0;
     }
+    p_has_child = 0;
+    saved(true);
   });
 
   child_item.sig_begin_insert.connect([this](const MetadataPtr &val) {
     add_child(val);
+    ++p_has_child;
+    saved(true);
   });
   child_item.sig_begin_erase.connect([this](const MetadataPtr &val) {
-    p_has_child = child_item.size() - 1;
+    --p_has_child;
+    saved(true);
   });
 
   child_item.sig_begin_push_back.connect([this](const MetadataPtr &val) {
     add_child(val);
+    ++p_has_child;
+    saved(true);
   });
 
   child_item.sig_begin_swap.connect([this](const std::vector<MetadataPtr> &val) {
     for (auto &k_i : val) {
       add_child(k_i);
     }
+    p_has_child = val.size();
+    saved(true);
   });
 }
 void Metadata::add_child(const MetadataPtr &val) {
@@ -202,11 +215,11 @@ void Metadata::add_child(const MetadataPtr &val) {
       val->p_parent.lock()->child_item.erase_sig(val);
     }
   }
+
   /// 这里将所有的子级要继承的父级属性给上
   val->p_parent                = weak_from_this();
   val->p_parent_id             = p_id;
   val->p_metadata_flctory_ptr_ = p_metadata_flctory_ptr_;
-  p_has_child                  = child_item.size();
   DOODLE_LOG_INFO(fmt::format("插入子数据： {}", val->showStr()))
 }
 

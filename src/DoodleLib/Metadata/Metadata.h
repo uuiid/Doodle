@@ -6,6 +6,7 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/core/observable_container.h>
 
+#include <any>
 #include <boost/signals2.hpp>
 #include <cereal/types/memory.hpp>
 #include <cereal/types/optional.hpp>
@@ -30,10 +31,7 @@ class DOODLELIB_API Metadata
 
   uint64_t p_has_child;
 
-
  protected:
-
-
   void install_slots();
   void add_child(const MetadataPtr &val);
 
@@ -103,6 +101,7 @@ class DOODLELIB_API Metadata
   virtual ~Metadata();
 
   observable_container<std::vector<MetadataPtr>> child_item;
+  std::any user_date;
 
   [[nodiscard]] virtual bool hasParent() const;  ///< 设置父指针
 
@@ -114,7 +113,6 @@ class DOODLELIB_API Metadata
    * @return false 工厂和列表中均不具有子项
    */
   [[nodiscard]] virtual bool hasChild() const;
-
 
   virtual void sortChildItems();  ///< 排序一个孩子
 
@@ -128,11 +126,17 @@ class DOODLELIB_API Metadata
    */
   [[nodiscard]] virtual std::string showStr() const;  ///< 这里时显示的字符串, 极有可能有中文
 
-  [[nodiscard]] const std::string &getUUID();   ///< 获得uuid
+  [[nodiscard]] const std::string &getUUID() const;   ///< 获得uuid
   [[nodiscard]] FSys::path getUrlUUID() const;  ///< 这个是获得所属项目的保持相对路径
 
   uint64_t getId() const;  ///< 获得数据库id
-
+  /**
+   * 获得字符串id
+   * @return id的字符串形式
+   */
+  inline std::string getIdStr() const {
+    return std::to_string(getId());
+  };
   /**
    * @brief  这个会一直递归找到没有父级的根节点
    * @return 根节点(现在基本上是项目节点)
@@ -188,12 +192,15 @@ class DOODLELIB_API Metadata
    */
   virtual void insert_into(const MetadataFactoryPtr &in_factory = {});
 
+  boost::signals2::signal<void()> sig_change;
+
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
 };
 
 template <class Archive>
 void Metadata::serialize(Archive &ar, std::uint32_t const version) {
+//  p_has_child = child_item.size();
   if (version == 1)
     ar(
         cereal::make_nvp("id", p_id),
@@ -201,6 +208,7 @@ void Metadata::serialize(Archive &ar, std::uint32_t const version) {
         cereal::make_nvp("UUID", p_uuid),
         cereal::make_nvp("has_child", p_has_child));
 }
+
 }  // namespace doodle
 
 //CEREAL_REGISTER_TYPE(doodle::Metadata)

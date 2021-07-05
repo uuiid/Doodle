@@ -123,8 +123,8 @@ void setting_windows::init_setting() {
   auto& set = CoreSet::getSet();
   p_dep.caption(set.getDepartment());
   p_user.reset(set.getUser());
-  p_cache.caption(set.getCacheRoot());
-  p_doc.caption(set.getDoc());
+  p_cache.caption(set.getCacheRoot().generic_string());
+  p_doc.caption(set.getDoc().generic_string());
   p_maya.reset(set.MayaPath().generic_string());
   p_ue_path.reset(set.gettUe4Setting().Path().generic_string());
   p_ue_version.reset(set.gettUe4Setting().Version());

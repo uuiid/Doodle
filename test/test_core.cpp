@@ -1,15 +1,14 @@
 #include <DoodleLib/DoodleLib.h>
+#include <date/date.h>
 #include <gtest/gtest.h>
 
 #include <boost/filesystem.hpp>
-
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/portable_binary.hpp>
 #include <iostream>
 #include <memory>
 #include <streambuf>
-#include <date/date.h>
 class CoreTest : public ::testing::Test {
  protected:
   void SetUp() override;
@@ -169,6 +168,7 @@ TEST_F(CoreTest, create_meatdata) {
         } break;
       }
     }
+    std::cout << "prj ch size: " << ptj->child_item.size() << std::endl;
     ptj->updata_db(k_f);
     set.writeDoodleLocalSet();
   }

@@ -27,10 +27,12 @@ const int64_t& Episodes::getEpisodes() const noexcept {
 }
 
 void Episodes::setEpisodes(const int64_t& Episodes_) {
-  if (Episodes_ < 0)
+  if (Episodes_ <= 0)
     throw DoodleError("集数无法为负");
   p_episodes = Episodes_;
   saved(true);
+  sig_change();
+
 }
 
 std::string Episodes::str() const {

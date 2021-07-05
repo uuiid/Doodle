@@ -9,12 +9,14 @@
 namespace doodle {
 Assets::Assets()
     : Metadata(),
-      p_name() {
+      p_name(),
+      p_name_enus() {
 }
 
 Assets::Assets(std::weak_ptr<Metadata> in_metadata, std::string in_name)
     : Metadata(std::move(in_metadata)),
-      p_name(std::move(in_name)) {
+      p_name(std::move(in_name)),
+      p_name_enus(convert::Get().toEn(p_name)) {
 }
 
 // Assets::~Assets() {
@@ -23,7 +25,9 @@ Assets::Assets(std::weak_ptr<Metadata> in_metadata, std::string in_name)
 // }
 
 std::string Assets::str() const {
-  return convert::Get().toEn(this->p_name);
+  if(p_name_enus.empty())
+    return convert::Get().toEn(p_name);
+  return p_name_enus;
 }
 std::string Assets::showStr() const {
   return p_name;
@@ -56,7 +60,10 @@ const std::string& Assets::getName1() const {
 }
 void Assets::setName1(const std::string& in_name) {
   p_name = in_name;
+  if(p_name_enus.empty())
+    p_name_enus = convert::Get().toEn(p_name);
   saved(true);
+  sig_change();
 }
 const std::string& Assets::getNameEnus() const {
   return p_name_enus;
@@ -64,6 +71,8 @@ const std::string& Assets::getNameEnus() const {
 void Assets::setNameEnus(const std::string& in_nameEnus) {
   p_name_enus = in_nameEnus;
   saved(true);
+  sig_change();
+
 }
 void Assets::_select_indb(const MetadataFactoryPtr& in_factory) {
   in_factory->select_indb(this);

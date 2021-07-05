@@ -27,6 +27,8 @@ void Project::setName(const std::string& Name) noexcept {
     return;
   p_name = Name;
   saved(true);
+  sig_change();
+
 }
 
 const FSys::path& Project::getPath() const noexcept {
@@ -41,7 +43,10 @@ void Project::setPath(const FSys::path& Path) {
 
   p_path = Path;
   saved(true);
+  sig_change();
+
 }
+
 
 std::string Project::str() const {
   return boost::algorithm::to_lower_copy(
