@@ -2,6 +2,7 @@
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 
+#include <Gui/factory/menu_factory.h>
 
 namespace doodle {
 
@@ -76,6 +77,9 @@ void Episodes::_deleteData(const MetadataFactoryPtr& in_factory) {
 }
 void Episodes::_insert_into(const MetadataFactoryPtr& in_factory) {
   in_factory->insert_into(this);
+}
+void Episodes::create_menu(const menu_factory_ptr& in_factoryPtr) {
+  in_factoryPtr->create_menu(std::dynamic_pointer_cast<Episodes>(shared_from_this()));
 }
 
 }  // namespace doodle

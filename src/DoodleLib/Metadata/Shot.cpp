@@ -2,7 +2,7 @@
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Shot.h>
-
+#include <Gui/factory/menu_factory.h>
 
 namespace doodle {
 
@@ -33,7 +33,6 @@ void Shot::setShot(const int64_t& in_shot) {
   p_shot = in_shot;
   saved(true);
   sig_change();
-
 }
 
 const std::string& Shot::getShotAb() const noexcept {
@@ -44,7 +43,6 @@ void Shot::setShotAb(const std::string& ShotAb) noexcept {
   p_shot_ab = ShotAb;
   saved(true);
   sig_change();
-
 }
 EpisodesPtr Shot::getEpisodesPtr() const {
   auto k_ptr = std::dynamic_pointer_cast<Episodes>(getParent());
@@ -95,6 +93,9 @@ void Shot::_deleteData(const MetadataFactoryPtr& in_factory) {
 }
 void Shot::_insert_into(const MetadataFactoryPtr& in_factory) {
   in_factory->insert_into(this);
+}
+void Shot::create_menu(const menu_factory_ptr& in_factoryPtr) {
+  in_factoryPtr->create_menu(std::dynamic_pointer_cast<Shot>(shared_from_this()));
 }
 
 }  // namespace doodle

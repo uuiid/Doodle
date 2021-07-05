@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include <Exception/Exception.h>
+#include <Gui/factory/menu_factory.h>
 #include <Logger/Logger.h>
 #include <Metadata/MetadataFactory.h>
 #include <Metadata/Project.h>
@@ -9,7 +10,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
 #include <cereal/archives/portable_binary.hpp>
-
 namespace doodle {
 
 Project::Project()
@@ -28,7 +28,6 @@ void Project::setName(const std::string& Name) noexcept {
   p_name = Name;
   saved(true);
   sig_change();
-
 }
 
 const FSys::path& Project::getPath() const noexcept {
@@ -44,9 +43,7 @@ void Project::setPath(const FSys::path& Path) {
   p_path = Path;
   saved(true);
   sig_change();
-
 }
-
 
 std::string Project::str() const {
   return boost::algorithm::to_lower_copy(
@@ -119,6 +116,9 @@ void Project::_updata_db(const MetadataFactoryPtr& in_factory) {
 }
 void Project::_select_indb(const MetadataFactoryPtr& in_factory) {
   in_factory->select_indb(this);
+}
+void Project::create_menu(const menu_factory_ptr& in_factoryPtr) {
+  in_factoryPtr->create_menu(std::dynamic_pointer_cast<Project>(shared_from_this()));
 }
 
 }  // namespace doodle

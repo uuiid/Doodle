@@ -15,6 +15,18 @@ class DOODLELIB_API menu_factory {
   nana::window p_window;
   MetadataPtr p_metadata;
 
+  friend Project;
+  friend Assets;
+  friend Episodes;
+  friend Shot;
+  friend AssetsFile;
+
+  virtual void create_menu(const ProjectPtr& in_ptr){};
+  virtual void create_menu(const AssetsPtr& in_ptr){};
+  virtual void create_menu(const EpisodesPtr& in_ptr){};
+  virtual void create_menu(const ShotPtr& in_ptr){};
+  virtual void create_menu(const AssetsFilePtr& in_ptr){};
+
  public:
   explicit menu_factory(nana::window in_window);
   void create_prj_action(MetadataPtr& in_metadata);

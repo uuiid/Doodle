@@ -12,6 +12,7 @@
 #include <cereal/types/optional.hpp>
 #include <cereal/types/polymorphic.hpp>
 #include <optional>
+
 namespace doodle {
 /**
  * @warning 这里这个基类是不进行cereal注册的要不然会序列化出错
@@ -126,8 +127,8 @@ class DOODLELIB_API Metadata
    */
   [[nodiscard]] virtual std::string showStr() const;  ///< 这里时显示的字符串, 极有可能有中文
 
-  [[nodiscard]] const std::string &getUUID() const;   ///< 获得uuid
-  [[nodiscard]] FSys::path getUrlUUID() const;  ///< 这个是获得所属项目的保持相对路径
+  [[nodiscard]] const std::string &getUUID() const;  ///< 获得uuid
+  [[nodiscard]] FSys::path getUrlUUID() const;       ///< 这个是获得所属项目的保持相对路径
 
   uint64_t getId() const;  ///< 获得数据库id
   /**
@@ -157,6 +158,8 @@ class DOODLELIB_API Metadata
    * @return 返回是否是这个的父亲
    */
   [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
+
+  virtual void create_menu(const menu_factory_ptr &in_factoryPtr) = 0;
 
   /**
    * @warning 此处如果进行比较， 会自动转化为子类进行比较， 相同子类优化， 不同子类字符串比较
@@ -200,7 +203,7 @@ class DOODLELIB_API Metadata
 
 template <class Archive>
 void Metadata::serialize(Archive &ar, std::uint32_t const version) {
-//  p_has_child = child_item.size();
+  //  p_has_child = child_item.size();
   if (version == 1)
     ar(
         cereal::make_nvp("id", p_id),

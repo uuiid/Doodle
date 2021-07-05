@@ -7,14 +7,8 @@
 #include <Gui/action/action_import.h>
 #include <Metadata/AssetsFile.h>
 #include <Metadata/Metadata_cpp.h>
-#include <Metadata/Project.h>
-#include <Metadata/Shot.h>
-#include <Metadata/TimeDuration.h>
-#include <core/CoreSet.h>
 
 #include <nana/gui/filebox.hpp>
-#include <nana/gui/msgbox.hpp>
-#include <nana/gui/widgets/menu.hpp>
 namespace doodle {
 
 menu_factory::menu_factory(nana::window in_window)
@@ -94,7 +88,7 @@ void menu_factory::create_file_action(MetadataPtr& in_metadata) {
   });
 
   if (!details::is_class<AssetsFile>(in_metadata)) {
-    DOODLE_LOG_WARN("不是 AssFile类， 无法设置属性");
+    DOODLE_LOG_WARN("不是 AssFile类， 无法设置属性")
     return;
   }
 

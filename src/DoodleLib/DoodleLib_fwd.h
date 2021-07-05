@@ -8,6 +8,7 @@
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+
 #include <codecvt>
 #include <stdexcept>
 //namespace fmt {
@@ -118,7 +119,7 @@ using ostream  = std::ostream;
 //using std::filesystem::is_socket;
 //using std::filesystem::is_symlink;
 //using std::filesystem::status;
-DOODLELIB_API inline path make_path(const std::string& in_string) {
+DOODLELIB_API inline path make_path(const std::string &in_string) {
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> convert;
   return path{convert.from_bytes(in_string)};
@@ -164,6 +165,8 @@ class upload_file_action;
 class upload_dir_and_file_action;
 class DoodleLib;
 class ThreadPool;
+class menu_factory;
+
 
 using MetadataPtr               = std::shared_ptr<Metadata>;
 using MetadataConstPtr          = std::shared_ptr<const Metadata>;
@@ -191,6 +194,7 @@ using UploadFileActionPtr       = std::shared_ptr<upload_file_action>;
 using UploadDirAndFileActionPre = std::shared_ptr<upload_dir_and_file_action>;
 using DoodleLibPtr              = std::unique_ptr<DoodleLib>;
 using ThreadPoolPtr             = std::shared_ptr<ThreadPool>;
+using menu_factory_ptr          = std::shared_ptr<menu_factory>;
 class Doodle;
 [[maybe_unused]] DOODLELIB_API DoodleLibPtr make_doodle_lib();
 template <typename SSC, typename SSN>
@@ -198,6 +202,5 @@ SSC ConvStr(const SSN &str) {
   static_assert(false, "这个函数会出错");
   return SSC{str};
 }
-
 
 }  // namespace doodle

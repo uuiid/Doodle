@@ -5,6 +5,7 @@
 #include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/PinYin/convert.h>
+#include <Gui/factory/menu_factory.h>
 
 namespace doodle {
 Assets::Assets()
@@ -25,7 +26,7 @@ Assets::Assets(std::weak_ptr<Metadata> in_metadata, std::string in_name)
 // }
 
 std::string Assets::str() const {
-  if(p_name_enus.empty())
+  if (p_name_enus.empty())
     return convert::Get().toEn(p_name);
   return p_name_enus;
 }
@@ -60,7 +61,7 @@ const std::string& Assets::getName1() const {
 }
 void Assets::setName1(const std::string& in_name) {
   p_name = in_name;
-  if(p_name_enus.empty())
+  if (p_name_enus.empty())
     p_name_enus = convert::Get().toEn(p_name);
   saved(true);
   sig_change();
@@ -72,7 +73,6 @@ void Assets::setNameEnus(const std::string& in_nameEnus) {
   p_name_enus = in_nameEnus;
   saved(true);
   sig_change();
-
 }
 void Assets::_select_indb(const MetadataFactoryPtr& in_factory) {
   in_factory->select_indb(this);
@@ -90,5 +90,8 @@ void Assets::_insert_into(const MetadataFactoryPtr& in_factory) {
 }
 void Assets::_deleteData(const MetadataFactoryPtr& in_factory) {
   in_factory->deleteData(this);
+}
+void Assets::create_menu(const menu_factory_ptr& in_factoryPtr) {
+  in_factoryPtr->create_menu(std::dynamic_pointer_cast<Assets>(shared_from_this()));
 }
 }  // namespace doodle

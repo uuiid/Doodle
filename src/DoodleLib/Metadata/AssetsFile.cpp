@@ -7,9 +7,9 @@
 #include <core/CoreSet.h>
 ///这个工厂类必须在所有导入的后面
 #include <DoodleLib/Metadata/MetadataFactory.h>
+#include <Gui/factory/menu_factory.h>
 #include <Metadata/TimeDuration.h>
 #include <PinYin/convert.h>
-
 
 #include <utility>
 
@@ -84,7 +84,6 @@ void AssetsFile::setStdTime(const std::chrono::time_point<std::chrono::system_cl
   p_time = std::make_shared<TimeDuration>(in_time);
   saved(true);
   sig_change();
-
 }
 const std::string& AssetsFile::getUser() const {
   return p_user;
@@ -93,7 +92,6 @@ void AssetsFile::setUser(const std::string& in_user) {
   p_user = in_user;
   saved(true);
   sig_change();
-
 }
 
 const std::vector<CommentPtr>& AssetsFile::getComment() const {
@@ -102,14 +100,12 @@ const std::vector<CommentPtr>& AssetsFile::getComment() const {
 void AssetsFile::setComment(const std::vector<CommentPtr>& in_comment) {
   p_comment = in_comment;
   saved(true);
-    sig_change();
-
+  sig_change();
 }
 void AssetsFile::addComment(const CommentPtr& in_comment) {
   p_comment.emplace_back(in_comment);
   saved(true);
-    sig_change();
-
+  sig_change();
 }
 
 const std::uint64_t& AssetsFile::getVersion() const noexcept {
@@ -117,7 +113,7 @@ const std::uint64_t& AssetsFile::getVersion() const noexcept {
 }
 
 std::string AssetsFile::getVersionStr() const {
-  return fmt::format("v{:04d}",p_version);
+  return fmt::format("v{:04d}", p_version);
 }
 
 void AssetsFile::setVersion(const std::uint64_t& in_Version) noexcept {
@@ -129,8 +125,7 @@ const std::vector<AssetsPathPtr>& AssetsFile::getPathFile() const {
 void AssetsFile::setPathFile(const std::vector<AssetsPathPtr>& in_pathFile) {
   p_path_files = in_pathFile;
   saved(true);
-    sig_change();
-
+  sig_change();
 }
 Department AssetsFile::getDepartment() const {
   return p_department;
@@ -138,8 +133,7 @@ Department AssetsFile::getDepartment() const {
 void AssetsFile::setDepartment(Department in_department) {
   p_department = in_department;
   saved(true);
-    sig_change();
-
+  sig_change();
 }
 void AssetsFile::_select_indb(const MetadataFactoryPtr& in_factory) {
   p_metadata_flctory_ptr_->select_indb(this);
@@ -164,6 +158,8 @@ void AssetsFile::setTime(const TimeDurationPtr& in_time) {
   p_time = in_time;
   saved(true);
   sig_change();
-
+}
+void AssetsFile::create_menu(const menu_factory_ptr& in_factoryPtr) {
+  in_factoryPtr->create_menu(std::dynamic_pointer_cast<AssetsFile>(shared_from_this()));
 }
 }  // namespace doodle
