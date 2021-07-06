@@ -14,13 +14,11 @@ set(
 	Gui/Metadata/project_widget.h
 	Gui/action/action.h
 	Gui/action/action_import.h
-	Gui/action/actn_image_to_movie.h
+	Gui/action/actn_image_and_movie.h
+	Gui/action/actn_up_paths.h
 	Gui/action/assets_action.h
 	Gui/action/assets_file_action.h
 	Gui/action/project_action.h
-	Gui/action/upload_dir_action.h
-	Gui/action/upload_dir_and_file_action.h
-	Gui/action/upload_file_action.h
 	Gui/factory/menu_factory.h
 	Gui/main_windows.h
 	Gui/setting_windows.h
@@ -84,13 +82,11 @@ set(
 	FileWarp/VideoSequence.cpp
 	Gui/Metadata/project_widget.cpp
 	Gui/action/action.cpp
-	Gui/action/actn_image_to_movie.cpp
+	Gui/action/actn_image_and_movie.cpp
+	Gui/action/actn_up_paths.cpp
 	Gui/action/assets_action.cpp
 	Gui/action/assets_file_action.cpp
 	Gui/action/project_action.cpp
-	Gui/action/upload_dir_action.cpp
-	Gui/action/upload_dir_and_file_action.cpp
-	Gui/action/upload_file_action.cpp
 	Gui/factory/menu_factory.cpp
 	Gui/main_windows.cpp
 	Gui/setting_windows.cpp

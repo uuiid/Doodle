@@ -131,7 +131,7 @@ void menu_factory::ass_action(MetadataPtr& in_metadata, bool is_parent) {
     return;
   p_metadata = in_metadata;
 
-  auto k_c_ass  = p_action.emplace_back(std::make_shared<assset_create_action>());
+  auto k_c_ass  = p_action.emplace_back(std::make_shared<actn_assets_create>());
   auto k_c_eps  = p_action.emplace_back(std::make_shared<episode_create_action>());
   auto k_c_shot = p_action.emplace_back(std::make_shared<shot_create_action>());
 

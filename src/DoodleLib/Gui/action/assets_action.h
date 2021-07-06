@@ -8,11 +8,11 @@
 
 namespace doodle {
 
-class DOODLELIB_API assset_create_action : public action {
+class DOODLELIB_API actn_assets_create : public action {
 
  public:
-  assset_create_action();
-  explicit assset_create_action(std::any&& in_any);
+  actn_assets_create();
+  explicit actn_assets_create(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
 

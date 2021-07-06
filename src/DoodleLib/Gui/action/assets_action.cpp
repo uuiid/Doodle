@@ -9,11 +9,11 @@
 #include <Metadata/Shot.h>
 namespace doodle {
 
-assset_create_action::assset_create_action(std::any&& in_any)
+actn_assets_create::actn_assets_create(std::any&& in_any)
     : action(std::move(in_any)) {
   p_name = "创建类别";
 }
-void assset_create_action::run(const MetadataPtr& in_data) {
+void actn_assets_create::run(const MetadataPtr& in_data) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
 
@@ -32,7 +32,7 @@ void assset_create_action::run(const MetadataPtr& in_data) {
 
   k_a->updata_db(in_data->getMetadataFactory());
 }
-assset_create_action::assset_create_action() {
+actn_assets_create::actn_assets_create() {
   p_name = "创建类别";
 }
 
