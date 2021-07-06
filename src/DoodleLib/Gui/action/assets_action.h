@@ -16,50 +16,50 @@ class DOODLELIB_API actn_assets_create : public action {
   void run(const MetadataPtr& in_data) override;
 };
 
-class DOODLELIB_API episode_create_action : public action {
+class DOODLELIB_API actn_episode_create : public action {
 
  public:
-  episode_create_action();
-  explicit episode_create_action(std::any&& in_any);
+  actn_episode_create();
+  explicit actn_episode_create(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
-class DOODLELIB_API shot_create_action : public action {
+class DOODLELIB_API actn_shot_create : public action {
 
  public:
-  shot_create_action();
-  explicit shot_create_action(std::any&& in_any);
-  void run(const MetadataPtr& in_data) override;
-};
-
-class DOODLELIB_API assets_delete_action : public action {
- public:
-  assets_delete_action();
-  explicit assets_delete_action(std::any&& in_any);
+  actn_shot_create();
+  explicit actn_shot_create(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
 
-class DOODLELIB_API episode_set_action : public action {
+class DOODLELIB_API actn_assets_delete : public action {
  public:
-  episode_set_action();
-  explicit episode_set_action(std::any&& in_any);
+  actn_assets_delete();
+  explicit actn_assets_delete(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
-class DOODLELIB_API shot_set_action : public action {
+
+class DOODLELIB_API actn_episode_set : public action {
  public:
-  shot_set_action();
-  explicit shot_set_action(std::any&& in_any);
+  actn_episode_set();
+  explicit actn_episode_set(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
-class DOODLELIB_API shotab_set_action : public action {
+class DOODLELIB_API actn_shot_set : public action {
  public:
-  shotab_set_action();
-  explicit shotab_set_action(std::any&& in_any);
+  actn_shot_set();
+  explicit actn_shot_set(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
-class DOODLELIB_API assets_setname_action : public action {
+class DOODLELIB_API actn_shotab_set : public action {
  public:
-  assets_setname_action();
-  explicit assets_setname_action(std::any&& in_any);
+  actn_shotab_set();
+  explicit actn_shotab_set(std::any&& in_any);
+  void run(const MetadataPtr& in_data) override;
+};
+class DOODLELIB_API actn_assets_setname : public action {
+ public:
+  actn_assets_setname();
+  explicit actn_assets_setname(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
 }  // namespace doodle

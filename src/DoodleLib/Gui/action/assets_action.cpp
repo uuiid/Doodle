@@ -36,11 +36,11 @@ actn_assets_create::actn_assets_create() {
   p_name = "创建类别";
 }
 
-episode_create_action::episode_create_action(std::any&& in_any)
+actn_episode_create::actn_episode_create(std::any&& in_any)
     : action(std::move(in_any)) {
   p_name = "创建集数";
 }
-void episode_create_action::run(const MetadataPtr& in_data) {
+void actn_episode_create::run(const MetadataPtr& in_data) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
 
@@ -54,19 +54,19 @@ void episode_create_action::run(const MetadataPtr& in_data) {
   in_data->child_item.push_back_sig(k_item);
   k_item->updata_db(in_data->getMetadataFactory());
 }
-episode_create_action::episode_create_action() {
+actn_episode_create::actn_episode_create() {
   p_name = "创建集数";
 }
 
-shot_create_action::shot_create_action(std::any&& in_any)
+actn_shot_create::actn_shot_create(std::any&& in_any)
     : action(std::move(in_any)) {
   p_name = "创建镜头";
 }
-shot_create_action::shot_create_action() {
+actn_shot_create::actn_shot_create() {
   p_name = "创建镜头";
 }
 
-void shot_create_action::run(const MetadataPtr& in_data) {
+void actn_shot_create::run(const MetadataPtr& in_data) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
 
@@ -81,23 +81,23 @@ void shot_create_action::run(const MetadataPtr& in_data) {
   k_item->updata_db(in_data->getMetadataFactory());
 }
 
-assets_delete_action::assets_delete_action(std::any&& in_any) : action(std::move(in_any)) {
+actn_assets_delete::actn_assets_delete(std::any&& in_any) : action(std::move(in_any)) {
   p_name = "删除";
 }
-void assets_delete_action::run(const MetadataPtr& in_data) {
+void actn_assets_delete::run(const MetadataPtr& in_data) {
   in_data->deleteData(in_data->getMetadataFactory());
   auto k_p = in_data->getParent();
 
   k_p->child_item.erase_sig(in_data);
 }
-assets_delete_action::assets_delete_action() {
+actn_assets_delete::actn_assets_delete() {
   p_name = "删除";
 }
 
-episode_set_action::episode_set_action(std::any&& in_any) : action(std::move(in_any)) {
+actn_episode_set::actn_episode_set(std::any&& in_any) : action(std::move(in_any)) {
   p_name = "设置集数";
 }
-void episode_set_action::run(const MetadataPtr& in_data) {
+void actn_episode_set::run(const MetadataPtr& in_data) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
 
@@ -113,14 +113,14 @@ void episode_set_action::run(const MetadataPtr& in_data) {
   k_eps->setEpisodes(k_i);
   k_eps->updata_db(k_eps->getMetadataFactory());
 }
-episode_set_action::episode_set_action() {
+actn_episode_set::actn_episode_set() {
   p_name = "设置集数";
 }
 
-shot_set_action::shot_set_action(std::any&& in_any) : action(std::move(in_any)) {
+actn_shot_set::actn_shot_set(std::any&& in_any) : action(std::move(in_any)) {
   p_name = "设置镜头号";
 }
-void shot_set_action::run(const MetadataPtr& in_data) {
+void actn_shot_set::run(const MetadataPtr& in_data) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
 
@@ -136,14 +136,14 @@ void shot_set_action::run(const MetadataPtr& in_data) {
   k_item->setShot(k_i);
   k_item->updata_db(k_item->getMetadataFactory());
 }
-shot_set_action::shot_set_action() {
+actn_shot_set::actn_shot_set() {
   p_name = "设置镜头号";
 }
 
-shotab_set_action::shotab_set_action(std::any&& in_any) : action(std::move(in_any)) {
+actn_shotab_set::actn_shotab_set(std::any&& in_any) : action(std::move(in_any)) {
   p_name = "设置ab镜头";
 }
-void shotab_set_action::run(const MetadataPtr& in_data) {
+void actn_shotab_set::run(const MetadataPtr& in_data) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
 
@@ -157,14 +157,14 @@ void shotab_set_action::run(const MetadataPtr& in_data) {
   k_item->setShotAb(k_s);
   k_item->updata_db(k_item->getMetadataFactory());
 }
-shotab_set_action::shotab_set_action() {
+actn_shotab_set::actn_shotab_set() {
   p_name = "设置ab镜头";
 }
 
-assets_setname_action::assets_setname_action(std::any&& in_any) : action(std::move(in_any)) {
+actn_assets_setname::actn_assets_setname(std::any&& in_any) : action(std::move(in_any)) {
   p_name = "设置名称";
 }
-void assets_setname_action::run(const MetadataPtr& in_data) {
+void actn_assets_setname::run(const MetadataPtr& in_data) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
 
@@ -178,7 +178,7 @@ void assets_setname_action::run(const MetadataPtr& in_data) {
   k_item->setName1(k_s);
   k_item->updata_db(k_item->getMetadataFactory());
 }
-assets_setname_action::assets_setname_action() {
+actn_assets_setname::actn_assets_setname() {
   p_name = "设置名称";
 }
 

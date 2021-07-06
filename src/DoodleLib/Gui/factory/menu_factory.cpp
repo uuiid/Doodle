@@ -23,7 +23,7 @@ void menu_factory::prj_action(MetadataPtr& in_metadata, bool is_parent) {
     return;
   p_metadata = in_metadata;
 
-  auto k_create = p_action.emplace_back(std::make_shared<create_project_action>());
+  auto k_create = p_action.emplace_back(std::make_shared<actn_create_project>());
 
   k_create->sig_get_input.connect([this]() -> std::any {
     nana::folderbox mes{
@@ -50,8 +50,8 @@ void menu_factory::prj_action(MetadataPtr& in_metadata, bool is_parent) {
 
   p_action.emplace_back(action_ptr{});
 
-  auto k_rm = p_action.emplace_back(std::make_shared<rename_project_action>());
-  auto k_rp = p_action.emplace_back(std::make_shared<setpath_project_action>());
+  auto k_rm = p_action.emplace_back(std::make_shared<actn_rename_project>());
+  auto k_rp = p_action.emplace_back(std::make_shared<actn_setpath_project>());
 
   k_rm->sig_get_input.connect([this]() -> std::any {
     nana::inputbox mess{p_window, "项目名称: "};
@@ -79,7 +79,7 @@ void menu_factory::file_action(MetadataPtr& in_metadata, bool is_parent) {
     return;
   p_metadata = in_metadata;
 
-  auto k_c_f = p_action.emplace_back(std::make_shared<assfile_create_action>());
+  auto k_c_f = p_action.emplace_back(std::make_shared<actn_assfile_create>());
   k_c_f->sig_get_input.connect([this]() -> std::any {
     nana::inputbox msg{p_window, "创建: "};
     nana::inputbox::text name{"名称: "};
@@ -94,8 +94,8 @@ void menu_factory::file_action(MetadataPtr& in_metadata, bool is_parent) {
 
   p_action.emplace_back(action_ptr{});
 
-  auto k_s_c = p_action.emplace_back(std::make_shared<assfile_add_com_action>());
-  auto k_s_t = p_action.emplace_back(std::make_shared<assfile_datetime_action>());
+  auto k_s_c = p_action.emplace_back(std::make_shared<actn_assfile_add_com>());
+  auto k_s_t = p_action.emplace_back(std::make_shared<actn_assfile_datetime>());
 
   k_s_c->sig_get_input.connect([this]() -> std::any {
     nana::inputbox msg{p_window, "评论: "};
@@ -124,7 +124,7 @@ void menu_factory::file_action(MetadataPtr& in_metadata, bool is_parent) {
     time->set_second(k_seconds.value());
     return std::make_any<TimeDurationPtr>(time);
   });
-  auto k_s_d = p_action.emplace_back(std::make_shared<assfile_delete_action>());
+  auto k_s_d = p_action.emplace_back(std::make_shared<actn_assfile_delete>());
 }
 void menu_factory::ass_action(MetadataPtr& in_metadata, bool is_parent) {
   if (!in_metadata)
@@ -132,8 +132,8 @@ void menu_factory::ass_action(MetadataPtr& in_metadata, bool is_parent) {
   p_metadata = in_metadata;
 
   auto k_c_ass  = p_action.emplace_back(std::make_shared<actn_assets_create>());
-  auto k_c_eps  = p_action.emplace_back(std::make_shared<episode_create_action>());
-  auto k_c_shot = p_action.emplace_back(std::make_shared<shot_create_action>());
+  auto k_c_eps  = p_action.emplace_back(std::make_shared<actn_episode_create>());
+  auto k_c_shot = p_action.emplace_back(std::make_shared<actn_shot_create>());
 
   k_c_ass->sig_get_input.connect([this]() -> std::any {
     nana::inputbox msg{p_window, "创建: "};
@@ -156,7 +156,7 @@ void menu_factory::ass_action(MetadataPtr& in_metadata, bool is_parent) {
 
   p_action.emplace_back(action_ptr{});
   if (details::is_class<Assets>(in_metadata)) {
-    auto k_s_ass = p_action.emplace_back(std::make_shared<assets_setname_action>());
+    auto k_s_ass = p_action.emplace_back(std::make_shared<actn_assets_setname>());
     k_s_ass->sig_get_input.connect([this]() -> std::any {
       nana::inputbox msg{p_window, "创建: "};
       nana::inputbox::text name{"名称: "};
@@ -165,7 +165,7 @@ void menu_factory::ass_action(MetadataPtr& in_metadata, bool is_parent) {
     });
 
   } else if (details::is_class<Episodes>(in_metadata)) {
-    auto k_s_eps = p_action.emplace_back(std::make_shared<episode_set_action>());
+    auto k_s_eps = p_action.emplace_back(std::make_shared<actn_episode_set>());
     k_s_eps->sig_get_input.connect([this]() -> std::any {
       nana::inputbox msg{p_window, "修改: "};
       nana::inputbox::integer k_i{"集数: ", 0, 0, 9999, 1};
@@ -174,8 +174,8 @@ void menu_factory::ass_action(MetadataPtr& in_metadata, bool is_parent) {
     });
 
   } else if (details::is_class<Shot>(in_metadata)) {
-    auto k_s_sh   = p_action.emplace_back(std::make_shared<shot_set_action>());
-    auto k_s_shab = p_action.emplace_back(std::make_shared<shotab_set_action>());
+    auto k_s_sh   = p_action.emplace_back(std::make_shared<actn_shot_set>());
+    auto k_s_shab = p_action.emplace_back(std::make_shared<actn_shotab_set>());
 
     k_s_sh->sig_get_input.connect([this]() -> std::any {
       nana::inputbox msg{p_window, "修改: "};
@@ -193,7 +193,7 @@ void menu_factory::ass_action(MetadataPtr& in_metadata, bool is_parent) {
   }
 
   p_action.emplace_back(action_ptr{});
-  auto k_d_ = p_action.emplace_back(std::make_shared<assets_delete_action>());
+  auto k_d_ = p_action.emplace_back(std::make_shared<actn_assets_delete>());
 }
 
 void menu_factory::operator()(nana::menu& in_menu) {

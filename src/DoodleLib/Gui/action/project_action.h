@@ -6,15 +6,15 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/action/action.h>
 namespace doodle {
-class DOODLELIB_API create_project_action : public action {
+class DOODLELIB_API actn_create_project : public action {
 
  public:
-  create_project_action();
+  actn_create_project();
   /**
    * @param in_any 喂入的是 std::tuple<std::string,FSys::path> 值
    * @param in_factory 这个是创建项目的工厂指针
    */
-  explicit create_project_action(std::any&& in_any);
+  explicit actn_create_project(std::any&& in_any);
   /**
    * @brief std::any 喂入的是 <std::tuple<std::string,FSys::path>  值
    * @param in_data 输入的是 project 数据
@@ -22,33 +22,33 @@ class DOODLELIB_API create_project_action : public action {
   void run(const MetadataPtr& in_data) override;
 };
 
-class DOODLELIB_API delete_project_action : public action {
+class DOODLELIB_API actn_delete_project : public action {
  public:
-  delete_project_action();
+  actn_delete_project();
   /**
    * @param in_any 这个不需要任何的输入
    */
-  explicit delete_project_action(std::any&& in_any);
+  explicit actn_delete_project(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
 
-class DOODLELIB_API rename_project_action : public action {
+class DOODLELIB_API actn_rename_project : public action {
  public:
-  rename_project_action();
+  actn_rename_project();
   /**
  * @param in_any 需要项目 std::string 名称
  */
-  explicit rename_project_action(std::any&& in_any);
+  explicit actn_rename_project(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
 
-class DOODLELIB_API setpath_project_action : public action {
+class DOODLELIB_API actn_setpath_project : public action {
  public:
-  setpath_project_action();
+  actn_setpath_project();
   /**
    * @param in_any 需要项目路径 FSys::path
    */
-  explicit setpath_project_action(std::any&& in_any);
+  explicit actn_setpath_project(std::any&& in_any);
   void run(const MetadataPtr& in_data) override;
 };
 

@@ -8,12 +8,12 @@
 #include <Metadata/Project.h>
 #include <core/CoreSet.h>
 namespace doodle {
-create_project_action::create_project_action(std::any&& in_any)
+actn_create_project::actn_create_project(std::any&& in_any)
     : action(std::move(in_any)) {
   p_name = "创建项目";
 }
 
-void create_project_action::run(const MetadataPtr& in_data) {
+void actn_create_project::run(const MetadataPtr& in_data) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
 
@@ -28,19 +28,19 @@ void create_project_action::run(const MetadataPtr& in_data) {
 
   CoreSet::getSet().p_project_vector.push_back_sig(prj);
 }
-create_project_action::create_project_action() {
+actn_create_project::actn_create_project() {
   p_name = "创建项目";
 }
 
-delete_project_action::delete_project_action(std::any&& in_any)
+actn_delete_project::actn_delete_project(std::any&& in_any)
     : action(std::move(in_any)) {
   p_name = "删除项目";
 }
-delete_project_action::delete_project_action()
+actn_delete_project::actn_delete_project()
     : action() {
   p_name = "删除项目";
 }
-void delete_project_action::run(const MetadataPtr& in_data) {
+void actn_delete_project::run(const MetadataPtr& in_data) {
   auto k_prj = std::dynamic_pointer_cast<Project>(in_data);
 
   auto& k_prj_v = CoreSet::getSet().p_project_vector;
@@ -49,13 +49,13 @@ void delete_project_action::run(const MetadataPtr& in_data) {
   in_data->deleteData(in_data->getMetadataFactory());
 }
 
-rename_project_action::rename_project_action() {
+actn_rename_project::actn_rename_project() {
   p_name = "重命名项目";
 }
-rename_project_action::rename_project_action(std::any&& in_any) : action(std::move(in_any)) {
+actn_rename_project::actn_rename_project(std::any&& in_any) : action(std::move(in_any)) {
   p_name = "重命名项目";
 }
-void rename_project_action::run(const MetadataPtr& in_data) {
+void actn_rename_project::run(const MetadataPtr& in_data) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
 
@@ -70,13 +70,13 @@ void rename_project_action::run(const MetadataPtr& in_data) {
   k_prj->updata_db(k_prj->getMetadataFactory());
 }
 
-setpath_project_action::setpath_project_action() {
+actn_setpath_project::actn_setpath_project() {
   p_name = "设置路径";
 }
-setpath_project_action::setpath_project_action(std::any&& in_any) : action(std::move(in_any)) {
+actn_setpath_project::actn_setpath_project(std::any&& in_any) : action(std::move(in_any)) {
   p_name = "设置路径";
 }
-void setpath_project_action::run(const MetadataPtr& in_data) {
+void actn_setpath_project::run(const MetadataPtr& in_data) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
 
