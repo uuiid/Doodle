@@ -97,15 +97,19 @@ project_widget::project_widget(nana::window in_window)
   p_list_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_) {
     p_menu.clear();
 
-    menu_factory k_factory{in_.window_handle};
+    auto k_factory  = std::make_shared<menu_factory>(in_.window_handle);
     auto k_selected = p_list_box.selected();
+    // MetadataPtr k_ptr{};
     if (k_selected.empty())
-      return;
+      k_factory->create_prj();
+    else {
+      auto k_pair = k_selected.at(0);
+      auto k_ptr  = p_list_box.at(k_pair).value<ProjectPtr>();
+      k_factory->set_metadate(k_ptr);
+      k_ptr->create_menu(k_factory);
+    }
 
-    auto k_pair       = k_selected.at(0);
-    MetadataPtr k_ptr = p_list_box.at(k_pair).value<ProjectPtr>();
-    k_factory.prj_action(k_ptr);
-    k_factory(p_menu);
+    (*k_factory)(p_menu);
     p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
   }});
 
@@ -132,19 +136,23 @@ assets_widget::assets_widget(nana::window in_window)
   p_tree_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_) {
     p_menu.clear();
 
-    menu_factory k_factory{in_.window_handle};
+    auto k_factory  = std::make_shared<menu_factory>(in_.window_handle);
     auto k_selected = p_tree_box.selected();
     MetadataPtr k_ptr{};
     /// 选择为空, 获取根, 如果都是空, 直接返回
-    if (k_selected.empty())
+    if (k_selected.empty()) {
       k_ptr = p_root;
-    else
+      k_factory->set_metadate({}, p_root);
+    } else {
       k_ptr = k_selected.value<MetadataPtr>();
+      k_factory->set_metadate(k_ptr, k_ptr->getParent());
+    }
 
     if (!k_ptr)
       return;
-    k_factory.ass_action(k_ptr);
-    k_factory(p_menu);
+    k_ptr->create_menu(k_factory);
+
+    (*k_factory)(p_menu);
     p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
   }});
 
@@ -247,7 +255,6 @@ void assets_widget::install_solt(const MetadataPtr& in_ptr) {
   p_conn.emplace_back(
       boost::signals2::scoped_connection{
           in_ptr->child_item.sig_swap.connect([this, k_ptr](const std::vector<MetadataPtr>& val) {
-
             details::draw_guard k_guard{p_tree_box};
 
             auto k_item = p_tree_box.find(std::any_cast<std::string>(k_ptr.lock()->user_date));
@@ -271,7 +278,7 @@ void assets_widget::install_solt(const MetadataPtr& in_ptr) {
               p_tree_box.find(str).text(k_ptr.lock()->showStr());
               nana::API::update_window(p_tree_box);
             } catch (std::bad_any_cast& error) {
-              DOODLE_LOG_WARN("不是可以转换的 {}", k_ptr.lock()->showStr());
+              DOODLE_LOG_WARN("不是可以转换的 {} {}", error.what(), k_ptr.lock()->showStr());
             }
           })});
 }
@@ -291,24 +298,26 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
   p_list_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_) {
     p_menu.clear();
 
-    menu_factory k_factory{in_.window_handle};
+    auto k_factory  = std::make_shared<menu_factory>(in_.window_handle);
     auto k_selected = p_list_box.selected();
     MetadataPtr k_ptr{};
 
     /// 如果有选择就获得选择, 没有就获得根, 再没有就返回
     if (k_selected.empty()) {
       k_ptr = p_root;
+      k_factory->set_metadate({}, p_root);
     } else {
       auto k_pair = k_selected.at(0);
       k_ptr       = p_list_box.at(k_pair).value<AssetsFilePtr>();
+      k_factory->set_metadate(k_ptr, p_root);
     }
     if (!k_ptr) {
       DOODLE_LOG_WARN("没有文件获得选择或者指针， 直接返回")
       return;
     }
 
-    k_factory.file_action(k_ptr);
-    k_factory(p_menu);
+    k_ptr->create_menu(k_factory);
+    (*k_factory)(p_menu);
     p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
   }});
 }

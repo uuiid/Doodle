@@ -163,7 +163,7 @@ class action;
 class actn_up_paths;
 class DoodleLib;
 class ThreadPool;
-class menu_factory;
+class menu_factory_base;
 
 
 using MetadataPtr               = std::shared_ptr<Metadata>;
@@ -190,7 +190,7 @@ using action_ptr                = std::shared_ptr<action>;
 using UploadDirAndFileActionPre = std::shared_ptr<actn_up_paths>;
 using DoodleLibPtr              = std::unique_ptr<DoodleLib>;
 using ThreadPoolPtr             = std::shared_ptr<ThreadPool>;
-using menu_factory_ptr          = std::shared_ptr<menu_factory>;
+using menu_factory_ptr          = std::shared_ptr<menu_factory_base>;
 class Doodle;
 [[maybe_unused]] DOODLELIB_API DoodleLibPtr make_doodle_lib();
 template <typename SSC, typename SSN>

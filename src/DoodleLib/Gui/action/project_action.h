@@ -6,10 +6,27 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/action/action.h>
 namespace doodle {
-class DOODLELIB_API actn_create_project : public action {
+  namespace action_arg{
+  class DOODLELIB_API arg_prj : public action::_arg {
+   public:
+    arg_prj() = default;
+    arg_prj(FSys::path& in_p, std::string& in_s)
+        : prj_path(in_p),
+          name(in_s){};
 
+    FSys::path prj_path;
+    std::string name;
+  };
+
+  }
+
+
+class DOODLELIB_API actn_create_project : public action_indirect<action_arg::arg_prj> {
  public:
   actn_create_project();
+
+
+  using arg = action_arg::arg_prj;
   /**
    * @param in_any 喂入的是 std::tuple<std::string,FSys::path> 值
    * @param in_factory 这个是创建项目的工厂指针
@@ -19,37 +36,43 @@ class DOODLELIB_API actn_create_project : public action {
    * @brief std::any 喂入的是 <std::tuple<std::string,FSys::path>  值
    * @param in_data 输入的是 project 数据
    */
-  void run(const MetadataPtr& in_data) override;
+  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
-class DOODLELIB_API actn_delete_project : public action {
+class DOODLELIB_API actn_delete_project : public action_indirect<action::arg_null> {
  public:
+  using arg = arg_null;
   actn_delete_project();
   /**
    * @param in_any 这个不需要任何的输入
    */
   explicit actn_delete_project(std::any&& in_any);
-  void run(const MetadataPtr& in_data) override;
+  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
-class DOODLELIB_API actn_rename_project : public action {
+class DOODLELIB_API actn_rename_project : public action_indirect<action::arg_str> {
  public:
   actn_rename_project();
+
+  using arg = arg_str;
+
   /**
  * @param in_any 需要项目 std::string 名称
  */
   explicit actn_rename_project(std::any&& in_any);
-  void run(const MetadataPtr& in_data) override;
+  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
-class DOODLELIB_API actn_setpath_project : public action {
+class DOODLELIB_API actn_setpath_project : public action_indirect<action::arg_path> {
  public:
+  using arg = action::arg_path;
+
   actn_setpath_project();
   /**
    * @param in_any 需要项目路径 FSys::path
    */
   explicit actn_setpath_project(std::any&& in_any);
-  void run(const MetadataPtr& in_data) override;
+  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
 //class DOODLELIB_API set_str_project_action : public action {
@@ -60,6 +83,6 @@ class DOODLELIB_API actn_setpath_project : public action {
 //   */
 //  explicit set_str_project_action(std::any&& in_any);
 //  set_str_project_action();
-//  void run(const MetadataPtr& in_data) override;
+//  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 //};
 }  // namespace doodle

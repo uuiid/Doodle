@@ -12,7 +12,7 @@
 namespace doodle {
 
 actn_assfile_create::actn_assfile_create(std::any&& in_any)
-    : action(std::move(in_any)) {
+    {
   p_name = "创建资产文件";
 }
 
@@ -20,7 +20,7 @@ actn_assfile_create::actn_assfile_create() {
   p_name = "创建资产文件";
 }
 
-void actn_assfile_create::run(const MetadataPtr& in_data) {
+void actn_assfile_create::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
   if (!p_any.has_value()) {
@@ -38,10 +38,10 @@ void actn_assfile_create::run(const MetadataPtr& in_data) {
   k_item->updata_db(in_data->getMetadataFactory());
 }
 
-actn_assfile_add_com::actn_assfile_add_com(std::any&& in_any) : action(std::move(in_any)) {
+actn_assfile_add_com::actn_assfile_add_com(std::any&& in_any) {
   p_name = "添加评论";
 }
-void actn_assfile_add_com::run(const MetadataPtr& in_data) {
+void actn_assfile_add_com::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
   if (!p_any.has_value()) {
@@ -57,10 +57,10 @@ actn_assfile_add_com::actn_assfile_add_com() {
   p_name = "添加评论";
 }
 
-actn_assfile_datetime::actn_assfile_datetime(std::any&& in_any) : action(std::move(in_any)) {
+actn_assfile_datetime::actn_assfile_datetime(std::any&& in_any) {
   p_name = "修改日期";
 }
-void actn_assfile_datetime::run(const MetadataPtr& in_data) {
+void actn_assfile_datetime::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   if (!p_any.has_value())
     p_any = sig_get_input().value();
   if (!p_any.has_value()) {
@@ -76,10 +76,10 @@ actn_assfile_datetime::actn_assfile_datetime() {
   p_name = "修改日期";
 }
 
-actn_assfile_delete::actn_assfile_delete(std::any&& in_any) : action(std::move(in_any)) {
+actn_assfile_delete::actn_assfile_delete(std::any&& in_any) {
   p_name = "删除";
 }
-void actn_assfile_delete::run(const MetadataPtr& in_data) {
+void actn_assfile_delete::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_ass = std::dynamic_pointer_cast<AssetsFile>(in_data);
   auto k_p   = k_ass->getParent();
   k_p->child_item.erase_sig(k_ass);

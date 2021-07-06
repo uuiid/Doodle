@@ -32,7 +32,7 @@ void action::set_any() {
 std::string action::class_name() {
   return p_name;
 }
-void action::operator()(const MetadataPtr& in_data) {
-  run(in_data);
+void action::operator()(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+  run(in_data, in_parent);
 }
 }  // namespace doodle

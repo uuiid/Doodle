@@ -24,7 +24,7 @@ class DOODLELIB_API actn_image_to_movie : public action {
   actn_image_to_movie() = default;
 
   bool is_accept(const _arg& in_any) override;
-  void run(const MetadataPtr& in_data) override;
+  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
 }  // namespace doodle
