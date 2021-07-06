@@ -104,7 +104,7 @@ project_widget::project_widget(nana::window in_window)
 
     auto k_pair       = k_selected.at(0);
     MetadataPtr k_ptr = p_list_box.at(k_pair).value<ProjectPtr>();
-    k_factory.create_prj_action(k_ptr);
+    k_factory.prj_action(k_ptr);
     k_factory(p_menu);
     p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
   }});
@@ -143,7 +143,7 @@ assets_widget::assets_widget(nana::window in_window)
 
     if (!k_ptr)
       return;
-    k_factory.create_ass_action(k_ptr);
+    k_factory.ass_action(k_ptr);
     k_factory(p_menu);
     p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
   }});
@@ -307,7 +307,7 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
       return;
     }
 
-    k_factory.create_file_action(k_ptr);
+    k_factory.file_action(k_ptr);
     k_factory(p_menu);
     p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
   }});

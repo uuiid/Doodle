@@ -18,7 +18,7 @@ menu_factory::menu_factory(nana::window in_window)
       p_metadata() {
 }
 
-void menu_factory::create_prj_action(MetadataPtr& in_metadata) {
+void menu_factory::prj_action(MetadataPtr& in_metadata, bool is_parent) {
   if (!in_metadata)
     return;
   p_metadata = in_metadata;
@@ -74,7 +74,7 @@ void menu_factory::create_prj_action(MetadataPtr& in_metadata) {
     return std::make_any<FSys::path>(k_e.at(0));
   });
 }
-void menu_factory::create_file_action(MetadataPtr& in_metadata) {
+void menu_factory::file_action(MetadataPtr& in_metadata, bool is_parent) {
   if (!in_metadata)
     return;
   p_metadata = in_metadata;
@@ -103,12 +103,12 @@ void menu_factory::create_file_action(MetadataPtr& in_metadata) {
     msg.show_modal(name);
     return std::make_any<std::string>(name.value());
   });
-  k_s_t->sig_get_input.connect([this,in_metadata]() -> std::any {
+  k_s_t->sig_get_input.connect([this, in_metadata]() -> std::any {
     nana::inputbox msg{p_window, "修改: "};
     //    nana::inputbox::date k_date{"时间: "};
     auto time = std::dynamic_pointer_cast<AssetsFile>(in_metadata)->getTime();
     nana::inputbox::integer k_year{"年", time->get_year(), 1999, 2999, 1};
-    nana::inputbox::integer k_month{"月",time->get_month(), 1, 12, 1};
+    nana::inputbox::integer k_month{"月", time->get_month(), 1, 12, 1};
     nana::inputbox::integer k_day{"天", time->get_day(), 1, 31, 1};
     nana::inputbox::integer k_hours{"时", time->get_hour(), 0, 23, 1};
     nana::inputbox::integer k_minutes{"分", time->get_minutes(), 0, 59, 1};
@@ -126,7 +126,7 @@ void menu_factory::create_file_action(MetadataPtr& in_metadata) {
   });
   auto k_s_d = p_action.emplace_back(std::make_shared<assfile_delete_action>());
 }
-void menu_factory::create_ass_action(MetadataPtr& in_metadata) {
+void menu_factory::ass_action(MetadataPtr& in_metadata, bool is_parent) {
   if (!in_metadata)
     return;
   p_metadata = in_metadata;
@@ -216,5 +216,41 @@ void menu_factory::operator()(nana::menu& in_menu) {
     else
       in_menu.append_splitter();
   }
+}
+void dragdrop_menu_factory::create_menu(const ProjectPtr& in_ptr) {
+  menu_factory::create_menu(in_ptr);
+}
+void dragdrop_menu_factory::create_menu(const AssetsPtr& in_ptr) {
+  menu_factory::create_menu(in_ptr);
+}
+void dragdrop_menu_factory::create_menu(const EpisodesPtr& in_ptr) {
+  menu_factory::create_menu(in_ptr);
+}
+void dragdrop_menu_factory::create_menu(const ShotPtr& in_ptr) {
+  menu_factory::create_menu(in_ptr);
+}
+void dragdrop_menu_factory::create_menu(const AssetsFilePtr& in_ptr) {
+  if (p_paths.empty())
+    return;
+
+  if (p_paths.size() == 1) {
+//    auto k_path = p_paths.front();
+//    if (FSys::exists(k_path))  ///不存在直接返回
+//      return;
+//    if (FSys::is_directory(k_path)) {  ///这是一个目录
+//      auto k_up_folder = p_action.emplace_back(std::make_shared<upload_dir_action>());
+//      k_up_folder->sig_get_input.connect([k_path]() { return std::make_any<FSys::path>(k_path); });
+//
+//
+//    } else {
+//    }
+
+  } else {
+  }
+
+  menu_factory::create_menu(in_ptr);
+}
+void dragdrop_menu_factory::set_drop_file(const std::vector<FSys::path>& in_path) {
+  p_paths = in_path;
 }
 }  // namespace doodle

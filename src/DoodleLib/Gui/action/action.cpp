@@ -14,6 +14,10 @@ action::action()
     : p_any(),
       sig_get_input() {
 }
+
+bool action::is_accept(const _arg& in_any) {
+  return false;
+}
 void action::set_any(std::any&& in_any) {
   p_any = std::move(in_any);
 }

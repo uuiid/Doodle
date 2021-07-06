@@ -16,6 +16,7 @@
 #include <DoodleLib/Gui/Metadata/project_widget.h>
 #include <DoodleLib/Gui/action/action.h>
 #include <DoodleLib/Gui/action/action_import.h>
+#include <DoodleLib/Gui/action/actn_image_to_movie.h>
 #include <DoodleLib/Gui/action/assets_action.h>
 #include <DoodleLib/Gui/action/assets_file_action.h>
 #include <DoodleLib/Gui/action/project_action.h>

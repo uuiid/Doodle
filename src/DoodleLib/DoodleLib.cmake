@@ -14,6 +14,7 @@ set(
 	Gui/Metadata/project_widget.h
 	Gui/action/action.h
 	Gui/action/action_import.h
+	Gui/action/actn_image_to_movie.h
 	Gui/action/assets_action.h
 	Gui/action/assets_file_action.h
 	Gui/action/project_action.h
@@ -83,6 +84,7 @@ set(
 	FileWarp/VideoSequence.cpp
 	Gui/Metadata/project_widget.cpp
 	Gui/action/action.cpp
+	Gui/action/actn_image_to_movie.cpp
 	Gui/action/assets_action.cpp
 	Gui/action/assets_file_action.cpp
 	Gui/action/project_action.cpp
