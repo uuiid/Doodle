@@ -27,10 +27,10 @@ void actn_assets_create::run(const MetadataPtr& in_data, const MetadataPtr& in_p
     DOODLE_LOG_WARN("没有值")
     return;
   }
-  auto k_a = std::make_shared<Assets>(in_data, k_s);
-  in_data->child_item.push_back_sig(k_a);
+  auto k_a = std::make_shared<Assets>(in_parent, k_s);
+  in_parent->child_item.push_back_sig(k_a);
 
-  k_a->updata_db(in_data->getMetadataFactory());
+  k_a->updata_db(in_parent->getMetadataFactory());
 }
 actn_assets_create::actn_assets_create() {
   p_name = "创建类别";
@@ -50,9 +50,9 @@ void actn_episode_create::run(const MetadataPtr& in_data, const MetadataPtr& in_
   }
 
   auto k_i    = std::any_cast<std::int32_t>(p_any);
-  auto k_item = std::make_shared<Episodes>(in_data, k_i);
-  in_data->child_item.push_back_sig(k_item);
-  k_item->updata_db(in_data->getMetadataFactory());
+  auto k_item = std::make_shared<Episodes>(in_parent, k_i);
+  in_parent->child_item.push_back_sig(k_item);
+  k_item->updata_db(in_parent->getMetadataFactory());
 }
 actn_episode_create::actn_episode_create() {
   p_name = "创建集数";
@@ -76,9 +76,9 @@ void actn_shot_create::run(const MetadataPtr& in_data, const MetadataPtr& in_par
   }
 
   auto k_i    = std::any_cast<std::int32_t>(p_any);
-  auto k_item = std::make_shared<Shot>(in_data, k_i);
-  in_data->child_item.push_back_sig(k_item);
-  k_item->updata_db(in_data->getMetadataFactory());
+  auto k_item = std::make_shared<Shot>(in_parent, k_i);
+  in_parent->child_item.push_back_sig(k_item);
+  k_item->updata_db(in_parent->getMetadataFactory());
 }
 
 actn_assets_delete::actn_assets_delete(std::any&& in_any)  {

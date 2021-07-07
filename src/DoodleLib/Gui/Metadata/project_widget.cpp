@@ -63,6 +63,14 @@ project_widget::project_widget(nana::window in_window)
           .text(1, k_ptr.lock()->getPath().generic_string());
     });
   }
+  p_list_box.events().selected([this](const nana::arg_listbox& in_) {
+    auto k_prj = in_.item.value<ProjectPtr>();
+    if (!k_prj) {
+      DOODLE_LOG_WARN("选中项目为空")
+      return;
+    }
+    sig_selected(k_prj, in_.item.selected());
+  });
 
   ///连接项目事件
   k_container.sig_swap.connect(
@@ -102,6 +110,7 @@ project_widget::project_widget(nana::window in_window)
     // MetadataPtr k_ptr{};
     if (k_selected.empty())
       k_factory->create_prj();
+
     else {
       auto k_pair = k_selected.at(0);
       auto k_ptr  = p_list_box.at(k_pair).value<ProjectPtr>();
@@ -127,7 +136,7 @@ assets_widget::assets_widget(nana::window in_window)
   p_tree_box.events().selected([this](const nana::arg_treebox& in_) {
     auto k_ptr = in_.item.value<MetadataPtr>();
     if (k_ptr)
-      sig_selected(k_ptr);
+      sig_selected(k_ptr, in_.item.selected());
     DOODLE_LOG_INFO("选中 {}", in_.item.key())
   });
   /**
@@ -220,6 +229,12 @@ void assets_widget::set_ass(const MetadataPtr& in_project_ptr) {
       k_item.append("none", "none");
     }
   }
+}
+
+void assets_widget::clear() {
+  p_conn.clear();
+  p_root.reset();
+  p_tree_box.clear();
 }
 
 nana::treebox& assets_widget::get_widget() {
@@ -358,6 +373,12 @@ void assets_attr_widget::set_ass(const MetadataPtr& in_ptr) {
       k_i.text(3, k_f->getComment().back()->getComment()).text(4, k_f->getTime()->showStr());
     });
   }
+}
+
+void assets_attr_widget::clear() {
+  p_list_box.at(0).clear();
+  p_menu.clear();
+  p_root.reset();
 }
 nana::listbox& assets_attr_widget::get_widget() {
   return p_list_box;

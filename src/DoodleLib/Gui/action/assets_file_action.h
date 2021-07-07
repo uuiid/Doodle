@@ -29,13 +29,15 @@ class DOODLELIB_API actn_assfile_add_com : public action_indirect<action::arg_st
   void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
-namespace action_arg{
-  class arg_time : public action::_arg {
-   public:
-    TimeDurationPtr time;
-  };
+namespace action_arg {
+class arg_time : public action::_arg {
+ public:
+  arg_time() = default;
+  explicit arg_time(TimeDurationPtr in_) : time(std::move(in_)){};
+  TimeDurationPtr time;
+};
 
-}
+}  // namespace action_arg
 
 class DOODLELIB_API actn_assfile_datetime : public action_indirect<action_arg::arg_time> {
  public:

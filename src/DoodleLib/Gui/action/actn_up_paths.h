@@ -22,7 +22,6 @@ class actn_up_paths : public action {
 
   void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 
-  void operator()(const MetadataPtr& in_data) override;
 };
 
 }  // namespace doodle

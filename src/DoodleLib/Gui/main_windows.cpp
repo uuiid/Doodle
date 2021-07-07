@@ -23,7 +23,17 @@ main_windows::main_windows()
       p_attr_listbox(std::make_shared<assets_attr_widget>(*this)),
       p_setting_windows() {
   p_layout.div(
-      R"(<vertical <weight=23 menubar>  <weight=20% project_listbox> | < <weight=30% ass_tree_box> | <attr_listbox > > >)");
+R"(
+<
+  vertical 
+
+  <weight=23 menubar> 
+  <weight=20% project_listbox> |
+    < 
+      <weight=30% ass_tree_box> | <attr_listbox > 
+    > 
+>
+)");
   create_menubar();
 
   p_layout.field("menubar") << p_menubar;
@@ -32,16 +42,22 @@ main_windows::main_windows()
   p_layout.field("attr_listbox") << p_attr_listbox->get_widget();
   p_layout.collocate();
 
-  p_project_listbox->get_widget().events().selected([this](const nana::arg_listbox& in_) {
-    auto k_prj = in_.item.value<ProjectPtr>();
-    if (!k_prj)
-      DOODLE_LOG_WARN("选中项目为空")
-    p_ass_tree_box->set_ass(k_prj);
+  p_project_listbox->sig_selected.connect([this](const MetadataPtr& in_, bool is_selected) {
+    if (is_selected)
+      p_ass_tree_box->set_ass(std::dynamic_pointer_cast<Project>(in_));
+    else {
+      p_ass_tree_box->clear();
+      p_attr_listbox->clear();
+    }
   });
-  p_ass_tree_box->sig_selected.connect([this](const MetadataPtr& in_ptr) {
-    this->p_attr_listbox->set_ass(in_ptr);
+  p_ass_tree_box->sig_selected.connect([this](const MetadataPtr& in_ptr, bool is_) {
+    if (is_)
+      this->p_attr_listbox->set_ass(in_ptr);
+    else
+      this->p_attr_listbox->clear();
   });
 }
+
 void main_windows::create_menubar() {
   auto& k_file_menu = p_menubar.push_back("文件");
   k_file_menu.append("设置", [this](nana::menu::item_proxy&) {

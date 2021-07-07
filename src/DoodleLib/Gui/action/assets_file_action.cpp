@@ -29,13 +29,11 @@ void actn_assfile_create::run(const MetadataPtr& in_data, const MetadataPtr& in_
   }
   auto k_s = std::any_cast<std::string>(p_any);
   AssetsFilePtr k_item;
-  //  if (details::is_class<AssetsFile>(in_data))
-  //    k_item = std::make_shared<AssetsFile>(in_data->getParent(), k_s);
-  //  else
-  k_item = std::make_shared<AssetsFile>(in_data, k_s);
-  in_data->child_item.push_back_sig(k_item);
 
-  k_item->updata_db(in_data->getMetadataFactory());
+  k_item = std::make_shared<AssetsFile>(in_parent, k_s);
+  in_parent->child_item.push_back_sig(k_item);
+
+  k_item->updata_db(in_parent->getMetadataFactory());
 }
 
 actn_assfile_add_com::actn_assfile_add_com(std::any&& in_any) {

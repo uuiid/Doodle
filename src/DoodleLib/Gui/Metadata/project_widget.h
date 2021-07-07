@@ -41,18 +41,29 @@ nana::listbox::iresolver& operator>>(nana::listbox::iresolver& oor, AssetsFilePt
 //  virtual ~widget() = default;
 //};
 
-class DOODLELIB_API project_widget {
+namespace details {
+class pej_widget_base {
+ protected:
+  nana::menu p_menu;
+  std::shared_ptr<menu_factory_base> p_factory;
+
+ public:
+  boost::signals2::signal<void(const MetadataPtr& in_, bool is_selected)> sig_selected;
+  virtual nana::widget& get_widget() = 0;
+};
+}  // namespace details
+
+class DOODLELIB_API project_widget : public details::pej_widget_base {
   nana::listbox p_list_box;
   nana::menu p_menu;
-
 
  public:
   explicit project_widget(nana::window in_window);
 
-  nana::listbox& get_widget();
+  nana::listbox& get_widget() override;
 };
 
-class DOODLELIB_API assets_widget {
+class DOODLELIB_API assets_widget : public details::pej_widget_base {
   nana::treebox p_tree_box;
 
   MetadataPtr p_root;
@@ -60,17 +71,18 @@ class DOODLELIB_API assets_widget {
 
   std::vector<boost::signals2::scoped_connection> p_conn;
   void install_solt(const MetadataPtr& in_project_ptr);
-//  nana::treebox::item_proxy append_tree(nana::treebox::item_proxy& in_proxy, MetadataPtr& in_ptr);
+  //  nana::treebox::item_proxy append_tree(nana::treebox::item_proxy& in_proxy, MetadataPtr& in_ptr);
 
  public:
   explicit assets_widget(nana::window in_window);
 
   void set_ass(const MetadataPtr& in_project_ptr);
-  boost::signals2::signal<void(const MetadataPtr& in_)> sig_selected;
-  nana::treebox& get_widget();
+  void clear();
+
+  nana::treebox& get_widget() override;
 };
 
-class DOODLELIB_API assets_attr_widget {
+class DOODLELIB_API assets_attr_widget : public details::pej_widget_base {
   nana::listbox p_list_box;
   nana::menu p_menu;
   MetadataPtr p_root;
@@ -80,6 +92,7 @@ class DOODLELIB_API assets_attr_widget {
  public:
   explicit assets_attr_widget(nana::window in_window);
   void set_ass(const MetadataPtr& in_ptr);
-  nana::listbox& get_widget();
+  void clear();
+  nana::listbox& get_widget() override;
 };
 }  // namespace doodle

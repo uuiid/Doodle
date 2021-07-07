@@ -7,6 +7,8 @@
 #include <Logger/Logger.h>
 #include <Metadata/Project.h>
 #include <core/CoreSet.h>
+#include <Metadata/MetadataFactory.h>
+
 namespace doodle {
 actn_create_project::actn_create_project(std::any&& in_any) {
   p_name = "创建项目";
@@ -23,7 +25,16 @@ void actn_create_project::run(const MetadataPtr& in_data, const MetadataPtr& in_
   auto [k_s, k_p] = std::any_cast<std::tuple<std::string, FSys::path> >(p_any);
 
   auto prj = std::make_shared<Project>(k_p, k_s);
-  prj->updata_db(in_data->getMetadataFactory());
+  MetadataFactoryPtr k_f{};
+  if (in_data)
+    k_f = in_data->getMetadataFactory();
+  else if (in_parent) {
+    k_f = in_parent->getMetadataFactory();
+  } else {
+    k_f = std::make_shared<MetadataFactory>();
+  }
+
+  prj->updata_db(k_f);
 
   CoreSet::getSet().p_project_vector.push_back_sig(prj);
 }

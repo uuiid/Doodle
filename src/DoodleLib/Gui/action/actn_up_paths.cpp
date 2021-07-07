@@ -43,6 +43,4 @@ void doodle::actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& i
   }
   k_ass_file->setPathFile(k_list);
 }
-void doodle::actn_up_paths::operator()(const doodle::MetadataPtr& in_data) {
-  run(in_data, <#initializer #>);
-}
+
