@@ -10,6 +10,7 @@ Shot::Shot()
     : Metadata(),
       p_shot(-1),
       p_shot_ab() {
+  p_type = meta_type::folder;
 }
 
 Shot::Shot(std::weak_ptr<Metadata> in_metadata,
@@ -18,6 +19,7 @@ Shot::Shot(std::weak_ptr<Metadata> in_metadata,
     : Metadata(std::move(in_metadata)),
       p_shot(in_shot),
       p_shot_ab(std::move(in_shot_ab)) {
+  p_type = meta_type::folder;
   if (p_shot < 0)
     throw DoodleError{"shot无法为负"};
 }

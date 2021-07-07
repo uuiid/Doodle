@@ -12,12 +12,14 @@ Assets::Assets()
     : Metadata(),
       p_name(),
       p_name_enus() {
+  p_type = meta_type::folder;
 }
 
 Assets::Assets(std::weak_ptr<Metadata> in_metadata, std::string in_name)
     : Metadata(std::move(in_metadata)),
       p_name(std::move(in_name)),
       p_name_enus(convert::Get().toEn(p_name)) {
+  p_type = meta_type::folder;
 }
 
 // Assets::~Assets() {

@@ -1,7 +1,6 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
-
 #include <Gui/factory/menu_factory.h>
 
 namespace doodle {
@@ -9,11 +8,13 @@ namespace doodle {
 Episodes::Episodes()
     : Metadata(),
       p_episodes(-1) {
+  p_type = meta_type::folder;
 }
 
 Episodes::Episodes(std::weak_ptr<Metadata> in_metadata, int64_t in_episodes)
     : Metadata(std::move(in_metadata)),
       p_episodes(in_episodes) {
+  p_type = meta_type::folder;
   if (p_episodes < 0)
     throw DoodleError("集数无法为负");
 }
@@ -33,7 +34,6 @@ void Episodes::setEpisodes(const int64_t& Episodes_) {
   p_episodes = Episodes_;
   saved(true);
   sig_change();
-
 }
 
 std::string Episodes::str() const {

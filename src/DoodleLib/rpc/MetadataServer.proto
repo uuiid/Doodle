@@ -12,6 +12,15 @@ message DataDb{
   google.protobuf.UInt64Value parent = 3;
   google.protobuf.Timestamp update_time = 4;
   google.protobuf.Any Metadata_cereal = 5;
+  enum meta_type{
+    unknown_file       = 0;
+    project_root       = 1;
+    file               = 2;
+    folder             = 3;
+    derive_file        = 4;
+    animation_lib_root = 5;
+  }
+  meta_type m_type = 6;
 }
 
 message DataVector{

@@ -15,11 +15,13 @@ namespace doodle {
 Project::Project()
     : p_name("none"),
       p_path("C:/") {
+  p_type = meta_type::project_root;
 }
 
 Project::Project(FSys::path in_path, std::string in_name)
     : p_name(std::move(in_name)),
       p_path(std::move(in_path)) {
+  p_type = meta_type::project_root;
 }
 
 void Project::setName(const std::string& Name) noexcept {

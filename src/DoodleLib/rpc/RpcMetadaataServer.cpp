@@ -63,10 +63,13 @@ grpc::Status RpcMetadaataServer::GetProject(grpc::ServerContext *context, const 
 
   for (const auto &row : (*k_conn)(sqlpp::select(sqlpp::all_of(k_tab))
                                        .from(k_tab)
-                                       .where(k_tab.parent.is_null()))) {
+                                       .where(k_tab.metaType == magic_enum::enum_integer(Metadata::meta_type::project_root)))) {
     auto k_data = response->add_data();
     k_data->set_id(row.id.value());
     k_data->set_uuidpath(std::string{row.uuidPath.value()});
+    k_data->set_m_type(
+        magic_enum::enum_cast<doodle::DataDb::meta_type>(row.metaType.value())
+            .value_or(doodle::DataDb::meta_type::DataDb_meta_type_unknown_file));
     k_data->update_time();
     auto k_item = k_data->mutable_update_time();
     /// 这个到时候还要重新斟酌一下，有没有更快的转换方案
@@ -97,6 +100,9 @@ grpc::Status RpcMetadaataServer::GetChild(grpc::ServerContext *context, const Da
     k_db.set_id(row.id.value());
     k_db.mutable_parent()->set_value(row.parent.value());
     k_db.set_uuidpath(std::string{row.uuidPath.value()});
+    k_db.set_m_type(
+        magic_enum::enum_cast<doodle::DataDb::meta_type>(row.metaType.value())
+            .value_or(doodle::DataDb::meta_type::DataDb_meta_type_unknown_file));
     auto k_time      = std::chrono::system_clock::time_point{row.updateTime.value()};
     auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(std::chrono::system_clock::to_time_t(k_time));
     k_db.mutable_update_time()->CopyFrom(k_timestamp);
@@ -125,6 +131,9 @@ grpc::Status RpcMetadaataServer::GetMetadata(grpc::ServerContext *context, const
     ///设置一些普遍值
     response->set_id(row.id.value());
     response->mutable_parent()->set_value(row.parent.value());
+    response->set_m_type(
+        magic_enum::enum_cast<doodle::DataDb::meta_type>(row.metaType.value())
+            .value_or(doodle::DataDb::meta_type::DataDb_meta_type_unknown_file));
     //    response->set_uuidpath(std::string{row.uuidPath.value()});
     //
     //    auto k_time = std::chrono::system_clock::time_point{row.updateTime.value()};
@@ -148,6 +157,7 @@ grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, c
 
   auto k_in = sqlpp::dynamic_insert_into(*k_conn, k_tab).dynamic_set();
   k_in.insert_list.add(k_tab.uuidPath = request->uuidpath());
+  k_in.insert_list.add(k_tab.metaType = magic_enum::enum_integer(request->m_type()));
   if (request->has_parent()) {
     k_in.insert_list.add(k_tab.parent = request->parent().value());
   }

@@ -21,7 +21,8 @@ Metadata::Metadata()
       p_updata_parent_id(false),
       p_has_child(0),
       child_item(),
-      user_date() {
+      user_date(),
+      p_type(meta_type::unknown_file) {
   install_slots();
 }
 
@@ -37,7 +38,8 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
       p_updata_parent_id(false),
       p_has_child(0),
       child_item(),
-      user_date() {
+      user_date(),
+      p_type(meta_type::unknown_file) {
   install_slots();
 }
 
@@ -47,11 +49,15 @@ std::shared_ptr<Metadata> Metadata::getParent() const {
   return p_parent.lock();
 }
 
-void Metadata::sortChildItems() {
+void Metadata::sortChildItems(bool is_launch_sig) {
+  if (is_launch_sig)
+    child_item.sig_begin_sort(child_item);
   std::sort(child_item.begin(), child_item.end(),
             [](const MetadataPtr &r, const MetadataPtr &l) {
               return *r < *l;
             });
+  if (is_launch_sig)
+    child_item.sig_sort(child_item);
 }
 
 bool Metadata::hasParent() const {
@@ -120,6 +126,30 @@ FSys::path Metadata::getUrlUUID() const {
 }
 uint64_t Metadata::getId() const {
   return p_id;
+}
+
+void Metadata::set_meta_typp(const meta_type &in_meta) {
+  p_type = in_meta;
+}
+
+void Metadata::set_meta_typp(const std::string &in_meta) {
+  p_type = magic_enum::enum_cast<meta_type>(in_meta).value_or(meta_type::unknown_file);
+}
+
+void Metadata::set_meta_type(std::int32_t in_) {
+  p_type = magic_enum::enum_cast<meta_type>(in_).value_or(meta_type::unknown_file);
+}
+
+Metadata::meta_type Metadata::get_meta_type() const {
+  return p_type;
+}
+
+std::string Metadata::get_meta_type_str() const {
+  return std::string{magic_enum::enum_name(p_type)};
+}
+
+std::int32_t Metadata::get_meta_type_int() const {
+  return magic_enum::enum_integer(p_type);
 }
 bool Metadata::operator==(const Metadata &in_rhs) const {
   return std::tie(p_id) == std::tie(in_rhs.p_id);

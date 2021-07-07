@@ -26,6 +26,7 @@ AssetsFile::AssetsFile()
       p_department(CoreSet::getSet().getDepartmentEnum()),
       p_comment(),
       p_version(1) {
+  p_type = meta_type::file;
 }
 
 AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string showName, std::string name)
@@ -39,6 +40,7 @@ AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string showName
       p_department(CoreSet::getSet().getDepartmentEnum()),
       p_comment(),
       p_version(1) {
+  p_type   = meta_type::file;
   p_parent = std::move(in_metadata);
   if (p_name.empty())
     p_name = convert::Get().toEn(p_ShowName);

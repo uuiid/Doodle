@@ -14,6 +14,7 @@
 #include <optional>
 
 namespace doodle {
+
 /**
  * @warning 这里这个基类是不进行cereal注册的要不然会序列化出错
  *
@@ -21,6 +22,21 @@ namespace doodle {
 class DOODLELIB_API Metadata
     : public std::enable_shared_from_this<Metadata>,
       public details::no_copy {
+ public:
+  /**
+   * @brief 这个枚举是数据库中的枚举， 更改请慎重
+   * 
+   */
+  enum class meta_type {
+    unknown_file       = 0,
+    project_root       = 1,
+    file               = 2,
+    folder             = 3,
+    derive_file        = 4,
+    animation_lib_root = 5
+  };
+
+ private:
   friend MetadataFactory;
   friend RpcMetadataClient;
   friend RpcMetadaataServer;
@@ -52,6 +68,7 @@ class DOODLELIB_API Metadata
    * @warning 基本保证在使用时不空（从逻辑上）
    */
   MetadataFactoryPtr p_metadata_flctory_ptr_;
+  meta_type p_type;
 
   inline bool isInstall() const { return p_id > 0; };
 
@@ -115,7 +132,7 @@ class DOODLELIB_API Metadata
    */
   [[nodiscard]] virtual bool hasChild() const;
 
-  virtual void sortChildItems();  ///< 排序一个孩子
+  virtual void sortChildItems(bool is_launch_sig = false);  ///< 排序一个孩子
 
   /**
    * @return 没有中文的字符串
@@ -138,6 +155,14 @@ class DOODLELIB_API Metadata
   inline std::string getIdStr() const {
     return std::to_string(getId());
   };
+
+  void set_meta_typp(const meta_type &in_meta);
+  void set_meta_typp(const std::string &in_meta);
+  void set_meta_type(std::int32_t in_);
+  meta_type get_meta_type() const;
+  std::string get_meta_type_str() const;
+  std::int32_t get_meta_type_int() const;
+
   /**
    * @brief  这个会一直递归找到没有父级的根节点
    * @return 根节点(现在基本上是项目节点)

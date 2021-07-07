@@ -47,9 +47,11 @@ std::vector<ProjectPtr> RpcMetadataClient::GetProject() {
       ar(k_prj);
     }
     //检查和验证
-    if (
-        k_prj->p_id != k_t.id())
+    if (k_prj->p_id != k_t.id())
       k_prj->p_id = k_t.id();
+
+    k_prj->set_meta_type(magic_enum::enum_integer(k_t.m_type()));
+
     k_out_list.emplace_back(std::dynamic_pointer_cast<Project>(k_prj));
   }
 
@@ -85,7 +87,7 @@ std::vector<MetadataPtr> RpcMetadataClient::GetChild(const MetadataConstPtr& in_
       if (k_ptr->p_id != k_i.id())
         continue;
     }
-
+    k_ptr->set_meta_type(magic_enum::enum_integer(k_i.m_type()));
     list.emplace_back(k_ptr);
   }
   return list;
@@ -112,7 +114,7 @@ void RpcMetadataClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
     k_archive(k_ptr);
     in_metadataPtr->p_has_child = k_ptr->p_has_child;
   }
-
+  in_metadataPtr->set_meta_type(magic_enum::enum_integer(k_out_db.m_type()));
   in_metadataPtr->p_id = k_out_db.id();
 }
 void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
@@ -123,6 +125,7 @@ void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   DataDb k_in_db{};
 
   k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
+  k_in_db.set_m_type(magic_enum::enum_cast<doodle::DataDb::meta_type>(in_metadataPtr->get_meta_type_int()).value());
   if (in_metadataPtr->hasParent())
     k_in_db.mutable_parent()->set_value(in_metadataPtr->p_parent_id.value());
 
