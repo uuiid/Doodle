@@ -178,6 +178,8 @@ grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, co
   response->set_id(id);
 
   auto k_new_p = get_delete_path(request->uuidpath());
+  if (!FSys::exists(k_new_p.parent_path()))
+    FSys::create_directories(k_new_p.parent_path());
   FSys::rename(k_path, k_new_p);
 
   DOODLE_LOG_DEBUG(fmt::format("delete id {}", id))

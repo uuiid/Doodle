@@ -156,7 +156,7 @@ void RpcMetadataClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
   k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
 
   DataDb k_out_db{};
-  auto k_status = p_stub->UpdataMetadata(&k_context, k_in_db, &k_out_db);
+  auto k_status = p_stub->DeleteMetadata(&k_context, k_in_db, &k_out_db);
   DOODLE_LOG_WARN("删除数据 : {} 路径 {}", in_metadataPtr->getId(), in_metadataPtr->getUrlUUID())
   if (!k_status.ok()) {
     throw DoodleError{k_status.error_message()};
