@@ -25,9 +25,6 @@ void menu_factory_base::set_metadate(const MetadataPtr& in_ptr, const MetadataPt
 }
 
 void menu_factory_base::operator()(nana::menu& in_menu) {
-  
-
-
   for (auto& k_i : p_action) {
     if (k_i)
       in_menu.append(
@@ -83,6 +80,12 @@ void menu_factory::create_menu(const ProjectPtr& in_ptr) {
       k_arg.date = k_e.at(0);
       return k_arg;
     });
+
+    if (!p_metadata->hasChild()) {
+      p_action.emplace_back(action_ptr{});
+      p_action.emplace_back(std::make_shared<actn_delete_project>());
+    }
+
   } else if (p_parent) {  /// 没有选中pej 如果有传入父指针, 则可以认为时ass tree 调用, 显示各种创建选项
     create_assets();
     creare_episodes();
@@ -109,21 +112,11 @@ void menu_factory::create_menu(const AssetsPtr& in_ptr) {
   }
 }
 
-void menu_factory::create_assets() {
-  auto k_c_ass = std::make_shared<actn_assets_create>();
-  p_action.push_back(k_c_ass);
-
-  k_c_ass->sig_get_arg.connect([this]() {
-    nana::inputbox msg{p_window, "创建: "};
-    nana::inputbox::text name{"名称: "};
-    msg.show_modal(name);
-    return actn_assets_create::arg{name.value()};
-  });
-}
-
 void menu_factory::create_menu(const EpisodesPtr& in_ptr) {
   if (p_metadata && p_parent) {
     creare_episodes();
+    create_shot();
+    create_assets();
 
     auto k_s_eps = std::make_shared<actn_episode_set>();
     p_action.push_back(k_s_eps);
@@ -138,21 +131,10 @@ void menu_factory::create_menu(const EpisodesPtr& in_ptr) {
     create_assets_file();
   }
 }
-
-void menu_factory::creare_episodes() {
-  auto k_c_eps = std::make_shared<actn_episode_create>();
-  p_action.push_back(k_c_eps);
-  k_c_eps->sig_get_arg.connect([this]() {
-    nana::inputbox msg{p_window, "创建: "};
-    nana::inputbox::integer k_i{"集数: ", 0, 0, 9999, 1};
-    msg.show_modal(k_i);
-    return actn_episode_create::arg{k_i.value()};
-  });
-}
-
 void menu_factory::create_menu(const ShotPtr& in_ptr) {
   if (p_metadata && p_parent) {
     create_shot();
+    create_assets();
 
     auto k_s_sh = std::make_shared<actn_shot_set>();
     p_action.push_back(k_s_sh);
@@ -176,17 +158,6 @@ void menu_factory::create_menu(const ShotPtr& in_ptr) {
   } else if (p_parent) {
     create_assets_file();
   }
-}
-void menu_factory::create_shot() {
-  auto k_c_shot = std::make_shared<actn_shot_create>();
-  p_action.push_back(k_c_shot);
-
-  k_c_shot->sig_get_arg.connect([this]() {
-    nana::inputbox msg{p_window, "创建: "};
-    nana::inputbox::integer k_i{"镜头号: ", 0, 0, 9999, 1};
-    msg.show_modal(k_i);
-    return actn_shot_create::arg{k_i.value()};
-  });
 }
 
 void menu_factory::create_menu(const AssetsFilePtr& in_ptr) {
@@ -233,6 +204,41 @@ void menu_factory::create_menu(const AssetsFilePtr& in_ptr) {
   }
 }
 
+void menu_factory::create_assets() {
+  auto k_c_ass = std::make_shared<actn_assets_create>();
+  p_action.push_back(k_c_ass);
+
+  k_c_ass->sig_get_arg.connect([this]() {
+    nana::inputbox msg{p_window, "创建: "};
+    nana::inputbox::text name{"名称: "};
+    msg.show_modal(name);
+    return actn_assets_create::arg{name.value()};
+  });
+}
+
+void menu_factory::creare_episodes() {
+  auto k_c_eps = std::make_shared<actn_episode_create>();
+  p_action.push_back(k_c_eps);
+  k_c_eps->sig_get_arg.connect([this]() {
+    nana::inputbox msg{p_window, "创建: "};
+    nana::inputbox::integer k_i{"集数: ", 0, 0, 9999, 1};
+    msg.show_modal(k_i);
+    return actn_episode_create::arg{k_i.value()};
+  });
+}
+
+void menu_factory::create_shot() {
+  auto k_c_shot = std::make_shared<actn_shot_create>();
+  p_action.push_back(k_c_shot);
+
+  k_c_shot->sig_get_arg.connect([this]() {
+    nana::inputbox msg{p_window, "创建: "};
+    nana::inputbox::integer k_i{"镜头号: ", 0, 0, 9999, 1};
+    msg.show_modal(k_i);
+    return actn_shot_create::arg{k_i.value()};
+  });
+}
+
 void menu_factory::create_assets_file() {
   auto k_c_f = std::make_shared<actn_assfile_create>();
   p_action.push_back(k_c_f);
@@ -250,7 +256,7 @@ void menu_factory::create_prj() {
 
   k_create->sig_get_arg.connect([this]() {
     nana::folderbox mes{
-        p_window};
+        p_window, FSys::current_path()};
     mes.allow_multi_select(false).title("选择项目根目录: ");
 
     auto k_e = mes();
@@ -275,8 +281,10 @@ void menu_factory::create_delete_assets() {
   if (!p_metadata)
     return;
 
-  p_action.emplace_back(action_ptr{});
-  auto k_d_ = p_action.emplace_back(std::make_shared<actn_assets_delete>());
+  if (!p_metadata->hasChild()) {
+    p_action.emplace_back(action_ptr{});
+    auto k_d_ = p_action.emplace_back(std::make_shared<actn_assets_delete>());
+  }
 }
 void dragdrop_menu_factory::create_menu(const ProjectPtr& in_ptr) {
 }

@@ -169,25 +169,27 @@ class observable_container : public container_type, public details::no_copy {
    * @return 被擦除的迭代器的位置
    */
   _iterator erase_sig(_iterator _where) {
-    sig_begin_erase(*_where);
+    auto k_val = *_where;
+    sig_begin_erase(k_val);
     auto _k_where = container_type::erase(_where);
     //    if constexpr (!std::is_same_v<pretreatment, details::pretreatment<container_type> >)
     //      _pre->erase(*_k_where);
-    sig_erase(*_k_where);
+    sig_erase(k_val);
     return _k_where;
   };
 
   _iterator erase_sig(_const_iterator _where) {
-    sig_begin_insert(*_where);
+    auto k_val = *_where;
+    sig_begin_insert(k_val);
     auto _k_where = container_type::erase(_where);
     //    if constexpr (!std::is_same_v<pretreatment, details::pretreatment<container_type> >)
     //      _pre->erase(*_k_where);
-    sig_erase(*_k_where);
+    sig_erase(k_val);
     return _k_where;
   }
 
   _iterator erase_sig(const _value_type& _val) {
-    auto it = std::find(container_type::begin(), container_type::end(),_val);
+    auto it = std::find(container_type::begin(), container_type::end(), _val);
     if (it == container_type::end())
       throw std::runtime_error{"在容器内找不到值"};
 
@@ -278,6 +280,12 @@ class observable_container : public container_type, public details::no_copy {
    */
   boost::signals2::signal<void(const container_type& val)> sig_begin_swap;
 
+    /**
+   * @brief 排序开始回调
+   * 
+   */
+  boost::signals2::signal<void (const container_type& val)> sig_begin_sort;
+
   //----------------------------------------------------------------------------
 
   /**
@@ -304,6 +312,13 @@ class observable_container : public container_type, public details::no_copy {
    * @brief 交换容器内容时发出的信号
    */
   boost::signals2::signal<void(const container_type& val)> sig_swap;
+
+
+  /**
+   * @brief 排序回调
+   * 
+   */
+  boost::signals2::signal<void (const container_type& val)> sig_sort;
 
   using container_type::operator=;
   using container_type::operator[];

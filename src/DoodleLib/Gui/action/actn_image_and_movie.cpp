@@ -29,8 +29,9 @@ bool actn_image_to_movie::is_accept(const _arg& in_any) {
 }
 
 void actn_image_to_movie::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  auto k_path = std::any_cast<FSys::path>(sig_get_input().get());
-  ImageSequence k_image{k_path, CoreSet::getSet().getUser_en()};
+  auto k_path = sig_get_arg().value();
+
+  ImageSequence k_image{k_path.date, CoreSet::getSet().getUser_en()};
   // k_image.createVideoFile()
 }
 

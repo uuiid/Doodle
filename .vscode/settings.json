@@ -147,7 +147,7 @@
         {
             "name": "test_my",
             "pattern": "b_Ninja_VS19_Ni_64_qt515_Debug/**/test_my.exe",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${absDirpath}"
         }
     ],
     "cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}",
@@ -175,5 +175,6 @@
         "venv": true
     },
     "C_Cpp.exclusionPolicy": "checkFolders",
-    "cmake.buildBeforeRun": false
+    "cmake.buildBeforeRun": false,
+    "testMate.cpp.test.workingDirectory": "${absDirpath}"
 }

@@ -7,7 +7,7 @@
 #include <Doodlelib/Gui/action/action.h>
 
 namespace doodle {
-class DOODLELIB_API actn_image_to_movie : public action {
+class DOODLELIB_API actn_image_to_movie : public action_indirect<action::arg_paths> {
  public:
   class DOODLELIB_API arg_path : public _arg {
    public:

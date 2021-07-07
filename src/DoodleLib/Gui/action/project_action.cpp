@@ -5,9 +5,9 @@
 #include "project_action.h"
 
 #include <Logger/Logger.h>
+#include <Metadata/MetadataFactory.h>
 #include <Metadata/Project.h>
 #include <core/CoreSet.h>
-#include <Metadata/MetadataFactory.h>
 
 namespace doodle {
 actn_create_project::actn_create_project(std::any&& in_any) {
@@ -15,16 +15,9 @@ actn_create_project::actn_create_project(std::any&& in_any) {
 }
 
 void actn_create_project::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  if (!p_any.has_value())
-    p_any = sig_get_input().value();
+  auto k_val = sig_get_arg().value();
 
-  if (!p_any.has_value()) {
-    DOODLE_LOG_WARN("没有发现值")
-    return;
-  }
-  auto [k_s, k_p] = std::any_cast<std::tuple<std::string, FSys::path> >(p_any);
-
-  auto prj = std::make_shared<Project>(k_p, k_s);
+  auto prj = std::make_shared<Project>(k_val.prj_path, k_val.name);
   MetadataFactoryPtr k_f{};
   if (in_data)
     k_f = in_data->getMetadataFactory();
@@ -52,9 +45,8 @@ void actn_delete_project::run(const MetadataPtr& in_data, const MetadataPtr& in_
   auto k_prj = std::dynamic_pointer_cast<Project>(in_data);
 
   auto& k_prj_v = CoreSet::getSet().p_project_vector;
-  k_prj_v.erase_sig(k_prj);
-
   in_data->deleteData(in_data->getMetadataFactory());
+  k_prj_v.erase_sig(k_prj);
 }
 
 actn_rename_project::actn_rename_project() {
@@ -64,15 +56,7 @@ actn_rename_project::actn_rename_project(std::any&& in_any) {
   p_name = "重命名项目";
 }
 void actn_rename_project::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  if (!p_any.has_value())
-    p_any = sig_get_input().value();
-
-  if (!p_any.has_value()) {
-    DOODLE_LOG_WARN("没有发现值")
-    return;
-  }
-
-  auto k_str = std::any_cast<std::string>(p_any);
+  auto k_str = sig_get_arg().value().date;
   auto k_prj = std::dynamic_pointer_cast<Project>(in_data);
   k_prj->setName(k_str);
   k_prj->updata_db(k_prj->getMetadataFactory());
@@ -85,15 +69,7 @@ actn_setpath_project::actn_setpath_project(std::any&& in_any) {
   p_name = "设置路径";
 }
 void actn_setpath_project::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  if (!p_any.has_value())
-    p_any = sig_get_input().value();
-
-  if (!p_any.has_value()) {
-    DOODLE_LOG_WARN("没有发现值")
-    return;
-  }
-
-  auto k_path = std::any_cast<FSys::path>(p_any);
+  auto k_path = sig_get_arg().value().date;
   auto k_prj  = std::dynamic_pointer_cast<Project>(in_data);
   k_prj->setPath(k_path);
   k_prj->updata_db(k_prj->getMetadataFactory());
@@ -106,11 +82,7 @@ void actn_setpath_project::run(const MetadataPtr& in_data, const MetadataPtr& in
 //  p_name = "设置英文名称";
 //}
 //void set_str_project_action::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-//  if (!p_any.has_value())
-//    p_any = sig_get_input().value();
-//
-//
-//  auto k_str = std::any_cast<std::string>(p_any);
+//  auto k_str = std::any_cast<std::string>();
 //  auto k_prj = std::dynamic_pointer_cast<Project>(in_data);
 //  k_prj->set(k_str);
 //  k_prj->updata_db(k_prj->getMetadataFactory());

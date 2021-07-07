@@ -55,7 +55,6 @@ class pej_widget_base {
 
 class DOODLELIB_API project_widget : public details::pej_widget_base {
   nana::listbox p_list_box;
-  nana::menu p_menu;
 
  public:
   explicit project_widget(nana::window in_window);
@@ -67,12 +66,12 @@ class DOODLELIB_API assets_widget : public details::pej_widget_base {
   nana::treebox p_tree_box;
 
   MetadataPtr p_root;
-  nana::menu p_menu;
 
   std::vector<boost::signals2::scoped_connection> p_conn;
   void install_solt(const MetadataPtr& in_project_ptr);
   //  nana::treebox::item_proxy append_tree(nana::treebox::item_proxy& in_proxy, MetadataPtr& in_ptr);
-
+  void add_nodes(const MetadataPtr& in_parent);
+  void add_node(const MetadataPtr& in_node,  nana::treebox::item_proxy& in_parent);
  public:
   explicit assets_widget(nana::window in_window);
 
@@ -84,7 +83,6 @@ class DOODLELIB_API assets_widget : public details::pej_widget_base {
 
 class DOODLELIB_API assets_attr_widget : public details::pej_widget_base {
   nana::listbox p_list_box;
-  nana::menu p_menu;
   MetadataPtr p_root;
 
   std::vector<AssetsFilePtr> p_assets;

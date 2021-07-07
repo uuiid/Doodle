@@ -10,7 +10,7 @@ namespace doodle {
  * @brief 这个类可以直接上传所有输入的文件夹和文件
  * @param in_paths 需要 std::vector<FSys::path>
  */
-class actn_up_paths : public action {
+class actn_up_paths : public action_indirect<action::arg_paths> {
  public:
   actn_up_paths();
 

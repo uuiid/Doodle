@@ -42,8 +42,8 @@ nana::listbox::iresolver& operator>>(nana::listbox::iresolver& oor, AssetsFilePt
 }
 
 project_widget::project_widget(nana::window in_window)
-    : p_list_box(in_window),
-      p_menu() {
+    : details::pej_widget_base(),
+      p_list_box(in_window) {
   p_list_box.append_header("名称");
   p_list_box.append_header("根目录");
   p_list_box.append_header("英文名称");
@@ -106,6 +106,8 @@ project_widget::project_widget(nana::window in_window)
     p_menu.clear();
 
     auto k_factory  = std::make_shared<menu_factory>(in_.window_handle);
+    this->p_factory = k_factory;
+
     auto k_selected = p_list_box.selected();
     // MetadataPtr k_ptr{};
     if (k_selected.empty())
@@ -129,8 +131,8 @@ nana::listbox& project_widget::get_widget() {
 }
 
 assets_widget::assets_widget(nana::window in_window)
-    : p_tree_box(in_window),
-      p_menu(),
+    : details::pej_widget_base(),
+      p_tree_box(in_window),
       p_root(),
       p_conn() {
   p_tree_box.events().selected([this](const nana::arg_treebox& in_) {
@@ -146,6 +148,7 @@ assets_widget::assets_widget(nana::window in_window)
     p_menu.clear();
 
     auto k_factory  = std::make_shared<menu_factory>(in_.window_handle);
+    this->p_factory = k_factory;
     auto k_selected = p_tree_box.selected();
     MetadataPtr k_ptr{};
     /// 选择为空, 获取根, 如果都是空, 直接返回
@@ -154,7 +157,8 @@ assets_widget::assets_widget(nana::window in_window)
       k_factory->set_metadate({}, p_root);
     } else {
       k_ptr = k_selected.value<MetadataPtr>();
-      k_factory->set_metadate(k_ptr, k_ptr->getParent());
+      /// 有选择的情况下， 使用选择作为父级
+      k_factory->set_metadate(k_ptr, k_ptr);
     }
 
     if (!k_ptr)
@@ -175,20 +179,11 @@ assets_widget::assets_widget(nana::window in_window)
         auto k_proxy = in_.item;
         DOODLE_LOG_INFO("扩展 {}", k_proxy.key())
 
-        details::draw_guard<nana::treebox> k_guard{p_tree_box};
         k_proxy.clear();
 
         auto k_me = k_proxy.value<MetadataPtr>();
-        k_me->select_indb();
-        k_me->sortChildItems();
 
-        for (auto& k_i : k_me->child_item) {
-          auto k_item    = k_proxy.append(k_i->getIdStr(), k_i->showStr(), k_i);
-          k_i->user_date = p_tree_box.make_key_path(k_item, "/");
-          install_solt(k_i);
-          if (k_i->hasChild())
-            k_item.append("none", "none");
-        }
+        add_nodes(k_me);
       });
 
   //  p_tree_box.events().selected([this](const nana::arg_treebox& in_) {
@@ -210,25 +205,10 @@ void assets_widget::set_ass(const MetadataPtr& in_project_ptr) {
     p_tree_box.clear();
     return;
   }
-  in_project_ptr->select_indb();
-  in_project_ptr->sortChildItems();
 
-  details::draw_guard<nana::treebox> k_guard{p_tree_box};
   p_tree_box.clear();
 
-  install_solt(in_project_ptr);
-
-  for (auto& k_i : in_project_ptr->child_item) {
-    auto k_item = p_tree_box.insert(k_i->getIdStr(), k_i->showStr());
-    k_item.value(k_i);
-    k_i->user_date = p_tree_box.make_key_path(k_item, "/");
-    install_solt(k_i);
-
-    DOODLE_LOG_INFO("树文件路径: {}", p_tree_box.make_key_path(k_item, "/"));
-    if (k_i->hasChild()) {
-      k_item.append("none", "none");
-    }
-  }
+  add_nodes(in_project_ptr);
 }
 
 void assets_widget::clear() {
@@ -241,19 +221,24 @@ nana::treebox& assets_widget::get_widget() {
   return p_tree_box;
 }
 void assets_widget::install_solt(const MetadataPtr& in_ptr) {
+  std::weak_ptr<Metadata> k_ptr{in_ptr};
+
+  p_conn.emplace_back(
+      boost::signals2::scoped_connection{
+          in_ptr->child_item.sig_sort.connect([this, k_ptr](const std::vector<MetadataPtr>& in_) {
+            add_nodes(k_ptr.lock());
+          })});
+
   p_conn.emplace_back(boost::signals2::scoped_connection{
 
       in_ptr->child_item.sig_push_back.connect([this](const MetadataPtr& val) {
         auto k_p = val->getParent();
-        if (k_p->user_date.has_value()) {
-          auto k_item    = p_tree_box.find(std::any_cast<std::string>(k_p->user_date));
-          auto k_ch      = k_item.append(val->getIdStr(), val->showStr(), val);
-          val->user_date = p_tree_box.make_key_path(k_ch, "/");
-        } else {
-          auto k_item = p_tree_box.insert(val->getIdStr(), val->showStr());
-          k_item.value(val);
-          val->user_date = p_tree_box.make_key_path(k_item, "/");
+        nana::treebox::item_proxy k_item{};
+        if (k_p->hasParent()) {
+          auto k_str = std::any_cast<std::string>(k_p->user_date);
+          k_item     = p_tree_box.find(k_str);
         }
+        add_node(val, k_item);
       })});
   p_conn.emplace_back(
       boost::signals2::scoped_connection{
@@ -266,17 +251,10 @@ void assets_widget::install_solt(const MetadataPtr& in_ptr) {
 
       });
 
-  std::weak_ptr<Metadata> k_ptr{in_ptr};
   p_conn.emplace_back(
       boost::signals2::scoped_connection{
           in_ptr->child_item.sig_swap.connect([this, k_ptr](const std::vector<MetadataPtr>& val) {
-            details::draw_guard k_guard{p_tree_box};
-
-            auto k_item = p_tree_box.find(std::any_cast<std::string>(k_ptr.lock()->user_date));
-            k_item.clear();
-            for (auto& k_i : val) {
-              k_item.append(k_i->getIdStr(), k_i->showStr(), k_i);
-            }
+            add_nodes(k_ptr.lock());
           })
 
       });
@@ -298,9 +276,43 @@ void assets_widget::install_solt(const MetadataPtr& in_ptr) {
           })});
 }
 
+void assets_widget::add_nodes(const MetadataPtr& in_parent) {
+  details::draw_guard<nana::treebox> k_guard{p_tree_box};
+  nana::treebox::item_proxy k_proxy{};
+  in_parent->select_indb();
+
+  in_parent->sortChildItems();
+  if (in_parent->hasParent()) {  // 有父物体的情况一定不是根
+    k_proxy = p_tree_box.find(std::any_cast<std::string>(in_parent->user_date));
+  } else {  //这个传入的时根物体节点（项目节点）
+    p_tree_box.clear();
+    install_solt(in_parent);
+  }
+  for (auto& k_i : in_parent->child_item) {
+    add_node(k_i, k_proxy);
+  }
+}
+
+void assets_widget::add_node(const MetadataPtr& in_node, nana::treebox::item_proxy& in_parent) {
+  nana::treebox::item_proxy k_item{};
+  if (in_parent.empty()) {
+    k_item = p_tree_box.insert(in_node->getIdStr(), in_node->showStr());
+    k_item.value(in_node);
+  } else {
+    k_item = in_parent.append(in_node->getIdStr(), in_node->showStr(), in_node);
+  }
+  in_node->user_date = p_tree_box.make_key_path(k_item, "/");
+  install_solt(in_node);
+
+  DOODLE_LOG_INFO("树文件路径: {}", p_tree_box.make_key_path(k_item, "/"));
+  if (in_node->hasChild()) {
+    k_item.append("none", "none");
+  }
+}
+
 assets_attr_widget::assets_attr_widget(nana::window in_window)
-    : p_list_box(in_window),
-      p_menu(),
+    : details::pej_widget_base(),
+      p_list_box(in_window),
       p_assets(),
       p_root() {
   p_list_box.append_header("id");
@@ -314,6 +326,7 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
     p_menu.clear();
 
     auto k_factory  = std::make_shared<menu_factory>(in_.window_handle);
+    this->p_factory = k_factory;
     auto k_selected = p_list_box.selected();
     MetadataPtr k_ptr{};
 
