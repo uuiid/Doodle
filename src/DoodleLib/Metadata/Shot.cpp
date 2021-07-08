@@ -72,6 +72,17 @@ bool Shot::operator>=(const Shot& rhs) const {
   return !(*this < rhs);
 }
 
+void Shot::analysis(const std::string& in_path) {
+  static std::regex reg{R"(sc_?(\d+)([a-z])?)", std::regex_constants::icase};
+  std::smatch k_match{};
+  if (std::regex_search(in_path, k_match, reg)) {
+    p_shot = std::stoi(k_match[1].str());
+    if (k_match.size() > 2)
+      p_shot_ab = k_match[2].str();
+  }
+  
+}
+
 bool Shot::sort(const Metadata& in_rhs) const {
   if (typeid(in_rhs) == typeid(*this)) {
     return *this < (dynamic_cast<const Shot&>(in_rhs));

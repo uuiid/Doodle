@@ -33,6 +33,8 @@ class DOODLELIB_API action : public details::no_copy {
     _arg()          = default;
     virtual ~_arg() = default;
 
+    bool is_cancel;
+
     // _arg(_arg&& other) = default;
     // _arg && operator=(_arg&& other) = default;
   };

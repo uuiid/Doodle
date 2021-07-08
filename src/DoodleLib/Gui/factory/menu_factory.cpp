@@ -322,19 +322,12 @@ void dragdrop_menu_factory::drop_menu() {
       k_arg.image_list = {k_path};
       if (k_image->is_accept(k_arg)) {
         k_image->sig_get_arg.connect([this]() {
-          nana::folderbox mes{
-              p_window, FSys::current_path()};
-          mes.allow_multi_select(false).title("选择项目根目录: ");
-
-          auto k_e = mes();
           actn_image_to_movie::arg_ k_arg{};
-          if (k_e.empty())
-            return k_arg;
-
           k_arg.image_list = p_paths;
-          k_arg.out_file   = k_e.front();
+          k_arg.out_file   = CoreSet::getSet().getCacheRoot("imaeg_to_move");
           return k_arg;
         });
+
         p_action.push_back(k_image);
       }
 

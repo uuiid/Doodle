@@ -11,7 +11,7 @@ class DOODLELIB_API Episodes : public Metadata {
   Episodes();
   explicit Episodes(std::weak_ptr<Metadata> in_metadata, int64_t in_episodes);
   // ~Episodes();
-  
+
   [[nodiscard]] const int64_t &getEpisodes() const noexcept;
   void setEpisodes(const int64_t &Episodes_);
 
@@ -23,6 +23,11 @@ class DOODLELIB_API Episodes : public Metadata {
   bool operator>(const Episodes &in_rhs) const;
   bool operator<=(const Episodes &in_rhs) const;
   bool operator>=(const Episodes &in_rhs) const;
+
+  inline void analysis(const FSys::path &in_path) {
+    return analysis(in_path.generic_string());
+  };
+  void analysis(const std::string &in_path);
 
  protected:
   void _select_indb(const MetadataFactoryPtr &in_factory) override;

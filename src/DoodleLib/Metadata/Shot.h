@@ -42,6 +42,11 @@ class DOODLELIB_API Shot : public Metadata {
   bool operator<=(const Shot &rhs) const;
   bool operator>=(const Shot &rhs) const;
 
+  inline void analysis(const FSys::path &in_path) {
+    return analysis(in_path.generic_string());
+  };
+  void analysis(const std::string &in_path);
+
  protected:
   void _select_indb(const MetadataFactoryPtr &in_factory) override;
   void _updata_db(const MetadataFactoryPtr &in_factory) override;

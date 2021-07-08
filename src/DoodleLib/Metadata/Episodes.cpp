@@ -54,6 +54,14 @@ bool Episodes::operator>=(const Episodes& in_rhs) const {
   return !(*this < in_rhs);
 }
 
+void Episodes::analysis(const std::string& in_path) {
+  static std::regex reg{R"(ep_?(\d+))", std::regex_constants::icase};
+  std::smatch k_match{};
+  if (std::regex_search(in_path, k_match, reg)) {
+    p_episodes = std::stoi(k_match[1].str());
+  }
+}
+
 bool Episodes::sort(const Metadata& in_rhs) const {
   if (typeid(in_rhs) == typeid(*this)) {
     return *this < (dynamic_cast<const Episodes&>(in_rhs));

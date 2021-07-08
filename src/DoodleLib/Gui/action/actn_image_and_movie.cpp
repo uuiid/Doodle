@@ -27,13 +27,18 @@ bool actn_image_to_movie::is_accept(const arg_& in_any) {
           FSys::directory_iterator(k_path), FSys::directory_iterator{},
           std::inserter(k_r, k_r.begin()), [](const FSys::path& in_) {
             if (FSys::is_regular_file(in_))
-              return std::find(static_path_list.begin(), static_path_list.end(), in_.extension()) == static_path_list.end();
+              return (std::find(static_path_list.begin(), static_path_list.end(), in_.extension()) == static_path_list.end());
             else
               return false;
           });
 
       is_ok = k_r.empty();
     }
+
+    if(is_ok){
+      
+    }
+
     return is_ok;
   } catch (const std::bad_cast& err) {
     DOODLE_LOG_WARN("无法转换any ", err.what())
@@ -45,7 +50,7 @@ void actn_image_to_movie::run(const MetadataPtr& in_data, const MetadataPtr& in_
   auto k_path = sig_get_arg().value();
 
   ImageSequence k_image{k_path.image_list.front(), CoreSet::getSet().getUser_en()};
-  // k_image.createVideoFile()
+
 }
 
 }  // namespace doodle

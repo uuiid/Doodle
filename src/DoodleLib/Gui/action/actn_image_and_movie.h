@@ -14,7 +14,15 @@ class DOODLELIB_API arg_path : public action::_arg {
   arg_path(std::vector<FSys::path>& in_paths, FSys::path& in_out_path)
       : image_list(in_paths),
         out_file(in_out_path){};
+  /**
+   * @brief 图片目录列表, 图片目录列表是一系列填充序列图的文件夹
+   * 
+   */
   std::vector<FSys::path> image_list;
+  /**
+   * @brief 输出路径， 没有文件名称， 文件名称由程序生成
+   * 
+   */
   FSys::path out_file;
 };
 
