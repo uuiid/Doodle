@@ -7,3 +7,4 @@
 #include <DoodleLib/Gui/action/assets_action.h>
 #include <DoodleLib/Gui/action/assets_file_action.h>
 #include <DoodleLib/Gui/action/project_action.h>
+#include <DoodleLib/Gui/action/actn_image_and_movie.h>

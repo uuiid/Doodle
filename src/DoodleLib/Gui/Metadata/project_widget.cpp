@@ -24,8 +24,7 @@ nana::listbox::iresolver& operator>>(nana::listbox::iresolver& oor, ProjectPtr& 
 }
 nana::listbox::oresolver& operator<<(nana::listbox::oresolver& oor, const AssetsFilePtr& in_file) {
   oor << in_file->getId()
-      << in_file->getVersionStr()
-      << in_file->showStr();
+      << in_file->getVersionStr();
   auto k_com = in_file->getComment();
   if (k_com.empty())
     oor << "none";
@@ -245,6 +244,8 @@ void assets_widget::install_solt(const MetadataPtr& in_ptr) {
           in_ptr->child_item.sig_erase.connect([this](const MetadataPtr& val) {
             if (!val->user_date.has_value())
               return;
+            if (details::is_class<AssetsFile>(val))
+              return;
 
             p_tree_box.erase(std::any_cast<std::string>(val->user_date));
           })
@@ -294,6 +295,9 @@ void assets_widget::add_nodes(const MetadataPtr& in_parent) {
 }
 
 void assets_widget::add_node(const MetadataPtr& in_node, nana::treebox::item_proxy& in_parent) {
+  if (details::is_class<AssetsFile>(in_node))
+    return;
+
   nana::treebox::item_proxy k_item{};
   if (in_parent.empty()) {
     k_item = p_tree_box.insert(in_node->getIdStr(), in_node->showStr());
@@ -317,10 +321,44 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
       p_root() {
   p_list_box.append_header("id");
   p_list_box.append_header("版本");
-  p_list_box.append_header("名称");
-  p_list_box.append_header("评论", 200);
+  p_list_box.append_header("评论", 300);
   p_list_box.append_header("时间", 130);
   p_list_box.append_header("制作人");
+
+  p_list_box.enable_dropfiles(true);
+
+  p_list_box.events().mouse_dropfiles.connect([this](const nana::arg_dropfiles& in_) {
+    p_menu.clear();
+    auto k_factory = std::make_shared<dragdrop_menu_factory>(in_.window_handle);
+
+    this->p_factory = k_factory;
+
+    k_factory->set_drop_file(in_.files);
+    k_factory->set_metadate({}, p_root);
+    auto k_selected = p_list_box.selected();
+    MetadataPtr k_ptr{};
+    /// 如果有选择就获得选择, 没有就获得根, 再没有就返回
+    if (k_selected.empty()) {
+      k_ptr = p_root;
+      k_factory->set_metadate({}, p_root);
+    } else {
+      auto k_pair = k_selected.at(0);
+      k_ptr       = p_list_box.at(k_pair).value<AssetsFilePtr>();
+      k_factory->set_metadate(k_ptr, p_root);
+    }
+    if (!k_ptr) {
+      DOODLE_LOG_WARN("没有文件获得选择或者指针， 直接返回")
+      return;
+    }
+    k_ptr->create_menu(k_factory);
+
+    (*k_factory)(p_menu);
+    if (p_menu.size() == 0) {
+      DOODLE_LOG_WARN("没有创建出菜单， 直接返回")
+      return;
+    }
+    p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
+  });
 
   p_list_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_) {
     p_menu.clear();
@@ -350,7 +388,8 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
   }});
 }
 void assets_attr_widget::set_ass(const MetadataPtr& in_ptr) {
-  p_list_box.clear();
+  clear();
+
   if (!in_ptr) {
     DOODLE_LOG_WARN("传入空镜头")
     return;
@@ -375,21 +414,24 @@ void assets_attr_widget::set_ass(const MetadataPtr& in_ptr) {
     if (!k_file) {
       continue;
     }
-
-    auto k_item       = p_list_box.at(0).append(k_file, true);
+    // 在这里我们插入文件
+    auto k_item = p_list_box.assoc(k_file->getDepartment())
+                      .text(std::string{magic_enum::enum_name(k_file->getDepartment())})
+                      .append(k_file, true);
     k_file->user_date = k_item.pos();
 
     std::weak_ptr<AssetsFile> k_ptr{k_file};
     k_file->sig_change.connect([k_ptr, this]() {
       auto k_f = k_ptr.lock();
       auto k_i = p_list_box.at(std::any_cast<nana::listbox::index_pair>(k_f->user_date));
-      k_i.text(3, k_f->getComment().back()->getComment()).text(4, k_f->getTime()->showStr());
+      k_i.text(2, k_f->getComment().back()->getComment()).text(3, k_f->getTime()->showStr());
     });
   }
 }
 
 void assets_attr_widget::clear() {
-  p_list_box.at(0).clear();
+  p_list_box.clear();
+  p_list_box.erase();
   p_menu.clear();
   p_root.reset();
 }

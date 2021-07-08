@@ -66,6 +66,9 @@ class DOODLELIB_API AssetsFile : public Metadata {
   const std::uint64_t& getVersion() const noexcept;
   std::string getVersionStr() const;
   void setVersion(const std::uint64_t& in_Version) noexcept;
+  int find_max_version() const;
+
+
 
   virtual void create_menu(const menu_factory_ptr& in_factoryPtr) override;
 

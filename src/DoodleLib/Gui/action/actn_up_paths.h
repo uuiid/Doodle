@@ -13,7 +13,7 @@ namespace doodle {
 class actn_up_paths : public action_indirect<action::arg_paths> {
  public:
   actn_up_paths();
-
+  using arg_ = action::arg_paths;
   /**
    * @brief 这里我们需要 std::vector<FSys::path> 传入
    * @param in_paths 需要 std::vector<FSys::path> 传入

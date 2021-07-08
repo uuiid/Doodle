@@ -70,8 +70,6 @@ class DOODLELIB_API action : public details::no_copy {
 
   action();
 
-  virtual bool is_accept(const _arg& in_any);
-
   /**
    * @brief 这个函数基本上可以作为显示为菜单的函数
    * @return 返回动作名称
@@ -87,7 +85,14 @@ class DOODLELIB_API action_indirect : public action {
  public:
   action_indirect() = default;
 
+  virtual bool is_accept(const arg_type& in_any) { return false; };
   boost::signals2::signal<arg_type()> sig_get_arg;
 };
 
+class DOODLELIB_API actn_null : public action_indirect<action::arg_null> {
+ public:
+  actn_null();
+
+  inline void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override{};
+};
 }  // namespace doodle

@@ -243,10 +243,7 @@ void menu_factory::create_assets_file() {
   auto k_c_f = std::make_shared<actn_assfile_create>();
   p_action.push_back(k_c_f);
   k_c_f->sig_get_arg.connect([this]() {
-    nana::inputbox msg{p_window, "创建: "};
-    nana::inputbox::text name{"名称: "};
-    msg.show_modal(name);
-    return actn_assfile_create::arg{name.value()};
+    return actn_assfile_create::arg{this->p_parent->showStr()};
   });
 }
 
@@ -289,29 +286,67 @@ void menu_factory::create_delete_assets() {
 void dragdrop_menu_factory::create_menu(const ProjectPtr& in_ptr) {
 }
 void dragdrop_menu_factory::create_menu(const AssetsPtr& in_ptr) {
+  drop_menu();
 }
 void dragdrop_menu_factory::create_menu(const EpisodesPtr& in_ptr) {
+  drop_menu();
 }
 void dragdrop_menu_factory::create_menu(const ShotPtr& in_ptr) {
+  drop_menu();
 }
 void dragdrop_menu_factory::create_menu(const AssetsFilePtr& in_ptr) {
+  drop_menu();
+}
+void dragdrop_menu_factory::drop_menu() {
   if (p_paths.empty())
     return;
 
+  //有任何一个路径不存在之际返回
+  for (const auto& k_p : p_paths) {
+    if (!FSys::exists(k_p))
+      return;
+  }
+
+  auto k_up_folder = std::make_shared<actn_up_paths>();
+  p_action.push_back(k_up_folder);
+  k_up_folder->sig_get_arg.connect([this]() {
+    return actn_up_paths::arg_{p_paths};
+  });
+
   if (p_paths.size() == 1) {
-    //    auto k_path = p_paths.front();
-    //    if (FSys::exists(k_path))  ///不存在直接返回
-    //      return;
-    //    if (FSys::is_directory(k_path)) {  ///这是一个目录
-    //      auto k_up_folder = p_action.emplace_back(std::make_shared<upload_dir_action>());
-    //      k_up_folder->sig_get_input.connect([k_path]() { return std::make_any<FSys::path>(k_path); });
-    //
-    //
-    //    } else {
-    //    }
+    auto k_path = p_paths.front();
+
+    if (FSys::is_directory(k_path)) {  ///这是一个目录 如果可以转换为视频的话直接转换为视频
+      auto k_image = std::make_shared<actn_image_to_movie>();
+      actn_image_to_movie::arg_ k_arg{};
+      k_arg.image_list = {k_path};
+      if (k_image->is_accept(k_arg)) {
+        k_image->sig_get_arg.connect([this]() {
+          nana::folderbox mes{
+              p_window, FSys::current_path()};
+          mes.allow_multi_select(false).title("选择项目根目录: ");
+
+          auto k_e = mes();
+          actn_image_to_movie::arg_ k_arg{};
+          if (k_e.empty())
+            return k_arg;
+
+          k_arg.image_list = p_paths;
+          k_arg.out_file   = k_e.front();
+          return k_arg;
+        });
+        p_action.push_back(k_image);
+      }
+
+    } else if (FSys::is_regular_file(k_path)) {
+    } else {
+      return;
+    }
 
   } else {
   }
+  p_action.emplace_back(action_ptr{});
+  p_action.emplace_back(std::make_shared<actn_null>());
 }
 void dragdrop_menu_factory::set_drop_file(const std::vector<FSys::path>& in_path) {
   p_paths = in_path;

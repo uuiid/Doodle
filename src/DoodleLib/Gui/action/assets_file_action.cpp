@@ -25,7 +25,7 @@ void actn_assfile_create::run(const MetadataPtr& in_data, const MetadataPtr& in_
 
   k_item = std::make_shared<AssetsFile>(in_parent, k_s);
   in_parent->child_item.push_back_sig(k_item);
-
+  k_item->setVersion(k_item->find_max_version());
   k_item->updata_db(in_parent->getMetadataFactory());
   in_parent->sortChildItems(true);
 }

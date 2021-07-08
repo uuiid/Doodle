@@ -22,7 +22,8 @@ Metadata::Metadata()
       p_has_child(0),
       child_item(),
       user_date(),
-      p_type(meta_type::unknown_file) {
+      p_type(meta_type::unknown_file),
+      child_item_is_sort(false) {
   install_slots();
 }
 
@@ -39,7 +40,8 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
       p_has_child(0),
       child_item(),
       user_date(),
-      p_type(meta_type::unknown_file) {
+      p_type(meta_type::unknown_file),
+      child_item_is_sort(false) {
   install_slots();
 }
 
@@ -50,6 +52,9 @@ std::shared_ptr<Metadata> Metadata::getParent() const {
 }
 
 void Metadata::sortChildItems(bool is_launch_sig) {
+  if (child_item_is_sort)
+    return;
+
   if (is_launch_sig)
     child_item.sig_begin_sort(child_item);
   std::sort(child_item.begin(), child_item.end(),
@@ -58,6 +63,8 @@ void Metadata::sortChildItems(bool is_launch_sig) {
             });
   if (is_launch_sig)
     child_item.sig_sort(child_item);
+
+  child_item_is_sort = true;
 }
 
 bool Metadata::hasParent() const {
@@ -250,6 +257,8 @@ void Metadata::add_child(const MetadataPtr &val) {
   val->p_parent                = weak_from_this();
   val->p_parent_id             = p_id;
   val->p_metadata_flctory_ptr_ = p_metadata_flctory_ptr_;
+  child_item_is_sort           = false;
+
   DOODLE_LOG_INFO(fmt::format("插入子数据： {}", val->showStr()))
 }
 

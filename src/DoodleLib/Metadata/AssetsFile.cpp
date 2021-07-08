@@ -121,6 +121,34 @@ std::string AssetsFile::getVersionStr() const {
 void AssetsFile::setVersion(const std::uint64_t& in_Version) noexcept {
   p_version = in_Version;
 }
+
+int AssetsFile::find_max_version() const {
+  if (p_parent.expired())
+    return 1;
+  auto k_p = p_parent.lock();
+
+  if (k_p->child_item.empty())
+    return 1;
+  std::vector<MetadataPtr> k_r;
+
+  std::copy_if(
+      k_p->child_item.begin(), k_p->child_item.end(),
+      std::inserter(k_r, k_r.begin()), [this](const MetadataPtr& in_) {
+        if (details::is_class<AssetsFile>(in_)) {
+          return std::dynamic_pointer_cast<AssetsFile>(in_)->getDepartment() == getDepartment();
+        } else
+          return false;
+      });
+
+  std::size_t k_int{1};
+  if (std::is_sorted(k_r.begin(), k_r.end())) {
+    k_int = std::dynamic_pointer_cast<AssetsFile>(k_r.back())->getVersion() + 1;
+  } else {
+    k_int = k_r.size();
+  }
+
+  return boost::numeric_cast<std::int32_t>(k_int) + 1;
+}
 const std::vector<AssetsPathPtr>& AssetsFile::getPathFile() const {
   return p_path_files;
 }

@@ -11,18 +11,28 @@
 #include <rpc/RpcFileSystemClient.h>
 
 doodle::actn_up_paths::actn_up_paths() {
-  p_name = "上传多个路径";
+  p_name = "直接上传多个路径";
 }
 doodle::actn_up_paths::actn_up_paths(std::any&& in_paths) {
-  p_name = "上传多个路径";
+  p_name = "直接上传多个路径";
 }
 
 void doodle::actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_ch = CoreSet::getSet().getRpcFileSystemClient();
 
   auto k_path = sig_get_arg().value().date;
+  AssetsFilePtr k_ass_file;
 
-  auto k_ass_file = std::dynamic_pointer_cast<AssetsFile>(in_data);
+  if (in_data)
+    k_ass_file = std::dynamic_pointer_cast<AssetsFile>(in_data);
+  else if (in_parent) {
+    auto k_str = in_parent->showStr();
+    k_ass_file = std::make_shared<AssetsFile>(in_parent, k_str);
+    in_parent->child_item.push_back_sig(k_ass_file);
+
+    k_ass_file->setVersion(k_ass_file->find_max_version());
+  }
+
   if (!k_ass_file) {
     DOODLE_LOG_DEBUG("无效的上传数据")
     throw DoodleError{"无效的上传数据"};
@@ -33,4 +43,6 @@ void doodle::actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& i
     k_ch->Upload(k_ass_path->getLocalPath(), k_ass_path->getServerPath());
   }
   k_ass_file->setPathFile(k_list);
+  k_ass_file->updata_db(in_parent->getMetadataFactory());
+
 }

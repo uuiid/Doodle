@@ -6,7 +6,6 @@
 #include <Logger/Logger.h>
 #include <PinYin/convert.h>
 
-
 #include <opencv2/opencv.hpp>
 namespace doodle {
 std::string ImageSequence::clearString(const std::string &str) {
@@ -81,7 +80,8 @@ std::string ImageSequence::getEpisodesAndShot_str() {
 }
 
 bool ImageSequence::seanDir(const FSys::path &dir) {
-  if (!FSys::is_directory(dir)) throw FileError{dir, "file not is a directory"};
+  if (!FSys::is_directory(dir))
+    throw FileError{dir, "file not is a directory"};
 
   FSys::path ex{};
   for (auto &path : FSys::directory_iterator(dir)) {
@@ -94,7 +94,8 @@ bool ImageSequence::seanDir(const FSys::path &dir) {
       }
     }
   }
-  if (p_paths.empty()) throw DoodleError("空目录");
+  if (p_paths.empty())
+    throw DoodleError("空目录");
   return true;
 }
 

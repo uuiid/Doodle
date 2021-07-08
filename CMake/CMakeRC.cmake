@@ -77,6 +77,10 @@ set(hpp_content [==[
 #include <system_error>
 #include <type_traits>
 
+#if !(defined(__EXCEPTIONS) || defined(__cpp_exceptions) || defined(_CPPUNWIND) || defined(CMRC_NO_EXCEPTIONS))
+#define CMRC_NO_EXCEPTIONS 1
+#endif
+
 namespace cmrc { namespace detail { struct dummy; } }
 
 #define CMRC_DECLARE(libid) \
@@ -339,7 +343,12 @@ public:
     file open(const std::string& path) const {
         auto entry_ptr = _get(path);
         if (!entry_ptr || !entry_ptr->is_file()) {
+#ifdef CMRC_NO_EXCEPTIONS
+            fprintf(stderr, "Error no such file or directory: %s\n", path.c_str());
+            abort();
+#else
             throw std::system_error(make_error_code(std::errc::no_such_file_or_directory), path);
+#endif
         }
         auto& dat = entry_ptr->as_file();
         return file{dat.begin_ptr, dat.end_ptr};
@@ -362,10 +371,20 @@ public:
     directory_iterator iterate_directory(const std::string& path) const {
         auto entry_ptr = _get(path);
         if (!entry_ptr) {
+#ifdef CMRC_NO_EXCEPTIONS
+            fprintf(stderr, "Error no such file or directory: %s\n", path.c_str());
+            abort();
+#else
             throw std::system_error(make_error_code(std::errc::no_such_file_or_directory), path);
+#endif
         }
         if (!entry_ptr->is_directory()) {
+#ifdef CMRC_NO_EXCEPTIONS
+            fprintf(stderr, "Error not a directory: %s\n", path.c_str());
+            abort();
+#else
             throw std::system_error(make_error_code(std::errc::not_a_directory), path);
+#endif
         }
         return entry_ptr->as_directory().begin();
     }
@@ -394,7 +413,7 @@ set_property(TARGET cmrc-base PROPERTY INTERFACE_CXX_EXTENSIONS OFF)
 add_library(cmrc::base ALIAS cmrc-base)
 
 function(cmrc_add_resource_library name)
-    set(args ALIAS NAMESPACE)
+    set(args ALIAS NAMESPACE TYPE)
     cmake_parse_arguments(ARG "" "${args}" "" "${ARGN}")
     # Generate the identifier for the resource library's namespace
     set(ns_re "[a-zA-Z_][a-zA-Z0-9_]*")
@@ -410,6 +429,14 @@ function(cmrc_add_resource_library name)
         endif()
     endif()
     set(libname "${name}")
+    # Check that type is either "STATIC" or "OBJECT", or default to "STATIC" if
+    # not set
+    if(NOT DEFINED ARG_TYPE)
+        set(ARG_TYPE STATIC)
+    elseif(NOT "${ARG_TYPE}" MATCHES "^(STATIC|OBJECT)$")
+        message(SEND_ERROR "${ARG_TYPE} is not a valid TYPE (STATIC and OBJECT are acceptable)")
+        set(ARG_TYPE STATIC)
+    endif()
     # Generate a library with the compiled in character arrays.
     string(CONFIGURE [=[
         #include <cmrc/cmrc.hpp>
@@ -468,7 +495,7 @@ function(cmrc_add_resource_library name)
     # Generate the actual static library. Each source file is just a single file
     # with a character array compiled in containing the contents of the
     # corresponding resource file.
-    add_library(${name} STATIC ${libcpp})
+    add_library(${name} ${ARG_TYPE} ${libcpp})
     set_property(TARGET ${name} PROPERTY CMRC_LIBDIR "${libdir}")
     set_property(TARGET ${name} PROPERTY CMRC_NAMESPACE "${ARG_NAMESPACE}")
     target_link_libraries(${name} PUBLIC cmrc::base)

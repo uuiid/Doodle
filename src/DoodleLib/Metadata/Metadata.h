@@ -48,6 +48,7 @@ class DOODLELIB_API Metadata
 
   uint64_t p_has_child;
 
+
  protected:
   void install_slots();
   void add_child(const MetadataPtr &val);
@@ -69,6 +70,8 @@ class DOODLELIB_API Metadata
    */
   MetadataFactoryPtr p_metadata_flctory_ptr_;
   meta_type p_type;
+
+  bool child_item_is_sort;
 
   inline bool isInstall() const { return p_id > 0; };
 
@@ -156,9 +159,19 @@ class DOODLELIB_API Metadata
     return std::to_string(getId());
   };
 
+  /**
+   * @brief 设置数据库中的类型
+   * 
+   * @param in_meta 类型
+   */
   void set_meta_typp(const meta_type &in_meta);
   void set_meta_typp(const std::string &in_meta);
   void set_meta_type(std::int32_t in_);
+  /**
+   * @brief 获得数据库中的类型
+   * 
+   * @return 数据库中的类型 
+   */
   meta_type get_meta_type() const;
   std::string get_meta_type_str() const;
   std::int32_t get_meta_type_int() const;
