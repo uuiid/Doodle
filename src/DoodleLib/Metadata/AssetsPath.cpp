@@ -45,7 +45,12 @@ void AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_m
   auto k_prj  = k_set.get_project();
 
   /// 这里使用树,向上寻找,组合路径
-  MetadataConstPtr k_m = in_metadata;
+  MetadataConstPtr k_m{};
+  if (details::is_class<AssetsFile>(in_metadata))
+    k_m = in_metadata->getParent();
+  else
+    k_m = in_metadata;
+
   FSys::path k_path{k_m->str()};
   while (k_m->hasParent()) {
     k_m    = k_m->getParent();
