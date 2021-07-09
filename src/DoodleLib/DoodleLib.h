@@ -5,7 +5,6 @@
 #pragma once
 #include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/DoodleLib_pch.h>
 #include <DoodleLib/DoodleMacro.h>
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/FileSys/FileSystem.h>

@@ -8,10 +8,12 @@
  */
 #pragma once
 // #include <QDebug>
+#include <DoodleConfig.h>
 #include <spdlog/spdlog.h>
 
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
+#include <doodlelib_export.h>
 
 #define DOODLE_LOG_DEBUG(...) \
   SPDLOG_INFO(__VA_ARGS__);

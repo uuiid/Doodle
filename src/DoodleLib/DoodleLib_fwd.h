@@ -1,15 +1,56 @@
 ﻿#pragma once
 
-#include <doodlelib_export.h>
+#include <DoodleConfig.h>
 
-#define SPDLOG_FUNCTION static_cast<const char *>(__FUNCSIG__)
+
+#include <chrono>
+#include <condition_variable>
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <future>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <regex>
+#include <stdexcept>
+#include <string>
+#include <unordered_set>
+#include <variant>
+#include <vector>
+
+
+#include <boost/filesystem.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
+
+#pragma warning(disable : 4251)
+#pragma warning(disable : 4275)
+
+
+#include <DoodleLib/DoodleMacro.h>
+
+#include <DoodleLib/libWarp/cmrcWarp.h>
+
+#include <DoodleLib/libWarp/sqlppWarp.h>
+
+#include <date/date.h>
+
+#include <DoodleLib/libWarp/CerealWarp.h>
+
+
+#include <doodlelib_export.h>
 
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
+//#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include <codecvt>
+//#undef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include <stdexcept>
 //namespace fmt {
 //namespace FSys = std::filesystem;
@@ -120,10 +161,9 @@ using ostream  = std::ostream;
 //using std::filesystem::is_symlink;
 //using std::filesystem::status;
 DOODLELIB_API inline path make_path(const std::string &in_string) {
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> convert;
   return path{convert.from_bytes(in_string)};
-#undef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+
 }
 
 DOODLELIB_API std::time_t last_write_time_t(const path &in_path);

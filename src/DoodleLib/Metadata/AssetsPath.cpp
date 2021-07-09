@@ -6,6 +6,7 @@
 
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/AssetsFile.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <Logger/Logger.h>
 namespace doodle {
@@ -67,6 +68,6 @@ void AssetsPath::setPath(const FSys::path &in_local_path, const FSys::path &in_s
   const auto k_root_path = in_local_path.root_path();
   p_lexically_relative   = in_local_path.lexically_relative(k_root_path);
   p_server_path          = in_server_path;
-  DOODLE_LOG_INFO(fmt::format("本地路径: {}, 设置服务路径: {}, 相对路径: {} ", p_local_path, p_server_path, p_lexically_relative));
+  DOODLE_LOG_INFO("本地路径: {}, 设置服务路径: {}, 相对路径: {} ", p_local_path, p_server_path, p_lexically_relative);
 }
 }  // namespace doodle

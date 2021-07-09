@@ -10,11 +10,12 @@
 #include <DoodleLib/DoodleApp.h>
 #include <Gui/main_windows.h>
 #include <Gui/setting_windows.h>
+#include <core/CoreSet.h>
 #include <fmt/ostream.h>
 #include <libWarp/json_warp.h>
 #include <rpc/RpcServerHandle.h>
 #include <shellapi.h>
-#include <core/CoreSet.h>
+
 #include <boost/algorithm/string.hpp>
 #include <exception>
 #include <nana/fwd.hpp>
@@ -46,6 +47,8 @@ class DOODLELIB_API command_line {
   bool b_server{};
 
   inline void get_set() {
+    if (!b_server)
+      return;
     auto& set       = CoreSet::getSet();
     p_sql_port      = set.getSqlPort();
     p_meta_rpc_port = set.getMetaRpcPort();
@@ -56,6 +59,9 @@ class DOODLELIB_API command_line {
   };
 
   inline void set_set() const {
+    if (!b_server)
+      return;
+
     auto& set = CoreSet::getSet();
     set.setSqlPort(p_sql_port);
     set.setMetaRpcPort(p_meta_rpc_port);
@@ -124,42 +130,46 @@ void doodle_app::init() {
     if (!k_file)
       return;
     auto p_info = nlohmann::json::parse(k_file)[0].get<command_line>();
+    p_info.set_set();
     if (p_info.b_mklink) {
       p_run_fun = [p_info]() {
         for (auto& k_p : p_info.p_mk_link) {
-//          MklinkWidget::mklink(k_p.first, k_p.second);
+          //          MklinkWidget::mklink(k_p.first, k_p.second);
         }
       };
     } else if (p_info.b_server) {
-      p_run_fun = [this, p_info]() {
-        p_info.set_set();
-        auto& set = CoreSet::getSet();
-        p_rpc_server_handle->runServer(p_info.p_meta_rpc_port, p_info.p_file_rpc_port);
-
-        nana::form _w{};
-        _w.caption("关闭窗口停止服务器");
-        _w.events().destroy([this](const nana::arg_destroy& in_) {
-          p_rpc_server_handle->stop();
-        });
-        _w.show();
-        nana::exec();
-      };
+      run_server();
     }
   } else if (k_argc == 1) {
     p_run_fun = [this]() {
-      this->gui_run();
+      this->run_gui();
     };
   }
   LocalFree(k_argv);
 }
+void doodle_app::run_server() {
+  p_run_fun = [this]() {
+    auto& set = CoreSet::getSet();
+    p_rpc_server_handle->runServer(set.getMetaRpcPort(), set.getFileRpcPort());
+    nana::form _w{};
+    _w.caption("关闭窗口停止服务器");
+    _w.events().destroy([this](const nana::arg_destroy& in_) {
+      p_rpc_server_handle->stop();
+    });
+    _w.show();
+    nana::exec();
+  };
+}
 void doodle_app::run() {
-  init();
+  if (!p_run_fun)
+    init();
+
   if (p_run_fun)
     p_run_fun();
 }
 void doodle_app::init_opt() {
 }
-void doodle_app::gui_run() {
+void doodle_app::run_gui() {
   CoreSet::getSet().guiInit();
 
   main_windows k_main_windows{};

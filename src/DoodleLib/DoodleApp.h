@@ -17,12 +17,13 @@ class DOODLELIB_API doodle_app {
   RpcServerHandlePtr p_rpc_server_handle;
   std::shared_ptr<setting_windows> p_setting_windows;
   void init_opt();
-  void init();
 
  public:
   doodle_app();
   void run();
-  void gui_run();
+  void init();
+  void run_gui();
+  void run_server();
 };
 
 
