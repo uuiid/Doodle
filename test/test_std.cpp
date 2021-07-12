@@ -242,3 +242,9 @@ TEST(DSTD, find) {
 
   test.erase_sig(std::shared_ptr<TT>{ta1});
 }
+
+TEST(DSTD, filesystem_add_time_stamp) {
+  std::cout << doodle::FSys::add_time_stamp("/test/dasd") << "\n"
+            << doodle::FSys::add_time_stamp("/test/dasd.mp4")
+            << std::endl;
+}

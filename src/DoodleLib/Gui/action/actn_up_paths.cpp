@@ -40,9 +40,10 @@ void doodle::actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& i
   std::vector<AssetsPathPtr> k_list;
   for (auto& k_i : k_path) {
     auto k_ass_path = k_list.emplace_back(std::make_shared<AssetsPath>(k_i, k_ass_file));
-    k_ch->Upload(k_ass_path->getLocalPath(), k_ass_path->getServerPath());
+    k_ch->Upload(k_ass_path->getLocalPath(),
+                 k_ass_path->getServerPath(),
+                 k_ass_path->getBackupPath());
   }
   k_ass_file->setPathFile(k_list);
   k_ass_file->updata_db(in_parent->getMetadataFactory());
-
 }

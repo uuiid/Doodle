@@ -7,9 +7,26 @@
 
 namespace doodle {
 class DOODLELIB_API AssetsPath {
+  /**
+   * @brief 上传时的本地路径
+   * 
+   */
   FSys::path p_local_path;
+  /**
+   * @brief 上传时相对本地根的路径
+   * 
+   */
   FSys::path p_lexically_relative;
+  /**
+   * @brief 服务器路径
+   * 
+   */
   FSys::path p_server_path;
+  /**
+   * @brief 服务器中如果存在文件的备份路径
+   * 
+   */
+  FSys::path p_backup_path;
 
  public:
   AssetsPath();
@@ -18,10 +35,11 @@ class DOODLELIB_API AssetsPath {
    * 
    * @param in_path 输入路径，这个会调用 AssetsPath::setPath(const FSys::path &in_path)
    */
-  explicit AssetsPath(const FSys::path &in_path,const MetadataConstPtr &in_metadata = {});
+  explicit AssetsPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata = {});
 
   [[nodiscard]] const FSys::path &getLocalPath() const;
   [[nodiscard]] const FSys::path &getServerPath() const;
+  [[nodiscard]] const FSys::path &getBackupPath() const;
   /**
    * @brief 设置资产的本地文件的路径，自动产生服务器路径
    * 同时会自动产生服务器路径 
@@ -63,8 +81,14 @@ void AssetsPath::serialize(Archive &ar, const std::uint32_t version) {
     ar(cereal::make_nvp("local_path", p_local_path),
        cereal::make_nvp("lexically_relative", p_lexically_relative),
        cereal::make_nvp("server_path", p_server_path));
+
+  if (version == 3)
+    ar(cereal::make_nvp("local_path", p_local_path),
+       cereal::make_nvp("lexically_relative", p_lexically_relative),
+       cereal::make_nvp("server_path", p_server_path),
+       cereal::make_nvp("backup_path", p_backup_path));
 }
 
 }  // namespace doodle
 
-CEREAL_CLASS_VERSION(doodle::AssetsPath, 2)
+CEREAL_CLASS_VERSION(doodle::AssetsPath, 3)

@@ -5,20 +5,22 @@
 #include "AssetsPath.h"
 
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <Logger/Logger.h>
 namespace doodle {
 AssetsPath::AssetsPath()
     : p_local_path(),
       p_lexically_relative(),
-      p_server_path() {
+      p_server_path(),
+      p_backup_path("backup/") {
 }
 AssetsPath::AssetsPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
     : p_local_path(),
       p_lexically_relative(),
-      p_server_path() {
+      p_server_path(),
+      p_backup_path("backup/") {
   if (in_metadata)
     this->setPath(in_path, in_metadata);
   else
@@ -30,6 +32,10 @@ const FSys::path &AssetsPath::getLocalPath() const {
 
 const FSys::path &AssetsPath::getServerPath() const {
   return p_server_path;
+}
+
+const FSys::path &AssetsPath::getBackupPath() const {
+  return p_backup_path;
 }
 void AssetsPath::setPath(const FSys::path &in_path) {
   auto &k_set       = CoreSet::getSet();
@@ -68,6 +74,8 @@ void AssetsPath::setPath(const FSys::path &in_local_path, const FSys::path &in_s
   const auto k_root_path = in_local_path.root_path();
   p_lexically_relative   = in_local_path.lexically_relative(k_root_path);
   p_server_path          = in_server_path;
-  DOODLE_LOG_INFO("本地路径: {}, 设置服务路径: {}, 相对路径: {} ", p_local_path, p_server_path, p_lexically_relative);
+  p_backup_path /= FSys::add_time_stamp(in_server_path);
+  DOODLE_LOG_INFO("本地路径: {}, 设置服务路径: {}, 相对路径: {} , 备份路径: {}",
+                  p_local_path, p_server_path, p_lexically_relative, p_backup_path);
 }
 }  // namespace doodle
