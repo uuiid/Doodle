@@ -165,6 +165,7 @@ DOODLELIB_API inline path add_time_stamp(const path &in_path) {
 
   return k_path;
 }
+DOODLELIB_API void open_explorer(const path &in_path) ;
 }  // namespace FSys
 
 using ConnPtr = std::unique_ptr<sqlpp::mysql::connection>;

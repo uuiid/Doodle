@@ -248,3 +248,10 @@ TEST(DSTD, filesystem_add_time_stamp) {
             << doodle::FSys::add_time_stamp("/test/dasd.mp4")
             << std::endl;
 }
+
+TEST(DSTD, filesystem_open_ex) {
+  using namespace doodle;
+  FSys::open_explorer(LR"(D:\哈哈\scoo+1235)");
+  FSys::open_explorer(LR"(D:\OneDrie)");
+  FSys::open_explorer(LR"(D:\OneDrie\VFXFORCE\快速提示01-Vimeo上Houdini中的生长繁殖.mp4)");
+}
