@@ -48,7 +48,6 @@ class DOODLELIB_API Metadata
 
   uint64_t p_has_child;
 
-
  protected:
   void install_slots();
   void add_child(const MetadataPtr &val);
@@ -198,6 +197,18 @@ class DOODLELIB_API Metadata
   [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
 
   virtual void create_menu(const menu_factory_ptr &in_factoryPtr) = 0;
+
+  template <class parent_class>
+  std::shared_ptr<parent_class> find_parent_class() {
+    auto k_m = this->shared_from_this();
+    while (k_m->hasParent()) {
+      if (details::is_class<parent_class>(k_m))
+        return std::dynamic_pointer_cast<parent_class>(k_m);
+      else
+        k_m = k_m->getParent();
+    }
+    return {};
+  };
 
   /**
    * @warning 此处如果进行比较， 会自动转化为子类进行比较， 相同子类优化， 不同子类字符串比较
