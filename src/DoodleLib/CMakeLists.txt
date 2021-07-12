@@ -35,7 +35,7 @@ doodle_grpc_generate(
 )
 
 add_doodle(
-        NAME doodleLib
+        NAME DoodleLib
         LISTS_FILES
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}

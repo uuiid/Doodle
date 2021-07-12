@@ -2,7 +2,9 @@
 
 #include <DoodleConfig.h>
 
-
+#include <boost/filesystem.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
 #include <chrono>
 #include <condition_variable>
 #include <filesystem>
@@ -21,30 +23,16 @@
 #include <variant>
 #include <vector>
 
-
-#include <boost/filesystem.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/iostreams/stream_buffer.hpp>
-
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
 
-
 #include <DoodleLib/DoodleMacro.h>
-
-#include <DoodleLib/libWarp/cmrcWarp.h>
-
-#include <DoodleLib/libWarp/sqlppWarp.h>
-
-#include <date/date.h>
-
-#include <DoodleLib/libWarp/CerealWarp.h>
-
-
-#include <doodlelib_export.h>
-
 #include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/libWarp/CerealWarp.h>
+#include <DoodleLib/libWarp/cmrcWarp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
+#include <date/date.h>
+#include <doodlelib_export.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
@@ -163,14 +151,20 @@ using ostream  = std::ostream;
 DOODLELIB_API inline path make_path(const std::string &in_string) {
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> convert;
   return path{convert.from_bytes(in_string)};
-
 }
 
 DOODLELIB_API std::time_t last_write_time_t(const path &in_path);
 DOODLELIB_API inline std::chrono::time_point<std::chrono::system_clock> last_write_time_point(const path &in_path) {
   return std::chrono::system_clock::from_time_t(last_write_time_t(in_path));
 }
+DOODLELIB_API inline path add_time_stamp(const path &in_path) {
+  auto k_fn = in_path.stem();
+  k_fn += date::format("_%m_%d_%y_%H_%M_%S_", std::chrono::system_clock::now());
+  k_fn += in_path.extension();
+  auto k_path = in_path.parent_path() / k_fn;
 
+  return k_path;
+}
 }  // namespace FSys
 
 using ConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
@@ -204,7 +198,6 @@ class actn_up_paths;
 class DoodleLib;
 class ThreadPool;
 class menu_factory_base;
-
 
 using MetadataPtr               = std::shared_ptr<Metadata>;
 using MetadataConstPtr          = std::shared_ptr<const Metadata>;

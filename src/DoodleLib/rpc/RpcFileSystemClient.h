@@ -5,8 +5,8 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/threadPool/ThreadPool.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
+#include <DoodleLib/threadPool/ThreadPool.h>
 #include <FileSystemServer.grpc.pb.h>
 
 #include <optional>
@@ -27,7 +27,7 @@ namespace doodle {
  * @brief 这个类在上传和下载时会`先比较文件，当比较成功后， 不一致才会上传和下载
  *
  */
-class DOODLELIB_API RpcFileSystemClient : public details::no_copy{
+class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
   std::unique_ptr<FileSystemServer::Stub> p_stub;
   std::recursive_mutex p_mutex;
   // std::shared_ptr<grpc::Channel> p_channel;
@@ -36,11 +36,28 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy{
    * @param in_local_path 本地路径
    * @param in_server_path 服务器路径
    * @return std::tuple<std::optional<bool>,  是否相等
-   *                    std::optional<bool> > 是否需要下载
+   *                    std::optional<bool>,  是否需要下载
+   *                    std::optional<bool>,  服务器文件是否存在
+   *                   > 
    */
-  std::tuple<std::optional<bool>, std::optional<bool> > compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  std::tuple<std::optional<bool>, std::optional<bool>, std::optional<bool> > compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  /**
+   * @brief 这个是递归调用进行下载
+   * 
+   * @param in_local_path 本地路径
+   * @param in_server_path  服务器路径
+   * @param k_future_list 等待结果
+   */
   void _DownloadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, std::vector<std::future<void> >& k_future_list);
-  void _UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, std::vector<std::future<void> >& in_future_list);
+  /**
+   * @brief 递归调用进行上传
+   * 
+   * @param in_local_path 本地路径
+   * @param in_server_path 服务器路径
+   * @param in_backup_path 备份路径
+   * @param in_future_list 等待结果
+   */
+  void _UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path, std::vector<std::future<void> >& in_future_list);
 
  public:
   using time_point = std::chrono::time_point<std::chrono::system_clock>;
@@ -91,15 +108,16 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy{
    * @brief 将文件上传到服务器中
    * @param in_local_path 本地路径
    * @param in_server_path 服务器路径
+   * @param in_backup_path 上传时的备份路径， 如果上传文件夹， 备份文件夹也应该是文件夹， 文件则对应文件
    * @return 上传结果
    */
-  void Upload(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  void Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path = {});
 
   void DownloadDir(const FSys::path& in_local_path, const FSys::path& in_server_path);
-  void UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  void UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path = {});
 
   void DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path);
-  void UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  void UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path = {});
   // TODO! 要将比较函数提取为函子, 作为同步功能的基础
   //  void DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path,const syn_fun& in_syn_fun );
   //  void UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path,const syn_fun& in_syn_fun );

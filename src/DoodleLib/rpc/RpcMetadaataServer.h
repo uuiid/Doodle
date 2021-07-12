@@ -6,14 +6,13 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/libWarp/protobuf_warp.h>
 
 #include <DoodleLib/libWarp/cache.hpp>
 #include <DoodleLib/libWarp/lru_cache_policy.hpp>
-#include <DoodleLib/libWarp/protobuf_warp.h>
-
 
 namespace doodle {
-class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service ,public details::no_copy{
+class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service, public details::no_copy {
   CoreSet& p_set;
 
   std::thread p_thread;
@@ -30,7 +29,7 @@ class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service ,p
   [[nodiscard]] inline FSys::path get_delete_path(const std::string& in_string) const {
     if (in_string.empty())
       throw DoodleError{"str 是空的"};
-    return p_set.getCacheRoot() / "delete" / in_string;
+    return p_set.getCacheRoot("delete") / in_string;
   };
 
   [[nodiscard]] std::string get_cache_and_file(const FSys::path& key);
@@ -45,7 +44,6 @@ class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service ,p
   grpc::Status InstallMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
   grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
   grpc::Status UpdataMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
-
 };
 
 }  // namespace doodle

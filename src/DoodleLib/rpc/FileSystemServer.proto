@@ -20,6 +20,10 @@ message FileStream{
   google.protobuf.Any data = 2;
 }
 
+message FileInfoMove{
+  FileInfo source = 1;
+  FileInfo target = 2;
+}
 
 service FileSystemServer{
   rpc GetInfo(FileInfo) returns (FileInfo) {}
@@ -32,4 +36,5 @@ service FileSystemServer{
 
   rpc Download(FileInfo) returns (stream FileStream) {}
   rpc Upload(stream FileStream) returns (FileInfo) {}
+  rpc Move(FileInfoMove) returns (FileInfo) {}
 }

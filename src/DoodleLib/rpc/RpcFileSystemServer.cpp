@@ -8,8 +8,6 @@
 #include <Logger/Logger.h>
 #include <libWarp/protobuf_warp_cpp.h>
 
-
-
 namespace doodle {
 RpcFileSystemServer::RpcFileSystemServer()
     : FileSystemServer::Service(),
@@ -204,6 +202,45 @@ grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::Ser
     }
   }
 
+  return grpc::Status::OK;
+}
+
+grpc::Status RpcFileSystemServer::Move(grpc::ServerContext* context,
+                                       const FileInfoMove* request,
+                                       FileInfo* response) {
+  if (!request->has_source()) {
+    DOODLE_LOG_WARN("传入参数无效, 必须来源路径")
+    return {grpc::StatusCode::CANCELLED, "传入参数无效, 必须来源路径"};
+  }
+
+  FSys::path k_s = p_set.getDataRoot() / request->source().path();
+
+  if (!FSys::exists(k_s)) {
+    DOODLE_LOG_WARN("来源路径不存在 {}", k_s)
+    return {grpc::StatusCode::CANCELLED, "来源路径不存在"};
+  }
+
+  FSys::path k_t{};
+
+  if (request->has_target())
+    k_t = p_set.getDataRoot() / request->target().path();
+  else
+    k_t = p_set.getCacheRoot("delete") / k_s.lexically_proximate(p_set.getCacheRoot());
+
+  if (!FSys::exists(k_t.parent_path()))
+    FSys::create_directories(k_t.parent_path());
+
+  try {
+    ///如果目标存在则直接添加时间戳重命名
+    if (FSys::exists(k_t)) {
+      k_t = FSys::add_time_stamp(k_t);
+    }
+
+    FSys::rename(k_s, k_t);
+    DOODLE_LOG_INFO("{} -move-> {}", k_s, k_t);
+  } catch (const FSys::filesystem_error& e) {
+    DOODLE_LOG_WARN(e.what());
+  }
   return grpc::Status::OK;
 }
 

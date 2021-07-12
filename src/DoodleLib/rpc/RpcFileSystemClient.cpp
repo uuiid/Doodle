@@ -13,7 +13,7 @@
 #include <grpcpp/grpcpp.h>
 
 namespace doodle {
-std::tuple<std::optional<bool>, std::optional<bool>> RpcFileSystemClient::compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path) {
+std::tuple<std::optional<bool>, std::optional<bool>, std::optional<bool>> RpcFileSystemClient::compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path) {
   auto k_l_ex                            = FSys::exists(in_local_path);
   auto k_l_dir                           = k_l_ex ? FSys::is_directory(in_local_path) : false;
   auto k_l_sz                            = k_l_ex ? FSys::file_size(in_local_path) : 0;
@@ -21,27 +21,27 @@ std::tuple<std::optional<bool>, std::optional<bool>> RpcFileSystemClient::compar
                                                ? FSys::last_write_time_point(in_local_path)
                                                : std::chrono::time_point<std::chrono::system_clock>{};
   auto [k_s_sz, k_s_ex, k_s_ti, k_s_dir] = GetInfo(in_server_path);
-  // TODO 在这里我们最好比较一下hash值确认文件相同
-  if (k_l_ex && k_s_ex) {       /// 本地文件和服务器文件都存在
-    if (k_l_dir || k_s_dir) {   /// 两个任意一个为目录我们都没有办法确定上传和下载的方案
-      return {};                /// 所以返回无
-    }                           ///
-    if (k_l_sz == k_s_sz &&     ///
-        k_l_ti == k_s_ti) {     /// 我们比较两个文件的时间和大小都相同的时候， 直接表示两个文件相同， 既不上穿也不下载
-      return {true, {}};        /// 所以返回无
-    } else {                    ///
-      if (k_l_ti < k_s_ti) {    /// 本地文件的修改时间小于服务器时间 那么就是本地文件比较旧 服务器文件新， 需要下载
-        return {false, true};   /// 返回 true
-      } else {                  /// 本地文件的修改时间大于服务器时间 那么就是本地文件比较新 服务时间比较旧, 需要上传
-        return {false, false};  /// 返回 false
-      }                         ///
-    }                           ///
-  } else if (k_l_ex) {          /// 本地文件存在和服务器文件不存在
-    return {false, false};      /// 返回 false
-  } else if (k_s_ex) {          /// 本地文件不存在和服务器存在
-    return {false, true};       /// 返回 true
-  } else {                      /// 本地和服务器文件都不存在
-    return {};
+  // TODO: 在这里我们最好比较一下hash值确认文件相同
+  if (k_l_ex && k_s_ex) {               /// 本地文件和服务器文件都存在
+    if (k_l_dir || k_s_dir) {           /// 两个任意一个为目录我们都没有办法确定上传和下载的方案
+      return {{}, {}, k_s_ex};          /// 所以返回无
+    }                                   ///
+    if (k_l_sz == k_s_sz &&             ///
+        k_l_ti == k_s_ti) {             /// 我们比较两个文件的时间和大小都相同的时候， 直接表示两个文件相同， 既不上穿也不下载
+      return {true, {}, k_s_ex};        /// 所以返回无
+    } else {                            ///
+      if (k_l_ti < k_s_ti) {            /// 本地文件的修改时间小于服务器时间 那么就是本地文件比较旧 服务器文件新， 需要下载
+        return {false, true, k_s_ex};   /// 返回 true
+      } else {                          /// 本地文件的修改时间大于服务器时间 那么就是本地文件比较新 服务时间比较旧, 需要上传
+        return {false, false, k_s_ex};  /// 返回 false
+      }                                 ///
+    }                                   ///
+  } else if (k_l_ex) {                  /// 本地文件存在和服务器文件不存在
+    return {false, false, k_s_ex};      /// 返回 false
+  } else if (k_s_ex) {                  /// 本地文件不存在和服务器存在
+    return {false, true, k_s_ex};       /// 返回 true
+  } else {                              /// 本地和服务器文件都不存在
+    return {{}, {}, k_s_ex};
   }
 }
 
@@ -130,14 +130,14 @@ void RpcFileSystemClient::Download(const FSys::path& in_local_path, const FSys::
   }
 }
 
-void RpcFileSystemClient::Upload(const FSys::path& in_local_path, const FSys::path& in_server_path) {
+void RpcFileSystemClient::Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path) {
   if (!FSys::exists(in_local_path))
     throw DoodleError{"本地中不存在文件或者目录"};
 
   if (FSys::is_directory(in_local_path)) {
-    UploadDir(in_local_path, in_server_path);
+    UploadDir(in_local_path, in_server_path, in_backup_path);
   } else
-    UploadFile(in_local_path, in_server_path);
+    UploadFile(in_local_path, in_server_path, in_backup_path);
 }
 
 void RpcFileSystemClient::_DownloadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, std::vector<std::future<void>>& k_future_list) {
@@ -181,7 +181,7 @@ void RpcFileSystemClient::_DownloadDir(const FSys::path& in_local_path, const FS
   if (!status.ok())
     throw DoodleError{status.error_message()};
 }
-void RpcFileSystemClient::_UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, std::vector<std::future<void>>& in_future_list) {
+void RpcFileSystemClient::_UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path, std::vector<std::future<void>>& in_future_list) {
   if (!FSys::exists(in_local_path))
     throw DoodleError{"未找到上传文件夹"};
 
@@ -190,10 +190,11 @@ void RpcFileSystemClient::_UploadDir(const FSys::path& in_local_path, const FSys
 
   for (const auto& k_it : FSys::directory_iterator(in_local_path)) {
     FSys::path k_s_p = in_server_path / k_it.path().filename();
+    auto k_back      = in_backup_path / k_it.path().filename();
     auto& k_l_p      = k_it.path();
 
     if (FSys::is_directory(k_it)) {
-      _UploadDir(k_l_p, k_s_p, in_future_list);
+      _UploadDir(k_l_p, k_s_p, k_back, in_future_list);
       //      std::unique_lock lock{p_mutex};
       //      in_future_list.emplace_back(
       //          k_prot->enqueue(
@@ -205,15 +206,15 @@ void RpcFileSystemClient::_UploadDir(const FSys::path& in_local_path, const FSys
       std::unique_lock lock{p_mutex};
       in_future_list.emplace_back(
           k_prot->enqueue(
-              [k_l_p, k_s_p, this]() {
-                UploadFile(k_l_p, k_s_p);
+              [k_l_p, k_s_p, k_back, this]() {
+                UploadFile(k_l_p, k_s_p, k_back);
               }));
     }
   }
 }
 
 void RpcFileSystemClient::DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path) {
-  auto [k_is_eq, k_is_down] = compare_file_is_down(in_local_path, in_server_path);
+  auto [k_is_eq, k_is_down, k_s_ex] = compare_file_is_down(in_local_path, in_server_path);
   if (!k_is_eq)
     return;
 
@@ -245,13 +246,30 @@ void RpcFileSystemClient::DownloadFile(const FSys::path& in_local_path, const FS
   if (!status.ok())
     throw DoodleError{status.error_message()};
 }
-void RpcFileSystemClient::UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path) {
-  auto [k_is_eq, k_is_down] = compare_file_is_down(in_local_path, in_server_path);
+void RpcFileSystemClient::UploadFile(const FSys::path& in_local_path,
+                                     const FSys::path& in_server_path,
+                                     const FSys::path& in_backup_path) {
+  auto [k_is_eq, k_is_down, k_s_ex] = compare_file_is_down(in_local_path, in_server_path);
   if (!k_is_eq)
     return;
 
   if (*k_is_eq)
     return;
+
+  if (k_s_ex && !in_backup_path.empty()) {
+    grpc::ClientContext k_context{};
+
+    FileInfoMove k_info{};
+    FileInfo k_out_info{};
+    k_info.mutable_source()->set_path(std::move(in_server_path.generic_string()));
+    k_info.mutable_target()->set_path(std::move(in_backup_path.generic_string()));
+
+    auto k_s = p_stub->Move(&k_context, k_info, &k_out_info);
+    if (!k_s.ok()) {
+      DOODLE_LOG_WARN(k_s.error_message());
+      throw DoodleError(k_s.error_message());
+    }
+  }
 
   grpc::ClientContext k_context{};
 
@@ -309,9 +327,9 @@ void RpcFileSystemClient::DownloadDir(const FSys::path& in_local_path, const FSy
     }
   }
 }
-void RpcFileSystemClient::UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path) {
+void RpcFileSystemClient::UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path) {
   std::vector<std::future<void>> k_list;
-  _UploadDir(in_local_path, in_server_path, k_list);
+  _UploadDir(in_local_path, in_server_path, in_backup_path, k_list);
   std::future_status k_status{};
   auto k_it = k_list.begin();
   while (!k_list.empty()) {

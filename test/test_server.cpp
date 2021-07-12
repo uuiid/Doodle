@@ -35,8 +35,8 @@ TEST(Server, dow_updata) {
   doodle::CoreSet::getSet().guiInit();
 
   auto k_ch = doodle::CoreSet::getSet().getRpcFileSystemClient();
-  k_ch->Upload("D:/WinDev2012Eval.VirtualBox.7z", "test/test.file.7z");
-  k_ch->Upload("D:\\Kitchen_set","test/tmp");
+  k_ch->Upload("D:\\test3.mp4", "test/test.file.7z","test_backup_path2/tset.mp4");
+  k_ch->Upload("D:\\Kitchen_set","test/tmp","test_backup_path2/");
   auto [k_t_ex, k_t_dir] = k_ch->IsFolder("test");
   auto [k_f_ex, k_f_dir] = k_ch->IsFolder("test/test.file.7z");
   std::cout << "is ex: " << k_ch->IsExist("test/test.file.7z") << "\n"

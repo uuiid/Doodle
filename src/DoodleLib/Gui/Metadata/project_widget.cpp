@@ -459,12 +459,6 @@ void assets_attr_widget::install_sig() {
             p_list_box.erase(k_i);
           }
         }
-        //        // 在这里我们插入文件
-        //        auto k_it = p_list_box.at(std::any_cast<nana::listbox::index_pair>(k_file->user_date));
-        //        if (k_it.value<AssetsFilePtr>() == k_file) {
-        //          p_list_box.erase(k_it);
-        //        } else {
-        //        }
       })});
 }
 void assets_attr_widget::install_sig_one(std::shared_ptr<AssetsFile>& k_file) {
