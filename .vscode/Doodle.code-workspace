@@ -137,6 +137,7 @@
 			"format": "cpp",
 			"source_location": "cpp"
 		},
+		"todo-tree.tree.scanMode": "workspace only",
 	},
 	"tasks": {
 		"version": "2.0.0",

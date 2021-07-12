@@ -1,10 +1,10 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/threadPool/long_term.h>
 
-#include <DoodleLib/threadPool/LongTerm.h>
 #include <boost/signals2.hpp>
 namespace doodle {
-class DOODLELIB_API MayaFile : public LongTerm , public details::no_copy{
+class DOODLELIB_API MayaFile : public long_term, public details::no_copy{
  private:
   FSys::path p_path;
 

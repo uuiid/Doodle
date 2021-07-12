@@ -67,7 +67,7 @@ set(
     rpc/RpcMetadaataServer.h
     rpc/RpcMetadataClient.h
     rpc/RpcServerHandle.h
-    threadPool/LongTerm.h
+        threadPool/long_term.h
     threadPool/ThreadPool.h
     toolkit/MessageAndProgress.h
     toolkit/toolkit.h)

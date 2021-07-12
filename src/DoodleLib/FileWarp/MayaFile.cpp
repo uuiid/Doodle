@@ -10,7 +10,7 @@
 
 namespace doodle {
 MayaFile::MayaFile(FSys::path mayaPath)
-    : LongTerm(),
+    : long_term(),
       p_path(std::move(mayaPath)) {
   if (!FSys::exists(p_path) && CoreSet::getSet().hasMaya())
     p_path = CoreSet::getSet().MayaPath();
@@ -125,7 +125,7 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
       //成功就加一
       ++k_pro;
       //添加进度
-      this->progress(boost::numeric_cast<int>((k_pro / size) * 100));
+      this->sig_progress(boost::numeric_cast<int>((k_pro / size) * 100));
       // try {
       // } catch (const DoodleError& err) {
       //   //添加错误
@@ -133,7 +133,7 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
       // }
 
       //发送消息
-      this->messagResult(fmt::format("文件:{} --> {}", it->first, ((it->second.get()) ? "成功" : "失败")));
+      this->sig_message_result(fmt::format("文件:{} --> {}", it->first, ((it->second.get()) ? "成功" : "失败")));
 
       //擦除容器内数据
       it = result.erase(it);
@@ -145,7 +145,7 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
       it = result.begin();
     }
   }
-  this->finished();
+  this->sig_finished();
   return true;
 }
 

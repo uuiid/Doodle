@@ -51,14 +51,8 @@
 #include <DoodleLib/core/static_value.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/libWarp/CerealWarp.h>
-#include <DoodleLib/libWarp/WinReg.hpp>
-#include <DoodleLib/libWarp/cache.hpp>
-#include <DoodleLib/libWarp/cache_policy.hpp>
 #include <DoodleLib/libWarp/cmrcWarp.h>
-#include <DoodleLib/libWarp/fifo_cache_policy.hpp>
 #include <DoodleLib/libWarp/json_warp.h>
-#include <DoodleLib/libWarp/lfu_cache_policy.hpp>
-#include <DoodleLib/libWarp/lru_cache_policy.hpp>
 #include <DoodleLib/libWarp/nana_warp.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
@@ -68,7 +62,14 @@
 #include <DoodleLib/rpc/RpcMetadaataServer.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
 #include <DoodleLib/rpc/RpcServerHandle.h>
-#include <DoodleLib/threadPool/LongTerm.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
+#include <DoodleLib/threadPool/long_term.h>
 #include <DoodleLib/toolkit/MessageAndProgress.h>
 #include <DoodleLib/toolkit/toolkit.h>
+
+#include <DoodleLib/libWarp/WinReg.hpp>
+#include <DoodleLib/libWarp/cache.hpp>
+#include <DoodleLib/libWarp/cache_policy.hpp>
+#include <DoodleLib/libWarp/fifo_cache_policy.hpp>
+#include <DoodleLib/libWarp/lfu_cache_policy.hpp>
+#include <DoodleLib/libWarp/lru_cache_policy.hpp>

@@ -5,7 +5,11 @@
 #include "actn_image_and_movie.h"
 
 #include <FileWarp/ImageSequence.h>
+#include <Metadata/Episodes.h>
+#include <Metadata/Shot.h>
 #include <core/CoreSet.h>
+
+#include <boost/algorithm/string.hpp>
 
 namespace doodle {
 actn_image_to_movie::actn_image_to_movie() {
@@ -35,8 +39,7 @@ bool actn_image_to_movie::is_accept(const arg_& in_any) {
       is_ok = k_r.empty();
     }
 
-    if(is_ok){
-      
+    if (is_ok) {
     }
 
     return is_ok;
@@ -48,9 +51,42 @@ bool actn_image_to_movie::is_accept(const arg_& in_any) {
 
 void actn_image_to_movie::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_path = sig_get_arg().value();
+  if (k_path.is_cancel)
+    return;
+  auto k_shot = in_parent->find_parent_class<Shot>();
+  auto k_eps  = in_parent->find_parent_class<Episodes>();
+
+  auto k_str = CoreSet::getSet().getUser_en();  /// 基本水印, 名称
+  /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
+  if (k_shot && k_eps) {
+    k_str += fmt::format(" : {}_{}", k_eps->str(), k_shot->str());
+  } else if (k_shot) {
+    k_str += fmt::format(" : {}", k_shot->str());
+  } else if (k_eps) {
+    k_str += fmt::format(" : {}", k_eps->str());
+  }
 
   ImageSequence k_image{k_path.image_list.front(), CoreSet::getSet().getUser_en()};
 
+  k_image.setText(k_str);  /// 设置文件水印
+  /// 添加文件路径名称
+  boost::replace_all(k_str, " ", "_");  /// 替换不好的文件名称组件
+  boost::replace_all(k_str, ":", "_");  /// 替换不好的文件名称组件
+  k_str += ".mp4";
+  if (k_eps)
+    k_path.out_file /= k_eps->str();
+  k_path.out_file /= k_str;
+
+  if (!FSys::exists(k_path.out_file.parent_path()))
+    FSys::create_directories(k_path.out_file.parent_path());
+
+  /// 防止重复, 添加时间戳
+  if (FSys::exists(k_path.out_file))
+    k_path.out_file = FSys::add_time_stamp(k_path.out_file);
+
+  k_image.createVideoFile(k_path.out_file);
+
+  FSys::open_explorer(k_path.out_file);
 }
 
 }  // namespace doodle

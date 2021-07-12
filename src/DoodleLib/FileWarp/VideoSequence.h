@@ -1,9 +1,9 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/threadPool/LongTerm.h>
+#include <DoodleLib/threadPool/long_term.h>
 
 namespace doodle {
-class DOODLELIB_API VideoSequence : public LongTerm {
+class DOODLELIB_API VideoSequence : public long_term {
  private:
   std::vector<FSys::path> p_paths;
 

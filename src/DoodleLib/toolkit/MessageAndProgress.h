@@ -20,13 +20,13 @@ class MessageAndProgress {
 template <typename T>
 void MessageAndProgress::createProgress(std::shared_ptr<T> value) {
   //连接进度
-  value->progress.connect([this](int i) {
+  value->sig_progress.connect([this](int i) {
   });
   //连接消息
-  value->messagResult.connect([this](const std::string& message) {
+  value->sig_message_result.connect([this](const std::string& message) {
   });
   //连接完成信号
-  value->finished.connect([this] {
+  value->sig_finished.connect([this] {
   });
 }
 }  // namespace doodle

@@ -7,7 +7,7 @@
 
 namespace doodle {
 VideoSequence::VideoSequence(decltype(p_paths) paths)
-    : LongTerm(),
+    : long_term(),
       p_paths(std::move(paths)) {
   for (auto&& path : p_paths) {
     auto ex = path.extension();
@@ -55,7 +55,7 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
           k_image_resized = k_image;
 
         k_video_out << k_image_resized;
-        this->progress(
+        this->sig_progress(
             boost::numeric_cast<int>(
                 (
                     (k_frame / (k_frame_count * k_len) +
@@ -70,7 +70,7 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
     ++k_i;
   }
 
-  this->messagResult(fmt::format("完成视频 {}", k_out_path));
-  this->finished();
+  this->sig_message_result(fmt::format("完成视频 {}", k_out_path));
+  this->sig_finished();
 }
 }  // namespace doodle
