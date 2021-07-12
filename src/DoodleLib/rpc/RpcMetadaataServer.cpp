@@ -6,9 +6,6 @@
 
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/core/CoreSql.h>
-//#include <DoodleLib/Exception/Exception.h>
-//#include <DoodleLib/core/ContainerDevice.h>
-//#include <DoodleLib/Metadata/Metadata.h>
 #include <Logger/Logger.h>
 #include <core/MetadataTabSql.h>
 #include <libWarp/protobuf_warp_cpp.h>
@@ -51,6 +48,8 @@ RpcMetadaataServer::RpcMetadaataServer()
     : p_set(CoreSet::getSet()),
       p_thread(),
       p_cache(1024 * 1024, caches::LRUCachePolicy<std::string>(), [this](const std::string &path, const std::string &value) {
+        if (value.size() == 0)
+          return;
         FSys::ofstream k_ofstream{path, std::ios::out | std::ios::binary};
         k_ofstream.write(value.data(), value.size());
       }) {
@@ -110,8 +109,10 @@ grpc::Status RpcMetadaataServer::GetChild(grpc::ServerContext *context, const Da
 
     auto k_path = getPath(row.uuidPath.value());
     auto k_str  = get_cache_and_file(k_path);
-    if (k_str.empty())
+    if (k_str.empty()) {
+      DOODLE_LOG_WARN("id: {} uuidPath: {} 数据无效, 进行删除! ", row.id.value(), row.uuidPath.value())
       continue;
+    }
     k_db.mutable_metadata_cereal()->set_value(std::move(k_str));
 
     DOODLE_LOG_DEBUG(fmt::format("id: {} uuidPath: {}", row.id.value(), row.uuidPath.value()))
@@ -180,19 +181,21 @@ grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, co
   Metadatatab k_tab{};
 
   auto k_path = getPath(request->uuidpath());
-  if (!p_cache.Remove(k_path.generic_string()))
-    return {grpc::StatusCode::NOT_FOUND, "未找到缓存"};
+  // if (!p_cache.Remove(k_path.generic_string()))
+  //   return {grpc::StatusCode::NOT_FOUND, "未找到缓存"};
 
   auto id = (*k_conn)(sqlpp::remove_from(k_tab).where(k_tab.id == request->id()));
   response->set_id(id);
 
   auto k_new_p = get_delete_path(request->uuidpath());
-  if (!FSys::exists(k_new_p.parent_path()))
-    FSys::create_directories(k_new_p.parent_path());
-  FSys::rename(k_path, k_new_p);
+  if (FSys::exists(k_path)) {
+    if (!FSys::exists(k_new_p.parent_path()))
+      FSys::create_directories(k_new_p.parent_path());
+    FSys::rename(k_path, k_new_p);
 
-  DOODLE_LOG_DEBUG(fmt::format("delete id {}", id))
-  DOODLE_LOG_WARN(fmt::format("移动文件 {} ---> {}", k_path, k_new_p))
+    DOODLE_LOG_DEBUG(fmt::format("delete id {}", id))
+    DOODLE_LOG_WARN(fmt::format("移动文件 {} ---> {}", k_path, k_new_p))
+  }
   return grpc::Status::OK;
 }
 

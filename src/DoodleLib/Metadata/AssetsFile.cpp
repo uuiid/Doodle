@@ -59,7 +59,8 @@ std::string AssetsFile::showStr() const {
 }
 
 bool AssetsFile::operator<(const AssetsFile& in_rhs) const {
-  return std::tie(p_name, p_ShowName, p_version) < std::tie(in_rhs.p_name, in_rhs.p_ShowName, p_version);
+  //  return std::tie(p_name, p_ShowName, p_version) < std::tie(in_rhs.p_name, in_rhs.p_ShowName, p_version);
+  return std::tie(p_version) < std::tie(in_rhs.p_version);
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_ShowName) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_ShowName);
 }
 bool AssetsFile::operator>(const AssetsFile& in_rhs) const {
@@ -120,6 +121,7 @@ std::string AssetsFile::getVersionStr() const {
 
 void AssetsFile::setVersion(const std::uint64_t& in_Version) noexcept {
   p_version = in_Version;
+  sig_change();
 }
 
 int AssetsFile::find_max_version() const {
@@ -140,14 +142,18 @@ int AssetsFile::find_max_version() const {
           return false;
       });
 
-  std::size_t k_int{1};
+  std::size_t k_int{0};
   if (std::is_sorted(k_r.begin(), k_r.end())) {
-    k_int = std::dynamic_pointer_cast<AssetsFile>(k_r.back())->getVersion() + 1;
   } else {
-    k_int = k_r.size();
+    std::sort(k_r.begin(), k_r.end(), [](const MetadataPtr& in_a, const MetadataPtr& in_b) {
+      return *in_a < *in_b;
+    });
   }
-
-  return boost::numeric_cast<std::int32_t>(k_int) + 1;
+  if (!k_r.empty())
+    k_int = std::dynamic_pointer_cast<AssetsFile>(k_r.back())->getVersion() + 1;
+  else
+    k_int = 1;
+  return boost::numeric_cast<std::int32_t>(k_int);
 }
 const std::vector<AssetsPathPtr>& AssetsFile::getPathFile() const {
   return p_path_files;

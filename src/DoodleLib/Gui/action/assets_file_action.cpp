@@ -62,8 +62,12 @@ actn_assfile_delete::actn_assfile_delete(std::any&& in_any) {
 void actn_assfile_delete::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_ass = std::dynamic_pointer_cast<AssetsFile>(in_data);
   auto k_p   = k_ass->getParent();
-  k_p->child_item.erase_sig(k_ass);
-  k_ass->deleteData(k_ass->getMetadataFactory());
+  try {
+    k_p->child_item.erase_sig(k_ass);
+    k_ass->deleteData(k_ass->getMetadataFactory());
+  } catch (const std::runtime_error&) {
+    DOODLE_LOG_WARN("无法找到 id {} {} ", k_ass->getId(), k_ass->showStr())
+  }
 }
 actn_assfile_delete::actn_assfile_delete() {
   p_name = "删除";

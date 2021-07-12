@@ -318,7 +318,8 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
     : details::pej_widget_base(),
       p_list_box(in_window),
       p_assets(),
-      p_root() {
+      p_root(),
+      p_conn() {
   p_list_box.append_header("id");
   p_list_box.append_header("版本");
   p_list_box.append_header("评论", 300);
@@ -335,7 +336,7 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
 
     k_factory->set_drop_file(in_.files);
     k_factory->set_metadate({}, p_root);
-    auto k_selected = p_list_box.selected();
+    auto k_selected = p_list_box.checked();
     MetadataPtr k_ptr{};
     /// 如果有选择就获得选择, 没有就获得根, 再没有就返回
     if (k_selected.empty()) {
@@ -360,9 +361,8 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
     p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
   });
 
-  p_list_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_) {
+  p_list_box.events().mouse_down.connect(menu_assist{[this](const nana::arg_mouse& in_) {
     p_menu.clear();
-
     auto k_factory  = std::make_shared<menu_factory>(in_.window_handle);
     this->p_factory = k_factory;
     auto k_selected = p_list_box.selected();
@@ -395,17 +395,17 @@ void assets_attr_widget::set_ass(const MetadataPtr& in_ptr) {
     return;
   }
   p_root = in_ptr;
-  in_ptr->select_indb();
-  in_ptr->sortChildItems();
+  p_root->select_indb();
+  p_root->sortChildItems();
 
-  if (!in_ptr->hasChild()) {
+  if (!p_root->hasChild()) {
     DOODLE_LOG_WARN("选中项没有子项")
     return;
   }
 
   details::draw_guard<nana::listbox> k_guard{p_list_box};
 
-  for (auto& k_i : in_ptr->child_item) {
+  for (auto& k_i : p_root->child_item) {
     if (!details::is_class<AssetsFile>(k_i)) {
       DOODLE_LOG_WARN("项目不是文件项")
       continue;
@@ -420,16 +420,68 @@ void assets_attr_widget::set_ass(const MetadataPtr& in_ptr) {
                       .append(k_file, true);
     k_file->user_date = k_item.pos();
 
-    std::weak_ptr<AssetsFile> k_ptr{k_file};
-    k_file->sig_change.connect([k_ptr, this]() {
-      auto k_f = k_ptr.lock();
-      auto k_i = p_list_box.at(std::any_cast<nana::listbox::index_pair>(k_f->user_date));
-      k_i.text(2, k_f->getComment().back()->getComment()).text(3, k_f->getTime()->showStr());
-    });
+    install_sig_one(k_file);
   }
+  install_sig();
+}
+void assets_attr_widget::install_sig() {
+  p_conn.emplace_back(boost::signals2::scoped_connection{
+      p_root->child_item.sig_push_back.connect([this](const MetadataPtr& in_) {
+        if (!details::is_class<AssetsFile>(in_))
+          return;
+        auto k_file = std::dynamic_pointer_cast<AssetsFile>(in_);
+        // 在这里我们插入文件
+        auto k_item = p_list_box.assoc(k_file->getDepartment())
+                          .text(std::string{magic_enum::enum_name(k_file->getDepartment())})
+                          .append(k_file, true);
+        k_file->user_date = k_item.pos();
+        install_sig_one(k_file);
+      })});
+  p_conn.emplace_back(boost::signals2::scoped_connection{
+      p_root->child_item.sig_insert.connect([this](const MetadataPtr& in_) {
+        if (!details::is_class<AssetsFile>(in_))
+          return;
+        auto k_file = std::dynamic_pointer_cast<AssetsFile>(in_);
+        // 在这里我们插入文件
+        auto k_item = p_list_box.assoc(k_file->getDepartment())
+                          .text(std::string{magic_enum::enum_name(k_file->getDepartment())})
+                          .append(k_file, true);
+        k_file->user_date = k_item.pos();
+        install_sig_one(k_file);
+      })});
+  p_conn.emplace_back(boost::signals2::scoped_connection{
+      p_root->child_item.sig_erase.connect([this](const MetadataPtr& in_) {
+        if (!details::is_class<AssetsFile>(in_))
+          return;
+        auto k_file = std::dynamic_pointer_cast<AssetsFile>(in_);
+        for (auto& k_i : p_list_box.assoc(k_file->getDepartment())) {
+          if (k_i.value<AssetsFilePtr>() == k_file) {
+            p_list_box.erase(k_i);
+          }
+        }
+        //        // 在这里我们插入文件
+        //        auto k_it = p_list_box.at(std::any_cast<nana::listbox::index_pair>(k_file->user_date));
+        //        if (k_it.value<AssetsFilePtr>() == k_file) {
+        //          p_list_box.erase(k_it);
+        //        } else {
+        //        }
+      })});
+}
+void assets_attr_widget::install_sig_one(std::shared_ptr<AssetsFile>& k_file) {
+  std::weak_ptr<AssetsFile> k_ptr{k_file};
+  p_conn.emplace_back(boost::signals2::scoped_connection{
+      k_file->sig_change.connect([k_ptr, this]() {
+        auto k_f = k_ptr.lock();
+        auto k_i = p_list_box.at(std::any_cast<nana::listbox::index_pair>(k_f->user_date));
+        k_i.text(0, k_f->getIdStr())
+            .text(1, k_f->getVersionStr())
+            .text(2, k_f->getComment().empty() ? "none" : k_f->getComment().back()->getComment())
+            .text(3, k_f->getTime()->showStr());
+      })});
 }
 
 void assets_attr_widget::clear() {
+  p_conn.clear();
   p_list_box.clear();
   p_list_box.erase();
   p_menu.clear();

@@ -86,6 +86,9 @@ class DOODLELIB_API assets_attr_widget : public details::pej_widget_base {
   MetadataPtr p_root;
 
   std::vector<AssetsFilePtr> p_assets;
+  std::vector<boost::signals2::scoped_connection> p_conn;
+  void install_sig();
+  void install_sig_one(std::shared_ptr<AssetsFile>& k_file);
 
  public:
   explicit assets_attr_widget(nana::window in_window);
