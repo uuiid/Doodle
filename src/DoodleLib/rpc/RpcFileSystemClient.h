@@ -40,7 +40,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
    *                    std::optional<bool>,  服务器文件是否存在
    *                   > 
    */
-  std::tuple<std::optional<bool>, std::optional<bool>, std::optional<bool> > compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  std::tuple<std::optional<bool>, std::optional<bool>, bool > compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
   /**
    * @brief 这个是递归调用进行下载
    * 
@@ -118,7 +118,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
 
   void DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path);
   void UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path = {});
-  // TODO! 要将比较函数提取为函子, 作为同步功能的基础
+  // TODO: 要将比较函数提取为函子, 作为同步功能的基础
   //  void DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path,const syn_fun& in_syn_fun );
   //  void UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path,const syn_fun& in_syn_fun );
 };
