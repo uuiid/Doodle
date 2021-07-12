@@ -78,7 +78,7 @@ class DOODLELIB_API action : public details::no_copy {
    */
   virtual std::string class_name();
 
-  virtual void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) = 0;
+  virtual long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) = 0;
   virtual void operator()(const MetadataPtr& in_data, const MetadataPtr& in_parent);
 };
 
@@ -94,19 +94,18 @@ class DOODLELIB_API action_indirect : public action {
 // template <class arg_type>
 class DOODLELIB_API action_composited final : public action_indirect<action::arg_null> {
  protected:
-
  public:
   action_composited() = default;
   std::vector<action_ptr> p_action_list;
 
-  virtual void set_class_name(const std::string& in_name) ;
-  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override ;
+  virtual void set_class_name(const std::string& in_name);
+  long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
 class DOODLELIB_API actn_null : public action_indirect<action::arg_null> {
  public:
   actn_null();
 
-  inline void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override{};
+  inline long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override{ return {};};
 };
 }  // namespace doodle

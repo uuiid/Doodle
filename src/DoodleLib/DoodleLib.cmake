@@ -119,5 +119,6 @@ set(
     rpc/RpcMetadaataServer.cpp
     rpc/RpcMetadataClient.cpp
     rpc/RpcServerHandle.cpp
+    threadPool/long_term.cpp
     toolkit/toolkit.cpp
 )

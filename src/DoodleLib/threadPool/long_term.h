@@ -10,11 +10,15 @@ namespace doodle {
  * 
  */
 class long_term {
+  /**
+   * @brief 其他线程运行结果（void 是闭包的包装， 只是用来确定完成结果的）
+   * 
+   */
+  bool p_fulfil;
  public:
-  long_term() : sig_progress(),
-                sig_message_result(),
-                sig_finished(){};
+  long_term();
   virtual ~long_term() = default;
+
   /**
    * @brief 这个是步进信号, 到一百是完成
    * 
@@ -31,6 +35,9 @@ class long_term {
    * 
    */
   boost::signals2::signal<void()> sig_finished;
+
+  bool fulfil() const;
+
 };
 
 }  // namespace doodle

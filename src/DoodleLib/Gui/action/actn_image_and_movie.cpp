@@ -49,10 +49,10 @@ bool actn_image_to_movie::is_accept(const arg_& in_any) {
   return false;
 }
 
-void actn_image_to_movie::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+long_term_ptr actn_image_to_movie::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_path = sig_get_arg().value();
   if (k_path.is_cancel)
-    return;
+    return {};
   auto k_shot = in_parent->find_parent_class<Shot>();
   auto k_eps  = in_parent->find_parent_class<Episodes>();
 
@@ -85,8 +85,9 @@ void actn_image_to_movie::run(const MetadataPtr& in_data, const MetadataPtr& in_
     k_path.out_file = FSys::add_time_stamp(k_path.out_file);
 
   auto k_fun = k_image.create_video_asyn(k_path.out_file);
-  
+
   FSys::open_explorer(k_path.out_file);
+  return k_fun;
 }
 
 }  // namespace doodle

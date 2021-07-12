@@ -18,7 +18,7 @@ class DOODLELIB_API actn_assfile_create : public action_indirect<action::arg_str
    * @param in_any 显示名称（std::string）
    */
   explicit actn_assfile_create(std::any&& in_any);
-  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
+  long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
 class DOODLELIB_API actn_assfile_add_com : public action_indirect<action::arg_str> {
@@ -26,7 +26,7 @@ class DOODLELIB_API actn_assfile_add_com : public action_indirect<action::arg_st
   using arg = arg_str;
   actn_assfile_add_com();
   explicit actn_assfile_add_com(std::any&& in_any);
-  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
+  long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
 namespace action_arg {
@@ -44,7 +44,7 @@ class DOODLELIB_API actn_assfile_datetime : public action_indirect<action_arg::a
   using arg = action_arg::arg_time;
   actn_assfile_datetime();
   explicit actn_assfile_datetime(std::any&& in_any);
-  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
+  long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 class DOODLELIB_API actn_assfile_delete : public action_indirect<action::arg_null> {
  public:
@@ -52,7 +52,7 @@ class DOODLELIB_API actn_assfile_delete : public action_indirect<action::arg_nul
 
   actn_assfile_delete();
   explicit actn_assfile_delete(std::any&& in_any);
-  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
+  long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
 }  // namespace doodle

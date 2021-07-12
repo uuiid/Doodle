@@ -39,7 +39,7 @@ class DOODLELIB_API actn_image_to_movie : public action_indirect<action_arg::arg
   actn_image_to_movie();
 
   bool is_accept(const arg_& in_any) override;
-  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
+  long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
 }  // namespace doodle

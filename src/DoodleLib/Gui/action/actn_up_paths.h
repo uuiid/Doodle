@@ -18,10 +18,9 @@ class actn_up_paths : public action_indirect<action::arg_paths> {
    * @brief 这里我们需要 std::vector<FSys::path> 传入
    * @param in_paths 需要 std::vector<FSys::path> 传入
    */
-  explicit actn_up_paths(std::any && in_paths);
+  explicit actn_up_paths(std::any&& in_paths);
 
-  void run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
-
+  long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
 }  // namespace doodle
