@@ -10,14 +10,16 @@
 #include <Metadata/AssetsPath.h>
 #include <rpc/RpcFileSystemClient.h>
 
-doodle::actn_up_paths::actn_up_paths() {
+namespace doodle {
+
+actn_up_paths::actn_up_paths() {
   p_name = "直接上传多个路径";
 }
-doodle::actn_up_paths::actn_up_paths(std::any&& in_paths) {
+actn_up_paths::actn_up_paths(std::any&& in_paths) {
   p_name = "直接上传多个路径";
 }
 
-void doodle::actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+void actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_ch = CoreSet::getSet().getRpcFileSystemClient();
 
   auto k_path = sig_get_arg().value().date;
@@ -47,3 +49,4 @@ void doodle::actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& i
   k_ass_file->setPathFile(k_list);
   k_ass_file->updata_db(in_parent->getMetadataFactory());
 }
+}  // namespace doodle

@@ -5,6 +5,7 @@
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <Logger/Logger.h>
 #include <PinYin/convert.h>
+#include <core/DoodleLib.h>
 
 #include <opencv2/opencv.hpp>
 namespace doodle {
@@ -20,7 +21,8 @@ ImageSequence::ImageSequence(const FSys::path &path_dir, const std::string &text
     : long_term(),
       p_paths(),
       p_Text(std::move(clearString(text))),
-      stride() {
+      stride(),
+      p_long_sig(std::make_shared<long_term>()) {
   this->seanDir(path_dir);
   for (auto &path : p_paths) {
     if (!FSys::is_regular_file(path)) {
@@ -120,12 +122,18 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
 
     ++k_i;
     this->stride(((float)1 / k_size_len) * (float)100);
-    this->sig_progress(boost::numeric_cast<int>((k_i / k_size_len) * 100));
+    p_long_sig->sig_progress(boost::numeric_cast<int>((k_i / k_size_len) * 100));
 
     video << k_image_resized;
   }
-  this->sig_message_result(fmt::format("成功创建视频 {}", out_file));
-  this->sig_finished();
+  p_long_sig->sig_message_result(fmt::format("成功创建视频 {}", out_file));
+  p_long_sig->sig_finished();
+}
+
+long_term_ptr ImageSequence::create_video_asyn(const FSys::path &out_file) {
+  DoodleLib::Get().get_thread_pool()->enqueue(
+      [this, out_file]() { this->createVideoFile(out_file); });
+  return p_long_sig;
 }
 
 //ImageSequenceBatch::ImageSequenceBatch(decltype(p_paths) dirs)

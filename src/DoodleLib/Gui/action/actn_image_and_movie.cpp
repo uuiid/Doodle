@@ -84,8 +84,8 @@ void actn_image_to_movie::run(const MetadataPtr& in_data, const MetadataPtr& in_
   if (FSys::exists(k_path.out_file))
     k_path.out_file = FSys::add_time_stamp(k_path.out_file);
 
-  k_image.createVideoFile(k_path.out_file);
-
+  auto k_fun = k_image.create_video_asyn(k_path.out_file);
+  
   FSys::open_explorer(k_path.out_file);
 }
 

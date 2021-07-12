@@ -21,6 +21,7 @@ set(
     Gui/action/project_action.h
     Gui/factory/menu_factory.h
     Gui/main_windows.h
+    Gui/progress.h
     Gui/setting_windows.h
     Logger/Logger.h
     Logger/LoggerTemplate.h
@@ -60,6 +61,7 @@ set(
     libWarp/lru_cache_policy.hpp
     libWarp/nana_warp.h
     libWarp/protobuf_warp.h
+    libWarp/protobuf_warp_cpp.h
     libWarp/sqlppWarp.h
     libWarp/wxWidgetWarp.h
     rpc/RpcFileSystemClient.h
@@ -67,9 +69,8 @@ set(
     rpc/RpcMetadaataServer.h
     rpc/RpcMetadataClient.h
     rpc/RpcServerHandle.h
-        threadPool/long_term.h
     threadPool/ThreadPool.h
-    toolkit/MessageAndProgress.h
+    threadPool/long_term.h
     toolkit/toolkit.h)
 set(
     DOODLELIB_SOURCE
@@ -89,6 +90,7 @@ set(
     Gui/action/project_action.cpp
     Gui/factory/menu_factory.cpp
     Gui/main_windows.cpp
+    Gui/progress.cpp
     Gui/setting_windows.cpp
     Logger/Logger.cpp
     Metadata/Assets.cpp
@@ -117,6 +119,5 @@ set(
     rpc/RpcMetadaataServer.cpp
     rpc/RpcMetadataClient.cpp
     rpc/RpcServerHandle.cpp
-    toolkit/MessageAndProgress.cpp
     toolkit/toolkit.cpp
 )

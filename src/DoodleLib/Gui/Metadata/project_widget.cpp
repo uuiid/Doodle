@@ -480,6 +480,7 @@ void assets_attr_widget::clear() {
   p_list_box.erase();
   p_menu.clear();
   p_root.reset();
+  
 }
 nana::listbox& assets_attr_widget::get_widget() {
   return p_list_box;

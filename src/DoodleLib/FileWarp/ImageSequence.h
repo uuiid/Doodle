@@ -7,6 +7,7 @@ namespace doodle {
 class DOODLELIB_API ImageSequence : public long_term {
   std::vector<FSys::path> p_paths;
   std::string p_Text;
+  long_term_ptr p_long_sig;
 
   static std::string clearString(const std::string& str);
 
@@ -19,6 +20,8 @@ class DOODLELIB_API ImageSequence : public long_term {
 
   void setText(const std::string& text);
   void createVideoFile(const FSys::path& out_file);
+  long_term_ptr create_video_asyn(const FSys::path& out_file);
+
 
   boost::signals2::signal<void(float)> stride;
 };

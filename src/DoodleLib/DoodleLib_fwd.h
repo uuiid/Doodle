@@ -165,7 +165,7 @@ DOODLELIB_API inline path add_time_stamp(const path &in_path) {
 
   return k_path;
 }
-DOODLELIB_API void open_explorer(const path &in_path) ;
+DOODLELIB_API void open_explorer(const path &in_path);
 }  // namespace FSys
 
 using ConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
@@ -199,6 +199,7 @@ class actn_up_paths;
 class DoodleLib;
 class ThreadPool;
 class menu_factory_base;
+class long_term;
 
 using MetadataPtr               = std::shared_ptr<Metadata>;
 using MetadataConstPtr          = std::shared_ptr<const Metadata>;
@@ -225,6 +226,7 @@ using UploadDirAndFileActionPre = std::shared_ptr<actn_up_paths>;
 using DoodleLibPtr              = std::unique_ptr<DoodleLib>;
 using ThreadPoolPtr             = std::shared_ptr<ThreadPool>;
 using menu_factory_ptr          = std::shared_ptr<menu_factory_base>;
+using long_term_ptr             = std::shared_ptr<long_term>;
 class Doodle;
 [[maybe_unused]] DOODLELIB_API DoodleLibPtr make_doodle_lib();
 template <typename SSC, typename SSN>
