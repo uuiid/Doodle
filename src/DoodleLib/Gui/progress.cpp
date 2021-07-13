@@ -12,11 +12,30 @@ namespace doodle {
 progress::progress() = default;
 
 progress::progress(nana::window in_w, long_term_ptr in_, std::string in_title)
-    : nana::form(in_w),
+    : nana::form(in_w, nana::size{600, 150}),
+      p_layout(*this),
+      _label(*this, "运行中..."),
       _pro(nana::progress(*this)) {
+  p_layout.div(R"(<> 
+  <
+    weight=70%
+    vertical 
+    <>
+    <
+      weight=80%
+      vertical
+      pro
+      arrange=[25,25]
+    >
+    <>
+  > 
+  <>
+  )");
+  p_layout.field("pro") << _label << _pro;
   _pro.amount(100);
   in_->sig_finished.connect([this]() {
     _pro.value(100);
+    this->close();
   });
   in_->sig_progress.connect([this](int in_) {
     _pro.value(((in_ < 0 ? 0 : in_) > 99 ? 99 : in_));
@@ -26,7 +45,20 @@ progress::progress(nana::window in_w, long_term_ptr in_, std::string in_title)
     msg << in_str;
     msg();
   }));
+  p_layout.collocate();
+}
 
+void progress::create_progress(nana::window in_w, long_term_ptr in_, std::string in_title) {
+  if (in_->fulfil()) {
+    DOODLE_LOG_INFO("已经完成， 不需要显示进度条")
+    nana::msgbox msg{in_w, "结果"};
+    msg << in_->message_result();
+    msg();
+    return;
+  }
+
+  progress k_{in_w, in_, in_title};
+  k_.modality();
 }
 
 }  // namespace doodle

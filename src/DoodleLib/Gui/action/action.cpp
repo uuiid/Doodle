@@ -13,8 +13,8 @@ action::action() {
 std::string action::class_name() {
   return p_name;
 }
-void action::operator()(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  run(in_data, in_parent);
+long_term_ptr action::operator()(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+  return run(in_data, in_parent);
 }
 
 void action_composited::set_class_name(const std::string& in_name) {

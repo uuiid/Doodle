@@ -66,9 +66,9 @@ long_term_ptr actn_image_to_movie::run(const MetadataPtr& in_data, const Metadat
     k_str += fmt::format(" : {}", k_eps->str());
   }
 
-  ImageSequence k_image{k_path.image_list.front(), CoreSet::getSet().getUser_en()};
-
-  k_image.setText(k_str);  /// 设置文件水印
+  auto k_image = std::make_shared<ImageSequence>(
+      k_path.image_list.front(), CoreSet::getSet().getUser_en());
+  k_image->setText(k_str);  /// 设置文件水印
   /// 添加文件路径名称
   boost::replace_all(k_str, " ", "_");  /// 替换不好的文件名称组件
   boost::replace_all(k_str, ":", "_");  /// 替换不好的文件名称组件
@@ -84,9 +84,9 @@ long_term_ptr actn_image_to_movie::run(const MetadataPtr& in_data, const Metadat
   if (FSys::exists(k_path.out_file))
     k_path.out_file = FSys::add_time_stamp(k_path.out_file);
 
-  auto k_fun = k_image.create_video_asyn(k_path.out_file);
+  auto k_fun = k_image->create_video_asyn(k_path.out_file);
 
-  FSys::open_explorer(k_path.out_file);
+  FSys::open_explorer(k_path.out_file.parent_path());
   return k_fun;
 }
 

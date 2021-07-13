@@ -5,10 +5,13 @@
 #include "menu_factory.h"
 
 #include <Gui/action/action_import.h>
+#include <Gui/progress.h>
 #include <Metadata/AssetsFile.h>
 #include <Metadata/Metadata_cpp.h>
+#include <threadPool/long_term.h>
 
 #include <nana/gui/filebox.hpp>
+
 namespace doodle {
 
 menu_factory_base::menu_factory_base(nana::window in_window)
@@ -31,7 +34,10 @@ void menu_factory_base::operator()(nana::menu& in_menu) {
           k_i->class_name(),
           [k_i, this](const nana::menu::item_proxy&) {
             try {
-              (*k_i)(p_metadata, p_parent);
+              auto k_long = (*k_i)(p_metadata, p_parent);
+              if (k_long) {
+                progress::create_progress(p_window, k_long, "结果");
+              }
             } catch (DoodleError& error) {
               DOODLE_LOG_WARN(error.what())
               nana::msgbox k_msgbox{p_window, error.what()};

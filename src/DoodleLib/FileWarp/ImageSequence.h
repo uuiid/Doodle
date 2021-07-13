@@ -4,7 +4,7 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
-class DOODLELIB_API ImageSequence : public long_term {
+class DOODLELIB_API ImageSequence : public std::enable_shared_from_this<ImageSequence> {
   std::vector<FSys::path> p_paths;
   std::string p_Text;
   long_term_ptr p_long_sig;

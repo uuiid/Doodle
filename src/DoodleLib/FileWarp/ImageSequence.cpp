@@ -18,7 +18,7 @@ std::string ImageSequence::clearString(const std::string &str) {
 }
 
 ImageSequence::ImageSequence(const FSys::path &path_dir, const std::string &text)
-    : long_term(),
+    : std::enable_shared_from_this<ImageSequence>(),
       p_paths(),
       p_Text(std::move(clearString(text))),
       stride(),
@@ -126,13 +126,14 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
 
     video << k_image_resized;
   }
-  p_long_sig->sig_message_result(fmt::format("成功创建视频 {}", out_file));
   p_long_sig->sig_finished();
+  p_long_sig->sig_message_result(fmt::format("成功创建视频 {}", out_file));
 }
 
 long_term_ptr ImageSequence::create_video_asyn(const FSys::path &out_file) {
+  auto k_ptr = shared_from_this();
   DoodleLib::Get().get_thread_pool()->enqueue(
-      [this, out_file]() { this->createVideoFile(out_file); });
+      [k_ptr, out_file]() { k_ptr->createVideoFile(out_file); });
   return p_long_sig;
 }
 

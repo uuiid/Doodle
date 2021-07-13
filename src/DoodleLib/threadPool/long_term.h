@@ -15,6 +15,8 @@ class long_term {
    * 
    */
   bool p_fulfil;
+  std::string p_str;
+
  public:
   long_term();
   virtual ~long_term() = default;
@@ -31,13 +33,13 @@ class long_term {
 
   boost::signals2::signal<void(const std::string& message)> sig_message_result;
   /**
-   * @brief 完成信号
+   * @brief 完成信号, 完成信号要在结果信息之前发出
    * 
    */
   boost::signals2::signal<void()> sig_finished;
 
   bool fulfil() const;
-
+  std::string message_result() const;
 };
 
 }  // namespace doodle

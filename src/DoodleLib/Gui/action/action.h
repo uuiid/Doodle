@@ -79,7 +79,7 @@ class DOODLELIB_API action : public details::no_copy {
   virtual std::string class_name();
 
   virtual long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) = 0;
-  virtual void operator()(const MetadataPtr& in_data, const MetadataPtr& in_parent);
+  virtual long_term_ptr operator()(const MetadataPtr& in_data, const MetadataPtr& in_parent);
 };
 
 template <class arg_type>

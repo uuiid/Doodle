@@ -23,14 +23,8 @@ std::time_t last_write_time_t(const path &in_path) {
 }
 
 void open_explorer(const path &in_path) {
-  std::cout << std::endl;
-  path k_p{};
-  if (is_regular_file(in_path))
-    k_p = in_path.parent_path();
-  else
-    k_p = in_path;
-  DOODLE_LOG_INFO("打开路径: {}", k_p.generic_string());
-  ShellExecute(nullptr, (L"open"), k_p.generic_wstring().c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
+  DOODLE_LOG_INFO("打开路径: {}", in_path.generic_string());
+  ShellExecute(nullptr, (L"open"), in_path.generic_wstring().c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
   // std::system(fmt::format(R"(explorer.exe {})", in_path.generic_string()).c_str());
 }
 
