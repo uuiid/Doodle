@@ -18,8 +18,9 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
 //  std::setlocale(LC_NUMERIC, "C");
 //  std::setlocale(LC_TIME, "C");
 //  std::setlocale(LC_MONETARY, "C");
-  std::locale::global(std::locale::classic());
+//  std::locale::global(std::locale::classic());
   //  std::wcout.imbue(std::locale{".UTF8"});
+  std::setlocale(LC_CTYPE, ".UTF8");
 
   auto doodleLib = doodle::make_doodle_lib();
   doodle::doodle_app app{};
