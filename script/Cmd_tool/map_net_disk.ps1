@@ -12,7 +12,8 @@ if ((Test-Connection "192.168.10.250" -Count 1 -Delay 1 -Quiet) -and (Test-Path 
         @("R:", "\\192.168.10.250\public\WanGuXieDi", "万古邪帝"),
         @("Q:", "\\192.168.10.250\public\renjianzuideyi", "人间最得意"),
         @("P:", "\\192.168.10.250\public\WanGuShenHua", "万古神话"),
-        @("O:", "\\192.168.10.250\public\11-剪辑", "剪辑")
+        @("O:", "\\192.168.10.250\public\11-剪辑", "剪辑"),
+        @("N:", "\\192.168.10.250\public\HouQi", "后期")
     )
 }
 elseif ( (Test-Connection "192.168.10.218" -Count 1 -Delay 1 -Quiet) -and (Test-Path -Path "\\192.168.10.218\changanhuanjie")) {
