@@ -38,7 +38,7 @@ progress::progress(nana::window in_w, long_term_ptr in_, std::string in_title)
     this->close();
   });
   in_->sig_progress.connect([this](int in_) {
-    _pro.value(((in_ < 0 ? 0 : in_) > 99 ? 99 : in_));
+      _pro.value(((in_ < 0 ? 0 : in_) > 99 ? 99 : in_));
   });
   in_->sig_message_result.connect(([this](const std::string& in_str) {
     nana::msgbox msg{*this, "结果"};

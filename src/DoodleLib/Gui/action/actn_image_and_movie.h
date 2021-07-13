@@ -29,6 +29,9 @@ class DOODLELIB_API arg_path : public action::_arg {
 }  // namespace action_arg
 
 class DOODLELIB_API actn_image_to_movie : public action_indirect<action_arg::arg_path> {
+  FSys::path p_video_path;
+  ImageSequencePtr p_image_sequence;
+
  public:
   using arg_ = action_arg::arg_path;
 
@@ -37,8 +40,23 @@ class DOODLELIB_API actn_image_to_movie : public action_indirect<action_arg::arg
    * 
    */
   actn_image_to_movie();
+  virtual bool is_async() override;
+
+  FSys::path get_video_path() const;
 
   bool is_accept(const arg_& in_any) override;
+  long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
+};
+
+class DOODLELIB_API actn_image_to_move_up : public actn_composited<action_arg::arg_path> {
+  std::shared_ptr<actn_image_to_movie> p_image_action;
+  std::shared_ptr<actn_up_paths> p_up_path;
+
+ public:
+  using arg_ = action_arg::arg_path;
+
+  actn_image_to_move_up();
+  virtual bool is_async() override;
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 

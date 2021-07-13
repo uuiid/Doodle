@@ -5,6 +5,7 @@
 #include "actn_image_and_movie.h"
 
 #include <FileWarp/ImageSequence.h>
+#include <Gui/action/actn_up_paths.h>
 #include <Metadata/Episodes.h>
 #include <Metadata/Shot.h>
 #include <core/CoreSet.h>
@@ -12,8 +13,15 @@
 #include <boost/algorithm/string.hpp>
 
 namespace doodle {
-actn_image_to_movie::actn_image_to_movie() {
+actn_image_to_movie::actn_image_to_movie()
+    : p_video_path(),
+      p_image_sequence(std::make_shared<ImageSequence>()) {
   p_name = "转换视频";
+  p_term = p_image_sequence->get_long_term();
+}
+
+FSys::path actn_image_to_movie::get_video_path() const {
+  return p_video_path;
 }
 
 bool actn_image_to_movie::is_accept(const arg_& in_any) {
@@ -66,9 +74,7 @@ long_term_ptr actn_image_to_movie::run(const MetadataPtr& in_data, const Metadat
     k_str += fmt::format(" : {}", k_eps->str());
   }
 
-  auto k_image = std::make_shared<ImageSequence>(
-      k_path.image_list.front(), CoreSet::getSet().getUser_en());
-  k_image->setText(k_str);  /// 设置文件水印
+  p_image_sequence->setText(k_str);  /// 设置文件水印
   /// 添加文件路径名称
   boost::replace_all(k_str, " ", "_");  /// 替换不好的文件名称组件
   boost::replace_all(k_str, ":", "_");  /// 替换不好的文件名称组件
@@ -80,14 +86,53 @@ long_term_ptr actn_image_to_movie::run(const MetadataPtr& in_data, const Metadat
   if (!FSys::exists(k_path.out_file.parent_path()))
     FSys::create_directories(k_path.out_file.parent_path());
 
-  /// 防止重复, 添加时间戳
-  if (FSys::exists(k_path.out_file))
-    k_path.out_file = FSys::add_time_stamp(k_path.out_file);
+  /// 防止重复, 添加时间戳备份
+  if (FSys::exists(k_path.out_file)) {
+    FSys::backup_file(k_path.out_file);
+  }
 
-  auto k_fun = k_image->create_video_asyn(k_path.out_file);
+  p_video_path = k_path.out_file;
+  p_image_sequence->set_path(k_path.image_list.front());
+  p_image_sequence->create_video_asyn(k_path.out_file);
 
   FSys::open_explorer(k_path.out_file.parent_path());
-  return k_fun;
+  return p_term;
+}
+bool actn_image_to_movie::is_async() {
+  return true;
+}
+
+actn_image_to_move_up::actn_image_to_move_up()
+    : p_image_action(std::make_shared<actn_image_to_movie>()),
+      p_up_path(std::make_shared<actn_up_paths>()) {
+  p_name = "制作拍屏并上传";
+  p_image_action->sig_get_arg.connect([this]() { return this->sig_get_arg().value(); });
+
+  /// 连接上传路径回调连接
+  p_up_path->sig_get_arg.connect([this]() {
+    auto k_vector = std::vector<FSys::path>{this->p_image_action->get_video_path()};
+    return actn_up_paths::arg_{k_vector};
+  });
+}
+
+bool actn_image_to_move_up::is_async() {
+  return true;
+}
+
+long_term_ptr actn_image_to_move_up::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+  auto k_v = action_indirect::sig_get_arg().value();
+  if (k_v.is_cancel)
+    return {};
+
+  auto k_conv_image = p_image_action->run(in_data, in_parent);
+  p_term_list.push_back(k_conv_image);
+
+  /// 运行转换完成后的上传文件回调
+  k_conv_image->sig_finished.connect([this, in_data, in_parent]() {
+    this->p_up_path->run(in_data, in_parent);
+  });
+
+  return actn_composited<arg_>::run(in_data, in_parent);
 }
 
 }  // namespace doodle

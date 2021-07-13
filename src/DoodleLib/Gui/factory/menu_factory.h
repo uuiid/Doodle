@@ -12,7 +12,9 @@ namespace doodle {
  * @brief 创建各种菜单的辅助类
  * 
  */
-class DOODLELIB_API menu_factory_base {
+class DOODLELIB_API menu_factory_base
+    : public std::enable_shared_from_this<menu_factory_base>,
+      public details::no_copy {
  protected:
   CoreSet& p_set;
   std::vector<action_ptr> p_action;
@@ -85,7 +87,7 @@ class DOODLELIB_API dragdrop_menu_factory : public menu_factory_base {
   void create_menu(const EpisodesPtr& in_ptr) override;
   void create_menu(const ShotPtr& in_ptr) override;
   void create_menu(const AssetsFilePtr& in_ptr) override;
- 
+
   explicit dragdrop_menu_factory(nana::window in_window)
       : menu_factory_base(in_window),
         p_paths(){};
@@ -97,5 +99,6 @@ class DOODLELIB_API dragdrop_menu_factory : public menu_factory_base {
    */
   void set_drop_file(const std::vector<FSys::path>& in_path);
   void drop_menu();
+  void create_image_and_up();
 };
 }  // namespace doodle

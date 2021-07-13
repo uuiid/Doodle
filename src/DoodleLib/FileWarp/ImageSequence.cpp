@@ -16,14 +16,26 @@ std::string ImageSequence::clearString(const std::string &str) {
 
   return str_r;
 }
-
+ImageSequence::ImageSequence()
+    : p_paths(),
+      p_Text(),
+      p_long_sig(std::make_shared<long_term>()) {
+}
 ImageSequence::ImageSequence(const FSys::path &path_dir, const std::string &text)
     : std::enable_shared_from_this<ImageSequence>(),
       p_paths(),
       p_Text(std::move(clearString(text))),
       stride(),
       p_long_sig(std::make_shared<long_term>()) {
-  this->seanDir(path_dir);
+  set_path(path_dir);
+}
+
+bool ImageSequence::hasSequence() {
+  return !p_paths.empty();
+}
+
+void ImageSequence::set_path(const FSys::path &dir) {
+  this->seanDir(dir);
   for (auto &path : p_paths) {
     if (!FSys::is_regular_file(path)) {
       throw DoodleError("不是文件, 无法识别");
@@ -31,8 +43,8 @@ ImageSequence::ImageSequence(const FSys::path &path_dir, const std::string &text
   }
 }
 
-bool ImageSequence::hasSequence() {
-  return !p_paths.empty();
+long_term_ptr ImageSequence::get_long_term() {
+  return p_long_sig;
 }
 
 bool ImageSequence::seanDir(const FSys::path &dir) {
@@ -67,64 +79,65 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
   if (!FSys::exists(out_file.parent_path()))
     FSys::create_directories(out_file.parent_path());
 
-  const static cv::Size k_size{1280, 720};
+  {
+    const static cv::Size k_size{1280, 720};
+    auto video           = cv::VideoWriter{out_file.generic_string(),
+                                 cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
+                                 25,
+                                 cv::Size(1280, 720)};
+    auto k_image         = cv::Mat{};
+    auto k_image_resized = cv::Mat{};
+    auto k_clone         = cv::Mat{};
 
-  auto video           = cv::VideoWriter{out_file.generic_string(),
-                               cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
-                               25,
-                               cv::Size(1280, 720)};
-  auto k_image         = cv::Mat{};
-  auto k_image_resized = cv::Mat{};
-  auto k_clone         = cv::Mat{};
+    auto k_size_len = boost::numeric_cast<float>(p_paths.size());
+    auto k_i        = float{0};
 
-  auto k_size_len = boost::numeric_cast<float>(p_paths.size());
-  auto k_i        = float{0};
+    //排序图片
+    std::sort(p_paths.begin(), p_paths.end(),
+              [](const FSys::path &k_r, const FSys::path &k_l) -> bool { return k_r.stem() < k_l.stem(); });
 
-  //排序图片
-  std::sort(p_paths.begin(), p_paths.end(),
-            [](const FSys::path &k_r, const FSys::path &k_l) -> bool { return k_r.stem() < k_l.stem(); });
+    for (auto &&path : p_paths) {
+      k_image = cv::imread(path.generic_string());
+      if (k_image.empty())
+        throw DoodleError("open cv not read image");
+      if (k_image.cols != 1280 || k_image.rows != 720)
+        cv::resize(k_image, k_image_resized, k_size);
+      else
+        k_image_resized = k_image;
+      int baseLine{};
 
-  for (auto &&path : p_paths) {
-    k_image = cv::imread(path.generic_string());
-    if (k_image.empty())
-      throw DoodleError("open cv not read image");
-    if (k_image.cols != 1280 || k_image.rows != 720)
-      cv::resize(k_image, k_image_resized, k_size);
-    else
-      k_image_resized = k_image;
-    int baseLine{};
+      {  //创建水印
+        k_clone          = k_image_resized.clone();
+        int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+        double fontScale = 1;
+        int thickness    = 2;
+        int baseline     = 0;
+        auto textSize    = cv::getTextSize(p_Text, fontFace,
+                                        fontScale, thickness, &baseline);
+        baseline += thickness;
+        textSize.width += baseline;
+        textSize.height += baseline;
+        // center the text
+        cv::Point textOrg((k_image_resized.cols - textSize.width) / 8,
+                          (k_image_resized.rows + textSize.height) / 8);
 
-    {  //创建水印
-      k_clone          = k_image_resized.clone();
-      int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
-      double fontScale = 1;
-      int thickness    = 2;
-      int baseline     = 0;
-      auto textSize    = cv::getTextSize(p_Text, fontFace,
-                                      fontScale, thickness, &baseline);
-      baseline += thickness;
-      textSize.width += baseline;
-      textSize.height += baseline;
-      // center the text
-      cv::Point textOrg((k_image_resized.cols - textSize.width) / 8,
-                        (k_image_resized.rows + textSize.height) / 8);
+        // draw the box
+        cv::rectangle(k_clone, textOrg + cv::Point(0, baseline),
+                      textOrg + cv::Point(textSize.width, -textSize.height),
+                      cv::Scalar(0, 0, 0), -1);
 
-      // draw the box
-      cv::rectangle(k_clone, textOrg + cv::Point(0, baseline),
-                    textOrg + cv::Point(textSize.width, -textSize.height),
-                    cv::Scalar(0, 0, 0), -1);
+        cv::addWeighted(k_clone, 0.7, k_image_resized, 0.3, 0, k_image_resized);
+        // then put the text itself
+        cv::putText(k_image_resized, p_Text, textOrg, fontFace, fontScale,
+                    cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+      }
 
-      cv::addWeighted(k_clone, 0.7, k_image_resized, 0.3, 0, k_image_resized);
-      // then put the text itself
-      cv::putText(k_image_resized, p_Text, textOrg, fontFace, fontScale,
-                  cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+      ++k_i;
+      this->stride(((float)1 / k_size_len) * (float)100);
+      p_long_sig->sig_progress(boost::numeric_cast<int>((k_i / k_size_len) * 100));
+
+      video << k_image_resized;
     }
-
-    ++k_i;
-    this->stride(((float)1 / k_size_len) * (float)100);
-    p_long_sig->sig_progress(boost::numeric_cast<int>((k_i / k_size_len) * 100));
-
-    video << k_image_resized;
   }
   p_long_sig->sig_finished();
   p_long_sig->sig_message_result(fmt::format("成功创建视频 {}", out_file));

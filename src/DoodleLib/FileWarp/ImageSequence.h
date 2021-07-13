@@ -14,19 +14,19 @@ class DOODLELIB_API ImageSequence : public std::enable_shared_from_this<ImageSeq
   bool seanDir(const FSys::path& dir);
 
  public:
+  ImageSequence();
   explicit ImageSequence(const FSys::path& path_dir, const std::string& text = {});
 
   bool hasSequence();
+  void set_path(const FSys::path& dir);
+  long_term_ptr get_long_term();
 
   void setText(const std::string& text);
   void createVideoFile(const FSys::path& out_file);
   long_term_ptr create_video_asyn(const FSys::path& out_file);
 
-
   boost::signals2::signal<void(float)> stride;
 };
-
-using ImageSequencePtr = std::shared_ptr<ImageSequence>;
 
 //class DOODLELIB_API ImageSequenceBatch : public LongTerm {
 //  std::vector<FSys::path> p_paths;

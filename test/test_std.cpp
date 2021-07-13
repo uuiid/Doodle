@@ -89,7 +89,8 @@ TEST(DSTD, regex) {
 TEST(DSTD, u8stringAndString) {
   auto k_local = boost::locale::generator().generate("");
   boost::filesystem::path::imbue(k_local);
-  // std::setlocale(LC_ALL, "zh_CN.UTF-8");
+//  std::locale::global(std::locale{".UTF8"});
+  std::setlocale(LC_CTYPE, ".UTF8");
   std::filesystem::path str{L"D:/哈哈/scoo+1235"};
   boost::filesystem::path str_b{"D:/哈哈/scoo+1235"};
   // std::cout << std::string{str2.begin(), str2.end()} << std::endl;

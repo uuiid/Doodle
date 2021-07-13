@@ -16,11 +16,15 @@ class long_term {
    */
   bool p_fulfil;
   std::string p_str;
+  std::double_t p_progress;
+  // std::mutex _mutex;
+  // std::recursive_mutex _mutex;
 
  public:
   long_term();
   virtual ~long_term() = default;
 
+  std::int32_t step(std::double_t in_);
   /**
    * @brief 这个是步进信号, 到一百是完成
    * 

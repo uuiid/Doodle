@@ -28,19 +28,22 @@ void menu_factory_base::set_metadate(const MetadataPtr& in_ptr, const MetadataPt
 }
 
 void menu_factory_base::operator()(nana::menu& in_menu) {
+  auto k_f = shared_from_this();
   for (auto& k_i : p_action) {
     if (k_i)
       in_menu.append(
           k_i->class_name(),
-          [k_i, this](const nana::menu::item_proxy&) {
+          [k_i, k_f](const nana::menu::item_proxy&) {
             try {
-              auto k_long = (*k_i)(p_metadata, p_parent);
-              if (k_long) {
-                progress::create_progress(p_window, k_long, "结果");
+              (*k_i)(k_f->p_metadata, k_f->p_parent);
+              if (k_i->is_async()) {
+                auto k_long = k_i->get_long_term_signal();
+                if (k_long)
+                  progress::create_progress(k_f->p_window, k_long, "结果");
               }
             } catch (DoodleError& error) {
               DOODLE_LOG_WARN(error.what())
-              nana::msgbox k_msgbox{p_window, error.what()};
+              nana::msgbox k_msgbox{k_f->p_window, error.what()};
               k_msgbox.show();
             }
           });
@@ -327,6 +330,7 @@ void dragdrop_menu_factory::drop_menu() {
       actn_image_to_movie::arg_ k_arg{};
       k_arg.image_list = {k_path};
       if (k_image->is_accept(k_arg)) {
+        /// 直接转换动画但是并不上传
         k_image->sig_get_arg.connect([this]() {
           actn_image_to_movie::arg_ k_arg{};
           k_arg.image_list = p_paths;
@@ -335,6 +339,8 @@ void dragdrop_menu_factory::drop_menu() {
         });
 
         p_action.push_back(k_image);
+
+        create_image_and_up();
       }
 
     } else if (FSys::is_regular_file(k_path)) {
@@ -346,6 +352,17 @@ void dragdrop_menu_factory::drop_menu() {
   }
   p_action.emplace_back(action_ptr{});
   p_action.emplace_back(std::make_shared<actn_null>());
+}
+void dragdrop_menu_factory::create_image_and_up() {
+  auto k_i_anf_up = std::make_shared<actn_image_to_move_up>();
+  k_i_anf_up->sig_get_arg.connect([this]() {
+    actn_image_to_move_up::arg_ k_arg{};
+    k_arg.image_list = p_paths;
+    k_arg.out_file   = CoreSet::getSet().getCacheRoot("imaeg_to_move");
+    return k_arg;
+  });
+
+  p_action.push_back(k_i_anf_up);
 }
 void dragdrop_menu_factory::set_drop_file(const std::vector<FSys::path>& in_path) {
   p_paths = in_path;

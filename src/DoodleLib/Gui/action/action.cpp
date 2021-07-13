@@ -6,27 +6,29 @@
 
 #include <DoodleLib/Exception/Exception.h>
 #include <Logger/Logger.h>
+#include <threadPool/long_term.h>
+
+#include <boost/numeric/conversion/cast.hpp>
+
 namespace doodle {
-action::action() {
+action::action()
+    : p_name(),
+      p_term() {
 }
 
 std::string action::class_name() {
   return p_name;
 }
+
+bool action::is_async() {
+  return false;
+}
+
+long_term_ptr action::get_long_term_signal() const {
+  return p_term;
+}
 long_term_ptr action::operator()(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   return run(in_data, in_parent);
-}
-
-void action_composited::set_class_name(const std::string& in_name) {
-  action::p_name = in_name;
-}
-
-long_term_ptr action_composited::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  if (!action_indirect::sig_get_arg().value().is_cancel)
-    return {};
-  auto& k_a = *p_action_list.back();
-  k_a(in_data, in_parent);
-  return {};
 }
 
 actn_null::actn_null() {
