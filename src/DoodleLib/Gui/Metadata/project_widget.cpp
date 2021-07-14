@@ -32,7 +32,8 @@ nana::listbox::oresolver& operator<<(nana::listbox::oresolver& oor, const Assets
     oor << k_com.back()->getComment();
 
   oor << in_file->getTime()->showStr()
-      << in_file->getUser();
+      << in_file->getUser()
+      << (!in_file->getPathFile().empty());
 
   return oor;
 }
@@ -324,7 +325,8 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
   p_list_box.append_header("版本");
   p_list_box.append_header("评论", 300);
   p_list_box.append_header("时间", 130);
-  p_list_box.append_header("制作人");
+  p_list_box.append_header("制作人", 70);
+  p_list_box.append_header("有文件");
 
   p_list_box.enable_dropfiles(true);
 
@@ -415,10 +417,10 @@ void assets_attr_widget::set_ass(const MetadataPtr& in_ptr) {
       continue;
     }
     // 在这里我们插入文件
-    auto k_item = p_list_box.assoc(k_file->getDepartment())
-                      .text(std::string{magic_enum::enum_name(k_file->getDepartment())})
-                      .append(k_file, true);
-    k_file->user_date = k_item.pos();
+    p_list_box.assoc(k_file->getDepartment())
+        .text(std::string{magic_enum::enum_name(k_file->getDepartment())})
+        .append(k_file, true)
+        .bgcolor(k_file->getPathFile().empty() ? nana::colors::light_coral : nana::colors::light_green);
 
     install_sig_one(k_file);
   }
@@ -431,10 +433,11 @@ void assets_attr_widget::install_sig() {
           return;
         auto k_file = std::dynamic_pointer_cast<AssetsFile>(in_);
         // 在这里我们插入文件
-        auto k_item = p_list_box.assoc(k_file->getDepartment())
-                          .text(std::string{magic_enum::enum_name(k_file->getDepartment())})
-                          .append(k_file, true);
-        k_file->user_date = k_item.pos();
+        p_list_box.assoc(k_file->getDepartment())
+            .text(std::string{magic_enum::enum_name(k_file->getDepartment())})
+            .append(k_file, true)
+            .bgcolor(k_file->getPathFile().empty() ? nana::colors::light_coral : nana::colors::light_green);
+
         install_sig_one(k_file);
       })});
   p_conn.emplace_back(boost::signals2::scoped_connection{
@@ -443,10 +446,11 @@ void assets_attr_widget::install_sig() {
           return;
         auto k_file = std::dynamic_pointer_cast<AssetsFile>(in_);
         // 在这里我们插入文件
-        auto k_item = p_list_box.assoc(k_file->getDepartment())
-                          .text(std::string{magic_enum::enum_name(k_file->getDepartment())})
-                          .append(k_file, true);
-        k_file->user_date = k_item.pos();
+        p_list_box.assoc(k_file->getDepartment())
+            .text(std::string{magic_enum::enum_name(k_file->getDepartment())})
+            .append(k_file, true)
+            .bgcolor(k_file->getPathFile().empty() ? nana::colors::light_coral : nana::colors::light_green);
+
         install_sig_one(k_file);
       })});
   p_conn.emplace_back(boost::signals2::scoped_connection{
@@ -466,11 +470,14 @@ void assets_attr_widget::install_sig_one(std::shared_ptr<AssetsFile>& k_file) {
   p_conn.emplace_back(boost::signals2::scoped_connection{
       k_file->sig_change.connect([k_ptr, this]() {
         auto k_f = k_ptr.lock();
-        auto k_i = p_list_box.at(std::any_cast<nana::listbox::index_pair>(k_f->user_date));
-        k_i.text(0, k_f->getIdStr())
-            .text(1, k_f->getVersionStr())
-            .text(2, k_f->getComment().empty() ? "none" : k_f->getComment().back()->getComment())
-            .text(3, k_f->getTime()->showStr());
+        for (auto& k_i : p_list_box.assoc(k_f->getDepartment())) {
+          if (k_i.value<AssetsFilePtr>() == k_f)
+            k_i.text(0, k_f->getIdStr())
+                .text(1, k_f->getVersionStr())
+                .text(2, k_f->getComment().empty() ? "none" : k_f->getComment().back()->getComment())
+                .text(3, k_f->getTime()->showStr())
+                .bgcolor(k_f->getPathFile().empty() ? nana::colors::light_coral : nana::colors::light_green);
+        }
       })});
 }
 
@@ -480,7 +487,6 @@ void assets_attr_widget::clear() {
   p_list_box.erase();
   p_menu.clear();
   p_root.reset();
-  
 }
 nana::listbox& assets_attr_widget::get_widget() {
   return p_list_box;
