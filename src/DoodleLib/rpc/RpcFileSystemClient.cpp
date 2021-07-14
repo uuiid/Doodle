@@ -285,6 +285,7 @@ void RpcFileSystemClient::UploadFile(const FSys::path& in_local_path,
   FSys::ifstream k_file{in_local_path, std::ios::in | std::ios::binary};
   if (!k_file)
     throw DoodleError{"not read file"};
+
   while (k_file) {
     std::string k_value{};
     k_value.resize(s_size);
