@@ -122,237 +122,36 @@ bool RpcFileSystemClient::IsExist(const FSys::path& in_path) {
   return k_out_info.exist();
 }
 
-void RpcFileSystemClient::Download(const FSys::path& in_local_path, const FSys::path& in_server_path) {
+RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(const FSys::path& in_local_path, const FSys::path& in_server_path) {
   auto [k_ex, k_dir] = IsFolder(in_server_path);
   if (!k_ex)
     throw DoodleError{"服务器中不存在文件或者目录"};
 
+  trans_file_ptr k_down;
   if (k_dir) {
-    DownloadDir(in_local_path, in_server_path);
+    k_down = std::make_shared<down_dir>(this);
   } else {
-    DownloadFile(in_local_path, in_server_path);
+    k_down = std::make_shared<down_file>(this);
   }
+  std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{in_local_path, in_server_path}};
+  k_down->set_parameter(k_ptr);
+  (*k_down)();
+  return k_down;
 }
 
-void RpcFileSystemClient::Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path) {
+RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path) {
   if (!FSys::exists(in_local_path))
     throw DoodleError{"本地中不存在文件或者目录"};
 
+  trans_file_ptr k_up;
   if (FSys::is_directory(in_local_path)) {
-    UploadDir(in_local_path, in_server_path, in_backup_path);
+    k_up = std::make_shared<up_dir>(this);
   } else
-    UploadFile(in_local_path, in_server_path, in_backup_path);
-}
-
-void RpcFileSystemClient::_download_dir(const FSys::path& in_local_path, const FSys::path& in_server_path, std::vector<std::future<void>>& k_future_list) {
-  if (!FSys::exists(in_local_path))
-    FSys::create_directories(in_local_path);
-
-  grpc::ClientContext k_context{};
-
-  FileInfo k_in_info{};
-  FileInfo k_out_info{};
-
-  k_in_info.set_path(in_server_path.generic_string());
-  auto k_out = p_stub->GetList(&k_context, k_in_info);
-
-  auto k_prot = DoodleLib::Get().get_thread_pool();
-
-  while (k_out->Read(&k_out_info)) {
-    FSys::path k_s_p = k_out_info.path();
-    FSys::path k_l_p = in_local_path / k_s_p.filename();
-    if (k_out_info.isfolder()) {
-      _download_dir(k_l_p, k_s_p, k_future_list);
-      //      std::unique_lock lock{p_mutex};
-      //      k_future_list.emplace_back(
-      //          k_prot->enqueue(
-      //              [k_s_p, k_l_p, this](std::vector<std::future<void>>& in_future_list_) {
-      //              },
-      //              std::ref(k_future_list)));
-
-    } else {
-      DOODLE_LOG_DEBUG(fmt::format("下载文件: {} <-----  {}", k_l_p, k_s_p))
-      std::unique_lock lock{p_mutex};
-
-      k_future_list.emplace_back(
-          k_prot->enqueue(
-              [k_s_p, k_l_p, this]() {
-                DownloadFile(k_l_p, k_s_p);
-              }));
-    }
-  }
-  auto status = k_out->Finish();
-  if (!status.ok())
-    throw DoodleError{status.error_message()};
-}
-void RpcFileSystemClient::_upload_dir(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path, std::vector<std::future<void>>& in_future_list) {
-  if (!FSys::exists(in_local_path))
-    throw DoodleError{"未找到上传文件夹"};
-
-  std::vector<std::pair<FSys::path, FSys::path>> path_list{};
-  auto k_prot = DoodleLib::Get().get_thread_pool();
-
-  for (const auto& k_it : FSys::directory_iterator(in_local_path)) {
-    FSys::path k_s_p = in_server_path / k_it.path().filename();
-    auto k_back      = in_backup_path / k_it.path().filename();
-    auto& k_l_p      = k_it.path();
-
-    if (FSys::is_directory(k_it)) {
-      _upload_dir(k_l_p, k_s_p, k_back, in_future_list);
-      //      std::unique_lock lock{p_mutex};
-      //      in_future_list.emplace_back(
-      //          k_prot->enqueue(
-      //              [k_l_p, k_s_p, this](std::vector<std::future<void>>& in_future_list_) {
-      //              },
-      //              std::ref(in_future_list)));
-    } else {
-      DOODLE_LOG_DEBUG(fmt::format("上传文件: {} -----> {}", k_l_p, k_s_p))
-      std::unique_lock lock{p_mutex};
-      in_future_list.emplace_back(
-          k_prot->enqueue(
-              [k_l_p, k_s_p, k_back, this]() {
-                UploadFile(k_l_p, k_s_p, k_back);
-              }));
-    }
-  }
-}
-
-void RpcFileSystemClient::DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path) {
-  auto [k_is_eq, k_is_down, k_s_ex, k_sz] = compare_file_is_down(in_local_path, in_server_path);
-  if (!k_is_eq)
-    return;
-
-  if ((*k_is_eq))
-    return;
-
-  if (FSys::exists(in_local_path.parent_path()))
-    FSys::create_directories(in_local_path.parent_path());
-
-  grpc::ClientContext k_context{};
-
-  FileInfo k_in_info{};
-  FileStream k_out_info{};
-
-  FSys::ofstream k_file{in_local_path, std::ios::out | std::ios::binary};
-  if (!k_file)
-    throw DoodleError{"not create file"};
-
-  k_in_info.set_path(in_server_path.generic_string());
-  auto k_out = p_stub->Download(&k_context, k_in_info);
-
-  while (k_out->Read(&k_out_info)) {
-    auto& str = k_out_info.data().value();
-    k_file.write(str.data(), str.size());
-  }
-
-  auto status = k_out->Finish();
-
-  if (!status.ok())
-    throw DoodleError{status.error_message()};
-}
-void RpcFileSystemClient::UploadFile(const FSys::path& in_local_path,
-                                     const FSys::path& in_server_path,
-                                     const FSys::path& in_backup_path) {
-  auto [k_is_eq, k_is_down, k_s_ex, k_sz] = compare_file_is_down(in_local_path, in_server_path);
-  if (!k_is_eq)
-    return;
-
-  if (*k_is_eq)
-    return;
-
-  if (k_s_ex && !in_backup_path.empty()) {
-    grpc::ClientContext k_context{};
-
-    FileInfoMove k_info{};
-    FileInfo k_out_info{};
-    k_info.mutable_source()->set_path(std::move(in_server_path.generic_string()));
-    k_info.mutable_target()->set_path(std::move(in_backup_path.generic_string()));
-
-    auto k_s = p_stub->Move(&k_context, k_info, &k_out_info);
-    if (!k_s.ok()) {
-      DOODLE_LOG_WARN(k_s.error_message());
-      throw DoodleError(k_s.error_message());
-    }
-  }
-
-  grpc::ClientContext k_context{};
-
-  FileInfo k_out_info{};
-  FileStream k_in_info{};
-
-  k_in_info.mutable_info()->set_path(in_server_path.generic_string());
-  auto k_in = p_stub->Upload(&k_context, &k_out_info);
-  k_in->Write(k_in_info);
-
-  auto s_size = CoreSet::getBlockSize();
-
-  FSys::ifstream k_file{in_local_path, std::ios::in | std::ios::binary};
-  if (!k_file)
-    throw DoodleError{"not read file"};
-
-  while (k_file) {
-    std::string k_value{};
-    k_value.resize(s_size);
-    k_file.read(k_value.data(), s_size);
-    auto k_s = k_file.gcount();
-    if (k_s != s_size) {
-      k_value.resize(k_s);
-      k_value.erase(k_s);
-    }
-
-    k_in_info.mutable_data()->set_value(std::move(k_value));
-    if (!k_in->Write(k_in_info))
-      throw DoodleError{"write stream errors"};
-  }
-  /// @warning 这里必须调用 WritesDone用来区分写入完成
-  k_in->WritesDone();
-  auto status = k_in->Finish();
-  if (!status.ok())
-    throw DoodleError{status.error_message()};
-}
-void RpcFileSystemClient::DownloadDir(const FSys::path& in_local_path, const FSys::path& in_server_path) {
-  std::vector<std::future<void>> k_list;
-  _download_dir(in_local_path, in_server_path, k_list);
-  std::future_status k_status{};
-  auto k_it = k_list.begin();
-  while (!k_list.empty()) {
-    k_status = k_it->wait_for(std::chrono::milliseconds{100});
-    if (k_status == std::future_status::ready) {
-      try {
-        k_it->get();
-      } catch (const std::runtime_error& error) {
-        DOODLE_LOG_DEBUG(error.what());
-      }
-      k_it = k_list.erase(k_it);
-    } else {
-      ++k_it;
-    }
-    if (k_it == k_list.end()) {
-      k_it = k_list.begin();
-    }
-  }
-}
-void RpcFileSystemClient::UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path) {
-  std::vector<std::future<void>> k_list;
-  _upload_dir(in_local_path, in_server_path, in_backup_path, k_list);
-  std::future_status k_status{};
-  auto k_it = k_list.begin();
-  while (!k_list.empty()) {
-    k_status = k_it->wait_for(std::chrono::milliseconds{100});
-    if (k_status == std::future_status::ready) {
-      try {
-        k_it->get();
-      } catch (const std::runtime_error& error) {
-        DOODLE_LOG_DEBUG(error.what());
-      }
-      k_it = k_list.erase(k_it);
-    } else {
-      ++k_it;
-    }
-    if (k_it == k_list.end()) {
-      k_it = k_list.begin();
-    }
-  }
+    k_up = std::make_shared<up_file>(this);
+  std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{in_local_path, in_server_path, in_backup_path}};
+  k_up->set_parameter(k_ptr);
+  (*k_up)();
+  return k_up;
 }
 
 RpcFileSystemClient::trans_file::trans_file(RpcFileSystemClient* in_self)
@@ -421,6 +220,9 @@ void RpcFileSystemClient::down_file::run() {
   _term->sig_finished();
   _term->sig_message_result(fmt::format(" 完成下载: {}", _param->local_path));
 }
+void RpcFileSystemClient::down_file::wait() {
+  _result.wait();
+}
 RpcFileSystemClient::up_file::up_file(RpcFileSystemClient* in_self)
     : trans_file(in_self) {
 }
@@ -488,6 +290,9 @@ void RpcFileSystemClient::up_file::run() {
   _term->sig_finished();
   _term->sig_message_result(fmt::format(" 完成上传: {}", _param->local_path));
 }
+void RpcFileSystemClient::up_file::wait() {
+  _result.wait();
+}
 RpcFileSystemClient::down_dir::down_dir(RpcFileSystemClient* in_self)
     : trans_file(in_self),
       _down_list(),
@@ -499,8 +304,7 @@ void RpcFileSystemClient::down_dir::run() {
 
   down(_param);
 
-  auto k_size = _down_list.size();
-
+  auto k_size = boost::numeric_cast<double_t>(_down_list.size());
   for (auto& k_i : _down_list) {
     k_i->_term->sig_progress.connect([this, k_size](std::double_t in_) {
       _term->sig_progress(in_ / k_size);
@@ -558,6 +362,11 @@ void RpcFileSystemClient::down_dir::down(const std::unique_ptr<rpc_trans_path>& 
   if (!status.ok())
     throw DoodleError{status.error_message()};
 }
+void RpcFileSystemClient::down_dir::wait() {
+  for (auto& k_i : _down_list) {
+    k_i->_result.wait();
+  }
+}
 RpcFileSystemClient::up_dir::up_dir(RpcFileSystemClient* in_self)
     : trans_file(in_self),
       _up_list(),
@@ -568,7 +377,7 @@ void RpcFileSystemClient::up_dir::run() {
     throw DoodleError{"未找到上传文件夹"};
   updata(_param);
 
-  auto k_size = _up_list.size();
+  auto k_size = boost::numeric_cast<double_t>(_up_list.size());
 
   for (auto& k_i : _up_list) {
     k_i->_term->sig_progress.connect([this, k_size](std::double_t in_) {
@@ -581,10 +390,10 @@ void RpcFileSystemClient::up_dir::run() {
       ++_size;
       if (k_size == _size) {
         /// 寻找序列中下载文件状态不是 std::future_status::ready 的, 全部都是的话一定可以是完成, 多次确认
-        auto k_it = std::find_if_not(_down_list.begin(), _down_list.end(), [](const std::shared_ptr<down_file>& in_downFile) {
-          return in_downFile->_result.wait_for(std::chrono::nanoseconds{1}) == std::future_status::ready;
+        auto k_it = std::find_if_not(_up_list.begin(), _up_list.end(), [](const std::shared_ptr<up_file>& in_up_File) {
+          return in_up_File->_result.wait_for(std::chrono::nanoseconds{1}) == std::future_status::ready;
         });
-        if (k_it == _down_list.end())
+        if (k_it == _up_list.end())
           _term->sig_finished();
       }
     });
@@ -616,6 +425,11 @@ void RpcFileSystemClient::up_dir::updata(const std::unique_ptr<rpc_trans_path>& 
       auto k_up = _up_list.emplace_back(std::make_shared<up_file>(_self));
       k_up->set_parameter(k_ptr);
     }
+  }
+}
+void RpcFileSystemClient::up_dir::wait() {
+  for (auto& k_i : _up_list) {
+    k_i->_result.wait();
   }
 }
 }  // namespace doodle

@@ -27,6 +27,7 @@ namespace doodle {
  *
  */
 class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
+ public:
   class down_file;
   class down_dir;
   class up_file;
@@ -47,6 +48,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
     explicit trans_file(RpcFileSystemClient* in_self);
     void set_parameter(std::unique_ptr<rpc_trans_path>& in_path);
     long_term_ptr operator()();
+    virtual void wait() = 0;
   };
 
   class DOODLELIB_API down_file : public trans_file {
@@ -54,6 +56,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
     explicit down_file(RpcFileSystemClient* in_self);
 
    protected:
+    virtual void wait() override;
     void run() override;
   };
   class DOODLELIB_API down_dir : public trans_file {
@@ -64,6 +67,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
     explicit down_dir(RpcFileSystemClient* in_self);
 
    protected:
+    virtual void wait() override;
     void down(const std::unique_ptr<rpc_trans_path>& in_path);
     void run() override;
   };
@@ -72,6 +76,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
     explicit up_file(RpcFileSystemClient* in_self);
 
    protected:
+    virtual void wait() override;
     void run() override;
   };
   class DOODLELIB_API up_dir : public trans_file {
@@ -82,10 +87,12 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
     explicit up_dir(RpcFileSystemClient* in_self);
 
    protected:
+    virtual void wait() override;
     void updata(const std::unique_ptr<rpc_trans_path>& in_path);
     void run() override;
   };
 
+ protected:
   std::unique_ptr<FileSystemServer::Stub> p_stub;
   std::recursive_mutex p_mutex;
   // std::shared_ptr<grpc::Channel> p_channel;
@@ -100,26 +107,10 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
    *                   > 
    */
   std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
-  /**
-   * @brief 这个是递归调用进行下载
-   * 
-   * @param in_local_path 本地路径
-   * @param in_server_path  服务器路径
-   * @param k_future_list 等待结果
-   */
-  void _download_dir(const FSys::path& in_local_path, const FSys::path& in_server_path, std::vector<std::future<void> >& k_future_list);
-  /**
-   * @brief 递归调用进行上传
-   * 
-   * @param in_local_path 本地路径
-   * @param in_server_path 服务器路径
-   * @param in_backup_path 备份路径
-   * @param in_future_list 等待结果
-   */
-  void _upload_dir(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path, std::vector<std::future<void> >& in_future_list);
 
  public:
-  using time_point = std::chrono::time_point<std::chrono::system_clock>;
+  using trans_file_ptr = std::shared_ptr<trans_file>;
+  using time_point     = std::chrono::time_point<std::chrono::system_clock>;
   /**
    *@brief 这个时用来判读是否进行同步或者下载的函子别名
    * std::tuple<std::optional<bool>,  是否相等
@@ -162,7 +153,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
    * @return true 下载完成
    * @return false 下载失败
    */
-  void Download(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  trans_file_ptr Download(const FSys::path& in_local_path, const FSys::path& in_server_path);
   /**
    * @brief 将文件上传到服务器中
    * @param in_local_path 本地路径
@@ -170,13 +161,8 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
    * @param in_backup_path 上传时的备份路径， 如果上传文件夹， 备份文件夹也应该是文件夹， 文件则对应文件
    * @return 上传结果
    */
-  void Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path = {});
+  trans_file_ptr Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path = {});
 
-  void DownloadDir(const FSys::path& in_local_path, const FSys::path& in_server_path);
-  void UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path = {});
-
-  void DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path);
-  void UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path = {});
   // TODO: 要将比较函数提取为函子, 作为同步功能的基础
   //  void DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path,const syn_fun& in_syn_fun );
   //  void UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path,const syn_fun& in_syn_fun );
