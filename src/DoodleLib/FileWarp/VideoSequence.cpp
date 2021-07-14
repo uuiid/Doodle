@@ -2,7 +2,6 @@
 #include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/core/CoreSet.h>
 
-
 #include <opencv2/opencv.hpp>
 
 namespace doodle {
@@ -37,7 +36,6 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
   auto k_image_resized = cv::Mat{};
   const static cv::Size k_size{1280, 720};
   const auto k_len = boost::numeric_cast<float>(p_paths.size());
-  auto k_i         = float{0};
   // 这里开始排序
   std::sort(p_paths.begin(), p_paths.end(),
             [](const FSys::path& k_l, const FSys::path& k_r) { return k_l.stem() < k_r.stem(); });
@@ -58,16 +56,14 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
         this->sig_progress(
             boost::numeric_cast<int>(
                 (
-                    (k_frame / (k_frame_count * k_len) +
-                     (k_i / k_len))  //
-                    )                //
-                * 100)               //
+                    ((k_frame / k_frame_count) / k_len)  //
+                    )                                    //
+                * 100)                                   //
         );
       }
     } else {
       throw DoodleError("不支持的格式");
     }
-    ++k_i;
   }
 
   this->sig_message_result(fmt::format("完成视频 {}", k_out_path));

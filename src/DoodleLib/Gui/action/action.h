@@ -164,11 +164,10 @@ long_term_ptr actn_composited<arg_type>::run(const MetadataPtr& in_data, const M
   const auto& k_size = p_term_list.size();
   for (auto& k_i : p_term_list) {
     auto k_v_con = k_i->sig_progress.connect([this, k_size](std::double_t in_) {
-      action::p_term->sig_progress(action::p_term->step(1.0 / boost::numeric_cast<std::double_t>(k_size)));
+      action::p_term->sig_progress(in_ / boost::numeric_cast<std::double_t>(k_size));
     });
     k_i->sig_message_result.connect([this](const std::string& in_) {
-      p_str += "\n";
-      p_str += in_;
+      action::p_term->sig_message_result(in_);
     });
     k_i->sig_finished.connect([this, k_size, k_v_con]() {
       ++p_num;

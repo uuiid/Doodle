@@ -70,6 +70,7 @@ set(
     rpc/RpcMetadaataServer.h
     rpc/RpcMetadataClient.h
     rpc/RpcServerHandle.h
+    rpc/rpc_trans_path.h
     threadPool/ThreadPool.h
     threadPool/long_term.h
     toolkit/toolkit.h)
@@ -121,6 +122,7 @@ set(
     rpc/RpcMetadaataServer.cpp
     rpc/RpcMetadataClient.cpp
     rpc/RpcServerHandle.cpp
+    rpc/rpc_trans_path.cpp
     threadPool/long_term.cpp
     toolkit/toolkit.cpp
 )

@@ -26,7 +26,8 @@ class long_term {
 
   std::double_t step(std::double_t in_);
   /**
-   * @brief 这个是步进信号, 到一百是完成
+   * @brief 这个是步进信号
+   * @param std::double_t 每次步进的大小
    * 
    */
   boost::signals2::signal<void(std::double_t)> sig_progress;

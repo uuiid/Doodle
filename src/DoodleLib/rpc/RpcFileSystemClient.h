@@ -8,10 +8,9 @@
 #include <DoodleLib/libWarp/protobuf_warp.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <FileSystemServer.grpc.pb.h>
+#include <rpc/rpc_trans_path.h>
 
 #include <optional>
-
-//#include "../../../cmake-build-debug-vs2019/src/DoodleLib/FileSystemServer.grpc.pb.h"
 
 namespace doodle {
 
@@ -28,6 +27,65 @@ namespace doodle {
  *
  */
 class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
+  class down_file;
+  class down_dir;
+  class up_file;
+  class up_dir;
+  class DOODLELIB_API trans_file : public details::no_copy {
+    friend down_dir;
+    friend up_dir;
+
+   protected:
+    RpcFileSystemClient* _self;
+    long_term_ptr _term;
+    std::unique_ptr<rpc_trans_path> _param;
+    std::future<void> _result;
+
+    virtual void run() = 0;
+
+   public:
+    explicit trans_file(RpcFileSystemClient* in_self);
+    void set_parameter(std::unique_ptr<rpc_trans_path>& in_path);
+    long_term_ptr operator()();
+  };
+
+  class DOODLELIB_API down_file : public trans_file {
+   public:
+    explicit down_file(RpcFileSystemClient* in_self);
+
+   protected:
+    void run() override;
+  };
+  class DOODLELIB_API down_dir : public trans_file {
+    std::vector<std::shared_ptr<down_file> > _down_list;
+    std::size_t _size;
+
+   public:
+    explicit down_dir(RpcFileSystemClient* in_self);
+
+   protected:
+    void down(const std::unique_ptr<rpc_trans_path>& in_path);
+    void run() override;
+  };
+  class DOODLELIB_API up_file : public trans_file {
+   public:
+    explicit up_file(RpcFileSystemClient* in_self);
+
+   protected:
+    void run() override;
+  };
+  class DOODLELIB_API up_dir : public trans_file {
+    std::vector<std::shared_ptr<up_file> > _up_list;
+    std::size_t _size;
+
+   public:
+    explicit up_dir(RpcFileSystemClient* in_self);
+
+   protected:
+    void updata(const std::unique_ptr<rpc_trans_path>& in_path);
+    void run() override;
+  };
+
   std::unique_ptr<FileSystemServer::Stub> p_stub;
   std::recursive_mutex p_mutex;
   // std::shared_ptr<grpc::Channel> p_channel;
@@ -38,9 +96,10 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
    * @return std::tuple<std::optional<bool>,  是否相等
    *                    std::optional<bool>,  是否需要下载
    *                    std::optional<bool>,  服务器文件是否存在
+   *                    std::size_t,          文件大小
    *                   > 
    */
-  std::tuple<std::optional<bool>, std::optional<bool>, bool > compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
   /**
    * @brief 这个是递归调用进行下载
    * 
@@ -48,7 +107,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
    * @param in_server_path  服务器路径
    * @param k_future_list 等待结果
    */
-  void _DownloadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, std::vector<std::future<void> >& k_future_list);
+  void _download_dir(const FSys::path& in_local_path, const FSys::path& in_server_path, std::vector<std::future<void> >& k_future_list);
   /**
    * @brief 递归调用进行上传
    * 
@@ -57,7 +116,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
    * @param in_backup_path 备份路径
    * @param in_future_list 等待结果
    */
-  void _UploadDir(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path, std::vector<std::future<void> >& in_future_list);
+  void _upload_dir(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path, std::vector<std::future<void> >& in_future_list);
 
  public:
   using time_point = std::chrono::time_point<std::chrono::system_clock>;

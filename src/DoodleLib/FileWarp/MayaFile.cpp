@@ -125,7 +125,7 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
       //成功就加一
       ++k_pro;
       //添加进度
-      this->sig_progress(boost::numeric_cast<int>((k_pro / size) * 100));
+      this->sig_progress(boost::numeric_cast<int>((1 / size) * 100));
       // try {
       // } catch (const DoodleError& err) {
       //   //添加错误
