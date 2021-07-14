@@ -7,14 +7,22 @@
 #include <Windows.h>
 #include <shellapi.h>
 
+#include <boost/locale.hpp>
+
 namespace doodle::FSys {
 std::time_t last_write_time_t(const path &in_path) {
-  auto k_h = CreateFile(in_path.generic_wstring().c_str(), 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
-  if (k_h == INVALID_HANDLE_VALUE)
-    throw std::runtime_error{"无效的文件路径"};
+
+  auto k_h = CreateFile(in_path.generic_wstring().c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+  if (k_h == INVALID_HANDLE_VALUE) {
+    auto k_err_code = GetLastError();
+    DOODLE_LOG_WARN("获得错误: {}", k_err_code);
+    throw std::runtime_error(fmt::format("获得错误: {}", k_err_code));
+  }
   FILETIME k_f_l;
   if (!GetFileTime(k_h, nullptr, nullptr, &k_f_l)) {
-    throw std::runtime_error{"无法获得写入时间"};
+    auto k_err_code = GetLastError();
+    DOODLE_LOG_WARN("获得错误: {}", k_err_code);
+    throw std::runtime_error(fmt::format("获得错误: {}", k_err_code));
   }
   ULARGE_INTEGER ull{};
   ull.LowPart  = k_f_l.dwLowDateTime;
