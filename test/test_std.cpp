@@ -113,6 +113,7 @@ TEST(DSTD, u8stringAndString) {
 
 TEST(DSTD, file_last_time) {
   auto file = std::filesystem::path{u8"D:/test2.mp4"};
+  auto file2 = std::filesystem::path{u8"D:/tmp"};
   auto time = std::filesystem::last_write_time(file);
 
   auto time2 = std::chrono::time_point_cast<std::chrono::system_clock::duration>(time - decltype(time)::clock::now() + std::chrono::system_clock::now());

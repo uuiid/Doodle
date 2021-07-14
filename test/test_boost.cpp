@@ -2,14 +2,14 @@
 // Created by teXiao on 2020/11/10.
 //
 #include <DoodleLib/DoodleLib.h>
+#include <date/date.h>
 #include <gtest/gtest.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/locale.hpp>
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
-#include <date/date.h>
+#include <boost/locale.hpp>
 std::string encode64(const std::string &val) {
   using namespace boost::archive::iterators;
   using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
@@ -47,9 +47,10 @@ TEST(dboost, normalize_path) {
 TEST(dboost, filesys_last_write_time) {
   using namespace doodle;
   FSys::path source_path{L"F:/测试文件.mp4"};
+  FSys::path source_path2{L"D:/tmp"};
   try {
-    std::cout << "0: " << date::format("%Y-%m-%d %X",FSys::last_write_time_point(source_path)) << std::endl;
-
+    std::cout << "0: " << date::format("%Y-%m-%d %X", FSys::last_write_time_point(source_path)) << std::endl;
+    std::cout << "0: " << date::format("%Y-%m-%d %X", FSys::last_write_time_point(source_path2)) << std::endl;
   } catch (const FSys::filesystem_error &e) {
     std::cout << e.what()
               << " \nutf : "
@@ -63,11 +64,11 @@ TEST(dboost, filesys_last_write_time) {
   auto k_t  = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
   auto k_t4 = std::chrono::system_clock::from_time_t(FSys::last_write_time_t(source_path));
 
-  date::format("%Y-%m-%d %X",k_t);
+  date::format("%Y-%m-%d %X", k_t);
   std::cout << "\n"
             << fileInfo.st_mtime << "\n"
-            << "k_t: " << date::format("%Y-%m-%d %X",k_t) << "\n"
-            << "k_t == k_t4: " << ((k_t == k_t4 ) ? "ok": "not")<< "\n"
+            << "k_t: " << date::format("%Y-%m-%d %X", k_t) << "\n"
+            << "k_t == k_t4: " << ((k_t == k_t4) ? "ok" : "not") << "\n"
             << std::endl;
 }
 
