@@ -24,12 +24,12 @@ class long_term {
   long_term();
   virtual ~long_term() = default;
 
-  std::int32_t step(std::double_t in_);
+  std::double_t step(std::double_t in_);
   /**
    * @brief 这个是步进信号, 到一百是完成
    * 
    */
-  boost::signals2::signal<void(int)> sig_progress;
+  boost::signals2::signal<void(std::double_t)> sig_progress;
   /**
    * @brief 结果信号
    * 
@@ -42,8 +42,8 @@ class long_term {
    */
   boost::signals2::signal<void()> sig_finished;
 
-  bool fulfil() const;
-  std::string message_result() const;
+  [[nodiscard]] bool fulfil() const;
+  [[nodiscard]] std::string message_result() const;
 };
 
 }  // namespace doodle

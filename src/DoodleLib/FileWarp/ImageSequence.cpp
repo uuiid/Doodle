@@ -90,7 +90,6 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
     auto k_clone         = cv::Mat{};
 
     auto k_size_len = boost::numeric_cast<float>(p_paths.size());
-    auto k_i        = float{0};
 
     //排序图片
     std::sort(p_paths.begin(), p_paths.end(),
@@ -104,7 +103,6 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
         cv::resize(k_image, k_image_resized, k_size);
       else
         k_image_resized = k_image;
-      int baseLine{};
 
       {  //创建水印
         k_clone          = k_image_resized.clone();
@@ -132,9 +130,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
                     cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
       }
 
-      ++k_i;
-      this->stride(((float)1 / k_size_len) * (float)100);
-      p_long_sig->sig_progress(boost::numeric_cast<int>((k_i / k_size_len) * 100));
+      p_long_sig->sig_progress(p_long_sig->step(boost::numeric_cast<std::double_t>((1 / k_size_len) * 100)));
 
       video << k_image_resized;
     }

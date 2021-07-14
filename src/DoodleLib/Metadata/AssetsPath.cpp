@@ -78,4 +78,9 @@ void AssetsPath::setPath(const FSys::path &in_local_path, const FSys::path &in_s
   DOODLE_LOG_INFO("本地路径: {}, 设置服务路径: {}, 相对路径: {} , 备份路径: {}",
                   p_local_path, p_server_path, p_lexically_relative, p_backup_path);
 }
+FSys::path AssetsPath::get_cache_path() const {
+  auto k_path = CoreSet::getSet().getCacheRoot();
+  k_path /= p_lexically_relative;
+  return k_path;
+}
 }  // namespace doodle

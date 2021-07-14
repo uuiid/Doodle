@@ -38,6 +38,7 @@ class DOODLELIB_API AssetsPath {
   explicit AssetsPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata = {});
 
   [[nodiscard]] const FSys::path &getLocalPath() const;
+  [[nodiscard]] FSys::path get_cache_path() const;
   [[nodiscard]] const FSys::path &getServerPath() const;
   [[nodiscard]] const FSys::path &getBackupPath() const;
   /**

@@ -15,10 +15,9 @@ long_term::long_term() : sig_progress(),
   });
 }
 
-std::int32_t long_term::step(std::double_t in_) {
-  // std::lock_guard _lo{_mutex};
+std::double_t long_term::step(std::double_t in_) {
   p_progress += in_;
-  return boost::numeric_cast<std::int32_t>(p_progress);
+  return p_progress;
 }
 
 bool long_term::fulfil() const {

@@ -163,7 +163,7 @@ template <class arg_type>
 long_term_ptr actn_composited<arg_type>::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   const auto& k_size = p_term_list.size();
   for (auto& k_i : p_term_list) {
-    auto k_v_con = k_i->sig_progress.connect([this, k_size](int in_) {
+    auto k_v_con = k_i->sig_progress.connect([this, k_size](std::double_t in_) {
       action::p_term->sig_progress(action::p_term->step(1.0 / boost::numeric_cast<std::double_t>(k_size)));
     });
     k_i->sig_message_result.connect([this](const std::string& in_) {
