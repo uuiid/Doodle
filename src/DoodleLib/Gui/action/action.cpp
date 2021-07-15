@@ -13,7 +13,8 @@
 namespace doodle {
 action::action()
     : p_name(),
-      p_term() {
+      p_term(),
+      _mutex() {
 }
 
 std::string action::class_name() {

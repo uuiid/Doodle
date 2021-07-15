@@ -20,7 +20,7 @@ class actn_up_paths : public action_indirect<action::arg_paths> {
    * @param in_paths 需要 std::vector<FSys::path> 传入
    */
   explicit actn_up_paths(std::any&& in_paths);
-
+  virtual bool is_async() override;
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 

@@ -14,6 +14,7 @@ namespace doodle {
 actn_down_paths::actn_down_paths()
     : p_tran() {
   p_name = "下载文件";
+  p_term = std::make_shared<long_term>();
 }
 long_term_ptr actn_down_paths::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_data = sig_get_arg().value();
@@ -41,8 +42,12 @@ long_term_ptr actn_down_paths::run(const MetadataPtr& in_data, const MetadataPtr
     k_list.emplace_back(std::make_unique<rpc_trans_path>(k_data.date / k_item->getServerPath().filename(), k_item->getServerPath()));
   }
   p_tran = k_client->Download(k_list);
-  p_term = p_tran->get_term();
+  p_tran->get_term()->forward_sig(p_term);
+  (*p_tran)();
   return p_term;
+}
+bool actn_down_paths::is_async() {
+  return true;
 }
 
 }  // namespace doodle

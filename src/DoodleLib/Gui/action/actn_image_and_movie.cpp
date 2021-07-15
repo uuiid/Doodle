@@ -126,6 +126,7 @@ long_term_ptr actn_image_to_move_up::run(const MetadataPtr& in_data, const Metad
 
   auto k_conv_image = p_image_action->run(in_data, in_parent);
   p_term_list.push_back(k_conv_image);
+  p_term_list.push_back(p_up_path->get_long_term_signal());
 
   /// 运行转换完成后的上传文件回调
   k_conv_image->sig_finished.connect([this, in_data, in_parent]() {

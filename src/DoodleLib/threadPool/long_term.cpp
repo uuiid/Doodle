@@ -29,4 +29,9 @@ bool long_term::fulfil() const {
 std::string long_term::message_result() const {
   return p_str;
 }
+void long_term::forward_sig(const long_term_ptr& in_forward) {
+  sig_progress.connect([in_forward](std::double_t in_pro) { in_forward->sig_progress(in_pro); });
+  sig_finished.connect([in_forward]() { in_forward->sig_finished(); });
+  sig_message_result.connect([in_forward](const std::string& in_str) { in_forward->sig_message_result(in_str); });
+}
 }  // namespace doodle

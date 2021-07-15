@@ -58,7 +58,7 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
                 (
                     ((k_frame / k_frame_count) / k_len)  //
                     )                                    //
-                * 100)                                   //
+                )                                        //
         );
       }
     } else {

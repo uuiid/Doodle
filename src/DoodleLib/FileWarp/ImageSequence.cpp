@@ -130,7 +130,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
                     cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
       }
 
-      p_long_sig->sig_progress(boost::numeric_cast<std::double_t>((1 / k_size_len) * 100));
+      p_long_sig->sig_progress(boost::numeric_cast<std::double_t>((1 / k_size_len)));
 
       video << k_image_resized;
     }

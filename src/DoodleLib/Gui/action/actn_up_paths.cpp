@@ -15,6 +15,7 @@ namespace doodle {
 actn_up_paths::actn_up_paths()
     : p_tran() {
   p_name = "直接上传多个路径";
+  p_term = std::make_shared<long_term>();
 }
 actn_up_paths::actn_up_paths(std::any&& in_paths) {
   p_name = "直接上传多个路径";
@@ -50,10 +51,15 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
                                                          k_ass_path->getBackupPath()));
   }
   p_tran = k_ch->Upload(k_list);
-  p_term = p_tran->get_term();
+  p_tran->get_term()->forward_sig(p_term);
+
 
   k_ass_file->setPathFile(k_ass_path_list);
   k_ass_file->updata_db(in_parent->getMetadataFactory());
+  (*p_tran)();
   return p_term;
+}
+bool actn_up_paths::is_async() {
+  return true;
 }
 }  // namespace doodle

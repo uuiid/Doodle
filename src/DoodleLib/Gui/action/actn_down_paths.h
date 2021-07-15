@@ -13,6 +13,7 @@ class DOODLELIB_API actn_down_paths : public action_indirect<action::arg_path> {
  public:
   actn_down_paths();
   using arg_ = action::arg_path;
+  virtual bool is_async() override;
   virtual long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 }  // namespace doodle

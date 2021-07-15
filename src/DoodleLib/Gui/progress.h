@@ -10,12 +10,15 @@
 #include <nana/gui/widgets/form.hpp>
 #include <nana/gui/widgets/label.hpp>
 #include <nana/gui/widgets/progress.hpp>
+#include <nana/gui/widgets/textbox.hpp>
+
 namespace doodle {
 
 class DOODLELIB_API progress : public nana::form {
   nana::progress _pro;
   nana::place p_layout;
   nana::label _label;
+  nana::textbox _text_box;
   std::vector<boost::signals2::scoped_connection> _sig_scoped_list;
 
  public:

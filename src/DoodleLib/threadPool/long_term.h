@@ -17,12 +17,14 @@ class DOODLELIB_API long_term {
   bool p_fulfil;
   std::string p_str;
   std::double_t p_progress;
-   std::mutex _mutex;
+  std::mutex _mutex;
   // std::recursive_mutex _mutex;
 
  public:
   long_term();
   virtual ~long_term() = default;
+
+  void forward_sig(const long_term_ptr& in_forward);
 
   std::double_t step(std::double_t in_);
   /**
