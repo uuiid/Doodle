@@ -11,6 +11,7 @@ namespace doodle {
  * @param in_paths 需要 std::vector<FSys::path>
  */
 class actn_up_paths : public action_indirect<action::arg_paths> {
+  rpc_trans::trans_file_ptr p_tran;
  public:
   actn_up_paths();
   using arg_ = action::arg_paths;

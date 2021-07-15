@@ -40,7 +40,7 @@ progress::progress(nana::window in_w, long_term_ptr in_, std::string in_title)
       })});
   _sig_scoped_list.emplace_back(boost::signals2::scoped_connection{
       in_->sig_progress.connect([this, in_](std::double_t in_double) {
-        auto k_v = in_->step(in_double);
+        auto k_v = in_->step(in_double) * 100;
         _pro.value(((k_v < 0 ? 0 : k_v) > 99 ? 99 : k_v));
       })});
   _sig_scoped_list.emplace_back(boost::signals2::scoped_connection{

@@ -7,7 +7,9 @@
 #include <DoodleLib/Gui/action/action.h>
 namespace doodle {
 
-class DOODLELIB_API actn_down_paths : public action_indirect<action::arg_path>  {
+class DOODLELIB_API actn_down_paths : public action_indirect<action::arg_path> {
+  rpc_trans::trans_file_ptr p_tran;
+
  public:
   actn_down_paths();
   using arg_ = action::arg_path;

@@ -13,6 +13,91 @@
 #include <optional>
 
 namespace doodle {
+namespace rpc_trans {
+class down_file;
+class down_dir;
+class up_file;
+class up_dir;
+class trans_file;
+class trans_files;
+using trans_file_ptr = std::shared_ptr<trans_file>;
+
+class DOODLELIB_API trans_file : public details::no_copy {
+  friend down_dir;
+  friend up_dir;
+  friend trans_files;
+
+ protected:
+  RpcFileSystemClient* _self;
+  long_term_ptr _term;
+  std::unique_ptr<rpc_trans_path> _param;
+  std::future<void> _result;
+  std::size_t _size;
+
+  std::mutex _mutex;
+
+  virtual void run() = 0;
+  void link_sub_sig(const trans_file_ptr& in_sub, const std::double_t& in_size);
+
+ public:
+  explicit trans_file(RpcFileSystemClient* in_self);
+  void set_parameter(std::unique_ptr<rpc_trans_path>& in_path);
+  [[nodiscard]] const long_term_ptr& get_term();
+  long_term_ptr operator()();
+  virtual void wait() = 0;
+};
+
+class DOODLELIB_API trans_files : public trans_file {
+ public:
+  explicit trans_files(RpcFileSystemClient* in_self);
+  std::vector<trans_file_ptr> _list;
+
+  void wait() override;
+
+ protected:
+  void run() override;
+};
+
+class DOODLELIB_API down_file : public trans_file {
+ public:
+  explicit down_file(RpcFileSystemClient* in_self);
+
+ protected:
+  void wait() override;
+  void run() override;
+};
+class DOODLELIB_API down_dir : public trans_file {
+  std::vector<std::shared_ptr<down_file>> _down_list;
+
+ public:
+  explicit down_dir(RpcFileSystemClient* in_self);
+
+ protected:
+  void wait() override;
+  void down(const std::unique_ptr<rpc_trans_path>& in_path);
+  void run() override;
+};
+class DOODLELIB_API up_file : public trans_file {
+ public:
+  explicit up_file(RpcFileSystemClient* in_self);
+
+ protected:
+  void wait() override;
+  void run() override;
+};
+class DOODLELIB_API up_dir : public trans_file {
+  std::vector<std::shared_ptr<up_file>> _up_list;
+
+ public:
+  explicit up_dir(RpcFileSystemClient* in_self);
+
+ protected:
+  void wait() override;
+  void updata(const std::unique_ptr<rpc_trans_path>& in_path);
+  void run() override;
+};
+
+}  // namespace rpc_trans
 
 //class equal_fun {
 // public:
@@ -27,89 +112,13 @@ namespace doodle {
  *
  */
 class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
+  friend rpc_trans::up_file;
+  friend rpc_trans::down_file;
+  friend rpc_trans::down_dir;
+  friend rpc_trans::up_dir;
+
  public:
-  class down_file;
-  class down_dir;
-  class up_file;
-  class up_dir;
-  class trans_file;
-  class trans_files;
-  using trans_file_ptr = std::shared_ptr<trans_file>;
-
-  class DOODLELIB_API trans_file : public details::no_copy {
-    friend down_dir;
-    friend up_dir;
-    friend trans_files;
-
-   protected:
-    RpcFileSystemClient* _self;
-    long_term_ptr _term;
-    std::unique_ptr<rpc_trans_path> _param;
-    std::future<void> _result;
-    std::size_t _size;
-
-    std::mutex _mutex;
-
-    virtual void run() = 0;
-    void link_sub_sig(const trans_file_ptr& in_sub, const std::double_t& in_size);
-
-   public:
-    explicit trans_file(RpcFileSystemClient* in_self);
-    void set_parameter(std::unique_ptr<rpc_trans_path>& in_path);
-    [[nodiscard]] const long_term_ptr& get_term();
-    long_term_ptr operator()();
-    virtual void wait() = 0;
-  };
-
-  class DOODLELIB_API trans_files : public trans_file {
-   public:
-    explicit trans_files(RpcFileSystemClient* in_self);
-    std::vector<trans_file_ptr> _list;
-
-    void wait() override;
-
-   protected:
-    void run() override;
-  };
-
-  class DOODLELIB_API down_file : public trans_file {
-   public:
-    explicit down_file(RpcFileSystemClient* in_self);
-
-   protected:
-    void wait() override;
-    void run() override;
-  };
-  class DOODLELIB_API down_dir : public trans_file {
-    std::vector<std::shared_ptr<down_file>> _down_list;
-
-   public:
-    explicit down_dir(RpcFileSystemClient* in_self);
-
-   protected:
-    void wait() override;
-    void down(const std::unique_ptr<rpc_trans_path>& in_path);
-    void run() override;
-  };
-  class DOODLELIB_API up_file : public trans_file {
-   public:
-    explicit up_file(RpcFileSystemClient* in_self);
-
-   protected:
-    void wait() override;
-    void run() override;
-  };
-  class DOODLELIB_API up_dir : public trans_file {
-    std::vector<std::shared_ptr<up_file>> _up_list;
-
-   public:
-    explicit up_dir(RpcFileSystemClient* in_self);
-
-   protected:
-    void wait() override;
-    void updata(const std::unique_ptr<rpc_trans_path>& in_path);
-    void run() override;
-  };
+  using trans_file_ptr = std::shared_ptr<rpc_trans::trans_file>;
 
  protected:
   std::unique_ptr<FileSystemServer::Stub> p_stub;

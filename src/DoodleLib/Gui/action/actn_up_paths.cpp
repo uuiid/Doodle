@@ -12,7 +12,8 @@
 
 namespace doodle {
 
-actn_up_paths::actn_up_paths() {
+actn_up_paths::actn_up_paths()
+    : p_tran() {
   p_name = "直接上传多个路径";
 }
 actn_up_paths::actn_up_paths(std::any&& in_paths) {
@@ -39,16 +40,20 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
     DOODLE_LOG_DEBUG("无效的上传数据")
     throw DoodleError{"无效的上传数据"};
   }
-  std::vector<AssetsPathPtr> k_list;
+
+  rpc_trans_path_ptr_list k_list{};
+  std::vector<AssetsPathPtr> k_ass_path_list;
   for (auto& k_i : k_path) {
-    auto k_ass_path = k_list.emplace_back(std::make_shared<AssetsPath>(k_i, k_ass_file));
-    /// TODO: 这里要有返回值的调用
-    k_ch->Upload(k_ass_path->getLocalPath(),
-                 k_ass_path->getServerPath(),
-                 k_ass_path->getBackupPath());
+    auto k_ass_path = k_ass_path_list.emplace_back(std::make_shared<AssetsPath>(k_i, k_ass_file));
+    k_list.emplace_back(std::make_unique<rpc_trans_path>(k_ass_path->getLocalPath(),
+                                                         k_ass_path->getServerPath(),
+                                                         k_ass_path->getBackupPath()));
   }
-  k_ass_file->setPathFile(k_list);
+  p_tran = k_ch->Upload(k_list);
+  p_term = p_tran->get_term();
+
+  k_ass_file->setPathFile(k_ass_path_list);
   k_ass_file->updata_db(in_parent->getMetadataFactory());
-  return {};
+  return p_term;
 }
 }  // namespace doodle

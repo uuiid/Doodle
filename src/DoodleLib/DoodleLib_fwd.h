@@ -157,7 +157,7 @@ DOODLELIB_API std::time_t last_write_time_t(const path &in_path);
 DOODLELIB_API inline std::chrono::time_point<std::chrono::system_clock> last_write_time_point(const path &in_path) {
   return std::chrono::system_clock::from_time_t(last_write_time_t(in_path));
 }
-DOODLELIB_API path add_time_stamp(const path &in_path) ;
+DOODLELIB_API path add_time_stamp(const path &in_path);
 DOODLELIB_API void open_explorer(const path &in_path);
 DOODLELIB_API void backup_file(const path &source);
 }  // namespace FSys
@@ -223,6 +223,16 @@ using ThreadPoolPtr             = std::shared_ptr<ThreadPool>;
 using menu_factory_ptr          = std::shared_ptr<menu_factory_base>;
 using long_term_ptr             = std::shared_ptr<long_term>;
 using ImageSequencePtr          = std::shared_ptr<ImageSequence>;
+
+namespace rpc_trans {
+class down_file;
+class down_dir;
+class up_file;
+class up_dir;
+class trans_file;
+class trans_files;
+using trans_file_ptr = std::shared_ptr<trans_file>;
+}  // namespace rpc_trans
 class Doodle;
 [[maybe_unused]] DOODLELIB_API DoodleLibPtr make_doodle_lib();
 template <typename SSC, typename SSN>
