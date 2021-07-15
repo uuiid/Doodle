@@ -72,7 +72,7 @@ void backup_file(const path &source) {
 }
 path add_time_stamp(const path &in_path) {
   auto k_fn = in_path.stem();
-  k_fn += date::format("_%m_%d_%y_%H_%M_%S_", std::chrono::system_clock::now());
+  k_fn += date::format("_%y_%m_%d_%H_%M_%S_", std::chrono::system_clock::now());
   k_fn += in_path.extension();
   auto k_path = in_path.parent_path() / k_fn;
   return k_path;

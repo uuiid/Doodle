@@ -44,7 +44,7 @@ static void boostLoggerInitAsyn(const std::string &logPath,
   if (!boost::filesystem::exists(appdata)) {
     boost::filesystem::create_directories(appdata);
   }
-  appdata /= "logfile_" + date::format("%m_%d_%y_%H_%M_%S_",std::chrono::system_clock::now()) + ".txt";
+  appdata /= "logfile_" + date::format("_%y_%m_%d_%H_%M_%S_",std::chrono::system_clock::now()) + ".txt";
 
   try {
     using namespace std::chrono_literals;

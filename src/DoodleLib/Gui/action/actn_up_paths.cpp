@@ -42,6 +42,7 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
   std::vector<AssetsPathPtr> k_list;
   for (auto& k_i : k_path) {
     auto k_ass_path = k_list.emplace_back(std::make_shared<AssetsPath>(k_i, k_ass_file));
+    /// TODO: 这里要有返回值的调用
     k_ch->Upload(k_ass_path->getLocalPath(),
                  k_ass_path->getServerPath(),
                  k_ass_path->getBackupPath());

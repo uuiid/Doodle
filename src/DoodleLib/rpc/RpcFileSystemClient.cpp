@@ -123,34 +123,53 @@ bool RpcFileSystemClient::IsExist(const FSys::path& in_path) {
 }
 
 RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(const FSys::path& in_local_path, const FSys::path& in_server_path) {
-  auto [k_ex, k_dir] = IsFolder(in_server_path);
+  std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{in_local_path, in_server_path}};
+  return Download(k_ptr);
+}
+
+RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path) {
+  std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{in_local_path, in_server_path, in_backup_path}};
+  return Upload(k_ptr);
+}
+RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(std::vector<std::unique_ptr<rpc_trans_path>>& in_vector) {
+  auto k_up = std::make_shared<trans_files>(this);
+  for (auto& k_item : in_vector) {
+    k_up->_list.push_back(Download(k_item));
+  }
+  return k_up;
+}
+RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(std::vector<std::unique_ptr<rpc_trans_path>>& in_vector) {
+  auto k_up = std::make_shared<trans_files>(this);
+  for (auto& k_item : in_vector) {
+    k_up->_list.push_back(Upload(k_item));
+  }
+  return k_up;
+}
+RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(std::unique_ptr<rpc_trans_path>& in_vector) {
+  auto [k_ex, k_dir] = IsFolder(in_vector->server_path);
   if (!k_ex)
     throw DoodleError{"服务器中不存在文件或者目录"};
 
   trans_file_ptr k_down;
-  if (k_dir) {
+  if (k_dir)
     k_down = std::make_shared<down_dir>(this);
-  } else {
+  else
     k_down = std::make_shared<down_file>(this);
-  }
-  std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{in_local_path, in_server_path}};
-  k_down->set_parameter(k_ptr);
-  (*k_down)();
+
+  k_down->set_parameter(in_vector);
   return k_down;
 }
-
-RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path) {
-  if (!FSys::exists(in_local_path))
+RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(std::unique_ptr<rpc_trans_path>& in_vector) {
+  if (!FSys::exists(in_vector->local_path))
     throw DoodleError{"本地中不存在文件或者目录"};
 
   trans_file_ptr k_up;
-  if (FSys::is_directory(in_local_path)) {
+  if (FSys::is_directory(in_vector->local_path))
     k_up = std::make_shared<up_dir>(this);
-  } else
+  else
     k_up = std::make_shared<up_file>(this);
-  std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{in_local_path, in_server_path, in_backup_path}};
-  k_up->set_parameter(k_ptr);
-  (*k_up)();
+
+  k_up->set_parameter(in_vector);
   return k_up;
 }
 
@@ -158,7 +177,9 @@ RpcFileSystemClient::trans_file::trans_file(RpcFileSystemClient* in_self)
     : _self(in_self),
       _param(),
       _term(std::make_shared<long_term>()),
-      _result() {
+      _result(),
+      _size(0),
+      _mutex() {
 }
 void RpcFileSystemClient::trans_file::set_parameter(std::unique_ptr<rpc_trans_path>& in_path) {
   _param = std::move(in_path);
@@ -169,12 +190,39 @@ long_term_ptr RpcFileSystemClient::trans_file::operator()() {
       this->run();
     } catch (DoodleError& error) {
       DOODLE_LOG_WARN(error.what());
+      _term->sig_progress(1);
       _term->sig_finished();
       _term->sig_message_result(error.what());
       throw error;
     }
   });
   return _term;
+}
+const long_term_ptr& RpcFileSystemClient::trans_file::get_term() {
+  return _term;
+}
+void RpcFileSystemClient::trans_file::link_sub_sig(const RpcFileSystemClient::trans_file_ptr& in_sub, const std::double_t& in_size) {
+  in_sub->_term->sig_progress.connect([this, in_size](std::double_t in_) {
+    _term->sig_progress(in_ / in_size);
+  });
+  in_sub->_term->sig_message_result.connect([this](const std::string& in_str) {
+    _term->sig_message_result(in_str);
+  });
+  in_sub->_term->sig_finished.connect([this, in_size]() {
+    std::lock_guard k_guard{_mutex};
+    ++_size;
+    if (boost::numeric_cast<std::size_t>(in_size) == _size) {
+      //        /// 寻找序列中下载文件状态不是 std::future_status::ready 的, 全部都是的话一定可以是完成, 多次确认
+      //        auto k_it = std::find_if_not(_list.begin(), _list.end(), [](const trans_file_ptr& in_tran_ptr) {
+      //          if (in_tran_ptr->_result.valid())
+      //            return in_tran_ptr->_result.wait_for(std::chrono::nanoseconds{1}) == std::future_status::ready;
+      //          else
+      //            return true;
+      //        });
+      //        if (k_it == _list.end())
+      _term->sig_finished();
+    }
+  });
 }
 
 RpcFileSystemClient::down_file::down_file(RpcFileSystemClient* in_self)
@@ -183,12 +231,19 @@ RpcFileSystemClient::down_file::down_file(RpcFileSystemClient* in_self)
 
 void RpcFileSystemClient::down_file::run() {
   auto [k_is_eq, k_is_down, k_s_ex, k_sz] = _self->compare_file_is_down(_param->local_path, _param->server_path);
-  //  _term->sig_progress(_term->step(0.01));
-  if (!k_is_eq)
+  if (!k_is_eq) {
+    _term->sig_progress(1);
+    _term->sig_finished();
+    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
     return;
+  }
 
-  if ((*k_is_eq))
+  if ((*k_is_eq)) {
+    _term->sig_progress(1);
+    _term->sig_finished();
+    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
     return;
+  }
 
   if (FSys::exists(_param->local_path.parent_path()))
     FSys::create_directories(_param->local_path.parent_path());
@@ -204,13 +259,12 @@ void RpcFileSystemClient::down_file::run() {
 
   k_in_info.set_path(_param->server_path.generic_string());
   auto k_out = _self->p_stub->Download(&k_context, k_in_info);
-  //  _term->sig_progress(_term->step(0.02));
 
-  const std::double_t k_num{boost::numeric_cast<std::double_t>(k_sz / CoreSet::getBlockSize())};
+  const std::double_t k_num2{CoreSet::getBlockSize() > k_sz ? 1 : (CoreSet::getBlockSize() / boost::numeric_cast<std::double_t>(k_sz))};
   while (k_out->Read(&k_out_info)) {
     auto& str = k_out_info.data().value();
     k_file.write(str.data(), str.size());
-    _term->sig_progress(100.0 / k_num);
+    _term->sig_progress(k_num2);
   }
 
   auto status = k_out->Finish();
@@ -218,22 +272,29 @@ void RpcFileSystemClient::down_file::run() {
   if (!status.ok())
     throw DoodleError{status.error_message()};
   _term->sig_finished();
-  _term->sig_message_result(fmt::format(" 完成下载: {}", _param->local_path));
+  _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
 }
 void RpcFileSystemClient::down_file::wait() {
-  _result.wait();
+  _result.get();
 }
 RpcFileSystemClient::up_file::up_file(RpcFileSystemClient* in_self)
     : trans_file(in_self) {
 }
 void RpcFileSystemClient::up_file::run() {
   auto [k_is_eq, k_is_down, k_s_ex, k_sz] = _self->compare_file_is_down(_param->local_path, _param->server_path);
-  //  _term->sig_progress(_term->step(0.01));
-  if (!k_is_eq)
+  if (!k_is_eq) {
+    _term->sig_progress(1);
+    _term->sig_finished();
+    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
     return;
+  }
 
-  if (*k_is_eq)
+  if (*k_is_eq) {
+    _term->sig_progress(1);
+    _term->sig_finished();
+    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
     return;
+  }
 
   if (k_s_ex && !_param->backup_path.empty()) {
     grpc::ClientContext k_context{};
@@ -248,7 +309,6 @@ void RpcFileSystemClient::up_file::run() {
       DOODLE_LOG_WARN(k_s.error_message());
       throw DoodleError(k_s.error_message());
     }
-    //    _term->sig_progress(_term->step(0.05));
   }
 
   grpc::ClientContext k_context{};
@@ -259,10 +319,9 @@ void RpcFileSystemClient::up_file::run() {
   k_in_info.mutable_info()->set_path(_param->server_path.generic_string());
   auto k_in = _self->p_stub->Upload(&k_context, &k_out_info);
   k_in->Write(k_in_info);
-  //  _term->sig_progress(_term->step(0.01));
 
   auto s_size = CoreSet::getBlockSize();
-  std::double_t k_num{boost::numeric_cast<std::double_t>(k_sz / s_size)};
+  const std::double_t k_num2{s_size > k_sz ? 1 : (s_size / boost::numeric_cast<std::double_t>(k_sz))};
   FSys::ifstream k_file{_param->local_path, std::ios::in | std::ios::binary};
   if (!k_file)
     throw DoodleError{"not read file"};
@@ -278,7 +337,7 @@ void RpcFileSystemClient::up_file::run() {
     }
 
     k_in_info.mutable_data()->set_value(std::move(k_value));
-    _term->sig_progress(100.0 / k_num);
+    _term->sig_progress(k_num2);
     if (!k_in->Write(k_in_info))
       throw DoodleError{"write stream errors"};
   }
@@ -288,15 +347,14 @@ void RpcFileSystemClient::up_file::run() {
   if (!status.ok())
     throw DoodleError{status.error_message()};
   _term->sig_finished();
-  _term->sig_message_result(fmt::format(" 完成上传: {}", _param->local_path));
+  _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
 }
 void RpcFileSystemClient::up_file::wait() {
-  _result.wait();
+  _result.get();
 }
 RpcFileSystemClient::down_dir::down_dir(RpcFileSystemClient* in_self)
     : trans_file(in_self),
-      _down_list(),
-      _size(0) {
+      _down_list() {
 }
 void RpcFileSystemClient::down_dir::run() {
   if (!FSys::exists(_param->local_path))
@@ -306,23 +364,7 @@ void RpcFileSystemClient::down_dir::run() {
 
   auto k_size = boost::numeric_cast<double_t>(_down_list.size());
   for (auto& k_i : _down_list) {
-    k_i->_term->sig_progress.connect([this, k_size](std::double_t in_) {
-      _term->sig_progress(in_ / k_size);
-    });
-    k_i->_term->sig_message_result.connect([this](const std::string& in_str) {
-      _term->sig_message_result(in_str);
-    });
-    k_i->_term->sig_finished.connect([this, k_size]() {
-      ++_size;
-      if (k_size == _size) {
-        /// 寻找序列中下载文件状态不是 std::future_status::ready 的, 全部都是的话一定可以是完成, 多次确认
-        auto k_it = std::find_if_not(_down_list.begin(), _down_list.end(), [](const std::shared_ptr<down_file>& in_downFile) {
-          return in_downFile->_result.wait_for(std::chrono::nanoseconds{1}) == std::future_status::ready;
-        });
-        if (k_it == _down_list.end())
-          _term->sig_finished();
-      }
-    });
+    link_sub_sig(k_i, k_size);
   }
   for (auto& k_i : _down_list) {
     (*k_i)();
@@ -363,14 +405,14 @@ void RpcFileSystemClient::down_dir::down(const std::unique_ptr<rpc_trans_path>& 
     throw DoodleError{status.error_message()};
 }
 void RpcFileSystemClient::down_dir::wait() {
+  _result.get();
   for (auto& k_i : _down_list) {
-    k_i->_result.wait();
+    k_i->_result.get();
   }
 }
 RpcFileSystemClient::up_dir::up_dir(RpcFileSystemClient* in_self)
     : trans_file(in_self),
-      _up_list(),
-      _size(0) {
+      _up_list() {
 }
 void RpcFileSystemClient::up_dir::run() {
   if (!FSys::exists(_param->local_path))
@@ -380,23 +422,7 @@ void RpcFileSystemClient::up_dir::run() {
   auto k_size = boost::numeric_cast<double_t>(_up_list.size());
 
   for (auto& k_i : _up_list) {
-    k_i->_term->sig_progress.connect([this, k_size](std::double_t in_) {
-      _term->sig_progress(in_ / k_size);
-    });
-    k_i->_term->sig_message_result.connect([this](const std::string& in_str) {
-      _term->sig_message_result(in_str);
-    });
-    k_i->_term->sig_finished.connect([this, k_size]() {
-      ++_size;
-      if (k_size == _size) {
-        /// 寻找序列中下载文件状态不是 std::future_status::ready 的, 全部都是的话一定可以是完成, 多次确认
-        auto k_it = std::find_if_not(_up_list.begin(), _up_list.end(), [](const std::shared_ptr<up_file>& in_up_File) {
-          return in_up_File->_result.wait_for(std::chrono::nanoseconds{1}) == std::future_status::ready;
-        });
-        if (k_it == _up_list.end())
-          _term->sig_finished();
-      }
-    });
+    link_sub_sig(k_i, k_size);
   }
   for (auto& k_i : _up_list) {
     (*k_i)();
@@ -406,10 +432,10 @@ void RpcFileSystemClient::up_dir::updata(const std::unique_ptr<rpc_trans_path>& 
   std::vector<std::pair<FSys::path, FSys::path>> path_list{};
   auto k_prot = DoodleLib::Get().get_thread_pool();
 
-  for (const auto& k_it : FSys::directory_iterator(_param->local_path)) {
+  for (const auto& k_it : FSys::directory_iterator(in_path->local_path)) {
     FSys::path k_s_p = in_path->server_path / k_it.path().filename();
     auto k_back      = in_path->backup_path / k_it.path().filename();
-    auto& k_l_p      = k_it.path();
+    auto k_l_p       = k_it.path();
     std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{k_l_p, k_s_p, k_back}};
 
     if (FSys::is_directory(k_it)) {
@@ -428,8 +454,30 @@ void RpcFileSystemClient::up_dir::updata(const std::unique_ptr<rpc_trans_path>& 
   }
 }
 void RpcFileSystemClient::up_dir::wait() {
+  _result.get();
   for (auto& k_i : _up_list) {
-    k_i->_result.wait();
+    k_i->_result.get();
   }
 }
+RpcFileSystemClient::trans_files::trans_files(RpcFileSystemClient* in_self)
+    : trans_file(in_self),
+      _list() {
+}
+void RpcFileSystemClient::trans_files::wait() {
+  _result.wait();
+  for (auto& k_i : _list) {
+    k_i->wait();
+  }
+}
+void RpcFileSystemClient::trans_files::run() {
+  auto k_size = boost::numeric_cast<double_t>(_list.size());
+  for (auto& k_i : _list) {
+    link_sub_sig(k_i, k_size);
+  }
+
+  for (auto& k_i : _list) {
+    (*k_i)();
+  }
+}
+
 }  // namespace doodle

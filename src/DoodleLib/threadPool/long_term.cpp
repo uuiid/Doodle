@@ -7,7 +7,8 @@ long_term::long_term() : sig_progress(),
                          sig_finished(),
                          p_fulfil(false),
                          p_str(),
-                         p_progress(0) {
+                         p_progress(0),
+                         _mutex() {
   sig_finished.connect([this]() { p_fulfil = true; });
   sig_message_result.connect([this](const std::string& in_str) {
     if (p_fulfil)
@@ -16,6 +17,7 @@ long_term::long_term() : sig_progress(),
 }
 
 std::double_t long_term::step(std::double_t in_) {
+  std::lock_guard k_guard{_mutex};
   p_progress += in_;
   return p_progress;
 }

@@ -6,9 +6,9 @@
 
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
+#include <DoodleLib/rpc/rpc_trans_path.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <FileSystemServer.grpc.pb.h>
-#include <rpc/rpc_trans_path.h>
 
 #include <optional>
 
@@ -32,23 +32,44 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
   class down_dir;
   class up_file;
   class up_dir;
+  class trans_file;
+  class trans_files;
+  using trans_file_ptr = std::shared_ptr<trans_file>;
+
   class DOODLELIB_API trans_file : public details::no_copy {
     friend down_dir;
     friend up_dir;
+    friend trans_files;
 
    protected:
     RpcFileSystemClient* _self;
     long_term_ptr _term;
     std::unique_ptr<rpc_trans_path> _param;
     std::future<void> _result;
+    std::size_t _size;
+
+    std::mutex _mutex;
 
     virtual void run() = 0;
+    void link_sub_sig(const trans_file_ptr& in_sub, const std::double_t& in_size);
 
    public:
     explicit trans_file(RpcFileSystemClient* in_self);
     void set_parameter(std::unique_ptr<rpc_trans_path>& in_path);
+    [[nodiscard]] const long_term_ptr& get_term();
     long_term_ptr operator()();
     virtual void wait() = 0;
+  };
+
+  class DOODLELIB_API trans_files : public trans_file {
+   public:
+    explicit trans_files(RpcFileSystemClient* in_self);
+    std::vector<trans_file_ptr> _list;
+
+    void wait() override;
+
+   protected:
+    void run() override;
   };
 
   class DOODLELIB_API down_file : public trans_file {
@@ -56,18 +77,17 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
     explicit down_file(RpcFileSystemClient* in_self);
 
    protected:
-    virtual void wait() override;
+    void wait() override;
     void run() override;
   };
   class DOODLELIB_API down_dir : public trans_file {
-    std::vector<std::shared_ptr<down_file> > _down_list;
-    std::size_t _size;
+    std::vector<std::shared_ptr<down_file>> _down_list;
 
    public:
     explicit down_dir(RpcFileSystemClient* in_self);
 
    protected:
-    virtual void wait() override;
+    void wait() override;
     void down(const std::unique_ptr<rpc_trans_path>& in_path);
     void run() override;
   };
@@ -76,18 +96,17 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
     explicit up_file(RpcFileSystemClient* in_self);
 
    protected:
-    virtual void wait() override;
+    void wait() override;
     void run() override;
   };
   class DOODLELIB_API up_dir : public trans_file {
-    std::vector<std::shared_ptr<up_file> > _up_list;
-    std::size_t _size;
+    std::vector<std::shared_ptr<up_file>> _up_list;
 
    public:
     explicit up_dir(RpcFileSystemClient* in_self);
 
    protected:
-    virtual void wait() override;
+    void wait() override;
     void updata(const std::unique_ptr<rpc_trans_path>& in_path);
     void run() override;
   };
@@ -109,14 +128,13 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
   std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
 
  public:
-  using trans_file_ptr = std::shared_ptr<trans_file>;
-  using time_point     = std::chrono::time_point<std::chrono::system_clock>;
+  using time_point = std::chrono::time_point<std::chrono::system_clock>;
   /**
    *@brief 这个时用来判读是否进行同步或者下载的函子别名
    * std::tuple<std::optional<bool>,  是否相等
    *            std::optional<bool> > 是否需要下载
    */
-  using syn_fun = std::function<bool(const std::tuple<std::optional<bool>, std::optional<bool> >& arg)>;
+  using syn_fun = std::function<bool(const std::tuple<std::optional<bool>, std::optional<bool>>& arg)>;
 
   explicit RpcFileSystemClient(const std::shared_ptr<grpc::Channel>& in_channel);
   /**
@@ -153,7 +171,9 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
    * @return true 下载完成
    * @return false 下载失败
    */
-  trans_file_ptr Download(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  [[nodiscard]] trans_file_ptr Download(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  [[nodiscard]] trans_file_ptr Download(std::vector<std::unique_ptr<rpc_trans_path>>& in_vector);
+  [[nodiscard]] trans_file_ptr Download(std::unique_ptr<rpc_trans_path>& in_vector);
   /**
    * @brief 将文件上传到服务器中
    * @param in_local_path 本地路径
@@ -161,8 +181,9 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
    * @param in_backup_path 上传时的备份路径， 如果上传文件夹， 备份文件夹也应该是文件夹， 文件则对应文件
    * @return 上传结果
    */
-  trans_file_ptr Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path = {});
-
+  [[nodiscard]] trans_file_ptr Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path = {});
+  [[nodiscard]] trans_file_ptr Upload(std::vector<std::unique_ptr<rpc_trans_path>>& in_vector);
+  [[nodiscard]] trans_file_ptr Upload(std::unique_ptr<rpc_trans_path>& in_vector);
   // TODO: 要将比较函数提取为函子, 作为同步功能的基础
   //  void DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path,const syn_fun& in_syn_fun );
   //  void UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path,const syn_fun& in_syn_fun );
