@@ -169,7 +169,7 @@
 				"args": [],
 				"group": "none",
 				"options": {
-					"cwd": "${workspaceFolder}/b_Ninja_VS19_Ni_64_qt515_Release",
+					"cwd": "${command:cmake.getLaunchTargetDirectory}",
 					"env": {
 						"PATH": "%PATH%;C:/Program Files/CMake/bin"
 					}

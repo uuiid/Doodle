@@ -139,8 +139,11 @@ void menu_factory::modify_shot_int() {
   });
 }
 void menu_factory::delete_assets_attr() { p_action.emplace_back(std::make_shared<actn_assfile_delete>()); }
-void menu_factory::down_file(const AssetsFilePtr& in_ptr) {
-  if (!in_ptr->getPathFile().empty()) {
+
+void menu_factory::down_file() {
+  auto p_ptr = std::dynamic_pointer_cast<AssetsFile>(p_metadata);
+
+  if (!p_ptr->getPathFile().empty()) {
     auto k_down = std::make_shared<actn_down_paths>();
     p_action.push_back(k_down);
     k_down->sig_get_arg.connect([this]() {
@@ -255,7 +258,7 @@ void menu_factory::create_prj() {
     return k_arg;
   });
 }
-void menu_factory::create_delete_assets() {
+void menu_factory::delete_assets() {
   if (!p_metadata)
     return;
 
@@ -419,7 +422,7 @@ void menu_factory_assets::create_menu(const AssetsPtr& in_ptr) {
   if (p_metadata) {
     p_action.emplace_back(action_ptr{});
     modify_assets_set_name();
-    create_delete_assets();
+    delete_assets();
   }
 }
 void menu_factory_assets::create_menu(const EpisodesPtr& in_ptr) {
@@ -431,7 +434,7 @@ void menu_factory_assets::create_menu(const EpisodesPtr& in_ptr) {
   if (p_metadata) {
     p_action.emplace_back(action_ptr{});
     modify_episode();
-    create_delete_assets();
+    delete_assets();
   }
 }
 void menu_factory_assets::create_menu(const ShotPtr& in_ptr) {
@@ -444,7 +447,7 @@ void menu_factory_assets::create_menu(const ShotPtr& in_ptr) {
     p_action.emplace_back(action_ptr{});
     modify_shot_int();
     modify_shot_ab();
-    create_delete_assets();
+    delete_assets();
   }
 }
 menu_factory_assets_attr::menu_factory_assets_attr(nana::window in_window) : menu_factory(in_window) {
@@ -480,8 +483,10 @@ void menu_factory_assets_attr::create_menu(const AssetsFilePtr& in_ptr) {
     p_action.emplace_back(action_ptr{});
     modify_attr_add_com();
     modify_attr_set_time();
-    down_file(in_ptr);
     modify_assets_file_up_data();
+
+    p_action.push_back(action_ptr{});
+    down_file();
 
     p_action.push_back(action_ptr{});
     delete_assets_attr();
