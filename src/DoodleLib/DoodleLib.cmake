@@ -16,6 +16,7 @@ set(
     Gui/action/action_import.h
     Gui/action/actn_down_paths.h
     Gui/action/actn_image_and_movie.h
+    Gui/action/actn_maya_export.h
     Gui/action/actn_up_paths.h
     Gui/action/assets_action.h
     Gui/action/assets_file_action.h
@@ -87,6 +88,7 @@ set(
     Gui/action/action.cpp
     Gui/action/actn_down_paths.cpp
     Gui/action/actn_image_and_movie.cpp
+    Gui/action/actn_maya_export.cpp
     Gui/action/actn_up_paths.cpp
     Gui/action/assets_action.cpp
     Gui/action/assets_file_action.cpp
