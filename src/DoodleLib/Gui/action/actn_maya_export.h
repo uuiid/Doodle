@@ -10,6 +10,7 @@ namespace doodle {
 
 class DOODLELIB_API actn_maya_export : public action_indirect<action::arg_path> {
   actn_up_paths_ptr p_up_paths;
+  FSys::path p_paths;
 
  public:
   actn_maya_export();

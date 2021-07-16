@@ -198,4 +198,7 @@ void AssetsFile::setTime(const TimeDurationPtr& in_time) {
 void AssetsFile::create_menu(const menu_factory_ptr& in_factoryPtr) {
   in_factoryPtr->create_menu(std::dynamic_pointer_cast<AssetsFile>(shared_from_this()));
 }
+std::vector<AssetsPathPtr>& AssetsFile::getPathFile() {
+  return p_path_files;
+}
 }  // namespace doodle

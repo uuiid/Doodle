@@ -20,4 +20,14 @@ class actn_up_paths : public action_indirect<action::arg_paths> {
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
+class actn_create_ass_up_paths : public action_indirect<action::arg_paths> {
+  actn_up_paths_ptr p_up;
+
+ public:
+  actn_create_ass_up_paths();
+  using arg_ = action::arg_paths;
+
+  bool is_async() override;
+  virtual long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
+};
 }  // namespace doodle

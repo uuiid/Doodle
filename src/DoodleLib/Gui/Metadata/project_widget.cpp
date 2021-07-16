@@ -105,14 +105,13 @@ project_widget::project_widget(nana::window in_window)
   p_list_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_) {
     p_menu.clear();
 
-    auto k_factory  = std::make_shared<menu_factory>(in_.window_handle);
+    auto k_factory  = std::make_shared<menu_factory_project>(in_.window_handle);
     this->p_factory = k_factory;
 
     auto k_selected = p_list_box.selected();
     // MetadataPtr k_ptr{};
     if (k_selected.empty())
       k_factory->create_prj();
-
     else {
       auto k_pair = k_selected.at(0);
       auto k_ptr  = p_list_box.at(k_pair).value<ProjectPtr>();
@@ -147,7 +146,7 @@ assets_widget::assets_widget(nana::window in_window)
   p_tree_box.events().mouse_down(menu_assist{[this](const nana::arg_mouse& in_) {
     p_menu.clear();
 
-    auto k_factory  = std::make_shared<menu_factory>(in_.window_handle);
+    auto k_factory  = std::make_shared<menu_factory_assets>(in_.window_handle);
     this->p_factory = k_factory;
     auto k_selected = p_tree_box.selected();
     MetadataPtr k_ptr{};
@@ -367,7 +366,7 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
 
   p_list_box.events().mouse_down.connect(menu_assist{[this](const nana::arg_mouse& in_) {
     p_menu.clear();
-    auto k_factory  = std::make_shared<menu_factory>(in_.window_handle);
+    auto k_factory  = std::make_shared<menu_factory_assets_attr>(in_.window_handle);
     this->p_factory = k_factory;
     auto k_selected = p_list_box.selected();
     MetadataPtr k_ptr{};
@@ -385,7 +384,6 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
       DOODLE_LOG_WARN("没有文件获得选择或者指针， 直接返回")
       return;
     }
-
     k_ptr->create_menu(k_factory);
     (*k_factory)(p_menu);
     p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);

@@ -55,6 +55,7 @@ class DOODLELIB_API AssetsFile : public Metadata {
   [[nodiscard]] const std::string& getUser() const;
   void setUser(const std::string& in_user);
   const std::vector<AssetsPathPtr>& getPathFile() const;
+  std::vector<AssetsPathPtr>& getPathFile();
   void setPathFile(const std::vector<AssetsPathPtr>& in_pathFile);
   Department getDepartment() const;
   void setDepartment(Department in_department);
@@ -67,8 +68,6 @@ class DOODLELIB_API AssetsFile : public Metadata {
   std::string getVersionStr() const;
   void setVersion(const std::uint64_t& in_Version) noexcept;
   int find_max_version() const;
-
-
 
   virtual void create_menu(const menu_factory_ptr& in_factoryPtr) override;
 

@@ -73,13 +73,49 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
   void create_shot();
   void create_assets_file();
   void create_assets_file_up_data();
+  void modify_assets_file_up_data();
   void create_assets_file_video_up();
   void create_assets_file_export_maya_up();
   void create_assets_file_batch_video_up();
   void create_assets_file_batch_export_maya_up();
   void create_ue4_Sequencer();
+  void modify_project_rename();
+  void modify_project_set_path();
+  void delete_project();
+  void modify_assets_set_name();
+  void modify_episode();
+  void modify_shot_int();
+  void modify_shot_ab();
+  void modify_attr_add_com();
+  void modify_attr_set_time();
+  void down_file(const AssetsFilePtr& in_ptr);
+  void delete_assets_attr();
 };
 
+class DOODLELIB_API menu_factory_project : public menu_factory {
+ public:
+  explicit menu_factory_project(nana::window in_window);
+
+  void create_menu(const ProjectPtr& in_ptr) override;
+};
+
+class DOODLELIB_API menu_factory_assets : public  menu_factory{
+ public:
+  explicit menu_factory_assets(nana::window in_window);
+  virtual void create_menu(const ProjectPtr& in_ptr) override;
+  virtual void create_menu(const AssetsPtr& in_ptr) override;
+  virtual void create_menu(const EpisodesPtr& in_ptr) override;
+  virtual void create_menu(const ShotPtr& in_ptr) override;
+};
+
+class DOODLELIB_API menu_factory_assets_attr : public menu_factory{
+ public:
+  explicit menu_factory_assets_attr(nana::window in_window);
+  virtual void create_menu(const AssetsPtr& in_ptr) override;
+  virtual void create_menu(const EpisodesPtr& in_ptr) override;
+  virtual void create_menu(const ShotPtr& in_ptr) override;
+  virtual void create_menu(const AssetsFilePtr& in_ptr) override;
+};
 /**
  * @brief 拖拽文件时所产生的菜单
  * 

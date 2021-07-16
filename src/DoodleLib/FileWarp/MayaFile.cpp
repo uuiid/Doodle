@@ -2,23 +2,23 @@
 #include <DoodleLib/FileWarp/MayaFile.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
+#include <DoodleLib/threadPool/long_term.h>
 #include <Logger/Logger.h>
-
 
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
 
 namespace doodle {
 MayaFile::MayaFile(FSys::path mayaPath)
-    : long_term(),
-      p_path(std::move(mayaPath)) {
+    : p_path(std::move(mayaPath)),
+      p_term(std::make_shared<long_term>()) {
   if (!FSys::exists(p_path) && CoreSet::getSet().hasMaya())
     p_path = CoreSet::getSet().MayaPath();
   else
     throw DoodleError{"无法找到maya启动器"};
 }
 
-FSys::path MayaFile::createTmpFile() const {
+FSys::path MayaFile::createTmpFile() {
   //开始写入临时文件
 
   const static auto tmp_path = CoreSet::getSet().getCacheRoot("maya");
@@ -27,7 +27,7 @@ FSys::path MayaFile::createTmpFile() const {
 
   {  //写入文件后直接关闭
     FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
-    file.write(k_file_py.begin(), k_file_py.size());
+    file.write(k_file_py.begin(), boost::numeric_cast<std::int64_t>(k_file_py.size()));
   }
   return k_tmp_path;
 }
@@ -41,8 +41,12 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
   if (!FSys::exists(k_export_path))
     FSys::create_directories(k_export_path);
 
-  if (!FSys::exists(file_path))
+  if (!FSys::exists(file_path)) {
+    p_term->sig_finished();
+    p_term->sig_message_result("不存在文件");
     return false;
+  }
+
   auto k_tmp_path = this->createTmpFile();
   //生成命令
   auto str_ = fmt::format(
@@ -72,12 +76,16 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
         p_path.generic_wstring().c_str(),  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
         &si,
         &pi);
+    p_term->sig_progress(0.1);
     // boost::process::system(command.c_str(), env);
   } catch (const std::runtime_error& err) {
     DOODLE_LOG_WARN(err.what())
     WaitForSingleObject(pi.hProcess, INFINITE);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
+
+    p_term->sig_finished();
+    p_term->sig_message_result("导出失败");
     return false;
   }
   WaitForSingleObject(pi.hProcess, INFINITE);
@@ -95,8 +103,11 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
   // }
 
   // k_c.wait();
+  p_term->sig_progress(0.9);
   FSys::remove(k_tmp_path);
   FSys::copy_file(file_path, k_export_path / file_path.filename(), FSys::copy_options::overwrite_existing);
+  p_term->sig_finished();
+  p_term->sig_message_result("导出完成");
   return true;
 }
 
@@ -125,7 +136,7 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
       //成功就加一
       ++k_pro;
       //添加进度
-      this->sig_progress(boost::numeric_cast<int>((1 / size)));
+      p_term->sig_progress(boost::numeric_cast<int>((1 / size)));
       // try {
       // } catch (const DoodleError& err) {
       //   //添加错误
@@ -133,7 +144,7 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
       // }
 
       //发送消息
-      this->sig_message_result(fmt::format("文件:{} --> {}", it->first, ((it->second.get()) ? "成功" : "失败")));
+      p_term->sig_message_result(fmt::format("文件:{} --> {}", it->first, ((it->second.get()) ? "成功" : "失败")));
 
       //擦除容器内数据
       it = result.erase(it);
@@ -145,7 +156,7 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
       it = result.begin();
     }
   }
-  this->sig_finished();
+  p_term->sig_finished();
   return true;
 }
 
@@ -155,6 +166,9 @@ bool MayaFile::checkFile() {
 bool MayaFile::is_maya_file(const FSys::path& in_path) {
   auto k_e = in_path.extension();
   return k_e == ".ma" || k_e == ".mb";
+}
+long_term_ptr MayaFile::get_term() const {
+  return p_term;
 }
 
 }  // namespace doodle

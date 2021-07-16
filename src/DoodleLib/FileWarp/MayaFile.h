@@ -1,18 +1,20 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/threadPool/long_term.h>
+
 
 #include <boost/signals2.hpp>
 namespace doodle {
-class DOODLELIB_API MayaFile : public long_term, public details::no_copy {
+class DOODLELIB_API MayaFile : public details::no_copy {
  private:
   FSys::path p_path;
+  long_term_ptr p_term;
 
-  [[nodiscard]] FSys::path createTmpFile() const;
+  [[nodiscard]] static FSys::path createTmpFile() ;
   bool checkFile();
 
  public:
   explicit MayaFile(FSys::path mayaPath = {});
+  [[nodiscard]] long_term_ptr get_term() const;
   bool exportFbxFile(const FSys::path& file_path, const FSys::path& export_path = {}) const;
   bool batchExportFbxFile(const std::vector<FSys::path>& file_path) const;
 

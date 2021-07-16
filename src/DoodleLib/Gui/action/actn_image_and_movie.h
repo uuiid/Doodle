@@ -8,10 +8,10 @@
 
 namespace doodle {
 namespace action_arg {
-class DOODLELIB_API arg_path : public action::_arg {
+class DOODLELIB_API arg_image_to_voide : public action::_arg {
  public:
-  arg_path() = default;
-  arg_path(std::vector<FSys::path>& in_paths, FSys::path& in_out_path)
+  arg_image_to_voide() = default;
+  arg_image_to_voide(std::vector<FSys::path>& in_paths, FSys::path& in_out_path)
       : image_list(in_paths),
         out_file(in_out_path){};
   /**
@@ -28,12 +28,12 @@ class DOODLELIB_API arg_path : public action::_arg {
 
 }  // namespace action_arg
 
-class DOODLELIB_API actn_image_to_movie : public action_indirect<action_arg::arg_path> {
+class DOODLELIB_API actn_image_to_movie : public action_indirect<action_arg::arg_image_to_voide> {
   FSys::path p_video_path;
   ImageSequencePtr p_image_sequence;
 
  public:
-  using arg_ = action_arg::arg_path;
+  using arg_ = action_arg::arg_image_to_voide;
 
   /**
    * @brief 将一个文件夹中的图片连接为视频
@@ -48,13 +48,13 @@ class DOODLELIB_API actn_image_to_movie : public action_indirect<action_arg::arg
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
-class DOODLELIB_API actn_image_to_move_up : public actn_composited<action_arg::arg_path> {
+class DOODLELIB_API actn_image_to_move_up : public actn_composited<action_arg::arg_image_to_voide> {
   std::shared_ptr<actn_image_to_movie> p_image_action;
   std::shared_ptr<actn_up_paths> p_up_path;
 
  public:
-  using arg_ = action_arg::arg_path;
-  virtual bool is_accept(const action_arg::arg_path& in_any) override;
+  using arg_ = action_arg::arg_image_to_voide;
+  virtual bool is_accept(const arg_& in_any) override;
   actn_image_to_move_up();
   virtual bool is_async() override;
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
