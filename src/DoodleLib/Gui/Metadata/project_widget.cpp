@@ -345,8 +345,11 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
     if (!k_selected.empty()) {
       auto k_pair = k_selected.at(0);
       k_ptr       = p_list_box.at(k_pair).value<AssetsFilePtr>();
+      k_factory->set_metadate(k_ptr, p_root);
+    } else {
+      k_ptr = p_root;
+      k_factory->set_metadate({}, p_root);
     }
-    k_factory->set_metadate(k_ptr, p_root);
 
     if (!p_root) {
       DOODLE_LOG_WARN("没有文件获得选择或者指针， 直接返回")
@@ -373,8 +376,11 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
     if (!k_selected.empty()) {
       auto k_pair = k_selected.at(0);
       k_ptr       = p_list_box.at(k_pair).value<AssetsFilePtr>();
+      k_factory->set_metadate(k_ptr, p_root);
+    } else {
+      k_ptr = p_root;
+      k_factory->set_metadate({}, p_root);
     }
-    k_factory->set_metadate(k_ptr, p_root);
     if (!k_ptr) {
       DOODLE_LOG_WARN("没有文件获得选择或者指针， 直接返回")
       return;
@@ -472,6 +478,7 @@ void assets_attr_widget::install_sig_one(std::shared_ptr<AssetsFile>& k_file) {
                 .text(1, k_f->getVersionStr())
                 .text(2, k_f->getComment().empty() ? "none" : k_f->getComment().back()->getComment())
                 .text(3, k_f->getTime()->showStr())
+                .text(5, !k_f->getPathFile().empty() ? "true" : "false")
                 .bgcolor(k_f->getPathFile().empty() ? nana::colors::light_coral : nana::colors::light_green);
         }
       })});

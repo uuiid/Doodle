@@ -72,6 +72,12 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
   void creare_episodes();
   void create_shot();
   void create_assets_file();
+  void create_assets_file_up_data();
+  void create_assets_file_video_up();
+  void create_assets_file_export_maya_up();
+  void create_assets_file_batch_video_up();
+  void create_assets_file_batch_export_maya_up();
+  void create_ue4_Sequencer();
 };
 
 /**

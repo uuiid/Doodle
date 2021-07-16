@@ -106,6 +106,9 @@ class DOODLELIB_API action : public details::no_copy {
 
 template <class arg_type>
 class DOODLELIB_API action_indirect : public action {
+ protected:
+  arg_type _arg_type;
+
  public:
   action_indirect() = default;
 

@@ -17,19 +17,16 @@ actn_up_paths::actn_up_paths()
   p_name = "直接上传多个路径";
   p_term = std::make_shared<long_term>();
 }
-actn_up_paths::actn_up_paths(std::any&& in_paths) {
-  p_name = "直接上传多个路径";
-}
-
 long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_ch = CoreSet::getSet().getRpcFileSystemClient();
 
   auto k_path = sig_get_arg().value().date;
   AssetsFilePtr k_ass_file;
 
-  if (in_data)
-    k_ass_file = std::dynamic_pointer_cast<AssetsFile>(in_data);
-  else if (in_parent) {
+  //  if (in_data)
+  //    k_ass_file = std::dynamic_pointer_cast<AssetsFile>(in_data);
+  //  else
+  if (in_parent) {
     auto k_str = in_parent->showStr();
     k_ass_file = std::make_shared<AssetsFile>(in_parent, k_str);
     in_parent->child_item.push_back_sig(k_ass_file);

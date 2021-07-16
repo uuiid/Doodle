@@ -269,6 +269,8 @@ void menu_factory::create_assets_file() {
   k_c_f->sig_get_arg.connect([this]() {
     return actn_assfile_create::arg{this->p_parent->showStr()};
   });
+  create_assets_file_up_data();
+  create_assets_file_video_up();
 }
 
 void menu_factory::create_prj() {
@@ -307,6 +309,39 @@ void menu_factory::create_delete_assets() {
     auto k_d_ = p_action.emplace_back(std::make_shared<actn_assets_delete>());
   }
 }
+void menu_factory::create_assets_file_up_data() {
+  auto k_up_folder = std::make_shared<actn_up_paths>();
+  p_action.push_back(k_up_folder);
+
+  k_up_folder->sig_get_arg.connect([this]() {
+    actn_up_paths::arg_ k_arg{};
+    nana::folderbox k_file{this->p_window, FSys::current_path()};
+    k_arg.date = k_file.show();
+    return k_arg;
+  });
+}
+void menu_factory::create_assets_file_video_up() {
+  auto k_i_anf_up = std::make_shared<actn_image_to_move_up>();
+  k_i_anf_up->sig_get_arg.connect([this, k_i_anf_up]() {
+    actn_image_to_move_up::arg_ k_arg{};
+    nana::folderbox k_file{this->p_window, FSys::current_path()};
+    k_file.allow_multi_select(false);
+    k_arg.image_list = k_file.show();
+    k_arg.out_file   = CoreSet::getSet().getCacheRoot("imaeg_to_move");
+    k_arg.is_cancel  = !k_i_anf_up->is_accept(k_arg);
+    return k_arg;
+  });
+
+  p_action.push_back(k_i_anf_up);
+}
+void menu_factory::create_assets_file_export_maya_up() {
+}
+void menu_factory::create_assets_file_batch_video_up() {
+}
+void menu_factory::create_assets_file_batch_export_maya_up() {
+}
+void menu_factory::create_ue4_Sequencer() {
+}
 void dragdrop_menu_factory::create_menu(const ProjectPtr& in_ptr) {
 }
 void dragdrop_menu_factory::create_menu(const AssetsPtr& in_ptr) {
@@ -324,6 +359,8 @@ void dragdrop_menu_factory::create_menu(const AssetsFilePtr& in_ptr) {
 void dragdrop_menu_factory::drop_menu() {
   if (p_paths.empty())
     return;
+  if (!p_metadata)
+    return;
 
   //有任何一个路径不存在之际返回
   for (const auto& k_p : p_paths) {
@@ -336,6 +373,7 @@ void dragdrop_menu_factory::drop_menu() {
   k_up_folder->sig_get_arg.connect([this]() {
     return actn_up_paths::arg_{p_paths};
   });
+  p_metadata.reset();
 
   if (p_paths.size() == 1) {
     auto k_path = p_paths.front();
@@ -354,8 +392,6 @@ void dragdrop_menu_factory::drop_menu() {
         });
 
         p_action.push_back(k_image);
-
-        create_image_and_up();
       }
 
     } else if (FSys::is_regular_file(k_path)) {

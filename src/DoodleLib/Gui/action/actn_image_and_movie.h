@@ -54,7 +54,7 @@ class DOODLELIB_API actn_image_to_move_up : public actn_composited<action_arg::a
 
  public:
   using arg_ = action_arg::arg_path;
-
+  virtual bool is_accept(const action_arg::arg_path& in_any) override;
   actn_image_to_move_up();
   virtual bool is_async() override;
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;

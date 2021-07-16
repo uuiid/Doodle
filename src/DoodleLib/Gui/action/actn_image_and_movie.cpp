@@ -106,7 +106,7 @@ actn_image_to_move_up::actn_image_to_move_up()
     : p_image_action(std::make_shared<actn_image_to_movie>()),
       p_up_path(std::make_shared<actn_up_paths>()) {
   p_name = "制作拍屏并上传";
-  p_image_action->sig_get_arg.connect([this]() { return this->sig_get_arg().value(); });
+  p_image_action->sig_get_arg.connect([this]() { return _arg_type; });
 
   /// 连接上传路径回调连接
   p_up_path->sig_get_arg.connect([this]() {
@@ -120,20 +120,26 @@ bool actn_image_to_move_up::is_async() {
 }
 
 long_term_ptr actn_image_to_move_up::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  auto k_v = action_indirect::sig_get_arg().value();
-  if (k_v.is_cancel)
-    return {};
+  _arg_type = action_indirect::sig_get_arg().value();
+  if (_arg_type.is_cancel) {
+    p_term->sig_finished();
+    p_term->sig_message_result("无法找到需要转换的资源");
+    return p_term;
+  }
 
   auto k_conv_image = p_image_action->run(in_data, in_parent);
   p_term_list.push_back(k_conv_image);
   p_term_list.push_back(p_up_path->get_long_term_signal());
 
   /// 运行转换完成后的上传文件回调
-  k_conv_image->sig_finished.connect([this, in_data, in_parent]() {
-    this->p_up_path->run(in_data, in_parent);
+  k_conv_image->sig_finished.connect([this,  in_parent]() {
+    this->p_up_path->run({}, in_parent);
   });
 
   return actn_composited<arg_>::run(in_data, in_parent);
+}
+bool actn_image_to_move_up::is_accept(const action_arg::arg_path& in_any) {
+  return p_image_action->is_accept(in_any);
 }
 
 }  // namespace doodle

@@ -152,7 +152,6 @@ DOODLELIB_API inline path make_path(const std::string &in_string) {
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> convert;
   return path{convert.from_bytes(in_string)};
 }
-
 DOODLELIB_API std::time_t last_write_time_t(const path &in_path);
 DOODLELIB_API inline std::chrono::time_point<std::chrono::system_clock> last_write_time_point(const path &in_path) {
   return std::chrono::system_clock::from_time_t(last_write_time_t(in_path));
@@ -217,7 +216,7 @@ using CommentPtr                = std::shared_ptr<Comment>;
 using AssetsPathPtr             = std::shared_ptr<AssetsPath>;
 using DragFilesFactoryPtr       = std::shared_ptr<DragFilesFactory>;
 using action_ptr                = std::shared_ptr<action>;
-using UploadDirAndFileActionPre = std::shared_ptr<actn_up_paths>;
+using actn_up_paths_ptr         = std::shared_ptr<actn_up_paths>;
 using DoodleLibPtr              = std::unique_ptr<DoodleLib>;
 using ThreadPoolPtr             = std::shared_ptr<ThreadPool>;
 using menu_factory_ptr          = std::shared_ptr<menu_factory_base>;
@@ -235,10 +234,5 @@ using trans_file_ptr = std::shared_ptr<trans_file>;
 }  // namespace rpc_trans
 class Doodle;
 [[maybe_unused]] DOODLELIB_API DoodleLibPtr make_doodle_lib();
-template <typename SSC, typename SSN>
-SSC ConvStr(const SSN &str) {
-  static_assert(false, "这个函数会出错");
-  return SSC{str};
-}
 
 }  // namespace doodle
