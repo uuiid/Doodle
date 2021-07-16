@@ -9,7 +9,10 @@ long_term::long_term() : sig_progress(),
                          p_str(),
                          p_progress(0),
                          _mutex() {
-  sig_finished.connect([this]() { p_fulfil = true; });
+  sig_finished.connect([this]() {
+    std::lock_guard k_guard{_mutex};
+    p_fulfil = true;
+  });
   sig_message_result.connect([this](const std::string& in_str) {
     if (p_fulfil)
       p_str = in_str;

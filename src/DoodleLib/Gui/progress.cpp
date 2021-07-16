@@ -34,7 +34,6 @@ progress::progress(nana::window in_w, long_term_ptr in_, std::string in_title)
   <>
   )");
   p_layout.field("pro") << _label << _pro << _text_box;
-  _text_box.editable(false).multi_lines(true).enable_caret();
 
   _pro.amount(1000);
   _sig_scoped_list.emplace_back(boost::signals2::scoped_connection{
@@ -50,15 +49,18 @@ progress::progress(nana::window in_w, long_term_ptr in_, std::string in_title)
   _sig_scoped_list.emplace_back(boost::signals2::scoped_connection{
       in_->sig_message_result.connect(([this](const std::string& in_str) {
         DOODLE_LOG_INFO(in_str);
-        _text_box.reset(in_str, false);
+        _text_box.caption(in_str);
         //        nana::msgbox msg{*this, "结果"};
         //        msg << in_str;
         //        msg();
       }))});
   p_layout.collocate();
+  caption(in_title);
 }
 
-void progress::create_progress(nana::window in_w, long_term_ptr in_, std::string in_title) {
+void progress::create_progress(nana::window in_w, const long_term_ptr& in_, const std::string& in_title) {
+  progress k_{in_w, in_, in_title};
+
   if (in_->fulfil()) {
     DOODLE_LOG_INFO("已经完成， 不需要显示进度条")
     nana::msgbox msg{in_w, "结果"};
@@ -67,7 +69,6 @@ void progress::create_progress(nana::window in_w, long_term_ptr in_, std::string
     return;
   }
 
-  progress k_{in_w, in_, in_title};
   k_.modality();
 }
 progress::~progress() {

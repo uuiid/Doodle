@@ -180,7 +180,6 @@ void menu_factory::create_menu(const AssetsFilePtr& in_ptr) {
     auto k_s_t = std::make_shared<actn_assfile_datetime>();
     p_action.push_back(k_s_t);
 
-
     k_s_c->sig_get_arg.connect([this]() {
       nana::inputbox msg{p_window, "评论: "};
       nana::inputbox::text name{"评论: "};
@@ -208,7 +207,7 @@ void menu_factory::create_menu(const AssetsFilePtr& in_ptr) {
       time->set_second(k_seconds.value());
       return actn_assfile_datetime::arg{time};
     });
-    if(!in_ptr->getPathFile().empty()) {
+    if (!in_ptr->getPathFile().empty()) {
       auto k_down = std::make_shared<actn_down_paths>();
       p_action.push_back(k_down);
       k_down->sig_get_arg.connect([this]() {

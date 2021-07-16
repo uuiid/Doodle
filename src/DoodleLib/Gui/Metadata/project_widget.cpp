@@ -338,18 +338,17 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
 
     k_factory->set_drop_file(in_.files);
     k_factory->set_metadate({}, p_root);
-    auto k_selected = p_list_box.checked();
+    auto k_selected = p_list_box.selected();
     MetadataPtr k_ptr{};
+
     /// 如果有选择就获得选择, 没有就获得根, 再没有就返回
-    if (k_selected.empty()) {
-      k_ptr = p_root;
-      k_factory->set_metadate({}, p_root);
-    } else {
+    if (!k_selected.empty()) {
       auto k_pair = k_selected.at(0);
       k_ptr       = p_list_box.at(k_pair).value<AssetsFilePtr>();
-      k_factory->set_metadate(k_ptr, p_root);
     }
-    if (!k_ptr) {
+    k_factory->set_metadate(k_ptr, p_root);
+
+    if (!p_root) {
       DOODLE_LOG_WARN("没有文件获得选择或者指针， 直接返回")
       return;
     }
@@ -371,14 +370,11 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
     MetadataPtr k_ptr{};
 
     /// 如果有选择就获得选择, 没有就获得根, 再没有就返回
-    if (k_selected.empty()) {
-      k_ptr = p_root;
-      k_factory->set_metadate({}, p_root);
-    } else {
+    if (!k_selected.empty()) {
       auto k_pair = k_selected.at(0);
       k_ptr       = p_list_box.at(k_pair).value<AssetsFilePtr>();
-      k_factory->set_metadate(k_ptr, p_root);
     }
+    k_factory->set_metadate(k_ptr, p_root);
     if (!k_ptr) {
       DOODLE_LOG_WARN("没有文件获得选择或者指针， 直接返回")
       return;

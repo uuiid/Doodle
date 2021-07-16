@@ -18,13 +18,13 @@ class DOODLELIB_API progress : public nana::form {
   nana::progress _pro;
   nana::place p_layout;
   nana::label _label;
-  nana::textbox _text_box;
+  nana::label _text_box;
   std::vector<boost::signals2::scoped_connection> _sig_scoped_list;
 
  public:
   progress();
-  ~progress();
+  ~progress() override;
   explicit progress(nana::window in_w, long_term_ptr in_, std::string in_title);
-  static void create_progress(nana::window in_w, long_term_ptr in_, std::string in_title);
+  static void create_progress(nana::window in_w, const long_term_ptr &in_, const std::string &in_title);
 };
 }  // namespace doodle
