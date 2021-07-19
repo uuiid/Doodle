@@ -11,22 +11,23 @@
 #include <Metadata/TimeDuration.h>
 namespace doodle {
 
-actn_assfile_create::actn_assfile_create(std::any&& in_any) {
+actn_assfile_create::actn_assfile_create()
+    : _assets_file() {
   p_name = "创建资产文件";
 }
 
-actn_assfile_create::actn_assfile_create() {
-  p_name = "创建资产文件";
+AssetsFilePtr actn_assfile_create::get_result() {
+  return _assets_file;
 }
 
 long_term_ptr actn_assfile_create::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_s = sig_get_arg().value().date;
   AssetsFilePtr k_item;
 
-  k_item = std::make_shared<AssetsFile>(in_parent, k_s);
-  in_parent->child_item.push_back_sig(k_item);
-  k_item->setVersion(k_item->find_max_version());
-  k_item->updata_db(in_parent->getMetadataFactory());
+  _assets_file = std::make_shared<AssetsFile>(in_parent, k_s);
+  in_parent->child_item.push_back_sig(_assets_file);
+  _assets_file->setVersion(_assets_file->find_max_version());
+  _assets_file->updata_db(in_parent->getMetadataFactory());
   in_parent->sortChildItems(true);
   return {};
 }

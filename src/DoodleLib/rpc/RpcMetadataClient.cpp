@@ -166,11 +166,11 @@ void RpcMetadataClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
   }
 }
 
-void RpcMetadataClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr) {
-  UpdataMetadata(in_metadataPtr, false);
+void RpcMetadataClient::UpdateMetadata(const MetadataConstPtr& in_metadataPtr) {
+  UpdateMetadata(in_metadataPtr, false);
 }
 
-void RpcMetadataClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr, bool b_updata_parent_id) {
+void RpcMetadataClient::UpdateMetadata(const MetadataConstPtr& in_metadataPtr, bool b_update_parent_id) {
   if (!in_metadataPtr->isInstall())
     return;
 
@@ -179,7 +179,7 @@ void RpcMetadataClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr, b
   k_in_db.set_id(in_metadataPtr->getId());
   k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
 
-  if (in_metadataPtr->hasParent() && b_updata_parent_id)
+  if (in_metadataPtr->hasParent() && b_update_parent_id)
     k_in_db.mutable_parent()->set_value(in_metadataPtr->p_parent_id.value());
 
   vector_container my_data{};
@@ -192,7 +192,7 @@ void RpcMetadataClient::UpdataMetadata(const MetadataConstPtr& in_metadataPtr, b
   k_in_db.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
 
   DataDb k_out_db{};
-  auto k_status = p_stub->UpdataMetadata(&k_context, k_in_db, &k_out_db);
+  auto k_status = p_stub->UpdateMetadata(&k_context, k_in_db, &k_out_db);
   if (!k_status.ok()) {
     throw DoodleError{k_status.error_message()};
   }

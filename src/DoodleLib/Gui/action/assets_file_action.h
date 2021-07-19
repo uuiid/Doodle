@@ -9,15 +9,13 @@
 namespace doodle {
 
 class DOODLELIB_API actn_assfile_create : public action_indirect<action::arg_str> {
+  AssetsFilePtr _assets_file;
+
  public:
   using arg = arg_str;
 
   actn_assfile_create();
-  /**
-   * @brief 输入的是显示名称
-   * @param in_any 显示名称（std::string）
-   */
-  explicit actn_assfile_create(std::any&& in_any);
+  AssetsFilePtr get_result();
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 

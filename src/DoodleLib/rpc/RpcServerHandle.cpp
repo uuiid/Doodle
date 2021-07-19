@@ -12,7 +12,7 @@ RpcServerHandle::RpcServerHandle()
       p_build(std::make_unique<grpc::ServerBuilder>()),
       p_thread() {
   grpc::ResourceQuota qu{"doodle_meta"};
-  qu.SetMaxThreads(std::thread::hardware_concurrency());
+  qu.SetMaxThreads(boost::numeric_cast<std::int32_t>(std::thread::hardware_concurrency()));
   p_build->SetResourceQuota(qu);
 }
 

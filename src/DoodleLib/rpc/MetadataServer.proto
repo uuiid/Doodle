@@ -34,5 +34,7 @@ service MetadataServer{
 
   rpc InstallMetadata(DataDb) returns(DataDb) {}
   rpc DeleteMetadata(DataDb) returns(DataDb) {}
-  rpc UpdataMetadata(DataDb) returns(DataDb) {}
+  rpc UpdateMetadata(DataDb) returns(DataDb) {}
+
+  rpc FilterMetadata(DataDb_Filter) returns(stream DataDb) {}
 }

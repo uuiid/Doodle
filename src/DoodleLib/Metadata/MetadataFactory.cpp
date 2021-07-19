@@ -31,7 +31,7 @@ bool MetadataFactory::insert_into(Metadata *in_metadata) const {
   return true;
 }
 void MetadataFactory::updata_db(MetadataPtr &in_metadata) const {
-  this->p_rpcClien.lock()->UpdataMetadata(in_metadata, in_metadata->p_updata_parent_id);
+  this->p_rpcClien.lock()->UpdateMetadata(in_metadata, in_metadata->p_updata_parent_id);
 }
 
 void MetadataFactory::select_indb(MetadataPtr &in_metadata) const {

@@ -199,7 +199,7 @@ grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, co
   return grpc::Status::OK;
 }
 
-grpc::Status RpcMetadaataServer::UpdataMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+grpc::Status RpcMetadaataServer::UpdateMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
   if (request->has_parent())
