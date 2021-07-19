@@ -33,7 +33,7 @@ class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service, p
   };
 
   [[nodiscard]] std::string get_cache_and_file(const FSys::path& key);
-  [[nodiscard]] void put_cache_and_file(const FSys::path& key, const std::string& value);
+  void put_cache_and_file(const FSys::path& key, const std::string& value);
 
   //  [[nodiscard]] FSys::path getPath(uint64_t id,const std::string& in_string)const;
  public:
