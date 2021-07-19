@@ -42,33 +42,14 @@ std::vector<MetadataPtr> RpcMetadataClient::GetChild(const MetadataConstPtr& in_
 //   auto k_filter = std::make_shared<rpc_filter::filter>();
 //   k_filter->set_id(in_metadataPtr->getId());
 //   FilterMetadata(k_filter).front();
-  
+
 // }
 void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   if (in_metadataPtr->isInstall())
     return;
 
   grpc::ClientContext k_context{};
-  DataDb k_in_db{};
-
-  k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
-  k_in_db.mutable_m_type()->set_value(
-      magic_enum::enum_cast<doodle::DataDb::meta_type>(in_metadataPtr->get_meta_type_int()).value());
-  if (in_metadataPtr->hasParent())
-    k_in_db.mutable_parent()->set_value(in_metadataPtr->p_parent_id.value());
-
-  // #ifndef NDEBUG
-  DOODLE_LOG_DEBUG(fmt::format("{} 子物体 -> {} ", in_metadataPtr->str(), in_metadataPtr->hasChild()));
-  // #endif
-  vector_container my_data{};
-  {
-    vector_iostream kt{my_data};
-    cereal::PortableBinaryOutputArchive k_archive{kt};
-    k_archive(in_metadataPtr);
-  }
-
-  k_in_db.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
-
+  DataDb k_in_db{*in_metadataPtr};
   DataDb k_out_db{};
   auto k_status = p_stub->InstallMetadata(&k_context, k_in_db, &k_out_db);
   if (k_status.ok()) {
@@ -103,22 +84,7 @@ void RpcMetadataClient::UpdateMetadata(const MetadataConstPtr& in_metadataPtr, b
     return;
 
   grpc::ClientContext k_context{};
-  DataDb k_in_db{};
-  k_in_db.set_id(in_metadataPtr->getId());
-  k_in_db.set_uuidpath(in_metadataPtr->getUrlUUID().generic_string());
-
-  if (in_metadataPtr->hasParent() && b_update_parent_id)
-    k_in_db.mutable_parent()->set_value(in_metadataPtr->p_parent_id.value());
-
-  vector_container my_data{};
-  {
-    vector_iostream kt{my_data};
-    cereal::PortableBinaryOutputArchive k_archive{kt};
-    k_archive(in_metadataPtr);
-  }
-
-  k_in_db.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
-
+  DataDb k_in_db{*in_metadataPtr};
   DataDb k_out_db{};
   auto k_status = p_stub->UpdateMetadata(&k_context, k_in_db, &k_out_db);
   if (!k_status.ok()) {

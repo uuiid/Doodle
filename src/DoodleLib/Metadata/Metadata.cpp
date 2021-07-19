@@ -280,7 +280,7 @@ Metadata::operator DataDb() const {
 void Metadata::to_DataDb(DataDb &in_) const {
   in_.set_id(p_id);
   in_.set_uuidpath(getUrlUUID().generic_string());
-  if (hasParent())
+  if (hasParent() && (p_updata_parent_id || p_id == 0))
     in_.mutable_parent()->set_value(*p_parent_id);
 
   //  auto k_time      = std::chrono::system_clock::now();
@@ -295,7 +295,7 @@ void Metadata::to_DataDb(DataDb &in_) const {
     k_archive(shared_from_this());
   }
   in_.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
-  if (p_updata_type)
+  if (p_updata_type || p_id == 0)
     in_.mutable_m_type()->set_value(magic_enum::enum_cast<doodle::DataDb::meta_type>(get_meta_type_int()).value());
 }
 MetadataPtr Metadata::from_DataDb(const DataDb &in_) {

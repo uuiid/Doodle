@@ -30,9 +30,6 @@ message DataDb{
   meta_type_value m_type = 6;
 }
 
-message DataVector{
-  repeated DataDb data = 1;
-}
 
 message DataDb_Filter{
   uint64 id = 1;
@@ -43,10 +40,6 @@ message DataDb_Filter{
 }
 
 service MetadataServer{
-  rpc GetProject(google.protobuf.Empty) returns (DataVector) {}
-  rpc GetChild(DataDb) returns (DataVector) {}
-  rpc GetMetadata(DataDb) returns (DataDb) {}
-
   rpc InstallMetadata(DataDb) returns(DataDb) {}
   rpc DeleteMetadata(DataDb) returns(DataDb) {}
   rpc UpdateMetadata(DataDb) returns(DataDb) {}

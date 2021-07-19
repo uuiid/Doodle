@@ -38,9 +38,7 @@ class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service, p
   //  [[nodiscard]] FSys::path getPath(uint64_t id,const std::string& in_string)const;
  public:
   RpcMetadaataServer();
-  grpc::Status GetProject(grpc::ServerContext* context, const google::protobuf::Empty* request, DataVector* response) override;
-  grpc::Status GetChild(grpc::ServerContext* context, const DataDb* request, DataVector* response) override;
-  grpc::Status GetMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
+
   grpc::Status InstallMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
   grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
   grpc::Status UpdateMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
