@@ -10,6 +10,7 @@
 #include <Gui/factory/menu_factory.h>
 #include <Metadata/TimeDuration.h>
 #include <PinYin/convert.h>
+#include <google/protobuf/util/time_util.h>
 
 #include <utility>
 
@@ -25,7 +26,8 @@ AssetsFile::AssetsFile()
       p_user(CoreSet::getSet().getUser()),
       p_department(CoreSet::getSet().getDepartmentEnum()),
       p_comment(),
-      p_version(1) {
+      p_version(1),
+      p_need_time(false) {
   p_type = meta_type::file;
 }
 
@@ -39,7 +41,8 @@ AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string showName
       p_user(CoreSet::getSet().getUser()),
       p_department(CoreSet::getSet().getDepartmentEnum()),
       p_comment(),
-      p_version(1) {
+      p_version(1),
+      p_need_time(false) {
   p_type   = meta_type::file;
   p_parent = std::move(in_metadata);
   if (p_name.empty())
@@ -87,6 +90,7 @@ void AssetsFile::setStdTime(const std::chrono::time_point<std::chrono::system_cl
   p_time = std::make_shared<TimeDuration>(in_time);
   saved(true);
   sig_change();
+  p_need_time = true;
 }
 const std::string& AssetsFile::getUser() const {
   return p_user;
@@ -194,6 +198,7 @@ void AssetsFile::setTime(const TimeDurationPtr& in_time) {
   p_time = in_time;
   saved(true);
   sig_change();
+  p_need_time = true;
 }
 void AssetsFile::create_menu(const menu_factory_ptr& in_factoryPtr) {
   in_factoryPtr->create_menu(std::dynamic_pointer_cast<AssetsFile>(shared_from_this()));
@@ -201,4 +206,14 @@ void AssetsFile::create_menu(const menu_factory_ptr& in_factoryPtr) {
 std::vector<AssetsPathPtr>& AssetsFile::getPathFile() {
   return p_path_files;
 }
+void AssetsFile::to_DataDb(DataDb& in_) const {
+  Metadata::to_DataDb(in_);
+  if (p_need_time) {
+    auto k_time      = p_time->getUTCTime();
+    auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
+        std::chrono::system_clock::to_time_t(k_time));
+    in_.mutable_update_time()->CopyFrom(k_timestamp);
+  }
+}
+
 }  // namespace doodle

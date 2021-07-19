@@ -6,7 +6,12 @@
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <Exception/Exception.h>
+#include <Metadata/Metadata_cpp.h>
+#include <core/ContainerDevice.h>
 #include <core/CoreSet.h>
+#include <google/protobuf/util/time_util.h>
+
+#include <cereal/archives/portable_binary.hpp>
 
 namespace doodle {
 Metadata::Metadata()
@@ -23,6 +28,7 @@ Metadata::Metadata()
       child_item(),
       user_date(),
       p_type(meta_type::unknown_file),
+      p_updata_type(false),
       child_item_is_sort(false) {
   install_slots();
 }
@@ -41,6 +47,7 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
       child_item(),
       user_date(),
       p_type(meta_type::unknown_file),
+      p_updata_type(false),
       child_item_is_sort(false) {
   install_slots();
 }
@@ -136,15 +143,18 @@ uint64_t Metadata::getId() const {
 }
 
 void Metadata::set_meta_typp(const meta_type &in_meta) {
-  p_type = in_meta;
+  p_type        = in_meta;
+  p_updata_type = true;
 }
 
 void Metadata::set_meta_typp(const std::string &in_meta) {
-  p_type = magic_enum::enum_cast<meta_type>(in_meta).value_or(meta_type::unknown_file);
+  p_type        = magic_enum::enum_cast<meta_type>(in_meta).value_or(meta_type::unknown_file);
+  p_updata_type = true;
 }
 
 void Metadata::set_meta_type(std::int32_t in_) {
-  p_type = magic_enum::enum_cast<meta_type>(in_).value_or(meta_type::unknown_file);
+  p_type        = magic_enum::enum_cast<meta_type>(in_).value_or(meta_type::unknown_file);
+  p_updata_type = true;
 }
 
 Metadata::meta_type Metadata::get_meta_type() const {
@@ -260,6 +270,56 @@ void Metadata::add_child(const MetadataPtr &val) {
   child_item_is_sort           = false;
 
   DOODLE_LOG_INFO(fmt::format("插入子数据： {}", val->showStr()))
+}
+Metadata::operator DataDb() const {
+  DataDb k_tmp{};
+  this->to_DataDb(k_tmp);
+  return k_tmp;
+}
+
+void Metadata::to_DataDb(DataDb &in_) const {
+  in_.set_id(p_id);
+  in_.set_uuidpath(getUrlUUID().generic_string());
+  if (hasParent())
+    in_.mutable_parent()->set_value(*p_parent_id);
+
+  //  auto k_time      = std::chrono::system_clock::now();
+  //  auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
+  //      std::chrono::system_clock::to_time_t(k_time));
+  //  in_.mutable_update_time()->CopyFrom(k_timestamp);
+
+  vector_container my_data{};
+  {
+    vector_iostream kt{my_data};
+    cereal::PortableBinaryOutputArchive k_archive{kt};
+    k_archive(shared_from_this());
+  }
+  in_.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
+  if (p_updata_type)
+    in_.mutable_m_type()->set_value(magic_enum::enum_cast<doodle::DataDb::meta_type>(get_meta_type_int()).value());
+}
+MetadataPtr Metadata::from_DataDb(const DataDb &in_) {
+  MetadataPtr k_ptr{};
+
+  auto k_data = in_.metadata_cereal().value();
+  vector_container my_data{k_data.begin(), k_data.end()};
+  {
+    vector_istream k_i{my_data};
+    cereal::PortableBinaryInputArchive k_archive{k_i};
+    k_archive(k_ptr);
+  }
+
+  if (k_ptr->p_id == 0) {
+    k_ptr->p_id = in_.id();
+  } else {
+    if (k_ptr->p_id != in_.id())
+      return {};
+  }
+  k_ptr->p_id        = in_.id();
+  k_ptr->p_parent_id = in_.parent().value();
+
+  k_ptr->set_meta_type(magic_enum::enum_integer(in_.m_type().value()));
+  return k_ptr;
 }
 
 }  // namespace doodle

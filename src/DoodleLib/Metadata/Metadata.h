@@ -5,6 +5,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/core/observable_container.h>
+#include <DoodleLib/libWarp/protobuf_warp.h>
 
 #include <any>
 #include <boost/signals2.hpp>
@@ -12,7 +13,6 @@
 #include <cereal/types/optional.hpp>
 #include <cereal/types/polymorphic.hpp>
 #include <optional>
-
 namespace doodle {
 
 /**
@@ -45,6 +45,7 @@ class DOODLELIB_API Metadata
   /// 需要保存
   bool p_need_load;
   bool p_updata_parent_id;
+  bool p_updata_type;
 
   uint64_t p_has_child;
 
@@ -245,6 +246,10 @@ class DOODLELIB_API Metadata
   virtual void insert_into(const MetadataFactoryPtr &in_factory = {});
 
   boost::signals2::signal<void()> sig_change;
+
+  virtual void to_DataDb(DataDb &in_) const;
+  static MetadataPtr from_DataDb(const DataDb &in_);
+  explicit operator DataDb() const;
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);

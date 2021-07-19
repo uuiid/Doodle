@@ -65,7 +65,7 @@ grpc::Status RpcMetadaataServer::GetProject(grpc::ServerContext *context, const 
     auto k_data = response->add_data();
     k_data->set_id(row.id.value());
     k_data->set_uuidpath(std::string{row.uuidPath.value()});
-    k_data->set_m_type(
+    k_data->mutable_m_type()->set_value(
         magic_enum::enum_cast<doodle::DataDb::meta_type>(row.metaType.value())
             .value_or(doodle::DataDb::meta_type::DataDb_meta_type_unknown_file));
     k_data->update_time();
@@ -98,7 +98,7 @@ grpc::Status RpcMetadaataServer::GetChild(grpc::ServerContext *context, const Da
     k_db.set_id(row.id.value());
     k_db.mutable_parent()->set_value(row.parent.value());
     k_db.set_uuidpath(std::string{row.uuidPath.value()});
-    k_db.set_m_type(
+    k_db.mutable_m_type()->set_value(
         magic_enum::enum_cast<doodle::DataDb::meta_type>(row.metaType.value())
             .value_or(doodle::DataDb::meta_type::DataDb_meta_type_unknown_file));
     auto k_time      = std::chrono::system_clock::time_point{row.updateTime.value()};
@@ -131,7 +131,7 @@ grpc::Status RpcMetadaataServer::GetMetadata(grpc::ServerContext *context, const
     ///设置一些普遍值
     response->set_id(row.id.value());
     response->mutable_parent()->set_value(row.parent.value());
-    response->set_m_type(
+    response->mutable_m_type()->set_value(
         magic_enum::enum_cast<doodle::DataDb::meta_type>(row.metaType.value())
             .value_or(doodle::DataDb::meta_type::DataDb_meta_type_unknown_file));
     //    response->set_uuidpath(std::string{row.uuidPath.value()});
@@ -157,7 +157,7 @@ grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, c
 
   auto k_in = sqlpp::dynamic_insert_into(*k_conn, k_tab).dynamic_set();
   k_in.insert_list.add(k_tab.uuidPath = request->uuidpath());
-  k_in.insert_list.add(k_tab.metaType = magic_enum::enum_integer(request->m_type()));
+  k_in.insert_list.add(k_tab.metaType = magic_enum::enum_integer(request->m_type().value()));
   if (request->has_parent()) {
     k_in.insert_list.add(k_tab.parent = request->parent().value());
   }
@@ -202,14 +202,82 @@ grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, co
 grpc::Status RpcMetadaataServer::UpdateMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   auto k_conn = CoreSql::Get().getConnection();
   Metadatatab k_tab{};
+  auto k_sql = sqlpp::dynamic_update(*k_conn, k_tab).where(k_tab.id == request->id()).dynamic_set();
   if (request->has_parent())
-    (*k_conn)(
-        sqlpp::update(k_tab).where(k_tab.id == request->id()).set(k_tab.parent = request->parent().value()));
+    k_sql.assignments.add(k_tab.parent = request->parent().value());
+  if (request->has_update_time()) {
+    auto k_time = std::chrono::system_clock::from_time_t(
+        google::protobuf::util::TimeUtil::TimestampToTimeT(request->update_time()));
+
+    k_sql.assignments.add(k_tab.updateTime = k_time);
+  }
+  if (request->has_m_type()) {
+    auto k_t = magic_enum::enum_integer(request->m_type().value());
+    k_sql.assignments.add(k_tab.metaType = k_t);
+  }
+
+  if (request->has_parent() || request->has_update_time() || request->has_m_type())
+    (*k_conn)(k_sql);
 
   auto path = getPath(request->uuidpath());
   put_cache_and_file(path, request->metadata_cereal().value());
 
   DOODLE_LOG_DEBUG(fmt::format("id: {} update: {}", request->id(), path))
+  return grpc::Status::OK;
+}
+grpc::Status RpcMetadaataServer::FilterMetadata(grpc::ServerContext *context,
+                                                const DataDb_Filter *request, grpc::ServerWriter<DataDb> *writer) {
+  auto k_conn = CoreSql::Get().getConnection();
+  Metadatatab k_tab{};
+  auto k_select = sqlpp::dynamic_select(*k_conn, sqlpp::all_of(k_tab)).from(k_tab).dynamic_where();
+
+  if (request->has_begin_time() && request->has_end_time()) {
+    auto k_time_begin = std::chrono::system_clock::from_time_t(
+        google::protobuf::util::TimeUtil::TimestampToTimeT(request->begin_time()));
+    auto k_time_end = std::chrono::system_clock::from_time_t(
+        google::protobuf::util::TimeUtil::TimestampToTimeT(request->end_time()));
+    k_select.where.add(k_tab.updateTime > k_time_begin && k_tab.updateTime < k_time_end);
+  }
+  if (request->has_m_type()) {
+    auto k_type = magic_enum::enum_cast<Metadata::meta_type>(
+                      magic_enum::enum_integer(request->m_type().value()))
+                      .value_or(Metadata::meta_type::unknown_file);
+    k_select.where.add(k_tab.metaType == magic_enum::enum_integer(k_type));
+  }
+  if (request->id() != 0) {
+    k_select.where.add(k_tab.id == request->id());
+  }
+  if (request->has_parent()) {
+    k_select.where.add(k_tab.parent == request->parent().value());
+  }
+
+  for (const auto &row : (*k_conn)(k_select)) {
+    DataDb k_db;
+    k_db.set_id(row.id.value());
+    k_db.mutable_parent()->set_value(row.parent.value());
+    k_db.set_uuidpath(std::string{row.uuidPath.value()});
+    k_db.mutable_m_type()->set_value(
+        magic_enum::enum_cast<doodle::DataDb::meta_type>(row.metaType.value())
+            .value_or(doodle::DataDb::meta_type::DataDb_meta_type_unknown_file));
+    auto k_time      = std::chrono::system_clock::time_point{row.updateTime.value()};
+    auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
+        std::chrono::system_clock::to_time_t(k_time));
+    k_db.mutable_update_time()->CopyFrom(k_timestamp);
+
+    ///@warning 这里是要读取数据的，但是请记得添加缓存
+    auto k_path = getPath(row.uuidPath.value());
+    auto k_str  = get_cache_and_file(k_path);
+    if (k_str.empty()) {
+      DOODLE_LOG_WARN("id: {} uuidPath: {} 数据无效, 进行删除! ", row.id.value(), row.uuidPath.value())
+      continue;
+    }
+    k_db.mutable_metadata_cereal()->set_value(std::move(k_str));
+    if (!writer->Write(k_db))
+      return grpc::Status::CANCELLED;
+
+    DOODLE_LOG_DEBUG(fmt::format("id: {} uuidPath: {}", row.id.value(), row.uuidPath.value()))
+  }
+
   return grpc::Status::OK;
 }
 

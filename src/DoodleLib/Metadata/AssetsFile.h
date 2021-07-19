@@ -25,6 +25,8 @@ class DOODLELIB_API AssetsFile : public Metadata {
   std::vector<CommentPtr> p_comment;
   std::uint64_t p_version;
 
+  bool p_need_time;
+
  public:
   /**
    * @brief 默认构造
@@ -75,6 +77,8 @@ class DOODLELIB_API AssetsFile : public Metadata {
   bool operator>(const AssetsFile& in_rhs) const;
   bool operator<=(const AssetsFile& in_rhs) const;
   bool operator>=(const AssetsFile& in_rhs) const;
+
+  virtual void to_DataDb(DataDb& in_) const override;
 
  protected:
   void _select_indb(const MetadataFactoryPtr& in_factory) override;

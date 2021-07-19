@@ -5,12 +5,38 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
-
+#include <Metadata/Metadata.h>
 #include <MetadataServer.grpc.pb.h>
-
 #include <grpcpp/channel.h>
 
 namespace doodle {
+namespace rpc_filter {
+class filter : details::no_copy {
+ public:
+  using time_point = std::chrono::time_point<std::chrono::system_clock>;
+
+ private:
+  std::optional<std::int64_t> _id;
+  std::optional<std::int64_t> _parent_id;
+  std::optional<Metadata::meta_type> _meta_type;
+  std::optional<time_point> _begin;
+  std::optional<time_point> _end;
+
+ public:
+  filter();
+
+  void set_id(std::int64_t in_id);
+  void set_parent_id(std::int64_t in_patent_id);
+  void set_meta_type(Metadata::meta_type in_meta_type);
+  void set_begin_time(const time_point& in_time);
+  void set_end_time(const time_point& in_time);
+  void set_range(const time_point& in_begin, const time_point& in_end);
+
+  explicit operator DataDb_Filter() const;
+};
+
+using rpc_filter_ptr = std::shared_ptr<filter>;
+}  // namespace rpc_filter
 /**
  * @brief rpc客户端
  * @warning 这个类在导出的时候使用会报错, 在grpc库中会报空指针错误, 所有不可以在外部使用
@@ -31,13 +57,13 @@ class DOODLELIB_API RpcMetadataClient {
    */
   [[nodiscard]] std::vector<MetadataPtr> GetChild(const MetadataConstPtr& in_metadataPtr);
 
-  /**
-   * @brief 这个不是获得是数据库中的数据， 是获得服务器中序列化的数据
-   * 这个函数是 RpcMetadataClient::GetChild 的单项函数
-   * 
-   * @param in_metadataPtr 要获得的数据对象
-   */
-  void GetMetadata(const MetadataPtr& in_metadataPtr);
+  // /**
+  //  * @brief 这个不是获得是数据库中的数据， 是获得服务器中序列化的数据
+  //  * 这个函数是 RpcMetadataClient::GetChild 的单项函数
+  //  * 
+  //  * @param in_metadataPtr 要获得的数据对象
+  //  */
+  // void GetMetadata(const MetadataPtr& in_metadataPtr);
 
   /**
    * @brief 这里是插入数据库数据

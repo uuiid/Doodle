@@ -6,6 +6,10 @@ import "google/protobuf/any.proto";
 import "google/protobuf/wrappers.proto";
 
 package doodle;
+
+
+
+
 message DataDb{
   uint64 id = 1;
   string uuidPath = 2;
@@ -13,18 +17,29 @@ message DataDb{
   google.protobuf.Timestamp update_time = 4;
   google.protobuf.Any Metadata_cereal = 5;
   enum meta_type{
-    unknown_file       = 0;
-    project_root       = 1;
-    file               = 2;
-    folder             = 3;
-    derive_file        = 4;
+    unknown_file = 0;
+    project_root = 1;
+    file = 2;
+    folder = 3;
+    derive_file = 4;
     animation_lib_root = 5;
   }
-  meta_type m_type = 6;
+  message meta_type_value{
+   meta_type value = 1; 
+  }
+  meta_type_value m_type = 6;
 }
 
 message DataVector{
   repeated DataDb data = 1;
+}
+
+message DataDb_Filter{
+  uint64 id = 1;
+  google.protobuf.Timestamp begin_time = 2;
+  google.protobuf.Timestamp end_time = 3;
+  DataDb.meta_type_value m_type = 4;
+  google.protobuf.UInt64Value parent = 5;
 }
 
 service MetadataServer{

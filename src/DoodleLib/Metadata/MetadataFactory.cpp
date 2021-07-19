@@ -58,7 +58,6 @@ bool MetadataFactory::hasChild(const Metadata *in_metadata) const {
 
 void MetadataFactory::select_indb(Project *in_) const {
   auto k_ptr = in_->shared_from_this();
-  this->p_rpcClien.lock()->GetMetadata(k_ptr);
   select_indb(k_ptr);
 }
 void MetadataFactory::select_indb(Shot *in_) const {
