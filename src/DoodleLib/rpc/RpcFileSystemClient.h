@@ -74,7 +74,7 @@ class DOODLELIB_API down_dir : public trans_file {
 
  protected:
   void wait() override;
-  void down(const std::unique_ptr<rpc_trans_path>& in_path);
+  rpc_trans_path_ptr_list down(const std::unique_ptr<rpc_trans_path>& in_path);
   void run() override;
 };
 class DOODLELIB_API up_file : public trans_file {
@@ -93,7 +93,7 @@ class DOODLELIB_API up_dir : public trans_file {
 
  protected:
   void wait() override;
-  void updata(const std::unique_ptr<rpc_trans_path>& in_path);
+  rpc_trans_path_ptr_list update(const std::unique_ptr<rpc_trans_path>& in_path);
   void run() override;
 };
 

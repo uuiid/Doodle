@@ -227,7 +227,6 @@ void trans_file::link_sub_sig(const trans_file_ptr& in_sub, const std::double_t&
   });
 }
 
-
 down_file::down_file(RpcFileSystemClient* in_self)
     : trans_file(in_self) {
 }
@@ -365,7 +364,13 @@ void down_dir::run() {
   if (!FSys::exists(_param->local_path))
     FSys::create_directories(_param->local_path);
 
-  down(_param);
+  rpc_trans_path_ptr_list _stack{};
+  _stack.push_back(std::move(_param));
+  while (_stack.empty()) {
+    auto k_i = down(_stack.back());
+    _stack.pop_back();
+    _stack.insert(_stack.end(), std::make_move_iterator(k_i.begin()), std::make_move_iterator(k_i.end()));
+  }
 
   auto k_size = boost::numeric_cast<double_t>(_down_list.size());
   for (auto& k_i : _down_list) {
@@ -375,7 +380,7 @@ void down_dir::run() {
     (*k_i)();
   }
 }
-void down_dir::down(const std::unique_ptr<rpc_trans_path>& in_path) {
+rpc_trans_path_ptr_list down_dir::down(const std::unique_ptr<rpc_trans_path>& in_path) {
   grpc::ClientContext k_context{};
 
   FileInfo k_in_info{};
@@ -386,12 +391,14 @@ void down_dir::down(const std::unique_ptr<rpc_trans_path>& in_path) {
 
   auto k_prot = DoodleLib::Get().get_thread_pool();
 
+  rpc_trans_path_ptr_list _stack{};
   while (k_out->Read(&k_out_info)) {
     FSys::path k_s_p = k_out_info.path();
     FSys::path k_l_p = in_path->local_path / k_s_p.filename();
     std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{k_l_p, k_s_p}};
     if (k_out_info.isfolder()) {
-      down(k_ptr);
+      _stack.push_back(std::move(k_ptr));
+      //      down(k_ptr);
       //      std::unique_lock lock{p_mutex};
       //      k_future_list.emplace_back(
       //          k_prot->enqueue(
@@ -408,6 +415,7 @@ void down_dir::down(const std::unique_ptr<rpc_trans_path>& in_path) {
   auto status = k_out->Finish();
   if (!status.ok())
     throw DoodleError{status.error_message()};
+  return _stack;
 }
 void down_dir::wait() {
   _result.get();
@@ -422,7 +430,13 @@ up_dir::up_dir(RpcFileSystemClient* in_self)
 void up_dir::run() {
   if (!FSys::exists(_param->local_path))
     throw DoodleError{"未找到上传文件夹"};
-  updata(_param);
+
+  rpc_trans_path_ptr_list _stack{};
+  _stack.push_back(std::move(_param));
+  while (_stack.empty()) {
+    auto k_list = update(_param);
+    _stack.insert(_stack.end(), std::make_move_iterator(k_list.begin()), std::make_move_iterator(k_list.end()));
+  }
 
   auto k_size = boost::numeric_cast<double_t>(_up_list.size());
 
@@ -433,10 +447,11 @@ void up_dir::run() {
     (*k_i)();
   }
 }
-void up_dir::updata(const std::unique_ptr<rpc_trans_path>& in_path) {
+rpc_trans_path_ptr_list up_dir::update(const std::unique_ptr<rpc_trans_path>& in_path) {
   std::vector<std::pair<FSys::path, FSys::path>> path_list{};
   auto k_prot = DoodleLib::Get().get_thread_pool();
 
+  rpc_trans_path_ptr_list _stack{};
   for (const auto& k_it : FSys::directory_iterator(in_path->local_path)) {
     FSys::path k_s_p = in_path->server_path / k_it.path().filename();
     auto k_back      = in_path->backup_path / k_it.path().filename();
@@ -444,7 +459,7 @@ void up_dir::updata(const std::unique_ptr<rpc_trans_path>& in_path) {
     std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{k_l_p, k_s_p, k_back}};
 
     if (FSys::is_directory(k_it)) {
-      updata(k_ptr);
+      _stack.push_back(std::move(k_ptr));
       //      std::unique_lock lock{p_mutex};
       //      in_future_list.emplace_back(
       //          k_prot->enqueue(
@@ -457,6 +472,7 @@ void up_dir::updata(const std::unique_ptr<rpc_trans_path>& in_path) {
       k_up->set_parameter(k_ptr);
     }
   }
+  return _stack;
 }
 void up_dir::wait() {
   _result.get();
