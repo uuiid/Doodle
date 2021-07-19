@@ -18,9 +18,16 @@ actn_up_paths::actn_up_paths()
   p_term = std::make_shared<long_term>();
 }
 long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+  _arg_type = sig_get_arg().value();
+  if (_arg_type.is_cancel) {
+    p_term->sig_finished();
+    p_term->sig_message_result("取消上传");
+    return p_term;
+  }
+
   auto k_ch = CoreSet::getSet().getRpcFileSystemClient();
 
-  auto k_path = sig_get_arg().value().date;
+  auto k_path = _arg_type.date;
   AssetsFilePtr k_ass_file;
 
   k_ass_file = std::dynamic_pointer_cast<AssetsFile>(in_data);
@@ -53,12 +60,18 @@ actn_create_ass_up_paths::actn_create_ass_up_paths()
     : p_up(std::make_shared<actn_up_paths>()) {
   p_name = "创建并上传文件";
   p_term = p_up->get_long_term_signal();
-  p_up->sig_get_arg.connect([this]() { return sig_get_arg().value(); });  /// 将信号和槽进行转移
+  p_up->sig_get_arg.connect([this]() { return _arg_type; });  /// 将信号和槽进行转移
 }
 bool actn_create_ass_up_paths::is_async() {
   return true;
 }
 long_term_ptr actn_create_ass_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+  _arg_type = sig_get_arg().value();
+  if (_arg_type.is_cancel) {
+    p_term->sig_finished();
+    p_term->sig_message_result("取消上传");
+    return p_term;
+  }
   AssetsFilePtr k_ass_file;
   if (in_parent) {
     auto k_str = in_parent->showStr();

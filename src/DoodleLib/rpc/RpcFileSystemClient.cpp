@@ -366,7 +366,7 @@ void down_dir::run() {
 
   rpc_trans_path_ptr_list _stack{};
   _stack.push_back(std::move(_param));
-  while (_stack.empty()) {
+  while (!_stack.empty()) {
     auto k_i = down(_stack.back());
     _stack.pop_back();
     _stack.insert(_stack.end(), std::make_move_iterator(k_i.begin()), std::make_move_iterator(k_i.end()));
@@ -433,8 +433,9 @@ void up_dir::run() {
 
   rpc_trans_path_ptr_list _stack{};
   _stack.push_back(std::move(_param));
-  while (_stack.empty()) {
-    auto k_list = update(_param);
+  while (!_stack.empty()) {
+    auto k_list = update(_stack.back());
+    _stack.pop_back();
     _stack.insert(_stack.end(), std::make_move_iterator(k_list.begin()), std::make_move_iterator(k_list.end()));
   }
 
