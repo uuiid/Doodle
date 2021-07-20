@@ -5,6 +5,10 @@
 #include <DoodleLib_fwd.h>
 #include <Exception/Exception.h>
 #include <Windows.h>
+#include <cryptopp/base64.h>
+#include <cryptopp/files.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/sha.h>
 #include <shellapi.h>
 
 #include <boost/locale.hpp>
@@ -76,6 +80,30 @@ path add_time_stamp(const path &in_path) {
   k_fn += in_path.extension();
   auto k_path = in_path.parent_path() / k_fn;
   return k_path;
+}
+std::string file_hash_sha224(const path &in_file) {
+  if (exists(in_file) && is_regular_file(in_file)) {
+    CryptoPP::SHA224 k_sha_224;
+    std::string k_string;
+    ifstream k_ifstream{in_file, std::ios::binary | std::ios::in};
+    if (!k_ifstream) {
+      DOODLE_LOG_INFO("{} 无法打开", in_file)
+      throw filesystem_error{fmt::format("{} 无法打开", in_file), in_file,
+                             std::make_error_code(std::errc::bad_file_descriptor)};
+    }
+    CryptoPP::FileSource k_file{
+        k_ifstream,
+        true,
+        new CryptoPP::HashFilter{
+            k_sha_224,
+            new CryptoPP::HexEncoder{
+                new CryptoPP::StringSink{k_string}}}};
+    return k_string;
+  } else {
+    DOODLE_LOG_INFO("{} 文件不存在或者不是文件", in_file)
+    throw filesystem_error{fmt::format("{} 文件不存在或者不是文件", in_file), in_file,
+                           std::make_error_code(std::errc::no_such_file_or_directory)};
+  }
 }
 
 }  // namespace doodle::FSys

@@ -159,6 +159,7 @@ DOODLELIB_API inline std::chrono::time_point<std::chrono::system_clock> last_wri
 DOODLELIB_API path add_time_stamp(const path &in_path);
 DOODLELIB_API void open_explorer(const path &in_path);
 DOODLELIB_API void backup_file(const path &source);
+DOODLELIB_API std::string file_hash_sha224(const path& in_file);
 }  // namespace FSys
 
 using ConnPtr = std::unique_ptr<sqlpp::mysql::connection>;

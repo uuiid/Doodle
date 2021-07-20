@@ -18,33 +18,35 @@
 
 namespace doodle {
 std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> RpcFileSystemClient::compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path) {
-  auto k_l_ex                            = FSys::exists(in_local_path);
-  auto k_l_dir                           = k_l_ex ? FSys::is_directory(in_local_path) : false;
-  auto k_l_sz                            = k_l_ex ? FSys::file_size(in_local_path) : 0;
-  auto k_l_ti                            = k_l_ex
-                                               ? FSys::last_write_time_point(in_local_path)
-                                               : std::chrono::time_point<std::chrono::system_clock>{};
+  auto k_l_ex  = FSys::exists(in_local_path);
+  auto k_l_dir = k_l_ex ? FSys::is_directory(in_local_path) : false;
+  auto k_l_sz  = k_l_ex ? FSys::file_size(in_local_path) : 0;
+  auto k_l_ti  = k_l_ex
+                     ? FSys::last_write_time_point(in_local_path)
+                     : std::chrono::time_point<std::chrono::system_clock>{};
+
   auto [k_s_sz, k_s_ex, k_s_ti, k_s_dir] = GetInfo(in_server_path);
   // TODO: 在这里我们最好比较一下hash值确认文件相同
-  if (k_l_ex && k_s_ex) {                       /// 本地文件和服务器文件都存在
-    if (k_l_dir || k_s_dir) {                   /// 两个任意一个为目录我们都没有办法确定上传和下载的方案
-      return {{}, {}, k_s_ex, 0};               /// 所以返回无
-    }                                           ///
-    if (k_l_sz == k_s_sz &&                     ///
-        k_l_ti == k_s_ti) {                     /// 我们比较两个文件的时间和大小都相同的时候， 直接表示两个文件相同， 既不上穿也不下载
-      return {true, {}, k_s_ex, k_l_sz};        /// 所以返回无
-    } else {                                    ///
-      if (k_l_ti < k_s_ti) {                    /// 本地文件的修改时间小于服务器时间 那么就是本地文件比较旧 服务器文件新， 需要下载
-        return {false, true, k_s_ex, k_s_sz};   /// 返回 true
-      } else {                                  /// 本地文件的修改时间大于服务器时间 那么就是本地文件比较新 服务时间比较旧, 需要上传
-        return {false, false, k_s_ex, k_l_sz};  /// 返回 false
-      }                                         ///
-    }                                           ///
-  } else if (k_l_ex) {                          /// 本地文件存在和服务器文件不存在
-    return {false, false, k_s_ex, k_l_sz};      /// 返回 false
-  } else if (k_s_ex) {                          /// 本地文件不存在和服务器存在
-    return {false, true, k_s_ex, k_s_sz};       /// 返回 true
-  } else {                                      /// 本地和服务器文件都不存在
+  if (k_l_ex && k_s_ex) {                                   /// 本地文件和服务器文件都存在
+    if (k_l_dir || k_s_dir) {                               /// 两个任意一个为目录我们都没有办法确定上传和下载的方案
+      return {{}, {}, k_s_ex, 0};                           /// 所以返回无
+    }                                                       ///
+    auto k_l_hash = FSys::file_hash_sha224(in_local_path);  ///
+    auto k_s_hash = get_hash(in_server_path);               ///
+    if (k_l_hash == k_s_hash) {                             /// 我们比较两个文件的时间和大小都相同的时候， 直接表示两个文件相同， 既不上穿也不下载
+      return {true, {}, k_s_ex, k_l_sz};                    /// 所以返回无
+    } else {                                                ///
+      if (k_l_ti < k_s_ti) {                                /// 本地文件的修改时间小于服务器时间 那么就是本地文件比较旧 服务器文件新， 需要下载
+        return {false, true, k_s_ex, k_s_sz};               /// 返回 true
+      } else {                                              /// 本地文件的修改时间大于服务器时间 那么就是本地文件比较新 服务时间比较旧, 需要上传
+        return {false, false, k_s_ex, k_l_sz};              /// 返回 false
+      }                                                     ///
+    }                                                       ///
+  } else if (k_l_ex) {                                      /// 本地文件存在和服务器文件不存在
+    return {false, false, k_s_ex, k_l_sz};                  /// 返回 false
+  } else if (k_s_ex) {                                      /// 本地文件不存在和服务器存在
+    return {false, true, k_s_ex, k_s_sz};                   /// 返回 true
+  } else {                                                  /// 本地和服务器文件都不存在
     return {{}, {}, k_s_ex, 0};
   }
 }
@@ -171,6 +173,17 @@ RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(std::unique_ptr<
 
   k_up->set_parameter(in_vector);
   return k_up;
+}
+std::string RpcFileSystemClient::get_hash(const FSys::path& in_path) {
+  grpc::ClientContext k_context{};
+
+  FileInfo k_in_info{};
+  k_in_info.set_path(in_path.generic_string());
+  FileInfo k_out_info;
+  auto status = p_stub->GetHash(&k_context, k_in_info, &k_out_info);
+  if (!status.ok())
+    throw DoodleError{status.error_message()};
+  return k_out_info.hash().value();
 }
 
 namespace rpc_trans {

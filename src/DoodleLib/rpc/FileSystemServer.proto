@@ -3,7 +3,7 @@ syntax = "proto3";
 // import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
-// import "google/protobuf/wrappers.proto";
+import "google/protobuf/wrappers.proto";
 
 package doodle;
 
@@ -13,6 +13,7 @@ message FileInfo{
   bool exist = 3;
   google.protobuf.Timestamp update_time = 4;
   uint64 size = 5;
+  google.protobuf.StringValue hash = 6;
 }
 
 message FileStream{
@@ -27,7 +28,8 @@ message FileInfoMove{
 
 service FileSystemServer{
   rpc GetInfo(FileInfo) returns (FileInfo) {}
-  
+  rpc GetHash(FileInfo) returns (FileInfo) {}
+
   rpc IsExist(FileInfo) returns (FileInfo) {}
   rpc GetSize(FileInfo) returns (FileInfo) {}
   rpc IsFolder(FileInfo) returns (FileInfo) {}

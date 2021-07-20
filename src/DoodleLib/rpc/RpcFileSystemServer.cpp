@@ -11,7 +11,8 @@
 namespace doodle {
 RpcFileSystemServer::RpcFileSystemServer()
     : FileSystemServer::Service(),
-      p_set(CoreSet::getSet()) {
+      p_set(CoreSet::getSet()),
+      p_cache(1024 * 1024 * 10) {
 }
 
 grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
@@ -243,5 +244,44 @@ grpc::Status RpcFileSystemServer::Move(grpc::ServerContext* context,
   }
   return grpc::Status::OK;
 }
+grpc::Status RpcFileSystemServer::GetHash(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
+  auto k_path = p_set.getDataRoot() / request->path();
+  if (FSys::exists(k_path) && FSys::is_regular_file(k_path)) {
+    if (!p_cache.Cached(k_path.generic_string())) {
+      p_cache.Put(k_path.generic_string(), std::make_shared<rpc_filesystem::file_hash>(k_path));
+    }
+    auto k_hash = p_cache.Get(k_path.generic_string());
+    if (!k_hash->valid()) {
+      k_hash->undate_hash();
+    }
+    response->mutable_hash()->set_value(std::move(k_hash->hash()));
+  }
 
+  return grpc::Status::OK;
+}
+
+rpc_filesystem::file_hash::file_hash(FSys::path path)
+    : _path(std::move(path)),
+      _size(FSys::file_size(_path)),
+      _time(FSys::last_write_time_point(_path)),
+      _hash(FSys::file_hash_sha224(_path)),
+      _mutex() {
+}
+bool rpc_filesystem::file_hash::valid() const {
+  std::lock_guard k_lock{_mutex};
+  return _size == FSys::file_size(_path) && _time == FSys::last_write_time_point(_path);
+}
+std::string rpc_filesystem::file_hash::hash() const {
+  std::lock_guard k_lock{_mutex};
+  return _hash;
+}
+void rpc_filesystem::file_hash::undate_hash() {
+  /// 在更新时先计算hash值然后加锁去更改会更快
+  auto k_item = FSys::file_hash_sha224(_path);
+
+  std::lock_guard k_lock{_mutex};
+  _size = FSys::file_size(_path);
+  _time = FSys::last_write_time_point(_path);
+  _hash = std::move(k_item);
+}
 }  // namespace doodle

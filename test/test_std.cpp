@@ -266,15 +266,5 @@ TEST(DSTD, filesystem_open_ex) {
 }
 
 TEST(DSTD, hash_file) {
-  CryptoPP::SHA224 k_sha_224;
-  std::string k_string;
-  CryptoPP::FileSource k_file{
-      R"(D:\Houdini 18.5.462 Win.rar)",
-      true,
-      new CryptoPP::HashFilter{
-          k_sha_224,
-          new CryptoPP::HexEncoder{
-              new CryptoPP::StringSink{k_string}}},
-      true};
-  std::cout << k_string << std::endl;
+  std::cout << doodle::FSys::file_hash_sha224(R"(D:\Houdini 18.5.462 Win.rar)") << std::endl;
 }

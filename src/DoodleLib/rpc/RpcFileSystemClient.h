@@ -135,7 +135,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
    *                   > 
    */
   std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
-
+  std::string get_hash(const FSys::path& in_path);
  public:
   using time_point = std::chrono::time_point<std::chrono::system_clock>;
   /**
