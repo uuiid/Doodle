@@ -78,6 +78,8 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
   void create_assets_file_batch_export_maya_up();
   void create_ue4_Sequencer();
 
+  void show_assets_file_attr();
+
   void modify_project_rename();
   void modify_project_set_path();
   void modify_assets_set_name();

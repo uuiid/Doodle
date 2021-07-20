@@ -96,7 +96,7 @@ void AssetsPath::serialize(Archive &ar, const std::uint32_t version) {
 
 namespace fmt {
 template <>
-struct fmt::formatter<doodle::AssetsPath> : fmt::formatter<string_view> {
+struct fmt::formatter<doodle::AssetsPath> : formatter<string_view> {
   template <typename FormatContext>
   auto format(const doodle::AssetsPath &in_, FormatContext &ctx) {
     formatter<string_view>::format(

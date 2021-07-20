@@ -63,6 +63,10 @@ void progress::create_progress(nana::window in_w, const long_term_ptr& in_, cons
 
   if (in_->fulfil()) {
     DOODLE_LOG_INFO("已经完成， 不需要显示进度条")
+    if (in_->message_result().empty()) {
+      DOODLE_LOG_INFO("结果字符串为空, 直接返回")
+      return;
+    }
     nana::msgbox msg{in_w, "结果"};
     msg << in_->message_result();
     msg();

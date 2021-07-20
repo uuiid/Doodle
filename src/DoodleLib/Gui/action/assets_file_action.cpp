@@ -86,35 +86,11 @@ long_term_ptr actn_assdile_attr_show::run(const MetadataPtr& in_data, const Meta
     p_term->sig_message_result("无法获得数据");
     return p_term;
   }
-  auto k_item = std::dynamic_pointer_cast<AssetsFile>(in_data);
 
   /// TODO: 这里要添加详细信息的面板, 使用信号作为详细信息的显示方案
   sig_get_arg();
-
-  std::string k_com{};
-  std::string k_path{};
-  for (const auto& k_i : k_item->getComment()) {
-    k_com += fmt::format("{}\n", *k_i);
-  }
-  for (const auto& k_i : k_item->getPathFile()) {
-    k_path += fmt::format("{}\n", *k_i);
-  }
-  auto str = fmt::format(R"(详细信息：
-名称： {}
-版本： {}
-制作者： {}
-制作时间： {}
-评论：
-{}
-路径:
-{}
-)",
-                         k_item->showStr(),             //名称
-                         k_item->getVersionStr(),       //版本
-                         k_item->getUser(),             //制作者
-                         k_item->getTime()->showStr(),  //制作时间
-                         k_com,                         //评论
-                         k_path                         // 路径
-  );
+  p_term->sig_finished();
+  p_term->sig_message_result({});
+  return p_term;
 }
 }  // namespace doodle

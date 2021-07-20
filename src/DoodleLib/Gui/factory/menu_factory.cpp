@@ -312,6 +312,44 @@ void menu_factory::modify_assets_file_up_data() {
     return k_arg;
   });
 }
+void menu_factory::show_assets_file_attr() {
+  auto k_show = std::make_shared<actn_assdile_attr_show>();
+  p_action.push_back(k_show);
+  k_show->sig_get_arg.connect([this]() {
+    /// TODO: 详细信息面板需要可以点击
+    auto k_item = std::dynamic_pointer_cast<AssetsFile>(p_metadata);
+    std::string k_com{};
+    std::string k_path{};
+    for (const auto& k_i : k_item->getComment()) {
+      k_com += fmt::format("{}\n", k_i->getComment());
+    }
+    for (const auto& k_i : k_item->getPathFile()) {
+      k_path += fmt::format("{}\n", k_i->str());
+    }
+    auto str = fmt::format(R"(详细信息：
+名称： {}
+版本： {}
+制作者： {}
+制作时间： {}
+评论：
+{}
+路径:
+{}
+)",
+                           k_item->showStr(),             //名称
+                           k_item->getVersionStr(),       //版本
+                           k_item->getUser(),             //制作者
+                           k_item->getTime()->showStr(),  //制作时间
+                           k_com,                         //评论
+                           k_path                         // 路径
+    );
+
+    nana::msgbox k_msgbox{p_window, "assets attr"};
+    k_msgbox << str;
+    k_msgbox.show();
+    return actn_assdile_attr_show::arg{};
+  });
+}
 void dragdrop_menu_factory::create_menu(const ProjectPtr& in_ptr) {
 }
 void dragdrop_menu_factory::create_menu(const AssetsPtr& in_ptr) {
@@ -482,6 +520,7 @@ void menu_factory_assets_attr::create_menu(const AssetsFilePtr& in_ptr) {
   }
   if (p_metadata) {
     p_action.emplace_back(action_ptr{});
+    show_assets_file_attr();
     modify_attr_add_com();
     modify_attr_set_time();
     modify_assets_file_up_data();
