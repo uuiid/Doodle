@@ -9,10 +9,20 @@
 #include <libWarp/protobuf_warp_cpp.h>
 
 namespace doodle {
+rpc_filesystem::file_mutex_ptr RpcFileSystemServer::get_mutex(const FSys::path& in_path) {
+  auto k_str = in_path.generic_string();
+
+  if (!_mutex.Cached(k_str)) {
+    _mutex.Put(k_str, std::make_shared<rpc_filesystem::file_mutex>());
+  }
+  return _mutex.Get(k_str);
+}
+
 RpcFileSystemServer::RpcFileSystemServer()
     : FileSystemServer::Service(),
       p_set(CoreSet::getSet()),
-      p_cache(1024 * 1024 * 10) {
+      p_cache(1024 * 1024 * 10),
+      _mutex(1024 * 1024 * 100) {
 }
 
 grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
@@ -134,6 +144,7 @@ grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const F
   DOODLE_LOG_DEBUG(fmt::format("down path: {}", k_path));
 
   {
+    std::lock_guard k_lock{get_mutex(k_path)->mutex()};
     FSys::ifstream k_file{k_path, std::ios::in | std::ios::binary};
 
     if (!k_file.is_open() || !k_file.good()) {
@@ -182,9 +193,10 @@ grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::Ser
 
   auto k_dir = FSys::is_directory(k_path);
   if (k_dir)
-    return {grpc::StatusCode::CANCELLED, k_path.generic_string() + " is dir"};
+    return {grpc::StatusCode::CANCELLED, fmt::format("{} is dir", k_path.generic_string())};
 
   {
+    std::lock_guard k_lock{get_mutex(k_path)->mutex()};
     FSys::ofstream k_file{k_path, std::ios::out | std::ios::binary};
 
     if (!k_file.is_open() || !k_file.good()) {
@@ -237,6 +249,7 @@ grpc::Status RpcFileSystemServer::Move(grpc::ServerContext* context,
       k_t = FSys::add_time_stamp(k_t);
     }
 
+    std::lock_guard k_lock{get_mutex(k_s)->mutex()};
     FSys::rename(k_s, k_t);
     DOODLE_LOG_INFO("{} -move-> {}", k_s, k_t);
   } catch (const FSys::filesystem_error& e) {
@@ -247,10 +260,13 @@ grpc::Status RpcFileSystemServer::Move(grpc::ServerContext* context,
 grpc::Status RpcFileSystemServer::GetHash(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
   auto k_path = p_set.getDataRoot() / request->path();
   if (FSys::exists(k_path) && FSys::is_regular_file(k_path)) {
-    if (!p_cache.Cached(k_path.generic_string())) {
-      p_cache.Put(k_path.generic_string(), std::make_shared<rpc_filesystem::file_hash>(k_path));
+    auto k_str = k_path.generic_string();
+    std::lock_guard k_lock{get_mutex(k_path)->mutex()};
+
+    if (!p_cache.Cached(k_str)) {
+      p_cache.Put(k_str, std::make_shared<rpc_filesystem::file_hash>(k_path));
     }
-    auto k_hash = p_cache.Get(k_path.generic_string());
+    auto k_hash = p_cache.Get(k_str);
     if (!k_hash->valid()) {
       k_hash->undate_hash();
     }
@@ -264,8 +280,11 @@ rpc_filesystem::file_hash::file_hash(FSys::path path)
     : _path(std::move(path)),
       _size(FSys::file_size(_path)),
       _time(FSys::last_write_time_point(_path)),
-      _hash(FSys::file_hash_sha224(_path)),
+      _hash(),
       _mutex() {
+  auto str = FSys::file_hash_sha224(_path);
+  std::lock_guard k_lock{_mutex};
+  _hash = std::move(str);
 }
 bool rpc_filesystem::file_hash::valid() const {
   std::lock_guard k_lock{_mutex};
@@ -284,4 +303,13 @@ void rpc_filesystem::file_hash::undate_hash() {
   _time = FSys::last_write_time_point(_path);
   _hash = std::move(k_item);
 }
+namespace rpc_filesystem {
+file_mutex::file_mutex()
+    : _mutex() {
+}
+
+std::mutex& file_mutex::mutex() {
+  return _mutex;
+}
+}  // namespace rpc_filesystem
 }  // namespace doodle

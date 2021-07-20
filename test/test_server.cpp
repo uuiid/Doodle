@@ -30,6 +30,8 @@ TEST(Server, createPrj) {
 }
 #include <date/date.h>
 
+#include <memory>
+
 TEST(Server, dow_updata) {
   using namespace doodle;
   doodle::CoreSet::getSet().guiInit();
@@ -37,11 +39,11 @@ TEST(Server, dow_updata) {
   auto k_ch = doodle::CoreSet::getSet().getRpcFileSystemClient();
 
   rpc_trans_path_ptr_list k_list;
-  k_list.emplace_back(rpc_trans_path_ptr{new rpc_trans_path{"D:\\test3.mp4", "test/test.file.7z", "test_backup_path2/tset.mp4"}});
-  k_list.emplace_back(rpc_trans_path_ptr{new rpc_trans_path{"D:\\Kitchen_set", "test/tmp", "test_backup_path2/"}});
-  k_list.emplace_back(rpc_trans_path_ptr{new rpc_trans_path{"D:\\Kitchen_set", "test/tmp1", "test_backup_path2/"}});
-  k_list.emplace_back(rpc_trans_path_ptr{new rpc_trans_path{"D:\\Kitchen_set", "test/tmp2", "test_backup_path2/"}});
-  k_list.emplace_back(rpc_trans_path_ptr{new rpc_trans_path{"D:\\Kitchen_set", "test/tmp3", "test_backup_path2/"}});
+  k_list.emplace_back(std::make_unique<rpc_trans_path>("D:\\test3.mp4", "test/test.file.7z", "test_backup_path2/tset.mp4"));
+  k_list.emplace_back(std::make_unique<rpc_trans_path>("D:\\Kitchen_set", "test/tmp", "test_backup_path2/"));
+  k_list.emplace_back(std::make_unique<rpc_trans_path>("D:\\Kitchen_set", "test/tmp1", "test_backup_path2/"));
+  k_list.emplace_back(std::make_unique<rpc_trans_path>("D:\\Kitchen_set", "test/tmp2", "test_backup_path2/"));
+  k_list.emplace_back(std::make_unique<rpc_trans_path>("D:\\Kitchen_set", "test/tmp", "test_backup_path2/"));
 
   auto k_item = k_ch->Upload(k_list);
   k_item->get_term()->sig_progress.connect([k_item](std::double_t in_) {

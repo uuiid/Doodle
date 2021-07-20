@@ -29,10 +29,18 @@ class DOODLELIB_API file_hash : public details::no_copy {
 };
 using file_hash_ptr = std::shared_ptr<file_hash>;
 
-class DOODLELIB_API file_io : public details::no_copy {
+class DOODLELIB_API file_mutex {
+  std::mutex _mutex;
+
  public:
-  explicit file_io(FSys::path path);
+  file_mutex();
+
+  std::mutex& mutex();
+  // explicit ifstream(FSys::path path,
+  //                   std::ios_base::openmode _Mode = ios_base::in,
+  //                   int _Prot                     = std::ios_base::_Default_open_prot);
 };
+using file_mutex_ptr = std::shared_ptr<file_mutex>;
 }  // namespace rpc_filesystem
 
 class DOODLELIB_API RpcFileSystemServer
@@ -40,7 +48,9 @@ class DOODLELIB_API RpcFileSystemServer
       public details::no_copy {
   CoreSet& p_set;
   caches::fixed_sized_cache<std::string, rpc_filesystem::file_hash_ptr, caches::LRUCachePolicy<std::string>> p_cache;
+  caches::fixed_sized_cache<std::string, rpc_filesystem::file_mutex_ptr, caches::LRUCachePolicy<std::string>> _mutex;
 
+  rpc_filesystem::file_mutex_ptr get_mutex(const FSys::path& in_path);
 
  public:
   explicit RpcFileSystemServer();
@@ -49,9 +59,9 @@ class DOODLELIB_API RpcFileSystemServer
                        const FileInfo* request,
                        FileInfo* response) override;
 
-  virtual grpc::Status GetHash(grpc::ServerContext* context,
-                               const FileInfo* request,
-                               FileInfo* response) override;
+  grpc::Status GetHash(grpc::ServerContext* context,
+                       const FileInfo* request,
+                       FileInfo* response) override;
 
   grpc::Status IsExist(grpc::ServerContext* context,
                        const FileInfo* request,
@@ -59,7 +69,7 @@ class DOODLELIB_API RpcFileSystemServer
 
   grpc::Status IsFolder(grpc::ServerContext* context,
                         const FileInfo* request,
-                        FileInfo* response);
+                        FileInfo* response) override;
 
   grpc::Status GetSize(grpc::ServerContext* context,
                        const FileInfo* request,
