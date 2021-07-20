@@ -69,7 +69,7 @@ TEST(Server, dow_updata) {
   doodle::CoreSet::getSet().clear();
   k_list.clear();
   k_list.emplace_back(rpc_trans_path_ptr{new rpc_trans_path{"D:\\test3.mp4", "test/test.file.7z", "test_backup_path2/tset.mp4"}});
-  k_list.emplace_back(rpc_trans_path_ptr{new rpc_trans_path{"D:\\Kitchen_set", "test/tmp", "test_backup_path2/"}});
+  k_list.emplace_back(rpc_trans_path_ptr{new rpc_trans_path{"D:\\Kitchen_set2", "test/tmp", "test_backup_path2/"}});
 
   k_item = k_ch->Download(k_list);
   k_item->get_term()->sig_progress.connect([k_item](std::double_t in_) {

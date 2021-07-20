@@ -247,7 +247,7 @@ void down_file::run() {
     return;
   }
 
-  if (FSys::exists(_param->local_path.parent_path()))
+  if (!FSys::exists(_param->local_path.parent_path()))
     FSys::create_directories(_param->local_path.parent_path());
 
   grpc::ClientContext k_context{};

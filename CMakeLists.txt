@@ -79,6 +79,7 @@ find_package(date CONFIG REQUIRED)
 find_package(cereal CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)
+find_package(cryptopp CONFIG REQUIRED)
 #服务器库
 #应该会用其中一个
 #find_package(cppzmq CONFIG REQUIRED)

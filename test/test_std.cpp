@@ -1,5 +1,11 @@
 #include <DoodleLib/DoodleLib.h>
 #include <Windows.h>
+#include <cryptopp/base64.h>
+#include <cryptopp/cryptlib.h>
+#include <cryptopp/files.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/sha.h>
 #include <date/date.h>
 #include <date/tz.h>
 #include <gtest/gtest.h>
@@ -11,6 +17,7 @@
 #include <iostream>
 #include <regex>
 #include <string>
+
 // #include <boost/nowide/
 TEST(DSTD, map_netDir) {
   NETRESOURCE resources{};
@@ -89,7 +96,7 @@ TEST(DSTD, regex) {
 TEST(DSTD, u8stringAndString) {
   auto k_local = boost::locale::generator().generate("");
   boost::filesystem::path::imbue(k_local);
-//  std::locale::global(std::locale{".UTF8"});
+  //  std::locale::global(std::locale{".UTF8"});
   std::setlocale(LC_CTYPE, ".UTF8");
   std::filesystem::path str{L"D:/哈哈/scoo+1235"};
   boost::filesystem::path str_b{"D:/哈哈/scoo+1235"};
@@ -112,9 +119,9 @@ TEST(DSTD, u8stringAndString) {
 }
 
 TEST(DSTD, file_last_time) {
-  auto file = std::filesystem::path{u8"D:/test2.mp4"};
+  auto file  = std::filesystem::path{u8"D:/test2.mp4"};
   auto file2 = std::filesystem::path{u8"D:/tmp"};
-  auto time = std::filesystem::last_write_time(file);
+  auto time  = std::filesystem::last_write_time(file);
 
   auto time2 = std::chrono::time_point_cast<std::chrono::system_clock::duration>(time - decltype(time)::clock::now() + std::chrono::system_clock::now());
   auto time3 = std::chrono::system_clock::to_time_t(time2);
@@ -256,4 +263,18 @@ TEST(DSTD, filesystem_open_ex) {
   FSys::open_explorer(LR"(D:\哈哈\scoo+1235)");
   FSys::open_explorer(LR"(D:\OneDrie)");
   FSys::open_explorer(LR"(D:\OneDrie\VFXFORCE\快速提示01-Vimeo上Houdini中的生长繁殖.mp4)");
+}
+
+TEST(DSTD, hash_file) {
+  CryptoPP::SHA224 k_sha_224;
+  std::string k_string;
+  CryptoPP::FileSource k_file{
+      R"(D:\Houdini 18.5.462 Win.rar)",
+      true,
+      new CryptoPP::HashFilter{
+          k_sha_224,
+          new CryptoPP::HexEncoder{
+              new CryptoPP::StringSink{k_string}}},
+      true};
+  std::cout << k_string << std::endl;
 }

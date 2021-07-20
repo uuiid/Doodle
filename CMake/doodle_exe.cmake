@@ -160,6 +160,7 @@ function(add_doodle)
             #        cppzmq
             #        cppzmq-static
             gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
+            cryptopp-static
             PRIVATE
             ${DOODLE_MAR}
             )
