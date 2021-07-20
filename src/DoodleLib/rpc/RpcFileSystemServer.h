@@ -25,7 +25,7 @@ class DOODLELIB_API file_hash : public details::no_copy {
 
   bool valid() const;
   [[nodiscard]] std::string hash() const;
-  void undate_hash();
+  void update_hash();
 };
 using file_hash_ptr = std::shared_ptr<file_hash>;
 

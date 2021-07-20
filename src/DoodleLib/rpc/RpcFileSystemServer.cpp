@@ -268,7 +268,7 @@ grpc::Status RpcFileSystemServer::GetHash(grpc::ServerContext* context, const Fi
     }
     auto k_hash = p_cache.Get(k_str);
     if (!k_hash->valid()) {
-      k_hash->undate_hash();
+      k_hash->update_hash();
     }
     response->mutable_hash()->set_value(std::move(k_hash->hash()));
   }
@@ -294,7 +294,7 @@ std::string rpc_filesystem::file_hash::hash() const {
   std::lock_guard k_lock{_mutex};
   return _hash;
 }
-void rpc_filesystem::file_hash::undate_hash() {
+void rpc_filesystem::file_hash::update_hash() {
   /// 在更新时先计算hash值然后加锁去更改会更快
   auto k_item = FSys::file_hash_sha224(_path);
 
