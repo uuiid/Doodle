@@ -65,6 +65,8 @@ class DOODLELIB_API AssetsPath {
    * @param in_server_path 服务器路径
    */
   void setPath(const FSys::path &in_local_path, const FSys::path &in_server_path);
+
+  std::string str() const;
   //  void open();
  private:
   //这里是序列化的代码
@@ -91,5 +93,17 @@ void AssetsPath::serialize(Archive &ar, const std::uint32_t version) {
 }
 
 }  // namespace doodle
+
+namespace fmt {
+template <>
+struct fmt::formatter<doodle::AssetsPath> : fmt::formatter<string_view> {
+  template <typename FormatContext>
+  auto format(const doodle::AssetsPath &in_, FormatContext &ctx) {
+    formatter<string_view>::format(
+        in_.str(),
+        ctx);
+  }
+};
+}  // namespace fmt
 
 CEREAL_CLASS_VERSION(doodle::AssetsPath, 3)

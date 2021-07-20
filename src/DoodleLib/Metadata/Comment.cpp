@@ -27,4 +27,11 @@ const std::string& Comment::getUser() const {
 void Comment::setUser(const std::string& in_user) {
   p_user = in_user;
 }
+std::string comment_list::str() const {
+  std::string str{};
+  for (auto& k_item : *this) {
+    str += fmt::format("{}\n", *k_item);
+  }
+  return str;
+}
 }  // namespace doodle

@@ -49,7 +49,13 @@ class DOODLELIB_API actn_assfile_delete : public action_indirect<action::arg_nul
   using arg = arg_null;
 
   actn_assfile_delete();
-  explicit actn_assfile_delete(std::any&& in_any);
+  long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
+};
+class DOODLELIB_API actn_assdile_attr_show : public action_indirect<action::arg_null>{
+ public:
+  using arg = arg_null;
+  actn_assdile_attr_show();
+  virtual bool is_async() override;
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 

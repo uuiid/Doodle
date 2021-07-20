@@ -422,6 +422,7 @@ void assets_attr_widget::set_ass(const MetadataPtr& in_ptr) {
         .append(k_file, true)
         .bgcolor(k_file->getPathFile().empty() ? nana::colors::light_coral : nana::colors::light_green);
 
+
     install_sig_one(k_file);
   }
   install_sig();
