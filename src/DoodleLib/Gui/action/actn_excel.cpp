@@ -9,7 +9,11 @@
 #include <rpc/RpcMetadataClient.h>
 
 namespace doodle {
-actn_export_excel::actn_export_excel() {
+actn_export_excel::actn_export_excel()
+    : p_list(),
+      p_ass_list(),
+      p_prj_list(),
+      p_user_list() {
   p_name = "导出表格";
   p_term = std::make_shared<long_term>();
 }
@@ -30,11 +34,22 @@ void actn_export_excel::export_excel() {
 
   auto k_filter = std::make_shared<rpc_filter::filter>();
   k_filter->set_range(_arg_type.p_time_range);
+  k_filter->set_meta_type(Metadata::meta_type::file);
   auto k_list = k_rpc->FilterMetadata(k_filter);
 
-  for (const auto& i : k_list) {  /// 先在每个中循环找到所有的父
-    find_parent(i);
+  for (const auto& i : k_list) {                            /// 先在每个中循环找到所有的父
+    auto k_ptr = std::dynamic_pointer_cast<AssetsFile>(i);  /// 转换为ass file
+    if (k_ptr) {                                            /// 确认时ass file 不是其他
+      p_ass_list.push_back(k_ptr);                          /// 保存ass file
+      find_parent(i);                                       /// 寻找 file 父链
+      p_user_list.insert(k_ptr->getUser());                 /// 添加user 为导出user表做准备
+    }
   }
+  /// 查找所有项目
+  std::copy_if(p_list.begin(), p_list.end(), std::inserter(p_prj_list,p_prj_list.begin()),
+               [](const std::pair<std::uint64_t, MetadataPtr>& in_) {
+                 return !in_.second->hasParent();
+               });
 }
 void actn_export_excel::find_parent(const MetadataPtr& in_ptr) {
   MetadataPtr k_ptr = in_ptr;
@@ -52,6 +67,11 @@ void actn_export_excel::find_parent(const MetadataPtr& in_ptr) {
     p_list[k_id]->child_item.push_back_sig(k_ptr);
     k_ptr = p_list[k_id];
   }
+}
+void actn_export_excel::export_user_excel() {
+
+}
+void actn_export_excel::export_prj_excel() {
 }
 
 }  // namespace doodle

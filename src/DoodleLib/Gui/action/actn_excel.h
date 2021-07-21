@@ -18,8 +18,15 @@ class DOODLELIB_API arg_excel : public arg_path {
 
 class DOODLELIB_API actn_export_excel : public action_indirect<action_arg::arg_excel> {
   void export_excel();
+  void export_prj_excel();
+  void export_user_excel();
+
   void find_parent(const MetadataPtr& in_ptr);
+
   std::map<std::uint64_t, MetadataPtr> p_list;
+  std::vector<AssetsFilePtr> p_ass_list;
+  std::map<std::uint64_t, MetadataPtr> p_prj_list;
+  std::set<std::string> p_user_list;
 
  public:
   actn_export_excel();
