@@ -13,9 +13,9 @@ function(doodle_grpc_generate out_lists)
             ${ARGN}
     )
     file(REAL_PATH ${DOODLE_GRPC_GENERATE_NAME} _PATH)
-    get_filename_component(_NAME_WE ${_PATH} NAME_WE  )
-    get_filename_component(_NAME ${_PATH} NAME  )
-    get_filename_component(_DIRECTORY ${_PATH} DIRECTORY )
+    get_filename_component(_NAME_WE ${_PATH} NAME_WE)
+    get_filename_component(_NAME ${_PATH} NAME)
+    get_filename_component(_DIRECTORY ${_PATH} DIRECTORY)
     cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)
 
     message("name: " ${DOODLE_GRPC_GENERATE_NAME})
@@ -58,9 +58,9 @@ function(doodle_sqlpp_generate out_lists)
             ${ARGN}
     )
     file(REAL_PATH ${DOODLE_GRPC_GENERATE_NAME} _PATH)
-    get_filename_component(_NAME_WE ${_PATH} NAME_WE  )
-    get_filename_component(_NAME ${_PATH} NAME  )
-    get_filename_component(_DIRECTORY ${_PATH} DIRECTORY )
+    get_filename_component(_NAME_WE ${_PATH} NAME_WE)
+    get_filename_component(_NAME ${_PATH} NAME)
+    get_filename_component(_DIRECTORY ${_PATH} DIRECTORY)
     cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)
 
     message("name: " ${DOODLE_GRPC_GENERATE_NAME})
@@ -76,11 +76,9 @@ function(doodle_sqlpp_generate out_lists)
             ${_PATH}
             ${CMAKE_CURRENT_BINARY_DIR}/core/${_NAME_WE}
             doodle
-            MAIN_DEPENDENCY  ${DOODLE_GRPC_GENERATE_NAME}
+            MAIN_DEPENDENCY ${DOODLE_GRPC_GENERATE_NAME}
     )
 endfunction()
-
-
 
 
 function(add_doodle)
@@ -104,7 +102,7 @@ function(add_doodle)
                 PUBLIC
                 DOODLELIB_STATIC_DEFINE
         )
-    else()
+    else ()
         message("add lib name : " ${ADD_DOODLE_NAME})
 
         add_library(
@@ -112,7 +110,7 @@ function(add_doodle)
                 SHARED
                 ${ADD_DOODLE_LISTS_FILES}
         )
-        string(TOUPPER ${ADD_DOODLE_NAME} _UP_STR )
+        string(TOUPPER ${ADD_DOODLE_NAME} _UP_STR)
         set(MY_CUSTOM_CONTENT "")
         generate_export_header(${ADD_DOODLE_NAME}
                 EXPORT_MACRO_NAME ${_UP_STR}_API
@@ -126,11 +124,11 @@ function(add_doodle)
 
     cmake_print_variables(CMAKE_CURRENT_LIST_DIR)
 
-#    #预编译头文件
-#    target_precompile_headers(${ADD_DOODLE_NAME}
-#            PRIVATE
-#            <DoodleLib/DoodleLib_pch.h>
-#            )
+    #    #预编译头文件
+    #    target_precompile_headers(${ADD_DOODLE_NAME}
+    #            PRIVATE
+    #            <DoodleLib/DoodleLib_pch.h>
+    #            )
     target_link_libraries(${ADD_DOODLE_NAME} PUBLIC
             date::date
             date::date-tz
@@ -168,13 +166,13 @@ function(add_doodle)
 
     target_compile_definitions(${ADD_DOODLE_NAME}
             PUBLIC
-#            _WIN32_WINNT=0x0A00
-#            WIN32_LEAN_AND_MEAN
+            #            _WIN32_WINNT=0x0A00
+            #            WIN32_LEAN_AND_MEAN
             $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
-#            PRIVATE
-#            _CRT_SECURE_NO_WARNINGS
-#            _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
-#            _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+            #            PRIVATE
+            #            _CRT_SECURE_NO_WARNINGS
+            #            _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
+            #            _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
             )
 
 
@@ -184,5 +182,12 @@ function(add_doodle)
             ${PROJECT_SOURCE_DIR}/src
             )
 
-
+#    add_dependencies(
+#            ${ADD_DOODLE_NAME}
+#            cmrc_prj
+#            doxygen_css
+#            tzdata_prj
+#            windowsZones_prj
+#            csv_parser_prj
+#    )
 endfunction()

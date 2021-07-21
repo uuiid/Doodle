@@ -144,6 +144,15 @@ ExternalProject_Add(windowsZones_prj
         INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/windowsZones_prj-prefix/src/windowsZones.xml ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml
         TEST_COMMAND ""
         )
+ExternalProject_Add(csv_parser_prj
+        GIT_REPOSITORY https://github.com/vincentlaucsb/csv-parser.git
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/csv_parser_prj-prefix/src/csv_parser_prj ${PROJECT_SOURCE_DIR}/external/csv_parser
+        TEST_COMMAND ""
+)
+
+
 #添加文档生成
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
 set(DOXYGEN_WARNINGS NO)
@@ -165,6 +174,7 @@ doxygen_add_docs(Doxygen
         )
 
 add_subdirectory(src)
+
 
 enable_testing()
 add_subdirectory(test)
