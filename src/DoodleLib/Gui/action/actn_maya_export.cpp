@@ -46,7 +46,7 @@ long_term_ptr actn_maya_export::run(const MetadataPtr& in_data, const MetadataPt
 
   return p_term;
 }
-bool actn_maya_export::is_accept(const action::arg_path& in_any) {
+bool actn_maya_export::is_accept(const action_arg::arg_path& in_any) {
   return MayaFile::is_maya_file(in_any.date);
 }
 }  // namespace doodle

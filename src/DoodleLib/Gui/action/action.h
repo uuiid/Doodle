@@ -71,11 +71,6 @@ class DOODLELIB_API action : public details::no_copy {
   std::mutex _mutex;
 
  public:
-  using arg_int   = action_arg::arg_int;
-  using arg_str   = action_arg::arg_str;
-  using arg_path  = action_arg::arg_path;
-  using arg_paths = action_arg::arg_paths;
-
   action();
 
   /**

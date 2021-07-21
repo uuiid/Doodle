@@ -8,7 +8,7 @@
 
 namespace doodle {
 
-class DOODLELIB_API actn_maya_export : public action_indirect<action::arg_path> {
+class DOODLELIB_API actn_maya_export : public action_indirect<action_arg::arg_path> {
   actn_up_paths_ptr p_up_paths;
   FSys::path p_paths;
 
@@ -17,6 +17,6 @@ class DOODLELIB_API actn_maya_export : public action_indirect<action::arg_path> 
 
   bool is_async() override;
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
-  bool is_accept(const arg_path& in_any) override;
+  bool is_accept(const action_arg::arg_path& in_any) override;
 };
 }  // namespace doodle

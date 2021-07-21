@@ -48,11 +48,11 @@ class DOODLELIB_API actn_delete_project : public action_indirect<action_arg::arg
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
-class DOODLELIB_API actn_rename_project : public action_indirect<action::arg_str> {
+class DOODLELIB_API actn_rename_project : public action_indirect<action_arg::arg_str> {
  public:
   actn_rename_project();
 
-  using arg = arg_str;
+  using arg = action_arg::arg_str;
 
   /**
  * @param in_any 需要项目 std::string 名称
@@ -61,9 +61,9 @@ class DOODLELIB_API actn_rename_project : public action_indirect<action::arg_str
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
-class DOODLELIB_API actn_setpath_project : public action_indirect<action::arg_path> {
+class DOODLELIB_API actn_setpath_project : public action_indirect<action_arg::arg_path> {
  public:
-  using arg = action::arg_path;
+  using arg = action_arg::arg_path;
 
   actn_setpath_project();
   /**
