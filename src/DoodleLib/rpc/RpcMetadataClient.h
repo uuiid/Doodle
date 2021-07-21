@@ -4,8 +4,8 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/libWarp/protobuf_warp.h>
 #include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/libWarp/protobuf_warp.h>
 #include <MetadataServer.grpc.pb.h>
 #include <grpcpp/channel.h>
 
@@ -25,13 +25,15 @@ class filter : details::no_copy {
  public:
   filter();
 
-  void set_id(std::int64_t in_id);
+  void set_id(uint64_t in_id);
   void set_parent_id(std::int64_t in_patent_id);
   void set_meta_type(Metadata::meta_type in_meta_type);
   void set_begin_time(const time_point& in_time);
   void set_end_time(const time_point& in_time);
   void set_range(const time_point& in_begin, const time_point& in_end);
+  void set_range(const std::pair<time_point, time_point>& in_time);
 
+  void reset();
   explicit operator DataDb_Filter() const;
 };
 
@@ -60,7 +62,7 @@ class DOODLELIB_API RpcMetadataClient {
   // /**
   //  * @brief 这个不是获得是数据库中的数据， 是获得服务器中序列化的数据
   //  * 这个函数是 RpcMetadataClient::GetChild 的单项函数
-  //  * 
+  //  *
   //  * @param in_metadataPtr 要获得的数据对象
   //  */
   // void GetMetadata(const MetadataPtr& in_metadataPtr);

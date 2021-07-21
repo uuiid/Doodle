@@ -51,7 +51,6 @@ class DOODLELIB_API Metadata
 
  protected:
   void install_slots();
-  void add_child(const MetadataPtr &val);
 
   ///弱父对象的指针
   std::weak_ptr<Metadata> p_parent;
@@ -124,9 +123,20 @@ class DOODLELIB_API Metadata
   observable_container<std::vector<MetadataPtr>> child_item;
   std::any user_date;
 
-  [[nodiscard]] virtual bool hasParent() const;  ///< 设置父指针
 
-  [[nodiscard]] virtual std::shared_ptr<Metadata> getParent() const;  ///< 活动父指针
+  void add_child(const MetadataPtr &val);
+
+  /**
+   * @brief 有父
+   * @return
+   */
+  [[nodiscard]] virtual bool hasParent() const;
+  [[nodiscard]] virtual std::uint64_t get_parent_id() const;
+  /**
+   * @brief 活动父指针
+   * @return
+   */
+  [[nodiscard]] virtual std::shared_ptr<Metadata> getParent() const;
   /**
    * @brief 这个时查询是否具有子项的(具有复杂的逻辑)
    * 

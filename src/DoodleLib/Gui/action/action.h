@@ -71,8 +71,6 @@ class DOODLELIB_API action : public details::no_copy {
   std::mutex _mutex;
 
  public:
-  using _arg      = action_arg::_arg;
-  using arg_null  = action_arg::arg_null;
   using arg_int   = action_arg::arg_int;
   using arg_str   = action_arg::arg_str;
   using arg_path  = action_arg::arg_path;
@@ -139,7 +137,7 @@ class actn_composited : public action_indirect<arg_type> {
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
-class DOODLELIB_API actn_null : public action_indirect<action::arg_null> {
+class DOODLELIB_API actn_null : public action_indirect<action_arg::arg_null> {
  public:
   actn_null();
 

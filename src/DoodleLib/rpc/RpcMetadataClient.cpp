@@ -110,7 +110,7 @@ rpc_filter::filter::filter()
       _begin(),
       _end() {
 }
-void rpc_filter::filter::set_id(std::int64_t in_id) {
+void rpc_filter::filter::set_id(uint64_t in_id) {
   _id = in_id;
 }
 void rpc_filter::filter::set_parent_id(std::int64_t in_patent_id) {
@@ -147,6 +147,17 @@ rpc_filter::filter::operator DataDb_Filter() const {
     k_tmp.mutable_end_time()->CopyFrom(k_end_timestamp);
   }
   return k_tmp;
+}
+void rpc_filter::filter::reset() {
+  _id.reset();
+  _parent_id.reset();
+  _meta_type.reset();
+  _begin.reset();
+  _end.reset();
+}
+void rpc_filter::filter::set_range(const std::pair<time_point, time_point>& in_time) {
+  _begin = in_time.first;
+  _end   = in_time.second;
 }
 
 }  // namespace doodle

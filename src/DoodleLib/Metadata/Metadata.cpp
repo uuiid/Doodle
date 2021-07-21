@@ -75,7 +75,8 @@ void Metadata::sortChildItems(bool is_launch_sig) {
 }
 
 bool Metadata::hasParent() const {
-  return !p_parent.expired();
+  p_parent_id.operator bool();
+  return p_parent_id.has_value();
 }
 bool Metadata::hasChild() const {
   return p_has_child > 0;
@@ -320,6 +321,9 @@ MetadataPtr Metadata::from_DataDb(const DataDb &in_) {
 
   k_ptr->set_meta_type(magic_enum::enum_integer(in_.m_type().value()));
   return k_ptr;
+}
+std::uint64_t Metadata::get_parent_id() const {
+  return *p_parent_id;
 }
 
 }  // namespace doodle

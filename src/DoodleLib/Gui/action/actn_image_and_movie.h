@@ -8,7 +8,7 @@
 
 namespace doodle {
 namespace action_arg {
-class DOODLELIB_API arg_image_to_voide : public action::_arg {
+class DOODLELIB_API arg_image_to_voide : public action_arg::_arg {
  public:
   arg_image_to_voide() = default;
   arg_image_to_voide(std::vector<FSys::path>& in_paths, FSys::path& in_out_path)

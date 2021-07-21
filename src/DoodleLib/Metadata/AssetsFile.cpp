@@ -208,8 +208,8 @@ std::vector<AssetsPathPtr>& AssetsFile::getPathFile() {
 }
 void AssetsFile::to_DataDb(DataDb& in_) const {
   Metadata::to_DataDb(in_);
-  if (p_need_time) {
-    auto k_time      = p_time->getUTCTime();
+  if (p_need_time || p_id == 0) {
+    auto k_time      = p_time->getLocalTime();
     auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
         std::chrono::system_clock::to_time_t(k_time));
     in_.mutable_update_time()->CopyFrom(k_timestamp);
