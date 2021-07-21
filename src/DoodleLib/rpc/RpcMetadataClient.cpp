@@ -75,10 +75,6 @@ void RpcMetadataClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
   }
 }
 
-void RpcMetadataClient::UpdateMetadata(const MetadataConstPtr& in_metadataPtr) {
-  UpdateMetadata(in_metadataPtr, false);
-}
-
 void RpcMetadataClient::UpdateMetadata(const MetadataConstPtr& in_metadataPtr, bool b_update_parent_id) {
   if (!in_metadataPtr->isInstall())
     return;

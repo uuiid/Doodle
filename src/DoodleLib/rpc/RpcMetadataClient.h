@@ -73,7 +73,6 @@ class DOODLELIB_API RpcMetadataClient {
    */
   void InstallMetadata(const MetadataPtr& in_metadataPtr);
   void DeleteMetadata(const MetadataConstPtr& in_metadataPtr);
-  void UpdateMetadata(const MetadataConstPtr& in_metadataPtr);
   void UpdateMetadata(const MetadataConstPtr& in_metadataPtr, bool b_update_parent_id);
   [[nodiscard]] std::vector<MetadataPtr> FilterMetadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr);
 };
