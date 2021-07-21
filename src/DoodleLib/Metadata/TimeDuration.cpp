@@ -107,7 +107,7 @@ std::string TimeDuration::getWeek() const {
 
 template <>
 std::int32_t TimeDuration::getWeek() const {
-  date::weekday k_weekday{date::sys_days{p_year / p_month / p_day}};
+  date::weekday k_weekday{date::local_days{p_year / p_month / p_day}};
   return k_weekday.c_encoding();
 }
 
@@ -118,12 +118,15 @@ TimeDuration::time_point TimeDuration::getUTCTime() const {
   return p_time;
 }
 
-void TimeDuration::disassemble()  {
+void TimeDuration::disassemble() {
   auto k_time = date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
   disassemble(k_time);
 }
-std::chrono::time_point<date::local_t, std::chrono::seconds> TimeDuration::getLocalTime() const {
-  return date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
+TimeDuration::time_point TimeDuration::getLocalTime() const {
+  auto k_time = date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
+  // auto k_time2 = p_time_zone->to_local(k_time);
+  // time_point test = date::clock_cast<std::chrono::system_clock>(k_time);
+  return date::clock_cast<std::chrono::system_clock>(k_time);
 }
 
 template <>

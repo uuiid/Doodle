@@ -73,7 +73,7 @@ class DOODLELIB_API TimeDuration :public details::no_copy{
 
   [[nodiscard]] std::string showStr() const;
   [[nodiscard]] time_point getUTCTime() const;
-  [[nodiscard]] std::chrono::time_point<date::local_t, std::chrono::seconds> getLocalTime() const;
+  [[nodiscard]] time_point getLocalTime() const;
 
   template <class T, class P>
   inline TimeDuration& operator-=(const std::chrono::duration<T, P>& _or) {
