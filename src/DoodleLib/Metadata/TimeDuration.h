@@ -15,7 +15,7 @@ namespace doodle {
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
-class DOODLELIB_API TimeDuration :public details::no_copy{
+class DOODLELIB_API TimeDuration : public details::no_copy {
   /**
    * @brief 这个是内部的utc时间
    * 
@@ -82,19 +82,12 @@ class DOODLELIB_API TimeDuration :public details::no_copy{
     return *this;
   }
 
+  operator time_point();
 
  private:
   void disassemble();
-  template <class T, class DT = typename T::duration>
-  void disassemble(const std::chrono::time_point<T, DT>& in_utc_timePoint) {
-    throw DoodleError{"函数错误"};
-  };
 
-  template <>
   void disassemble(const std::chrono::time_point<std::chrono::system_clock>& in_utc_timePoint);
-
-  template <>
-  void disassemble(const std::chrono::time_point<date::local_t, std::chrono::seconds>& in_utc_timePoint);
 
   //这里是序列化的代码
   friend class cereal::access;

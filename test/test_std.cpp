@@ -192,6 +192,16 @@ TEST(DSTD, date_utc) {
             << "make_zoned(current_zone(), mt_tt).get_local_time(): " << make_zoned(current_zone(), mt_tt).get_local_time() << "\n"
 
             << "\n"
+            << "std::chrono::system_clock::now(): " << std::chrono::system_clock::now() << "\n"
+            << "date::clock_cast<date::local_t>(std::chrono::system_clock::now()): " << date::clock_cast<date::local_t>(std::chrono::system_clock::now()) << "\n"
+            << "date::make_zoned(date::current_zone(),std::chrono::system_clock::now()): " << date::make_zoned(date::current_zone(), std::chrono::system_clock::now()) << "\n"
+            << "注意这里是不对的-> date::make_zoned(date::current_zone(), date::clock_cast<date::local_t>(std::chrono::system_clock::now())): " << date::make_zoned(date::current_zone(), date::clock_cast<date::local_t>(std::chrono::system_clock::now())) << "\n"
+            << "注意这里是不对的-> date::make_zoned(date::current_zone(), date::clock_cast<date::local_t>(std::chrono::system_clock::now())).get_local_time(): " << date::make_zoned(date::current_zone(), date::clock_cast<date::local_t>(std::chrono::system_clock::now())).get_local_time() << "\n"
+            << "注意这里是不对的-> date::make_zoned(date::current_zone(), date::clock_cast<date::local_t>(std::chrono::system_clock::now())).get_sys_time(): " << date::make_zoned(date::current_zone(), date::clock_cast<date::local_t>(std::chrono::system_clock::now())).get_sys_time() << "\n"
+            << "date::clock_cast<date::utc_clock>(std::chrono::system_clock::now()): " << date::clock_cast<date::utc_clock>(std::chrono::system_clock::now()) << "\n"
+            << "\n"
+
+            << "\n"
             << "year   : " << k_day.year() << "\n"
             << "month  : " << k_day.month() << "\n"
             << "day    : " << k_day.day() << "\n"
