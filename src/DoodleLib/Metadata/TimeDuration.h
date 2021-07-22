@@ -82,6 +82,14 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
     return *this;
   }
 
+  /**
+   * 这里返回系统时钟 系统时钟我们始终假定为 utc时钟 (system_clock跟踪的时区（未指定但事实上的标准）)
+   * @warning 这里一定要注意, 在库中还存在一种用来表示本地时间的系统时钟,
+   * 将 system_clock 用于表示本地时间的原因主要是为了和其他库进行快速的接口使用
+   *
+   * TODO: 这里我们因该将上面的表示为系统时钟的本地时间进行重构
+   * @return
+   */
   operator time_point();
 
  private:

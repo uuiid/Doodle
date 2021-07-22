@@ -8,6 +8,7 @@
 #include <core/CoreSet.h>
 #include <rpc/RpcMetadataClient.h>
 
+#include <csv.hpp>
 namespace doodle {
 actn_export_excel::actn_export_excel()
     : p_list(),
@@ -33,7 +34,7 @@ void actn_export_excel::export_excel() {
   auto k_rpc = CoreSet::getSet().getRpcMetadataClient();
 
   auto k_filter = std::make_shared<rpc_filter::filter>();
-  k_filter->set_range(_arg_type.p_time_range);
+  k_filter->set_range(_arg_type.p_time_range.first->getLocalTime(), _arg_type.p_time_range.second->getLocalTime());
   k_filter->set_meta_type(Metadata::meta_type::file);
   auto k_list = k_rpc->FilterMetadata(k_filter);
 
@@ -46,7 +47,7 @@ void actn_export_excel::export_excel() {
     }
   }
   /// 查找所有项目
-  std::copy_if(p_list.begin(), p_list.end(), std::inserter(p_prj_list,p_prj_list.begin()),
+  std::copy_if(p_list.begin(), p_list.end(), std::inserter(p_prj_list, p_prj_list.begin()),
                [](const std::pair<std::uint64_t, MetadataPtr>& in_) {
                  return !in_.second->hasParent();
                });
@@ -68,10 +69,64 @@ void actn_export_excel::find_parent(const MetadataPtr& in_ptr) {
     k_ptr = p_list[k_id];
   }
 }
-void actn_export_excel::export_user_excel() {
 
+void actn_export_excel::export_user_excel() {
+  auto k_path = _arg_type.date;
+  if (FSys::exists(k_path))
+    FSys::create_directories(k_path);
+  std::vector<std::string> k_line{"项目,所属部门,集数,镜头,名称,制作人,开始时间,结束时间,持续时间,备注,文件存在,文件路径"};
+  std::vector<AssetsFilePtr> k_list_ass;
+
+  for (const auto& k_user : p_user_list) {
+    FSys::ofstream k_ofstream{k_path / (k_user + ".csv"), std::ios::out};
+    auto k_csv = csv::make_csv_writer(k_ofstream);
+    k_csv << k_line;  ///写入标题
+
+    k_line.clear();
+    /// 查找用户所属
+    std::copy_if(p_ass_list.begin(), p_ass_list.end(), std::back_inserter(k_list_ass),
+                 [k_user](const AssetsFilePtr& in_) {
+                   return in_->getUser() == k_user;
+                 });
+  }
 }
 void actn_export_excel::export_prj_excel() {
+}
+string_list_ptr actn_export_excel::export_excel_line(const std::vector<AssetsFilePtr>& in_list) {
+  auto k_list = std::make_shared<string_list>();
+  AssetsFilePtr k_previous;
+  TimeDurationPtr k_previous_time = _arg_type.p_time_range.first;
+  ;
+  for (const auto& k_item : in_list) {
+    k_list->emplace_back(k_item->getRootParent()->showStr());              /// 项目
+    k_list->emplace_back(magic_enum::enum_name(k_item->getDepartment()));  /// 所属部门
+    if (auto k_eps = k_item->find_parent_class<Episodes>(); k_eps) {       ///集数
+      k_list->emplace_back(k_eps->str());
+    } else {
+      k_list->emplace_back(std::string{});
+    }
+    if (auto k_shot = k_item->find_parent_class<Shot>(); k_shot) {  ///镜头
+      k_list->emplace_back(k_shot->str());
+    } else
+      k_list->emplace_back(std::string{});
+    if (auto k_ass = k_item->find_parent_class<Assets>(); k_ass)  ///名称
+      k_list->emplace_back(k_ass->str());
+    else
+      k_list->emplace_back(std::string{});
+
+    k_list->emplace_back(k_item->getUser());  ///制作人
+
+    k_list->emplace_back(k_previous_time->showStr());    ///开始时间
+    k_list->emplace_back(k_item->getTime()->showStr());  ///结束时间
+
+    ///持续时间
+    ///备注
+    ///文件存在
+    ///文件路径
+    k_previous      = k_item;
+    k_previous_time = k_item->getTime();
+  }
+  return k_list;
 }
 
 }  // namespace doodle

@@ -196,6 +196,10 @@ class menu_factory_base;
 class long_term;
 class ImageSequence;
 
+using string_list     = std::vector<std::string>;
+using string_list_ptr = std::shared_ptr<string_list>;
+
+
 using MetadataPtr               = std::shared_ptr<Metadata>;
 using MetadataConstPtr          = std::shared_ptr<const Metadata>;
 using RpcMetadataClientPtr      = std::shared_ptr<RpcMetadataClient>;

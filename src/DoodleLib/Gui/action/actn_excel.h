@@ -11,14 +11,26 @@ namespace action_arg {
 class DOODLELIB_API arg_excel : public arg_path {
  public:
   using time_point = std::chrono::time_point<std::chrono::system_clock>;
-  std::pair<time_point, time_point> p_time_range;
+  std::pair<TimeDurationPtr , TimeDurationPtr> p_time_range;
 };
 
 }  // namespace action_arg
 
+namespace excel {
+class DOODLELIB_API assets_file_line : public details::no_copy {
+  AssetsFilePtr p_ass_file;
+
+ public:
+  explicit assets_file_line(AssetsFilePtr in_ptr);
+
+
+};
+}  // namespace excel
+
 class DOODLELIB_API actn_export_excel : public action_indirect<action_arg::arg_excel> {
   void export_excel();
   void export_prj_excel();
+  string_list_ptr export_excel_line(const std::vector<AssetsFilePtr>& in_list);
   void export_user_excel();
 
   void find_parent(const MetadataPtr& in_ptr);
