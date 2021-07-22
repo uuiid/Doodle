@@ -75,12 +75,14 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
   [[nodiscard]] time_point getUTCTime() const;
   [[nodiscard]] time_point getLocalTime() const;
 
-  template <class T, class P>
-  inline TimeDuration& operator-=(const std::chrono::duration<T, P>& _or) {
-    p_time -= _or;
-    disassemble(p_time);
-    return *this;
-  }
+  //  template <class T, class P>
+  //  inline TimeDuration& operator-=(const std::chrono::duration<T, P>& _or) {
+  //    p_time -= _or;
+  //    disassemble(p_time);
+  //    return *this;
+  //  }
+
+  std::chrono::duration<std::chrono::hours> duration(const TimeDuration& in) const;
 
   /**
    * 这里返回系统时钟 系统时钟我们始终假定为 utc时钟 (system_clock跟踪的时区（未指定但事实上的标准）)

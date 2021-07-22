@@ -6,6 +6,7 @@
 
 #include <Metadata/Metadata_cpp.h>
 #include <core/CoreSet.h>
+#include <rpc/RpcFileSystemClient.h>
 #include <rpc/RpcMetadataClient.h>
 
 #include <csv.hpp>
@@ -94,7 +95,7 @@ void actn_export_excel::export_prj_excel() {
 }
 string_list_ptr actn_export_excel::export_excel_line(const std::vector<AssetsFilePtr>& in_list) {
   auto k_list = std::make_shared<string_list>();
-  AssetsFilePtr k_previous;
+  //  AssetsFilePtr k_previous;
   TimeDurationPtr k_previous_time = _arg_type.p_time_range.first;
   ;
   for (const auto& k_item : in_list) {
@@ -119,14 +120,28 @@ string_list_ptr actn_export_excel::export_excel_line(const std::vector<AssetsFil
     k_list->emplace_back(k_previous_time->showStr());    ///开始时间
     k_list->emplace_back(k_item->getTime()->showStr());  ///结束时间
 
-    ///持续时间
-    ///备注
-    ///文件存在
-    ///文件路径
-    k_previous      = k_item;
+     ///持续时间
+    const auto& k_com = k_item->getComment();
+    k_list->emplace_back(k_com.empty() ? std::string{} : k_com.back()->getComment());   ///备注
+    k_list->emplace_back(exist(k_item) ? std::string{"不存在"} : std::string{"存在"});  ///文件存在
+    string_list k_string_list;
+    std::transform(k_item->getPathFile().begin(), k_item->getPathFile().end(), std::back_inserter(k_string_list),
+                   [](const AssetsPathPtr& in_) { return in_->getServerPath().generic_string(); });
+    k_list->emplace_back(fmt::format("{}", fmt::join(k_string_list, "\n")));  ///文件路径
+
     k_previous_time = k_item->getTime();
   }
   return k_list;
+}
+bool actn_export_excel::exist(const AssetsFilePtr& in_ptr) {
+  const auto& k_paths = in_ptr->getPathFile();
+  auto k_ch           = CoreSet::getSet().getRpcFileSystemClient();
+  if (k_paths.empty())
+    return false;
+  else
+    return std::all_of(k_paths.begin(), k_paths.end(), [k_ch](const AssetsPathPtr& in_) {
+      return k_ch->IsExist(in_->getServerPath());
+    });
 }
 
 }  // namespace doodle

@@ -119,15 +119,21 @@ TimeDuration::time_point TimeDuration::getUTCTime() const {
 }
 
 void TimeDuration::disassemble() {
-  auto k_time = date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
-  auto k_      = date::make_zoned(p_time_zone, k_time);
+  auto k_time = date::sys_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
+  auto k_     = date::make_zoned(p_time_zone, k_time);
   disassemble(k_.get_sys_time());
 }
 TimeDuration::time_point TimeDuration::getLocalTime() const {
   auto k_time = date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
-  // auto k_time2 = p_time_zone->to_local(k_time);
+  // auto k_time2 = k_time - k_time;
   // time_point test = date::clock_cast<std::chrono::system_clock>(k_time);
   return date::clock_cast<std::chrono::system_clock>(k_time);
+}
+
+std::chrono::duration<std::chrono::hours> TimeDuration::duration(const TimeDuration& in) const {
+  date::year_month_day k_begnd{p_time};
+  for (; k_begnd >= in.p_time; ++k_begnd) {
+  }
 }
 
 void TimeDuration::disassemble(const std::chrono::time_point<std::chrono::system_clock>& in_utc_timePoint) {
