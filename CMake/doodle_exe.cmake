@@ -12,35 +12,38 @@ function(doodle_grpc_generate out_lists)
             "${multiValueArgs}"
             ${ARGN}
     )
-    file(REAL_PATH ${DOODLE_GRPC_GENERATE_NAME} _PATH)
-    get_filename_component(_NAME_WE ${_PATH} NAME_WE)
-    get_filename_component(_NAME ${_PATH} NAME)
-    get_filename_component(_DIRECTORY ${_PATH} DIRECTORY)
-    cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)
+    foreach (LIST ${DOODLE_GRPC_GENERATE_LISTS_FILES})
+        file(REAL_PATH ${LIST} _PATH)
+        get_filename_component(_NAME_WE ${_PATH} NAME_WE)
+        get_filename_component(_NAME ${_PATH} NAME)
+        get_filename_component(_DIRECTORY ${_PATH} DIRECTORY)
+        cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)
 
-    message("name: " ${DOODLE_GRPC_GENERATE_NAME})
-    list(APPEND
-            _OUT
-            ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.h
-            ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.cc
-            ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.h
-            ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.cc)
-    add_custom_command(
-            OUTPUT
-            ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.h
-            ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.cc
-            ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.h
-            ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.cc
-            COMMAND protobuf::protoc
-            ARGS --proto_path=${Z_VCPKG_ROOT_DIR}/installed/${VCPKG_TARGET_TRIPLET}/include
-            --proto_path=${_DIRECTORY}
-            --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-            --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
-            --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
-            ${_NAME}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-            MAIN_DEPENDENCY ${DOODLE_GRPC_GENERATE_NAME}
-    )
+        message("name: " ${LIST})
+        list(APPEND
+                _OUT
+                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.h
+                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.cc
+                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.h
+                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.cc)
+        add_custom_command(
+                OUTPUT
+                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.h
+                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.cc
+                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.h
+                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.cc
+                COMMAND protobuf::protoc
+                ARGS --proto_path=${Z_VCPKG_ROOT_DIR}/installed/${VCPKG_TARGET_TRIPLET}/include
+                --proto_path=${_DIRECTORY}
+                --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+                --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
+                --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
+                ${_NAME}
+                WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+                MAIN_DEPENDENCY ${DOODLE_GRPC_GENERATE_NAME}
+        )
+    endforeach ()
+
     set("${out_lists}"
             ${_OUT}
             PARENT_SCOPE)
@@ -57,27 +60,34 @@ function(doodle_sqlpp_generate out_lists)
             "${multiValueArgs}"
             ${ARGN}
     )
-    file(REAL_PATH ${DOODLE_GRPC_GENERATE_NAME} _PATH)
-    get_filename_component(_NAME_WE ${_PATH} NAME_WE)
-    get_filename_component(_NAME ${_PATH} NAME)
-    get_filename_component(_DIRECTORY ${_PATH} DIRECTORY)
-    cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)
+    foreach (LIST ${DOODLE_GRPC_GENERATE_LISTS_FILES})
+        file(REAL_PATH ${LIST} _PATH)
+        get_filename_component(_NAME_WE ${_PATH} NAME_WE)
+        get_filename_component(_NAME ${_PATH} NAME)
+        get_filename_component(_DIRECTORY ${_PATH} DIRECTORY)
+        cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)
 
-    message("name: " ${DOODLE_GRPC_GENERATE_NAME})
+        string(REGEX MATCH "[a-zA-Z]+"
+                CLEAN_NAME ${_NAME_WE})
+        cmake_print_variables(LIST CLEAN_NAME)
 
-    list(APPEND
-            _OUT
-            ${CMAKE_CURRENT_BINARY_DIR}/core/MetadataTabSql.h)
-    add_custom_command(
-            OUTPUT "${_OUT}"
-            COMMAND ${PROJECT_SOURCE_DIR}/venv/Scripts/Activate.bat
-            COMMAND py
-            ARGS $<TARGET_FILE:sqlpp11::ddl2cpp>
-            ${_PATH}
-            ${CMAKE_CURRENT_BINARY_DIR}/core/${_NAME_WE}
-            doodle
-            MAIN_DEPENDENCY ${DOODLE_GRPC_GENERATE_NAME}
-    )
+        list(APPEND
+                _OUT
+                ${CMAKE_CURRENT_BINARY_DIR}/core/${_NAME_WE}_sql.h)
+        add_custom_command(
+                OUTPUT "${_OUT}"
+                COMMAND ${PROJECT_SOURCE_DIR}/venv/Scripts/Activate.bat
+                COMMAND py
+                ARGS $<TARGET_FILE:sqlpp11::ddl2cpp>
+                ${_PATH}
+                ${CMAKE_CURRENT_BINARY_DIR}/core/${CLEAN_NAME}_sql
+                doodle
+                MAIN_DEPENDENCY ${DOODLE_GRPC_GENERATE_NAME}
+        )
+    endforeach ()
+    set("${out_lists}"
+            ${_OUT}
+            PARENT_SCOPE)
 endfunction()
 
 
@@ -153,7 +163,7 @@ function(add_doodle)
             #        $<IF:$<CONFIG:Debug>,${WX_advd},${WX_adv}>
 
             cxxopts::cxxopts
-
+            csv
             SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
             #        cppzmq
             #        cppzmq-static
@@ -182,12 +192,12 @@ function(add_doodle)
             ${PROJECT_SOURCE_DIR}/src
             )
 
-#    add_dependencies(
-#            ${ADD_DOODLE_NAME}
-#            cmrc_prj
-#            doxygen_css
-#            tzdata_prj
-#            windowsZones_prj
-#            csv_parser_prj
-#    )
+    #    add_dependencies(
+    #            ${ADD_DOODLE_NAME}
+    #            cmrc_prj
+    #            doxygen_css
+    #            tzdata_prj
+    #            windowsZones_prj
+    #            csv_parser_prj
+    #    )
 endfunction()

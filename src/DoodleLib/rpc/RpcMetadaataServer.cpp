@@ -7,7 +7,7 @@
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/core/CoreSql.h>
 #include <Logger/Logger.h>
-#include <core/MetadataTabSql.h>
+#include <core/metadatatab_sql.h>
 #include <libWarp/protobuf_warp_cpp.h>
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
@@ -48,7 +48,7 @@ RpcMetadaataServer::RpcMetadaataServer()
     : p_set(CoreSet::getSet()),
       p_thread(),
       p_cache(1024 * 1024, caches::LRUCachePolicy<std::string>(), [this](const std::string &path, const std::string &value) {
-        if (value.size() == 0)
+        if (value.empty())
           return;
         FSys::ofstream k_ofstream{path, std::ios::out | std::ios::binary};
         k_ofstream.write(value.data(), value.size());

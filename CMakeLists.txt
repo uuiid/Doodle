@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.14)
+﻿cmake_minimum_required(VERSION 3.20)
 
 project(Doodle
         VERSION 2.7.32.2
@@ -14,6 +14,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
 add_compile_definitions(QT_NO_KEYWORDS UNICODE _UNICODE NOMINMAX)
+#add_compile_options(/W4)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -52,7 +53,7 @@ include(CMakeRC)
 find_package(wxWidgets REQUIRED)
 find_package(unofficial-nana CONFIG REQUIRED)
 
-find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time  log locale iostreams)
+find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time log locale iostreams)
 find_package(EnTT CONFIG REQUIRED)
 # find_package(CURL REQUIRED)
 find_package(Sqlpp11 REQUIRED)
@@ -137,7 +138,7 @@ ExternalProject_Add(tzdata_prj
 
 ExternalProject_Add(windowsZones_prj
         URL https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml
-#        DOWNLOAD_NAME windowsZones.xml
+        #        DOWNLOAD_NAME windowsZones.xml
         DOWNLOAD_NO_EXTRACT TRUE
         CONFIGURE_COMMAND ""
         BUILD_COMMAND ""
@@ -150,7 +151,8 @@ ExternalProject_Add(csv_parser_prj
         BUILD_COMMAND ""
         INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/csv_parser_prj-prefix/src/csv_parser_prj ${PROJECT_SOURCE_DIR}/external/csv_parser
         TEST_COMMAND ""
-)
+        )
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv_parser)
 
 
 #添加文档生成

@@ -18,19 +18,16 @@ add_custom_target(
         COMMAND ${CMAKE_COMMAND} -P ListFile.cmake
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 )
+
 doodle_sqlpp_generate(
         OUT_LISTS_sqlpp
-        NAME
+        LISTS_FILES
         core/000-metadatatab.sql
 )
 doodle_grpc_generate(
-        OUT_LISTS_MetadataServer
-        NAME
+        OUT_LISTS_GRPC
+        LISTS_FILES
         rpc/MetadataServer.proto
-)
-doodle_grpc_generate(
-        OUT_LISTS_FileSystemServer
-        NAME
         rpc/FileSystemServer.proto
 )
 
@@ -40,8 +37,7 @@ add_doodle(
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
         ${OUT_LISTS_sqlpp}
-        ${OUT_LISTS_MetadataServer}
-        ${OUT_LISTS_FileSystemServer}
+        ${OUT_LISTS_GRPC}
         main/doodle.manifest
 )
 add_doodle(
@@ -51,8 +47,7 @@ add_doodle(
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
         ${OUT_LISTS_sqlpp}
-        ${OUT_LISTS_MetadataServer}
-        ${OUT_LISTS_FileSystemServer}
+        ${OUT_LISTS_GRPC}
         main/doodle.manifest
         main/icon.ico
         main/win_exe.rc
@@ -65,8 +60,7 @@ add_doodle(
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
         ${OUT_LISTS_sqlpp}
-        ${OUT_LISTS_MetadataServer}
-        ${OUT_LISTS_FileSystemServer}
+        ${OUT_LISTS_GRPC}
         main/doodle.manifest
         main/icon.ico
         main/win_exe.rc
