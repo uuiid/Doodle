@@ -73,7 +73,7 @@ function(doodle_sqlpp_generate out_lists)
 
         list(APPEND
                 _OUT
-                ${CMAKE_CURRENT_BINARY_DIR}/core/${_NAME_WE}_sql.h)
+                ${CMAKE_CURRENT_BINARY_DIR}/core/${CLEAN_NAME}_sql.h)
         add_custom_command(
                 OUTPUT "${_OUT}"
                 COMMAND ${PROJECT_SOURCE_DIR}/venv/Scripts/Activate.bat
@@ -82,7 +82,7 @@ function(doodle_sqlpp_generate out_lists)
                 ${_PATH}
                 ${CMAKE_CURRENT_BINARY_DIR}/core/${CLEAN_NAME}_sql
                 doodle
-                MAIN_DEPENDENCY ${DOODLE_GRPC_GENERATE_NAME}
+                MAIN_DEPENDENCY ${LIST}
         )
     endforeach ()
     set("${out_lists}"
@@ -191,7 +191,6 @@ function(add_doodle)
             ${CMAKE_CURRENT_BINARY_DIR}
             ${PROJECT_SOURCE_DIR}/src
             )
-
     #    add_dependencies(
     #            ${ADD_DOODLE_NAME}
     #            cmrc_prj

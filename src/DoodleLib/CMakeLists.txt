@@ -66,3 +66,4 @@ add_doodle(
         main/win_exe.rc
         main/server/main.cpp
 )
+include_directories(${PROJECT_SOURCE_DIR}/external/csv_parser/include)
