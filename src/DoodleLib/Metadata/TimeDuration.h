@@ -11,6 +11,7 @@
 #include <cereal/types/chrono.hpp>
 
 namespace doodle {
+
 /**
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
@@ -81,8 +82,12 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
   //    disassemble(p_time);
   //    return *this;
   //  }
-
-  std::chrono::duration<std::chrono::hours> duration(const TimeDuration& in) const;
+  /**
+   *
+   * @param in 结束的时间
+   * @return
+   */
+  chrono::hours_double work_duration(const TimeDuration& in) const;
 
   /**
    * 这里返回系统时钟 系统时钟我们始终假定为 utc时钟 (system_clock跟踪的时区（未指定但事实上的标准）)
@@ -95,6 +100,15 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
   operator time_point();
 
  private:
+  /**
+   * 这个是计算开始时到一天结束时的工作时长
+   * 通常是安装8小时计算, 同时计算前段时间可以使用 8-return
+   * @param in_point  开始的时间点
+   * @return 工作时间长度
+   */
+  chrono::hours_double one_day_works_hours(const time_point& in_point) const;
+  chrono::days work_days(const time_point& in_begin, const time_point& in_end) const;
+
   void disassemble();
 
   void disassemble(const std::chrono::time_point<std::chrono::system_clock>& in_utc_timePoint);

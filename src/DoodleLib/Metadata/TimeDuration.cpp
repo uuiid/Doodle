@@ -130,10 +130,32 @@ TimeDuration::time_point TimeDuration::getLocalTime() const {
   return date::clock_cast<std::chrono::system_clock>(k_time);
 }
 
-std::chrono::duration<std::chrono::hours> TimeDuration::duration(const TimeDuration& in) const {
-  date::year_month_day k_begnd{p_time};
-  for (; k_begnd >= in.p_time; ++k_begnd) {
-  }
+chrono::hours_double TimeDuration::work_duration(const TimeDuration& in) const {
+  if (p_time > in.p_time)
+    return chrono::hours_double{0};
+
+  auto k_begin = date::sys_days{p_year / p_month / p_day};
+  auto k_end   = date::sys_days{in.p_year / in.p_month / in.p_day};
+
+  auto k_time                   = k_end - k_begin;                           /// 总总工作天数()
+  chrono::hours_double k_time_h = k_time.count() * chrono::hours_double{8};  /// 总工作小时
+
+  /**
+   *            @warning 首先是加入开始， 并且加入结束
+   *            所以减去开始时多出来的部分， 再减去结束时多出来的部分
+   *  k_time_h = ((k_time.count() +1) * chrono::hours_double{8})  - (  chrono::hours_double{8} - one_day_works_hours(p_time)) - one_day_works_hours(in.p_time);
+   *  简化为
+   *  k_time_h = k_time_h + one_day_works_hours(p_time) - one_day_works_hours(in.p_time);
+   */
+  k_time_h = k_time_h +
+             (chrono::is_rest_day(k_begin)
+                  ? chrono::hours_double{0}
+                  : one_day_works_hours(p_time)) -
+             (chrono::is_rest_day(k_end)
+                  ? chrono::hours_double{0}
+                  : one_day_works_hours(in.p_time));
+
+  return k_time_h;
 }
 
 void TimeDuration::disassemble(const std::chrono::time_point<std::chrono::system_clock>& in_utc_timePoint) {
@@ -154,6 +176,49 @@ void TimeDuration::disassemble(const std::chrono::time_point<std::chrono::system
 }
 TimeDuration::operator time_point() {
   return p_time;
+}
+
+chrono::hours_double TimeDuration::one_day_works_hours(const time_point& in_point) const {
+  /// TODO: 这里我们要添加设置， 而不是静态变量
+
+  /// 获得当天的日期后制作工作时间
+  auto k_day = chrono::floor<chrono::days>(in_point);
+
+  auto k_begin_1 = k_day + std::chrono::hours{9};   ///上午上班时间
+  auto k_end_1   = k_day + std::chrono::hours{12};  /// 上午下班时间
+  auto k_begin_2 = k_day + std::chrono::hours{13};  /// 下午上班时间
+  auto k_end_2   = k_day + std::chrono::hours{18};  /// 下午下班时间
+
+  if (in_point <= k_begin_1) {                                ///上班前提交
+    return chrono::hours_double{8};                           ///
+                                                              ///
+  } else if (in_point > k_begin_1 && in_point <= k_end_1) {   ///上午上班后提交
+    return chrono::hours_double{8} - (k_begin_1 - in_point);  ///
+                                                              ///
+  } else if (in_point > k_end_1 && in_point <= k_begin_2) {   /// 中文午休提交
+    return chrono::hours_double{4};                           ///
+                                                              ///
+  } else if (in_point > k_begin_2 && in_point <= k_end_2) {   /// 下午上班后提交
+    return chrono::hours_double{4} - (k_begin_2 - in_point);  ///
+                                                              ///
+  } else if (in_point > k_end_2) {                            /// 下午下班后提交
+    return chrono::hours_double{0};                           ///
+  }
+}
+chrono::days TimeDuration::work_days(const TimeDuration::time_point& in_begin, const TimeDuration::time_point& in_end) const {
+  auto k_day_begin = chrono::floor<chrono::days>(in_begin);
+  auto k_day_end   = chrono::floor<chrono::days>(in_end);
+
+  std::vector<chrono::sys_days> k_days{};
+  std::fill_n(k_days.begin(), (k_day_end - k_day_begin).count(), [k_day_begin, n = 0]() mutable {
+    auto k_i = k_day_begin + chrono::days{n};
+    ++n;
+    return k_i;
+  });
+  auto k_s = std::count_if(k_days.begin(), k_days.end(), [](const chrono::sys_days& in) {
+    return !chrono::is_rest_day(in);
+  });
+  return chrono::days{k_s};
 }
 
 }  // namespace doodle

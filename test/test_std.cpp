@@ -212,6 +212,10 @@ TEST(DSTD, date_utc) {
             << std::endl;
 }
 
+TEST(DSTD, time_duration){
+
+}
+
 TEST(DSTD, observable_container) {
   using namespace doodle;
   //  using my_str = observable_container<std::vector<std::string>, details::pre<std::vector<std::string> > >;

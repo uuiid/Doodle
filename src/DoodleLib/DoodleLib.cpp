@@ -13,7 +13,15 @@
 
 #include <boost/locale.hpp>
 
-namespace doodle::FSys {
+namespace doodle {
+namespace chrono {
+bool is_rest_day(const sys_days &in_days) {
+  weekday k_weekday{in_days};
+  return k_weekday == Sunday && k_weekday == Saturday;
+}
+}  // namespace chrono
+
+namespace FSys {
 ///  这个在windows上使用
 ///  以100纳秒为时间单位的时间段
 using filetime_duration = std::chrono::duration<std::int64_t, std::ratio<1, 10'000'000>>;
@@ -105,5 +113,7 @@ std::string file_hash_sha224(const path &in_file) {
                            std::make_error_code(std::errc::no_such_file_or_directory)};
   }
 }
+}  // namespace FSys
+}  // namespace doodle
 
-}  // namespace doodle::FSys
+// namespace doodle::FSys

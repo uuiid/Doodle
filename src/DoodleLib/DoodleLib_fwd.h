@@ -79,6 +79,18 @@ bool is_class(const RT &in_rt) {
   return typeid(T) == typeid(k_item);
 }
 }  // namespace details
+namespace chrono {
+using namespace std::chrono;
+using namespace date;
+
+using hours_double = duration<std::double_t, std::ratio<3600> >;
+
+/// TODO: 这里我们暂时使用周六和周日作为判断, 但是实际上还有各种假期和其他情况要计入
+bool is_rest_day(const sys_days& in_days);
+//template <class Clock>
+//bool is_morning_works(const std::chrono::time_point<Clock, typename Clock::duration>& in_time) {
+//}
+}  // namespace chrono
 
 namespace FSys {
 //namespace details{
@@ -159,7 +171,7 @@ DOODLELIB_API inline std::chrono::time_point<std::chrono::system_clock> last_wri
 DOODLELIB_API path add_time_stamp(const path &in_path);
 DOODLELIB_API void open_explorer(const path &in_path);
 DOODLELIB_API void backup_file(const path &source);
-DOODLELIB_API std::string file_hash_sha224(const path& in_file);
+DOODLELIB_API std::string file_hash_sha224(const path &in_file);
 }  // namespace FSys
 
 using ConnPtr = std::unique_ptr<sqlpp::mysql::connection>;
@@ -199,34 +211,33 @@ class ImageSequence;
 using string_list     = std::vector<std::string>;
 using string_list_ptr = std::shared_ptr<string_list>;
 
-
-using MetadataPtr               = std::shared_ptr<Metadata>;
-using MetadataConstPtr          = std::shared_ptr<const Metadata>;
-using RpcMetadataClientPtr      = std::shared_ptr<RpcMetadataClient>;
-using RpcMetadataServerPtr      = std::shared_ptr<RpcMetadaataServer>;
-using RpcServerHandlePtr        = std::shared_ptr<RpcServerHandle>;
-using RpcFileSystemServerPtr    = std::shared_ptr<RpcFileSystemServer>;
-using RpcFileSystemClientPtr    = std::shared_ptr<RpcFileSystemClient>;
-using ProjectPtr                = std::shared_ptr<Project>;
-using EpisodesPtr               = std::shared_ptr<Episodes>;
-using ShotPtr                   = std::shared_ptr<Shot>;
-using AssetsPtr                 = std::shared_ptr<Assets>;
-using AssetsFilePtr             = std::shared_ptr<AssetsFile>;
-using coreSqlPtr                = std::shared_ptr<CoreSql>;
-using LabelNodePtr              = std::shared_ptr<LabelNode>;
-using AssetsFilePtr             = std::shared_ptr<AssetsFile>;
-using MetadataFactoryPtr        = std::shared_ptr<MetadataFactory>;
-using TimeDurationPtr           = std::shared_ptr<TimeDuration>;
-using CommentPtr                = std::shared_ptr<Comment>;
-using AssetsPathPtr             = std::shared_ptr<AssetsPath>;
-using DragFilesFactoryPtr       = std::shared_ptr<DragFilesFactory>;
-using action_ptr                = std::shared_ptr<action>;
-using actn_up_paths_ptr         = std::shared_ptr<actn_up_paths>;
-using DoodleLibPtr              = std::unique_ptr<DoodleLib>;
-using ThreadPoolPtr             = std::shared_ptr<ThreadPool>;
-using menu_factory_ptr          = std::shared_ptr<menu_factory_base>;
-using long_term_ptr             = std::shared_ptr<long_term>;
-using ImageSequencePtr          = std::shared_ptr<ImageSequence>;
+using MetadataPtr            = std::shared_ptr<Metadata>;
+using MetadataConstPtr       = std::shared_ptr<const Metadata>;
+using RpcMetadataClientPtr   = std::shared_ptr<RpcMetadataClient>;
+using RpcMetadataServerPtr   = std::shared_ptr<RpcMetadaataServer>;
+using RpcServerHandlePtr     = std::shared_ptr<RpcServerHandle>;
+using RpcFileSystemServerPtr = std::shared_ptr<RpcFileSystemServer>;
+using RpcFileSystemClientPtr = std::shared_ptr<RpcFileSystemClient>;
+using ProjectPtr             = std::shared_ptr<Project>;
+using EpisodesPtr            = std::shared_ptr<Episodes>;
+using ShotPtr                = std::shared_ptr<Shot>;
+using AssetsPtr              = std::shared_ptr<Assets>;
+using AssetsFilePtr          = std::shared_ptr<AssetsFile>;
+using coreSqlPtr             = std::shared_ptr<CoreSql>;
+using LabelNodePtr           = std::shared_ptr<LabelNode>;
+using AssetsFilePtr          = std::shared_ptr<AssetsFile>;
+using MetadataFactoryPtr     = std::shared_ptr<MetadataFactory>;
+using TimeDurationPtr        = std::shared_ptr<TimeDuration>;
+using CommentPtr             = std::shared_ptr<Comment>;
+using AssetsPathPtr          = std::shared_ptr<AssetsPath>;
+using DragFilesFactoryPtr    = std::shared_ptr<DragFilesFactory>;
+using action_ptr             = std::shared_ptr<action>;
+using actn_up_paths_ptr      = std::shared_ptr<actn_up_paths>;
+using DoodleLibPtr           = std::unique_ptr<DoodleLib>;
+using ThreadPoolPtr          = std::shared_ptr<ThreadPool>;
+using menu_factory_ptr       = std::shared_ptr<menu_factory_base>;
+using long_term_ptr          = std::shared_ptr<long_term>;
+using ImageSequencePtr       = std::shared_ptr<ImageSequence>;
 
 namespace rpc_trans {
 class down_file;
