@@ -25,17 +25,17 @@ namespace doodle {
 
 class DOODLELIB_API command_line {
  public:
-  int p_sql_port{3306};                      ///< mysql 端口
-  int p_meta_rpc_port{60999};                ///< 元数据端口
-  int p_file_rpc_port{60998};                ///< filesys 文件传输端口
-  std::string p_sql_host{"192.168.10.215"};  ///< mysql数据库ip
-  std::string p_sql_user{"deve"};            ///< mysql 用户名称
-  std::string p_sql_password{"deve"};        ///< mysql 用户密码
+  int p_sql_port{3306};                     ///< mysql 端口
+  int p_meta_rpc_port{60999};               ///< 元数据端口
+  int p_file_rpc_port{60998};               ///< filesys 文件传输端口
+  std::string p_sql_host{"192.168.20.60"};  ///< mysql数据库ip
+  std::string p_sql_user{"deve"};           ///< mysql 用户名称
+  std::string p_sql_password{"deve"};       ///< mysql 用户密码
   command_line()
       : p_sql_port(3306),
         p_meta_rpc_port(60999),
         p_file_rpc_port(60998),
-        p_sql_host("192.168.10.215"),
+        p_sql_host("192.168.20.60"),
         p_sql_user("deve"),
         p_sql_password("deve"),
         p_mk_link(),

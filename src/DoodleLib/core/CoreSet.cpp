@@ -125,14 +125,14 @@ CoreSet::CoreSet()
       p_rpc_file_system_client(),
       p_metadata_factory(),
 #ifdef NDEBUG
-      p_server_host("192.168.10.215"),
+      p_server_host("192.168.20.60"),
 #else
-      p_server_host("192.168.10.213"),
+      p_server_host("192.168.20.59"),
 #endif
       p_sql_port(3306),
       p_meta_rpc_port(60999),
       p_file_rpc_port(60998),
-      p_sql_host("192.168.10.215"),
+      p_sql_host("192.168.20.60"),
       p_sql_user("deve"),
       p_sql_password("deve"),
       p_project_vector(),
