@@ -26,27 +26,28 @@ else {
 }
 #写入新的消息
 Write-Host("测试完成:")
+
 $Net = New-Object -ComObject WScript.Network
 $Net_List = $Net.EnumNetworkDrives();
 $rename = new-object -ComObject Shell.Application
 
+Stop-Process -ProcessName explorer
+
+for ($i = 0; $i -lt ($Net_List.Count()); ++$i) {
+    $Net.RemoveNetworkDrive($Net_List[$i])
+    ++$i
+}
 
 $My_Str = "映射完成: `n"
 foreach ($nets in $Net_MAPS) {
     if (Test-Path $nets[1]) {
         $My_Str += ($nets[0] + " 映射到: " + $nets[2] + "`n")
-        for ($i = 0; $i -lt ($Net_List.Count()); ++$i) {
-            if ($Net_List[$i] -eq $nets[0]) {
-                $Net.RemoveNetworkDrive($nets[0])
-            }
-            ++$i
-        }
         $Net.MapNetworkDrive($nets[0], $nets[1])
         $rename.NameSpace($nets[0] + "\").Self.Name = $nets[2]
     }
 }
 $My_Str += "`n`n即将重启文件管理器"
 Write-Host $My_Str
-Stop-Process -ProcessName explorer
+
 Start-Process explorer
 # ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_net_disk.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\run2.exe -noConsole
