@@ -75,8 +75,7 @@ void Metadata::sortChildItems(bool is_launch_sig) {
 }
 
 bool Metadata::hasParent() const {
-  p_parent_id.operator bool();
-  return p_parent_id.has_value();
+  return !p_parent.expired();
 }
 bool Metadata::hasChild() const {
   return p_has_child > 0;
@@ -324,6 +323,9 @@ MetadataPtr Metadata::from_DataDb(const DataDb &in_) {
 }
 std::uint64_t Metadata::get_parent_id() const {
   return *p_parent_id;
+}
+bool Metadata::has_parent_id() const {
+  return p_parent_id.has_value();
 }
 
 }  // namespace doodle

@@ -80,13 +80,19 @@ bool is_class(const RT &in_rt) {
 }
 }  // namespace details
 namespace chrono {
+namespace literals {
+using namespace std::chrono_literals;
+using namespace date::literals;
+
+}
+
 using namespace std::chrono;
 using namespace date;
 
 using hours_double = duration<std::double_t, std::ratio<3600> >;
 
 /// TODO: 这里我们暂时使用周六和周日作为判断, 但是实际上还有各种假期和其他情况要计入
-bool is_rest_day(const sys_days& in_days);
+bool is_rest_day(const sys_days &in_days);
 //template <class Clock>
 //bool is_morning_works(const std::chrono::time_point<Clock, typename Clock::duration>& in_time) {
 //}

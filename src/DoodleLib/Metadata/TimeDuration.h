@@ -75,6 +75,7 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
   [[nodiscard]] std::string showStr() const;
   [[nodiscard]] time_point getUTCTime() const;
   [[nodiscard]] time_point getLocalTime() const;
+  void set_local_time(const chrono::local_time<chrono::seconds>& in_time);
 
   //  template <class T, class P>
   //  inline TimeDuration& operator-=(const std::chrono::duration<T, P>& _or) {

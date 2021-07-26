@@ -123,14 +123,14 @@ class DOODLELIB_API Metadata
   observable_container<std::vector<MetadataPtr>> child_item;
   std::any user_date;
 
-
   void add_child(const MetadataPtr &val);
 
   /**
-   * @brief 有父
+   * @brief 有父 这个是判断有父指针并且已加载父物体
    * @return
    */
   [[nodiscard]] virtual bool hasParent() const;
+  [[nodiscard]] virtual bool has_parent_id() const;
   [[nodiscard]] virtual std::uint64_t get_parent_id() const;
   /**
    * @brief 活动父指针

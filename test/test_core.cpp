@@ -320,3 +320,24 @@ TEST_F(CoreTest, long_path) {
             << "lase write time " << last_write_time << "\n"
             << (file.is_open() ? "true" : "false") << std::endl;
 }
+TEST(core, time) {
+  using namespace doodle;
+  using namespace doodle::chrono::literals;
+  auto k_time1     = TimeDuration{};
+  auto k_sys_time1 = chrono::local_days(2020_y / 7 / 21_d) + 10h + 45min + 30s;
+  auto k_sys_time2 = chrono::local_days(2020_y / 7 / 23_d) + 16h + 20min + 30s;
+  k_time1.set_local_time(k_sys_time1);
+  std::cout << k_time1.showStr() << std::endl;
+  auto k_time2 = TimeDuration{};
+  k_time2.set_local_time(k_sys_time2);
+  std::cout << k_time2.showStr() << std::endl;
+  std::cout << k_time1.work_duration(k_time2).count() << std::endl;
+  /// 测试待周末的
+  k_sys_time1 = chrono::local_days(2020_y / 7 / 21_d) + 10h + 45min + 30s;
+  k_sys_time2 = chrono::local_days(2020_y / 7 / 27_d) + 16h + 20min + 30s;
+  k_time1.set_local_time(k_sys_time1);
+  std::cout << k_time1.showStr() << std::endl;
+  k_time2.set_local_time(k_sys_time2);
+  std::cout << k_time2.showStr() << std::endl;
+  std::cout << k_time1.work_duration(k_time2).count() << std::endl;
+}

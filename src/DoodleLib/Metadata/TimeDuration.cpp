@@ -137,23 +137,26 @@ chrono::hours_double TimeDuration::work_duration(const TimeDuration& in) const {
   auto k_begin = date::sys_days{p_year / p_month / p_day};
   auto k_end   = date::sys_days{in.p_year / in.p_month / in.p_day};
 
-  auto k_time                   = k_end - k_begin;                           /// 总总工作天数()
-  chrono::hours_double k_time_h = k_time.count() * chrono::hours_double{8};  /// 总工作小时
+  auto k_time = k_end - k_begin;  /// 总总工作天数()
+  /// 这里要测试工作和休息日
+  chrono::hours_double k_time_h = work_days(k_begin, k_end).count() * chrono::hours_double{8};  /// 总工作小时
 
   /**
    *            @warning 首先是加入开始， 并且加入结束
    *            所以减去开始时多出来的部分， 再减去结束时多出来的部分
-   *  k_time_h = ((k_time.count() +1) * chrono::hours_double{8})  - (  chrono::hours_double{8} - one_day_works_hours(p_time)) - one_day_works_hours(in.p_time);
+   *  k_time_h = (k_time.count() * chrono::hours_double{8})
+   *  - one_day_works_hours(p_time)
+   *  + one_day_works_hours(in.p_time);
    *  简化为
    *  k_time_h = k_time_h + one_day_works_hours(p_time) - one_day_works_hours(in.p_time);
    */
-  k_time_h = k_time_h +
+  k_time_h = k_time_h -
              (chrono::is_rest_day(k_begin)
                   ? chrono::hours_double{0}
-                  : one_day_works_hours(p_time)) -
+                  : one_day_works_hours(getLocalTime())) +
              (chrono::is_rest_day(k_end)
                   ? chrono::hours_double{0}
-                  : one_day_works_hours(in.p_time));
+                  : one_day_works_hours(in.getLocalTime()));
 
   return k_time_h;
 }
@@ -189,28 +192,33 @@ chrono::hours_double TimeDuration::one_day_works_hours(const time_point& in_poin
   auto k_begin_2 = k_day + std::chrono::hours{13};  /// 下午上班时间
   auto k_end_2   = k_day + std::chrono::hours{18};  /// 下午下班时间
 
-  if (in_point <= k_begin_1) {                                ///上班前提交
-    return chrono::hours_double{8};                           ///
-                                                              ///
-  } else if (in_point > k_begin_1 && in_point <= k_end_1) {   ///上午上班后提交
-    return chrono::hours_double{8} - (k_begin_1 - in_point);  ///
-                                                              ///
-  } else if (in_point > k_end_1 && in_point <= k_begin_2) {   /// 中文午休提交
-    return chrono::hours_double{4};                           ///
-                                                              ///
-  } else if (in_point > k_begin_2 && in_point <= k_end_2) {   /// 下午上班后提交
-    return chrono::hours_double{4} - (k_begin_2 - in_point);  ///
-                                                              ///
-  } else if (in_point > k_end_2) {                            /// 下午下班后提交
-    return chrono::hours_double{0};                           ///
+  chrono::hours_double k_h{0};
+  if (in_point <= k_begin_1) {                               ///上班前提交
+                                                             ///
+  } else if (in_point > k_begin_1 && in_point <= k_end_1) {  ///上午上班后提交
+    k_h = in_point - k_begin_1;                              ///
+                                                             ///
+  } else if (in_point > k_end_1 && in_point <= k_begin_2) {  /// 中文午休提交
+    k_h = chrono::hours_double{4};                           ///
+                                                             ///
+  } else if (in_point > k_begin_2 && in_point <= k_end_2) {  /// 下午上班后提交
+    k_h = chrono::hours_double{4} + (in_point - k_begin_2);  ///
+                                                             ///
+  } else if (in_point > k_end_2) {                           /// 下午下班后提交
+    k_h = chrono::hours_double{8};                           ///
+  } else {
+    throw DoodleError{"未知时间"};
   }
+  return k_h;
 }
-chrono::days TimeDuration::work_days(const TimeDuration::time_point& in_begin, const TimeDuration::time_point& in_end) const {
+chrono::days TimeDuration::work_days(const TimeDuration::time_point& in_begin,
+                                     const TimeDuration::time_point& in_end) const {
   auto k_day_begin = chrono::floor<chrono::days>(in_begin);
   auto k_day_end   = chrono::floor<chrono::days>(in_end);
 
   std::vector<chrono::sys_days> k_days{};
-  std::fill_n(k_days.begin(), (k_day_end - k_day_begin).count(), [k_day_begin, n = 0]() mutable {
+  k_days.resize((k_day_end - k_day_begin).count());
+  std::generate_n(k_days.begin(), (k_day_end - k_day_begin).count(), [k_day_begin, n = 0]() mutable -> chrono::sys_days {
     auto k_i = k_day_begin + chrono::days{n};
     ++n;
     return k_i;
@@ -219,6 +227,10 @@ chrono::days TimeDuration::work_days(const TimeDuration::time_point& in_begin, c
     return !chrono::is_rest_day(in);
   });
   return chrono::days{k_s};
+}
+void TimeDuration::set_local_time(const date::local_time<chrono::seconds>& in_time) {
+  auto k_time = chrono::make_zoned(p_time_zone, in_time);
+  disassemble(k_time.get_sys_time());
 }
 
 }  // namespace doodle

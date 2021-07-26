@@ -58,7 +58,7 @@ void actn_export_excel::find_parent(const MetadataPtr& in_ptr) {
   auto k_filter     = std::make_shared<rpc_filter::filter>();
   auto k_rpc        = CoreSet::getSet().getRpcMetadataClient();
 
-  while (k_ptr->hasParent()) {  ///首先测试传入父id 有的话直接查找 p_map 没有就rpc中查找
+  while (k_ptr->has_parent_id()) {  ///首先测试传入父id 有的话直接查找 p_map 没有就rpc中查找
     const std::uint64_t k_id = k_ptr->get_parent_id();
     if (p_list.find(k_id) == p_list.end()) {
       k_filter->set_id(k_id);
@@ -120,7 +120,7 @@ string_list_ptr actn_export_excel::export_excel_line(const std::vector<AssetsFil
     k_list->emplace_back(k_previous_time->showStr());    ///开始时间
     k_list->emplace_back(k_item->getTime()->showStr());  ///结束时间
 
-     ///持续时间
+    ///持续时间
     const auto& k_com = k_item->getComment();
     k_list->emplace_back(k_com.empty() ? std::string{} : k_com.back()->getComment());   ///备注
     k_list->emplace_back(exist(k_item) ? std::string{"不存在"} : std::string{"存在"});  ///文件存在

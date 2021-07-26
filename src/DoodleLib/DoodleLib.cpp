@@ -17,7 +17,7 @@ namespace doodle {
 namespace chrono {
 bool is_rest_day(const sys_days &in_days) {
   weekday k_weekday{in_days};
-  return k_weekday == Sunday && k_weekday == Saturday;
+  return k_weekday == Sunday || k_weekday == Saturday;
 }
 }  // namespace chrono
 
