@@ -1,29 +1,26 @@
 ﻿Write-Host " 准备测试服务器 .... 请点击确认按钮并等待完成..."
 
-if ((Test-Connection "192.168.10.250" -Count 1 -Delay 1 -Quiet) -and (Test-Path -Path "\\192.168.10.250\public\changanhuanjie")) {
+if (<# (Test-Connection "192.168.10.250" -Count 1 -Delay 1 -Quiet) -and  #>(Test-Path -Path "\\192.168.10.250\public\changanhuanjie")) {
     $Net_MAPS = @(
         @("X:", "\\192.168.10.250\public\changanhuanjie", "长安幻街"),
         @("V:", "\\192.168.10.250\public\DuBuXiaoYao_3", "独步逍遥v3"),
         @("W:", "\\192.168.10.250\public\Prism_projects", "程序开发"),
         @("Y:", "\\192.168.10.250\public\动画共享", "动画共享"),
         @("U:", "\\192.168.10.250\public\WanYuFengShen", "万域封神"),
-        @("T:", "\\192.168.10.250\public\KuangShenMoZun", "狂神魔尊"),
+        # @("T:", "\\192.168.10.250\public\KuangShenMoZun", "狂神魔尊"),
         @("S:", "\\192.168.10.250\public\CangFeng", "藏锋"),
         @("R:", "\\192.168.10.250\public\WanGuXieDi", "万古邪帝"),
         @("Q:", "\\192.168.10.250\public\renjianzuideyi", "人间最得意"),
         @("P:", "\\192.168.10.250\public\WanGuShenHua", "万古神话"),
         @("O:", "\\192.168.10.250\public\11-剪辑", "剪辑"),
-        @("N:", "\\192.168.10.250\public\HouQi", "后期")
+        @("N:", "\\192.168.10.250\public\HouQi", "后期"),
+        @("T:", "\\192.168.10.218\KuangShenMoZun", "狂神魔尊")
     )
 }
-elseif ( (Test-Connection "192.168.10.218" -Count 1 -Delay 1 -Quiet) -and (Test-Path -Path "\\192.168.10.218\changanhuanjie")) {
-    $Net_MAPS = @(
-        @("X:", "\\192.168.10.218\changanhuanjie", "长安幻街"),
-        @("U:", "\\192.168.10.218\WanYuFengShen", "万域封神"),
-        @("T:", "\\192.168.10.218\KuangShenMoZun", "狂神魔尊"),
-        @("Z:", "\\192.168.10.57\netDir", "苗雨共享")
-    )
-}
+# elseif ( (Test-Connection "192.168.10.218" -Count 1 -Delay 1 -Quiet) -and (Test-Path -Path "\\192.168.10.218\changanhuanjie")) {
+#     $Net_MAPS = @(
+#     )
+# }
 else {
     exit
 }
