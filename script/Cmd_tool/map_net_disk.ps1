@@ -8,13 +8,15 @@ if (<# (Test-Connection "192.168.10.250" -Count 1 -Delay 1 -Quiet) -and  #>(Test
         @("Y:", "\\192.168.10.250\public\动画共享", "动画共享"),
         @("U:", "\\192.168.10.250\public\WanYuFengShen", "万域封神"),
         # @("T:", "\\192.168.10.250\public\KuangShenMoZun", "狂神魔尊"),
+        @("T:", "\\192.168.10.218\KuangShenMoZun", "狂神魔尊"),
         @("S:", "\\192.168.10.250\public\CangFeng", "藏锋"),
         @("R:", "\\192.168.10.250\public\WanGuXieDi", "万古邪帝"),
         @("Q:", "\\192.168.10.250\public\renjianzuideyi", "人间最得意"),
         @("P:", "\\192.168.10.250\public\WanGuShenHua", "万古神话"),
-        @("O:", "\\192.168.10.250\public\11-剪辑", "剪辑"),
-        @("N:", "\\192.168.10.250\public\HouQi", "后期"),
-        @("T:", "\\192.168.10.218\KuangShenMoZun", "狂神魔尊")
+        @("O:", "\\192.168.10.250\public\11-剪辑", "8幢_剪辑"),
+        @("N:", "\\192.168.10.250\public\HouQi", "8幢_后期"),
+        @("M:", "\\192.168.10.218\jianji", "9幢_剪辑"),
+        @("L:", "\\192.168.10.218\houqi", "9幢_后期")
     )
 }
 # elseif ( (Test-Connection "192.168.10.218" -Count 1 -Delay 1 -Quiet) -and (Test-Path -Path "\\192.168.10.218\changanhuanjie")) {
