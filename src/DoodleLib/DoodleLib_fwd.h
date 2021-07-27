@@ -84,7 +84,7 @@ namespace literals {
 using namespace std::chrono_literals;
 using namespace date::literals;
 
-}
+}  // namespace literals
 
 using namespace std::chrono;
 using namespace date;
@@ -214,7 +214,9 @@ class menu_factory_base;
 class long_term;
 class ImageSequence;
 
-using string_list     = std::vector<std::string>;
+using string_list        = std::vector<std::string>;
+using string_matrix2     = std::vector<string_list>;
+using string_matrix2_ptr = std::shared_ptr<string_matrix2>;
 using string_list_ptr = std::shared_ptr<string_list>;
 
 using MetadataPtr            = std::shared_ptr<Metadata>;

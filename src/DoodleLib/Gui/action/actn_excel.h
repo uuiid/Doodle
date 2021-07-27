@@ -28,7 +28,7 @@ class DOODLELIB_API assets_file_line : public details::no_copy {
 class DOODLELIB_API actn_export_excel : public action_indirect<action_arg::arg_excel> {
   void export_excel();
   void export_prj_excel();
-  string_list_ptr export_excel_line(const std::vector<AssetsFilePtr>& in_list);
+  string_matrix2_ptr export_excel_line(const std::vector<AssetsFilePtr>& in_list);
   void export_user_excel();
   bool exist(const AssetsFilePtr& in_ptr);
 
@@ -41,6 +41,8 @@ class DOODLELIB_API actn_export_excel : public action_indirect<action_arg::arg_e
 
  public:
   actn_export_excel();
+  using arg = action_arg::arg_excel;
+
 
   bool is_async() override;
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;

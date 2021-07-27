@@ -78,6 +78,8 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
   void create_assets_file_batch_export_maya_up();
   void create_ue4_Sequencer();
 
+  void export_excel();
+
   void show_assets_file_attr();
 
   void modify_project_rename();
@@ -103,7 +105,7 @@ class DOODLELIB_API menu_factory_project : public menu_factory {
   void create_menu(const ProjectPtr& in_ptr) override;
 };
 
-class DOODLELIB_API menu_factory_assets : public  menu_factory{
+class DOODLELIB_API menu_factory_assets : public menu_factory {
  public:
   explicit menu_factory_assets(nana::window in_window);
   virtual void create_menu(const ProjectPtr& in_ptr) override;
@@ -112,7 +114,7 @@ class DOODLELIB_API menu_factory_assets : public  menu_factory{
   virtual void create_menu(const ShotPtr& in_ptr) override;
 };
 
-class DOODLELIB_API menu_factory_assets_attr : public menu_factory{
+class DOODLELIB_API menu_factory_assets_attr : public menu_factory {
  public:
   explicit menu_factory_assets_attr(nana::window in_window);
   virtual void create_menu(const AssetsPtr& in_ptr) override;

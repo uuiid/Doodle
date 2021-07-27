@@ -3,6 +3,7 @@
 //
 
 #include "DoodleLib.h"
+
 #include <Logger/Logger.h>
 #include <core/CoreSet.h>
 #include <threadPool/ThreadPool.h>
@@ -12,6 +13,7 @@ DoodleLib* DoodleLib::p_install = nullptr;
 
 DoodleLib::DoodleLib()
     : p_thread_pool(std::make_shared<ThreadPool>(4)) {
+  CoreSet::getSet();
   Logger::doodle_initLog();
 }
 DoodleLib& DoodleLib::Get() {

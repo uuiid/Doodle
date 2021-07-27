@@ -19,49 +19,7 @@
 #include <string>
 
 // #include <boost/nowide/
-TEST(DSTD, map_netDir) {
-  NETRESOURCE resources{};
-  resources.dwType       = RESOURCETYPE_DISK;
-  resources.lpLocalName  = (LPWSTR)L"S:";
-  resources.lpProvider   = 0;
-  resources.lpRemoteName = (LPWSTR)LR"(\\192.168.10.250\public\CangFeng)";
-  DWORD r                = WNetAddConnection2(&resources, NULL, NULL,
-                               CONNECT_TEMPORARY | CONNECT_INTERACTIVE | CONNECT_COMMANDLINE | CONNECT_CRED_RESET);
-  if (r != NO_ERROR) {
-    std::cout << r << std::endl;
-  }
-  ASSERT_TRUE(r == NO_ERROR);
-}
-
-TEST(DSTD, gset_netDir_name) {
-  TCHAR szDeviceName[150];
-  DWORD dwResult, cchBuff = sizeof(szDeviceName);
-
-  dwResult = WNetGetConnection(L"V:", szDeviceName, &cchBuff);
-
-  ASSERT_TRUE(dwResult == NO_ERROR);
-
-  std::wcout << std::wstring{szDeviceName} << std::endl;
-  auto rules_n = SetVolumeLabel(L"V:\\", L"test");
-  if (rules_n == 0) {
-    auto err = GetLastError();
-    std::cout << err << std::endl;
-  }
-  // ASSERT_TRUE(rules_n != 0);
-
-  wchar_t VolumeName[80];
-  auto rules = GetVolumeInformation(L"V:\\", VolumeName, sizeof(VolumeName), NULL, NULL, NULL, NULL, 0);
-  ASSERT_TRUE(rules);
-  std::cout << VolumeName << std::endl;
-}
-
-TEST(DSTD, canclel_netDir) {
-  DWORD r = WNetCancelConnection2(L"S:", CONNECT_UPDATE_PROFILE, true);
-  if (r != NO_ERROR) {
-    std::cout << r << std::endl;
-  }
-  ASSERT_TRUE(r == NO_ERROR);
-}
+//
 
 TEST(DSTD, dir) {
   auto r = 2740700278 / 8000000;

@@ -52,6 +52,8 @@ void actn_export_excel::export_excel() {
                [](const std::pair<std::uint64_t, MetadataPtr>& in_) {
                  return !in_.second->hasParent();
                });
+  export_user_excel();
+  export_prj_excel();
 }
 void actn_export_excel::find_parent(const MetadataPtr& in_ptr) {
   MetadataPtr k_ptr = in_ptr;
@@ -84,54 +86,60 @@ void actn_export_excel::export_user_excel() {
     k_csv << k_line;  ///写入标题
 
     k_line.clear();
+    k_list_ass.clear();
     /// 查找用户所属
     std::copy_if(p_ass_list.begin(), p_ass_list.end(), std::back_inserter(k_list_ass),
                  [k_user](const AssetsFilePtr& in_) {
                    return in_->getUser() == k_user;
                  });
+    auto k_mat = export_excel_line(k_list_ass);
+    for (auto& k_l : *k_mat)
+      k_csv << k_l;
   }
+  DOODLE_LOG_INFO("完成导出 user 表");
 }
 void actn_export_excel::export_prj_excel() {
 }
-string_list_ptr actn_export_excel::export_excel_line(const std::vector<AssetsFilePtr>& in_list) {
-  auto k_list = std::make_shared<string_list>();
+string_matrix2_ptr actn_export_excel::export_excel_line(const std::vector<AssetsFilePtr>& in_list) {
+  auto k_matrix2 = std::make_shared<string_matrix2>();
+  auto k_list    = string_list{};
   //  AssetsFilePtr k_previous;
   TimeDurationPtr k_previous_time = _arg_type.p_time_range.first;
-  ;
   for (const auto& k_item : in_list) {
-    k_list->emplace_back(k_item->getRootParent()->showStr());              /// 项目
-    k_list->emplace_back(magic_enum::enum_name(k_item->getDepartment()));  /// 所属部门
-    if (auto k_eps = k_item->find_parent_class<Episodes>(); k_eps) {       ///集数
-      k_list->emplace_back(k_eps->str());
+    k_list.emplace_back(k_item->getRootParent()->showStr());              /// 项目
+    k_list.emplace_back(magic_enum::enum_name(k_item->getDepartment()));  /// 所属部门
+    if (auto k_eps = k_item->find_parent_class<Episodes>(); k_eps) {      ///集数
+      k_list.emplace_back(k_eps->str());
     } else {
-      k_list->emplace_back(std::string{});
+      k_list.emplace_back(std::string{});
     }
     if (auto k_shot = k_item->find_parent_class<Shot>(); k_shot) {  ///镜头
-      k_list->emplace_back(k_shot->str());
+      k_list.emplace_back(k_shot->str());
     } else
-      k_list->emplace_back(std::string{});
+      k_list.emplace_back(std::string{});
     if (auto k_ass = k_item->find_parent_class<Assets>(); k_ass)  ///名称
-      k_list->emplace_back(k_ass->str());
+      k_list.emplace_back(k_ass->str());
     else
-      k_list->emplace_back(std::string{});
+      k_list.emplace_back(std::string{});
 
-    k_list->emplace_back(k_item->getUser());  ///制作人
+    k_list.emplace_back(k_item->getUser());  ///制作人
 
-    k_list->emplace_back(k_previous_time->showStr());    ///开始时间
-    k_list->emplace_back(k_item->getTime()->showStr());  ///结束时间
+    k_list.emplace_back(k_previous_time->showStr());    ///开始时间
+    k_list.emplace_back(k_item->getTime()->showStr());  ///结束时间
 
-    ///持续时间
+    k_list.emplace_back(std::to_string(k_previous_time->work_duration(*k_item->getTime()).count()));  ///持续时间
     const auto& k_com = k_item->getComment();
-    k_list->emplace_back(k_com.empty() ? std::string{} : k_com.back()->getComment());   ///备注
-    k_list->emplace_back(exist(k_item) ? std::string{"不存在"} : std::string{"存在"});  ///文件存在
+    k_list.emplace_back(k_com.empty() ? std::string{} : k_com.back()->getComment());   ///备注
+    k_list.emplace_back(exist(k_item) ? std::string{"不存在"} : std::string{"存在"});  ///文件存在
     string_list k_string_list;
     std::transform(k_item->getPathFile().begin(), k_item->getPathFile().end(), std::back_inserter(k_string_list),
                    [](const AssetsPathPtr& in_) { return in_->getServerPath().generic_string(); });
-    k_list->emplace_back(fmt::format("{}", fmt::join(k_string_list, "\n")));  ///文件路径
+    k_list.emplace_back(fmt::format("{}", fmt::join(k_string_list, "\n")));  ///文件路径
 
     k_previous_time = k_item->getTime();
+    k_matrix2->emplace_back(k_list);
   }
-  return k_list;
+  return k_matrix2;
 }
 bool actn_export_excel::exist(const AssetsFilePtr& in_ptr) {
   const auto& k_paths = in_ptr->getPathFile();

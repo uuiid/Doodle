@@ -350,6 +350,42 @@ void menu_factory::show_assets_file_attr() {
     return actn_assdile_attr_show::arg{};
   });
 }
+void menu_factory::export_excel() {
+  auto k_ex = std::make_shared<actn_export_excel>();
+  p_action.emplace_back(k_ex);
+
+  k_ex->sig_get_arg.connect([this]() {
+    actn_export_excel::arg k_arg{};
+    nana::inputbox msg{p_window, "选择时间: "};
+    auto k_time_b = std::make_shared<TimeDuration>();
+    nana::inputbox::integer k_year{"年", k_time_b->get_year(), 1999, 2999, 1};
+    nana::inputbox::integer k_men{"月", k_time_b->get_month(), 1, 12, 1};
+    msg.show_modal(k_year, k_men);
+    k_time_b->set_year(k_year.value());
+    k_time_b->set_month(k_men.value());
+    k_time_b->set_day(1);
+    k_time_b->set_hour(0);
+    k_time_b->set_minutes(0);
+    k_time_b->set_second(0);
+
+    auto k_time_end = std::make_shared<TimeDuration>(k_time_b->getUTCTime());
+    k_time_end->set_day((std::uint32_t)chrono::year_month_day_last{chrono::year{k_time_b->get_year()},
+                                                                   chrono::month_day_last{
+                                                                       chrono::month{k_time_b->get_month()}}}
+                            .day());
+    k_time_end->set_hour(23);
+    k_time_end->set_minutes(59);
+    k_time_end->set_second(59);
+    k_arg.p_time_range = std::make_pair(k_time_b, k_time_end);
+
+    nana::folderbox k_folder{p_window, FSys::current_path()};
+    k_folder.allow_multi_select(false);
+    k_arg.date = k_folder.show().front();
+
+    k_arg.is_cancel = k_arg.date == FSys::current_path();
+    return k_arg;
+  });
+}
 void dragdrop_menu_factory::create_menu(const ProjectPtr& in_ptr) {
 }
 void dragdrop_menu_factory::create_menu(const AssetsPtr& in_ptr) {
@@ -428,17 +464,15 @@ void dragdrop_menu_factory::set_drop_file(const std::vector<FSys::path>& in_path
 }
 
 void menu_factory_project::create_menu(const ProjectPtr& in_ptr) {
+  create_prj();
+  export_excel();
   if (p_metadata) {  /// 首先测试是否选中prj 这种情况下显示所有
-    create_prj();
     //----------------------------------------------------------------
 
     p_action.emplace_back(action_ptr{});
     modify_project_rename();
     modify_project_set_path();
     delete_project();
-
-  } else {  /// 都没有  只有创建物体这一个选择了
-    create_prj();
   }
 }
 menu_factory_project::menu_factory_project(nana::window in_window) : menu_factory(in_window) {

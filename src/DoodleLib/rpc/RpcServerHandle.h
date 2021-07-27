@@ -15,7 +15,7 @@ class RpcServerHandle {
 
  public:
   RpcServerHandle();
-
+  ~RpcServerHandle();
   void registerFileSystemServer(int port);
   void registerMetadataServer(int port);
 

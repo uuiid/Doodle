@@ -43,6 +43,7 @@ add_doodle(
 add_doodle(
         NAME DoodleExe
         IS_EXE
+        ADD_WIN32
         LISTS_FILES
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
@@ -56,6 +57,7 @@ add_doodle(
 add_doodle(
         NAME doodleServerExe
         IS_EXE
+        ADD_WIN32
         LISTS_FILES
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
@@ -65,5 +67,20 @@ add_doodle(
         main/icon.ico
         main/win_exe.rc
         main/server/main.cpp
+)
+add_doodle(
+        NAME doodle_test
+        IS_EXE
+        LISTS_FILES
+        ${DOODLELIB_HEADER}
+        ${DOODLELIB_SOURCE}
+        ${OUT_LISTS_sqlpp}
+        ${OUT_LISTS_GRPC}
+        main/test/main.cpp
+        main/icon.ico
+        main/win_exe.rc
+        main/test/test_core.cpp
+        main/test/test_metadata.cpp
+        main/test/test_server.cpp
 )
 include_directories(${PROJECT_SOURCE_DIR}/external/csv_parser/include)

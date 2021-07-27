@@ -145,8 +145,8 @@
     "testMate.cpp.log.logSentry": "disable_3",
     "testMate.cpp.test.advancedExecutables": [
         {
-            "name": "test_my",
-            "pattern": "b_Ninja_VS19_Ni_64_qt515_Debug/**/test_my.exe",
+            "name": "doodle_test",
+            "pattern": "b_Ninja_VS19_Ni_64_qt515_Debug/**/doodle_test.exe",
             "cwd": "${absDirpath}"
         }
     ],

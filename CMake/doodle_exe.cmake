@@ -92,7 +92,7 @@ endfunction()
 
 
 function(add_doodle)
-    set(options IS_EXE)
+    set(options IS_EXE ADD_WIN32)
     set(oneValueArgs NAME)
     set(multiValueArgs LISTS_FILES)
     cmake_parse_arguments(
@@ -104,9 +104,14 @@ function(add_doodle)
     )
     if (ADD_DOODLE_IS_EXE)
         message("add exe name : " ${ADD_DOODLE_NAME})
-        add_executable(${ADD_DOODLE_NAME}
-                WIN32
-                ${ADD_DOODLE_LISTS_FILES})
+        if (ADD_WIN32)
+            add_executable(${ADD_DOODLE_NAME}
+                    WIN32
+                    ${ADD_DOODLE_LISTS_FILES})
+        else ()
+            add_executable(${ADD_DOODLE_NAME}
+                    ${ADD_DOODLE_LISTS_FILES})
+        endif ()
         target_compile_definitions(
                 ${ADD_DOODLE_NAME}
                 PUBLIC
@@ -164,6 +169,7 @@ function(add_doodle)
 
             cxxopts::cxxopts
             csv
+            Catch2::Catch2
             SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
             #        cppzmq
             #        cppzmq-static

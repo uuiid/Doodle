@@ -32,7 +32,7 @@ AssetsFile::AssetsFile()
 }
 
 AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string showName, std::string name)
-    : Metadata(),
+    : Metadata(in_metadata),
       p_name(std::move(name)),
       p_ShowName(std::move(showName)),
       p_path_file(std::make_shared<AssetsPath>()),

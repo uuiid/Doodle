@@ -17,6 +17,7 @@ TimeDuration::TimeDuration()
       p_minutes(),
       p_seconds(),
       p_time_zone(date::current_zone()) {
+  disassemble(std::chrono::system_clock::now());
 }
 TimeDuration::TimeDuration(time_point in_utc_timePoint)
     : p_time(),
@@ -119,7 +120,7 @@ TimeDuration::time_point TimeDuration::getUTCTime() const {
 }
 
 void TimeDuration::disassemble() {
-  auto k_time = date::sys_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
+  auto k_time = date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
   auto k_     = date::make_zoned(p_time_zone, k_time);
   disassemble(k_.get_sys_time());
 }

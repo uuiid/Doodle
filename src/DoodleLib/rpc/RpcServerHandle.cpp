@@ -68,5 +68,8 @@ void RpcServerHandle::stop() {
 
   p_Server.reset();
 }
+RpcServerHandle::~RpcServerHandle() {
+  stop();
+}
 
 }  // namespace doodle
