@@ -93,9 +93,33 @@ TEST_CASE("observable_container", "[metadata][observable]") {
   test.swap_sig(k_other);
   test.clear_sig();
 }
-
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <sstream>
+#include <string>
 TEST_CASE("test create metadata", "[server][metadata]") {
   using namespace doodle;
+  std::string user{
+      "宦倩冰 邰小溪 孔佳晨 顾柏文 乌书竹 邱媛女 冷梓颖"
+      " 乔平良 闻爱萍 堵乐然 钭如之 屠宵月 农曦秀 苍佳洁 索优悦 黎晶晶"
+      " 杜珠玉 苏若美 宦修美 弓博敏 巴沛蓝 邵河灵 靳佩兰 张子丹 鱼绮丽"
+      " 胡怀亦 幸艳芳 衡韶丽 薛友绿 耿丝琪 杜俊慧 双芮悦 欧妙菡 陆梅雪"
+      " 寿江红 益小凝 燕洮洮 古逸雅 宁梦华 扶倩愉 国宇丞 魏梅雪 冯诗蕊"
+      " 刘秋双 宰怡丞 须奇文 蓟言文 邹心诺 陈曦秀 谢绣文 充靖柔 红凡梦"
+      " 冷霞绮 郏怡若 庄书萱 谭布侬 罗芷蕾 籍子琳 吕向莉 贺颜落 蔚元瑶"
+      " 冷绮云 家密思 钱云琼 养茵茵 鄂曼吟 璩静恬 步幸瑶 仰陶宁 秦芸静"
+      " 温玉兰 潘华楚 金初瑶 孔蔚然 朱诗晗 相夏槐 秦小之 焦念薇 陆丽英"
+      " 程香洁 万陶然 浦迎荷 隆智敏 潘蔓蔓 曾子芸 乌滢滢 古笑雯 顾半烟"
+      " 宫津童 彭灵波 翟诗桃 须思聪 方碧玉 梁羡丽 漕闲华 韩皎月 扈晴丽"
+      " 温燕平 冀冬梅 赖代容"};
+  std::istringstream iss{user};
+  string_list user_list{std::istream_iterator<std::string>(iss),
+                        std::istream_iterator<std::string>()};
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_int_distribution<int> dist{1, 30};
+
   auto k_server = RpcServerHandle{};
   auto& set     = CoreSet::getSet();
   k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
@@ -144,12 +168,19 @@ TEST_CASE("test create metadata", "[server][metadata]") {
                 if (k_k % 3 == 0) {
                   ///  生成具体条目
                   for (int k_l = 0; k_l < 20; ++k_l) {
-                    auto k_d    = chrono::days{30} / (20 * 3 * 3 * 5);
                     auto k_file = std::make_shared<AssetsFile>(k_assets_ptr, k_assets_ptr->showStr());
+                    k_assets_ptr->child_item.push_back_sig(k_file);
+
+                    auto k_d    = chrono::days{30} / (20 * 3 * 3 * 5);
                     auto k_time = std::make_shared<TimeDuration>(chrono::system_clock::now() + k_d * i);
+
                     ++i;
+
+                    auto k_u_i = dist(mt);
                     k_file->setTime(k_time);
                     k_file->updata_db(k_fa);
+                    k_file->setUser(user_list[k_u_i]);
+                    k_file->setDepartment(magic_enum::enum_cast<Department>(k_u_i % 8).value());
                   }
                 }
               }

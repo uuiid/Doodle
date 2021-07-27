@@ -104,7 +104,7 @@ function(add_doodle)
     )
     if (ADD_DOODLE_IS_EXE)
         message("add exe name : " ${ADD_DOODLE_NAME})
-        if (ADD_WIN32)
+        if (ADD_DOODLE_ADD_WIN32)
             add_executable(${ADD_DOODLE_NAME}
                     WIN32
                     ${ADD_DOODLE_LISTS_FILES})
