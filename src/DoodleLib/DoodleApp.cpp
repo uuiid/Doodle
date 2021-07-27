@@ -106,7 +106,7 @@ class DOODLELIB_API command_line {
 
 doodle_app::doodle_app()
     : p_run_fun(),
-      p_rpc_server_handle(std::make_shared<RpcServerHandle>()),
+      p_rpc_server_handle(),
       p_setting_windows() {
   init_opt();
 }
@@ -150,6 +150,7 @@ void doodle_app::init() {
 void doodle_app::run_server() {
   p_run_fun = [this]() {
     auto& set = CoreSet::getSet();
+    p_rpc_server_handle = std::make_shared<RpcServerHandle>();
     p_rpc_server_handle->runServer(set.getMetaRpcPort(), set.getFileRpcPort());
     nana::form _w{};
     _w.caption("关闭窗口停止服务器");
