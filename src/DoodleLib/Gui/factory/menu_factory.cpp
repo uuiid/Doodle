@@ -330,18 +330,20 @@ void menu_factory::show_assets_file_attr() {
 名称： {}
 版本： {}
 制作者： {}
+部门: {}
 制作时间： {}
 评论：
 {}
 路径:
 {}
 )",
-                           k_item->showStr(),             //名称
-                           k_item->getVersionStr(),       //版本
-                           k_item->getUser(),             //制作者
-                           k_item->getTime()->showStr(),  //制作时间
-                           k_com,                         //评论
-                           k_path                         // 路径
+                           k_item->showStr(),                                 //名称
+                           k_item->getVersionStr(),                           //版本
+                           k_item->getUser(),                                 //制作者
+                           magic_enum::enum_name<>(k_item->getDepartment()),  // 部门
+                           k_item->getTime()->showStr(),                      //制作时间
+                           k_com,                                             //评论
+                           k_path                                             // 路径
     );
 
     nana::msgbox k_msgbox{p_window, "assets attr"};
