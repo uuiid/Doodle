@@ -171,16 +171,17 @@ TEST_CASE("test create metadata", "[server][metadata]") {
                     auto k_file = std::make_shared<AssetsFile>(k_assets_ptr, k_assets_ptr->showStr());
                     k_assets_ptr->child_item.push_back_sig(k_file);
 
-                    auto k_d    = chrono::days{30} / (20 * 3 * 3 * 5);
-                    auto k_time = std::make_shared<TimeDuration>(chrono::system_clock::now() + k_d * i);
-
+                    using namespace chrono::literals;
+                    auto k_time = std::make_shared<TimeDuration>(chrono::system_clock::now() - 3h * i);
+                    DOODLE_LOG_INFO("生成时间 {} ", k_time->showStr());
                     ++i;
 
                     auto k_u_i = dist(mt);
                     k_file->setTime(k_time);
-                    k_file->updata_db(k_fa);
                     k_file->setUser(user_list[k_u_i]);
                     k_file->setDepartment(magic_enum::enum_cast<Department>(k_u_i % 8).value());
+                    /// 插入数据
+                    k_file->updata_db(k_fa);
                   }
                 }
               }
