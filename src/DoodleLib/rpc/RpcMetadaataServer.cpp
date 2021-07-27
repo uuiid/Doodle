@@ -65,6 +65,11 @@ grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, c
   if (request->has_parent()) {
     k_in.insert_list.add(k_tab.parent = request->parent().value());
   }
+  if (request->has_update_time()) {
+    auto k_time = std::chrono::system_clock::from_time_t(
+        google::protobuf::util::TimeUtil::TimestampToTimeT(request->update_time()));
+    k_in.insert_list.add(k_tab.updateTime = k_time);
+  }
   auto k_id = (*k_conn)(k_in);
 
   if (k_id < 0) {
