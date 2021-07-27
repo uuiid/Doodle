@@ -154,9 +154,6 @@ void doodle_app::run_server() {
     p_rpc_server_handle->runServer(set.getMetaRpcPort(), set.getFileRpcPort());
     nana::form _w{};
     _w.caption("关闭窗口停止服务器");
-    _w.events().destroy([this](const nana::arg_destroy& in_) {
-      p_rpc_server_handle->stop();
-    });
     _w.show();
     nana::exec();
   };
