@@ -132,6 +132,7 @@ TimeDuration::time_point TimeDuration::getLocalTime() const {
 }
 
 chrono::hours_double TimeDuration::work_duration(const TimeDuration& in) const {
+  /// @warning 开始时间不能比结束时间大
   if (p_time > in.p_time)
     return chrono::hours_double{0};
 
@@ -200,10 +201,10 @@ chrono::hours_double TimeDuration::one_day_works_hours(const time_point& in_poin
     k_h = in_point - k_begin_1;                              ///
                                                              ///
   } else if (in_point > k_end_1 && in_point <= k_begin_2) {  /// 中文午休提交
-    k_h = chrono::hours_double{4};                           ///
+    k_h = chrono::hours_double{3};                           ///
                                                              ///
   } else if (in_point > k_begin_2 && in_point <= k_end_2) {  /// 下午上班后提交
-    k_h = chrono::hours_double{4} + (in_point - k_begin_2);  ///
+    k_h = chrono::hours_double{3} + (in_point - k_begin_2);  ///
                                                              ///
   } else if (in_point > k_end_2) {                           /// 下午下班后提交
     k_h = chrono::hours_double{8};                           ///
