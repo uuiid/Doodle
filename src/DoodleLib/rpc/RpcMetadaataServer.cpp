@@ -80,8 +80,10 @@ grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, c
   response->set_id(k_id);
   DOODLE_LOG_DEBUG(fmt::format("插入数据库 id: {}", k_id))
 
-  auto path = getPath(request->uuidpath());
-  put_cache_and_file(path, request->metadata_cereal().value());
+  if (!request->metadata_cereal().value().empty()) {
+    auto path = getPath(request->uuidpath());
+    put_cache_and_file(path, request->metadata_cereal().value());
+  }
 
   return grpc::Status::OK;
 }
@@ -128,10 +130,13 @@ grpc::Status RpcMetadaataServer::UpdateMetadata(grpc::ServerContext *context, co
   if (request->has_parent() || request->has_update_time() || request->has_m_type())
     (*k_conn)(k_sql);
 
-  auto path = getPath(request->uuidpath());
-  put_cache_and_file(path, request->metadata_cereal().value());
+  if (!request->metadata_cereal().value().empty()) {
+    auto path = getPath(request->uuidpath());
+    put_cache_and_file(path, request->metadata_cereal().value());
+    DOODLE_LOG_DEBUG(fmt::format("id: {} update: {}", request->id(), path))
+  }
+  DOODLE_LOG_DEBUG(fmt::format("id: {}", request->id()))
 
-  DOODLE_LOG_DEBUG(fmt::format("id: {} update: {}", request->id(), path))
   return grpc::Status::OK;
 }
 grpc::Status RpcMetadaataServer::FilterMetadata(grpc::ServerContext *context,

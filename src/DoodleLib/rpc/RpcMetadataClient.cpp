@@ -53,10 +53,11 @@ void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   DataDb k_out_db{};
   auto k_status = p_stub->InstallMetadata(&k_context, k_in_db, &k_out_db);
   if (k_status.ok()) {
-    in_metadataPtr->p_id = k_out_db.id();
+    in_metadataPtr->p_id        = k_out_db.id();
   } else {
     throw DoodleError{k_status.error_message()};
   }
+  UpdateMetadata(in_metadataPtr, false);
 }
 void RpcMetadataClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
   if (!in_metadataPtr->isInstall())
