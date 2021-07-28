@@ -44,20 +44,27 @@ TEST_CASE("time duration", "[metadata]") {
     REQUIRE(my_t.getUTCTime() == k_new);
   }
   SECTION("time duration") {
-    auto k_sys_time1 = chrono::local_days(2020_y / 7 / 21_d) + 10h + 45min + 30s;
-    auto k_sys_time2 = chrono::local_days(2020_y / 7 / 23_d) + 16h + 20min + 30s;
+    auto k_sys_time1 = chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s;
+    auto k_sys_time2 = chrono::local_days(2021_y / 7 / 23_d) + 16h + 20min + 30s;
     my_t.set_local_time(k_sys_time1);
     my_t2.set_local_time(k_sys_time2);
     using namespace Catch::literals;
     //    auto k_matcher = Catch::Approx(5.1);
 
-    REQUIRE(my_t.work_duration(my_t2).count() == (21.583_a).epsilon(0.01));
+    REQUIRE(my_t.work_duration(my_t2).count() == (20.583_a).epsilon(0.01));
     SECTION("time works durtion") {
-      k_sys_time1 = chrono::local_days(2020_y / 7 / 21_d) + 10h + 45min + 30s;
-      k_sys_time2 = chrono::local_days(2020_y / 7 / 27_d) + 16h + 20min + 30s;
+      k_sys_time1 = chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s;
+      k_sys_time2 = chrono::local_days(2021_y / 7 / 27_d) + 16h + 20min + 30s;
       my_t.set_local_time(k_sys_time1);
       my_t2.set_local_time(k_sys_time2);
-      REQUIRE(my_t.work_duration(my_t2).count() == (37.583_a).epsilon(0.01));
+      REQUIRE(my_t.work_duration(my_t2).count() == (36.583_a).epsilon(0.01));
+    }
+    SECTION("ond day time"){
+      k_sys_time1 = chrono::local_days(2021_y / 6 / 23_d) + 17h + 8min + 48s;
+      k_sys_time2 = chrono::local_days(2021_y / 6 / 23_d) + 20h + 8min + 48s;
+      my_t.set_local_time(k_sys_time1);
+      my_t2.set_local_time(k_sys_time2);
+      REQUIRE(my_t.work_duration(my_t2).count() == (0.86_a).epsilon(0.01));
     }
   }
 }
