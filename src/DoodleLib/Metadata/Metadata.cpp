@@ -287,14 +287,16 @@ void Metadata::to_DataDb(DataDb &in_) const {
   //  auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
   //      std::chrono::system_clock::to_time_t(k_time));
   //  in_.mutable_update_time()->CopyFrom(k_timestamp);
-
-  vector_container my_data{};
-  {
-    vector_iostream kt{my_data};
-    cereal::PortableBinaryOutputArchive k_archive{kt};
-    k_archive(shared_from_this());
+  if(p_id != 0) {
+    vector_container my_data{};
+    {
+      vector_iostream kt{my_data};
+      cereal::PortableBinaryOutputArchive k_archive{kt};
+      k_archive(shared_from_this());
+    }
+    in_.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
   }
-  in_.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
+
   if (p_updata_type || p_id == 0)
     in_.mutable_m_type()->set_value(magic_enum::enum_cast<doodle::DataDb::meta_type>(get_meta_type_int()).value());
 }
@@ -309,14 +311,16 @@ MetadataPtr Metadata::from_DataDb(const DataDb &in_) {
     k_archive(k_ptr);
   }
 
-  if (k_ptr->p_id == 0) {
-    k_ptr->p_id = in_.id();
+  if (k_ptr->p_id != in_.id())
+    throw DoodleError{fmt::format("验证出错 id 不相同 {} == {}", k_ptr->p_id, in_.id())};
+
+  if (in_.parent().value() != 0) {  ///  不为零的情况下, 比较验证值, 不相同就返回空指针
+    if (k_ptr->p_parent_id != in_.parent().value())
+      throw DoodleError{fmt::format("验证出错, 父id不相同 {} == {}", k_ptr->p_parent_id.value(), in_.parent().value())};
   } else {
-    if (k_ptr->p_id != in_.id())
-      return {};
+    if (k_ptr->p_parent_id)  /// 是零就是默认值, 没有值, 如果父id有值就直接返回空
+      throw DoodleError{fmt::format("验证出错, 没有父id, 但是传入父id {} ", in_.parent().value())};
   }
-  k_ptr->p_id        = in_.id();
-  k_ptr->p_parent_id = in_.parent().value();
 
   k_ptr->set_meta_type(magic_enum::enum_integer(in_.m_type().value()));
   return k_ptr;
