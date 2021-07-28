@@ -220,7 +220,11 @@ class DOODLELIB_API Metadata
     }
     return {};
   };
-
+  template <class parent_class>
+  std::string find_parent_class_to_string() {
+    auto k_m = find_parent_class<parent_class>();
+    return k_m ? k_m->showStr() : std::string{};
+  };
   /**
    * @warning 此处如果进行比较， 会自动转化为子类进行比较， 相同子类优化， 不同子类字符串比较
    */
