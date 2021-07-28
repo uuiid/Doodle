@@ -195,15 +195,22 @@ bool actn_export_excel::exist(const AssetsFilePtr& in_ptr) {
 std::pair<TimeDurationPtr, TimeDurationPtr> actn_export_excel::find_time(const AssetsFilePtr& in_assetsFilePtr) {
   std::pair<TimeDurationPtr, TimeDurationPtr> k_pair{};
   k_pair.first = in_assetsFilePtr->getTime();
-  auto k_it    = std::find(p_ass_list.begin(), p_ass_list.end(), in_assetsFilePtr);
+
+  auto k_it = std::find(p_ass_list.begin(), p_ass_list.end(), in_assetsFilePtr);
   if (k_it == p_ass_list.end())
     throw DoodleError{"错误的类型"};
-
   ++k_it;
+
   if (k_it == p_ass_list.end()) {
     k_pair.second = _arg_type.p_time_range.second;
   } else {
-    k_pair.second = (*k_it)->getTime();
+    auto k_it_next = std::find_if(k_it, p_ass_list.end(), [in_assetsFilePtr](const AssetsFilePtr& in_ptr) {
+      return in_ptr->getUser() == in_assetsFilePtr->getUser();
+    });
+    if (k_it_next == p_ass_list.end())
+      k_pair.second = _arg_type.p_time_range.second;
+    else
+      k_pair.second = (*k_it_next)->getTime();
   }
   return k_pair;
 }
