@@ -118,6 +118,11 @@ void actn_export_excel::export_dep_excel() {
     auto k_mat = export_excel_line(k_list_ass);
     /// 再进行集数排序
     std::stable_sort(k_mat->begin(), k_mat->end(), [](const string_list& in_l, const string_list& in_r) {
+      return in_l[5] < in_r[5];
+    });
+
+    /// 再进行集数排序
+    std::stable_sort(k_mat->begin(), k_mat->end(), [](const string_list& in_l, const string_list& in_r) {
       return in_l[2] < in_r[2];
     });
 
