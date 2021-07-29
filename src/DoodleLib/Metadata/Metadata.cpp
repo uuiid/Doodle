@@ -197,7 +197,11 @@ void Metadata::updata_db(const MetadataFactoryPtr &in_factory) {
     p_parent.lock()->updata_db(p_metadata_flctory_ptr_);
   }
 
-  _updata_db(in_factory);
+  if (isInstall())
+    _updata_db(p_metadata_flctory_ptr_);
+  else
+    _insert_into(p_metadata_flctory_ptr_);
+
   saved();
 }
 
@@ -287,7 +291,7 @@ void Metadata::to_DataDb(DataDb &in_) const {
   //  auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
   //      std::chrono::system_clock::to_time_t(k_time));
   //  in_.mutable_update_time()->CopyFrom(k_timestamp);
-  if(p_id != 0) {
+  if (p_id != 0) {
     vector_container my_data{};
     {
       vector_iostream kt{my_data};
