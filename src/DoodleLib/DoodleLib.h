@@ -40,6 +40,7 @@
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Metadata/TimeDuration.h>
+#include <DoodleLib/Metadata/season.h>
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/ScreenshotWidght/ScreenshotAction.h>
 #include <DoodleLib/ScreenshotWidght/ScreenshotWidght.h>
