@@ -10,9 +10,6 @@
 #include <core/CoreSet.h>
 
 namespace doodle {
-actn_create_project::actn_create_project(std::any&& in_any) {
-  p_name = "创建项目";
-}
 
 long_term_ptr actn_create_project::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_val = sig_get_arg().value();
@@ -36,9 +33,6 @@ actn_create_project::actn_create_project() {
   p_name = "创建项目";
 }
 
-actn_delete_project::actn_delete_project(std::any&& in_any) {
-  p_name = "删除项目";
-}
 actn_delete_project::actn_delete_project() {
   p_name = "删除项目";
 }
@@ -54,9 +48,6 @@ long_term_ptr actn_delete_project::run(const MetadataPtr& in_data, const Metadat
 actn_rename_project::actn_rename_project() {
   p_name = "重命名项目";
 }
-actn_rename_project::actn_rename_project(std::any&& in_any) {
-  p_name = "重命名项目";
-}
 long_term_ptr actn_rename_project::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_str = sig_get_arg().value().date;
   auto k_prj = std::dynamic_pointer_cast<Project>(in_data);
@@ -68,9 +59,6 @@ long_term_ptr actn_rename_project::run(const MetadataPtr& in_data, const Metadat
 actn_setpath_project::actn_setpath_project() {
   p_name = "设置路径";
 }
-actn_setpath_project::actn_setpath_project(std::any&& in_any) {
-  p_name = "设置路径";
-}
 long_term_ptr actn_setpath_project::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_path = sig_get_arg().value().date;
   auto k_prj  = std::dynamic_pointer_cast<Project>(in_data);
@@ -79,17 +67,14 @@ long_term_ptr actn_setpath_project::run(const MetadataPtr& in_data, const Metada
   return {};
 }
 
-//set_str_project_action::set_str_project_action() {
-//  p_name = "设置英文名称";
-//}
-//set_str_project_action::set_str_project_action(std::any&& in_any)  {
-//  p_name = "设置英文名称";
-//}
-//long_term_ptr  set_str_project_action::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-//  auto k_str = std::any_cast<std::string>();
-//  auto k_prj = std::dynamic_pointer_cast<Project>(in_data);
-//  k_prj->set(k_str);
-//  k_prj->updata_db(k_prj->getMetadataFactory());
-// return {};
-//}
+// set_str_project_action::set_str_project_action() {
+//   p_name = "设置英文名称";
+// }
+// long_term_ptr  set_str_project_action::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+//   auto k_str = std::any_cast<std::string>();
+//   auto k_prj = std::dynamic_pointer_cast<Project>(in_data);
+//   k_prj->set(k_str);
+//   k_prj->updata_db(k_prj->getMetadataFactory());
+//  return {};
+// }
 }  // namespace doodle
