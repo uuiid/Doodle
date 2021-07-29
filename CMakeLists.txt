@@ -113,49 +113,63 @@ find_package(Autodesk_FBX 2020 REQUIRED)
 
 #下载自定义嵌入文件
 include(ExternalProject)
-ExternalProject_Add(cmrc_prj
-        GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/cmrc_prj-prefix/src/cmrc_prj/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake
-        TEST_COMMAND ""
-        )
-#添加doxygen自定义css
-ExternalProject_Add(doxygen_css
-        GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
-        GIT_TAG origin/main
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/doxygen_css-prefix/src/doxygen_css/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css
-        #        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/doxygen-awesome-css-prefix/src/doxygen-awesome-css/doxygen-awesome-sidebar-only.css ${PROJECT_SOURCE_DIR}/doc/css
-        TEST_COMMAND ""
-        )
-ExternalProject_Add(tzdata_prj
-        URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/tzdata_prj-prefix/src/tzdata_prj ${CMAKE_BINARY_DIR}/bin/tzdata
-        TEST_COMMAND ""
-        )
+include(FetchContent)
+# 添加树项目
+FetchContent_Declare(
+        st_tree
+        GIT_REPOSITORY https://github.com/erikerlandson/st_tree.git
+        GIT_TAG develop
+)
+if (NOT st_tree_POPULATED)
+    FetchContent_Populate(st_tree)
+endif ()
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${st_tree_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/external/)
 
-ExternalProject_Add(windowsZones_prj
-        URL https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml
-        #        DOWNLOAD_NAME windowsZones.xml
-        DOWNLOAD_NO_EXTRACT TRUE
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/windowsZones_prj-prefix/src/windowsZones.xml ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml
-        TEST_COMMAND ""
-        )
-ExternalProject_Add(csv_parser_prj
+# 添加csv解析器
+FetchContent_Declare(
+        csv_parser
         GIT_REPOSITORY https://github.com/vincentlaucsb/csv-parser.git
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/csv_parser_prj-prefix/src/csv_parser_prj ${PROJECT_SOURCE_DIR}/external/csv_parser
-        TEST_COMMAND ""
-        )
+)
+FetchContent_Populate(csv_parser)
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${csv_parser_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/csv_parser)
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv_parser)
 
+#添加windows时区数据库
+#FetchContent_Declare(
+#        windowsZones
+#        URL https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml
+#        DOWNLOAD_NO_EXTRACT TRUE
+#)
+#FetchContent_Populate(windowsZones)
+#execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${windowsZones_SOURCE_DIR}/windowsZones.xml ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml)
+file(DOWNLOAD
+        https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml
+        ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml)
+#添加时区数据库
+FetchContent_Declare(
+        tzdata
+        URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
+        DOWNLOAD_NO_EXTRACT TRUE
+)
+FetchContent_Populate(tzdata)
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${tzdata_SOURCE_DIR} ${CMAKE_BINARY_DIR}/bin/tzdata)
+
+#添加doxygen自定义css
+FetchContent_Declare(
+        doxygen_css
+        GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
+        GIT_TAG origin/main
+)
+FetchContent_Populate(doxygen_css)
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${doxygen_css_SOURCE_DIR}/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css)
+
+#添加cmake 嵌入文件
+FetchContent_Declare(
+        cmrc_prj
+        GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
+)
+FetchContent_Populate(cmrc_prj)
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${cmrc_prj_SOURCE_DIR}/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake)
 
 #添加文档生成
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
