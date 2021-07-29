@@ -7,6 +7,7 @@
 #include <Metadata/Assets.h>
 #include <Metadata/AssetsFile.h>
 #include <Metadata/AssetsPath.h>
+#include <Metadata/MetadataFactory.h>
 #include <Metadata/Comment.h>
 #include <Metadata/TimeDuration.h>
 namespace doodle {

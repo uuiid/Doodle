@@ -5,7 +5,6 @@
 #include "season.h"
 namespace doodle {
 season::season()
-    : Metadata(),
-      database_action<season, MetadataFactory>(this) {
+    : Metadata() {
 }
 }  // namespace doodle

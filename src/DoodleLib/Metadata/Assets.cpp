@@ -76,23 +76,6 @@ void Assets::setNameEnus(const std::string& in_nameEnus) {
   saved(true);
   sig_change();
 }
-void Assets::_select_indb(const MetadataFactoryPtr& in_factory) {
-  in_factory->select_indb(this);
-}
-
-void Assets::_updata_db(const MetadataFactoryPtr& in_factory) {
-  if (isInstall())
-    p_metadata_flctory_ptr_->updata_db(this);
-  else
-    p_metadata_flctory_ptr_->insert_into(this);
-}
-
-void Assets::_insert_into(const MetadataFactoryPtr& in_factory) {
-  in_factory->insert_into(this);
-}
-void Assets::_deleteData(const MetadataFactoryPtr& in_factory) {
-  in_factory->deleteData(this);
-}
 void Assets::create_menu(const menu_factory_ptr& in_factoryPtr) {
   in_factoryPtr->create_menu(std::dynamic_pointer_cast<Assets>(shared_from_this()));
 }

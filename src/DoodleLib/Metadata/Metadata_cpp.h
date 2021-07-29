@@ -11,4 +11,5 @@
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
 // clang-format on

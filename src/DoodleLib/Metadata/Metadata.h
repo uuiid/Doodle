@@ -14,6 +14,127 @@
 #include <cereal/types/polymorphic.hpp>
 #include <optional>
 namespace doodle {
+template <class Class, class factory>
+class database_action {
+ public:
+  using factory_ptr = std::shared_ptr<factory>;
+
+ private:
+  /**
+   * @brief 需要加载
+   */
+  bool p_need_load;
+  /**
+   * @brief 需要保存
+   */
+  bool p_need_save;
+
+ protected:
+  /**
+ * 这个是加载或者保存时的工厂
+ * 这个工厂会在加载时记录, 或者在第一次保存时记录
+ * 同时在添加子物体时也会继承父级的工厂,在整个项目中工厂应该保持一致
+ * @warning 基本保证在使用时不空（从逻辑上）
+ */
+  factory_ptr p_factory;
+
+  Class *metadate_self;
+  [[nodiscard]] bool is_saved() const{
+    return !p_need_save;
+  };
+  [[nodiscard]] bool is_loaded() const{
+    return !p_need_load;
+  };
+  void saved(bool in_need = false) {
+    p_need_save = in_need;
+  };
+  void loaded(bool in_need = false) {
+    p_need_load = in_need;
+  };
+  [[nodiscard]] bool is_install() const{
+    return metadate_self->p_id > 0;
+  };
+
+ public:
+  explicit database_action(Class *in_ptr)
+      : metadate_self(in_ptr),
+        p_factory(),
+        p_need_load(true),
+        p_need_save(true){};
+
+  /**
+   * @brief 这里是使用工厂进行加载和保存的函数
+   * 使用访问者模式
+   * @warning 注意,这里进行工厂加载是不触发任何的添加子物体和子物体更改等任何插槽的，
+   *  工厂在添加子物体时应该调用 observable_container:: 中不带_sig后缀的方法
+   * @param in_factory 序列化工厂
+   */
+  void select_indb(const factory_ptr &in_factory = {}) {
+    if (in_factory)
+      p_factory = in_factory;
+    if (is_loaded())
+      return;
+
+    p_factory->select_indb(metadate_self);
+    loaded();
+    saved();
+  };
+  /**
+   *
+   * @param in_factory 序列化工厂
+   */
+  void updata_db(const factory_ptr &in_factory = {}) {
+    if (in_factory)
+      p_factory = in_factory;
+
+    if (is_saved())
+      return;
+
+    ///在这里测试使用具有父级， 并且如果有父级， 还要更新父id， 那么就可以断定也要更新父级的记录
+    if (metadate_self->hasParent() && p_factory) {
+      metadate_self->p_parent.lock()->updata_db(p_factory);
+    }
+
+    if (is_install())
+      p_factory->updata_db(metadate_self);
+    else
+      insert_into(p_factory);
+
+    saved();
+    loaded();
+  };
+  /**
+   * @brief  删除这个数据
+   * @param in_factory 序列化工厂
+   */
+  void deleteData(const factory_ptr &in_factory = {}) {
+    if (in_factory)
+      p_factory = in_factory;
+
+    p_factory->deleteData(metadate_self);
+  };
+  /**
+   * @brief 插入函数
+   *
+   * @param in_factory 序列化工厂
+   */
+  void insert_into(const factory_ptr &in_factory = {}) {
+    if (in_factory)
+      p_factory = in_factory;
+    p_factory->insert_into(metadate_self);
+    saved();
+    loaded();
+  };
+};
+
+//template <class Class>
+//class menu_create {
+//  Class *menu_self;
+//
+// public:
+//  explicit menu_create(Class *in_ptr)
+//      : menu_self(in_ptr);
+//};
 
 /**
  * @warning 这里这个基类是不进行cereal注册的要不然会序列化出错
@@ -21,11 +142,13 @@ namespace doodle {
  */
 class DOODLELIB_API Metadata
     : public std::enable_shared_from_this<Metadata>,
+      public database_action<Metadata, MetadataFactory>,
       public details::no_copy {
+  friend database_action<Metadata,MetadataFactory>;
  public:
   /**
    * @brief 这个枚举是数据库中的枚举， 更改请慎重
-   * 
+   *
    */
   enum class meta_type {
     unknown_file       = 0,
@@ -40,10 +163,7 @@ class DOODLELIB_API Metadata
   friend MetadataFactory;
   friend RpcMetadataClient;
   friend RpcMetadaataServer;
-  /// 需要加载
-  bool p_need_save;
-  /// 需要保存
-  bool p_need_load;
+
   bool p_updata_parent_id;
   bool p_updata_type;
 
@@ -61,55 +181,11 @@ class DOODLELIB_API Metadata
   std::optional<uint64_t> p_parent_id;
 
   std::string p_uuid;
-  /**
-   * 这个是加载或者保存时的工厂
-   * 这个工厂会在加载时记录, 或者在第一次保存时记录
-   * 同时在添加子物体时也会继承父级的工厂,在整个项目中工厂应该保持一致
-   * @warning 基本保证在使用时不空（从逻辑上）
-   */
-  MetadataFactoryPtr p_metadata_flctory_ptr_;
   meta_type p_type;
 
   bool child_item_is_sort;
 
-  inline bool isInstall() const { return p_id > 0; };
-
   virtual bool sort(const Metadata &in_rhs) const = 0;
-
-  /// 设置为已经加载
-  virtual void loaded(bool in_need = false);
-  /// 设置为已经保存
-  virtual void saved(bool in_need = false);
-
-  /// 是已经加载过的
-  virtual bool isLoaded() const;
-  /// 是已经保存过的
-  virtual bool isSaved() const;
-
-  /**
-   * @brief 这里是使用工厂进行加载和保存的函数
-   * 使用访问者模式
-   * @warning 注意,这里进行工厂加载是不触发任何的添加子物体和子物体更改等任何插槽的，
-   *   工厂在添加子物体时应该调用 observable_container:: 中不带_sig后缀的方法
-   * @param in_factory 序列化工厂
-   */
-  virtual void _select_indb(const MetadataFactoryPtr &in_factory) = 0;
-  /**
-   *
-   * @param in_factory 序列化工厂
-   */
-  virtual void _updata_db(const MetadataFactoryPtr &in_factory) = 0;
-  /**
-   * @brief  删除这个数据
-   * @param in_factory 序列化工厂
-   */
-  virtual void _deleteData(const MetadataFactoryPtr &in_factory) = 0;
-  /**
-   * @brief 插入函数
-   * 
-   * @param in_factory 
-   */
-  virtual void _insert_into(const MetadataFactoryPtr &in_factory) = 0;
 
  public:
   Metadata();
@@ -139,7 +215,7 @@ class DOODLELIB_API Metadata
   [[nodiscard]] virtual std::shared_ptr<Metadata> getParent() const;
   /**
    * @brief 这个时查询是否具有子项的(具有复杂的逻辑)
-   * 
+   *
    * @return true 有子项
    * @return false 工厂和列表中均不具有子项
    */
@@ -171,7 +247,7 @@ class DOODLELIB_API Metadata
 
   /**
    * @brief 设置数据库中的类型
-   * 
+   *
    * @param in_meta 类型
    */
   void set_meta_typp(const meta_type &in_meta);
@@ -179,8 +255,8 @@ class DOODLELIB_API Metadata
   void set_meta_type(std::int32_t in_);
   /**
    * @brief 获得数据库中的类型
-   * 
-   * @return 数据库中的类型 
+   *
+   * @return 数据库中的类型
    */
   meta_type get_meta_type() const;
   std::string get_meta_type_str() const;
@@ -234,30 +310,6 @@ class DOODLELIB_API Metadata
   virtual bool operator>=(const Metadata &in_rhs) const;
   bool operator==(const Metadata &in_rhs) const;
   bool operator!=(const Metadata &in_rhs) const;
-  /**
-   * @brief 这里是使用工厂进行加载和保存的函数
-   * 使用访问者模式
-   * @warning 注意,这里进行工厂加载是不触发任何的添加子物体和子物体更改等任何插槽的，
-   *  工厂在添加子物体时应该调用 observable_container:: 中不带_sig后缀的方法
-   * @param in_factory 序列化工厂
-   */
-  virtual void select_indb(const MetadataFactoryPtr &in_factory = {});
-  /**
-   *
-   * @param in_factory 序列化工厂
-   */
-  virtual void updata_db(const MetadataFactoryPtr &in_factory = {});
-  /**
-   * @brief  删除这个数据
-   * @param in_factory 序列化工厂
-   */
-  virtual void deleteData(const MetadataFactoryPtr &in_factory = {});
-  /**
-   * @brief 插入函数
-   * 
-   * @param in_factory 
-   */
-  virtual void insert_into(const MetadataFactoryPtr &in_factory = {});
 
   boost::signals2::signal<void()> sig_change;
 
@@ -282,6 +334,6 @@ void Metadata::serialize(Archive &ar, std::uint32_t const version) {
 
 }  // namespace doodle
 
-//CEREAL_REGISTER_TYPE(doodle::Metadata)
-//CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::Metadata>, doodle::Metadata)
+// CEREAL_REGISTER_TYPE(doodle::Metadata)
+// CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::Metadata>, doodle::Metadata)
 CEREAL_CLASS_VERSION(doodle::Metadata, 1)

@@ -3,6 +3,7 @@
 //
 
 #include "assets_action.h"
+#include <Metadata/MetadataFactory.h>
 
 #include <Metadata/Assets.h>
 #include <Metadata/Episodes.h>

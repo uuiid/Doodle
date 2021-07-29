@@ -104,21 +104,7 @@ bool Project::sort(const Metadata& in_rhs) const {
 const std::string& Project::getName() const {
   return p_name;
 }
-void Project::_deleteData(const MetadataFactoryPtr& in_factory) {
-  in_factory->deleteData(this);
-}
-void Project::_insert_into(const MetadataFactoryPtr& in_factory) {
-  in_factory->insert_into(this);
-}
-void Project::_updata_db(const MetadataFactoryPtr& in_factory) {
-  if (isInstall())
-    p_metadata_flctory_ptr_->updata_db(this);
-  else
-    p_metadata_flctory_ptr_->insert_into(this);
-}
-void Project::_select_indb(const MetadataFactoryPtr& in_factory) {
-  in_factory->select_indb(this);
-}
+
 void Project::create_menu(const menu_factory_ptr& in_factoryPtr) {
   in_factoryPtr->create_menu(std::dynamic_pointer_cast<Project>(shared_from_this()));
 }

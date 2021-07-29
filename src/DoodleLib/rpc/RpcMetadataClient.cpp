@@ -45,7 +45,7 @@ std::vector<MetadataPtr> RpcMetadataClient::GetChild(const MetadataConstPtr& in_
 
 // }
 void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
-  if (in_metadataPtr->isInstall())
+  if (in_metadataPtr->is_install())
     return;
 
   grpc::ClientContext k_context{};
@@ -60,7 +60,7 @@ void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   UpdateMetadata(in_metadataPtr, false);
 }
 void RpcMetadataClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
-  if (!in_metadataPtr->isInstall())
+  if (!in_metadataPtr->is_install())
     return;
 
   grpc::ClientContext k_context{};
@@ -77,7 +77,7 @@ void RpcMetadataClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
 }
 
 void RpcMetadataClient::UpdateMetadata(const MetadataConstPtr& in_metadataPtr, bool b_update_parent_id) {
-  if (!in_metadataPtr->isInstall())
+  if (!in_metadataPtr->is_install())
     return;
 
   grpc::ClientContext k_context{};

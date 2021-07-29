@@ -70,22 +70,6 @@ bool Episodes::sort(const Metadata& in_rhs) const {
   }
 }
 
-void Episodes::_select_indb(const MetadataFactoryPtr& in_factory) {
-  in_factory->select_indb(this);
-}
-
-void Episodes::_updata_db(const MetadataFactoryPtr& in_factory) {
-  if (isInstall())
-    in_factory->updata_db(this);
-  else
-    in_factory->insert_into(this);
-}
-void Episodes::_deleteData(const MetadataFactoryPtr& in_factory) {
-  in_factory->deleteData(this);
-}
-void Episodes::_insert_into(const MetadataFactoryPtr& in_factory) {
-  in_factory->insert_into(this);
-}
 void Episodes::create_menu(const menu_factory_ptr& in_factoryPtr) {
   in_factoryPtr->create_menu(std::dynamic_pointer_cast<Episodes>(shared_from_this()));
 }

@@ -175,22 +175,6 @@ void AssetsFile::setDepartment(Department in_department) {
   saved(true);
   sig_change();
 }
-void AssetsFile::_select_indb(const MetadataFactoryPtr& in_factory) {
-  p_metadata_flctory_ptr_->select_indb(this);
-}
-
-void AssetsFile::_updata_db(const MetadataFactoryPtr& in_factory) {
-  if (isInstall())
-    p_metadata_flctory_ptr_->updata_db(this);
-  else
-    p_metadata_flctory_ptr_->insert_into(this);
-}
-void AssetsFile::_deleteData(const MetadataFactoryPtr& in_factory) {
-  in_factory->deleteData(this);
-}
-void AssetsFile::_insert_into(const MetadataFactoryPtr& in_factory) {
-  in_factory->insert_into(this);
-}
 const TimeDurationPtr& AssetsFile::getTime() const {
   return p_time;
 }

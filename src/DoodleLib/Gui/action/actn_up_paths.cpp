@@ -9,6 +9,7 @@
 #include <Metadata/AssetsFile.h>
 #include <Metadata/AssetsPath.h>
 #include <rpc/RpcFileSystemClient.h>
+#include <Metadata/MetadataFactory.h>
 
 namespace doodle {
 

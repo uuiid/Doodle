@@ -80,7 +80,6 @@ void Shot::analysis(const std::string& in_path) {
     if (k_match.size() > 2)
       p_shot_ab = k_match[2].str();
   }
-  
 }
 
 bool Shot::sort(const Metadata& in_rhs) const {
@@ -90,23 +89,7 @@ bool Shot::sort(const Metadata& in_rhs) const {
     return str() < in_rhs.str();
   }
 }
-void Shot::_select_indb(const MetadataFactoryPtr& in_factory) {
-  in_factory->select_indb(this);
-}
 
-void Shot::_updata_db(const MetadataFactoryPtr& in_factory) {
-  if (this->isInstall())
-    p_metadata_flctory_ptr_->updata_db(this);
-  else
-    p_metadata_flctory_ptr_->insert_into(this);
-}
-
-void Shot::_deleteData(const MetadataFactoryPtr& in_factory) {
-  in_factory->deleteData(this);
-}
-void Shot::_insert_into(const MetadataFactoryPtr& in_factory) {
-  in_factory->insert_into(this);
-}
 void Shot::create_menu(const menu_factory_ptr& in_factoryPtr) {
   in_factoryPtr->create_menu(std::dynamic_pointer_cast<Shot>(shared_from_this()));
 }

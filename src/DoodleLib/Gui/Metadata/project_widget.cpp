@@ -8,6 +8,7 @@
 #include <Gui/factory/menu_factory.h>
 #include <Metadata/AssetsFile.h>
 #include <Metadata/Comment.h>
+#include <Metadata/MetadataFactory.h>
 #include <Metadata/Project.h>
 #include <Metadata/TimeDuration.h>
 #include <libWarp/nana_warp.h>
@@ -421,7 +422,6 @@ void assets_attr_widget::set_ass(const MetadataPtr& in_ptr) {
         .text(std::string{magic_enum::enum_name(k_file->getDepartment())})
         .append(k_file, true)
         .bgcolor(k_file->getPathFile().empty() ? nana::colors::light_coral : nana::colors::light_green);
-
 
     install_sig_one(k_file);
   }

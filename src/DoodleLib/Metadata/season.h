@@ -8,8 +8,7 @@
 namespace doodle {
 
 class DOODLELIB_API season
-    : public Metadata,
-      public database_action<season, MetadataFactory> {
+    : public Metadata{
  public:
   season();
 
