@@ -177,7 +177,7 @@ std::string save_minimal(Archive const &, doodle::Department const &department) 
 }
 template <class Archive>
 void load_minimal(Archive const &, doodle::Department &department, std::string const &value) {
-  department = magic_enum::enum_cast<doodle::Department>(value).value_or(doodle::Department::VFX);
+  department = magic_enum::enum_cast<doodle::Department>(value).value_or(doodle::Department::None_);
 };
 }  // namespace cereal
 CEREAL_CLASS_VERSION(doodle::CoreSet, 6);

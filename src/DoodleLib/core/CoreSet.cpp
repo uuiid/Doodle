@@ -114,7 +114,7 @@ void CoreSet::getSetting() {
 }
 CoreSet::CoreSet()
     : p_user_("user"),
-      p_department_(Department::VFX),
+      p_department_(Department::None_),
       p_cache_root("C:/Doodle/cache"),
       p_doc("C:/Doodle/doc"),
       p_data_root("C:/Doodle/data"),
@@ -195,7 +195,7 @@ const Department &CoreSet::getDepartmentEnum() const {
 }
 
 void CoreSet::setDepartment(const std::string &value) {
-  p_department_ = magic_enum::enum_cast<Department>(value).value_or(Department::VFX);
+  p_department_ = magic_enum::enum_cast<Department>(value).value_or(Department::None_);
 }
 
 std::string CoreSet::getUser() const { return p_user_; }
