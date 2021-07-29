@@ -388,6 +388,8 @@ void menu_factory::export_excel() {
     return k_arg;
   });
 }
+void menu_factory::create_menu(const season_ptr& in_ptr) {
+}
 void dragdrop_menu_factory::create_menu(const ProjectPtr& in_ptr) {
 }
 void dragdrop_menu_factory::create_menu(const AssetsPtr& in_ptr) {

@@ -50,13 +50,6 @@ bool Assets::operator>=(const Assets& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-bool Assets::sort(const Metadata& in_rhs) const {
-  if (typeid(in_rhs) == typeid(*this)) {
-    return *this < (dynamic_cast<const Assets&>(in_rhs));
-  } else {
-    return str() < in_rhs.str();
-  }
-}
 
 const std::string& Assets::getName1() const {
   return p_name;

@@ -185,8 +185,6 @@ class DOODLELIB_API Metadata
 
   bool child_item_is_sort;
 
-  virtual bool sort(const Metadata &in_rhs) const = 0;
-
  public:
   Metadata();
   /**

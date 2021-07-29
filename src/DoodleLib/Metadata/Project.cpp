@@ -94,13 +94,6 @@ bool Project::operator>=(const Project& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-bool Project::sort(const Metadata& in_rhs) const {
-  if (typeid(in_rhs) == typeid(*this)) {
-    return *this < (dynamic_cast<const Project&>(in_rhs));
-  } else {
-    return str() < in_rhs.str();
-  }
-}
 const std::string& Project::getName() const {
   return p_name;
 }

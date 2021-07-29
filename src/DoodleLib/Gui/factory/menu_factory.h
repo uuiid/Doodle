@@ -10,7 +10,7 @@
 namespace doodle {
 /**
  * @brief 创建各种菜单的辅助类
- * 
+ *
  */
 class DOODLELIB_API menu_factory_base
     : public std::enable_shared_from_this<menu_factory_base>,
@@ -33,6 +33,7 @@ class DOODLELIB_API menu_factory_base
   virtual void create_menu(const EpisodesPtr& in_ptr)   = 0;
   virtual void create_menu(const ShotPtr& in_ptr)       = 0;
   virtual void create_menu(const AssetsFilePtr& in_ptr) = 0;
+  virtual void create_menu(const season_ptr& in_ptr)    = 0;
 
  public:
   explicit menu_factory_base(nana::window in_window);
@@ -45,14 +46,14 @@ class DOODLELIB_API menu_factory_base
   void set_metadate(const MetadataPtr& in_ptr, const MetadataPtr& in_parent = {});
   /**
    * @brief 将创建的动作转换为菜单的便捷函数
-   * 
-   * @param in_menu 
+   *
+   * @param in_menu
    */
   void operator()(nana::menu& in_menu);
 };
 /**
  * @brief 创建右键菜单
- * 
+ *
  */
 class DOODLELIB_API menu_factory : public menu_factory_base {
  public:
@@ -65,6 +66,7 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
   virtual void create_menu(const EpisodesPtr& in_ptr) override;
   virtual void create_menu(const ShotPtr& in_ptr) override;
   virtual void create_menu(const AssetsFilePtr& in_ptr) override;
+  virtual void create_menu(const season_ptr& in_ptr) override;
 
  protected:
   void create_assets();
@@ -124,7 +126,7 @@ class DOODLELIB_API menu_factory_assets_attr : public menu_factory {
 };
 /**
  * @brief 拖拽文件时所产生的菜单
- * 
+ *
  */
 class DOODLELIB_API dragdrop_menu_factory : public menu_factory_base {
   std::vector<FSys::path> p_paths;
@@ -142,8 +144,8 @@ class DOODLELIB_API dragdrop_menu_factory : public menu_factory_base {
 
   /**
    * @brief 传入的拖拽文件的列表
-   * 
-   * @param in_path 
+   *
+   * @param in_path
    */
   void set_drop_file(const std::vector<FSys::path>& in_path);
   void drop_menu();

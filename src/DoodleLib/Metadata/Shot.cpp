@@ -82,14 +82,6 @@ void Shot::analysis(const std::string& in_path) {
   }
 }
 
-bool Shot::sort(const Metadata& in_rhs) const {
-  if (typeid(in_rhs) == typeid(*this)) {
-    return *this < (dynamic_cast<const Shot&>(in_rhs));
-  } else {
-    return str() < in_rhs.str();
-  }
-}
-
 void Shot::create_menu(const menu_factory_ptr& in_factoryPtr) {
   in_factoryPtr->create_menu(std::dynamic_pointer_cast<Shot>(shared_from_this()));
 }

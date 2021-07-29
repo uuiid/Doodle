@@ -47,9 +47,6 @@ class DOODLELIB_API Shot : public Metadata {
   };
   void analysis(const std::string &in_path);
 
- protected:
-
-  bool sort(const Metadata &in_rhs) const override;
 
  private:
   friend class cereal::access;

@@ -29,8 +29,6 @@ class DOODLELIB_API Episodes : public Metadata {
   };
   void analysis(const std::string &in_path);
 
- protected:
-  virtual bool sort(const Metadata &in_rhs) const override;
 
  private:
   friend class cereal::access;

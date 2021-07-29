@@ -91,7 +91,7 @@ bool Metadata::checkParent(const Metadata &in_metadata) const {
 }
 
 bool Metadata::operator<(const Metadata &in_rhs) const {
-  return this->sort(in_rhs);
+  return str() < str();
 }
 bool Metadata::operator>(const Metadata &in_rhs) const {
   return in_rhs < *this;
@@ -154,7 +154,7 @@ bool Metadata::operator==(const Metadata &in_rhs) const {
   return std::tie(p_id) == std::tie(in_rhs.p_id);
 }
 bool Metadata::operator!=(const Metadata &in_rhs) const {
-  return !(in_rhs == *this);
+  return std::tie(p_id) != std::tie(in_rhs.p_id);
 }
 
 void Metadata::install_slots() {

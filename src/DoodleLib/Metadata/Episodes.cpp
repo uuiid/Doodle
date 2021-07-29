@@ -62,13 +62,6 @@ void Episodes::analysis(const std::string& in_path) {
   }
 }
 
-bool Episodes::sort(const Metadata& in_rhs) const {
-  if (typeid(in_rhs) == typeid(*this)) {
-    return *this < (dynamic_cast<const Episodes&>(in_rhs));
-  } else {
-    return str() < in_rhs.str();
-  }
-}
 
 void Episodes::create_menu(const menu_factory_ptr& in_factoryPtr) {
   in_factoryPtr->create_menu(std::dynamic_pointer_cast<Episodes>(shared_from_this()));

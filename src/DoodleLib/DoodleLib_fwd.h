@@ -40,19 +40,19 @@
 #include <codecvt>
 //#undef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include <stdexcept>
-//namespace fmt {
-//namespace FSys = std::filesystem;
-//template <class Char>
-//struct formatter<FSys::path, Char> : formatter<basic_string_view<Char>, Char> {
-//  template <typename FormatContext>
-//  auto format(const FSys::path &in_path, FormatContext &ctx) {
-//    if constexpr (std::is_same_v<Char, char>)
-//      return formatter<basic_string_view<Char>, Char>::format(in_path.generic_string(), ctx);
-//    else if constexpr (std::is_same_v<Char, wchar_t>)
-//      return formatter<basic_string_view<Char>, Char>::format(in_path.generic_wstring(), ctx);
-//  }
-//};
-//}  // namespace fmt
+// namespace fmt {
+// namespace FSys = std::filesystem;
+// template <class Char>
+// struct formatter<FSys::path, Char> : formatter<basic_string_view<Char>, Char> {
+//   template <typename FormatContext>
+//   auto format(const FSys::path &in_path, FormatContext &ctx) {
+//     if constexpr (std::is_same_v<Char, char>)
+//       return formatter<basic_string_view<Char>, Char>::format(in_path.generic_string(), ctx);
+//     else if constexpr (std::is_same_v<Char, wchar_t>)
+//       return formatter<basic_string_view<Char>, Char>::format(in_path.generic_wstring(), ctx);
+//   }
+// };
+// }  // namespace fmt
 
 //开始我们的名称空间
 namespace doodle {
@@ -93,16 +93,16 @@ using hours_double = duration<std::double_t, std::ratio<3600> >;
 
 /// TODO: 这里我们暂时使用周六和周日作为判断, 但是实际上还有各种假期和其他情况要计入
 bool is_rest_day(const sys_days &in_days);
-//template <class Clock>
-//bool is_morning_works(const std::chrono::time_point<Clock, typename Clock::duration>& in_time) {
-//}
+// template <class Clock>
+// bool is_morning_works(const std::chrono::time_point<Clock, typename Clock::duration>& in_time) {
+// }
 }  // namespace chrono
 
 namespace FSys {
-//namespace details{
-//using namespace std::filesystem;
+// namespace details{
+// using namespace std::filesystem;
 //
-//}
+// }
 using namespace std::filesystem;
 using fstream  = std::fstream;
 using istream  = std::istream;
@@ -110,62 +110,62 @@ using ifstream = std::ifstream;
 using ofstream = std::ofstream;
 using ostream  = std::ostream;
 
-//class path : public ::std::filesystem::path{
-// public:
+// class path : public ::std::filesystem::path{
+//  public:
 //
-//};
+// };
 
-//using std::filesystem::filesystem_error;
-//using std::filesystem::directory_entry;
-//using std::filesystem::directory_iteratorr;
-//using std::filesystem::recursive_directory_iterator;
-//using std::filesystem::file_status;
-//using std::filesystem::space_info;
-//using std::filesystem::file_type;
-//using std::filesystem::perms;
-//using std::filesystem::perm_options;
-//using std::filesystem::copy_options;
-//using std::filesystem::directory_options;
-//using std::filesystem::file_time_type;
+// using std::filesystem::filesystem_error;
+// using std::filesystem::directory_entry;
+// using std::filesystem::directory_iteratorr;
+// using std::filesystem::recursive_directory_iterator;
+// using std::filesystem::file_status;
+// using std::filesystem::space_info;
+// using std::filesystem::file_type;
+// using std::filesystem::perms;
+// using std::filesystem::perm_options;
+// using std::filesystem::copy_options;
+// using std::filesystem::directory_options;
+// using std::filesystem::file_time_type;
 //
-//using std::filesystem::absolute;
-//using std::filesystem::canonical;
-//using std::filesystem::weakly_canonical;
-//using std::filesystem::copy;
-//using std::filesystem::copy_file;
-//using std::filesystem::copy_symlink;
-//using std::filesystem::create_directories;
-//using std::filesystem::create_directory;
-//using std::filesystem::create_hard_link;
-//using std::filesystem::create_symlink;
-//using std::filesystem::create_directory_symlink;
-//using std::filesystem::current_path;
-//using std::filesystem::exists;
-//using std::filesystem::equivalent;
-//using std::filesystem::file_size;
-//using std::filesystem::hard_link_count;
-//using std::filesystem::last_write_time;
-//using std::filesystem::permissions;
-//using std::filesystem::read_symlink;
-//using std::filesystem::remove;
-//using std::filesystem::remove_all;
-//using std::filesystem::rename;
-//using std::filesystem::resize_file;
-//using std::filesystem::space;
-//using std::filesystem::status;
-//using std::filesystem::symlink_status;
-//using std::filesystem::temp_directory_path;
+// using std::filesystem::absolute;
+// using std::filesystem::canonical;
+// using std::filesystem::weakly_canonical;
+// using std::filesystem::copy;
+// using std::filesystem::copy_file;
+// using std::filesystem::copy_symlink;
+// using std::filesystem::create_directories;
+// using std::filesystem::create_directory;
+// using std::filesystem::create_hard_link;
+// using std::filesystem::create_symlink;
+// using std::filesystem::create_directory_symlink;
+// using std::filesystem::current_path;
+// using std::filesystem::exists;
+// using std::filesystem::equivalent;
+// using std::filesystem::file_size;
+// using std::filesystem::hard_link_count;
+// using std::filesystem::last_write_time;
+// using std::filesystem::permissions;
+// using std::filesystem::read_symlink;
+// using std::filesystem::remove;
+// using std::filesystem::remove_all;
+// using std::filesystem::rename;
+// using std::filesystem::resize_file;
+// using std::filesystem::space;
+// using std::filesystem::status;
+// using std::filesystem::symlink_status;
+// using std::filesystem::temp_directory_path;
 //
-//using std::filesystem::is_block_file;
-//using std::filesystem::is_character_file;
-//using std::filesystem::is_directory;
-//using std::filesystem::is_empty;
-//using std::filesystem::is_fifo;
-//using std::filesystem::is_other;
-//using std::filesystem::is_regular_file;
-//using std::filesystem::is_socket;
-//using std::filesystem::is_symlink;
-//using std::filesystem::status;
+// using std::filesystem::is_block_file;
+// using std::filesystem::is_character_file;
+// using std::filesystem::is_directory;
+// using std::filesystem::is_empty;
+// using std::filesystem::is_fifo;
+// using std::filesystem::is_other;
+// using std::filesystem::is_regular_file;
+// using std::filesystem::is_socket;
+// using std::filesystem::is_symlink;
+// using std::filesystem::status;
 DOODLELIB_API inline path make_path(const std::string &in_string) {
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> convert;
   return path{convert.from_bytes(in_string)};
@@ -213,12 +213,13 @@ class ThreadPool;
 class menu_factory_base;
 class long_term;
 class ImageSequence;
-
+class season;
 using string_list        = std::vector<std::string>;
 using string_matrix2     = std::vector<string_list>;
 using string_matrix2_ptr = std::shared_ptr<string_matrix2>;
-using string_list_ptr = std::shared_ptr<string_list>;
+using string_list_ptr    = std::shared_ptr<string_list>;
 
+using season_ptr             = std::shared_ptr<season>;
 using MetadataPtr            = std::shared_ptr<Metadata>;
 using MetadataConstPtr       = std::shared_ptr<const Metadata>;
 using RpcMetadataClientPtr   = std::shared_ptr<RpcMetadataClient>;

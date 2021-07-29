@@ -3,8 +3,21 @@
 //
 
 #include "season.h"
+
+#include <Gui/factory/menu_factory.h>
 namespace doodle {
 season::season()
-    : Metadata() {
+    : Metadata(),
+      p_int(0) {
+}
+season::season(std::weak_ptr<Metadata> in_metadata, std::int32_t in_)
+    : Metadata(in_metadata),
+      p_int(0) {
+}
+std::string season::str() const {
+  return fmt::format("season_{}", p_int);
+}
+void season::create_menu(const menu_factory_ptr& in_factoryPtr) {
+  in_factoryPtr->create_menu(std::dynamic_pointer_cast<season>(shared_from_this()));
 }
 }  // namespace doodle

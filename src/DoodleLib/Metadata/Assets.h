@@ -31,8 +31,6 @@ class DOODLELIB_API Assets : public Metadata {
   bool operator>=(const Assets& in_rhs) const;
   void create_menu(const menu_factory_ptr& in_factoryPtr) override;
 
- protected:
-  virtual bool sort(const Metadata& in_rhs) const override;
 
  private:
   friend class cereal::access;
