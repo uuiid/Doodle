@@ -39,6 +39,7 @@ set(
     Metadata/Project.h
     Metadata/Shot.h
     Metadata/TimeDuration.h
+    Metadata/season.h
     PinYin/convert.h
     ScreenshotWidght/ScreenshotAction.h
     ScreenshotWidght/ScreenshotWidght.h
@@ -110,6 +111,7 @@ set(
     Metadata/Project.cpp
     Metadata/Shot.cpp
     Metadata/TimeDuration.cpp
+    Metadata/season.cpp
     PinYin/convert.cpp
     ScreenshotWidght/ScreenshotAction.cpp
     ScreenshotWidght/ScreenshotWidght.cpp

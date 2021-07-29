@@ -120,19 +120,23 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/erikerlandson/st_tree.git
         GIT_TAG develop
 )
+FetchContent_GetProperties(st_tree)
 if (NOT st_tree_POPULATED)
     FetchContent_Populate(st_tree)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${st_tree_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/external/st_tree/)
 endif ()
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${st_tree_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/external/)
-
+include_directories(${PROJECT_SOURCE_DIR}/external/st_tree/)
 # 添加csv解析器
 FetchContent_Declare(
         csv_parser
         GIT_REPOSITORY https://github.com/vincentlaucsb/csv-parser.git
 )
-FetchContent_Populate(csv_parser)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${csv_parser_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/csv_parser)
-add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv_parser)
+FetchContent_GetProperties(csv_parser)
+if (NOT csv_parser_POPULATED)
+    FetchContent_Populate(csv_parser)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${csv_parser_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/csv_parser)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv_parser)
+endif ()
 
 #添加windows时区数据库
 #FetchContent_Declare(
@@ -151,8 +155,11 @@ FetchContent_Declare(
         URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
         DOWNLOAD_NO_EXTRACT TRUE
 )
-FetchContent_Populate(tzdata)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${tzdata_SOURCE_DIR} ${CMAKE_BINARY_DIR}/bin/tzdata)
+FetchContent_GetProperties(tzdata)
+if (NOT tzdata_POPULATED)
+    FetchContent_Populate(tzdata)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${tzdata_SOURCE_DIR} ${CMAKE_BINARY_DIR}/bin/tzdata)
+endif ()
 
 #添加doxygen自定义css
 FetchContent_Declare(
@@ -160,16 +167,22 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
         GIT_TAG origin/main
 )
-FetchContent_Populate(doxygen_css)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${doxygen_css_SOURCE_DIR}/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css)
+FetchContent_GetProperties(doxygen_css)
+if (NOT doxygen_css_POPULATED)
+    FetchContent_Populate(doxygen_css)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${doxygen_css_SOURCE_DIR}/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css)
+endif ()
 
 #添加cmake 嵌入文件
 FetchContent_Declare(
         cmrc_prj
         GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
 )
-FetchContent_Populate(cmrc_prj)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${cmrc_prj_SOURCE_DIR}/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake)
+FetchContent_GetProperties(cmrc_prj)
+if (NOT cmrc_prj_POPULATED)
+    FetchContent_Populate(cmrc_prj)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${cmrc_prj_SOURCE_DIR}/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake)
+endif ()
 
 #添加文档生成
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)

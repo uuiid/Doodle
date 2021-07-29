@@ -82,5 +82,8 @@ add_doodle(
         main/test/test_core.cpp
         main/test/test_metadata.cpp
         main/test/test_server.cpp
+        main/test/test_external.cpp
 )
 include_directories(${PROJECT_SOURCE_DIR}/external/csv_parser/include)
+include(Catch)
+catch_discover_tests(doodle_test)
