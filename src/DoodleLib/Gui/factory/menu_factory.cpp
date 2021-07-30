@@ -61,6 +61,7 @@ void menu_factory::create_menu(const AssetsPtr& in_ptr) {}
 void menu_factory::create_menu(const EpisodesPtr& in_ptr) {}
 void menu_factory::create_menu(const ShotPtr& in_ptr) {}
 void menu_factory::create_menu(const AssetsFilePtr& in_ptr) {}
+void menu_factory::create_menu(const season_ptr& in_ptr) {}
 
 void menu_factory::delete_project() {
   if (!p_metadata->hasChild()) {
@@ -388,7 +389,29 @@ void menu_factory::export_excel() {
     return k_arg;
   });
 }
-void menu_factory::create_menu(const season_ptr& in_ptr) {
+
+void menu_factory::create_season() {
+  auto item = std::make_shared<actn_season_create>();
+  p_action.push_back(item);
+  item->sig_get_arg.connect([this]() {
+    actn_season_create::arg arg{};
+    nana::inputbox k_inputbox{p_window, "创建季数"};
+    nana::inputbox::integer k_int{"季数", 1, 1, 999, 1};
+    arg.is_cancel = !k_inputbox.show_modal(k_int);
+    arg.date      = k_int.value();
+    return arg;
+  });
+}
+void menu_factory::modify_season() {
+  auto item = std::make_shared<actn_season_set>();
+  item->sig_get_arg.connect([this]() {
+    actn_season_set::arg arg{};
+    nana::inputbox k_inputbox{p_window, "修改季数"};
+    nana::inputbox::integer k_int{"季数", 1, 1, 999, 1};
+    arg.is_cancel = !k_inputbox.show_modal(k_int);
+    arg.date      = k_int.value();
+    return arg;
+  });
 }
 void dragdrop_menu_factory::create_menu(const ProjectPtr& in_ptr) {
 }
@@ -490,6 +513,7 @@ void menu_factory_assets::create_menu(const ProjectPtr& in_ptr) {
     create_assets();
     creare_episodes();
     create_shot();
+    create_season();
   }
 }
 void menu_factory_assets::create_menu(const AssetsPtr& in_ptr) {
@@ -497,6 +521,7 @@ void menu_factory_assets::create_menu(const AssetsPtr& in_ptr) {
     create_assets();
     creare_episodes();
     create_shot();
+    create_season();
   }
   if (p_metadata) {
     p_action.emplace_back(action_ptr{});
@@ -509,6 +534,7 @@ void menu_factory_assets::create_menu(const EpisodesPtr& in_ptr) {
     create_assets();
     creare_episodes();
     create_shot();
+    create_season();
   }
   if (p_metadata) {
     p_action.emplace_back(action_ptr{});
@@ -521,6 +547,7 @@ void menu_factory_assets::create_menu(const ShotPtr& in_ptr) {
     create_assets();
     creare_episodes();
     create_shot();
+    create_season();
   }
   if (p_metadata) {
     p_action.emplace_back(action_ptr{});
@@ -529,7 +556,23 @@ void menu_factory_assets::create_menu(const ShotPtr& in_ptr) {
     delete_assets();
   }
 }
-menu_factory_assets_attr::menu_factory_assets_attr(nana::window in_window) : menu_factory(in_window) {
+
+void menu_factory_assets::create_menu(const season_ptr& in_ptr) {
+  if (p_parent) {
+    create_assets();
+    creare_episodes();
+    create_shot();
+    create_season();
+  }
+  if (p_metadata) {
+    p_action.emplace_back(action_ptr{});
+    modify_season();
+    delete_assets();
+  }
+}
+
+menu_factory_assets_attr::menu_factory_assets_attr(nana::window in_window)
+    : menu_factory(in_window) {
 }
 void menu_factory_assets_attr::create_menu(const AssetsPtr& in_ptr) {
   if (p_parent) {
@@ -570,6 +613,14 @@ void menu_factory_assets_attr::create_menu(const AssetsFilePtr& in_ptr) {
 
     p_action.push_back(action_ptr{});
     delete_assets_attr();
+  }
+}
+
+void menu_factory_assets_attr::create_menu(const season_ptr& in_ptr) {
+  if (p_parent) {
+    create_assets_file();
+    create_assets_file_up_data();
+    create_assets_file_video_up();
   }
 }
 }  // namespace doodle

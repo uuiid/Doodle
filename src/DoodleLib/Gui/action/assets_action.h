@@ -74,7 +74,7 @@ class DOODLELIB_API actn_season_set : public action_indirect<action_arg::arg_int
  public:
   using arg = action_arg::arg_int;
   actn_season_set();
-  virtual long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
+  long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 
 }  // namespace doodle

@@ -4,11 +4,7 @@
 
 #include "assets_action.h"
 
-#include <Metadata/Assets.h>
-#include <Metadata/Episodes.h>
-#include <Metadata/MetadataFactory.h>
 #include <Metadata/Metadata_cpp.h>
-#include <Metadata/Shot.h>
 
 namespace doodle {
 
@@ -27,7 +23,6 @@ long_term_ptr actn_assets_create::run(const MetadataPtr& in_data, const Metadata
   in_parent->child_item.push_back_sig(k_a);
 
   k_a->updata_db(in_parent->getMetadataFactory());
-  in_parent->sortChildItems(true);
   return {};
 }
 
@@ -42,7 +37,6 @@ long_term_ptr actn_episode_create::run(const MetadataPtr& in_data, const Metadat
   auto k_item = std::make_shared<Episodes>(in_parent, _arg_type.date);
   in_parent->child_item.push_back_sig(k_item);
   k_item->updata_db(in_parent->getMetadataFactory());
-  in_parent->sortChildItems(true);
   return {};
 }
 
@@ -57,7 +51,6 @@ long_term_ptr actn_shot_create::run(const MetadataPtr& in_data, const MetadataPt
   auto k_item = std::make_shared<Shot>(in_parent, _arg_type.date);
   in_parent->child_item.push_back_sig(k_item);
   k_item->updata_db(in_parent->getMetadataFactory());
-  in_parent->sortChildItems(true);
   return {};
 }
 

@@ -138,6 +138,7 @@
 			"source_location": "cpp"
 		},
 		"todo-tree.tree.scanMode": "workspace only",
+		"cmake.useCMakePresets": "never"
 	},
 	"tasks": {
 		"version": "2.0.0",

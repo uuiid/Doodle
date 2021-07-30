@@ -146,9 +146,11 @@ endif ()
 #)
 #FetchContent_Populate(windowsZones)
 #execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${windowsZones_SOURCE_DIR}/windowsZones.xml ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml)
-file(DOWNLOAD
-        https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml
-        ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml)
+if (NOT EXISTS ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml)
+    file(DOWNLOAD
+            https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml
+            ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml)
+endif ()
 #添加时区数据库
 FetchContent_Declare(
         tzdata

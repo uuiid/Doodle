@@ -72,6 +72,7 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
   void creare_episodes();
   void create_shot();
   void create_assets_file();
+  void create_season();
   void create_assets_file_up_data();
   void create_assets_file_video_up();
   void create_assets_file_export_maya_up();
@@ -87,6 +88,7 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
   void modify_project_set_path();
   void modify_assets_set_name();
   void modify_episode();
+  void modify_season();
   void modify_shot_int();
   void modify_shot_ab();
   void modify_attr_add_com();
@@ -113,6 +115,7 @@ class DOODLELIB_API menu_factory_assets : public menu_factory {
   virtual void create_menu(const AssetsPtr& in_ptr) override;
   virtual void create_menu(const EpisodesPtr& in_ptr) override;
   virtual void create_menu(const ShotPtr& in_ptr) override;
+  virtual void create_menu(const season_ptr& in_ptr) override;
 };
 
 class DOODLELIB_API menu_factory_assets_attr : public menu_factory {
@@ -122,6 +125,7 @@ class DOODLELIB_API menu_factory_assets_attr : public menu_factory {
   virtual void create_menu(const EpisodesPtr& in_ptr) override;
   virtual void create_menu(const ShotPtr& in_ptr) override;
   virtual void create_menu(const AssetsFilePtr& in_ptr) override;
+  virtual void create_menu(const season_ptr& in_ptr) override;
 };
 /**
  * @brief 拖拽文件时所产生的菜单
