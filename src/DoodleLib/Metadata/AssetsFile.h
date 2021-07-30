@@ -80,10 +80,6 @@ class DOODLELIB_API AssetsFile : public Metadata {
 
   virtual void to_DataDb(DataDb& in_) const override;
 
- protected:
-
-  virtual bool sort(const Metadata& in_rhs) const override;
-
  private:
   friend class cereal::access;
   template <class Archive>

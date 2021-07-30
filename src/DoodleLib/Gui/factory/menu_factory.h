@@ -28,14 +28,13 @@ class DOODLELIB_API menu_factory_base
   friend Shot;
   friend AssetsFile;
 
+ public:
   virtual void create_menu(const ProjectPtr& in_ptr)    = 0;
   virtual void create_menu(const AssetsPtr& in_ptr)     = 0;
   virtual void create_menu(const EpisodesPtr& in_ptr)   = 0;
   virtual void create_menu(const ShotPtr& in_ptr)       = 0;
   virtual void create_menu(const AssetsFilePtr& in_ptr) = 0;
   virtual void create_menu(const season_ptr& in_ptr)    = 0;
-
- public:
   explicit menu_factory_base(nana::window in_window);
   /**
    * @brief 设置创建各种内容所需要的数据
@@ -137,6 +136,7 @@ class DOODLELIB_API dragdrop_menu_factory : public menu_factory_base {
   void create_menu(const EpisodesPtr& in_ptr) override;
   void create_menu(const ShotPtr& in_ptr) override;
   void create_menu(const AssetsFilePtr& in_ptr) override;
+  virtual void create_menu(const season_ptr& in_ptr) override;
 
   explicit dragdrop_menu_factory(nana::window in_window)
       : menu_factory_base(in_window),

@@ -466,6 +466,8 @@ void dragdrop_menu_factory::create_image_and_up() {
 void dragdrop_menu_factory::set_drop_file(const std::vector<FSys::path>& in_path) {
   p_paths = in_path;
 }
+void dragdrop_menu_factory::create_menu(const season_ptr& in_ptr) {
+}
 
 void menu_factory_project::create_menu(const ProjectPtr& in_ptr) {
   create_prj();

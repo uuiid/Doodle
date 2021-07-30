@@ -58,7 +58,7 @@ class DOODLELIB_API Ue4ProjectFile {
   FSys::path p_ue_Project_path;
   ProjectPtr p_project;
 
-  void addUe4ProjectPlugins(const std::vector<std::string>& str) const;
+  void addUe4ProjectPlugins(const std::vector<std::string>& in_strs) const;
   void runPythonScript(const std::string& python_str) const;
   void runPythonScript(const FSys::path& python_file) const;
 

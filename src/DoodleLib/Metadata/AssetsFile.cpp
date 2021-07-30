@@ -76,13 +76,6 @@ bool AssetsFile::operator>=(const AssetsFile& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-bool AssetsFile::sort(const Metadata& in_rhs) const {
-  if (typeid(in_rhs) == typeid(*this)) {
-    return *this < (dynamic_cast<const AssetsFile&>(in_rhs));
-  } else {
-    return str() < in_rhs.str();
-  }
-}
 std::chrono::time_point<std::chrono::system_clock> AssetsFile::getStdTime() const {
   return p_time->getUTCTime();
 }

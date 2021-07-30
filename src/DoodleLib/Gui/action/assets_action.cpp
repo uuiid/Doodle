@@ -7,6 +7,7 @@
 #include <Metadata/Assets.h>
 #include <Metadata/Episodes.h>
 #include <Metadata/MetadataFactory.h>
+#include <Metadata/Metadata_cpp.h>
 #include <Metadata/Shot.h>
 
 namespace doodle {
@@ -87,10 +88,9 @@ actn_episode_set::actn_episode_set() {
 }
 
 long_term_ptr actn_shot_set::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  _arg_type   = sig_get_arg().value();
+  _arg_type = sig_get_arg().value();
   if (_arg_type.is_cancel)
     return {};
-
 
   auto k_item = std::dynamic_pointer_cast<Shot>(in_data);
   k_item->setShot(_arg_type.date);
@@ -102,7 +102,7 @@ actn_shot_set::actn_shot_set() {
 }
 
 long_term_ptr actn_shotab_set::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  _arg_type   = sig_get_arg().value();
+  _arg_type = sig_get_arg().value();
 
   if (_arg_type.is_cancel)
     return {};
@@ -127,4 +127,33 @@ actn_assets_setname::actn_assets_setname() {
   p_name = "设置名称";
 }
 
+actn_season_create::actn_season_create() {
+  p_name = "创建季数";
+}
+long_term_ptr actn_season_create::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+  _arg_type = sig_get_arg().value();
+
+  if (_arg_type.is_cancel)
+    return {};
+
+  auto k_item = std::make_shared<season>(in_parent, _arg_type.date);
+  in_parent->child_item.push_back_sig(k_item);
+  k_item->updata_db();
+  return {};
+}
+actn_season_set::actn_season_set() {
+  p_name = "设置季数";
+}
+long_term_ptr actn_season_set::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+  _arg_type = sig_get_arg().value();
+  if (_arg_type.is_cancel)
+    return {};
+
+  auto item = std::dynamic_pointer_cast<season>(in_data);
+  if (!item)
+    return {};
+  item->set_season(_arg_type.date);
+  item->updata_db();
+  return {};
+}
 }  // namespace doodle

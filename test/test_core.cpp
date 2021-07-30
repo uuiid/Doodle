@@ -173,83 +173,8 @@ TEST_F(CoreTest, create_meatdata) {
     set.writeDoodleLocalSet();
   }
 }
-TEST_F(CoreTest, load_meatdata) {
-  using namespace doodle;
-  auto k_f = std::make_shared<MetadataFactory>();
-  //加载文件
-  auto ptj = set.get_project();
-  ptj->select_indb(k_f);
-  std::cout << ptj->showStr() << std::endl;
-  ASSERT_TRUE(ptj->getMetadataFactory() == k_f);
-  std::cout << ptj->child_item.size() << std::endl;
 
-  for (const auto& it : ptj->child_item) {
-    std::cout << std::setw(4) << "|->" << it->showStr() << std::endl;
-    it->select_indb(k_f);
-    ASSERT_TRUE(it->getMetadataFactory() == k_f);
 
-    for (const auto& it1 : it->child_item) {
-      std::cout << std::setw(7) << "|->" << it1->showStr() << std::endl;
-    }
-  }
-  auto& k_c  = ptj->child_item;
-  auto it_tc = std::find_if(k_c.begin(), k_c.end(),
-                            [](const MetadataPtr& ptr) {
-                              return ptr->str() == "test_m_parent";
-                            });
-  ASSERT_TRUE(it_tc != k_c.end());
-  auto it_tp = std::find_if(k_c.begin(), k_c.end(),
-                            [](const MetadataPtr& ptr) {
-                              return ptr->str() == "ep0010";
-                            });
-  ASSERT_TRUE(it_tp != k_c.end());
-  ASSERT_TRUE((*it_tc)->getParent() == ptj);
-  ASSERT_TRUE((*it_tc)->getMetadataFactory() == k_f);
-  auto tc = *it_tc;
-  auto tp = *it_tp;
-  tp->child_item.push_back_sig(tc);
-  tc->updata_db(k_f);
-  ASSERT_TRUE(tc->getParent() == tp);
-}
-TEST_F(CoreTest, modify_meatdata) {
-  using namespace doodle;
-  auto k_f = std::make_shared<MetadataFactory>();
-  //加载文件
-  auto ptj = set.get_project();
-  ptj->select_indb(k_f);
-  std::cout << ptj->showStr() << std::endl;
-  ASSERT_TRUE(ptj->getMetadataFactory() == k_f);
-  std::cout << ptj->child_item.size() << std::endl;
-
-  for (const auto& it : ptj->child_item) {
-    std::cout << std::setw(4) << "|->" << it->showStr() << std::endl;
-    it->select_indb(k_f);
-    ASSERT_TRUE(it->getMetadataFactory() == k_f);
-    it->sortChildItems();
-    for (const auto& it1 : it->child_item) {
-      it1->select_indb(k_f);
-      std::cout << std::setw(7) << "|->" << it1->showStr() << std::endl;
-      for (const auto& it2 : it1->child_item) {
-        it2->select_indb(k_f);
-        std::cout << std::setw(10) << "|->" << it2->showStr() << std::endl;
-      }
-    }
-  }
-  auto& k_c  = ptj->child_item;
-  auto it_tp = std::find_if(k_c.begin(), k_c.end(),
-                            [](const MetadataPtr& ptr) {
-                              return ptr->str() == "ep0010";
-                            });
-  ASSERT_TRUE(it_tp != k_c.end());
-  auto& k_c1 = (*it_tp)->child_item;
-  auto it_tc = std::find_if(k_c1.begin(), k_c1.end(),
-                            [](const MetadataPtr& ptr) {
-                              return ptr->str() == "test_m_parent";
-                            });
-  ASSERT_TRUE(it_tc != k_c1.end());
-  ASSERT_TRUE((*it_tc)->getParent() != ptj);
-  ASSERT_TRUE((*it_tc)->getParent() == *it_tp);
-}
 TEST_F(CoreTest, loadUe4ProjectFile) {
   ASSERT_TRUE(doodle::FSys::exists(p_ue4_path));
 

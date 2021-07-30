@@ -26,11 +26,11 @@ Ue4Project::Ue4Project(FSys::path project_path)
   p_ue_path = ue.Path();
 }
 
-void Ue4Project::addUe4ProjectPlugins(const std::vector<std::string>& strs) const {
+void Ue4Project::addUe4ProjectPlugins(const std::vector<std::string>& in_strs) const {
   FSys::ifstream k_ifile{p_ue_Project_path, std::ios::in};
 
   auto k_ue = nlohmann::json::parse(k_ifile).get<Ue4ProjectFile>();
-  for (auto str : strs) {
+  for (auto str : in_strs) {
     auto it = std::find_if(
         k_ue.Plugins.begin(), k_ue.Plugins.end(),
         [&str](const Ue4ProjectFilePulgins& plug) { return plug.Name == str; });

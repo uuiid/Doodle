@@ -14,6 +14,14 @@ season::season(std::weak_ptr<Metadata> in_metadata, std::int32_t in_)
     : Metadata(in_metadata),
       p_int(0) {
 }
+
+void season::set_season(std::int32_t in_) {
+  p_int = in_;
+}
+
+std::int32_t season::get_season(std::int32_t in_) const {
+  return p_int;
+}
 std::string season::str() const {
   return fmt::format("season_{}", p_int);
 }

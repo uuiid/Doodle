@@ -176,5 +176,6 @@
     },
     "C_Cpp.exclusionPolicy": "checkFolders",
     "cmake.buildBeforeRun": false,
-    "testMate.cpp.test.workingDirectory": "${absDirpath}"
+    "testMate.cpp.test.workingDirectory": "${absDirpath}",
+    "editor.formatOnSaveMode": "modifications"
 }
