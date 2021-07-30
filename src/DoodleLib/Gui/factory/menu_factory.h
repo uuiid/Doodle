@@ -69,7 +69,7 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
 
  protected:
   void create_assets();
-  void creare_episodes();
+  void create_episodes();
   void create_shot();
   void create_assets_file();
   void create_season();

@@ -204,7 +204,7 @@ void menu_factory::create_assets() {
     return actn_assets_create::arg{name.value()};
   });
 }
-void menu_factory::creare_episodes() {
+void menu_factory::create_episodes() {
   auto k_c_eps = std::make_shared<actn_episode_create>();
   p_action.push_back(k_c_eps);
   k_c_eps->sig_get_arg.connect([this]() {
@@ -511,7 +511,7 @@ menu_factory_assets::menu_factory_assets(nana::window in_window) : menu_factory(
 void menu_factory_assets::create_menu(const ProjectPtr& in_ptr) {
   if (p_parent) {
     create_assets();
-    creare_episodes();
+    create_episodes();
     create_shot();
     create_season();
   }
@@ -519,7 +519,7 @@ void menu_factory_assets::create_menu(const ProjectPtr& in_ptr) {
 void menu_factory_assets::create_menu(const AssetsPtr& in_ptr) {
   if (p_parent) {
     create_assets();
-    creare_episodes();
+    create_episodes();
     create_shot();
     create_season();
   }
@@ -532,7 +532,7 @@ void menu_factory_assets::create_menu(const AssetsPtr& in_ptr) {
 void menu_factory_assets::create_menu(const EpisodesPtr& in_ptr) {
   if (p_parent) {
     create_assets();
-    creare_episodes();
+    create_episodes();
     create_shot();
     create_season();
   }
@@ -545,7 +545,7 @@ void menu_factory_assets::create_menu(const EpisodesPtr& in_ptr) {
 void menu_factory_assets::create_menu(const ShotPtr& in_ptr) {
   if (p_parent) {
     create_assets();
-    creare_episodes();
+    create_episodes();
     create_shot();
     create_season();
   }
@@ -560,7 +560,7 @@ void menu_factory_assets::create_menu(const ShotPtr& in_ptr) {
 void menu_factory_assets::create_menu(const season_ptr& in_ptr) {
   if (p_parent) {
     create_assets();
-    creare_episodes();
+    create_episodes();
     create_shot();
     create_season();
   }
