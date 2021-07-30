@@ -54,6 +54,7 @@
 #include <DoodleLib/core/Util.h>
 #include <DoodleLib/core/observable_container.h>
 #include <DoodleLib/core/static_value.h>
+#include <DoodleLib/core/tree_container.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/libWarp/CerealWarp.h>
 #include <DoodleLib/libWarp/WinReg.hpp>
