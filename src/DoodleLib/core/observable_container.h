@@ -12,6 +12,26 @@
 namespace doodle {
 
 namespace details {
+template <typename T, typename Enable = void>
+struct is_smart_pointer {
+  enum { value = false };
+};
+
+template <typename T>
+struct is_smart_pointer<T, typename std::enable_if<std::is_same<typename std::remove_cv<T>::type, std::shared_ptr<typename T::element_type>>::value>::type> {
+  enum { value = true };
+};
+
+template <typename T>
+struct is_smart_pointer<T, typename std::enable_if<std::is_same<typename std::remove_cv<T>::type, std::unique_ptr<typename T::element_type>>::value>::type> {
+  enum { value = true };
+};
+
+template <typename T>
+struct is_smart_pointer<T, typename std::enable_if<std::is_same<typename std::remove_cv<T>::type, std::weak_ptr<typename T::element_type>>::value>::type> {
+  enum { value = true };
+};
+
 /**
  * @brief 纯虚的预处理类
  * @tparam container_type 容器类型
@@ -53,7 +73,6 @@ class pretreatment : public abs_pretreatment<container_type> {
 /**
  * @brief 一个可观察的容器
  * @tparam container_type 容器类型
- * @tparam pretreatment 容器的预处理, 在使用发射型号时,可以使用这个类将值进行一次预处理, 这个类的方法优先于所有的信号
  *
  * @warning 在信号中更改容器内容, 会导致递归调用, 这是请使用 boost::signals2::shared_connection_block 阻止插槽
  * 或者使用不带 _sig 后缀的函数名称,
@@ -97,9 +116,9 @@ class observable_container : public container_type, public details::no_copy {
         sig_resize(),
         sig_swap(){};
   /**
- * @brief
- * @param
- */
+   * @brief
+   * @param
+   */
   explicit observable_container(const _allocator_type& _al)
       : container_type(_al),
         sig_begin_clear(),
@@ -188,7 +207,7 @@ class observable_container : public container_type, public details::no_copy {
     return _k_where;
   }
 
-  _iterator erase_sig(const _value_type& _val) {
+  _iterator erase_sig(_const_reference _val) {
     auto it = std::find(container_type::begin(), container_type::end(), _val);
     if (it == container_type::end())
       throw std::runtime_error{"在容器内找不到值"};
@@ -200,7 +219,7 @@ class observable_container : public container_type, public details::no_copy {
    * 向后方追加值
    * @param _val 值
    */
-  void push_back_sig(const _value_type& _val) {
+  void push_back_sig(_const_reference _val) {
     //    if constexpr (!std::is_same_v<pretreatment, details::pretreatment<container_type> >)
     //      _pre->push_back(_val);
     sig_begin_push_back(_val);
@@ -237,6 +256,36 @@ class observable_container : public container_type, public details::no_copy {
     sig_begin_swap(other);
     container_type::swap(other);
     sig_swap(*this);
+  }
+  template <class Fun>
+  void sort_sig(Fun fun) {
+    sig_begin_sort(*this);
+    std::sort(container_type::begin(), container_type::end(), fun);
+    sig_end_sort(*this);
+  }
+
+  void sort_sig() {
+    sig_begin_sort(*this);
+    if constexpr (details::is_smart_pointer<_value_type>::value)
+      std::sort(container_type::begin(), container_type::end(), [](_const_reference r, _const_reference l) {
+        return *r < *l;
+      });
+    else
+      std::sort(container_type::begin(), container_type::end(), [](_const_reference r, _const_reference l) {
+        return r < l;
+      });
+    sig_end_sort(*this);
+  }
+
+  void sort() {
+    if constexpr (details::is_smart_pointer<_value_type>::value)
+      std::sort(container_type::begin(), container_type::end(), [](_const_reference r, _const_reference l) {
+        return *r < *l;
+      });
+    else
+      std::sort(container_type::begin(), container_type::end(), [](_const_reference r, _const_reference l) {
+        return r < l;
+      });
   }
   //  _iterator insert(_const_iterator _where, const _size_type _count, const _value_type& _val) {
   //    auto _k_where = container_type::insert(_where, _count, _val);
@@ -280,11 +329,11 @@ class observable_container : public container_type, public details::no_copy {
    */
   boost::signals2::signal<void(const container_type& val)> sig_begin_swap;
 
-    /**
+  /**
    * @brief 排序开始回调
-   * 
+   *
    */
-  boost::signals2::signal<void (const container_type& val)> sig_begin_sort;
+  boost::signals2::signal<void(const container_type& val)> sig_begin_sort;
 
   //----------------------------------------------------------------------------
 
@@ -313,16 +362,15 @@ class observable_container : public container_type, public details::no_copy {
    */
   boost::signals2::signal<void(const container_type& val)> sig_swap;
 
-
   /**
    * @brief 排序回调
-   * 
+   *
    */
-  boost::signals2::signal<void (const container_type& val)> sig_sort;
+  boost::signals2::signal<void(const container_type& val)> sig_sort;
 
   using container_type::operator=;
   using container_type::operator[];
 };
-//using my_str = observable_container<std::vector<std::string> >;
-//using mt_map = observable_container<std::map<std::string, std::string> >;
+// using my_str = observable_container<std::vector<std::string> >;
+// using mt_map = observable_container<std::map<std::string, std::string> >;
 }  // namespace doodle
