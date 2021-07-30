@@ -84,6 +84,7 @@ add_doodle(
         main/test/test_server.cpp
         main/test/test_external.cpp
 )
+target_compile_options(doodle_test PRIVATE /bigobj)
 include_directories(${PROJECT_SOURCE_DIR}/external/csv_parser/include)
 include(Catch)
 catch_discover_tests(doodle_test)
