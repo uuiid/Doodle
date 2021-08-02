@@ -17,10 +17,4 @@ TEST_CASE("st tree", "[external]") {
   t.root().find("a");
 }
 TEST_CASE("my tree", "[tree]") {
-  using namespace doodle;
-  auto k_tree = std::make_shared<tree_container<std::string>>();
-  auto k_p    = k_tree->get_root();
-  std::cout << std::boolalpha;
-  std::cout << k_tree->has_parent() << std::endl;
-  std::cout << k_tree->is_root() << std::endl;
 }

@@ -123,6 +123,7 @@ set(
     core/Ue4Setting.cpp
     core/Util.cpp
     core/static_value.cpp
+    core/tree_container.cpp
     libWarp/nana_warp.cpp
     rpc/RpcFileSystemClient.cpp
     rpc/RpcFileSystemServer.cpp

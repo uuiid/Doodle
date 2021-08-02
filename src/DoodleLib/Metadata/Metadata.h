@@ -38,7 +38,7 @@ class database_action {
  */
   factory_ptr p_factory;
 
-  Class *metadate_self;
+  Class *metadata_self;
   [[nodiscard]] bool is_saved() const{
     return !p_need_save;
   };
@@ -52,12 +52,12 @@ class database_action {
     p_need_load = in_need;
   };
   [[nodiscard]] bool is_install() const{
-    return metadate_self->p_id > 0;
+    return metadata_self->p_id > 0;
   };
 
  public:
   explicit database_action(Class *in_ptr)
-      : metadate_self(in_ptr),
+      : metadata_self(in_ptr),
         p_factory(),
         p_need_load(true),
         p_need_save(true){};
@@ -75,7 +75,7 @@ class database_action {
     if (is_loaded())
       return;
 
-    p_factory->select_indb(metadate_self);
+    p_factory->select_indb(metadata_self);
     loaded();
     saved();
   };
@@ -91,12 +91,12 @@ class database_action {
       return;
 
     ///在这里测试使用具有父级， 并且如果有父级， 还要更新父id， 那么就可以断定也要更新父级的记录
-    if (metadate_self->hasParent() && p_factory) {
-      metadate_self->p_parent.lock()->updata_db(p_factory);
+    if (metadata_self->hasParent() && p_factory) {
+      metadata_self->p_parent.lock()->updata_db(p_factory);
     }
 
     if (is_install())
-      p_factory->updata_db(metadate_self);
+      p_factory->updata_db(metadata_self);
     else
       insert_into(p_factory);
 
@@ -111,7 +111,7 @@ class database_action {
     if (in_factory)
       p_factory = in_factory;
 
-    p_factory->deleteData(metadate_self);
+    p_factory->deleteData(metadata_self);
   };
   /**
    * @brief 插入函数
@@ -121,7 +121,7 @@ class database_action {
   void insert_into(const factory_ptr &in_factory = {}) {
     if (in_factory)
       p_factory = in_factory;
-    p_factory->insert_into(metadate_self);
+    p_factory->insert_into(metadata_self);
     saved();
     loaded();
   };

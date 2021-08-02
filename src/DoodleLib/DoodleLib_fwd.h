@@ -90,6 +90,7 @@ using namespace std::chrono;
 using namespace date;
 
 using hours_double = duration<std::double_t, std::ratio<3600> >;
+using sys_time_pos = time_point<system_clock>;
 
 /// TODO: 这里我们暂时使用周六和周日作为判断, 但是实际上还有各种假期和其他情况要计入
 bool is_rest_day(const sys_days &in_days);

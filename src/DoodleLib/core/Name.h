@@ -6,20 +6,33 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 
 namespace doodle {
-class Name {
+class user {
+ public:
+  using time_pair_list = std::vector<std::pair<chrono::sys_time_pos, chrono::sys_time_pos> >;
+
+ private:
   std::string p_string_;
   std::string p_ENUS;
 
+  time_pair_list p_time_rest;
+  time_pair_list p_time_work;
+
  public:
-  explicit Name(std::string in_string);
-  explicit Name(std::string in_string, std::string in_ENUS);
+  explicit user(std::string in_string);
+  explicit user(std::string in_string, std::string in_ENUS);
 
-  [[nodiscard]] const std::string& getName() const;
-  void setName(const std::string& in_string);
-  void setName(const std::string& in_string, const std::string& in_ENUS);
+  [[nodiscard]] const std::string& get_name() const;
+  void set_name(const std::string& in_string);
+  void set_name(const std::string& in_string, const std::string& in_ENUS);
 
-  [[nodiscard]] const std::string& getEnus() const;
-  void setEnus(const std::string& in_string);
+  [[nodiscard]] const std::string& get_enus() const;
+  void set_enus(const std::string& in_string);
+
+  const time_pair_list& get_time_work_list() const;
+  time_pair_list& get_time_work_list();
+
+  const time_pair_list& get_time_rest_list() const;
+  time_pair_list& get_time_rest_list();
 };
 
 }  // namespace doodle
