@@ -31,18 +31,18 @@ class database_action {
 
  protected:
   /**
- * 这个是加载或者保存时的工厂
- * 这个工厂会在加载时记录, 或者在第一次保存时记录
- * 同时在添加子物体时也会继承父级的工厂,在整个项目中工厂应该保持一致
- * @warning 基本保证在使用时不空（从逻辑上）
- */
+   * 这个是加载或者保存时的工厂
+   * 这个工厂会在加载时记录, 或者在第一次保存时记录
+   * 同时在添加子物体时也会继承父级的工厂,在整个项目中工厂应该保持一致
+   * @warning 基本保证在使用时不空（从逻辑上）
+   */
   factory_ptr p_factory;
 
   Class *metadata_self;
-  [[nodiscard]] bool is_saved() const{
+  [[nodiscard]] bool is_saved() const {
     return !p_need_save;
   };
-  [[nodiscard]] bool is_loaded() const{
+  [[nodiscard]] bool is_loaded() const {
     return !p_need_load;
   };
   void saved(bool in_need = false) {
@@ -51,7 +51,7 @@ class database_action {
   void loaded(bool in_need = false) {
     p_need_load = in_need;
   };
-  [[nodiscard]] bool is_install() const{
+  [[nodiscard]] bool is_install() const {
     return metadata_self->p_id > 0;
   };
 
@@ -127,24 +127,25 @@ class database_action {
   };
 };
 
-//template <class Class>
-//class menu_create {
-//  Class *menu_self;
+// template <class Class>
+// class menu_create {
+//   Class *menu_self;
 //
-// public:
-//  explicit menu_create(Class *in_ptr)
-//      : menu_self(in_ptr);
-//};
+//  public:
+//   explicit menu_create(Class *in_ptr)
+//       : menu_self(in_ptr);
+// };
 
 /**
  * @warning 这里这个基类是不进行cereal注册的要不然会序列化出错
- *
+ *  TODO: 将父子关系函数进行提取出超类
  */
 class DOODLELIB_API Metadata
     : public std::enable_shared_from_this<Metadata>,
       public database_action<Metadata, MetadataFactory>,
       public details::no_copy {
-  friend database_action<Metadata,MetadataFactory>;
+  friend database_action<Metadata, MetadataFactory>;
+
  public:
   /**
    * @brief 这个枚举是数据库中的枚举， 更改请慎重
@@ -315,6 +316,7 @@ class DOODLELIB_API Metadata
   static MetadataPtr from_DataDb(const DataDb &in_);
   explicit operator DataDb() const;
 
+  friend class cereal::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
 };

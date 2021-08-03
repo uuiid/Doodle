@@ -33,6 +33,20 @@ class user {
 
   const time_pair_list& get_time_rest_list() const;
   time_pair_list& get_time_rest_list();
+
+ private:
+  friend class cereal::access;
+  template <class Archive>
+  void serialize(Archive& ar, std::uint32_t const version);
 };
+template <class Archive>
+void user::serialize(Archive& ar, const std::uint32_t version) {
+  if (version == 1)
+    ar(p_string_,
+       p_ENUS,
+       p_time_rest,
+       p_time_work);
+}
 
 }  // namespace doodle
+CEREAL_CLASS_VERSION(doodle::user, 1)
