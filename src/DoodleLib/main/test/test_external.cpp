@@ -32,7 +32,11 @@ TEST_CASE("my tree", "[tree]") {
 
   SECTION("tree insert") {
     k_tree->insert(tree);
+
     k_tree->insert(tree2);
+    SECTION("tree mut insert") {
+      k_tree->insert(tree);
+    }
     SECTION("remove tree") {
       k_tree->remove(tree);
     }

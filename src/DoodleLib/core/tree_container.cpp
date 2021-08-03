@@ -17,22 +17,25 @@ void tree_node_destroy::operator()(tree_node* in_ptr) {
 tree_node::tree_node()
     : parent(),
       data(),
-      child_item() {
+      child_item(),
+      child_owner() {
 }
 tree_node::tree_node(tree_node* in_parent, MetadataPtr in_data)
     : parent(in_parent),
       data(std::move(in_data)),
-      child_item() {
-  if (parent)
-    parent->child_item.insert(*this);
+      child_item(),
+      child_owner() {
+  //  if (parent)
+  //    parent->child_item.insert(*this);
 }
 
 tree_node::tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data)
     : parent(in_parent.get()),
       data(std::move(in_data)),
-      child_item() {
-  if (parent)
-    parent->child_item.insert(*this);
+      child_item(),
+      child_owner() {
+  //  if (parent)
+  //    parent->child_item.insert(*this);
 }
 tree_node::~tree_node() {
   child_item.clear();
@@ -52,18 +55,23 @@ const tree_node::child_set& tree_node::get_children() const {
   return child_item;
 }
 void tree_node::insert(const tree_node::tree_node_ptr& in_) {
-  insert(*in_);
-}
-void tree_node::insert(tree_node& in_) {
-  if (in_.parent == this)
+  if (in_->parent == this)
     return;
 
-  if (in_.has_parent()) {
-    in_.parent->remove(in_);
-    assert(!in_.is_linked());
+  if (in_->has_parent()) {
+    in_->parent->remove(in_);
+    assert(!in_->is_linked());
   }
-  in_.parent = this;
-  child_item.insert(in_);
+  insert_private(in_);
+}
+void tree_node::insert_private(const tree_node::tree_node_ptr& in_) {
+  in_->parent          = this;
+  auto [k_it, k_is_in] = child_item.insert(*in_);
+  if (k_is_in) {
+    child_owner.insert(in_);
+  } else {
+    DOODLE_LOG_INFO("插入失败, 已经有这个子元素");
+  }
 }
 tree_node::operator MetadataPtr&() {
   return data;
@@ -72,19 +80,19 @@ MetadataPtr& tree_node::get() {
   return data;
 }
 void tree_node::remove(const tree_node_ptr& in_) {
-  remove(*in_);
-}
-
-void tree_node::remove(tree_node& in_) {
-  if (in_ == *this)
+  if (*in_ == *this)
     throw std::runtime_error{"无法移除自己"};
 
-  auto it = child_item.find(in_);
+  auto it = child_item.find(*in_);
   if (it != child_item.end()) {
-    in_.parent = nullptr;
+    in_->parent = nullptr;
     child_item.erase(it);
+    child_owner.erase(in_);
+  } else {
+    DOODLE_LOG_INFO("没有找到子元素");
   }
 }
+
 void tree_node::clear() {
   for (auto& it : child_item) {
     it.parent = nullptr;

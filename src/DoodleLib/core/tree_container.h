@@ -42,6 +42,8 @@ class tree_node : public std::enable_shared_from_this<tree_node>,
   explicit tree_node(tree_node* in_parent, MetadataPtr in_data);
   explicit tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data);
 
+  void insert_private(const tree_node_ptr& in_);
+
  public:
   ~tree_node();
   using tree_node_ptr = std::shared_ptr<tree_node>;
@@ -50,16 +52,18 @@ class tree_node : public std::enable_shared_from_this<tree_node>,
       tree_node,
       boost::intrusive::base_hook<tree_node>,
       boost::intrusive::constant_time_size<false>>;
+  using child_set_owner = std::set<tree_node_ptr>;
 
   template <class... type_arg>
   static tree_node_ptr make_this(type_arg&&... in_arg) {
     auto tmp = std::shared_ptr<tree_node>{
         new tree_node{std::forward<type_arg>(in_arg)...},
         details::tree_node_destroy()};
-    //    if constexpr (sizeof...(in_arg) > 1) {
-    //      if (tmp->has_parent())
-    //        tmp->parent->insert(tmp);
-    //    }
+    /// 非默认构造, 这个时候可以直接检查父物体是否为空后插入
+    if constexpr (sizeof...(in_arg) > 1) {
+      if (tmp->has_parent())
+        tmp->parent->insert_private(tmp);
+    }
     return tmp;
   };
 
@@ -69,9 +73,9 @@ class tree_node : public std::enable_shared_from_this<tree_node>,
   [[nodiscard]] const child_set& get_children() const;
 
   void insert(const tree_node_ptr& in_);
-  void insert(tree_node& in_);
+  //  void insert(tree_node& in_);
   void remove(const tree_node_ptr& in_);
-  void remove(tree_node& in_);
+  //  void remove(tree_node& in_);
   void clear();
 
   bool operator==(const tree_node& in_rhs) const;
@@ -82,16 +86,17 @@ class tree_node : public std::enable_shared_from_this<tree_node>,
   bool operator<=(const tree_node& in_rhs) const;
   bool operator>=(const tree_node& in_rhs) const;
 
-   operator MetadataPtr&();
-   MetadataPtr& get();
+  operator MetadataPtr&();
+  MetadataPtr& get();
 
-   operator const MetadataPtr&() const;
-   const MetadataPtr& get() const;
+  operator const MetadataPtr&() const;
+  const MetadataPtr& get() const;
 
  private:
   tree_node* parent;
   MetadataPtr data;
   child_set child_item;
+  child_set_owner child_owner;
 };
 
 template <class... type_arg>
