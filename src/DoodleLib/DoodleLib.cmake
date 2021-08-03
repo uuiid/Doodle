@@ -47,7 +47,7 @@ set(
     core/CoreSet.h
     core/CoreSql.h
     core/DoodleLib.h
-    core/Name.h
+        Metadata/Name.h
     core/ToolsSetting.h
     core/Ue4Setting.h
     core/Util.h
@@ -119,7 +119,7 @@ set(
     core/CoreSet.cpp
     core/CoreSql.cpp
     core/DoodleLib.cpp
-    core/Name.cpp
+        Metadata/Name.cpp
     core/Ue4Setting.cpp
     core/Util.cpp
     core/static_value.cpp

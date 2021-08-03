@@ -144,7 +144,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   [[nodiscard]] bool has_parent() const;
   [[nodiscard]] tree_node_ptr get_parent() const;
   [[nodiscard]] const child_set& get_children() const;
-  [[nodiscard]] bool has_child() const;
+  [[nodiscard]] bool empty() const;
   void insert(const tree_node_ptr& in_);
   //  void insert(tree_node& in_);
   void remove(const tree_node_ptr& in_);

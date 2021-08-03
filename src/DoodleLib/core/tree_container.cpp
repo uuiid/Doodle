@@ -126,8 +126,8 @@ tree_node::operator const MetadataPtr&() const {
 const MetadataPtr& tree_node::get() const {
   return data;
 }
-bool tree_node::has_child() const {
-  return p_;
+bool tree_node::empty() const {
+  return child_item.empty();
 }
 
 }  // namespace doodle

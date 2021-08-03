@@ -48,7 +48,6 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
 #include <DoodleLib/core/DoodleLib.h>
-#include <DoodleLib/core/Name.h>
 #include <DoodleLib/core/ToolsSetting.h>
 #include <DoodleLib/core/Ue4Setting.h>
 #include <DoodleLib/core/Util.h>
@@ -57,14 +56,8 @@
 #include <DoodleLib/core/tree_container.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/libWarp/CerealWarp.h>
-#include <DoodleLib/libWarp/WinReg.hpp>
-#include <DoodleLib/libWarp/cache.hpp>
-#include <DoodleLib/libWarp/cache_policy.hpp>
 #include <DoodleLib/libWarp/cmrcWarp.h>
-#include <DoodleLib/libWarp/fifo_cache_policy.hpp>
 #include <DoodleLib/libWarp/json_warp.h>
-#include <DoodleLib/libWarp/lfu_cache_policy.hpp>
-#include <DoodleLib/libWarp/lru_cache_policy.hpp>
 #include <DoodleLib/libWarp/nana_warp.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 #include <DoodleLib/libWarp/protobuf_warp_cpp.h>
@@ -79,3 +72,11 @@
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <DoodleLib/threadPool/long_term.h>
 #include <DoodleLib/toolkit/toolkit.h>
+#include <Metadata/Name.h>
+
+#include <DoodleLib/libWarp/WinReg.hpp>
+#include <DoodleLib/libWarp/cache.hpp>
+#include <DoodleLib/libWarp/cache_policy.hpp>
+#include <DoodleLib/libWarp/fifo_cache_policy.hpp>
+#include <DoodleLib/libWarp/lfu_cache_policy.hpp>
+#include <DoodleLib/libWarp/lru_cache_policy.hpp>

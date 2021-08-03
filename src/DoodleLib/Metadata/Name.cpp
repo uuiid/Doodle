@@ -2,8 +2,8 @@
 // Created by TD on 2021/5/7.
 //
 
-#include <DoodleLib/core/Name.h>
-#include <PinYIn/convert.h>
+#include <Metadata/Name.h>
+#include <PinYin/convert.h>
 namespace doodle {
 
 user::user(std::string in_string)
