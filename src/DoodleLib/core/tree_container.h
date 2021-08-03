@@ -11,6 +11,7 @@
 #include <boost/intrusive/pack_options.hpp>
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/trivial_value_traits.hpp>
+#include <boost/signals2.hpp>
 
 namespace doodle {
 
@@ -24,19 +25,91 @@ template <class... type_arg>
 tree_node_ptr make_tree(type_arg&&... in_arg);
 
 namespace details {
-class tree_node_destroy : public std::default_delete<tree_node> {
+class DOODLELIB_API tree_node_destroy : public std::default_delete<tree_node> {
  public:
   tree_node_destroy() = default;
   void operator()(tree_node* in_ptr);
+};
+
+template <class value, class container>
+class DOODLELIB_API observe : public no_copy {
+ public:
+  using _value_type    = value;
+  using container_type = container;
+  observe()            = default;
+
+  /**
+   * @brief 开始清理时发出的信号
+   */
+  boost::signals2::signal<void()> sig_begin_clear;
+  /**
+   * @brief 开始插入时发出的信号
+   */
+  boost::signals2::signal<void(const _value_type& val)> sig_begin_insert;
+  /**
+   * @brief 开始擦除时发出的信号
+   */
+  boost::signals2::signal<void(const _value_type& val)> sig_begin_erase;
+  /**
+   * @brief 开始追加时发出的信号
+   */
+  boost::signals2::signal<void(const _value_type& val)> sig_begin_push_back;
+  /**
+   * @brief 开始调整大小时发出的信号
+   */
+  boost::signals2::signal<void(std::size_t where)> sig_begin_resize;
+  /**
+   * @brief 开始交换容器内容时发出的信号
+   */
+  boost::signals2::signal<void(const container_type& val)> sig_begin_swap;
+
+  /**
+   * @brief 排序开始回调
+   *
+   */
+  boost::signals2::signal<void(const container_type& val)> sig_begin_sort;
+
+  //----------------------------------------------------------------------------
+
+  /**
+   * @brief 清理时发出的信号
+   */
+  boost::signals2::signal<void()> sig_clear;
+  /**
+   * @brief 插入时发出的信号
+   */
+  boost::signals2::signal<void(const _value_type& val)> sig_insert;
+  /**
+   * @brief 擦除时发出的信号
+   */
+  boost::signals2::signal<void(const _value_type& val)> sig_erase;
+  /**
+   * @brief 追加时发出的信号
+   */
+  boost::signals2::signal<void(const _value_type& val)> sig_push_back;
+  /**
+   * @brief 调整大小时发出的信号
+   */
+  boost::signals2::signal<void(std::size_t where)> sig_resize;
+  /**
+   * @brief 交换容器内容时发出的信号
+   */
+  boost::signals2::signal<void(const container_type& val)> sig_swap;
+
+  /**
+   * @brief 排序回调
+   *
+   */
+  boost::signals2::signal<void(const container_type& val)> sig_sort;
 };
 }  // namespace details
 
 /**
  * @brief 这是一个树结构
  */
-class tree_node : public std::enable_shared_from_this<tree_node>,
-                  public set_base_hook,
-                  public details::no_copy {
+class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
+                                public set_base_hook,
+                                public details::no_copy {
   friend details::tree_node_destroy;
   tree_node();
   explicit tree_node(tree_node* in_parent, MetadataPtr in_data);
@@ -71,7 +144,7 @@ class tree_node : public std::enable_shared_from_this<tree_node>,
   [[nodiscard]] bool has_parent() const;
   [[nodiscard]] tree_node_ptr get_parent() const;
   [[nodiscard]] const child_set& get_children() const;
-
+  [[nodiscard]] bool has_child() const;
   void insert(const tree_node_ptr& in_);
   //  void insert(tree_node& in_);
   void remove(const tree_node_ptr& in_);
@@ -97,6 +170,7 @@ class tree_node : public std::enable_shared_from_this<tree_node>,
   MetadataPtr data;
   child_set child_item;
   child_set_owner child_owner;
+  details::observe<MetadataPtr, child_set> sig_class;
 };
 
 template <class... type_arg>

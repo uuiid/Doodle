@@ -37,6 +37,9 @@ class database_action {
    * @warning 基本保证在使用时不空（从逻辑上）
    */
   factory_ptr p_factory;
+  ///这个时文件的根名称， 基本判断相同就直接比较他俩就行
+
+  std::uint64_t p_id;
 
   Class *metadata_self;
   [[nodiscard]] bool is_saved() const {
@@ -52,7 +55,7 @@ class database_action {
     p_need_load = in_need;
   };
   [[nodiscard]] bool is_install() const {
-    return metadata_self->p_id > 0;
+    return p_id > 0;
   };
 
  public:
@@ -60,7 +63,12 @@ class database_action {
       : metadata_self(in_ptr),
         p_factory(),
         p_need_load(true),
-        p_need_save(true){};
+        p_need_save(true),
+        p_id(0){};
+
+  std::uint64_t getId() const {
+    return p_id;
+  };  ///< 获得数据库id
 
   /**
    * @brief 这里是使用工厂进行加载和保存的函数
@@ -89,11 +97,6 @@ class database_action {
 
     if (is_saved())
       return;
-
-    ///在这里测试使用具有父级， 并且如果有父级， 还要更新父id， 那么就可以断定也要更新父级的记录
-    if (metadata_self->hasParent() && p_factory) {
-      metadata_self->p_parent.lock()->updata_db(p_factory);
-    }
 
     if (is_install())
       p_factory->updata_db(metadata_self);
@@ -144,8 +147,6 @@ class DOODLELIB_API Metadata
     : public std::enable_shared_from_this<Metadata>,
       public database_action<Metadata, MetadataFactory>,
       public details::no_copy {
-  friend database_action<Metadata, MetadataFactory>;
-
  public:
   /**
    * @brief 这个枚举是数据库中的枚举， 更改请慎重
@@ -176,8 +177,6 @@ class DOODLELIB_API Metadata
   ///弱父对象的指针
   std::weak_ptr<Metadata> p_parent;
 
-  ///这个时文件的根名称， 基本判断相同就直接比较他俩就行
-  uint64_t p_id;
   ///这个时父对象的root
   std::optional<uint64_t> p_parent_id;
 
@@ -235,7 +234,6 @@ class DOODLELIB_API Metadata
   [[nodiscard]] const std::string &getUUID() const;  ///< 获得uuid
   [[nodiscard]] FSys::path getUrlUUID() const;       ///< 这个是获得所属项目的保持相对路径
 
-  uint64_t getId() const;  ///< 获得数据库id
   /**
    * 获得字符串id
    * @return id的字符串形式

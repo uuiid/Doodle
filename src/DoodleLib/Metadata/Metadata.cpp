@@ -18,7 +18,6 @@ Metadata::Metadata()
     : database_action<Metadata, MetadataFactory>(this),
       std::enable_shared_from_this<Metadata>(),
       p_parent(),
-      p_id(0),
       p_parent_id(),
       p_uuid(std::move(CoreSet::getSet().getUUIDStr())),
       p_updata_parent_id(false),
@@ -35,7 +34,6 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
     : database_action<Metadata, MetadataFactory>(this),
       std::enable_shared_from_this<Metadata>(),
       p_parent(std::move(in_metadata)),
-      p_id(0),
       p_parent_id(p_parent.lock()->p_id),
       p_uuid(std::move(CoreSet::getSet().getUUIDStr())),
       p_updata_parent_id(false),
@@ -119,9 +117,6 @@ FSys::path Metadata::getUrlUUID() const {
   name /= p_uuid.substr(0, 3);
   name /= p_uuid;
   return name;
-}
-uint64_t Metadata::getId() const {
-  return p_id;
 }
 
 void Metadata::set_meta_typp(const meta_type &in_meta) {

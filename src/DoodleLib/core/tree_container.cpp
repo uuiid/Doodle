@@ -18,13 +18,15 @@ tree_node::tree_node()
     : parent(),
       data(),
       child_item(),
-      child_owner() {
+      child_owner(),
+      sig_class() {
 }
 tree_node::tree_node(tree_node* in_parent, MetadataPtr in_data)
     : parent(in_parent),
       data(std::move(in_data)),
       child_item(),
-      child_owner() {
+      child_owner(),
+      sig_class() {
   //  if (parent)
   //    parent->child_item.insert(*this);
 }
@@ -33,7 +35,8 @@ tree_node::tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data)
     : parent(in_parent.get()),
       data(std::move(in_data)),
       child_item(),
-      child_owner() {
+      child_owner(),
+      sig_class() {
   //  if (parent)
   //    parent->child_item.insert(*this);
 }
@@ -122,6 +125,9 @@ tree_node::operator const MetadataPtr&() const {
 }
 const MetadataPtr& tree_node::get() const {
   return data;
+}
+bool tree_node::has_child() const {
+  return p_;
 }
 
 }  // namespace doodle

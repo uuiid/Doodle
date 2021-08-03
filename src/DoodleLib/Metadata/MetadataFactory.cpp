@@ -31,7 +31,13 @@ bool MetadataFactory::insert_into(Metadata *in_metadata) const {
   return true;
 }
 void MetadataFactory::updata_db(Metadata *in_metadata) const {
-  this->p_rpcClien.lock()->UpdateMetadata(in_metadata->shared_from_this(), in_metadata->p_updata_parent_id);
+  ///在这里测试使用具有父级， 并且如果有父级， 还要更新父id， 那么就可以断定也要更新父级的记录
+  auto k_c = this->p_rpcClien.lock();
+  if (in_metadata->hasParent()) {
+    auto k_p = in_metadata->p_parent.lock();
+    k_p->updata_db();
+  }
+  k_c->UpdateMetadata(in_metadata->shared_from_this(), in_metadata->p_updata_parent_id);
 }
 
 void MetadataFactory::select_indb(Metadata *in_metadata) const {
