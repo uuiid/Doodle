@@ -21,8 +21,20 @@ rpc_filesystem::file_mutex_ptr RpcFileSystemServer::get_mutex(const FSys::path& 
 RpcFileSystemServer::RpcFileSystemServer()
     : FileSystemServer::Service(),
       p_set(CoreSet::getSet()),
-      p_cache(1024 * 1024 * 10),
-      _mutex(1024 * 1024 * 100) {
+      p_cache(
+#ifdef NDEBUG
+              1024 * 1024 * 10
+#else
+              10
+#endif
+          ),
+      _mutex(
+#ifdef NDEBUG
+    1024 * 1024 * 100
+#else
+10
+#endif
+) {
 }
 
 grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {

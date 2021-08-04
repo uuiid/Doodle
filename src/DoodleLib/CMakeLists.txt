@@ -23,12 +23,14 @@ doodle_sqlpp_generate(
         OUT_LISTS_sqlpp
         LISTS_FILES
         core/000-metadatatab.sql
+        core/001-usertab.sql
 )
 doodle_grpc_generate(
         OUT_LISTS_GRPC
         LISTS_FILES
         rpc/MetadataServer.proto
         rpc/FileSystemServer.proto
+        rpc/UserMessage.proto
 )
 
 add_doodle(

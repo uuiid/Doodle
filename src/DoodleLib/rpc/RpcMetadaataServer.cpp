@@ -47,7 +47,13 @@ void RpcMetadaataServer::put_cache_and_file(const FSys::path &key, const std::st
 RpcMetadaataServer::RpcMetadaataServer()
     : p_set(CoreSet::getSet()),
       p_thread(),
-      p_cache(1024 * 1024, caches::LRUCachePolicy<std::string>(), [this](const std::string &path, const std::string &value) {
+      p_cache(
+#ifdef NDEBUG
+          1024 * 1024
+#else
+          10
+#endif
+          , caches::LRUCachePolicy<std::string>(), [this](const std::string &path, const std::string &value) {
         if (value.empty())
           return;
         FSys::ofstream k_ofstream{path, std::ios::out | std::ios::binary};

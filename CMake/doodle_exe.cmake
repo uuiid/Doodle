@@ -40,7 +40,7 @@ function(doodle_grpc_generate out_lists)
                 --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
                 ${_NAME}
                 WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-                MAIN_DEPENDENCY ${DOODLE_GRPC_GENERATE_NAME}
+                MAIN_DEPENDENCY ${_PATH}
         )
     endforeach ()
 
@@ -75,19 +75,20 @@ function(doodle_sqlpp_generate out_lists)
                 _OUT
                 ${CMAKE_CURRENT_BINARY_DIR}/core/${CLEAN_NAME}_sql.h)
         add_custom_command(
-                OUTPUT "${_OUT}"
+                OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/core/${CLEAN_NAME}_sql.h"
                 COMMAND ${PROJECT_SOURCE_DIR}/venv/Scripts/Activate.bat
                 COMMAND py
                 ARGS $<TARGET_FILE:sqlpp11::ddl2cpp>
                 ${_PATH}
                 ${CMAKE_CURRENT_BINARY_DIR}/core/${CLEAN_NAME}_sql
                 doodle
-                MAIN_DEPENDENCY ${LIST}
+                MAIN_DEPENDENCY ${_PATH}
         )
     endforeach ()
     set("${out_lists}"
             ${_OUT}
             PARENT_SCOPE)
+    cmake_print_variables(_OUT)
 endfunction()
 
 
