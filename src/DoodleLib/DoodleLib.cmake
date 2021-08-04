@@ -18,11 +18,13 @@ set(
     Gui/action/actn_excel.h
     Gui/action/actn_image_and_movie.h
     Gui/action/actn_maya_export.h
+    Gui/action/actn_tool_box.h
     Gui/action/actn_up_paths.h
     Gui/action/assets_action.h
     Gui/action/assets_file_action.h
     Gui/action/project_action.h
     Gui/factory/menu_factory.h
+    Gui/factory/tool_box_menu_factory.h
     Gui/main_windows.h
     Gui/progress.h
     Gui/setting_windows.h
@@ -36,6 +38,7 @@ set(
     Metadata/Metadata.h
     Metadata/MetadataFactory.h
     Metadata/Metadata_cpp.h
+    Metadata/Name.h
     Metadata/Project.h
     Metadata/Shot.h
     Metadata/TimeDuration.h
@@ -47,7 +50,6 @@ set(
     core/CoreSet.h
     core/CoreSql.h
     core/DoodleLib.h
-        Metadata/Name.h
     core/ToolsSetting.h
     core/Ue4Setting.h
     core/Util.h
@@ -93,11 +95,13 @@ set(
     Gui/action/actn_excel.cpp
     Gui/action/actn_image_and_movie.cpp
     Gui/action/actn_maya_export.cpp
+    Gui/action/actn_tool_box.cpp
     Gui/action/actn_up_paths.cpp
     Gui/action/assets_action.cpp
     Gui/action/assets_file_action.cpp
     Gui/action/project_action.cpp
     Gui/factory/menu_factory.cpp
+    Gui/factory/tool_box_menu_factory.cpp
     Gui/main_windows.cpp
     Gui/progress.cpp
     Gui/setting_windows.cpp
@@ -109,6 +113,7 @@ set(
     Metadata/Episodes.cpp
     Metadata/Metadata.cpp
     Metadata/MetadataFactory.cpp
+    Metadata/Name.cpp
     Metadata/Project.cpp
     Metadata/Shot.cpp
     Metadata/TimeDuration.cpp
@@ -119,7 +124,6 @@ set(
     core/CoreSet.cpp
     core/CoreSql.cpp
     core/DoodleLib.cpp
-        Metadata/Name.cpp
     core/Ue4Setting.cpp
     core/Util.cpp
     core/static_value.cpp

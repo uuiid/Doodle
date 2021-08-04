@@ -11,23 +11,27 @@
 #include <boost/numeric/conversion/cast.hpp>
 
 namespace doodle {
-action::action()
+action_base::action_base()
     : p_name(),
       p_term(),
-      _mutex() {
-}
+      _mutex() {}
 
-std::string action::class_name() {
+std::string action_base::class_name() {
   return p_name;
 }
 
-bool action::is_async() {
+bool action_base::is_async() {
   return false;
 }
 
-long_term_ptr action::get_long_term_signal() const {
+long_term_ptr action_base::get_long_term_signal() const {
   return p_term;
 }
+
+action::action()
+    : action_base() {
+}
+
 long_term_ptr action::operator()(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   return run(in_data, in_parent);
 }

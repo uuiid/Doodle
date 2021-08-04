@@ -15,7 +15,7 @@ namespace doodle {
 namespace action_arg {
 /**
  * @brief 这是一个动作参数对象， 使用时根据动作来确定参数
- * 
+ *
  */
 class DOODLELIB_API _arg {
  public:
@@ -61,8 +61,7 @@ class DOODLELIB_API arg_paths : public _arg {
  * 在创建动作时，需要喂入所需要的数据， 并在之后调用他
  * 或者我们喂入一些函子也是可以的
  */
-
-class DOODLELIB_API action : public details::no_copy {
+class DOODLELIB_API action_base : public details::no_copy {
   friend DragFilesFactory;
 
  protected:
@@ -70,9 +69,15 @@ class DOODLELIB_API action : public details::no_copy {
   long_term_ptr p_term;
   std::mutex _mutex;
 
- public:
-  action();
+  void cancel(const std::string& in_str) {
+    if (p_term) {
+      p_term->sig_finished();
+      p_term->sig_message_result(in_str);
+    }
+  }
 
+ public:
+  action_base();
   /**
    * @brief 这个函数基本上可以作为显示为菜单的函数
    * @return 返回动作名称
@@ -81,21 +86,45 @@ class DOODLELIB_API action : public details::no_copy {
 
   /**
    * @brief 确认是否是异步动作
-   * 
+   *
    * @return true 是异步动作
    * @return false 不是异步动作
    */
   virtual bool is_async();
   /**
    * @brief 获得异步动作的信号属性(如果不是异步动作则为空指针)
-   * 
+   *
    * @return long_term_ptr 异步动作的信号类
    */
   [[nodiscard]] long_term_ptr get_long_term_signal() const;
+};
+template <class arg_type>
+class action_toolbox : public action_base {
+ protected:
+  arg_type p_date;
+  virtual long_term_ptr run() = 0;
+
+ public:
+  action_toolbox()
+      : action_base(),
+        sig_get_arg(),
+        p_date();
+
+  virtual long_term_ptr operator()() {
+    return run();
+  }
+  boost::signals2::signal<arg_type()> sig_get_arg;
+};
+
+class DOODLELIB_API action : public action_base {
+  friend DragFilesFactory;
+
+ public:
+  action();
 
   /**
    * @brief 运行动作， 异步时会直接返回进度信号类
-   * 
+   *
    * @param in_data 输入的数据
    * @param in_parent  输入数据的父类
    * @return long_term_ptr 返回的信号类可能为空

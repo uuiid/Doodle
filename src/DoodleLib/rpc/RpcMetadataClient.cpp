@@ -28,9 +28,11 @@ std::vector<ProjectPtr> RpcMetadataClient::GetProject() {
   k_filter->set_meta_type(Metadata::meta_type::project_root);
   auto k_list = FilterMetadata(k_filter);
   std::vector<ProjectPtr> k_out_list{};
-  for (auto& i : k_list) {
-    k_out_list.emplace_back(std::dynamic_pointer_cast<Project>(i));
-  }
+  std::transform(
+      k_list.begin(), k_list.end(), std::back_inserter(k_out_list),
+      [](const MetadataPtr& in) {
+        return std::dynamic_pointer_cast<Project>(in);
+      });
   return k_out_list;
 }
 std::vector<MetadataPtr> RpcMetadataClient::GetChild(const MetadataConstPtr& in_metadataPtr) {
@@ -53,7 +55,7 @@ void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   DataDb k_out_db{};
   auto k_status = p_stub->InstallMetadata(&k_context, k_in_db, &k_out_db);
   if (k_status.ok()) {
-    in_metadataPtr->p_id        = k_out_db.id();
+    in_metadataPtr->p_id = k_out_db.id();
   } else {
     throw DoodleError{k_status.error_message()};
   }

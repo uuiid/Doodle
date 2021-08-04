@@ -294,14 +294,36 @@ void menu_factory::create_assets_file_video_up() {
 
   p_action.push_back(k_i_anf_up);
 }
+
 void menu_factory::create_assets_file_export_maya_up() {
+  auto k_ex = std::make_shared<actn_maya_export>();
+  if (!p_metadata)
+    return;
+  auto k_files = std::dynamic_pointer_cast<AssetsFile>(p_metadata)
+                     ->getPathFile();
+  if (k_files.empty())
+    return;
+
+  auto path = k_files.front()->getServerPath();
+  actn_maya_export::arg arg{};
+  arg.date = path;
+  if (k_ex->is_accept(arg)) {
+    p_action.push_back(k_ex);
+    k_ex->sig_get_arg.connect([arg]() {
+      return arg;
+    });
+  }
 }
+
 void menu_factory::create_assets_file_batch_video_up() {
 }
+
 void menu_factory::create_assets_file_batch_export_maya_up() {
 }
+
 void menu_factory::create_ue4_Sequencer() {
 }
+
 void menu_factory::modify_assets_file_up_data() {
   auto k_up_folder = std::make_shared<actn_up_paths>();
   p_action.push_back(k_up_folder);
