@@ -18,7 +18,7 @@ TEST(Server, createPrj) {
 
   doodle::CoreSet::getSet().guiInit();
 
-  for (const auto& k_prj : doodle::CoreSet::getSet().p_project_vector) {
+  for (const auto& k_prj : doodle::DoodleLib::Get().p_project_vector) {
     std::cout << "id: " << k_prj->getId() << "\n"
               << "uuid: " << k_prj->getUUID() << "\n"
               << "name: " << k_prj->getName() << "\n"
@@ -26,7 +26,7 @@ TEST(Server, createPrj) {
   }
   std::cout << std::endl;
 
-  ASSERT_TRUE(doodle::CoreSet::getSet().p_project_vector.size() == 2);
+  ASSERT_TRUE(doodle::DoodleLib::Get().p_project_vector.size() == 2);
 }
 #include <date/date.h>
 

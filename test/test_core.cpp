@@ -56,7 +56,7 @@ TEST_F(CoreTest, archive) {
     json(cereal::make_nvp("mainset", set));
     // cereal::BinaryOutputArchive binary{std::cout};
     cereal::BinaryOutputArchive binary2{str_stream_bin};
-    doodle::CoreSet::getSet().p_project_vector.push_back_sig(std::make_shared<doodle::Project>(
+    doodle::DoodleLib::Get().p_project_vector.push_back_sig(std::make_shared<doodle::Project>(
         "D:/", "test22333"));
 
     binary2(set);
@@ -125,7 +125,7 @@ TEST_F(CoreTest, create_meatdata) {
     ptj->updata_db(k_f);
 
     ASSERT_TRUE(ptj->getMetadataFactory() == k_f);
-    CoreSet::getSet().p_project_vector.push_back_sig(ptj);
+    DoodleLib::Get().p_project_vector.push_back_sig(ptj);
     CoreSet::getSet().set_project(ptj);
 
     for (auto i = 1; i <= 10; ++i) {

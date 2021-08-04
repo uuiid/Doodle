@@ -84,7 +84,7 @@ TEST_CASE("core create_path", "[fun][create_path]") {
   using namespace doodle;
 
   auto k_1 = std::make_shared<Project>("D:/", "ttt");
-  //  CoreSet::getSet().p_project_vector.push_back_sig(k_1);
+  //  DoodleLib::Get().p_project_vector.push_back_sig(k_1);
   //  CoreSet::getSet().set_project(k_1);
   auto k_2 = std::make_shared<Assets>(k_1, "ttt");
   k_1->child_item.push_back_sig(k_2);

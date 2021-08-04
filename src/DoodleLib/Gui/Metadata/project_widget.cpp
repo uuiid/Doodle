@@ -12,6 +12,7 @@
 #include <Metadata/Project.h>
 #include <Metadata/TimeDuration.h>
 #include <libWarp/nana_warp.h>
+#include <core/DoodleLib.h>
 namespace doodle {
 
 nana::listbox::oresolver& operator<<(nana::listbox::oresolver& oor, const ProjectPtr& prj) {
@@ -53,7 +54,7 @@ project_widget::project_widget(nana::window in_window)
 
   details::draw_guard<nana::listbox> k_guard{p_list_box};
 
-  auto& k_container = CoreSet::getSet().p_project_vector;
+  auto& k_container = DoodleLib::Get().p_project_vector;
   for (auto& k_i : k_container) {
     auto k_item    = p_list_box.at(0).append(k_i, true).pos();
     k_i->user_date = k_item;
