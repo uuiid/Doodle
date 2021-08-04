@@ -40,7 +40,6 @@ DoodleLib::~DoodleLib() {
   p_project_vector.clear();
   p_curr_project.reset();
 
-  CoreSet::getSet().clear();
   Logger::clear();
 }
 const ProjectPtr& DoodleLib::current_project() const {

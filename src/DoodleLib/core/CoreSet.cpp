@@ -232,8 +232,6 @@ std::string CoreSet::getUUIDStr() {
   return boost::uuids::to_string(getUUID());
 }
 
-void CoreSet::clear() {
-}
 int CoreSet::getSqlPort() const {
   return p_sql_port;
 }

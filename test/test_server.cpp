@@ -68,7 +68,7 @@ TEST(Server, dow_updata) {
             << "test/test.file.7z time: " << date::format("%Y/%m/%d %H:%M", k_ch->GetTimestamp("test/test.file.7z")) << "\n"
             << "test/test.file.7z size: " << k_ch->GetSize("test/test.file.7z") << "\n"
             << std::endl;
-  doodle::CoreSet::getSet().clear();
+
   k_list.clear();
   k_list.emplace_back(rpc_trans_path_ptr{new rpc_trans_path{"D:\\test3.mp4", "test/test.file.7z", "test_backup_path2/tset.mp4"}});
   k_list.emplace_back(rpc_trans_path_ptr{new rpc_trans_path{"D:\\Kitchen_set2", "test/tmp", "test_backup_path2/"}});

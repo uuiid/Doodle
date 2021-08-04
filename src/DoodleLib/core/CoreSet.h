@@ -37,7 +37,7 @@ class DOODLELIB_API CoreSet : public details::no_copy {
  public:
   static CoreSet &getSet();
 
-  void clear();
+
 
   void findMaya();
 
