@@ -8,7 +8,9 @@
 #include <DoodleLib/Metadata/AssetsFile.h>
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/DoodleLib.h>
 #include <Logger/Logger.h>
+
 namespace doodle {
 AssetsPath::AssetsPath()
     : p_local_path(),
@@ -40,7 +42,7 @@ const FSys::path &AssetsPath::getBackupPath() const {
 void AssetsPath::setPath(const FSys::path &in_path) {
   auto &k_set       = CoreSet::getSet();
   auto uuid         = k_set.getUUIDStr();
-  auto k_prj        = k_set.get_project();
+  auto k_prj        = DoodleLib::Get().current_project();
   FSys::path k_path = k_prj->str();
 
   auto k_server_path = k_path / uuid.substr(3) / uuid / in_path.filename();
@@ -48,8 +50,7 @@ void AssetsPath::setPath(const FSys::path &in_path) {
 }
 
 void AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata) {
-  auto &k_set = CoreSet::getSet();
-  auto k_prj  = k_set.get_project();
+  auto k_prj = DoodleLib::Get().current_project();
 
   /// 这里使用树,向上寻找,组合路径
   MetadataConstPtr k_m{};

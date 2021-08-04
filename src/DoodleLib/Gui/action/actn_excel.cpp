@@ -8,6 +8,7 @@
 #include <core/CoreSet.h>
 #include <rpc/RpcFileSystemClient.h>
 #include <rpc/RpcMetadataClient.h>
+#include <core/DoodleLib.h>
 
 #include <csv.hpp>
 namespace doodle {
@@ -32,7 +33,7 @@ long_term_ptr actn_export_excel::run(const MetadataPtr& in_data, const MetadataP
   return p_term;
 }
 void actn_export_excel::export_excel() {
-  auto k_rpc = CoreSet::getSet().getRpcMetadataClient();
+  auto k_rpc = DoodleLib::Get().getRpcMetadataClient();
 
   auto k_filter = std::make_shared<rpc_filter::filter>();
   DOODLE_LOG_INFO("获得日期 {} {}", _arg_type.p_time_range.first->showStr(), _arg_type.p_time_range.second->showStr());
@@ -140,7 +141,7 @@ void actn_export_excel::export_dep_excel() {
 void actn_export_excel::find_parent(const MetadataPtr& in_ptr) {
   MetadataPtr k_ptr = in_ptr;
   auto k_filter     = std::make_shared<rpc_filter::filter>();
-  auto k_rpc        = CoreSet::getSet().getRpcMetadataClient();
+  auto k_rpc        = DoodleLib::Get().getRpcMetadataClient();
 
   while (k_ptr->has_parent_id() && k_ptr->get_parent_id() != 0) {  ///首先测试传入父id 有的话直接查找 p_map 没有就rpc中查找
     const std::uint64_t k_id = k_ptr->get_parent_id();
@@ -189,7 +190,7 @@ string_matrix2_ptr actn_export_excel::export_excel_line(const std::vector<Assets
 
 bool actn_export_excel::exist(const AssetsFilePtr& in_ptr) {
   const auto& k_paths = in_ptr->getPathFile();
-  auto k_ch           = CoreSet::getSet().getRpcFileSystemClient();
+  auto k_ch           = DoodleLib::Get().getRpcFileSystemClient();
   if (k_paths.empty())
     return false;
   else

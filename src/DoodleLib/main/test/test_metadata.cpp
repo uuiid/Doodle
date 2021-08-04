@@ -131,7 +131,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
   auto& set     = CoreSet::getSet();
   k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
 
-  set.guiInit();
+  DoodleLib::Get().init_gui();
   auto k_fa = std::make_shared<MetadataFactory>();
 
   std::vector<MetadataPtr> k_delete_id;
@@ -210,7 +210,7 @@ TEST_CASE("gui action metadata", "[metadata][gui]") {
   auto& set     = CoreSet::getSet();
   k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
 
-  set.guiInit();
+  DoodleLib::Get().init_gui();
   auto k_fa = std::make_shared<MetadataFactory>();
 
   SECTION("export excel") {

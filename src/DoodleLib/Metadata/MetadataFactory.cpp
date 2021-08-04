@@ -8,6 +8,7 @@
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
+#include <core/DoodleLib.h>
 #include <grpcpp/grpcpp.h>
 
 #include <cereal/archives/json.hpp>
@@ -16,7 +17,7 @@
 namespace doodle {
 
 MetadataFactory::MetadataFactory()
-    : p_rpcClien(CoreSet::getSet().getRpcMetadataClient()) {
+    : p_rpcClien(DoodleLib::Get().getRpcMetadataClient()) {
 }
 std::vector<ProjectPtr> MetadataFactory::getAllProject() {
   auto k_v = p_rpcClien.lock()->GetProject();

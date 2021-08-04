@@ -8,7 +8,7 @@
 #include <Metadata/Metadata_cpp.h>
 #include <core/CoreSet.h>
 #include <rpc/RpcFileSystemClient.h>
-
+#include <core/DoodleLib.h>
 #include <memory>
 namespace doodle {
 actn_down_paths::actn_down_paths()
@@ -33,7 +33,7 @@ long_term_ptr actn_down_paths::run(const MetadataPtr& in_data, const MetadataPtr
   if (!FSys::exists(k_data.date.parent_path()))
     FSys::create_directories(k_data.date.parent_path());
 
-  auto k_client = CoreSet::getSet().getRpcFileSystemClient();
+  auto k_client = DoodleLib::Get().getRpcFileSystemClient();
 
   auto k_paths = k_ass->getPathFile();
 

@@ -29,7 +29,7 @@ class CoreTest : public ::testing::Test {
 void CoreTest::SetUp() {
   // auto prj = std::make_shared<doodle::Project>("W:/");
   // set.setProject(prj);
-  set.guiInit();
+  DoodleLib::Get().init_gui();
   p_maya_path = LR"(D:/shot_ep016_sc0032_Anm_Animation_v0001_zhengshanshan.ma)";
 
   p_image_path = LR"(D:/sc_064)";
@@ -126,7 +126,6 @@ TEST_F(CoreTest, create_meatdata) {
 
     ASSERT_TRUE(ptj->getMetadataFactory() == k_f);
     DoodleLib::Get().p_project_vector.push_back_sig(ptj);
-    CoreSet::getSet().set_project(ptj);
 
     for (auto i = 1; i <= 10; ++i) {
       switch (i) {

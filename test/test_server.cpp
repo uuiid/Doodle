@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 
 TEST(Server, createPrj) {
-  doodle::CoreSet::getSet().guiInit();
+  DoodleLib::Get().init_gui();
 
   auto k_f = std::make_shared<doodle::MetadataFactory>();
   auto prj = std::make_shared<doodle::Project>("D:/", "测试");
@@ -16,7 +16,7 @@ TEST(Server, createPrj) {
   prj = std::make_shared<doodle::Project>("D:/", "测试2");
   prj->insert_into(k_f);
 
-  doodle::CoreSet::getSet().guiInit();
+  DoodleLib::Get().init_gui();
 
   for (const auto& k_prj : doodle::DoodleLib::Get().p_project_vector) {
     std::cout << "id: " << k_prj->getId() << "\n"
@@ -34,9 +34,9 @@ TEST(Server, createPrj) {
 
 TEST(Server, dow_updata) {
   using namespace doodle;
-  doodle::CoreSet::getSet().guiInit();
+  DoodleLib::Get().init_gui();
 
-  auto k_ch = doodle::CoreSet::getSet().getRpcFileSystemClient();
+  auto k_ch = doodle::DoodleLib::Get().getRpcFileSystemClient();
 
   rpc_trans_path_ptr_list k_list;
   k_list.emplace_back(std::make_unique<rpc_trans_path>("D:\\test3.mp4", "test/test.file.7z", "test_backup_path2/tset.mp4"));

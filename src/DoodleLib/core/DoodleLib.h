@@ -17,6 +17,9 @@ class DOODLELIB_API DoodleLib : public details::no_copy {
 
   ThreadPoolPtr p_thread_pool;
   ProjectPtr p_curr_project;
+  RpcMetadataClientPtr p_rpc_metadata_clien;
+  RpcFileSystemClientPtr p_rpc_file_system_client;
+  MetadataFactoryPtr p_metadata_factory;
 
  public:
   virtual ~DoodleLib();
@@ -27,6 +30,11 @@ class DOODLELIB_API DoodleLib : public details::no_copy {
 
   using project_vector = std::vector<ProjectPtr>;
   observable_container<project_vector> p_project_vector;
+
+  void init_gui();
+
+  [[nodiscard]] RpcMetadataClientPtr getRpcMetadataClient() const;
+  [[nodiscard]] RpcFileSystemClientPtr getRpcFileSystemClient() const;
 
   const ProjectPtr& current_project() const;
   void set_current_project(const ProjectPtr& in_currProject);

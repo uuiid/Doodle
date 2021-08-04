@@ -3,6 +3,7 @@
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/Ue4Setting.h>
 
 #include <DoodleLib/libWarp/WinReg.hpp>
@@ -21,7 +22,7 @@ const std::string Ue4Project::Prop        = "Prop";
 Ue4Project::Ue4Project(FSys::path project_path)
     : p_ue_path(),
       p_ue_Project_path(std::move(project_path)),
-      p_project(CoreSet::getSet().get_project()) {
+      p_project(DoodleLib::Get().current_project()) {
   auto& ue  = Ue4Setting::Get();
   p_ue_path = ue.Path();
 }

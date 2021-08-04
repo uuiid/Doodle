@@ -36,11 +36,6 @@ enum class Department {
 class DOODLELIB_API CoreSet : public details::no_copy {
  public:
   static CoreSet &getSet();
-  /**
-   * @brief 初始化gui设置
-   * 
-   */
-  void guiInit();
 
   void clear();
 
@@ -97,19 +92,12 @@ class DOODLELIB_API CoreSet : public details::no_copy {
 
   [[deprecated]] static FSys::path toIpPath(const FSys::path &path);
 
-  [[nodiscard]] RpcMetadataClientPtr getRpcMetadataClient() const;
-  [[nodiscard]] RpcFileSystemClientPtr getRpcFileSystemClient() const;
-  [[nodiscard]] MetadataFactoryPtr get_metadata_factory() const;
   static std::size_t getBlockSize() {
     static std::size_t k_i{64 * 1024};
     return k_i;
   };
 
-  using project_vector = std::vector<ProjectPtr>;
-  observable_container<project_vector> p_project_vector;
-  const ProjectPtr &get_project() const;
-  void set_project(const ProjectPtr &in_currProject);
-
+  std::string get_server_host();
  private:
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
@@ -138,9 +126,6 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   Ue4Setting &p_ue4_setting;
 
   FSys::path p_mayaPath;
-  RpcMetadataClientPtr p_rpc_metadata_clien;
-  RpcFileSystemClientPtr p_rpc_file_system_client;
-  MetadataFactoryPtr p_metadata_factory;
   std::string p_server_host;  ///< 我们自己的服务器ip
 
   int p_sql_port;       ///< mysql 端口
@@ -150,7 +135,6 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   std::string p_sql_host;      ///< mysql数据库ip
   std::string p_sql_user;      ///< mysql 用户名称
   std::string p_sql_password;  ///< mysql 用户密码
-  ProjectPtr  p_curr_project;
 
   //这里是序列化的代码
   friend class cereal::access;
@@ -160,13 +144,12 @@ class DOODLELIB_API CoreSet : public details::no_copy {
 
 template <class Archive>
 void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
-  if (version == 6)
+  if (version == 7)
     ar(
         cereal::make_nvp("user", p_user_),
         cereal::make_nvp("department", p_department_),
         cereal::make_nvp("ue4_setting", p_ue4_setting),
-        cereal::make_nvp("maya_Path", p_mayaPath),
-        cereal::make_nvp("p_curr_project",p_curr_project));
+        cereal::make_nvp("maya_Path", p_mayaPath));
 }
 
 }  // namespace doodle
@@ -180,4 +163,4 @@ void load_minimal(Archive const &, doodle::Department &department, std::string c
   department = magic_enum::enum_cast<doodle::Department>(value).value_or(doodle::Department::None_);
 };
 }  // namespace cereal
-CEREAL_CLASS_VERSION(doodle::CoreSet, 6);
+CEREAL_CLASS_VERSION(doodle::CoreSet, 7);

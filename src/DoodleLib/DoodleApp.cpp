@@ -21,6 +21,7 @@
 #include <nana/fwd.hpp>
 #include <nana/gui.hpp>
 #include <nlohmann/json.hpp>
+#include <core/DoodleLib.h>
 namespace doodle {
 
 class DOODLELIB_API command_line {
@@ -149,7 +150,7 @@ void doodle_app::init() {
 }
 void doodle_app::run_server() {
   p_run_fun = [this]() {
-    auto& set = CoreSet::getSet();
+    auto& set           = CoreSet::getSet();
     p_rpc_server_handle = std::make_shared<RpcServerHandle>();
     p_rpc_server_handle->runServer(set.getMetaRpcPort(), set.getFileRpcPort());
     nana::form _w{};
@@ -168,7 +169,7 @@ void doodle_app::run() {
 void doodle_app::init_opt() {
 }
 void doodle_app::run_gui() {
-  CoreSet::getSet().guiInit();
+  DoodleLib::Get().init_gui();
 
   main_windows k_main_windows{};
   k_main_windows.show();

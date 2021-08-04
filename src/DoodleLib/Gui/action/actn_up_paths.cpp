@@ -8,8 +8,9 @@
 #include <Logger/Logger.h>
 #include <Metadata/AssetsFile.h>
 #include <Metadata/AssetsPath.h>
-#include <rpc/RpcFileSystemClient.h>
 #include <Metadata/MetadataFactory.h>
+#include <core/DoodleLib.h>
+#include <rpc/RpcFileSystemClient.h>
 
 namespace doodle {
 
@@ -26,7 +27,7 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
     return p_term;
   }
 
-  auto k_ch = CoreSet::getSet().getRpcFileSystemClient();
+  auto k_ch = DoodleLib::Get().getRpcFileSystemClient();
 
   auto k_path = _arg_type.date;
   AssetsFilePtr k_ass_file;
