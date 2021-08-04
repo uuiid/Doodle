@@ -31,4 +31,11 @@ DoodleLib::~DoodleLib() {
   CoreSet::getSet().clear();
   Logger::clear();
 }
+const ProjectPtr& DoodleLib::current_project() const {
+  
+  return p_curr_project;
+}
+void DoodleLib::set_current_project(const ProjectPtr& in_currProject) {
+  p_curr_project = in_currProject;
+}
 }  // namespace doodle
