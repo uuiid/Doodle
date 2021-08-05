@@ -10,6 +10,7 @@
     <mapping directory="$PROJECT_DIR$/build/Ninja_build_nocopy/_deps/csv_parser-src/tests/data/real_data/us_states" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/build/Ninja_build_nocopy/_deps/doxygen_css-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/build/Ninja_build_nocopy/_deps/st_tree-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/cmrc" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/csv_parser" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/csv_parser/tests/data" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/csv_parser/tests/data/real_data/us_states" vcs="Git" />

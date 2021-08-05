@@ -114,29 +114,21 @@ find_package(Autodesk_FBX 2020 REQUIRED)
 #下载自定义嵌入文件
 include(ExternalProject)
 include(FetchContent)
+
 # 添加树项目
-FetchContent_Declare(
-        st_tree
-        GIT_REPOSITORY https://github.com/erikerlandson/st_tree.git
-        GIT_TAG develop
-)
-FetchContent_GetProperties(st_tree)
-if (NOT st_tree_POPULATED)
-    FetchContent_Populate(st_tree)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${st_tree_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/external/st_tree/)
-endif ()
-include_directories(${PROJECT_SOURCE_DIR}/external/st_tree/)
+# FetchContent_Declare(
+#         st_tree
+#         GIT_REPOSITORY https://github.com/erikerlandson/st_tree.git
+#         GIT_TAG develop
+# )
+# FetchContent_GetProperties(st_tree)
+# if (NOT st_tree_POPULATED)
+#     FetchContent_Populate(st_tree)
+#     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${st_tree_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/external/st_tree/)
+# endif ()
+# include_directories(${PROJECT_SOURCE_DIR}/external/st_tree/)
 # 添加csv解析器
-FetchContent_Declare(
-        csv_parser
-        GIT_REPOSITORY https://github.com/vincentlaucsb/csv-parser.git
-)
-FetchContent_GetProperties(csv_parser)
-if (NOT csv_parser_POPULATED)
-    FetchContent_Populate(csv_parser)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${csv_parser_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/csv_parser)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv_parser)
-endif ()
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv_parser)
 
 #添加windows时区数据库
 #FetchContent_Declare(
@@ -146,45 +138,54 @@ endif ()
 #)
 #FetchContent_Populate(windowsZones)
 #execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${windowsZones_SOURCE_DIR}/windowsZones.xml ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml)
-if (NOT EXISTS ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml)
+if (NOT EXISTS ${PROJECT_SOURCE_DIR}/external/tzdata/windowsZones.xml)
     file(DOWNLOAD
             https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml
-            ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml)
+            ${PROJECT_SOURCE_DIR}/external/tzdata/windowsZones.xml
+            SHOW_PROGRESS)
+    file(DOWNLOAD
+            https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
+            ${PROJECT_SOURCE_DIR}/external/tzdata/tzdata-latest.tar.gz
+            SHOW_PROGRESS)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${PROJECT_SOURCE_DIR}/external/tzdata/tzdata-latest.tar.gz
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/external/tzdata/
+            RESULT_VARIABLE rv)
+    file(REMOVE ${PROJECT_SOURCE_DIR}/external/tzdata/tzdata-latest.tar.gz)
 endif ()
 #添加时区数据库
-FetchContent_Declare(
-        tzdata
-        URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
-#        DOWNLOAD_NO_EXTRACT TRUE
-)
-FetchContent_GetProperties(tzdata)
-if (NOT tzdata_POPULATED)
-    FetchContent_Populate(tzdata)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${tzdata_SOURCE_DIR} ${CMAKE_BINARY_DIR}/bin/tzdata)
-endif ()
+# FetchContent_Declare(
+#         tzdata
+#         URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
+# #        DOWNLOAD_NO_EXTRACT TRUE
+# )
+# FetchContent_GetProperties(tzdata)
+# if (NOT tzdata_POPULATED)
+#     FetchContent_Populate(tzdata)
+#     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${tzdata_SOURCE_DIR} ${CMAKE_BINARY_DIR}/bin/tzdata)
+# endif ()
 
 #添加doxygen自定义css
-FetchContent_Declare(
-        doxygen_css
-        GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
-        GIT_TAG origin/main
-)
-FetchContent_GetProperties(doxygen_css)
-if (NOT doxygen_css_POPULATED)
-    FetchContent_Populate(doxygen_css)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${doxygen_css_SOURCE_DIR}/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css)
-endif ()
+# FetchContent_Declare(
+#         doxygen_css
+#         GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
+#         GIT_TAG origin/main
+# )
+# FetchContent_GetProperties(doxygen_css)
+# if (NOT doxygen_css_POPULATED)
+#     FetchContent_Populate(doxygen_css)
+#     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${doxygen_css_SOURCE_DIR}/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css)
+# endif ()
 
 #添加cmake 嵌入文件
-FetchContent_Declare(
-        cmrc_prj
-        GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
-)
-FetchContent_GetProperties(cmrc_prj)
-if (NOT cmrc_prj_POPULATED)
-    FetchContent_Populate(cmrc_prj)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${cmrc_prj_SOURCE_DIR}/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake)
-endif ()
+# FetchContent_Declare(
+#         cmrc_prj
+#         GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
+# )
+# FetchContent_GetProperties(cmrc_prj)
+# if (NOT cmrc_prj_POPULATED)
+#     FetchContent_Populate(cmrc_prj)
+#     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${cmrc_prj_SOURCE_DIR}/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake)
+# endif ()
 
 #添加文档生成
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
