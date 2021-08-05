@@ -1,13 +1,7 @@
-
+add_subdirectory(resource)
 cmrc_add_resource_library(
         DoodleLibResource
-        resource/abcExport.py
-        resource/icon.ico
-        resource/mayaExport.py
-        resource/mayaIcon.png
-        resource/Ue4CraeteLevel.py
-        resource/ue4Icon.png
-        resource/zhtopy.txt
+        ${DOODLE_RE_FILES_LIST}
 )
 include(doodle_exe)
 include(DoodleLib.cmake)

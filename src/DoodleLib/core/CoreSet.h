@@ -37,8 +37,6 @@ class DOODLELIB_API CoreSet : public details::no_copy {
  public:
   static CoreSet &getSet();
 
-
-
   void findMaya();
 
   //获得运行程序目录
@@ -98,10 +96,11 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   };
 
   std::string get_server_host();
+
  private:
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
-   * 
+   *
    */
   CoreSet();
   //获得缓存磁盘路径

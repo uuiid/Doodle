@@ -20,6 +20,8 @@ class DOODLELIB_API DoodleLib : public details::no_copy {
   RpcMetadataClientPtr p_rpc_metadata_clien;
   RpcFileSystemClientPtr p_rpc_file_system_client;
   MetadataFactoryPtr p_metadata_factory;
+  
+  FSys::path create_time_database();
 
  public:
   virtual ~DoodleLib();

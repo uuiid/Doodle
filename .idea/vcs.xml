@@ -2,17 +2,10 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build/Ninja_build/_deps/csv_parser-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build/Ninja_build/_deps/st_tree-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build/Ninja_build_nocopy/_deps/cmrc_prj-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build/Ninja_build_nocopy/_deps/csv_parser-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build/Ninja_build_nocopy/_deps/csv_parser-src/tests/data" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build/Ninja_build_nocopy/_deps/csv_parser-src/tests/data/real_data/us_states" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build/Ninja_build_nocopy/_deps/doxygen_css-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build/Ninja_build_nocopy/_deps/st_tree-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/cmrc" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/external/csv_parser" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/external/csv_parser/tests/data" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/external/csv_parser/tests/data/real_data/us_states" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/csv-parser" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/csv-parser/tests/data" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/csv-parser/tests/data/real_data/us_states" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/doxygen-awesome-css" vcs="Git" />
   </component>
 </project>

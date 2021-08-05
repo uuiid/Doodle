@@ -8,6 +8,7 @@
 #include <Logger/Logger.h>
 #include <Metadata/MetadataFactory.h>
 #include <core/CoreSet.h>
+#include <date/tz.h>
 #include <grpcpp/grpcpp.h>
 #include <rpc/RpcFileSystemClient.h>
 #include <rpc/RpcMetadataClient.h>
@@ -24,6 +25,29 @@ DoodleLib::DoodleLib()
       p_metadata_factory() {
   CoreSet::getSet();
   Logger::doodle_initLog();
+  /// 在这里我们初始化date tz 时区数据库
+  auto k_path = create_time_database();
+  date::set_install(k_path.generic_string());
+  DOODLE_LOG_INFO("初始化时区数据库: {}", k_path.generic_string());
+}
+
+FSys::path DoodleLib::create_time_database() {
+  auto k_local_path = CoreSet::getSet().getCacheRoot("tzdata");
+  if (FSys::is_empty(k_local_path)) {
+    auto k_path = cmrc::DoodleLibResource::get_filesystem().iterate_directory("resource/tzdata");
+    for (const auto& i : k_path) {
+      FSys::ofstream k_ofstream{k_local_path / i.filename(), std::ios::out | std::ios::binary};
+      DOODLE_LOG_INFO("开始创建数据库 {}", k_local_path / i.filename());
+      if (k_ofstream) {
+        auto k_file = cmrc::DoodleLibResource::get_filesystem().open("resource/tzdata/" + i.filename());
+        k_ofstream.write(k_file.begin(), boost::numeric_cast<std::int64_t>(k_file.size()));
+      } else {
+        DOODLE_LOG_INFO("无法创建数据库 {}", k_local_path / i.filename());
+        throw DoodleError{fmt::format("无法创建数据库 {}", k_local_path / i.filename())};
+      }
+    }
+  }
+  return k_local_path;
 }
 DoodleLib& DoodleLib::Get() {
   return *p_install;

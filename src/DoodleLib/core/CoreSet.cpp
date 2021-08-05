@@ -80,7 +80,7 @@ void CoreSet::getSetting() {
 CoreSet::CoreSet()
     : p_user_("user"),
       p_department_(Department::None_),
-      p_cache_root("C:/Doodle/cache"),
+      p_cache_root(FSys::temp_directory_path()),
       p_doc("C:/Doodle/doc"),
       p_data_root("C:/Doodle/data"),
       p_uuid_gen(),
@@ -118,9 +118,6 @@ CoreSet::CoreSet()
   if (!FSys::exists(getDataRoot())) {
     FSys::create_directories(getDataRoot());
   }
-  /// 在这里我们初始化date tz 时区数据库
-  date::set_install(program_location("tzdata").generic_string());
-  DOODLE_LOG_INFO("初始化时区数据库: {}", program_location("tzdata").generic_string());
   findMaya();
   getSetting();
 }
@@ -198,19 +195,19 @@ void CoreSet::setDataRoot(const FSys::path &in_path) {
 }
 
 void CoreSet::getCacheDiskPath() {
-  const static std::vector<std::string> dirs{"D:/",
-                                             "E:/",
-                                             "F:/",
-                                             "G:/",
-                                             "H:/",
-                                             "I:/",
-                                             "J:/",
-                                             "K:/",
-                                             "L:/"};
+  const static string_list dirs{"D:/",
+                                "E:/",
+                                "F:/",
+                                "G:/",
+                                "H:/",
+                                "I:/",
+                                "J:/",
+                                "K:/",
+                                "L:/"};
   for (auto &dir : dirs) {
     if (FSys::exists(dir)) {
       auto info = FSys::space(dir);
-      if (((float)info.available / (float)info.available) > 0.05) {
+      if (((float)info.available / (float)info.capacity) > 0.2) {
         p_cache_root = dir + "Doodle/cache";
         break;
       }
