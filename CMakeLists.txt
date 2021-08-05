@@ -115,29 +115,8 @@ find_package(Autodesk_FBX 2020 REQUIRED)
 include(ExternalProject)
 include(FetchContent)
 
-# 添加树项目
-# FetchContent_Declare(
-#         st_tree
-#         GIT_REPOSITORY https://github.com/erikerlandson/st_tree.git
-#         GIT_TAG develop
-# )
-# FetchContent_GetProperties(st_tree)
-# if (NOT st_tree_POPULATED)
-#     FetchContent_Populate(st_tree)
-#     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${st_tree_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/external/st_tree/)
-# endif ()
-# include_directories(${PROJECT_SOURCE_DIR}/external/st_tree/)
-# 添加csv解析器
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv-parser)
 
-#添加windows时区数据库
-#FetchContent_Declare(
-#        windowsZones
-#        URL https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml
-#        DOWNLOAD_NO_EXTRACT TRUE
-#)
-#FetchContent_Populate(windowsZones)
-#execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${windowsZones_SOURCE_DIR}/windowsZones.xml ${CMAKE_BINARY_DIR}/bin/tzdata/windowsZones.xml)
 if (NOT EXISTS ${PROJECT_SOURCE_DIR}/external/tzdata/windowsZones.xml)
     file(DOWNLOAD
             https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml

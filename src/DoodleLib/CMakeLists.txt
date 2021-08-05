@@ -8,7 +8,6 @@ cmrc_add_resource_library(
         resource/Ue4CraeteLevel.py
         resource/ue4Icon.png
         resource/zhtopy.txt
-
 )
 include(doodle_exe)
 include(DoodleLib.cmake)
@@ -87,6 +86,6 @@ add_doodle(
         main/test/test_external.cpp
 )
 target_compile_options(doodle_test PRIVATE /bigobj)
-include_directories(${PROJECT_SOURCE_DIR}/external/csv_parser/include)
+include_directories(${PROJECT_SOURCE_DIR}/external/csv-parser/include)
 include(Catch)
 catch_discover_tests(doodle_test)
