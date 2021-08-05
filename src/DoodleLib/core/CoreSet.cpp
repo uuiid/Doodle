@@ -120,7 +120,7 @@ CoreSet::CoreSet()
   }
   /// 在这里我们初始化date tz 时区数据库
   date::set_install(program_location("tzdata").generic_string());
-
+  DOODLE_LOG_INFO("初始化时区数据库: {}", program_location("tzdata").generic_string());
   findMaya();
   getSetting();
 }

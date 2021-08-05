@@ -51,3 +51,9 @@ TEST_CASE("my tree", "[tree]") {
     }
   }
 }
+TEST_CASE("date time", "[time]") {
+  using namespace doodle;
+  date::set_install();
+  date::current_zone();
+
+}

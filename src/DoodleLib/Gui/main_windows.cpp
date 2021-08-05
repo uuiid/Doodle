@@ -6,6 +6,7 @@
 
 #include <DoodleLib/Gui/setting_windows.h>
 #include <Gui/Metadata/project_widget.h>
+#include <Gui/factory/tool_box_menu_factory.h>
 #include <core/CoreSet.h>
 #include <toolkit/toolkit.h>
 
@@ -21,9 +22,10 @@ main_windows::main_windows()
       p_project_listbox(std::make_shared<project_widget>(*this)),
       p_ass_tree_box(std::make_shared<assets_widget>(*this)),
       p_attr_listbox(std::make_shared<assets_attr_widget>(*this)),
+      p_menu_factory(std::make_shared<tool_box_menu_factory>(*this)),
       p_setting_windows() {
   p_layout.div(
-R"(
+      R"(
 <
   vertical 
 
@@ -66,6 +68,9 @@ void main_windows::create_menubar() {
   });
   k_file_menu.append("退出", [](nana::menu::item_proxy&) { nana::API::exit_all(); });
   auto& k_tool_menu = p_menubar.push_back("工具箱");
+
+  (*p_menu_factory)(k_tool_menu);
+  k_tool_menu.append_splitter();
 
   k_tool_menu.append("安装maya插件", [this](nana::menu::item_proxy&) {
     toolkit::installMayaPath();

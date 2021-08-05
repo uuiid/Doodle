@@ -36,6 +36,7 @@ class DOODLELIB_API main_windows : public nana::form {
   std::shared_ptr<project_widget> p_project_listbox;
   std::shared_ptr<assets_widget> p_ass_tree_box;
   std::shared_ptr<assets_attr_widget> p_attr_listbox;
+  tool_box_menu_factory_ptr p_menu_factory;
 
  public:
   main_windows();

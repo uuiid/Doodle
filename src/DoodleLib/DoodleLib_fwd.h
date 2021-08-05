@@ -216,7 +216,11 @@ class long_term;
 class ImageSequence;
 class season;
 class actn_create_ass_up_paths;
+class action_base;
+class tool_box_menu_factory;
+using tool_box_menu_factory_ptr = std::shared_ptr<tool_box_menu_factory>;
 
+using action_base_ptr              = std::shared_ptr<action_base>;
 using string_list                  = std::vector<std::string>;
 using string_matrix2               = std::vector<string_list>;
 using string_matrix2_ptr           = std::shared_ptr<string_matrix2>;

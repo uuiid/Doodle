@@ -25,6 +25,7 @@ menu_factory_base::menu_factory_base(nana::window in_window)
 void menu_factory_base::set_metadate(const MetadataPtr& in_ptr, const MetadataPtr& in_parent) {
   p_metadata = in_ptr;
   p_parent   = in_parent;
+  p_action.clear();
 }
 
 void menu_factory_base::operator()(nana::menu& in_menu) {

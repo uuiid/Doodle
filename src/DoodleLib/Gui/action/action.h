@@ -97,7 +97,10 @@ class DOODLELIB_API action_base : public details::no_copy {
    * @return long_term_ptr 异步动作的信号类
    */
   [[nodiscard]] long_term_ptr get_long_term_signal() const;
+
+  virtual long_term_ptr operator()();
 };
+
 template <class arg_type>
 class action_toolbox : public action_base {
  protected:
@@ -108,11 +111,11 @@ class action_toolbox : public action_base {
   action_toolbox()
       : action_base(),
         sig_get_arg(),
-        p_date();
+        p_date(){};
 
-  virtual long_term_ptr operator()() {
+  long_term_ptr operator()() override {
     return run();
-  }
+  };
   boost::signals2::signal<arg_type()> sig_get_arg;
 };
 
@@ -133,6 +136,10 @@ class DOODLELIB_API action : public action_base {
   virtual long_term_ptr operator()(const MetadataPtr& in_data, const MetadataPtr& in_parent);
 };
 
+/**
+ * 动作的中间对象,用来实现转换回调函数
+ * @tparam arg_type 需要从gui获得的数据
+ */
 template <class arg_type>
 class DOODLELIB_API action_indirect : public action {
  protected:
