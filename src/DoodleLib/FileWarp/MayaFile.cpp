@@ -1,6 +1,7 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/FileWarp/MayaFile.h>
 #include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <DoodleLib/threadPool/long_term.h>
 #include <Logger/Logger.h>
@@ -112,14 +113,14 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
 }
 
 bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) const {
-  auto thread_pool = ThreadPool{std::thread::hardware_concurrency()};
+  auto thread_pool = DoodleLib::Get().get_thread_pool();
   auto result      = std::map<FSys::path, std::future<bool>>{};
   for (auto&& file : file_path) {
     if (file.extension() == ".ma" || file.extension() == ".mb") {
       result.insert(
           {file,
            thread_pool
-               .enqueue(
+               ->enqueue(
                    [this, file]() -> bool {
                      return this->exportFbxFile(file);
                    })});

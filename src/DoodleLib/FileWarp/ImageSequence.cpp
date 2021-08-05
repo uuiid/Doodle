@@ -2,7 +2,6 @@
 #include <DoodleLib/FileWarp/ImageSequence.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
-#include <DoodleLib/threadPool/ThreadPool.h>
 #include <Logger/Logger.h>
 #include <PinYin/convert.h>
 #include <core/DoodleLib.h>
