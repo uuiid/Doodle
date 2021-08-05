@@ -128,7 +128,7 @@ include(FetchContent)
 # endif ()
 # include_directories(${PROJECT_SOURCE_DIR}/external/st_tree/)
 # 添加csv解析器
-add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv_parser)
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv-parser)
 
 #添加windows时区数据库
 #FetchContent_Declare(
@@ -152,40 +152,18 @@ if (NOT EXISTS ${PROJECT_SOURCE_DIR}/external/tzdata/windowsZones.xml)
             RESULT_VARIABLE rv)
     file(REMOVE ${PROJECT_SOURCE_DIR}/external/tzdata/tzdata-latest.tar.gz)
 endif ()
-#添加时区数据库
-# FetchContent_Declare(
-#         tzdata
-#         URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
-# #        DOWNLOAD_NO_EXTRACT TRUE
-# )
-# FetchContent_GetProperties(tzdata)
-# if (NOT tzdata_POPULATED)
-#     FetchContent_Populate(tzdata)
-#     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${tzdata_SOURCE_DIR} ${CMAKE_BINARY_DIR}/bin/tzdata)
-# endif ()
-
-#添加doxygen自定义css
-# FetchContent_Declare(
-#         doxygen_css
-#         GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
-#         GIT_TAG origin/main
-# )
-# FetchContent_GetProperties(doxygen_css)
-# if (NOT doxygen_css_POPULATED)
-#     FetchContent_Populate(doxygen_css)
-#     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${doxygen_css_SOURCE_DIR}/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css)
-# endif ()
-
-#添加cmake 嵌入文件
-# FetchContent_Declare(
-#         cmrc_prj
-#         GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
-# )
-# FetchContent_GetProperties(cmrc_prj)
-# if (NOT cmrc_prj_POPULATED)
-#     FetchContent_Populate(cmrc_prj)
-#     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${cmrc_prj_SOURCE_DIR}/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake)
-# endif ()
+add_custom_target(
+        tzdata_file
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/external/tzdata/ ${CMAKE_BINARY_DIR}/bin/tzdata/
+)
+add_custom_command(
+        OUTPUT ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.css
+        ${PROJECT_SOURCE_DIR}/CMake/CMakeRC.cmake
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/doxygen-awesome-css/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/cmrc/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake/
+        DEPENDS ${PROJECT_SOURCE_DIR}/external/doxygen-awesome-css/doxygen-awesome.css
+        ${PROJECT_SOURCE_DIR}/external/cmrc/CMakeRC.cmake
+)
 
 #添加文档生成
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
