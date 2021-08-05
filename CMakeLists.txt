@@ -117,19 +117,19 @@ include(FetchContent)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv-parser)
 
-if (NOT EXISTS ${PROJECT_SOURCE_DIR}/external/tzdata/windowsZones.xml)
+if (NOT EXISTS ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/windowsZones.xml)
     file(DOWNLOAD
             https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml
-            ${PROJECT_SOURCE_DIR}/external/tzdata/windowsZones.xml
+            ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/windowsZones.xml
             SHOW_PROGRESS)
     file(DOWNLOAD
             https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
-            ${PROJECT_SOURCE_DIR}/external/tzdata/tzdata-latest.tar.gz
+            ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/tzdata-latest.tar.gz
             SHOW_PROGRESS)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${PROJECT_SOURCE_DIR}/external/tzdata/tzdata-latest.tar.gz
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/external/tzdata/
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/tzdata-latest.tar.gz
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/
             RESULT_VARIABLE rv)
-    file(REMOVE ${PROJECT_SOURCE_DIR}/external/tzdata/tzdata-latest.tar.gz)
+    file(REMOVE ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/tzdata-latest.tar.gz)
 endif ()
 add_custom_target(
         tzdata_file
