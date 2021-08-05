@@ -117,31 +117,16 @@ include(FetchContent)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv-parser)
 
-if (NOT EXISTS ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/windowsZones.xml)
-    file(DOWNLOAD
-            https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml
-            ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/windowsZones.xml
-            SHOW_PROGRESS)
-    file(DOWNLOAD
-            https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
-            ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/tzdata-latest.tar.gz
-            SHOW_PROGRESS)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/tzdata-latest.tar.gz
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/
-            RESULT_VARIABLE rv)
-    file(REMOVE ${PROJECT_SOURCE_DIR}/src/DoodleLib/resource/tzdata/tzdata-latest.tar.gz)
-endif ()
+
 add_custom_target(
         tzdata_file
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/external/tzdata/ ${CMAKE_BINARY_DIR}/bin/tzdata/
+        COMMAND ${CMAKE_COMMAND} -DROOT_DIR=${PROJECT_SOURCE_DIR} -P ${PROJECT_SOURCE_DIR}/CMake/update_Time_Zone_Database.cmake
 )
-add_custom_command(
-        OUTPUT ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.css
-        ${PROJECT_SOURCE_DIR}/CMake/CMakeRC.cmake
+add_custom_target(
+        update_doc_and_cmrc
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/doxygen-awesome-css/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/cmrc/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake/
-        DEPENDS ${PROJECT_SOURCE_DIR}/external/doxygen-awesome-css/doxygen-awesome.css
-        ${PROJECT_SOURCE_DIR}/external/cmrc/CMakeRC.cmake
+
 )
 
 #添加文档生成
