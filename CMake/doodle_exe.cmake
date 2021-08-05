@@ -191,7 +191,11 @@ function(add_doodle)
             #            _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
             #            _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
             )
+    target_compile_options(${ADD_DOODLE_NAME}
+            PUBLIC
+            /EHsc
 
+    )
 
     target_include_directories(${ADD_DOODLE_NAME}
             PUBLIC

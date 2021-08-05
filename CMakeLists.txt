@@ -155,7 +155,7 @@ endif ()
 FetchContent_Declare(
         tzdata
         URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
-        DOWNLOAD_NO_EXTRACT TRUE
+#        DOWNLOAD_NO_EXTRACT TRUE
 )
 FetchContent_GetProperties(tzdata)
 if (NOT tzdata_POPULATED)
