@@ -149,11 +149,10 @@ doxygen_add_docs(Doxygen
         ${PROJECT_SOURCE_DIR}/doc
         )
 
-add_subdirectory(src)
-
-
+        
+        
 enable_testing()
-add_subdirectory(test)
+add_subdirectory(src)
 add_subdirectory(tools)
 #=====================安装打包过程===============================
 # list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
@@ -182,6 +181,8 @@ if (RUN_COPY)
     # install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/Cmd_tool
     # DESTINATION tools)
     # #复制插件
+    # install(FILES ${CMAKE_SOURCE_DIR}/script/Cmd_tool/run2.exe 
+    # DESTINATION ${CMAKE_SOURCE_DIR}/script/maya)
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya
             DESTINATION plug)
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug
