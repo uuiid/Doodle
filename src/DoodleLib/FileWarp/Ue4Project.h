@@ -57,7 +57,6 @@ class DOODLELIB_API Ue4Project {
 
   FSys::path p_ue_path;
   FSys::path p_ue_Project_path;
-  ProjectPtr p_project;
   long_term_ptr p_term;
 
   void addUe4ProjectPlugins(const std::vector<std::string>& in_strs) const;

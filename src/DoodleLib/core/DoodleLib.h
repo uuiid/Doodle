@@ -37,8 +37,5 @@ class DOODLELIB_API DoodleLib : public details::no_copy {
 
   [[nodiscard]] RpcMetadataClientPtr getRpcMetadataClient() const;
   [[nodiscard]] RpcFileSystemClientPtr getRpcFileSystemClient() const;
-
-  const ProjectPtr& current_project() const;
-  void set_current_project(const ProjectPtr& in_currProject);
 };
 }  // namespace doodle

@@ -39,7 +39,7 @@ class DOODLELIB_API AssetsFile : public Metadata {
    * 
    * @param in_metadata 父条目,这个是必须的
    * @param in_path 本地路径,这个在创建时会自动生成一个服务器路径(基本上是一个uuid路径) 
-   *                基本是调用 AssetsPath::setPath(const FSys::path &in_path)
+   *                基本是调用 AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
    * @param name 名称
    * @param showName 显示名称 
    */

@@ -7,6 +7,9 @@
 #include <Exception/Exception.h>
 #include <Gui/action/actn_tool_box.h>
 #include <Gui/progress.h>
+#include <Metadata/Episodes.h>
+#include <Metadata/Metadata.h>
+#include <Metadata/Project.h>
 #include <Metadata/Shot.h>
 
 #include <nana/gui/filebox.hpp>
@@ -55,25 +58,32 @@ void tool_box_menu_factory::create_menu() {
     nana::filebox k_filebox{p_window, true};
     k_filebox.allow_multi_select(false);
 
-    auto k_files = k_filebox();
     nana::inputbox k_input_box{p_window, "镜头范围"};
+    nana::inputbox::text k_prj{"项目名称: "};
+    nana::inputbox::integer k_eps{"集数", 1, 1, 9999, 1};
     nana::inputbox::integer k_b{"开始", 1, 1, 9999, 1};
     nana::inputbox::integer k_e{"结束", 1, 1, 9999, 1};
 
-    k_input_box.show_modal(k_b, k_e);
+    k_input_box.show_modal(k_prj, k_b, k_e);
     toolbox::actn_ue4_shot_episodes::arg k_arg{};
     const auto k_range = k_e.value() - k_b.value();
     const auto k_b_int = k_b.value();
+
+    k_arg.project = std::make_shared<Project>("D:/", k_prj.value());
+
+    k_arg.epsiodes = std::make_shared<Episodes>(k_arg.project, k_eps.value());
+    k_arg.project->child_item.push_back_sig(k_arg.epsiodes->shared_from_this());
     std::generate_n(std::back_inserter(k_arg.shot_list),
                     k_range > 0 ? k_range : 0,
-                    [n = k_b_int]() mutable {
-                      auto k_shot = std::make_shared<Shot>();
-                      k_shot->setShot(n);
+                    [n = k_b_int, &k_arg]() mutable {
+                      auto k_shot = std::make_shared<Shot>(k_arg.epsiodes, n);
+                      k_arg.epsiodes->child_item.push_back_sig(k_shot->shared_from_this());
                       ++n;
                       return k_shot;
                     });
 
-    k_arg.date      = k_filebox().front();
+    auto k_paths    = k_filebox();
+    k_arg.date      = k_paths.empty() ? FSys::path{} : k_paths.front();
     k_arg.is_cancel = k_arg.date.empty() || k_range < 0;
 
     return k_arg;

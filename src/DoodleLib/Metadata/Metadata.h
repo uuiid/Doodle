@@ -285,11 +285,15 @@ class DOODLELIB_API Metadata
   template <class parent_class>
   std::shared_ptr<parent_class> find_parent_class() {
     auto k_m = this->shared_from_this();
-    while (k_m->hasParent()) {
+    while (k_m) {
       if (details::is_class<parent_class>(k_m))
         return std::dynamic_pointer_cast<parent_class>(k_m);
-      else
-        k_m = k_m->getParent();
+      else {
+        if (k_m->hasParent())
+          k_m = k_m->getParent();
+        else
+          k_m = nullptr;
+      }
     }
     return {};
   };

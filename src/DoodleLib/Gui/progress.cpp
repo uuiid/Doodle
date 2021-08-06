@@ -39,7 +39,6 @@ progress::progress(nana::window in_w, long_term_ptr in_, std::string in_title)
   _sig_scoped_list.emplace_back(boost::signals2::scoped_connection{
       in_->sig_finished.connect([this]() {
         _pro.value(1000);
-        this->close();
       })});
   _sig_scoped_list.emplace_back(boost::signals2::scoped_connection{
       in_->sig_progress.connect([this, in_](std::double_t in_double) {

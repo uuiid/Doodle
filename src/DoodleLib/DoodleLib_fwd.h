@@ -218,6 +218,11 @@ class season;
 class actn_create_ass_up_paths;
 class action_base;
 class tool_box_menu_factory;
+class VideoSequence;
+class Ue4Project;
+using ue4_project_ptr = std::shared_ptr<Ue4Project>;
+
+using video_sequence_ptr = std::shared_ptr<VideoSequence>;
 using tool_box_menu_factory_ptr = std::shared_ptr<tool_box_menu_factory>;
 
 using action_base_ptr              = std::shared_ptr<action_base>;

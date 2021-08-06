@@ -33,28 +33,21 @@ class DOODLELIB_API AssetsPath {
   /**
    * @brief 生成一个类
    * 
-   * @param in_path 输入路径，这个会调用 AssetsPath::setPath(const FSys::path &in_path)
+   * @param in_path 输入路径，这个会调用 AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
    */
-  explicit AssetsPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata = {});
+  explicit AssetsPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata);
 
   [[nodiscard]] const FSys::path &getLocalPath() const;
   [[nodiscard]] FSys::path get_cache_path() const;
   [[nodiscard]] const FSys::path &getServerPath() const;
   [[nodiscard]] const FSys::path &getBackupPath() const;
   /**
-   * @brief 设置资产的本地文件的路径，自动产生服务器路径
-   * 同时会自动产生服务器路径 
-   *  
-   * @param in_path 本地文件的路径 
-   */
-  void setPath(const FSys::path &in_path);
-  /**
    * @brief 设置资产的本地文件的路径，根据元数据产生路径
-   * 
+   *
    * 会产生根据元数据标签产生的路径
-   * 
-   * @param in_path  本地文件的路径 
-   * @param in_metadata 元数据指针， 
+   *
+   * @param in_path  本地文件的路径
+   * @param in_metadata 元数据指针，
    */
   void setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata);
 

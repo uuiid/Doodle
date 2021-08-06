@@ -66,19 +66,6 @@ DoodleLib::~DoodleLib() {
 
   Logger::clear();
 }
-const ProjectPtr& DoodleLib::current_project() const {
-  return p_curr_project;
-}
-void DoodleLib::set_current_project(const ProjectPtr& in_currProject) {
-  auto it = std::find_if(
-      p_project_vector.begin(), p_project_vector.end(),
-      [in_currProject](const ProjectPtr& in_ptr) { return in_ptr->getId() == in_currProject->getId(); });
-  if (it == p_project_vector.end()) {
-    DOODLE_LOG_WARN("无法找到项目: {}", in_currProject->str());
-    throw DoodleError{fmt::format("无法找到项目: {}", in_currProject->str())};
-  }
-  p_curr_project = in_currProject;
-}
 void DoodleLib::init_gui() {
   auto k_ip = fmt::format("{}:{:d}", CoreSet::getSet().get_server_host(), CoreSet::getSet().getMetaRpcPort());
 

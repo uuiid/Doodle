@@ -8,7 +8,8 @@
 
 namespace doodle {
 VideoSequence::VideoSequence(decltype(p_paths) paths)
-    : p_paths(std::move(paths)) {
+    : p_paths(std::move(paths)),
+      p_term(std::make_shared<long_term>()) {
   for (auto&& path : p_paths) {
     auto ex = path.extension();
     if (ex != ".mp4" && ex != ".avi")
@@ -54,13 +55,7 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
           k_image_resized = k_image;
 
         k_video_out << k_image_resized;
-        p_term->sig_progress(
-            boost::numeric_cast<int>(
-                (
-                    ((k_frame / k_frame_count) / k_len)  //
-                    )                                    //
-                )                                        //
-        );
+        p_term->sig_progress((std::double_t)1 / k_frame_count / k_len);
       }
     } else {
       throw DoodleError("不支持的格式");

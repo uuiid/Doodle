@@ -50,8 +50,10 @@ void long_term::forward_sig(const std::vector<long_term_ptr>& in_forward) {
       sig_message_result(str);
     });
     i->sig_finished.connect([this, k_size]() {
-      std::lock_guard k_guark{_mutex};
-      ++p_num;
+      {
+        std::lock_guard k_guark{_mutex};
+        ++p_num;
+      }
       if (p_num == k_size) {
         sig_finished();
       }

@@ -26,7 +26,7 @@ AssetsPath::AssetsPath(const FSys::path &in_path, const MetadataConstPtr &in_met
   if (in_metadata)
     this->setPath(in_path, in_metadata);
   else
-    setPath(in_path);
+    throw DoodleError{"空指针"};
 }
 const FSys::path &AssetsPath::getLocalPath() const {
   return p_local_path;
@@ -39,19 +39,8 @@ const FSys::path &AssetsPath::getServerPath() const {
 const FSys::path &AssetsPath::getBackupPath() const {
   return p_backup_path;
 }
-void AssetsPath::setPath(const FSys::path &in_path) {
-  auto &k_set       = CoreSet::getSet();
-  auto uuid         = k_set.getUUIDStr();
-  auto k_prj        = DoodleLib::Get().current_project();
-  FSys::path k_path = k_prj->str();
-
-  auto k_server_path = k_path / uuid.substr(3) / uuid / in_path.filename();
-  setPath(in_path, k_server_path);
-}
 
 void AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata) {
-  auto k_prj = DoodleLib::Get().current_project();
-
   /// 这里使用树,向上寻找,组合路径
   MetadataConstPtr k_m{};
   if (details::is_class<AssetsFile>(in_metadata))

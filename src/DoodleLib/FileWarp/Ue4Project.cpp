@@ -23,7 +23,6 @@ const std::string Ue4Project::Prop        = "Prop";
 Ue4Project::Ue4Project(FSys::path project_path)
     : p_ue_path(),
       p_ue_Project_path(std::move(project_path)),
-      p_project(DoodleLib::Get().current_project()),
       p_term(std::make_shared<long_term>()) {
   auto& ue  = Ue4Setting::Get();
   p_ue_path = ue.Path();
@@ -65,11 +64,11 @@ void Ue4Project::runPythonScript(const FSys::path& python_file) const {
   if (!FSys::exists(k_ue4_cmd))
     throw DoodleError{"找不到ue运行文件"};
 
-  auto k_comm = fmt::format(R"("{}" "{}" -ExecutePythonScript="{}")",
-                            k_ue4_cmd,          //ue路径
+  auto k_comm = fmt::format(R"({} {} -ExecutePythonScript={})",
+                            k_ue4_cmd,          // ue路径
                             p_ue_Project_path,  //项目路径
                                                 //      % "pythonscript"                      //运行ue命令名称
-                            python_file);       //python脚本路径
+                            python_file);       // python脚本路径
 
   DOODLE_LOG_INFO(k_comm)
   boost::process::child k_c{k_comm};
@@ -109,7 +108,7 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
     FSys::fstream file{k_tmp_file_path, std::ios_base::out | std::ios::binary};
     file.write(tmp_f.begin(), tmp_f.size());
   }
-
+  auto k_prj = inShotList[0]->find_parent_class<Project>();
   {  //这个是后续追加写入
     FSys::fstream file{k_tmp_file_path, std::ios_base::out | std::ios_base::app};
 
@@ -118,7 +117,7 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
     auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0]->getEpisodesPtr()->str();
     for (const auto& k_shot : inShotList) {
       auto k_string = fmt::format("{}{:04d}_{}",
-                                  p_project->showStr(),
+                                  k_prj->showStr(),
                                   k_shot->getEpisodesPtr()->getEpisodes(),
                                   k_shot->str());
 
@@ -142,11 +141,11 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
 
       if (!FSys::exists(k_shot_sequence_path) && !FSys::exists(k_shot_lev_path)) {
         file << fmt::format(
-                    R"(doodle_lve("{}", "{}/", "{}", "{}")())",
+                    R"(doodle_lve("""{}""", """{}/""", """{}""", """{}""")())",
                     k_shot_lev,
-                    k_game_shot_path,
+                    k_game_shot_path.generic_string(),
                     k_shot_sequence,
-                    k_game_shot_path)
+                    k_game_shot_path.generic_string())
              << std::endl;
       }
     }

@@ -13,6 +13,8 @@ class DOODLELIB_API arg_tool_box_create_ue_shot : public arg_path {
  public:
   arg_tool_box_create_ue_shot();
   std::vector<ShotPtr> shot_list;
+  EpisodesPtr epsiodes;
+  ProjectPtr project;
 };
 }  // namespace action_arg
 namespace toolbox {
@@ -46,6 +48,8 @@ class DOODLELIB_API actn_create_video
 
 class DOODLELIB_API actn_connect_video
     : public action_toolbox<action_arg::arg_paths> {
+  video_sequence_ptr p_video_sequence;
+
  public:
   actn_connect_video();
   bool is_async() override;
@@ -57,6 +61,7 @@ class DOODLELIB_API actn_connect_video
 
 class DOODLELIB_API actn_ue4_shot_episodes
     : public action_toolbox<action_arg::arg_tool_box_create_ue_shot> {
+  ue4_project_ptr p_ptr;
  public:
   actn_ue4_shot_episodes();
   bool is_async() override;
