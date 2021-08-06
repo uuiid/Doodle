@@ -123,8 +123,8 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
 
   using child_set = boost::intrusive::set<
       tree_node,
-      boost::intrusive::base_hook<tree_node>,
-      boost::intrusive::constant_time_size<false>>;
+      boost::intrusive::base_hook<tree_node>>;
+  // boost::intrusive::constant_time_size<false>
   using child_set_owner = std::set<tree_node_ptr>;
 
   template <class... type_arg>

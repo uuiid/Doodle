@@ -26,15 +26,15 @@ doodle_grpc_generate(
         rpc/UserMessage.proto
 )
 
-add_doodle(
-        NAME DoodleLib
-        LISTS_FILES
-        ${DOODLELIB_HEADER}
-        ${DOODLELIB_SOURCE}
-        ${OUT_LISTS_sqlpp}
-        ${OUT_LISTS_GRPC}
-        main/doodle.manifest
-)
+# add_doodle(
+#         NAME DoodleLib
+#         LISTS_FILES
+#         ${DOODLELIB_HEADER}
+#         ${DOODLELIB_SOURCE}
+#         ${OUT_LISTS_sqlpp}
+#         ${OUT_LISTS_GRPC}
+#         main/doodle.manifest
+# )
 add_doodle(
         NAME DoodleExe
         IS_EXE
@@ -63,6 +63,7 @@ add_doodle(
         main/win_exe.rc
         main/server/main.cpp
 )
+
 add_doodle(
         NAME doodle_test
         IS_EXE
@@ -79,6 +80,7 @@ add_doodle(
         main/test/test_server.cpp
         main/test/test_external.cpp
 )
+
 target_compile_options(doodle_test PRIVATE /bigobj)
 include_directories(${PROJECT_SOURCE_DIR}/external/csv-parser/include)
 include(Catch)
