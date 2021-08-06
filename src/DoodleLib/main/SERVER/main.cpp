@@ -6,6 +6,7 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
+
 #include <DoodleLib/DoodleLib.h>
 //#include <DoodleLib/DoodleApp.h>
 //#include <boost/locale.hpp>
@@ -13,12 +14,12 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               HINSTANCE hPrevInstance,
                               LPSTR strCmdLine,
                               int nCmdShow) try {
-  //  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF );
-//  std::locale::global(std::locale{".UTF8"});
-//  std::setlocale(LC_NUMERIC, "C");
-//  std::setlocale(LC_TIME, "C");
-//  std::setlocale(LC_MONETARY, "C");
-//  std::locale::global(std::locale::classic());
+  // ::_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+  //  std::locale::global(std::locale{".UTF8"});
+  //  std::setlocale(LC_NUMERIC, "C");
+  //  std::setlocale(LC_TIME, "C");
+  //  std::setlocale(LC_MONETARY, "C");
+  //  std::locale::global(std::locale::classic());
   //  std::wcout.imbue(std::locale{".UTF8"});
   std::setlocale(LC_CTYPE, ".UTF8");
 
@@ -27,6 +28,7 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
   app.run_server();
   app.run();
   return 0;
+  // _CrtDumpMemoryLeaks();
 } catch (const std::exception &err) {
   std::cout << err.what() << std::endl;
   //  DOODLE_LOG_ERROR(err.what());
