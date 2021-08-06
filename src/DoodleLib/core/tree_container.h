@@ -31,10 +31,10 @@ class DOODLELIB_API tree_node_destroy : public std::default_delete<tree_node> {
   void operator()(tree_node* in_ptr);
 };
 
-template <class value, class container>
+template <class container>
 class DOODLELIB_API observe : public no_copy {
  public:
-  using _value_type    = value;
+  using _value_type    = typename container::value_type;
   using container_type = container;
   observe()            = default;
 
@@ -110,15 +110,7 @@ class DOODLELIB_API observe : public no_copy {
 class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
                                 public set_base_hook,
                                 public details::no_copy {
-  friend details::tree_node_destroy;
-  tree_node();
-  explicit tree_node(tree_node* in_parent, MetadataPtr in_data);
-  explicit tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data);
-
-  void insert_private(const tree_node_ptr& in_);
-
  public:
-  ~tree_node();
   using tree_node_ptr = std::shared_ptr<tree_node>;
 
   using child_set = boost::intrusive::set<
@@ -126,6 +118,22 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
       boost::intrusive::base_hook<tree_node>>;
   // boost::intrusive::constant_time_size<false>
   using child_set_owner = std::set<tree_node_ptr>;
+
+  using iterator               = typename child_set ::iterator;
+  using const_iterator         = typename child_set ::const_iterator;
+  using reverse_iterator       = typename child_set ::reverse_iterator;
+  using const_reverse_iterator = typename child_set ::const_reverse_iterator;
+
+ private:
+  friend details::tree_node_destroy;
+  tree_node();
+  explicit tree_node(tree_node* in_parent, MetadataPtr in_data);
+  explicit tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data);
+
+  iterator insert_private(const tree_node_ptr& in_);
+
+ public:
+  ~tree_node();
 
   template <class... type_arg>
   static tree_node_ptr make_this(type_arg&&... in_arg) {
@@ -145,10 +153,23 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   [[nodiscard]] tree_node_ptr get_parent() const;
   [[nodiscard]] const child_set& get_children() const;
   [[nodiscard]] bool empty() const;
-  void insert(const tree_node_ptr& in_);
-  //  void insert(tree_node& in_);
-  void remove(const tree_node_ptr& in_);
-  //  void remove(tree_node& in_);
+  iterator insert(const tree_node_ptr& in_);
+  iterator insert(const MetadataPtr& in_ptr);
+
+  iterator remove(const tree_node_ptr& in_);
+  iterator remove(const MetadataPtr& in_ptr);
+
+  [[nodiscard]] iterator begin() noexcept;
+  [[nodiscard]] const_iterator begin() const noexcept;
+  [[nodiscard]] iterator end() noexcept;
+  [[nodiscard]] const_iterator end() const noexcept;
+  [[nodiscard]] reverse_iterator rbegin() noexcept;
+  [[nodiscard]] const_reverse_iterator rbegin() const noexcept;
+  [[nodiscard]] reverse_iterator rend() noexcept;
+  [[nodiscard]] const_reverse_iterator rend() const noexcept;
+  [[nodiscard]] const_reverse_iterator crbegin() const noexcept;
+  [[nodiscard]] const_reverse_iterator crend() const noexcept;
+
   void clear();
 
   bool operator==(const tree_node& in_rhs) const;
@@ -170,7 +191,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   MetadataPtr data;
   child_set child_item;
   child_set_owner child_owner;
-  details::observe<MetadataPtr, child_set> sig_class;
+  details::observe<child_set> sig_class;
 };
 
 template <class... type_arg>
