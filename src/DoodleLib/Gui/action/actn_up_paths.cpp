@@ -48,7 +48,7 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
   }
 
   p_tran = k_ch->Upload(k_list);
-  p_tran->get_term()->forward_sig(p_term);
+  p_term->forward_sig(p_tran->get_term());
 
   k_ass_file->updata_db(in_parent->getMetadataFactory());
   (*p_tran)();

@@ -5,9 +5,10 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/Ue4Setting.h>
+#include <DoodleLib/threadPool/ThreadPool.h>
+#include <DoodleLib/threadPool/long_term.h>
 
 #include <DoodleLib/libWarp/WinReg.hpp>
-
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
 
@@ -22,7 +23,8 @@ const std::string Ue4Project::Prop        = "Prop";
 Ue4Project::Ue4Project(FSys::path project_path)
     : p_ue_path(),
       p_ue_Project_path(std::move(project_path)),
-      p_project(DoodleLib::Get().current_project()) {
+      p_project(DoodleLib::Get().current_project()),
+      p_term(std::make_shared<long_term>()) {
   auto& ue  = Ue4Setting::Get();
   p_ue_path = ue.Path();
 }
@@ -115,8 +117,7 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
 
     auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0]->getEpisodesPtr()->str();
     for (const auto& k_shot : inShotList) {
-
-      auto k_string         = fmt::format("{}{:04d}_{}",
+      auto k_string = fmt::format("{}{:04d}_{}",
                                   p_project->showStr(),
                                   k_shot->getEpisodesPtr()->getEpisodes(),
                                   k_shot->str());
@@ -129,7 +130,7 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
       FSys::create_directory(k_shot_path / k_dep);
 
       //添加关卡序列和定序器
-      auto k_shot_su = fmt::format("_{}",k_dep.front());
+      auto k_shot_su = fmt::format("_{}", k_dep.front());
 
       auto k_shot_sequence = k_string;
       k_shot_sequence += k_shot_su;
@@ -153,6 +154,16 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
   }
 
   this->runPythonScript(k_tmp_file_path);
+  p_term->sig_finished();
+  p_term->sig_message_result("完成添加");
+}
+
+long_term_ptr Ue4Project::create_shot_folder_asyn(const std::vector<ShotPtr>& inShotList) {
+  DoodleLib::Get().get_thread_pool()->enqueue(
+      [this, inShotList]() {
+        this->createShotFolder(inShotList);
+      });
+  return p_term;
 }
 bool Ue4Project::can_import_ue4(const FSys::path& in_path) {
   auto k_e = in_path.extension();

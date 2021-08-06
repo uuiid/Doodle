@@ -41,7 +41,7 @@ long_term_ptr actn_maya_export::run(const MetadataPtr& in_data, const MetadataPt
   _arg_type.date = k_path->get_cache_path();
 
   auto k_maya = std::make_shared<MayaFile>();
-  k_maya->get_term()->forward_sig(p_term);
+  p_term->forward_sig(k_maya->get_term());
   p_term->sig_finished.connect([this, in_data, in_parent]() {
     p_up_paths->run(in_data, in_parent);
   });

@@ -1,17 +1,18 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/threadPool/ThreadPool.h>
 
 #include <opencv2/opencv.hpp>
 
 namespace doodle {
 VideoSequence::VideoSequence(decltype(p_paths) paths)
-    : long_term(),
-      p_paths(std::move(paths)) {
+    : p_paths(std::move(paths)) {
   for (auto&& path : p_paths) {
     auto ex = path.extension();
     if (ex != ".mp4" && ex != ".avi")
-      throw DoodleError("不是MP4文件, 暂时不支持");
+      throw DoodleError("不是可以处理的视频文件, 暂时不支持");
   }
 }
 
@@ -53,7 +54,7 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
           k_image_resized = k_image;
 
         k_video_out << k_image_resized;
-        this->sig_progress(
+        p_term->sig_progress(
             boost::numeric_cast<int>(
                 (
                     ((k_frame / k_frame_count) / k_len)  //
@@ -66,7 +67,14 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
     }
   }
 
-  this->sig_message_result(fmt::format("完成视频 {}", k_out_path));
-  this->sig_finished();
+  p_term->sig_message_result(fmt::format("完成视频 {}", k_out_path));
+  p_term->sig_finished();
+}
+
+long_term_ptr VideoSequence::connectVideo_asyn(const FSys::path& path) {
+  auto k_ptr = shared_from_this();
+  DoodleLib::Get().get_thread_pool()->enqueue(
+      [k_ptr, path]() { k_ptr->connectVideo(path); });
+  return p_term;
 }
 }  // namespace doodle

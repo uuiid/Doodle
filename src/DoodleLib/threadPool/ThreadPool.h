@@ -1,6 +1,6 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-
+#include <DoodleLib/Exception/Exception.h>
 #include <vector>
 #include <queue>
 #include <memory>

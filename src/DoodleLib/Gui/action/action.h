@@ -194,23 +194,7 @@ void actn_composited<arg_type>::set_class_name(const std::string& in_name) {
 
 template <class arg_type>
 long_term_ptr actn_composited<arg_type>::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  const auto& k_size = p_term_list.size();
-  for (auto& k_i : p_term_list) {
-    k_i->sig_progress.connect([this, k_size](std::double_t in_) {
-      action::p_term->sig_progress(in_ / boost::numeric_cast<std::double_t>(k_size));
-    });
-    k_i->sig_message_result.connect([this](const std::string& in_) {
-      action::p_term->sig_message_result(in_);
-    });
-    k_i->sig_finished.connect([this, k_size]() {
-      std::lock_guard k_guark{action::_mutex};
-      ++p_num;
-      if (p_num == k_size) {
-        action::p_term->sig_finished();
-      }
-    });
-  }
-
+  action::p_term->forward_sig(p_term_list);
   return p_term_list.empty() ? long_term_ptr{} : action::p_term;
 }
 

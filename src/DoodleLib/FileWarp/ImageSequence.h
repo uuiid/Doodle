@@ -9,6 +9,7 @@ class DOODLELIB_API ImageSequence : public std::enable_shared_from_this<ImageSeq
   std::string p_Text;
   long_term_ptr p_long_sig;
 
+  FSys::path p_out_path;
   static std::string clearString(const std::string& str);
 
   bool seanDir(const FSys::path& dir);
@@ -22,8 +23,16 @@ class DOODLELIB_API ImageSequence : public std::enable_shared_from_this<ImageSeq
   long_term_ptr get_long_term();
 
   void setText(const std::string& text);
-  void createVideoFile(const FSys::path& out_file);
-  long_term_ptr create_video_asyn(const FSys::path& out_file);
+  /**
+   * @brief 使用这个可以将镜头和和集数还有水印， 路径等一起设置完成
+   * 
+   * @param in_shot 要使用的镜头元数据
+   * @param in_episodes 要使用的集数元数据
+   * @return std::string 生成的水印
+   */
+  std::string set_shot_and_eps(const ShotPtr& in_shot, const EpisodesPtr& in_episodes);
+  void createVideoFile(const FSys::path& out_file = {});
+  long_term_ptr create_video_asyn(const FSys::path& out_file = {});
 
   boost::signals2::signal<void(float)> stride;
 };
