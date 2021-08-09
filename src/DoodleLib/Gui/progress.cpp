@@ -37,8 +37,9 @@ progress::progress(nana::window in_w, long_term_ptr in_, std::string in_title)
 
   _pro.amount(1000);
   _sig_scoped_list.emplace_back(boost::signals2::scoped_connection{
-      in_->sig_finished.connect([this]() {
+      in_->sig_finished.connect([this, in_]() {
         _pro.value(1000);
+        this->close();
       })});
   _sig_scoped_list.emplace_back(boost::signals2::scoped_connection{
       in_->sig_progress.connect([this, in_](std::double_t in_double) {
@@ -46,12 +47,14 @@ progress::progress(nana::window in_w, long_term_ptr in_, std::string in_title)
         _pro.value(((k_v < 0 ? 0 : k_v) > 999 ? 999 : k_v));
       })});
   _sig_scoped_list.emplace_back(boost::signals2::scoped_connection{
-      in_->sig_message_result.connect(([this](const std::string& in_str) {
+      in_->sig_message_result.connect(([this, in_](const std::string& in_str) {
         DOODLE_LOG_INFO(in_str);
         _text_box.caption(in_str);
-        //        nana::msgbox msg{*this, "结果"};
-        //        msg << in_str;
-        //        msg();
+        if (in_->fulfil()) {
+          nana::msgbox msg{"结果"};
+          msg << in_str;
+          msg();
+        }
       }))});
   p_layout.collocate();
   caption(in_title);

@@ -331,8 +331,10 @@ void menu_factory::modify_assets_file_up_data() {
 
   k_up_folder->sig_get_arg.connect([this]() {
     actn_up_paths::arg_ k_arg{};
-    nana::folderbox k_file{this->p_window, FSys::current_path()};
-    k_arg.date = k_file.show();
+    nana::filebox k_file{this->p_window, true};
+    k_file.allow_multi_select(true);
+    k_arg.date      = k_file.show();
+    k_arg.is_cancel = k_arg.date.empty();
     return k_arg;
   });
 }

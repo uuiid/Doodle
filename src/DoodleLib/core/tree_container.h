@@ -183,7 +183,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   operator MetadataPtr&();
   MetadataPtr& get();
 
-  operator const MetadataPtr&() const;
+  operator const MetadataPtr&() const; 
   const MetadataPtr& get() const;
 
  private:
