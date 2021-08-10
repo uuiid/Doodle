@@ -23,18 +23,18 @@ RpcFileSystemServer::RpcFileSystemServer()
       p_set(CoreSet::getSet()),
       p_cache(
 #ifdef NDEBUG
-              1024 * 1024 * 10
+          1024 * 1024 * 10
 #else
-              10
+          10
 #endif
           ),
       _mutex(
 #ifdef NDEBUG
-    1024 * 1024 * 100
+          1024 * 1024 * 100
 #else
-10
+          10
 #endif
-) {
+      ) {
 }
 
 grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
@@ -156,7 +156,8 @@ grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const F
   DOODLE_LOG_DEBUG(fmt::format("down path: {}", k_path));
 
   {
-    std::lock_guard k_lock{get_mutex(k_path)->mutex()};
+    auto k_m = get_mutex(k_path);
+    std::lock_guard k_lock{k_m->mutex()};
     FSys::ifstream k_file{k_path, std::ios::in | std::ios::binary};
 
     if (!k_file.is_open() || !k_file.good()) {
@@ -208,7 +209,8 @@ grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::Ser
     return {grpc::StatusCode::CANCELLED, fmt::format("{} is dir", k_path.generic_string())};
 
   {
-    std::lock_guard k_lock{get_mutex(k_path)->mutex()};
+    auto k_m = get_mutex(k_path);
+    std::lock_guard k_lock{k_m->mutex()};
     FSys::ofstream k_file{k_path, std::ios::out | std::ios::binary};
 
     if (!k_file.is_open() || !k_file.good()) {
@@ -261,7 +263,8 @@ grpc::Status RpcFileSystemServer::Move(grpc::ServerContext* context,
       k_t = FSys::add_time_stamp(k_t);
     }
 
-    std::lock_guard k_lock{get_mutex(k_s)->mutex()};
+    auto k_m = get_mutex(k_s);
+    std::lock_guard k_lock{k_m->mutex()};
     FSys::rename(k_s, k_t);
     DOODLE_LOG_INFO("{} -move-> {}", k_s, k_t);
   } catch (const FSys::filesystem_error& e) {
@@ -273,7 +276,8 @@ grpc::Status RpcFileSystemServer::GetHash(grpc::ServerContext* context, const Fi
   auto k_path = p_set.getDataRoot() / request->path();
   if (FSys::exists(k_path) && FSys::is_regular_file(k_path)) {
     auto k_str = k_path.generic_string();
-    std::lock_guard k_lock{get_mutex(k_path)->mutex()};
+    auto k_m   = get_mutex(k_path);
+    std::lock_guard k_lock{k_m->mutex()};
 
     if (!p_cache.Cached(k_str)) {
       p_cache.Put(k_str, std::make_shared<rpc_filesystem::file_hash>(k_path));
@@ -316,11 +320,12 @@ void rpc_filesystem::file_hash::update_hash() {
   _hash = std::move(k_item);
 }
 namespace rpc_filesystem {
+
 file_mutex::file_mutex()
     : _mutex() {
 }
 
-std::mutex& file_mutex::mutex() {
+decltype(file_mutex::_mutex)& file_mutex::mutex() {
   return _mutex;
 }
 }  // namespace rpc_filesystem

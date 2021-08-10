@@ -30,12 +30,12 @@ class DOODLELIB_API file_hash : public details::no_copy {
 using file_hash_ptr = std::shared_ptr<file_hash>;
 
 class DOODLELIB_API file_mutex {
-  std::mutex _mutex;
+  std::recursive_mutex _mutex;
 
  public:
   file_mutex();
 
-  std::mutex& mutex();
+  decltype(_mutex)& mutex();
   // explicit ifstream(FSys::path path,
   //                   std::ios_base::openmode _Mode = ios_base::in,
   //                   int _Prot                     = std::ios_base::_Default_open_prot);
