@@ -174,7 +174,8 @@ string_matrix2_ptr actn_export_excel::export_excel_line(const std::vector<Assets
     k_list.emplace_back(fmt::format("\"{}\"", k_time.first->showStr()));   ///开始时间
     k_list.emplace_back(fmt::format("\"{}\"", k_time.second->showStr()));  ///结束时间
 
-    k_list.emplace_back(std::to_string(k_time.first->work_duration(*k_time.second).count()));  ///持续时间
+    auto k_work_time = k_time.first->work_duration(*k_time.second);
+    k_list.emplace_back(std::to_string(chrono::floor<chrono::days_double>(k_work_time).count()));  ///持续时间
     const auto& k_com = k_item->getComment();
     k_list.emplace_back(k_com.empty() ? std::string{"无"} : k_com.back()->getComment());  ///备注
     k_list.emplace_back(exist(k_item) ? std::string{"存在"} : std::string{"不存在"});     ///文件存在

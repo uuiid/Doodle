@@ -3,7 +3,6 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/test",
                 "${workspaceFolder}/src",
                 "F:/vcpkg/installed/x64-windows/include"
             ],
