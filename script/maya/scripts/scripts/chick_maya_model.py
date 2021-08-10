@@ -54,8 +54,8 @@ class materal():
         # self.isOk = (self.shader_group == "{}SG".format(self.name))
         # print("is {} match".format(self.isOk))
         # if not self.isOk:
-        #     self.repairName()
-        # self.repairMateralFace()
+        # self.repairName()
+        # self.repairMateralFacFe()
         self.reName()
 
     def repairName(self):

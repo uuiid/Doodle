@@ -1,13 +1,13 @@
-import maya.cmds
+﻿import maya.cmds
 import maya.mel
 import pymel.core
-from pymel.core.modeling import bevel
 import pymel.core.system
 import argparse
 import os
 import re
 import json
 import pymel.util.path
+import pymel.all
 
 
 def get_file_name():
@@ -29,7 +29,7 @@ class maya_play_raneg():
 class maya_file():
     def __init__(self):
         self.file_path = pymel.core.system.sceneName()
-        self.maya_path_class = pymel.util.path(self.file_path)
+        self.maya_path_class = pymel.core.Path(self.file_path)
         self.file_name = self.maya_path_class.basename()
         self.name_not_ex = self.file_name.splitext()[0]
         self.abs_path = self.maya_path_class.dirname()
@@ -90,18 +90,61 @@ class camera:
                 break
         print("not select cam ", self.maya_cam)
 
-    def create_move(self):
+    def create_move(self, out_path=None):
         # 如果不符合就直接返回
         if not self.maya_cam:
             return
-        
-        
+        if not out_path:
+            out_path = doodle_work_space.maya_file.abs_path
+        tmp_path = pymel.core.Path(out_path)
+        if not tmp_path.exists():
+            tmp_path.mkdir_p()
+
+        maya.mel.eval(
+            "lookThroughModelPanel {} modelPanel1;".format(self.maya_cam))
+        print("maya mel eval lookThroughModelPanel {} modelPanel1;".format(self.maya_cam))
+        try:
+            pymel.core.playblast(viewer=False,
+                                 startTime=doodle_work_space.raneg.start,
+                                 endTime=doodle_work_space.raneg.end,
+                                 filename="{path}/{base_name}_playblast_{start}-{end}"
+                                 .format(
+                                     path=out_path,
+                                     base_name=doodle_work_space.maya_file.name_not_ex,
+                                     start=doodle_work_space.raneg.start,
+                                     end=doodle_work_space.raneg.end
+                                 ),
+                                 percent=100,
+                                 quality=100,
+                                 offScreen=True,
+                                 editorPanelName="modelPanel1",
+                                 format="qt")
+            pymel.core.system.warning("QuickTime not found, use default value")
+        except RuntimeError:
+            pymel.core.playblast(viewer=False,
+                                 startTime=doodle_work_space.raneg.start,
+                                 endTime=doodle_work_space.raneg.end,
+                                 filename="{path}/{base_name}_playblast_{start}-{end}"
+                                 .format(
+                                     path=out_path,
+                                     base_name=doodle_work_space.maya_file.name_not_ex,
+                                     start=doodle_work_space.raneg.start,
+                                     end=doodle_work_space.raneg.end
+                                 ),
+                                 percent=100,
+                                 quality=100,
+                                 offScreen=True,
+                                 editorPanelName="modelPanel1",
+                                 format="movie")
 
     def export(self, export_path):
 
         # 如果不符合就直接返回
         if not self.maya_cam:
             return
+        tmp_path = pymel.core.Path(export_path)
+        if not tmp_path.exists():
+            tmp_path.mkdir_p()
 
         if len(self.maya_cam.fullPath().split("|")) > 2:
             try:
@@ -189,12 +232,95 @@ class camera:
             print("not export")
 
 
-class maya_obj():
-    def __init__(self, str):
-        self.maya_obj = pymel.core.ls(str)
+class meateral():
+    def __init__(self, meateral_obj):
+        self.maya_obj = meateral_obj
+        self.name = self.mat.name()
+        self.shader_group = None
+        self.shader = None
+        grp = self.maya_obj.shadingGroups()
+        if grp:
+            self.shader_group = self.maya_obj.shadingGroups()[0]
+            self.shader = self.shader_group.name()
 
-    def export_cloth_abc(self):
-        pass
+    def chick(self):
+        self.reName()
 
-    def export_cloth_fbx(self):
-        pass
+    def reName(self):
+        if self.maya_obj and self.shader_group:
+            self.maya_obj.rename("{}Mat".format(self.name))
+            self.shader_group.rename(self.name)
+            print("rename {} ".format(self.name))
+        else:
+            print("not rename {}".format(self.maya_obj))
+
+    def isSurfaceMaterial(self):
+        # 获得分类是表面材质
+        if [c for c in self.maya_obj.classification() if "shader/surface" in c]:
+            return True
+        else:
+            return False
+
+    def repairMateralFace(self):
+        polys = pymel.core.sets(self.shader_group, query=True)
+        print("materal obj: ")
+        for poly in polys:
+            if poly.__class__.__name__ == "Mesh":
+                pymel.core.sets(self.shader_group, remove=poly, edit=True)
+                pymel.core.sets(self.shader_group, add=poly.faces, edit=True)
+
+
+class uvmap():
+    MultipleUvMap = True
+    name = []
+
+    def __init__(self, maya_obj):
+        self.maya_obj = maya_obj
+        self._getMapName_()
+
+    def _getMapName_(self):
+        self.name = pymel.core.polyUVSet(self.maya_obj, q=True, allUVSets=True)
+        print("_" * 20)
+        print("get obj {}".format(self.maya_obj.name()))
+        print("uv maps: ")
+        print(self.name)
+
+        if not self.name:
+            return
+
+        if len(self.name) > 1:
+            self.MultipleUvMap = True
+        else:
+            self.MultipleUvMap = False
+        print("set MultipleUvMap {}".format(self.MultipleUvMap))
+
+
+class geometryInfo():
+    def __init__(self, maya_mesh_obj):
+        try:
+            self.maya_mesh_obj = maya_mesh_obj.getShapes()[0]
+        except AttributeError:
+            self.maya_mesh_obj = maya_mesh_obj
+        self.name = maya_mesh_obj.getTransform().name()
+        self.out_path = doodle_work_space.maya_file.abs_path
+        self.materals = []
+        self._getMaterals_()
+        
+
+    def export_cloth_abc(self, out_path=None):
+        if out_path:
+            self.out_path = out_path
+
+    def export_cloth_fbx(self, out_path=None):
+        if out_path:
+            self.out_path = out_path
+
+    def _getMaterals_(self):
+        pymel.core.select(self.maya_mesh_obj, replace=True)
+        pymel.core.select(clear=True)
+        for s in self.maya_mesh_obj.outputs():
+            if(s.__class__ == pymel.all.ShadingEngine):
+                pymel.core.select(s.surfaceShader.inputs(), add=True)
+        for shd in pymel.core.selected(materials=True):
+            if [c for c in shd.classification() if 'shader/surface' in c]:
+                self.materals.append(meateral(shd))
