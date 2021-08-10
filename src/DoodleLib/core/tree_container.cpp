@@ -28,7 +28,8 @@ tree_node::tree_node(tree_node* in_parent, MetadataPtr in_data)
       child_item(),
       child_owner(),
       sig_class(),
-      p_sig(std::make_shared<signal_observe>()) {;
+      p_sig(std::make_shared<signal_observe>()) {
+  ;
 }
 
 tree_node::tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data)
@@ -63,7 +64,7 @@ tree_node::iterator tree_node::insert_private(const tree_node::tree_node_ptr& in
   in_->parent          = this;
   auto [k_it, k_is_in] = child_item.insert(*in_);
   if (k_is_in) {
-    child_owner.insert(in_);
+    child_owner.push_back(in_);
   } else {
     DOODLE_LOG_INFO("插入失败, 已经有这个子元素");
   }
@@ -95,6 +96,12 @@ void tree_node::clear() {
     it.parent = nullptr;
   }
   child_item.clear();
+}
+
+void tree_node::clear_sig() {
+  p_sig->sig_begin_clear();
+  clear();
+  p_sig->sig_clear();
 }
 
 tree_node::signal_observe_ptr tree_node::get_signal_observe() const {
@@ -149,7 +156,8 @@ tree_node::iterator tree_node::erase(const tree_node_ptr& in_) {
   if (it != child_item.end()) {
     in_->parent = nullptr;
     k_iterator  = child_item.erase(it);
-    child_owner.erase(in_);
+    auto k_it   = std::find(child_owner.begin(), child_owner.end(), in_);
+    child_owner.erase(k_it);
   } else {
     DOODLE_LOG_INFO("没有找到子元素");
   }

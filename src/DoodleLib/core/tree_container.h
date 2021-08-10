@@ -118,7 +118,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
       tree_node,
       boost::intrusive::base_hook<tree_node>>;
   // boost::intrusive::constant_time_size<false>
-  using child_set_owner    = std::set<tree_node_ptr>;
+  using child_set_owner    = std::vector<tree_node_ptr>;
   using signal_observe     = details::observe<child_set>;
   using signal_observe_ptr = std::shared_ptr<signal_observe>;
 
@@ -136,6 +136,86 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   iterator insert_private(const tree_node_ptr& in_);
   iterator insert(const tree_node_ptr& in_, bool emit_solt);
 
+  // template <      class T>
+  // struct test_value {
+  //   constexpr static auto k_has_connect = boost::hana::is_valid(
+  //       [](auto&& obj, auto& in_arg) -> decltype(obj->connect(in_arg)) {});
+
+  //   /// 这里我们再测试一下是否需要指向容器的指针，需要的的话添加一下
+  //   constexpr static auto k_has_node_ptr = boost::hana::is_valid(
+  //       [](auto&& obj) -> decltype(obj->node_ptr) {});
+
+  //   template <class arg_t>
+  //   static void connect(const T& data, arg_t& in_arg) {
+  //     data->connect(in_arg);
+  //   };
+
+  //   template <class arg_t>
+  //   static void set_node_ptr(const T& data, arg_t& in_arg) {
+  //     data->node_ptr = in_arg;
+  //   };
+  // };
+
+  // template <
+  //     class T,
+  //     std::enable_if_t<!details::is_smart_pointer<T>::value, bool> = true>
+  // struct test_value {
+  //   constexpr static auto k_has_connect = boost::hana::is_valid(
+  //       [](auto&& obj, auto& in_arg) -> decltype(obj.connect(in_arg)) {});
+
+  //   /// 这里我们再测试一下是否需要指向容器的指针，需要的的话添加一下
+  //   constexpr static auto k_has_node_ptr = boost::hana::is_valid(
+  //       [](auto&& obj) -> decltype(obj.node_ptr) {});
+
+  //   template <class arg_t>
+  //   static void connect(T& data, arg_t& in_arg) {
+  //     data.connect(in_arg);
+  //   };
+
+  //   template <class arg_t>
+  //   static void set_node_ptr(const T& data, arg_t& in_arg) {
+  //     data.node_ptr = in_arg;
+  //   };
+  // };
+  template <class T>
+  struct test_value {
+    /// 在这里我们测试一下自动连接是否可用， 可用的话进行连接
+    constexpr static auto k_has_connect = boost::hana::is_valid(
+        [](auto&& obj, auto& in_arg) -> decltype(obj.connect(in_arg)) {});
+
+    /// 这里我们再测试一下是否需要指向容器的指针，需要的的话添加一下
+    constexpr static auto k_has_node = boost::hana::is_valid(
+        [](auto&& obj) -> decltype(obj.node_ptr) {});
+
+    template <class arg_t, class T>
+    static std::enable_if_t<details::is_smart_pointer<T>::value>
+    connect(const T& data, arg_t& in_arg) {
+      if constexpr (decltype(k_has_connect(*data, in_arg)){})
+        data->connect(in_arg);
+    };
+
+    template <class arg_t, class T>
+    static std::enable_if_t<details::is_smart_pointer<T>::value>
+    set_node_ptr(const T& data, arg_t& in_arg) {
+      if constexpr (decltype(k_has_node(*data)){})
+        data->node_ptr = in_arg;
+    };
+
+    template <class arg_t, class T>
+    static std::enable_if_t<!details::is_smart_pointer<T>::value>
+    connect(T& data, arg_t& in_arg) {
+      if constexpr (decltype(k_has_connect(data, in_arg)){})
+        data.connect(in_arg);
+    };
+
+    template <class arg_t, class T>
+    static std::enable_if_t<!details::is_smart_pointer<T>::value>
+    set_node_ptr(const T& data, arg_t& in_arg) {
+      if constexpr (decltype(k_has_node(data)){})
+        data.node_ptr = in_arg;
+    };
+  };
+
  public:
   ~tree_node();
 
@@ -149,12 +229,10 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
       if (tmp->has_parent())
         tmp->parent->insert_private(tmp);
     }
-    /// 在这里我们测试一下自动连接是否可用， 可用的话进行连接
-    constexpr auto k_has = boost::hana::is_valid(
-        [](auto&& obj) -> decltype(obj->connect(tmp)) {});
-    if constexpr (decltype(k_has(tmp->data)){}) {
-      tmp->data->connect(tmp);
-    }
+
+    using test_value_t = test_value<decltype(data)>;
+    test_value_t::connect(tmp->data, tmp);
+    test_value_t::set_node_ptr(tmp->data, tmp);
     return tmp;
   };
 
@@ -174,6 +252,9 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   iterator erase_sig(const tree_node_ptr& in_);
   iterator erase_sig(const MetadataPtr& in_ptr);
 
+  void clear();
+  void clear_sig();
+  signal_observe_ptr get_signal_observe() const;
   /**
    * @brief 这里所有的迭代器都是迭代子项， 没有包括父物体
    * 
@@ -189,9 +270,6 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   [[nodiscard]] const_reverse_iterator rend() const noexcept;
   [[nodiscard]] const_reverse_iterator crbegin() const noexcept;
   [[nodiscard]] const_reverse_iterator crend() const noexcept;
-
-  void clear();
-  signal_observe_ptr get_signal_observe() const;
 
   bool operator==(const tree_node& in_rhs) const;
   bool operator!=(const tree_node& in_rhs) const;

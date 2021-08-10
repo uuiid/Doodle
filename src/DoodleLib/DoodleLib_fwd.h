@@ -63,21 +63,45 @@ class no_copy {
   no_copy(const no_copy &) = delete;
   no_copy &operator=(const no_copy &) = delete;
 };
+template <typename T, typename Enable = void>
+struct is_smart_pointer {
+  static const auto value = std::false_type::value;
+};
+
+template <typename T>
+struct is_smart_pointer<T, typename std::enable_if<std::is_same<typename std::remove_cv<T>::type, std::shared_ptr<typename T::element_type>>::value>::type> {
+  static const auto value = std::true_type::value;
+};
+
+template <typename T>
+struct is_smart_pointer<T, typename std::enable_if<std::is_same<typename std::remove_cv<T>::type, std::unique_ptr<typename T::element_type>>::value>::type> {
+  static const auto value = std::true_type::value;
+};
+
+template <typename T>
+struct is_smart_pointer<T, typename std::enable_if<std::is_same<typename std::remove_cv<T>::type, std::weak_ptr<typename T::element_type>>::value>::type> {
+  static const auto value = std::true_type::value;
+};
 
 /**
  * 这个是判断指针或者共享指针是什么类的帮助函数
  * @tparam T 是否是这个类
- * @tparam RT 传入的指针类型
- * @param in_rt 输入的指针
+ * @tparam RT 传入的类型
+ * @param in_rt 输入的
  * @return 是否是可以转换的
  */
 template <class T, class RT>
 bool is_class(const RT &in_rt) {
-  if (!in_rt)
-    return false;
-  const auto &k_item = *in_rt;
-  return typeid(T) == typeid(k_item);
+  if constexpr (is_smart_pointer<RT>::value) {
+    if (!in_rt)
+      return false;
+    const auto &k_item = *in_rt;
+    return typeid(T) == typeid(k_item);
+  } else {
+    return typeid(T) == typeid(in_rt);
+  }
 }
+
 }  // namespace details
 namespace chrono {
 namespace literals {
@@ -89,8 +113,8 @@ using namespace date::literals;
 using namespace std::chrono;
 using namespace date;
 
-using hours_double = duration<std::double_t, std::ratio<3600> >;
-using days_double = duration<std::double_t, std::ratio<28800> >;
+using hours_double = duration<std::double_t, std::ratio<3600>>;
+using days_double  = duration<std::double_t, std::ratio<28800>>;
 using sys_time_pos = time_point<system_clock>;
 
 /// TODO: 这里我们暂时使用周六和周日作为判断, 但是实际上还有各种假期和其他情况要计入
@@ -223,7 +247,7 @@ class VideoSequence;
 class Ue4Project;
 using ue4_project_ptr = std::shared_ptr<Ue4Project>;
 
-using video_sequence_ptr = std::shared_ptr<VideoSequence>;
+using video_sequence_ptr        = std::shared_ptr<VideoSequence>;
 using tool_box_menu_factory_ptr = std::shared_ptr<tool_box_menu_factory>;
 
 using action_base_ptr              = std::shared_ptr<action_base>;

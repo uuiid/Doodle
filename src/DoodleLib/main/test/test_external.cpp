@@ -9,15 +9,15 @@ TEST_CASE("my tree", "[tree]") {
   using namespace doodle;
 
   auto k_tree = GENERATE(make_tree(), make_tree(), make_tree());
-  auto tree   = GENERATE_COPY(
+  auto tree   = GENERATE(
       make_tree(nullptr, std::make_shared<Shot>()),
-      make_tree(k_tree, std::make_shared<Shot>()),
-      make_tree(k_tree, std::make_shared<Episodes>()));
-  auto tree2 = GENERATE_COPY(
       make_tree(nullptr, std::make_shared<Shot>()),
-      make_tree(k_tree, std::make_shared<Shot>()),
-      make_tree(tree, std::make_shared<Shot>()),
-      make_tree(tree, std::make_shared<Episodes>()));
+      make_tree(nullptr, std::make_shared<Episodes>()));
+  auto tree2 = GENERATE(
+      make_tree(nullptr, std::make_shared<Shot>()),
+      make_tree(nullptr, std::make_shared<Shot>()),
+      make_tree(nullptr, std::make_shared<Shot>()),
+      make_tree(nullptr, std::make_shared<Episodes>()));
 
   SECTION("tree insert") {
     k_tree->insert(tree);
