@@ -19,14 +19,16 @@ tree_node::tree_node()
       data(),
       child_item(),
       child_owner(),
-      sig_class() {
+      sig_class(),
+      p_sig(std::make_shared<signal_observe>()) {
 }
 tree_node::tree_node(tree_node* in_parent, MetadataPtr in_data)
     : parent(in_parent),
       data(std::move(in_data)),
       child_item(),
       child_owner(),
-      sig_class() {
+      sig_class(),
+      p_sig(std::make_shared<signal_observe>()) {
   //  if (parent)
   //    parent->child_item.insert(*this);
 }
@@ -36,7 +38,8 @@ tree_node::tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data)
       data(std::move(in_data)),
       child_item(),
       child_owner(),
-      sig_class() {
+      sig_class(),
+      p_sig(std::make_shared<signal_observe>()) {
   //  if (parent)
   //    parent->child_item.insert(*this);
 }
@@ -58,14 +61,7 @@ const tree_node::child_set& tree_node::get_children() const {
   return child_item;
 }
 tree_node::iterator tree_node::insert(const tree_node::tree_node_ptr& in_) {
-  if (in_->parent == this)
-    return {};
-
-  if (in_->has_parent()) {
-    in_->parent->remove(in_);
-    assert(!in_->is_linked());
-  }
-  return insert_private(in_);
+  return insert(in_, false);
 }
 tree_node::iterator tree_node::insert_private(const tree_node::tree_node_ptr& in_) {
   in_->parent          = this;
@@ -77,26 +73,25 @@ tree_node::iterator tree_node::insert_private(const tree_node::tree_node_ptr& in
   }
   return k_it;
 }
+
+tree_node::iterator tree_node::insert(const tree_node_ptr& in_, bool emit_solt) {
+  if (in_->parent == this)
+    return {};
+
+  if (in_->has_parent()) {
+    if (emit_solt)
+      in_->parent->erase_sig(in_);
+    else
+      in_->parent->erase(in_);
+    assert(!in_->is_linked());
+  }
+  return insert_private(in_);
+}
 tree_node::operator MetadataPtr&() {
   return data;
 }
 MetadataPtr& tree_node::get() {
   return data;
-}
-tree_node::iterator tree_node::remove(const tree_node_ptr& in_) {
-  if (*in_ == *this)
-    throw std::runtime_error{"无法移除自己"};
-
-  auto it = child_item.find(*in_);
-  iterator k_iterator{};
-  if (it != child_item.end()) {
-    in_->parent = nullptr;
-    k_iterator  = child_item.erase(it);
-    child_owner.erase(in_);
-  } else {
-    DOODLE_LOG_INFO("没有找到子元素");
-  }
-  return k_iterator;
 }
 
 void tree_node::clear() {
@@ -104,6 +99,10 @@ void tree_node::clear() {
     it.parent = nullptr;
   }
   child_item.clear();
+}
+
+tree_node::signal_observe_ptr tree_node::get_signal_observe() const {
+  return p_sig;
 }
 bool tree_node::operator==(const tree_node& in_rhs) const {
   return std::tie(parent, data, child_item) == std::tie(in_rhs.parent, in_rhs.data, in_rhs.child_item);
@@ -132,22 +131,75 @@ const MetadataPtr& tree_node::get() const {
 bool tree_node::empty() const {
   return child_item.empty();
 }
-tree_node::iterator tree_node::remove(const MetadataPtr& in_ptr) {
+tree_node::iterator tree_node::erase(const MetadataPtr& in_ptr) {
   auto k_it = std::find_if(child_item.begin(), child_item.end(),
                            [in_ptr](const tree_node& in) {
                              return in.data == in_ptr;
                            });
 
   if (k_it != child_item.end()) {
-    return remove(*k_it);
+    return erase(*k_it);
+  } else {
+    return {};
+  }
+}
+
+tree_node::iterator tree_node::erase(const tree_node_ptr& in_) {
+  if (*in_ == *this)
+    throw std::runtime_error{"无法移除自己"};
+
+  auto it = child_item.find(*in_);
+  iterator k_iterator{};
+  if (it != child_item.end()) {
+    in_->parent = nullptr;
+    k_iterator  = child_item.erase(it);
+    child_owner.erase(in_);
+  } else {
+    DOODLE_LOG_INFO("没有找到子元素");
+  }
+  return k_iterator;
+}
+
+tree_node::iterator tree_node::erase_sig(const tree_node_ptr& in_) {
+  p_sig->sig_begin_erase(*in_);
+  auto k_i = erase(in_);
+  p_sig->sig_erase(*k_i);
+  return k_i;
+}
+
+tree_node::iterator tree_node::erase_sig(const MetadataPtr& in_ptr) {
+  auto k_it = std::find_if(child_item.begin(), child_item.end(),
+                           [in_ptr](const tree_node& in) {
+                             return in.data == in_ptr;
+                           });
+
+  if (k_it != child_item.end()) {
+    p_sig->sig_begin_erase(*k_it);
+    auto k_i = erase(*k_it);
+    p_sig->sig_erase(*k_i);
+    return k_i;
   } else {
     return {};
   }
 }
 tree_node::iterator tree_node::insert(const MetadataPtr& in_ptr) {
   auto k_ptr = make_this(this, in_ptr);
-  return insert(k_ptr);
+  return insert(k_ptr, false);
 }
+
+tree_node::iterator tree_node::insert_sig(const tree_node_ptr& in_) {
+  p_sig->sig_begin_insert(*in_);
+  auto k_i = insert(in_, true);
+  p_sig->sig_insert(*k_i);
+}
+
+tree_node::iterator tree_node::insert_sig(const MetadataPtr& in_ptr) {
+  auto k_ptr = make_this(this, in_ptr);
+  p_sig->sig_begin_insert(*k_ptr);
+  auto k_i = insert(k_ptr, true);
+  p_sig->sig_insert(*k_i);
+}
+
 tree_node::iterator tree_node::begin() noexcept {
   return child_item.begin();
 }

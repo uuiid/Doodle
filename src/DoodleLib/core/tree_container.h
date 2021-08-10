@@ -117,7 +117,9 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
       tree_node,
       boost::intrusive::base_hook<tree_node>>;
   // boost::intrusive::constant_time_size<false>
-  using child_set_owner = std::set<tree_node_ptr>;
+  using child_set_owner    = std::set<tree_node_ptr>;
+  using signal_observe     = details::observe<child_set>;
+  using signal_observe_ptr = std::shared_ptr<signal_observe>;
 
   using iterator               = typename child_set ::iterator;
   using const_iterator         = typename child_set ::const_iterator;
@@ -131,6 +133,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   explicit tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data);
 
   iterator insert_private(const tree_node_ptr& in_);
+  iterator insert(const tree_node_ptr& in_, bool emit_solt);
 
  public:
   ~tree_node();
@@ -153,12 +156,22 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   [[nodiscard]] tree_node_ptr get_parent() const;
   [[nodiscard]] const child_set& get_children() const;
   [[nodiscard]] bool empty() const;
+
   iterator insert(const tree_node_ptr& in_);
   iterator insert(const MetadataPtr& in_ptr);
+  iterator insert_sig(const tree_node_ptr& in_);
+  iterator insert_sig(const MetadataPtr& in_ptr);
 
-  iterator remove(const tree_node_ptr& in_);
-  iterator remove(const MetadataPtr& in_ptr);
+  iterator erase(const tree_node_ptr& in_);
+  iterator erase(const MetadataPtr& in_ptr);
+  iterator erase_sig(const tree_node_ptr& in_);
+  iterator erase_sig(const MetadataPtr& in_ptr);
 
+  /**
+   * @brief 这里所有的迭代器都是迭代子项， 没有包括父物体
+   * 
+   * @return iterator 子项迭代器
+   */
   [[nodiscard]] iterator begin() noexcept;
   [[nodiscard]] const_iterator begin() const noexcept;
   [[nodiscard]] iterator end() noexcept;
@@ -171,6 +184,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   [[nodiscard]] const_reverse_iterator crend() const noexcept;
 
   void clear();
+  signal_observe_ptr get_signal_observe() const;
 
   bool operator==(const tree_node& in_rhs) const;
   bool operator!=(const tree_node& in_rhs) const;
@@ -183,7 +197,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   operator MetadataPtr&();
   MetadataPtr& get();
 
-  operator const MetadataPtr&() const; 
+  operator const MetadataPtr&() const;
   const MetadataPtr& get() const;
 
  private:
@@ -192,6 +206,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   child_set child_item;
   child_set_owner child_owner;
   details::observe<child_set> sig_class;
+  signal_observe_ptr p_sig;
 };
 
 template <class... type_arg>
