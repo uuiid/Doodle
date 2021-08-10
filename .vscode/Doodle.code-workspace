@@ -34,7 +34,48 @@
 			]
 		},
 		"todo-tree.tree.scanMode": "workspace only",
-		"cmake.useCMakePresets": "never"
+		"cmake.useCMakePresets": "never",
+		"files.associations": {
+			".clang-format": "yaml",
+			"memory": "cpp"
+		},
+		"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+		"testMate.cpp.log.logSentry": "disable_3",
+		"testMate.cpp.test.advancedExecutables": [
+			{
+				"name": "doodle_test",
+				"pattern": "b_Ninja_VS19_Ni_64_qt515_Debug/**/doodle_test.exe",
+				"cwd": "${absDirpath}"
+			}
+		],
+		"cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}",
+		"cmake.configureSettings": {},
+		"python.envFile": "${workspaceFolder}/.env",
+		"python.formatting.autopep8Args": [
+			"--ignore",
+			"E402"
+		],
+		"editor.tabSize": 2,
+		"editor.fontFamily": " 'Fira Code',Consolas, monospace",
+		"editor.fontLigatures": true,
+		"files.exclude": {
+			"**/.git": true,
+			"**/.svn": true,
+			"**/.hg": true,
+			".idea": true,
+			".vs": true,
+			"b_Ninja_VS19_Ni_64_qt515_Debug": false,
+			"b_Ninja_VS19_Ni_64_qt515_Release": true,
+			"install*": true,
+			"cmake-build-debug-vs2019": true,
+			"cmake-build-release-vs2019": true,
+			".vscode": false,
+			"venv": true
+		},
+		"C_Cpp.exclusionPolicy": "checkFolders",
+		"cmake.buildBeforeRun": false,
+		"testMate.cpp.test.workingDirectory": "${absDirpath}",
+		"editor.formatOnSaveMode": "modifications"
 	},
 	"tasks": {
 		"version": "2.0.0",
