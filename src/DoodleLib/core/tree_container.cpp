@@ -28,9 +28,7 @@ tree_node::tree_node(tree_node* in_parent, MetadataPtr in_data)
       child_item(),
       child_owner(),
       sig_class(),
-      p_sig(std::make_shared<signal_observe>()) {
-  //  if (parent)
-  //    parent->child_item.insert(*this);
+      p_sig(std::make_shared<signal_observe>()) {;
 }
 
 tree_node::tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data)
@@ -40,8 +38,6 @@ tree_node::tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data)
       child_owner(),
       sig_class(),
       p_sig(std::make_shared<signal_observe>()) {
-  //  if (parent)
-  //    parent->child_item.insert(*this);
 }
 tree_node::~tree_node() {
   child_item.clear();
@@ -191,6 +187,7 @@ tree_node::iterator tree_node::insert_sig(const tree_node_ptr& in_) {
   p_sig->sig_begin_insert(*in_);
   auto k_i = insert(in_, true);
   p_sig->sig_insert(*k_i);
+  return k_i;
 }
 
 tree_node::iterator tree_node::insert_sig(const MetadataPtr& in_ptr) {
@@ -198,6 +195,7 @@ tree_node::iterator tree_node::insert_sig(const MetadataPtr& in_ptr) {
   p_sig->sig_begin_insert(*k_ptr);
   auto k_i = insert(k_ptr, true);
   p_sig->sig_insert(*k_i);
+  return k_i;
 }
 
 tree_node::iterator tree_node::begin() noexcept {

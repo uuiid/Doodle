@@ -5,6 +5,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 
+#include <boost/hana.hpp>
 #include <boost/intrusive/intrusive_fwd.hpp>
 #include <boost/intrusive/link_mode.hpp>
 #include <boost/intrusive/list.hpp>
@@ -147,6 +148,12 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
     if constexpr (sizeof...(in_arg) > 1) {
       if (tmp->has_parent())
         tmp->parent->insert_private(tmp);
+    }
+    /// 在这里我们测试一下自动连接是否可用， 可用的话进行连接
+    constexpr auto k_has = boost::hana::is_valid(
+        [](auto&& obj) -> decltype(obj->connect(tmp)) {});
+    if constexpr (decltype(k_has(tmp->data)){}) {
+      tmp->data->connect(tmp);
     }
     return tmp;
   };
