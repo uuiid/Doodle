@@ -42,10 +42,13 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
   rpc_trans_path_ptr_list k_list{};
   for (auto& k_i : k_path) {
     if (Ue4Project::is_ue4_file(k_i)) {
-      auto k_ass_path = std::make_shared<AssetsPath>(k_i.parent_path() / Ue4Project::Content, k_ass_file);
-      k_list.emplace_back(std::make_unique<rpc_trans_path>(k_ass_path->getLocalPath(),
-                                                           k_ass_path->getServerPath(),
-                                                           k_ass_path->getBackupPath()));
+      if (FSys::exists(k_i.parent_path() / Ue4Project::Content)) {
+        auto k_ass_path = std::make_shared<AssetsPath>(k_i.parent_path() / Ue4Project::Content, k_ass_file);
+        k_list.emplace_back(std::make_unique<rpc_trans_path>(k_ass_path->getLocalPath(),
+                                                             k_ass_path->getServerPath(),
+                                                             k_ass_path->getBackupPath()));
+        k_ass_file->getPathFile().push_back(k_ass_path);
+      }
     }
     auto k_ass_path = std::make_shared<AssetsPath>(k_i, k_ass_file);
     k_list.emplace_back(std::make_unique<rpc_trans_path>(k_ass_path->getLocalPath(),
