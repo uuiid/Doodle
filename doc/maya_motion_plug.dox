@@ -1,7 +1,8 @@
 /**
  * @page maya_motion_plug maya动作库
  * @tableofcontents
- * 
+
+ * @section maya_warn maya警告
  * @subsubsection maya_notice 关于路径的
  * 
  * @b 😱尽量不要使用 特殊字符以及空格和中文路径 ,以及一些 表情符   
@@ -24,7 +25,7 @@
  * 
  * 
  * 
- * @subsubsection maya_action_library 使用
+ * @section maya_action_library 使用
  * @image html maya_motion/open_windows.jpg 打开菜单栏
  * @image html maya_motion/setting.jpg 设置窗口
  * 

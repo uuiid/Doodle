@@ -24,7 +24,36 @@ class setting_windows;
 class project_widget;
 class assets_widget;
 class assets_attr_widget;
+/**
+ * @defgroup  doodle_windwos 主要窗口
+ * @tableofcontents
+ * 
+ * @b 第一次使用时请先进行基本的设置
+ * 
+ * @ref doodle_windwos_setting "设置窗口"
+ * 
+ * @image html main_windows.jpg 主要窗口 width=30%
+ * 
+ * @section doodle_window_menu_bar 窗口菜单栏
+ * @subsection doodle_window_menu_bar_file 文件
+ * @li @b 设置 @ref doodle_windwos_setting
+ * @li @b 退出 退出软件
+ * 
+ * @subsection doodle_window_menu_bar_tool 工具箱
+ * @b 工具箱中的所有工具是可以不依赖主面板使用的独立小工具集合
+ * @image html doodle_main_tool.jpg 工具箱  width=30%
+ * 
+ * 
+ * @subsubsection install_ue_plugin 安装ue插件
 
+ * @subsubsection delete_ue_cache 删除ue缓存
+ * @subsubsection modify_the_ue_cache_location 修改ue缓存位置
+ */
+
+/**
+ * @brief 主要的程序窗口
+ * 
+ */
 class DOODLELIB_API main_windows : public nana::form {
   nana::place p_layout;
   nana::menubar p_menubar;
@@ -40,6 +69,10 @@ class DOODLELIB_API main_windows : public nana::form {
 
  public:
   main_windows();
+  /**
+   * @brief 创建菜单栏
+   * 
+   */
   void create_menubar();
 };
 }  // namespace doodle

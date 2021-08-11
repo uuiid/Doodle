@@ -130,10 +130,9 @@ add_custom_target(
 )
 
 #添加文档生成
-set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
-set(DOXYGEN_WARNINGS NO)
-set(DOXYGEN_WARN_IF_UNDOCUMENTED NO)
-set(DOXYGEN_WARN_IF_DOC_ERROR NO)
+set(DOXYGEN_WARNINGS YES)
+set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
+set(DOXYGEN_WARN_IF_DOC_ERROR YES)
 set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
 set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR}/doc)
 set(DOXYGEN_EXCLUDE_PATTERNS
@@ -141,7 +140,11 @@ set(DOXYGEN_EXCLUDE_PATTERNS
         */.vs
         */b_Ninja_VS*
         */cmake-build*
-        */venv)
+        */tools
+        */script
+        */venv
+        */MAYA)
+set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
 set(DOXYGEN_GENERATE_TREEVIEW YES)
 set(DOXYGEN_HTML_EXTRA_STYLESHEET ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.css)
 doxygen_add_docs(Doxygen

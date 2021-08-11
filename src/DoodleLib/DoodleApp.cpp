@@ -11,6 +11,7 @@
 #include <Gui/main_windows.h>
 #include <Gui/setting_windows.h>
 #include <core/CoreSet.h>
+#include <core/DoodleLib.h>
 #include <fmt/ostream.h>
 #include <libWarp/json_warp.h>
 #include <rpc/RpcServerHandle.h>
@@ -21,9 +22,12 @@
 #include <nana/fwd.hpp>
 #include <nana/gui.hpp>
 #include <nlohmann/json.hpp>
-#include <core/DoodleLib.h>
 namespace doodle {
 
+/**
+ * @brief 这个是解析命令行专用的类
+ * 
+ */
 class DOODLELIB_API command_line {
  public:
   int p_sql_port{3306};                     ///< mysql 端口
@@ -41,12 +45,28 @@ class DOODLELIB_API command_line {
         p_sql_password("deve"),
         p_mk_link(),
         b_mklink(false),
-        b_server(false) {}
-  std::vector<std::pair<FSys::path, FSys::path> > p_mk_link;
+        b_server(false){};
 
+  /**
+   * @brief 制作硬链接的属性
+   * 
+   */
+  std::vector<std::pair<FSys::path, FSys::path> > p_mk_link;
+  /**
+   * @brief 使用时硬链接制作
+   * 
+   */
   bool b_mklink{};
+  /**
+   * @brief 是否时候启动服务器功能
+   * 
+   */
   bool b_server{};
 
+  /**
+   * @brief 获得简单的全局设置
+   * 
+   */
   inline void get_set() {
     if (!b_server)
       return;
@@ -58,6 +78,11 @@ class DOODLELIB_API command_line {
     p_sql_user      = set.getSqlUser();
     p_sql_password  = set.getSqlPassword();
   };
+
+  /**
+   * @brief 将配置文件直接添加到全局设置中
+   * 
+   */
 
   inline void set_set() const {
     if (!b_server)
@@ -71,7 +96,12 @@ class DOODLELIB_API command_line {
     set.setSqlUser(p_sql_user);
     set.setSqlPassword(p_sql_password);
   };
-
+  /**
+   * @brief 转换为json
+   * 
+   * @param nlohmann_json_j 
+   * @param nlohmann_json_t 
+   */
   friend void to_json(nlohmann::json& nlohmann_json_j, const command_line& nlohmann_json_t) {
     nlohmann_json_j["b_server"]        = nlohmann_json_t.b_server;
     nlohmann_json_j["b_mklink"]        = nlohmann_json_t.b_mklink;
@@ -83,6 +113,12 @@ class DOODLELIB_API command_line {
     nlohmann_json_j["p_sql_password"]  = nlohmann_json_t.p_sql_password;
     nlohmann_json_j["p_mk_link"]       = nlohmann_json_t.p_mk_link;
   };
+  /**
+   * @brief 从json读取值
+   * 
+   * @param nlohmann_json_j 
+   * @param nlohmann_json_t 
+   */
   friend void from_json(const nlohmann::json& nlohmann_json_j, command_line& nlohmann_json_t) {
     try {
       nlohmann_json_j.at("b_server").get_to(nlohmann_json_t.b_server);

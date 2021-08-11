@@ -18,8 +18,7 @@
 #include <string>
 namespace doodle {
 
-void toolkit::openPath(const FSys::path &path) {
-}
+
 
 void toolkit::installMayaPath() {
   auto mayadoc = CoreSet::getSet().getDoc().parent_path();
