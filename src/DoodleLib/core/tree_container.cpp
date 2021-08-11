@@ -64,6 +64,7 @@ tree_node::iterator tree_node::insert_private(const tree_node::tree_node_ptr& in
   in_->parent          = this;
   auto [k_it, k_is_in] = child_item.insert(*in_);
   if (k_is_in) {
+    /// 所有权转移插入
     child_owner.push_back(in_);
   } else {
     DOODLE_LOG_INFO("插入失败, 已经有这个子元素");
@@ -130,6 +131,30 @@ tree_node::operator const MetadataPtr&() const {
 }
 const MetadataPtr& tree_node::get() const {
   return data;
+}
+
+void tree_node::set(const MetadataPtr& in_) {
+  value_fun_t::disconnect(data, shared_from_this());
+  value_fun_t::set_node_ptr(data, tree_node_ptr{});
+  data = in_;
+  value_fun_t::connect(data, shared_from_this());
+  value_fun_t::set_node_ptr(data, shared_from_this());
+}
+
+void tree_node::set(MetadataPtr&& in_) {
+  value_fun_t::disconnect(data, shared_from_this());
+  value_fun_t::set_node_ptr(data, tree_node_ptr{});
+  data = std::move(in_);
+  value_fun_t::connect(data, shared_from_this());
+  value_fun_t::set_node_ptr(data, shared_from_this());
+}
+
+tree_node& tree_node::operator=(const MetadataPtr& in_) {
+  set(in_);
+}
+
+tree_node& tree_node::operator=(MetadataPtr&& in_) {
+  set(std::move(in_));
 }
 bool tree_node::empty() const {
   return child_item.empty();

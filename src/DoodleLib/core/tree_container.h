@@ -106,7 +106,14 @@ class DOODLELIB_API observe : public no_copy {
 }  // namespace details
 
 /**
- * @brief 这是一个树结构
+ * @brief 这是一个树结构， 并且可以进行观察， 并且父对象拥有子对象的所有权
+ * 在这个结构是不可复制的， 所以我们使用智能指针来进行传递， 并将构造函数隐藏，
+ * 同时，使用工厂函数进行转发， 但是他依旧是可默认构造的，
+ * 在储存的数据如果有 connect(tree_node_ptr& in )自动连接时函数， 会自动调用，保持连接信号
+ * 如果有 tree_node_ptr 的弱指针指向容器时， 也会自动设置
+ * 有 disconnect(tree_node_ptr& in ) 断开连接时， 也会进行断开链接
+ * 
+ * 
  */
 class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
                                 public set_base_hook,
@@ -136,69 +143,25 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   iterator insert_private(const tree_node_ptr& in_);
   iterator insert(const tree_node_ptr& in_, bool emit_solt);
 
-  // template <      class T>
-  // struct test_value {
-  //   constexpr static auto k_has_connect = boost::hana::is_valid(
-  //       [](auto&& obj, auto& in_arg) -> decltype(obj->connect(in_arg)) {});
-
-  //   /// 这里我们再测试一下是否需要指向容器的指针，需要的的话添加一下
-  //   constexpr static auto k_has_node_ptr = boost::hana::is_valid(
-  //       [](auto&& obj) -> decltype(obj->node_ptr) {});
-
-  //   template <class arg_t>
-  //   static void connect(const T& data, arg_t& in_arg) {
-  //     data->connect(in_arg);
-  //   };
-
-  //   template <class arg_t>
-  //   static void set_node_ptr(const T& data, arg_t& in_arg) {
-  //     data->node_ptr = in_arg;
-  //   };
-  // };
-
-  // template <
-  //     class T,
-  //     std::enable_if_t<!details::is_smart_pointer<T>::value, bool> = true>
-  // struct test_value {
-  //   constexpr static auto k_has_connect = boost::hana::is_valid(
-  //       [](auto&& obj, auto& in_arg) -> decltype(obj.connect(in_arg)) {});
-
-  //   /// 这里我们再测试一下是否需要指向容器的指针，需要的的话添加一下
-  //   constexpr static auto k_has_node_ptr = boost::hana::is_valid(
-  //       [](auto&& obj) -> decltype(obj.node_ptr) {});
-
-  //   template <class arg_t>
-  //   static void connect(T& data, arg_t& in_arg) {
-  //     data.connect(in_arg);
-  //   };
-
-  //   template <class arg_t>
-  //   static void set_node_ptr(const T& data, arg_t& in_arg) {
-  //     data.node_ptr = in_arg;
-  //   };
-  // };
   template <class T>
-  struct test_value {
+  struct value_fun {
     /// 在这里我们测试一下自动连接是否可用， 可用的话进行连接
     constexpr static auto k_has_connect = boost::hana::is_valid(
         [](auto&& obj, auto& in_arg) -> decltype(obj.connect(in_arg)) {});
 
+    /// 在这里我们测试一下断开连接是否可用
+    constexpr static auto k_has_disconnect = boost::hana::is_valid(
+        [](auto&& obj, auto& in_arg) -> decltype(obj.disconnect(in_arg)) {});
+
     /// 这里我们再测试一下是否需要指向容器的指针，需要的的话添加一下
     constexpr static auto k_has_node = boost::hana::is_valid(
-        [](auto&& obj) -> decltype(obj.node_ptr) {});
+        [](auto&& obj) -> decltype(obj.tree_node_ptr) {});
 
     template <class arg_t, class T>
     static std::enable_if_t<details::is_smart_pointer<T>::value>
     connect(const T& data, arg_t& in_arg) {
       if constexpr (decltype(k_has_connect(*data, in_arg)){})
         data->connect(in_arg);
-    };
-
-    template <class arg_t, class T>
-    static std::enable_if_t<details::is_smart_pointer<T>::value>
-    set_node_ptr(const T& data, arg_t& in_arg) {
-      if constexpr (decltype(k_has_node(*data)){})
-        data->node_ptr = in_arg;
     };
 
     template <class arg_t, class T>
@@ -209,12 +172,42 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
     };
 
     template <class arg_t, class T>
+    static std::enable_if_t<details::is_smart_pointer<T>::value>
+    set_node_ptr(const T& data, arg_t& in_arg) {
+      if constexpr (decltype(k_has_node(*data)){})
+        data->tree_node_ptr = in_arg;
+    };
+
+    template <class arg_t, class T>
     static std::enable_if_t<!details::is_smart_pointer<T>::value>
     set_node_ptr(const T& data, arg_t& in_arg) {
       if constexpr (decltype(k_has_node(data)){})
-        data.node_ptr = in_arg;
+        data.tree_node_ptr = in_arg;
+    };
+
+    template <class arg_t, class T>
+    static std::enable_if_t<details::is_smart_pointer<T>::value>
+    disconnect(const T& data, arg_t& in_arg) {
+      if constexpr (decltype(k_has_disconnect(*data)){})
+        data->disconnect(in_arg);
+    };
+
+    template <class arg_t, class T>
+    static std::enable_if_t<!details::is_smart_pointer<T>::value>
+    disconnect(const T& data, arg_t& in_arg) {
+      if constexpr (decltype(k_has_disconnect(data)){})
+        data.disconnect(in_arg);
     };
   };
+
+ private:
+  tree_node* parent;
+  MetadataPtr data;
+  child_set child_item;
+  child_set_owner child_owner;
+  details::observe<child_set> sig_class;
+  signal_observe_ptr p_sig;
+  using value_fun_t = value_fun<decltype(data)>;
 
  public:
   ~tree_node();
@@ -230,9 +223,8 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
         tmp->parent->insert_private(tmp);
     }
 
-    using test_value_t = test_value<decltype(data)>;
-    test_value_t::connect(tmp->data, tmp);
-    test_value_t::set_node_ptr(tmp->data, tmp);
+    value_fun_t::connect(tmp->data, tmp);
+    value_fun_t::set_node_ptr(tmp->data, tmp);
     return tmp;
   };
 
@@ -281,17 +273,13 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
 
   operator MetadataPtr&();
   MetadataPtr& get();
+  void set(const MetadataPtr& in_);
+  void set(MetadataPtr&& in_);
+  tree_node& operator=(const MetadataPtr& in_);
+  tree_node& operator=(MetadataPtr&& in_);
 
   operator const MetadataPtr&() const;
   const MetadataPtr& get() const;
-
- private:
-  tree_node* parent;
-  MetadataPtr data;
-  child_set child_item;
-  child_set_owner child_owner;
-  details::observe<child_set> sig_class;
-  signal_observe_ptr p_sig;
 };
 
 template <class... type_arg>
@@ -299,21 +287,4 @@ tree_node_ptr make_tree(type_arg&&... in_arg) {
   return tree_node::make_this(std::forward<type_arg>(in_arg)...);
 }
 
-// class tree_meta;
-// class tree_meta {
-//  public:
-//   using tree_meta_ptr      = std::shared_ptr<tree_meta>;
-//   using tree_meta_weak_ptr = std::weak_ptr<tree_meta>;
-//
-//  private:
-//   tree_meta_weak_ptr parent;
-//   std::set<tree_meta_ptr> child_item;
-//   MetadataPtr data;
-//
-//  public:
-//   tree_meta() = default;
-//   explicit tree_meta(tree_meta_ptr& in_meta, MetadataPtr in_metadata);
-//   //  bool has_parent();
-//   //  bool is_root();
-// };
 }  // namespace doodle
