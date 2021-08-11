@@ -1,0 +1,67 @@
+/**
+ * @page maya_motion_plug maya动作库
+ * @tableofcontents
+ * 
+ * @subsubsection maya_notice 关于路径的
+ * 
+ * @b 😱尽量不要使用 特殊字符以及空格和中文路径 ,以及一些 表情符   
+ * @code 
+ * D:/#@##@~`3%..&())😀😥😥/ @b 像这样的路径不可以 /&*&*(*()()_())
+ * @endcode
+ * 
+ * @b 😱路径嵌套层数不要太多,太长,这样会造成一些无法预知的问题,  
+ * @code 
+ * D:/dasdsads/sdsadsadfdf/xxxxxx/xxxxxxxxx/xxxxxxxxxxxx/xxxxxxxxxxxxxxxx/xxxxxxxxx/
+ * xxxxxxxxxxx/xxxxxxxxxxxxxxx/xxxxxxxxxxxxxx/sxsdsadsax/sadsadsa/axxxxxxxxx/xxxxxx/ 
+ * 个路径已经太长了,请不要在这里设置动作库/fsdsadsada  
+ * @endcode
+ * @b 😁在动作库当中是可以使用中文的, 包括制作人, 都可以使用中文 
+ * 
+ * 
+ * @subsection install1 加载插件
+ * @warning 首先要记得加载插件 
+ * @image html maya_motion/load_plug.jpg
+ * 
+ * 
+ * 
+ * @subsubsection maya_action_library 使用
+ * @image html maya_motion/open_windows.jpg 打开菜单栏
+ * @image html maya_motion/setting.jpg 设置窗口
+ * 
+ * @b 记得先要设置根目录 
+ * 
+ * 动作库的根目录必须有 @b DoodleMotion.config 这个文件, 否则无法识别,
+ *  请不要删除,在删除后会不可避免的丢失大多数信息, 
+ * 同时动作库内部文件的随意改动以及代码注入会造成 @b 不可预知的错误和崩溃  
+ * 在没有 @b DoodleMotion.config 时会自动创建,请尽可能的使用空目录创建动作库, 以减少不可预知的风险 
+ * 
+ * 在首次打开动作库的时候请设置 @b 制作人名称, 以便在提交动作库的时候进行标注和搜索
+ * 
+ * 
+ * @subsubsection action_library_main_window 主要窗口
+ *
+ * @image html maya_motion/main_motion.jpg 主要界面
+ * 在动作库中右上方文件菜单时标准菜单, 可以打开设置或者退出
+ * 
+ * @image html maya_motion/dir_menu.jpg 菜单目录 
+ * @image html maya_motion/main_menu.jpg 主要目录 
+ * 
+ * 
+ * 主要窗口时动作库的主要工作窗口, 提供大部分常用功能
+ * 其中创建动作的 @ref maya_notice "注意事项"与设置相同
+ * 名称长度不要超过  @b 64  个字
+ * @b 导出时注意选择根骨骼不需要要多选,只要根骨骼就行 
+ * 导入就是导入fbx,基本没什么可说的
+ * @b 更新图标和视频 在权限不足的文件夹中, @b 功能受限, 根据权限会弹出相应的错误
+ * 
+ * @subsubsection action_library_details 详细信息
+ * 
+ * @image html maya_motion/attr_view.jpg 详细信息
+ * 
+ * 详细信息主要时提供详细的动作预览
+ * 名称和注意请看 @ref maya_notice "注意事项"
+ * 信息中基本可以任意输入, 但是要注意不能输入过多的文字 **小于4096个文字**
+ * 
+ * 
+ * @warning  在权限不足的情况下, 无法编辑项目, 创建后无法更改
+ */

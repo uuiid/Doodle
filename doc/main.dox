@@ -1,0 +1,20 @@
+/**
+ * @mainpage doodle 工具包
+ * @section 主要管理工具
+ * @image html doodle_image/main_windows.jpg 主要面板 
+ * 启动后的主窗口
+ * 
+ * 
+ * @section 安装步骤
+ * @subsubsection install_step1 安装
+ * @image html doodle_image/install.jpg 安装图像
+ * 基本上直接安装， 中途不会有问题， 
+ * @warning 尽量在安装路径中不要出现中文
+ *  
+ * 
+ * 
+ * @ref maya_motion_plug
+ * 
+ * 
+ * 
+ */

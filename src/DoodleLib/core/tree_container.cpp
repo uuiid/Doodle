@@ -151,10 +151,12 @@ void tree_node::set(MetadataPtr&& in_) {
 
 tree_node& tree_node::operator=(const MetadataPtr& in_) {
   set(in_);
+  return *this;
 }
 
 tree_node& tree_node::operator=(MetadataPtr&& in_) {
   set(std::move(in_));
+  return *this;
 }
 bool tree_node::empty() const {
   return child_item.empty();
