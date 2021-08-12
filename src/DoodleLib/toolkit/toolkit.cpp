@@ -13,12 +13,9 @@
 #include <ShlObj.h>
 
 #include <boost/algorithm/string.hpp>
-
 #include <regex>
 #include <string>
 namespace doodle {
-
-
 
 void toolkit::installMayaPath() {
   auto mayadoc = CoreSet::getSet().getDoc().parent_path();
@@ -48,7 +45,7 @@ void toolkit::installUePath(const FSys::path &path) {
     FSys::create_directories(targetPath);
   }
 
-  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}",sourePath,targetPath));
+  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, targetPath));
   FileSystem::localCopy(sourePath, targetPath, false);
 }
 
@@ -82,42 +79,12 @@ bool toolkit::deleteUeCache() {
   if (!pManager) throw DoodleError("无法找到保存路径");
 
   FSys::path path{pManager};
+  CoTaskMemFree(pManager);
+
   path /= "UnrealEngine";
-  DOODLE_LOG_INFO(fmt::format("delete Folder : {}",path));
+  DOODLE_LOG_INFO(fmt::format("delete Folder : {}", path));
   FSys::remove_all(path);
   return true;
 }
 
-// void toolkit::openPath(const fileSqlInfoPtr &info_ptr,
-//                        const bool &openEx) {
-//   if (info_ptr->getFileList().empty()) {
-//     DOODLE_LOG_INFO("没有找到目录");
-//     QMessageBox::warning(nullptr, QString::fromUtf8("没有目录"),
-//                          QString::fromUtf8("没有找到目录 "),
-//                          QMessageBox::Yes);
-//   }
-//   auto path =
-//       info_ptr->getFileList()[0].parent_path();
-//   boost::wformat wstr;
-//   str("explorer.exe \"%s\"");
-//   auto path_noral = boost::replace_all_copy(path.generic_path().generic_string(), "/", "\\");
-//   path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
-//   path_noral      = boost::replace_all_copy(path_noral, R"(\\)", R"(\)");
-//   str % path_noral;
-
-//   DOODLE_LOG_INFO("打开路径: " << str.str().c_str());
-//   if (boost::filesystem::exists(path)) {
-//     if (openEx)
-//       boost::process::system(str.str().c_str());
-//     else
-//       QGuiApplication::clipboard()->setText(QString::fromStdString(path.generic_string()));
-//   } else {
-//     DOODLE_LOG_INFO(" 没有在服务器中找到目录:" << path.generic_string());
-//     QMessageBox::warning(nullptr, QString::fromUtf8("没有目录"),
-//                          QString::fromUtf8("没有在服务器中找到目录:\n %1")
-//                              .arg(QString::fromStdString(path.generic_string())),
-//                          QMessageBox::Yes);
-//   }
-// }
-
-}
+}  // namespace doodle
