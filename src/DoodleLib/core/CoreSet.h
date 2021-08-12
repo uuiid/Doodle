@@ -97,6 +97,19 @@ class DOODLELIB_API CoreSet : public details::no_copy {
 
   std::string get_server_host();
 
+  /**
+   * @brief 全局是否停止， 服务器使用
+   */
+  bool p_stop;
+  /**
+   * @brief 全局锁,服务器使用
+   */
+  std::mutex p_mutex;
+  /**
+   * @brief 全局条件变量,服务器使用
+   */
+  std::condition_variable p_condition;
+
  private:
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的

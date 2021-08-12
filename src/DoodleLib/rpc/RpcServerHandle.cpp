@@ -59,8 +59,8 @@ void RpcServerHandle::runServerWait(int port_meta, int port_file_sys) {
   p_thread.join();
 }
 void RpcServerHandle::stop() {
-  using namespace std::chrono_literals;
-  auto k_time = std::chrono::system_clock::now() + 2s;
+  using namespace chrono::literals;
+  auto k_time = chrono::system_clock::now() + 2s;
 
   p_Server->Shutdown(k_time);
   if (p_thread.joinable())

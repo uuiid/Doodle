@@ -52,7 +52,6 @@ add_doodle(
 add_doodle(
         NAME doodleServerExe
         IS_EXE
-        ADD_WIN32
         LISTS_FILES
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}

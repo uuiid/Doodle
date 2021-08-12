@@ -96,7 +96,10 @@ CoreSet::CoreSet()
       p_file_rpc_port(60998),
       p_sql_host("192.168.20.60"),
       p_sql_user("deve"),
-      p_sql_password("deve") {
+      p_sql_password("deve"),
+      p_stop(false),
+      p_mutex(),
+      p_condition() {
   ///这里我们手动做一些工作
   ///获取环境变量 FOLDERID_Documents
   PWSTR pManager;

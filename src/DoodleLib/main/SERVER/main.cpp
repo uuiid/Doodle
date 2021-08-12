@@ -10,10 +10,17 @@
 #include <DoodleLib/DoodleLib.h>
 //#include <DoodleLib/DoodleApp.h>
 //#include <boost/locale.hpp>
+
+#if 0
+
 extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               HINSTANCE hPrevInstance,
                               LPSTR strCmdLine,
-                              int nCmdShow) try {
+                              int nCmdShow)
+#else
+extern "C" int main(int argc, char** argv)
+#endif
+try {
   // ::_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
   //  std::locale::global(std::locale{".UTF8"});
   //  std::setlocale(LC_NUMERIC, "C");

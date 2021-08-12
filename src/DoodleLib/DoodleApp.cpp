@@ -18,6 +18,7 @@
 #include <shellapi.h>
 
 #include <boost/algorithm/string.hpp>
+#include <csignal>
 #include <exception>
 #include <nana/fwd.hpp>
 #include <nana/gui.hpp>
@@ -26,7 +27,7 @@ namespace doodle {
 
 /**
  * @brief 这个是解析命令行专用的类
- * 
+ *
  */
 class DOODLELIB_API command_line {
  public:
@@ -49,23 +50,23 @@ class DOODLELIB_API command_line {
 
   /**
    * @brief 制作硬链接的属性
-   * 
+   *
    */
   std::vector<std::pair<FSys::path, FSys::path> > p_mk_link;
   /**
    * @brief 使用时硬链接制作
-   * 
+   *
    */
   bool b_mklink{};
   /**
    * @brief 是否时候启动服务器功能
-   * 
+   *
    */
   bool b_server{};
 
   /**
    * @brief 获得简单的全局设置
-   * 
+   *
    */
   inline void get_set() {
     if (!b_server)
@@ -81,7 +82,7 @@ class DOODLELIB_API command_line {
 
   /**
    * @brief 将配置文件直接添加到全局设置中
-   * 
+   *
    */
 
   inline void set_set() const {
@@ -98,9 +99,9 @@ class DOODLELIB_API command_line {
   };
   /**
    * @brief 转换为json
-   * 
-   * @param nlohmann_json_j 
-   * @param nlohmann_json_t 
+   *
+   * @param nlohmann_json_j
+   * @param nlohmann_json_t
    */
   friend void to_json(nlohmann::json& nlohmann_json_j, const command_line& nlohmann_json_t) {
     nlohmann_json_j["b_server"]        = nlohmann_json_t.b_server;
@@ -115,9 +116,9 @@ class DOODLELIB_API command_line {
   };
   /**
    * @brief 从json读取值
-   * 
-   * @param nlohmann_json_j 
-   * @param nlohmann_json_t 
+   *
+   * @param nlohmann_json_j
+   * @param nlohmann_json_t
    */
   friend void from_json(const nlohmann::json& nlohmann_json_j, command_line& nlohmann_json_t) {
     try {
@@ -141,12 +142,37 @@ class DOODLELIB_API command_line {
   };
 };
 
+BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
+  DOODLE_LOG_WARN("收到退出信号， 开始退出 {}", fdwCtrlType);
+  CoreSet::getSet().p_stop = true;
+  CoreSet::getSet().p_condition.notify_all();
+  return true;
+}
+
 doodle_app::doodle_app()
     : p_run_fun(),
       p_rpc_server_handle(),
       p_setting_windows() {
   init_opt();
 }
+
+void doodle_app::init_opt() {
+}
+
+void doodle_app::add_signal_fun() {
+  // auto k_ = [](int) {
+  //   DOODLE_LOG_WARN("收到退出信号， 开始退出");
+  //   doodle_app::p_stop = true;
+  // };
+  // std::signal(SIGABRT, k_);
+  // std::signal(SIGFPE, k_);
+  // std::signal(SIGILL, k_);
+  // std::signal(SIGINT, k_);
+  // std::signal(SIGSEGV, k_);
+  // std::signal(SIGTERM, k_);
+  SetConsoleCtrlHandler(CtrlHandler, TRUE);
+}
+
 void doodle_app::init() {
   int k_argc;
   auto k_argv = CommandLineToArgvW(GetCommandLine(), &k_argc);
@@ -185,14 +211,16 @@ void doodle_app::init() {
   LocalFree(k_argv);
 }
 void doodle_app::run_server() {
+  add_signal_fun();
   p_run_fun = [this]() {
     auto& set           = CoreSet::getSet();
     p_rpc_server_handle = std::make_shared<RpcServerHandle>();
     p_rpc_server_handle->runServer(set.getMetaRpcPort(), set.getFileRpcPort());
-    nana::form _w{};
-    _w.caption("关闭窗口停止服务器");
-    _w.show();
-    nana::exec();
+    std::unique_lock k_lock{set.p_mutex};
+    set.p_condition.wait(
+        k_lock,
+        [&set]() { return set.p_stop; });
+    return;
   };
 }
 void doodle_app::run() {
@@ -202,8 +230,7 @@ void doodle_app::run() {
   if (p_run_fun)
     p_run_fun();
 }
-void doodle_app::init_opt() {
-}
+
 void doodle_app::run_gui() {
   DoodleLib::Get().init_gui();
 
