@@ -128,8 +128,17 @@ class DOODLELIB_API menu_factory_project : public menu_factory {
 /**
  * @brief 创建资产小部件右键菜单
  * 
- * 
- * 
+ * @image html doodle_main_menu_factory_assets.jpg  width=30%
+ * @li 可以创建 @b 集数，镜头，季数 这三个是不可以是负数， 
+ * @li 其中镜头是可以有ab镜头的， 但是请注意不要太多， 只可以有26个
+ * @li 同时是可以创建重复的镜头的， 但是如果没有特殊情况，请不要创建重复的镜头
+ * @li @b 资产 是可以使用任意的名称的， 可以使用中文， 在内部会自动转换为拼音，
+ * @warning 不要使用特殊字符和 @b -,*,$,%,#,还有各种中文标点符号 \n 
+ * 请小心多音字, 如果有多音字, 请加入 @b 后缀区分 \n
+ * 集数显示为 ep0002,还有镜头显示为sc0002, 季数显示为seas_2这种, \n
+ * @b 请不要将资产命名为这种类型的名称!!!!! 以便于区分
+ * @li @b 删除 只有在这个项目没有子物体和子条目时才会显示  
+ *
  */
 class DOODLELIB_API menu_factory_assets : public menu_factory {
  public:
@@ -140,6 +149,21 @@ class DOODLELIB_API menu_factory_assets : public menu_factory {
   virtual void create_menu(const ShotPtr& in_ptr) override;
   virtual void create_menu(const season_ptr& in_ptr) override;
 };
+
+/**
+ * @brief 资产的详情信息右键菜单栏
+ * 
+ * @image html doodle_main_menu_factory_assets_attr.jpg width=30%
+ * 
+ * @li @b 创建资产文件 是空的， 如果想要没有文件的话直接点这个就行 
+ * @li @b 创建并上传文件 是上传并创建一个条目
+ * @li @b 制作拍屏并上传 可以上传一个拍屏文件， 作为示意
+ * @li @b 显示详细信息 可以显这个条目的详细信息
+ * @li @b 添加评论 附加一条描述性的条目
+ * @li @b 修改日期 将条目的日期修改到指定时间， 这个请小心使用， 在导出表格时会使用这个日期
+ * @li @b 下载文件 如果在这个条目中有文件的话可以直接下载下来
+ * @li @b 删除 删除这个条目， 不会删除文件
+ */
 
 class DOODLELIB_API menu_factory_assets_attr : public menu_factory {
  public:
