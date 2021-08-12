@@ -6,8 +6,8 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/spdlog.h>
 #include <windows.h>
+#include <core/CoreSet.h>
 
-#include <boost/filesystem.hpp>
 #include <boost/locale.hpp>
 namespace doodle::Logger {
 
@@ -38,11 +38,11 @@ using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
 
 static void boostLoggerInitAsyn(const std::string &logPath,
                                 std::size_t logMaxSize) {
-  auto appdata = boost::filesystem::current_path();
+  auto appdata = CoreSet::getSet().getCacheRoot();
   appdata /= logPath;
   appdata /= "log";
-  if (!boost::filesystem::exists(appdata)) {
-    boost::filesystem::create_directories(appdata);
+  if (!FSys::exists(appdata)) {
+    FSys::create_directories(appdata);
   }
   appdata /= "logfile_" + date::format("_%y_%m_%d_%H_%M_%S_",std::chrono::system_clock::now()) + ".txt";
 

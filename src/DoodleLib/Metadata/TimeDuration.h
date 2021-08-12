@@ -77,16 +77,13 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
   [[nodiscard]] time_point getLocalTime() const;
   void set_local_time(const chrono::local_time<chrono::seconds>& in_time);
 
-  //  template <class T, class P>
-  //  inline TimeDuration& operator-=(const std::chrono::duration<T, P>& _or) {
-  //    p_time -= _or;
-  //    disassemble(p_time);
-  //    return *this;
-  //  }
   /**
    *
    * @param in 结束的时间
-   * @return
+   * @return 
+   * 
+   * @todo 时间选项中去除节假日和个人调休
+   * 
    */
   chrono::hours_double work_duration(const TimeDuration& in) const;
 

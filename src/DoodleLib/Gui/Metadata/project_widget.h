@@ -12,11 +12,21 @@
 namespace doodle {
 
 namespace details {
+/**
+ * @brief 这个一个辅助类, 帮助取消重复的自动绘制
+ * 
+ * @tparam widget 模板小部件
+ */
 template <class widget>
 class draw_guard : public no_copy {
   widget& _w;
 
  public:
+  /**
+   * @brief Construct a new draw guard object
+   * 
+   * @param in_widget 传入的小部件
+   */
   explicit draw_guard(widget& in_widget) : _w(in_widget) {
     _w.auto_draw(false);
   }
@@ -109,9 +119,6 @@ class DOODLELIB_API project_widget : public details::pej_widget_base {
  * @note 这里资产名称和集数，镜头是上下级关系， 就像是文件夹一样，
  * 但是他们的嵌套关系可以是任意的， 比如集数下是镜头， 或者镜头下是集数， 或者资产下是镜头
  * 
- * @todo 添加季数这个类别
- * 
- * 
  */
 class DOODLELIB_API assets_widget : public details::pej_widget_base {
   nana::treebox p_tree_box;
@@ -126,13 +133,29 @@ class DOODLELIB_API assets_widget : public details::pej_widget_base {
 
  public:
   explicit assets_widget(nana::window in_window);
-
+  /**
+   * @brief 设置点击的项目,初始化这个显示
+   * 
+   * @param in_project_ptr 点击的项目
+   */
   void set_ass(const MetadataPtr& in_project_ptr);
+  /**
+   * @brief 清除这个小部件中的项目
+   * 
+   */
   void clear();
 
   nana::treebox& get_widget() override;
 };
-
+/**
+ * @brief 项目的详细信息
+ * 
+ * @image html doodle_main_assets_attr_widget.jpg  width=60%
+ * 
+ * 这个窗口中， 红色代表项目中的文件缺失或者没有文件
+ * 同时绿色代表者文件存在， 
+ * 每个分组代表着部门组
+ */
 class DOODLELIB_API assets_attr_widget : public details::pej_widget_base {
   nana::listbox p_list_box;
   MetadataPtr p_root;
@@ -144,7 +167,16 @@ class DOODLELIB_API assets_attr_widget : public details::pej_widget_base {
 
  public:
   explicit assets_attr_widget(nana::window in_window);
+  /**
+   * @brief 设置点击的项目,初始化这个显示
+   * 
+   * @param in_ptr 点击的项目
+   */
   void set_ass(const MetadataPtr& in_ptr);
+  /**
+   * @brief 清除这个小部件中的项目
+   * 
+   */
   void clear();
   nana::listbox& get_widget() override;
 };

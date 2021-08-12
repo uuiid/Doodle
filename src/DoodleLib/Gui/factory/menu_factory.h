@@ -29,6 +29,11 @@ class DOODLELIB_API menu_factory_base
   friend AssetsFile;
 
  public:
+  /**
+   * @brief 这个时候使用 metadata 转发的方法
+   * 
+   * @param in_ptr 
+   */
   virtual void create_menu(const ProjectPtr& in_ptr)    = 0;
   virtual void create_menu(const AssetsPtr& in_ptr)     = 0;
   virtual void create_menu(const EpisodesPtr& in_ptr)   = 0;
@@ -101,6 +106,18 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
   void delete_assets_attr();
 };
 
+/**
+ * @brief 这个是创建 项目右键菜单的方法
+ * 
+ * @image html doodle_main_menu_factory_project.jpg width=30%
+ * 
+ * @li 创建项目 直接创建项目， 名称使用中文， 拼音名称会自动生成， 
+ * @warning 请不要使用符号， 各种书名号或者其他符号等
+ * @li 导出表格 导出csv格式的表格， 使用各种软件都可以打开
+ * @li 重命名项目 重命名项目时 不会同时改变拼音名称
+ * @li 设置路径 设置项目根路径
+ * 
+ */
 class DOODLELIB_API menu_factory_project : public menu_factory {
  public:
   explicit menu_factory_project(nana::window in_window);
@@ -108,6 +125,12 @@ class DOODLELIB_API menu_factory_project : public menu_factory {
   void create_menu(const ProjectPtr& in_ptr) override;
 };
 
+/**
+ * @brief 创建资产小部件右键菜单
+ * 
+ * 
+ * 
+ */
 class DOODLELIB_API menu_factory_assets : public menu_factory {
  public:
   explicit menu_factory_assets(nana::window in_window);

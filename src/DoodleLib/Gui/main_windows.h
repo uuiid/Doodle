@@ -28,14 +28,9 @@ class assets_attr_widget;
  * @page  doodle_windwos 主要窗口
  * @tableofcontents
  * 
- * @b 第一次使用时请先进行基本的设置
+ * @warning 第一次使用时请先进行基本的设置
  * 
- * @ref doodle_windwos_setting "设置窗口"
- * 
- * @image html main_windows.jpg 主要窗口 width=30%
- * 
- * @section doodle_window_menu_bar 窗口菜单栏
- * 
+ * @subpage doodle_windwos_setting \n
  * @subpage doodle_main_boolbox \n
  * @b 工具箱中的所有工具是可以不依赖主面板使用的独立小工具集合
  * 
