@@ -136,6 +136,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
    */
   std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
   std::string get_hash(const FSys::path& in_path);
+
  public:
   using time_point = std::chrono::time_point<std::chrono::system_clock>;
   /**
@@ -193,7 +194,10 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
   [[nodiscard]] trans_file_ptr Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path = {});
   [[nodiscard]] trans_file_ptr Upload(std::vector<std::unique_ptr<rpc_trans_path>>& in_vector);
   [[nodiscard]] trans_file_ptr Upload(std::unique_ptr<rpc_trans_path>& in_vector);
-  // TODO: 要将比较函数提取为函子, 作为同步功能的基础
+  /**
+    * @todo 要将比较函数提取为函子, 作为同步功能的基础
+    * 
+    */
   //  void DownloadFile(const FSys::path& in_local_path, const FSys::path& in_server_path,const syn_fun& in_syn_fun );
   //  void UploadFile(const FSys::path& in_local_path, const FSys::path& in_server_path,const syn_fun& in_syn_fun );
 };

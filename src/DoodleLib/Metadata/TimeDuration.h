@@ -106,6 +106,8 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
    * 通常是安装8小时计算, 同时计算前段时间可以使用 8-return
    * @param in_point  开始的时间点
    * @return 工作时间长度
+   * 
+   * @todo: 这里我们要添加设置， 而不是静态变量
    */
   chrono::hours_double one_day_works_hours(const time_point& in_point) const;
   chrono::days work_days(const time_point& in_begin, const time_point& in_end) const;

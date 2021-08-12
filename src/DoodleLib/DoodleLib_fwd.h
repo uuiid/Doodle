@@ -158,7 +158,11 @@ using hours_double = duration<std::double_t, std::ratio<3600>>;
 using days_double  = duration<std::double_t, std::ratio<28800>>;
 using sys_time_pos = time_point<system_clock>;
 
-/// TODO: 这里我们暂时使用周六和周日作为判断, 但是实际上还有各种假期和其他情况要计入
+/**
+ * @brief 判断是否是休息日 周六日
+ * 
+ * @todo 这里我们暂时使用周六和周日作为判断, 但是实际上还有各种假期和其他情况要计入
+ */
 bool is_rest_day(const sys_days &in_days);
 // template <class Clock>
 // bool is_morning_works(const std::chrono::time_point<Clock, typename Clock::duration>& in_time) {

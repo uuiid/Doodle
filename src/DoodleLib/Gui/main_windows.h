@@ -25,7 +25,7 @@ class project_widget;
 class assets_widget;
 class assets_attr_widget;
 /**
- * @defgroup  doodle_windwos 主要窗口
+ * @page  doodle_windwos 主要窗口
  * @tableofcontents
  * 
  * @b 第一次使用时请先进行基本的设置
@@ -35,32 +35,50 @@ class assets_attr_widget;
  * @image html main_windows.jpg 主要窗口 width=30%
  * 
  * @section doodle_window_menu_bar 窗口菜单栏
- * @subsection doodle_window_menu_bar_file 文件
- * @li @b 设置 @ref doodle_windwos_setting
- * @li @b 退出 退出软件
  * 
- * @subsection doodle_window_menu_bar_tool 工具箱
+ * @subpage doodle_main_boolbox \n
  * @b 工具箱中的所有工具是可以不依赖主面板使用的独立小工具集合
- * @image html doodle_main_tool.jpg 工具箱  width=30%
+ * 
+ * @section main_windwos_project_widget 主要窗口
+ * @copydetails doodle::main_windows
+ * 
+ * @subsection doodle_project_widget 项目窗口
+ * @copydetails doodle::project_widget
+ * 
+ * @subsubsection doodle_project_widget_memu 右键操作
+ * @copydetails doodle::menu_factory_project
  * 
  * 
- * @subsubsection install_ue_plugin 安装ue插件
-
- * @subsubsection delete_ue_cache 删除ue缓存
- * @subsubsection modify_the_ue_cache_location 修改ue缓存位置
+ * @subsection doodle_assets_widget 资产窗口
+ * @copydetails doodle::assets_widget
+ * 
+ * @subsubsection doodle_assets_widget_memu 右键操作
+ * @copydetails doodle::menu_factory_assets
+ * 
+ * @subsection doodle_assets_attr_widget 属性窗口
+ * @copydetails doodle::assets_attr_widget
+ * 
+ * @subsubsection doodle_assets_attr_widget_memu 右键操作
+ * @copydetails doodle::menu_factory_assets_attr
+ *  
  */
 
 /**
  * @brief 主要的程序窗口
  * 
+ * @image html main_windows.jpg 主要窗口 width=30%
+ * 
+ * 这个主要窗口中， 所有的操作都是依赖右键菜单和拖拽文件的
+ * 
+ * @warning 这个窗口中的主要功能时需要联网的，如果断网将会失败
  */
 class DOODLELIB_API main_windows : public nana::form {
   nana::place p_layout;
   nana::menubar p_menubar;
   nana::menu p_menu;
-  //  nana::listbox p_project_listbox;
-  //  nana::treebox p_ass_tree_box;
-  //  nana::listbox p_attr_listbox;
+  // nana::listbox p_project_listbox;
+  // nana::treebox p_ass_tree_box;
+  // nana::listbox p_attr_listbox;
   std::shared_ptr<setting_windows> p_setting_windows;
   std::shared_ptr<project_widget> p_project_listbox;
   std::shared_ptr<assets_widget> p_ass_tree_box;
@@ -70,7 +88,7 @@ class DOODLELIB_API main_windows : public nana::form {
  public:
   main_windows();
   /**
-   * @brief 创建菜单栏
+   * @brief 创建菜单栏， 由初始化函数调用
    * 
    */
   void create_menubar();

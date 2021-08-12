@@ -23,11 +23,11 @@ class DOODLELIB_API Shot : public Metadata {
   enum class ShotAbEnum { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
   // clang-format on
 
-  [[nodiscard]] const decltype(p_shot) &getShot() const noexcept;
-  void setShot(const decltype(p_shot) &in_shot);
+  [[nodiscard]] const std::int64_t &getShot() const noexcept;
+  void setShot(const std::int64_t &in_shot);
 
-  [[nodiscard]] const decltype(p_shot_ab) &getShotAb() const noexcept;
-  void setShotAb(const decltype(p_shot_ab) &ShotAb) noexcept;
+  [[nodiscard]] const std::string &getShotAb() const noexcept;
+  void setShotAb(const std::string &ShotAb) noexcept;
   inline void setShotAb(const ShotAbEnum &ShotAb) {
     setShotAb(std::string{magic_enum::enum_name(ShotAb)});
   };

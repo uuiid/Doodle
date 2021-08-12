@@ -26,7 +26,6 @@ std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> RpcFileS
                      : std::chrono::time_point<std::chrono::system_clock>{};
 
   auto [k_s_sz, k_s_ex, k_s_ti, k_s_dir] = GetInfo(in_server_path);
-  // TODO: 在这里我们最好比较一下hash值确认文件相同
   if (k_l_ex && k_s_ex) {                                   /// 本地文件和服务器文件都存在
     if (k_l_dir || k_s_dir) {                               /// 两个任意一个为目录我们都没有办法确定上传和下载的方案
       return {{}, {}, k_s_ex, 0};                           /// 所以返回无

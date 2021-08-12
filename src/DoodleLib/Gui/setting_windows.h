@@ -18,7 +18,7 @@ namespace doodle {
 
 /**
  * 
- * @defgroup doodle_windwos_setting 设置窗口
+ * @page doodle_windwos_setting 设置窗口
  * @tableofcontents
  * @image html doodle_setting.jpg 设置窗口
  * 

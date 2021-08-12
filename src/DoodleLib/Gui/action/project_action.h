@@ -54,9 +54,12 @@ class DOODLELIB_API actn_setpath_project : public action_indirect<action_arg::ar
 
   actn_setpath_project();
   /**
-   * @param in_any 需要项目路径 FSys::path
+   * @brief 运行命令
+   * 
+   * @param in_data 
+   * @param in_parent 
+   * @return long_term_ptr 
    */
-
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 

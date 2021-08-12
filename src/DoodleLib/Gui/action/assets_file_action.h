@@ -56,7 +56,7 @@ class DOODLELIB_API actn_assdile_attr_show : public action_indirect<action_arg::
   using arg = action_arg::arg_null;
   actn_assdile_attr_show();
   virtual bool is_async() override;
-  /// @todo 这里要添加详细信息的面板, 使用信号作为详细信息的显示方案
+  /// @todo 这里要添加详细信息的面板, 并且其中一些信息要可以做连接
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
 };
 

@@ -39,7 +39,7 @@
  * 在首次打开动作库的时候请设置 @b 制作人名称, 以便在提交动作库的时候进行标注和搜索
  * 
  * 
- * @subsubsection action_library_main_window 主要窗口
+ * @subsection action_library_main_window 主要窗口
  *
  * @image html maya_motion/main_motion.jpg 主要界面
  * 在动作库中右上方文件菜单时标准菜单, 可以打开设置或者退出
@@ -55,7 +55,7 @@
  * 导入就是导入fbx,基本没什么可说的
  * @b 更新图标和视频 在权限不足的文件夹中, @b 功能受限, 根据权限会弹出相应的错误
  * 
- * @subsubsection action_library_details 详细信息
+ * @subsection action_library_details 详细信息
  * 
  * @image html maya_motion/attr_view.jpg 详细信息
  * 

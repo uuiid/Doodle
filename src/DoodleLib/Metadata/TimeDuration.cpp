@@ -184,7 +184,6 @@ TimeDuration::operator time_point() {
 }
 
 chrono::hours_double TimeDuration::one_day_works_hours(const time_point& in_point) const {
-  /// TODO: 这里我们要添加设置， 而不是静态变量
 
   /// 获得当天的日期后制作工作时间
   auto k_day = chrono::floor<chrono::days>(in_point);

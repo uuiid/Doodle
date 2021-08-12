@@ -343,7 +343,6 @@ void menu_factory::show_assets_file_attr() {
   auto k_show = std::make_shared<actn_assdile_attr_show>();
   p_action.push_back(k_show);
   k_show->sig_get_arg.connect([this]() {
-    /// TODO: 详细信息面板需要可以点击
     auto k_item = std::dynamic_pointer_cast<AssetsFile>(p_metadata);
     std::string k_com{};
     std::string k_path{};

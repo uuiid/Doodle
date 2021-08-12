@@ -19,9 +19,9 @@ class DOODLELIB_API arg_tool_box_create_ue_shot : public arg_path {
 }  // namespace action_arg
 namespace toolbox {
 /**
- * @addtogroup doodle_windwos
- * @subsubsection export_fbx 导出fbx
- * 导出fbx 需要选中导出的maya文件 这里是可以多项选中的 \n
+ * @brief 这个是导出maya fbx 的动作， 需要一个多个maya文件输入
+ * 
+ * @details @b 导出fbx 需要选中导出的maya文件 这里是可以多项选中的 \n
  * 导出时会创建和maya文件名称相同的文件夹, 内部会放置fbx和maya文件
  * @pre 需要maya文件中的相机不要命名为 front persp side top camera 这几样
  * 并且不可以出现这几个关键字 @b 同时必须有下划线作为区分
@@ -29,12 +29,6 @@ namespace toolbox {
  * @b fbx导出的骨骼必须有UE4这个关键字作为标识 这样可以导出组下方的模型
  * 
  * @warning 同时，如果maya中出现变形器， 在ue中将会丢失
- * 
- */
-
-/**
- * @brief 这个是导出maya fbx 的动作， 需要一个多个maya文件输入
- * 
  */
 class DOODLELIB_API actn_export_maya
     : public action_toolbox<action_arg::arg_paths> {
@@ -47,19 +41,13 @@ class DOODLELIB_API actn_export_maya
   long_term_ptr run() override;
 };
 
-/**
- * @addtogroup doodle_windwos
- * @subsubsection create_video 创建视频
- * @pre 这里必须是每个文件夹中只放置序列图像, 
- * 同时 在路径中捕获 关键字 @b ep @b sc 两个关键字, 会使用这两关键字进行解析,寻找到时添加到视频水印,
- * 没有寻找到的话没有这一部分水印
- * 
- */
 
 /**
  * @brief 这个导出视频需要多个文件夹
  * 
- * 
+ * @pre 这里必须是每个文件夹中只放置序列图像, 
+ * 同时 在路径中捕获 关键字 @b ep @b sc 两个关键字, 会使用这两关键字进行解析,寻找到时添加到视频水印,
+ * 没有寻找到的话没有这一部分水印
  */
 class DOODLELIB_API actn_create_video
     : public action_toolbox<action_arg::arg_paths> {
@@ -74,16 +62,11 @@ class DOODLELIB_API actn_create_video
   long_term_ptr run() override;
 };
 
-/**
- * @addtogroup doodle_windwos
- * @subsubsection connection_video 连接视频
- * @pre 连接视频前需要仔细检查是否有空视频， 空视频会导致出错
- * 
- */
 
 /**
  * @brief 连接多个视频
  * 
+ * @pre 连接视频前需要仔细检查是否有空视频， 空视频会导致出错
  */
 class DOODLELIB_API actn_connect_video
     : public action_toolbox<action_arg::arg_paths> {
@@ -99,19 +82,13 @@ class DOODLELIB_API actn_connect_video
 };
 
 /**
- * @addtogroup doodle_windwos
- * @subsubsection create_ue_level 创建ue关卡
+ * @brief 添加ue项目
+ * 
  * @pre 创建ue关卡需要 @ref doodle_windwos_setting "设置" 中的ue4路径
  * 如果为空会失败
  * 同时如果没有创建成功请删除一下配置文件和缓存
  * 
  * @bug 在创建完成后ue4会有崩溃出现， 但是并不影响内容
- * 
- */
-
-/**
- * @brief 添加ue项目
- * 
  */
 class DOODLELIB_API actn_ue4_shot_episodes
     : public action_toolbox<action_arg::arg_tool_box_create_ue_shot> {
