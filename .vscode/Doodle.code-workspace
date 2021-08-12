@@ -171,7 +171,17 @@
 		"C_Cpp.exclusionPolicy": "checkFolders",
 		"cmake.buildBeforeRun": false,
 		"testMate.cpp.test.workingDirectory": "${absDirpath}",
-		"editor.formatOnSaveMode": "modifications"
+		"editor.formatOnSaveMode": "modifications",
+		"todo-tree.general.tags":[
+			"BUG",
+			"HACK",
+			"FIXME",
+			"TODO",
+			"@todo",
+			"@bug"
+		],
+		"todo-tree.regex.regexCaseSensitive": false,
+		"todo-tree.regex.regex": "((\\* @|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])"
 	},
 	"tasks": {
 		"version": "2.0.0",
