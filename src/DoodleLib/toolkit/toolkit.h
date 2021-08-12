@@ -22,11 +22,12 @@ class toolkit {
    * 
    * @pre 安装ue插件需要在 @ref doodle_windwos_setting "设置" 中寻找到ue4的位置
    */
+
   /**
    * @addtogroup doodle_windwos
    * @subsubsection install_ue_project_plugin 安装ue项目插件
    * 
-   * @b 安装ue项目插件是可以直接使用的，但是请注意版本问题
+   * @note 安装ue项目插件是可以直接使用的，但是请注意版本问题
    */
 
   /**
@@ -50,12 +51,32 @@ class toolkit {
    * @return false 
    */
   static bool update();
+
+  /**
+   * @addtogroup doodle_windwos
+   * @subsubsection modifyUeCachePath 修改ue4缓存位置
+   * 
+   * @pre 修改ue4缓存位置需要在 @ref doodle_windwos_setting "设置" 中寻找到ue4的位置
+   * 
+   * 我们将会替换配置文件中的缓存位置值，
+   * 将缓存位置更改为项目中
+   * @note 同时会将原先的进行备份，备份时同时会添加时间戳， 同时必须重新启动ue4 配置文件才会生效
+   */
+
   /**
    * @brief 修改ue4缓存位置, 
    * 我们使用更改ue4配置文件,将 @b %ENGINEVERSIONAGNOSTICUSERDIR%DerivedDataCache
    * 替换为 @b %GAMEDIR%DerivedDataCache 的方法运行
    */
   static void modifyUeCachePath();
+
+  /**
+   * @addtogroup doodle_windwos
+   * @subsubsection deleteUeCache 删除ue4缓存
+   * 
+   * @note 删除ue4缓存会导致ue4重新编译着色器
+   */
+
   /**
    * @brief 删除缓存
    * 我们适使用 @b SHGetKnownFolderPath 寻找到FOLDERID_LocalAppData文件夹后删除ue4目录中的缓存
@@ -64,9 +85,6 @@ class toolkit {
    * @return false 
    */
   static bool deleteUeCache();
-
- private:
-  static FSys::path getUeInstallPath();
 };
 
 }  // namespace doodle

@@ -85,6 +85,11 @@ class DOODLELIB_API setting_windows : public nana::form {
   void init_setting();
 
  public:
+  /**
+   * @brief Set the ting windows object
+   * 
+   * @param in_window 父窗口
+   */
   explicit setting_windows(nana::window in_window);
 };
 }  // namespace doodle

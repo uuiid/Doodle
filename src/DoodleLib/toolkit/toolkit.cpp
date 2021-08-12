@@ -56,7 +56,8 @@ bool toolkit::update() {
 void toolkit::modifyUeCachePath() {
   auto ue_path = CoreSet::getSet().gettUe4Setting().Path() / "Engine/Config/BaseEngine.ini";
   //做备份
-  FSys::copy(ue_path, FSys::path{ue_path}.replace_extension(".ini.backup"), FSys::copy_options::update_existing);
+  auto backup_path = FSys::path{ue_path}.replace_extension(".ini.backup");
+  FSys::copy(ue_path, FSys::add_time_stamp(backup_path), FSys::copy_options::update_existing);
   FSys::fstream file{ue_path, std::ios::in | std::ios::out | std::ios::binary};
   std::string line{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 

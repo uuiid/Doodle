@@ -88,7 +88,6 @@ long_term_ptr actn_assdile_attr_show::run(const MetadataPtr& in_data, const Meta
     return p_term;
   }
 
-  /// TODO: 这里要添加详细信息的面板, 使用信号作为详细信息的显示方案
   sig_get_arg();
   p_term->sig_finished();
   p_term->sig_message_result({});
