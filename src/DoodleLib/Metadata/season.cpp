@@ -23,7 +23,7 @@ std::int32_t season::get_season(std::int32_t in_) const {
   return p_int;
 }
 std::string season::str() const {
-  return fmt::format("season_{}", p_int);
+  return fmt::format("seas_{}", p_int);
 }
 void season::create_menu(const menu_factory_ptr& in_factoryPtr) {
   in_factoryPtr->create_menu(std::dynamic_pointer_cast<season>(shared_from_this()));
