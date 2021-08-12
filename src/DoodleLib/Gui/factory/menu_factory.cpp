@@ -437,6 +437,7 @@ void menu_factory::modify_season() {
     arg.date      = k_int.value();
     return arg;
   });
+  p_action.push_back(item);
 }
 void dragdrop_menu_factory::create_menu(const ProjectPtr& in_ptr) {
 }
