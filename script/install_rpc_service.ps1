@@ -22,7 +22,7 @@ function Update-DoodleFile {
 
 Update-DoodleFile -InstallPath ($env:APPDATA + "\Apache24\htdocs") -SourcePath $source_path_doc
 
-$exe = Get-Process | Where-Object {$_.ProcessName -eq "doodleServerExe"}
+$exe = Get-Process | Where-Object { $_.ProcessName -eq "doodleServerExe" }
 if ($exe) {
   $exe.CloseMainWindow()
   Write-Host "stop " $service_name
