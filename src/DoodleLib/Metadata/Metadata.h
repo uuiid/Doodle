@@ -48,17 +48,8 @@ class database_action {
   [[nodiscard]] bool is_loaded() const {
     return !p_need_load;
   };
-  void saved(bool in_need = false) {
-    p_need_save = in_need;
-  };
-  void loaded(bool in_need = false) {
-    p_need_load = in_need;
-  };
-  [[nodiscard]] bool is_install() const {
-    return p_id > 0;
-  };
-
  public:
+
   explicit database_action(Class *in_ptr)
       : metadata_self(in_ptr),
         p_factory(),
@@ -69,6 +60,16 @@ class database_action {
   std::uint64_t getId() const {
     return p_id;
   };  ///< 获得数据库id
+
+  void saved(bool in_need = false) {
+    p_need_save = in_need;
+  };
+  void loaded(bool in_need = false) {
+    p_need_load = in_need;
+  };
+  [[nodiscard]] bool is_install() const {
+    return p_id > 0;
+  };
 
   /**
    * @brief 这里是使用工厂进行加载和保存的函数

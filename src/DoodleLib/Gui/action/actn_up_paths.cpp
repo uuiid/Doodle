@@ -88,7 +88,7 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
       k_ass_file->getPathFile().push_back(k_i);
     }
   }
-
+  k_ass_file->saved(true);
   p_tran = k_ch->Upload(k_list);
   p_term->forward_sig(p_tran->get_term());
 
