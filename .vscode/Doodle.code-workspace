@@ -172,7 +172,7 @@
 		"cmake.buildBeforeRun": false,
 		"testMate.cpp.test.workingDirectory": "${absDirpath}",
 		"editor.formatOnSaveMode": "modifications",
-		"todo-tree.general.tags":[
+		"todo-tree.general.tags": [
 			"BUG",
 			"HACK",
 			"FIXME",
@@ -218,6 +218,25 @@
 						"PATH": "%PATH%;C:/Program Files/CMake/bin"
 					}
 				}
+			}
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "PowerShell Launch Current File",
+				"type": "PowerShell",
+				"request": "launch",
+				"script": "${file}",
+				"cwd": "${file}"
+			},
+			{
+				"name": "PowerShell: Launch Script",
+				"type": "PowerShell",
+				"request": "launch",
+				"script": "enter path or command to execute e.g.: ${workspaceFolder}/src/foo.ps1 or Invoke-Pester",
+				"cwd": "${workspaceFolder}"
 			}
 		]
 	}
