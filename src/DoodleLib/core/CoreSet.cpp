@@ -89,7 +89,7 @@ CoreSet::CoreSet()
 #ifdef NDEBUG
       p_server_host("192.168.20.60"),
 #else
-      p_server_host("192.168.20.59"),
+      p_server_host("192.168.20.60"),
 #endif
       p_sql_port(3306),
       p_meta_rpc_port(60999),
