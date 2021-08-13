@@ -13,6 +13,9 @@ namespace doodle {
 
 long_term_ptr actn_create_project::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_val = sig_get_arg().value();
+  if (k_val.is_cancel) {
+    return {};
+  }
 
   auto prj = std::make_shared<Project>(k_val.prj_path, k_val.name);
   MetadataFactoryPtr k_f{};
@@ -49,7 +52,11 @@ actn_rename_project::actn_rename_project() {
   p_name = "重命名项目";
 }
 long_term_ptr actn_rename_project::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  auto k_str = sig_get_arg().value().date;
+  _arg_type = sig_get_arg().value();
+  if (_arg_type.is_cancel) {
+    return {};
+  }
+  auto k_str = _arg_type.date;
   auto k_prj = std::dynamic_pointer_cast<Project>(in_data);
   k_prj->setName(k_str);
   k_prj->updata_db(k_prj->getMetadataFactory());
@@ -60,8 +67,12 @@ actn_setpath_project::actn_setpath_project() {
   p_name = "设置路径";
 }
 long_term_ptr actn_setpath_project::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  auto k_path = sig_get_arg().value().date;
-  auto k_prj  = std::dynamic_pointer_cast<Project>(in_data);
+  _arg_type   = sig_get_arg().value();
+  auto k_path = _arg_type.date;
+  if (_arg_type.is_cancel)
+    return {};
+
+  auto k_prj = std::dynamic_pointer_cast<Project>(in_data);
   k_prj->setPath(k_path);
   k_prj->updata_db(k_prj->getMetadataFactory());
   return {};

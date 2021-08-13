@@ -74,12 +74,15 @@ void menu_factory::modify_project_set_path() {
   auto k_rp = std::make_shared<actn_setpath_project>();
   p_action.emplace_back(k_rp);
   k_rp->sig_get_arg.connect([this]() {
-    nana::folderbox mes{
-        p_window};
+    nana::folderbox mes{p_window};
     mes.allow_multi_select(false).title("选择项目根目录: ");
 
     auto k_e = mes();
     actn_setpath_project::arg k_arg{};
+    if (k_e.empty()) {
+      k_arg.is_cancel = true;
+      return k_arg;
+    }
     k_arg.date = k_e.at(0);
     return k_arg;
   });
@@ -94,7 +97,8 @@ void menu_factory::modify_project_rename() {
     auto str = name.value();
 
     actn_rename_project::arg k_arg{};
-    k_arg.date = str;
+    k_arg.is_cancel = str.empty();
+    k_arg.date      = str;
     return k_arg;
   });
 }
@@ -105,7 +109,11 @@ void menu_factory::modify_assets_set_name() {
     nana::inputbox msg{p_window, "创建: "};
     nana::inputbox::text name{"名称: "};
     msg.show_modal(name);
-    return actn_assets_setname::arg{name.value()};
+
+    actn_assets_setname::arg k_arg{};
+    k_arg.date      = name.value();
+    k_arg.is_cancel = k_arg.date.empty();
+    return k_arg;
   });
 }
 void menu_factory::modify_episode() {
@@ -115,7 +123,10 @@ void menu_factory::modify_episode() {
     nana::inputbox msg{p_window, "修改: "};
     nana::inputbox::integer k_i{"集数: ", 0, 0, 9999, 1};
     msg.show_modal(k_i);
-    return actn_episode_set::arg{k_i.value()};
+    actn_episode_set::arg k_arg{};
+    k_arg.date      = k_i.value();
+    k_arg.is_cancel = k_arg.date != 0;
+    return k_arg;
   });
 }
 void menu_factory::modify_shot_ab() {
@@ -126,7 +137,10 @@ void menu_factory::modify_shot_ab() {
     auto k_s_v = magic_enum::enum_names<Shot::ShotAbEnum>();
     nana::inputbox::text k_text{"ab镜头号:", std::vector<std::string>{k_s_v.begin(), k_s_v.end()}};
     msg.show_modal(k_text);
-    return actn_shotab_set::arg{k_text.value()};
+    actn_shotab_set::arg k_arg{};
+    k_arg.date      = k_text.value();
+    k_arg.is_cancel = k_arg.date.empty();
+    return k_arg;
   });
 }
 void menu_factory::modify_shot_int() {
@@ -137,7 +151,10 @@ void menu_factory::modify_shot_int() {
     nana::inputbox msg{p_window, "修改: "};
     nana::inputbox::integer k_i{"镜头号: ", 0, 0, 9999, 1};
     msg.show_modal(k_i);
-    return actn_shot_set::arg{k_i.value()};
+    actn_shot_set::arg k_arg{k_i.value()};
+    k_arg.date      = k_i.value();
+    k_arg.is_cancel = k_arg.date != 0;
+    return k_arg;
   });
 }
 void menu_factory::delete_assets_attr() { p_action.emplace_back(std::make_shared<actn_assfile_delete>()); }
@@ -238,22 +255,25 @@ void menu_factory::create_prj() {
   p_action.push_back(k_create);
 
   k_create->sig_get_arg.connect([this]() {
-    nana::folderbox mes{
-        p_window, FSys::current_path()};
+    nana::folderbox mes{p_window, FSys::current_path()};
     mes.allow_multi_select(false).title("选择项目根目录: ");
 
     auto k_e = mes();
-    if (k_e.empty())
-      return actn_create_project::arg{};
+    actn_create_project::arg k_arg{};
+    if (k_e.empty()) {
+      k_arg.is_cancel = true;
+      return k_arg;
+    }
 
     nana::inputbox mess{p_window, "项目名称: "};
 
     nana::inputbox::text name{"项目名称: "};
     mess.show_modal(name);
     auto str = name.value();
-    if (str.empty())
-      return actn_create_project::arg{};
-    actn_create_project::arg k_arg{};
+    if (str.empty()) {
+      k_arg.is_cancel = true;
+      return k_arg;
+    }
     k_arg.prj_path = k_e.at(0);
     k_arg.name     = str;
 
