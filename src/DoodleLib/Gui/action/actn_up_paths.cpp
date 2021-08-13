@@ -13,6 +13,9 @@
 #include <core/DoodleLib.h>
 #include <rpc/RpcFileSystemClient.h>
 
+#include <boost/range.hpp>
+#include <boost/range/adaptors.hpp>
+#include <boost/range/algorithm.hpp>
 namespace doodle {
 
 actn_up_paths::actn_up_paths()
@@ -40,21 +43,50 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
   }
 
   rpc_trans_path_ptr_list k_list{};
-  for (auto& k_i : k_path) {
-    if (Ue4Project::is_ue4_file(k_i)) {
-      if (FSys::exists(k_i.parent_path() / Ue4Project::Content)) {
-        auto k_ass_path = std::make_shared<AssetsPath>(k_i.parent_path() / Ue4Project::Content, k_ass_file);
-        k_list.emplace_back(std::make_unique<rpc_trans_path>(k_ass_path->getLocalPath(),
-                                                             k_ass_path->getServerPath(),
-                                                             k_ass_path->getBackupPath()));
-        k_ass_file->getPathFile().push_back(k_ass_path);
+  std::vector<AssetsPathPtr> k_ass_file_apth_list{};
+  std::vector<AssetsPathPtr> k_ass_file_apth_list_filter{};
+
+  /// 转换为资产路径
+  std::transform(k_path.begin(), k_path.end(), std::back_inserter(k_ass_file_apth_list),
+                 [k_ass_file](const FSys::path& in) {
+                   return std::make_shared<AssetsPath>(in, k_ass_file);
+                 });
+  /// 转换为上传路径, 并在这时添加额外路径
+  for (auto& k_i : k_ass_file_apth_list) {
+    auto k_it = std::find_if(k_ass_file->getPathFile().begin(), k_ass_file->getPathFile().end(),
+                             [k_i](const AssetsPathPtr& in_path) {
+                               return in_path->getServerPath() == k_i->getServerPath();
+                             });
+    if (k_it != k_ass_file->getPathFile().end()) {
+      if (Ue4Project::is_ue4_file(k_i->getLocalPath())) {
+        if (FSys::exists(k_i->getLocalPath().parent_path() / Ue4Project::Content)) {
+          auto k_ass_path = std::make_shared<AssetsPath>(
+              k_i->getLocalPath().parent_path() / Ue4Project::Content, k_ass_file);
+          k_list.emplace_back(std::make_unique<rpc_trans_path>(k_ass_path->getLocalPath(),
+                                                               k_ass_path->getServerPath(),
+                                                               k_ass_path->getBackupPath()));
+        }
       }
+      k_list.emplace_back(std::make_unique<rpc_trans_path>(k_i->getLocalPath(),
+                                                           k_i->getServerPath(),
+                                                           k_i->getBackupPath()));
+    } else {
+      if (Ue4Project::is_ue4_file(k_i->getLocalPath())) {
+        if (FSys::exists(k_i->getLocalPath().parent_path() / Ue4Project::Content)) {
+          auto k_ass_path = std::make_shared<AssetsPath>(
+              k_i->getLocalPath().parent_path() / Ue4Project::Content, k_ass_file);
+          k_list.emplace_back(std::make_unique<rpc_trans_path>(k_ass_path->getLocalPath(),
+                                                               k_ass_path->getServerPath(),
+                                                               k_ass_path->getBackupPath()));
+
+          k_ass_file->getPathFile().push_back(k_ass_path);
+        }
+      }
+      k_list.emplace_back(std::make_unique<rpc_trans_path>(k_i->getLocalPath(),
+                                                           k_i->getServerPath(),
+                                                           k_i->getBackupPath()));
+      k_ass_file->getPathFile().push_back(k_i);
     }
-    auto k_ass_path = std::make_shared<AssetsPath>(k_i, k_ass_file);
-    k_list.emplace_back(std::make_unique<rpc_trans_path>(k_ass_path->getLocalPath(),
-                                                         k_ass_path->getServerPath(),
-                                                         k_ass_path->getBackupPath()));
-    k_ass_file->getPathFile().push_back(k_ass_path);
   }
 
   p_tran = k_ch->Upload(k_list);
