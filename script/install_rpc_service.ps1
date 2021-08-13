@@ -20,7 +20,7 @@ function Update-DoodleFile {
 }
 $exe = Get-Process | Where-Object {$_.ProcessName -eq "doodleServerExe"}
 if ($exe) {
-  Stop-Process $exe
+  $exe.CloseMainWindow()
   Write-Host "stop " $service_name
   Write-Host "updata  " $service_name
   Update-DoodleFile -InstallPath $install_path -SourcePath $source_path

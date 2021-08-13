@@ -26,6 +26,7 @@ class DOODLELIB_API doodle_app : public details::no_copy {
 
  public:
   doodle_app();
+  ~doodle_app();
   /**
    * @brief 根据传入的命令行选择运行
    *

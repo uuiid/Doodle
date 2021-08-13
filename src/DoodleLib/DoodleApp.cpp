@@ -142,6 +142,12 @@ class DOODLELIB_API command_line {
   };
 };
 
+/**
+ * @brief 正常退出时的信号
+ *
+ * @param fdwCtrlType 退出时的型号类型
+ * @return BOOL
+ */
 BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
   DOODLE_LOG_WARN("收到退出信号， 开始退出 {}", fdwCtrlType);
   CoreSet::getSet().p_stop = true;
@@ -156,20 +162,25 @@ doodle_app::doodle_app()
   init_opt();
 }
 
+doodle_app::~doodle_app() = default;
+
 void doodle_app::init_opt() {
 }
 
 void doodle_app::add_signal_fun() {
-  // auto k_ = [](int) {
-  //   DOODLE_LOG_WARN("收到退出信号， 开始退出");
-  //   doodle_app::p_stop = true;
-  // };
-  // std::signal(SIGABRT, k_);
-  // std::signal(SIGFPE, k_);
-  // std::signal(SIGILL, k_);
-  // std::signal(SIGINT, k_);
-  // std::signal(SIGSEGV, k_);
-  // std::signal(SIGTERM, k_);
+  auto k_ = [](int) {
+    DOODLE_LOG_WARN("std  收到退出信号， 开始退出 ");
+    CoreSet::getSet().p_stop = true;
+    CoreSet::getSet().p_condition.notify_all();
+  };
+  std::signal(SIGABRT, k_);
+  std::signal(SIGABRT_COMPAT, k_);
+  std::signal(SIGBREAK, k_);
+  std::signal(SIGFPE, k_);
+  std::signal(SIGILL, k_);
+  std::signal(SIGINT, k_);
+  std::signal(SIGSEGV, k_);
+  std::signal(SIGTERM, k_);
   SetConsoleCtrlHandler(CtrlHandler, TRUE);
 }
 
@@ -216,10 +227,14 @@ void doodle_app::run_server() {
     auto& set           = CoreSet::getSet();
     p_rpc_server_handle = std::make_shared<RpcServerHandle>();
     p_rpc_server_handle->runServer(set.getMetaRpcPort(), set.getFileRpcPort());
-    std::unique_lock k_lock{set.p_mutex};
-    set.p_condition.wait(
-        k_lock,
-        [&set]() { return set.p_stop; });
+    //    std::unique_lock k_lock{set.p_mutex};
+    //    set.p_condition.wait(
+    //        k_lock,
+    //        [&set]() { return set.p_stop; });
+    nana::form _w{};
+    _w.caption("关闭窗口停止服务器");
+    _w.show();
+    nana::exec();
     return;
   };
 }

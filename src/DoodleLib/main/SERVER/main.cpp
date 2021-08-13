@@ -11,7 +11,7 @@
 //#include <DoodleLib/DoodleApp.h>
 //#include <boost/locale.hpp>
 
-#if 0
+#if 1
 
 extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               HINSTANCE hPrevInstance,
