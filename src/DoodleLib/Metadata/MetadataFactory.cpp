@@ -28,7 +28,12 @@ std::vector<ProjectPtr> MetadataFactory::getAllProject() {
 }
 
 bool MetadataFactory::insert_into(Metadata *in_metadata) const {
-  p_rpcClien.lock()->InstallMetadata(in_metadata->shared_from_this());
+  auto k_c = this->p_rpcClien.lock();
+  if (in_metadata->hasParent()) {
+    auto k_p = in_metadata->p_parent.lock();
+    k_p->updata_db();
+  }
+  k_c->InstallMetadata(in_metadata->shared_from_this());
   return true;
 }
 void MetadataFactory::updata_db(Metadata *in_metadata) const {
