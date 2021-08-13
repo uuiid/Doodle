@@ -53,6 +53,7 @@ void AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_m
     k_m    = k_m->getParent();
     k_path = FSys::path{k_m->str()} / k_path;
   }
+  k_path /= CoreSet::getSet().getDepartment();
   k_path /= in_path.filename();
   setPath(in_path, k_path);
 }
