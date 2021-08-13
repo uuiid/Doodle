@@ -1,0 +1,1 @@
+Enter-PSSession -ComputerName 192.168.20.60 -Credential nickli
