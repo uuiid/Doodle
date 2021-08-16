@@ -65,6 +65,7 @@ cmake-build-debug/
 /core/doodle_core.xmind
 /.idea/
 /venv/
+/.venv/
 /b_N*/
 /install*
 /script/tools/.*

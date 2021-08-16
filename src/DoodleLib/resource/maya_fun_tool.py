@@ -2,6 +2,7 @@
 import maya.mel
 import pymel.core
 import pymel.core.system
+import pymel.core.nodetypes
 import argparse
 import os
 import re
@@ -23,13 +24,15 @@ def create_maya_workspace():
 class maya_play_raneg():
     def __init__(self):
         self.start = int(pymel.core.playbackOptions(query=True, min=True))
+        self.start = 1000
         self.end = int(pymel.core.playbackOptions(query=True, max=True))
 
 
 class maya_file():
     def __init__(self):
         self.file_path = pymel.core.system.sceneName()
-        self.maya_path_class = pymel.core.Path(self.file_path)
+        self.maya_path_class = pymel.core.Path(
+            self.file_path)  # type:  pymel.core.Path
         self.file_name = self.maya_path_class.basename()
         self.name_not_ex = self.file_name.splitext()[0]
         self.abs_path = self.maya_path_class.dirname()
@@ -297,23 +300,22 @@ class uvmap():
 
 class geometryInfo():
     def __init__(self, maya_mesh_obj):
+        # type: (pymel.core.nodetypes.Transform)->None
+        self.maya_mesh_obj  # type: pymel.core.nodetypes.Shape
         try:
             self.maya_mesh_obj = maya_mesh_obj.getShapes()[0]
         except AttributeError:
             self.maya_mesh_obj = maya_mesh_obj
-        self.name = maya_mesh_obj.getTransform().name()
+
+        self.name = self.maya_mesh_obj.getTransform().name()
         self.out_path = doodle_work_space.maya_file.abs_path
-        self.materals = []
+        self.materals = []  # type: list[meateral]
+
         self._getMaterals_()
-        
 
-    def export_cloth_abc(self, out_path=None):
-        if out_path:
-            self.out_path = out_path
-
-    def export_cloth_fbx(self, out_path=None):
-        if out_path:
-            self.out_path = out_path
+    def repair(self):
+        for mat in self.materals:
+            mat.reName()
 
     def _getMaterals_(self):
         pymel.core.select(self.maya_mesh_obj, replace=True)
@@ -324,3 +326,189 @@ class geometryInfo():
         for shd in pymel.core.selected(materials=True):
             if [c for c in shd.classification() if 'shader/surface' in c]:
                 self.materals.append(meateral(shd))
+
+
+class references_file():
+    def __init__(self, ref_obj):
+        # type:(pymel.core.FileReference)->None
+
+        self.maya_ref = ref_obj
+        self.path = self.maya_ref.path  # type: pymel.core.Path
+        self.namespace = self.maya_ref.fullNamespace
+        if self.path.fnmatch("*[rig].ma"):
+            self.cloth_path = pymel.core.Path(
+                "V:/03_Workflow/Assets/CFX/cloth") / self.path.name.replace(
+                "rig", "cloth")
+        else:
+            self.cloth_path = None
+
+    def replace_file(self):
+        if(self.cloth_path):
+            self.maya_ref.replaceWith(self.cloth_path)
+
+
+class cloth_group_file():
+    def __init__(self, ref_obj):
+        # type:(references_file)->None
+        self.maya_ref = ref_obj
+        self.maya_name_space = ref_obj.namespace
+        pymel.core.select(clear=True)
+        pymel.core.select(
+            "{}:*cloth_proxy".format(self.maya_name_space), replace=True)
+        self.cloth_group = pymel.core.selected()
+
+        self.maya_abc_export  # type: list[pymel.core.nodetypes.Transform]
+
+    def qcloth_update_pose(self):
+        for obj in self.cloth_group:
+            select_str = obj.name(stripNamespace=True).replace(
+                "cloth_proxy", "skin_proxy")
+            pymel.core.select(
+                "{}:*{}".format(self.maya_name_space, select_str), replace=True)
+            pymel.core.select(obj, add=True)
+            maya.mel.eval("qlUpdateInitialPose;")
+
+    def set_cache_folder(self):
+        for obj in self.cloth_group:
+            select_str = obj.name(stripNamespace=True).replace(
+                "cloth_proxy", "clothShape")
+            pymel.core.select(
+                "{}:*{}".format(self.maya_name_space, select_str), replace=True)
+            qcloth_obj = pymel.core.selected()[0]
+            path = doodle_work_space.maya_file.name_not_ex / self.maya_name_space / select_str
+            doodle_work_space.work.mkdir(doodle_work_space.work.path / path)
+            print(path)
+            print(qcloth_obj)
+            qcloth_obj.setAttr("cacheFolder", str(path))
+            qcloth_obj.setAttr("cacheName", select_str)
+
+    def hide_other(self):
+        pymel.core.select("{}:cfx_grp".format(self.maya_name_space))
+        pymel.core.hide(pymel.core.selected())
+
+    def show_other(self):
+        pymel.core.select("{}:cfx_grp".format(self.maya_name_space))
+        pymel.core.hide(pymel.core.selected())
+
+    def export_fbx(self):
+        pymel.core.select("{}:*UE4".format(self.maya_name_space))
+        # 空置就返回
+        if not pymel.core.selected():
+            return
+
+        path = doodle_work_space.work.getPath() / "fbx"  # type: pymel.core.Path
+
+        name = "{}_{}_{}-{}.fbx".format(doodle_work_space.maya_file.name_not_ex,
+                                        self.maya_name_space,
+                                        doodle_work_space.raneg.start,
+                                        doodle_work_space.raneg.end)
+        path.mkdir_p()
+        path = path / name
+        print("export path : {}".format(path))
+        pymel.core.bakeResults(simulation=True,
+                               time=(doodle_work_space.raneg.start,
+                                     doodle_work_space.raneg.end),
+                               hierarchy="below",
+                               sampleBy=1,
+                               disableImplicitControl=True,
+                               preserveOutsideKeys=False,
+                               sparseAnimCurveBake=False)
+        maya.mel.eval(
+            "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
+        maya.mel.eval(
+            "FBXExportBakeComplexEnd -v {}".format(doodle_work_space.raneg.end))
+        maya.mel.eval("FBXExportBakeComplexAnimation -v true")
+        maya.mel.eval("FBXExportSmoothingGroups -v true")
+        maya.mel.eval("FBXExportConstraints -v true")
+        maya.mel.eval('FBXExport -f "{}" -s'.format(path))
+
+    def export_abc(self):
+        # 选择物体
+        self.maya_ref.maya_ref.importContents()
+        pymel.core.select("{}:*_wrap")
+
+        # 创建路径
+        path = doodle_work_space.work.getPath() / "abc"  # type: pymel.core.Path
+        name = "{}_{}_{}-{}.abc".format(doodle_work_space.maya_file.name_not_ex,
+                                        self.maya_name_space,
+                                        doodle_work_space.raneg.start,
+                                        doodle_work_space.raneg.end)
+        path.mkdir_p()
+        path = path / name
+        print("export path : {}".format(path))
+
+        # 导出物体
+        # list[pymel.core.nodetypes.Transform]
+        self.maya_abc_export = pymel.core.selected()
+
+        if not self.maya_abc_export:
+            return
+
+        for obj in self.maya_abc_export:
+            k_geo = geometryInfo(obj)
+            k_geo.repair()
+        export_abc = None  # type: pymel.core.nodetypes.Transform
+        if len(self.maya_abc_export) > 1:
+            export_abc = pymel.core.polyUnite(self.maya_abc_export)[0]
+        else:
+            export_abc = self.maya_abc_export[0]
+
+        abcexmashs = "-root {}".format(export_abc.fullPathName())
+        # abcexmashs = ""
+        # for exmash in self.export_abc:
+        #     abcexmashs = "{} -root {}".format(abcexmashs,
+        #                                       exmash.fullPathName())
+        # -stripNamespaces
+        abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
+            .format(f0=path,
+                    f1=doodle_work_space.raneg.start, f2=doodle_work_space.raneg.end,
+                    mash=abcexmashs)
+        print(abcExportCom)
+        pymel.core.mel.eval(abcExportCom)
+
+
+class cloth_export():
+    def __init__(self):
+
+        self.colth = []  # type: list[references_file]
+        self.qcolth_group = []  # type: list[cloth_group_file]
+        for ref_obj in pymel.core.system.listReferences():
+            self.colth.append(references_file(ref_obj))
+        self.cam = camera()
+
+    def replace_file(self):
+        for obj in self.colth:
+            obj.replace_file()
+            self.qcolth_group.append(cloth_group_file(self.colth))
+
+    def set_qcloth_attr(self):
+        for obj in self.qcolth_group:
+            obj.qcloth_update_pose()
+            obj.set_cache_folder()
+
+    def play_move(self):
+        for obj in self.qcolth_group:
+            obj.hide_other()
+        self.cam.create_move()
+        for obj in self.qcolth_group:
+            obj.show_other()
+
+    def export_fbx(self):
+        for obj in self.qcolth_group:
+            obj.export_fbx()
+
+    def export_abc(self):
+        for obj in self.qcolth_group:
+            obj.export_abc()
+
+    def save(self):
+        pymel.core.system.saveAs("{}_sim_colth.ma".format(
+            doodle_work_space.maya_file.name_not_ex))
+
+    def __call__(self):
+        self.replace_file()
+        self.set_qcloth_attr()
+        self.save()
+        self.play_move()
+        self.export_fbx()
+        self.export_abc()

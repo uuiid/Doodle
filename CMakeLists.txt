@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 
 project(Doodle
-        VERSION 3.0.0.6
+        VERSION 3.0.0.8
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -225,3 +225,4 @@ include(CPack REQUIRED)
 
 add_custom_target(cpack_${PROJECT_NAME}
         COMMAND ${CMAKE_CPACK_COMMAND} --build ${PROJECT_BINARY_DIR} --target package)
+add_dependencies(cpack_${PROJECT_NAME} DoodleExe doodleServerExe)

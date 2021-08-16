@@ -146,8 +146,13 @@ for index, export in enumerate(exports):
         mel_name = "{path}/{name}_{suh}.fbx".format(
             path=args.exportpath, name=doodle_filename, suh=split___)
         print("fbx export path --> {}".format(mel_name))
-        maya.cmds.bakeResults(simulation=True, t=(start, end), hierarchy="below", sampleBy=1, disableImplicitControl=True,
-                              preserveOutsideKeys=False, sparseAnimCurveBake=False)
+        maya.cmds.bakeResults(simulation=True,
+                              t=(start, end),
+                              hierarchy="below",
+                              sampleBy=1,
+                              disableImplicitControl=True,
+                              preserveOutsideKeys=False,
+                              sparseAnimCurveBake=False)
         maya.mel.eval("FBXExportBakeComplexStart -v {}".format(start))
         maya.mel.eval("FBXExportBakeComplexEnd -v {}".format(end))
         maya.mel.eval("FBXExportBakeComplexAnimation -v true")
