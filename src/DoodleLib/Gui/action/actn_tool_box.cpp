@@ -14,6 +14,11 @@
 #include <threadPool/ThreadPool.h>
 
 namespace doodle {
+namespace action_arg {
+arg_tool_box_create_ue_shot::arg_tool_box_create_ue_shot()
+    : arg_path(), shot_list() {
+}
+}  // namespace action_arg
 namespace toolbox {
 
 actn_export_maya::actn_export_maya()
@@ -125,10 +130,25 @@ long_term_ptr actn_ue4_shot_episodes::run() {
 
   return p_term;
 }
-}  // namespace toolbox
-namespace action_arg {
-arg_tool_box_create_ue_shot::arg_tool_box_create_ue_shot()
-    : arg_path(), shot_list() {
+actn_qcloth_sim_export::actn_qcloth_sim_export() {
+  p_name = "进行qcloth批量解算";
 }
-}  // namespace action_arg
+bool actn_qcloth_sim_export::is_async() {
+  return false;
+}
+long_term_ptr actn_qcloth_sim_export::run() {
+  p_date = sig_get_arg().value();
+
+  if (p_date.is_cancel) {
+    cancel("取消导出");
+    return p_term;
+  }
+  auto k_maya = std::make_shared<MayaFile>();
+  for (const auto& in : p_date.date) {
+    k_maya->qcloth_sim_file(in);
+  }
+  return {};
+}
+}  // namespace toolbox
+
 }  // namespace doodle

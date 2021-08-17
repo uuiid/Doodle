@@ -24,6 +24,19 @@ class DOODLELIB_API MayaFile : public details::no_copy {
    */
   bool exportFbxFile(const FSys::path& file_path, const FSys::path& export_path = {}) const;
   bool batchExportFbxFile(const std::vector<FSys::path>& file_path) const;
+  /**
+   * @brief 
+   * 
+   * 
+   * 我一直做测试， 终于找到原因了：
+   * 1、引用的文件必须和动画文件帧率相同，比如一个引用是24帧每秒， 动画是25 ，就会会卡死
+   * 2、两个重复的一样的引用，这个时候会卡死，
+   * 3、导出abc时不可以从1001开始，必须从解算的起始帧开始，要不然会出现不解算直接停留在第一帧
+   * 
+   * @param file_path 需要解算的文件路径
+   * @return true 
+   * @return false 
+   */
   bool qcloth_sim_file(const FSys::path& file_path) const;
   bool batch_qcloth_sim_file(const std::vector<FSys::path>& file_path) const;
 

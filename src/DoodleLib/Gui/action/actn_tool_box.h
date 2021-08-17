@@ -41,7 +41,6 @@ class DOODLELIB_API actn_export_maya
   long_term_ptr run() override;
 };
 
-
 /**
  * @brief 这个导出视频需要多个文件夹
  * 
@@ -61,7 +60,6 @@ class DOODLELIB_API actn_create_video
  protected:
   long_term_ptr run() override;
 };
-
 
 /**
  * @brief 连接多个视频
@@ -102,5 +100,17 @@ class DOODLELIB_API actn_ue4_shot_episodes
  protected:
   long_term_ptr run() override;
 };
+
+class DOODLELIB_API actn_qcloth_sim_export
+    : public action_toolbox<action_arg::arg_paths> {
+ public:
+  actn_qcloth_sim_export();
+  bool is_async() override;
+  using arg = action_arg::arg_paths;
+
+ protected:
+  long_term_ptr run() override;
+};
+
 }  // namespace toolbox
 }  // namespace doodle

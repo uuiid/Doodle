@@ -88,6 +88,10 @@ void tool_box_menu_factory::create_menu() {
 
     return k_arg;
   });
+
+  auto k_qcloth = std::make_shared<toolbox::actn_qcloth_sim_export>();
+  p_list.push_back(k_qcloth);
+  k_qcloth->sig_get_argl.connect(k_get_paths);
 }
 void tool_box_menu_factory::operator()(nana::menu& in_menu) {
   create_menu();

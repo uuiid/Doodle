@@ -199,10 +199,10 @@ bool MayaFile::qcloth_sim_file(const FSys::path& file_path) const {
     file.write(k_file_py.begin(), boost::numeric_cast<std::int64_t>(k_file_py.size()));
   }
   auto str_script = fmt::format(
-      L"\n\npymel.core.system.openFile({},loadReferenceDepth=\"all\")\n"
-      L"import maya_fun_tool\n"
-      L"reload(maya_fun_tool)\n"
-      L"maya_fun_tool.cloth_export()()",
+      "\n\npymel.core.system.openFile({},loadReferenceDepth=\"all\")\n"
+      "import maya_fun_tool\n"
+      "reload(maya_fun_tool)\n"
+      "maya_fun_tool.cloth_export()()",
       file_path.generic_string());
   auto run_path = warit_tmp_file(str_script);
 
