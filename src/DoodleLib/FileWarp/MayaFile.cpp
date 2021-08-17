@@ -192,14 +192,23 @@ bool MayaFile::qcloth_sim_file(const FSys::path& file_path) const {
   }
   // 写入文件
   const static auto k_tmp_path = CoreSet::getSet().getCacheRoot("maya") / "maya_fun_tool.py";
-  auto k_file_py               = cmrc::DoodleLibResource::get_filesystem().open("");
+  auto k_file_py               = cmrc::DoodleLibResource::get_filesystem().open("resource/maya_fun_tool.py");
 
   {  //写入文件后直接关闭
     FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
     file.write(k_file_py.begin(), boost::numeric_cast<std::int64_t>(k_file_py.size()));
   }
   auto str_script = fmt::format(
-      "\n\npymel.core.system.openFile({},loadReferenceDepth=\"all\")\n"
+      "import maya.standalone\n"
+      "maya.standalone.initialize(name='python')\n"
+      "import pymel.core.system\n"
+      "import pymel.core\n"
+      "pymel.core.system.newFile(force=True)\n"
+      "pymel.core.system.loadPlugin(\"AbcExport\")\n"
+      "pymel.core.system.loadPlugin(\"AbcImport\")\n"
+      "pymel.core.system.loadPlugin(\"qualoth_2019_x64\")"
+      "\n\npymel.core.system.openFile(\"{}\",loadReferenceDepth=\"all\")\n"
+      "pymel.core.playbackOptions(animationStartTime=\"950\")\n"
       "import maya_fun_tool\n"
       "reload(maya_fun_tool)\n"
       "maya_fun_tool.cloth_export()()",
@@ -215,6 +224,7 @@ bool MayaFile::qcloth_sim_file(const FSys::path& file_path) const {
 }
 
 bool MayaFile::batch_qcloth_sim_file(const std::vector<FSys::path>& file_path) const {
+  return true;
 }
 
 bool MayaFile::is_maya_file(const FSys::path& in_path) {

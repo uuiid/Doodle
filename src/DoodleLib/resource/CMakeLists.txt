@@ -33,6 +33,7 @@ set(DOODLE_RE_FILES_LIST
         resource/abcExport.py
         resource/CMakeLists.txt
         resource/icon.ico
+        resource/maya_fun_tool.py
         resource/mayaExport.py
         resource/mayaIcon.png
         resource/Ue4CraeteLevel.py

@@ -10,17 +10,6 @@ import json
 import pymel.util.path
 import pymel.all
 
-
-def get_file_name():
-    return os.path.splitext(maya.cmds.file(
-        query=True, sceneName=True, shortName=True))[0]
-
-
-def create_maya_workspace():
-
-    pass
-
-
 class maya_play_raneg():
     def __init__(self):
         self.start = int(pymel.core.playbackOptions(query=True, min=True))
@@ -355,6 +344,9 @@ class references_file():
         if(self.cloth_path):
             self.maya_ref.replaceWith(self.cloth_path)
 
+class export_group():
+    def export_fbx(self, select_str):
+        pymel.core.select(select_str)
 
 class cloth_group_file():
     def __init__(self, ref_obj):
@@ -478,6 +470,13 @@ class cloth_group_file():
         abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
             .format(f0=str(path.abspath()).replace("\\", "/"),
                     f1=doodle_work_space.raneg.start, f2=doodle_work_space.raneg.end,
+                    mash=abcexmashs)
+        print(abcExportCom)
+        pymel.core.mel.eval(abcExportCom)
+        
+        abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
+            .format(f0=str(path.abspath()).replace("\\", "/"),
+                    f1=1000, f2=doodle_work_space.raneg.end,
                     mash=abcexmashs)
         print(abcExportCom)
         pymel.core.mel.eval(abcExportCom)

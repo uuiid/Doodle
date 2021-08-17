@@ -26,7 +26,10 @@ class DOODLELIB_API MayaFile : public details::no_copy {
   bool batchExportFbxFile(const std::vector<FSys::path>& file_path) const;
   /**
    * @brief 
+   * @note 导出abc时会重复导出一次，第一次用来创建缓存，第二次用来更改导出帧为1001，
    * 
+   * @todo maya 导出时需要拍屏
+   * @todo 公开寻找引用的路径ui
    * 
    * 我一直做测试， 终于找到原因了：
    * 1、引用的文件必须和动画文件帧率相同，比如一个引用是24帧每秒， 动画是25 ，就会会卡死
