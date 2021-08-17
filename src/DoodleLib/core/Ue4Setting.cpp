@@ -1,9 +1,8 @@
 #include <DoodleLib/core/Ue4Setting.h>
 #include <Exception/Exception.h>
 
-#include <libWarp/WinReg.hpp>
-
 #include <boost/locale.hpp>
+#include <libWarp/WinReg.hpp>
 namespace doodle {
 Ue4Setting::Ue4Setting()
     : ue4_path(),
@@ -59,11 +58,15 @@ void Ue4Setting::testValue() {
   }
   if (ue4_path.empty()) {
     auto wv      = boost::locale::conv::utf_to_utf<wchar_t>(Ue4Setting::Get().Version());
-    auto key_str = fmt::format(LR"(SOFTWARE\EpicGames\Unreal Engine\{})",wv);
+    auto key_str = fmt::format(LR"(SOFTWARE\EpicGames\Unreal Engine\{})", wv);
+    try {
+      auto key = winreg::RegKey{HKEY_LOCAL_MACHINE};
+      key.Open(HKEY_LOCAL_MACHINE, key_str, KEY_QUERY_VALUE);
+      ue4_path = FSys::path{key.GetStringValue(L"InstalledDirectory")};
 
-    auto key = winreg::RegKey{HKEY_LOCAL_MACHINE};
-    key.Open(HKEY_LOCAL_MACHINE, key_str, KEY_QUERY_VALUE);
-    ue4_path = FSys::path{key.GetStringValue(L"InstalledDirectory")};
+    } catch (const winreg::RegException& e) {
+      DOODLE_LOG_WARN(e.what());
+    }
   }
 }
 
