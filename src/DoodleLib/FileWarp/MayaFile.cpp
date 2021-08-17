@@ -19,12 +19,12 @@ MayaFile::MayaFile(FSys::path mayaPath)
     throw DoodleError{"无法找到maya启动器"};
 }
 
-FSys::path MayaFile::createTmpFile() {
+FSys::path MayaFile::createTmpFile(const std::string& in_resource_path) {
   //开始写入临时文件
 
   const static auto tmp_path = CoreSet::getSet().getCacheRoot("maya");
   auto k_tmp_path            = tmp_path / (boost::uuids::to_string(CoreSet::getSet().getUUID()) + ".py");
-  auto k_file_py             = cmrc::DoodleLibResource::get_filesystem().open("resource/mayaExport.py");
+  auto k_file_py             = cmrc::DoodleLibResource::get_filesystem().open(in_resource_path);
 
   {  //写入文件后直接关闭
     FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
@@ -33,32 +33,21 @@ FSys::path MayaFile::createTmpFile() {
   return k_tmp_path;
 }
 
-bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& export_path) const {
-  auto k_export_path = file_path.parent_path() / file_path.stem();
-  if (!export_path.empty()) k_export_path = export_path;
-
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-  if (!FSys::exists(k_export_path))
-    FSys::create_directories(k_export_path);
-
-  if (!FSys::exists(file_path)) {
-    p_term->sig_finished();
-    p_term->sig_message_result("不存在文件");
-    return false;
+FSys::path MayaFile::warit_tmp_file(const std::string& in_string) {
+  const static auto tmp_path = CoreSet::getSet().getCacheRoot("maya");
+  auto k_tmp_path            = tmp_path / (boost::uuids::to_string(CoreSet::getSet().getUUID()) + ".py");
+  {  //写入文件后直接关闭
+    FSys::fstream file{k_tmp_path, std::ios::out};
+    file << in_string;
   }
+  return k_tmp_path;
+}
 
-  auto k_tmp_path = this->createTmpFile();
-  //生成命令
-  auto str_ = fmt::format(
-      LR"("{}/mayapy.exe" {} --path {} --exportpath {})",
-      p_path.generic_wstring(),
-      k_tmp_path.generic_wstring(),
-      file_path.generic_wstring(),
-      k_export_path.generic_wstring());
+bool MayaFile::checkFile() {
+  return true;
+}
 
-  DOODLE_LOG_INFO(fmt::format(" {} ", boost::locale::conv::utf_to_utf<char>(str_)))
-
+bool MayaFile::run_comm(const std::wstring& in_com) const {
   STARTUPINFO si{};
   PROCESS_INFORMATION pi{};
   ZeroMemory(&si, sizeof(si));
@@ -68,13 +57,13 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
     //使用windowsIPA创建子进程
     CreateProcess(
         nullptr,
-        (wchar_t*)str_.c_str(),
+        (wchar_t*)in_com.c_str(),
         nullptr,
         nullptr,
         false,
-        CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP,  //CREATE_NEW_CONSOLE
+        CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP,  // CREATE_NEW_CONSOLE
         nullptr,
-        p_path.generic_wstring().c_str(),  //R"(C:\Program Files\Autodesk\Maya2018\bin\)"
+        p_path.generic_wstring().c_str(),  // R"(C:\Program Files\Autodesk\Maya2018\bin\)"
         &si,
         &pi);
     p_term->sig_progress(0.1);
@@ -92,6 +81,37 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
   WaitForSingleObject(pi.hProcess, INFINITE);
   CloseHandle(pi.hProcess);
   CloseHandle(pi.hThread);
+  return true;
+}
+
+bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& export_path) const {
+  auto k_export_path = file_path.parent_path() / file_path.stem();
+  if (!export_path.empty())
+    k_export_path = export_path;
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+  if (!FSys::exists(k_export_path))
+    FSys::create_directories(k_export_path);
+
+  if (!FSys::exists(file_path)) {
+    p_term->sig_finished();
+    p_term->sig_message_result("不存在文件");
+    return false;
+  }
+
+  auto k_tmp_path = this->createTmpFile("resource/mayaExport.py");
+  //生成命令
+  auto str_ = fmt::format(
+      LR"("{}/mayapy.exe" {} --path {} --exportpath {})",
+      p_path.generic_wstring(),
+      k_tmp_path.generic_wstring(),
+      file_path.generic_wstring(),
+      k_export_path.generic_wstring());
+
+  DOODLE_LOG_INFO(fmt::format(" {} ", boost::locale::conv::utf_to_utf<char>(str_)))
+
+  run_comm(str_);
   // boost::process::ipstream k_in{};
   // boost::process::system(str.str());
   // boost::process::child k_c{str.str(), boost::process::windows::hide};
@@ -102,7 +122,6 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
   //   // std::cout << str_r << std::endl;
   //   DOODLE_LOG_INFO(str_r);
   // }
-
   // k_c.wait();
   p_term->sig_progress(0.9);
   FSys::remove(k_tmp_path);
@@ -161,9 +180,43 @@ bool MayaFile::batchExportFbxFile(const std::vector<FSys::path>& file_path) cons
   return true;
 }
 
-bool MayaFile::checkFile() {
-  return true;
+bool MayaFile::qcloth_sim_file(const FSys::path& file_path) const {
+  auto k_export_path = file_path.parent_path() / file_path.stem();
+  if (!FSys::exists(k_export_path))
+    FSys::create_directories(k_export_path);
+
+  if (!FSys::exists(file_path)) {
+    p_term->sig_finished();
+    p_term->sig_message_result("不存在文件");
+    return false;
+  }
+  // 写入文件
+  const static auto k_tmp_path = CoreSet::getSet().getCacheRoot("maya") / "maya_fun_tool.py";
+  auto k_file_py               = cmrc::DoodleLibResource::get_filesystem().open("");
+
+  {  //写入文件后直接关闭
+    FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
+    file.write(k_file_py.begin(), boost::numeric_cast<std::int64_t>(k_file_py.size()));
+  }
+  auto str_script = fmt::format(
+      L"\n\npymel.core.system.openFile({},loadReferenceDepth=\"all\")\n"
+      L"import maya_fun_tool\n"
+      L"reload(maya_fun_tool)\n"
+      L"maya_fun_tool.cloth_export()()",
+      file_path.generic_string());
+  auto run_path = warit_tmp_file(str_script);
+
+  //生成命令
+  auto run_com = fmt::format(
+      LR"("{}/mayapy.exe" {})",
+      p_path.generic_wstring(),
+      run_path.generic_wstring());
+  return run_comm(run_com);
 }
+
+bool MayaFile::batch_qcloth_sim_file(const std::vector<FSys::path>& file_path) const {
+}
+
 bool MayaFile::is_maya_file(const FSys::path& in_path) {
   auto k_e = in_path.extension();
   return k_e == ".ma" || k_e == ".mb";
