@@ -25,16 +25,15 @@ class DOODLELIB_API MayaFile : public details::no_copy {
   bool exportFbxFile(const FSys::path& file_path, const FSys::path& export_path = {}) const;
   bool batchExportFbxFile(const std::vector<FSys::path>& file_path) const;
   /**
-   * @brief 
+   * @brief 批量解算qcloth 文件
    * @note 导出abc时会重复导出一次，第一次用来创建缓存，第二次用来更改导出帧为1001，
    * 
    * @todo maya 导出时需要拍屏
    * @todo 公开寻找引用的路径ui
    * 
    * 我一直做测试， 终于找到原因了：
-   * 1、引用的文件必须和动画文件帧率相同，比如一个引用是24帧每秒， 动画是25 ，就会会卡死
-   * 2、两个重复的一样的引用，这个时候会卡死，
-   * 3、导出abc时不可以从1001开始，必须从解算的起始帧开始，要不然会出现不解算直接停留在第一帧
+   * 1、引用的文件必须和动画文件帧率相同，比如一个引用是24帧每秒， 动画是25 ，就会卡死
+   * 2、导出abc时不可以从1001开始，必须从解算的起始帧开始，要不然会出现不解算直接停留在第一帧
    * 
    * @param file_path 需要解算的文件路径
    * @return true 

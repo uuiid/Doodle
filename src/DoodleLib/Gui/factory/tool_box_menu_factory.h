@@ -29,6 +29,9 @@ namespace doodle {
  * @subsection create_ue_level 创建ue关卡
  * @copydetails doodle::toolbox::actn_ue4_shot_episodes
  * 
+ * @subsection qcloth_sim_file 批量qcloth解算
+ * @copydetails doodle::toolbox::actn_qcloth_sim_export
+ * 
  * @subsection install_ue_plugin 安装ue插件
  * @subsection install_ue_project_plugin 安装ue项目插件
  * @copydetails doodle::toolkit::installUePath

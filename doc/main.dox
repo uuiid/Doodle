@@ -8,8 +8,13 @@
  * @ref doodle_main_boolbox \n 
  * 
  * 
+ * 基本上是按照版本控制语义来的 <https://semver.org/>
+ * 
+ * 但是有一个特性， 奇数版本一般为测试用， 偶数版本比较稳定
+ * 
  * @section main_management_tool 主要窗口
  * @image html doodle_image/main_windows.jpg 主要面板 width=30%
+ * 
  * 
  * 
  * @section installation_steps 安装步骤

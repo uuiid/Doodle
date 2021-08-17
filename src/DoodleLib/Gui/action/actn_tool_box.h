@@ -100,7 +100,26 @@ class DOODLELIB_API actn_ue4_shot_episodes
  protected:
   long_term_ptr run() override;
 };
-
+/**
+ * @brief 
+ * 
+ * 批量解算qcloth 文件
+ * 
+ * @li 选择文件后会自动替换qcloth 模板文件， 
+ * @li 他们的文件名称必须 *_rig --> *_cloth 是这种对应格式化, 大小写不可替换 
+ * @li 在文件中 解算体必须以*_cloth_proxy后缀结束 
+ * @li 更新post 姿势物体和解算体的对应关系必须是 *_cloth_proxy --> *_skin_proxy  
+ * @li 在使用时注意maya 版本 请在 @ref doodle_windwos_setting 中设置 为 2019 的版本 \n 
+ * 例如: C:/Program Files/Autodesk/Maya2019/bin
+ * 
+ * 
+ * @warning @li 引用的文件必须和动画文件帧率相同，比如一个引用是24帧每秒， 动画是25 ，就会卡死 \n
+ * @li 解算帧开始必须为950
+ * @li 路径中出现中文有可能会出错误, 请注意
+ * @li 插件名称不要更改 必须是 qualoth_2019_x64
+ * 
+ * 
+ */
 class DOODLELIB_API actn_qcloth_sim_export
     : public action_toolbox<action_arg::arg_paths> {
  public:
