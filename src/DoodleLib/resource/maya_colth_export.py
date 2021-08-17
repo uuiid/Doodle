@@ -10,7 +10,7 @@ pymel.core.system.loadPlugin("AbcExport")
 pymel.core.system.loadPlugin("AbcImport")
 pymel.core.system.loadPlugin("qualoth_2019_x64")
 
-pymel.core.system.openFile("D:/Autodesk/test/test.ma",loadReferenceDepth="all")
+pymel.core.system.openFile("D:/Autodesk/test/test2.ma",loadReferenceDepth="all")
 # 这个导出一定要在加载好场景后导入
 import maya_fun_tool
 reload(maya_fun_tool)

@@ -24,7 +24,7 @@ def create_maya_workspace():
 class maya_play_raneg():
     def __init__(self):
         self.start = int(pymel.core.playbackOptions(query=True, min=True))
-        self.start = 1000
+        # self.start = 1000
         self.end = int(pymel.core.playbackOptions(query=True, max=True))
 
 
@@ -108,10 +108,11 @@ class camera:
         #     "lookThroughModelPanel {} modelPanel1;".format(self.maya_cam.fullPath()))
         try:
             render_node = pymel.core.ls("defaultRenderGlobals")[0]
-            render_node.setAttr("currentRenderer","mayaHardware2",type ="string")
-            render_node.setAttr("imageFormat",23)
-            render_node.setAttr("animation",1)
-            pymel.core.render(self.maya_cam,x=1280,y=1920,replace=True)
+            render_node.setAttr("currentRenderer",
+                                "mayaHardware2", type="string")
+            render_node.setAttr("imageFormat", 23)
+            render_node.setAttr("animation", 1)
+            pymel.core.render(self.maya_cam, x=1280, y=1920, replace=True)
             # pymel.core.playblast(
             #     viewer=False,
             #     startTime=doodle_work_space.raneg.start,
@@ -361,9 +362,7 @@ class cloth_group_file():
         self.maya_ref = ref_obj
         self.maya_name_space = ref_obj.namespace
         pymel.core.select(clear=True)
-        pymel.core.select(
-            "{}:*cloth_proxy".format(self.maya_name_space), replace=True)
-        self.cloth_group = pymel.core.selected()
+        self.cloth_group = pymel.core.ls("{}:*cloth_proxy".format(self.maya_name_space))
 
         # type: list[pymel.core.nodetypes.Transform]
         self.maya_abc_export = None
@@ -483,21 +482,27 @@ class cloth_group_file():
         print(abcExportCom)
         pymel.core.mel.eval(abcExportCom)
 
+    def dgeval(self):
+        for obj in pymel.core.ls("{}:*_cloth".format(self.maya_name_space)):
+            print("dgeval {}".format(str(obj.getShapes()[0].outputMesh)))
+            pymel.core.system.dgeval(obj.getShapes()[0].outputMesh)
+
+
 class fbx_export():
     def __init__(self):
         self.qcolth_group = []  # type: list[cloth_group_file]
         for ref_obj in pymel.core.system.listReferences():
             self.colth.append(references_file(ref_obj))
         self.cam = camera()
-    
+
     def export_fbx_mesh(self):
         self.cam.export()
         for obj in self.qcolth_group:
             obj.export_fbx()
-    
+
     def __call__(self):
         self.export_fbx_mesh()
-        
+
 
 class cloth_export():
     def __init__(self):
@@ -519,9 +524,17 @@ class cloth_export():
             obj.set_cache_folder()
 
     def play_move(self):
+        pass
         # pymel.core.playbackOptions(maxPlaybackSpeed=0,blockingAnim=True,view="all",loop="once")
         # pymel.core.play(forward=True)
-        maya.mel.eval("qlStartLocalSimulation")
+        # pymel.core.select(clear=True)
+        # for f in range(
+        #     doodle_work_space.raneg.start,
+        #     doodle_work_space.raneg.end,
+        #         1):
+        #     pymel.core.currentTime(f, update= False)
+        #     for obj in self.qcolth_group:
+        #         obj.dgeval()
         # self.cam.create_move()
 
     def export_fbx(self):
@@ -539,7 +552,7 @@ class cloth_export():
     def __call__(self):
         self.replace_file()
         self.set_qcloth_attr()
-        self.play_move()
         self.save()
+        self.play_move()
         # self.export_fbx()
-        # self.export_abc()
+        self.export_abc()
