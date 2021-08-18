@@ -130,6 +130,7 @@ add_custom_target(
 )
 
 #添加文档生成
+set(DOODLE_EXE_MSI_FILE_NAME Doodle-${Doodle_VERSION_MAJOR}.${Doodle_VERSION_MINOR}.${Doodle_VERSION_PATCH}-win64.msi)
 set(DOXYGEN_WARNINGS YES)
 set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
 set(DOXYGEN_WARN_IF_DOC_ERROR YES)
@@ -150,7 +151,7 @@ set(DOXYGEN_GENERATE_TREEVIEW YES)
 # set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 0)
 # set(DOXYGEN_HTML_DYNAMIC_SECTIONS YES)
 set(DOXYGEN_ALIASES
-    "doodle_exe_file=Doodle-${Doodle_VERSION_MAJOR}.${Doodle_VERSION_MINOR}.${Doodle_VERSION_PATCH}-win64.msi"
+    "doodle_exe_file=${DOODLE_EXE_MSI_FILE_NAME}"
 )
 set(DOXYGEN_EXAMPLE_PATH ${PROJECT_SOURCE_DIR}/src)
 set(DOXYGEN_HTML_EXTRA_STYLESHEET ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.css)
@@ -158,9 +159,12 @@ doxygen_add_docs(Doxygen
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/doc
         )
+add_custom_command(TARGET  Doxygen
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/html ${PROJECT_SOURCE_DIR}/build/html
+        )
 
-        
-        
+
 enable_testing()
 add_subdirectory(src)
 add_subdirectory(tools)
@@ -228,4 +232,10 @@ include(CPack REQUIRED)
 
 add_custom_target(cpack_${PROJECT_NAME}
         COMMAND ${CMAKE_CPACK_COMMAND} --build ${PROJECT_BINARY_DIR} --target package)
+add_custom_command(
+        TARGET cpack_${PROJECT_NAME}
+        POST_BUILD
+        COMMAND  ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_EXE_MSI_FILE_NAME} ${PROJECT_SOURCE_DIR}/build/html/files/
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
+)
 add_dependencies(cpack_${PROJECT_NAME} DoodleExe doodleServerExe)

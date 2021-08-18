@@ -1,6 +1,6 @@
 ﻿$service_name = "doodle_service"
-$source_path = "\\192.168.20.59\Users\TD\Source\Doodle\b_Ninja_VS19_Ni_64_qt515_Release\bin"
-$source_path_doc = "\\192.168.20.59\Users\TD\Source\Doodle\b_Ninja_VS19_Ni_64_qt515_Debug\html"
+$source_path = "\\192.168.20.59\Users\TD\Source\Doodle\build\doodle\bin"
+$source_path_doc = "\\192.168.20.59\Users\TD\Source\Doodle\build\html"
 $install_path = "C:\doodle\bin"
 $exe_name = "doodleServerExe.exe"
 $bin_path = Join-Path $install_path $exe_name
