@@ -146,6 +146,7 @@ set(DOXYGEN_EXCLUDE_PATTERNS
         */venv
         */MAYA)
 set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
+set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build/html)
 # set(DOXYGEN_DISABLE_INDEX YES)
 set(DOXYGEN_GENERATE_TREEVIEW YES)
 # set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 0)
@@ -158,10 +159,6 @@ set(DOXYGEN_HTML_EXTRA_STYLESHEET ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.
 doxygen_add_docs(Doxygen
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/doc
-        )
-add_custom_command(TARGET  Doxygen
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/html ${PROJECT_SOURCE_DIR}/build/html
         )
 
 
