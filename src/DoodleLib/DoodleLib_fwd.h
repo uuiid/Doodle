@@ -288,6 +288,7 @@ class action_base;
 class tool_box_menu_factory;
 class VideoSequence;
 class Ue4Project;
+class MayaFile;
 
 /**
  * @brief 数据库连接指针
@@ -479,6 +480,10 @@ using long_term_ptr = std::shared_ptr<long_term>;
  * 
  */
 using ImageSequencePtr = std::shared_ptr<ImageSequence>;
+/**
+ * @brief MayaFile 智能共享指针
+ */
+using MayaFilePtr = std::shared_ptr<MayaFile>;
 
 namespace rpc_trans {
 class down_file;

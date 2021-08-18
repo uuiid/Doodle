@@ -122,6 +122,7 @@ class DOODLELIB_API actn_ue4_shot_episodes
  */
 class DOODLELIB_API actn_qcloth_sim_export
     : public action_toolbox<action_arg::arg_paths> {
+  MayaFilePtr p_maya;
  public:
   actn_qcloth_sim_export();
   bool is_async() override;

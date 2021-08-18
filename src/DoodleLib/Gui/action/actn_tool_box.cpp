@@ -130,11 +130,13 @@ long_term_ptr actn_ue4_shot_episodes::run() {
 
   return p_term;
 }
-actn_qcloth_sim_export::actn_qcloth_sim_export() {
+actn_qcloth_sim_export::actn_qcloth_sim_export()
+    : p_maya(std::make_shared<MayaFile>()) {
+  p_term = std:: : make_shared<long_term>();
   p_name = "进行qcloth批量解算";
 }
 bool actn_qcloth_sim_export::is_async() {
-  return false;
+  return true;
 }
 long_term_ptr actn_qcloth_sim_export::run() {
   p_date = sig_get_arg().value();
@@ -143,11 +145,13 @@ long_term_ptr actn_qcloth_sim_export::run() {
     cancel("取消导出");
     return p_term;
   }
-  auto k_maya = std::make_shared<MayaFile>();
-  for (const auto& in : p_date.date) {
-    k_maya->qcloth_sim_file(in);
-  }
-  return {};
+  std::vector<long_term_ptr> k_list{};
+  std::transform(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
+                 [this](const auto& in) {
+                   return p_maya->qcloth_sim_file(in);
+                 });
+  p_term->forward_sig(k_list);
+  return p_term;
 }
 }  // namespace toolbox
 

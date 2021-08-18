@@ -3,10 +3,14 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
-class DOODLELIB_API MayaFile : public details::no_copy {
+class DOODLELIB_API MayaFile
+    : public details::no_copy {
  private:
   FSys::path p_path;
   long_term_ptr p_term;
+
+  std::vector<long_term_ptr> p_term_list;
+  std::vector<std::future<void>> p_futurn_list;
 
   [[nodiscard]] static FSys::path createTmpFile(const std::string& in_resource_path);
   static void write_maya_tool_file();
@@ -14,9 +18,9 @@ class DOODLELIB_API MayaFile : public details::no_copy {
   bool checkFile();
   bool run_comm(const std::wstring& in_com) const;
 
-  
  public:
   explicit MayaFile(FSys::path mayaPath = {});
+  virtual ~MayaFile();
   [[nodiscard]] long_term_ptr get_term() const;
   /**
    * 导出maya文件中的fbx
@@ -28,6 +32,9 @@ class DOODLELIB_API MayaFile : public details::no_copy {
   bool batchExportFbxFile(const std::vector<FSys::path>& file_path) const;
   /**
    * @brief 批量解算qcloth 文件
+   * 在使用时， 可以重复的调用， 由于是异步的，所以请接受返回信号，信号的所有权是自己本身
+   *
+   *
    * @note 导出abc时会重复导出一次，第一次用来创建缓存，第二次用来更改导出帧为1001，
    * 
    * @todo maya 导出时需要拍屏
@@ -41,8 +48,7 @@ class DOODLELIB_API MayaFile : public details::no_copy {
    * @return true 
    * @return false 
    */
-  bool qcloth_sim_file(const FSys::path& file_path) const;
-  bool batch_qcloth_sim_file(const std::vector<FSys::path>& file_path) const;
+  [[nodiscard]] long_term_ptr qcloth_sim_file(const FSys::path& file_path) ;
 
   [[nodiscard]] static bool is_maya_file(const FSys::path& in_path);
 };
