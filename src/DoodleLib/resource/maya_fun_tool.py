@@ -571,7 +571,7 @@ class cloth_export():
             obj.set_cache_folder()
 
     def play_move(self):
-        pass
+        self.cam.create_move()
         # pymel.core.playbackOptions(maxPlaybackSpeed=0,blockingAnim=True,view="all",loop="once")
         # pymel.core.play(forward=True)
         # pymel.core.select(clear=True)
