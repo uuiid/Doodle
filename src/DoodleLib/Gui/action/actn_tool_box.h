@@ -120,6 +120,21 @@ class DOODLELIB_API actn_ue4_shot_episodes
  * @li 更新post 姿势物体和解算体的对应关系必须是 *_cloth_proxy --> *_skin_proxy  
  * @li 在使用时注意maya 版本 请在 @ref doodle_windwos_setting 中设置 为 2019 的版本 \n 
  * 例如: C:/Program Files/Autodesk/Maya2019/bin
+ * @li 在做解算资产时，要将不想看到的物体隐藏， 这样在创建拍屏时才会输出想要的拍屏，
+ * 
+ * @code 
+ * 解算文件夹输出结构： 
+ * /-↓ 
+ * -解算文件 
+ * -拍屏文件（使用解算文件名称作为前缀） 
+ * -abc文件夹 
+ *  |-abc文件（使用解算文件名称作为前缀） 
+ * -解算缓存文件夹（使用解算文件名称作为文件夹的名称） 
+ *  |-文件夹（每个引用的空间名称） 
+ *    |-文件夹（引用内部解算体的文件夹） 
+ *      |-解算文件缓存 
+ * @endcode
+ * 
  * 
  * 
  * @warning @li 引用的文件必须和动画文件帧率相同，比如一个引用是24帧每秒， 动画是25 ，就会卡死 \n
