@@ -19,6 +19,11 @@ arg_tool_box_create_ue_shot::arg_tool_box_create_ue_shot()
     : arg_path(),
       shot_list() {
 }
+
+arg_tool_box_sim_qcloth::arg_tool_box_sim_qcloth()
+    : arg_paths(),
+      qcloth_assets_path() {
+}
 }  // namespace action_arg
 namespace toolbox {
 
@@ -150,7 +155,7 @@ long_term_ptr actn_qcloth_sim_export::run() {
   std::vector<long_term_ptr> k_list{};
   std::transform(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
                  [this](const auto& in) {
-                   auto ptr                = std::make_unique<MayaFile::qcloth_arg>();
+                   auto ptr                = std::make_shared<MayaFile::qcloth_arg>();
                    ptr->sim_path           = in;
                    ptr->qcloth_assets_path = p_date.qcloth_assets_path;
                    return p_maya->qcloth_sim_file(ptr);

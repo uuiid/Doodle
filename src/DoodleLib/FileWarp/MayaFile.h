@@ -21,10 +21,11 @@ class DOODLELIB_API MayaFile
   class DOODLELIB_API qcloth_arg {
    public:
     qcloth_arg() = default;
+    ~qcloth_arg() = default;
     FSys::path sim_path;
     FSys::path qcloth_assets_path;
   };
-  using qcloth_arg_ptr = std::unique_ptr<qcloth_arg>;
+  using qcloth_arg_ptr = std::shared_ptr<qcloth_arg>;
 
   explicit MayaFile(FSys::path mayaPath = {});
   virtual ~MayaFile();

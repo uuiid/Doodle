@@ -534,7 +534,7 @@ class fbx_export():
 
 class cloth_export():
     def __init__(self, cfx_path):
-        references_file.cfx_cloth_path = cfx_path
+        references_file.cfx_cloth_path = pymel.core.Path(cfx_path)
 
         self.colth = []  # type: list[references_file]
         self.qcolth_group = []  # type: list[cloth_group_file]

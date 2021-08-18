@@ -121,6 +121,7 @@ bool MayaFile::run_comm(const std::wstring& in_com) const {
   auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue(
       [this, k_term, file_path, k_export_path]() {
         write_maya_tool_file();
+        k_term->sig_progress(0.1);
         //生成导出文件
         auto str_script = fmt::format(
             "# -*- coding: utf-8 -*-\n"
@@ -138,17 +139,22 @@ bool MayaFile::run_comm(const std::wstring& in_com) const {
             "maya_fun_tool.fbx_export()()",
             file_path.generic_string());
         auto run_path = warit_tmp_file(str_script);
+        k_term->sig_progress(0.1);
+
         //生成命令
         auto run_com = fmt::format(
             LR"("{}/mayapy.exe" {})",
             p_path.generic_wstring(),
             run_path.generic_wstring());
-        DOODLE_LOG_INFO(run_com)
+        k_term->sig_progress(0.1);
+
         run_comm(run_com);
 
-        k_term->sig_progress(0.9);
+        k_term->sig_progress(0.6);
         FSys::remove(run_path);
         FSys::copy_file(file_path, k_export_path / file_path.filename(), FSys::copy_options::overwrite_existing);
+        
+        k_term->sig_progress(0.1);
         k_term->sig_finished();
         k_term->sig_message_result("导出完成");
       });
@@ -171,7 +177,7 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
   }
 
   auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue(
-      [k_term, this, in_arg = std::move(in_arg)]() {
+      [in_arg,k_term,this]() {
         // 写入文件
         write_maya_tool_file();
         k_term->sig_progress(0.1);
