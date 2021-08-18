@@ -49,6 +49,7 @@ class maya_workspace():
         else:
             self.work.open(self.maya_file.abs_path)
             self.work.fileRules["cache"] = "cache"
+            self.work.fileRules["images"] = "images"
             self.work.save()
 
 
@@ -96,33 +97,47 @@ class camera:
         if not tmp_path.exists():
             tmp_path.mkdir_p()
 
+        render_node = pymel.core.ls("defaultRenderGlobals")[0]
+
+        render_node.imageFormat.set(8)
+        render_node.animation.set(True)
+        render_node.putFrameBeforeExt.set(True)
+        render_node.useFrameExt.set(False)
+        render_node.useMayaFileName.set(True)
+        render_node.imageFilePrefix.set("<Scene>/<Scene>")
+        render_node.startFrame.set(doodle_work_space.raneg.start)
+        render_node.endFrame.set(doodle_work_space.raneg.end)
+        Resolution_node = pymel.core.ls("defaultResolution")[0]
+        Resolution_node.height.set(1920)
+        Resolution_node.width.set(1280)
+
+        for cam in pymel.core.listCameras():
+            pymel.core.ls(cam)[0].renderable.set(False)
+        self.maya_cam.renderable.set(True)
         # print("maya mel eval lookThroughModelPanel {} modelPanel1;".format(self.maya_cam.fullPath()))
         # maya.mel.eval(
         #     "lookThroughModelPanel {} modelPanel1;".format(self.maya_cam.fullPath()))
         try:
-            render_node = pymel.core.ls("defaultRenderGlobals")[0]
-            render_node.setAttr("currentRenderer",
-                                "mayaHardware2", type="string")
-            render_node.setAttr("imageFormat", 23)
-            render_node.setAttr("animation", 1)
-            pymel.core.render(self.maya_cam, x=1280, y=1920, replace=True)
-            # pymel.core.playblast(
-            #     viewer=False,
-            #     startTime=doodle_work_space.raneg.start,
-            #     endTime=doodle_work_space.raneg.end,
-            #     filename="{path}/{base_name}_playblast_{start}-{end}"
-            #     .format(
-            #         path=out_path,
-            #         base_name=doodle_work_space.maya_file.name_not_ex,
-            #         start=doodle_work_space.raneg.start,
-            #         end=doodle_work_space.raneg.end
-            #     ),
-            #     percent=100,
-            #     quality=100,
-            #     # offScreen=True,
-            #     # editorPanelName="modelPanel1",
-            #     format="qt"
-            # )
+            # type: pymel.core.nodetypes.RenderGlobals
+            # pymel.core.hwRender(camera=self.maya_cam, h=1280, w=1920)
+            pymel.core.playblast(
+                viewer=False,
+                startTime=doodle_work_space.raneg.start,
+                endTime=doodle_work_space.raneg.end,
+                filename="{path}/{base_name}_playblast_{start}-{end}"
+                .format(
+                    path=out_path,
+                    base_name=doodle_work_space.maya_file.name_not_ex,
+                    start=doodle_work_space.raneg.start,
+                    end=doodle_work_space.raneg.end
+                ),
+                percent=100,
+                quality=100,
+                # offScreen=True,
+                # editorPanelName="modelPanel1",
+                format="qt",
+                widthHeight=(1920,1280)
+            )
         except RuntimeError:
             pymel.core.system.warning("QuickTime not found, use default value")
             pymel.core.playblast(
@@ -138,7 +153,8 @@ class camera:
                 ),
                 percent=100,
                 quality=100,
-                editorPanelName="modelPanel4"
+                widthHeight=(1920,1280)
+                # editorPanelName="modelPanel4"
                 # offScreen=True
             )
 
@@ -341,14 +357,13 @@ class references_file():
         self.path = pymel.core.Path(
             self.maya_ref.path)  # type: pymel.core.Path
         self.namespace = self.maya_ref.fullNamespace
+        self.cloth_path = pymel.core.Path()
         if self.path.fnmatch("*[rig].ma"):
             self.cloth_path = self.cfx_cloth_path / self.path.name.replace(
                 "rig", "cloth")
-        else:
-            self.cloth_path = None
 
     def replace_file(self):
-        if(self.cloth_path):
+        if(self.cloth_path.exists()):
             self.maya_ref.replaceWith(self.cloth_path)
 
 
