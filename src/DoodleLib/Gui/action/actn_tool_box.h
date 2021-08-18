@@ -16,6 +16,13 @@ class DOODLELIB_API arg_tool_box_create_ue_shot : public arg_path {
   EpisodesPtr epsiodes;
   ProjectPtr project;
 };
+
+class DOODLELIB_API arg_tool_box_sim_qcloth : public arg_paths {
+ public:
+  arg_tool_box_sim_qcloth();
+  FSys::path qcloth_assets_path;
+};
+
 }  // namespace action_arg
 namespace toolbox {
 /**
@@ -32,6 +39,8 @@ namespace toolbox {
  */
 class DOODLELIB_API actn_export_maya
     : public action_toolbox<action_arg::arg_paths> {
+  MayaFilePtr p_maya;
+
  public:
   actn_export_maya();
   bool is_async() override;
@@ -121,12 +130,13 @@ class DOODLELIB_API actn_ue4_shot_episodes
  * 
  */
 class DOODLELIB_API actn_qcloth_sim_export
-    : public action_toolbox<action_arg::arg_paths> {
+    : public action_toolbox<action_arg::arg_tool_box_sim_qcloth> {
   MayaFilePtr p_maya;
+
  public:
   actn_qcloth_sim_export();
   bool is_async() override;
-  using arg = action_arg::arg_paths;
+  using arg = action_arg::arg_tool_box_sim_qcloth;
 
  protected:
   long_term_ptr run() override;

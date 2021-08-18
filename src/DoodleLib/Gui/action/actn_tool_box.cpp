@@ -16,13 +16,15 @@
 namespace doodle {
 namespace action_arg {
 arg_tool_box_create_ue_shot::arg_tool_box_create_ue_shot()
-    : arg_path(), shot_list() {
+    : arg_path(),
+      shot_list() {
 }
 }  // namespace action_arg
 namespace toolbox {
 
 actn_export_maya::actn_export_maya()
-    : action_toolbox<action_arg::arg_paths>() {
+    : action_toolbox<action_arg::arg_paths>(),
+      p_maya(std::make_shared<MayaFile>()) {
   p_term = std::make_shared<long_term>();
   p_name = "导出fbx";
 }
@@ -33,13 +35,13 @@ long_term_ptr actn_export_maya::run() {
     cancel("取消导出");
     return p_term;
   }
-  auto k_maya = std::make_shared<MayaFile>();
-  p_term->forward_sig(k_maya->get_term());
-  DoodleLib::Get().get_thread_pool()->enqueue(
-      [k_maya, this]() {
-        k_maya->batchExportFbxFile(p_date.date);
-      });
 
+  std::vector<long_term_ptr> k_list{};
+  std::transform(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
+                 [this](const auto& in) {
+                   return p_maya->exportFbxFile(in);
+                 });
+  p_term->forward_sig(k_list);
   return p_term;
 }
 bool actn_export_maya::is_async() {
@@ -132,7 +134,7 @@ long_term_ptr actn_ue4_shot_episodes::run() {
 }
 actn_qcloth_sim_export::actn_qcloth_sim_export()
     : p_maya(std::make_shared<MayaFile>()) {
-  p_term = std:: : make_shared<long_term>();
+  p_term = std::make_shared<long_term>();
   p_name = "进行qcloth批量解算";
 }
 bool actn_qcloth_sim_export::is_async() {
@@ -148,7 +150,10 @@ long_term_ptr actn_qcloth_sim_export::run() {
   std::vector<long_term_ptr> k_list{};
   std::transform(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
                  [this](const auto& in) {
-                   return p_maya->qcloth_sim_file(in);
+                   auto ptr                = std::make_unique<MayaFile::qcloth_arg>();
+                   ptr->sim_path           = in;
+                   ptr->qcloth_assets_path = p_date.qcloth_assets_path;
+                   return p_maya->qcloth_sim_file(ptr);
                  });
   p_term->forward_sig(k_list);
   return p_term;

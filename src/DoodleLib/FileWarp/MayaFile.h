@@ -12,13 +12,20 @@ class DOODLELIB_API MayaFile
   std::vector<long_term_ptr> p_term_list;
   std::vector<std::future<void>> p_futurn_list;
 
-  [[nodiscard]] static FSys::path createTmpFile(const std::string& in_resource_path);
   static void write_maya_tool_file();
   [[nodiscard]] static FSys::path warit_tmp_file(const std::string& in_string);
   bool checkFile();
   bool run_comm(const std::wstring& in_com) const;
 
  public:
+  class DOODLELIB_API qcloth_arg {
+   public:
+    qcloth_arg() = default;
+    FSys::path sim_path;
+    FSys::path qcloth_assets_path;
+  };
+  using qcloth_arg_ptr = std::unique_ptr<qcloth_arg>;
+
   explicit MayaFile(FSys::path mayaPath = {});
   virtual ~MayaFile();
   [[nodiscard]] long_term_ptr get_term() const;
@@ -28,8 +35,8 @@ class DOODLELIB_API MayaFile
    * @param export_path 导出的路径
    * @return 是否导出成功
    */
-  bool exportFbxFile(const FSys::path& file_path, const FSys::path& export_path = {}) const;
-  bool batchExportFbxFile(const std::vector<FSys::path>& file_path) const;
+  [[nodiscard]] long_term_ptr exportFbxFile(const FSys::path& file_path, const FSys::path& export_path = {});
+
   /**
    * @brief 批量解算qcloth 文件
    * 在使用时， 可以重复的调用， 由于是异步的，所以请接受返回信号，信号的所有权是自己本身
@@ -44,11 +51,11 @@ class DOODLELIB_API MayaFile
    * 1、引用的文件必须和动画文件帧率相同，比如一个引用是24帧每秒， 动画是25 ，就会卡死
    * 2、导出abc时不可以从1001开始，必须从解算的起始帧开始，要不然会出现不解算直接停留在第一帧
    * 
-   * @param file_path 需要解算的文件路径
+   * @param qcloth_arg_ptr 配置参数
    * @return true 
    * @return false 
    */
-  [[nodiscard]] long_term_ptr qcloth_sim_file(const FSys::path& file_path) ;
+  [[nodiscard]] long_term_ptr qcloth_sim_file(qcloth_arg_ptr& in_arg);
 
   [[nodiscard]] static bool is_maya_file(const FSys::path& in_path);
 };

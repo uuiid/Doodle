@@ -91,7 +91,24 @@ void tool_box_menu_factory::create_menu() {
 
   auto k_qcloth = std::make_shared<toolbox::actn_qcloth_sim_export>();
   p_list.push_back(k_qcloth);
-  k_qcloth->sig_get_arg.connect(k_get_paths);
+  k_qcloth->sig_get_arg.connect([this]() {
+    nana::filebox k_filebox{p_window, true};
+    k_filebox.allow_multi_select(true);
+
+    toolbox::actn_qcloth_sim_export::arg k_arg{};
+    k_arg.date      = k_filebox();
+    k_arg.is_cancel = k_arg.date.empty();
+
+    nana::folderbox k_folder_box{p_window, FSys::current_path()};
+
+    k_folder_box.allow_multi_select(false);
+    auto k_paths = k_folder_box();
+    k_arg.is_cancel &= k_paths.empty();
+    if (k_arg.is_cancel)
+      return k_arg;
+    k_arg.qcloth_assets_path = k_paths.front();
+    return k_arg;
+  });
 }
 void tool_box_menu_factory::operator()(nana::menu& in_menu) {
   create_menu();

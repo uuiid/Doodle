@@ -20,12 +20,14 @@ class maya_play_raneg():
 
 class maya_file():
     def __init__(self):
-        self.file_path = pymel.core.system.sceneName()
+        self._file_path = pymel.core.system.sceneName()
         self.maya_path_class = pymel.core.Path(
-            self.file_path)  # type:  pymel.core.Path
-        self.file_name = self.maya_path_class.basename()
+            self._file_path)  # type: pymel.core.Path
+        self.file_name = pymel.core.Path(
+            self.maya_path_class.basename())  # type: pymel.core.Path
+        # type: pymel.core.Path
         self.name_not_ex = self.file_name.splitext()[0]
-        self.abs_path = self.maya_path_class.dirname()
+        self.abs_path = self.maya_path_class.dirname()  # type: pymel.core.Path
 
     def save_as_cloth(self):
         pass
@@ -37,8 +39,9 @@ class maya_workspace():
         self.work.update()
         self.maya_file = maya_file()
         self.raneg = maya_play_raneg()
-        k_work = self.maya_file.abs_path.dirname() / "workspace.mel"
-        k_work2 = self.maya_file.abs_path / "workspace.mel"
+        k_work = self.maya_file.abs_path.dirname(
+        ) / "workspace.mel"  # type: pymel.core.Path
+        k_work2 = self.maya_file.abs_path / "workspace.mel"  # type: pymel.core.Path
         if(k_work.exists()):
             self.work.open(k_work.dirname())
         elif(k_work2.exists()):
@@ -226,7 +229,8 @@ class camera:
 
     def __call__(self, str=None):
         if not str:
-            str = doodle_work_space.maya_file.abs_path
+            str = doodle_work_space.maya_file.abs_path / \
+                doodle_work_space.maya_file.name_not_ex / "fbx"
         self.export(str)
         try:
             pass
@@ -328,15 +332,17 @@ class geometryInfo():
 
 
 class references_file():
+    cfx_cloth_path = pymel.core.Path()  # tyep: type: pymel.core.Path
+
     def __init__(self, ref_obj):
         # type:(pymel.core.FileReference)->None
 
         self.maya_ref = ref_obj
-        self.path = self.maya_ref.path  # type: pymel.core.Path
+        self.path = pymel.core.Path(
+            self.maya_ref.path)  # type: pymel.core.Path
         self.namespace = self.maya_ref.fullNamespace
         if self.path.fnmatch("*[rig].ma"):
-            self.cloth_path = pymel.core.Path(
-                "V:/03_Workflow/Assets/CFX/cloth") / self.path.name.replace(
+            self.cloth_path = self.cfx_cloth_path / self.path.name.replace(
                 "rig", "cloth")
         else:
             self.cloth_path = None
@@ -358,7 +364,8 @@ class export_group(object):
         if not mesh:
             return
 
-        path = doodle_work_space.work.getPath() / "fbx"  # type: pymel.core.Path
+        path = doodle_work_space.work.getPath() \
+            / doodle_work_space.maya_file.name_not_ex / "fbx"  # type: pymel.core.Path
 
         name = "{}_{}_{}-{}.fbx".format(doodle_work_space.maya_file.name_not_ex,
                                         self.maya_name_space,
@@ -389,7 +396,7 @@ class export_group(object):
 class cloth_group_file(export_group):
     def __init__(self, ref_obj):
         # type:(references_file)->None
-        super().__init__(ref_obj)
+        super(cloth_group_file, self).__init__(ref_obj)
         self.maya_ref = ref_obj
         pymel.core.select(clear=True)
         self.cloth_group = pymel.core.ls(
@@ -430,7 +437,8 @@ class cloth_group_file(export_group):
         pymel.core.showHidden(pymel.core.selected())
 
     def export_fbx(self):
-        super(cloth_group_file,self).export_fbx("{}:*UE4".format(self.maya_name_space))
+        super(cloth_group_file, self).export_fbx(
+            "{}:*UE4".format(self.maya_name_space))
 
     def export_abc(self):
         # 选择物体
@@ -495,18 +503,20 @@ class cloth_group_file(export_group):
             print("dgeval {}".format(str(obj.getShapes()[0].outputMesh)))
             pymel.core.system.dgeval(obj.getShapes()[0].outputMesh)
 
+
 class fbx_group_file(export_group):
     def __init__(self, ref_obj):
         # type:(references_file)->None
-        super().__init__(ref_obj)
+        super(fbx_group_file, self).__init__(ref_obj)
+
     def export_fbx(self):
-        return super().export_fbx("{}:*UE4".format(self.maya_name_space))
+        return super(fbx_group_file, self).export_fbx("{}:*UE4".format(self.maya_name_space))
 
 
 class fbx_export():
     def __init__(self):
         self.ref = []  # type: list[references_file]
-        self.fbx_group = [] # type: list[fbx_group_file]
+        self.fbx_group = []  # type: list[fbx_group_file]
         for ref_obj in pymel.core.system.listReferences():
             self.ref.append(references_file(ref_obj))
         for ref_obj in self.ref:
@@ -514,7 +524,7 @@ class fbx_export():
         self.cam = camera()
 
     def export_fbx_mesh(self):
-        self.cam.export()
+        self.cam()
         for obj in self.fbx_group:
             obj.export_fbx()
 
@@ -523,7 +533,8 @@ class fbx_export():
 
 
 class cloth_export():
-    def __init__(self):
+    def __init__(self, cfx_path):
+        references_file.cfx_cloth_path = cfx_path
 
         self.colth = []  # type: list[references_file]
         self.qcolth_group = []  # type: list[cloth_group_file]
