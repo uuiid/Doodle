@@ -502,12 +502,13 @@ class cloth_group_file(export_group):
         #     abcexmashs = "{} -root {}".format(abcexmashs,
         #                                       exmash.fullPathName())
         # -stripNamespaces
-        abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
-            .format(f0=str(path.abspath()).replace("\\", "/"),
-                    f1=doodle_work_space.raneg.start, f2=doodle_work_space.raneg.end,
-                    mash=abcexmashs)
-        print(abcExportCom)
-        pymel.core.mel.eval(abcExportCom)
+
+        # abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
+        #     .format(f0=str(path.abspath()).replace("\\", "/"),
+        #             f1=doodle_work_space.raneg.start, f2=doodle_work_space.raneg.end,
+        #             mash=abcexmashs)
+        # print(abcExportCom)
+        # pymel.core.mel.eval(abcExportCom)
 
         abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
             .format(f0=str(path.abspath()).replace("\\", "/"),
