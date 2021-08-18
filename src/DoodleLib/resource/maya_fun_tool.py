@@ -1,4 +1,5 @@
-﻿import maya.cmds
+﻿# -*- coding: utf-8 -*-
+import maya.cmds
 import maya.mel
 import pymel.core
 import pymel.core.system
@@ -12,6 +13,10 @@ import pymel.all
 
 
 class maya_play_raneg():
+    """
+    maya文件范围
+    """
+
     def __init__(self):
         self.start = int(pymel.core.playbackOptions(query=True, min=True))
         # self.start = 1000
@@ -19,6 +24,10 @@ class maya_play_raneg():
 
 
 class maya_file():
+    """
+    maya文件本身的一些路径方便属性
+    """
+
     def __init__(self):
         self._file_path = pymel.core.system.sceneName()
         self.maya_path_class = pymel.core.Path(
@@ -34,6 +43,10 @@ class maya_file():
 
 
 class maya_workspace():
+    """
+    maya 工作空间的一些创建和使用
+    """
+
     def __init__(self):
         self.work = pymel.core.system.workspace
         self.work.update()
@@ -54,17 +67,26 @@ class maya_workspace():
 
 
 class export_log(object):
+    """
+    导出问价使用的log文件类
+    """
 
     def addfile(self, objname, path, version):
         setattr(self, objname, [path, version])
 
 
+# 全局名称空间变量，
 doodle_work_space = maya_workspace()
-
+# 全局log变量
 log = export_log()
 
 
 class camera:
+    """
+    代表maya文件中的cam
+    这个选择时会排除掉默认的和不加下滑线的cam
+    """
+
     exclude = "(front|persp|side|top|camera)"
 
     def __init__(self):
@@ -73,6 +95,7 @@ class camera:
         self.loa = None
 
     def filter_cam(self):
+        # 过滤cam
         for cam in pymel.core.ls(type='camera', l=True):
             ex = True
             for test in filter(None, cam.fullPath().split("|")):
@@ -88,6 +111,7 @@ class camera:
         print("not select cam ", self.maya_cam)
 
     def create_move(self, out_path=None):
+        # 创建视频
         # 如果不符合就直接返回
         if not self.maya_cam:
             return
