@@ -10,6 +10,7 @@ import json
 import pymel.util.path
 import pymel.all
 
+
 class maya_play_raneg():
     def __init__(self):
         self.start = int(pymel.core.playbackOptions(query=True, min=True))
@@ -344,17 +345,55 @@ class references_file():
         if(self.cloth_path):
             self.maya_ref.replaceWith(self.cloth_path)
 
-class export_group():
-    def export_fbx(self, select_str):
-        pymel.core.select(select_str)
 
-class cloth_group_file():
+class export_group(object):
     def __init__(self, ref_obj):
         # type:(references_file)->None
-        self.maya_ref = ref_obj
         self.maya_name_space = ref_obj.namespace
+
+    def export_fbx(self, select_str):
+        mesh = pymel.core.ls(select_str)
+        pymel.core.select(mesh)
+
+        if not mesh:
+            return
+
+        path = doodle_work_space.work.getPath() / "fbx"  # type: pymel.core.Path
+
+        name = "{}_{}_{}-{}.fbx".format(doodle_work_space.maya_file.name_not_ex,
+                                        self.maya_name_space,
+                                        doodle_work_space.raneg.start,
+                                        doodle_work_space.raneg.end)
+        path.mkdir_p()
+        path = path / name
+        print("export path : {}".format(path.abspath()).replace("\\", "/"))
+        pymel.core.bakeResults(simulation=True,
+                               time=(doodle_work_space.raneg.start,
+                                     doodle_work_space.raneg.end),
+                               hierarchy="below",
+                               sampleBy=1,
+                               disableImplicitControl=True,
+                               preserveOutsideKeys=False,
+                               sparseAnimCurveBake=False)
+        maya.mel.eval(
+            "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
+        maya.mel.eval(
+            "FBXExportBakeComplexEnd -v {}".format(doodle_work_space.raneg.end))
+        maya.mel.eval("FBXExportBakeComplexAnimation -v true")
+        maya.mel.eval("FBXExportSmoothingGroups -v true")
+        maya.mel.eval("FBXExportConstraints -v true")
+        maya.mel.eval(
+            'FBXExport -f "{}" -s'.format(path.abspath()).replace("\\", "/"))
+
+
+class cloth_group_file(export_group):
+    def __init__(self, ref_obj):
+        # type:(references_file)->None
+        super().__init__(ref_obj)
+        self.maya_ref = ref_obj
         pymel.core.select(clear=True)
-        self.cloth_group = pymel.core.ls("{}:*cloth_proxy".format(self.maya_name_space))
+        self.cloth_group = pymel.core.ls(
+            "{}:*cloth_proxy".format(self.maya_name_space))
 
         # type: list[pymel.core.nodetypes.Transform]
         self.maya_abc_export = None
@@ -391,37 +430,7 @@ class cloth_group_file():
         pymel.core.showHidden(pymel.core.selected())
 
     def export_fbx(self):
-        pymel.core.select("{}:*UE4".format(self.maya_name_space))
-        # 空置就返回
-        if not pymel.core.selected():
-            return
-
-        path = doodle_work_space.work.getPath() / "fbx"  # type: pymel.core.Path
-
-        name = "{}_{}_{}-{}.fbx".format(doodle_work_space.maya_file.name_not_ex,
-                                        self.maya_name_space,
-                                        doodle_work_space.raneg.start,
-                                        doodle_work_space.raneg.end)
-        path.mkdir_p()
-        path = path / name
-        print("export path : {}".format(path.abspath()).replace("\\", "/"))
-        pymel.core.bakeResults(simulation=True,
-                               time=(doodle_work_space.raneg.start,
-                                     doodle_work_space.raneg.end),
-                               hierarchy="below",
-                               sampleBy=1,
-                               disableImplicitControl=True,
-                               preserveOutsideKeys=False,
-                               sparseAnimCurveBake=False)
-        maya.mel.eval(
-            "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
-        maya.mel.eval(
-            "FBXExportBakeComplexEnd -v {}".format(doodle_work_space.raneg.end))
-        maya.mel.eval("FBXExportBakeComplexAnimation -v true")
-        maya.mel.eval("FBXExportSmoothingGroups -v true")
-        maya.mel.eval("FBXExportConstraints -v true")
-        maya.mel.eval(
-            'FBXExport -f "{}" -s'.format(path.abspath()).replace("\\", "/"))
+        super(cloth_group_file,self).export_fbx("{}:*UE4".format(self.maya_name_space))
 
     def export_abc(self):
         # 选择物体
@@ -473,7 +482,7 @@ class cloth_group_file():
                     mash=abcexmashs)
         print(abcExportCom)
         pymel.core.mel.eval(abcExportCom)
-        
+
         abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
             .format(f0=str(path.abspath()).replace("\\", "/"),
                     f1=1000, f2=doodle_work_space.raneg.end,
@@ -486,17 +495,27 @@ class cloth_group_file():
             print("dgeval {}".format(str(obj.getShapes()[0].outputMesh)))
             pymel.core.system.dgeval(obj.getShapes()[0].outputMesh)
 
+class fbx_group_file(export_group):
+    def __init__(self, ref_obj):
+        # type:(references_file)->None
+        super().__init__(ref_obj)
+    def export_fbx(self):
+        return super().export_fbx("{}:*UE4".format(self.maya_name_space))
+
 
 class fbx_export():
     def __init__(self):
-        self.qcolth_group = []  # type: list[cloth_group_file]
+        self.ref = []  # type: list[references_file]
+        self.fbx_group = [] # type: list[fbx_group_file]
         for ref_obj in pymel.core.system.listReferences():
-            self.colth.append(references_file(ref_obj))
+            self.ref.append(references_file(ref_obj))
+        for ref_obj in self.ref:
+            self.fbx_group.append(fbx_group_file(ref_obj))
         self.cam = camera()
 
     def export_fbx_mesh(self):
         self.cam.export()
-        for obj in self.qcolth_group:
+        for obj in self.fbx_group:
             obj.export_fbx()
 
     def __call__(self):

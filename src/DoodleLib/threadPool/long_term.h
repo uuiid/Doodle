@@ -9,7 +9,7 @@ namespace doodle {
  * @brief 长时间任务时， 使用这个类进行通知；
  *
  */
-class DOODLELIB_API long_term {
+class DOODLELIB_API long_term : public details::no_copy {
   /**
    * @brief 其他线程运行结果（void 是闭包的包装， 只是用来确定完成结果的）
    *
@@ -42,7 +42,6 @@ class DOODLELIB_API long_term {
    * @brief 结果信号
    *
    */
-
   boost::signals2::signal<void(const std::string& message)> sig_message_result;
   /**
    * @brief 完成信号, 完成信号要在结果信息之后发出

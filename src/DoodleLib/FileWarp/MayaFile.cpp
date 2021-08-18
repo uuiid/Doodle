@@ -33,9 +33,30 @@ FSys::path MayaFile::createTmpFile(const std::string& in_resource_path) {
   return k_tmp_path;
 }
 
+void MayaFile::write_maya_tool_file() {
+  const static auto tmp_path = CoreSet::getSet().getCacheRoot(
+      fmt::format("maya/v{}{}{}",
+                  Doodle_VERSION_MAJOR,
+                  Doodle_VERSION_MINOR,
+                  Doodle_VERSION_PATCH));
+  auto k_tmp_path = tmp_path / "maya_fun_tool.py";
+  if (FSys::exists(k_tmp_path))
+    return;
+
+  auto k_file_py = cmrc::DoodleLibResource::get_filesystem().open("resource/maya_fun_tool.py");
+  {  //写入文件后直接关闭
+    FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
+    file.write(k_file_py.begin(), boost::numeric_cast<std::int64_t>(k_file_py.size()));
+  }
+}
+
 FSys::path MayaFile::warit_tmp_file(const std::string& in_string) {
-  const static auto tmp_path = CoreSet::getSet().getCacheRoot("maya");
-  auto k_tmp_path            = tmp_path / (boost::uuids::to_string(CoreSet::getSet().getUUID()) + ".py");
+  const static auto tmp_path = CoreSet::getSet().getCacheRoot(
+      fmt::format("maya/v{}{}{}",
+                  Doodle_VERSION_MAJOR,
+                  Doodle_VERSION_MINOR,
+                  Doodle_VERSION_PATCH));
+  auto k_tmp_path = tmp_path / (boost::uuids::to_string(CoreSet::getSet().getUUID()) + ".py");
   {  //写入文件后直接关闭
     FSys::fstream file{k_tmp_path, std::ios::out};
     file << in_string;
@@ -78,6 +99,19 @@ bool MayaFile::run_comm(const std::wstring& in_com) const {
     p_term->sig_message_result("导出失败");
     return false;
   }
+
+  // boost::process::ipstream k_in{};
+  // boost::process::child k_c{str.str(), boost::process::windows::hide};
+  // boost::process::child k_c{boost::process::cmd = str.str(), boost::process::std_out > k_in, boost::process::windows::hide};
+
+  // auto str_r = std::string{};
+  // while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
+  //   // std::cout << str_r << std::endl;
+  //   DOODLE_LOG_INFO(str_r);
+  // }
+  // k_c.wait();
+
+
   WaitForSingleObject(pi.hProcess, INFINITE);
   CloseHandle(pi.hProcess);
   CloseHandle(pi.hThread);
@@ -112,17 +146,7 @@ bool MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& expo
   DOODLE_LOG_INFO(fmt::format(" {} ", boost::locale::conv::utf_to_utf<char>(str_)))
 
   run_comm(str_);
-  // boost::process::ipstream k_in{};
-  // boost::process::system(str.str());
-  // boost::process::child k_c{str.str(), boost::process::windows::hide};
-  // boost::process::child k_c{boost::process::cmd = str.str(), boost::process::std_out > k_in, boost::process::windows::hide};
 
-  // auto str_r = std::string{};
-  // while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
-  //   // std::cout << str_r << std::endl;
-  //   DOODLE_LOG_INFO(str_r);
-  // }
-  // k_c.wait();
   p_term->sig_progress(0.9);
   FSys::remove(k_tmp_path);
   FSys::copy_file(file_path, k_export_path / file_path.filename(), FSys::copy_options::overwrite_existing);
@@ -191,13 +215,8 @@ bool MayaFile::qcloth_sim_file(const FSys::path& file_path) const {
     return false;
   }
   // 写入文件
-  const static auto k_tmp_path = CoreSet::getSet().getCacheRoot("maya") / "maya_fun_tool.py";
-  auto k_file_py               = cmrc::DoodleLibResource::get_filesystem().open("resource/maya_fun_tool.py");
+  write_maya_tool_file();
 
-  {  //写入文件后直接关闭
-    FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
-    file.write(k_file_py.begin(), boost::numeric_cast<std::int64_t>(k_file_py.size()));
-  }
   auto str_script = fmt::format(
       "import maya.standalone\n"
       "maya.standalone.initialize(name='python')\n"

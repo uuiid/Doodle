@@ -9,10 +9,12 @@ class DOODLELIB_API MayaFile : public details::no_copy {
   long_term_ptr p_term;
 
   [[nodiscard]] static FSys::path createTmpFile(const std::string& in_resource_path);
+  static void write_maya_tool_file();
   [[nodiscard]] static FSys::path warit_tmp_file(const std::string& in_string);
   bool checkFile();
   bool run_comm(const std::wstring& in_com) const;
 
+  
  public:
   explicit MayaFile(FSys::path mayaPath = {});
   [[nodiscard]] long_term_ptr get_term() const;
