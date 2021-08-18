@@ -136,7 +136,7 @@ class camera:
                 # offScreen=True,
                 # editorPanelName="modelPanel1",
                 format="qt",
-                widthHeight=(1920,1280)
+                widthHeight=(1920, 1280)
             )
         except RuntimeError:
             pymel.core.system.warning("QuickTime not found, use default value")
@@ -153,7 +153,7 @@ class camera:
                 ),
                 percent=100,
                 quality=100,
-                widthHeight=(1920,1280)
+                widthHeight=(1920, 1280)
                 # editorPanelName="modelPanel4"
                 # offScreen=True
             )
@@ -363,8 +363,11 @@ class references_file():
                 "rig", "cloth")
 
     def replace_file(self):
+        # type:()->bool
         if(self.cloth_path.exists()):
             self.maya_ref.replaceWith(self.cloth_path)
+            return True
+        return False
 
 
 class export_group(object):
@@ -559,8 +562,8 @@ class cloth_export():
 
     def replace_file(self):
         for obj in self.colth:
-            obj.replace_file()
-            self.qcolth_group.append(cloth_group_file(obj))
+            if obj.replace_file():
+                self.qcolth_group.append(cloth_group_file(obj))
 
     def set_qcloth_attr(self):
         for obj in self.qcolth_group:
