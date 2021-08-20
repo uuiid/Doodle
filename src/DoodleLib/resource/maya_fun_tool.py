@@ -286,14 +286,14 @@ class meateral():
         self.shader = None
         grp = self.maya_obj.shadingGroups()
         if grp:
-            self.shader_group = self.maya_obj.shadingGroups()[0]
+            self.shader_group = grp[0]
             self.shader = self.shader_group.name()
 
     def chick(self):
         self.reName()
 
     def reName(self):
-        if self.maya_obj and self.shader_group:
+        if self.maya_obj and self.shader_group and not re.search("Mat$", self.name):
             self.maya_obj.rename("{}Mat".format(self.name))
             self.shader_group.rename(self.name)
             print("rename to {} ".format(self.name))
@@ -314,6 +314,14 @@ class meateral():
             if poly.__class__.__name__ == "Mesh":
                 pymel.core.sets(self.shader_group, remove=poly, edit=True)
                 pymel.core.sets(self.shader_group, add=poly.faces, edit=True)
+
+    def __eq__(self, o):
+        # type : (meateral)->bool
+        return o.shader_group == self.shader_group
+
+    def __hash__(self):
+        # type : ()->int
+        return self.shader_group.__hash__
 
 
 class uvmap():
@@ -506,9 +514,21 @@ class cloth_group_file(export_group):
         if not self.maya_abc_export:
             return
 
+        # 先找到的所有集合体
+        # geo_group = []  # type: list[geometryInfo]
         for obj in self.maya_abc_export:
             k_geo = geometryInfo(obj)
             k_geo.repair()
+            # geo_group.append(geometryInfo(obj))
+
+        # mat_group = []  # type: list[meateral]
+        # mat_node_set = set()
+        # for geo in geo_group:  # 获得所有几何体中的mat
+        #     for mat in geo.materals:  # 获得mat 中的mat maya node 然后插入集合去重
+        #         mat_node_set.add(mat.maya_obj)
+        # for mat in mat_node_set:  # 去重后的集合体重命名
+        #     meateral(mat).reName()
+
         export_abc = None  # type: pymel.core.nodetypes.Transform
         if len(self.maya_abc_export) > 1:
             export_abc = pymel.core.polyUnite(self.maya_abc_export)[0]
