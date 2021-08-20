@@ -75,6 +75,9 @@ bool UDoodleAssCreateCommandlet::parse_import_setting(const FString& in_import_s
             k_setting->FactoryName = "AlembicImportFactory";
             k_setting->Initialize(nullptr);
             auto k_abc_stting = UAbcImportSettings::Get();
+
+            auto k_assetImportTask = NewObject<UAssetImportTask>(this);
+            k_setting->Factory->AssetImportTask = k_assetImportTask;
             k_abc_stting->ImportType = EAlembicImportType::GeometryCache;//导入为几何缓存
             k_abc_stting->MaterialSettings.bCreateMaterials = false; //不创建材质
             k_abc_stting->MaterialSettings.bFindMaterials = true;//寻找材质
@@ -82,11 +85,17 @@ bool UDoodleAssCreateCommandlet::parse_import_setting(const FString& in_import_s
             k_abc_stting->GeometryCacheSettings.bFlattenTracks = true;//合并轨道
             k_abc_stting->SamplingSettings.bSkipEmpty = true;// 跳过空白帧
             k_abc_stting->SamplingSettings.FrameStart = 1000;//开始帧
+            k_abc_stting->SamplingSettings.FrameEnd = 1200;//开始帧
             k_abc_stting->SamplingSettings.FrameSteps = 1;//帧步数
-            k_setting->Factory->AssetImportTask->Options = k_abc_stting;
+            k_assetImportTask->bAutomated = true;
+            k_assetImportTask->bReplaceExisting = true;
+            k_assetImportTask->bSave = true;
+            k_assetImportTask->Options = k_abc_stting;
+
+            ImportDataList.Add(k_setting);
             break;
         }
-        case UDoodleAssetImportData::import_file_type::Fbx: 
+        case UDoodleAssetImportData::import_file_type::Fbx:
         {
 
             k_setting->FactoryName = "FbxFactory";
@@ -95,7 +104,7 @@ bool UDoodleAssCreateCommandlet::parse_import_setting(const FString& in_import_s
             auto k_fbx_f = Cast<UFbxFactory>(k_setting->Factory);
             if (k_fbx_f) {
             }
-            break; 
+            break;
         }
         case UDoodleAssetImportData::import_file_type::None:
         {
