@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
 //using System.IO;
@@ -46,7 +46,7 @@ public class doodleEditor : ModuleRules
                 "EditorStyle",
                 "Eigen",
                 "RenderCore",
-                "RHI"
+                "RHI",
 
             }
             );
@@ -74,11 +74,13 @@ public class doodleEditor : ModuleRules
 
                 "DesktopPlatform",//桌面依赖  打开文件对话框的依赖
 				"RenderCore",
-				////abc批量导入需要
-                //"AlembicLibrary",
+                "AlembicLibrary",//abc批量导入需要
 				"AIModule",//这个是ai控制使用的
                 "PlacementMode",//这个是创建面板用的
-                "AssetRegistry"//资源注册表模块
+                "AssetRegistry",//资源注册表模块
+                "JsonUtilities",// 批量导入需要读取json
+                "Json",// 批量导入需要读取json
+                "SourceControl"//源代码管理
             }
             );
 

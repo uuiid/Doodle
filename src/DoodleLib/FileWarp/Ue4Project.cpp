@@ -64,7 +64,7 @@ void Ue4Project::runPythonScript(const FSys::path& python_file) const {
   if (!FSys::exists(k_ue4_cmd))
     throw DoodleError{"找不到ue运行文件"};
 
-  auto k_comm = fmt::format(R"({} {} -ExecutePythonScript={})",
+  auto k_comm = fmt::format(R"({} {} -ExecutePythonScript={} -AllowCommandletRendering)",
                             k_ue4_cmd,          // ue路径
                             p_ue_Project_path,  //项目路径
                                                 //      % "pythonscript"                      //运行ue命令名称
