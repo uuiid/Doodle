@@ -38,8 +38,8 @@ bool UDoodleAssCreateCommandlet::parse_params(const FString& in_params)
     TMap<FString, FString> ParamsMap;
     ParseCommandLine(ParamStr, CmdLineTokens, CmdLineSwitches, ParamsMap);
     import_setting_path = ParamsMap.FindRef("path");
-    UE_LOG(LogTemp, Log, TEXT("导入设置路径 %s") ,
-        import_setting_path.IsEmpty() ? (*import_setting_path):TEXT("空"));
+    UE_LOG(LogTemp, Log, TEXT("导入设置路径 %s"),
+        import_setting_path.IsEmpty() ? (*import_setting_path) : TEXT("空"));
 
     return !import_setting_path.IsEmpty();
 }
@@ -51,10 +51,23 @@ bool UDoodleAssCreateCommandlet::parse_import_setting(const FString& in_import_s
         TSharedPtr<FJsonObject> k_root;
         if (FJsonSerializer::Deserialize(k_json_r, k_root) && k_root.IsValid()) {
             UE_LOG(LogTemp, Log, TEXT("开始读取json配置文件"));
-            auto  import_setting = NewObject<UDoodleAssetImportData>(this);
-            import_setting->initialize(k_root);
-            if (import_setting->is_valid())
-                import_setting_list.Add(import_setting);
+            auto k_group = k_root->TryGetField("groups");
+            if (k_group)
+            {
+                for (auto& i : k_group->AsArray()) {
+                    auto  import_setting = NewObject<UDoodleAssetImportData>(this);
+                    import_setting->initialize(i->AsObject());
+                    if (import_setting->is_valid())
+                        import_setting_list.Add(import_setting);
+                }
+            }
+            else
+            {
+                auto  import_setting = NewObject<UDoodleAssetImportData>(this);
+                import_setting->initialize(k_root);
+                if (import_setting->is_valid())
+                    import_setting_list.Add(import_setting);
+            }
         }
     }
 
@@ -113,7 +126,7 @@ bool UDoodleAssCreateCommandlet::parse_import_setting(const FString& in_import_s
                 UE_LOG(LogTemp, Log, TEXT("找到骨骼名称，开始尝试加载 %s"), *k_fbx_name);
                 USkeleton* skinObj = LoadObject<USkeleton>(
                     USkeleton::StaticClass(),
-                    *k_fbx_name, 
+                    *k_fbx_name,
                     nullptr,
                     LOAD_ResolvingDeferredExports);
                 if (skinObj) {
