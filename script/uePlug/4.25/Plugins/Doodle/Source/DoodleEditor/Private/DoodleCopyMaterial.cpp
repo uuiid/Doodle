@@ -306,7 +306,7 @@ FReply DoodleCopyMat::BathImport()
 				nullptr,
 				TEXT("/Game/shot_ep001_sc0009_Anm_fbx_v0001__miaoyu__Ch003A0_Skeleton.shot_ep001_sc0009_Anm_fbx_v0001__miaoyu__Ch003A0_Skeleton"),
 				nullptr,
-				LOAD_None);
+				LOAD_ResolvingDeferredExports);
 			// auto skinMeshObj = LoadObject<USkeletalMesh>(
 			// 	nullptr,
 			// 	TEXT("/Game/shot_ep001_sc0009_Anm_fbx_v0001__miaoyu__Ch003A0.shot_ep001_sc0009_Anm_fbx_v0001__miaoyu__Ch003A0"));

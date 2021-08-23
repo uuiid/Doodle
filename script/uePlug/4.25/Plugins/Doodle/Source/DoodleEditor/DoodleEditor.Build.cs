@@ -34,7 +34,6 @@ public class doodleEditor : ModuleRules
                 "UnrealEd",
 
                 "Engine",//几何缓存的骨骼依赖
-                "UnrealEd", //创建actor工厂类需要
                 // ... add other public dependencies that you statically link with here ...
                 //abc的包装需要
                 "AlembicLib",

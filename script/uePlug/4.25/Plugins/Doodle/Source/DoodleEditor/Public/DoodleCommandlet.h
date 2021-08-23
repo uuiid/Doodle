@@ -2,11 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "Commandlets/Commandlet.h"
+#include "DoodleAssetImportData.h"
 
 #include "DoodleCommandlet.generated.h"
 
 class UFactory;
 class FJsonObject;
+class UFbxFactory;
+
 namespace {
     class Episodes {
     public:
@@ -23,37 +26,6 @@ namespace {
         TOptional<FString> shot_ab;
     };
 }
-
-
-
-UCLASS()
-class DOODLEEDITOR_API UDoodleAssetImportData : public UObject
-{
-    GENERATED_BODY()
-public:
-    enum class import_file_type : uint8 {
-        None,
-        Abc,
-        Fbx
-    };
-
-    bool is_valid() const;
-
-    void initialize(TSharedPtr<FJsonObject> InImportGroupJsonData);
-public:
-    /* 导入文件的路径(文件名称) */
-    FString import_file_path;
-    /* 保存文件的路径(目录) */
-    FString import_file_save_dir;
-    /* 导入文件时的json 数据 */
-    TSharedPtr<FJsonObject> ImportGroupJsonData;
-
-    import_file_type import_type;
-
-};
-
-
-
 
 UCLASS()
 class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet
@@ -83,6 +55,8 @@ private:
 private:
     bool parse_params(const FString& in_params);
     bool parse_import_setting(const FString& in_import_setting_file);
+    void setting_import_fbx_is_skobj(UFbxFactory* k_fbx_f);
+
     bool import_and_save(const TArray<UAutomatedAssetImportData*>& assets_import_list);
     void ClearDirtyPackages();
     //static bool SavePackage(UPackage* Package, const FString& PackageFilename)
