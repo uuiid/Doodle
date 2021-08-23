@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 
 project(Doodle
-        VERSION 3.0.1.8
+        VERSION 3.0.3.8
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -146,7 +146,7 @@ set(DOXYGEN_EXCLUDE_PATTERNS
         */venv
         */MAYA)
 set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
-set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build/html)
+set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
 # set(DOXYGEN_DISABLE_INDEX YES)
 set(DOXYGEN_GENERATE_TREEVIEW YES)
 # set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 0)
