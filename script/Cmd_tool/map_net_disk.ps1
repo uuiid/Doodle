@@ -44,10 +44,19 @@ for ($i = 0; $i -lt ($Net_List.Count()); ++$i) {
 
 $My_Str = "映射完成: `n"
 foreach ($nets in $Net_MAPS) {
-    if (Test-Path $nets[1]) {
-        $My_Str += ($nets[0] + " 映射到: " + $nets[2] + "`n")
-        $Net.MapNetworkDrive($nets[0], $nets[1])
-        $rename.NameSpace($nets[0] + "\").Self.Name = $nets[2]
+    try {
+        Get-Childitem -Path $nets[1] -ErrorAction Stop
+        if (Test-Path $nets[1]) {
+            $My_Str += ($nets[0] + " 映射到: " + $nets[2] + "`n")
+            $Net.MapNetworkDrive($nets[0], $nets[1])
+            $rename.NameSpace($nets[0] + "\").Self.Name = $nets[2]
+        }
+    }
+    catch [System.Management.Automation.ActionPreferenceStopException]{
+        Write-Host "目录" $nets[1] "没有访问权限， 取消映射"
+    }
+    catch{
+        Write-Host "catch all 目录" $nets[1] "没有访问权限， 取消映射"
     }
 }
 $My_Str += "`n`n即将重启文件管理器"
@@ -55,3 +64,10 @@ Write-Host $My_Str
 
 Start-Process explorer
 # ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_net_disk.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\run2.exe -noConsole
+# try {
+#     Get-Childitem -Path \\192.168.10.218\zhipian -ErrorAction Stop
+# }
+# catch [System.UnauthorizedAccessException]{
+#     Write-Host "not file"
+# }
+# Get-Childitem -Path \\192.168.10.218\houqi 
