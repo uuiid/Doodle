@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -28,18 +28,18 @@ public:
 
     void initialize(TSharedPtr<FJsonObject> InImportGroupJsonData);
 public:
-    /* µ¼ÈëÎÄ¼şµÄÂ·¾¶(ÎÄ¼şÃû³Æ) */
+    /* å¯¼å…¥æ–‡ä»¶çš„è·¯å¾„(æ–‡ä»¶åç§°) */
     FString import_file_path;
-    /* ±£´æÎÄ¼şµÄÂ·¾¶(Ä¿Â¼) */
+    /* ä¿å­˜æ–‡ä»¶çš„è·¯å¾„(ç›®å½•) */
     FString import_file_save_dir;
 
-    /* µ¼ÈëÎÄ¼şÊ±fbx skeleton ËùÔÚÎÄ¼ş¼Ğ*/
+    /* å¯¼å…¥æ–‡ä»¶æ—¶fbx skeleton æ‰€åœ¨æ–‡ä»¶å¤¹*/
     FString fbx_skeleton_dir;
-    /* µ¼ÈëÎÄ¼şÊ±fbx skeleton ÎÄ¼şÃû³Æ */
+    /* å¯¼å…¥æ–‡ä»¶æ—¶fbx skeleton æ–‡ä»¶åç§° */
     FString fbx_skeleton_file_name;
 
 
-    /* µ¼ÈëÎÄ¼şÊ±µÄjson Êı¾İ */
+    /* å¯¼å…¥æ–‡ä»¶æ—¶çš„json æ•°æ® */
     TSharedPtr<FJsonObject> ImportGroupJsonData;
 
     import_file_type import_type;
