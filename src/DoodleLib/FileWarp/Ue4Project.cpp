@@ -5,6 +5,7 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/Ue4Setting.h>
+#include <DoodleLib/core/filesystem_extend.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <DoodleLib/threadPool/long_term.h>
 
@@ -47,6 +48,21 @@ void Ue4Project::addUe4ProjectPlugins(const std::vector<std::string>& in_strs) c
   k_ofile << root;
 }
 
+void Ue4Project::run_cmd_scipt(const std::string& run_com) const {
+  auto k_ue4_cmd = p_ue_path / UE4PATH;
+  if (!FSys::exists(k_ue4_cmd))
+    throw DoodleError{"找不到ue运行文件"};
+
+  auto k_comm = fmt::format(R"({} {} {})",
+                            k_ue4_cmd,          // ue路径
+                            p_ue_Project_path,  //项目路径
+                            run_com);           // 其后的运行命令
+
+  DOODLE_LOG_INFO(k_comm)
+  boost::process::child k_c{k_comm};
+  k_c.wait();
+}
+
 void Ue4Project::runPythonScript(const std::string& python_str) const {
   auto tmp_name = boost::uuids::to_string(CoreSet::getSet().getUUID()) + ".py";
   auto tmp_file = CoreSet::getSet().getCacheRoot() / tmp_name;
@@ -60,19 +76,46 @@ void Ue4Project::runPythonScript(const std::string& python_str) const {
 }
 
 void Ue4Project::runPythonScript(const FSys::path& python_file) const {
-  auto k_ue4_cmd = p_ue_path / UE4PATH;
-  if (!FSys::exists(k_ue4_cmd))
-    throw DoodleError{"找不到ue运行文件"};
+  run_cmd_scipt(fmt::format("-ExecutePythonScript={}", python_file));
+}
 
-  auto k_comm = fmt::format(R"({} {} -ExecutePythonScript={} -AllowCommandletRendering)",
-                            k_ue4_cmd,          // ue路径
-                            p_ue_Project_path,  //项目路径
-                                                //      % "pythonscript"                      //运行ue命令名称
-                            python_file);       // python脚本路径
+FSys::path Ue4Project::convert_path_to_game(const FSys::path& in_path) const {
+  auto k_con = p_ue_Project_path.parent_path() / Content;
+  FSys::path k_game_path{"/Game/"};
+  k_game_path /= k_con.lexically_relative(in_path).parent_path();
+  k_game_path /= in_path.stem();
+  return k_game_path;
+}
 
-  DOODLE_LOG_INFO(k_comm)
-  boost::process::child k_c{k_comm};
-  k_c.wait();
+FSys::path Ue4Project::find_ue4_skeleton(const FSys::path& in_path) {
+  static std::regex reg{R"(_(Ch\d+[a-zA-Z])\d?[\._])"};
+  std::smatch k_match{};
+  auto str      = in_path.generic_string();
+  auto k_ch_dir = p_ue_Project_path.parent_path() / Content / Character;
+
+  FSys::path k_r{};
+
+  if (std::regex_search(str, k_match, reg)) {
+    auto k_ch    = k_match[1].str();
+    auto k_sk_ch = fmt::format("SK_{}_Skeleton", k_ch);
+    auto k_it    = std::find_if(
+        FSys::recursive_directory_iterator{k_ch_dir},
+        FSys::recursive_directory_iterator{},
+        [k_sk_ch](const FSys::directory_entry& in_path) {
+          auto k_p = in_path.path().stem().generic_string();
+          // std::transform(k_p.begin(), k_p.end(), k_p.begin(), [](unsigned char c) { return std::tolower(c); });
+          return in_path.path().stem() == k_sk_ch;
+        });
+    if (k_it != FSys::recursive_directory_iterator{}) {
+      k_r = k_it->path();
+    }
+  }
+
+  if (!k_r.empty()) {
+    k_r = convert_path_to_game(k_r);
+  }
+
+  return k_r;
 }
 
 void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
@@ -164,13 +207,55 @@ long_term_ptr Ue4Project::create_shot_folder_asyn(const std::vector<ShotPtr>& in
       });
   return p_term;
 }
+
+long_term_ptr Ue4Project::import_files_asyn(const std::vector<FSys::path>& in_paths) {
+  this->addUe4ProjectPlugins({"doodle"});
+  nlohmann::json k_root{};
+  std::vector<import_settting> k_list;
+  for (const auto& i : in_paths) {
+    auto&& k_stting               = k_list.emplace_back(import_settting{});
+    k_stting.import_file_path     = i;
+    k_stting.import_file_save_dir = analysis_path_to_gamepath(i);
+    if (i.extension() == ".fbx") {
+      k_stting.import_type            = import_type::Fbx;
+      k_stting.fbx_skeleton_file_name = find_ue4_skeleton(i);
+    } else if (i.extension() == ".abc") {
+      k_stting.import_type = import_type::Abc;
+      auto [k_s, k_end]    = FSys::find_path_frame(i);
+      k_stting.end_frame   = k_end;
+      k_stting.start_frame = k_s;
+    }
+  }
+  k_root["groups"] == k_list;
+  auto path = FSys::write_tmp_file("UE4", k_root.dump(), ".json");
+  run_cmd_scipt(fmt::format("-run=DoodleAssCreate -path={}", path));
+}
+
 bool Ue4Project::can_import_ue4(const FSys::path& in_path) {
   auto k_e = in_path.extension();
   return k_e == ".fbx" || k_e == ".abc";
 }
+
 bool Ue4Project::is_ue4_file(const FSys::path& in_path) {
   auto k_e = in_path.extension();
   return k_e == ".uproject";
+}
+
+FSys::path Ue4Project::analysis_path_to_gamepath(const FSys::path& in_path) {
+  std::stringstream k_str{};
+
+  // auto k_p = DoodleLib::Get().p_project_vector;
+  if (auto k_ = Episodes::analysis_static(in_path); k_)
+    k_str << k_->str();
+  if (auto k_ = Shot::analysis_static(in_path); k_) {
+    k_str << "_" << k_->str();
+  }
+
+  auto k_Dir = FSys::path{"/Game"} / ContentShot;
+  if (!k_str.tellp()) {
+    k_Dir /= k_str.str();
+  }
+  return k_Dir;
 }
 
 }  // namespace doodle

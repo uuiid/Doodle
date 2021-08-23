@@ -42,11 +42,15 @@ class DOODLELIB_API Shot : public Metadata {
   bool operator<=(const Shot &rhs) const;
   bool operator>=(const Shot &rhs) const;
 
-  inline void analysis(const FSys::path &in_path) {
+  inline bool analysis(const FSys::path &in_path) {
     return analysis(in_path.generic_string());
   };
-  void analysis(const std::string &in_path);
+  bool analysis(const std::string &in_path);
 
+  static ShotPtr analysis_static(const std::string &in_path);
+  inline static ShotPtr analysis_static(const FSys::path &in_path) {
+    return analysis_static(in_path.generic_string());
+  };
 
  private:
   friend class cereal::access;

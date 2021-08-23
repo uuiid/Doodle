@@ -54,6 +54,7 @@
 #include <DoodleLib/core/ToolsSetting.h>
 #include <DoodleLib/core/Ue4Setting.h>
 #include <DoodleLib/core/Util.h>
+#include <DoodleLib/core/filesystem_extend.h>
 #include <DoodleLib/core/observable_container.h>
 #include <DoodleLib/core/static_value.h>
 #include <DoodleLib/core/tree_container.h>

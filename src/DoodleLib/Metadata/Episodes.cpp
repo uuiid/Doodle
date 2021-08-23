@@ -54,14 +54,23 @@ bool Episodes::operator>=(const Episodes& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-void Episodes::analysis(const std::string& in_path) {
+bool Episodes::analysis(const std::string& in_path) {
   static std::regex reg{R"(ep_?(\d+))", std::regex_constants::icase};
   std::smatch k_match{};
   if (std::regex_search(in_path, k_match, reg)) {
     p_episodes = std::stoi(k_match[1].str());
+  } else {
+    return false;
   }
 }
 
+EpisodesPtr Episodes::analysis_static(const std::string& in_path) {
+  auto k_eps = std::make_shared<Episodes>();
+  if (k_eps->analysis(in_path))
+    return k_eps;
+  else
+    return {};
+}
 
 void Episodes::create_menu(const menu_factory_ptr& in_factoryPtr) {
   in_factoryPtr->create_menu(std::dynamic_pointer_cast<Episodes>(shared_from_this()));

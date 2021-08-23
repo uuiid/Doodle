@@ -498,7 +498,7 @@ class cloth_group_file(export_group):
         path = doodle_work_space.work.getPath() / "abc"  # type: pymel.core.Path
         name = "{}_{}_{}-{}.abc".format(doodle_work_space.maya_file.name_not_ex,
                                         self.maya_name_space,
-                                        doodle_work_space.raneg.start,
+                                        1000,
                                         doodle_work_space.raneg.end)
         path.mkdir_p()
         path = path / name

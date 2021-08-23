@@ -4,6 +4,7 @@
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <DoodleLib/threadPool/long_term.h>
+#include <DoodleLib/core/filesystem_extend.h>
 #include <Logger/Logger.h>
 
 #include <boost/locale.hpp>
@@ -49,7 +50,7 @@ FSys::path MayaFile::warit_tmp_file(const std::string& in_string) {
     FSys::fstream file{k_tmp_path, std::ios::out};
     file << in_string;
   }
-  return k_tmp_path;
+  return FSys::write_tmp_file("maya",in_string,".py");
 }
 
 bool MayaFile::checkFile() {

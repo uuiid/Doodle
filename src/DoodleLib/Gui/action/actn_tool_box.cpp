@@ -163,6 +163,30 @@ long_term_ptr actn_qcloth_sim_export::run() {
   p_term->forward_sig(k_list);
   return p_term;
 }
+
+actn_ue4_import_files::actn_ue4_import_files() {
+  p_name = "批量导入ue4文件";
+  p_term = std::make_shared<long_term>();
+}
+
+bool actn_ue4_import_files::is_async() {
+  return true;
+}
+
+long_term_ptr actn_ue4_import_files::run() {
+  p_date = sig_get_arg().value();
+  if (p_date.is_cancel) {
+    cancel("取消");
+  }
+
+  p_ue = std::make_shared<Ue4Project>(p_date.ue4_project);
+  std::vector<FSys::path> k_list;
+  std::copy_if(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
+               [this](const FSys::path& in_path) { return p_ue->can_import_ue4(in_path); });
+
+  p_term = p_ue->import_files_asyn(k_list);
+  return p_term;
+}
 }  // namespace toolbox
 
 }  // namespace doodle

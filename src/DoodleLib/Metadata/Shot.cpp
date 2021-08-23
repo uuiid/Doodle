@@ -72,14 +72,24 @@ bool Shot::operator>=(const Shot& rhs) const {
   return !(*this < rhs);
 }
 
-void Shot::analysis(const std::string& in_path) {
+bool Shot::analysis(const std::string& in_path) {
   static std::regex reg{R"(sc_?(\d+)([a-z])?)", std::regex_constants::icase};
   std::smatch k_match{};
   if (std::regex_search(in_path, k_match, reg)) {
     p_shot = std::stoi(k_match[1].str());
     if (k_match.size() > 2)
       p_shot_ab = k_match[2].str();
+  } else {
+    return false;
   }
+}
+
+ShotPtr Shot::analysis_static(const std::string& in_path) {
+  auto k_shot = std::make_shared<Shot>();
+  if (k_shot->analysis(in_path))
+    return k_shot;
+  else
+    return {};
 }
 
 void Shot::create_menu(const menu_factory_ptr& in_factoryPtr) {

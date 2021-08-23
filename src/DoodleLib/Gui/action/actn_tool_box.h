@@ -23,6 +23,12 @@ class DOODLELIB_API arg_tool_box_sim_qcloth : public arg_paths {
   FSys::path qcloth_assets_path;
 };
 
+class DOODLELIB_API arg_tool_box_ue4_import : public arg_paths {
+ public:
+  arg_tool_box_ue4_import();
+  FSys::path ue4_project;
+};
+
 }  // namespace action_arg
 namespace toolbox {
 /**
@@ -156,6 +162,28 @@ class DOODLELIB_API actn_qcloth_sim_export
  protected:
   long_term_ptr run() override;
 };
+/**
+ * @brief 导入ue4 文件动作
+ * 
+ * 
+ * 导入ue4文件
+ * 可以导入fbx和abc
+ * @li abc 导入为集合缓存
+ * @li fbx 在可以找到skeleton 的时候导入为动画， 否则导入为骨骼网格体和动画
+ * @li 导入时必须安装doodle 插件
+ * 
+ */
+class DOODLELIB_API actn_ue4_import_files
+    : public action_toolbox<action_arg::arg_tool_box_ue4_import> {
+  ue4_project_ptr p_ue;
 
+ public:
+  actn_ue4_import_files();
+  bool is_async() override;
+  using arg = action_arg::arg_tool_box_ue4_import;
+
+ protected:
+  long_term_ptr run() override;
+};
 }  // namespace toolbox
 }  // namespace doodle

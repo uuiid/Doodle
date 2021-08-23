@@ -14,6 +14,9 @@ file(
         RELATIVE ${CMAKE_CURRENT_LIST_DIR}
         *.cpp
 )
+# 排除resource目录中的文件
+list(FILTER DOODLELIB_HEADER EXCLUDE REGEX "^resource/")
+
 # 连接头文件的字符串
 set(LIBCMAKE "set(\n    DOODLELIB_HEADER\n    ")
 list(JOIN DOODLELIB_HEADER "\n    " LIBCMAKE_H)

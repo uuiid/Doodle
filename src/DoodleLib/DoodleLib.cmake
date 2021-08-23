@@ -53,6 +53,7 @@ set(
     core/ToolsSetting.h
     core/Ue4Setting.h
     core/Util.h
+    core/filesystem_extend.h
     core/observable_container.h
     core/static_value.h
     core/tree_container.h
@@ -126,6 +127,7 @@ set(
     core/DoodleLib.cpp
     core/Ue4Setting.cpp
     core/Util.cpp
+    core/filesystem_extend.cpp
     core/static_value.cpp
     core/tree_container.cpp
     libWarp/nana_warp.cpp
