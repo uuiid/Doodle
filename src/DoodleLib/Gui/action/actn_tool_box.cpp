@@ -24,6 +24,11 @@ arg_tool_box_sim_qcloth::arg_tool_box_sim_qcloth()
     : arg_paths(),
       qcloth_assets_path() {
 }
+
+arg_tool_box_ue4_import::arg_tool_box_ue4_import()
+    : arg_paths(),
+      ue4_project() {
+}
 }  // namespace action_arg
 namespace toolbox {
 
@@ -166,7 +171,6 @@ long_term_ptr actn_qcloth_sim_export::run() {
 
 actn_ue4_import_files::actn_ue4_import_files() {
   p_name = "批量导入ue4文件";
-  p_term = std::make_shared<long_term>();
 }
 
 bool actn_ue4_import_files::is_async() {
@@ -177,6 +181,7 @@ long_term_ptr actn_ue4_import_files::run() {
   p_date = sig_get_arg().value();
   if (p_date.is_cancel) {
     cancel("取消");
+    return {};
   }
 
   p_ue = std::make_shared<Ue4Project>(p_date.ue4_project);

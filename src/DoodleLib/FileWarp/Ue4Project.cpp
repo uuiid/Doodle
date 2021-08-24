@@ -25,14 +25,18 @@ Ue4Project::Ue4Project(FSys::path project_path)
     : p_ue_path(),
       p_ue_Project_path(std::move(project_path)),
       p_term(std::make_shared<long_term>()),
-      p_futre() {
+      p_futurn_list() {
   auto& ue  = Ue4Setting::Get();
   p_ue_path = ue.Path();
 }
 
 Ue4Project::~Ue4Project() {
-  for (auto& f : p_futre) {
-    f.get();
+  for (auto& rus : p_futurn_list) {
+    try {
+      rus.get();
+    } catch (DoodleError& error) {
+      DOODLE_LOG_WARN(error.what());
+    }
   }
 }
 
@@ -88,9 +92,10 @@ void Ue4Project::runPythonScript(const FSys::path& python_file) const {
 
 FSys::path Ue4Project::convert_path_to_game(const FSys::path& in_path) const {
   auto k_con = p_ue_Project_path.parent_path() / Content;
-  FSys::path k_game_path{"/Game/"};
-  k_game_path /= k_con.lexically_relative(in_path).parent_path();
+  FSys::path k_game_path{"/Game"};
+  k_game_path /= in_path.lexically_relative(k_con).parent_path();
   k_game_path /= in_path.stem();
+  DOODLE_LOG_INFO("转换路径 {} --> {}", in_path, k_game_path);
   return k_game_path;
 }
 
@@ -115,6 +120,7 @@ FSys::path Ue4Project::find_ue4_skeleton(const FSys::path& in_path) {
         });
     if (k_it != FSys::recursive_directory_iterator{}) {
       k_r = k_it->path();
+      DOODLE_LOG_INFO("寻找到sk {}", k_r);
     }
   }
 
@@ -212,7 +218,7 @@ long_term_ptr Ue4Project::create_shot_folder_asyn(const std::vector<ShotPtr>& in
       [this, inShotList]() {
         this->createShotFolder(inShotList);
       });
-  p_futre.emplace_back(std::move(k_f));
+  p_futurn_list.emplace_back(std::move(k_f));
   return p_term;
 }
 
@@ -220,12 +226,11 @@ long_term_ptr Ue4Project::import_files_asyn(const std::vector<FSys::path>& in_pa
   this->addUe4ProjectPlugins({"doodle"});
   auto k_term = std::make_shared<long_term>();
   auto k_fun  = [this, in_paths, k_term]() {
-    k_term->sig_progress(0.1);
     nlohmann::json k_root{};
     std::vector<import_settting> k_list;
     const std::size_t k_num = in_paths.size();
     for (const auto& i : in_paths) {
-      auto&& k_stting               = k_list.emplace_back(import_settting{});
+      auto& k_stting                = k_list.emplace_back(import_settting{});
       k_stting.import_file_path     = i;
       k_stting.import_file_save_dir = analysis_path_to_gamepath(i);
       if (i.extension() == ".fbx") {
@@ -239,11 +244,14 @@ long_term_ptr Ue4Project::import_files_asyn(const std::vector<FSys::path>& in_pa
       }
       k_term->sig_progress(1 / (k_num * 2));
     }
-    k_root["groups"] == k_list;
-    auto path = FSys::write_tmp_file("UE4", k_root.dump(), ".json");
-    k_term->sig_progress(0.5);
+    k_root["groups"] = k_list;
+    auto path        = FSys::write_tmp_file("UE4", k_root.dump(), ".json");
     run_cmd_scipt(fmt::format("-run=DoodleAssCreate -path={}", path));
+    k_term->sig_progress(0.5);
+    k_term->sig_finished();
+    k_term->sig_message_result(fmt::format("项目 {} 完成导入", p_ue_Project_path));
   };
+  p_futurn_list.emplace_back(DoodleLib::Get().get_thread_pool()->enqueue(k_fun));
   return k_term;
 }
 

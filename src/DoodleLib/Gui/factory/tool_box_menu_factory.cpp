@@ -109,6 +109,34 @@ void tool_box_menu_factory::create_menu() {
     k_arg.qcloth_assets_path = k_paths.front();
     return k_arg;
   });
+
+  auto k_import_ue4 = std::make_shared<toolbox::actn_ue4_import_files>();
+  p_list.push_back(k_import_ue4);
+  k_import_ue4->sig_get_arg.connect([this]() {
+    toolbox::actn_ue4_import_files::arg k_arg{};
+
+    {
+      nana::filebox k_filebox{p_window, true};
+      k_filebox.add_filter("ue4 project", "*.uproject");
+      k_filebox.allow_multi_select(false);
+
+      auto k_pas = k_filebox();
+      if (!k_pas.empty())
+        k_arg.ue4_project = k_pas.front();
+      k_arg.is_cancel = k_pas.empty();
+    }
+
+    {
+      nana::filebox k_filebox{p_window, true};
+      k_filebox.add_filter("fbx file and abc file", "*.fbx;*.abc");
+      k_filebox.allow_multi_select(true);
+
+      k_arg.date      = k_filebox();
+      k_arg.is_cancel = k_arg.date.empty();
+    }
+
+    return k_arg;
+  });
 }
 void tool_box_menu_factory::operator()(nana::menu& in_menu) {
   create_menu();
