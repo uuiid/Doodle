@@ -75,13 +75,13 @@ bool Shot::operator>=(const Shot& rhs) const {
 bool Shot::analysis(const std::string& in_path) {
   static std::regex reg{R"(sc_?(\d+)([a-z])?)", std::regex_constants::icase};
   std::smatch k_match{};
-  if (std::regex_search(in_path, k_match, reg)) {
+  const auto& k_r = std::regex_search(in_path, k_match, reg);
+  if (k_r) {
     p_shot = std::stoi(k_match[1].str());
     if (k_match.size() > 2)
       p_shot_ab = k_match[2].str();
-  } else {
-    return false;
   }
+  return k_r;
 }
 
 ShotPtr Shot::analysis_static(const std::string& in_path) {

@@ -57,11 +57,11 @@ bool Episodes::operator>=(const Episodes& in_rhs) const {
 bool Episodes::analysis(const std::string& in_path) {
   static std::regex reg{R"(ep_?(\d+))", std::regex_constants::icase};
   std::smatch k_match{};
-  if (std::regex_search(in_path, k_match, reg)) {
+  const auto& k_r = std::regex_search(in_path, k_match, reg);
+  if (k_r) {
     p_episodes = std::stoi(k_match[1].str());
-  } else {
-    return false;
   }
+  return k_r;
 }
 
 EpisodesPtr Episodes::analysis_static(const std::string& in_path) {
