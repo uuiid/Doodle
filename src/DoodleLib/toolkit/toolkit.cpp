@@ -32,11 +32,12 @@ void toolkit::installMayaPath() {
 }
 
 void toolkit::installUePath(const FSys::path &path) {
-  auto &set      = CoreSet::getSet();
-  auto sourePath = set.program_location().parent_path() /
-                   "plug/uePlug/" /
-                   set.gettUe4Setting().Version() /
-                   "/Plugins/Doodle";
+  auto &set = CoreSet::getSet();
+
+  auto sourePath = FSys::current_path().parent_path();
+  sourePath /= "plug/uePlug";
+  sourePath /= set.gettUe4Setting().Version();
+  sourePath /= "Plugins/Doodle";
   auto targetPath = path / "Plugins/Doodle";
 
   if (FSys::exists(targetPath)) {

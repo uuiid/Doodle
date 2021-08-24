@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 
 project(Doodle
-        VERSION 3.0.3.8
+        VERSION 3.0.5.8
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -221,7 +221,7 @@ set(CPACK_PACKAGE_EXECUTABLES DoodleExe;Doodle)
 set(CPACK_CREATE_DESKTOP_LINKS DoodleExe)
 set(CPACK_PACKAGE_VENDOR uuiid)
 set(CPACK_PACKAGE_INSTALL_DIRECTORY uuiid/doodle${PROJECT_VERSION_MAJOR}${PROJECT_VERSION_MINOR})
-set(CPACK_WIX_UPGRADE_GUID 96068D94-08C8-412B-9292-6DE8453E61B3)
+# set(CPACK_WIX_UPGRADE_GUID 96068D94-08C8-412B-9292-6DE8453E61B3)
 # set(CPACK_WIX_PRODUCT_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 # set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 # set(CPACK_WIX_CULTURES zh_CN)
@@ -234,5 +234,6 @@ add_custom_command(
         POST_BUILD
         COMMAND  ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_EXE_MSI_FILE_NAME} ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_EXE_MSI_FILE_NAME}
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
-)
-add_dependencies(cpack_${PROJECT_NAME} DoodleExe doodleServerExe)
+
+        )
+add_dependencies(cpack_${PROJECT_NAME} DoodleExe doodleServerExe Doxygen)

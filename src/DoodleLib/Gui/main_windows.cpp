@@ -87,7 +87,8 @@ void main_windows::create_menubar() {
         mes();
       }
     } catch (const std::exception& error) {
-      nana::msgbox mes{*this, error.what()};
+      nana::msgbox mes{*this, "错误"};
+      mes << error.what();
       mes();
     }
   });
