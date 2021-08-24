@@ -106,6 +106,7 @@ class DOODLELIB_API Ue4Project {
   FSys::path p_ue_path;
   FSys::path p_ue_Project_path;
   long_term_ptr p_term;
+  std::vector<std::future<void>> p_futre; 
 
   void addUe4ProjectPlugins(const std::vector<std::string>& in_strs) const;
 
@@ -126,6 +127,8 @@ class DOODLELIB_API Ue4Project {
    * @param project_path 项目文件路径
    */
   Ue4Project(FSys::path project_path);
+
+  ~Ue4Project();
   /**
    * @brief 同步创建镜头和集数文件夹
    * 

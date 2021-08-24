@@ -24,9 +24,16 @@ const std::string Ue4Project::Prop        = "Prop";
 Ue4Project::Ue4Project(FSys::path project_path)
     : p_ue_path(),
       p_ue_Project_path(std::move(project_path)),
-      p_term(std::make_shared<long_term>()) {
+      p_term(std::make_shared<long_term>()),
+      p_futre() {
   auto& ue  = Ue4Setting::Get();
   p_ue_path = ue.Path();
+}
+
+Ue4Project::~Ue4Project() {
+  for (auto& f : p_futre) {
+    f.get();
+  }
 }
 
 void Ue4Project::addUe4ProjectPlugins(const std::vector<std::string>& in_strs) const {
@@ -201,34 +208,43 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
 }
 
 long_term_ptr Ue4Project::create_shot_folder_asyn(const std::vector<ShotPtr>& inShotList) {
-  DoodleLib::Get().get_thread_pool()->enqueue(
+  auto k_f = DoodleLib::Get().get_thread_pool()->enqueue(
       [this, inShotList]() {
         this->createShotFolder(inShotList);
       });
+  p_futre.emplace_back(std::move(k_f));
   return p_term;
 }
 
 long_term_ptr Ue4Project::import_files_asyn(const std::vector<FSys::path>& in_paths) {
   this->addUe4ProjectPlugins({"doodle"});
-  nlohmann::json k_root{};
-  std::vector<import_settting> k_list;
-  for (const auto& i : in_paths) {
-    auto&& k_stting               = k_list.emplace_back(import_settting{});
-    k_stting.import_file_path     = i;
-    k_stting.import_file_save_dir = analysis_path_to_gamepath(i);
-    if (i.extension() == ".fbx") {
-      k_stting.import_type            = import_type::Fbx;
-      k_stting.fbx_skeleton_file_name = find_ue4_skeleton(i);
-    } else if (i.extension() == ".abc") {
-      k_stting.import_type = import_type::Abc;
-      auto [k_s, k_end]    = FSys::find_path_frame(i);
-      k_stting.end_frame   = k_end;
-      k_stting.start_frame = k_s;
+  auto k_term = std::make_shared<long_term>();
+  auto k_fun  = [this, in_paths, k_term]() {
+    k_term->sig_progress(0.1);
+    nlohmann::json k_root{};
+    std::vector<import_settting> k_list;
+    const std::size_t k_num = in_paths.size();
+    for (const auto& i : in_paths) {
+      auto&& k_stting               = k_list.emplace_back(import_settting{});
+      k_stting.import_file_path     = i;
+      k_stting.import_file_save_dir = analysis_path_to_gamepath(i);
+      if (i.extension() == ".fbx") {
+        k_stting.import_type            = import_type::Fbx;
+        k_stting.fbx_skeleton_file_name = find_ue4_skeleton(i);
+      } else if (i.extension() == ".abc") {
+        k_stting.import_type = import_type::Abc;
+        auto [k_s, k_end]    = FSys::find_path_frame(i);
+        k_stting.end_frame   = k_end;
+        k_stting.start_frame = k_s;
+      }
+      k_term->sig_progress(1 / (k_num * 2));
     }
-  }
-  k_root["groups"] == k_list;
-  auto path = FSys::write_tmp_file("UE4", k_root.dump(), ".json");
-  run_cmd_scipt(fmt::format("-run=DoodleAssCreate -path={}", path));
+    k_root["groups"] == k_list;
+    auto path = FSys::write_tmp_file("UE4", k_root.dump(), ".json");
+    k_term->sig_progress(0.5);
+    run_cmd_scipt(fmt::format("-run=DoodleAssCreate -path={}", path));
+  };
+  return k_term;
 }
 
 bool Ue4Project::can_import_ue4(const FSys::path& in_path) {
