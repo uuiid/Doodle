@@ -221,7 +221,7 @@ set(CPACK_PACKAGE_EXECUTABLES DoodleExe;Doodle)
 set(CPACK_CREATE_DESKTOP_LINKS DoodleExe)
 set(CPACK_PACKAGE_VENDOR uuiid)
 set(CPACK_PACKAGE_INSTALL_DIRECTORY uuiid/doodle${PROJECT_VERSION_MAJOR}${PROJECT_VERSION_MINOR})
-# set(CPACK_WIX_UPGRADE_GUID 96068D94-08C8-412B-9292-6DE8453E61B3)
+set(CPACK_WIX_UPGRADE_GUID 3E490EAC-2FC7-49BF-A521-20F2F93E320A)
 # set(CPACK_WIX_PRODUCT_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 # set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 # set(CPACK_WIX_CULTURES zh_CN)
@@ -237,3 +237,5 @@ add_custom_command(
 
         )
 add_dependencies(cpack_${PROJECT_NAME} DoodleExe doodleServerExe Doxygen)
+# "D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Rocket -Plugin=F:\Users\teXiao\Documents\Unreal_Projects\doodle_plug\Plugins\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.25\Plugins -VS2019 -CreateSubFolder
+# "D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=F:\Users\teXiao\Documents\Unreal_Projects\doodle_plug\Plugins\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.25\Plugins\Doodle -VS2019
