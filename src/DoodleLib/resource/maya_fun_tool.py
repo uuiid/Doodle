@@ -110,7 +110,9 @@ class camera:
                 return
         print("not select cam ", self.maya_cam)
 
-    def create_move(self, out_path=None):
+    def create_move(self, out_path=None,
+                    start_frame=doodle_work_space.raneg.start,
+                    end_frame=doodle_work_space.raneg.end):
         # 创建视频
         # 如果不符合就直接返回
         if not self.maya_cam:
@@ -146,14 +148,14 @@ class camera:
             # pymel.core.hwRender(camera=self.maya_cam, h=1280, w=1920)
             pymel.core.playblast(
                 viewer=False,
-                startTime=doodle_work_space.raneg.start,
-                endTime=doodle_work_space.raneg.end,
+                startTime=start_frame,
+                endTime=end_frame,
                 filename="{path}/{base_name}_playblast_{start}-{end}"
                 .format(
                     path=out_path,
                     base_name=doodle_work_space.maya_file.name_not_ex,
-                    start=doodle_work_space.raneg.start,
-                    end=doodle_work_space.raneg.end
+                    start=start_frame,
+                    end=end_frame
                 ),
                 percent=100,
                 quality=100,
@@ -167,14 +169,14 @@ class camera:
             pymel.core.system.warning("QuickTime not found, use default value")
             pymel.core.playblast(
                 viewer=False,
-                startTime=doodle_work_space.raneg.start,
-                endTime=doodle_work_space.raneg.end,
+                startTime=start_frame,
+                endTime=end_frame,
                 filename="{path}/{base_name}_playblast_{start}-{end}"
                 .format(
                     path=out_path,
                     base_name=doodle_work_space.maya_file.name_not_ex,
-                    start=doodle_work_space.raneg.start,
-                    end=doodle_work_space.raneg.end
+                    start=start_frame,
+                    end=end_frame
                 ),
                 percent=100,
                 quality=100,
@@ -618,6 +620,10 @@ class cloth_export():
 
     def play_move(self):
         self.cam.create_move()
+        self.cam.create_move(
+            out_path=doodle_work_space.maya_file.abs_path / "mov",
+            start_frame=1001
+        )
         # pymel.core.playbackOptions(maxPlaybackSpeed=0,blockingAnim=True,view="all",loop="once")
         # pymel.core.play(forward=True)
         # pymel.core.select(clear=True)
