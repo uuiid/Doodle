@@ -116,7 +116,7 @@ class camera:
         if not self.maya_cam:
             return
         if not out_path:
-            out_path = doodle_work_space.maya_file.abs_path
+            out_path = doodle_work_space.maya_file.abs_path / "mov"
         tmp_path = pymel.core.Path(out_path)
         if not tmp_path.exists():
             tmp_path.mkdir_p()
@@ -160,6 +160,7 @@ class camera:
                 # offScreen=True,
                 # editorPanelName="modelPanel1",
                 format="qt",
+                compression="H.264",
                 widthHeight=(1920, 1280)
             )
         except RuntimeError:
@@ -638,7 +639,12 @@ class cloth_export():
             obj.export_abc()
 
     def save(self):
-        pymel.core.system.saveAs("{}_sim_colth.ma".format(
+        path = doodle_work_space.maya_file.abs_path / \
+            doodle_work_space.maya_file.name_not_ex  # type: pymel.core.Path
+        path.mkdir_p()
+
+        pymel.core.system.saveAs("{}/{}_sim_colth.ma".format(
+            path,
             doodle_work_space.maya_file.name_not_ex))
 
     def __call__(self):
