@@ -9,14 +9,14 @@ import scripts.Doodle_dem_bone as Doodle_dem_bone
 import scripts.Doodle_deleteSurplusWeight as deleteWeight
 import scripts.Doodle_deleteAttr as deleteAttr
 import scripts.export_usd as export_usd
-
+import scripts.maya_fun_tool as Doodle_fun_tool
 from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
 
 import pymel.core
 import pymel.core.system
-
+import pymel.core.nodetypes
 
 class DlsShelf(shelfBase._shelf):
     cloth_to_fbx = None
@@ -36,15 +36,13 @@ class DlsShelf(shelfBase._shelf):
                       command=self.polyremesh)
 
         self.addButon("clear", icon="icons/clear.png", command=self.clearScane)
-        self.addButon("CLoth_to_Fbx", icon="icons/cloth_to_fbx.png",
-                      command=self.clothToFbx)
+
         self.addButon("delect Weight", icon="icons/ue_delete_weight.png",
                       command=self.deleteWeightPoint)
         self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
                       command=self.deleteAttr)
-        self.addButon("export usd", icon="icons/export_usd.png",
-                      command=self.exportUSD)
-        self.addButon("repair", icon="icons/repair", command=self.repair)
+
+
         self.addButon("randomColor", icon="icons/randomColor.png",
                       command=self.randomColor)
         self.addButon("mark_sim", icon="icons/mark_sim.png",
@@ -70,12 +68,6 @@ class DlsShelf(shelfBase._shelf):
         self.re()
         Doodle_clear.clearAndUpload().clearScane()
 
-    def clothToFbx(self):
-        self.re()
-        if self.cloth_to_fbx:
-            self.cloth_to_fbx.show()
-        else:
-            self.cloth_to_fbx = Doodle_dem_bone.DleClothToFbx().show()
 
     def deleteWeightPoint(self):
         self.re()
@@ -84,25 +76,6 @@ class DlsShelf(shelfBase._shelf):
     def deleteAttr(self):
         self.re()
         deleteAttr.deleteShape().show()
-
-    def exportUSD(self):
-        self.re()
-        export_usd.export()
-
-    def repair(self):
-        import pymel.core
-        import re
-        f = pymel.core.listReferences()
-        for i in f:
-            print(i)
-            if (re.match(r"V:/03_Workflow/Assets/[P,p]rop", i.__str__())):
-                if (re.match(r"V:/03_Workflow/Assets/[P,p]rops", i.__str__())):
-                    continue
-                try:
-                    i.load(re.sub(
-                        r"V:/03_Workflow/Assets/[P,p]rop", r"V:/03_Workflow/Assets/props", i.__str__()))
-                except:
-                    pass
 
     def randomColor(self):
         import pymel.core
