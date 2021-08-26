@@ -9,7 +9,6 @@ import scripts.Doodle_dem_bone as Doodle_dem_bone
 import scripts.Doodle_deleteSurplusWeight as deleteWeight
 import scripts.Doodle_deleteAttr as deleteAttr
 import scripts.export_usd as export_usd
-import scripts.maya_fun_tool as Doodle_fun_tool
 from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -17,6 +16,7 @@ from PySide2 import QtWidgets
 import pymel.core
 import pymel.core.system
 import pymel.core.nodetypes
+import maya_fun_tool as Doodle_fun_tool
 
 class DlsShelf(shelfBase._shelf):
     cloth_to_fbx = None
@@ -42,7 +42,6 @@ class DlsShelf(shelfBase._shelf):
         self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
                       command=self.deleteAttr)
 
-
         self.addButon("randomColor", icon="icons/randomColor.png",
                       command=self.randomColor)
         self.addButon("mark_sim", icon="icons/mark_sim.png",
@@ -53,35 +52,30 @@ class DlsShelf(shelfBase._shelf):
         Doodle_PolyRemesh.myRemesh()
 
     def exportCam(self):
-        self.re()
-        Doodle_fun_tool.doodle_work_space = Doodle_fun_tool.maya_workspace()
-        Doodle_fun_tool.log = Doodle_fun_tool.export_log()
-
-        cam = Doodle_fun_tool.camera();
-        try:
-            selects = pymel.core.selected();
-            if not isinstance(selects[0].getShapes()[0],pymel.core.nodetypes.Camera):
-                return
-            cam.maya_cam = pymel.core.selected()[0]
-        except IndexError:
-            pymel.core.warning("未选中有效cam")
-            return
-        except AttributeError:
-            pymel.core.warning("选择物体类型不是cam")
-            return
+        cam = self.get_tool_cam()
+        if cam:
+            cam()
 
     def exportAbc(self):
         self.re()
-        Doodle_exportUe.exportUe().export("two")
+        ref_file = None  # type: pymel.core.FileReference()
+        for s in pymel.core.selected():
+            ref = self.get_select_refFile(s)
+            if ref:
+                ref_file = ref
+
+        ex = Doodle_fun_tool.cloth_group_file(
+            Doodle_fun_tool.references_file(ref_file))
+        ex.export_select_abc(select_obj=pymel.core.selected())
 
     def BakeAimCam(self):
-        self.re()
-        Doodle_cam.camBakeAim()
+        cam = self.get_tool_cam()
+        if cam:
+            cam.bakeAnm()
 
     def clearScane(self):
         self.re()
         Doodle_clear.clearAndUpload().clearScane()
-
 
     def deleteWeightPoint(self):
         self.re()
@@ -97,17 +91,28 @@ class DlsShelf(shelfBase._shelf):
         select_lists = pymel.core.ls(sl=True)
         for select_obj in select_lists:
             pymel.core.select(select_obj)
-            pymel.core.polyColorPerVertex(colorDisplayOption=True,
-                                          rgb=(random.random() * .5, random.random() * .5, random.random() * .5))
+            pymel.core.polyColorPerVertex(
+                colorDisplayOption=True,
+                rgb=(random.random() * .5, random.random() * .5, random.random() * .5))
 
     def mark_sim(self):
         select = pymel.core.selected()
         fls = set()  # type: set[pymel.core.system.FileReference]
         for s in select:
-            ref = pymel.core.referenceQuery(s, referenceNode=True, topReference=True)
-            fls.add(pymel.core.FileReference(ref))
+            ref = self.get_select_refFile()
+            if ref:
+                fls.add(pymel.core.FileReference(ref))
         print(fls)
         pymel.core.system.fileInfo["doodle_sim"] = str(fls)
+
+    def get_select_refFile(self, maya_obj):
+        # type: (Any)->pymel.core.FileReference
+        try:
+            ref = pymel.core.referenceQuery(
+                maya_obj, referenceNode=True, topReference=True)
+            return pymel.core.FileReference(ref)
+        except RuntimeError:
+            return
 
     def re(self):
         key = QtWidgets.QApplication.keyboardModifiers()
@@ -120,6 +125,25 @@ class DlsShelf(shelfBase._shelf):
             reload(deleteWeight)
             reload(deleteAttr)
             reload(export_usd)
+
+    def get_tool_cam(self):
+        # type: ()->Doodle_fun_tool.camera
+        Doodle_fun_tool.doodle_work_space = Doodle_fun_tool.maya_workspace()
+        Doodle_fun_tool.log = Doodle_fun_tool.export_log()
+
+        cam = Doodle_fun_tool.camera()
+        try:
+            selects = pymel.core.selected()
+            if not isinstance(selects[0].getShapes()[0], pymel.core.nodetypes.Camera):
+                return
+            cam.maya_cam = pymel.core.selected()[0]
+            return cam
+        except IndexError:
+            pymel.core.warning("未选中有效cam")
+            return
+        except AttributeError:
+            pymel.core.warning("选择物体类型不是cam")
+            return
 
 
 class DoodleUIManage(object):
