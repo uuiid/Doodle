@@ -493,12 +493,20 @@ class cloth_group_file(export_group):
         super(cloth_group_file, self).export_fbx(
             "{}:*UE4".format(self.maya_name_space))
 
-    def export_abc(self):
-        # 选择物体
+    def export_select_abc(
+            self,
+            export_path=pymel.core.Path(),
+            select_obj=[]):
+        # type: (pymel.core.Path,list[pymel.core.nodetypes.Transform])->None
+
+        # 选择物体导入
         self.maya_ref.maya_ref.importContents()
 
         # 创建路径
-        path = doodle_work_space.work.getPath() / "abc"  # type: pymel.core.Path
+        if not export_path:
+            export_path = doodle_work_space.work.getPath() / "abc"
+        path = export_path  # type: pymel.core.Path
+
         name = "{}_{}_{}-{}.abc".format(doodle_work_space.maya_file.name_not_ex,
                                         self.maya_name_space,
                                         1000,
@@ -509,10 +517,7 @@ class cloth_group_file(export_group):
 
         # 导出物体
         # list[pymel.core.nodetypes.Transform]
-        self.maya_abc_export = pymel.core.ls(
-            "{}:*UE4".format(self.maya_name_space),
-            geometry=True,
-            dagObjects=True)
+        self.maya_abc_export = select_obj
 
         if not self.maya_abc_export:
             return
@@ -563,6 +568,18 @@ class cloth_group_file(export_group):
                     mash=abcexmashs)
         print(abcExportCom)
         pymel.core.mel.eval(abcExportCom)
+
+    def export_abc(self, export_path=pymel.core.Path()):
+        # 创建路径
+        if not export_path:
+            export_path = doodle_work_space.work.getPath() / "abc"
+        path = export_path  # type: pymel.core.Path
+        self.export_select_abc(
+            path,
+            pymel.core.ls(
+                "{}:*UE4".format(self.maya_name_space),
+                geometry=True,
+                dagObjects=True))
 
     def dgeval(self):
         for obj in pymel.core.ls("{}:*_cloth".format(self.maya_name_space)):
