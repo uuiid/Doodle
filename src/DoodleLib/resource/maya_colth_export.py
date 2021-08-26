@@ -12,6 +12,8 @@ pymel.core.system.loadPlugin("qualoth_2019_x64")
 
 pymel.core.system.openFile(
     "D:/Autodesk/test/DBXY_163_54.ma", loadReferenceDepth="all")
+if not pymel.core.mel.eval("currentTimeUnitToFPS") != 25:
+    quit()
 pymel.core.playbackOptions(animationStartTime="950")
 # 这个导出一定要在加载好场景后导入
 import maya_fun_tool
