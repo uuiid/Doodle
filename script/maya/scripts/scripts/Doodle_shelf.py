@@ -54,7 +54,21 @@ class DlsShelf(shelfBase._shelf):
 
     def exportCam(self):
         self.re()
-        Doodle_exportUe.exportUe().export("one")
+        Doodle_fun_tool.doodle_work_space = Doodle_fun_tool.maya_workspace()
+        Doodle_fun_tool.log = Doodle_fun_tool.export_log()
+
+        cam = Doodle_fun_tool.camera();
+        try:
+            selects = pymel.core.selected();
+            if not isinstance(selects[0].getShapes()[0],pymel.core.nodetypes.Camera):
+                return
+            cam.maya_cam = pymel.core.selected()[0]
+        except IndexError:
+            pymel.core.warning("未选中有效cam")
+            return
+        except AttributeError:
+            pymel.core.warning("选择物体类型不是cam")
+            return
 
     def exportAbc(self):
         self.re()
