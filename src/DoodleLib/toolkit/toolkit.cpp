@@ -19,7 +19,7 @@ namespace doodle {
 
 void toolkit::installMayaPath() {
   auto mayadoc = CoreSet::getSet().getDoc().parent_path();
-  mayadoc /= "maya/modules";
+  mayadoc /= "maya/modules/doodle/";
 
   auto sourePath = CoreSet::program_location().parent_path();
   sourePath /= "plug/maya";
@@ -28,7 +28,17 @@ void toolkit::installMayaPath() {
     FSys::create_directories(mayadoc);
   } else
     FSys::remove_all(mayadoc);
+
   FileSystem::localCopy(sourePath, mayadoc, false);
+  static std::string k_mod{R"(+ doodle 1.1 .\doodle
+MYMODULE_LOCATION:= .
+PATH+:= scripts;plug-ins
+PYTHONPATH+:= scripts
+)"};
+  {
+    FSys::ofstream k_file{mayadoc / "doodle.mod"};
+    k_file << k_mod;
+  }
 }
 
 void toolkit::installUePath(const FSys::path &path) {

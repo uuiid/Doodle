@@ -125,12 +125,12 @@ class camera:
 
         render_node = pymel.core.ls("defaultRenderGlobals")[0]
 
-        render_node.imageFormat.set(8)
-        render_node.animation.set(True)
-        render_node.putFrameBeforeExt.set(True)
-        render_node.useFrameExt.set(False)
-        render_node.useMayaFileName.set(True)
-        render_node.imageFilePrefix.set("<Scene>/<Scene>")
+        # render_node.imageFormat.set(8)
+        # render_node.animation.set(True)
+        # render_node.putFrameBeforeExt.set(True)
+        # render_node.useFrameExt.set(False)
+        # render_node.useMayaFileName.set(True)
+        # render_node.imageFilePrefix.set("<Scene>/<Scene>")
         render_node.startFrame.set(doodle_work_space.raneg.start)
         render_node.endFrame.set(doodle_work_space.raneg.end)
         Resolution_node = pymel.core.ls("defaultResolution")[0]
