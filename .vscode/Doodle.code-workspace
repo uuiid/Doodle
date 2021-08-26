@@ -151,6 +151,14 @@
 			"--ignore",
 			"E402"
 		],
+		"python.autoComplete.extraPaths": [
+			"c:\\Users\\TD\\.vscode\\extensions\\fxtd-odyssey.mayapy-1.0.4\\mayaSDK",
+			"${workspaceFolder}/src/DoodleLib/resource"
+		],
+		"python.analysis.extraPaths": [
+			"c:\\Users\\TD\\.vscode\\extensions\\fxtd-odyssey.mayapy-1.0.4\\mayaSDK",
+			"${workspaceFolder}/src/DoodleLib/resource"
+		],
 		"editor.tabSize": 2,
 		"editor.fontFamily": " 'Fira Code',Consolas, monospace",
 		"editor.fontLigatures": true,
