@@ -40,16 +40,6 @@ void MayaFile::write_maya_tool_file() {
 }
 
 FSys::path MayaFile::warit_tmp_file(const std::string& in_string) {
-  const static auto tmp_path = CoreSet::getSet().getCacheRoot(
-      fmt::format("maya/v{}{}{}",
-                  Doodle_VERSION_MAJOR,
-                  Doodle_VERSION_MINOR,
-                  Doodle_VERSION_PATCH));
-  auto k_tmp_path = tmp_path / (boost::uuids::to_string(CoreSet::getSet().getUUID()) + ".py");
-  {  //写入文件后直接关闭
-    FSys::fstream file{k_tmp_path, std::ios::out};
-    file << in_string;
-  }
   return FSys::write_tmp_file("maya",in_string,".py");
 }
 
@@ -193,6 +183,8 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
             "pymel.core.system.loadPlugin(\"AbcImport\")\n"
             "pymel.core.system.loadPlugin(\"qualoth_2019_x64\")"
             "\n\npymel.core.system.openFile(\"{}\",loadReferenceDepth=\"all\")\n"
+            "if not pymel.core.mel.eval(\"currentTimeUnitToFPS\") != 25:\n"
+            "    quit()"
             "pymel.core.playbackOptions(animationStartTime=\"950\")\n"
             "import maya_fun_tool\n"
             "reload(maya_fun_tool)\n"
