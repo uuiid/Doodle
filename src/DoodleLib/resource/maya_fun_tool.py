@@ -621,9 +621,16 @@ class cloth_export():
 
         self.colth = []  # type: list[references_file]
         self.qcolth_group = []  # type: list[cloth_group_file]
-        for ref_obj in pymel.core.system.listReferences():
-            self.colth.append(references_file(ref_obj))
+        self.select_sim_references_file()
         self.cam = camera()
+
+    def select_sim_references_file(self):
+        if pymel.core.fileInfo.has_key("doodle_sim"):
+            k_set = eval(pymel.core.fileInfo["doodle_sim"])
+            self.colth = [references_file(i) for i in k_set]
+        else:
+            self.colth = [references_file(i)
+                          for i in pymel.core.listReferences()]
 
     def replace_file(self):
         for obj in self.colth:
