@@ -92,6 +92,14 @@ bool UDoodleAssCreateCommandlet::parse_import_setting(const FString& in_import_s
             k_abc_stting->MaterialSettings.bCreateMaterials = false;            //不创建材质
             k_abc_stting->MaterialSettings.bFindMaterials = true;               //寻找材质
             k_abc_stting->ConversionSettings.Preset = EAbcConversionPreset::Max;//导入预设为3dmax
+            k_abc_stting->ConversionSettings.bFlipV = true;
+            k_abc_stting->ConversionSettings.Scale.X = 1.0;
+            k_abc_stting->ConversionSettings.Scale.Y = -1.0;
+            k_abc_stting->ConversionSettings.Scale.Z = 1.0;
+            k_abc_stting->ConversionSettings.Rotation.X = 90.0;
+            k_abc_stting->ConversionSettings.Rotation.Y = 0.0;
+            k_abc_stting->ConversionSettings.Rotation.Z = 0.0;
+
             k_abc_stting->GeometryCacheSettings.bFlattenTracks = true;          //合并轨道
             k_abc_stting->SamplingSettings.bSkipEmpty = true;                   // 跳过空白帧
             k_abc_stting->SamplingSettings.FrameStart = i->start_frame;         //开始帧
