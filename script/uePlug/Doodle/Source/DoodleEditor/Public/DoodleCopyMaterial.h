@@ -24,7 +24,7 @@ class DoodleCopyMat : public SCompoundWidget, public FGCObject {
   TArray<FString> OpenFileDialog(const FString& DialogTitle, const FString& DefaultPath, const FString& FileTypes);
   FString OpenDirDialog(const FString& DialogTitle,
                         const FString& DefaultPath);
-
+  void set_material_attr(UMaterialInterface* in_mat, const FString& in_SlotName);
  private:
   USkeletalMesh* copySoureSkinObj;
   UObject* copySoureGeoCache;

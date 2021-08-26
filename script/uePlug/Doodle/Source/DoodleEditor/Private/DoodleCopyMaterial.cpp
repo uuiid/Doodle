@@ -22,7 +22,8 @@
 #include "Widgets/Input/SButton.h"
 //重命名资产
 #include "EditorAssetLibrary.h"
-
+//保存包需要
+#include "Editor.h"
 //自定义abc导入
 //#include "AbcWrap/DoodleAbcFactory.h"
 
@@ -364,39 +365,48 @@ FReply DoodleCopyMat::BathReameAss()
 		UObject *loadObj = item.ToSoftObjectPath().TryLoad();
 		if (loadObj == nullptr)
 			continue;
-		if (!item.GetClass()->IsChildOf<USkeletalMesh>())
-			continue;
-		//确认时骨骼物体
-		USkeletalMesh *skinObj = Cast<USkeletalMesh>(loadObj);
-		UE_LOG(LogTemp, Log, TEXT("确认并加载骨骼物体 %s"),
-			   *(skinObj->GetPathName()));
-		if (skinObj == nullptr)
-			continue;
-		for (auto &mat : skinObj->Materials)
+        if (item.GetClass()->IsChildOf<USkeletalMesh>())
+        {
+            //确认时骨骼物体
+            USkeletalMesh* skinObj = Cast<USkeletalMesh>(loadObj);
+            UE_LOG(LogTemp, Log, TEXT("确认物体, 并进行转换 %s"),
+                *(skinObj->GetPathName()));
+            if (skinObj == nullptr)
+                UE_LOG(LogTemp, Log, TEXT("不是骨骼物体 %s"),
+                    *(skinObj->GetPathName()));
+            for (auto& mat : skinObj->Materials)
+            {
+                if (mat.ImportedMaterialSlotName.IsValid())
+                {
+                    set_material_attr(mat.MaterialInterface, mat.ImportedMaterialSlotName.ToString());
+                }
+            }
+		}
+		else if (item.GetClass()->IsChildOf<UStaticMesh>())
 		{
-			if (mat.ImportedMaterialSlotName.IsValid())
+			UStaticMesh* k_st = Cast<UStaticMesh>(loadObj);
+			UE_LOG(LogTemp, Log, TEXT("确认物体, 并进行转换 %s"),
+				*(k_st->GetPathName()));
+			if (k_st == nullptr)
 			{
-				if (mat.MaterialInterface->GetMaterial() != nullptr)
+				UE_LOG(LogTemp, Log, TEXT("不是静态网格体 %s"),
+					*(k_st->GetPathName()));
+				continue;
+			}
+			for (auto& mat : k_st->StaticMaterials)
+			{
+				if (mat.ImportedMaterialSlotName.IsValid())
 				{
-					mat.MaterialInterface->GetMaterial()->bUsedWithGeometryCache = true;
-					UE_LOG(LogTemp, Log, TEXT("使材料支持集合缓存 %s"),
-						   *(mat.MaterialInterface->GetPathName()));
+					set_material_attr(mat.MaterialInterface, mat.ImportedMaterialSlotName.ToString());
 				}
-				UE_LOG(LogTemp, Log, TEXT("确认材质插槽名称 %s"),
-					   *(mat.ImportedMaterialSlotName.ToString()));
-				UEditorAssetLibrary::RenameAsset(
-					mat.MaterialInterface->GetPathName(),
-					mat.MaterialInterface->GetPathName().Replace(
-						*(mat.MaterialInterface->GetName()),
-						*(mat.ImportedMaterialSlotName.ToString())));
-				UE_LOG(LogTemp, Log, TEXT("重命名材质 路径 %s  %s --> %s"),
-					   *(mat.MaterialInterface->GetPathName()),
-					   *(mat.MaterialInterface->GetName()),
-					   *(mat.ImportedMaterialSlotName.ToString()));
 			}
 		}
+		else 
+		{
+			UE_LOG(LogTemp, Log, TEXT("不支持的类型"));
+			continue;
+		}
 	}
-
 	return FReply::Handled();
 }
 
@@ -500,4 +510,46 @@ FString DoodleCopyMat::OpenDirDialog(const FString &DialogTitle,
 											 DefaultPath, OutDir);
 	}
 	return OutDir;
+}
+
+void DoodleCopyMat::set_material_attr(UMaterialInterface* in_mat, const FString& in_SlotName)
+{
+	IPlatformFile& FileManager = FPlatformFileManager::Get().GetPlatformFile();
+
+    UE_LOG(LogTemp, Log, TEXT("确认材质插槽名称 %s"), *in_SlotName);
+    auto old_path = in_mat->GetPathName();
+    auto new_path = in_mat->GetPathName().Replace(*(in_mat->GetName()), *in_SlotName);
+    if (old_path == new_path)
+	{
+		UE_LOG(LogTemp, Log, TEXT("材质新旧路径相同，不需要重命名"));
+	}
+
+	if (FileManager.FileExists(*new_path)) {
+		if (old_path != new_path)
+		{
+			UE_LOG(LogTemp, Log, TEXT("新路径存在资产,无法重命名 %s"), *(new_path));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("材质新旧路径相同，不需要重命名"));
+		}
+	}
+
+	if (old_path != new_path && !FileManager.FileExists(*new_path)) {
+		UEditorAssetLibrary::RenameAsset(old_path, new_path);
+		UE_LOG(LogTemp, Log, TEXT("重命名材质 路径 %s --> %s"),
+			*(old_path),
+			*(new_path));
+	}
+
+
+	if (in_mat->GetMaterial() != nullptr)
+	{
+		auto mat_m = in_mat->GetMaterial();
+		mat_m->bUsedWithGeometryCache = true;
+		mat_m->MarkPackageDirty();
+		UEditorAssetLibrary::SaveAsset(mat_m->GetPathName());
+		UE_LOG(LogTemp, Log, TEXT("使材料支持集合缓存 %s"),
+			*(mat_m->GetPathName()));
+	}
 }
