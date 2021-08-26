@@ -14,6 +14,9 @@ from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
 
+import pymel.core
+import pymel.core.system
+
 
 class DlsShelf(shelfBase._shelf):
     cloth_to_fbx = None
@@ -44,6 +47,8 @@ class DlsShelf(shelfBase._shelf):
         self.addButon("repair", icon="icons/repair", command=self.repair)
         self.addButon("randomColor", icon="icons/randomColor.png",
                       command=self.randomColor)
+        self.addButon("mark_sim", icon="icons/mark_sim.png",
+                      command=self.mark_sim)
 
     def polyremesh(self):
         self.re()
@@ -107,6 +112,15 @@ class DlsShelf(shelfBase._shelf):
             pymel.core.select(select_obj)
             pymel.core.polyColorPerVertex(colorDisplayOption=True,
                                           rgb=(random.random() * .5, random.random() * .5, random.random() * .5))
+
+    def mark_sim(self):
+        select = pymel.core.selected()
+        fls = set()  # type: set[pymel.core.system.FileReference]
+        for s in select:
+            ref = pymel.core.referenceQuery(s, referenceNode=True, topReference=True)
+            fls.add(pymel.core.FileReference(ref))
+        print(fls)
+        pymel.core.system.fileInfo["doodle_sim"] = str(fls)
 
     def re(self):
         key = QtWidgets.QApplication.keyboardModifiers()
