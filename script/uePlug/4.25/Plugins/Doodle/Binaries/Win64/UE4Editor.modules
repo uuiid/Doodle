@@ -1,9 +1,0 @@
-{
-	"BuildId": "13144385",
-	"Modules": 
-	{
-		"doodle": "UE4Editor-doodle.dll",
-		"doodleEditor": "UE4Editor-doodleEditor.dll",
-		"doodleUI": "UE4Editor-doodleUI.dll"
-	}
-}
