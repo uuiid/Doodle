@@ -104,8 +104,10 @@ CoreSet::CoreSet()
   ///获取环境变量 FOLDERID_Documents
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
-  if (!pManager)
+  if (!pManager) {
+    std::cout << "unable to find a save path" << std::endl;
     throw DoodleError("无法找到保存路径");
+  }
 
   p_doc = FSys::path{pManager} / "doodle";
   CoTaskMemFree(pManager);
@@ -216,6 +218,7 @@ void CoreSet::getCacheDiskPath() {
       }
     }
   }
+  p_cache_root = FSys::path{"C:"} / "Doodle" / "cache";
 }
 
 FSys::path CoreSet::program_location() {

@@ -5,9 +5,12 @@
 #include "main_windows.h"
 
 #include <DoodleLib/Gui/setting_windows.h>
+#include <Exception/Exception.h>
 #include <Gui/Metadata/project_widget.h>
 #include <Gui/factory/tool_box_menu_factory.h>
 #include <core/CoreSet.h>
+#include <core/DoodleLib.h>
+#include <rpc/RpcFileSystemClient.h>
 #include <toolkit/toolkit.h>
 
 #include <nana/gui/filebox.hpp>
@@ -116,5 +119,24 @@ void main_windows::create_menubar() {
       mes();
     }
   });
+  // k_tool_menu.append("更新", [](nana::menu::item_proxy&) {
+  //   try {
+  //     auto k_rpc  = DoodleLib::Get().getRpcFileSystemClient();
+  //     auto k_name = fmt::format(
+  //         "Doodle-{}.{}.{}-win64.msi",
+  //         Doodle_VERSION_MAJOR,
+  //         Doodle_VERSION_MINOR,
+  //         Doodle_VERSION_PATCH);
+  //     auto k_l = CoreSet::getSet().getCacheRoot("update") / k_name;
+  //     auto k_s = FSys::path{"html"} /
+  //                "file" /
+  //                k_name;
+
+  //     k_rpc->Download(k_l, k_s);
+      
+  //   } catch (const DoodleError& e) {
+  //     DOODLE_LOG_ERROR(e.what());
+  //   }
+  // });
 }
 }  // namespace doodle
