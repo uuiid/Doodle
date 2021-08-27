@@ -392,6 +392,12 @@ class references_file():
         # type:(pymel.core.FileReference)->None
 
         self.maya_ref = ref_obj
+        self.namespace = None  # type:str
+        self.cloth_path = None  # type: pymel.core.Path
+        if self.maya_ref:
+            self._set_init_()
+
+    def _set_init_(self):
         self.path = pymel.core.Path(
             self.maya_ref.path)  # type: pymel.core.Path
         self.namespace = self.maya_ref.fullNamespace
@@ -406,6 +412,10 @@ class references_file():
             self.maya_ref.replaceWith(self.cloth_path)
             return True
         return False
+
+    def importContents(self):
+        if self.maya_ref:
+            self.maya_ref.importContents()
 
 
 class export_group(object):
