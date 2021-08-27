@@ -82,3 +82,5 @@ cmake-build-debug/
 .vscode/**.VC.**
 **/Plugins/Doodle/Binaries/**
 /build/
+*.mll
+*.manifest
