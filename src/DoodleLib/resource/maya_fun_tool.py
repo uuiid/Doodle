@@ -296,12 +296,15 @@ class meateral():
         self.reName()
 
     def reName(self):
-        if self.maya_obj and self.shader_group and not re.search("Mat$", self.name):
-            self.maya_obj.rename("{}Mat".format(self.name))
-            self.shader_group.rename(self.name)
-            print("rename to {} ".format(self.name))
-        else:
-            print("not rename {}".format(self.maya_obj))
+        try:
+            if self.maya_obj and self.shader_group and not re.search("Mat$", self.name):
+                self.maya_obj.rename("{}Mat".format(self.name))
+                self.shader_group.rename(self.name)
+                print("rename to {} ".format(self.name))
+            else:
+                print("not rename {}".format(self.maya_obj))
+        except RuntimeError:
+            pymel.core.warning("not rename {}".format(str(self.name)))
 
     def isSurfaceMaterial(self):
         # 获得分类是表面材质
