@@ -513,7 +513,7 @@ class cloth_group_file(export_group):
         # type: (pymel.core.Path,list[pymel.core.nodetypes.Transform])->None
 
         # 选择物体导入
-        self.maya_ref.maya_ref.importContents()
+        self.maya_ref.importContents()
 
         # 创建路径
         if not export_path:
