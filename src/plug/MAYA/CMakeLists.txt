@@ -2,10 +2,14 @@
 #         VERSION 2.3.1.9
 #         LANGUAGES CXX)
 
-# set(CMAKE_AUTOUIC ON)
-# set(CMAKE_AUTOMOC ON)
-# set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
+#list(APPEND CMAKE_PREFIX_PATH "C:/Program Files/Autodesk/Maya2020")
+set(CMAKE_PREFIX_PATH "F:/Qt/5.12.9/msvc2017_64")
+message(${CMAKE_PREFIX_PATH})
+find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
 # set(AUTOMOC_EXECUTABLE "C:/Program Files/Autodesk/Maya2020/bin/moc.exe")
 
 # helper macro to set up a moc rule

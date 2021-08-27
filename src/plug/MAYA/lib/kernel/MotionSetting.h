@@ -2,8 +2,8 @@
 #include <lib/MotionGlobal.h>
 #include <lib/kernel/BoostUuidWarp.h>
 
-#include <nlohmann/json_fwd.hpp>
 #include <boost/signals2.hpp>
+#include <nlohmann/json_fwd.hpp>
 namespace doodle::motion::kernel {
 class MotionSetting {
  public:
@@ -29,6 +29,7 @@ class MotionSetting {
 
  private:
   MotionSetting();
+  ~MotionSetting() = default;
 
   void createMotionProject();
 

@@ -47,7 +47,7 @@ set(doodle_motion_HEADER
         )
 
 # 由于版本不一样所以使用特制版qt制作maya插件
-Maya_qt5_wrap_cpp(MAYA_MOC_FILE ${doodle_motion_HEADER})
+qt5_wrap_cpp(MAYA_MOC_FILE ${doodle_motion_HEADER})
 
 
 add_library(doodle_motion SHARED

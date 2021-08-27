@@ -3,7 +3,7 @@
 # qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
 add_subdirectory(DoodleLib)
 #add_subdirectory(doodle_server)
-#add_subdirectory(plug)
+add_subdirectory(plug)
 
 #target_include_directories(core PUBLIC ${PROJECT_SOURCE_DIR}/include)
 #target_include_directories(pinyin PUBLIC ${PROJECT_SOURCE_DIR}/include)
