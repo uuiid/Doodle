@@ -538,8 +538,11 @@ class cloth_group_file(export_group):
         # 先找到的所有集合体
         # geo_group = []  # type: list[geometryInfo]
         for obj in self.maya_abc_export:
-            k_geo = geometryInfo(obj)
-            k_geo.repair()
+            try:
+                k_geo = geometryInfo(obj)
+                k_geo.repair()
+            except IndexError:
+                pymel.core.warning("{} not repair".format(str(obj)))
             # geo_group.append(geometryInfo(obj))
 
         # mat_group = []  # type: list[meateral]
@@ -697,3 +700,42 @@ class cloth_export():
         self.play_move()
         # self.export_fbx()
         self.export_abc()
+
+
+class analyseFileName():
+
+    def __init__(self):
+        self.filename = str(doodle_work_space.maya_file.name_not_ex)
+        self.eps = None
+        self.shot = None
+        self.shot_ab = ""
+
+    def analyse(self):
+        name_parsing_ep = re.findall("ep(\d+)", self.filename)
+        name_parsing_shot = re.findall("sc(\d+)([_|a-z])", self.filename)
+        if name_parsing_ep and name_parsing_shot:
+            try:
+                self.eps = int(name_parsing_ep[0][0])
+                self.shot = int(name_parsing_shot[0][0])
+                shotab = name_parsing_shot[0][1]
+                if shotab != "_":
+                    self.shotab = shotab
+            except NameError:
+                print("not get episodes and shots")
+        else:
+            pymel.core.warning("not get episodes and shots")
+
+    def path(self):
+        # type:()->pymel.core.Path
+        self.analyse()
+        path = None
+        if self.eps and self.shot:
+            path = "/03_Workflow/shots/ep{eps:0>3d}/sc{shot:0>4d}{shotab}/".format(
+                eps=self.eps,
+                shot=self.shot,
+                shotab=self.shot_ab
+            )
+        else:
+            path = "/03_Workflow/shots/"
+
+        return pymel.core.Path(path)
