@@ -280,6 +280,7 @@ class actn_up_paths;
 class DoodleLib;
 class ThreadPool;
 class menu_factory_base;
+class menu_factory;
 class long_term;
 class ImageSequence;
 class season;
@@ -469,7 +470,7 @@ using ThreadPoolPtr = std::shared_ptr<ThreadPool>;
  * @brief menu_factory_base 智能共享指针
  * 
  */
-using menu_factory_ptr = std::shared_ptr<menu_factory_base>;
+using menu_factory_ptr = std::shared_ptr<menu_factory>;
 /**
  * @brief long_term 智能共享指针
  * 

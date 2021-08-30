@@ -27,9 +27,6 @@ bool action_base::is_async() {
 long_term_ptr action_base::get_long_term_signal() const {
   return p_term;
 }
-long_term_ptr action_base::operator()() {
-  return p_term;
-}
 
 action::action()
     : action_base() {

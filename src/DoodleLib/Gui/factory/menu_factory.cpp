@@ -57,12 +57,6 @@ menu_factory::menu_factory(nana::window in_window)
     : menu_factory_base(in_window) {
 }
 
-void menu_factory::create_menu(const ProjectPtr& in_ptr) {}
-void menu_factory::create_menu(const AssetsPtr& in_ptr) {}
-void menu_factory::create_menu(const EpisodesPtr& in_ptr) {}
-void menu_factory::create_menu(const ShotPtr& in_ptr) {}
-void menu_factory::create_menu(const AssetsFilePtr& in_ptr) {}
-void menu_factory::create_menu(const season_ptr& in_ptr) {}
 
 void menu_factory::delete_project() {
   if (!p_metadata->hasChild()) {
@@ -459,20 +453,7 @@ void menu_factory::modify_season() {
   });
   p_action.push_back(item);
 }
-void dragdrop_menu_factory::create_menu(const ProjectPtr& in_ptr) {
-}
-void dragdrop_menu_factory::create_menu(const AssetsPtr& in_ptr) {
-  drop_menu();
-}
-void dragdrop_menu_factory::create_menu(const EpisodesPtr& in_ptr) {
-  drop_menu();
-}
-void dragdrop_menu_factory::create_menu(const ShotPtr& in_ptr) {
-  drop_menu();
-}
-void dragdrop_menu_factory::create_menu(const AssetsFilePtr& in_ptr) {
-  drop_menu();
-}
+
 void dragdrop_menu_factory::drop_menu() {
   if (p_paths.empty())
     return;
@@ -535,7 +516,8 @@ void dragdrop_menu_factory::create_image_and_up() {
 void dragdrop_menu_factory::set_drop_file(const std::vector<FSys::path>& in_path) {
   p_paths = in_path;
 }
-void dragdrop_menu_factory::create_menu(const season_ptr& in_ptr) {
+
+menu_factory_project::menu_factory_project(nana::window in_window) : menu_factory(in_window) {
 }
 
 void menu_factory_project::create_menu(const ProjectPtr& in_ptr) {
@@ -550,10 +532,22 @@ void menu_factory_project::create_menu(const ProjectPtr& in_ptr) {
     delete_project();
   }
 }
-menu_factory_project::menu_factory_project(nana::window in_window) : menu_factory(in_window) {
+
+void menu_factory_project::create_menu(const AssetsPtr& in_ptr) {
+}
+void menu_factory_project::create_menu(const EpisodesPtr& in_ptr) {
+}
+void menu_factory_project::create_menu(const ShotPtr& in_ptr) {
+}
+void menu_factory_project::create_menu(const AssetsFilePtr& in_ptr) {
+}
+void menu_factory_project::create_menu(const season_ptr& in_ptr) {
 }
 menu_factory_assets::menu_factory_assets(nana::window in_window) : menu_factory(in_window) {
 }
+void menu_factory_assets::create_menu(const AssetsFilePtr& in_ptr) {
+}
+
 void menu_factory_assets::create_menu(const ProjectPtr& in_ptr) {
   if (p_parent) {
     create_assets();
@@ -617,9 +611,13 @@ void menu_factory_assets::create_menu(const season_ptr& in_ptr) {
   }
 }
 
+
 menu_factory_assets_attr::menu_factory_assets_attr(nana::window in_window)
     : menu_factory(in_window) {
 }
+void menu_factory_assets_attr::create_menu(const ProjectPtr& in_ptr) {
+}
+
 void menu_factory_assets_attr::create_menu(const AssetsPtr& in_ptr) {
   if (p_parent) {
     create_assets_file();
@@ -669,4 +667,5 @@ void menu_factory_assets_attr::create_menu(const season_ptr& in_ptr) {
     create_assets_file_video_up();
   }
 }
+
 }  // namespace doodle

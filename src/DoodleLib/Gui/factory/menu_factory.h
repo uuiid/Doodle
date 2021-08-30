@@ -28,18 +28,15 @@ class DOODLELIB_API menu_factory_base
   friend Shot;
   friend AssetsFile;
 
+
+
  public:
   /**
    * @brief 这个时候使用 metadata 转发的方法
-   * 
-   * @param in_ptr 
+   *
+   * @param in_ptr
    */
-  virtual void create_menu(const ProjectPtr& in_ptr)    = 0;
-  virtual void create_menu(const AssetsPtr& in_ptr)     = 0;
-  virtual void create_menu(const EpisodesPtr& in_ptr)   = 0;
-  virtual void create_menu(const ShotPtr& in_ptr)       = 0;
-  virtual void create_menu(const AssetsFilePtr& in_ptr) = 0;
-  virtual void create_menu(const season_ptr& in_ptr)    = 0;
+
   explicit menu_factory_base(nana::window in_window);
   /**
    * @brief 设置创建各种内容所需要的数据
@@ -53,7 +50,7 @@ class DOODLELIB_API menu_factory_base
    *
    * @param in_menu
    */
-  void operator()(nana::menu& in_menu);
+  virtual void operator()(nana::menu& in_menu);
 };
 /**
  * @brief 创建右键菜单
@@ -65,12 +62,12 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
 
   virtual void create_prj();
 
-  virtual void create_menu(const ProjectPtr& in_ptr) override;
-  virtual void create_menu(const AssetsPtr& in_ptr) override;
-  virtual void create_menu(const EpisodesPtr& in_ptr) override;
-  virtual void create_menu(const ShotPtr& in_ptr) override;
-  virtual void create_menu(const AssetsFilePtr& in_ptr) override;
-  virtual void create_menu(const season_ptr& in_ptr) override;
+  virtual void create_menu(const ProjectPtr& in_ptr)  = 0;
+  virtual void create_menu(const AssetsPtr& in_ptr)  = 0;
+  virtual void create_menu(const EpisodesPtr& in_ptr)  = 0;
+  virtual void create_menu(const ShotPtr& in_ptr)  = 0;
+  virtual void create_menu(const AssetsFilePtr& in_ptr)  = 0;
+  virtual void create_menu(const season_ptr& in_ptr)  = 0;
 
  protected:
   void create_assets();
@@ -108,41 +105,48 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
 
 /**
  * @brief 这个是创建 项目右键菜单的方法
- * 
+ *
  * @image html doodle_main_menu_factory_project.jpg width=30%
- * 
- * @li 创建项目 直接创建项目， 名称使用中文， 拼音名称会自动生成， 
+ *
+ * @li 创建项目 直接创建项目， 名称使用中文， 拼音名称会自动生成，
  * @warning 请不要使用符号， 各种书名号或者其他符号等
  * @li 导出表格 导出csv格式的表格， 使用各种软件都可以打开
  * @li 重命名项目 重命名项目时 不会同时改变拼音名称
  * @li 设置路径 设置项目根路径
- * 
+ *
  */
 class DOODLELIB_API menu_factory_project : public menu_factory {
  public:
   explicit menu_factory_project(nana::window in_window);
 
   void create_menu(const ProjectPtr& in_ptr) override;
+  void create_menu(const AssetsPtr& in_ptr) override;
+  void create_menu(const EpisodesPtr& in_ptr) override;
+  void create_menu(const ShotPtr& in_ptr) override;
+  void create_menu(const AssetsFilePtr& in_ptr) override;
+  void create_menu(const season_ptr& in_ptr) override;
 };
 
 /**
  * @brief 创建资产小部件右键菜单
- * 
+ *
  * @image html doodle_main_menu_factory_assets.jpg  width=30%
- * @li 可以创建 @b 集数，镜头，季数 这三个是不可以是负数， 
+ * @li 可以创建 @b 集数，镜头，季数 这三个是不可以是负数，
  * @li 其中镜头是可以有ab镜头的， 但是请注意不要太多， 只可以有26个
  * @li 同时是可以创建重复的镜头的， 但是如果没有特殊情况，请不要创建重复的镜头
  * @li @b 资产 是可以使用任意的名称的， 可以使用中文， 在内部会自动转换为拼音，
- * @warning 不要使用特殊字符和 @b -,*,$,%,#,还有各种中文标点符号 \n 
+ * @warning 不要使用特殊字符和 @b -,*,$,%,#,还有各种中文标点符号 \n
  * 请小心多音字, 如果有多音字, 请加入 @b 后缀区分 \n
  * 集数显示为 ep0002,还有镜头显示为sc0002, 季数显示为seas_2这种, \n
  * @b 请不要将资产命名为这种类型的名称!!!!! 以便于区分
- * @li @b 删除 只有在这个项目没有子物体和子条目时才会显示  
+ * @li @b 删除 只有在这个项目没有子物体和子条目时才会显示
  *
  */
 class DOODLELIB_API menu_factory_assets : public menu_factory {
  public:
   explicit menu_factory_assets(nana::window in_window);
+
+  virtual void create_menu(const AssetsFilePtr& in_ptr) override;
   virtual void create_menu(const ProjectPtr& in_ptr) override;
   virtual void create_menu(const AssetsPtr& in_ptr) override;
   virtual void create_menu(const EpisodesPtr& in_ptr) override;
@@ -152,10 +156,10 @@ class DOODLELIB_API menu_factory_assets : public menu_factory {
 
 /**
  * @brief 资产的详情信息右键菜单栏
- * 
+ *
  * @image html doodle_main_menu_factory_assets_attr.jpg width=30%
- * 
- * @li @b 创建资产文件 是空的， 如果想要没有文件的话直接点这个就行 
+ *
+ * @li @b 创建资产文件 是空的， 如果想要没有文件的话直接点这个就行
  * @li @b 创建并上传文件 是上传并创建一个条目
  * @li @b 制作拍屏并上传 可以上传一个拍屏文件， 作为示意
  * @li @b 显示详细信息 可以显这个条目的详细信息
@@ -168,6 +172,7 @@ class DOODLELIB_API menu_factory_assets : public menu_factory {
 class DOODLELIB_API menu_factory_assets_attr : public menu_factory {
  public:
   explicit menu_factory_assets_attr(nana::window in_window);
+  virtual void create_menu(const ProjectPtr& in_ptr) override;
   virtual void create_menu(const AssetsPtr& in_ptr) override;
   virtual void create_menu(const EpisodesPtr& in_ptr) override;
   virtual void create_menu(const ShotPtr& in_ptr) override;
@@ -182,16 +187,12 @@ class DOODLELIB_API dragdrop_menu_factory : public menu_factory_base {
   std::vector<FSys::path> p_paths;
 
  public:
-  void create_menu(const ProjectPtr& in_ptr) override;
-  void create_menu(const AssetsPtr& in_ptr) override;
-  void create_menu(const EpisodesPtr& in_ptr) override;
-  void create_menu(const ShotPtr& in_ptr) override;
-  void create_menu(const AssetsFilePtr& in_ptr) override;
-  virtual void create_menu(const season_ptr& in_ptr) override;
 
   explicit dragdrop_menu_factory(nana::window in_window)
       : menu_factory_base(in_window),
         p_paths(){};
+
+
 
   /**
    * @brief 传入的拖拽文件的列表

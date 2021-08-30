@@ -56,7 +56,7 @@ foreach ($nets in $Net_MAPS) {
         Write-Host "目录" $nets[1] "没有访问权限， 取消映射"
     }
     catch{
-        Write-Host "catch all 目录" $nets[1] "没有访问权限， 取消映射"
+        Write-Host "catch all 目录 " $nets[1] " 没有访问权限， 取消映射"
     }
 }
 $My_Str += "`n`n即将重启文件管理器"

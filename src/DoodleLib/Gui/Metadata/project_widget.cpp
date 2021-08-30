@@ -356,14 +356,14 @@ assets_attr_widget::assets_attr_widget(nana::window in_window)
       DOODLE_LOG_WARN("没有文件获得选择或者指针， 直接返回")
       return;
     }
-    k_ptr->create_menu(k_factory);
+//    k_ptr->create_menu(k_factory);
 
-    (*k_factory)(p_menu);
-    if (p_menu.size() == 0) {
-      DOODLE_LOG_WARN("没有创建出菜单， 直接返回")
-      return;
-    }
-    p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
+//    (*k_factory)(p_menu);
+//    if (p_menu.size() == 0) {
+//      DOODLE_LOG_WARN("没有创建出菜单， 直接返回")
+//      return;
+//    }
+//    p_menu.popup(in_.window_handle, in_.pos.x, in_.pos.y);
   });
 
   p_list_box.events().mouse_down.connect(menu_assist{[this](const nana::arg_mouse& in_) {
