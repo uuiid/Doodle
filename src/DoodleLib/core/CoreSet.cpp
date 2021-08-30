@@ -210,12 +210,16 @@ void CoreSet::getCacheDiskPath() {
                                 "K:/",
                                 "L:/"};
   for (auto &dir : dirs) {
-    if (FSys::exists(dir)) {
-      auto info = FSys::space(dir);
-      if (((float)info.available / (float)info.capacity) > 0.2) {
-        p_cache_root = dir + "Doodle/cache";
-        break;
+    try {
+      if (FSys::exists(dir)) {
+        auto info = FSys::space(dir);
+        if (((float)info.available / (float)info.capacity) > 0.2) {
+          p_cache_root = dir + "Doodle/cache";
+          break;
+        }
       }
+    } catch (const FSys::filesystem_error &e) {
+      std::cout << e.what() << std::endl;
     }
   }
   p_cache_root = FSys::path{"C:"} / "Doodle" / "cache";

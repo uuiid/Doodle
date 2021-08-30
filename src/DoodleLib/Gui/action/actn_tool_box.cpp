@@ -34,7 +34,7 @@ namespace toolbox {
 
 actn_export_maya::actn_export_maya()
     : action_toolbox<action_arg::arg_paths>(),
-      p_maya(std::make_shared<MayaFile>()) {
+      p_maya() {
   p_term = std::make_shared<long_term>();
   p_name = "导出fbx";
 }
@@ -45,7 +45,7 @@ long_term_ptr actn_export_maya::run() {
     cancel("取消导出");
     return p_term;
   }
-
+  p_maya = std::make_shared<MayaFile>();
   std::vector<long_term_ptr> k_list{};
   std::transform(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
                  [this](const auto& in) {
@@ -143,7 +143,7 @@ long_term_ptr actn_ue4_shot_episodes::run() {
   return p_term;
 }
 actn_qcloth_sim_export::actn_qcloth_sim_export()
-    : p_maya(std::make_shared<MayaFile>()) {
+    : p_maya() {
   p_term = std::make_shared<long_term>();
   p_name = "进行qcloth批量解算";
 }
@@ -157,6 +157,7 @@ long_term_ptr actn_qcloth_sim_export::run() {
     cancel("取消导出");
     return p_term;
   }
+  p_maya = std::make_shared<MayaFile>();
   std::vector<long_term_ptr> k_list{};
   std::transform(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
                  [this](const auto& in) {
