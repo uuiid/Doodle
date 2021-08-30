@@ -397,15 +397,20 @@ class references_file():
         if self.maya_ref:
             self._set_init_()
 
+    ## 
+    # 创建colth 文件路径
     def _set_init_(self):
         self.path = pymel.core.Path(
             self.maya_ref.path)  # type: pymel.core.Path
         self.namespace = self.maya_ref.fullNamespace
         self.cloth_path = pymel.core.Path()
-        if self.path.fnmatch("*[rig].ma"):
-            self.cloth_path = self.cfx_cloth_path / self.path.name.replace(
-                "rig", "cloth")
-
+        self.cloth_path = self.cfx_cloth_path / \
+            "{}_cloth{}".format(self.path.namebase, self.path.ext)
+        # if self.path.fnmatch("*[rig].ma"):
+        #     self.cloth_path = self.cfx_cloth_path / self.path.name.replace(
+        #         "rig", "cloth")
+    ## 
+    # 如果存在就替换路径
     def replace_file(self):
         # type:()->bool
         if(self.cloth_path.exists()):
