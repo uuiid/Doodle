@@ -7,6 +7,7 @@
       <file path="$PROJECT_DIR$/.vscode" />
       <file path="$PROJECT_DIR$/b_Ninja_VS19_Ni_64_qt515_Debug" />
       <file path="$PROJECT_DIR$/b_Ninja_VS19_Ni_64_qt515_Release" />
+      <file path="$PROJECT_DIR$/build" />
       <file path="$PROJECT_DIR$/tools/grpc_test" />
     </excludeRoots>
   </component>

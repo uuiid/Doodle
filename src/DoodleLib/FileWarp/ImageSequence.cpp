@@ -117,7 +117,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
         int thickness    = 2;
         int baseline     = 0;
         auto textSize    = cv::getTextSize(p_Text, fontFace,
-                                        fontScale, thickness, &baseline);
+                                           fontScale, thickness, &baseline);
         baseline += thickness;
         textSize.width += baseline;
         textSize.height += baseline;
@@ -146,9 +146,9 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
 }
 
 long_term_ptr ImageSequence::create_video_asyn(const FSys::path &out_file) {
-  auto k_ptr = shared_from_this();
-  DoodleLib::Get().get_thread_pool()->enqueue(
-      [k_ptr, out_file]() { k_ptr->createVideoFile(out_file); });
+  auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue(
+      [this, out_file]() { this->createVideoFile(out_file); });
+  p_long_sig->p_list.push_back(std::move(k_fut));
   return p_long_sig;
 }
 std::string ImageSequence::set_shot_and_eps(const ShotPtr &in_shot, const EpisodesPtr &in_episodes) {

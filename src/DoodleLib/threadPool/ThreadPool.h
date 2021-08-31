@@ -1,19 +1,20 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Exception/Exception.h>
-#include <vector>
-#include <queue>
-#include <memory>
-#include <thread>
-#include <mutex>
+
 #include <condition_variable>
-#include <future>
 #include <functional>
+#include <future>
+#include <memory>
+#include <mutex>
+#include <queue>
 #include <stdexcept>
+#include <thread>
+#include <vector>
 
 namespace doodle {
 
-class ThreadPool : public  details::no_copy {
+class ThreadPool : public details::no_copy {
  public:
   explicit ThreadPool(size_t);
   template <class F, class... Args>
@@ -90,4 +91,4 @@ inline ThreadPool::~ThreadPool() {
   for (std::thread& worker : workers)
     worker.join();
 }
-}
+}  // namespace doodle

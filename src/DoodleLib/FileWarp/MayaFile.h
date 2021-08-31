@@ -10,7 +10,7 @@ class DOODLELIB_API MayaFile
   long_term_ptr p_term;
 
   std::vector<long_term_ptr> p_term_list;
-  std::vector<std::future<void>> p_futurn_list;
+
 
   static void write_maya_tool_file();
   [[nodiscard]] static FSys::path warit_tmp_file(const std::string& in_string);
@@ -28,7 +28,7 @@ class DOODLELIB_API MayaFile
   using qcloth_arg_ptr = std::shared_ptr<qcloth_arg>;
 
   explicit MayaFile(FSys::path mayaPath = {});
-  virtual ~MayaFile();
+
   [[nodiscard]] long_term_ptr get_term() const;
   /**
    * 导出maya文件中的fbx

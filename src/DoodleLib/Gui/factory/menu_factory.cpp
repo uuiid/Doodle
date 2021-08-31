@@ -29,22 +29,20 @@ void menu_factory_base::set_metadate(const MetadataPtr& in_ptr, const MetadataPt
 }
 
 void menu_factory_base::operator()(nana::menu& in_menu) {
-  auto k_f = shared_from_this();
   for (auto& k_i : p_action) {
     if (k_i)
       in_menu.append(
           k_i->class_name(),
-          [k_i, k_f](const nana::menu::item_proxy&) {
+          [k_i, this](const nana::menu::item_proxy&) {
             try {
-              (*k_i)(k_f->p_metadata, k_f->p_parent);
+              auto k_long = (*k_i)(this->p_metadata, this->p_parent);
               if (k_i->is_async()) {
-                auto k_long = k_i->get_long_term_signal();
                 if (k_long)
-                  progress::create_progress(k_f->p_window, k_long, "结果");
+                  progress::create_progress(this->p_window, k_long, "结果");
               }
             } catch (DoodleError& error) {
               DOODLE_LOG_WARN(error.what())
-              nana::msgbox k_msgbox{k_f->p_window, error.what()};
+              nana::msgbox k_msgbox{this->p_window, error.what()};
               k_msgbox.show();
             }
           });

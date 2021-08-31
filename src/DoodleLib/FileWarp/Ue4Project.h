@@ -129,7 +129,6 @@ class DOODLELIB_API Ue4Project {
    */
   Ue4Project(FSys::path project_path);
 
-  ~Ue4Project();
   /**
    * @brief 同步创建镜头和集数文件夹
    * 

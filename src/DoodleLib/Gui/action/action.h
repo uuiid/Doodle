@@ -66,13 +66,13 @@ class DOODLELIB_API action_base : public details::no_copy {
 
  protected:
   std::string p_name;
-  long_term_ptr p_term;
+  std::weak_ptr<long_term> p_term;
   std::mutex _mutex;
 
   void cancel(const std::string& in_str) {
-    if (p_term) {
-      p_term->sig_finished();
-      p_term->sig_message_result(in_str);
+    if (!p_term.expired()) {
+      p_term.lock()->sig_finished();
+      p_term.lock()->sig_message_result(in_str);
     }
   }
 
@@ -97,6 +97,7 @@ class DOODLELIB_API action_base : public details::no_copy {
    * @return long_term_ptr 异步动作的信号类
    */
   [[nodiscard]] long_term_ptr get_long_term_signal() const;
+  [[nodiscard]] long_term_ptr get_long_term_signal();
 };
 
 class DOODLELIB_API action : public action_base {
@@ -122,7 +123,7 @@ class action_toolbox : public action {
   arg_type p_date;
   virtual long_term_ptr run() = 0;
   long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override {
-    return action::p_term;
+    return {};
   };
 
  public:
@@ -155,17 +156,13 @@ class DOODLELIB_API action_indirect : public action {
 template <class arg_type>
 class actn_composited : public action_indirect<arg_type> {
  protected:
-  std::vector<long_term_ptr> p_term_list;
-  std::int32_t p_num;
-  std::string p_str;
 
  public:
   using arg_ = arg_type;
-  actn_composited();
+  actn_composited() = default;
 
   void set_class_name(const std::string& in_name);
-  bool is_async() override;
-  long_term_ptr run(const MetadataPtr& in_data, const MetadataPtr& in_parent) override;
+
 };
 
 class DOODLELIB_API actn_null : public action_indirect<action_arg::arg_null> {
@@ -178,28 +175,8 @@ class DOODLELIB_API actn_null : public action_indirect<action_arg::arg_null> {
 
 /// 内部实现
 namespace doodle {
-
-template <class arg_type>
-actn_composited<arg_type>::actn_composited()
-    : p_term_list(),
-      p_num(0),
-      p_str() {
-  action::p_term = std::make_shared<long_term>();
-}
-
 template <class arg_type>
 void actn_composited<arg_type>::set_class_name(const std::string& in_name) {
   action::p_name = in_name;
-}
-
-template <class arg_type>
-long_term_ptr actn_composited<arg_type>::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  action::p_term->forward_sig(p_term_list);
-  return p_term_list.empty() ? long_term_ptr{} : action::p_term;
-}
-
-template <class arg_type>
-bool actn_composited<arg_type>::is_async() {
-  return false;
 }
 }  // namespace doodle

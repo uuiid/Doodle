@@ -18,19 +18,19 @@ actn_export_excel::actn_export_excel()
       p_prj_list(),
       p_user_list() {
   p_name = "导出表格";
-  p_term = std::make_shared<long_term>();
 }
 bool actn_export_excel::is_async() {
   return true;
 }
 long_term_ptr actn_export_excel::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   _arg_type = sig_get_arg().value();
+  auto k_term = get_long_term_signal();
   if (_arg_type.is_cancel || !_arg_type.p_time_range.first || !_arg_type.p_time_range.second) {
-    p_term->sig_finished();
-    p_term->sig_message_result({"取消导出"});
+    k_term->sig_finished();
+    k_term->sig_message_result({"取消导出"});
   }
   export_excel();
-  return p_term;
+  return k_term;
 }
 void actn_export_excel::export_excel() {
   auto k_rpc = DoodleLib::Get().getRpcMetadataClient();

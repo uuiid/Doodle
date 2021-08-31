@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/Exception/Exception.h>
 
 #include <boost/signals2.hpp>
 
@@ -20,10 +21,10 @@ class DOODLELIB_API long_term : public details::no_copy {
   std::mutex _mutex;
   std::size_t p_num;
   // std::recursive_mutex _mutex;
-
+  std::vector<long_term_ptr> p_child;
  public:
   long_term();
-  virtual ~long_term() = default;
+  virtual ~long_term();
   /**
    * @brief 将信号转发到传入的新的信号中去
    * @param in_forward 新的信号
@@ -51,6 +52,8 @@ class DOODLELIB_API long_term : public details::no_copy {
 
   [[nodiscard]] bool fulfil() const;
   [[nodiscard]] std::string message_result() const;
+
+  std::vector<std::future<void>> p_list;
 };
 
 }  // namespace doodle

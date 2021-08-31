@@ -14,8 +14,7 @@ namespace doodle {
 MayaFile::MayaFile(FSys::path mayaPath)
     : p_path(std::move(mayaPath)),
       p_term(std::make_shared<long_term>()),
-      p_term_list(),
-      p_futurn_list() {
+      p_term_list(){
   if (!FSys::exists(p_path) && CoreSet::getSet().hasMaya())
     p_path = CoreSet::getSet().MayaPath();
   else
@@ -149,7 +148,7 @@ bool MayaFile::run_comm(const std::wstring& in_com) const {
         k_term->sig_finished();
         k_term->sig_message_result("导出完成");
       });
-  p_futurn_list.push_back(std::move(k_fut));
+  k_term->p_list.push_back(std::move(k_fut));
   return k_term;
 }
 
@@ -206,7 +205,7 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
         k_term->sig_finished();
         k_term->sig_message_result(fmt::format("完成导出 :{}", in_arg->sim_path.generic_string()));
       });
-  p_futurn_list.push_back(std::move(k_fut));
+  k_term->p_list.push_back(std::move(k_fut));
   return k_term;
 }
 
@@ -217,14 +216,6 @@ bool MayaFile::is_maya_file(const FSys::path& in_path) {
 long_term_ptr MayaFile::get_term() const {
   return p_term;
 }
-MayaFile::~MayaFile() {
-  for (auto& rus : p_futurn_list) {
-    try {
-      rus.get();
-    } catch (DoodleError& error) {
-      DOODLE_LOG_WARN(error.what());
-    }
-  }
-}
+
 
 }  // namespace doodle

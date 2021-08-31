@@ -5,7 +5,7 @@
 namespace doodle {
 /**
  * @brief 连接视频的opencv的包装类
- * 
+ *
  */
 class DOODLELIB_API VideoSequence
     : public std::enable_shared_from_this<VideoSequence> {
@@ -14,7 +14,7 @@ class DOODLELIB_API VideoSequence
   long_term_ptr p_term;
 
  public:
-  VideoSequence(decltype(p_paths) paths);
+  VideoSequence(std::vector<FSys::path> paths);
 
   void connectVideo(const FSys::path& path = {});
   long_term_ptr connectVideo_asyn(const FSys::path& path = {});

@@ -15,9 +15,8 @@
 namespace doodle {
 actn_image_to_movie::actn_image_to_movie()
     : p_video_path(),
-      p_image_sequence(std::make_shared<ImageSequence>()) {
+      p_image_sequence() {
   p_name = "转换视频";
-  p_term = p_image_sequence->get_long_term();
 }
 
 FSys::path actn_image_to_movie::get_video_path() const {
@@ -58,6 +57,9 @@ bool actn_image_to_movie::is_accept(const arg_& in_any) {
 }
 
 long_term_ptr actn_image_to_movie::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+  p_image_sequence = std::make_shared<ImageSequence>();
+  auto k_term = p_image_sequence->get_long_term();
+
   auto k_path = sig_get_arg().value();
   if (k_path.is_cancel)
     return {};
@@ -96,7 +98,7 @@ long_term_ptr actn_image_to_movie::run(const MetadataPtr& in_data, const Metadat
   p_image_sequence->create_video_asyn(k_path.out_file);
 
   FSys::open_explorer(k_path.out_file.parent_path());
-  return p_term;
+  return k_term;
 }
 bool actn_image_to_movie::is_async() {
   return true;
@@ -120,16 +122,17 @@ bool actn_image_to_move_up::is_async() {
 }
 
 long_term_ptr actn_image_to_move_up::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+  auto k_term = this->get_long_term_signal();
   _arg_type = action_indirect::sig_get_arg().value();
   if (_arg_type.is_cancel) {
-    p_term->sig_finished();
-    p_term->sig_message_result("无法找到需要转换的资源");
-    return p_term;
+    this->cancel("取消上传");
+    return k_term;
   }
 
   auto k_conv_image = p_image_action->run(in_data, in_parent);
-  p_term_list.push_back(k_conv_image);
-  p_term_list.push_back(p_up_path->get_long_term_signal());
+  k_term->forward_sig(k_conv_image);
+  k_term->forward_sig(p_up_path->get_long_term_signal());
+
 
   /// 运行转换完成后的上传文件回调
   k_conv_image->sig_finished.connect([this, in_parent]() {

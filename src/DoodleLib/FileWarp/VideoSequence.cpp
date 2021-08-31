@@ -7,7 +7,7 @@
 #include <opencv2/opencv.hpp>
 
 namespace doodle {
-VideoSequence::VideoSequence(decltype(p_paths) paths)
+VideoSequence::VideoSequence(std::vector<FSys::path> paths)
     : p_paths(std::move(paths)),
       p_term(std::make_shared<long_term>()) {
   for (auto&& path : p_paths) {
@@ -67,9 +67,9 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
 }
 
 long_term_ptr VideoSequence::connectVideo_asyn(const FSys::path& path) {
-  auto k_ptr = shared_from_this();
-  DoodleLib::Get().get_thread_pool()->enqueue(
-      [k_ptr, path]() { k_ptr->connectVideo(path); });
+  auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue(
+      [this, path]() { this->connectVideo(path); });
+  p_term->p_list.push_back(std::move(k_fut));
   return p_term;
 }
 }  // namespace doodle

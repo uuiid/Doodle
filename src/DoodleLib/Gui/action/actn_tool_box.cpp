@@ -35,10 +35,10 @@ namespace toolbox {
 actn_export_maya::actn_export_maya()
     : action_toolbox<action_arg::arg_paths>(),
       p_maya() {
-  p_term = std::make_shared<long_term>();
   p_name = "导出fbx";
 }
 long_term_ptr actn_export_maya::run() {
+  p_term = std::make_shared<long_term>();
   p_date = sig_get_arg().value();
 
   if (p_date.is_cancel) {
@@ -61,13 +61,15 @@ bool actn_export_maya::is_async() {
 actn_create_video::actn_create_video()
     : action_toolbox<action_arg::arg_paths>(),
       p_image() {
-  p_term = std::make_shared<long_term>();
   p_name = "创建视频";
 }
 bool actn_create_video::is_async() {
   return true;
 }
 long_term_ptr actn_create_video::run() {
+  p_term = std::make_shared<long_term>();
+  p_image.clear();
+
   p_date = sig_get_arg().value();
 
   if (p_date.is_cancel) {
@@ -101,13 +103,13 @@ long_term_ptr actn_create_video::run() {
 actn_connect_video::actn_connect_video()
     : action_toolbox<action_arg::arg_paths>(),
       p_video_sequence() {
-  p_term = std::make_shared<long_term>();
   p_name = "连接视频";
 }
 bool actn_connect_video::is_async() {
   return true;
 }
 long_term_ptr actn_connect_video::run() {
+  p_term = std::make_shared<long_term>();
   p_date = sig_get_arg().value();
 
   if (p_date.is_cancel) {
@@ -123,13 +125,13 @@ long_term_ptr actn_connect_video::run() {
 
 actn_ue4_shot_episodes::actn_ue4_shot_episodes()
     : action_toolbox<action_arg::arg_tool_box_create_ue_shot>() {
-  p_term = std::make_shared<long_term>();
   p_name = "创建ue4关卡";
 }
 bool actn_ue4_shot_episodes::is_async() {
   return true;
 }
 long_term_ptr actn_ue4_shot_episodes::run() {
+  p_term = std::make_shared<long_term>();
   p_date = sig_get_arg().value();
 
   if (p_date.is_cancel) {
@@ -144,13 +146,13 @@ long_term_ptr actn_ue4_shot_episodes::run() {
 }
 actn_qcloth_sim_export::actn_qcloth_sim_export()
     : p_maya() {
-  p_term = std::make_shared<long_term>();
   p_name = "进行qcloth批量解算";
 }
 bool actn_qcloth_sim_export::is_async() {
   return true;
 }
 long_term_ptr actn_qcloth_sim_export::run() {
+  p_term = std::make_shared<long_term>();
   p_date = sig_get_arg().value();
 
   if (p_date.is_cancel) {

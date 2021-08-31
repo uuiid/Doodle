@@ -14,12 +14,13 @@ namespace doodle {
 actn_down_paths::actn_down_paths()
     : p_tran() {
   p_name = "下载文件";
-  p_term = std::make_shared<long_term>();
 }
 long_term_ptr actn_down_paths::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+  auto k_term = get_long_term_signal();
+
   auto k_data = sig_get_arg().value();
   if (k_data.is_cancel)
-    return p_term;
+    return k_term;
 
   if (!in_data)
     throw DoodleError{"选择为空"};
@@ -28,7 +29,7 @@ long_term_ptr actn_down_paths::run(const MetadataPtr& in_data, const MetadataPtr
 
   auto k_ass = std::dynamic_pointer_cast<AssetsFile>(in_data);
   if (k_ass->getPathFile().empty())
-    return p_term;
+    return k_term;
 
   if (!FSys::exists(k_data.date.parent_path()))
     FSys::create_directories(k_data.date.parent_path());
@@ -42,9 +43,9 @@ long_term_ptr actn_down_paths::run(const MetadataPtr& in_data, const MetadataPtr
     k_list.emplace_back(std::make_unique<rpc_trans_path>(k_data.date / k_item->getServerPath().filename(), k_item->getServerPath()));
   }
   p_tran = k_client->Download(k_list);
-  p_term->forward_sig(p_tran->get_term());
+  k_term->forward_sig(p_tran->get_term());
   (*p_tran)();
-  return p_term;
+  return k_term;
 }
 bool actn_down_paths::is_async() {
   return true;

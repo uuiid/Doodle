@@ -26,20 +26,9 @@ Ue4Project::Ue4Project(FSys::path project_path)
     : p_ue_path(),
       p_ue_Project_path(std::move(project_path)),
       p_term(std::make_shared<long_term>()),
-      p_futurn_list(),
       p_term_list() {
   auto& ue  = Ue4Setting::Get();
   p_ue_path = ue.Path();
-}
-
-Ue4Project::~Ue4Project() {
-  for (auto& rus : p_futurn_list) {
-    try {
-      rus.get();
-    } catch (DoodleError& error) {
-      DOODLE_LOG_WARN(error.what());
-    }
-  }
 }
 
 void Ue4Project::addUe4ProjectPlugins(const std::vector<std::string>& in_strs) const {
@@ -113,13 +102,13 @@ FSys::path Ue4Project::find_ue4_skeleton(const FSys::path& in_path) {
     auto k_ch    = k_match[1].str();
     auto k_sk_ch = fmt::format("SK_{}_Skeleton", k_ch);
     auto k_it    = std::find_if(
-        FSys::recursive_directory_iterator{k_ch_dir},
-        FSys::recursive_directory_iterator{},
-        [k_sk_ch](const FSys::directory_entry& in_path) {
+           FSys::recursive_directory_iterator{k_ch_dir},
+           FSys::recursive_directory_iterator{},
+           [k_sk_ch](const FSys::directory_entry& in_path) {
           auto k_p = in_path.path().stem().generic_string();
           // std::transform(k_p.begin(), k_p.end(), k_p.begin(), [](unsigned char c) { return std::tolower(c); });
           return in_path.path().stem() == k_sk_ch;
-        });
+           });
     if (k_it != FSys::recursive_directory_iterator{}) {
       k_r = k_it->path();
       DOODLE_LOG_INFO("寻找到sk {}", k_r);
@@ -220,7 +209,7 @@ long_term_ptr Ue4Project::create_shot_folder_asyn(const std::vector<ShotPtr>& in
       [this, inShotList]() {
         this->createShotFolder(inShotList);
       });
-  p_futurn_list.emplace_back(std::move(k_f));
+  p_term->p_list.emplace_back(std::move(k_f));
   return p_term;
 }
 
@@ -256,7 +245,7 @@ long_term_ptr Ue4Project::import_files_asyn(const std::vector<FSys::path>& in_pa
       k_term->sig_message_result(fmt::format("项目 {} 完成导入", p_ue_Project_path));
     };
 
-    p_futurn_list.emplace_back(DoodleLib::Get().get_thread_pool()->enqueue(k_fun));
+    k_term->p_list.emplace_back(DoodleLib::Get().get_thread_pool()->enqueue(k_fun));
   }
   k_term->forward_sig(p_term_list);
   return k_term;

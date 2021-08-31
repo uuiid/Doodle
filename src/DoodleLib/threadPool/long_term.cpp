@@ -9,7 +9,9 @@ long_term::long_term() : sig_progress(),
                          p_str(),
                          p_progress(0),
                          p_num(0),
-                         _mutex() {
+                         _mutex(),
+                         p_list(),
+                         p_child(){
   sig_finished.connect([this]() {
     std::lock_guard k_guard{_mutex};
     p_fulfil = true;
@@ -37,6 +39,7 @@ void long_term::forward_sig(const long_term_ptr& in_forward) {
   in_forward->sig_progress.connect([this](std::double_t in_pro) { sig_progress(in_pro); });
   in_forward->sig_finished.connect([this]() { sig_finished(); });
   in_forward->sig_message_result.connect([this](const std::string& in_str) { sig_message_result(in_str); });
+  p_child.push_back(in_forward);
 }
 
 void long_term::forward_sig(const std::vector<long_term_ptr>& in_forward) {
@@ -58,6 +61,16 @@ void long_term::forward_sig(const std::vector<long_term_ptr>& in_forward) {
         sig_finished();
       }
     });
+    p_child.push_back(i);
+  }
+}
+long_term::~long_term() {
+  for (auto& k_item : p_list) {
+    try {
+      k_item.get();
+    } catch (const DoodleError& error) {
+      DOODLE_LOG_WARN(error.what());
+    }
   }
 }
 }  // namespace doodle
