@@ -106,7 +106,10 @@ void tool_box_menu_factory::create_menu() {
     k_arg.is_cancel &= k_paths.empty();
     if (k_arg.is_cancel)
       return k_arg;
-    k_arg.qcloth_assets_path = k_paths.front();
+    if (!k_paths.empty())
+      k_arg.qcloth_assets_path = k_paths.front();
+    else
+      k_arg.is_cancel = true;
     return k_arg;
   });
 

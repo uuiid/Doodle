@@ -222,7 +222,8 @@ void CoreSet::getCacheDiskPath() {
       std::cout << e.what() << std::endl;
     }
   }
-  p_cache_root = FSys::path{"C:"} / "Doodle" / "cache";
+  if (p_cache_root.empty())
+    p_cache_root = FSys::path{"C:/"} / "Doodle" / "cache";
 }
 
 FSys::path CoreSet::program_location() {

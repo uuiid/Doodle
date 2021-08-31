@@ -23,8 +23,8 @@ MayaFile::MayaFile(FSys::path mayaPath)
 }
 
 void MayaFile::write_maya_tool_file() {
-  const static auto tmp_path = CoreSet::getSet().getCacheRoot(
-      fmt::format("maya/v{}{}{}",
+  const auto tmp_path = CoreSet::getSet().getCacheRoot(
+      fmt::format("maya\\v{}{}{}",
                   Doodle_VERSION_MAJOR,
                   Doodle_VERSION_MINOR,
                   Doodle_VERSION_PATCH));
@@ -184,12 +184,12 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
             "pymel.core.system.loadPlugin(\"qualoth_2019_x64\")"
             "\n\npymel.core.system.openFile(\"{}\",loadReferenceDepth=\"all\")\n"
             "if pymel.core.mel.eval(\"currentTimeUnitToFPS\") != 25:\n"
-            "    pymel.core.warning(\"frame rate is not 25 \")"
-            "    quit()"
-            "pymel.core.playbackOptions(animationStartTime=\"950\")\n"
+            "    pymel.core.warning(\"frame rate is not 25 \")\n"
+            "    quit()\n"
+            "pymel.core.playbackOptions(animationStartTime=950)\n"
             "import maya_fun_tool\n"
-            "reload(maya_fun_tool)\n"
-            "maya_fun_tool.cloth_export(\"{}\")()",
+            "maya_fun_tool.doodle_work_space = maya_fun_tool.maya_workspace()\n"
+            "maya_fun_tool.cloth_export(\"{}\")()\n",
             in_arg->sim_path.generic_string(),
             in_arg->qcloth_assets_path.generic_string());
         auto run_path = warit_tmp_file(str_script);

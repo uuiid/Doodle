@@ -21,5 +21,6 @@ pymel.core.playbackOptions(animationStartTime="950")
 # 这个导出一定要在加载好场景后导入
 import maya_fun_tool
 reload(maya_fun_tool)
+maya_fun_tool.doodle_work_space = maya_fun_tool.maya_workspace()
 maya_fun_tool.cloth_export("V:/03_Workflow/Assets/CFX/cloth")()
 # maya_fun_tool.camera().create_move()

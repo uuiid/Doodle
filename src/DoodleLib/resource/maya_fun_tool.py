@@ -184,6 +184,7 @@ class camera:
                 # editorPanelName="modelPanel4"
                 # offScreen=True
             )
+        print("create move {}".format(out_path))
 
     def export(self, export_path):
 
@@ -397,7 +398,7 @@ class references_file():
         if self.maya_ref:
             self._set_init_()
 
-    ## 
+    ##
     # 创建colth 文件路径
     def _set_init_(self):
         self.path = pymel.core.Path(
@@ -406,11 +407,13 @@ class references_file():
         self.cloth_path = pymel.core.Path()
         self.cloth_path = self.cfx_cloth_path / \
             "{}_cloth{}".format(self.path.namebase, self.path.ext)
+        print("replace_file {}".format(self.cloth_path))
         # if self.path.fnmatch("*[rig].ma"):
         #     self.cloth_path = self.cfx_cloth_path / self.path.name.replace(
         #         "rig", "cloth")
-    ## 
+    ##
     # 如果存在就替换路径
+
     def replace_file(self):
         # type:()->bool
         if(self.cloth_path.exists()):
@@ -664,6 +667,9 @@ class cloth_export():
             obj.set_cache_folder()
 
     def play_move(self):
+        print("create move {} to {}".format(
+            doodle_work_space.raneg.start,
+            doodle_work_space.raneg.end))
         self.cam.create_move()
         self.cam.create_move(
             out_path=doodle_work_space.maya_file.abs_path / "mov",
