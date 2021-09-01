@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 
 project(Doodle
-        VERSION 3.0.12.11
+        VERSION 3.0.13.11
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -50,23 +50,23 @@ include(CMakeRC)
 #
 #find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
 #GUI 库
-find_package(wxWidgets REQUIRED)
-find_package(unofficial-nana CONFIG REQUIRED)
+#find_package(wxWidgets REQUIRED)
 
-find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time log locale iostreams)
-find_package(EnTT CONFIG REQUIRED)
+#find_package(EnTT CONFIG REQUIRED)
 # find_package(CURL REQUIRED)
-find_package(Sqlpp11 REQUIRED)
-find_package(GTest CONFIG REQUIRED)
-find_package(Catch2 CONFIG REQUIRED)
+#find_package(GTest CONFIG REQUIRED)
 #target_link_libraries(main PRIVATE Catch2::Catch2)
-find_package(FFMPEG REQUIRED)
+#find_package(FFMPEG REQUIRED)
 #find_package(rttr CONFIG REQUIRED)
-find_library(DOODLE_MAR mpr.lib REQUIRED)
 # find_package(pugixml CONFIG REQUIRED)
 
-find_package(Doxygen REQUIRED)
 
+find_package(unofficial-nana CONFIG )
+find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time log locale iostreams)
+find_package(Sqlpp11 REQUIRED)
+find_package(Catch2 CONFIG )
+find_library(DOODLE_MAR mpr.lib REQUIRED)
+find_package(Doxygen )
 # 寻找opencv
 find_package(OpenCV CONFIG REQUIRED)
 
@@ -83,6 +83,8 @@ find_package(cereal CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
+find_package(Autodesk_FBX 2020 )
 #服务器库
 #应该会用其中一个
 #find_package(cppzmq CONFIG REQUIRED)
@@ -103,11 +105,9 @@ find_package(cryptopp CONFIG REQUIRED)
 #
 #find_package(modules CONFIG REQUIRED)
 #target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
-find_package(gRPC CONFIG REQUIRED)
 #target_link_libraries(main PRIVATE gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts)
 #target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
 
-find_package(Autodesk_FBX 2020 REQUIRED)
 #搜索qt 安装辅助程序
 # find_program(WINQT qt5::windeployqt REQUIRED)
 
