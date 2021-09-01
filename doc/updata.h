@@ -36,4 +36,9 @@
  * @subsection updata_log_3013 版本3.0.13
  *
  * @li 更新maya自动解算组件：更新maya解算文件abc导出规则
+ *
+ * @subsection updata_log_3014 版本3.0.14
+ *
+ * @li 更新maya工具: 解算导出是提取路径功能
+ *
  */
