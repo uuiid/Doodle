@@ -32,4 +32,8 @@
  * @subsection updata_log_3011 版本3.0.11
  * 
  * @li 更新maya自动解算组件：更新maya 解算资产替换规则
+ *
+ * @subsection updata_log_3013 版本3.0.13
+ *
+ * @li 更新maya自动解算组件：更新maya解算文件abc导出规则
  */
