@@ -76,7 +76,7 @@ function(doodle_sqlpp_generate out_lists)
                 ${CMAKE_CURRENT_BINARY_DIR}/core/${CLEAN_NAME}_sql.h)
         add_custom_command(
                 OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/core/${CLEAN_NAME}_sql.h"
-                COMMAND ${PROJECT_SOURCE_DIR}/venv/Scripts/Activate.bat
+                COMMAND ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat
                 COMMAND py
                 ARGS $<TARGET_FILE:sqlpp11::ddl2cpp>
                 ${_PATH}
