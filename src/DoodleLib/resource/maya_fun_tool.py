@@ -411,9 +411,9 @@ class references_file():
         # if self.path.fnmatch("*[rig].ma"):
         #     self.cloth_path = self.cfx_cloth_path / self.path.name.replace(
         #         "rig", "cloth")
+
     ##
     # 如果存在就替换路径
-
     def replace_file(self):
         # type:()->bool
         if(self.cloth_path.exists()):
@@ -728,7 +728,7 @@ class analyseFileName():
         name_parsing_shot = re.findall("sc(\d+)([_|a-z])", self.filename)
         if name_parsing_ep and name_parsing_shot:
             try:
-                self.eps = int(name_parsing_ep[0][0])
+                self.eps = int(name_parsing_ep[0])
                 self.shot = int(name_parsing_shot[0][0])
                 shotab = name_parsing_shot[0][1]
                 if shotab != "_":
