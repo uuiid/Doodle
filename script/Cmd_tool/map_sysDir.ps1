@@ -13,21 +13,51 @@ $map_item = @(
     @("C:\sy\JianJi_8", "\\192.168.10.250\public\11-剪辑", "8幢_剪辑"),
     @("C:\sy\HouQi_8", "\\192.168.10.250\public\HouQi", "8幢_后期"),
     @("C:\sy\MeiYiGiao_8", "\\192.168.10.250\public\美易高", "美易高"),
+    @("C:\sy\LianQiShiWanNian_8", "\\192.168.10.250\public\LianQiShiWanNian", "念气十万年"),
+    @("C:\sy\WuJinShenYu_8", "\\192.168.10.250\public\WuJinShenYu", "无尽神域"),
+    @("C:\sy\WuDiJianHun_8", "\\192.168.10.250\public\WuDiJianHun", "无敌剑魂"),
+
     @("C:\sy\WanYuFengShen_9", "\\192.168.10.218\WanYuFengShen", "9幢_万域封神"),
     @("C:\sy\KuangShenMoZun_9", "\\192.168.10.218\KuangShenMoZun", "9幢_狂神魔尊"),
     @("C:\sy\JianJi_9", "\\192.168.10.218\jianji", "9幢_剪辑"),
     @("C:\sy\HouQi_9", "\\192.168.10.218\houqi", "9幢_后期")
     
 )
+# Get-ItemProperty "D:\Autodesk\test\Gumu.ma"
+
+# $fso = New-Object -ComObject Scripting.FileSystemObject
+# $folder = $fso.GetFolder("D:\Autodesk\test") Variant
+
+# $app_shell  = New-Object -ComObject Shell.Application
+# $folder = $app_shell.NameSpace("D:\Autodesk\test")
+# $folder.SetDetailsOf("test2.ma",24)
+
+
+# $folder = (New-Object -ComObject Shell.Application).NameSpace("$pwd")
+# # Note: Assumes that no indices higher than 1000 exist.
+# 0..1000 | % { 
+#   if ($n = $folder.GetDetailsOf($null, $_)) { 
+#     [pscustomobject] @{ Index = $_; Name = $n } 
+#   } 
+# }
+
+
+# # | Get-member
+# $folder =  Get-Item -Path "C:\sy\donghuagongxiang_8"
+# $folder | Get-member
+# $folder.GetFileSystemInfos()
+# $folder.SubFolders
 
 foreach ($item in $map_item) {
     try {
         Get-Childitem -Path $item[1] -ErrorAction Stop
         if (Test-Path $item[1]) {
             if (Test-Path $item[0]) {
-                (Get-Item -Path $item[0]).Delete()
+                $fod = Get-Item -Path $item[0]
+                $fod.Delete()
             }
             New-Item -ItemType SymbolicLink -Path $item[0] -Target $item[1]
+
         }
     }
     catch [System.Management.Automation.ActionPreferenceStopException] {
