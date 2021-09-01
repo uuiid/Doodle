@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 2,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 21,
@@ -30,7 +30,7 @@
       }
     },
     {
-      "name": "Ninja_build_copy",
+      "name": "Ninja_release",
       "inherits": "Ninja_build",
       "cacheVariables": {
         "RUN_fixup": {
@@ -45,7 +45,7 @@
       }
     },
     {
-      "name": "Ninja_build_nocopy",
+      "name": "Ninja_debug",
       "inherits": "Ninja_build",
       "cacheVariables": {
         "RUN_fixup": {
@@ -63,7 +63,7 @@
   "buildPresets": [
     {
       "name": "debug",
-      "configurePreset": "Ninja_build_nocopy",
+      "configurePreset": "Ninja_debug",
       "jobs": 10
     },
     {
@@ -78,13 +78,19 @@
     },
     {
       "name": "release",
-      "configurePreset": "Ninja_build_copy"
+      "configurePreset": "Ninja_release",
+      "jobs": 10
+    },
+    {
+      "name": "cpack_doodle",
+      "inherits": "release",
+      "targets": "cpack_Doodle"
     }
   ],
   "testPresets": [
     {
       "name": "develop",
-      "configurePreset": "Ninja_build_nocopy",
+      "configurePreset": "Ninja_debug",
       "output": {
         "outputOnFailure": true
       },
