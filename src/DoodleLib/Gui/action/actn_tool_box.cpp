@@ -38,12 +38,12 @@ actn_export_maya::actn_export_maya()
   p_name = "导出fbx";
 }
 long_term_ptr actn_export_maya::run() {
-  p_term = std::make_shared<long_term>();
+  auto k_term = std::make_shared<long_term>();
   p_date = sig_get_arg().value();
 
   if (p_date.is_cancel) {
     cancel("取消导出");
-    return p_term;
+    return k_term;
   }
   p_maya = std::make_shared<MayaFile>();
   std::vector<long_term_ptr> k_list{};
@@ -51,8 +51,8 @@ long_term_ptr actn_export_maya::run() {
                  [this](const auto& in) {
                    return p_maya->exportFbxFile(in);
                  });
-  p_term->forward_sig(k_list);
-  return p_term;
+  k_term->forward_sig(k_list);
+  return k_term;
 }
 bool actn_export_maya::is_async() {
   return true;
@@ -67,14 +67,14 @@ bool actn_create_video::is_async() {
   return true;
 }
 long_term_ptr actn_create_video::run() {
-  p_term = std::make_shared<long_term>();
+  auto k_term = std::make_shared<long_term>();
   p_image.clear();
 
   p_date = sig_get_arg().value();
 
   if (p_date.is_cancel) {
     cancel("取消导出");
-    return p_term;
+    return k_term;
   }
 
   auto k_video = std::make_shared<ImageSequence>();
@@ -95,9 +95,9 @@ long_term_ptr actn_create_video::run() {
                    return in->create_video_asyn();
                  });
 
-  p_term->forward_sig(k_list);
+  k_term->forward_sig(k_list);
 
-  return p_term;
+  return k_term;
 }
 
 actn_connect_video::actn_connect_video()
@@ -109,18 +109,18 @@ bool actn_connect_video::is_async() {
   return true;
 }
 long_term_ptr actn_connect_video::run() {
-  p_term = std::make_shared<long_term>();
+  auto k_term = std::make_shared<long_term>();
   p_date = sig_get_arg().value();
 
   if (p_date.is_cancel) {
     cancel("取消导出");
-    return p_term;
+    return k_term;
   }
 
   p_video_sequence = std::make_shared<VideoSequence>(p_date.date);
-  p_term->forward_sig(p_video_sequence->connectVideo_asyn());
+  k_term->forward_sig(p_video_sequence->connectVideo_asyn());
 
-  return p_term;
+  return k_term;
 }
 
 actn_ue4_shot_episodes::actn_ue4_shot_episodes()
@@ -131,18 +131,18 @@ bool actn_ue4_shot_episodes::is_async() {
   return true;
 }
 long_term_ptr actn_ue4_shot_episodes::run() {
-  p_term = std::make_shared<long_term>();
+  auto k_term = std::make_shared<long_term>();
   p_date = sig_get_arg().value();
 
   if (p_date.is_cancel) {
     cancel("取消导出");
-    return p_term;
+    return k_term;
   }
 
   p_ptr = std::make_shared<Ue4Project>(p_date.date);
-  p_term->forward_sig(p_ptr->create_shot_folder_asyn(p_date.shot_list));
+  k_term->forward_sig(p_ptr->create_shot_folder_asyn(p_date.shot_list));
 
-  return p_term;
+  return k_term;
 }
 actn_qcloth_sim_export::actn_qcloth_sim_export()
     : p_maya() {
@@ -152,12 +152,12 @@ bool actn_qcloth_sim_export::is_async() {
   return true;
 }
 long_term_ptr actn_qcloth_sim_export::run() {
-  p_term = std::make_shared<long_term>();
+  auto k_term = std::make_shared<long_term>();
   p_date = sig_get_arg().value();
 
   if (p_date.is_cancel) {
     cancel("取消导出");
-    return p_term;
+    return k_term;
   }
   p_maya = std::make_shared<MayaFile>();
   std::vector<long_term_ptr> k_list{};
@@ -168,8 +168,8 @@ long_term_ptr actn_qcloth_sim_export::run() {
                    ptr->qcloth_assets_path = p_date.qcloth_assets_path;
                    return p_maya->qcloth_sim_file(ptr);
                  });
-  p_term->forward_sig(k_list);
-  return p_term;
+  k_term->forward_sig(k_list);
+  return k_term;
 }
 
 actn_ue4_import_files::actn_ue4_import_files() {
@@ -192,8 +192,9 @@ long_term_ptr actn_ue4_import_files::run() {
   std::copy_if(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
                [this](const FSys::path& in_path) { return p_ue->can_import_ue4(in_path); });
 
-  p_term = p_ue->import_files_asyn(k_list);
-  return p_term;
+  auto k_term  = p_ue->import_files_asyn(k_list);
+  p_term = k_term;
+  return k_term;
 }
 }  // namespace toolbox
 

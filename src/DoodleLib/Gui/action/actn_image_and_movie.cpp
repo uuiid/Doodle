@@ -139,7 +139,7 @@ long_term_ptr actn_image_to_move_up::run(const MetadataPtr& in_data, const Metad
     this->p_up_path->run({}, in_parent);
   });
 
-  return actn_composited<arg_>::run(in_data, in_parent);
+  return k_term;
 }
 bool actn_image_to_move_up::is_accept(const arg_& in_any) {
   return p_image_action->is_accept(in_any);

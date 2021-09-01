@@ -75,22 +75,21 @@ actn_assfile_delete::actn_assfile_delete() {
   p_name = "删除";
 }
 actn_assdile_attr_show::actn_assdile_attr_show() {
-  p_term = std::make_shared<long_term>();
   p_name = "显示详细信息";
 }
 bool actn_assdile_attr_show::is_async() {
   return true;
 }
 long_term_ptr actn_assdile_attr_show::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
+  auto k_term = this->get_long_term_signal();
   if (!in_data) {
-    p_term->sig_finished();
-    p_term->sig_message_result("无法获得数据");
-    return p_term;
+    this->cancel("无法获得数据");
+    return k_term;
   }
 
   sig_get_arg();
-  p_term->sig_finished();
-  p_term->sig_message_result({});
-  return p_term;
+  k_term->sig_finished();
+  k_term->sig_message_result({});
+  return k_term;
 }
 }  // namespace doodle

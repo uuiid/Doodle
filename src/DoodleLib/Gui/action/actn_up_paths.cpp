@@ -21,14 +21,14 @@ namespace doodle {
 actn_up_paths::actn_up_paths()
     : p_tran() {
   p_name = "添加文件";
-  p_term = std::make_shared<long_term>();
 }
 long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  _arg_type = sig_get_arg().value();
+  auto k_term = this->get_long_term_signal();
+  _arg_type   = sig_get_arg().value();
   if (_arg_type.is_cancel) {
-    p_term->sig_finished();
-    p_term->sig_message_result("取消上传");
-    return p_term;
+    k_term->sig_finished();
+    k_term->sig_message_result("取消上传");
+    return k_term;
   }
 
   auto k_ch = DoodleLib::Get().getRpcFileSystemClient();
@@ -90,11 +90,11 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
   }
   k_ass_file->saved(true);
   p_tran = k_ch->Upload(k_list);
-  p_term->forward_sig(p_tran->get_term());
+  k_term->forward_sig(p_tran->get_term());
 
   k_ass_file->updata_db();
   (*p_tran)();
-  return p_term;
+  return k_term;
 }
 bool actn_up_paths::is_async() {
   return true;
@@ -103,18 +103,17 @@ bool actn_up_paths::is_async() {
 actn_create_ass_up_paths::actn_create_ass_up_paths()
     : p_up(std::make_shared<actn_up_paths>()) {
   p_name = "创建并上传文件";
-  p_term = p_up->get_long_term_signal();
   p_up->sig_get_arg.connect([this]() { return _arg_type; });  /// 将信号和槽进行转移
 }
 bool actn_create_ass_up_paths::is_async() {
   return true;
 }
 long_term_ptr actn_create_ass_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  _arg_type = sig_get_arg().value();
+  auto k_term = this->get_long_term_signal();
+  _arg_type   = sig_get_arg().value();
   if (_arg_type.is_cancel) {
-    p_term->sig_finished();
-    p_term->sig_message_result("取消上传");
-    return p_term;
+    this->cancel("取消上传");
+    return k_term;
   }
   AssetsFilePtr k_ass_file;
   if (in_parent) {
@@ -129,7 +128,7 @@ long_term_ptr actn_create_ass_up_paths::run(const MetadataPtr& in_data, const Me
     throw DoodleError{"无效的上传数据"};
   }
   (*p_up)(k_ass_file, in_parent);
-  return p_term;
+  return k_term;
 }
 
 }  // namespace doodle
