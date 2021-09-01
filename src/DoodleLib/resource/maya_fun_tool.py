@@ -123,7 +123,7 @@ class camera:
             out_path = doodle_work_space.maya_file.abs_path / "mov"
         tmp_path = pymel.core.Path(out_path)
         if not tmp_path.exists():
-            tmp_path.mkdir_p()
+            tmp_path.makedirs_p()
 
         render_node = pymel.core.ls("defaultRenderGlobals")[0]
 
@@ -195,7 +195,7 @@ class camera:
             return
         tmp_path = pymel.core.Path(export_path)
         if not tmp_path.exists():
-            tmp_path.mkdir_p()
+            tmp_path.makedirs_p()
 
         if len(self.maya_cam.fullPath().split("|")) > 2:
             try:
@@ -447,7 +447,7 @@ class export_group(object):
                                         self.maya_name_space,
                                         doodle_work_space.raneg.start,
                                         doodle_work_space.raneg.end)
-        path.mkdir_p()
+        path.makedirs_p()
         path = path / name
         print("export path : {}".format(path.abspath()).replace("\\", "/"))
         pymel.core.bakeResults(simulation=True,
@@ -535,7 +535,7 @@ class cloth_group_file(export_group):
                                         self.maya_name_space,
                                         1000,
                                         doodle_work_space.raneg.end)
-        path.mkdir_p()
+        path.makedirs_p()
         path = path / name
         print("export path : {}".format(path))
 
@@ -704,7 +704,7 @@ class cloth_export():
     def save(self):
         path = doodle_work_space.maya_file.abs_path / \
             doodle_work_space.maya_file.name_not_ex  # type: pymel.core.Path
-        path.mkdir_p()
+        path.makedirs_p()
 
         pymel.core.system.saveAs("{}/{}_sim_colth.ma".format(
             path,
