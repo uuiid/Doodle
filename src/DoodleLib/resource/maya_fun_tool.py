@@ -52,8 +52,10 @@ class maya_workspace():
         self.work.update()
         self.maya_file = maya_file()
         self.raneg = maya_play_raneg()
-        k_work = self.maya_file.abs_path.dirname(
-        ) / "workspace.mel"  # type: pymel.core.Path
+    
+
+    def set_workspace(self):
+        k_work = self.maya_file.abs_path.dirname() / "workspace.mel"  # type: pymel.core.Path
         k_work2 = self.maya_file.abs_path / "workspace.mel"  # type: pymel.core.Path
         if(k_work.exists()):
             self.work.open(k_work.dirname())
@@ -624,6 +626,7 @@ class fbx_group_file(export_group):
 
 class fbx_export():
     def __init__(self):
+        doodle_work_space.set_workspace()
         self.ref = []  # type: list[references_file]
         self.fbx_group = []  # type: list[fbx_group_file]
         for ref_obj in pymel.core.system.listReferences():
@@ -643,6 +646,7 @@ class fbx_export():
 
 class cloth_export():
     def __init__(self, cfx_path):
+        doodle_work_space.set_workspace()
         references_file.cfx_cloth_path = pymel.core.Path(cfx_path)
 
         self.colth = []  # type: list[references_file]

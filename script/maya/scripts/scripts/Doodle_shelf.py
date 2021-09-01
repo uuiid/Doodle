@@ -54,11 +54,13 @@ class DlsShelf(shelfBase._shelf):
         Doodle_PolyRemesh.myRemesh()
 
     def exportCam(self):
+        Doodle_fun_tool.doodle_work_space = Doodle_fun_tool.maya_workspace()
         cam = self.get_tool_cam()
         if cam:
             cam()
 
     def exportAbc(self):
+        Doodle_fun_tool.doodle_work_space = Doodle_fun_tool.maya_workspace()
         self.re()
         ref_file = None  # type: Doodle_fun_tool.references_file
         k_map = {"Q:/": "人间最得意",
@@ -112,6 +114,7 @@ class DlsShelf(shelfBase._shelf):
             export_path=path, select_obj=k_select)
 
     def BakeAimCam(self):
+        Doodle_fun_tool.doodle_work_space = Doodle_fun_tool.maya_workspace()
         cam = self.get_tool_cam()
         if cam:
             cam.bakeAnm()
@@ -148,17 +151,6 @@ class DlsShelf(shelfBase._shelf):
         print(fls)
         pymel.core.system.fileInfo["doodle_sim"] = str(fls)
 
-    def get_select_refFile(self, maya_obj):
-        # type: (Any)->pymel.core.FileReference
-        try:
-            ref = pymel.core.referenceQuery(
-                maya_obj, referenceNode=True, topReference=True)
-            if ref:
-                return pymel.core.FileReference(ref)
-            else:
-                return
-        except RuntimeError:
-            return
 
     def re(self):
         key = QtWidgets.QApplication.keyboardModifiers()
@@ -172,6 +164,18 @@ class DlsShelf(shelfBase._shelf):
             reload(deleteAttr)
             reload(export_usd)
             reload(Doodle_fun_tool)
+
+    def get_select_refFile(self, maya_obj):
+        # type: (Any)->pymel.core.FileReference
+        try:
+            ref = pymel.core.referenceQuery(
+                maya_obj, referenceNode=True, topReference=True)
+            if ref:
+                return pymel.core.FileReference(ref)
+            else:
+                return
+        except RuntimeError:
+            return
 
     def get_tool_cam(self):
         # type: ()->Doodle_fun_tool.camera
