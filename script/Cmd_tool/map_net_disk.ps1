@@ -1,17 +1,12 @@
 ﻿Write-Host " 准备测试服务器 .... 请点击确认按钮并等待完成..."
 
 $Net_MAPS = @(
-    @("X:", "\\192.168.10.250\public\changanhuanjie", "8幢_长安幻街"),
     @("V:", "\\192.168.10.250\public\DuBuXiaoYao_3", "8幢_独步逍遥v3"),
-    @("W:", "\\192.168.10.250\public\Prism_projects", "8幢_程序开发"),
-    @("Y:", "\\192.168.10.250\public\动画共享", "8幢_动画共享"),
     @("U:", "\\192.168.10.218\WanYuFengShen", "9幢_万域封神"),
-    # @("T:", "\\192.168.10.250\public\KuangShenMoZun", "狂神魔尊"),
     @("T:", "\\192.168.10.218\KuangShenMoZun", "9幢_狂神魔尊"),
     @("S:", "\\192.168.10.250\public\CangFeng", "8幢_藏锋"),
     @("R:", "\\192.168.10.250\public\WanGuShenHua", "8幢_万古神话"),
     @("Q:", "\\192.168.10.250\public\renjianzuideyi", "8幢_人间最得意"),
-    @("P:", "\\192.168.10.250\public\DaiDing", "8幢_待定名称"),
     @("O:", "\\192.168.10.250\public\11-剪辑", "8幢_剪辑"),
     @("N:", "\\192.168.10.250\public\HouQi", "8幢_后期"),
     @("M:", "\\192.168.10.218\jianji", "9幢_剪辑"),
@@ -52,10 +47,10 @@ foreach ($nets in $Net_MAPS) {
             $rename.NameSpace($nets[0] + "\").Self.Name = $nets[2]
         }
     }
-    catch [System.Management.Automation.ActionPreferenceStopException]{
+    catch [System.Management.Automation.ActionPreferenceStopException] {
         Write-Host "目录" $nets[1] "没有访问权限， 取消映射"
     }
-    catch{
+    catch {
         Write-Host "catch all 目录 " $nets[1] " 没有访问权限， 取消映射"
     }
 }
