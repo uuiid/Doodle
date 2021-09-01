@@ -415,6 +415,23 @@ class references_file():
         #     self.cloth_path = self.cfx_cloth_path / self.path.name.replace(
         #         "rig", "cloth")
 
+    def select_to_ref(self,maya_obj):
+        # type: (Any)->bool
+        try:
+            ref = pymel.core.referenceQuery(
+                maya_obj, referenceNode=True, topReference=True)
+            if ref:
+                self.replace_file = pymel.core.FileReference(ref)
+                self._set_init_()
+                return True
+            else:
+                return False
+        except RuntimeError:
+            return False
+
+    def isLoaded(self):
+        return self.maya_ref.isLoaded()
+
     ##
     # 如果存在就替换路径
     def replace_file(self):
@@ -631,7 +648,9 @@ class fbx_export():
         self.ref = []  # type: list[references_file]
         self.fbx_group = []  # type: list[fbx_group_file]
         for ref_obj in pymel.core.system.listReferences():
-            self.ref.append(references_file(ref_obj))
+            k_ref = references_file(ref_obj=ref_obj)
+            if k_ref.isLoaded():
+                self.ref.append(k_ref)
         for ref_obj in self.ref:
             self.fbx_group.append(fbx_group_file(ref_obj))
         self.cam = camera()
