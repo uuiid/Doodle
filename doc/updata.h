@@ -2,20 +2,20 @@
  * @page updata_log 更新日志
  * @tableofcontents
  * @section updata_log_3 版本3
- * 
+ *
  * @subsection updata_log_309 版本3.0.9
- * 
+ *
  * @li 更新maya自动解算组件： 导出拍屏位置为mov文件夹
  * @li 更新maya自动解算组件： 拍屏优先使用quicktime h264解码
  * @li 更新maya自动解算组件： 保存文件位置为文件名称所在文件夹
- * @li 更新maya自动解算组件： 拍屏开始时间确定为1001开始帧 
+ * @li 更新maya自动解算组件： 拍屏开始时间确定为1001开始帧
  * @li 更新ue4 批量导入功能： 导入时启用多进程导入
- * 
+ *
  * @subsection updata_log_3010 版本3.0.10
- * 
+ *
  * @li 更新maya插件：添加maya 动画解算标记工具
  * @li 更新maya插件：修改maya插件安装位置安装冲突
- * @li 更新maya插件：修改maya场景清理工具，删除maya文件健康处理脚本功能 
+ * @li 更新maya插件：修改maya场景清理工具，删除maya文件健康处理脚本功能
  * @li 更新maya插件：导出fbx 相机工具更改
  * @li 更新maya插件：更改手动导出abc时的方式
  * @li 更新maya插件：添加abc手动导出时选择项目对话框 \n
@@ -27,10 +27,10 @@
  * @li 更新ue4插件：将ue4 更改材质名称插件兼容静态网格体
  * @li 更新ue4插件：添加材质缓存支持选项确认并修复功能
  * @li 更新ue4插件：添加材质保存回调, 自动保存材质
- * 
- * 
+ *
+ *
  * @subsection updata_log_3011 版本3.0.11
- * 
+ *
  * @li 更新maya自动解算组件：更新maya 解算资产替换规则
  *
  * @subsection updata_log_3013 版本3.0.13
@@ -41,7 +41,11 @@
  *
  * @li 更新maya工具: 解算导出是提取路径功能
  *
-* @subsection updata_log_3015 版本3.0.15
-*
-* @li 更新maya工具: 导出时创建连续的目录
+ * @subsection updata_log_3015 版本3.0.15
+ *
+ * @li 更新maya工具: 导出时创建连续的目录
+ *
+ * @subsection updata_log_3016 版本3.0.16
+ *
+ * @li 更新maya 自动导出fbx工具 : 更新导出fbx 摄像机无法导出时导出问题
  */

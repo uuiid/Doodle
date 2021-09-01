@@ -213,6 +213,7 @@ class camera:
             name=doodle_work_space.maya_file.name_not_ex,
             start=int(doodle_work_space.raneg.start),
             end=int(doodle_work_space.raneg.end))
+        mel_name = pymel.core.Path(mel_name)
         pymel.core.select(self.maya_cam)
         print("Prepare export path ", mel_name)
         maya.mel.eval(
@@ -221,8 +222,8 @@ class camera:
             "FBXExportBakeComplexEnd -v {}".format(doodle_work_space.raneg.end))
         maya.mel.eval("FBXExportBakeComplexAnimation -v true")
         maya.mel.eval("FBXExportConstraints -v true")
-        maya.mel.eval('FBXExport -f "{}" -s'.format(mel_name))
-        print("camera erport ----> {}".format(mel_name))
+        maya.mel.eval('FBXExport -f "{}" -s'.format(str(mel_name.abspath()).replace("\\","/")))
+        print("camera erport ----> {}".format(str(mel_name.abspath()).replace("\\","/")))
         log.addfile("camera", mel_name, 0)
 
     def bakeAnm(self):
