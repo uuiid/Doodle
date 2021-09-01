@@ -48,4 +48,9 @@
  * @subsection updata_log_3016 版本3.0.16
  *
  * @li 更新maya 自动导出fbx工具 : 更新导出fbx 摄像机无法导出时导出问题
+ * 
+ * @subsection updata_log_3017 版本3.0.17
+ *
+ * @li 更新maya 自动导出fbx工具 : 添加fbx导出筛选， 没有加载的不导出
+ * @li 更新盘符映射改为系统连接
  */
