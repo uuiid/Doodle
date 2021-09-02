@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include <DoodleLib/DoodleApp.h>
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/DoodleMacro.h>
 #include <DoodleLib/Exception/Exception.h>
@@ -12,23 +11,6 @@
 #include <DoodleLib/FileWarp/MayaFile.h>
 #include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/FileWarp/VideoSequence.h>
-#include <DoodleLib/Gui/Metadata/project_widget.h>
-#include <DoodleLib/Gui/action/action.h>
-#include <DoodleLib/Gui/action/action_import.h>
-#include <DoodleLib/Gui/action/actn_down_paths.h>
-#include <DoodleLib/Gui/action/actn_excel.h>
-#include <DoodleLib/Gui/action/actn_image_and_movie.h>
-#include <DoodleLib/Gui/action/actn_maya_export.h>
-#include <DoodleLib/Gui/action/actn_tool_box.h>
-#include <DoodleLib/Gui/action/actn_up_paths.h>
-#include <DoodleLib/Gui/action/assets_action.h>
-#include <DoodleLib/Gui/action/assets_file_action.h>
-#include <DoodleLib/Gui/action/project_action.h>
-#include <DoodleLib/Gui/factory/menu_factory.h>
-#include <DoodleLib/Gui/factory/tool_box_menu_factory.h>
-#include <DoodleLib/Gui/main_windows.h>
-#include <DoodleLib/Gui/progress.h>
-#include <DoodleLib/Gui/setting_windows.h>
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Logger/LoggerTemplate.h>
 #include <DoodleLib/Metadata/Assets.h>
@@ -60,15 +42,8 @@
 #include <DoodleLib/core/tree_container.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/libWarp/CerealWarp.h>
-#include <DoodleLib/libWarp/WinReg.hpp>
-#include <DoodleLib/libWarp/cache.hpp>
-#include <DoodleLib/libWarp/cache_policy.hpp>
 #include <DoodleLib/libWarp/cmrcWarp.h>
-#include <DoodleLib/libWarp/fifo_cache_policy.hpp>
 #include <DoodleLib/libWarp/json_warp.h>
-#include <DoodleLib/libWarp/lfu_cache_policy.hpp>
-#include <DoodleLib/libWarp/lru_cache_policy.hpp>
-#include <DoodleLib/libWarp/nana_warp.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 #include <DoodleLib/libWarp/protobuf_warp_cpp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
@@ -82,3 +57,11 @@
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <DoodleLib/threadPool/long_term.h>
 #include <DoodleLib/toolkit/toolkit.h>
+#include <libWarp/nana_warp.h>
+
+#include <DoodleLib/libWarp/WinReg.hpp>
+#include <DoodleLib/libWarp/cache.hpp>
+#include <DoodleLib/libWarp/cache_policy.hpp>
+#include <DoodleLib/libWarp/fifo_cache_policy.hpp>
+#include <DoodleLib/libWarp/lfu_cache_policy.hpp>
+#include <DoodleLib/libWarp/lru_cache_policy.hpp>

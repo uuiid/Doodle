@@ -4,7 +4,7 @@
 #include <grpcpp/grpcpp.h>
 
 namespace doodle {
-class RpcServerHandle {
+class DOODLELIB_API RpcServerHandle {
   std::unique_ptr<grpc::Server> p_Server;
 
   RpcMetadataServerPtr p_rpc_metadata_server;

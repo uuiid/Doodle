@@ -4,7 +4,7 @@
 
 #include "progress.h"
 
-#include <threadPool/long_term.h>
+#include <DoodleLib/threadPool/long_term.h>
 
 #include <nana/gui/msgbox.hpp>
 

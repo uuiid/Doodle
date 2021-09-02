@@ -4,7 +4,7 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-
+#include <DoodleLib/Gui/factory/menu_factory_Interface.h>
 #include <nana/gui.hpp>
 #include <nana/gui/widgets/menu.hpp>
 namespace doodle {
@@ -12,7 +12,7 @@ namespace doodle {
  * @brief 创建各种菜单的辅助类
  *
  */
-class DOODLELIB_API menu_factory_base
+class  menu_factory_base
     : public std::enable_shared_from_this<menu_factory_base>,
       public details::no_copy {
  protected:
@@ -52,22 +52,16 @@ class DOODLELIB_API menu_factory_base
    */
   virtual void operator()(nana::menu& in_menu);
 };
+
 /**
  * @brief 创建右键菜单
  *
  */
-class DOODLELIB_API menu_factory : public menu_factory_base {
+class  menu_factory : public menu_factory_base ,public menu_factory_interface{
  public:
   explicit menu_factory(nana::window in_window);
 
   virtual void create_prj();
-
-  virtual void create_menu(const ProjectPtr& in_ptr)  = 0;
-  virtual void create_menu(const AssetsPtr& in_ptr)  = 0;
-  virtual void create_menu(const EpisodesPtr& in_ptr)  = 0;
-  virtual void create_menu(const ShotPtr& in_ptr)  = 0;
-  virtual void create_menu(const AssetsFilePtr& in_ptr)  = 0;
-  virtual void create_menu(const season_ptr& in_ptr)  = 0;
 
  protected:
   void create_assets();
@@ -115,7 +109,7 @@ class DOODLELIB_API menu_factory : public menu_factory_base {
  * @li 设置路径 设置项目根路径
  *
  */
-class DOODLELIB_API menu_factory_project : public menu_factory {
+class  menu_factory_project : public menu_factory {
  public:
   explicit menu_factory_project(nana::window in_window);
 
@@ -142,7 +136,7 @@ class DOODLELIB_API menu_factory_project : public menu_factory {
  * @li @b 删除 只有在这个项目没有子物体和子条目时才会显示
  *
  */
-class DOODLELIB_API menu_factory_assets : public menu_factory {
+class  menu_factory_assets : public menu_factory {
  public:
   explicit menu_factory_assets(nana::window in_window);
 
@@ -169,7 +163,7 @@ class DOODLELIB_API menu_factory_assets : public menu_factory {
  * @li @b 删除 删除这个条目， 不会删除文件
  */
 
-class DOODLELIB_API menu_factory_assets_attr : public menu_factory {
+class  menu_factory_assets_attr : public menu_factory {
  public:
   explicit menu_factory_assets_attr(nana::window in_window);
   virtual void create_menu(const ProjectPtr& in_ptr) override;
@@ -183,7 +177,7 @@ class DOODLELIB_API menu_factory_assets_attr : public menu_factory {
  * @brief 拖拽文件时所产生的菜单
  *
  */
-class DOODLELIB_API dragdrop_menu_factory : public menu_factory_base {
+class  dragdrop_menu_factory : public menu_factory_base {
   std::vector<FSys::path> p_paths;
 
  public:

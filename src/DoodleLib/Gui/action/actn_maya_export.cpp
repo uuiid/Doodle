@@ -5,12 +5,12 @@
 #include "actn_maya_export.h"
 
 #include <DoodleLib/FileWarp/MayaFile.h>
-#include <Gui/action/actn_up_paths.h>
-#include <Metadata/Metadata_cpp.h>
-#include <core/CoreSet.h>
-#include <core/DoodleLib.h>
-#include <rpc/RpcFileSystemClient.h>
-#include <threadPool/ThreadPool.h>
+#include <DoodleLib/Gui/action/actn_up_paths.h>
+#include <DoodleLib/Metadata/Metadata_cpp.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/rpc/RpcFileSystemClient.h>
+#include <DoodleLib/threadPool/ThreadPool.h>
 namespace doodle {
 
 actn_maya_export::actn_maya_export()

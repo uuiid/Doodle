@@ -60,7 +60,7 @@ namespace doodle {
  * @brief 设置主窗口
  * 
  */
-class DOODLELIB_API setting_windows : public nana::form {
+class  setting_windows : public nana::form {
   nana::place p_layout;
   nana::label p_dep_label;
   nana::label p_user_label;

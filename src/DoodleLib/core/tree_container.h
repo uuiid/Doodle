@@ -6,18 +6,16 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 
 #include <boost/hana.hpp>
-#include <boost/intrusive/intrusive_fwd.hpp>
-#include <boost/intrusive/link_mode.hpp>
-#include <boost/intrusive/list.hpp>
-#include <boost/intrusive/pack_options.hpp>
-#include <boost/intrusive/set.hpp>
-#include <boost/intrusive/trivial_value_traits.hpp>
+//#include <boost/intrusive/intrusive_fwd.hpp>
+//#include <boost/intrusive/link_mode.hpp>
+//#include <boost/intrusive/list.hpp>
+//#include <boost/intrusive/pack_options.hpp>
+//#include <boost/intrusive/set.hpp>
+//#include <boost/intrusive/trivial_value_traits.hpp>
 #include <boost/signals2.hpp>
 
 namespace doodle {
 
-using set_base_hook = boost::intrusive::set_base_hook<
-    boost::intrusive::link_mode<boost::intrusive::safe_link>>;
 
 class tree_node;
 using tree_node_ptr = std::shared_ptr<tree_node>;
@@ -26,11 +24,11 @@ template <class... type_arg>
 tree_node_ptr make_tree(type_arg&&... in_arg);
 
 namespace details {
-class DOODLELIB_API tree_node_destroy : public std::default_delete<tree_node> {
- public:
-  tree_node_destroy() = default;
-  void operator()(tree_node* in_ptr);
-};
+//class DOODLELIB_API tree_node_destroy : public std::default_delete<tree_node> {
+// public:
+//  tree_node_destroy() = default;
+//  void operator()(tree_node* in_ptr);
+//};
 
 template <class container>
 class DOODLELIB_API observe : public no_copy {
@@ -116,26 +114,28 @@ class DOODLELIB_API observe : public no_copy {
  * 
  */
 class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
-                                public set_base_hook,
                                 public details::no_copy {
  public:
   using tree_node_ptr = std::shared_ptr<tree_node>;
 
-  using child_set = boost::intrusive::set<
-      tree_node,
-      boost::intrusive::base_hook<tree_node>>;
+//  using child_set = boost::intrusive::set<
+//      tree_node,
+//      boost::intrusive::base_hook<tree_node>>;
   // boost::intrusive::constant_time_size<false>
   using child_set_owner    = std::vector<tree_node_ptr>;
-  using signal_observe     = details::observe<child_set>;
+  using signal_observe     = details::observe<child_set_owner>;
   using signal_observe_ptr = std::shared_ptr<signal_observe>;
 
-  using iterator               = typename child_set ::iterator;
-  using const_iterator         = typename child_set ::const_iterator;
-  using reverse_iterator       = typename child_set ::reverse_iterator;
-  using const_reverse_iterator = typename child_set ::const_reverse_iterator;
+  using iterator               = typename child_set_owner ::iterator;
+  using const_iterator         = typename child_set_owner ::const_iterator;
+  using reverse_iterator       = typename child_set_owner ::reverse_iterator;
+  using const_reverse_iterator = typename child_set_owner ::const_reverse_iterator;
 
  private:
-  friend details::tree_node_destroy;
+//  friend details::tree_node_destroy;
+  template <class _Ty,class... _Types>
+  friend std::shared_ptr<_Ty> std::make_shared(_Types&& ...) ;
+
   tree_node();
   explicit tree_node(tree_node* in_parent, MetadataPtr in_data);
   explicit tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data);
@@ -143,7 +143,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   iterator insert_private(const tree_node_ptr& in_);
   iterator insert(const tree_node_ptr& in_, bool emit_solt);
 
-  template <class T>
+  template <class T_ptr>
   struct value_fun {
     /// 在这里我们测试一下自动连接是否可用， 可用的话进行连接
     constexpr static auto k_has_connect = boost::hana::is_valid(
@@ -157,44 +157,44 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
     constexpr static auto k_has_node = boost::hana::is_valid(
         [](auto&& obj) -> decltype(obj.tree_node_ptr) {});
 
-    template <class arg_t, class T>
-    static std::enable_if_t<details::is_smart_pointer<T>::value>
-    connect(const T& data, arg_t& in_arg) {
+    template <class arg_t, class T_ptr>
+    static std::enable_if_t<details::is_smart_pointer<T_ptr>::value>
+    connect(const T_ptr& data, arg_t& in_arg) {
       if constexpr (decltype(k_has_connect(*data, in_arg)){})
         data->connect(in_arg);
     };
 
-    template <class arg_t, class T>
-    static std::enable_if_t<!details::is_smart_pointer<T>::value>
-    connect(T& data, arg_t& in_arg) {
+    template <class arg_t, class T_ptr>
+    static std::enable_if_t<!details::is_smart_pointer<T_ptr>::value>
+    connect(T_ptr& data, arg_t& in_arg) {
       if constexpr (decltype(k_has_connect(data, in_arg)){})
         data.connect(in_arg);
     };
 
-    template <class arg_t, class T>
-    static std::enable_if_t<details::is_smart_pointer<T>::value>
-    set_node_ptr(const T& data, arg_t& in_arg) {
+    template <class arg_t, class T_ptr>
+    static std::enable_if_t<details::is_smart_pointer<T_ptr>::value>
+    set_node_ptr(const T_ptr& data, arg_t& in_arg) {
       if constexpr (decltype(k_has_node(*data)){})
         data->tree_node_ptr = in_arg;
     };
 
-    template <class arg_t, class T>
-    static std::enable_if_t<!details::is_smart_pointer<T>::value>
-    set_node_ptr(const T& data, arg_t& in_arg) {
+    template <class arg_t, class T_ptr>
+    static std::enable_if_t<!details::is_smart_pointer<T_ptr>::value>
+    set_node_ptr(const T_ptr& data, arg_t& in_arg) {
       if constexpr (decltype(k_has_node(data)){})
         data.tree_node_ptr = in_arg;
     };
 
-    template <class arg_t, class T>
-    static std::enable_if_t<details::is_smart_pointer<T>::value>
-    disconnect(const T& data, arg_t& in_arg) {
+    template <class arg_t, class T_ptr>
+    static std::enable_if_t<details::is_smart_pointer<T_ptr>::value>
+    disconnect(const T_ptr& data, arg_t& in_arg) {
       if constexpr (decltype(k_has_disconnect(*data)){})
         data->disconnect(in_arg);
     };
 
-    template <class arg_t, class T>
-    static std::enable_if_t<!details::is_smart_pointer<T>::value>
-    disconnect(const T& data, arg_t& in_arg) {
+    template <class arg_t, class T_ptr>
+    static std::enable_if_t<!details::is_smart_pointer<T_ptr>::value>
+    disconnect(const T_ptr& data, arg_t& in_arg) {
       if constexpr (decltype(k_has_disconnect(data)){})
         data.disconnect(in_arg);
     };
@@ -203,9 +203,8 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
  private:
   tree_node* parent;
   MetadataPtr data;
-  child_set child_item;
   child_set_owner child_owner;
-  details::observe<child_set> sig_class;
+  details::observe<child_set_owner> sig_class;
   signal_observe_ptr p_sig;
   using value_fun_t = value_fun<decltype(data)>;
 
@@ -215,8 +214,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   template <class... type_arg>
   static tree_node_ptr make_this(type_arg&&... in_arg) {
     auto tmp = std::shared_ptr<tree_node>{
-        new tree_node{std::forward<type_arg>(in_arg)...},
-        details::tree_node_destroy()};
+        new tree_node{std::forward<type_arg>(in_arg)...}};
     /// 非默认构造, 这个时候可以直接检查父物体是否为空后插入
     if constexpr (sizeof...(in_arg) > 1) {
       if (tmp->has_parent())
@@ -231,7 +229,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   [[nodiscard]] bool is_root() const;
   [[nodiscard]] bool has_parent() const;
   [[nodiscard]] tree_node_ptr get_parent() const;
-  [[nodiscard]] const child_set& get_children() const;
+  [[nodiscard]] const child_set_owner & get_children() const;
   [[nodiscard]] bool empty() const;
 
   iterator insert(const tree_node_ptr& in_);

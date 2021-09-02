@@ -5,8 +5,8 @@
 #include "action.h"
 
 #include <DoodleLib/Exception/Exception.h>
-#include <Logger/Logger.h>
-#include <threadPool/long_term.h>
+#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/threadPool/long_term.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 

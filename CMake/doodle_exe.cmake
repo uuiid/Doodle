@@ -194,7 +194,6 @@ function(add_doodle)
     target_compile_options(${ADD_DOODLE_NAME}
             PUBLIC
             /EHsc
-
     )
 
     target_include_directories(${ADD_DOODLE_NAME}

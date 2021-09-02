@@ -11,7 +11,7 @@
 //#include <DoodleLib/DoodleApp.h>
 //#include <boost/locale.hpp>
 
-#if 1
+#if 0
 
 extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               HINSTANCE hPrevInstance,
@@ -31,9 +31,7 @@ try {
   std::setlocale(LC_CTYPE, ".UTF8");
 
   auto doodleLib = doodle::make_doodle_lib();
-  doodle::doodle_app app{};
-  app.run_server();
-  app.run();
+
   return 0;
   // _CrtDumpMemoryLeaks();
 } catch (const std::exception &err) {

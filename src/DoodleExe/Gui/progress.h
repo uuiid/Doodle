@@ -14,7 +14,7 @@
 
 namespace doodle {
 
-class DOODLELIB_API progress : public nana::form {
+class  progress : public nana::form {
   nana::progress _pro;
   nana::place p_layout;
   nana::label _label;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DoodleLib_fwd.h"
+#include <DoodleLib/DoodleLib_fwd.h>
 #include <stdexcept>
 
 namespace doodle {

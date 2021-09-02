@@ -5,7 +5,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/action/action.h>
-#include <core/CoreSet.h>
+#include <DoodleLib/core/CoreSet.h>
 namespace doodle {
 namespace action_arg {
 

@@ -14,7 +14,7 @@
 
 namespace doodle {
 
-class ThreadPool : public details::no_copy {
+class DOODLELIB_API ThreadPool : public details::no_copy {
  public:
   explicit ThreadPool(size_t);
   template <class F, class... Args>

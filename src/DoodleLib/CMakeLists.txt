@@ -8,7 +8,7 @@ include(DoodleLib.cmake)
 
 add_custom_target(
         create_list_doodle_cmake
-        COMMAND ${CMAKE_COMMAND} -P ListFile.cmake
+        COMMAND ${CMAKE_COMMAND} -DDOODLE_INCLUDE_CMAKE=${PROJECT_SOURCE_DIR} -P ListFile.cmake
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 )
 
@@ -26,62 +26,70 @@ doodle_grpc_generate(
         rpc/UserMessage.proto
 )
 
-# add_doodle(
-#         NAME DoodleLib
-#         LISTS_FILES
-#         ${DOODLELIB_HEADER}
-#         ${DOODLELIB_SOURCE}
-#         ${OUT_LISTS_sqlpp}
-#         ${OUT_LISTS_GRPC}
-#         main/doodle.manifest
-# )
-add_doodle(
-        NAME DoodleExe
-        IS_EXE
-        ADD_WIN32
-        LISTS_FILES
+add_library(DoodleLib
+        SHARED
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
         ${OUT_LISTS_sqlpp}
         ${OUT_LISTS_GRPC}
-        main/doodle.manifest
-        main/icon.ico
-        main/win_exe.rc
-        main/gui/main.cpp
-)
-add_doodle(
-        NAME doodleServerExe
-        IS_EXE
-        ADD_WIN32
-        LISTS_FILES
-        ${DOODLELIB_HEADER}
-        ${DOODLELIB_SOURCE}
-        ${OUT_LISTS_sqlpp}
-        ${OUT_LISTS_GRPC}
-        main/doodle.manifest
-        main/icon.ico
-        main/win_exe.rc
-        main/server/main.cpp
-)
+        DoodleLib.manifest
+        )
 
-add_doodle(
-        NAME doodle_test
-        IS_EXE
-        LISTS_FILES
-        ${DOODLELIB_HEADER}
-        ${DOODLELIB_SOURCE}
-        ${OUT_LISTS_sqlpp}
-        ${OUT_LISTS_GRPC}
-        main/test/main.cpp
-        main/icon.ico
-        main/win_exe.rc
-        main/test/test_core.cpp
-        main/test/test_metadata.cpp
-        main/test/test_server.cpp
-        main/test/test_external.cpp
-)
+set(MY_CUSTOM_CONTENT "")
+generate_export_header(DoodleLib
+        EXPORT_MACRO_NAME DOODLELIB_API
+        CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
+set_target_properties(DoodleLib
+        PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+include(GenerateExportHeader)
 
-target_compile_options(doodle_test PRIVATE /bigobj)
-include_directories(${PROJECT_SOURCE_DIR}/external/csv-parser/include)
-include(Catch)
-catch_discover_tests(doodle_test)
+target_link_libraries(DoodleLib
+        PUBLIC
+        date::date
+        date::date-tz
+        #        SqlppSqlite
+        DoodleLibResource
+        # RTTR::Core
+        cereal
+        magic_enum::magic_enum
+        ${Boost_LIBRARIES}
+        Boost::locale
+        Boost::filesystem
+        nlohmann_json nlohmann_json::nlohmann_json
+        ${OpenCV_LIBS}
+        #        EnTT::EnTT
+        #        Boost::locale
+        #        Boost::filesystem
+        #        Boost::log
+        spdlog::spdlog
+        #        $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
+        #        $<IF:$<CONFIG:Debug>,${WX_cored},${WX_core}>
+        #        $<IF:$<CONFIG:Debug>,${WX_advd},${WX_adv}>
+
+        cxxopts::cxxopts
+        csv
+        Catch2::Catch2
+        SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
+        #        cppzmq
+        #        cppzmq-static
+        gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
+        cryptopp-static
+        PRIVATE
+        ${DOODLE_MAR}
+        )
+target_compile_definitions(DoodleLib
+        PUBLIC
+        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
+        )
+target_compile_options(DoodleLib
+        PUBLIC
+        /EHsc
+        )
+
+target_include_directories(DoodleLib
+        PUBLIC
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/external/csv-parser/include
+        )
+

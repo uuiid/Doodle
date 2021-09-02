@@ -68,6 +68,7 @@ long_term::~long_term() {
   for (auto& k_item : p_list) {
     try {
       k_item.get();
+
     } catch (const DoodleError& error) {
       DOODLE_LOG_WARN(error.what());
     }

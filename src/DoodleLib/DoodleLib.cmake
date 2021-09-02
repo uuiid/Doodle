@@ -1,17 +1,23 @@
 set(
     DOODLELIB_HEADER
-    DoodleApp.h
-    DoodleLib.h
-    DoodleLib_fwd.h
-    DoodleLib_pch.h
-    DoodleMacro.h
+    core/ContainerDevice.h
+    core/CoreSet.h
+    core/CoreSql.h
+    core/DoodleLib.h
+    core/ToolsSetting.h
+    core/Ue4Setting.h
+    core/Util.h
+    core/filesystem_extend.h
+    core/observable_container.h
+    core/static_value.h
+    core/tree_container.h
     Exception/Exception.h
     FileSys/FileSystem.h
     FileWarp/ImageSequence.h
     FileWarp/MayaFile.h
     FileWarp/Ue4Project.h
     FileWarp/VideoSequence.h
-    Gui/Metadata/project_widget.h
+    Gui/factory/menu_factory_Interface.h
     Gui/action/action.h
     Gui/action/action_import.h
     Gui/action/actn_down_paths.h
@@ -23,11 +29,20 @@ set(
     Gui/action/assets_action.h
     Gui/action/assets_file_action.h
     Gui/action/project_action.h
-    Gui/factory/menu_factory.h
-    Gui/factory/tool_box_menu_factory.h
-    Gui/main_windows.h
-    Gui/progress.h
-    Gui/setting_windows.h
+    libWarp/BoostUuidWarp.h
+    libWarp/CerealWarp.h
+    libWarp/WinReg.hpp
+    libWarp/cache.hpp
+    libWarp/cache_policy.hpp
+    libWarp/cmrcWarp.h
+    libWarp/fifo_cache_policy.hpp
+    libWarp/json_warp.h
+    libWarp/lfu_cache_policy.hpp
+    libWarp/lru_cache_policy.hpp
+    libWarp/protobuf_warp.h
+    libWarp/protobuf_warp_cpp.h
+    libWarp/sqlppWarp.h
+    libWarp/wxWidgetWarp.h
     Logger/Logger.h
     Logger/LoggerTemplate.h
     Metadata/Assets.h
@@ -44,53 +59,36 @@ set(
     Metadata/TimeDuration.h
     Metadata/season.h
     PinYin/convert.h
-    ScreenshotWidght/ScreenshotAction.h
-    ScreenshotWidght/ScreenshotWidght.h
-    core/ContainerDevice.h
-    core/CoreSet.h
-    core/CoreSql.h
-    core/DoodleLib.h
-    core/ToolsSetting.h
-    core/Ue4Setting.h
-    core/Util.h
-    core/filesystem_extend.h
-    core/observable_container.h
-    core/static_value.h
-    core/tree_container.h
-    libWarp/BoostUuidWarp.h
-    libWarp/CerealWarp.h
-    libWarp/WinReg.hpp
-    libWarp/cache.hpp
-    libWarp/cache_policy.hpp
-    libWarp/cmrcWarp.h
-    libWarp/fifo_cache_policy.hpp
-    libWarp/json_warp.h
-    libWarp/lfu_cache_policy.hpp
-    libWarp/lru_cache_policy.hpp
-    libWarp/nana_warp.h
-    libWarp/protobuf_warp.h
-    libWarp/protobuf_warp_cpp.h
-    libWarp/sqlppWarp.h
-    libWarp/wxWidgetWarp.h
     rpc/RpcFileSystemClient.h
     rpc/RpcFileSystemServer.h
     rpc/RpcMetadaataServer.h
     rpc/RpcMetadataClient.h
     rpc/RpcServerHandle.h
     rpc/rpc_trans_path.h
+    ScreenshotWidght/ScreenshotAction.h
+    ScreenshotWidght/ScreenshotWidght.h
     threadPool/ThreadPool.h
     threadPool/long_term.h
-    toolkit/toolkit.h)
+    toolkit/toolkit.h
+    DoodleLib.h
+    DoodleLib_fwd.h
+    DoodleLib_pch.h
+    DoodleMacro.h)
 set(
     DOODLELIB_SOURCE
-    DoodleApp.cpp
-    DoodleLib.cpp
+    core/CoreSet.cpp
+    core/CoreSql.cpp
+    core/DoodleLib.cpp
+    core/Ue4Setting.cpp
+    core/Util.cpp
+    core/filesystem_extend.cpp
+    core/static_value.cpp
+    core/tree_container.cpp
     FileSys/FileSystem.cpp
     FileWarp/ImageSequence.cpp
     FileWarp/MayaFile.cpp
     FileWarp/Ue4Project.cpp
     FileWarp/VideoSequence.cpp
-    Gui/Metadata/project_widget.cpp
     Gui/action/action.cpp
     Gui/action/actn_down_paths.cpp
     Gui/action/actn_excel.cpp
@@ -101,11 +99,6 @@ set(
     Gui/action/assets_action.cpp
     Gui/action/assets_file_action.cpp
     Gui/action/project_action.cpp
-    Gui/factory/menu_factory.cpp
-    Gui/factory/tool_box_menu_factory.cpp
-    Gui/main_windows.cpp
-    Gui/progress.cpp
-    Gui/setting_windows.cpp
     Logger/Logger.cpp
     Metadata/Assets.cpp
     Metadata/AssetsFile.cpp
@@ -120,23 +113,14 @@ set(
     Metadata/TimeDuration.cpp
     Metadata/season.cpp
     PinYin/convert.cpp
-    ScreenshotWidght/ScreenshotAction.cpp
-    ScreenshotWidght/ScreenshotWidght.cpp
-    core/CoreSet.cpp
-    core/CoreSql.cpp
-    core/DoodleLib.cpp
-    core/Ue4Setting.cpp
-    core/Util.cpp
-    core/filesystem_extend.cpp
-    core/static_value.cpp
-    core/tree_container.cpp
-    libWarp/nana_warp.cpp
     rpc/RpcFileSystemClient.cpp
     rpc/RpcFileSystemServer.cpp
     rpc/RpcMetadaataServer.cpp
     rpc/RpcMetadataClient.cpp
     rpc/RpcServerHandle.cpp
     rpc/rpc_trans_path.cpp
+    ScreenshotWidght/ScreenshotAction.cpp
+    ScreenshotWidght/ScreenshotWidght.cpp
     threadPool/long_term.cpp
     toolkit/toolkit.cpp
-)
+    DoodleLib.cpp)

@@ -8,8 +8,8 @@
 #include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Project.h>
-#include <Logger/Logger.h>
-#include <core/CoreSet.h>
+#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/core/CoreSet.h>
 
 #include <magic_enum.hpp>
 namespace doodle {

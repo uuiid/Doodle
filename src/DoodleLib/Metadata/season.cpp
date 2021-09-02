@@ -4,7 +4,7 @@
 
 #include "season.h"
 
-#include <Gui/factory/menu_factory.h>
+#include <Gui/factory/menu_factory_Interface.h>
 namespace doodle {
 season::season()
     : Metadata(),

@@ -5,13 +5,13 @@
 #include "actn_up_paths.h"
 
 #include <DoodleLib/Exception/Exception.h>
-#include <FileWarp/Ue4Project.h>
-#include <Logger/Logger.h>
-#include <Metadata/AssetsFile.h>
-#include <Metadata/AssetsPath.h>
-#include <Metadata/MetadataFactory.h>
-#include <core/DoodleLib.h>
-#include <rpc/RpcFileSystemClient.h>
+#include <DoodleLib/FileWarp/Ue4Project.h>
+#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/AssetsPath.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/rpc/RpcFileSystemClient.h>
 
 #include <boost/range.hpp>
 #include <boost/range/adaptors.hpp>

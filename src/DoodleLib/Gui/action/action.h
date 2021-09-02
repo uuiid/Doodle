@@ -118,7 +118,7 @@ class DOODLELIB_API action : public action_base {
 };
 
 template <class arg_type>
-class action_toolbox : public action {
+class DOODLELIB_API action_toolbox : public action {
  protected:
   arg_type p_date;
   virtual long_term_ptr run() = 0;
@@ -154,7 +154,7 @@ class DOODLELIB_API action_indirect : public action {
 };
 
 template <class arg_type>
-class actn_composited : public action_indirect<arg_type> {
+class  actn_composited : public action_indirect<arg_type> {
  protected:
 
  public:

@@ -4,7 +4,7 @@
 
 #pragma once
 #include <DoodleLib/Metadata/Metadata.h>
-#include <DoodleLib_fwd.h>
+#include <DoodleLib/DoodleLib_fwd.h>
 namespace doodle {
 
 class DOODLELIB_API season

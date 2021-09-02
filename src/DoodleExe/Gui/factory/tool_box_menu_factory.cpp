@@ -4,13 +4,13 @@
 
 #include "tool_box_menu_factory.h"
 
-#include <Exception/Exception.h>
-#include <Gui/action/actn_tool_box.h>
-#include <Gui/progress.h>
-#include <Metadata/Episodes.h>
-#include <Metadata/Metadata.h>
-#include <Metadata/Project.h>
-#include <Metadata/Shot.h>
+#include <DoodleLib/Gui/action/actn_tool_box.h>
+#include <DoodleExe/Gui/progress.h>
+#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/Metadata/Shot.h>
 
 #include <nana/gui/filebox.hpp>
 #include <nana/gui/msgbox.hpp>
@@ -144,5 +144,6 @@ void tool_box_menu_factory::operator()(nana::menu& in_menu) {
   create_menu();
   menu_factory_base::operator()(in_menu);
 }
+
 
 }  // namespace doodle

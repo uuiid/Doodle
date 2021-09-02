@@ -4,11 +4,11 @@
 
 #include "actn_image_and_movie.h"
 
-#include <FileWarp/ImageSequence.h>
-#include <Gui/action/actn_up_paths.h>
-#include <Metadata/Episodes.h>
-#include <Metadata/Shot.h>
-#include <core/CoreSet.h>
+#include <DoodleLib/FileWarp/ImageSequence.h>
+#include <DoodleLib/Gui/action/actn_up_paths.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/core/CoreSet.h>
 
 #include <boost/algorithm/string.hpp>
 

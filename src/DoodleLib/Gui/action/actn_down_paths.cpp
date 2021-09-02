@@ -4,11 +4,11 @@
 
 #include "actn_down_paths.h"
 
-#include <Exception/Exception.h>
-#include <Metadata/Metadata_cpp.h>
-#include <core/CoreSet.h>
-#include <rpc/RpcFileSystemClient.h>
-#include <core/DoodleLib.h>
+#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Metadata/Metadata_cpp.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/rpc/RpcFileSystemClient.h>
+#include <DoodleLib/core/DoodleLib.h>
 #include <memory>
 namespace doodle {
 actn_down_paths::actn_down_paths()

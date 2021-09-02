@@ -13,6 +13,10 @@
 #include <cereal/types/optional.hpp>
 #include <cereal/types/polymorphic.hpp>
 #include <optional>
+
+#include <DoodleLib/Metadata/MetadataFactory.h>
+
+
 namespace doodle {
 template <class Class, class factory>
 class database_action {

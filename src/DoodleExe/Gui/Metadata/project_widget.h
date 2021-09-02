@@ -4,7 +4,7 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-
+#include <DoodleExe/DoodleGui_fwd.h>
 #include <boost/signals2.hpp>
 #include <nana/gui/widgets/listbox.hpp>
 #include <nana/gui/widgets/menu.hpp>
@@ -102,7 +102,7 @@ class pej_widget_base {
  * @todo 英文名称和中文名称可以单独更改 
  * 
  */
-class DOODLELIB_API project_widget : public details::pej_widget_base {
+class  project_widget : public details::pej_widget_base {
   nana::listbox p_list_box;
 
  public:
@@ -120,7 +120,7 @@ class DOODLELIB_API project_widget : public details::pej_widget_base {
  * 但是他们的嵌套关系可以是任意的， 比如集数下是镜头， 或者镜头下是集数， 或者资产下是镜头
  * 
  */
-class DOODLELIB_API assets_widget : public details::pej_widget_base {
+class  assets_widget : public details::pej_widget_base {
   nana::treebox p_tree_box;
 
   MetadataPtr p_root;
@@ -156,7 +156,7 @@ class DOODLELIB_API assets_widget : public details::pej_widget_base {
  * 同时绿色代表者文件存在， 
  * 每个分组代表着部门组
  */
-class DOODLELIB_API assets_attr_widget : public details::pej_widget_base {
+class  assets_attr_widget : public details::pej_widget_base {
   nana::listbox p_list_box;
   MetadataPtr p_root;
 

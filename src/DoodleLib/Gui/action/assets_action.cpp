@@ -4,7 +4,7 @@
 
 #include "assets_action.h"
 
-#include <Metadata/Metadata_cpp.h>
+#include <DoodleLib/Metadata/Metadata_cpp.h>
 
 namespace doodle {
 

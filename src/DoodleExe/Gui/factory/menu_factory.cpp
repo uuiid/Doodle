@@ -4,11 +4,11 @@
 
 #include "menu_factory.h"
 
-#include <Gui/action/action_import.h>
-#include <Gui/progress.h>
-#include <Metadata/AssetsFile.h>
-#include <Metadata/Metadata_cpp.h>
-#include <threadPool/long_term.h>
+#include <DoodleLib/Gui/action/action_import.h>
+#include <DoodleExe/Gui/progress.h>
+#include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/Metadata_cpp.h>
+#include <DoodleLib/threadPool/long_term.h>
 
 #include <nana/gui/filebox.hpp>
 

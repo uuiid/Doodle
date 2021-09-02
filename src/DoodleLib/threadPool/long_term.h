@@ -53,7 +53,7 @@ class DOODLELIB_API long_term : public details::no_copy {
   [[nodiscard]] bool fulfil() const;
   [[nodiscard]] std::string message_result() const;
 
-  std::vector<std::future<void>> p_list;
+  std::vector<std::shared_future<void>> p_list;
 };
 
 }  // namespace doodle

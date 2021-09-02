@@ -4,14 +4,14 @@
 
 #include "main_windows.h"
 
-#include <DoodleLib/Gui/setting_windows.h>
-#include <Exception/Exception.h>
-#include <Gui/Metadata/project_widget.h>
-#include <Gui/factory/tool_box_menu_factory.h>
-#include <core/CoreSet.h>
-#include <core/DoodleLib.h>
-#include <rpc/RpcFileSystemClient.h>
-#include <toolkit/toolkit.h>
+#include <DoodleExe/Gui/Metadata/project_widget.h>
+#include <DoodleExe/Gui/factory/tool_box_menu_factory.h>
+#include <DoodleExe/Gui/setting_windows.h>
+#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/rpc/RpcFileSystemClient.h>
+#include <DoodleLib/toolkit/toolkit.h>
 
 #include <nana/gui/filebox.hpp>
 

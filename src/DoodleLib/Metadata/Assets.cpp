@@ -5,7 +5,7 @@
 #include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/PinYin/convert.h>
-#include <Gui/factory/menu_factory.h>
+#include <Gui/factory/menu_factory_Interface.h>
 
 namespace doodle {
 Assets::Assets()

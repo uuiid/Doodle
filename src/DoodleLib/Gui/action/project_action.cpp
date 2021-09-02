@@ -4,11 +4,11 @@
 
 #include "project_action.h"
 
-#include <Logger/Logger.h>
-#include <Metadata/MetadataFactory.h>
-#include <Metadata/Project.h>
-#include <core/CoreSet.h>
-#include <core/DoodleLib.h>
+#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/DoodleLib.h>
 namespace doodle {
 
 long_term_ptr actn_create_project::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {

@@ -14,7 +14,7 @@ namespace doodle {
  * @brief 一些额外的没有什么关系的组件
  * 
  */
-class toolkit {
+class DOODLELIB_API toolkit {
  public:
   /**
    * @brief 安装ue插件

@@ -3,8 +3,8 @@
 //
 
 #pragma once
-#include <Doodlelib/DoodleLib_fwd.h>
-#include <Doodlelib/Gui/action/action.h>
+#include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/Gui/action/action.h>
 
 namespace doodle {
 namespace action_arg {

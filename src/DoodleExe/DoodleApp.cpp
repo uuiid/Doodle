@@ -7,14 +7,14 @@
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
 #include <DoodleConfig.h>
-#include <DoodleLib/DoodleApp.h>
+#include <DoodleExe/DoodleApp.h>
 #include <Gui/main_windows.h>
 #include <Gui/setting_windows.h>
-#include <core/CoreSet.h>
-#include <core/DoodleLib.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/DoodleLib.h>
 #include <fmt/ostream.h>
-#include <libWarp/json_warp.h>
-#include <rpc/RpcServerHandle.h>
+#include <DoodleLib/libWarp/json_warp.h>
+#include <DoodleLib/rpc/RpcServerHandle.h>
 #include <shellapi.h>
 
 #include <boost/algorithm/string.hpp>
@@ -29,7 +29,7 @@ namespace doodle {
  * @brief 这个是解析命令行专用的类
  *
  */
-class DOODLELIB_API command_line {
+class  command_line {
  public:
   int p_sql_port{3306};                     ///< mysql 端口
   int p_meta_rpc_port{60999};               ///< 元数据端口

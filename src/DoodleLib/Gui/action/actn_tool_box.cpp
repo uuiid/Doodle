@@ -5,13 +5,13 @@
 #include "actn_tool_box.h"
 
 #include <DoodleLib/core/DoodleLib.h>
-#include <FileWarp/ImageSequence.h>
-#include <FileWarp/MayaFile.h>
-#include <FileWarp/Ue4Project.h>
-#include <FileWarp/VideoSequence.h>
-#include <Metadata/Episodes.h>
-#include <Metadata/Shot.h>
-#include <threadPool/ThreadPool.h>
+#include <DoodleLib/FileWarp/ImageSequence.h>
+#include <DoodleLib/FileWarp/MayaFile.h>
+#include <DoodleLib/FileWarp/Ue4Project.h>
+#include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/threadPool/ThreadPool.h>
 
 namespace doodle {
 namespace action_arg {

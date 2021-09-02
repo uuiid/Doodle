@@ -67,7 +67,7 @@ class assets_attr_widget;
  * 
  * @warning 这个窗口中的主要功能时需要联网的，如果断网将会失败
  */
-class DOODLELIB_API main_windows : public nana::form {
+class  main_windows : public nana::form {
   nana::place p_layout;
   nana::menubar p_menubar;
   nana::menu p_menu;

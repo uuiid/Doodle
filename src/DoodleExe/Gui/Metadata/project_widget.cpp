@@ -4,15 +4,15 @@
 
 #include "project_widget.h"
 
-#include <Gui/action/action_import.h>
-#include <Gui/factory/menu_factory.h>
-#include <Metadata/AssetsFile.h>
-#include <Metadata/Comment.h>
-#include <Metadata/MetadataFactory.h>
-#include <Metadata/Project.h>
-#include <Metadata/TimeDuration.h>
+#include <DoodleExe/Gui/factory/menu_factory.h>
+#include <DoodleLib/Gui/action/action_import.h>
+#include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/Comment.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/Metadata/TimeDuration.h>
+#include <DoodleLib/core/DoodleLib.h>
 #include <libWarp/nana_warp.h>
-#include <core/DoodleLib.h>
 namespace doodle {
 
 nana::listbox::oresolver& operator<<(nana::listbox::oresolver& oor, const ProjectPtr& prj) {

@@ -4,12 +4,12 @@
 
 #include "assets_file_action.h"
 
-#include <Metadata/Assets.h>
-#include <Metadata/AssetsFile.h>
-#include <Metadata/AssetsPath.h>
-#include <Metadata/MetadataFactory.h>
-#include <Metadata/Comment.h>
-#include <Metadata/TimeDuration.h>
+#include <DoodleLib/Metadata/Assets.h>
+#include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/AssetsPath.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/Comment.h>
+#include <DoodleLib/Metadata/TimeDuration.h>
 namespace doodle {
 
 actn_assfile_create::actn_assfile_create()

@@ -4,11 +4,11 @@
 
 #include "actn_excel.h"
 
-#include <Metadata/Metadata_cpp.h>
-#include <core/CoreSet.h>
-#include <rpc/RpcFileSystemClient.h>
-#include <rpc/RpcMetadataClient.h>
-#include <core/DoodleLib.h>
+#include <DoodleLib/Metadata/Metadata_cpp.h>
+#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/rpc/RpcFileSystemClient.h>
+#include <DoodleLib/rpc/RpcMetadataClient.h>
+#include <DoodleLib/core/DoodleLib.h>
 
 #include <csv.hpp>
 namespace doodle {

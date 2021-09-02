@@ -3,8 +3,8 @@
 //
 
 #pragma once
+#include <DoodleExe/Gui/factory/menu_factory.h>
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Gui/factory/menu_factory.h>
 
 #include <nana/gui/widgets/menu.hpp>
 namespace doodle {
@@ -50,7 +50,7 @@ namespace doodle {
  * @brief 这个是用来创建工具菜单栏的工厂
  *
  */
-class DOODLELIB_API tool_box_menu_factory
+class  tool_box_menu_factory
     : public menu_factory_base {
 
   void create_menu();
