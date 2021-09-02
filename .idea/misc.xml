@@ -11,4 +11,7 @@
       <file path="$PROJECT_DIR$/tools/grpc_test" />
     </excludeRoots>
   </component>
+  <component name="PyPackaging">
+    <option name="earlyReleasesAsUpgrades" value="true" />
+  </component>
 </project>
