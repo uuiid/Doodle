@@ -716,7 +716,7 @@ class cloth_export():
         print("create move {} to {}".format(
             doodle_work_space.raneg.start,
             doodle_work_space.raneg.end))
-        # self.cam.create_move()
+        self.cam.create_move()
         self.cam.create_move(
             out_path=doodle_work_space.maya_file.abs_path / "mov",
             start_frame=1001
