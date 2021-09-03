@@ -11,7 +11,7 @@ pymel.core.system.loadPlugin("AbcImport")
 pymel.core.system.loadPlugin("qualoth_2019_x64")
 
 pymel.core.system.openFile(
-    "D:/Autodesk/test/DBXY_163_54.ma", loadReferenceDepth="all")
+    "F:/data/DBXY_163_059/DBXY_163_059_sim_colth.ma", loadReferenceDepth="all")
 if pymel.core.mel.eval("currentTimeUnitToFPS") != 25.0:
     pymel.core.warning("frame rate is not 25 is {}".format(
         pymel.core.mel.eval("currentTimeUnitToFPS")
@@ -20,7 +20,8 @@ if pymel.core.mel.eval("currentTimeUnitToFPS") != 25.0:
 pymel.core.playbackOptions(animationStartTime="950")
 # 这个导出一定要在加载好场景后导入
 import maya_fun_tool
-reload(maya_fun_tool)
 maya_fun_tool.doodle_work_space = maya_fun_tool.maya_workspace()
-maya_fun_tool.cloth_export("V:/03_Workflow/Assets/CFX/cloth")()
+maya_fun_tool.doodle_work_space.set_workspace()
+# maya_fun_tool.cloth_export("V:/03_Workflow/Assets/CFX/cloth")()
+maya_fun_tool.cloth_export("V:/03_Workflow/Assets/CFX/cloth").sim_and_export()
 # maya_fun_tool.camera().create_move()

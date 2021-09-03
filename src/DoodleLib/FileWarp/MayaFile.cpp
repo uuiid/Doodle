@@ -126,7 +126,9 @@ bool MayaFile::run_comm(const std::wstring& in_com) const {
             "pymel.core.system.openFile(\"{}\",loadReferenceDepth=\"all\")\n"
             "import maya_fun_tool\n"
             "reload(maya_fun_tool)\n"
-            "maya_fun_tool.fbx_export()()",
+            "maya_fun_tool.doodle_work_space = maya_fun_tool.maya_workspace()\n"
+            "maya_fun_tool.doodle_work_space.set_workspace()\n"
+            "maya_fun_tool.fbx_export()()\n",
             file_path.generic_string());
         auto run_path = warit_tmp_file(str_script);
         k_term->sig_progress(0.1);

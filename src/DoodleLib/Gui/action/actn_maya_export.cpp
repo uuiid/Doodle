@@ -40,16 +40,14 @@ long_term_ptr actn_maya_export::run(const MetadataPtr& in_data, const MetadataPt
   _arg_type.date = k_path->get_cache_path();
 
   auto k_maya = std::make_shared<MayaFile>();
-  k_item->forward_sig(k_maya->get_term());
   k_item->sig_finished.connect([this, in_data, in_parent]() {
     p_up_paths->run(in_data, in_parent);
   });
 
   p_paths = CoreSet::getSet().getCacheRoot("maya_export") / _arg_type.date.stem();
-  auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue([k_maya, this]() {
-    k_maya->exportFbxFile(_arg_type.date, p_paths);
-  });
-  k_item->p_list.push_back(std::move(k_fut));
+  auto k_maya_term =   k_maya->exportFbxFile(_arg_type.date, p_paths);
+
+  k_item->forward_sig(k_maya_term);
 
   return k_item;
 }

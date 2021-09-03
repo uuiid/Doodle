@@ -58,4 +58,7 @@
  *
  * @li 更新maya 解算工具: 添加z直接解算选项
  *
+* @subsection updata_log_3019 版本3.0.19
+*
+* @li 更新maya 导出fbx工具: 正确的进度条和析构节点
  */
