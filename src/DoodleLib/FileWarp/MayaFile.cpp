@@ -189,7 +189,7 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
             "if pymel.core.mel.eval(\"currentTimeUnitToFPS\") != 25:\n"
             "    pymel.core.warning(\"frame rate is not 25 \")\n"
             "    quit()\n"
-            "pymel.core.playbackOptions(animationStartTime=950)\n"
+            "pymel.core.playbackOptions(animationStartTime=950,minTime=950)\n"
             "import maya_fun_tool\n"
             "maya_fun_tool.doodle_work_space = maya_fun_tool.maya_workspace()\n"
             "maya_fun_tool.doodle_work_space.set_workspace()\n"

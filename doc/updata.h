@@ -48,7 +48,7 @@
  * @subsection updata_log_3016 版本3.0.16
  *
  * @li 更新maya 自动导出fbx工具 : 更新导出fbx 摄像机无法导出时导出问题
- * 
+ *
  * @subsection updata_log_3017 版本3.0.17
  *
  * @li 更新maya 自动导出fbx工具 : 添加fbx导出筛选， 没有加载的不导出
@@ -57,8 +57,15 @@
  * @subsection updata_log_3018 版本3.0.18
  *
  * @li 更新maya 解算工具: 添加z直接解算选项
+ * @bug 这个版本不能正确的设置布料缓存路径（没有选中）
  *
-* @subsection updata_log_3019 版本3.0.19
-*
-* @li 更新maya 导出fbx工具: 正确的进度条和析构节点
+ * @subsection updata_log_3019 版本3.0.19
+ *
+ * @li 更新maya 导出fbx工具: 正确的进度条和析构节点
+ *
+ *
+ * @subsection updata_log_3020 版本3.0.20
+ *
+ * @li 更新maya 解算工具: 正确的创建文件夹和选中导出物体
+ * @li 更新maya 解算工具: 正确的解算起始时间
  */

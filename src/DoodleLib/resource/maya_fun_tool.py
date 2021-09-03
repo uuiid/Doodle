@@ -444,6 +444,7 @@ class references_file():
         # type:()->bool
         if(self.cloth_path.exists()):
             self.maya_ref.replaceWith(self.cloth_path)
+            self.namespace = self.maya_ref.namespace
             return True
         return False
 
@@ -454,6 +455,9 @@ class references_file():
 
 class export_group(object):
     def __init__(self, ref_obj):
+        self.reset(ref_obj);
+
+    def reset(self, ref_obj):
         # type:(references_file)->None
         self.maya_name_space = ref_obj.namespace
 
@@ -497,6 +501,11 @@ class cloth_group_file(export_group):
     def __init__(self, ref_obj):
         # type:(references_file)->None
         super(cloth_group_file, self).__init__(ref_obj)
+        self.reset(ref_obj)
+    
+    def reset(self, ref_obj):
+        # type:(references_file)->None
+        super(cloth_group_file,self).reset(ref_obj)
         self.maya_ref = ref_obj
         pymel.core.select(clear=True)
         self.cloth_group = pymel.core.ls(
@@ -694,6 +703,9 @@ class cloth_export():
     def replace_file(self):
         for obj in self.colth_ref:
             obj.replace_file()
+        
+        for qc in self.qcolth_group:
+            qc.reset(qc.maya_ref)
 
     def set_qcloth_attr(self):
         for obj in self.qcolth_group:
@@ -704,7 +716,7 @@ class cloth_export():
         print("create move {} to {}".format(
             doodle_work_space.raneg.start,
             doodle_work_space.raneg.end))
-        self.cam.create_move()
+        # self.cam.create_move()
         self.cam.create_move(
             out_path=doodle_work_space.maya_file.abs_path / "mov",
             start_frame=1001

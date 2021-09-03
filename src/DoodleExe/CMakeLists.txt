@@ -42,13 +42,13 @@ add_executable(
         main/icon.ico
         main/win_exe.rc
 )
-set_target_properties(DoodleExe
+set_target_properties(DoodleServerExe
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-target_link_libraries(DoodleExe
+target_link_libraries(DoodleServerExe
         PUBLIC
         DoodleLib
         )
-target_compile_definitions(DoodleExe
+target_compile_definitions(DoodleServerExe
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         )
