@@ -31,6 +31,9 @@ try {
   std::setlocale(LC_CTYPE, ".UTF8");
 
   auto doodleLib = doodle::make_doodle_lib();
+  auto& set           = doodle::CoreSet::getSet();
+  auto p_rpc_server_handle = std::make_shared<doodle::RpcServerHandle>();
+  p_rpc_server_handle->runServerWait(set.getMetaRpcPort(), set.getFileRpcPort());
 
   return 0;
   // _CrtDumpMemoryLeaks();
