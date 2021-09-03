@@ -57,7 +57,7 @@
  * @subsection updata_log_3018 版本3.0.18
  *
  * @li 更新maya 解算工具: 添加z直接解算选项
- * @bug 这个版本不能正确的设置布料缓存路径（没有选中）
+ * @warning  这个版本不能正确的设置布料缓存路径（没有选中）
  *
  * @subsection updata_log_3019 版本3.0.19
  *

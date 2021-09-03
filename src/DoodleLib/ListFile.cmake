@@ -29,3 +29,15 @@ doodle_write_list_file(
         NAME
         DoodleLib
 )
+
+file(WRITE DoodleLib.h [[//
+// Created by TD on 2021/5/9.
+//
+
+#pragma once]] )
+foreach (_HEADER IN LISTS DOODLELIB_HEADER)
+    if (${_HEADER} STREQUAL DoodleLib.h)
+    else()
+        file(APPEND DoodleLib.h "\n#include <DoodleLib/${_HEADER}>")
+    endif ()
+endforeach ()
