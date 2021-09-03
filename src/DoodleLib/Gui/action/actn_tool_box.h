@@ -21,6 +21,7 @@ class DOODLELIB_API arg_tool_box_sim_qcloth : public arg_paths {
  public:
   arg_tool_box_sim_qcloth();
   FSys::path qcloth_assets_path;
+  bool is_sim;
 };
 
 class DOODLELIB_API arg_tool_box_ue4_import : public arg_paths {

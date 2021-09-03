@@ -81,6 +81,6 @@ cmake-build-debug/
 /GTAGS
 .vscode/**.VC.**
 **/Plugins/Doodle/Binaries/**
-/build/
+build
 *.mll
 *.manifest

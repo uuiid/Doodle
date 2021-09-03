@@ -24,6 +24,8 @@ class DOODLELIB_API MayaFile
     ~qcloth_arg() = default;
     FSys::path sim_path;
     FSys::path qcloth_assets_path;
+
+    bool only_sim;
   };
   using qcloth_arg_ptr = std::shared_ptr<qcloth_arg>;
 

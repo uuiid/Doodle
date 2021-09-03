@@ -57,6 +57,7 @@ class maya_workspace():
     def set_workspace(self):
         k_work = self.maya_file.abs_path.dirname() / "workspace.mel"  # type: pymel.core.Path
         k_work2 = self.maya_file.abs_path / "workspace.mel"  # type: pymel.core.Path
+        print("find workspace path {} \n {}".format(k_work,k_work2))
         if(k_work.exists()):
             self.work.open(k_work.dirname())
         elif(k_work2.exists()):
@@ -432,6 +433,11 @@ class references_file():
     def isLoaded(self):
         return self.maya_ref.isLoaded()
 
+    def is_valid(self):
+        #type:()->bool
+        is_colth = re.findall("_cloth$",self.path.namebase)
+        colth_ex = self.cloth_path.exists()
+        return self.isLoaded() and (is_colth or colth_ex)
     ##
     # 如果存在就替换路径
     def replace_file(self):
@@ -506,6 +512,8 @@ class cloth_group_file(export_group):
             pymel.core.select(
                 "{}:*{}".format(self.maya_name_space, select_str), replace=True)
             pymel.core.select(obj, add=True)
+            print("select {} and {}".format(str(select_str),str(obj)))
+            print(pymel.core.selected())
             maya.mel.eval("qlUpdateInitialPose;")
 
     def set_cache_folder(self):
@@ -669,23 +677,23 @@ class cloth_export():
         doodle_work_space.set_workspace()
         references_file.cfx_cloth_path = pymel.core.Path(cfx_path)
 
-        self.colth = []  # type: list[references_file]
+        self.colth_ref = []  # type: list[references_file]
         self.qcolth_group = []  # type: list[cloth_group_file]
         self.select_sim_references_file()
         self.cam = camera()
+        self.qcolth_group = [cloth_group_file(i) for i in self.colth_ref if i.is_valid()]
 
     def select_sim_references_file(self):
         if pymel.core.fileInfo.has_key("doodle_sim"):
             k_set = eval(pymel.core.fileInfo["doodle_sim"])
-            self.colth = [references_file(i) for i in k_set]
+            self.colth_ref = [references_file(i) for i in k_set]
         else:
-            self.colth = [references_file(i)
+            self.colth_ref = [references_file(i)
                           for i in pymel.core.listReferences()]
 
     def replace_file(self):
-        for obj in self.colth:
-            if obj.replace_file():
-                self.qcolth_group.append(cloth_group_file(obj))
+        for obj in self.colth_ref:
+            obj.replace_file()
 
     def set_qcloth_attr(self):
         for obj in self.qcolth_group:
@@ -721,23 +729,32 @@ class cloth_export():
         for obj in self.qcolth_group:
             obj.export_abc(repeat=True)
 
-    def save(self):
-        path = doodle_work_space.maya_file.abs_path / \
-            doodle_work_space.maya_file.name_not_ex  # type: pymel.core.Path
-        path.makedirs_p()
+    def save(self, override=False):
+        if not override:
+            path = doodle_work_space.maya_file.abs_path / \
+                doodle_work_space.maya_file.name_not_ex  # type: pymel.core.Path
+            path.makedirs_p()
 
-        pymel.core.system.saveAs("{}/{}_sim_colth.ma".format(
-            path,
-            doodle_work_space.maya_file.name_not_ex))
+            pymel.core.system.saveAs("{}/{}_sim_colth.ma".format(
+                path,
+                doodle_work_space.maya_file.name_not_ex))
+        else:
+            pymel.core.system.saveFile(force=True)
+
+    def sim_and_export(self):
+        self.set_qcloth_attr()
+        self.save(override=True)
+        self.export_abc()
+        self.play_move()
+        # self.export_fbx()
+
 
     def __call__(self):
         self.replace_file()
         self.set_qcloth_attr()
         self.save()
-        self.play_move()
-        # self.export_fbx()
         self.export_abc()
-
+        self.play_move()
 
 class analyseFileName():
 

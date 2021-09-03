@@ -109,6 +109,12 @@ void tool_box_menu_factory::create_menu() {
       k_arg.qcloth_assets_path = k_paths.front();
     else
       k_arg.is_cancel = true;
+
+
+    nana::inputbox k_inputbox{p_window, "解算设置"};
+    nana::inputbox::boolean is_sim{"只解算",false};
+    k_inputbox.show_modal(is_sim);
+    k_arg.is_sim = is_sim.value();
     return k_arg;
   });
 

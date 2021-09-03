@@ -173,6 +173,8 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
         k_term->sig_progress(0.1);
 
         auto str_script = fmt::format(
+            "# -*- coding: utf-8 -*-\n"
+            "\n"
             "import maya.standalone\n"
             "maya.standalone.initialize(name='python')\n"
             "import pymel.core.system\n"
@@ -188,9 +190,16 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
             "pymel.core.playbackOptions(animationStartTime=950)\n"
             "import maya_fun_tool\n"
             "maya_fun_tool.doodle_work_space = maya_fun_tool.maya_workspace()\n"
-            "maya_fun_tool.cloth_export(\"{}\")()\n",
+            "maya_fun_tool.doodle_work_space.set_workspace()\n"
+            "sim = maya_fun_tool.cloth_export(\"{}\")\n",
             in_arg->sim_path.generic_string(),
             in_arg->qcloth_assets_path.generic_string());
+        if(in_arg->only_sim)
+          str_script.append("sim.sim_and_export()\n");
+        else
+          str_script.append("sim()\n");
+
+
         auto run_path = warit_tmp_file(str_script);
         k_term->sig_progress(0.1);
         //生成命令

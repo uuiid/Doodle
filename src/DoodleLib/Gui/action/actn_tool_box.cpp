@@ -4,13 +4,13 @@
 
 #include "actn_tool_box.h"
 
-#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/FileWarp/ImageSequence.h>
 #include <DoodleLib/FileWarp/MayaFile.h>
 #include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
 
 namespace doodle {
@@ -39,7 +39,7 @@ actn_export_maya::actn_export_maya()
 }
 long_term_ptr actn_export_maya::run() {
   auto k_term = std::make_shared<long_term>();
-  p_date = sig_get_arg().value();
+  p_date      = sig_get_arg().value();
 
   if (p_date.is_cancel) {
     cancel("取消导出");
@@ -110,7 +110,7 @@ bool actn_connect_video::is_async() {
 }
 long_term_ptr actn_connect_video::run() {
   auto k_term = std::make_shared<long_term>();
-  p_date = sig_get_arg().value();
+  p_date      = sig_get_arg().value();
 
   if (p_date.is_cancel) {
     cancel("取消导出");
@@ -132,7 +132,7 @@ bool actn_ue4_shot_episodes::is_async() {
 }
 long_term_ptr actn_ue4_shot_episodes::run() {
   auto k_term = std::make_shared<long_term>();
-  p_date = sig_get_arg().value();
+  p_date      = sig_get_arg().value();
 
   if (p_date.is_cancel) {
     cancel("取消导出");
@@ -153,7 +153,7 @@ bool actn_qcloth_sim_export::is_async() {
 }
 long_term_ptr actn_qcloth_sim_export::run() {
   auto k_term = std::make_shared<long_term>();
-  p_date = sig_get_arg().value();
+  p_date      = sig_get_arg().value();
 
   if (p_date.is_cancel) {
     cancel("取消导出");
@@ -166,6 +166,7 @@ long_term_ptr actn_qcloth_sim_export::run() {
                    auto ptr                = std::make_shared<MayaFile::qcloth_arg>();
                    ptr->sim_path           = in;
                    ptr->qcloth_assets_path = p_date.qcloth_assets_path;
+                   ptr->only_sim           = p_date.is_sim;
                    return p_maya->qcloth_sim_file(ptr);
                  });
   k_term->forward_sig(k_list);
@@ -192,8 +193,8 @@ long_term_ptr actn_ue4_import_files::run() {
   std::copy_if(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
                [this](const FSys::path& in_path) { return p_ue->can_import_ue4(in_path); });
 
-  auto k_term  = p_ue->import_files_asyn(k_list);
-  p_term = k_term;
+  auto k_term = p_ue->import_files_asyn(k_list);
+  p_term      = k_term;
   return k_term;
 }
 }  // namespace toolbox
