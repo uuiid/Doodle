@@ -47,7 +47,7 @@ bool MayaFile::checkFile() {
   return true;
 }
 
-bool MayaFile::run_comm(const std::wstring& in_com) const {
+bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term) const {
   //  STARTUPINFO si{};
   //  PROCESS_INFORMATION pi{};
   //  ZeroMemory(&si, sizeof(si));
@@ -93,18 +93,21 @@ bool MayaFile::run_comm(const std::wstring& in_com) const {
       boost::process::std_err > k_in2,
       boost::process::std_in.close(),
       boost::process::windows::hide};
-//  boost::process::imbue();
 
   auto fun = DoodleLib::Get().get_thread_pool()->enqueue(
-      [&k_c,&k_in]() {
+      [&k_c, &k_in, &in_term]() {
         auto str_r = std::string{};
         while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
-          DOODLE_LOG_INFO(boost::locale::conv::to_utf<char>(str_r,"GB18030"));
+          DOODLE_LOG_INFO(boost::locale::conv::to_utf<char>(str_r, "GB18030"));
+          in_term->sig_message_result(boost::locale::conv::to_utf<char>(str_r, "GB18030"));
+          in_term->sig_progress(0.000001);
         }
       });
   auto str_r2 = std::string{};
   while (k_c.running() && std::getline(k_in2, str_r2) && !str_r2.empty()) {
-    DOODLE_LOG_INFO(boost::locale::conv::to_utf<char>(str_r2,"GB18030"))
+    DOODLE_LOG_INFO(boost::locale::conv::to_utf<char>(str_r2, "GB18030"))
+    in_term->sig_message_result(boost::locale::conv::to_utf<char>(str_r2, "GB18030"));
+    in_term->sig_progress(0.000001);
   }
   k_c.wait();
   fun.get();
@@ -157,7 +160,7 @@ bool MayaFile::run_comm(const std::wstring& in_com) const {
             run_path.generic_wstring());
         k_term->sig_progress(0.1);
 
-        run_comm(run_com);
+        run_comm(run_com, k_term);
 
         k_term->sig_progress(0.6);
         FSys::remove(run_path);
@@ -229,7 +232,7 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
             run_path.generic_wstring());
 
         k_term->sig_progress(0.1);
-        run_comm(run_com);
+        run_comm(run_com, k_term);
         k_term->sig_progress(0.7);
         k_term->sig_finished();
         k_term->sig_message_result(fmt::format("完成导出 :{}", in_arg->sim_path.generic_string()));
