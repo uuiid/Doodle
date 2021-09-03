@@ -34,8 +34,7 @@ TEST_CASE("my tree", "[tree]") {
     }
     SECTION("for child") {
       for (auto& it : k_tree->get_children()) {
-        if (it.get())
-          std::cout << it.get()->str() << std::endl;
+          std::cout << it->get()->str() << std::endl;
       }
     }
   }

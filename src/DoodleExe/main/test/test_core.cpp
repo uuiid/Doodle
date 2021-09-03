@@ -106,6 +106,7 @@ TEST_CASE("core create_path", "[fun][create_path]") {
   }
 }
 
+#include <boost/locale/generator.hpp>
 #include <opencv2/opencv.hpp>
 TEST_CASE("core opencv", "[fun]") {
   using namespace doodle;
@@ -135,6 +136,28 @@ TEST_CASE("core opencv image", "[fun]") {
       << "step: " << k_mat.step << "\n"
       << "step1: " << k_mat.step1() << "\n"
       << std::endl;
+}
+
+TEST_CASE("maya get log", "[maya]") {
+  using namespace doodle;
+  auto k_maya               = MayaFile();
+  auto k_arg                = std::make_shared<MayaFile::qcloth_arg>();
+  k_arg->only_sim           = false;
+  k_arg->qcloth_assets_path = FSys::path{R"(V:\03_Workflow\Assets\CFX\cloth)"};
+  k_arg->sim_path           = FSys::path{"F:\\data\\DBXY_163_052.ma"};
+  auto k_term               = k_maya.qcloth_sim_file(k_arg);
+  k_term->sig_message_result.connect([](const std::string& in_) { DOODLE_LOG_INFO(in_); });
+  k_term->sig_progress.connect([](auto in_) { DOODLE_LOG_INFO(in_); });
+  k_term->p_list[0].get();
+}
+
+#include <boost/locale/util.hpp>
+#include <boost/locale.hpp>
+TEST_CASE("sys encoding", "[sys]") {
+  auto k_ = boost::locale::util::get_system_locale();
+  std::cout << k_ << std::endl;
+  std::cout << boost::locale::conv::from_utf<char>("测试", "windows-936") << std::endl;
+  //  std::cout << k_.c_str() << std::endl;
 }
 
 #include <cereal/archives/binary.hpp>
@@ -201,13 +224,13 @@ TEST_CASE("core archive", "[fun][archives]") {
 //#include <boost/archive/iterators/base64_from_binary.hpp>
 //#include <boost/archive/iterators/binary_from_base64.hpp>
 //#include <boost/archive/iterators/transform_width.hpp>
-//std::string encode64(const std::string &val) {
+// std::string encode64(const std::string &val) {
 //  using namespace boost::archive::iterators;
 //  using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
 //  auto tmp = std::string(It(std::begin(val)), It(std::end(val)));
 //  return tmp.append((3 - val.size() % 3) % 3, '=');
 //}
-//std::string decode64(const std::string &val) {
+// std::string decode64(const std::string &val) {
 //  using namespace boost::archive::iterators;
 //  using It = transform_width<binary_from_base64<std::string::const_iterator>, 8, 6>;
 //  return boost::algorithm::trim_right_copy_if(std::string(It(std::begin(val)), It(std::end(val))), [](char c) {
