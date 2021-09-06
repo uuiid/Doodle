@@ -8,7 +8,7 @@
 #include <DoodleLib/libWarp/protobuf_warp.h>
 #include <DoodleLib/rpc/rpc_trans_path.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
-#include <FileSystemServer.grpc.pb.h>
+#include <DoodleLib/generate/rpc/FileSystemServer.grpc.pb.h>
 
 #include <optional>
 
