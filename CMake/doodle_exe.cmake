@@ -173,7 +173,6 @@ function(add_doodle)
             #        $<IF:$<CONFIG:Debug>,${WX_cored},${WX_core}>
             #        $<IF:$<CONFIG:Debug>,${WX_advd},${WX_adv}>
 
-            cxxopts::cxxopts
             csv
             Catch2::Catch2
             SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器

@@ -10,11 +10,17 @@
   "features": {},
   "dependencies": [
     "boost",
-    "gtest",
-    "rttr",
     "magic-enum",
     "nlohmann-json",
     "sqlpp11",
+    "nana",
+    "catch2",
+    "opencv",
+    "date",
+    "cereal",
+    "spdlog",
+    "cryptopp",
+    "grpc",
     {
       "name": "sqlpp11-connector-mysql",
       "default-features":false,
@@ -22,8 +28,6 @@
         "mysql"
       ]
     },
-    "date",
-    "cereal",
     {
       "name": "opencv",
       "default-features": true,

@@ -151,13 +151,22 @@ TEST_CASE("maya get log", "[maya]") {
   k_term->p_list[0].get();
 }
 
-#include <boost/locale/util.hpp>
 #include <boost/locale.hpp>
+#include <boost/locale/util.hpp>
 TEST_CASE("sys encoding", "[sys]") {
   auto k_ = boost::locale::util::get_system_locale();
   std::cout << k_ << std::endl;
   std::cout << boost::locale::conv::from_utf<char>("测试", "windows-936") << std::endl;
   //  std::cout << k_.c_str() << std::endl;
+}
+
+#include <boost/rational.hpp>
+
+TEST_CASE("boost rational", "[boost][rational]") {
+  using rati = boost::rational<std::uint64_t>;
+  auto k_i   = rati(1, 5);
+  auto k_i2  = rati(1, 10);
+  std::cout << boost::rational_cast<std::double_t>(((k_i + k_i2) / rati{5}) * rati{2}) << std::endl;
 }
 
 #include <cereal/archives/binary.hpp>

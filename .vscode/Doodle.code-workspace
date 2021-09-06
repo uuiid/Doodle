@@ -144,7 +144,7 @@
 				"cwd": "${absDirpath}"
 			}
 		],
-		"cmake.buildDirectory": "${workspaceFolder}/b_${generator}_${buildKit}_${buildType}",
+		"cmake.buildDirectory": "${workspaceFolder}/build/b_${generator}_${buildKit}_${buildType}",
 		"cmake.configureSettings": {},
 		"python.envFile": "${workspaceFolder}/.env",
 		"python.formatting.autopep8Args": [
