@@ -18,7 +18,7 @@ namespace doodle {
 DoodleLib* DoodleLib::p_install = nullptr;
 
 DoodleLib::DoodleLib()
-    : p_thread_pool(std::make_shared<ThreadPool>(4)),
+    : p_thread_pool(std::make_shared<ThreadPool>(std::thread::hardware_concurrency())),
       p_curr_project(),
       p_rpc_metadata_clien(),
       p_rpc_file_system_client(),

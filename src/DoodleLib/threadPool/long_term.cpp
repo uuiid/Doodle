@@ -11,7 +11,7 @@ long_term::long_term() : sig_progress(),
                          p_num(0),
                          _mutex(),
                          p_list(),
-                         p_child(){
+                         p_child() {
   sig_finished.connect([this]() {
     std::lock_guard k_guard{_mutex};
     p_fulfil = true;
@@ -45,6 +45,8 @@ void long_term::forward_sig(const long_term_ptr& in_forward) {
 void long_term::forward_sig(const std::vector<long_term_ptr>& in_forward) {
   const std::size_t k_size = in_forward.size();
   for (const auto& i : in_forward) {
+    p_child.push_back(i);
+
     i->sig_progress.connect([this, k_size](
                                 std::double_t in_) {
       sig_progress(in_ / boost::numeric_cast<std::double_t>(k_size));
@@ -53,15 +55,13 @@ void long_term::forward_sig(const std::vector<long_term_ptr>& in_forward) {
       sig_message_result(str);
     });
     i->sig_finished.connect([this, k_size]() {
-      {
-        std::lock_guard k_guark{_mutex};
-        ++p_num;
-      }
-      if (p_num == k_size) {
+      auto k_is_fulfil = std::all_of(p_child.begin(), p_child.end(), [](const long_term_ptr& in_term) {
+        std::lock_guard k_guark{in_term->_mutex};
+        return in_term->p_fulfil;
+      });
+      if (k_is_fulfil)
         sig_finished();
-      }
     });
-    p_child.push_back(i);
   }
 }
 long_term::~long_term() {

@@ -10,6 +10,7 @@ import re
 import json
 import pymel.util.path
 import pymel.all
+import pymel.core.animation
 
 
 class maya_play_raneg():
@@ -52,12 +53,12 @@ class maya_workspace():
         self.work.update()
         self.maya_file = maya_file()
         self.raneg = maya_play_raneg()
-    
 
     def set_workspace(self):
-        k_work = self.maya_file.abs_path.dirname() / "workspace.mel"  # type: pymel.core.Path
+        k_work = self.maya_file.abs_path.dirname(
+        ) / "workspace.mel"  # type: pymel.core.Path
         k_work2 = self.maya_file.abs_path / "workspace.mel"  # type: pymel.core.Path
-        print("find workspace path {} \n {}".format(k_work,k_work2))
+        print("find workspace path {} \n {}".format(k_work, k_work2))
         if(k_work.exists()):
             self.work.open(k_work.dirname())
         elif(k_work2.exists()):
@@ -223,8 +224,9 @@ class camera:
             "FBXExportBakeComplexEnd -v {}".format(doodle_work_space.raneg.end))
         maya.mel.eval("FBXExportBakeComplexAnimation -v true")
         maya.mel.eval("FBXExportConstraints -v true")
-        maya.mel.eval('FBXExport -f "{}" -s'.format(str(mel_name.abspath()).replace("\\","/")))
-        print("camera erport ----> {}".format(str(mel_name.abspath()).replace("\\","/")))
+        maya.mel.eval(
+            'FBXExport -f "{}" -s'.format(str(mel_name.abspath()).replace("\\", "/")))
+        print("camera erport ----> {}".format(str(mel_name.abspath()).replace("\\", "/")))
         log.addfile("camera", mel_name, 0)
 
     def bakeAnm(self):
@@ -416,7 +418,7 @@ class references_file():
         #     self.cloth_path = self.cfx_cloth_path / self.path.name.replace(
         #         "rig", "cloth")
 
-    def select_to_ref(self,maya_obj):
+    def select_to_ref(self, maya_obj):
         # type: (Any)->bool
         try:
             ref = pymel.core.referenceQuery(
@@ -434,12 +436,13 @@ class references_file():
         return self.maya_ref.isLoaded()
 
     def is_valid(self):
-        #type:()->bool
-        is_colth = re.findall("_cloth$",self.path.namebase)
+        # type:()->bool
+        is_colth = re.findall("_cloth$", self.path.namebase)
         colth_ex = self.cloth_path.exists()
         return self.isLoaded() and (is_colth or colth_ex)
     ##
     # 如果存在就替换路径
+
     def replace_file(self):
         # type:()->bool
         if(self.cloth_path.exists()):
@@ -455,7 +458,7 @@ class references_file():
 
 class export_group(object):
     def __init__(self, ref_obj):
-        self.reset(ref_obj);
+        self.reset(ref_obj)
 
     def reset(self, ref_obj):
         # type:(references_file)->None
@@ -502,10 +505,10 @@ class cloth_group_file(export_group):
         # type:(references_file)->None
         super(cloth_group_file, self).__init__(ref_obj)
         self.reset(ref_obj)
-    
+
     def reset(self, ref_obj):
         # type:(references_file)->None
-        super(cloth_group_file,self).reset(ref_obj)
+        super(cloth_group_file, self).reset(ref_obj)
         self.maya_ref = ref_obj
         pymel.core.select(clear=True)
         self.cloth_group = pymel.core.ls(
@@ -521,7 +524,7 @@ class cloth_group_file(export_group):
             pymel.core.select(
                 "{}:*{}".format(self.maya_name_space, select_str), replace=True)
             pymel.core.select(obj, add=True)
-            print("select {} and {}".format(str(select_str),str(obj)))
+            print("select {} and {}".format(str(select_str), str(obj)))
             print(pymel.core.selected())
             maya.mel.eval("qlUpdateInitialPose;")
 
@@ -683,14 +686,16 @@ class fbx_export():
 
 class cloth_export():
     def __init__(self, cfx_path):
+        pymel.core.animation.evaluationManager(mode="off")
         doodle_work_space.set_workspace()
         references_file.cfx_cloth_path = pymel.core.Path(cfx_path)
 
         self.colth_ref = []  # type: list[references_file]
         self.qcolth_group = []  # type: list[cloth_group_file]
+        self.cam = camera()  # 调整camera的位置， 保证在替换引用之前找到cam
         self.select_sim_references_file()
-        self.cam = camera()
-        self.qcolth_group = [cloth_group_file(i) for i in self.colth_ref if i.is_valid()]
+        self.qcolth_group = [cloth_group_file(
+            i) for i in self.colth_ref if i.is_valid()]
 
     def select_sim_references_file(self):
         if pymel.core.fileInfo.has_key("doodle_sim"):
@@ -698,12 +703,12 @@ class cloth_export():
             self.colth_ref = [references_file(i) for i in k_set]
         else:
             self.colth_ref = [references_file(i)
-                          for i in pymel.core.listReferences()]
+                              for i in pymel.core.listReferences()]
 
     def replace_file(self):
         for obj in self.colth_ref:
             obj.replace_file()
-        
+
         for qc in self.qcolth_group:
             qc.reset(qc.maya_ref)
 
@@ -756,17 +761,17 @@ class cloth_export():
     def sim_and_export(self):
         self.set_qcloth_attr()
         self.save(override=True)
-        self.export_abc()
         self.play_move()
+        self.export_abc()
         # self.export_fbx()
-
 
     def __call__(self):
         self.replace_file()
         self.set_qcloth_attr()
         self.save()
-        self.export_abc()
         self.play_move()
+        self.export_abc()
+
 
 class analyseFileName():
 

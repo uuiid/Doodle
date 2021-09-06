@@ -98,16 +98,14 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
       [&k_c, &k_in, &in_term]() {
         auto str_r = std::string{};
         while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
-          DOODLE_LOG_INFO(boost::locale::conv::to_utf<char>(str_r, "GB18030"));
           in_term->sig_message_result(boost::locale::conv::to_utf<char>(str_r, "GB18030"));
-          in_term->sig_progress(0.000001);
+          in_term->sig_progress(0.00001);
         }
       });
   auto str_r2 = std::string{};
   while (k_c.running() && std::getline(k_in2, str_r2) && !str_r2.empty()) {
-    DOODLE_LOG_INFO(boost::locale::conv::to_utf<char>(str_r2, "GB18030"))
     in_term->sig_message_result(boost::locale::conv::to_utf<char>(str_r2, "GB18030"));
-    in_term->sig_progress(0.000001);
+    in_term->sig_progress(0.00001);
   }
   k_c.wait();
   fun.get();
