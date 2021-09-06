@@ -1,0 +1,14 @@
+FROM ubuntu
+
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone  \
+    && apt-get update \
+    && apt-get install -y cmake curl file gcc g++ git libtool ninja-build tar unzip wget
+
+RUN cd /tmp \
+    && git clone https://github.com/microsoft/vcpkg.git \
+    && cd vcpkg \
+    && ./bootstrap-vcpkg.sh -useSystemBinaries
+
