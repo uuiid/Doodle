@@ -22,21 +22,21 @@ function(doodle_grpc_generate out_lists)
         message("name: " ${LIST})
         list(APPEND
                 _OUT
-                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.h
-                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.cc
-                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.h
-                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.cc)
+                ${CMAKE_CURRENT_LIST_DIR}/generate/rpc/${_NAME_WE}.pb.h
+                ${CMAKE_CURRENT_LIST_DIR}/generate/rpc/${_NAME_WE}.pb.cc
+                ${CMAKE_CURRENT_LIST_DIR}/generate/rpc/${_NAME_WE}.grpc.pb.h
+                ${CMAKE_CURRENT_LIST_DIR}/generate/rpc/${_NAME_WE}.grpc.pb.cc)
         add_custom_command(
                 OUTPUT
-                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.h
-                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.pb.cc
-                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.h
-                ${CMAKE_CURRENT_BINARY_DIR}/${_NAME_WE}.grpc.pb.cc
+                ${CMAKE_CURRENT_LIST_DIR}/generate/rpc/${_NAME_WE}.pb.h
+                ${CMAKE_CURRENT_LIST_DIR}/generate/rpc/${_NAME_WE}.pb.cc
+                ${CMAKE_CURRENT_LIST_DIR}/generate/rpc/${_NAME_WE}.grpc.pb.h
+                ${CMAKE_CURRENT_LIST_DIR}/generate/rpc/${_NAME_WE}.grpc.pb.cc
                 COMMAND protobuf::protoc
                 ARGS --proto_path=${Z_VCPKG_ROOT_DIR}/installed/${VCPKG_TARGET_TRIPLET}/include
                 --proto_path=${_DIRECTORY}
-                --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-                --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
+                --cpp_out=${CMAKE_CURRENT_LIST_DIR}/generate/rpc
+                --grpc_out=${CMAKE_CURRENT_LIST_DIR}/generate/rpc
                 --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
                 ${_NAME}
                 WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
@@ -73,22 +73,27 @@ function(doodle_sqlpp_generate out_lists)
 
         list(APPEND
                 _OUT
-                ${CMAKE_CURRENT_BINARY_DIR}/core/${CLEAN_NAME}_sql.h)
-        add_custom_command(
-                OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/core/${CLEAN_NAME}_sql.h"
-                COMMAND ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat
-                COMMAND py
-                ARGS $<TARGET_FILE:sqlpp11::ddl2cpp>
-                ${_PATH}
-                ${CMAKE_CURRENT_BINARY_DIR}/core/${CLEAN_NAME}_sql
-                doodle
-                MAIN_DEPENDENCY ${_PATH}
-        )
+                ${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql.h)
+        if (EXISTS ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat)
+            add_custom_command(
+                    OUTPUT "${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql.h"
+                    COMMAND ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat
+                    COMMAND py
+                    ARGS $<TARGET_FILE:sqlpp11::ddl2cpp>
+                    ${_PATH}
+                    ${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql
+                    doodle
+                    MAIN_DEPENDENCY ${_PATH}
+            )
+        endif ()
     endforeach ()
+
     set("${out_lists}"
             ${_OUT}
             PARENT_SCOPE)
     cmake_print_variables(_OUT)
+
+
 endfunction()
 
 
@@ -194,7 +199,7 @@ function(add_doodle)
     target_compile_options(${ADD_DOODLE_NAME}
             PUBLIC
             /EHsc
-    )
+            )
 
     target_include_directories(${ADD_DOODLE_NAME}
             PUBLIC

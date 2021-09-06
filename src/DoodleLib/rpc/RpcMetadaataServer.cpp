@@ -7,7 +7,7 @@
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/core/CoreSql.h>
 #include <Logger/Logger.h>
-#include <core/metadatatab_sql.h>
+#include <DoodleLib/generate/core/metadatatab_sql.h>
 #include <libWarp/protobuf_warp_cpp.h>
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
