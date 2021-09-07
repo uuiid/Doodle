@@ -752,7 +752,7 @@ class cloth_export():
 
     def set_qcloth_attr(self):
         for obj in self.qcolth_group:
-            obj.qcloth_update_pose()
+            # obj.qcloth_update_pose()
             obj.set_cache_folder()
 
     def play_move(self):
@@ -800,16 +800,24 @@ class cloth_export():
     def sim_and_export(self):
         self.set_qcloth_attr()
         self.save(override=True)
-        self.play_move()
-        self.export_abc()
+        if len(self.qcolth_group) > 5:
+            self.export_abc()
+            self.play_move()
+        else:
+            self.play_move()
+            self.export_abc()
         # self.export_fbx()
 
     def __call__(self):
         self.replace_file()
         self.set_qcloth_attr()
         self.save()
-        self.play_move()
-        self.export_abc()
+        if len(self.qcolth_group) > 5:
+            self.export_abc()
+            self.play_move()
+        else:
+            self.play_move()
+            self.export_abc()
 
 
 class analyseFileName():
