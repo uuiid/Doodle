@@ -135,7 +135,6 @@
 			"xtree": "cpp",
 			"xutility": "cpp"
 		},
-		"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
 		"testMate.cpp.log.logSentry": "disable_3",
 		"testMate.cpp.test.advancedExecutables": [
 			{
