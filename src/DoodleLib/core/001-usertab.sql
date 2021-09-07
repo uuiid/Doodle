@@ -13,3 +13,5 @@ create index usertab_id_index
 create index usertab_permission_group_index
     on usertab (permission_group);
 
+create index usertab_user_name_index
+    on usertab (user_name(512))

@@ -1,4 +1,7 @@
 # *.cpp filter=gitignore
+
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
 *.psd filter=lfs diff=lfs merge=lfs -text
 *.exe filter=lfs diff=lfs merge=lfs -text
 *.gif filter=lfs diff=lfs merge=lfs -text
