@@ -169,6 +169,11 @@ TEST_CASE("boost rational", "[boost][rational]") {
   std::cout << boost::rational_cast<std::double_t>(((k_i + k_i2) / rati{5}) * rati{2}) << std::endl;
 }
 
+TEST_CASE("std regex", "[std][regex]") {
+  std::cout.setf(std::ios_base::boolalpha);
+  std::cout << std::regex_search("sarfas致命错误：sadd", std::regex{"致命错误"}) << std::endl;
+}
+
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/portable_binary.hpp>

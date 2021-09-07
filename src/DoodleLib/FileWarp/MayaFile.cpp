@@ -104,7 +104,11 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
       });
   auto str_r2 = std::string{};
   while (k_c.running() && std::getline(k_in2, str_r2) && !str_r2.empty()) {
-    in_term->sig_message_result(boost::locale::conv::to_utf<char>(str_r2, "GB18030"));
+    auto str  = boost::locale::conv::to_utf<char>(str_r2, "GB18030");
+    in_term->sig_message_result(str);
+    if(std::regex_search(str.c_str(),std::regex{"致命错误"})){
+//      boost::process::system(fmt::format("taskkill /F /T /PID {}",k_c.id()));
+    }
     in_term->sig_progress(0.001);
   }
   k_c.wait();
