@@ -279,5 +279,13 @@ void CoreSet::setFileRpcPort(int in_fileRpcPort) {
 std::string CoreSet::get_server_host() {
   return p_server_host;
 }
+void CoreSet::from_json(const nlohmann::json &nlohmann_json_j) {
+  nlohmann_json_j.at("p_sql_port").get_to(p_sql_port);
+  nlohmann_json_j.at("p_meta_rpc_port").get_to(p_meta_rpc_port);
+  nlohmann_json_j.at("p_file_rpc_port").get_to(p_file_rpc_port);
+  nlohmann_json_j.at("p_sql_host").get_to(p_sql_host);
+  nlohmann_json_j.at("p_sql_user").get_to(p_sql_user);
+  nlohmann_json_j.at("p_sql_password").get_to(p_sql_password);
+}
 
 }  // namespace doodle

@@ -15,6 +15,7 @@
 #include <cereal/types/vector.hpp>
 #include <magic_enum.hpp>
 
+#include <nlohmann/json_fwd.hpp>
 namespace doodle {
 
 enum class Department {
@@ -96,6 +97,8 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   };
 
   std::string get_server_host();
+
+  void from_json(const nlohmann::json& nlohmann_json_j);
 
   /**
    * @brief 全局是否停止， 服务器使用

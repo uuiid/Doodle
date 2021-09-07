@@ -3,6 +3,7 @@
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/rpc/RpcFileSystemServer.h>
 #include <DoodleLib/rpc/RpcMetadaataServer.h>
+#include <csignal>
 
 namespace doodle {
 RpcServerHandle::RpcServerHandle()
@@ -54,9 +55,35 @@ void RpcServerHandle::runServer(int port_meta, int port_file_sys) {
     p_Server->Wait();
   }};
 }
+BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
+  DOODLE_LOG_WARN("收到退出信号， 开始退出 {}", fdwCtrlType);
+  CoreSet::getSet().p_stop = true;
+  CoreSet::getSet().p_condition.notify_all();
+  return true;
+}
+
 void RpcServerHandle::runServerWait(int port_meta, int port_file_sys) {
   runServer(port_meta, port_file_sys);
-  p_thread.join();
+  auto k_ = [](int) {
+    DOODLE_LOG_WARN("std  收到退出信号， 开始退出 ");
+    CoreSet::getSet().p_stop = true;
+    CoreSet::getSet().p_condition.notify_all();
+  };
+  std::signal(SIGABRT, k_);
+  std::signal(SIGABRT_COMPAT, k_);
+  std::signal(SIGBREAK, k_);
+  std::signal(SIGFPE, k_);
+  std::signal(SIGILL, k_);
+  std::signal(SIGINT, k_);
+  std::signal(SIGSEGV, k_);
+  std::signal(SIGTERM, k_);
+
+  auto& set = CoreSet::getSet();
+  std::unique_lock k_lock{set.p_mutex};
+  set.p_condition.wait(
+      k_lock,
+      [&set](){return set.p_stop;}
+      );
 }
 void RpcServerHandle::stop() {
   using namespace chrono::literals;

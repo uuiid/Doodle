@@ -11,8 +11,16 @@
 //#include <DoodleLib/DoodleApp.h>
 //#include <boost/locale.hpp>
 
-#if 0
+void load_setting(const doodle::FSys::path& path) {
+  using namespace doodle;
+  FSys::ifstream k_file{path, std::ios::in};
+  if(k_file){
+    auto p_info = nlohmann::json::parse(k_file);
+    CoreSet::getSet().from_json(p_info);
+  }
+};
 
+#if 0
 extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               HINSTANCE hPrevInstance,
                               LPSTR strCmdLine,
@@ -30,19 +38,22 @@ try {
   //  std::wcout.imbue(std::locale{".UTF8"});
   std::setlocale(LC_CTYPE, ".UTF8");
 
-  auto doodleLib = doodle::make_doodle_lib();
-  auto& set           = doodle::CoreSet::getSet();
+  auto doodleLib           = doodle::make_doodle_lib();
+  if(argc == 2){
+    load_setting(argv[1]);
+  }
+  auto& set                = doodle::CoreSet::getSet();
   auto p_rpc_server_handle = std::make_shared<doodle::RpcServerHandle>();
   p_rpc_server_handle->runServerWait(set.getMetaRpcPort(), set.getFileRpcPort());
 
   return 0;
   // _CrtDumpMemoryLeaks();
-} catch (const std::exception &err) {
+} catch (const std::exception& err) {
   std::cout << err.what() << std::endl;
-  //  DOODLE_LOG_ERROR(err.what());
-  //  doodle::CoreSet::getSet().writeDoodleLocalSet();
+  DOODLE_LOG_ERROR(err.what());
+  doodle::CoreSet::getSet().writeDoodleLocalSet();
   return 1;
 } catch (...) {
-  //  doodle::CoreSet::getSet().writeDoodleLocalSet();
+  doodle::CoreSet::getSet().writeDoodleLocalSet();
   return 1;
 }
