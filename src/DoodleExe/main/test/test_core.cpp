@@ -171,7 +171,18 @@ TEST_CASE("boost rational", "[boost][rational]") {
 
 TEST_CASE("std regex", "[std][regex]") {
   std::cout.setf(std::ios_base::boolalpha);
-  std::cout << std::regex_search("sarfas致命错误：sadd", std::regex{"致命错误"}) << std::endl;
+  //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
+  const static std::wregex fatal_error_znch{
+      LR"(致命错误.尝试在 C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.ma 中保存)"};
+
+  //Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
+  const static std::wregex fatal_error_en_us{
+      LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.ma)"};
+
+  std::cout << std::regex_search(L"致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存",
+                                 fatal_error_znch) << std::endl;
+  std::cout << std::regex_search(L"Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma",
+                                 fatal_error_en_us) << std::endl;
 }
 
 #include <cereal/archives/binary.hpp>

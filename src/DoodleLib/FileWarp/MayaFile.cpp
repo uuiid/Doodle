@@ -103,11 +103,21 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
         }
       });
   auto str_r2 = std::string{};
+  //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
+  const static std::wregex fatal_error_znch{
+      LR"(致命错误.尝试在 C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.ma 中保存)"};
+
+  // Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
+  const static std::wregex fatal_error_en_us{
+      LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.ma)"};
+
   while (k_c.running() && std::getline(k_in2, str_r2) && !str_r2.empty()) {
-    auto str  = boost::locale::conv::to_utf<char>(str_r2, "GB18030");
+    auto str = boost::locale::conv::to_utf<char>(str_r2, "GB18030");
     in_term->sig_message_result(str);
-    if(std::regex_search(str.c_str(),std::regex{"致命错误"})){
-//      boost::process::system(fmt::format("taskkill /F /T /PID {}",k_c.id()));
+    auto wstr = boost::locale::conv::utf_to_utf<wchar_t>(str);
+    if (std::regex_search(wstr.c_str(), fatal_error_znch) || std::regex_search(wstr.c_str(), fatal_error_en_us)) {
+      DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算命令是 {}", boost::locale::conv::utf_to_utf<char>(in_com));
+      boost::process::system(fmt::format("taskkill /F /T /PID {}", k_c.id()));
     }
     in_term->sig_progress(0.001);
   }
