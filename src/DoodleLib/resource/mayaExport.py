@@ -1,18 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# 一定要先初始化maya
-import maya.standalone
-maya.standalone.initialize(name='python')
-# 然后是创建和打开物体
-import pymel.core.system
-import pymel.core
-pymel.core.system.newFile(force=True)
-pymel.core.system.loadPlugin("AbcExport")
-pymel.core.system.loadPlugin("AbcImport")
 
-pymel.core.system.openFile("D:/Autodesk/test/test2.ma",loadReferenceDepth="all")
-pymel.core.playbackOptions(animationStartTime="1001")
-# 这个导出一定要在加载好场景后导入
 import maya_fun_tool
-reload(maya_fun_tool)
-maya_fun_tool.fbx_export()()
+k_f =  maya_fun_tool.open_file("F:/data/test/DBXY_163_057_1.ma")
+k_f.get_fbx_export()()

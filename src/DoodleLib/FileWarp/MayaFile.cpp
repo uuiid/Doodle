@@ -99,13 +99,13 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
         auto str_r = std::string{};
         while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
           in_term->sig_message_result(boost::locale::conv::to_utf<char>(str_r, "GB18030"));
-          in_term->sig_progress(0.0001);
+          in_term->sig_progress(0.001);
         }
       });
   auto str_r2 = std::string{};
   while (k_c.running() && std::getline(k_in2, str_r2) && !str_r2.empty()) {
     in_term->sig_message_result(boost::locale::conv::to_utf<char>(str_r2, "GB18030"));
-    in_term->sig_progress(0.0001);
+    in_term->sig_progress(0.001);
   }
   k_c.wait();
   fun.get();
@@ -134,19 +134,9 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
         auto str_script = fmt::format(
             "# -*- coding: utf-8 -*-\n"
             "\n"
-            "import maya.standalone\n"
-            "maya.standalone.initialize(name='python')\n"
-            "import pymel.core.system\n"
-            "import pymel.core\n"
-            "pymel.core.system.newFile(force=True)\n"
-            "pymel.core.system.loadPlugin(\"fbxmaya\")\n"
-            "\n"
-            "pymel.core.system.openFile(\"{}\",loadReferenceDepth=\"all\")\n"
             "import maya_fun_tool\n"
-            "reload(maya_fun_tool)\n"
-            "maya_fun_tool.doodle_work_space = maya_fun_tool.maya_workspace()\n"
-            "maya_fun_tool.doodle_work_space.set_workspace()\n"
-            "maya_fun_tool.fbx_export()()\n",
+            "k_f =  maya_fun_tool.open_file(\"{}\")\n"
+            "k_f.get_fbx_export()()",
             file_path.generic_string());
         auto run_path = warit_tmp_file(str_script);
         k_term->sig_progress(0.1);
@@ -194,26 +184,9 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
 
         auto str_script = fmt::format(
             "# -*- coding: utf-8 -*-\n"
-            "import sys\n"
-            "sys.stdout = sys.__stdout__\n"
-            "\n"
-            "import maya.standalone\n"
-            "maya.standalone.initialize(name='python')\n"
-            "import pymel.core.system\n"
-            "import pymel.core\n"
-            "pymel.core.system.newFile(force=True)\n"
-            "pymel.core.system.loadPlugin(\"AbcExport\")\n"
-            "pymel.core.system.loadPlugin(\"AbcImport\")\n"
-            "pymel.core.system.loadPlugin(\"qualoth_2019_x64\")"
-            "\n\npymel.core.system.openFile(\"{}\",loadReferenceDepth=\"all\")\n"
-            "if pymel.core.mel.eval(\"currentTimeUnitToFPS\") != 25:\n"
-            "    pymel.core.warning(\"frame rate is not 25 \")\n"
-            "    quit()\n"
-            "pymel.core.playbackOptions(animationStartTime=950,minTime=950)\n"
             "import maya_fun_tool\n"
-            "maya_fun_tool.doodle_work_space = maya_fun_tool.maya_workspace()\n"
-            "maya_fun_tool.doodle_work_space.set_workspace()\n"
-            "sim = maya_fun_tool.cloth_export(\"{}\")\n",
+            "k_f =  maya_fun_tool.open_file(\"{}\")\n"
+            "sim = k_f.get_cloth_sim(\"{}\")\n",
             in_arg->sim_path.generic_string(),
             in_arg->qcloth_assets_path.generic_string());
         if (in_arg->only_sim)

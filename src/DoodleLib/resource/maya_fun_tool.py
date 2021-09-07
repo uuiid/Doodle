@@ -24,6 +24,9 @@ class maya_play_raneg():
         # self.start = 1000
         self.end = int(pymel.core.playbackOptions(query=True, max=True))
 
+    def __str__(self):
+        return "start: {}, end {}".format(self.start, self.end)
+
 
 class maya_file():
     """
@@ -43,6 +46,11 @@ class maya_file():
     def save_as_cloth(self):
         pass
 
+    def __str__(self):
+        return "maya file path : {} maya name :"\
+              .format(self.abs_path,
+                      self.file_name)
+
 
 class maya_workspace():
     """
@@ -58,6 +66,12 @@ class maya_workspace():
     def set_workspace(self):
         self.work.open(maya_workspace.set_workspace_static(
             self.maya_file.abs_path))
+
+    def reset(self):
+        self.work = pymel.core.system.workspace
+        self.work.update()
+        self.maya_file = maya_file()
+        self.raneg = maya_play_raneg()
 
     @staticmethod
     def set_workspace_static(path):
@@ -76,6 +90,9 @@ class maya_workspace():
             pymel.core.system.workspace.fileRules["images"] = "images"
             pymel.core.system.workspace.save()
             return k_work2.dirname()
+
+    def __str__(self):
+        return "{} ,{}".format(str(self.maya_file), str(self.raneg))
 
 
 class export_log(object):
@@ -123,8 +140,12 @@ class camera:
         print("not select cam ", self.maya_cam)
 
     def create_move(self, out_path=None,
-                    start_frame=doodle_work_space.raneg.start,
-                    end_frame=doodle_work_space.raneg.end):
+                    start_frame=None,
+                    end_frame=None):
+        if not start_frame:
+            start_frame = doodle_work_space.raneg.start
+        if not end_frame:
+            end_frame = doodle_work_space.raneg.end
         # 创建视频
         # 如果不符合就直接返回
         if not self.maya_cam:
@@ -179,6 +200,7 @@ class camera:
         #     )
         # except RuntimeError:
         pymel.core.system.warning("QuickTime not found, use default value")
+        print("create move {}".format(out_path))
         pymel.core.playblast(
             viewer=False,
             startTime=start_frame,
@@ -626,10 +648,10 @@ class cloth_group_file(export_group):
                                             self.maya_name_space,
                                             1000,
                                             doodle_work_space.raneg.end)
-            path = path / name
-            print("export path : {}".format(path))
+            k_path = path / name
+            print("export path : {}".format(k_path))
             abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
-                .format(f0=str(path.abspath()).replace("\\", "/"),
+                .format(f0=str(k_path.abspath()).replace("\\", "/"),
                         f1=doodle_work_space.raneg.start, f2=doodle_work_space.raneg.end,
                         mash=abcexmashs)
             print(abcExportCom)
@@ -702,6 +724,8 @@ class cloth_export():
     def __init__(self, cfx_path):
         pymel.core.animation.evaluationManager(mode="off")
         doodle_work_space.set_workspace()
+        print(doodle_work_space)
+
         references_file.cfx_cloth_path = pymel.core.Path(cfx_path)
 
         self.colth_ref = []  # type: list[references_file]
@@ -732,6 +756,7 @@ class cloth_export():
             obj.set_cache_folder()
 
     def play_move(self):
+        global doodle_work_space
         print("create move {} to {}".format(
             doodle_work_space.raneg.start,
             doodle_work_space.raneg.end))
@@ -830,7 +855,7 @@ class open_file():
     def __init__(self, file_path):
         self.file_path = pymel.core.Path(file_path)
 
-    def load_plug():
+    def load_plug(self):
         pymel.core.system.loadPlugin("AbcExport")
         pymel.core.system.loadPlugin("AbcImport")
         pymel.core.system.loadPlugin("qualoth_2019_x64")
@@ -846,6 +871,9 @@ class open_file():
                 pymel.core.mel.eval("currentTimeUnitToFPS")
             ))
             quit()
+
+        global doodle_work_space
+        doodle_work_space.reset()
         doodle_work_space.set_workspace()
 
     def get_cloth_sim(self, qcloth_path):
