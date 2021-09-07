@@ -85,7 +85,7 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
    * @todo 时间选项中去除节假日和个人调休
    * 
    */
-  chrono::hours_double work_duration(const TimeDuration& in) const;
+  [[nodiscard]] chrono::hours_double work_duration(const TimeDuration& in) const;
 
   /**
    * 这里返回系统时钟 系统时钟我们始终假定为 utc时钟 (system_clock跟踪的时区（未指定但事实上的标准）)
