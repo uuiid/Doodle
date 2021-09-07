@@ -129,12 +129,12 @@ class camera:
 
         render_node = pymel.core.ls("defaultRenderGlobals")[0]
 
-        # render_node.imageFormat.set(8)
-        # render_node.animation.set(True)
-        # render_node.putFrameBeforeExt.set(True)
-        # render_node.useFrameExt.set(False)
-        # render_node.useMayaFileName.set(True)
-        # render_node.imageFilePrefix.set("<Scene>/<Scene>")
+        render_node.imageFormat.set(8)
+        render_node.animation.set(True)
+        render_node.putFrameBeforeExt.set(True)
+        render_node.useFrameExt.set(False)
+        render_node.useMayaFileName.set(True)
+        render_node.imageFilePrefix.set("<Scene>/<Scene>")
         render_node.startFrame.set(doodle_work_space.raneg.start)
         render_node.endFrame.set(doodle_work_space.raneg.end)
         Resolution_node = pymel.core.ls("defaultResolution")[0]
@@ -147,47 +147,47 @@ class camera:
         # print("maya mel eval lookThroughModelPanel {} modelPanel1;".format(self.maya_cam.fullPath()))
         # maya.mel.eval(
         #     "lookThroughModelPanel {} modelPanel1;".format(self.maya_cam.fullPath()))
-        try:
-            # type: pymel.core.nodetypes.RenderGlobals
-            # pymel.core.hwRender(camera=self.maya_cam, h=1280, w=1920)
-            pymel.core.playblast(
-                viewer=False,
-                startTime=start_frame,
-                endTime=end_frame,
-                filename="{path}/{base_name}_playblast_{start}-{end}"
-                .format(
-                    path=out_path,
-                    base_name=doodle_work_space.maya_file.name_not_ex,
-                    start=start_frame,
-                    end=end_frame
-                ),
-                percent=100,
-                quality=100,
-                # offScreen=True,
-                # editorPanelName="modelPanel1",
-                format="qt",
-                compression="H.264",
-                widthHeight=(1920, 1280)
-            )
-        except RuntimeError:
-            pymel.core.system.warning("QuickTime not found, use default value")
-            pymel.core.playblast(
-                viewer=False,
-                startTime=start_frame,
-                endTime=end_frame,
-                filename="{path}/{base_name}_playblast_{start}-{end}"
-                .format(
-                    path=out_path,
-                    base_name=doodle_work_space.maya_file.name_not_ex,
-                    start=start_frame,
-                    end=end_frame
-                ),
-                percent=100,
-                quality=100,
-                widthHeight=(1920, 1280)
-                # editorPanelName="modelPanel4"
-                # offScreen=True
-            )
+        # try:
+        #     # type: pymel.core.nodetypes.RenderGlobals
+        #     # pymel.core.hwRender(camera=self.maya_cam, h=1280, w=1920)
+        #     pymel.core.playblast(
+        #         viewer=False,
+        #         startTime=start_frame,
+        #         endTime=end_frame,
+        #         filename="{path}/{base_name}_playblast_{start}-{end}"
+        #         .format(
+        #             path=out_path,
+        #             base_name=doodle_work_space.maya_file.name_not_ex,
+        #             start=start_frame,
+        #             end=end_frame
+        #         ),
+        #         percent=100,
+        #         quality=100,
+        #         # offScreen=True,
+        #         # editorPanelName="modelPanel1",
+        #         format="qt",
+        #         compression="H.264",
+        #         widthHeight=(1920, 1280)
+        #     )
+        # except RuntimeError:
+        pymel.core.system.warning("QuickTime not found, use default value")
+        pymel.core.playblast(
+            viewer=False,
+            startTime=start_frame,
+            endTime=end_frame,
+            filename="{path}/{base_name}_playblast_{start}-{end}"
+            .format(
+                path=out_path,
+                base_name=doodle_work_space.maya_file.name_not_ex,
+                start=start_frame,
+                end=end_frame
+            ),
+            percent=100,
+            quality=100,
+            widthHeight=(1920, 1280)
+            # editorPanelName="modelPanel4"
+            # offScreen=True
+        )
         print("create move {}".format(out_path))
 
     def export(self, export_path):
