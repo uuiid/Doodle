@@ -80,5 +80,8 @@
  * @li 更新maya 解算工具: 调整maya导出方法 先创建拍屏
  * @li 更新maya 解算工具: 调整maya打开解算文件时的问题, 先创建工作区再打开
  *
- *
+ * @subsection updata_log_3024 版本3.0.24
+ * @li 更新maya 解算工具: maya致命错误中止进程
+ * @li 更新maya 解算工具: 不需要设置maya qcloth post
+ * @li 更新maya 解算工具: 多人场景分段解算（每人解算一次）
  */
