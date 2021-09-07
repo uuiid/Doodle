@@ -257,6 +257,30 @@ grpc::Status RpcMetadaataServer::FilterUserDate(::grpc::ServerContext *context, 
   if(!request->user_name().empty()){
     k_select.where.add(k_tab.userName == request->user_name());
   }
+  if(!request->permission_group() != 0){
+    k_select.where.add(k_tab.permissionGroup == request->permission_group());
+  }
+  for (const auto& row : (*k_conn)(k_select)) {
+    user_database k_db{};
+    k_db.set_id(row.id);
+    k_db.set_uuidpath(row.uuidPath.value());
+    k_db.set_permission_group(row.permissionGroup.value());
+    k_db.set_user_name(row.userName.value());
+
+
+    auto k_path = getPath(row.uuidPath.value());
+    auto k_str = get_cache_and_file(k_path);
+    if (k_str.empty()) {
+      DOODLE_LOG_WARN("id: {} uuidPath: {} 数据无效, 进行删除! ", row.id.value(), row.uuidPath.value())
+      continue;
+    }
+    k_db.mutable_userdata_cereal()->set_value(std::move(k_str));
+    if (!writer->Write(k_db))
+      return grpc::Status::CANCELLED;
+
+    DOODLE_LOG_DEBUG(fmt::format("id: {} uuidPath: {}", row.id.value(), row.uuidPath.value()))
+
+  }
 }
 
 }  // namespace doodle
