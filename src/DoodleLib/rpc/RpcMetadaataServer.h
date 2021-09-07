@@ -43,6 +43,10 @@ class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service, p
   grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
   grpc::Status UpdateMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
   grpc::Status FilterMetadata(grpc::ServerContext* context, const DataDb_Filter* request, grpc::ServerWriter<DataDb>* writer) override;
+  virtual grpc::Status InstallUserDate(::grpc::ServerContext* context, const ::doodle::user_database* request, ::doodle::user_database* response) override;
+  virtual grpc::Status UpdateUserDate(::grpc::ServerContext* context, const ::doodle::user_database* request, ::doodle::user_database* response) override;
+  virtual grpc::Status DeleteUserDate(::grpc::ServerContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response) override;
+  virtual grpc::Status FilterUserDate(::grpc::ServerContext* context, const ::doodle::user_database_filter* request, ::grpc::ServerWriter<::doodle::user_database>* writer) override;
 };
 
 }  // namespace doodle

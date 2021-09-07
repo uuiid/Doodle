@@ -6,9 +6,11 @@
 
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/core/CoreSql.h>
-#include <Logger/Logger.h>
+#include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/generate/core/metadatatab_sql.h>
-#include <libWarp/protobuf_warp_cpp.h>
+#include <DoodleLib/generate/core/usertab_sql.h>
+
+#include <DoodleLib/libWarp/protobuf_warp_cpp.h>
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
 
@@ -39,8 +41,8 @@ std::string RpcMetadaataServer::get_cache_and_file(const FSys::path &key) {
 void RpcMetadaataServer::put_cache_and_file(const FSys::path &key, const std::string &value) {
   if (!FSys::exists(key.parent_path()))
     FSys::create_directories(key.parent_path());
-  // FSys::ofstream k_ofstream{key, std::ios::out | std::ios::binary};
-  // k_ofstream.write(value.data(), value.size());
+   FSys::ofstream k_ofstream{key, std::ios::out | std::ios::binary};
+   k_ofstream.write(value.data(), value.size());
   p_cache.Put(key.generic_string(), value);
 }
 
@@ -199,6 +201,62 @@ grpc::Status RpcMetadaataServer::FilterMetadata(grpc::ServerContext *context,
   }
 
   return grpc::Status::OK;
+}
+grpc::Status RpcMetadaataServer::InstallUserDate(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
+  auto k_conn = CoreSql::Get().getConnection();
+  Usertab k_tab{};
+  auto k_sql =  sqlpp::insert_into(k_tab).set(
+      k_tab.uuidPath = request->uuidpath(),
+      k_tab.userName = request->user_name(),
+      k_tab.permissionGroup = request->permission_group()
+      );
+  auto k_id = (*k_conn)(k_sql);
+  if(k_id < 0){
+    DOODLE_LOG_DEBUG("插入数据库失败")
+    return {grpc::StatusCode::RESOURCE_EXHAUSTED, "插入数据库失败"};
+  }
+
+  response->set_id(k_id);
+  DOODLE_LOG_DEBUG(fmt::format("插入数据库 id: {}", k_id))
+  if(!request->userdata_cereal().value().empty()){
+    auto k_path = getPath(request->uuidpath());
+    put_cache_and_file(k_path, request->userdata_cereal().value());
+  }
+  return grpc::Status::OK;
+}
+grpc::Status RpcMetadaataServer::UpdateUserDate(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
+  return Service::UpdateUserDate(context, request, response);
+}
+grpc::Status RpcMetadaataServer::DeleteUserDate(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::doodle::user_database *response) {
+  auto k_conn = CoreSql::Get().getConnection();
+  Usertab k_tab{};
+
+  auto k_path = getPath(request->uuidpath());
+  // if (!p_cache.Remove(k_path.generic_string()))
+  //   return {grpc::StatusCode::NOT_FOUND, "未找到缓存"};
+
+  auto id = (*k_conn)(sqlpp::remove_from(k_tab).where(k_tab.id == request->id()));
+  response->set_id(id);
+
+  auto k_new_p = get_delete_path(request->uuidpath());
+  if (FSys::exists(k_path)) {
+    if (!FSys::exists(k_new_p.parent_path()))
+      FSys::create_directories(k_new_p.parent_path());
+    FSys::rename(k_path, k_new_p);
+
+    DOODLE_LOG_DEBUG(fmt::format("delete id {}", id))
+    DOODLE_LOG_WARN(fmt::format("移动文件 {} ---> {}", k_path, k_new_p))
+  }
+  return grpc::Status::OK;
+}
+grpc::Status RpcMetadaataServer::FilterUserDate(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::grpc::ServerWriter< ::doodle::user_database> *writer) {
+  auto k_conn = CoreSql::Get().getConnection();
+  Usertab k_tab{};
+
+  auto k_select = sqlpp::dynamic_select(*k_conn,sqlpp::all_of(k_tab)).from(k_tab).dynamic_where();
+  if(!request->user_name().empty()){
+    k_select.where.add(k_tab.userName == request->user_name());
+  }
 }
 
 }  // namespace doodle

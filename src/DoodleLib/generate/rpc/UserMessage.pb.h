@@ -385,9 +385,43 @@ class user_database_filter PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kUuidPathFieldNumber = 2,
+    kUserNameFieldNumber = 3,
     kIdFieldNumber = 1,
     kPermissionGroupFieldNumber = 5,
   };
+  // string uuidPath = 2;
+  void clear_uuidpath();
+  const std::string& uuidpath() const;
+  void set_uuidpath(const std::string& value);
+  void set_uuidpath(std::string&& value);
+  void set_uuidpath(const char* value);
+  void set_uuidpath(const char* value, size_t size);
+  std::string* mutable_uuidpath();
+  std::string* release_uuidpath();
+  void set_allocated_uuidpath(std::string* uuidpath);
+  private:
+  const std::string& _internal_uuidpath() const;
+  void _internal_set_uuidpath(const std::string& value);
+  std::string* _internal_mutable_uuidpath();
+  public:
+
+  // string user_name = 3;
+  void clear_user_name();
+  const std::string& user_name() const;
+  void set_user_name(const std::string& value);
+  void set_user_name(std::string&& value);
+  void set_user_name(const char* value);
+  void set_user_name(const char* value, size_t size);
+  std::string* mutable_user_name();
+  std::string* release_user_name();
+  void set_allocated_user_name(std::string* user_name);
+  private:
+  const std::string& _internal_user_name() const;
+  void _internal_set_user_name(const std::string& value);
+  std::string* _internal_mutable_user_name();
+  public:
+
   // uint64 id = 1;
   void clear_id();
   ::PROTOBUF_NAMESPACE_ID::uint64 id() const;
@@ -413,6 +447,8 @@ class user_database_filter PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr uuidpath_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr user_name_;
   ::PROTOBUF_NAMESPACE_ID::uint64 id_;
   ::PROTOBUF_NAMESPACE_ID::uint64 permission_group_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -690,6 +726,128 @@ inline void user_database_filter::_internal_set_id(::PROTOBUF_NAMESPACE_ID::uint
 inline void user_database_filter::set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_id(value);
   // @@protoc_insertion_point(field_set:doodle.user_database_filter.id)
+}
+
+// string uuidPath = 2;
+inline void user_database_filter::clear_uuidpath() {
+  uuidpath_.ClearToEmpty();
+}
+inline const std::string& user_database_filter::uuidpath() const {
+  // @@protoc_insertion_point(field_get:doodle.user_database_filter.uuidPath)
+  return _internal_uuidpath();
+}
+inline void user_database_filter::set_uuidpath(const std::string& value) {
+  _internal_set_uuidpath(value);
+  // @@protoc_insertion_point(field_set:doodle.user_database_filter.uuidPath)
+}
+inline std::string* user_database_filter::mutable_uuidpath() {
+  // @@protoc_insertion_point(field_mutable:doodle.user_database_filter.uuidPath)
+  return _internal_mutable_uuidpath();
+}
+inline const std::string& user_database_filter::_internal_uuidpath() const {
+  return uuidpath_.Get();
+}
+inline void user_database_filter::_internal_set_uuidpath(const std::string& value) {
+  
+  uuidpath_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArena());
+}
+inline void user_database_filter::set_uuidpath(std::string&& value) {
+  
+  uuidpath_.Set(
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:doodle.user_database_filter.uuidPath)
+}
+inline void user_database_filter::set_uuidpath(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  uuidpath_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::string(value), GetArena());
+  // @@protoc_insertion_point(field_set_char:doodle.user_database_filter.uuidPath)
+}
+inline void user_database_filter::set_uuidpath(const char* value,
+    size_t size) {
+  
+  uuidpath_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:doodle.user_database_filter.uuidPath)
+}
+inline std::string* user_database_filter::_internal_mutable_uuidpath() {
+  
+  return uuidpath_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArena());
+}
+inline std::string* user_database_filter::release_uuidpath() {
+  // @@protoc_insertion_point(field_release:doodle.user_database_filter.uuidPath)
+  return uuidpath_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void user_database_filter::set_allocated_uuidpath(std::string* uuidpath) {
+  if (uuidpath != nullptr) {
+    
+  } else {
+    
+  }
+  uuidpath_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), uuidpath,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:doodle.user_database_filter.uuidPath)
+}
+
+// string user_name = 3;
+inline void user_database_filter::clear_user_name() {
+  user_name_.ClearToEmpty();
+}
+inline const std::string& user_database_filter::user_name() const {
+  // @@protoc_insertion_point(field_get:doodle.user_database_filter.user_name)
+  return _internal_user_name();
+}
+inline void user_database_filter::set_user_name(const std::string& value) {
+  _internal_set_user_name(value);
+  // @@protoc_insertion_point(field_set:doodle.user_database_filter.user_name)
+}
+inline std::string* user_database_filter::mutable_user_name() {
+  // @@protoc_insertion_point(field_mutable:doodle.user_database_filter.user_name)
+  return _internal_mutable_user_name();
+}
+inline const std::string& user_database_filter::_internal_user_name() const {
+  return user_name_.Get();
+}
+inline void user_database_filter::_internal_set_user_name(const std::string& value) {
+  
+  user_name_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArena());
+}
+inline void user_database_filter::set_user_name(std::string&& value) {
+  
+  user_name_.Set(
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:doodle.user_database_filter.user_name)
+}
+inline void user_database_filter::set_user_name(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  user_name_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::string(value), GetArena());
+  // @@protoc_insertion_point(field_set_char:doodle.user_database_filter.user_name)
+}
+inline void user_database_filter::set_user_name(const char* value,
+    size_t size) {
+  
+  user_name_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:doodle.user_database_filter.user_name)
+}
+inline std::string* user_database_filter::_internal_mutable_user_name() {
+  
+  return user_name_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArena());
+}
+inline std::string* user_database_filter::release_user_name() {
+  // @@protoc_insertion_point(field_release:doodle.user_database_filter.user_name)
+  return user_name_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void user_database_filter::set_allocated_user_name(std::string* user_name) {
+  if (user_name != nullptr) {
+    
+  } else {
+    
+  }
+  user_name_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), user_name,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:doodle.user_database_filter.user_name)
 }
 
 // uint64 permission_group = 5;

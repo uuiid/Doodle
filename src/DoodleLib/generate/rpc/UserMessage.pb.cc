@@ -73,6 +73,8 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_UserMessage_2eproto::offsets[]
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   PROTOBUF_FIELD_OFFSET(::doodle::user_database_filter, id_),
+  PROTOBUF_FIELD_OFFSET(::doodle::user_database_filter, uuidpath_),
+  PROTOBUF_FIELD_OFFSET(::doodle::user_database_filter, user_name_),
   PROTOBUF_FIELD_OFFSET(::doodle::user_database_filter, permission_group_),
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
@@ -90,9 +92,10 @@ const char descriptor_table_protodef_UserMessage_2eproto[] PROTOBUF_SECTION_VARI
   "obuf/any.proto\"\211\001\n\ruser_database\022\n\n\002id\030\001"
   " \001(\004\022\020\n\010uuidPath\030\002 \001(\t\022\021\n\tuser_name\030\003 \001("
   "\t\022-\n\017userdata_cereal\030\004 \001(\0132\024.google.prot"
-  "obuf.Any\022\030\n\020permission_group\030\005 \001(\004\"<\n\024us"
-  "er_database_filter\022\n\n\002id\030\001 \001(\004\022\030\n\020permis"
-  "sion_group\030\005 \001(\004b\006proto3"
+  "obuf.Any\022\030\n\020permission_group\030\005 \001(\004\"a\n\024us"
+  "er_database_filter\022\n\n\002id\030\001 \001(\004\022\020\n\010uuidPa"
+  "th\030\002 \001(\t\022\021\n\tuser_name\030\003 \001(\t\022\030\n\020permissio"
+  "n_group\030\005 \001(\004b\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_UserMessage_2eproto_deps[1] = {
   &::descriptor_table_google_2fprotobuf_2fany_2eproto,
@@ -103,7 +106,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_Use
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_UserMessage_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_UserMessage_2eproto = {
-  false, false, descriptor_table_protodef_UserMessage_2eproto, "UserMessage.proto", 264,
+  false, false, descriptor_table_protodef_UserMessage_2eproto, "UserMessage.proto", 301,
   &descriptor_table_UserMessage_2eproto_once, descriptor_table_UserMessage_2eproto_sccs, descriptor_table_UserMessage_2eproto_deps, 2, 1,
   schemas, file_default_instances, TableStruct_UserMessage_2eproto::offsets,
   file_level_metadata_UserMessage_2eproto, 2, file_level_enum_descriptors_UserMessage_2eproto, file_level_service_descriptors_UserMessage_2eproto,
@@ -480,6 +483,16 @@ user_database_filter::user_database_filter(::PROTOBUF_NAMESPACE_ID::Arena* arena
 user_database_filter::user_database_filter(const user_database_filter& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  uuidpath_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from._internal_uuidpath().empty()) {
+    uuidpath_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_uuidpath(), 
+      GetArena());
+  }
+  user_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from._internal_user_name().empty()) {
+    user_name_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_user_name(), 
+      GetArena());
+  }
   ::memcpy(&id_, &from.id_,
     static_cast<size_t>(reinterpret_cast<char*>(&permission_group_) -
     reinterpret_cast<char*>(&id_)) + sizeof(permission_group_));
@@ -487,6 +500,9 @@ user_database_filter::user_database_filter(const user_database_filter& from)
 }
 
 void user_database_filter::SharedCtor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_user_database_filter_UserMessage_2eproto.base);
+  uuidpath_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  user_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
       reinterpret_cast<char*>(&id_) - reinterpret_cast<char*>(this)),
       0, static_cast<size_t>(reinterpret_cast<char*>(&permission_group_) -
@@ -501,6 +517,8 @@ user_database_filter::~user_database_filter() {
 
 void user_database_filter::SharedDtor() {
   GOOGLE_DCHECK(GetArena() == nullptr);
+  uuidpath_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  user_name_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
 void user_database_filter::ArenaDtor(void* object) {
@@ -524,6 +542,8 @@ void user_database_filter::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  uuidpath_.ClearToEmpty();
+  user_name_.ClearToEmpty();
   ::memset(&id_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&permission_group_) -
       reinterpret_cast<char*>(&id_)) + sizeof(permission_group_));
@@ -541,6 +561,24 @@ const char* user_database_filter::_InternalParse(const char* ptr, ::PROTOBUF_NAM
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
           id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string uuidPath = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+          auto str = _internal_mutable_uuidpath();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "doodle.user_database_filter.uuidPath"));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string user_name = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
+          auto str = _internal_mutable_user_name();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "doodle.user_database_filter.user_name"));
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -585,6 +623,26 @@ failure:
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->_internal_id(), target);
   }
 
+  // string uuidPath = 2;
+  if (this->uuidpath().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_uuidpath().data(), static_cast<int>(this->_internal_uuidpath().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "doodle.user_database_filter.uuidPath");
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_uuidpath(), target);
+  }
+
+  // string user_name = 3;
+  if (this->user_name().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_user_name().data(), static_cast<int>(this->_internal_user_name().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "doodle.user_database_filter.user_name");
+    target = stream->WriteStringMaybeAliased(
+        3, this->_internal_user_name(), target);
+  }
+
   // uint64 permission_group = 5;
   if (this->permission_group() != 0) {
     target = stream->EnsureSpace(target);
@@ -606,6 +664,20 @@ size_t user_database_filter::ByteSizeLong() const {
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
+
+  // string uuidPath = 2;
+  if (this->uuidpath().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_uuidpath());
+  }
+
+  // string user_name = 3;
+  if (this->user_name().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_user_name());
+  }
 
   // uint64 id = 1;
   if (this->id() != 0) {
@@ -652,6 +724,12 @@ void user_database_filter::MergeFrom(const user_database_filter& from) {
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from.uuidpath().size() > 0) {
+    _internal_set_uuidpath(from._internal_uuidpath());
+  }
+  if (from.user_name().size() > 0) {
+    _internal_set_user_name(from._internal_user_name());
+  }
   if (from.id() != 0) {
     _internal_set_id(from._internal_id());
   }
@@ -681,6 +759,8 @@ bool user_database_filter::IsInitialized() const {
 void user_database_filter::InternalSwap(user_database_filter* other) {
   using std::swap;
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  uuidpath_.Swap(&other->uuidpath_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  user_name_.Swap(&other->user_name_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(user_database_filter, permission_group_)
       + sizeof(user_database_filter::permission_group_)
