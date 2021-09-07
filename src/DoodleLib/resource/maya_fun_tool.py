@@ -8,6 +8,7 @@ import argparse
 import os
 import re
 import json
+from pymel.util.arrays import det
 import pymel.util.path
 import pymel.all
 import pymel.core.animation
@@ -55,19 +56,26 @@ class maya_workspace():
         self.raneg = maya_play_raneg()
 
     def set_workspace(self):
-        k_work = self.maya_file.abs_path.dirname(
-        ) / "workspace.mel"  # type: pymel.core.Path
-        k_work2 = self.maya_file.abs_path / "workspace.mel"  # type: pymel.core.Path
-        print("find workspace path {} \n {}".format(k_work, k_work2))
-        if(k_work.exists()):
-            self.work.open(k_work.dirname())
-        elif(k_work2.exists()):
-            self.work.open(k_work2.dirname())
+        self.work.open(maya_workspace.set_workspace_static(
+            self.maya_file.abs_path))
+
+    @staticmethod
+    def set_workspace_static(path):
+        # type : (str)->pymel.core.Path
+        k_work = pymel.core.Path(path).dirname() / "workspace.mel"
+        k_work2 = pymel.core.Path(path) / "workspace.mel"
+        if k_work.exists():
+            pymel.core.system.workspace.open(k_work.dirname())
+            return k_work.dirname()
+        elif k_work2.exists():
+            pymel.core.system.workspace.open(k_work2.dirname())
+            return k_work2.dirname()
         else:
-            self.work.open(self.maya_file.abs_path)
-            self.work.fileRules["cache"] = "cache"
-            self.work.fileRules["images"] = "images"
-            self.work.save()
+            pymel.core.system.workspace.open(k_work2.dirname())
+            pymel.core.system.workspace.fileRules["cache"] = "cache"
+            pymel.core.system.workspace.fileRules["images"] = "images"
+            pymel.core.system.workspace.save()
+            return k_work2.dirname()
 
 
 class export_log(object):
@@ -569,13 +577,7 @@ class cloth_group_file(export_group):
             export_path = doodle_work_space.work.getPath() / "abc"
         path = export_path  # type: pymel.core.Path
 
-        name = "{}_{}_{}-{}.abc".format(doodle_work_space.maya_file.name_not_ex,
-                                        self.maya_name_space,
-                                        1000,
-                                        doodle_work_space.raneg.end)
         path.makedirs_p()
-        path = path / name
-        print("export path : {}".format(path))
 
         # 导出物体
         # list[pymel.core.nodetypes.Transform]
@@ -620,6 +622,12 @@ class cloth_group_file(export_group):
         #                                       exmash.fullPathName())
         # -stripNamespaces
         if repeat:
+            name = "{}_{}_{}-{}.abc".format(doodle_work_space.maya_file.name_not_ex,
+                                            self.maya_name_space,
+                                            1000,
+                                            doodle_work_space.raneg.end)
+            path = path / name
+            print("export path : {}".format(path))
             abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
                 .format(f0=str(path.abspath()).replace("\\", "/"),
                         f1=doodle_work_space.raneg.start, f2=doodle_work_space.raneg.end,
@@ -627,6 +635,12 @@ class cloth_group_file(export_group):
             print(abcExportCom)
             pymel.core.mel.eval(abcExportCom)
 
+        name = "{}_{}_{}-{}.abc".format(doodle_work_space.maya_file.name_not_ex,
+                                        self.maya_name_space,
+                                        1000,
+                                        doodle_work_space.raneg.end)
+        path = path / name
+        print("export path : {}".format(path))
         abcExportCom = """AbcExport -j "-frameRange {f1} {f2} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {mash} -file {f0}" """ \
             .format(f0=str(path.abspath()).replace("\\", "/"),
                     f1=1000, f2=doodle_work_space.raneg.end,
@@ -810,3 +824,37 @@ class analyseFileName():
             path = "/03_Workflow/shots/"
 
         return pymel.core.Path(path)
+
+
+class open_file():
+    def __init__(self, file_path):
+        self.file_path = pymel.core.Path(file_path)
+
+    def load_plug():
+        pymel.core.system.loadPlugin("AbcExport")
+        pymel.core.system.loadPlugin("AbcImport")
+        pymel.core.system.loadPlugin("qualoth_2019_x64")
+
+    def open(self):
+        self.load_plug()
+        maya_workspace.set_workspace_static(self.file_path.dirname())
+
+        pymel.core.system.newFile(force=True)
+        pymel.core.system.openFile(self.file_path, loadReferenceDepth="all")
+        if pymel.core.mel.eval("currentTimeUnitToFPS") != 25.0:
+            pymel.core.warning("frame rate is not 25 is {}".format(
+                pymel.core.mel.eval("currentTimeUnitToFPS")
+            ))
+            quit()
+        doodle_work_space.set_workspace()
+
+    def get_cloth_sim(self, qcloth_path):
+        # type: (str)->cloth_export
+        self.open()
+        pymel.core.playbackOptions(animationStartTime="950")
+        return cloth_export(qcloth_path)
+
+    def get_fbx_export(self):
+        # type :(str)->fbx_export
+        self.open()
+        return fbx_export()
