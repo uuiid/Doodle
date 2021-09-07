@@ -76,4 +76,9 @@
  * @subsection updata_log_3022 版本3.0.22
  * @li 更新maya 解算工具: 添加更准确的进度条
  *
+ * @subsection updata_log_3023 版本3.0.23
+ * @li 更新maya 解算工具: 调整maya导出方法 先创建拍屏
+ * @li 更新maya 解算工具: 调整maya打开解算文件时的问题, 先创建工作区再打开
+ *
+ *
  */
