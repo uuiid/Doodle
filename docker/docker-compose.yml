@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  doodle:
+    image: doodle
+    build:
+      context: .
+      dockerfile: ./Dockerfile

@@ -12,3 +12,4 @@ RUN cd /tmp \
     && cd vcpkg \
     && ./bootstrap-vcpkg.sh -useSystemBinaries
 
+LABEL Name=doodle Version=0.0.1
