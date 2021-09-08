@@ -565,7 +565,7 @@ class cloth_group_file(export_group):
             pymel.core.select(
                 "{}:*{}".format(self.maya_name_space, select_str), replace=True)
             qcloth_obj = pymel.core.selected()[0]
-            path = doodle_work_space.maya_file.name_not_ex / self.maya_name_space / select_str
+            path = doodle_work_space.maya_file.name_not_ex / "cache" / self.maya_name_space / select_str
             doodle_work_space.work.mkdir(doodle_work_space.work.path / path)
             print(path)
             print(qcloth_obj)
