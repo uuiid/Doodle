@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * @page updata_log 更新日志
  * @tableofcontents
@@ -84,4 +86,10 @@
  * @li 更新maya 解算工具: maya致命错误中止进程
  * @li 更新maya 解算工具: 不需要设置maya qcloth post
  * @li 更新maya 解算工具: 多人场景分段解算（每人解算一次）
+ *
+ * @subsection updata_log_3025 版本3.0.25
+ * @li 更新maya 解算工具: 更改maya cloth 解算 保存文件位置
+ * @li 更新maya 解算工具: 更改maya cloth 解算 缓存位置
+ *
+ *
  */

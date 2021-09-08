@@ -565,7 +565,7 @@ class cloth_group_file(export_group):
             pymel.core.select(
                 "{}:*{}".format(self.maya_name_space, select_str), replace=True)
             qcloth_obj = pymel.core.selected()[0]
-            path = doodle_work_space.maya_file.name_not_ex / "cache" / self.maya_name_space / select_str
+            path = pymel.core.Path("cache") / doodle_work_space.maya_file.name_not_ex / self.maya_name_space / select_str
             doodle_work_space.work.mkdir(doodle_work_space.work.path / path)
             print(path)
             print(qcloth_obj)
@@ -787,9 +787,7 @@ class cloth_export():
 
     def save(self, override=False):
         if not override:
-            path = doodle_work_space.maya_file.abs_path / \
-                "ma" / \
-                doodle_work_space.maya_file.name_not_ex  # type: pymel.core.util.path
+            path = doodle_work_space.maya_file.abs_path / "ma"  # type: pymel.core.util.path
             path.makedirs_p()
 
             pymel.core.system.saveAs("{}/{}_sim_colth.ma".format(
