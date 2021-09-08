@@ -14,68 +14,53 @@
 #include <google/protobuf/wire_format.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
-extern PROTOBUF_INTERNAL_EXPORT_FileSystemServer_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<2> scc_info_FileInfo_FileSystemServer_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_google_2fprotobuf_2fany_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Any_google_2fprotobuf_2fany_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_google_2fprotobuf_2fwrappers_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_StringValue_google_2fprotobuf_2fwrappers_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_google_2fprotobuf_2ftimestamp_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Timestamp_google_2fprotobuf_2ftimestamp_2eproto;
+
+PROTOBUF_PRAGMA_INIT_SEG
 namespace doodle {
-class FileInfoDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<FileInfo> _instance;
-} _FileInfo_default_instance_;
-class FileStreamDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<FileStream> _instance;
-} _FileStream_default_instance_;
-class FileInfoMoveDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<FileInfoMove> _instance;
-} _FileInfoMove_default_instance_;
+constexpr FileInfo::FileInfo(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : path_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , update_time_(nullptr)
+  , hash_(nullptr)
+  , size_(PROTOBUF_ULONGLONG(0))
+  , isfolder_(false)
+  , exist_(false){}
+struct FileInfoDefaultTypeInternal {
+  constexpr FileInfoDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~FileInfoDefaultTypeInternal() {}
+  union {
+    FileInfo _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT FileInfoDefaultTypeInternal _FileInfo_default_instance_;
+constexpr FileStream::FileStream(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : info_(nullptr)
+  , data_(nullptr){}
+struct FileStreamDefaultTypeInternal {
+  constexpr FileStreamDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~FileStreamDefaultTypeInternal() {}
+  union {
+    FileStream _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT FileStreamDefaultTypeInternal _FileStream_default_instance_;
+constexpr FileInfoMove::FileInfoMove(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : source_(nullptr)
+  , target_(nullptr){}
+struct FileInfoMoveDefaultTypeInternal {
+  constexpr FileInfoMoveDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~FileInfoMoveDefaultTypeInternal() {}
+  union {
+    FileInfoMove _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT FileInfoMoveDefaultTypeInternal _FileInfoMove_default_instance_;
 }  // namespace doodle
-static void InitDefaultsscc_info_FileInfo_FileSystemServer_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::doodle::_FileInfo_default_instance_;
-    new (ptr) ::doodle::FileInfo();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<2> scc_info_FileInfo_FileSystemServer_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 2, 0, InitDefaultsscc_info_FileInfo_FileSystemServer_2eproto}, {
-      &scc_info_Timestamp_google_2fprotobuf_2ftimestamp_2eproto.base,
-      &scc_info_StringValue_google_2fprotobuf_2fwrappers_2eproto.base,}};
-
-static void InitDefaultsscc_info_FileInfoMove_FileSystemServer_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::doodle::_FileInfoMove_default_instance_;
-    new (ptr) ::doodle::FileInfoMove();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_FileInfoMove_FileSystemServer_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_FileInfoMove_FileSystemServer_2eproto}, {
-      &scc_info_FileInfo_FileSystemServer_2eproto.base,}};
-
-static void InitDefaultsscc_info_FileStream_FileSystemServer_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::doodle::_FileStream_default_instance_;
-    new (ptr) ::doodle::FileStream();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<2> scc_info_FileStream_FileSystemServer_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 2, 0, InitDefaultsscc_info_FileStream_FileSystemServer_2eproto}, {
-      &scc_info_FileInfo_FileSystemServer_2eproto.base,
-      &scc_info_Any_google_2fprotobuf_2fany_2eproto.base,}};
-
 static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_FileSystemServer_2eproto[3];
 static constexpr ::PROTOBUF_NAMESPACE_ID::EnumDescriptor const** file_level_enum_descriptors_FileSystemServer_2eproto = nullptr;
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_FileSystemServer_2eproto = nullptr;
@@ -151,21 +136,21 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor
   &::descriptor_table_google_2fprotobuf_2ftimestamp_2eproto,
   &::descriptor_table_google_2fprotobuf_2fwrappers_2eproto,
 };
-static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_FileSystemServer_2eproto_sccs[3] = {
-  &scc_info_FileInfo_FileSystemServer_2eproto.base,
-  &scc_info_FileInfoMove_FileSystemServer_2eproto.base,
-  &scc_info_FileStream_FileSystemServer_2eproto.base,
-};
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_FileSystemServer_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_FileSystemServer_2eproto = {
-  false, false, descriptor_table_protodef_FileSystemServer_2eproto, "FileSystemServer.proto", 993,
-  &descriptor_table_FileSystemServer_2eproto_once, descriptor_table_FileSystemServer_2eproto_sccs, descriptor_table_FileSystemServer_2eproto_deps, 3, 3,
+  false, false, 993, descriptor_table_protodef_FileSystemServer_2eproto, "FileSystemServer.proto", 
+  &descriptor_table_FileSystemServer_2eproto_once, descriptor_table_FileSystemServer_2eproto_deps, 3, 3,
   schemas, file_default_instances, TableStruct_FileSystemServer_2eproto::offsets,
-  file_level_metadata_FileSystemServer_2eproto, 3, file_level_enum_descriptors_FileSystemServer_2eproto, file_level_service_descriptors_FileSystemServer_2eproto,
+  file_level_metadata_FileSystemServer_2eproto, file_level_enum_descriptors_FileSystemServer_2eproto, file_level_service_descriptors_FileSystemServer_2eproto,
 };
+PROTOBUF_ATTRIBUTE_WEAK ::PROTOBUF_NAMESPACE_ID::Metadata
+descriptor_table_FileSystemServer_2eproto_metadata_getter(int index) {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_FileSystemServer_2eproto);
+  return descriptor_table_FileSystemServer_2eproto.file_level_metadata[index];
+}
 
 // Force running AddDescriptors() at dynamic initialization time.
-static bool dynamic_init_dummy_FileSystemServer_2eproto = (static_cast<void>(::PROTOBUF_NAMESPACE_ID::internal::AddDescriptors(&descriptor_table_FileSystemServer_2eproto)), true);
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY static ::PROTOBUF_NAMESPACE_ID::internal::AddDescriptorsRunner dynamic_init_dummy_FileSystemServer_2eproto(&descriptor_table_FileSystemServer_2eproto);
 namespace doodle {
 
 // ===================================================================
@@ -227,12 +212,11 @@ FileInfo::FileInfo(const FileInfo& from)
 }
 
 void FileInfo::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_FileInfo_FileSystemServer_2eproto.base);
-  path_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
-      reinterpret_cast<char*>(&update_time_) - reinterpret_cast<char*>(this)),
-      0, static_cast<size_t>(reinterpret_cast<char*>(&exist_) -
-      reinterpret_cast<char*>(&update_time_)) + sizeof(exist_));
+path_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&update_time_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&exist_) -
+    reinterpret_cast<char*>(&update_time_)) + sizeof(exist_));
 }
 
 FileInfo::~FileInfo() {
@@ -257,11 +241,6 @@ void FileInfo::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void FileInfo::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const FileInfo& FileInfo::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_FileInfo_FileSystemServer_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void FileInfo::Clear() {
 // @@protoc_insertion_point(message_clear_start:doodle.FileInfo)
@@ -592,11 +571,10 @@ FileStream::FileStream(const FileStream& from)
 }
 
 void FileStream::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_FileStream_FileSystemServer_2eproto.base);
-  ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
-      reinterpret_cast<char*>(&info_) - reinterpret_cast<char*>(this)),
-      0, static_cast<size_t>(reinterpret_cast<char*>(&data_) -
-      reinterpret_cast<char*>(&info_)) + sizeof(data_));
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&info_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&data_) -
+    reinterpret_cast<char*>(&info_)) + sizeof(data_));
 }
 
 FileStream::~FileStream() {
@@ -620,11 +598,6 @@ void FileStream::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void FileStream::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const FileStream& FileStream::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_FileStream_FileSystemServer_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void FileStream::Clear() {
 // @@protoc_insertion_point(message_clear_start:doodle.FileStream)
@@ -850,11 +823,10 @@ FileInfoMove::FileInfoMove(const FileInfoMove& from)
 }
 
 void FileInfoMove::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_FileInfoMove_FileSystemServer_2eproto.base);
-  ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
-      reinterpret_cast<char*>(&source_) - reinterpret_cast<char*>(this)),
-      0, static_cast<size_t>(reinterpret_cast<char*>(&target_) -
-      reinterpret_cast<char*>(&source_)) + sizeof(target_));
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&source_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&target_) -
+    reinterpret_cast<char*>(&source_)) + sizeof(target_));
 }
 
 FileInfoMove::~FileInfoMove() {
@@ -878,11 +850,6 @@ void FileInfoMove::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void FileInfoMove::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const FileInfoMove& FileInfoMove::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_FileInfoMove_FileSystemServer_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void FileInfoMove::Clear() {
 // @@protoc_insertion_point(message_clear_start:doodle.FileInfoMove)

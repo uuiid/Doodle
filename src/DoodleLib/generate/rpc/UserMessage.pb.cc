@@ -14,44 +14,41 @@
 #include <google/protobuf/wire_format.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
-extern PROTOBUF_INTERNAL_EXPORT_google_2fprotobuf_2fany_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Any_google_2fprotobuf_2fany_2eproto;
+
+PROTOBUF_PRAGMA_INIT_SEG
 namespace doodle {
-class user_databaseDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<user_database> _instance;
-} _user_database_default_instance_;
-class user_database_filterDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<user_database_filter> _instance;
-} _user_database_filter_default_instance_;
+constexpr user_database::user_database(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : uuidpath_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , user_name_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , userdata_cereal_(nullptr)
+  , id_(PROTOBUF_ULONGLONG(0))
+  , permission_group_(PROTOBUF_ULONGLONG(0)){}
+struct user_databaseDefaultTypeInternal {
+  constexpr user_databaseDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~user_databaseDefaultTypeInternal() {}
+  union {
+    user_database _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT user_databaseDefaultTypeInternal _user_database_default_instance_;
+constexpr user_database_filter::user_database_filter(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : uuidpath_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , user_name_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , id_(PROTOBUF_ULONGLONG(0))
+  , permission_group_(PROTOBUF_ULONGLONG(0)){}
+struct user_database_filterDefaultTypeInternal {
+  constexpr user_database_filterDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~user_database_filterDefaultTypeInternal() {}
+  union {
+    user_database_filter _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT user_database_filterDefaultTypeInternal _user_database_filter_default_instance_;
 }  // namespace doodle
-static void InitDefaultsscc_info_user_database_UserMessage_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::doodle::_user_database_default_instance_;
-    new (ptr) ::doodle::user_database();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_user_database_UserMessage_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_user_database_UserMessage_2eproto}, {
-      &scc_info_Any_google_2fprotobuf_2fany_2eproto.base,}};
-
-static void InitDefaultsscc_info_user_database_filter_UserMessage_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::doodle::_user_database_filter_default_instance_;
-    new (ptr) ::doodle::user_database_filter();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_user_database_filter_UserMessage_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_user_database_filter_UserMessage_2eproto}, {}};
-
 static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_UserMessage_2eproto[2];
 static constexpr ::PROTOBUF_NAMESPACE_ID::EnumDescriptor const** file_level_enum_descriptors_UserMessage_2eproto = nullptr;
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_UserMessage_2eproto = nullptr;
@@ -100,20 +97,21 @@ const char descriptor_table_protodef_UserMessage_2eproto[] PROTOBUF_SECTION_VARI
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_UserMessage_2eproto_deps[1] = {
   &::descriptor_table_google_2fprotobuf_2fany_2eproto,
 };
-static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_UserMessage_2eproto_sccs[2] = {
-  &scc_info_user_database_UserMessage_2eproto.base,
-  &scc_info_user_database_filter_UserMessage_2eproto.base,
-};
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_UserMessage_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_UserMessage_2eproto = {
-  false, false, descriptor_table_protodef_UserMessage_2eproto, "UserMessage.proto", 301,
-  &descriptor_table_UserMessage_2eproto_once, descriptor_table_UserMessage_2eproto_sccs, descriptor_table_UserMessage_2eproto_deps, 2, 1,
+  false, false, 301, descriptor_table_protodef_UserMessage_2eproto, "UserMessage.proto", 
+  &descriptor_table_UserMessage_2eproto_once, descriptor_table_UserMessage_2eproto_deps, 1, 2,
   schemas, file_default_instances, TableStruct_UserMessage_2eproto::offsets,
-  file_level_metadata_UserMessage_2eproto, 2, file_level_enum_descriptors_UserMessage_2eproto, file_level_service_descriptors_UserMessage_2eproto,
+  file_level_metadata_UserMessage_2eproto, file_level_enum_descriptors_UserMessage_2eproto, file_level_service_descriptors_UserMessage_2eproto,
 };
+PROTOBUF_ATTRIBUTE_WEAK ::PROTOBUF_NAMESPACE_ID::Metadata
+descriptor_table_UserMessage_2eproto_metadata_getter(int index) {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_UserMessage_2eproto);
+  return descriptor_table_UserMessage_2eproto.file_level_metadata[index];
+}
 
 // Force running AddDescriptors() at dynamic initialization time.
-static bool dynamic_init_dummy_UserMessage_2eproto = (static_cast<void>(::PROTOBUF_NAMESPACE_ID::internal::AddDescriptors(&descriptor_table_UserMessage_2eproto)), true);
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY static ::PROTOBUF_NAMESPACE_ID::internal::AddDescriptorsRunner dynamic_init_dummy_UserMessage_2eproto(&descriptor_table_UserMessage_2eproto);
 namespace doodle {
 
 // ===================================================================
@@ -164,13 +162,12 @@ user_database::user_database(const user_database& from)
 }
 
 void user_database::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_user_database_UserMessage_2eproto.base);
-  uuidpath_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  user_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
-      reinterpret_cast<char*>(&userdata_cereal_) - reinterpret_cast<char*>(this)),
-      0, static_cast<size_t>(reinterpret_cast<char*>(&permission_group_) -
-      reinterpret_cast<char*>(&userdata_cereal_)) + sizeof(permission_group_));
+uuidpath_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+user_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&userdata_cereal_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&permission_group_) -
+    reinterpret_cast<char*>(&userdata_cereal_)) + sizeof(permission_group_));
 }
 
 user_database::~user_database() {
@@ -195,11 +192,6 @@ void user_database::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void user_database::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const user_database& user_database::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_user_database_UserMessage_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void user_database::Clear() {
 // @@protoc_insertion_point(message_clear_start:doodle.user_database)
@@ -500,13 +492,12 @@ user_database_filter::user_database_filter(const user_database_filter& from)
 }
 
 void user_database_filter::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_user_database_filter_UserMessage_2eproto.base);
-  uuidpath_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  user_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
-      reinterpret_cast<char*>(&id_) - reinterpret_cast<char*>(this)),
-      0, static_cast<size_t>(reinterpret_cast<char*>(&permission_group_) -
-      reinterpret_cast<char*>(&id_)) + sizeof(permission_group_));
+uuidpath_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+user_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&id_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&permission_group_) -
+    reinterpret_cast<char*>(&id_)) + sizeof(permission_group_));
 }
 
 user_database_filter::~user_database_filter() {
@@ -530,11 +521,6 @@ void user_database_filter::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void user_database_filter::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const user_database_filter& user_database_filter::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_user_database_filter_UserMessage_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void user_database_filter::Clear() {
 // @@protoc_insertion_point(message_clear_start:doodle.user_database_filter)

@@ -91,5 +91,7 @@
  * @li 更新maya 解算工具: 更改maya cloth 解算 保存文件位置
  * @li 更新maya 解算工具: 更改maya cloth 解算 缓存位置
  *
- *
+ * @subsection updata_log_3025 版本3.0.25
+ * @li 添加maya正确的插件加载行为
+ * @li 添加ue 批量导入寻找材质部分
  */

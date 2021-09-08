@@ -14,70 +14,56 @@
 #include <google/protobuf/wire_format.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
-extern PROTOBUF_INTERNAL_EXPORT_MetadataServer_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_DataDb_meta_type_value_MetadataServer_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_google_2fprotobuf_2fany_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Any_google_2fprotobuf_2fany_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_google_2fprotobuf_2ftimestamp_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Timestamp_google_2fprotobuf_2ftimestamp_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_google_2fprotobuf_2fwrappers_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_UInt64Value_google_2fprotobuf_2fwrappers_2eproto;
+
+PROTOBUF_PRAGMA_INIT_SEG
 namespace doodle {
-class DataDb_meta_type_valueDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<DataDb_meta_type_value> _instance;
-} _DataDb_meta_type_value_default_instance_;
-class DataDbDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<DataDb> _instance;
-} _DataDb_default_instance_;
-class DataDb_FilterDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<DataDb_Filter> _instance;
-} _DataDb_Filter_default_instance_;
+constexpr DataDb_meta_type_value::DataDb_meta_type_value(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : value_(0)
+{}
+struct DataDb_meta_type_valueDefaultTypeInternal {
+  constexpr DataDb_meta_type_valueDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~DataDb_meta_type_valueDefaultTypeInternal() {}
+  union {
+    DataDb_meta_type_value _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT DataDb_meta_type_valueDefaultTypeInternal _DataDb_meta_type_value_default_instance_;
+constexpr DataDb::DataDb(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : uuidpath_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , parent_(nullptr)
+  , update_time_(nullptr)
+  , metadata_cereal_(nullptr)
+  , m_type_(nullptr)
+  , id_(PROTOBUF_ULONGLONG(0)){}
+struct DataDbDefaultTypeInternal {
+  constexpr DataDbDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~DataDbDefaultTypeInternal() {}
+  union {
+    DataDb _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT DataDbDefaultTypeInternal _DataDb_default_instance_;
+constexpr DataDb_Filter::DataDb_Filter(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : begin_time_(nullptr)
+  , end_time_(nullptr)
+  , m_type_(nullptr)
+  , parent_(nullptr)
+  , id_(PROTOBUF_ULONGLONG(0)){}
+struct DataDb_FilterDefaultTypeInternal {
+  constexpr DataDb_FilterDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~DataDb_FilterDefaultTypeInternal() {}
+  union {
+    DataDb_Filter _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT DataDb_FilterDefaultTypeInternal _DataDb_Filter_default_instance_;
 }  // namespace doodle
-static void InitDefaultsscc_info_DataDb_MetadataServer_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::doodle::_DataDb_default_instance_;
-    new (ptr) ::doodle::DataDb();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<4> scc_info_DataDb_MetadataServer_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 4, 0, InitDefaultsscc_info_DataDb_MetadataServer_2eproto}, {
-      &scc_info_UInt64Value_google_2fprotobuf_2fwrappers_2eproto.base,
-      &scc_info_Timestamp_google_2fprotobuf_2ftimestamp_2eproto.base,
-      &scc_info_Any_google_2fprotobuf_2fany_2eproto.base,
-      &scc_info_DataDb_meta_type_value_MetadataServer_2eproto.base,}};
-
-static void InitDefaultsscc_info_DataDb_meta_type_value_MetadataServer_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::doodle::_DataDb_meta_type_value_default_instance_;
-    new (ptr) ::doodle::DataDb_meta_type_value();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_DataDb_meta_type_value_MetadataServer_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_DataDb_meta_type_value_MetadataServer_2eproto}, {}};
-
-static void InitDefaultsscc_info_DataDb_Filter_MetadataServer_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::doodle::_DataDb_Filter_default_instance_;
-    new (ptr) ::doodle::DataDb_Filter();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<3> scc_info_DataDb_Filter_MetadataServer_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 3, 0, InitDefaultsscc_info_DataDb_Filter_MetadataServer_2eproto}, {
-      &scc_info_Timestamp_google_2fprotobuf_2ftimestamp_2eproto.base,
-      &scc_info_DataDb_meta_type_value_MetadataServer_2eproto.base,
-      &scc_info_UInt64Value_google_2fprotobuf_2fwrappers_2eproto.base,}};
-
 static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_MetadataServer_2eproto[3];
 static const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* file_level_enum_descriptors_MetadataServer_2eproto[1];
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_MetadataServer_2eproto = nullptr;
@@ -164,21 +150,21 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor
   &::descriptor_table_google_2fprotobuf_2ftimestamp_2eproto,
   &::descriptor_table_google_2fprotobuf_2fwrappers_2eproto,
 };
-static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_MetadataServer_2eproto_sccs[3] = {
-  &scc_info_DataDb_MetadataServer_2eproto.base,
-  &scc_info_DataDb_meta_type_value_MetadataServer_2eproto.base,
-  &scc_info_DataDb_Filter_MetadataServer_2eproto.base,
-};
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_MetadataServer_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_MetadataServer_2eproto = {
-  false, false, descriptor_table_protodef_MetadataServer_2eproto, "MetadataServer.proto", 1288,
-  &descriptor_table_MetadataServer_2eproto_once, descriptor_table_MetadataServer_2eproto_sccs, descriptor_table_MetadataServer_2eproto_deps, 3, 4,
+  false, false, 1288, descriptor_table_protodef_MetadataServer_2eproto, "MetadataServer.proto", 
+  &descriptor_table_MetadataServer_2eproto_once, descriptor_table_MetadataServer_2eproto_deps, 4, 3,
   schemas, file_default_instances, TableStruct_MetadataServer_2eproto::offsets,
-  file_level_metadata_MetadataServer_2eproto, 3, file_level_enum_descriptors_MetadataServer_2eproto, file_level_service_descriptors_MetadataServer_2eproto,
+  file_level_metadata_MetadataServer_2eproto, file_level_enum_descriptors_MetadataServer_2eproto, file_level_service_descriptors_MetadataServer_2eproto,
 };
+PROTOBUF_ATTRIBUTE_WEAK ::PROTOBUF_NAMESPACE_ID::Metadata
+descriptor_table_MetadataServer_2eproto_metadata_getter(int index) {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_MetadataServer_2eproto);
+  return descriptor_table_MetadataServer_2eproto.file_level_metadata[index];
+}
 
 // Force running AddDescriptors() at dynamic initialization time.
-static bool dynamic_init_dummy_MetadataServer_2eproto = (static_cast<void>(::PROTOBUF_NAMESPACE_ID::internal::AddDescriptors(&descriptor_table_MetadataServer_2eproto)), true);
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY static ::PROTOBUF_NAMESPACE_ID::internal::AddDescriptorsRunner dynamic_init_dummy_MetadataServer_2eproto(&descriptor_table_MetadataServer_2eproto);
 namespace doodle {
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* DataDb_meta_type_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_MetadataServer_2eproto);
@@ -230,7 +216,7 @@ DataDb_meta_type_value::DataDb_meta_type_value(const DataDb_meta_type_value& fro
 }
 
 void DataDb_meta_type_value::SharedCtor() {
-  value_ = 0;
+value_ = 0;
 }
 
 DataDb_meta_type_value::~DataDb_meta_type_value() {
@@ -252,11 +238,6 @@ void DataDb_meta_type_value::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) 
 void DataDb_meta_type_value::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const DataDb_meta_type_value& DataDb_meta_type_value::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_DataDb_meta_type_value_MetadataServer_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void DataDb_meta_type_value::Clear() {
 // @@protoc_insertion_point(message_clear_start:doodle.DataDb.meta_type_value)
@@ -488,12 +469,11 @@ DataDb::DataDb(const DataDb& from)
 }
 
 void DataDb::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_DataDb_MetadataServer_2eproto.base);
-  uuidpath_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
-      reinterpret_cast<char*>(&parent_) - reinterpret_cast<char*>(this)),
-      0, static_cast<size_t>(reinterpret_cast<char*>(&id_) -
-      reinterpret_cast<char*>(&parent_)) + sizeof(id_));
+uuidpath_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&parent_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&id_) -
+    reinterpret_cast<char*>(&parent_)) + sizeof(id_));
 }
 
 DataDb::~DataDb() {
@@ -520,11 +500,6 @@ void DataDb::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void DataDb::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const DataDb& DataDb::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_DataDb_MetadataServer_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void DataDb::Clear() {
 // @@protoc_insertion_point(message_clear_start:doodle.DataDb)
@@ -902,11 +877,10 @@ DataDb_Filter::DataDb_Filter(const DataDb_Filter& from)
 }
 
 void DataDb_Filter::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_DataDb_Filter_MetadataServer_2eproto.base);
-  ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
-      reinterpret_cast<char*>(&begin_time_) - reinterpret_cast<char*>(this)),
-      0, static_cast<size_t>(reinterpret_cast<char*>(&id_) -
-      reinterpret_cast<char*>(&begin_time_)) + sizeof(id_));
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&begin_time_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&id_) -
+    reinterpret_cast<char*>(&begin_time_)) + sizeof(id_));
 }
 
 DataDb_Filter::~DataDb_Filter() {
@@ -932,11 +906,6 @@ void DataDb_Filter::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void DataDb_Filter::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const DataDb_Filter& DataDb_Filter::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_DataDb_Filter_MetadataServer_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void DataDb_Filter::Clear() {
 // @@protoc_insertion_point(message_clear_start:doodle.DataDb_Filter)

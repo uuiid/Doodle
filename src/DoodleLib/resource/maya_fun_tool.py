@@ -862,13 +862,12 @@ class open_file():
     def __init__(self, file_path):
         self.file_path = pymel.core.Path(file_path)
 
-    def load_plug(self):
-        pymel.core.system.loadPlugin("AbcExport")
-        pymel.core.system.loadPlugin("AbcImport")
-        pymel.core.system.loadPlugin("qualoth_2019_x64")
+    def load_plug(self, str_list):
+        # type: (list[str])->None
+        for plug in str_list:
+            pymel.core.system.loadPlugin(plug)
 
     def open(self):
-        self.load_plug()
         maya_workspace.set_workspace_static(self.file_path.dirname())
 
         pymel.core.system.newFile(force=True)
@@ -884,12 +883,14 @@ class open_file():
         doodle_work_space.set_workspace()
 
     def get_cloth_sim(self, qcloth_path):
+        self.load_plug(["AbcExport","AbcImport","qualoth_2019_x64"])
         # type: (str)->cloth_export
         self.open()
         pymel.core.playbackOptions(animationStartTime="950")
         return cloth_export(qcloth_path)
 
     def get_fbx_export(self):
+        self.load_plug(["fbxmaya"])
         # type :(str)->fbx_export
         self.open()
         return fbx_export()
