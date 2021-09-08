@@ -1,6 +1,4 @@
 ﻿# -*- coding: utf-8 -*-
-import maya.cmds
-import maya.mel
 import pymel.core
 import pymel.core.system
 import pymel.core.nodetypes
@@ -8,7 +6,7 @@ import argparse
 import os
 import re
 import json
-from pymel.util.arrays import det
+
 import pymel.util.path
 import pymel.all
 import pymel.core.animation
@@ -75,9 +73,10 @@ class maya_workspace():
 
     @staticmethod
     def set_workspace_static(path):
-        # type : (str)->pymel.core.Path
-        k_work = pymel.core.Path(path).dirname() / "workspace.mel"
+        # type: (str)->pymel.util.path
+        k_work = pymel.core.Path(path).dirname() / "workspace.mel" # type: pymel.util.path
         k_work2 = pymel.core.Path(path) / "workspace.mel"
+
         if k_work.exists():
             pymel.core.system.workspace.open(k_work.dirname())
             return k_work.dirname()
@@ -174,7 +173,7 @@ class camera:
             pymel.core.ls(cam)[0].renderable.set(False)
         self.maya_cam.renderable.set(True)
         # print("maya mel eval lookThroughModelPanel {} modelPanel1;".format(self.maya_cam.fullPath()))
-        # maya.mel.eval(
+        # pymel.core.mel.eval(
         #     "lookThroughModelPanel {} modelPanel1;".format(self.maya_cam.fullPath()))
         # try:
         #     # type: pymel.core.nodetypes.RenderGlobals
@@ -248,13 +247,14 @@ class camera:
         mel_name = pymel.core.Path(mel_name)
         pymel.core.select(self.maya_cam)
         print("Prepare export path ", mel_name)
-        maya.mel.eval(
+
+        pymel.core.mel.eval(
             "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
-        maya.mel.eval(
+        pymel.core.mel.eval(
             "FBXExportBakeComplexEnd -v {}".format(doodle_work_space.raneg.end))
-        maya.mel.eval("FBXExportBakeComplexAnimation -v true")
-        maya.mel.eval("FBXExportConstraints -v true")
-        maya.mel.eval(
+        pymel.core.mel.eval("FBXExportBakeComplexAnimation -v true")
+        pymel.core.mel.eval("FBXExportConstraints -v true")
+        pymel.core.mel.eval(
             'FBXExport -f "{}" -s'.format(str(mel_name.abspath()).replace("\\", "/")))
         print("camera erport ----> {}".format(str(mel_name.abspath()).replace("\\", "/")))
         log.addfile("camera", mel_name, 0)
@@ -273,7 +273,7 @@ class camera:
 
         print(self.maya_cam.getShape().longName())
         try:
-            maya.mel.eval('setAttr "{}.displayGateMaskOpacity" 1;'.format(
+            pymel.core.mel.eval('setAttr "{}.displayGateMaskOpacity" 1;'.format(
                 self.maya_cam.getShape().longName()))
         except:
             print("""Cannot set door mask transparency""")
@@ -519,14 +519,14 @@ class export_group(object):
                                disableImplicitControl=True,
                                preserveOutsideKeys=False,
                                sparseAnimCurveBake=False)
-        maya.mel.eval(
+        pymel.core.mel.eval(
             "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
-        maya.mel.eval(
+        pymel.core.mel.eval(
             "FBXExportBakeComplexEnd -v {}".format(doodle_work_space.raneg.end))
-        maya.mel.eval("FBXExportBakeComplexAnimation -v true")
-        maya.mel.eval("FBXExportSmoothingGroups -v true")
-        maya.mel.eval("FBXExportConstraints -v true")
-        maya.mel.eval(
+        pymel.core.mel.eval("FBXExportBakeComplexAnimation -v true")
+        pymel.core.mel.eval("FBXExportSmoothingGroups -v true")
+        pymel.core.mel.eval("FBXExportConstraints -v true")
+        pymel.core.mel.eval(
             'FBXExport -f "{}" -s'.format(path.abspath()).replace("\\", "/"))
 
 
@@ -556,7 +556,7 @@ class cloth_group_file(export_group):
             pymel.core.select(obj, add=True)
             print("select {} and {}".format(str(select_str), str(obj)))
             print(pymel.core.selected())
-            maya.mel.eval("qlUpdateInitialPose;")
+            pymel.core.mel.eval("qlUpdateInitialPose;")
 
     def set_cache_folder(self):
         for obj in self.cloth_group:
