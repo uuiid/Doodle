@@ -883,8 +883,8 @@ class open_file():
         doodle_work_space.set_workspace()
 
     def get_cloth_sim(self, qcloth_path):
-        self.load_plug(["AbcExport","AbcImport","qualoth_2019_x64"])
         # type: (str) -> cloth_export
+        self.load_plug(["AbcExport","AbcImport","qualoth_2019_x64"])
         self.open()
         pymel.core.playbackOptions(animationStartTime="950")
         return cloth_export(qcloth_path)
