@@ -1,4 +1,4 @@
-# coding:utf-8
+# -*- coding: utf-8 -*-
 import maya.cmds
 import maya.mel
 
@@ -14,6 +14,7 @@ class myRemesh(object):
         self.max_edge_length = 1
         self.collapse_threshold = 50
         self.onf_file = True
+        self.preserveHardEdges = False
         self.mywindow = maya.cmds.window(widthHeight=(200, 300), title="polyRemesh")
         maya.cmds.columnLayout(adjustableColumn=True)
         maya.cmds.button(label="Get selected objects", command=self._getSelectMesh)
@@ -23,6 +24,7 @@ class myRemesh(object):
         maya.cmds.floatField(annotation='Collapse Threshold', minValue=1, maxValue=80, step=1,
                              value=self.collapse_threshold,
                              dragCommand=self._getCollapseThreshold, changeCommand=self._getCollapseThreshold)
+        maya.cmds.checkBox(label="preserveHardEdges", changeCommand=self._setpreserveHardEdges, value=self.preserveHardEdges)
         maya.cmds.button(label="Subdivision", command=self._MYremesh)
         maya.cmds.button(label="buid", command=self._bindSkin)
         maya.cmds.button(label="Copy skin", command=self._copyBindSkin)
@@ -44,6 +46,8 @@ class myRemesh(object):
             self.duplicate_mesh.append(mesh_dub)
             # print(mesh_dub)
             maya.cmds.select(mesh_dub)
+            if(self.preserveHardEdges):
+                maya.cmds.polyRetopo(preserveHardEdges=self.preserveHardEdges)
             maya.cmds.polyRemesh(maxEdgeLength=self.max_edge_length, collapseThreshold=self.collapse_threshold)
 
     def _getSelectMesh(self, t):
@@ -58,6 +62,9 @@ class myRemesh(object):
     def _getMaxEdgeLength(self, f):
         self.max_edge_length = f
         # print(self.max_edge_length)
+
+    def _setpreserveHardEdges(self,f):
+        self.preserveHardEdges = f;
 
     def _getCollapseThreshold(self, f):
         self.collapse_threshold = f
