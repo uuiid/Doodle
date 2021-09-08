@@ -225,7 +225,11 @@ grpc::Status RpcMetadaataServer::InstallUserDate(::grpc::ServerContext *context,
   return grpc::Status::OK;
 }
 grpc::Status RpcMetadaataServer::UpdateUserDate(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
-  return Service::UpdateUserDate(context, request, response);
+  if(!request->userdata_cereal().value().empty()){
+    auto k_path = getPath(request->uuidpath());
+    put_cache_and_file(k_path,request->userdata_cereal().value());
+  }
+  return grpc::Status::OK;
 }
 grpc::Status RpcMetadaataServer::DeleteUserDate(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::doodle::user_database *response) {
   auto k_conn = CoreSql::Get().getConnection();

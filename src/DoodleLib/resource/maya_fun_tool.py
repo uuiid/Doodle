@@ -884,7 +884,7 @@ class open_file():
 
     def get_cloth_sim(self, qcloth_path):
         self.load_plug(["AbcExport","AbcImport","qualoth_2019_x64"])
-        # type: (str)->cloth_export
+        # type: (str) -> cloth_export
         self.open()
         pymel.core.playbackOptions(animationStartTime="950")
         return cloth_export(qcloth_path)
