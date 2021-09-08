@@ -99,4 +99,6 @@
  * @li 添加maya重新分别网格功能
  * @li 重新创建maya导出位置
  *
+ * @subsection updata_log_3028 版本3.0.28
+ * @li maya 解算和导出fbx自动化脚本更新： 更改maya 文件打开引用方式
  */
