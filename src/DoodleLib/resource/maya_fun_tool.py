@@ -871,7 +871,7 @@ class open_file():
         maya_workspace.set_workspace_static(self.file_path.dirname())
 
         pymel.core.system.newFile(force=True)
-        pymel.core.system.openFile(self.file_path, loadReferenceDepth="all")
+        pymel.core.system.openFile(self.file_path)
         if pymel.core.mel.eval("currentTimeUnitToFPS") != 25.0:
             pymel.core.warning("frame rate is not 25 is {}".format(
                 pymel.core.mel.eval("currentTimeUnitToFPS")
