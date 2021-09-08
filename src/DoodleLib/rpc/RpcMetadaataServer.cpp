@@ -232,8 +232,6 @@ grpc::Status RpcMetadaataServer::DeleteUserDate(::grpc::ServerContext *context, 
   Usertab k_tab{};
 
   auto k_path = getPath(request->uuidpath());
-  // if (!p_cache.Remove(k_path.generic_string()))
-  //   return {grpc::StatusCode::NOT_FOUND, "未找到缓存"};
 
   auto id = (*k_conn)(sqlpp::remove_from(k_tab).where(k_tab.id == request->id()));
   response->set_id(id);
@@ -257,7 +255,7 @@ grpc::Status RpcMetadaataServer::FilterUserDate(::grpc::ServerContext *context, 
   if(!request->user_name().empty()){
     k_select.where.add(k_tab.userName == request->user_name());
   }
-  if(!request->permission_group() != 0){
+  if(request->permission_group() != 0){
     k_select.where.add(k_tab.permissionGroup == request->permission_group());
   }
   for (const auto& row : (*k_conn)(k_select)) {
@@ -279,7 +277,6 @@ grpc::Status RpcMetadaataServer::FilterUserDate(::grpc::ServerContext *context, 
       return grpc::Status::CANCELLED;
 
     DOODLE_LOG_DEBUG(fmt::format("id: {} uuidPath: {}", row.id.value(), row.uuidPath.value()))
-
   }
 }
 

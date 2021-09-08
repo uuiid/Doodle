@@ -144,8 +144,8 @@ chrono::hours_double TimeDuration::work_duration(const TimeDuration& in) const {
   chrono::hours_double k_time_h = work_days(k_begin, k_end).count() * chrono::hours_double{8};  /// 总工作小时
 
   /**
-   *            @warning 首先是加入开始， 并且加入结束
-   *            所以减去开始时多出来的部分， 再减去结束时多出来的部分
+   *  @warning 首先是加入开始， 并且加入结束
+   *  所以减去开始时多出来的部分， 再减去结束时多出来的部分
    *  k_time_h = (k_time.count() * chrono::hours_double{8})
    *  - one_day_works_hours(p_time)
    *  + one_day_works_hours(in.p_time);
