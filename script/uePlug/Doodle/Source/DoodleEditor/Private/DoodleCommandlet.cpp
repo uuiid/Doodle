@@ -6,6 +6,8 @@
 #include "Factories/FbxImportUI.h"
 #include "Factories/FbxSkeletalMeshImportData.h"
 #include "Factories/FbxAnimSequenceImportData.h"
+#include "Factories/MaterialImportHelpers.h"
+#include "Factories/FbxTextureImportData.h"
 
 #include "AutomatedAssetImportData.h"
 #include "Modules/ModuleManager.h"
@@ -198,6 +200,7 @@ void UDoodleAssCreateCommandlet::setting_import_fbx_is_skobj(UFbxFactory* k_fbx_
     k_fbx_f->ImportUI->AnimSequenceImportData->AnimationLength = FBXALIT_ExportedTime;
     k_fbx_f->ImportUI->AnimSequenceImportData->bImportBoneTracks = true;
     k_fbx_f->ImportUI->bAllowContentTypeImport = true;
+    k_fbx_f->ImportUI->TextureImportData->MaterialSearchLocation = EMaterialSearchLocation::UnderRoot;
 }
 
 static bool SavePackage(UPackage* Package, const FString& PackageFilename)
