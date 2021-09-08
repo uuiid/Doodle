@@ -309,8 +309,8 @@ class camera:
 
     def __call__(self, str=None):
         if not str:
-            str = doodle_work_space.maya_file.abs_path / \
-                doodle_work_space.maya_file.name_not_ex / "fbx"
+            str = doodle_work_space.work.getPath() / \
+                doodle_work_space.maya_file.name_not_ex 
         self.export(str)
         try:
             pass
@@ -502,7 +502,7 @@ class export_group(object):
             return
 
         path = doodle_work_space.work.getPath() \
-            / doodle_work_space.maya_file.name_not_ex / "fbx"  # type: pymel.core.Path
+            / doodle_work_space.maya_file.name_not_ex   # type: pymel.core.Path
 
         name = "{}_{}_{}-{}.fbx".format(doodle_work_space.maya_file.name_not_ex,
                                         self.maya_name_space,
