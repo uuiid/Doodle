@@ -788,7 +788,8 @@ class cloth_export():
     def save(self, override=False):
         if not override:
             path = doodle_work_space.maya_file.abs_path / \
-                doodle_work_space.maya_file.name_not_ex  # type: pymel.core.Path
+                "ma" / \
+                doodle_work_space.maya_file.name_not_ex  # type: pymel.core.util.path
             path.makedirs_p()
 
             pymel.core.system.saveAs("{}/{}_sim_colth.ma".format(
