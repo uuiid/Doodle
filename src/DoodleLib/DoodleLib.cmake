@@ -53,7 +53,7 @@ set(
     Metadata/Metadata.h
     Metadata/MetadataFactory.h
     Metadata/Metadata_cpp.h
-    Metadata/Name.h
+        Metadata/user.h
     Metadata/Project.h
     Metadata/Shot.h
     Metadata/TimeDuration.h
@@ -107,7 +107,7 @@ set(
     Metadata/Episodes.cpp
     Metadata/Metadata.cpp
     Metadata/MetadataFactory.cpp
-    Metadata/Name.cpp
+        Metadata/user.cpp
     Metadata/Project.cpp
     Metadata/Shot.cpp
     Metadata/TimeDuration.cpp
