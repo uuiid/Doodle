@@ -215,29 +215,6 @@ long_term_ptr trans_file::operator()() {
 const long_term_ptr& trans_file::get_term() {
   return _term;
 }
-void trans_file::link_sub_sig(const trans_file_ptr& in_sub, const std::double_t& in_size) {
-  in_sub->_term->sig_progress.connect([this, in_size](std::double_t in_) {
-    _term->sig_progress(in_ / in_size);
-  });
-  in_sub->_term->sig_message_result.connect([this](const std::string& in_str) {
-    _term->sig_message_result(in_str);
-  });
-  in_sub->_term->sig_finished.connect([this, in_size]() {
-    std::lock_guard k_guard{_mutex};
-    ++_size;
-    if (boost::numeric_cast<std::size_t>(in_size) == _size) {
-      //        /// 寻找序列中下载文件状态不是 std::future_status::ready 的, 全部都是的话一定可以是完成, 多次确认
-      //        auto k_it = std::find_if_not(_list.begin(), _list.end(), [](const trans_file_ptr& in_tran_ptr) {
-      //          if (in_tran_ptr->_result.valid())
-      //            return in_tran_ptr->_result.wait_for(std::chrono::nanoseconds{1}) == std::future_status::ready;
-      //          else
-      //            return true;
-      //        });
-      //        if (k_it == _list.end())
-      _term->sig_finished();
-    }
-  });
-}
 
 down_file::down_file(RpcFileSystemClient* in_self)
     : trans_file(in_self) {
@@ -384,10 +361,11 @@ void down_dir::run() {
     _stack.insert(_stack.end(), std::make_move_iterator(k_i.begin()), std::make_move_iterator(k_i.end()));
   }
 
-  auto k_size = boost::numeric_cast<double_t>(_down_list.size());
-  for (auto& k_i : _down_list) {
-    link_sub_sig(k_i, k_size);
-  }
+  std::vector<long_term_ptr> k_l_list{};
+  std::transform(_down_list.begin(),  _down_list.end(),std::back_inserter(k_l_list),
+                 [](const trans_file_ptr& in_){return  in_->get_term();});
+  _term->forward_sig(k_l_list);
+
   for (auto& k_i : _down_list) {
     (*k_i)();
   }
@@ -451,11 +429,11 @@ void up_dir::run() {
     _stack.insert(_stack.end(), std::make_move_iterator(k_list.begin()), std::make_move_iterator(k_list.end()));
   }
 
-  auto k_size = boost::numeric_cast<double_t>(_up_list.size());
+  std::vector<long_term_ptr> k_l_list{};
+  std::transform(_up_list.begin(),  _up_list.end(),std::back_inserter(k_l_list),
+                 [](const trans_file_ptr& in_){return  in_->get_term();});
+  _term->forward_sig(k_l_list);
 
-  for (auto& k_i : _up_list) {
-    link_sub_sig(k_i, k_size);
-  }
   for (auto& k_i : _up_list) {
     (*k_i)();
   }
@@ -504,10 +482,10 @@ void trans_files::wait() {
   }
 }
 void trans_files::run() {
-  auto k_size = boost::numeric_cast<double_t>(_list.size());
-  for (auto& k_i : _list) {
-    link_sub_sig(k_i, k_size);
-  }
+  std::vector<long_term_ptr> k_l_list{};
+  std::transform(_list.begin(),  _list.end(),std::back_inserter(k_l_list),
+                 [](const trans_file_ptr& in_){return  in_->get_term();});
+  _term->forward_sig(k_l_list);
 
   for (auto& k_i : _list) {
     (*k_i)();

@@ -37,7 +37,6 @@ class DOODLELIB_API trans_file : public details::no_copy {
   std::mutex _mutex;
 
   virtual void run() = 0;
-  void link_sub_sig(const trans_file_ptr& in_sub, const std::double_t& in_size);
 
  public:
   explicit trans_file(RpcFileSystemClient* in_self);

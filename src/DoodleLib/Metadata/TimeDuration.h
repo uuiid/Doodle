@@ -42,6 +42,7 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
 
  public:
   using time_point = std::chrono::time_point<std::chrono::system_clock>;
+  using l = chrono::local_t;
   TimeDuration();
   explicit TimeDuration(time_point in_utc_timePoint);
 

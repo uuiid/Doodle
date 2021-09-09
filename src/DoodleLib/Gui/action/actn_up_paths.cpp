@@ -127,6 +127,7 @@ long_term_ptr actn_create_ass_up_paths::run(const MetadataPtr& in_data, const Me
     DOODLE_LOG_DEBUG("无效的上传数据")
     throw DoodleError{"无效的上传数据"};
   }
+  k_term->forward_sig(p_up->get_long_term_signal());
   (*p_up)(k_ass_file, in_parent);
   return k_term;
 }
