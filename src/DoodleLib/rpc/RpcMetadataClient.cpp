@@ -10,6 +10,8 @@
 // clang-format on
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/core/ContainerDevice.h>
+#include <consoleapi.h>
+#include <consoleapi2.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>
 
@@ -143,9 +145,9 @@ rpc_filter::filter::operator DataDb_Filter() const {
         magic_enum::enum_cast<DataDb::meta_type>(magic_enum::enum_integer(*_meta_type)).value());
   if (_begin && _end) {
     auto k_begin_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
-        std::chrono::system_clock::to_time_t(*_begin));
+        chrono::to_time_t(*_begin));
     auto k_end_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
-        std::chrono::system_clock::to_time_t(*_end));
+        chrono::to_time_t(*_end));
     k_tmp.mutable_begin_time()->CopyFrom(k_begin_timestamp);
     k_tmp.mutable_end_time()->CopyFrom(k_end_timestamp);
   }

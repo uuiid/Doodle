@@ -137,7 +137,7 @@ class DOODLELIB_API RpcFileSystemClient : public details::no_copy {
   std::string get_hash(const FSys::path& in_path);
 
  public:
-  using time_point = std::chrono::time_point<std::chrono::system_clock>;
+  using time_point = chrono::sys_time_pos;
   /**
    *@brief 这个时用来判读是否进行同步或者下载的函子别名
    * std::tuple<std::optional<bool>,  是否相等

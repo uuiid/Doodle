@@ -169,6 +169,7 @@ using namespace date;
 using hours_double = duration<std::double_t, std::ratio<3600>>;
 using days_double  = duration<std::double_t, std::ratio<28800>>;
 using sys_time_pos = time_point<system_clock>;
+using local_time_pos = time_point<local_t,seconds>;
 
 /**
  * @brief 判断是否是休息日 周六日
@@ -176,6 +177,10 @@ using sys_time_pos = time_point<system_clock>;
  * @todo 这里我们暂时使用周六和周日作为判断, 但是实际上还有各种假期和其他情况要计入
  */
 bool is_rest_day(const sys_days &in_days);
+template <class dur>
+std::time_t to_time_t(const time_point<local_t, dur>& in_timePoint){
+    return duration_cast<seconds>(in_timePoint.time_since_epoch()).count();
+};
 // template <class Clock>
 // bool is_morning_works(const std::chrono::time_point<Clock, typename Clock::duration>& in_time) {
 // }
@@ -254,7 +259,7 @@ DOODLELIB_API inline path make_path(const std::string &in_string) {
   return path{convert.from_bytes(in_string)};
 }
 DOODLELIB_API std::time_t last_write_time_t(const path &in_path);
-DOODLELIB_API inline std::chrono::time_point<std::chrono::system_clock> last_write_time_point(const path &in_path) {
+DOODLELIB_API inline chrono::sys_time_pos last_write_time_point(const path &in_path) {
   return std::chrono::system_clock::from_time_t(last_write_time_t(in_path));
 }
 DOODLELIB_API path add_time_stamp(const path &in_path);
@@ -274,7 +279,7 @@ class LabelNode;
 class AssetsFile;
 class MetadataFactory;
 class ContextMenu;
-class TimeDuration;
+class time_point_wrap;
 class Comment;
 class AssetsPath;
 
@@ -441,7 +446,7 @@ using MetadataFactoryPtr = std::shared_ptr<MetadataFactory>;
  * @brief TimeDuration 智能共享指针
  *
  */
-using TimeDurationPtr = std::shared_ptr<TimeDuration>;
+using TimeDurationPtr = std::shared_ptr<time_point_wrap>;
 /**
  * @brief Comment 智能共享指针
  *

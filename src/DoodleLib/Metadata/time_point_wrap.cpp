@@ -2,13 +2,13 @@
 // Created by TD on 2021/5/17.
 //
 
-#include <DoodleLib/Metadata/TimeDuration.h>
+#include <DoodleLib/Metadata/time_point_wrap.h>
 #include <date/date.h>
 #include <date/tz.h>
 
 namespace doodle {
 
-TimeDuration::TimeDuration()
+time_point_wrap::time_point_wrap()
     : p_time(),
       p_year(),
       p_month(),
@@ -19,7 +19,7 @@ TimeDuration::TimeDuration()
       p_time_zone(date::current_zone()) {
   disassemble(std::chrono::system_clock::now());
 }
-TimeDuration::TimeDuration(time_point in_utc_timePoint)
+time_point_wrap::time_point_wrap(time_point in_utc_timePoint)
     : p_time(),
       p_year(),
       p_month(),
@@ -30,51 +30,51 @@ TimeDuration::TimeDuration(time_point in_utc_timePoint)
       p_time_zone(date::current_zone()) {
   disassemble(in_utc_timePoint);
 }
-std::uint16_t TimeDuration::get_year() const {
+std::uint16_t time_point_wrap::get_year() const {
   return (int)p_year;
 }
-void TimeDuration::set_year(std::uint16_t in_year) {
+void time_point_wrap::set_year(std::uint16_t in_year) {
   p_year = date::year{in_year};
   disassemble();
 }
-std::uint16_t TimeDuration::get_month() const {
+std::uint16_t time_point_wrap::get_month() const {
   return (std::uint32_t)p_month;
 }
-void TimeDuration::set_month(std::uint16_t in_month) {
+void time_point_wrap::set_month(std::uint16_t in_month) {
   p_month = date::month{in_month};
   disassemble();
 }
-std::uint16_t TimeDuration::get_day() const {
+std::uint16_t time_point_wrap::get_day() const {
   return (std::uint32_t)p_day;
 }
-void TimeDuration::set_day(std::uint16_t in_day) {
+void time_point_wrap::set_day(std::uint16_t in_day) {
   p_day = date::day{in_day};
   disassemble();
 }
-std::uint16_t TimeDuration::get_hour() const {
+std::uint16_t time_point_wrap::get_hour() const {
   return p_hours.count();
 }
-void TimeDuration::set_hour(std::uint16_t in_hour) {
+void time_point_wrap::set_hour(std::uint16_t in_hour) {
   p_hours = std::chrono::hours{in_hour};
   disassemble();
 }
-std::uint16_t TimeDuration::get_minutes() const {
+std::uint16_t time_point_wrap::get_minutes() const {
   return p_minutes.count();
 }
-void TimeDuration::set_minutes(std::uint16_t in_minutes) {
+void time_point_wrap::set_minutes(std::uint16_t in_minutes) {
   p_minutes = std::chrono::minutes{in_minutes};
   disassemble();
 }
-std::uint16_t TimeDuration::get_second() const {
+std::uint16_t time_point_wrap::get_second() const {
   return p_seconds.count();
 }
-void TimeDuration::set_second(std::uint16_t in_second) {
+void time_point_wrap::set_second(std::uint16_t in_second) {
   p_seconds = std::chrono::seconds{in_second};
   disassemble();
 }
 
 template <>
-std::string TimeDuration::getWeek() const {
+std::string time_point_wrap::getWeek() const {
   auto k_int = getWeek<std::int32_t>();
   std::string k_string{};
   switch (k_int) {
@@ -107,31 +107,31 @@ std::string TimeDuration::getWeek() const {
 }
 
 template <>
-std::int32_t TimeDuration::getWeek() const {
+std::int32_t time_point_wrap::getWeek() const {
   date::weekday k_weekday{date::local_days{p_year / p_month / p_day}};
   return k_weekday.c_encoding();
 }
 
-std::string TimeDuration::showStr() const {
+std::string time_point_wrap::showStr() const {
   return date::format("%Y/%m/%d %H:%M:%S", getLocalTime());
 }
-TimeDuration::time_point TimeDuration::getUTCTime() const {
+time_point_wrap::time_point time_point_wrap::getUTCTime() const {
   return p_time;
 }
 
-void TimeDuration::disassemble() {
+void time_point_wrap::disassemble() {
   auto k_time = date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
   auto k_     = date::make_zoned(p_time_zone, k_time);
   disassemble(k_.get_sys_time());
 }
-TimeDuration::time_point TimeDuration::getLocalTime() const {
+chrono::local_time<chrono::seconds> time_point_wrap::getLocalTime() const {
   auto k_time = date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
   // auto k_time2 = k_time - k_time;
   // time_point test = date::clock_cast<std::chrono::system_clock>(k_time);
-  return date::clock_cast<std::chrono::system_clock>(k_time);
+  return k_time;
 }
 
-chrono::hours_double TimeDuration::work_duration(const TimeDuration& in) const {
+chrono::hours_double time_point_wrap::work_duration(const time_point_wrap& in) const {
   /// @warning 开始时间不能比结束时间大
   if (p_time > in.p_time)
     return chrono::hours_double{0};
@@ -163,7 +163,7 @@ chrono::hours_double TimeDuration::work_duration(const TimeDuration& in) const {
   return k_time_h;
 }
 
-void TimeDuration::disassemble(const std::chrono::time_point<std::chrono::system_clock>& in_utc_timePoint) {
+void time_point_wrap::disassemble(const chrono::sys_time_pos& in_utc_timePoint) {
   // date::locate_zone("");
   // date::to_utc_time(p_time);
   p_time       = in_utc_timePoint;
@@ -179,11 +179,11 @@ void TimeDuration::disassemble(const std::chrono::time_point<std::chrono::system
   p_minutes = k_hh_mm_ss.minutes();
   p_seconds = k_hh_mm_ss.seconds();
 }
-TimeDuration::operator time_point() {
+time_point_wrap::operator time_point() {
   return p_time;
 }
 
-chrono::hours_double TimeDuration::one_day_works_hours(const time_point& in_point) const {
+chrono::hours_double time_point_wrap::one_day_works_hours(const chrono::local_time<chrono::seconds>& in_point) const {
 
   /// 获得当天的日期后制作工作时间
   auto k_day = chrono::floor<chrono::days>(in_point);
@@ -212,8 +212,8 @@ chrono::hours_double TimeDuration::one_day_works_hours(const time_point& in_poin
   }
   return k_h;
 }
-chrono::days TimeDuration::work_days(const TimeDuration::time_point& in_begin,
-                                     const TimeDuration::time_point& in_end) const {
+chrono::days time_point_wrap::work_days(const time_point_wrap::time_point& in_begin,
+                                     const time_point_wrap::time_point& in_end) const {
   auto k_day_begin = chrono::floor<chrono::days>(in_begin);
   auto k_day_end   = chrono::floor<chrono::days>(in_end);
 
@@ -229,9 +229,16 @@ chrono::days TimeDuration::work_days(const TimeDuration::time_point& in_begin,
   });
   return chrono::days{k_s};
 }
-void TimeDuration::set_local_time(const date::local_time<chrono::seconds>& in_time) {
+void time_point_wrap::set_local_time(const date::local_time<chrono::seconds>& in_time) {
   auto k_time = chrono::make_zoned(p_time_zone, in_time);
   disassemble(k_time.get_sys_time());
+}
+std::time_t time_point_wrap::get_local_time_t() const {
+  auto k_time = getLocalTime();
+  return chrono::to_time_t(k_time);
+}
+std::time_t time_point_wrap::get_utc_time_t() const {
+  return time_point::clock::to_time_t(p_time);
 }
 
 }  // namespace doodle

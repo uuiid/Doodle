@@ -23,7 +23,7 @@ std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> RpcFileS
   auto k_l_sz  = k_l_ex ? FSys::file_size(in_local_path) : 0;
   auto k_l_ti  = k_l_ex
                      ? FSys::last_write_time_point(in_local_path)
-                     : std::chrono::time_point<std::chrono::system_clock>{};
+                     : chrono::sys_time_pos{};
 
   auto [k_s_sz, k_s_ex, k_s_ti, k_s_dir] = GetInfo(in_server_path);
   if (k_l_ex && k_s_ex) {                                   /// 本地文件和服务器文件都存在
@@ -56,7 +56,7 @@ RpcFileSystemClient::RpcFileSystemClient(const std::shared_ptr<grpc::Channel>& i
 {
 }
 
-std::tuple<std::size_t, bool, std::chrono::time_point<std::chrono::system_clock>, bool> RpcFileSystemClient::GetInfo(const FSys::path& in_path) {
+std::tuple<std::size_t, bool, chrono::sys_time_pos, bool> RpcFileSystemClient::GetInfo(const FSys::path& in_path) {
   grpc::ClientContext k_context{};
 
   FileInfo k_in_info{};
@@ -96,7 +96,7 @@ std::tuple<bool, bool> RpcFileSystemClient::IsFolder(const FSys::path& in_path) 
   return {k_out_info.exist(), k_out_info.isfolder()};
 }
 
-std::chrono::time_point<std::chrono::system_clock> RpcFileSystemClient::GetTimestamp(const FSys::path& in_path) {
+chrono::sys_time_pos RpcFileSystemClient::GetTimestamp(const FSys::path& in_path) {
   grpc::ClientContext k_context{};
 
   FileInfo k_in_info{};

@@ -8,7 +8,7 @@
 ///这个工厂类必须在所有导入的后面
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <Gui/factory/menu_factory_Interface.h>
-#include <Metadata/TimeDuration.h>
+#include <Metadata/time_point_wrap.h>
 #include <PinYin/convert.h>
 #include <google/protobuf/util/time_util.h>
 
@@ -22,7 +22,7 @@ AssetsFile::AssetsFile()
       p_ShowName(),
       p_path_file(),
       p_path_files(),
-      p_time(std::make_shared<TimeDuration>(std::chrono::system_clock::now())),
+      p_time(std::make_shared<time_point_wrap>(std::chrono::system_clock::now())),
       p_user(CoreSet::getSet().getUser()),
       p_department(CoreSet::getSet().getDepartmentEnum()),
       p_comment(),
@@ -37,7 +37,7 @@ AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string showName
       p_ShowName(std::move(showName)),
       p_path_file(std::make_shared<AssetsPath>()),
       p_path_files(),
-      p_time(std::make_shared<TimeDuration>(std::chrono::system_clock::now())),
+      p_time(std::make_shared<time_point_wrap>(std::chrono::system_clock::now())),
       p_user(CoreSet::getSet().getUser()),
       p_department(CoreSet::getSet().getDepartmentEnum()),
       p_comment(),
@@ -76,11 +76,11 @@ bool AssetsFile::operator>=(const AssetsFile& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-std::chrono::time_point<std::chrono::system_clock> AssetsFile::getStdTime() const {
+chrono::sys_time_pos AssetsFile::getStdTime() const {
   return p_time->getUTCTime();
 }
-void AssetsFile::setStdTime(const std::chrono::time_point<std::chrono::system_clock>& in_time) {
-  p_time = std::make_shared<TimeDuration>(in_time);
+void AssetsFile::setStdTime(const chrono::sys_time_pos& in_time) {
+  p_time = std::make_shared<time_point_wrap>(in_time);
   saved(true);
   sig_change();
   p_need_time = true;
@@ -188,9 +188,8 @@ std::vector<AssetsPathPtr>& AssetsFile::getPathFile() {
 void AssetsFile::to_DataDb(DataDb& in_) const {
   Metadata::to_DataDb(in_);
   if (p_need_time || p_id == 0) {
-    auto k_time      = p_time->getLocalTime();
     auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
-        std::chrono::system_clock::to_time_t(k_time));
+        p_time->get_local_time_t());
     in_.mutable_update_time()->CopyFrom(k_timestamp);
   }
 }

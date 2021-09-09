@@ -20,8 +20,8 @@ TEST_CASE("time duration", "[metadata]") {
     REQUIRE(k_time.get_sys_time() == k_new);
   }
 
-  doodle::TimeDuration my_t{};
-  doodle::TimeDuration my_t2{};
+  doodle::time_point_wrap my_t{};
+  doodle::time_point_wrap my_t2{};
   SECTION("time set") {
     my_t.set_year(2021);
     my_t.set_month(6);
@@ -179,7 +179,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
                     k_assets_ptr->child_item.push_back_sig(k_file);
 
                     using namespace chrono::literals;
-                    auto k_time = std::make_shared<TimeDuration>(chrono::system_clock::now() - 3h * i);
+                    auto k_time = std::make_shared<time_point_wrap>(chrono::system_clock::now() - 3h * i);
                     DOODLE_LOG_INFO("生成时间 {} ", k_time->showStr());
                     ++i;
 
@@ -218,9 +218,9 @@ TEST_CASE("gui action metadata", "[metadata][gui]") {
 
     k_ex->sig_get_arg.connect([]() {
       actn_export_excel::arg k_arg{};
-      auto k_time_b = std::make_shared<TimeDuration>();
+      auto k_time_b = std::make_shared<time_point_wrap>();
       k_time_b->set_local_time(chrono::local_days(2021_y / 6 / 1_d));
-      auto k_time_end = std::make_shared<TimeDuration>();
+      auto k_time_end = std::make_shared<time_point_wrap>();
       k_time_end->set_local_time(chrono::local_days(2021_y / 6 / 30_d));
       k_arg.p_time_range = std::make_pair(k_time_b, k_time_end);
 

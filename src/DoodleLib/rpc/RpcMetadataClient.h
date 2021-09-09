@@ -13,7 +13,7 @@ namespace doodle {
 namespace rpc_filter {
 class filter : details::no_copy {
  public:
-  using time_point = std::chrono::time_point<std::chrono::system_clock>;
+  using time_point = chrono::local_time_pos;
 
  private:
   std::optional<std::int64_t> _id;

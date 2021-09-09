@@ -36,8 +36,8 @@
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
-#include <DoodleLib/Metadata/TimeDuration.h>
 #include <DoodleLib/Metadata/season.h>
+#include <DoodleLib/Metadata/time_point_wrap.h>
 #include <DoodleLib/Metadata/user.h>
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/ScreenshotWidght/ScreenshotAction.h>

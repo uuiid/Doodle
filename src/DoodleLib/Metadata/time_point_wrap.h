@@ -16,12 +16,12 @@ namespace doodle {
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
-class DOODLELIB_API TimeDuration : public details::no_copy {
+class DOODLELIB_API time_point_wrap : public details::no_copy {
   /**
    * @brief 这个是内部的utc时间
    * 
    */
-  std::chrono::time_point<std::chrono::system_clock> p_time;
+  chrono::sys_time_pos p_time;
   /**
    * @brief 这里是本地日期的年组件之一
    * 
@@ -41,10 +41,10 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
   const date::time_zone* p_time_zone;
 
  public:
-  using time_point = std::chrono::time_point<std::chrono::system_clock>;
+  using time_point = chrono::sys_time_pos;
   using l = chrono::local_t;
-  TimeDuration();
-  explicit TimeDuration(time_point in_utc_timePoint);
+  time_point_wrap();
+  explicit time_point_wrap(time_point in_utc_timePoint);
 
   [[nodiscard]] std::uint16_t get_year() const;
   void set_year(std::uint16_t in_year);
@@ -75,7 +75,9 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
 
   [[nodiscard]] std::string showStr() const;
   [[nodiscard]] time_point getUTCTime() const;
-  [[nodiscard]] time_point getLocalTime() const;
+  [[nodiscard]] chrono::local_time<chrono::seconds> getLocalTime() const;
+  [[nodiscard]] std::time_t get_local_time_t() const;
+  [[nodiscard]] std::time_t get_utc_time_t() const;
   void set_local_time(const chrono::local_time<chrono::seconds>& in_time);
 
   /**
@@ -86,7 +88,7 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
    * @todo 时间选项中去除节假日和个人调休
    * 
    */
-  [[nodiscard]] chrono::hours_double work_duration(const TimeDuration& in) const;
+  [[nodiscard]] chrono::hours_double work_duration(const time_point_wrap& in) const;
 
   /**
    * 这里返回系统时钟 系统时钟我们始终假定为 utc时钟 (system_clock跟踪的时区（未指定但事实上的标准）)
@@ -107,12 +109,12 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
    * 
    * @todo: 这里我们要添加设置， 而不是静态变量
    */
-  chrono::hours_double one_day_works_hours(const time_point& in_point) const;
+  chrono::hours_double one_day_works_hours(const chrono::local_time<chrono::seconds>& in_point) const;
   chrono::days work_days(const time_point& in_begin, const time_point& in_end) const;
 
   void disassemble();
 
-  void disassemble(const std::chrono::time_point<std::chrono::system_clock>& in_utc_timePoint);
+  void disassemble(const chrono::sys_time_pos& in_utc_timePoint);
 
   //这里是序列化的代码
   friend class cereal::access;
@@ -120,7 +122,7 @@ class DOODLELIB_API TimeDuration : public details::no_copy {
   void serialize(Archive& ar, const std::uint32_t version);
 };
 template <class Archive>
-void TimeDuration::serialize(Archive& ar, const std::uint32_t version) {
+void time_point_wrap::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 1)
     ar(
         cereal::make_nvp("year", p_year),
@@ -139,4 +141,4 @@ void TimeDuration::serialize(Archive& ar, const std::uint32_t version) {
 //   };
 // }
 }  // namespace doodle
-CEREAL_CLASS_VERSION(doodle::TimeDuration, 1)
+CEREAL_CLASS_VERSION(doodle::time_point_wrap, 1)

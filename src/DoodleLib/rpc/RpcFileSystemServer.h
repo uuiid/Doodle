@@ -13,7 +13,7 @@
 namespace doodle {
 namespace rpc_filesystem {
 class DOODLELIB_API file_hash : public details::no_copy {
-  using time_pos = std::chrono::time_point<std::chrono::system_clock>;
+  using time_pos = chrono::sys_time_pos;
   FSys::path _path;
   std::size_t _size;
   time_pos _time;

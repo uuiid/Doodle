@@ -49,8 +49,8 @@ class DOODLELIB_API AssetsFile : public Metadata {
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string showStr() const override;
 
-  [[nodiscard]] std::chrono::time_point<std::chrono::system_clock> getStdTime() const;
-  void setStdTime(const std::chrono::time_point<std::chrono::system_clock>& in_time);
+  [[nodiscard]] chrono::sys_time_pos getStdTime() const;
+  void setStdTime(const chrono::sys_time_pos& in_time);
   [[nodiscard]] const TimeDurationPtr& getTime() const;
   void setTime(const TimeDurationPtr& in_time);
 

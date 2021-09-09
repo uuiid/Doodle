@@ -10,7 +10,7 @@
 #include <DoodleLib/Metadata/Comment.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Project.h>
-#include <DoodleLib/Metadata/TimeDuration.h>
+#include <DoodleLib/Metadata/time_point_wrap.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <libWarp/nana_warp.h>
 namespace doodle {

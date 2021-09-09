@@ -282,6 +282,7 @@ grpc::Status RpcMetadaataServer::FilterUserDate(::grpc::ServerContext *context, 
 
     DOODLE_LOG_DEBUG(fmt::format("id: {} uuidPath: {}", row.id.value(), row.uuidPath.value()))
   }
+  return grpc::Status::OK;
 }
 
 }  // namespace doodle

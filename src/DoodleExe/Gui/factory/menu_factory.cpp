@@ -397,7 +397,7 @@ void menu_factory::export_excel() {
   k_ex->sig_get_arg.connect([this]() {
     actn_export_excel::arg k_arg{};
     nana::inputbox msg{p_window, "选择时间: "};
-    auto k_time_b = std::make_shared<TimeDuration>();
+    auto k_time_b = std::make_shared<time_point_wrap>();
     nana::inputbox::integer k_year{"年", k_time_b->get_year(), 1999, 2999, 1};
     nana::inputbox::integer k_men{"月", k_time_b->get_month(), 1, 12, 1};
     msg.show_modal(k_year, k_men);
@@ -408,7 +408,7 @@ void menu_factory::export_excel() {
     k_time_b->set_minutes(0);
     k_time_b->set_second(0);
 
-    auto k_time_end = std::make_shared<TimeDuration>(k_time_b->getUTCTime());
+    auto k_time_end = std::make_shared<time_point_wrap>(k_time_b->getUTCTime());
     k_time_end->set_day((std::uint32_t)chrono::year_month_day_last{chrono::year{k_time_b->get_year()},
                                                                    chrono::month_day_last{
                                                                        chrono::month{k_time_b->get_month()}}}

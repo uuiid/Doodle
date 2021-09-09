@@ -11,7 +11,7 @@ namespace action_arg {
 
 class DOODLELIB_API arg_excel : public arg_path {
  public:
-  using time_point = std::chrono::time_point<std::chrono::system_clock>;
+  using time_point = chrono::sys_time_pos;
   std::pair<TimeDurationPtr, TimeDurationPtr> p_time_range;
 };
 

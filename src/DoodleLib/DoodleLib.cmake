@@ -56,7 +56,7 @@ set(
         Metadata/user.h
     Metadata/Project.h
     Metadata/Shot.h
-    Metadata/TimeDuration.h
+        Metadata/time_point_wrap.h
     Metadata/season.h
     PinYin/convert.h
     rpc/RpcFileSystemClient.h
@@ -110,7 +110,7 @@ set(
         Metadata/user.cpp
     Metadata/Project.cpp
     Metadata/Shot.cpp
-    Metadata/TimeDuration.cpp
+        Metadata/time_point_wrap.cpp
     Metadata/season.cpp
     PinYin/convert.cpp
     rpc/RpcFileSystemClient.cpp
