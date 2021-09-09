@@ -94,7 +94,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
       boost::process::std_in.close(),
       boost::process::windows::hide};
 
-  auto fun = DoodleLib::Get().get_thread_pool()->enqueue(
+  auto fun = std::async(std::launch::async,
       [&k_c, &k_in, &in_term]() {
         auto str_r = std::string{};
         while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {

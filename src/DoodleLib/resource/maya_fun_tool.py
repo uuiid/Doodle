@@ -890,7 +890,7 @@ class open_file():
         return cloth_export(qcloth_path)
 
     def get_fbx_export(self):
+        # type: () -> fbx_export
         self.load_plug(["fbxmaya"])
-        # type :(str)->fbx_export
         self.open()
         return fbx_export()
