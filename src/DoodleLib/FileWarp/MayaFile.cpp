@@ -9,8 +9,14 @@
 
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
+
+#ifdef _WIN32
 #include <boost/process/windows.hpp>
+
+#elif defined  __linux__
 #include <boost/process/posix.hpp>
+
+#endif
 
 namespace doodle {
 MayaFile::MayaFile(FSys::path mayaPath)
@@ -95,14 +101,14 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
       boost::process::std_in.close(),
       boost::process::windows::hide};
 
-  auto fun = std::async(std::launch::async,
-      [&k_c, &k_in, &in_term]() {
-        auto str_r = std::string{};
-        while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
-          in_term->sig_message_result(boost::locale::conv::to_utf<char>(str_r, "GB18030"));
-          in_term->sig_progress(0.001);
-        }
-      });
+  auto fun    = std::async(std::launch::async,
+                           [&k_c, &k_in, &in_term]() {
+                          auto str_r = std::string{};
+                          while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
+                            in_term->sig_message_result(boost::locale::conv::to_utf<char>(str_r, "GB18030"));
+                            in_term->sig_progress(0.001);
+                          }
+                           });
   auto str_r2 = std::string{};
   //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
   const static std::wregex fatal_error_znch{
