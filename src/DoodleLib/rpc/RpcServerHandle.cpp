@@ -15,6 +15,7 @@ RpcServerHandle::RpcServerHandle()
   grpc::ResourceQuota qu{"doodle_meta"};
   qu.SetMaxThreads(boost::numeric_cast<std::int32_t>(std::thread::hardware_concurrency()));
   p_build->SetResourceQuota(qu);
+  DOODLE_LOG_INFO("开始创建rpc服务器");
 }
 
 void RpcServerHandle::registerFileSystemServer(int port) {

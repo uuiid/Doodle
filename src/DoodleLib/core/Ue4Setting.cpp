@@ -56,6 +56,7 @@ void Ue4Setting::testValue() {
   if (shot_end <= shot_start) {
     throw DoodleError{"结束镜头小于开始镜头!"};
   }
+#ifdef _WIN32
   if (ue4_path.empty()) {
     auto wv      = boost::locale::conv::utf_to_utf<wchar_t>(Ue4Setting::Get().Version());
     auto key_str = fmt::format(LR"(SOFTWARE\EpicGames\Unreal Engine\{})", wv);
@@ -68,6 +69,7 @@ void Ue4Setting::testValue() {
       DOODLE_LOG_WARN(e.what());
     }
   }
+#endif
 }
 
 }  // namespace doodle

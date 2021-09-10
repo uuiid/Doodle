@@ -69,7 +69,7 @@ class DOODLELIB_API Ue4Project {
     FSys::path import_file_save_dir;
     FSys::path fbx_skeleton_dir;
     FSys::path fbx_skeleton_file_name;
-    import_type import_type;
+    import_type p_import_type;
     std::uint64_t start_frame;
     std::uint64_t end_frame;
 
@@ -78,7 +78,7 @@ class DOODLELIB_API Ue4Project {
       nlohmann_json_j["import_file_save_dir"]   = nlohmann_json_t.import_file_save_dir;
       nlohmann_json_j["fbx_skeleton_dir"]       = nlohmann_json_t.fbx_skeleton_dir;
       nlohmann_json_j["fbx_skeleton_file_name"] = nlohmann_json_t.fbx_skeleton_file_name;
-      nlohmann_json_j["import_type"]            = nlohmann_json_t.import_type;
+      nlohmann_json_j["import_type"]            = nlohmann_json_t.p_import_type;
       nlohmann_json_j["start_frame"]            = nlohmann_json_t.start_frame;
       nlohmann_json_j["end_frame"]              = nlohmann_json_t.end_frame;
     };
@@ -87,7 +87,7 @@ class DOODLELIB_API Ue4Project {
       nlohmann_json_j.at("import_file_save_dir").get_to(nlohmann_json_t.import_file_save_dir);
       nlohmann_json_j.at("fbx_skeleton_dir").get_to(nlohmann_json_t.fbx_skeleton_dir);
       nlohmann_json_j.at("fbx_skeleton_file_name").get_to(nlohmann_json_t.fbx_skeleton_file_name);
-      nlohmann_json_j.at("import_type").get_to(nlohmann_json_t.import_type);
+      nlohmann_json_j.at("import_type").get_to(nlohmann_json_t.p_import_type);
       nlohmann_json_j.at("start_frame").get_to(nlohmann_json_t.start_frame);
       nlohmann_json_j.at("end_frame").get_to(nlohmann_json_t.end_frame);
     };

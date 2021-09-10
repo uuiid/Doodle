@@ -42,7 +42,6 @@ class DOODLELIB_API time_point_wrap : public details::no_copy {
 
  public:
   using time_point = chrono::sys_time_pos;
-  using l = chrono::local_t;
   time_point_wrap();
   explicit time_point_wrap(time_point in_utc_timePoint);
 
@@ -119,21 +118,19 @@ class DOODLELIB_API time_point_wrap : public details::no_copy {
   //这里是序列化的代码
   friend class cereal::access;
   template <class Archive>
-  void serialize(Archive& ar, const std::uint32_t version);
+  void serialize(Archive& ar, const std::uint32_t version){
+    if (version == 1)
+      ar(
+          cereal::make_nvp("year", p_year),
+          cereal::make_nvp("month", p_month),
+          cereal::make_nvp("days", p_day),
+          cereal::make_nvp("hours", p_hours),
+          cereal::make_nvp("minutes", p_minutes),
+          cereal::make_nvp("seconds", p_seconds),
+          cereal::make_nvp("time", p_time));
+    disassemble(p_time);
+  };
 };
-template <class Archive>
-void time_point_wrap::serialize(Archive& ar, const std::uint32_t version) {
-  if (version == 1)
-    ar(
-        cereal::make_nvp("year", p_year),
-        cereal::make_nvp("month", p_month),
-        cereal::make_nvp("days", p_day),
-        cereal::make_nvp("hours", p_hours),
-        cereal::make_nvp("minutes", p_minutes),
-        cereal::make_nvp("seconds", p_seconds),
-        cereal::make_nvp("time", p_time));
-  disassemble(p_time);
-}
 
 // class time_point : public std::chrono::time_point<std::chrono::system_clock> {
 //  public:

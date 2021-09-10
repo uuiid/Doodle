@@ -7,7 +7,6 @@
 #include <DoodleLib/rpc/RpcFileSystemClient.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
 #include <Metadata/MetadataFactory.h>
-#include <ShlObj.h>
 #include <date/tz.h>
 #include <google/protobuf/service.h>
 #include <grpcpp/grpcpp.h>
@@ -18,8 +17,43 @@
 #include <cereal/archives/portable_binary.hpp>
 #include <magic_enum.hpp>
 #include <nlohmann/json.hpp>
+#ifdef _WIN32
+#include <ShlObj.h>
+#else
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+#endif // _WIN32
+
+
+
 
 namespace doodle {
+
+FSys::path get_pwd()
+#ifdef _WIN32
+{
+  ///这里我们手动做一些工作
+  ///获取环境变量 FOLDERID_Documents
+  PWSTR pManager;
+  SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
+  if (!pManager) {
+    std::cout << "unable to find a save path" << std::endl;
+    throw DoodleError("无法找到保存路径");
+  }
+
+  auto k_path = FSys::path{pManager};
+  CoTaskMemFree(pManager);
+  return k_path;
+}
+#else
+{
+  auto pw = getpwuid(getuid())->pw_dir;
+  return FSys::path{pw};
+};
+#endif // _WIN32
+
+
 
 CoreSet &CoreSet::getSet() {
   static CoreSet install;
@@ -100,17 +134,7 @@ CoreSet::CoreSet()
       p_stop(false),
       p_mutex(),
       p_condition() {
-  ///这里我们手动做一些工作
-  ///获取环境变量 FOLDERID_Documents
-  PWSTR pManager;
-  SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
-  if (!pManager) {
-    std::cout << "unable to find a save path" << std::endl;
-    throw DoodleError("无法找到保存路径");
-  }
-
-  p_doc = FSys::path{pManager} / "doodle";
-  CoTaskMemFree(pManager);
+  p_doc = get_pwd() / "doodle";
 
   getCacheDiskPath();
   p_data_root = p_cache_root.parent_path() / "data";
@@ -125,26 +149,6 @@ CoreSet::CoreSet()
   }
   findMaya();
   getSetting();
-}
-
-FSys::path CoreSet::toIpPath(const FSys::path &path) {
-  std::wstring str{};
-  str.resize(MAX_PATH);
-  DWORD dwResult, cchBuff = str.size();
-  dwResult = WNetGetConnection(path.generic_wstring().c_str(), str.data(), &cchBuff);
-  switch (dwResult) {
-    case NO_ERROR:
-      break;
-    case ERROR_BUFFER_OVERFLOW: {
-      str.resize(cchBuff);
-      dwResult = WNetGetConnection(path.generic_wstring().c_str(), str.data(), &cchBuff);
-      break;
-    }
-    default: {
-      throw DoodleError{"错误代码：" + std::to_string(dwResult)};
-    } break;
-  }
-  return {str};
 }
 
 boost::uuids::uuid CoreSet::getUUID() {

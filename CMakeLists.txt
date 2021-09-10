@@ -64,7 +64,6 @@ find_package(unofficial-nana CONFIG )
 find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time log locale iostreams)
 find_package(Sqlpp11 REQUIRED)
 find_package(Catch2 CONFIG )
-find_library(DOODLE_MAR mpr.lib)
 find_package(Doxygen )
 # 寻找opencv
 find_package(OpenCV CONFIG REQUIRED)

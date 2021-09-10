@@ -33,7 +33,7 @@ void Comment::serialize(Archive& ar, const std::uint32_t version) {
 
 namespace fmt {
 template <>
-struct fmt::formatter<doodle::Comment> : formatter<string_view> {
+struct formatter<doodle::Comment> : formatter<string_view> {
   template <typename FormatContext>
   auto format(const doodle::Comment& in_, FormatContext& ctx) {
     formatter<string_view>::format(

@@ -10,6 +10,7 @@
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
 #include <boost/process/windows.hpp>
+#include <boost/process/posix.hpp>
 
 namespace doodle {
 MayaFile::MayaFile(FSys::path mayaPath)

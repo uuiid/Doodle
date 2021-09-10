@@ -1,6 +1,7 @@
+#ifdef _WIN32
+
 #ifndef GIOVANNI_DICANIO_WINREG_HPP_INCLUDED
 #define GIOVANNI_DICANIO_WINREG_HPP_INCLUDED
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -2098,3 +2099,5 @@ inline std::wstring RegResult::ErrorMessage(const DWORD languageId) const
 
 
 #endif // GIOVANNI_DICANIO_WINREG_HPP_INCLUDED
+
+#endif // _WIN32

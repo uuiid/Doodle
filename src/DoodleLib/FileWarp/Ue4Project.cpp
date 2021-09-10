@@ -228,10 +228,10 @@ long_term_ptr Ue4Project::import_files_asyn(const std::vector<FSys::path>& in_pa
       k_stting.import_file_path     = i;
       k_stting.import_file_save_dir = analysis_path_to_gamepath(i);
       if (i.extension() == ".fbx") {
-        k_stting.import_type            = import_type::Fbx;
+        k_stting.p_import_type          = import_type::Fbx;
         k_stting.fbx_skeleton_file_name = find_ue4_skeleton(i);
       } else if (i.extension() == ".abc") {
-        k_stting.import_type = import_type::Abc;
+        k_stting.p_import_type = import_type::Abc;
         auto [k_s, k_end]    = FSys::find_path_frame(i);
         k_stting.end_frame   = k_end;
         k_stting.start_frame = k_s;

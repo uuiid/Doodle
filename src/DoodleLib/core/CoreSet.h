@@ -89,8 +89,6 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   boost::uuids::uuid getUUID();
   std::string getUUIDStr();
 
-  [[deprecated]] static FSys::path toIpPath(const FSys::path &path);
-
   static std::size_t getBlockSize() {
     static std::size_t k_i{64 * 1024};
     return k_i;

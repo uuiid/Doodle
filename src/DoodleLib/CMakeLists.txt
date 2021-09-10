@@ -72,8 +72,6 @@ target_link_libraries(DoodleLib
         #        cppzmq-static
         gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
         cryptopp-static
-        PRIVATE
-        ${DOODLE_MAR}
         )
 target_compile_definitions(DoodleLib
         PUBLIC
@@ -81,7 +79,7 @@ target_compile_definitions(DoodleLib
         )
 target_compile_options(DoodleLib
         PUBLIC
-        /EHsc
+        $<$<CXX_COMPILER_ID:MSVC>: /EHsc>
         )
 
 target_include_directories(DoodleLib

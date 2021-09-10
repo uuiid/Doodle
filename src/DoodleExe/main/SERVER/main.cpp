@@ -40,6 +40,7 @@ try {
 
   auto doodleLib           = doodle::make_doodle_lib();
   if(argc == 2){
+    DOODLE_LOG_INFO("读取和加载配置文件", argv[1])
     load_setting(argv[1]);
   }
   auto& set                = doodle::CoreSet::getSet();

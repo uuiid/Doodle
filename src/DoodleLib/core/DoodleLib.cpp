@@ -13,6 +13,7 @@
 #include <rpc/RpcFileSystemClient.h>
 #include <rpc/RpcMetadataClient.h>
 #include <threadPool/ThreadPool.h>
+#include <boost/numeric/conversion/cast.hpp>
 namespace doodle {
 
 DoodleLib* DoodleLib::p_install = nullptr;
@@ -25,10 +26,12 @@ DoodleLib::DoodleLib()
       p_metadata_factory() {
   CoreSet::getSet();
   Logger::doodle_initLog();
+#ifdef _WIN32
   /// 在这里我们初始化date tz 时区数据库
   auto k_path = create_time_database();
   date::set_install(k_path.generic_string());
   DOODLE_LOG_INFO("初始化时区数据库: {}", k_path.generic_string());
+#endif
 }
 
 FSys::path DoodleLib::create_time_database() {

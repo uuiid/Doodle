@@ -74,7 +74,7 @@ function(doodle_sqlpp_generate out_lists)
         list(APPEND
                 _OUT
                 ${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql.h)
-        if (EXISTS ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat)
+        if (EXISTS ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat AND WIN32 )
             add_custom_command(
                     OUTPUT "${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql.h"
                     COMMAND ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat
