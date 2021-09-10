@@ -2,7 +2,7 @@
 
 #include <DoodleConfig.h>
 
-#include <boost/filesystem.hpp>
+
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
 #include <chrono>
@@ -27,6 +27,7 @@
 #pragma warning(disable : 4275)
 
 #include <DoodleLib/DoodleMacro.h>
+#include <boost/numeric/conversion/cast.hpp>
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/libWarp/CerealWarp.h>
 #include <DoodleLib/libWarp/cmrcWarp.h>
@@ -36,9 +37,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
-//#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include <codecvt>
-//#undef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include <stdexcept>
 // namespace fmt {
 // namespace FSys = std::filesystem;

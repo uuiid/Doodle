@@ -1,12 +1,16 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <Logger/Logger.h>
+#include <core/CoreSet.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/msvc_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/spdlog.h>
+
+#ifdef _WIN32
 #include <windows.h>
-#include <core/CoreSet.h>
+
+#endif
 
 #include <boost/locale.hpp>
 namespace doodle::Logger {
@@ -20,6 +24,7 @@ class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
   void sink_it_(const spdlog::details::log_msg &msg) override {
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+#ifdef _WIN32
     OutputDebugString(
 #ifdef UNICODE
         boost::locale::conv::utf_to_utf<wchar_t>(
@@ -29,12 +34,16 @@ class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
                 )
 #endif
             .c_str());
+#else
+    std::cout << fmt::to_string(formatted) << std::endl;
+#endif
   }
 
   void flush_() override {}
 };
+
 using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
-//using msvc_doodle_sink_st = msvc_doodle_sink<spdlog::details::null_mutex>;
+// using msvc_doodle_sink_st = msvc_doodle_sink<spdlog::details::null_mutex>;
 
 static void boostLoggerInitAsyn(const std::string &logPath,
                                 std::size_t logMaxSize) {
@@ -44,7 +53,7 @@ static void boostLoggerInitAsyn(const std::string &logPath,
   if (!FSys::exists(appdata)) {
     FSys::create_directories(appdata);
   }
-  appdata /= "logfile_" + date::format("_%y_%m_%d_%H_%M_%S_",std::chrono::system_clock::now()) + ".txt";
+  appdata /= "logfile_" + date::format("_%y_%m_%d_%H_%M_%S_", std::chrono::system_clock::now()) + ".txt";
 
   try {
     using namespace std::chrono_literals;
@@ -57,7 +66,7 @@ static void boostLoggerInitAsyn(const std::string &logPath,
 
     auto k_file = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(appdata.generic_string(), 1024 * 1024, 100, true);
     std::vector<spdlog::sink_ptr> sinks{k_file, k_debug};
-#endif  //NDEBUG
+#endif  // NDEBUG
     auto k_logger = std::make_shared<spdlog::async_logger>(
         "doodle_lib", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 

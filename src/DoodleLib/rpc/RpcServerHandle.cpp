@@ -56,12 +56,18 @@ void RpcServerHandle::runServer(int port_meta, int port_file_sys) {
     p_Server->Wait();
   }};
 }
+
+#if defined( _WIN32) and defined( _MSC_VER )
+
 BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
   DOODLE_LOG_WARN("收到退出信号， 开始退出 {}", fdwCtrlType);
   CoreSet::getSet().p_stop = true;
   CoreSet::getSet().p_condition.notify_all();
   return true;
 }
+
+#endif
+
 
 void RpcServerHandle::runServerWait(int port_meta, int port_file_sys) {
   runServer(port_meta, port_file_sys);
@@ -71,8 +77,10 @@ void RpcServerHandle::runServerWait(int port_meta, int port_file_sys) {
     CoreSet::getSet().p_condition.notify_all();
   };
   std::signal(SIGABRT, k_);
+#if defined( _WIN32) and defined( _MSC_VER )
   std::signal(SIGABRT_COMPAT, k_);
   std::signal(SIGBREAK, k_);
+#endif
   std::signal(SIGFPE, k_);
   std::signal(SIGILL, k_);
   std::signal(SIGINT, k_);

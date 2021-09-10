@@ -157,44 +157,44 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
     constexpr static auto k_has_node = boost::hana::is_valid(
         [](auto&& obj) -> decltype(obj.tree_node_ptr) {});
 
-    template <class arg_t, class T_ptr>
-    static std::enable_if_t<details::is_smart_pointer<T_ptr>::value>
-    connect(const T_ptr& data, arg_t& in_arg) {
+    template <class T_ptr_, class arg_t>
+    static std::enable_if_t<details::is_smart_pointer<T_ptr_>::value>
+    connect(const T_ptr_& data, const arg_t& in_arg) {
       if constexpr (decltype(k_has_connect(*data, in_arg)){})
         data->connect(in_arg);
     };
 
-    template <class arg_t, class T_ptr>
-    static std::enable_if_t<!details::is_smart_pointer<T_ptr>::value>
-    connect(T_ptr& data, arg_t& in_arg) {
+    template <class T_ptr_, class arg_t>
+    static std::enable_if_t<!details::is_smart_pointer<T_ptr_>::value>
+    connect(const T_ptr_& data, const arg_t& in_arg) {
       if constexpr (decltype(k_has_connect(data, in_arg)){})
         data.connect(in_arg);
     };
 
-    template <class arg_t, class T_ptr>
-    static std::enable_if_t<details::is_smart_pointer<T_ptr>::value>
-    set_node_ptr(const T_ptr& data, arg_t& in_arg) {
+    template <class T_ptr_, class arg_t>
+    static std::enable_if_t<details::is_smart_pointer<T_ptr_>::value>
+    set_node_ptr(const T_ptr_& data, const arg_t& in_arg) {
       if constexpr (decltype(k_has_node(*data)){})
         data->tree_node_ptr = in_arg;
     };
 
-    template <class arg_t, class T_ptr>
-    static std::enable_if_t<!details::is_smart_pointer<T_ptr>::value>
-    set_node_ptr(const T_ptr& data, arg_t& in_arg) {
+    template <class T_ptr_, class arg_t>
+    static std::enable_if_t<!details::is_smart_pointer<T_ptr_>::value>
+    set_node_ptr(const T_ptr_& data, const arg_t& in_arg) {
       if constexpr (decltype(k_has_node(data)){})
         data.tree_node_ptr = in_arg;
     };
 
-    template <class arg_t, class T_ptr>
-    static std::enable_if_t<details::is_smart_pointer<T_ptr>::value>
-    disconnect(const T_ptr& data, arg_t& in_arg) {
+    template <class T_ptr_, class arg_t>
+    static std::enable_if_t<details::is_smart_pointer<T_ptr_>::value>
+    disconnect(const T_ptr_& data, const arg_t& in_arg) {
       if constexpr (decltype(k_has_disconnect(*data)){})
         data->disconnect(in_arg);
     };
 
-    template <class arg_t, class T_ptr>
-    static std::enable_if_t<!details::is_smart_pointer<T_ptr>::value>
-    disconnect(const T_ptr& data, arg_t& in_arg) {
+    template <class T_ptr_, class arg_t>
+    static std::enable_if_t<!details::is_smart_pointer<T_ptr_>::value>
+    disconnect(const T_ptr_& data, const arg_t& in_arg) {
       if constexpr (decltype(k_has_disconnect(data)){})
         data.disconnect(in_arg);
     };

@@ -73,9 +73,9 @@ void time_point_wrap::set_second(std::uint16_t in_second) {
   disassemble();
 }
 
-template <>
-std::string time_point_wrap::getWeek() const {
-  auto k_int = getWeek<std::int32_t>();
+
+std::string time_point_wrap::getWeek_s() const {
+  auto k_int = getWeek_int();
   std::string k_string{};
   switch (k_int) {
     case 0:
@@ -106,8 +106,8 @@ std::string time_point_wrap::getWeek() const {
   return k_string;
 }
 
-template <>
-std::int32_t time_point_wrap::getWeek() const {
+
+std::int32_t time_point_wrap::getWeek_int() const {
   date::weekday k_weekday{date::local_days{p_year / p_month / p_day}};
   return k_weekday.c_encoding();
 }

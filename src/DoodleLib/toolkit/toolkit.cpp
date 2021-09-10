@@ -10,11 +10,17 @@
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/toolkit/toolkit.h>
-#include <ShlObj.h>
 
 #include <boost/algorithm/string.hpp>
 #include <regex>
 #include <string>
+
+
+#if defined( _WIN32)
+
+#include <ShlObj.h>
+#endif
+
 namespace doodle {
 
 void toolkit::installMayaPath() {
@@ -98,6 +104,7 @@ void toolkit::modifyUeCachePath() {
 }
 
 bool toolkit::deleteUeCache() {
+#if defined( _WIN32)
   //这里我们手动做一些工作
   //获取环境变量
   PWSTR pManager;
@@ -110,6 +117,7 @@ bool toolkit::deleteUeCache() {
   path /= "UnrealEngine";
   DOODLE_LOG_INFO(fmt::format("delete Folder : {}", path));
   FSys::remove_all(path);
+#endif
   return true;
 }
 

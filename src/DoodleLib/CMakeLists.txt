@@ -27,7 +27,7 @@ doodle_grpc_generate(
 )
 
 add_library(DoodleLib
-        SHARED
+#        $<$<CXX_COMPILER_ID:MSVC>:SHARED>
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
         ${OUT_LISTS_sqlpp}

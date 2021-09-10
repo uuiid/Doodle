@@ -98,8 +98,11 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
       boost::process::cmd = in_com,
       boost::process::std_out > k_in,
       boost::process::std_err > k_in2,
-      boost::process::std_in.close(),
-      boost::process::windows::hide};
+      boost::process::std_in.close()
+#ifdef _WIN32
+    , boost::process::windows::hide
+#endif //_WIN32
+  };
 
   auto fun    = std::async(std::launch::async,
                            [&k_c, &k_in, &in_term]() {

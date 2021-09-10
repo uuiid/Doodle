@@ -1,17 +1,25 @@
 ﻿//
 // Created by TD on 2021/5/9.
 //
-#pragma once
+
 #include <DoodleLib_fwd.h>
 #include <Exception/Exception.h>
-#include <Windows.h>
 #include <cryptopp/base64.h>
 #include <cryptopp/files.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/sha.h>
-#include <shellapi.h>
 
 #include <boost/locale.hpp>
+
+#ifdef _WIN32
+#include <Windows.h>
+#include <shellapi.h>
+
+#elif defined( __linux__ )
+
+
+
+#endif
 
 namespace doodle {
 namespace chrono {
@@ -27,11 +35,13 @@ namespace FSys {
 using filetime_duration = std::chrono::duration<std::int64_t, std::ratio<1, 10'000'000>>;
 /// 从公元 1601 年到公元 1970 年有 369 年的差异，转换为 11644473600秒
 constexpr std::chrono::duration<std::int64_t> nt_to_unix_epoch{INT64_C(-11644473600)};
+static constexpr chrono::seconds _S_epoch_diff{6437664000};
 
 std::time_t last_write_time_t(const path &in_path) {
+  auto k_time = last_write_time(in_path);
+#if defined( _WIN32 ) and defined ( _MSC_VER )
   /// 这个在Windows上获得的是FILETIME结构转换的int64值的时间点,
   /// https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-filetime
-  auto k_time = last_write_time(in_path);
   /// 我们先把它转换为以100纳秒为单位的时间段,
   const filetime_duration asDuration{static_cast<int64_t>(k_time.time_since_epoch().count())};
   /// 然后我们进行加法运算, 加上 11644473600秒。
@@ -40,6 +50,11 @@ std::time_t last_write_time_t(const path &in_path) {
   /// 然后我们将100纳秒时间段转换为 单位秒的时间段
   /// 最后我们进行强制转换， 将int64值， 转换为time_t值
   return static_cast<time_t>(std::chrono::floor<std::chrono::seconds>(withUnixEpoch).count());
+#elif defined( __linux__ ) and defined( __GNUC__ )
+  chrono::sys_time_pos k_sys_time_pos{k_time.time_since_epoch()};
+  k_sys_time_pos -= _S_epoch_diff;
+  return chrono::system_clock::to_time_t(k_sys_time_pos);
+#endif
 
   //  const filetime_duration asDuration{0};
   //    return system_clock::time_point{
@@ -70,9 +85,13 @@ std::time_t last_write_time_t(const path &in_path) {
 }
 
 void open_explorer(const path &in_path) {
+#if defined( _WIN32 )
   DOODLE_LOG_INFO("打开路径: {}", in_path.generic_string());
   ShellExecute(nullptr, (L"open"), in_path.generic_wstring().c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
   // std::system(fmt::format(R"(explorer.exe {})", in_path.generic_string()).c_str());
+#else
+  throw DoodleError{"没有这个函数"};
+#endif
 }
 void backup_file(const path &source) {
   auto backup_path = source.parent_path() / "backup" / add_time_stamp(source).filename();

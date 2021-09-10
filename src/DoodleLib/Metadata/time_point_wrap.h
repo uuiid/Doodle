@@ -63,14 +63,11 @@ class DOODLELIB_API time_point_wrap : public details::no_copy {
   [[nodiscard]] std::uint16_t get_second() const;
   void set_second(std::uint16_t in_second);
 
-  template <class T>
-  [[nodiscard]] T getWeek() const {};
 
-  template <>
-  [[nodiscard]] std::string getWeek() const;
+  [[nodiscard]] std::string getWeek_s() const;
 
-  template <>
-  [[nodiscard]] std::int32_t getWeek() const;
+
+  [[nodiscard]] std::int32_t getWeek_int() const;
 
   [[nodiscard]] std::string showStr() const;
   [[nodiscard]] time_point getUTCTime() const;
