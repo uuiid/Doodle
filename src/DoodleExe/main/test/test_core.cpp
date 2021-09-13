@@ -88,7 +88,6 @@ TEST_CASE("core path ", "[fun][path]") {
     struct stat fileInfo{};
     stat(root.generic_string().c_str(), &fileInfo);
 #endif
-    auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
     REQUIRE(k_t == FSys::last_write_time_point(root));
   }
   SECTION("file sys append") {

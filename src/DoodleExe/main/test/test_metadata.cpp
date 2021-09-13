@@ -36,7 +36,7 @@ TEST_CASE("time duration", "[metadata]") {
     REQUIRE(my_t.get_minutes() == 34);
     REQUIRE(my_t.get_second() == 37);
 
-//    REQUIRE(my_t.getLocalTime() == doodle::chrono::clock_cast<doodle::chrono::local_days>(k_new));
+    REQUIRE(my_t.getLocalTime() == doodle::chrono::clock_cast<doodle::chrono::local_t>(k_new));
   }
 
   SECTION("set local") {
