@@ -4,21 +4,19 @@ FROM mcr.microsoft.com/powershell:lts-windowsservercore-1909
 RUN pwsh.exe -Command \
     Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'));
 
+VOLUME [ "C:/ProgramData/MySQL/data" ]
+
 RUN pwsh.exe -Command \
-    choco install mysql choco-cleaner -y ;\
-    Set-ExecutionPolicy -ExecutionPolicy Unrestricted; \
-    C:\ProgramData\chocolatey\bin\Choco-Cleaner.bat
+    choco install mysql -y --params '/dataLocation:C:/ProgramData/MySQL/data /serviceName:MySQL' ;
 
 # SHELL ["mysql","-u","root","-execute"]
 
 WORKDIR /doodle
 COPY doodle_create_table.sql doodle_create_table.sql
 
-
-
 RUN mysql -u root -e "create schema doodle";
-RUN    mysql -u root doodle < doodle_create_table.sql
-
-CMD pwsh.exe -Command (Get-Service "MySQL80").WaitForStatus("Stopped")
+RUN mysql -u root doodle < doodle_create_table.sql
+# CMD ["pwsh.exe"]
+CMD ["pwsh.exe", "-Command", "(Get-Service 'MySQL').WaitForStatus('Stopped')"]
 
 

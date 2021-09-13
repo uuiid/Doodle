@@ -4,18 +4,25 @@ services:
 
   db:
     build: .
+    platform: windows
     #    image: mysql
 #    command: -d
     #    command: --default-authentication-plugin=mysql_native_password
     restart: always
-    
+    volumes: 
+      - doodle_mysql_data:C:\ProgramData\MySQL\data
+      - doodle_mysql_data:C:\test
 #    environment:
 #      MYSQL_ROOT_PASSWORD: example
     ports:
       - 3306:3306
-#  adminer:
+  # adminer:
+  #   platform: linux
 #    image: adminer
 #    restart: always
 #    ports:
 #      - 8080:8080
-
+volumes:
+  doodle_mysql_data:
+# networks:
+#   doodle_net:
