@@ -744,10 +744,8 @@ class cloth_export():
                               for i in pymel.core.listReferences()]
 
     def replace_file(self):
-        for obj in self.colth_ref:
-            obj.replace_file()
-
         for qc in self.qcolth_group:
+            qc.maya_ref.replace_file()
             qc.reset(qc.maya_ref)
 
     def set_qcloth_attr(self):
@@ -878,15 +876,17 @@ class open_file():
             ))
             quit()
 
-        global doodle_work_space
         doodle_work_space.reset()
         doodle_work_space.set_workspace()
 
     def get_cloth_sim(self, qcloth_path):
         # type: (str) -> cloth_export
-        self.load_plug(["AbcExport","AbcImport","qualoth_2019_x64"])
+        self.load_plug(["AbcExport", "AbcImport", "qualoth_2019_x64"])
         self.open()
-        pymel.core.playbackOptions(animationStartTime=950,min=950)
+        pymel.core.playbackOptions(animationStartTime=950, min=950)
+        pymel.core.currentTime(950)
+        doodle_work_space.reset()
+
         return cloth_export(qcloth_path)
 
     def get_fbx_export(self):

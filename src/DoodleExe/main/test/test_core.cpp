@@ -3,7 +3,10 @@
 //
 
 #include <DoodleLib/DoodleLib.h>
-
+#if defined ( _WIN32 )
+#elif defined ( __linux__ )
+#include <sys/stat.h>
+#endif
 #include <catch.hpp>
 
 TEST_CASE("core pinyi", "[fun][pingyin]") {
@@ -19,11 +22,17 @@ TEST_CASE("core pinyi", "[fun][pingyin]") {
 }
 
 TEST_CASE("core fmt", "[fun][fmt]") {
-  auto wstr = fmt::format(L"{}", std::wstring{L"test"});
-  REQUIRE(wstr == L"test");
-  const auto k_string = std::wstring{L"还会"};
+  auto wstr = fmt::format(L"11{}", std::wstring{L"test"});
+  REQUIRE(wstr == L"11test");
+#if defined ( _WIN32 )
+  const auto k_string = std::wstring{L"/还会"};
   wstr                = fmt::format(L"{}", doodle::FSys::path{k_string});
   REQUIRE(wstr == std::wstring{LR"("还会")"});
+#elif defined ( __linux__ )
+  const auto k_string = std::string{"/还会"};
+  auto strl                = fmt::format("{}", doodle::FSys::path{k_string});
+  REQUIRE(strl == std::string{R"("/还会")"});
+#endif
   auto str = fmt::format("{:04d}", 2);
   REQUIRE(str == "0002");
   str = fmt::format("{}", doodle::FSys::path{"test"});
@@ -32,34 +41,53 @@ TEST_CASE("core fmt", "[fun][fmt]") {
 
 TEST_CASE("core path ", "[fun][path]") {
   using namespace doodle;
+#if defined ( _WIN32 )
   FSys::path source_path{L"F:/测试文件.mp4"};
   FSys::path root{"D:/"};
   FSys::path p1{L"D:\\9-houqi\\Content\\Character"};
+#elif defined ( __linux__ )
+  FSys::path p1{"/mnt/d/9-houqi/Content/Character"};
+  FSys::path root{"/mnt/d/"};
+  FSys::path source_path{"/mnt/f/测试文件.mp4"};
+#endif
+
 
   SECTION("lexically_normal path") {
-    FSys::path subdir("..\\configuration\\instance");
-    FSys::path cfgfile("..\\instance\\myfile.cfg");
+    FSys::path subdir("../configuration/instance");
+    FSys::path cfgfile("../instance/myfile.cfg");
     root /= "tmp";
     root /= "test";
     root /= "ttt";
     FSys::path tmp(root / subdir / cfgfile);
-    REQUIRE(tmp.generic_string() == std::string{"D:/tmp/test/ttt/../configuration/instance/../instance/myfile.cfg"});
-    REQUIRE(tmp.lexically_normal() == std::string{"D:/tmp/test/configuration/instance/myfile.cfg"});
+    REQUIRE(tmp.generic_string() == FSys::path{"D:/tmp/test/ttt/../configuration/instance/../instance/myfile.cfg"}.generic_string());
+    REQUIRE(tmp.lexically_normal() == FSys::path{"D:/tmp/test/configuration/instance/myfile.cfg"}.generic_string());
   }
   SECTION("file time") {
+#if defined ( _WIN32 )
     struct _stat64 fileInfo {};
     if (_wstat64(source_path.generic_wstring().c_str(), &fileInfo) != 0) {
       std::cout << "Error : not find last_write_time " << std::endl;
     }
     auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
+#elif defined ( __linux__ )
+    struct stat fileInfo{};
+    stat(source_path.generic_string().c_str(), &fileInfo);
+    auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
+#endif
     REQUIRE(k_t == FSys::last_write_time_point(source_path));
   }
   SECTION("folder time") {
+#if defined ( _WIN32 )
     struct _stat64 fileInfo {};
     root /= "tmp";
     if (_wstat64(root.generic_wstring().c_str(), &fileInfo) != 0) {
       std::cout << "Error : not find last_write_time " << std::endl;
     }
+    auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
+#elif defined ( __linux__ )
+    struct stat fileInfo{};
+    stat(root.generic_string().c_str(), &fileInfo);
+#endif
     auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
     REQUIRE(k_t == FSys::last_write_time_point(root));
   }

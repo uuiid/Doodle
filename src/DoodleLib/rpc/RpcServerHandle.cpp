@@ -59,12 +59,12 @@ void RpcServerHandle::runServer(int port_meta, int port_file_sys) {
 
 #if defined( _WIN32) and defined( _MSC_VER )
 
-BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
-  DOODLE_LOG_WARN("收到退出信号， 开始退出 {}", fdwCtrlType);
-  CoreSet::getSet().p_stop = true;
-  CoreSet::getSet().p_condition.notify_all();
-  return true;
-}
+//BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
+//  DOODLE_LOG_WARN("收到退出信号， 开始退出 {}", fdwCtrlType);
+//  CoreSet::getSet().p_stop = true;
+//  CoreSet::getSet().p_condition.notify_all();
+//  return true;
+//}
 
 #endif
 
