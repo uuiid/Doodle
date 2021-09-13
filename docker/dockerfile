@@ -1,15 +1,24 @@
-FROM ubuntu
+FROM mcr.microsoft.com/powershell:lts-windowsservercore-1909
 
-ARG DEBIAN_FRONTEND=noninteractive
-ENV TZ=Asia/Shanghai
 
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone  \
-    && apt-get update \
-    && apt-get install -y cmake curl file gcc g++ git libtool ninja-build tar unzip wget
+RUN pwsh.exe -Command \
+    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'));
 
-RUN cd /tmp \
-    && git clone https://github.com/microsoft/vcpkg.git \
-    && cd vcpkg \
-    && ./bootstrap-vcpkg.sh -useSystemBinaries
+RUN pwsh.exe -Command \
+    choco install mysql choco-cleaner -y ;\
+    Set-ExecutionPolicy -ExecutionPolicy Unrestricted; \
+    C:\ProgramData\chocolatey\bin\Choco-Cleaner.bat
 
-LABEL Name=doodle Version=0.0.1
+# SHELL ["mysql","-u","root","-execute"]
+
+WORKDIR /doodle
+COPY doodle_create_table.sql doodle_create_table.sql
+
+
+
+RUN mysql -u root -e "create schema doodle";
+RUN    mysql -u root doodle < doodle_create_table.sql
+
+CMD pwsh.exe -Command (Get-Service "MySQL80").WaitForStatus("Stopped")
+
+
