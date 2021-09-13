@@ -204,6 +204,7 @@ void CoreSet::setDataRoot(const FSys::path &in_path) {
 }
 
 void CoreSet::getCacheDiskPath() {
+#if defined ( _WIN32 )
   const static string_list dirs{"D:/",
                                 "E:/",
                                 "F:/",
@@ -228,6 +229,9 @@ void CoreSet::getCacheDiskPath() {
   }
   if (p_cache_root.empty())
     p_cache_root = FSys::path{"C:/"} / "Doodle" / "cache";
+#elif defined ( __linux__ )
+  p_cache_root = FSys::path{"/mnt/doodle"};
+#endif
 }
 
 FSys::path CoreSet::program_location() {
