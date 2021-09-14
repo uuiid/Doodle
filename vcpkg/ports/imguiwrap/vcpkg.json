@@ -1,0 +1,20 @@
+{
+  "name": "imguiwrap",
+  "version-string": "1.2.2",
+  "port-version": 1,
+  "description": "This is a trifold wrapper for the Dear ImGui library.",
+  "homepage": "https://github.com/kfsone/imguiwrap",
+  "features": {
+    "core": {
+      "description": "Only wrapper for imgui",
+      "dependencies": ["imgui"]
+    },
+    "glfw-backed": {
+      "description": "rovides a simple glfw-backed main loop",
+      "dependencies": {
+        "name": "imgui",
+        "features": ["glfw-binding"]
+      }
+    }
+  }
+}
