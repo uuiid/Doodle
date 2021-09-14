@@ -5,7 +5,7 @@ cmrc_add_resource_library(
 )
 include(doodle_exe)
 include(DoodleLib.cmake)
-
+include(${PROJECT_SOURCE_DIR}/CMake/fix_mariadb_plug.cmake)
 add_custom_target(
         create_list_doodle_cmake
         COMMAND ${CMAKE_COMMAND} -DDOODLE_INCLUDE_CMAKE=${PROJECT_SOURCE_DIR} -P ListFile.cmake
@@ -35,6 +35,7 @@ add_library(DoodleLib
         ${OUT_LISTS_GRPC}
         DoodleLib.manifest
         )
+fix_mariadb_plug(NAME DoodleLib)
 
 set(MY_CUSTOM_CONTENT "")
 generate_export_header(DoodleLib
@@ -71,6 +72,7 @@ target_link_libraries(DoodleLib
         SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
         #        cppzmq
         #        cppzmq-static
+        imgui::imgui
         gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
         cryptopp-static
         )

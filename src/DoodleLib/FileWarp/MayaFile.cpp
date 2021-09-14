@@ -9,6 +9,7 @@
 
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
+#include <DoodleLib/libWarp/boost_locale_warp.h>
 
 #ifdef _WIN32
 #include <boost/process/windows.hpp>
@@ -167,12 +168,12 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
 
         //生成命令
         auto run_com = fmt::format(
-            LR"("{}/mayapy.exe" {})",
-            p_path.generic_wstring(),
-            run_path.generic_wstring());
+            R"("{}/mayapy.exe" {})",
+            p_path.generic_string(),
+            run_path.generic_string());
         k_term->sig_progress(0.1);
 
-        run_comm(run_com, k_term);
+        run_comm(conv::utf_to_utf<wchar_t>(run_com), k_term);
 
         k_term->sig_progress(0.6);
         FSys::remove(run_path);
@@ -222,12 +223,12 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
         k_term->sig_progress(0.1);
         //生成命令
         auto run_com = fmt::format(
-            LR"("{}/mayapy.exe" {})",
-            p_path.generic_wstring(),
-            run_path.generic_wstring());
+            R"("{}/mayapy.exe" {})",
+            p_path.generic_string(),
+            run_path.generic_string());
 
         k_term->sig_progress(0.1);
-        run_comm(run_com, k_term);
+        run_comm(conv::utf_to_utf<wchar_t>(run_com), k_term);
         k_term->sig_progress(0.7);
         k_term->sig_finished();
         k_term->sig_message_result(fmt::format("完成导出 :{}", in_arg->sim_path.generic_string()));

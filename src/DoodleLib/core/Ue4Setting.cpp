@@ -1,7 +1,8 @@
 #include <DoodleLib/core/Ue4Setting.h>
 #include <Exception/Exception.h>
 
-#include <boost/locale.hpp>
+#include <DoodleLib/libWarp/boost_locale_warp.h>
+
 #include <libWarp/WinReg.hpp>
 namespace doodle {
 Ue4Setting::Ue4Setting()
@@ -58,8 +59,7 @@ void Ue4Setting::testValue() {
   }
 #ifdef _WIN32
   if (ue4_path.empty()) {
-    auto wv      = boost::locale::conv::utf_to_utf<wchar_t>(Ue4Setting::Get().Version());
-    auto key_str = fmt::format(LR"(SOFTWARE\EpicGames\Unreal Engine\{})", wv);
+    auto key_str = conv::utf_to_utf<wchar_t>(fmt::format(R"(SOFTWARE\EpicGames\Unreal Engine\{})", Ue4Setting::Get().Version()));
     try {
       auto key = winreg::RegKey{HKEY_LOCAL_MACHINE};
       key.Open(HKEY_LOCAL_MACHINE, key_str, KEY_QUERY_VALUE);

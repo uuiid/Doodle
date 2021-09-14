@@ -35,7 +35,7 @@ namespace FSys {
 using filetime_duration = std::chrono::duration<std::int64_t, std::ratio<1, 10'000'000>>;
 /// 从公元 1601 年到公元 1970 年有 369 年的差异，转换为 11644473600秒
 constexpr std::chrono::duration<std::int64_t> nt_to_unix_epoch{INT64_C(-11644473600)};
-static constexpr chrono::seconds _S_epoch_diff{6437664000};
+static constexpr chrono::seconds S_epoch_diff{6437664000};
 
 std::time_t last_write_time_t(const path &in_path) {
   auto k_time = last_write_time(in_path);
@@ -52,7 +52,7 @@ std::time_t last_write_time_t(const path &in_path) {
   return static_cast<time_t>(std::chrono::floor<std::chrono::seconds>(withUnixEpoch).count());
 #elif defined( __linux__ ) and defined( __GNUC__ )
   chrono::sys_time_pos k_sys_time_pos{k_time.time_since_epoch()};
-  k_sys_time_pos -= _S_epoch_diff;
+  k_sys_time_pos -= S_epoch_diff;
   return chrono::system_clock::to_time_t(k_sys_time_pos);
 #endif
 
