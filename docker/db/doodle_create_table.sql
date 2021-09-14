@@ -1,6 +1,6 @@
-create user 'deve'@'%' identified by 'deve';
-GRANT ALL PRIVILEGES ON *.* TO 'deve'@'%';
-FLUSH PRIVILEGES;
+-- create user 'deve'@'%' identified by 'deve';
+-- GRANT ALL PRIVILEGES ON *.* TO 'deve'@'%';
+-- FLUSH PRIVILEGES;
 
 
 DELIMITER $$

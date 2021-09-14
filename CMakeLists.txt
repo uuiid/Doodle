@@ -232,7 +232,7 @@ add_custom_command(
         POST_BUILD
         COMMAND  ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_EXE_MSI_FILE_NAME} ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_EXE_MSI_FILE_NAME}
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
-
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/docker/doodle_server/bin
         )
 add_dependencies(cpack_${PROJECT_NAME} DoodleExe DoodleServerExe Doxygen)
 # "D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Rocket -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.25\Plugins -VS2019 -CreateSubFolder
