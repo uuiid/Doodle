@@ -16,7 +16,7 @@ class setting_windows;
  * @brief 主要的运行类, 包括gui和服务器启动
  *
  */
-class doodle_app : public details::no_copy {
+class doodle_gui_app : public details::no_copy {
   std::function<void()> p_run_fun;
   RpcServerHandlePtr p_rpc_server_handle;
   std::shared_ptr<setting_windows> p_setting_windows;
@@ -25,8 +25,8 @@ class doodle_app : public details::no_copy {
   void add_signal_fun();
 
  public:
-  doodle_app();
-  ~doodle_app();
+  doodle_gui_app();
+  ~doodle_gui_app();
   /**
    * @brief 根据传入的命令行选择运行
    *

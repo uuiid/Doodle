@@ -32,10 +32,14 @@ set(
     libWarp/BoostUuidWarp.h
     libWarp/CerealWarp.h
     libWarp/WinReg.hpp
+    libWarp/boost_locale_warp.h
     libWarp/cache.hpp
     libWarp/cache_policy.hpp
     libWarp/cmrcWarp.h
     libWarp/fifo_cache_policy.hpp
+    libWarp/imgui_warp.h
+    libWarp/imguiwrap.dear.h
+    libWarp/imguiwrap.helpers.h
     libWarp/json_warp.h
     libWarp/lfu_cache_policy.hpp
     libWarp/lru_cache_policy.hpp
@@ -53,11 +57,11 @@ set(
     Metadata/Metadata.h
     Metadata/MetadataFactory.h
     Metadata/Metadata_cpp.h
-        Metadata/user.h
     Metadata/Project.h
     Metadata/Shot.h
-        Metadata/time_point_wrap.h
     Metadata/season.h
+    Metadata/time_point_wrap.h
+    Metadata/user.h
     PinYin/convert.h
     rpc/RpcFileSystemClient.h
     rpc/RpcFileSystemServer.h
@@ -73,7 +77,8 @@ set(
     DoodleLib.h
     DoodleLib_fwd.h
     DoodleLib_pch.h
-    DoodleMacro.h)
+    DoodleMacro.h
+    doodle_app.h)
 set(
     DOODLELIB_SOURCE
     core/CoreSet.cpp
@@ -107,11 +112,11 @@ set(
     Metadata/Episodes.cpp
     Metadata/Metadata.cpp
     Metadata/MetadataFactory.cpp
-        Metadata/user.cpp
     Metadata/Project.cpp
     Metadata/Shot.cpp
-        Metadata/time_point_wrap.cpp
     Metadata/season.cpp
+    Metadata/time_point_wrap.cpp
+    Metadata/user.cpp
     PinYin/convert.cpp
     rpc/RpcFileSystemClient.cpp
     rpc/RpcFileSystemServer.cpp
@@ -123,4 +128,5 @@ set(
     ScreenshotWidght/ScreenshotWidght.cpp
     threadPool/long_term.cpp
     toolkit/toolkit.cpp
-    DoodleLib.cpp)
+    DoodleLib.cpp
+    doodle_app.cpp)

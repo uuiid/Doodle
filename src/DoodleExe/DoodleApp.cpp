@@ -155,19 +155,19 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
   return true;
 }
 
-doodle_app::doodle_app()
+doodle_gui_app::doodle_gui_app()
     : p_run_fun(),
       p_rpc_server_handle(),
       p_setting_windows() {
   init_opt();
 }
 
-doodle_app::~doodle_app() = default;
+doodle_gui_app::~doodle_gui_app() = default;
 
-void doodle_app::init_opt() {
+void doodle_gui_app::init_opt() {
 }
 
-void doodle_app::add_signal_fun() {
+void doodle_gui_app::add_signal_fun() {
   auto k_ = [](int) {
     DOODLE_LOG_WARN("std  收到退出信号， 开始退出 ");
     CoreSet::getSet().p_stop = true;
@@ -184,7 +184,7 @@ void doodle_app::add_signal_fun() {
   SetConsoleCtrlHandler(CtrlHandler, TRUE);
 }
 
-void doodle_app::init() {
+void doodle_gui_app::init() {
   int k_argc;
   auto k_argv = CommandLineToArgvW(GetCommandLine(), &k_argc);
 
@@ -221,7 +221,7 @@ void doodle_app::init() {
   }
   LocalFree(k_argv);
 }
-void doodle_app::run_server() {
+void doodle_gui_app::run_server() {
   add_signal_fun();
   p_run_fun = [this]() {
     auto& set           = CoreSet::getSet();
@@ -238,7 +238,7 @@ void doodle_app::run_server() {
     return;
   };
 }
-void doodle_app::run() {
+void doodle_gui_app::run() {
   if (!p_run_fun)
     init();
 
@@ -246,7 +246,7 @@ void doodle_app::run() {
     p_run_fun();
 }
 
-void doodle_app::run_gui() {
+void doodle_gui_app::run_gui() {
   DoodleLib::Get().init_gui();
 
   main_windows k_main_windows{};
