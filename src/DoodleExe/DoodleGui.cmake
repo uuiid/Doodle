@@ -1,21 +1,5 @@
 set(
     DOODLELIB_GUI_HEADER
-    Gui/factory/menu_factory.h
-    Gui/factory/tool_box_menu_factory.h
-    Gui/Metadata/project_widget.h
-    Gui/main_windows.h
-    Gui/progress.h
-    Gui/setting_windows.h
-    libWarp/nana_warp.h
-    DoodleApp.h
-    DoodleGui_fwd.h)
+        DoodleGui_fwd.h)
 set(
-    DOODLELIB_GUI_SOURCE
-    Gui/factory/menu_factory.cpp
-    Gui/factory/tool_box_menu_factory.cpp
-    Gui/Metadata/project_widget.cpp
-    Gui/main_windows.cpp
-    Gui/progress.cpp
-    Gui/setting_windows.cpp
-    libWarp/nana_warp.cpp
-    DoodleApp.cpp)
+    DOODLELIB_GUI_SOURCE)

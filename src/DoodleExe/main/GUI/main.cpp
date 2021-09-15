@@ -7,7 +7,6 @@
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
 #include <DoodleLib/DoodleLib.h>
-#include <DoodleExe/DoodleApp.h>
 //#include <DoodleLib/DoodleApp.h>
 //#include <boost/locale.hpp>
 
