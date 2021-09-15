@@ -5,6 +5,10 @@
 #pragma once
 namespace doodle{
 
-//class doodle_app {
-//};
+class doodle_app {
+  void* p_hwnd;
+ public:
+  doodle_app();
+  ~doodle_app();
+};
 }

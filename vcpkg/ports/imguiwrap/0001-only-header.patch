@@ -1,0 +1,27 @@
+From 44d32ef757387cc13b3b5ef02b67e1696387bc16 Mon Sep 17 00:00:00 2001
+From: uuiid <957714080@qq.com>
+Date: Wed, 15 Sep 2021 10:04:19 +0800
+Subject: [PATCH] only header
+
+---
+ src/imguiwrap.helpers.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/imguiwrap.helpers.h b/src/imguiwrap.helpers.h
+index 4f413b9..9e1e218 100644
+--- a/src/imguiwrap.helpers.h
++++ b/src/imguiwrap.helpers.h
+@@ -1,8 +1,8 @@
+ #pragma once
+ 
+-#include "imguiwrap.h"
++// #include "imguiwrap.h"
+ // DEPRECATED: I'm going to remove this in future.
+-#include "imguiwrap.defermacro.h"
++// #include "imguiwrap.defermacro.h"
+ 
+ // ImGui fails to provide these useful constants
+ constexpr int ImGuiTableFlags_SizingShift = 13;
+-- 
+2.31.1.windows.1
+

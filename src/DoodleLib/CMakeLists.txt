@@ -75,6 +75,7 @@ target_link_libraries(DoodleLib
         imgui::imgui
         gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
         cryptopp-static
+        d3d11.lib
         )
 target_compile_definitions(DoodleLib
         PUBLIC

@@ -68,6 +68,7 @@ find_package(Doxygen )
 # 寻找opencv
 find_package(OpenCV CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(imguiwrap CONFIG REQUIRED)
 
 #这两个是我自己写的寻找库的方法
 #find_package(SqlppSqlite REQUIRED)
@@ -242,3 +243,4 @@ add_dependencies(cpack_${PROJECT_NAME} DoodleExe DoodleServerExe Doxygen)
 # $env:VCPKG_DEFAULT_TRIPLET="x64-windows"
 # .\vcpkg.exe install boost sqlpp11 nana catch2 opencv date cereal spdlog cryptopp grpc magic-enum nlohmann-json sqlpp11-connector-mysql opencv[ffmpeg,contrib] imgui[win32-binding,dx11-binding,docking-experimental]
 # imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse
+# install imguiwrap --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
