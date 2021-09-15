@@ -11,10 +11,6 @@
 #include <imguiwrap.dear.h>
 
 namespace doodle {
-namespace imgui {
-using namespace ::ImGui;
-}
-namespace dear {
-using namespace ::dear;
-}
+namespace imgui = ::ImGui;
+namespace dear = ::dear;
 }  // namespace doodle

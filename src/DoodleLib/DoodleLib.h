@@ -20,7 +20,9 @@
 #include <DoodleLib/FileWarp/MayaFile.h>
 #include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/Gui/base_windwos.h>
 #include <DoodleLib/Gui/main_windwos.h>
+#include <DoodleLib/Gui/setting_windows.h>
 #include <DoodleLib/Gui/factory/menu_factory_Interface.h>
 #include <DoodleLib/Gui/action/action.h>
 #include <DoodleLib/Gui/action/action_import.h>

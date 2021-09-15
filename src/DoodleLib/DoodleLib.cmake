@@ -17,7 +17,9 @@ set(
     FileWarp/MayaFile.h
     FileWarp/Ue4Project.h
     FileWarp/VideoSequence.h
+    Gui/base_windwos.h
     Gui/main_windwos.h
+    Gui/setting_windows.h
     Gui/factory/menu_factory_Interface.h
     Gui/action/action.h
     Gui/action/action_import.h
@@ -93,7 +95,9 @@ set(
     FileWarp/MayaFile.cpp
     FileWarp/Ue4Project.cpp
     FileWarp/VideoSequence.cpp
+    Gui/base_windwos.cpp
     Gui/main_windwos.cpp
+    Gui/setting_windows.cpp
     Gui/action/action.cpp
     Gui/action/actn_down_paths.cpp
     Gui/action/actn_excel.cpp

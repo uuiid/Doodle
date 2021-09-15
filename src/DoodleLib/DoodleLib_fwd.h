@@ -305,7 +305,7 @@ class tool_box_menu_factory;
 class VideoSequence;
 class Ue4Project;
 class MayaFile;
-
+class setting_windows;
 /**
  * @brief 数据库连接指针
  *
@@ -500,6 +500,10 @@ using ImageSequencePtr = std::shared_ptr<ImageSequence>;
  * @brief MayaFile 智能共享指针
  */
 using MayaFilePtr = std::shared_ptr<MayaFile>;
+using setting_windows_ptr = std::shared_ptr<setting_windows>;
+
+
+using bool_ptr = std::shared_ptr<bool>;
 
 namespace rpc_trans {
 class down_file;

@@ -295,5 +295,8 @@ void CoreSet::from_json(const nlohmann::json &nlohmann_json_j) {
   nlohmann_json_j.at("p_sql_user").get_to(p_sql_user);
   nlohmann_json_j.at("p_sql_password").get_to(p_sql_password);
 }
+void CoreSet::setDepartment(const Department &value) {
+  p_department_ = value;
+}
 
 }  // namespace doodle

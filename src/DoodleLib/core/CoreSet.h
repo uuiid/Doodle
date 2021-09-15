@@ -57,6 +57,7 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   [[nodiscard]] std::string getDepartment() const;
   [[nodiscard]] const Department &getDepartmentEnum() const;
   void setDepartment(const std::string &value);
+  void setDepartment(const Department &value);
 
   //缓存路径
   [[nodiscard]] FSys::path getCacheRoot() const;
