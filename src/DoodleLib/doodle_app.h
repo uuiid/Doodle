@@ -5,6 +5,7 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
+#include <windows.h>
 #include <windef.h>
 #include <WinUser.h>
 
@@ -13,7 +14,7 @@
 namespace doodle {
 using win_handle = HWND;
 using win_class = WNDCLASSEX;
-class doodle_app {
+class DOODLELIB_API doodle_app {
   win_handle p_hwnd;
   win_class p_win_class;
  public:

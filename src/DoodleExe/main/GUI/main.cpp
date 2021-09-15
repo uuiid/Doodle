@@ -26,7 +26,7 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
   std::setlocale(LC_CTYPE, ".UTF8");
 
   auto doodleLib = doodle::make_doodle_lib();
-  doodle::doodle_gui_app app{};
+  doodle::doodle_app app{};
   app.run();
   return 0;
 } catch (const std::exception &err) {

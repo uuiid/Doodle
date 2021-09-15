@@ -12,6 +12,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 #set(CMAKE_AUTOMOC ON)
 #set(CMAKE_AUTORCC ON)
 
+#add_compile_definitions(QT_NO_KEYWORDS NOMINMAX)
 add_compile_definitions(QT_NO_KEYWORDS UNICODE _UNICODE NOMINMAX)
 #add_compile_options(/W4)
 
@@ -242,5 +243,5 @@ add_dependencies(cpack_${PROJECT_NAME} DoodleExe DoodleServerExe Doxygen)
 # "D:\Program Files\Epic Games\UE_4.26\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.26\Plugins\Doodle -VS2019
 # $env:VCPKG_DEFAULT_TRIPLET="x64-windows"
 # .\vcpkg.exe install boost sqlpp11 nana catch2 opencv date cereal spdlog cryptopp grpc magic-enum nlohmann-json sqlpp11-connector-mysql opencv[ffmpeg,contrib] imgui[win32-binding,dx11-binding,docking-experimental]
-# imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse
+# imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 # install imguiwrap --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"

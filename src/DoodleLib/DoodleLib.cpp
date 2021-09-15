@@ -14,7 +14,7 @@
 #ifdef _WIN32
 #include <Windows.h>
 #include <shellapi.h>
-
+#include <tchar.h>
 #elif defined( __linux__ )
 
 
@@ -87,7 +87,7 @@ std::time_t last_write_time_t(const path &in_path) {
 void open_explorer(const path &in_path) {
 #if defined( _WIN32 )
   DOODLE_LOG_INFO("打开路径: {}", in_path.generic_string());
-  ShellExecute(nullptr, (L"open"), in_path.generic_wstring().c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
+  ShellExecute(nullptr, _T("open"), in_path.generic_wstring().c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
   // std::system(fmt::format(R"(explorer.exe {})", in_path.generic_string()).c_str());
 #else
   throw DoodleError{"没有这个函数"};
