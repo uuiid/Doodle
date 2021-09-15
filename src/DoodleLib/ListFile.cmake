@@ -9,6 +9,7 @@ doodle_get_source(
         ${CMAKE_CURRENT_LIST_DIR}/Exception
         ${CMAKE_CURRENT_LIST_DIR}/FileSys
         ${CMAKE_CURRENT_LIST_DIR}/FileWarp
+        ${CMAKE_CURRENT_LIST_DIR}/Gui
         ${CMAKE_CURRENT_LIST_DIR}/Gui/factory
         ${CMAKE_CURRENT_LIST_DIR}/Gui/action
         ${CMAKE_CURRENT_LIST_DIR}/libWarp

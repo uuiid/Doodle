@@ -4,6 +4,7 @@
 
 #include "doodle_app.h"
 
+#include <DoodleLib/Gui/main_windwos.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 // Helper functions
 #include <d3d11.h>
@@ -116,21 +117,21 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         ::SetWindowPos(hWnd, nullptr, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
       }
       break;
-//    case WM_IME_CHAR: {
-//      auto& io    = ImGui::GetIO();
-//      DWORD wChar = wParam;
-//      if (wChar <= 127) {
-//        io.AddInputCharacter(wChar);
-//      } else {
-//        // swap lower and upper part.
-//        BYTE low  = (BYTE)(wChar & 0x00FF);
-//        BYTE high = (BYTE)((wChar & 0xFF00) >> 8);
-//        wChar     = MAKEWORD(high, low);
-//        wchar_t ch[6];
-//        MultiByteToWideChar(CP_OEMCP, 0, (LPCSTR)&wChar, 4, ch, 3);
-//        io.AddInputCharacter(ch[0]);
-//      }
-//    }
+      //    case WM_IME_CHAR: {
+      //      auto& io    = ImGui::GetIO();
+      //      DWORD wChar = wParam;
+      //      if (wChar <= 127) {
+      //        io.AddInputCharacter(wChar);
+      //      } else {
+      //        // swap lower and upper part.
+      //        BYTE low  = (BYTE)(wChar & 0x00FF);
+      //        BYTE high = (BYTE)((wChar & 0xFF00) >> 8);
+      //        wChar     = MAKEWORD(high, low);
+      //        wchar_t ch[6];
+      //        MultiByteToWideChar(CP_OEMCP, 0, (LPCSTR)&wChar, 4, ch, 3);
+      //        io.AddInputCharacter(ch[0]);
+      //      }
+      //    }
     default:
       break;
   }
@@ -139,6 +140,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 #include <windows.h>
 
 namespace doodle {
+
+doodle_app* doodle_app::self;
 
 doodle_app::doodle_app()
     : p_hwnd{},
@@ -152,7 +155,8 @@ doodle_app::doodle_app()
                   nullptr,
                   nullptr,
                   _T("ImGui Example"),
-                  nullptr} {
+                  nullptr},
+      p_done(false) {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassEx(&p_win_class);
@@ -236,13 +240,14 @@ std::int32_t doodle_app::run() {
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 18.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
 
+  auto k_show = std::make_shared<bool>(true);
+  main_windows k_main_windows{};
   // Our state
   bool show_demo_window    = true;
   bool show_another_window = false;
   ImVec4 clear_color       = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
   // Main loop
-  bool done = false;
-  while (!done) {
+  while (!p_done) {
     // Poll and handle messages (inputs, window resize, etc.)
     // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
     // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
@@ -253,9 +258,9 @@ std::int32_t doodle_app::run() {
       ::TranslateMessage(&msg);
       ::DispatchMessage(&msg);
       if (msg.message == WM_QUIT)
-        done = true;
+        p_done = true;
     }
-    if (done)
+    if (p_done)
       break;
 
     // Start the Dear ImGui frame
@@ -263,41 +268,9 @@ std::int32_t doodle_app::run() {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    if (show_demo_window)
-      ImGui::ShowDemoWindow(&show_demo_window);
 
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-    {
-      static float f     = 0.0f;
-      static int counter = 0;
 
-      ImGui::Begin("Hello, world!");  // Create a window called "Hello, world!" and append into it.
-
-      ImGui::Text("This is some useful text.");           // Display some text (you can use a format strings too)
-      ImGui::Checkbox("Demo Window", &show_demo_window);  // Edit bools storing our window open/close state
-      ImGui::Checkbox("Another Window", &show_another_window);
-
-      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);             // Edit 1 float using a slider from 0.0f to 1.0f
-      ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
-
-      if (ImGui::Button("Button"))  // Buttons return true when clicked (most widgets return true when edited/activated)
-        counter++;
-      ImGui::SameLine();
-      ImGui::Text("counter = %d", counter);
-
-      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-      ImGui::End();
-    }
-
-    // 3. Show another simple window.
-    if (show_another_window) {
-      ImGui::Begin("Another Window", &show_another_window);  // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-      ImGui::Text("Hello from another window!");
-      if (ImGui::Button("Close Me"))
-        show_another_window = false;
-      ImGui::End();
-    }
+    k_main_windows.frame_render(k_show);
 
     // Rendering
     ImGui::Render();
@@ -316,5 +289,13 @@ std::int32_t doodle_app::run() {
                                   // g_pSwapChain->Present(0, 0); // Present without vsync
   }
   return 0;
+}
+std::unique_ptr<doodle_app> doodle_app::make_this() {
+  auto k_          = std::unique_ptr<doodle_app>(new doodle_app{});
+  doodle_app::self = k_.get();
+  return k_;
+}
+doodle_app* doodle_app::Get() {
+  return doodle_app::self;
 }
 }  // namespace doodle
