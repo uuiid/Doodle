@@ -38,8 +38,6 @@ set(
     libWarp/cmrcWarp.h
     libWarp/fifo_cache_policy.hpp
     libWarp/imgui_warp.h
-    libWarp/imguiwrap.dear.h
-    libWarp/imguiwrap.helpers.h
     libWarp/json_warp.h
     libWarp/lfu_cache_policy.hpp
     libWarp/lru_cache_policy.hpp

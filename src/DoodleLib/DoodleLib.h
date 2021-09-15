@@ -41,8 +41,6 @@
 #include <DoodleLib/libWarp/cmrcWarp.h>
 #include <DoodleLib/libWarp/fifo_cache_policy.hpp>
 #include <DoodleLib/libWarp/imgui_warp.h>
-#include <DoodleLib/libWarp/imguiwrap.dear.h>
-#include <DoodleLib/libWarp/imguiwrap.helpers.h>
 #include <DoodleLib/libWarp/json_warp.h>
 #include <DoodleLib/libWarp/lfu_cache_policy.hpp>
 #include <DoodleLib/libWarp/lru_cache_policy.hpp>
