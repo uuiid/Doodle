@@ -5,6 +5,8 @@
 #include "main_windwos.h"
 
 #include <DoodleLib/Gui/setting_windows.h>
+#include <DoodleLib/Gui/widgets/assets_widget.h>
+#include <DoodleLib/Gui/widgets/attribute_widgets.h>
 #include <DoodleLib/Gui/widgets/project_widget.h>
 #include <DoodleLib/doodle_app.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
@@ -23,7 +25,10 @@ main_windows::main_windows()
           Doodle_VERSION_PATCH,
           Doodle_VERSION_TWEAK)),
       p_setting(std::make_shared<setting_windows>()),
-      p_prj(std::make_shared<project_widget>()) {
+      p_prj(std::make_shared<project_widget>()),
+      p_ass(std::make_shared<assets_widget>()),
+      p_attr(std::make_shared<attribute_widgets>()) {
+  p_prj->select_change.connect([this](auto in) { p_ass->set_metadata(in); });
 }
 void main_windows::frame_render(const bool_ptr& is_show) {
   if (*p_setting_show)
@@ -46,6 +51,7 @@ void main_windows::frame_render(const bool_ptr& is_show) {
           dear::Menu{"工具"} && [this] { main_menu_tool(); };
         };
         p_prj->frame_render();
+        p_ass->frame_render();
       };
 }
 void main_windows::main_menu_file() {

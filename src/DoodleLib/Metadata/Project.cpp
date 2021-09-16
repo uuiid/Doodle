@@ -14,7 +14,9 @@ namespace doodle {
 
 Project::Project()
     : p_name("none"),
-      p_path("C:/") {
+      p_path("C:/"),
+      p_en_str(),
+      p_shor_str() {
   p_type = meta_type::project_root;
 }
 
@@ -28,6 +30,7 @@ void Project::setName(const std::string& Name) noexcept {
   if (Name == p_name)
     return;
   p_name = Name;
+  init();
   saved(true);
   sig_change();
 }
@@ -48,20 +51,11 @@ void Project::setPath(const FSys::path& Path) {
 }
 
 std::string Project::str() const {
-  return boost::algorithm::to_lower_copy(
-      convert::Get().toEn(this->p_name));
+  return p_en_str;
 }
 
 std::string Project::shortStr() const {
-  auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
-  auto& k_pingYin = convert::Get();
-  std::string str{};
-  for (auto s : wstr) {
-    auto k_s_front = k_pingYin.toEn(s).front();
-    str.append(&k_s_front, 1);
-  }
-  DOODLE_LOG_INFO(str)
-  return boost::algorithm::to_upper_copy(str.substr(0, 2));
+  return p_shor_str;
 }
 
 std::string Project::showStr() const {
@@ -100,6 +94,19 @@ const std::string& Project::getName() const {
 
 void Project::create_menu(const menu_factory_ptr& in_factoryPtr) {
   in_factoryPtr->create_menu(std::dynamic_pointer_cast<Project>(shared_from_this()));
+}
+void Project::init() {
+  p_en_str = boost::algorithm::to_lower_copy(
+      convert::Get().toEn(this->p_name));
+  auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
+  auto& k_pingYin = convert::Get();
+  std::string str{};
+  for (auto s : wstr) {
+    auto k_s_front = k_pingYin.toEn(s).front();
+    str.append(&k_s_front, 1);
+  }
+  DOODLE_LOG_INFO(str)
+  p_shor_str = boost::algorithm::to_upper_copy(str.substr(0, 2));
 }
 
 }  // namespace doodle

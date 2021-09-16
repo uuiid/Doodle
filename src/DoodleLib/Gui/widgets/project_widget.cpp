@@ -28,7 +28,7 @@ void project_widget::frame_render() {
                            p == p_current_select,
                            ImGuiSelectableFlags_SpanAllColumns)) {
         p_current_select = p;
-        project_change(p_current_select);
+        select_change(p_current_select);
       }
       imgui::TableNextColumn();
       dear::Text(p->getPath().generic_string());

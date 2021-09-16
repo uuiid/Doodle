@@ -11,8 +11,11 @@ namespace doodle {
  */
 class DOODLELIB_API Project : public Metadata {
   std::string p_name;
+  std::string p_en_str;
+  std::string p_shor_str;
   FSys::path p_path;
 
+  void init();
  public:
   Project();
   explicit Project(FSys::path in_path, std::string in_name = {});
@@ -58,6 +61,7 @@ void Project::serialize(Archive& ar, std::uint32_t const version) {
         cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
         cereal::make_nvp("name", p_name),
         cereal::make_nvp("path", p_path));
+  init();
 }
 
 }  // namespace doodle

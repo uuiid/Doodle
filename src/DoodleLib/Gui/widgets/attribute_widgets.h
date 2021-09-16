@@ -9,6 +9,12 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 
-class DOODLELIB_API attribute_widgets : public base_widget{
+class DOODLELIB_API attribute_widgets : public base_widget {
+  MetadataPtr p_root;
+ public:
+  attribute_widgets();
+  virtual void frame_render() override;
+
+  void set_metadata(const MetadataPtr& in_ptr);
 };
-}
+}  // namespace doodle
