@@ -5,8 +5,10 @@
 #include "main_windwos.h"
 
 #include <DoodleLib/Gui/setting_windows.h>
+#include <DoodleLib/Gui/widgets/project_widget.h>
 #include <DoodleLib/doodle_app.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
+
 namespace doodle {
 main_windows::main_windows()
     : p_setting_show(std::make_shared<bool>(false)),
@@ -20,7 +22,8 @@ main_windows::main_windows()
           Doodle_VERSION_MINOR,
           Doodle_VERSION_PATCH,
           Doodle_VERSION_TWEAK)),
-      p_setting(std::make_shared<setting_windows>()) {
+      p_setting(std::make_shared<setting_windows>()),
+      p_prj(std::make_shared<project_widget>()) {
 }
 void main_windows::frame_render(const bool_ptr& is_show) {
   if (*p_setting_show)
@@ -42,12 +45,7 @@ void main_windows::frame_render(const bool_ptr& is_show) {
           dear::Menu{"文件"} && [this]() { this->main_menu_file(); };
           dear::Menu{"工具"} && [this] { main_menu_tool(); };
         };
-
-        ImGui::Spacing();
-        ImGui::Text("This is some useful text.");
-        ImGui::Text("This is some useful text.2");
-        ImGui::Text("This is some useful text.3");
-        ImGui::Text("This is some useful text.4");
+        p_prj->frame_render();
       };
 }
 void main_windows::main_menu_file() {

@@ -161,7 +161,7 @@ doodle_app::doodle_app()
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassEx(&p_win_class);
   p_hwnd = ::CreateWindow(p_win_class.lpszClassName,
-                          _T("Dear ImGui DirectX11 Example"),
+                          _T("doodle main"),
                           WS_OVERLAPPEDWINDOW,
                           100, 100, 1280, 800,
                           nullptr, nullptr,

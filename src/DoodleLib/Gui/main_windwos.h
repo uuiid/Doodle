@@ -6,7 +6,7 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/base_windwos.h>
 namespace doodle {
-
+class project_widget;
 class DOODLELIB_API main_windows : public base_windows {
   bool_ptr p_setting_show;
   bool_ptr p_debug_show;
@@ -15,6 +15,7 @@ class DOODLELIB_API main_windows : public base_windows {
   bool_ptr p_quit;
   std::string p_title;
   setting_windows_ptr p_setting;
+  std::shared_ptr<project_widget> p_prj;
 
   void main_menu_file();
   void main_menu_tool();

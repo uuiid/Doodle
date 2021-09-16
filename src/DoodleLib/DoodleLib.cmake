@@ -32,6 +32,9 @@ set(
     Gui/action/assets_action.h
     Gui/action/assets_file_action.h
     Gui/action/project_action.h
+    Gui/widgets/assets_widget.h
+    Gui/widgets/attribute_widgets.h
+    Gui/widgets/project_widget.h
     libWarp/BoostUuidWarp.h
     libWarp/CerealWarp.h
     libWarp/WinReg.hpp
@@ -108,6 +111,9 @@ set(
     Gui/action/assets_action.cpp
     Gui/action/assets_file_action.cpp
     Gui/action/project_action.cpp
+    Gui/widgets/assets_widget.cpp
+    Gui/widgets/attribute_widgets.cpp
+    Gui/widgets/project_widget.cpp
     Logger/Logger.cpp
     Metadata/Assets.cpp
     Metadata/AssetsFile.cpp
