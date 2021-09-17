@@ -13,6 +13,7 @@
 #include <rpc/RpcFileSystemClient.h>
 #include <rpc/RpcMetadataClient.h>
 #include <threadPool/ThreadPool.h>
+
 #include <boost/numeric/conversion/cast.hpp>
 namespace doodle {
 
@@ -23,7 +24,9 @@ DoodleLib::DoodleLib()
       p_curr_project(),
       p_rpc_metadata_clien(),
       p_rpc_file_system_client(),
-      p_metadata_factory() {
+      p_metadata_factory(),
+      long_task_list(),
+      mutex() {
   CoreSet::getSet();
   Logger::doodle_initLog();
 #ifdef _WIN32

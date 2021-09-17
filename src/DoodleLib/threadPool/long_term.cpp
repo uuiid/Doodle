@@ -1,6 +1,9 @@
 #include "long_term.h"
 
+#include <DoodleLib/core/DoodleLib.h>
+
 #include <boost/numeric/conversion/cast.hpp>
+
 namespace doodle {
 long_term::long_term() : sig_progress(),
                          sig_message_result(),
@@ -8,10 +11,13 @@ long_term::long_term() : sig_progress(),
                          p_fulfil(false),
                          p_str(),
                          p_progress(0),
-                         p_num(0),
                          _mutex(),
                          p_list(),
-                         p_child() {
+                         p_child(),
+                         p_id(),
+                         p_name(),
+                         p_time(chrono::system_clock::now()),
+                         p_state(state::none_) {
   sig_finished.connect([this]() {
     std::lock_guard k_guard{_mutex};
     p_fulfil = true;
@@ -20,10 +26,10 @@ long_term::long_term() : sig_progress(),
     if (p_fulfil)
       p_str = in_str;
   });
-
+  p_id = fmt::format("none###{}", fmt::ptr(this));
 }
 
-std::double_t long_term::step(std::double_t in_) {
+rational_int long_term::step(rational_int in_) {
   std::lock_guard k_guard{_mutex};
   p_progress += in_;
   return p_progress;
@@ -38,7 +44,7 @@ std::string long_term::message_result() const {
 }
 void long_term::forward_sig(const long_term_ptr& in_forward) {
   p_child.push_back(in_forward);
-  in_forward->sig_progress.connect([this](std::double_t in_pro) { sig_progress(in_pro); });
+  in_forward->sig_progress.connect([this](rational_int in_pro) { sig_progress(in_pro); });
   in_forward->sig_finished.connect([this]() { sig_finished(); });
   in_forward->sig_message_result.connect([this](const std::string& in_str) { sig_message_result(in_str); });
 }
@@ -49,8 +55,8 @@ void long_term::forward_sig(const std::vector<long_term_ptr>& in_forward) {
     p_child.push_back(i);
 
     i->sig_progress.connect([this, k_size](
-                                std::double_t in_) {
-      sig_progress(in_ / boost::numeric_cast<std::double_t>(k_size));
+                                rational_int in_) {
+      sig_progress(in_ / k_size);
     });
     i->sig_message_result.connect([this](const std::string& str) {
       sig_message_result(str);
@@ -74,5 +80,30 @@ long_term::~long_term() {
       DOODLE_LOG_WARN(error.what());
     }
   }
+}
+long_term_ptr long_term::make_this_shared() {
+  auto k_ptr = std::make_shared<long_term>();
+  auto& k_   = DoodleLib::Get();
+  {
+    std::lock_guard k_guard{k_.mutex};
+    k_.long_task_list.push_back(k_ptr);
+  }
+  return k_ptr;
+}
+std::string& long_term::get_id() {
+  return p_id;
+}
+std::string& long_term::get_name() {
+  return p_name;
+}
+void long_term::set_name(const std::string& in_string) {
+  p_name = in_string;
+  p_id   = fmt::format("{}###{}", in_string, fmt::ptr(this));
+}
+rational_int long_term::get_progress() const {
+  return p_progress;
+}
+std::double_t long_term::get_progress_int() const {
+  return boost::rational_cast<std::double_t>(p_progress * rational_int{100});
 }
 }  // namespace doodle

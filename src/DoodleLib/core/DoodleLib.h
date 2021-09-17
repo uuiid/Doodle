@@ -20,7 +20,7 @@ class DOODLELIB_API DoodleLib : public details::no_copy {
   RpcMetadataClientPtr p_rpc_metadata_clien;
   RpcFileSystemClientPtr p_rpc_file_system_client;
   MetadataFactoryPtr p_metadata_factory;
-  
+
   FSys::path create_time_database();
 
  public:
@@ -37,5 +37,8 @@ class DOODLELIB_API DoodleLib : public details::no_copy {
 
   [[nodiscard]] RpcMetadataClientPtr getRpcMetadataClient() const;
   [[nodiscard]] RpcFileSystemClientPtr getRpcFileSystemClient() const;
+
+  std::vector<long_term_ptr> long_task_list;
+  std::recursive_mutex mutex;
 };
 }  // namespace doodle

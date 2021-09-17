@@ -3,28 +3,50 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Exception/Exception.h>
 
+#include <boost/rational.hpp>
 #include <boost/signals2.hpp>
-
 namespace doodle {
+
+using rational_int = boost::rational<std::uint64_t>;
 /**
  * @brief 长时间任务时， 使用这个类进行通知；
  *
  */
 class DOODLELIB_API long_term : public details::no_copy {
+ public:
+  enum state {
+    none_   = 0,
+    success = 1,
+    fail    = 2
+  };
+
+ private:
   /**
    * @brief 其他线程运行结果（void 是闭包的包装， 只是用来确定完成结果的）
    *
    */
   bool p_fulfil;
+  std::string p_id;
+  std::string p_name;
+  chrono::sys_time_pos p_time;
+  state p_state;
+
   std::string p_str;
-  std::double_t p_progress;
+  rational_int p_progress;
   std::mutex _mutex;
-  std::size_t p_num;
   // std::recursive_mutex _mutex;
   std::vector<long_term_ptr> p_child;
+
  public:
   long_term();
   virtual ~long_term();
+
+  long_term_ptr make_this_shared();
+
+  std::string& get_name();
+  void set_name(const std::string& in_string);
+
+  std::string& get_id();
   /**
    * @brief 将信号转发到传入的新的信号中去
    * @param in_forward 新的信号
@@ -32,13 +54,13 @@ class DOODLELIB_API long_term : public details::no_copy {
   void forward_sig(const long_term_ptr& in_forward);
   void forward_sig(const std::vector<long_term_ptr>& in_forward);
 
-  std::double_t step(std::double_t in_);
+  rational_int step(rational_int in_);
   /**
    * @brief 这个是步进信号
    * @param std::double_t 每次步进的大小
    *
    */
-  boost::signals2::signal<void(std::double_t)> sig_progress;
+  boost::signals2::signal<void(rational_int)> sig_progress;
   /**
    * @brief 结果信号
    *
@@ -52,6 +74,9 @@ class DOODLELIB_API long_term : public details::no_copy {
 
   [[nodiscard]] bool fulfil() const;
   [[nodiscard]] std::string message_result() const;
+
+  [[nodiscard]] rational_int get_progress() const;
+  [[nodiscard]] std::double_t get_progress_int() const;
 
   std::vector<std::shared_future<void>> p_list;
 };
