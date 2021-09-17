@@ -5,6 +5,7 @@
 #include "doodle_app.h"
 
 #include <DoodleLib/Gui/main_windwos.h>
+#include <DoodleLib/libWarp/boost_locale_warp.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 // Helper functions
 #include <d3d11.h>
@@ -137,6 +138,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   }
   return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
+#include <toolkit/toolkit.h>
 #include <windows.h>
 
 namespace doodle {
@@ -156,7 +158,8 @@ doodle_app::doodle_app()
                   nullptr,
                   _T("ImGui Example"),
                   nullptr},
-      p_done(false) {
+      p_done(false),
+      p_fun_list() {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassEx(&p_win_class);
@@ -269,24 +272,43 @@ std::int32_t doodle_app::run() {
     ImGui::NewFrame();
 
     imgui::DockSpaceOverViewport(imgui::GetMainViewport());
-
-    k_main_windows.frame_render(k_show);
-
-
+    static bool show_info = false;
+    static std::string str{};
+    try {
+      k_main_windows.frame_render(k_show);
+      main_loop();
+    } catch (DoodleError& err) {
+      show_info = true;
+      str       = err.what();
+      imgui::OpenPopup("警告");
+    }
+    //    catch (std::runtime_error& err) {
+    //      show_info = true;
+    //      std::wstring str2{err.what(), err.what() + std::strlen(err.what())};
+    //      str = conv::locale_to_utf<char>(str2);
+    //
+    //      imgui::OpenPopup("警告");
+    //    }
+    dear::PopupModal{"警告", &show_info} && [str1 = str]() {
+      dear::Text(str);
+      if (ImGui::Button("OK")) {
+        ImGui::CloseCurrentPopup();
+      }
+    };
     {
-      static float f = 0.0f;
+      static float f     = 0.0f;
       static int counter = 0;
 
-      ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+      ImGui::Begin("Hello, world!");  // Create a window called "Hello, world!" and append into it.
 
-      ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-      ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+      ImGui::Text("This is some useful text.");           // Display some text (you can use a format strings too)
+      ImGui::Checkbox("Demo Window", &show_demo_window);  // Edit bools storing our window open/close state
       ImGui::Checkbox("Another Window", &show_another_window);
 
-      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-      ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);             // Edit 1 float using a slider from 0.0f to 1.0f
+      ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
 
-      if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+      if (ImGui::Button("Button"))  // Buttons return true when clicked (most widgets return true when edited/activated)
         counter++;
       ImGui::SameLine();
       ImGui::Text("counter = %d", counter);
@@ -295,21 +317,20 @@ std::int32_t doodle_app::run() {
       ImGui::End();
     }
 
-
     {
-      static float f = 0.0f;
+      static float f     = 0.0f;
       static int counter = 0;
 
-      ImGui::Begin("Hello, world!2");                          // Create a window called "Hello, world!" and append into it.
+      ImGui::Begin("Hello, world!2");  // Create a window called "Hello, world!" and append into it.
 
-      ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-      ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+      ImGui::Text("This is some useful text.");           // Display some text (you can use a format strings too)
+      ImGui::Checkbox("Demo Window", &show_demo_window);  // Edit bools storing our window open/close state
       ImGui::Checkbox("Another Window", &show_another_window);
 
-      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-      ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);             // Edit 1 float using a slider from 0.0f to 1.0f
+      ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
 
-      if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+      if (ImGui::Button("Button"))  // Buttons return true when clicked (most widgets return true when edited/activated)
         counter++;
       ImGui::SameLine();
       ImGui::Text("counter = %d", counter);

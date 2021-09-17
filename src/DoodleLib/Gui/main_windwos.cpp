@@ -4,13 +4,14 @@
 
 #include "main_windwos.h"
 
+#include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Gui/setting_windows.h>
 #include <DoodleLib/Gui/widgets/assets_widget.h>
 #include <DoodleLib/Gui/widgets/attribute_widgets.h>
 #include <DoodleLib/Gui/widgets/project_widget.h>
 #include <DoodleLib/doodle_app.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
-
+#include <DoodleLib/toolkit/toolkit.h>
 namespace doodle {
 main_windows::main_windows()
     : p_setting_show(std::make_shared<bool>(false)),
@@ -29,6 +30,7 @@ main_windows::main_windows()
       p_ass(std::make_shared<assets_widget>()),
       p_attr(std::make_shared<attribute_widgets>()) {
   p_prj->select_change.connect([this](auto in) { p_ass->set_metadata(in); });
+  p_ass->select_change.connect([this](auto in) { p_attr->set_metadata(in); });
 }
 void main_windows::frame_render(const bool_ptr& is_show) {
   if (*p_setting_show)
@@ -48,10 +50,12 @@ void main_windows::frame_render(const bool_ptr& is_show) {
       [this]() {
         dear::MenuBar{} && [this]() {
           dear::Menu{"文件"} && [this]() { this->main_menu_file(); };
-          dear::Menu{"工具"} && [this] { main_menu_tool(); };
+          dear::Menu{"工具"} && [this]() { main_menu_tool(); };
         };
         p_prj->frame_render();
         p_ass->frame_render();
+        //        imgui::SameLine();
+        p_attr->frame_render();
       };
 }
 void main_windows::main_menu_file() {
@@ -66,6 +70,41 @@ void main_windows::main_menu_file() {
   }
 }
 void main_windows::main_menu_tool() {
+  if (dear::MenuItem("安装maya插件"))
+    toolkit::installMayaPath();
+  if (dear::MenuItem("安装ue4插件"))
+    try {
+      toolkit::installUePath(CoreSet::getSet().gettUe4Setting().Path() / "Engine");
+    } catch (const DoodleError& err) {
+      dear::PopupModal{"警告"} && [&err]() {
+        dear::Text(err.what());
+        if (ImGui::Button("OK", ImVec2(120, 0)))
+          ImGui::CloseCurrentPopup();
+      };
+      DOODLE_LOG_WARN(err.what());
+    }
+
+  if (dear::MenuItem("安装ue4项目插件")) {
+    imgui::FileDialog::Instance()->OpenModal(
+        "ChooseDirDlgKey",
+        "select_ue_project",
+        ".uproject",
+        ".");
+    doodle_app::Get()->main_loop.connect_extended([](const doodle_app::connection& in) {
+      dear::OpenFileDialog{"ChooseDirDlgKey"} && [in]() {
+        auto ig = ImGuiFileDialog::Instance();
+        if (ig->IsOk()) {
+          FSys::path k_path = ig->GetCurrentPath();
+          toolkit::installUePath(k_path);
+        }
+        in.disconnect();
+      };
+    });
+  }
+  if (dear::MenuItem("删除ue4缓存"))
+    toolkit::deleteUeCache();
+  if (dear::MenuItem("修改ue4缓存位置"))
+    toolkit::modifyUeCachePath();
 }
 
 }  // namespace doodle

@@ -15,8 +15,7 @@
 #include <regex>
 #include <string>
 
-
-#if defined( _WIN32)
+#if defined(_WIN32)
 
 #include <ShlObj.h>
 #endif
@@ -54,7 +53,7 @@ PATH+:= scripts;plug-ins
 PYTHONPATH+:= scripts
 )"};
   {
-    auto k_p =mayadoc.parent_path() / "doodle.mod";
+    auto k_p = mayadoc.parent_path() / "doodle.mod";
     DOODLE_LOG_INFO("写入 {}", k_p);
     FSys::ofstream k_file{k_p};
     k_file << k_mod;
@@ -64,11 +63,11 @@ PYTHONPATH+:= scripts
 void toolkit::installUePath(const FSys::path &path) {
   auto &set = CoreSet::getSet();
 
-  auto sourePath = FSys::current_path().parent_path();
-  sourePath /= "plug/uePlug";
-  sourePath /= set.gettUe4Setting().Version();
-  sourePath /= "Plugins/Doodle";
-  auto targetPath = path / "Plugins/Doodle";
+  auto sourePath  = FSys::current_path().parent_path();
+  sourePath       = sourePath / "plug" / "uePlug";
+  sourePath       = sourePath / set.gettUe4Setting().Version();
+  sourePath       = sourePath / "Plugins" / "Doodle";
+  auto targetPath = path / "Plugins" / "Doodle";
 
   if (FSys::exists(targetPath)) {
     FSys::remove_all(targetPath);
@@ -104,7 +103,7 @@ void toolkit::modifyUeCachePath() {
 }
 
 bool toolkit::deleteUeCache() {
-#if defined( _WIN32)
+#if defined(_WIN32)
   //这里我们手动做一些工作
   //获取环境变量
   PWSTR pManager;

@@ -33,6 +33,9 @@ add_library(DoodleLib
         ${DOODLELIB_SOURCE}
         ${OUT_LISTS_sqlpp}
         ${OUT_LISTS_GRPC}
+        external/ImGuiFileDialog/ImGuiFileDialog.cpp
+        external/ImGuiFileDialog/ImGuiFileDialog.h
+        external/ImGuiFileDialog/ImGuiFileDialogConfig.h
         DoodleLib.manifest
         )
 fix_mariadb_plug(NAME DoodleLib)

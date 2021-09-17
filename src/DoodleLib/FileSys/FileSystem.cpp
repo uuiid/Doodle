@@ -11,7 +11,8 @@ void FileSystem::localCopy(const FSys::path& in_sourcePath, const FSys::path& ta
   boost::asio::thread_pool pool(std::thread::hardware_concurrency());
   //验证文件存在
   // if (FSys::exists(targetPath)) return false;
-  if (!FSys::exists(in_sourcePath)) throw FileError(in_sourcePath, "不存在路径");
+  if (!FSys::exists(in_sourcePath))
+    throw FileError(in_sourcePath, "不存在路径");
   if (!FSys::exists(targetPath.parent_path()))
     FSys::create_directories(targetPath.parent_path());
   FSys::path backup_path{};

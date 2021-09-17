@@ -11,6 +11,9 @@ namespace doodle {
 
 class DOODLELIB_API attribute_widgets : public base_widget {
   MetadataPtr p_root;
+  AssetsFilePtr p_current_select;
+
+
  public:
   attribute_widgets();
   virtual void frame_render() override;
