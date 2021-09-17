@@ -20,9 +20,6 @@ namespace doodle {
 class tree_node;
 using tree_node_ptr = std::shared_ptr<tree_node>;
 
-template <class... type_arg>
-tree_node_ptr make_tree(type_arg&&... in_arg);
-
 namespace details {
 //class DOODLELIB_API tree_node_destroy : public std::default_delete<tree_node> {
 // public:
@@ -212,7 +209,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   ~tree_node();
 
   template <class... type_arg>
-  static tree_node_ptr make_this(type_arg&&... in_arg) {
+  static tree_node_ptr make_this_shared(type_arg&&... in_arg) {
     auto tmp = std::shared_ptr<tree_node>{
         new tree_node{std::forward<type_arg>(in_arg)...}};
     /// 非默认构造, 这个时候可以直接检查父物体是否为空后插入
@@ -279,10 +276,5 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   operator const MetadataPtr&() const;
   const MetadataPtr& get() const;
 };
-
-template <class... type_arg>
-tree_node_ptr make_tree(type_arg&&... in_arg) {
-  return tree_node::make_this(std::forward<type_arg>(in_arg)...);
-}
 
 }  // namespace doodle

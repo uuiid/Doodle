@@ -8,16 +8,18 @@
 TEST_CASE("my tree", "[tree]") {
   using namespace doodle;
 
-  auto k_tree = GENERATE(make_tree(), make_tree(), make_tree());
+  auto k_tree = GENERATE(make_shared_<tree_node>(),
+                         make_shared_<tree_node>(),
+                         make_shared_<tree_node>());
   auto tree   = GENERATE(
-      make_tree(nullptr, std::make_shared<Shot>()),
-      make_tree(nullptr, std::make_shared<Shot>()),
-      make_tree(nullptr, std::make_shared<Episodes>()));
+        make_shared_<tree_node>(nullptr, std::make_shared<Shot>()),
+        make_shared_<tree_node>(nullptr, std::make_shared<Shot>()),
+        make_shared_<tree_node>(nullptr, std::make_shared<Episodes>()));
   auto tree2 = GENERATE(
-      make_tree(nullptr, std::make_shared<Shot>()),
-      make_tree(nullptr, std::make_shared<Shot>()),
-      make_tree(nullptr, std::make_shared<Shot>()),
-      make_tree(nullptr, std::make_shared<Episodes>()));
+      make_shared_<tree_node>(nullptr, std::make_shared<Shot>()),
+      make_shared_<tree_node>(nullptr, std::make_shared<Shot>()),
+      make_shared_<tree_node>(nullptr, std::make_shared<Shot>()),
+      make_shared_<tree_node>(nullptr, std::make_shared<Episodes>()));
 
   SECTION("tree insert") {
     k_tree->insert(tree);
@@ -34,7 +36,7 @@ TEST_CASE("my tree", "[tree]") {
     }
     SECTION("for child") {
       for (auto& it : k_tree->get_children()) {
-          std::cout << it->get()->str() << std::endl;
+        std::cout << it->get()->str() << std::endl;
       }
     }
   }

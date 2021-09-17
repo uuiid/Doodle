@@ -37,6 +37,7 @@
 #include <DoodleLib/Gui/action/project_action.h>
 #include <DoodleLib/Gui/widgets/assets_widget.h>
 #include <DoodleLib/Gui/widgets/attribute_widgets.h>
+#include <DoodleLib/Gui/widgets/long_time_tasks_widget.h>
 #include <DoodleLib/Gui/widgets/project_widget.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/libWarp/CerealWarp.h>
@@ -53,6 +54,7 @@
 #include <DoodleLib/libWarp/protobuf_warp.h>
 #include <DoodleLib/libWarp/protobuf_warp_cpp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
+#include <DoodleLib/libWarp/std_warp.h>
 #include <DoodleLib/libWarp/wxWidgetWarp.h>
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Logger/LoggerTemplate.h>

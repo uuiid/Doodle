@@ -19,7 +19,7 @@
 namespace doodle {
 std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> RpcFileSystemClient::compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path) {
   auto k_l_ex  = FSys::exists(in_local_path);
-  auto k_l_dir = k_l_ex ? FSys::is_directory(in_local_path) : false;
+  auto k_l_dir = k_l_ex && FSys::is_directory(in_local_path);
   auto k_l_sz  = k_l_ex ? FSys::file_size(in_local_path) : 0;
   auto k_l_ti  = k_l_ex
                      ? FSys::last_write_time_point(in_local_path)

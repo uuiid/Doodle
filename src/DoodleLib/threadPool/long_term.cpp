@@ -20,6 +20,7 @@ long_term::long_term() : sig_progress(),
     if (p_fulfil)
       p_str = in_str;
   });
+
 }
 
 std::double_t long_term::step(std::double_t in_) {

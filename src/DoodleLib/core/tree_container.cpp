@@ -203,7 +203,7 @@ tree_node::iterator tree_node::erase_sig(const MetadataPtr& in_ptr) {
   }
 }
 tree_node::iterator tree_node::insert(const MetadataPtr& in_ptr) {
-  auto k_ptr = make_this(this, in_ptr);
+  auto k_ptr = make_this_shared(this, in_ptr);
   return insert(k_ptr, false);
 }
 
@@ -215,7 +215,7 @@ tree_node::iterator tree_node::insert_sig(const tree_node_ptr& in_) {
 }
 
 tree_node::iterator tree_node::insert_sig(const MetadataPtr& in_ptr) {
-  auto k_ptr = make_this(this, in_ptr);
+  auto k_ptr = make_this_shared(this, in_ptr);
   p_sig->sig_begin_insert(k_ptr);
   auto k_i = insert(k_ptr, true);
   p_sig->sig_insert(*k_i);

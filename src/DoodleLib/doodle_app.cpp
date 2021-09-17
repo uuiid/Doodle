@@ -158,8 +158,7 @@ doodle_app::doodle_app()
                   nullptr,
                   _T("ImGui Example"),
                   nullptr},
-      p_done(false),
-      p_fun_list() {
+      p_done(false) {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassEx(&p_win_class);

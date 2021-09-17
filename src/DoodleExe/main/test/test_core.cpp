@@ -22,21 +22,21 @@ TEST_CASE("core pinyi", "[fun][pingyin]") {
 }
 
 TEST_CASE("core fmt", "[fun][fmt]") {
-  auto wstr = fmt::format(L"11{}", std::wstring{L"test"});
-  REQUIRE(wstr == L"11test");
-#if defined ( _WIN32 )
-  const auto k_string = std::wstring{L"/还会"};
-  wstr                = fmt::format(L"{}", doodle::FSys::path{k_string});
-  REQUIRE(wstr == std::wstring{LR"("还会")"});
-#elif defined ( __linux__ )
-  const auto k_string = std::string{"/还会"};
-  auto strl                = fmt::format("{}", doodle::FSys::path{k_string});
-  REQUIRE(strl == std::string{R"("/还会")"});
-#endif
-  auto str = fmt::format("{:04d}", 2);
-  REQUIRE(str == "0002");
-  str = fmt::format("{}", doodle::FSys::path{"test"});
-  REQUIRE(str == R"("test")");
+//  auto wstr = fmt::format(L"11{}", std::wstring{L"test"});
+//  REQUIRE(wstr == L"11test");
+//#if defined ( _WIN32 )
+//  const auto k_string = std::wstring{L"/还会"};
+//  wstr                = fmt::format(L"{}", doodle::FSys::path{k_string});
+//  REQUIRE(wstr == std::wstring{LR"("还会")"});
+//#elif defined ( __linux__ )
+//  const auto k_string = std::string{"/还会"};
+//  auto strl                = fmt::format("{}", doodle::FSys::path{k_string});
+//  REQUIRE(strl == std::string{R"("/还会")"});
+//#endif
+//  auto str = fmt::format("{:04d}", 2);
+//  REQUIRE(str == "0002");
+//  str = fmt::format("{}", doodle::FSys::path{"test"});
+//  REQUIRE(str == R"("test")");
 }
 
 TEST_CASE("core path ", "[fun][path]") {

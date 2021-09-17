@@ -12,10 +12,11 @@
 namespace doodle {
 using win_handle = HWND;
 using win_class  = WNDCLASSEX;
+
+class long_time_tasks_widget;
 class DOODLELIB_API doodle_app : public details::no_copy {
   win_handle p_hwnd;
   win_class p_win_class;
-  std::set<std::shared_ptr<std::function<bool()>>> p_fun_list;
   doodle_app();
   static doodle_app* self;
 
@@ -27,6 +28,9 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   static std::unique_ptr<doodle_app> make_this();
   static doodle_app* Get();
   boost::signals2::signal<void()> main_loop;
+
+  std::shared_ptr<long_time_tasks_widget> long_task_widgets;
+
   std::int32_t run();
   ~doodle_app();
 };

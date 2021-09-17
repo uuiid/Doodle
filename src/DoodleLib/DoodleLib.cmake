@@ -34,6 +34,7 @@ set(
     Gui/action/project_action.h
     Gui/widgets/assets_widget.h
     Gui/widgets/attribute_widgets.h
+    Gui/widgets/long_time_tasks_widget.h
     Gui/widgets/project_widget.h
     libWarp/BoostUuidWarp.h
     libWarp/CerealWarp.h
@@ -50,6 +51,7 @@ set(
     libWarp/protobuf_warp.h
     libWarp/protobuf_warp_cpp.h
     libWarp/sqlppWarp.h
+    libWarp/std_warp.h
     libWarp/wxWidgetWarp.h
     Logger/Logger.h
     Logger/LoggerTemplate.h
@@ -113,6 +115,7 @@ set(
     Gui/action/project_action.cpp
     Gui/widgets/assets_widget.cpp
     Gui/widgets/attribute_widgets.cpp
+    Gui/widgets/long_time_tasks_widget.cpp
     Gui/widgets/project_widget.cpp
     Logger/Logger.cpp
     Metadata/Assets.cpp
