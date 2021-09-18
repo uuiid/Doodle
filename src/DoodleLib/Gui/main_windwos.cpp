@@ -20,7 +20,7 @@ main_windows::main_windows()
       p_debug_show(std::make_shared<bool>(false)),
       p_about_show(std::make_shared<bool>(false)),
       p_style_show(std::make_shared<bool>(false)),
-      p_long_task_show(std::make_shared<bool>(false)),
+      p_long_task_show(std::make_shared<bool>(true)),
       p_title(fmt::format(
           u8"doodle {}.{}.{}.{}",
           Doodle_VERSION_MAJOR,

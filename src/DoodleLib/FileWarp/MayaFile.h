@@ -12,7 +12,7 @@ class DOODLELIB_API MayaFile
   static void write_maya_tool_file();
   [[nodiscard]] static FSys::path warit_tmp_file(const std::string& in_string);
   bool checkFile();
-  bool run_comm(const std::wstring& in_com, const long_term_ptr& in_term) const;
+  static bool run_comm(const std::wstring& in_com, const long_term_ptr& in_term) ;
 
  public:
   class DOODLELIB_API qcloth_arg {

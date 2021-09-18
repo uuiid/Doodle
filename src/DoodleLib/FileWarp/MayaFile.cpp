@@ -53,7 +53,7 @@ bool MayaFile::checkFile() {
   return true;
 }
 
-bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term) const {
+bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term) {
   boost::process::ipstream k_in{};
   boost::process::ipstream k_in2{};
   //   boost::process::child k_c{str.str(), boost::process::windows::hide};
@@ -74,9 +74,9 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
                            [&k_c, &k_in, &in_term]() {
                           auto str_r = std::string{};
                           while (k_c.running()) {
-                            if(std::getline(k_in, str_r) && !str_r.empty()) {
-                              in_term->sig_message_result(conv::locale_to_utf<char>(str_r) + "\n", long_term::warning);
-                              in_term->sig_progress(rational_int{1, 10000});
+                            if (std::getline(k_in, str_r) && !str_r.empty()) {
+                              in_term->sig_message_result(conv::to_utf<char>(str_r, "GBK") + "\n", long_term::warning);
+                              in_term->sig_progress(rational_int{1, 5000});
                             }
                           }
                            });
@@ -89,9 +89,9 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
   const static std::wregex fatal_error_en_us{
       LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab])"};
 
-  while (k_c.running() ) {
-    if(std::getline(k_in2, str_r2) && !str_r2.empty()) {
-      auto str = conv::locale_to_utf<char>(str_r2);
+  while (k_c.running()) {
+    if (std::getline(k_in2, str_r2) && !str_r2.empty()) {
+      auto str = conv::to_utf<char>(str_r2, "GBK");
       in_term->sig_message_result(str + "\n", long_term::info);
       auto wstr = conv::utf_to_utf<wchar_t>(str);
       if (std::regex_search(wstr.c_str(), fatal_error_znch) || std::regex_search(wstr.c_str(), fatal_error_en_us)) {
@@ -101,7 +101,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
         boost::process::system(fmt::format("taskkill /F /T /PID {}", k_c.id()));
         in_term->set_state(long_term::fail);
       }
-      in_term->sig_progress(rational_int{1, 10000});
+      in_term->sig_progress(rational_int{1, 5000});
     }
   }
   fun.get();
@@ -145,7 +145,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
         k_term->sig_finished();
         k_term->sig_message_result("导出完成 \n", long_term::warning);
       });
-  k_term->p_list.push_back(std::move(k_fut));
+  k_term->p_list.emplace_back(std::move(k_fut));
   return k_term;
 }
 
@@ -195,7 +195,7 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
         k_term->sig_finished();
         k_term->sig_message_result(fmt::format("完成导出 :{} \n", in_arg->sim_path.generic_string()), long_term::warning);
       });
-  k_term->p_list.push_back(std::move(k_fut));
+  k_term->p_list.emplace_back(std::move(k_fut));
   return k_term;
 }
 

@@ -139,7 +139,7 @@ class camera:
                     ex = False
             if not re.findall("_", cam.name()):
                 ex = False
-            print(cam.fullPath(), ex)
+            print("cam {} is ".format(cam.fullPath(), ex))
             if ex:
                 self.maya_cam = cam.getTransform()
                 print("select cam ", self.maya_cam)
@@ -180,7 +180,6 @@ class camera:
         for cam in pymel.core.listCameras():
             pymel.core.ls(cam)[0].renderable.set(False)
         self.maya_cam.renderable.set(True)
-        # print("maya mel eval lookThroughModelPanel {} modelPanel1;".format(self.maya_cam.fullPath()))
         # pymel.core.mel.eval(
         #     "lookThroughModelPanel {} modelPanel1;".format(self.maya_cam.fullPath()))
         # try:
@@ -278,7 +277,7 @@ class camera:
         self.newCam.setDisplayResolution(True)
         self.newCam.setDisplayGateMask(True)
 
-        print(self.maya_cam.getShape().longName())
+        print("get cam {}.displayGateMaskOpacity attr".format(self.maya_cam.getShape().longName()))
         try:
             pymel.core.mel.eval('setAttr "{}.displayGateMaskOpacity" 1;'.format(
                 self.maya_cam.getShape().longName()))
@@ -319,10 +318,7 @@ class camera:
             str = doodle_work_space.work.getPath() / \
                 doodle_work_space.maya_file.name_not_ex
         self.export(str)
-        try:
-            pass
-        except:
-            print("not export")
+
 
 
 class meateral():
@@ -348,7 +344,7 @@ class meateral():
             else:
                 print("not rename {}".format(self.maya_obj))
         except RuntimeError:
-            pymel.core.warning("not rename {}".format(str(self.name)))
+            print("not rename {}".format(str(self.name)))
 
     def isSurfaceMaterial(self):
         # 获得分类是表面材质
@@ -628,7 +624,7 @@ class cloth_group_file(export_group):
                 k_geo = geometryInfo(obj)
                 k_geo.repair()
             except IndexError:
-                pymel.core.warning("{} not repair".format(str(obj)))
+                print("{} not repair".format(str(obj)))
             # geo_group.append(geometryInfo(obj))
 
         # mat_group = []  # type: list[meateral]
@@ -696,10 +692,6 @@ class cloth_group_file(export_group):
                 dagObjects=True),
             repeat)
 
-    def dgeval(self):
-        for obj in pymel.core.ls("{}:*_cloth".format(self.maya_name_space)):
-            print("dgeval {}".format(str(obj.getShapes()[0].outputMesh)))
-            pymel.core.system.dgeval(obj.getShapes()[0].outputMesh)
 
 
 class fbx_group_file(export_group):
@@ -840,7 +832,7 @@ class analyseFileName():
             except NameError:
                 print("not get episodes and shots")
         else:
-            pymel.core.warning("not get episodes and shots")
+            print("not get episodes and shots")
 
     def path(self):
         # type:()->pymel.core.Path
@@ -873,7 +865,7 @@ class open_file():
         pymel.core.system.newFile(force=True)
         pymel.core.system.openFile(self.file_path)
         if pymel.core.mel.eval("currentTimeUnitToFPS") != 25.0:
-            pymel.core.warning("frame rate is not 25 is {}".format(
+            print("frame rate is not 25 is {}".format(
                 pymel.core.mel.eval("currentTimeUnitToFPS")
             ))
             quit()
