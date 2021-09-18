@@ -46,8 +46,8 @@ class maya_file():
 
     def __str__(self):
         return "maya file path : {} maya name :"\
-              .format(self.abs_path,
-                      self.file_name)
+            .format(self.abs_path,
+                    self.file_name)
 
 
 class maya_workspace():
@@ -74,19 +74,27 @@ class maya_workspace():
     @staticmethod
     def set_workspace_static(path):
         # type: (str)->pymel.util.path
-        k_work = pymel.core.Path(path).dirname() / "workspace.mel" # type: pymel.util.path
+        k_work = pymel.core.Path(path).dirname() / \
+            "workspace.mel"  # type: pymel.util.path
         k_work2 = pymel.core.Path(path) / "workspace.mel"
 
         if k_work.exists():
             pymel.core.system.workspace.open(k_work.dirname())
+            pymel.core.system.workspace.fileRules["cache"] = "cache"
+            pymel.core.system.workspace.fileRules["images"] = "images"
+            pymel.core.system.workspace.fileRules["fileCache"] = "cache/nCache"
             return k_work.dirname()
         elif k_work2.exists():
             pymel.core.system.workspace.open(k_work2.dirname())
+            pymel.core.system.workspace.fileRules["cache"] = "cache"
+            pymel.core.system.workspace.fileRules["images"] = "images"
+            pymel.core.system.workspace.fileRules["fileCache"] = "cache/nCache"
             return k_work2.dirname()
         else:
             pymel.core.system.workspace.open(k_work2.dirname())
             pymel.core.system.workspace.fileRules["cache"] = "cache"
             pymel.core.system.workspace.fileRules["images"] = "images"
+            pymel.core.system.workspace.fileRules["fileCache"] = "cache/nCache"
             pymel.core.system.workspace.save()
             return k_work2.dirname()
 
@@ -217,7 +225,6 @@ class camera:
             # editorPanelName="modelPanel4"
             # offScreen=True
         )
-        print("create move {}".format(out_path))
 
     def export(self, export_path):
 
@@ -310,7 +317,7 @@ class camera:
     def __call__(self, str=None):
         if not str:
             str = doodle_work_space.work.getPath() / \
-                doodle_work_space.maya_file.name_not_ex 
+                doodle_work_space.maya_file.name_not_ex
         self.export(str)
         try:
             pass
@@ -443,7 +450,7 @@ class references_file():
         self.cloth_path = pymel.core.Path()
         self.cloth_path = self.cfx_cloth_path / \
             "{}_cloth{}".format(self.path.namebase, self.path.ext)
-        print("replace_file {}".format(self.cloth_path))
+        print("Speculation file is {}".format(self.cloth_path))
         # if self.path.fnmatch("*[rig].ma"):
         #     self.cloth_path = self.cfx_cloth_path / self.path.name.replace(
         #         "rig", "cloth")
@@ -565,12 +572,18 @@ class cloth_group_file(export_group):
             pymel.core.select(
                 "{}:*{}".format(self.maya_name_space, select_str), replace=True)
             qcloth_obj = pymel.core.selected()[0]
-            path = pymel.core.Path("cache") / doodle_work_space.maya_file.name_not_ex / self.maya_name_space / select_str
+            path = pymel.core.Path(
+                "cache") / doodle_work_space.maya_file.name_not_ex / self.maya_name_space / select_str
             doodle_work_space.work.mkdir(doodle_work_space.work.path / path)
             print(path)
             print(qcloth_obj)
             qcloth_obj.setAttr("cacheFolder", str(path))
             qcloth_obj.setAttr("cacheName", select_str)
+
+    def create_cache(self):
+        for obj in self.cloth_group:
+            for m_attr in obj.getShapes():
+                m_attr.outMesh.evaluate()
 
     def hide_other(self):
         pymel.core.select("{}:*UE4".format(self.maya_name_space))
@@ -756,32 +769,26 @@ class cloth_export():
     def play_move(self):
         global doodle_work_space
         print("create move {} to {}".format(
-            doodle_work_space.raneg.start,
+            1001,
             doodle_work_space.raneg.end))
-        self.cam.create_move()
         self.cam.create_move(
             out_path=doodle_work_space.maya_file.abs_path / "mov",
             start_frame=1001
         )
-        # pymel.core.playbackOptions(maxPlaybackSpeed=0,blockingAnim=True,view="all",loop="once")
-        # pymel.core.play(forward=True)
-        # pymel.core.select(clear=True)
-        # for f in range(
-        #     doodle_work_space.raneg.start,
-        #     doodle_work_space.raneg.end,
-        #         1):
-        #     pymel.core.currentTime(f, update= False)
-        #     for obj in self.qcolth_group:
-        #         obj.dgeval()
-        # self.cam.create_move()
 
     def export_fbx(self):
         for obj in self.qcolth_group:
             obj.export_fbx()
 
+    def creare_cache(self):
+        for i in range(doodle_work_space.raneg.start,doodle_work_space.raneg.end):
+            pymel.core.currentTime(i)
+            for obj in self.qcolth_group:
+                obj.create_cache()
+
     def export_abc(self):
         for obj in self.qcolth_group:
-            obj.export_abc(repeat=True)
+            obj.export_abc(repeat=False)
 
     def save(self, override=False):
         if not override:
@@ -797,24 +804,19 @@ class cloth_export():
     def sim_and_export(self):
         self.set_qcloth_attr()
         self.save(override=True)
-        if len(self.qcolth_group) > 5:
-            self.export_abc()
-            self.play_move()
-        else:
-            self.play_move()
-            self.export_abc()
+        self.creare_cache()
+        self.play_move()
+        self.export_abc()
+
         # self.export_fbx()
 
     def __call__(self):
         self.replace_file()
         self.set_qcloth_attr()
         self.save()
-        if len(self.qcolth_group) > 5:
-            self.export_abc()
-            self.play_move()
-        else:
-            self.play_move()
-            self.export_abc()
+        self.creare_cache()
+        self.play_move()
+        self.export_abc()
 
 
 class analyseFileName():

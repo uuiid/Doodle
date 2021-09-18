@@ -105,6 +105,9 @@
  * @subsection updata_log_3029 版本3.0.29
  * @li maya 解算和导出fbx自动化脚本更新： 解决maya在长时间任务时不会结束的问题
  *
- * @subsection updata_log_3029 版本3.0.29
+ * @subsection updata_log_3031 版本3.0.31
  * @li 更新maya 解算工具: 正确的设置起始帧
+ * 
+ * @subsection updata_log_3032 版本3.0.32
+ * @li 更新maya 解算工具: 更改更加合理的创建缓存的方式
  */
