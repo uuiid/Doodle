@@ -5,6 +5,7 @@
 
 #include <boost/rational.hpp>
 #include <boost/signals2.hpp>
+#include <optional>
 namespace doodle {
 
 using rational_int = boost::rational<std::size_t>;
@@ -19,6 +20,10 @@ class DOODLELIB_API long_term : public details::no_copy {
     success = 1,
     fail    = 2
   };
+  enum level{
+    info,
+    warning,
+  };
 
  private:
   /**
@@ -29,9 +34,13 @@ class DOODLELIB_API long_term : public details::no_copy {
   std::string p_id;
   std::string p_name;
   chrono::sys_time_pos p_time;
+  std::optional<chrono::sys_time_pos> p_end;
   state p_state;
 
-  std::string p_str;
+  std::deque<std::string> p_str;
+  std::deque<std::string> p_log;
+
+
   rational_int p_progress;
   std::mutex _mutex;
   // std::recursive_mutex _mutex;
@@ -65,7 +74,9 @@ class DOODLELIB_API long_term : public details::no_copy {
    * @brief 结果信号
    *
    */
-  boost::signals2::signal<void(const std::string& message)> sig_message_result;
+  boost::signals2::signal<void(const std::string& message, level)> sig_message_result;
+
+
   /**
    * @brief 完成信号, 完成信号要在结果信息之后发出
    *
@@ -74,10 +85,14 @@ class DOODLELIB_API long_term : public details::no_copy {
 
   [[nodiscard]] bool fulfil() const;
   [[nodiscard]] std::string message_result() const;
+  [[nodiscard]] const std::deque<std::string> message() const;
+  [[nodiscard]] const std::deque<std::string> log() const;
 
   [[nodiscard]] rational_int get_progress() const;
   [[nodiscard]] std::double_t get_progress_int() const;
 
+  [[nodiscard]] std::string_view get_state_str() const;
+  [[nodiscard]] std::string get_time_str() const;
   std::vector<std::shared_future<void>> p_list;
 };
 

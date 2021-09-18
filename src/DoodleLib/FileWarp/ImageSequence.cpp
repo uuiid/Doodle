@@ -142,7 +142,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
     }
   }
   p_long_sig->sig_finished();
-  p_long_sig->sig_message_result(fmt::format("成功创建视频 {}", p_out_path));
+  p_long_sig->sig_message_result(fmt::format("成功创建视频 {}\n", p_out_path), long_term::warning);
 }
 
 long_term_ptr ImageSequence::create_video_asyn(const FSys::path &out_file) {

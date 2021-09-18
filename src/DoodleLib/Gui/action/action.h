@@ -72,7 +72,7 @@ class DOODLELIB_API action_base : public details::no_copy {
   void cancel(const std::string& in_str) {
     if (!p_term.expired()) {
       p_term.lock()->sig_finished();
-      p_term.lock()->sig_message_result(in_str);
+      p_term.lock()->sig_message_result(in_str+ "\n",long_term::warning);
     }
   }
 
@@ -96,6 +96,8 @@ class DOODLELIB_API action_base : public details::no_copy {
    *
    * @return long_term_ptr 异步动作的信号类
    */
+
+
   [[nodiscard]] long_term_ptr get_long_term_signal() const;
   [[nodiscard]] long_term_ptr get_long_term_signal();
 };

@@ -172,7 +172,7 @@ TEST_CASE("maya get log", "[maya]") {
   k_arg->qcloth_assets_path = FSys::path{R"(V:\03_Workflow\Assets\CFX\cloth)"};
   k_arg->sim_path           = FSys::path{"F:\\data\\DBXY_163_052.ma"};
   auto k_term               = k_maya.qcloth_sim_file(k_arg);
-  k_term->sig_message_result.connect([](const std::string& in_) { DOODLE_LOG_INFO(in_); });
+  k_term->sig_message_result.connect([](const std::string& in_, long_term::level in_level) { DOODLE_LOG_INFO(in_); });
   k_term->sig_progress.connect([](auto in_) { DOODLE_LOG_INFO(in_); });
   k_term->p_list[0].get();
 }

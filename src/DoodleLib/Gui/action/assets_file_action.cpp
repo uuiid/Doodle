@@ -89,7 +89,7 @@ long_term_ptr actn_assdile_attr_show::run(const MetadataPtr& in_data, const Meta
 
   sig_get_arg();
   k_term->sig_finished();
-  k_term->sig_message_result({});
+  k_term->sig_message_result({},long_term::warning);
   return k_term;
 }
 }  // namespace doodle

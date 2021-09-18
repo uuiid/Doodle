@@ -2,7 +2,6 @@
 
 #include <DoodleConfig.h>
 
-
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
 #include <chrono>
@@ -27,7 +26,6 @@
 #pragma warning(disable : 4275)
 
 #include <DoodleLib/DoodleMacro.h>
-#include <boost/numeric/conversion/cast.hpp>
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/libWarp/CerealWarp.h>
 #include <DoodleLib/libWarp/cmrcWarp.h>
@@ -37,6 +35,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
+#include <boost/numeric/conversion/cast.hpp>
 #include <codecvt>
 #include <stdexcept>
 // namespace fmt {
@@ -165,10 +164,10 @@ using namespace date::literals;
 using namespace std::chrono;
 using namespace date;
 
-using hours_double = duration<std::double_t, std::ratio<3600>>;
-using days_double  = duration<std::double_t, std::ratio<28800>>;
-using sys_time_pos = time_point<system_clock>;
-using local_time_pos = time_point<local_t,seconds>;
+using hours_double   = duration<std::double_t, std::ratio<3600>>;
+using days_double    = duration<std::double_t, std::ratio<28800>>;
+using sys_time_pos   = time_point<system_clock>;
+using local_time_pos = time_point<local_t, seconds>;
 
 /**
  * @brief 判断是否是休息日 周六日
@@ -177,8 +176,8 @@ using local_time_pos = time_point<local_t,seconds>;
  */
 bool is_rest_day(const sys_days &in_days);
 template <class dur>
-std::time_t to_time_t(const time_point<local_t, dur>& in_timePoint){
-    return duration_cast<seconds>(in_timePoint.time_since_epoch()).count();
+std::time_t to_time_t(const time_point<local_t, dur> &in_timePoint) {
+  return duration_cast<seconds>(in_timePoint.time_since_epoch()).count();
 };
 // template <class Clock>
 // bool is_morning_works(const std::chrono::time_point<Clock, typename Clock::duration>& in_time) {
@@ -306,6 +305,10 @@ class VideoSequence;
 class Ue4Project;
 class MayaFile;
 class setting_windows;
+template <class... Args>
+class command_base;
+using command_tool     = command_base<>;
+using command_tool_ptr = std::shared_ptr<command_tool>;
 /**
  * @brief 数据库连接指针
  *
@@ -499,9 +502,8 @@ using ImageSequencePtr = std::shared_ptr<ImageSequence>;
 /**
  * @brief MayaFile 智能共享指针
  */
-using MayaFilePtr = std::shared_ptr<MayaFile>;
+using MayaFilePtr         = std::shared_ptr<MayaFile>;
 using setting_windows_ptr = std::shared_ptr<setting_windows>;
-
 
 using bool_ptr = std::shared_ptr<bool>;
 

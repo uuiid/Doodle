@@ -206,7 +206,7 @@ long_term_ptr trans_file::operator()() {
       DOODLE_LOG_WARN(error.what());
       _term->sig_progress(1);
       _term->sig_finished();
-      _term->sig_message_result(error.what());
+      _term->sig_message_result(error.what(), long_term::warning);
       throw error;
     }
   });
@@ -225,14 +225,16 @@ void down_file::run() {
   if (!k_is_eq) {
     _term->sig_progress(1);
     _term->sig_finished();
-    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
+    _term->sig_message_result(
+        fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path), long_term::warning);
     return;
   }
 
   if ((*k_is_eq)) {
     _term->sig_progress(1);
     _term->sig_finished();
-    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
+    _term->sig_message_result(
+        fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path), long_term::warning);
     return;
   }
 
@@ -265,7 +267,7 @@ void down_file::run() {
   if (!status.ok())
     throw DoodleError{status.error_message()};
   _term->sig_finished();
-  _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
+  _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
 }
 void down_file::wait() {
   _result.get();
@@ -278,14 +280,14 @@ void up_file::run() {
   if (!k_is_eq) {
     _term->sig_progress(1);
     _term->sig_finished();
-    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
+    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
     return;
   }
 
   if (*k_is_eq) {
     _term->sig_progress(1);
     _term->sig_finished();
-    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
+    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
     return;
   }
 
@@ -340,7 +342,7 @@ void up_file::run() {
   if (!status.ok())
     throw DoodleError{status.error_message()};
   _term->sig_finished();
-  _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path));
+  _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
 }
 void up_file::wait() {
   _result.get();

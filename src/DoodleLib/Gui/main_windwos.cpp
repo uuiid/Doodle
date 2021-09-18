@@ -5,9 +5,11 @@
 #include "main_windwos.h"
 
 #include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Gui/action/command.h>
 #include <DoodleLib/Gui/setting_windows.h>
 #include <DoodleLib/Gui/widgets/assets_widget.h>
 #include <DoodleLib/Gui/widgets/attribute_widgets.h>
+#include <DoodleLib/Gui/widgets/long_time_tasks_widget.h>
 #include <DoodleLib/Gui/widgets/project_widget.h>
 #include <DoodleLib/doodle_app.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
@@ -18,7 +20,7 @@ main_windows::main_windows()
       p_debug_show(std::make_shared<bool>(false)),
       p_about_show(std::make_shared<bool>(false)),
       p_style_show(std::make_shared<bool>(false)),
-      p_quit(std::make_shared<bool>(false)),
+      p_long_task_show(std::make_shared<bool>(false)),
       p_title(fmt::format(
           u8"doodle {}.{}.{}.{}",
           Doodle_VERSION_MAJOR,
@@ -28,7 +30,8 @@ main_windows::main_windows()
       p_setting(std::make_shared<setting_windows>()),
       p_prj(std::make_shared<project_widget>()),
       p_ass(std::make_shared<assets_widget>()),
-      p_attr(std::make_shared<attribute_widgets>()) {
+      p_attr(std::make_shared<attribute_widgets>()),
+      p_long_task(std::make_shared<long_time_tasks_widget>()) {
   p_prj->select_change.connect([this](auto in) { p_ass->set_metadata(in); });
   p_ass->select_change.connect([this](auto in) { p_attr->set_metadata(in); });
 }
@@ -42,6 +45,11 @@ void main_windows::frame_render(const bool_ptr& is_show) {
       imgui::ShowStyleEditor();
     };
   }
+  if (*p_long_task_show) {
+    dear::Begin{"后台任务", p_style_show.get()} && [this]() {
+      p_long_task->frame_render();
+    };
+  }
 
   dear::Begin{
       p_title.c_str(),
@@ -50,7 +58,9 @@ void main_windows::frame_render(const bool_ptr& is_show) {
       [this]() {
         dear::MenuBar{} && [this]() {
           dear::Menu{"文件"} && [this]() { this->main_menu_file(); };
-          dear::Menu{"工具"} && [this]() { main_menu_tool(); };
+          dear::Menu{"窗口"} && [this]() { this->main_menu_windows(); };
+          dear::Menu{"编辑"} && [this]() { this->main_menu_edit(); };
+          dear::Menu{"工具"} && [this]() { this->main_menu_tool(); };
         };
         p_prj->frame_render();
         p_ass->frame_render();
@@ -73,16 +83,7 @@ void main_windows::main_menu_tool() {
   if (dear::MenuItem("安装maya插件"))
     toolkit::installMayaPath();
   if (dear::MenuItem("安装ue4插件"))
-    try {
-      toolkit::installUePath(CoreSet::getSet().gettUe4Setting().Path() / "Engine");
-    } catch (const DoodleError& err) {
-      dear::PopupModal{"警告"} && [&err]() {
-        dear::Text(err.what());
-        if (ImGui::Button("OK", ImVec2(120, 0)))
-          ImGui::CloseCurrentPopup();
-      };
-      DOODLE_LOG_WARN(err.what());
-    }
+    toolkit::installUePath(CoreSet::getSet().gettUe4Setting().Path() / "Engine");
 
   if (dear::MenuItem("安装ue4项目插件")) {
     imgui::FileDialog::Instance()->OpenModal(
@@ -105,6 +106,13 @@ void main_windows::main_menu_tool() {
     toolkit::deleteUeCache();
   if (dear::MenuItem("修改ue4缓存位置"))
     toolkit::modifyUeCachePath();
+}
+void main_windows::main_menu_windows() {
+  dear::MenuItem(u8"后台任务", p_long_task_show.get());
+}
+void main_windows::main_menu_edit() {
+  if (dear::MenuItem(u8"导出fbx"))
+    p_long_task->set_tool_widget(std::make_shared<comm_export_fbx>());
 }
 
 }  // namespace doodle

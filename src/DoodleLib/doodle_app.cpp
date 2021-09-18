@@ -240,7 +240,7 @@ std::int32_t doodle_app::run() {
   // ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
   // IM_ASSERT(font != NULL);
   ImGuiIO& io = ImGui::GetIO();
-  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 18.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 13.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
 
   auto k_show = std::make_shared<bool>(true);
   main_windows k_main_windows{};

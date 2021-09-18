@@ -34,6 +34,7 @@
 #include <DoodleLib/Gui/action/actn_up_paths.h>
 #include <DoodleLib/Gui/action/assets_action.h>
 #include <DoodleLib/Gui/action/assets_file_action.h>
+#include <DoodleLib/Gui/action/command.h>
 #include <DoodleLib/Gui/action/project_action.h>
 #include <DoodleLib/Gui/widgets/assets_widget.h>
 #include <DoodleLib/Gui/widgets/attribute_widgets.h>

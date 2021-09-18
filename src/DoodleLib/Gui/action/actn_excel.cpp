@@ -27,7 +27,7 @@ long_term_ptr actn_export_excel::run(const MetadataPtr& in_data, const MetadataP
   auto k_term = get_long_term_signal();
   if (_arg_type.is_cancel || !_arg_type.p_time_range.first || !_arg_type.p_time_range.second) {
     k_term->sig_finished();
-    k_term->sig_message_result({"取消导出"});
+    k_term->sig_message_result({"取消导出\n"},long_term::warning);
   }
   export_excel();
   return k_term;

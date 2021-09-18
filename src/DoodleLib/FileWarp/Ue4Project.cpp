@@ -201,7 +201,7 @@ void Ue4Project::createShotFolder(const std::vector<ShotPtr>& inShotList) {
 
   this->runPythonScript(k_tmp_file_path);
   p_term->sig_finished();
-  p_term->sig_message_result("完成添加");
+  p_term->sig_message_result("完成添加 \n",long_term::warning);
 }
 
 long_term_ptr Ue4Project::create_shot_folder_asyn(const std::vector<ShotPtr>& inShotList) {
@@ -242,7 +242,7 @@ long_term_ptr Ue4Project::import_files_asyn(const std::vector<FSys::path>& in_pa
       run_cmd_scipt(fmt::format("-run=DoodleAssCreate -path={}", path));
       k_term->sig_progress(rational_int{1, 2});
       k_term->sig_finished();
-      k_term->sig_message_result(fmt::format("项目 {} 完成导入", p_ue_Project_path));
+      k_term->sig_message_result(fmt::format("项目 {} 完成导入 \n", p_ue_Project_path),long_term::warning);
     };
 
     k_term->p_list.emplace_back(DoodleLib::Get().get_thread_pool()->enqueue(k_fun));

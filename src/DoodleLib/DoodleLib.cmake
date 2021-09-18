@@ -31,6 +31,7 @@ set(
     Gui/action/actn_up_paths.h
     Gui/action/assets_action.h
     Gui/action/assets_file_action.h
+    Gui/action/command.h
     Gui/action/project_action.h
     Gui/widgets/assets_widget.h
     Gui/widgets/attribute_widgets.h
@@ -112,6 +113,7 @@ set(
     Gui/action/actn_up_paths.cpp
     Gui/action/assets_action.cpp
     Gui/action/assets_file_action.cpp
+    Gui/action/command.cpp
     Gui/action/project_action.cpp
     Gui/widgets/assets_widget.cpp
     Gui/widgets/attribute_widgets.cpp

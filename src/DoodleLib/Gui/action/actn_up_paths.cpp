@@ -27,7 +27,7 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
   _arg_type   = sig_get_arg().value();
   if (_arg_type.is_cancel) {
     k_term->sig_finished();
-    k_term->sig_message_result("取消上传");
+    k_term->sig_message_result("取消上传\n",long_term::warning);
     return k_term;
   }
 

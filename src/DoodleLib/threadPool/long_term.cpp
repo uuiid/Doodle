@@ -3,13 +3,14 @@
 #include <DoodleLib/core/DoodleLib.h>
 
 #include <boost/numeric/conversion/cast.hpp>
-
+#include <magic_enum.hpp>
 namespace doodle {
 long_term::long_term() : sig_progress(),
                          sig_message_result(),
                          sig_finished(),
                          p_fulfil(false),
                          p_str(),
+                         p_log(),
                          p_progress(0),
                          _mutex(),
                          p_list(),
@@ -17,15 +18,36 @@ long_term::long_term() : sig_progress(),
                          p_id(),
                          p_name(),
                          p_time(chrono::system_clock::now()),
+                         p_end(),
                          p_state(state::none_) {
   sig_finished.connect([this]() {
     std::lock_guard k_guard{_mutex};
-    p_fulfil = true;
+    p_fulfil   = true;
+    p_progress = 1;
+    p_end      = chrono::system_clock::now();
+    p_state    = success;
   });
-  sig_message_result.connect([this](const std::string& in_str) {
-    if (p_fulfil)
-      p_str = in_str;
+  sig_message_result.connect(
+      [this](const std::string& in_str, level in_level) {
+        {
+          std::lock_guard k_guard{_mutex};
+          switch (in_level) {
+            case warning: {
+              p_str.push_back(in_str);
+            }
+            case info: {
+              p_log.push_back(in_str);
+            } break;
+            default:
+              break;
+          }
+        }
+        DOODLE_LOG_INFO(in_str);
+      });
+  sig_progress.connect([this](rational_int in) {
+    step(in);
   });
+
   p_id = fmt::format("none###{}", fmt::ptr(this));
 }
 
@@ -40,13 +62,16 @@ bool long_term::fulfil() const {
 }
 
 std::string long_term::message_result() const {
-  return p_str;
+  return p_str.empty() ? std::string{} : p_str.back();
 }
 void long_term::forward_sig(const long_term_ptr& in_forward) {
   p_child.push_back(in_forward);
   in_forward->sig_progress.connect([this](rational_int in_pro) { sig_progress(in_pro); });
   in_forward->sig_finished.connect([this]() { sig_finished(); });
-  in_forward->sig_message_result.connect([this](const std::string& in_str) { sig_message_result(in_str); });
+  in_forward->sig_message_result.connect(
+      [this](const std::string& in_str, level in_level) {
+        sig_message_result(in_str, in_level);
+      });
 }
 
 void long_term::forward_sig(const std::vector<long_term_ptr>& in_forward) {
@@ -58,8 +83,8 @@ void long_term::forward_sig(const std::vector<long_term_ptr>& in_forward) {
                                 rational_int in_) {
       sig_progress(in_ / k_size);
     });
-    i->sig_message_result.connect([this](const std::string& str) {
-      sig_message_result(str);
+    i->sig_message_result.connect([this](const std::string& str, level in_level) {
+      sig_message_result(str, in_level);
     });
     i->sig_finished.connect([this, k_size]() {
       auto k_is_fulfil = std::all_of(p_child.begin(), p_child.end(), [](const long_term_ptr& in_term) {
@@ -105,5 +130,23 @@ rational_int long_term::get_progress() const {
 }
 std::double_t long_term::get_progress_int() const {
   return boost::rational_cast<std::double_t>(p_progress * rational_int{100});
+}
+std::string_view long_term::get_state_str() const {
+  return magic_enum::enum_name(p_state);
+}
+std::string long_term::get_time_str() const {
+  if (p_end) {
+    return chrono::format("%H:%M:%S",
+                          chrono::floor<chrono::seconds>(*p_end - p_time));
+  } else {
+    return chrono::format("%H:%M:%S",
+                          chrono::floor<chrono::seconds>(chrono::system_clock::now() - p_time));
+  }
+}
+const std::deque<std::string> long_term::message() const {
+  return p_str;
+}
+const std::deque<std::string> long_term::log() const {
+  return p_log;
 }
 }  // namespace doodle

@@ -62,7 +62,7 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
     }
   }
 
-  p_term->sig_message_result(fmt::format("完成视频 {}", k_out_path));
+  p_term->sig_message_result(fmt::format("完成视频 {} \n", k_out_path),long_term::warning);
   p_term->sig_finished();
 }
 
