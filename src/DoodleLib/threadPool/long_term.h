@@ -18,11 +18,13 @@ class DOODLELIB_API long_term : public details::no_copy {
   enum state {
     none_   = 0,
     success = 1,
-    fail    = 2
+    fail    = 2,
+    wait    = 3,
+    run     = 4
   };
-  enum level{
-    info,
-    warning,
+  enum level {
+    info    = 0,
+    warning = 1,
   };
 
  private:
@@ -39,7 +41,6 @@ class DOODLELIB_API long_term : public details::no_copy {
 
   std::deque<std::string> p_str;
   std::deque<std::string> p_log;
-
 
   rational_int p_progress;
   std::mutex _mutex;
@@ -76,12 +77,14 @@ class DOODLELIB_API long_term : public details::no_copy {
    */
   boost::signals2::signal<void(const std::string& message, level)> sig_message_result;
 
-
   /**
    * @brief 完成信号, 完成信号要在结果信息之后发出
    *
    */
   boost::signals2::signal<void()> sig_finished;
+
+  void start();
+  void set_state(long_term::state in_state);
 
   [[nodiscard]] bool fulfil() const;
   [[nodiscard]] std::string message_result() const;

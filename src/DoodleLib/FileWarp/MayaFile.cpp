@@ -73,33 +73,38 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
   auto fun    = std::async(std::launch::async,
                            [&k_c, &k_in, &in_term]() {
                           auto str_r = std::string{};
-                          while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
-                            in_term->sig_message_result(boost::locale::conv::to_utf<char>(str_r, "GB18030") + "\n", long_term::warning);
-                            in_term->sig_progress(rational_int{1, 1000});
+                          while (k_c.running()) {
+                            if(std::getline(k_in, str_r) && !str_r.empty()) {
+                              in_term->sig_message_result(conv::locale_to_utf<char>(str_r) + "\n", long_term::warning);
+                              in_term->sig_progress(rational_int{1, 10000});
+                            }
                           }
                            });
   auto str_r2 = std::string{};
   //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
   const static std::wregex fatal_error_znch{
-      LR"(致命错误.尝试在 C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.ma 中保存)"};
+      LR"(致命错误.尝试在 C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab] 中保存)"};
 
   // Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
   const static std::wregex fatal_error_en_us{
-      LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.ma)"};
+      LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab])"};
 
-  while (k_c.running() && std::getline(k_in2, str_r2) && !str_r2.empty()) {
-    auto str = boost::locale::conv::to_utf<char>(str_r2, "GB18030");
-    in_term->sig_message_result(str+ "\n", long_term::info);
-    auto wstr = boost::locale::conv::utf_to_utf<wchar_t>(str);
-    if (std::regex_search(wstr.c_str(), fatal_error_znch) || std::regex_search(wstr.c_str(), fatal_error_en_us)) {
-      DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算命令是 {}", boost::locale::conv::utf_to_utf<char>(in_com));
-      boost::process::system(fmt::format("taskkill /F /T /PID {}", k_c.id()));
+  while (k_c.running() ) {
+    if(std::getline(k_in2, str_r2) && !str_r2.empty()) {
+      auto str = conv::locale_to_utf<char>(str_r2);
+      in_term->sig_message_result(str + "\n", long_term::info);
+      auto wstr = conv::utf_to_utf<wchar_t>(str);
+      if (std::regex_search(wstr.c_str(), fatal_error_znch) || std::regex_search(wstr.c_str(), fatal_error_en_us)) {
+        auto info_str = fmt::format("检测到maya结束崩溃,结束进程: 解算命令是 {}", conv::utf_to_utf<char>(in_com));
+        DOODLE_LOG_WARN(info_str);
+        in_term->sig_message_result(info_str, long_term::warning);
+        boost::process::system(fmt::format("taskkill /F /T /PID {}", k_c.id()));
+        in_term->set_state(long_term::fail);
+      }
+      in_term->sig_progress(rational_int{1, 10000});
     }
-    in_term->sig_progress(rational_int{1, 100});
   }
-  k_c.wait();
   fun.get();
-
   return true;
 }
 
@@ -108,13 +113,14 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
 
   if (!FSys::exists(file_path)) {
     k_term->sig_finished();
-    k_term->sig_message_result("不存在文件 \n",long_term::warning);
+    k_term->sig_message_result("不存在文件 \n", long_term::warning);
     return k_term;
   }
   auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue(
       [self = shared_from_this(), k_term, file_path]() {
+        k_term->start();
         write_maya_tool_file();
-        k_term->sig_progress(rational_int{1, 10});
+        k_term->sig_progress(rational_int{1, 40});
         //生成导出文件
         auto str_script = fmt::format(
             "# -*- coding: utf-8 -*-\n"
@@ -124,23 +130,20 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
             "k_f.get_fbx_export()()",
             file_path.generic_string());
         auto run_path = warit_tmp_file(str_script);
-        k_term->sig_progress(rational_int{1, 10});
+        k_term->sig_progress(rational_int{1, 40});
 
         //生成命令
         auto run_com = fmt::format(
             R"("{}/mayapy.exe" {})",
             self->p_path.generic_string(),
             run_path.generic_string());
-        k_term->sig_progress(rational_int{1, 10});
+        k_term->sig_progress(rational_int{1, 40});
 
         self->run_comm(conv::utf_to_utf<wchar_t>(run_com), k_term);
 
-        k_term->sig_progress(rational_int{1, 60});
-        FSys::remove(run_path);
-
-        k_term->sig_progress(rational_int{1, 10});
+        k_term->sig_progress(rational_int{1, 40});
         k_term->sig_finished();
-        k_term->sig_message_result("导出完成 \n",long_term::warning);
+        k_term->sig_message_result("导出完成 \n", long_term::warning);
       });
   k_term->p_list.push_back(std::move(k_fut));
   return k_term;
@@ -155,15 +158,16 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
 
   if (!FSys::exists(in_arg->sim_path)) {
     k_term->sig_finished();
-    k_term->sig_message_result("不存在文件 \n",long_term::warning);
+    k_term->sig_message_result("不存在文件 \n", long_term::warning);
     return k_term;
   }
 
   auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue(
       [in_arg, k_term, self = shared_from_this()]() {
+        k_term->start();
         // 写入文件
         write_maya_tool_file();
-        k_term->sig_progress(rational_int{1, 10});
+        k_term->sig_progress(rational_int{1, 40});
 
         auto str_script = fmt::format(
             "# -*- coding: utf-8 -*-\n"
@@ -178,18 +182,18 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
           str_script.append("sim()\n");
 
         auto run_path = warit_tmp_file(str_script);
-        k_term->sig_progress(rational_int{1, 10});
+        k_term->sig_progress(rational_int{1, 40});
         //生成命令
         auto run_com = fmt::format(
             R"("{}/mayapy.exe" {})",
             self->p_path.generic_string(),
             run_path.generic_string());
 
-        k_term->sig_progress(rational_int{1, 10});
+        k_term->sig_progress(rational_int{1, 40});
         self->run_comm(conv::utf_to_utf<wchar_t>(run_com), k_term);
-        k_term->sig_progress(rational_int{1, 70});
+        k_term->sig_progress(rational_int{1, 40});
         k_term->sig_finished();
-        k_term->sig_message_result(fmt::format("完成导出 :{} \n", in_arg->sim_path.generic_string()),long_term::warning);
+        k_term->sig_message_result(fmt::format("完成导出 :{} \n", in_arg->sim_path.generic_string()), long_term::warning);
       });
   k_term->p_list.push_back(std::move(k_fut));
   return k_term;

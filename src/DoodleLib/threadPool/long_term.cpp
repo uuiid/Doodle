@@ -19,7 +19,7 @@ long_term::long_term() : sig_progress(),
                          p_name(),
                          p_time(chrono::system_clock::now()),
                          p_end(),
-                         p_state(state::none_) {
+                         p_state(state::wait) {
   sig_finished.connect([this]() {
     std::lock_guard k_guard{_mutex};
     p_fulfil   = true;
@@ -135,6 +135,9 @@ std::string_view long_term::get_state_str() const {
   return magic_enum::enum_name(p_state);
 }
 std::string long_term::get_time_str() const {
+  if(p_state == wait || p_state == none_)
+    return {"..."};
+
   if (p_end) {
     return chrono::format("%H:%M:%S",
                           chrono::floor<chrono::seconds>(*p_end - p_time));
@@ -148,5 +151,12 @@ const std::deque<std::string> long_term::message() const {
 }
 const std::deque<std::string> long_term::log() const {
   return p_log;
+}
+void long_term::start(){
+  p_time = chrono::system_clock::now();
+  p_state = run;
+}
+void long_term::set_state(long_term::state in_state){
+  p_state = in_state;
 }
 }  // namespace doodle

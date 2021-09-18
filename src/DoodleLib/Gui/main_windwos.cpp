@@ -62,6 +62,9 @@ void main_windows::frame_render(const bool_ptr& is_show) {
           dear::Menu{"编辑"} && [this]() { this->main_menu_edit(); };
           dear::Menu{"工具"} && [this]() { this->main_menu_tool(); };
         };
+#ifndef NDEBUG
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+#endif
         p_prj->frame_render();
         p_ass->frame_render();
         //        imgui::SameLine();

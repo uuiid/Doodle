@@ -240,7 +240,7 @@ std::int32_t doodle_app::run() {
   // ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
   // IM_ASSERT(font != NULL);
   ImGuiIO& io = ImGui::GetIO();
-  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 13.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
 
   auto k_show = std::make_shared<bool>(true);
   main_windows k_main_windows{};
@@ -294,49 +294,7 @@ std::int32_t doodle_app::run() {
         ImGui::CloseCurrentPopup();
       }
     };
-    {
-      static float f     = 0.0f;
-      static int counter = 0;
 
-      ImGui::Begin("Hello, world!");  // Create a window called "Hello, world!" and append into it.
-
-      ImGui::Text("This is some useful text.");           // Display some text (you can use a format strings too)
-      ImGui::Checkbox("Demo Window", &show_demo_window);  // Edit bools storing our window open/close state
-      ImGui::Checkbox("Another Window", &show_another_window);
-
-      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);             // Edit 1 float using a slider from 0.0f to 1.0f
-      ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
-
-      if (ImGui::Button("Button"))  // Buttons return true when clicked (most widgets return true when edited/activated)
-        counter++;
-      ImGui::SameLine();
-      ImGui::Text("counter = %d", counter);
-
-      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-      ImGui::End();
-    }
-
-    {
-      static float f     = 0.0f;
-      static int counter = 0;
-
-      ImGui::Begin("Hello, world!2");  // Create a window called "Hello, world!" and append into it.
-
-      ImGui::Text("This is some useful text.");           // Display some text (you can use a format strings too)
-      ImGui::Checkbox("Demo Window", &show_demo_window);  // Edit bools storing our window open/close state
-      ImGui::Checkbox("Another Window", &show_another_window);
-
-      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);             // Edit 1 float using a slider from 0.0f to 1.0f
-      ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
-
-      if (ImGui::Button("Button"))  // Buttons return true when clicked (most widgets return true when edited/activated)
-        counter++;
-      ImGui::SameLine();
-      ImGui::Text("counter = %d", counter);
-
-      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-      ImGui::End();
-    }
     // Rendering
     ImGui::Render();
     const float clear_color_with_alpha[4] = {clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w};
