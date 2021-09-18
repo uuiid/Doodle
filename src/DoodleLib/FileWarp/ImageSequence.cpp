@@ -95,7 +95,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
     auto k_image_resized = cv::Mat{};
     auto k_clone         = cv::Mat{};
 
-    auto k_size_len = boost::numeric_cast<float>(p_paths.size());
+    auto k_size_len = p_paths.size();
 
     //排序图片
     std::sort(p_paths.begin(), p_paths.end(),
@@ -136,7 +136,7 @@ void ImageSequence::createVideoFile(const FSys::path &out_file) {
                     cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
       }
 
-      p_long_sig->sig_progress(boost::numeric_cast<std::double_t>((1 / k_size_len)));
+      p_long_sig->sig_progress(rational_int{1, k_size_len});
 
       video << k_image_resized;
     }

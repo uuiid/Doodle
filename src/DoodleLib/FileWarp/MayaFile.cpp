@@ -110,7 +110,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
                           auto str_r = std::string{};
                           while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
                             in_term->sig_message_result(boost::locale::conv::to_utf<char>(str_r, "GB18030"));
-                            in_term->sig_progress(0.001);
+                            in_term->sig_progress(rational_int{1,1000});
                           }
                            });
   auto str_r2 = std::string{};
@@ -130,7 +130,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
       DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算命令是 {}", boost::locale::conv::utf_to_utf<char>(in_com));
       boost::process::system(fmt::format("taskkill /F /T /PID {}", k_c.id()));
     }
-    in_term->sig_progress(0.001);
+    in_term->sig_progress(rational_int{1,100});
   }
   k_c.wait();
   fun.get();
@@ -154,7 +154,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
   auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue(
       [this, k_term, file_path, k_export_path]() {
         write_maya_tool_file();
-        k_term->sig_progress(0.1);
+        k_term->sig_progress(rational_int{1,10});
         //生成导出文件
         auto str_script = fmt::format(
             "# -*- coding: utf-8 -*-\n"
@@ -164,22 +164,22 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
             "k_f.get_fbx_export()()",
             file_path.generic_string());
         auto run_path = warit_tmp_file(str_script);
-        k_term->sig_progress(0.1);
+        k_term->sig_progress(rational_int{1,10});
 
         //生成命令
         auto run_com = fmt::format(
             R"("{}/mayapy.exe" {})",
             p_path.generic_string(),
             run_path.generic_string());
-        k_term->sig_progress(0.1);
+        k_term->sig_progress(rational_int{1,10});
 
         run_comm(conv::utf_to_utf<wchar_t>(run_com), k_term);
 
-        k_term->sig_progress(0.6);
+        k_term->sig_progress(rational_int{1,60});
         FSys::remove(run_path);
         FSys::copy_file(file_path, k_export_path / file_path.filename(), FSys::copy_options::overwrite_existing);
 
-        k_term->sig_progress(0.1);
+        k_term->sig_progress(rational_int{1,10});
         k_term->sig_finished();
         k_term->sig_message_result("导出完成");
       });
@@ -205,7 +205,7 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
       [in_arg, k_term, this]() {
         // 写入文件
         write_maya_tool_file();
-        k_term->sig_progress(0.1);
+        k_term->sig_progress(rational_int{1,10});
 
         auto str_script = fmt::format(
             "# -*- coding: utf-8 -*-\n"
@@ -220,16 +220,16 @@ long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
           str_script.append("sim()\n");
 
         auto run_path = warit_tmp_file(str_script);
-        k_term->sig_progress(0.1);
+        k_term->sig_progress(rational_int{1,10});
         //生成命令
         auto run_com = fmt::format(
             R"("{}/mayapy.exe" {})",
             p_path.generic_string(),
             run_path.generic_string());
 
-        k_term->sig_progress(0.1);
+        k_term->sig_progress(rational_int{1,10});
         run_comm(conv::utf_to_utf<wchar_t>(run_com), k_term);
-        k_term->sig_progress(0.7);
+        k_term->sig_progress(rational_int{1,70});
         k_term->sig_finished();
         k_term->sig_message_result(fmt::format("完成导出 :{}", in_arg->sim_path.generic_string()));
       });

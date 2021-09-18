@@ -7,7 +7,7 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 
-using rational_int = boost::rational<std::uint64_t>;
+using rational_int = boost::rational<std::size_t>;
 /**
  * @brief 长时间任务时， 使用这个类进行通知；
  *
@@ -41,7 +41,7 @@ class DOODLELIB_API long_term : public details::no_copy {
   long_term();
   virtual ~long_term();
 
-  long_term_ptr make_this_shared();
+  static long_term_ptr make_this_shared();
 
   std::string& get_name();
   void set_name(const std::string& in_string);

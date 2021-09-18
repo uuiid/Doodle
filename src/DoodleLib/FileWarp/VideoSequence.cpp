@@ -37,7 +37,7 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
   auto k_image         = cv::Mat{};
   auto k_image_resized = cv::Mat{};
   const static cv::Size k_size{1280, 720};
-  const auto k_len = boost::numeric_cast<float>(p_paths.size());
+  const auto k_len = p_paths.size();
   // 这里开始排序
   std::sort(p_paths.begin(), p_paths.end(),
             [](const FSys::path& k_l, const FSys::path& k_r) { return k_l.stem() < k_r.stem(); });
@@ -45,17 +45,17 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
   for (const auto& path : p_paths) {
     if (k_video_input.open(path.generic_string())) {
       //获得总帧数
-      auto k_frame_count = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT);
+      std::size_t k_frame_count = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT);
 
       while (k_video_input.read(k_image)) {
-        auto k_frame = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
+        std::size_t k_frame = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
         if (k_image.cols != 1280 || k_image.rows != 720)
           cv::resize(k_image, k_image_resized, k_size);
         else
           k_image_resized = k_image;
 
         k_video_out << k_image_resized;
-        p_term->sig_progress((std::double_t)1 / k_frame_count / k_len);
+        p_term->sig_progress(rational_int{1,k_frame_count * k_len} );
       }
     } else {
       throw DoodleError("不支持的格式");

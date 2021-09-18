@@ -251,13 +251,13 @@ void down_file::run() {
   k_in_info.set_path(_param->server_path.generic_string());
   auto k_out = _self->p_stub->Download(&k_context, k_in_info);
 
-  const std::double_t k_num2{CoreSet::getBlockSize() > k_sz
-                                 ? 1
-                                 : (boost::numeric_cast<std::double_t>(CoreSet::getBlockSize()) / boost::numeric_cast<std::double_t>(k_sz))};
+  const std::size_t k_num2{CoreSet::getBlockSize() > k_sz
+                               ? 1
+                               : (CoreSet::getBlockSize() / k_sz)};
   while (k_out->Read(&k_out_info)) {
     auto& str = k_out_info.data().value();
     k_file.write(str.data(), str.size());
-    _term->sig_progress(k_num2);
+    _term->sig_progress(rational_int{1, k_num2});
   }
 
   auto status = k_out->Finish();
@@ -314,7 +314,7 @@ void up_file::run() {
   k_in->Write(k_in_info);
 
   auto s_size = CoreSet::getBlockSize();
-  const std::double_t k_num2{s_size > k_sz ? 1 : (s_size / boost::numeric_cast<std::double_t>(k_sz))};
+  const std::size_t k_num2{s_size > k_sz ? 1 : (s_size / k_sz)};
   FSys::ifstream k_file{_param->local_path, std::ios::in | std::ios::binary};
   if (!k_file)
     throw DoodleError{"not read file"};
@@ -330,7 +330,7 @@ void up_file::run() {
     }
 
     k_in_info.mutable_data()->set_value(std::move(k_value));
-    _term->sig_progress(k_num2);
+    _term->sig_progress(rational_int(k_num2));
     if (!k_in->Write(k_in_info))
       throw DoodleError{"write stream errors"};
   }
@@ -362,8 +362,8 @@ void down_dir::run() {
   }
 
   std::vector<long_term_ptr> k_l_list{};
-  std::transform(_down_list.begin(),  _down_list.end(),std::back_inserter(k_l_list),
-                 [](const trans_file_ptr& in_){return  in_->get_term();});
+  std::transform(_down_list.begin(), _down_list.end(), std::back_inserter(k_l_list),
+                 [](const trans_file_ptr& in_) { return in_->get_term(); });
   _term->forward_sig(k_l_list);
 
   for (auto& k_i : _down_list) {
@@ -430,8 +430,8 @@ void up_dir::run() {
   }
 
   std::vector<long_term_ptr> k_l_list{};
-  std::transform(_up_list.begin(),  _up_list.end(),std::back_inserter(k_l_list),
-                 [](const trans_file_ptr& in_){return  in_->get_term();});
+  std::transform(_up_list.begin(), _up_list.end(), std::back_inserter(k_l_list),
+                 [](const trans_file_ptr& in_) { return in_->get_term(); });
   _term->forward_sig(k_l_list);
 
   for (auto& k_i : _up_list) {
@@ -483,8 +483,8 @@ void trans_files::wait() {
 }
 void trans_files::run() {
   std::vector<long_term_ptr> k_l_list{};
-  std::transform(_list.begin(),  _list.end(),std::back_inserter(k_l_list),
-                 [](const trans_file_ptr& in_){return  in_->get_term();});
+  std::transform(_list.begin(), _list.end(), std::back_inserter(k_l_list),
+                 [](const trans_file_ptr& in_) { return in_->get_term(); });
   _term->forward_sig(k_l_list);
 
   for (auto& k_i : _list) {

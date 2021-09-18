@@ -232,15 +232,15 @@ long_term_ptr Ue4Project::import_files_asyn(const std::vector<FSys::path>& in_pa
         k_stting.fbx_skeleton_file_name = find_ue4_skeleton(i);
       } else if (i.extension() == ".abc") {
         k_stting.p_import_type = import_type::Abc;
-        auto [k_s, k_end]    = FSys::find_path_frame(i);
-        k_stting.end_frame   = k_end;
-        k_stting.start_frame = k_s;
+        auto [k_s, k_end]      = FSys::find_path_frame(i);
+        k_stting.end_frame     = k_end;
+        k_stting.start_frame   = k_s;
       }
       k_root    = k_stting;
       auto path = FSys::write_tmp_file("UE4", k_root.dump(), ".json");
-      k_term->sig_progress(0.5);
+      k_term->sig_progress(rational_int{1, 2});
       run_cmd_scipt(fmt::format("-run=DoodleAssCreate -path={}", path));
-      k_term->sig_progress(0.5);
+      k_term->sig_progress(rational_int{1, 2});
       k_term->sig_finished();
       k_term->sig_message_result(fmt::format("项目 {} 完成导入", p_ue_Project_path));
     };

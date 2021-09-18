@@ -3,8 +3,8 @@
 //
 
 #include <DoodleLib/DoodleLib.h>
-#if defined ( _WIN32 )
-#elif defined ( __linux__ )
+#if defined(_WIN32)
+#elif defined(__linux__)
 #include <sys/stat.h>
 #endif
 #include <catch.hpp>
@@ -22,35 +22,34 @@ TEST_CASE("core pinyi", "[fun][pingyin]") {
 }
 
 TEST_CASE("core fmt", "[fun][fmt]") {
-//  auto wstr = fmt::format(L"11{}", std::wstring{L"test"});
-//  REQUIRE(wstr == L"11test");
-//#if defined ( _WIN32 )
-//  const auto k_string = std::wstring{L"/还会"};
-//  wstr                = fmt::format(L"{}", doodle::FSys::path{k_string});
-//  REQUIRE(wstr == std::wstring{LR"("还会")"});
-//#elif defined ( __linux__ )
-//  const auto k_string = std::string{"/还会"};
-//  auto strl                = fmt::format("{}", doodle::FSys::path{k_string});
-//  REQUIRE(strl == std::string{R"("/还会")"});
-//#endif
-//  auto str = fmt::format("{:04d}", 2);
-//  REQUIRE(str == "0002");
-//  str = fmt::format("{}", doodle::FSys::path{"test"});
-//  REQUIRE(str == R"("test")");
+  //  auto wstr = fmt::format(L"11{}", std::wstring{L"test"});
+  //  REQUIRE(wstr == L"11test");
+  //#if defined ( _WIN32 )
+  //  const auto k_string = std::wstring{L"/还会"};
+  //  wstr                = fmt::format(L"{}", doodle::FSys::path{k_string});
+  //  REQUIRE(wstr == std::wstring{LR"("还会")"});
+  //#elif defined ( __linux__ )
+  //  const auto k_string = std::string{"/还会"};
+  //  auto strl                = fmt::format("{}", doodle::FSys::path{k_string});
+  //  REQUIRE(strl == std::string{R"("/还会")"});
+  //#endif
+  //  auto str = fmt::format("{:04d}", 2);
+  //  REQUIRE(str == "0002");
+  //  str = fmt::format("{}", doodle::FSys::path{"test"});
+  //  REQUIRE(str == R"("test")");
 }
 
 TEST_CASE("core path ", "[fun][path]") {
   using namespace doodle;
-#if defined ( _WIN32 )
+#if defined(_WIN32)
   FSys::path source_path{L"F:/测试文件.mp4"};
   FSys::path root{"D:/"};
   FSys::path p1{L"D:\\9-houqi\\Content\\Character"};
-#elif defined ( __linux__ )
+#elif defined(__linux__)
   FSys::path p1{"/mnt/d/9-houqi/Content/Character"};
   FSys::path root{"/mnt/d/"};
   FSys::path source_path{"/mnt/f/测试文件.mp4"};
 #endif
-
 
   SECTION("lexically_normal path") {
     FSys::path subdir("../configuration/instance");
@@ -63,29 +62,29 @@ TEST_CASE("core path ", "[fun][path]") {
     REQUIRE(tmp.lexically_normal() == FSys::path{"D:/tmp/test/configuration/instance/myfile.cfg"}.generic_string());
   }
   SECTION("file time") {
-#if defined ( _WIN32 )
+#if defined(_WIN32)
     struct _stat64 fileInfo {};
     if (_wstat64(source_path.generic_wstring().c_str(), &fileInfo) != 0) {
       std::cout << "Error : not find last_write_time " << std::endl;
     }
     auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
-#elif defined ( __linux__ )
-    struct stat fileInfo{};
+#elif defined(__linux__)
+    struct stat fileInfo {};
     stat(source_path.generic_string().c_str(), &fileInfo);
     auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
 #endif
     REQUIRE(k_t == FSys::last_write_time_point(source_path));
   }
   SECTION("folder time") {
-#if defined ( _WIN32 )
+#if defined(_WIN32)
     struct _stat64 fileInfo {};
     root /= "tmp";
     if (_wstat64(root.generic_wstring().c_str(), &fileInfo) != 0) {
       std::cout << "Error : not find last_write_time " << std::endl;
     }
     auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
-#elif defined ( __linux__ )
-    struct stat fileInfo{};
+#elif defined(__linux__)
+    struct stat fileInfo {};
     stat(root.generic_string().c_str(), &fileInfo);
 #endif
     REQUIRE(k_t == FSys::last_write_time_point(root));
@@ -202,14 +201,16 @@ TEST_CASE("std regex", "[std][regex]") {
   const static std::wregex fatal_error_znch{
       LR"(致命错误.尝试在 C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.ma 中保存)"};
 
-  //Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
+  // Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
   const static std::wregex fatal_error_en_us{
       LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.ma)"};
 
   std::cout << std::regex_search(L"致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存",
-                                 fatal_error_znch) << std::endl;
+                                 fatal_error_znch)
+            << std::endl;
   std::cout << std::regex_search(L"Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma",
-                                 fatal_error_en_us) << std::endl;
+                                 fatal_error_en_us)
+            << std::endl;
 }
 
 #include <cereal/archives/binary.hpp>
@@ -271,6 +272,13 @@ TEST_CASE("core archive", "[fun][archives]") {
       }
     }
   }
+}
+
+TEST_CASE("temp fun", "[core]") {
+  using namespace doodle;
+
+  auto ter = make_shared_<long_term>();
+  REQUIRE(DoodleLib::Get().long_task_list.size() == 1);
 }
 //#include <boost/algorithm/string.hpp>
 //#include <boost/archive/iterators/base64_from_binary.hpp>
