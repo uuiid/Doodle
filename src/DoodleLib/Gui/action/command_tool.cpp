@@ -54,4 +54,44 @@ bool comm_export_fbx::run() {
 bool comm_export_fbx::is_async() {
   return true;
 }
+comm_qcloth_sim::comm_qcloth_sim() {
+}
+bool comm_qcloth_sim::is_async() {
+  return command_base::is_async();
+}
+bool comm_qcloth_sim::run() {
+  return command_base::run();
+}
+comm_create_video::comm_create_video() {
+}
+bool comm_create_video::is_async() {
+  return command_base::is_async();
+}
+bool comm_create_video::run() {
+  return command_base::run();
+}
+comm_connect_video::comm_connect_video() {
+}
+bool comm_connect_video::is_async() {
+  return command_base::is_async();
+}
+bool comm_connect_video::run() {
+  return command_base::run();
+}
+comm_import_ue_files::comm_import_ue_files() {
+}
+bool comm_import_ue_files::is_async() {
+  return command_base::is_async();
+}
+bool comm_import_ue_files::run() {
+  return command_base::run();
+}
+comm_create_ue_project::comm_create_ue_project() {
+}
+bool comm_create_ue_project::is_async() {
+  return command_base::is_async();
+}
+bool comm_create_ue_project::run() {
+  return command_base::run();
+}
 }  // namespace doodle
