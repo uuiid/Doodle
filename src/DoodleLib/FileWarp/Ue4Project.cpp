@@ -266,7 +266,7 @@ ue4_project_async::ue4_project_async()
     : p_ue4() {
 }
 long_term_ptr ue4_project_async::import_file(const FSys::path& in_paths) {
-  auto k_term = make_shared_<long_term>();
+  auto k_term = new_object<long_term>();
   k_term->p_list.emplace_back(DoodleLib::Get().get_thread_pool()->enqueue(
       [k_term, in_paths, self = p_ue4]() {
         self->import_file(in_paths, k_term);
@@ -277,7 +277,7 @@ void ue4_project_async::set_ue4_project(const FSys::path& in_paths) {
   p_ue4 = std::make_shared<Ue4Project>(in_paths);
 }
 long_term_ptr ue4_project_async::create_shot_folder(const std::vector<ShotPtr>& in_vector) {
-  auto k_term = make_shared_<long_term>();
+  auto k_term = new_object<long_term>();
   k_term->p_list.emplace_back(DoodleLib::Get().get_thread_pool()->enqueue(
       [k_term, in_vector, self = p_ue4]() {
         self->create_shot_folder(in_vector, k_term);

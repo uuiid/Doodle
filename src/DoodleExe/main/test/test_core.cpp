@@ -293,7 +293,7 @@ TEST_CASE("core archive", "[fun][archives]") {
 TEST_CASE("temp fun", "[core]") {
   using namespace doodle;
 
-  auto ter = make_shared_<long_term>();
+  auto ter = new_object<long_term>();
   REQUIRE(DoodleLib::Get().long_task_list.size() == 1);
 }
 //#include <boost/algorithm/string.hpp>

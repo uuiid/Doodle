@@ -76,7 +76,7 @@ long_term_ptr video_sequence_async::connect_video(const FSys::path& path) const 
   if (!path.empty())
     k_out_path = path;
 
-  auto k_term = make_shared_<long_term>();
+  auto k_term = new_object<long_term>();
   auto k_fut  = DoodleLib::Get().get_thread_pool()->enqueue(
        [self = p_video, k_out_path, k_term]() { self->connectVideo(k_out_path, k_term); });
   k_term->p_list.push_back(std::move(k_fut));

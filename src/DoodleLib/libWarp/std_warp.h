@@ -12,7 +12,7 @@ namespace details {
 }  // namespace details
 
 template <class ClassIn, class... Args>
-std::shared_ptr<ClassIn> make_shared_(Args&&... in_args) {
+std::shared_ptr<ClassIn> new_object(Args&&... in_args) {
   //post_constructor
   constexpr auto has_make_this =
       boost::hana::is_valid(

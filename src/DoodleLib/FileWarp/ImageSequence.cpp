@@ -71,8 +71,8 @@ void ImageSequence::setText(const std::string &text) {
 long_term_ptr ImageSequence::create_video_asyn(const FSys::path &out_file) {
   if (!this->hasSequence())
     throw DoodleError{"not Sequence"};
-  auto k_long     = make_shared_<long_term>();
-  auto k_arg      = make_shared_<asyn_arg>();
+  auto k_long     = new_object<long_term>();
+  auto k_arg      = new_object<asyn_arg>();
   k_arg->out_path = p_out_path;
   k_arg->paths    = p_paths;
   k_arg->long_sig = k_long;
@@ -278,7 +278,7 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
 image_sequence_async::image_sequence_async()
     : p_image_sequence() {}
 void image_sequence_async::set_path(const FSys::path &image_dir) {
-  p_image_sequence = make_shared_<ImageSequence>();
+  p_image_sequence = new_object<ImageSequence>();
 }
 void image_sequence_async::set_path(const std::vector<FSys::path> &image_path_list) {
 }

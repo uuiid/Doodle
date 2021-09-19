@@ -109,7 +109,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
 }
 
 [[nodiscard]] long_term_ptr MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& export_path) {
-  auto k_term = make_shared_<long_term>();
+  auto k_term = new_object<long_term>();
 
   if (!FSys::exists(file_path)) {
     k_term->sig_finished();
