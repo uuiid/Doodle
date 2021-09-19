@@ -21,18 +21,7 @@ set(
     Gui/main_windwos.h
     Gui/setting_windows.h
     Gui/factory/menu_factory_Interface.h
-    Gui/action/action.h
-    Gui/action/action_import.h
-    Gui/action/actn_down_paths.h
-    Gui/action/actn_excel.h
-    Gui/action/actn_image_and_movie.h
-    Gui/action/actn_maya_export.h
-    Gui/action/actn_tool_box.h
-    Gui/action/actn_up_paths.h
-    Gui/action/assets_action.h
-    Gui/action/assets_file_action.h
     Gui/action/command.h
-    Gui/action/project_action.h
     Gui/widgets/assets_widget.h
     Gui/widgets/attribute_widgets.h
     Gui/widgets/long_time_tasks_widget.h
@@ -104,17 +93,7 @@ set(
     Gui/base_windwos.cpp
     Gui/main_windwos.cpp
     Gui/setting_windows.cpp
-    Gui/action/action.cpp
-    Gui/action/actn_down_paths.cpp
-    Gui/action/actn_excel.cpp
-    Gui/action/actn_image_and_movie.cpp
-    Gui/action/actn_maya_export.cpp
-    Gui/action/actn_tool_box.cpp
-    Gui/action/actn_up_paths.cpp
-    Gui/action/assets_action.cpp
-    Gui/action/assets_file_action.cpp
     Gui/action/command.cpp
-    Gui/action/project_action.cpp
     Gui/widgets/assets_widget.cpp
     Gui/widgets/attribute_widgets.cpp
     Gui/widgets/long_time_tasks_widget.cpp

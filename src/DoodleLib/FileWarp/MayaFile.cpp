@@ -101,7 +101,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
         boost::process::system(fmt::format("taskkill /F /T /PID {}", k_c.id()));
         in_term->set_state(long_term::fail);
       }
-      in_term->sig_progress(rational_int{1, 5000});
+      in_term->sig_progress(rational_int{1, 50});
     }
   }
   fun.get();
