@@ -68,20 +68,6 @@ void ImageSequence::setText(const std::string &text) {
   p_Text = clearString(text);
 }
 
-long_term_ptr ImageSequence::create_video_asyn(const FSys::path &out_file) {
-  if (!this->hasSequence())
-    throw DoodleError{"not Sequence"};
-  auto k_long     = new_object<long_term>();
-  auto k_arg      = new_object<asyn_arg>();
-  k_arg->out_path = p_out_path;
-  k_arg->paths    = p_paths;
-  k_arg->long_sig = k_long;
-  k_arg->Text     = p_Text;
-  auto k_fut      = DoodleLib::Get().get_thread_pool()->enqueue(
-           [k_arg]() { ImageSequence::create_video(k_arg); });
-  k_long->p_list.push_back(std::move(k_fut));
-  return k_long;
-}
 std::string ImageSequence::set_shot_and_eps(const ShotPtr &in_shot, const EpisodesPtr &in_episodes) {
   auto k_str = CoreSet::getSet().getUser_en();  /// 基本水印, 名称
   /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
@@ -173,114 +159,38 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
   in_arg->long_sig->sig_finished();
   in_arg->long_sig->sig_message_result(fmt::format("成功创建视频 {}\n", in_arg->out_path), long_term::warning);
 }
-
-// ImageSequenceBatch::ImageSequenceBatch(decltype(p_paths) dirs)
-//     : LongTerm(),
-//       p_paths(std::move(dirs)),
-//       p_imageSequences() {
-//   for (auto &&dir : p_paths) {
-//     if (FSys::is_directory(dir))
-//       p_imageSequences.emplace_back(
-//           new_object<ImageSequence>(dir));
-//     else
-//       throw DoodleError("不是目录");
-//   }
-// }
-//
-// ImageSequenceBatch::ImageSequenceBatch(decltype(p_imageSequences) imageSequences)
-//     : p_paths(),
-//       p_imageSequences(std::move(imageSequences)) {
-//   for (auto &&image : p_imageSequences) {
-//     p_paths.emplace_back(image->getDir());
-//   }
-// }
-//
-// void ImageSequenceBatch::batchCreateSequence(const FSys::path &out_dir) const {
-//   if (p_imageSequences.empty()) return;
-//   auto &set = CoreSet::getSet();
-//   //这里使用序列图的父路径加uuid防止重复
-//   auto k_path = p_imageSequences[0]->getDir().parent_path() /
-//                 boost::uuids::to_string(set.getUUID());
-//   // auto k_path = set.getCacheRoot() / boost::uuids::to_string(set.getUUID());
-//
-//   //创建生成路径
-//   if (!out_dir.empty())
-//     k_path = out_dir;
-//   //检查路径存在
-//   if (!FSys::exists(k_path))
-//     FSys::create_directories(k_path);
-//
-//   //创建线程池, 开始
-//   auto k_pool = DoodleLib::Get().get_thread_pool();
-//   std::map<FSys::path, std::future<void>> result{};
-//   //创建锁
-//   std::recursive_mutex p_mutex{};
-//   auto k_i = float{1};
-//   //添加进度回调函数
-//   auto k_add_fun = std::bind<void>([&p_mutex](float i, float *_1) {
-//     std::unique_lock lock{p_mutex};
-//     (*_1) += i;
-//   },
-//                                    std::placeholders::_1, &k_i);
-//   for (const auto &im : p_imageSequences) {
-//     auto str = im->getEpisodesAndShot_str().append(".mp4");
-//     im->stride.connect(k_add_fun);
-//
-//     result.emplace(im->getDir(),
-//                    k_pool->enqueue(
-//                        [k_path, str, im] {
-//                          // !从这里开始送入线程池, 防止线程检查重名式失败
-//                          //检查存在,如果存在就使用其他名称
-//                          auto path = k_path / str;
-//                          if (FSys::exists(path) || str == "ep0000_sc0000") {
-//                            path.remove_filename();
-//                            path /= boost::uuids::to_string(CoreSet::getSet().getUUID()).append(".mp4");
-//                          }
-//                          im->createVideoFile(path);
-//                        }));
-//   }
-//   std::future_status status{};
-//   auto it          = result.begin();
-//   const auto k_len = boost::numeric_cast<float>(p_imageSequences.size());
-//
-//   while (!result.empty()) {
-//     status = it->second.wait_for(std::chrono::milliseconds{10});
-//     {
-//       std::unique_lock lock{p_mutex};
-//       this->progress(boost::numeric_cast<int>(k_i / k_len));
-//     }
-//     if (status == std::future_status::ready) {
-//       ++k_i;
-//
-//       std::string mess{"成功"};
-//       try {
-//         it->second.get();
-//       } catch (const DoodleError &err) {
-//         mess = fmt::format("失败: {}", err.what());
-//         DOODLE_LOG_INFO(mess)
-//       }
-//
-//       this->messagResult(mess);
-//       //这里要擦除数据
-//       it = result.erase(it);
-//     } else {
-//       //超时后继续等待其他
-//       ++it;
-//     }
-//     // 如果到了结尾就返回开始
-//     if (it == result.end()) {
-//       it = result.begin();
-//     }
-//   }
-//   this->finished();
-// }
+void ImageSequence::set_path(const std::vector<FSys::path> &in_images) {
+  p_paths = in_images;
+}
+void ImageSequence::create_video(const FSys::path &out_file, const long_term_ptr &in_ptr) {
+  if (!this->hasSequence())
+    throw DoodleError{"not Sequence"};
+  auto k_arg      = new_object<asyn_arg>();
+  k_arg->out_path = p_out_path;
+  k_arg->paths    = p_paths;
+  k_arg->long_sig = in_ptr;
+  k_arg->Text     = p_Text;
+  ImageSequence::create_video(k_arg);
+}
 
 image_sequence_async::image_sequence_async()
     : p_image_sequence() {}
 void image_sequence_async::set_path(const FSys::path &image_dir) {
   p_image_sequence = new_object<ImageSequence>();
+  p_image_sequence->set_path(image_dir);
 }
 void image_sequence_async::set_path(const std::vector<FSys::path> &image_path_list) {
+  p_image_sequence = new_object<ImageSequence>();
+  p_image_sequence->set_path(image_path_list);
+}
+long_term_ptr image_sequence_async::create_video(const FSys::path &out_file) {
+  auto k_term = new_object<long_term>();
+  k_term->p_list.emplace_back(
+      DoodleLib::Get().get_thread_pool()->enqueue(
+          [self = p_image_sequence, out_file, k_term]() {
+            self->create_video(out_file, k_term);
+          }));
+  return k_term;
 }
 
 }  // namespace doodle

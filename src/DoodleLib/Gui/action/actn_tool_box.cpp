@@ -46,12 +46,12 @@ long_term_ptr actn_export_maya::run() {
     return k_term;
   }
   p_maya = new_object<MayaFile>();
-  std::vector<long_term_ptr> k_list{};
-  std::transform(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
-                 [this](const auto& in) {
-                   return p_maya->exportFbxFile(in);
-                 });
-  k_term->forward_sig(k_list);
+//  std::vector<long_term_ptr> k_list{};
+//  std::transform(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
+//                 [this](const auto& in) {
+//                   return p_maya->exportFbxFile(in);
+//                 });
+//  k_term->forward_sig(k_list);
   return k_term;
 }
 bool actn_export_maya::is_async() {
@@ -92,7 +92,7 @@ long_term_ptr actn_create_video::run() {
   std::vector<long_term_ptr> k_list;
   std::transform(p_image.begin(), p_image.end(), std::back_inserter(k_list),
                  [](const ImageSequencePtr& in) {
-                   return in->create_video_asyn();
+                   return long_term_ptr{};
                  });
 
   k_term->forward_sig(k_list);
@@ -168,7 +168,7 @@ long_term_ptr actn_qcloth_sim_export::run() {
                    ptr->sim_path           = in;
                    ptr->qcloth_assets_path = p_date.qcloth_assets_path;
                    ptr->only_sim           = p_date.is_sim;
-                   return p_maya->qcloth_sim_file(ptr);
+                   return long_term_ptr{};
                  });
   k_term->forward_sig(k_list);
   return k_term;

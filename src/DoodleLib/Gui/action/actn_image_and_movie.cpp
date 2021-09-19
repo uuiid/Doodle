@@ -95,7 +95,7 @@ long_term_ptr actn_image_to_movie::run(const MetadataPtr& in_data, const Metadat
 
   p_video_path = k_path.out_file;
   p_image_sequence->set_path(k_path.image_list.front());
-  p_image_sequence->create_video_asyn(k_path.out_file);
+//  p_image_sequence->create_video_asyn(k_path.out_file);
 
   FSys::open_explorer(k_path.out_file.parent_path());
   return k_term;

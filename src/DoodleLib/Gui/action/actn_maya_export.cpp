@@ -27,7 +27,7 @@ bool actn_maya_export::is_async() {
 }
 long_term_ptr actn_maya_export::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_item = this->get_long_term_signal();
-  _arg_type = sig_get_arg().value();
+  _arg_type   = sig_get_arg().value();
   if (_arg_type.is_cancel) {
     this->cancel("取消");
     return k_item;
@@ -45,11 +45,12 @@ long_term_ptr actn_maya_export::run(const MetadataPtr& in_data, const MetadataPt
   });
 
   p_paths = CoreSet::getSet().getCacheRoot("maya_export") / _arg_type.date.stem();
-  auto k_maya_term =   k_maya->exportFbxFile(_arg_type.date, p_paths);
-
-  k_item->forward_sig(k_maya_term);
-
-  return k_item;
+  //  auto k_maya_term =   k_maya->exportFbxFile(_arg_type.date, p_paths);
+  //
+  //  k_item->forward_sig(k_maya_term);
+  //
+  //  return k_item;
+  return{};
 }
 bool actn_maya_export::is_accept(const action_arg::arg_path& in_any) {
   return MayaFile::is_maya_file(in_any.date);

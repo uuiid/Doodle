@@ -29,7 +29,7 @@ class DOODLELIB_API ImageSequence
 
   bool hasSequence();
   void set_path(const FSys::path& dir);
-
+  void set_path(const std::vector<FSys::path>& in_images);
   void setText(const std::string& text);
   /**
    * @brief 使用这个可以将镜头和和集数还有水印， 路径等一起设置完成
@@ -39,17 +39,17 @@ class DOODLELIB_API ImageSequence
    * @return std::string 生成的水印
    */
   std::string set_shot_and_eps(const ShotPtr& in_shot, const EpisodesPtr& in_episodes);
-  long_term_ptr create_video_asyn(const FSys::path& out_file = {});
-
-
+  void create_video(const FSys::path& out_file, const long_term_ptr& in_ptr);
 };
 
 class DOODLELIB_API image_sequence_async : public details::no_copy {
-  std::shared_ptr<ImageSequence> p_image_sequence;
+  ImageSequencePtr p_image_sequence;
+
  public:
   image_sequence_async();
   void set_path(const FSys::path& image_dir);
   void set_path(const std::vector<FSys::path>& image_path_list);
+  long_term_ptr create_video(const FSys::path& out_file);
 };
 // class DOODLELIB_API ImageSequenceBatch : public LongTerm {
 //   std::vector<FSys::path> p_paths;

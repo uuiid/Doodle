@@ -12,7 +12,7 @@ class DOODLELIB_API MayaFile
   static void write_maya_tool_file();
   [[nodiscard]] static FSys::path warit_tmp_file(const std::string& in_string);
   bool checkFile();
-  static bool run_comm(const std::wstring& in_com, const long_term_ptr& in_term) ;
+  static bool run_comm(const std::wstring& in_com, const long_term_ptr& in_term);
 
  public:
   class DOODLELIB_API qcloth_arg {
@@ -34,7 +34,7 @@ class DOODLELIB_API MayaFile
    * @param export_path 导出的路径
    * @return 是否导出成功
    */
-  long_term_ptr exportFbxFile(const FSys::path& file_path, const FSys::path& export_path = {});
+  void exportFbxFile(const FSys::path& file_path, const FSys::path& export_path, const long_term_ptr& in_ptr);
 
   /**
    * @brief 批量解算qcloth 文件
@@ -54,9 +54,19 @@ class DOODLELIB_API MayaFile
    * @return true
    * @return false
    */
-  [[nodiscard]] long_term_ptr qcloth_sim_file(qcloth_arg_ptr& in_arg);
+  void qcloth_sim_file(const qcloth_arg_ptr& in_arg, const long_term_ptr& in_ptr);
 
   [[nodiscard]] static bool is_maya_file(const FSys::path& in_path);
+};
+
+class DOODLELIB_API maya_file_async : public details::no_copy {
+  std::shared_ptr<MayaFile> p_maya_file;
+
+ public:
+  maya_file_async();
+
+  long_term_ptr export_fbx_file(const FSys::path& file_path, const FSys::path& export_path = {});
+  long_term_ptr qcloth_sim_file(MayaFile::qcloth_arg_ptr& in_arg);
 };
 
 }  // namespace doodle

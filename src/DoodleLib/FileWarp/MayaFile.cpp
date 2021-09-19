@@ -108,95 +108,98 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
   return true;
 }
 
-[[nodiscard]] long_term_ptr MayaFile::exportFbxFile(const FSys::path& file_path, const FSys::path& export_path) {
-  auto k_term = new_object<long_term>();
-
+[[nodiscard]] void MayaFile::exportFbxFile(const FSys::path& file_path,
+                                           const FSys::path& export_path,
+                                           const long_term_ptr& in_ptr) {
   if (!FSys::exists(file_path)) {
-    k_term->sig_finished();
-    k_term->sig_message_result("不存在文件 \n", long_term::warning);
-    return k_term;
+    if (in_ptr) {
+      in_ptr->sig_finished();
+      in_ptr->sig_message_result("不存在文件 \n", long_term::warning);
+    }
+    return;
   }
-  auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue(
-      [self = shared_from_this(), k_term, file_path]() {
-        k_term->start();
-        write_maya_tool_file();
-        k_term->sig_progress(rational_int{1, 40});
-        //生成导出文件
-        auto str_script = fmt::format(
-            "# -*- coding: utf-8 -*-\n"
-            "\n"
-            "import maya_fun_tool\n"
-            "k_f =  maya_fun_tool.open_file(\"{}\")\n"
-            "k_f.get_fbx_export()()",
-            file_path.generic_string());
-        auto run_path = warit_tmp_file(str_script);
-        k_term->sig_progress(rational_int{1, 40});
+  if (in_ptr)
+    in_ptr->start();
+  write_maya_tool_file();
+  if (in_ptr)
+    in_ptr->sig_progress(rational_int{1, 40});
+  //生成导出文件
+  auto str_script = fmt::format(
+      "# -*- coding: utf-8 -*-\n"
+      "\n"
+      "import maya_fun_tool\n"
+      "k_f =  maya_fun_tool.open_file(\"{}\")\n"
+      "k_f.get_fbx_export()()",
+      file_path.generic_string());
+  auto run_path = warit_tmp_file(str_script);
+  if (in_ptr)
+    in_ptr->sig_progress(rational_int{1, 40});
 
-        //生成命令
-        auto run_com = fmt::format(
-            R"("{}/mayapy.exe" {})",
-            self->p_path.generic_string(),
-            run_path.generic_string());
-        k_term->sig_progress(rational_int{1, 40});
+  //生成命令
+  auto run_com = fmt::format(
+      R"("{}/mayapy.exe" {})",
+      this->p_path.generic_string(),
+      run_path.generic_string());
+  if (in_ptr)
+    in_ptr->sig_progress(rational_int{1, 40});
 
-        self->run_comm(conv::utf_to_utf<wchar_t>(run_com), k_term);
+  this->run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr);
 
-        k_term->sig_progress(rational_int{1, 40});
-        k_term->sig_finished();
-        k_term->sig_message_result("导出完成 \n", long_term::warning);
-      });
-  k_term->p_list.emplace_back(std::move(k_fut));
-  return k_term;
+  if (in_ptr) {
+    in_ptr->sig_progress(rational_int{1, 40});
+    in_ptr->sig_finished();
+    in_ptr->sig_message_result("导出完成 \n", long_term::warning);
+  }
 }
 
-long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
-  auto k_term = new_object<long_term>();
-
+void MayaFile::qcloth_sim_file(const qcloth_arg_ptr& in_arg,
+                               const long_term_ptr& in_ptr) {
   auto k_export_path = in_arg->sim_path.parent_path() / in_arg->sim_path.stem();
   if (!FSys::exists(k_export_path))
     FSys::create_directories(k_export_path);
 
   if (!FSys::exists(in_arg->sim_path)) {
-    k_term->sig_finished();
-    k_term->sig_message_result("不存在文件 \n", long_term::warning);
-    return k_term;
+    if (in_ptr) {
+      in_ptr->sig_finished();
+      in_ptr->sig_message_result("不存在文件 \n", long_term::warning);
+    }
+    return;
   }
+  if (in_ptr)
+    in_ptr->start();
+  // 写入文件
+  write_maya_tool_file();
+  if (in_ptr)
+    in_ptr->sig_progress(rational_int{1, 40});
 
-  auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue(
-      [in_arg, k_term, self = shared_from_this()]() {
-        k_term->start();
-        // 写入文件
-        write_maya_tool_file();
-        k_term->sig_progress(rational_int{1, 40});
+  auto str_script = fmt::format(
+      "# -*- coding: utf-8 -*-\n"
+      "import maya_fun_tool\n"
+      "k_f =  maya_fun_tool.open_file(\"{}\")\n"
+      "sim = k_f.get_cloth_sim(\"{}\")\n",
+      in_arg->sim_path.generic_string(),
+      in_arg->qcloth_assets_path.generic_string());
+  if (in_arg->only_sim)
+    str_script.append("sim.sim_and_export()\n");
+  else
+    str_script.append("sim()\n");
 
-        auto str_script = fmt::format(
-            "# -*- coding: utf-8 -*-\n"
-            "import maya_fun_tool\n"
-            "k_f =  maya_fun_tool.open_file(\"{}\")\n"
-            "sim = k_f.get_cloth_sim(\"{}\")\n",
-            in_arg->sim_path.generic_string(),
-            in_arg->qcloth_assets_path.generic_string());
-        if (in_arg->only_sim)
-          str_script.append("sim.sim_and_export()\n");
-        else
-          str_script.append("sim()\n");
-
-        auto run_path = warit_tmp_file(str_script);
-        k_term->sig_progress(rational_int{1, 40});
-        //生成命令
-        auto run_com = fmt::format(
-            R"("{}/mayapy.exe" {})",
-            self->p_path.generic_string(),
-            run_path.generic_string());
-
-        k_term->sig_progress(rational_int{1, 40});
-        self->run_comm(conv::utf_to_utf<wchar_t>(run_com), k_term);
-        k_term->sig_progress(rational_int{1, 40});
-        k_term->sig_finished();
-        k_term->sig_message_result(fmt::format("完成导出 :{} \n", in_arg->sim_path.generic_string()), long_term::warning);
-      });
-  k_term->p_list.emplace_back(std::move(k_fut));
-  return k_term;
+  auto run_path = warit_tmp_file(str_script);
+  if (in_ptr)
+    in_ptr->sig_progress(rational_int{1, 40});
+  //生成命令
+  auto run_com = fmt::format(
+      R"("{}/mayapy.exe" {})",
+      this->p_path.generic_string(),
+      run_path.generic_string());
+  if (in_ptr)
+    in_ptr->sig_progress(rational_int{1, 40});
+  this->run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr);
+  if (in_ptr) {
+    in_ptr->sig_progress(rational_int{1, 40});
+    in_ptr->sig_finished();
+    in_ptr->sig_message_result(fmt::format("完成导出 :{} \n", in_arg->sim_path.generic_string()), long_term::warning);
+  }
 }
 
 bool MayaFile::is_maya_file(const FSys::path& in_path) {
@@ -204,4 +207,22 @@ bool MayaFile::is_maya_file(const FSys::path& in_path) {
   return k_e == ".ma" || k_e == ".mb";
 }
 
+maya_file_async::maya_file_async()
+    : p_maya_file(std::make_shared<MayaFile>()) {}
+long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, const FSys::path& export_path) {
+  auto k_term = new_object<long_term>();
+  DoodleLib::Get().get_thread_pool()->enqueue(
+      [self = p_maya_file, file_path, export_path, k_term]() {
+        self->exportFbxFile(file_path, export_path, k_term);
+      });
+  return k_term;
+}
+long_term_ptr maya_file_async::qcloth_sim_file(MayaFile::qcloth_arg_ptr& in_arg) {
+  auto k_term = new_object<long_term>();
+  DoodleLib::Get().get_thread_pool()->enqueue(
+      [self = p_maya_file, in_arg, k_term]() {
+        self->qcloth_sim_file(in_arg, k_term);
+      });
+  return k_term;
+}
 }  // namespace doodle
