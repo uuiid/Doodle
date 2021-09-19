@@ -2,6 +2,7 @@
 #include <DoodleLib/FileWarp/ImageSequence.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/libWarp/std_warp.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <Logger/Logger.h>
 #include <Metadata/Episodes.h>
@@ -21,15 +22,13 @@ std::string ImageSequence::clearString(const std::string &str) {
 }
 ImageSequence::ImageSequence()
     : p_paths(),
-      p_Text(),
-      p_long_sig(std::make_shared<long_term>()) {
+      p_Text() {
 }
 ImageSequence::ImageSequence(const FSys::path &path_dir, const std::string &text)
     : std::enable_shared_from_this<ImageSequence>(),
       p_paths(),
       p_Text(std::move(clearString(text))),
-      stride(),
-      p_long_sig(std::make_shared<long_term>()) {
+      stride() {
   set_path(path_dir);
 }
 
@@ -46,9 +45,7 @@ void ImageSequence::set_path(const FSys::path &dir) {
   }
 }
 
-long_term_ptr ImageSequence::get_long_term() {
-  return p_long_sig;
-}
+
 
 bool ImageSequence::seanDir(const FSys::path &dir) {
   if (!FSys::is_directory(dir))
@@ -74,82 +71,19 @@ void ImageSequence::setText(const std::string &text) {
   p_Text = clearString(text);
 }
 
-void ImageSequence::createVideoFile(const FSys::path &out_file) {
-  if (!out_file.empty())
-    p_out_path = out_file;
-
+long_term_ptr ImageSequence::create_video_asyn(const FSys::path &out_file) {
   if (!this->hasSequence())
     throw DoodleError{"not Sequence"};
-  std::this_thread::sleep_for(std::chrono::milliseconds{10});
-  //检查父路径存在
-  if (!FSys::exists(p_out_path.parent_path()))
-    FSys::create_directories(p_out_path.parent_path());
-
-  {
-    const static cv::Size k_size{1280, 720};
-    auto video           = cv::VideoWriter{p_out_path.generic_string(),
-                                 cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
-                                 25,
-                                 cv::Size(1280, 720)};
-    auto k_image         = cv::Mat{};
-    auto k_image_resized = cv::Mat{};
-    auto k_clone         = cv::Mat{};
-
-    auto k_size_len = p_paths.size();
-
-    //排序图片
-    std::sort(p_paths.begin(), p_paths.end(),
-              [](const FSys::path &k_r, const FSys::path &k_l) -> bool { return k_r.stem() < k_l.stem(); });
-
-    for (auto &&path : p_paths) {
-      k_image = cv::imread(path.generic_string());
-      if (k_image.empty())
-        throw DoodleError("open cv not read image");
-      if (k_image.cols != 1280 || k_image.rows != 720)
-        cv::resize(k_image, k_image_resized, k_size);
-      else
-        k_image_resized = k_image;
-
-      {  //创建水印
-        k_clone          = k_image_resized.clone();
-        int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
-        double fontScale = 1;
-        int thickness    = 2;
-        int baseline     = 0;
-        auto textSize    = cv::getTextSize(p_Text, fontFace,
-                                           fontScale, thickness, &baseline);
-        baseline += thickness;
-        textSize.width += baseline;
-        textSize.height += baseline;
-        // center the text
-        cv::Point textOrg((k_image_resized.cols - textSize.width) / 8,
-                          (k_image_resized.rows + textSize.height) / 8);
-
-        // draw the box
-        cv::rectangle(k_clone, textOrg + cv::Point(0, baseline),
-                      textOrg + cv::Point(textSize.width, -textSize.height),
-                      cv::Scalar(0, 0, 0), -1);
-
-        cv::addWeighted(k_clone, 0.7, k_image_resized, 0.3, 0, k_image_resized);
-        // then put the text itself
-        cv::putText(k_image_resized, p_Text, textOrg, fontFace, fontScale,
-                    cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
-      }
-
-      p_long_sig->sig_progress(rational_int{1, k_size_len});
-
-      video << k_image_resized;
-    }
-  }
-  p_long_sig->sig_finished();
-  p_long_sig->sig_message_result(fmt::format("成功创建视频 {}\n", p_out_path), long_term::warning);
-}
-
-long_term_ptr ImageSequence::create_video_asyn(const FSys::path &out_file) {
-  auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue(
-      [this, out_file]() { this->createVideoFile(out_file); });
-  p_long_sig->p_list.push_back(std::move(k_fut));
-  return p_long_sig;
+  auto k_long = make_shared_<long_term>();
+  asyn_arg arg{};
+  arg.out_path = p_out_path;
+  arg.paths    = p_paths;
+  arg.long_sig = k_long;
+  arg.Text     = p_Text;
+  auto k_fut   = DoodleLib::Get().get_thread_pool()->enqueue(
+        [arg]() { ImageSequence::create_video(arg); });
+  k_long->p_list.push_back(std::move(k_fut));
+  return k_long;
 }
 std::string ImageSequence::set_shot_and_eps(const ShotPtr &in_shot, const EpisodesPtr &in_episodes) {
   auto k_str = CoreSet::getSet().getUser_en();  /// 基本水印, 名称
@@ -173,6 +107,72 @@ std::string ImageSequence::set_shot_and_eps(const ShotPtr &in_shot, const Episod
   p_out_path /= k_str;
 
   return p_Text;
+}
+
+void ImageSequence::create_video(const ImageSequence::asyn_arg &in_arg) {
+  std::this_thread::sleep_for(std::chrono::milliseconds{10});
+  //检查父路径存在
+  if (!FSys::exists(in_arg.out_path.parent_path()))
+    FSys::create_directories(in_arg.out_path.parent_path());
+
+  {
+    const static cv::Size k_size{1280, 720};
+    auto video           = cv::VideoWriter{in_arg.out_path.generic_string(),
+                                 cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
+                                 25,
+                                 cv::Size(1280, 720)};
+    auto k_image         = cv::Mat{};
+    auto k_image_resized = cv::Mat{};
+    auto k_clone         = cv::Mat{};
+
+    auto k_size_len = in_arg.paths.size();
+
+    //排序图片
+    std::sort(in_arg.paths.begin(), in_arg.paths.end(),
+              [](const FSys::path &k_r, const FSys::path &k_l) -> bool { return k_r.stem() < k_l.stem(); });
+
+    for (auto &&path : in_arg.paths) {
+      k_image = cv::imread(path.generic_string());
+      if (k_image.empty())
+        throw DoodleError("open cv not read image");
+      if (k_image.cols != 1280 || k_image.rows != 720)
+        cv::resize(k_image, k_image_resized, k_size);
+      else
+        k_image_resized = k_image;
+
+      {  //创建水印
+        k_clone          = k_image_resized.clone();
+        int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+        double fontScale = 1;
+        int thickness    = 2;
+        int baseline     = 0;
+        auto textSize    = cv::getTextSize(in_arg.Text, fontFace,
+                                           fontScale, thickness, &baseline);
+        baseline += thickness;
+        textSize.width += baseline;
+        textSize.height += baseline;
+        // center the text
+        cv::Point textOrg((k_image_resized.cols - textSize.width) / 8,
+                          (k_image_resized.rows + textSize.height) / 8);
+
+        // draw the box
+        cv::rectangle(k_clone, textOrg + cv::Point(0, baseline),
+                      textOrg + cv::Point(textSize.width, -textSize.height),
+                      cv::Scalar(0, 0, 0), -1);
+
+        cv::addWeighted(k_clone, 0.7, k_image_resized, 0.3, 0, k_image_resized);
+        // then put the text itself
+        cv::putText(k_image_resized, in_arg.Text, textOrg, fontFace, fontScale,
+                    cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+      }
+
+      in_arg.long_sig->sig_progress(rational_int{1, k_size_len});
+
+      video << k_image_resized;
+    }
+  }
+  in_arg.long_sig->sig_finished();
+  in_arg.long_sig->sig_message_result(fmt::format("成功创建视频 {}\n", in_arg.out_path), long_term::warning);
 }
 
 // ImageSequenceBatch::ImageSequenceBatch(decltype(p_paths) dirs)

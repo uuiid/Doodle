@@ -11,3 +11,7 @@
 	path = src/DoodleLib/external/ImGuiFileDialog
 	url = https://github.com/aiekick/ImGuiFileDialog.git
 	branch = Lib_Only
+[submodule "src/DoodleLib/external/imguiwrap"]
+	path = src/DoodleLib/external/imguiwrap
+	url = https://github.com/kfsone/imguiwrap.git
+	branch = main
