@@ -118,7 +118,7 @@ long_term_ptr actn_connect_video::run() {
   }
 
   p_video_sequence = std::make_shared<VideoSequence>(p_date.date);
-  k_term->forward_sig(p_video_sequence->connectVideo_asyn());
+//  k_term->forward_sig(p_video_sequence->connectVideo_asyn());
 
   return k_term;
 }
@@ -140,9 +140,10 @@ long_term_ptr actn_ue4_shot_episodes::run() {
   }
 
   p_ptr = std::make_shared<Ue4Project>(p_date.date);
-  k_term->forward_sig(p_ptr->create_shot_folder_asyn(p_date.shot_list));
-
-  return k_term;
+  //  k_term->forward_sig(p_ptr->create_shot_folder_asyn(p_date.shot_list));
+  //
+  //  return k_term;
+  return {};
 }
 actn_qcloth_sim_export::actn_qcloth_sim_export()
     : p_maya() {

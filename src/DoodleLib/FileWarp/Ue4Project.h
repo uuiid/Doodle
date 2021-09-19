@@ -15,7 +15,7 @@
 namespace doodle {
 
 class DOODLELIB_API Ue4Project
-    :public std::enable_shared_from_this<Ue4Project>{
+    : public std::enable_shared_from_this<Ue4Project> {
   class DOODLELIB_API Ue4ProjectFilePulgins {
    public:
     std::string Name;
@@ -106,19 +106,8 @@ class DOODLELIB_API Ue4Project
 
   FSys::path p_ue_path;
   FSys::path p_ue_Project_path;
-  long_term_ptr p_term;
-  std::vector<long_term_ptr> p_term_list;
 
   void addUe4ProjectPlugins(const std::vector<std::string>& in_strs) const;
-
-  class async_ue4_project {
-    FSys::path p_ue_path;
-    FSys::path p_ue_Project_path;
-    long_term_ptr p_term;
-    void run_cmd_scipt(const std::string& run_com) const;
-    void runPythonScript(const FSys::path& python_file) const;
-    void create_shot_folder(const std::vector<ShotPtr>& inShotList);
-  };
 
   void run_cmd_scipt(const std::string& run_com) const;
   void runPythonScript(const std::string& python_str) const;
@@ -143,16 +132,15 @@ class DOODLELIB_API Ue4Project
    *
    * @param inShotList 镜头列表
    */
-  void createShotFolder(const std::vector<ShotPtr>& inShotList) const;
+  void create_shot_folder(const std::vector<ShotPtr>& inShotList, const long_term_ptr& in_ptr) const;
   /**
    * @brief 异步创建镜头和集数文件夹
    *
    * @param inShotList 镜头列表
    * @return long_term_ptr 进度指示
    */
-  long_term_ptr create_shot_folder_asyn(const std::vector<ShotPtr>& inShotList) const;
-  long_term_ptr import_file_asyn(const FSys::path& in_paths) const;
 
+  void import_file(const FSys::path& in_paths, const long_term_ptr& in_ptr) const;
   /**
    * @brief ue4 项目中的文件系统路径转换为以/Game/开头的复合ue4 标准的路径
    *
@@ -186,5 +174,16 @@ class DOODLELIB_API Ue4Project
    * @warning 返回的路径都是以 /Game/开头的ue4路径
    */
   static FSys::path analysis_path_to_gamepath(const FSys::path& in_path);
+};
+
+class ue4_project_async : public details::no_copy {
+  ue4_project_ptr p_ue4;
+
+ public:
+  ue4_project_async();
+
+  void set_ue4_project(const FSys::path& in_paths);
+  long_term_ptr import_file(const FSys::path& in_paths);
+  long_term_ptr create_shot_folder(const std::vector<ShotPtr>& in_vector);
 };
 }  // namespace doodle

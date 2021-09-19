@@ -13,7 +13,9 @@ using rational_int = boost::rational<std::size_t>;
  * @brief 长时间任务时， 使用这个类进行通知；
  *
  */
-class DOODLELIB_API long_term : public details::no_copy {
+class DOODLELIB_API long_term
+    : public details::no_copy,
+      public std::enable_shared_from_this<long_term> {
  public:
   enum state {
     none_   = 0,
@@ -51,7 +53,7 @@ class DOODLELIB_API long_term : public details::no_copy {
   long_term();
   virtual ~long_term();
 
-  static long_term_ptr make_this_shared();
+  void post_constructor();
 
   std::string& get_name();
   void set_name(const std::string& in_string);

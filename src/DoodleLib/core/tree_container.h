@@ -16,16 +16,15 @@
 
 namespace doodle {
 
-
 class tree_node;
 using tree_node_ptr = std::shared_ptr<tree_node>;
 
 namespace details {
-//class DOODLELIB_API tree_node_destroy : public std::default_delete<tree_node> {
-// public:
-//  tree_node_destroy() = default;
-//  void operator()(tree_node* in_ptr);
-//};
+// class DOODLELIB_API tree_node_destroy : public std::default_delete<tree_node> {
+//  public:
+//   tree_node_destroy() = default;
+//   void operator()(tree_node* in_ptr);
+// };
 
 template <class container>
 class DOODLELIB_API observe : public no_copy {
@@ -107,17 +106,17 @@ class DOODLELIB_API observe : public no_copy {
  * 在储存的数据如果有 connect(tree_node_ptr& in )自动连接时函数， 会自动调用，保持连接信号
  * 如果有 tree_node_ptr 的弱指针指向容器时， 也会自动设置
  * 有 disconnect(tree_node_ptr& in ) 断开连接时， 也会进行断开链接
- * 
- * 
+ *
+ *
  */
 class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
                                 public details::no_copy {
  public:
   using tree_node_ptr = std::shared_ptr<tree_node>;
 
-//  using child_set = boost::intrusive::set<
-//      tree_node,
-//      boost::intrusive::base_hook<tree_node>>;
+  //  using child_set = boost::intrusive::set<
+  //      tree_node,
+  //      boost::intrusive::base_hook<tree_node>>;
   // boost::intrusive::constant_time_size<false>
   using child_set_owner    = std::vector<tree_node_ptr>;
   using signal_observe     = details::observe<child_set_owner>;
@@ -128,14 +127,14 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   using reverse_iterator       = typename child_set_owner ::reverse_iterator;
   using const_reverse_iterator = typename child_set_owner ::const_reverse_iterator;
 
- private:
-//  friend details::tree_node_destroy;
-  template <class _Ty,class... _Types>
-  friend std::shared_ptr<_Ty> std::make_shared(_Types&& ...) ;
+  //  friend details::tree_node_destroy;
+  template <class _Ty, class... _Types>
+  friend std::shared_ptr<_Ty> std::make_shared(_Types&&...);
 
   tree_node();
   explicit tree_node(tree_node* in_parent, MetadataPtr in_data);
   explicit tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data);
+ private:
 
   iterator insert_private(const tree_node_ptr& in_);
   iterator insert(const tree_node_ptr& in_, bool emit_solt);
@@ -208,25 +207,13 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
  public:
   ~tree_node();
 
-  template <class... type_arg>
-  static tree_node_ptr make_this_shared(type_arg&&... in_arg) {
-    auto tmp = std::shared_ptr<tree_node>{
-        new tree_node{std::forward<type_arg>(in_arg)...}};
-    /// 非默认构造, 这个时候可以直接检查父物体是否为空后插入
-    if constexpr (sizeof...(in_arg) > 1) {
-      if (tmp->has_parent())
-        tmp->parent->insert_private(tmp);
-    }
 
-    value_fun_t::connect(tmp->data, tmp);
-    value_fun_t::set_node_ptr(tmp->data, tmp);
-    return tmp;
-  };
+  void post_constructor() ;
 
   [[nodiscard]] bool is_root() const;
   [[nodiscard]] bool has_parent() const;
   [[nodiscard]] tree_node_ptr get_parent() const;
-  [[nodiscard]] const child_set_owner & get_children() const;
+  [[nodiscard]] const child_set_owner& get_children() const;
   [[nodiscard]] bool empty() const;
 
   iterator insert(const tree_node_ptr& in_);
@@ -244,7 +231,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   signal_observe_ptr get_signal_observe() const;
   /**
    * @brief 这里所有的迭代器都是迭代子项， 没有包括父物体
-   * 
+   *
    * @return iterator 子项迭代器
    */
   [[nodiscard]] iterator begin() noexcept;

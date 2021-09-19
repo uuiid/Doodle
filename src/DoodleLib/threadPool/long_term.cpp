@@ -106,14 +106,12 @@ long_term::~long_term() {
     }
   }
 }
-long_term_ptr long_term::make_this_shared() {
-  auto k_ptr = std::make_shared<long_term>();
-  auto& k_   = DoodleLib::Get();
+void long_term::post_constructor() {
+  auto& k_ = DoodleLib::Get();
   {
     std::lock_guard k_guard{k_.mutex};
-    k_.long_task_list.push_back(k_ptr);
+    k_.long_task_list.push_back(shared_from_this());
   }
-  return k_ptr;
 }
 std::string& long_term::get_id() {
   return p_id;
@@ -135,7 +133,7 @@ std::string_view long_term::get_state_str() const {
   return magic_enum::enum_name(p_state);
 }
 std::string long_term::get_time_str() const {
-  if(p_state == wait || p_state == none_)
+  if (p_state == wait || p_state == none_)
     return {"..."};
 
   if (p_end) {
@@ -152,11 +150,11 @@ const std::deque<std::string> long_term::message() const {
 const std::deque<std::string> long_term::log() const {
   return p_log;
 }
-void long_term::start(){
-  p_time = chrono::system_clock::now();
+void long_term::start() {
+  p_time  = chrono::system_clock::now();
   p_state = run;
 }
-void long_term::set_state(long_term::state in_state){
+void long_term::set_state(long_term::state in_state) {
   p_state = in_state;
 }
 }  // namespace doodle

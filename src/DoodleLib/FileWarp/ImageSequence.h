@@ -40,8 +40,17 @@ class DOODLELIB_API ImageSequence
    */
   std::string set_shot_and_eps(const ShotPtr& in_shot, const EpisodesPtr& in_episodes);
   long_term_ptr create_video_asyn(const FSys::path& out_file = {});
+
+
 };
 
+class DOODLELIB_API image_sequence_async : public details::no_copy {
+  std::shared_ptr<ImageSequence> p_image_sequence;
+ public:
+  image_sequence_async();
+  void set_path(const FSys::path& image_dir);
+  void set_path(const std::vector<FSys::path>& image_path_list);
+};
 // class DOODLELIB_API ImageSequenceBatch : public LongTerm {
 //   std::vector<FSys::path> p_paths;
 //   std::vector<ImageSequencePtr> p_imageSequences;

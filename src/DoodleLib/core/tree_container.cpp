@@ -203,7 +203,7 @@ tree_node::iterator tree_node::erase_sig(const MetadataPtr& in_ptr) {
   }
 }
 tree_node::iterator tree_node::insert(const MetadataPtr& in_ptr) {
-  auto k_ptr = make_this_shared(this, in_ptr);
+  auto k_ptr = make_shared_<tree_node>(this, in_ptr);
   return insert(k_ptr, false);
 }
 
@@ -215,7 +215,7 @@ tree_node::iterator tree_node::insert_sig(const tree_node_ptr& in_) {
 }
 
 tree_node::iterator tree_node::insert_sig(const MetadataPtr& in_ptr) {
-  auto k_ptr = make_this_shared(this, in_ptr);
+  auto k_ptr = make_shared_<tree_node>(this, in_ptr);
   p_sig->sig_begin_insert(k_ptr);
   auto k_i = insert(k_ptr, true);
   p_sig->sig_insert(*k_i);
@@ -251,6 +251,13 @@ tree_node::const_reverse_iterator tree_node::crbegin() const noexcept {
 }
 tree_node::const_reverse_iterator tree_node::crend() const noexcept {
   return child_owner.crend();
+}
+void tree_node::post_constructor() {
+  if (this->has_parent())
+    this->parent->insert_private(shared_from_this());
+
+  value_fun_t::connect(this->data, shared_from_this());
+  value_fun_t::set_node_ptr(this->data, shared_from_this());
 }
 
 }  // namespace doodle

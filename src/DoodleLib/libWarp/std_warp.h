@@ -7,18 +7,22 @@
 #include <boost/hana.hpp>
 #include <memory>
 namespace doodle {
+namespace details {
+
+}  // namespace details
+
 template <class ClassIn, class... Args>
 std::shared_ptr<ClassIn> make_shared_(Args&&... in_args) {
-  constexpr static auto has_make_this =
+  //post_constructor
+  constexpr auto has_make_this =
       boost::hana::is_valid(
-          [](Args&&... in_args)
-              -> decltype(ClassIn::make_this_shared(
-                  std::forward<Args>(in_args)...)) {});
-  using has_make_this_v = decltype(has_make_this(std::forward<Args>(in_args)...));
+          [](auto obj)
+              -> decltype(obj.make_this_shared()) {});
+  auto ptr              = std::make_shared<ClassIn>(std::forward<Args>(in_args)...);
+  using has_make_this_v = decltype(has_make_this(ptr));
   if constexpr (has_make_this_v{}) {
-    return ClassIn::make_this_shared(std::forward<Args>(in_args)...);
-  } else {
-    return std::make_shared<ClassIn>(std::forward<Args>(in_args)...);
+    ptr->make_this_shared();
   }
+  return ptr;
 };
 }  // namespace doodle

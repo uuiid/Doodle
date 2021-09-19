@@ -30,6 +30,8 @@
 #include <DoodleLib/libWarp/CerealWarp.h>
 #include <DoodleLib/libWarp/cmrcWarp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
+#include <DoodleLib/libWarp/std_warp.h>
+
 #include <date/date.h>
 #include <doodlelib_export.h>
 #include <fmt/format.h>
