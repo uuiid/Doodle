@@ -108,7 +108,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
   return true;
 }
 
-[[nodiscard]] void MayaFile::exportFbxFile(const FSys::path& file_path,
+void MayaFile::exportFbxFile(const FSys::path& file_path,
                                            const FSys::path& export_path,
                                            const long_term_ptr& in_ptr) {
   if (!FSys::exists(file_path)) {

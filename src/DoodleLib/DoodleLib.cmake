@@ -22,6 +22,7 @@ set(
     Gui/setting_windows.h
     Gui/factory/menu_factory_Interface.h
     Gui/action/command.h
+    Gui/action/command_tool.h
     Gui/widgets/assets_widget.h
     Gui/widgets/attribute_widgets.h
     Gui/widgets/long_time_tasks_widget.h
@@ -94,6 +95,7 @@ set(
     Gui/main_windwos.cpp
     Gui/setting_windows.cpp
     Gui/action/command.cpp
+    Gui/action/command_tool.cpp
     Gui/widgets/assets_widget.cpp
     Gui/widgets/attribute_widgets.cpp
     Gui/widgets/long_time_tasks_widget.cpp

@@ -29,13 +29,5 @@ class DOODLELIB_API command_base : public details::no_copy {
 
 using command_tool = command_base<>;
 
-class DOODLELIB_API comm_export_fbx : public command_tool {
-  std::vector<FSys::path> p_files;
-
- public:
-  comm_export_fbx();
-  virtual bool is_async() override;
-  virtual bool run() override;
-};
 
 }  // namespace doodle
