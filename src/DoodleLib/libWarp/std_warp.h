@@ -13,15 +13,15 @@ namespace details {
 
 template <class ClassIn, class... Args>
 std::shared_ptr<ClassIn> new_object(Args&&... in_args) {
-  //post_constructor
+  // post_constructor
   constexpr auto has_make_this =
       boost::hana::is_valid(
           [](auto obj)
-              -> decltype(obj.make_this_shared()) {});
+              -> decltype(obj.post_constructor()) {});
   auto ptr              = std::make_shared<ClassIn>(std::forward<Args>(in_args)...);
   using has_make_this_v = decltype(has_make_this(ptr));
   if constexpr (has_make_this_v{}) {
-    ptr->make_this_shared();
+    ptr->post_constructor();
   }
   return ptr;
 };
