@@ -20,7 +20,7 @@ namespace doodle {
 DoodleLib* DoodleLib::p_install = nullptr;
 
 DoodleLib::DoodleLib()
-    : p_thread_pool(new_object<ThreadPool>(std::thread::hardware_concurrency() - 1)),
+    : p_thread_pool(new_object<ThreadPool>(std::thread::hardware_concurrency() - 2)),
       p_curr_project(),
       p_rpc_metadata_clien(),
       p_rpc_file_system_client(),

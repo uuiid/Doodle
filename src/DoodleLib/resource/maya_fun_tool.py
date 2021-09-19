@@ -139,12 +139,12 @@ class camera:
                     ex = False
             if not re.findall("_", cam.name()):
                 ex = False
-            print("cam {} is ".format(cam.fullPath(), ex))
+            print("cam {} is {}".format(cam.fullPath(), ex))
             if ex:
                 self.maya_cam = cam.getTransform()
-                print("select cam ", self.maya_cam)
+                print("select cam {}".format(self.maya_cam))
                 return
-        print("not select cam ", self.maya_cam)
+        print("not select cam {}".format( self.maya_cam))
 
     def create_move(self, out_path=None,
                     start_frame=None,
@@ -252,7 +252,7 @@ class camera:
             end=int(doodle_work_space.raneg.end))
         mel_name = pymel.core.Path(mel_name)
         pymel.core.select(self.maya_cam)
-        print("Prepare export path ", mel_name)
+        print("Prepare export path --> {}".format(mel_name))
 
         pymel.core.mel.eval(
             "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
