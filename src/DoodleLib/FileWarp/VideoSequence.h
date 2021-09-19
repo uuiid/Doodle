@@ -16,8 +16,8 @@ class DOODLELIB_API VideoSequence
  public:
   VideoSequence(std::vector<FSys::path> paths);
 
-  void connectVideo(const FSys::path& path = {});
-  long_term_ptr connectVideo_asyn(const FSys::path& path = {});
+  void connectVideo(const FSys::path& path = {}) const;
+  long_term_ptr connectVideo_asyn(const FSys::path& path = {}) const;
 };
 
 }  // namespace doodle

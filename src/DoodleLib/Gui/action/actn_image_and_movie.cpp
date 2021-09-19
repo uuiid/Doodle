@@ -58,7 +58,7 @@ bool actn_image_to_movie::is_accept(const arg_& in_any) {
 
 long_term_ptr actn_image_to_movie::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   p_image_sequence = std::make_shared<ImageSequence>();
-  auto k_term = p_image_sequence->get_long_term();
+  auto k_term = std::make_shared<long_term>();
 
   auto k_path = sig_get_arg().value();
   if (k_path.is_cancel)

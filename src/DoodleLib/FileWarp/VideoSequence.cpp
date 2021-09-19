@@ -17,7 +17,7 @@ VideoSequence::VideoSequence(std::vector<FSys::path> paths)
   }
 }
 
-void VideoSequence::connectVideo(const FSys::path& out_path) {
+void VideoSequence::connectVideo(const FSys::path& out_path) const {
   //验证输出路径
   auto k_out_path = p_paths[0].parent_path() /
                     boost::uuids::to_string(CoreSet::getSet().getUUID()).append(".mp4");
@@ -55,20 +55,20 @@ void VideoSequence::connectVideo(const FSys::path& out_path) {
           k_image_resized = k_image;
 
         k_video_out << k_image_resized;
-        p_term->sig_progress(rational_int{1,k_frame_count * k_len} );
+        p_term->sig_progress(rational_int{1, k_frame_count * k_len});
       }
     } else {
       throw DoodleError("不支持的格式");
     }
   }
 
-  p_term->sig_message_result(fmt::format("完成视频 {} \n", k_out_path),long_term::warning);
+  p_term->sig_message_result(fmt::format("完成视频 {} \n", k_out_path), long_term::warning);
   p_term->sig_finished();
 }
 
-long_term_ptr VideoSequence::connectVideo_asyn(const FSys::path& path) {
+long_term_ptr VideoSequence::connectVideo_asyn(const FSys::path& path) const {
   auto k_fut = DoodleLib::Get().get_thread_pool()->enqueue(
-      [this, path]() { this->connectVideo(path); });
+      [self = shared_from_this(), path]() { self->connectVideo(path); });
   p_term->p_list.push_back(std::move(k_fut));
   return p_term;
 }

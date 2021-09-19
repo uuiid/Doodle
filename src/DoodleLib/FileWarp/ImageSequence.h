@@ -17,8 +17,8 @@ class DOODLELIB_API ImageSequence
 
     FSys::path out_path;
   };
-
-  static void create_video(const asyn_arg& in_arg);
+  using asyn_arg_ptr = std::shared_ptr<asyn_arg>;
+  static void create_video(const asyn_arg_ptr& in_arg);
   static std::string clearString(const std::string& str);
 
   bool seanDir(const FSys::path& dir);

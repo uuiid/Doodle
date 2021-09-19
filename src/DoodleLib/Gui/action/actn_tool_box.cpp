@@ -193,9 +193,10 @@ long_term_ptr actn_ue4_import_files::run() {
   std::copy_if(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
                [this](const FSys::path& in_path) { return p_ue->can_import_ue4(in_path); });
 
-  auto k_term = p_ue->import_files_asyn(k_list);
-  p_term      = k_term;
-  return k_term;
+  //  auto k_term = p_ue->import_files_asyn(k_list);
+  //  p_term      = k_term;
+  //  return k_term;
+  return nullptr;
 }
 }  // namespace toolbox
 

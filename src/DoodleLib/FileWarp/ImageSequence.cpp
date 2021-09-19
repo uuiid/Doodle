@@ -27,8 +27,7 @@ ImageSequence::ImageSequence()
 ImageSequence::ImageSequence(const FSys::path &path_dir, const std::string &text)
     : std::enable_shared_from_this<ImageSequence>(),
       p_paths(),
-      p_Text(std::move(clearString(text))),
-      stride() {
+      p_Text(std::move(clearString(text))) {
   set_path(path_dir);
 }
 
@@ -44,8 +43,6 @@ void ImageSequence::set_path(const FSys::path &dir) {
     }
   }
 }
-
-
 
 bool ImageSequence::seanDir(const FSys::path &dir) {
   if (!FSys::is_directory(dir))
@@ -75,13 +72,13 @@ long_term_ptr ImageSequence::create_video_asyn(const FSys::path &out_file) {
   if (!this->hasSequence())
     throw DoodleError{"not Sequence"};
   auto k_long = make_shared_<long_term>();
-  asyn_arg arg{};
-  arg.out_path = p_out_path;
-  arg.paths    = p_paths;
-  arg.long_sig = k_long;
-  arg.Text     = p_Text;
-  auto k_fut   = DoodleLib::Get().get_thread_pool()->enqueue(
-        [arg]() { ImageSequence::create_video(arg); });
+  auto k_arg  = make_shared_<asyn_arg>();
+  k_arg->out_path = p_out_path;
+  k_arg->paths    = p_paths;
+  k_arg->long_sig = k_long;
+  k_arg->Text     = p_Text;
+  auto k_fut      = DoodleLib::Get().get_thread_pool()->enqueue(
+           [k_arg]() { ImageSequence::create_video(k_arg); });
   k_long->p_list.push_back(std::move(k_fut));
   return k_long;
 }
@@ -109,15 +106,15 @@ std::string ImageSequence::set_shot_and_eps(const ShotPtr &in_shot, const Episod
   return p_Text;
 }
 
-void ImageSequence::create_video(const ImageSequence::asyn_arg &in_arg) {
+void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
   std::this_thread::sleep_for(std::chrono::milliseconds{10});
   //检查父路径存在
-  if (!FSys::exists(in_arg.out_path.parent_path()))
-    FSys::create_directories(in_arg.out_path.parent_path());
+  if (!FSys::exists(in_arg->out_path.parent_path()))
+    FSys::create_directories(in_arg->out_path.parent_path());
 
   {
     const static cv::Size k_size{1280, 720};
-    auto video           = cv::VideoWriter{in_arg.out_path.generic_string(),
+    auto video           = cv::VideoWriter{in_arg->out_path.generic_string(),
                                  cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
                                  25,
                                  cv::Size(1280, 720)};
@@ -125,13 +122,15 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg &in_arg) {
     auto k_image_resized = cv::Mat{};
     auto k_clone         = cv::Mat{};
 
-    auto k_size_len = in_arg.paths.size();
+    auto k_size_len = in_arg->paths.size();
 
     //排序图片
-    std::sort(in_arg.paths.begin(), in_arg.paths.end(),
-              [](const FSys::path &k_r, const FSys::path &k_l) -> bool { return k_r.stem() < k_l.stem(); });
+    std::sort(in_arg->paths.begin(), in_arg->paths.end(),
+              [](const FSys::path &k_r, const FSys::path &k_l) -> bool {
+                return k_r.stem() < k_l.stem();
+              });
 
-    for (auto &&path : in_arg.paths) {
+    for (auto &&path : in_arg->paths) {
       k_image = cv::imread(path.generic_string());
       if (k_image.empty())
         throw DoodleError("open cv not read image");
@@ -146,7 +145,7 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg &in_arg) {
         double fontScale = 1;
         int thickness    = 2;
         int baseline     = 0;
-        auto textSize    = cv::getTextSize(in_arg.Text, fontFace,
+        auto textSize    = cv::getTextSize(in_arg->Text, fontFace,
                                            fontScale, thickness, &baseline);
         baseline += thickness;
         textSize.width += baseline;
@@ -162,17 +161,17 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg &in_arg) {
 
         cv::addWeighted(k_clone, 0.7, k_image_resized, 0.3, 0, k_image_resized);
         // then put the text itself
-        cv::putText(k_image_resized, in_arg.Text, textOrg, fontFace, fontScale,
+        cv::putText(k_image_resized, in_arg->Text, textOrg, fontFace, fontScale,
                     cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
       }
 
-      in_arg.long_sig->sig_progress(rational_int{1, k_size_len});
+      in_arg->long_sig->sig_progress(rational_int{1, k_size_len});
 
       video << k_image_resized;
     }
   }
-  in_arg.long_sig->sig_finished();
-  in_arg.long_sig->sig_message_result(fmt::format("成功创建视频 {}\n", in_arg.out_path), long_term::warning);
+  in_arg->long_sig->sig_finished();
+  in_arg->long_sig->sig_message_result(fmt::format("成功创建视频 {}\n", in_arg->out_path), long_term::warning);
 }
 
 // ImageSequenceBatch::ImageSequenceBatch(decltype(p_paths) dirs)

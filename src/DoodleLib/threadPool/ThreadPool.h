@@ -2,6 +2,7 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Exception/Exception.h>
 
+#include <boost/asio.hpp>
 #include <condition_variable>
 #include <functional>
 #include <future>
@@ -91,4 +92,51 @@ inline ThreadPool::~ThreadPool() {
   for (std::thread& worker : workers)
     worker.join();
 }
+namespace details {
+class DOODLELIB_API ThreadPool : public details::no_copy {
+ public:
+  explicit ThreadPool(size_t);
+  template <class F, class... Args>
+  auto enqueue(F&& f, Args&&... args)
+      -> std::future<typename std::invoke_result<F, Args...>::type>;
+  ~ThreadPool();
+
+ private:
+  // need to keep track of threads so we can join them
+  std::vector<std::thread> workers;
+  std::atomic_bool stop;
+  boost::asio::io_context io_context;
+  boost::asio::any_io_executor io_work;
+};
+inline ThreadPool::ThreadPool(size_t threads)
+    : stop(false),
+      io_context(),
+      io_work(
+          boost::asio::require(
+              io_context.get_executor(),
+              boost::asio::execution::outstanding_work.tracked)) {
+  for (size_t i = 0; i < threads; ++i)
+    workers.emplace_back(
+        [this]() {
+          this->io_context.run();
+        });
+}
+template <class F, class... Args>
+[[nodiscard]] auto ThreadPool::enqueue(F&& f, Args&&... args)
+    -> std::future<typename std::invoke_result<F, Args...>::type> {
+  using return_type = typename std::invoke_result<F, Args...>::type;
+
+  auto task = std::make_shared<std::packaged_task<return_type()> >(
+      std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+  std::future<return_type> res = task->get_future();
+  boost::asio::post(io_context, [task]() { (*task)(); });
+  return res;
+}
+inline ThreadPool::~ThreadPool() {
+  io_work = decltype(io_work){};
+  io_context.stop();
+  for (auto& worker : workers)
+    worker.join();
+}
+}  // namespace details
 }  // namespace doodle

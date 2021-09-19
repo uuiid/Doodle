@@ -177,6 +177,16 @@ TEST_CASE("maya get log", "[maya]") {
   k_term->p_list[0].get();
 }
 
+TEST_CASE("ThreadPool", "[core][ThreadPool]") {
+  using namespace doodle;
+  details::ThreadPool th{4};
+  for (int k_i = 0; k_i < 100; ++k_i) {
+    th.enqueue([k_i]() {
+      std::cout << k_i << std::endl;
+    });
+  }
+}
+
 #include <boost/locale.hpp>
 #include <boost/locale/info.hpp>
 #include <boost/locale/util.hpp>
@@ -188,7 +198,7 @@ TEST_CASE("sys encoding", "[sys]") {
   auto k_lo = boost::locale::generator()("");
   std::cout << std::use_facet<boost::locale::info>(k_lo).encoding() << std::endl;
   std::cout << std::use_facet<boost::locale::info>(k_lo).name() << std::endl;
-  std::cout << std::use_facet<boost::locale::info>(k_lo).variant()  << std::endl;
+  std::cout << std::use_facet<boost::locale::info>(k_lo).variant() << std::endl;
   //  std::cout << k_.c_str() << std::endl;
 }
 
