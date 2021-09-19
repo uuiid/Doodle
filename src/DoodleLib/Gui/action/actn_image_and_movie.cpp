@@ -57,8 +57,8 @@ bool actn_image_to_movie::is_accept(const arg_& in_any) {
 }
 
 long_term_ptr actn_image_to_movie::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
-  p_image_sequence = std::make_shared<ImageSequence>();
-  auto k_term = std::make_shared<long_term>();
+  p_image_sequence = new_object<ImageSequence>();
+  auto k_term = new_object<long_term>();
 
   auto k_path = sig_get_arg().value();
   if (k_path.is_cancel)
@@ -105,8 +105,8 @@ bool actn_image_to_movie::is_async() {
 }
 
 actn_image_to_move_up::actn_image_to_move_up()
-    : p_image_action(std::make_shared<actn_image_to_movie>()),
-      p_up_path(std::make_shared<actn_up_paths>()) {
+    : p_image_action(new_object<actn_image_to_movie>()),
+      p_up_path(new_object<actn_up_paths>()) {
   p_name = "制作拍屏并上传";
   p_image_action->sig_get_arg.connect([this]() { return _arg_type; });
 

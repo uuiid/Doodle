@@ -38,14 +38,14 @@ actn_export_maya::actn_export_maya()
   p_name = "导出fbx";
 }
 long_term_ptr actn_export_maya::run() {
-  auto k_term = std::make_shared<long_term>();
+  auto k_term = new_object<long_term>();
   p_date      = sig_get_arg().value();
 
   if (p_date.is_cancel) {
     cancel("取消导出");
     return k_term;
   }
-  p_maya = std::make_shared<MayaFile>();
+  p_maya = new_object<MayaFile>();
   std::vector<long_term_ptr> k_list{};
   std::transform(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
                  [this](const auto& in) {
@@ -67,7 +67,7 @@ bool actn_create_video::is_async() {
   return true;
 }
 long_term_ptr actn_create_video::run() {
-  auto k_term = std::make_shared<long_term>();
+  auto k_term = new_object<long_term>();
   p_image.clear();
 
   p_date = sig_get_arg().value();
@@ -77,15 +77,15 @@ long_term_ptr actn_create_video::run() {
     return k_term;
   }
 
-  auto k_video = std::make_shared<ImageSequence>();
+  auto k_video = new_object<ImageSequence>();
   std::transform(p_date.date.begin(), p_date.date.end(), std::back_inserter(p_image),
                  [](const FSys::path& in) {
-                   auto k_shot = std::make_shared<Shot>();
+                   auto k_shot = new_object<Shot>();
                    k_shot->analysis(in);
-                   auto k_eps = std::make_shared<Episodes>();
+                   auto k_eps = new_object<Episodes>();
                    k_eps->analysis(in);
 
-                   auto k_image = std::make_shared<ImageSequence>(in, "");
+                   auto k_image = new_object<ImageSequence>(in, "");
                    k_image->set_shot_and_eps(k_shot, k_eps);
                    return k_image;
                  });
@@ -109,7 +109,7 @@ bool actn_connect_video::is_async() {
   return true;
 }
 long_term_ptr actn_connect_video::run() {
-  auto k_term = std::make_shared<long_term>();
+  auto k_term = new_object<long_term>();
   p_date      = sig_get_arg().value();
 
   if (p_date.is_cancel) {
@@ -117,7 +117,7 @@ long_term_ptr actn_connect_video::run() {
     return k_term;
   }
 
-  p_video_sequence = std::make_shared<VideoSequence>(p_date.date);
+  p_video_sequence = new_object<VideoSequence>(p_date.date);
 //  k_term->forward_sig(p_video_sequence->connectVideo_asyn());
 
   return k_term;
@@ -131,7 +131,7 @@ bool actn_ue4_shot_episodes::is_async() {
   return true;
 }
 long_term_ptr actn_ue4_shot_episodes::run() {
-  auto k_term = std::make_shared<long_term>();
+  auto k_term = new_object<long_term>();
   p_date      = sig_get_arg().value();
 
   if (p_date.is_cancel) {
@@ -139,7 +139,7 @@ long_term_ptr actn_ue4_shot_episodes::run() {
     return k_term;
   }
 
-  p_ptr = std::make_shared<Ue4Project>(p_date.date);
+  p_ptr = new_object<Ue4Project>(p_date.date);
   //  k_term->forward_sig(p_ptr->create_shot_folder_asyn(p_date.shot_list));
   //
   //  return k_term;
@@ -153,18 +153,18 @@ bool actn_qcloth_sim_export::is_async() {
   return true;
 }
 long_term_ptr actn_qcloth_sim_export::run() {
-  auto k_term = std::make_shared<long_term>();
+  auto k_term = new_object<long_term>();
   p_date      = sig_get_arg().value();
 
   if (p_date.is_cancel) {
     cancel("取消导出");
     return k_term;
   }
-  p_maya = std::make_shared<MayaFile>();
+  p_maya = new_object<MayaFile>();
   std::vector<long_term_ptr> k_list{};
   std::transform(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
                  [this](const auto& in) {
-                   auto ptr                = std::make_shared<MayaFile::qcloth_arg>();
+                   auto ptr                = new_object<MayaFile::qcloth_arg>();
                    ptr->sim_path           = in;
                    ptr->qcloth_assets_path = p_date.qcloth_assets_path;
                    ptr->only_sim           = p_date.is_sim;
@@ -189,7 +189,7 @@ long_term_ptr actn_ue4_import_files::run() {
     return {};
   }
 
-  p_ue = std::make_shared<Ue4Project>(p_date.ue4_project);
+  p_ue = new_object<Ue4Project>(p_date.ue4_project);
   std::vector<FSys::path> k_list;
   std::copy_if(p_date.date.begin(), p_date.date.end(), std::back_inserter(k_list),
                [this](const FSys::path& in_path) { return p_ue->can_import_ue4(in_path); });

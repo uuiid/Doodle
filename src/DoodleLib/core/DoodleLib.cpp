@@ -20,7 +20,7 @@ namespace doodle {
 DoodleLib* DoodleLib::p_install = nullptr;
 
 DoodleLib::DoodleLib()
-    : p_thread_pool(std::make_shared<ThreadPool>(std::thread::hardware_concurrency() - 1)),
+    : p_thread_pool(new_object<ThreadPool>(std::thread::hardware_concurrency() - 1)),
       p_curr_project(),
       p_rpc_metadata_clien(),
       p_rpc_file_system_client(),
@@ -77,17 +77,17 @@ void DoodleLib::init_gui() {
 
   DOODLE_LOG_DEBUG(k_ip)
 
-  p_rpc_metadata_clien = std::make_shared<RpcMetadataClient>(
+  p_rpc_metadata_clien = new_object<RpcMetadataClient>(
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 
   k_ip = fmt::format("{}:{:d}", CoreSet::getSet().get_server_host(), CoreSet::getSet().getFileRpcPort());
   DOODLE_LOG_DEBUG(k_ip)
-  p_rpc_file_system_client = std::make_shared<RpcFileSystemClient>(
+  p_rpc_file_system_client = new_object<RpcFileSystemClient>(
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 
-  p_project_vector = std::make_shared<MetadataFactory>()->getAllProject();
+  p_project_vector = new_object<MetadataFactory>()->getAllProject();
   if (!p_project_vector.empty())
     if (p_curr_project) {
       auto it = std::find_if(p_project_vector.begin(), p_project_vector.end(),

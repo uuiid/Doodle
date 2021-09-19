@@ -65,7 +65,7 @@ bool Episodes::analysis(const std::string& in_path) {
 }
 
 EpisodesPtr Episodes::analysis_static(const std::string& in_path) {
-  auto k_eps = std::make_shared<Episodes>();
+  auto k_eps = new_object<Episodes>();
   if (k_eps->analysis(in_path))
     return k_eps;
   else

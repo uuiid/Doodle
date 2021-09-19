@@ -66,7 +66,7 @@ video_sequence_async::video_sequence_async()
       p_backup_out_path() {
 }
 void video_sequence_async::set_video_list(const std::vector<FSys::path>& paths) {
-  p_video           = std::make_shared<VideoSequence>(paths);
+  p_video           = new_object<VideoSequence>(paths);
   p_backup_out_path = paths.empty() ? FSys::path{} : paths.front();
 }
 long_term_ptr video_sequence_async::connect_video(const FSys::path& path) const {

@@ -129,7 +129,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
 
   //  friend details::tree_node_destroy;
   template <class _Ty, class... _Types>
-  friend std::shared_ptr<_Ty> std::make_shared(_Types&&...);
+  friend std::shared_ptr<_Ty> new_object(_Types&&...);
 
   tree_node();
   explicit tree_node(tree_node* in_parent, MetadataPtr in_data);

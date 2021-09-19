@@ -243,7 +243,7 @@ std::int32_t doodle_app::run() {
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
 
-  auto k_show = std::make_shared<bool>(true);
+  auto k_show = new_object<bool>(true);
   main_windows k_main_windows{};
   // Our state
   bool show_demo_window    = true;

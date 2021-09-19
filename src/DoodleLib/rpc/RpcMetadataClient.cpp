@@ -26,7 +26,7 @@ RpcMetadataClient::RpcMetadataClient(const std::shared_ptr<grpc::Channel>& in_ch
   //  auto k_s = p_channel->GetState(true);
 }
 std::vector<ProjectPtr> RpcMetadataClient::GetProject() {
-  auto k_filter = std::make_shared<rpc_filter::filter>();
+  auto k_filter = new_object<rpc_filter::filter>();
   k_filter->set_meta_type(Metadata::meta_type::project_root);
   auto k_list = FilterMetadata(k_filter);
   std::vector<ProjectPtr> k_out_list{};
@@ -38,12 +38,12 @@ std::vector<ProjectPtr> RpcMetadataClient::GetProject() {
   return k_out_list;
 }
 std::vector<MetadataPtr> RpcMetadataClient::GetChild(const MetadataConstPtr& in_metadataPtr) {
-  auto k_filter = std::make_shared<rpc_filter::filter>();
+  auto k_filter = new_object<rpc_filter::filter>();
   k_filter->set_parent_id(in_metadataPtr->getId());
   return FilterMetadata(k_filter);
 }
 // void RpcMetadataClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
-//   auto k_filter = std::make_shared<rpc_filter::filter>();
+//   auto k_filter = new_object<rpc_filter::filter>();
 //   k_filter->set_id(in_metadataPtr->getId());
 //   FilterMetadata(k_filter).front();
 

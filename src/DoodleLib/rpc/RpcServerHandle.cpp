@@ -19,7 +19,7 @@ RpcServerHandle::RpcServerHandle()
 }
 
 void RpcServerHandle::registerFileSystemServer(int port) {
-  p_rpc_file_system_server = std::make_shared<RpcFileSystemServer>();
+  p_rpc_file_system_server = new_object<RpcFileSystemServer>();
   std::string server_address{"[::]:"};
   server_address += std::to_string(port);
 
@@ -30,7 +30,7 @@ void RpcServerHandle::registerFileSystemServer(int port) {
 }
 
 void RpcServerHandle::registerMetadataServer(int port) {
-  p_rpc_metadata_server = std::make_shared<RpcMetadaataServer>();
+  p_rpc_metadata_server = new_object<RpcMetadaataServer>();
   std::string server_address{"[::]:"};
   server_address += std::to_string(port);
 

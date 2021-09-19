@@ -49,7 +49,7 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
   /// 转换为资产路径
   std::transform(k_path.begin(), k_path.end(), std::back_inserter(k_ass_file_apth_list),
                  [k_ass_file](const FSys::path& in) {
-                   return std::make_shared<AssetsPath>(in, k_ass_file);
+                   return new_object<AssetsPath>(in, k_ass_file);
                  });
   /// 转换为上传路径, 并在这时添加额外路径
   for (auto& k_i : k_ass_file_apth_list) {
@@ -60,7 +60,7 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
     if (k_it != k_ass_file->getPathFile().end()) {
       if (Ue4Project::is_ue4_file(k_i->getLocalPath())) {
         if (FSys::exists(k_i->getLocalPath().parent_path() / Ue4Project::Content)) {
-          auto k_ass_path = std::make_shared<AssetsPath>(
+          auto k_ass_path = new_object<AssetsPath>(
               k_i->getLocalPath().parent_path() / Ue4Project::Content, k_ass_file);
           k_list.emplace_back(std::make_unique<rpc_trans_path>(k_ass_path->getLocalPath(),
                                                                k_ass_path->getServerPath(),
@@ -73,7 +73,7 @@ long_term_ptr actn_up_paths::run(const MetadataPtr& in_data, const MetadataPtr& 
     } else {
       if (Ue4Project::is_ue4_file(k_i->getLocalPath())) {
         if (FSys::exists(k_i->getLocalPath().parent_path() / Ue4Project::Content)) {
-          auto k_ass_path = std::make_shared<AssetsPath>(
+          auto k_ass_path = new_object<AssetsPath>(
               k_i->getLocalPath().parent_path() / Ue4Project::Content, k_ass_file);
           k_list.emplace_back(std::make_unique<rpc_trans_path>(k_ass_path->getLocalPath(),
                                                                k_ass_path->getServerPath(),
@@ -101,7 +101,7 @@ bool actn_up_paths::is_async() {
 }
 
 actn_create_ass_up_paths::actn_create_ass_up_paths()
-    : p_up(std::make_shared<actn_up_paths>()) {
+    : p_up(new_object<actn_up_paths>()) {
   p_name = "创建并上传文件";
   p_up->sig_get_arg.connect([this]() { return _arg_type; });  /// 将信号和槽进行转移
 }
@@ -118,7 +118,7 @@ long_term_ptr actn_create_ass_up_paths::run(const MetadataPtr& in_data, const Me
   AssetsFilePtr k_ass_file;
   if (in_parent) {
     auto k_str = in_parent->showStr();
-    k_ass_file = std::make_shared<AssetsFile>(in_parent, k_str);
+    k_ass_file = new_object<AssetsFile>(in_parent, k_str);
     in_parent->child_item.push_back_sig(k_ass_file);
 
     k_ass_file->setVersion(k_ass_file->find_max_version());

@@ -26,14 +26,14 @@ bool action_base::is_async() {
 
 long_term_ptr action_base::get_long_term_signal() const {
   if (p_term.expired()) {
-    auto k_ptr = std::make_shared<long_term>();
+    auto k_ptr = new_object<long_term>();
     return  k_ptr;
   } else
     return p_term.lock();
 }
 long_term_ptr action_base::get_long_term_signal() {
   if (p_term.expired()) {
-    auto k_ptr = std::make_shared<long_term>();
+    auto k_ptr = new_object<long_term>();
     p_term = k_ptr;
     return  k_ptr;
   } else

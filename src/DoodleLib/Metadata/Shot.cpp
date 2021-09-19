@@ -85,7 +85,7 @@ bool Shot::analysis(const std::string& in_path) {
 }
 
 ShotPtr Shot::analysis_static(const std::string& in_path) {
-  auto k_shot = std::make_shared<Shot>();
+  auto k_shot = new_object<Shot>();
   if (k_shot->analysis(in_path))
     return k_shot;
   else

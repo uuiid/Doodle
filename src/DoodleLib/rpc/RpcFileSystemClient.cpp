@@ -133,14 +133,14 @@ RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(const FSys::path
   return Upload(k_ptr);
 }
 RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(std::vector<std::unique_ptr<rpc_trans_path>>& in_vector) {
-  auto k_up = std::make_shared<rpc_trans::trans_files>(this);
+  auto k_up = new_object<rpc_trans::trans_files>(this);
   for (auto& k_item : in_vector) {
     k_up->_list.push_back(Download(k_item));
   }
   return k_up;
 }
 RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(std::vector<std::unique_ptr<rpc_trans_path>>& in_vector) {
-  auto k_up = std::make_shared<rpc_trans::trans_files>(this);
+  auto k_up = new_object<rpc_trans::trans_files>(this);
   for (auto& k_item : in_vector) {
     k_up->_list.push_back(Upload(k_item));
   }
@@ -153,9 +153,9 @@ RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(std::unique_pt
 
   trans_file_ptr k_down;
   if (k_dir)
-    k_down = std::make_shared<rpc_trans::down_dir>(this);
+    k_down = new_object<rpc_trans::down_dir>(this);
   else
-    k_down = std::make_shared<rpc_trans::down_file>(this);
+    k_down = new_object<rpc_trans::down_file>(this);
 
   k_down->set_parameter(in_vector);
   return k_down;
@@ -166,9 +166,9 @@ RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(std::unique_ptr<
 
   trans_file_ptr k_up;
   if (FSys::is_directory(in_vector->local_path))
-    k_up = std::make_shared<rpc_trans::up_dir>(this);
+    k_up = new_object<rpc_trans::up_dir>(this);
   else
-    k_up = std::make_shared<rpc_trans::up_file>(this);
+    k_up = new_object<rpc_trans::up_file>(this);
 
   k_up->set_parameter(in_vector);
   return k_up;
@@ -190,7 +190,7 @@ namespace rpc_trans {
 trans_file::trans_file(RpcFileSystemClient* in_self)
     : _self(in_self),
       _param(),
-      _term(std::make_shared<long_term>()),
+      _term(new_object<long_term>()),
       _result(),
       _size(0),
       _mutex() {
@@ -400,7 +400,7 @@ rpc_trans_path_ptr_list down_dir::down(const std::unique_ptr<rpc_trans_path>& in
 
     } else {
       DOODLE_LOG_DEBUG(fmt::format("准备下载文件: {} <-----  {}", k_l_p, k_s_p))
-      auto k_down = _down_list.emplace_back(std::make_shared<down_file>(_self));
+      auto k_down = _down_list.emplace_back(new_object<down_file>(_self));
       k_down->set_parameter(k_ptr);
     }
   }
@@ -461,7 +461,7 @@ rpc_trans_path_ptr_list up_dir::update(const std::unique_ptr<rpc_trans_path>& in
       //              std::ref(in_future_list)));
     } else {
       DOODLE_LOG_DEBUG(fmt::format("准备上传文件: {} -----> {}", k_l_p, k_s_p))
-      auto k_up = _up_list.emplace_back(std::make_shared<up_file>(_self));
+      auto k_up = _up_list.emplace_back(new_object<up_file>(_self));
       k_up->set_parameter(k_ptr);
     }
   }

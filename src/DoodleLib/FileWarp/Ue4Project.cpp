@@ -274,7 +274,7 @@ long_term_ptr ue4_project_async::import_file(const FSys::path& in_paths) {
   return k_term;
 }
 void ue4_project_async::set_ue4_project(const FSys::path& in_paths) {
-  p_ue4 = std::make_shared<Ue4Project>(in_paths);
+  p_ue4 = new_object<Ue4Project>(in_paths);
 }
 long_term_ptr ue4_project_async::create_shot_folder(const std::vector<ShotPtr>& in_vector) {
   auto k_term = new_object<long_term>();

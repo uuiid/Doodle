@@ -25,7 +25,7 @@ long_term_ptr actn_assfile_create::run(const MetadataPtr& in_data, const Metadat
   auto k_s = sig_get_arg().value().date;
   AssetsFilePtr k_item;
 
-  _assets_file = std::make_shared<AssetsFile>(in_parent, k_s);
+  _assets_file = new_object<AssetsFile>(in_parent, k_s);
   in_parent->child_item.push_back_sig(_assets_file);
   _assets_file->setVersion(_assets_file->find_max_version());
   _assets_file->updata_db(in_parent->getMetadataFactory());
@@ -39,7 +39,7 @@ actn_assfile_add_com::actn_assfile_add_com(std::any&& in_any) {
 long_term_ptr actn_assfile_add_com::run(const MetadataPtr& in_data, const MetadataPtr& in_parent) {
   auto k_s   = sig_get_arg().value().date;
   auto k_ass = std::dynamic_pointer_cast<AssetsFile>(in_data);
-  k_ass->addComment(std::make_shared<Comment>(k_s));
+  k_ass->addComment(new_object<Comment>(k_s));
   k_ass->updata_db(k_ass->getMetadataFactory());
   return {};
 }

@@ -35,7 +35,7 @@ long_term_ptr actn_export_excel::run(const MetadataPtr& in_data, const MetadataP
 void actn_export_excel::export_excel() {
   auto k_rpc = DoodleLib::Get().getRpcMetadataClient();
 
-  auto k_filter = std::make_shared<rpc_filter::filter>();
+  auto k_filter = new_object<rpc_filter::filter>();
   DOODLE_LOG_INFO("获得日期 {} {}", _arg_type.p_time_range.first->showStr(), _arg_type.p_time_range.second->showStr());
   k_filter->set_range(_arg_type.p_time_range.first->getLocalTime(), _arg_type.p_time_range.second->getLocalTime());
   k_filter->set_meta_type(Metadata::meta_type::file);
@@ -140,7 +140,7 @@ void actn_export_excel::export_dep_excel() {
 
 void actn_export_excel::find_parent(const MetadataPtr& in_ptr) {
   MetadataPtr k_ptr = in_ptr;
-  auto k_filter     = std::make_shared<rpc_filter::filter>();
+  auto k_filter     = new_object<rpc_filter::filter>();
   auto k_rpc        = DoodleLib::Get().getRpcMetadataClient();
 
   while (k_ptr->has_parent_id() && k_ptr->get_parent_id() != 0) {  ///首先测试传入父id 有的话直接查找 p_map 没有就rpc中查找
@@ -157,7 +157,7 @@ void actn_export_excel::find_parent(const MetadataPtr& in_ptr) {
 }
 
 string_matrix2_ptr actn_export_excel::export_excel_line(const std::vector<AssetsFilePtr>& in_list) {
-  auto k_matrix2 = std::make_shared<string_matrix2>();
+  auto k_matrix2 = new_object<string_matrix2>();
 
   for (const auto& k_item : in_list) {
     auto k_list = string_list{};

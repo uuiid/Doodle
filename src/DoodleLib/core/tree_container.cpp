@@ -19,14 +19,14 @@ tree_node::tree_node()
       data(),
       child_owner(),
       sig_class(),
-      p_sig(std::make_shared<signal_observe>()) {
+      p_sig(new_object<signal_observe>()) {
 }
 tree_node::tree_node(tree_node* in_parent, MetadataPtr in_data)
     : parent(in_parent),
       data(std::move(in_data)),
       child_owner(),
       sig_class(),
-      p_sig(std::make_shared<signal_observe>()) {
+      p_sig(new_object<signal_observe>()) {
   ;
 }
 
@@ -35,7 +35,7 @@ tree_node::tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data)
       data(std::move(in_data)),
       child_owner(),
       sig_class(),
-      p_sig(std::make_shared<signal_observe>()) {
+      p_sig(new_object<signal_observe>()) {
 }
 tree_node::~tree_node() {
   child_owner.clear();

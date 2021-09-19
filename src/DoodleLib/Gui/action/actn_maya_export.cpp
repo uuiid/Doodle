@@ -14,7 +14,7 @@
 namespace doodle {
 
 actn_maya_export::actn_maya_export()
-    : p_up_paths(std::make_shared<actn_create_ass_up_paths>()) {
+    : p_up_paths(new_object<actn_create_ass_up_paths>()) {
   p_name = "导出maya fbx 并上传文件";
   p_up_paths->sig_get_arg.connect([this]() {
     actn_up_paths::arg_ k_arg{};
@@ -39,7 +39,7 @@ long_term_ptr actn_maya_export::run(const MetadataPtr& in_data, const MetadataPt
   DoodleLib::Get().getRpcFileSystemClient()->Download(k_list)->wait();
   _arg_type.date = k_path->get_cache_path();
 
-  auto k_maya = std::make_shared<MayaFile>();
+  auto k_maya = new_object<MayaFile>();
   k_item->sig_finished.connect([this, in_data, in_parent]() {
     p_up_paths->run(in_data, in_parent);
   });

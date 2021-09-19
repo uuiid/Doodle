@@ -8,7 +8,7 @@
 
 namespace doodle {
 CoreSql::CoreSql()
-    : config(std::make_shared<sqlpp::mysql::connection_config>()) {
+    : config(new_object<sqlpp::mysql::connection_config>()) {
   Init();
 }
 

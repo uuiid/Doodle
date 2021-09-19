@@ -14,13 +14,13 @@ namespace doodle {
 setting_windows::setting_windows()
     : p_dep_list(magic_enum::enum_names<Department>()),
       p_cur_dep_index(magic_enum::enum_integer(CoreSet::getSet().getDepartmentEnum())),
-      p_user(std::make_shared<std::string>(CoreSet::getSet().getUser())),
-      p_cache(std::make_shared<std::string>(CoreSet::getSet().getCacheRoot().generic_string())),
-      p_doc(std::make_shared<std::string>(CoreSet::getSet().getDoc().generic_string())),
-      p_maya_path(std::make_shared<std::string>(CoreSet::getSet().MayaPath().generic_string())),
-      p_ue_path(std::make_shared<std::string>(CoreSet::getSet().gettUe4Setting().Path().generic_string())),
-      p_ue_version(std::make_shared<std::string>(CoreSet::getSet().gettUe4Setting().Version())),
-      p_batch_max(std::make_shared<std::int32_t>(std::thread::hardware_concurrency())) {
+      p_user(new_object<std::string>(CoreSet::getSet().getUser())),
+      p_cache(new_object<std::string>(CoreSet::getSet().getCacheRoot().generic_string())),
+      p_doc(new_object<std::string>(CoreSet::getSet().getDoc().generic_string())),
+      p_maya_path(new_object<std::string>(CoreSet::getSet().MayaPath().generic_string())),
+      p_ue_path(new_object<std::string>(CoreSet::getSet().gettUe4Setting().Path().generic_string())),
+      p_ue_version(new_object<std::string>(CoreSet::getSet().gettUe4Setting().Version())),
+      p_batch_max(new_object<std::int32_t>(std::thread::hardware_concurrency())) {
 }
 void setting_windows::frame_render(const bool_ptr& is_show) {
   dear::Begin{"设置窗口", is_show.get()} && [this]() {

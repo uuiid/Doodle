@@ -19,7 +19,7 @@ long_term_ptr actn_assets_create::run(const MetadataPtr& in_data, const Metadata
     DOODLE_LOG_WARN("没有值")
     return {};
   }
-  auto k_a = std::make_shared<Assets>(in_parent, _arg_type.date);
+  auto k_a = new_object<Assets>(in_parent, _arg_type.date);
   in_parent->child_item.push_back_sig(k_a);
 
   k_a->updata_db(in_parent->getMetadataFactory());
@@ -34,7 +34,7 @@ long_term_ptr actn_episode_create::run(const MetadataPtr& in_data, const Metadat
   if (_arg_type.is_cancel)
     return {};
 
-  auto k_item = std::make_shared<Episodes>(in_parent, _arg_type.date);
+  auto k_item = new_object<Episodes>(in_parent, _arg_type.date);
   in_parent->child_item.push_back_sig(k_item);
   k_item->updata_db(in_parent->getMetadataFactory());
   return {};
@@ -48,7 +48,7 @@ long_term_ptr actn_shot_create::run(const MetadataPtr& in_data, const MetadataPt
   _arg_type = sig_get_arg().value();
   if (_arg_type.is_cancel)
     return {};
-  auto k_item = std::make_shared<Shot>(in_parent, _arg_type.date);
+  auto k_item = new_object<Shot>(in_parent, _arg_type.date);
   in_parent->child_item.push_back_sig(k_item);
   k_item->updata_db(in_parent->getMetadataFactory());
   return {};
@@ -129,7 +129,7 @@ long_term_ptr actn_season_create::run(const MetadataPtr& in_data, const Metadata
   if (_arg_type.is_cancel)
     return {};
 
-  auto k_item = std::make_shared<season>(in_parent, _arg_type.date);
+  auto k_item = new_object<season>(in_parent, _arg_type.date);
   in_parent->child_item.push_back_sig(k_item);
   k_item->updata_db();
   return {};

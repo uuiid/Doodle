@@ -150,7 +150,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
 }
 
 long_term_ptr MayaFile::qcloth_sim_file(qcloth_arg_ptr& in_arg) {
-  auto k_term = std::make_shared<long_term>();
+  auto k_term = new_object<long_term>();
 
   auto k_export_path = in_arg->sim_path.parent_path() / in_arg->sim_path.stem();
   if (!FSys::exists(k_export_path))

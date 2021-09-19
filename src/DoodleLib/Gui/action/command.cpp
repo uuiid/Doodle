@@ -44,7 +44,7 @@ bool comm_export_fbx::run() {
     }
   };
   if (imgui::Button("导出")) {
-    auto maya = std::make_shared<MayaFile>();
+    auto maya = new_object<MayaFile>();
     std::for_each(p_files.begin(), p_files.end(),
                   [maya](const auto& i) { maya->exportFbxFile(i); });
   }

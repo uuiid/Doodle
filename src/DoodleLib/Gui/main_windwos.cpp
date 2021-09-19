@@ -16,22 +16,22 @@
 #include <DoodleLib/toolkit/toolkit.h>
 namespace doodle {
 main_windows::main_windows()
-    : p_setting_show(std::make_shared<bool>(false)),
-      p_debug_show(std::make_shared<bool>(false)),
-      p_about_show(std::make_shared<bool>(false)),
-      p_style_show(std::make_shared<bool>(false)),
-      p_long_task_show(std::make_shared<bool>(true)),
+    : p_setting_show(new_object<bool>(false)),
+      p_debug_show(new_object<bool>(false)),
+      p_about_show(new_object<bool>(false)),
+      p_style_show(new_object<bool>(false)),
+      p_long_task_show(new_object<bool>(true)),
       p_title(fmt::format(
           u8"doodle {}.{}.{}.{}",
           Doodle_VERSION_MAJOR,
           Doodle_VERSION_MINOR,
           Doodle_VERSION_PATCH,
           Doodle_VERSION_TWEAK)),
-      p_setting(std::make_shared<setting_windows>()),
-      p_prj(std::make_shared<project_widget>()),
-      p_ass(std::make_shared<assets_widget>()),
-      p_attr(std::make_shared<attribute_widgets>()),
-      p_long_task(std::make_shared<long_time_tasks_widget>()) {
+      p_setting(new_object<setting_windows>()),
+      p_prj(new_object<project_widget>()),
+      p_ass(new_object<assets_widget>()),
+      p_attr(new_object<attribute_widgets>()),
+      p_long_task(new_object<long_time_tasks_widget>()) {
   p_prj->select_change.connect([this](auto in) { p_ass->set_metadata(in); });
   p_ass->select_change.connect([this](auto in) { p_attr->set_metadata(in); });
 }
@@ -115,7 +115,7 @@ void main_windows::main_menu_windows() {
 }
 void main_windows::main_menu_edit() {
   if (dear::MenuItem(u8"导出fbx"))
-    p_long_task->set_tool_widget(std::make_shared<comm_export_fbx>());
+    p_long_task->set_tool_widget(new_object<comm_export_fbx>());
 }
 
 }  // namespace doodle

@@ -13,7 +13,7 @@ rpc_filesystem::file_mutex_ptr RpcFileSystemServer::get_mutex(const FSys::path& 
   auto k_str = in_path.generic_string();
 
   if (!_mutex.Cached(k_str)) {
-    _mutex.Put(k_str, std::make_shared<rpc_filesystem::file_mutex>());
+    _mutex.Put(k_str, new_object<rpc_filesystem::file_mutex>());
   }
   return _mutex.Get(k_str);
 }
@@ -280,7 +280,7 @@ grpc::Status RpcFileSystemServer::GetHash(grpc::ServerContext* context, const Fi
     std::lock_guard k_lock{k_m->mutex()};
 
     if (!p_cache.Cached(k_str)) {
-      p_cache.Put(k_str, std::make_shared<rpc_filesystem::file_hash>(k_path));
+      p_cache.Put(k_str, new_object<rpc_filesystem::file_hash>(k_path));
     }
     auto k_hash = p_cache.Get(k_str);
     if (!k_hash->valid()) {

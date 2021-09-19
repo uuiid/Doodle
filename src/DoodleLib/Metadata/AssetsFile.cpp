@@ -22,7 +22,7 @@ AssetsFile::AssetsFile()
       p_ShowName(),
       p_path_file(),
       p_path_files(),
-      p_time(std::make_shared<time_point_wrap>(std::chrono::system_clock::now())),
+      p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
       p_user(CoreSet::getSet().getUser()),
       p_department(CoreSet::getSet().getDepartmentEnum()),
       p_comment(),
@@ -35,9 +35,9 @@ AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string showName
     : Metadata(in_metadata),
       p_name(std::move(name)),
       p_ShowName(std::move(showName)),
-      p_path_file(std::make_shared<AssetsPath>()),
+      p_path_file(new_object<AssetsPath>()),
       p_path_files(),
-      p_time(std::make_shared<time_point_wrap>(std::chrono::system_clock::now())),
+      p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
       p_user(CoreSet::getSet().getUser()),
       p_department(CoreSet::getSet().getDepartmentEnum()),
       p_comment(),
@@ -80,7 +80,7 @@ chrono::sys_time_pos AssetsFile::getStdTime() const {
   return p_time->getUTCTime();
 }
 void AssetsFile::setStdTime(const chrono::sys_time_pos& in_time) {
-  p_time = std::make_shared<time_point_wrap>(in_time);
+  p_time = new_object<time_point_wrap>(in_time);
   saved(true);
   sig_change();
   p_need_time = true;

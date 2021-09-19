@@ -59,15 +59,15 @@ static void boostLoggerInitAsyn(const std::string &logPath,
     using namespace std::chrono_literals;
     spdlog::init_thread_pool(8192, 1);
 #ifdef NDEBUG
-    auto k_file = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(appdata.generic_string(), 1024 * 1024, 100);
+    auto k_file = new_object<spdlog::sinks::rotating_file_sink_mt>(appdata.generic_string(), 1024 * 1024, 100);
     std::vector<spdlog::sink_ptr> sinks{k_file};
 #else
-    auto k_debug = std::make_shared<msvc_doodle_sink_mt>();
+    auto k_debug = new_object<msvc_doodle_sink_mt>();
 
-    auto k_file = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(appdata.generic_string(), 1024 * 1024, 100, true);
+    auto k_file = new_object<spdlog::sinks::rotating_file_sink_mt>(appdata.generic_string(), 1024 * 1024, 100, true);
     std::vector<spdlog::sink_ptr> sinks{k_file, k_debug};
 #endif  // NDEBUG
-    auto k_logger = std::make_shared<spdlog::async_logger>(
+    auto k_logger = new_object<spdlog::async_logger>(
         "doodle_lib", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 
     spdlog::register_logger(k_logger);

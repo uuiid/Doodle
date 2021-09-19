@@ -17,14 +17,14 @@ long_term_ptr actn_create_project::run(const MetadataPtr& in_data, const Metadat
     return {};
   }
 
-  auto prj = std::make_shared<Project>(k_val.prj_path, k_val.name);
+  auto prj = new_object<Project>(k_val.prj_path, k_val.name);
   MetadataFactoryPtr k_f{};
   if (in_data)
     k_f = in_data->getMetadataFactory();
   else if (in_parent) {
     k_f = in_parent->getMetadataFactory();
   } else {
-    k_f = std::make_shared<MetadataFactory>();
+    k_f = new_object<MetadataFactory>();
   }
 
   prj->updata_db(k_f);

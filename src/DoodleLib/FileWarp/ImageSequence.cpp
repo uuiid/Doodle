@@ -181,7 +181,7 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
 //   for (auto &&dir : p_paths) {
 //     if (FSys::is_directory(dir))
 //       p_imageSequences.emplace_back(
-//           std::make_shared<ImageSequence>(dir));
+//           new_object<ImageSequence>(dir));
 //     else
 //       throw DoodleError("不是目录");
 //   }
