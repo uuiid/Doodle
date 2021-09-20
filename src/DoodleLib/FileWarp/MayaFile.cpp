@@ -76,7 +76,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
                           while (k_c.running()) {
                             if (std::getline(k_in, str_r) && !str_r.empty()) {
                               in_term->sig_message_result(conv::to_utf<char>(str_r, "GBK") + "\n", long_term::warning);
-                              in_term->sig_progress(rational_int{1, 5000});
+                              in_term->sig_progress(rational_int{1, 50});
                             }
                           }
                            });
@@ -101,7 +101,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
         boost::process::system(fmt::format("taskkill /F /T /PID {}", k_c.id()));
         in_term->set_state(long_term::fail);
       }
-      in_term->sig_progress(rational_int{1, 50});
+      in_term->sig_progress(rational_int{1, 5000});
     }
   }
   fun.get();
@@ -154,10 +154,6 @@ void MayaFile::exportFbxFile(const FSys::path& file_path,
 
 void MayaFile::qcloth_sim_file(const qcloth_arg_ptr& in_arg,
                                const long_term_ptr& in_ptr) {
-  auto k_export_path = in_arg->sim_path.parent_path() / in_arg->sim_path.stem();
-  if (!FSys::exists(k_export_path))
-    FSys::create_directories(k_export_path);
-
   if (!FSys::exists(in_arg->sim_path)) {
     if (in_ptr) {
       in_ptr->sig_finished();
