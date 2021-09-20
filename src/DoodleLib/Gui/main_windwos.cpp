@@ -116,6 +116,14 @@ void main_windows::main_menu_windows() {
 void main_windows::main_menu_edit() {
   if (dear::MenuItem(u8"导出fbx"))
     p_long_task->set_tool_widget(new_object<comm_export_fbx>());
+  if (dear::MenuItem(u8"解算布料"))
+    p_long_task->set_tool_widget(new_object<comm_qcloth_sim>());
+  //  if (dear::MenuItem(u8"创建视频"))
+  //    p_long_task->set_tool_widget(new_object<comm_export_fbx>());
+  //  if (dear::MenuItem(u8"导入ue文件"))
+  //    p_long_task->set_tool_widget(new_object<comm_export_fbx>());
+  //  if (dear::MenuItem(u8"创建ue关卡"))
+  //    p_long_task->set_tool_widget(new_object<comm_export_fbx>());
 }
 
 }  // namespace doodle

@@ -17,6 +17,11 @@ class DOODLELIB_API comm_export_fbx : public command_tool {
 };
 
 class DOODLELIB_API comm_qcloth_sim : public command_tool {
+  FSys::path p_cloth_path;
+  std::shared_ptr<std::string> p_text;
+  std::vector<FSys::path> p_sim_path;
+  bool p_only_sim;
+
  public:
   comm_qcloth_sim();
   virtual bool is_async() override;
