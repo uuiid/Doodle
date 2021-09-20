@@ -27,39 +27,34 @@ target_compile_definitions(DoodleServerExe
         )
 
 cmake_print_variables(unofficial-nana_FOUND)
-if (unofficial-nana_FOUND)
-    add_executable(
-            DoodleExe
-            WIN32
-            ${DOODLELIB_GUI_HEADER}
-            ${DOODLELIB_GUI_SOURCE}
-            main/GUI/main.cpp
-            main/doodle.manifest
-            main/icon.ico
-            main/win_exe.rc
-    )
+add_executable(
+        DoodleExe
+        WIN32
+        ${DOODLELIB_GUI_HEADER}
+        ${DOODLELIB_GUI_SOURCE}
+        main/GUI/main.cpp
+        main/doodle.manifest
+        main/icon.ico
+        main/win_exe.rc
+)
 
-    set_target_properties(DoodleExe
-            PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-    target_link_libraries(DoodleExe
-            PUBLIC
-            DoodleLib
-            unofficial::nana::nana
-            )
-    target_compile_definitions(DoodleExe
-            PUBLIC
-            #            _WIN32_WINNT=0x0A00
-            #            WIN32_LEAN_AND_MEAN
-            $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
-            )
-else()
-    add_executable(DoodleExe ALIAS DoodleServerExe )
-endif ()
-
-
-
-
-
+set_target_properties(DoodleExe
+        PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+target_link_libraries(DoodleExe
+        PUBLIC
+        DoodleLib
+        )
+target_compile_definitions(DoodleExe
+        PUBLIC
+        #            _WIN32_WINNT=0x0A00
+        #            WIN32_LEAN_AND_MEAN
+        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
+        )
+#if (unofficial-nana_FOUND)
+#
+#else ()
+#    #    add_executable(DoodleExe ALIAS DoodleServerExe )
+#endif ()
 
 
 add_executable(
@@ -83,6 +78,6 @@ target_compile_definitions(doodle_test
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         )
-target_compile_options(doodle_test PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /bigobj> )# $<$<CXX_COMPILER_ID:GNU>: -Wa,-mbig-obj>
+target_compile_options(doodle_test PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)# $<$<CXX_COMPILER_ID:GNU>: -Wa,-mbig-obj>
 include(Catch)
 catch_discover_tests(doodle_test)

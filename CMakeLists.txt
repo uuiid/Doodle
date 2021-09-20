@@ -44,10 +44,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(CMakeRC)
 
-#寻找一些外部库
-#    find_package(unofficial-nana CONFIG REQUIRED)
-#    target_link_libraries(main PRIVATE unofficial::nana::nana)
-#
 #find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
 #GUI 库
 #find_package(wxWidgets REQUIRED)
@@ -60,8 +56,6 @@ include(CMakeRC)
 #find_package(rttr CONFIG REQUIRED)
 # find_package(pugixml CONFIG REQUIRED)
 
-
-find_package(unofficial-nana CONFIG )
 find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time log locale iostreams)
 find_package(Sqlpp11 REQUIRED)
 find_package(Catch2 CONFIG )
