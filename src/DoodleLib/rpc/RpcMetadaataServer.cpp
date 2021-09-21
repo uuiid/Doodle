@@ -14,7 +14,6 @@
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
 
-#include <cereal/archives/portable_binary.hpp>
 
 namespace doodle {
 

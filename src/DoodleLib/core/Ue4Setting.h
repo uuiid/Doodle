@@ -1,9 +1,6 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <cereal/cereal.hpp>
-#include <cereal/types/common.hpp>
-#include <cereal/types/string.hpp>
 
 namespace doodle {
 class DOODLELIB_API Ue4Setting :public details::no_copy{

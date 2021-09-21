@@ -11,9 +11,6 @@
 #include <core/DoodleLib.h>
 #include <grpcpp/grpcpp.h>
 
-#include <cereal/archives/json.hpp>
-#include <cereal/archives/portable_binary.hpp>
-
 namespace doodle {
 
 MetadataFactory::MetadataFactory()

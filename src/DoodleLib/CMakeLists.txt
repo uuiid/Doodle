@@ -60,6 +60,7 @@ target_link_libraries(DoodleLib
         ${Boost_LIBRARIES}
         Boost::locale
         Boost::filesystem
+        Boost::serialization
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}
         #        EnTT::EnTT

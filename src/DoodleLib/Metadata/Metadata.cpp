@@ -11,7 +11,8 @@
 #include <core/CoreSet.h>
 #include <google/protobuf/util/time_util.h>
 
-#include <cereal/archives/portable_binary.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 namespace doodle {
 Metadata::Metadata()
@@ -228,8 +229,8 @@ void Metadata::to_DataDb(DataDb &in_) const {
     vector_container my_data{};
     {
       vector_iostream kt{my_data};
-      cereal::PortableBinaryOutputArchive k_archive{kt};
-      k_archive(shared_from_this());
+      boost::archive::text_oarchive k_archive{kt};
+      k_archive << shared_from_this();
     }
     in_.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
   }
@@ -244,8 +245,8 @@ MetadataPtr Metadata::from_DataDb(const DataDb &in_) {
   vector_container my_data{k_data.begin(), k_data.end()};
   {
     vector_istream k_i{my_data};
-    cereal::PortableBinaryInputArchive k_archive{k_i};
-    k_archive(k_ptr);
+    boost::archive::text_iarchive k_archive{k_i};
+    k_archive >> k_ptr;
   }
 
   if (k_ptr->p_id != in_.id())

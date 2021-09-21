@@ -7,7 +7,6 @@
 #include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/core/CoreSet.h>
 
-#include <cereal/types/chrono.hpp>
 
 namespace doodle {
 /**

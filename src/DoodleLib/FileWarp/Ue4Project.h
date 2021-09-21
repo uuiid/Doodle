@@ -6,11 +6,6 @@
 #include <DoodleLib/libWarp/json_warp.h>
 #include <DoodleLib/threadPool/long_term.h>
 
-#include <cereal/types/base_class.hpp>
-#include <cereal/types/common.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/string.hpp>
-#include <cereal/types/vector.hpp>
 
 namespace doodle {
 

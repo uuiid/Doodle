@@ -10,9 +10,6 @@
 
 #include <any>
 #include <boost/signals2.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/optional.hpp>
-#include <cereal/types/polymorphic.hpp>
 #include <optional>
 
 namespace doodle {
@@ -342,3 +339,5 @@ void Metadata::serialize(Archive &ar, std::uint32_t const version) {
 // CEREAL_REGISTER_TYPE(doodle::Metadata)
 // CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::Metadata>, doodle::Metadata)
 BOOST_CLASS_VERSION(doodle::Metadata, 1)
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(doodle::Metadata)
+BOOST_CLASS_EXPORT_KEY(doodle::Metadata)

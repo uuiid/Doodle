@@ -204,35 +204,35 @@ TEST_CASE("test create metadata", "[server][metadata]") {
 }
 
 TEST_CASE("gui action metadata", "[metadata][gui]") {
-  using namespace doodle;
-  using namespace doodle::chrono::literals;
-  auto k_server = RpcServerHandle{};
-  auto& set     = CoreSet::getSet();
-  k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
-
-  DoodleLib::Get().init_gui();
-  auto k_fa = std::make_shared<MetadataFactory>();
-
-  SECTION("export excel") {
-    auto k_ex = std::make_shared<actn_export_excel>();
-
-    k_ex->sig_get_arg.connect([]() {
-      actn_export_excel::arg k_arg{};
-      auto k_time_b = std::make_shared<time_point_wrap>();
-      k_time_b->set_local_time(chrono::local_days(2021_y / 6 / 1_d));
-      auto k_time_end = std::make_shared<time_point_wrap>();
-      k_time_end->set_local_time(chrono::local_days(2021_y / 6 / 30_d));
-      k_arg.p_time_range = std::make_pair(k_time_b, k_time_end);
-
-      k_arg.date = FSys::temp_directory_path() / "doodle_tset";
-      if (FSys::exists(k_arg.date))
-        FSys::create_directories(k_arg.date);
-
-      return k_arg;
-    });
-
-    (*k_ex)({}, {});
-  }
+//  using namespace doodle;
+//  using namespace doodle::chrono::literals;
+//  auto k_server = RpcServerHandle{};
+//  auto& set     = CoreSet::getSet();
+//  k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
+//
+//  DoodleLib::Get().init_gui();
+//  auto k_fa = std::make_shared<MetadataFactory>();
+//
+//  SECTION("export excel") {
+//    auto k_ex = std::make_shared<actn_export_excel>();
+//
+//    k_ex->sig_get_arg.connect([]() {
+//      actn_export_excel::arg k_arg{};
+//      auto k_time_b = std::make_shared<time_point_wrap>();
+//      k_time_b->set_local_time(chrono::local_days(2021_y / 6 / 1_d));
+//      auto k_time_end = std::make_shared<time_point_wrap>();
+//      k_time_end->set_local_time(chrono::local_days(2021_y / 6 / 30_d));
+//      k_arg.p_time_range = std::make_pair(k_time_b, k_time_end);
+//
+//      k_arg.date = FSys::temp_directory_path() / "doodle_tset";
+//      if (FSys::exists(k_arg.date))
+//        FSys::create_directories(k_arg.date);
+//
+//      return k_arg;
+//    });
+//
+//    (*k_ex)({}, {});
+//  }
 }
 //TEST(DSTD, map_netDir) {
 //  NETRESOURCE resources{};

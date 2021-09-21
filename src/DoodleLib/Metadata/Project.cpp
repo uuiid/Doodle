@@ -1,15 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include <Exception/Exception.h>
 #include <Gui/factory/menu_factory_Interface.h>
-#include <Logger/Logger.h>
 #include <Metadata/MetadataFactory.h>
 #include <Metadata/Project.h>
-#include <PinYIn/convert.h>
-#include <core/CoreSet.h>
+#include <PinYin/convert.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
-#include <cereal/archives/portable_binary.hpp>
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Project)
 namespace doodle {
 
 Project::Project()

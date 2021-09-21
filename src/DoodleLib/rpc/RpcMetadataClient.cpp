@@ -15,8 +15,6 @@
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>
 
-#include <cereal/archives/portable_binary.hpp>
-
 namespace doodle {
 
 RpcMetadataClient::RpcMetadataClient(const std::shared_ptr<grpc::Channel>& in_channel)

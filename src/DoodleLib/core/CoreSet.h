@@ -7,12 +7,6 @@
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 
 #include <boost/filesystem.hpp>
-#include <cereal/cereal.hpp>
-#include <cereal/types/base_class.hpp>
-#include <cereal/types/common.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/string.hpp>
-#include <cereal/types/vector.hpp>
 #include <magic_enum.hpp>
 #include <nlohmann/json_fwd.hpp>
 namespace doodle {

@@ -2,9 +2,6 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/Metadata.h>
 
-#include <cereal/cereal.hpp>
-#include <cereal/types/common.hpp>
-#include <cereal/types/string.hpp>
 namespace doodle {
 /**
  * 项目信息类
@@ -66,3 +63,4 @@ void Project::serialize(Archive& ar, std::uint32_t const version) {
 
 }  // namespace doodle
 BOOST_CLASS_VERSION(doodle::Project, 2);
+BOOST_CLASS_EXPORT_KEY(doodle::Project)

@@ -8,7 +8,6 @@
 #include <date/date.h>
 #include <date/tz.h>
 
-#include <cereal/types/chrono.hpp>
 
 namespace doodle {
 

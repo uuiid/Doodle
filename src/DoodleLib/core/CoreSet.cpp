@@ -13,20 +13,18 @@
 #include <sqlpp11/mysql/mysql.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/process.hpp>
-#include <cereal/archives/portable_binary.hpp>
 #include <magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #ifdef _WIN32
 #include <ShlObj.h>
 #else
-#include <unistd.h>
-#include <sys/types.h>
 #include <pwd.h>
-#endif // _WIN32
-
-
-
+#include <sys/types.h>
+#include <unistd.h>
+#endif  // _WIN32
 
 namespace doodle {
 
@@ -51,9 +49,7 @@ FSys::path get_pwd()
   auto pw = getpwuid(getuid())->pw_dir;
   return FSys::path{pw};
 };
-#endif // _WIN32
-
-
+#endif  // _WIN32
 
 CoreSet &CoreSet::getSet() {
   static CoreSet install;
@@ -93,8 +89,8 @@ void CoreSet::writeDoodleLocalSet() {
   }
 
   FSys::ofstream outjosn{p_doc / configFileName(), std::ios::out | std::ios::binary};
-  cereal::PortableBinaryOutputArchive out{outjosn};
-  out(*this);
+  boost::archive::text_oarchive out{outjosn};
+  out << *this;
 }
 
 void CoreSet::getSetting() {
@@ -103,10 +99,10 @@ void CoreSet::getSetting() {
     FSys::path strFile(k_settingFileName);
     FSys::ifstream inJosn{k_settingFileName, std::ifstream::binary};
 
-    cereal::PortableBinaryInputArchive incereal{inJosn};
+    boost::archive::text_iarchive out{inJosn};
     try {
-      incereal(*this);
-    } catch (const cereal::Exception &err) {
+      out >> *this;
+    } catch (const boost::archive::archive_exception &err) {
       DOODLE_LOG_DEBUG(err.what());
     }
   }
@@ -204,7 +200,7 @@ void CoreSet::setDataRoot(const FSys::path &in_path) {
 }
 
 void CoreSet::getCacheDiskPath() {
-#if defined ( _WIN32 )
+#if defined(_WIN32)
   const static string_list dirs{"D:/",
                                 "E:/",
                                 "F:/",
@@ -229,7 +225,7 @@ void CoreSet::getCacheDiskPath() {
   }
   if (p_cache_root.empty())
     p_cache_root = FSys::path{"C:/"} / "Doodle" / "cache";
-#elif defined ( __linux__ )
+#elif defined(__linux__)
   p_cache_root = FSys::path{"/mnt/doodle"};
 #endif
 }

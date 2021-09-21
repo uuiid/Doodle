@@ -138,7 +138,7 @@ TEST_CASE("core opencv", "[fun]") {
   using namespace doodle;
   const FSys::path path{R"(D:\tmp\tmp)"};
   std::fstream file{};
-  int i = 0;
+  int i      = 0;
 
   auto video = cv::VideoWriter("D:/test.mp4", cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), (double)25, cv::Size{1280, 720});
   cv::Mat image{};
@@ -168,18 +168,18 @@ TEST_CASE("maya get log", "[maya]") {
   using namespace doodle;
   auto k_maya               = MayaFile();
   auto k_arg                = std::make_shared<MayaFile::qcloth_arg>();
-  k_arg->only_sim           = false;
-  k_arg->qcloth_assets_path = FSys::path{R"(V:\03_Workflow\Assets\CFX\cloth)"};
-  k_arg->sim_path           = FSys::path{"F:\\data\\DBXY_163_052.ma"};
-  auto k_term               = k_maya.qcloth_sim_file(k_arg);
-  k_term->sig_message_result.connect([](const std::string& in_, long_term::level in_level) { DOODLE_LOG_INFO(in_); });
-  k_term->sig_progress.connect([](auto in_) { DOODLE_LOG_INFO(in_); });
-  k_term->p_list[0].get();
+//  k_arg->only_sim           = false;
+//  k_arg->qcloth_assets_path = FSys::path{R"(V:\03_Workflow\Assets\CFX\cloth)"};
+//  k_arg->sim_path           = FSys::path{"F:\\data\\DBXY_163_052.ma"};
+//  auto k_term               = k_maya.qcloth_sim_file(k_arg);
+//  k_term->sig_message_result.connect([](const std::string& in_, long_term::level in_level) { DOODLE_LOG_INFO(in_); });
+//  k_term->sig_progress.connect([](auto in_) { DOODLE_LOG_INFO(in_); });
+//  k_term->p_list[0].get();
 }
 
 TEST_CASE("ThreadPool", "[core][ThreadPool]") {
   using namespace doodle;
-  details::ThreadPool th{4};
+  ThreadPool th{4};
   for (int k_i = 0; k_i < 100; ++k_i) {
     th.enqueue([k_i]() {
       std::cout << k_i << std::endl;
@@ -229,9 +229,10 @@ TEST_CASE("std regex", "[std][regex]") {
             << std::endl;
 }
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
-#include <cereal/archives/portable_binary.hpp>
+#include <boost/archive/polymorphic_text_iarchive.hpp>
+#include <boost/archive/polymorphic_text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 TEST_CASE("core archive", "[fun][archives]") {
   using namespace doodle;
@@ -242,19 +243,21 @@ TEST_CASE("core archive", "[fun][archives]") {
   SECTION("archive") {
     auto k_val = std::make_shared<doodle::Project>("D:/", "test22333");
     {
-      cereal::JSONOutputArchive json{str_stream};
-      json(boost::serialization::make_nvp("mainset", k_val));
+      boost::archive::text_oarchive json{str_stream};
+//      boost::archive::polymorphic_text_oarchive json{str_stream};
+      json << boost::serialization::make_nvp("mainset", k_val);
       // cereal::BinaryOutputArchive binary{std::cout};
-      cereal::BinaryOutputArchive binary2{str_stream_bin};
-      binary2(k_val);
+      //      cereal::BinaryOutputArchive binary2{str_stream_bin};
+      //      binary2(k_val);
     }
     std::cout << str_stream.str() << std::endl;
     k_val.reset();
     {
-      cereal::JSONInputArchive json{str_stream};
-      json(k_val);
-      cereal::BinaryInputArchive binary{str_stream_bin};
-      binary(k_val);
+      boost::archive::text_iarchive json{str_stream};
+//      boost::archive::polymorphic_text_iarchive json{str_stream};
+      json >> k_val;
+      //      cereal::BinaryInputArchive binary{str_stream_bin};
+      //      binary(k_val);
     }
     REQUIRE(k_val->getPath() == FSys::path{"D:/"});
     REQUIRE(k_val->getName() == FSys::path{"test22333"});
@@ -265,22 +268,23 @@ TEST_CASE("core archive", "[fun][archives]") {
       {
         doodle::MetadataPtr k_m1 = std::make_shared<doodle::Project>("D:/", "测试1");
         doodle::MetadataPtr k_m2 = std::make_shared<doodle::Project>("F:/", "测试2");
-        cereal::JSONOutputArchive json{str_stream};
-        json(boost::serialization::make_nvp("metadata1", k_m1),
-             boost::serialization::make_nvp("metadata12", k_m2));
+        boost::archive::text_oarchive json{str_stream};
+//        boost::archive::polymorphic_text_oarchive json{str_stream};
+        json << boost::serialization::make_nvp("metadata1", k_m1) << boost::serialization::make_nvp("metadata12", k_m2);
         // cereal::BinaryOutputArchive binary{std::cout};
-        cereal::BinaryOutputArchive binary2{str_stream_bin};
-        binary2(boost::serialization::make_nvp("metadata1", k_m1),
-                boost::serialization::make_nvp("metadata12", k_m2));
+        //        cereal::BinaryOutputArchive binary2{str_stream_bin};
+        //        binary2(boost::serialization::make_nvp("metadata1", k_m1),
+        //                boost::serialization::make_nvp("metadata12", k_m2));
       }
       {
         doodle::MetadataPtr k1;
         doodle::MetadataPtr k2;
 
-        cereal::JSONInputArchive json{str_stream};
-        json(k1, k2);
-        cereal::BinaryInputArchive binary{str_stream_bin};
-        binary(k1, k2);
+        boost::archive::text_iarchive json{str_stream};
+//        boost::archive::polymorphic_text_iarchive json{str_stream};
+        json >> k1 >> k2;
+        //        cereal::BinaryInputArchive binary{str_stream_bin};
+        //        binary(k1, k2);
         REQUIRE(std::dynamic_pointer_cast<Project>(k1)->getPath() == FSys::path{"D:/"});
         REQUIRE(std::dynamic_pointer_cast<Project>(k1)->getName() == "测试1");
         REQUIRE(std::dynamic_pointer_cast<Project>(k2)->getPath() == FSys::path{"F:/"});
