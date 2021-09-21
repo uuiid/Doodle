@@ -4,6 +4,7 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/core/observable_container.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 
@@ -13,9 +14,6 @@
 #include <cereal/types/optional.hpp>
 #include <cereal/types/polymorphic.hpp>
 #include <optional>
-
-#include <DoodleLib/Metadata/MetadataFactory.h>
-
 
 namespace doodle {
 template <class Class, class factory>
@@ -52,8 +50,8 @@ class database_action {
   [[nodiscard]] bool is_loaded() const {
     return !p_need_load;
   };
- public:
 
+ public:
   explicit database_action(Class *in_ptr)
       : metadata_self(in_ptr),
         p_factory(),
@@ -323,7 +321,7 @@ class DOODLELIB_API Metadata
   static MetadataPtr from_DataDb(const DataDb &in_);
   explicit operator DataDb() const;
 
-  friend class cereal::access;
+  friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
 };
@@ -332,15 +330,15 @@ template <class Archive>
 void Metadata::serialize(Archive &ar, std::uint32_t const version) {
   //  p_has_child = child_item.size();
   if (version == 1)
-    ar(
-        cereal::make_nvp("id", p_id),
-        cereal::make_nvp("parent_id", p_parent_id),
-        cereal::make_nvp("UUID", p_uuid),
-        cereal::make_nvp("has_child", p_has_child));
+    ar &
+            boost::serialization::make_nvp("id", p_id) &
+        boost::serialization::make_nvp("parent_id", p_parent_id) &
+        boost::serialization::make_nvp("UUID", p_uuid) &
+        boost::serialization::make_nvp("has_child", p_has_child);
 }
 
 }  // namespace doodle
 
 // CEREAL_REGISTER_TYPE(doodle::Metadata)
 // CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::Metadata>, doodle::Metadata)
-CEREAL_CLASS_VERSION(doodle::Metadata, 1)
+BOOST_CLASS_VERSION(doodle::Metadata, 1)

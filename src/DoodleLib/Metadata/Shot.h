@@ -53,17 +53,16 @@ class DOODLELIB_API Shot : public Metadata {
   };
 
  private:
-  friend class cereal::access;
+  friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
 };
 template <class Archive>
 void Shot::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
-    ar(
-        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
-        p_shot,
-        p_shot_ab);
+    ar &boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+        p_shot &
+            p_shot_ab;
 }
 }  // namespace doodle
 
@@ -78,5 +77,4 @@ void load_minimal(Archive const &, doodle::Shot::ShotAbEnum &shotab, std::string
 };
 }  // namespace cereal
 
-CEREAL_REGISTER_TYPE(doodle::Shot)
-CEREAL_CLASS_VERSION(doodle::Shot, 1)
+BOOST_CLASS_VERSION(doodle::Shot, 1)

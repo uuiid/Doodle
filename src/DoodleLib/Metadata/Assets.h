@@ -31,9 +31,8 @@ class DOODLELIB_API Assets : public Metadata {
   bool operator>=(const Assets& in_rhs) const;
   void create_menu(const menu_factory_ptr& in_factoryPtr) override;
 
-
  private:
-  friend class cereal::access;
+  friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version);
 };
@@ -41,16 +40,15 @@ class DOODLELIB_API Assets : public Metadata {
 template <class Archive>
 void Assets::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 1)
-    ar(
-        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
-        p_name);
+    ar&
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+        p_name;
   if (version == 2)
-    ar(
-        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
-        p_name,
-        p_name_enus);
+    ar&
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+        p_name&
+            p_name_enus;
 }
 }  // namespace doodle
 
-CEREAL_REGISTER_TYPE(doodle::Assets)
-CEREAL_CLASS_VERSION(doodle::Assets, 2)
+BOOST_CLASS_VERSION(doodle::Assets, 2)

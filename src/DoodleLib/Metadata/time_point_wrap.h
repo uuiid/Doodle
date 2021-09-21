@@ -113,18 +113,18 @@ class DOODLELIB_API time_point_wrap : public details::no_copy {
   void disassemble(const chrono::sys_time_pos& in_utc_timePoint);
 
   //这里是序列化的代码
-  friend class cereal::access;
+  friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const std::uint32_t version){
     if (version == 1)
       ar(
-          cereal::make_nvp("year", p_year),
-          cereal::make_nvp("month", p_month),
-          cereal::make_nvp("days", p_day),
-          cereal::make_nvp("hours", p_hours),
-          cereal::make_nvp("minutes", p_minutes),
-          cereal::make_nvp("seconds", p_seconds),
-          cereal::make_nvp("time", p_time));
+          boost::serialization::make_nvp("year", p_year),
+          boost::serialization::make_nvp("month", p_month),
+          boost::serialization::make_nvp("days", p_day),
+          boost::serialization::make_nvp("hours", p_hours),
+          boost::serialization::make_nvp("minutes", p_minutes),
+          boost::serialization::make_nvp("seconds", p_seconds),
+          boost::serialization::make_nvp("time", p_time));
     disassemble(p_time);
   };
 };
@@ -135,4 +135,4 @@ class DOODLELIB_API time_point_wrap : public details::no_copy {
 //   };
 // }
 }  // namespace doodle
-CEREAL_CLASS_VERSION(doodle::time_point_wrap, 1)
+BOOST_CLASS_VERSION(doodle::time_point_wrap, 1)

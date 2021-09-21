@@ -11,9 +11,9 @@
 
 namespace doodle {
 /**
-  * @brief 这个类代表着服务端的文件条目
-  * 
-  */
+ * @brief 这个类代表着服务端的文件条目
+ *
+ */
 class DOODLELIB_API AssetsFile : public Metadata {
   std::string p_name;
   std::string p_ShowName;
@@ -30,18 +30,18 @@ class DOODLELIB_API AssetsFile : public Metadata {
  public:
   /**
    * @brief 默认构造
-   * 
+   *
    */
   AssetsFile();
 
   /**
    * @brief 构造一个条目并添加一些必要的属性
-   * 
+   *
    * @param in_metadata 父条目,这个是必须的
-   * @param in_path 本地路径,这个在创建时会自动生成一个服务器路径(基本上是一个uuid路径) 
+   * @param in_path 本地路径,这个在创建时会自动生成一个服务器路径(基本上是一个uuid路径)
    *                基本是调用 AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
    * @param name 名称
-   * @param showName 显示名称 
+   * @param showName 显示名称
    */
   explicit AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string showName, std::string Name = {});
   // ~AssetsFile();
@@ -81,7 +81,7 @@ class DOODLELIB_API AssetsFile : public Metadata {
   virtual void to_DataDb(DataDb& in_) const override;
 
  private:
-  friend class cereal::access;
+  friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version);
 };
@@ -89,40 +89,39 @@ class DOODLELIB_API AssetsFile : public Metadata {
 template <class Archive>
 void AssetsFile::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 1)
-    ar(
-        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
-        CEREAL_NVP(p_name),
-        CEREAL_NVP(p_ShowName),
-        CEREAL_NVP(p_path_file),
-        CEREAL_NVP(p_time),
-        CEREAL_NVP(p_user),
-        CEREAL_NVP(p_department),
-        CEREAL_NVP(p_comment));
+    ar&
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+        BOOST_SERIALIZATION_NVP(p_name) &
+        BOOST_SERIALIZATION_NVP(p_ShowName) &
+        BOOST_SERIALIZATION_NVP(p_path_file) &
+        BOOST_SERIALIZATION_NVP(p_time) &
+        BOOST_SERIALIZATION_NVP(p_user) &
+        BOOST_SERIALIZATION_NVP(p_department) &
+        BOOST_SERIALIZATION_NVP(p_comment);
   if (version == 2)
-    ar(
-        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
-        CEREAL_NVP(p_name),
-        CEREAL_NVP(p_ShowName),
-        CEREAL_NVP(p_path_file),
-        CEREAL_NVP(p_time),
-        CEREAL_NVP(p_user),
-        CEREAL_NVP(p_department),
-        CEREAL_NVP(p_comment),
-        CEREAL_NVP(p_version));
+    ar&
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+        BOOST_SERIALIZATION_NVP(p_name) &
+        BOOST_SERIALIZATION_NVP(p_ShowName) &
+        BOOST_SERIALIZATION_NVP(p_path_file) &
+        BOOST_SERIALIZATION_NVP(p_time) &
+        BOOST_SERIALIZATION_NVP(p_user) &
+        BOOST_SERIALIZATION_NVP(p_department) &
+        BOOST_SERIALIZATION_NVP(p_comment) &
+        BOOST_SERIALIZATION_NVP(p_version);
   if (version == 3)
-    ar(
-        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
-        CEREAL_NVP(p_name),
-        CEREAL_NVP(p_ShowName),
-        CEREAL_NVP(p_path_files),
-        CEREAL_NVP(p_time),
-        CEREAL_NVP(p_user),
-        CEREAL_NVP(p_department),
-        CEREAL_NVP(p_comment),
-        CEREAL_NVP(p_version));
+    ar&
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+        BOOST_SERIALIZATION_NVP(p_name) &
+        BOOST_SERIALIZATION_NVP(p_ShowName) &
+        BOOST_SERIALIZATION_NVP(p_path_files) &
+        BOOST_SERIALIZATION_NVP(p_time) &
+        BOOST_SERIALIZATION_NVP(p_user) &
+        BOOST_SERIALIZATION_NVP(p_department) &
+        BOOST_SERIALIZATION_NVP(p_comment) &
+        BOOST_SERIALIZATION_NVP(p_version);
 }
 
 }  // namespace doodle
 
-CEREAL_REGISTER_TYPE(doodle::AssetsFile)
-CEREAL_CLASS_VERSION(doodle::AssetsFile, 3)
+BOOST_CLASS_VERSION(doodle::AssetsFile, 3)

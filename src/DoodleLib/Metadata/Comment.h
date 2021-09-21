@@ -19,15 +19,15 @@ class DOODLELIB_API Comment {
   void setUser(const std::string& in_user);
 
  private:
-  friend class cereal::access;
+  friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version);
 };
 template <class Archive>
 void Comment::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 1)
-    ar(CEREAL_NVP(p_comment),
-       CEREAL_NVP(p_user));
+    ar&BOOST_SERIALIZATION_NVP(p_comment)&
+       BOOST_SERIALIZATION_NVP(p_user);
 }
 }  // namespace doodle
 
@@ -42,4 +42,4 @@ struct formatter<doodle::Comment> : formatter<string_view> {
   }
 };
 }  // namespace fmt
-CEREAL_CLASS_VERSION(doodle::Comment, 1)
+BOOST_CLASS_VERSION(doodle::Comment, 1)

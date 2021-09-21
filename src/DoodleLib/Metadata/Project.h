@@ -16,6 +16,7 @@ class DOODLELIB_API Project : public Metadata {
   FSys::path p_path;
 
   void init();
+
  public:
   Project();
   explicit Project(FSys::path in_path, std::string in_name = {});
@@ -41,11 +42,10 @@ class DOODLELIB_API Project : public Metadata {
   bool operator<=(const Project& in_rhs) const;
   bool operator>=(const Project& in_rhs) const;
 
-
  private:
   [[nodiscard]] FSys::path DBRoot() const;
 
-  friend class cereal::access;
+  friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version);
 };
@@ -53,17 +53,16 @@ class DOODLELIB_API Project : public Metadata {
 template <class Archive>
 void Project::serialize(Archive& ar, std::uint32_t const version) {
   if (version == 1)
-    ar(
-        cereal::make_nvp("name", p_name),
-        cereal::make_nvp("path", p_path));
+    ar&
+            boost::serialization::make_nvp("name", p_name) &
+        boost::serialization::make_nvp("path", p_path);
   if (version == 2)
-    ar(
-        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
-        cereal::make_nvp("name", p_name),
-        cereal::make_nvp("path", p_path));
+    ar&
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+        boost::serialization::make_nvp("name", p_name) &
+        boost::serialization::make_nvp("path", p_path);
   init();
 }
 
 }  // namespace doodle
-CEREAL_REGISTER_TYPE(doodle::Project)
-CEREAL_CLASS_VERSION(doodle::Project, 2);
+BOOST_CLASS_VERSION(doodle::Project, 2);

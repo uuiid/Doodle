@@ -34,7 +34,7 @@ class DOODLELIB_API Ue4Setting :public details::no_copy{
   void testValue();
 
  private:
-  friend class cereal::access;
+  friend class boost::serialization::access;
 
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version);
@@ -43,13 +43,13 @@ class DOODLELIB_API Ue4Setting :public details::no_copy{
 template <class Archive>
 void Ue4Setting::serialize(Archive& ar, std::uint32_t const version) {
   if (version == 1)
-    ar(
-        cereal::make_nvp("ue4_path", ue4_path),
-        cereal::make_nvp("ue4_version", ue4_version),
-        cereal::make_nvp("shot_start", shot_start),
-        cereal::make_nvp("shot_end", shot_end));
+    ar&
+        boost::serialization::make_nvp("ue4_path", ue4_path)&
+        boost::serialization::make_nvp("ue4_version", ue4_version)&
+        boost::serialization::make_nvp("shot_start", shot_start)&
+        boost::serialization::make_nvp("shot_end", shot_end);
 }
 
 }  // namespace doodle
 
-CEREAL_CLASS_VERSION(doodle::Ue4Setting, 1);
+BOOST_CLASS_VERSION(doodle::Ue4Setting, 1);

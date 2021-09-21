@@ -14,7 +14,6 @@
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 #include <magic_enum.hpp>
-
 #include <nlohmann/json_fwd.hpp>
 namespace doodle {
 
@@ -97,7 +96,7 @@ class DOODLELIB_API CoreSet : public details::no_copy {
 
   std::string get_server_host();
 
-  void from_json(const nlohmann::json& nlohmann_json_j);
+  void from_json(const nlohmann::json &nlohmann_json_j);
 
   /**
    * @brief 全局是否停止， 服务器使用
@@ -151,7 +150,7 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   std::string p_sql_password;  ///< mysql 用户密码
 
   //这里是序列化的代码
-  friend class cereal::access;
+  friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
 };
@@ -159,11 +158,11 @@ class DOODLELIB_API CoreSet : public details::no_copy {
 template <class Archive>
 void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
   if (version == 7)
-    ar(
-        cereal::make_nvp("user", p_user_),
-        cereal::make_nvp("department", p_department_),
-        cereal::make_nvp("ue4_setting", p_ue4_setting),
-        cereal::make_nvp("maya_Path", p_mayaPath));
+    ar &
+            boost::serialization::make_nvp("user", p_user_) &
+        boost::serialization::make_nvp("department", p_department_) &
+        boost::serialization::make_nvp("ue4_setting", p_ue4_setting) &
+        boost::serialization::make_nvp("maya_Path", p_mayaPath);
 }
 
 }  // namespace doodle
@@ -177,4 +176,4 @@ void load_minimal(Archive const &, doodle::Department &department, std::string c
   department = magic_enum::enum_cast<doodle::Department>(value).value_or(doodle::Department::None_);
 };
 }  // namespace cereal
-CEREAL_CLASS_VERSION(doodle::CoreSet, 7);
+BOOST_CLASS_VERSION(doodle::CoreSet, 7);

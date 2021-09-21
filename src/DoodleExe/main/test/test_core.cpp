@@ -243,7 +243,7 @@ TEST_CASE("core archive", "[fun][archives]") {
     auto k_val = std::make_shared<doodle::Project>("D:/", "test22333");
     {
       cereal::JSONOutputArchive json{str_stream};
-      json(cereal::make_nvp("mainset", k_val));
+      json(boost::serialization::make_nvp("mainset", k_val));
       // cereal::BinaryOutputArchive binary{std::cout};
       cereal::BinaryOutputArchive binary2{str_stream_bin};
       binary2(k_val);
@@ -266,12 +266,12 @@ TEST_CASE("core archive", "[fun][archives]") {
         doodle::MetadataPtr k_m1 = std::make_shared<doodle::Project>("D:/", "测试1");
         doodle::MetadataPtr k_m2 = std::make_shared<doodle::Project>("F:/", "测试2");
         cereal::JSONOutputArchive json{str_stream};
-        json(cereal::make_nvp("metadata1", k_m1),
-             cereal::make_nvp("metadata12", k_m2));
+        json(boost::serialization::make_nvp("metadata1", k_m1),
+             boost::serialization::make_nvp("metadata12", k_m2));
         // cereal::BinaryOutputArchive binary{std::cout};
         cereal::BinaryOutputArchive binary2{str_stream_bin};
-        binary2(cereal::make_nvp("metadata1", k_m1),
-                cereal::make_nvp("metadata12", k_m2));
+        binary2(boost::serialization::make_nvp("metadata1", k_m1),
+                boost::serialization::make_nvp("metadata12", k_m2));
       }
       {
         doodle::MetadataPtr k1;

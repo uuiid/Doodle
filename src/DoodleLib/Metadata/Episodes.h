@@ -35,17 +35,16 @@ class DOODLELIB_API Episodes : public Metadata {
   };
 
  private:
-  friend class cereal::access;
+  friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
 };
 template <class Archive>
 void Episodes::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
-    ar(cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
-       p_episodes);
+    ar &boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+        p_episode;
 }
 }  // namespace doodle
 
-CEREAL_REGISTER_TYPE(doodle::Episodes)
-CEREAL_CLASS_VERSION(doodle::Episodes, 1)
+BOOST_CLASS_VERSION(doodle::Episodes, 1)

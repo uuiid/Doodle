@@ -22,7 +22,7 @@ class DOODLELIB_API season
   virtual void create_menu(const menu_factory_ptr& in_factoryPtr) override;
 
  private:
-  friend class cereal::access;
+  friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version);
 };
@@ -30,11 +30,10 @@ class DOODLELIB_API season
 template <class Archive>
 void season::serialize(Archive& ar, std::uint32_t const version) {
   if (version == 1)
-    ar(
-        cereal::make_nvp("Metadata", cereal::base_class<Metadata>(this)),
-        p_int);
+    ar&
+        boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this))&
+        p_int;
 }
 }  // namespace doodle
 
-CEREAL_REGISTER_TYPE(doodle::season)
-CEREAL_CLASS_VERSION(doodle::season, 1)
+BOOST_CLASS_VERSION(doodle::season, 1)
