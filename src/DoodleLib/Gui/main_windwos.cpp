@@ -21,6 +21,7 @@ main_windows::main_windows()
       p_about_show(new_object<bool>(false)),
       p_style_show(new_object<bool>(false)),
       p_long_task_show(new_object<bool>(true)),
+      p_attr_show(new_object<bool>(false)),
       p_title(fmt::format(
           u8"doodle {}.{}.{}.{}",
           Doodle_VERSION_MAJOR,
@@ -50,6 +51,11 @@ void main_windows::frame_render(const bool_ptr& is_show) {
       p_long_task->frame_render();
     };
   }
+  if (*p_attr_show) {
+    dear::Begin{"详细信息", p_style_show.get()} && [this]() {
+      p_attr->frame_render();
+    };
+  }
 
   dear::Begin{
       p_title.c_str(),
@@ -68,7 +74,6 @@ void main_windows::frame_render(const bool_ptr& is_show) {
         p_prj->frame_render();
         p_ass->frame_render();
         //        imgui::SameLine();
-        p_attr->frame_render();
       };
 }
 void main_windows::main_menu_file() {
@@ -111,6 +116,7 @@ void main_windows::main_menu_tool() {
     toolkit::modifyUeCachePath();
 }
 void main_windows::main_menu_windows() {
+  dear::MenuItem(u8"详细详细", p_attr_show.get());
   dear::MenuItem(u8"后台任务", p_long_task_show.get());
 }
 void main_windows::main_menu_edit() {
