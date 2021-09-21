@@ -6,6 +6,8 @@
 #include <date/date.h>
 #include <date/tz.h>
 
+
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::time_point_wrap)
 namespace doodle {
 
 time_point_wrap::time_point_wrap()

@@ -10,7 +10,7 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <Logger/Logger.h>
-
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::AssetsPath)
 namespace doodle {
 AssetsPath::AssetsPath()
     : p_local_path(),

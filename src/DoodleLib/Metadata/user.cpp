@@ -4,6 +4,8 @@
 
 #include <Metadata/user.h>
 #include <PinYin/convert.h>
+
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::user)
 namespace doodle {
 
 user::user(std::string in_string)

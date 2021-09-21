@@ -43,3 +43,4 @@ struct formatter<doodle::Comment> : formatter<string_view> {
 };
 }  // namespace fmt
 BOOST_CLASS_VERSION(doodle::Comment, 1)
+BOOST_CLASS_EXPORT_KEY(doodle::Comment)

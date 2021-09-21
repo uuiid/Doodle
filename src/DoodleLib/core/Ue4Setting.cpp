@@ -1,9 +1,10 @@
 #include <DoodleLib/core/Ue4Setting.h>
+#include <DoodleLib/libWarp/boost_locale_warp.h>
 #include <Exception/Exception.h>
 
-#include <DoodleLib/libWarp/boost_locale_warp.h>
-
 #include <libWarp/WinReg.hpp>
+
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Ue4Setting)
 namespace doodle {
 Ue4Setting::Ue4Setting()
     : ue4_path(),

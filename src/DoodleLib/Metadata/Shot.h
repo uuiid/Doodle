@@ -78,3 +78,4 @@ void load_minimal(Archive const &, doodle::Shot::ShotAbEnum &shotab, std::string
 }  // namespace cereal
 
 BOOST_CLASS_VERSION(doodle::Shot, 1)
+BOOST_CLASS_EXPORT_KEY(doodle::Shot)

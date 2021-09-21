@@ -171,3 +171,4 @@ void load_minimal(Archive const &, doodle::Department &department, std::string c
 };
 }  // namespace cereal
 BOOST_CLASS_VERSION(doodle::CoreSet, 7);
+BOOST_CLASS_EXPORT_KEY(doodle::CoreSet);

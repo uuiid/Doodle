@@ -100,3 +100,4 @@ struct formatter<doodle::AssetsPath> : formatter<string_view> {
 }  // namespace fmt
 
 BOOST_CLASS_VERSION(doodle::AssetsPath, 3)
+BOOST_CLASS_EXPORT_KEY(doodle::AssetsPath)

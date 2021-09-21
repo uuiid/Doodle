@@ -14,6 +14,8 @@
 
 #include <utility>
 
+
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::AssetsFile)
 namespace doodle {
 
 AssetsFile::AssetsFile()

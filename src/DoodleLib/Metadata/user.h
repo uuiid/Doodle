@@ -50,3 +50,4 @@ void user::serialize(Archive& ar, const std::uint32_t version) {
 
 }  // namespace doodle
 BOOST_CLASS_VERSION(doodle::user, 1)
+BOOST_CLASS_EXPORT_KEY(doodle::user)

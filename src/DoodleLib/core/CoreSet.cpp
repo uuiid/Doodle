@@ -26,6 +26,8 @@
 #include <unistd.h>
 #endif  // _WIN32
 
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::CoreSet)
+
 namespace doodle {
 
 FSys::path get_pwd()

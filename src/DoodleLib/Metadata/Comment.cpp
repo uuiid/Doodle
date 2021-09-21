@@ -4,6 +4,8 @@
 
 #include <DoodleLib/Metadata/Comment.h>
 #include <DoodleLib/core/CoreSet.h>
+
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Comment)
 namespace doodle {
 Comment::Comment()
     : p_comment(),

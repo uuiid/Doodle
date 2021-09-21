@@ -6,7 +6,7 @@
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/PinYin/convert.h>
 #include <Gui/factory/menu_factory_Interface.h>
-
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Assets)
 namespace doodle {
 Assets::Assets()
     : Metadata(),
@@ -49,7 +49,6 @@ bool Assets::operator<=(const Assets& in_rhs) const {
 bool Assets::operator>=(const Assets& in_rhs) const {
   return !(*this < in_rhs);
 }
-
 
 const std::string& Assets::getName1() const {
   return p_name;
