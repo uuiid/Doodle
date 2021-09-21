@@ -56,7 +56,7 @@ include(CMakeRC)
 #find_package(rttr CONFIG REQUIRED)
 # find_package(pugixml CONFIG REQUIRED)
 
-find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time log locale iostreams)
+find_package(Boost 1.75 REQUIRED COMPONENTS filesystem date_time log locale iostreams serialization)
 find_package(Sqlpp11 REQUIRED)
 find_package(Catch2 CONFIG )
 find_package(Doxygen )

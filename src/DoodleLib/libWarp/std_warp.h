@@ -24,5 +24,5 @@ std::shared_ptr<ClassIn> new_object(Args&&... in_args) {
     ptr->post_constructor();
   }
   return ptr;
-};
+}
 }  // namespace doodle
