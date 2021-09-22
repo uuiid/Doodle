@@ -166,15 +166,15 @@ TEST_CASE("core opencv image", "[fun]") {
 
 TEST_CASE("maya get log", "[maya]") {
   using namespace doodle;
-  auto k_maya               = MayaFile();
-  auto k_arg                = std::make_shared<MayaFile::qcloth_arg>();
-//  k_arg->only_sim           = false;
-//  k_arg->qcloth_assets_path = FSys::path{R"(V:\03_Workflow\Assets\CFX\cloth)"};
-//  k_arg->sim_path           = FSys::path{"F:\\data\\DBXY_163_052.ma"};
-//  auto k_term               = k_maya.qcloth_sim_file(k_arg);
-//  k_term->sig_message_result.connect([](const std::string& in_, long_term::level in_level) { DOODLE_LOG_INFO(in_); });
-//  k_term->sig_progress.connect([](auto in_) { DOODLE_LOG_INFO(in_); });
-//  k_term->p_list[0].get();
+  auto k_maya = MayaFile();
+  auto k_arg  = std::make_shared<MayaFile::qcloth_arg>();
+  //  k_arg->only_sim           = false;
+  //  k_arg->qcloth_assets_path = FSys::path{R"(V:\03_Workflow\Assets\CFX\cloth)"};
+  //  k_arg->sim_path           = FSys::path{"F:\\data\\DBXY_163_052.ma"};
+  //  auto k_term               = k_maya.qcloth_sim_file(k_arg);
+  //  k_term->sig_message_result.connect([](const std::string& in_, long_term::level in_level) { DOODLE_LOG_INFO(in_); });
+  //  k_term->sig_progress.connect([](auto in_) { DOODLE_LOG_INFO(in_); });
+  //  k_term->p_list[0].get();
 }
 
 TEST_CASE("ThreadPool", "[core][ThreadPool]") {
@@ -231,6 +231,10 @@ TEST_CASE("std regex", "[std][regex]") {
 
 #include <boost/archive/polymorphic_text_iarchive.hpp>
 #include <boost/archive/polymorphic_text_oarchive.hpp>
+#include <boost/archive/polymorphic_xml_iarchive.hpp>
+#include <boost/archive/polymorphic_xml_oarchive.hpp>
+#include <boost/archive/xml_iarchive.hpp>
+#include <boost/archive/xml_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
@@ -244,18 +248,24 @@ TEST_CASE("core archive", "[fun][archives]") {
     auto k_val = std::make_shared<doodle::Project>("D:/", "test22333");
     {
       boost::archive::text_oarchive json{str_stream};
-//      boost::archive::polymorphic_text_oarchive json{str_stream};
+      boost::archive::xml_oarchive xml{str_stream_bin};
+      //      boost::archive::polymorphic_text_oarchive json{str_stream};
       json << boost::serialization::make_nvp("mainset", k_val);
+//      xml << boost::serialization::make_nvp("mainset", k_val);
       // cereal::BinaryOutputArchive binary{std::cout};
       //      cereal::BinaryOutputArchive binary2{str_stream_bin};
       //      binary2(k_val);
     }
     std::cout << str_stream.str() << std::endl;
+    std::cout << str_stream_bin.str() << std::endl;
     k_val.reset();
     {
       boost::archive::text_iarchive json{str_stream};
-//      boost::archive::polymorphic_text_iarchive json{str_stream};
+      boost::archive::xml_iarchive xml{str_stream_bin};
+      //      boost::archive::polymorphic_text_iarchive json{str_stream};
       json >> k_val;
+      k_val.reset();
+//      xml >> k_val;
       //      cereal::BinaryInputArchive binary{str_stream_bin};
       //      binary(k_val);
     }
@@ -269,7 +279,7 @@ TEST_CASE("core archive", "[fun][archives]") {
         doodle::MetadataPtr k_m1 = std::make_shared<doodle::Project>("D:/", "测试1");
         doodle::MetadataPtr k_m2 = std::make_shared<doodle::Project>("F:/", "测试2");
         boost::archive::text_oarchive json{str_stream};
-//        boost::archive::polymorphic_text_oarchive json{str_stream};
+        //        boost::archive::polymorphic_text_oarchive json{str_stream};
         json << boost::serialization::make_nvp("metadata1", k_m1) << boost::serialization::make_nvp("metadata12", k_m2);
         // cereal::BinaryOutputArchive binary{std::cout};
         //        cereal::BinaryOutputArchive binary2{str_stream_bin};
@@ -281,7 +291,7 @@ TEST_CASE("core archive", "[fun][archives]") {
         doodle::MetadataPtr k2;
 
         boost::archive::text_iarchive json{str_stream};
-//        boost::archive::polymorphic_text_iarchive json{str_stream};
+        //        boost::archive::polymorphic_text_iarchive json{str_stream};
         json >> k1 >> k2;
         //        cereal::BinaryInputArchive binary{str_stream_bin};
         //        binary(k1, k2);
