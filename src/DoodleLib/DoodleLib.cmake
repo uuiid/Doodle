@@ -9,6 +9,7 @@ set(
     core/Util.h
     core/filesystem_extend.h
     core/observable_container.h
+    core/open_file_dialog.h
     core/static_value.h
     core/tree_container.h
     Exception/Exception.h
@@ -84,6 +85,7 @@ set(
     core/Ue4Setting.cpp
     core/Util.cpp
     core/filesystem_extend.cpp
+    core/open_file_dialog.cpp
     core/static_value.cpp
     core/tree_container.cpp
     FileSys/FileSystem.cpp
@@ -100,6 +102,7 @@ set(
     Gui/widgets/attribute_widgets.cpp
     Gui/widgets/long_time_tasks_widget.cpp
     Gui/widgets/project_widget.cpp
+    libWarp/imgui_warp.cpp
     Logger/Logger.cpp
     Metadata/Assets.cpp
     Metadata/AssetsFile.cpp

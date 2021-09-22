@@ -12,8 +12,8 @@ class DOODLELIB_API comm_export_fbx : public command_tool {
 
  public:
   comm_export_fbx();
-  virtual bool is_async() override;
-  virtual bool run() override;
+  bool is_async() override;
+  bool run() override;
 };
 
 class DOODLELIB_API comm_qcloth_sim : public command_tool {
@@ -24,35 +24,38 @@ class DOODLELIB_API comm_qcloth_sim : public command_tool {
 
  public:
   comm_qcloth_sim();
-  virtual bool is_async() override;
-  virtual bool run() override;
+  bool is_async() override;
+  bool run() override;
 };
 
 class DOODLELIB_API comm_create_video : public command_tool {
+  struct image_paths {
+    std::vector<FSys::path> p_path_list;
+    FSys::path p_out_path;
+    std::string p_show_name;
+    bool use_dir;
+  };
+  std::vector<FSys::path> p_video_path;
+  std::vector<image_paths> p_image_path;
+  std::shared_ptr<std::string> p_out_path;
+
  public:
   comm_create_video();
-  virtual bool is_async() override;
-  virtual bool run() override;
-};
-
-class DOODLELIB_API comm_connect_video : public command_tool {
- public:
-  comm_connect_video();
-  virtual bool is_async() override;
-  virtual bool run() override;
+  bool is_async() override;
+  bool run() override;
 };
 
 class DOODLELIB_API comm_import_ue_files : public command_tool {
  public:
   comm_import_ue_files();
-  virtual bool is_async() override;
-  virtual bool run() override;
+  bool is_async() override;
+  bool run() override;
 };
 
 class DOODLELIB_API comm_create_ue_project : public command_tool {
  public:
   comm_create_ue_project();
-  virtual bool is_async() override;
-  virtual bool run() override;
+  bool is_async() override;
+  bool run() override;
 };
 }  // namespace doodle

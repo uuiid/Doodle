@@ -12,6 +12,7 @@
 #include <DoodleLib/core/Util.h>
 #include <DoodleLib/core/filesystem_extend.h>
 #include <DoodleLib/core/observable_container.h>
+#include <DoodleLib/core/open_file_dialog.h>
 #include <DoodleLib/core/static_value.h>
 #include <DoodleLib/core/tree_container.h>
 #include <DoodleLib/Exception/Exception.h>

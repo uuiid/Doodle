@@ -11,6 +11,14 @@
 #include <core/DoodleLib.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/assign.hpp>
+#include <boost/range.hpp>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/adaptors.hpp>
+#include <boost/range/algorithm.hpp>
+#include <boost/range/algorithm/copy.hpp>
+#include <boost/range/algorithm_ext.hpp>
 #include <opencv2/opencv.hpp>
 namespace doodle {
 std::string ImageSequence::clearString(const std::string &str) {
@@ -81,14 +89,13 @@ std::string ImageSequence::set_shot_and_eps(const ShotPtr &in_shot, const Episod
   p_Text = k_str;
 
   /// 添加文件路径名称
-  boost::replace_all(k_str, " ", "_");  /// 替换不好的文件名称组件
+  boost::replace_all(k_str, " ", "");   /// 替换不好的文件名称组件
   boost::replace_all(k_str, ":", "_");  /// 替换不好的文件名称组件
   k_str += ".mp4";
-  p_out_path = p_paths.front().parent_path().parent_path();
-  if (in_episodes)
-    p_out_path /= in_episodes->str();
-  p_out_path /= k_str;
 
+  if (in_episodes && !p_out_path.empty())
+    p_out_path /= in_episodes->str();
+  p_name = k_str;
   return p_Text;
 }
 
@@ -108,7 +115,7 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
     auto k_image_resized = cv::Mat{};
     auto k_clone         = cv::Mat{};
 
-    auto k_size_len = in_arg->paths.size();
+    auto k_size_len      = in_arg->paths.size();
 
     //排序图片
     std::sort(in_arg->paths.begin(), in_arg->paths.end(),
@@ -162,33 +169,89 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
 void ImageSequence::set_path(const std::vector<FSys::path> &in_images) {
   p_paths = in_images;
 }
-void ImageSequence::create_video(const FSys::path &out_file, const long_term_ptr &in_ptr) {
+void ImageSequence::set_out_dir(const FSys::path &out_dir) {
+  p_out_path = out_dir;
+}
+void ImageSequence::create_video(const long_term_ptr &in_ptr) {
   if (!this->hasSequence())
     throw DoodleError{"not Sequence"};
   auto k_arg      = new_object<asyn_arg>();
-  k_arg->out_path = p_out_path;
+  k_arg->out_path = p_out_path / p_name;
   k_arg->paths    = p_paths;
   k_arg->long_sig = in_ptr;
   k_arg->Text     = p_Text;
   ImageSequence::create_video(k_arg);
 }
+std::string ImageSequence::show_str(const std::vector<FSys::path> &in_images) {
+  static std::regex reg{R"(\d+)"};
+  std::smatch k_match{};
+  std::vector<std::vector<std::double_t>> p_k_num;
+
+  //  std::transform(in_images.begin(), in_images.end(), std::back_inserter(p_k_num),
+  //                 [reg](const FSys::path &in_path) {
+  //                   auto k_name = in_path.filename().generic_string();
+  //                   auto k_b         = std::regex_iterator{k_name.begin(), k_name.end(), reg};
+  //                   for (auto it = k_b; it != std::sregex_iterator{}; ++it) {
+  //
+  //                   }
+  //                 });
+  //
+  // boost::copy(
+  //     in_images |
+  //         boost::adaptors::transformed([](const FSys::path &in_path) -> std::vector<std::double_t> {
+  //           auto k_name = in_path.filename().generic_string();
+  //           auto rage =
+  //               std::sregex_iterator{k_name.begin(), k_name.end(), reg} |
+  //               boost::adaptors::transformed([]() -> std::double_t {});
+  //         }),
+  //     p_k_num);
+  // for (const auto &image : in_images) {
+  //   auto k_name = image.filename().generic_string();
+  //   auto k_b    = std::sregex_iterator{k_name.begin(), k_name.end(), reg};
+  //   std::vector<std::double_t> p_v{};
+  //   for (auto it = k_b; it != std::sregex_iterator{}; ++it) {
+  //     p_v.emplace_back(std::stod(it->str()));
+  //   }
+  //   p_k_num.emplace_back(std::move(p_v));
+  // }
+  // const auto &k_size = p_k_num.front().size();
+  // if (
+  //     std::any_of(p_k_num.begin(), p_k_num.end(), [&k_size](const std::vector<std::double_t> &in) {
+  //       return k_size == in.size();
+  //     })) {
+  //       for (auto i = 0; i < k_size; ++i)
+  //       {
+  //         std::
+
+  //       }
+
+  // }
+
+  return std::string();
+}
+FSys::path ImageSequence::get_out_path() const {
+  return p_out_path / p_name;
+}
 
 image_sequence_async::image_sequence_async()
     : p_image_sequence() {}
-void image_sequence_async::set_path(const FSys::path &image_dir) {
+ImageSequencePtr image_sequence_async::set_path(const FSys::path &image_dir) {
   p_image_sequence = new_object<ImageSequence>();
   p_image_sequence->set_path(image_dir);
+  return p_image_sequence;
 }
-void image_sequence_async::set_path(const std::vector<FSys::path> &image_path_list) {
+ImageSequencePtr image_sequence_async::set_path(const std::vector<FSys::path> &image_path_list) {
   p_image_sequence = new_object<ImageSequence>();
   p_image_sequence->set_path(image_path_list);
+  return p_image_sequence;
 }
 long_term_ptr image_sequence_async::create_video(const FSys::path &out_file) {
   auto k_term = new_object<long_term>();
   k_term->p_list.emplace_back(
       DoodleLib::Get().get_thread_pool()->enqueue(
-          [self = p_image_sequence, out_file, k_term]() {
-            self->create_video(out_file, k_term);
+          [self = p_image_sequence,out_file, k_term]() {
+            self->set_path(out_file);
+            self->create_video(k_term);
           }));
   return k_term;
 }
