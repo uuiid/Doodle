@@ -9,11 +9,15 @@
 #include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/core/open_file_dialog.h>
 #include <DoodleLib/doodle_app.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 
-#include <DoodleLib/core/open_file_dialog.h>
-
+#include <boost/assign.hpp>
+#include <boost/range.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/adaptors.hpp>
+#include <boost/range/algorithm.hpp>
 namespace doodle {
 
 comm_export_fbx::comm_export_fbx() {
@@ -23,28 +27,16 @@ comm_export_fbx::comm_export_fbx() {
 bool comm_export_fbx::run() {
   if (imgui::Button("选择maya文件路径")) {
     p_files.clear();
-    imgui::FileDialog::Instance()->OpenModal(
+    open_file_dialog{
         "open_get_fbx",
         "select_maya_file",
         ".ma,.mb",
         ".",
         "",
-        0);
-    doodle_app::Get()->main_loop.connect_extended([this](const doodle_app::connection& in) {
-      dear::OpenFileDialog{"open_get_fbx"} && [in, this]() {
-        auto ig = ImGuiFileDialog::Instance();
-        if (ig->IsOk()) {
-          auto k_paths     = ig->GetSelection();
-          FSys::path k_dir = ig->GetCurrentPath();
-          std::transform(k_paths.begin(), k_paths.end(),
-                         std::back_inserter(p_files),
-                         [&k_dir](const auto& j) {
-                           return k_dir / j.second;
-                         });
-        }
-        in.disconnect();
-      };
-    });
+        0}.show(
+            [](const std::vector<FSys::path>& in_p){
+              p_files = in_p;
+            });
   }
   dear::ListBox{"file_list"} && [this]() {
     for (const auto& f : p_files) {
@@ -77,48 +69,31 @@ bool comm_qcloth_sim::run() {
   imgui::InputText("解算资产", p_text.get(), ImGuiInputTextFlags_ReadOnly);
   imgui::SameLine();
   if (imgui::Button("选择")) {
-    imgui::FileDialog::Instance()->OpenModal(
+    open_file_dialog{
         "open_get_sim_cloth_path_ass",
         "open_get_sim_cloth_path_ass",
         nullptr,
         ".",
         "",
-        1);
-    doodle_app::Get()->main_loop.connect_extended([this](const doodle_app::connection& in) {
-      dear::OpenFileDialog{"open_get_sim_cloth_path_ass"} && [in, this]() {
-        auto ig = ImGuiFileDialog::Instance();
-        if (ig->IsOk()) {
-          p_cloth_path = ig->GetFilePathName();
-          *p_text      = p_cloth_path.generic_string();
-        }
-        in.disconnect();
-      };
-    });
+        1}.show(
+            [this](const std::vector<FSys::path>& in_p){
+              p_cloth_path = in_p.front();
+              *p_text = p_cloth_path.generic_string();
+            });
   }
   if (imgui::Button("maya文件")) {
     p_sim_path.clear();
-    imgui::FileDialog::Instance()->OpenModal(
+    open_file_dialog{
         "open_get_ma",
         "select_maya_file",
         ".ma,.mb",
         ".",
         "",
-        0);
-    doodle_app::Get()->main_loop.connect_extended([this](const doodle_app::connection& in) {
-      dear::OpenFileDialog{"open_get_ma"} && [in, this]() {
-        auto ig = ImGuiFileDialog::Instance();
-        if (ig->IsOk()) {
-          auto k_paths     = ig->GetSelection();
-          FSys::path k_dir = ig->GetCurrentPath();
-          std::transform(k_paths.begin(), k_paths.end(),
-                         std::back_inserter(p_sim_path),
-                         [&k_dir](const auto& j) {
-                           return k_dir / j.second;
-                         });
-        }
-        in.disconnect();
-      };
-    });
+        0}.show(
+            [this](const std::vector<FSys::path>& in_p){
+              p_sim_path = in_p;
+            }
+            );
   }
 
   dear::ListBox{"file_list"} && [this]() {
@@ -155,52 +130,34 @@ bool comm_create_video::run() {
   imgui::InputText("输出文件夹", p_out_path.get());
   imgui::SameLine();
   if (imgui::Button("选择")) {
-    imgui::FileDialog::Instance()->OpenModal(
+    open_file_dialog{
         "comm_create_video",
         "选择目录",
         nullptr,
         ".",
         "",
-        1);
-    doodle_app::Get()->main_loop.connect_extended([this](const doodle_app::connection& in) {
-      dear::OpenFileDialog{"comm_create_video"} && [in, this]() {
-        auto ig = ImGuiFileDialog::Instance();
-        if (ig->IsOk()) {
-          *p_out_path = ig->GetFilePathName();
-        }
-        in.disconnect();
-      };
-    });
+        1}
+        .show(
+            [this](const std::vector<FSys::path>& in_p) {
+              *p_out_path = in_p.front().generic_string();
+            });
   }
 
   if (imgui::Button("选择图片")) {
-    imgui::FileDialog::Instance()->OpenModal(
+    open_file_dialog{
         "select_image_comm_create_video",
         "选择序列",
         ".png,.jpg",
         ".",
         "",
-        0);
-    doodle_app::Get()->main_loop.connect_extended([this](const doodle_app::connection& in) {
-      dear::OpenFileDialog{"select_image_comm_create_video"} && [in, this]() {
-        auto ig = ImGuiFileDialog::Instance();
-        if (ig->IsOk()) {
+        0}
+        .show([this](const std::vector<FSys::path>& in) {
           image_paths k_image_paths{};
-          k_image_paths.use_dir = false;
-          auto k_path           = ig->GetSelection();
-          FSys::path k_dir      = ig->GetCurrentPath();
-          std::transform(k_path.begin(),
-                         k_path.end(),
-                         std::back_inserter(k_image_paths.p_path_list),
-                         [&k_dir](const auto& j) {
-                           return k_dir / j.second;
-                         });
+          k_image_paths.use_dir     = false;
+          k_image_paths.p_path_list = in;
           k_image_paths.p_show_name = k_image_paths.p_path_list.front().parent_path().generic_string();
           p_image_path.emplace_back(std::move(k_image_paths));
-        }
-        in.disconnect();
-      };
-    });
+        });
   }
   imgui::SameLine();
   if (imgui::Button("选择文件夹")) {
@@ -209,19 +166,23 @@ bool comm_create_video::run() {
                      nullptr,
                      ".",
                      "",
-                     0}.show(
-            [this](const FSys::path& in){
-              image_paths k_image_paths{};
-              k_image_paths.use_dir = true;
-              k_image_paths.p_path_list.emplace_back(in);
-              k_image_paths.p_show_name = fmt::format("{}###{}",
-                                                      k_image_paths.p_path_list.front().generic_string(),
-                                                      fmt::ptr(&k_image_paths));
-              p_image_path.emplace_back(std::move(k_image_paths));
-            }
-            );
-    });
+                     0}
+        .show(
+            [this](const std::vector<FSys::path>& in) {
+              boost::copy(in | boost::adaptors::transformed(
+                                   [](const FSys::path& in_path) {
+                                     image_paths k_image_paths{};
+                                     k_image_paths.use_dir = true;
+                                     k_image_paths.p_path_list.emplace_back(in_path);
+                                     k_image_paths.p_show_name = fmt::format("{}###{}",
+                                                                             k_image_paths.p_path_list.back().generic_string(),
+                                                                             fmt::ptr(&k_image_paths));
+                                     return k_image_paths;
+                                   }),
+                          std::back_inserter(p_image_path));
+            });
   }
+
   imgui::SameLine();
   if (imgui::Button("清除")) {
     p_image_path.clear();
@@ -251,12 +212,12 @@ bool comm_create_video::run() {
   };
 
   if (imgui::Button("选择视频")) {
-//    open_file_dialog{"comm_create_video",
-//                       "select dir",
-//                       nullptr,
-//                       ".",
-//                       "",
-//                       0}
+    //    open_file_dialog{"comm_create_video",
+    //                       "select dir",
+    //                       nullptr,
+    //                       ".",
+    //                       "",
+    //                       0}
   }
   imgui::SameLine();
   if (imgui::Button("连接视频")) {
