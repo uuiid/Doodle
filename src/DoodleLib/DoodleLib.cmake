@@ -21,7 +21,7 @@ set(
     Gui/base_windwos.h
     Gui/main_windwos.h
     Gui/setting_windows.h
-    Gui/factory/menu_factory_Interface.h
+    Gui/factory/attribute_factory_interface.h
     Gui/action/command.h
     Gui/action/command_tool.h
     Gui/widgets/assets_widget.h
@@ -96,6 +96,7 @@ set(
     Gui/base_windwos.cpp
     Gui/main_windwos.cpp
     Gui/setting_windows.cpp
+    Gui/factory/attribute_factory_interface.cpp
     Gui/action/command.cpp
     Gui/action/command_tool.cpp
     Gui/widgets/assets_widget.cpp
