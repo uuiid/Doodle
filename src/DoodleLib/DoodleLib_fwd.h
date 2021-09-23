@@ -503,3 +503,41 @@ class Doodle;
 [[maybe_unused]] DOODLELIB_API DoodleLibPtr make_doodle_lib();
 
 }  // namespace doodle
+
+namespace boost::serialization {
+//class _Rep, class _Period
+template <class Archive, class Clock, class Duration>
+inline void serialize(Archive &ar, doodle::chrono::time_point<Clock, Duration> &t, const unsigned int file_version) {
+  split_free(ar, t, file_version);
+}
+
+template <class Archive, class Clock, class Duration>
+inline void save(Archive &ar, const doodle::chrono::time_point<Clock, Duration> &time, const std::uint32_t version) {
+  ar &boost::serialization::make_nvp("time", time.time_since_epoch());
+}
+template <class Archive, class Clock, class Duration>
+inline void load(Archive &ar, doodle::chrono::time_point<Clock, Duration> &time, const std::uint32_t version) {
+  Duration time_since_epoch;
+  ar &boost::serialization::make_nvp("time", time_since_epoch);
+  time = doodle::chrono::time_point<Clock, Duration>{time_since_epoch};
+}
+
+template <class Archive, class Rep, class Period>
+inline void serialize(Archive &ar, doodle::chrono::duration<Rep,Period> &t, const unsigned int file_version) {
+  split_free(ar, t, file_version);
+}
+
+template <class Archive, class Rep, class Period>
+inline void save(Archive &ar, const doodle::chrono::duration<Rep,Period> &dur, const std::uint32_t version) {
+  auto count = dur.count();
+  ar &boost::serialization::make_nvp("duration", count);
+}
+template <class Archive, class Rep, class Period>
+inline void load(Archive &ar, doodle::chrono::duration<Rep,Period> &dur, const std::uint32_t version) {
+  Rep count;
+  ar &boost::serialization::make_nvp("duration", count);
+  dur = doodle::chrono::duration<Rep,Period>{count};
+}
+
+
+}  // namespace boost::serialization

@@ -8,7 +8,6 @@
 
 #include <boost/hana/experimental/printable.hpp>
 namespace doodle {
-
 class DOODLELIB_API base_widget : public details::no_copy {
  protected:
   string p_class_name;

@@ -9,6 +9,7 @@
 #include <DoodleLib/libWarp/protobuf_warp.h>
 
 #include <any>
+#include <boost/serialization/export.hpp>
 #include <boost/signals2.hpp>
 #include <optional>
 
@@ -320,18 +321,20 @@ class DOODLELIB_API Metadata
 
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, std::uint32_t const version);
+  void serialize(Archive &ar, const std::uint32_t version);
 };
 
 template <class Archive>
-void Metadata::serialize(Archive &ar, std::uint32_t const version) {
+void Metadata::serialize(Archive &ar, const std::uint32_t version) {
   //  p_has_child = child_item.size();
+  //  if (version == 1)
+  //    ar &
+  //            boost::serialization::make_nvp("id", p_id) &
+  //        boost::serialization::make_nvp("parent_id", p_parent_id) &
+  //        boost::serialization::make_nvp("UUID", p_uuid) &
+  //        boost::serialization::make_nvp("has_child", p_has_child);
   if (version == 1)
-    ar &
-            boost::serialization::make_nvp("id", p_id) &
-        boost::serialization::make_nvp("parent_id", p_parent_id) &
-        boost::serialization::make_nvp("UUID", p_uuid) &
-        boost::serialization::make_nvp("has_child", p_has_child);
+    ar &boost::serialization::make_nvp("id", p_id);
 }
 
 }  // namespace doodle

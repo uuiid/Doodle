@@ -18,6 +18,7 @@ class user {
   time_pair_list p_time_work;
 
  public:
+  user();
   explicit user(std::string in_string);
   explicit user(std::string in_string, std::string in_ENUS);
 

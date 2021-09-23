@@ -2,8 +2,8 @@
 // Created by teXiao on 2021/4/27.
 //
 
+#include "Metadata.h"
 #include <DoodleLib/Logger/Logger.h>
-#include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <Exception/Exception.h>
 #include <Metadata/Metadata_cpp.h>
@@ -11,9 +11,11 @@
 #include <core/CoreSet.h>
 #include <google/protobuf/util/time_util.h>
 
+#include <boost/archive/polymorphic_text_iarchive.hpp>
+#include <boost/archive/polymorphic_text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Metadata)
 namespace doodle {
 Metadata::Metadata()
     : database_action<Metadata, MetadataFactory>(this),
@@ -230,7 +232,8 @@ void Metadata::to_DataDb(DataDb &in_) const {
     {
       vector_iostream kt{my_data};
       boost::archive::text_oarchive k_archive{kt};
-      k_archive << shared_from_this();
+      auto k_ptr = shared_from_this();
+      k_archive << boost::serialization::make_nvp("meta",k_ptr);
     }
     in_.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
   }

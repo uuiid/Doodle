@@ -43,7 +43,7 @@ template <class Archive>
 void Episodes::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
     ar &boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
-        p_episode;
+        p_episodes;
 }
 }  // namespace doodle
 

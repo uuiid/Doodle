@@ -35,10 +35,12 @@ main_windows::main_windows()
       p_edit_windows(new_object<windows_warp<edit_widgets>>()) {
   p_prj->select_change.connect([this](auto in) {
     p_ass->set_metadata(in);
+    win_cast<edit_widgets>(p_edit_windows)->set_factort(p_prj->get_factory());
   });
   p_ass->select_change.connect([this](auto in) {
     win_cast<assets_file_widgets>(p_attr)->set_metadata(in);
   });
+  win_cast<edit_widgets>(p_edit_windows)->set_factort(p_prj->get_factory());
 }
 void main_windows::frame_render() {
   p_setting->frame_render();

@@ -25,8 +25,8 @@ set(
     Gui/action/command.h
     Gui/action/command_meta.h
     Gui/action/command_tool.h
+    Gui/widgets/assets_file_widgets.h
     Gui/widgets/assets_widget.h
-        Gui/widgets/assets_file_widgets.h
     Gui/widgets/edit_widgets.h
     Gui/widgets/long_time_tasks_widget.h
     Gui/widgets/project_widget.h
@@ -101,11 +101,12 @@ set(
     Gui/action/command.cpp
     Gui/action/command_meta.cpp
     Gui/action/command_tool.cpp
+    Gui/widgets/assets_file_widgets.cpp
     Gui/widgets/assets_widget.cpp
-        Gui/widgets/assets_file_widgets.cpp
     Gui/widgets/edit_widgets.cpp
     Gui/widgets/long_time_tasks_widget.cpp
     Gui/widgets/project_widget.cpp
+    libWarp/boost_serialization_warp.cpp
     libWarp/imgui_warp.cpp
     Logger/Logger.cpp
     Metadata/Assets.cpp

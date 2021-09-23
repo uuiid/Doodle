@@ -8,7 +8,6 @@
 #include <date/date.h>
 #include <date/tz.h>
 
-
 namespace doodle {
 
 /**
@@ -18,12 +17,12 @@ namespace doodle {
 class DOODLELIB_API time_point_wrap : public details::no_copy {
   /**
    * @brief 这个是内部的utc时间
-   * 
+   *
    */
   chrono::sys_time_pos p_time;
   /**
    * @brief 这里是本地日期的年组件之一
-   * 
+   *
    */
   date::year p_year;
   date::month p_month;
@@ -35,7 +34,7 @@ class DOODLELIB_API time_point_wrap : public details::no_copy {
 
   /**
    * @brief 这个是指向时区的指针
-   *  每次创建时都会重新获取当前的时区，并和系统时间组合为本地时间 
+   *  每次创建时都会重新获取当前的时区，并和系统时间组合为本地时间
    */
   const date::time_zone* p_time_zone;
 
@@ -62,9 +61,7 @@ class DOODLELIB_API time_point_wrap : public details::no_copy {
   [[nodiscard]] std::uint16_t get_second() const;
   void set_second(std::uint16_t in_second);
 
-
   [[nodiscard]] std::string getWeek_s() const;
-
 
   [[nodiscard]] std::int32_t getWeek_int() const;
 
@@ -78,10 +75,10 @@ class DOODLELIB_API time_point_wrap : public details::no_copy {
   /**
    *
    * @param in 结束的时间
-   * @return 
-   * 
+   * @return
+   *
    * @todo 时间选项中去除节假日和个人调休
-   * 
+   *
    */
   [[nodiscard]] chrono::hours_double work_duration(const time_point_wrap& in) const;
 
@@ -101,7 +98,7 @@ class DOODLELIB_API time_point_wrap : public details::no_copy {
    * 通常是安装8小时计算, 同时计算前段时间可以使用 8-return
    * @param in_point  开始的时间点
    * @return 工作时间长度
-   * 
+   *
    * @todo: 这里我们要添加设置， 而不是静态变量
    */
   chrono::hours_double one_day_works_hours(const chrono::local_time<chrono::seconds>& in_point) const;
@@ -114,16 +111,9 @@ class DOODLELIB_API time_point_wrap : public details::no_copy {
   //这里是序列化的代码
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, const std::uint32_t version){
+  void serialize(Archive& ar, const std::uint32_t version) {
     if (version == 1)
-      ar(
-          boost::serialization::make_nvp("year", p_year),
-          boost::serialization::make_nvp("month", p_month),
-          boost::serialization::make_nvp("days", p_day),
-          boost::serialization::make_nvp("hours", p_hours),
-          boost::serialization::make_nvp("minutes", p_minutes),
-          boost::serialization::make_nvp("seconds", p_seconds),
-          boost::serialization::make_nvp("time", p_time));
+      ar& boost::serialization::make_nvp("time", p_time);
     disassemble(p_time);
   };
 };

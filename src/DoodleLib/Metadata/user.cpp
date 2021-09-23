@@ -2,12 +2,17 @@
 // Created by TD on 2021/5/7.
 //
 
+#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <Metadata/user.h>
 #include <PinYin/convert.h>
-#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::user)
 namespace doodle {
+user::user()
+    : p_string_(),
+      p_ENUS(),
+      p_time_rest(),
+      p_time_work() {}
 
 user::user(std::string in_string)
     : p_string_(std::move(in_string)) {

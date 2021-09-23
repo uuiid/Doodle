@@ -4,6 +4,7 @@
 
 #include <DoodleLib/Metadata/AssetsFile.h>
 #include <DoodleLib/Metadata/AssetsPath.h>
+#include <DoodleLib/Metadata/Comment.h>
 #include <core/CoreSet.h>
 ///这个工厂类必须在所有导入的后面
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
