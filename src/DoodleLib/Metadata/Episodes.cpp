@@ -1,4 +1,5 @@
 #include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 
@@ -73,7 +74,8 @@ EpisodesPtr Episodes::analysis_static(const std::string& in_path) {
 }
 
 void Episodes::create_menu(const menu_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->create_menu(std::dynamic_pointer_cast<Episodes>(shared_from_this()));
+  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<Episodes>(shared_from_this()));
 }
 
 }  // namespace doodle
+

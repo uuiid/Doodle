@@ -4,6 +4,7 @@
 
 #include <Metadata/user.h>
 #include <PinYin/convert.h>
+#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::user)
 namespace doodle {

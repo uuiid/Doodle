@@ -1,8 +1,8 @@
 #include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Shot.h>
-
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Shot)
 namespace doodle {
@@ -94,7 +94,7 @@ ShotPtr Shot::analysis_static(const std::string& in_path) {
 }
 
 void Shot::create_menu(const menu_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->create_menu(std::dynamic_pointer_cast<Shot>(shared_from_this()));
+  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<Shot>(shared_from_this()));
 }
 
 }  // namespace doodle

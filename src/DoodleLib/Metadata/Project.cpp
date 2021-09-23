@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
+#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <Exception/Exception.h>
-
 #include <Metadata/MetadataFactory.h>
 #include <Metadata/Project.h>
 #include <PinYin/convert.h>
@@ -91,7 +91,7 @@ const std::string& Project::getName() const {
 }
 
 void Project::create_menu(const menu_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->create_menu(std::dynamic_pointer_cast<Project>(shared_from_this()));
+  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<Project>(shared_from_this()));
 }
 void Project::init() {
   p_en_str = boost::algorithm::to_lower_copy(

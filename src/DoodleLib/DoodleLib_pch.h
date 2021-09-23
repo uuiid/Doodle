@@ -43,7 +43,6 @@
 #include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/libWarp/boost_locale_warp.h>
 #include <DoodleLib/libWarp/std_warp.h>
-#include <DoodleLib/libWarp/imgui_warp.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <fmt/format.h>

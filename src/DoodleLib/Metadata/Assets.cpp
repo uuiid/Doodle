@@ -2,6 +2,7 @@
 // Created by teXiao on 2021/4/27.
 //
 
+#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/PinYin/convert.h>
@@ -69,6 +70,6 @@ void Assets::setNameEnus(const std::string& in_nameEnus) {
   sig_change();
 }
 void Assets::create_menu(const menu_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->create_menu(std::dynamic_pointer_cast<Assets>(shared_from_this()));
+  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<Assets>(shared_from_this()));
 }
 }  // namespace doodle

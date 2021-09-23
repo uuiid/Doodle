@@ -6,14 +6,13 @@
 #include <DoodleLib/Metadata/AssetsPath.h>
 #include <core/CoreSet.h>
 ///这个工厂类必须在所有导入的后面
+#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
-
 #include <Metadata/time_point_wrap.h>
 #include <PinYin/convert.h>
 #include <google/protobuf/util/time_util.h>
 
 #include <utility>
-
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::AssetsFile)
 namespace doodle {
@@ -182,7 +181,7 @@ void AssetsFile::setTime(const TimeDurationPtr& in_time) {
   p_need_time = true;
 }
 void AssetsFile::create_menu(const menu_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->create_menu(std::dynamic_pointer_cast<AssetsFile>(shared_from_this()));
+  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<AssetsFile>(shared_from_this()));
 }
 std::vector<AssetsPathPtr>& AssetsFile::getPathFile() {
   return p_path_files;

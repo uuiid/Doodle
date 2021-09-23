@@ -41,7 +41,7 @@ add_library(DoodleLib
 fix_mariadb_plug(NAME DoodleLib)
 
 target_precompile_headers(DoodleLib
-        PUBLIC [[<DoodleLib/DoodleLib_fwd.h>]])
+        PUBLIC [[<DoodleLib/DoodleLib_pch.h>]])
 
 set(MY_CUSTOM_CONTENT "")
 generate_export_header(DoodleLib

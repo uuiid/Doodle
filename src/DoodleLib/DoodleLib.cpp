@@ -39,7 +39,8 @@ static constexpr chrono::seconds S_epoch_diff{6437664000};
 
 std::time_t last_write_time_t(const path &in_path) {
   auto k_time = last_write_time(in_path);
-#if defined( _WIN32 ) and defined ( _MSC_VER )
+#if defined(_WIN32) && defined(_MSC_VER)
+
   /// 这个在Windows上获得的是FILETIME结构转换的int64值的时间点,
   /// https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-filetime
   /// 我们先把它转换为以100纳秒为单位的时间段,
@@ -50,7 +51,7 @@ std::time_t last_write_time_t(const path &in_path) {
   /// 然后我们将100纳秒时间段转换为 单位秒的时间段
   /// 最后我们进行强制转换， 将int64值， 转换为time_t值
   return static_cast<time_t>(std::chrono::floor<std::chrono::seconds>(withUnixEpoch).count());
-#elif defined( __linux__ ) and defined( __GNUC__ )
+#elif defined( __linux__ ) && defined( __GNUC__ )
   chrono::sys_time_pos k_sys_time_pos{k_time.time_since_epoch()};
   k_sys_time_pos -= S_epoch_diff;
   return chrono::system_clock::to_time_t(k_sys_time_pos);

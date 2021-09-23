@@ -4,7 +4,7 @@
 
 #include "season.h"
 
-
+#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::season)
 namespace doodle {
@@ -30,6 +30,6 @@ std::string season::str() const {
   return fmt::format("seas_{}", p_int);
 }
 void season::create_menu(const menu_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->create_menu(std::dynamic_pointer_cast<season>(shared_from_this()));
+  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<season>(shared_from_this()));
 }
 }  // namespace doodle

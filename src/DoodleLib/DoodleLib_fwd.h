@@ -270,7 +270,7 @@ class action;
 class actn_up_paths;
 class DoodleLib;
 class ThreadPool;
-class menu_factory_interface;
+class attribute_factory_interface;
 class long_term;
 class ImageSequence;
 class season;
@@ -464,10 +464,10 @@ using DoodleLibPtr                 = std::unique_ptr<DoodleLib>;
  */
 using ThreadPoolPtr                = std::shared_ptr<ThreadPool>;
 /**
- * @brief menu_factory_interface 智能共享指针
+ * @brief attribute_factory_interface 智能共享指针
  *
  */
-using menu_factory_ptr             = std::shared_ptr<menu_factory_interface>;
+using menu_factory_ptr             = std::shared_ptr<attribute_factory_interface>;
 /**
  * @brief long_term 智能共享指针
  *
