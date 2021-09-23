@@ -215,18 +215,24 @@ bool comm_create_video::run() {
   };
 
   if (imgui::Button("选择视频")) {
-    //    open_file_dialog{"comm_create_video",
-    //                       "select dir",
-    //                       nullptr,
-    //                       ".",
-    //                       "",
-    //                       0}
+    open_file_dialog{"comm_create_video",
+                     "select dir",
+                     ".mp4",
+                     ".",
+                     "",
+                     0}
+        .show(
+            [this](const std::vector<FSys::path>& in) {
+              p_video_path = in;
+            });
   }
   imgui::SameLine();
   if (imgui::Button("连接视频")) {
-    auto video = new_object<video_sequence_async>();
-    video->set_video_list(p_video_path);
-    video->connect_video(*p_out_path);
+    auto video  = new_object<video_sequence_async>();
+    auto k_v    = video->set_video_list(p_video_path);
+    auto k_name = k_v->set_shot_and_eps(Shot::analysis_static(p_video_path.front()),
+                                        Episodes::analysis_static(p_video_path.front()));
+    video->connect_video(k_name.empty() ? FSys::path{} : FSys::path{*p_out_path} / k_name);
   }
 
   dear::ListBox{"video_list"} && [this]() {

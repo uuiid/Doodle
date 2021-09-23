@@ -1,5 +1,7 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/libWarp/std_warp.h>
@@ -8,7 +10,8 @@
 #include <opencv2/opencv.hpp>
 namespace doodle {
 VideoSequence::VideoSequence(std::vector<FSys::path> paths)
-    : p_paths(std::move(paths)) {
+    : p_paths(std::move(paths)),
+      p_name() {
   for (auto&& path : p_paths) {
     auto ex = path.extension();
     if (ex != ".mp4" && ex != ".avi")
@@ -33,7 +36,6 @@ void VideoSequence::connectVideo(const FSys::path& out_path, const long_term_ptr
   auto k_image_resized = cv::Mat{};
   const static cv::Size k_size{1280, 720};
   const auto k_len = p_paths.size();
-
 
   for (const auto& path : p_paths) {
     if (k_video_input.open(path.generic_string())) {
@@ -61,24 +63,36 @@ void VideoSequence::connectVideo(const FSys::path& out_path, const long_term_ptr
   }
 }
 
+std::string VideoSequence::set_shot_and_eps(const ShotPtr& in_shot, const EpisodesPtr& in_episodes) {
+  if (in_shot && in_episodes) {
+    p_name = fmt::format("{}_{}.mp4", in_episodes->str(), in_shot->str());
+  } else if (in_shot) {
+    p_name = fmt::format("{}.mp4", in_shot->str());
+  } else if (in_episodes) {
+    p_name = fmt::format("{}.mp4", in_episodes->str());
+  }
+  return p_name;
+}
+
 video_sequence_async::video_sequence_async()
     : p_video(),
       p_backup_out_path() {
 }
-void video_sequence_async::set_video_list(const std::vector<FSys::path>& paths) {
+std::shared_ptr<VideoSequence> video_sequence_async::set_video_list(const std::vector<FSys::path>& paths) {
   p_video           = new_object<VideoSequence>(paths);
   p_backup_out_path = paths.empty() ? FSys::path{} : paths.front();
+  return p_video;
 }
 long_term_ptr video_sequence_async::connect_video(const FSys::path& path) const {
   //验证输出路径
   auto k_out_path = p_backup_out_path.parent_path() /
-                    boost::uuids::to_string(CoreSet::getSet().getUUID()).append(".mp4");
+                    CoreSet::getSet().getUUIDStr().append(".mp4");
   if (!path.empty())
     k_out_path = path;
 
   auto k_term = new_object<long_term>();
   auto k_fut  = DoodleLib::Get().get_thread_pool()->enqueue(
-       [self = p_video, k_out_path, k_term]() { self->connectVideo(k_out_path, k_term); });
+      [self = p_video, k_out_path, k_term]() { self->connectVideo(k_out_path, k_term); });
   k_term->p_list.push_back(std::move(k_fut));
   return k_term;
 }
