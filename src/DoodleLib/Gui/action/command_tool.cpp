@@ -7,6 +7,7 @@
 #include <DoodleLib/FileWarp/ImageSequence.h>
 #include <DoodleLib/FileWarp/MayaFile.h>
 #include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/core/open_file_dialog.h>
@@ -243,20 +244,57 @@ bool comm_create_video::run() {
 
   return true;
 }
-comm_import_ue_files::comm_import_ue_files() {
+comm_import_ue_files::comm_import_ue_files()
+    : p_ue4_prj(),
+      p_ue4_show(new_object<std::string>()) {
+  p_name = "ue工具";
 }
 bool comm_import_ue_files::is_async() {
   return true;
 }
 bool comm_import_ue_files::run() {
+  imgui::InputText("ue项目", p_ue4_show.get());
+  imgui::SameLine();
+  if (imgui::Button("选择")) {
+    open_file_dialog{
+        "comm_create_video",
+        "选择",
+        ".uproject",
+        ".",
+        "",
+        1}
+        .show(
+            [this](const std::vector<FSys::path>& in_p) {
+              if (!in_p.empty()) {
+                *p_ue4_show = in_p.front().generic_string();
+                p_ue4_prj   = in_p.front();
+              }
+            });
+  }
+  imgui::SameLine();
+  if (imgui::Button("选择导入")) {
+    open_file_dialog{
+        "comm_create_video",
+        "选择",
+        ".fbx,.abc",
+        ".",
+        "",
+        1}
+        .show(
+            [this](const std::vector<FSys::path>& in_p) {
+              p_import_list = in_p;
+            });
+  }
+  if(imgui::Button("导入")){
+    auto ue = new_object<ue4_project_async>();
+    ue->set_ue4_project(p_ue4_prj);
+    for(const auto& i: p_import_list){
+      ue->import_file(i);
+    }
+  }
+   
+
   return command_base::run();
 }
-comm_create_ue_project::comm_create_ue_project() {
-}
-bool comm_create_ue_project::is_async() {
-  return true;
-}
-bool comm_create_ue_project::run() {
-  return command_base::run();
-}
+
 }  // namespace doodle
