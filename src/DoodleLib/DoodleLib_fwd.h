@@ -277,6 +277,8 @@ class VideoSequence;
 class Ue4Project;
 class MayaFile;
 class setting_windows;
+class base_widget;
+using base_widget_ptr = std::shared_ptr<base_widget>;
 template <class... Args>
 class command_base;
 

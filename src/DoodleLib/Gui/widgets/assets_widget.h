@@ -9,9 +9,8 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 
-class DOODLELIB_API assets_widget : public base_widget {
+class DOODLELIB_API assets_widget : public metadata_widget {
   MetadataPtr p_root;
-
   void load_meta(const MetadataPtr& in_ptr);
 
  public:
@@ -22,7 +21,6 @@ class DOODLELIB_API assets_widget : public base_widget {
 
   void set_select(const MetadataPtr& in_ptr);
   MetadataPtr p_meta;
-  boost::signals2::signal<void (const MetadataPtr&)> select_change;
-
+  boost::signals2::signal<void(const MetadataPtr&)> select_change;
 };
 }  // namespace doodle

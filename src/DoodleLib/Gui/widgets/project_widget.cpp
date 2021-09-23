@@ -4,13 +4,16 @@
 
 #include "project_widget.h"
 
+#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 
 namespace doodle {
 
-project_widget::project_widget() : p_current_select() {
+project_widget::project_widget()
+    : p_current_select(){
+      p_factory = new_object<attr_project>();
 }
 void project_widget::frame_render() {
   dear::Table{"project", 3} && [this]() {
@@ -37,4 +40,5 @@ void project_widget::frame_render() {
     }
   };
 }
+
 }  // namespace doodle

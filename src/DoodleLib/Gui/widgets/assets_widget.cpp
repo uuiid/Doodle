@@ -11,6 +11,7 @@ namespace doodle {
 assets_widget::assets_widget()
     : p_root(),
       p_meta() {
+        
 }
 void assets_widget::frame_render() {
   dear::TreeNode{"assets_widget"} && [this]() {
@@ -19,6 +20,8 @@ void assets_widget::frame_render() {
     }
   };
 }
+
+
 void assets_widget::set_metadata(const MetadataPtr& in_ptr) {
   p_root = in_ptr;
 }

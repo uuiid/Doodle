@@ -5,11 +5,13 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/base_windwos.h>
+
 namespace doodle {
 class project_widget;
 class assets_widget;
 class assets_file_widgets;
 class long_time_tasks_widget;
+class edit_widgets;
 class DOODLELIB_API main_windows : public base_windows {
   bool_ptr p_setting_show;
   bool_ptr p_debug_show;
@@ -23,6 +25,8 @@ class DOODLELIB_API main_windows : public base_windows {
   std::shared_ptr<assets_widget> p_ass;
   std::shared_ptr<assets_file_widgets> p_attr;
   std::shared_ptr<long_time_tasks_widget> p_long_task;
+
+  std::shared_ptr<base_widget> p_edit_windows;
 
   void main_menu_file();
   void main_menu_tool();

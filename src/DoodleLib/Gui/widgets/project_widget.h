@@ -9,10 +9,12 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 
-class DOODLELIB_API project_widget : public base_widget {
+class DOODLELIB_API project_widget : public metadata_widget {
  public:
   project_widget();
   void frame_render() override;
+
+
   ProjectPtr p_current_select;
   
   boost::signals2::signal<void(const ProjectPtr&)> select_change;

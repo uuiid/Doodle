@@ -3,7 +3,9 @@
 //
 
 #include "base_windwos.h"
-namespace doodle{
-
-
+namespace doodle {
+attribute_factory_ptr metadata_widget::get_factory() {
+  return p_factory;
 }
+
+}  // namespace doodle
