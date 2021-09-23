@@ -47,7 +47,6 @@
 #include <DoodleLib/libWarp/protobuf_warp_cpp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <DoodleLib/libWarp/std_warp.h>
-#include <DoodleLib/libWarp/wxWidgetWarp.h>
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Logger/LoggerTemplate.h>
 #include <DoodleLib/Metadata/Assets.h>

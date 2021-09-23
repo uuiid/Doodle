@@ -21,11 +21,8 @@
 #include <unordered_set>
 #include <variant>
 #include <vector>
-
-
-
-#include <DoodleLib/DoodleLib_fwd.h>
-
+#include <codecvt>
+#include <stdexcept>
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
@@ -43,4 +40,11 @@
 #include <date/date.h>
 
 #include <DoodleLib/libWarp/CerealWarp.h>
+#include <DoodleLib/libWarp/BoostUuidWarp.h>
+#include <DoodleLib/libWarp/boost_locale_warp.h>
+#include <DoodleLib/libWarp/std_warp.h>
+#include <DoodleLib/libWarp/imgui_warp.h>
 
+#include <boost/numeric/conversion/cast.hpp>
+#include <fmt/format.h>
+#include <fmt/ostream.h>

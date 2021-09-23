@@ -44,7 +44,6 @@ set(
     libWarp/protobuf_warp_cpp.h
     libWarp/sqlppWarp.h
     libWarp/std_warp.h
-    libWarp/wxWidgetWarp.h
     Logger/Logger.h
     Logger/LoggerTemplate.h
     Metadata/Assets.h

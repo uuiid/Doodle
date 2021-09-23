@@ -2,28 +2,8 @@
 
 #include <DoodleConfig.h>
 
-#include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/iostreams/stream_buffer.hpp>
-#include <chrono>
-#include <condition_variable>
-#include <filesystem>
-#include <fstream>
-#include <functional>
-#include <future>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <queue>
-#include <regex>
-#include <stdexcept>
-#include <string>
-#include <unordered_set>
-#include <variant>
-#include <vector>
+#include <DoodleLib/DoodleLib_pch.h>
 
-#pragma warning(disable : 4251)
-#pragma warning(disable : 4275)
 
 #include <DoodleLib/DoodleMacro.h>
 #include <DoodleLib/Logger/Logger.h>
@@ -31,14 +11,9 @@
 #include <DoodleLib/libWarp/cmrcWarp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <DoodleLib/libWarp/std_warp.h>
-#include <date/date.h>
 #include <doodlelib_export.h>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
 
-#include <boost/numeric/conversion/cast.hpp>
-#include <codecvt>
-#include <stdexcept>
+
 // namespace fmt {
 // namespace FSys = std::filesystem;
 // template <class Char>
