@@ -126,9 +126,8 @@ void main_windows::main_menu_edit() {
     p_long_task->set_tool_widget(new_object<comm_qcloth_sim>());
   if (dear::MenuItem(u8"创建视频"))
     p_long_task->set_tool_widget(new_object<comm_create_video>());
-
-  //  if (dear::MenuItem(u8"导入ue文件"))
-  //    p_long_task->set_tool_widget(new_object<comm_export_fbx>());
+  if (dear::MenuItem(u8"ue工具"))
+    p_long_task->set_tool_widget(new_object<comm_import_ue_files>());
   //  if (dear::MenuItem(u8"创建ue关卡"))
   //    p_long_task->set_tool_widget(new_object<comm_export_fbx>());
 }

@@ -14,7 +14,7 @@ class DOODLELIB_API project_widget : public base_widget {
   project_widget();
   void frame_render() override;
   ProjectPtr p_current_select;
-
+  
   boost::signals2::signal<void(const ProjectPtr&)> select_change;
 };
 }  // namespace doodle
