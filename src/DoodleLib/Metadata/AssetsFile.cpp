@@ -7,7 +7,7 @@
 #include <core/CoreSet.h>
 ///这个工厂类必须在所有导入的后面
 #include <DoodleLib/Metadata/MetadataFactory.h>
-#include <Gui/factory/menu_factory_Interface.h>
+
 #include <Metadata/time_point_wrap.h>
 #include <PinYin/convert.h>
 #include <google/protobuf/util/time_util.h>

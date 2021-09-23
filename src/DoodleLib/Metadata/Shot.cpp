@@ -2,7 +2,7 @@
 #include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Shot.h>
-#include <Gui/factory/menu_factory_Interface.h>
+
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Shot)
 namespace doodle {

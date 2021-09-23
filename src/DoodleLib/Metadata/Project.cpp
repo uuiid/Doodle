@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include <Exception/Exception.h>
-#include <Gui/factory/menu_factory_Interface.h>
+
 #include <Metadata/MetadataFactory.h>
 #include <Metadata/Project.h>
 #include <PinYin/convert.h>

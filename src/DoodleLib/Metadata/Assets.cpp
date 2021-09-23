@@ -5,7 +5,7 @@
 #include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/PinYin/convert.h>
-#include <Gui/factory/menu_factory_Interface.h>
+
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Assets)
 namespace doodle {
 Assets::Assets()

@@ -4,7 +4,7 @@
 
 #include "season.h"
 
-#include <Gui/factory/menu_factory_Interface.h>
+
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::season)
 namespace doodle {
