@@ -9,12 +9,12 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 
-class DOODLELIB_API attribute_widgets : public base_widget {
+class DOODLELIB_API assets_file_widgets : public base_widget {
   MetadataPtr p_root;
   AssetsFilePtr p_current_select;
 
  public:
-  attribute_widgets();
+  assets_file_widgets();
   virtual void frame_render() override;
 
   void set_metadata(const MetadataPtr& in_ptr);

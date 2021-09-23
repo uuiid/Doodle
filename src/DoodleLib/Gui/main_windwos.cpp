@@ -7,8 +7,8 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Gui/action/command_tool.h>
 #include <DoodleLib/Gui/setting_windows.h>
+#include <DoodleLib/Gui/widgets/assets_file_widgets.h>
 #include <DoodleLib/Gui/widgets/assets_widget.h>
-#include <DoodleLib/Gui/widgets/attribute_widgets.h>
 #include <DoodleLib/Gui/widgets/long_time_tasks_widget.h>
 #include <DoodleLib/Gui/widgets/project_widget.h>
 #include <DoodleLib/doodle_app.h>
@@ -31,7 +31,7 @@ main_windows::main_windows()
       p_setting(new_object<setting_windows>()),
       p_prj(new_object<project_widget>()),
       p_ass(new_object<assets_widget>()),
-      p_attr(new_object<attribute_widgets>()),
+      p_attr(new_object<assets_file_widgets>()),
       p_long_task(new_object<long_time_tasks_widget>()) {
   p_prj->select_change.connect([this](auto in) { p_ass->set_metadata(in); });
   p_ass->select_change.connect([this](auto in) { p_attr->set_metadata(in); });

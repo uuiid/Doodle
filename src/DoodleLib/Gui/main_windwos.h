@@ -8,7 +8,7 @@
 namespace doodle {
 class project_widget;
 class assets_widget;
-class attribute_widgets;
+class assets_file_widgets;
 class long_time_tasks_widget;
 class DOODLELIB_API main_windows : public base_windows {
   bool_ptr p_setting_show;
@@ -21,7 +21,7 @@ class DOODLELIB_API main_windows : public base_windows {
   setting_windows_ptr p_setting;
   std::shared_ptr<project_widget> p_prj;
   std::shared_ptr<assets_widget> p_ass;
-  std::shared_ptr<attribute_widgets> p_attr;
+  std::shared_ptr<assets_file_widgets> p_attr;
   std::shared_ptr<long_time_tasks_widget> p_long_task;
 
   void main_menu_file();

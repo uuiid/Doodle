@@ -2,18 +2,18 @@
 // Created by TD on 2021/9/16.
 //
 
-#include "attribute_widgets.h"
+#include "assets_file_widgets.h"
 
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 namespace doodle {
 
-attribute_widgets::attribute_widgets()
+assets_file_widgets::assets_file_widgets()
     : p_root(),
       p_current_select() {
 }
 
-void attribute_widgets::frame_render() {
+void assets_file_widgets::frame_render() {
   dear::Table{"attribute_widgets", 5} && [this]() {
     imgui::TableSetupColumn("id");
     imgui::TableSetupColumn("版本");
@@ -54,7 +54,7 @@ void attribute_widgets::frame_render() {
   };
 }
 
-void attribute_widgets::set_metadata(const MetadataPtr& in_ptr) {
+void assets_file_widgets::set_metadata(const MetadataPtr& in_ptr) {
   p_root = in_ptr;
 }
 
