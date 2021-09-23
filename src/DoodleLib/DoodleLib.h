@@ -26,6 +26,7 @@
 #include <DoodleLib/Gui/setting_windows.h>
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Gui/action/command.h>
+#include <DoodleLib/Gui/action/command_meta.h>
 #include <DoodleLib/Gui/action/command_tool.h>
 #include <DoodleLib/Gui/widgets/assets_widget.h>
 #include <DoodleLib/Gui/widgets/attribute_widgets.h>

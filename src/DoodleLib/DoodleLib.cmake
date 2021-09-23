@@ -23,6 +23,7 @@ set(
     Gui/setting_windows.h
     Gui/factory/attribute_factory_interface.h
     Gui/action/command.h
+    Gui/action/command_meta.h
     Gui/action/command_tool.h
     Gui/widgets/assets_widget.h
     Gui/widgets/attribute_widgets.h
@@ -97,6 +98,7 @@ set(
     Gui/setting_windows.cpp
     Gui/factory/attribute_factory_interface.cpp
     Gui/action/command.cpp
+    Gui/action/command_meta.cpp
     Gui/action/command_tool.cpp
     Gui/widgets/assets_widget.cpp
     Gui/widgets/attribute_widgets.cpp

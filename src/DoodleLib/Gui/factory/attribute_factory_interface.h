@@ -7,17 +7,18 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 namespace doodle {
 
-class attribute_factory_interface : public details::no_copy {
+class attribute_factory_interface
+    : public details::no_copy,
+      public std::enable_shared_from_this<attribute_factory_interface> {
  public:
   virtual void render() = 0;
 
-  virtual void show_attribute(const EpisodesPtr in) = 0;
-  virtual void show_attribute(const ProjectPtr in) = 0;
-  virtual void show_attribute(const ShotPtr in) = 0;
-  virtual void show_attribute(const AssetsPtr in) = 0;
-  virtual void show_attribute(const AssetsFilePtr in) = 0;
-  virtual void show_attribute(const season_ptr in) = 0;
-
+  virtual void show_attribute(const EpisodesPtr& in){};
+  virtual void show_attribute(const ProjectPtr& in){};
+  virtual void show_attribute(const ShotPtr& in){};
+  virtual void show_attribute(const AssetsPtr& in){};
+  virtual void show_attribute(const AssetsFilePtr& in){};
+  virtual void show_attribute(const season_ptr& in){};
 };
 
 class attr_project : public attribute_factory_interface {
@@ -26,8 +27,8 @@ class attr_project : public attribute_factory_interface {
  public:
   attr_project();
 
-  void set_project(const ProjectPtr& in_prj);
   virtual void render() override;
+  virtual void show_attribute(const ProjectPtr& in) override;
 };
 
 }  // namespace  doodle

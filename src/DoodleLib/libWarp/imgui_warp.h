@@ -4,13 +4,15 @@
 
 #pragma once
 
-#include <DoodleLib/external/ImGuiFileDialog/ImGuiFileDialog.h>
+// clang-format off
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
-#include <imgui_internal.h>
 #include <imgui_stdlib.h>
+#include <DoodleLib/external/ImGuiFileDialog/ImGuiFileDialog.h>
 #include <imguiwrap.dear.h>
+// clang-format on
 
 namespace doodle {
 namespace imgui {
