@@ -12,8 +12,9 @@
 namespace doodle {
 
 project_widget::project_widget()
-    : p_current_select(){
-      p_factory = new_object<attr_project>();
+    : p_current_select() {
+  p_factory    = new_object<attr_project>();
+  p_class_name = "项目";
 }
 void project_widget::frame_render() {
   dear::Table{"project", 3} && [this]() {

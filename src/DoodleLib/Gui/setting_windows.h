@@ -8,7 +8,7 @@
 #include <DoodleLib/core/CoreSet.h>
 
 namespace doodle {
-class DOODLELIB_API setting_windows : public base_windows {
+class DOODLELIB_API setting_windows : public base_widget {
   decltype(magic_enum::enum_names<Department>()) p_dep_list;
   std::int32_t p_cur_dep_index;
   std::shared_ptr<std::string> p_user;
@@ -21,7 +21,7 @@ class DOODLELIB_API setting_windows : public base_windows {
 
  public:
   setting_windows();
-  virtual void frame_render(const bool_ptr& is_show) override;
+  virtual void frame_render() override;
   void save();
 };
 }  // namespace doodle

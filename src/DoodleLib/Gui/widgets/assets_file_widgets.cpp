@@ -11,6 +11,7 @@ namespace doodle {
 assets_file_widgets::assets_file_widgets()
     : p_root(),
       p_current_select() {
+        p_class_name = "文件列表";
 }
 
 void assets_file_widgets::frame_render() {

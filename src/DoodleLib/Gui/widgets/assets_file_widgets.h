@@ -16,7 +16,6 @@ class DOODLELIB_API assets_file_widgets : public metadata_widget {
  public:
   assets_file_widgets();
   virtual void frame_render() override;
-
   void set_metadata(const MetadataPtr& in_ptr);
 };
 }  // namespace doodle

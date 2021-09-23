@@ -243,7 +243,6 @@ std::int32_t doodle_app::run() {
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
 
-  auto k_show = new_object<bool>(true);
   main_windows k_main_windows{};
   // Our state
   bool show_demo_window    = true;
@@ -275,7 +274,7 @@ std::int32_t doodle_app::run() {
     static bool show_info = false;
     static std::string str{};
     try {
-      k_main_windows.frame_render(k_show);
+      k_main_windows.frame_render();
       main_loop();
     } catch (DoodleError& err) {
       show_info = true;

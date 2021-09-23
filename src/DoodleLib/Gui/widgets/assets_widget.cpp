@@ -11,7 +11,7 @@ namespace doodle {
 assets_widget::assets_widget()
     : p_root(),
       p_meta() {
-        
+        p_class_name = "资产";
 }
 void assets_widget::frame_render() {
   dear::TreeNode{"assets_widget"} && [this]() {

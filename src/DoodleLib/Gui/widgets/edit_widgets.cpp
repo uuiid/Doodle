@@ -10,6 +10,7 @@ namespace doodle {
 edit_widgets::edit_widgets()
     : p_meta_parent(),
       p_factory(new_object<attr_project>()) {
+        p_class_name = "编辑";
 }
 
 void edit_widgets::frame_render() {

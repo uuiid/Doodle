@@ -9,14 +9,13 @@
 #include <boost/hana/experimental/printable.hpp>
 namespace doodle {
 
-class DOODLELIB_API base_windows : public details::no_copy {
- public:
-  virtual void frame_render(const bool_ptr& is_show) = 0;
-};
 class DOODLELIB_API base_widget : public details::no_copy {
+ protected:
+  string p_class_name;
+
  public:
   virtual void frame_render() = 0;
-  //  virtual const string& get_class_name();
+  virtual const string& get_class_name();
 };
 
 class DOODLELIB_API metadata_widget : public base_widget {
@@ -41,19 +40,29 @@ class DOODLELIB_API windows_warp : public base_widget {
 
   void frame_render() override {
     if (*p_show) {
-      dear::Begin{"rea",
-                  p_show.get()} &&
+      dear::Begin{
+          fmt::format("{}###{}",
+                      this->p_widget->get_class_name(),
+                      fmt::ptr(p_widget.get()))
+              .c_str(),
+          p_show.get()} &&
           std::bind(&widget::frame_render, this->p_widget.get());
     }
   }
 };
 
 template <class widget>
+std::shared_ptr<windows_warp<widget>> win_warp_cast(const base_widget_ptr& in) {
+  return std::dynamic_pointer_cast<windows_warp<widget>>(in);
+}
+
+template <class widget>
 std::shared_ptr<widget> win_cast(const base_widget_ptr& in) {
-  auto ptr = std::dynamic_pointer_cast<windows_warp<widget>>(in);
+  auto ptr = win_warp_cast<widget>(in);
   if (ptr)
     return ptr->p_widget;
   else
     return nullptr;
 }
+
 }  // namespace doodle

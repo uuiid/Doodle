@@ -17,33 +17,35 @@
 #include <DoodleLib/toolkit/toolkit.h>
 namespace doodle {
 main_windows::main_windows()
-    : p_setting_show(new_object<bool>(false)),
-      p_debug_show(new_object<bool>(false)),
+    : p_debug_show(new_object<bool>(false)),
       p_about_show(new_object<bool>(false)),
       p_style_show(new_object<bool>(false)),
-      p_long_task_show(new_object<bool>(true)),
-      p_attr_show(new_object<bool>(false)),
       p_title(fmt::format(
           u8"doodle {}.{}.{}.{}",
           Doodle_VERSION_MAJOR,
           Doodle_VERSION_MINOR,
           Doodle_VERSION_PATCH,
           Doodle_VERSION_TWEAK)),
-      p_setting(new_object<setting_windows>()),
-      p_prj(new_object<project_widget>()),
       p_ass(new_object<assets_widget>()),
-      p_attr(new_object<assets_file_widgets>()),
-      p_long_task(new_object<long_time_tasks_widget>()),
-      p_edit_windows(new_object<edit_widgets>()) {
+      p_prj(new_object<project_widget>()),
 
+      p_setting(new_object<windows_warp<setting_windows>>()),
+      p_attr(new_object<windows_warp<assets_file_widgets>>()),
+      p_long_task(new_object<windows_warp<long_time_tasks_widget>>()),
+      p_edit_windows(new_object<windows_warp<edit_widgets>>()) {
   p_prj->select_change.connect([this](auto in) {
     p_ass->set_metadata(in);
   });
-  p_ass->select_change.connect([this](auto in) { p_attr->set_metadata(in); });
+  p_ass->select_change.connect([this](auto in) {
+    win_cast<assets_file_widgets>(p_attr)->set_metadata(in);
+  });
 }
-void main_windows::frame_render(const bool_ptr& is_show) {
-  if (*p_setting_show)
-    p_setting->frame_render(p_setting_show);
+void main_windows::frame_render() {
+  p_setting->frame_render();
+  p_long_task->frame_render();
+  p_attr->frame_render();
+  p_edit_windows->frame_render();
+
   if (*p_debug_show) imgui::ShowMetricsWindow();
   if (*p_about_show) imgui::ShowAboutWindow();
   if (*p_style_show) {
@@ -51,20 +53,10 @@ void main_windows::frame_render(const bool_ptr& is_show) {
       imgui::ShowStyleEditor();
     };
   }
-  if (*p_long_task_show) {
-    dear::Begin{"后台任务", p_style_show.get()} && [this]() {
-      p_long_task->frame_render();
-    };
-  }
-  if (*p_attr_show) {
-    dear::Begin{"详细信息", p_style_show.get()} && [this]() {
-      p_attr->frame_render();
-    };
-  }
-  p_edit_windows->frame_render();
+
   dear::Begin{
       p_title.c_str(),
-      is_show.get(),
+      nullptr,
       ImGuiWindowFlags_MenuBar} &&
       [this]() {
         dear::MenuBar{} && [this]() {
@@ -82,7 +74,10 @@ void main_windows::frame_render(const bool_ptr& is_show) {
       };
 }
 void main_windows::main_menu_file() {
-  dear::MenuItem(u8"设置", p_setting_show.get());
+  dear::MenuItem(
+      win_cast<setting_windows>(p_setting)->get_class_name().c_str(),
+      win_warp_cast<setting_windows>(p_setting)->p_show.get());
+
   ImGui::Separator();
   dear::MenuItem(u8"调试", p_debug_show.get());
   dear::MenuItem(u8"样式设置", p_style_show.get());
@@ -121,18 +116,27 @@ void main_windows::main_menu_tool() {
     toolkit::modifyUeCachePath();
 }
 void main_windows::main_menu_windows() {
-  dear::MenuItem(u8"详细详细", p_attr_show.get());
-  dear::MenuItem(u8"后台任务", p_long_task_show.get());
+  dear::MenuItem(
+      win_cast<assets_file_widgets>(p_attr)->get_class_name().c_str(),
+      win_warp_cast<assets_file_widgets>(p_attr)->p_show.get());
+  dear::MenuItem(
+      win_cast<long_time_tasks_widget>(p_long_task)->get_class_name().c_str(),
+      win_warp_cast<long_time_tasks_widget>(p_long_task)->p_show.get());
+  dear::MenuItem(
+      win_cast<edit_widgets>(p_edit_windows)->get_class_name().c_str(),
+      win_warp_cast<edit_widgets>(p_edit_windows)->p_show.get());
 }
+
 void main_windows::main_menu_edit() {
+  auto k_task = win_cast<long_time_tasks_widget>(p_long_task);
   if (dear::MenuItem(u8"导出fbx"))
-    p_long_task->set_tool_widget(new_object<comm_export_fbx>());
+    k_task->set_tool_widget(new_object<comm_export_fbx>());
   if (dear::MenuItem(u8"解算布料"))
-    p_long_task->set_tool_widget(new_object<comm_qcloth_sim>());
+    k_task->set_tool_widget(new_object<comm_qcloth_sim>());
   if (dear::MenuItem(u8"创建视频"))
-    p_long_task->set_tool_widget(new_object<comm_create_video>());
+    k_task->set_tool_widget(new_object<comm_create_video>());
   if (dear::MenuItem(u8"ue工具"))
-    p_long_task->set_tool_widget(new_object<comm_import_ue_files>());
+    k_task->set_tool_widget(new_object<comm_import_ue_files>());
   //  if (dear::MenuItem(u8"创建ue关卡"))
   //    p_long_task->set_tool_widget(new_object<comm_export_fbx>());
 }

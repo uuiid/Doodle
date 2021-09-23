@@ -17,6 +17,7 @@ long_time_tasks_widget::long_time_tasks_widget()
       p_command_tool_ptr_(),
       p_main_log(),
       p_info_log() {
+        p_class_name = "队列"; 
   //  for (int k_i = 0; k_i < 5000; ++k_i) {
   //    p_main_log.p_log.append("p_main_log test\n");
   //    p_info_log.p_log.append("p_info_log test\n");
