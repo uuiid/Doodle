@@ -101,6 +101,7 @@ std::string ImageSequence::set_shot_and_eps(const ShotPtr &in_shot, const Episod
 
 void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
   std::this_thread::sleep_for(std::chrono::milliseconds{10});
+  in_arg->long_sig->start();
   //检查父路径存在
   if (!FSys::exists(in_arg->out_path.parent_path()))
     FSys::create_directories(in_arg->out_path.parent_path());
@@ -108,7 +109,7 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
   {
     const static cv::Size k_size{1280, 720};
     auto video           = cv::VideoWriter{in_arg->out_path.generic_string(),
-                                 cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
+                                 cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
                                  25,
                                  cv::Size(1280, 720)};
     auto k_image         = cv::Mat{};

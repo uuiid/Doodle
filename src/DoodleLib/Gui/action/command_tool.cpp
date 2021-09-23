@@ -33,8 +33,9 @@ bool comm_export_fbx::run() {
         ".ma,.mb",
         ".",
         "",
-        0}.show(
-            [](const std::vector<FSys::path>& in_p){
+        0}
+        .show(
+            [this](const std::vector<FSys::path>& in_p) {
               p_files = in_p;
             });
   }
@@ -75,10 +76,11 @@ bool comm_qcloth_sim::run() {
         nullptr,
         ".",
         "",
-        1}.show(
-            [this](const std::vector<FSys::path>& in_p){
+        1}
+        .show(
+            [this](const std::vector<FSys::path>& in_p) {
               p_cloth_path = in_p.front();
-              *p_text = p_cloth_path.generic_string();
+              *p_text      = p_cloth_path.generic_string();
             });
   }
   if (imgui::Button("maya文件")) {
@@ -89,11 +91,11 @@ bool comm_qcloth_sim::run() {
         ".ma,.mb",
         ".",
         "",
-        0}.show(
-            [this](const std::vector<FSys::path>& in_p){
+        0}
+        .show(
+            [this](const std::vector<FSys::path>& in_p) {
               p_sim_path = in_p;
-            }
-            );
+            });
   }
 
   dear::ListBox{"file_list"} && [this]() {
@@ -139,7 +141,8 @@ bool comm_create_video::run() {
         1}
         .show(
             [this](const std::vector<FSys::path>& in_p) {
-              *p_out_path = in_p.front().generic_string();
+              if (!in_p.empty())
+                *p_out_path = in_p.front().generic_string();
             });
   }
 

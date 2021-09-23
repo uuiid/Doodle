@@ -15,8 +15,8 @@ void open_file_dialog::show(const std::function<void(const std::vector<FSys::pat
           auto ig = ImGuiFileDialog::Instance();
           if (ig->IsOk()) {
             auto filter           = ig->GetCurrentFilter();
-            FSys::path k_get_curr = ig->GetFilePathName();
-            k_get_curr            = k_get_curr.parent_path();
+            FSys::path k_get_curr_p = ig->GetFilePathName();
+            auto k_get_curr            = k_get_curr_p.parent_path();
             std::vector<FSys::path> k_list{};
             auto selected = ig->GetSelection();
             std::transform(selected.begin(), selected.end(),
@@ -24,6 +24,8 @@ void open_file_dialog::show(const std::function<void(const std::vector<FSys::pat
                            [&k_get_curr](const auto& k) {
                              return k_get_curr / k.first;
                            });
+            if (selected.empty())
+              k_list.emplace_back(k_get_curr);
             k_fun(k_list);
           }
           in.disconnect();
