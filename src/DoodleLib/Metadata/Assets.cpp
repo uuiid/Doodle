@@ -69,7 +69,7 @@ void Assets::setNameEnus(const std::string& in_nameEnus) {
   saved(true);
   sig_change();
 }
-void Assets::create_menu(const menu_factory_ptr& in_factoryPtr) {
+void Assets::create_menu(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<Assets>(shared_from_this()));
 }
 }  // namespace doodle

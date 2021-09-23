@@ -19,7 +19,7 @@ class DOODLELIB_API season
   std::int32_t get_season(std::int32_t in_) const;
 
   virtual std::string str() const override;
-  virtual void create_menu(const menu_factory_ptr& in_factoryPtr) override;
+  virtual void create_menu(const attribute_factory_ptr& in_factoryPtr) override;
 
  private:
   friend class boost::serialization::access;

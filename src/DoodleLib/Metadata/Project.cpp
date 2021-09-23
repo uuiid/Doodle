@@ -90,7 +90,7 @@ const std::string& Project::getName() const {
   return p_name;
 }
 
-void Project::create_menu(const menu_factory_ptr& in_factoryPtr) {
+void Project::create_menu(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<Project>(shared_from_this()));
 }
 void Project::init() {

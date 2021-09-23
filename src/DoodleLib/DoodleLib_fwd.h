@@ -1,10 +1,7 @@
 ﻿#pragma once
 
 #include <DoodleConfig.h>
-
 #include <DoodleLib/DoodleLib_pch.h>
-
-
 #include <DoodleLib/DoodleMacro.h>
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/libWarp/CerealWarp.h>
@@ -12,7 +9,6 @@
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <DoodleLib/libWarp/std_warp.h>
 #include <doodlelib_export.h>
-
 
 // namespace fmt {
 // namespace FSys = std::filesystem;
@@ -283,6 +279,7 @@ class MayaFile;
 class setting_windows;
 template <class... Args>
 class command_base;
+
 using command_tool     = command_base<>;
 using command_tool_ptr = std::shared_ptr<command_tool>;
 
@@ -467,7 +464,7 @@ using ThreadPoolPtr                = std::shared_ptr<ThreadPool>;
  * @brief attribute_factory_interface 智能共享指针
  *
  */
-using menu_factory_ptr             = std::shared_ptr<attribute_factory_interface>;
+using attribute_factory_ptr        = std::shared_ptr<attribute_factory_interface>;
 /**
  * @brief long_term 智能共享指针
  *
@@ -486,6 +483,11 @@ using setting_windows_ptr          = std::shared_ptr<setting_windows>;
 using ue4_project_async_ptr        = std::shared_ptr<ue4_project_async>;
 using bool_ptr                     = std::shared_ptr<bool>;
 
+using string                       = std::string;
+using string_ptr                   = std::shared_ptr<string>;
+
+using command_meta                 = command_base<const MetadataPtr &, const MetadataPtr &>;
+using command_meta_ptr             = std::shared_ptr<command_meta>;
 namespace rpc_trans {
 class down_file;
 class down_dir;

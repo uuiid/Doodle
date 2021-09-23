@@ -23,7 +23,7 @@ class attribute_factory_interface
 
 class attr_project : public attribute_factory_interface {
   ProjectPtr p_prj;
-
+  command_meta_ptr p_comm;
  public:
   attr_project();
 

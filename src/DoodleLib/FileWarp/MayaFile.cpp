@@ -71,7 +71,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
   };
 
   auto fun    = std::async(std::launch::async,
-                           [&k_c, &k_in, &in_term]() {
+                        [&k_c, &k_in, &in_term]() {
                           auto str_r = std::string{};
                           while (k_c.running()) {
                             if (std::getline(k_in, str_r) && !str_r.empty()) {
@@ -79,7 +79,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
                               in_term->sig_progress(rational_int{1, 50});
                             }
                           }
-                           });
+                        });
   auto str_r2 = std::string{};
   //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
   const static std::wregex fatal_error_znch{
@@ -109,8 +109,8 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
 }
 
 void MayaFile::exportFbxFile(const FSys::path& file_path,
-                                           const FSys::path& export_path,
-                                           const long_term_ptr& in_ptr) {
+                             const FSys::path& export_path,
+                             const long_term_ptr& in_ptr) {
   if (!FSys::exists(file_path)) {
     if (in_ptr) {
       in_ptr->sig_finished();
@@ -207,18 +207,21 @@ maya_file_async::maya_file_async()
     : p_maya_file(std::make_shared<MayaFile>()) {}
 long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, const FSys::path& export_path) {
   auto k_term = new_object<long_term>();
-  DoodleLib::Get().get_thread_pool()->enqueue(
+  auto k_f    = DoodleLib::Get().get_thread_pool()->enqueue(
       [self = p_maya_file, file_path, export_path, k_term]() {
         self->exportFbxFile(file_path, export_path, k_term);
       });
+  k_term->p_list.emplace_back(std::move(k_f));
   return k_term;
 }
 long_term_ptr maya_file_async::qcloth_sim_file(MayaFile::qcloth_arg_ptr& in_arg) {
   auto k_term = new_object<long_term>();
-  DoodleLib::Get().get_thread_pool()->enqueue(
+  auto k_f    = DoodleLib::Get().get_thread_pool()->enqueue(
       [self = p_maya_file, in_arg, k_term]() {
         self->qcloth_sim_file(in_arg, k_term);
       });
+  k_term->p_list.emplace_back(std::move(k_f));
+
   return k_term;
 }
 }  // namespace doodle

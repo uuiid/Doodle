@@ -29,7 +29,7 @@ class DOODLELIB_API Assets : public Metadata {
   bool operator>(const Assets& in_rhs) const;
   bool operator<=(const Assets& in_rhs) const;
   bool operator>=(const Assets& in_rhs) const;
-  void create_menu(const menu_factory_ptr& in_factoryPtr) override;
+  void create_menu(const attribute_factory_ptr& in_factoryPtr) override;
 
  private:
   friend class boost::serialization::access;

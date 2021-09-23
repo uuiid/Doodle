@@ -180,7 +180,7 @@ void AssetsFile::setTime(const TimeDurationPtr& in_time) {
   sig_change();
   p_need_time = true;
 }
-void AssetsFile::create_menu(const menu_factory_ptr& in_factoryPtr) {
+void AssetsFile::create_menu(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<AssetsFile>(shared_from_this()));
 }
 std::vector<AssetsPathPtr>& AssetsFile::getPathFile() {

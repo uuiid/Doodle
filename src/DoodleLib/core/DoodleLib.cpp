@@ -87,7 +87,8 @@ void DoodleLib::init_gui() {
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 
-  p_project_vector = new_object<MetadataFactory>()->getAllProject();
+  p_metadata_factory = new_object<MetadataFactory>();
+  p_project_vector   = p_metadata_factory->getAllProject();
   if (!p_project_vector.empty())
     if (p_curr_project) {
       auto it = std::find_if(p_project_vector.begin(), p_project_vector.end(),
@@ -104,5 +105,9 @@ RpcMetadataClientPtr DoodleLib::getRpcMetadataClient() const {
 }
 RpcFileSystemClientPtr DoodleLib::getRpcFileSystemClient() const {
   return p_rpc_file_system_client;
+}
+
+MetadataFactoryPtr DoodleLib::get_metadata_factory() const {
+  return p_metadata_factory;
 }
 }  // namespace doodle

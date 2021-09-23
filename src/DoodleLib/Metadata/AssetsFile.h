@@ -70,7 +70,7 @@ class DOODLELIB_API AssetsFile : public Metadata {
   void setVersion(const std::uint64_t& in_Version) noexcept;
   int find_max_version() const;
 
-  virtual void create_menu(const menu_factory_ptr& in_factoryPtr) override;
+  virtual void create_menu(const attribute_factory_ptr& in_factoryPtr) override;
 
   bool operator<(const AssetsFile& in_rhs) const;
   bool operator>(const AssetsFile& in_rhs) const;

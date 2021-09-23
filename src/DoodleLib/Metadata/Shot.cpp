@@ -93,7 +93,7 @@ ShotPtr Shot::analysis_static(const std::string& in_path) {
     return {};
 }
 
-void Shot::create_menu(const menu_factory_ptr& in_factoryPtr) {
+void Shot::create_menu(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<Shot>(shared_from_this()));
 }
 

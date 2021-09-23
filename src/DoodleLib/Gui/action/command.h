@@ -20,7 +20,7 @@ template <class... Args>
 class DOODLELIB_API command_base : public details::no_copy {
  protected:
   std::string p_name;
-
+  
  public:
   virtual const std::string& class_name() { return p_name; };
   virtual bool is_async() { return false; };
@@ -28,6 +28,6 @@ class DOODLELIB_API command_base : public details::no_copy {
 };
 
 using command_tool = command_base<>;
-using command_meta = command_base<MetadataPtr,MetadataPtr>;
+using command_meta = command_base<const MetadataPtr&, const MetadataPtr&>;
 
 }  // namespace doodle

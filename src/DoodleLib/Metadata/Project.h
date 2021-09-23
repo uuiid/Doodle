@@ -32,7 +32,7 @@ class DOODLELIB_API Project : public Metadata {
   static std::string getConfigFileName();
   static std::string getConfigFileFolder();
 
-  virtual void create_menu(const menu_factory_ptr& in_factoryPtr) override;
+  virtual void create_menu(const attribute_factory_ptr& in_factoryPtr) override;
 
   bool operator<(const Project& in_rhs) const;
   bool operator>(const Project& in_rhs) const;

@@ -280,7 +280,7 @@ class DOODLELIB_API Metadata
    */
   [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
 
-  virtual void create_menu(const menu_factory_ptr &in_factoryPtr) = 0;
+  virtual void create_menu(const attribute_factory_ptr &in_factoryPtr) = 0;
 
   template <class parent_class>
   std::shared_ptr<parent_class> find_parent_class() {
