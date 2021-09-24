@@ -25,7 +25,7 @@ comm_export_fbx::comm_export_fbx() {
   p_name = "导出fbx";
 }
 
-bool comm_export_fbx::run() {
+bool comm_export_fbx::render() {
   if (imgui::Button("选择maya文件路径")) {
     p_files.clear();
     open_file_dialog{
@@ -67,7 +67,7 @@ comm_qcloth_sim::comm_qcloth_sim()
 bool comm_qcloth_sim::is_async() {
   return true;
 }
-bool comm_qcloth_sim::run() {
+bool comm_qcloth_sim::render() {
   imgui::InputText("解算资产", p_text.get(), ImGuiInputTextFlags_ReadOnly);
   imgui::SameLine();
   if (imgui::Button("选择")) {
@@ -129,7 +129,7 @@ comm_create_video::comm_create_video()
 bool comm_create_video::is_async() {
   return true;
 }
-bool comm_create_video::run() {
+bool comm_create_video::render() {
   imgui::InputText("输出文件夹", p_out_path.get());
   imgui::SameLine();
   if (imgui::Button("选择")) {
@@ -252,7 +252,7 @@ comm_import_ue_files::comm_import_ue_files()
 bool comm_import_ue_files::is_async() {
   return true;
 }
-bool comm_import_ue_files::run() {
+bool comm_import_ue_files::render() {
   imgui::InputText("ue项目", p_ue4_show.get());
   imgui::SameLine();
   if (imgui::Button("选择")) {
@@ -294,7 +294,7 @@ bool comm_import_ue_files::run() {
   }
    
 
-  return command_base::run();
+  return command_base::add_data();
 }
 
 }  // namespace doodle

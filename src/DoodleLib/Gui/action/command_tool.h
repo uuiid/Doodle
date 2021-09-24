@@ -13,7 +13,7 @@ class DOODLELIB_API comm_export_fbx : public command_tool {
  public:
   comm_export_fbx();
   bool is_async() override;
-  bool run() override;
+  bool render() override;
 };
 
 class DOODLELIB_API comm_qcloth_sim : public command_tool {
@@ -25,7 +25,7 @@ class DOODLELIB_API comm_qcloth_sim : public command_tool {
  public:
   comm_qcloth_sim();
   bool is_async() override;
-  bool run() override;
+  bool render() override;
 };
 
 class DOODLELIB_API comm_create_video : public command_tool {
@@ -42,7 +42,7 @@ class DOODLELIB_API comm_create_video : public command_tool {
  public:
   comm_create_video();
   bool is_async() override;
-  bool run() override;
+  bool render() override;
 };
 
 class DOODLELIB_API comm_import_ue_files : public command_tool {
@@ -54,7 +54,7 @@ class DOODLELIB_API comm_import_ue_files : public command_tool {
  public:
   comm_import_ue_files();
   bool is_async() override;
-  bool run() override;
+  bool render() override;
 };
 
 }  // namespace doodle

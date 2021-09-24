@@ -13,9 +13,11 @@ class DOODLELIB_API comm_project_add : public command_meta {
   string_ptr p_prj_name;
   string_ptr p_prj_name_short;
   string_ptr p_prj_path;
+  ProjectPtr p_root;
  public:
   comm_project_add();
-  bool run(const MetadataPtr& in_parent, const MetadataPtr &in) override;
+  bool render() override;
+  bool add_data(const MetadataPtr& in_parent, const MetadataPtr &in) override;
 };
 
 }  // namespace doodle

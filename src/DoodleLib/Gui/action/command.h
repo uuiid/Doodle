@@ -20,11 +20,12 @@ template <class... Args>
 class DOODLELIB_API command_base : public details::no_copy {
  protected:
   std::string p_name;
-  
+
  public:
   virtual const std::string& class_name() { return p_name; };
   virtual bool is_async() { return false; };
-  virtual bool run(const Args&... in_args) { return false; };
+  virtual bool render() { return false; };
+  virtual bool add_data(const Args&... in_args) { return false; };
 };
 
 using command_tool = command_base<>;

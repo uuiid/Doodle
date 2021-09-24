@@ -31,7 +31,7 @@ void long_time_tasks_widget::frame_render() {
     task = k_.long_task_list;
   }
   if (p_command_tool_ptr_)
-    p_command_tool_ptr_->run();
+    p_command_tool_ptr_->render();
 
   dear::Table{"long_time_tasks_widget", 5} && [this]() {
     imgui::TableSetupColumn("名称");

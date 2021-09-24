@@ -14,12 +14,13 @@ attr_project::attr_project()
 }
 
 void attr_project::render() {
-  p_comm->run(nullptr, p_prj);
+  p_comm->render();
 }
 
 void attr_project::show_attribute(const ProjectPtr& in) {
   if (in != p_prj) {
     p_prj = in;
+    p_comm->add_data(nullptr,p_prj);
   }
 }
 

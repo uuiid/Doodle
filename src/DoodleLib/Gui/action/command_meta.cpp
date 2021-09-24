@@ -13,28 +13,28 @@ namespace doodle {
 comm_project_add::comm_project_add()
     : p_prj_name(new_object<string>()),
       p_prj_name_short(new_object<string>()),
-      p_prj_path(new_object<string>()) {
+      p_prj_path(new_object<string>()),
+      p_root() {
   p_name = "项目";
 }
 
-bool comm_project_add::run(const MetadataPtr& in_parent, const MetadataPtr& in) {
+bool comm_project_add::render() {
   auto& k_d_lib = DoodleLib::Get();
   if (imgui::Button("添加")) {
     auto k_prj = new_object<Project>(*p_prj_path, *p_prj_name);
     k_prj->updata_db(k_d_lib.get_metadata_factory());
     k_d_lib.p_project_vector = k_d_lib.get_metadata_factory()->getAllProject();
   }
-  if (in && details::is_class<Project>(in)) {
-    auto k_prj = std::dynamic_pointer_cast<Project>(in);
+  if (p_root) {
     imgui::SameLine();
     if (imgui::Button("修改")) {
-      k_prj->setName(*p_prj_name);
-      k_prj->setName(*p_prj_path);
-      k_prj->updata_db();
+      p_root->setName(*p_prj_name);
+      p_root->setPath(*p_prj_path);
+      p_root->updata_db();
     }
     imgui::SameLine();
     if (imgui::Button("删除")) {
-      k_prj->deleteData();
+      p_root->deleteData();
       k_d_lib.p_project_vector = k_d_lib.get_metadata_factory()->getAllProject();
     }
   }
@@ -56,6 +56,15 @@ bool comm_project_add::run(const MetadataPtr& in_parent, const MetadataPtr& in) 
   }
 
   return true;
+}
+
+bool comm_project_add::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+  p_root = std::dynamic_pointer_cast<Project>(in);
+  if (p_root) {
+    *p_prj_name = p_root->getName();
+    *p_prj_path = p_root->getPath().generic_string();
+  }
+  return p_root != nullptr;
 }
 
 }  // namespace doodle

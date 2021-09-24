@@ -3,6 +3,7 @@
 //
 
 #include "Metadata.h"
+
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <Exception/Exception.h>
@@ -166,17 +167,17 @@ void Metadata::install_slots() {
 
   child_item.sig_begin_insert.connect([this](const MetadataPtr &val) {
     add_child(val);
-    ++p_has_child;
+      ++p_has_child;
     saved(true);
   });
   child_item.sig_begin_erase.connect([this](const MetadataPtr &val) {
-    --p_has_child;
+      --p_has_child;
     saved(true);
   });
 
   child_item.sig_begin_push_back.connect([this](const MetadataPtr &val) {
     add_child(val);
-    ++p_has_child;
+      ++p_has_child;
     saved(true);
   });
 
@@ -233,7 +234,7 @@ void Metadata::to_DataDb(DataDb &in_) const {
       vector_iostream kt{my_data};
       boost::archive::text_oarchive k_archive{kt};
       auto k_ptr = shared_from_this();
-      k_archive << boost::serialization::make_nvp("meta",k_ptr);
+      k_archive << boost::serialization::make_nvp("meta", k_ptr);
     }
     in_.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
   }

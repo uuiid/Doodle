@@ -32,6 +32,7 @@ void project_widget::frame_render() {
                            p == p_current_select,
                            ImGuiSelectableFlags_SpanAllColumns)) {
         p_current_select = p;
+        p_factory->show_attribute(p_current_select);
         select_change(p_current_select);
       }
       imgui::TableNextColumn();

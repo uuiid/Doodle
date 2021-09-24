@@ -38,7 +38,6 @@ add_library(DoodleLib
         external/ImGuiFileDialog/ImGuiFileDialogConfig.h
         DoodleLib.manifest
         )
-fix_mariadb_plug(NAME DoodleLib)
 
 target_precompile_headers(DoodleLib
         PUBLIC [[<DoodleLib/DoodleLib_pch.h>]])
@@ -49,6 +48,9 @@ generate_export_header(DoodleLib
         CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
 set_target_properties(DoodleLib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+fix_mariadb_plug(NAME DoodleLib)
+
 include(GenerateExportHeader)
 
 target_link_libraries(DoodleLib

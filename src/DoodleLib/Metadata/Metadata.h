@@ -148,7 +148,6 @@ class DOODLELIB_API Metadata
     : public std::enable_shared_from_this<Metadata>,
       public database_action<Metadata, MetadataFactory>,
       public details::no_copy {
-
  public:
   /**
    * @brief 这个枚举是数据库中的枚举， 更改请慎重
@@ -334,8 +333,12 @@ void Metadata::serialize(Archive &ar, const std::uint32_t version) {
   //        boost::serialization::make_nvp("parent_id", p_parent_id) &
   //        boost::serialization::make_nvp("UUID", p_uuid) &
   //        boost::serialization::make_nvp("has_child", p_has_child);
-  if (version == 1)
-    ar &boost::serialization::make_nvp("id", p_id);
+  if (version == 1) {
+    ar &BOOST_SERIALIZATION_NVP(p_id);
+    ar &BOOST_SERIALIZATION_NVP(p_parent_id);
+    ar &BOOST_SERIALIZATION_NVP(p_uuid);
+    ar &BOOST_SERIALIZATION_NVP(p_has_child);
+  }
 }
 
 }  // namespace doodle
