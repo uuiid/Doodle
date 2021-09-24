@@ -148,6 +148,7 @@ class DOODLELIB_API Metadata
     : public std::enable_shared_from_this<Metadata>,
       public database_action<Metadata, MetadataFactory>,
       public details::no_copy {
+
  public:
   /**
    * @brief 这个枚举是数据库中的枚举， 更改请慎重

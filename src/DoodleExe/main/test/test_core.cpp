@@ -229,15 +229,6 @@ TEST_CASE("std regex", "[std][regex]") {
             << std::endl;
 }
 
-#include <boost/archive/polymorphic_text_iarchive.hpp>
-#include <boost/archive/polymorphic_text_oarchive.hpp>
-#include <boost/archive/polymorphic_xml_iarchive.hpp>
-#include <boost/archive/polymorphic_xml_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/xml_iarchive.hpp>
-#include <boost/archive/xml_oarchive.hpp>
-
 TEST_CASE("core archive", "[fun][archives]") {
   using namespace doodle;
   //  auto& set           = CoreSet::getSet();
@@ -248,7 +239,7 @@ TEST_CASE("core archive", "[fun][archives]") {
     doodle::MetadataPtr k_val = std::make_shared<doodle::Project>("D:/", "test22333");
     {
       boost::archive::text_oarchive json{str_stream};
-      boost::archive::xml_oarchive xml{str_stream_bin};
+//      boost::archive::xml_oarchive xml{str_stream_bin};
       //      boost::archive::polymorphic_text_oarchive json{str_stream};
       json << boost::serialization::make_nvp("metadata1", k_val);
       //      xml << boost::serialization::make_nvp("mainset", k_val);
@@ -261,7 +252,7 @@ TEST_CASE("core archive", "[fun][archives]") {
     k_val.reset();
     {
       boost::archive::text_iarchive json{str_stream};
-      boost::archive::xml_iarchive xml{str_stream_bin};
+//      boost::archive::xml_iarchive xml{str_stream_bin};
       //      boost::archive::polymorphic_text_iarchive json{str_stream};
       json >> k_val;
       //      xml >> k_val;
@@ -285,6 +276,8 @@ TEST_CASE("core archive", "[fun][archives]") {
         //        binary2(boost::serialization::make_nvp("metadata1", k_m1),
         //                boost::serialization::make_nvp("metadata12", k_m2));
       }
+      std::cout << str_stream.str() << std::endl;
+      std::cout << str_stream_bin.str() << std::endl;
       {
         doodle::MetadataPtr k1;
         doodle::MetadataPtr k2;

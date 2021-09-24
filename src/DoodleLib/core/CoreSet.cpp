@@ -119,14 +119,18 @@ CoreSet::CoreSet()
       p_ue4_setting(Ue4Setting::Get()),
       p_mayaPath(),
 #ifdef NDEBUG
-      p_server_host("mysql.server.doodle.com"),
+      p_server_host("rpc.server.doodle.com"),
 #else
-      p_server_host("mysql.server.doodle.com"),
+      p_server_host("dev.rpc.server.doodle.com"),
 #endif
       p_sql_port(3306),
       p_meta_rpc_port(60999),
       p_file_rpc_port(60998),
-      p_sql_host("rpc.server.doodle.com"),
+#ifdef NDEBUG
+      p_sql_host("mysql.server.doodle.com"),
+#else
+      p_sql_host("dev.mysql.server.doodle.com"),
+#endif
       p_sql_user("deve"),
       p_sql_password("deve"),
       p_stop(false),
