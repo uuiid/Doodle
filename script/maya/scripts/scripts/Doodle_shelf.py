@@ -145,7 +145,7 @@ class DlsShelf(shelfBase._shelf):
         select = pymel.core.selected()
         fls = set()  # type: set[pymel.core.system.FileReference]
         for s in select:
-            ref = self.get_select_refFile()
+            ref = self.get_select_refFile(s)
             if ref:
                 fls.add(pymel.core.FileReference(ref))
         print(fls)

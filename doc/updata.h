@@ -4,8 +4,9 @@
  * @page updata_log 更新日志
  * @tableofcontents
  * @section updata_log_3 版本3
- *
- * @subsection updata_log_309 版本3.0.9
+ * @subsection updata_log_30 版本3.0
+ * 
+ * @subsubsection updata_log_309 版本3.0.9
  *
  * @li 更新maya自动解算组件： 导出拍屏位置为mov文件夹
  * @li 更新maya自动解算组件： 拍屏优先使用quicktime h264解码
@@ -13,7 +14,7 @@
  * @li 更新maya自动解算组件： 拍屏开始时间确定为1001开始帧
  * @li 更新ue4 批量导入功能： 导入时启用多进程导入
  *
- * @subsection updata_log_3010 版本3.0.10
+ * @subsubsection updata_log_3010 版本3.0.10
  *
  * @li 更新maya插件：添加maya 动画解算标记工具
  * @li 更新maya插件：修改maya插件安装位置安装冲突
@@ -31,83 +32,98 @@
  * @li 更新ue4插件：添加材质保存回调, 自动保存材质
  *
  *
- * @subsection updata_log_3011 版本3.0.11
+ * @subsubsection updata_log_3011 版本3.0.11
  *
  * @li 更新maya自动解算组件：更新maya 解算资产替换规则
  *
- * @subsection updata_log_3013 版本3.0.13
+ * @subsubsection updata_log_3013 版本3.0.13
  *
  * @li 更新maya自动解算组件：更新maya解算文件abc导出规则
  *
- * @subsection updata_log_3014 版本3.0.14
+ * @subsubsection updata_log_3014 版本3.0.14
  *
  * @li 更新maya工具: 解算导出是提取路径功能
  *
- * @subsection updata_log_3015 版本3.0.15
+ * @subsubsection updata_log_3015 版本3.0.15
  *
  * @li 更新maya工具: 导出时创建连续的目录
  *
- * @subsection updata_log_3016 版本3.0.16
+ * @subsubsection updata_log_3016 版本3.0.16
  *
  * @li 更新maya 自动导出fbx工具 : 更新导出fbx 摄像机无法导出时导出问题
  *
- * @subsection updata_log_3017 版本3.0.17
+ * @subsubsection updata_log_3017 版本3.0.17
  *
  * @li 更新maya 自动导出fbx工具 : 添加fbx导出筛选， 没有加载的不导出
  * @li 更新盘符映射改为系统连接
  *
- * @subsection updata_log_3018 版本3.0.18
+ * @subsubsection updata_log_3018 版本3.0.18
  *
  * @li 更新maya 解算工具: 添加z直接解算选项
  * @warning  这个版本不能正确的设置布料缓存路径（没有选中）
  *
- * @subsection updata_log_3019 版本3.0.19
+ * @subsubsection updata_log_3019 版本3.0.19
  *
  * @li 更新maya 导出fbx工具: 正确的进度条和析构节点
  *
  *
- * @subsection updata_log_3020 版本3.0.20
+ * @subsubsection updata_log_3020 版本3.0.20
  *
  * @li 更新maya 解算工具: 正确的创建文件夹和选中导出物体
  * @li 更新maya 解算工具: 正确的解算起始时间
  *
- * @subsection updata_log_3021 版本3.0.21
+ * @subsubsection updata_log_3021 版本3.0.21
  * @li 更新maya 解算工具: 解算拍屏为两次包装正确
  * @li 更新maya 解算工具: 添加解算管道, 将解算日志捕获为gui界面, 并隐藏cmd窗口
  *
- * @subsection updata_log_3022 版本3.0.22
+ * @subsubsection updata_log_3022 版本3.0.22
  * @li 更新maya 解算工具: 添加更准确的进度条
  *
- * @subsection updata_log_3023 版本3.0.23
+ * @subsubsection updata_log_3023 版本3.0.23
  * @li 更新maya 解算工具: 调整maya导出方法 先创建拍屏
  * @li 更新maya 解算工具: 调整maya打开解算文件时的问题, 先创建工作区再打开
  *
- * @subsection updata_log_3024 版本3.0.24
+ * @subsubsection updata_log_3024 版本3.0.24
  * @li 更新maya 解算工具: maya致命错误中止进程
  * @li 更新maya 解算工具: 不需要设置maya qcloth post
  * @li 更新maya 解算工具: 多人场景分段解算（每人解算一次）
  *
- * @subsection updata_log_3025 版本3.0.25
+ * @subsubsection updata_log_3025 版本3.0.25
  * @li 更新maya 解算工具: 更改maya cloth 解算 保存文件位置
  * @li 更新maya 解算工具: 更改maya cloth 解算 缓存位置
  *
- * @subsection updata_log_3026 版本3.0.26
+ * @subsubsection updata_log_3026 版本3.0.26
  * @li 添加maya正确的插件加载行为
  * @li 添加ue 批量导入寻找材质部分
  *
- * @subsection updata_log_3027 版本3.0.27
+ * @subsubsection updata_log_3027 版本3.0.27
  * @li 添加maya重新分别网格功能
  * @li 重新创建maya导出位置
  *
- * @subsection updata_log_3028 版本3.0.28
+ * @subsubsection updata_log_3028 版本3.0.28
  * @li maya 解算和导出fbx自动化脚本更新： 更改maya 文件打开引用方式
  *
- * @subsection updata_log_3029 版本3.0.29
+ * @subsubsection updata_log_3029 版本3.0.29
  * @li maya 解算和导出fbx自动化脚本更新： 解决maya在长时间任务时不会结束的问题
  *
- * @subsection updata_log_3031 版本3.0.31
+ * @subsubsection updata_log_3031 版本3.0.31
  * @li 更新maya 解算工具: 正确的设置起始帧
  * 
- * @subsection updata_log_3032 版本3.0.32
+ * @subsubsection updata_log_3032 版本3.0.32
  * @li 更新maya 解算工具: 更改更加合理的创建缓存的方式
+ * 
+ * 
+ * @subsection updata_log_31 版本3.1
+ * 
+ * @subsubsection updata_log_310 版本3.1.0
+ * @li 全选的界面
+ * @li 可自由拖拽
+ * @li 可以自定义进行配置 高度自定义化
+ * @li 三款默认界面主题
+ * @li 每次打开记住界面选项
+ * @li 全新的长时间任务反馈
+ * 
+ * 
+ * @subsubsection updata_log_311 版本3.1.1
+ * @li 解算标记工具的更新
  */
