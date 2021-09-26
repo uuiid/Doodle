@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 
 project(Doodle
-        VERSION 3.0.32.0
+        VERSION 3.1.0.0
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -222,7 +222,7 @@ set(CPACK_WIX_UPGRADE_GUID 3E490EAC-2FC7-49BF-A521-20F2F93E320A)
 # set(CPACK_WIX_CULTURES zh_CN)
 include(CPack REQUIRED)
 
-add_custom_target(cpack_${PROJECT_NAME}
+add_custom_target(cpack_${PROJECT_NAME} 
         COMMAND ${CMAKE_CPACK_COMMAND} --build ${PROJECT_BINARY_DIR} --target package)
 add_custom_command(
         TARGET cpack_${PROJECT_NAME}
