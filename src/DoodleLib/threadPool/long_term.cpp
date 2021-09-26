@@ -121,7 +121,7 @@ std::string& long_term::get_name() {
 }
 void long_term::set_name(const std::string& in_string) {
   p_name = in_string;
-  p_id   = fmt::format("{}###{}", in_string, fmt::ptr(this));
+  p_id   = fmt::format("{}##{}", in_string, fmt::ptr(this));
 }
 rational_int long_term::get_progress() const {
   return p_progress;

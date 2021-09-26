@@ -178,7 +178,7 @@ bool comm_create_video::render() {
                                      image_paths k_image_paths{};
                                      k_image_paths.use_dir = true;
                                      k_image_paths.p_path_list.emplace_back(in_path);
-                                     k_image_paths.p_show_name = fmt::format("{}###{}",
+                                     k_image_paths.p_show_name = fmt::format("{}##{}",
                                                                              k_image_paths.p_path_list.back().generic_string(),
                                                                              fmt::ptr(&k_image_paths));
                                      return k_image_paths;

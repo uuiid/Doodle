@@ -10,7 +10,7 @@ namespace doodle {
 Shot::Shot()
     : Metadata(),
       p_shot(-1),
-      p_shot_ab() {
+      p_shot_ab("None") {
   p_type = meta_type::folder;
 }
 
@@ -62,7 +62,7 @@ void Shot::setEpisodesPtr(const EpisodesPtr& Episodes_) noexcept {
   Episodes_->child_item.push_back_sig(shared_from_this());
 }
 std::string Shot::str() const {
-  return fmt::format("sc{:04d}{}", p_shot, p_shot_ab);
+  return fmt::format("sc{:04d}{}", p_shot, p_shot_ab == "None" ? "" : p_shot_ab);
 }
 bool Shot::operator<(const Shot& rhs) const {
   return std::tie(p_shot, p_shot_ab) < std::tie(rhs.p_shot, rhs.p_shot_ab);

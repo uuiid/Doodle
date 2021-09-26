@@ -20,13 +20,6 @@ comm_project_add::comm_project_add()
       p_prj_path(new_object<string>()),
       p_root() {
   p_name     = "项目";
-  // p_show_str = {
-  //     make_show_shr("删除", this),
-  //     make_show_shr("添加", this),
-  //     make_show_shr("修改", this),
-  //     make_show_shr("名称", this),
-  //     make_show_shr("路径", this),
-  //     make_show_shr("选择", this)};
   p_show_str = make_imgui_name(this, "删除", "添加",
                                "修改", "名称",
                                "路径", "选择");
@@ -35,29 +28,29 @@ comm_project_add::comm_project_add()
 bool comm_project_add::render() {
   auto& k_d_lib = DoodleLib::Get();
   ImGui::BulletText(p_name.c_str());
-  if (imgui::Button("添加")) {
+  if (imgui::Button(p_show_str["添加"].c_str())) {
     auto k_prj = new_object<Project>(*p_prj_path, *p_prj_name);
     k_prj->updata_db(k_d_lib.get_metadata_factory());
     k_d_lib.p_project_vector = k_d_lib.get_metadata_factory()->getAllProject();
   }
   if (p_root) {
     imgui::SameLine();
-    if (imgui::Button("修改")) {
+    if (imgui::Button(p_show_str["修改"].c_str())) {
       p_root->setName(*p_prj_name);
       p_root->setPath(*p_prj_path);
       p_root->updata_db();
     }
     imgui::SameLine();
-    if (imgui::Button("删除")) {
+    if (imgui::Button(p_show_str["删除"].c_str())) {
       p_root->deleteData();
       k_d_lib.p_project_vector = k_d_lib.get_metadata_factory()->getAllProject();
     }
   }
 
-  imgui::InputText("名称", p_prj_name.get());
-  imgui::InputText("路径", p_prj_path.get());
+  imgui::InputText(p_show_str["名称"].c_str(), p_prj_name.get());
+  imgui::InputText(p_show_str["路径"].c_str(), p_prj_path.get());
   imgui::SameLine();
-  if (imgui::Button("选择")) {
+  if (imgui::Button(p_show_str["选择"].c_str())) {
     open_file_dialog{"open_select_path",
                      "选择路径",
                      nullptr,
@@ -105,34 +98,34 @@ comm_ass_eps::comm_ass_eps()
 }
 
 bool comm_ass_eps::render() {
-  ImGui::BulletText(p_name.c_str());
+  ImGui::BulletText("%s", p_name.c_str());
   if (p_parent) {
-    if (imgui::Button("添加")) {
+    if (imgui::Button(p_show_str["添加"].c_str())) {
       if (!(*use_batch)) {
         p_end = p_data + 1;
       }
       add_eps(range(p_data, p_end));
     }
     imgui::SameLine();
-    imgui::Checkbox("批量添加", use_batch.get());
+    imgui::Checkbox(p_show_str["批量添加"].c_str(), use_batch.get());
 
     if (p_root) {
       imgui::SameLine();
-      if (imgui::Button("修改")) {
+      if (imgui::Button(p_show_str["修改"].c_str())) {
         p_root->setEpisodes(p_data);
         p_root->updata_db();
       }
 
       if (!p_root->hasChild()) {
         imgui::SameLine();
-        if (imgui::Button("删除")) {
+        if (imgui::Button(p_show_str["删除"].c_str())) {
           p_root->deleteData();
         }
       }
     }
-    imgui::InputInt("集数", &p_data, 1, 9999);
+    imgui::InputInt(p_show_str["集数"].c_str(), &p_data, 1, 9999);
     if (*use_batch)
-      imgui::InputInt("结束集数", &p_end, 1, 9999);
+      imgui::InputInt(p_show_str["结束集数"].c_str(), &p_end, 1, 9999);
     if (p_end < p_data)
       p_end = p_data + 1;
   }
@@ -175,17 +168,17 @@ comm_ass_shot::comm_ass_shot()
 bool comm_ass_shot::render() {
   ImGui::BulletText(p_name.c_str());
   if (p_parent) {
-    if (imgui::Button("添加")) {
+    if (imgui::Button(p_show_str["添加"].c_str())) {
       if (!(*use_batch)) {
         p_end = p_data + 1;
       }
       add_shot(range(p_data, p_end));
     }
     imgui::SameLine();
-    imgui::Checkbox("批量添加", use_batch.get());
+    imgui::Checkbox(p_show_str["批量添加"].c_str(), use_batch.get());
     if (p_root) {
       imgui::SameLine();
-      if (imgui::Button("修改")) {
+      if (imgui::Button(p_show_str["修改"].c_str())) {
         p_root->setShot(p_data);
         p_root->setShotAb(magic_enum::enum_cast<Shot::ShotAbEnum>(
                               p_shot_ab)
@@ -194,12 +187,12 @@ bool comm_ass_shot::render() {
       }
       if (!p_root->hasChild()) {
         imgui::SameLine();
-        if (imgui::Button("删除"))
+        if (imgui::Button(p_show_str["删除"].c_str()))
           p_root->deleteData();
       }
     }
-    imgui::InputInt("镜头", &p_data, 1, 9999);
-    dear::Combo{"ab镜头", p_shot_ab.data()} && [this]() {
+    imgui::InputInt(p_show_str["镜头"].c_str(), &p_data, 1, 9999);
+    dear::Combo{p_show_str["ab镜头"].c_str(), p_shot_ab.data()} && [this]() {
       static auto shot_enum{magic_enum::enum_names<Shot::ShotAbEnum>()};
       for (auto& i : shot_enum) {
         if (imgui::Selectable(i.data(), i == p_shot_ab))
@@ -245,23 +238,23 @@ comm_assets::comm_assets()
 bool comm_assets::render() {
   ImGui::BulletText(p_name.c_str());
   if (p_parent) {
-    if (imgui::Button("添加")) {
+    if (imgui::Button(p_show_str["添加"].c_str())) {
       add_ass({p_data});
     }
     if (p_root) {
       imgui::SameLine();
-      if (imgui::Button("修改")) {
+      if (imgui::Button(p_show_str["修改"].c_str())) {
         p_root->setName1(p_data);
         p_root->updata_db();
       }
       if (!p_root->hasChild()) {
         imgui::SameLine();
-        if (imgui::Button("删除")) {
+        if (imgui::Button(p_show_str["删除"].c_str())) {
           p_root->deleteData();
         }
       }
     }
-    imgui::InputText("名称", &p_data);
+    imgui::InputText(p_show_str["名称"].c_str(), &p_data);
   }
 
   return true;
@@ -303,32 +296,32 @@ bool comm_ass_season::render() {
   ImGui::BulletText(p_name.c_str());
 
   if (p_parent) {
-    if (imgui::Button("添加")) {
+    if (imgui::Button(p_show_str["添加"].c_str())) {
       if (!(*use_batch)) {
         p_end = p_data + 1;
       }
       add_season(range(p_data, p_end));
     }
     imgui::SameLine();
-    imgui::Checkbox("批量添加", use_batch.get());
+    imgui::Checkbox(p_show_str["批量添加"].c_str(), use_batch.get());
 
     if (p_root) {
       imgui::SameLine();
-      if (imgui::Button("修改")) {
+      if (imgui::Button(p_show_str["修改"].c_str())) {
         p_root->set_season(p_data);
         p_root->updata_db();
       }
 
       if (!p_root->hasChild()) {
         imgui::SameLine();
-        if (imgui::Button("删除")) {
+        if (imgui::Button(p_show_str["删除"].c_str())) {
           p_root->deleteData();
         }
       }
     }
-    imgui::InputInt("季数", &p_data, 1, 9999);
+    imgui::InputInt(p_show_str["季数"].c_str(), &p_data, 1, 9999);
     if (*use_batch)
-      imgui::InputInt("结束季数", &p_end, 1, 9999);
+      imgui::InputInt(p_show_str["结束季数"].c_str(), &p_end, 1, 9999);
     if (p_end < p_data)
       p_end = p_data + 1;
   }
@@ -357,18 +350,18 @@ comm_ass_file::comm_ass_file()
 bool comm_ass_file::render() {
   ImGui::BulletText(p_name.c_str());
   if (p_parent) {
-    if (imgui::Button("添加")) {
+    if (imgui::Button(p_show_str["添加"].c_str())) {
       auto ass = new_object<AssetsFile>();
       p_parent->child_item.push_back(ass);
     }
     if (p_root) {
       imgui::SameLine();
-      if (imgui::Button("更改")) {
+      if (imgui::Button(p_show_str["更改"].c_str())) {
         p_root->getTime();
       }
       if (p_root->hasChild()) {
         imgui::SameLine();
-        if (imgui::Button("删除")) {
+        if (imgui::Button(p_show_str["删除"].c_str())) {
           p_root->deleteData();
         }
       }
