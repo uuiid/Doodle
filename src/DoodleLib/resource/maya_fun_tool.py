@@ -10,7 +10,8 @@ import json
 import pymel.util.path
 import pymel.all
 import pymel.core.animation
-
+# from pymel.core.system import FileReference
+from pymel.core import FileReference
 
 class maya_play_raneg():
     """
