@@ -126,6 +126,7 @@ bool is_class(const RT &in_rt) {
 }
 
 }  // namespace details
+
 namespace chrono {
 namespace literals {
 using namespace std::chrono_literals;
@@ -155,6 +156,13 @@ std::time_t to_time_t(const time_point<local_t, dur> &in_timePoint) {
 // bool is_morning_works(const std::chrono::time_point<Clock, typename Clock::duration>& in_time) {
 // }
 }  // namespace chrono
+
+template <typename IntType = std::int32_t>
+std::vector<IntType> range(IntType start, IntType stop, IntType step = 1) {
+  std::vector<IntType> x{};
+  boost::push_back(x, boost::irange(start, stop, step));
+  return x;
+};
 
 namespace FSys {
 // namespace details{
@@ -501,6 +509,14 @@ using trans_file_ptr = std::shared_ptr<trans_file>;
 class Doodle;
 [[maybe_unused]] DOODLELIB_API DoodleLibPtr make_doodle_lib();
 
+namespace details {
+
+std::pair<string, string> make_show_shr(const string &in_key, const void *in_ptr);
+}
+template <class... Args>
+std::map<string, string> make_imgui_name(const void *in_ptr, Args &&...in_args) {
+  return std::map<string, string>{details::make_show_shr(in_args, in_ptr)...};
+};
 }  // namespace doodle
 
 namespace boost::serialization {

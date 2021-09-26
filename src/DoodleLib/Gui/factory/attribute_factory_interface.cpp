@@ -26,7 +26,7 @@ void attr_project::show_attribute(const ProjectPtr& in) {
 
 attr_assets::attr_assets()
     : p_data(),
-      p_comm() {
+      p_comm(new_object<comm_ass>()) {
 }
 
 void attr_assets::render() {
@@ -34,7 +34,7 @@ void attr_assets::render() {
 }
 
 void attr_assets::show_attribute(const EpisodesPtr& in) {
-  p_comm = new_object<comm_ass_eps>();
+  //  p_comm = new_object<comm_ass_eps>();
   p_comm->add_data(in, in);
 }
 
@@ -43,17 +43,16 @@ void attr_assets::show_attribute(const ProjectPtr& in) {
 }
 
 void attr_assets::show_attribute(const ShotPtr& in) {
-  p_comm = new_object<comm_ass_shot>();
+  //  p_comm = new_object<comm_ass_shot>();
   p_comm->add_data(in, in);
 }
 
 void attr_assets::show_attribute(const AssetsPtr& in) {
-  p_comm = new_object<comm_assets>();
+  //  p_comm = new_object<comm_assets>();
   p_comm->add_data(in, in);
 }
 
 void attr_assets::show_attribute(const season_ptr& in) {
-  p_comm = new_object<comm_ass_season>();
   p_comm->add_data(in, in);
 }
 

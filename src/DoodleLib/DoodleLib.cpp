@@ -15,13 +15,17 @@
 #include <Windows.h>
 #include <shellapi.h>
 #include <tchar.h>
-#elif defined( __linux__ )
-
-
+#elif defined(__linux__)
 
 #endif
 
 namespace doodle {
+namespace details {
+std::pair<string, string> make_show_shr(const string &in_key, const void *in_ptr) {
+  return std::make_pair(in_key, fmt::format("{}###{}", in_key, fmt::ptr(in_ptr)));
+};
+}  // namespace details
+
 namespace chrono {
 bool is_rest_day(const sys_days &in_days) {
   weekday k_weekday{in_days};
@@ -51,7 +55,7 @@ std::time_t last_write_time_t(const path &in_path) {
   /// 然后我们将100纳秒时间段转换为 单位秒的时间段
   /// 最后我们进行强制转换， 将int64值， 转换为time_t值
   return static_cast<time_t>(std::chrono::floor<std::chrono::seconds>(withUnixEpoch).count());
-#elif defined( __linux__ ) && defined( __GNUC__ )
+#elif defined(__linux__) && defined(__GNUC__)
   chrono::sys_time_pos k_sys_time_pos{k_time.time_since_epoch()};
   k_sys_time_pos -= S_epoch_diff;
   return chrono::system_clock::to_time_t(k_sys_time_pos);
@@ -86,7 +90,7 @@ std::time_t last_write_time_t(const path &in_path) {
 }
 
 void open_explorer(const path &in_path) {
-#if defined( _WIN32 )
+#if defined(_WIN32)
   DOODLE_LOG_INFO("打开路径: {}", in_path.generic_string());
   ShellExecute(nullptr, _T("open"), in_path.generic_wstring().c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
   // std::system(fmt::format(R"(explorer.exe {})", in_path.generic_string()).c_str());

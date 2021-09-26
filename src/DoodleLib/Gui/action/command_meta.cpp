@@ -9,17 +9,32 @@
 #include <DoodleLib/core/open_file_dialog.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 
+#include <boost/range.hpp>
+#include <boost/range/irange.hpp>
+
 namespace doodle {
+
 comm_project_add::comm_project_add()
     : p_prj_name(new_object<string>()),
       p_prj_name_short(new_object<string>()),
       p_prj_path(new_object<string>()),
       p_root() {
-  p_name = "项目";
+  p_name     = "项目";
+  // p_show_str = {
+  //     make_show_shr("删除", this),
+  //     make_show_shr("添加", this),
+  //     make_show_shr("修改", this),
+  //     make_show_shr("名称", this),
+  //     make_show_shr("路径", this),
+  //     make_show_shr("选择", this)};
+  p_show_str = make_imgui_name(this, "删除", "添加",
+                               "修改", "名称",
+                               "路径", "选择");
 }
 
 bool comm_project_add::render() {
   auto& k_d_lib = DoodleLib::Get();
+  ImGui::BulletText(p_name.c_str());
   if (imgui::Button("添加")) {
     auto k_prj = new_object<Project>(*p_prj_path, *p_prj_name);
     k_prj->updata_db(k_d_lib.get_metadata_factory());
@@ -67,10 +82,10 @@ bool comm_project_add::add_data(const MetadataPtr& in_parent, const MetadataPtr&
   return p_root != nullptr;
 }
 
-void comm_ass_eps::add_eps(std::int32_t in_begin, std::int32_t in_end) {
-  for (auto i = in_begin; i < in_end; ++i) {
+void comm_ass_eps::add_eps(const std::vector<std::int32_t>& p_eps) {
+  for (auto i : p_eps) {
     auto eps = new_object<Episodes>(p_parent, i);
-    p_parent->add_child(eps);
+    p_parent->child_item.push_back_sig(eps);
     eps->insert_into();
   }
 }
@@ -80,23 +95,36 @@ comm_ass_eps::comm_ass_eps()
       p_root(),
       p_data(0),
       use_batch(new_object<bool>(false)) {
+  p_name     = "集数";
+  p_show_str = make_imgui_name(this, "添加",
+                               "批量添加",
+                               "修改",
+                               "删除",
+                               "集数",
+                               "结束集数");
 }
 
 bool comm_ass_eps::render() {
+  ImGui::BulletText(p_name.c_str());
   if (p_parent) {
     if (imgui::Button("添加")) {
-      imgui::Checkbox("批量添加", use_batch.get());
-      if (!use_batch) {
+      if (!(*use_batch)) {
         p_end = p_data + 1;
       }
-      add_eps(p_data, p_end);
+      add_eps(range(p_data, p_end));
     }
+    imgui::SameLine();
+    imgui::Checkbox("批量添加", use_batch.get());
+
     if (p_root) {
+      imgui::SameLine();
       if (imgui::Button("修改")) {
         p_root->setEpisodes(p_data);
         p_root->updata_db();
       }
+
       if (!p_root->hasChild()) {
+        imgui::SameLine();
         if (imgui::Button("删除")) {
           p_root->deleteData();
         }
@@ -120,12 +148,69 @@ bool comm_ass_eps::add_data(const MetadataPtr& in_parent, const MetadataPtr& in)
   return p_root != nullptr;
 }
 
+void comm_ass_shot::add_shot(const std::vector<std::int32_t>& p_shots) {
+  for (auto s : p_shots) {
+    auto k_s = new_object<Shot>();
+    k_s->setShot(s);
+    p_parent->child_item.push_back_sig(k_s);
+  }
+}
+
 comm_ass_shot::comm_ass_shot()
     : p_parent(),
-      p_root() {
+      p_root(),
+      p_data(),
+      p_end(),
+      use_batch(new_object<bool>(false)),
+      p_shot_ab() {
+  p_name     = "镜头";
+  p_show_str = make_imgui_name(this, "添加",
+                               "批量添加",
+                               "修改",
+                               "删除",
+                               "镜头",
+                               "ab镜头");
 }
 
 bool comm_ass_shot::render() {
+  ImGui::BulletText(p_name.c_str());
+  if (p_parent) {
+    if (imgui::Button("添加")) {
+      if (!(*use_batch)) {
+        p_end = p_data + 1;
+      }
+      add_shot(range(p_data, p_end));
+    }
+    imgui::SameLine();
+    imgui::Checkbox("批量添加", use_batch.get());
+    if (p_root) {
+      imgui::SameLine();
+      if (imgui::Button("修改")) {
+        p_root->setShot(p_data);
+        p_root->setShotAb(magic_enum::enum_cast<Shot::ShotAbEnum>(
+                              p_shot_ab)
+                              .value_or(Shot::ShotAbEnum::None));
+        p_root->updata_db();
+      }
+      if (!p_root->hasChild()) {
+        imgui::SameLine();
+        if (imgui::Button("删除"))
+          p_root->deleteData();
+      }
+    }
+    imgui::InputInt("镜头", &p_data, 1, 9999);
+    dear::Combo{"ab镜头", p_shot_ab.data()} && [this]() {
+      static auto shot_enum{magic_enum::enum_names<Shot::ShotAbEnum>()};
+      for (auto& i : shot_enum) {
+        if (imgui::Selectable(i.data(), i == p_shot_ab))
+          p_shot_ab = i;
+      }
+    };
+    if (*use_batch) {
+      imgui::InputInt("镜头结束", &p_end, 1, 9999);
+    }
+  }
+
   return true;
 }
 
@@ -134,17 +219,51 @@ bool comm_ass_shot::add_data(const MetadataPtr& in_parent, const MetadataPtr& in
   p_root   = std::dynamic_pointer_cast<Shot>(in);
   if (p_root) {
     p_data    = p_root->getShot();
-    p_shot_ab = magic_enum::enum_integer(p_root->getShotAb_enum());
+    p_shot_ab = p_root->getShotAb();
   }
   return p_root != nullptr;
+}
+
+void comm_assets::add_ass(std::vector<string> in_Str) {
+  for (auto& i : in_Str) {
+    auto k_ass = new_object<Assets>();
+    k_ass->setName1(i);
+    p_parent->child_item.push_back_sig(k_ass);
+  }
 }
 
 comm_assets::comm_assets()
     : p_parent(),
       p_root() {
+  p_name     = "资产";
+  p_show_str = make_imgui_name(this, "添加",
+                               "修改",
+                               "删除",
+                               "名称");
 }
 
 bool comm_assets::render() {
+  ImGui::BulletText(p_name.c_str());
+  if (p_parent) {
+    if (imgui::Button("添加")) {
+      add_ass({p_data});
+    }
+    if (p_root) {
+      imgui::SameLine();
+      if (imgui::Button("修改")) {
+        p_root->setName1(p_data);
+        p_root->updata_db();
+      }
+      if (!p_root->hasChild()) {
+        imgui::SameLine();
+        if (imgui::Button("删除")) {
+          p_root->deleteData();
+        }
+      }
+    }
+    imgui::InputText("名称", &p_data);
+  }
+
   return true;
 }
 
@@ -157,12 +276,63 @@ bool comm_assets::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) 
   return p_root != nullptr;
 }
 
+void comm_ass_season::add_season(const std::vector<std::int32_t>& in) {
+  for (auto& i : in) {
+    auto s = new_object<season>();
+    s->set_season(i);
+    p_parent->child_item.push_back_sig(s);
+  }
+}
+
 comm_ass_season::comm_ass_season()
     : p_parent(),
-      p_root() {
+      p_root(),
+      p_data(),
+      p_end(),
+      use_batch(new_object<bool>(false)) {
+  p_name     = "季数";
+  p_show_str = make_imgui_name(this, "添加",
+                               "批量添加",
+                               "修改",
+                               "删除",
+                               "季数",
+                               "结束季数");
 }
 
 bool comm_ass_season::render() {
+  ImGui::BulletText(p_name.c_str());
+
+  if (p_parent) {
+    if (imgui::Button("添加")) {
+      if (!(*use_batch)) {
+        p_end = p_data + 1;
+      }
+      add_season(range(p_data, p_end));
+    }
+    imgui::SameLine();
+    imgui::Checkbox("批量添加", use_batch.get());
+
+    if (p_root) {
+      imgui::SameLine();
+      if (imgui::Button("修改")) {
+        p_root->set_season(p_data);
+        p_root->updata_db();
+      }
+
+      if (!p_root->hasChild()) {
+        imgui::SameLine();
+        if (imgui::Button("删除")) {
+          p_root->deleteData();
+        }
+      }
+    }
+    imgui::InputInt("季数", &p_data, 1, 9999);
+    if (*use_batch)
+      imgui::InputInt("结束季数", &p_end, 1, 9999);
+    if (p_end < p_data)
+      p_end = p_data + 1;
+  }
+
   return true;
 }
 
@@ -178,9 +348,33 @@ bool comm_ass_season::add_data(const MetadataPtr& in_parent, const MetadataPtr& 
 comm_ass_file::comm_ass_file()
     : p_parent(),
       p_root() {
+  p_name     = "资产文件";
+  p_show_str = make_imgui_name(this, "添加",
+                               "更改",
+                               "删除");
 }
 
 bool comm_ass_file::render() {
+  ImGui::BulletText(p_name.c_str());
+  if (p_parent) {
+    if (imgui::Button("添加")) {
+      auto ass = new_object<AssetsFile>();
+      p_parent->child_item.push_back(ass);
+    }
+    if (p_root) {
+      imgui::SameLine();
+      if (imgui::Button("更改")) {
+        p_root->getTime();
+      }
+      if (p_root->hasChild()) {
+        imgui::SameLine();
+        if (imgui::Button("删除")) {
+          p_root->deleteData();
+        }
+      }
+    }
+  }
+
   return true;
 }
 

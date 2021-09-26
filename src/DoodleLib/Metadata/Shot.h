@@ -20,7 +20,7 @@ class DOODLELIB_API Shot : public Metadata {
        decltype(p_shot_ab) in_shot_ab = {});
 
   // clang-format off
-  enum class ShotAbEnum { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
+  enum class ShotAbEnum { None, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
   // clang-format on
 
   [[nodiscard]] const std::int64_t &getShot() const noexcept;

@@ -43,7 +43,7 @@ struct TreeNodeEx : public ScopeWrapper<TreeNodeEx> {
     if (!ok_)
       return;
 
-    if (use_dtor)
+    if (!use_dtor)
       ImGui::TreePop();
   };
 };

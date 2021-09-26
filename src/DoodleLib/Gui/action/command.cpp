@@ -9,4 +9,5 @@
 #include <DoodleLib/libWarp/imgui_warp.h>
 
 namespace doodle {
+
 }  // namespace doodle

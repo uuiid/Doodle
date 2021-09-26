@@ -26,7 +26,9 @@
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
-
+#include <boost/range.hpp>
+#include <boost/range/irange.hpp>
+#include <boost/range/algorithm_ext.hpp>
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
 
