@@ -16,7 +16,7 @@ class DOODLELIB_API season
   explicit season(std::weak_ptr<Metadata> in_metadata, std::int32_t in_);
 
   void set_season(std::int32_t in_);
-  std::int32_t get_season(std::int32_t in_) const;
+  std::int32_t get_season() const;
 
   virtual std::string str() const override;
   virtual void create_menu(const attribute_factory_ptr& in_factoryPtr) override;

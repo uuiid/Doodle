@@ -6,12 +6,14 @@
 
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
+#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 namespace doodle {
 
 assets_widget::assets_widget()
     : p_root(),
       p_meta() {
-        p_class_name = "资产";
+  p_factory    = new_object<attr_assets>();
+  p_class_name = "资产";
 }
 void assets_widget::frame_render() {
   dear::TreeNode{"assets_widget"} && [this]() {
@@ -20,7 +22,6 @@ void assets_widget::frame_render() {
     }
   };
 }
-
 
 void assets_widget::set_metadata(const MetadataPtr& in_ptr) {
   p_root = in_ptr;
@@ -50,6 +51,7 @@ void assets_widget::load_meta(const MetadataPtr& in_ptr) {
 }
 void assets_widget::set_select(const MetadataPtr& in_ptr) {
   p_meta = in_ptr;
+  p_meta->create_menu(p_factory);
   select_change(p_meta);
 }
 }  // namespace doodle

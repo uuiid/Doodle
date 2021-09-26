@@ -42,6 +42,10 @@ const std::string& Shot::getShotAb() const noexcept {
   return p_shot_ab;
 }
 
+Shot::ShotAbEnum Shot::getShotAb_enum() const noexcept {
+  return magic_enum::enum_cast<ShotAbEnum>(p_shot_ab).value();
+}
+
 void Shot::setShotAb(const std::string& ShotAb) noexcept {
   p_shot_ab = ShotAb;
   saved(true);

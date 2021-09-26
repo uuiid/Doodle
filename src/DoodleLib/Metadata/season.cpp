@@ -23,7 +23,7 @@ void season::set_season(std::int32_t in_) {
   sig_change();
 }
 
-std::int32_t season::get_season(std::int32_t in_) const {
+std::int32_t season::get_season() const {
   return p_int;
 }
 std::string season::str() const {

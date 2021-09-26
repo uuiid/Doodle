@@ -27,6 +27,7 @@ class DOODLELIB_API Shot : public Metadata {
   void setShot(const std::int64_t &in_shot);
 
   [[nodiscard]] const std::string &getShotAb() const noexcept;
+  [[nodiscard]] ShotAbEnum getShotAb_enum() const noexcept;
   void setShotAb(const std::string &ShotAb) noexcept;
   inline void setShotAb(const ShotAbEnum &ShotAb) {
     setShotAb(std::string{magic_enum::enum_name(ShotAb)});

@@ -67,4 +67,127 @@ bool comm_project_add::add_data(const MetadataPtr& in_parent, const MetadataPtr&
   return p_root != nullptr;
 }
 
+void comm_ass_eps::add_eps(std::int32_t in_begin, std::int32_t in_end) {
+  for (auto i = in_begin; i < in_end; ++i) {
+    auto eps = new_object<Episodes>(p_parent, i);
+    p_parent->add_child(eps);
+    eps->insert_into();
+  }
+}
+
+comm_ass_eps::comm_ass_eps()
+    : p_parent(),
+      p_root(),
+      p_data(0),
+      use_batch(new_object<bool>(false)) {
+}
+
+bool comm_ass_eps::render() {
+  if (p_parent) {
+    if (imgui::Button("添加")) {
+      imgui::Checkbox("批量添加", use_batch.get());
+      if (!use_batch) {
+        p_end = p_data + 1;
+      }
+      add_eps(p_data, p_end);
+    }
+    if (p_root) {
+      if (imgui::Button("修改")) {
+        p_root->setEpisodes(p_data);
+        p_root->updata_db();
+      }
+      if (!p_root->hasChild()) {
+        if (imgui::Button("删除")) {
+          p_root->deleteData();
+        }
+      }
+    }
+    imgui::InputInt("集数", &p_data, 1, 9999);
+    if (*use_batch)
+      imgui::InputInt("结束集数", &p_end, 1, 9999);
+    if (p_end < p_data)
+      p_end = p_data + 1;
+  }
+}
+
+bool comm_ass_eps::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+  p_parent = in_parent;
+  p_root   = std::dynamic_pointer_cast<Episodes>(in);
+  if (p_root) {
+    p_data = p_root->getEpisodes();
+  }
+  return p_root != nullptr;
+}
+
+comm_ass_shot::comm_ass_shot()
+    : p_parent(),
+      p_root() {
+}
+
+bool comm_ass_shot::render() {
+  
+}
+
+bool comm_ass_shot::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+  p_parent = in_parent;
+  p_root   = std::dynamic_pointer_cast<Shot>(in);
+  if (p_root) {
+    p_data    = p_root->getShot();
+    p_shot_ab = magic_enum::enum_integer(p_root->getShotAb_enum());
+  }
+  return p_root != nullptr;
+}
+
+comm_assets::comm_assets()
+    : p_parent(),
+      p_root() {
+}
+
+bool comm_assets::render() {
+}
+
+bool comm_assets::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+  p_parent = in_parent;
+  p_root   = std::dynamic_pointer_cast<Assets>(in);
+  if (p_root) {
+    p_data = p_root->getName1();
+  }
+  return p_root != nullptr;
+}
+
+comm_ass_season::comm_ass_season()
+    : p_parent(),
+      p_root() {
+}
+
+bool comm_ass_season::render() {
+}
+
+bool comm_ass_season::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+  p_parent = in_parent;
+  p_root   = std::dynamic_pointer_cast<season>(in);
+  if (p_root) {
+    p_data = p_root->get_season();
+  }
+  return p_root != nullptr;
+}
+
+comm_ass_file::comm_ass_file()
+    : p_parent(),
+      p_root() {
+}
+
+bool comm_ass_file::render() {
+}
+
+bool comm_ass_file::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+  p_parent = in_parent;
+  p_root   = std::dynamic_pointer_cast<AssetsFile>(in);
+  if (p_root) {
+    p_time = p_root->getTime()->getLocalTime();
+    p_comm = p_root->getComment();
+  }
+  return p_root != nullptr;
+}
+
 }  // namespace doodle
