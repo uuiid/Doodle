@@ -144,7 +144,7 @@ class camera:
                 self.maya_cam = cam.getTransform()
                 print("select cam {}".format(self.maya_cam))
                 return
-        print("not select cam {}".format( self.maya_cam))
+        print("not select cam {}".format(self.maya_cam))
 
     def create_move(self, out_path=None,
                     start_frame=None,
@@ -277,7 +277,8 @@ class camera:
         self.newCam.setDisplayResolution(True)
         self.newCam.setDisplayGateMask(True)
 
-        print("get cam {}.displayGateMaskOpacity attr".format(self.maya_cam.getShape().longName()))
+        print("get cam {}.displayGateMaskOpacity attr".format(
+            self.maya_cam.getShape().longName()))
         try:
             pymel.core.mel.eval('setAttr "{}.displayGateMaskOpacity" 1;'.format(
                 self.maya_cam.getShape().longName()))
@@ -318,7 +319,6 @@ class camera:
             str = doodle_work_space.work.getPath() / \
                 doodle_work_space.maya_file.name_not_ex
         self.export(str)
-
 
 
 class meateral():
@@ -682,7 +682,8 @@ class cloth_group_file(export_group):
     def export_abc(self, export_path=pymel.core.Path(), repeat=False):
         # 创建路径
         if not export_path:
-            export_path = doodle_work_space.work.getPath() / "abc"
+            export_path = doodle_work_space.work.getPath(
+            ) / "abc" / doodle_work_space.maya_file.name_not_ex
         path = export_path  # type: pymel.core.Path
         self.export_select_abc(
             path,
@@ -691,7 +692,6 @@ class cloth_group_file(export_group):
                 geometry=True,
                 dagObjects=True),
             repeat)
-
 
 
 class fbx_group_file(export_group):
@@ -773,7 +773,7 @@ class cloth_export():
             obj.export_fbx()
 
     def creare_cache(self):
-        for i in range(doodle_work_space.raneg.start,doodle_work_space.raneg.end):
+        for i in range(doodle_work_space.raneg.start, doodle_work_space.raneg.end):
             pymel.core.currentTime(i)
             for obj in self.qcolth_group:
                 obj.create_cache()
