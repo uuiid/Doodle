@@ -107,11 +107,11 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
     FSys::create_directories(in_arg->out_path.parent_path());
 
   {
-    const static cv::Size k_size{1280, 720};
+    const static cv::Size k_size{1920, 1080};
     auto video           = cv::VideoWriter{in_arg->out_path.generic_string(),
                                  cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
                                  25,
-                                 cv::Size(1280, 720)};
+                                 k_size};
     auto k_image         = cv::Mat{};
     auto k_image_resized = cv::Mat{};
     auto k_clone         = cv::Mat{};
@@ -128,7 +128,7 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
       k_image = cv::imread(path.generic_string());
       if (k_image.empty())
         throw DoodleError("open cv not read image");
-      if (k_image.cols != 1280 || k_image.rows != 720)
+      if (k_image.cols != k_size.width || k_image.rows != k_size.height)
         cv::resize(k_image, k_image_resized, k_size);
       else
         k_image_resized = k_image;

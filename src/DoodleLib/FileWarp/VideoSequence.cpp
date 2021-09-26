@@ -28,13 +28,13 @@ void VideoSequence::connectVideo(const FSys::path& out_path, const long_term_ptr
     FSys::create_directories(out_path.parent_path());
 
   auto k_video_input   = cv::VideoCapture{};
+  const static cv::Size k_size{1920, 1080};
   auto k_video_out     = cv::VideoWriter{out_path.generic_string(),
                                      cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
                                      25,
-                                     cv::Size(1280, 720)};
+                                     k_size};
   auto k_image         = cv::Mat{};
   auto k_image_resized = cv::Mat{};
-  const static cv::Size k_size{1280, 720};
   const auto k_len = p_paths.size();
 
   for (const auto& path : p_paths) {
@@ -44,7 +44,7 @@ void VideoSequence::connectVideo(const FSys::path& out_path, const long_term_ptr
 
       while (k_video_input.read(k_image)) {
         std::size_t k_frame = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
-        if (k_image.cols != 1280 || k_image.rows != 720)
+        if (k_image.cols != k_size.width || k_image.rows != k_size.height)
           cv::resize(k_image, k_image_resized, k_size);
         else
           k_image_resized = k_image;
