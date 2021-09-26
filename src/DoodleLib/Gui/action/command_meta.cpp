@@ -108,6 +108,7 @@ bool comm_ass_eps::render() {
     if (p_end < p_data)
       p_end = p_data + 1;
   }
+  return true;
 }
 
 bool comm_ass_eps::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
@@ -125,7 +126,7 @@ comm_ass_shot::comm_ass_shot()
 }
 
 bool comm_ass_shot::render() {
-  
+  return true;
 }
 
 bool comm_ass_shot::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
@@ -144,6 +145,7 @@ comm_assets::comm_assets()
 }
 
 bool comm_assets::render() {
+  return true;
 }
 
 bool comm_assets::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
@@ -161,6 +163,7 @@ comm_ass_season::comm_ass_season()
 }
 
 bool comm_ass_season::render() {
+  return true;
 }
 
 bool comm_ass_season::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
@@ -178,6 +181,7 @@ comm_ass_file::comm_ass_file()
 }
 
 bool comm_ass_file::render() {
+  return true;
 }
 
 bool comm_ass_file::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
@@ -190,4 +194,15 @@ bool comm_ass_file::add_data(const MetadataPtr& in_parent, const MetadataPtr& in
   return p_root != nullptr;
 }
 
+comm_ass::comm_ass()
+    : p_val() {
+}
+bool comm_ass::render() {
+  boost::hana::for_each(p_val, [](auto& in) { in.render(); });
+  return true;
+}
+bool comm_ass::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(in_parent, in); });
+  return true;
+}
 }  // namespace doodle

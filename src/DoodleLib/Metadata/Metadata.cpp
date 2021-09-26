@@ -167,17 +167,17 @@ void Metadata::install_slots() {
 
   child_item.sig_begin_insert.connect([this](const MetadataPtr &val) {
     add_child(val);
-      ++p_has_child;
+    ++p_has_child;
     saved(true);
   });
   child_item.sig_begin_erase.connect([this](const MetadataPtr &val) {
-      --p_has_child;
+    --p_has_child;
     saved(true);
   });
 
   child_item.sig_begin_push_back.connect([this](const MetadataPtr &val) {
     add_child(val);
-      ++p_has_child;
+    ++p_has_child;
     saved(true);
   });
 
@@ -244,27 +244,31 @@ void Metadata::to_DataDb(DataDb &in_) const {
 }
 MetadataPtr Metadata::from_DataDb(const DataDb &in_) {
   MetadataPtr k_ptr{};
+  try {
+    auto k_data = in_.metadata_cereal().value();
+    vector_container my_data{k_data.begin(), k_data.end()};
+    {
+      vector_istream k_i{my_data};
+      boost::archive::text_iarchive k_archive{k_i};
+      k_archive >> k_ptr;
+    }
 
-  auto k_data = in_.metadata_cereal().value();
-  vector_container my_data{k_data.begin(), k_data.end()};
-  {
-    vector_istream k_i{my_data};
-    boost::archive::text_iarchive k_archive{k_i};
-    k_archive >> k_ptr;
+    if (k_ptr->p_id != in_.id())
+      throw DoodleError{fmt::format("验证出错 id 不相同 {} == {}", k_ptr->p_id, in_.id())};
+
+    if (in_.parent().value() != 0) {  ///  不为零的情况下, 比较验证值, 不相同就返回空指针
+      if (k_ptr->p_parent_id != in_.parent().value())
+        throw DoodleError{fmt::format("验证出错, 父id不相同 {} == {}", k_ptr->p_parent_id.value(), in_.parent().value())};
+    } else {
+      if (k_ptr->p_parent_id)  /// 是零就是默认值, 没有值, 如果父id有值就直接返回空
+        throw DoodleError{fmt::format("验证出错, 没有父id, 但是传入父id {} ", in_.parent().value())};
+    }
+
+    k_ptr->set_meta_type(magic_enum::enum_integer(in_.m_type().value()));
+  } catch (boost::archive::archive_exception &err) {
+    DOODLE_LOG_WARN(err.what());
   }
 
-  if (k_ptr->p_id != in_.id())
-    throw DoodleError{fmt::format("验证出错 id 不相同 {} == {}", k_ptr->p_id, in_.id())};
-
-  if (in_.parent().value() != 0) {  ///  不为零的情况下, 比较验证值, 不相同就返回空指针
-    if (k_ptr->p_parent_id != in_.parent().value())
-      throw DoodleError{fmt::format("验证出错, 父id不相同 {} == {}", k_ptr->p_parent_id.value(), in_.parent().value())};
-  } else {
-    if (k_ptr->p_parent_id)  /// 是零就是默认值, 没有值, 如果父id有值就直接返回空
-      throw DoodleError{fmt::format("验证出错, 没有父id, 但是传入父id {} ", in_.parent().value())};
-  }
-
-  k_ptr->set_meta_type(magic_enum::enum_integer(in_.m_type().value()));
   return k_ptr;
 }
 std::uint64_t Metadata::get_parent_id() const {

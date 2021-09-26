@@ -7,6 +7,8 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/action/command.h>
 
+#include <boost/hana.hpp>
+#include <boost/hana/tuple.hpp>
 namespace doodle {
 class DOODLELIB_API comm_project_add : public command_meta {
  private:
@@ -30,7 +32,8 @@ class DOODLELIB_API comm_ass_eps : public command_meta {
   bool_ptr use_batch;
   std::int32_t p_end;
 
-  void add_eps(std::int32_t in_begin,std::int32_t in_end);
+  void add_eps(std::int32_t in_begin, std::int32_t in_end);
+
  public:
   comm_ass_eps();
   bool render() override;
@@ -88,6 +91,17 @@ class DOODLELIB_API comm_ass_file : public command_meta {
 
  public:
   comm_ass_file();
+  bool render() override;
+  bool add_data(const MetadataPtr& in_parent, const MetadataPtr& in) override;
+};
+class DOODLELIB_API comm_ass : public command_meta {
+  boost::hana::tuple<comm_ass_eps,
+                     comm_ass_shot,
+                     comm_assets,
+                     comm_ass_season>      p_val;
+
+ public:
+  comm_ass();
   bool render() override;
   bool add_data(const MetadataPtr& in_parent, const MetadataPtr& in) override;
 };

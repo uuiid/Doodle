@@ -282,9 +282,6 @@ using base_widget_ptr = std::shared_ptr<base_widget>;
 template <class... Args>
 class command_base;
 
-using command_tool     = command_base<>;
-using command_tool_ptr = std::shared_ptr<command_tool>;
-
 class ue4_project_async;
 
 /**
@@ -488,6 +485,8 @@ using bool_ptr                     = std::shared_ptr<bool>;
 using string                       = std::string;
 using string_ptr                   = std::shared_ptr<string>;
 
+using command_tool                 = command_base<>;
+using command_tool_ptr             = std::shared_ptr<command_tool>;
 using command_meta                 = command_base<const MetadataPtr &, const MetadataPtr &>;
 using command_meta_ptr             = std::shared_ptr<command_meta>;
 namespace rpc_trans {
@@ -505,7 +504,7 @@ class Doodle;
 }  // namespace doodle
 
 namespace boost::serialization {
-//class _Rep, class _Period
+// class _Rep, class _Period
 template <class Archive, class Clock, class Duration>
 inline void serialize(Archive &ar, doodle::chrono::time_point<Clock, Duration> &t, const unsigned int file_version) {
   split_free(ar, t, file_version);
@@ -523,21 +522,20 @@ inline void load(Archive &ar, doodle::chrono::time_point<Clock, Duration> &time,
 }
 
 template <class Archive, class Rep, class Period>
-inline void serialize(Archive &ar, doodle::chrono::duration<Rep,Period> &t, const unsigned int file_version) {
+inline void serialize(Archive &ar, doodle::chrono::duration<Rep, Period> &t, const unsigned int file_version) {
   split_free(ar, t, file_version);
 }
 
 template <class Archive, class Rep, class Period>
-inline void save(Archive &ar, const doodle::chrono::duration<Rep,Period> &dur, const std::uint32_t version) {
+inline void save(Archive &ar, const doodle::chrono::duration<Rep, Period> &dur, const std::uint32_t version) {
   auto count = dur.count();
   ar &boost::serialization::make_nvp("duration", count);
 }
 template <class Archive, class Rep, class Period>
-inline void load(Archive &ar, doodle::chrono::duration<Rep,Period> &dur, const std::uint32_t version) {
+inline void load(Archive &ar, doodle::chrono::duration<Rep, Period> &dur, const std::uint32_t version) {
   Rep count;
   ar &boost::serialization::make_nvp("duration", count);
-  dur = doodle::chrono::duration<Rep,Period>{count};
+  dur = doodle::chrono::duration<Rep, Period>{count};
 }
-
 
 }  // namespace boost::serialization
