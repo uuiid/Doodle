@@ -5,7 +5,7 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/core_set.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 
 #include <DoodleLib/libWarp/cache.hpp>
@@ -46,7 +46,7 @@ using file_mutex_ptr = std::shared_ptr<file_mutex>;
 class DOODLELIB_API RpcFileSystemServer
     : public FileSystemServer::Service,
       public details::no_copy {
-  CoreSet& p_set;
+  core_set& p_set;
   caches::fixed_sized_cache<std::string, rpc_filesystem::file_hash_ptr, caches::LRUCachePolicy<std::string>> p_cache;
   caches::fixed_sized_cache<std::string, rpc_filesystem::file_mutex_ptr, caches::LRUCachePolicy<std::string>> _mutex;
 

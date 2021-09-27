@@ -9,7 +9,7 @@
 #include <Exception/exception.h>
 #include <Metadata/metadata_cpp.h>
 #include <core/ContainerDevice.h>
-#include <core/CoreSet.h>
+#include <core/core_set.h>
 #include <google/protobuf/util/time_util.h>
 
 #include <boost/algorithm/algorithm.hpp>
@@ -26,7 +26,7 @@ metadata::metadata()
       std::enable_shared_from_this<metadata>(),
       p_parent(),
       p_parent_id(),
-      p_uuid(std::move(CoreSet::getSet().getUUIDStr())),
+      p_uuid(std::move(core_set::getSet().getUUIDStr())),
       p_updata_parent_id(false),
       p_has_child(0),
       p_has_file(0),
@@ -42,7 +42,7 @@ metadata::metadata(std::weak_ptr<metadata> in_metadata)
       std::enable_shared_from_this<metadata>(),
       p_parent(std::move(in_metadata)),
       p_parent_id(p_parent.lock()->p_id),
-      p_uuid(std::move(CoreSet::getSet().getUUIDStr())),
+      p_uuid(std::move(core_set::getSet().getUUIDStr())),
       p_updata_parent_id(false),
       p_has_child(0),
       p_has_file(0),

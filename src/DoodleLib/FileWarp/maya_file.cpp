@@ -1,7 +1,7 @@
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/FileWarp/maya_file.h>
-#include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/core/core_set.h>
 #include <DoodleLib/core/filesystem_extend.h>
 #include <DoodleLib/libWarp/boost_locale_warp.h>
 #include <DoodleLib/libWarp/std_warp.h>
@@ -22,14 +22,14 @@
 namespace doodle {
 maya_file::maya_file(FSys::path mayaPath)
     : p_path(std::move(mayaPath)) {
-  if (!FSys::exists(p_path) && CoreSet::getSet().hasMaya())
-    p_path = CoreSet::getSet().MayaPath();
+  if (!FSys::exists(p_path) && core_set::getSet().hasMaya())
+    p_path = core_set::getSet().MayaPath();
   else
     throw doodle_error{"无法找到maya启动器"};
 }
 
 void maya_file::write_maya_tool_file() {
-  const auto tmp_path = CoreSet::getSet().getCacheRoot(
+  const auto tmp_path = core_set::getSet().getCacheRoot(
       fmt::format("maya\\v{}{}{}",
                   Doodle_VERSION_MAJOR,
                   Doodle_VERSION_MINOR,

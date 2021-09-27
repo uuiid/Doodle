@@ -128,7 +128,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
   std::uniform_int_distribution<int> dist{1, 30};
 
   auto k_server = RpcServerHandle{};
-  auto& set     = CoreSet::getSet();
+  auto& set     = core_set::getSet();
   k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
 
   DoodleLib::Get().init_gui();
@@ -186,7 +186,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
                     auto k_u_i = dist(mt);
                     k_file->setTime(k_time);
                     k_file->setUser(user_list[k_u_i]);
-                    k_file->setDepartment(magic_enum::enum_cast<Department>(k_u_i % 8).value());
+                    k_file->setDepartment(magic_enum::enum_cast<department>(k_u_i % 8).value());
                     /// 插入数据
                     k_file->updata_db(k_fa);
                   }

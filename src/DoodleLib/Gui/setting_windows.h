@@ -5,11 +5,11 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/base_windwos.h>
-#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/core_set.h>
 
 namespace doodle {
 class DOODLELIB_API setting_windows : public base_widget {
-  decltype(magic_enum::enum_names<Department>()) p_dep_list;
+  decltype(magic_enum::enum_names<department>()) p_dep_list;
   std::int32_t p_cur_dep_index;
   std::shared_ptr<std::string> p_user;
   std::shared_ptr<std::string> p_cache;

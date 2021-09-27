@@ -4,7 +4,7 @@
 
 #include "RpcFileSystemServer.h"
 
-#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/core_set.h>
 #include <Logger/logger.h>
 #include <libWarp/protobuf_warp_cpp.h>
 
@@ -20,7 +20,7 @@ rpc_filesystem::file_mutex_ptr RpcFileSystemServer::get_mutex(const FSys::path& 
 
 RpcFileSystemServer::RpcFileSystemServer()
     : FileSystemServer::Service(),
-      p_set(CoreSet::getSet()),
+      p_set(core_set::getSet()),
       p_cache(
 #ifdef NDEBUG
           1024 * 1024 * 10
@@ -173,7 +173,7 @@ grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const F
     }
     //  std::istreambuf_iterator<char> k_iter{k_file};
 
-    auto s_size = CoreSet::getBlockSize();
+    auto s_size = core_set::getBlockSize();
     FileStream k_stream{};
 
     while (k_file) {

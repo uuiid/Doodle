@@ -6,7 +6,7 @@
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/Metadata/metadata_cpp.h>
-#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/core_set.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
 #include <core/DoodleLib.h>
 #include <grpcpp/grpcpp.h>

@@ -1,8 +1,8 @@
 
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/Metadata/project.h>
-#include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
+#include <DoodleLib/core/core_set.h>
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
 
@@ -13,7 +13,7 @@ CoreSql::CoreSql()
 }
 
 void CoreSql::Init() {
-  auto& set = CoreSet::getSet();
+  auto& set = core_set::getSet();
 
   config->port     = set.getSqlPort();
   config->host     = set.getSqlHost();

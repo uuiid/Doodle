@@ -4,23 +4,23 @@
 
 #include "setting_windows.h"
 
-#include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/core/core_set.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 
 #include <magic_enum.hpp>
 namespace doodle {
 
 setting_windows::setting_windows()
-    : p_dep_list(magic_enum::enum_names<Department>()),
-      p_cur_dep_index(magic_enum::enum_integer(CoreSet::getSet().getDepartmentEnum())),
-      p_user(new_object<std::string>(CoreSet::getSet().getUser())),
-      p_cache(new_object<std::string>(CoreSet::getSet().getCacheRoot().generic_string())),
-      p_doc(new_object<std::string>(CoreSet::getSet().getDoc().generic_string())),
-      p_maya_path(new_object<std::string>(CoreSet::getSet().MayaPath().generic_string())),
-      p_ue_path(new_object<std::string>(CoreSet::getSet().gettUe4Setting().Path().generic_string())),
-      p_ue_version(new_object<std::string>(CoreSet::getSet().gettUe4Setting().Version())),
-      p_batch_max(new_object<std::int32_t>(CoreSet::getSet().p_max_thread)) {
+    : p_dep_list(magic_enum::enum_names<department>()),
+      p_cur_dep_index(magic_enum::enum_integer(core_set::getSet().getDepartmentEnum())),
+      p_user(new_object<std::string>(core_set::getSet().getUser())),
+      p_cache(new_object<std::string>(core_set::getSet().getCacheRoot().generic_string())),
+      p_doc(new_object<std::string>(core_set::getSet().getDoc().generic_string())),
+      p_maya_path(new_object<std::string>(core_set::getSet().MayaPath().generic_string())),
+      p_ue_path(new_object<std::string>(core_set::getSet().gettUe4Setting().Path().generic_string())),
+      p_ue_version(new_object<std::string>(core_set::getSet().gettUe4Setting().Version())),
+      p_batch_max(new_object<std::int32_t>(core_set::getSet().p_max_thread)) {
   p_class_name = "设置";
 }
 void setting_windows::frame_render() {
@@ -48,8 +48,8 @@ void setting_windows::frame_render() {
     save();
 }
 void setting_windows::save() {
-  auto& set = CoreSet::getSet();
-  set.setDepartment(magic_enum::enum_cast<Department>(p_cur_dep_index).value());
+  auto& set = core_set::getSet();
+  set.setDepartment(magic_enum::enum_cast<department>(p_cur_dep_index).value());
   set.setUser(*p_user);
   set.setMayaPath(*p_maya_path);
   set.set_max_tread(*p_batch_max);

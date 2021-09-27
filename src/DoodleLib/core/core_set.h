@@ -11,7 +11,7 @@
 #include <nlohmann/json_fwd.hpp>
 namespace doodle {
 
-enum class Department {
+enum class department {
   None_,
   Executive,
   Light,
@@ -27,9 +27,9 @@ enum class Department {
  *全局静态设置类
  */
 
-class DOODLELIB_API CoreSet : public details::no_copy {
+class DOODLELIB_API core_set : public details::no_copy {
  public:
-  static CoreSet &getSet();
+  static core_set &getSet();
 
   void findMaya();
 
@@ -48,9 +48,9 @@ class DOODLELIB_API CoreSet : public details::no_copy {
 
   //部门设置
   [[nodiscard]] std::string getDepartment() const;
-  [[nodiscard]] const Department &getDepartmentEnum() const;
+  [[nodiscard]] const department &getDepartmentEnum() const;
   void setDepartment(const std::string &value);
-  void setDepartment(const Department &value);
+  void setDepartment(const department &value);
 
   //缓存路径
   [[nodiscard]] FSys::path getCacheRoot() const;
@@ -112,7 +112,7 @@ class DOODLELIB_API CoreSet : public details::no_copy {
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
    *
    */
-  CoreSet();
+  core_set();
   //获得缓存磁盘路径
   void getCacheDiskPath();
   //获得本地的有限设置
@@ -126,7 +126,7 @@ class DOODLELIB_API CoreSet : public details::no_copy {
   //用户名称
   std::string p_user_;
   //部门
-  Department p_department_;
+  department p_department_;
 
   FSys::path p_cache_root;
   FSys::path p_doc;
@@ -152,7 +152,7 @@ class DOODLELIB_API CoreSet : public details::no_copy {
 };
 
 template <class Archive>
-void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
+void core_set::serialize(Archive &ar, std::uint32_t const version) {
   if (version == 7)
     ar &
             boost::serialization::make_nvp("user", p_user_) &
@@ -171,13 +171,13 @@ void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
 }  // namespace doodle
 namespace cereal {
 template <class Archive>
-std::string save_minimal(Archive const &, doodle::Department const &department) {
+std::string save_minimal(Archive const &, doodle::department const &department) {
   return std::string{magic_enum::enum_name(department)};
 }
 template <class Archive>
-void load_minimal(Archive const &, doodle::Department &department, std::string const &value) {
-  department = magic_enum::enum_cast<doodle::Department>(value).value_or(doodle::Department::None_);
+void load_minimal(Archive const &, doodle::department &department, std::string const &value) {
+  department = magic_enum::enum_cast<doodle::department>(value).value_or(doodle::department::None_);
 };
 }  // namespace cereal
-BOOST_CLASS_VERSION(doodle::CoreSet, 8);
-BOOST_CLASS_EXPORT_KEY(doodle::CoreSet);
+BOOST_CLASS_VERSION(doodle::core_set, 8);
+BOOST_CLASS_EXPORT_KEY(doodle::core_set);

@@ -5,7 +5,7 @@
 #include <DoodleLib/Metadata/assets_file.h>
 #include <DoodleLib/Metadata/assets_path.h>
 #include <DoodleLib/Metadata/comment.h>
-#include <core/CoreSet.h>
+#include <core/core_set.h>
 ///这个工厂类必须在所有导入的后面
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Metadata/metadata_factory.h>
@@ -25,8 +25,8 @@ assets_file::assets_file()
       p_path_file(),
       p_path_files(),
       p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
-      p_user(CoreSet::getSet().getUser()),
-      p_department(CoreSet::getSet().getDepartmentEnum()),
+      p_user(core_set::getSet().getUser()),
+      p_department(core_set::getSet().getDepartmentEnum()),
       p_comment(),
       p_version(1),
       p_need_time(false) {
@@ -40,8 +40,8 @@ assets_file::assets_file(std::weak_ptr<metadata> in_metadata, std::string showNa
       p_path_file(new_object<assets_path>()),
       p_path_files(),
       p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
-      p_user(CoreSet::getSet().getUser()),
-      p_department(CoreSet::getSet().getDepartmentEnum()),
+      p_user(core_set::getSet().getUser()),
+      p_department(core_set::getSet().getDepartmentEnum()),
       p_comment(),
       p_version(1),
       p_need_time(false) {
@@ -158,10 +158,10 @@ void assets_file::setPathFile(const std::vector<AssetsPathPtr>& in_pathFile) {
   p_path_files = in_pathFile;
   saved(true);
 }
-Department assets_file::getDepartment() const {
+department assets_file::getDepartment() const {
   return p_department;
 }
-void assets_file::setDepartment(Department in_department) {
+void assets_file::setDepartment(department in_department) {
   p_department = in_department;
   saved(true);
 }

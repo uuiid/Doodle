@@ -2,9 +2,9 @@
 #include <DoodleLib/FileWarp/ue4_project.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/shot.h>
-#include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/Ue4Setting.h>
+#include <DoodleLib/core/core_set.h>
 #include <DoodleLib/core/filesystem_extend.h>
 #include <DoodleLib/libWarp/std_warp.h>
 #include <DoodleLib/threadPool/long_term.h>
@@ -65,8 +65,8 @@ void ue4_project::run_cmd_scipt(const std::string& run_com) const {
 }
 
 void ue4_project::runPythonScript(const std::string& python_str) const {
-  auto tmp_name = boost::uuids::to_string(CoreSet::getSet().getUUID()) + ".py";
-  auto tmp_file = CoreSet::getSet().getCacheRoot() / tmp_name;
+  auto tmp_name = boost::uuids::to_string(core_set::getSet().getUUID()) + ".py";
+  auto tmp_file = core_set::getSet().getCacheRoot() / tmp_name;
 
   {  //写入文件
     FSys::ofstream k_ofile{tmp_file};
@@ -134,7 +134,7 @@ void ue4_project::create_shot_folder(const std::vector<ShotPtr>& inShotList,
     FSys::create_directories(k_createDir);
   }
 
-  auto& set = CoreSet::getSet();
+  auto& set = core_set::getSet();
   //创建集数文件夹
   auto k_episodes_path = k_createDir / inShotList[0]->getEpisodesPtr()->str();
   if (!FSys::exists(k_episodes_path))
@@ -142,13 +142,13 @@ void ue4_project::create_shot_folder(const std::vector<ShotPtr>& inShotList,
 
   auto k_dep = set.getDepartment();
   //创建特效专用文件夹
-  if (set.getDepartmentEnum() == Department::VFX) {
+  if (set.getDepartmentEnum() == department::VFX) {
     auto p_episodes_vfx_name = k_episodes_path / k_dep / set.getUser_en();
     if (!FSys::exists(p_episodes_vfx_name))
       FSys::create_directories(p_episodes_vfx_name);
   }
 
-  auto k_tmp_file_path = CoreSet::getSet().getCacheRoot("ue4_lev") / boost::uuids::to_string(CoreSet::getSet().getUUID()).append(".py");
+  auto k_tmp_file_path = core_set::getSet().getCacheRoot("ue4_lev") / boost::uuids::to_string(core_set::getSet().getUUID()).append(".py");
 
   {  //写入临时文件
     auto tmp_f = cmrc::DoodleLibResource::get_filesystem().open("resource/Ue4CraeteLevel.py");

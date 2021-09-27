@@ -246,7 +246,7 @@ DOODLELIB_API void backup_file(const path &source);
 DOODLELIB_API std::string file_hash_sha224(const path &in_file);
 }  // namespace FSys
 
-class CoreSet;
+class core_set;
 class project;
 class episodes;
 class shot;

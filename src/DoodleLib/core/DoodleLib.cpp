@@ -7,7 +7,7 @@
 #include <Exception/exception.h>
 #include <Logger/logger.h>
 #include <Metadata/metadata_factory.h>
-#include <core/CoreSet.h>
+#include <core/core_set.h>
 #include <date/tz.h>
 #include <grpcpp/grpcpp.h>
 #include <rpc/RpcFileSystemClient.h>
@@ -20,14 +20,14 @@ namespace doodle {
 DoodleLib* DoodleLib::p_install = nullptr;
 
 DoodleLib::DoodleLib()
-    : p_thread_pool(new_object<thread_pool>(CoreSet::getSet().p_max_thread)),
+    : p_thread_pool(new_object<thread_pool>(core_set::getSet().p_max_thread)),
       p_curr_project(),
       p_rpc_metadata_clien(),
       p_rpc_file_system_client(),
       p_metadata_factory(),
       long_task_list(),
       mutex() {
-  CoreSet::getSet();
+  core_set::getSet();
   logger::doodle_initLog();
 #ifdef _WIN32
   /// 在这里我们初始化date tz 时区数据库
@@ -38,7 +38,7 @@ DoodleLib::DoodleLib()
 }
 
 FSys::path DoodleLib::create_time_database() {
-  auto k_local_path = CoreSet::getSet().getCacheRoot("tzdata");
+  auto k_local_path = core_set::getSet().getCacheRoot("tzdata");
   if (FSys::is_empty(k_local_path)) {
     auto k_path = cmrc::DoodleLibResource::get_filesystem().iterate_directory("resource/tzdata");
     for (const auto& i : k_path) {
@@ -60,7 +60,7 @@ DoodleLib& DoodleLib::Get() {
 }
 
 void DoodleLib::set_thread_pool_size() {
-  p_thread_pool = new_object<thread_pool>(CoreSet::getSet().p_max_thread);
+  p_thread_pool = new_object<thread_pool>(core_set::getSet().p_max_thread);
 }
 ThreadPoolPtr DoodleLib::get_thread_pool() {
   return p_thread_pool;
@@ -77,7 +77,7 @@ DoodleLib::~DoodleLib() {
   logger::clear();
 }
 void DoodleLib::init_gui() {
-  auto k_ip = fmt::format("{}:{:d}", CoreSet::getSet().get_server_host(), CoreSet::getSet().getMetaRpcPort());
+  auto k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().getMetaRpcPort());
 
   DOODLE_LOG_DEBUG(k_ip)
 
@@ -85,7 +85,7 @@ void DoodleLib::init_gui() {
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 
-  k_ip = fmt::format("{}:{:d}", CoreSet::getSet().get_server_host(), CoreSet::getSet().getFileRpcPort());
+  k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().getFileRpcPort());
   DOODLE_LOG_DEBUG(k_ip)
   p_rpc_file_system_client = new_object<RpcFileSystemClient>(
       grpc::CreateChannel(k_ip,

@@ -5,7 +5,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Exception/exception.h>
-#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/core_set.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 
 #include <DoodleLib/libWarp/cache.hpp>
@@ -13,7 +13,7 @@
 
 namespace doodle {
 class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service, public details::no_copy {
-  CoreSet& p_set;
+  core_set& p_set;
 
   std::thread p_thread;
 

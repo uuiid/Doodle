@@ -5,8 +5,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/metadata.h>
-#include <DoodleLib/core/CoreSet.h>
-
+#include <DoodleLib/core/core_set.h>
 
 namespace doodle {
 /**
@@ -20,7 +19,7 @@ class DOODLELIB_API assets_file : public metadata {
   std::vector<AssetsPathPtr> p_path_files;
   TimeDurationPtr p_time;
   std::string p_user;
-  Department p_department;
+  department p_department;
   std::vector<CommentPtr> p_comment;
   std::uint64_t p_version;
 
@@ -58,8 +57,8 @@ class DOODLELIB_API assets_file : public metadata {
   const std::vector<AssetsPathPtr>& getPathFile() const;
   std::vector<AssetsPathPtr>& getPathFile();
   void setPathFile(const std::vector<AssetsPathPtr>& in_pathFile);
-  Department getDepartment() const;
-  void setDepartment(Department in_department);
+  department getDepartment() const;
+  void setDepartment(department in_department);
 
   [[nodiscard]] const std::vector<CommentPtr>& getComment() const;
   void setComment(const std::vector<CommentPtr>& in_comment);

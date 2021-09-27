@@ -1,7 +1,7 @@
 set(
     DOODLELIB_HEADER
     core/ContainerDevice.h
-    core/CoreSet.h
+        core/core_set.h
     core/CoreSql.h
     core/DoodleLib.h
     core/ToolsSetting.h
@@ -80,7 +80,7 @@ set(
     doodle_app.h)
 set(
     DOODLELIB_SOURCE
-    core/CoreSet.cpp
+        core/core_set.cpp
     core/CoreSql.cpp
     core/DoodleLib.cpp
     core/Ue4Setting.cpp

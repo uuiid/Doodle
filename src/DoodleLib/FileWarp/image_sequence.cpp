@@ -1,7 +1,7 @@
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/FileWarp/image_sequence.h>
-#include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/core/core_set.h>
 #include <DoodleLib/libWarp/std_warp.h>
 #include <DoodleLib/threadPool/thread_pool.h>
 #include <Logger/logger.h>
@@ -77,7 +77,7 @@ void image_sequence::setText(const std::string &text) {
 }
 
 std::string image_sequence::set_shot_and_eps(const ShotPtr &in_shot, const EpisodesPtr &in_episodes) {
-  auto k_str = CoreSet::getSet().getUser_en();  /// 基本水印, 名称
+  auto k_str = core_set::getSet().getUser_en();  /// 基本水印, 名称
   /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
   if (in_shot && in_episodes) {
     k_str += fmt::format(" : {}_{}", in_episodes->str(), in_shot->str());

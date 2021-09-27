@@ -7,8 +7,8 @@
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/Metadata/assets_file.h>
 #include <DoodleLib/Metadata/metadata.h>
-#include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/core/core_set.h>
 #include <Logger/logger.h>
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path)
 namespace doodle {
@@ -53,7 +53,7 @@ void assets_path::setPath(const FSys::path &in_path, const MetadataConstPtr &in_
     k_m    = k_m->getParent();
     k_path = FSys::path{k_m->str()} / k_path;
   }
-  k_path /= CoreSet::getSet().getDepartment();
+  k_path /= core_set::getSet().getDepartment();
   k_path /= in_path.filename();
   setPath(in_path, k_path);
 }
@@ -76,7 +76,7 @@ std::string assets_path::str() const {
                      p_server_path);
 }
 FSys::path assets_path::get_cache_path() const {
-  auto k_path = CoreSet::getSet().getCacheRoot();
+  auto k_path = core_set::getSet().getCacheRoot();
   k_path /= p_lexically_relative;
   return k_path;
 }

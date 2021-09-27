@@ -16,7 +16,7 @@ void load_setting(const doodle::FSys::path& path) {
   FSys::ifstream k_file{path, std::ios::in};
   if(k_file){
     auto p_info = nlohmann::json::parse(k_file);
-    CoreSet::getSet().from_json(p_info);
+    core_set::getSet().from_json(p_info);
   }
 };
 
@@ -43,7 +43,7 @@ try {
     DOODLE_LOG_INFO("读取和加载配置文件", argv[1])
     load_setting(argv[1]);
   }
-  auto& set                = doodle::CoreSet::getSet();
+  auto& set                = doodle::core_set::getSet();
   auto p_rpc_server_handle = std::make_shared<doodle::RpcServerHandle>();
   p_rpc_server_handle->runServerWait(set.getMetaRpcPort(), set.getFileRpcPort());
 
@@ -52,9 +52,9 @@ try {
 } catch (const std::exception& err) {
   std::cout << err.what() << std::endl;
   DOODLE_LOG_ERROR(err.what());
-  doodle::CoreSet::getSet().writeDoodleLocalSet();
+  doodle::core_set::getSet().writeDoodleLocalSet();
   return 1;
 } catch (...) {
-  doodle::CoreSet::getSet().writeDoodleLocalSet();
+  doodle::core_set::getSet().writeDoodleLocalSet();
   return 1;
 }

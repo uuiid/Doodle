@@ -8,7 +8,7 @@
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/project.h>
 #include <DoodleLib/Metadata/shot.h>
-#include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/core_set.h>
 #include <DoodleLib/toolkit/toolkit.h>
 
 #include <boost/algorithm/string.hpp>
@@ -23,12 +23,12 @@
 namespace doodle {
 
 void toolkit::installMayaPath() {
-  auto mayadoc = CoreSet::getSet().getDoc().parent_path();
+  auto mayadoc = core_set::getSet().getDoc().parent_path();
   mayadoc /= "maya";
   mayadoc /= "modules";
   mayadoc /= "doodle";
 
-  auto sourePath = CoreSet::program_location().parent_path();
+  auto sourePath = core_set::program_location().parent_path();
   sourePath /= "plug/maya";
 
   if (!FSys::exists(mayadoc)) {
@@ -61,7 +61,7 @@ PYTHONPATH+:= scripts
 }
 
 void toolkit::installUePath(const FSys::path &path) {
-  auto &set = CoreSet::getSet();
+  auto &set = core_set::getSet();
 
   auto sourePath  = FSys::current_path().parent_path();
   sourePath       = sourePath / "plug" / "uePlug";
@@ -84,7 +84,7 @@ bool toolkit::update() {
 }
 
 void toolkit::modifyUeCachePath() {
-  auto ue_path = CoreSet::getSet().gettUe4Setting().Path() / "Engine/Config/BaseEngine.ini";
+  auto ue_path = core_set::getSet().gettUe4Setting().Path() / "Engine/Config/BaseEngine.ini";
   //做备份
   auto backup_path = FSys::path{ue_path}.replace_extension(".ini.backup");
   FSys::copy(ue_path, FSys::add_time_stamp(backup_path), FSys::copy_options::update_existing);

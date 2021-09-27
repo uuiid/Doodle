@@ -74,8 +74,8 @@ void RpcServerHandle::runServerWait(int port_meta, int port_file_sys) {
   runServer(port_meta, port_file_sys);
   auto k_ = [](int) {
     DOODLE_LOG_WARN("std  收到退出信号， 开始退出 ");
-    CoreSet::getSet().p_stop = true;
-    CoreSet::getSet().p_condition.notify_all();
+    core_set::getSet().p_stop = true;
+    core_set::getSet().p_condition.notify_all();
   };
   std::signal(SIGABRT, k_);
 #if defined( _WIN32) and defined( _MSC_VER )
@@ -88,7 +88,7 @@ void RpcServerHandle::runServerWait(int port_meta, int port_file_sys) {
   std::signal(SIGSEGV, k_);
   std::signal(SIGTERM, k_);
 
-  auto& set = CoreSet::getSet();
+  auto& set = core_set::getSet();
   std::unique_lock k_lock{set.p_mutex};
   set.p_condition.wait(
       k_lock,

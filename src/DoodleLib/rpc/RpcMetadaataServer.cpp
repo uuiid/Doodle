@@ -44,7 +44,7 @@ void RpcMetadaataServer::put_cache_and_file(const FSys::path &key, const std::st
 }
 
 RpcMetadaataServer::RpcMetadaataServer()
-    : p_set(CoreSet::getSet()),
+    : p_set(core_set::getSet()),
       p_thread(),
       p_cache(
 #ifdef NDEBUG

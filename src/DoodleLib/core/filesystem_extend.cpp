@@ -1,4 +1,4 @@
-#include <core/CoreSet.h>
+#include <core/core_set.h>
 #include <core/filesystem_extend.h>
 
 namespace doodle {
@@ -17,13 +17,13 @@ std::tuple<std::uint64_t, std::uint64_t> find_path_frame(const path& in_path) {
 FSys::path write_tmp_file(const std::string& in_falg,
                           const std::string& in_string,
                           const std::string& in_extension) {
-  auto tmp_path = CoreSet::getSet().getCacheRoot(
+  auto tmp_path = core_set::getSet().getCacheRoot(
       fmt::format("{}/v{}{}{}",
                   in_falg,
                   Doodle_VERSION_MAJOR,
                   Doodle_VERSION_MINOR,
                   Doodle_VERSION_PATCH));
-  auto k_tmp_path = tmp_path / (boost::uuids::to_string(CoreSet::getSet().getUUID()) + in_extension);
+  auto k_tmp_path = tmp_path / (boost::uuids::to_string(core_set::getSet().getUUID()) + in_extension);
   {  //写入文件后直接关闭
     FSys::fstream file{k_tmp_path, std::ios::out};
     file << in_string;
