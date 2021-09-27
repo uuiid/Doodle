@@ -1,8 +1,8 @@
 #include "rpc_server_handle.h"
 
 #include <DoodleLib/Logger/logger.h>
-#include <DoodleLib/rpc/RpcFileSystemServer.h>
-#include <DoodleLib/rpc/RpcMetadaataServer.h>
+#include <DoodleLib/rpc/rpc_file_system_server.h>
+#include <DoodleLib/rpc/rpc_metadaata_server.h>
 
 #include <csignal>
 
@@ -20,7 +20,7 @@ rpc_server_handle::rpc_server_handle()
 }
 
 void rpc_server_handle::register_file_system_server(int port) {
-  p_rpc_file_system_server = new_object<RpcFileSystemServer>();
+  p_rpc_file_system_server = new_object<rpc_file_system_server>();
   std::string server_address{"[::]:"};
   server_address += std::to_string(port);
 
@@ -31,7 +31,7 @@ void rpc_server_handle::register_file_system_server(int port) {
 }
 
 void rpc_server_handle::register_metadata_server(int port) {
-  p_rpc_metadata_server = new_object<RpcMetadaataServer>();
+  p_rpc_metadata_server = new_object<rpc_metadaata_server>();
   std::string server_address{"[::]:"};
   server_address += std::to_string(port);
 

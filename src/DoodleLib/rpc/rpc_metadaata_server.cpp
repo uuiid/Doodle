@@ -2,7 +2,7 @@
 // Created by TD on 2021/5/25.
 //
 
-#include "RpcMetadaataServer.h"
+#include "rpc_metadaata_server.h"
 
 #include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/Metadata/metadata_cpp.h>
@@ -15,7 +15,7 @@
 
 namespace doodle {
 
-std::string RpcMetadaataServer::get_cache_and_file(const FSys::path &key) {
+std::string rpc_metadaata_server::get_cache_and_file(const FSys::path &key) {
   auto k_key = key.generic_string();
 
   if (p_cache.Cached(k_key)) {
@@ -35,7 +35,7 @@ std::string RpcMetadaataServer::get_cache_and_file(const FSys::path &key) {
   }
 }
 
-void RpcMetadaataServer::put_cache_and_file(const FSys::path &key, const std::string &value) {
+void rpc_metadaata_server::put_cache_and_file(const FSys::path &key, const std::string &value) {
   if (!FSys::exists(key.parent_path()))
     FSys::create_directories(key.parent_path());
    FSys::ofstream k_ofstream{key, std::ios::out | std::ios::binary};
@@ -43,7 +43,7 @@ void RpcMetadaataServer::put_cache_and_file(const FSys::path &key, const std::st
   p_cache.Put(key.generic_string(), value);
 }
 
-RpcMetadaataServer::RpcMetadaataServer()
+rpc_metadaata_server::rpc_metadaata_server()
     : p_set(core_set::getSet()),
       p_thread(),
       p_cache(
@@ -60,7 +60,7 @@ RpcMetadaataServer::RpcMetadaataServer()
       }) {
 }
 
-grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+grpc::Status rpc_metadaata_server::InstallMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   auto k_conn = core_sql::Get().get_connection();
   Metadatatab k_tab{};
 
@@ -92,7 +92,7 @@ grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, c
 
   return grpc::Status::OK;
 }
-grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+grpc::Status rpc_metadaata_server::DeleteMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   auto k_conn = core_sql::Get().get_connection();
   Metadatatab k_tab{};
 
@@ -115,7 +115,7 @@ grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, co
   return grpc::Status::OK;
 }
 
-grpc::Status RpcMetadaataServer::UpdateMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+grpc::Status rpc_metadaata_server::UpdateMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
   auto k_conn = core_sql::Get().get_connection();
   Metadatatab k_tab{};
   auto k_sql = sqlpp::dynamic_update(*k_conn, k_tab).where(k_tab.id == request->id()).dynamic_set();
@@ -144,7 +144,7 @@ grpc::Status RpcMetadaataServer::UpdateMetadata(grpc::ServerContext *context, co
 
   return grpc::Status::OK;
 }
-grpc::Status RpcMetadaataServer::FilterMetadata(grpc::ServerContext *context,
+grpc::Status rpc_metadaata_server::FilterMetadata(grpc::ServerContext *context,
                                                 const DataDb_Filter *request, grpc::ServerWriter<DataDb> *writer) {
   auto k_conn = core_sql::Get().get_connection();
   Metadatatab k_tab{};
@@ -199,7 +199,7 @@ grpc::Status RpcMetadaataServer::FilterMetadata(grpc::ServerContext *context,
 
   return grpc::Status::OK;
 }
-grpc::Status RpcMetadaataServer::InstallUserDate(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
+grpc::Status rpc_metadaata_server::InstallUserDate(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
   auto k_conn = core_sql::Get().get_connection();
   Usertab k_tab{};
   auto k_sql =  sqlpp::insert_into(k_tab).set(
@@ -221,14 +221,14 @@ grpc::Status RpcMetadaataServer::InstallUserDate(::grpc::ServerContext *context,
   }
   return grpc::Status::OK;
 }
-grpc::Status RpcMetadaataServer::UpdateUserDate(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
+grpc::Status rpc_metadaata_server::UpdateUserDate(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
   if(!request->userdata_cereal().value().empty()){
     auto k_path = getPath(request->uuidpath());
     put_cache_and_file(k_path,request->userdata_cereal().value());
   }
   return grpc::Status::OK;
 }
-grpc::Status RpcMetadaataServer::DeleteUserDate(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::doodle::user_database *response) {
+grpc::Status rpc_metadaata_server::DeleteUserDate(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::doodle::user_database *response) {
   auto k_conn = core_sql::Get().get_connection();
   Usertab k_tab{};
 
@@ -248,7 +248,7 @@ grpc::Status RpcMetadaataServer::DeleteUserDate(::grpc::ServerContext *context, 
   }
   return grpc::Status::OK;
 }
-grpc::Status RpcMetadaataServer::FilterUserDate(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::grpc::ServerWriter< ::doodle::user_database> *writer) {
+grpc::Status rpc_metadaata_server::FilterUserDate(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::grpc::ServerWriter< ::doodle::user_database> *writer) {
   auto k_conn = core_sql::Get().get_connection();
   Usertab k_tab{};
 

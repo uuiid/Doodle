@@ -43,7 +43,7 @@ class DOODLELIB_API file_mutex {
 using file_mutex_ptr = std::shared_ptr<file_mutex>;
 }  // namespace rpc_filesystem
 
-class DOODLELIB_API RpcFileSystemServer
+class DOODLELIB_API rpc_file_system_server
     : public FileSystemServer::Service,
       public details::no_copy {
   core_set& p_set;
@@ -53,7 +53,7 @@ class DOODLELIB_API RpcFileSystemServer
   rpc_filesystem::file_mutex_ptr get_mutex(const FSys::path& in_path);
 
  public:
-  explicit RpcFileSystemServer();
+  explicit rpc_file_system_server();
 
   grpc::Status GetInfo(grpc::ServerContext* context,
                        const FileInfo* request,

@@ -63,8 +63,8 @@ set(
     Metadata/user.h
     PinYin/convert.h
         rpc/rpc_file_system_client.h
-    rpc/RpcFileSystemServer.h
-    rpc/RpcMetadaataServer.h
+        rpc/rpc_file_system_server.h
+        rpc/rpc_metadaata_server.h
         rpc/rpc_metadata_client.h
         rpc/rpc_server_handle.h
     rpc/rpc_trans_path.h
@@ -123,8 +123,8 @@ set(
     Metadata/user.cpp
     PinYin/convert.cpp
         rpc/rpc_file_system_client.cpp
-    rpc/RpcFileSystemServer.cpp
-    rpc/RpcMetadaataServer.cpp
+        rpc/rpc_file_system_server.cpp
+        rpc/rpc_metadaata_server.cpp
         rpc/rpc_metadata_client.cpp
         rpc/rpc_server_handle.cpp
     rpc/rpc_trans_path.cpp

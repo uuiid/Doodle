@@ -12,7 +12,7 @@
 #include <DoodleLib/libWarp/lru_cache_policy.hpp>
 
 namespace doodle {
-class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service, public details::no_copy {
+class DOODLELIB_API rpc_metadaata_server final : public MetadataServer::Service, public details::no_copy {
   core_set& p_set;
 
   std::thread p_thread;
@@ -37,7 +37,7 @@ class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service, p
 
   //  [[nodiscard]] FSys::path getPath(uint64_t id,const std::string& in_string)const;
  public:
-  RpcMetadaataServer();
+  rpc_metadaata_server();
 
   grpc::Status InstallMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
   grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
