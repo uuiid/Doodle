@@ -131,7 +131,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
                                  auto info_str = fmt::format("检测到maya结束崩溃,结束进程: 解算命令是 {}", conv::utf_to_utf<char>(in_com));
                                  DOODLE_LOG_WARN(info_str);
                                  in_term->sig_message_result(info_str, long_term::warning);
-                                 boost::process::system(fmt::format("taskkill /F /T /PID {}", k_c.id()));
+                                 k_c.terminate();
                                  in_term->set_state(long_term::fail);
                                }
                                in_term->sig_progress(rational_int{1, 5000});
@@ -143,7 +143,6 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
   }
   p_run = false;
   k_in2.close();
-  // fun2.get();
   return true;
 }
 
