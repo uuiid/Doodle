@@ -251,7 +251,7 @@ class Project;
 class episodes;
 class Shot;
 class metadata;
-class Assets;
+class assets;
 class CoreSql;
 class LabelNode;
 class AssetsFile;
@@ -401,7 +401,7 @@ using ShotPtr                      = std::shared_ptr<Shot>;
  * @brief Assets 智能共享指针
  *
  */
-using AssetsPtr                    = std::shared_ptr<Assets>;
+using AssetsPtr                    = std::shared_ptr<assets>;
 /**
  * @brief AssetsFile 智能共享指针
  *

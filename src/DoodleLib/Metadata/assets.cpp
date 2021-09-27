@@ -3,20 +3,20 @@
 //
 
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
-#include <DoodleLib/Metadata/Assets.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/assets.h>
 #include <DoodleLib/PinYin/convert.h>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Assets)
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets)
 namespace doodle {
-Assets::Assets()
+assets::assets()
     : metadata(),
       p_name(),
       p_name_enus() {
   p_type = meta_type::folder;
 }
 
-Assets::Assets(std::weak_ptr<metadata> in_metadata, std::string in_name)
+assets::assets(std::weak_ptr<metadata> in_metadata, std::string in_name)
     : metadata(std::move(in_metadata)),
       p_name(std::move(in_name)),
       p_name_enus(convert::Get().toEn(p_name)) {
@@ -28,46 +28,46 @@ Assets::Assets(std::weak_ptr<metadata> in_metadata, std::string in_name)
 //     updata_db(p_metadata_flctory_ptr_);
 // }
 
-std::string Assets::str() const {
+std::string assets::str() const {
   if (p_name_enus.empty())
     return convert::Get().toEn(p_name);
   return p_name_enus;
 }
-std::string Assets::showStr() const {
+std::string assets::showStr() const {
   return p_name;
 }
 
-bool Assets::operator<(const Assets& in_rhs) const {
+bool assets::operator<(const assets& in_rhs) const {
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name);
   return std::tie(p_name) < std::tie(in_rhs.p_name);
 }
-bool Assets::operator>(const Assets& in_rhs) const {
+bool assets::operator>(const assets& in_rhs) const {
   return in_rhs < *this;
 }
-bool Assets::operator<=(const Assets& in_rhs) const {
+bool assets::operator<=(const assets& in_rhs) const {
   return !(in_rhs < *this);
 }
-bool Assets::operator>=(const Assets& in_rhs) const {
+bool assets::operator>=(const assets& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-const std::string& Assets::getName1() const {
+const std::string& assets::getName1() const {
   return p_name;
 }
-void Assets::setName1(const std::string& in_name) {
+void assets::setName1(const std::string& in_name) {
   p_name = in_name;
   if (p_name_enus.empty())
     p_name_enus = convert::Get().toEn(p_name);
   saved(true);
 }
-const std::string& Assets::getNameEnus() const {
+const std::string& assets::getNameEnus() const {
   return p_name_enus;
 }
-void Assets::setNameEnus(const std::string& in_nameEnus) {
+void assets::setNameEnus(const std::string& in_nameEnus) {
   p_name_enus = in_nameEnus;
   saved(true);
 }
-void Assets::create_menu(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<Assets>(shared_from_this()));
+void assets::create_menu(const attribute_factory_ptr& in_factoryPtr) {
+  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<assets>(shared_from_this()));
 }
 }  // namespace doodle

@@ -48,7 +48,7 @@ set(
     libWarp/std_warp.h
     Logger/Logger.h
     Logger/LoggerTemplate.h
-    Metadata/Assets.h
+        Metadata/assets.h
     Metadata/AssetsFile.h
         Metadata/assets_path.h
         Metadata/comment.h
@@ -109,7 +109,7 @@ set(
     libWarp/boost_serialization_warp.cpp
     libWarp/imgui_warp.cpp
     Logger/Logger.cpp
-    Metadata/Assets.cpp
+        Metadata/assets.cpp
     Metadata/AssetsFile.cpp
         Metadata/assets_path.cpp
         Metadata/comment.cpp

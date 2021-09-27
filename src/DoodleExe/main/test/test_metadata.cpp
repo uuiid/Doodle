@@ -167,7 +167,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
             if (k_j % 3 == 0) {
               /// 生成人名
               for (int k_k = 0; k_k < 10; ++k_k) {
-                k_assets_ptr = std::make_shared<Assets>(k_shot_ptr, fmt::format("tset_{}", k_k));
+                k_assets_ptr = std::make_shared<assets>(k_shot_ptr, fmt::format("tset_{}", k_k));
                 k_shot_ptr->child_item.push_back_sig(k_assets_ptr);
                 k_assets_ptr->updata_db(k_fa);
 

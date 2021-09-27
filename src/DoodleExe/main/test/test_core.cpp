@@ -110,9 +110,9 @@ TEST_CASE("core create_path", "[fun][create_path]") {
   using namespace doodle;
 
   auto k_1 = std::make_shared<Project>("D:/", "ttt");
-  auto k_2 = std::make_shared<Assets>(k_1, "ttt");
+  auto k_2 = std::make_shared<assets>(k_1, "ttt");
   k_1->child_item.push_back_sig(k_2);
-  auto k_3 = std::make_shared<Assets>(k_2, "eee");
+  auto k_3 = std::make_shared<assets>(k_2, "eee");
   k_2->child_item.push_back_sig(k_3);
   auto path = assets_path("D:/file/ex2.ma", k_3);
   SECTION("dir ") {

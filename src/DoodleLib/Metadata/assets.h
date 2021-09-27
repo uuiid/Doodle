@@ -8,13 +8,13 @@
 #include <DoodleLib/Metadata/metadata.h>
 
 namespace doodle {
-class DOODLELIB_API Assets : public metadata {
+class DOODLELIB_API assets : public metadata {
   std::string p_name;
   std::string p_name_enus;
 
  public:
-  Assets();
-  explicit Assets(std::weak_ptr<metadata> in_metadata, std::string in_name);
+  assets();
+  explicit assets(std::weak_ptr<metadata> in_metadata, std::string in_name);
   // ~Assets();
 
   [[nodiscard]] std::string str() const override;
@@ -25,10 +25,10 @@ class DOODLELIB_API Assets : public metadata {
   const std::string& getNameEnus() const;
   void setNameEnus(const std::string& in_nameEnus);
 
-  bool operator<(const Assets& in_rhs) const;
-  bool operator>(const Assets& in_rhs) const;
-  bool operator<=(const Assets& in_rhs) const;
-  bool operator>=(const Assets& in_rhs) const;
+  bool operator<(const assets& in_rhs) const;
+  bool operator>(const assets& in_rhs) const;
+  bool operator<=(const assets& in_rhs) const;
+  bool operator>=(const assets& in_rhs) const;
   void create_menu(const attribute_factory_ptr& in_factoryPtr) override;
 
  private:
@@ -38,7 +38,7 @@ class DOODLELIB_API Assets : public metadata {
 };
 
 template <class Archive>
-void Assets::serialize(Archive& ar, const std::uint32_t version) {
+void assets::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 1)
     ar&
             boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
@@ -51,5 +51,5 @@ void Assets::serialize(Archive& ar, const std::uint32_t version) {
 }
 }  // namespace doodle
 
-BOOST_CLASS_VERSION(doodle::Assets, 2)
-BOOST_CLASS_EXPORT_KEY(doodle::Assets)
+BOOST_CLASS_VERSION(doodle::assets, 2)
+BOOST_CLASS_EXPORT_KEY(doodle::assets)

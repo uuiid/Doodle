@@ -219,7 +219,7 @@ bool comm_ass_shot::add_data(const MetadataPtr& in_parent, const MetadataPtr& in
 
 void comm_assets::add_ass(std::vector<string> in_Str) {
   for (auto& i : in_Str) {
-    auto k_ass = new_object<Assets>();
+    auto k_ass = new_object<assets>();
     k_ass->setName1(i);
     p_parent->child_item.push_back_sig(k_ass);
   }
@@ -262,7 +262,7 @@ bool comm_assets::render() {
 
 bool comm_assets::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
   p_parent = in_parent;
-  p_root   = std::dynamic_pointer_cast<Assets>(in);
+  p_root   = std::dynamic_pointer_cast<assets>(in);
   if (p_root) {
     p_data = p_root->getName1();
   }

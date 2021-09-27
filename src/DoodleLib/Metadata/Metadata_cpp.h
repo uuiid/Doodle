@@ -3,7 +3,7 @@
 // clang-format off
 #include <DoodleLib/Metadata/metadata.h>
 
-#include <DoodleLib/Metadata/Assets.h>
+#include <DoodleLib/Metadata/assets.h>
 
 #include <DoodleLib/Metadata/AssetsFile.h>
 #include <DoodleLib/Metadata/comment.h>
