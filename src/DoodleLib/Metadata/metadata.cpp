@@ -4,7 +4,7 @@
 
 #include "metadata.h"
 
-#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/Metadata/metadata_factory.h>
 #include <Exception/Exception.h>
 #include <Metadata/metadata_cpp.h>

@@ -4,7 +4,7 @@
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/libWarp/std_warp.h>
 #include <DoodleLib/threadPool/thread_pool.h>
-#include <Logger/Logger.h>
+#include <Logger/logger.h>
 #include <Metadata/episodes.h>
 #include <Metadata/shot.h>
 #include <PinYin/convert.h>

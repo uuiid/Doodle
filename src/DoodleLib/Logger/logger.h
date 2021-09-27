@@ -27,7 +27,7 @@
 #define DOODLE_LOG_ERROR(...) \
   SPDLOG_ERROR(__VA_ARGS__);
 
-namespace doodle::Logger {
+namespace doodle::logger {
 
 void DOODLELIB_API doodle_initLog(const std::string &logPath = "doodle",
                                   std::size_t logMaxSize = 16 * 1024 * 1024, bool async = true);

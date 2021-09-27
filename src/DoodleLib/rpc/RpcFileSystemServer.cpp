@@ -5,7 +5,7 @@
 #include "RpcFileSystemServer.h"
 
 #include <DoodleLib/core/CoreSet.h>
-#include <Logger/Logger.h>
+#include <Logger/logger.h>
 #include <libWarp/protobuf_warp_cpp.h>
 
 namespace doodle {

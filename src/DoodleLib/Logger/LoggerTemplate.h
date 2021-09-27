@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <string>
-namespace doodle::Logger {
+namespace doodle::logger {
 const static std::string logTemplate =
     R"logTemplate(<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "https://github.com/">

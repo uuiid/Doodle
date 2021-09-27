@@ -4,9 +4,9 @@
 
 namespace doodle {
 
-class ScreenshotAction {
+class screenshot_action {
  public:
-  ScreenshotAction();
+  screenshot_action();
 
   void screenShot(const FSys::path &save_path);
 

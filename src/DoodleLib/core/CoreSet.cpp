@@ -1,5 +1,5 @@
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>

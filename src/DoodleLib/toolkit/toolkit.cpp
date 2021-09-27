@@ -4,7 +4,7 @@
 #include <DoodleLib/FileWarp/MayaFile.h>
 #include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/FileWarp/VideoSequence.h>
-#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/project.h>
 #include <DoodleLib/Metadata/shot.h>

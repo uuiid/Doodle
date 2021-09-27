@@ -9,7 +9,7 @@
 #include <DoodleLib/Metadata/metadata.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
-#include <Logger/Logger.h>
+#include <Logger/logger.h>
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path)
 namespace doodle {
 assets_path::assets_path()

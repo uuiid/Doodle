@@ -24,8 +24,8 @@
 #include <DoodleLib/Gui/widgets/edit_widgets.h>
 #include <DoodleLib/Gui/widgets/long_time_tasks_widget.h>
 #include <DoodleLib/Gui/widgets/project_widget.h>
-#include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Logger/LoggerTemplate.h>
+#include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/Metadata/assets.h>
 #include <DoodleLib/Metadata/assets_file.h>
 #include <DoodleLib/Metadata/assets_path.h>
@@ -40,8 +40,8 @@
 #include <DoodleLib/Metadata/time_point_wrap.h>
 #include <DoodleLib/Metadata/user.h>
 #include <DoodleLib/PinYin/convert.h>
-#include <DoodleLib/ScreenshotWidght/ScreenshotAction.h>
-#include <DoodleLib/ScreenshotWidght/ScreenshotWidght.h>
+#include <DoodleLib/ScreenshotWidght/screenshot_action.h>
+#include <DoodleLib/ScreenshotWidght/screenshot_widght.h>
 #include <DoodleLib/core/ContainerDevice.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>

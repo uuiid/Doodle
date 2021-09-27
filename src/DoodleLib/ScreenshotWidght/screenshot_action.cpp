@@ -1,5 +1,5 @@
-#include <ScreenshotWidght/ScreenshotAction.h>
 #include <Exception/Exception.h>
+#include <ScreenshotWidght/screenshot_action.h>
 
 #include <boost/filesystem.hpp>
 

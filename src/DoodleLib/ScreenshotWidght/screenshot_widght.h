@@ -4,9 +4,9 @@
 
 namespace doodle {
 
-class ScreenshotWidght {
+class screenshot_widght {
  public:
-  ScreenshotWidght();
+  screenshot_widght();
 
   virtual void createScreenshot();
   void showImage();

@@ -8,7 +8,7 @@
 // clang-format off
 #include <DoodleLib/Metadata/metadata_cpp.h>
 // clang-format on
-#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/core/ContainerDevice.h>
 //#include <consoleapi.h>
 //#include <consoleapi2.h>

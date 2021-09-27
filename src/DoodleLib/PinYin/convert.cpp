@@ -1,4 +1,4 @@
-#include <Logger/Logger.h>
+#include <Logger/logger.h>
 #include <PinYin/convert.h>
 
 #include <boost/locale.hpp>

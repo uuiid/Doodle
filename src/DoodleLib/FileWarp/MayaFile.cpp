@@ -7,7 +7,7 @@
 #include <DoodleLib/libWarp/std_warp.h>
 #include <DoodleLib/threadPool/long_term.h>
 #include <DoodleLib/threadPool/thread_pool.h>
-#include <Logger/Logger.h>
+#include <Logger/logger.h>
 
 #include <boost/locale.hpp>
 #include <boost/process.hpp>

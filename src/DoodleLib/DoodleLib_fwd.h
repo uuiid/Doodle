@@ -3,7 +3,7 @@
 #include <DoodleConfig.h>
 #include <DoodleLib/DoodleLib_pch.h>
 #include <DoodleLib/DoodleMacro.h>
-#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/libWarp/CerealWarp.h>
 #include <DoodleLib/libWarp/cmrcWarp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>

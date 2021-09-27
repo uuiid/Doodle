@@ -8,7 +8,7 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/threadPool/thread_pool.h>
-#include <Logger/Logger.h>
+#include <Logger/logger.h>
 #include <core/DoodleLib.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>

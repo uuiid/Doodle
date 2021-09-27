@@ -5,7 +5,7 @@
 #include "DoodleLib.h"
 
 #include <Exception/Exception.h>
-#include <Logger/Logger.h>
+#include <Logger/logger.h>
 #include <Metadata/metadata_factory.h>
 #include <core/CoreSet.h>
 #include <date/tz.h>
@@ -28,7 +28,7 @@ DoodleLib::DoodleLib()
       long_task_list(),
       mutex() {
   CoreSet::getSet();
-  Logger::doodle_initLog();
+  logger::doodle_initLog();
 #ifdef _WIN32
   /// 在这里我们初始化date tz 时区数据库
   auto k_path = create_time_database();
@@ -74,7 +74,7 @@ DoodleLib::~DoodleLib() {
   p_project_vector.clear();
   p_curr_project.reset();
 
-  Logger::clear();
+  logger::clear();
 }
 void DoodleLib::init_gui() {
   auto k_ip = fmt::format("{}:{:d}", CoreSet::getSet().get_server_host(), CoreSet::getSet().getMetaRpcPort());

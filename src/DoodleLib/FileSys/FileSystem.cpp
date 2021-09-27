@@ -1,6 +1,6 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/FileSys/FileSystem.h>
-#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Logger/logger.h>
 #include <date/date.h>
 
 #include <boost/asio.hpp>

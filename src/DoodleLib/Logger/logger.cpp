@@ -1,5 +1,5 @@
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <Logger/Logger.h>
+#include <Logger/logger.h>
 #include <core/CoreSet.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -13,7 +13,7 @@
 #endif
 
 #include <boost/locale.hpp>
-namespace doodle::Logger {
+namespace doodle::logger {
 
 template <class Mutex>
 class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {

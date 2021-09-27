@@ -1,8 +1,9 @@
 #include "RpcServerHandle.h"
 
-#include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/rpc/RpcFileSystemServer.h>
 #include <DoodleLib/rpc/RpcMetadaataServer.h>
+
 #include <csignal>
 
 namespace doodle {

@@ -46,7 +46,7 @@ set(
     libWarp/protobuf_warp_cpp.h
     libWarp/sqlppWarp.h
     libWarp/std_warp.h
-    Logger/Logger.h
+        Logger/logger.h
     Logger/LoggerTemplate.h
         Metadata/assets.h
         Metadata/assets_file.h
@@ -68,8 +68,8 @@ set(
     rpc/RpcMetadataClient.h
     rpc/RpcServerHandle.h
     rpc/rpc_trans_path.h
-    ScreenshotWidght/ScreenshotAction.h
-    ScreenshotWidght/ScreenshotWidght.h
+        ScreenshotWidght/screenshot_action.h
+        ScreenshotWidght/screenshot_widght.h
         threadPool/thread_pool.h
     threadPool/long_term.h
     toolkit/toolkit.h
@@ -108,7 +108,7 @@ set(
     Gui/widgets/project_widget.cpp
     libWarp/boost_serialization_warp.cpp
     libWarp/imgui_warp.cpp
-    Logger/Logger.cpp
+        Logger/logger.cpp
         Metadata/assets.cpp
         Metadata/assets_file.cpp
         Metadata/assets_path.cpp
@@ -128,8 +128,8 @@ set(
     rpc/RpcMetadataClient.cpp
     rpc/RpcServerHandle.cpp
     rpc/rpc_trans_path.cpp
-    ScreenshotWidght/ScreenshotAction.cpp
-    ScreenshotWidght/ScreenshotWidght.cpp
+        ScreenshotWidght/screenshot_action.cpp
+        ScreenshotWidght/screenshot_widght.cpp
     threadPool/long_term.cpp
     toolkit/toolkit.cpp
     DoodleLib.cpp
