@@ -1,7 +1,7 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/FileWarp/Ue4Project.h>
-#include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Metadata/episodes.h>
+#include <DoodleLib/Metadata/shot.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/Ue4Setting.h>
@@ -222,7 +222,7 @@ FSys::path Ue4Project::analysis_path_to_gamepath(const FSys::path& in_path) {
   // auto k_p = DoodleLib::Get().p_project_vector;
   if (auto k_ = episodes::analysis_static(in_path); k_)
     k_str << k_->str();
-  if (auto k_ = Shot::analysis_static(in_path); k_) {
+  if (auto k_ = shot::analysis_static(in_path); k_) {
     k_str << "_" << k_->str();
   }
 

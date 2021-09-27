@@ -158,7 +158,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
         if (k_i % 2 == 0) {
           /// 生成镜头
           for (int k_j = 0; k_j < 10; ++k_j) {
-            k_shot_ptr = std::make_shared<Shot>(k_eps, k_j);
+            k_shot_ptr = std::make_shared<shot>(k_eps, k_j);
             k_eps->child_item.push_back_sig(k_shot_ptr);
             k_shot_ptr->updata_db(k_fa);
 

@@ -5,8 +5,8 @@
 #include <DoodleLib/libWarp/std_warp.h>
 #include <DoodleLib/threadPool/ThreadPool.h>
 #include <Logger/Logger.h>
-#include <Metadata/Shot.h>
 #include <Metadata/episodes.h>
+#include <Metadata/shot.h>
 #include <PinYin/convert.h>
 #include <core/DoodleLib.h>
 

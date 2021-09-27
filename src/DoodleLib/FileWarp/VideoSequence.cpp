@@ -1,7 +1,7 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/FileWarp/VideoSequence.h>
-#include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Metadata/episodes.h>
+#include <DoodleLib/Metadata/shot.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/libWarp/std_warp.h>

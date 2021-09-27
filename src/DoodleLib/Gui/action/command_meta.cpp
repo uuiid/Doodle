@@ -143,7 +143,7 @@ bool comm_ass_eps::add_data(const MetadataPtr& in_parent, const MetadataPtr& in)
 
 void comm_ass_shot::add_shot(const std::vector<std::int32_t>& p_shots) {
   for (auto s : p_shots) {
-    auto k_s = new_object<Shot>();
+    auto k_s = new_object<shot>();
     k_s->setShot(s);
     p_parent->child_item.push_back_sig(k_s);
   }
@@ -180,9 +180,9 @@ bool comm_ass_shot::render() {
       imgui::SameLine();
       if (imgui::Button(p_show_str["修改"].c_str())) {
         p_root->setShot(p_data);
-        p_root->setShotAb(magic_enum::enum_cast<Shot::ShotAbEnum>(
+        p_root->setShotAb(magic_enum::enum_cast<shot::shot_ab_enum>(
                               p_shot_ab)
-                              .value_or(Shot::ShotAbEnum::None));
+                              .value_or(shot::shot_ab_enum::None));
         p_root->updata_db();
       }
       if (!p_root->hasChild()) {
@@ -193,7 +193,7 @@ bool comm_ass_shot::render() {
     }
     imgui::InputInt(p_show_str["镜头"].c_str(), &p_data, 1, 9999);
     dear::Combo{p_show_str["ab镜头"].c_str(), p_shot_ab.data()} && [this]() {
-      static auto shot_enum{magic_enum::enum_names<Shot::ShotAbEnum>()};
+      static auto shot_enum{magic_enum::enum_names<shot::shot_ab_enum>()};
       for (auto& i : shot_enum) {
         if (imgui::Selectable(i.data(), i == p_shot_ab))
           p_shot_ab = i;
@@ -209,7 +209,7 @@ bool comm_ass_shot::render() {
 
 bool comm_ass_shot::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
   p_parent = in_parent;
-  p_root   = std::dynamic_pointer_cast<Shot>(in);
+  p_root   = std::dynamic_pointer_cast<shot>(in);
   if (p_root) {
     p_data    = p_root->getShot();
     p_shot_ab = p_root->getShotAb();

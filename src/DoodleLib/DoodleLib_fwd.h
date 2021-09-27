@@ -249,7 +249,7 @@ DOODLELIB_API std::string file_hash_sha224(const path &in_file);
 class CoreSet;
 class project;
 class episodes;
-class Shot;
+class shot;
 class metadata;
 class assets;
 class CoreSql;
@@ -396,7 +396,7 @@ using EpisodesPtr                  = std::shared_ptr<episodes>;
  * @brief Shot 智能共享指针
  *
  */
-using ShotPtr                      = std::shared_ptr<Shot>;
+using ShotPtr                      = std::shared_ptr<shot>;
 /**
  * @brief Assets 智能共享指针
  *

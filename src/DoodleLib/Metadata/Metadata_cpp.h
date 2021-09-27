@@ -12,7 +12,7 @@
 #include <DoodleLib/Metadata/project.h>
 #include <DoodleLib/Metadata/season.h>
 #include <DoodleLib/Metadata/episodes.h>
-#include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/Metadata/shot.h>
 
 #include <DoodleLib/Metadata/time_point_wrap.h>
 #include <DoodleLib/Metadata/metadata_factory.h>

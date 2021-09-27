@@ -5,9 +5,9 @@
 #include <DoodleLib/FileWarp/Ue4Project.h>
 #include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/Logger/Logger.h>
-#include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/project.h>
+#include <DoodleLib/Metadata/shot.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/toolkit/toolkit.h>
 

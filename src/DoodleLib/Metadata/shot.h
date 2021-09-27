@@ -5,31 +5,31 @@
 
 #include <magic_enum.hpp>
 namespace doodle {
-class DOODLELIB_API Shot : public metadata {
+class DOODLELIB_API shot : public metadata {
  public:
-  enum class ShotAbEnum;
+  enum class shot_ab_enum;
 
  private:
   int64_t p_shot;
   std::string p_shot_ab;
 
  public:
-  Shot();
-  Shot(std::weak_ptr<metadata> in_metadata,
+  shot();
+  shot(std::weak_ptr<metadata> in_metadata,
        decltype(p_shot) in_shot,
        decltype(p_shot_ab) in_shot_ab = {});
 
   // clang-format off
-  enum class ShotAbEnum { None, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
+  enum class shot_ab_enum { None, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
   // clang-format on
 
   [[nodiscard]] const std::int64_t &getShot() const noexcept;
   void setShot(const std::int64_t &in_shot);
 
   [[nodiscard]] const std::string &getShotAb() const noexcept;
-  [[nodiscard]] ShotAbEnum getShotAb_enum() const noexcept;
+  [[nodiscard]] shot_ab_enum getShotAb_enum() const noexcept;
   void setShotAb(const std::string &ShotAb) noexcept;
-  inline void setShotAb(const ShotAbEnum &ShotAb) {
+  inline void setShotAb(const shot_ab_enum &ShotAb) {
     setShotAb(std::string{magic_enum::enum_name(ShotAb)});
   };
 
@@ -38,10 +38,10 @@ class DOODLELIB_API Shot : public metadata {
 
   [[nodiscard]] std::string str() const override;
   virtual void create_menu(const attribute_factory_ptr &in_factoryPtr) override;
-  bool operator<(const Shot &rhs) const;
-  bool operator>(const Shot &rhs) const;
-  bool operator<=(const Shot &rhs) const;
-  bool operator>=(const Shot &rhs) const;
+  bool operator<(const shot &rhs) const;
+  bool operator>(const shot &rhs) const;
+  bool operator<=(const shot &rhs) const;
+  bool operator>=(const shot &rhs) const;
 
   inline bool analysis(const FSys::path &in_path) {
     return analysis(in_path.generic_string());
@@ -59,7 +59,7 @@ class DOODLELIB_API Shot : public metadata {
   void serialize(Archive &ar, std::uint32_t const version);
 };
 template <class Archive>
-void Shot::serialize(Archive &ar, const std::uint32_t version) {
+void shot::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
     ar &boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
         p_shot &
@@ -69,14 +69,14 @@ void Shot::serialize(Archive &ar, const std::uint32_t version) {
 
 namespace cereal {
 template <class Archive>
-std::string save_minimal(Archive const &, doodle::Shot::ShotAbEnum const &shotab) {
+std::string save_minimal(Archive const &, doodle::shot::shot_ab_enum const &shotab) {
   return std::string{magic_enum::enum_name(shotab)};
 }
 template <class Archive>
-void load_minimal(Archive const &, doodle::Shot::ShotAbEnum &shotab, std::string const &value) {
-  shotab = magic_enum::enum_cast<doodle::Shot::ShotAbEnum>(value).value_or(doodle::Shot::ShotAbEnum::A);
+void load_minimal(Archive const &, doodle::shot::shot_ab_enum &shotab, std::string const &value) {
+  shotab = magic_enum::enum_cast<doodle::shot::shot_ab_enum>(value).value_or(doodle::shot::shot_ab_enum::A);
 };
 }  // namespace cereal
 
-BOOST_CLASS_VERSION(doodle::Shot, 1)
-BOOST_CLASS_EXPORT_KEY(doodle::Shot)
+BOOST_CLASS_VERSION(doodle::shot, 1)
+BOOST_CLASS_EXPORT_KEY(doodle::shot)
