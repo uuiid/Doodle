@@ -10,8 +10,8 @@
 #include <core/core_set.h>
 #include <date/tz.h>
 #include <grpcpp/grpcpp.h>
-#include <rpc/RpcFileSystemClient.h>
-#include <rpc/RpcMetadataClient.h>
+#include <rpc/rpc_file_system_client.h>
+#include <rpc/rpc_metadata_client.h>
 #include <threadPool/thread_pool.h>
 
 #include <boost/numeric/conversion/cast.hpp>
@@ -81,13 +81,13 @@ void doodle_lib::init_gui() {
 
   DOODLE_LOG_DEBUG(k_ip)
 
-  p_rpc_metadata_clien = new_object<RpcMetadataClient>(
+  p_rpc_metadata_clien = new_object<rpc_metadata_client>(
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 
   k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().get_file_rpc_port());
   DOODLE_LOG_DEBUG(k_ip)
-  p_rpc_file_system_client = new_object<RpcFileSystemClient>(
+  p_rpc_file_system_client = new_object<rpc_file_system_client>(
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 

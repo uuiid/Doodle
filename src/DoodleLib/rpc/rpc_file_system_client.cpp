@@ -2,7 +2,7 @@
 // Created by TD on 2021/6/9.
 //
 
-#include "RpcFileSystemClient.h"
+#include "rpc_file_system_client.h"
 
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/core/core_set.h>
@@ -17,7 +17,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 
 namespace doodle {
-std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> RpcFileSystemClient::compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path) {
+std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> rpc_file_system_client::compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path) {
   auto k_l_ex  = FSys::exists(in_local_path);
   auto k_l_dir = k_l_ex && FSys::is_directory(in_local_path);
   auto k_l_sz  = k_l_ex ? FSys::file_size(in_local_path) : 0;
@@ -25,7 +25,7 @@ std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> RpcFileS
                      ? FSys::last_write_time_point(in_local_path)
                      : chrono::sys_time_pos{};
 
-  auto [k_s_sz, k_s_ex, k_s_ti, k_s_dir] = GetInfo(in_server_path);
+  auto [k_s_sz, k_s_ex, k_s_ti, k_s_dir] = get_info(in_server_path);
   if (k_l_ex && k_s_ex) {                                   /// 本地文件和服务器文件都存在
     if (k_l_dir || k_s_dir) {                               /// 两个任意一个为目录我们都没有办法确定上传和下载的方案
       return {{}, {}, k_s_ex, 0};                           /// 所以返回无
@@ -50,17 +50,17 @@ std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> RpcFileS
   }
 }
 
-RpcFileSystemClient::RpcFileSystemClient(const std::shared_ptr<grpc::Channel>& in_channel)
+rpc_file_system_client::rpc_file_system_client(const std::shared_ptr<grpc::Channel>& in_channel)
     : p_stub(FileSystemServer::NewStub(in_channel))
 // p_channel(in_channel)
 {
 }
 
-std::tuple<std::size_t, bool, chrono::sys_time_pos, bool> RpcFileSystemClient::GetInfo(const FSys::path& in_path) {
+std::tuple<std::size_t, bool, chrono::sys_time_pos, bool> rpc_file_system_client::get_info(const FSys::path& in_server_path) {
   grpc::ClientContext k_context{};
 
   FileInfo k_in_info{};
-  k_in_info.set_path(in_path.generic_string());
+  k_in_info.set_path(in_server_path.generic_string());
   FileInfo k_out_info;
   auto status = p_stub->GetInfo(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
@@ -70,11 +70,11 @@ std::tuple<std::size_t, bool, chrono::sys_time_pos, bool> RpcFileSystemClient::G
   return {k_out_info.size(), k_out_info.exist(), k_t, k_out_info.isfolder()};
 }
 
-std::size_t RpcFileSystemClient::GetSize(const FSys::path& in_path) {
+std::size_t rpc_file_system_client::get_size(const FSys::path& in_server_path) {
   grpc::ClientContext k_context{};
 
   FileInfo k_in_info{};
-  k_in_info.set_path(in_path.generic_string());
+  k_in_info.set_path(in_server_path.generic_string());
   FileInfo k_out_info;
   auto status = p_stub->GetSize(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
@@ -83,11 +83,11 @@ std::size_t RpcFileSystemClient::GetSize(const FSys::path& in_path) {
   return k_out_info.size();
 }
 
-std::tuple<bool, bool> RpcFileSystemClient::IsFolder(const FSys::path& in_path) {
+std::tuple<bool, bool> rpc_file_system_client::is_folder(const FSys::path& in_server_path) {
   grpc::ClientContext k_context{};
 
   FileInfo k_in_info{};
-  k_in_info.set_path(in_path.generic_string());
+  k_in_info.set_path(in_server_path.generic_string());
   FileInfo k_out_info;
   auto status = p_stub->IsFolder(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
@@ -96,11 +96,11 @@ std::tuple<bool, bool> RpcFileSystemClient::IsFolder(const FSys::path& in_path) 
   return {k_out_info.exist(), k_out_info.isfolder()};
 }
 
-chrono::sys_time_pos RpcFileSystemClient::GetTimestamp(const FSys::path& in_path) {
+chrono::sys_time_pos rpc_file_system_client::get_timestamp(const FSys::path& in_server_path) {
   grpc::ClientContext k_context{};
 
   FileInfo k_in_info{};
-  k_in_info.set_path(in_path.generic_string());
+  k_in_info.set_path(in_server_path.generic_string());
   FileInfo k_out_info;
   auto status = p_stub->GetTimestamp(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
@@ -110,11 +110,11 @@ chrono::sys_time_pos RpcFileSystemClient::GetTimestamp(const FSys::path& in_path
   return k_t;
 }
 
-bool RpcFileSystemClient::IsExist(const FSys::path& in_path) {
+bool rpc_file_system_client::is_exist(const FSys::path& in_server_path) {
   grpc::ClientContext k_context{};
 
   FileInfo k_in_info{};
-  k_in_info.set_path(in_path.generic_string());
+  k_in_info.set_path(in_server_path.generic_string());
   FileInfo k_out_info;
   auto status = p_stub->IsExist(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
@@ -123,31 +123,31 @@ bool RpcFileSystemClient::IsExist(const FSys::path& in_path) {
   return k_out_info.exist();
 }
 
-RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(const FSys::path& in_local_path, const FSys::path& in_server_path) {
+rpc_file_system_client::trans_file_ptr rpc_file_system_client::download(const FSys::path& in_local_path, const FSys::path& in_server_path) {
   std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{in_local_path, in_server_path}};
-  return Download(k_ptr);
+  return download(k_ptr);
 }
 
-RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path) {
+rpc_file_system_client::trans_file_ptr rpc_file_system_client::upload(const FSys::path& in_local_path, const FSys::path& in_server_path, const FSys::path& in_backup_path) {
   std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{in_local_path, in_server_path, in_backup_path}};
-  return Upload(k_ptr);
+  return upload(k_ptr);
 }
-RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(std::vector<std::unique_ptr<rpc_trans_path>>& in_vector) {
+rpc_file_system_client::trans_file_ptr rpc_file_system_client::download(std::vector<std::unique_ptr<rpc_trans_path>>& in_vector) {
   auto k_up = new_object<rpc_trans::trans_files>(this);
   for (auto& k_item : in_vector) {
-    k_up->_list.push_back(Download(k_item));
+    k_up->_list.push_back(download(k_item));
   }
   return k_up;
 }
-RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(std::vector<std::unique_ptr<rpc_trans_path>>& in_vector) {
+rpc_file_system_client::trans_file_ptr rpc_file_system_client::upload(std::vector<std::unique_ptr<rpc_trans_path>>& in_vector) {
   auto k_up = new_object<rpc_trans::trans_files>(this);
   for (auto& k_item : in_vector) {
-    k_up->_list.push_back(Upload(k_item));
+    k_up->_list.push_back(upload(k_item));
   }
   return k_up;
 }
-RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(std::unique_ptr<rpc_trans_path>& in_vector) {
-  auto [k_ex, k_dir] = IsFolder(in_vector->server_path);
+rpc_file_system_client::trans_file_ptr rpc_file_system_client::download(std::unique_ptr<rpc_trans_path>& in_vector) {
+  auto [k_ex, k_dir] = is_folder(in_vector->server_path);
   if (!k_ex)
     throw doodle_error{"服务器中不存在文件或者目录"};
 
@@ -160,7 +160,7 @@ RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(std::unique_pt
   k_down->set_parameter(in_vector);
   return k_down;
 }
-RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(std::unique_ptr<rpc_trans_path>& in_vector) {
+rpc_file_system_client::trans_file_ptr rpc_file_system_client::upload(std::unique_ptr<rpc_trans_path>& in_vector) {
   if (!FSys::exists(in_vector->local_path))
     throw doodle_error{"本地中不存在文件或者目录"};
 
@@ -173,7 +173,7 @@ RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(std::unique_ptr<
   k_up->set_parameter(in_vector);
   return k_up;
 }
-std::string RpcFileSystemClient::get_hash(const FSys::path& in_path) {
+std::string rpc_file_system_client::get_hash(const FSys::path& in_path) {
   grpc::ClientContext k_context{};
 
   FileInfo k_in_info{};
@@ -187,7 +187,7 @@ std::string RpcFileSystemClient::get_hash(const FSys::path& in_path) {
 
 namespace rpc_trans {
 
-trans_file::trans_file(RpcFileSystemClient* in_self)
+trans_file::trans_file(rpc_file_system_client* in_self)
     : _self(in_self),
       _param(),
       _term(new_object<long_term>()),
@@ -216,7 +216,7 @@ const long_term_ptr& trans_file::get_term() {
   return _term;
 }
 
-down_file::down_file(RpcFileSystemClient* in_self)
+down_file::down_file(rpc_file_system_client* in_self)
     : trans_file(in_self) {
 }
 
@@ -272,7 +272,7 @@ void down_file::run() {
 void down_file::wait() {
   _result.get();
 }
-up_file::up_file(RpcFileSystemClient* in_self)
+up_file::up_file(rpc_file_system_client* in_self)
     : trans_file(in_self) {
 }
 void up_file::run() {
@@ -347,7 +347,7 @@ void up_file::run() {
 void up_file::wait() {
   _result.get();
 }
-down_dir::down_dir(RpcFileSystemClient* in_self)
+down_dir::down_dir(rpc_file_system_client* in_self)
     : trans_file(in_self),
       _down_list() {
 }
@@ -415,7 +415,7 @@ void down_dir::wait() {
     k_i->_result.get();
   }
 }
-up_dir::up_dir(RpcFileSystemClient* in_self)
+up_dir::up_dir(rpc_file_system_client* in_self)
     : trans_file(in_self),
       _up_list() {
 }
@@ -473,7 +473,7 @@ void up_dir::wait() {
     k_i->_result.get();
   }
 }
-trans_files::trans_files(RpcFileSystemClient* in_self)
+trans_files::trans_files(rpc_file_system_client* in_self)
     : trans_file(in_self),
       _list() {
 }

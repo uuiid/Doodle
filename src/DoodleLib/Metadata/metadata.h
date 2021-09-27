@@ -164,7 +164,7 @@ class DOODLELIB_API metadata
 
  private:
   friend metadata_factory;
-  friend RpcMetadataClient;
+  friend rpc_metadata_client;
   friend RpcMetadaataServer;
 
   bool p_updata_parent_id;

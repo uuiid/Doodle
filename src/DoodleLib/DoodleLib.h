@@ -65,11 +65,11 @@
 #include <DoodleLib/libWarp/protobuf_warp_cpp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <DoodleLib/libWarp/std_warp.h>
-#include <DoodleLib/rpc/RpcFileSystemClient.h>
 #include <DoodleLib/rpc/RpcFileSystemServer.h>
 #include <DoodleLib/rpc/RpcMetadaataServer.h>
-#include <DoodleLib/rpc/RpcMetadataClient.h>
-#include <DoodleLib/rpc/RpcServerHandle.h>
+#include <DoodleLib/rpc/rpc_file_system_client.h>
+#include <DoodleLib/rpc/rpc_metadata_client.h>
+#include <DoodleLib/rpc/rpc_server_handle.h>
 #include <DoodleLib/rpc/rpc_trans_path.h>
 #include <DoodleLib/threadPool/long_term.h>
 #include <DoodleLib/threadPool/thread_pool.h>

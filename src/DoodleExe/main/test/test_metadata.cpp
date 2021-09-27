@@ -127,9 +127,9 @@ TEST_CASE("test create metadata", "[server][metadata]") {
   std::mt19937 mt(rd());
   std::uniform_int_distribution<int> dist{1, 30};
 
-  auto k_server = RpcServerHandle{};
+  auto k_server = rpc_server_handle{};
   auto& set     = core_set::getSet();
-  k_server.runServer(set.get_meta_rpc_port(), set.get_file_rpc_port());
+  k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
 
   doodle_lib::Get().init_gui();
   auto k_fa = std::make_shared<metadata_factory>();

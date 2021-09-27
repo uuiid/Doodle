@@ -4,8 +4,8 @@
 #include <DoodleLib/core/core_set.h>
 #include <DoodleLib/core/core_sql.h>
 #include <DoodleLib/core/static_value.h>
-#include <DoodleLib/rpc/RpcFileSystemClient.h>
-#include <DoodleLib/rpc/RpcMetadataClient.h>
+#include <DoodleLib/rpc/rpc_file_system_client.h>
+#include <DoodleLib/rpc/rpc_metadata_client.h>
 #include <Metadata/metadata_factory.h>
 #include <date/tz.h>
 #include <google/protobuf/service.h>

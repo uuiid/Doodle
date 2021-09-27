@@ -2,7 +2,7 @@
 // Created by TD on 2021/5/25.
 //
 
-#include "RpcMetadataClient.h"
+#include "rpc_metadata_client.h"
 
 #include <DoodleLib/Exception/exception.h>
 // clang-format off
@@ -17,16 +17,16 @@
 
 namespace doodle {
 
-RpcMetadataClient::RpcMetadataClient(const std::shared_ptr<grpc::Channel>& in_channel)
+rpc_metadata_client::rpc_metadata_client(const std::shared_ptr<grpc::Channel>& in_channel)
     : p_stub(MetadataServer::NewStub(in_channel))
 // p_channel(in_channel)
 {
   //  auto k_s = p_channel->GetState(true);
 }
-std::vector<ProjectPtr> RpcMetadataClient::GetProject() {
+std::vector<ProjectPtr> rpc_metadata_client::get_project() {
   auto k_filter = new_object<rpc_filter::filter>();
   k_filter->set_meta_type(metadata::meta_type::project_root);
-  auto k_list = FilterMetadata(k_filter);
+  auto k_list = filter_metadata(k_filter);
   std::vector<ProjectPtr> k_out_list{};
   std::transform(
       k_list.begin(), k_list.end(), std::back_inserter(k_out_list),
@@ -35,10 +35,10 @@ std::vector<ProjectPtr> RpcMetadataClient::GetProject() {
       });
   return k_out_list;
 }
-std::vector<MetadataPtr> RpcMetadataClient::GetChild(const MetadataConstPtr& in_metadataPtr) {
+std::vector<MetadataPtr> rpc_metadata_client::get_child(const MetadataConstPtr& in_metadataPtr) {
   auto k_filter = new_object<rpc_filter::filter>();
   k_filter->set_parent_id(in_metadataPtr->getId());
-  return FilterMetadata(k_filter);
+  return filter_metadata(k_filter);
 }
 // void RpcMetadataClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
 //   auto k_filter = new_object<rpc_filter::filter>();
@@ -46,7 +46,7 @@ std::vector<MetadataPtr> RpcMetadataClient::GetChild(const MetadataConstPtr& in_
 //   FilterMetadata(k_filter).front();
 
 // }
-void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
+void rpc_metadata_client::install_metadata(const MetadataPtr& in_metadataPtr) {
   if (in_metadataPtr->is_install())
     return;
 
@@ -59,9 +59,9 @@ void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   } else {
     throw doodle_error{k_status.error_message()};
   }
-  UpdateMetadata(in_metadataPtr, false);
+  update_metadata(in_metadataPtr, false);
 }
-void RpcMetadataClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
+void rpc_metadata_client::delete_metadata(const MetadataConstPtr& in_metadataPtr) {
   if (!in_metadataPtr->is_install())
     return;
 
@@ -78,7 +78,7 @@ void RpcMetadataClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
   }
 }
 
-void RpcMetadataClient::UpdateMetadata(const MetadataConstPtr& in_metadataPtr, bool b_update_parent_id) {
+void rpc_metadata_client::update_metadata(const MetadataConstPtr& in_metadataPtr, bool b_update_parent_id) {
   if (!in_metadataPtr->is_install())
     return;
 
@@ -90,7 +90,7 @@ void RpcMetadataClient::UpdateMetadata(const MetadataConstPtr& in_metadataPtr, b
     throw doodle_error{k_status.error_message()};
   }
 }
-std::vector<MetadataPtr> RpcMetadataClient::FilterMetadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr) {
+std::vector<MetadataPtr> rpc_metadata_client::filter_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr) {
   std::vector<MetadataPtr> k_list{};
   grpc::ClientContext k_context{};
   DataDb_Filter k_filter{std::move(*in_filter_ptr)};

@@ -44,8 +44,8 @@ try {
     load_setting(argv[1]);
   }
   auto& set                = doodle::core_set::getSet();
-  auto p_rpc_server_handle = std::make_shared<doodle::RpcServerHandle>();
-  p_rpc_server_handle->runServerWait(set.get_meta_rpc_port(), set.get_file_rpc_port());
+  auto p_rpc_server_handle = std::make_shared<doodle::rpc_server_handle>();
+  p_rpc_server_handle->run_server_wait(set.get_meta_rpc_port(), set.get_file_rpc_port());
 
   return 0;
   // _CrtDumpMemoryLeaks();

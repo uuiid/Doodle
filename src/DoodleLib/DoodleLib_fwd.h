@@ -261,13 +261,13 @@ class time_point_wrap;
 class comment;
 class assets_path;
 
-class RpcMetadataClient;
+class rpc_metadata_client;
 class RpcMetadaataServer;
 class ProjectManage;
-class RpcServerHandle;
+class rpc_server_handle;
 class AssetsTree;
 class ListAttributeModel;
-class RpcFileSystemClient;
+class rpc_file_system_client;
 class RpcFileSystemServer;
 class DragFilesFactory;
 class action;
@@ -361,7 +361,7 @@ using MetadataConstPtr             = std::shared_ptr<const metadata>;
  * @brief RpcMetadataClient 智能共享指针
  *
  */
-using RpcMetadataClientPtr         = std::shared_ptr<RpcMetadataClient>;
+using RpcMetadataClientPtr         = std::shared_ptr<rpc_metadata_client>;
 /**
  * @brief RpcMetadaataServer 智能共享指针
  *
@@ -371,7 +371,7 @@ using RpcMetadataServerPtr         = std::shared_ptr<RpcMetadaataServer>;
  * @brief RpcServerHandle 智能共享指针
  *
  */
-using RpcServerHandlePtr           = std::shared_ptr<RpcServerHandle>;
+using RpcServerHandlePtr           = std::shared_ptr<rpc_server_handle>;
 /**
  * @brief RpcFileSystemServer 智能共享指针
  *
@@ -381,7 +381,7 @@ using RpcFileSystemServerPtr       = std::shared_ptr<RpcFileSystemServer>;
  * @brief RpcFileSystemClient 智能共享指针
  *
  */
-using RpcFileSystemClientPtr       = std::shared_ptr<RpcFileSystemClient>;
+using RpcFileSystemClientPtr       = std::shared_ptr<rpc_file_system_client>;
 /**
  * @brief Project 智能共享指针
  *

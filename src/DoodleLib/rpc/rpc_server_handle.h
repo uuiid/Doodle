@@ -4,7 +4,7 @@
 #include <grpcpp/grpcpp.h>
 
 namespace doodle {
-class DOODLELIB_API RpcServerHandle {
+class DOODLELIB_API rpc_server_handle {
   std::unique_ptr<grpc::Server> p_Server;
 
   RpcMetadataServerPtr p_rpc_metadata_server;
@@ -14,13 +14,13 @@ class DOODLELIB_API RpcServerHandle {
   std::thread p_thread;
 
  public:
-  RpcServerHandle();
-  ~RpcServerHandle();
-  void registerFileSystemServer(int port);
-  void registerMetadataServer(int port);
+  rpc_server_handle();
+  ~rpc_server_handle();
+  void register_file_system_server(int port);
+  void register_metadata_server(int port);
 
-  void runServer(int port_meta, int port_file_sys);
-  void runServerWait(int port_meta, int port_file_sys);
+  void run_server(int port_meta, int port_file_sys);
+  void run_server_wait(int port_meta, int port_file_sys);
   void stop();
 };
 }  // namespace doodle

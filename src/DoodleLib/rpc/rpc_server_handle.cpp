@@ -1,4 +1,4 @@
-#include "RpcServerHandle.h"
+#include "rpc_server_handle.h"
 
 #include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/rpc/RpcFileSystemServer.h>
@@ -7,7 +7,7 @@
 #include <csignal>
 
 namespace doodle {
-RpcServerHandle::RpcServerHandle()
+rpc_server_handle::rpc_server_handle()
     : p_Server(),
       p_rpc_metadata_server(),
       p_rpc_file_system_server(),
@@ -19,7 +19,7 @@ RpcServerHandle::RpcServerHandle()
   DOODLE_LOG_INFO("开始创建rpc服务器");
 }
 
-void RpcServerHandle::registerFileSystemServer(int port) {
+void rpc_server_handle::register_file_system_server(int port) {
   p_rpc_file_system_server = new_object<RpcFileSystemServer>();
   std::string server_address{"[::]:"};
   server_address += std::to_string(port);
@@ -30,7 +30,7 @@ void RpcServerHandle::registerFileSystemServer(int port) {
   DOODLE_LOG_INFO(fmt::format("Server listening on {}", server_address));
 }
 
-void RpcServerHandle::registerMetadataServer(int port) {
+void rpc_server_handle::register_metadata_server(int port) {
   p_rpc_metadata_server = new_object<RpcMetadaataServer>();
   std::string server_address{"[::]:"};
   server_address += std::to_string(port);
@@ -41,13 +41,13 @@ void RpcServerHandle::registerMetadataServer(int port) {
   DOODLE_LOG_INFO(fmt::format("Server listening on {}", server_address));
 }
 
-void RpcServerHandle::runServer(int port_meta, int port_file_sys) {
+void rpc_server_handle::run_server(int port_meta, int port_file_sys) {
   ///检查p_metadata_Server防止重复调用
   if (p_Server)
     return;
 
-  registerMetadataServer(port_meta);
-  registerFileSystemServer(port_file_sys);
+  register_metadata_server(port_meta);
+  register_file_system_server(port_file_sys);
 
   p_Server = std::move(p_build->BuildAndStart());
   if (!p_Server)
@@ -70,8 +70,8 @@ void RpcServerHandle::runServer(int port_meta, int port_file_sys) {
 #endif
 
 
-void RpcServerHandle::runServerWait(int port_meta, int port_file_sys) {
-  runServer(port_meta, port_file_sys);
+void rpc_server_handle::run_server_wait(int port_meta, int port_file_sys) {
+  run_server(port_meta, port_file_sys);
   auto k_ = [](int) {
     DOODLE_LOG_WARN("std  收到退出信号， 开始退出 ");
     core_set::getSet().p_stop = true;
@@ -95,7 +95,7 @@ void RpcServerHandle::runServerWait(int port_meta, int port_file_sys) {
       [&set](){return set.p_stop;}
       );
 }
-void RpcServerHandle::stop() {
+void rpc_server_handle::stop() {
   using namespace chrono::literals;
   auto k_time = chrono::system_clock::now() + 2s;
 
@@ -105,7 +105,7 @@ void RpcServerHandle::stop() {
 
   p_Server.reset();
 }
-RpcServerHandle::~RpcServerHandle() {
+rpc_server_handle::~rpc_server_handle() {
   stop();
 }
 
