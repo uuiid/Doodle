@@ -51,19 +51,19 @@ bool assets::operator>=(const assets& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-const std::string& assets::getName1() const {
+const std::string& assets::get_name1() const {
   return p_name;
 }
-void assets::setName1(const std::string& in_name) {
+void assets::set_name1(const std::string& in_name) {
   p_name = in_name;
   if (p_name_enus.empty())
     p_name_enus = convert::Get().toEn(p_name);
   saved(true);
 }
-const std::string& assets::getNameEnus() const {
+const std::string& assets::get_name_enus() const {
   return p_name_enus;
 }
-void assets::setNameEnus(const std::string& in_nameEnus) {
+void assets::set_name_enus(const std::string& in_nameEnus) {
   p_name_enus = in_nameEnus;
   saved(true);
 }

@@ -116,19 +116,19 @@ TEST_CASE("core create_path", "[fun][create_path]") {
   k_2->child_item.push_back_sig(k_3);
   auto path = assets_path("D:/file/ex2.ma", k_3);
   SECTION("dir ") {
-    REQUIRE(path.getLocalPath() == FSys::path{"D:/file/ex2.ma"});
-    REQUIRE(path.getServerPath() == FSys::path{"ttt/ttt/eee/ex2.ma"});
+    REQUIRE(path.get_local_path() == FSys::path{"D:/file/ex2.ma"});
+    REQUIRE(path.get_server_path() == FSys::path{"ttt/ttt/eee/ex2.ma"});
   }
   SECTION("ip path") {
-    k_1->setPath("//192.168.10.250/public/changanhuanjie");
-    REQUIRE(path.getLocalPath() == FSys::path{"D:/file/ex2.ma"});
-    REQUIRE(path.getServerPath() == FSys::path{"ttt/ttt/eee/ex2.ma"});
+    k_1->set_path("//192.168.10.250/public/changanhuanjie");
+    REQUIRE(path.get_local_path() == FSys::path{"D:/file/ex2.ma"});
+    REQUIRE(path.get_server_path() == FSys::path{"ttt/ttt/eee/ex2.ma"});
   }
   SECTION("ip path2") {
     auto path2 = assets_path("//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma", k_3);
-    k_1->setPath("//192.168.10.250/public/changanhuanjie");
-    REQUIRE(path2.getLocalPath() == FSys::path{"//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma"});
-    REQUIRE(path2.getServerPath() == FSys::path{"ttt/ttt/eee/Ch001A_Rig_lyq.ma"});
+    k_1->set_path("//192.168.10.250/public/changanhuanjie");
+    REQUIRE(path2.get_local_path() == FSys::path{"//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma"});
+    REQUIRE(path2.get_server_path() == FSys::path{"ttt/ttt/eee/Ch001A_Rig_lyq.ma"});
   }
 }
 
@@ -287,10 +287,10 @@ TEST_CASE("core archive", "[fun][archives]") {
         json >> k1 >> k2;
         //        cereal::BinaryInputArchive binary{str_stream_bin};
         //        binary(k1, k2);
-        REQUIRE(std::dynamic_pointer_cast<project>(k1)->getPath() == FSys::path{"D:/"});
-        REQUIRE(std::dynamic_pointer_cast<project>(k1)->getName() == "测试1");
-        REQUIRE(std::dynamic_pointer_cast<project>(k2)->getPath() == FSys::path{"F:/"});
-        REQUIRE(std::dynamic_pointer_cast<project>(k2)->getName() == "测试2");
+        REQUIRE(std::dynamic_pointer_cast<project>(k1)->get_path() == FSys::path{"D:/"});
+        REQUIRE(std::dynamic_pointer_cast<project>(k1)->get_name() == "测试1");
+        REQUIRE(std::dynamic_pointer_cast<project>(k2)->get_path() == FSys::path{"F:/"});
+        REQUIRE(std::dynamic_pointer_cast<project>(k2)->get_name() == "测试2");
       }
     }
   }

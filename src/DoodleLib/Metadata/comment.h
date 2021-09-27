@@ -13,10 +13,10 @@ class DOODLELIB_API comment {
  public:
   comment();
   explicit comment(std::string in_str);
-  [[nodiscard]] const std::string& getComment() const;
-  void setComment(const std::string& in_comment);
-  [[nodiscard]] const std::string& getUser() const;
-  void setUser(const std::string& in_user);
+  [[nodiscard]] const std::string& get_comment() const;
+  void set_comment(const std::string& in_comment);
+  [[nodiscard]] const std::string& get_user() const;
+  void set_user(const std::string& in_user);
 
  private:
   friend class boost::serialization::access;
@@ -37,7 +37,7 @@ struct formatter<doodle::comment> : formatter<string_view> {
   template <typename FormatContext>
   auto format(const doodle::comment& in_, FormatContext& ctx) {
     formatter<string_view>::format(
-        in_.getComment(),
+        in_.get_comment(),
         ctx);
   }
 };

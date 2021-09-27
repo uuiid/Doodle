@@ -78,43 +78,35 @@ bool assets_file::operator>=(const assets_file& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-chrono::sys_time_pos assets_file::getStdTime() const {
-  return p_time->getUTCTime();
-}
-void assets_file::setStdTime(const chrono::sys_time_pos& in_time) {
-  p_time = new_object<time_point_wrap>(in_time);
-  saved(true);
-  p_need_time = true;
-}
-const std::string& assets_file::getUser() const {
+const std::string& assets_file::get_user() const {
   return p_user;
 }
-void assets_file::setUser(const std::string& in_user) {
+void assets_file::set_user(const std::string& in_user) {
   p_user = in_user;
   saved(true);
 }
 
-const std::vector<CommentPtr>& assets_file::getComment() const {
+const std::vector<CommentPtr>& assets_file::get_comment() const {
   return p_comment;
 }
-void assets_file::setComment(const std::vector<CommentPtr>& in_comment) {
+void assets_file::set_comment(const std::vector<CommentPtr>& in_comment) {
   p_comment = in_comment;
   saved(true);
 }
-void assets_file::addComment(const CommentPtr& in_comment) {
+void assets_file::add_comment(const CommentPtr& in_comment) {
   p_comment.emplace_back(in_comment);
   saved(true);
 }
 
-const std::uint64_t& assets_file::getVersion() const noexcept {
+const std::uint64_t& assets_file::get_version() const noexcept {
   return p_version;
 }
 
-std::string assets_file::getVersionStr() const {
+std::string assets_file::get_version_str() const {
   return fmt::format("v{:04d}", p_version);
 }
 
-void assets_file::setVersion(const std::uint64_t& in_Version) noexcept {
+void assets_file::set_version(const std::uint64_t& in_Version) noexcept {
   p_version = in_Version;
 }
 
@@ -132,7 +124,7 @@ int assets_file::find_max_version() const {
       k_p->child_item.begin(), k_p->child_item.end(),
       std::inserter(k_r, k_r.begin()), [this](const MetadataPtr& in_) {
         if (details::is_class<assets_file>(in_)) {
-          return std::dynamic_pointer_cast<assets_file>(in_)->getDepartment() == getDepartment();
+          return std::dynamic_pointer_cast<assets_file>(in_)->get_department() == get_department();
         } else
           return false;
       });
@@ -146,29 +138,29 @@ int assets_file::find_max_version() const {
     return *in_a < *in_b;
   });
   if (!k_assetsFilePtr.empty())
-    k_int = k_assetsFilePtr.back()->getVersion() + 1;
+    k_int = k_assetsFilePtr.back()->get_version() + 1;
   else
     k_int = 1;
   return boost::numeric_cast<std::int32_t>(k_int);
 }
-const std::vector<AssetsPathPtr>& assets_file::getPathFile() const {
+const std::vector<AssetsPathPtr>& assets_file::get_path_file() const {
   return p_path_files;
 }
-void assets_file::setPathFile(const std::vector<AssetsPathPtr>& in_pathFile) {
+void assets_file::set_path_file(const std::vector<AssetsPathPtr>& in_pathFile) {
   p_path_files = in_pathFile;
   saved(true);
 }
-department assets_file::getDepartment() const {
+department assets_file::get_department() const {
   return p_department;
 }
-void assets_file::setDepartment(department in_department) {
+void assets_file::set_department(department in_department) {
   p_department = in_department;
   saved(true);
 }
-const TimeDurationPtr& assets_file::getTime() const {
+const TimeDurationPtr& assets_file::get_time() const {
   return p_time;
 }
-void assets_file::setTime(const TimeDurationPtr& in_time) {
+void assets_file::set_time(const TimeDurationPtr& in_time) {
   p_time = in_time;
   saved(true);
   p_need_time = true;
@@ -176,7 +168,7 @@ void assets_file::setTime(const TimeDurationPtr& in_time) {
 void assets_file::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<assets_file>(shared_from_this()));
 }
-std::vector<AssetsPathPtr>& assets_file::getPathFile() {
+std::vector<AssetsPathPtr>& assets_file::get_path_file() {
   return p_path_files;
 }
 void assets_file::to_DataDb(DataDb& in_) const {

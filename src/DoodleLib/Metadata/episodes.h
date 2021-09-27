@@ -12,8 +12,8 @@ class DOODLELIB_API episodes : public metadata {
   explicit episodes(std::weak_ptr<metadata> in_metadata, int64_t in_episodes);
   // ~Episodes();
 
-  [[nodiscard]] const int64_t &getEpisodes() const noexcept;
-  void setEpisodes(const int64_t &Episodes_);
+  [[nodiscard]] const int64_t &get_episodes() const noexcept;
+  void set_episodes(const int64_t &Episodes_);
 
   [[nodiscard]] std::string str() const override;
 

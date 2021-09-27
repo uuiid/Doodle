@@ -24,23 +24,23 @@ assets_path::assets_path(const FSys::path &in_path, const MetadataConstPtr &in_m
       p_server_path(),
       p_backup_path("backup/") {
   if (in_metadata)
-    this->setPath(in_path, in_metadata);
+    this->set_path(in_path, in_metadata);
   else
     throw doodle_error{"空指针"};
 }
-const FSys::path &assets_path::getLocalPath() const {
+const FSys::path &assets_path::get_local_path() const {
   return p_local_path;
 }
 
-const FSys::path &assets_path::getServerPath() const {
+const FSys::path &assets_path::get_server_path() const {
   return p_server_path;
 }
 
-const FSys::path &assets_path::getBackupPath() const {
+const FSys::path &assets_path::get_backup_path() const {
   return p_backup_path;
 }
 
-void assets_path::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata) {
+void assets_path::set_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata) {
   /// 这里使用树,向上寻找,组合路径
   MetadataConstPtr k_m{};
   if (details::is_class<assets_file>(in_metadata))
@@ -55,10 +55,10 @@ void assets_path::setPath(const FSys::path &in_path, const MetadataConstPtr &in_
   }
   k_path /= core_set::getSet().get_department();
   k_path /= in_path.filename();
-  setPath(in_path, k_path);
+  set_path(in_path, k_path);
 }
 
-void assets_path::setPath(const FSys::path &in_local_path, const FSys::path &in_server_path) {
+void assets_path::set_path(const FSys::path &in_local_path, const FSys::path &in_server_path) {
   if (!FSys::exists(in_local_path))
     throw doodle_error{"不存在文件"};
   p_local_path           = in_local_path;

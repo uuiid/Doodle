@@ -36,12 +36,12 @@ TEST_CASE("time duration", "[metadata]") {
     REQUIRE(my_t.get_minutes() == 34);
     REQUIRE(my_t.get_second() == 37);
 
-    REQUIRE(my_t.getLocalTime() == doodle::chrono::clock_cast<doodle::chrono::local_t>(k_new));
+    REQUIRE(my_t.get_local_time() == doodle::chrono::clock_cast<doodle::chrono::local_t>(k_new));
   }
 
   SECTION("set local") {
     my_t.set_local_time(k_local);
-    REQUIRE(my_t.getUTCTime() == k_new);
+    REQUIRE(my_t.get_utc_time() == k_new);
   }
   SECTION("time duration") {
     auto k_sys_time1 = chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s;
@@ -180,13 +180,13 @@ TEST_CASE("test create metadata", "[server][metadata]") {
 
                     using namespace chrono::literals;
                     auto k_time = std::make_shared<time_point_wrap>(chrono::system_clock::now() - 3h * i);
-                    DOODLE_LOG_INFO("生成时间 {} ", k_time->showStr());
+                    DOODLE_LOG_INFO("生成时间 {} ", k_time->show_str());
                     ++i;
 
                     auto k_u_i = dist(mt);
-                    k_file->setTime(k_time);
-                    k_file->setUser(user_list[k_u_i]);
-                    k_file->setDepartment(magic_enum::enum_cast<department>(k_u_i % 8).value());
+                    k_file->set_time(k_time);
+                    k_file->set_user(user_list[k_u_i]);
+                    k_file->set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
                     /// 插入数据
                     k_file->updata_db(k_fa);
                   }

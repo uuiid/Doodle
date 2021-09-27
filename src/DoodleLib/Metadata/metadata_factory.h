@@ -22,7 +22,7 @@ class DOODLELIB_API metadata_factory : public std::enable_shared_from_this<metad
   virtual std::vector<ProjectPtr> getAllProject();
 
   virtual bool insert_into(metadata* in_metadata) const;
-  virtual void deleteData(const metadata* in_metadata) const;
+  virtual void delete_data(const metadata* in_metadata) const;
   /**
    * @brief 在这里测试使用具有父级， 并且如果有父级， 还要更新父id， 那么就可以断定也要更新父级的记录
    * @param in_metadata

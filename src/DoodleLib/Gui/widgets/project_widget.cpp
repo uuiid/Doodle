@@ -36,7 +36,7 @@ void project_widget::frame_render() {
         select_change(p_current_select);
       }
       imgui::TableNextColumn();
-      dear::Text(p->getPath().generic_string());
+      dear::Text(p->get_path().generic_string());
       imgui::TableNextColumn();
       dear::Text(p->str());
     }

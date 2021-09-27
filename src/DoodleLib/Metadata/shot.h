@@ -23,18 +23,18 @@ class DOODLELIB_API shot : public metadata {
   enum class shot_ab_enum { None, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
   // clang-format on
 
-  [[nodiscard]] const std::int64_t &getShot() const noexcept;
-  void setShot(const std::int64_t &in_shot);
+  [[nodiscard]] const std::int64_t &get_shot() const noexcept;
+  void set_shot(const std::int64_t &in_shot);
 
-  [[nodiscard]] const std::string &getShotAb() const noexcept;
-  [[nodiscard]] shot_ab_enum getShotAb_enum() const noexcept;
-  void setShotAb(const std::string &ShotAb) noexcept;
-  inline void setShotAb(const shot_ab_enum &ShotAb) {
-    setShotAb(std::string{magic_enum::enum_name(ShotAb)});
+  [[nodiscard]] const std::string &get_shot_ab() const noexcept;
+  [[nodiscard]] shot_ab_enum get_shot_ab_enum() const noexcept;
+  void set_shot_ab(const std::string &ShotAb) noexcept;
+  inline void set_shot_ab(const shot_ab_enum &ShotAb) {
+    set_shot_ab(std::string{magic_enum::enum_name(ShotAb)});
   };
 
-  [[nodiscard]] EpisodesPtr getEpisodesPtr() const;
-  void setEpisodesPtr(const EpisodesPtr &Episodes_) noexcept;
+  [[nodiscard]] EpisodesPtr get_episodes_ptr() const;
+  void set_episodes_ptr(const EpisodesPtr &Episodes_) noexcept;
 
   [[nodiscard]] std::string str() const override;
   virtual void attribute_widget(const attribute_factory_ptr &in_factoryPtr) override;

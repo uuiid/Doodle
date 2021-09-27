@@ -25,11 +25,11 @@ shot::shot(std::weak_ptr<metadata> in_metadata,
     throw doodle_error{"shot无法为负"};
 }
 
-const int64_t& shot::getShot() const noexcept {
+const int64_t& shot::get_shot() const noexcept {
   return p_shot;
 }
 
-void shot::setShot(const int64_t& in_shot) {
+void shot::set_shot(const int64_t& in_shot) {
   if (in_shot <= 0)
     throw doodle_error{"shot无法为负"};
 
@@ -37,26 +37,26 @@ void shot::setShot(const int64_t& in_shot) {
   saved(true);
 }
 
-const std::string& shot::getShotAb() const noexcept {
+const std::string& shot::get_shot_ab() const noexcept {
   return p_shot_ab;
 }
 
-shot::shot_ab_enum shot::getShotAb_enum() const noexcept {
+shot::shot_ab_enum shot::get_shot_ab_enum() const noexcept {
   return magic_enum::enum_cast<shot_ab_enum>(p_shot_ab).value_or(shot_ab_enum::None);
 }
 
-void shot::setShotAb(const std::string& ShotAb) noexcept {
+void shot::set_shot_ab(const std::string& ShotAb) noexcept {
   p_shot_ab = ShotAb;
   saved(true);
 }
-EpisodesPtr shot::getEpisodesPtr() const {
+EpisodesPtr shot::get_episodes_ptr() const {
   auto k_ptr = std::dynamic_pointer_cast<episodes>(get_parent());
   if (!k_ptr)
     throw nullptr_error("没有集数");
   return k_ptr;
 }
 
-void shot::setEpisodesPtr(const EpisodesPtr& Episodes_) noexcept {
+void shot::set_episodes_ptr(const EpisodesPtr& Episodes_) noexcept {
   Episodes_->child_item.push_back_sig(shared_from_this());
 }
 std::string shot::str() const {

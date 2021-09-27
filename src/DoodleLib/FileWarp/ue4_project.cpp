@@ -136,7 +136,7 @@ void ue4_project::create_shot_folder(const std::vector<ShotPtr>& inShotList,
 
   auto& set = core_set::getSet();
   //创建集数文件夹
-  auto k_episodes_path = k_createDir / inShotList[0]->getEpisodesPtr()->str();
+  auto k_episodes_path = k_createDir / inShotList[0]->get_episodes_ptr()->str();
   if (!FSys::exists(k_episodes_path))
     FSys::create_directory(k_episodes_path);
 
@@ -161,11 +161,11 @@ void ue4_project::create_shot_folder(const std::vector<ShotPtr>& inShotList,
 
     file << std::endl;
 
-    auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0]->getEpisodesPtr()->str();
+    auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0]->get_episodes_ptr()->str();
     for (const auto& k_shot : inShotList) {
       auto k_string = fmt::format("{}{:04d}_{}",
                                   k_prj->show_str(),
-                                  k_shot->getEpisodesPtr()->getEpisodes(),
+                                          k_shot->get_episodes_ptr()->get_episodes(),
                                   k_shot->str());
 
       auto k_shot_path      = k_episodes_path / k_string;

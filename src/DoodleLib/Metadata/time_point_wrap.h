@@ -61,13 +61,13 @@ class DOODLELIB_API time_point_wrap : public details::no_copy {
   [[nodiscard]] std::uint16_t get_second() const;
   void set_second(std::uint16_t in_second);
 
-  [[nodiscard]] std::string getWeek_s() const;
+  [[nodiscard]] std::string get_week_s() const;
 
-  [[nodiscard]] std::int32_t getWeek_int() const;
+  [[nodiscard]] std::int32_t get_week_int() const;
 
-  [[nodiscard]] std::string showStr() const;
-  [[nodiscard]] time_point getUTCTime() const;
-  [[nodiscard]] chrono::local_time<chrono::seconds> getLocalTime() const;
+  [[nodiscard]] std::string show_str() const;
+  [[nodiscard]] time_point get_utc_time() const;
+  [[nodiscard]] chrono::local_time<chrono::seconds> get_local_time() const;
   [[nodiscard]] std::time_t get_local_time_t() const;
   [[nodiscard]] std::time_t get_utc_time_t() const;
   void set_local_time(const chrono::local_time<chrono::seconds>& in_time);

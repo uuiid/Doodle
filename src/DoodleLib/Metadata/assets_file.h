@@ -47,26 +47,24 @@ class DOODLELIB_API assets_file : public metadata {
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string show_str() const override;
 
-  [[nodiscard]] chrono::sys_time_pos getStdTime() const;
-  void setStdTime(const chrono::sys_time_pos& in_time);
-  [[nodiscard]] const TimeDurationPtr& getTime() const;
-  void setTime(const TimeDurationPtr& in_time);
+  [[nodiscard]] const TimeDurationPtr& get_time() const;
+  void set_time(const TimeDurationPtr& in_time);
 
-  [[nodiscard]] const std::string& getUser() const;
-  void setUser(const std::string& in_user);
-  const std::vector<AssetsPathPtr>& getPathFile() const;
-  std::vector<AssetsPathPtr>& getPathFile();
-  void setPathFile(const std::vector<AssetsPathPtr>& in_pathFile);
-  department getDepartment() const;
-  void setDepartment(department in_department);
+  [[nodiscard]] const std::string& get_user() const;
+  void set_user(const std::string& in_user);
+  const std::vector<AssetsPathPtr>& get_path_file() const;
+  std::vector<AssetsPathPtr>& get_path_file();
+  void set_path_file(const std::vector<AssetsPathPtr>& in_pathFile);
+  department get_department() const;
+  void set_department(department in_department);
 
-  [[nodiscard]] const std::vector<CommentPtr>& getComment() const;
-  void setComment(const std::vector<CommentPtr>& in_comment);
-  void addComment(const CommentPtr& in_comment);
+  [[nodiscard]] const std::vector<CommentPtr>& get_comment() const;
+  void set_comment(const std::vector<CommentPtr>& in_comment);
+  void add_comment(const CommentPtr& in_comment);
 
-  const std::uint64_t& getVersion() const noexcept;
-  std::string getVersionStr() const;
-  void setVersion(const std::uint64_t& in_Version) noexcept;
+  const std::uint64_t& get_version() const noexcept;
+  std::string get_version_str() const;
+  void set_version(const std::uint64_t& in_Version) noexcept;
   int find_max_version() const;
 
   virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr) override;

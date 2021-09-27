@@ -37,10 +37,10 @@ class DOODLELIB_API assets_path {
    */
   explicit assets_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata);
 
-  [[nodiscard]] const FSys::path &getLocalPath() const;
+  [[nodiscard]] const FSys::path &get_local_path() const;
   [[nodiscard]] FSys::path get_cache_path() const;
-  [[nodiscard]] const FSys::path &getServerPath() const;
-  [[nodiscard]] const FSys::path &getBackupPath() const;
+  [[nodiscard]] const FSys::path &get_server_path() const;
+  [[nodiscard]] const FSys::path &get_backup_path() const;
   /**
    * @brief 设置资产的本地文件的路径，根据元数据产生路径
    *
@@ -49,7 +49,7 @@ class DOODLELIB_API assets_path {
    * @param in_path  本地文件的路径
    * @param in_metadata 元数据指针，
    */
-  void setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata);
+  void set_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata);
 
   /**
    * @brief设置资产的本地文件的路径，直接设置服务器路径
@@ -57,7 +57,7 @@ class DOODLELIB_API assets_path {
    * @param in_local_path 本地路径
    * @param in_server_path 服务器路径
    */
-  void setPath(const FSys::path &in_local_path, const FSys::path &in_server_path);
+  void set_path(const FSys::path &in_local_path, const FSys::path &in_server_path);
 
   std::string str() const;
   //  void open();

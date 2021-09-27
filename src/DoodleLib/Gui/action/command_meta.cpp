@@ -36,8 +36,8 @@ bool comm_project_add::render() {
   if (p_root) {
     imgui::SameLine();
     if (imgui::Button(p_show_str["修改"].c_str())) {
-      p_root->setName(*p_prj_name);
-      p_root->setPath(*p_prj_path);
+      p_root->set_name(*p_prj_name);
+      p_root->set_path(*p_prj_path);
       p_root->updata_db();
     }
     imgui::SameLine();
@@ -69,8 +69,8 @@ bool comm_project_add::render() {
 bool comm_project_add::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
   p_root = std::dynamic_pointer_cast<project>(in);
   if (p_root) {
-    *p_prj_name = p_root->getName();
-    *p_prj_path = p_root->getPath().generic_string();
+    *p_prj_name = p_root->get_name();
+    *p_prj_path = p_root->get_path().generic_string();
   }
   return p_root != nullptr;
 }
@@ -112,7 +112,7 @@ bool comm_ass_eps::render() {
     if (p_root) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["修改"].c_str())) {
-        p_root->setEpisodes(p_data);
+        p_root->set_episodes(p_data);
         p_root->updata_db();
       }
 
@@ -136,7 +136,7 @@ bool comm_ass_eps::add_data(const MetadataPtr& in_parent, const MetadataPtr& in)
   p_parent = in_parent;
   p_root   = std::dynamic_pointer_cast<episodes>(in);
   if (p_root) {
-    p_data = p_root->getEpisodes();
+    p_data = p_root->get_episodes();
   }
   return p_root != nullptr;
 }
@@ -144,7 +144,7 @@ bool comm_ass_eps::add_data(const MetadataPtr& in_parent, const MetadataPtr& in)
 void comm_ass_shot::add_shot(const std::vector<std::int32_t>& p_shots) {
   for (auto s : p_shots) {
     auto k_s = new_object<shot>();
-    k_s->setShot(s);
+    k_s->set_shot(s);
     p_parent->child_item.push_back_sig(k_s);
   }
 }
@@ -179,10 +179,10 @@ bool comm_ass_shot::render() {
     if (p_root) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["修改"].c_str())) {
-        p_root->setShot(p_data);
-        p_root->setShotAb(magic_enum::enum_cast<shot::shot_ab_enum>(
-                              p_shot_ab)
-                              .value_or(shot::shot_ab_enum::None));
+        p_root->set_shot(p_data);
+        p_root->set_shot_ab(magic_enum::enum_cast<shot::shot_ab_enum>(
+                                p_shot_ab)
+                                .value_or(shot::shot_ab_enum::None));
         p_root->updata_db();
       }
       if (!p_root->has_child()) {
@@ -211,8 +211,8 @@ bool comm_ass_shot::add_data(const MetadataPtr& in_parent, const MetadataPtr& in
   p_parent = in_parent;
   p_root   = std::dynamic_pointer_cast<shot>(in);
   if (p_root) {
-    p_data    = p_root->getShot();
-    p_shot_ab = p_root->getShotAb();
+    p_data    = p_root->get_shot();
+    p_shot_ab = p_root->get_shot_ab();
   }
   return p_root != nullptr;
 }
@@ -220,7 +220,7 @@ bool comm_ass_shot::add_data(const MetadataPtr& in_parent, const MetadataPtr& in
 void comm_assets::add_ass(std::vector<string> in_Str) {
   for (auto& i : in_Str) {
     auto k_ass = new_object<assets>();
-    k_ass->setName1(i);
+    k_ass->set_name1(i);
     p_parent->child_item.push_back_sig(k_ass);
   }
 }
@@ -244,7 +244,7 @@ bool comm_assets::render() {
     if (p_root) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["修改"].c_str())) {
-        p_root->setName1(p_data);
+        p_root->set_name1(p_data);
         p_root->updata_db();
       }
       if (!p_root->has_child()) {
@@ -264,7 +264,7 @@ bool comm_assets::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) 
   p_parent = in_parent;
   p_root   = std::dynamic_pointer_cast<assets>(in);
   if (p_root) {
-    p_data = p_root->getName1();
+    p_data = p_root->get_name1();
   }
   return p_root != nullptr;
 }
@@ -357,7 +357,7 @@ bool comm_ass_file::render() {
     if (p_root) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["更改"].c_str())) {
-        p_root->getTime();
+        p_root->get_time();
       }
       if (p_root->has_child()) {
         imgui::SameLine();
@@ -375,8 +375,8 @@ bool comm_ass_file::add_data(const MetadataPtr& in_parent, const MetadataPtr& in
   p_parent = in_parent;
   p_root   = std::dynamic_pointer_cast<assets_file>(in);
   if (p_root) {
-    p_time = p_root->getTime()->getLocalTime();
-    p_comm = p_root->getComment();
+    p_time = p_root->get_time()->get_local_time();
+    p_comm = p_root->get_comment();
   }
   return p_root != nullptr;
 }

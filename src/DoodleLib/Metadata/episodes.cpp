@@ -25,11 +25,11 @@ episodes::episodes(std::weak_ptr<metadata> in_metadata, int64_t in_episodes)
 //     updata_db(p_metadata_flctory_ptr_);
 // }
 
-const int64_t& episodes::getEpisodes() const noexcept {
+const int64_t& episodes::get_episodes() const noexcept {
   return p_episodes;
 }
 
-void episodes::setEpisodes(const int64_t& Episodes_) {
+void episodes::set_episodes(const int64_t& Episodes_) {
   if (Episodes_ <= 0)
     throw doodle_error("集数无法为负");
   p_episodes = Episodes_;

@@ -20,10 +20,10 @@ class DOODLELIB_API assets : public metadata {
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string show_str() const override;
 
-  const std::string& getName1() const;
-  void setName1(const std::string& in_name);
-  const std::string& getNameEnus() const;
-  void setNameEnus(const std::string& in_nameEnus);
+  const std::string& get_name1() const;
+  void set_name1(const std::string& in_name);
+  const std::string& get_name_enus() const;
+  void set_name_enus(const std::string& in_nameEnus);
 
   bool operator<(const assets& in_rhs) const;
   bool operator>(const assets& in_rhs) const;

@@ -24,7 +24,7 @@ project::project(FSys::path in_path, std::string in_name)
   p_type = meta_type::project_root;
 }
 
-void project::setName(const std::string& Name) noexcept {
+void project::set_name(const std::string& Name) noexcept {
   if (Name == p_name)
     return;
   p_name = Name;
@@ -32,11 +32,11 @@ void project::setName(const std::string& Name) noexcept {
   saved(true);
 }
 
-const FSys::path& project::getPath() const noexcept {
+const FSys::path& project::get_path() const noexcept {
   return p_path;
 }
 
-void project::setPath(const FSys::path& Path) {
+void project::set_path(const FSys::path& Path) {
   if (Path.empty())
     throw doodle_error{"项目路径不能为空"};
   if (p_path == Path)
@@ -50,19 +50,19 @@ std::string project::str() const {
   return p_en_str;
 }
 
-std::string project::shortStr() const {
+std::string project::short_str() const {
   return p_shor_str;
 }
 
 std::string project::show_str() const {
   return this->p_name;
 }
-std::string project::getConfigFileFolder() {
+std::string project::get_config_file_folder() {
   static std::string str{".doodle_config"};
   return str;
 }
 
-std::string project::getConfigFileName() {
+std::string project::get_config_file_name() {
   static std::string str{"doodle_config.dole"};
   return str;
 }
@@ -84,7 +84,7 @@ bool project::operator>=(const project& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-const std::string& project::getName() const {
+const std::string& project::get_name() const {
   return p_name;
 }
 

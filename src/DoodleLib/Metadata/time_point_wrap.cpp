@@ -76,8 +76,8 @@ void time_point_wrap::set_second(std::uint16_t in_second) {
 }
 
 
-std::string time_point_wrap::getWeek_s() const {
-  auto k_int = getWeek_int();
+std::string time_point_wrap::get_week_s() const {
+  auto k_int = get_week_int();
   std::string k_string{};
   switch (k_int) {
     case 0:
@@ -109,15 +109,15 @@ std::string time_point_wrap::getWeek_s() const {
 }
 
 
-std::int32_t time_point_wrap::getWeek_int() const {
+std::int32_t time_point_wrap::get_week_int() const {
   date::weekday k_weekday{date::local_days{p_year / p_month / p_day}};
   return k_weekday.c_encoding();
 }
 
-std::string time_point_wrap::showStr() const {
-  return date::format("%Y/%m/%d %H:%M:%S", getLocalTime());
+std::string time_point_wrap::show_str() const {
+  return date::format("%Y/%m/%d %H:%M:%S", get_local_time());
 }
-time_point_wrap::time_point time_point_wrap::getUTCTime() const {
+time_point_wrap::time_point time_point_wrap::get_utc_time() const {
   return p_time;
 }
 
@@ -126,7 +126,7 @@ void time_point_wrap::disassemble() {
   auto k_     = date::make_zoned(p_time_zone, k_time);
   disassemble(k_.get_sys_time());
 }
-chrono::local_time<chrono::seconds> time_point_wrap::getLocalTime() const {
+chrono::local_time<chrono::seconds> time_point_wrap::get_local_time() const {
   auto k_time = date::local_days{p_year / p_month / p_day} + p_hours + p_minutes + p_seconds;
   // auto k_time2 = k_time - k_time;
   // time_point test = date::clock_cast<std::chrono::system_clock>(k_time);
@@ -157,10 +157,10 @@ chrono::hours_double time_point_wrap::work_duration(const time_point_wrap& in) c
   k_time_h = k_time_h -
              (chrono::is_rest_day(k_begin)
                   ? chrono::hours_double{0}
-                  : one_day_works_hours(getLocalTime())) +
+                  : one_day_works_hours(get_local_time())) +
              (chrono::is_rest_day(k_end)
                   ? chrono::hours_double{0}
-                  : one_day_works_hours(in.getLocalTime()));
+                  : one_day_works_hours(in.get_local_time()));
 
   return k_time_h;
 }
@@ -236,7 +236,7 @@ void time_point_wrap::set_local_time(const date::local_time<chrono::seconds>& in
   disassemble(k_time.get_sys_time());
 }
 std::time_t time_point_wrap::get_local_time_t() const {
-  auto k_time = getLocalTime();
+  auto k_time = get_local_time();
   return chrono::to_time_t(k_time);
 }
 std::time_t time_point_wrap::get_utc_time_t() const {

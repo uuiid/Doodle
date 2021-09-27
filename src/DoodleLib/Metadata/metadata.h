@@ -115,7 +115,7 @@ class database_action {
     if (in_factory)
       p_factory = in_factory;
 
-    p_factory->deleteData(metadata_self);
+    p_factory->delete_data(metadata_self);
   };
   /**
    * @brief 插入函数

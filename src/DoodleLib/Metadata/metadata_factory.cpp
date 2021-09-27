@@ -53,7 +53,7 @@ void metadata_factory::select_indb(metadata *in_metadata) const {
   in_metadata->child_item = k_c;
 }
 
-void metadata_factory::deleteData(const metadata *in_metadata) const {
+void metadata_factory::delete_data(const metadata *in_metadata) const {
   p_rpcClien.lock()->DeleteMetadata(in_metadata->shared_from_this());
 }
 

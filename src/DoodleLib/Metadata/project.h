@@ -18,19 +18,19 @@ class DOODLELIB_API project : public metadata {
   project();
   explicit project(FSys::path in_path, std::string in_name = {});
 
-  const std::string& getName() const;
-  void setName(const std::string& Name) noexcept;
+  const std::string& get_name() const;
+  void set_name(const std::string& Name) noexcept;
 
-  [[nodiscard]] const FSys::path& getPath() const noexcept;
-  void setPath(const FSys::path& Path);
+  [[nodiscard]] const FSys::path& get_path() const noexcept;
+  void set_path(const FSys::path& Path);
 
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string show_str() const override;
 
-  [[nodiscard]] std::string shortStr() const;
+  [[nodiscard]] std::string short_str() const;
 
-  static std::string getConfigFileName();
-  static std::string getConfigFileFolder();
+  static std::string get_config_file_name();
+  static std::string get_config_file_folder();
 
   virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr) override;
 

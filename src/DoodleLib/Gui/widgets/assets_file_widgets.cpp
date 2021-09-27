@@ -36,17 +36,17 @@ void assets_file_widgets::frame_render() {
           }
 
           imgui::TableNextColumn();
-          dear::Text(k->getVersionStr());
+          dear::Text(k->get_version_str());
 
           imgui::TableNextColumn();
-          auto& com = k->getComment();
-          dear::Text(com.empty() ? std::string{} : com.front()->getComment());
+          auto& com = k->get_comment();
+          dear::Text(com.empty() ? std::string{} : com.front()->get_comment());
 
           imgui::TableNextColumn();
-          dear::Text(k->getTime()->showStr());
+          dear::Text(k->get_time()->show_str());
 
           imgui::TableNextColumn();
-          dear::Text(k->getUser());
+          dear::Text(k->get_user());
 
           //          imgui::TableNextColumn();
           //          dear::Text()
