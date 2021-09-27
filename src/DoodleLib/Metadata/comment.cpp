@@ -9,12 +9,12 @@ BOOST_CLASS_EXPORT_IMPLEMENT(doodle::comment)
 namespace doodle {
 comment::comment()
     : p_comment(),
-      p_user(core_set::getSet().getUser()) {
+      p_user(core_set::getSet().get_user()) {
 }
 
 comment::comment(std::string in_str)
     : p_comment(std::move(in_str)),
-      p_user(core_set::getSet().getUser()) {
+      p_user(core_set::getSet().get_user()) {
 }
 
 const std::string& comment::getComment() const {

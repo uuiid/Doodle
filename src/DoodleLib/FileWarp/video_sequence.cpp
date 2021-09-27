@@ -86,7 +86,7 @@ std::shared_ptr<video_sequence> video_sequence_async::set_video_list(const std::
 long_term_ptr video_sequence_async::connect_video(const FSys::path& path) const {
   //验证输出路径
   auto k_out_path = p_backup_out_path.parent_path() /
-                    core_set::getSet().getUUIDStr().append(".mp4");
+                    core_set::getSet().get_uuid_str().append(".mp4");
   if (!path.empty())
     k_out_path = path;
 

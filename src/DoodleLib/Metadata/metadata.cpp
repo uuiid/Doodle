@@ -26,7 +26,7 @@ metadata::metadata()
       std::enable_shared_from_this<metadata>(),
       p_parent(),
       p_parent_id(),
-      p_uuid(std::move(core_set::getSet().getUUIDStr())),
+      p_uuid(std::move(core_set::getSet().get_uuid_str())),
       p_updata_parent_id(false),
       p_has_child(0),
       p_has_file(0),
@@ -42,7 +42,7 @@ metadata::metadata(std::weak_ptr<metadata> in_metadata)
       std::enable_shared_from_this<metadata>(),
       p_parent(std::move(in_metadata)),
       p_parent_id(p_parent.lock()->p_id),
-      p_uuid(std::move(core_set::getSet().getUUIDStr())),
+      p_uuid(std::move(core_set::getSet().get_uuid_str())),
       p_updata_parent_id(false),
       p_has_child(0),
       p_has_file(0),
@@ -88,7 +88,7 @@ bool metadata::has_file() const {
 std::string metadata::showStr() const {
   return str();
 }
-const std::string &metadata::getUUID() const {
+const std::string &metadata::get_uuid() const {
   return p_uuid;
 }
 
@@ -123,8 +123,8 @@ MetadataConstPtr metadata::getRootParent() const {
   //    return p_parent.lock()->getRootParent();
 }
 
-FSys::path metadata::getUrlUUID() const {
-  auto name = FSys::path{getRootParent()->getUUID()};
+FSys::path metadata::get_url_uuid() const {
+  auto name = FSys::path{getRootParent()->get_uuid()};
   name /= p_uuid.substr(0, 3);
   name /= p_uuid;
   return name;
@@ -289,7 +289,7 @@ metadata::operator DataDb() const {
 
 void metadata::to_DataDb(DataDb &in_) const {
   in_.set_id(p_id);
-  in_.set_uuidpath(getUrlUUID().generic_string());
+  in_.set_uuidpath(get_url_uuid().generic_string());
   if (hasParent() && (p_updata_parent_id || p_id == 0))
     in_.mutable_parent()->set_value(*p_parent_id);
 

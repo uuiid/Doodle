@@ -13,13 +13,13 @@ namespace doodle {
 
 setting_windows::setting_windows()
     : p_dep_list(magic_enum::enum_names<department>()),
-      p_cur_dep_index(magic_enum::enum_integer(core_set::getSet().getDepartmentEnum())),
-      p_user(new_object<std::string>(core_set::getSet().getUser())),
-      p_cache(new_object<std::string>(core_set::getSet().getCacheRoot().generic_string())),
-      p_doc(new_object<std::string>(core_set::getSet().getDoc().generic_string())),
-      p_maya_path(new_object<std::string>(core_set::getSet().MayaPath().generic_string())),
-      p_ue_path(new_object<std::string>(core_set::getSet().gettUe4Setting().Path().generic_string())),
-      p_ue_version(new_object<std::string>(core_set::getSet().gettUe4Setting().Version())),
+      p_cur_dep_index(magic_enum::enum_integer(core_set::getSet().get_department_enum())),
+      p_user(new_object<std::string>(core_set::getSet().get_user())),
+      p_cache(new_object<std::string>(core_set::getSet().get_cache_root().generic_string())),
+      p_doc(new_object<std::string>(core_set::getSet().get_doc().generic_string())),
+      p_maya_path(new_object<std::string>(core_set::getSet().maya_path().generic_string())),
+      p_ue_path(new_object<std::string>(core_set::getSet().get_ue4_setting().Path().generic_string())),
+      p_ue_version(new_object<std::string>(core_set::getSet().get_ue4_setting().Version())),
       p_batch_max(new_object<std::int32_t>(core_set::getSet().p_max_thread)) {
   p_class_name = "设置";
 }
@@ -49,13 +49,13 @@ void setting_windows::frame_render() {
 }
 void setting_windows::save() {
   auto& set = core_set::getSet();
-  set.setDepartment(magic_enum::enum_cast<department>(p_cur_dep_index).value());
-  set.setUser(*p_user);
-  set.setMayaPath(*p_maya_path);
+  set.set_department(magic_enum::enum_cast<department>(p_cur_dep_index).value());
+  set.set_user(*p_user);
+  set.set_maya_path(*p_maya_path);
   set.set_max_tread(*p_batch_max);
-  set.gettUe4Setting().setPath(*p_ue_path);
-  set.gettUe4Setting().setVersion(*p_ue_version);
-  set.writeDoodleLocalSet();
+  set.get_ue4_setting().setPath(*p_ue_path);
+  set.get_ue4_setting().setVersion(*p_ue_version);
+  set.write_doodle_local_set();
   doodle_lib::Get().set_thread_pool_size();
 }
 }  // namespace doodle

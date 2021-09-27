@@ -44,7 +44,7 @@ void assets_widget::load_meta(const MetadataPtr& in_ptr) {
 
       if (i->hasChild() || i->has_file()) {
         dear::TreeNodeEx{
-            i->getUUID().c_str(),
+            i->get_uuid().c_str(),
             flsge,
             i->showStr().c_str()} &&
             [i, this]() {
@@ -57,7 +57,7 @@ void assets_widget::load_meta(const MetadataPtr& in_ptr) {
             };
       } else {
         dear::TreeNodeEx{
-            i->getUUID().c_str(),
+            i->get_uuid().c_str(),
             flsge | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen,
             i->showStr().c_str()} &&
             [this, i]() {

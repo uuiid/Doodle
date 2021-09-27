@@ -38,7 +38,7 @@ doodle_lib::doodle_lib()
 }
 
 FSys::path doodle_lib::create_time_database() {
-  auto k_local_path = core_set::getSet().getCacheRoot("tzdata");
+  auto k_local_path = core_set::getSet().get_cache_root("tzdata");
   if (FSys::is_empty(k_local_path)) {
     auto k_path = cmrc::DoodleLibResource::get_filesystem().iterate_directory("resource/tzdata");
     for (const auto& i : k_path) {
@@ -77,7 +77,7 @@ doodle_lib::~doodle_lib() {
   logger::clear();
 }
 void doodle_lib::init_gui() {
-  auto k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().getMetaRpcPort());
+  auto k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().get_meta_rpc_port());
 
   DOODLE_LOG_DEBUG(k_ip)
 
@@ -85,7 +85,7 @@ void doodle_lib::init_gui() {
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 
-  k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().getFileRpcPort());
+  k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().get_file_rpc_port());
   DOODLE_LOG_DEBUG(k_ip)
   p_rpc_file_system_client = new_object<RpcFileSystemClient>(
       grpc::CreateChannel(k_ip,

@@ -233,8 +233,8 @@ class DOODLELIB_API metadata
    */
   [[nodiscard]] virtual std::string showStr() const;  ///< 这里时显示的字符串, 极有可能有中文
 
-  [[nodiscard]] const std::string &getUUID() const;  ///< 获得uuid
-  [[nodiscard]] FSys::path getUrlUUID() const;       ///< 这个是获得所属项目的保持相对路径
+  [[nodiscard]] const std::string &get_uuid() const;  ///< 获得uuid
+  [[nodiscard]] FSys::path get_url_uuid() const;       ///< 这个是获得所属项目的保持相对路径
 
   /**
    * 获得字符串id

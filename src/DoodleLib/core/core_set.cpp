@@ -68,19 +68,19 @@ void core_set::findMaya() {
   }
 }
 
-bool core_set::hasMaya() const noexcept {
+bool core_set::has_maya() const noexcept {
   return !p_mayaPath.empty();
 }
 
-const FSys::path &core_set::MayaPath() const noexcept {
+const FSys::path &core_set::maya_path() const noexcept {
   return p_mayaPath;
 }
 
-void core_set::setMayaPath(const FSys::path &in_MayaPath) noexcept {
+void core_set::set_maya_path(const FSys::path &in_MayaPath) noexcept {
   p_mayaPath = in_MayaPath;
 }
 
-void core_set::writeDoodleLocalSet() {
+void core_set::write_doodle_local_set() {
   p_ue4_setting.testValue();
   if (p_ue4_setting.hasPath() && !FSys::exists(p_ue4_setting.Path() / staticValue::ue_path_obj())) {
     p_ue4_setting.setPath({});
@@ -90,13 +90,13 @@ void core_set::writeDoodleLocalSet() {
     throw file_error{p_mayaPath, " 在路径中没有找到maya,不保存"};
   }
 
-  FSys::ofstream outjosn{p_doc / configFileName(), std::ios::out | std::ios::binary};
+  FSys::ofstream outjosn{p_doc / config_file_name(), std::ios::out | std::ios::binary};
   boost::archive::text_oarchive out{outjosn};
   out << *this;
 }
 
-void core_set::getSetting() {
-  static FSys::path k_settingFileName = p_doc / configFileName();
+void core_set::get_setting() {
+  static FSys::path k_settingFileName = p_doc / config_file_name();
   if (FSys::exists(k_settingFileName)) {
     FSys::path strFile(k_settingFileName);
     FSys::ifstream inJosn{k_settingFileName, std::ifstream::binary};
@@ -139,74 +139,74 @@ core_set::core_set()
       p_condition() {
   p_doc = get_pwd() / "doodle";
 
-  getCacheDiskPath();
+  get_cache_disk_path();
   p_data_root = p_cache_root.parent_path() / "data";
 
   if (!FSys::exists(p_doc))
     FSys::create_directories(p_doc);
-  if (!FSys::exists(getCacheRoot())) {
-    FSys::create_directories(getCacheRoot());
+  if (!FSys::exists(get_cache_root())) {
+    FSys::create_directories(get_cache_root());
   }
-  if (!FSys::exists(getDataRoot())) {
-    FSys::create_directories(getDataRoot());
+  if (!FSys::exists(get_data_root())) {
+    FSys::create_directories(get_data_root());
   }
   findMaya();
-  getSetting();
+  get_setting();
 }
 
-boost::uuids::uuid core_set::getUUID() {
+boost::uuids::uuid core_set::get_uuid() {
   return p_uuid_gen();
 }
 
-std::string core_set::getDepartment() const {
+std::string core_set::get_department() const {
   return std::string{magic_enum::enum_name(p_department_)};
 }
 
-const department &core_set::getDepartmentEnum() const {
+const department &core_set::get_department_enum() const {
   return p_department_;
 }
 
-void core_set::setDepartment(const std::string &value) {
+void core_set::set_department(const std::string &value) {
   p_department_ = magic_enum::enum_cast<department>(value).value_or(department::None_);
 }
 
-std::string core_set::getUser() const { return p_user_; }
+std::string core_set::get_user() const { return p_user_; }
 
-std::string core_set::getUser_en() const {
+std::string core_set::get_user_en() const {
   return boost::algorithm::to_lower_copy(
       convert::Get().toEn(p_user_));
 }
 
-void core_set::setUser(const std::string &value) {
+void core_set::set_user(const std::string &value) {
   p_user_ = value;
 }
 
-FSys::path core_set::getDoc() const { return p_doc; }
+FSys::path core_set::get_doc() const { return p_doc; }
 
-FSys::path core_set::getCacheRoot() const {
+FSys::path core_set::get_cache_root() const {
   return p_cache_root;
 }
 
-FSys::path core_set::getCacheRoot(const FSys::path &in_path) const {
+FSys::path core_set::get_cache_root(const FSys::path &in_path) const {
   auto path = p_cache_root / in_path;
   if (!FSys::exists(path))
     FSys::create_directories(path);
   return path;
 }
 
-void core_set::setCacheRoot(const FSys::path &path) {
+void core_set::set_cache_root(const FSys::path &path) {
   p_cache_root = path;
 }
 
-FSys::path core_set::getDataRoot() const {
+FSys::path core_set::get_data_root() const {
   return p_data_root;
 }
 
-void core_set::setDataRoot(const FSys::path &in_path) {
+void core_set::set_data_root(const FSys::path &in_path) {
   p_data_root = in_path;
 }
 
-void core_set::getCacheDiskPath() {
+void core_set::get_cache_disk_path() {
 #if defined(_WIN32)
   const static string_list dirs{"D:/",
                                 "E:/",
@@ -243,48 +243,48 @@ FSys::path core_set::program_location() {
 FSys::path core_set::program_location(const FSys::path &path) {
   return program_location() / path;
 }
-std::string core_set::configFileName() {
+std::string core_set::config_file_name() {
   static std::string str{"doodle_config.bin"};
   return str;
 }
-std::string core_set::getUUIDStr() {
-  return boost::uuids::to_string(getUUID());
+std::string core_set::get_uuid_str() {
+  return boost::uuids::to_string(get_uuid());
 }
 
-int core_set::getSqlPort() const {
+int core_set::get_sql_port() const {
   return p_sql_port;
 }
-void core_set::setSqlPort(int in_sqlPort) {
+void core_set::set_sql_port(int in_sqlPort) {
   p_sql_port = in_sqlPort;
 }
-const std::string &core_set::getSqlHost() const {
+const std::string &core_set::get_sql_host() const {
   return p_sql_host;
 }
-void core_set::setSqlHost(const std::string &in_sqlHost) {
+void core_set::set_sql_host(const std::string &in_sqlHost) {
   p_sql_host = in_sqlHost;
 }
-const std::string &core_set::getSqlUser() const {
+const std::string &core_set::get_sql_user() const {
   return p_sql_user;
 }
-void core_set::setSqlUser(const std::string &in_sqlUser) {
+void core_set::set_sql_user(const std::string &in_sqlUser) {
   p_sql_user = in_sqlUser;
 }
-const std::string &core_set::getSqlPassword() const {
+const std::string &core_set::get_sql_password() const {
   return p_sql_password;
 }
-void core_set::setSqlPassword(const std::string &in_sqlPassword) {
+void core_set::set_sql_password(const std::string &in_sqlPassword) {
   p_sql_password = in_sqlPassword;
 }
-int core_set::getMetaRpcPort() const {
+int core_set::get_meta_rpc_port() const {
   return p_meta_rpc_port;
 }
-void core_set::setMetaRpcPort(int in_metaRpcPort) {
+void core_set::set_meta_rpc_port(int in_metaRpcPort) {
   p_meta_rpc_port = in_metaRpcPort;
 }
-int core_set::getFileRpcPort() const {
+int core_set::get_file_rpc_port() const {
   return p_file_rpc_port;
 }
-void core_set::setFileRpcPort(int in_fileRpcPort) {
+void core_set::set_file_rpc_port(int in_fileRpcPort) {
   p_file_rpc_port = in_fileRpcPort;
 }
 std::string core_set::get_server_host() {
@@ -303,7 +303,7 @@ void core_set::set_max_tread(const std::uint16_t in)
 {
   p_max_thread = in;
 }
-void core_set::setDepartment(const department &value) {
+void core_set::set_department(const department &value) {
   p_department_ = value;
 }
 

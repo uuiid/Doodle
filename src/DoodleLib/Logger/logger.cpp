@@ -47,7 +47,7 @@ using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
 
 static void boostLoggerInitAsyn(const std::string &logPath,
                                 std::size_t logMaxSize) {
-  auto appdata = core_set::getSet().getCacheRoot();
+  auto appdata = core_set::getSet().get_cache_root();
   appdata /= logPath;
   appdata /= "log";
   if (!FSys::exists(appdata)) {

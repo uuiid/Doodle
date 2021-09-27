@@ -15,10 +15,10 @@ core_sql::core_sql()
 void core_sql::Init() {
   auto& set = core_set::getSet();
 
-  config->port     = set.getSqlPort();
-  config->host     = set.getSqlHost();
-  config->user     = set.getSqlUser();
-  config->password = set.getSqlPassword();
+  config->port     = set.get_sql_port();
+  config->host     = set.get_sql_host();
+  config->user     = set.get_sql_user();
+  config->password = set.get_sql_password();
 #ifdef NDEBUG
   config->debug    = false;
   config->database = "doodle";

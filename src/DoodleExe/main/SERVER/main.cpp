@@ -45,16 +45,16 @@ try {
   }
   auto& set                = doodle::core_set::getSet();
   auto p_rpc_server_handle = std::make_shared<doodle::RpcServerHandle>();
-  p_rpc_server_handle->runServerWait(set.getMetaRpcPort(), set.getFileRpcPort());
+  p_rpc_server_handle->runServerWait(set.get_meta_rpc_port(), set.get_file_rpc_port());
 
   return 0;
   // _CrtDumpMemoryLeaks();
 } catch (const std::exception& err) {
   std::cout << err.what() << std::endl;
   DOODLE_LOG_ERROR(err.what());
-  doodle::core_set::getSet().writeDoodleLocalSet();
+  doodle::core_set::getSet().write_doodle_local_set();
   return 1;
 } catch (...) {
-  doodle::core_set::getSet().writeDoodleLocalSet();
+  doodle::core_set::getSet().write_doodle_local_set();
   return 1;
 }

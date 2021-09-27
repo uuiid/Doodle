@@ -129,7 +129,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
 
   auto k_server = RpcServerHandle{};
   auto& set     = core_set::getSet();
-  k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
+  k_server.runServer(set.get_meta_rpc_port(), set.get_file_rpc_port());
 
   doodle_lib::Get().init_gui();
   auto k_fa = std::make_shared<metadata_factory>();

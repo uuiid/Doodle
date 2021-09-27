@@ -253,9 +253,9 @@ void down_file::run() {
   k_in_info.set_path(_param->server_path.generic_string());
   auto k_out = _self->p_stub->Download(&k_context, k_in_info);
 
-  const std::size_t k_num2{core_set::getBlockSize() > k_sz
+  const std::size_t k_num2{core_set::get_block_size() > k_sz
                                ? 1
-                               : (core_set::getBlockSize() / k_sz)};
+                               : (core_set::get_block_size() / k_sz)};
   while (k_out->Read(&k_out_info)) {
     auto& str = k_out_info.data().value();
     k_file.write(str.data(), str.size());
@@ -315,7 +315,7 @@ void up_file::run() {
   auto k_in = _self->p_stub->Upload(&k_context, &k_out_info);
   k_in->Write(k_in_info);
 
-  auto s_size = core_set::getBlockSize();
+  auto s_size = core_set::get_block_size();
   const std::size_t k_num2{s_size > k_sz ? 1 : (s_size / k_sz)};
   FSys::ifstream k_file{_param->local_path, std::ios::in | std::ios::binary};
   if (!k_file)

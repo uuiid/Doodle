@@ -65,8 +65,8 @@ void ue4_project::run_cmd_scipt(const std::string& run_com) const {
 }
 
 void ue4_project::runPythonScript(const std::string& python_str) const {
-  auto tmp_name = boost::uuids::to_string(core_set::getSet().getUUID()) + ".py";
-  auto tmp_file = core_set::getSet().getCacheRoot() / tmp_name;
+  auto tmp_name = boost::uuids::to_string(core_set::getSet().get_uuid()) + ".py";
+  auto tmp_file = core_set::getSet().get_cache_root() / tmp_name;
 
   {  //写入文件
     FSys::ofstream k_ofile{tmp_file};
@@ -140,15 +140,15 @@ void ue4_project::create_shot_folder(const std::vector<ShotPtr>& inShotList,
   if (!FSys::exists(k_episodes_path))
     FSys::create_directory(k_episodes_path);
 
-  auto k_dep = set.getDepartment();
+  auto k_dep = set.get_department();
   //创建特效专用文件夹
-  if (set.getDepartmentEnum() == department::VFX) {
-    auto p_episodes_vfx_name = k_episodes_path / k_dep / set.getUser_en();
+  if (set.get_department_enum() == department::VFX) {
+    auto p_episodes_vfx_name = k_episodes_path / k_dep / set.get_user_en();
     if (!FSys::exists(p_episodes_vfx_name))
       FSys::create_directories(p_episodes_vfx_name);
   }
 
-  auto k_tmp_file_path = core_set::getSet().getCacheRoot("ue4_lev") / boost::uuids::to_string(core_set::getSet().getUUID()).append(".py");
+  auto k_tmp_file_path = core_set::getSet().get_cache_root("ue4_lev") / boost::uuids::to_string(core_set::getSet().get_uuid()).append(".py");
 
   {  //写入临时文件
     auto tmp_f = cmrc::DoodleLibResource::get_filesystem().open("resource/Ue4CraeteLevel.py");

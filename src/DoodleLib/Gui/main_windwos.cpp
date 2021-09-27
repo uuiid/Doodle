@@ -94,7 +94,7 @@ void main_windows::main_menu_tool() {
   if (dear::MenuItem("安装maya插件"))
     toolkit::installMayaPath();
   if (dear::MenuItem("安装ue4插件"))
-    toolkit::installUePath(core_set::getSet().gettUe4Setting().Path() / "Engine");
+    toolkit::installUePath(core_set::getSet().get_ue4_setting().Path() / "Engine");
 
   if (dear::MenuItem("安装ue4项目插件")) {
     imgui::FileDialog::Instance()->OpenModal(

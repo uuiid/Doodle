@@ -37,53 +37,53 @@ class DOODLELIB_API core_set : public details::no_copy {
   static FSys::path program_location();
   static FSys::path program_location(const FSys::path &path);
 
-  [[nodiscard]] bool hasMaya() const noexcept;
-  [[nodiscard]] const FSys::path &MayaPath() const noexcept;
-  void setMayaPath(const FSys::path &in_MayaPath) noexcept;
+  [[nodiscard]] bool has_maya() const noexcept;
+  [[nodiscard]] const FSys::path &maya_path() const noexcept;
+  void set_maya_path(const FSys::path &in_MayaPath) noexcept;
 
   // user设置
-  [[nodiscard]] std::string getUser() const;
-  [[nodiscard]] std::string getUser_en() const;
-  void setUser(const std::string &value);
+  [[nodiscard]] std::string get_user() const;
+  [[nodiscard]] std::string get_user_en() const;
+  void set_user(const std::string &value);
 
   //部门设置
-  [[nodiscard]] std::string getDepartment() const;
-  [[nodiscard]] const department &getDepartmentEnum() const;
-  void setDepartment(const std::string &value);
-  void setDepartment(const department &value);
+  [[nodiscard]] std::string get_department() const;
+  [[nodiscard]] const department &get_department_enum() const;
+  void set_department(const std::string &value);
+  void set_department(const department &value);
 
   //缓存路径
-  [[nodiscard]] FSys::path getCacheRoot() const;
-  [[nodiscard]] FSys::path getCacheRoot(const FSys::path &path) const;
-  void setCacheRoot(const FSys::path &path);
+  [[nodiscard]] FSys::path get_cache_root() const;
+  [[nodiscard]] FSys::path get_cache_root(const FSys::path &in_path) const;
+  void set_cache_root(const FSys::path &path);
 
-  FSys::path getDataRoot() const;
-  void setDataRoot(const FSys::path &in_path);
+  FSys::path get_data_root() const;
+  void set_data_root(const FSys::path &in_path);
 
   // doc路径
-  [[nodiscard]] FSys::path getDoc() const;
+  [[nodiscard]] FSys::path get_doc() const;
 
-  [[nodiscard]] ue4_setting &gettUe4Setting() const { return p_ue4_setting; };
+  [[nodiscard]] ue4_setting &get_ue4_setting() const { return p_ue4_setting; };
 
-  [[nodiscard]] int getSqlPort() const;
-  void setSqlPort(int in_sqlPort);
-  [[nodiscard]] const std::string &getSqlHost() const;
-  void setSqlHost(const std::string &in_sqlHost);
-  [[nodiscard]] const std::string &getSqlUser() const;
-  void setSqlUser(const std::string &in_sqlUser);
-  [[nodiscard]] const std::string &getSqlPassword() const;
-  void setSqlPassword(const std::string &in_sqlPassword);
-  [[nodiscard]] int getMetaRpcPort() const;
-  void setMetaRpcPort(int in_metaRpcPort);
-  [[nodiscard]] int getFileRpcPort() const;
-  void setFileRpcPort(int in_fileRpcPort);
+  [[nodiscard]] int get_sql_port() const;
+  void set_sql_port(int in_sqlPort);
+  [[nodiscard]] const std::string &get_sql_host() const;
+  void set_sql_host(const std::string &in_sqlHost);
+  [[nodiscard]] const std::string &get_sql_user() const;
+  void set_sql_user(const std::string &in_sqlUser);
+  [[nodiscard]] const std::string &get_sql_password() const;
+  void set_sql_password(const std::string &in_sqlPassword);
+  [[nodiscard]] int get_meta_rpc_port() const;
+  void set_meta_rpc_port(int in_metaRpcPort);
+  [[nodiscard]] int get_file_rpc_port() const;
+  void set_file_rpc_port(int in_fileRpcPort);
 
-  void writeDoodleLocalSet();
+  void write_doodle_local_set();
 
-  boost::uuids::uuid getUUID();
-  std::string getUUIDStr();
+  boost::uuids::uuid get_uuid();
+  std::string get_uuid_str();
 
-  static std::size_t getBlockSize() {
+  static std::size_t get_block_size() {
     static std::size_t k_i{64 * 1024};
     return k_i;
   };
@@ -114,11 +114,11 @@ class DOODLELIB_API core_set : public details::no_copy {
    */
   core_set();
   //获得缓存磁盘路径
-  void getCacheDiskPath();
+  void get_cache_disk_path();
   //获得本地的有限设置
-  void getSetting();
+  void get_setting();
 
-  static std::string configFileName();
+  static std::string config_file_name();
 
  private:
   boost::uuids::random_generator p_uuid_gen;

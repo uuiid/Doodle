@@ -22,14 +22,14 @@
 namespace doodle {
 maya_file::maya_file(FSys::path mayaPath)
     : p_path(std::move(mayaPath)) {
-  if (!FSys::exists(p_path) && core_set::getSet().hasMaya())
-    p_path = core_set::getSet().MayaPath();
+  if (!FSys::exists(p_path) && core_set::getSet().has_maya())
+    p_path = core_set::getSet().maya_path();
   else
     throw doodle_error{"无法找到maya启动器"};
 }
 
 void maya_file::write_maya_tool_file() {
-  const auto tmp_path = core_set::getSet().getCacheRoot(
+  const auto tmp_path = core_set::getSet().get_cache_root(
       fmt::format("maya\\v{}{}{}",
                   Doodle_VERSION_MAJOR,
                   Doodle_VERSION_MINOR,

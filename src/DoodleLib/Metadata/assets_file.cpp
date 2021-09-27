@@ -25,8 +25,8 @@ assets_file::assets_file()
       p_path_file(),
       p_path_files(),
       p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
-      p_user(core_set::getSet().getUser()),
-      p_department(core_set::getSet().getDepartmentEnum()),
+      p_user(core_set::getSet().get_user()),
+      p_department(core_set::getSet().get_department_enum()),
       p_comment(),
       p_version(1),
       p_need_time(false) {
@@ -40,8 +40,8 @@ assets_file::assets_file(std::weak_ptr<metadata> in_metadata, std::string showNa
       p_path_file(new_object<assets_path>()),
       p_path_files(),
       p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
-      p_user(core_set::getSet().getUser()),
-      p_department(core_set::getSet().getDepartmentEnum()),
+      p_user(core_set::getSet().get_user()),
+      p_department(core_set::getSet().get_department_enum()),
       p_comment(),
       p_version(1),
       p_need_time(false) {

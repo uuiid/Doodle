@@ -23,7 +23,7 @@
 namespace doodle {
 
 void toolkit::installMayaPath() {
-  auto mayadoc = core_set::getSet().getDoc().parent_path();
+  auto mayadoc = core_set::getSet().get_doc().parent_path();
   mayadoc /= "maya";
   mayadoc /= "modules";
   mayadoc /= "doodle";
@@ -65,7 +65,7 @@ void toolkit::installUePath(const FSys::path &path) {
 
   auto sourePath  = FSys::current_path().parent_path();
   sourePath       = sourePath / "plug" / "uePlug";
-  sourePath       = sourePath / set.gettUe4Setting().Version();
+  sourePath       = sourePath / set.get_ue4_setting().Version();
   sourePath       = sourePath / "Plugins" / "Doodle";
   auto targetPath = path / "Plugins" / "Doodle";
 
@@ -84,7 +84,7 @@ bool toolkit::update() {
 }
 
 void toolkit::modifyUeCachePath() {
-  auto ue_path = core_set::getSet().gettUe4Setting().Path() / "Engine/Config/BaseEngine.ini";
+  auto ue_path = core_set::getSet().get_ue4_setting().Path() / "Engine/Config/BaseEngine.ini";
   //做备份
   auto backup_path = FSys::path{ue_path}.replace_extension(".ini.backup");
   FSys::copy(ue_path, FSys::add_time_stamp(backup_path), FSys::copy_options::update_existing);

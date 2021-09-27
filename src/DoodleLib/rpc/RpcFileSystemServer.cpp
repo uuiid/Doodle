@@ -38,7 +38,7 @@ RpcFileSystemServer::RpcFileSystemServer()
 }
 
 grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
-  FSys::path k_path = p_set.getDataRoot() / request->path();
+  FSys::path k_path = p_set.get_data_root() / request->path();
   DOODLE_LOG_DEBUG(fmt::format("get info path: {}", k_path));
 
   auto k_ex = FSys::exists(k_path);
@@ -60,7 +60,7 @@ grpc::Status RpcFileSystemServer::GetInfo(grpc::ServerContext* context, const Fi
 }
 
 grpc::Status RpcFileSystemServer::IsExist(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
-  FSys::path k_path = p_set.getDataRoot() / request->path();
+  FSys::path k_path = p_set.get_data_root() / request->path();
   auto k_ex         = FSys::exists(k_path);
   response->set_exist(k_ex);
   DOODLE_LOG_DEBUG(fmt::format("get exist path: {}", k_path));
@@ -68,7 +68,7 @@ grpc::Status RpcFileSystemServer::IsExist(grpc::ServerContext* context, const Fi
 }
 
 grpc::Status RpcFileSystemServer::IsFolder(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
-  FSys::path k_path = p_set.getDataRoot() / request->path();
+  FSys::path k_path = p_set.get_data_root() / request->path();
   auto k_ex         = FSys::exists(k_path);
   response->set_exist(k_ex);
   if (!k_ex)
@@ -81,7 +81,7 @@ grpc::Status RpcFileSystemServer::IsFolder(grpc::ServerContext* context, const F
 }
 
 grpc::Status RpcFileSystemServer::GetSize(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
-  FSys::path k_path = p_set.getDataRoot() / request->path();
+  FSys::path k_path = p_set.get_data_root() / request->path();
   auto k_ex         = FSys::exists(k_path);
   response->set_exist(k_ex);
   if (!k_ex)
@@ -100,7 +100,7 @@ grpc::Status RpcFileSystemServer::GetSize(grpc::ServerContext* context, const Fi
 }
 
 grpc::Status RpcFileSystemServer::GetTimestamp(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
-  FSys::path k_path = p_set.getDataRoot() / request->path();
+  FSys::path k_path = p_set.get_data_root() / request->path();
   auto k_ex         = FSys::exists(k_path);
   response->set_exist(k_ex);
   if (!k_ex)
@@ -122,8 +122,8 @@ grpc::Status RpcFileSystemServer::GetTimestamp(grpc::ServerContext* context, con
 }
 
 grpc::Status RpcFileSystemServer::GetList(grpc::ServerContext* context, const FileInfo* request, grpc::ServerWriter<FileInfo>* writer) {
-  auto k_root       = p_set.getDataRoot();
-  FSys::path k_path = p_set.getDataRoot() / request->path();
+  auto k_root       = p_set.get_data_root();
+  FSys::path k_path = p_set.get_data_root() / request->path();
 
   DOODLE_LOG_DEBUG(fmt::format("list info path: {}", k_path));
 
@@ -147,7 +147,7 @@ grpc::Status RpcFileSystemServer::GetList(grpc::ServerContext* context, const Fi
 }
 
 grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const FileInfo* request, grpc::ServerWriter<FileStream>* writer) {
-  FSys::path k_path = p_set.getDataRoot() / request->path();
+  FSys::path k_path = p_set.get_data_root() / request->path();
   auto k_ex         = FSys::exists(k_path);
   auto k_dir        = FSys::is_directory(k_path);
   if (!k_ex || k_dir)
@@ -173,7 +173,7 @@ grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const F
     }
     //  std::istreambuf_iterator<char> k_iter{k_file};
 
-    auto s_size = core_set::getBlockSize();
+    auto s_size = core_set::get_block_size();
     FileStream k_stream{};
 
     while (k_file) {
@@ -196,7 +196,7 @@ grpc::Status RpcFileSystemServer::Download(grpc::ServerContext* context, const F
 grpc::Status RpcFileSystemServer::Upload(grpc::ServerContext* context, grpc::ServerReader<FileStream>* reader, FileInfo* response) {
   FileStream k_file_stream{};
   reader->Read(&k_file_stream);
-  FSys::path k_path = p_set.getDataRoot() / k_file_stream.info().path();
+  FSys::path k_path = p_set.get_data_root() / k_file_stream.info().path();
   auto k_ex         = FSys::exists(k_path.parent_path());
 
   DOODLE_LOG_DEBUG(fmt::format("upload path: {}", k_path));
@@ -240,7 +240,7 @@ grpc::Status RpcFileSystemServer::Move(grpc::ServerContext* context,
     return {grpc::StatusCode::CANCELLED, "传入参数无效, 必须来源路径"};
   }
 
-  FSys::path k_s = p_set.getDataRoot() / request->source().path();
+  FSys::path k_s = p_set.get_data_root() / request->source().path();
 
   if (!FSys::exists(k_s)) {
     DOODLE_LOG_WARN("来源路径不存在 {}", k_s)
@@ -250,9 +250,9 @@ grpc::Status RpcFileSystemServer::Move(grpc::ServerContext* context,
   FSys::path k_t{};
 
   if (request->has_target())
-    k_t = p_set.getDataRoot() / request->target().path();
+    k_t = p_set.get_data_root() / request->target().path();
   else
-    k_t = p_set.getCacheRoot("delete") / k_s.lexically_proximate(p_set.getCacheRoot());
+    k_t = p_set.get_cache_root("delete") / k_s.lexically_proximate(p_set.get_cache_root());
 
   if (!FSys::exists(k_t.parent_path()))
     FSys::create_directories(k_t.parent_path());
@@ -273,7 +273,7 @@ grpc::Status RpcFileSystemServer::Move(grpc::ServerContext* context,
   return grpc::Status::OK;
 }
 grpc::Status RpcFileSystemServer::GetHash(grpc::ServerContext* context, const FileInfo* request, FileInfo* response) {
-  auto k_path = p_set.getDataRoot() / request->path();
+  auto k_path = p_set.get_data_root() / request->path();
   if (FSys::exists(k_path) && FSys::is_regular_file(k_path)) {
     auto k_str = k_path.generic_string();
     auto k_m   = get_mutex(k_path);
