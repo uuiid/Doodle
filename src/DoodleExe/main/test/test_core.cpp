@@ -114,7 +114,7 @@ TEST_CASE("core create_path", "[fun][create_path]") {
   k_1->child_item.push_back_sig(k_2);
   auto k_3 = std::make_shared<Assets>(k_2, "eee");
   k_2->child_item.push_back_sig(k_3);
-  auto path = AssetsPath("D:/file/ex2.ma", k_3);
+  auto path = assets_path("D:/file/ex2.ma", k_3);
   SECTION("dir ") {
     REQUIRE(path.getLocalPath() == FSys::path{"D:/file/ex2.ma"});
     REQUIRE(path.getServerPath() == FSys::path{"ttt/ttt/eee/ex2.ma"});
@@ -125,7 +125,7 @@ TEST_CASE("core create_path", "[fun][create_path]") {
     REQUIRE(path.getServerPath() == FSys::path{"ttt/ttt/eee/ex2.ma"});
   }
   SECTION("ip path2") {
-    auto path2 = AssetsPath("//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma", k_3);
+    auto path2 = assets_path("//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma", k_3);
     k_1->setPath("//192.168.10.250/public/changanhuanjie");
     REQUIRE(path2.getLocalPath() == FSys::path{"//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma"});
     REQUIRE(path2.getServerPath() == FSys::path{"ttt/ttt/eee/Ch001A_Rig_lyq.ma"});

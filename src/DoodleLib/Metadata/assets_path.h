@@ -6,7 +6,7 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 
 namespace doodle {
-class DOODLELIB_API AssetsPath {
+class DOODLELIB_API assets_path {
   /**
    * @brief 上传时的本地路径
    *
@@ -29,13 +29,13 @@ class DOODLELIB_API AssetsPath {
   FSys::path p_backup_path;
 
  public:
-  AssetsPath();
+  assets_path();
   /**
    * @brief 生成一个类
    *
    * @param in_path 输入路径，这个会调用 AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
    */
-  explicit AssetsPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata);
+  explicit assets_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata);
 
   [[nodiscard]] const FSys::path &getLocalPath() const;
   [[nodiscard]] FSys::path get_cache_path() const;
@@ -69,7 +69,7 @@ class DOODLELIB_API AssetsPath {
 };
 
 template <class Archive>
-void AssetsPath::serialize(Archive &ar, const std::uint32_t version) {
+void assets_path::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
     ar &boost::serialization::make_nvp("path", p_local_path);
 
@@ -89,9 +89,9 @@ void AssetsPath::serialize(Archive &ar, const std::uint32_t version) {
 
 namespace fmt {
 template <>
-struct formatter<doodle::AssetsPath> : formatter<string_view> {
+struct formatter<doodle::assets_path> : formatter<string_view> {
   template <typename FormatContext>
-  auto format(const doodle::AssetsPath &in_, FormatContext &ctx) {
+  auto format(const doodle::assets_path &in_, FormatContext &ctx) {
     formatter<string_view>::format(
         in_.str(),
         ctx);
@@ -99,5 +99,5 @@ struct formatter<doodle::AssetsPath> : formatter<string_view> {
 };
 }  // namespace fmt
 
-BOOST_CLASS_VERSION(doodle::AssetsPath, 3)
-BOOST_CLASS_EXPORT_KEY(doodle::AssetsPath)
+BOOST_CLASS_VERSION(doodle::assets_path, 3)
+BOOST_CLASS_EXPORT_KEY(doodle::assets_path)

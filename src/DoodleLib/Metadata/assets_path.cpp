@@ -2,7 +2,7 @@
 // Created by TD on 2021/5/18.
 //
 
-#include "AssetsPath.h"
+#include "assets_path.h"
 
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Metadata/AssetsFile.h>
@@ -10,15 +10,15 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <Logger/Logger.h>
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::AssetsPath)
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path)
 namespace doodle {
-AssetsPath::AssetsPath()
+assets_path::assets_path()
     : p_local_path(),
       p_lexically_relative(),
       p_server_path(),
       p_backup_path("backup/") {
 }
-AssetsPath::AssetsPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
+assets_path::assets_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
     : p_local_path(),
       p_lexically_relative(),
       p_server_path(),
@@ -28,19 +28,19 @@ AssetsPath::AssetsPath(const FSys::path &in_path, const MetadataConstPtr &in_met
   else
     throw DoodleError{"空指针"};
 }
-const FSys::path &AssetsPath::getLocalPath() const {
+const FSys::path &assets_path::getLocalPath() const {
   return p_local_path;
 }
 
-const FSys::path &AssetsPath::getServerPath() const {
+const FSys::path &assets_path::getServerPath() const {
   return p_server_path;
 }
 
-const FSys::path &AssetsPath::getBackupPath() const {
+const FSys::path &assets_path::getBackupPath() const {
   return p_backup_path;
 }
 
-void AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata) {
+void assets_path::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata) {
   /// 这里使用树,向上寻找,组合路径
   MetadataConstPtr k_m{};
   if (details::is_class<AssetsFile>(in_metadata))
@@ -58,7 +58,7 @@ void AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_m
   setPath(in_path, k_path);
 }
 
-void AssetsPath::setPath(const FSys::path &in_local_path, const FSys::path &in_server_path) {
+void assets_path::setPath(const FSys::path &in_local_path, const FSys::path &in_server_path) {
   if (!FSys::exists(in_local_path))
     throw DoodleError{"不存在文件"};
   p_local_path           = in_local_path;
@@ -70,12 +70,12 @@ void AssetsPath::setPath(const FSys::path &in_local_path, const FSys::path &in_s
                   p_local_path, p_server_path, p_lexically_relative, p_backup_path);
 }
 
-std::string AssetsPath::str() const {
+std::string assets_path::str() const {
   return fmt::format("本地路径 {}\n服务器路径 {}",
                      p_local_path,
                      p_server_path);
 }
-FSys::path AssetsPath::get_cache_path() const {
+FSys::path assets_path::get_cache_path() const {
   auto k_path = CoreSet::getSet().getCacheRoot();
   k_path /= p_lexically_relative;
   return k_path;

@@ -50,7 +50,7 @@ set(
     Logger/LoggerTemplate.h
     Metadata/Assets.h
     Metadata/AssetsFile.h
-    Metadata/AssetsPath.h
+        Metadata/assets_path.h
         Metadata/comment.h
         Metadata/episodes.h
         Metadata/metadata.h
@@ -111,7 +111,7 @@ set(
     Logger/Logger.cpp
     Metadata/Assets.cpp
     Metadata/AssetsFile.cpp
-    Metadata/AssetsPath.cpp
+        Metadata/assets_path.cpp
         Metadata/comment.cpp
         Metadata/episodes.cpp
         Metadata/metadata.cpp

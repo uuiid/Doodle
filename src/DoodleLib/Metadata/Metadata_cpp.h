@@ -7,7 +7,7 @@
 
 #include <DoodleLib/Metadata/AssetsFile.h>
 #include <DoodleLib/Metadata/comment.h>
-#include <DoodleLib/Metadata/AssetsPath.h>
+#include <DoodleLib/Metadata/assets_path.h>
 
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/season.h>

@@ -3,7 +3,7 @@
 //
 
 #include <DoodleLib/Metadata/AssetsFile.h>
-#include <DoodleLib/Metadata/AssetsPath.h>
+#include <DoodleLib/Metadata/assets_path.h>
 #include <DoodleLib/Metadata/comment.h>
 #include <core/CoreSet.h>
 ///这个工厂类必须在所有导入的后面
@@ -37,7 +37,7 @@ AssetsFile::AssetsFile(std::weak_ptr<metadata> in_metadata, std::string showName
     : metadata(in_metadata),
       p_name(std::move(name)),
       p_ShowName(std::move(showName)),
-      p_path_file(new_object<AssetsPath>()),
+      p_path_file(new_object<assets_path>()),
       p_path_files(),
       p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
       p_user(CoreSet::getSet().getUser()),
