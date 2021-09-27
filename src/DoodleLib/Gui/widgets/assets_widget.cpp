@@ -42,16 +42,15 @@ void assets_widget::load_meta(const MetadataPtr& in_ptr) {
       if (p_meta == i)
         flsge |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
 
-      if (i->has_file())
-        imgui::Bullet();
-      if (i->hasChild()) {
+      if (i->hasChild() || i->has_file()) {
         dear::TreeNodeEx{
             i->getUUID().c_str(),
             flsge,
             i->showStr().c_str()} &&
             [i, this]() {
               // imgui::SameLine();
-
+              if (i->has_file())
+                imgui::BulletText("files");
               if (imgui::IsItemClicked())
                 set_select(i);
               load_meta(i);

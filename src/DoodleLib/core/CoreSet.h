@@ -159,6 +159,13 @@ void CoreSet::serialize(Archive &ar, std::uint32_t const version) {
         boost::serialization::make_nvp("department", p_department_) &
         boost::serialization::make_nvp("ue4_setting", p_ue4_setting) &
         boost::serialization::make_nvp("maya_Path", p_mayaPath);
+  if (version == 8)
+    ar &
+            boost::serialization::make_nvp("user", p_user_) &
+        boost::serialization::make_nvp("department", p_department_) &
+        boost::serialization::make_nvp("ue4_setting", p_ue4_setting) &
+        boost::serialization::make_nvp("maya_Path", p_mayaPath) &
+        boost::serialization::make_nvp("p_max_thread", p_max_thread);
 }
 
 }  // namespace doodle
@@ -172,5 +179,5 @@ void load_minimal(Archive const &, doodle::Department &department, std::string c
   department = magic_enum::enum_cast<doodle::Department>(value).value_or(doodle::Department::None_);
 };
 }  // namespace cereal
-BOOST_CLASS_VERSION(doodle::CoreSet, 7);
+BOOST_CLASS_VERSION(doodle::CoreSet, 8);
 BOOST_CLASS_EXPORT_KEY(doodle::CoreSet);

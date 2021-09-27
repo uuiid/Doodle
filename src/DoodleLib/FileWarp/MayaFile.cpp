@@ -56,55 +56,94 @@ bool MayaFile::checkFile() {
 bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term) {
   boost::process::ipstream k_in{};
   boost::process::ipstream k_in2{};
+
+  // boost::asio::io_context ios{};
+  // std::vector<char> v_out(128 << 10);
+  // auto out_buff{boost::asio::buffer(v_out)};
+  // boost::process::async_pipe pip_out{ios};
+
+  // std::function<void(const boost::system::error_code& ec, std::size_t n)> on_sut;
+
+  // on_sut = [&in_term, &v_out, &pip_out, &out_buff, &on_sut](const boost::system::error_code& ec, std::size_t n) {
+  //   in_term->sig_message_result(string{v_out.begin(), v_out.begin() + n}, long_term::warning);
+  //   if (!ec) {
+  //     boost::asio::async_read(pip_out, out_buff, on_sut);
+  //   }
+  // };
+
+  // std::vector<char> v_err(128 << 10);
+  // auto err_buff{boost::asio::buffer(v_err)};
+  // boost::process::async_pipe pip_err{ios};
+  // std::function<void(const boost::system::error_code& ec, std::size_t n)> on_err;
+  // on_err = [&in_term, &v_err, &pip_err, &err_buff, &on_err](const boost::system::error_code& ec, std::size_t n) {
+  //   in_term->sig_message_result(string{v_err.begin(), v_err.begin() + n}, long_term::level::info);
+  //   if (!ec) {
+  //     boost::asio::async_read(pip_err, err_buff, on_err);
+  //   }
+  // };
+
   //   boost::process::child k_c{str.str(), boost::process::windows::hide};
   //   auto com = fmt::format(LR"(cmd.exe /c "{}")",in_com);
   DOODLE_LOG_INFO("命令 {}", boost::locale::conv::utf_to_utf<char>(in_com));
   boost::process::child k_c{
       boost::process::cmd = in_com,
       boost::process::std_out > k_in,
-      boost::process::std_err > k_in2,
-      boost::process::std_in.close()
+      boost::process::std_err > k_in2
 #ifdef _WIN32
-          ,
+      ,
       boost::process::windows::hide
 #endif  //_WIN32
   };
 
-  auto fun    = std::async(std::launch::async,
-                        [&k_c, &k_in, &in_term]() {
+  // boost::asio::async_read(pip_err, err_buff, on_err);
+  // boost::asio::async_read(pip_out, out_buff, on_sut);
+  // ios.run();
+  // k_c.wait();
+  // return k_c.exit_code() == 0;
+  std::atomic_bool p_run{true};
+  auto fun  = std::async(std::launch::async,
+                        [&k_c, &k_in, &in_term, &p_run]() {
                           auto str_r = std::string{};
-                          while (k_c.running()) {
+                          while (p_run) {
                             if (std::getline(k_in, str_r) && !str_r.empty()) {
                               in_term->sig_message_result(conv::to_utf<char>(str_r, "GBK") + "\n", long_term::warning);
                               in_term->sig_progress(rational_int{1, 50});
                             }
                           }
                         });
-  auto str_r2 = std::string{};
-  //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
-  const static std::wregex fatal_error_znch{
-      LR"(致命错误.尝试在 C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab] 中保存)"};
+  auto fun2 = std::async(std::launch::async,
+                         [&k_c, &k_in2, &in_term, &in_com, &p_run]() {
+                           auto str_r2 = std::string{};
+                           //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
+                           const static std::wregex fatal_error_znch{
+                               LR"(致命错误.尝试在 C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab] 中保存)"};
 
-  // Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
-  const static std::wregex fatal_error_en_us{
-      LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab])"};
+                           // Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
+                           const static std::wregex fatal_error_en_us{
+                               LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab])"};
 
-  while (k_c.running()) {
-    if (std::getline(k_in2, str_r2) && !str_r2.empty()) {
-      auto str = conv::to_utf<char>(str_r2, "GBK");
-      in_term->sig_message_result(str + "\n", long_term::info);
-      auto wstr = conv::utf_to_utf<wchar_t>(str);
-      if (std::regex_search(wstr.c_str(), fatal_error_znch) || std::regex_search(wstr.c_str(), fatal_error_en_us)) {
-        auto info_str = fmt::format("检测到maya结束崩溃,结束进程: 解算命令是 {}", conv::utf_to_utf<char>(in_com));
-        DOODLE_LOG_WARN(info_str);
-        in_term->sig_message_result(info_str, long_term::warning);
-        boost::process::system(fmt::format("taskkill /F /T /PID {}", k_c.id()));
-        in_term->set_state(long_term::fail);
-      }
-      in_term->sig_progress(rational_int{1, 5000});
-    }
+                           while (p_run) {
+                             if (std::getline(k_in2, str_r2) && !str_r2.empty()) {
+                               auto str = conv::to_utf<char>(str_r2, "GBK");
+                               in_term->sig_message_result(str + "\n", long_term::info);
+                               auto wstr = conv::utf_to_utf<wchar_t>(str);
+                               if (std::regex_search(wstr.c_str(), fatal_error_znch) || std::regex_search(wstr.c_str(), fatal_error_en_us)) {
+                                 auto info_str = fmt::format("检测到maya结束崩溃,结束进程: 解算命令是 {}", conv::utf_to_utf<char>(in_com));
+                                 DOODLE_LOG_WARN(info_str);
+                                 in_term->sig_message_result(info_str, long_term::warning);
+                                 boost::process::system(fmt::format("taskkill /F /T /PID {}", k_c.id()));
+                                 in_term->set_state(long_term::fail);
+                               }
+                               in_term->sig_progress(rational_int{1, 5000});
+                             }
+                           }
+                         });
+  using namespace chrono;
+  while (!k_c.wait_for(1s)) {
   }
-  fun.get();
+  p_run = false;
+  k_in2.close();
+  // fun2.get();
   return true;
 }
 
@@ -190,7 +229,7 @@ void MayaFile::qcloth_sim_file(const qcloth_arg_ptr& in_arg,
       run_path.generic_string());
   if (in_ptr)
     in_ptr->sig_progress(rational_int{1, 40});
-  this->run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr);
+  run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr);
   if (in_ptr) {
     in_ptr->sig_progress(rational_int{1, 40});
     in_ptr->sig_finished();
@@ -204,12 +243,13 @@ bool MayaFile::is_maya_file(const FSys::path& in_path) {
 }
 
 maya_file_async::maya_file_async()
-    : p_maya_file(std::make_shared<MayaFile>()) {}
+    : p_maya_file() {}
 
 long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, const FSys::path& export_path) {
+  p_maya_file = std::make_shared<MayaFile>();
   auto k_term = new_object<long_term>();
   k_term->set_name(file_path.filename().generic_string());
-  auto k_f    = DoodleLib::Get().get_thread_pool()->enqueue(
+  auto k_f = DoodleLib::Get().get_thread_pool()->enqueue(
       [self = p_maya_file, file_path, export_path, k_term]() {
         self->exportFbxFile(file_path, export_path, k_term);
       });
@@ -217,9 +257,10 @@ long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, cons
   return k_term;
 }
 long_term_ptr maya_file_async::qcloth_sim_file(MayaFile::qcloth_arg_ptr& in_arg) {
+  p_maya_file = std::make_shared<MayaFile>();
   auto k_term = new_object<long_term>();
-    k_term->set_name(in_arg->sim_path.filename().generic_string());
-  auto k_f    = DoodleLib::Get().get_thread_pool()->enqueue(
+  k_term->set_name(in_arg->sim_path.filename().generic_string());
+  auto k_f = DoodleLib::Get().get_thread_pool()->enqueue(
       [self = p_maya_file, in_arg, k_term]() {
         self->qcloth_sim_file(in_arg, k_term);
       });
