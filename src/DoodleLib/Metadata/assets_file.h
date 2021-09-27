@@ -74,7 +74,7 @@ class DOODLELIB_API assets_file : public metadata {
   bool operator<=(const assets_file& in_rhs) const;
   bool operator>=(const assets_file& in_rhs) const;
 
-  virtual void to_DataDb(DataDb& in_) const override;
+  virtual void to_DataDb(metadata_database& in_) const override;
 
  private:
   friend class boost::serialization::access;

@@ -5,7 +5,7 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/generate/rpc/FileSystemServer.grpc.pb.h>
+#include <DoodleLib/generate/rpc/file_system_server.grpc.pb.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 #include <DoodleLib/rpc/rpc_trans_path.h>
 #include <DoodleLib/threadPool/thread_pool.h>
@@ -120,7 +120,7 @@ class DOODLELIB_API rpc_file_system_client : public details::no_copy {
   using trans_file_ptr = std::shared_ptr<rpc_trans::trans_file>;
 
  protected:
-  std::unique_ptr<FileSystemServer::Stub> p_stub;
+  std::unique_ptr<file_system_server::Stub> p_stub;
   std::recursive_mutex p_mutex;
   // std::shared_ptr<grpc::Channel> p_channel;
   /**

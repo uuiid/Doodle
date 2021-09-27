@@ -281,15 +281,15 @@ void metadata::add_child(const MetadataPtr &val) {
 
   DOODLE_LOG_INFO(fmt::format("插入子数据： {}", val->show_str()))
 }
-metadata::operator DataDb() const {
-  DataDb k_tmp{};
+metadata::operator metadata_database() const {
+  metadata_database k_tmp{};
   this->to_DataDb(k_tmp);
   return k_tmp;
 }
 
-void metadata::to_DataDb(DataDb &in_) const {
+void metadata::to_DataDb(metadata_database &in_) const {
   in_.set_id(p_id);
-  in_.set_uuidpath(get_url_uuid().generic_string());
+  in_.set_uuid_path(get_url_uuid().generic_string());
   if (has_parent() && (p_updata_parent_id || p_id == 0))
     in_.mutable_parent()->set_value(*p_parent_id);
 
@@ -309,9 +309,9 @@ void metadata::to_DataDb(DataDb &in_) const {
   }
 
   if (p_updata_type || p_id == 0)
-    in_.mutable_m_type()->set_value(magic_enum::enum_cast<doodle::DataDb::meta_type>(get_meta_type_int()).value());
+    in_.mutable_m_type()->set_value(magic_enum::enum_cast<doodle::metadata_database::meta_type>(get_meta_type_int()).value());
 }
-MetadataPtr metadata::from_DataDb(const DataDb &in_) {
+MetadataPtr metadata::from_DataDb(const metadata_database &in_) {
   MetadataPtr k_ptr{};
   try {
     auto k_data = in_.metadata_cereal().value();

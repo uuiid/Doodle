@@ -9,7 +9,7 @@
 
 #include <google/protobuf/parse_context.h>
 
-#include <DoodleLib/generate/rpc/FileSystemServer.grpc.pb.h>
-#include <DoodleLib/generate/rpc/MetadataServer.grpc.pb.h>
+#include <DoodleLib/generate/rpc/file_system_server.grpc.pb.h>
+#include <DoodleLib/generate/rpc/metadata_server.grpc.pb.h>
 
 #pragma warning(pop)

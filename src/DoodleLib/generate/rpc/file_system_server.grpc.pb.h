@@ -28,149 +28,149 @@
 
 namespace doodle {
 
-class FileSystemServer final {
+class file_system_server final {
  public:
   static constexpr char const* service_full_name() {
-    return "doodle.FileSystemServer";
+    return "doodle.file_system_server";
   }
   class StubInterface {
    public:
     virtual ~StubInterface() {}
-    virtual ::grpc::Status GetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> AsyncGetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(AsyncGetInfoRaw(context, request, cq));
+    virtual ::grpc::Status get_info(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> Asyncget_info(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(Asyncget_infoRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncGetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncGetInfoRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncget_info(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncget_infoRaw(context, request, cq));
     }
-    virtual ::grpc::Status GetHash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> AsyncGetHash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(AsyncGetHashRaw(context, request, cq));
+    virtual ::grpc::Status get_hash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> Asyncget_hash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(Asyncget_hashRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncGetHash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncGetHashRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncget_hash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncget_hashRaw(context, request, cq));
     }
-    virtual ::grpc::Status IsExist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> AsyncIsExist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(AsyncIsExistRaw(context, request, cq));
+    virtual ::grpc::Status is_exist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> Asyncis_exist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(Asyncis_existRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncIsExist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncIsExistRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncis_exist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncis_existRaw(context, request, cq));
     }
-    virtual ::grpc::Status GetSize(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> AsyncGetSize(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(AsyncGetSizeRaw(context, request, cq));
+    virtual ::grpc::Status get_size(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> Asyncget_size(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(Asyncget_sizeRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncGetSize(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncGetSizeRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncget_size(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncget_sizeRaw(context, request, cq));
     }
-    virtual ::grpc::Status IsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> AsyncIsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(AsyncIsFolderRaw(context, request, cq));
+    virtual ::grpc::Status is_folder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> Asyncis_folder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(Asyncis_folderRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncIsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncIsFolderRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncis_folder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncis_folderRaw(context, request, cq));
     }
-    virtual ::grpc::Status GetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> AsyncGetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(AsyncGetTimestampRaw(context, request, cq));
+    virtual ::grpc::Status get_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> Asyncget_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(Asyncget_timestampRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncGetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncGetTimestampRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncget_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncget_timestampRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientReaderInterface< ::doodle::file_info_server>> GetList(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
-      return std::unique_ptr< ::grpc::ClientReaderInterface< ::doodle::file_info_server>>(GetListRaw(context, request));
+    std::unique_ptr< ::grpc::ClientReaderInterface< ::doodle::file_info_server>> get_list(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
+      return std::unique_ptr< ::grpc::ClientReaderInterface< ::doodle::file_info_server>>(get_listRaw(context, request));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>> AsyncGetList(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>>(AsyncGetListRaw(context, request, cq, tag));
+    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>> Asyncget_list(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>>(Asyncget_listRaw(context, request, cq, tag));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>> PrepareAsyncGetList(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>>(PrepareAsyncGetListRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>> PrepareAsyncget_list(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>>(PrepareAsyncget_listRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientReaderInterface< ::doodle::file_stream_server>> Download(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
-      return std::unique_ptr< ::grpc::ClientReaderInterface< ::doodle::file_stream_server>>(DownloadRaw(context, request));
+    std::unique_ptr< ::grpc::ClientReaderInterface< ::doodle::file_stream_server>> download(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
+      return std::unique_ptr< ::grpc::ClientReaderInterface< ::doodle::file_stream_server>>(downloadRaw(context, request));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>> AsyncDownload(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>>(AsyncDownloadRaw(context, request, cq, tag));
+    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>> Asyncdownload(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>>(AsyncdownloadRaw(context, request, cq, tag));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>> PrepareAsyncDownload(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>>(PrepareAsyncDownloadRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>> PrepareAsyncdownload(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>>(PrepareAsyncdownloadRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientWriterInterface< ::doodle::file_stream_server>> Upload(::grpc::ClientContext* context, ::doodle::file_info_server* response) {
-      return std::unique_ptr< ::grpc::ClientWriterInterface< ::doodle::file_stream_server>>(UploadRaw(context, response));
+    std::unique_ptr< ::grpc::ClientWriterInterface< ::doodle::file_stream_server>> upload(::grpc::ClientContext* context, ::doodle::file_info_server* response) {
+      return std::unique_ptr< ::grpc::ClientWriterInterface< ::doodle::file_stream_server>>(uploadRaw(context, response));
     }
-    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>> AsyncUpload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>>(AsyncUploadRaw(context, response, cq, tag));
+    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>> Asyncupload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>>(AsyncuploadRaw(context, response, cq, tag));
     }
-    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>> PrepareAsyncUpload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>>(PrepareAsyncUploadRaw(context, response, cq));
+    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>> PrepareAsyncupload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>>(PrepareAsyncuploadRaw(context, response, cq));
     }
-    virtual ::grpc::Status Move(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::doodle::file_info_server* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> AsyncMove(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(AsyncMoveRaw(context, request, cq));
+    virtual ::grpc::Status move(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::doodle::file_info_server* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> Asyncmove(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(AsyncmoveRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncMove(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncMoveRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>> PrepareAsyncmove(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>>(PrepareAsyncmoveRaw(context, request, cq));
     }
     class experimental_async_interface {
      public:
       virtual ~experimental_async_interface() {}
-      virtual void GetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void get_info(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void GetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void get_info(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
-      virtual void GetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void get_info(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      virtual void GetHash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void get_hash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void GetHash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void get_hash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
-      virtual void GetHash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void get_hash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      virtual void IsExist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void is_exist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void IsExist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void is_exist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
-      virtual void IsExist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void is_exist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      virtual void GetSize(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void get_size(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void GetSize(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void get_size(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
-      virtual void GetSize(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void get_size(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      virtual void IsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void is_folder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void IsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void is_folder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
-      virtual void IsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void is_folder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      virtual void GetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void get_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void GetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void get_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
-      virtual void GetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void GetList(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::ClientReadReactor< ::doodle::file_info_server>* reactor) = 0;
-      #else
-      virtual void GetList(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_info_server>* reactor) = 0;
+      virtual void get_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void Download(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::ClientReadReactor< ::doodle::file_stream_server>* reactor) = 0;
+      virtual void get_list(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::ClientReadReactor< ::doodle::file_info_server>* reactor) = 0;
       #else
-      virtual void Download(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_stream_server>* reactor) = 0;
+      virtual void get_list(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_info_server>* reactor) = 0;
       #endif
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void Upload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::ClientWriteReactor< ::doodle::file_stream_server>* reactor) = 0;
+      virtual void download(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::ClientReadReactor< ::doodle::file_stream_server>* reactor) = 0;
       #else
-      virtual void Upload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::experimental::ClientWriteReactor< ::doodle::file_stream_server>* reactor) = 0;
+      virtual void download(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_stream_server>* reactor) = 0;
       #endif
-      virtual void Move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void Move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void upload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::ClientWriteReactor< ::doodle::file_stream_server>* reactor) = 0;
       #else
-      virtual void Move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void upload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::experimental::ClientWriteReactor< ::doodle::file_stream_server>* reactor) = 0;
+      #endif
+      virtual void move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
+      virtual void move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
     };
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
@@ -181,168 +181,168 @@ class FileSystemServer final {
     #endif
     virtual class experimental_async_interface* experimental_async() { return nullptr; }
   private:
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* AsyncGetInfoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncGetInfoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* AsyncGetHashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncGetHashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* AsyncIsExistRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncIsExistRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* AsyncGetSizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncGetSizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* AsyncIsFolderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncIsFolderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* AsyncGetTimestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncGetTimestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientReaderInterface< ::doodle::file_info_server>* GetListRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) = 0;
-    virtual ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>* AsyncGetListRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) = 0;
-    virtual ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>* PrepareAsyncGetListRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientReaderInterface< ::doodle::file_stream_server>* DownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) = 0;
-    virtual ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>* AsyncDownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) = 0;
-    virtual ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>* PrepareAsyncDownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientWriterInterface< ::doodle::file_stream_server>* UploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response) = 0;
-    virtual ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>* AsyncUploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq, void* tag) = 0;
-    virtual ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>* PrepareAsyncUploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* AsyncMoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncMoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* Asyncget_infoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncget_infoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* Asyncget_hashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncget_hashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* Asyncis_existRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncis_existRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* Asyncget_sizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncget_sizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* Asyncis_folderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncis_folderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* Asyncget_timestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncget_timestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientReaderInterface< ::doodle::file_info_server>* get_listRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) = 0;
+    virtual ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>* Asyncget_listRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncReaderInterface< ::doodle::file_info_server>* PrepareAsyncget_listRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientReaderInterface< ::doodle::file_stream_server>* downloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) = 0;
+    virtual ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>* AsyncdownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncReaderInterface< ::doodle::file_stream_server>* PrepareAsyncdownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientWriterInterface< ::doodle::file_stream_server>* uploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response) = 0;
+    virtual ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>* AsyncuploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncWriterInterface< ::doodle::file_stream_server>* PrepareAsyncuploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* AsyncmoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::file_info_server>* PrepareAsyncmoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) = 0;
   };
   class Stub final : public StubInterface {
    public:
     Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel);
-    ::grpc::Status GetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> AsyncGetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(AsyncGetInfoRaw(context, request, cq));
+    ::grpc::Status get_info(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> Asyncget_info(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(Asyncget_infoRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncGetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncGetInfoRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncget_info(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncget_infoRaw(context, request, cq));
     }
-    ::grpc::Status GetHash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> AsyncGetHash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(AsyncGetHashRaw(context, request, cq));
+    ::grpc::Status get_hash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> Asyncget_hash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(Asyncget_hashRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncGetHash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncGetHashRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncget_hash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncget_hashRaw(context, request, cq));
     }
-    ::grpc::Status IsExist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> AsyncIsExist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(AsyncIsExistRaw(context, request, cq));
+    ::grpc::Status is_exist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> Asyncis_exist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(Asyncis_existRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncIsExist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncIsExistRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncis_exist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncis_existRaw(context, request, cq));
     }
-    ::grpc::Status GetSize(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> AsyncGetSize(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(AsyncGetSizeRaw(context, request, cq));
+    ::grpc::Status get_size(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> Asyncget_size(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(Asyncget_sizeRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncGetSize(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncGetSizeRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncget_size(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncget_sizeRaw(context, request, cq));
     }
-    ::grpc::Status IsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> AsyncIsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(AsyncIsFolderRaw(context, request, cq));
+    ::grpc::Status is_folder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> Asyncis_folder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(Asyncis_folderRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncIsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncIsFolderRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncis_folder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncis_folderRaw(context, request, cq));
     }
-    ::grpc::Status GetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> AsyncGetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(AsyncGetTimestampRaw(context, request, cq));
+    ::grpc::Status get_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> Asyncget_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(Asyncget_timestampRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncGetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncGetTimestampRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncget_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncget_timestampRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientReader< ::doodle::file_info_server>> GetList(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
-      return std::unique_ptr< ::grpc::ClientReader< ::doodle::file_info_server>>(GetListRaw(context, request));
+    std::unique_ptr< ::grpc::ClientReader< ::doodle::file_info_server>> get_list(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
+      return std::unique_ptr< ::grpc::ClientReader< ::doodle::file_info_server>>(get_listRaw(context, request));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_info_server>> AsyncGetList(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_info_server>>(AsyncGetListRaw(context, request, cq, tag));
+    std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_info_server>> Asyncget_list(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_info_server>>(Asyncget_listRaw(context, request, cq, tag));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_info_server>> PrepareAsyncGetList(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_info_server>>(PrepareAsyncGetListRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_info_server>> PrepareAsyncget_list(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_info_server>>(PrepareAsyncget_listRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientReader< ::doodle::file_stream_server>> Download(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
-      return std::unique_ptr< ::grpc::ClientReader< ::doodle::file_stream_server>>(DownloadRaw(context, request));
+    std::unique_ptr< ::grpc::ClientReader< ::doodle::file_stream_server>> download(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
+      return std::unique_ptr< ::grpc::ClientReader< ::doodle::file_stream_server>>(downloadRaw(context, request));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_stream_server>> AsyncDownload(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_stream_server>>(AsyncDownloadRaw(context, request, cq, tag));
+    std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_stream_server>> Asyncdownload(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_stream_server>>(AsyncdownloadRaw(context, request, cq, tag));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_stream_server>> PrepareAsyncDownload(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_stream_server>>(PrepareAsyncDownloadRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_stream_server>> PrepareAsyncdownload(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::file_stream_server>>(PrepareAsyncdownloadRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientWriter< ::doodle::file_stream_server>> Upload(::grpc::ClientContext* context, ::doodle::file_info_server* response) {
-      return std::unique_ptr< ::grpc::ClientWriter< ::doodle::file_stream_server>>(UploadRaw(context, response));
+    std::unique_ptr< ::grpc::ClientWriter< ::doodle::file_stream_server>> upload(::grpc::ClientContext* context, ::doodle::file_info_server* response) {
+      return std::unique_ptr< ::grpc::ClientWriter< ::doodle::file_stream_server>>(uploadRaw(context, response));
     }
-    std::unique_ptr< ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>> AsyncUpload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>>(AsyncUploadRaw(context, response, cq, tag));
+    std::unique_ptr< ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>> Asyncupload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>>(AsyncuploadRaw(context, response, cq, tag));
     }
-    std::unique_ptr< ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>> PrepareAsyncUpload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>>(PrepareAsyncUploadRaw(context, response, cq));
+    std::unique_ptr< ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>> PrepareAsyncupload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>>(PrepareAsyncuploadRaw(context, response, cq));
     }
-    ::grpc::Status Move(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::doodle::file_info_server* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> AsyncMove(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(AsyncMoveRaw(context, request, cq));
+    ::grpc::Status move(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::doodle::file_info_server* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> Asyncmove(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(AsyncmoveRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncMove(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncMoveRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>> PrepareAsyncmove(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>>(PrepareAsyncmoveRaw(context, request, cq));
     }
     class experimental_async final :
       public StubInterface::experimental_async_interface {
      public:
-      void GetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
+      void get_info(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void GetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void get_info(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
-      void GetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void get_info(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      void GetHash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
+      void get_hash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void GetHash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void get_hash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
-      void GetHash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void get_hash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      void IsExist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
+      void is_exist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void IsExist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void is_exist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
-      void IsExist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void is_exist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      void GetSize(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
+      void get_size(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void GetSize(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void get_size(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
-      void GetSize(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void get_size(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      void IsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
+      void is_folder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void IsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void is_folder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
-      void IsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void is_folder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      void GetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
+      void get_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void GetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void get_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
-      void GetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void GetList(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::ClientReadReactor< ::doodle::file_info_server>* reactor) override;
-      #else
-      void GetList(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_info_server>* reactor) override;
+      void get_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void Download(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::ClientReadReactor< ::doodle::file_stream_server>* reactor) override;
+      void get_list(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::ClientReadReactor< ::doodle::file_info_server>* reactor) override;
       #else
-      void Download(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_stream_server>* reactor) override;
+      void get_list(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_info_server>* reactor) override;
       #endif
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void Upload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::ClientWriteReactor< ::doodle::file_stream_server>* reactor) override;
+      void download(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::ClientReadReactor< ::doodle::file_stream_server>* reactor) override;
       #else
-      void Upload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::experimental::ClientWriteReactor< ::doodle::file_stream_server>* reactor) override;
+      void download(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_stream_server>* reactor) override;
       #endif
-      void Move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void Move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void upload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::ClientWriteReactor< ::doodle::file_stream_server>* reactor) override;
       #else
-      void Move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void upload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::experimental::ClientWriteReactor< ::doodle::file_stream_server>* reactor) override;
+      #endif
+      void move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
+      void move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
      private:
       friend class Stub;
@@ -355,39 +355,39 @@ class FileSystemServer final {
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
     class experimental_async async_stub_{this};
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* AsyncGetInfoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncGetInfoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* AsyncGetHashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncGetHashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* AsyncIsExistRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncIsExistRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* AsyncGetSizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncGetSizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* AsyncIsFolderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncIsFolderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* AsyncGetTimestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncGetTimestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientReader< ::doodle::file_info_server>* GetListRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) override;
-    ::grpc::ClientAsyncReader< ::doodle::file_info_server>* AsyncGetListRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) override;
-    ::grpc::ClientAsyncReader< ::doodle::file_info_server>* PrepareAsyncGetListRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientReader< ::doodle::file_stream_server>* DownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) override;
-    ::grpc::ClientAsyncReader< ::doodle::file_stream_server>* AsyncDownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) override;
-    ::grpc::ClientAsyncReader< ::doodle::file_stream_server>* PrepareAsyncDownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientWriter< ::doodle::file_stream_server>* UploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response) override;
-    ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>* AsyncUploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq, void* tag) override;
-    ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>* PrepareAsyncUploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* AsyncMoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncMoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) override;
-    const ::grpc::internal::RpcMethod rpcmethod_GetInfo_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetHash_;
-    const ::grpc::internal::RpcMethod rpcmethod_IsExist_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetSize_;
-    const ::grpc::internal::RpcMethod rpcmethod_IsFolder_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetTimestamp_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetList_;
-    const ::grpc::internal::RpcMethod rpcmethod_Download_;
-    const ::grpc::internal::RpcMethod rpcmethod_Upload_;
-    const ::grpc::internal::RpcMethod rpcmethod_Move_;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* Asyncget_infoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncget_infoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* Asyncget_hashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncget_hashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* Asyncis_existRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncis_existRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* Asyncget_sizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncget_sizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* Asyncis_folderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncis_folderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* Asyncget_timestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncget_timestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientReader< ::doodle::file_info_server>* get_listRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) override;
+    ::grpc::ClientAsyncReader< ::doodle::file_info_server>* Asyncget_listRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncReader< ::doodle::file_info_server>* PrepareAsyncget_listRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientReader< ::doodle::file_stream_server>* downloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) override;
+    ::grpc::ClientAsyncReader< ::doodle::file_stream_server>* AsyncdownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncReader< ::doodle::file_stream_server>* PrepareAsyncdownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientWriter< ::doodle::file_stream_server>* uploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response) override;
+    ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>* AsyncuploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncWriter< ::doodle::file_stream_server>* PrepareAsyncuploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* AsyncmoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* PrepareAsyncmoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) override;
+    const ::grpc::internal::RpcMethod rpcmethod_get_info_;
+    const ::grpc::internal::RpcMethod rpcmethod_get_hash_;
+    const ::grpc::internal::RpcMethod rpcmethod_is_exist_;
+    const ::grpc::internal::RpcMethod rpcmethod_get_size_;
+    const ::grpc::internal::RpcMethod rpcmethod_is_folder_;
+    const ::grpc::internal::RpcMethod rpcmethod_get_timestamp_;
+    const ::grpc::internal::RpcMethod rpcmethod_get_list_;
+    const ::grpc::internal::RpcMethod rpcmethod_download_;
+    const ::grpc::internal::RpcMethod rpcmethod_upload_;
+    const ::grpc::internal::RpcMethod rpcmethod_move_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
 
@@ -395,224 +395,224 @@ class FileSystemServer final {
    public:
     Service();
     virtual ~Service();
-    virtual ::grpc::Status GetInfo(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
-    virtual ::grpc::Status GetHash(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
-    virtual ::grpc::Status IsExist(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
-    virtual ::grpc::Status GetSize(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
-    virtual ::grpc::Status IsFolder(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
-    virtual ::grpc::Status GetTimestamp(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
-    virtual ::grpc::Status GetList(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::grpc::ServerWriter< ::doodle::file_info_server>* writer);
-    virtual ::grpc::Status Download(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::grpc::ServerWriter< ::doodle::file_stream_server>* writer);
-    virtual ::grpc::Status Upload(::grpc::ServerContext* context, ::grpc::ServerReader< ::doodle::file_stream_server>* reader, ::doodle::file_info_server* response);
-    virtual ::grpc::Status Move(::grpc::ServerContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response);
+    virtual ::grpc::Status get_info(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
+    virtual ::grpc::Status get_hash(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
+    virtual ::grpc::Status is_exist(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
+    virtual ::grpc::Status get_size(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
+    virtual ::grpc::Status is_folder(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
+    virtual ::grpc::Status get_timestamp(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response);
+    virtual ::grpc::Status get_list(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::grpc::ServerWriter< ::doodle::file_info_server>* writer);
+    virtual ::grpc::Status download(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::grpc::ServerWriter< ::doodle::file_stream_server>* writer);
+    virtual ::grpc::Status upload(::grpc::ServerContext* context, ::grpc::ServerReader< ::doodle::file_stream_server>* reader, ::doodle::file_info_server* response);
+    virtual ::grpc::Status move(::grpc::ServerContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response);
   };
   template <class BaseClass>
-  class WithAsyncMethod_GetInfo : public BaseClass {
+  class WithAsyncMethod_get_info : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithAsyncMethod_GetInfo() {
+    WithAsyncMethod_get_info() {
       ::grpc::Service::MarkMethodAsync(0);
     }
-    ~WithAsyncMethod_GetInfo() override {
+    ~WithAsyncMethod_get_info() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetInfo(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_info(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestGetInfo(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestget_info(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(0, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithAsyncMethod_GetHash : public BaseClass {
+  class WithAsyncMethod_get_hash : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithAsyncMethod_GetHash() {
+    WithAsyncMethod_get_hash() {
       ::grpc::Service::MarkMethodAsync(1);
     }
-    ~WithAsyncMethod_GetHash() override {
+    ~WithAsyncMethod_get_hash() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetHash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_hash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestGetHash(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestget_hash(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithAsyncMethod_IsExist : public BaseClass {
+  class WithAsyncMethod_is_exist : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithAsyncMethod_IsExist() {
+    WithAsyncMethod_is_exist() {
       ::grpc::Service::MarkMethodAsync(2);
     }
-    ~WithAsyncMethod_IsExist() override {
+    ~WithAsyncMethod_is_exist() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status IsExist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_exist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestIsExist(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestis_exist(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithAsyncMethod_GetSize : public BaseClass {
+  class WithAsyncMethod_get_size : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithAsyncMethod_GetSize() {
+    WithAsyncMethod_get_size() {
       ::grpc::Service::MarkMethodAsync(3);
     }
-    ~WithAsyncMethod_GetSize() override {
+    ~WithAsyncMethod_get_size() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetSize(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_size(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestGetSize(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestget_size(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithAsyncMethod_IsFolder : public BaseClass {
+  class WithAsyncMethod_is_folder : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithAsyncMethod_IsFolder() {
+    WithAsyncMethod_is_folder() {
       ::grpc::Service::MarkMethodAsync(4);
     }
-    ~WithAsyncMethod_IsFolder() override {
+    ~WithAsyncMethod_is_folder() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status IsFolder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_folder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestIsFolder(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestis_folder(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithAsyncMethod_GetTimestamp : public BaseClass {
+  class WithAsyncMethod_get_timestamp : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithAsyncMethod_GetTimestamp() {
+    WithAsyncMethod_get_timestamp() {
       ::grpc::Service::MarkMethodAsync(5);
     }
-    ~WithAsyncMethod_GetTimestamp() override {
+    ~WithAsyncMethod_get_timestamp() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetTimestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_timestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestGetTimestamp(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestget_timestamp(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithAsyncMethod_GetList : public BaseClass {
+  class WithAsyncMethod_get_list : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithAsyncMethod_GetList() {
+    WithAsyncMethod_get_list() {
       ::grpc::Service::MarkMethodAsync(6);
     }
-    ~WithAsyncMethod_GetList() override {
+    ~WithAsyncMethod_get_list() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetList(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
+    ::grpc::Status get_list(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestGetList(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncWriter< ::doodle::file_info_server>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestget_list(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncWriter< ::doodle::file_info_server>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncServerStreaming(6, context, request, writer, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithAsyncMethod_Download : public BaseClass {
+  class WithAsyncMethod_download : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithAsyncMethod_Download() {
+    WithAsyncMethod_download() {
       ::grpc::Service::MarkMethodAsync(7);
     }
-    ~WithAsyncMethod_Download() override {
+    ~WithAsyncMethod_download() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
+    ::grpc::Status download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestDownload(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncWriter< ::doodle::file_stream_server>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestdownload(::grpc::ServerContext* context, ::doodle::file_info_server* request, ::grpc::ServerAsyncWriter< ::doodle::file_stream_server>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncServerStreaming(7, context, request, writer, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithAsyncMethod_Upload : public BaseClass {
+  class WithAsyncMethod_upload : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithAsyncMethod_Upload() {
+    WithAsyncMethod_upload() {
       ::grpc::Service::MarkMethodAsync(8);
     }
-    ~WithAsyncMethod_Upload() override {
+    ~WithAsyncMethod_upload() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Upload(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::doodle::file_stream_server>* /*reader*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status upload(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::doodle::file_stream_server>* /*reader*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestUpload(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::doodle::file_info_server, ::doodle::file_stream_server>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestupload(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::doodle::file_info_server, ::doodle::file_stream_server>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncClientStreaming(8, context, reader, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithAsyncMethod_Move : public BaseClass {
+  class WithAsyncMethod_move : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithAsyncMethod_Move() {
+    WithAsyncMethod_move() {
       ::grpc::Service::MarkMethodAsync(9);
     }
-    ~WithAsyncMethod_Move() override {
+    ~WithAsyncMethod_move() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestMove(::grpc::ServerContext* context, ::doodle::file_info_move_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestmove(::grpc::ServerContext* context, ::doodle::file_info_move_server* request, ::grpc::ServerAsyncResponseWriter< ::doodle::file_info_server>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(9, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
-  typedef WithAsyncMethod_GetInfo<WithAsyncMethod_GetHash<WithAsyncMethod_IsExist<WithAsyncMethod_GetSize<WithAsyncMethod_IsFolder<WithAsyncMethod_GetTimestamp<WithAsyncMethod_GetList<WithAsyncMethod_Download<WithAsyncMethod_Upload<WithAsyncMethod_Move<Service > > > > > > > > > > AsyncService;
+  typedef WithAsyncMethod_get_info<WithAsyncMethod_get_hash<WithAsyncMethod_is_exist<WithAsyncMethod_get_size<WithAsyncMethod_is_folder<WithAsyncMethod_get_timestamp<WithAsyncMethod_get_list<WithAsyncMethod_download<WithAsyncMethod_upload<WithAsyncMethod_move<Service > > > > > > > > > > AsyncService;
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_GetInfo : public BaseClass {
+  class ExperimentalWithCallbackMethod_get_info : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_GetInfo() {
+    ExperimentalWithCallbackMethod_get_info() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -626,8 +626,8 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->GetInfo(context, request, response); }));}
-    void SetMessageAllocatorFor_GetInfo(
+                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->get_info(context, request, response); }));}
+    void SetMessageAllocatorFor_get_info(
         ::grpc::experimental::MessageAllocator< ::doodle::file_info_server, ::doodle::file_info_server>* allocator) {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(0);
@@ -637,29 +637,29 @@ class FileSystemServer final {
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::file_info_server, ::doodle::file_info_server>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_GetInfo() override {
+    ~ExperimentalWithCallbackMethod_get_info() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetInfo(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_info(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* GetInfo(
+    virtual ::grpc::ServerUnaryReactor* get_info(
       ::grpc::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* GetInfo(
+    virtual ::grpc::experimental::ServerUnaryReactor* get_info(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_GetHash : public BaseClass {
+  class ExperimentalWithCallbackMethod_get_hash : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_GetHash() {
+    ExperimentalWithCallbackMethod_get_hash() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -673,8 +673,8 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->GetHash(context, request, response); }));}
-    void SetMessageAllocatorFor_GetHash(
+                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->get_hash(context, request, response); }));}
+    void SetMessageAllocatorFor_get_hash(
         ::grpc::experimental::MessageAllocator< ::doodle::file_info_server, ::doodle::file_info_server>* allocator) {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(1);
@@ -684,29 +684,29 @@ class FileSystemServer final {
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::file_info_server, ::doodle::file_info_server>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_GetHash() override {
+    ~ExperimentalWithCallbackMethod_get_hash() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetHash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_hash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* GetHash(
+    virtual ::grpc::ServerUnaryReactor* get_hash(
       ::grpc::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* GetHash(
+    virtual ::grpc::experimental::ServerUnaryReactor* get_hash(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_IsExist : public BaseClass {
+  class ExperimentalWithCallbackMethod_is_exist : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_IsExist() {
+    ExperimentalWithCallbackMethod_is_exist() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -720,8 +720,8 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->IsExist(context, request, response); }));}
-    void SetMessageAllocatorFor_IsExist(
+                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->is_exist(context, request, response); }));}
+    void SetMessageAllocatorFor_is_exist(
         ::grpc::experimental::MessageAllocator< ::doodle::file_info_server, ::doodle::file_info_server>* allocator) {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(2);
@@ -731,29 +731,29 @@ class FileSystemServer final {
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::file_info_server, ::doodle::file_info_server>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_IsExist() override {
+    ~ExperimentalWithCallbackMethod_is_exist() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status IsExist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_exist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* IsExist(
+    virtual ::grpc::ServerUnaryReactor* is_exist(
       ::grpc::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* IsExist(
+    virtual ::grpc::experimental::ServerUnaryReactor* is_exist(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_GetSize : public BaseClass {
+  class ExperimentalWithCallbackMethod_get_size : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_GetSize() {
+    ExperimentalWithCallbackMethod_get_size() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -767,8 +767,8 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->GetSize(context, request, response); }));}
-    void SetMessageAllocatorFor_GetSize(
+                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->get_size(context, request, response); }));}
+    void SetMessageAllocatorFor_get_size(
         ::grpc::experimental::MessageAllocator< ::doodle::file_info_server, ::doodle::file_info_server>* allocator) {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(3);
@@ -778,29 +778,29 @@ class FileSystemServer final {
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::file_info_server, ::doodle::file_info_server>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_GetSize() override {
+    ~ExperimentalWithCallbackMethod_get_size() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetSize(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_size(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* GetSize(
+    virtual ::grpc::ServerUnaryReactor* get_size(
       ::grpc::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* GetSize(
+    virtual ::grpc::experimental::ServerUnaryReactor* get_size(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_IsFolder : public BaseClass {
+  class ExperimentalWithCallbackMethod_is_folder : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_IsFolder() {
+    ExperimentalWithCallbackMethod_is_folder() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -814,8 +814,8 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->IsFolder(context, request, response); }));}
-    void SetMessageAllocatorFor_IsFolder(
+                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->is_folder(context, request, response); }));}
+    void SetMessageAllocatorFor_is_folder(
         ::grpc::experimental::MessageAllocator< ::doodle::file_info_server, ::doodle::file_info_server>* allocator) {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(4);
@@ -825,29 +825,29 @@ class FileSystemServer final {
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::file_info_server, ::doodle::file_info_server>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_IsFolder() override {
+    ~ExperimentalWithCallbackMethod_is_folder() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status IsFolder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_folder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* IsFolder(
+    virtual ::grpc::ServerUnaryReactor* is_folder(
       ::grpc::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* IsFolder(
+    virtual ::grpc::experimental::ServerUnaryReactor* is_folder(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_GetTimestamp : public BaseClass {
+  class ExperimentalWithCallbackMethod_get_timestamp : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_GetTimestamp() {
+    ExperimentalWithCallbackMethod_get_timestamp() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -861,8 +861,8 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->GetTimestamp(context, request, response); }));}
-    void SetMessageAllocatorFor_GetTimestamp(
+                     context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) { return this->get_timestamp(context, request, response); }));}
+    void SetMessageAllocatorFor_get_timestamp(
         ::grpc::experimental::MessageAllocator< ::doodle::file_info_server, ::doodle::file_info_server>* allocator) {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(5);
@@ -872,29 +872,29 @@ class FileSystemServer final {
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::file_info_server, ::doodle::file_info_server>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_GetTimestamp() override {
+    ~ExperimentalWithCallbackMethod_get_timestamp() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetTimestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_timestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* GetTimestamp(
+    virtual ::grpc::ServerUnaryReactor* get_timestamp(
       ::grpc::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* GetTimestamp(
+    virtual ::grpc::experimental::ServerUnaryReactor* get_timestamp(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_GetList : public BaseClass {
+  class ExperimentalWithCallbackMethod_get_list : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_GetList() {
+    ExperimentalWithCallbackMethod_get_list() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -908,31 +908,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::doodle::file_info_server* request) { return this->GetList(context, request); }));
+                     context, const ::doodle::file_info_server* request) { return this->get_list(context, request); }));
     }
-    ~ExperimentalWithCallbackMethod_GetList() override {
+    ~ExperimentalWithCallbackMethod_get_list() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetList(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
+    ::grpc::Status get_list(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerWriteReactor< ::doodle::file_info_server>* GetList(
+    virtual ::grpc::ServerWriteReactor< ::doodle::file_info_server>* get_list(
       ::grpc::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/)
     #else
-    virtual ::grpc::experimental::ServerWriteReactor< ::doodle::file_info_server>* GetList(
+    virtual ::grpc::experimental::ServerWriteReactor< ::doodle::file_info_server>* get_list(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_Download : public BaseClass {
+  class ExperimentalWithCallbackMethod_download : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_Download() {
+    ExperimentalWithCallbackMethod_download() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -946,31 +946,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::doodle::file_info_server* request) { return this->Download(context, request); }));
+                     context, const ::doodle::file_info_server* request) { return this->download(context, request); }));
     }
-    ~ExperimentalWithCallbackMethod_Download() override {
+    ~ExperimentalWithCallbackMethod_download() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
+    ::grpc::Status download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerWriteReactor< ::doodle::file_stream_server>* Download(
+    virtual ::grpc::ServerWriteReactor< ::doodle::file_stream_server>* download(
       ::grpc::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/)
     #else
-    virtual ::grpc::experimental::ServerWriteReactor< ::doodle::file_stream_server>* Download(
+    virtual ::grpc::experimental::ServerWriteReactor< ::doodle::file_stream_server>* download(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::file_info_server* /*request*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_Upload : public BaseClass {
+  class ExperimentalWithCallbackMethod_upload : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_Upload() {
+    ExperimentalWithCallbackMethod_upload() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -984,31 +984,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, ::doodle::file_info_server* response) { return this->Upload(context, response); }));
+                     context, ::doodle::file_info_server* response) { return this->upload(context, response); }));
     }
-    ~ExperimentalWithCallbackMethod_Upload() override {
+    ~ExperimentalWithCallbackMethod_upload() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Upload(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::doodle::file_stream_server>* /*reader*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status upload(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::doodle::file_stream_server>* /*reader*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerReadReactor< ::doodle::file_stream_server>* Upload(
+    virtual ::grpc::ServerReadReactor< ::doodle::file_stream_server>* upload(
       ::grpc::CallbackServerContext* /*context*/, ::doodle::file_info_server* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerReadReactor< ::doodle::file_stream_server>* Upload(
+    virtual ::grpc::experimental::ServerReadReactor< ::doodle::file_stream_server>* upload(
       ::grpc::experimental::CallbackServerContext* /*context*/, ::doodle::file_info_server* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_Move : public BaseClass {
+  class ExperimentalWithCallbackMethod_move : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_Move() {
+    ExperimentalWithCallbackMethod_move() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -1022,8 +1022,8 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response) { return this->Move(context, request, response); }));}
-    void SetMessageAllocatorFor_Move(
+                     context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response) { return this->move(context, request, response); }));}
+    void SetMessageAllocatorFor_move(
         ::grpc::experimental::MessageAllocator< ::doodle::file_info_move_server, ::doodle::file_info_server>* allocator) {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(9);
@@ -1033,404 +1033,404 @@ class FileSystemServer final {
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::file_info_move_server, ::doodle::file_info_server>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_Move() override {
+    ~ExperimentalWithCallbackMethod_move() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* Move(
+    virtual ::grpc::ServerUnaryReactor* move(
       ::grpc::CallbackServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* Move(
+    virtual ::grpc::experimental::ServerUnaryReactor* move(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/)
     #endif
       { return nullptr; }
   };
   #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-  typedef ExperimentalWithCallbackMethod_GetInfo<ExperimentalWithCallbackMethod_GetHash<ExperimentalWithCallbackMethod_IsExist<ExperimentalWithCallbackMethod_GetSize<ExperimentalWithCallbackMethod_IsFolder<ExperimentalWithCallbackMethod_GetTimestamp<ExperimentalWithCallbackMethod_GetList<ExperimentalWithCallbackMethod_Download<ExperimentalWithCallbackMethod_Upload<ExperimentalWithCallbackMethod_Move<Service > > > > > > > > > > CallbackService;
+  typedef ExperimentalWithCallbackMethod_get_info<ExperimentalWithCallbackMethod_get_hash<ExperimentalWithCallbackMethod_is_exist<ExperimentalWithCallbackMethod_get_size<ExperimentalWithCallbackMethod_is_folder<ExperimentalWithCallbackMethod_get_timestamp<ExperimentalWithCallbackMethod_get_list<ExperimentalWithCallbackMethod_download<ExperimentalWithCallbackMethod_upload<ExperimentalWithCallbackMethod_move<Service > > > > > > > > > > CallbackService;
   #endif
 
-  typedef ExperimentalWithCallbackMethod_GetInfo<ExperimentalWithCallbackMethod_GetHash<ExperimentalWithCallbackMethod_IsExist<ExperimentalWithCallbackMethod_GetSize<ExperimentalWithCallbackMethod_IsFolder<ExperimentalWithCallbackMethod_GetTimestamp<ExperimentalWithCallbackMethod_GetList<ExperimentalWithCallbackMethod_Download<ExperimentalWithCallbackMethod_Upload<ExperimentalWithCallbackMethod_Move<Service > > > > > > > > > > ExperimentalCallbackService;
+  typedef ExperimentalWithCallbackMethod_get_info<ExperimentalWithCallbackMethod_get_hash<ExperimentalWithCallbackMethod_is_exist<ExperimentalWithCallbackMethod_get_size<ExperimentalWithCallbackMethod_is_folder<ExperimentalWithCallbackMethod_get_timestamp<ExperimentalWithCallbackMethod_get_list<ExperimentalWithCallbackMethod_download<ExperimentalWithCallbackMethod_upload<ExperimentalWithCallbackMethod_move<Service > > > > > > > > > > ExperimentalCallbackService;
   template <class BaseClass>
-  class WithGenericMethod_GetInfo : public BaseClass {
+  class WithGenericMethod_get_info : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithGenericMethod_GetInfo() {
+    WithGenericMethod_get_info() {
       ::grpc::Service::MarkMethodGeneric(0);
     }
-    ~WithGenericMethod_GetInfo() override {
+    ~WithGenericMethod_get_info() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetInfo(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_info(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
   };
   template <class BaseClass>
-  class WithGenericMethod_GetHash : public BaseClass {
+  class WithGenericMethod_get_hash : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithGenericMethod_GetHash() {
+    WithGenericMethod_get_hash() {
       ::grpc::Service::MarkMethodGeneric(1);
     }
-    ~WithGenericMethod_GetHash() override {
+    ~WithGenericMethod_get_hash() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetHash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_hash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
   };
   template <class BaseClass>
-  class WithGenericMethod_IsExist : public BaseClass {
+  class WithGenericMethod_is_exist : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithGenericMethod_IsExist() {
+    WithGenericMethod_is_exist() {
       ::grpc::Service::MarkMethodGeneric(2);
     }
-    ~WithGenericMethod_IsExist() override {
+    ~WithGenericMethod_is_exist() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status IsExist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_exist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
   };
   template <class BaseClass>
-  class WithGenericMethod_GetSize : public BaseClass {
+  class WithGenericMethod_get_size : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithGenericMethod_GetSize() {
+    WithGenericMethod_get_size() {
       ::grpc::Service::MarkMethodGeneric(3);
     }
-    ~WithGenericMethod_GetSize() override {
+    ~WithGenericMethod_get_size() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetSize(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_size(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
   };
   template <class BaseClass>
-  class WithGenericMethod_IsFolder : public BaseClass {
+  class WithGenericMethod_is_folder : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithGenericMethod_IsFolder() {
+    WithGenericMethod_is_folder() {
       ::grpc::Service::MarkMethodGeneric(4);
     }
-    ~WithGenericMethod_IsFolder() override {
+    ~WithGenericMethod_is_folder() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status IsFolder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_folder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
   };
   template <class BaseClass>
-  class WithGenericMethod_GetTimestamp : public BaseClass {
+  class WithGenericMethod_get_timestamp : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithGenericMethod_GetTimestamp() {
+    WithGenericMethod_get_timestamp() {
       ::grpc::Service::MarkMethodGeneric(5);
     }
-    ~WithGenericMethod_GetTimestamp() override {
+    ~WithGenericMethod_get_timestamp() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetTimestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_timestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
   };
   template <class BaseClass>
-  class WithGenericMethod_GetList : public BaseClass {
+  class WithGenericMethod_get_list : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithGenericMethod_GetList() {
+    WithGenericMethod_get_list() {
       ::grpc::Service::MarkMethodGeneric(6);
     }
-    ~WithGenericMethod_GetList() override {
+    ~WithGenericMethod_get_list() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetList(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
+    ::grpc::Status get_list(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
   };
   template <class BaseClass>
-  class WithGenericMethod_Download : public BaseClass {
+  class WithGenericMethod_download : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithGenericMethod_Download() {
+    WithGenericMethod_download() {
       ::grpc::Service::MarkMethodGeneric(7);
     }
-    ~WithGenericMethod_Download() override {
+    ~WithGenericMethod_download() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
+    ::grpc::Status download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
   };
   template <class BaseClass>
-  class WithGenericMethod_Upload : public BaseClass {
+  class WithGenericMethod_upload : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithGenericMethod_Upload() {
+    WithGenericMethod_upload() {
       ::grpc::Service::MarkMethodGeneric(8);
     }
-    ~WithGenericMethod_Upload() override {
+    ~WithGenericMethod_upload() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Upload(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::doodle::file_stream_server>* /*reader*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status upload(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::doodle::file_stream_server>* /*reader*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
   };
   template <class BaseClass>
-  class WithGenericMethod_Move : public BaseClass {
+  class WithGenericMethod_move : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithGenericMethod_Move() {
+    WithGenericMethod_move() {
       ::grpc::Service::MarkMethodGeneric(9);
     }
-    ~WithGenericMethod_Move() override {
+    ~WithGenericMethod_move() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
   };
   template <class BaseClass>
-  class WithRawMethod_GetInfo : public BaseClass {
+  class WithRawMethod_get_info : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithRawMethod_GetInfo() {
+    WithRawMethod_get_info() {
       ::grpc::Service::MarkMethodRaw(0);
     }
-    ~WithRawMethod_GetInfo() override {
+    ~WithRawMethod_get_info() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetInfo(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_info(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestGetInfo(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestget_info(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(0, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithRawMethod_GetHash : public BaseClass {
+  class WithRawMethod_get_hash : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithRawMethod_GetHash() {
+    WithRawMethod_get_hash() {
       ::grpc::Service::MarkMethodRaw(1);
     }
-    ~WithRawMethod_GetHash() override {
+    ~WithRawMethod_get_hash() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetHash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_hash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestGetHash(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestget_hash(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithRawMethod_IsExist : public BaseClass {
+  class WithRawMethod_is_exist : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithRawMethod_IsExist() {
+    WithRawMethod_is_exist() {
       ::grpc::Service::MarkMethodRaw(2);
     }
-    ~WithRawMethod_IsExist() override {
+    ~WithRawMethod_is_exist() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status IsExist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_exist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestIsExist(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestis_exist(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithRawMethod_GetSize : public BaseClass {
+  class WithRawMethod_get_size : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithRawMethod_GetSize() {
+    WithRawMethod_get_size() {
       ::grpc::Service::MarkMethodRaw(3);
     }
-    ~WithRawMethod_GetSize() override {
+    ~WithRawMethod_get_size() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetSize(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_size(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestGetSize(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestget_size(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithRawMethod_IsFolder : public BaseClass {
+  class WithRawMethod_is_folder : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithRawMethod_IsFolder() {
+    WithRawMethod_is_folder() {
       ::grpc::Service::MarkMethodRaw(4);
     }
-    ~WithRawMethod_IsFolder() override {
+    ~WithRawMethod_is_folder() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status IsFolder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_folder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestIsFolder(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestis_folder(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithRawMethod_GetTimestamp : public BaseClass {
+  class WithRawMethod_get_timestamp : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithRawMethod_GetTimestamp() {
+    WithRawMethod_get_timestamp() {
       ::grpc::Service::MarkMethodRaw(5);
     }
-    ~WithRawMethod_GetTimestamp() override {
+    ~WithRawMethod_get_timestamp() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetTimestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_timestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestGetTimestamp(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestget_timestamp(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithRawMethod_GetList : public BaseClass {
+  class WithRawMethod_get_list : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithRawMethod_GetList() {
+    WithRawMethod_get_list() {
       ::grpc::Service::MarkMethodRaw(6);
     }
-    ~WithRawMethod_GetList() override {
+    ~WithRawMethod_get_list() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetList(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
+    ::grpc::Status get_list(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestGetList(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncWriter< ::grpc::ByteBuffer>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestget_list(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncWriter< ::grpc::ByteBuffer>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncServerStreaming(6, context, request, writer, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithRawMethod_Download : public BaseClass {
+  class WithRawMethod_download : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithRawMethod_Download() {
+    WithRawMethod_download() {
       ::grpc::Service::MarkMethodRaw(7);
     }
-    ~WithRawMethod_Download() override {
+    ~WithRawMethod_download() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
+    ::grpc::Status download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestDownload(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncWriter< ::grpc::ByteBuffer>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestdownload(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncWriter< ::grpc::ByteBuffer>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncServerStreaming(7, context, request, writer, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithRawMethod_Upload : public BaseClass {
+  class WithRawMethod_upload : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithRawMethod_Upload() {
+    WithRawMethod_upload() {
       ::grpc::Service::MarkMethodRaw(8);
     }
-    ~WithRawMethod_Upload() override {
+    ~WithRawMethod_upload() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Upload(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::doodle::file_stream_server>* /*reader*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status upload(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::doodle::file_stream_server>* /*reader*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestUpload(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestupload(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncClientStreaming(8, context, reader, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithRawMethod_Move : public BaseClass {
+  class WithRawMethod_move : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithRawMethod_Move() {
+    WithRawMethod_move() {
       ::grpc::Service::MarkMethodRaw(9);
     }
-    ~WithRawMethod_Move() override {
+    ~WithRawMethod_move() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestMove(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestmove(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(9, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_GetInfo : public BaseClass {
+  class ExperimentalWithRawCallbackMethod_get_info : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_GetInfo() {
+    ExperimentalWithRawCallbackMethod_get_info() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -1444,31 +1444,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->GetInfo(context, request, response); }));
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->get_info(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_GetInfo() override {
+    ~ExperimentalWithRawCallbackMethod_get_info() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetInfo(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_info(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* GetInfo(
+    virtual ::grpc::ServerUnaryReactor* get_info(
       ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* GetInfo(
+    virtual ::grpc::experimental::ServerUnaryReactor* get_info(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_GetHash : public BaseClass {
+  class ExperimentalWithRawCallbackMethod_get_hash : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_GetHash() {
+    ExperimentalWithRawCallbackMethod_get_hash() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -1482,31 +1482,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->GetHash(context, request, response); }));
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->get_hash(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_GetHash() override {
+    ~ExperimentalWithRawCallbackMethod_get_hash() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetHash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_hash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* GetHash(
+    virtual ::grpc::ServerUnaryReactor* get_hash(
       ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* GetHash(
+    virtual ::grpc::experimental::ServerUnaryReactor* get_hash(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_IsExist : public BaseClass {
+  class ExperimentalWithRawCallbackMethod_is_exist : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_IsExist() {
+    ExperimentalWithRawCallbackMethod_is_exist() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -1520,31 +1520,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->IsExist(context, request, response); }));
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->is_exist(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_IsExist() override {
+    ~ExperimentalWithRawCallbackMethod_is_exist() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status IsExist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_exist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* IsExist(
+    virtual ::grpc::ServerUnaryReactor* is_exist(
       ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* IsExist(
+    virtual ::grpc::experimental::ServerUnaryReactor* is_exist(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_GetSize : public BaseClass {
+  class ExperimentalWithRawCallbackMethod_get_size : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_GetSize() {
+    ExperimentalWithRawCallbackMethod_get_size() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -1558,31 +1558,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->GetSize(context, request, response); }));
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->get_size(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_GetSize() override {
+    ~ExperimentalWithRawCallbackMethod_get_size() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetSize(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_size(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* GetSize(
+    virtual ::grpc::ServerUnaryReactor* get_size(
       ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* GetSize(
+    virtual ::grpc::experimental::ServerUnaryReactor* get_size(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_IsFolder : public BaseClass {
+  class ExperimentalWithRawCallbackMethod_is_folder : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_IsFolder() {
+    ExperimentalWithRawCallbackMethod_is_folder() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -1596,31 +1596,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->IsFolder(context, request, response); }));
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->is_folder(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_IsFolder() override {
+    ~ExperimentalWithRawCallbackMethod_is_folder() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status IsFolder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_folder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* IsFolder(
+    virtual ::grpc::ServerUnaryReactor* is_folder(
       ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* IsFolder(
+    virtual ::grpc::experimental::ServerUnaryReactor* is_folder(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_GetTimestamp : public BaseClass {
+  class ExperimentalWithRawCallbackMethod_get_timestamp : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_GetTimestamp() {
+    ExperimentalWithRawCallbackMethod_get_timestamp() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -1634,31 +1634,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->GetTimestamp(context, request, response); }));
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->get_timestamp(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_GetTimestamp() override {
+    ~ExperimentalWithRawCallbackMethod_get_timestamp() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetTimestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_timestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* GetTimestamp(
+    virtual ::grpc::ServerUnaryReactor* get_timestamp(
       ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* GetTimestamp(
+    virtual ::grpc::experimental::ServerUnaryReactor* get_timestamp(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_GetList : public BaseClass {
+  class ExperimentalWithRawCallbackMethod_get_list : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_GetList() {
+    ExperimentalWithRawCallbackMethod_get_list() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -1672,31 +1672,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const::grpc::ByteBuffer* request) { return this->GetList(context, request); }));
+                     context, const::grpc::ByteBuffer* request) { return this->get_list(context, request); }));
     }
-    ~ExperimentalWithRawCallbackMethod_GetList() override {
+    ~ExperimentalWithRawCallbackMethod_get_list() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GetList(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
+    ::grpc::Status get_list(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerWriteReactor< ::grpc::ByteBuffer>* GetList(
+    virtual ::grpc::ServerWriteReactor< ::grpc::ByteBuffer>* get_list(
       ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)
     #else
-    virtual ::grpc::experimental::ServerWriteReactor< ::grpc::ByteBuffer>* GetList(
+    virtual ::grpc::experimental::ServerWriteReactor< ::grpc::ByteBuffer>* get_list(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_Download : public BaseClass {
+  class ExperimentalWithRawCallbackMethod_download : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_Download() {
+    ExperimentalWithRawCallbackMethod_download() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -1710,31 +1710,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const::grpc::ByteBuffer* request) { return this->Download(context, request); }));
+                     context, const::grpc::ByteBuffer* request) { return this->download(context, request); }));
     }
-    ~ExperimentalWithRawCallbackMethod_Download() override {
+    ~ExperimentalWithRawCallbackMethod_download() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
+    ::grpc::Status download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerWriteReactor< ::grpc::ByteBuffer>* Download(
+    virtual ::grpc::ServerWriteReactor< ::grpc::ByteBuffer>* download(
       ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)
     #else
-    virtual ::grpc::experimental::ServerWriteReactor< ::grpc::ByteBuffer>* Download(
+    virtual ::grpc::experimental::ServerWriteReactor< ::grpc::ByteBuffer>* download(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_Upload : public BaseClass {
+  class ExperimentalWithRawCallbackMethod_upload : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_Upload() {
+    ExperimentalWithRawCallbackMethod_upload() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -1748,31 +1748,31 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, ::grpc::ByteBuffer* response) { return this->Upload(context, response); }));
+                     context, ::grpc::ByteBuffer* response) { return this->upload(context, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_Upload() override {
+    ~ExperimentalWithRawCallbackMethod_upload() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Upload(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::doodle::file_stream_server>* /*reader*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status upload(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::doodle::file_stream_server>* /*reader*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerReadReactor< ::grpc::ByteBuffer>* Upload(
+    virtual ::grpc::ServerReadReactor< ::grpc::ByteBuffer>* upload(
       ::grpc::CallbackServerContext* /*context*/, ::grpc::ByteBuffer* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerReadReactor< ::grpc::ByteBuffer>* Upload(
+    virtual ::grpc::experimental::ServerReadReactor< ::grpc::ByteBuffer>* upload(
       ::grpc::experimental::CallbackServerContext* /*context*/, ::grpc::ByteBuffer* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_Move : public BaseClass {
+  class ExperimentalWithRawCallbackMethod_move : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_Move() {
+    ExperimentalWithRawCallbackMethod_move() {
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       ::grpc::Service::
     #else
@@ -1786,271 +1786,271 @@ class FileSystemServer final {
     #else
                    ::grpc::experimental::CallbackServerContext*
     #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->Move(context, request, response); }));
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->move(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_Move() override {
+    ~ExperimentalWithRawCallbackMethod_move() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* Move(
+    virtual ::grpc::ServerUnaryReactor* move(
       ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #else
-    virtual ::grpc::experimental::ServerUnaryReactor* Move(
+    virtual ::grpc::experimental::ServerUnaryReactor* move(
       ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
     #endif
       { return nullptr; }
   };
   template <class BaseClass>
-  class WithStreamedUnaryMethod_GetInfo : public BaseClass {
+  class WithStreamedUnaryMethod_get_info : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithStreamedUnaryMethod_GetInfo() {
+    WithStreamedUnaryMethod_get_info() {
       ::grpc::Service::MarkMethodStreamed(0,
         new ::grpc::internal::StreamedUnaryHandler<
           ::doodle::file_info_server, ::doodle::file_info_server>(
             [this](::grpc::ServerContext* context,
                    ::grpc::ServerUnaryStreamer<
                      ::doodle::file_info_server, ::doodle::file_info_server>* streamer) {
-                       return this->StreamedGetInfo(context,
+                       return this->Streamedget_info(context,
                          streamer);
                   }));
     }
-    ~WithStreamedUnaryMethod_GetInfo() override {
+    ~WithStreamedUnaryMethod_get_info() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status GetInfo(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_info(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedGetInfo(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
+    virtual ::grpc::Status Streamedget_info(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
-  class WithStreamedUnaryMethod_GetHash : public BaseClass {
+  class WithStreamedUnaryMethod_get_hash : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithStreamedUnaryMethod_GetHash() {
+    WithStreamedUnaryMethod_get_hash() {
       ::grpc::Service::MarkMethodStreamed(1,
         new ::grpc::internal::StreamedUnaryHandler<
           ::doodle::file_info_server, ::doodle::file_info_server>(
             [this](::grpc::ServerContext* context,
                    ::grpc::ServerUnaryStreamer<
                      ::doodle::file_info_server, ::doodle::file_info_server>* streamer) {
-                       return this->StreamedGetHash(context,
+                       return this->Streamedget_hash(context,
                          streamer);
                   }));
     }
-    ~WithStreamedUnaryMethod_GetHash() override {
+    ~WithStreamedUnaryMethod_get_hash() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status GetHash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_hash(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedGetHash(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
+    virtual ::grpc::Status Streamedget_hash(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
-  class WithStreamedUnaryMethod_IsExist : public BaseClass {
+  class WithStreamedUnaryMethod_is_exist : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithStreamedUnaryMethod_IsExist() {
+    WithStreamedUnaryMethod_is_exist() {
       ::grpc::Service::MarkMethodStreamed(2,
         new ::grpc::internal::StreamedUnaryHandler<
           ::doodle::file_info_server, ::doodle::file_info_server>(
             [this](::grpc::ServerContext* context,
                    ::grpc::ServerUnaryStreamer<
                      ::doodle::file_info_server, ::doodle::file_info_server>* streamer) {
-                       return this->StreamedIsExist(context,
+                       return this->Streamedis_exist(context,
                          streamer);
                   }));
     }
-    ~WithStreamedUnaryMethod_IsExist() override {
+    ~WithStreamedUnaryMethod_is_exist() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status IsExist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_exist(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedIsExist(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
+    virtual ::grpc::Status Streamedis_exist(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
-  class WithStreamedUnaryMethod_GetSize : public BaseClass {
+  class WithStreamedUnaryMethod_get_size : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithStreamedUnaryMethod_GetSize() {
+    WithStreamedUnaryMethod_get_size() {
       ::grpc::Service::MarkMethodStreamed(3,
         new ::grpc::internal::StreamedUnaryHandler<
           ::doodle::file_info_server, ::doodle::file_info_server>(
             [this](::grpc::ServerContext* context,
                    ::grpc::ServerUnaryStreamer<
                      ::doodle::file_info_server, ::doodle::file_info_server>* streamer) {
-                       return this->StreamedGetSize(context,
+                       return this->Streamedget_size(context,
                          streamer);
                   }));
     }
-    ~WithStreamedUnaryMethod_GetSize() override {
+    ~WithStreamedUnaryMethod_get_size() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status GetSize(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_size(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedGetSize(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
+    virtual ::grpc::Status Streamedget_size(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
-  class WithStreamedUnaryMethod_IsFolder : public BaseClass {
+  class WithStreamedUnaryMethod_is_folder : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithStreamedUnaryMethod_IsFolder() {
+    WithStreamedUnaryMethod_is_folder() {
       ::grpc::Service::MarkMethodStreamed(4,
         new ::grpc::internal::StreamedUnaryHandler<
           ::doodle::file_info_server, ::doodle::file_info_server>(
             [this](::grpc::ServerContext* context,
                    ::grpc::ServerUnaryStreamer<
                      ::doodle::file_info_server, ::doodle::file_info_server>* streamer) {
-                       return this->StreamedIsFolder(context,
+                       return this->Streamedis_folder(context,
                          streamer);
                   }));
     }
-    ~WithStreamedUnaryMethod_IsFolder() override {
+    ~WithStreamedUnaryMethod_is_folder() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status IsFolder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status is_folder(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedIsFolder(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
+    virtual ::grpc::Status Streamedis_folder(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
-  class WithStreamedUnaryMethod_GetTimestamp : public BaseClass {
+  class WithStreamedUnaryMethod_get_timestamp : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithStreamedUnaryMethod_GetTimestamp() {
+    WithStreamedUnaryMethod_get_timestamp() {
       ::grpc::Service::MarkMethodStreamed(5,
         new ::grpc::internal::StreamedUnaryHandler<
           ::doodle::file_info_server, ::doodle::file_info_server>(
             [this](::grpc::ServerContext* context,
                    ::grpc::ServerUnaryStreamer<
                      ::doodle::file_info_server, ::doodle::file_info_server>* streamer) {
-                       return this->StreamedGetTimestamp(context,
+                       return this->Streamedget_timestamp(context,
                          streamer);
                   }));
     }
-    ~WithStreamedUnaryMethod_GetTimestamp() override {
+    ~WithStreamedUnaryMethod_get_timestamp() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status GetTimestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status get_timestamp(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedGetTimestamp(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
+    virtual ::grpc::Status Streamedget_timestamp(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
-  class WithStreamedUnaryMethod_Move : public BaseClass {
+  class WithStreamedUnaryMethod_move : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithStreamedUnaryMethod_Move() {
+    WithStreamedUnaryMethod_move() {
       ::grpc::Service::MarkMethodStreamed(9,
         new ::grpc::internal::StreamedUnaryHandler<
           ::doodle::file_info_move_server, ::doodle::file_info_server>(
             [this](::grpc::ServerContext* context,
                    ::grpc::ServerUnaryStreamer<
                      ::doodle::file_info_move_server, ::doodle::file_info_server>* streamer) {
-                       return this->StreamedMove(context,
+                       return this->Streamedmove(context,
                          streamer);
                   }));
     }
-    ~WithStreamedUnaryMethod_Move() override {
+    ~WithStreamedUnaryMethod_move() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status Move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
+    ::grpc::Status move(::grpc::ServerContext* /*context*/, const ::doodle::file_info_move_server* /*request*/, ::doodle::file_info_server* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedMove(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_move_server,::doodle::file_info_server>* server_unary_streamer) = 0;
+    virtual ::grpc::Status Streamedmove(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::doodle::file_info_move_server,::doodle::file_info_server>* server_unary_streamer) = 0;
   };
-  typedef WithStreamedUnaryMethod_GetInfo<WithStreamedUnaryMethod_GetHash<WithStreamedUnaryMethod_IsExist<WithStreamedUnaryMethod_GetSize<WithStreamedUnaryMethod_IsFolder<WithStreamedUnaryMethod_GetTimestamp<WithStreamedUnaryMethod_Move<Service > > > > > > > StreamedUnaryService;
+  typedef WithStreamedUnaryMethod_get_info<WithStreamedUnaryMethod_get_hash<WithStreamedUnaryMethod_is_exist<WithStreamedUnaryMethod_get_size<WithStreamedUnaryMethod_is_folder<WithStreamedUnaryMethod_get_timestamp<WithStreamedUnaryMethod_move<Service > > > > > > > StreamedUnaryService;
   template <class BaseClass>
-  class WithSplitStreamingMethod_GetList : public BaseClass {
+  class WithSplitStreamingMethod_get_list : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithSplitStreamingMethod_GetList() {
+    WithSplitStreamingMethod_get_list() {
       ::grpc::Service::MarkMethodStreamed(6,
         new ::grpc::internal::SplitServerStreamingHandler<
           ::doodle::file_info_server, ::doodle::file_info_server>(
             [this](::grpc::ServerContext* context,
                    ::grpc::ServerSplitStreamer<
                      ::doodle::file_info_server, ::doodle::file_info_server>* streamer) {
-                       return this->StreamedGetList(context,
+                       return this->Streamedget_list(context,
                          streamer);
                   }));
     }
-    ~WithSplitStreamingMethod_GetList() override {
+    ~WithSplitStreamingMethod_get_list() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status GetList(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
+    ::grpc::Status get_list(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_info_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with split streamed
-    virtual ::grpc::Status StreamedGetList(::grpc::ServerContext* context, ::grpc::ServerSplitStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_split_streamer) = 0;
+    virtual ::grpc::Status Streamedget_list(::grpc::ServerContext* context, ::grpc::ServerSplitStreamer< ::doodle::file_info_server,::doodle::file_info_server>* server_split_streamer) = 0;
   };
   template <class BaseClass>
-  class WithSplitStreamingMethod_Download : public BaseClass {
+  class WithSplitStreamingMethod_download : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    WithSplitStreamingMethod_Download() {
+    WithSplitStreamingMethod_download() {
       ::grpc::Service::MarkMethodStreamed(7,
         new ::grpc::internal::SplitServerStreamingHandler<
           ::doodle::file_info_server, ::doodle::file_stream_server>(
             [this](::grpc::ServerContext* context,
                    ::grpc::ServerSplitStreamer<
                      ::doodle::file_info_server, ::doodle::file_stream_server>* streamer) {
-                       return this->StreamedDownload(context,
+                       return this->Streameddownload(context,
                          streamer);
                   }));
     }
-    ~WithSplitStreamingMethod_Download() override {
+    ~WithSplitStreamingMethod_download() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status Download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
+    ::grpc::Status download(::grpc::ServerContext* /*context*/, const ::doodle::file_info_server* /*request*/, ::grpc::ServerWriter< ::doodle::file_stream_server>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with split streamed
-    virtual ::grpc::Status StreamedDownload(::grpc::ServerContext* context, ::grpc::ServerSplitStreamer< ::doodle::file_info_server,::doodle::file_stream_server>* server_split_streamer) = 0;
+    virtual ::grpc::Status Streameddownload(::grpc::ServerContext* context, ::grpc::ServerSplitStreamer< ::doodle::file_info_server,::doodle::file_stream_server>* server_split_streamer) = 0;
   };
-  typedef WithSplitStreamingMethod_GetList<WithSplitStreamingMethod_Download<Service > > SplitStreamedService;
-  typedef WithStreamedUnaryMethod_GetInfo<WithStreamedUnaryMethod_GetHash<WithStreamedUnaryMethod_IsExist<WithStreamedUnaryMethod_GetSize<WithStreamedUnaryMethod_IsFolder<WithStreamedUnaryMethod_GetTimestamp<WithSplitStreamingMethod_GetList<WithSplitStreamingMethod_Download<WithStreamedUnaryMethod_Move<Service > > > > > > > > > StreamedService;
+  typedef WithSplitStreamingMethod_get_list<WithSplitStreamingMethod_download<Service > > SplitStreamedService;
+  typedef WithStreamedUnaryMethod_get_info<WithStreamedUnaryMethod_get_hash<WithStreamedUnaryMethod_is_exist<WithStreamedUnaryMethod_get_size<WithStreamedUnaryMethod_is_folder<WithStreamedUnaryMethod_get_timestamp<WithSplitStreamingMethod_get_list<WithSplitStreamingMethod_download<WithStreamedUnaryMethod_move<Service > > > > > > > > > StreamedService;
 };
 
 }  // namespace doodle

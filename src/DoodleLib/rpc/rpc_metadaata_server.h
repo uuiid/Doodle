@@ -12,7 +12,7 @@
 #include <DoodleLib/libWarp/lru_cache_policy.hpp>
 
 namespace doodle {
-class DOODLELIB_API rpc_metadaata_server final : public MetadataServer::Service, public details::no_copy {
+class DOODLELIB_API rpc_metadaata_server final : public metadata_server::Service, public details::no_copy {
   core_set& p_set;
 
   std::thread p_thread;
@@ -39,14 +39,14 @@ class DOODLELIB_API rpc_metadaata_server final : public MetadataServer::Service,
  public:
   rpc_metadaata_server();
 
-  grpc::Status InstallMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
-  grpc::Status DeleteMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
-  grpc::Status UpdateMetadata(grpc::ServerContext* context, const DataDb* request, DataDb* response) override;
-  grpc::Status FilterMetadata(grpc::ServerContext* context, const DataDb_Filter* request, grpc::ServerWriter<DataDb>* writer) override;
-  virtual grpc::Status InstallUserDate(::grpc::ServerContext* context, const ::doodle::user_database* request, ::doodle::user_database* response) override;
-  virtual grpc::Status UpdateUserDate(::grpc::ServerContext* context, const ::doodle::user_database* request, ::doodle::user_database* response) override;
-  virtual grpc::Status DeleteUserDate(::grpc::ServerContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response) override;
-  virtual grpc::Status FilterUserDate(::grpc::ServerContext* context, const ::doodle::user_database_filter* request, ::grpc::ServerWriter<::doodle::user_database>* writer) override;
+  grpc::Status install_metadata(grpc::ServerContext* context, const metadata_database* request, metadata_database* response) override;
+  grpc::Status delete_metadata(grpc::ServerContext* context, const metadata_database* request, metadata_database* response) override;
+  grpc::Status update_metadata(grpc::ServerContext* context, const metadata_database* request, metadata_database* response) override;
+  grpc::Status filter_metadata(grpc::ServerContext* context, const metadata_database_filter* request, grpc::ServerWriter<metadata_database>* writer) override;
+  grpc::Status install_user_date(::grpc::ServerContext* context, const ::doodle::user_database* request, ::doodle::user_database* response) override;
+  grpc::Status update_user_date(::grpc::ServerContext* context, const ::doodle::user_database* request, ::doodle::user_database* response) override;
+  grpc::Status delete_user_date(::grpc::ServerContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response) override;
+  grpc::Status filter_user_date(::grpc::ServerContext* context, const ::doodle::user_database_filter* request, ::grpc::ServerWriter<::doodle::user_database>* writer) override;
 };
 
 }  // namespace doodle

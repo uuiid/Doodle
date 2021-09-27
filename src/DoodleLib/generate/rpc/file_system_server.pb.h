@@ -258,13 +258,13 @@ class file_info_server PROTOBUF_FINAL :
   void _internal_set_size(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
-  // bool isFolder = 2;
-  void clear_isfolder();
-  bool isfolder() const;
-  void set_isfolder(bool value);
+  // bool is_folder = 2;
+  void clear_is_folder();
+  bool is_folder() const;
+  void set_is_folder(bool value);
   private:
-  bool _internal_isfolder() const;
-  void _internal_set_isfolder(bool value);
+  bool _internal_is_folder() const;
+  void _internal_set_is_folder(bool value);
   public:
 
   // bool exist = 3;
@@ -287,7 +287,7 @@ class file_info_server PROTOBUF_FINAL :
   PROTOBUF_NAMESPACE_ID::Timestamp* update_time_;
   PROTOBUF_NAMESPACE_ID::StringValue* hash_;
   ::PROTOBUF_NAMESPACE_ID::uint64 size_;
-  bool isfolder_;
+  bool is_folder_;
   bool exist_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_file_5fsystem_5fserver_2eproto;
@@ -696,24 +696,24 @@ inline void file_info_server::set_allocated_path(std::string* path) {
   // @@protoc_insertion_point(field_set_allocated:doodle.file_info_server.path)
 }
 
-// bool isFolder = 2;
-inline void file_info_server::clear_isfolder() {
-  isfolder_ = false;
+// bool is_folder = 2;
+inline void file_info_server::clear_is_folder() {
+  is_folder_ = false;
 }
-inline bool file_info_server::_internal_isfolder() const {
-  return isfolder_;
+inline bool file_info_server::_internal_is_folder() const {
+  return is_folder_;
 }
-inline bool file_info_server::isfolder() const {
-  // @@protoc_insertion_point(field_get:doodle.file_info_server.isFolder)
-  return _internal_isfolder();
+inline bool file_info_server::is_folder() const {
+  // @@protoc_insertion_point(field_get:doodle.file_info_server.is_folder)
+  return _internal_is_folder();
 }
-inline void file_info_server::_internal_set_isfolder(bool value) {
+inline void file_info_server::_internal_set_is_folder(bool value) {
   
-  isfolder_ = value;
+  is_folder_ = value;
 }
-inline void file_info_server::set_isfolder(bool value) {
-  _internal_set_isfolder(value);
-  // @@protoc_insertion_point(field_set:doodle.file_info_server.isFolder)
+inline void file_info_server::set_is_folder(bool value) {
+  _internal_set_is_folder(value);
+  // @@protoc_insertion_point(field_set:doodle.file_info_server.is_folder)
 }
 
 // bool exist = 3;

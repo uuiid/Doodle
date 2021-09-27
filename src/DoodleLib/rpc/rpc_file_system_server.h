@@ -44,7 +44,7 @@ using file_mutex_ptr = std::shared_ptr<file_mutex>;
 }  // namespace rpc_filesystem
 
 class DOODLELIB_API rpc_file_system_server
-    : public FileSystemServer::Service,
+    : public file_system_server::Service,
       public details::no_copy {
   core_set& p_set;
   caches::fixed_sized_cache<std::string, rpc_filesystem::file_hash_ptr, caches::LRUCachePolicy<std::string>> p_cache;
@@ -55,45 +55,45 @@ class DOODLELIB_API rpc_file_system_server
  public:
   explicit rpc_file_system_server();
 
-  grpc::Status GetInfo(grpc::ServerContext* context,
-                       const FileInfo* request,
-                       FileInfo* response) override;
+  grpc::Status get_info(grpc::ServerContext* context,
+                       const file_info_server* request,
+                       file_info_server* response) override;
 
-  grpc::Status GetHash(grpc::ServerContext* context,
-                       const FileInfo* request,
-                       FileInfo* response) override;
+  grpc::Status get_hash(grpc::ServerContext* context,
+                       const file_info_server* request,
+                       file_info_server* response) override;
 
-  grpc::Status IsExist(grpc::ServerContext* context,
-                       const FileInfo* request,
-                       FileInfo* response) override;
+  grpc::Status is_exist(grpc::ServerContext* context,
+                       const file_info_server* request,
+                       file_info_server* response) override;
 
-  grpc::Status IsFolder(grpc::ServerContext* context,
-                        const FileInfo* request,
-                        FileInfo* response) override;
+  grpc::Status is_folder(grpc::ServerContext* context,
+                        const file_info_server* request,
+                        file_info_server* response) override;
 
-  grpc::Status GetSize(grpc::ServerContext* context,
-                       const FileInfo* request,
-                       FileInfo* response) override;
+  grpc::Status get_size(grpc::ServerContext* context,
+                       const file_info_server* request,
+                       file_info_server* response) override;
 
-  grpc::Status GetTimestamp(grpc::ServerContext* context,
-                            const FileInfo* request,
-                            FileInfo* response) override;
+  grpc::Status get_timestamp(grpc::ServerContext* context,
+                            const file_info_server* request,
+                            file_info_server* response) override;
 
-  grpc::Status GetList(grpc::ServerContext* context,
-                       const FileInfo* request,
-                       grpc::ServerWriter<FileInfo>* writer) override;
+  grpc::Status get_list(grpc::ServerContext* context,
+                       const file_info_server* request,
+                       grpc::ServerWriter<file_info_server>* writer) override;
 
-  grpc::Status Download(grpc::ServerContext* context,
-                        const FileInfo* request,
-                        grpc::ServerWriter<FileStream>* writer) override;
+  grpc::Status download(grpc::ServerContext* context,
+                        const file_info_server* request,
+                        grpc::ServerWriter<file_stream_server>* writer) override;
 
-  grpc::Status Upload(grpc::ServerContext* context,
-                      grpc::ServerReader<FileStream>* reader,
-                      FileInfo* response) override;
+  grpc::Status upload(grpc::ServerContext* context,
+                      grpc::ServerReader<file_stream_server>* reader,
+                      file_info_server* response) override;
 
-  grpc::Status Move(grpc::ServerContext* context,
-                    const FileInfoMove* request,
-                    FileInfo* response) override;
+  grpc::Status move(grpc::ServerContext* context,
+                    const file_info_move_server* request,
+                    file_info_server* response) override;
 };
 
 }  // namespace doodle

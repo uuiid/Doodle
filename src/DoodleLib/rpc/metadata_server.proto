@@ -38,18 +38,18 @@ message metadata_database_filter{
   google.protobuf.UInt64Value parent = 5;
 }
 
-service MetadataServer{
-  rpc InstallMetadata(metadata_database) returns(metadata_database) {}
-  rpc DeleteMetadata(metadata_database) returns(metadata_database) {}
-  rpc UpdateMetadata(metadata_database) returns(metadata_database) {}
+service metadata_server{
+  rpc install_metadata(metadata_database) returns(metadata_database) {}
+  rpc delete_metadata(metadata_database) returns(metadata_database) {}
+  rpc update_metadata(metadata_database) returns(metadata_database) {}
 
-  rpc FilterMetadata(metadata_database_filter) returns(stream metadata_database) {}
+  rpc filter_metadata(metadata_database_filter) returns(stream metadata_database) {}
 
-  rpc InstallUserDate(user_database) returns(user_database) {}
-  rpc UpdateUserDate(user_database) returns(user_database) {}
-  rpc DeleteUserDate(user_database_filter) returns(user_database) {}
+  rpc install_user_date(user_database) returns(user_database) {}
+  rpc update_user_date(user_database) returns(user_database) {}
+  rpc delete_user_date(user_database_filter) returns(user_database) {}
 
-  rpc FilterUserDate(user_database_filter) returns(stream user_database) {}
+  rpc filter_user_date(user_database_filter) returns(stream user_database) {}
 
 
 }

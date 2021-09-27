@@ -60,12 +60,12 @@ rpc_metadaata_server::rpc_metadaata_server()
       }) {
 }
 
-grpc::Status rpc_metadaata_server::InstallMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+grpc::Status rpc_metadaata_server::install_metadata(grpc::ServerContext *context, const metadata_database *request, metadata_database *response) {
   auto k_conn = core_sql::Get().get_connection();
   Metadatatab k_tab{};
 
   auto k_in = sqlpp::dynamic_insert_into(*k_conn, k_tab).dynamic_set();
-  k_in.insert_list.add(k_tab.uuidPath = request->uuidpath());
+  k_in.insert_list.add(k_tab.uuidPath = request->uuid_path());
   k_in.insert_list.add(k_tab.metaType = magic_enum::enum_integer(request->m_type().value()));
   if (request->has_parent()) {
     k_in.insert_list.add(k_tab.parent = request->parent().value());
@@ -86,24 +86,24 @@ grpc::Status rpc_metadaata_server::InstallMetadata(grpc::ServerContext *context,
   DOODLE_LOG_DEBUG(fmt::format("插入数据库 id: {}", k_id))
 
   if (!request->metadata_cereal().value().empty()) {
-    auto path = getPath(request->uuidpath());
+    auto path = getPath(request->uuid_path());
     put_cache_and_file(path, request->metadata_cereal().value());
   }
 
   return grpc::Status::OK;
 }
-grpc::Status rpc_metadaata_server::DeleteMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+grpc::Status rpc_metadaata_server::delete_metadata(grpc::ServerContext *context, const metadata_database *request, metadata_database *response) {
   auto k_conn = core_sql::Get().get_connection();
   Metadatatab k_tab{};
 
-  auto k_path = getPath(request->uuidpath());
+  auto k_path = getPath(request->uuid_path());
   // if (!p_cache.Remove(k_path.generic_string()))
   //   return {grpc::StatusCode::NOT_FOUND, "未找到缓存"};
 
   auto id = (*k_conn)(sqlpp::remove_from(k_tab).where(k_tab.id == request->id()));
   response->set_id(id);
 
-  auto k_new_p = get_delete_path(request->uuidpath());
+  auto k_new_p = get_delete_path(request->uuid_path());
   if (FSys::exists(k_path)) {
     if (!FSys::exists(k_new_p.parent_path()))
       FSys::create_directories(k_new_p.parent_path());
@@ -115,7 +115,7 @@ grpc::Status rpc_metadaata_server::DeleteMetadata(grpc::ServerContext *context, 
   return grpc::Status::OK;
 }
 
-grpc::Status rpc_metadaata_server::UpdateMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
+grpc::Status rpc_metadaata_server::update_metadata(grpc::ServerContext *context, const metadata_database *request, metadata_database *response) {
   auto k_conn = core_sql::Get().get_connection();
   Metadatatab k_tab{};
   auto k_sql = sqlpp::dynamic_update(*k_conn, k_tab).where(k_tab.id == request->id()).dynamic_set();
@@ -136,7 +136,7 @@ grpc::Status rpc_metadaata_server::UpdateMetadata(grpc::ServerContext *context, 
     (*k_conn)(k_sql);
 
   if (!request->metadata_cereal().value().empty()) {
-    auto path = getPath(request->uuidpath());
+    auto path = getPath(request->uuid_path());
     put_cache_and_file(path, request->metadata_cereal().value());
     DOODLE_LOG_DEBUG(fmt::format("id: {} update: {}", request->id(), path))
   }
@@ -144,8 +144,8 @@ grpc::Status rpc_metadaata_server::UpdateMetadata(grpc::ServerContext *context, 
 
   return grpc::Status::OK;
 }
-grpc::Status rpc_metadaata_server::FilterMetadata(grpc::ServerContext *context,
-                                                const DataDb_Filter *request, grpc::ServerWriter<DataDb> *writer) {
+grpc::Status rpc_metadaata_server::filter_metadata(grpc::ServerContext *context,
+                                                const metadata_database_filter *request, grpc::ServerWriter<metadata_database> *writer) {
   auto k_conn = core_sql::Get().get_connection();
   Metadatatab k_tab{};
   auto k_select = sqlpp::dynamic_select(*k_conn, sqlpp::all_of(k_tab)).from(k_tab).dynamic_where();
@@ -171,13 +171,13 @@ grpc::Status rpc_metadaata_server::FilterMetadata(grpc::ServerContext *context,
   }
 
   for (const auto &row : (*k_conn)(k_select)) {
-    DataDb k_db;
+    metadata_database k_db;
     k_db.set_id(row.id.value());
     k_db.mutable_parent()->set_value(row.parent.value());
-    k_db.set_uuidpath(std::string{row.uuidPath.value()});
+    k_db.set_uuid_path(std::string{row.uuidPath.value()});
     k_db.mutable_m_type()->set_value(
-        magic_enum::enum_cast<doodle::DataDb::meta_type>(row.metaType.value())
-            .value_or(doodle::DataDb::meta_type::DataDb_meta_type_unknown_file));
+        magic_enum::enum_cast<doodle::metadata_database::meta_type>(row.metaType.value())
+            .value_or(doodle::metadata_database::meta_type::metadata_database_meta_type_unknown_file));
     auto k_time      = std::chrono::system_clock::time_point{row.updateTime.value()};
     auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
         std::chrono::system_clock::to_time_t(k_time));
@@ -199,7 +199,7 @@ grpc::Status rpc_metadaata_server::FilterMetadata(grpc::ServerContext *context,
 
   return grpc::Status::OK;
 }
-grpc::Status rpc_metadaata_server::InstallUserDate(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
+grpc::Status rpc_metadaata_server::install_user_date(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
   auto k_conn = core_sql::Get().get_connection();
   Usertab k_tab{};
   auto k_sql =  sqlpp::insert_into(k_tab).set(
@@ -221,14 +221,14 @@ grpc::Status rpc_metadaata_server::InstallUserDate(::grpc::ServerContext *contex
   }
   return grpc::Status::OK;
 }
-grpc::Status rpc_metadaata_server::UpdateUserDate(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
+grpc::Status rpc_metadaata_server::update_user_date(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
   if(!request->userdata_cereal().value().empty()){
     auto k_path = getPath(request->uuidpath());
     put_cache_and_file(k_path,request->userdata_cereal().value());
   }
   return grpc::Status::OK;
 }
-grpc::Status rpc_metadaata_server::DeleteUserDate(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::doodle::user_database *response) {
+grpc::Status rpc_metadaata_server::delete_user_date(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::doodle::user_database *response) {
   auto k_conn = core_sql::Get().get_connection();
   Usertab k_tab{};
 
@@ -248,7 +248,7 @@ grpc::Status rpc_metadaata_server::DeleteUserDate(::grpc::ServerContext *context
   }
   return grpc::Status::OK;
 }
-grpc::Status rpc_metadaata_server::FilterUserDate(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::grpc::ServerWriter< ::doodle::user_database> *writer) {
+grpc::Status rpc_metadaata_server::filter_user_date(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::grpc::ServerWriter< ::doodle::user_database> *writer) {
   auto k_conn = core_sql::Get().get_connection();
   Usertab k_tab{};
 

@@ -9,7 +9,7 @@ package doodle;
 
 message file_info_server{
   string path = 1;
-  bool isFolder = 2;
+  bool is_folder = 2;
   bool exist = 3;
   google.protobuf.Timestamp update_time = 4;
   uint64 size = 5;
@@ -26,17 +26,17 @@ message file_info_move_server{
   file_info_server target = 2;
 }
 
-service FileSystemServer{
-  rpc GetInfo(file_info_server) returns (file_info_server) {}
-  rpc GetHash(file_info_server) returns (file_info_server) {}
+service file_system_server{
+  rpc get_info(file_info_server) returns (file_info_server) {}
+  rpc get_hash(file_info_server) returns (file_info_server) {}
 
-  rpc IsExist(file_info_server) returns (file_info_server) {}
-  rpc GetSize(file_info_server) returns (file_info_server) {}
-  rpc IsFolder(file_info_server) returns (file_info_server) {}
-  rpc GetTimestamp(file_info_server) returns (file_info_server) {}
-  rpc GetList(file_info_server) returns (stream file_info_server) {}
+  rpc is_exist(file_info_server) returns (file_info_server) {}
+  rpc get_size(file_info_server) returns (file_info_server) {}
+  rpc is_folder(file_info_server) returns (file_info_server) {}
+  rpc get_timestamp(file_info_server) returns (file_info_server) {}
+  rpc get_list(file_info_server) returns (stream file_info_server) {}
 
-  rpc Download(file_info_server) returns (stream file_stream_server) {}
-  rpc Upload(stream file_stream_server) returns (file_info_server) {}
-  rpc Move(file_info_move_server) returns (file_info_server) {}
+  rpc download(file_info_server) returns (stream file_stream_server) {}
+  rpc upload(stream file_stream_server) returns (file_info_server) {}
+  rpc move(file_info_move_server) returns (file_info_server) {}
 }

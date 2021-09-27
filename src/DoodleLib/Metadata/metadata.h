@@ -313,9 +313,9 @@ class DOODLELIB_API metadata
   bool operator==(const metadata &in_rhs) const;
   bool operator!=(const metadata &in_rhs) const;
 
-  virtual void to_DataDb(DataDb &in_) const;
-  static MetadataPtr from_DataDb(const DataDb &in_);
-  explicit operator DataDb() const;
+  virtual void to_DataDb(metadata_database &in_) const;
+  static MetadataPtr from_DataDb(const metadata_database &in_);
+  explicit operator metadata_database() const;
 
   friend class boost::serialization::access;
   template <class Archive>

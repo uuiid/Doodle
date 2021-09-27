@@ -21,417 +21,417 @@
 #include <grpcpp/impl/codegen/sync_stream.h>
 namespace doodle {
 
-static const char* FileSystemServer_method_names[] = {
-  "/doodle.FileSystemServer/GetInfo",
-  "/doodle.FileSystemServer/GetHash",
-  "/doodle.FileSystemServer/IsExist",
-  "/doodle.FileSystemServer/GetSize",
-  "/doodle.FileSystemServer/IsFolder",
-  "/doodle.FileSystemServer/GetTimestamp",
-  "/doodle.FileSystemServer/GetList",
-  "/doodle.FileSystemServer/Download",
-  "/doodle.FileSystemServer/Upload",
-  "/doodle.FileSystemServer/Move",
+static const char* file_system_server_method_names[] = {
+  "/doodle.file_system_server/get_info",
+  "/doodle.file_system_server/get_hash",
+  "/doodle.file_system_server/is_exist",
+  "/doodle.file_system_server/get_size",
+  "/doodle.file_system_server/is_folder",
+  "/doodle.file_system_server/get_timestamp",
+  "/doodle.file_system_server/get_list",
+  "/doodle.file_system_server/download",
+  "/doodle.file_system_server/upload",
+  "/doodle.file_system_server/move",
 };
 
-std::unique_ptr< FileSystemServer::Stub> FileSystemServer::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
+std::unique_ptr< file_system_server::Stub> file_system_server::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
   (void)options;
-  std::unique_ptr< FileSystemServer::Stub> stub(new FileSystemServer::Stub(channel));
+  std::unique_ptr< file_system_server::Stub> stub(new file_system_server::Stub(channel));
   return stub;
 }
 
-FileSystemServer::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_GetInfo_(FileSystemServer_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetHash_(FileSystemServer_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_IsExist_(FileSystemServer_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetSize_(FileSystemServer_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_IsFolder_(FileSystemServer_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetTimestamp_(FileSystemServer_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetList_(FileSystemServer_method_names[6], ::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
-  , rpcmethod_Download_(FileSystemServer_method_names[7], ::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
-  , rpcmethod_Upload_(FileSystemServer_method_names[8], ::grpc::internal::RpcMethod::CLIENT_STREAMING, channel)
-  , rpcmethod_Move_(FileSystemServer_method_names[9], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+file_system_server::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
+  : channel_(channel), rpcmethod_get_info_(file_system_server_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_get_hash_(file_system_server_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_is_exist_(file_system_server_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_get_size_(file_system_server_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_is_folder_(file_system_server_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_get_timestamp_(file_system_server_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_get_list_(file_system_server_method_names[6], ::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
+  , rpcmethod_download_(file_system_server_method_names[7], ::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
+  , rpcmethod_upload_(file_system_server_method_names[8], ::grpc::internal::RpcMethod::CLIENT_STREAMING, channel)
+  , rpcmethod_move_(file_system_server_method_names[9], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
-::grpc::Status FileSystemServer::Stub::GetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
-  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_GetInfo_, context, request, response);
+::grpc::Status file_system_server::Stub::get_info(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_get_info_, context, request, response);
 }
 
-void FileSystemServer::Stub::experimental_async::GetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
-  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetInfo_, context, request, response, std::move(f));
+void file_system_server::Stub::experimental_async::get_info(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_get_info_, context, request, response, std::move(f));
 }
 
-void FileSystemServer::Stub::experimental_async::GetInfo(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetInfo_, context, request, response, reactor);
+void file_system_server::Stub::experimental_async::get_info(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_get_info_, context, request, response, reactor);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::PrepareAsyncGetInfoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_GetInfo_, context, request);
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::PrepareAsyncget_infoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_get_info_, context, request);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::AsyncGetInfoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::Asyncget_infoRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
   auto* result =
-    this->PrepareAsyncGetInfoRaw(context, request, cq);
+    this->PrepareAsyncget_infoRaw(context, request, cq);
   result->StartCall();
   return result;
 }
 
-::grpc::Status FileSystemServer::Stub::GetHash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
-  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_GetHash_, context, request, response);
+::grpc::Status file_system_server::Stub::get_hash(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_get_hash_, context, request, response);
 }
 
-void FileSystemServer::Stub::experimental_async::GetHash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
-  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetHash_, context, request, response, std::move(f));
+void file_system_server::Stub::experimental_async::get_hash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_get_hash_, context, request, response, std::move(f));
 }
 
-void FileSystemServer::Stub::experimental_async::GetHash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetHash_, context, request, response, reactor);
+void file_system_server::Stub::experimental_async::get_hash(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_get_hash_, context, request, response, reactor);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::PrepareAsyncGetHashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_GetHash_, context, request);
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::PrepareAsyncget_hashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_get_hash_, context, request);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::AsyncGetHashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::Asyncget_hashRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
   auto* result =
-    this->PrepareAsyncGetHashRaw(context, request, cq);
+    this->PrepareAsyncget_hashRaw(context, request, cq);
   result->StartCall();
   return result;
 }
 
-::grpc::Status FileSystemServer::Stub::IsExist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
-  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_IsExist_, context, request, response);
+::grpc::Status file_system_server::Stub::is_exist(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_is_exist_, context, request, response);
 }
 
-void FileSystemServer::Stub::experimental_async::IsExist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
-  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_IsExist_, context, request, response, std::move(f));
+void file_system_server::Stub::experimental_async::is_exist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_is_exist_, context, request, response, std::move(f));
 }
 
-void FileSystemServer::Stub::experimental_async::IsExist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_IsExist_, context, request, response, reactor);
+void file_system_server::Stub::experimental_async::is_exist(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_is_exist_, context, request, response, reactor);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::PrepareAsyncIsExistRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_IsExist_, context, request);
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::PrepareAsyncis_existRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_is_exist_, context, request);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::AsyncIsExistRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::Asyncis_existRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
   auto* result =
-    this->PrepareAsyncIsExistRaw(context, request, cq);
+    this->PrepareAsyncis_existRaw(context, request, cq);
   result->StartCall();
   return result;
 }
 
-::grpc::Status FileSystemServer::Stub::GetSize(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
-  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_GetSize_, context, request, response);
+::grpc::Status file_system_server::Stub::get_size(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_get_size_, context, request, response);
 }
 
-void FileSystemServer::Stub::experimental_async::GetSize(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
-  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetSize_, context, request, response, std::move(f));
+void file_system_server::Stub::experimental_async::get_size(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_get_size_, context, request, response, std::move(f));
 }
 
-void FileSystemServer::Stub::experimental_async::GetSize(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetSize_, context, request, response, reactor);
+void file_system_server::Stub::experimental_async::get_size(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_get_size_, context, request, response, reactor);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::PrepareAsyncGetSizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_GetSize_, context, request);
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::PrepareAsyncget_sizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_get_size_, context, request);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::AsyncGetSizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::Asyncget_sizeRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
   auto* result =
-    this->PrepareAsyncGetSizeRaw(context, request, cq);
+    this->PrepareAsyncget_sizeRaw(context, request, cq);
   result->StartCall();
   return result;
 }
 
-::grpc::Status FileSystemServer::Stub::IsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
-  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_IsFolder_, context, request, response);
+::grpc::Status file_system_server::Stub::is_folder(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_is_folder_, context, request, response);
 }
 
-void FileSystemServer::Stub::experimental_async::IsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
-  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_IsFolder_, context, request, response, std::move(f));
+void file_system_server::Stub::experimental_async::is_folder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_is_folder_, context, request, response, std::move(f));
 }
 
-void FileSystemServer::Stub::experimental_async::IsFolder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_IsFolder_, context, request, response, reactor);
+void file_system_server::Stub::experimental_async::is_folder(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_is_folder_, context, request, response, reactor);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::PrepareAsyncIsFolderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_IsFolder_, context, request);
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::PrepareAsyncis_folderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_is_folder_, context, request);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::AsyncIsFolderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::Asyncis_folderRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
   auto* result =
-    this->PrepareAsyncIsFolderRaw(context, request, cq);
+    this->PrepareAsyncis_folderRaw(context, request, cq);
   result->StartCall();
   return result;
 }
 
-::grpc::Status FileSystemServer::Stub::GetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
-  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_GetTimestamp_, context, request, response);
+::grpc::Status file_system_server::Stub::get_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::doodle::file_info_server* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_get_timestamp_, context, request, response);
 }
 
-void FileSystemServer::Stub::experimental_async::GetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
-  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetTimestamp_, context, request, response, std::move(f));
+void file_system_server::Stub::experimental_async::get_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_get_timestamp_, context, request, response, std::move(f));
 }
 
-void FileSystemServer::Stub::experimental_async::GetTimestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetTimestamp_, context, request, response, reactor);
+void file_system_server::Stub::experimental_async::get_timestamp(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_get_timestamp_, context, request, response, reactor);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::PrepareAsyncGetTimestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_GetTimestamp_, context, request);
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::PrepareAsyncget_timestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_get_timestamp_, context, request);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::AsyncGetTimestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::Asyncget_timestampRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
   auto* result =
-    this->PrepareAsyncGetTimestampRaw(context, request, cq);
+    this->PrepareAsyncget_timestampRaw(context, request, cq);
   result->StartCall();
   return result;
 }
 
-::grpc::ClientReader< ::doodle::file_info_server>* FileSystemServer::Stub::GetListRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
-  return ::grpc::internal::ClientReaderFactory< ::doodle::file_info_server>::Create(channel_.get(), rpcmethod_GetList_, context, request);
+::grpc::ClientReader< ::doodle::file_info_server>* file_system_server::Stub::get_listRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
+  return ::grpc::internal::ClientReaderFactory< ::doodle::file_info_server>::Create(channel_.get(), rpcmethod_get_list_, context, request);
 }
 
-void FileSystemServer::Stub::experimental_async::GetList(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_info_server>* reactor) {
-  ::grpc::internal::ClientCallbackReaderFactory< ::doodle::file_info_server>::Create(stub_->channel_.get(), stub_->rpcmethod_GetList_, context, request, reactor);
+void file_system_server::Stub::experimental_async::get_list(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_info_server>* reactor) {
+  ::grpc::internal::ClientCallbackReaderFactory< ::doodle::file_info_server>::Create(stub_->channel_.get(), stub_->rpcmethod_get_list_, context, request, reactor);
 }
 
-::grpc::ClientAsyncReader< ::doodle::file_info_server>* FileSystemServer::Stub::AsyncGetListRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderFactory< ::doodle::file_info_server>::Create(channel_.get(), cq, rpcmethod_GetList_, context, request, true, tag);
+::grpc::ClientAsyncReader< ::doodle::file_info_server>* file_system_server::Stub::Asyncget_listRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::doodle::file_info_server>::Create(channel_.get(), cq, rpcmethod_get_list_, context, request, true, tag);
 }
 
-::grpc::ClientAsyncReader< ::doodle::file_info_server>* FileSystemServer::Stub::PrepareAsyncGetListRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderFactory< ::doodle::file_info_server>::Create(channel_.get(), cq, rpcmethod_GetList_, context, request, false, nullptr);
+::grpc::ClientAsyncReader< ::doodle::file_info_server>* file_system_server::Stub::PrepareAsyncget_listRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::doodle::file_info_server>::Create(channel_.get(), cq, rpcmethod_get_list_, context, request, false, nullptr);
 }
 
-::grpc::ClientReader< ::doodle::file_stream_server>* FileSystemServer::Stub::DownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
-  return ::grpc::internal::ClientReaderFactory< ::doodle::file_stream_server>::Create(channel_.get(), rpcmethod_Download_, context, request);
+::grpc::ClientReader< ::doodle::file_stream_server>* file_system_server::Stub::downloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request) {
+  return ::grpc::internal::ClientReaderFactory< ::doodle::file_stream_server>::Create(channel_.get(), rpcmethod_download_, context, request);
 }
 
-void FileSystemServer::Stub::experimental_async::Download(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_stream_server>* reactor) {
-  ::grpc::internal::ClientCallbackReaderFactory< ::doodle::file_stream_server>::Create(stub_->channel_.get(), stub_->rpcmethod_Download_, context, request, reactor);
+void file_system_server::Stub::experimental_async::download(::grpc::ClientContext* context, const ::doodle::file_info_server* request, ::grpc::experimental::ClientReadReactor< ::doodle::file_stream_server>* reactor) {
+  ::grpc::internal::ClientCallbackReaderFactory< ::doodle::file_stream_server>::Create(stub_->channel_.get(), stub_->rpcmethod_download_, context, request, reactor);
 }
 
-::grpc::ClientAsyncReader< ::doodle::file_stream_server>* FileSystemServer::Stub::AsyncDownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderFactory< ::doodle::file_stream_server>::Create(channel_.get(), cq, rpcmethod_Download_, context, request, true, tag);
+::grpc::ClientAsyncReader< ::doodle::file_stream_server>* file_system_server::Stub::AsyncdownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::doodle::file_stream_server>::Create(channel_.get(), cq, rpcmethod_download_, context, request, true, tag);
 }
 
-::grpc::ClientAsyncReader< ::doodle::file_stream_server>* FileSystemServer::Stub::PrepareAsyncDownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderFactory< ::doodle::file_stream_server>::Create(channel_.get(), cq, rpcmethod_Download_, context, request, false, nullptr);
+::grpc::ClientAsyncReader< ::doodle::file_stream_server>* file_system_server::Stub::PrepareAsyncdownloadRaw(::grpc::ClientContext* context, const ::doodle::file_info_server& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::doodle::file_stream_server>::Create(channel_.get(), cq, rpcmethod_download_, context, request, false, nullptr);
 }
 
-::grpc::ClientWriter< ::doodle::file_stream_server>* FileSystemServer::Stub::UploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response) {
-  return ::grpc::internal::ClientWriterFactory< ::doodle::file_stream_server>::Create(channel_.get(), rpcmethod_Upload_, context, response);
+::grpc::ClientWriter< ::doodle::file_stream_server>* file_system_server::Stub::uploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response) {
+  return ::grpc::internal::ClientWriterFactory< ::doodle::file_stream_server>::Create(channel_.get(), rpcmethod_upload_, context, response);
 }
 
-void FileSystemServer::Stub::experimental_async::Upload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::experimental::ClientWriteReactor< ::doodle::file_stream_server>* reactor) {
-  ::grpc::internal::ClientCallbackWriterFactory< ::doodle::file_stream_server>::Create(stub_->channel_.get(), stub_->rpcmethod_Upload_, context, response, reactor);
+void file_system_server::Stub::experimental_async::upload(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::experimental::ClientWriteReactor< ::doodle::file_stream_server>* reactor) {
+  ::grpc::internal::ClientCallbackWriterFactory< ::doodle::file_stream_server>::Create(stub_->channel_.get(), stub_->rpcmethod_upload_, context, response, reactor);
 }
 
-::grpc::ClientAsyncWriter< ::doodle::file_stream_server>* FileSystemServer::Stub::AsyncUploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncWriterFactory< ::doodle::file_stream_server>::Create(channel_.get(), cq, rpcmethod_Upload_, context, response, true, tag);
+::grpc::ClientAsyncWriter< ::doodle::file_stream_server>* file_system_server::Stub::AsyncuploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncWriterFactory< ::doodle::file_stream_server>::Create(channel_.get(), cq, rpcmethod_upload_, context, response, true, tag);
 }
 
-::grpc::ClientAsyncWriter< ::doodle::file_stream_server>* FileSystemServer::Stub::PrepareAsyncUploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncWriterFactory< ::doodle::file_stream_server>::Create(channel_.get(), cq, rpcmethod_Upload_, context, response, false, nullptr);
+::grpc::ClientAsyncWriter< ::doodle::file_stream_server>* file_system_server::Stub::PrepareAsyncuploadRaw(::grpc::ClientContext* context, ::doodle::file_info_server* response, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncWriterFactory< ::doodle::file_stream_server>::Create(channel_.get(), cq, rpcmethod_upload_, context, response, false, nullptr);
 }
 
-::grpc::Status FileSystemServer::Stub::Move(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::doodle::file_info_server* response) {
-  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_move_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_Move_, context, request, response);
+::grpc::Status file_system_server::Stub::move(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::doodle::file_info_server* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::doodle::file_info_move_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_move_, context, request, response);
 }
 
-void FileSystemServer::Stub::experimental_async::Move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
-  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_move_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_Move_, context, request, response, std::move(f));
+void file_system_server::Stub::experimental_async::move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::doodle::file_info_move_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_move_, context, request, response, std::move(f));
 }
 
-void FileSystemServer::Stub::experimental_async::Move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_Move_, context, request, response, reactor);
+void file_system_server::Stub::experimental_async::move(::grpc::ClientContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_move_, context, request, response, reactor);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::PrepareAsyncMoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_move_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_Move_, context, request);
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::PrepareAsyncmoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::doodle::file_info_server, ::doodle::file_info_move_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_move_, context, request);
 }
 
-::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* FileSystemServer::Stub::AsyncMoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::doodle::file_info_server>* file_system_server::Stub::AsyncmoveRaw(::grpc::ClientContext* context, const ::doodle::file_info_move_server& request, ::grpc::CompletionQueue* cq) {
   auto* result =
-    this->PrepareAsyncMoveRaw(context, request, cq);
+    this->PrepareAsyncmoveRaw(context, request, cq);
   result->StartCall();
   return result;
 }
 
-FileSystemServer::Service::Service() {
+file_system_server::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      FileSystemServer_method_names[0],
+      file_system_server_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< FileSystemServer::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
-          [](FileSystemServer::Service* service,
+      new ::grpc::internal::RpcMethodHandler< file_system_server::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](file_system_server::Service* service,
              ::grpc::ServerContext* ctx,
              const ::doodle::file_info_server* req,
              ::doodle::file_info_server* resp) {
-               return service->GetInfo(ctx, req, resp);
+               return service->get_info(ctx, req, resp);
              }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      FileSystemServer_method_names[1],
+      file_system_server_method_names[1],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< FileSystemServer::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
-          [](FileSystemServer::Service* service,
+      new ::grpc::internal::RpcMethodHandler< file_system_server::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](file_system_server::Service* service,
              ::grpc::ServerContext* ctx,
              const ::doodle::file_info_server* req,
              ::doodle::file_info_server* resp) {
-               return service->GetHash(ctx, req, resp);
+               return service->get_hash(ctx, req, resp);
              }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      FileSystemServer_method_names[2],
+      file_system_server_method_names[2],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< FileSystemServer::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
-          [](FileSystemServer::Service* service,
+      new ::grpc::internal::RpcMethodHandler< file_system_server::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](file_system_server::Service* service,
              ::grpc::ServerContext* ctx,
              const ::doodle::file_info_server* req,
              ::doodle::file_info_server* resp) {
-               return service->IsExist(ctx, req, resp);
+               return service->is_exist(ctx, req, resp);
              }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      FileSystemServer_method_names[3],
+      file_system_server_method_names[3],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< FileSystemServer::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
-          [](FileSystemServer::Service* service,
+      new ::grpc::internal::RpcMethodHandler< file_system_server::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](file_system_server::Service* service,
              ::grpc::ServerContext* ctx,
              const ::doodle::file_info_server* req,
              ::doodle::file_info_server* resp) {
-               return service->GetSize(ctx, req, resp);
+               return service->get_size(ctx, req, resp);
              }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      FileSystemServer_method_names[4],
+      file_system_server_method_names[4],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< FileSystemServer::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
-          [](FileSystemServer::Service* service,
+      new ::grpc::internal::RpcMethodHandler< file_system_server::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](file_system_server::Service* service,
              ::grpc::ServerContext* ctx,
              const ::doodle::file_info_server* req,
              ::doodle::file_info_server* resp) {
-               return service->IsFolder(ctx, req, resp);
+               return service->is_folder(ctx, req, resp);
              }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      FileSystemServer_method_names[5],
+      file_system_server_method_names[5],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< FileSystemServer::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
-          [](FileSystemServer::Service* service,
+      new ::grpc::internal::RpcMethodHandler< file_system_server::Service, ::doodle::file_info_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](file_system_server::Service* service,
              ::grpc::ServerContext* ctx,
              const ::doodle::file_info_server* req,
              ::doodle::file_info_server* resp) {
-               return service->GetTimestamp(ctx, req, resp);
+               return service->get_timestamp(ctx, req, resp);
              }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      FileSystemServer_method_names[6],
+      file_system_server_method_names[6],
       ::grpc::internal::RpcMethod::SERVER_STREAMING,
-      new ::grpc::internal::ServerStreamingHandler< FileSystemServer::Service, ::doodle::file_info_server, ::doodle::file_info_server>(
-          [](FileSystemServer::Service* service,
+      new ::grpc::internal::ServerStreamingHandler< file_system_server::Service, ::doodle::file_info_server, ::doodle::file_info_server>(
+          [](file_system_server::Service* service,
              ::grpc::ServerContext* ctx,
              const ::doodle::file_info_server* req,
              ::grpc::ServerWriter<::doodle::file_info_server>* writer) {
-               return service->GetList(ctx, req, writer);
+               return service->get_list(ctx, req, writer);
              }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      FileSystemServer_method_names[7],
+      file_system_server_method_names[7],
       ::grpc::internal::RpcMethod::SERVER_STREAMING,
-      new ::grpc::internal::ServerStreamingHandler< FileSystemServer::Service, ::doodle::file_info_server, ::doodle::file_stream_server>(
-          [](FileSystemServer::Service* service,
+      new ::grpc::internal::ServerStreamingHandler< file_system_server::Service, ::doodle::file_info_server, ::doodle::file_stream_server>(
+          [](file_system_server::Service* service,
              ::grpc::ServerContext* ctx,
              const ::doodle::file_info_server* req,
              ::grpc::ServerWriter<::doodle::file_stream_server>* writer) {
-               return service->Download(ctx, req, writer);
+               return service->download(ctx, req, writer);
              }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      FileSystemServer_method_names[8],
+      file_system_server_method_names[8],
       ::grpc::internal::RpcMethod::CLIENT_STREAMING,
-      new ::grpc::internal::ClientStreamingHandler< FileSystemServer::Service, ::doodle::file_stream_server, ::doodle::file_info_server>(
-          [](FileSystemServer::Service* service,
+      new ::grpc::internal::ClientStreamingHandler< file_system_server::Service, ::doodle::file_stream_server, ::doodle::file_info_server>(
+          [](file_system_server::Service* service,
              ::grpc::ServerContext* ctx,
              ::grpc::ServerReader<::doodle::file_stream_server>* reader,
              ::doodle::file_info_server* resp) {
-               return service->Upload(ctx, reader, resp);
+               return service->upload(ctx, reader, resp);
              }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      FileSystemServer_method_names[9],
+      file_system_server_method_names[9],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< FileSystemServer::Service, ::doodle::file_info_move_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
-          [](FileSystemServer::Service* service,
+      new ::grpc::internal::RpcMethodHandler< file_system_server::Service, ::doodle::file_info_move_server, ::doodle::file_info_server, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](file_system_server::Service* service,
              ::grpc::ServerContext* ctx,
              const ::doodle::file_info_move_server* req,
              ::doodle::file_info_server* resp) {
-               return service->Move(ctx, req, resp);
+               return service->move(ctx, req, resp);
              }, this)));
 }
 
-FileSystemServer::Service::~Service() {
+file_system_server::Service::~Service() {
 }
 
-::grpc::Status FileSystemServer::Service::GetInfo(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
+::grpc::Status file_system_server::Service::get_info(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status FileSystemServer::Service::GetHash(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
+::grpc::Status file_system_server::Service::get_hash(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status FileSystemServer::Service::IsExist(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
+::grpc::Status file_system_server::Service::is_exist(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status FileSystemServer::Service::GetSize(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
+::grpc::Status file_system_server::Service::get_size(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status FileSystemServer::Service::IsFolder(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
+::grpc::Status file_system_server::Service::is_folder(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status FileSystemServer::Service::GetTimestamp(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
+::grpc::Status file_system_server::Service::get_timestamp(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::doodle::file_info_server* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status FileSystemServer::Service::GetList(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::grpc::ServerWriter< ::doodle::file_info_server>* writer) {
+::grpc::Status file_system_server::Service::get_list(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::grpc::ServerWriter< ::doodle::file_info_server>* writer) {
   (void) context;
   (void) request;
   (void) writer;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status FileSystemServer::Service::Download(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::grpc::ServerWriter< ::doodle::file_stream_server>* writer) {
+::grpc::Status file_system_server::Service::download(::grpc::ServerContext* context, const ::doodle::file_info_server* request, ::grpc::ServerWriter< ::doodle::file_stream_server>* writer) {
   (void) context;
   (void) request;
   (void) writer;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status FileSystemServer::Service::Upload(::grpc::ServerContext* context, ::grpc::ServerReader< ::doodle::file_stream_server>* reader, ::doodle::file_info_server* response) {
+::grpc::Status file_system_server::Service::upload(::grpc::ServerContext* context, ::grpc::ServerReader< ::doodle::file_stream_server>* reader, ::doodle::file_info_server* response) {
   (void) context;
   (void) reader;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status FileSystemServer::Service::Move(::grpc::ServerContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response) {
+::grpc::Status file_system_server::Service::move(::grpc::ServerContext* context, const ::doodle::file_info_move_server* request, ::doodle::file_info_server* response) {
   (void) context;
   (void) request;
   (void) response;

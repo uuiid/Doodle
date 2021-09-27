@@ -5,7 +5,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/metadata.h>
-#include <DoodleLib/generate/rpc/MetadataServer.grpc.pb.h>
+#include <DoodleLib/generate/rpc/metadata_server.grpc.pb.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 #include <grpcpp/channel.h>
 
@@ -34,7 +34,7 @@ class filter : details::no_copy {
   void set_range(const std::pair<time_point, time_point>& in_time);
 
   void reset();
-  explicit operator DataDb_Filter() const;
+  explicit operator metadata_database_filter() const;
 };
 
 using rpc_filter_ptr = std::shared_ptr<filter>;
@@ -44,7 +44,7 @@ using rpc_filter_ptr = std::shared_ptr<filter>;
  * @warning 这个类在导出的时候使用会报错, 在grpc库中会报空指针错误, 所有不可以在外部使用
  */
 class DOODLELIB_API rpc_metadata_client {
-  std::unique_ptr<MetadataServer::Stub> p_stub;
+  std::unique_ptr<metadata_server::Stub> p_stub;
   // std::shared_ptr<grpc::Channel> p_channel;
 
  public:

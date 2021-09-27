@@ -51,7 +51,7 @@ std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> rpc_file
 }
 
 rpc_file_system_client::rpc_file_system_client(const std::shared_ptr<grpc::Channel>& in_channel)
-    : p_stub(FileSystemServer::NewStub(in_channel))
+    : p_stub(file_system_server::NewStub(in_channel))
 // p_channel(in_channel)
 {
 }
@@ -59,24 +59,24 @@ rpc_file_system_client::rpc_file_system_client(const std::shared_ptr<grpc::Chann
 std::tuple<std::size_t, bool, chrono::sys_time_pos, bool> rpc_file_system_client::get_info(const FSys::path& in_server_path) {
   grpc::ClientContext k_context{};
 
-  FileInfo k_in_info{};
+  file_info_server k_in_info{};
   k_in_info.set_path(in_server_path.generic_string());
-  FileInfo k_out_info;
-  auto status = p_stub->GetInfo(&k_context, k_in_info, &k_out_info);
+  file_info_server k_out_info;
+  auto status = p_stub->get_info(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
     throw doodle_error{status.error_message()};
 
   auto k_t = std::chrono::system_clock::from_time_t(google::protobuf::util::TimeUtil::TimestampToTimeT(k_out_info.update_time()));
-  return {k_out_info.size(), k_out_info.exist(), k_t, k_out_info.isfolder()};
+  return {k_out_info.size(), k_out_info.exist(), k_t, k_out_info.is_folder()};
 }
 
 std::size_t rpc_file_system_client::get_size(const FSys::path& in_server_path) {
   grpc::ClientContext k_context{};
 
-  FileInfo k_in_info{};
+  file_info_server k_in_info{};
   k_in_info.set_path(in_server_path.generic_string());
-  FileInfo k_out_info;
-  auto status = p_stub->GetSize(&k_context, k_in_info, &k_out_info);
+  file_info_server k_out_info;
+  auto status = p_stub->get_size(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
     throw doodle_error{status.error_message()};
 
@@ -86,23 +86,23 @@ std::size_t rpc_file_system_client::get_size(const FSys::path& in_server_path) {
 std::tuple<bool, bool> rpc_file_system_client::is_folder(const FSys::path& in_server_path) {
   grpc::ClientContext k_context{};
 
-  FileInfo k_in_info{};
+  file_info_server k_in_info{};
   k_in_info.set_path(in_server_path.generic_string());
-  FileInfo k_out_info;
-  auto status = p_stub->IsFolder(&k_context, k_in_info, &k_out_info);
+  file_info_server k_out_info;
+  auto status = p_stub->is_folder(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
     throw doodle_error{status.error_message()};
 
-  return {k_out_info.exist(), k_out_info.isfolder()};
+  return {k_out_info.exist(), k_out_info.is_folder()};
 }
 
 chrono::sys_time_pos rpc_file_system_client::get_timestamp(const FSys::path& in_server_path) {
   grpc::ClientContext k_context{};
 
-  FileInfo k_in_info{};
+  file_info_server k_in_info{};
   k_in_info.set_path(in_server_path.generic_string());
-  FileInfo k_out_info;
-  auto status = p_stub->GetTimestamp(&k_context, k_in_info, &k_out_info);
+  file_info_server k_out_info;
+  auto status = p_stub->get_timestamp(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
     throw doodle_error{status.error_message()};
   auto k_t = std::chrono::system_clock::from_time_t(google::protobuf::util::TimeUtil::TimestampToTimeT(k_out_info.update_time()));
@@ -113,10 +113,10 @@ chrono::sys_time_pos rpc_file_system_client::get_timestamp(const FSys::path& in_
 bool rpc_file_system_client::is_exist(const FSys::path& in_server_path) {
   grpc::ClientContext k_context{};
 
-  FileInfo k_in_info{};
+  file_info_server k_in_info{};
   k_in_info.set_path(in_server_path.generic_string());
-  FileInfo k_out_info;
-  auto status = p_stub->IsExist(&k_context, k_in_info, &k_out_info);
+  file_info_server k_out_info;
+  auto status = p_stub->is_exist(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
     throw doodle_error{status.error_message()};
 
@@ -176,10 +176,10 @@ rpc_file_system_client::trans_file_ptr rpc_file_system_client::upload(std::uniqu
 std::string rpc_file_system_client::get_hash(const FSys::path& in_path) {
   grpc::ClientContext k_context{};
 
-  FileInfo k_in_info{};
+  file_info_server k_in_info{};
   k_in_info.set_path(in_path.generic_string());
-  FileInfo k_out_info;
-  auto status = p_stub->GetHash(&k_context, k_in_info, &k_out_info);
+  file_info_server k_out_info;
+  auto status = p_stub->get_hash(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
     throw doodle_error{status.error_message()};
   return k_out_info.hash().value();
@@ -243,15 +243,15 @@ void down_file::run() {
 
   grpc::ClientContext k_context{};
 
-  FileInfo k_in_info{};
-  FileStream k_out_info{};
+  file_info_server k_in_info{};
+  file_stream_server k_out_info{};
 
   FSys::ofstream k_file{_param->local_path, std::ios::out | std::ios::binary};
   if (!k_file)
     throw doodle_error{"not create file"};
 
   k_in_info.set_path(_param->server_path.generic_string());
-  auto k_out = _self->p_stub->Download(&k_context, k_in_info);
+  auto k_out = _self->p_stub->download(&k_context, k_in_info);
 
   const std::size_t k_num2{core_set::get_block_size() > k_sz
                                ? 1
@@ -294,12 +294,12 @@ void up_file::run() {
   if (k_s_ex && !_param->backup_path.empty()) {
     grpc::ClientContext k_context{};
 
-    FileInfoMove k_info{};
-    FileInfo k_out_info{};
+    file_info_move_server k_info{};
+    file_info_server k_out_info{};
     k_info.mutable_source()->set_path(std::move(_param->server_path.generic_string()));
     k_info.mutable_target()->set_path(std::move(_param->backup_path.generic_string()));
 
-    auto k_s = _self->p_stub->Move(&k_context, k_info, &k_out_info);
+    auto k_s = _self->p_stub->move(&k_context, k_info, &k_out_info);
     if (!k_s.ok()) {
       DOODLE_LOG_WARN(k_s.error_message());
       throw doodle_error(k_s.error_message());
@@ -308,11 +308,11 @@ void up_file::run() {
 
   grpc::ClientContext k_context{};
 
-  FileInfo k_out_info{};
-  FileStream k_in_info{};
+  file_info_server k_out_info{};
+  file_stream_server k_in_info{};
 
   k_in_info.mutable_info()->set_path(_param->server_path.generic_string());
-  auto k_in = _self->p_stub->Upload(&k_context, &k_out_info);
+  auto k_in = _self->p_stub->upload(&k_context, &k_out_info);
   k_in->Write(k_in_info);
 
   auto s_size = core_set::get_block_size();
@@ -375,11 +375,11 @@ void down_dir::run() {
 rpc_trans_path_ptr_list down_dir::down(const std::unique_ptr<rpc_trans_path>& in_path) {
   grpc::ClientContext k_context{};
 
-  FileInfo k_in_info{};
-  FileInfo k_out_info{};
+  file_info_server k_in_info{};
+  file_info_server k_out_info{};
 
   k_in_info.set_path(in_path->server_path.generic_string());
-  auto k_out = _self->p_stub->GetList(&k_context, k_in_info);
+  auto k_out = _self->p_stub->get_list(&k_context, k_in_info);
 
   auto k_prot = doodle_lib::Get().get_thread_pool();
 
@@ -388,7 +388,7 @@ rpc_trans_path_ptr_list down_dir::down(const std::unique_ptr<rpc_trans_path>& in
     FSys::path k_s_p = k_out_info.path();
     FSys::path k_l_p = in_path->local_path / k_s_p.filename();
     std::unique_ptr<rpc_trans_path> k_ptr{new rpc_trans_path{k_l_p, k_s_p}};
-    if (k_out_info.isfolder()) {
+    if (k_out_info.is_folder()) {
       _stack.push_back(std::move(k_ptr));
       //      down(k_ptr);
       //      std::unique_lock lock{p_mutex};

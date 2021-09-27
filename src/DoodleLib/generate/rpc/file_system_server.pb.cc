@@ -23,7 +23,7 @@ constexpr file_info_server::file_info_server(
   , update_time_(nullptr)
   , hash_(nullptr)
   , size_(PROTOBUF_ULONGLONG(0))
-  , isfolder_(false)
+  , is_folder_(false)
   , exist_(false){}
 struct file_info_serverDefaultTypeInternal {
   constexpr file_info_serverDefaultTypeInternal()
@@ -72,7 +72,7 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_file_5fsystem_5fserver_2eproto
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   PROTOBUF_FIELD_OFFSET(::doodle::file_info_server, path_),
-  PROTOBUF_FIELD_OFFSET(::doodle::file_info_server, isfolder_),
+  PROTOBUF_FIELD_OFFSET(::doodle::file_info_server, is_folder_),
   PROTOBUF_FIELD_OFFSET(::doodle::file_info_server, exist_),
   PROTOBUF_FIELD_OFFSET(::doodle::file_info_server, update_time_),
   PROTOBUF_FIELD_OFFSET(::doodle::file_info_server, size_),
@@ -108,34 +108,34 @@ const char descriptor_table_protodef_file_5fsystem_5fserver_2eproto[] PROTOBUF_S
   "\n\030file_system_server.proto\022\006doodle\032\037goog"
   "le/protobuf/timestamp.proto\032\031google/prot"
   "obuf/any.proto\032\036google/protobuf/wrappers"
-  ".proto\"\254\001\n\020file_info_server\022\014\n\004path\030\001 \001("
-  "\t\022\020\n\010isFolder\030\002 \001(\010\022\r\n\005exist\030\003 \001(\010\022/\n\013up"
-  "date_time\030\004 \001(\0132\032.google.protobuf.Timest"
-  "amp\022\014\n\004size\030\005 \001(\004\022*\n\004hash\030\006 \001(\0132\034.google"
-  ".protobuf.StringValue\"`\n\022file_stream_ser"
-  "ver\022&\n\004info\030\001 \001(\0132\030.doodle.file_info_ser"
-  "ver\022\"\n\004data\030\002 \001(\0132\024.google.protobuf.Any\""
-  "k\n\025file_info_move_server\022(\n\006source\030\001 \001(\013"
-  "2\030.doodle.file_info_server\022(\n\006target\030\002 \001"
-  "(\0132\030.doodle.file_info_server2\256\005\n\020FileSys"
-  "temServer\022\?\n\007GetInfo\022\030.doodle.file_info_"
-  "server\032\030.doodle.file_info_server\"\000\022\?\n\007Ge"
-  "tHash\022\030.doodle.file_info_server\032\030.doodle"
-  ".file_info_server\"\000\022\?\n\007IsExist\022\030.doodle."
-  "file_info_server\032\030.doodle.file_info_serv"
-  "er\"\000\022\?\n\007GetSize\022\030.doodle.file_info_serve"
-  "r\032\030.doodle.file_info_server\"\000\022@\n\010IsFolde"
-  "r\022\030.doodle.file_info_server\032\030.doodle.fil"
-  "e_info_server\"\000\022D\n\014GetTimestamp\022\030.doodle"
-  ".file_info_server\032\030.doodle.file_info_ser"
-  "ver\"\000\022A\n\007GetList\022\030.doodle.file_info_serv"
-  "er\032\030.doodle.file_info_server\"\0000\001\022D\n\010Down"
-  "load\022\030.doodle.file_info_server\032\032.doodle."
-  "file_stream_server\"\0000\001\022B\n\006Upload\022\032.doodl"
-  "e.file_stream_server\032\030.doodle.file_info_"
-  "server\"\000(\001\022A\n\004Move\022\035.doodle.file_info_mo"
-  "ve_server\032\030.doodle.file_info_server\"\000b\006p"
-  "roto3"
+  ".proto\"\255\001\n\020file_info_server\022\014\n\004path\030\001 \001("
+  "\t\022\021\n\tis_folder\030\002 \001(\010\022\r\n\005exist\030\003 \001(\010\022/\n\013u"
+  "pdate_time\030\004 \001(\0132\032.google.protobuf.Times"
+  "tamp\022\014\n\004size\030\005 \001(\004\022*\n\004hash\030\006 \001(\0132\034.googl"
+  "e.protobuf.StringValue\"`\n\022file_stream_se"
+  "rver\022&\n\004info\030\001 \001(\0132\030.doodle.file_info_se"
+  "rver\022\"\n\004data\030\002 \001(\0132\024.google.protobuf.Any"
+  "\"k\n\025file_info_move_server\022(\n\006source\030\001 \001("
+  "\0132\030.doodle.file_info_server\022(\n\006target\030\002 "
+  "\001(\0132\030.doodle.file_info_server2\267\005\n\022file_s"
+  "ystem_server\022@\n\010get_info\022\030.doodle.file_i"
+  "nfo_server\032\030.doodle.file_info_server\"\000\022@"
+  "\n\010get_hash\022\030.doodle.file_info_server\032\030.d"
+  "oodle.file_info_server\"\000\022@\n\010is_exist\022\030.d"
+  "oodle.file_info_server\032\030.doodle.file_inf"
+  "o_server\"\000\022@\n\010get_size\022\030.doodle.file_inf"
+  "o_server\032\030.doodle.file_info_server\"\000\022A\n\t"
+  "is_folder\022\030.doodle.file_info_server\032\030.do"
+  "odle.file_info_server\"\000\022E\n\rget_timestamp"
+  "\022\030.doodle.file_info_server\032\030.doodle.file"
+  "_info_server\"\000\022B\n\010get_list\022\030.doodle.file"
+  "_info_server\032\030.doodle.file_info_server\"\000"
+  "0\001\022D\n\010download\022\030.doodle.file_info_server"
+  "\032\032.doodle.file_stream_server\"\0000\001\022B\n\006uplo"
+  "ad\022\032.doodle.file_stream_server\032\030.doodle."
+  "file_info_server\"\000(\001\022A\n\004move\022\035.doodle.fi"
+  "le_info_move_server\032\030.doodle.file_info_s"
+  "erver\"\000b\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_file_5fsystem_5fserver_2eproto_deps[3] = {
   &::descriptor_table_google_2fprotobuf_2fany_2eproto,
@@ -144,7 +144,7 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_file_5fsystem_5fserver_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_file_5fsystem_5fserver_2eproto = {
-  false, false, 1205, descriptor_table_protodef_file_5fsystem_5fserver_2eproto, "file_system_server.proto", 
+  false, false, 1215, descriptor_table_protodef_file_5fsystem_5fserver_2eproto, "file_system_server.proto", 
   &descriptor_table_file_5fsystem_5fserver_2eproto_once, descriptor_table_file_5fsystem_5fserver_2eproto_deps, 3, 3,
   schemas, file_default_instances, TableStruct_file_5fsystem_5fserver_2eproto::offsets,
   file_level_metadata_file_5fsystem_5fserver_2eproto, file_level_enum_descriptors_file_5fsystem_5fserver_2eproto, file_level_service_descriptors_file_5fsystem_5fserver_2eproto,
@@ -285,10 +285,10 @@ const char* file_info_server::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPA
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // bool isFolder = 2;
+      // bool is_folder = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
-          isfolder_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          is_folder_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -358,10 +358,10 @@ failure:
         1, this->_internal_path(), target);
   }
 
-  // bool isFolder = 2;
-  if (this->isfolder() != 0) {
+  // bool is_folder = 2;
+  if (this->is_folder() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteBoolToArray(2, this->_internal_isfolder(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteBoolToArray(2, this->_internal_is_folder(), target);
   }
 
   // bool exist = 3;
@@ -436,8 +436,8 @@ size_t file_info_server::ByteSizeLong() const {
         this->_internal_size());
   }
 
-  // bool isFolder = 2;
-  if (this->isfolder() != 0) {
+  // bool is_folder = 2;
+  if (this->is_folder() != 0) {
     total_size += 1 + 1;
   }
 
@@ -489,8 +489,8 @@ void file_info_server::MergeFrom(const file_info_server& from) {
   if (from.size() != 0) {
     _internal_set_size(from._internal_size());
   }
-  if (from.isfolder() != 0) {
-    _internal_set_isfolder(from._internal_isfolder());
+  if (from.is_folder() != 0) {
+    _internal_set_is_folder(from._internal_is_folder());
   }
   if (from.exist() != 0) {
     _internal_set_exist(from._internal_exist());

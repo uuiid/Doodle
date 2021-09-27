@@ -130,22 +130,23 @@ const char descriptor_table_protodef_metadata_5fserver_2eproto[] PROTOBUF_SECTIO
   "e\030\003 \001(\0132\032.google.protobuf.Timestamp\0229\n\006m"
   "_type\030\004 \001(\0132).doodle.metadata_database.m"
   "eta_type_value\022,\n\006parent\030\005 \001(\0132\034.google."
-  "protobuf.UInt64Value2\333\004\n\016MetadataServer\022"
-  "I\n\017InstallMetadata\022\031.doodle.metadata_dat"
-  "abase\032\031.doodle.metadata_database\"\000\022H\n\016De"
-  "leteMetadata\022\031.doodle.metadata_database\032"
-  "\031.doodle.metadata_database\"\000\022H\n\016UpdateMe"
-  "tadata\022\031.doodle.metadata_database\032\031.dood"
-  "le.metadata_database\"\000\022Q\n\016FilterMetadata"
-  "\022 .doodle.metadata_database_filter\032\031.doo"
-  "dle.metadata_database\"\0000\001\022A\n\017InstallUser"
-  "Date\022\025.doodle.user_database\032\025.doodle.use"
-  "r_database\"\000\022@\n\016UpdateUserDate\022\025.doodle."
-  "user_database\032\025.doodle.user_database\"\000\022G"
-  "\n\016DeleteUserDate\022\034.doodle.user_database_"
-  "filter\032\025.doodle.user_database\"\000\022I\n\016Filte"
-  "rUserDate\022\034.doodle.user_database_filter\032"
-  "\025.doodle.user_database\"\0000\001b\006proto3"
+  "protobuf.UInt64Value2\350\004\n\017metadata_server"
+  "\022J\n\020install_metadata\022\031.doodle.metadata_d"
+  "atabase\032\031.doodle.metadata_database\"\000\022I\n\017"
+  "delete_metadata\022\031.doodle.metadata_databa"
+  "se\032\031.doodle.metadata_database\"\000\022I\n\017updat"
+  "e_metadata\022\031.doodle.metadata_database\032\031."
+  "doodle.metadata_database\"\000\022R\n\017filter_met"
+  "adata\022 .doodle.metadata_database_filter\032"
+  "\031.doodle.metadata_database\"\0000\001\022C\n\021instal"
+  "l_user_date\022\025.doodle.user_database\032\025.doo"
+  "dle.user_database\"\000\022B\n\020update_user_date\022"
+  "\025.doodle.user_database\032\025.doodle.user_dat"
+  "abase\"\000\022I\n\020delete_user_date\022\034.doodle.use"
+  "r_database_filter\032\025.doodle.user_database"
+  "\"\000\022K\n\020filter_user_date\022\034.doodle.user_dat"
+  "abase_filter\032\025.doodle.user_database\"\0000\001b"
+  "\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_metadata_5fserver_2eproto_deps[4] = {
   &::descriptor_table_google_2fprotobuf_2fany_2eproto,
@@ -155,7 +156,7 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_metadata_5fserver_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_metadata_5fserver_2eproto = {
-  false, false, 1434, descriptor_table_protodef_metadata_5fserver_2eproto, "metadata_server.proto", 
+  false, false, 1447, descriptor_table_protodef_metadata_5fserver_2eproto, "metadata_server.proto", 
   &descriptor_table_metadata_5fserver_2eproto_once, descriptor_table_metadata_5fserver_2eproto_deps, 4, 3,
   schemas, file_default_instances, TableStruct_metadata_5fserver_2eproto::offsets,
   file_level_metadata_metadata_5fserver_2eproto, file_level_enum_descriptors_metadata_5fserver_2eproto, file_level_service_descriptors_metadata_5fserver_2eproto,

@@ -171,7 +171,7 @@ void assets_file::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
 std::vector<AssetsPathPtr>& assets_file::get_path_file() {
   return p_path_files;
 }
-void assets_file::to_DataDb(DataDb& in_) const {
+void assets_file::to_DataDb(metadata_database& in_) const {
   metadata::to_DataDb(in_);
   if (p_need_time || p_id == 0) {
     auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
