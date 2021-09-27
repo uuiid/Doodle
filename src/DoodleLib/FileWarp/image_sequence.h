@@ -4,8 +4,8 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
-class DOODLELIB_API ImageSequence
-    : public std::enable_shared_from_this<ImageSequence> {
+class DOODLELIB_API image_sequence
+    : public std::enable_shared_from_this<image_sequence> {
   std::vector<FSys::path> p_paths;
   std::string p_Text;
   FSys::path p_out_path;
@@ -24,8 +24,8 @@ class DOODLELIB_API ImageSequence
   bool seanDir(const FSys::path& dir);
 
  public:
-  ImageSequence();
-  explicit ImageSequence(const FSys::path& path_dir, const std::string& text = {});
+  image_sequence();
+  explicit image_sequence(const FSys::path& path_dir, const std::string& text = {});
 
   bool hasSequence();
   void set_path(const FSys::path& dir);

@@ -9,8 +9,8 @@
 
 namespace doodle {
 
-class DOODLELIB_API Ue4Project
-    : public std::enable_shared_from_this<Ue4Project> {
+class DOODLELIB_API ue4_project
+    : public std::enable_shared_from_this<ue4_project> {
   class DOODLELIB_API Ue4ProjectFilePulgins {
    public:
     std::string Name;
@@ -120,7 +120,7 @@ class DOODLELIB_API Ue4Project
    *
    * @param project_path 项目文件路径
    */
-  Ue4Project(FSys::path project_path);
+  ue4_project(FSys::path project_path);
 
   /**
    * @brief 同步创建镜头和集数文件夹

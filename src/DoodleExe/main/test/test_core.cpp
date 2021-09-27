@@ -166,8 +166,8 @@ TEST_CASE("core opencv image", "[fun]") {
 
 TEST_CASE("maya get log", "[maya]") {
   using namespace doodle;
-  auto k_maya = MayaFile();
-  auto k_arg  = std::make_shared<MayaFile::qcloth_arg>();
+  auto k_maya = maya_file();
+  auto k_arg  = std::make_shared<maya_file::qcloth_arg>();
   //  k_arg->only_sim           = false;
   //  k_arg->qcloth_assets_path = FSys::path{R"(V:\03_Workflow\Assets\CFX\cloth)"};
   //  k_arg->sim_path           = FSys::path{"F:\\data\\DBXY_163_052.ma"};

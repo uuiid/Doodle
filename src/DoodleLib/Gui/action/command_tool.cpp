@@ -4,10 +4,10 @@
 
 #include "command_tool.h"
 
-#include <DoodleLib/FileWarp/ImageSequence.h>
-#include <DoodleLib/FileWarp/MayaFile.h>
-#include <DoodleLib/FileWarp/Ue4Project.h>
-#include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/FileWarp/image_sequence.h>
+#include <DoodleLib/FileWarp/maya_file.h>
+#include <DoodleLib/FileWarp/ue4_project.h>
+#include <DoodleLib/FileWarp/video_sequence.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/shot.h>
 #include <DoodleLib/core/open_file_dialog.h>
@@ -109,7 +109,7 @@ bool comm_qcloth_sim::render() {
     auto maya = new_object<maya_file_async>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
                   [this, maya](const FSys::path& in_path) {
-                    auto arg                = new_object<MayaFile::qcloth_arg>();
+                    auto arg                = new_object<maya_file::qcloth_arg>();
                     arg->sim_path           = in_path;
                     arg->qcloth_assets_path = p_cloth_path;
                     arg->only_sim           = p_only_sim;

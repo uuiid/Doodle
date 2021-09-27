@@ -1,14 +1,14 @@
 target_sources(
         core
         PUBLIC
-        ImageSequence.h
-        MayaFile.h
-        Ue4Project.h
-        VideoSequence.h
+        image_sequence.h
+        maya_file.h
+        ue4_project.h
+        video_sequence.h
         
         PRIVATE
-        ImageSequence.cpp
-        MayaFile.cpp
-        Ue4Project.cpp
-        VideoSequence.cpp
+        image_sequence.cpp
+        maya_file.cpp
+        ue4_project.cpp
+        video_sequence.cpp
 )

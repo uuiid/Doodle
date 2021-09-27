@@ -1,9 +1,9 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/FileSys/FileSystem.h>
-#include <DoodleLib/FileWarp/ImageSequence.h>
-#include <DoodleLib/FileWarp/MayaFile.h>
-#include <DoodleLib/FileWarp/Ue4Project.h>
-#include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/FileWarp/image_sequence.h>
+#include <DoodleLib/FileWarp/maya_file.h>
+#include <DoodleLib/FileWarp/ue4_project.h>
+#include <DoodleLib/FileWarp/video_sequence.h>
 #include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/project.h>

@@ -1,5 +1,5 @@
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/FileWarp/VideoSequence.h>
+#include <DoodleLib/FileWarp/video_sequence.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/shot.h>
 #include <DoodleLib/core/CoreSet.h>
@@ -9,7 +9,7 @@
 
 #include <opencv2/opencv.hpp>
 namespace doodle {
-VideoSequence::VideoSequence(std::vector<FSys::path> paths)
+video_sequence::video_sequence(std::vector<FSys::path> paths)
     : p_paths(std::move(paths)),
       p_name() {
   for (auto&& path : p_paths) {
@@ -22,7 +22,7 @@ VideoSequence::VideoSequence(std::vector<FSys::path> paths)
             [](const FSys::path& k_l, const FSys::path& k_r) { return k_l.stem() < k_r.stem(); });
 }
 
-void VideoSequence::connectVideo(const FSys::path& out_path, const long_term_ptr& in_ptr) const {
+void video_sequence::connectVideo(const FSys::path& out_path, const long_term_ptr& in_ptr) const {
   //验证输出文件
   if (!FSys::exists(out_path.parent_path()))
     FSys::create_directories(out_path.parent_path());
@@ -63,7 +63,7 @@ void VideoSequence::connectVideo(const FSys::path& out_path, const long_term_ptr
   }
 }
 
-std::string VideoSequence::set_shot_and_eps(const ShotPtr& in_shot, const EpisodesPtr& in_episodes) {
+std::string video_sequence::set_shot_and_eps(const ShotPtr& in_shot, const EpisodesPtr& in_episodes) {
   if (in_shot && in_episodes) {
     p_name = fmt::format("{}_{}.mp4", in_episodes->str(), in_shot->str());
   } else if (in_shot) {
@@ -78,8 +78,8 @@ video_sequence_async::video_sequence_async()
     : p_video(),
       p_backup_out_path() {
 }
-std::shared_ptr<VideoSequence> video_sequence_async::set_video_list(const std::vector<FSys::path>& paths) {
-  p_video           = new_object<VideoSequence>(paths);
+std::shared_ptr<video_sequence> video_sequence_async::set_video_list(const std::vector<FSys::path>& paths) {
+  p_video           = new_object<video_sequence>(paths);
   p_backup_out_path = paths.empty() ? FSys::path{} : paths.front();
   return p_video;
 }

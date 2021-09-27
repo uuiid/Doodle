@@ -1,5 +1,5 @@
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/FileWarp/ImageSequence.h>
+#include <DoodleLib/FileWarp/image_sequence.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/libWarp/std_warp.h>
@@ -21,29 +21,29 @@
 #include <boost/range/algorithm_ext.hpp>
 #include <opencv2/opencv.hpp>
 namespace doodle {
-std::string ImageSequence::clearString(const std::string &str) {
+std::string image_sequence::clearString(const std::string &str) {
   auto &con  = convert::Get();
   auto str_r = std::string{};
   str_r      = con.toEn(str);
 
   return str_r;
 }
-ImageSequence::ImageSequence()
+image_sequence::image_sequence()
     : p_paths(),
       p_Text() {
 }
-ImageSequence::ImageSequence(const FSys::path &path_dir, const std::string &text)
-    : std::enable_shared_from_this<ImageSequence>(),
+image_sequence::image_sequence(const FSys::path &path_dir, const std::string &text)
+    : std::enable_shared_from_this<image_sequence>(),
       p_paths(),
       p_Text(std::move(clearString(text))) {
   set_path(path_dir);
 }
 
-bool ImageSequence::hasSequence() {
+bool image_sequence::hasSequence() {
   return !p_paths.empty();
 }
 
-void ImageSequence::set_path(const FSys::path &dir) {
+void image_sequence::set_path(const FSys::path &dir) {
   this->seanDir(dir);
   for (auto &path : p_paths) {
     if (!FSys::is_regular_file(path)) {
@@ -52,7 +52,7 @@ void ImageSequence::set_path(const FSys::path &dir) {
   }
 }
 
-bool ImageSequence::seanDir(const FSys::path &dir) {
+bool image_sequence::seanDir(const FSys::path &dir) {
   if (!FSys::is_directory(dir))
     throw FileError{dir, "file not is a directory"};
 
@@ -72,11 +72,11 @@ bool ImageSequence::seanDir(const FSys::path &dir) {
   return true;
 }
 
-void ImageSequence::setText(const std::string &text) {
+void image_sequence::setText(const std::string &text) {
   p_Text = clearString(text);
 }
 
-std::string ImageSequence::set_shot_and_eps(const ShotPtr &in_shot, const EpisodesPtr &in_episodes) {
+std::string image_sequence::set_shot_and_eps(const ShotPtr &in_shot, const EpisodesPtr &in_episodes) {
   auto k_str = CoreSet::getSet().getUser_en();  /// 基本水印, 名称
   /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
   if (in_shot && in_episodes) {
@@ -99,7 +99,7 @@ std::string ImageSequence::set_shot_and_eps(const ShotPtr &in_shot, const Episod
   return p_Text;
 }
 
-void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
+void image_sequence::create_video(const image_sequence::asyn_arg_ptr &in_arg) {
   std::this_thread::sleep_for(std::chrono::milliseconds{10});
   in_arg->long_sig->start();
   //检查父路径存在
@@ -167,13 +167,13 @@ void ImageSequence::create_video(const ImageSequence::asyn_arg_ptr &in_arg) {
   in_arg->long_sig->sig_finished();
   in_arg->long_sig->sig_message_result(fmt::format("成功创建视频 {}\n", in_arg->out_path), long_term::warning);
 }
-void ImageSequence::set_path(const std::vector<FSys::path> &in_images) {
+void image_sequence::set_path(const std::vector<FSys::path> &in_images) {
   p_paths = in_images;
 }
-void ImageSequence::set_out_dir(const FSys::path &out_dir) {
+void image_sequence::set_out_dir(const FSys::path &out_dir) {
   p_out_path = out_dir;
 }
-void ImageSequence::create_video(const long_term_ptr &in_ptr) {
+void image_sequence::create_video(const long_term_ptr &in_ptr) {
   if (!this->hasSequence())
     throw DoodleError{"not Sequence"};
   auto k_arg      = new_object<asyn_arg>();
@@ -181,9 +181,9 @@ void ImageSequence::create_video(const long_term_ptr &in_ptr) {
   k_arg->paths    = p_paths;
   k_arg->long_sig = in_ptr;
   k_arg->Text     = p_Text;
-  ImageSequence::create_video(k_arg);
+  image_sequence::create_video(k_arg);
 }
-std::string ImageSequence::show_str(const std::vector<FSys::path> &in_images) {
+std::string image_sequence::show_str(const std::vector<FSys::path> &in_images) {
   static std::regex reg{R"(\d+)"};
   std::smatch k_match{};
   std::vector<std::vector<std::double_t>> p_k_num;
@@ -230,19 +230,19 @@ std::string ImageSequence::show_str(const std::vector<FSys::path> &in_images) {
 
   return std::string();
 }
-FSys::path ImageSequence::get_out_path() const {
+FSys::path image_sequence::get_out_path() const {
   return p_out_path / p_name;
 }
 
 image_sequence_async::image_sequence_async()
     : p_image_sequence() {}
 ImageSequencePtr image_sequence_async::set_path(const FSys::path &image_dir) {
-  p_image_sequence = new_object<ImageSequence>();
+  p_image_sequence = new_object<image_sequence>();
   p_image_sequence->set_path(image_dir);
   return p_image_sequence;
 }
 ImageSequencePtr image_sequence_async::set_path(const std::vector<FSys::path> &image_path_list) {
-  p_image_sequence = new_object<ImageSequence>();
+  p_image_sequence = new_object<image_sequence>();
   p_image_sequence->set_path(image_path_list);
   return p_image_sequence;
 }

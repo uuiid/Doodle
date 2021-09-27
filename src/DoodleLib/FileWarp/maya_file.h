@@ -3,9 +3,9 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
-class DOODLELIB_API MayaFile
+class DOODLELIB_API maya_file
     : public details::no_copy,
-      public std::enable_shared_from_this<MayaFile> {
+      public std::enable_shared_from_this<maya_file> {
  private:
   FSys::path p_path;
 
@@ -26,7 +26,7 @@ class DOODLELIB_API MayaFile
   };
   using qcloth_arg_ptr = std::shared_ptr<qcloth_arg>;
 
-  explicit MayaFile(FSys::path mayaPath = {});
+  explicit maya_file(FSys::path mayaPath = {});
 
   /**
    * 导出maya文件中的fbx
@@ -60,13 +60,13 @@ class DOODLELIB_API MayaFile
 };
 
 class DOODLELIB_API maya_file_async : public details::no_copy {
-  std::shared_ptr<MayaFile> p_maya_file;
+  std::shared_ptr<maya_file> p_maya_file;
 
  public:
   maya_file_async();
 
   long_term_ptr export_fbx_file(const FSys::path& file_path, const FSys::path& export_path = {});
-  long_term_ptr qcloth_sim_file(MayaFile::qcloth_arg_ptr& in_arg);
+  long_term_ptr qcloth_sim_file(maya_file::qcloth_arg_ptr& in_arg);
 };
 
 }  // namespace doodle

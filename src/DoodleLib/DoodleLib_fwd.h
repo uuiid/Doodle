@@ -4,7 +4,7 @@
 #include <DoodleLib/DoodleLib_pch.h>
 #include <DoodleLib/DoodleMacro.h>
 #include <DoodleLib/Logger/logger.h>
-#include <DoodleLib/libWarp/CerealWarp.h>
+#include <DoodleLib/libWarp/boost_serialization_warp.h>
 #include <DoodleLib/libWarp/cmrcWarp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
 #include <DoodleLib/libWarp/std_warp.h>
@@ -276,14 +276,14 @@ class DoodleLib;
 class thread_pool;
 class attribute_factory_interface;
 class long_term;
-class ImageSequence;
+class image_sequence;
 class season;
 class actn_create_ass_up_paths;
 class action_base;
 class tool_box_menu_factory;
-class VideoSequence;
-class Ue4Project;
-class MayaFile;
+class video_sequence;
+class ue4_project;
+class maya_file;
 class setting_windows;
 class base_widget;
 using base_widget_ptr = std::shared_ptr<base_widget>;
@@ -301,12 +301,12 @@ using ConnPtr                      = std::unique_ptr<sqlpp::mysql::connection>;
  * @brief Ue4Project智能g'x指针
  *
  */
-using ue4_project_ptr              = std::shared_ptr<Ue4Project>;
+using ue4_project_ptr              = std::shared_ptr<ue4_project>;
 /**
  * @brief VideoSequence 智能共享指针
  *
  */
-using video_sequence_ptr           = std::shared_ptr<VideoSequence>;
+using video_sequence_ptr           = std::shared_ptr<video_sequence>;
 /**
  * @brief tool_box_menu_factory 智能共享指针
  *
@@ -481,11 +481,11 @@ using long_term_ptr                = std::shared_ptr<long_term>;
  * @brief ImageSequence 智能共享指针
  *
  */
-using ImageSequencePtr             = std::shared_ptr<ImageSequence>;
+using ImageSequencePtr             = std::shared_ptr<image_sequence>;
 /**
  * @brief MayaFile 智能共享指针
  */
-using MayaFilePtr                  = std::shared_ptr<MayaFile>;
+using MayaFilePtr                  = std::shared_ptr<maya_file>;
 using setting_windows_ptr          = std::shared_ptr<setting_windows>;
 using ue4_project_async_ptr        = std::shared_ptr<ue4_project_async>;
 using bool_ptr                     = std::shared_ptr<bool>;

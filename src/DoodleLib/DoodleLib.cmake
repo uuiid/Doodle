@@ -14,10 +14,10 @@ set(
     core/tree_container.h
     Exception/Exception.h
     FileSys/FileSystem.h
-    FileWarp/ImageSequence.h
-    FileWarp/MayaFile.h
-    FileWarp/Ue4Project.h
-    FileWarp/VideoSequence.h
+        FileWarp/image_sequence.h
+        FileWarp/maya_file.h
+        FileWarp/ue4_project.h
+        FileWarp/video_sequence.h
     Gui/base_windwos.h
     Gui/main_windwos.h
     Gui/setting_windows.h
@@ -30,8 +30,8 @@ set(
     Gui/widgets/edit_widgets.h
     Gui/widgets/long_time_tasks_widget.h
     Gui/widgets/project_widget.h
-    libWarp/BoostUuidWarp.h
-    libWarp/CerealWarp.h
+        libWarp/boost_uuid_warp.h
+        libWarp/boost_serialization_warp.h
     libWarp/WinReg.hpp
     libWarp/boost_locale_warp.h
     libWarp/cache.hpp
@@ -90,10 +90,10 @@ set(
     core/static_value.cpp
     core/tree_container.cpp
     FileSys/FileSystem.cpp
-    FileWarp/ImageSequence.cpp
-    FileWarp/MayaFile.cpp
-    FileWarp/Ue4Project.cpp
-    FileWarp/VideoSequence.cpp
+        FileWarp/image_sequence.cpp
+        FileWarp/maya_file.cpp
+        FileWarp/ue4_project.cpp
+        FileWarp/video_sequence.cpp
     Gui/base_windwos.cpp
     Gui/main_windwos.cpp
     Gui/setting_windows.cpp

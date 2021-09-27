@@ -1,5 +1,5 @@
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/FileWarp/MayaFile.h>
+#include <DoodleLib/FileWarp/maya_file.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/filesystem_extend.h>
@@ -20,7 +20,7 @@
 #endif
 
 namespace doodle {
-MayaFile::MayaFile(FSys::path mayaPath)
+maya_file::maya_file(FSys::path mayaPath)
     : p_path(std::move(mayaPath)) {
   if (!FSys::exists(p_path) && CoreSet::getSet().hasMaya())
     p_path = CoreSet::getSet().MayaPath();
@@ -28,7 +28,7 @@ MayaFile::MayaFile(FSys::path mayaPath)
     throw DoodleError{"无法找到maya启动器"};
 }
 
-void MayaFile::write_maya_tool_file() {
+void maya_file::write_maya_tool_file() {
   const auto tmp_path = CoreSet::getSet().getCacheRoot(
       fmt::format("maya\\v{}{}{}",
                   Doodle_VERSION_MAJOR,
@@ -45,15 +45,15 @@ void MayaFile::write_maya_tool_file() {
   }
 }
 
-FSys::path MayaFile::warit_tmp_file(const std::string& in_string) {
+FSys::path maya_file::warit_tmp_file(const std::string& in_string) {
   return FSys::write_tmp_file("maya", in_string, ".py");
 }
 
-bool MayaFile::checkFile() {
+bool maya_file::checkFile() {
   return true;
 }
 
-bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term) {
+bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_term) {
   boost::process::ipstream k_in{};
   boost::process::ipstream k_in2{};
 
@@ -143,7 +143,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
   return true;
 }
 
-void MayaFile::exportFbxFile(const FSys::path& file_path,
+void maya_file::exportFbxFile(const FSys::path& file_path,
                              const FSys::path& export_path,
                              const long_term_ptr& in_ptr) {
   if (!FSys::exists(file_path)) {
@@ -187,7 +187,7 @@ void MayaFile::exportFbxFile(const FSys::path& file_path,
   }
 }
 
-void MayaFile::qcloth_sim_file(const qcloth_arg_ptr& in_arg,
+void maya_file::qcloth_sim_file(const qcloth_arg_ptr& in_arg,
                                const long_term_ptr& in_ptr) {
   if (!FSys::exists(in_arg->sim_path)) {
     if (in_ptr) {
@@ -233,7 +233,7 @@ void MayaFile::qcloth_sim_file(const qcloth_arg_ptr& in_arg,
   }
 }
 
-bool MayaFile::is_maya_file(const FSys::path& in_path) {
+bool maya_file::is_maya_file(const FSys::path& in_path) {
   auto k_e = in_path.extension();
   return k_e == ".ma" || k_e == ".mb";
 }
@@ -242,7 +242,7 @@ maya_file_async::maya_file_async()
     : p_maya_file() {}
 
 long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, const FSys::path& export_path) {
-  p_maya_file = std::make_shared<MayaFile>();
+  p_maya_file = std::make_shared<maya_file>();
   auto k_term = new_object<long_term>();
   k_term->set_name(file_path.filename().generic_string());
   auto k_f = DoodleLib::Get().get_thread_pool()->enqueue(
@@ -252,8 +252,8 @@ long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, cons
   k_term->p_list.emplace_back(std::move(k_f));
   return k_term;
 }
-long_term_ptr maya_file_async::qcloth_sim_file(MayaFile::qcloth_arg_ptr& in_arg) {
-  p_maya_file = std::make_shared<MayaFile>();
+long_term_ptr maya_file_async::qcloth_sim_file(maya_file::qcloth_arg_ptr& in_arg) {
+  p_maya_file = std::make_shared<maya_file>();
   auto k_term = new_object<long_term>();
   k_term->set_name(in_arg->sim_path.filename().generic_string());
   auto k_f = DoodleLib::Get().get_thread_pool()->enqueue(

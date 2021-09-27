@@ -32,20 +32,15 @@
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
 
-
 #include <DoodleLib/DoodleMacro.h>
-
-#include <DoodleLib/libWarp/cmrcWarp.h>
-
-#include <DoodleLib/libWarp/sqlppWarp.h>
-
-#include <date/date.h>
-
-#include <DoodleLib/libWarp/CerealWarp.h>
-#include <DoodleLib/libWarp/BoostUuidWarp.h>
 #include <DoodleLib/libWarp/boost_locale_warp.h>
+#include <DoodleLib/libWarp/boost_serialization_warp.h>
+#include <DoodleLib/libWarp/boost_uuid_warp.h>
+#include <DoodleLib/libWarp/cmrcWarp.h>
+#include <DoodleLib/libWarp/sqlppWarp.h>
 #include <DoodleLib/libWarp/std_warp.h>
-
-#include <boost/numeric/conversion/cast.hpp>
+#include <date/date.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+
+#include <boost/numeric/conversion/cast.hpp>
