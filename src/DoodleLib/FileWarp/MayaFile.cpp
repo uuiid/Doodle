@@ -100,11 +100,10 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
   // ios.run();
   // k_c.wait();
   // return k_c.exit_code() == 0;
-  std::atomic_bool p_run{true};
   auto fun  = std::async(std::launch::async,
-                        [&k_c, &k_in, &in_term, &p_run]() {
+                        [&k_c, &k_in, &in_term]() {
                           auto str_r = std::string{};
-                          while (p_run) {
+                          while (k_c.running()) {
                             if (std::getline(k_in, str_r) && !str_r.empty()) {
                               in_term->sig_message_result(conv::to_utf<char>(str_r, "GBK") + "\n", long_term::warning);
                               in_term->sig_progress(rational_int{1, 50});
@@ -112,7 +111,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
                           }
                         });
   auto fun2 = std::async(std::launch::async,
-                         [&k_c, &k_in2, &in_term, &in_com, &p_run]() {
+                         [&k_c, &k_in2, &in_term, &in_com ]() {
                            auto str_r2 = std::string{};
                            //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
                            const static std::wregex fatal_error_znch{
@@ -122,7 +121,7 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
                            const static std::wregex fatal_error_en_us{
                                LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab])"};
 
-                           while (p_run) {
+                           while (k_c.running()) {
                              if (std::getline(k_in2, str_r2) && !str_r2.empty()) {
                                auto str = conv::to_utf<char>(str_r2, "GBK");
                                in_term->sig_message_result(str + "\n", long_term::info);
@@ -141,8 +140,6 @@ bool MayaFile::run_comm(const std::wstring& in_com, const long_term_ptr& in_term
   using namespace chrono;
   while (!k_c.wait_for(1s)) {
   }
-  p_run = false;
-  k_in2.close();
   return true;
 }
 
