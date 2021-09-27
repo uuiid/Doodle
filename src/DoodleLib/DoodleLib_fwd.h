@@ -258,7 +258,7 @@ class AssetsFile;
 class MetadataFactory;
 class ContextMenu;
 class time_point_wrap;
-class Comment;
+class comment;
 class AssetsPath;
 
 class RpcMetadataClient;
@@ -436,7 +436,7 @@ using TimeDurationPtr              = std::shared_ptr<time_point_wrap>;
  * @brief Comment 智能共享指针
  *
  */
-using CommentPtr                   = std::shared_ptr<Comment>;
+using CommentPtr                   = std::shared_ptr<comment>;
 /**
  * @brief AssetsPath 智能共享指针
  *
