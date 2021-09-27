@@ -8,13 +8,13 @@
 #include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/core/core_set.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
-#include <core/DoodleLib.h>
+#include <core/doodle_lib.h>
 #include <grpcpp/grpcpp.h>
 
 namespace doodle {
 
 metadata_factory::metadata_factory()
-    : p_rpcClien(DoodleLib::Get().getRpcMetadataClient()) {
+    : p_rpcClien(doodle_lib::Get().getRpcMetadataClient()) {
 }
 std::vector<ProjectPtr> metadata_factory::getAllProject() {
   auto k_v = p_rpcClien.lock()->GetProject();

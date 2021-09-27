@@ -6,7 +6,7 @@
 
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Metadata/metadata_cpp.h>
-#include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 
 namespace doodle {
@@ -23,7 +23,7 @@ void project_widget::frame_render() {
     imgui::TableSetupColumn("字母名称");
     imgui::TableHeadersRow();
 
-    const auto& k_prj_list = DoodleLib::Get().p_project_vector;
+    const auto& k_prj_list = doodle_lib::Get().p_project_vector;
 
     for (const auto& p : k_prj_list) {
       imgui::TableNextRow();

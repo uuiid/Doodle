@@ -1,14 +1,14 @@
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/FileWarp/image_sequence.h>
-#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/core_set.h>
+#include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/libWarp/std_warp.h>
 #include <DoodleLib/threadPool/thread_pool.h>
 #include <Logger/logger.h>
 #include <Metadata/episodes.h>
 #include <Metadata/shot.h>
 #include <PinYin/convert.h>
-#include <core/DoodleLib.h>
+#include <core/doodle_lib.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/assign.hpp>
@@ -249,7 +249,7 @@ ImageSequencePtr image_sequence_async::set_path(const std::vector<FSys::path> &i
 long_term_ptr image_sequence_async::create_video(const FSys::path &out_file) {
   auto k_term = new_object<long_term>();
   k_term->p_list.emplace_back(
-      DoodleLib::Get().get_thread_pool()->enqueue(
+      doodle_lib::Get().get_thread_pool()->enqueue(
           [self = p_image_sequence,out_file, k_term]() {
             self->set_path(out_file);
             self->create_video(k_term);

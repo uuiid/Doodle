@@ -1,7 +1,7 @@
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/FileWarp/maya_file.h>
-#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/core_set.h>
+#include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/core/filesystem_extend.h>
 #include <DoodleLib/libWarp/boost_locale_warp.h>
 #include <DoodleLib/libWarp/std_warp.h>
@@ -245,7 +245,7 @@ long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, cons
   p_maya_file = std::make_shared<maya_file>();
   auto k_term = new_object<long_term>();
   k_term->set_name(file_path.filename().generic_string());
-  auto k_f = DoodleLib::Get().get_thread_pool()->enqueue(
+  auto k_f = doodle_lib::Get().get_thread_pool()->enqueue(
       [self = p_maya_file, file_path, export_path, k_term]() {
         self->exportFbxFile(file_path, export_path, k_term);
       });
@@ -256,7 +256,7 @@ long_term_ptr maya_file_async::qcloth_sim_file(maya_file::qcloth_arg_ptr& in_arg
   p_maya_file = std::make_shared<maya_file>();
   auto k_term = new_object<long_term>();
   k_term->set_name(in_arg->sim_path.filename().generic_string());
-  auto k_f = DoodleLib::Get().get_thread_pool()->enqueue(
+  auto k_f = doodle_lib::Get().get_thread_pool()->enqueue(
       [self = p_maya_file, in_arg, k_term]() {
         self->qcloth_sim_file(in_arg, k_term);
       });

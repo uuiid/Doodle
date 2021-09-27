@@ -1,6 +1,6 @@
 #include "long_term.h"
 
-#include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/core/doodle_lib.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <magic_enum.hpp>
@@ -107,7 +107,7 @@ long_term::~long_term() {
   }
 }
 void long_term::post_constructor() {
-  auto& k_ = DoodleLib::Get();
+  auto& k_ = doodle_lib::Get();
   {
     std::lock_guard k_guard{k_.mutex};
     k_.long_task_list.push_back(shared_from_this());

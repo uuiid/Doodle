@@ -300,7 +300,7 @@ TEST_CASE("temp fun", "[core]") {
   using namespace doodle;
 
   auto ter = new_object<long_term>();
-  REQUIRE(DoodleLib::Get().long_task_list.size() == 1);
+  REQUIRE(doodle_lib::Get().long_task_list.size() == 1);
 }
 //#include <boost/algorithm/string.hpp>
 //#include <boost/archive/iterators/base64_from_binary.hpp>

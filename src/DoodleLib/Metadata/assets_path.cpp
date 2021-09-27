@@ -7,8 +7,8 @@
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/Metadata/assets_file.h>
 #include <DoodleLib/Metadata/metadata.h>
-#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/core_set.h>
+#include <DoodleLib/core/doodle_lib.h>
 #include <Logger/logger.h>
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path)
 namespace doodle {

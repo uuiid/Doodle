@@ -6,7 +6,7 @@
 
 #include <DoodleLib/Gui/action/command.h>
 #include <DoodleLib/Metadata/metadata_cpp.h>
-#include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 #include <DoodleLib/threadPool/long_term.h>
 namespace doodle {
@@ -25,7 +25,7 @@ long_time_tasks_widget::long_time_tasks_widget()
 }
 
 void long_time_tasks_widget::frame_render() {
-  auto& k_ = DoodleLib::Get();
+  auto& k_ = doodle_lib::Get();
   {
     std::lock_guard k_guard{k_.mutex};
     task = k_.long_task_list;

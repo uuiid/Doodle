@@ -4,8 +4,8 @@
 
 #include "setting_windows.h"
 
-#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/core_set.h>
+#include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 
 #include <magic_enum.hpp>
@@ -56,6 +56,6 @@ void setting_windows::save() {
   set.gettUe4Setting().setPath(*p_ue_path);
   set.gettUe4Setting().setVersion(*p_ue_version);
   set.writeDoodleLocalSet();
-  DoodleLib::Get().set_thread_pool_size();
+  doodle_lib::Get().set_thread_pool_size();
 }
 }  // namespace doodle

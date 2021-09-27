@@ -2,8 +2,8 @@ set(
     DOODLELIB_HEADER
     core/ContainerDevice.h
         core/core_set.h
-    core/CoreSql.h
-    core/DoodleLib.h
+        core/core_sql.h
+        core/doodle_lib.h
     core/ToolsSetting.h
     core/Ue4Setting.h
     core/Util.h
@@ -81,8 +81,8 @@ set(
 set(
     DOODLELIB_SOURCE
         core/core_set.cpp
-    core/CoreSql.cpp
-    core/DoodleLib.cpp
+        core/core_sql.cpp
+        core/doodle_lib.cpp
     core/Ue4Setting.cpp
     core/Util.cpp
     core/filesystem_extend.cpp

@@ -252,7 +252,7 @@ class episodes;
 class shot;
 class metadata;
 class assets;
-class CoreSql;
+class core_sql;
 class LabelNode;
 class assets_file;
 class metadata_factory;
@@ -272,7 +272,7 @@ class RpcFileSystemServer;
 class DragFilesFactory;
 class action;
 class actn_up_paths;
-class DoodleLib;
+class doodle_lib;
 class thread_pool;
 class attribute_factory_interface;
 class long_term;
@@ -411,7 +411,7 @@ using AssetsFilePtr                = std::shared_ptr<assets_file>;
  * @brief CoreSql 智能共享指针
  *
  */
-using coreSqlPtr                   = std::shared_ptr<CoreSql>;
+using coreSqlPtr                   = std::shared_ptr<core_sql>;
 /**
  * @brief LabelNode 智能共享指针
  *
@@ -461,7 +461,7 @@ using actn_up_paths_ptr            = std::shared_ptr<actn_up_paths>;
  * @brief DoodleLib 智能共享指针
  *
  */
-using DoodleLibPtr                 = std::unique_ptr<DoodleLib>;
+using DoodleLibPtr                 = std::unique_ptr<doodle_lib>;
 /**
  * @brief ThreadPool 智能共享指针
  *

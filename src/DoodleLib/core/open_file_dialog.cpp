@@ -4,7 +4,7 @@
 
 #include "open_file_dialog.h"
 
-#include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/doodle_app.h>
 namespace doodle {
 

@@ -5,7 +5,7 @@
 #include "command_meta.h"
 
 #include <DoodleLib/Metadata/metadata_cpp.h>
-#include <DoodleLib/core/DoodleLib.h>
+#include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/core/open_file_dialog.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 
@@ -26,7 +26,7 @@ comm_project_add::comm_project_add()
 }
 
 bool comm_project_add::render() {
-  auto& k_d_lib = DoodleLib::Get();
+  auto& k_d_lib = doodle_lib::Get();
   ImGui::BulletText(p_name.c_str());
   if (imgui::Button(p_show_str["添加"].c_str())) {
     auto k_prj = new_object<project>(*p_prj_path, *p_prj_name);

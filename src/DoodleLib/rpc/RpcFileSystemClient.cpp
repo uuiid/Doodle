@@ -5,11 +5,11 @@
 #include "RpcFileSystemClient.h"
 
 #include <DoodleLib/Exception/exception.h>
-#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/core_set.h>
+#include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/threadPool/thread_pool.h>
 #include <Logger/logger.h>
-#include <core/DoodleLib.h>
+#include <core/doodle_lib.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>
 #include <threadPool/long_term.h>
@@ -199,7 +199,7 @@ void trans_file::set_parameter(std::unique_ptr<rpc_trans_path>& in_path) {
   _param = std::move(in_path);
 }
 long_term_ptr trans_file::operator()() {
-  _result = DoodleLib::Get().get_thread_pool()->enqueue([this]() {
+  _result = doodle_lib::Get().get_thread_pool()->enqueue([this]() {
     try {
       this->run();
     } catch (doodle_error& error) {
@@ -381,7 +381,7 @@ rpc_trans_path_ptr_list down_dir::down(const std::unique_ptr<rpc_trans_path>& in
   k_in_info.set_path(in_path->server_path.generic_string());
   auto k_out = _self->p_stub->GetList(&k_context, k_in_info);
 
-  auto k_prot = DoodleLib::Get().get_thread_pool();
+  auto k_prot = doodle_lib::Get().get_thread_pool();
 
   rpc_trans_path_ptr_list _stack{};
   while (k_out->Read(&k_out_info)) {
@@ -442,7 +442,7 @@ void up_dir::run() {
 }
 rpc_trans_path_ptr_list up_dir::update(const std::unique_ptr<rpc_trans_path>& in_path) {
   std::vector<std::pair<FSys::path, FSys::path>> path_list{};
-  auto k_prot = DoodleLib::Get().get_thread_pool();
+  auto k_prot = doodle_lib::Get().get_thread_pool();
 
   rpc_trans_path_ptr_list _stack{};
   for (const auto& k_it : FSys::directory_iterator(in_path->local_path)) {

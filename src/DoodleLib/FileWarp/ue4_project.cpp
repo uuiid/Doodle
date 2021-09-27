@@ -2,9 +2,9 @@
 #include <DoodleLib/FileWarp/ue4_project.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/shot.h>
-#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/Ue4Setting.h>
 #include <DoodleLib/core/core_set.h>
+#include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/core/filesystem_extend.h>
 #include <DoodleLib/libWarp/std_warp.h>
 #include <DoodleLib/threadPool/long_term.h>
@@ -267,7 +267,7 @@ ue4_project_async::ue4_project_async()
 }
 long_term_ptr ue4_project_async::import_file(const FSys::path& in_paths) {
   auto k_term = new_object<long_term>();
-  k_term->p_list.emplace_back(DoodleLib::Get().get_thread_pool()->enqueue(
+  k_term->p_list.emplace_back(doodle_lib::Get().get_thread_pool()->enqueue(
       [k_term, in_paths, self = p_ue4]() {
         self->import_file(in_paths, k_term);
       }));
@@ -278,7 +278,7 @@ void ue4_project_async::set_ue4_project(const FSys::path& in_paths) {
 }
 long_term_ptr ue4_project_async::create_shot_folder(const std::vector<ShotPtr>& in_vector) {
   auto k_term = new_object<long_term>();
-  k_term->p_list.emplace_back(DoodleLib::Get().get_thread_pool()->enqueue(
+  k_term->p_list.emplace_back(doodle_lib::Get().get_thread_pool()->enqueue(
       [k_term, in_vector, self = p_ue4]() {
         self->create_shot_folder(in_vector, k_term);
       }));

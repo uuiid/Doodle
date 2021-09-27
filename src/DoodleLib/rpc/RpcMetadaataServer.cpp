@@ -6,7 +6,7 @@
 
 #include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/Metadata/metadata_cpp.h>
-#include <DoodleLib/core/CoreSql.h>
+#include <DoodleLib/core/core_sql.h>
 #include <DoodleLib/generate/core/metadatatab_sql.h>
 #include <DoodleLib/generate/core/usertab_sql.h>
 #include <DoodleLib/libWarp/protobuf_warp_cpp.h>
@@ -61,7 +61,7 @@ RpcMetadaataServer::RpcMetadaataServer()
 }
 
 grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
-  auto k_conn = CoreSql::Get().getConnection();
+  auto k_conn = core_sql::Get().getConnection();
   Metadatatab k_tab{};
 
   auto k_in = sqlpp::dynamic_insert_into(*k_conn, k_tab).dynamic_set();
@@ -93,7 +93,7 @@ grpc::Status RpcMetadaataServer::InstallMetadata(grpc::ServerContext *context, c
   return grpc::Status::OK;
 }
 grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
-  auto k_conn = CoreSql::Get().getConnection();
+  auto k_conn = core_sql::Get().getConnection();
   Metadatatab k_tab{};
 
   auto k_path = getPath(request->uuidpath());
@@ -116,7 +116,7 @@ grpc::Status RpcMetadaataServer::DeleteMetadata(grpc::ServerContext *context, co
 }
 
 grpc::Status RpcMetadaataServer::UpdateMetadata(grpc::ServerContext *context, const DataDb *request, DataDb *response) {
-  auto k_conn = CoreSql::Get().getConnection();
+  auto k_conn = core_sql::Get().getConnection();
   Metadatatab k_tab{};
   auto k_sql = sqlpp::dynamic_update(*k_conn, k_tab).where(k_tab.id == request->id()).dynamic_set();
   if (request->has_parent())
@@ -146,7 +146,7 @@ grpc::Status RpcMetadaataServer::UpdateMetadata(grpc::ServerContext *context, co
 }
 grpc::Status RpcMetadaataServer::FilterMetadata(grpc::ServerContext *context,
                                                 const DataDb_Filter *request, grpc::ServerWriter<DataDb> *writer) {
-  auto k_conn = CoreSql::Get().getConnection();
+  auto k_conn = core_sql::Get().getConnection();
   Metadatatab k_tab{};
   auto k_select = sqlpp::dynamic_select(*k_conn, sqlpp::all_of(k_tab)).from(k_tab).dynamic_where();
 
@@ -200,7 +200,7 @@ grpc::Status RpcMetadaataServer::FilterMetadata(grpc::ServerContext *context,
   return grpc::Status::OK;
 }
 grpc::Status RpcMetadaataServer::InstallUserDate(::grpc::ServerContext *context, const ::doodle::user_database *request, ::doodle::user_database *response) {
-  auto k_conn = CoreSql::Get().getConnection();
+  auto k_conn = core_sql::Get().getConnection();
   Usertab k_tab{};
   auto k_sql =  sqlpp::insert_into(k_tab).set(
       k_tab.uuidPath = request->uuidpath(),
@@ -229,7 +229,7 @@ grpc::Status RpcMetadaataServer::UpdateUserDate(::grpc::ServerContext *context, 
   return grpc::Status::OK;
 }
 grpc::Status RpcMetadaataServer::DeleteUserDate(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::doodle::user_database *response) {
-  auto k_conn = CoreSql::Get().getConnection();
+  auto k_conn = core_sql::Get().getConnection();
   Usertab k_tab{};
 
   auto k_path = getPath(request->uuidpath());
@@ -249,7 +249,7 @@ grpc::Status RpcMetadaataServer::DeleteUserDate(::grpc::ServerContext *context, 
   return grpc::Status::OK;
 }
 grpc::Status RpcMetadaataServer::FilterUserDate(::grpc::ServerContext *context, const ::doodle::user_database_filter *request, ::grpc::ServerWriter< ::doodle::user_database> *writer) {
-  auto k_conn = CoreSql::Get().getConnection();
+  auto k_conn = core_sql::Get().getConnection();
   Usertab k_tab{};
 
   auto k_select = sqlpp::dynamic_select(*k_conn,sqlpp::all_of(k_tab)).from(k_tab).dynamic_where();

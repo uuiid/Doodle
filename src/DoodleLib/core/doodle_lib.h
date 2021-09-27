@@ -9,11 +9,11 @@
 
 namespace doodle {
 
-class DOODLELIB_API DoodleLib : public details::no_copy {
+class DOODLELIB_API doodle_lib : public details::no_copy {
   friend DOODLELIB_API DoodleLibPtr make_doodle_lib();
 
-  static DoodleLib* p_install;
-  DoodleLib();
+  static doodle_lib* p_install;
+  doodle_lib();
 
   ThreadPoolPtr p_thread_pool;
   ProjectPtr p_curr_project;
@@ -24,9 +24,9 @@ class DOODLELIB_API DoodleLib : public details::no_copy {
   FSys::path create_time_database();
 
  public:
-  virtual ~DoodleLib();
+  virtual ~doodle_lib();
 
-  static DoodleLib& Get();
+  static doodle_lib& Get();
 
   void set_thread_pool_size();
   ThreadPoolPtr get_thread_pool();

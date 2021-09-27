@@ -2,7 +2,7 @@
 // Created by TD on 2021/6/17.
 //
 
-#include "DoodleLib.h"
+#include "doodle_lib.h"
 
 #include <Exception/exception.h>
 #include <Logger/logger.h>
@@ -17,9 +17,9 @@
 #include <boost/numeric/conversion/cast.hpp>
 namespace doodle {
 
-DoodleLib* DoodleLib::p_install = nullptr;
+doodle_lib* doodle_lib::p_install = nullptr;
 
-DoodleLib::DoodleLib()
+doodle_lib::doodle_lib()
     : p_thread_pool(new_object<thread_pool>(core_set::getSet().p_max_thread)),
       p_curr_project(),
       p_rpc_metadata_clien(),
@@ -37,7 +37,7 @@ DoodleLib::DoodleLib()
 #endif
 }
 
-FSys::path DoodleLib::create_time_database() {
+FSys::path doodle_lib::create_time_database() {
   auto k_local_path = core_set::getSet().getCacheRoot("tzdata");
   if (FSys::is_empty(k_local_path)) {
     auto k_path = cmrc::DoodleLibResource::get_filesystem().iterate_directory("resource/tzdata");
@@ -55,28 +55,28 @@ FSys::path DoodleLib::create_time_database() {
   }
   return k_local_path;
 }
-DoodleLib& DoodleLib::Get() {
+doodle_lib& doodle_lib::Get() {
   return *p_install;
 }
 
-void DoodleLib::set_thread_pool_size() {
+void doodle_lib::set_thread_pool_size() {
   p_thread_pool = new_object<thread_pool>(core_set::getSet().p_max_thread);
 }
-ThreadPoolPtr DoodleLib::get_thread_pool() {
+ThreadPoolPtr doodle_lib::get_thread_pool() {
   return p_thread_pool;
 }
 [[maybe_unused]] DoodleLibPtr make_doodle_lib() {
-  auto ptr             = std::unique_ptr<DoodleLib>(new DoodleLib{});
-  DoodleLib::p_install = ptr.get();
+  auto ptr             = std::unique_ptr<doodle_lib>(new doodle_lib{});
+  doodle_lib::p_install = ptr.get();
   return ptr;
 }
-DoodleLib::~DoodleLib() {
+doodle_lib::~doodle_lib() {
   p_project_vector.clear();
   p_curr_project.reset();
 
   logger::clear();
 }
-void DoodleLib::init_gui() {
+void doodle_lib::init_gui() {
   auto k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().getMetaRpcPort());
 
   DOODLE_LOG_DEBUG(k_ip)
@@ -104,14 +104,14 @@ void DoodleLib::init_gui() {
     } else
       p_curr_project = p_project_vector.front();
 }
-RpcMetadataClientPtr DoodleLib::getRpcMetadataClient() const {
+RpcMetadataClientPtr doodle_lib::getRpcMetadataClient() const {
   return p_rpc_metadata_clien;
 }
-RpcFileSystemClientPtr DoodleLib::getRpcFileSystemClient() const {
+RpcFileSystemClientPtr doodle_lib::getRpcFileSystemClient() const {
   return p_rpc_file_system_client;
 }
 
-MetadataFactoryPtr DoodleLib::get_metadata_factory() const {
+MetadataFactoryPtr doodle_lib::get_metadata_factory() const {
   return p_metadata_factory;
 }
 }  // namespace doodle

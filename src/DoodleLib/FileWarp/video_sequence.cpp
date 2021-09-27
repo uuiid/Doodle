@@ -2,8 +2,8 @@
 #include <DoodleLib/FileWarp/video_sequence.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/shot.h>
-#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/core/core_set.h>
+#include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/libWarp/std_warp.h>
 #include <DoodleLib/threadPool/thread_pool.h>
 
@@ -91,7 +91,7 @@ long_term_ptr video_sequence_async::connect_video(const FSys::path& path) const 
     k_out_path = path;
 
   auto k_term = new_object<long_term>();
-  auto k_fut  = DoodleLib::Get().get_thread_pool()->enqueue(
+  auto k_fut  = doodle_lib::Get().get_thread_pool()->enqueue(
       [self = p_video, k_out_path, k_term]() { self->connectVideo(k_out_path, k_term); });
   k_term->p_list.push_back(std::move(k_fut));
   return k_term;
