@@ -1,8 +1,8 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
-#include <DoodleLib/Metadata/Episodes.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/Metadata/episodes.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Shot)
 namespace doodle {
@@ -50,7 +50,7 @@ void Shot::setShotAb(const std::string& ShotAb) noexcept {
   saved(true);
 }
 EpisodesPtr Shot::getEpisodesPtr() const {
-  auto k_ptr = std::dynamic_pointer_cast<Episodes>(getParent());
+  auto k_ptr = std::dynamic_pointer_cast<episodes>(getParent());
   if (!k_ptr)
     throw nullptr_error("没有集数");
   return k_ptr;

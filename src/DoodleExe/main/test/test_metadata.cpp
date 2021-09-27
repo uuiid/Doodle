@@ -150,7 +150,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
       auto i = 1;
       /// 生成集数
       for (int k_i = 0; k_i < 10; ++k_i) {
-        k_eps = std::make_shared<Episodes>(k_prj, k_i);
+        k_eps = std::make_shared<episodes>(k_prj, k_i);
         k_prj->child_item.push_back_sig(k_eps);
         k_eps->updata_db(k_fa);
 

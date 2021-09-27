@@ -6,10 +6,10 @@
 
 #include <DoodleLib/FileWarp/ImageSequence.h>
 #include <DoodleLib/FileWarp/MayaFile.h>
-#include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/FileWarp/Ue4Project.h>
-#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/FileWarp/VideoSequence.h>
 #include <DoodleLib/Metadata/Shot.h>
+#include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/core/open_file_dialog.h>
 #include <DoodleLib/doodle_app.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
@@ -203,7 +203,7 @@ bool comm_create_video::render() {
       }
       ptr->set_out_dir(*p_out_path);
       ptr->set_shot_and_eps(Shot::analysis_static(i.p_path_list.front()),
-                            Episodes::analysis_static(i.p_path_list.front()));
+                            episodes::analysis_static(i.p_path_list.front()));
 
       image->create_video(*p_out_path);
     }
@@ -232,7 +232,7 @@ bool comm_create_video::render() {
     auto video  = new_object<video_sequence_async>();
     auto k_v    = video->set_video_list(p_video_path);
     auto k_name = k_v->set_shot_and_eps(Shot::analysis_static(p_video_path.front()),
-                                        Episodes::analysis_static(p_video_path.front()));
+                                        episodes::analysis_static(p_video_path.front()));
     video->connect_video(k_name.empty() ? FSys::path{} : FSys::path{*p_out_path} / k_name);
   }
 

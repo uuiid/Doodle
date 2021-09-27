@@ -11,7 +11,7 @@
 
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/season.h>
-#include <DoodleLib/Metadata/Episodes.h>
+#include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/Shot.h>
 
 #include <DoodleLib/Metadata/time_point_wrap.h>

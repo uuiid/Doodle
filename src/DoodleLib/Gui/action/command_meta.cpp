@@ -77,7 +77,7 @@ bool comm_project_add::add_data(const MetadataPtr& in_parent, const MetadataPtr&
 
 void comm_ass_eps::add_eps(const std::vector<std::int32_t>& p_eps) {
   for (auto i : p_eps) {
-    auto eps = new_object<Episodes>(p_parent, i);
+    auto eps = new_object<episodes>(p_parent, i);
     p_parent->child_item.push_back_sig(eps);
     eps->insert_into();
   }
@@ -134,7 +134,7 @@ bool comm_ass_eps::render() {
 
 bool comm_ass_eps::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
   p_parent = in_parent;
-  p_root   = std::dynamic_pointer_cast<Episodes>(in);
+  p_root   = std::dynamic_pointer_cast<episodes>(in);
   if (p_root) {
     p_data = p_root->getEpisodes();
   }

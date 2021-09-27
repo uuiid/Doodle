@@ -14,12 +14,12 @@ TEST_CASE("my tree", "[tree]") {
   auto tree   = GENERATE(
         new_object<tree_node>(nullptr, std::make_shared<Shot>()),
         new_object<tree_node>(nullptr, std::make_shared<Shot>()),
-        new_object<tree_node>(nullptr, std::make_shared<Episodes>()));
+        new_object<tree_node>(nullptr, std::make_shared<episodes>()));
   auto tree2 = GENERATE(
       new_object<tree_node>(nullptr, std::make_shared<Shot>()),
       new_object<tree_node>(nullptr, std::make_shared<Shot>()),
       new_object<tree_node>(nullptr, std::make_shared<Shot>()),
-      new_object<tree_node>(nullptr, std::make_shared<Episodes>()));
+      new_object<tree_node>(nullptr, std::make_shared<episodes>()));
 
   SECTION("tree insert") {
     k_tree->insert(tree);

@@ -4,12 +4,12 @@
 
 namespace doodle {
 
-class DOODLELIB_API Episodes : public metadata {
+class DOODLELIB_API episodes : public metadata {
   int64_t p_episodes;
 
  public:
-  Episodes();
-  explicit Episodes(std::weak_ptr<metadata> in_metadata, int64_t in_episodes);
+  episodes();
+  explicit episodes(std::weak_ptr<metadata> in_metadata, int64_t in_episodes);
   // ~Episodes();
 
   [[nodiscard]] const int64_t &getEpisodes() const noexcept;
@@ -19,10 +19,10 @@ class DOODLELIB_API Episodes : public metadata {
 
   void create_menu(const attribute_factory_ptr &in_factoryPtr) override;
 
-  bool operator<(const Episodes &in_rhs) const;
-  bool operator>(const Episodes &in_rhs) const;
-  bool operator<=(const Episodes &in_rhs) const;
-  bool operator>=(const Episodes &in_rhs) const;
+  bool operator<(const episodes &in_rhs) const;
+  bool operator>(const episodes &in_rhs) const;
+  bool operator<=(const episodes &in_rhs) const;
+  bool operator>=(const episodes &in_rhs) const;
 
   inline bool analysis(const FSys::path &in_path) {
     return analysis(in_path.generic_string());
@@ -40,12 +40,12 @@ class DOODLELIB_API Episodes : public metadata {
   void serialize(Archive &ar, std::uint32_t const version);
 };
 template <class Archive>
-void Episodes::serialize(Archive &ar, const std::uint32_t version) {
+void episodes::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
     ar &boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
         p_episodes;
 }
 }  // namespace doodle
 
-BOOST_CLASS_VERSION(doodle::Episodes, 1)
-BOOST_CLASS_EXPORT_KEY(doodle::Episodes)
+BOOST_CLASS_VERSION(doodle::episodes, 1)
+BOOST_CLASS_EXPORT_KEY(doodle::episodes)
