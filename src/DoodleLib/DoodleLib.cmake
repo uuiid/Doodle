@@ -70,7 +70,7 @@ set(
     rpc/rpc_trans_path.h
     ScreenshotWidght/ScreenshotAction.h
     ScreenshotWidght/ScreenshotWidght.h
-    threadPool/ThreadPool.h
+        threadPool/thread_pool.h
     threadPool/long_term.h
     toolkit/toolkit.h
     DoodleLib.h

@@ -273,7 +273,7 @@ class DragFilesFactory;
 class action;
 class actn_up_paths;
 class DoodleLib;
-class ThreadPool;
+class thread_pool;
 class attribute_factory_interface;
 class long_term;
 class ImageSequence;
@@ -466,7 +466,7 @@ using DoodleLibPtr                 = std::unique_ptr<DoodleLib>;
  * @brief ThreadPool 智能共享指针
  *
  */
-using ThreadPoolPtr                = std::shared_ptr<ThreadPool>;
+using ThreadPoolPtr                = std::shared_ptr<thread_pool>;
 /**
  * @brief attribute_factory_interface 智能共享指针
  *

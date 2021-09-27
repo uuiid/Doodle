@@ -71,8 +71,8 @@
 #include <DoodleLib/rpc/RpcMetadataClient.h>
 #include <DoodleLib/rpc/RpcServerHandle.h>
 #include <DoodleLib/rpc/rpc_trans_path.h>
-#include <DoodleLib/threadPool/ThreadPool.h>
 #include <DoodleLib/threadPool/long_term.h>
+#include <DoodleLib/threadPool/thread_pool.h>
 #include <DoodleLib/toolkit/toolkit.h>
 
 #include <DoodleLib/libWarp/WinReg.hpp>

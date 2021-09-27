@@ -7,8 +7,8 @@
 #include <DoodleLib/core/Ue4Setting.h>
 #include <DoodleLib/core/filesystem_extend.h>
 #include <DoodleLib/libWarp/std_warp.h>
-#include <DoodleLib/threadPool/ThreadPool.h>
 #include <DoodleLib/threadPool/long_term.h>
+#include <DoodleLib/threadPool/thread_pool.h>
 
 #include <DoodleLib/libWarp/WinReg.hpp>
 #include <boost/locale.hpp>

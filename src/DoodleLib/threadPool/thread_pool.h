@@ -16,13 +16,13 @@
 namespace doodle {
 
 //namespace details {
-class DOODLELIB_API ThreadPool : public details::no_copy {
+class DOODLELIB_API thread_pool : public details::no_copy {
  public:
-  explicit ThreadPool(size_t);
+  explicit thread_pool(size_t);
   template <class F, class... Args>
   auto enqueue(F&& f, Args&&... args)
       -> std::future<typename std::invoke_result<F, Args...>::type>;
-  ~ThreadPool();
+  ~thread_pool();
 
  private:
   // need to keep track of threads so we can join them
@@ -31,7 +31,7 @@ class DOODLELIB_API ThreadPool : public details::no_copy {
   boost::asio::io_context io_context;
   boost::asio::any_io_executor io_work;
 };
-inline ThreadPool::ThreadPool(size_t threads)
+inline thread_pool::thread_pool(size_t threads)
     : stop(false),
       io_context(),
       io_work(
@@ -45,7 +45,7 @@ inline ThreadPool::ThreadPool(size_t threads)
         });
 }
 template <class F, class... Args>
-[[nodiscard]] auto ThreadPool::enqueue(F&& f, Args&&... args)
+[[nodiscard]] auto thread_pool::enqueue(F&& f, Args&&... args)
     -> std::future<typename std::invoke_result<F, Args...>::type> {
   using return_type = typename std::invoke_result<F, Args...>::type;
 
@@ -55,7 +55,7 @@ template <class F, class... Args>
   boost::asio::post(io_context, [task]() { (*task)(); });
   return res;
 }
-inline ThreadPool::~ThreadPool() {
+inline thread_pool::~thread_pool() {
   io_work = decltype(io_work){};
   io_context.stop();
   for (auto& worker : workers)

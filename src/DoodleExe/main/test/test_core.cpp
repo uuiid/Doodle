@@ -179,7 +179,7 @@ TEST_CASE("maya get log", "[maya]") {
 
 TEST_CASE("ThreadPool", "[core][ThreadPool]") {
   using namespace doodle;
-  ThreadPool th{4};
+  thread_pool th{4};
   for (int k_i = 0; k_i < 100; ++k_i) {
     th.enqueue([k_i]() {
       std::cout << k_i << std::endl;

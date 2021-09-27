@@ -3,7 +3,7 @@
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/libWarp/std_warp.h>
-#include <DoodleLib/threadPool/ThreadPool.h>
+#include <DoodleLib/threadPool/thread_pool.h>
 #include <Logger/Logger.h>
 #include <Metadata/episodes.h>
 #include <Metadata/shot.h>

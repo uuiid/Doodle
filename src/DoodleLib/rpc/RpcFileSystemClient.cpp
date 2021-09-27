@@ -7,7 +7,7 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
-#include <DoodleLib/threadPool/ThreadPool.h>
+#include <DoodleLib/threadPool/thread_pool.h>
 #include <Logger/Logger.h>
 #include <core/DoodleLib.h>
 #include <google/protobuf/util/time_util.h>

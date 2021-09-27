@@ -12,7 +12,7 @@
 #include <grpcpp/grpcpp.h>
 #include <rpc/RpcFileSystemClient.h>
 #include <rpc/RpcMetadataClient.h>
-#include <threadPool/ThreadPool.h>
+#include <threadPool/thread_pool.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 namespace doodle {
@@ -20,7 +20,7 @@ namespace doodle {
 DoodleLib* DoodleLib::p_install = nullptr;
 
 DoodleLib::DoodleLib()
-    : p_thread_pool(new_object<ThreadPool>(CoreSet::getSet().p_max_thread)),
+    : p_thread_pool(new_object<thread_pool>(CoreSet::getSet().p_max_thread)),
       p_curr_project(),
       p_rpc_metadata_clien(),
       p_rpc_file_system_client(),
@@ -60,7 +60,7 @@ DoodleLib& DoodleLib::Get() {
 }
 
 void DoodleLib::set_thread_pool_size() {
-  p_thread_pool = new_object<ThreadPool>(CoreSet::getSet().p_max_thread);
+  p_thread_pool = new_object<thread_pool>(CoreSet::getSet().p_max_thread);
 }
 ThreadPoolPtr DoodleLib::get_thread_pool() {
   return p_thread_pool;
