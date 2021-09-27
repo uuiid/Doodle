@@ -4,7 +4,7 @@
 
 #include "DoodleLib.h"
 
-#include <Exception/Exception.h>
+#include <Exception/exception.h>
 #include <Logger/logger.h>
 #include <Metadata/metadata_factory.h>
 #include <core/CoreSet.h>

@@ -1,4 +1,4 @@
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/FileWarp/image_sequence.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>

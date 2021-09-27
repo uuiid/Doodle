@@ -4,7 +4,7 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 

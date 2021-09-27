@@ -3,7 +3,7 @@
 //
 
 #include <DoodleLib_fwd.h>
-#include <Exception/Exception.h>
+#include <Exception/exception.h>
 #include <cryptopp/base64.h>
 #include <cryptopp/files.h>
 #include <cryptopp/hex.h>

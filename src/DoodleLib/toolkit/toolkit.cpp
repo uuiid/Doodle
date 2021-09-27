@@ -1,5 +1,5 @@
-#include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/FileSys/FileSystem.h>
+#include <DoodleLib/Exception/exception.h>
+#include <DoodleLib/FileSys/file_system.h>
 #include <DoodleLib/FileWarp/image_sequence.h>
 #include <DoodleLib/FileWarp/maya_file.h>
 #include <DoodleLib/FileWarp/ue4_project.h>
@@ -36,7 +36,7 @@ void toolkit::installMayaPath() {
   } else
     FSys::remove_all(mayadoc);
 
-  FileSystem::localCopy(sourePath, mayadoc, false);
+  file_system::localCopy(sourePath, mayadoc, false);
   auto k_tmp_path = mayadoc / "scripts" / "scripts" / "maya_fun_tool.py";
   if (FSys::exists(k_tmp_path))
     return;
@@ -76,7 +76,7 @@ void toolkit::installUePath(const FSys::path &path) {
   }
 
   DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, targetPath));
-  FileSystem::localCopy(sourePath, targetPath, false);
+  file_system::localCopy(sourePath, targetPath, false);
 }
 
 bool toolkit::update() {

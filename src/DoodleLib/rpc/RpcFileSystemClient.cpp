@@ -4,7 +4,7 @@
 
 #include "RpcFileSystemClient.h"
 
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/threadPool/thread_pool.h>

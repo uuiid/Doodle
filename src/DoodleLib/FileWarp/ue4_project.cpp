@@ -1,4 +1,4 @@
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/FileWarp/ue4_project.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/shot.h>

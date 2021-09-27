@@ -1,4 +1,4 @@
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/core/CoreSet.h>

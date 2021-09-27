@@ -15,7 +15,7 @@ set(doodle_motion_CPP
         kernel/MotionSetting.cpp
         kernel/MotionFile.cpp
         kernel/Maya/FbxFile.cpp
-        kernel/Exception.cpp
+        kernel/exception.cpp
         kernel/Maya/Screenshot.cpp
         kernel/Maya/MayaRenderOpenGL.cpp
         kernel/Maya/MayaVideo.cpp

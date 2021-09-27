@@ -1,4 +1,4 @@
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/metadata_factory.h>

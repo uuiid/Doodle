@@ -5,7 +5,7 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 #include <Windows.h>
 
 #include <boost/signals2.hpp>

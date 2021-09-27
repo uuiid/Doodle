@@ -6,7 +6,7 @@
 
 #include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/Metadata/metadata_factory.h>
-#include <Exception/Exception.h>
+#include <Exception/exception.h>
 #include <Metadata/metadata_cpp.h>
 #include <core/ContainerDevice.h>
 #include <core/CoreSet.h>

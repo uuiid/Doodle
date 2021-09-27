@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
-#include <Exception/Exception.h>
+#include <Exception/exception.h>
 #include <Metadata/metadata_factory.h>
 #include <Metadata/project.h>
 #include <PinYin/convert.h>

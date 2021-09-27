@@ -12,8 +12,8 @@ set(
     core/open_file_dialog.h
     core/static_value.h
     core/tree_container.h
-    Exception/Exception.h
-    FileSys/FileSystem.h
+        Exception/exception.h
+        FileSys/file_system.h
         FileWarp/image_sequence.h
         FileWarp/maya_file.h
         FileWarp/ue4_project.h
@@ -89,7 +89,7 @@ set(
     core/open_file_dialog.cpp
     core/static_value.cpp
     core/tree_container.cpp
-    FileSys/FileSystem.cpp
+        FileSys/file_system.cpp
         FileWarp/image_sequence.cpp
         FileWarp/maya_file.cpp
         FileWarp/ue4_project.cpp

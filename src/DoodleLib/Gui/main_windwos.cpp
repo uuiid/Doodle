@@ -4,7 +4,7 @@
 
 #include "main_windwos.h"
 
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/Gui/action/command_tool.h>
 #include <DoodleLib/Gui/setting_windows.h>
 #include <DoodleLib/Gui/widgets/assets_file_widgets.h>

@@ -4,7 +4,7 @@
 
 #include "RpcMetadataClient.h"
 
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 // clang-format off
 #include <DoodleLib/Metadata/metadata_cpp.h>
 // clang-format on

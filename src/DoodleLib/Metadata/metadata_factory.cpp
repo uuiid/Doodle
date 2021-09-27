@@ -3,7 +3,7 @@
 //
 #include "metadata_factory.h"
 
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/Logger/logger.h>
 #include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/core/CoreSet.h>

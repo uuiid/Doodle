@@ -6,8 +6,8 @@
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/DoodleLib_pch.h>
 #include <DoodleLib/DoodleMacro.h>
-#include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/FileSys/FileSystem.h>
+#include <DoodleLib/Exception/exception.h>
+#include <DoodleLib/FileSys/file_system.h>
 #include <DoodleLib/FileWarp/image_sequence.h>
 #include <DoodleLib/FileWarp/maya_file.h>
 #include <DoodleLib/FileWarp/ue4_project.h>

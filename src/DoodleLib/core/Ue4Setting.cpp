@@ -1,6 +1,6 @@
 #include <DoodleLib/core/Ue4Setting.h>
 #include <DoodleLib/libWarp/boost_locale_warp.h>
-#include <Exception/Exception.h>
+#include <Exception/exception.h>
 
 #include <libWarp/WinReg.hpp>
 

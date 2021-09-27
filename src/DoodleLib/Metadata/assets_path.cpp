@@ -4,7 +4,7 @@
 
 #include "assets_path.h"
 
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/Metadata/assets_file.h>
 #include <DoodleLib/Metadata/metadata.h>
 #include <DoodleLib/core/CoreSet.h>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Exception/Exception.h>
+#include <DoodleLib/Exception/exception.h>
 
 #include <boost/rational.hpp>
 #include <boost/signals2.hpp>
