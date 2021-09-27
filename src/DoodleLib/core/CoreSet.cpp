@@ -39,7 +39,7 @@ FSys::path get_pwd()
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
   if (!pManager) {
     std::cout << "unable to find a save path" << std::endl;
-    throw DoodleError("无法找到保存路径");
+    throw doodle_error("无法找到保存路径");
   }
 
   auto k_path = FSys::path{pManager};
@@ -84,10 +84,10 @@ void CoreSet::writeDoodleLocalSet() {
   p_ue4_setting.testValue();
   if (p_ue4_setting.hasPath() && !FSys::exists(p_ue4_setting.Path() / staticValue::ue_path_obj())) {
     p_ue4_setting.setPath({});
-    throw FileError{p_ue4_setting.Path(), " 在路径中没有找到ue,不保存"};
+    throw file_error{p_ue4_setting.Path(), " 在路径中没有找到ue,不保存"};
   }
   if (!FSys::exists(p_mayaPath / "maya.exe")) {
-    throw FileError{p_mayaPath, " 在路径中没有找到maya,不保存"};
+    throw file_error{p_mayaPath, " 在路径中没有找到maya,不保存"};
   }
 
   FSys::ofstream outjosn{p_doc / configFileName(), std::ios::out | std::ios::binary};

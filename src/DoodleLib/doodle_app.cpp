@@ -276,7 +276,7 @@ std::int32_t doodle_app::run() {
     try {
       k_main_windows.frame_render();
       main_loop();
-    } catch (DoodleError& err) {
+    } catch (doodle_error& err) {
       show_info = true;
       str       = err.what();
       imgui::OpenPopup("警告");

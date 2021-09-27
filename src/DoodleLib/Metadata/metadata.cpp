@@ -323,14 +323,14 @@ MetadataPtr metadata::from_DataDb(const DataDb &in_) {
     }
 
     if (k_ptr->p_id != in_.id())
-      throw DoodleError{fmt::format("验证出错 id 不相同 {} == {}", k_ptr->p_id, in_.id())};
+      throw doodle_error{fmt::format("验证出错 id 不相同 {} == {}", k_ptr->p_id, in_.id())};
 
     if (in_.parent().value() != 0) {  ///  不为零的情况下, 比较验证值, 不相同就返回空指针
       if (k_ptr->p_parent_id != in_.parent().value())
-        throw DoodleError{fmt::format("验证出错, 父id不相同 {} == {}", k_ptr->p_parent_id.value(), in_.parent().value())};
+        throw doodle_error{fmt::format("验证出错, 父id不相同 {} == {}", k_ptr->p_parent_id.value(), in_.parent().value())};
     } else {
       if (k_ptr->p_parent_id)  /// 是零就是默认值, 没有值, 如果父id有值就直接返回空
-        throw DoodleError{fmt::format("验证出错, 没有父id, 但是传入父id {} ", in_.parent().value())};
+        throw doodle_error{fmt::format("验证出错, 没有父id, 但是传入父id {} ", in_.parent().value())};
     }
 
     k_ptr->set_meta_type(magic_enum::enum_integer(in_.m_type().value()));

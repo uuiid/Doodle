@@ -64,7 +64,7 @@ std::tuple<std::size_t, bool, chrono::sys_time_pos, bool> RpcFileSystemClient::G
   FileInfo k_out_info;
   auto status = p_stub->GetInfo(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
-    throw DoodleError{status.error_message()};
+    throw doodle_error{status.error_message()};
 
   auto k_t = std::chrono::system_clock::from_time_t(google::protobuf::util::TimeUtil::TimestampToTimeT(k_out_info.update_time()));
   return {k_out_info.size(), k_out_info.exist(), k_t, k_out_info.isfolder()};
@@ -78,7 +78,7 @@ std::size_t RpcFileSystemClient::GetSize(const FSys::path& in_path) {
   FileInfo k_out_info;
   auto status = p_stub->GetSize(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
-    throw DoodleError{status.error_message()};
+    throw doodle_error{status.error_message()};
 
   return k_out_info.size();
 }
@@ -91,7 +91,7 @@ std::tuple<bool, bool> RpcFileSystemClient::IsFolder(const FSys::path& in_path) 
   FileInfo k_out_info;
   auto status = p_stub->IsFolder(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
-    throw DoodleError{status.error_message()};
+    throw doodle_error{status.error_message()};
 
   return {k_out_info.exist(), k_out_info.isfolder()};
 }
@@ -104,7 +104,7 @@ chrono::sys_time_pos RpcFileSystemClient::GetTimestamp(const FSys::path& in_path
   FileInfo k_out_info;
   auto status = p_stub->GetTimestamp(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
-    throw DoodleError{status.error_message()};
+    throw doodle_error{status.error_message()};
   auto k_t = std::chrono::system_clock::from_time_t(google::protobuf::util::TimeUtil::TimestampToTimeT(k_out_info.update_time()));
 
   return k_t;
@@ -118,7 +118,7 @@ bool RpcFileSystemClient::IsExist(const FSys::path& in_path) {
   FileInfo k_out_info;
   auto status = p_stub->IsExist(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
-    throw DoodleError{status.error_message()};
+    throw doodle_error{status.error_message()};
 
   return k_out_info.exist();
 }
@@ -149,7 +149,7 @@ RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(std::vector<std:
 RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(std::unique_ptr<rpc_trans_path>& in_vector) {
   auto [k_ex, k_dir] = IsFolder(in_vector->server_path);
   if (!k_ex)
-    throw DoodleError{"服务器中不存在文件或者目录"};
+    throw doodle_error{"服务器中不存在文件或者目录"};
 
   trans_file_ptr k_down;
   if (k_dir)
@@ -162,7 +162,7 @@ RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Download(std::unique_pt
 }
 RpcFileSystemClient::trans_file_ptr RpcFileSystemClient::Upload(std::unique_ptr<rpc_trans_path>& in_vector) {
   if (!FSys::exists(in_vector->local_path))
-    throw DoodleError{"本地中不存在文件或者目录"};
+    throw doodle_error{"本地中不存在文件或者目录"};
 
   trans_file_ptr k_up;
   if (FSys::is_directory(in_vector->local_path))
@@ -181,7 +181,7 @@ std::string RpcFileSystemClient::get_hash(const FSys::path& in_path) {
   FileInfo k_out_info;
   auto status = p_stub->GetHash(&k_context, k_in_info, &k_out_info);
   if (!status.ok())
-    throw DoodleError{status.error_message()};
+    throw doodle_error{status.error_message()};
   return k_out_info.hash().value();
 }
 
@@ -202,7 +202,7 @@ long_term_ptr trans_file::operator()() {
   _result = DoodleLib::Get().get_thread_pool()->enqueue([this]() {
     try {
       this->run();
-    } catch (DoodleError& error) {
+    } catch (doodle_error& error) {
       DOODLE_LOG_WARN(error.what());
       _term->sig_progress(1);
       _term->sig_finished();
@@ -248,7 +248,7 @@ void down_file::run() {
 
   FSys::ofstream k_file{_param->local_path, std::ios::out | std::ios::binary};
   if (!k_file)
-    throw DoodleError{"not create file"};
+    throw doodle_error{"not create file"};
 
   k_in_info.set_path(_param->server_path.generic_string());
   auto k_out = _self->p_stub->Download(&k_context, k_in_info);
@@ -265,7 +265,7 @@ void down_file::run() {
   auto status = k_out->Finish();
 
   if (!status.ok())
-    throw DoodleError{status.error_message()};
+    throw doodle_error{status.error_message()};
   _term->sig_finished();
   _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
 }
@@ -302,7 +302,7 @@ void up_file::run() {
     auto k_s = _self->p_stub->Move(&k_context, k_info, &k_out_info);
     if (!k_s.ok()) {
       DOODLE_LOG_WARN(k_s.error_message());
-      throw DoodleError(k_s.error_message());
+      throw doodle_error(k_s.error_message());
     }
   }
 
@@ -319,7 +319,7 @@ void up_file::run() {
   const std::size_t k_num2{s_size > k_sz ? 1 : (s_size / k_sz)};
   FSys::ifstream k_file{_param->local_path, std::ios::in | std::ios::binary};
   if (!k_file)
-    throw DoodleError{"not read file"};
+    throw doodle_error{"not read file"};
 
   while (k_file) {
     std::string k_value{};
@@ -334,13 +334,13 @@ void up_file::run() {
     k_in_info.mutable_data()->set_value(std::move(k_value));
     _term->sig_progress(rational_int(k_num2));
     if (!k_in->Write(k_in_info))
-      throw DoodleError{"write stream errors"};
+      throw doodle_error{"write stream errors"};
   }
   /// @warning 这里必须调用 WritesDone用来区分写入完成
   k_in->WritesDone();
   auto status = k_in->Finish();
   if (!status.ok())
-    throw DoodleError{status.error_message()};
+    throw doodle_error{status.error_message()};
   _term->sig_finished();
   _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
 }
@@ -406,7 +406,7 @@ rpc_trans_path_ptr_list down_dir::down(const std::unique_ptr<rpc_trans_path>& in
   }
   auto status = k_out->Finish();
   if (!status.ok())
-    throw DoodleError{status.error_message()};
+    throw doodle_error{status.error_message()};
   return _stack;
 }
 void down_dir::wait() {
@@ -421,7 +421,7 @@ up_dir::up_dir(RpcFileSystemClient* in_self)
 }
 void up_dir::run() {
   if (!FSys::exists(_param->local_path))
-    throw DoodleError{"未找到上传文件夹"};
+    throw doodle_error{"未找到上传文件夹"};
 
   rpc_trans_path_ptr_list _stack{};
   _stack.push_back(std::move(_param));

@@ -210,7 +210,7 @@ chrono::hours_double time_point_wrap::one_day_works_hours(const chrono::local_ti
   } else if (in_point > k_end_2) {                           /// 下午下班后提交
     k_h = chrono::hours_double{8};                           ///
   } else {
-    throw DoodleError{"未知时间"};
+    throw doodle_error{"未知时间"};
   }
   return k_h;
 }

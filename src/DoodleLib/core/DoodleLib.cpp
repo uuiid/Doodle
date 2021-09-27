@@ -49,7 +49,7 @@ FSys::path DoodleLib::create_time_database() {
         k_ofstream.write(k_file.begin(), boost::numeric_cast<std::int64_t>(k_file.size()));
       } else {
         DOODLE_LOG_INFO("无法创建数据库 {}", k_local_path / i.filename());
-        throw DoodleError{fmt::format("无法创建数据库 {}", k_local_path / i.filename())};
+        throw doodle_error{fmt::format("无法创建数据库 {}", k_local_path / i.filename())};
       }
     }
   }

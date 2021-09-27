@@ -21,14 +21,14 @@ class DOODLELIB_API RpcMetadaataServer final : public MetadataServer::Service, p
 
   [[nodiscard]] inline FSys::path getPath(const std::string& in_string) const {
     if (in_string.empty()) {
-      throw DoodleError{"str 是空的"};
+      throw doodle_error{"str 是空的"};
     }
     return p_set.getCacheRoot() / in_string;
   };
 
   [[nodiscard]] inline FSys::path get_delete_path(const std::string& in_string) const {
     if (in_string.empty())
-      throw DoodleError{"str 是空的"};
+      throw doodle_error{"str 是空的"};
     return p_set.getCacheRoot("delete") / in_string;
   };
 

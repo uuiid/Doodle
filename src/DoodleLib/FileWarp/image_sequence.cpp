@@ -47,14 +47,14 @@ void image_sequence::set_path(const FSys::path &dir) {
   this->seanDir(dir);
   for (auto &path : p_paths) {
     if (!FSys::is_regular_file(path)) {
-      throw DoodleError("不是文件, 无法识别");
+      throw doodle_error("不是文件, 无法识别");
     }
   }
 }
 
 bool image_sequence::seanDir(const FSys::path &dir) {
   if (!FSys::is_directory(dir))
-    throw FileError{dir, "file not is a directory"};
+    throw file_error{dir, "file not is a directory"};
 
   FSys::path ex{};
   for (auto &path : FSys::directory_iterator(dir)) {
@@ -68,7 +68,7 @@ bool image_sequence::seanDir(const FSys::path &dir) {
     }
   }
   if (p_paths.empty())
-    throw DoodleError("空目录");
+    throw doodle_error("空目录");
   return true;
 }
 
@@ -127,7 +127,7 @@ void image_sequence::create_video(const image_sequence::asyn_arg_ptr &in_arg) {
     for (auto &&path : in_arg->paths) {
       k_image = cv::imread(path.generic_string());
       if (k_image.empty())
-        throw DoodleError("open cv not read image");
+        throw doodle_error("open cv not read image");
       if (k_image.cols != k_size.width || k_image.rows != k_size.height)
         cv::resize(k_image, k_image_resized, k_size);
       else
@@ -175,7 +175,7 @@ void image_sequence::set_out_dir(const FSys::path &out_dir) {
 }
 void image_sequence::create_video(const long_term_ptr &in_ptr) {
   if (!this->hasSequence())
-    throw DoodleError{"not Sequence"};
+    throw doodle_error{"not Sequence"};
   auto k_arg      = new_object<asyn_arg>();
   k_arg->out_path = p_out_path / p_name;
   k_arg->paths    = p_paths;

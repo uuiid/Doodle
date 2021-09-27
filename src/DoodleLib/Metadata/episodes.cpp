@@ -17,7 +17,7 @@ episodes::episodes(std::weak_ptr<metadata> in_metadata, int64_t in_episodes)
       p_episodes(in_episodes) {
   p_type = meta_type::folder;
   if (p_episodes < 0)
-    throw DoodleError("集数无法为负");
+    throw doodle_error("集数无法为负");
 }
 
 // Episodes::~Episodes() {
@@ -31,7 +31,7 @@ const int64_t& episodes::getEpisodes() const noexcept {
 
 void episodes::setEpisodes(const int64_t& Episodes_) {
   if (Episodes_ <= 0)
-    throw DoodleError("集数无法为负");
+    throw doodle_error("集数无法为负");
   p_episodes = Episodes_;
   saved(true);
 }

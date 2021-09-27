@@ -25,7 +25,7 @@ maya_file::maya_file(FSys::path mayaPath)
   if (!FSys::exists(p_path) && CoreSet::getSet().hasMaya())
     p_path = CoreSet::getSet().MayaPath();
   else
-    throw DoodleError{"无法找到maya启动器"};
+    throw doodle_error{"无法找到maya启动器"};
 }
 
 void maya_file::write_maya_tool_file() {

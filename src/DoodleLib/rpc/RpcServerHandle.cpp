@@ -51,7 +51,7 @@ void RpcServerHandle::runServer(int port_meta, int port_file_sys) {
 
   p_Server = std::move(p_build->BuildAndStart());
   if (!p_Server)
-    throw DoodleError{"无法创建服务器"};
+    throw doodle_error{"无法创建服务器"};
 
   p_thread = std::thread{[this]() {
     p_Server->Wait();

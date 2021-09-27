@@ -26,7 +26,7 @@ assets_path::assets_path(const FSys::path &in_path, const MetadataConstPtr &in_m
   if (in_metadata)
     this->setPath(in_path, in_metadata);
   else
-    throw DoodleError{"空指针"};
+    throw doodle_error{"空指针"};
 }
 const FSys::path &assets_path::getLocalPath() const {
   return p_local_path;
@@ -60,7 +60,7 @@ void assets_path::setPath(const FSys::path &in_path, const MetadataConstPtr &in_
 
 void assets_path::setPath(const FSys::path &in_local_path, const FSys::path &in_server_path) {
   if (!FSys::exists(in_local_path))
-    throw DoodleError{"不存在文件"};
+    throw doodle_error{"不存在文件"};
   p_local_path           = in_local_path;
   const auto k_root_path = in_local_path.root_path();
   p_lexically_relative   = in_local_path.lexically_relative(k_root_path);

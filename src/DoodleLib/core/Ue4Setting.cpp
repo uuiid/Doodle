@@ -56,7 +56,7 @@ void Ue4Setting::setShotEnd(const std::int32_t& ShotEnd) noexcept {
 
 void Ue4Setting::testValue() {
   if (shot_end <= shot_start) {
-    throw DoodleError{"结束镜头小于开始镜头!"};
+    throw doodle_error{"结束镜头小于开始镜头!"};
   }
 #ifdef _WIN32
   if (ue4_path.empty()) {

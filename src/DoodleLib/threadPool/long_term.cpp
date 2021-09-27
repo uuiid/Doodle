@@ -101,7 +101,7 @@ long_term::~long_term() {
     try {
       k_item.get();
 
-    } catch (const DoodleError& error) {
+    } catch (const doodle_error& error) {
       DOODLE_LOG_WARN(error.what());
     }
   }

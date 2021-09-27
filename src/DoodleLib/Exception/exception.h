@@ -5,21 +5,21 @@
 
 namespace doodle {
 // 空指针错误
-class DOODLELIB_API DoodleError : public std::runtime_error {
+class DOODLELIB_API doodle_error : public std::runtime_error {
  public:
-  explicit DoodleError(const std::string& message) : std::runtime_error(message){};
+  explicit doodle_error(const std::string& message) : std::runtime_error(message){};
 };
-class DOODLELIB_API nullptr_error : public DoodleError {
+class DOODLELIB_API nullptr_error : public doodle_error {
  public:
-  explicit nullptr_error(const std::string &err) : DoodleError(err){};
+  explicit nullptr_error(const std::string &err) : doodle_error(err){};
 };
 // fileErr
-class DOODLELIB_API FileError : public DoodleError {
+class DOODLELIB_API file_error : public doodle_error {
   FSys::path p_path;
 
  public:
-  FileError(FSys::path path, const std::string& message)
-      : DoodleError(path.generic_string().append(message)),
+  file_error(FSys::path path, const std::string& message)
+      : doodle_error(path.generic_string().append(message)),
        p_path(std::move(path)){};
 };
 //doodl err

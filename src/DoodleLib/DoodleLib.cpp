@@ -104,7 +104,7 @@ void backup_file(const path &source) {
     create_directories(backup_path.parent_path());
   rename(source, backup_path);
   if (exists(source))
-    throw DoodleError{"无法备份文件"};
+    throw doodle_error{"无法备份文件"};
 }
 path add_time_stamp(const path &in_path) {
   auto k_fn = in_path.stem();

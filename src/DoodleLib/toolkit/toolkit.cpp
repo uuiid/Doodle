@@ -108,7 +108,7 @@ bool toolkit::deleteUeCache() {
   //获取环境变量
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, nullptr, &pManager);
-  if (!pManager) throw DoodleError("无法找到保存路径");
+  if (!pManager) throw doodle_error("无法找到保存路径");
 
   FSys::path path{pManager};
   CoTaskMemFree(pManager);

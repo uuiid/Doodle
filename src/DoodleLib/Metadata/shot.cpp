@@ -22,7 +22,7 @@ shot::shot(std::weak_ptr<metadata> in_metadata,
       p_shot_ab(std::move(in_shot_ab)) {
   p_type = meta_type::folder;
   if (p_shot < 0)
-    throw DoodleError{"shot无法为负"};
+    throw doodle_error{"shot无法为负"};
 }
 
 const int64_t& shot::getShot() const noexcept {
@@ -31,7 +31,7 @@ const int64_t& shot::getShot() const noexcept {
 
 void shot::setShot(const int64_t& in_shot) {
   if (in_shot <= 0)
-    throw DoodleError{"shot无法为负"};
+    throw doodle_error{"shot无法为负"};
 
   p_shot = in_shot;
   saved(true);

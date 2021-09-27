@@ -52,7 +52,7 @@ void ue4_project::addUe4ProjectPlugins(const std::vector<std::string>& in_strs) 
 void ue4_project::run_cmd_scipt(const std::string& run_com) const {
   auto k_ue4_cmd = p_ue_path / UE4PATH;
   if (!FSys::exists(k_ue4_cmd))
-    throw DoodleError{"找不到ue运行文件"};
+    throw doodle_error{"找不到ue运行文件"};
 
   auto k_comm = fmt::format(R"({} {} {})",
                             k_ue4_cmd,          // ue路径

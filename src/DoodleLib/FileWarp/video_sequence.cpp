@@ -15,7 +15,7 @@ video_sequence::video_sequence(std::vector<FSys::path> paths)
   for (auto&& path : p_paths) {
     auto ex = path.extension();
     if (ex != ".mp4" && ex != ".avi")
-      throw DoodleError("不是可以处理的视频文件, 暂时不支持");
+      throw doodle_error("不是可以处理的视频文件, 暂时不支持");
   }
   // 这里开始排序
   std::sort(p_paths.begin(), p_paths.end(),
@@ -54,7 +54,7 @@ void video_sequence::connectVideo(const FSys::path& out_path, const long_term_pt
           in_ptr->sig_progress(rational_int{1, k_frame_count * k_len});
       }
     } else {
-      throw DoodleError("不支持的格式");
+      throw doodle_error("不支持的格式");
     }
   }
   if (in_ptr) {

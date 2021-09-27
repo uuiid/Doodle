@@ -57,7 +57,7 @@ void RpcMetadataClient::InstallMetadata(const MetadataPtr& in_metadataPtr) {
   if (k_status.ok()) {
     in_metadataPtr->p_id = k_out_db.id();
   } else {
-    throw DoodleError{k_status.error_message()};
+    throw doodle_error{k_status.error_message()};
   }
   UpdateMetadata(in_metadataPtr, false);
 }
@@ -74,7 +74,7 @@ void RpcMetadataClient::DeleteMetadata(const MetadataConstPtr& in_metadataPtr) {
   auto k_status = p_stub->DeleteMetadata(&k_context, k_in_db, &k_out_db);
   DOODLE_LOG_WARN("删除数据 : {} 路径 {}", in_metadataPtr->getId(), in_metadataPtr->getUrlUUID())
   if (!k_status.ok()) {
-    throw DoodleError{k_status.error_message()};
+    throw doodle_error{k_status.error_message()};
   }
 }
 
@@ -87,7 +87,7 @@ void RpcMetadataClient::UpdateMetadata(const MetadataConstPtr& in_metadataPtr, b
   DataDb k_out_db{};
   auto k_status = p_stub->UpdateMetadata(&k_context, k_in_db, &k_out_db);
   if (!k_status.ok()) {
-    throw DoodleError{k_status.error_message()};
+    throw doodle_error{k_status.error_message()};
   }
 }
 std::vector<MetadataPtr> RpcMetadataClient::FilterMetadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr) {
@@ -103,7 +103,7 @@ std::vector<MetadataPtr> RpcMetadataClient::FilterMetadata(const rpc_filter::rpc
   auto status = k_r->Finish();
 
   if (!status.ok())
-    throw DoodleError{status.error_message()};
+    throw doodle_error{status.error_message()};
   return k_list;
 }
 rpc_filter::filter::filter()
