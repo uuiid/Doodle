@@ -5,7 +5,7 @@
 #include "assets_path.h"
 
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/assets_file.h>
 #include <DoodleLib/Metadata/metadata.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
@@ -43,7 +43,7 @@ const FSys::path &assets_path::getBackupPath() const {
 void assets_path::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata) {
   /// 这里使用树,向上寻找,组合路径
   MetadataConstPtr k_m{};
-  if (details::is_class<AssetsFile>(in_metadata))
+  if (details::is_class<assets_file>(in_metadata))
     k_m = in_metadata->getParent();
   else
     k_m = in_metadata;

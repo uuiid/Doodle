@@ -351,7 +351,7 @@ bool comm_ass_file::render() {
   ImGui::BulletText(p_name.c_str());
   if (p_parent) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
-      auto ass = new_object<AssetsFile>();
+      auto ass = new_object<assets_file>();
       p_parent->child_item.push_back(ass);
     }
     if (p_root) {
@@ -373,7 +373,7 @@ bool comm_ass_file::render() {
 
 bool comm_ass_file::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
   p_parent = in_parent;
-  p_root   = std::dynamic_pointer_cast<AssetsFile>(in);
+  p_root   = std::dynamic_pointer_cast<assets_file>(in);
   if (p_root) {
     p_time = p_root->getTime()->getLocalTime();
     p_comm = p_root->getComment();

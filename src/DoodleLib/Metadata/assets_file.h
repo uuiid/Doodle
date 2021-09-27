@@ -13,7 +13,7 @@ namespace doodle {
  * @brief 这个类代表着服务端的文件条目
  *
  */
-class DOODLELIB_API AssetsFile : public metadata {
+class DOODLELIB_API assets_file : public metadata {
   std::string p_name;
   std::string p_ShowName;
   AssetsPathPtr p_path_file;
@@ -31,7 +31,7 @@ class DOODLELIB_API AssetsFile : public metadata {
    * @brief 默认构造
    *
    */
-  AssetsFile();
+  assets_file();
 
   /**
    * @brief 构造一个条目并添加一些必要的属性
@@ -42,7 +42,7 @@ class DOODLELIB_API AssetsFile : public metadata {
    * @param name 名称
    * @param showName 显示名称
    */
-  explicit AssetsFile(std::weak_ptr<metadata> in_metadata, std::string showName, std::string Name = {});
+  explicit assets_file(std::weak_ptr<metadata> in_metadata, std::string showName, std::string Name = {});
   // ~AssetsFile();
 
   [[nodiscard]] std::string str() const override;
@@ -72,10 +72,10 @@ class DOODLELIB_API AssetsFile : public metadata {
 
   virtual void create_menu(const attribute_factory_ptr& in_factoryPtr) override;
 
-  bool operator<(const AssetsFile& in_rhs) const;
-  bool operator>(const AssetsFile& in_rhs) const;
-  bool operator<=(const AssetsFile& in_rhs) const;
-  bool operator>=(const AssetsFile& in_rhs) const;
+  bool operator<(const assets_file& in_rhs) const;
+  bool operator>(const assets_file& in_rhs) const;
+  bool operator<=(const assets_file& in_rhs) const;
+  bool operator>=(const assets_file& in_rhs) const;
 
   virtual void to_DataDb(DataDb& in_) const override;
 
@@ -86,7 +86,7 @@ class DOODLELIB_API AssetsFile : public metadata {
 };
 
 template <class Archive>
-void AssetsFile::serialize(Archive& ar, const std::uint32_t version) {
+void assets_file::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 1)
     ar&
             boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
@@ -123,5 +123,5 @@ void AssetsFile::serialize(Archive& ar, const std::uint32_t version) {
 
 }  // namespace doodle
 
-BOOST_CLASS_VERSION(doodle::AssetsFile, 3)
-BOOST_CLASS_EXPORT_KEY(doodle::AssetsFile)
+BOOST_CLASS_VERSION(doodle::assets_file, 3)
+BOOST_CLASS_EXPORT_KEY(doodle::assets_file)

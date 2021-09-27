@@ -49,7 +49,7 @@ set(
     Logger/Logger.h
     Logger/LoggerTemplate.h
         Metadata/assets.h
-    Metadata/AssetsFile.h
+        Metadata/assets_file.h
         Metadata/assets_path.h
         Metadata/comment.h
         Metadata/episodes.h
@@ -110,7 +110,7 @@ set(
     libWarp/imgui_warp.cpp
     Logger/Logger.cpp
         Metadata/assets.cpp
-    Metadata/AssetsFile.cpp
+        Metadata/assets_file.cpp
         Metadata/assets_path.cpp
         Metadata/comment.cpp
         Metadata/episodes.cpp

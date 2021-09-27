@@ -26,12 +26,12 @@
 #include <DoodleLib/Gui/widgets/project_widget.h>
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Logger/LoggerTemplate.h>
-#include <DoodleLib/Metadata/AssetsFile.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Metadata/assets.h>
+#include <DoodleLib/Metadata/assets_file.h>
 #include <DoodleLib/Metadata/assets_path.h>
 #include <DoodleLib/Metadata/comment.h>
 #include <DoodleLib/Metadata/episodes.h>

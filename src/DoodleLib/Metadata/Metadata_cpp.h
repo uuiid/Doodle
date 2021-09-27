@@ -5,7 +5,7 @@
 
 #include <DoodleLib/Metadata/assets.h>
 
-#include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/assets_file.h>
 #include <DoodleLib/Metadata/comment.h>
 #include <DoodleLib/Metadata/assets_path.h>
 

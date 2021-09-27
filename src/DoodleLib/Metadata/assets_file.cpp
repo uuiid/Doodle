@@ -2,7 +2,7 @@
 // Created by TD on 2021/5/7.
 //
 
-#include <DoodleLib/Metadata/AssetsFile.h>
+#include <DoodleLib/Metadata/assets_file.h>
 #include <DoodleLib/Metadata/assets_path.h>
 #include <DoodleLib/Metadata/comment.h>
 #include <core/CoreSet.h>
@@ -15,10 +15,10 @@
 
 #include <utility>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::AssetsFile)
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_file)
 namespace doodle {
 
-AssetsFile::AssetsFile()
+assets_file::assets_file()
     : metadata(),
       p_name(),
       p_ShowName(),
@@ -33,7 +33,7 @@ AssetsFile::AssetsFile()
   p_type = meta_type::file;
 }
 
-AssetsFile::AssetsFile(std::weak_ptr<metadata> in_metadata, std::string showName, std::string name)
+assets_file::assets_file(std::weak_ptr<metadata> in_metadata, std::string showName, std::string name)
     : metadata(in_metadata),
       p_name(std::move(name)),
       p_ShowName(std::move(showName)),
@@ -56,69 +56,69 @@ AssetsFile::AssetsFile(std::weak_ptr<metadata> in_metadata, std::string showName
 //     updata_db(p_metadata_flctory_ptr_);
 // }
 
-std::string AssetsFile::str() const {
+std::string assets_file::str() const {
   return p_name;
 }
-std::string AssetsFile::showStr() const {
+std::string assets_file::showStr() const {
   return p_ShowName;
 }
 
-bool AssetsFile::operator<(const AssetsFile& in_rhs) const {
+bool assets_file::operator<(const assets_file& in_rhs) const {
   // return std::tie(p_version, p_time->getUTCTime()) < std::tie(p_version, p_time->getUTCTime());
   return std::tie(p_version) < std::tie(in_rhs.p_version);
   //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_ShowName) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_ShowName);
 }
-bool AssetsFile::operator>(const AssetsFile& in_rhs) const {
+bool assets_file::operator>(const assets_file& in_rhs) const {
   return in_rhs < *this;
 }
-bool AssetsFile::operator<=(const AssetsFile& in_rhs) const {
+bool assets_file::operator<=(const assets_file& in_rhs) const {
   return !(in_rhs < *this);
 }
-bool AssetsFile::operator>=(const AssetsFile& in_rhs) const {
+bool assets_file::operator>=(const assets_file& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-chrono::sys_time_pos AssetsFile::getStdTime() const {
+chrono::sys_time_pos assets_file::getStdTime() const {
   return p_time->getUTCTime();
 }
-void AssetsFile::setStdTime(const chrono::sys_time_pos& in_time) {
+void assets_file::setStdTime(const chrono::sys_time_pos& in_time) {
   p_time = new_object<time_point_wrap>(in_time);
   saved(true);
   p_need_time = true;
 }
-const std::string& AssetsFile::getUser() const {
+const std::string& assets_file::getUser() const {
   return p_user;
 }
-void AssetsFile::setUser(const std::string& in_user) {
+void assets_file::setUser(const std::string& in_user) {
   p_user = in_user;
   saved(true);
 }
 
-const std::vector<CommentPtr>& AssetsFile::getComment() const {
+const std::vector<CommentPtr>& assets_file::getComment() const {
   return p_comment;
 }
-void AssetsFile::setComment(const std::vector<CommentPtr>& in_comment) {
+void assets_file::setComment(const std::vector<CommentPtr>& in_comment) {
   p_comment = in_comment;
   saved(true);
 }
-void AssetsFile::addComment(const CommentPtr& in_comment) {
+void assets_file::addComment(const CommentPtr& in_comment) {
   p_comment.emplace_back(in_comment);
   saved(true);
 }
 
-const std::uint64_t& AssetsFile::getVersion() const noexcept {
+const std::uint64_t& assets_file::getVersion() const noexcept {
   return p_version;
 }
 
-std::string AssetsFile::getVersionStr() const {
+std::string assets_file::getVersionStr() const {
   return fmt::format("v{:04d}", p_version);
 }
 
-void AssetsFile::setVersion(const std::uint64_t& in_Version) noexcept {
+void assets_file::setVersion(const std::uint64_t& in_Version) noexcept {
   p_version = in_Version;
 }
 
-int AssetsFile::find_max_version() const {
+int assets_file::find_max_version() const {
   if (p_parent.expired())
     return 1;
   auto k_p = p_parent.lock();
@@ -131,14 +131,14 @@ int AssetsFile::find_max_version() const {
   std::copy_if(
       k_p->child_item.begin(), k_p->child_item.end(),
       std::inserter(k_r, k_r.begin()), [this](const MetadataPtr& in_) {
-        if (details::is_class<AssetsFile>(in_)) {
-          return std::dynamic_pointer_cast<AssetsFile>(in_)->getDepartment() == getDepartment();
+        if (details::is_class<assets_file>(in_)) {
+          return std::dynamic_pointer_cast<assets_file>(in_)->getDepartment() == getDepartment();
         } else
           return false;
       });
   std::transform(k_r.begin(), k_r.end(), std::back_inserter(k_assetsFilePtr),
                  [](const MetadataPtr& in_) {
-                   return std::dynamic_pointer_cast<AssetsFile>(in_);
+                   return std::dynamic_pointer_cast<assets_file>(in_);
                  });
 
   std::size_t k_int{0};
@@ -151,35 +151,35 @@ int AssetsFile::find_max_version() const {
     k_int = 1;
   return boost::numeric_cast<std::int32_t>(k_int);
 }
-const std::vector<AssetsPathPtr>& AssetsFile::getPathFile() const {
+const std::vector<AssetsPathPtr>& assets_file::getPathFile() const {
   return p_path_files;
 }
-void AssetsFile::setPathFile(const std::vector<AssetsPathPtr>& in_pathFile) {
+void assets_file::setPathFile(const std::vector<AssetsPathPtr>& in_pathFile) {
   p_path_files = in_pathFile;
   saved(true);
 }
-Department AssetsFile::getDepartment() const {
+Department assets_file::getDepartment() const {
   return p_department;
 }
-void AssetsFile::setDepartment(Department in_department) {
+void assets_file::setDepartment(Department in_department) {
   p_department = in_department;
   saved(true);
 }
-const TimeDurationPtr& AssetsFile::getTime() const {
+const TimeDurationPtr& assets_file::getTime() const {
   return p_time;
 }
-void AssetsFile::setTime(const TimeDurationPtr& in_time) {
+void assets_file::setTime(const TimeDurationPtr& in_time) {
   p_time = in_time;
   saved(true);
   p_need_time = true;
 }
-void AssetsFile::create_menu(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<AssetsFile>(shared_from_this()));
+void assets_file::create_menu(const attribute_factory_ptr& in_factoryPtr) {
+  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<assets_file>(shared_from_this()));
 }
-std::vector<AssetsPathPtr>& AssetsFile::getPathFile() {
+std::vector<AssetsPathPtr>& assets_file::getPathFile() {
   return p_path_files;
 }
-void AssetsFile::to_DataDb(DataDb& in_) const {
+void assets_file::to_DataDb(DataDb& in_) const {
   metadata::to_DataDb(in_);
   if (p_need_time || p_id == 0) {
     auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(

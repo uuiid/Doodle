@@ -25,8 +25,8 @@ void assets_file_widgets::frame_render() {
     imgui::TableHeadersRow();
     if (p_root) {
       for (const auto& i : p_root->child_item) {
-        if (details::is_class<AssetsFile>(i)) {
-          auto k = std::dynamic_pointer_cast<AssetsFile>(i);
+        if (details::is_class<assets_file>(i)) {
+          auto k = std::dynamic_pointer_cast<assets_file>(i);
           imgui::TableNextRow();
           imgui::TableNextColumn();
           if (dear::Selectable(k->getIdStr(),

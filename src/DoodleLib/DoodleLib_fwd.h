@@ -254,7 +254,7 @@ class metadata;
 class assets;
 class CoreSql;
 class LabelNode;
-class AssetsFile;
+class assets_file;
 class MetadataFactory;
 class ContextMenu;
 class time_point_wrap;
@@ -406,7 +406,7 @@ using AssetsPtr                    = std::shared_ptr<assets>;
  * @brief AssetsFile 智能共享指针
  *
  */
-using AssetsFilePtr                = std::shared_ptr<AssetsFile>;
+using AssetsFilePtr                = std::shared_ptr<assets_file>;
 /**
  * @brief CoreSql 智能共享指针
  *
@@ -421,7 +421,7 @@ using LabelNodePtr                 = std::shared_ptr<LabelNode>;
  * @brief AssetsFile 智能共享指针
  *
  */
-using AssetsFilePtr                = std::shared_ptr<AssetsFile>;
+using AssetsFilePtr                = std::shared_ptr<assets_file>;
 /**
  * @brief MetadataFactory 智能共享指针
  *
