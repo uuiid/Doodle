@@ -1,8 +1,8 @@
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Metadata/episodes.h>
+#include <DoodleLib/Metadata/metadata_factory.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Shot)
 namespace doodle {

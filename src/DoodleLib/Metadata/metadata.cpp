@@ -5,7 +5,7 @@
 #include "metadata.h"
 
 #include <DoodleLib/Logger/Logger.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/metadata_factory.h>
 #include <Exception/Exception.h>
 #include <Metadata/Metadata_cpp.h>
 #include <core/ContainerDevice.h>
@@ -22,7 +22,7 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::metadata)
 namespace doodle {
 metadata::metadata()
-    : database_action<metadata, MetadataFactory>(this),
+    : database_action<metadata, metadata_factory>(this),
       std::enable_shared_from_this<metadata>(),
       p_parent(),
       p_parent_id(),
@@ -38,7 +38,7 @@ metadata::metadata()
 }
 
 metadata::metadata(std::weak_ptr<metadata> in_metadata)
-    : database_action<metadata, MetadataFactory>(this),
+    : database_action<metadata, metadata_factory>(this),
       std::enable_shared_from_this<metadata>(),
       p_parent(std::move(in_metadata)),
       p_parent_id(p_parent.lock()->p_id),

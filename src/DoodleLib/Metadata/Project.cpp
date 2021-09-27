@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <Exception/Exception.h>
-#include <Metadata/MetadataFactory.h>
 #include <Metadata/Project.h>
+#include <Metadata/metadata_factory.h>
 #include <PinYin/convert.h>
 
 #include <boost/algorithm/string.hpp>

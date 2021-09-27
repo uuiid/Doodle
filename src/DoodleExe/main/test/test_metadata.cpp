@@ -132,7 +132,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
   k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
 
   DoodleLib::Get().init_gui();
-  auto k_fa = std::make_shared<MetadataFactory>();
+  auto k_fa = std::make_shared<metadata_factory>();
 
   std::vector<MetadataPtr> k_delete_id;
   SECTION("create project") {

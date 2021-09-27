@@ -4,7 +4,7 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/metadata_factory.h>
 #include <DoodleLib/core/observable_container.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 
@@ -146,7 +146,7 @@ class database_action {
  */
 class DOODLELIB_API metadata
     : public std::enable_shared_from_this<metadata>,
-      public database_action<metadata, MetadataFactory>,
+      public database_action<metadata, metadata_factory>,
       public details::no_copy {
  public:
   /**
@@ -163,7 +163,7 @@ class DOODLELIB_API metadata
   };
 
  private:
-  friend MetadataFactory;
+  friend metadata_factory;
   friend RpcMetadataClient;
   friend RpcMetadaataServer;
 

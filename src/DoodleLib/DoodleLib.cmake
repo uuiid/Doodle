@@ -54,7 +54,7 @@ set(
         Metadata/comment.h
         Metadata/episodes.h
         Metadata/metadata.h
-    Metadata/MetadataFactory.h
+        Metadata/metadata_factory.h
     Metadata/Metadata_cpp.h
     Metadata/Project.h
     Metadata/Shot.h
@@ -115,7 +115,7 @@ set(
         Metadata/comment.cpp
         Metadata/episodes.cpp
         Metadata/metadata.cpp
-    Metadata/MetadataFactory.cpp
+        Metadata/metadata_factory.cpp
     Metadata/Project.cpp
     Metadata/Shot.cpp
     Metadata/season.cpp

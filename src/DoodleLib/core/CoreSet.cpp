@@ -6,7 +6,7 @@
 #include <DoodleLib/core/static_value.h>
 #include <DoodleLib/rpc/RpcFileSystemClient.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
-#include <Metadata/MetadataFactory.h>
+#include <Metadata/metadata_factory.h>
 #include <date/tz.h>
 #include <google/protobuf/service.h>
 #include <grpcpp/grpcpp.h>

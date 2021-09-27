@@ -3,8 +3,8 @@
 //
 
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
 #include <DoodleLib/Metadata/assets.h>
+#include <DoodleLib/Metadata/metadata_factory.h>
 #include <DoodleLib/PinYin/convert.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets)

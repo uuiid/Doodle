@@ -15,6 +15,6 @@
 #include <DoodleLib/Metadata/Shot.h>
 
 #include <DoodleLib/Metadata/time_point_wrap.h>
-#include <DoodleLib/Metadata/MetadataFactory.h>
+#include <DoodleLib/Metadata/metadata_factory.h>
 #include <DoodleLib/Metadata/user.h>
 // clang-format on

@@ -6,7 +6,7 @@
 
 #include <Exception/Exception.h>
 #include <Logger/Logger.h>
-#include <Metadata/MetadataFactory.h>
+#include <Metadata/metadata_factory.h>
 #include <core/CoreSet.h>
 #include <date/tz.h>
 #include <grpcpp/grpcpp.h>
@@ -91,7 +91,7 @@ void DoodleLib::init_gui() {
       grpc::CreateChannel(k_ip,
                           grpc::InsecureChannelCredentials()));
 
-  p_metadata_factory = new_object<MetadataFactory>();
+  p_metadata_factory = new_object<metadata_factory>();
   p_project_vector   = p_metadata_factory->getAllProject();
   if (!p_project_vector.empty())
     if (p_curr_project) {
