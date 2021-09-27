@@ -197,7 +197,6 @@ class DOODLELIB_API Metadata
   virtual ~Metadata();
 
   observable_container<std::vector<MetadataPtr>> child_item;
-  std::any user_date;
 
   void add_child(const MetadataPtr &val);
 
@@ -314,8 +313,6 @@ class DOODLELIB_API Metadata
   virtual bool operator>=(const Metadata &in_rhs) const;
   bool operator==(const Metadata &in_rhs) const;
   bool operator!=(const Metadata &in_rhs) const;
-
-  boost::signals2::signal<void()> sig_change;
 
   virtual void to_DataDb(DataDb &in_) const;
   static MetadataPtr from_DataDb(const DataDb &in_);

@@ -84,7 +84,6 @@ chrono::sys_time_pos AssetsFile::getStdTime() const {
 void AssetsFile::setStdTime(const chrono::sys_time_pos& in_time) {
   p_time = new_object<time_point_wrap>(in_time);
   saved(true);
-  sig_change();
   p_need_time = true;
 }
 const std::string& AssetsFile::getUser() const {
@@ -93,7 +92,6 @@ const std::string& AssetsFile::getUser() const {
 void AssetsFile::setUser(const std::string& in_user) {
   p_user = in_user;
   saved(true);
-  sig_change();
 }
 
 const std::vector<CommentPtr>& AssetsFile::getComment() const {
@@ -102,12 +100,10 @@ const std::vector<CommentPtr>& AssetsFile::getComment() const {
 void AssetsFile::setComment(const std::vector<CommentPtr>& in_comment) {
   p_comment = in_comment;
   saved(true);
-  sig_change();
 }
 void AssetsFile::addComment(const CommentPtr& in_comment) {
   p_comment.emplace_back(in_comment);
   saved(true);
-  sig_change();
 }
 
 const std::uint64_t& AssetsFile::getVersion() const noexcept {
@@ -120,7 +116,6 @@ std::string AssetsFile::getVersionStr() const {
 
 void AssetsFile::setVersion(const std::uint64_t& in_Version) noexcept {
   p_version = in_Version;
-  sig_change();
 }
 
 int AssetsFile::find_max_version() const {
@@ -162,7 +157,6 @@ const std::vector<AssetsPathPtr>& AssetsFile::getPathFile() const {
 void AssetsFile::setPathFile(const std::vector<AssetsPathPtr>& in_pathFile) {
   p_path_files = in_pathFile;
   saved(true);
-  sig_change();
 }
 Department AssetsFile::getDepartment() const {
   return p_department;
@@ -170,7 +164,6 @@ Department AssetsFile::getDepartment() const {
 void AssetsFile::setDepartment(Department in_department) {
   p_department = in_department;
   saved(true);
-  sig_change();
 }
 const TimeDurationPtr& AssetsFile::getTime() const {
   return p_time;
@@ -178,7 +171,6 @@ const TimeDurationPtr& AssetsFile::getTime() const {
 void AssetsFile::setTime(const TimeDurationPtr& in_time) {
   p_time = in_time;
   saved(true);
-  sig_change();
   p_need_time = true;
 }
 void AssetsFile::create_menu(const attribute_factory_ptr& in_factoryPtr) {

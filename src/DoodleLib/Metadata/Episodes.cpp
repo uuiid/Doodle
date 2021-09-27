@@ -34,7 +34,6 @@ void Episodes::setEpisodes(const int64_t& Episodes_) {
     throw DoodleError("集数无法为负");
   p_episodes = Episodes_;
   saved(true);
-  sig_change();
 }
 
 std::string Episodes::str() const {

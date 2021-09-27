@@ -20,7 +20,6 @@ season::season(std::weak_ptr<Metadata> in_metadata, std::int32_t in_)
 void season::set_season(std::int32_t in_) {
   p_int = in_;
   saved(true);
-  sig_change();
 }
 
 std::int32_t season::get_season() const {

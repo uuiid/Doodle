@@ -31,7 +31,6 @@ Metadata::Metadata()
       p_has_child(0),
       p_has_file(0),
       child_item(),
-      user_date(),
       p_type(meta_type::unknown_file),
       p_updata_type(false),
       child_item_is_sort(false) {
@@ -48,7 +47,6 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
       p_has_child(0),
       p_has_file(0),
       child_item(),
-      user_date(),
       p_type(meta_type::unknown_file),
       p_updata_type(false),
       child_item_is_sort(false) {

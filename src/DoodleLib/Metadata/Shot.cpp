@@ -35,7 +35,6 @@ void Shot::setShot(const int64_t& in_shot) {
 
   p_shot = in_shot;
   saved(true);
-  sig_change();
 }
 
 const std::string& Shot::getShotAb() const noexcept {
@@ -49,7 +48,6 @@ Shot::ShotAbEnum Shot::getShotAb_enum() const noexcept {
 void Shot::setShotAb(const std::string& ShotAb) noexcept {
   p_shot_ab = ShotAb;
   saved(true);
-  sig_change();
 }
 EpisodesPtr Shot::getEpisodesPtr() const {
   auto k_ptr = std::dynamic_pointer_cast<Episodes>(getParent());

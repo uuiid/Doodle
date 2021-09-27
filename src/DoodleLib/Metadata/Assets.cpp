@@ -59,7 +59,6 @@ void Assets::setName1(const std::string& in_name) {
   if (p_name_enus.empty())
     p_name_enus = convert::Get().toEn(p_name);
   saved(true);
-  sig_change();
 }
 const std::string& Assets::getNameEnus() const {
   return p_name_enus;
@@ -67,7 +66,6 @@ const std::string& Assets::getNameEnus() const {
 void Assets::setNameEnus(const std::string& in_nameEnus) {
   p_name_enus = in_nameEnus;
   saved(true);
-  sig_change();
 }
 void Assets::create_menu(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<Assets>(shared_from_this()));
