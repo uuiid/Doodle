@@ -236,7 +236,7 @@ TEST_CASE("core archive", "[fun][archives]") {
   auto str_stream     = std::stringstream{};
   auto str_stream_bin = std::stringstream{};
   SECTION("archive") {
-    doodle::MetadataPtr k_val = std::make_shared<doodle::project>("D:/", "test22333");
+    doodle::metadata_ptr k_val = std::make_shared<doodle::project>("D:/", "test22333");
     {
       boost::archive::text_oarchive json{str_stream};
 //      boost::archive::xml_oarchive xml{str_stream_bin};
@@ -266,8 +266,8 @@ TEST_CASE("core archive", "[fun][archives]") {
     str_stream_bin.clear();
     SECTION("archive polymorphism") {
       {
-        doodle::MetadataPtr k_m1 = std::make_shared<doodle::project>("D:/", "测试1");
-        doodle::MetadataPtr k_m2 = std::make_shared<doodle::project>("F:/", "测试2");
+        doodle::metadata_ptr k_m1 = std::make_shared<doodle::project>("D:/", "测试1");
+        doodle::metadata_ptr k_m2 = std::make_shared<doodle::project>("F:/", "测试2");
         boost::archive::text_oarchive json{str_stream};
         //        boost::archive::polymorphic_text_oarchive json{str_stream};
         json << boost::serialization::make_nvp("metadata1", k_m1) << boost::serialization::make_nvp("metadata12", k_m2);
@@ -279,8 +279,8 @@ TEST_CASE("core archive", "[fun][archives]") {
       std::cout << str_stream.str() << std::endl;
       std::cout << str_stream_bin.str() << std::endl;
       {
-        doodle::MetadataPtr k1;
-        doodle::MetadataPtr k2;
+        doodle::metadata_ptr k1;
+        doodle::metadata_ptr k2;
 
         boost::archive::text_iarchive json{str_stream};
         //        boost::archive::polymorphic_text_iarchive json{str_stream};

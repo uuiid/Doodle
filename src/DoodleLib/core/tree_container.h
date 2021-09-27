@@ -132,8 +132,8 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   friend std::shared_ptr<_Ty> new_object(_Types&&...);
 
   tree_node();
-  explicit tree_node(tree_node* in_parent, MetadataPtr in_data);
-  explicit tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data);
+  explicit tree_node(tree_node* in_parent, metadata_ptr in_data);
+  explicit tree_node(const tree_node_ptr& in_parent, metadata_ptr in_data);
  private:
 
   iterator insert_private(const tree_node_ptr& in_);
@@ -198,7 +198,7 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
 
  private:
   tree_node* parent;
-  MetadataPtr data;
+  metadata_ptr data;
   child_set_owner child_owner;
   details::observe<child_set_owner> sig_class;
   signal_observe_ptr p_sig;
@@ -217,14 +217,14 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   [[nodiscard]] bool empty() const;
 
   iterator insert(const tree_node_ptr& in_);
-  iterator insert(const MetadataPtr& in_ptr);
+  iterator insert(const metadata_ptr& in_ptr);
   iterator insert_sig(const tree_node_ptr& in_);
-  iterator insert_sig(const MetadataPtr& in_ptr);
+  iterator insert_sig(const metadata_ptr& in_ptr);
 
   iterator erase(const tree_node_ptr& in_);
-  iterator erase(const MetadataPtr& in_ptr);
+  iterator erase(const metadata_ptr& in_ptr);
   iterator erase_sig(const tree_node_ptr& in_);
-  iterator erase_sig(const MetadataPtr& in_ptr);
+  iterator erase_sig(const metadata_ptr& in_ptr);
 
   void clear();
   void clear_sig();
@@ -253,15 +253,15 @@ class DOODLELIB_API tree_node : public std::enable_shared_from_this<tree_node>,
   bool operator<=(const tree_node& in_rhs) const;
   bool operator>=(const tree_node& in_rhs) const;
 
-  operator MetadataPtr&();
-  MetadataPtr& get();
-  void set(const MetadataPtr& in_);
-  void set(MetadataPtr&& in_);
-  tree_node& operator=(const MetadataPtr& in_);
-  tree_node& operator=(MetadataPtr&& in_);
+  operator metadata_ptr&();
+  metadata_ptr& get();
+  void set(const metadata_ptr& in_);
+  void set(metadata_ptr&& in_);
+  tree_node& operator=(const metadata_ptr& in_);
+  tree_node& operator=(metadata_ptr&& in_);
 
-  operator const MetadataPtr&() const;
-  const MetadataPtr& get() const;
+  operator const metadata_ptr&() const;
+  const metadata_ptr& get() const;
 };
 
 }  // namespace doodle

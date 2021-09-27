@@ -76,7 +76,7 @@ void image_sequence::set_text(const std::string &text) {
   p_Text = clearString(text);
 }
 
-std::string image_sequence::set_shot_and_eps(const ShotPtr &in_shot, const EpisodesPtr &in_episodes) {
+std::string image_sequence::set_shot_and_eps(const shot_ptr &in_shot, const episodes_ptr &in_episodes) {
   auto k_str = core_set::getSet().get_user_en();  /// 基本水印, 名称
   /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
   if (in_shot && in_episodes) {
@@ -236,12 +236,12 @@ FSys::path image_sequence::get_out_path() const {
 
 image_sequence_async::image_sequence_async()
     : p_image_sequence() {}
-ImageSequencePtr image_sequence_async::set_path(const FSys::path &image_dir) {
+image_sequence_ptr image_sequence_async::set_path(const FSys::path &image_dir) {
   p_image_sequence = new_object<image_sequence>();
   p_image_sequence->set_path(image_dir);
   return p_image_sequence;
 }
-ImageSequencePtr image_sequence_async::set_path(const std::vector<FSys::path> &image_path_list) {
+image_sequence_ptr image_sequence_async::set_path(const std::vector<FSys::path> &image_path_list) {
   p_image_sequence = new_object<image_sequence>();
   p_image_sequence->set_path(image_path_list);
   return p_image_sequence;

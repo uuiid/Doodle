@@ -66,7 +66,7 @@ void metadata::sort_child_items(bool is_launch_sig) {
   if (is_launch_sig)
     child_item.sig_begin_sort(child_item);
   std::sort(child_item.begin(), child_item.end(),
-            [](const MetadataPtr &r, const MetadataPtr &l) {
+            [](const metadata_ptr &r, const metadata_ptr &l) {
               return *r < *l;
             });
   if (is_launch_sig)
@@ -92,7 +92,7 @@ const std::string &metadata::get_uuid() const {
   return p_uuid;
 }
 
-const MetadataFactoryPtr &metadata::get_metadata_factory() const {
+const metadata_factory_ptr &metadata::get_metadata_factory() const {
   return p_factory;
 }
 bool metadata::check_parent(const metadata &in_metadata) const {
@@ -111,7 +111,7 @@ bool metadata::operator<=(const metadata &in_rhs) const {
 bool metadata::operator>=(const metadata &in_rhs) const {
   return !(*this < in_rhs);
 }
-MetadataConstPtr metadata::get_root_parent() const {
+metadata_const_ptr metadata::get_root_parent() const {
   auto k_p = shared_from_this();
   while (!k_p->p_parent.expired()) {
     k_p = k_p->p_parent.lock()->get_root_parent();
@@ -172,7 +172,7 @@ void metadata::install_slots() {
     saved(true);
   });
 
-  child_item.sig_begin_insert.connect([this](const MetadataPtr &val) {
+  child_item.sig_begin_insert.connect([this](const metadata_ptr &val) {
     add_child(val);
     switch (val->p_type) {
       case meta_type::unknown_file:
@@ -193,7 +193,7 @@ void metadata::install_slots() {
 
     saved(true);
   });
-  child_item.sig_begin_erase.connect([this](const MetadataPtr &val) {
+  child_item.sig_begin_erase.connect([this](const metadata_ptr &val) {
     switch (val->p_type) {
       case meta_type::unknown_file:
       case meta_type::project_root:
@@ -213,7 +213,7 @@ void metadata::install_slots() {
     saved(true);
   });
 
-  child_item.sig_begin_push_back.connect([this](const MetadataPtr &val) {
+  child_item.sig_begin_push_back.connect([this](const metadata_ptr &val) {
     add_child(val);
     switch (val->p_type) {
       case meta_type::unknown_file:
@@ -234,7 +234,7 @@ void metadata::install_slots() {
     saved(true);
   });
 
-  child_item.sig_begin_swap.connect([this](const std::vector<MetadataPtr> &val) {
+  child_item.sig_begin_swap.connect([this](const std::vector<metadata_ptr> &val) {
     for (auto &k_i : val) {
       add_child(k_i);
       switch (k_i->p_type) {
@@ -258,7 +258,7 @@ void metadata::install_slots() {
     saved(true);
   });
 }
-void metadata::add_child(const MetadataPtr &val) {
+void metadata::add_child(const metadata_ptr &val) {
   /// 先查看是否有父级关联
   if (val->has_parent()) {
     /// 有关联并且父物体不是指向自己的话
@@ -311,8 +311,8 @@ void metadata::to_DataDb(metadata_database &in_) const {
   if (p_updata_type || p_id == 0)
     in_.mutable_m_type()->set_value(magic_enum::enum_cast<doodle::metadata_database::meta_type>(get_meta_type_int()).value());
 }
-MetadataPtr metadata::from_DataDb(const metadata_database &in_) {
-  MetadataPtr k_ptr{};
+metadata_ptr metadata::from_DataDb(const metadata_database &in_) {
+  metadata_ptr k_ptr{};
   try {
     auto k_data = in_.metadata_cereal().value();
     vector_container my_data{k_data.begin(), k_data.end()};

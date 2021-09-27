@@ -13,37 +13,37 @@ class DOODLELIB_API attribute_factory_interface
  public:
   virtual void render() = 0;
 
-  virtual void show_attribute(const EpisodesPtr& in){};
-  virtual void show_attribute(const ProjectPtr& in){};
-  virtual void show_attribute(const ShotPtr& in){};
-  virtual void show_attribute(const AssetsPtr& in){};
-  virtual void show_attribute(const AssetsFilePtr& in){};
+  virtual void show_attribute(const episodes_ptr& in){};
+  virtual void show_attribute(const project_ptr& in){};
+  virtual void show_attribute(const shot_ptr& in){};
+  virtual void show_attribute(const assets_ptr& in){};
+  virtual void show_attribute(const assets_file_ptr& in){};
   virtual void show_attribute(const season_ptr& in){};
 };
 
 class DOODLELIB_API attr_project : public attribute_factory_interface {
-  ProjectPtr p_prj;
+  project_ptr p_prj;
   command_meta_ptr p_comm;
 
  public:
   attr_project();
 
   void render() override;
-  void show_attribute(const ProjectPtr& in) override;
+  void show_attribute(const project_ptr& in) override;
 };
 
 class DOODLELIB_API attr_assets : public attribute_factory_interface {
-  MetadataPtr p_data;
+  metadata_ptr p_data;
   command_meta_ptr p_comm;
 
  public:
   attr_assets();
 
   void render() override;
-  void show_attribute(const EpisodesPtr& in) override;
-  void show_attribute(const ProjectPtr& in) override;
-  void show_attribute(const ShotPtr& in) override;
-  void show_attribute(const AssetsPtr& in) override;
+  void show_attribute(const episodes_ptr& in) override;
+  void show_attribute(const project_ptr& in) override;
+  void show_attribute(const shot_ptr& in) override;
+  void show_attribute(const assets_ptr& in) override;
   void show_attribute(const season_ptr& in) override;
 };
 

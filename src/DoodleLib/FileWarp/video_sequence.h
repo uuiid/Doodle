@@ -25,7 +25,7 @@ class DOODLELIB_API video_sequence
    * @param in_episodes 要使用的集数元数据
    * @return std::string 生成的水印
    */
-  std::string set_shot_and_eps(const ShotPtr& in_shot, const EpisodesPtr& in_episodes);
+  std::string set_shot_and_eps(const shot_ptr& in_shot, const episodes_ptr& in_episodes);
 };
 
 class DOODLELIB_API video_sequence_async : public details::no_copy {

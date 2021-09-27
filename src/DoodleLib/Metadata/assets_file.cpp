@@ -86,14 +86,14 @@ void assets_file::set_user(const std::string& in_user) {
   saved(true);
 }
 
-const std::vector<CommentPtr>& assets_file::get_comment() const {
+const std::vector<comment_ptr>& assets_file::get_comment() const {
   return p_comment;
 }
-void assets_file::set_comment(const std::vector<CommentPtr>& in_comment) {
+void assets_file::set_comment(const std::vector<comment_ptr>& in_comment) {
   p_comment = in_comment;
   saved(true);
 }
-void assets_file::add_comment(const CommentPtr& in_comment) {
+void assets_file::add_comment(const comment_ptr& in_comment) {
   p_comment.emplace_back(in_comment);
   saved(true);
 }
@@ -117,24 +117,24 @@ int assets_file::find_max_version() const {
 
   if (k_p->child_item.empty())
     return 1;
-  std::vector<MetadataPtr> k_r;
-  std::vector<AssetsFilePtr> k_assetsFilePtr;
+  std::vector<metadata_ptr> k_r;
+  std::vector<assets_file_ptr> k_assetsFilePtr;
 
   std::copy_if(
       k_p->child_item.begin(), k_p->child_item.end(),
-      std::inserter(k_r, k_r.begin()), [this](const MetadataPtr& in_) {
+      std::inserter(k_r, k_r.begin()), [this](const metadata_ptr& in_) {
         if (details::is_class<assets_file>(in_)) {
           return std::dynamic_pointer_cast<assets_file>(in_)->get_department() == get_department();
         } else
           return false;
       });
   std::transform(k_r.begin(), k_r.end(), std::back_inserter(k_assetsFilePtr),
-                 [](const MetadataPtr& in_) {
+                 [](const metadata_ptr& in_) {
                    return std::dynamic_pointer_cast<assets_file>(in_);
                  });
 
   std::size_t k_int{0};
-  std::sort(k_assetsFilePtr.begin(), k_assetsFilePtr.end(), [](const AssetsFilePtr& in_a, const AssetsFilePtr& in_b) {
+  std::sort(k_assetsFilePtr.begin(), k_assetsFilePtr.end(), [](const assets_file_ptr& in_a, const assets_file_ptr& in_b) {
     return *in_a < *in_b;
   });
   if (!k_assetsFilePtr.empty())
@@ -143,10 +143,10 @@ int assets_file::find_max_version() const {
     k_int = 1;
   return boost::numeric_cast<std::int32_t>(k_int);
 }
-const std::vector<AssetsPathPtr>& assets_file::get_path_file() const {
+const std::vector<assets_path_ptr>& assets_file::get_path_file() const {
   return p_path_files;
 }
-void assets_file::set_path_file(const std::vector<AssetsPathPtr>& in_pathFile) {
+void assets_file::set_path_file(const std::vector<assets_path_ptr>& in_pathFile) {
   p_path_files = in_pathFile;
   saved(true);
 }
@@ -157,10 +157,10 @@ void assets_file::set_department(department in_department) {
   p_department = in_department;
   saved(true);
 }
-const TimeDurationPtr& assets_file::get_time() const {
+const time_duration_ptr& assets_file::get_time() const {
   return p_time;
 }
-void assets_file::set_time(const TimeDurationPtr& in_time) {
+void assets_file::set_time(const time_duration_ptr& in_time) {
   p_time = in_time;
   saved(true);
   p_need_time = true;
@@ -168,7 +168,7 @@ void assets_file::set_time(const TimeDurationPtr& in_time) {
 void assets_file::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<assets_file>(shared_from_this()));
 }
-std::vector<AssetsPathPtr>& assets_file::get_path_file() {
+std::vector<assets_path_ptr>& assets_file::get_path_file() {
   return p_path_files;
 }
 void assets_file::to_DataDb(metadata_database& in_) const {

@@ -10,17 +10,17 @@
 namespace doodle {
 
 class DOODLELIB_API assets_widget : public metadata_widget {
-  MetadataPtr p_root;
-  void load_meta(const MetadataPtr& in_ptr);
+  metadata_ptr p_root;
+  void load_meta(const metadata_ptr& in_ptr);
 
  public:
   assets_widget();
   void frame_render() override;
 
-  void set_metadata(const MetadataPtr& in_ptr);
+  void set_metadata(const metadata_ptr& in_ptr);
 
-  void set_select(const MetadataPtr& in_ptr);
-  MetadataPtr p_meta;
-  boost::signals2::signal<void(const MetadataPtr&)> select_change;
+  void set_select(const metadata_ptr& in_ptr);
+  metadata_ptr p_meta;
+  boost::signals2::signal<void(const metadata_ptr&)> select_change;
 };
 }  // namespace doodle

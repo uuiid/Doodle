@@ -62,10 +62,10 @@ doodle_lib& doodle_lib::Get() {
 void doodle_lib::set_thread_pool_size() {
   p_thread_pool = new_object<thread_pool>(core_set::getSet().p_max_thread);
 }
-ThreadPoolPtr doodle_lib::get_thread_pool() {
+thread_pool_ptr doodle_lib::get_thread_pool() {
   return p_thread_pool;
 }
-[[maybe_unused]] DoodleLibPtr make_doodle_lib() {
+[[maybe_unused]] doodle_lib_ptr make_doodle_lib() {
   auto ptr             = std::unique_ptr<doodle_lib>(new doodle_lib{});
   doodle_lib::p_install = ptr.get();
   return ptr;
@@ -96,7 +96,7 @@ void doodle_lib::init_gui() {
   if (!p_project_vector.empty())
     if (p_curr_project) {
       auto it = std::find_if(p_project_vector.begin(), p_project_vector.end(),
-                             [this](const ProjectPtr& in_ptr) { return in_ptr->getId() == this->p_curr_project->getId(); });
+                             [this](const project_ptr& in_ptr) { return in_ptr->getId() == this->p_curr_project->getId(); });
       if (it != p_project_vector.end())
         p_curr_project = *it;
       else
@@ -104,14 +104,14 @@ void doodle_lib::init_gui() {
     } else
       p_curr_project = p_project_vector.front();
 }
-RpcMetadataClientPtr doodle_lib::get_rpc_metadata_client() const {
+rpc_metadata_client_ptr doodle_lib::get_rpc_metadata_client() const {
   return p_rpc_metadata_clien;
 }
-RpcFileSystemClientPtr doodle_lib::get_rpc_file_system_client() const {
+rpc_file_system_client_ptr doodle_lib::get_rpc_file_system_client() const {
   return p_rpc_file_system_client;
 }
 
-MetadataFactoryPtr doodle_lib::get_metadata_factory() const {
+metadata_factory_ptr doodle_lib::get_metadata_factory() const {
   return p_metadata_factory;
 }
 }  // namespace doodle

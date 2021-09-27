@@ -63,7 +63,7 @@ void video_sequence::connect_video(const FSys::path& path, const long_term_ptr& 
   }
 }
 
-std::string video_sequence::set_shot_and_eps(const ShotPtr& in_shot, const EpisodesPtr& in_episodes) {
+std::string video_sequence::set_shot_and_eps(const shot_ptr& in_shot, const episodes_ptr& in_episodes) {
   if (in_shot && in_episodes) {
     p_name = fmt::format("{}_{}.mp4", in_episodes->str(), in_shot->str());
   } else if (in_shot) {

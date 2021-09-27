@@ -19,7 +19,7 @@ class DOODLELIB_API metadata_factory : public std::enable_shared_from_this<metad
  public:
   metadata_factory();
 
-  virtual std::vector<ProjectPtr> getAllProject();
+  virtual std::vector<project_ptr> getAllProject();
 
   virtual bool insert_into(metadata* in_metadata) const;
   virtual void delete_data(const metadata* in_metadata) const;

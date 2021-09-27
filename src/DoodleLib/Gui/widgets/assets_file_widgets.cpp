@@ -56,7 +56,7 @@ void assets_file_widgets::frame_render() {
   };
 }
 
-void assets_file_widgets::set_metadata(const MetadataPtr& in_ptr) {
+void assets_file_widgets::set_metadata(const metadata_ptr& in_ptr) {
   p_root = in_ptr;
   p_root->select_indb();
 }

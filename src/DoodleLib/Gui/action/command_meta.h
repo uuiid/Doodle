@@ -44,19 +44,19 @@ class DOODLELIB_API comm_project_add : public command_meta {
   string_ptr p_prj_name;
   string_ptr p_prj_name_short;
   string_ptr p_prj_path;
-  ProjectPtr p_root;
+  project_ptr p_root;
 
 
  public:
   comm_project_add();
   bool render() override;
-  bool add_data(const MetadataPtr& in_parent, const MetadataPtr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
 };
 
 class DOODLELIB_API comm_ass_eps : public command_meta {
  private:
-  MetadataPtr p_parent;
-  EpisodesPtr p_root;
+  metadata_ptr p_parent;
+  episodes_ptr p_root;
 
   std::int32_t p_data;
   std::int32_t p_end;
@@ -67,13 +67,13 @@ class DOODLELIB_API comm_ass_eps : public command_meta {
  public:
   comm_ass_eps();
   bool render() override;
-  bool add_data(const MetadataPtr& in_parent, const MetadataPtr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
 };
 
 class DOODLELIB_API comm_ass_shot : public command_meta {
  private:
-  MetadataPtr p_parent;
-  ShotPtr p_root;
+  metadata_ptr p_parent;
+  shot_ptr p_root;
 
   std::int32_t p_data;
   std::int32_t p_end;
@@ -86,13 +86,13 @@ class DOODLELIB_API comm_ass_shot : public command_meta {
  public:
   comm_ass_shot();
   bool render() override;
-  bool add_data(const MetadataPtr& in_parent, const MetadataPtr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
 };
 
 class DOODLELIB_API comm_assets : public command_meta {
  private:
-  MetadataPtr p_parent;
-  AssetsPtr p_root;
+  metadata_ptr p_parent;
+  assets_ptr p_root;
 
   string p_data;
   void add_ass(std::vector<string> in_Str);
@@ -100,12 +100,12 @@ class DOODLELIB_API comm_assets : public command_meta {
  public:
   comm_assets();
   bool render() override;
-  bool add_data(const MetadataPtr& in_parent, const MetadataPtr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
 };
 
 class DOODLELIB_API comm_ass_season : public command_meta {
  private:
-  MetadataPtr p_parent;
+  metadata_ptr p_parent;
   season_ptr p_root;
 
   std::int32_t p_data;
@@ -116,22 +116,22 @@ class DOODLELIB_API comm_ass_season : public command_meta {
  public:
   comm_ass_season();
   bool render() override;
-  bool add_data(const MetadataPtr& in_parent, const MetadataPtr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
 };
 
 class DOODLELIB_API comm_ass_file : public command_meta {
  private:
-  MetadataPtr p_parent;
-  AssetsFilePtr p_root;
+  metadata_ptr p_parent;
+  assets_file_ptr p_root;
 
   chrono::local_time_pos p_time;
-  std::vector<doodle::CommentPtr> p_comm;
+  std::vector<doodle::comment_ptr> p_comm;
   bool has_file;
 
  public:
   comm_ass_file();
   bool render() override;
-  bool add_data(const MetadataPtr& in_parent, const MetadataPtr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
 };
 class DOODLELIB_API comm_ass : public command_meta {
   boost::hana::tuple<comm_ass_season,
@@ -143,6 +143,6 @@ class DOODLELIB_API comm_ass : public command_meta {
  public:
   comm_ass();
   bool render() override;
-  bool add_data(const MetadataPtr& in_parent, const MetadataPtr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
 };
 }  // namespace doodle

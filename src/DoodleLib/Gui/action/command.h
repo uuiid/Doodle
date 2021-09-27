@@ -33,6 +33,6 @@ class DOODLELIB_API command_base : public details::no_copy {
 };
 
 using command_tool = command_base<>;
-using command_meta = command_base<const MetadataPtr&, const MetadataPtr&>;
+using command_meta = command_base<const metadata_ptr&, const metadata_ptr&>;
 
 }  // namespace doodle

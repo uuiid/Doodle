@@ -66,7 +66,7 @@ bool comm_project_add::render() {
   return true;
 }
 
-bool comm_project_add::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+bool comm_project_add::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
   p_root = std::dynamic_pointer_cast<project>(in);
   if (p_root) {
     *p_prj_name = p_root->get_name();
@@ -132,7 +132,7 @@ bool comm_ass_eps::render() {
   return true;
 }
 
-bool comm_ass_eps::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+bool comm_ass_eps::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
   p_parent = in_parent;
   p_root   = std::dynamic_pointer_cast<episodes>(in);
   if (p_root) {
@@ -207,7 +207,7 @@ bool comm_ass_shot::render() {
   return true;
 }
 
-bool comm_ass_shot::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+bool comm_ass_shot::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
   p_parent = in_parent;
   p_root   = std::dynamic_pointer_cast<shot>(in);
   if (p_root) {
@@ -260,7 +260,7 @@ bool comm_assets::render() {
   return true;
 }
 
-bool comm_assets::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+bool comm_assets::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
   p_parent = in_parent;
   p_root   = std::dynamic_pointer_cast<assets>(in);
   if (p_root) {
@@ -329,7 +329,7 @@ bool comm_ass_season::render() {
   return true;
 }
 
-bool comm_ass_season::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+bool comm_ass_season::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
   p_parent = in_parent;
   p_root   = std::dynamic_pointer_cast<season>(in);
   if (p_root) {
@@ -366,12 +366,13 @@ bool comm_ass_file::render() {
         }
       }
     }
+    
   }
 
   return true;
 }
 
-bool comm_ass_file::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+bool comm_ass_file::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
   p_parent = in_parent;
   p_root   = std::dynamic_pointer_cast<assets_file>(in);
   if (p_root) {
@@ -388,7 +389,7 @@ bool comm_ass::render() {
   boost::hana::for_each(p_val, [](auto& in) { in.render(); });
   return true;
 }
-bool comm_ass::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
+bool comm_ass::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
   boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(in_parent, in); });
   return true;
 }

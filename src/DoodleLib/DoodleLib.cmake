@@ -1,23 +1,23 @@
 set(
     DOODLELIB_HEADER
     core/ContainerDevice.h
-        core/core_set.h
-        core/core_sql.h
-        core/doodle_lib.h
-        core/tools_setting.h
-        core/ue4_setting.h
-        core/util.h
+    core/core_set.h
+    core/core_sql.h
+    core/doodle_lib.h
     core/filesystem_extend.h
     core/observable_container.h
     core/open_file_dialog.h
     core/static_value.h
+    core/tools_setting.h
     core/tree_container.h
-        Exception/exception.h
-        FileSys/file_system.h
-        FileWarp/image_sequence.h
-        FileWarp/maya_file.h
-        FileWarp/ue4_project.h
-        FileWarp/video_sequence.h
+    core/ue4_setting.h
+    core/util.h
+    Exception/exception.h
+    FileSys/file_system.h
+    FileWarp/image_sequence.h
+    FileWarp/maya_file.h
+    FileWarp/ue4_project.h
+    FileWarp/video_sequence.h
     Gui/base_windwos.h
     Gui/main_windwos.h
     Gui/setting_windows.h
@@ -30,10 +30,11 @@ set(
     Gui/widgets/edit_widgets.h
     Gui/widgets/long_time_tasks_widget.h
     Gui/widgets/project_widget.h
-        libWarp/boost_uuid_warp.h
-        libWarp/boost_serialization_warp.h
+    Gui/widgets/time_widget.h
     libWarp/WinReg.hpp
     libWarp/boost_locale_warp.h
+    libWarp/boost_serialization_warp.h
+    libWarp/boost_uuid_warp.h
     libWarp/cache.hpp
     libWarp/cache_policy.hpp
     libWarp/cmrcWarp.h
@@ -46,32 +47,32 @@ set(
     libWarp/protobuf_warp_cpp.h
     libWarp/sqlppWarp.h
     libWarp/std_warp.h
-        Logger/logger.h
     Logger/LoggerTemplate.h
-        Metadata/assets.h
-        Metadata/assets_file.h
-        Metadata/assets_path.h
-        Metadata/comment.h
-        Metadata/episodes.h
-        Metadata/metadata.h
-        Metadata/metadata_factory.h
-        Metadata/metadata_cpp.h
-        Metadata/project.h
-        Metadata/shot.h
+    Logger/logger.h
+    Metadata/assets.h
+    Metadata/assets_file.h
+    Metadata/assets_path.h
+    Metadata/comment.h
+    Metadata/episodes.h
+    Metadata/metadata.h
+    Metadata/metadata_cpp.h
+    Metadata/metadata_factory.h
+    Metadata/project.h
     Metadata/season.h
+    Metadata/shot.h
     Metadata/time_point_wrap.h
     Metadata/user.h
     PinYin/convert.h
-        rpc/rpc_file_system_client.h
-        rpc/rpc_file_system_server.h
-        rpc/rpc_metadaata_server.h
-        rpc/rpc_metadata_client.h
-        rpc/rpc_server_handle.h
+    rpc/rpc_file_system_client.h
+    rpc/rpc_file_system_server.h
+    rpc/rpc_metadaata_server.h
+    rpc/rpc_metadata_client.h
+    rpc/rpc_server_handle.h
     rpc/rpc_trans_path.h
-        ScreenshotWidght/screenshot_action.h
-        ScreenshotWidght/screenshot_widght.h
-        threadPool/thread_pool.h
+    ScreenshotWidght/screenshot_action.h
+    ScreenshotWidght/screenshot_widght.h
     threadPool/long_term.h
+    threadPool/thread_pool.h
     toolkit/toolkit.h
     DoodleLib.h
     DoodleLib_fwd.h
@@ -80,20 +81,20 @@ set(
     doodle_app.h)
 set(
     DOODLELIB_SOURCE
-        core/core_set.cpp
-        core/core_sql.cpp
-        core/doodle_lib.cpp
-        core/ue4_setting.cpp
-        core/util.cpp
+    core/core_set.cpp
+    core/core_sql.cpp
+    core/doodle_lib.cpp
     core/filesystem_extend.cpp
     core/open_file_dialog.cpp
     core/static_value.cpp
     core/tree_container.cpp
-        FileSys/file_system.cpp
-        FileWarp/image_sequence.cpp
-        FileWarp/maya_file.cpp
-        FileWarp/ue4_project.cpp
-        FileWarp/video_sequence.cpp
+    core/ue4_setting.cpp
+    core/util.cpp
+    FileSys/file_system.cpp
+    FileWarp/image_sequence.cpp
+    FileWarp/maya_file.cpp
+    FileWarp/ue4_project.cpp
+    FileWarp/video_sequence.cpp
     Gui/base_windwos.cpp
     Gui/main_windwos.cpp
     Gui/setting_windows.cpp
@@ -106,30 +107,31 @@ set(
     Gui/widgets/edit_widgets.cpp
     Gui/widgets/long_time_tasks_widget.cpp
     Gui/widgets/project_widget.cpp
+    Gui/widgets/time_widget.cpp
     libWarp/boost_serialization_warp.cpp
     libWarp/imgui_warp.cpp
-        Logger/logger.cpp
-        Metadata/assets.cpp
-        Metadata/assets_file.cpp
-        Metadata/assets_path.cpp
-        Metadata/comment.cpp
-        Metadata/episodes.cpp
-        Metadata/metadata.cpp
-        Metadata/metadata_factory.cpp
-        Metadata/project.cpp
-        Metadata/shot.cpp
+    Logger/logger.cpp
+    Metadata/assets.cpp
+    Metadata/assets_file.cpp
+    Metadata/assets_path.cpp
+    Metadata/comment.cpp
+    Metadata/episodes.cpp
+    Metadata/metadata.cpp
+    Metadata/metadata_factory.cpp
+    Metadata/project.cpp
     Metadata/season.cpp
+    Metadata/shot.cpp
     Metadata/time_point_wrap.cpp
     Metadata/user.cpp
     PinYin/convert.cpp
-        rpc/rpc_file_system_client.cpp
-        rpc/rpc_file_system_server.cpp
-        rpc/rpc_metadaata_server.cpp
-        rpc/rpc_metadata_client.cpp
-        rpc/rpc_server_handle.cpp
+    rpc/rpc_file_system_client.cpp
+    rpc/rpc_file_system_server.cpp
+    rpc/rpc_metadaata_server.cpp
+    rpc/rpc_metadata_client.cpp
+    rpc/rpc_server_handle.cpp
     rpc/rpc_trans_path.cpp
-        ScreenshotWidght/screenshot_action.cpp
-        ScreenshotWidght/screenshot_widght.cpp
+    ScreenshotWidght/screenshot_action.cpp
+    ScreenshotWidght/screenshot_widght.cpp
     threadPool/long_term.cpp
     toolkit/toolkit.cpp
     DoodleLib.cpp

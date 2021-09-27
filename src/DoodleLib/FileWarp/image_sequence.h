@@ -41,17 +41,17 @@ class DOODLELIB_API image_sequence
    * @param in_episodes 要使用的集数元数据
    * @return std::string 生成的水印
    */
-  std::string set_shot_and_eps(const ShotPtr& in_shot, const EpisodesPtr& in_episodes);
+  std::string set_shot_and_eps(const shot_ptr& in_shot, const episodes_ptr& in_episodes);
   void create_video(const long_term_ptr& in_ptr);
 };
 
 class DOODLELIB_API image_sequence_async : public details::no_copy {
-  ImageSequencePtr p_image_sequence;
+  image_sequence_ptr p_image_sequence;
 
  public:
   image_sequence_async();
-  ImageSequencePtr set_path(const FSys::path& image_dir);
-  ImageSequencePtr set_path(const std::vector<FSys::path>& image_path_list);
+  image_sequence_ptr set_path(const FSys::path& image_dir);
+  image_sequence_ptr set_path(const std::vector<FSys::path>& image_path_list);
   long_term_ptr create_video(const FSys::path& out_file);
 };
 

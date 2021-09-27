@@ -21,7 +21,7 @@ tree_node::tree_node()
       sig_class(),
       p_sig(new_object<signal_observe>()) {
 }
-tree_node::tree_node(tree_node* in_parent, MetadataPtr in_data)
+tree_node::tree_node(tree_node* in_parent, metadata_ptr in_data)
     : parent(in_parent),
       data(std::move(in_data)),
       child_owner(),
@@ -30,7 +30,7 @@ tree_node::tree_node(tree_node* in_parent, MetadataPtr in_data)
   ;
 }
 
-tree_node::tree_node(const tree_node_ptr& in_parent, MetadataPtr in_data)
+tree_node::tree_node(const tree_node_ptr& in_parent, metadata_ptr in_data)
     : parent(in_parent.get()),
       data(std::move(in_data)),
       child_owner(),
@@ -76,10 +76,10 @@ tree_node::iterator tree_node::insert(const tree_node_ptr& in_, bool emit_solt) 
   }
   return insert_private(in_);
 }
-tree_node::operator MetadataPtr&() {
+tree_node::operator metadata_ptr&() {
   return data;
 }
-MetadataPtr& tree_node::get() {
+metadata_ptr& tree_node::get() {
   return data;
 }
 
@@ -117,14 +117,14 @@ bool tree_node::operator<=(const tree_node& in_rhs) const {
 bool tree_node::operator>=(const tree_node& in_rhs) const {
   return !(*this < in_rhs);
 }
-tree_node::operator const MetadataPtr&() const {
+tree_node::operator const metadata_ptr&() const {
   return data;
 }
-const MetadataPtr& tree_node::get() const {
+const metadata_ptr& tree_node::get() const {
   return data;
 }
 
-void tree_node::set(const MetadataPtr& in_) {
+void tree_node::set(const metadata_ptr& in_) {
   value_fun_t::disconnect(data, shared_from_this());
   value_fun_t::set_node_ptr(data, tree_node_ptr{});
   data = in_;
@@ -132,7 +132,7 @@ void tree_node::set(const MetadataPtr& in_) {
   value_fun_t::set_node_ptr(data, shared_from_this());
 }
 
-void tree_node::set(MetadataPtr&& in_) {
+void tree_node::set(metadata_ptr&& in_) {
   value_fun_t::disconnect(data, shared_from_this());
   value_fun_t::set_node_ptr(data, tree_node_ptr{});
   data = std::move(in_);
@@ -140,19 +140,19 @@ void tree_node::set(MetadataPtr&& in_) {
   value_fun_t::set_node_ptr(data, shared_from_this());
 }
 
-tree_node& tree_node::operator=(const MetadataPtr& in_) {
+tree_node& tree_node::operator=(const metadata_ptr& in_) {
   set(in_);
   return *this;
 }
 
-tree_node& tree_node::operator=(MetadataPtr&& in_) {
+tree_node& tree_node::operator=(metadata_ptr&& in_) {
   set(std::move(in_));
   return *this;
 }
 bool tree_node::empty() const {
   return child_owner.empty();
 }
-tree_node::iterator tree_node::erase(const MetadataPtr& in_ptr) {
+tree_node::iterator tree_node::erase(const metadata_ptr& in_ptr) {
   auto k_it = std::find_if(child_owner.begin(), child_owner.end(),
                            [in_ptr](const tree_node_ptr& in) {
                              return in->data == in_ptr;
@@ -187,7 +187,7 @@ tree_node::iterator tree_node::erase_sig(const tree_node_ptr& in_) {
   return k_i;
 }
 
-tree_node::iterator tree_node::erase_sig(const MetadataPtr& in_ptr) {
+tree_node::iterator tree_node::erase_sig(const metadata_ptr& in_ptr) {
   auto k_it = std::find_if(child_owner.begin(), child_owner.end(),
                            [in_ptr](const tree_node_ptr& in) {
                              return in->data == in_ptr;
@@ -202,7 +202,7 @@ tree_node::iterator tree_node::erase_sig(const MetadataPtr& in_ptr) {
     return {};
   }
 }
-tree_node::iterator tree_node::insert(const MetadataPtr& in_ptr) {
+tree_node::iterator tree_node::insert(const metadata_ptr& in_ptr) {
   auto k_ptr = new_object<tree_node>(this, in_ptr);
   return insert(k_ptr, false);
 }
@@ -214,7 +214,7 @@ tree_node::iterator tree_node::insert_sig(const tree_node_ptr& in_) {
   return k_i;
 }
 
-tree_node::iterator tree_node::insert_sig(const MetadataPtr& in_ptr) {
+tree_node::iterator tree_node::insert_sig(const metadata_ptr& in_ptr) {
   auto k_ptr = new_object<tree_node>(this, in_ptr);
   p_sig->sig_begin_insert(k_ptr);
   auto k_i = insert(k_ptr, true);

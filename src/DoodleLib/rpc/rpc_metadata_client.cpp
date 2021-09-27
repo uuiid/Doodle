@@ -23,19 +23,19 @@ rpc_metadata_client::rpc_metadata_client(const std::shared_ptr<grpc::Channel>& i
 {
   //  auto k_s = p_channel->GetState(true);
 }
-std::vector<ProjectPtr> rpc_metadata_client::get_project() {
+std::vector<project_ptr> rpc_metadata_client::get_project() {
   auto k_filter = new_object<rpc_filter::filter>();
   k_filter->set_meta_type(metadata::meta_type::project_root);
   auto k_list = filter_metadata(k_filter);
-  std::vector<ProjectPtr> k_out_list{};
+  std::vector<project_ptr> k_out_list{};
   std::transform(
       k_list.begin(), k_list.end(), std::back_inserter(k_out_list),
-      [](const MetadataPtr& in) {
+      [](const metadata_ptr& in) {
         return std::dynamic_pointer_cast<project>(in);
       });
   return k_out_list;
 }
-std::vector<MetadataPtr> rpc_metadata_client::get_child(const MetadataConstPtr& in_metadataPtr) {
+std::vector<metadata_ptr> rpc_metadata_client::get_child(const metadata_const_ptr& in_metadataPtr) {
   auto k_filter = new_object<rpc_filter::filter>();
   k_filter->set_parent_id(in_metadataPtr->getId());
   return filter_metadata(k_filter);
@@ -46,7 +46,7 @@ std::vector<MetadataPtr> rpc_metadata_client::get_child(const MetadataConstPtr& 
 //   FilterMetadata(k_filter).front();
 
 // }
-void rpc_metadata_client::install_metadata(const MetadataPtr& in_metadataPtr) {
+void rpc_metadata_client::install_metadata(const metadata_ptr& in_metadataPtr) {
   if (in_metadataPtr->is_install())
     return;
 
@@ -61,7 +61,7 @@ void rpc_metadata_client::install_metadata(const MetadataPtr& in_metadataPtr) {
   }
   update_metadata(in_metadataPtr, false);
 }
-void rpc_metadata_client::delete_metadata(const MetadataConstPtr& in_metadataPtr) {
+void rpc_metadata_client::delete_metadata(const metadata_const_ptr& in_metadataPtr) {
   if (!in_metadataPtr->is_install())
     return;
 
@@ -78,7 +78,7 @@ void rpc_metadata_client::delete_metadata(const MetadataConstPtr& in_metadataPtr
   }
 }
 
-void rpc_metadata_client::update_metadata(const MetadataConstPtr& in_metadataPtr, bool b_update_parent_id) {
+void rpc_metadata_client::update_metadata(const metadata_const_ptr& in_metadataPtr, bool b_update_parent_id) {
   if (!in_metadataPtr->is_install())
     return;
 
@@ -90,8 +90,8 @@ void rpc_metadata_client::update_metadata(const MetadataConstPtr& in_metadataPtr
     throw doodle_error{k_status.error_message()};
   }
 }
-std::vector<MetadataPtr> rpc_metadata_client::filter_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr) {
-  std::vector<MetadataPtr> k_list{};
+std::vector<metadata_ptr> rpc_metadata_client::filter_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr) {
+  std::vector<metadata_ptr> k_list{};
   grpc::ClientContext k_context{};
   metadata_database_filter k_filter{std::move(*in_filter_ptr)};
   auto k_r = p_stub->filter_metadata(&k_context, k_filter);

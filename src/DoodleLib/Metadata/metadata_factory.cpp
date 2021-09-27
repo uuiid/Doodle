@@ -16,7 +16,7 @@ namespace doodle {
 metadata_factory::metadata_factory()
     : p_rpcClien(doodle_lib::Get().get_rpc_metadata_client()) {
 }
-std::vector<ProjectPtr> metadata_factory::getAllProject() {
+std::vector<project_ptr> metadata_factory::getAllProject() {
   auto k_v = p_rpcClien.lock()->get_project();
   for (auto &k_i : k_v) {
     k_i->p_factory = this->shared_from_this();

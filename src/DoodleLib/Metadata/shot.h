@@ -33,8 +33,8 @@ class DOODLELIB_API shot : public metadata {
     set_shot_ab(std::string{magic_enum::enum_name(ShotAb)});
   };
 
-  [[nodiscard]] EpisodesPtr get_episodes_ptr() const;
-  void set_episodes_ptr(const EpisodesPtr &Episodes_) noexcept;
+  [[nodiscard]] episodes_ptr get_episodes_ptr() const;
+  void set_episodes_ptr(const episodes_ptr &Episodes_) noexcept;
 
   [[nodiscard]] std::string str() const override;
   virtual void attribute_widget(const attribute_factory_ptr &in_factoryPtr) override;
@@ -48,8 +48,8 @@ class DOODLELIB_API shot : public metadata {
   };
   bool analysis(const std::string &in_path);
 
-  static ShotPtr analysis_static(const std::string &in_path);
-  inline static ShotPtr analysis_static(const FSys::path &in_path) {
+  static shot_ptr analysis_static(const std::string &in_path);
+  inline static shot_ptr analysis_static(const FSys::path &in_path) {
     return analysis_static(in_path.generic_string());
   };
 

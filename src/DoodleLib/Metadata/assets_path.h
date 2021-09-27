@@ -35,7 +35,7 @@ class DOODLELIB_API assets_path {
    *
    * @param in_path 输入路径，这个会调用 AssetsPath::set_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
    */
-  explicit assets_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata);
+  explicit assets_path(const FSys::path &in_path, const metadata_const_ptr &in_metadata);
 
   [[nodiscard]] const FSys::path &get_local_path() const;
   [[nodiscard]] FSys::path get_cache_path() const;
@@ -49,7 +49,7 @@ class DOODLELIB_API assets_path {
    * @param in_path  本地文件的路径
    * @param in_metadata 元数据指针，
    */
-  void set_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata);
+  void set_path(const FSys::path &in_path, const metadata_const_ptr &in_metadata);
 
   /**
    * @brief设置资产的本地文件的路径，直接设置服务器路径

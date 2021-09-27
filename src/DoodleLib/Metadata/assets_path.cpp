@@ -18,7 +18,7 @@ assets_path::assets_path()
       p_server_path(),
       p_backup_path("backup/") {
 }
-assets_path::assets_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
+assets_path::assets_path(const FSys::path &in_path, const metadata_const_ptr &in_metadata)
     : p_local_path(),
       p_lexically_relative(),
       p_server_path(),
@@ -40,9 +40,9 @@ const FSys::path &assets_path::get_backup_path() const {
   return p_backup_path;
 }
 
-void assets_path::set_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata) {
+void assets_path::set_path(const FSys::path &in_path, const metadata_const_ptr &in_metadata) {
   /// 这里使用树,向上寻找,组合路径
-  MetadataConstPtr k_m{};
+  metadata_const_ptr k_m{};
   if (details::is_class<assets_file>(in_metadata))
     k_m = in_metadata->get_parent();
   else

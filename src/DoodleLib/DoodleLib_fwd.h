@@ -253,10 +253,8 @@ class shot;
 class metadata;
 class assets;
 class core_sql;
-class LabelNode;
 class assets_file;
 class metadata_factory;
-class ContextMenu;
 class time_point_wrap;
 class comment;
 class assets_path;
@@ -265,27 +263,21 @@ class rpc_metadata_client;
 class rpc_metadaata_server;
 class ProjectManage;
 class rpc_server_handle;
-class AssetsTree;
-class ListAttributeModel;
 class rpc_file_system_client;
 class rpc_file_system_server;
-class DragFilesFactory;
-class action;
-class actn_up_paths;
 class doodle_lib;
 class thread_pool;
 class attribute_factory_interface;
 class long_term;
 class image_sequence;
 class season;
-class actn_create_ass_up_paths;
-class action_base;
-class tool_box_menu_factory;
 class video_sequence;
 class ue4_project;
 class maya_file;
 class setting_windows;
 class base_widget;
+
+
 using base_widget_ptr = std::shared_ptr<base_widget>;
 template <class... Args>
 class command_base;
@@ -296,7 +288,7 @@ class ue4_project_async;
  * @brief 数据库连接指针
  *
  */
-using ConnPtr                      = std::unique_ptr<sqlpp::mysql::connection>;
+using conn_ptr                     = std::unique_ptr<sqlpp::mysql::connection>;
 /**
  * @brief Ue4Project智能g'x指针
  *
@@ -307,16 +299,7 @@ using ue4_project_ptr              = std::shared_ptr<ue4_project>;
  *
  */
 using video_sequence_ptr           = std::shared_ptr<video_sequence>;
-/**
- * @brief tool_box_menu_factory 智能共享指针
- *
- */
-using tool_box_menu_factory_ptr    = std::shared_ptr<tool_box_menu_factory>;
-/**
- * @brief action_base 智能共享指针
- *
- */
-using action_base_ptr              = std::shared_ptr<action_base>;
+
 /**
  * @brief std 智能共享指针
  *
@@ -337,11 +320,7 @@ using string_matrix2_ptr           = std::shared_ptr<string_matrix2>;
  *
  */
 using string_list_ptr              = std::shared_ptr<string_list>;
-/**
- * @brief actn_create_ass_up_paths 智能共享指针
- *
- */
-using actn_create_ass_up_paths_ptr = std::shared_ptr<actn_create_ass_up_paths>;
+
 /**
  * @brief season 智能共享指针
  *
@@ -351,122 +330,99 @@ using season_ptr                   = std::shared_ptr<season>;
  * @brief Metadata 智能共享指针
  *
  */
-using MetadataPtr                  = std::shared_ptr<metadata>;
+using metadata_ptr                 = std::shared_ptr<metadata>;
 /**
  * @brief const 智能共享指针
  *
  */
-using MetadataConstPtr             = std::shared_ptr<const metadata>;
+using metadata_const_ptr           = std::shared_ptr<const metadata>;
 /**
  * @brief RpcMetadataClient 智能共享指针
  *
  */
-using RpcMetadataClientPtr         = std::shared_ptr<rpc_metadata_client>;
+using rpc_metadata_client_ptr      = std::shared_ptr<rpc_metadata_client>;
 /**
  * @brief RpcMetadaataServer 智能共享指针
  *
  */
-using RpcMetadataServerPtr         = std::shared_ptr<rpc_metadaata_server>;
+using rpc_metadata_server_ptr      = std::shared_ptr<rpc_metadaata_server>;
 /**
  * @brief RpcServerHandle 智能共享指针
  *
  */
-using RpcServerHandlePtr           = std::shared_ptr<rpc_server_handle>;
+using rpc_server_handle_ptr        = std::shared_ptr<rpc_server_handle>;
 /**
  * @brief RpcFileSystemServer 智能共享指针
  *
  */
-using RpcFileSystemServerPtr       = std::shared_ptr<rpc_file_system_server>;
+using rpc_file_system_server_ptr   = std::shared_ptr<rpc_file_system_server>;
 /**
  * @brief RpcFileSystemClient 智能共享指针
  *
  */
-using RpcFileSystemClientPtr       = std::shared_ptr<rpc_file_system_client>;
+using rpc_file_system_client_ptr   = std::shared_ptr<rpc_file_system_client>;
 /**
  * @brief Project 智能共享指针
  *
  */
-using ProjectPtr                   = std::shared_ptr<project>;
+using project_ptr                  = std::shared_ptr<project>;
 /**
  * @brief Episodes 智能共享指针
  *
  */
-using EpisodesPtr                  = std::shared_ptr<episodes>;
+using episodes_ptr                 = std::shared_ptr<episodes>;
 /**
  * @brief Shot 智能共享指针
  *
  */
-using ShotPtr                      = std::shared_ptr<shot>;
+using shot_ptr                     = std::shared_ptr<shot>;
 /**
  * @brief Assets 智能共享指针
  *
  */
-using AssetsPtr                    = std::shared_ptr<assets>;
+using assets_ptr                   = std::shared_ptr<assets>;
 /**
  * @brief AssetsFile 智能共享指针
  *
  */
-using AssetsFilePtr                = std::shared_ptr<assets_file>;
+using assets_file_ptr                = std::shared_ptr<assets_file>;
 /**
  * @brief CoreSql 智能共享指针
  *
  */
-using coreSqlPtr                   = std::shared_ptr<core_sql>;
-/**
- * @brief LabelNode 智能共享指针
- *
- */
-using LabelNodePtr                 = std::shared_ptr<LabelNode>;
-/**
- * @brief AssetsFile 智能共享指针
- *
- */
-using AssetsFilePtr                = std::shared_ptr<assets_file>;
+using core_sql_ptr                   = std::shared_ptr<core_sql>;
+
 /**
  * @brief MetadataFactory 智能共享指针
  *
  */
-using MetadataFactoryPtr           = std::shared_ptr<metadata_factory>;
+using metadata_factory_ptr           = std::shared_ptr<metadata_factory>;
 /**
  * @brief TimeDuration 智能共享指针
  *
  */
-using TimeDurationPtr              = std::shared_ptr<time_point_wrap>;
+using time_duration_ptr              = std::shared_ptr<time_point_wrap>;
 /**
  * @brief Comment 智能共享指针
  *
  */
-using CommentPtr                   = std::shared_ptr<comment>;
+using comment_ptr                    = std::shared_ptr<comment>;
 /**
  * @brief AssetsPath 智能共享指针
  *
  */
-using AssetsPathPtr                = std::shared_ptr<assets_path>;
-/**
- * @brief DragFilesFactory 智能共享指针
- *
- */
-using DragFilesFactoryPtr          = std::shared_ptr<DragFilesFactory>;
-/**
- * @brief action 智能共享指针
- *
- */
-using action_ptr                   = std::shared_ptr<action>;
-/**
- * @brief actn_up_paths 智能共享指针
- *
- */
-using actn_up_paths_ptr            = std::shared_ptr<actn_up_paths>;
+using assets_path_ptr                = std::shared_ptr<assets_path>;
+
 /**
  * @brief DoodleLib 智能共享指针
  *
  */
-using DoodleLibPtr                 = std::unique_ptr<doodle_lib>;
+using doodle_lib_ptr                 = std::unique_ptr<doodle_lib>;
 /**
  * @brief ThreadPool 智能共享指针
  *
  */
-using ThreadPoolPtr                = std::shared_ptr<thread_pool>;
+using thread_pool_ptr                = std::shared_ptr<thread_pool>;
 /**
  * @brief attribute_factory_interface 智能共享指针
  *
@@ -481,11 +437,11 @@ using long_term_ptr                = std::shared_ptr<long_term>;
  * @brief ImageSequence 智能共享指针
  *
  */
-using ImageSequencePtr             = std::shared_ptr<image_sequence>;
+using image_sequence_ptr             = std::shared_ptr<image_sequence>;
 /**
  * @brief MayaFile 智能共享指针
  */
-using MayaFilePtr                  = std::shared_ptr<maya_file>;
+using maya_file_ptr                  = std::shared_ptr<maya_file>;
 using setting_windows_ptr          = std::shared_ptr<setting_windows>;
 using ue4_project_async_ptr        = std::shared_ptr<ue4_project_async>;
 using bool_ptr                     = std::shared_ptr<bool>;
@@ -495,7 +451,7 @@ using string_ptr                   = std::shared_ptr<string>;
 
 using command_tool                 = command_base<>;
 using command_tool_ptr             = std::shared_ptr<command_tool>;
-using command_meta                 = command_base<const MetadataPtr &, const MetadataPtr &>;
+using command_meta                 = command_base<const metadata_ptr &, const metadata_ptr &>;
 using command_meta_ptr             = std::shared_ptr<command_meta>;
 namespace rpc_trans {
 class down_file;
@@ -507,7 +463,7 @@ class trans_files;
 using trans_file_ptr = std::shared_ptr<trans_file>;
 }  // namespace rpc_trans
 class Doodle;
-[[maybe_unused]] DOODLELIB_API DoodleLibPtr make_doodle_lib();
+[[maybe_unused]] DOODLELIB_API doodle_lib_ptr make_doodle_lib();
 
 namespace details {
 

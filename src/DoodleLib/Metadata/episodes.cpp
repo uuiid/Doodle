@@ -64,7 +64,7 @@ bool episodes::analysis(const std::string& in_path) {
   return k_r;
 }
 
-EpisodesPtr episodes::analysis_static(const std::string& in_path) {
+episodes_ptr episodes::analysis_static(const std::string& in_path) {
   auto k_eps = new_object<episodes>();
   if (k_eps->analysis(in_path))
     return k_eps;

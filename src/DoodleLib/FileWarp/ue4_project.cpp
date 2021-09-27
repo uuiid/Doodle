@@ -121,7 +121,7 @@ FSys::path ue4_project::find_ue4_skeleton(const FSys::path& in_path) const {
   return k_r;
 }
 
-void ue4_project::create_shot_folder(const std::vector<ShotPtr>& inShotList,
+void ue4_project::create_shot_folder(const std::vector<shot_ptr>& inShotList,
                                     const long_term_ptr& in_ptr) const {
   if (inShotList.empty())
     return;
@@ -276,7 +276,7 @@ long_term_ptr ue4_project_async::import_file(const FSys::path& in_paths) {
 void ue4_project_async::set_ue4_project(const FSys::path& in_paths) {
   p_ue4 = new_object<ue4_project>(in_paths);
 }
-long_term_ptr ue4_project_async::create_shot_folder(const std::vector<ShotPtr>& in_vector) {
+long_term_ptr ue4_project_async::create_shot_folder(const std::vector<shot_ptr>& in_vector) {
   auto k_term = new_object<long_term>();
   k_term->p_list.emplace_back(doodle_lib::Get().get_thread_pool()->enqueue(
       [k_term, in_vector, self = p_ue4]() {

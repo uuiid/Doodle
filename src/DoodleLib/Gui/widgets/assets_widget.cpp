@@ -27,10 +27,10 @@ void assets_widget::frame_render() {
   };
 }
 
-void assets_widget::set_metadata(const MetadataPtr& in_ptr) {
+void assets_widget::set_metadata(const metadata_ptr& in_ptr) {
   p_root = in_ptr;
 }
-void assets_widget::load_meta(const MetadataPtr& in_ptr) {
+void assets_widget::load_meta(const metadata_ptr& in_ptr) {
   static auto base_flags{ImGuiTreeNodeFlags_OpenOnArrow |
                          ImGuiTreeNodeFlags_OpenOnDoubleClick |
                          ImGuiTreeNodeFlags_SpanAvailWidth};
@@ -69,7 +69,7 @@ void assets_widget::load_meta(const MetadataPtr& in_ptr) {
     }
   }
 }
-void assets_widget::set_select(const MetadataPtr& in_ptr) {
+void assets_widget::set_select(const metadata_ptr& in_ptr) {
   p_meta = in_ptr;
   p_meta->attribute_widget(p_factory);
   select_change(p_meta);

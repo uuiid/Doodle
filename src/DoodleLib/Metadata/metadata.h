@@ -196,9 +196,9 @@ class DOODLELIB_API metadata
   explicit metadata(std::weak_ptr<metadata> in_metadata);
   virtual ~metadata();
 
-  observable_container<std::vector<MetadataPtr>> child_item;
+  observable_container<std::vector<metadata_ptr>> child_item;
 
-  void add_child(const MetadataPtr &val);
+  void add_child(const metadata_ptr &val);
 
   /**
    * @brief 有父 这个是判断有父指针并且已加载父物体
@@ -265,14 +265,14 @@ class DOODLELIB_API metadata
    * @brief  这个会一直递归找到没有父级的根节点
    * @return 根节点(现在基本上是项目节点)
    */
-  [[nodiscard]] MetadataConstPtr get_root_parent() const;
+  [[nodiscard]] metadata_const_ptr get_root_parent() const;
 
 
   /**
    * @brief 获得序列化他们的工厂
    * @return
    */
-  const MetadataFactoryPtr &get_metadata_factory() const;
+  const metadata_factory_ptr &get_metadata_factory() const;
 
   /**
    * @brief 检查父亲是否符合记录
@@ -314,7 +314,7 @@ class DOODLELIB_API metadata
   bool operator!=(const metadata &in_rhs) const;
 
   virtual void to_DataDb(metadata_database &in_) const;
-  static MetadataPtr from_DataDb(const metadata_database &in_);
+  static metadata_ptr from_DataDb(const metadata_database &in_);
   explicit operator metadata_database() const;
 
   friend class boost::serialization::access;

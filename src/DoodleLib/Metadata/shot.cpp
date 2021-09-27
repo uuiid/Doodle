@@ -49,14 +49,14 @@ void shot::set_shot_ab(const std::string& ShotAb) noexcept {
   p_shot_ab = ShotAb;
   saved(true);
 }
-EpisodesPtr shot::get_episodes_ptr() const {
+episodes_ptr shot::get_episodes_ptr() const {
   auto k_ptr = std::dynamic_pointer_cast<episodes>(get_parent());
   if (!k_ptr)
     throw nullptr_error("没有集数");
   return k_ptr;
 }
 
-void shot::set_episodes_ptr(const EpisodesPtr& Episodes_) noexcept {
+void shot::set_episodes_ptr(const episodes_ptr& Episodes_) noexcept {
   Episodes_->child_item.push_back_sig(shared_from_this());
 }
 std::string shot::str() const {
@@ -87,7 +87,7 @@ bool shot::analysis(const std::string& in_path) {
   return k_r;
 }
 
-ShotPtr shot::analysis_static(const std::string& in_path) {
+shot_ptr shot::analysis_static(const std::string& in_path) {
   auto k_shot = new_object<shot>();
   if (k_shot->analysis(in_path))
     return k_shot;

@@ -128,7 +128,7 @@ class DOODLELIB_API ue4_project
    *
    * @param inShotList 镜头列表
    */
-  void create_shot_folder(const std::vector<ShotPtr>& inShotList, const long_term_ptr& in_ptr) const;
+  void create_shot_folder(const std::vector<shot_ptr>& inShotList, const long_term_ptr& in_ptr) const;
   /**
    * @brief 异步创建镜头和集数文件夹
    *
@@ -180,6 +180,6 @@ class ue4_project_async : public details::no_copy {
 
   void set_ue4_project(const FSys::path& in_paths);
   long_term_ptr import_file(const FSys::path& in_paths);
-  long_term_ptr create_shot_folder(const std::vector<ShotPtr>& in_vector);
+  long_term_ptr create_shot_folder(const std::vector<shot_ptr>& in_vector);
 };
 }  // namespace doodle

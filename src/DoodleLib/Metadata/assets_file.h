@@ -15,12 +15,12 @@ namespace doodle {
 class DOODLELIB_API assets_file : public metadata {
   std::string p_name;
   std::string p_ShowName;
-  AssetsPathPtr p_path_file;
-  std::vector<AssetsPathPtr> p_path_files;
-  TimeDurationPtr p_time;
+  assets_path_ptr p_path_file;
+  std::vector<assets_path_ptr> p_path_files;
+  time_duration_ptr p_time;
   std::string p_user;
   department p_department;
-  std::vector<CommentPtr> p_comment;
+  std::vector<comment_ptr> p_comment;
   std::uint64_t p_version;
 
   bool p_need_time;
@@ -47,20 +47,20 @@ class DOODLELIB_API assets_file : public metadata {
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string show_str() const override;
 
-  [[nodiscard]] const TimeDurationPtr& get_time() const;
-  void set_time(const TimeDurationPtr& in_time);
+  [[nodiscard]] const time_duration_ptr& get_time() const;
+  void set_time(const time_duration_ptr& in_time);
 
   [[nodiscard]] const std::string& get_user() const;
   void set_user(const std::string& in_user);
-  const std::vector<AssetsPathPtr>& get_path_file() const;
-  std::vector<AssetsPathPtr>& get_path_file();
-  void set_path_file(const std::vector<AssetsPathPtr>& in_pathFile);
+  const std::vector<assets_path_ptr>& get_path_file() const;
+  std::vector<assets_path_ptr>& get_path_file();
+  void set_path_file(const std::vector<assets_path_ptr>& in_pathFile);
   department get_department() const;
   void set_department(department in_department);
 
-  [[nodiscard]] const std::vector<CommentPtr>& get_comment() const;
-  void set_comment(const std::vector<CommentPtr>& in_comment);
-  void add_comment(const CommentPtr& in_comment);
+  [[nodiscard]] const std::vector<comment_ptr>& get_comment() const;
+  void set_comment(const std::vector<comment_ptr>& in_comment);
+  void add_comment(const comment_ptr& in_comment);
 
   const std::uint64_t& get_version() const noexcept;
   std::string get_version_str() const;

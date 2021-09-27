@@ -134,7 +134,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
   doodle_lib::Get().init_gui();
   auto k_fa = std::make_shared<metadata_factory>();
 
-  std::vector<MetadataPtr> k_delete_id;
+  std::vector<metadata_ptr> k_delete_id;
   SECTION("create project") {
     auto k_prj = std::make_shared<project>("D:/tmp", "case_tset");
     k_prj->insert_into(k_fa);
@@ -144,9 +144,9 @@ TEST_CASE("test create metadata", "[server][metadata]") {
     k_delete_id.push_back(k_prj);
 
     SECTION("create other") {
-      EpisodesPtr k_eps{};
-      ShotPtr k_shot_ptr{};
-      AssetsPtr k_assets_ptr{};
+      episodes_ptr k_eps{};
+      shot_ptr k_shot_ptr{};
+      assets_ptr k_assets_ptr{};
       auto i = 1;
       /// 生成集数
       for (int k_i = 0; k_i < 10; ++k_i) {

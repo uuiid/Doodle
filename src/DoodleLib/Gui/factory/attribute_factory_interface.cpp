@@ -17,7 +17,7 @@ void attr_project::render() {
   p_comm->render();
 }
 
-void attr_project::show_attribute(const ProjectPtr& in) {
+void attr_project::show_attribute(const project_ptr& in) {
   if (in != p_prj) {
     p_prj = in;
     p_comm->add_data(nullptr, p_prj);
@@ -33,21 +33,21 @@ void attr_assets::render() {
   p_comm->render();
 }
 
-void attr_assets::show_attribute(const EpisodesPtr& in) {
+void attr_assets::show_attribute(const episodes_ptr& in) {
   //  p_comm = new_object<comm_ass_eps>();
   p_comm->add_data(in, in);
 }
 
-void attr_assets::show_attribute(const ProjectPtr& in) {
+void attr_assets::show_attribute(const project_ptr& in) {
   p_comm->add_data(in, nullptr);
 }
 
-void attr_assets::show_attribute(const ShotPtr& in) {
+void attr_assets::show_attribute(const shot_ptr& in) {
   //  p_comm = new_object<comm_ass_shot>();
   p_comm->add_data(in, in);
 }
 
-void attr_assets::show_attribute(const AssetsPtr& in) {
+void attr_assets::show_attribute(const assets_ptr& in) {
   //  p_comm = new_object<comm_assets>();
   p_comm->add_data(in, in);
 }

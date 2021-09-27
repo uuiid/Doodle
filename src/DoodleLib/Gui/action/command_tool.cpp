@@ -195,7 +195,7 @@ bool comm_create_video::render() {
   if (imgui::Button("创建视频")) {
     auto image = new_object<image_sequence_async>();
     for (const auto& i : p_image_path) {
-      ImageSequencePtr ptr{};
+      image_sequence_ptr ptr{};
       if (i.use_dir) {
         ptr = image->set_path(i.p_path_list.front());
       } else {
