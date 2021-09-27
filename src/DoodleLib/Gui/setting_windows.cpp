@@ -18,8 +18,8 @@ setting_windows::setting_windows()
       p_cache(new_object<std::string>(core_set::getSet().get_cache_root().generic_string())),
       p_doc(new_object<std::string>(core_set::getSet().get_doc().generic_string())),
       p_maya_path(new_object<std::string>(core_set::getSet().maya_path().generic_string())),
-      p_ue_path(new_object<std::string>(core_set::getSet().get_ue4_setting().Path().generic_string())),
-      p_ue_version(new_object<std::string>(core_set::getSet().get_ue4_setting().Version())),
+      p_ue_path(new_object<std::string>(core_set::getSet().get_ue4_setting().get_path().generic_string())),
+      p_ue_version(new_object<std::string>(core_set::getSet().get_ue4_setting().get_version())),
       p_batch_max(new_object<std::int32_t>(core_set::getSet().p_max_thread)) {
   p_class_name = "设置";
 }
@@ -53,8 +53,8 @@ void setting_windows::save() {
   set.set_user(*p_user);
   set.set_maya_path(*p_maya_path);
   set.set_max_tread(*p_batch_max);
-  set.get_ue4_setting().setPath(*p_ue_path);
-  set.get_ue4_setting().setVersion(*p_ue_version);
+  set.get_ue4_setting().set_path(*p_ue_path);
+  set.get_ue4_setting().set_version(*p_ue_version);
   set.write_doodle_local_set();
   doodle_lib::Get().set_thread_pool_size();
 }

@@ -15,20 +15,14 @@ class DOODLELIB_API ue4_setting :public details::no_copy{
 
   static ue4_setting& Get();
 
-  const std::string& Version() const noexcept;
-  void setVersion(const std::string& Version) noexcept;
+  const std::string& get_version() const noexcept;
+  void set_version(const std::string& Version) noexcept;
 
-  bool hasPath() const;
-  const FSys::path& Path() const noexcept;
-  void setPath(const FSys::path& Path) noexcept;
+  bool has_path() const;
+  const FSys::path& get_path() const noexcept;
+  void set_path(const FSys::path& Path) noexcept;
 
-  const std::int32_t& ShotStart() const noexcept;
-  void setShotStart(const std::int32_t& ShotStart) noexcept;
-
-  const std::int32_t& ShotEnd() const noexcept;
-  void setShotEnd(const std::int32_t& ShotEnd) noexcept;
-
-  void testValue();
+  void test_value();
 
  private:
   friend class boost::serialization::access;

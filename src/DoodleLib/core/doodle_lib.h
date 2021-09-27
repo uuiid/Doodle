@@ -36,8 +36,8 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
 
   void init_gui();
 
-  [[nodiscard]] RpcMetadataClientPtr getRpcMetadataClient() const;
-  [[nodiscard]] RpcFileSystemClientPtr getRpcFileSystemClient() const;
+  [[nodiscard]] RpcMetadataClientPtr get_rpc_metadata_client() const;
+  [[nodiscard]] RpcFileSystemClientPtr get_rpc_file_system_client() const;
   [[nodiscard]] MetadataFactoryPtr get_metadata_factory() const;
 
   std::vector<long_term_ptr> long_task_list;

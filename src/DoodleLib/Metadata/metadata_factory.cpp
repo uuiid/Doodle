@@ -14,7 +14,7 @@
 namespace doodle {
 
 metadata_factory::metadata_factory()
-    : p_rpcClien(doodle_lib::Get().getRpcMetadataClient()) {
+    : p_rpcClien(doodle_lib::Get().get_rpc_metadata_client()) {
 }
 std::vector<ProjectPtr> metadata_factory::getAllProject() {
   auto k_v = p_rpcClien.lock()->GetProject();

@@ -81,10 +81,10 @@ void core_set::set_maya_path(const FSys::path &in_MayaPath) noexcept {
 }
 
 void core_set::write_doodle_local_set() {
-  p_ue4_setting.testValue();
-  if (p_ue4_setting.hasPath() && !FSys::exists(p_ue4_setting.Path() / staticValue::ue_path_obj())) {
-    p_ue4_setting.setPath({});
-    throw file_error{p_ue4_setting.Path(), " 在路径中没有找到ue,不保存"};
+  p_ue4_setting.test_value();
+  if (p_ue4_setting.has_path() && !FSys::exists(p_ue4_setting.get_path() / staticValue::ue_path_obj())) {
+    p_ue4_setting.set_path({});
+    throw file_error{p_ue4_setting.get_path(), " 在路径中没有找到ue,不保存"};
   }
   if (!FSys::exists(p_mayaPath / "maya.exe")) {
     throw file_error{p_mayaPath, " 在路径中没有找到maya,不保存"};

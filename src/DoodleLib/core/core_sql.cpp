@@ -28,7 +28,7 @@ void core_sql::Init() {
 #endif
 }
 
-ConnPtr core_sql::getConnection() const {
+ConnPtr core_sql::get_connection() const {
   return std::make_unique<sqlpp::mysql::connection>(config);
 }
 core_sql& core_sql::Get() {

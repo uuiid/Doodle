@@ -33,7 +33,7 @@ class DOODLELIB_API assets_path {
   /**
    * @brief 生成一个类
    *
-   * @param in_path 输入路径，这个会调用 AssetsPath::setPath(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
+   * @param in_path 输入路径，这个会调用 AssetsPath::set_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
    */
   explicit assets_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata);
 

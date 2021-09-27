@@ -18,49 +18,33 @@ ue4_setting& ue4_setting::Get() {
   return install;
 }
 
-const std::string& ue4_setting::Version() const noexcept {
+const std::string& ue4_setting::get_version() const noexcept {
   return ue4_version;
 }
 
-void ue4_setting::setVersion(const std::string& Version) noexcept {
+void ue4_setting::set_version(const std::string& Version) noexcept {
   ue4_version = Version;
 }
 
-bool ue4_setting::hasPath() const {
+bool ue4_setting::has_path() const {
   return !ue4_path.empty();
 }
 
-const FSys::path& ue4_setting::Path() const noexcept {
+const FSys::path& ue4_setting::get_path() const noexcept {
   return ue4_path;
 }
 
-void ue4_setting::setPath(const FSys::path& Path) noexcept {
+void ue4_setting::set_path(const FSys::path& Path) noexcept {
   ue4_path = Path;
 }
 
-const std::int32_t& ue4_setting::ShotStart() const noexcept {
-  return shot_start;
-}
-
-void ue4_setting::setShotStart(const std::int32_t& ShotStart) noexcept {
-  shot_start = ShotStart;
-}
-
-const std::int32_t& ue4_setting::ShotEnd() const noexcept {
-  return shot_end;
-}
-
-void ue4_setting::setShotEnd(const std::int32_t& ShotEnd) noexcept {
-  shot_end = ShotEnd;
-}
-
-void ue4_setting::testValue() {
+void ue4_setting::test_value() {
   if (shot_end <= shot_start) {
     throw doodle_error{"结束镜头小于开始镜头!"};
   }
 #ifdef _WIN32
   if (ue4_path.empty()) {
-    auto key_str = conv::utf_to_utf<wchar_t>(fmt::format(R"(SOFTWARE\EpicGames\Unreal Engine\{})", ue4_setting::Get().Version()));
+    auto key_str = conv::utf_to_utf<wchar_t>(fmt::format(R"(SOFTWARE\EpicGames\Unreal Engine\{})", ue4_setting::Get().get_version()));
     try {
       auto key = winreg::RegKey{HKEY_LOCAL_MACHINE};
       key.Open(HKEY_LOCAL_MACHINE, key_str, KEY_QUERY_VALUE);

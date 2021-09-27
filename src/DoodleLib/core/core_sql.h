@@ -17,7 +17,7 @@ class DOODLELIB_API core_sql :public details::no_copy{
 
   void Init();
   [[nodiscard]] static core_sql& Get();
-  [[nodiscard]] ConnPtr getConnection() const;
+  [[nodiscard]] ConnPtr get_connection() const;
 
 };
 

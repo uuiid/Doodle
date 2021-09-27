@@ -104,10 +104,10 @@ void doodle_lib::init_gui() {
     } else
       p_curr_project = p_project_vector.front();
 }
-RpcMetadataClientPtr doodle_lib::getRpcMetadataClient() const {
+RpcMetadataClientPtr doodle_lib::get_rpc_metadata_client() const {
   return p_rpc_metadata_clien;
 }
-RpcFileSystemClientPtr doodle_lib::getRpcFileSystemClient() const {
+RpcFileSystemClientPtr doodle_lib::get_rpc_file_system_client() const {
   return p_rpc_file_system_client;
 }
 

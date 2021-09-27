@@ -27,7 +27,7 @@ ue4_project::ue4_project(FSys::path project_path)
     : p_ue_path(),
       p_ue_Project_path(std::move(project_path)) {
   auto& ue  = ue4_setting::Get();
-  p_ue_path = ue.Path();
+  p_ue_path = ue.get_path();
 }
 
 void ue4_project::addUe4ProjectPlugins(const std::vector<std::string>& in_strs) const {

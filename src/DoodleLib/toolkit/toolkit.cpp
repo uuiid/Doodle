@@ -65,7 +65,7 @@ void toolkit::installUePath(const FSys::path &path) {
 
   auto sourePath  = FSys::current_path().parent_path();
   sourePath       = sourePath / "plug" / "uePlug";
-  sourePath       = sourePath / set.get_ue4_setting().Version();
+  sourePath       = sourePath / set.get_ue4_setting().get_version();
   sourePath       = sourePath / "Plugins" / "Doodle";
   auto targetPath = path / "Plugins" / "Doodle";
 
@@ -84,7 +84,7 @@ bool toolkit::update() {
 }
 
 void toolkit::modifyUeCachePath() {
-  auto ue_path = core_set::getSet().get_ue4_setting().Path() / "Engine/Config/BaseEngine.ini";
+  auto ue_path = core_set::getSet().get_ue4_setting().get_path() / "Engine/Config/BaseEngine.ini";
   //做备份
   auto backup_path = FSys::path{ue_path}.replace_extension(".ini.backup");
   FSys::copy(ue_path, FSys::add_time_stamp(backup_path), FSys::copy_options::update_existing);
