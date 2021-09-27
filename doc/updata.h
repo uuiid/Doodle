@@ -126,4 +126,10 @@
  * 
  * @subsubsection updata_log_311 版本3.1.1
  * @li 解算标记工具的更新
+ * 
+ * @subsubsection updata_log_312 版本3.1.2
+ * @li 添加线程池大小调整
+ * @li 添加长时间任务时更加明了的名称
+ * @li 创建包裹帮助函数
+ * @li 添加子文件计数
  */
