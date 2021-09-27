@@ -4,9 +4,9 @@ set(
         core/core_set.h
         core/core_sql.h
         core/doodle_lib.h
-    core/ToolsSetting.h
-    core/Ue4Setting.h
-    core/Util.h
+        core/tools_setting.h
+        core/ue4_setting.h
+        core/util.h
     core/filesystem_extend.h
     core/observable_container.h
     core/open_file_dialog.h
@@ -83,8 +83,8 @@ set(
         core/core_set.cpp
         core/core_sql.cpp
         core/doodle_lib.cpp
-    core/Ue4Setting.cpp
-    core/Util.cpp
+        core/ue4_setting.cpp
+        core/util.cpp
     core/filesystem_extend.cpp
     core/open_file_dialog.cpp
     core/static_value.cpp

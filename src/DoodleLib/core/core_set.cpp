@@ -116,7 +116,7 @@ core_set::core_set()
       p_doc("C:/Doodle/doc"),
       p_data_root("C:/Doodle/data"),
       p_uuid_gen(),
-      p_ue4_setting(Ue4Setting::Get()),
+      p_ue4_setting(ue4_setting::Get()),
       p_mayaPath(),
 #ifdef NDEBUG
       p_server_host("rpc.server.doodle.com"),

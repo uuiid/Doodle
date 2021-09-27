@@ -1,66 +1,66 @@
-#include <DoodleLib/core/Ue4Setting.h>
+#include <DoodleLib/core/ue4_setting.h>
 #include <DoodleLib/libWarp/boost_locale_warp.h>
 #include <Exception/exception.h>
 
 #include <libWarp/WinReg.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Ue4Setting)
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::ue4_setting)
 namespace doodle {
-Ue4Setting::Ue4Setting()
+ue4_setting::ue4_setting()
     : ue4_path(),
       ue4_version("4.25"),
       shot_start(0),
       shot_end(100) {
 }
 
-Ue4Setting& Ue4Setting::Get() {
-  static Ue4Setting install;
+ue4_setting& ue4_setting::Get() {
+  static ue4_setting install;
   return install;
 }
 
-const std::string& Ue4Setting::Version() const noexcept {
+const std::string& ue4_setting::Version() const noexcept {
   return ue4_version;
 }
 
-void Ue4Setting::setVersion(const std::string& Version) noexcept {
+void ue4_setting::setVersion(const std::string& Version) noexcept {
   ue4_version = Version;
 }
 
-bool Ue4Setting::hasPath() const {
+bool ue4_setting::hasPath() const {
   return !ue4_path.empty();
 }
 
-const FSys::path& Ue4Setting::Path() const noexcept {
+const FSys::path& ue4_setting::Path() const noexcept {
   return ue4_path;
 }
 
-void Ue4Setting::setPath(const FSys::path& Path) noexcept {
+void ue4_setting::setPath(const FSys::path& Path) noexcept {
   ue4_path = Path;
 }
 
-const std::int32_t& Ue4Setting::ShotStart() const noexcept {
+const std::int32_t& ue4_setting::ShotStart() const noexcept {
   return shot_start;
 }
 
-void Ue4Setting::setShotStart(const std::int32_t& ShotStart) noexcept {
+void ue4_setting::setShotStart(const std::int32_t& ShotStart) noexcept {
   shot_start = ShotStart;
 }
 
-const std::int32_t& Ue4Setting::ShotEnd() const noexcept {
+const std::int32_t& ue4_setting::ShotEnd() const noexcept {
   return shot_end;
 }
 
-void Ue4Setting::setShotEnd(const std::int32_t& ShotEnd) noexcept {
+void ue4_setting::setShotEnd(const std::int32_t& ShotEnd) noexcept {
   shot_end = ShotEnd;
 }
 
-void Ue4Setting::testValue() {
+void ue4_setting::testValue() {
   if (shot_end <= shot_start) {
     throw doodle_error{"结束镜头小于开始镜头!"};
   }
 #ifdef _WIN32
   if (ue4_path.empty()) {
-    auto key_str = conv::utf_to_utf<wchar_t>(fmt::format(R"(SOFTWARE\EpicGames\Unreal Engine\{})", Ue4Setting::Get().Version()));
+    auto key_str = conv::utf_to_utf<wchar_t>(fmt::format(R"(SOFTWARE\EpicGames\Unreal Engine\{})", ue4_setting::Get().Version()));
     try {
       auto key = winreg::RegKey{HKEY_LOCAL_MACHINE};
       key.Open(HKEY_LOCAL_MACHINE, key_str, KEY_QUERY_VALUE);

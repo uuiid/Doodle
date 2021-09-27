@@ -43,9 +43,6 @@
 #include <DoodleLib/ScreenshotWidght/screenshot_action.h>
 #include <DoodleLib/ScreenshotWidght/screenshot_widght.h>
 #include <DoodleLib/core/ContainerDevice.h>
-#include <DoodleLib/core/ToolsSetting.h>
-#include <DoodleLib/core/Ue4Setting.h>
-#include <DoodleLib/core/Util.h>
 #include <DoodleLib/core/core_set.h>
 #include <DoodleLib/core/core_sql.h>
 #include <DoodleLib/core/doodle_lib.h>
@@ -53,7 +50,10 @@
 #include <DoodleLib/core/observable_container.h>
 #include <DoodleLib/core/open_file_dialog.h>
 #include <DoodleLib/core/static_value.h>
+#include <DoodleLib/core/tools_setting.h>
 #include <DoodleLib/core/tree_container.h>
+#include <DoodleLib/core/ue4_setting.h>
+#include <DoodleLib/core/util.h>
 #include <DoodleLib/doodle_app.h>
 #include <DoodleLib/libWarp/boost_locale_warp.h>
 #include <DoodleLib/libWarp/boost_serialization_warp.h>

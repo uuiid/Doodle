@@ -2,8 +2,8 @@
 
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/project.h>
-#include <DoodleLib/core/Ue4Setting.h>
 #include <DoodleLib/core/observable_container.h>
+#include <DoodleLib/core/ue4_setting.h>
 #include <DoodleLib/libWarp/boost_uuid_warp.h>
 
 #include <boost/filesystem.hpp>
@@ -63,7 +63,7 @@ class DOODLELIB_API core_set : public details::no_copy {
   // doc路径
   [[nodiscard]] FSys::path getDoc() const;
 
-  [[nodiscard]] Ue4Setting &gettUe4Setting() const { return p_ue4_setting; };
+  [[nodiscard]] ue4_setting &gettUe4Setting() const { return p_ue4_setting; };
 
   [[nodiscard]] int getSqlPort() const;
   void setSqlPort(int in_sqlPort);
@@ -132,7 +132,7 @@ class DOODLELIB_API core_set : public details::no_copy {
   FSys::path p_doc;
   FSys::path p_data_root;
 
-  Ue4Setting &p_ue4_setting;
+  ue4_setting &p_ue4_setting;
 
   FSys::path p_mayaPath;
   std::string p_server_host;  ///< 我们自己的服务器ip

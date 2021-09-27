@@ -2,10 +2,10 @@
 #include <DoodleLib/FileWarp/ue4_project.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/shot.h>
-#include <DoodleLib/core/Ue4Setting.h>
 #include <DoodleLib/core/core_set.h>
 #include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/core/filesystem_extend.h>
+#include <DoodleLib/core/ue4_setting.h>
 #include <DoodleLib/libWarp/std_warp.h>
 #include <DoodleLib/threadPool/long_term.h>
 #include <DoodleLib/threadPool/thread_pool.h>
@@ -26,7 +26,7 @@ const std::string ue4_project::Prop      = "Prop";
 ue4_project::ue4_project(FSys::path project_path)
     : p_ue_path(),
       p_ue_Project_path(std::move(project_path)) {
-  auto& ue  = Ue4Setting::Get();
+  auto& ue  = ue4_setting::Get();
   p_ue_path = ue.Path();
 }
 
