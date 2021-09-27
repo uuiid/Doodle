@@ -75,5 +75,28 @@ struct OpenFileDialog : public ScopeWrapper<OpenFileDialog> {
   };
 };
 
+struct TextWrapPos : public ScopeWrapper<TextWrapPos, true> {
+  TextWrapPos(float wrap_pos_x)
+      : ScopeWrapper<TextWrapPos, true>(true) {
+    ImGui::PushTextWrapPos(wrap_pos_x);
+  }
+  static void dtor() noexcept {
+    ImGui::PopTextWrapPos();
+  };
+};
+
+struct HelpMarker : public ScopeWrapper<HelpMarker, true> {
+  HelpMarker(const char* in_args) noexcept
+      : ScopeWrapper<HelpMarker, true>(false) {
+    ImGui::TextDisabled("(?)");
+    ItemTooltip{} && [&in_args]() {
+      TextWrapPos{ImGui::GetFontSize() * 35.0f} && [&in_args]() {
+        imgui::TextUnformatted(in_args);
+      };
+    };
+  }
+  static void dtor() noexcept {};
+};
+
 }  // namespace dear
 }  // namespace doodle
