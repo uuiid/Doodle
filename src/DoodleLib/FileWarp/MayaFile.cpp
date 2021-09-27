@@ -205,8 +205,10 @@ bool MayaFile::is_maya_file(const FSys::path& in_path) {
 
 maya_file_async::maya_file_async()
     : p_maya_file(std::make_shared<MayaFile>()) {}
+
 long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, const FSys::path& export_path) {
   auto k_term = new_object<long_term>();
+  k_term->set_name(file_path.filename().generic_string());
   auto k_f    = DoodleLib::Get().get_thread_pool()->enqueue(
       [self = p_maya_file, file_path, export_path, k_term]() {
         self->exportFbxFile(file_path, export_path, k_term);
@@ -216,6 +218,7 @@ long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, cons
 }
 long_term_ptr maya_file_async::qcloth_sim_file(MayaFile::qcloth_arg_ptr& in_arg) {
   auto k_term = new_object<long_term>();
+    k_term->set_name(in_arg->sim_path.filename().generic_string());
   auto k_f    = DoodleLib::Get().get_thread_pool()->enqueue(
       [self = p_maya_file, in_arg, k_term]() {
         self->qcloth_sim_file(in_arg, k_term);

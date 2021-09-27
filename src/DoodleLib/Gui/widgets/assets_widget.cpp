@@ -7,6 +7,10 @@
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Metadata/Metadata_cpp.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
+
+#include <boost/algorithm/cxx11/any_of.hpp>
+#include <boost/range/any_range.hpp>
+
 namespace doodle {
 
 assets_widget::assets_widget()
@@ -32,19 +36,22 @@ void assets_widget::load_meta(const MetadataPtr& in_ptr) {
                          ImGuiTreeNodeFlags_SpanAvailWidth};
   if (in_ptr && in_ptr->hasChild()) {
     in_ptr->select_indb();
+
     for (const auto& i : in_ptr->child_item) {
       auto flsge = base_flags;
       if (p_meta == i)
         flsge |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+
+      if (i->has_file())
+        imgui::Bullet();
       if (i->hasChild()) {
-        //,
-        //   p_meta == i ? base_flags | ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected : base_flags
-        //
         dear::TreeNodeEx{
             i->getUUID().c_str(),
             flsge,
             i->showStr().c_str()} &&
             [i, this]() {
+              // imgui::SameLine();
+
               if (imgui::IsItemClicked())
                 set_select(i);
               load_meta(i);

@@ -11,7 +11,7 @@ namespace doodle {
 assets_file_widgets::assets_file_widgets()
     : p_root(),
       p_current_select() {
-        p_class_name = "文件列表";
+  p_class_name = "文件列表";
 }
 
 void assets_file_widgets::frame_render() {
@@ -23,7 +23,7 @@ void assets_file_widgets::frame_render() {
     imgui::TableSetupColumn("制作人");
     //      imgui::TableSetupColumn("存在文件");
     imgui::TableHeadersRow();
-    if (p_root)
+    if (p_root) {
       for (const auto& i : p_root->child_item) {
         if (details::is_class<AssetsFile>(i)) {
           auto k = std::dynamic_pointer_cast<AssetsFile>(i);
@@ -52,11 +52,13 @@ void assets_file_widgets::frame_render() {
           //          dear::Text()
         }
       }
+    }
   };
 }
 
 void assets_file_widgets::set_metadata(const MetadataPtr& in_ptr) {
   p_root = in_ptr;
+  p_root->select_indb();
 }
 
 }  // namespace doodle
