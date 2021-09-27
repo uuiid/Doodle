@@ -142,7 +142,7 @@ class database_action {
 
 /**
  * @warning 这里这个基类是不进行cereal注册的要不然会序列化出错
- *  TODO: 将父子关系函数进行提取出超类
+ * @TODO: 将父子关系函数进行提取出超类
  */
 class DOODLELIB_API Metadata
     : public std::enable_shared_from_this<Metadata>,
@@ -170,7 +170,8 @@ class DOODLELIB_API Metadata
   bool p_updata_parent_id;
   bool p_updata_type;
 
-  uint64_t p_has_child;
+  std::size_t p_has_child;
+  std::size_t p_has_file;
 
  protected:
   void install_slots();
@@ -219,6 +220,7 @@ class DOODLELIB_API Metadata
    * @return false 工厂和列表中均不具有子项
    */
   [[nodiscard]] virtual bool hasChild() const;
+  [[nodiscard]] virtual bool has_file() const;
 
   virtual void sortChildItems(bool is_launch_sig = false);  ///< 排序一个孩子
 
@@ -339,12 +341,19 @@ void Metadata::serialize(Archive &ar, const std::uint32_t version) {
     ar &BOOST_SERIALIZATION_NVP(p_uuid);
     ar &BOOST_SERIALIZATION_NVP(p_has_child);
   }
+  if (version == 2) {
+    ar &BOOST_SERIALIZATION_NVP(p_id);
+    ar &BOOST_SERIALIZATION_NVP(p_parent_id);
+    ar &BOOST_SERIALIZATION_NVP(p_uuid);
+    ar &BOOST_SERIALIZATION_NVP(p_has_child);
+    ar &BOOST_SERIALIZATION_NVP(p_has_file);
+  }
 }
 
 }  // namespace doodle
 
 // CEREAL_REGISTER_TYPE(doodle::Metadata)
 // CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::Metadata>, doodle::Metadata)
-BOOST_CLASS_VERSION(doodle::Metadata, 1)
+BOOST_CLASS_VERSION(doodle::Metadata, 2)
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(doodle::Metadata)
 BOOST_CLASS_EXPORT_KEY(doodle::Metadata)

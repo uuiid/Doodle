@@ -12,10 +12,13 @@
 #include <core/CoreSet.h>
 #include <google/protobuf/util/time_util.h>
 
+#include <boost/algorithm/algorithm.hpp>
 #include <boost/archive/polymorphic_text_iarchive.hpp>
 #include <boost/archive/polymorphic_text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/range/algorithm/count_if.hpp>
+
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Metadata)
 namespace doodle {
 Metadata::Metadata()
@@ -26,6 +29,7 @@ Metadata::Metadata()
       p_uuid(std::move(CoreSet::getSet().getUUIDStr())),
       p_updata_parent_id(false),
       p_has_child(0),
+      p_has_file(0),
       child_item(),
       user_date(),
       p_type(meta_type::unknown_file),
@@ -42,6 +46,7 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
       p_uuid(std::move(CoreSet::getSet().getUUIDStr())),
       p_updata_parent_id(false),
       p_has_child(0),
+      p_has_file(0),
       child_item(),
       user_date(),
       p_type(meta_type::unknown_file),
@@ -77,6 +82,10 @@ bool Metadata::hasParent() const {
 }
 bool Metadata::hasChild() const {
   return p_has_child > 0;
+}
+
+bool Metadata::has_file() const {
+  return p_has_file > 0;
 }
 std::string Metadata::showStr() const {
   return str();
@@ -167,25 +176,87 @@ void Metadata::install_slots() {
 
   child_item.sig_begin_insert.connect([this](const MetadataPtr &val) {
     add_child(val);
-    ++p_has_child;
+    switch (val->p_type) {
+      case meta_type::unknown_file:
+      case meta_type::project_root:
+      case meta_type::animation_lib_root:
+        break;
+      case meta_type::folder:
+        ++p_has_child;
+        break;
+      case meta_type::derive_file:
+      case meta_type::file: {
+        ++p_has_file;
+        break;
+      }
+      default:
+        break;
+    }
+
     saved(true);
   });
   child_item.sig_begin_erase.connect([this](const MetadataPtr &val) {
-    --p_has_child;
+    switch (val->p_type) {
+      case meta_type::unknown_file:
+      case meta_type::project_root:
+      case meta_type::animation_lib_root:
+        break;
+      case meta_type::folder:
+        --p_has_child;
+        break;
+      case meta_type::derive_file:
+      case meta_type::file: {
+        --p_has_file;
+        break;
+      }
+      default:
+        break;
+    }
     saved(true);
   });
 
   child_item.sig_begin_push_back.connect([this](const MetadataPtr &val) {
     add_child(val);
-    ++p_has_child;
+    switch (val->p_type) {
+      case meta_type::unknown_file:
+      case meta_type::project_root:
+      case meta_type::animation_lib_root:
+        break;
+      case meta_type::folder:
+        ++p_has_child;
+        break;
+      case meta_type::derive_file:
+      case meta_type::file: {
+        ++p_has_file;
+        break;
+      }
+      default:
+        break;
+    }
     saved(true);
   });
 
   child_item.sig_begin_swap.connect([this](const std::vector<MetadataPtr> &val) {
     for (auto &k_i : val) {
       add_child(k_i);
+      switch (k_i->p_type) {
+        case meta_type::unknown_file:
+        case meta_type::project_root:
+        case meta_type::animation_lib_root:
+          break;
+        case meta_type::folder:
+          ++p_has_child;
+          break;
+        case meta_type::derive_file:
+        case meta_type::file: {
+          ++p_has_file;
+          break;
+        }
+        default:
+          break;
+      }
     }
-    p_has_child = val.size();
+
     saved(true);
   });
 }

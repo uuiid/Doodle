@@ -44,8 +44,8 @@ void MetadataFactory::updata_db(Metadata *in_metadata) const {
 }
 
 void MetadataFactory::select_indb(Metadata *in_metadata) const {
-  if (!in_metadata->hasChild())
-    return;
+  // if (!details::is_class<AssetsFile>(in_metadata) && !in_metadata->hasChild())
+  //   return;
   auto k_c = this->p_rpcClien.lock()->GetChild(in_metadata->shared_from_this());
   for (auto &k_i : k_c) {
     in_metadata->add_child(k_i);
