@@ -204,24 +204,24 @@ class DOODLELIB_API metadata
    * @brief 有父 这个是判断有父指针并且已加载父物体
    * @return
    */
-  [[nodiscard]] virtual bool hasParent() const;
+  [[nodiscard]] virtual bool has_parent() const;
   [[nodiscard]] virtual bool has_parent_id() const;
   [[nodiscard]] virtual std::uint64_t get_parent_id() const;
   /**
    * @brief 活动父指针
    * @return
    */
-  [[nodiscard]] virtual std::shared_ptr<metadata> getParent() const;
+  [[nodiscard]] virtual std::shared_ptr<metadata> get_parent() const;
   /**
    * @brief 这个时查询是否具有子项的(具有复杂的逻辑)
    *
    * @return true 有子项
    * @return false 工厂和列表中均不具有子项
    */
-  [[nodiscard]] virtual bool hasChild() const;
+  [[nodiscard]] virtual bool has_child() const;
   [[nodiscard]] virtual bool has_file() const;
 
-  virtual void sortChildItems(bool is_launch_sig = false);  ///< 排序一个孩子
+  virtual void sort_child_items(bool is_launch_sig = false);  ///< 排序一个孩子
 
   /**
    * @return 没有中文的字符串
@@ -231,7 +231,7 @@ class DOODLELIB_API metadata
   /**
    * @return 有或者没有中文的字符串, 但是意思一定时很明了的
    */
-  [[nodiscard]] virtual std::string showStr() const;  ///< 这里时显示的字符串, 极有可能有中文
+  [[nodiscard]] virtual std::string show_str() const;  ///< 这里时显示的字符串, 极有可能有中文
 
   [[nodiscard]] const std::string &get_uuid() const;  ///< 获得uuid
   [[nodiscard]] FSys::path get_url_uuid() const;       ///< 这个是获得所属项目的保持相对路径
@@ -240,7 +240,7 @@ class DOODLELIB_API metadata
    * 获得字符串id
    * @return id的字符串形式
    */
-  inline std::string getIdStr() const {
+  inline std::string get_id_str() const {
     return std::to_string(getId());
   };
 
@@ -265,24 +265,23 @@ class DOODLELIB_API metadata
    * @brief  这个会一直递归找到没有父级的根节点
    * @return 根节点(现在基本上是项目节点)
    */
-  [[nodiscard]] MetadataConstPtr getRootParent() const;
+  [[nodiscard]] MetadataConstPtr get_root_parent() const;
 
-  //  [[nodiscard]] virtual FSys::path FolderPath() const;
 
   /**
    * @brief 获得序列化他们的工厂
    * @return
    */
-  const MetadataFactoryPtr &getMetadataFactory() const;
+  const MetadataFactoryPtr &get_metadata_factory() const;
 
   /**
    * @brief 检查父亲是否符合记录
    * @param in_metadata 输入父亲
    * @return 返回是否是这个的父亲
    */
-  [[nodiscard]] virtual bool checkParent(const metadata &in_metadata) const;
+  [[nodiscard]] virtual bool check_parent(const metadata &in_metadata) const;
 
-  virtual void create_menu(const attribute_factory_ptr &in_factoryPtr) = 0;
+  virtual void attribute_widget(const attribute_factory_ptr &in_factoryPtr) = 0;
 
   template <class parent_class>
   std::shared_ptr<parent_class> find_parent_class() {
@@ -291,8 +290,8 @@ class DOODLELIB_API metadata
       if (details::is_class<parent_class>(k_m))
         return std::dynamic_pointer_cast<parent_class>(k_m);
       else {
-        if (k_m->hasParent())
-          k_m = k_m->getParent();
+        if (k_m->has_parent())
+          k_m = k_m->get_parent();
         else
           k_m = nullptr;
       }
@@ -302,7 +301,7 @@ class DOODLELIB_API metadata
   template <class parent_class>
   std::string find_parent_class_to_string() {
     auto k_m = find_parent_class<parent_class>();
-    return k_m ? k_m->showStr() : std::string{};
+    return k_m ? k_m->show_str() : std::string{};
   };
   /**
    * @warning 此处如果进行比较， 会自动转化为子类进行比较， 相同子类优化， 不同子类字符串比较

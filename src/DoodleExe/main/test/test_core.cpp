@@ -261,7 +261,7 @@ TEST_CASE("core archive", "[fun][archives]") {
     }
     // REQUIRE(k_val->getPath() == FSys::path{"D:/"});
     // REQUIRE(k_val->getName() == FSys::path{"test22333"});
-    REQUIRE(k_val->showStr() == FSys::path{"test22333"});
+    REQUIRE(k_val->show_str() == FSys::path{"test22333"});
     str_stream.clear();
     str_stream_bin.clear();
     SECTION("archive polymorphism") {

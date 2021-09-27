@@ -45,7 +45,7 @@ class DOODLELIB_API assets_file : public metadata {
   // ~AssetsFile();
 
   [[nodiscard]] std::string str() const override;
-  [[nodiscard]] std::string showStr() const override;
+  [[nodiscard]] std::string show_str() const override;
 
   [[nodiscard]] chrono::sys_time_pos getStdTime() const;
   void setStdTime(const chrono::sys_time_pos& in_time);
@@ -69,7 +69,7 @@ class DOODLELIB_API assets_file : public metadata {
   void setVersion(const std::uint64_t& in_Version) noexcept;
   int find_max_version() const;
 
-  virtual void create_menu(const attribute_factory_ptr& in_factoryPtr) override;
+  virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr) override;
 
   bool operator<(const assets_file& in_rhs) const;
   bool operator>(const assets_file& in_rhs) const;

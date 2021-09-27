@@ -143,7 +143,7 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
   return true;
 }
 
-void maya_file::exportFbxFile(const FSys::path& file_path,
+void maya_file::export_fbx_file(const FSys::path& file_path,
                              const FSys::path& export_path,
                              const long_term_ptr& in_ptr) {
   if (!FSys::exists(file_path)) {
@@ -247,7 +247,7 @@ long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, cons
   k_term->set_name(file_path.filename().generic_string());
   auto k_f = doodle_lib::Get().get_thread_pool()->enqueue(
       [self = p_maya_file, file_path, export_path, k_term]() {
-        self->exportFbxFile(file_path, export_path, k_term);
+        self->export_fbx_file(file_path, export_path, k_term);
       });
   k_term->p_list.emplace_back(std::move(k_f));
   return k_term;

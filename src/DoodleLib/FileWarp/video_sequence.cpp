@@ -22,14 +22,14 @@ video_sequence::video_sequence(std::vector<FSys::path> paths)
             [](const FSys::path& k_l, const FSys::path& k_r) { return k_l.stem() < k_r.stem(); });
 }
 
-void video_sequence::connectVideo(const FSys::path& out_path, const long_term_ptr& in_ptr) const {
+void video_sequence::connect_video(const FSys::path& path, const long_term_ptr& in_ptr) const {
   //验证输出文件
-  if (!FSys::exists(out_path.parent_path()))
-    FSys::create_directories(out_path.parent_path());
+  if (!FSys::exists(path.parent_path()))
+    FSys::create_directories(path.parent_path());
 
   auto k_video_input   = cv::VideoCapture{};
   const static cv::Size k_size{1920, 1080};
-  auto k_video_out     = cv::VideoWriter{out_path.generic_string(),
+  auto k_video_out     = cv::VideoWriter{path.generic_string(),
                                      cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
                                      25,
                                      k_size};
@@ -58,7 +58,7 @@ void video_sequence::connectVideo(const FSys::path& out_path, const long_term_pt
     }
   }
   if (in_ptr) {
-    in_ptr->sig_message_result(fmt::format("完成视频 {} \n", out_path), long_term::warning);
+    in_ptr->sig_message_result(fmt::format("完成视频 {} \n", path), long_term::warning);
     in_ptr->sig_finished();
   }
 }
@@ -92,7 +92,7 @@ long_term_ptr video_sequence_async::connect_video(const FSys::path& path) const 
 
   auto k_term = new_object<long_term>();
   auto k_fut  = doodle_lib::Get().get_thread_pool()->enqueue(
-      [self = p_video, k_out_path, k_term]() { self->connectVideo(k_out_path, k_term); });
+      [self = p_video, k_out_path, k_term]() { self->connect_video(k_out_path, k_term); });
   k_term->p_list.push_back(std::move(k_fut));
   return k_term;
 }

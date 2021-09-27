@@ -175,7 +175,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
                 if (k_k % 3 == 0) {
                   ///  生成具体条目
                   for (int k_l = 0; k_l < 20; ++k_l) {
-                    auto k_file = std::make_shared<assets_file>(k_assets_ptr, k_assets_ptr->showStr());
+                    auto k_file = std::make_shared<assets_file>(k_assets_ptr, k_assets_ptr->show_str());
                     k_assets_ptr->child_item.push_back_sig(k_file);
 
                     using namespace chrono::literals;

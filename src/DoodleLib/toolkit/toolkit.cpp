@@ -36,7 +36,7 @@ void toolkit::installMayaPath() {
   } else
     FSys::remove_all(mayadoc);
 
-  file_system::localCopy(sourePath, mayadoc, false);
+  file_system::local_copy(sourePath, mayadoc, false);
   auto k_tmp_path = mayadoc / "scripts" / "scripts" / "maya_fun_tool.py";
   if (FSys::exists(k_tmp_path))
     return;
@@ -76,7 +76,7 @@ void toolkit::installUePath(const FSys::path &path) {
   }
 
   DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, targetPath));
-  file_system::localCopy(sourePath, targetPath, false);
+  file_system::local_copy(sourePath, targetPath, false);
 }
 
 bool toolkit::update() {

@@ -28,7 +28,7 @@ std::int32_t season::get_season() const {
 std::string season::str() const {
   return fmt::format("seas_{}", p_int);
 }
-void season::create_menu(const attribute_factory_ptr& in_factoryPtr) {
+void season::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<season>(shared_from_this()));
 }
 }  // namespace doodle

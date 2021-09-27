@@ -33,7 +33,7 @@ std::string assets::str() const {
     return convert::Get().toEn(p_name);
   return p_name_enus;
 }
-std::string assets::showStr() const {
+std::string assets::show_str() const {
   return p_name;
 }
 
@@ -67,7 +67,7 @@ void assets::setNameEnus(const std::string& in_nameEnus) {
   p_name_enus = in_nameEnus;
   saved(true);
 }
-void assets::create_menu(const attribute_factory_ptr& in_factoryPtr) {
+void assets::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<assets>(shared_from_this()));
 }
 }  // namespace doodle

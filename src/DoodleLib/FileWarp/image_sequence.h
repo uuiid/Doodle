@@ -27,10 +27,10 @@ class DOODLELIB_API image_sequence
   image_sequence();
   explicit image_sequence(const FSys::path& path_dir, const std::string& text = {});
 
-  bool hasSequence();
+  bool has_sequence();
   void set_path(const FSys::path& dir);
   void set_path(const std::vector<FSys::path>& in_images);
-  void setText(const std::string& text);
+  void set_text(const std::string& text);
   void set_out_dir(const  FSys::path& out_dir);
   FSys::path get_out_path() const;
   static std::string show_str(const std::vector<FSys::path>& in_images);

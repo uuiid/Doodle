@@ -34,7 +34,7 @@ class DOODLELIB_API maya_file
    * @param export_path 导出的路径
    * @return 是否导出成功
    */
-  void exportFbxFile(const FSys::path& file_path, const FSys::path& export_path, const long_term_ptr& in_ptr);
+  void export_fbx_file(const FSys::path& file_path, const FSys::path& export_path, const long_term_ptr& in_ptr);
 
   /**
    * @brief 批量解算qcloth 文件

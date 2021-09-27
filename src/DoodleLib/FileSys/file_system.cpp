@@ -6,7 +6,7 @@
 #include <boost/asio.hpp>
 
 namespace doodle {
-void file_system::localCopy(const FSys::path& in_sourcePath, const FSys::path& targetPath, bool backup) {
+void file_system::local_copy(const FSys::path& in_sourcePath, const FSys::path& targetPath, bool backup) {
   //创建线程池多线程复制
   boost::asio::thread_pool pool(std::thread::hardware_concurrency());
   //验证文件存在

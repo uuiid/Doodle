@@ -18,7 +18,7 @@ class DOODLELIB_API assets : public metadata {
   // ~Assets();
 
   [[nodiscard]] std::string str() const override;
-  [[nodiscard]] std::string showStr() const override;
+  [[nodiscard]] std::string show_str() const override;
 
   const std::string& getName1() const;
   void setName1(const std::string& in_name);
@@ -29,7 +29,7 @@ class DOODLELIB_API assets : public metadata {
   bool operator>(const assets& in_rhs) const;
   bool operator<=(const assets& in_rhs) const;
   bool operator>=(const assets& in_rhs) const;
-  void create_menu(const attribute_factory_ptr& in_factoryPtr) override;
+  void attribute_widget(const attribute_factory_ptr& in_factoryPtr) override;
 
  private:
   friend class boost::serialization::access;

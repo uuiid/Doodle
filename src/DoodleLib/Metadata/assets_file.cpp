@@ -59,7 +59,7 @@ assets_file::assets_file(std::weak_ptr<metadata> in_metadata, std::string showNa
 std::string assets_file::str() const {
   return p_name;
 }
-std::string assets_file::showStr() const {
+std::string assets_file::show_str() const {
   return p_ShowName;
 }
 
@@ -173,7 +173,7 @@ void assets_file::setTime(const TimeDurationPtr& in_time) {
   saved(true);
   p_need_time = true;
 }
-void assets_file::create_menu(const attribute_factory_ptr& in_factoryPtr) {
+void assets_file::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<assets_file>(shared_from_this()));
 }
 std::vector<AssetsPathPtr>& assets_file::getPathFile() {

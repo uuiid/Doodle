@@ -17,7 +17,7 @@ class DOODLELIB_API video_sequence
  public:
   video_sequence(std::vector<FSys::path> paths);
 
-  void connectVideo(const FSys::path& path, const long_term_ptr& in_ptr) const;
+  void connect_video(const FSys::path& path, const long_term_ptr& in_ptr) const;
   /**
    * @brief 使用这个可以将镜头和和集数以及输出名称一起设置完成
    *

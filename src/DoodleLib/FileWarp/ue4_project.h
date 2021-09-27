@@ -105,8 +105,9 @@ class DOODLELIB_API ue4_project
   void addUe4ProjectPlugins(const std::vector<std::string>& in_strs) const;
 
   void run_cmd_scipt(const std::string& run_com) const;
-  void runPythonScript(const std::string& python_str) const;
-  void runPythonScript(const FSys::path& python_file) const;
+  void run_python_script(const std::string& python_str) const;
+  void run_python_script(const FSys::path& python_file) const;
+
 
  public:
   const static std::string Content;

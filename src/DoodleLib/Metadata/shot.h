@@ -37,7 +37,7 @@ class DOODLELIB_API shot : public metadata {
   void setEpisodesPtr(const EpisodesPtr &Episodes_) noexcept;
 
   [[nodiscard]] std::string str() const override;
-  virtual void create_menu(const attribute_factory_ptr &in_factoryPtr) override;
+  virtual void attribute_widget(const attribute_factory_ptr &in_factoryPtr) override;
   bool operator<(const shot &rhs) const;
   bool operator>(const shot &rhs) const;
   bool operator<=(const shot &rhs) const;

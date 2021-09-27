@@ -21,7 +21,7 @@ assets_widget::assets_widget()
 }
 void assets_widget::frame_render() {
   dear::TreeNode{"assets_widget"} && [this]() {
-    if (p_root && p_root->hasChild()) {
+    if (p_root && p_root->has_child()) {
       load_meta(p_root);
     }
   };
@@ -34,7 +34,7 @@ void assets_widget::load_meta(const MetadataPtr& in_ptr) {
   static auto base_flags{ImGuiTreeNodeFlags_OpenOnArrow |
                          ImGuiTreeNodeFlags_OpenOnDoubleClick |
                          ImGuiTreeNodeFlags_SpanAvailWidth};
-  if (in_ptr && in_ptr->hasChild()) {
+  if (in_ptr && in_ptr->has_child()) {
     in_ptr->select_indb();
 
     for (const auto& i : in_ptr->child_item) {
@@ -42,11 +42,11 @@ void assets_widget::load_meta(const MetadataPtr& in_ptr) {
       if (p_meta == i)
         flsge |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
 
-      if (i->hasChild() || i->has_file()) {
+      if (i->has_child() || i->has_file()) {
         dear::TreeNodeEx{
             i->get_uuid().c_str(),
             flsge,
-            i->showStr().c_str()} &&
+            i->show_str().c_str()} &&
             [i, this]() {
               // imgui::SameLine();
               if (i->has_file())
@@ -59,7 +59,7 @@ void assets_widget::load_meta(const MetadataPtr& in_ptr) {
         dear::TreeNodeEx{
             i->get_uuid().c_str(),
             flsge | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen,
-            i->showStr().c_str()} &&
+            i->show_str().c_str()} &&
             [this, i]() {
               if (imgui::IsItemClicked()) {
                 set_select(i);
@@ -71,7 +71,7 @@ void assets_widget::load_meta(const MetadataPtr& in_ptr) {
 }
 void assets_widget::set_select(const MetadataPtr& in_ptr) {
   p_meta = in_ptr;
-  p_meta->create_menu(p_factory);
+  p_meta->attribute_widget(p_factory);
   select_change(p_meta);
 }
 }  // namespace doodle

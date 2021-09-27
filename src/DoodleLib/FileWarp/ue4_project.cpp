@@ -64,7 +64,7 @@ void ue4_project::run_cmd_scipt(const std::string& run_com) const {
   k_c.wait();
 }
 
-void ue4_project::runPythonScript(const std::string& python_str) const {
+void ue4_project::run_python_script(const std::string& python_str) const {
   auto tmp_name = boost::uuids::to_string(core_set::getSet().get_uuid()) + ".py";
   auto tmp_file = core_set::getSet().get_cache_root() / tmp_name;
 
@@ -72,11 +72,11 @@ void ue4_project::runPythonScript(const std::string& python_str) const {
     FSys::ofstream k_ofile{tmp_file};
     k_ofile << python_str;
   }
-  runPythonScript(tmp_file);
+  run_python_script(tmp_file);
   FSys::remove(tmp_file);
 }
 
-void ue4_project::runPythonScript(const FSys::path& python_file) const {
+void ue4_project::run_python_script(const FSys::path& python_file) const {
   run_cmd_scipt(fmt::format("-ExecutePythonScript={}", python_file));
 }
 
@@ -164,7 +164,7 @@ void ue4_project::create_shot_folder(const std::vector<ShotPtr>& inShotList,
     auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0]->getEpisodesPtr()->str();
     for (const auto& k_shot : inShotList) {
       auto k_string = fmt::format("{}{:04d}_{}",
-                                  k_prj->showStr(),
+                                  k_prj->show_str(),
                                   k_shot->getEpisodesPtr()->getEpisodes(),
                                   k_shot->str());
 
@@ -199,7 +199,7 @@ void ue4_project::create_shot_folder(const std::vector<ShotPtr>& inShotList,
     //    file << "time.sleep(3)" << std::endl;
   }
 
-  this->runPythonScript(k_tmp_file_path);
+  this->run_python_script(k_tmp_file_path);
   if (in_ptr) {
     in_ptr->sig_finished();
     in_ptr->sig_message_result("完成添加 \n", long_term::warning);

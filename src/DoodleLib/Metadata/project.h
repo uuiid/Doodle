@@ -25,14 +25,14 @@ class DOODLELIB_API project : public metadata {
   void setPath(const FSys::path& Path);
 
   [[nodiscard]] std::string str() const override;
-  [[nodiscard]] std::string showStr() const override;
+  [[nodiscard]] std::string show_str() const override;
 
   [[nodiscard]] std::string shortStr() const;
 
   static std::string getConfigFileName();
   static std::string getConfigFileFolder();
 
-  virtual void create_menu(const attribute_factory_ptr& in_factoryPtr) override;
+  virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr) override;
 
   bool operator<(const project& in_rhs) const;
   bool operator>(const project& in_rhs) const;

@@ -55,11 +55,11 @@ metadata::metadata(std::weak_ptr<metadata> in_metadata)
 
 metadata::~metadata() = default;
 
-std::shared_ptr<metadata> metadata::getParent() const {
+std::shared_ptr<metadata> metadata::get_parent() const {
   return p_parent.lock();
 }
 
-void metadata::sortChildItems(bool is_launch_sig) {
+void metadata::sort_child_items(bool is_launch_sig) {
   if (child_item_is_sort)
     return;
 
@@ -75,27 +75,27 @@ void metadata::sortChildItems(bool is_launch_sig) {
   child_item_is_sort = true;
 }
 
-bool metadata::hasParent() const {
+bool metadata::has_parent() const {
   return !p_parent.expired();
 }
-bool metadata::hasChild() const {
+bool metadata::has_child() const {
   return p_has_child > 0;
 }
 
 bool metadata::has_file() const {
   return p_has_file > 0;
 }
-std::string metadata::showStr() const {
+std::string metadata::show_str() const {
   return str();
 }
 const std::string &metadata::get_uuid() const {
   return p_uuid;
 }
 
-const MetadataFactoryPtr &metadata::getMetadataFactory() const {
+const MetadataFactoryPtr &metadata::get_metadata_factory() const {
   return p_factory;
 }
-bool metadata::checkParent(const metadata &in_metadata) const {
+bool metadata::check_parent(const metadata &in_metadata) const {
   return p_parent_id == in_metadata.p_id;
 }
 
@@ -111,10 +111,10 @@ bool metadata::operator<=(const metadata &in_rhs) const {
 bool metadata::operator>=(const metadata &in_rhs) const {
   return !(*this < in_rhs);
 }
-MetadataConstPtr metadata::getRootParent() const {
+MetadataConstPtr metadata::get_root_parent() const {
   auto k_p = shared_from_this();
   while (!k_p->p_parent.expired()) {
-    k_p = k_p->p_parent.lock()->getRootParent();
+    k_p = k_p->p_parent.lock()->get_root_parent();
   }
   return k_p;
   //  if(p_parent.expired())
@@ -124,7 +124,7 @@ MetadataConstPtr metadata::getRootParent() const {
 }
 
 FSys::path metadata::get_url_uuid() const {
-  auto name = FSys::path{getRootParent()->get_uuid()};
+  auto name = FSys::path{get_root_parent()->get_uuid()};
   name /= p_uuid.substr(0, 3);
   name /= p_uuid;
   return name;
@@ -260,7 +260,7 @@ void metadata::install_slots() {
 }
 void metadata::add_child(const MetadataPtr &val) {
   /// 先查看是否有父级关联
-  if (val->hasParent()) {
+  if (val->has_parent()) {
     /// 有关联并且父物体不是指向自己的话
     /// 那么我们要同时记录子项要更新父id属性和要保存所有属性
     if (val->p_parent.lock() != shared_from_this()) {
@@ -279,7 +279,7 @@ void metadata::add_child(const MetadataPtr &val) {
   val->p_factory     = p_factory;
   child_item_is_sort = false;
 
-  DOODLE_LOG_INFO(fmt::format("插入子数据： {}", val->showStr()))
+  DOODLE_LOG_INFO(fmt::format("插入子数据： {}", val->show_str()))
 }
 metadata::operator DataDb() const {
   DataDb k_tmp{};
@@ -290,7 +290,7 @@ metadata::operator DataDb() const {
 void metadata::to_DataDb(DataDb &in_) const {
   in_.set_id(p_id);
   in_.set_uuidpath(get_url_uuid().generic_string());
-  if (hasParent() && (p_updata_parent_id || p_id == 0))
+  if (has_parent() && (p_updata_parent_id || p_id == 0))
     in_.mutable_parent()->set_value(*p_parent_id);
 
   //  auto k_time      = std::chrono::system_clock::now();

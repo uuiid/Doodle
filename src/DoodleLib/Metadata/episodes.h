@@ -17,7 +17,7 @@ class DOODLELIB_API episodes : public metadata {
 
   [[nodiscard]] std::string str() const override;
 
-  void create_menu(const attribute_factory_ptr &in_factoryPtr) override;
+  void attribute_widget(const attribute_factory_ptr &in_factoryPtr) override;
 
   bool operator<(const episodes &in_rhs) const;
   bool operator>(const episodes &in_rhs) const;

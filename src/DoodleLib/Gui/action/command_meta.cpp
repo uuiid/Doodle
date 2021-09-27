@@ -116,7 +116,7 @@ bool comm_ass_eps::render() {
         p_root->updata_db();
       }
 
-      if (!p_root->hasChild()) {
+      if (!p_root->has_child()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
           p_root->deleteData();
@@ -185,7 +185,7 @@ bool comm_ass_shot::render() {
                               .value_or(shot::shot_ab_enum::None));
         p_root->updata_db();
       }
-      if (!p_root->hasChild()) {
+      if (!p_root->has_child()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str()))
           p_root->deleteData();
@@ -247,7 +247,7 @@ bool comm_assets::render() {
         p_root->setName1(p_data);
         p_root->updata_db();
       }
-      if (!p_root->hasChild()) {
+      if (!p_root->has_child()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
           p_root->deleteData();
@@ -312,7 +312,7 @@ bool comm_ass_season::render() {
         p_root->updata_db();
       }
 
-      if (!p_root->hasChild()) {
+      if (!p_root->has_child()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
           p_root->deleteData();
@@ -359,7 +359,7 @@ bool comm_ass_file::render() {
       if (imgui::Button(p_show_str["更改"].c_str())) {
         p_root->getTime();
       }
-      if (p_root->hasChild()) {
+      if (p_root->has_child()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
           p_root->deleteData();

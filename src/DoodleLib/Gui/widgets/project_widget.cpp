@@ -28,7 +28,7 @@ void project_widget::frame_render() {
     for (const auto& p : k_prj_list) {
       imgui::TableNextRow();
       imgui::TableNextColumn();
-      if (dear::Selectable(p->showStr(),
+      if (dear::Selectable(p->show_str(),
                            p == p_current_select,
                            ImGuiSelectableFlags_SpanAllColumns)) {
         p_current_select = p;

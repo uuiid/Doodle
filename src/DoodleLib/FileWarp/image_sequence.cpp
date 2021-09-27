@@ -39,7 +39,7 @@ image_sequence::image_sequence(const FSys::path &path_dir, const std::string &te
   set_path(path_dir);
 }
 
-bool image_sequence::hasSequence() {
+bool image_sequence::has_sequence() {
   return !p_paths.empty();
 }
 
@@ -72,7 +72,7 @@ bool image_sequence::seanDir(const FSys::path &dir) {
   return true;
 }
 
-void image_sequence::setText(const std::string &text) {
+void image_sequence::set_text(const std::string &text) {
   p_Text = clearString(text);
 }
 
@@ -174,7 +174,7 @@ void image_sequence::set_out_dir(const FSys::path &out_dir) {
   p_out_path = out_dir;
 }
 void image_sequence::create_video(const long_term_ptr &in_ptr) {
-  if (!this->hasSequence())
+  if (!this->has_sequence())
     throw doodle_error{"not Sequence"};
   auto k_arg      = new_object<asyn_arg>();
   k_arg->out_path = p_out_path / p_name;

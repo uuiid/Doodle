@@ -8,7 +8,7 @@
 namespace doodle {
 class DOODLELIB_API file_system {
     public:
-    static void localCopy(const FSys::path& in_sourcePath, const FSys::path& targetPath, bool backup);
+    static void local_copy(const FSys::path& in_sourcePath, const FSys::path& targetPath, bool backup);
 };
 
 }  // namespace doodle

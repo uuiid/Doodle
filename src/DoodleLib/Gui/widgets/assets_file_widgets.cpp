@@ -29,7 +29,7 @@ void assets_file_widgets::frame_render() {
           auto k = std::dynamic_pointer_cast<assets_file>(i);
           imgui::TableNextRow();
           imgui::TableNextColumn();
-          if (dear::Selectable(k->getIdStr(),
+          if (dear::Selectable(k->get_id_str(),
                                k == p_current_select,
                                ImGuiSelectableFlags_SpanAllColumns)) {
             p_current_select = k;

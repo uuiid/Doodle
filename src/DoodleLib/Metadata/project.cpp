@@ -54,7 +54,7 @@ std::string project::shortStr() const {
   return p_shor_str;
 }
 
-std::string project::showStr() const {
+std::string project::show_str() const {
   return this->p_name;
 }
 std::string project::getConfigFileFolder() {
@@ -88,7 +88,7 @@ const std::string& project::getName() const {
   return p_name;
 }
 
-void project::create_menu(const attribute_factory_ptr& in_factoryPtr) {
+void project::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<project>(shared_from_this()));
 }
 void project::init() {

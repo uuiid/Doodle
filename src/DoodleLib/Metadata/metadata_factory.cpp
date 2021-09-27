@@ -26,7 +26,7 @@ std::vector<ProjectPtr> metadata_factory::getAllProject() {
 
 bool metadata_factory::insert_into(metadata *in_metadata) const {
   auto k_c = this->p_rpcClien.lock();
-  if (in_metadata->hasParent()) {
+  if (in_metadata->has_parent()) {
     auto k_p = in_metadata->p_parent.lock();
     k_p->updata_db();
   }
@@ -36,7 +36,7 @@ bool metadata_factory::insert_into(metadata *in_metadata) const {
 void metadata_factory::updata_db(metadata *in_metadata) const {
   ///在这里测试使用具有父级， 并且如果有父级， 还要更新父id， 那么就可以断定也要更新父级的记录
   auto k_c = this->p_rpcClien.lock();
-  if (in_metadata->hasParent()) {
+  if (in_metadata->has_parent()) {
     auto k_p = in_metadata->p_parent.lock();
     k_p->updata_db();
   }
