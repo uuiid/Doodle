@@ -5,7 +5,7 @@
 #include "attribute_factory_interface.h"
 
 #include <DoodleLib/Gui/action/command_meta.h>
-#include <DoodleLib/Metadata/Metadata_cpp.h>
+#include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 namespace doodle {
 attr_project::attr_project()

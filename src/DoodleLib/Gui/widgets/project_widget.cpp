@@ -5,7 +5,7 @@
 #include "project_widget.h"
 
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
-#include <DoodleLib/Metadata/Metadata_cpp.h>
+#include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 

@@ -4,16 +4,14 @@
 
 #include "RpcMetadaataServer.h"
 
-#include <DoodleLib/Metadata/Metadata_cpp.h>
-#include <DoodleLib/core/CoreSql.h>
 #include <DoodleLib/Logger/Logger.h>
+#include <DoodleLib/Metadata/metadata_cpp.h>
+#include <DoodleLib/core/CoreSql.h>
 #include <DoodleLib/generate/core/metadatatab_sql.h>
 #include <DoodleLib/generate/core/usertab_sql.h>
-
 #include <DoodleLib/libWarp/protobuf_warp_cpp.h>
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
-
 
 namespace doodle {
 

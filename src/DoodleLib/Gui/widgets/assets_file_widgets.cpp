@@ -4,7 +4,7 @@
 
 #include "assets_file_widgets.h"
 
-#include <DoodleLib/Metadata/Metadata_cpp.h>
+#include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 namespace doodle {
 

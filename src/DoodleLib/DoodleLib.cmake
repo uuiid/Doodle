@@ -55,7 +55,7 @@ set(
         Metadata/episodes.h
         Metadata/metadata.h
         Metadata/metadata_factory.h
-    Metadata/Metadata_cpp.h
+        Metadata/metadata_cpp.h
         Metadata/project.h
         Metadata/shot.h
     Metadata/season.h

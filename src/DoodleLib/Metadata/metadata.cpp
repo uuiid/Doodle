@@ -7,7 +7,7 @@
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Metadata/metadata_factory.h>
 #include <Exception/Exception.h>
-#include <Metadata/Metadata_cpp.h>
+#include <Metadata/metadata_cpp.h>
 #include <core/ContainerDevice.h>
 #include <core/CoreSet.h>
 #include <google/protobuf/util/time_util.h>

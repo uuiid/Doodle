@@ -5,7 +5,7 @@
 
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Logger/Logger.h>
-#include <DoodleLib/Metadata/Metadata_cpp.h>
+#include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/rpc/RpcMetadataClient.h>
 #include <core/DoodleLib.h>

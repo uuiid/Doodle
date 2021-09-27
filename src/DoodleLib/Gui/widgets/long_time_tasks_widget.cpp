@@ -5,7 +5,7 @@
 #include "long_time_tasks_widget.h"
 
 #include <DoodleLib/Gui/action/command.h>
-#include <DoodleLib/Metadata/Metadata_cpp.h>
+#include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 #include <DoodleLib/threadPool/long_term.h>
