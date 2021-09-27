@@ -250,7 +250,7 @@ class CoreSet;
 class Project;
 class Episodes;
 class Shot;
-class Metadata;
+class metadata;
 class Assets;
 class CoreSql;
 class LabelNode;
@@ -351,12 +351,12 @@ using season_ptr                   = std::shared_ptr<season>;
  * @brief Metadata 智能共享指针
  *
  */
-using MetadataPtr                  = std::shared_ptr<Metadata>;
+using MetadataPtr                  = std::shared_ptr<metadata>;
 /**
  * @brief const 智能共享指针
  *
  */
-using MetadataConstPtr             = std::shared_ptr<const Metadata>;
+using MetadataConstPtr             = std::shared_ptr<const metadata>;
 /**
  * @brief RpcMetadataClient 智能共享指针
  *

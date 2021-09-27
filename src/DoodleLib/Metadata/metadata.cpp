@@ -2,7 +2,7 @@
 // Created by teXiao on 2021/4/27.
 //
 
-#include "Metadata.h"
+#include "metadata.h"
 
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Metadata/MetadataFactory.h>
@@ -19,11 +19,11 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/range/algorithm/count_if.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Metadata)
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::metadata)
 namespace doodle {
-Metadata::Metadata()
-    : database_action<Metadata, MetadataFactory>(this),
-      std::enable_shared_from_this<Metadata>(),
+metadata::metadata()
+    : database_action<metadata, MetadataFactory>(this),
+      std::enable_shared_from_this<metadata>(),
       p_parent(),
       p_parent_id(),
       p_uuid(std::move(CoreSet::getSet().getUUIDStr())),
@@ -37,9 +37,9 @@ Metadata::Metadata()
   install_slots();
 }
 
-Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
-    : database_action<Metadata, MetadataFactory>(this),
-      std::enable_shared_from_this<Metadata>(),
+metadata::metadata(std::weak_ptr<metadata> in_metadata)
+    : database_action<metadata, MetadataFactory>(this),
+      std::enable_shared_from_this<metadata>(),
       p_parent(std::move(in_metadata)),
       p_parent_id(p_parent.lock()->p_id),
       p_uuid(std::move(CoreSet::getSet().getUUIDStr())),
@@ -53,13 +53,13 @@ Metadata::Metadata(std::weak_ptr<Metadata> in_metadata)
   install_slots();
 }
 
-Metadata::~Metadata() = default;
+metadata::~metadata() = default;
 
-std::shared_ptr<Metadata> Metadata::getParent() const {
+std::shared_ptr<metadata> metadata::getParent() const {
   return p_parent.lock();
 }
 
-void Metadata::sortChildItems(bool is_launch_sig) {
+void metadata::sortChildItems(bool is_launch_sig) {
   if (child_item_is_sort)
     return;
 
@@ -75,43 +75,43 @@ void Metadata::sortChildItems(bool is_launch_sig) {
   child_item_is_sort = true;
 }
 
-bool Metadata::hasParent() const {
+bool metadata::hasParent() const {
   return !p_parent.expired();
 }
-bool Metadata::hasChild() const {
+bool metadata::hasChild() const {
   return p_has_child > 0;
 }
 
-bool Metadata::has_file() const {
+bool metadata::has_file() const {
   return p_has_file > 0;
 }
-std::string Metadata::showStr() const {
+std::string metadata::showStr() const {
   return str();
 }
-const std::string &Metadata::getUUID() const {
+const std::string &metadata::getUUID() const {
   return p_uuid;
 }
 
-const MetadataFactoryPtr &Metadata::getMetadataFactory() const {
+const MetadataFactoryPtr &metadata::getMetadataFactory() const {
   return p_factory;
 }
-bool Metadata::checkParent(const Metadata &in_metadata) const {
+bool metadata::checkParent(const metadata &in_metadata) const {
   return p_parent_id == in_metadata.p_id;
 }
 
-bool Metadata::operator<(const Metadata &in_rhs) const {
+bool metadata::operator<(const metadata &in_rhs) const {
   return str() < str();
 }
-bool Metadata::operator>(const Metadata &in_rhs) const {
+bool metadata::operator>(const metadata &in_rhs) const {
   return in_rhs < *this;
 }
-bool Metadata::operator<=(const Metadata &in_rhs) const {
+bool metadata::operator<=(const metadata &in_rhs) const {
   return !(in_rhs < *this);
 }
-bool Metadata::operator>=(const Metadata &in_rhs) const {
+bool metadata::operator>=(const metadata &in_rhs) const {
   return !(*this < in_rhs);
 }
-MetadataConstPtr Metadata::getRootParent() const {
+MetadataConstPtr metadata::getRootParent() const {
   auto k_p = shared_from_this();
   while (!k_p->p_parent.expired()) {
     k_p = k_p->p_parent.lock()->getRootParent();
@@ -123,47 +123,47 @@ MetadataConstPtr Metadata::getRootParent() const {
   //    return p_parent.lock()->getRootParent();
 }
 
-FSys::path Metadata::getUrlUUID() const {
+FSys::path metadata::getUrlUUID() const {
   auto name = FSys::path{getRootParent()->getUUID()};
   name /= p_uuid.substr(0, 3);
   name /= p_uuid;
   return name;
 }
 
-void Metadata::set_meta_typp(const meta_type &in_meta) {
+void metadata::set_meta_typp(const meta_type &in_meta) {
   p_type        = in_meta;
   p_updata_type = true;
 }
 
-void Metadata::set_meta_typp(const std::string &in_meta) {
+void metadata::set_meta_typp(const std::string &in_meta) {
   p_type        = magic_enum::enum_cast<meta_type>(in_meta).value_or(meta_type::unknown_file);
   p_updata_type = true;
 }
 
-void Metadata::set_meta_type(std::int32_t in_) {
+void metadata::set_meta_type(std::int32_t in_) {
   p_type        = magic_enum::enum_cast<meta_type>(in_).value_or(meta_type::unknown_file);
   p_updata_type = true;
 }
 
-Metadata::meta_type Metadata::get_meta_type() const {
+metadata::meta_type metadata::get_meta_type() const {
   return p_type;
 }
 
-std::string Metadata::get_meta_type_str() const {
+std::string metadata::get_meta_type_str() const {
   return std::string{magic_enum::enum_name(p_type)};
 }
 
-std::int32_t Metadata::get_meta_type_int() const {
+std::int32_t metadata::get_meta_type_int() const {
   return magic_enum::enum_integer(p_type);
 }
-bool Metadata::operator==(const Metadata &in_rhs) const {
+bool metadata::operator==(const metadata &in_rhs) const {
   return std::tie(p_id) == std::tie(in_rhs.p_id);
 }
-bool Metadata::operator!=(const Metadata &in_rhs) const {
+bool metadata::operator!=(const metadata &in_rhs) const {
   return std::tie(p_id) != std::tie(in_rhs.p_id);
 }
 
-void Metadata::install_slots() {
+void metadata::install_slots() {
   child_item.sig_begin_clear.connect([this]() {
     for (const auto &k_i : this->child_item) {
       k_i->p_id = 0;
@@ -258,7 +258,7 @@ void Metadata::install_slots() {
     saved(true);
   });
 }
-void Metadata::add_child(const MetadataPtr &val) {
+void metadata::add_child(const MetadataPtr &val) {
   /// 先查看是否有父级关联
   if (val->hasParent()) {
     /// 有关联并且父物体不是指向自己的话
@@ -281,13 +281,13 @@ void Metadata::add_child(const MetadataPtr &val) {
 
   DOODLE_LOG_INFO(fmt::format("插入子数据： {}", val->showStr()))
 }
-Metadata::operator DataDb() const {
+metadata::operator DataDb() const {
   DataDb k_tmp{};
   this->to_DataDb(k_tmp);
   return k_tmp;
 }
 
-void Metadata::to_DataDb(DataDb &in_) const {
+void metadata::to_DataDb(DataDb &in_) const {
   in_.set_id(p_id);
   in_.set_uuidpath(getUrlUUID().generic_string());
   if (hasParent() && (p_updata_parent_id || p_id == 0))
@@ -311,7 +311,7 @@ void Metadata::to_DataDb(DataDb &in_) const {
   if (p_updata_type || p_id == 0)
     in_.mutable_m_type()->set_value(magic_enum::enum_cast<doodle::DataDb::meta_type>(get_meta_type_int()).value());
 }
-MetadataPtr Metadata::from_DataDb(const DataDb &in_) {
+MetadataPtr metadata::from_DataDb(const DataDb &in_) {
   MetadataPtr k_ptr{};
   try {
     auto k_data = in_.metadata_cereal().value();
@@ -340,10 +340,10 @@ MetadataPtr Metadata::from_DataDb(const DataDb &in_) {
 
   return k_ptr;
 }
-std::uint64_t Metadata::get_parent_id() const {
+std::uint64_t metadata::get_parent_id() const {
   return *p_parent_id;
 }
-bool Metadata::has_parent_id() const {
+bool metadata::has_parent_id() const {
   return p_parent_id.has_value();
 }
 

@@ -5,16 +5,16 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/metadata.h>
 
 namespace doodle {
-class DOODLELIB_API Assets : public Metadata {
+class DOODLELIB_API Assets : public metadata {
   std::string p_name;
   std::string p_name_enus;
 
  public:
   Assets();
-  explicit Assets(std::weak_ptr<Metadata> in_metadata, std::string in_name);
+  explicit Assets(std::weak_ptr<metadata> in_metadata, std::string in_name);
   // ~Assets();
 
   [[nodiscard]] std::string str() const override;
@@ -41,11 +41,11 @@ template <class Archive>
 void Assets::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 1)
     ar&
-            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
         p_name;
   if (version == 2)
     ar&
-            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
         p_name&
             p_name_enus;
 }

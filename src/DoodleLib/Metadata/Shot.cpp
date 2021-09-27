@@ -8,16 +8,16 @@ BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Shot)
 namespace doodle {
 
 Shot::Shot()
-    : Metadata(),
+    : metadata(),
       p_shot(-1),
       p_shot_ab("None") {
   p_type = meta_type::folder;
 }
 
-Shot::Shot(std::weak_ptr<Metadata> in_metadata,
+Shot::Shot(std::weak_ptr<metadata> in_metadata,
            decltype(p_shot) in_shot,
            decltype(p_shot_ab) in_shot_ab)
-    : Metadata(std::move(in_metadata)),
+    : metadata(std::move(in_metadata)),
       p_shot(in_shot),
       p_shot_ab(std::move(in_shot_ab)) {
   p_type = meta_type::folder;

@@ -4,7 +4,7 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/metadata.h>
 #include <DoodleLib/core/CoreSet.h>
 
 
@@ -13,7 +13,7 @@ namespace doodle {
  * @brief 这个类代表着服务端的文件条目
  *
  */
-class DOODLELIB_API AssetsFile : public Metadata {
+class DOODLELIB_API AssetsFile : public metadata {
   std::string p_name;
   std::string p_ShowName;
   AssetsPathPtr p_path_file;
@@ -42,7 +42,7 @@ class DOODLELIB_API AssetsFile : public Metadata {
    * @param name 名称
    * @param showName 显示名称
    */
-  explicit AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string showName, std::string Name = {});
+  explicit AssetsFile(std::weak_ptr<metadata> in_metadata, std::string showName, std::string Name = {});
   // ~AssetsFile();
 
   [[nodiscard]] std::string str() const override;
@@ -89,7 +89,7 @@ template <class Archive>
 void AssetsFile::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 1)
     ar&
-            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
         BOOST_SERIALIZATION_NVP(p_name) &
         BOOST_SERIALIZATION_NVP(p_ShowName) &
         BOOST_SERIALIZATION_NVP(p_path_file) &
@@ -99,7 +99,7 @@ void AssetsFile::serialize(Archive& ar, const std::uint32_t version) {
         BOOST_SERIALIZATION_NVP(p_comment);
   if (version == 2)
     ar&
-            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
         BOOST_SERIALIZATION_NVP(p_name) &
         BOOST_SERIALIZATION_NVP(p_ShowName) &
         BOOST_SERIALIZATION_NVP(p_path_file) &
@@ -110,7 +110,7 @@ void AssetsFile::serialize(Archive& ar, const std::uint32_t version) {
         BOOST_SERIALIZATION_NVP(p_version);
   if (version == 3)
     ar&
-            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
         BOOST_SERIALIZATION_NVP(p_name) &
         BOOST_SERIALIZATION_NVP(p_ShowName) &
         BOOST_SERIALIZATION_NVP(p_path_files) &

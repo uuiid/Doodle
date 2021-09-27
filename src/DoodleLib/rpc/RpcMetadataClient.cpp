@@ -25,7 +25,7 @@ RpcMetadataClient::RpcMetadataClient(const std::shared_ptr<grpc::Channel>& in_ch
 }
 std::vector<ProjectPtr> RpcMetadataClient::GetProject() {
   auto k_filter = new_object<rpc_filter::filter>();
-  k_filter->set_meta_type(Metadata::meta_type::project_root);
+  k_filter->set_meta_type(metadata::meta_type::project_root);
   auto k_list = FilterMetadata(k_filter);
   std::vector<ProjectPtr> k_out_list{};
   std::transform(
@@ -97,7 +97,7 @@ std::vector<MetadataPtr> RpcMetadataClient::FilterMetadata(const rpc_filter::rpc
   auto k_r = p_stub->FilterMetadata(&k_context, k_filter);
   DataDb k_db;
   while (k_r->Read(&k_db)) {
-    if (auto k_i = Metadata::from_DataDb(k_db); k_i)
+    if (auto k_i = metadata::from_DataDb(k_db); k_i)
       k_list.push_back(k_i);
   }
   auto status = k_r->Finish();
@@ -119,7 +119,7 @@ void rpc_filter::filter::set_id(uint64_t in_id) {
 void rpc_filter::filter::set_parent_id(std::int64_t in_patent_id) {
   _parent_id = in_patent_id;
 }
-void rpc_filter::filter::set_meta_type(Metadata::meta_type in_meta_type) {
+void rpc_filter::filter::set_meta_type(metadata::meta_type in_meta_type) {
   _meta_type = in_meta_type;
 }
 void rpc_filter::filter::set_begin_time(const rpc_filter::filter::time_point& in_time) {

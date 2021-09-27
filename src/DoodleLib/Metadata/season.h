@@ -3,17 +3,17 @@
 //
 
 #pragma once
-#include <DoodleLib/Metadata/Metadata.h>
 #include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/Metadata/metadata.h>
 namespace doodle {
 
 class DOODLELIB_API season
-    : public Metadata {
+    : public metadata {
   std::int32_t p_int;
 
  public:
   season();
-  explicit season(std::weak_ptr<Metadata> in_metadata, std::int32_t in_);
+  explicit season(std::weak_ptr<metadata> in_metadata, std::int32_t in_);
 
   void set_season(std::int32_t in_);
   std::int32_t get_season() const;
@@ -31,7 +31,7 @@ template <class Archive>
 void season::serialize(Archive& ar, std::uint32_t const version) {
   if (version == 1)
     ar&
-        boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this))&
+        boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this))&
         p_int;
 }
 }  // namespace doodle

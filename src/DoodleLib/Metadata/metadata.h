@@ -144,9 +144,9 @@ class database_action {
  * @warning 这里这个基类是不进行cereal注册的要不然会序列化出错
  * @TODO: 将父子关系函数进行提取出超类
  */
-class DOODLELIB_API Metadata
-    : public std::enable_shared_from_this<Metadata>,
-      public database_action<Metadata, MetadataFactory>,
+class DOODLELIB_API metadata
+    : public std::enable_shared_from_this<metadata>,
+      public database_action<metadata, MetadataFactory>,
       public details::no_copy {
  public:
   /**
@@ -177,7 +177,7 @@ class DOODLELIB_API Metadata
   void install_slots();
 
   ///弱父对象的指针
-  std::weak_ptr<Metadata> p_parent;
+  std::weak_ptr<metadata> p_parent;
 
   ///这个时父对象的root
   std::optional<uint64_t> p_parent_id;
@@ -188,13 +188,13 @@ class DOODLELIB_API Metadata
   bool child_item_is_sort;
 
  public:
-  Metadata();
+  metadata();
   /**
    * @brief 这个时直接创建对象的，其中会自动设置父指针
    * @param in_metadata 父指针输入
    */
-  explicit Metadata(std::weak_ptr<Metadata> in_metadata);
-  virtual ~Metadata();
+  explicit metadata(std::weak_ptr<metadata> in_metadata);
+  virtual ~metadata();
 
   observable_container<std::vector<MetadataPtr>> child_item;
 
@@ -211,7 +211,7 @@ class DOODLELIB_API Metadata
    * @brief 活动父指针
    * @return
    */
-  [[nodiscard]] virtual std::shared_ptr<Metadata> getParent() const;
+  [[nodiscard]] virtual std::shared_ptr<metadata> getParent() const;
   /**
    * @brief 这个时查询是否具有子项的(具有复杂的逻辑)
    *
@@ -280,7 +280,7 @@ class DOODLELIB_API Metadata
    * @param in_metadata 输入父亲
    * @return 返回是否是这个的父亲
    */
-  [[nodiscard]] virtual bool checkParent(const Metadata &in_metadata) const;
+  [[nodiscard]] virtual bool checkParent(const metadata &in_metadata) const;
 
   virtual void create_menu(const attribute_factory_ptr &in_factoryPtr) = 0;
 
@@ -307,12 +307,12 @@ class DOODLELIB_API Metadata
   /**
    * @warning 此处如果进行比较， 会自动转化为子类进行比较， 相同子类优化， 不同子类字符串比较
    */
-  virtual bool operator<(const Metadata &in_rhs) const;
-  virtual bool operator>(const Metadata &in_rhs) const;
-  virtual bool operator<=(const Metadata &in_rhs) const;
-  virtual bool operator>=(const Metadata &in_rhs) const;
-  bool operator==(const Metadata &in_rhs) const;
-  bool operator!=(const Metadata &in_rhs) const;
+  virtual bool operator<(const metadata &in_rhs) const;
+  virtual bool operator>(const metadata &in_rhs) const;
+  virtual bool operator<=(const metadata &in_rhs) const;
+  virtual bool operator>=(const metadata &in_rhs) const;
+  bool operator==(const metadata &in_rhs) const;
+  bool operator!=(const metadata &in_rhs) const;
 
   virtual void to_DataDb(DataDb &in_) const;
   static MetadataPtr from_DataDb(const DataDb &in_);
@@ -324,7 +324,7 @@ class DOODLELIB_API Metadata
 };
 
 template <class Archive>
-void Metadata::serialize(Archive &ar, const std::uint32_t version) {
+void metadata::serialize(Archive &ar, const std::uint32_t version) {
   //  p_has_child = child_item.size();
   //  if (version == 1)
   //    ar &
@@ -351,6 +351,6 @@ void Metadata::serialize(Archive &ar, const std::uint32_t version) {
 
 // CEREAL_REGISTER_TYPE(doodle::Metadata)
 // CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::Metadata>, doodle::Metadata)
-BOOST_CLASS_VERSION(doodle::Metadata, 2)
-BOOST_SERIALIZATION_ASSUME_ABSTRACT(doodle::Metadata)
-BOOST_CLASS_EXPORT_KEY(doodle::Metadata)
+BOOST_CLASS_VERSION(doodle::metadata, 2)
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(doodle::metadata)
+BOOST_CLASS_EXPORT_KEY(doodle::metadata)

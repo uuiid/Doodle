@@ -1,15 +1,15 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/metadata.h>
 
 namespace doodle {
 
-class DOODLELIB_API Episodes : public Metadata {
+class DOODLELIB_API Episodes : public metadata {
   int64_t p_episodes;
 
  public:
   Episodes();
-  explicit Episodes(std::weak_ptr<Metadata> in_metadata, int64_t in_episodes);
+  explicit Episodes(std::weak_ptr<metadata> in_metadata, int64_t in_episodes);
   // ~Episodes();
 
   [[nodiscard]] const int64_t &getEpisodes() const noexcept;
@@ -42,7 +42,7 @@ class DOODLELIB_API Episodes : public Metadata {
 template <class Archive>
 void Episodes::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
-    ar &boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+    ar &boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
         p_episodes;
 }
 }  // namespace doodle

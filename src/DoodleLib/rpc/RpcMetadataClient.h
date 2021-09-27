@@ -4,9 +4,9 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Metadata/Metadata.h>
-#include <DoodleLib/libWarp/protobuf_warp.h>
+#include <DoodleLib/Metadata/metadata.h>
 #include <DoodleLib/generate/rpc/MetadataServer.grpc.pb.h>
+#include <DoodleLib/libWarp/protobuf_warp.h>
 #include <grpcpp/channel.h>
 
 namespace doodle {
@@ -18,7 +18,7 @@ class filter : details::no_copy {
  private:
   std::optional<std::int64_t> _id;
   std::optional<std::int64_t> _parent_id;
-  std::optional<Metadata::meta_type> _meta_type;
+  std::optional<metadata::meta_type> _meta_type;
   std::optional<time_point> _begin;
   std::optional<time_point> _end;
 
@@ -27,7 +27,7 @@ class filter : details::no_copy {
 
   void set_id(uint64_t in_id);
   void set_parent_id(std::int64_t in_patent_id);
-  void set_meta_type(Metadata::meta_type in_meta_type);
+  void set_meta_type(metadata::meta_type in_meta_type);
   void set_begin_time(const time_point& in_time);
   void set_end_time(const time_point& in_time);
   void set_range(const time_point& in_begin, const time_point& in_end);

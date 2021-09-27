@@ -5,7 +5,7 @@
 #include "edit_widgets.h"
 
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
-#include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/metadata.h>
 namespace doodle {
 edit_widgets::edit_widgets()
     : p_meta_parent(),

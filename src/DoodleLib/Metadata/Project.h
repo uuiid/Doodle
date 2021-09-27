@@ -1,12 +1,12 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/metadata.h>
 
 namespace doodle {
 /**
  * 项目信息类
  */
-class DOODLELIB_API Project : public Metadata {
+class DOODLELIB_API Project : public metadata {
   std::string p_name;
   std::string p_en_str;
   std::string p_shor_str;
@@ -55,7 +55,7 @@ void Project::serialize(Archive& ar, std::uint32_t const version) {
         boost::serialization::make_nvp("path", p_path);
   if (version == 2)
     ar&
-            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
         boost::serialization::make_nvp("name", p_name) &
         boost::serialization::make_nvp("path", p_path);
   init();

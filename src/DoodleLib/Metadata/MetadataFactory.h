@@ -21,14 +21,14 @@ class DOODLELIB_API MetadataFactory : public std::enable_shared_from_this<Metada
 
   virtual std::vector<ProjectPtr> getAllProject();
 
-  virtual bool insert_into(Metadata* in_metadata) const;
-  virtual void deleteData(const Metadata* in_metadata) const;
+  virtual bool insert_into(metadata* in_metadata) const;
+  virtual void deleteData(const metadata* in_metadata) const;
   /**
    * @brief 在这里测试使用具有父级， 并且如果有父级， 还要更新父id， 那么就可以断定也要更新父级的记录
    * @param in_metadata
    */
-  virtual void updata_db(Metadata* in_metadata) const;
-  virtual void select_indb(Metadata* in_metadata) const;
+  virtual void updata_db(metadata* in_metadata) const;
+  virtual void select_indb(metadata* in_metadata) const;
 };
 
 }  // namespace doodle

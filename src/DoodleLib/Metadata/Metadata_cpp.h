@@ -1,7 +1,7 @@
 #pragma once
 
 // clang-format off
-#include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/metadata.h>
 
 #include <DoodleLib/Metadata/Assets.h>
 

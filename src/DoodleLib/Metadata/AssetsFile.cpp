@@ -19,7 +19,7 @@ BOOST_CLASS_EXPORT_IMPLEMENT(doodle::AssetsFile)
 namespace doodle {
 
 AssetsFile::AssetsFile()
-    : Metadata(),
+    : metadata(),
       p_name(),
       p_ShowName(),
       p_path_file(),
@@ -33,8 +33,8 @@ AssetsFile::AssetsFile()
   p_type = meta_type::file;
 }
 
-AssetsFile::AssetsFile(std::weak_ptr<Metadata> in_metadata, std::string showName, std::string name)
-    : Metadata(in_metadata),
+AssetsFile::AssetsFile(std::weak_ptr<metadata> in_metadata, std::string showName, std::string name)
+    : metadata(in_metadata),
       p_name(std::move(name)),
       p_ShowName(std::move(showName)),
       p_path_file(new_object<AssetsPath>()),
@@ -180,7 +180,7 @@ std::vector<AssetsPathPtr>& AssetsFile::getPathFile() {
   return p_path_files;
 }
 void AssetsFile::to_DataDb(DataDb& in_) const {
-  Metadata::to_DataDb(in_);
+  metadata::to_DataDb(in_);
   if (p_need_time || p_id == 0) {
     auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
         p_time->get_local_time_t());

@@ -9,11 +9,11 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::season)
 namespace doodle {
 season::season()
-    : Metadata(),
+    : metadata(),
       p_int(0) {
 }
-season::season(std::weak_ptr<Metadata> in_metadata, std::int32_t in_)
-    : Metadata(in_metadata),
+season::season(std::weak_ptr<metadata> in_metadata, std::int32_t in_)
+    : metadata(in_metadata),
       p_int(in_) {
 }
 

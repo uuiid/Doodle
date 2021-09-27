@@ -6,7 +6,7 @@
 
 #include <DoodleLib/Exception/Exception.h>
 #include <DoodleLib/Metadata/AssetsFile.h>
-#include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/metadata.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/DoodleLib.h>
 #include <Logger/Logger.h>

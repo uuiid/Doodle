@@ -7,13 +7,13 @@ BOOST_CLASS_EXPORT_IMPLEMENT(doodle::Episodes)
 namespace doodle {
 
 Episodes::Episodes()
-    : Metadata(),
+    : metadata(),
       p_episodes(-1) {
   p_type = meta_type::folder;
 }
 
-Episodes::Episodes(std::weak_ptr<Metadata> in_metadata, int64_t in_episodes)
-    : Metadata(std::move(in_metadata)),
+Episodes::Episodes(std::weak_ptr<metadata> in_metadata, int64_t in_episodes)
+    : metadata(std::move(in_metadata)),
       p_episodes(in_episodes) {
   p_type = meta_type::folder;
   if (p_episodes < 0)

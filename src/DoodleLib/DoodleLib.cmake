@@ -53,7 +53,7 @@ set(
     Metadata/AssetsPath.h
     Metadata/Comment.h
     Metadata/Episodes.h
-    Metadata/Metadata.h
+        Metadata/metadata.h
     Metadata/MetadataFactory.h
     Metadata/Metadata_cpp.h
     Metadata/Project.h
@@ -114,7 +114,7 @@ set(
     Metadata/AssetsPath.cpp
     Metadata/Comment.cpp
     Metadata/Episodes.cpp
-    Metadata/Metadata.cpp
+        Metadata/metadata.cpp
     Metadata/MetadataFactory.cpp
     Metadata/Project.cpp
     Metadata/Shot.cpp

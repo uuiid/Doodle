@@ -1,11 +1,11 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Metadata/Metadata.h>
+#include <DoodleLib/Metadata/metadata.h>
 
 #include <magic_enum.hpp>
 namespace doodle {
-class DOODLELIB_API Shot : public Metadata {
+class DOODLELIB_API Shot : public metadata {
  public:
   enum class ShotAbEnum;
 
@@ -15,7 +15,7 @@ class DOODLELIB_API Shot : public Metadata {
 
  public:
   Shot();
-  Shot(std::weak_ptr<Metadata> in_metadata,
+  Shot(std::weak_ptr<metadata> in_metadata,
        decltype(p_shot) in_shot,
        decltype(p_shot_ab) in_shot_ab = {});
 
@@ -61,7 +61,7 @@ class DOODLELIB_API Shot : public Metadata {
 template <class Archive>
 void Shot::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
-    ar &boost::serialization::make_nvp("Metadata", boost::serialization::base_object<Metadata>(*this)) &
+    ar &boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
         p_shot &
             p_shot_ab;
 }
