@@ -3,15 +3,15 @@
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/wrappers.proto";
-import "UserMessage.proto";
+import "user_message.proto";
 package doodle;
 
 
 
 
-message DataDb{
+message metadata_database{
   uint64 id = 1;
-  string uuidPath = 2;
+  string uuid_path = 2;
   google.protobuf.UInt64Value parent = 3;
   google.protobuf.Timestamp update_time = 4;
   google.protobuf.Any Metadata_cereal = 5;
@@ -30,20 +30,20 @@ message DataDb{
 }
 
 
-message DataDb_Filter{
+message metadata_database_filter{
   uint64 id = 1;
   google.protobuf.Timestamp begin_time = 2;
   google.protobuf.Timestamp end_time = 3;
-  DataDb.meta_type_value m_type = 4;
+  metadata_database.meta_type_value m_type = 4;
   google.protobuf.UInt64Value parent = 5;
 }
 
 service MetadataServer{
-  rpc InstallMetadata(DataDb) returns(DataDb) {}
-  rpc DeleteMetadata(DataDb) returns(DataDb) {}
-  rpc UpdateMetadata(DataDb) returns(DataDb) {}
+  rpc InstallMetadata(metadata_database) returns(metadata_database) {}
+  rpc DeleteMetadata(metadata_database) returns(metadata_database) {}
+  rpc UpdateMetadata(metadata_database) returns(metadata_database) {}
 
-  rpc FilterMetadata(DataDb_Filter) returns(stream DataDb) {}
+  rpc FilterMetadata(metadata_database_filter) returns(stream metadata_database) {}
 
   rpc InstallUserDate(user_database) returns(user_database) {}
   rpc UpdateUserDate(user_database) returns(user_database) {}

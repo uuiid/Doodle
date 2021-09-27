@@ -21,9 +21,9 @@ doodle_sqlpp_generate(
 doodle_grpc_generate(
         OUT_LISTS_GRPC
         LISTS_FILES
-        rpc/MetadataServer.proto
-        rpc/FileSystemServer.proto
-        rpc/UserMessage.proto
+        rpc/metadata_server.proto
+        rpc/file_system_server.proto
+        rpc/user_message.proto
 )
 
 add_library(DoodleLib
