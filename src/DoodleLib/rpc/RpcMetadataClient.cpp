@@ -31,7 +31,7 @@ std::vector<ProjectPtr> RpcMetadataClient::GetProject() {
   std::transform(
       k_list.begin(), k_list.end(), std::back_inserter(k_out_list),
       [](const MetadataPtr& in) {
-        return std::dynamic_pointer_cast<Project>(in);
+        return std::dynamic_pointer_cast<project>(in);
       });
   return k_out_list;
 }

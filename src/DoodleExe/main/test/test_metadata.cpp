@@ -136,7 +136,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
 
   std::vector<MetadataPtr> k_delete_id;
   SECTION("create project") {
-    auto k_prj = std::make_shared<Project>("D:/tmp", "case_tset");
+    auto k_prj = std::make_shared<project>("D:/tmp", "case_tset");
     k_prj->insert_into(k_fa);
     REQUIRE(k_prj->getId() != 0);
     DOODLE_LOG_INFO("prj id is {} ", k_prj->getId());

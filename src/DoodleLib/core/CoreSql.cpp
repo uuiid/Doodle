@@ -1,6 +1,6 @@
 
 #include <DoodleLib/Exception/Exception.h>
-#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/Metadata/project.h>
 #include <DoodleLib/core/CoreSet.h>
 #include <DoodleLib/core/CoreSql.h>
 #include <sqlpp11/mysql/mysql.h>

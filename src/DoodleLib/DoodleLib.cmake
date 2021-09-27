@@ -56,7 +56,7 @@ set(
         Metadata/metadata.h
         Metadata/metadata_factory.h
     Metadata/Metadata_cpp.h
-    Metadata/Project.h
+        Metadata/project.h
     Metadata/Shot.h
     Metadata/season.h
     Metadata/time_point_wrap.h
@@ -116,7 +116,7 @@ set(
         Metadata/episodes.cpp
         Metadata/metadata.cpp
         Metadata/metadata_factory.cpp
-    Metadata/Project.cpp
+        Metadata/project.cpp
     Metadata/Shot.cpp
     Metadata/season.cpp
     Metadata/time_point_wrap.cpp

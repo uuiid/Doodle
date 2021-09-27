@@ -1,7 +1,7 @@
 #pragma once
 
 #include <DoodleLib/DoodleLib_fwd.h>
-#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/Metadata/project.h>
 #include <DoodleLib/core/Ue4Setting.h>
 #include <DoodleLib/core/observable_container.h>
 #include <DoodleLib/libWarp/BoostUuidWarp.h>

@@ -27,7 +27,6 @@
 #include <DoodleLib/Logger/Logger.h>
 #include <DoodleLib/Logger/LoggerTemplate.h>
 #include <DoodleLib/Metadata/Metadata_cpp.h>
-#include <DoodleLib/Metadata/Project.h>
 #include <DoodleLib/Metadata/Shot.h>
 #include <DoodleLib/Metadata/assets.h>
 #include <DoodleLib/Metadata/assets_file.h>
@@ -36,6 +35,7 @@
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/metadata.h>
 #include <DoodleLib/Metadata/metadata_factory.h>
+#include <DoodleLib/Metadata/project.h>
 #include <DoodleLib/Metadata/season.h>
 #include <DoodleLib/Metadata/time_point_wrap.h>
 #include <DoodleLib/Metadata/user.h>

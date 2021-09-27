@@ -247,7 +247,7 @@ DOODLELIB_API std::string file_hash_sha224(const path &in_file);
 }  // namespace FSys
 
 class CoreSet;
-class Project;
+class project;
 class episodes;
 class Shot;
 class metadata;
@@ -386,7 +386,7 @@ using RpcFileSystemClientPtr       = std::shared_ptr<RpcFileSystemClient>;
  * @brief Project 智能共享指针
  *
  */
-using ProjectPtr                   = std::shared_ptr<Project>;
+using ProjectPtr                   = std::shared_ptr<project>;
 /**
  * @brief Episodes 智能共享指针
  *

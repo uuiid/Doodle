@@ -6,7 +6,7 @@ namespace doodle {
 /**
  * 项目信息类
  */
-class DOODLELIB_API Project : public metadata {
+class DOODLELIB_API project : public metadata {
   std::string p_name;
   std::string p_en_str;
   std::string p_shor_str;
@@ -15,8 +15,8 @@ class DOODLELIB_API Project : public metadata {
   void init();
 
  public:
-  Project();
-  explicit Project(FSys::path in_path, std::string in_name = {});
+  project();
+  explicit project(FSys::path in_path, std::string in_name = {});
 
   const std::string& getName() const;
   void setName(const std::string& Name) noexcept;
@@ -34,10 +34,10 @@ class DOODLELIB_API Project : public metadata {
 
   virtual void create_menu(const attribute_factory_ptr& in_factoryPtr) override;
 
-  bool operator<(const Project& in_rhs) const;
-  bool operator>(const Project& in_rhs) const;
-  bool operator<=(const Project& in_rhs) const;
-  bool operator>=(const Project& in_rhs) const;
+  bool operator<(const project& in_rhs) const;
+  bool operator>(const project& in_rhs) const;
+  bool operator<=(const project& in_rhs) const;
+  bool operator>=(const project& in_rhs) const;
 
  private:
   [[nodiscard]] FSys::path DBRoot() const;
@@ -48,7 +48,7 @@ class DOODLELIB_API Project : public metadata {
 };
 
 template <class Archive>
-void Project::serialize(Archive& ar, std::uint32_t const version) {
+void project::serialize(Archive& ar, std::uint32_t const version) {
   if (version == 1)
     ar&
             boost::serialization::make_nvp("name", p_name) &
@@ -62,5 +62,5 @@ void Project::serialize(Archive& ar, std::uint32_t const version) {
 }
 
 }  // namespace doodle
-BOOST_CLASS_VERSION(doodle::Project, 2);
-BOOST_CLASS_EXPORT_KEY(doodle::Project)
+BOOST_CLASS_VERSION(doodle::project, 2);
+BOOST_CLASS_EXPORT_KEY(doodle::project)

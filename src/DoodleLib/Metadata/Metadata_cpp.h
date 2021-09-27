@@ -9,7 +9,7 @@
 #include <DoodleLib/Metadata/comment.h>
 #include <DoodleLib/Metadata/assets_path.h>
 
-#include <DoodleLib/Metadata/Project.h>
+#include <DoodleLib/Metadata/project.h>
 #include <DoodleLib/Metadata/season.h>
 #include <DoodleLib/Metadata/episodes.h>
 #include <DoodleLib/Metadata/Shot.h>

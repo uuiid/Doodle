@@ -29,7 +29,7 @@ bool comm_project_add::render() {
   auto& k_d_lib = DoodleLib::Get();
   ImGui::BulletText(p_name.c_str());
   if (imgui::Button(p_show_str["添加"].c_str())) {
-    auto k_prj = new_object<Project>(*p_prj_path, *p_prj_name);
+    auto k_prj = new_object<project>(*p_prj_path, *p_prj_name);
     k_prj->updata_db(k_d_lib.get_metadata_factory());
     k_d_lib.p_project_vector = k_d_lib.get_metadata_factory()->getAllProject();
   }
@@ -67,7 +67,7 @@ bool comm_project_add::render() {
 }
 
 bool comm_project_add::add_data(const MetadataPtr& in_parent, const MetadataPtr& in) {
-  p_root = std::dynamic_pointer_cast<Project>(in);
+  p_root = std::dynamic_pointer_cast<project>(in);
   if (p_root) {
     *p_prj_name = p_root->getName();
     *p_prj_path = p_root->getPath().generic_string();
