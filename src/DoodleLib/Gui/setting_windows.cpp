@@ -5,10 +5,10 @@
 #include "setting_windows.h"
 
 #include <DoodleLib/core/CoreSet.h>
+#include <DoodleLib/core/DoodleLib.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 
 #include <magic_enum.hpp>
-
 namespace doodle {
 
 setting_windows::setting_windows()
@@ -20,7 +20,7 @@ setting_windows::setting_windows()
       p_maya_path(new_object<std::string>(CoreSet::getSet().MayaPath().generic_string())),
       p_ue_path(new_object<std::string>(CoreSet::getSet().gettUe4Setting().Path().generic_string())),
       p_ue_version(new_object<std::string>(CoreSet::getSet().gettUe4Setting().Version())),
-      p_batch_max(new_object<std::int32_t>(std::thread::hardware_concurrency())) {
+      p_batch_max(new_object<std::int32_t>(CoreSet::getSet().p_max_thread)) {
   p_class_name = "设置";
 }
 void setting_windows::frame_render() {
@@ -41,6 +41,8 @@ void setting_windows::frame_render() {
   imgui::InputText("UE路径", p_ue_path.get());
   imgui::InputText("UE版本", p_ue_version.get());
   imgui::InputInt("batch 操作线程数", p_batch_max.get());
+  imgui::SameLine();
+  dear::HelpMarker{"更改线程池大小需要一定时间,以及风险"};
 
   if (imgui::Button("save"))
     save();
@@ -50,8 +52,10 @@ void setting_windows::save() {
   set.setDepartment(magic_enum::enum_cast<Department>(p_cur_dep_index).value());
   set.setUser(*p_user);
   set.setMayaPath(*p_maya_path);
+  set.set_max_tread(*p_batch_max);
   set.gettUe4Setting().setPath(*p_ue_path);
   set.gettUe4Setting().setVersion(*p_ue_version);
   set.writeDoodleLocalSet();
+  DoodleLib::Get().set_thread_pool_size();
 }
 }  // namespace doodle

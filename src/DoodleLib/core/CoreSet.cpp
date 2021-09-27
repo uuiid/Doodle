@@ -133,6 +133,7 @@ CoreSet::CoreSet()
 #endif
       p_sql_user("deve"),
       p_sql_password("deve"),
+      p_max_thread(std::thread::hardware_concurrency() - 2),
       p_stop(false),
       p_mutex(),
       p_condition() {
@@ -296,6 +297,11 @@ void CoreSet::from_json(const nlohmann::json &nlohmann_json_j) {
   nlohmann_json_j.at("p_sql_host").get_to(p_sql_host);
   nlohmann_json_j.at("p_sql_user").get_to(p_sql_user);
   nlohmann_json_j.at("p_sql_password").get_to(p_sql_password);
+}
+
+void CoreSet::set_max_tread(const std::uint16_t in) 
+{
+  p_max_thread = in;
 }
 void CoreSet::setDepartment(const Department &value) {
   p_department_ = value;

@@ -20,7 +20,7 @@ namespace doodle {
 DoodleLib* DoodleLib::p_install = nullptr;
 
 DoodleLib::DoodleLib()
-    : p_thread_pool(new_object<ThreadPool>(std::thread::hardware_concurrency() - 2)),
+    : p_thread_pool(new_object<ThreadPool>(CoreSet::getSet().p_max_thread)),
       p_curr_project(),
       p_rpc_metadata_clien(),
       p_rpc_file_system_client(),
@@ -57,6 +57,10 @@ FSys::path DoodleLib::create_time_database() {
 }
 DoodleLib& DoodleLib::Get() {
   return *p_install;
+}
+
+void DoodleLib::set_thread_pool_size() {
+  p_thread_pool = new_object<ThreadPool>(CoreSet::getSet().p_max_thread);
 }
 ThreadPoolPtr DoodleLib::get_thread_pool() {
   return p_thread_pool;

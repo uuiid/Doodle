@@ -92,6 +92,8 @@ class DOODLELIB_API CoreSet : public details::no_copy {
 
   void from_json(const nlohmann::json &nlohmann_json_j);
 
+  std::uint16_t p_max_thread;
+  void set_max_tread(const std::uint16_t in);
   /**
    * @brief 全局是否停止， 服务器使用
    */

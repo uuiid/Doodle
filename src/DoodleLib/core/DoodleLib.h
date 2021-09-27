@@ -28,6 +28,7 @@ class DOODLELIB_API DoodleLib : public details::no_copy {
 
   static DoodleLib& Get();
 
+  void set_thread_pool_size();
   ThreadPoolPtr get_thread_pool();
 
   using project_vector = std::vector<ProjectPtr>;
