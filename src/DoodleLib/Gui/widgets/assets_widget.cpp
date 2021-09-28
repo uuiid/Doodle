@@ -49,10 +49,10 @@ void assets_widget::load_meta(const metadata_ptr& in_ptr) {
             i->show_str().c_str()} &&
             [i, this]() {
               // imgui::SameLine();
-              if (i->has_file())
-                imgui::BulletText("files");
               if (imgui::IsItemClicked())
                 set_select(i);
+              if (i->has_file())
+                imgui::BulletText("files");
               load_meta(i);
             };
       } else {
