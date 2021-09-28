@@ -53,9 +53,18 @@ bool maya_file::checkFile() {
   return true;
 }
 
+// class ctypr : public std::ctype<char> {
+//   mask my_table[table_size];
+
+//  public:
+//   ctypr(std::size_t refs = 0)
+//       : std::ctype<char>(&my_table[0], false, refs){};
+// };
+
 bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_term) {
   boost::process::ipstream k_in{};
   boost::process::ipstream k_in2{};
+  // k_in.imbue();
   // boost::asio::io_context ios{};
   // std::vector<char> v_out(128 << 10);
   // auto out_buff{boost::asio::buffer(v_out)};
@@ -100,7 +109,7 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
   // k_c.wait();
   // return k_c.exit_code() == 0;
   auto fun  = std::async(std::launch::async,
-                         [&k_c, &k_in, &in_term]() {
+                        [&k_c, &k_in, &in_term]() {
                           auto str_r = std::string{};
                           while (k_c.running()) {
                             if (std::getline(k_in, str_r) && !str_r.empty()) {
@@ -108,7 +117,7 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
                               in_term->sig_progress(rational_int{1, 50});
                             }
                           }
-                         });
+                        });
   auto fun2 = std::async(std::launch::async,
                          [&k_c, &k_in2, &in_term, &in_com]() {
                            auto str_r2 = std::string{};
