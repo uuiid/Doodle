@@ -23,7 +23,7 @@ time_widget::time_widget()
 void time_widget::frame_render() {
   dear::TreeNode{p_class_name.c_str()} && [this]() {
     imgui::SliderInt("年", &p_year, 0, 2050);
-    imgui::SliderInt("月", &p_month, 0, 11);
+    imgui::SliderInt("月", &p_month, 1, 12);
     imgui::SliderInt("日", &p_day, 0, p_day_max);
     imgui::SliderInt("时", &p_hour, 0, 23);
     imgui::SliderInt("分", &p_minutes, 0, 59);
@@ -43,9 +43,17 @@ void time_widget::frame_render() {
              chrono::month{(std::uint32_t)p_month} /
              chrono::last;
   p_day_max = (std::uint32_t)k_l.day();
+  if (p_day > p_day_max)
+    p_day = p_day_max;
 }
 
 void time_widget::set_time(const time_wrap_ptr& in_time) {
-  p_time = in_time;
+  p_time    = in_time;
+  p_year    = p_time->get_year();
+  p_month   = p_time->get_month();
+  p_day     = p_time->get_day();
+  p_hour    = p_time->get_hour();
+  p_minutes = p_time->get_minutes();
+  p_second  = p_time->get_second();
 }
 }  // namespace doodle
