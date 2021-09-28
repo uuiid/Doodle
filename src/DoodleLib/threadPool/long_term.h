@@ -59,12 +59,6 @@ class DOODLELIB_API long_term
   void set_name(const std::string& in_string);
 
   std::string& get_id();
-  /**
-   * @brief 将信号转发到传入的新的信号中去
-   * @param in_forward 新的信号
-   */
-  void forward_sig(const long_term_ptr& in_forward);
-  void forward_sig(const std::vector<long_term_ptr>& in_forward);
 
   rational_int step(rational_int in_);
   /**

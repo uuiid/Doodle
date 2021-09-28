@@ -221,6 +221,7 @@ down_file::down_file(rpc_file_system_client* in_self)
 }
 
 void down_file::run() {
+  _term->start();
   auto [k_is_eq, k_is_down, k_s_ex, k_sz] = _self->compare_file_is_down(_param->local_path, _param->server_path);
   if (!k_is_eq) {
     _term->sig_progress(1);
@@ -276,6 +277,7 @@ up_file::up_file(rpc_file_system_client* in_self)
     : trans_file(in_self) {
 }
 void up_file::run() {
+  _term->start();
   auto [k_is_eq, k_is_down, k_s_ex, k_sz] = _self->compare_file_is_down(_param->local_path, _param->server_path);
   if (!k_is_eq) {
     _term->sig_progress(1);
@@ -363,11 +365,6 @@ void down_dir::run() {
     _stack.insert(_stack.end(), std::make_move_iterator(k_i.begin()), std::make_move_iterator(k_i.end()));
   }
 
-  std::vector<long_term_ptr> k_l_list{};
-  std::transform(_down_list.begin(), _down_list.end(), std::back_inserter(k_l_list),
-                 [](const trans_file_ptr& in_) { return in_->get_term(); });
-  _term->forward_sig(k_l_list);
-
   for (auto& k_i : _down_list) {
     (*k_i)();
   }
@@ -431,11 +428,6 @@ void up_dir::run() {
     _stack.insert(_stack.end(), std::make_move_iterator(k_list.begin()), std::make_move_iterator(k_list.end()));
   }
 
-  std::vector<long_term_ptr> k_l_list{};
-  std::transform(_up_list.begin(), _up_list.end(), std::back_inserter(k_l_list),
-                 [](const trans_file_ptr& in_) { return in_->get_term(); });
-  _term->forward_sig(k_l_list);
-
   for (auto& k_i : _up_list) {
     (*k_i)();
   }
@@ -484,11 +476,6 @@ void trans_files::wait() {
   }
 }
 void trans_files::run() {
-  std::vector<long_term_ptr> k_l_list{};
-  std::transform(_list.begin(), _list.end(), std::back_inserter(k_l_list),
-                 [](const trans_file_ptr& in_) { return in_->get_term(); });
-  _term->forward_sig(k_l_list);
-
   for (auto& k_i : _list) {
     (*k_i)();
   }

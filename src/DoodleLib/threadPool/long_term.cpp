@@ -64,38 +64,7 @@ bool long_term::fulfil() const {
 std::string long_term::message_result() const {
   return p_str.empty() ? std::string{} : p_str.back();
 }
-void long_term::forward_sig(const long_term_ptr& in_forward) {
-  p_child.push_back(in_forward);
-  in_forward->sig_progress.connect([this](rational_int in_pro) { sig_progress(in_pro); });
-  in_forward->sig_finished.connect([this]() { sig_finished(); });
-  in_forward->sig_message_result.connect(
-      [this](const std::string& in_str, level in_level) {
-        sig_message_result(in_str, in_level);
-      });
-}
 
-void long_term::forward_sig(const std::vector<long_term_ptr>& in_forward) {
-  const std::size_t k_size = in_forward.size();
-  for (const auto& i : in_forward) {
-    p_child.push_back(i);
-
-    i->sig_progress.connect([this, k_size](
-                                rational_int in_) {
-      sig_progress(in_ / k_size);
-    });
-    i->sig_message_result.connect([this](const std::string& str, level in_level) {
-      sig_message_result(str, in_level);
-    });
-    i->sig_finished.connect([this, k_size]() {
-      auto k_is_fulfil = std::all_of(p_child.begin(), p_child.end(), [](const long_term_ptr& in_term) {
-        std::lock_guard k_guark{in_term->_mutex};
-        return in_term->p_fulfil;
-      });
-      if (k_is_fulfil)
-        sig_finished();
-    });
-  }
-}
 long_term::~long_term() {
   for (auto& k_item : p_list) {
     try {

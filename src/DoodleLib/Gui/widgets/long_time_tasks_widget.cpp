@@ -9,6 +9,9 @@
 #include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 #include <DoodleLib/threadPool/long_term.h>
+
+#include <boost/range.hpp>
+#include <boost/range/algorithm_ext.hpp>
 namespace doodle {
 
 long_time_tasks_widget::long_time_tasks_widget()
@@ -17,7 +20,7 @@ long_time_tasks_widget::long_time_tasks_widget()
       p_command_tool_ptr_(),
       p_main_log(),
       p_info_log() {
-        p_class_name = "队列"; 
+  p_class_name = "队列";
   //  for (int k_i = 0; k_i < 5000; ++k_i) {
   //    p_main_log.p_log.append("p_main_log test\n");
   //    p_info_log.p_log.append("p_info_log test\n");
@@ -28,6 +31,12 @@ void long_time_tasks_widget::frame_render() {
   auto& k_ = doodle_lib::Get();
   {
     std::lock_guard k_guard{k_.mutex};
+    if (k_.long_task_list.size() > 100) {
+      boost::remove_erase_if(k_.long_task_list, [](const long_term_ptr& in) {
+        return in->fulfil();
+      });
+      // std::remove_if()
+    }
     task = k_.long_task_list;
   }
   if (p_command_tool_ptr_)
