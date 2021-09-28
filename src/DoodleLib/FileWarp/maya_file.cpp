@@ -56,7 +56,6 @@ bool maya_file::checkFile() {
 bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_term) {
   boost::process::ipstream k_in{};
   boost::process::ipstream k_in2{};
-
   // boost::asio::io_context ios{};
   // std::vector<char> v_out(128 << 10);
   // auto out_buff{boost::asio::buffer(v_out)};
@@ -101,7 +100,7 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
   // k_c.wait();
   // return k_c.exit_code() == 0;
   auto fun  = std::async(std::launch::async,
-                        [&k_c, &k_in, &in_term]() {
+                         [&k_c, &k_in, &in_term]() {
                           auto str_r = std::string{};
                           while (k_c.running()) {
                             if (std::getline(k_in, str_r) && !str_r.empty()) {
@@ -109,9 +108,9 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
                               in_term->sig_progress(rational_int{1, 50});
                             }
                           }
-                        });
+                         });
   auto fun2 = std::async(std::launch::async,
-                         [&k_c, &k_in2, &in_term, &in_com ]() {
+                         [&k_c, &k_in2, &in_term, &in_com]() {
                            auto str_r2 = std::string{};
                            //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
                            const static std::wregex fatal_error_znch{
@@ -140,12 +139,14 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
   using namespace chrono;
   while (!k_c.wait_for(1s)) {
   }
+  k_in.close();
+  k_in2.close();
   return true;
 }
 
 void maya_file::export_fbx_file(const FSys::path& file_path,
-                             const FSys::path& export_path,
-                             const long_term_ptr& in_ptr) {
+                                const FSys::path& export_path,
+                                const long_term_ptr& in_ptr) {
   if (!FSys::exists(file_path)) {
     if (in_ptr) {
       in_ptr->sig_finished();
@@ -188,7 +189,7 @@ void maya_file::export_fbx_file(const FSys::path& file_path,
 }
 
 void maya_file::qcloth_sim_file(const qcloth_arg_ptr& in_arg,
-                               const long_term_ptr& in_ptr) {
+                                const long_term_ptr& in_ptr) {
   if (!FSys::exists(in_arg->sim_path)) {
     if (in_ptr) {
       in_ptr->sig_finished();
