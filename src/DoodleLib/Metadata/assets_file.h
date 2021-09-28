@@ -17,7 +17,7 @@ class DOODLELIB_API assets_file : public metadata {
   std::string p_ShowName;
   assets_path_ptr p_path_file;
   std::vector<assets_path_ptr> p_path_files;
-  time_duration_ptr p_time;
+  time_wrap_ptr p_time;
   std::string p_user;
   department p_department;
   std::vector<comment_ptr> p_comment;
@@ -47,8 +47,8 @@ class DOODLELIB_API assets_file : public metadata {
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string show_str() const override;
 
-  [[nodiscard]] const time_duration_ptr& get_time() const;
-  void set_time(const time_duration_ptr& in_time);
+  [[nodiscard]] const time_wrap_ptr& get_time() const;
+  void set_time(const time_wrap_ptr& in_time);
 
   [[nodiscard]] const std::string& get_user() const;
   void set_user(const std::string& in_user);

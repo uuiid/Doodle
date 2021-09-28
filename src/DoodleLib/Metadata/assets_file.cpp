@@ -157,10 +157,10 @@ void assets_file::set_department(department in_department) {
   p_department = in_department;
   saved(true);
 }
-const time_duration_ptr& assets_file::get_time() const {
+const time_wrap_ptr& assets_file::get_time() const {
   return p_time;
 }
-void assets_file::set_time(const time_duration_ptr& in_time) {
+void assets_file::set_time(const time_wrap_ptr& in_time) {
   p_time = in_time;
   saved(true);
   p_need_time = true;

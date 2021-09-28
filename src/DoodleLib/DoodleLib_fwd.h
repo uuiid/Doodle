@@ -401,7 +401,7 @@ using metadata_factory_ptr           = std::shared_ptr<metadata_factory>;
  * @brief TimeDuration 智能共享指针
  *
  */
-using time_duration_ptr              = std::shared_ptr<time_point_wrap>;
+using time_wrap_ptr              = std::shared_ptr<time_point_wrap>;
 /**
  * @brief Comment 智能共享指针
  *
