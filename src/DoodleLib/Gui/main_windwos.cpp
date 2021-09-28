@@ -41,6 +41,14 @@ main_windows::main_windows()
     win_cast<assets_file_widgets>(p_attr)->set_metadata(in);
     win_cast<edit_widgets>(p_edit_windows)->set_factort(p_ass->get_factory());
   });
+  win_cast<assets_file_widgets>(p_attr)->select_change.connect(
+      [this](auto in) {
+        win_cast<edit_widgets>(
+            p_edit_windows)
+            ->set_factort(
+                win_cast<assets_file_widgets>(p_attr)->get_factory());
+      });
+
   win_cast<edit_widgets>(p_edit_windows)->set_factort(p_prj->get_factory());
 }
 void main_windows::frame_render() {

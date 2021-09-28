@@ -4,6 +4,7 @@
 
 #include "assets_file_widgets.h"
 
+#include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 namespace doodle {
@@ -12,6 +13,7 @@ assets_file_widgets::assets_file_widgets()
     : p_root(),
       p_current_select() {
   p_class_name = "文件列表";
+  p_factory    = new_object<attr_assets_file>();
 }
 
 void assets_file_widgets::frame_render() {
@@ -33,6 +35,8 @@ void assets_file_widgets::frame_render() {
                                k == p_current_select,
                                ImGuiSelectableFlags_SpanAllColumns)) {
             p_current_select = k;
+            p_current_select->attribute_widget(p_factory);
+            select_change(p_current_select);
           }
 
           imgui::TableNextColumn();
@@ -40,7 +44,10 @@ void assets_file_widgets::frame_render() {
 
           imgui::TableNextColumn();
           auto& com = k->get_comment();
-          dear::Text(com->get().empty() ? std::string{} : com->get().front()->get_comment());
+          if (com)
+            dear::Text(com->get().empty() ? std::string{} : com->get().front()->get_comment());
+          else
+            dear::Text(std::string{});
 
           imgui::TableNextColumn();
           dear::Text(k->get_time()->show_str());

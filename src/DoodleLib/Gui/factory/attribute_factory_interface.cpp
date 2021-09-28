@@ -56,4 +56,34 @@ void attr_assets::show_attribute(const season_ptr& in) {
   p_comm->add_data(in, in);
 }
 
+attr_assets_file::attr_assets_file()
+    : p_data(),
+      p_comm(new_object<comm_ass_file>()) {
+}
+
+void attr_assets_file::render() {
+  p_comm->render();
+}
+
+// void attr_assets_file::show_attribute(const episodes_ptr& in) {
+//   p_comm->add_data(in, nullptr);
+// }
+
+// void attr_assets_file::show_attribute(const shot_ptr& in) {
+//   p_comm->add_data(in, nullptr);
+// }
+
+// void attr_assets_file::show_attribute(const assets_ptr& in) {
+//   p_comm->add_data(in, nullptr);
+// }
+
+// void attr_assets_file::show_attribute(const season_ptr& in) {
+//   p_comm->add_data(in, nullptr);
+// }
+
+void attr_assets_file::show_attribute(const assets_file_ptr& in) {
+  if (in->has_parent())
+    p_comm->add_data(in->get_parent(), in);
+}
+
 }  // namespace doodle

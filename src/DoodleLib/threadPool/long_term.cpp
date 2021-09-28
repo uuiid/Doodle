@@ -99,8 +99,8 @@ void long_term::forward_sig(const std::vector<long_term_ptr>& in_forward) {
 long_term::~long_term() {
   for (auto& k_item : p_list) {
     try {
-      k_item.get();
-
+      if (k_item.valid())
+        k_item.get();
     } catch (const doodle_error& error) {
       DOODLE_LOG_WARN(error.what());
     }
