@@ -252,7 +252,7 @@ maya_file_async::maya_file_async()
     : p_maya_file() {}
 
 long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, const FSys::path& export_path) {
-  p_maya_file = std::make_shared<maya_file>();
+  p_maya_file = new_object<maya_file>();
   auto k_term = new_object<long_term>();
   k_term->set_name(file_path.filename().generic_string());
   auto k_f = doodle_lib::Get().get_thread_pool()->enqueue(
@@ -263,7 +263,7 @@ long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, cons
   return k_term;
 }
 long_term_ptr maya_file_async::qcloth_sim_file(maya_file::qcloth_arg_ptr& in_arg) {
-  p_maya_file = std::make_shared<maya_file>();
+  p_maya_file = new_object<maya_file>();
   auto k_term = new_object<long_term>();
   k_term->set_name(in_arg->sim_path.filename().generic_string());
   auto k_f = doodle_lib::Get().get_thread_pool()->enqueue(
