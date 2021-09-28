@@ -22,7 +22,6 @@ assets_file::assets_file()
     : metadata(),
       p_name(),
       p_ShowName(),
-      p_path_file(),
       p_path_files(),
       p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
       p_user(core_set::getSet().get_user()),
@@ -37,7 +36,6 @@ assets_file::assets_file(std::weak_ptr<metadata> in_metadata, std::string showNa
     : metadata(in_metadata),
       p_name(std::move(name)),
       p_ShowName(std::move(showName)),
-      p_path_file(new_object<assets_path>()),
       p_path_files(),
       p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
       p_user(core_set::getSet().get_user()),
@@ -86,18 +84,6 @@ void assets_file::set_user(const std::string& in_user) {
   saved(true);
 }
 
-const std::vector<comment_ptr>& assets_file::get_comment() const {
-  return p_comment;
-}
-void assets_file::set_comment(const std::vector<comment_ptr>& in_comment) {
-  p_comment = in_comment;
-  saved(true);
-}
-void assets_file::add_comment(const comment_ptr& in_comment) {
-  p_comment.emplace_back(in_comment);
-  saved(true);
-}
-
 const std::uint64_t& assets_file::get_version() const noexcept {
   return p_version;
 }
@@ -143,13 +129,7 @@ int assets_file::find_max_version() const {
     k_int = 1;
   return boost::numeric_cast<std::int32_t>(k_int);
 }
-const std::vector<assets_path_ptr>& assets_file::get_path_file() const {
-  return p_path_files;
-}
-void assets_file::set_path_file(const std::vector<assets_path_ptr>& in_pathFile) {
-  p_path_files = in_pathFile;
-  saved(true);
-}
+
 department assets_file::get_department() const {
   return p_department;
 }
@@ -168,9 +148,6 @@ void assets_file::set_time(const time_wrap_ptr& in_time) {
 void assets_file::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(std::dynamic_pointer_cast<assets_file>(shared_from_this()));
 }
-std::vector<assets_path_ptr>& assets_file::get_path_file() {
-  return p_path_files;
-}
 void assets_file::to_DataDb(metadata_database& in_) const {
   metadata::to_DataDb(in_);
   if (p_need_time || p_id == 0) {
@@ -178,6 +155,18 @@ void assets_file::to_DataDb(metadata_database& in_) const {
         p_time->get_local_time_t());
     in_.mutable_update_time()->CopyFrom(k_timestamp);
   }
+}
+void assets_file::set_path_file(const assets_path_vector_ptr& in_) {
+  p_path_files = in_;
+}
+void assets_file::set_comment(const comment_vector_ptr& in_) {
+  p_comment = in_;
+}
+assets_path_vector_ptr assets_file::get_path_file()  {
+  return p_path_files;
+}
+comment_vector_ptr assets_file::get_comment()  {
+  return p_comment;
 }
 
 }  // namespace doodle

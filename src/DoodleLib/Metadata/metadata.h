@@ -324,20 +324,7 @@ class DOODLELIB_API metadata
 
 template <class Archive>
 void metadata::serialize(Archive &ar, const std::uint32_t version) {
-  //  p_has_child = child_item.size();
-  //  if (version == 1)
-  //    ar &
-  //            boost::serialization::make_nvp("id", p_id) &
-  //        boost::serialization::make_nvp("parent_id", p_parent_id) &
-  //        boost::serialization::make_nvp("UUID", p_uuid) &
-  //        boost::serialization::make_nvp("has_child", p_has_child);
-  if (version == 1) {
-    ar &BOOST_SERIALIZATION_NVP(p_id);
-    ar &BOOST_SERIALIZATION_NVP(p_parent_id);
-    ar &BOOST_SERIALIZATION_NVP(p_uuid);
-    ar &BOOST_SERIALIZATION_NVP(p_has_child);
-  }
-  if (version == 2) {
+  if (version == 3) {
     ar &BOOST_SERIALIZATION_NVP(p_id);
     ar &BOOST_SERIALIZATION_NVP(p_parent_id);
     ar &BOOST_SERIALIZATION_NVP(p_uuid);
@@ -350,6 +337,6 @@ void metadata::serialize(Archive &ar, const std::uint32_t version) {
 
 // CEREAL_REGISTER_TYPE(doodle::Metadata)
 // CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::Metadata>, doodle::Metadata)
-BOOST_CLASS_VERSION(doodle::metadata, 2)
+BOOST_CLASS_VERSION(doodle::metadata, 3)
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(doodle::metadata)
 BOOST_CLASS_EXPORT_KEY(doodle::metadata)

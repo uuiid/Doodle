@@ -4,6 +4,7 @@
 
 #include "command_meta.h"
 
+#include <DoodleLib/Gui/widgets/time_widget.h>
 #include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/core/open_file_dialog.h>
@@ -340,11 +341,17 @@ bool comm_ass_season::add_data(const metadata_ptr& in_parent, const metadata_ptr
 
 comm_ass_file::comm_ass_file()
     : p_parent(),
-      p_root() {
+      p_root(),
+      p_time(),
+      p_comm(),
+      has_file(false),
+      p_time_widget(new_object<time_widget>()),
+      p_comm_str(new_object<string>()) {
   p_name     = "资产文件";
   p_show_str = make_imgui_name(this, "添加",
                                "更改",
-                               "删除");
+                               "删除", "注释",
+                               "添加注释");
 }
 
 bool comm_ass_file::render() {
@@ -366,7 +373,14 @@ bool comm_ass_file::render() {
         }
       }
     }
-    
+
+    p_time_widget->frame_render();
+    imgui::InputText(p_show_str["注释"].c_str(), p_comm_str.get());
+    imgui::SameLine();
+    if (imgui::Button(p_show_str["添加注释"].c_str())) {
+      auto k_com = p_comm->get().emplace_back(new_object<comment>());
+      k_com->set_comment(*p_comm_str);
+    }
   }
 
   return true;
@@ -378,6 +392,7 @@ bool comm_ass_file::add_data(const metadata_ptr& in_parent, const metadata_ptr& 
   if (p_root) {
     p_time = p_root->get_time()->get_local_time();
     p_comm = p_root->get_comment();
+    p_time_widget->set_time(p_root->get_time());
   }
   return p_root != nullptr;
 }

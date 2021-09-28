@@ -11,6 +11,8 @@
 #include <DoodleLib/core/doodle_lib.h>
 #include <Logger/logger.h>
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path)
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path_vector)
+
 namespace doodle {
 assets_path::assets_path()
     : p_local_path(),
@@ -80,4 +82,5 @@ FSys::path assets_path::get_cache_path() const {
   k_path /= p_lexically_relative;
   return k_path;
 }
+
 }  // namespace doodle

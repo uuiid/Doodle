@@ -15,12 +15,11 @@ namespace doodle {
 class DOODLELIB_API assets_file : public metadata {
   std::string p_name;
   std::string p_ShowName;
-  assets_path_ptr p_path_file;
-  std::vector<assets_path_ptr> p_path_files;
   time_wrap_ptr p_time;
   std::string p_user;
   department p_department;
-  std::vector<comment_ptr> p_comment;
+  assets_path_vector_ptr p_path_files;
+  comment_vector_ptr p_comment;
   std::uint64_t p_version;
 
   bool p_need_time;
@@ -52,15 +51,14 @@ class DOODLELIB_API assets_file : public metadata {
 
   [[nodiscard]] const std::string& get_user() const;
   void set_user(const std::string& in_user);
-  const std::vector<assets_path_ptr>& get_path_file() const;
-  std::vector<assets_path_ptr>& get_path_file();
-  void set_path_file(const std::vector<assets_path_ptr>& in_pathFile);
+
+  assets_path_vector_ptr get_path_file();
+  void set_path_file(const assets_path_vector_ptr& in_);
+  [[nodiscard]] comment_vector_ptr get_comment();
+  void set_comment(const comment_vector_ptr& in_);
+
   department get_department() const;
   void set_department(department in_department);
-
-  [[nodiscard]] const std::vector<comment_ptr>& get_comment() const;
-  void set_comment(const std::vector<comment_ptr>& in_comment);
-  void add_comment(const comment_ptr& in_comment);
 
   const std::uint64_t& get_version() const noexcept;
   std::string get_version_str() const;
@@ -84,27 +82,6 @@ class DOODLELIB_API assets_file : public metadata {
 
 template <class Archive>
 void assets_file::serialize(Archive& ar, const std::uint32_t version) {
-  if (version == 1)
-    ar&
-            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
-        BOOST_SERIALIZATION_NVP(p_name) &
-        BOOST_SERIALIZATION_NVP(p_ShowName) &
-        BOOST_SERIALIZATION_NVP(p_path_file) &
-        BOOST_SERIALIZATION_NVP(p_time) &
-        BOOST_SERIALIZATION_NVP(p_user) &
-        BOOST_SERIALIZATION_NVP(p_department) &
-        BOOST_SERIALIZATION_NVP(p_comment);
-  if (version == 2)
-    ar&
-            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
-        BOOST_SERIALIZATION_NVP(p_name) &
-        BOOST_SERIALIZATION_NVP(p_ShowName) &
-        BOOST_SERIALIZATION_NVP(p_path_file) &
-        BOOST_SERIALIZATION_NVP(p_time) &
-        BOOST_SERIALIZATION_NVP(p_user) &
-        BOOST_SERIALIZATION_NVP(p_department) &
-        BOOST_SERIALIZATION_NVP(p_comment) &
-        BOOST_SERIALIZATION_NVP(p_version);
   if (version == 3)
     ar&
             boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &

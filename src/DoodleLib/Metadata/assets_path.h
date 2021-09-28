@@ -65,25 +65,40 @@ class DOODLELIB_API assets_path {
   //这里是序列化的代码
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, std::uint32_t const version);
+  void serialize(Archive &ar, std::uint32_t const version) {
+    if (version == 1)
+      ar &boost::serialization::make_nvp("path", p_local_path);
+
+    if (version == 2)
+      ar &boost::serialization::make_nvp("local_path", p_local_path) &
+          boost::serialization::make_nvp("lexically_relative", p_lexically_relative) &
+          boost::serialization::make_nvp("server_path", p_server_path);
+
+    if (version == 3)
+      ar &boost::serialization::make_nvp("local_path", p_local_path) &
+          boost::serialization::make_nvp("lexically_relative", p_lexically_relative) &
+          boost::serialization::make_nvp("server_path", p_server_path) &
+          boost::serialization::make_nvp("backup_path", p_backup_path);
+  };
 };
 
-template <class Archive>
-void assets_path::serialize(Archive &ar, const std::uint32_t version) {
-  if (version == 1)
-    ar &boost::serialization::make_nvp("path", p_local_path);
+class DOODLELIB_API assets_path_vector : public details::no_copy {
+ public:
+  assets_path_vector() : paths(){};
+  std::vector<assets_path> paths;
 
-  if (version == 2)
-    ar &boost::serialization::make_nvp("local_path", p_local_path) &
-        boost::serialization::make_nvp("lexically_relative", p_lexically_relative) &
-        boost::serialization::make_nvp("server_path", p_server_path);
+  inline std::vector<assets_path> &get() { return paths; };
+  inline const std::vector<assets_path> &get() const { return paths; };
 
-  if (version == 3)
-    ar &boost::serialization::make_nvp("local_path", p_local_path) &
-        boost::serialization::make_nvp("lexically_relative", p_lexically_relative) &
-        boost::serialization::make_nvp("server_path", p_server_path) &
-        boost::serialization::make_nvp("backup_path", p_backup_path);
-}
+ private:
+  //这里是序列化的代码
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &ar, std::uint32_t const version) {
+    if (version == 1)
+      ar &boost::serialization::make_nvp("paths", paths);
+  };
+};
 
 }  // namespace doodle
 
@@ -101,3 +116,5 @@ struct formatter<doodle::assets_path> : formatter<string_view> {
 
 BOOST_CLASS_VERSION(doodle::assets_path, 3)
 BOOST_CLASS_EXPORT_KEY(doodle::assets_path)
+BOOST_CLASS_VERSION(doodle::assets_path_vector, 1)
+BOOST_CLASS_EXPORT_KEY(doodle::assets_path_vector)

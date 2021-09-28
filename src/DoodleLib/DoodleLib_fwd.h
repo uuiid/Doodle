@@ -276,7 +276,8 @@ class ue4_project;
 class maya_file;
 class setting_windows;
 class base_widget;
-
+class comment_vector;
+class assets_path_vector;
 
 using base_widget_ptr = std::shared_ptr<base_widget>;
 template <class... Args>
@@ -288,115 +289,115 @@ class ue4_project_async;
  * @brief 数据库连接指针
  *
  */
-using conn_ptr                     = std::unique_ptr<sqlpp::mysql::connection>;
+using conn_ptr                   = std::unique_ptr<sqlpp::mysql::connection>;
 /**
  * @brief Ue4Project智能g'x指针
  *
  */
-using ue4_project_ptr              = std::shared_ptr<ue4_project>;
+using ue4_project_ptr            = std::shared_ptr<ue4_project>;
 /**
  * @brief VideoSequence 智能共享指针
  *
  */
-using video_sequence_ptr           = std::shared_ptr<video_sequence>;
+using video_sequence_ptr         = std::shared_ptr<video_sequence>;
 
 /**
  * @brief std 智能共享指针
  *
  */
-using string_list                  = std::vector<std::string>;
+using string_list                = std::vector<std::string>;
 /**
  * @brief string_list 智能共享指针
  *
  */
-using string_matrix2               = std::vector<string_list>;
+using string_matrix2             = std::vector<string_list>;
 /**
  * @brief string_matrix2 智能共享指针
  *
  */
-using string_matrix2_ptr           = std::shared_ptr<string_matrix2>;
+using string_matrix2_ptr         = std::shared_ptr<string_matrix2>;
 /**
  * @brief string_list 智能共享指针
  *
  */
-using string_list_ptr              = std::shared_ptr<string_list>;
+using string_list_ptr            = std::shared_ptr<string_list>;
 
 /**
  * @brief season 智能共享指针
  *
  */
-using season_ptr                   = std::shared_ptr<season>;
+using season_ptr                 = std::shared_ptr<season>;
 /**
  * @brief Metadata 智能共享指针
  *
  */
-using metadata_ptr                 = std::shared_ptr<metadata>;
+using metadata_ptr               = std::shared_ptr<metadata>;
 /**
  * @brief const 智能共享指针
  *
  */
-using metadata_const_ptr           = std::shared_ptr<const metadata>;
+using metadata_const_ptr         = std::shared_ptr<const metadata>;
 /**
  * @brief RpcMetadataClient 智能共享指针
  *
  */
-using rpc_metadata_client_ptr      = std::shared_ptr<rpc_metadata_client>;
+using rpc_metadata_client_ptr    = std::shared_ptr<rpc_metadata_client>;
 /**
  * @brief RpcMetadaataServer 智能共享指针
  *
  */
-using rpc_metadata_server_ptr      = std::shared_ptr<rpc_metadaata_server>;
+using rpc_metadata_server_ptr    = std::shared_ptr<rpc_metadaata_server>;
 /**
  * @brief RpcServerHandle 智能共享指针
  *
  */
-using rpc_server_handle_ptr        = std::shared_ptr<rpc_server_handle>;
+using rpc_server_handle_ptr      = std::shared_ptr<rpc_server_handle>;
 /**
  * @brief RpcFileSystemServer 智能共享指针
  *
  */
-using rpc_file_system_server_ptr   = std::shared_ptr<rpc_file_system_server>;
+using rpc_file_system_server_ptr = std::shared_ptr<rpc_file_system_server>;
 /**
  * @brief RpcFileSystemClient 智能共享指针
  *
  */
-using rpc_file_system_client_ptr   = std::shared_ptr<rpc_file_system_client>;
+using rpc_file_system_client_ptr = std::shared_ptr<rpc_file_system_client>;
 /**
  * @brief Project 智能共享指针
  *
  */
-using project_ptr                  = std::shared_ptr<project>;
+using project_ptr                = std::shared_ptr<project>;
 /**
  * @brief Episodes 智能共享指针
  *
  */
-using episodes_ptr                 = std::shared_ptr<episodes>;
+using episodes_ptr               = std::shared_ptr<episodes>;
 /**
  * @brief Shot 智能共享指针
  *
  */
-using shot_ptr                     = std::shared_ptr<shot>;
+using shot_ptr                   = std::shared_ptr<shot>;
 /**
  * @brief Assets 智能共享指针
  *
  */
-using assets_ptr                   = std::shared_ptr<assets>;
+using assets_ptr                 = std::shared_ptr<assets>;
 /**
  * @brief AssetsFile 智能共享指针
  *
  */
-using assets_file_ptr                = std::shared_ptr<assets_file>;
+using assets_file_ptr            = std::shared_ptr<assets_file>;
 /**
  * @brief CoreSql 智能共享指针
  *
  */
-using core_sql_ptr                   = std::shared_ptr<core_sql>;
+using core_sql_ptr               = std::shared_ptr<core_sql>;
 
 /**
  * @brief MetadataFactory 智能共享指针
  *
  */
-using metadata_factory_ptr           = std::shared_ptr<metadata_factory>;
+using metadata_factory_ptr       = std::shared_ptr<metadata_factory>;
 /**
  * @brief TimeDuration 智能共享指针
  *
@@ -406,53 +407,59 @@ using time_wrap_ptr              = std::shared_ptr<time_point_wrap>;
  * @brief Comment 智能共享指针
  *
  */
-using comment_ptr                    = std::shared_ptr<comment>;
+using comment_ptr                = std::shared_ptr<comment>;
 /**
  * @brief AssetsPath 智能共享指针
  *
  */
-using assets_path_ptr                = std::shared_ptr<assets_path>;
+using assets_path_ptr            = std::shared_ptr<assets_path>;
 
 /**
  * @brief DoodleLib 智能共享指针
  *
  */
-using doodle_lib_ptr                 = std::unique_ptr<doodle_lib>;
+using doodle_lib_ptr             = std::unique_ptr<doodle_lib>;
 /**
  * @brief ThreadPool 智能共享指针
  *
  */
-using thread_pool_ptr                = std::shared_ptr<thread_pool>;
+using thread_pool_ptr            = std::shared_ptr<thread_pool>;
 /**
  * @brief attribute_factory_interface 智能共享指针
  *
  */
-using attribute_factory_ptr        = std::shared_ptr<attribute_factory_interface>;
+using attribute_factory_ptr      = std::shared_ptr<attribute_factory_interface>;
 /**
  * @brief long_term 智能共享指针
  *
  */
-using long_term_ptr                = std::shared_ptr<long_term>;
+using long_term_ptr              = std::shared_ptr<long_term>;
 /**
  * @brief ImageSequence 智能共享指针
  *
  */
-using image_sequence_ptr             = std::shared_ptr<image_sequence>;
+using image_sequence_ptr         = std::shared_ptr<image_sequence>;
 /**
  * @brief MayaFile 智能共享指针
  */
-using maya_file_ptr                  = std::shared_ptr<maya_file>;
-using setting_windows_ptr          = std::shared_ptr<setting_windows>;
-using ue4_project_async_ptr        = std::shared_ptr<ue4_project_async>;
-using bool_ptr                     = std::shared_ptr<bool>;
+class time_widget;
 
-using string                       = std::string;
-using string_ptr                   = std::shared_ptr<string>;
+using maya_file_ptr          = std::shared_ptr<maya_file>;
+using setting_windows_ptr    = std::shared_ptr<setting_windows>;
+using ue4_project_async_ptr  = std::shared_ptr<ue4_project_async>;
+using bool_ptr               = std::shared_ptr<bool>;
 
-using command_tool                 = command_base<>;
-using command_tool_ptr             = std::shared_ptr<command_tool>;
-using command_meta                 = command_base<const metadata_ptr &, const metadata_ptr &>;
-using command_meta_ptr             = std::shared_ptr<command_meta>;
+using string                 = std::string;
+using string_ptr             = std::shared_ptr<string>;
+
+using command_tool           = command_base<>;
+using command_tool_ptr       = std::shared_ptr<command_tool>;
+using command_meta           = command_base<const metadata_ptr &, const metadata_ptr &>;
+using command_meta_ptr       = std::shared_ptr<command_meta>;
+using comment_vector_ptr     = std::shared_ptr<comment_vector>;
+using assets_path_vector_ptr = std::shared_ptr<assets_path_vector>;
+using time_widget_ptr        = std::shared_ptr<time_widget>;
+
 namespace rpc_trans {
 class down_file;
 class down_dir;

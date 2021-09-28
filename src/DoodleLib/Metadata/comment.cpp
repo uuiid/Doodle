@@ -6,6 +6,7 @@
 #include <DoodleLib/core/core_set.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::comment)
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::comment_vector)
 namespace doodle {
 comment::comment()
     : p_comment(),
@@ -29,4 +30,5 @@ const std::string& comment::get_user() const {
 void comment::set_user(const std::string& in_user) {
   p_user = in_user;
 }
+
 }  // namespace doodle

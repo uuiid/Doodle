@@ -125,9 +125,11 @@ class DOODLELIB_API comm_ass_file : public command_meta {
   assets_file_ptr p_root;
 
   chrono::local_time_pos p_time;
-  std::vector<doodle::comment_ptr> p_comm;
+  comment_vector_ptr p_comm;
   bool has_file;
 
+  time_widget_ptr p_time_widget;
+  string_ptr p_comm_str;
  public:
   comm_ass_file();
   bool render() override;

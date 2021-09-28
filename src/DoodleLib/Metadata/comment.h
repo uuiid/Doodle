@@ -21,14 +21,30 @@ class DOODLELIB_API comment {
  private:
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, std::uint32_t const version);
+  void serialize(Archive& ar, const std::uint32_t version) {
+    if (version == 1)
+      ar& BOOST_SERIALIZATION_NVP(p_comment) &
+          BOOST_SERIALIZATION_NVP(p_user);
+  };
 };
-template <class Archive>
-void comment::serialize(Archive& ar, const std::uint32_t version) {
-  if (version == 1)
-    ar&BOOST_SERIALIZATION_NVP(p_comment)&
-       BOOST_SERIALIZATION_NVP(p_user);
-}
+
+class DOODLELIB_API comment_vector : public details::no_copy {
+ public:
+  comment_vector() : comm(){};
+
+  std::vector<comment_ptr> comm;
+
+  inline std::vector<comment_ptr>& get() { return comm; };
+  inline const std::vector<comment_ptr>& get() const { return comm; };
+
+ private:
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive& ar, const std::uint32_t version) {
+    if (version == 1)
+      ar& BOOST_SERIALIZATION_NVP(comm);
+  };
+};
 }  // namespace doodle
 
 namespace fmt {
@@ -44,3 +60,5 @@ struct formatter<doodle::comment> : formatter<string_view> {
 }  // namespace fmt
 BOOST_CLASS_VERSION(doodle::comment, 1)
 BOOST_CLASS_EXPORT_KEY(doodle::comment)
+BOOST_CLASS_VERSION(doodle::comment_vector, 1)
+BOOST_CLASS_EXPORT_KEY(doodle::comment_vector)
