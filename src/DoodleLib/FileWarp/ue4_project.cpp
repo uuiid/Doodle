@@ -20,8 +20,8 @@ const std::string ue4_project::Content     = "Content";
 const std::string ue4_project::ContentShot = "Shot";
 const std::string ue4_project::UE4PATH     = "Engine/Binaries/Win64/UE4Editor.exe";
 // const std::string Ue4Project::UE4PATH     = "Engine/Binaries/Win64/UE4Editor-Cmd.exe";
-const std::string ue4_project::Character = "Character";
-const std::string ue4_project::Prop      = "Prop";
+const std::string ue4_project::Character   = "Character";
+const std::string ue4_project::Prop        = "Prop";
 
 ue4_project::ue4_project(FSys::path project_path)
     : p_ue_path(),
@@ -101,13 +101,13 @@ FSys::path ue4_project::find_ue4_skeleton(const FSys::path& in_path) const {
     auto k_ch    = k_match[1].str();
     auto k_sk_ch = fmt::format("SK_{}_Skeleton", k_ch);
     auto k_it    = std::find_if(
-           FSys::recursive_directory_iterator{k_ch_dir},
-           FSys::recursive_directory_iterator{},
-           [k_sk_ch](const FSys::directory_entry& in_path) {
+        FSys::recursive_directory_iterator{k_ch_dir},
+        FSys::recursive_directory_iterator{},
+        [k_sk_ch](const FSys::directory_entry& in_path) {
           auto k_p = in_path.path().stem().generic_string();
           // std::transform(k_p.begin(), k_p.end(), k_p.begin(), [](unsigned char c) { return std::tolower(c); });
           return in_path.path().stem() == k_sk_ch;
-           });
+        });
     if (k_it != FSys::recursive_directory_iterator{}) {
       k_r = k_it->path();
       DOODLE_LOG_INFO("寻找到sk {}", k_r);
@@ -122,7 +122,8 @@ FSys::path ue4_project::find_ue4_skeleton(const FSys::path& in_path) const {
 }
 
 void ue4_project::create_shot_folder(const std::vector<shot_ptr>& inShotList,
-                                    const long_term_ptr& in_ptr) const {
+                                     const long_term_ptr& in_ptr) const {
+  in_ptr->start();
   if (inShotList.empty())
     return;
 
@@ -134,7 +135,7 @@ void ue4_project::create_shot_folder(const std::vector<shot_ptr>& inShotList,
     FSys::create_directories(k_createDir);
   }
 
-  auto& set = core_set::getSet();
+  auto& set            = core_set::getSet();
   //创建集数文件夹
   auto k_episodes_path = k_createDir / inShotList[0]->get_episodes_ptr()->str();
   if (!FSys::exists(k_episodes_path))
@@ -163,9 +164,9 @@ void ue4_project::create_shot_folder(const std::vector<shot_ptr>& inShotList,
 
     auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0]->get_episodes_ptr()->str();
     for (const auto& k_shot : inShotList) {
-      auto k_string = fmt::format("{}{:04d}_{}",
+      auto k_string         = fmt::format("{}{:04d}_{}",
                                   k_prj->show_str(),
-                                          k_shot->get_episodes_ptr()->get_episodes(),
+                                  k_shot->get_episodes_ptr()->get_episodes(),
                                   k_shot->str());
 
       auto k_shot_path      = k_episodes_path / k_string;
@@ -176,7 +177,7 @@ void ue4_project::create_shot_folder(const std::vector<shot_ptr>& inShotList,
       FSys::create_directory(k_shot_path / k_dep);
 
       //添加关卡序列和定序器
-      auto k_shot_su = fmt::format("_{}", k_dep.front());
+      auto k_shot_su       = fmt::format("_{}", k_dep.front());
 
       auto k_shot_sequence = k_string;
       k_shot_sequence += k_shot_su;
@@ -198,11 +199,12 @@ void ue4_project::create_shot_folder(const std::vector<shot_ptr>& inShotList,
     }
     //    file << "time.sleep(3)" << std::endl;
   }
+  in_ptr->sig_message_result(fmt::format("写入创建文件 {}\n", k_tmp_file_path.generic_string()), long_term::info);
 
   this->run_python_script(k_tmp_file_path);
   if (in_ptr) {
     in_ptr->sig_finished();
-    in_ptr->sig_message_result("完成添加 \n", long_term::warning);
+    in_ptr->sig_message_result(fmt::format("完成添加 {}\n", p_ue_Project_path.generic_string()), long_term::warning);
   }
 }
 
@@ -233,6 +235,7 @@ FSys::path ue4_project::analysis_path_to_gamepath(const FSys::path& in_path) {
   return k_Dir;
 }
 void ue4_project::import_file(const FSys::path& in_paths, const long_term_ptr& in_ptr) const {
+  in_ptr->start();
   this->addUe4ProjectPlugins({"doodle"});
 
   nlohmann::json k_root{};

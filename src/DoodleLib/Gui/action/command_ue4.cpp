@@ -55,6 +55,7 @@ bool comm_ass_ue4_create_shot::render() {
                   return std::dynamic_pointer_cast<shot>(in);
                 }),
             std::back_inserter(p_shot_list));
+        boost::sort(p_shot_list, boost::less_pointees_t<shot_ptr>{});
       }
     }
     imgui::SameLine();

@@ -125,6 +125,10 @@ bool is_class(const RT &in_rt) {
   }
 }
 
+template<class less_type>
+bool less(const less_type& in_r, const less_type& in_l){
+  return *in_r < in_l;
+};
 }  // namespace details
 
 namespace chrono {
