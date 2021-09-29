@@ -87,8 +87,7 @@ void rpc_server_handle::run_server_wait(int port_meta, int port_file_sys) {
   std::unique_lock k_lock{set.p_mutex};
   set.p_condition.wait(
       k_lock,
-      [&set](){return set.p_stop;}
-      );
+      [&set]() -> bool { return set.p_stop; });
 }
 void rpc_server_handle::stop() {
   using namespace chrono::literals;

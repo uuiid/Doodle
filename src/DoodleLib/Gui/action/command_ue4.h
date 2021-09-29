@@ -12,6 +12,8 @@ class DOODLELIB_API comm_ass_ue4_create_shot : public command_meta {
  private:
   string_ptr p_ue4_prj_path;
 
+  std::vector<shot_ptr> p_shot_list;
+
   ue4_project_async_ptr p_ue4;
   metadata_ptr p_parent;
 

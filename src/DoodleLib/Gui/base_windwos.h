@@ -36,8 +36,8 @@ class DOODLELIB_API windows_warp : public base_widget {
   bool_ptr p_show;
   widget_ptr p_widget;
 
-  windows_warp()
-      : p_show(new_object<bool>()),
+  windows_warp(bool init_show= false)
+      : p_show(new_object<bool>(init_show)),
         p_widget(new_object<widget>()){};
 
   void frame_render() override {

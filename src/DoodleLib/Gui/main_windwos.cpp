@@ -30,9 +30,9 @@ main_windows::main_windows()
       p_prj(new_object<project_widget>()),
 
       p_setting(new_object<windows_warp<setting_windows>>()),
-      p_attr(new_object<windows_warp<assets_file_widgets>>()),
-      p_long_task(new_object<windows_warp<long_time_tasks_widget>>()),
-      p_edit_windows(new_object<windows_warp<edit_widgets>>()) {
+      p_attr(new_object<windows_warp<assets_file_widgets>>(true)),
+      p_long_task(new_object<windows_warp<long_time_tasks_widget>>(true)),
+      p_edit_windows(new_object<windows_warp<edit_widgets>>(true)) {
   p_prj->select_change.connect([this](auto in) {
     p_ass->set_metadata(in);
     win_cast<edit_widgets>(p_edit_windows)->set_factort(p_prj->get_factory());
