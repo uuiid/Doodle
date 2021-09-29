@@ -66,6 +66,7 @@
 #include <DoodleLib/Metadata/season.h>
 #include <DoodleLib/Metadata/shot.h>
 #include <DoodleLib/Metadata/time_point_wrap.h>
+#include <DoodleLib/Metadata/tree_adapter.h>
 #include <DoodleLib/Metadata/user.h>
 #include <DoodleLib/PinYin/convert.h>
 #include <DoodleLib/rpc/rpc_file_system_client.h>

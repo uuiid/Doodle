@@ -63,6 +63,7 @@ set(
     Metadata/season.h
     Metadata/shot.h
     Metadata/time_point_wrap.h
+    Metadata/tree_adapter.h
     Metadata/user.h
     PinYin/convert.h
     rpc/rpc_file_system_client.h
