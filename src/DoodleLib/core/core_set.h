@@ -97,7 +97,7 @@ class DOODLELIB_API core_set : public details::no_copy {
   /**
    * @brief 全局是否停止， 服务器使用
    */
-  bool p_stop;
+  std::atomic_bool p_stop;
   /**
    * @brief 全局锁,服务器使用
    */
