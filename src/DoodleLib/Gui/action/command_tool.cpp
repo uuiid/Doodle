@@ -276,23 +276,26 @@ bool comm_import_ue_files::render() {
     open_file_dialog{
         "comm_create_video",
         "选择",
-        ".fbx,.abc",
+        "files (*.abc *.fbx){.fbx,.abc}",
         ".",
         "",
-        1}
+        0}
         .show(
             [this](const std::vector<FSys::path>& in_p) {
               p_import_list = in_p;
             });
   }
-  if(imgui::Button("导入")){
+  if (imgui::Button("导入")) {
     auto ue = new_object<ue4_project_async>();
     ue->set_ue4_project(p_ue4_prj);
-    for(const auto& i: p_import_list){
+    for (const auto& i : p_import_list) {
       ue->import_file(i);
     }
   }
-   
+  dear::ListBox{"文件列表"} && [this]() {
+    for (const auto& in : p_import_list)
+      dear::Selectable(in.filename().generic_string());
+  };
 
   return command_base::add_data();
 }

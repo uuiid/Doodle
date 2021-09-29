@@ -48,7 +48,7 @@ void assets_file_widgets::frame_render() {
           dear::Text(k->get_version_str());
 
           imgui::TableNextColumn();
-          auto& com = k->get_comment();
+          auto com = k->get_comment();
           if (com)
             dear::Text(com->get().empty() ? std::string{} : com->get().front()->get_comment());
           else
