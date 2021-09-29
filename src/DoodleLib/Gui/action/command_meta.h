@@ -11,7 +11,7 @@
 #include <boost/hana/tuple.hpp>
 namespace doodle {
 namespace details {
-  
+
 // template <class... Args>
 // class DOODLELIB_API comm_button_names {
 //  public:
@@ -45,7 +45,6 @@ class DOODLELIB_API comm_project_add : public command_meta {
   string_ptr p_prj_name_short;
   string_ptr p_prj_path;
   project_ptr p_root;
-
 
  public:
   comm_project_add();
@@ -119,6 +118,25 @@ class DOODLELIB_API comm_ass_season : public command_meta {
   bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
 };
 
+class DOODLELIB_API comm_ass_ue4_create_shot : public command_meta {
+ private:
+  ue4_project_async_ptr p_ue4;
+  metadata_ptr p_parent;
+
+ public:
+  comm_ass_ue4_create_shot();
+  bool render() override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
+};
+
+class DOODLELIB_API comm_ass_ue4_import : public command_meta {
+ private:
+ public:
+  comm_ass_ue4_import();
+  bool render() override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
+};
+
 class DOODLELIB_API comm_ass_file : public command_meta {
  private:
   metadata_ptr p_parent;
@@ -130,6 +148,7 @@ class DOODLELIB_API comm_ass_file : public command_meta {
 
   time_widget_ptr p_time_widget;
   string_ptr p_comm_str;
+
  public:
   comm_ass_file();
   bool render() override;

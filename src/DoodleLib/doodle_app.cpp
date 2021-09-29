@@ -39,7 +39,7 @@ bool CreateDeviceD3D(HWND hWnd) {
   sd.Windowed                           = TRUE;
   sd.SwapEffect                         = DXGI_SWAP_EFFECT_DISCARD;
 
-  UINT createDeviceFlags = 0;
+  UINT createDeviceFlags                = 0;
   // createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
   D3D_FEATURE_LEVEL featureLevel;
   const D3D_FEATURE_LEVEL featureLevelArray[2] = {
@@ -243,11 +243,9 @@ std::int32_t doodle_app::run() {
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
 
-  main_windows k_main_windows{};
-  // Our state
-  bool show_demo_window    = true;
-  bool show_another_window = false;
-  ImVec4 clear_color       = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+  auto k_main_windows = new_object<main_windows>();
+
+  ImVec4 clear_color  = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
   // Main loop
   while (!p_done) {
     // Poll and handle messages (inputs, window resize, etc.)
@@ -274,7 +272,7 @@ std::int32_t doodle_app::run() {
     static bool show_info = false;
     static std::string str{};
     try {
-      k_main_windows.frame_render();
+      k_main_windows->frame_render();
       main_loop();
     } catch (doodle_error& err) {
       show_info = true;

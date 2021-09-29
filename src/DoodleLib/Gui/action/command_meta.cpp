@@ -4,6 +4,7 @@
 
 #include "command_meta.h"
 
+#include <DoodleLib/FileWarp/ue4_project.h>
 #include <DoodleLib/Gui/widgets/time_widget.h>
 #include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/core/doodle_lib.h>
@@ -337,6 +338,23 @@ bool comm_ass_season::add_data(const metadata_ptr& in_parent, const metadata_ptr
     p_data = p_root->get_season();
   }
   return p_root != nullptr;
+}
+
+comm_ass_ue4_create_shot::comm_ass_ue4_create_shot()
+    : p_ue4(new_object<ue4_project_async>()) {
+  p_show_str = make_imgui_name(this, "创建镜头序列");
+}
+
+bool comm_ass_ue4_create_shot::render() {
+  if (p_parent) {
+    if (imgui::Button(p_show_str["创建镜头序列"].c_str())) {
+      // p_ue4->
+    }
+  }
+}
+
+bool comm_ass_ue4_create_shot::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
+  p_parent = in_parent;
 }
 
 comm_ass_file::comm_ass_file()

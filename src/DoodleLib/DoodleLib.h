@@ -24,6 +24,7 @@
 #include <DoodleLib/Gui/base_windwos.h>
 #include <DoodleLib/Gui/main_windwos.h>
 #include <DoodleLib/Gui/setting_windows.h>
+#include <DoodleLib/Gui/widget_register.h>
 #include <DoodleLib/Gui/factory/attribute_factory_interface.h>
 #include <DoodleLib/Gui/action/command.h>
 #include <DoodleLib/Gui/action/command_meta.h>
