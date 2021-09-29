@@ -10,25 +10,31 @@
 //#include <DoodleLib/DoodleApp.h>
 //#include <boost/locale.hpp>
 
-
 extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               HINSTANCE hPrevInstance,
                               LPSTR strCmdLine,
                               int nCmdShow) try {
   //  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF );
-//  std::locale::global(std::locale{".UTF8"});
-//  std::setlocale(LC_NUMERIC, "C");
-//  std::setlocale(LC_TIME, "C");
-//  std::setlocale(LC_MONETARY, "C");
-//  std::locale::global(std::locale::classic());
+  //  std::locale::global(std::locale{".UTF8"});
+  //  std::setlocale(LC_NUMERIC, "C");
+  //  std::setlocale(LC_TIME, "C");
+  //  std::setlocale(LC_MONETARY, "C");
+  //  std::locale::global(std::locale::classic());
   //  std::wcout.imbue(std::locale{".UTF8"});
   std::setlocale(LC_CTYPE, ".UTF8");
 
   auto doodleLib = doodle::make_doodle_lib();
+
+#ifndef NDEBUG
+  auto& set                = doodle::core_set::getSet();
+  auto p_rpc_server_handle = std::make_shared<doodle::rpc_server_handle>();
+  p_rpc_server_handle->run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
+#endif
+
   doodleLib->init_gui();
   auto app = doodle::doodle_app::make_this();
   return app->run();
-} catch (const std::exception &err) {
+} catch (const std::exception& err) {
   std::cout << err.what() << std::endl;
   //  DOODLE_LOG_ERROR(err.what());
   //  doodle::CoreSet::getSet().writeDoodleLocalSet();
