@@ -11,8 +11,7 @@ rpc_server_handle::rpc_server_handle()
     : p_Server(),
       p_rpc_metadata_server(),
       p_rpc_file_system_server(),
-      p_build(std::make_unique<grpc::ServerBuilder>()),
-      p_thread() {
+      p_build(std::make_unique<grpc::ServerBuilder>()) {
   grpc::ResourceQuota qu{"doodle_meta"};
   qu.SetMaxThreads(boost::numeric_cast<std::int32_t>(std::thread::hardware_concurrency()));
   p_build->SetResourceQuota(qu);
@@ -52,10 +51,6 @@ void rpc_server_handle::run_server(int port_meta, int port_file_sys) {
   p_Server = std::move(p_build->BuildAndStart());
   if (!p_Server)
     throw doodle_error{"无法创建服务器"};
-
-  p_thread = std::thread{[this]() {
-    p_Server->Wait();
-  }};
 }
 
 #if defined( _WIN32) and defined( _MSC_VER )
@@ -100,8 +95,6 @@ void rpc_server_handle::stop() {
   auto k_time = chrono::system_clock::now() + 2s;
 
   p_Server->Shutdown(k_time);
-  if (p_thread.joinable())
-    p_thread.join();
 
   p_Server.reset();
 }

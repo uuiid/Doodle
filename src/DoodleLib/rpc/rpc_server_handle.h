@@ -11,7 +11,6 @@ class DOODLELIB_API rpc_server_handle {
   rpc_file_system_server_ptr p_rpc_file_system_server;
   std::unique_ptr<grpc::ServerBuilder> p_build;
 
-  std::thread p_thread;
 
  public:
   rpc_server_handle();
