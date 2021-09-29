@@ -17,10 +17,15 @@ assets_file_widgets::assets_file_widgets()
 }
 
 void assets_file_widgets::frame_render() {
-  dear::Table{"attribute_widgets", 5} && [this]() {
+  static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
+                    ImGuiTableFlags_::ImGuiTableFlags_Resizable |
+                    ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
+                    ImGuiTableFlags_::ImGuiTableFlags_BordersV |
+                    ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody};
+  dear::Table{"attribute_widgets", 5, flags} && [this]() {
     imgui::TableSetupColumn("id");
     imgui::TableSetupColumn("版本");
-    imgui::TableSetupColumn("评论");
+    imgui::TableSetupColumn("评论",ImGuiTableColumnFlags_WidthStretch);
     imgui::TableSetupColumn("时间");
     imgui::TableSetupColumn("制作人");
     //      imgui::TableSetupColumn("存在文件");

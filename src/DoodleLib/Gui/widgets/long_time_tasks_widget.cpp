@@ -42,7 +42,12 @@ void long_time_tasks_widget::frame_render() {
   if (p_command_tool_ptr_)
     p_command_tool_ptr_->render();
 
-  dear::Table{"long_time_tasks_widget", 5} && [this]() {
+  static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
+                    ImGuiTableFlags_::ImGuiTableFlags_Resizable |
+                    ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
+                    ImGuiTableFlags_::ImGuiTableFlags_BordersV |
+                    ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody};
+  dear::Table{"long_time_tasks_widget", 5, flags} && [this]() {
     imgui::TableSetupColumn("名称");
     imgui::TableSetupColumn("进度");
     imgui::TableSetupColumn("消息");
