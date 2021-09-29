@@ -123,6 +123,8 @@ bool comm_ass_eps::render() {
       if (!p_root->has_child() && !p_root->has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
+          auto k_parent = p_root->get_parent();
+          k_parent->child_item.erase_sig(p_root);
           p_root->deleteData();
         }
       }
@@ -149,7 +151,9 @@ void comm_ass_shot::add_shot(const std::vector<std::int32_t>& p_shots) {
   for (auto s : p_shots) {
     auto k_s = new_object<shot>();
     k_s->set_shot(s);
+    k_s->set_shot_ab(std::string{p_shot_ab});
     p_parent->child_item.push_back_sig(k_s);
+    k_s->insert_into();
   }
 }
 
@@ -190,8 +194,12 @@ bool comm_ass_shot::render() {
       }
       if (!p_root->has_child() && !p_root->has_file()) {
         imgui::SameLine();
-        if (imgui::Button(p_show_str["删除"].c_str()))
+        if (imgui::Button(p_show_str["删除"].c_str())) {
+          auto k_parent = p_root->get_parent();
+          k_parent->child_item.erase_sig(p_root);
           p_root->deleteData();
+          p_shot_ab = {};
+        }
       }
     }
     imgui::InputInt(p_show_str["镜头"].c_str(), &p_data, 1, 9999);
@@ -225,6 +233,7 @@ void comm_assets::add_ass(std::vector<string> in_Str) {
     auto k_ass = new_object<assets>();
     k_ass->set_name1(i);
     p_parent->child_item.push_back_sig(k_ass);
+    k_ass->insert_into();
   }
 }
 
@@ -252,6 +261,8 @@ bool comm_assets::render() {
       if (!p_root->has_child() && !p_root->has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
+          auto k_parent = p_root->get_parent();
+          k_parent->child_item.erase_sig(p_root);
           p_root->deleteData();
         }
       }
@@ -276,6 +287,7 @@ void comm_ass_season::add_season(const std::vector<std::int32_t>& in) {
     auto s = new_object<season>();
     s->set_season(i);
     p_parent->child_item.push_back_sig(s);
+    s->insert_into();
   }
 }
 
@@ -315,6 +327,8 @@ bool comm_ass_season::render() {
       if (!p_root->has_child() && !p_root->has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
+          auto k_parent = p_root->get_parent();
+          k_parent->child_item.erase_sig(p_root);
           p_root->deleteData();
         }
       }
@@ -358,6 +372,7 @@ bool comm_ass_file::render() {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       auto ass = new_object<assets_file>();
       p_parent->child_item.push_back(ass);
+      ass->insert_into();
     }
     if (p_root) {
       imgui::SameLine();
@@ -367,6 +382,8 @@ bool comm_ass_file::render() {
       if (p_root->has_child()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
+          auto k_parent = p_root->get_parent();
+          k_parent->child_item.erase_sig(p_root);
           p_root->deleteData();
         }
       }

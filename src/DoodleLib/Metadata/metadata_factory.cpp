@@ -54,7 +54,10 @@ void metadata_factory::select_indb(metadata *in_metadata) const {
 }
 
 void metadata_factory::delete_data(const metadata *in_metadata) const {
-  p_rpcClien.lock()->delete_metadata(in_metadata->shared_from_this());
+  auto k_meta = in_metadata->shared_from_this();
+  p_rpcClien.lock()->delete_metadata(k_meta);
+  auto k_p = k_meta->get_parent();
+  k_p->updata_db();
 }
 
 }  // namespace doodle
