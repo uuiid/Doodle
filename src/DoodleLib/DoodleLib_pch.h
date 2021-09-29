@@ -4,7 +4,18 @@
 
 #pragma once
 
+#include <boost/algorithm/algorithm.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
+#include <boost/range.hpp>
+#include <boost/range/adaptors.hpp>
+#include <boost/range/algorithm_ext.hpp>
+#include <boost/range/algorithm.hpp>
+#include <boost/range/irange.hpp>
+
 #include <chrono>
+#include <codecvt>
 #include <condition_variable>
 #include <filesystem>
 #include <fstream>
@@ -18,18 +29,10 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <typeindex>
 #include <unordered_set>
 #include <variant>
 #include <vector>
-#include <typeindex>
-#include <codecvt>
-#include <stdexcept>
-#include <boost/filesystem.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/iostreams/stream_buffer.hpp>
-#include <boost/range.hpp>
-#include <boost/range/irange.hpp>
-#include <boost/range/algorithm_ext.hpp>
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
 

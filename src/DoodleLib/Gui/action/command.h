@@ -17,7 +17,7 @@ enum class command_type {
 }
 
 template <class... Args>
-class DOODLELIB_API command_base : public details::no_copy {
+class DOODLELIB_API command_base /* : public details::no_copy  */{
  protected:
   std::string p_name;
   std::map<string, string> p_show_str;

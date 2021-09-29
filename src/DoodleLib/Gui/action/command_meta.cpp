@@ -4,16 +4,18 @@
 
 #include "command_meta.h"
 
-#include <DoodleLib/FileWarp/ue4_project.h>
+#include <DoodleLib/Gui/widgets/assets_widget.h>
 #include <DoodleLib/Gui/widgets/time_widget.h>
 #include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/core/doodle_lib.h>
 #include <DoodleLib/core/open_file_dialog.h>
+#include <DoodleLib/doodle_app.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 
+#include <boost/algorithm/algorithm.hpp>
 #include <boost/range.hpp>
+#include <boost/range/algorithm.hpp>
 #include <boost/range/irange.hpp>
-
 namespace doodle {
 
 comm_project_add::comm_project_add()
@@ -29,7 +31,7 @@ comm_project_add::comm_project_add()
 
 bool comm_project_add::render() {
   auto& k_d_lib = doodle_lib::Get();
-  ImGui::BulletText(p_name.c_str());
+
   if (imgui::Button(p_show_str["添加"].c_str())) {
     auto k_prj = new_object<project>(*p_prj_path, *p_prj_name);
     k_prj->updata_db(k_d_lib.get_metadata_factory());
@@ -118,7 +120,7 @@ bool comm_ass_eps::render() {
         p_root->updata_db();
       }
 
-      if (!p_root->has_child()) {
+      if (!p_root->has_child() && !p_root->has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
           p_root->deleteData();
@@ -168,7 +170,6 @@ comm_ass_shot::comm_ass_shot()
 }
 
 bool comm_ass_shot::render() {
-  ImGui::BulletText(p_name.c_str());
   if (p_parent) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       if (!(*use_batch)) {
@@ -187,7 +188,7 @@ bool comm_ass_shot::render() {
                                 .value_or(shot::shot_ab_enum::None));
         p_root->updata_db();
       }
-      if (!p_root->has_child()) {
+      if (!p_root->has_child() && !p_root->has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str()))
           p_root->deleteData();
@@ -238,7 +239,6 @@ comm_assets::comm_assets()
 }
 
 bool comm_assets::render() {
-  ImGui::BulletText(p_name.c_str());
   if (p_parent) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       add_ass({p_data});
@@ -249,7 +249,7 @@ bool comm_assets::render() {
         p_root->set_name1(p_data);
         p_root->updata_db();
       }
-      if (!p_root->has_child()) {
+      if (!p_root->has_child() && !p_root->has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
           p_root->deleteData();
@@ -295,8 +295,6 @@ comm_ass_season::comm_ass_season()
 }
 
 bool comm_ass_season::render() {
-  ImGui::BulletText(p_name.c_str());
-
   if (p_parent) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       if (!(*use_batch)) {
@@ -314,7 +312,7 @@ bool comm_ass_season::render() {
         p_root->updata_db();
       }
 
-      if (!p_root->has_child()) {
+      if (!p_root->has_child() && !p_root->has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
           p_root->deleteData();
@@ -340,25 +338,6 @@ bool comm_ass_season::add_data(const metadata_ptr& in_parent, const metadata_ptr
   return p_root != nullptr;
 }
 
-comm_ass_ue4_create_shot::comm_ass_ue4_create_shot()
-    : p_ue4(new_object<ue4_project_async>()) {
-  p_show_str = make_imgui_name(this, "创建镜头序列");
-}
-
-bool comm_ass_ue4_create_shot::render() {
-  if (p_parent) {
-    if (imgui::Button(p_show_str["创建镜头序列"].c_str())) {
-      // p_ue4->
-    }
-  }
-  return true;
-}
-
-bool comm_ass_ue4_create_shot::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
-  p_parent = in_parent;
-  return true;
-}
-
 comm_ass_file::comm_ass_file()
     : p_parent(),
       p_root(),
@@ -375,7 +354,6 @@ comm_ass_file::comm_ass_file()
 }
 
 bool comm_ass_file::render() {
-  ImGui::BulletText(p_name.c_str());
   if (p_parent) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       auto ass = new_object<assets_file>();
@@ -384,7 +362,7 @@ bool comm_ass_file::render() {
     if (p_root) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["更改"].c_str())) {
-        p_root->get_time();
+        p_root->updata_db();
       }
       if (p_root->has_child()) {
         imgui::SameLine();
@@ -419,9 +397,18 @@ bool comm_ass_file::add_data(const metadata_ptr& in_parent, const metadata_ptr& 
 
 comm_ass::comm_ass()
     : p_val() {
+  // p_val = std::move(boost::hana::make_tuple(comm_ass_season{},
+  //                                           comm_ass_eps{},
+  //                                           comm_ass_shot{},
+  //                                           comm_assets{},
+  //                                           comm_ass_ue4_create_shot{}));
 }
 bool comm_ass::render() {
-  boost::hana::for_each(p_val, [](auto& in) { in.render(); });
+  boost::hana::for_each(p_val, [](auto& in) {
+    dear::TreeNode{in.class_name().c_str()} && [&]() {
+      in.render();
+    };
+  });
   return true;
 }
 bool comm_ass::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {

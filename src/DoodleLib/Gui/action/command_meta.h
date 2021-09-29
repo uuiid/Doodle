@@ -6,6 +6,7 @@
 
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/action/command.h>
+#include <DoodleLib/Gui/action/command_ue4.h>
 
 #include <boost/hana.hpp>
 #include <boost/hana/tuple.hpp>
@@ -118,25 +119,6 @@ class DOODLELIB_API comm_ass_season : public command_meta {
   bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
 };
 
-class DOODLELIB_API comm_ass_ue4_create_shot : public command_meta {
- private:
-  ue4_project_async_ptr p_ue4;
-  metadata_ptr p_parent;
-
- public:
-  comm_ass_ue4_create_shot();
-  bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
-};
-
-class DOODLELIB_API comm_ass_ue4_import : public command_meta {
- private:
- public:
-  comm_ass_ue4_import();
-  bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
-};
-
 class DOODLELIB_API comm_ass_file : public command_meta {
  private:
   metadata_ptr p_parent;
@@ -158,7 +140,8 @@ class DOODLELIB_API comm_ass : public command_meta {
   boost::hana::tuple<comm_ass_season,
                      comm_ass_eps,
                      comm_ass_shot,
-                     comm_assets>
+                     comm_assets,
+                     comm_ass_ue4_create_shot>
       p_val;
 
  public:

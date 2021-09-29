@@ -29,6 +29,7 @@
 #include <DoodleLib/Gui/action/command.h>
 #include <DoodleLib/Gui/action/command_meta.h>
 #include <DoodleLib/Gui/action/command_tool.h>
+#include <DoodleLib/Gui/action/command_ue4.h>
 #include <DoodleLib/Gui/widgets/assets_file_widgets.h>
 #include <DoodleLib/Gui/widgets/assets_widget.h>
 #include <DoodleLib/Gui/widgets/edit_widgets.h>
