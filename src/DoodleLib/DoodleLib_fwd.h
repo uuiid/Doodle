@@ -278,7 +278,7 @@ class setting_windows;
 class base_widget;
 class comment_vector;
 class assets_path_vector;
-
+class widget_register;
 using base_widget_ptr = std::shared_ptr<base_widget>;
 template <class... Args>
 class command_base;
@@ -459,7 +459,7 @@ using command_meta_ptr       = std::shared_ptr<command_meta>;
 using comment_vector_ptr     = std::shared_ptr<comment_vector>;
 using assets_path_vector_ptr = std::shared_ptr<assets_path_vector>;
 using time_widget_ptr        = std::shared_ptr<time_widget>;
-
+using widget_register_ptr = std::shared_ptr<widget_register>;
 namespace rpc_trans {
 class down_file;
 class down_dir;

@@ -30,6 +30,10 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   boost::signals2::signal<void()> main_loop;
 
   std::shared_ptr<long_time_tasks_widget> long_task_widgets;
+  widget_register_ptr wregister;
+
+  inline widget_register_ptr get_register(){return wregister;};
+  inline const widget_register_ptr get_register() const {return wregister;};
 
   std::int32_t run();
   ~doodle_app();

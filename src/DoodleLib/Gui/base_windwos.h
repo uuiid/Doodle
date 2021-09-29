@@ -8,11 +8,14 @@
 
 #include <boost/hana/experimental/printable.hpp>
 namespace doodle {
-class DOODLELIB_API base_widget : public details::no_copy {
+class DOODLELIB_API base_widget
+    : public details::no_copy,
+      public std::enable_shared_from_this<base_widget> {
  protected:
   string p_class_name;
 
  public:
+  virtual void post_constructor();
   virtual void frame_render() = 0;
   virtual const string& get_class_name();
 };

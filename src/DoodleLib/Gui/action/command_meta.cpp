@@ -351,10 +351,12 @@ bool comm_ass_ue4_create_shot::render() {
       // p_ue4->
     }
   }
+  return true;
 }
 
 bool comm_ass_ue4_create_shot::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
   p_parent = in_parent;
+  return true;
 }
 
 comm_ass_file::comm_ass_file()

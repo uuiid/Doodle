@@ -21,6 +21,7 @@
 #include <unordered_set>
 #include <variant>
 #include <vector>
+#include <typeindex>
 #include <codecvt>
 #include <stdexcept>
 #include <boost/filesystem.hpp>

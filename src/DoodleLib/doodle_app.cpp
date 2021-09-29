@@ -5,6 +5,7 @@
 #include "doodle_app.h"
 
 #include <DoodleLib/Gui/main_windwos.h>
+#include <DoodleLib/Gui/widget_register.h>
 #include <DoodleLib/libWarp/boost_locale_warp.h>
 #include <DoodleLib/libWarp/imgui_warp.h>
 // Helper functions
@@ -158,7 +159,8 @@ doodle_app::doodle_app()
                   nullptr,
                   _T("ImGui Example"),
                   nullptr},
-      p_done(false) {
+      p_done(false),
+      wregister(new_object<widget_register>()){
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassEx(&p_win_class);
