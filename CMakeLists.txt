@@ -132,14 +132,7 @@ set(DOXYGEN_WARN_IF_DOC_ERROR YES)
 set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
 set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR}/doc)
 set(DOXYGEN_EXCLUDE_PATTERNS
-        */.idea
-        */.vs
-        */b_Ninja_VS*
-        */cmake-build*
-        */tools
-        */script
-        */venv
-        */MAYA)
+        */external)
 set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
 set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
 # set(DOXYGEN_DISABLE_INDEX YES)
