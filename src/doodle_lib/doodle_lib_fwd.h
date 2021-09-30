@@ -125,8 +125,8 @@ bool is_class(const RT &in_rt) {
   }
 }
 
-template<class less_type>
-bool less(const less_type& in_r, const less_type& in_l){
+template <class less_type>
+bool less(const less_type &in_r, const less_type &in_l) {
   return *in_r < in_l;
 };
 }  // namespace details
@@ -463,7 +463,7 @@ using command_meta_ptr       = std::shared_ptr<command_meta>;
 using comment_vector_ptr     = std::shared_ptr<comment_vector>;
 using assets_path_vector_ptr = std::shared_ptr<assets_path_vector>;
 using time_widget_ptr        = std::shared_ptr<time_widget>;
-using widget_register_ptr = std::shared_ptr<widget_register>;
+using widget_register_ptr    = std::shared_ptr<widget_register>;
 namespace rpc_trans {
 class down_file;
 class down_dir;
@@ -477,11 +477,13 @@ class Doodle;
 [[maybe_unused]] DOODLELIB_API doodle_lib_ptr make_doodle_lib();
 
 namespace details {
-
-std::pair<string, string> make_show_shr(const string &in_key, const void *in_ptr);
+template <class in_type>
+std::pair<string, string> make_show_shr(const string &in_key, const in_type *in_ptr){
+  return std::make_pair(in_key, fmt::format("{}##{}", in_key, typeid(*in_ptr).name()));
+};
 }
-template <class... Args>
-std::map<string, string> make_imgui_name(const void *in_ptr, Args &&...in_args) {
+template <class... Args, class in_type>
+std::map<string, string> make_imgui_name(const in_type *in_ptr, Args &&...in_args) {
   return std::map<string, string>{details::make_show_shr(in_args, in_ptr)...};
 };
 }  // namespace doodle

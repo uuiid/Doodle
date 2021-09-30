@@ -365,6 +365,9 @@ comm_ass_file::comm_ass_file()
                                "更改",
                                "删除", "注释",
                                "添加注释");
+  p_time_widget->sig_time_change.connect([this]() {
+    p_root->updata_db();
+  });
 }
 
 bool comm_ass_file::render() {
@@ -395,6 +398,7 @@ bool comm_ass_file::render() {
     if (imgui::Button(p_show_str["添加注释"].c_str())) {
       auto k_com = p_comm->get().emplace_back(new_object<comment>());
       k_com->set_comment(*p_comm_str);
+      p_root->updata_db();
     }
   }
 

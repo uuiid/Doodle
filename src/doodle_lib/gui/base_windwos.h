@@ -43,7 +43,7 @@ class DOODLELIB_API windows_warp : public base_widget {
   void frame_render() override {
     if (*p_show) {
       dear::Begin{
-          fmt::format("{}###{}",
+          fmt::format("{}",
                       this->p_widget->get_class_name(),
                       fmt::ptr(p_widget.get()))
               .c_str(),

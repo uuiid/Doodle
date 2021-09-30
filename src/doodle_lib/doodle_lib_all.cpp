@@ -20,11 +20,6 @@
 #endif
 
 namespace doodle {
-namespace details {
-std::pair<string, string> make_show_shr(const string &in_key, const void *in_ptr) {
-  return std::make_pair(in_key, fmt::format("{}##{}", in_key, fmt::ptr(in_ptr)));
-};
-}  // namespace details
 
 namespace chrono {
 bool is_rest_day(const sys_days &in_days) {
