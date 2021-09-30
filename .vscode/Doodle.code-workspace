@@ -180,7 +180,8 @@
 		"testMate.cpp.test.workingDirectory": "${absDirpath}",
 		"editor.formatOnSaveMode": "modifications",
 		"todo-tree.regex.regexCaseSensitive": false,
-		"todo-tree.regex.regex": "((\\* @|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])"
+		"todo-tree.regex.regex": "((\\* @|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])",
+		"todo-tree.tree.showBadges": true,
 	},
 	"tasks": {
 		"version": "2.0.0",
