@@ -7,12 +7,12 @@
 #include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/threadPool/thread_pool.h>
+#include <doodle_lib/thread_pool/thread_pool.h>
 #include <Logger/logger.h>
 #include <core/doodle_lib.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>
-#include <threadPool/long_term.h>
+#include <thread_pool/long_term.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 

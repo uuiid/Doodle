@@ -78,8 +78,8 @@
 #include <doodle_lib/rpc/rpc_trans_path.h>
 #include <doodle_lib/ScreenshotWidght/screenshot_action.h>
 #include <doodle_lib/ScreenshotWidght/screenshot_widght.h>
-#include <doodle_lib/threadPool/long_term.h>
-#include <doodle_lib/threadPool/thread_pool.h>
+#include <doodle_lib/thread_pool/long_term.h>
+#include <doodle_lib/thread_pool/thread_pool.h>
 #include <doodle_lib/toolkit/toolkit.h>
 #include <doodle_lib/doodle_app.h>
 #include <doodle_lib/doodle_lib_fwd.h>

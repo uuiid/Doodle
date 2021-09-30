@@ -19,7 +19,7 @@ doodle_get_source(
         ${CMAKE_CURRENT_LIST_DIR}/PinYin
         ${CMAKE_CURRENT_LIST_DIR}/rpc
         ${CMAKE_CURRENT_LIST_DIR}/ScreenshotWidght
-        ${CMAKE_CURRENT_LIST_DIR}/threadPool
+        ${CMAKE_CURRENT_LIST_DIR}/thread_pool
         ${CMAKE_CURRENT_LIST_DIR}/toolkit
         ${CMAKE_CURRENT_LIST_DIR}
 )

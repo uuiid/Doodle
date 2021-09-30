@@ -12,7 +12,7 @@
 #include <grpcpp/grpcpp.h>
 #include <rpc/rpc_file_system_client.h>
 #include <rpc/rpc_metadata_client.h>
-#include <threadPool/thread_pool.h>
+#include <thread_pool/thread_pool.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 namespace doodle {

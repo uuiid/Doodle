@@ -8,7 +8,7 @@
 #include <doodle_lib/Metadata/metadata_cpp.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/libWarp/imgui_warp.h>
-#include <doodle_lib/threadPool/long_term.h>
+#include <doodle_lib/thread_pool/long_term.h>
 
 #include <boost/range.hpp>
 #include <boost/range/algorithm_ext.hpp>

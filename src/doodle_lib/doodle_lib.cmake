@@ -75,8 +75,8 @@ set(
     rpc/rpc_trans_path.h
     ScreenshotWidght/screenshot_action.h
     ScreenshotWidght/screenshot_widght.h
-    threadPool/long_term.h
-    threadPool/thread_pool.h
+        thread_pool/long_term.h
+        thread_pool/thread_pool.h
     toolkit/toolkit.h
     doodle_app.h
     doodle_lib_all.h
@@ -139,7 +139,7 @@ set(
     rpc/rpc_trans_path.cpp
     ScreenshotWidght/screenshot_action.cpp
     ScreenshotWidght/screenshot_widght.cpp
-    threadPool/long_term.cpp
+        thread_pool/long_term.cpp
     toolkit/toolkit.cpp
     doodle_app.cpp
     doodle_lib_all.cpp)

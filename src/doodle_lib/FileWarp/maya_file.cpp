@@ -5,8 +5,8 @@
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/libWarp/boost_locale_warp.h>
 #include <doodle_lib/libWarp/std_warp.h>
-#include <doodle_lib/threadPool/long_term.h>
-#include <doodle_lib/threadPool/thread_pool.h>
+#include <doodle_lib/thread_pool/long_term.h>
+#include <doodle_lib/thread_pool/thread_pool.h>
 #include <Logger/logger.h>
 
 #include <boost/locale.hpp>
