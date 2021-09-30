@@ -3,12 +3,15 @@
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="CidrRootsConfiguration">
     <excludeRoots>
+      <file path="$PROJECT_DIR$/.venv" />
       <file path="$PROJECT_DIR$/.vs" />
       <file path="$PROJECT_DIR$/.vscode" />
       <file path="$PROJECT_DIR$/b_Ninja_VS19_Ni_64_qt515_Debug" />
       <file path="$PROJECT_DIR$/b_Ninja_VS19_Ni_64_qt515_Release" />
       <file path="$PROJECT_DIR$/build" />
+      <file path="$PROJECT_DIR$/external" />
       <file path="$PROJECT_DIR$/external/csv-parser/tests" />
+      <file path="$PROJECT_DIR$/src/doodle_lib/external" />
       <file path="$PROJECT_DIR$/tools/grpc_test" />
     </excludeRoots>
   </component>
