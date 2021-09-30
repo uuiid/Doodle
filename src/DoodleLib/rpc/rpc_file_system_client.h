@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/doodleLib_fwd.h>
 #include <DoodleLib/generate/rpc/file_system_server.grpc.pb.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 #include <DoodleLib/rpc/rpc_trans_path.h>

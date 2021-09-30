@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/doodleLib_fwd.h>
 namespace doodle {
 
 class DOODLELIB_API attribute_factory_interface

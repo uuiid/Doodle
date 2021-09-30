@@ -1,9 +1,9 @@
 #pragma once
 
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/project.h>
 #include <DoodleLib/core/observable_container.h>
 #include <DoodleLib/core/ue4_setting.h>
+#include <DoodleLib/doodleLib_fwd.h>
 #include <DoodleLib/libWarp/boost_uuid_warp.h>
 
 #include <boost/filesystem.hpp>

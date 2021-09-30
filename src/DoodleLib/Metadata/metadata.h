@@ -3,10 +3,10 @@
 //
 
 #pragma once
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/metadata_factory.h>
 #include <DoodleLib/Metadata/tree_adapter.h>
 #include <DoodleLib/core/observable_container.h>
+#include <DoodleLib/doodleLib_fwd.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 
 #include <any>

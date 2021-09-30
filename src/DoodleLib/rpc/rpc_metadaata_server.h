@@ -3,9 +3,9 @@
 //
 
 #pragma once
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/core/core_set.h>
+#include <DoodleLib/doodleLib_fwd.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 
 #include <DoodleLib/libWarp/cache.hpp>

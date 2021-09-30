@@ -1,4 +1,4 @@
-#include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/doodleLib_fwd.h>
 #include <Logger/logger.h>
 #include <core/core_set.h>
 #include <spdlog/async.h>

@@ -3,8 +3,8 @@
 //
 
 #pragma once
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/base_windwos.h>
+#include <DoodleLib/doodleLib_fwd.h>
 namespace doodle {
 class DOODLELIB_API time_widget : public base_widget {
   time_wrap_ptr p_time;

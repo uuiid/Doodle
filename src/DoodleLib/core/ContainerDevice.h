@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/doodleLib_fwd.h>
 
 #include <boost/iostreams/categories.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/detail/ios.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
 
 namespace doodle{
 

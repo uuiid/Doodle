@@ -3,9 +3,9 @@
 //
 
 #pragma once
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/base_windwos.h>
 #include <DoodleLib/core/core_set.h>
+#include <DoodleLib/doodleLib_fwd.h>
 
 namespace doodle {
 class DOODLELIB_API setting_windows : public base_widget {

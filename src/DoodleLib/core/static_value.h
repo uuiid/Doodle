@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/doodleLib_fwd.h>
 namespace doodle::staticValue{
 std::string fun_obj();
 std::string server_obj();

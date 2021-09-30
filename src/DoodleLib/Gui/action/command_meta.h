@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/action/command.h>
 #include <DoodleLib/Gui/action/command_ue4.h>
+#include <DoodleLib/doodleLib_fwd.h>
 
 #include <boost/hana.hpp>
 #include <boost/hana/tuple.hpp>

@@ -2,12 +2,12 @@
 // Created by TD on 2021/5/9.
 //
 
-#include <DoodleLib_fwd.h>
 #include <Exception/exception.h>
 #include <cryptopp/base64.h>
 #include <cryptopp/files.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/sha.h>
+#include <doodleLib_fwd.h>
 
 #include <boost/locale.hpp>
 

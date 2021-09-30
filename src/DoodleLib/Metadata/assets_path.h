@@ -3,9 +3,9 @@
 //
 
 #pragma once
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/leaf_meta.h>
 #include <DoodleLib/Metadata/tree_adapter.h>
+#include <DoodleLib/doodleLib_fwd.h>
 namespace doodle {
 class DOODLELIB_API assets_path : public leaf_meta {
   /**

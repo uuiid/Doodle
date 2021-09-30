@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Exception/exception.h>
+#include <DoodleLib/doodleLib_fwd.h>
 #include <Windows.h>
 
 #include <boost/signals2.hpp>

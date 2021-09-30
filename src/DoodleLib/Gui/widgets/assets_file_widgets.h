@@ -3,8 +3,8 @@
 //
 
 #pragma once
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/base_windwos.h>
+#include <DoodleLib/doodleLib_fwd.h>
 
 #include <boost/signals2.hpp>
 namespace doodle {

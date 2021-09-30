@@ -1,11 +1,10 @@
 
 #pragma once
 
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Logger/logger.h>
+#include <DoodleLib/doodleLib_fwd.h>
 #include <DoodleLib/libWarp/json_warp.h>
 #include <DoodleLib/threadPool/long_term.h>
-
 
 namespace doodle {
 

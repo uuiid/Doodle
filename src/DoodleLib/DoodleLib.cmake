@@ -79,7 +79,7 @@ set(
     threadPool/thread_pool.h
     toolkit/toolkit.h
     DoodleLib.h
-    DoodleLib_fwd.h
+        doodleLib_fwd.h
     DoodleLib_pch.h
     DoodleMacro.h
     doodle_app.h)

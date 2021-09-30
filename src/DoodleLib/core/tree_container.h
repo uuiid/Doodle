@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/doodleLib_fwd.h>
 
 #include <boost/hana.hpp>
 //#include <boost/intrusive/intrusive_fwd.hpp>

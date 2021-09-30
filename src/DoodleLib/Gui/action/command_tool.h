@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Gui/action/command.h>
+#include <DoodleLib/doodleLib_fwd.h>
 namespace doodle {
 class DOODLELIB_API comm_export_fbx : public command_tool {
   std::vector<FSys::path> p_files;
