@@ -7,7 +7,7 @@
     <mapping directory="$PROJECT_DIR$/external/csv-parser/tests/data" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/csv-parser/tests/data/real_data/us_states" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/doxygen-awesome-css" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/DoodleLib/external/ImGuiFileDialog" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/DoodleLib/external/imguiwrap" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/doodle_lib/external/ImGuiFileDialog" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/doodle_lib/external/imguiwrap" vcs="Git" />
   </component>
 </project>
