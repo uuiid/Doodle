@@ -19,7 +19,7 @@ set_target_properties(DoodleServerExe
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 target_link_libraries(DoodleServerExe
         PUBLIC
-        DoodleLib
+        doodle_lib
         )
 target_compile_definitions(DoodleServerExe
         PUBLIC
@@ -42,7 +42,7 @@ set_target_properties(DoodleExe
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 target_link_libraries(DoodleExe
         PUBLIC
-        DoodleLib
+        doodle_lib
         )
 target_compile_definitions(DoodleExe
         PUBLIC
@@ -72,7 +72,7 @@ set_target_properties(doodle_test
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 target_link_libraries(doodle_test
         PUBLIC
-        DoodleLib
+        doodle_lib
         )
 target_compile_definitions(doodle_test
         PUBLIC

@@ -1,7 +1,7 @@
 //
 // Created by TD on 2021/7/27.
 //
-#include <DoodleLib/doodle_lib_all.h>
+#include <doodle_lib/doodle_lib_all.h>
 
 #include <catch.hpp>
 
@@ -210,7 +210,7 @@ TEST_CASE("gui action metadata", "[metadata][gui]") {
 //  auto& set     = CoreSet::getSet();
 //  k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
 //
-//  DoodleLib::Get().init_gui();
+//  doodle_lib::Get().init_gui();
 //  auto k_fa = std::make_shared<MetadataFactory>();
 //
 //  SECTION("export excel") {

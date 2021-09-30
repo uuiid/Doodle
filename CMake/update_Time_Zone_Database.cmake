@@ -1,8 +1,8 @@
 include(CMakePrintHelpers)
 
-set(db_win ${ROOT_DIR}/src/DoodleLib/resource/tzdata/windowsZones.xml)
-set(tzdata ${ROOT_DIR}/src/DoodleLib/resource/tzdata/tzdata-latest.tar.gz)
-set(tzdata_dir ${ROOT_DIR}/src/DoodleLib/resource/tzdata/)
+set(db_win ${ROOT_DIR}/src/doodle_lib/resource/tzdata/windowsZones.xml)
+set(tzdata ${ROOT_DIR}/src/doodle_lib/resource/tzdata/tzdata-latest.tar.gz)
+set(tzdata_dir ${ROOT_DIR}/src/doodle_lib/resource/tzdata/)
 
 cmake_print_variables(
         ROOT_DIR

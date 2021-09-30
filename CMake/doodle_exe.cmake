@@ -148,7 +148,7 @@ function(add_doodle)
     #    #预编译头文件
     #    target_precompile_headers(${ADD_DOODLE_NAME}
     #            PRIVATE
-    #            <DoodleLib/DoodleLib_pch.h>
+    #            <doodle_lib/DoodleLib_pch.h>
     #            )
     target_link_libraries(${ADD_DOODLE_NAME} PUBLIC
             date::date

@@ -7,11 +7,11 @@
 [submodule "external/doxygen-awesome-css"]
 	path = external/doxygen-awesome-css
 	url = https://github.com/jothepro/doxygen-awesome-css.git
-[submodule "src/DoodleLib/external/ImGuiFileDialog"]
-	path = src/DoodleLib/external/ImGuiFileDialog
+[submodule "src/doodle_lib/external/ImGuiFileDialog"]
+	path = src/doodle_lib/external/ImGuiFileDialog
 	url = https://github.com/aiekick/ImGuiFileDialog.git
 	branch = Lib_Only
-[submodule "src/DoodleLib/external/imguiwrap"]
-	path = src/DoodleLib/external/imguiwrap
+[submodule "src/doodle_lib/external/imguiwrap"]
+	path = src/doodle_lib/external/imguiwrap
 	url = https://github.com/kfsone/imguiwrap.git
 	branch = main

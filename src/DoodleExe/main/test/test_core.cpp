@@ -2,7 +2,7 @@
 // Created by TD on 2021/7/27.
 //
 
-#include <DoodleLib/doodle_lib_all.h>
+#include <doodle_lib/doodle_lib_all.h>
 #if defined(_WIN32)
 #elif defined(__linux__)
 #include <sys/stat.h>

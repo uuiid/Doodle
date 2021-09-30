@@ -3,7 +3,7 @@
 //
 
 
-#include <DoodleLib/doodle_lib_all.h>
+#include <doodle_lib/doodle_lib_all.h>
 #define CATCH_CONFIG_RUNNER
 #include <catch.hpp>
 
