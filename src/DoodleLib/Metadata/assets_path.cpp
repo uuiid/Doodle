@@ -80,8 +80,9 @@ std::string assets_path::str() const {
 }
 
 void assets_path_vector::set_metadata(const metadata_ptr &in_meta) {
+  leaf_meta::set_metadata(in_meta);
   for (auto &i : get()) {
-    i.set_metadata(in_meta);
+    i->set_metadata(in_meta);
   }
 }
 FSys::path assets_path::get_cache_path() const {

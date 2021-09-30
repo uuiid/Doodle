@@ -91,11 +91,15 @@ class DOODLELIB_API assets_path_vector
   using path_list = std::vector<assets_path_ptr>;
   path_list paths;
 
-  inline vector_adapter<path_list, assets_path_vector> &get() {
+  inline vector_adapter<path_list, assets_path_vector> get() {
     return make_vector_adapter(paths, *this);
   };
 
   void set_metadata(const metadata_ptr &in_meta) override;
+  
+  void end_push_back(const assets_path_ptr &in) {
+    in->set_metadata(p_meta.lock());
+  };
 
  private:
   //这里是序列化的代码
