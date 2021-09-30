@@ -59,6 +59,7 @@
 #include <DoodleLib/Metadata/assets_path.h>
 #include <DoodleLib/Metadata/comment.h>
 #include <DoodleLib/Metadata/episodes.h>
+#include <DoodleLib/Metadata/leaf_meta.h>
 #include <DoodleLib/Metadata/metadata.h>
 #include <DoodleLib/Metadata/metadata_cpp.h>
 #include <DoodleLib/Metadata/metadata_factory.h>

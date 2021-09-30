@@ -4,9 +4,10 @@
 
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
+#include <DoodleLib/Metadata/leaf_meta.h>
 
 namespace doodle {
-class DOODLELIB_API assets_path {
+class DOODLELIB_API assets_path : public leaf_meta {
   /**
    * @brief 上传时的本地路径
    *
@@ -82,14 +83,16 @@ class DOODLELIB_API assets_path {
   };
 };
 
-class DOODLELIB_API assets_path_vector : public details::no_copy {
+class DOODLELIB_API assets_path_vector
+    : public details::no_copy,
+      public leaf_meta {
  public:
   assets_path_vector() : paths(){};
   std::vector<assets_path> paths;
 
   inline std::vector<assets_path> &get() { return paths; };
   inline const std::vector<assets_path> &get() const { return paths; };
-
+  void set_metadata(const metadata_ptr& in_meta)override;
  private:
   //这里是序列化的代码
   friend class boost::serialization::access;

@@ -17,6 +17,12 @@
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_file)
 namespace doodle {
+void assets_file::serialize_check() {
+  if (!p_path_files)
+    p_path_files = new_object<assets_path_vector>();
+  if (!p_comment)
+    p_comment = new_object<comment_vector>();
+}
 
 assets_file::assets_file()
     : metadata(),
@@ -36,11 +42,11 @@ assets_file::assets_file(std::weak_ptr<metadata> in_metadata, std::string showNa
     : metadata(in_metadata),
       p_name(std::move(name)),
       p_ShowName(std::move(showName)),
-      p_path_files(),
+      p_path_files(new_object<assets_path_vector>()),
       p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
       p_user(core_set::getSet().get_user()),
       p_department(core_set::getSet().get_department_enum()),
-      p_comment(),
+      p_comment(new_object<comment_vector>()),
       p_version(1),
       p_need_time(false) {
   p_type   = meta_type::file;
@@ -137,7 +143,8 @@ void assets_file::set_department(department in_department) {
   p_department = in_department;
   saved(true);
 }
-const time_wrap_ptr& assets_file::get_time() const {
+const time_wrap_ptr& assets_file::get_time() {
+  p_time->set_metadata(shared_from_this());
   return p_time;
 }
 void assets_file::set_time(const time_wrap_ptr& in_time) {
@@ -163,9 +170,11 @@ void assets_file::set_comment(const comment_vector_ptr& in_) {
   p_comment = in_;
 }
 assets_path_vector_ptr assets_file::get_path_file() {
+  p_path_files->set_metadata(shared_from_this());
   return p_path_files;
 }
 comment_vector_ptr assets_file::get_comment() {
+  p_comment->set_metadata(shared_from_this());
   return p_comment;
 }
 

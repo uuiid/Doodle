@@ -56,6 +56,7 @@ set(
     Metadata/assets_path.h
     Metadata/comment.h
     Metadata/episodes.h
+    Metadata/leaf_meta.h
     Metadata/metadata.h
     Metadata/metadata_cpp.h
     Metadata/metadata_factory.h
@@ -121,6 +122,7 @@ set(
     Metadata/assets_path.cpp
     Metadata/comment.cpp
     Metadata/episodes.cpp
+    Metadata/leaf_meta.cpp
     Metadata/metadata.cpp
     Metadata/metadata_factory.cpp
     Metadata/project.cpp

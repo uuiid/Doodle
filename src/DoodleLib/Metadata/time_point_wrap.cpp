@@ -3,9 +3,9 @@
 //
 
 #include <DoodleLib/Metadata/time_point_wrap.h>
+#include <Metadata/metadata.h>
 #include <date/date.h>
 #include <date/tz.h>
-
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::time_point_wrap)
 namespace doodle {
@@ -32,6 +32,7 @@ time_point_wrap::time_point_wrap(time_point in_utc_timePoint)
       p_time_zone(date::current_zone()) {
   disassemble(in_utc_timePoint);
 }
+
 std::uint16_t time_point_wrap::get_year() const {
   return (int)p_year;
 }
@@ -75,7 +76,6 @@ void time_point_wrap::set_second(std::uint16_t in_second) {
   disassemble();
 }
 
-
 std::string time_point_wrap::get_week_s() const {
   auto k_int = get_week_int();
   std::string k_string{};
@@ -108,7 +108,6 @@ std::string time_point_wrap::get_week_s() const {
   return k_string;
 }
 
-
 std::int32_t time_point_wrap::get_week_int() const {
   date::weekday k_weekday{date::local_days{p_year / p_month / p_day}};
   return k_weekday.c_encoding();
@@ -138,10 +137,10 @@ chrono::hours_double time_point_wrap::work_duration(const time_point_wrap& in) c
   if (p_time > in.p_time)
     return chrono::hours_double{0};
 
-  auto k_begin = date::sys_days{p_year / p_month / p_day};
-  auto k_end   = date::sys_days{in.p_year / in.p_month / in.p_day};
+  auto k_begin                  = date::sys_days{p_year / p_month / p_day};
+  auto k_end                    = date::sys_days{in.p_year / in.p_month / in.p_day};
 
-  auto k_time = k_end - k_begin;  /// 总总工作天数()
+  auto k_time                   = k_end - k_begin;  /// 总总工作天数()
   /// 这里要测试工作和休息日
   chrono::hours_double k_time_h = work_days(k_begin, k_end).count() * chrono::hours_double{8};  /// 总工作小时
 
@@ -154,7 +153,7 @@ chrono::hours_double time_point_wrap::work_duration(const time_point_wrap& in) c
    *  简化为
    *  k_time_h = k_time_h + one_day_works_hours(p_time) - one_day_works_hours(in.p_time);
    */
-  k_time_h = k_time_h -
+  k_time_h                      = k_time_h -
              (chrono::is_rest_day(k_begin)
                   ? chrono::hours_double{0}
                   : one_day_works_hours(get_local_time())) +
@@ -171,7 +170,7 @@ void time_point_wrap::disassemble(const chrono::sys_time_pos& in_utc_timePoint) 
   p_time       = in_utc_timePoint;
   auto k_local = date::make_zoned(p_time_zone, in_utc_timePoint).get_local_time();
 
-  auto k_dp = date::floor<date::days>(k_local);
+  auto k_dp    = date::floor<date::days>(k_local);
   date::year_month_day k_day{k_dp};
   date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(k_local - k_dp)};
   p_year    = k_day.year();
@@ -180,15 +179,15 @@ void time_point_wrap::disassemble(const chrono::sys_time_pos& in_utc_timePoint) 
   p_hours   = k_hh_mm_ss.hours();
   p_minutes = k_hh_mm_ss.minutes();
   p_seconds = k_hh_mm_ss.seconds();
+  p_meta.lock()->saved(true);
 }
 time_point_wrap::operator time_point() {
   return p_time;
 }
 
 chrono::hours_double time_point_wrap::one_day_works_hours(const chrono::local_time<chrono::seconds>& in_point) const {
-
   /// 获得当天的日期后制作工作时间
-  auto k_day = chrono::floor<chrono::days>(in_point);
+  auto k_day     = chrono::floor<chrono::days>(in_point);
 
   auto k_begin_1 = k_day + std::chrono::hours{9};   ///上午上班时间
   auto k_end_1   = k_day + std::chrono::hours{12};  /// 上午下班时间
@@ -215,7 +214,7 @@ chrono::hours_double time_point_wrap::one_day_works_hours(const chrono::local_ti
   return k_h;
 }
 chrono::days time_point_wrap::work_days(const time_point_wrap::time_point& in_begin,
-                                     const time_point_wrap::time_point& in_end) const {
+                                        const time_point_wrap::time_point& in_end) const {
   auto k_day_begin = chrono::floor<chrono::days>(in_begin);
   auto k_day_end   = chrono::floor<chrono::days>(in_end);
 

@@ -43,7 +43,7 @@ class DOODLELIB_API child_adapter {
     _self->end_clear();
   };
 
-  bool empty() const noexcept {
+  [[nodiscard]] bool empty() const noexcept {
     return _list.empty();
   };
   [[nodiscard]] iterator begin() noexcept { return _list.begin(); };

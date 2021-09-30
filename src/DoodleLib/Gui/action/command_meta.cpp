@@ -405,7 +405,10 @@ bool comm_ass_file::add_data(const metadata_ptr& in_parent, const metadata_ptr& 
   p_parent = in_parent;
   p_root   = std::dynamic_pointer_cast<assets_file>(in);
   if (p_root) {
-    p_time = p_root->get_time()->get_local_time();
+    if (!p_root->get_comment())
+      p_root->set_comment(new_object<comment_vector>());
+    if (!p_root->get_path_file())
+      p_root->set_path_file(new_object<assets_path_vector>());
     p_comm = p_root->get_comment();
     p_time_widget->set_time(p_root->get_time());
   }

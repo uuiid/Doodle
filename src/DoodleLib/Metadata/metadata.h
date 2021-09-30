@@ -61,12 +61,23 @@ class database_action {
     return p_id;
   };  ///< 获得数据库id
 
+  /**
+   * @brief 添加需要保存的状态
+   * 
+   * @param in_need 需要保存
+   */
   void saved(bool in_need = false) {
     p_need_save = in_need;
   };
+  /**
+   * @brief 添加需要加载的状态
+   * 
+   * @param in_need 需要加载
+   */
   void loaded(bool in_need = false) {
     p_need_load = in_need;
   };
+  
   [[nodiscard]] bool is_install() const {
     return p_id > 0;
   };

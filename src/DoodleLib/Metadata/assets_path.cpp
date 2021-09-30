@@ -70,12 +70,19 @@ void assets_path::set_path(const FSys::path &in_local_path, const FSys::path &in
   p_backup_path /= FSys::add_time_stamp(in_server_path);
   DOODLE_LOG_INFO("本地路径: {}, 设置服务路径: {}, 相对路径: {} , 备份路径: {}",
                   p_local_path, p_server_path, p_lexically_relative, p_backup_path);
+  p_meta.lock()->saved(true);
 }
 
 std::string assets_path::str() const {
   return fmt::format("本地路径 {}\n服务器路径 {}",
                      p_local_path,
                      p_server_path);
+}
+
+void assets_path_vector::set_metadata(const metadata_ptr &in_meta) {
+  for (auto &i : get()) {
+    i.set_metadata(in_meta);
+  }
 }
 FSys::path assets_path::get_cache_path() const {
   auto k_path = core_set::getSet().get_cache_root();

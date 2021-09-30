@@ -24,6 +24,8 @@ class DOODLELIB_API assets_file : public metadata {
 
   bool p_need_time;
 
+  void serialize_check();
+
  public:
   /**
    * @brief 默认构造
@@ -46,7 +48,7 @@ class DOODLELIB_API assets_file : public metadata {
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string show_str() const override;
 
-  [[nodiscard]] const time_wrap_ptr& get_time() const;
+  [[nodiscard]] const time_wrap_ptr& get_time();
   void set_time(const time_wrap_ptr& in_time);
 
   [[nodiscard]] const std::string& get_user() const;
