@@ -3,7 +3,7 @@
 #include <Exception/exception.h>
 #include <Metadata/metadata_factory.h>
 #include <Metadata/project.h>
-#include <PinYin/convert.h>
+#include <pin_yin/convert.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>

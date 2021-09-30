@@ -10,7 +10,7 @@
 #include <doodle_lib/Gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/Metadata/metadata_factory.h>
 #include <Metadata/time_point_wrap.h>
-#include <PinYin/convert.h>
+#include <pin_yin/convert.h>
 #include <google/protobuf/util/time_util.h>
 
 #include <utility>

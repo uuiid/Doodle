@@ -1,6 +1,6 @@
 #include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/Logger/logger.h>
-#include <doodle_lib/PinYin/convert.h>
+#include <doodle_lib/pin_yin/convert.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/core_sql.h>
 #include <doodle_lib/core/static_value.h>

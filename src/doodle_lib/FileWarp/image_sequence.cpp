@@ -7,7 +7,7 @@
 #include <Logger/logger.h>
 #include <Metadata/episodes.h>
 #include <Metadata/shot.h>
-#include <PinYin/convert.h>
+#include <pin_yin/convert.h>
 #include <core/doodle_lib.h>
 
 #include <boost/algorithm/string.hpp>

@@ -66,15 +66,15 @@ set(
     Metadata/time_point_wrap.h
     Metadata/tree_adapter.h
     Metadata/user.h
-    PinYin/convert.h
+        pin_yin/convert.h
     rpc/rpc_file_system_client.h
     rpc/rpc_file_system_server.h
     rpc/rpc_metadaata_server.h
     rpc/rpc_metadata_client.h
     rpc/rpc_server_handle.h
     rpc/rpc_trans_path.h
-    ScreenshotWidght/screenshot_action.h
-    ScreenshotWidght/screenshot_widght.h
+        screenshot_widght/screenshot_action.h
+        screenshot_widght/screenshot_widght.h
         thread_pool/long_term.h
         thread_pool/thread_pool.h
     toolkit/toolkit.h
@@ -130,15 +130,15 @@ set(
     Metadata/shot.cpp
     Metadata/time_point_wrap.cpp
     Metadata/user.cpp
-    PinYin/convert.cpp
+        pin_yin/convert.cpp
     rpc/rpc_file_system_client.cpp
     rpc/rpc_file_system_server.cpp
     rpc/rpc_metadaata_server.cpp
     rpc/rpc_metadata_client.cpp
     rpc/rpc_server_handle.cpp
     rpc/rpc_trans_path.cpp
-    ScreenshotWidght/screenshot_action.cpp
-    ScreenshotWidght/screenshot_widght.cpp
+        screenshot_widght/screenshot_action.cpp
+        screenshot_widght/screenshot_widght.cpp
         thread_pool/long_term.cpp
     toolkit/toolkit.cpp
     doodle_app.cpp

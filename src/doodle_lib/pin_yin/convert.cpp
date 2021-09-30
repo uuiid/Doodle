@@ -1,5 +1,5 @@
 #include <Logger/logger.h>
-#include <PinYin/convert.h>
+#include <pin_yin/convert.h>
 
 #include <boost/locale.hpp>
 #include <regex>
