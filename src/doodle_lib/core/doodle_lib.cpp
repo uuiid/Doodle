@@ -66,7 +66,7 @@ thread_pool_ptr doodle_lib::get_thread_pool() {
   return p_thread_pool;
 }
 [[maybe_unused]] doodle_lib_ptr make_doodle_lib() {
-  auto ptr             = std::unique_ptr<doodle_lib>(new doodle_lib{});
+  auto ptr              = std::unique_ptr<doodle_lib>(new doodle_lib{});
   doodle_lib::p_install = ptr.get();
   return ptr;
 }
@@ -92,17 +92,21 @@ void doodle_lib::init_gui() {
                           grpc::InsecureChannelCredentials()));
 
   p_metadata_factory = new_object<metadata_factory>();
-  p_project_vector   = p_metadata_factory->getAllProject();
-  if (!p_project_vector.empty())
-    if (p_curr_project) {
-      auto it = std::find_if(p_project_vector.begin(), p_project_vector.end(),
-                             [this](const project_ptr& in_ptr) { return in_ptr->getId() == this->p_curr_project->getId(); });
-      if (it != p_project_vector.end())
-        p_curr_project = *it;
-      else
+  try {
+    p_project_vector = p_metadata_factory->getAllProject();
+    if (!p_project_vector.empty())
+      if (p_curr_project) {
+        auto it = std::find_if(p_project_vector.begin(), p_project_vector.end(),
+                               [this](const project_ptr& in_ptr) { return in_ptr->getId() == this->p_curr_project->getId(); });
+        if (it != p_project_vector.end())
+          p_curr_project = *it;
+        else
+          p_curr_project = p_project_vector.front();
+      } else
         p_curr_project = p_project_vector.front();
-    } else
-      p_curr_project = p_project_vector.front();
+  } catch (doodle_error& err) {
+    DOODLE_LOG_ERROR(err.what());
+  }
 }
 rpc_metadata_client_ptr doodle_lib::get_rpc_metadata_client() const {
   return p_rpc_metadata_clien;
