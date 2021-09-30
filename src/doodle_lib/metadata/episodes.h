@@ -42,7 +42,7 @@ class DOODLELIB_API episodes : public metadata {
 template <class Archive>
 void episodes::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
-    ar &boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
+    ar &boost::serialization::make_nvp("metadata", boost::serialization::base_object<metadata>(*this)) &
         p_episodes;
 }
 }  // namespace doodle

@@ -41,7 +41,7 @@ std::string episodes::str() const {
 }
 
 bool episodes::operator<(const episodes& in_rhs) const {
-  //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_episodes) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_episodes);
+  //  return std::tie(static_cast<const doodle::metadata&>(*this), p_episodes) < std::tie(static_cast<const doodle::metadata&>(in_rhs), in_rhs.p_episodes);
   return std::tie(p_episodes) < std::tie(in_rhs.p_episodes);
 }
 bool episodes::operator>(const episodes& in_rhs) const {

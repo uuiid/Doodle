@@ -15,7 +15,7 @@ doodle_get_source(
         ${CMAKE_CURRENT_LIST_DIR}/Gui/widgets
         ${CMAKE_CURRENT_LIST_DIR}/libWarp
         ${CMAKE_CURRENT_LIST_DIR}/Logger
-        ${CMAKE_CURRENT_LIST_DIR}/Metadata
+        ${CMAKE_CURRENT_LIST_DIR}/metadata
         ${CMAKE_CURRENT_LIST_DIR}/pin_yin
         ${CMAKE_CURRENT_LIST_DIR}/rpc
         ${CMAKE_CURRENT_LIST_DIR}/screenshot_widght

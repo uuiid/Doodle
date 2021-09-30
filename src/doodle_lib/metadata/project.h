@@ -55,7 +55,7 @@ void project::serialize(Archive& ar, std::uint32_t const version) {
         boost::serialization::make_nvp("path", p_path);
   if (version == 2)
     ar&
-            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
+            boost::serialization::make_nvp("metadata", boost::serialization::base_object<metadata>(*this)) &
         boost::serialization::make_nvp("name", p_name) &
         boost::serialization::make_nvp("path", p_path);
   init();

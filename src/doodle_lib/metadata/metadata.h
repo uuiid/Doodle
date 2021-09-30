@@ -350,8 +350,8 @@ void metadata::serialize(Archive &ar, const std::uint32_t version) {
 
 }  // namespace doodle
 
-// CEREAL_REGISTER_TYPE(doodle::Metadata)
-// CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::Metadata>, doodle::Metadata)
+// CEREAL_REGISTER_TYPE(doodle::metadata)
+// CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::metadata>, doodle::metadata)
 BOOST_CLASS_VERSION(doodle::metadata, 3)
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(doodle::metadata)
 BOOST_CLASS_EXPORT_KEY(doodle::metadata)

@@ -71,7 +71,7 @@ FSys::path project::DBRoot() const {
 }
 
 bool project::operator<(const project& in_rhs) const {
-  //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_path) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_path);
+  //  return std::tie(static_cast<const doodle::metadata&>(*this), p_name, p_path) < std::tie(static_cast<const doodle::metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_path);
   return std::tie(p_name, p_path) < std::tie(in_rhs.p_name, in_rhs.p_path);
 }
 bool project::operator>(const project& in_rhs) const {

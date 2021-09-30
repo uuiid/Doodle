@@ -70,7 +70,7 @@ std::string assets_file::show_str() const {
 bool assets_file::operator<(const assets_file& in_rhs) const {
   // return std::tie(p_version, p_time->getUTCTime()) < std::tie(p_version, p_time->getUTCTime());
   return std::tie(p_version) < std::tie(in_rhs.p_version);
-  //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name, p_ShowName) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_ShowName);
+  //  return std::tie(static_cast<const doodle::metadata&>(*this), p_name, p_ShowName) < std::tie(static_cast<const doodle::metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_ShowName);
 }
 bool assets_file::operator>(const assets_file& in_rhs) const {
   return in_rhs < *this;

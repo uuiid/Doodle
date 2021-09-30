@@ -86,7 +86,7 @@ template <class Archive>
 void assets_file::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 3)
     ar&
-            boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this)) &
+            boost::serialization::make_nvp("metadata", boost::serialization::base_object<metadata>(*this)) &
         BOOST_SERIALIZATION_NVP(p_name) &
         BOOST_SERIALIZATION_NVP(p_ShowName) &
         BOOST_SERIALIZATION_NVP(p_path_files) &

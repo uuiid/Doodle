@@ -38,7 +38,7 @@ std::string assets::show_str() const {
 }
 
 bool assets::operator<(const assets& in_rhs) const {
-  //  return std::tie(static_cast<const doodle::Metadata&>(*this), p_name) < std::tie(static_cast<const doodle::Metadata&>(in_rhs), in_rhs.p_name);
+  //  return std::tie(static_cast<const doodle::metadata&>(*this), p_name) < std::tie(static_cast<const doodle::metadata&>(in_rhs), in_rhs.p_name);
   return std::tie(p_name) < std::tie(in_rhs.p_name);
 }
 bool assets::operator>(const assets& in_rhs) const {

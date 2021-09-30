@@ -51,21 +51,21 @@ set(
     libWarp/std_warp.h
     Logger/LoggerTemplate.h
     Logger/logger.h
-    Metadata/assets.h
-    Metadata/assets_file.h
-    Metadata/assets_path.h
-    Metadata/comment.h
-    Metadata/episodes.h
-    Metadata/leaf_meta.h
-    Metadata/metadata.h
-    Metadata/metadata_cpp.h
-    Metadata/metadata_factory.h
-    Metadata/project.h
-    Metadata/season.h
-    Metadata/shot.h
-    Metadata/time_point_wrap.h
-    Metadata/tree_adapter.h
-    Metadata/user.h
+        metadata/assets.h
+        metadata/assets_file.h
+        metadata/assets_path.h
+        metadata/comment.h
+        metadata/episodes.h
+        metadata/leaf_meta.h
+        metadata/metadata.h
+        metadata/metadata_cpp.h
+        metadata/metadata_factory.h
+        metadata/project.h
+        metadata/season.h
+        metadata/shot.h
+        metadata/time_point_wrap.h
+        metadata/tree_adapter.h
+        metadata/user.h
         pin_yin/convert.h
     rpc/rpc_file_system_client.h
     rpc/rpc_file_system_server.h
@@ -117,19 +117,19 @@ set(
     libWarp/boost_serialization_warp.cpp
     libWarp/imgui_warp.cpp
     Logger/logger.cpp
-    Metadata/assets.cpp
-    Metadata/assets_file.cpp
-    Metadata/assets_path.cpp
-    Metadata/comment.cpp
-    Metadata/episodes.cpp
-    Metadata/leaf_meta.cpp
-    Metadata/metadata.cpp
-    Metadata/metadata_factory.cpp
-    Metadata/project.cpp
-    Metadata/season.cpp
-    Metadata/shot.cpp
-    Metadata/time_point_wrap.cpp
-    Metadata/user.cpp
+        metadata/assets.cpp
+        metadata/assets_file.cpp
+        metadata/assets_path.cpp
+        metadata/comment.cpp
+        metadata/episodes.cpp
+        metadata/leaf_meta.cpp
+        metadata/metadata.cpp
+        metadata/metadata_factory.cpp
+        metadata/project.cpp
+        metadata/season.cpp
+        metadata/shot.cpp
+        metadata/time_point_wrap.cpp
+        metadata/user.cpp
         pin_yin/convert.cpp
     rpc/rpc_file_system_client.cpp
     rpc/rpc_file_system_server.cpp

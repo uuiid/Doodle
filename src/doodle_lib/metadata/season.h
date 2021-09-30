@@ -31,7 +31,7 @@ template <class Archive>
 void season::serialize(Archive& ar, std::uint32_t const version) {
   if (version == 1)
     ar&
-        boost::serialization::make_nvp("Metadata", boost::serialization::base_object<metadata>(*this))&
+        boost::serialization::make_nvp("metadata", boost::serialization::base_object<metadata>(*this))&
         p_int;
 }
 }  // namespace doodle

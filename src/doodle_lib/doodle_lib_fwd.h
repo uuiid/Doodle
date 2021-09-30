@@ -332,7 +332,7 @@ using string_list_ptr            = std::shared_ptr<string_list>;
  */
 using season_ptr                 = std::shared_ptr<season>;
 /**
- * @brief Metadata 智能共享指针
+ * @brief metadata 智能共享指针
  *
  */
 using metadata_ptr               = std::shared_ptr<metadata>;
