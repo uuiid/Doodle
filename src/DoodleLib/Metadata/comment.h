@@ -5,6 +5,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/leaf_meta.h>
+#include <DoodleLib/Metadata/tree_adapter.h>
 
 namespace doodle {
 
@@ -30,19 +31,29 @@ class DOODLELIB_API comment : public leaf_meta {
   };
 };
 
-class DOODLELIB_API comment_vector 
-  : public details::no_copy,
-    public leaf_meta {
+class DOODLELIB_API comment_vector
+    : public details::no_copy,
+      public leaf_meta {
  public:
   comment_vector() : comm(){};
 
   std::vector<comment_ptr> comm;
 
-  inline std::vector<comment_ptr>& get() { return comm; };
-  inline const std::vector<comment_ptr>& get() const { return comm; };
+  void end_push_back(const comment_ptr& in) {
+    in->set_metadata(p_meta.lock());
+  };
+
+  void end_erase(const comment_ptr& in){};
+  void end_clear(){};
+
+  inline vector_adapter<std::vector<comment_ptr>, comment_vector> get() {
+    return make_vector_adapter(comm, *this);
+  };
+  // inline const vector_adapter<comment_ptr, comment_vector> get() const {
+  //   return vector_adapter<comment_ptr, comment_vector>{comm, *this};
+  // };
 
   void set_metadata(const metadata_ptr& in_meta) override;
-
 
  private:
   friend class boost::serialization::access;

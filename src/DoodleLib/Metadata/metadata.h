@@ -63,7 +63,7 @@ class database_action {
 
   /**
    * @brief 添加需要保存的状态
-   * 
+   *
    * @param in_need 需要保存
    */
   void saved(bool in_need = false) {
@@ -71,13 +71,13 @@ class database_action {
   };
   /**
    * @brief 添加需要加载的状态
-   * 
+   *
    * @param in_need 需要加载
    */
   void loaded(bool in_need = false) {
     p_need_load = in_need;
   };
-  
+
   [[nodiscard]] bool is_install() const {
     return p_id > 0;
   };
@@ -195,7 +195,7 @@ class DOODLELIB_API metadata
   meta_type p_type;
 
   bool child_item_is_sort;
-  friend child_adapter<metadata>;
+  friend vector_adapter<std::vector<metadata_ptr>, metadata>;
   void end_push_back(const metadata_ptr &in_val);
   void end_erase(const metadata_ptr &in_val);
   void end_clear();
@@ -209,12 +209,12 @@ class DOODLELIB_API metadata
   explicit metadata(std::weak_ptr<metadata> in_metadata);
   virtual ~metadata();
 
-  observable_container<std::vector<metadata_ptr>> child_item;
+  std::vector<metadata_ptr> child_item;
 
   void add_child(const metadata_ptr &val);
 
-  inline child_adapter<metadata> get_child() {
-    return child_adapter<metadata>{child_item, shared_from_this()};
+  inline vector_adapter<std::vector<metadata_ptr>,metadata> get_child() {
+    return make_vector_adapter(child_item, *this);
   };
   /**
    * @brief 有父 这个是判断有父指针并且已加载父物体

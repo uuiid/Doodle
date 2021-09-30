@@ -34,6 +34,7 @@ void comment::set_user(const std::string& in_user) {
 }
 
 void comment_vector::set_metadata(const metadata_ptr& in_meta) {
+  leaf_meta::set_metadata(in_meta);
   for (auto& i : get()) {
     i->set_metadata(in_meta);
   }

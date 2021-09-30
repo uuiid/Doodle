@@ -170,11 +170,13 @@ void assets_file::set_comment(const comment_vector_ptr& in_) {
   p_comment = in_;
 }
 assets_path_vector_ptr assets_file::get_path_file() {
-  p_path_files->set_metadata(shared_from_this());
+  if (p_path_files)
+    p_path_files->set_metadata(shared_from_this());
   return p_path_files;
 }
 comment_vector_ptr assets_file::get_comment() {
-  p_comment->set_metadata(shared_from_this());
+  if (p_comment)
+    p_comment->set_metadata(shared_from_this());
   return p_comment;
 }
 
