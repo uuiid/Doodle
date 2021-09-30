@@ -38,16 +38,16 @@ class DOODLELIB_API child_adapter {
     return k_r;
   };
 
-  [[nodiscard]] iterator begin() noexcept{ return _list.begin()};
-  [[nodiscard]] const_iterator begin() const noexcept{ return _list.begin()};
-  [[nodiscard]] iterator end() noexcept{ return _list.end()};
-  [[nodiscard]] const_iterator end() const noexcept{ return _list.end()};
-  [[nodiscard]] reverse_iterator rbegin() noexcept{ return _list.rbegin()};
-  [[nodiscard]] const_reverse_iterator rbegin() const noexcept{ return _list.rbegin()};
-  [[nodiscard]] reverse_iterator rend() noexcept{ return _list.rend()};
-  [[nodiscard]] const_reverse_iterator rend() const noexcept{ return _list.rend()};
-  [[nodiscard]] const_reverse_iterator crbegin() const noexcept{ return _list.crbegin()};
-  [[nodiscard]] const_reverse_iterator crend() const noexcept{ return _list.crend()};
+  [[nodiscard]] iterator begin() noexcept { return _list.begin(); };
+  [[nodiscard]] const_iterator begin() const noexcept { return _list.begin(); };
+  [[nodiscard]] iterator end() noexcept { return _list.end(); };
+  [[nodiscard]] const_iterator end() const noexcept { return _list.end(); };
+  [[nodiscard]] reverse_iterator rbegin() noexcept { return _list.rbegin(); };
+  [[nodiscard]] const_reverse_iterator rbegin() const noexcept { return _list.rbegin(); };
+  [[nodiscard]] reverse_iterator rend() noexcept { return _list.rend(); };
+  [[nodiscard]] const_reverse_iterator rend() const noexcept { return _list.rend(); };
+  [[nodiscard]] const_reverse_iterator crbegin() const noexcept { return _list.crbegin(); };
+  [[nodiscard]] const_reverse_iterator crend() const noexcept { return _list.crend(); };
 };
 
 }  // namespace doodle
