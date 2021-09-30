@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include <DoodleLib/DoodleMacro.h>
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/FileSys/file_system.h>
 #include <DoodleLib/FileWarp/image_sequence.h>
@@ -57,9 +56,10 @@
 #include <DoodleLib/core/tree_container.h>
 #include <DoodleLib/core/ue4_setting.h>
 #include <DoodleLib/core/util.h>
-#include <DoodleLib/doodleLib_fwd.h>
-#include <DoodleLib/doodleLib_pch.h>
 #include <DoodleLib/doodle_app.h>
+#include <DoodleLib/doodle_lib_fwd.h>
+#include <DoodleLib/doodle_lib_pch.h>
+#include <DoodleLib/doodle_macro.h>
 #include <DoodleLib/libWarp/boost_locale_warp.h>
 #include <DoodleLib/libWarp/boost_serialization_warp.h>
 #include <DoodleLib/libWarp/boost_uuid_warp.h>

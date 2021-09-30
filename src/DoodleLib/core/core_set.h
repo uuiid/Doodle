@@ -3,7 +3,7 @@
 #include <DoodleLib/Metadata/project.h>
 #include <DoodleLib/core/observable_container.h>
 #include <DoodleLib/core/ue4_setting.h>
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 #include <DoodleLib/libWarp/boost_uuid_warp.h>
 
 #include <boost/filesystem.hpp>

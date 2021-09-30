@@ -5,7 +5,7 @@
 #pragma once
 
 #include <DoodleLib/Gui/base_windwos.h>
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 
 namespace doodle {
 

@@ -5,7 +5,7 @@
 #pragma once
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/core/core_set.h>
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 
 #include <DoodleLib/libWarp/cache.hpp>

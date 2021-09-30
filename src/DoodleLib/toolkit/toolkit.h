@@ -7,7 +7,7 @@
  * @FilePath: \Doodle\doodle_GUI\src\toolkit.h
  */
 #pragma once
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 
 namespace doodle {
 /**

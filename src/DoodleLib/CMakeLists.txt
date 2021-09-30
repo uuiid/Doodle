@@ -4,11 +4,11 @@ cmrc_add_resource_library(
         ${DOODLE_RE_FILES_LIST}
 )
 include(doodle_exe)
-include(DoodleLib.cmake)
+include(doodle_lib.cmake)
 include(${PROJECT_SOURCE_DIR}/CMake/fix_mariadb_plug.cmake)
 add_custom_target(
         create_list_doodle_cmake
-        COMMAND ${CMAKE_COMMAND} -DDOODLE_INCLUDE_CMAKE=${PROJECT_SOURCE_DIR} -P ListFile.cmake
+        COMMAND ${CMAKE_COMMAND} -DDOODLE_INCLUDE_CMAKE=${PROJECT_SOURCE_DIR} -P list_file.cmake
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 )
 
@@ -36,11 +36,11 @@ add_library(DoodleLib
         external/ImGuiFileDialog/ImGuiFileDialog.cpp
         external/ImGuiFileDialog/ImGuiFileDialog.h
         external/ImGuiFileDialog/ImGuiFileDialogConfig.h
-        DoodleLib.manifest
+        doodle_lib.manifest
         )
 
 target_precompile_headers(DoodleLib
-        PUBLIC [[<DoodleLib/DoodleLib_pch.h>]])
+        PUBLIC [[<doodlelib/doodle_lib_pch.h>]])
 
 set(MY_CUSTOM_CONTENT "")
 generate_export_header(DoodleLib

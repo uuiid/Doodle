@@ -32,14 +32,14 @@ doodle_write_list_file(
         DoodleLib
 )
 
-file(WRITE DoodleLib.h [[//
+file(WRITE doodle_lib_all.h [[//
 // Created by TD on 2021/5/9.
 //
 
 #pragma once]] )
 foreach (_HEADER IN LISTS DOODLELIB_HEADER)
-    if (${_HEADER} STREQUAL DoodleLib.h)
+    if (${_HEADER} STREQUAL doodle_lib_all.h)
     else()
-        file(APPEND DoodleLib.h "\n#include <DoodleLib/${_HEADER}>")
+        file(APPEND doodle_lib_all.h "\n#include <DoodleLib/${_HEADER}>")
     endif ()
 endforeach ()

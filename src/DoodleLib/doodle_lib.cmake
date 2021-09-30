@@ -78,10 +78,10 @@ set(
     threadPool/long_term.h
     threadPool/thread_pool.h
     toolkit/toolkit.h
-    DoodleLib.h
-        doodleLib_fwd.h
-        doodleLib_pch.h
-    DoodleMacro.h
+        doodle_lib_all.h
+        doodle_lib_fwd.h
+        doodle_lib_pch.h
+        doodle_macro.h
     doodle_app.h)
 set(
     DOODLELIB_SOURCE
@@ -141,5 +141,5 @@ set(
     ScreenshotWidght/screenshot_widght.cpp
     threadPool/long_term.cpp
     toolkit/toolkit.cpp
-    DoodleLib.cpp
+        doodle_lib_all.cpp
     doodle_app.cpp)

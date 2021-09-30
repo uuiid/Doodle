@@ -5,7 +5,7 @@
 #pragma once
 #include <DoodleLib/Exception/exception.h>
 #include <DoodleLib/Metadata/leaf_meta.h>
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 #include <date/date.h>
 #include <date/tz.h>
 

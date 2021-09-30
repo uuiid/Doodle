@@ -2,7 +2,7 @@
 #pragma once
 
 #include <DoodleLib/Logger/logger.h>
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 #include <DoodleLib/libWarp/json_warp.h>
 #include <DoodleLib/threadPool/long_term.h>
 

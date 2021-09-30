@@ -36,7 +36,7 @@
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
 
-#include <DoodleLib/DoodleMacro.h>
+#include <DoodleLib/doodle_macro.h>
 #include <DoodleLib/libWarp/boost_locale_warp.h>
 #include <DoodleLib/libWarp/boost_serialization_warp.h>
 #include <DoodleLib/libWarp/boost_uuid_warp.h>

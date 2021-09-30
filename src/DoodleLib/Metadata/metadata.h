@@ -6,7 +6,7 @@
 #include <DoodleLib/Metadata/metadata_factory.h>
 #include <DoodleLib/Metadata/tree_adapter.h>
 #include <DoodleLib/core/observable_container.h>
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 
 #include <any>

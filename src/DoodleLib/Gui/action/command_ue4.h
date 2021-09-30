@@ -5,7 +5,7 @@
 #pragma once
 
 #include <DoodleLib/Gui/action/command.h>
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 
 namespace doodle {
 class DOODLELIB_API comm_ass_ue4_create_shot : public command_meta {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <DoodleLib/Metadata/metadata.h>
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 
 #include <magic_enum.hpp>
 namespace doodle {

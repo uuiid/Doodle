@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 
 #include <boost/iostreams/categories.hpp>
 #include <boost/iostreams/detail/ios.hpp>

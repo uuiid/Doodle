@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 
 namespace doodle {
 class DOODLELIB_API leaf_meta {

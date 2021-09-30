@@ -6,7 +6,7 @@
 
 #include <DoodleLib/Gui/action/command.h>
 #include <DoodleLib/Gui/action/command_ue4.h>
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 
 #include <boost/hana.hpp>
 #include <boost/hana/tuple.hpp>

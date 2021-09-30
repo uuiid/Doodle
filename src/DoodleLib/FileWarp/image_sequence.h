@@ -1,5 +1,5 @@
 #pragma once
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 #include <DoodleLib/threadPool/long_term.h>
 
 #include <boost/signals2.hpp>

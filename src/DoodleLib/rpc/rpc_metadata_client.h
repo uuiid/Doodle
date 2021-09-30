@@ -4,7 +4,7 @@
 
 #pragma once
 #include <DoodleLib/Metadata/metadata.h>
-#include <DoodleLib/doodleLib_fwd.h>
+#include <DoodleLib/doodle_lib_fwd.h>
 #include <DoodleLib/generate/rpc/metadata_server.grpc.pb.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 #include <grpcpp/channel.h>

@@ -7,7 +7,7 @@
 #include <cryptopp/files.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/sha.h>
-#include <doodleLib_fwd.h>
+#include <doodle_lib_fwd.h>
 
 #include <boost/locale.hpp>
 
