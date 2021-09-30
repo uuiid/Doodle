@@ -91,4 +91,4 @@ void doodle_initLog(const std::string &logPath, std::size_t logMaxSize, bool asy
 void DOODLELIB_API clear() {
   spdlog::shutdown();
 }
-}  // namespace doodle::Logger
+}  // namespace doodle::logger

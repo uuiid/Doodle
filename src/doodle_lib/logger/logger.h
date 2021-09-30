@@ -4,7 +4,7 @@
  * @LastEditTime: 2020-10-10 13:48:07
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
- * @FilePath: \Doodle\logger\Logger.h
+ * @FilePath: \Doodle\logger\logger.h
  */
 #pragma once
 
@@ -33,4 +33,4 @@ void DOODLELIB_API doodle_initLog(const std::string &logPath = "doodle",
                                   std::size_t logMaxSize = 16 * 1024 * 1024, bool async = true);
 
 void DOODLELIB_API clear();
-}  // namespace doodle::Logger
+}  // namespace doodle::logger

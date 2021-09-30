@@ -49,8 +49,8 @@ set(
         lib_warp/protobuf_warp_cpp.h
         lib_warp/sqlppWarp.h
         lib_warp/std_warp.h
-    Logger/LoggerTemplate.h
-    Logger/logger.h
+        logger/LoggerTemplate.h
+        logger/logger.h
         metadata/assets.h
         metadata/assets_file.h
         metadata/assets_path.h
@@ -116,7 +116,7 @@ set(
         gui/widgets/time_widget.cpp
         lib_warp/boost_serialization_warp.cpp
         lib_warp/imgui_warp.cpp
-    Logger/logger.cpp
+        logger/logger.cpp
         metadata/assets.cpp
         metadata/assets_file.cpp
         metadata/assets_path.cpp
