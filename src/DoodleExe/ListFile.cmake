@@ -8,7 +8,7 @@ doodle_get_source(
         ${CMAKE_CURRENT_LIST_DIR}/Gui/factory
         ${CMAKE_CURRENT_LIST_DIR}/Gui/Metadata
         ${CMAKE_CURRENT_LIST_DIR}/Gui
-        ${CMAKE_CURRENT_LIST_DIR}/libWarp
+        ${CMAKE_CURRENT_LIST_DIR}/lib_warp
         ${CMAKE_CURRENT_LIST_DIR}
 
 )

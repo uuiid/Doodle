@@ -6,8 +6,8 @@
 
 #include <doodle_lib/Gui/main_windwos.h>
 #include <doodle_lib/Gui/widget_register.h>
-#include <doodle_lib/libWarp/boost_locale_warp.h>
-#include <doodle_lib/libWarp/imgui_warp.h>
+#include <doodle_lib/lib_warp/boost_locale_warp.h>
+#include <doodle_lib/lib_warp/imgui_warp.h>
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>

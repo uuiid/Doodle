@@ -1,8 +1,8 @@
 #include <doodle_lib/core/ue4_setting.h>
-#include <doodle_lib/libWarp/boost_locale_warp.h>
+#include <doodle_lib/lib_warp/boost_locale_warp.h>
 #include <Exception/exception.h>
 
-#include <libWarp/WinReg.hpp>
+#include <lib_warp/WinReg.hpp>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::ue4_setting)
 namespace doodle {

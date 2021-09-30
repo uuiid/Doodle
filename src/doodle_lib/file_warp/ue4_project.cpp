@@ -6,11 +6,11 @@
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/core/ue4_setting.h>
-#include <doodle_lib/libWarp/std_warp.h>
+#include <doodle_lib/lib_warp/std_warp.h>
 #include <doodle_lib/thread_pool/long_term.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 
-#include <doodle_lib/libWarp/WinReg.hpp>
+#include <doodle_lib/lib_warp/WinReg.hpp>
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
 

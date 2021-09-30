@@ -7,7 +7,7 @@
 #include <doodle_lib/Gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/Metadata/metadata_cpp.h>
 #include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/libWarp/imgui_warp.h>
+#include <doodle_lib/lib_warp/imgui_warp.h>
 
 namespace doodle {
 

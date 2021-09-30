@@ -6,7 +6,7 @@
 #include <doodle_lib/Metadata/metadata.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/generate/rpc/metadata_server.grpc.pb.h>
-#include <doodle_lib/libWarp/protobuf_warp.h>
+#include <doodle_lib/lib_warp/protobuf_warp.h>
 #include <grpcpp/channel.h>
 
 namespace doodle {

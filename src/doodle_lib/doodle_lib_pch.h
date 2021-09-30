@@ -37,12 +37,12 @@
 #pragma warning(disable : 4275)
 
 #include <doodle_lib/doodle_macro.h>
-#include <doodle_lib/libWarp/boost_locale_warp.h>
-#include <doodle_lib/libWarp/boost_serialization_warp.h>
-#include <doodle_lib/libWarp/boost_uuid_warp.h>
-#include <doodle_lib/libWarp/cmrcWarp.h>
-#include <doodle_lib/libWarp/sqlppWarp.h>
-#include <doodle_lib/libWarp/std_warp.h>
+#include <doodle_lib/lib_warp/boost_locale_warp.h>
+#include <doodle_lib/lib_warp/boost_serialization_warp.h>
+#include <doodle_lib/lib_warp/boost_uuid_warp.h>
+#include <doodle_lib/lib_warp/cmrcWarp.h>
+#include <doodle_lib/lib_warp/sqlppWarp.h>
+#include <doodle_lib/lib_warp/std_warp.h>
 #include <date/date.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>

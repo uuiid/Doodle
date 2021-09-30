@@ -6,10 +6,10 @@
 #include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/libWarp/protobuf_warp.h>
+#include <doodle_lib/lib_warp/protobuf_warp.h>
 
-#include <doodle_lib/libWarp/cache.hpp>
-#include <doodle_lib/libWarp/lru_cache_policy.hpp>
+#include <doodle_lib/lib_warp/cache.hpp>
+#include <doodle_lib/lib_warp/lru_cache_policy.hpp>
 
 namespace doodle {
 class DOODLELIB_API rpc_metadaata_server final : public metadata_server::Service, public details::no_copy {

@@ -7,7 +7,7 @@
 #include <doodle_lib/Metadata/tree_adapter.h>
 #include <doodle_lib/core/observable_container.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/libWarp/protobuf_warp.h>
+#include <doodle_lib/lib_warp/protobuf_warp.h>
 
 #include <any>
 #include <boost/serialization/export.hpp>

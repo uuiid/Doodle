@@ -12,7 +12,7 @@
 #include <doodle_lib/Metadata/shot.h>
 #include <doodle_lib/core/open_file_dialog.h>
 #include <doodle_lib/doodle_app.h>
-#include <doodle_lib/libWarp/imgui_warp.h>
+#include <doodle_lib/lib_warp/imgui_warp.h>
 
 #include <boost/assign.hpp>
 #include <boost/range.hpp>

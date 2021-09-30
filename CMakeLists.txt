@@ -44,7 +44,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(CMakeRC)
 
-#find_package(Qt5 CONFIG COMPONENTS Core Widgets Gui LinguistTools  REQUIRED)
+#find_package(Qt5 CONFIG COMPONENTS Core Widgets gui LinguistTools  REQUIRED)
 #GUI 库
 #find_package(wxWidgets REQUIRED)
 

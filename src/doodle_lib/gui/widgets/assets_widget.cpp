@@ -6,7 +6,7 @@
 
 #include <doodle_lib/Gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/Metadata/metadata_cpp.h>
-#include <doodle_lib/libWarp/imgui_warp.h>
+#include <doodle_lib/lib_warp/imgui_warp.h>
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/range/any_range.hpp>

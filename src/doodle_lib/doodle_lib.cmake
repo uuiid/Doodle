@@ -18,37 +18,37 @@ set(
         file_warp/maya_file.h
         file_warp/ue4_project.h
         file_warp/video_sequence.h
-    Gui/base_windwos.h
-    Gui/main_windwos.h
-    Gui/setting_windows.h
-    Gui/widget_register.h
-    Gui/factory/attribute_factory_interface.h
-    Gui/action/command.h
-    Gui/action/command_meta.h
-    Gui/action/command_tool.h
-    Gui/action/command_ue4.h
-    Gui/widgets/assets_file_widgets.h
-    Gui/widgets/assets_widget.h
-    Gui/widgets/edit_widgets.h
-    Gui/widgets/long_time_tasks_widget.h
-    Gui/widgets/project_widget.h
-    Gui/widgets/time_widget.h
-    libWarp/WinReg.hpp
-    libWarp/boost_locale_warp.h
-    libWarp/boost_serialization_warp.h
-    libWarp/boost_uuid_warp.h
-    libWarp/cache.hpp
-    libWarp/cache_policy.hpp
-    libWarp/cmrcWarp.h
-    libWarp/fifo_cache_policy.hpp
-    libWarp/imgui_warp.h
-    libWarp/json_warp.h
-    libWarp/lfu_cache_policy.hpp
-    libWarp/lru_cache_policy.hpp
-    libWarp/protobuf_warp.h
-    libWarp/protobuf_warp_cpp.h
-    libWarp/sqlppWarp.h
-    libWarp/std_warp.h
+        gui/base_windwos.h
+        gui/main_windwos.h
+        gui/setting_windows.h
+        gui/widget_register.h
+        gui/factory/attribute_factory_interface.h
+        gui/action/command.h
+        gui/action/command_meta.h
+        gui/action/command_tool.h
+        gui/action/command_ue4.h
+        gui/widgets/assets_file_widgets.h
+        gui/widgets/assets_widget.h
+        gui/widgets/edit_widgets.h
+        gui/widgets/long_time_tasks_widget.h
+        gui/widgets/project_widget.h
+        gui/widgets/time_widget.h
+        lib_warp/WinReg.hpp
+        lib_warp/boost_locale_warp.h
+        lib_warp/boost_serialization_warp.h
+        lib_warp/boost_uuid_warp.h
+        lib_warp/cache.hpp
+        lib_warp/cache_policy.hpp
+        lib_warp/cmrcWarp.h
+        lib_warp/fifo_cache_policy.hpp
+        lib_warp/imgui_warp.h
+        lib_warp/json_warp.h
+        lib_warp/lfu_cache_policy.hpp
+        lib_warp/lru_cache_policy.hpp
+        lib_warp/protobuf_warp.h
+        lib_warp/protobuf_warp_cpp.h
+        lib_warp/sqlppWarp.h
+        lib_warp/std_warp.h
     Logger/LoggerTemplate.h
     Logger/logger.h
         metadata/assets.h
@@ -99,23 +99,23 @@ set(
         file_warp/maya_file.cpp
         file_warp/ue4_project.cpp
         file_warp/video_sequence.cpp
-    Gui/base_windwos.cpp
-    Gui/main_windwos.cpp
-    Gui/setting_windows.cpp
-    Gui/widget_register.cpp
-    Gui/factory/attribute_factory_interface.cpp
-    Gui/action/command.cpp
-    Gui/action/command_meta.cpp
-    Gui/action/command_tool.cpp
-    Gui/action/command_ue4.cpp
-    Gui/widgets/assets_file_widgets.cpp
-    Gui/widgets/assets_widget.cpp
-    Gui/widgets/edit_widgets.cpp
-    Gui/widgets/long_time_tasks_widget.cpp
-    Gui/widgets/project_widget.cpp
-    Gui/widgets/time_widget.cpp
-    libWarp/boost_serialization_warp.cpp
-    libWarp/imgui_warp.cpp
+        gui/base_windwos.cpp
+        gui/main_windwos.cpp
+        gui/setting_windows.cpp
+        gui/widget_register.cpp
+        gui/factory/attribute_factory_interface.cpp
+        gui/action/command.cpp
+        gui/action/command_meta.cpp
+        gui/action/command_tool.cpp
+        gui/action/command_ue4.cpp
+        gui/widgets/assets_file_widgets.cpp
+        gui/widgets/assets_widget.cpp
+        gui/widgets/edit_widgets.cpp
+        gui/widgets/long_time_tasks_widget.cpp
+        gui/widgets/project_widget.cpp
+        gui/widgets/time_widget.cpp
+        lib_warp/boost_serialization_warp.cpp
+        lib_warp/imgui_warp.cpp
     Logger/logger.cpp
         metadata/assets.cpp
         metadata/assets_file.cpp
