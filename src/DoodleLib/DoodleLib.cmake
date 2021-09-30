@@ -80,7 +80,7 @@ set(
     toolkit/toolkit.h
     DoodleLib.h
         doodleLib_fwd.h
-    DoodleLib_pch.h
+        doodleLib_pch.h
     DoodleMacro.h
     doodle_app.h)
 set(

@@ -1,9 +1,9 @@
 ﻿#pragma once
 
 #include <DoodleConfig.h>
-#include <DoodleLib/DoodleLib_pch.h>
 #include <DoodleLib/DoodleMacro.h>
 #include <DoodleLib/Logger/logger.h>
+#include <DoodleLib/doodleLib_pch.h>
 #include <DoodleLib/libWarp/boost_serialization_warp.h>
 #include <DoodleLib/libWarp/cmrcWarp.h>
 #include <DoodleLib/libWarp/sqlppWarp.h>
