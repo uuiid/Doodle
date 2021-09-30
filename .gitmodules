@@ -15,3 +15,6 @@
 	path = src/doodle_lib/external/imguiwrap
 	url = https://github.com/kfsone/imguiwrap.git
 	branch = main
+[submodule "src/doodle_lib/external/service-base"]
+	path = src/doodle_lib/external/service-base
+	url = https://github.com/tromgy/service-base.git
