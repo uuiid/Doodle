@@ -5,11 +5,6 @@ doodle_get_source(
         DOODLELIB_GUI_HEADER
         DOODLELIB_GUI_SOURCE
         LISTS_DIR
-        ${CMAKE_CURRENT_LIST_DIR}/Gui/factory
-        ${CMAKE_CURRENT_LIST_DIR}/Gui/Metadata
-        ${CMAKE_CURRENT_LIST_DIR}/Gui
-        ${CMAKE_CURRENT_LIST_DIR}/lib_warp
-        ${CMAKE_CURRENT_LIST_DIR}
 
 )
 

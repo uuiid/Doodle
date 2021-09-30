@@ -53,7 +53,7 @@ target_compile_definitions(DoodleExe
 #if (unofficial-nana_FOUND)
 #
 #else ()
-#    #    add_executable(DoodleExe ALIAS DoodleServerExe )
+#    #    add_executable(doodle_exe ALIAS DoodleServerExe )
 #endif ()
 
 
