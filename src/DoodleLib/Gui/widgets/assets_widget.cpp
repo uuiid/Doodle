@@ -40,7 +40,7 @@ void assets_widget::load_meta(const metadata_ptr& in_ptr) {
   if (in_ptr && in_ptr->has_child()) {
     in_ptr->select_indb();
 
-    for (const auto& i : in_ptr->child_item) {
+    for (const auto& i : in_ptr->get_child()) {
       auto flsge = base_flags;
       if (is_select(i))
         flsge |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;

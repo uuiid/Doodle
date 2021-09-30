@@ -5,6 +5,7 @@
 #pragma once
 #include <DoodleLib/DoodleLib_fwd.h>
 #include <DoodleLib/Metadata/metadata_factory.h>
+#include <DoodleLib/Metadata/tree_adapter.h>
 #include <DoodleLib/core/observable_container.h>
 #include <DoodleLib/libWarp/protobuf_warp.h>
 
@@ -12,7 +13,6 @@
 #include <boost/serialization/export.hpp>
 #include <boost/signals2.hpp>
 #include <optional>
-
 namespace doodle {
 template <class Class, class factory>
 class database_action {
@@ -174,8 +174,6 @@ class DOODLELIB_API metadata
   std::size_t p_has_file;
 
  protected:
-  void install_slots();
-
   ///弱父对象的指针
   std::weak_ptr<metadata> p_parent;
 
@@ -186,6 +184,10 @@ class DOODLELIB_API metadata
   meta_type p_type;
 
   bool child_item_is_sort;
+  friend child_adapter<metadata>;
+  void end_push_back(const metadata_ptr &in_val);
+  void end_erase(const metadata_ptr &in_val);
+  void end_clear();
 
  public:
   metadata();
@@ -200,6 +202,9 @@ class DOODLELIB_API metadata
 
   void add_child(const metadata_ptr &val);
 
+  inline child_adapter<metadata> get_child() {
+    return child_adapter<metadata>{child_item, shared_from_this()};
+  };
   /**
    * @brief 有父 这个是判断有父指针并且已加载父物体
    * @return
@@ -234,7 +239,7 @@ class DOODLELIB_API metadata
   [[nodiscard]] virtual std::string show_str() const;  ///< 这里时显示的字符串, 极有可能有中文
 
   [[nodiscard]] const std::string &get_uuid() const;  ///< 获得uuid
-  [[nodiscard]] FSys::path get_url_uuid() const;       ///< 这个是获得所属项目的保持相对路径
+  [[nodiscard]] FSys::path get_url_uuid() const;      ///< 这个是获得所属项目的保持相对路径
 
   /**
    * 获得字符串id
@@ -266,7 +271,6 @@ class DOODLELIB_API metadata
    * @return 根节点(现在基本上是项目节点)
    */
   [[nodiscard]] metadata_const_ptr get_root_parent() const;
-
 
   /**
    * @brief 获得序列化他们的工厂

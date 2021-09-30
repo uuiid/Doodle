@@ -57,7 +57,7 @@ episodes_ptr shot::get_episodes_ptr() const {
 }
 
 void shot::set_episodes_ptr(const episodes_ptr& Episodes_) noexcept {
-  Episodes_->child_item.push_back_sig(shared_from_this());
+  Episodes_->get_child().push_back(shared_from_this());
 }
 std::string shot::str() const {
   return fmt::format("sc{:04d}{}", p_shot, p_shot_ab == "None" ? "" : p_shot_ab);

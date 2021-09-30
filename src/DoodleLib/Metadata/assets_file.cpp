@@ -101,13 +101,13 @@ int assets_file::find_max_version() const {
     return 1;
   auto k_p = p_parent.lock();
 
-  if (k_p->child_item.empty())
+  if (k_p->get_child().empty())
     return 1;
   std::vector<metadata_ptr> k_r;
   std::vector<assets_file_ptr> k_assetsFilePtr;
 
   std::copy_if(
-      k_p->child_item.begin(), k_p->child_item.end(),
+      k_p->get_child().begin(), k_p->get_child().end(),
       std::inserter(k_r, k_r.begin()), [this](const metadata_ptr& in_) {
         if (details::is_class<assets_file>(in_)) {
           return std::dynamic_pointer_cast<assets_file>(in_)->get_department() == get_department();

@@ -151,7 +151,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
       /// 生成集数
       for (int k_i = 0; k_i < 10; ++k_i) {
         k_eps = std::make_shared<episodes>(k_prj, k_i);
-        k_prj->child_item.push_back_sig(k_eps);
+        k_prj->get_child().push_back(k_eps);
         k_eps->updata_db(k_fa);
 
         k_delete_id.push_back(k_eps);
@@ -159,7 +159,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
           /// 生成镜头
           for (int k_j = 0; k_j < 10; ++k_j) {
             k_shot_ptr = std::make_shared<shot>(k_eps, k_j);
-            k_eps->child_item.push_back_sig(k_shot_ptr);
+            k_eps->get_child().push_back(k_shot_ptr);
             k_shot_ptr->updata_db(k_fa);
 
             k_delete_id.push_back(k_shot_ptr);
@@ -168,7 +168,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
               /// 生成人名
               for (int k_k = 0; k_k < 10; ++k_k) {
                 k_assets_ptr = std::make_shared<assets>(k_shot_ptr, fmt::format("tset_{}", k_k));
-                k_shot_ptr->child_item.push_back_sig(k_assets_ptr);
+                k_shot_ptr->get_child().push_back(k_assets_ptr);
                 k_assets_ptr->updata_db(k_fa);
 
                 k_delete_id.push_back(k_assets_ptr);
@@ -176,7 +176,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
                   ///  生成具体条目
                   for (int k_l = 0; k_l < 20; ++k_l) {
                     auto k_file = std::make_shared<assets_file>(k_assets_ptr, k_assets_ptr->show_str());
-                    k_assets_ptr->child_item.push_back_sig(k_file);
+                    k_assets_ptr->get_child().push_back(k_file);
 
                     using namespace chrono::literals;
                     auto k_time = std::make_shared<time_point_wrap>(chrono::system_clock::now() - 3h * i);

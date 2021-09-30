@@ -111,9 +111,9 @@ TEST_CASE("core create_path", "[fun][create_path]") {
 
   auto k_1 = std::make_shared<project>("D:/", "ttt");
   auto k_2 = std::make_shared<assets>(k_1, "ttt");
-  k_1->child_item.push_back_sig(k_2);
+  k_1->get_child().push_back(k_2);
   auto k_3 = std::make_shared<assets>(k_2, "eee");
-  k_2->child_item.push_back_sig(k_3);
+  k_2->get_child().push_back(k_3);
   auto path = assets_path("D:/file/ex2.ma", k_3);
   SECTION("dir ") {
     REQUIRE(path.get_local_path() == FSys::path{"D:/file/ex2.ma"});

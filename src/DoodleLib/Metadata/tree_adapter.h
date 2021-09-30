@@ -19,25 +19,33 @@ class DOODLELIB_API child_adapter {
   using const_reverse_iterator = typename value_list ::const_reverse_iterator;
 
   value_list& _list;
-  value_ptr _parent;
-  explicit child_adapter(value_list& in_value_list, value_ptr in_parent)
-      : _list(in_value_list),
-        _parent(std::move(in_parent)){};
+  value_ptr _self;
 
-  iterator push_back(const value_ptr& in) {
-    auto k_r = _list.push_back(in);
-    _parent->end_push_back(in);
-    return k_r;
+  explicit child_adapter(value_list& in_value_list, value_ptr in_self)
+      : _list(in_value_list),
+        _self(std::move(in_self)){};
+
+  void push_back(const value_ptr& in) {
+    _list.push_back(in);
+    _self->end_push_back(in);
   };
   iterator erase(const value_ptr& in) {
     auto it = std::find(_list.begin(), _list.end(), in);
     if (it == _list.end())
       throw error_iterator{"错误的迭代器"};
     auto k_r = _list.erase(it);
-    _parent->end_erase(in);
+    _self->end_erase(in);
     return k_r;
   };
 
+  void clear() {
+    _list.clear();
+    _self->end_clear();
+  };
+
+  bool empty() const noexcept {
+    return _list.empty();
+  };
   [[nodiscard]] iterator begin() noexcept { return _list.begin(); };
   [[nodiscard]] const_iterator begin() const noexcept { return _list.begin(); };
   [[nodiscard]] iterator end() noexcept { return _list.end(); };
@@ -49,5 +57,7 @@ class DOODLELIB_API child_adapter {
   [[nodiscard]] const_reverse_iterator crbegin() const noexcept { return _list.crbegin(); };
   [[nodiscard]] const_reverse_iterator crend() const noexcept { return _list.crend(); };
 };
+template <class value_type>
+using child_adapter_ptr = std::shared_ptr<child_adapter<value_type>>;
 
 }  // namespace doodle

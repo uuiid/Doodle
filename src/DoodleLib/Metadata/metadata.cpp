@@ -34,7 +34,6 @@ metadata::metadata()
       p_type(meta_type::unknown_file),
       p_updata_type(false),
       child_item_is_sort(false) {
-  install_slots();
 }
 
 metadata::metadata(std::weak_ptr<metadata> in_metadata)
@@ -50,7 +49,6 @@ metadata::metadata(std::weak_ptr<metadata> in_metadata)
       p_type(meta_type::unknown_file),
       p_updata_type(false),
       child_item_is_sort(false) {
-  install_slots();
 }
 
 metadata::~metadata() = default;
@@ -60,19 +58,10 @@ std::shared_ptr<metadata> metadata::get_parent() const {
 }
 
 void metadata::sort_child_items(bool is_launch_sig) {
-  if (child_item_is_sort)
-    return;
-
-  if (is_launch_sig)
-    child_item.sig_begin_sort(child_item);
-  std::sort(child_item.begin(), child_item.end(),
-            [](const metadata_ptr &r, const metadata_ptr &l) {
-              return *r < *l;
-            });
-  if (is_launch_sig)
-    child_item.sig_sort(child_item);
-
-  child_item_is_sort = true;
+//  std::sort(child_item.begin(), child_item.end(),
+//            [](const metadata_ptr &r, const metadata_ptr &l) {
+//              return *r < *l;
+//            });
 }
 
 bool metadata::has_parent() const {
@@ -163,100 +152,54 @@ bool metadata::operator!=(const metadata &in_rhs) const {
   return std::tie(p_id) != std::tie(in_rhs.p_id);
 }
 
-void metadata::install_slots() {
-  child_item.sig_begin_clear.connect([this]() {
-    for (const auto &k_i : this->child_item) {
-      k_i->p_id = 0;
+void metadata::end_push_back(const metadata_ptr &in_val) {
+  add_child(in_val);
+  switch (in_val->p_type) {
+    case meta_type::unknown_file:
+    case meta_type::project_root:
+    case meta_type::animation_lib_root:
+      break;
+    case meta_type::folder:
+      ++p_has_child;
+      break;
+    case meta_type::derive_file:
+    case meta_type::file: {
+      ++p_has_file;
+      break;
     }
-    p_has_child = 0;
-    saved(true);
-  });
+    default:
+      break;
+  }
 
-  child_item.sig_begin_insert.connect([this](const metadata_ptr &val) {
-    add_child(val);
-    switch (val->p_type) {
-      case meta_type::unknown_file:
-      case meta_type::project_root:
-      case meta_type::animation_lib_root:
-        break;
-      case meta_type::folder:
-        ++p_has_child;
-        break;
-      case meta_type::derive_file:
-      case meta_type::file: {
-        ++p_has_file;
-        break;
-      }
-      default:
-        break;
+  saved(true);
+}
+
+void metadata::end_erase(const metadata_ptr &in_val) {
+  switch (in_val->p_type) {
+    case meta_type::unknown_file:
+    case meta_type::project_root:
+    case meta_type::animation_lib_root:
+      break;
+    case meta_type::folder:
+      --p_has_child;
+      break;
+    case meta_type::derive_file:
+    case meta_type::file: {
+      --p_has_file;
+      break;
     }
+    default:
+      break;
+  }
+  saved(true);
+}
 
-    saved(true);
-  });
-  child_item.sig_begin_erase.connect([this](const metadata_ptr &val) {
-    switch (val->p_type) {
-      case meta_type::unknown_file:
-      case meta_type::project_root:
-      case meta_type::animation_lib_root:
-        break;
-      case meta_type::folder:
-        --p_has_child;
-        break;
-      case meta_type::derive_file:
-      case meta_type::file: {
-        --p_has_file;
-        break;
-      }
-      default:
-        break;
-    }
-    saved(true);
-  });
-
-  child_item.sig_begin_push_back.connect([this](const metadata_ptr &val) {
-    add_child(val);
-    switch (val->p_type) {
-      case meta_type::unknown_file:
-      case meta_type::project_root:
-      case meta_type::animation_lib_root:
-        break;
-      case meta_type::folder:
-        ++p_has_child;
-        break;
-      case meta_type::derive_file:
-      case meta_type::file: {
-        ++p_has_file;
-        break;
-      }
-      default:
-        break;
-    }
-    saved(true);
-  });
-
-  child_item.sig_begin_swap.connect([this](const std::vector<metadata_ptr> &val) {
-    for (auto &k_i : val) {
-      add_child(k_i);
-      switch (k_i->p_type) {
-        case meta_type::unknown_file:
-        case meta_type::project_root:
-        case meta_type::animation_lib_root:
-          break;
-        case meta_type::folder:
-          ++p_has_child;
-          break;
-        case meta_type::derive_file:
-        case meta_type::file: {
-          ++p_has_file;
-          break;
-        }
-        default:
-          break;
-      }
-    }
-
-    saved(true);
-  });
+void metadata::end_clear() {
+  for (const auto &k_i : this->child_item) {
+    k_i->p_id = 0;
+  }
+  p_has_child = 0;
+  saved(true);
 }
 void metadata::add_child(const metadata_ptr &val) {
   /// 先查看是否有父级关联
@@ -269,7 +212,7 @@ void metadata::add_child(const metadata_ptr &val) {
       /// 设置为需求保存
       val->saved(true);
       /// 在父物体上调用清除子物体信号
-      val->p_parent.lock()->child_item.erase_sig(val);
+      val->p_parent.lock()->get_child().erase(val);
     }
   }
 
