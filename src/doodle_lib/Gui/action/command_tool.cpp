@@ -4,10 +4,10 @@
 
 #include "command_tool.h"
 
-#include <doodle_lib/FileWarp/image_sequence.h>
-#include <doodle_lib/FileWarp/maya_file.h>
-#include <doodle_lib/FileWarp/ue4_project.h>
-#include <doodle_lib/FileWarp/video_sequence.h>
+#include <doodle_lib/file_warp/image_sequence.h>
+#include <doodle_lib/file_warp/maya_file.h>
+#include <doodle_lib/file_warp/ue4_project.h>
+#include <doodle_lib/file_warp/video_sequence.h>
 #include <doodle_lib/Metadata/episodes.h>
 #include <doodle_lib/Metadata/shot.h>
 #include <doodle_lib/core/open_file_dialog.h>

@@ -6,9 +6,9 @@ doodle_get_source(
         DOODLELIB_SOURCE
         LISTS_DIR
         ${CMAKE_CURRENT_LIST_DIR}/core
-        ${CMAKE_CURRENT_LIST_DIR}/Exception
-        ${CMAKE_CURRENT_LIST_DIR}/FileSys
-        ${CMAKE_CURRENT_LIST_DIR}/FileWarp
+        ${CMAKE_CURRENT_LIST_DIR}/exception
+        ${CMAKE_CURRENT_LIST_DIR}/file_sys
+        ${CMAKE_CURRENT_LIST_DIR}/file_warp
         ${CMAKE_CURRENT_LIST_DIR}/Gui
         ${CMAKE_CURRENT_LIST_DIR}/Gui/factory
         ${CMAKE_CURRENT_LIST_DIR}/Gui/action

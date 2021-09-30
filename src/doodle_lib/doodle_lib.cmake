@@ -12,12 +12,12 @@ set(
     core/tree_container.h
     core/ue4_setting.h
     core/util.h
-    Exception/exception.h
-    FileSys/file_system.h
-    FileWarp/image_sequence.h
-    FileWarp/maya_file.h
-    FileWarp/ue4_project.h
-    FileWarp/video_sequence.h
+        exception/exception.h
+        file_sys/file_system.h
+        file_warp/image_sequence.h
+        file_warp/maya_file.h
+        file_warp/ue4_project.h
+        file_warp/video_sequence.h
     Gui/base_windwos.h
     Gui/main_windwos.h
     Gui/setting_windows.h
@@ -94,11 +94,11 @@ set(
     core/tree_container.cpp
     core/ue4_setting.cpp
     core/util.cpp
-    FileSys/file_system.cpp
-    FileWarp/image_sequence.cpp
-    FileWarp/maya_file.cpp
-    FileWarp/ue4_project.cpp
-    FileWarp/video_sequence.cpp
+        file_sys/file_system.cpp
+        file_warp/image_sequence.cpp
+        file_warp/maya_file.cpp
+        file_warp/ue4_project.cpp
+        file_warp/video_sequence.cpp
     Gui/base_windwos.cpp
     Gui/main_windwos.cpp
     Gui/setting_windows.cpp

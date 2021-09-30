@@ -4,7 +4,7 @@
 
 #include "command.h"
 
-#include <doodle_lib/FileWarp/maya_file.h>
+#include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/doodle_app.h>
 #include <doodle_lib/libWarp/imgui_warp.h>
 

@@ -1,9 +1,9 @@
 #include <doodle_lib/Exception/exception.h>
-#include <doodle_lib/FileSys/file_system.h>
-#include <doodle_lib/FileWarp/image_sequence.h>
-#include <doodle_lib/FileWarp/maya_file.h>
-#include <doodle_lib/FileWarp/ue4_project.h>
-#include <doodle_lib/FileWarp/video_sequence.h>
+#include <doodle_lib/file_sys/file_system.h>
+#include <doodle_lib/file_warp/image_sequence.h>
+#include <doodle_lib/file_warp/maya_file.h>
+#include <doodle_lib/file_warp/ue4_project.h>
+#include <doodle_lib/file_warp/video_sequence.h>
 #include <doodle_lib/Logger/logger.h>
 #include <doodle_lib/Metadata/episodes.h>
 #include <doodle_lib/Metadata/project.h>

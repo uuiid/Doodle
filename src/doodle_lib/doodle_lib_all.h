@@ -16,11 +16,11 @@
 #include <doodle_lib/core/ue4_setting.h>
 #include <doodle_lib/core/util.h>
 #include <doodle_lib/Exception/exception.h>
-#include <doodle_lib/FileSys/file_system.h>
-#include <doodle_lib/FileWarp/image_sequence.h>
-#include <doodle_lib/FileWarp/maya_file.h>
-#include <doodle_lib/FileWarp/ue4_project.h>
-#include <doodle_lib/FileWarp/video_sequence.h>
+#include <doodle_lib/file_sys/file_system.h>
+#include <doodle_lib/file_warp/image_sequence.h>
+#include <doodle_lib/file_warp/maya_file.h>
+#include <doodle_lib/file_warp/ue4_project.h>
+#include <doodle_lib/file_warp/video_sequence.h>
 #include <doodle_lib/Gui/base_windwos.h>
 #include <doodle_lib/Gui/main_windwos.h>
 #include <doodle_lib/Gui/setting_windows.h>

@@ -1,5 +1,5 @@
 #include <doodle_lib/Exception/exception.h>
-#include <doodle_lib/FileWarp/image_sequence.h>
+#include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/libWarp/std_warp.h>
