@@ -23,3 +23,4 @@ class DOODLELIB_API comm_files_up : public command_meta {
 };
 
 }  // namespace doodle
+ 

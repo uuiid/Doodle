@@ -27,9 +27,9 @@ function(FIX_MARIADB_PLUG)
     endif ()
 
 
-    cmake_print_variables(FIX_MARIADB_PLUG_NAME _DIR)
+#     cmake_print_variables(FIX_MARIADB_PLUG_NAME _DIR)
     foreach (VAR IN LISTS LIBMARIADB_PLUG )
-        cmake_print_variables(VAR)
+        # cmake_print_variables(VAR)
 #        set(CMAKE_FIND_DEBUG_MODE TRUE)
         find_file(
                 _PLUG_${VAR}
@@ -38,7 +38,7 @@ function(FIX_MARIADB_PLUG)
                 REQUIRED
         )
 #        set(CMAKE_FIND_DEBUG_MODE FALSE)
-        cmake_print_variables(_PLUG_${VAR})
+        # cmake_print_variables(_PLUG_${VAR})
         add_custom_command(
                 TARGET ${FIX_MARIADB_PLUG_NAME}
                 POST_BUILD

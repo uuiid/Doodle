@@ -17,9 +17,9 @@ function(doodle_grpc_generate out_lists)
         get_filename_component(_NAME_WE ${_PATH} NAME_WE)
         get_filename_component(_NAME ${_PATH} NAME)
         get_filename_component(_DIRECTORY ${_PATH} DIRECTORY)
-        cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)
+        # cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)
 
-        message("name: " ${LIST})
+        # message("name: " ${LIST})
         list(APPEND
                 _OUT
                 ${CMAKE_CURRENT_LIST_DIR}/generate/rpc/${_NAME_WE}.pb.h
@@ -65,11 +65,11 @@ function(doodle_sqlpp_generate out_lists)
         get_filename_component(_NAME_WE ${_PATH} NAME_WE)
         get_filename_component(_NAME ${_PATH} NAME)
         get_filename_component(_DIRECTORY ${_PATH} DIRECTORY)
-        cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)
+        # cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)
 
         string(REGEX MATCH "[a-zA-Z]+"
                 CLEAN_NAME ${_NAME_WE})
-        cmake_print_variables(LIST CLEAN_NAME)
+        # cmake_print_variables(LIST CLEAN_NAME)
 
         list(APPEND
                 _OUT
@@ -91,7 +91,7 @@ function(doodle_sqlpp_generate out_lists)
     set("${out_lists}"
             ${_OUT}
             PARENT_SCOPE)
-    cmake_print_variables(_OUT)
+#     cmake_print_variables(_OUT)
 
 
 endfunction()
@@ -143,7 +143,7 @@ function(add_doodle)
     #设置导出符号
     include(GenerateExportHeader)
 
-    cmake_print_variables(CMAKE_CURRENT_LIST_DIR)
+#     cmake_print_variables(CMAKE_CURRENT_LIST_DIR)
 
     #    #预编译头文件
     #    target_precompile_headers(${ADD_DOODLE_NAME}
