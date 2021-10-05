@@ -13,7 +13,7 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "E:/vcpkg/scripts/buildsystems/vcpkg.cmake"
       },
       "architecture": {
         "value": "x64",
@@ -25,7 +25,8 @@
             "Windows"
           ]
         }
-      }
+      },
+      "cmakeExecutable": "E:\\vcpkg\\downloads\\tools\\cmake-3.21.1-windows\\cmake-3.21.1-windows-i386\\bin\\cmake.exe"
     },
     {
       "name": "Ninja_release",

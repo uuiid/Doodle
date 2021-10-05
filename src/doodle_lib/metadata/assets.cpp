@@ -2,9 +2,9 @@
 // Created by teXiao on 2021/4/27.
 //
 
-#include <doodle_lib/Gui/factory/attribute_factory_interface.h>
-#include <doodle_lib/Metadata/assets.h>
-#include <doodle_lib/Metadata/metadata_factory.h>
+#include <doodle_lib/gui/factory/attribute_factory_interface.h>
+#include <doodle_lib/metadata/assets.h>
+#include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/pin_yin/convert.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets)

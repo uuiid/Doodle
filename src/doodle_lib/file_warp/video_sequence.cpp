@@ -1,7 +1,7 @@
-#include <doodle_lib/Exception/exception.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/file_warp/video_sequence.h>
-#include <doodle_lib/Metadata/episodes.h>
-#include <doodle_lib/Metadata/shot.h>
+#include <doodle_lib/metadata/episodes.h>
+#include <doodle_lib/metadata/shot.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/lib_warp/std_warp.h>
