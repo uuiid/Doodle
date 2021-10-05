@@ -23,7 +23,7 @@ class DOODLELIB_API attribute_factory_interface
 
 class DOODLELIB_API attr_project : public attribute_factory_interface {
   project_ptr p_prj;
-  command_meta_ptr p_comm;
+  command_ptr p_comm;
 
  public:
   attr_project();
@@ -34,7 +34,7 @@ class DOODLELIB_API attr_project : public attribute_factory_interface {
 
 class DOODLELIB_API attr_assets : public attribute_factory_interface {
   metadata_ptr p_data;
-  command_meta_ptr p_comm;
+  command_ptr p_comm;
 
  public:
   attr_assets();
@@ -49,7 +49,7 @@ class DOODLELIB_API attr_assets : public attribute_factory_interface {
 
 class DOODLELIB_API attr_assets_file : public attribute_factory_interface {
   assets_file_ptr p_data;
-  command_meta_ptr p_comm;
+  command_ptr p_comm;
 
  public:
   attr_assets_file();

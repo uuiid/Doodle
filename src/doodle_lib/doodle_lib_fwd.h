@@ -284,7 +284,6 @@ class comment_vector;
 class assets_path_vector;
 class widget_register;
 using base_widget_ptr = std::shared_ptr<base_widget>;
-template <class... Args>
 class command_base;
 
 class ue4_project_async;
@@ -456,10 +455,7 @@ using bool_ptr               = std::shared_ptr<bool>;
 using string                 = std::string;
 using string_ptr             = std::shared_ptr<string>;
 
-using command_tool           = command_base<>;
-using command_tool_ptr       = std::shared_ptr<command_tool>;
-using command_meta           = command_base<const metadata_ptr &, const metadata_ptr &>;
-using command_meta_ptr       = std::shared_ptr<command_meta>;
+using command_ptr            = std::shared_ptr<command_base>;
 using comment_vector_ptr     = std::shared_ptr<comment_vector>;
 using assets_path_vector_ptr = std::shared_ptr<assets_path_vector>;
 using time_widget_ptr        = std::shared_ptr<time_widget>;
@@ -478,10 +474,10 @@ class Doodle;
 
 namespace details {
 template <class in_type>
-std::pair<string, string> make_show_shr(const string &in_key, const in_type *in_ptr){
+std::pair<string, string> make_show_shr(const string &in_key, const in_type *in_ptr) {
   return std::make_pair(in_key, fmt::format("{}##{}", in_key, typeid(*in_ptr).name()));
 };
-}
+}  // namespace details
 template <class... Args, class in_type>
 std::map<string, string> make_imgui_name(const in_type *in_ptr, Args &&...in_args) {
   return std::map<string, string>{details::make_show_shr(in_args, in_ptr)...};

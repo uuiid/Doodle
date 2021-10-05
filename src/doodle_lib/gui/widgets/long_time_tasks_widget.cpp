@@ -93,7 +93,7 @@ void long_time_tasks_widget::frame_render() {
 void long_time_tasks_widget::push_back(const long_term_ptr& in_term) {
   task.push_back(in_term);
 }
-void long_time_tasks_widget::set_tool_widget(const command_tool_ptr& in_ptr) {
+void long_time_tasks_widget::set_tool_widget(const command_ptr& in_ptr) {
   p_command_tool_ptr_ = in_ptr;
 }
 void long_time_tasks_widget::link_main_log() {

@@ -30,7 +30,7 @@ class DOODLELIB_API long_time_tasks_widget : public base_widget {
   std::vector<long_term_ptr> task;
   long_term_ptr p_current_select;
 
-  command_tool_ptr p_command_tool_ptr_;
+  command_ptr p_command_tool_ptr_;
   main_log p_main_log;
   info_log p_info_log;
 
@@ -41,7 +41,7 @@ class DOODLELIB_API long_time_tasks_widget : public base_widget {
   long_time_tasks_widget();
   void push_back(const long_term_ptr& in_term);
 
-  void set_tool_widget(const command_tool_ptr& in_ptr);
+  void set_tool_widget(const command_ptr& in_ptr);
   virtual void frame_render() override;
 };
 }  // namespace doodle

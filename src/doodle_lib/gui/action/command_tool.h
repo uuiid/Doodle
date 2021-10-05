@@ -7,7 +7,7 @@
 #include <doodle_lib/Gui/action/command.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle {
-class DOODLELIB_API comm_export_fbx : public command_tool {
+class DOODLELIB_API comm_export_fbx : public command_base {
   std::vector<FSys::path> p_files;
 
  public:
@@ -16,7 +16,7 @@ class DOODLELIB_API comm_export_fbx : public command_tool {
   bool render() override;
 };
 
-class DOODLELIB_API comm_qcloth_sim : public command_tool {
+class DOODLELIB_API comm_qcloth_sim : public command_base {
   FSys::path p_cloth_path;
   std::shared_ptr<std::string> p_text;
   std::vector<FSys::path> p_sim_path;
@@ -28,7 +28,7 @@ class DOODLELIB_API comm_qcloth_sim : public command_tool {
   bool render() override;
 };
 
-class DOODLELIB_API comm_create_video : public command_tool {
+class DOODLELIB_API comm_create_video : public command_base {
   struct image_paths {
     std::vector<FSys::path> p_path_list;
     FSys::path p_out_path;
@@ -45,7 +45,7 @@ class DOODLELIB_API comm_create_video : public command_tool {
   bool render() override;
 };
 
-class DOODLELIB_API comm_import_ue_files : public command_tool {
+class DOODLELIB_API comm_import_ue_files : public command_base {
   FSys::path p_ue4_prj;
   std::shared_ptr<std::string> p_ue4_show;
 

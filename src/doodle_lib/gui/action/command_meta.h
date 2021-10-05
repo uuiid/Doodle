@@ -40,7 +40,7 @@ namespace details {
 // };
 }  // namespace details
 
-class DOODLELIB_API comm_project_add : public command_meta {
+class DOODLELIB_API comm_project_add : public command_base {
  private:
   string_ptr p_prj_name;
   string_ptr p_prj_name_short;
@@ -50,10 +50,10 @@ class DOODLELIB_API comm_project_add : public command_meta {
  public:
   comm_project_add();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
-class DOODLELIB_API comm_ass_eps : public command_meta {
+class DOODLELIB_API comm_ass_eps : public command_base {
  private:
   metadata_ptr p_parent;
   episodes_ptr p_root;
@@ -67,10 +67,10 @@ class DOODLELIB_API comm_ass_eps : public command_meta {
  public:
   comm_ass_eps();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
-class DOODLELIB_API comm_ass_shot : public command_meta {
+class DOODLELIB_API comm_ass_shot : public command_base {
  private:
   metadata_ptr p_parent;
   shot_ptr p_root;
@@ -86,10 +86,10 @@ class DOODLELIB_API comm_ass_shot : public command_meta {
  public:
   comm_ass_shot();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
-class DOODLELIB_API comm_assets : public command_meta {
+class DOODLELIB_API comm_assets : public command_base {
  private:
   metadata_ptr p_parent;
   assets_ptr p_root;
@@ -100,10 +100,10 @@ class DOODLELIB_API comm_assets : public command_meta {
  public:
   comm_assets();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
-class DOODLELIB_API comm_ass_season : public command_meta {
+class DOODLELIB_API comm_ass_season : public command_base {
  private:
   metadata_ptr p_parent;
   season_ptr p_root;
@@ -116,10 +116,10 @@ class DOODLELIB_API comm_ass_season : public command_meta {
  public:
   comm_ass_season();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
-class DOODLELIB_API comm_ass_file : public command_meta {
+class DOODLELIB_API comm_ass_file : public command_base {
  private:
   metadata_ptr p_parent;
   assets_file_ptr p_root;
@@ -134,9 +134,9 @@ class DOODLELIB_API comm_ass_file : public command_meta {
  public:
   comm_ass_file();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
-class DOODLELIB_API comm_ass : public command_meta {
+class DOODLELIB_API comm_ass : public command_base {
   boost::hana::tuple<comm_ass_season,
                      comm_ass_eps,
                      comm_ass_shot,
@@ -147,6 +147,6 @@ class DOODLELIB_API comm_ass : public command_meta {
  public:
   comm_ass();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 }  // namespace doodle

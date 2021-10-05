@@ -8,7 +8,7 @@
 #include <doodle_lib/gui/action/command.h>
 
 namespace doodle {
-class DOODLELIB_API comm_files_up : public command_meta {
+class DOODLELIB_API comm_files_up : public command_base {
  private:
   assets_file_ptr p_root;
   metadata_ptr p_parent;
@@ -19,8 +19,7 @@ class DOODLELIB_API comm_files_up : public command_meta {
   comm_files_up();
 
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) override;
+  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
 }  // namespace doodle
- 
