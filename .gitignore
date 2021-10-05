@@ -64,7 +64,6 @@ cmake-build-debug/
 /cmake-build-*
 /core/doodle_core.xmind
 /.idea/
-/venv/
 /.venv/
 /b_N*/
 /install*
@@ -75,10 +74,6 @@ cmake-build-debug/
 /script/uePlug/*/Plugins/Doodle/Intermediate/*
 #忽略python文件
 *.pyc
-/GPATH
-/GRTAGS
-/GSYMS
-/GTAGS
 .vscode/**.VC.**
 **/Plugins/Doodle/Binaries/**
 build

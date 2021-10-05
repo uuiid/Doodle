@@ -34,21 +34,19 @@ class DOODLELIB_API assets : public metadata {
  private:
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, std::uint32_t const version);
+  void serialize(Archive& ar, std::uint32_t const version){
+    ;
+    if (version == 1) {
+      ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(metadata);
+      ar& BOOST_SERIALIZATION_NVP(p_name);
+    }
+    if (version == 2) {
+      ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(metadata);
+      ar& BOOST_SERIALIZATION_NVP(p_name);
+      ar& BOOST_SERIALIZATION_NVP(p_name_enus);
+    }
+  };
 };
-
-template <class Archive>
-void assets::serialize(Archive& ar, const std::uint32_t version) {
-  if (version == 1)
-    ar&
-            boost::serialization::make_nvp("metadata", boost::serialization::base_object<metadata>(*this)) &
-        p_name;
-  if (version == 2)
-    ar&
-            boost::serialization::make_nvp("metadata", boost::serialization::base_object<metadata>(*this)) &
-        p_name&
-            p_name_enus;
-}
 }  // namespace doodle
 
 BOOST_CLASS_VERSION(doodle::assets, 2)
