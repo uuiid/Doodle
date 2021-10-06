@@ -11,15 +11,14 @@ namespace doodle {
 class DOODLELIB_API comm_files_up : public command_base {
  private:
   assets_file_ptr p_root;
-  metadata_ptr p_parent;
 
   std::vector<FSys::path> p_files;
+  bool set_child(const assets_file_ptr& in_ptr);
 
  public:
   comm_files_up();
 
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
 }  // namespace doodle

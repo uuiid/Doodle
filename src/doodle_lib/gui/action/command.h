@@ -21,8 +21,23 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
  protected:
   std::string p_name;
   std::map<string, string> p_show_str;
-  using metadata_variant = std::variant<episodes_ptr, shot_ptr, season_ptr, assets_ptr, assets_file_ptr>;
-  metadata_variant p_meta_var;
+  using metadata_variant = std::variant<
+      episodes_ptr,
+      shot_ptr,
+      season_ptr,
+      assets_ptr,
+      assets_file_ptr,
+      project_ptr,
+      std::nullptr_t>;
+  metadata_ptr p_meta_var;
+
+  virtual bool set_child(const episodes_ptr& in_ptr) { return false; };
+  virtual bool set_child(const shot_ptr& in_ptr) { return false; };
+  virtual bool set_child(const season_ptr& in_ptr) { return false; };
+  virtual bool set_child(const assets_ptr& in_ptr) { return false; };
+  virtual bool set_child(const assets_file_ptr& in_ptr) { return false; };
+  virtual bool set_child(const project_ptr& in_ptr) { return false; };
+  virtual bool set_child(const std::nullptr_t& in_ptr) { return false; };
 
  public:
   virtual const std::string& class_name() { return p_name; };
@@ -31,15 +46,16 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
 
   template <class... Args>
   bool add_data(const Args&... in_args) {
+    using namespace boost::hana::literals;
     auto k_arg            = boost::hana::make_tuple(in_args...);
     auto constexpr k_size = decltype(boost::hana::size(k_arg))::value;
 
     if constexpr (k_size == 0) {
       return false;
     } else if (k_size == 2) {
-      return true;
+      p_meta_var = k_arg[0_c];
+      return this->set_child(k_arg[1_c]);
     }
-
     return false;
   };
 };

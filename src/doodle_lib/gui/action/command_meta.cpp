@@ -69,27 +69,23 @@ bool comm_project_add::render() {
 
   return true;
 }
-
-bool comm_project_add::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
-  p_root = std::dynamic_pointer_cast<project>(in);
-  if (p_root) {
-    *p_prj_name = p_root->get_name();
-    *p_prj_path = p_root->get_path().generic_string();
-  }
-  return p_root != nullptr;
+bool comm_project_add::set_child(const project_ptr& in_ptr) {
+  p_root      = in_ptr;
+  *p_prj_name = p_root->get_name();
+  *p_prj_path = p_root->get_path().generic_string();
+  return true;
 }
 
 void comm_ass_eps::add_eps(const std::vector<std::int32_t>& p_eps) {
   for (auto i : p_eps) {
-    auto eps = new_object<episodes>(p_parent, i);
-    p_parent->get_child().push_back(eps);
+    auto eps = new_object<episodes>(p_meta_var, i);
+    p_meta_var->get_child().push_back(eps);
     eps->insert_into();
   }
 }
 
 comm_ass_eps::comm_ass_eps()
-    : p_parent(),
-      p_root(),
+    : p_root(),
       p_data(0),
       use_batch(new_object<bool>(false)) {
   p_name     = "集数";
@@ -103,7 +99,7 @@ comm_ass_eps::comm_ass_eps()
 
 bool comm_ass_eps::render() {
   ImGui::BulletText("%s", p_name.c_str());
-  if (p_parent) {
+  if (p_meta_var) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       if (!(*use_batch)) {
         p_end = p_data + 1;
@@ -137,14 +133,10 @@ bool comm_ass_eps::render() {
   }
   return true;
 }
-
-bool comm_ass_eps::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
-  p_parent = in_parent;
-  p_root   = std::dynamic_pointer_cast<episodes>(in);
-  if (p_root) {
-    p_data = p_root->get_episodes();
-  }
-  return p_root != nullptr;
+bool comm_ass_eps::set_child(const episodes_ptr& in_ptr) {
+  p_root = in_ptr;
+  p_data = p_root->get_episodes();
+  return true;
 }
 
 void comm_ass_shot::add_shot(const std::vector<std::int32_t>& p_shots) {
@@ -152,14 +144,13 @@ void comm_ass_shot::add_shot(const std::vector<std::int32_t>& p_shots) {
     auto k_s = new_object<shot>();
     k_s->set_shot(s);
     k_s->set_shot_ab(std::string{p_shot_ab});
-    p_parent->get_child().push_back(k_s);
+    p_meta_var->get_child().push_back(k_s);
     k_s->insert_into();
   }
 }
 
 comm_ass_shot::comm_ass_shot()
-    : p_parent(),
-      p_root(),
+    : p_root(),
       p_data(),
       p_end(),
       use_batch(new_object<bool>(false)),
@@ -174,7 +165,7 @@ comm_ass_shot::comm_ass_shot()
 }
 
 bool comm_ass_shot::render() {
-  if (p_parent) {
+  if (p_meta_var) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       if (!(*use_batch)) {
         p_end = p_data + 1;
@@ -217,29 +208,24 @@ bool comm_ass_shot::render() {
 
   return true;
 }
-
-bool comm_ass_shot::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
-  p_parent = in_parent;
-  p_root   = std::dynamic_pointer_cast<shot>(in);
-  if (p_root) {
-    p_data    = p_root->get_shot();
-    p_shot_ab = p_root->get_shot_ab();
-  }
-  return p_root != nullptr;
+bool comm_ass_shot::set_child(const shot_ptr& in_ptr) {
+  p_root    = in_ptr;
+  p_data    = p_root->get_shot();
+  p_shot_ab = p_root->get_shot_ab();
+  return true;
 }
 
 void comm_assets::add_ass(std::vector<string> in_Str) {
   for (auto& i : in_Str) {
     auto k_ass = new_object<assets>();
     k_ass->set_name1(i);
-    p_parent->get_child().push_back(k_ass);
+    p_meta_var->get_child().push_back(k_ass);
     k_ass->insert_into();
   }
 }
 
 comm_assets::comm_assets()
-    : p_parent(),
-      p_root() {
+    : p_root() {
   p_name     = "资产";
   p_show_str = make_imgui_name(this, "添加",
                                "修改",
@@ -248,7 +234,7 @@ comm_assets::comm_assets()
 }
 
 bool comm_assets::render() {
-  if (p_parent) {
+  if (p_meta_var) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       add_ass({p_data});
     }
@@ -272,28 +258,23 @@ bool comm_assets::render() {
 
   return true;
 }
-
-bool comm_assets::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
-  p_parent = in_parent;
-  p_root   = std::dynamic_pointer_cast<assets>(in);
-  if (p_root) {
-    p_data = p_root->get_name1();
-  }
-  return p_root != nullptr;
+bool comm_assets::set_child(const assets_ptr& in_ptr) {
+  p_root = in_ptr;
+  p_data = p_root->get_name1();
+  return true;
 }
 
 void comm_ass_season::add_season(const std::vector<std::int32_t>& in) {
   for (auto& i : in) {
     auto s = new_object<season>();
     s->set_season(i);
-    p_parent->get_child().push_back(s);
+    p_meta_var->get_child().push_back(s);
     s->insert_into();
   }
 }
 
 comm_ass_season::comm_ass_season()
-    : p_parent(),
-      p_root(),
+    : p_root(),
       p_data(),
       p_end(),
       use_batch(new_object<bool>(false)) {
@@ -307,7 +288,7 @@ comm_ass_season::comm_ass_season()
 }
 
 bool comm_ass_season::render() {
-  if (p_parent) {
+  if (p_meta_var) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       if (!(*use_batch)) {
         p_end = p_data + 1;
@@ -342,19 +323,14 @@ bool comm_ass_season::render() {
 
   return true;
 }
-
-bool comm_ass_season::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
-  p_parent = in_parent;
-  p_root   = std::dynamic_pointer_cast<season>(in);
-  if (p_root) {
-    p_data = p_root->get_season();
-  }
-  return p_root != nullptr;
+bool comm_ass_season::set_child(const season_ptr& in_ptr) {
+  p_root = in_ptr;
+  p_data = p_root->get_season();
+  return true;
 }
 
 comm_ass_file::comm_ass_file()
-    : p_parent(),
-      p_root(),
+    : p_root(),
       p_time(),
       p_comm(),
       has_file(false),
@@ -371,10 +347,10 @@ comm_ass_file::comm_ass_file()
 }
 
 bool comm_ass_file::render() {
-  if (p_parent) {
+  if (p_meta_var) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       auto ass = new_object<assets_file>();
-      p_parent->get_child().push_back(ass);
+      p_meta_var->get_child().push_back(ass);
       ass->insert_into();
     }
     if (p_root) {
@@ -404,19 +380,15 @@ bool comm_ass_file::render() {
 
   return true;
 }
-
-bool comm_ass_file::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
-  p_parent = in_parent;
-  p_root   = std::dynamic_pointer_cast<assets_file>(in);
-  if (p_root) {
-    if (!p_root->get_comment())
-      p_root->set_comment(new_object<comment_vector>());
-    if (!p_root->get_path_file())
-      p_root->set_path_file(new_object<assets_path_vector>());
-    p_comm = p_root->get_comment();
-    p_time_widget->set_time(p_root->get_time());
-  }
-  return p_root != nullptr;
+bool comm_ass_file::set_child(const assets_file_ptr& in_ptr) {
+  p_root = in_ptr;
+  if (!p_root->get_comment())
+    p_root->set_comment(new_object<comment_vector>());
+  if (!p_root->get_path_file())
+    p_root->set_path_file(new_object<assets_path_vector>());
+  p_comm = p_root->get_comment();
+  p_time_widget->set_time(p_root->get_time());
+  return true;
 }
 
 comm_ass::comm_ass()
@@ -435,8 +407,33 @@ bool comm_ass::render() {
   });
   return true;
 }
-bool comm_ass::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
-  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(in_parent, in); });
-  return true;
+bool comm_ass::set_child(const episodes_ptr& in_ptr) {
+  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
+  return command_base::set_child(in_ptr);
 }
+bool comm_ass::set_child(const shot_ptr& in_ptr) {
+  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
+  return command_base::set_child(in_ptr);
+}
+bool comm_ass::set_child(const season_ptr& in_ptr) {
+  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
+  return command_base::set_child(in_ptr);
+}
+bool comm_ass::set_child(const assets_ptr& in_ptr) {
+  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
+  return command_base::set_child(in_ptr);
+}
+bool comm_ass::set_child(const assets_file_ptr& in_ptr) {
+  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
+  return command_base::set_child(in_ptr);
+}
+bool comm_ass::set_child(const project_ptr& in_ptr) {
+  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
+  return command_base::set_child(in_ptr);
+}
+bool comm_ass::set_child(nullptr_t const& in_ptr) {
+  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
+  return command_base::set_child(in_ptr);
+}
+
 }  // namespace doodle

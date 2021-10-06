@@ -11,34 +11,6 @@
 #include <boost/hana.hpp>
 #include <boost/hana/tuple.hpp>
 namespace doodle {
-namespace details {
-
-// template <class... Args>
-// class DOODLELIB_API comm_button_names {
-//  public:
-//   boost::hana::map<hana::pair<Args, string>...> map_;
-
-//   comm_button_names(void* ptr) {
-//     boost::hana::for_each(map_, [ptr](auto& par) {
-//       boost::hana::first(par).c_str();
-//     });
-//   };
-//   string p_add;
-//   string p_delete;
-//   string p_modify;
-//   string p_b;
-// };
-
-// template <class... Args>
-// auto
-// make_str(void* ptr,Args ...args){
-//   hana::map<hana::pair<Args, string>...> map_;
-//   boost::hana::for_each(map_,[ptr](auto& par){
-//     par.;
-//   })
-//   return map_;
-// };
-}  // namespace details
 
 class DOODLELIB_API comm_project_add : public command_base {
  private:
@@ -47,15 +19,16 @@ class DOODLELIB_API comm_project_add : public command_base {
   string_ptr p_prj_path;
   project_ptr p_root;
 
+ protected:
+  virtual bool set_child(const project_ptr& in_ptr) override;
+
  public:
   comm_project_add();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
 class DOODLELIB_API comm_ass_eps : public command_base {
  private:
-  metadata_ptr p_parent;
   episodes_ptr p_root;
 
   std::int32_t p_data;
@@ -64,15 +37,16 @@ class DOODLELIB_API comm_ass_eps : public command_base {
 
   void add_eps(const std::vector<std::int32_t>& p_eps);
 
+ protected:
+  virtual bool set_child(const episodes_ptr& in_ptr) override;
+
  public:
   comm_ass_eps();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
 class DOODLELIB_API comm_ass_shot : public command_base {
  private:
-  metadata_ptr p_parent;
   shot_ptr p_root;
 
   std::int32_t p_data;
@@ -83,29 +57,31 @@ class DOODLELIB_API comm_ass_shot : public command_base {
 
   void add_shot(const std::vector<std::int32_t>& p_shots);
 
+ protected:
+  virtual bool set_child(const shot_ptr& in_ptr) override;
+
  public:
   comm_ass_shot();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
 class DOODLELIB_API comm_assets : public command_base {
  private:
-  metadata_ptr p_parent;
   assets_ptr p_root;
 
   string p_data;
   void add_ass(std::vector<string> in_Str);
 
+ protected:
+  virtual bool set_child(const assets_ptr& in_ptr) override;
+
  public:
   comm_assets();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
 class DOODLELIB_API comm_ass_season : public command_base {
  private:
-  metadata_ptr p_parent;
   season_ptr p_root;
 
   std::int32_t p_data;
@@ -113,15 +89,16 @@ class DOODLELIB_API comm_ass_season : public command_base {
   bool_ptr use_batch;
   void add_season(const std::vector<std::int32_t>& in);
 
+ protected:
+  virtual bool set_child(const season_ptr& in_ptr) override;
+
  public:
   comm_ass_season();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 
 class DOODLELIB_API comm_ass_file : public command_base {
  private:
-  metadata_ptr p_parent;
   assets_file_ptr p_root;
 
   chrono::local_time_pos p_time;
@@ -131,10 +108,12 @@ class DOODLELIB_API comm_ass_file : public command_base {
   time_widget_ptr p_time_widget;
   string_ptr p_comm_str;
 
+ protected:
+  virtual bool set_child(const assets_file_ptr& in_ptr) override;
+
  public:
   comm_ass_file();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 class DOODLELIB_API comm_ass : public command_base {
   boost::hana::tuple<comm_ass_season,
@@ -144,9 +123,17 @@ class DOODLELIB_API comm_ass : public command_base {
                      comm_ass_ue4_create_shot>
       p_val;
 
+ protected:
+  virtual bool set_child(const episodes_ptr& in_ptr) override;
+  virtual bool set_child(const shot_ptr& in_ptr) override;
+  virtual bool set_child(const season_ptr& in_ptr) override;
+  virtual bool set_child(const assets_ptr& in_ptr) override;
+  virtual bool set_child(const assets_file_ptr& in_ptr) override;
+  virtual bool set_child(const project_ptr& in_ptr) override;
+  virtual bool set_child(nullptr_t const& in_ptr) override;
+
  public:
   comm_ass();
   bool render() override;
-  bool add_data(const metadata_ptr& in_parent, const metadata_ptr& in) ;
 };
 }  // namespace doodle

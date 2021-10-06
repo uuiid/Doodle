@@ -16,8 +16,7 @@
 namespace doodle {
 comm_ass_ue4_create_shot::comm_ass_ue4_create_shot()
     : p_ue4(new_object<ue4_project_async>()),
-      p_ue4_prj_path(new_object<string>()),
-      p_parent() {
+      p_ue4_prj_path(new_object<string>()) {
   p_name     = "创建ue4镜头";
   p_show_str = make_imgui_name(this,
                                "创建镜头序列",
@@ -28,7 +27,7 @@ comm_ass_ue4_create_shot::comm_ass_ue4_create_shot()
 }
 
 bool comm_ass_ue4_create_shot::render() {
-  if (p_parent) {
+  if (p_meta_var) {
     imgui::InputText(p_show_str["ue路径"].c_str(), p_ue4_prj_path.get());
     imgui::SameLine();
     if (imgui::Button(p_show_str["选择"].c_str()))
@@ -75,11 +74,6 @@ bool comm_ass_ue4_create_shot::render() {
   return true;
 }
 
-bool comm_ass_ue4_create_shot::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
-  p_parent = in_parent;
-  return true;
-}
-
 comm_ass_ue4_import::comm_ass_ue4_import() {
 }
 
@@ -87,7 +81,5 @@ bool comm_ass_ue4_import::render() {
   return true;
 }
 
-bool comm_ass_ue4_import::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
-  return true;
-}
+
 }  // namespace doodle

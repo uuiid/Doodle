@@ -8,8 +8,7 @@
 #include <doodle_lib/metadata/metadata_cpp.h>
 namespace doodle {
 comm_files_up::comm_files_up()
-    : p_root(),
-      p_parent() {
+    : p_root() {
   p_name     = "添加文件";
   p_show_str = make_imgui_name(this,
                                "添加文件",
@@ -32,7 +31,7 @@ bool comm_files_up::render() {
                 p_files = in_p;
               });
     if (imgui::Button(p_show_str["添加"].c_str())) {
-      auto k_f=  p_root->get_path_file();
+      auto k_f = p_root->get_path_file();
       ;
     }
     if (imgui::Button(p_show_str["替换"].c_str())) {
@@ -41,12 +40,8 @@ bool comm_files_up::render() {
   return true;
 }
 
-bool comm_files_up::add_data(const metadata_ptr& in_parent, const metadata_ptr& in) {
-  if (in_parent) {
-    p_parent = in_parent;
-  }
-  if (details::is_class<assets_file>(in))
-    p_root = std::dynamic_pointer_cast<assets_file>(in);
+bool comm_files_up::set_child(const assets_file_ptr& in_ptr) {
+  p_root = in_ptr;
   return true;
 }
 }  // namespace doodle
