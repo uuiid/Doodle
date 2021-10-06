@@ -33,6 +33,7 @@ add_library(doodle_lib
         ${DOODLELIB_SOURCE}
         ${OUT_LISTS_sqlpp}
         ${OUT_LISTS_GRPC}
+        ${PROJECT_SOURCE_DIR}/stl.natvis
         external/ImGuiFileDialog/ImGuiFileDialog.cpp
         external/ImGuiFileDialog/ImGuiFileDialog.h
         external/ImGuiFileDialog/ImGuiFileDialogConfig.h
