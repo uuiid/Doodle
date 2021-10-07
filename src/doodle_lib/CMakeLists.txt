@@ -63,7 +63,6 @@ target_link_libraries(doodle_lib
         # RTTR::Core
         cereal
         magic_enum::magic_enum
-        ${Boost_LIBRARIES}
         Boost::locale
         Boost::filesystem
         Boost::serialization
