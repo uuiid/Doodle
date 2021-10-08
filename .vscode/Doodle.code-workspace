@@ -34,7 +34,7 @@
 			]
 		},
 		"todo-tree.tree.scanMode": "workspace only",
-		"cmake.useCMakePresets": "never",
+		"cmake.useCMakePresets": "auto",
 		"files.associations": {
 			".clang-format": "yaml",
 			"memory": "cpp",
