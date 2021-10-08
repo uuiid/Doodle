@@ -96,6 +96,11 @@
       "execution": {
         "noTestsAction": "error",
         "stopOnFailure": true
+      },
+      "filter": {
+        "include": {
+          "name": "pinyi"
+        }
       }
     }
   ],

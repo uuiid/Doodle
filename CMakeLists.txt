@@ -151,6 +151,7 @@ doxygen_add_docs(Doxygen
 
 
 enable_testing()
+include(Dart)
 add_subdirectory(src)
 add_subdirectory(tools)
 #=====================安装打包过程===============================

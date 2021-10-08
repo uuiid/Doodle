@@ -68,19 +68,10 @@ target_link_libraries(doodle_lib
         Boost::serialization
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}
-        #        EnTT::EnTT
-        #        Boost::locale
-        #        Boost::filesystem
-        #        Boost::log
         spdlog::spdlog
-        #        $<IF:$<CONFIG:Debug>,${WX_based},${WX_base}>
-        #        $<IF:$<CONFIG:Debug>,${WX_cored},${WX_core}>
-        #        $<IF:$<CONFIG:Debug>,${WX_advd},${WX_adv}>
         csv
         Catch2::Catch2
         SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
-        #        cppzmq
-        #        cppzmq-static
         imgui::imgui
         gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
         cryptopp-static
@@ -90,7 +81,6 @@ target_compile_definitions(doodle_lib
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         PRIVATE
-
         )
 target_compile_options(doodle_lib
         PUBLIC
