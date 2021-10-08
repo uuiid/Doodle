@@ -41,6 +41,7 @@ class DOODLELIB_API comment_vector
 
   void end_push_back(const comment_ptr& in) {
     in->set_metadata(p_meta.lock());
+    //p_meta.lock()->saved(true);
   };
 
   void end_erase(const comment_ptr& in){};

@@ -11,8 +11,10 @@ namespace doodle {
 class DOODLELIB_API comm_files_up : public command_base {
  private:
   assets_file_ptr p_root;
+  bool_ptr p_use_relative;
+  std::vector<assets_path_ptr> p_list_path; 
 
-  std::vector<FSys::path> p_files;
+  FSys::path p_file;
   bool set_child(const assets_file_ptr& in_ptr);
 
  public:

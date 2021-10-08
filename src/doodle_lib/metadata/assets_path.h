@@ -50,7 +50,7 @@ class DOODLELIB_API assets_path : public leaf_meta {
    * @param in_path  本地文件的路径
    * @param in_metadata 元数据指针，
    */
-  void set_path(const FSys::path &in_path, const metadata_const_ptr &in_metadata);
+  void set_path(const FSys::path &in_path, const metadata_const_ptr &in_metadata, bool in_using_lexically_relative = false);
 
   /**
    * @brief设置资产的本地文件的路径，直接设置服务器路径
@@ -67,14 +67,6 @@ class DOODLELIB_API assets_path : public leaf_meta {
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
-    if (version == 1)
-      ar &boost::serialization::make_nvp("path", p_local_path);
-
-    if (version == 2)
-      ar &boost::serialization::make_nvp("local_path", p_local_path) &
-          boost::serialization::make_nvp("lexically_relative", p_lexically_relative) &
-          boost::serialization::make_nvp("server_path", p_server_path);
-
     if (version == 3)
       ar &boost::serialization::make_nvp("local_path", p_local_path) &
           boost::serialization::make_nvp("lexically_relative", p_lexically_relative) &
@@ -96,11 +88,13 @@ class DOODLELIB_API assets_path_vector
   };
 
   void set_metadata(const metadata_ptr &in_meta) override;
-  
-  void end_push_back(const assets_path_ptr &in) {
-    in->set_metadata(p_meta.lock());
-  };
 
+  inline void end_push_back(const assets_path_ptr &in) {
+    in->set_metadata(p_meta.lock());
+    //p_meta.lock()->saved(true);
+  };
+  
+  path_list add_file(const FSys::path &in_path, bool in_using_lexically_relative = false);
  private:
   //这里是序列化的代码
   friend class boost::serialization::access;

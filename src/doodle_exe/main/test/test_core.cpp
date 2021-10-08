@@ -239,7 +239,7 @@ TEST_CASE("core archive", "[fun][archives]") {
     doodle::metadata_ptr k_val = std::make_shared<doodle::project>("D:/", "test22333");
     {
       boost::archive::text_oarchive json{str_stream};
-//      boost::archive::xml_oarchive xml{str_stream_bin};
+      //      boost::archive::xml_oarchive xml{str_stream_bin};
       //      boost::archive::polymorphic_text_oarchive json{str_stream};
       json << boost::serialization::make_nvp("metadata1", k_val);
       //      xml << boost::serialization::make_nvp("mainset", k_val);
@@ -252,7 +252,7 @@ TEST_CASE("core archive", "[fun][archives]") {
     k_val.reset();
     {
       boost::archive::text_iarchive json{str_stream};
-//      boost::archive::xml_iarchive xml{str_stream_bin};
+      //      boost::archive::xml_iarchive xml{str_stream_bin};
       //      boost::archive::polymorphic_text_iarchive json{str_stream};
       json >> k_val;
       //      xml >> k_val;
@@ -302,6 +302,56 @@ TEST_CASE("temp fun", "[core]") {
   auto ter = new_object<long_term>();
   REQUIRE(doodle_lib::Get().long_task_list.size() == 1);
 }
+
+TEST_CASE("gen_path", "[core]") {
+  using namespace doodle;
+  FSys::path ue4path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject"};
+
+  auto k_prj = new_object<project>();
+  k_prj->set_name("ret");
+  k_prj->set_path("F:/");
+
+  auto k_s = new_object<season>();
+  k_s->set_season(3);
+  k_prj->get_child().push_back(k_s);
+
+  auto k_eps = new_object<episodes>();
+  k_eps->set_episodes(1);
+  k_s->get_child().push_back(k_eps);
+
+  auto k_shot = new_object<shot>();
+  k_shot->set_shot(10);
+  k_shot->set_shot_ab("A");
+  k_eps->get_child().push_back(k_shot);
+
+  auto k_ass = new_object<assets>();
+  k_ass->set_name1("测试");
+
+  k_shot->get_child().push_back(k_ass);
+
+  auto k_file = new_object<assets_file>();
+  k_shot->get_child().push_back(k_file);
+
+  SECTION("ue4_file") {
+    SECTION("not use repath") {
+      auto k_path = k_file->get_path_file()->add_file(ue4path);
+      REQUIRE(k_path.size() == 2);
+      REQUIRE(k_path[0]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject");
+      REQUIRE(k_path[0]->get_server_path() == "ret\\seas_3\\ep0001\\sc0010A\\VFX\\test_tmp.uproject");
+      REQUIRE(k_path[1]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content");
+      REQUIRE(k_path[1]->get_server_path() == "ret\\seas_3\\ep0001\\sc0010A\\VFX\\Content");
+    }
+    SECTION("using repath") {
+      auto k_path = k_file->get_path_file()->add_file(ue4path, true);
+      REQUIRE(k_path.size() == 2);
+      REQUIRE(k_path[0]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject");
+      REQUIRE(k_path[0]->get_server_path() == "Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject");
+      REQUIRE(k_path[1]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content");
+      REQUIRE(k_path[1]->get_server_path() == "Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\Content");
+    }
+  }
+}
+
 //#include <boost/algorithm/string.hpp>
 //#include <boost/archive/iterators/base64_from_binary.hpp>
 //#include <boost/archive/iterators/binary_from_base64.hpp>

@@ -313,6 +313,23 @@ class DOODLELIB_API metadata
     }
     return {};
   };
+
+    template <class parent_class>
+  std::shared_ptr<const parent_class> find_parent_class() const {
+    auto k_m = this->shared_from_this();
+    while (k_m) {
+      if (details::is_class<const parent_class>(k_m))
+        return std::dynamic_pointer_cast<const parent_class>(k_m);
+      else {
+        if (k_m->has_parent())
+          k_m = k_m->get_parent();
+        else
+          k_m = nullptr;
+      }
+    }
+    return {};
+  };
+
   template <class parent_class>
   std::string find_parent_class_to_string() {
     auto k_m = find_parent_class<parent_class>();
