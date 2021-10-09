@@ -14,6 +14,7 @@ class DOODLELIB_API base_widget
  protected:
   string p_class_name;
 
+  virtual bool use_register() { return true; };
  public:
   virtual void post_constructor();
   virtual void frame_render() = 0;
