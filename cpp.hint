@@ -9,3 +9,4 @@
 #define LINMATH_H_FUNC
 #define DECL_WINELIB_TYPE_AW
 #define DECL_WINELIB_TYPE_AW(type) typedef WINELIB_NAME_AW(type) type;
+
