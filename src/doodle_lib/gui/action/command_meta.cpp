@@ -358,7 +358,7 @@ bool comm_ass_file_attr::render() {
       if (imgui::Button(p_show_str["更改"].c_str())) {
         p_root->updata_db();
       }
-      if (p_root->has_child()) {
+      if (!p_root->has_child()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
           auto k_parent = p_root->get_parent();
