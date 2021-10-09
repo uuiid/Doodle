@@ -52,7 +52,7 @@ bool assets_file_widgets::add_colum_render() {
 
   k_col           = p_colum_list.emplace_back(new_object<details::table_column>());
   k_col->p_name   = "路径";
-  k_col->p_width  = 8;
+  k_col->p_width  = 13;
   k_col->p_render = [](const assets_file_ptr& in_) -> bool {
     auto k_path = in_->get_path_file();
     string k_all_str{};
@@ -63,8 +63,10 @@ bool assets_file_widgets::add_colum_render() {
       k_all_str  = fmt::format("{}", *k_path);
     }
     dear::Text(k_line_str.c_str());
-    imgui::SameLine();
-    dear::HelpMarker{"(...)", k_all_str.c_str()};
+    if (!k_all_str.empty()) {
+      imgui::SameLine();
+      dear::HelpMarker{"(...)", k_all_str.c_str()};
+    }
     return true;
   };
 

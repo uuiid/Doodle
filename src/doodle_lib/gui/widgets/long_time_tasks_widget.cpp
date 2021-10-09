@@ -83,11 +83,15 @@ void long_time_tasks_widget::frame_render() {
   };
   dear::Text("主要日志");
   dear::Child{"main_log", ImVec2{0, 266}, true} && [this]() {
-    imgui::TextUnformatted(p_main_log.p_log.begin(), p_main_log.p_log.end());
+    dear::TextWrapPos{0.0f} && [this]() {
+      imgui::TextUnformatted(p_main_log.p_log.begin(), p_main_log.p_log.end());
+    };
   };
   dear::Text("全部信息");
   dear::Child{"info_log", ImVec2{0, 266}, true} && [this]() {
-    imgui::TextUnformatted(p_info_log.p_log.begin(), p_info_log.p_log.end());
+    dear::TextWrapPos{0.0f} && [this]() {
+      imgui::TextUnformatted(p_info_log.p_log.begin(), p_info_log.p_log.end());
+    };
   };
 }
 void long_time_tasks_widget::push_back(const long_term_ptr& in_term) {
