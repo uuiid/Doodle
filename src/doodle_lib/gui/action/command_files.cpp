@@ -45,26 +45,16 @@ bool comm_files_up::render() {
     }
 
     if (imgui::Button(p_show_str["添加"].c_str())) {
-      rpc_trans_path_ptr_list k_list{};
-      for (auto& i : p_list_path) {
-        k_list.emplace_back(std::make_unique<rpc_trans_path>(i));
-        p_root->get_path_file()->get().push_back(i);
+      if (!p_list_path.empty()) {
+        add_files();
       }
-      p_root->updata_db();
-      auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(k_list);
-      (*k_up)();
     }
     imgui::SameLine();
     if (imgui::Button(p_show_str["替换"].c_str())) {
-      rpc_trans_path_ptr_list k_list{};
-      p_root->get_path_file()->get().clear();
-      for (auto& i : p_list_path) {
-        k_list.emplace_back(std::make_unique<rpc_trans_path>(i));
-        p_root->get_path_file()->get().push_back(i);
+      if (!p_list_path.empty()) {
+        p_root->get_path_file()->get().clear();
+        add_files();
       }
-      p_root->updata_db();
-      auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(k_list);
-      (*k_up)();
     }
     dear::ListBox{
         p_show_str["路径列表"].c_str(),
@@ -86,5 +76,17 @@ bool comm_files_up::set_child(const assets_file_ptr& in_ptr) {
     p_root->set_path_file(new_object<assets_path_vector>());
   }
   return true;
+}
+bool comm_files_up::add_files() {
+  rpc_trans_path_ptr_list k_list{};
+  for (auto& i : p_list_path) {
+    k_list.emplace_back(std::make_unique<rpc_trans_path>(i));
+    p_root->get_path_file()->get().push_back(i);
+  }
+  p_root->up_version();
+  p_root->updata_db();
+  auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(k_list);
+  (*k_up)();
+  return false;
 }
 }  // namespace doodle
