@@ -5,6 +5,7 @@
 #pragma once
 
 #include <doodle_lib/Gui/action/command.h>
+#include <doodle_lib/Gui/action/command_files.h>
 #include <doodle_lib/Gui/action/command_ue4.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
@@ -97,7 +98,7 @@ class DOODLELIB_API comm_ass_season : public command_base {
   bool render() override;
 };
 
-class DOODLELIB_API comm_ass_file : public command_base {
+class DOODLELIB_API comm_ass_file_attr : public command_base {
  private:
   assets_file_ptr p_root;
 
@@ -112,28 +113,65 @@ class DOODLELIB_API comm_ass_file : public command_base {
   virtual bool set_child(const assets_file_ptr& in_ptr) override;
 
  public:
-  comm_ass_file();
+  comm_ass_file_attr();
   bool render() override;
 };
-class DOODLELIB_API comm_ass : public command_base {
-  boost::hana::tuple<comm_ass_season,
-                     comm_ass_eps,
-                     comm_ass_shot,
-                     comm_assets,
-                     comm_ass_ue4_create_shot>
-      p_val;
+
+template <class... in_comm>
+class DOODLELIB_API comm_compound : public command_base {
+  boost::hana::tuple<in_comm...> p_val;
 
  protected:
-  virtual bool set_child(const episodes_ptr& in_ptr) override;
-  virtual bool set_child(const shot_ptr& in_ptr) override;
-  virtual bool set_child(const season_ptr& in_ptr) override;
-  virtual bool set_child(const assets_ptr& in_ptr) override;
-  virtual bool set_child(const assets_file_ptr& in_ptr) override;
-  virtual bool set_child(const project_ptr& in_ptr) override;
-  virtual bool set_child(nullptr_t const& in_ptr) override;
+  virtual bool set_child(const episodes_ptr& in_ptr) override {
+    boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var, in_ptr); });
+    return command_base::set_child(in_ptr);
+  };
+  virtual bool set_child(const shot_ptr& in_ptr) override {
+    boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var, in_ptr); });
+    return command_base::set_child(in_ptr);
+  };
+  virtual bool set_child(const season_ptr& in_ptr) override {
+    boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var, in_ptr); });
+    return command_base::set_child(in_ptr);
+  };
+  virtual bool set_child(const assets_ptr& in_ptr) override {
+    boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var, in_ptr); });
+    return command_base::set_child(in_ptr);
+  };
+  virtual bool set_child(const assets_file_ptr& in_ptr) override {
+    boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var, in_ptr); });
+    return command_base::set_child(in_ptr);
+  };
+  virtual bool set_child(const project_ptr& in_ptr) override {
+    boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var, in_ptr); });
+    return command_base::set_child(in_ptr);
+  };
+  virtual bool set_child(nullptr_t const& in_ptr) override {
+    boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var, in_ptr); });
+    return command_base::set_child(in_ptr);
+  };
 
  public:
-  comm_ass();
-  bool render() override;
+  comm_compound() : command_base(), p_val(){};
+  bool render() override {
+    boost::hana::for_each(p_val, [](auto& in) {
+      dear::TreeNode{in.class_name().c_str()} && [&]() {
+        in.render();
+      };
+    });
+    return true;
+  };
 };
+
+using comm_ass = comm_compound<
+    comm_ass_season,
+    comm_ass_eps,
+    comm_ass_shot,
+    comm_assets,
+    comm_ass_ue4_create_shot>;
+
+using comm_assets_file = comm_compound<
+    comm_ass_file_attr,
+    comm_files_up>;
+
 }  // namespace doodle

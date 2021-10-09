@@ -16,7 +16,7 @@ class DOODLELIB_API comm_files_up : public command_base {
 
   FSys::path p_file;
   bool set_child(const assets_file_ptr& in_ptr);
-
+  rpc_trans::trans_file_ptr p_tran_files;
  public:
   comm_files_up();
 

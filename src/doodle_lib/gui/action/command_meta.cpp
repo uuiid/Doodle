@@ -329,7 +329,7 @@ bool comm_ass_season::set_child(const season_ptr& in_ptr) {
   return true;
 }
 
-comm_ass_file::comm_ass_file()
+comm_ass_file_attr::comm_ass_file_attr()
     : p_root(),
       p_time(),
       p_comm(),
@@ -346,7 +346,7 @@ comm_ass_file::comm_ass_file()
   });
 }
 
-bool comm_ass_file::render() {
+bool comm_ass_file_attr::render() {
   if (p_meta_var) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       auto ass = new_object<assets_file>();
@@ -380,7 +380,7 @@ bool comm_ass_file::render() {
 
   return true;
 }
-bool comm_ass_file::set_child(const assets_file_ptr& in_ptr) {
+bool comm_ass_file_attr::set_child(const assets_file_ptr& in_ptr) {
   p_root = in_ptr;
   if (!p_root->get_comment())
     p_root->set_comment(new_object<comment_vector>());
@@ -389,51 +389,6 @@ bool comm_ass_file::set_child(const assets_file_ptr& in_ptr) {
   p_comm = p_root->get_comment();
   p_time_widget->set_time(p_root->get_time());
   return true;
-}
-
-comm_ass::comm_ass()
-    : p_val() {
-  // p_val = std::move(boost::hana::make_tuple(comm_ass_season{},
-  //                                           comm_ass_eps{},
-  //                                           comm_ass_shot{},
-  //                                           comm_assets{},
-  //                                           comm_ass_ue4_create_shot{}));
-}
-bool comm_ass::render() {
-  boost::hana::for_each(p_val, [](auto& in) {
-    dear::TreeNode{in.class_name().c_str()} && [&]() {
-      in.render();
-    };
-  });
-  return true;
-}
-bool comm_ass::set_child(const episodes_ptr& in_ptr) {
-  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
-  return command_base::set_child(in_ptr);
-}
-bool comm_ass::set_child(const shot_ptr& in_ptr) {
-  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
-  return command_base::set_child(in_ptr);
-}
-bool comm_ass::set_child(const season_ptr& in_ptr) {
-  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
-  return command_base::set_child(in_ptr);
-}
-bool comm_ass::set_child(const assets_ptr& in_ptr) {
-  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
-  return command_base::set_child(in_ptr);
-}
-bool comm_ass::set_child(const assets_file_ptr& in_ptr) {
-  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
-  return command_base::set_child(in_ptr);
-}
-bool comm_ass::set_child(const project_ptr& in_ptr) {
-  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
-  return command_base::set_child(in_ptr);
-}
-bool comm_ass::set_child(nullptr_t const& in_ptr) {
-  boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var,in_ptr); });
-  return command_base::set_child(in_ptr);
 }
 
 }  // namespace doodle

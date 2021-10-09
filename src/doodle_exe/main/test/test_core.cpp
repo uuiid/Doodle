@@ -22,21 +22,10 @@ TEST_CASE("core pinyi", "[fun][pingyin]") {
 }
 
 TEST_CASE("core fmt", "[fun][fmt]") {
-  //  auto wstr = fmt::format(L"11{}", std::wstring{L"test"});
-  //  REQUIRE(wstr == L"11test");
-  //#if defined ( _WIN32 )
-  //  const auto k_string = std::wstring{L"/还会"};
-  //  wstr                = fmt::format(L"{}", doodle::FSys::path{k_string});
-  //  REQUIRE(wstr == std::wstring{LR"("还会")"});
-  //#elif defined ( __linux__ )
-  //  const auto k_string = std::string{"/还会"};
-  //  auto strl                = fmt::format("{}", doodle::FSys::path{k_string});
-  //  REQUIRE(strl == std::string{R"("/还会")"});
-  //#endif
-  //  auto str = fmt::format("{:04d}", 2);
-  //  REQUIRE(str == "0002");
-  //  str = fmt::format("{}", doodle::FSys::path{"test"});
-  //  REQUIRE(str == R"("test")");
+  auto str = fmt::format("{:04d}", 2);
+  REQUIRE(str == "0002");
+  str = fmt::format("{}", doodle::FSys::path{"test"});
+  REQUIRE(str == R"("test")");
 }
 
 TEST_CASE("core path ", "[fun][path]") {
@@ -330,25 +319,37 @@ TEST_CASE("gen_path", "[core]") {
   k_shot->get_child().push_back(k_ass);
 
   auto k_file = new_object<assets_file>();
-  k_shot->get_child().push_back(k_file);
+  k_ass->get_child().push_back(k_file);
 
   SECTION("ue4_file") {
     SECTION("not use repath") {
       auto k_path = k_file->get_path_file()->add_file(ue4path);
       REQUIRE(k_path.size() == 2);
       REQUIRE(k_path[0]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject");
-      REQUIRE(k_path[0]->get_server_path() == "ret\\seas_3\\ep0001\\sc0010A\\VFX\\test_tmp.uproject");
+      REQUIRE(k_path[0]->get_server_path() == "ret\\seas_3\\ep0001\\sc0010A\\ceshi\\VFX\\test_tmp.uproject");
       REQUIRE(k_path[1]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content");
-      REQUIRE(k_path[1]->get_server_path() == "ret\\seas_3\\ep0001\\sc0010A\\VFX\\Content");
+      REQUIRE(k_path[1]->get_server_path() == "ret\\seas_3\\ep0001\\sc0010A\\ceshi\\VFX\\Content");
+
+      SECTION("fmt assets path list") {
+        auto str = fmt::format("{}", *(k_file->get_path_file()));
+        std::cout << str<< std::endl;
+      }
     }
     SECTION("using repath") {
       auto k_path = k_file->get_path_file()->add_file(ue4path, true);
       REQUIRE(k_path.size() == 2);
       REQUIRE(k_path[0]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject");
-      REQUIRE(k_path[0]->get_server_path() == "Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject");
+      REQUIRE(k_path[0]->get_server_path() == "ret\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject");
       REQUIRE(k_path[1]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content");
-      REQUIRE(k_path[1]->get_server_path() == "Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\Content");
+      REQUIRE(k_path[1]->get_server_path() == "ret\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\Content");
     }
+  }
+}
+TEST_CASE("path iter", "[core]") {
+  using namespace doodle;
+  FSys::path k_path{"Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject"};
+  for (auto& i : k_path) {
+    std::cout << i << std::endl;
   }
 }
 
