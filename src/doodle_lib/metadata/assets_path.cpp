@@ -49,8 +49,10 @@ const FSys::path &assets_path::get_backup_path() const {
 
 void assets_path::set_path(const FSys::path &in_path, const metadata_const_ptr &in_metadata, bool in_using_lexically_relative) {
   if (in_using_lexically_relative) {
+    auto k_prj       = in_metadata->find_parent_class<project>();
     auto k_root_path = in_metadata->find_parent_class<project>()->get_path();
     auto k_path      = in_path.lexically_relative(k_root_path);
+    k_path           = FSys::path{k_prj->str()} / k_path;
     set_path(in_path, k_path);
   } else {
     /// 这里使用树,向上寻找,组合路径
@@ -62,8 +64,11 @@ void assets_path::set_path(const FSys::path &in_path, const metadata_const_ptr &
 
     FSys::path k_path{k_m->str()};
     while (k_m->has_parent()) {
-      k_m    = k_m->get_parent();
-      k_path = FSys::path{k_m->str()} / k_path;
+      k_m = k_m->get_parent();
+      if (k_m->has_parent())
+        k_path = FSys::path{k_m->str()} / k_path;
+      else
+        k_path = FSys::path{k_m->str()} / k_path;
     }
     k_path /= core_set::getSet().get_department();
     k_path /= in_path.filename();

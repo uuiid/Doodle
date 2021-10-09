@@ -93,8 +93,10 @@ class DOODLELIB_API assets_path_vector
     in->set_metadata(p_meta.lock());
     //p_meta.lock()->saved(true);
   };
-  
+  inline void end_clear(){};
+
   path_list add_file(const FSys::path &in_path, bool in_using_lexically_relative = false);
+
  private:
   //这里是序列化的代码
   friend class boost::serialization::access;
@@ -108,15 +110,31 @@ class DOODLELIB_API assets_path_vector
 }  // namespace doodle
 
 namespace fmt {
+
 template <>
-struct formatter<doodle::assets_path> : formatter<string_view> {
+struct fmt::formatter<doodle::assets_path> : fmt::formatter<fmt::string_view> {
   template <typename FormatContext>
   auto format(const doodle::assets_path &in_, FormatContext &ctx) {
-    formatter<string_view>::format(
-        in_.str(),
+    return formatter<string_view>::format(
+        in_.get_server_path().generic_string(),
         ctx);
   }
 };
+template <>
+struct fmt::formatter<doodle::assets_path_vector> : fmt::formatter<fmt::string_view> {
+  template <typename FormatContext>
+  auto format(const doodle::assets_path_vector &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+    std::string str;
+    for (auto &i : in_.paths) {
+      str += fmt::format("{}\n", i->get_local_path());
+    }
+
+    return formatter<string_view>::format(
+        str,
+        ctx);
+  }
+};
+
 }  // namespace fmt
 
 BOOST_CLASS_VERSION(doodle::assets_path, 3)
