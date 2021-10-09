@@ -53,7 +53,7 @@ void rpc_server_handle::run_server(int port_meta, int port_file_sys) {
     throw doodle_error{"无法创建服务器"};
 }
 
-#if defined( _WIN32) and defined( _MSC_VER )
+#if defined(_WIN32) and defined(_MSC_VER)
 
 //BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
 //  DOODLE_LOG_WARN("收到退出信号， 开始退出 {}", fdwCtrlType);
@@ -64,7 +64,6 @@ void rpc_server_handle::run_server(int port_meta, int port_file_sys) {
 
 #endif
 
-
 void rpc_server_handle::run_server_wait(int port_meta, int port_file_sys) {
   run_server(port_meta, port_file_sys);
   auto k_ = [](int) {
@@ -73,7 +72,7 @@ void rpc_server_handle::run_server_wait(int port_meta, int port_file_sys) {
     core_set::getSet().p_condition.notify_all();
   };
   std::signal(SIGABRT, k_);
-#if defined( _WIN32) and defined( _MSC_VER )
+#if defined(_WIN32) and defined(_MSC_VER)
   std::signal(SIGABRT_COMPAT, k_);
   std::signal(SIGBREAK, k_);
 #endif
@@ -92,10 +91,10 @@ void rpc_server_handle::run_server_wait(int port_meta, int port_file_sys) {
 void rpc_server_handle::stop() {
   using namespace chrono::literals;
   auto k_time = chrono::system_clock::now() + 2s;
-
-  p_Server->Shutdown(k_time);
-
-  p_Server.reset();
+  if (p_Server) {
+    p_Server->Shutdown(k_time);
+    p_Server.reset();
+  }
 }
 rpc_server_handle::~rpc_server_handle() {
   stop();

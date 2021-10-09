@@ -22,27 +22,27 @@ class trans_file;
 class trans_files;
 using trans_file_ptr = std::shared_ptr<trans_file>;
 
-class DOODLELIB_API trans_file : public details::no_copy {
+class DOODLELIB_API trans_file
+    : public details::no_copy,
+      public std::enable_shared_from_this<trans_file> {
   friend down_dir;
   friend up_dir;
   friend trans_files;
 
  protected:
   rpc_file_system_client* _self;
-  long_term_ptr _term;
   std::unique_ptr<rpc_trans_path> _param;
   std::future<void> _result;
   std::size_t _size;
 
   std::mutex _mutex;
 
-  virtual void run() = 0;
+  virtual void run(const long_term_ptr& in_term) = 0;
 
  public:
   explicit trans_file(rpc_file_system_client* in_self);
   void set_parameter(std::unique_ptr<rpc_trans_path>& in_path);
-  [[nodiscard]] const long_term_ptr& get_term();
-  long_term_ptr operator()();
+  virtual long_term_ptr operator()();
   virtual void wait() = 0;
 };
 
@@ -53,8 +53,9 @@ class DOODLELIB_API trans_files : public trans_file {
 
   void wait() override;
 
+  long_term_ptr operator()() override;
  protected:
-  void run() override;
+  void run(const long_term_ptr& in_term) override;
 };
 
 class DOODLELIB_API down_file : public trans_file {
@@ -63,7 +64,7 @@ class DOODLELIB_API down_file : public trans_file {
 
  protected:
   void wait() override;
-  void run() override;
+  void run(const long_term_ptr& in_term) override;
 };
 class DOODLELIB_API down_dir : public trans_file {
   std::vector<std::shared_ptr<down_file>> _down_list;
@@ -74,7 +75,7 @@ class DOODLELIB_API down_dir : public trans_file {
  protected:
   void wait() override;
   rpc_trans_path_ptr_list down(const std::unique_ptr<rpc_trans_path>& in_path);
-  void run() override;
+  void run(const long_term_ptr& in_term) override;
 };
 class DOODLELIB_API up_file : public trans_file {
  public:
@@ -82,7 +83,7 @@ class DOODLELIB_API up_file : public trans_file {
 
  protected:
   void wait() override;
-  void run() override;
+  void run(const long_term_ptr& in_term) override;
 };
 class DOODLELIB_API up_dir : public trans_file {
   std::vector<std::shared_ptr<up_file>> _up_list;
@@ -93,7 +94,7 @@ class DOODLELIB_API up_dir : public trans_file {
  protected:
   void wait() override;
   rpc_trans_path_ptr_list update(const std::unique_ptr<rpc_trans_path>& in_path);
-  void run() override;
+  void run(const long_term_ptr& in_term) override;
 };
 
 }  // namespace rpc_trans
@@ -122,7 +123,7 @@ class DOODLELIB_API rpc_file_system_client : public details::no_copy {
  protected:
   std::unique_ptr<file_system_server::Stub> p_stub;
   std::recursive_mutex p_mutex;
-  // std::shared_ptr<grpc::Channel> p_channel;
+
   /**
    * 这个是用来比较文件的函数
    * @param in_local_path 本地路径
@@ -143,7 +144,7 @@ class DOODLELIB_API rpc_file_system_client : public details::no_copy {
    * std::tuple<std::optional<bool>,  是否相等
    *            std::optional<bool> > 是否需要下载
    */
-  using syn_fun = std::function<bool(const std::tuple<std::optional<bool>, std::optional<bool>>& arg)>;
+  using syn_fun    = std::function<bool(const std::tuple<std::optional<bool>, std::optional<bool>>& arg)>;
 
   explicit rpc_file_system_client(const std::shared_ptr<grpc::Channel>& in_channel);
   /**

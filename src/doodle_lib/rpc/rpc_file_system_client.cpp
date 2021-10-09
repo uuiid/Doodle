@@ -190,7 +190,6 @@ namespace rpc_trans {
 trans_file::trans_file(rpc_file_system_client* in_self)
     : _self(in_self),
       _param(),
-      _term(new_object<long_term>()),
       _result(),
       _size(0),
       _mutex() {
@@ -199,42 +198,41 @@ void trans_file::set_parameter(std::unique_ptr<rpc_trans_path>& in_path) {
   _param = std::move(in_path);
 }
 long_term_ptr trans_file::operator()() {
-  _result = doodle_lib::Get().get_thread_pool()->enqueue([this]() {
+  auto k_term = new_object<long_term>();
+  _result     = doodle_lib::Get().get_thread_pool()->enqueue([self = shared_from_this(), k_term]() {
     try {
-      this->run();
+      self->run(k_term);
     } catch (doodle_error& error) {
       DOODLE_LOG_WARN(error.what());
-      _term->sig_progress(1);
-      _term->sig_finished();
-      _term->sig_message_result(error.what(), long_term::warning);
+      k_term->sig_progress(0);
+      k_term->sig_finished();
+      k_term->sig_message_result(error.what(), long_term::warning);
       throw error;
     }
   });
-  return _term;
+  return k_term;
 }
-const long_term_ptr& trans_file::get_term() {
-  return _term;
-}
+
 
 down_file::down_file(rpc_file_system_client* in_self)
     : trans_file(in_self) {
 }
 
-void down_file::run() {
-  _term->start();
+void down_file::run(const long_term_ptr& in_term) {
+  in_term->start();
   auto [k_is_eq, k_is_down, k_s_ex, k_sz] = _self->compare_file_is_down(_param->local_path, _param->server_path);
   if (!k_is_eq) {
-    _term->sig_progress(1);
-    _term->sig_finished();
-    _term->sig_message_result(
+    in_term->sig_progress(0);
+    in_term->sig_finished();
+    in_term->sig_message_result(
         fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path), long_term::warning);
     return;
   }
 
   if ((*k_is_eq)) {
-    _term->sig_progress(1);
-    _term->sig_finished();
-    _term->sig_message_result(
+    in_term->sig_progress(0);
+    in_term->sig_finished();
+    in_term->sig_message_result(
         fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path), long_term::warning);
     return;
   }
@@ -260,15 +258,15 @@ void down_file::run() {
   while (k_out->Read(&k_out_info)) {
     auto& str = k_out_info.data().value();
     k_file.write(str.data(), str.size());
-    _term->sig_progress(rational_int{1, k_num2});
+    in_term->sig_progress(rational_int{1, k_num2});
   }
 
   auto status = k_out->Finish();
 
   if (!status.ok())
     throw doodle_error{status.error_message()};
-  _term->sig_finished();
-  _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
+  in_term->sig_finished();
+  in_term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
 }
 void down_file::wait() {
   _result.get();
@@ -276,20 +274,20 @@ void down_file::wait() {
 up_file::up_file(rpc_file_system_client* in_self)
     : trans_file(in_self) {
 }
-void up_file::run() {
-  _term->start();
+void up_file::run(const long_term_ptr& in_term) {
+  in_term->start();
   auto [k_is_eq, k_is_down, k_s_ex, k_sz] = _self->compare_file_is_down(_param->local_path, _param->server_path);
   if (!k_is_eq) {
-    _term->sig_progress(1);
-    _term->sig_finished();
-    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
+    in_term->sig_progress(0);
+    in_term->sig_finished();
+    in_term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
     return;
   }
 
   if (*k_is_eq) {
-    _term->sig_progress(1);
-    _term->sig_finished();
-    _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
+    in_term->sig_progress(0);
+    in_term->sig_finished();
+    in_term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
     return;
   }
 
@@ -334,7 +332,7 @@ void up_file::run() {
     }
 
     k_in_info.mutable_data()->set_value(std::move(k_value));
-    _term->sig_progress(rational_int(k_num2));
+    in_term->sig_progress(rational_int(k_num2));
     if (!k_in->Write(k_in_info))
       throw doodle_error{"write stream errors"};
   }
@@ -343,8 +341,8 @@ void up_file::run() {
   auto status = k_in->Finish();
   if (!status.ok())
     throw doodle_error{status.error_message()};
-  _term->sig_finished();
-  _term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
+  in_term->sig_finished();
+  in_term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
 }
 void up_file::wait() {
   _result.get();
@@ -353,7 +351,7 @@ down_dir::down_dir(rpc_file_system_client* in_self)
     : trans_file(in_self),
       _down_list() {
 }
-void down_dir::run() {
+void down_dir::run(const long_term_ptr& in_term) {
   if (!FSys::exists(_param->local_path))
     FSys::create_directories(_param->local_path);
 
@@ -416,7 +414,7 @@ up_dir::up_dir(rpc_file_system_client* in_self)
     : trans_file(in_self),
       _up_list() {
 }
-void up_dir::run() {
+void up_dir::run(const long_term_ptr& in_term) {
   if (!FSys::exists(_param->local_path))
     throw doodle_error{"未找到上传文件夹"};
 
@@ -475,10 +473,13 @@ void trans_files::wait() {
     k_i->wait();
   }
 }
-void trans_files::run() {
+long_term_ptr trans_files::operator()() {
   for (auto& k_i : _list) {
     (*k_i)();
   }
+  return nullptr;
+}
+void trans_files::run(const long_term_ptr& in_term) {
 }
 }  // namespace rpc_trans
 
