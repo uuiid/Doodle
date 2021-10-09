@@ -126,7 +126,7 @@ struct fmt::formatter<doodle::assets_path_vector> : fmt::formatter<fmt::string_v
   auto format(const doodle::assets_path_vector &in_, FormatContext &ctx) -> decltype(ctx.out()) {
     std::string str;
     for (auto &i : in_.paths) {
-      str += fmt::format("{}\n", i->get_local_path());
+      str += fmt::format("{}\n", i->get_server_path().generic_string());
     }
 
     return formatter<string_view>::format(
