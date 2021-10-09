@@ -8,12 +8,90 @@
 #include <doodle_lib/Metadata/metadata_cpp.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 namespace doodle {
+namespace details {
+void table_column::frame_render(const assets_file_ptr& in_ptr) {
+  imgui::TableNextColumn();
+  p_render(in_ptr);
+}
+}  // namespace details
 
+bool assets_file_widgets::add_colum_render() {
+  auto k_col      = p_colum_list.emplace_back(new_object<details::table_column>());
+  k_col->p_name   = "id";
+  k_col->p_width  = 6;
+  k_col->p_render = [this](const assets_file_ptr& in_) -> bool {
+    if (dear::Selectable(in_->get_id_str(),
+                         in_ == p_current_select,
+                         ImGuiSelectableFlags_SpanAllColumns)) {
+      p_current_select = in_;
+      p_current_select->attribute_widget(p_factory);
+      select_change(p_current_select);
+    }
+    return true;
+  };
+
+  k_col           = p_colum_list.emplace_back(new_object<details::table_column>());
+  k_col->p_name   = "版本";
+  k_col->p_width  = 6;
+  k_col->p_render = [this](const assets_file_ptr& in_) -> bool {
+    dear::Text(in_->get_version_str());
+    return true;
+  };
+
+  k_col           = p_colum_list.emplace_back(new_object<details::table_column>());
+  k_col->p_name   = "评论";
+  k_col->p_render = [this](const assets_file_ptr& in_) -> bool {
+    auto com = in_->get_comment();
+
+    if (com)
+      dear::Text(com->get().empty() ? std::string{} : com->get().front()->get_comment());
+    else
+      dear::Text(std::string{});
+    return true;
+  };
+
+  k_col           = p_colum_list.emplace_back(new_object<details::table_column>());
+  k_col->p_name   = "路径";
+  k_col->p_width  = 8;
+  k_col->p_render = [](const assets_file_ptr& in_) -> bool {
+    auto k_path = in_->get_path_file();
+    string k_all_str{};
+    string k_line_str{};
+
+    if (k_path && !k_path->get().empty()) {
+      k_line_str = k_path->get().front()->get_server_path().generic_string();
+      k_all_str  = fmt::format("{}", *k_path);
+    }
+    dear::Text(k_line_str.c_str());
+    imgui::SameLine();
+    dear::HelpMarker{"(...)", k_all_str.c_str()};
+    return true;
+  };
+
+  k_col           = p_colum_list.emplace_back(new_object<details::table_column>());
+  k_col->p_name   = "时间";
+  k_col->p_width  = 6;
+  k_col->p_render = [this](const assets_file_ptr& in_) -> bool {
+    dear::Text(in_->get_time()->show_str());
+    return true;
+  };
+  k_col           = p_colum_list.emplace_back(new_object<details::table_column>());
+  k_col->p_name   = "制作人";
+  k_col->p_width  = 6;
+  k_col->p_render = [this](const assets_file_ptr& in_) -> bool {
+    dear::Text(in_->get_user());
+    return true;
+  };
+
+  return false;
+}
 assets_file_widgets::assets_file_widgets()
     : p_root(),
-      p_current_select() {
+      p_current_select(),
+      p_colum_list() {
   p_class_name = "文件列表";
   p_factory    = new_object<attr_assets_file>();
+  add_colum_render();
 }
 
 void assets_file_widgets::frame_render() {
@@ -21,51 +99,34 @@ void assets_file_widgets::frame_render() {
                     ImGuiTableFlags_::ImGuiTableFlags_Resizable |
                     ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
                     ImGuiTableFlags_::ImGuiTableFlags_BordersV |
-                    ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody};
-  dear::Table{"attribute_widgets", 5, flags} && [this]() {
-    imgui::TableSetupColumn("id");
-    imgui::TableSetupColumn("版本");
-    imgui::TableSetupColumn("评论", ImGuiTableColumnFlags_WidthStretch);
-    imgui::TableSetupColumn("时间");
-    imgui::TableSetupColumn("制作人");
-    //      imgui::TableSetupColumn("存在文件");
-    imgui::TableHeadersRow();
-    if (p_root) {
-      for (const auto& i : p_root->get_child()) {
-        if (details::is_class<assets_file>(i)) {
-          auto k = std::dynamic_pointer_cast<assets_file>(i);
-          imgui::TableNextRow();
-          imgui::TableNextColumn();
-          if (dear::Selectable(k->get_id_str(),
-                               k == p_current_select,
-                               ImGuiSelectableFlags_SpanAllColumns)) {
-            p_current_select = k;
-            p_current_select->attribute_widget(p_factory);
-            select_change(p_current_select);
-          }
-
-          imgui::TableNextColumn();
-          dear::Text(k->get_version_str());
-
-          imgui::TableNextColumn();
-          auto com = k->get_comment();
-          if (com)
-            dear::Text(com->get().empty() ? std::string{} : com->get().front()->get_comment());
+                    ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody |
+                    ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
+                    ImGuiTableFlags_::ImGuiTableFlags_ScrollY};
+  dear::Table{"attribute_widgets",
+              boost::numeric_cast<std::int32_t>(p_colum_list.size()),
+              flags} &&
+      [this]() {
+        /// 添加表头
+        for (auto& i : p_colum_list) {
+          if (i->p_width != 0)
+            imgui::TableSetupColumn(i->p_name.c_str(), 0, imgui::GetFontSize() * i->p_width);
           else
-            dear::Text(std::string{});
-
-          imgui::TableNextColumn();
-          dear::Text(k->get_time()->show_str());
-
-          imgui::TableNextColumn();
-          dear::Text(k->get_user());
-
-          //          imgui::TableNextColumn();
-          //          dear::Text()
+            imgui::TableSetupColumn(i->p_name.c_str());
         }
-      }
-    }
-  };
+
+        imgui::TableHeadersRow();
+        if (p_root) {
+          for (const auto& i : p_root->get_child()) {
+            if (details::is_class<assets_file>(i)) {
+              auto k = std::dynamic_pointer_cast<assets_file>(i);
+              imgui::TableNextRow();
+              ///添加每行渲染
+              for (auto& i : p_colum_list)
+                i->frame_render(k);
+            }
+          }
+        }
+      };
 }
 
 void assets_file_widgets::set_metadata(const metadata_ptr& in_ptr) {
