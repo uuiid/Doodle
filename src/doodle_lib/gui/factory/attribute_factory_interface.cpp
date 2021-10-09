@@ -58,7 +58,7 @@ void attr_assets::show_attribute(const season_ptr& in) {
 
 attr_assets_file::attr_assets_file()
     : p_data(),
-      p_comm(new_object<comm_ass_file>()) {
+      p_comm(new_object<comm_assets_file>()) {
 }
 
 void attr_assets_file::render() {
