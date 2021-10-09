@@ -86,15 +86,22 @@ struct TextWrapPos : public ScopeWrapper<TextWrapPos, true> {
 };
 
 struct HelpMarker : public ScopeWrapper<HelpMarker, true> {
-  HelpMarker(const char* in_args) noexcept
+  HelpMarker(const char* in_show_str, const char* in_args) noexcept
       : ScopeWrapper<HelpMarker, true>(false) {
-    ImGui::TextDisabled("(?)");
+    ImGui::TextDisabled(in_show_str);
     ItemTooltip{} && [&in_args]() {
       TextWrapPos{ImGui::GetFontSize() * 35.0f} && [&in_args]() {
         imgui::TextUnformatted(in_args);
       };
     };
   }
+  HelpMarker(const char* in_args) noexcept
+      : HelpMarker("(?)", in_args) {}
+  HelpMarker(const std::string& in_args) noexcept
+      : HelpMarker(in_args.c_str()){};
+
+  HelpMarker(const std::string& in_show_str, const std::string& in_args) noexcept
+      : HelpMarker(in_show_str.c_str(), in_args.c_str()){};
   static void dtor() noexcept {};
 };
 
