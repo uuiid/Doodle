@@ -2,9 +2,9 @@
 // Created by TD on 2021/5/18.
 //
 
-#include <doodle_lib/Metadata/comment.h>
-#include <doodle_lib/Metadata/metadata.h>
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/metadata/comment.h>
+#include <doodle_lib/metadata/metadata.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::comment)
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::comment_vector)

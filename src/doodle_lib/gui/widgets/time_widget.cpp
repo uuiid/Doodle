@@ -4,8 +4,8 @@
 
 #include "time_widget.h"
 
-#include <doodle_lib/Metadata/time_point_wrap.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_lib/metadata/time_point_wrap.h>
 namespace doodle {
 time_widget::time_widget()
     : base_widget(),

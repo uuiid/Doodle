@@ -6,7 +6,7 @@
 
 #include <doodle_lib/Exception/exception.h>
 // clang-format off
-#include <doodle_lib/Metadata/metadata_cpp.h>
+#include <doodle_lib/metadata/metadata_cpp.h>
 // clang-format on
 #include <doodle_lib/Logger/logger.h>
 #include <doodle_lib/core/ContainerDevice.h>

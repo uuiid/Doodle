@@ -5,11 +5,11 @@
 #include "rpc_metadaata_server.h"
 
 #include <doodle_lib/Logger/logger.h>
-#include <doodle_lib/Metadata/metadata_cpp.h>
 #include <doodle_lib/core/core_sql.h>
 #include <doodle_lib/generate/core/metadatatab_sql.h>
 #include <doodle_lib/generate/core/usertab_sql.h>
 #include <doodle_lib/lib_warp/protobuf_warp_cpp.h>
+#include <doodle_lib/metadata/metadata_cpp.h>
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
 

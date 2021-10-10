@@ -1,10 +1,10 @@
 #pragma once
 
-#include <doodle_lib/Metadata/project.h>
 #include <doodle_lib/core/observable_container.h>
 #include <doodle_lib/core/ue4_setting.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/boost_uuid_warp.h>
+#include <doodle_lib/metadata/project.h>
 
 #include <boost/filesystem.hpp>
 #include <magic_enum.hpp>

@@ -3,12 +3,12 @@
 //
 #include "metadata_factory.h"
 
+#include <core/doodle_lib.h>
 #include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/Logger/logger.h>
-#include <doodle_lib/Metadata/metadata_cpp.h>
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/rpc/rpc_metadata_client.h>
-#include <core/doodle_lib.h>
 #include <grpcpp/grpcpp.h>
 
 namespace doodle {

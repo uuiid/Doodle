@@ -1,8 +1,8 @@
 #include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/Gui/factory/attribute_factory_interface.h>
-#include <doodle_lib/Metadata/episodes.h>
-#include <doodle_lib/Metadata/metadata_factory.h>
-#include <doodle_lib/Metadata/shot.h>
+#include <doodle_lib/metadata/episodes.h>
+#include <doodle_lib/metadata/metadata_factory.h>
+#include <doodle_lib/metadata/shot.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::shot)
 namespace doodle {

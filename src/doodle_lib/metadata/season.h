@@ -3,8 +3,8 @@
 //
 
 #pragma once
-#include <doodle_lib/Metadata/metadata.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/metadata/metadata.h>
 namespace doodle {
 
 class DOODLELIB_API season

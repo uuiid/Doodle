@@ -1,8 +1,8 @@
 
 #include <doodle_lib/Exception/exception.h>
-#include <doodle_lib/Metadata/project.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/core_sql.h>
+#include <doodle_lib/metadata/project.h>
 #include <sqlpp11/mysql/mysql.h>
 #include <sqlpp11/sqlpp11.h>
 

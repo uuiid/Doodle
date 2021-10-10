@@ -4,12 +4,12 @@
 
 #include "metadata.h"
 
-#include <doodle_lib/Logger/logger.h>
-#include <doodle_lib/Metadata/metadata_factory.h>
 #include <Exception/exception.h>
 #include <Metadata/metadata_cpp.h>
 #include <core/ContainerDevice.h>
 #include <core/core_set.h>
+#include <doodle_lib/Logger/logger.h>
+#include <doodle_lib/metadata/metadata_factory.h>
 #include <google/protobuf/util/time_util.h>
 
 #include <boost/algorithm/algorithm.hpp>

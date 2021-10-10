@@ -2,18 +2,16 @@
 // Created by TD on 2021/5/7.
 //
 
-#include <doodle_lib/Metadata/assets_file.h>
-#include <doodle_lib/Metadata/assets_path.h>
-#include <doodle_lib/Metadata/comment.h>
-#include <core/core_set.h>
+#include <doodle_lib/metadata/assets_file.h>
+#include <doodle_lib/metadata/assets_path.h>
+#include <doodle_lib/metadata/comment.h>
 ///这个工厂类必须在所有导入的后面
-#include <doodle_lib/Gui/factory/attribute_factory_interface.h>
-#include <doodle_lib/Metadata/metadata_factory.h>
-#include <Metadata/time_point_wrap.h>
+#include <doodle_lib/gui/factory/attribute_factory_interface.h>
+#include <doodle_lib/metadata/metadata_factory.h>
+#include <metadata/time_point_wrap.h>
 #include <pin_yin/convert.h>
 #include <google/protobuf/util/time_util.h>
 
-#include <utility>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_file)
 namespace doodle {
