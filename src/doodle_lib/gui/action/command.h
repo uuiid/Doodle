@@ -15,7 +15,7 @@ enum class command_type {
   async,
   composite
 };
-}
+}  // namespace details
 
 class DOODLELIB_API command_base /* : public details::no_copy  */ {
  protected:
@@ -30,14 +30,15 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
       project_ptr,
       std::nullptr_t>;
   metadata_ptr p_meta_var;
+  virtual bool set_child() { return false; };
 
-  virtual bool set_child(const episodes_ptr& in_ptr) { return false; };
-  virtual bool set_child(const shot_ptr& in_ptr) { return false; };
-  virtual bool set_child(const season_ptr& in_ptr) { return false; };
-  virtual bool set_child(const assets_ptr& in_ptr) { return false; };
-  virtual bool set_child(const assets_file_ptr& in_ptr) { return false; };
-  virtual bool set_child(const project_ptr& in_ptr) { return false; };
-  virtual bool set_child(const std::nullptr_t& in_ptr) { return false; };
+  using data_variant = std::variant<episodes_ptr,
+                                    shot_ptr,
+                                    season_ptr,
+                                    assets_ptr,
+                                    assets_file_ptr,
+                                    project_ptr>;
+  data_variant p_var;
 
  public:
   virtual const std::string& class_name() { return p_name; };
@@ -54,7 +55,12 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
       return false;
     } else if (k_size == 2) {
       p_meta_var = k_arg[0_c];
-      return this->set_child(k_arg[1_c]);
+      //details::help_fun<decltype(p_meta_var)>::fun(p_meta_var);
+      if constexpr (boost::hana::typeid_(k_arg[1_c]) != boost::hana::type_c<std::nullptr_t>) {
+        p_var = k_arg[1_c];
+        return this->set_child();
+      } else
+        return false;
     }
     return false;
   };

@@ -69,10 +69,14 @@ bool comm_project_add::render() {
 
   return true;
 }
-bool comm_project_add::set_child(const project_ptr& in_ptr) {
-  p_root      = in_ptr;
-  *p_prj_name = p_root->get_name();
-  *p_prj_path = p_root->get_path().generic_string();
+bool comm_project_add::set_child() {
+  if (std::holds_alternative<project_ptr>(p_var)) {
+    p_root = std::get<project_ptr>(p_var);
+    if (p_root) {
+      *p_prj_name = p_root->get_name();
+      *p_prj_path = p_root->get_path().generic_string();
+    }
+  }
   return true;
 }
 
@@ -133,9 +137,11 @@ bool comm_ass_eps::render() {
   }
   return true;
 }
-bool comm_ass_eps::set_child(const episodes_ptr& in_ptr) {
-  p_root = in_ptr;
-  p_data = p_root->get_episodes();
+bool comm_ass_eps::set_child() {
+  if (std::holds_alternative<episodes_ptr>(p_var)) {
+    p_root = std::get<episodes_ptr>(p_var);
+    p_data = p_root->get_episodes();
+  }
   return true;
 }
 
@@ -208,10 +214,12 @@ bool comm_ass_shot::render() {
 
   return true;
 }
-bool comm_ass_shot::set_child(const shot_ptr& in_ptr) {
-  p_root    = in_ptr;
-  p_data    = p_root->get_shot();
-  p_shot_ab = p_root->get_shot_ab();
+bool comm_ass_shot::set_child() {
+  if (std::holds_alternative<shot_ptr>(p_var)) {
+    p_root    = std::get<shot_ptr>(p_var);
+    p_data    = p_root->get_shot();
+    p_shot_ab = p_root->get_shot_ab();
+  }
   return true;
 }
 
@@ -258,9 +266,11 @@ bool comm_assets::render() {
 
   return true;
 }
-bool comm_assets::set_child(const assets_ptr& in_ptr) {
-  p_root = in_ptr;
-  p_data = p_root->get_name1();
+bool comm_assets::set_child() {
+  if (std::holds_alternative<assets_ptr>(p_var)) {
+    p_root = std::get<assets_ptr>(p_var);
+    p_data = p_root->get_name1();
+  }
   return true;
 }
 
@@ -323,9 +333,11 @@ bool comm_ass_season::render() {
 
   return true;
 }
-bool comm_ass_season::set_child(const season_ptr& in_ptr) {
-  p_root = in_ptr;
-  p_data = p_root->get_season();
+bool comm_ass_season::set_child() {
+  if (std::holds_alternative<season_ptr>(p_var)) {
+    p_root = std::get<season_ptr>(p_var);
+    p_data = p_root->get_season();
+  }
   return true;
 }
 
@@ -380,14 +392,17 @@ bool comm_ass_file_attr::render() {
 
   return true;
 }
-bool comm_ass_file_attr::set_child(const assets_file_ptr& in_ptr) {
-  p_root = in_ptr;
-  if (!p_root->get_comment())
-    p_root->set_comment(new_object<comment_vector>());
-  if (!p_root->get_path_file())
-    p_root->set_path_file(new_object<assets_path_vector>());
-  p_comm = p_root->get_comment();
-  p_time_widget->set_time(p_root->get_time());
+bool comm_ass_file_attr::set_child() {
+  if (std::holds_alternative<assets_file_ptr>(p_var)) {
+    p_root = std::get<assets_file_ptr>(p_var);
+
+    if (!p_root->get_comment())
+      p_root->set_comment(new_object<comment_vector>());
+    if (!p_root->get_path_file())
+      p_root->set_path_file(new_object<assets_path_vector>());
+    p_comm = p_root->get_comment();
+    p_time_widget->set_time(p_root->get_time());
+  }
   return true;
 }
 

@@ -70,10 +70,12 @@ bool comm_files_up::render() {
   return true;
 }
 
-bool comm_files_up::set_child(const assets_file_ptr& in_ptr) {
-  p_root = in_ptr;
-  if (!p_root->get_path_file()) {
-    p_root->set_path_file(new_object<assets_path_vector>());
+bool comm_files_up::set_child() {
+  if (std::holds_alternative<assets_file_ptr>(p_var)) {
+    p_root = std::get<assets_file_ptr>(p_var);
+    if (p_root && !p_root->get_path_file()) {
+      p_root->set_path_file(new_object<assets_path_vector>());
+    }
   }
   return true;
 }
