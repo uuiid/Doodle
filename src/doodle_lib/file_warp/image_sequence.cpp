@@ -1,14 +1,14 @@
-#include <doodle_lib/Exception/exception.h>
-#include <doodle_lib/file_warp/image_sequence.h>
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/lib_warp/std_warp.h>
-#include <doodle_lib/thread_pool/thread_pool.h>
 #include <Logger/logger.h>
 #include <Metadata/episodes.h>
 #include <Metadata/shot.h>
-#include <pin_yin/convert.h>
 #include <core/doodle_lib.h>
+#include <doodle_lib/Exception/exception.h>
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/file_warp/image_sequence.h>
+#include <doodle_lib/lib_warp/std_warp.h>
+#include <doodle_lib/thread_pool/thread_pool.h>
+#include <pin_yin/convert.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/assign.hpp>
@@ -21,6 +21,50 @@
 #include <boost/range/algorithm_ext.hpp>
 #include <opencv2/opencv.hpp>
 namespace doodle {
+
+namespace details {
+std::vector<std::int32_t> image_file::extract_num() {
+  static std::regex reg{R"(\d+)"};
+  std::smatch k_match{};
+  std::vector<std::int32_t> p_k_num;
+
+  auto k_name = p_file.filename().generic_string();
+
+  auto k_b    = std::sregex_iterator{k_name.begin(), k_name.end(), reg};
+  
+  for (auto it = k_b; it != std::sregex_iterator{}; ++it) {
+    k_match = *it;
+    p_k_num.push_back(std::stoi(k_match.str()));
+  }
+  return p_k_num;
+}
+void image_file::set_path(const FSys::path &in_) {
+  p_file = in_;
+  if (FSys::exists(p_file) && p_file.has_filename())
+    extract_num();
+}
+bool image_file::speculate_frame(const image_file &in) {
+  if (p_list.size() == in.p_list.size()) {
+    for (auto i = 0; i < p_list.size(); ++i) {
+      if (p_list[i] != in.p_list[i]) {
+        p_frame = p_list[i];
+        p_index = i;
+        return true;
+      }
+    }
+  }
+  return false;
+}
+bool image_file::next( image_file &in) const {
+  if (p_list.size() == in.p_list.size()) {
+    in.p_frame = in.p_list[p_index];
+    in.p_index = p_index;
+    return true;
+  }
+  return false;
+}
+}  // namespace details
+
 std::string image_sequence::clearString(const std::string &str) {
   auto &con  = convert::Get();
   auto str_r = std::string{};
@@ -140,7 +184,7 @@ void image_sequence::create_video(const image_sequence::asyn_arg_ptr &in_arg) {
         int thickness    = 2;
         int baseline     = 0;
         auto textSize    = cv::getTextSize(in_arg->Text, fontFace,
-                                           fontScale, thickness, &baseline);
+                                        fontScale, thickness, &baseline);
         baseline += thickness;
         textSize.width += baseline;
         textSize.height += baseline;
@@ -182,6 +226,9 @@ void image_sequence::create_video(const long_term_ptr &in_ptr) {
   k_arg->long_sig = in_ptr;
   k_arg->Text     = p_Text;
   image_sequence::create_video(k_arg);
+}
+bool image_sequence::is_image_sequence(const std::vector<FSys::path> &in_file_list) {
+  return false;
 }
 std::string image_sequence::show_str(const std::vector<FSys::path> &in_images) {
   static std::regex reg{R"(\d+)"};
@@ -250,7 +297,7 @@ long_term_ptr image_sequence_async::create_video(const FSys::path &out_file) {
   auto k_term = new_object<long_term>();
   k_term->p_list.emplace_back(
       doodle_lib::Get().get_thread_pool()->enqueue(
-          [self = p_image_sequence,out_file, k_term]() {
+          [self = p_image_sequence, out_file, k_term]() {
             self->set_path(out_file);
             self->create_video(k_term);
           }));
