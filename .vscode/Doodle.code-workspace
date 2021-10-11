@@ -182,6 +182,9 @@
 		"todo-tree.regex.regexCaseSensitive": false,
 		"todo-tree.regex.regex": "((\\* @|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])",
 		"todo-tree.tree.showBadges": true,
+		"markdownlint.config": {
+			"MD033": false
+		}
 	},
 	"tasks": {
 		"version": "2.0.0",
