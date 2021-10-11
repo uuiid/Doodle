@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <doodle_lib/Gui/action/command.h>
+#include <doodle_lib/gui/action/command.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle {
 class DOODLELIB_API comm_export_fbx : public command_base {

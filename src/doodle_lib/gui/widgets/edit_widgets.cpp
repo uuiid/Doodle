@@ -4,7 +4,7 @@
 
 #include "edit_widgets.h"
 
-#include <doodle_lib/Gui/factory/attribute_factory_interface.h>
+#include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/metadata/metadata.h>
 namespace doodle {
 edit_widgets::edit_widgets()

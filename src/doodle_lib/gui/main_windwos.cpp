@@ -5,14 +5,14 @@
 #include "main_windwos.h"
 
 #include <doodle_lib/Exception/exception.h>
-#include <doodle_lib/Gui/action/command_tool.h>
-#include <doodle_lib/Gui/setting_windows.h>
-#include <doodle_lib/Gui/widgets/assets_file_widgets.h>
-#include <doodle_lib/Gui/widgets/assets_widget.h>
-#include <doodle_lib/Gui/widgets/edit_widgets.h>
-#include <doodle_lib/Gui/widgets/long_time_tasks_widget.h>
-#include <doodle_lib/Gui/widgets/project_widget.h>
 #include <doodle_lib/doodle_app.h>
+#include <doodle_lib/gui/action/command_tool.h>
+#include <doodle_lib/gui/setting_windows.h>
+#include <doodle_lib/gui/widgets/assets_file_widgets.h>
+#include <doodle_lib/gui/widgets/assets_widget.h>
+#include <doodle_lib/gui/widgets/edit_widgets.h>
+#include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
+#include <doodle_lib/gui/widgets/project_widget.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/toolkit/toolkit.h>
 namespace doodle {

@@ -4,7 +4,7 @@
 
 #include "assets_file_widgets.h"
 
-#include <doodle_lib/Gui/factory/attribute_factory_interface.h>
+#include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 namespace doodle {

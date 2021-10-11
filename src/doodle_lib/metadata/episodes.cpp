@@ -1,5 +1,5 @@
 #include <doodle_lib/Exception/exception.h>
-#include <doodle_lib/Gui/factory/attribute_factory_interface.h>
+#include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/metadata_factory.h>
 

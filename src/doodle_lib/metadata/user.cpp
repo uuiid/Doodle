@@ -2,8 +2,8 @@
 // Created by TD on 2021/5/7.
 //
 
-#include <doodle_lib/Gui/factory/attribute_factory_interface.h>
 #include <Metadata/user.h>
+#include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <pin_yin/convert.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::user)

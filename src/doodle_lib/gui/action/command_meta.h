@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <doodle_lib/Gui/action/command.h>
-#include <doodle_lib/Gui/action/command_files.h>
-#include <doodle_lib/Gui/action/command_ue4.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/gui/action/command.h>
+#include <doodle_lib/gui/action/command_files.h>
+#include <doodle_lib/gui/action/command_ue4.h>
 
 #include <boost/hana.hpp>
 #include <boost/hana/tuple.hpp>

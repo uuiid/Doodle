@@ -4,8 +4,8 @@
 
 #include "doodle_app.h"
 
-#include <doodle_lib/Gui/main_windwos.h>
-#include <doodle_lib/Gui/widget_register.h>
+#include <doodle_lib/gui/main_windwos.h>
+#include <doodle_lib/gui/widget_register.h>
 #include <doodle_lib/lib_warp/boost_locale_warp.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 // Helper functions

@@ -5,7 +5,7 @@
 #include "base_windwos.h"
 
 #include <doodle_app.h>
-#include <doodle_lib/Gui/widget_register.h>
+#include <doodle_lib/gui/widget_register.h>
 namespace doodle {
 const string& base_widget::get_class_name() {
   return p_class_name;
