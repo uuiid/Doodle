@@ -32,12 +32,15 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
   metadata_ptr p_meta_var;
   virtual bool set_child() { return false; };
 
-  using data_variant = std::variant<episodes_ptr,
-                                    shot_ptr,
-                                    season_ptr,
-                                    assets_ptr,
-                                    assets_file_ptr,
-                                    project_ptr>;
+  using data_variant = std::variant<
+      episodes_ptr,
+      shot_ptr,
+      season_ptr,
+      assets_ptr,
+      assets_file_ptr,
+      project_ptr,
+      assets_path_vector_ptr>;
+
   data_variant p_var;
 
  public:

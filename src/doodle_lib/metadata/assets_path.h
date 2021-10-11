@@ -98,6 +98,11 @@ class DOODLELIB_API assets_path_vector
 
   path_list add_file(const FSys::path &in_path, bool in_using_lexically_relative = false);
 
+  inline void merge(const assets_path_vector &in) {
+    paths.resize(paths.size() + in.paths.size());
+    paths.insert(paths.end(), in.paths.begin(), in.paths.end());
+  };
+
  private:
   //这里是序列化的代码
   friend class boost::serialization::access;

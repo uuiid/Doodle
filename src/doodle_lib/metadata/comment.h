@@ -40,7 +40,7 @@ class DOODLELIB_API comment_vector
   std::vector<comment_ptr> comm;
 
   void end_push_back(const comment_ptr& in) {
-    in->set_metadata(p_meta.lock());
+    in->set_metadata(p_meta);
     //p_meta.lock()->saved(true);
   };
 
@@ -54,7 +54,7 @@ class DOODLELIB_API comment_vector
   //   return vector_adapter<comment_ptr, comment_vector>{comm, *this};
   // };
 
-  void set_metadata(const metadata_ptr& in_meta) override;
+  void set_metadata(const std::weak_ptr<metadata>& in_meta) override;
 
  private:
   friend class boost::serialization::access;

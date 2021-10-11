@@ -12,6 +12,8 @@ namespace doodle {
  * @brief 这个类代表着服务端的文件条目
  *
  */
+
+
 class DOODLELIB_API assets_file : public metadata {
   std::string p_name;
   std::string p_ShowName;
@@ -89,17 +91,17 @@ class DOODLELIB_API assets_file : public metadata {
 
 template <class Archive>
 void assets_file::serialize(Archive& ar, const std::uint32_t version) {
-  if (version == 3)
-    ar&
-            boost::serialization::make_nvp("metadata", boost::serialization::base_object<metadata>(*this)) &
-        BOOST_SERIALIZATION_NVP(p_name) &
-        BOOST_SERIALIZATION_NVP(p_ShowName) &
-        BOOST_SERIALIZATION_NVP(p_path_files) &
-        BOOST_SERIALIZATION_NVP(p_time) &
-        BOOST_SERIALIZATION_NVP(p_user) &
-        BOOST_SERIALIZATION_NVP(p_department) &
-        BOOST_SERIALIZATION_NVP(p_comment) &
-        BOOST_SERIALIZATION_NVP(p_version);
+  if (version == 3) {
+    ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(metadata);
+    ar& BOOST_SERIALIZATION_NVP(p_name);
+    ar& BOOST_SERIALIZATION_NVP(p_ShowName);
+    ar& BOOST_SERIALIZATION_NVP(p_path_files);
+    ar& BOOST_SERIALIZATION_NVP(p_time);
+    ar& BOOST_SERIALIZATION_NVP(p_user);
+    ar& BOOST_SERIALIZATION_NVP(p_department);
+    ar& BOOST_SERIALIZATION_NVP(p_comment);
+    ar& BOOST_SERIALIZATION_NVP(p_version);
+  }
 }
 
 }  // namespace doodle

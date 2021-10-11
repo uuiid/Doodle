@@ -104,22 +104,21 @@ void assets_path_vector::set_metadata(const std::weak_ptr<metadata> &in_meta) {
 }
 assets_path_vector::path_list assets_path_vector::add_file(
     const FSys::path &in_path, bool in_using_lexically_relative) {
-  path_list k_list{};
   auto k_path = new_object<assets_path>();
   // 添加基本路径
-  k_path->set_metadata(p_meta.lock());
+  k_path->set_metadata(p_meta);
   k_path->set_path(in_path, p_meta.lock(), in_using_lexically_relative);
-  k_list.push_back(k_path);
+  get().push_back(k_path);
 
   if (ue4_project::is_ue4_file(in_path)) {
     // 添加内容路径
     k_path = new_object<assets_path>();
     k_path->set_metadata(p_meta.lock());
     k_path->set_path(in_path.parent_path() / ue4_project::Content, p_meta.lock(), in_using_lexically_relative);
-    k_list.push_back(k_path);
+    get().push_back(k_path);
   }
 
-  return k_list;
+  return paths;
 }
 FSys::path assets_path::get_cache_path() const {
   auto k_path = core_set::getSet().get_cache_root();

@@ -13,7 +13,9 @@ class DOODLELIB_API comm_files_up : public command_base {
  private:
   assets_file_ptr p_root;
   bool_ptr p_use_relative;
-  std::vector<assets_path_ptr> p_list_path;
+
+  assets_path_vector_ptr p_list_paths;
+
 
   FSys::path p_file;
   rpc_trans::trans_file_ptr p_tran_files;
