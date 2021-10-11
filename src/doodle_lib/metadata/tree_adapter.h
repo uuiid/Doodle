@@ -37,6 +37,11 @@ class DOODLELIB_API vector_adapter {
     _list.push_back(in);
     _self.end_push_back(in);
   };
+  void push_back(value_type&& in) {
+    auto k_ = in;
+    _list.push_back(std::move(in));
+    _self.end_push_back(k_);
+  };
 
   auto emplace_back(value_type&& in_ptr) {
     auto k_r = _list.emplace_back(std::forward<value_type>(in_ptr));
