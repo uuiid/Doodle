@@ -87,10 +87,11 @@ class DOODLELIB_API assets_path_vector
     return make_vector_adapter(paths, *this);
   };
 
-  void set_metadata(const metadata_ptr &in_meta) override;
+  void set_metadata(const std::weak_ptr<metadata> &in_meta) override;
 
   inline void end_push_back(const assets_path_ptr &in) {
-    in->set_metadata(p_meta.lock());
+    if (!p_meta.expired())
+      in->set_metadata(p_meta);
     //p_meta.lock()->saved(true);
   };
   inline void end_clear(){};

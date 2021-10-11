@@ -96,7 +96,7 @@ std::string assets_path::str() const {
                      p_server_path);
 }
 
-void assets_path_vector::set_metadata(const metadata_ptr &in_meta) {
+void assets_path_vector::set_metadata(const std::weak_ptr<metadata> &in_meta) {
   leaf_meta::set_metadata(in_meta);
   for (auto &i : get()) {
     i->set_metadata(in_meta);
