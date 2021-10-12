@@ -148,6 +148,6 @@ using comm_ass = comm_compound<
 
 using comm_assets_file = comm_compound<
     comm_ass_file_attr,
-    comm_files_up>;
+    comm_files_select>;
 
 }  // namespace doodle

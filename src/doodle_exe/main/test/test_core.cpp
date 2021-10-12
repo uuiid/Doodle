@@ -332,7 +332,7 @@ TEST_CASE("gen_path", "[core]") {
 
       SECTION("fmt assets path list") {
         auto str = fmt::format("{}", *(k_file->get_path_file()));
-        std::cout << str<< std::endl;
+        std::cout << str << std::endl;
       }
     }
     SECTION("using repath") {
@@ -352,7 +352,16 @@ TEST_CASE("path iter", "[core]") {
     std::cout << i << std::endl;
   }
 }
+TEST_CASE("image sequence", "[core]") {
+  using namespace doodle;
 
+  std::vector<FSys::path> p_list{
+      FSys::directory_iterator{"D:\\tmp\\image_test_sc001"},
+      FSys::directory_iterator{}};
+
+  std::cout << fmt::format("{}", fmt::join(p_list, " \n")) << std::endl;
+  REQUIRE(image_sequence::is_image_sequence(p_list));
+}
 //#include <boost/algorithm/string.hpp>
 //#include <boost/archive/iterators/base64_from_binary.hpp>
 //#include <boost/archive/iterators/binary_from_base64.hpp>

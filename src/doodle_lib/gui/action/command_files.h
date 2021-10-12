@@ -9,23 +9,51 @@
 //#include <boost/hana/transform.hpp>
 
 namespace doodle {
-class DOODLELIB_API comm_files_up : public command_base {
+
+class comm_file_image_to_move : public command_base {
+ private:
+  assets_path_vector_ptr p_list_paths;
+  FSys::path p_file;
+  bool_ptr p_not_up_file;
+  bool_ptr p_not_up_source_file;
+  assets_file_ptr p_root;
+
+  void init();
+
+ public:
+  comm_file_image_to_move()
+      : p_list_paths(),
+        p_file(),
+        p_not_up_file(new_object<bool>(false)),
+        p_not_up_source_file(new_object<bool>(false)),
+        p_root() {
+    init();
+  };
+  bool render() override;
+};
+
+//class DOODLELIB_API comm_files_up : public command_base {
+// private:
+//  assets_path_vector_ptr p_list_paths;
+//  FSys::path p_file;
+//
+// public:
+//  comm_files_up();
+//  bool render() override;
+//};
+
+class DOODLELIB_API comm_files_select : public command_base {
  private:
   assets_file_ptr p_root;
   bool_ptr p_use_relative;
-
   assets_path_vector_ptr p_list_paths;
-
-
   FSys::path p_file;
-  rpc_trans::trans_file_ptr p_tran_files;
 
   bool set_child();
   bool add_files();
 
-
  public:
-  comm_files_up();
+  comm_files_select();
 
   bool render() override;
 };

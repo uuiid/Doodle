@@ -9,6 +9,7 @@
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 #include <pin_yin/convert.h>
+#include <doodle_lib/metadata/assets_path.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/assign.hpp>
@@ -23,25 +24,27 @@
 namespace doodle {
 
 namespace details {
-std::vector<std::int32_t> image_file::extract_num() {
+const std::vector<std::int32_t>& image_file::extract_num() {
   static std::regex reg{R"(\d+)"};
   std::smatch k_match{};
-  std::vector<std::int32_t> p_k_num;
 
   auto k_name = p_file.filename().generic_string();
 
   auto k_b    = std::sregex_iterator{k_name.begin(), k_name.end(), reg};
-  
+
   for (auto it = k_b; it != std::sregex_iterator{}; ++it) {
     k_match = *it;
-    p_k_num.push_back(std::stoi(k_match.str()));
+    p_list.push_back(std::stoi(k_match.str()));
   }
-  return p_k_num;
+  return p_list;
 }
 void image_file::set_path(const FSys::path &in_) {
   p_file = in_;
   if (FSys::exists(p_file) && p_file.has_filename())
     extract_num();
+}
+std::int32_t image_file::get_frame() const {
+  return p_frame;
 }
 bool image_file::speculate_frame(const image_file &in) {
   if (p_list.size() == in.p_list.size()) {
@@ -55,13 +58,34 @@ bool image_file::speculate_frame(const image_file &in) {
   }
   return false;
 }
-bool image_file::next( image_file &in) const {
+bool image_file::next(image_file &in) const {
   if (p_list.size() == in.p_list.size()) {
     in.p_frame = in.p_list[p_index];
     in.p_index = p_index;
     return true;
   }
   return false;
+}
+bool image_file::operator<(const image_file &in_rhs) const {
+  return p_frame < in_rhs.p_frame;
+}
+bool image_file::operator>(const image_file &in_rhs) const {
+  return in_rhs < *this;
+}
+bool image_file::operator<=(const image_file &in_rhs) const {
+  return !(in_rhs < *this);
+}
+bool image_file::operator>=(const image_file &in_rhs) const {
+  return !(*this < in_rhs);
+}
+image_file::operator bool() const {
+  return p_index >= 0;
+}
+bool image_file::operator==(const image_file &in_rhs) const {
+  return p_file == in_rhs.p_file;
+}
+bool image_file::operator!=(const image_file &in_rhs) const {
+  return !(in_rhs == *this);
 }
 }  // namespace details
 
@@ -228,7 +252,41 @@ void image_sequence::create_video(const long_term_ptr &in_ptr) {
   image_sequence::create_video(k_arg);
 }
 bool image_sequence::is_image_sequence(const std::vector<FSys::path> &in_file_list) {
-  return false;
+  std::vector<details::image_file_ptr> k_files{};
+  boost::copy(
+      in_file_list |
+          boost::adaptors::transformed(
+              [](const FSys::path &in_path) -> details::image_file_ptr {
+                return new_object<details::image_file>(in_path);
+              }),
+      std::back_inserter(k_files));
+  if (k_files.empty())
+    return false;
+  auto k_f = k_files.back();
+  k_files.pop_back();
+  for (auto &i : k_files) {
+    if (k_f->speculate_frame(*i))
+      break;
+  }
+  if (!(*k_f))
+    return false;
+
+  for (auto &i : k_files) {
+    if (!k_f->next(*i))
+      return false;
+  }
+  k_files.push_back(k_f);
+  boost::sort(k_files, &boost::less_pointees<details::image_file_ptr>);
+
+  auto k_i = k_files.front()->get_frame();
+  for (auto &i : k_files) {
+    if (k_i == i->get_frame())
+      ++k_i;
+    else
+      return false;
+  }
+
+  return true;
 }
 std::string image_sequence::show_str(const std::vector<FSys::path> &in_images) {
   static std::regex reg{R"(\d+)"};
@@ -293,12 +351,26 @@ image_sequence_ptr image_sequence_async::set_path(const std::vector<FSys::path> 
   p_image_sequence->set_path(image_path_list);
   return p_image_sequence;
 }
+image_sequence_ptr image_sequence_async::ser_path(const assets_path_vector_ptr &in_path) {
+  set_path(in_path->get().front()->get_local_path());
+  auto k_out_dir = in_path->get().front()->get_cache_path();
+  p_image_sequence->set_out_dir(k_out_dir);
+  auto k_meta = in_path->get_metadata();
+  if (!k_meta.expired()) {
+    auto k_m = k_meta.lock();
+    p_image_sequence->set_shot_and_eps(k_m->find_parent_class<shot>(), k_m->find_parent_class<episodes>());
+  }
+  return p_image_sequence;
+}
 long_term_ptr image_sequence_async::create_video(const FSys::path &out_file) {
+  p_image_sequence->set_path(out_file);
+  return create_video();
+}
+long_term_ptr image_sequence_async::create_video() {
   auto k_term = new_object<long_term>();
   k_term->p_list.emplace_back(
       doodle_lib::Get().get_thread_pool()->enqueue(
-          [self = p_image_sequence, out_file, k_term]() {
-            self->set_path(out_file);
+          [self = p_image_sequence, k_term]() {
             self->create_video(k_term);
           }));
   return k_term;

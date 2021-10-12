@@ -14,6 +14,8 @@ class DOODLELIB_API leaf_meta {
   ~leaf_meta() =default;
 
   virtual void set_metadata(const std::weak_ptr<metadata>& in_meta);
+  virtual std::weak_ptr<metadata> get_metadata() const;
+
   //virtual void set_metadata(const std::weak_ptr<metadata>& in_meta);
 };
 }  // namespace doodle

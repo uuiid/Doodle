@@ -248,6 +248,8 @@ DOODLELIB_API path add_time_stamp(const path &in_path);
 DOODLELIB_API void open_explorer(const path &in_path);
 DOODLELIB_API void backup_file(const path &source);
 DOODLELIB_API std::string file_hash_sha224(const path &in_file);
+DOODLELIB_API std::vector<path> list_files(const path &in_dir);
+
 }  // namespace FSys
 
 class core_set;
@@ -285,6 +287,7 @@ class assets_path_vector;
 class widget_register;
 using base_widget_ptr = std::shared_ptr<base_widget>;
 class command_base;
+class rpc_trans_path;
 
 class ue4_project_async;
 
@@ -447,19 +450,23 @@ using image_sequence_ptr         = std::shared_ptr<image_sequence>;
  */
 class time_widget;
 
-using maya_file_ptr          = std::shared_ptr<maya_file>;
-using setting_windows_ptr    = std::shared_ptr<setting_windows>;
-using ue4_project_async_ptr  = std::shared_ptr<ue4_project_async>;
-using bool_ptr               = std::shared_ptr<bool>;
+using maya_file_ptr           = std::shared_ptr<maya_file>;
+using setting_windows_ptr     = std::shared_ptr<setting_windows>;
+using ue4_project_async_ptr   = std::shared_ptr<ue4_project_async>;
+using bool_ptr                = std::shared_ptr<bool>;
 
-using string                 = std::string;
-using string_ptr             = std::shared_ptr<string>;
+using string                  = std::string;
+using string_ptr              = std::shared_ptr<string>;
 
-using command_ptr            = std::shared_ptr<command_base>;
-using comment_vector_ptr     = std::shared_ptr<comment_vector>;
-using assets_path_vector_ptr = std::shared_ptr<assets_path_vector>;
-using time_widget_ptr        = std::shared_ptr<time_widget>;
-using widget_register_ptr    = std::shared_ptr<widget_register>;
+using command_ptr             = std::shared_ptr<command_base>;
+using comment_vector_ptr      = std::shared_ptr<comment_vector>;
+using assets_path_vector_ptr  = std::shared_ptr<assets_path_vector>;
+using time_widget_ptr         = std::shared_ptr<time_widget>;
+using widget_register_ptr     = std::shared_ptr<widget_register>;
+
+using rpc_trans_path_ptr      = std::unique_ptr<rpc_trans_path>;
+using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
+
 namespace rpc_trans {
 class down_file;
 class down_dir;

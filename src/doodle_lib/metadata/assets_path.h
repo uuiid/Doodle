@@ -96,12 +96,15 @@ class DOODLELIB_API assets_path_vector
   };
   inline void end_clear(){};
 
-  path_list add_file(const FSys::path &in_path, bool in_using_lexically_relative = false);
+  command_ptr add_file(const FSys::path &in_path, bool in_using_lexically_relative = false);
 
   inline void merge(const assets_path_vector &in) {
     paths.resize(paths.size() + in.paths.size());
     paths.insert(paths.end(), in.paths.begin(), in.paths.end());
   };
+
+  [[nodiscard]] rpc_trans_path_ptr_list make_up_path() const;
+  //operator rpc_trans_path_ptr_list() const;
 
  private:
   //这里是序列化的代码

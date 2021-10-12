@@ -132,6 +132,11 @@ std::string file_hash_sha224(const path &in_file) {
                            std::make_error_code(std::errc::no_such_file_or_directory)};
   }
 }
+std::vector<path> list_files(const path &in_dir) {
+  return std::vector<path>{
+      directory_iterator{in_dir},
+      directory_iterator{}};
+}
 }  // namespace FSys
 }  // namespace doodle
 

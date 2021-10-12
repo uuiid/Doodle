@@ -11,19 +11,33 @@ class DOODLELIB_API image_file {
   std::vector<std::int32_t> p_list;
 
   std::int32_t p_frame;
-  std::size_t p_index;
+  std::int64_t p_index;
 
-  std::vector<std::int32_t> extract_num();
+  const std::vector<std::int32_t>& extract_num();
+
  public:
-  image_file() = default;
-  
+  image_file() : p_frame(-1), p_index(-1), p_list(), p_file(){};
+  explicit image_file(const FSys::path& in_path) : image_file() {
+    set_path(in_path);
+  };
+
   void set_path(const FSys::path& in_);
 
-  bool speculate_frame(const image_file& in) ;
+  std::int32_t get_frame() const;
+
+  bool speculate_frame(const image_file& in);
   bool next(image_file& in) const;
 
+  bool operator==(const image_file& in_rhs) const;
+  bool operator!=(const image_file& in_rhs) const;
 
+  bool operator<(const image_file& in_rhs) const;
+  bool operator>(const image_file& in_rhs) const;
+  bool operator<=(const image_file& in_rhs) const;
+  bool operator>=(const image_file& in_rhs) const;
+  operator bool() const;
 };
+using image_file_ptr = std::shared_ptr<image_file>;
 }  // namespace details
 
 class DOODLELIB_API image_sequence
@@ -74,9 +88,32 @@ class DOODLELIB_API image_sequence_async : public details::no_copy {
 
  public:
   image_sequence_async();
+  /**
+   * @brief 创建一个图片序列对象
+   * @warning 需要手动的创建一个输出目录和输出文件名称
+   * @param image_dir 图片序列所在的文件夹
+   */
   image_sequence_ptr set_path(const FSys::path& image_dir);
+  /**
+   * @brief 创建一个图片序列对象
+   *
+   * @warning 需要手动的创建一个输出目录和输出文件名称
+   *
+   * @param image_dir 图片序列
+   */
   image_sequence_ptr set_path(const std::vector<FSys::path>& image_path_list);
+  /**
+   * @brief 创建一个图片序列对象
+   *
+   * @warning 这个是不需要调用创建视频时指定输出帧的,
+   *
+   * @param image_dir 图片序列
+   */
+  image_sequence_ptr ser_path(const assets_path_vector_ptr& in_path);
+
   long_term_ptr create_video(const FSys::path& out_file);
+  long_term_ptr create_video();
+
 };
 
 // class DOODLELIB_API ImageSequenceBatch : public LongTerm {

@@ -4,8 +4,8 @@
 
 #include "assets_path.h"
 
-#include <Logger/logger.h>
-#include <doodle_lib/Exception/exception.h>
+#include <logger/logger.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/file_warp/image_sequence.h>
@@ -14,6 +14,8 @@
 #include <doodle_lib/file_warp/video_sequence.h>
 #include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/metadata/metadata.h>
+#include <doodle_lib/rpc/rpc_trans_path.h>
+#include <doodle_lib/gui/action/command_files.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path)
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path_vector)
@@ -102,15 +104,16 @@ void assets_path_vector::set_metadata(const std::weak_ptr<metadata> &in_meta) {
     i->set_metadata(in_meta);
   }
 }
-assets_path_vector::path_list assets_path_vector::add_file(
+command_ptr assets_path_vector::add_file(
     const FSys::path &in_path, bool in_using_lexically_relative) {
+  command_ptr k_comm{};
+
   auto k_path = new_object<assets_path>();
-  // 添加基本路径
   k_path->set_metadata(p_meta);
-  k_path->set_path(in_path, p_meta.lock(), in_using_lexically_relative);
-  get().push_back(k_path);
 
   if (ue4_project::is_ue4_file(in_path)) {
+    // 添加基本路径(ue4 prj 路径)
+    k_path->set_path(in_path, p_meta.lock(), in_using_lexically_relative);
     // 添加内容路径
     k_path = new_object<assets_path>();
     k_path->set_metadata(p_meta.lock());
@@ -118,7 +121,21 @@ assets_path_vector::path_list assets_path_vector::add_file(
     get().push_back(k_path);
   }
 
-  return paths;
+  if (image_sequence::is_image_sequence(FSys::list_files(in_path.parent_path()))) {
+    // 添加文件的父路径, 序列文件夹
+    k_path->set_path(in_path.parent_path(), p_meta.lock(), in_using_lexically_relative);
+    auto k_m   = new_object<comm_file_image_to_move>();
+
+  }
+  get().push_back(k_path);
+
+  return k_comm;
+}
+rpc_trans_path_ptr_list assets_path_vector::make_up_path() const {
+  rpc_trans_path_ptr_list k_list{};
+  for (auto &i : paths)
+    k_list.emplace_back(std::make_unique<rpc_trans_path>(i->get_local_path(), i->get_server_path(), i->get_backup_path()));
+  return k_list;
 }
 FSys::path assets_path::get_cache_path() const {
   auto k_path = core_set::getSet().get_cache_root();
