@@ -109,22 +109,10 @@ class DOODLELIB_API image_sequence_async : public details::no_copy {
    *
    * @param image_dir 图片序列
    */
-  image_sequence_ptr ser_path(const assets_path_vector_ptr& in_path);
+  image_sequence_ptr set_path(const assets_path_vector_ptr& in_path);
 
   long_term_ptr create_video(const FSys::path& out_file);
   long_term_ptr create_video();
 
 };
-
-// class DOODLELIB_API ImageSequenceBatch : public LongTerm {
-//   std::vector<FSys::path> p_paths;
-//   std::vector<ImageSequencePtr> p_imageSequences;
-//
-//  public:
-//   explicit ImageSequenceBatch(decltype(p_paths) dirs);
-//   explicit ImageSequenceBatch(decltype(p_imageSequences) imageSequences);
-//   void batchCreateSequence(const FSys::path& out_files = {}) const;
-//
-// };
-
 }  // namespace doodle

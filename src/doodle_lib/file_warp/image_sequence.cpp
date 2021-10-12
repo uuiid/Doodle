@@ -351,7 +351,7 @@ image_sequence_ptr image_sequence_async::set_path(const std::vector<FSys::path> 
   p_image_sequence->set_path(image_path_list);
   return p_image_sequence;
 }
-image_sequence_ptr image_sequence_async::ser_path(const assets_path_vector_ptr &in_path) {
+image_sequence_ptr image_sequence_async::set_path(const assets_path_vector_ptr &in_path) {
   set_path(in_path->get().front()->get_local_path());
   auto k_out_dir = in_path->get().front()->get_cache_path();
   p_image_sequence->set_out_dir(k_out_dir);

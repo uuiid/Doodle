@@ -100,6 +100,8 @@ std::string assets_path::str() const {
 
 void assets_path_vector::set_metadata(const std::weak_ptr<metadata> &in_meta) {
   leaf_meta::set_metadata(in_meta);
+  boost::remove_erase_if(paths, [](auto i) { return !i; });
+  
   for (auto &i : get()) {
     i->set_metadata(in_meta);
   }
@@ -124,8 +126,7 @@ command_ptr assets_path_vector::add_file(
   if (image_sequence::is_image_sequence(FSys::list_files(in_path.parent_path()))) {
     // 添加文件的父路径, 序列文件夹
     k_path->set_path(in_path.parent_path(), p_meta.lock(), in_using_lexically_relative);
-    auto k_m   = new_object<comm_file_image_to_move>();
-
+    k_comm = new_object<comm_file_image_to_move>();
   }
   get().push_back(k_path);
 

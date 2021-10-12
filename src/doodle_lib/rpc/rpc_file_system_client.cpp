@@ -4,12 +4,12 @@
 
 #include "rpc_file_system_client.h"
 
+#include <Logger/logger.h>
+#include <core/doodle_lib.h>
 #include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
-#include <Logger/logger.h>
-#include <core/doodle_lib.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>
 #include <thread_pool/long_term.h>
@@ -18,12 +18,12 @@
 
 namespace doodle {
 std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> rpc_file_system_client::compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path) {
-  auto k_l_ex  = FSys::exists(in_local_path);
-  auto k_l_dir = k_l_ex && FSys::is_directory(in_local_path);
-  auto k_l_sz  = k_l_ex ? FSys::file_size(in_local_path) : 0;
-  auto k_l_ti  = k_l_ex
-                     ? FSys::last_write_time_point(in_local_path)
-                     : chrono::sys_time_pos{};
+  auto k_l_ex                            = FSys::exists(in_local_path);
+  auto k_l_dir                           = k_l_ex && FSys::is_directory(in_local_path);
+  auto k_l_sz                            = k_l_ex ? FSys::file_size(in_local_path) : 0;
+  auto k_l_ti                            = k_l_ex
+                                               ? FSys::last_write_time_point(in_local_path)
+                                               : chrono::sys_time_pos{};
 
   auto [k_s_sz, k_s_ex, k_s_ti, k_s_dir] = get_info(in_server_path);
   if (k_l_ex && k_s_ex) {                                   /// 本地文件和服务器文件都存在
@@ -201,9 +201,12 @@ long_term_ptr trans_file::operator()() {
   auto k_term = new_object<long_term>();
   _result     = doodle_lib::Get().get_thread_pool()->enqueue([self = shared_from_this(), k_term]() {
     try {
+      k_term->start();
+      k_term->set_name(self->_param->local_path.filename().generic_string());
       self->run(k_term);
     } catch (doodle_error& error) {
       DOODLE_LOG_WARN(error.what());
+      k_term->start();
       k_term->sig_progress(0);
       k_term->sig_finished();
       k_term->sig_message_result(error.what(), long_term::warning);
@@ -213,19 +216,17 @@ long_term_ptr trans_file::operator()() {
   return k_term;
 }
 
-
 down_file::down_file(rpc_file_system_client* in_self)
     : trans_file(in_self) {
 }
 
 void down_file::run(const long_term_ptr& in_term) {
-  in_term->start();
   auto [k_is_eq, k_is_down, k_s_ex, k_sz] = _self->compare_file_is_down(_param->local_path, _param->server_path);
   if (!k_is_eq) {
     in_term->sig_progress(0);
     in_term->sig_finished();
     in_term->sig_message_result(
-        fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path), long_term::warning);
+        fmt::format("完成 local_path: {}\n server_path: {}", _param->local_path, _param->server_path), long_term::warning);
     return;
   }
 
@@ -233,7 +234,7 @@ void down_file::run(const long_term_ptr& in_term) {
     in_term->sig_progress(0);
     in_term->sig_finished();
     in_term->sig_message_result(
-        fmt::format("完成 local_path: {} server_path: {}", _param->local_path, _param->server_path), long_term::warning);
+        fmt::format("完成 local_path: {}\n server_path: {}", _param->local_path, _param->server_path), long_term::warning);
     return;
   }
 
@@ -266,7 +267,7 @@ void down_file::run(const long_term_ptr& in_term) {
   if (!status.ok())
     throw doodle_error{status.error_message()};
   in_term->sig_finished();
-  in_term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
+  in_term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path), long_term::warning);
 }
 void down_file::wait() {
   _result.get();
@@ -275,19 +276,18 @@ up_file::up_file(rpc_file_system_client* in_self)
     : trans_file(in_self) {
 }
 void up_file::run(const long_term_ptr& in_term) {
-  in_term->start();
   auto [k_is_eq, k_is_down, k_s_ex, k_sz] = _self->compare_file_is_down(_param->local_path, _param->server_path);
   if (!k_is_eq) {
     in_term->sig_progress(0);
     in_term->sig_finished();
-    in_term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
+    in_term->sig_message_result(fmt::format("完成 local_path: {}\n server_path: {}\n", _param->local_path, _param->server_path), long_term::warning);
     return;
   }
 
   if (*k_is_eq) {
     in_term->sig_progress(0);
     in_term->sig_finished();
-    in_term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
+    in_term->sig_message_result(fmt::format("完成 local_path: {}\n server_path: {}\n", _param->local_path, _param->server_path), long_term::warning);
     return;
   }
 
@@ -342,7 +342,7 @@ void up_file::run(const long_term_ptr& in_term) {
   if (!status.ok())
     throw doodle_error{status.error_message()};
   in_term->sig_finished();
-  in_term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path),long_term::warning);
+  in_term->sig_message_result(fmt::format("完成 local_path: {}\n server_path: {}\n", _param->local_path, _param->server_path), long_term::warning);
 }
 void up_file::wait() {
   _result.get();
@@ -355,6 +355,7 @@ void down_dir::run(const long_term_ptr& in_term) {
   if (!FSys::exists(_param->local_path))
     FSys::create_directories(_param->local_path);
 
+  auto message_str = fmt::format("{}目录扫描完成", _param->local_path);
   rpc_trans_path_ptr_list _stack{};
   _stack.push_back(std::move(_param));
   while (!_stack.empty()) {
@@ -362,10 +363,14 @@ void down_dir::run(const long_term_ptr& in_term) {
     _stack.pop_back();
     _stack.insert(_stack.end(), std::make_move_iterator(k_i.begin()), std::make_move_iterator(k_i.end()));
   }
-
+  auto k_size = _down_list.size();
   for (auto& k_i : _down_list) {
     (*k_i)();
+    in_term->sig_progress(rational_int{1, k_size});
   }
+
+  in_term->sig_finished();
+  in_term->sig_message_result(message_str, long_term::warning);
 }
 rpc_trans_path_ptr_list down_dir::down(const std::unique_ptr<rpc_trans_path>& in_path) {
   grpc::ClientContext k_context{};
@@ -374,7 +379,7 @@ rpc_trans_path_ptr_list down_dir::down(const std::unique_ptr<rpc_trans_path>& in
   file_info_server k_out_info{};
 
   k_in_info.set_path(in_path->server_path.generic_string());
-  auto k_out = _self->p_stub->get_list(&k_context, k_in_info);
+  auto k_out  = _self->p_stub->get_list(&k_context, k_in_info);
 
   auto k_prot = doodle_lib::Get().get_thread_pool();
 
@@ -394,7 +399,7 @@ rpc_trans_path_ptr_list down_dir::down(const std::unique_ptr<rpc_trans_path>& in
       //              std::ref(k_future_list)));
 
     } else {
-      DOODLE_LOG_DEBUG(fmt::format("准备下载文件: {} <-----  {}", k_l_p, k_s_p))
+      DOODLE_LOG_DEBUG(fmt::format("准备下载文件: {} \n->{}", k_s_p, k_l_p))
       auto k_down = _down_list.emplace_back(new_object<down_file>(_self));
       k_down->set_parameter(k_ptr);
     }
@@ -418,6 +423,7 @@ void up_dir::run(const long_term_ptr& in_term) {
   if (!FSys::exists(_param->local_path))
     throw doodle_error{"未找到上传文件夹"};
 
+  auto message_str = fmt::format("{}目录扫描完成", _param->local_path);
   rpc_trans_path_ptr_list _stack{};
   _stack.push_back(std::move(_param));
   while (!_stack.empty()) {
@@ -425,10 +431,13 @@ void up_dir::run(const long_term_ptr& in_term) {
     _stack.pop_back();
     _stack.insert(_stack.end(), std::make_move_iterator(k_list.begin()), std::make_move_iterator(k_list.end()));
   }
-
+  auto k_size = _up_list.size();
   for (auto& k_i : _up_list) {
     (*k_i)();
+    in_term->sig_progress(rational_int{1, k_size});
   }
+  in_term->sig_finished();
+  in_term->sig_message_result(message_str, long_term::warning);
 }
 rpc_trans_path_ptr_list up_dir::update(const std::unique_ptr<rpc_trans_path>& in_path) {
   std::vector<std::pair<FSys::path, FSys::path>> path_list{};
@@ -450,7 +459,7 @@ rpc_trans_path_ptr_list up_dir::update(const std::unique_ptr<rpc_trans_path>& in
       //              },
       //              std::ref(in_future_list)));
     } else {
-      DOODLE_LOG_DEBUG(fmt::format("准备上传文件: {} -----> {}", k_l_p, k_s_p))
+      DOODLE_LOG_DEBUG(fmt::format("准备上传文件: {} \n->{}", k_l_p, k_s_p))
       auto k_up = _up_list.emplace_back(new_object<up_file>(_self));
       k_up->set_parameter(k_ptr);
     }

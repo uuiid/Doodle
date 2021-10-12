@@ -290,6 +290,9 @@ class command_base;
 class rpc_trans_path;
 
 class ue4_project_async;
+class image_sequence_async;
+
+using image_sequence_async_ptr   = std::shared_ptr<image_sequence_async>;
 
 /**
  * @brief 数据库连接指针

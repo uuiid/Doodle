@@ -40,13 +40,15 @@ bool comm_files_select::render() {
               [this](const std::vector<FSys::path>& in_p) {
                 p_file = in_p.front();
                 p_list_paths->get().clear();
-                p_list_paths->add_file(p_file, *p_use_relative);
+                p_comm_sub = p_list_paths->add_file(p_file, *p_use_relative);
+                p_comm_sub->add_data(p_root, p_list_paths);
               });
     }
     imgui::SameLine();
     if (imgui::Checkbox(p_show_str["相对路径"].c_str(), p_use_relative.get())) {
       p_list_paths->get().clear();
-      p_list_paths->add_file(p_file, *p_use_relative);
+      p_comm_sub = p_list_paths->add_file(p_file, *p_use_relative);
+      p_comm_sub->add_data(p_root, p_list_paths);
     }
 
     dear::ListBox{
@@ -59,7 +61,9 @@ bool comm_files_select::render() {
             imgui::Selectable(str.c_str());
           }
         };
-
+    if (p_comm_sub) {
+      p_comm_sub->render();
+    }
     if (imgui::Button(p_show_str["添加"].c_str())) {
       if (!p_list_paths->get().empty()) {
         add_files();
@@ -79,9 +83,9 @@ bool comm_files_select::render() {
 bool comm_files_select::set_child() {
   if (std::holds_alternative<assets_file_ptr>(p_var)) {
     p_root = std::get<assets_file_ptr>(p_var);
+    p_list_paths->set_metadata(p_root);
     if (p_root && !p_root->get_path_file()) {
       p_root->set_path_file(new_object<assets_path_vector>());
-      p_list_paths->set_metadata(p_root);
     }
   }
   return true;
@@ -96,24 +100,31 @@ bool comm_files_select::add_files() {
 }
 
 void comm_file_image_to_move::init() {
-  p_name     = "视频选项";
-  p_show_str = make_imgui_name(this, "不上传", "上传视频");
+  p_name         = "视频选项";
+  p_show_str     = make_imgui_name(this, "不上传", "上传视频", "不上传源文件");
+  p_image_create = new_object<image_sequence_async>();
+}
+
+bool comm_file_image_to_move::set_child() {
+  if (std::holds_alternative<assets_path_vector_ptr>(p_var)) {
+    p_list_paths = std::get<assets_path_vector_ptr>(p_var);
+    p_image      = p_image_create->set_path(p_list_paths);
+    p_out_file   = p_image->get_out_path();
+    p_text       = fmt::format("本地生成路径 {}",p_out_file);
+  }
+  return false;
 }
 
 bool comm_file_image_to_move::render() {
   if (p_list_paths) {
     imgui::Checkbox(p_show_str["不上传"].c_str(), p_not_up_file.get());
+    imgui::SameLine();
     imgui::Checkbox(p_show_str["不上传源文件"].c_str(), p_not_up_file.get());
 
-    if (imgui::Button(p_show_str["上传视频"].c_str())) {
-      image_sequence_async image{};
-      auto k_vide    = image.set_path(FSys::list_files(p_list_paths->get().front()->get_local_path()));
-      auto k_out_dir = p_list_paths->get().front()->get_cache_path();
-      k_vide->set_out_dir(k_out_dir);
-      k_vide->set_shot_and_eps(p_root->find_parent_class<shot>(), p_root->find_parent_class<episodes>());
-      auto k_out_file = k_vide->get_out_path();
+    imgui::Text(p_text.c_str());
 
-      image.create_video(k_out_file);
+    if (imgui::Button(p_show_str["上传视频"].c_str())) {
+      p_image_create->create_video();
     }
   }
   return false;

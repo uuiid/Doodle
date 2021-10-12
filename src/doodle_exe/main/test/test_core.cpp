@@ -323,7 +323,8 @@ TEST_CASE("gen_path", "[core]") {
 
   SECTION("ue4_file") {
     SECTION("not use repath") {
-      auto k_path = k_file->get_path_file()->add_file(ue4path);
+      k_file->get_path_file()->add_file(ue4path);
+      auto k_path = k_file->get_path_file()->paths;
       REQUIRE(k_path.size() == 2);
       REQUIRE(k_path[0]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject");
       REQUIRE(k_path[0]->get_server_path() == "ret\\seas_3\\ep0001\\sc0010A\\ceshi\\VFX\\test_tmp.uproject");
@@ -336,7 +337,8 @@ TEST_CASE("gen_path", "[core]") {
       }
     }
     SECTION("using repath") {
-      auto k_path = k_file->get_path_file()->add_file(ue4path, true);
+      k_file->get_path_file()->add_file(ue4path, true);
+      auto k_path = k_file->get_path_file()->paths;
       REQUIRE(k_path.size() == 2);
       REQUIRE(k_path[0]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject");
       REQUIRE(k_path[0]->get_server_path() == "ret\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject");
