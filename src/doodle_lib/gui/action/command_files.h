@@ -25,6 +25,7 @@ class comm_file_image_to_move : public command_base {
 
   void init();
   bool set_child() override;
+  bool updata_file();
 
  public:
   comm_file_image_to_move()

@@ -110,9 +110,26 @@ bool comm_file_image_to_move::set_child() {
     p_list_paths = std::get<assets_path_vector_ptr>(p_var);
     p_image      = p_image_create->set_path(p_list_paths);
     p_out_file   = p_image->get_out_path();
-    p_text       = fmt::format("本地生成路径 {}",p_out_file);
+    p_text       = fmt::format("本地生成路径 {}", p_out_file);
   }
   return false;
+}
+
+bool comm_file_image_to_move::updata_file() {
+  if (*p_not_up_file)
+    return true;
+
+  if (*p_not_up_source_file)
+    p_list_paths->get().clear();
+  p_list_paths->add_file(p_out_file);
+  auto k_m = std::dynamic_pointer_cast<assets_file>(p_list_paths->get_metadata().lock());
+  k_m->up_version();
+  k_m->set_path_file(p_list_paths);
+  k_m->updata_db();
+  auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(p_list_paths->make_up_path());
+  (*k_up)();
+
+  return true;
 }
 
 bool comm_file_image_to_move::render() {
@@ -124,7 +141,21 @@ bool comm_file_image_to_move::render() {
     imgui::Text(p_text.c_str());
 
     if (imgui::Button(p_show_str["上传视频"].c_str())) {
-      p_image_create->create_video();
+      auto k_term = p_image_create->create_video();
+      if (*p_not_up_file)
+        return true;
+
+      k_term->sig_finished.connect([k_not_up = *p_not_up_file, k_out_file = p_out_file, k_list = p_list_paths]() {
+        if (k_not_up)
+          k_list->get().clear();
+        k_list->add_file(k_out_file);
+        auto k_m = std::dynamic_pointer_cast<assets_file>(k_list->get_metadata().lock());
+        k_m->up_version();
+        k_m->set_path_file(k_list);
+        k_m->updata_db();
+        auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(k_list->make_up_path());
+        (*k_up)();
+      });
     }
   }
   return false;
