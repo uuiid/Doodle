@@ -26,7 +26,6 @@ target_compile_definitions(DoodleServerExe
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         )
 
-cmake_print_variables(unofficial-nana_FOUND)
 add_executable(
         DoodleExe
         WIN32

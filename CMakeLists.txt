@@ -80,6 +80,8 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 find_package(Autodesk_FBX 2020 )
+find_package(Maya 2020 REQUIRED)
+
 #服务器库
 #应该会用其中一个
 #find_package(cppzmq CONFIG REQUIRED)

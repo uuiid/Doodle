@@ -1,6 +1,6 @@
-#include <MayaPlug/MotionMayaPlugInit.h>
+#include <MotionMayaPlugInit.h>
 
-#include <Maya/MFnPlugin.h>
+#include <maya/MFnPlugin.h>
 
 MStatus initializePlugin(MObject obj) {
   /**

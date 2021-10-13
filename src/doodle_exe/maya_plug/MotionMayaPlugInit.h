@@ -5,9 +5,6 @@
 
 #include <maya/MPxCommand.h>
 
-namespace doodle::motion::ui {
-class MotionMainUI;
-};
 
 namespace doodle::MayaPlug {
 class doodleCreate : public MPxCommand {
@@ -23,6 +20,5 @@ class doodleCreate : public MPxCommand {
   static void clear_();
 
  private:
-  static doodle::motion::ui::MotionMainUI* p_ui;
 };
 }  // namespace doodle::MayaPlug

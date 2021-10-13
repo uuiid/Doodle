@@ -1,5 +1,3 @@
-find_package(Maya 2020 REQUIRED)
-
 set(doodle_maya_plug_cpp
         MayaPlug.cpp
         MotionMayaPlugInit.cpp
@@ -15,8 +13,8 @@ set_target_properties(doodle_plug PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
         )
-target_link_libraries(doodle_plug PRIVATE doodle_lib)
-
+target_link_libraries(doodle_plug PRIVATE doodle_lib maya::maya_2020_all )
+target_include_directories(doodle_plug PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 #设置maya插件后缀名
 set_target_properties(
         doodle_plug PROPERTIES SUFFIX ".mll"
