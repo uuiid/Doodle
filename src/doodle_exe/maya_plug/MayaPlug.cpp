@@ -1,6 +1,13 @@
 #include <MotionMayaPlugInit.h>
-
 #include <maya/MFnPlugin.h>
+
+namespace {
+const static std::string doodle_windows{"doodle_windows"};
+const static std::string doodle_win_path{"MayaWindow|mainWindowMenu"};
+const static std::string doodle_create{"doodleCreate"};
+
+
+}
 
 MStatus initializePlugin(MObject obj) {
   /**
@@ -26,10 +33,16 @@ MStatus initializePlugin(MObject obj) {
   //   MGlobal::executePythonCommand("doodleCreateMenu()", pythonResult);
 
   //添加菜单项
-  k_plugin.addMenuItem("Doodle_Motion", "MayaWindow|mainWindowMenu", "doodleCreate", "", false, nullptr, &status);
+  k_plugin.addMenuItem(doodle_windows.c_str(),
+                       doodle_win_path.c_str(),
+                       doodle_create.c_str(),
+                       "",
+                       false,
+                       nullptr,
+                       &status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   //注册命令
-  status = k_plugin.registerCommand("doodleCreate", doodle::MayaPlug::doodleCreate::create);
+  status = k_plugin.registerCommand(doodle_create.c_str(), doodle::MayaPlug::doodleCreate::create);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   return status;
 }
@@ -41,7 +54,7 @@ MStatus uninitializePlugin(MObject obj) {
   doodle::MayaPlug::doodleCreate::clear_();
 
   MStringArray menuItems{};
-  menuItems.append("Doodle_Motion");
+  menuItems.append(doodle_windows.c_str());
   status = k_plugin.removeMenuItem(menuItems);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
@@ -58,7 +71,7 @@ MStatus uninitializePlugin(MObject obj) {
   //   MGlobal::executePythonCommand("doodleDeleteMenu()");
   //   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  status = k_plugin.deregisterCommand("doodleCreate");
+  status = k_plugin.deregisterCommand(doodle_create.c_str());
   CHECK_MSTATUS_AND_RETURN_IT(status);
   return status;
 }

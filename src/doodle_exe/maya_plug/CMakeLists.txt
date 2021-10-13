@@ -9,10 +9,15 @@ add_library(doodle_plug MODULE
         )
 
 
+#set_target_properties(doodle_plug PROPERTIES
+#        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+#        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+#        )
 set_target_properties(doodle_plug PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
         )
+
 target_link_libraries(doodle_plug PRIVATE doodle_lib maya::maya_2020_all )
 target_include_directories(doodle_plug PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 #设置maya插件后缀名
