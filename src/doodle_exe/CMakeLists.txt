@@ -55,7 +55,7 @@ target_compile_definitions(DoodleExe
 #else ()
 #    #    add_executable(doodle_exe ALIAS DoodleServerExe )
 #endif ()
-
+add_subdirectory(maya_plug)
 
 add_executable(
         doodle_test
