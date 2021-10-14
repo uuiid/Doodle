@@ -1,0 +1,16 @@
+//
+// Created by TD on 2021/10/14.
+//
+
+#ifndef DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_MAYA_WINDWOS_H_
+#define DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_MAYA_WINDWOS_H_
+
+
+
+class maya_windwos {
+
+};
+
+
+
+#endif //DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_MAYA_WINDWOS_H_
