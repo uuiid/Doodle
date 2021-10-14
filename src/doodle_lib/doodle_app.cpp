@@ -4,6 +4,7 @@
 
 #include "doodle_app.h"
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/gui/main_windwos.h>
 #include <doodle_lib/gui/widget_register.h>
 #include <doodle_lib/lib_warp/boost_locale_warp.h>
@@ -108,9 +109,13 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       if ((wParam & 0xfff0) == SC_KEYMENU)  // Disable ALT application menu
         return 0;
       break;
-    case WM_DESTROY:
-      ::PostQuitMessage(0);
+    case WM_DESTROY: {
+      doodle::doodle_app::Get()->p_done = true;
+      doodle::core_set::getSet().p_stop = true;
+      doodle::core_set::getSet().p_condition.notify_all();
+      // ::PostQuitMessage(0);
       return 0;
+    }
     case WM_DPICHANGED:
       if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports) {
         // const int dpi = HIWORD(wParam);
@@ -160,7 +165,7 @@ doodle_app::doodle_app()
                   _T("ImGui Example"),
                   nullptr},
       p_done(false),
-      wregister(new_object<widget_register>()){
+      wregister(new_object<widget_register>()) {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassEx(&p_win_class);

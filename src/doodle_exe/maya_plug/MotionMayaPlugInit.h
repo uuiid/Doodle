@@ -19,7 +19,7 @@ class doodleCreate : public MPxCommand {
   static void clear_();
 
  private:
-  static doodle_lib_ptr p_doodle_lib                     ;
-  static ::std::unique_ptr<::doodle::doodle_app> app_ptr ;
+  struct doodle_data;
+  static doodle_data* d_ptr_;
 };
 }  // namespace doodle::MayaPlug
