@@ -13,11 +13,13 @@ class assets_file_widgets;
 class long_time_tasks_widget;
 class edit_widgets;
 class DOODLELIB_API main_windows : public base_widget {
+  std::string p_title;
+
+ protected:
   bool_ptr p_debug_show;
   bool_ptr p_about_show;
   bool_ptr p_style_show;
 
-  std::string p_title;
   std::shared_ptr<project_widget> p_prj;
   std::shared_ptr<assets_widget> p_ass;
 
@@ -25,6 +27,7 @@ class DOODLELIB_API main_windows : public base_widget {
   std::shared_ptr<base_widget> p_long_task;
   std::shared_ptr<base_widget> p_edit_windows;
   std::shared_ptr<base_widget> p_setting;
+  std::shared_ptr<base_widget> p_tool_box;
 
  protected:
   virtual void main_menu_file();

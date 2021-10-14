@@ -13,6 +13,7 @@
 #include <doodle_lib/gui/widgets/edit_widgets.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
 #include <doodle_lib/gui/widgets/project_widget.h>
+#include <doodle_lib/gui/widgets/tool_box_widget.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/toolkit/toolkit.h>
 namespace doodle {
@@ -32,7 +33,8 @@ main_windows::main_windows()
       p_setting(new_object<windows_warp<setting_windows>>()),
       p_attr(new_object<windows_warp<assets_file_widgets>>(true)),
       p_long_task(new_object<windows_warp<long_time_tasks_widget>>(true)),
-      p_edit_windows(new_object<windows_warp<edit_widgets>>(true)) {
+      p_edit_windows(new_object<windows_warp<edit_widgets>>(true)),
+      p_tool_box(new_object<windows_warp<tool_box_widget>>(true)) {
   p_prj->select_change.connect([this](auto in) {
     p_ass->set_metadata(in);
     win_cast<edit_widgets>(p_edit_windows)->set_factort(p_prj->get_factory());
@@ -56,6 +58,7 @@ void main_windows::frame_render() {
   p_long_task->frame_render();
   p_attr->frame_render();
   p_edit_windows->frame_render();
+  p_tool_box->frame_render();
 
   if (*p_debug_show) imgui::ShowMetricsWindow(p_debug_show.get());
   if (*p_about_show) imgui::ShowAboutWindow(p_about_show.get());
@@ -139,7 +142,7 @@ void main_windows::main_menu_windows() {
 }
 
 void main_windows::main_menu_edit() {
-  auto k_task = win_cast<long_time_tasks_widget>(p_long_task);
+  auto k_task = win_cast<tool_box_widget>(p_tool_box);
   if (dear::MenuItem(u8"导出fbx"))
     k_task->set_tool_widget(new_object<comm_export_fbx>());
   if (dear::MenuItem(u8"解算布料"))
@@ -148,8 +151,6 @@ void main_windows::main_menu_edit() {
     k_task->set_tool_widget(new_object<comm_create_video>());
   if (dear::MenuItem(u8"ue工具"))
     k_task->set_tool_widget(new_object<comm_import_ue_files>());
-  //  if (dear::MenuItem(u8"创建ue关卡"))
-  //    p_long_task->set_tool_widget(new_object<comm_export_fbx>());
 }
 
 }  // namespace doodle
