@@ -231,6 +231,15 @@ doodle_app::~doodle_app() {
   ::DestroyWindow(p_hwnd);
   ::UnregisterClass(p_win_class.lpszClassName, p_win_class.hInstance);
 }
+
+base_widget_ptr doodle_app::get_main_windows() const {
+  return new_object<main_windows>();
+}
+
+void doodle_app::post_constructor() {
+  doodle_app::self = this;
+}
+
 std::int32_t doodle_app::run() {
   // Load Fonts
   // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -250,7 +259,7 @@ std::int32_t doodle_app::run() {
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
 
-  auto k_main_windows = new_object<main_windows>();
+  auto k_main_windows = get_main_windows();
 
   ImVec4 clear_color  = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
   // Main loop
@@ -318,11 +327,7 @@ std::int32_t doodle_app::run() {
   }
   return 0;
 }
-std::unique_ptr<doodle_app> doodle_app::make_this() {
-  auto k_          = std::unique_ptr<doodle_app>(new doodle_app{});
-  doodle_app::self = k_.get();
-  return k_;
-}
+
 doodle_app* doodle_app::Get() {
   return doodle_app::self;
 }

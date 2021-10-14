@@ -17,15 +17,17 @@ class long_time_tasks_widget;
 class DOODLELIB_API doodle_app : public details::no_copy {
   win_handle p_hwnd;
   win_class p_win_class;
-  doodle_app();
   static doodle_app* self;
 
+  virtual base_widget_ptr get_main_windows() const;
+
  public:
+  doodle_app();
   std::atomic_bool p_done;
 
   using connection = boost::signals2::connection;
+  virtual void post_constructor();
 
-  static std::unique_ptr<doodle_app> make_this();
   static doodle_app* Get();
   boost::signals2::signal<void()> main_loop;
 

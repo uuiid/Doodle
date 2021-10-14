@@ -32,8 +32,7 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
 #endif
 
   doodleLib->init_gui();
-  auto app = doodle::doodle_app::make_this();
-  return app->run();
+  return doodle::new_object<doodle::doodle_app>()->run();
 } catch (const std::exception& err) {
   std::cout << err.what() << std::endl;
   //  DOODLE_LOG_ERROR(err.what());

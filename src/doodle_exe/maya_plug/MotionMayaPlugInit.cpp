@@ -24,11 +24,14 @@ void* doodleCreate::create() {
 
 MStatus doodleCreate::doIt(const MArgList& list) {
   using namespace doodle;
-  if (!doodleCreate::d_ptr_->p_doodle_lib) {
+  if (!doodleCreate::d_ptr_) {
+    doodleCreate::d_ptr_ = new doodle_data;
+  }
+  if (doodleCreate::d_ptr_ && !doodleCreate::d_ptr_->p_doodle_lib) {
     doodleCreate::d_ptr_->p_doodle_lib = make_doodle_lib();
     doodleCreate::d_ptr_->p_doodle_lib->init_gui();
   }
-  doodle_app::make_this()->run();
+  new_object<doodle_app>()->run();
 
   return MStatus::kFailure;
 }
@@ -38,9 +41,11 @@ bool doodleCreate::isUndoable() const {
 }
 
 void doodleCreate::clear_() {
-  doodle::core_set::getSet().p_stop = true;
-  doodleCreate::d_ptr_->p_doodle_lib.reset();
-  delete d_ptr_;
+  if(doodleCreate::d_ptr_) {
+    doodle::core_set::getSet().p_stop = true;
+    doodleCreate::d_ptr_->p_doodle_lib.reset();
+    delete d_ptr_;
+  }
 }
 
 }  // namespace doodle::MayaPlug
