@@ -1,0 +1,11 @@
+//
+// Created by TD on 2021/10/14.
+//
+
+#ifndef DOODLE_SRC_DOODLE_LIB_GUI_WIDGETS_TOOL_BOX_H_
+#define DOODLE_SRC_DOODLE_LIB_GUI_WIDGETS_TOOL_BOX_H_
+
+class tool_box {
+};
+
+#endif  // DOODLE_SRC_DOODLE_LIB_GUI_WIDGETS_TOOL_BOX_H_
