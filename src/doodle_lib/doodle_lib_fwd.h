@@ -288,6 +288,7 @@ class widget_register;
 using base_widget_ptr = std::shared_ptr<base_widget>;
 class command_base;
 class rpc_trans_path;
+class doodle_app;
 
 class ue4_project_async;
 class image_sequence_async;

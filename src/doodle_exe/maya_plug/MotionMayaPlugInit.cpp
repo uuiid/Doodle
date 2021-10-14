@@ -4,12 +4,9 @@
 #include <maya/MApiNamespace.h>
 #include <maya/MObject.h>
 namespace doodle::MayaPlug {
+doodle_lib_ptr doodleCreate::p_doodle_lib                     = nullptr;
+::std::unique_ptr<::doodle::doodle_app> doodleCreate::app_ptr = nullptr;
 
-namespace {
-static doodle_lib_ptr p_doodle_lib                     = nullptr;
-static ::std::unique_ptr<::doodle::doodle_app> app_ptr = nullptr;
-
-}  // namespace
 doodleCreate::doodleCreate()
     : MPxCommand() {
 }
@@ -22,18 +19,18 @@ void* doodleCreate::create() {
 
 MStatus doodleCreate::doIt(const MArgList& list) {
   using namespace doodle;
-  if (!p_doodle_lib) {
-    p_doodle_lib = make_doodle_lib();
-    p_doodle_lib->init_gui();
-    app_ptr = doodle_app::make_this();
+  if (!doodleCreate::p_doodle_lib) {
+    doodleCreate::p_doodle_lib = make_doodle_lib();
+    doodleCreate::p_doodle_lib->init_gui();
+    doodleCreate::app_ptr = doodle_app::make_this();
     std::thread([]() {
-      return app_ptr->run();
+      return doodleCreate::app_ptr->run();
     }).detach();
   }
   if (core_set::getSet().p_stop) {
     core_set::getSet().p_stop = false;
     std::thread([]() {
-      return app_ptr->run();
+      return doodleCreate::app_ptr->run();
     }).detach();
   }
 
@@ -46,8 +43,8 @@ bool doodleCreate::isUndoable() const {
 
 void doodleCreate::clear_() {
   doodle::core_set::getSet().p_stop = true;
-  app_ptr.reset();
-  p_doodle_lib.reset();
+  doodleCreate::app_ptr.reset();
+  doodleCreate::p_doodle_lib.reset();
 }
 
 }  // namespace doodle::MayaPlug
