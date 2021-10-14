@@ -1,16 +1,15 @@
 //
 // Created by TD on 2021/10/14.
 //
+#pragma once
+#include <doodle_lib/gui/base_windwos.h>
 
-#ifndef DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_WIDGETS_MAYA_TOOL_WIDGET_H_
-#define DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_WIDGETS_MAYA_TOOL_WIDGET_H_
-
-
-
-class maya_tool_widget {
-
+namespace doodle::maya_plug {
+class maya_tool_widget : public base_widget {
+  
+ public:
+  maya_tool_widget();
+  void frame_render() override;
 };
 
-
-
-#endif //DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_WIDGETS_MAYA_TOOL_WIDGET_H_
+}  // namespace doodle::maya_plug

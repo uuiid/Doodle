@@ -8,6 +8,9 @@ set(doodle_maya_plug_cpp
         gui/maya_windwos.h
         gui/action/reference_attr_setting.cpp
         gui/action/reference_attr_setting.h
+        gui/widgets/maya_tool_widget.cpp
+        gui/widgets/maya_tool_widget.h
+
         )
 
 add_library(doodle_plug MODULE
