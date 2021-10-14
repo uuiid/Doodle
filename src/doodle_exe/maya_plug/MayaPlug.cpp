@@ -1,4 +1,4 @@
-#include <MotionMayaPlugInit.h>
+#include <maya_plug/MotionMayaPlugInit.h>
 #include <maya/MFnPlugin.h>
 
 namespace {

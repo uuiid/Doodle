@@ -19,7 +19,7 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   win_class p_win_class;
   static doodle_app* self;
 
-  virtual base_widget_ptr get_main_windows() const;
+  virtual base_widget_ptr get_main_windows() const; 
 
  public:
   doodle_app();

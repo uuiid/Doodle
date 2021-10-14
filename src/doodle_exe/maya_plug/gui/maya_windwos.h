@@ -2,15 +2,18 @@
 // Created by TD on 2021/10/14.
 //
 
-#ifndef DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_MAYA_WINDWOS_H_
-#define DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_MAYA_WINDWOS_H_
+#pragma once
+#include <doodle_lib/gui/main_windwos.h>
 
-
-
-class maya_windwos {
-
+namespace doodle::maya_plug {
+class maya_windwos : public main_windows {
+  std::vector<string> p_file_list;
+ 
+  bool maya_tool();
+  std::map<string,string> p_show_name;
+ public:
+  maya_windwos();
+  void frame_render() override;
 };
 
-
-
-#endif //DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_MAYA_WINDWOS_H_
+}  // namespace doodle::maya_plug

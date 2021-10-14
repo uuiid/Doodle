@@ -1,4 +1,4 @@
-#include <MotionMayaPlugInit.h>
+#include <maya_plug/MotionMayaPlugInit.h>
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <maya/MApiNamespace.h>
