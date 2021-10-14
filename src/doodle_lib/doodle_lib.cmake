@@ -34,6 +34,7 @@ set(
     gui/widgets/long_time_tasks_widget.h
     gui/widgets/project_widget.h
     gui/widgets/time_widget.h
+    gui/widgets/tool_box_widget.h
     lib_warp/WinReg.hpp
     lib_warp/boost_locale_warp.h
     lib_warp/boost_serialization_warp.h
@@ -116,6 +117,7 @@ set(
     gui/widgets/long_time_tasks_widget.cpp
     gui/widgets/project_widget.cpp
     gui/widgets/time_widget.cpp
+    gui/widgets/tool_box_widget.cpp
     lib_warp/boost_serialization_warp.cpp
     lib_warp/imgui_warp.cpp
     logger/logger.cpp
