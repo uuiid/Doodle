@@ -15,6 +15,7 @@ class DOODLELIB_API base_widget
   string p_class_name;
 
   virtual bool use_register() { return true; };
+
  public:
   virtual void post_constructor();
   virtual void frame_render() = 0;
@@ -37,17 +38,14 @@ class DOODLELIB_API windows_warp : public base_widget {
   bool_ptr p_show;
   widget_ptr p_widget;
 
-  windows_warp(bool init_show= false)
+  windows_warp(bool init_show = false)
       : p_show(new_object<bool>(init_show)),
         p_widget(new_object<widget>()){};
 
   void frame_render() override {
     if (*p_show) {
       dear::Begin{
-          fmt::format("{}",
-                      this->p_widget->get_class_name(),
-                      fmt::ptr(p_widget.get()))
-              .c_str(),
+          this->p_widget->get_class_name().c_str(),
           p_show.get()} &&
           std::bind(&widget::frame_render, this->p_widget.get());
     }

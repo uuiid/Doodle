@@ -57,8 +57,8 @@ void main_windows::frame_render() {
   p_attr->frame_render();
   p_edit_windows->frame_render();
 
-  if (*p_debug_show) imgui::ShowMetricsWindow();
-  if (*p_about_show) imgui::ShowAboutWindow();
+  if (*p_debug_show) imgui::ShowMetricsWindow(p_debug_show.get());
+  if (*p_about_show) imgui::ShowAboutWindow(p_about_show.get());
   if (*p_style_show) {
     dear::Begin{"界面样式编辑", p_style_show.get()} && []() {
       imgui::ShowStyleEditor();
