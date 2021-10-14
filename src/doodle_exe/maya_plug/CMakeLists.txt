@@ -6,6 +6,7 @@ set(doodle_maya_plug_cpp
 
 add_library(doodle_plug MODULE
         ${doodle_maya_plug_cpp}
+        ${PROJECT_SOURCE_DIR}/stl.natvis
         )
 
 
