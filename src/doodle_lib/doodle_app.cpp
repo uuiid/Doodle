@@ -256,10 +256,12 @@ std::int32_t doodle_app::run() {
   // io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
   // ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
   // IM_ASSERT(font != NULL);
+  static string imgui_file_path{(core_set::getSet().get_cache_root("imgui") / "imgui.ini").generic_string()};
+
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
-
+  io.IniFilename      = imgui_file_path.c_str();
   auto k_main_windows = get_main_windows();
 
   ImVec4 clear_color  = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
