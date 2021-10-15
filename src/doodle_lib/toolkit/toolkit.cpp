@@ -51,7 +51,7 @@ void toolkit::installMayaPath() {
 
   static std::string k_mod{R"(+ doodle 1.1 .\doodle
 MYMODULE_LOCATION:= .
-PATH+:= scripts;plug-ins
+PATH+:= plug-ins
 PYTHONPATH+:= scripts
 )"};
   {
