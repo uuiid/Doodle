@@ -79,3 +79,4 @@ cmake-build-debug/
 build
 *.mll
 *.manifest
+imgui.ini
