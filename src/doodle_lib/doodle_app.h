@@ -37,6 +37,8 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   inline widget_register_ptr get_register(){return wregister;};
   inline const widget_register_ptr get_register() const {return wregister;};
 
+  bool valid() const;
+
   std::int32_t run();
   ~doodle_app();
 };

@@ -108,6 +108,7 @@ set(MAYA_LIBS_TO_FIND
         OpenMayaUI
         Image
         Foundation
+        MetaData # 元数据连接库
         # IMFbase
         cg
         cgGL

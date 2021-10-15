@@ -113,7 +113,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       doodle::doodle_app::Get()->p_done = true;
       doodle::core_set::getSet().p_stop = true;
       doodle::core_set::getSet().p_condition.notify_all();
-      // ::PostQuitMessage(0);
+      ::PostQuitMessage(0);
       return 0;
     }
     case WM_DPICHANGED:
@@ -154,7 +154,7 @@ doodle_app* doodle_app::self;
 doodle_app::doodle_app()
     : p_hwnd{},
       p_win_class{sizeof(WNDCLASSEX),
-                  CS_CLASSDC, WndProc,
+                  CS_CLASSDC | CS_NOCLOSE, WndProc,
                   0L,
                   0L,
                   GetModuleHandle(nullptr),
@@ -241,6 +241,7 @@ void doodle_app::post_constructor() {
 }
 
 std::int32_t doodle_app::run() {
+  ::ShowWindow(p_hwnd, SW_SHOW);
   // Load Fonts
   // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
   // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
@@ -325,10 +326,15 @@ std::int32_t doodle_app::run() {
     g_pSwapChain->Present(1, 0);  // Present with vsync
                                   // g_pSwapChain->Present(0, 0); // Present without vsync
   }
+  ::ShowWindow(p_hwnd, SW_HIDE);
   return 0;
 }
 
 doodle_app* doodle_app::Get() {
   return doodle_app::self;
+}
+
+bool doodle_app::valid() const {
+  return this->p_hwnd != nullptr;
 }
 }  // namespace doodle

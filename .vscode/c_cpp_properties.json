@@ -4,7 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/src",
-                "F:/vcpkg/installed/x64-windows/include"
+                "E:/vcpkg/installed/x64-windows/include"
             ],
             "defines": [
                 "UNICODE",
@@ -18,8 +18,11 @@
             "configurationProvider": "ms-vscode.cmake-tools",
             "compileCommands": "${workspaceFolder}/build/Ninja_debug/compile_commands.json",
             "browse": {
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db"
+                "limitSymbolsToIncludedHeaders": false,
+                "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db",
+                "path": [
+                    "${workspaceFolder}/src/"
+                ]
             }
         }
     ],

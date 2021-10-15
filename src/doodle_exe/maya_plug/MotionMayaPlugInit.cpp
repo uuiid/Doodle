@@ -12,8 +12,10 @@ doodleCreate::doodle_data* doodleCreate::d_ptr_ = nullptr;
 struct doodleCreate::doodle_data {
  public:
   static doodle_lib_ptr p_doodle_lib;
+  static std::shared_ptr<doodle_app> p_doodle_app;
 };
-doodle_lib_ptr doodleCreate::doodle_data::p_doodle_lib = nullptr;
+doodle_lib_ptr doodleCreate::doodle_data::p_doodle_lib              = nullptr;
+std::shared_ptr<doodle_app> doodleCreate::doodle_data::p_doodle_app = nullptr;
 
 doodleCreate::doodleCreate()
     : MPxCommand() {
@@ -34,7 +36,16 @@ MStatus doodleCreate::doIt(const MArgList& list) {
     doodleCreate::d_ptr_->p_doodle_lib = make_doodle_lib();
     doodleCreate::d_ptr_->p_doodle_lib->init_gui();
   }
-  new_object<::doodle::maya_plug::maya_plug_app>()->run();
+  if (!(d_ptr_->p_doodle_app)) {
+    d_ptr_->p_doodle_app = new_object<::doodle::maya_plug::maya_plug_app>();
+  }
+  if (!d_ptr_->p_doodle_app->valid()) {
+    d_ptr_->p_doodle_app = new_object<::doodle::maya_plug::maya_plug_app>();
+  }
+  if (d_ptr_->p_doodle_app->p_done) {
+    d_ptr_->p_doodle_app->p_done = false;
+  }
+  d_ptr_->p_doodle_app->run();
 
   return MStatus::kFailure;
 }
@@ -45,7 +56,10 @@ bool doodleCreate::isUndoable() const {
 
 void doodleCreate::clear_() {
   if (doodleCreate::d_ptr_) {
+    if (!(d_ptr_->p_doodle_app))
+      d_ptr_->p_doodle_app->p_done = true;
     doodle::core_set::getSet().p_stop = true;
+    d_ptr_->p_doodle_app.reset();
     doodleCreate::d_ptr_->p_doodle_lib.reset();
     delete d_ptr_;
   }
