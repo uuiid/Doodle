@@ -105,6 +105,8 @@ void doodle_lib::init_gui() {
       } else
         p_curr_project = p_project_vector.front();
   } catch (doodle_error& err) {
+    p_rpc_file_system_client.reset();
+    p_rpc_metadata_clien.reset();
     DOODLE_LOG_ERROR(err.what());
   }
 }

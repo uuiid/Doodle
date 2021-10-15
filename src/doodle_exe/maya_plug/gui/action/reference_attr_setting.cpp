@@ -29,7 +29,8 @@ reference_attr_setting::reference_attr_setting()
   p_show_str = make_imgui_name(this,
                                "解析引用",
                                "引用",
-                               "设置场景");
+                               "设置场景",
+                               "保存");
 }
 
 bool reference_attr_setting::get_file_info() {
@@ -79,7 +80,7 @@ bool reference_attr_setting::render() {
     std::vector<reference_attr::data> k_l;
     std::transform(p_list.begin(), p_list.end(), std::back_inserter(k_l), [](auto& i) { return *i; });
     nlohmann::json k_j{k_l};
-    auto str = fmt::format(R"(fileInfo "doodle_sim_json" {})", k_j.dump());
+    auto str = fmt::format(R"(fileInfo "doodle_sim_json" "{}")", k_j.dump());
     MString k_ms;
     k_ms.setUTF8(str.c_str());
     MGlobal::executeCommand(k_ms);
