@@ -94,4 +94,7 @@ target_include_directories(doodle_lib
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/external/csv-parser/include
         )
-
+if (NOT RUN_COPY)
+    target_compile_options(doodle_lib PRIVATE /Zi)
+    target_link_options(doodle_lib PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF) 
+endif()

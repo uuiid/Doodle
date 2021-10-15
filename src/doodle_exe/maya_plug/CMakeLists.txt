@@ -34,3 +34,7 @@ target_include_directories(doodle_plug PUBLIC ${PROJECT_SOURCE_DIR}/src/doodle_e
 set_target_properties(
         doodle_plug PROPERTIES SUFFIX ".mll"
 )
+if (NOT RUN_COPY)
+    target_compile_options(doodle_plug PRIVATE /Zi)
+    target_link_options(doodle_plug PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF) 
+endif()

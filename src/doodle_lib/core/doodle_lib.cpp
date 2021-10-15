@@ -81,19 +81,19 @@ void doodle_lib::init_gui() {
 
   DOODLE_LOG_DEBUG(k_ip)
 
-  p_rpc_metadata_clien = new_object<rpc_metadata_client>(
-      grpc::CreateChannel(k_ip,
-                          grpc::InsecureChannelCredentials()));
-
-  k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().get_file_rpc_port());
-  DOODLE_LOG_DEBUG(k_ip)
-  p_rpc_file_system_client = new_object<rpc_file_system_client>(
-      grpc::CreateChannel(k_ip,
-                          grpc::InsecureChannelCredentials()));
-
-  p_metadata_factory = new_object<metadata_factory>();
   try {
-    p_project_vector = p_metadata_factory->getAllProject();
+    p_rpc_metadata_clien = new_object<rpc_metadata_client>(
+        grpc::CreateChannel(k_ip,
+                            grpc::InsecureChannelCredentials()));
+
+    k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().get_file_rpc_port());
+    DOODLE_LOG_DEBUG(k_ip)
+    p_rpc_file_system_client = new_object<rpc_file_system_client>(
+        grpc::CreateChannel(k_ip,
+                            grpc::InsecureChannelCredentials()));
+
+    p_metadata_factory = new_object<metadata_factory>();
+    p_project_vector   = p_metadata_factory->getAllProject();
     if (!p_project_vector.empty())
       if (p_curr_project) {
         auto it = std::find_if(p_project_vector.begin(), p_project_vector.end(),
