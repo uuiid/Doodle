@@ -13,6 +13,7 @@ import pymel.core.animation
 # from pymel.core.system import FileReference
 from pymel.core import FileReference
 
+
 class maya_play_raneg():
     """
     maya文件范围
@@ -435,6 +436,7 @@ class references_file():
         self.maya_ref = ref_obj
         self.namespace = None  # type:str
         self.cloth_path = None  # type: pymel.core.Path
+        self.use_sim = False
         if self.maya_ref:
             self._set_init_()
 
@@ -488,6 +490,13 @@ class references_file():
     def importContents(self):
         if self.maya_ref:
             self.maya_ref.importContents()
+
+    def form_map(self, obj):
+        # type: (dict[str,str])->bool
+        self.maya_ref = pymel.core.FileReference(
+            pathOrRefNode=pymel.core.Path(obj["path"]))
+        self._set_init_()
+        self.use_sim = obj["use_sim"]
 
 
 class export_group(object):
@@ -742,9 +751,12 @@ class cloth_export():
             i) for i in self.colth_ref if i.is_valid()]
 
     def select_sim_references_file(self):
-        if pymel.core.fileInfo.has_key("doodle_sim"):
-            k_set = eval(pymel.core.fileInfo["doodle_sim"])
-            self.colth_ref = [references_file(i) for i in k_set]
+        meta = pymel.core.modeling.getMetadata(
+            channelName="doodle_sim_json", streamName="json_stream", memberName="json", scene=True, index="0")
+        if meta:
+            obj_dirt = json.loads(meta[0])
+            for i in obj_dirt:
+                self.colth_ref.append(references_file().form_map(i))
         else:
             self.colth_ref = [references_file(i)
                               for i in pymel.core.listReferences()]

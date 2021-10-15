@@ -37,6 +37,24 @@ reference_attr_setting::reference_attr_setting()
                                "保存");
 }
 
+bool reference_attr_setting::add_channel() const {
+  MStatus k_status{};
+  adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
+  CHECK_MSTATUS_AND_RETURN(k_status, false);
+  auto k_channel = k_meta.channel("doodle_sim_json");
+  if (!k_channel.dataStream("json_stream")) {
+    auto k_s = adsk::Data::Structure::create();              // 添加结构
+    k_s->setName("json_structure");                          // 设置结构名称
+    k_s->addMember(adsk::Data::Member::kString, 1, "json");  // 添加结构成员
+    adsk::Data::Structure::registerStructure(*k_s);          // 注册结构
+
+    adsk::Data::Stream k_stream{*k_s, "json_stream"};
+    k_channel.setDataStream(k_stream);  // 设置流
+    MFileIO::setMetadata(k_meta);
+  }
+  return true;
+}
+
 bool reference_attr_setting::get_file_info() {
   adsk::Debug::Print k_p{std::cout};
   MStringArray file_list;
@@ -53,6 +71,7 @@ bool reference_attr_setting::get_file_info() {
                    k_r->use_sim = false;
                    return k_r;
                  });
+  add_channel();
   auto k_m = MFileIO::metadata(&k_status);
   // adsk::Debug::Print k_p{std::cout};
   adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
@@ -75,15 +94,6 @@ bool reference_attr_setting::get_file_info() {
           j->use_sim = k_d.use_sim;
       }
     }
-  } else {
-    auto k_s = adsk::Data::Structure::create();              // 添加结构
-    k_s->setName("json_structure");                          // 设置结构名称
-    k_s->addMember(adsk::Data::Member::kString, 1, "json");  // 添加结构成员
-    adsk::Data::Structure::registerStructure(*k_s);          // 注册结构
-
-    adsk::Data::Stream k_stream{*k_s, "json_stream"};
-    k_channel.setDataStream(k_stream);  // 设置流
-    MFileIO::setMetadata(k_meta);
   }
   decltype(k_meta)::Debug(&k_meta, k_p);
   k_p.endSection();
@@ -101,10 +111,11 @@ bool reference_attr_setting::render() {
     }
   };
   if (imgui::Button(p_show_str["保存"].c_str())) {
+    add_channel();
     std::vector<reference_attr::data> k_l;
     nlohmann::json k_j{};
     std::transform(p_list.begin(), p_list.end(), std::back_inserter(k_j), [](auto& i) { return *i; });
-    
+
     MStatus k_status{};
     /// 获取文件元数据
     auto k_m = MFileIO::metadata(&k_status);
@@ -115,7 +126,6 @@ bool reference_attr_setting::render() {
     CHECK_MSTATUS_AND_RETURN(k_status, false);
     auto k_json   = k_meta.channel("doodle_sim_json");  /// 获得元数据通道
     auto k_stream = k_json.dataStream("json_stream");   /// 获得元数据流
-    auto& k_s     = k_stream->structure();
 
     adsk::Data::Handle k_h{k_stream->structure()};
 

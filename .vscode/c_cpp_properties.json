@@ -21,7 +21,8 @@
                 "limitSymbolsToIncludedHeaders": false,
                 "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db",
                 "path": [
-                    "${workspaceFolder}/src/"
+                    "${workspaceFolder}/src/doodle_exe",
+                    "${workspaceFolder}/src/doodle_lib"
                 ]
             }
         }
