@@ -5,7 +5,7 @@
  * @tableofcontents
  * @section updata_log_3 版本3
  * @subsection updata_log_30 版本3.0
- * 
+ *
  * @subsubsection updata_log_309 版本3.0.9
  *
  * @li 更新maya自动解算组件： 导出拍屏位置为mov文件夹
@@ -108,13 +108,13 @@
  *
  * @subsubsection updata_log_3031 版本3.0.31
  * @li 更新maya 解算工具: 正确的设置起始帧
- * 
+ *
  * @subsubsection updata_log_3032 版本3.0.32
  * @li 更新maya 解算工具: 更改更加合理的创建缓存的方式
- * 
- * 
+ *
+ *
  * @subsection updata_log_31 版本3.1
- * 
+ *
  * @subsubsection updata_log_310 版本3.1.0
  * @li 全选的界面
  * @li 可自由拖拽
@@ -122,14 +122,56 @@
  * @li 三款默认界面主题
  * @li 每次打开记住界面选项
  * @li 全新的长时间任务反馈
- * 
- * 
+ *
+ *
  * @subsubsection updata_log_311 版本3.1.1
  * @li 解算标记工具的更新
- * 
+ *
  * @subsubsection updata_log_312 版本3.1.2
  * @li 添加线程池大小调整
  * @li 添加长时间任务时更加明了的名称
  * @li 创建包裹帮助函数
  * @li 添加子文件计数
+ *
+ * @subsubsection updata_log_313 版本3.1.3
+ * @li win管道关闭修复(修复maya导出退出时下一个任务不会提交的问题)
+ * @li 时间小部件更加方便使用
+ * @li 更加科学的文件选择方式
+ * @li 长时间任务主动清除过多过旧的任务
+ * @li 调整表格布局方式, 更加方便和明了
+ * @li ue4 创建镜头更加的清晰明了, 更加快捷
+ * @li 服务器启动更加方便
+ * @li ue4 自动导入优化
+ * @li ue4 导入文件选择文件优化
+ * @li 添加镜头和集数的多选功能
+ * @li 添加本地运行模式, 脱离服务器可以运行
+ * @li 优化文件上传
+ * @li 文件列表优化
+ * @li 添加上传文件自定义路径
+ * @li 客户端更加科学的上传文件方式
+ * @li 调整gui界面, 更加清晰明了
+ * @li 添加文件时自动递增版本
+ *
+ * @subsubsection updata_log_314 版本3.1.4
+ * @li 添加创建视频时判断序列帧功能
+ * @li 自动判断ue4 文件并进行附加文件的上传
+ * @li 在上传文件时自动合成序列帧, 并进行标注题头元素
+ * @li 优化上传文件时的选项, 可以上传源文件和合成视频选项
+ * @li 将上传文件和制作拍屏添加到多线程环境中
+ * @li 添加maya插件
+ * @li 添加maya插件gui
+ * @li 将maya 插件更新到支持多个版本
+ * @li 更改maya 插件创建布局时的选项
+ * @li 添加maya插件更新解算属性gui
+ * @li 添加maya插件题头版本号
+ * @li 更新gui为动态库, 修复上下文不一致的问题
+ * @li 添加maya 插件不正确退出的问题
+ * @li 更加科学的maya元数据添加方式
+ * @li 修复maya 插件客户端和服务器通信产生的死锁
+ * @li 修复maya 插件客户端在没有服务器的情况下可以本地运行
+ * @li 更新maya 插件安装方式
+ *
+ * @subsubsection updata_log_315 版本3.1.5
+ * @li 将gui 配置文件分配到统一位置
+ *
  */
