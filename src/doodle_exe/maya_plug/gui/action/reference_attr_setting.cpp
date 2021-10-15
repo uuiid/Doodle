@@ -62,6 +62,22 @@ bool reference_attr_setting::get_file_info() {
   k_status = MFileIO::getReferences(file_list);
   CHECK_MSTATUS_AND_RETURN(k_status, false);
   p_list.clear();
+
+#if MAYA_API_VERSION > 20180000 && MAYA_API_VERSION < 20190000
+  for (auto i = 0; i < file_list.length(); ++i) {
+    auto k_r     = new_object<reference_attr::data>();
+    k_r->path    = file_list[i].asUTF8();
+    k_r->use_sim = false;
+    p_list.push_back(k_r);
+  }
+#elif MAYA_API_VERSION > 20190000 && MAYA_API_VERSION < 20200000
+  for (auto& in : file_list) {
+    auto k_r     = new_object<reference_attr::data>();
+    k_r->path    = in.asUTF8();
+    k_r->use_sim = false;
+    p_list.push_back(k_r);
+  }
+#elif MAYA_API_VERSION > 20200000
   std::transform(file_list.begin(),
                  file_list.end(),
                  std::back_inserter(p_list),
@@ -71,6 +87,8 @@ bool reference_attr_setting::get_file_info() {
                    k_r->use_sim = false;
                    return k_r;
                  });
+
+#endif
   add_channel();
   auto k_m = MFileIO::metadata(&k_status);
   // adsk::Debug::Print k_p{std::cout};

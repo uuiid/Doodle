@@ -1,20 +1,26 @@
-#include <maya_plug/MotionMayaPlugInit.h>
 #include <maya/MFnPlugin.h>
+#include <maya_plug/MotionMayaPlugInit.h>
 
 namespace {
 const static std::string doodle_windows{"doodle_windows"};
 const static std::string doodle_win_path{"MayaWindow|mainWindowMenu"};
 const static std::string doodle_create{"doodleCreate"};
 
-
-}
+}  // namespace
 
 MStatus initializePlugin(MObject obj) {
   /**
    * @brief 添加插件注册方法
    */
   MStatus status = MStatus::MStatusCode::kFailure;
-  MFnPlugin k_plugin{obj, "1.0", "Any"};
+  MFnPlugin k_plugin{obj, "doodle",
+                     fmt::format("{}.{}.{}.{}",
+                                 Doodle_VERSION_MAJOR,
+                                 Doodle_VERSION_MINOR,
+                                 Doodle_VERSION_PATCH,
+                                 Doodle_VERSION_TWEAK)
+                         .c_str(),
+                     fmt::format("{}", MAYA_API_VERSION).c_str()};
 
   //   //创建菜单项
   //   MString pythonResult{};

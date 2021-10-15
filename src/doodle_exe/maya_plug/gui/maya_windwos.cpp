@@ -19,6 +19,7 @@ void maya_windwos::main_menu_tool() {
 
 maya_windwos::maya_windwos()
     : main_windows() {
+  p_title = fmt::format("{} maya api version {}", p_title, MAYA_API_VERSION);
 }
 
 void maya_windwos::frame_render() {

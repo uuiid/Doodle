@@ -13,9 +13,8 @@ class assets_file_widgets;
 class long_time_tasks_widget;
 class edit_widgets;
 class DOODLELIB_API main_windows : public base_widget {
-  std::string p_title;
-
  protected:
+  std::string p_title;
   bool_ptr p_debug_show;
   bool_ptr p_about_show;
   bool_ptr p_style_show;
