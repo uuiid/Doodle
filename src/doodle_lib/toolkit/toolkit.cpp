@@ -37,6 +37,8 @@ void toolkit::installMayaPath() {
     FSys::remove_all(mayadoc);
 
   file_system::local_copy(sourePath, mayadoc, false);
+  file_system::local_copy(core_set::program_location(), mayadoc / "plug-ins", false);
+
   auto k_tmp_path = mayadoc / "scripts" / "scripts" / "maya_fun_tool.py";
   if (FSys::exists(k_tmp_path))
     return;
@@ -61,7 +63,7 @@ PYTHONPATH+:= scripts
 }
 
 void toolkit::installUePath(const FSys::path &path) {
-  auto &set = core_set::getSet();
+  auto &set       = core_set::getSet();
 
   auto sourePath  = FSys::current_path().parent_path();
   sourePath       = sourePath / "plug" / "uePlug";
@@ -84,7 +86,7 @@ bool toolkit::update() {
 }
 
 void toolkit::modifyUeCachePath() {
-  auto ue_path = core_set::getSet().get_ue4_setting().get_path() / "Engine/Config/BaseEngine.ini";
+  auto ue_path     = core_set::getSet().get_ue4_setting().get_path() / "Engine/Config/BaseEngine.ini";
   //做备份
   auto backup_path = FSys::path{ue_path}.replace_extension(".ini.backup");
   FSys::copy(ue_path, FSys::add_time_stamp(backup_path), FSys::copy_options::update_existing);
