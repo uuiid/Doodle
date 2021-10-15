@@ -2,13 +2,17 @@ cmake_minimum_required(VERSION 3.8)
 project(imgui CXX)
 
 set(CMAKE_DEBUG_POSTFIX d)
-add_library(${PROJECT_NAME} "")
+add_library(${PROJECT_NAME} SHARED "")
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
+configure_file(imconfig.h.in ${PROJECT_SOURCE_DIR}/imconfig.h)
+
 target_compile_definitions(${PROJECT_NAME} PUBLIC UNICODE _UNICODE)
 target_include_directories(
     ${PROJECT_NAME}
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:include>
 )
 
@@ -22,6 +26,12 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/imgui_widgets.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp
 )
+include(GenerateExportHeader)
+set(MY_CUSTOM_CONTENT "")
+generate_export_header(${PROJECT_NAME}
+        EXPORT_MACRO_NAME IMGUI_API
+        CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
+
 
 if(IMGUI_BUILD_ALLEGRO5_BINDING)
     find_path(ALLEGRO5_INCLUDE_DIRS allegro5/allegro.h)
@@ -130,6 +140,9 @@ if(NOT IMGUI_SKIP_HEADERS)
         ${CMAKE_CURRENT_SOURCE_DIR}/imstb_truetype.h
         ${CMAKE_CURRENT_SOURCE_DIR}/misc/cpp/imgui_stdlib.h
         DESTINATION include
+    )
+    install(FILES
+        ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_export.h DESTINATION include
     )
 
     if(IMGUI_BUILD_ALLEGRO5_BINDING)

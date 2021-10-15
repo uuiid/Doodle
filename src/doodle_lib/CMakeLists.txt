@@ -42,17 +42,18 @@ add_library(doodle_lib
 
 target_precompile_headers(doodle_lib
         PUBLIC [[<doodle_lib/doodle_lib_pch.h>]])
-
+        
+include(GenerateExportHeader)
 set(MY_CUSTOM_CONTENT "")
 generate_export_header(doodle_lib
         EXPORT_MACRO_NAME DOODLELIB_API
         CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
+
 set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 fix_mariadb_plug(NAME doodle_lib)
 
-include(GenerateExportHeader)
 
 target_link_libraries(doodle_lib
         PUBLIC

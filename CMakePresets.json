@@ -89,6 +89,11 @@
       "name": "cpack_doodle",
       "inherits": "release",
       "targets": "cpack_Doodle"
+    },
+    {
+      "name": "doodle_maya_plug",
+      "inherits": "release",
+      "targets": "doodle_plug"
     }
   ],
   "testPresets": [

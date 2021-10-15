@@ -31,7 +31,7 @@ using data_ptr = std::shared_ptr<data>;
 class reference_attr_setting : public command_base {
   std::vector<reference_attr::data_ptr> p_list;
 
-  void get_file_info();
+  bool get_file_info();
 
  public:
   reference_attr_setting();

@@ -7,9 +7,8 @@
 
 namespace doodle::maya_plug {
 class maya_windwos : public main_windows {
-  
-  
-  bool maya_tool();
+  void main_menu_tool() override;
+
  public:
   maya_windwos();
   void frame_render() override;

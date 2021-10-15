@@ -235,3 +235,4 @@ add_dependencies(cpack_${PROJECT_NAME} DoodleExe DoodleServerExe Doxygen)
 # .\vcpkg.exe install boost sqlpp11 catch2 opencv date cereal spdlog cryptopp grpc magic-enum nlohmann-json sqlpp11-connector-mysql opencv[ffmpeg,contrib] imgui[win32-binding,dx11-binding,docking-experimental]
 # imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 # install imguiwrap --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
+# install imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"

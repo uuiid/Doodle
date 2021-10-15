@@ -25,16 +25,16 @@ bool data::operator!=(const data& in_rhs) const {
 reference_attr_setting::reference_attr_setting()
     : command_base(),
       p_list() {
-  p_name      = "引用编辑";
-  p_show_name = make_imgui_name(this,
-                                "解析引用",
-                                "引用",
-                                "设置场景");
+  p_name     = "引用编辑";
+  p_show_str = make_imgui_name(this,
+                               "解析引用",
+                               "引用",
+                               "设置场景");
 }
 
-void reference_attr_setting::get_file_info() {
+bool reference_attr_setting::get_file_info() {
   MStringArray file_list;
-  MStatus k_status;
+  MStatus k_status{};
   k_status = MFileIO::getReferences(file_list);
   CHECK_MSTATUS_AND_RETURN(k_status, false);
   p_list.clear();
@@ -42,12 +42,15 @@ void reference_attr_setting::get_file_info() {
                  file_list.end(),
                  std::back_inserter(p_list),
                  [](const MString& in) -> reference_attr::data_ptr {
-                   return new_object<reference_attr::data>(in.asUTF8(), false);
+                   auto k_r     = new_object<reference_attr::data>();
+                   k_r->path    = in.asUTF8();
+                   k_r->use_sim = false;
+                   return k_r;
                  });
 
   MString k_result{};
   MGlobal::executeCommand(R"(fileInfo -q "doodle_sim_json")", k_result, &k_status);
-  CHECK_MSTATUS_AND_RETURN(k_status, );
+  CHECK_MSTATUS_AND_RETURN(k_status, false);
   if (k_result.numChars() != 0) {
     auto k_j = nlohmann::json::parse(k_result.asUTF8());
 
@@ -59,14 +62,15 @@ void reference_attr_setting::get_file_info() {
       }
     }
   }
+  return true;
 }
 
 bool reference_attr_setting::render() {
-  if (imgui::Button(p_show_name["解析引用"].c_str())) {
+  if (imgui::Button(p_show_str["解析引用"].c_str())) {
     get_file_info();
   }
 
-  dear::ListBox{p_show_name["引用"].c_str()} && [this]() {
+  dear::ListBox{p_show_str["引用"].c_str()} && [this]() {
     for (auto& i : p_list) {
       imgui::Checkbox(i->path.c_str(), &(i->use_sim));
     }
@@ -80,6 +84,7 @@ bool reference_attr_setting::render() {
     k_ms.setUTF8(str.c_str());
     MGlobal::executeCommand(k_ms);
   }
+  return true;
 }
 
 }  // namespace doodle::maya_plug

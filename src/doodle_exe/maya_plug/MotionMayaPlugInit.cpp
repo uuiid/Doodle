@@ -1,8 +1,11 @@
-#include <maya_plug/MotionMayaPlugInit.h>
-#include <doodle_lib/doodle_lib_all.h>
+#include "MotionMayaPlugInit.h"
+
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <maya/MApiNamespace.h>
 #include <maya/MObject.h>
+#include <maya_plug/gui/maya_plug_app.h>
 namespace doodle::MayaPlug {
 doodleCreate::doodle_data* doodleCreate::d_ptr_ = nullptr;
 
@@ -31,7 +34,7 @@ MStatus doodleCreate::doIt(const MArgList& list) {
     doodleCreate::d_ptr_->p_doodle_lib = make_doodle_lib();
     doodleCreate::d_ptr_->p_doodle_lib->init_gui();
   }
-  new_object<doodle_app>()->run();
+  new_object<::doodle::maya_plug::maya_plug_app>()->run();
 
   return MStatus::kFailure;
 }
@@ -41,7 +44,7 @@ bool doodleCreate::isUndoable() const {
 }
 
 void doodleCreate::clear_() {
-  if(doodleCreate::d_ptr_) {
+  if (doodleCreate::d_ptr_) {
     doodle::core_set::getSet().p_stop = true;
     doodleCreate::d_ptr_->p_doodle_lib.reset();
     delete d_ptr_;
