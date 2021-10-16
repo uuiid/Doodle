@@ -113,7 +113,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       doodle::doodle_app::Get()->p_done = true;
       doodle::core_set::getSet().p_stop = true;
       doodle::core_set::getSet().p_condition.notify_all();
-      ::PostQuitMessage(0);
+      // ::PostQuitMessage(0);
       return 0;
     }
     case WM_DPICHANGED:
@@ -162,7 +162,7 @@ doodle_app::doodle_app()
                   nullptr,
                   nullptr,
                   nullptr,
-                  _T("ImGui Example"),
+                  _T("doodle"),
                   nullptr},
       p_done(false),
       wregister(new_object<widget_register>()) {

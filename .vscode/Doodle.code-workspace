@@ -202,7 +202,7 @@
 			{
 				"label": "doodle_python",
 				"type": "process",
-				"command": "c:\\Program Files\\Autodesk\\Maya2020\\bin\\mayapy.exe",
+				"command": "c:\\Program Files\\Autodesk\\Maya2019\\bin\\mayapy.exe",
 				"args": [
 					"${file}",
 					"--path=C:/Users/teXiao/Documents/maya/projects/default/scenes/test_uv_set_and_mat.ma",

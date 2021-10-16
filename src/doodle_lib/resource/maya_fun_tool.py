@@ -491,12 +491,14 @@ class references_file():
         if self.maya_ref:
             self.maya_ref.importContents()
 
-    def form_map(self, obj):
-        # type: (dict[str,str])->bool
-        self.maya_ref = pymel.core.FileReference(
+    @staticmethod
+    def form_map(obj):
+        # type: (dict[str,str])-> references_file
+        maya_ref = pymel.core.FileReference(
             pathOrRefNode=pymel.core.Path(obj["path"]))
-        self._set_init_()
-        self.use_sim = obj["use_sim"]
+        k_ref = references_file(maya_ref)
+        k_ref.use_sim = obj["use_sim"]
+        return k_ref
 
 
 class export_group(object):
@@ -755,8 +757,11 @@ class cloth_export():
             channelName="doodle_sim_json", streamName="json_stream", memberName="json", scene=True, index="0")
         if meta:
             obj_dirt = json.loads(meta[0])
+            k_colth_ref = []  # type: list[references_file]
             for i in obj_dirt:
-                self.colth_ref.append(references_file().form_map(i))
+                k_colth_ref.append(references_file.form_map(i))
+            self.colth_ref = [i for i in k_colth_ref if i.use_sim]
+
         else:
             self.colth_ref = [references_file(i)
                               for i in pymel.core.listReferences()]

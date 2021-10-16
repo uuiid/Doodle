@@ -25,7 +25,7 @@
             "request": "launch",
             "python": "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayapy.exe",
             "program": "${file}",
-            "console": "internalConsole",
+            "console": "integratedTerminal",
             "args": [],
             "cwd": "${workspaceFolder}",
         },
