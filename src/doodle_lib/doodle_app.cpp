@@ -124,6 +124,12 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         ::SetWindowPos(hWnd, nullptr, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
       }
       break;
+    case WM_CLOSE: {
+      doodle::doodle_app::Get()->p_done = true;
+      doodle::core_set::getSet().p_stop = true;
+      doodle::core_set::getSet().p_condition.notify_all();
+      return 0;
+    }
       //    case WM_IME_CHAR: {
       //      auto& io    = ImGui::GetIO();
       //      DWORD wChar = wParam;
@@ -154,7 +160,7 @@ doodle_app* doodle_app::self;
 doodle_app::doodle_app()
     : p_hwnd{},
       p_win_class{sizeof(WNDCLASSEX),
-                  CS_CLASSDC | CS_NOCLOSE, WndProc,
+                  CS_CLASSDC, WndProc,
                   0L,
                   0L,
                   GetModuleHandle(nullptr),

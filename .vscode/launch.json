@@ -16,8 +16,18 @@
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "console": "internalConsole"
+            "environment": [
+                {
+                    "name": "MAYA_PLUG_IN_PATH",
+                    "value": "${workspaceFolder}/build/Ninja_release_plug/bin"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${env:PATH};${workspaceFolder}/build/Ninja_release_plug/bin"
+                }
+            ],
+            "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
             "name": "Python maya debug",
@@ -39,6 +49,7 @@
             "cwd": "${command:cmake.getLaunchTargetDirectory}",
             "environment": [],
             "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
             "name": "Doodle_server_debug",
@@ -52,6 +63,7 @@
             "cwd": "${command:cmake.getLaunchTargetDirectory}",
             "environment": [],
             "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
         }
     ],
     "compounds": [
