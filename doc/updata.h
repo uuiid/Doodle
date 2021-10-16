@@ -174,4 +174,8 @@
  * @subsubsection updata_log_315 版本3.1.5
  * @li 将gui 配置文件分配到统一位置
  *
+ * @subsubsection updata_log_316 版本3.1.6
+ * @li 窗口和主窗口配置文件不一致问题
+ * @li 修复解算abc问题
+ * @li 修复长时间任务时的日志太多问题
  */
