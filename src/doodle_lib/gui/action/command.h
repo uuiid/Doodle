@@ -15,6 +15,7 @@ enum class command_type {
   async,
   composite
 };
+
 }  // namespace details
 
 class DOODLELIB_API command_base /* : public details::no_copy  */ {
@@ -58,7 +59,6 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
       return false;
     } else if (k_size == 2) {
       p_meta_var = k_arg[0_c];
-      //details::help_fun<decltype(p_meta_var)>::fun(p_meta_var);
       if constexpr (boost::hana::typeid_(k_arg[1_c]) != boost::hana::type_c<std::nullptr_t>) {
         p_var = k_arg[1_c];
         return this->set_child();
