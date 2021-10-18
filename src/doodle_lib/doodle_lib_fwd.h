@@ -470,7 +470,7 @@ using widget_register_ptr     = std::shared_ptr<widget_register>;
 
 using rpc_trans_path_ptr      = std::unique_ptr<rpc_trans_path>;
 using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
-using doodle_app_ptr          = std::shared<doodle_app>;
+using doodle_app_ptr          = std::shared_ptr<doodle_app>;
 
 namespace rpc_trans {
 class down_file;

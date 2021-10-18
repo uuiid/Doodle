@@ -63,6 +63,7 @@ find_package(Boost 1.75 REQUIRED COMPONENTS
         locale
         iostreams
         serialization
+        program_options 
         )
 find_package(Sqlpp11 REQUIRED)
 find_package(Catch2 CONFIG )

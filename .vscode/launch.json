@@ -1,12 +1,6 @@
 {
     "configurations": [
         {
-            "name": "maya_launch",
-            "type": "cppvsdbg",
-            "request": "attach",
-            "processId": "${command:pickProcess}"
-        },
-        {
             "name": "maya",
             "type": "cppvsdbg",
             "request": "launch",
@@ -52,12 +46,12 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
-            "name": "Doodle_server_debug",
+            "name": "Doodle_debug_command",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "args": [
-                "server_config.json"
+                "${input:arg_input}"
             ],
             "stopAtEntry": false,
             "cwd": "${command:cmake.getLaunchTargetDirectory}",
@@ -66,11 +60,18 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         }
     ],
+    "inputs": [
+        {
+            "id": "arg_input",
+            "type": "promptString",
+            "description": "input arg",
+            "default": ""
+        }
+    ],
     "compounds": [
         {
             "name": "Doodle_sercer/client",
             "configurations": [
-                "Doodle_server_debug",
                 "Doodle_debug"
             ]
         }

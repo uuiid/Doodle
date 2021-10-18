@@ -8,7 +8,12 @@
 
 namespace doodle {
 program_options::program_options()
-    : p_opt_all("doodle_opt"),
+    : p_opt_all("doodle opt"),
+      p_opt_file("doodle config file"),
+      p_opt_gui("doodle config gui"),
+      p_opt_server("doodle config server"),
+      p_opt_general("doodle config general"),
+      p_opt_advanced("doodle general config"),
       p_config_file(core_set::getSet().get_cache_root() / "doodle.ini"),
       p_max_thread(core_set::getSet().p_max_thread),
       p_root(core_set::getSet().get_root()),
@@ -81,6 +86,7 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
                              Doodle_VERSION_PATCH,
                              Doodle_VERSION_TWEAK)
               << std::endl;
+  return true;
 }
 doodle_app_ptr program_options::make_app() {
   return nullptr;

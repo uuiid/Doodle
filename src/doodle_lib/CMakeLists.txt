@@ -71,6 +71,7 @@ target_link_libraries(doodle_lib
         Boost::locale
         Boost::filesystem
         Boost::serialization
+        Boost::program_options
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}
         spdlog::spdlog
