@@ -1,10 +1,12 @@
 #include <maya/MFnPlugin.h>
+#include <maya/MSceneMessage.h>
 #include <maya_plug/MotionMayaPlugInit.h>
 
 namespace {
 const static std::string doodle_windows{"doodle_windows"};
 const static std::string doodle_win_path{"MayaWindow|mainWindowMenu"};
 const static std::string doodle_create{"doodleCreate"};
+static MCallbackId clear_callback_id{0};
 
 }  // namespace
 
@@ -38,6 +40,10 @@ MStatus initializePlugin(MObject obj) {
   // )");
   //   MGlobal::executePythonCommand("doodleCreateMenu()", pythonResult);
 
+  //注册命令
+  status = k_plugin.registerCommand(doodle_create.c_str(), doodle::MayaPlug::doodleCreate::create);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+
   //添加菜单项
   k_plugin.addMenuItem(doodle_windows.c_str(),
                        doodle_win_path.c_str(),
@@ -47,24 +53,35 @@ MStatus initializePlugin(MObject obj) {
                        nullptr,
                        &status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  //注册命令
-  status = k_plugin.registerCommand(doodle_create.c_str(), doodle::MayaPlug::doodleCreate::create);
+
+  clear_callback_id = MSceneMessage::addCallback(
+      MSceneMessage::Message::kMayaExiting,
+      [](void* in) {
+        ::doodle::MayaPlug::doodleCreate::clear_();
+      },
+      nullptr,
+      &status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   return status;
 }
 
 MStatus uninitializePlugin(MObject obj) {
   MStatus status = MStatus::MStatusCode::kFailure;
+
   MFnPlugin k_plugin{obj};
+  //删除回调
+  status = MMessage::removeCallback(clear_callback_id);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+
   //这里要关闭窗口
   doodle::MayaPlug::doodleCreate::clear_();
 
+  //这一部分是删除菜单项的
   MStringArray menuItems{};
   menuItems.append(doodle_windows.c_str());
   status = k_plugin.removeMenuItem(menuItems);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  //这一部分是删除菜单项的
   //   MString pythonResult{};
   //   MGlobal::executePythonCommand(R"(import maya.cmds
   // def doodleDeleteMenu():
@@ -77,6 +94,7 @@ MStatus uninitializePlugin(MObject obj) {
   //   MGlobal::executePythonCommand("doodleDeleteMenu()");
   //   CHECK_MSTATUS_AND_RETURN_IT(status);
 
+  // 卸载命令
   status = k_plugin.deregisterCommand(doodle_create.c_str());
   CHECK_MSTATUS_AND_RETURN_IT(status);
   return status;

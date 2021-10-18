@@ -56,7 +56,7 @@ bool doodleCreate::isUndoable() const {
 
 void doodleCreate::clear_() {
   if (doodleCreate::d_ptr_) {
-    if (!(d_ptr_->p_doodle_app))
+    if (d_ptr_->p_doodle_app)
       d_ptr_->p_doodle_app->p_done = true;
     doodle::core_set::getSet().p_stop = true;
     d_ptr_->p_doodle_app.reset();
