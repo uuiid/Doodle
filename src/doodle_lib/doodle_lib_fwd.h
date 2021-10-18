@@ -428,7 +428,7 @@ using assets_path_ptr            = std::shared_ptr<assets_path>;
  * @brief doodle_lib 智能共享指针
  *
  */
-using doodle_lib_ptr             = std::unique_ptr<doodle_lib>;
+using doodle_lib_ptr             = std::shared_ptr<doodle_lib>;
 /**
  * @brief ThreadPool 智能共享指针
  *

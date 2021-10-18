@@ -17,10 +17,15 @@ class DOODLELIB_API program_options {
   string p_mysql_ip;
   string p_mysql_user;
   string p_mysql_pow;
-  string p_rpc_setver_ip;
   std::int32_t p_mysql_port;
+  string p_rpc_setver_ip;
   std::int32_t p_rpc_file_port;
   std::int32_t p_rpc_meta_port;
+
+  bool p_use_gui;
+  bool p_use_server;
+
+  doodle_lib_ptr p_lib;
 
  private:
   /**
@@ -71,7 +76,7 @@ class DOODLELIB_API program_options {
     return command_line_parser(k_str);
   };
   bool command_line_parser(const std::vector<string>& in_arg);
-  inline bool command_line_parser(LPSTR in_arg) {
+  inline bool command_line_parser(const LPSTR& in_arg) {
     auto k_str = boost::program_options::split_winmain(in_arg);
     return command_line_parser(k_str);
   };

@@ -8,7 +8,7 @@
  */
 #include <doodle_lib/doodle_lib_all.h>
 //#include <doodle_lib/DoodleApp.h>
-//#include <boost/locale.hpp>
+#include <boost/locale.hpp>
 
 extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               HINSTANCE hPrevInstance,
@@ -21,12 +21,16 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
   //  std::setlocale(LC_MONETARY, "C");
   //  std::locale::global(std::locale::classic());
   //  std::wcout.imbue(std::locale{".UTF8"});
-  std::setlocale(LC_CTYPE, ".UTF8");
+  //  std::setlocale(LC_CTYPE, ".UTF8");
+  boost::locale::generator k_gen{};
+  k_gen.categories(boost::locale::all_categories ^
+                   boost::locale::formatting_facet ^
+                   boost::locale::parsing_facet);
+  std::locale::global(k_gen("zh_CN.UTF-8"));
+  auto doodleLib = doodle::make_doodle_lib();
 
   doodle::program_options p_opt{};
   p_opt.command_line_parser(strCmdLine);
-
-  //   auto doodleLib = doodle::make_doodle_lib();
 
   // #ifndef NDEBUG
   //   auto& set                = doodle::core_set::getSet();

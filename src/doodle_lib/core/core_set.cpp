@@ -189,6 +189,10 @@ FSys::path core_set::get_config_file() const {
   return p_doc / config_file_name();
 }
 
+void core_set::set_server_host(const string &in_host) {
+  p_server_host = in_host;
+}
+
 FSys::path core_set::get_root() const {
   return p_root;
 }

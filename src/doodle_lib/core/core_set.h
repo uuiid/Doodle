@@ -64,6 +64,7 @@ class DOODLELIB_API core_set : public details::no_copy {
   [[nodiscard]] FSys::path get_doc() const;
   // 配置文件的路径
   [[nodiscard]] FSys::path get_config_file() const;
+  void set_server_host(const string& in_host);
 
   [[nodiscard]] ue4_setting &get_ue4_setting() const { return p_ue4_setting; };
 

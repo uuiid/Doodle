@@ -57,7 +57,13 @@
             "cwd": "${command:cmake.getLaunchTargetDirectory}",
             "environment": [],
             "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
+            "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "setupCommands": [
+                {
+                    "description": "Enable utf-8",
+                    "text": "set charset UTF-8"
+                }
+            ]
         }
     ],
     "inputs": [
