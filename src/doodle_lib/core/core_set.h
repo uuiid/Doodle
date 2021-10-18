@@ -28,6 +28,7 @@ enum class department {
  */
 
 class DOODLELIB_API core_set : public details::no_copy {
+
  public:
   static core_set &getSet();
 
@@ -53,15 +54,16 @@ class DOODLELIB_API core_set : public details::no_copy {
   void set_department(const department &value);
 
   //缓存路径
+  [[nodiscard]] FSys::path get_root() const;
+  void set_root(const FSys::path &in_root) ;
   [[nodiscard]] FSys::path get_cache_root() const;
   [[nodiscard]] FSys::path get_cache_root(const FSys::path &in_path) const;
-  void set_cache_root(const FSys::path &path);
-
   FSys::path get_data_root() const;
-  void set_data_root(const FSys::path &in_path);
 
   // doc路径
   [[nodiscard]] FSys::path get_doc() const;
+  // 配置文件的路径
+  [[nodiscard]] FSys::path get_config_file() const;
 
   [[nodiscard]] ue4_setting &get_ue4_setting() const { return p_ue4_setting; };
 
@@ -128,9 +130,10 @@ class DOODLELIB_API core_set : public details::no_copy {
   //部门
   department p_department_;
 
-  FSys::path p_cache_root;
+  FSys::path p_root;
+  FSys::path _root_cache;
+  FSys::path _root_data;
   FSys::path p_doc;
-  FSys::path p_data_root;
 
   ue4_setting &p_ue4_setting;
 

@@ -7,6 +7,7 @@ set(
     core/filesystem_extend.h
     core/observable_container.h
     core/open_file_dialog.h
+    core/program_options.h
     core/static_value.h
     core/tools_setting.h
     core/tree_container.h
@@ -93,6 +94,7 @@ set(
     core/doodle_lib.cpp
     core/filesystem_extend.cpp
     core/open_file_dialog.cpp
+    core/program_options.cpp
     core/static_value.cpp
     core/tree_container.cpp
     core/ue4_setting.cpp

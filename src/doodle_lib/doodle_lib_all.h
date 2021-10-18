@@ -10,6 +10,7 @@
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/core/observable_container.h>
 #include <doodle_lib/core/open_file_dialog.h>
+#include <doodle_lib/core/program_options.h>
 #include <doodle_lib/core/static_value.h>
 #include <doodle_lib/core/tools_setting.h>
 #include <doodle_lib/core/tree_container.h>

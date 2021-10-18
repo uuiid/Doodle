@@ -9,7 +9,9 @@
 		"workbench.editor.closeEmptyGroups": false,
 		"git.autoRepositoryDetection": "subFolders",
 		"git.ignoredRepositories": [
-			"F:/Source/vcpkg"
+			"E:/Source/vcpkg",
+			"cmrc",
+			"imguiwrap"
 		],
 		"editor.tokenColorCustomizations": {
 			"textMateRules": [
@@ -184,7 +186,8 @@
 		"todo-tree.tree.showBadges": true,
 		"markdownlint.config": {
 			"MD033": false
-		}
+		},
+		"git.fetchOnPull": true
 	},
 	"tasks": {
 		"version": "2.0.0",

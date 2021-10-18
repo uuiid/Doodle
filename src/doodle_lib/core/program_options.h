@@ -2,15 +2,81 @@
 // Created by TD on 2021/10/18.
 //
 
-#ifndef DOODLE_SRC_DOODLE_LIB_CORE_PROGRAM_OPTIONS_H_
-#define DOODLE_SRC_DOODLE_LIB_CORE_PROGRAM_OPTIONS_H_
+#pragma once
 
+#include <doodle_lib/doodle_lib_fwd.h>
 
+#include <boost/program_options.hpp>
+namespace doodle {
 
-class program_options {
+class DOODLELIB_API program_options {
+ private:
+  FSys::path p_config_file;
+  std::int32_t p_max_thread;
+  FSys::path p_root;
+  string p_mysql_ip;
+  string p_mysql_user;
+  string p_mysql_pow;
+  string p_rpc_setver_ip;
+  std::int32_t p_mysql_port;
+  std::int32_t p_rpc_file_port;
+  std::int32_t p_rpc_meta_port;
 
+ private:
+  /**
+   * @brief 所有选项， 命令行选项
+   *
+   */
+  boost::program_options::options_description p_opt_all;
+  /**
+   * @brief 解析配置文件时的选项
+   *
+   */
+  boost::program_options::options_description p_opt_file;
+
+  /**
+   * @brief gui选项
+   *
+   */
+  boost::program_options::options_description p_opt_gui;
+  /**
+   * @brief 服务器选项
+   *
+   */
+  boost::program_options::options_description p_opt_server;
+  /**
+   * @brief 一般选项
+   *
+   */
+  boost::program_options::options_description p_opt_general;
+  /**
+   * @brief 高级设置
+   *
+   */
+  boost::program_options::options_description p_opt_advanced;
+
+ public:
+  program_options();
+
+  /**
+   * @brief 解析命令行
+   *
+   * @param argc 传入的命令行参数
+   * @param argv 传入的命令行参数
+   * @return true 解析成功
+   * @return false 解析失败
+   */
+  inline bool command_line_parser(int argc, const char* argv[]) {
+    string_list k_str{argv, argv + argc};
+    return command_line_parser(k_str);
+  };
+  bool command_line_parser(const std::vector<string>& in_arg);
+  inline bool command_line_parser(LPSTR in_arg) {
+    auto k_str = boost::program_options::split_winmain(in_arg);
+    return command_line_parser(k_str);
+  };
+
+  doodle_app_ptr make_app();
 };
 
-
-
-#endif //DOODLE_SRC_DOODLE_LIB_CORE_PROGRAM_OPTIONS_H_
+}  // namespace doodle

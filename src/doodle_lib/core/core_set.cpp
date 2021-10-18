@@ -1,13 +1,13 @@
+#include <Metadata/metadata_factory.h>
+#include <date/tz.h>
 #include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/Logger/logger.h>
-#include <doodle_lib/pin_yin/convert.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/core_sql.h>
 #include <doodle_lib/core/static_value.h>
+#include <doodle_lib/pin_yin/convert.h>
 #include <doodle_lib/rpc/rpc_file_system_client.h>
 #include <doodle_lib/rpc/rpc_metadata_client.h>
-#include <Metadata/metadata_factory.h>
-#include <date/tz.h>
 #include <google/protobuf/service.h>
 #include <grpcpp/grpcpp.h>
 #include <sqlpp11/mysql/mysql.h>
@@ -96,7 +96,7 @@ void core_set::write_doodle_local_set() {
 }
 
 void core_set::get_setting() {
-  static FSys::path k_settingFileName = p_doc / config_file_name();
+  static FSys::path k_settingFileName = get_doc() / config_file_name();
   if (FSys::exists(k_settingFileName)) {
     FSys::path strFile(k_settingFileName);
     FSys::ifstream inJosn{k_settingFileName, std::ifstream::binary};
@@ -112,9 +112,7 @@ void core_set::get_setting() {
 core_set::core_set()
     : p_user_("user"),
       p_department_(department::None_),
-      p_cache_root(FSys::temp_directory_path()),
-      p_doc("C:/Doodle/doc"),
-      p_data_root("C:/Doodle/data"),
+      p_doc(),
       p_uuid_gen(),
       p_ue4_setting(ue4_setting::Get()),
       p_mayaPath(),
@@ -136,11 +134,11 @@ core_set::core_set()
       p_max_thread(std::thread::hardware_concurrency() - 2),
       p_stop(false),
       p_mutex(),
-      p_condition() {
+      p_condition(),
+      p_root(FSys::temp_directory_path() / "Doodle") {
   p_doc = get_pwd() / "doodle";
 
   get_cache_disk_path();
-  p_data_root = p_cache_root.parent_path() / "data";
 
   if (!FSys::exists(p_doc))
     FSys::create_directories(p_doc);
@@ -151,6 +149,9 @@ core_set::core_set()
     FSys::create_directories(get_data_root());
   }
   findMaya();
+  if (p_doc.empty())
+    p_doc = get_root() / "doc";
+
   get_setting();
 }
 
@@ -181,48 +182,53 @@ void core_set::set_user(const std::string &value) {
   p_user_ = value;
 }
 
-FSys::path core_set::get_doc() const { return p_doc; }
+FSys::path core_set::get_doc() const {
+  return p_doc;
+}
+FSys::path core_set::get_config_file() const {
+  return p_doc / config_file_name();
+}
+
+FSys::path core_set::get_root() const {
+  return p_root;
+}
+void core_set::set_root(const FSys::path &in_path) {
+  p_root      = in_path;
+  _root_cache = p_root / "cache";
+  _root_data  = p_root / "data";
+}
 
 FSys::path core_set::get_cache_root() const {
-  return p_cache_root;
+  return _root_cache;
 }
 
 FSys::path core_set::get_cache_root(const FSys::path &in_path) const {
-  auto path = p_cache_root / in_path;
+  auto path = get_cache_root() / in_path;
   if (!FSys::exists(path))
     FSys::create_directories(path);
   return path;
 }
 
-void core_set::set_cache_root(const FSys::path &path) {
-  p_cache_root = path;
-}
-
 FSys::path core_set::get_data_root() const {
-  return p_data_root;
-}
-
-void core_set::set_data_root(const FSys::path &in_path) {
-  p_data_root = in_path;
+  return _root_data;
 }
 
 void core_set::get_cache_disk_path() {
-#if defined(_WIN32)
-  const static string_list dirs{"D:/",
-                                "E:/",
-                                "F:/",
-                                "G:/",
-                                "H:/",
-                                "I:/",
-                                "J:/",
-                                "K:/",
-                                "L:/"};
+  const static std::vector<FSys::path> dirs{"D:/",
+                                            "E:/",
+                                            "F:/",
+                                            "G:/",
+                                            "H:/",
+                                            "I:/",
+                                            "J:/",
+                                            "K:/",
+                                            "L:/"};
   for (auto &dir : dirs) {
     try {
       if (FSys::exists(dir)) {
         auto info = FSys::space(dir);
         if (((float)info.available / (float)info.capacity) > 0.2) {
-          p_cache_root = dir + "Doodle/cache";
+          set_root(dir / "Doodle");
           break;
         }
       }
@@ -230,11 +236,6 @@ void core_set::get_cache_disk_path() {
       std::cout << e.what() << std::endl;
     }
   }
-  if (p_cache_root.empty())
-    p_cache_root = FSys::path{"C:/"} / "Doodle" / "cache";
-#elif defined(__linux__)
-  p_cache_root = FSys::path{"/mnt/doodle"};
-#endif
 }
 
 FSys::path core_set::program_location() {
@@ -299,8 +300,7 @@ void core_set::from_json(const nlohmann::json &nlohmann_json_j) {
   nlohmann_json_j.at("p_sql_password").get_to(p_sql_password);
 }
 
-void core_set::set_max_tread(const std::uint16_t in)
-{
+void core_set::set_max_tread(const std::uint16_t in) {
   p_max_thread = in;
 }
 void core_set::set_department(const department &value) {
