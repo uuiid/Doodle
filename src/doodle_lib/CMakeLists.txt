@@ -37,6 +37,10 @@ add_library(doodle_lib
         external/ImGuiFileDialog/ImGuiFileDialog.cpp
         external/ImGuiFileDialog/ImGuiFileDialog.h
         external/ImGuiFileDialog/ImGuiFileDialogConfig.h
+        external/service-base/ServiceBase.cpp
+        external/service-base/ServiceBase.h
+        external/service-base/ServiceInstaller.cpp
+        external/service-base/ServiceInstaller.h
         doodle_lib.manifest
         )
 

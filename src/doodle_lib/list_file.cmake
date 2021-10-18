@@ -21,6 +21,7 @@ doodle_get_source(
         ${CMAKE_CURRENT_LIST_DIR}/screenshot_widght
         ${CMAKE_CURRENT_LIST_DIR}/thread_pool
         ${CMAKE_CURRENT_LIST_DIR}/toolkit
+        ${CMAKE_CURRENT_LIST_DIR}/server
         ${CMAKE_CURRENT_LIST_DIR}
 )
 

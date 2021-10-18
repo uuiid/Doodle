@@ -80,6 +80,7 @@ set(
     thread_pool/long_term.h
     thread_pool/thread_pool.h
     toolkit/toolkit.h
+    server/doodle_server.h
     doodle_app.h
     doodle_lib_all.h
     doodle_lib_fwd.h
@@ -145,5 +146,6 @@ set(
     screenshot_widght/screenshot_widght.cpp
     thread_pool/long_term.cpp
     toolkit/toolkit.cpp
+    server/doodle_server.cpp
     doodle_app.cpp
     doodle_lib_all.cpp)

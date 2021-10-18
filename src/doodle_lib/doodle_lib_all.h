@@ -83,6 +83,7 @@
 #include <doodle_lib/thread_pool/long_term.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 #include <doodle_lib/toolkit/toolkit.h>
+#include <doodle_lib/server/doodle_server.h>
 #include <doodle_lib/doodle_app.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/doodle_lib_pch.h>
