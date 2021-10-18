@@ -1,0 +1,16 @@
+//
+// Created by TD on 2021/10/18.
+//
+
+#ifndef DOODLE_SRC_DOODLE_LIB_CORE_PROGRAM_OPTIONS_H_
+#define DOODLE_SRC_DOODLE_LIB_CORE_PROGRAM_OPTIONS_H_
+
+
+
+class program_options {
+
+};
+
+
+
+#endif //DOODLE_SRC_DOODLE_LIB_CORE_PROGRAM_OPTIONS_H_
