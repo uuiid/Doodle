@@ -23,7 +23,7 @@
 namespace doodle {
 
 void toolkit::installMayaPath() {
-  auto mayadoc = core_set::getSet().get_doc().parent_path();
+  auto mayadoc = get_pwd();
   mayadoc /= "maya";
   mayadoc /= "modules";
   mayadoc /= "doodle";

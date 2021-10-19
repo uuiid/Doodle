@@ -28,7 +28,6 @@ enum class department {
  */
 
 class DOODLELIB_API core_set : public details::no_copy {
-
  public:
   static core_set &getSet();
 
@@ -55,7 +54,7 @@ class DOODLELIB_API core_set : public details::no_copy {
 
   //缓存路径
   [[nodiscard]] FSys::path get_root() const;
-  void set_root(const FSys::path &in_root) ;
+  void set_root(const FSys::path &in_root);
   [[nodiscard]] FSys::path get_cache_root() const;
   [[nodiscard]] FSys::path get_cache_root(const FSys::path &in_path) const;
   FSys::path get_data_root() const;
@@ -64,7 +63,7 @@ class DOODLELIB_API core_set : public details::no_copy {
   [[nodiscard]] FSys::path get_doc() const;
   // 配置文件的路径
   [[nodiscard]] FSys::path get_config_file() const;
-  void set_server_host(const string& in_host);
+  void set_server_host(const string &in_host);
 
   [[nodiscard]] ue4_setting &get_ue4_setting() const { return p_ue4_setting; };
 
@@ -171,7 +170,7 @@ void core_set::serialize(Archive &ar, std::uint32_t const version) {
         boost::serialization::make_nvp("maya_Path", p_mayaPath) &
         boost::serialization::make_nvp("p_max_thread", p_max_thread);
 }
-
+FSys::path DOODLELIB_API get_pwd();
 }  // namespace doodle
 namespace cereal {
 template <class Archive>
