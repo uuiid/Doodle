@@ -79,7 +79,7 @@ doodle_lib::~doodle_lib() {
 void doodle_lib::init_gui() {
   auto k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().get_meta_rpc_port());
 
-  DOODLE_LOG_DEBUG(k_ip)
+  DOODLE_LOG_DEBUG(k_ip);
 
   try {
     p_rpc_metadata_clien = new_object<rpc_metadata_client>(

@@ -30,6 +30,11 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
 
   doodle::program_options p_opt{};
   p_opt.command_line_parser(strCmdLine);
+  auto k_app = p_opt.make_app();
+  if (k_app)
+    return k_app->run();
+  else
+    return 0;
 
   // #ifndef NDEBUG
   //   auto& set                = doodle::core_set::getSet();
@@ -37,9 +42,6 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
   //   p_rpc_server_handle->run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
   // #endif
 
-  //   doodleLib->init_gui();
-  //   return doodle::new_object<doodle::doodle_app>()->run();
-  return 0;
 } catch (const std::exception& err) {
   std::cout << err.what() << std::endl;
   //  DOODLE_LOG_ERROR(err.what());

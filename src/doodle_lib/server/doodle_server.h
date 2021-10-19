@@ -21,6 +21,9 @@ class DOODLELIB_API doodle_server : public CServiceBase {
                 WORD wErrorCategoryId  = 0);
   ~doodle_server() = default;
 
+  // static bool install_server();
+  // static bool uninstall_server();
+
  protected:
   void OnStart(DWORD dwArgc, PWSTR* pszArgv) override;
   void OnStop() override;

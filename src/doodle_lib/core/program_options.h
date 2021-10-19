@@ -23,7 +23,9 @@ class DOODLELIB_API program_options {
   std::int32_t p_rpc_meta_port;
 
   bool p_use_gui;
-  bool p_use_server;
+  bool p_server;
+  bool p_install;
+  bool p_uninstall;
 
   doodle_lib_ptr p_lib;
 

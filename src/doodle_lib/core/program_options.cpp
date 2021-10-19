@@ -6,6 +6,10 @@
 
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/doodle_app.h>
+#include <doodle_lib/external/service-base/ServiceInstaller.h>
+#include <doodle_lib/server/doodle_server.h>
+
 namespace doodle {
 program_options::program_options()
     : p_opt_all("doodle opt"),
@@ -14,6 +18,10 @@ program_options::program_options()
       p_opt_server("doodle config server"),
       p_opt_general("doodle config general"),
       p_opt_advanced("doodle general config"),
+      p_use_gui(true),
+      p_server(false),
+      p_install(false),
+      p_uninstall(false),
       p_config_file(core_set::getSet().get_cache_root() / "doodle.ini"),
       p_max_thread(core_set::getSet().p_max_thread),
       p_root(core_set::getSet().get_root()),
@@ -24,16 +32,17 @@ program_options::program_options()
       p_mysql_port(core_set::getSet().get_sql_port()),
       p_rpc_file_port(core_set::getSet().get_file_rpc_port()),
       p_rpc_meta_port(core_set::getSet().get_meta_rpc_port()) {
+  std::cout << "开始构建命令行" << std::endl;
   p_opt_general.add_options()(
       "help,h", "help")(
       "version,v", "显示版本")(
       "config_file",
-      boost::program_options::value(&p_config_file)->default_value(p_config_file),
+      boost::program_options::value(&p_config_file),
       "配置文件的路径");
 
   p_opt_gui.add_options()(
       "gui,g",
-      boost::program_options::value(&p_use_gui)->default_value(true),
+      boost::program_options::bool_switch(&p_use_gui)->default_value(p_use_gui),
       "运行gui")(
       "root",
       boost::program_options::value(&p_root)->default_value(p_root),
@@ -43,9 +52,15 @@ program_options::program_options()
       "rpc地址");
 
   p_opt_server.add_options()(
+      "install,i",
+      boost::program_options::bool_switch(&p_install)->default_value(p_install),
+      "安装服务")(
+      "uninstall",
+      boost::program_options::bool_switch(&p_uninstall)->default_value(p_uninstall),
+      "卸载服务")(
       "server,s",
-      boost::program_options::value(&p_use_server)->default_value(false),
-      "安装服务器")(
+      boost::program_options::bool_switch(&p_server)->default_value(p_server),
+      "启动服务")(
       "mysql_address",
       boost::program_options::value(&p_mysql_ip)->default_value(p_mysql_ip),
       "mysql数据库地址")(
@@ -74,6 +89,7 @@ program_options::program_options()
   p_opt_file.add(p_opt_gui).add(p_opt_server).add(p_opt_advanced);
 }
 bool program_options::command_line_parser(const std::vector<string>& in_arg) {
+  std::cout << "开始解析命令行" << std::endl;
   boost::program_options::command_line_parser k_p{in_arg};
 
   k_p.options(p_opt_all).allow_unregistered().style(
@@ -85,7 +101,8 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
 
   if (k_vm.count("help")) {
     std::cout << p_opt_all << std::endl;
-    return true;
+    p_use_gui = false;
+    goto log;
   }
   if (k_vm.count("version")) {
     std::cout << fmt::format("doodle 版本是 {}.{}.{}.{} ",
@@ -94,12 +111,16 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
                              Doodle_VERSION_PATCH,
                              Doodle_VERSION_TWEAK)
               << std::endl;
-    return true;
+    p_use_gui = false;
+    goto log;
   }
   if (k_vm.count("config_file")) {
-    FSys::ifstream k_file{k_vm["config_file"].as<FSys::path>()};
-    if (k_file)
-      boost::program_options::store(boost::program_options::parse_config_file(k_file, p_opt_file), k_vm);
+    auto k_path = k_vm["config_file"].as<FSys::path>();
+    if (!k_path.empty() && FSys::exists(k_path)) {
+      FSys::ifstream k_file{k_vm["config_file"].as<FSys::path>()};
+      if (k_file)
+        boost::program_options::store(boost::program_options::parse_config_file(k_file, p_opt_file), k_vm);
+    }
   }
 
   boost::program_options::store(boost::program_options::parse_environment(p_opt_file, "doodle_"), k_vm);
@@ -108,7 +129,8 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   std::cout
       << fmt::format("使用配置 config_file : {}", p_config_file) << "\n"
       << fmt::format("使用配置 运行gui : {}", p_use_gui) << "\n"
-      << fmt::format("使用配置 运行服务器 : {}", p_use_server) << "\n"
+      << fmt::format("使用配置 运行服务 : {}", p_server) << "\n"
+      << fmt::format("使用配置 安装服务 : {}", p_install) << "\n"
       << fmt::format("使用配置 max_thread : {}", p_max_thread) << "\n"
       << fmt::format("使用配置 root : {}", p_root) << "\n"
       << fmt::format("使用配置 mysql_ip : {}", p_mysql_ip) << "\n"
@@ -118,6 +140,8 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
       << fmt::format("使用配置 mysql_port : {}", p_mysql_port) << "\n"
       << fmt::format("使用配置 rpc_file_port : {}", p_rpc_file_port) << "\n"
       << fmt::format("使用配置 rpc_meta_port : {}", p_rpc_meta_port) << "\n"
+      << "开始初始化库基础(日志类和程序日期数据库)"
+      << "\n"
       << std::endl;
 
   auto& set        = core_set::getSet();
@@ -131,11 +155,13 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   set.set_file_rpc_port(p_rpc_file_port);
   set.set_meta_rpc_port(p_rpc_meta_port);
 
+log:
   p_lib = new_object<doodle_lib>();
 
-  DOODLE_LOG_INFO("使用配置 config_file : {}", p_config_file);
+  DOODLE_LOG_INFO("配置文件解析为 config_file : {}", p_config_file);
   DOODLE_LOG_INFO("使用配置 运行gui : {}", p_use_gui)
-  DOODLE_LOG_INFO("使用配置 安装服务器 : {}", p_use_server)
+  DOODLE_LOG_INFO("使用配置 运行服务 : {}", p_server)
+  DOODLE_LOG_INFO("使用配置 安装服务 : {}", p_install)
   DOODLE_LOG_INFO("使用配置 max_thread : {}", p_max_thread);
   DOODLE_LOG_INFO("使用配置 root : {}", p_root);
   DOODLE_LOG_INFO("使用配置 mysql_ip : {}", p_mysql_ip);
@@ -145,10 +171,47 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   DOODLE_LOG_INFO("使用配置 mysql_port : {}", p_mysql_port);
   DOODLE_LOG_INFO("使用配置 rpc_file_port : {}", p_rpc_file_port);
   DOODLE_LOG_INFO("使用配置 rpc_meta_port : {}", p_rpc_meta_port);
+  DOODLE_LOG_INFO("初始化完成");
 
   return true;
 }
 doodle_app_ptr program_options::make_app() {
+  if (p_install) {
+    InstallService(
+        L"doodle_rpc_server",
+        L"doodle rpc",
+        L"doodle rpc",
+        L"--server",
+        SERVICE_AUTO_START,
+        nullptr,
+        nullptr,
+        nullptr,
+        true);
+    return nullptr;
+  }
+  if (p_uninstall) {
+    UninstallService(L"doodle_rpc_server");
+    return nullptr;
+  }
+  if (p_server) {
+    DOODLE_LOG_INFO("开始运行服务");
+    doodle_server k_ser{L"doodle_rpc_server"};
+    k_ser.SetCommandLine(0, nullptr);
+    if (!doodle_server::Run(k_ser)) {
+      DWORD dwErr = GetLastError();
+
+      DOODLE_LOG_ERROR("Service failed to run with error code: {}", dwErr);
+    }
+    return nullptr;
+  }
+  if (p_use_gui) {
+    DOODLE_LOG_INFO("开始gui初始化");
+    p_lib->init_gui();
+    DOODLE_LOG_INFO("开始gui显示gui界面");
+    auto k_gui = new_object<doodle_app>();
+    return k_gui;
+  }
+
   return nullptr;
 };
 

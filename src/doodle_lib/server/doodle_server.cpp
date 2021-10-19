@@ -3,6 +3,7 @@
 //
 
 #include "doodle_server.h"
+
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/rpc/rpc_server_handle.h>
 namespace doodle {
@@ -22,7 +23,6 @@ doodle_server::doodle_server(PCWSTR pszServiceName,
 }
 
 void doodle_server::OnStart(DWORD dwArgc, PWSTR* pszArgv) {
-  
   auto& k_set = core_set::getSet();
   p_h->run_server(k_set.get_meta_rpc_port(), k_set.get_file_rpc_port());
 }
