@@ -10,10 +10,8 @@
 namespace doodle {
 
 class DOODLELIB_API doodle_lib : public details::no_copy {
-  friend DOODLELIB_API doodle_lib_ptr make_doodle_lib();
 
   static doodle_lib* p_install;
-  doodle_lib();
 
   thread_pool_ptr p_thread_pool;
   project_ptr p_curr_project;
@@ -24,10 +22,12 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
   FSys::path create_time_database();
 
  public:
+  doodle_lib();
   virtual ~doodle_lib();
 
   static doodle_lib& Get();
-
+  virtual void post_constructor();
+  
   void set_thread_pool_size();
   thread_pool_ptr get_thread_pool();
 

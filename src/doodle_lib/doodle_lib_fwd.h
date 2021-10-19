@@ -482,7 +482,6 @@ class trans_files;
 using trans_file_ptr = std::shared_ptr<trans_file>;
 }  // namespace rpc_trans
 class Doodle;
-[[maybe_unused]] DOODLELIB_API doodle_lib_ptr make_doodle_lib();
 
 namespace details {
 template <class in_type>

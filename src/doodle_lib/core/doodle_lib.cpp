@@ -59,17 +59,17 @@ doodle_lib& doodle_lib::Get() {
   return *p_install;
 }
 
+void doodle_lib::post_constructor() {
+  p_install = this;
+}
+
 void doodle_lib::set_thread_pool_size() {
   p_thread_pool = new_object<thread_pool>(core_set::getSet().p_max_thread);
 }
 thread_pool_ptr doodle_lib::get_thread_pool() {
   return p_thread_pool;
 }
-[[maybe_unused]] doodle_lib_ptr make_doodle_lib() {
-  auto ptr              = std::unique_ptr<doodle_lib>(new doodle_lib{});
-  doodle_lib::p_install = ptr.get();
-  return ptr;
-}
+
 doodle_lib::~doodle_lib() {
   p_project_vector.clear();
   p_curr_project.reset();

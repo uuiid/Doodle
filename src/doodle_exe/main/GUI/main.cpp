@@ -27,7 +27,6 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                    boost::locale::formatting_facet ^
                    boost::locale::parsing_facet);
   std::locale::global(k_gen("zh_CN.UTF-8"));
-  auto doodleLib = doodle::make_doodle_lib();
 
   doodle::program_options p_opt{};
   p_opt.command_line_parser(strCmdLine);
