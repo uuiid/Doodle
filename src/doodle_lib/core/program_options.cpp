@@ -7,7 +7,6 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/doodle_app.h>
-#include <doodle_lib/external/service-base/ServiceInstaller.h>
 #include <doodle_lib/server/doodle_server.h>
 
 namespace doodle {
@@ -22,6 +21,8 @@ program_options::program_options()
       p_server(false),
       p_install(false),
       p_uninstall(false),
+      p_help(false),
+      p_version(false),
       p_config_file(core_set::getSet().get_cache_root() / "doodle.ini"),
       p_max_thread(core_set::getSet().p_max_thread),
       p_root(core_set::getSet().get_root()),
@@ -34,8 +35,12 @@ program_options::program_options()
       p_rpc_meta_port(core_set::getSet().get_meta_rpc_port()) {
   std::cout << "开始构建命令行" << std::endl;
   p_opt_general.add_options()(
-      "help,h", "help")(
-      "version,v", "显示版本")(
+      "help,h",
+      boost::program_options::bool_switch(&p_help)->default_value(p_help),
+      "help")(
+      "version,v",
+      boost::program_options::bool_switch(&p_version)->default_value(p_version),
+      "显示版本")(
       "config_file",
       boost::program_options::value(&p_config_file),
       "配置文件的路径");
@@ -89,42 +94,28 @@ program_options::program_options()
   p_opt_file.add(p_opt_gui).add(p_opt_server).add(p_opt_advanced);
 }
 bool program_options::command_line_parser(const std::vector<string>& in_arg) {
+  p_arg = in_arg;
   std::cout << "开始解析命令行" << std::endl;
   boost::program_options::command_line_parser k_p{in_arg};
 
   k_p.options(p_opt_all).allow_unregistered().style(
       boost::program_options::command_line_style::default_style |
       boost::program_options::command_line_style::allow_slash_for_short);
-  auto k_opt = k_p.run();
-  boost::program_options::variables_map k_vm{};
-  boost::program_options::store(k_opt, k_vm);
 
-  if (k_vm.count("help")) {
-    std::cout << p_opt_all << std::endl;
-    p_use_gui = false;
-    goto log;
-  }
-  if (k_vm.count("version")) {
-    std::cout << fmt::format("doodle 版本是 {}.{}.{}.{} ",
-                             Doodle_VERSION_MAJOR,
-                             Doodle_VERSION_MINOR,
-                             Doodle_VERSION_PATCH,
-                             Doodle_VERSION_TWEAK)
-              << std::endl;
-    p_use_gui = false;
-    goto log;
-  }
-  if (k_vm.count("config_file")) {
-    auto k_path = k_vm["config_file"].as<FSys::path>();
+  auto k_opt = k_p.run();
+  boost::program_options::store(k_opt, p_vm);
+
+  if (p_vm.count("config_file")) {
+    auto k_path = p_vm["config_file"].as<FSys::path>();
     if (!k_path.empty() && FSys::exists(k_path)) {
-      FSys::ifstream k_file{k_vm["config_file"].as<FSys::path>()};
+      FSys::ifstream k_file{p_vm["config_file"].as<FSys::path>()};
       if (k_file)
-        boost::program_options::store(boost::program_options::parse_config_file(k_file, p_opt_file), k_vm);
+        boost::program_options::store(boost::program_options::parse_config_file(k_file, p_opt_file), p_vm);
     }
   }
 
-  boost::program_options::store(boost::program_options::parse_environment(p_opt_file, "doodle_"), k_vm);
-  boost::program_options::notify(k_vm);
+  boost::program_options::store(boost::program_options::parse_environment(p_opt_file, "doodle_"), p_vm);
+  boost::program_options::notify(p_vm);
 
   std::cout
       << fmt::format("使用配置 config_file : {}", p_config_file) << "\n"
@@ -144,6 +135,21 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
       << "\n"
       << std::endl;
 
+  if (p_help) {
+    std::cout << p_opt_all << std::endl;
+    p_use_gui = false;
+  }
+  if (p_version) {
+    std::cout << fmt::format("doodle 版本是 {}.{}.{}.{} ",
+                             Doodle_VERSION_MAJOR,
+                             Doodle_VERSION_MINOR,
+                             Doodle_VERSION_PATCH,
+                             Doodle_VERSION_TWEAK)
+              << std::endl;
+    p_use_gui = false;
+  }
+
+
   auto& set        = core_set::getSet();
   set.p_max_thread = p_max_thread;
   set.set_root(p_root);
@@ -155,7 +161,6 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   set.set_file_rpc_port(p_rpc_file_port);
   set.set_meta_rpc_port(p_rpc_meta_port);
 
-log:
   p_lib = new_object<doodle_lib>();
 
   DOODLE_LOG_INFO("配置文件解析为 config_file : {}", p_config_file);
@@ -177,20 +182,11 @@ log:
 }
 doodle_app_ptr program_options::make_app() {
   if (p_install) {
-    InstallService(
-        L"doodle_rpc_server",
-        L"doodle rpc",
-        L"doodle rpc",
-        L"--server",
-        SERVICE_AUTO_START,
-        nullptr,
-        nullptr,
-        nullptr,
-        true);
+    doodle_server::install_server();
     return nullptr;
   }
   if (p_uninstall) {
-    UninstallService(L"doodle_rpc_server");
+    doodle_server::uninstall_server();
     return nullptr;
   }
   if (p_server) {

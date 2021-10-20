@@ -26,9 +26,12 @@ class DOODLELIB_API program_options {
   bool p_server;
   bool p_install;
   bool p_uninstall;
+  bool p_help;
+  bool p_version;
 
   doodle_lib_ptr p_lib;
-
+  
+  std::vector<string> p_arg;
  private:
   /**
    * @brief 所有选项， 命令行选项
@@ -61,6 +64,8 @@ class DOODLELIB_API program_options {
    *
    */
   boost::program_options::options_description p_opt_advanced;
+
+  boost::program_options::variables_map p_vm;
 
  public:
   program_options();
