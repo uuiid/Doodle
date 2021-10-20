@@ -129,25 +129,8 @@ class camera:
 
     def __init__(self):
         self.maya_cam = None  # type: pymel.core.nodetypes.Transform
-        self.filter_cam()
         self.loa = None
         self.priority_num = 0
-
-    def filter_cam(self):
-        # 过滤cam
-        for cam in pymel.core.ls(type='camera', l=True):
-            ex = True
-            for test in filter(None, cam.fullPath().split("|")):
-                if re.findall(self.exclude, test):
-                    ex = False
-            if not re.findall("_", cam.name()):
-                ex = False
-            print("cam {} is {}".format(cam.fullPath(), ex))
-            if ex:
-                self.maya_cam = cam.getTransform()
-                print("select cam {}".format(self.maya_cam))
-                return
-        print("not select cam {}".format(self.maya_cam))
 
     def create_move(self, out_path=None,
                     start_frame=None,
@@ -343,31 +326,40 @@ class camera_filter:
     def compute(self):
         for cam in self.cam_list:
             self._compute(cam=cam)
-        self.cam_list.sort(key=lambda c: c.priority_num)
+        self.cam_list.sort(key=lambda c: c.priority_num, reverse=True)
         print("--------------------- compute cam -----------------------")
-        print("\n".join(self.cam_list))
+        print("\n".join([str(i) for i in self.cam_list]))
 
     def _compute(self, cam):
         # type:(camera)->None
         # 匹配是否有集数和镜头标志
-        if re.findall("""ep\d+_sc\d+""", cam.maya_cam.name(), re.L):
+        if re.findall("""ep\d+_sc\d+""", cam.maya_cam.name(), re.I):
             cam.priority_num += 30
 
-        if re.findall("""ep\d+""", cam.maya_cam.name(), re.L):
+        if re.findall("""ep\d+""", cam.maya_cam.name(), re.I):
             cam.priority_num += 10
 
-        if re.findall("""sc\d+""", cam.maya_cam.name(), re.L):
+        if re.findall("""sc\d+""", cam.maya_cam.name(), re.I):
             cam.priority_num += 10
+
+        if re.findall("""ep_\d+_sc_\d+""", cam.maya_cam.name(), re.I):
+            cam.priority_num += 10
+
+        if re.findall("""ep_\d+""", cam.maya_cam.name(), re.I):
+            cam.priority_num += 5
+
+        if re.findall("""sc_\d+""", cam.maya_cam.name(), re.I):
+            cam.priority_num += 5
 
         # 匹配是否有大写开头的表示项目的字符
         if re.findall("""^[A-Z]+_""", cam.maya_cam.name(stripNamespace=True)):
-            cam.priority_num += 5
+            cam.priority_num += 2
 
         # 大致上匹配镜头和集数的
         if re.findall("""_\d+_\d+""", cam.maya_cam.name(stripNamespace=True)):
-            cam.priority_num += 5
+            cam.priority_num += 2
 
-    def exclude(self):
+    def exclude_fun(self):
         for cam in self.cam_list:
             for test in filter(None, cam.maya_cam.fullPath().split("|")):
                 if re.findall(self.exclude, test):
@@ -377,14 +369,18 @@ class camera_filter:
             if not re.findall("_", cam.maya_cam.name(stripNamespace=True)):
                 cam.priority_num = -1
 
-        filter(lambda c: c.priority_num > 1, self.cam_list)
+        self.cam_list = filter(lambda c: c.priority_num >= 0, self.cam_list)
         print("--------------------- filter cam re -----------------------")
-        print("\n".join(self.cam_list))
+        print("\n".join([str(i) for i in self.cam_list]))
 
     def __call__(self):
-        self.exclude()
+        # type:()->camera
+        self.exclude_fun()
         self.compute()
-        pass
+        if len(self.cam_list) > 0:
+            return self.cam_list[0]
+        else:
+            return None
 
 
 class meateral():
@@ -790,7 +786,7 @@ class fbx_export():
                 self.ref.append(k_ref)
         for ref_obj in self.ref:
             self.fbx_group.append(fbx_group_file(ref_obj))
-        self.cam = camera()
+        self.cam = camera_filter()()
 
     def export_fbx_mesh(self):
         self.cam()
@@ -811,7 +807,7 @@ class cloth_export():
 
         self.colth_ref = []  # type: list[references_file]
         self.qcolth_group = []  # type: list[cloth_group_file]
-        self.cam = camera()  # 调整camera的位置， 保证在替换引用之前找到cam
+        self.cam = camera_filter()()  # 调整camera的位置， 保证在替换引用之前找到cam
         self.select_sim_references_file()
         self.qcolth_group = [cloth_group_file(
             i) for i in self.colth_ref if i.is_valid()]
