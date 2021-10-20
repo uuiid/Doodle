@@ -28,7 +28,7 @@ doodle_lib::doodle_lib()
       long_task_list(),
       mutex() {
   core_set::getSet();
-  logger::doodle_initLog();
+
 #ifdef _WIN32
   /// 在这里我们初始化date tz 时区数据库
   auto k_path = create_time_database();
@@ -74,7 +74,6 @@ doodle_lib::~doodle_lib() {
   p_project_vector.clear();
   p_curr_project.reset();
 
-  logger::clear();
 }
 void doodle_lib::init_gui() {
   auto k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().get_meta_rpc_port());

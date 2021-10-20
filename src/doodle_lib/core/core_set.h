@@ -23,11 +23,17 @@ enum class department {
   paint
 };
 
-/*
- *全局静态设置类
+class core_set_init;
+
+/**
+ * @brief 全局静态设置类
+ *
+ * @warning 这个类本身的初始化极为基本和简单， 初始化请使用 core_set_init 分步调用
  */
 
 class DOODLELIB_API core_set : public details::no_copy {
+  friend core_set_init;
+
  public:
   static core_set &getSet();
 
@@ -80,22 +86,18 @@ class DOODLELIB_API core_set : public details::no_copy {
   [[nodiscard]] int get_file_rpc_port() const;
   void set_file_rpc_port(int in_fileRpcPort);
 
-  void write_doodle_local_set();
-
   boost::uuids::uuid get_uuid();
   std::string get_uuid_str();
 
   static std::size_t get_block_size() {
-    static std::size_t k_i{64 * 1024};
-    return k_i;
+    static std::size_t l_k_i{64 * 1024};
+    return l_k_i;
   };
 
   std::string get_server_host();
 
-  void from_json(const nlohmann::json &nlohmann_json_j);
-
   std::uint16_t p_max_thread;
-  void set_max_tread(const std::uint16_t in);
+  void set_max_tread(std::uint16_t in);
   /**
    * @brief 全局是否停止， 服务器使用
    */
@@ -115,10 +117,6 @@ class DOODLELIB_API core_set : public details::no_copy {
    *
    */
   core_set();
-  //获得缓存磁盘路径
-  void get_cache_disk_path();
-  //获得本地的有限设置
-  void get_setting();
 
   static std::string config_file_name();
 
@@ -154,6 +152,19 @@ class DOODLELIB_API core_set : public details::no_copy {
   void serialize(Archive &ar, std::uint32_t const version);
 };
 
+class DOODLELIB_API core_set_init {
+
+  core_set& p_set;
+ public:
+  core_set_init();
+
+
+  bool read_file();
+  bool write_file();
+  bool find_cache_dir();
+};
+
+
 template <class Archive>
 void core_set::serialize(Archive &ar, std::uint32_t const version) {
   if (version == 7)
@@ -171,6 +182,9 @@ void core_set::serialize(Archive &ar, std::uint32_t const version) {
         boost::serialization::make_nvp("p_max_thread", p_max_thread);
 }
 FSys::path DOODLELIB_API get_pwd();
+
+
+
 }  // namespace doodle
 namespace cereal {
 template <class Archive>

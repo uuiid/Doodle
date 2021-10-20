@@ -55,7 +55,7 @@ void setting_windows::save() {
   set.set_max_tread(*p_batch_max);
   set.get_ue4_setting().set_path(*p_ue_path);
   set.get_ue4_setting().set_version(*p_ue_version);
-  set.write_doodle_local_set();
+  core_set_init{}.write_file();
   doodle_lib::Get().set_thread_pool_size();
 }
 }  // namespace doodle

@@ -2,15 +2,17 @@
 // Created by TD on 2021/10/20.
 //
 
-#ifndef DOODLE_SRC_DOODLE_LIB_CORE_DOODLE_APP_BASE_H_
-#define DOODLE_SRC_DOODLE_LIB_CORE_DOODLE_APP_BASE_H_
+#pragma once
+#include <doodle_lib/doodle_lib_fwd.h>
+namespace doodle {
 
+class DOODLELIB_API doodle_app_base {
+  program_options_ptr p_program_options;
 
+ public:
+  doodle_app_base();
 
-class doodle_app_base {
-
+  virtual std::int32_t run();
 };
 
-
-
-#endif //DOODLE_SRC_DOODLE_LIB_CORE_DOODLE_APP_BASE_H_
+}  // namespace doodle

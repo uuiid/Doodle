@@ -80,39 +80,10 @@ void core_set::set_maya_path(const FSys::path &in_MayaPath) noexcept {
   p_mayaPath = in_MayaPath;
 }
 
-void core_set::write_doodle_local_set() {
-  p_ue4_setting.test_value();
-  if (p_ue4_setting.has_path() && !FSys::exists(p_ue4_setting.get_path() / staticValue::ue_path_obj())) {
-    p_ue4_setting.set_path({});
-    throw file_error{p_ue4_setting.get_path(), " 在路径中没有找到ue,不保存"};
-  }
-  if (!FSys::exists(p_mayaPath / "maya.exe")) {
-    throw file_error{p_mayaPath, " 在路径中没有找到maya,不保存"};
-  }
-
-  FSys::ofstream outjosn{p_doc / config_file_name(), std::ios::out | std::ios::binary};
-  boost::archive::text_oarchive out{outjosn};
-  out << *this;
-}
-
-void core_set::get_setting() {
-  static FSys::path k_settingFileName = get_doc() / config_file_name();
-  if (FSys::exists(k_settingFileName)) {
-    FSys::path strFile(k_settingFileName);
-    FSys::ifstream inJosn{k_settingFileName, std::ifstream::binary};
-
-    boost::archive::text_iarchive out{inJosn};
-    try {
-      out >> *this;
-    } catch (const boost::archive::archive_exception &err) {
-      DOODLE_LOG_DEBUG(err.what());
-    }
-  }
-}
 core_set::core_set()
     : p_user_("user"),
       p_department_(department::None_),
-      p_doc(),
+      p_doc(FSys::current_path()),
       p_uuid_gen(),
       p_ue4_setting(ue4_setting::Get()),
       p_mayaPath(),
@@ -135,24 +106,9 @@ core_set::core_set()
       p_stop(false),
       p_mutex(),
       p_condition(),
-      p_root(FSys::temp_directory_path() / "Doodle") {
-  p_doc = FSys::current_path();
-
-  get_cache_disk_path();
-
-  if (!FSys::exists(p_doc))
-    FSys::create_directories(p_doc);
-  if (!FSys::exists(get_cache_root())) {
-    FSys::create_directories(get_cache_root());
-  }
-  if (!FSys::exists(get_data_root())) {
-    FSys::create_directories(get_data_root());
-  }
-  findMaya();
-  if (p_doc.empty())
-    p_doc = get_root() / "doc";
-
-  get_setting();
+      p_root(FSys::temp_directory_path() / "Doodle"),
+      _root_cache(p_root / "cache"),
+      _root_data(p_root / "data") {
 }
 
 boost::uuids::uuid core_set::get_uuid() {
@@ -217,31 +173,6 @@ FSys::path core_set::get_data_root() const {
   return _root_data;
 }
 
-void core_set::get_cache_disk_path() {
-  const static std::vector<FSys::path> dirs{"D:/",
-                                            "E:/",
-                                            "F:/",
-                                            "G:/",
-                                            "H:/",
-                                            "I:/",
-                                            "J:/",
-                                            "K:/",
-                                            "L:/"};
-  for (auto &dir : dirs) {
-    try {
-      if (FSys::exists(dir)) {
-        auto info = FSys::space(dir);
-        if (((float)info.available / (float)info.capacity) > 0.2) {
-          set_root(dir / "Doodle");
-          break;
-        }
-      }
-    } catch (const FSys::filesystem_error &e) {
-      std::cout << e.what() << std::endl;
-    }
-  }
-}
-
 FSys::path core_set::program_location() {
   return FSys::current_path();
 }
@@ -295,14 +226,6 @@ void core_set::set_file_rpc_port(int in_fileRpcPort) {
 std::string core_set::get_server_host() {
   return p_server_host;
 }
-void core_set::from_json(const nlohmann::json &nlohmann_json_j) {
-  nlohmann_json_j.at("p_sql_port").get_to(p_sql_port);
-  nlohmann_json_j.at("p_meta_rpc_port").get_to(p_meta_rpc_port);
-  nlohmann_json_j.at("p_file_rpc_port").get_to(p_file_rpc_port);
-  nlohmann_json_j.at("p_sql_host").get_to(p_sql_host);
-  nlohmann_json_j.at("p_sql_user").get_to(p_sql_user);
-  nlohmann_json_j.at("p_sql_password").get_to(p_sql_password);
-}
 
 void core_set::set_max_tread(const std::uint16_t in) {
   p_max_thread = in;
@@ -311,4 +234,73 @@ void core_set::set_department(const department &value) {
   p_department_ = value;
 }
 
+core_set_init::core_set_init()
+    : p_set(core_set::getSet()) {
+  if (!FSys::exists(p_set.p_doc))
+    FSys::create_directories(p_set.p_doc);
+  if (!FSys::exists(p_set.get_cache_root())) {
+    FSys::create_directories(p_set.get_cache_root());
+  }
+  if (!FSys::exists(p_set.get_data_root())) {
+    FSys::create_directories(p_set.get_data_root());
+  }
+}
+bool core_set_init::read_file() {
+  static FSys::path l_k_setting_file_name = p_set.get_doc() / p_set.config_file_name();
+  if (FSys::exists(l_k_setting_file_name)) {
+    FSys::path l_str_file(l_k_setting_file_name);
+    FSys::ifstream l_in_josn{l_k_setting_file_name, std::ifstream::binary};
+
+    boost::archive::text_iarchive l_out{l_in_josn};
+    try {
+      l_out >> p_set;
+    } catch (const boost::archive::archive_exception &err) {
+      DOODLE_LOG_DEBUG(err.what());
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+bool core_set_init::write_file() {
+  p_set.p_ue4_setting.test_value();
+  if (p_set.p_ue4_setting.has_path() && !FSys::exists(p_set.p_ue4_setting.get_path() / staticValue::ue_path_obj())) {
+    p_set.p_ue4_setting.set_path({});
+    throw file_error{p_set.p_ue4_setting.get_path(), " 在路径中没有找到ue,不保存"};
+  }
+  if (!FSys::exists(p_set.p_mayaPath / "maya.exe")) {
+    throw file_error{p_set.p_mayaPath, " 在路径中没有找到maya,不保存"};
+  }
+
+  FSys::ofstream l_ofstream{p_set.p_doc / p_set.config_file_name(), std::ios::out | std::ios::binary};
+  boost::archive::text_oarchive l_out{l_ofstream};
+  l_out << p_set;
+  return true;
+}
+bool core_set_init::find_cache_dir() {
+  const static std::vector<FSys::path> dirs{"D:/",
+                                            "E:/",
+                                            "F:/",
+                                            "G:/",
+                                            "H:/",
+                                            "I:/",
+                                            "J:/",
+                                            "K:/",
+                                            "L:/"};
+  auto l_item = std::any_of(dirs.begin(), dirs.end(), [this](const FSys::path &in_path) {
+    try {
+      if (FSys::exists(in_path)) {
+        auto info = FSys::space(in_path);
+        if (((float)info.available / (float)info.capacity) > 0.2) {
+          p_set.set_root(in_path / "Doodle");
+          return true;
+        }
+      }
+    } catch (const FSys::filesystem_error &e) {
+      DOODLE_LOG_ERROR(e.what())
+    }
+    return false;
+  });
+  return l_item;
+}
 }  // namespace doodle

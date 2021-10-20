@@ -9,11 +9,8 @@
 #pragma once
 
 #include <DoodleConfig.h>
-#include <spdlog/spdlog.h>
-
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
 #include <doodle_lib_export.h>
+#include <spdlog/spdlog.h>
 
 #define DOODLE_LOG_DEBUG(...) \
   SPDLOG_INFO(__VA_ARGS__);
@@ -27,10 +24,39 @@
 #define DOODLE_LOG_ERROR(...) \
   SPDLOG_ERROR(__VA_ARGS__);
 
-namespace doodle::logger {
+namespace doodle {
 
-void DOODLELIB_API doodle_initLog(const std::string &logPath = "doodle",
-                                  std::size_t logMaxSize = 16 * 1024 * 1024, bool async = true);
+/**
+ * @brief 在程序初始化时log就最先运行, 但是输出在了临时文件位置中,
+ */
+class DOODLELIB_API logger_ctrl {
+  std::filesystem::path p_log_path;
+  std::string p_log_name;
 
-void DOODLELIB_API clear();
-}  // namespace doodle::logger
+  void init_temp_log();
+  logger_ctrl();
+  static logger_ctrl* _self;
+
+  void init_log();
+
+ public:
+  virtual ~logger_ctrl();
+
+  enum log_type {
+    none   = 0,
+    guiexe = 1,
+    server = 2,
+  };
+  static logger_ctrl& get_log();
+
+  /**
+   * @brief 这个是在运行app时重新调整日志， 这样可以正确的记录在app指定的位置上
+   * @param in_name log的文件名称， 不要使用路径， 路径使用 core_set::set_root 修改
+   * @return 是否成功
+   */
+  bool set_log_name(const std::string& in_name);
+  virtual void post_constructor();
+};
+
+
+}  // namespace doodle

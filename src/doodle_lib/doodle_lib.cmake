@@ -3,6 +3,7 @@ set(
     core/ContainerDevice.h
     core/core_set.h
     core/core_sql.h
+    core/doodle_app_base.h
     core/doodle_lib.h
     core/filesystem_extend.h
     core/observable_container.h
@@ -91,6 +92,7 @@ set(
     DOODLELIB_SOURCE
     core/core_set.cpp
     core/core_sql.cpp
+    core/doodle_app_base.cpp
     core/doodle_lib.cpp
     core/filesystem_extend.cpp
     core/open_file_dialog.cpp
