@@ -368,7 +368,7 @@ class camera_filter:
                     cam.priority_num = 1
             if not re.findall("_", cam.maya_cam.name(stripNamespace=True)):
                 cam.priority_num = -1
-
+        self.old_cam = self.cam_list
         self.cam_list = filter(lambda c: c.priority_num >= 0, self.cam_list)
         print("--------------------- filter cam re -----------------------")
         print("\n".join([str(i) for i in self.cam_list]))
@@ -380,7 +380,7 @@ class camera_filter:
         if len(self.cam_list) > 0:
             return self.cam_list[0]
         else:
-            return None
+            return self.old_cam[0]
 
 
 class meateral():
