@@ -1,0 +1,16 @@
+//
+// Created by TD on 2021/10/20.
+//
+
+#ifndef DOODLE_SRC_DOODLE_LIB_CORE_DOODLE_APP_BASE_H_
+#define DOODLE_SRC_DOODLE_LIB_CORE_DOODLE_APP_BASE_H_
+
+
+
+class doodle_app_base {
+
+};
+
+
+
+#endif //DOODLE_SRC_DOODLE_LIB_CORE_DOODLE_APP_BASE_H_
