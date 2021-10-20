@@ -131,6 +131,7 @@ class camera:
         self.maya_cam = None  # type: pymel.core.nodetypes.Transform
         self.filter_cam()
         self.loa = None
+        self.priority_num = 0
 
     def filter_cam(self):
         # 过滤cam
@@ -322,6 +323,69 @@ class camera:
                 doodle_work_space.maya_file.name_not_ex
         self.export(str)
 
+    def __str__(self):
+        return "camera is {}, priority num is {}".format(
+            self.maya_cam.fullPath(),
+            self.priority_num)
+
+
+class camera_filter:
+    exclude = "(front|persp|side|top|camera)"
+
+    def __init__(self):
+        self.cam_list = []  # type:list[camera]
+        for cam in pymel.core.ls(type='camera', l=True):
+            l_c = camera()
+            l_c.maya_cam = cam.getTransform()
+            print("get {}".format(l_c))
+            self.cam_list.append(l_c)
+
+    def compute(self):
+        for cam in self.cam_list:
+            self._compute(cam=cam)
+        self.cam_list.sort(key=lambda c: c.priority_num)
+        print("--------------------- compute cam -----------------------")
+        print("\n".join(self.cam_list))
+
+    def _compute(self, cam):
+        # type:(camera)->None
+        # 匹配是否有集数和镜头标志
+        if re.findall("""ep\d+_sc\d+""", cam.maya_cam.name(), re.L):
+            cam.priority_num += 30
+
+        if re.findall("""ep\d+""", cam.maya_cam.name(), re.L):
+            cam.priority_num += 10
+
+        if re.findall("""sc\d+""", cam.maya_cam.name(), re.L):
+            cam.priority_num += 10
+
+        # 匹配是否有大写开头的表示项目的字符
+        if re.findall("""^[A-Z]+_""", cam.maya_cam.name(stripNamespace=True)):
+            cam.priority_num += 5
+
+        # 大致上匹配镜头和集数的
+        if re.findall("""_\d+_\d+""", cam.maya_cam.name(stripNamespace=True)):
+            cam.priority_num += 5
+
+    def exclude(self):
+        for cam in self.cam_list:
+            for test in filter(None, cam.maya_cam.fullPath().split("|")):
+                if re.findall(self.exclude, test):
+                    cam.priority_num = -1
+                else:
+                    cam.priority_num = 1
+            if not re.findall("_", cam.maya_cam.name(stripNamespace=True)):
+                cam.priority_num = -1
+
+        filter(lambda c: c.priority_num > 1, self.cam_list)
+        print("--------------------- filter cam re -----------------------")
+        print("\n".join(self.cam_list))
+
+    def __call__(self):
+        self.exclude()
+        self.compute()
+        pass
+
 
 class meateral():
     def __init__(self, meateral_obj):
@@ -455,7 +519,7 @@ class references_file():
         #         "rig", "cloth")
 
     def select_to_ref(self, maya_obj):
-        # type: (Any)->bool
+        # type: (pymel.core.nodetypes.Transform)->bool
         try:
             ref = pymel.core.referenceQuery(
                 maya_obj, referenceNode=True, topReference=True)
