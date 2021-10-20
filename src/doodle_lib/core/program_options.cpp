@@ -24,16 +24,16 @@ program_options::program_options()
       p_uninstall(false),
       p_help(false),
       p_version(false),
-      p_config_file(core_set::getSet().get_cache_root() / "doodle.ini"),
-      p_max_thread(core_set::getSet().p_max_thread),
-      p_root(core_set::getSet().get_root()),
-      p_mysql_ip(core_set::getSet().get_sql_host()),
-      p_mysql_user(core_set::getSet().get_sql_user()),
-      p_mysql_pow(core_set::getSet().get_sql_password()),
-      p_rpc_setver_ip(core_set::getSet().get_server_host()),
-      p_mysql_port(core_set::getSet().get_sql_port()),
-      p_rpc_file_port(core_set::getSet().get_file_rpc_port()),
-      p_rpc_meta_port(core_set::getSet().get_meta_rpc_port()) {
+      p_config_file(),
+      p_max_thread(),
+      p_root(),
+      p_mysql_ip(),
+      p_mysql_user(),
+      p_mysql_pow(),
+      p_rpc_setver_ip(),
+      p_mysql_port(),
+      p_rpc_file_port(),
+      p_rpc_meta_port() {
   DOODLE_LOG_INFO("开始初始化基本配置");
 
   core_set_init k_init{};
@@ -49,7 +49,7 @@ program_options::program_options()
       boost::program_options::bool_switch(&p_version)->default_value(p_version),
       "显示版本")(
       "config_file",
-      boost::program_options::value(&p_config_file),
+      boost::program_options::value(&p_config_file)->default_value({}),
       "配置文件的路径");
 
   p_opt_gui.add_options()(
@@ -57,10 +57,10 @@ program_options::program_options()
       boost::program_options::bool_switch(&p_use_gui)->default_value(p_use_gui),
       "运行gui")(
       "root",
-      boost::program_options::value(&p_root)->default_value(p_root),
+      boost::program_options::value(&p_root)->default_value({}),
       "数据根目录")(
       "rpc_address",
-      boost::program_options::value(&p_rpc_setver_ip)->default_value(p_rpc_setver_ip),
+      boost::program_options::value(&p_rpc_setver_ip)->default_value({}),
       "rpc地址");
 
   p_opt_server.add_options()(
@@ -74,27 +74,27 @@ program_options::program_options()
       boost::program_options::bool_switch(&p_server)->default_value(p_server),
       "启动服务")(
       "mysql_address",
-      boost::program_options::value(&p_mysql_ip)->default_value(p_mysql_ip),
+      boost::program_options::value(&p_mysql_ip)->default_value({}),
       "mysql数据库地址")(
       "mysql_user",
-      boost::program_options::value(&p_mysql_user)->default_value(p_mysql_user),
+      boost::program_options::value(&p_mysql_user)->default_value({}),
       "mysql数据库用户名")(
       "mysql_password",
-      boost::program_options::value(&p_mysql_pow)->default_value(p_mysql_pow),
+      boost::program_options::value(&p_mysql_pow)->default_value({}),
       "mysql数据库密码");
 
   p_opt_advanced.add_options()(
       "rpc_file_prot",
-      boost::program_options::value(&p_rpc_file_port)->default_value(p_rpc_file_port),
+      boost::program_options::value(&p_rpc_file_port)->default_value({-1}),
       "rpc文件服务器端口")(
       "rpc_meta_prot",
-      boost::program_options::value(&p_rpc_meta_port)->default_value(p_rpc_meta_port),
+      boost::program_options::value(&p_rpc_meta_port)->default_value({-1}),
       "rpc元数据服务器端口")(
       "mysql_prot",
-      boost::program_options::value(&p_mysql_port)->default_value(p_mysql_port),
+      boost::program_options::value(&p_mysql_port)->default_value({-1}),
       "mysql数据库端口")(
       "thread_max",
-      boost::program_options::value(&p_max_thread)->default_value(p_max_thread),
+      boost::program_options::value(&p_max_thread)->default_value({-1}),
       "线程池大小\n(默认文硬件最大限制 - 2)");
 
   p_opt_all.add(p_opt_general).add(p_opt_gui).add(p_opt_server).add(p_opt_advanced);
@@ -123,21 +123,25 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
 
   boost::program_options::store(boost::program_options::parse_environment(p_opt_file, "doodle_"), p_vm);
   boost::program_options::notify(p_vm);
-
+  using namespace std::literals;
   std::cout
-      << fmt::format("使用配置 config_file : {}", p_config_file) << "\n"
-      << fmt::format("使用配置 运行gui : {}", p_use_gui) << "\n"
+      << (p_config_file.empty()
+              ? "没有传入配置文件选项"s
+              : fmt::format("使用配置 config_file : {}", p_config_file))
+      << "\n"
       << fmt::format("使用配置 运行服务 : {}", p_server) << "\n"
       << fmt::format("使用配置 安装服务 : {}", p_install) << "\n"
-      << fmt::format("使用配置 max_thread : {}", p_max_thread) << "\n"
-      << fmt::format("使用配置 root : {}", p_root) << "\n"
-      << fmt::format("使用配置 mysql_ip : {}", p_mysql_ip) << "\n"
-      << fmt::format("使用配置 mysql_user : {}", p_mysql_user) << "\n"
-      << fmt::format("使用配置 mysql_pow : {}", p_mysql_pow) << "\n"
-      << fmt::format("使用配置 rpc_setver_ip : {}", p_rpc_setver_ip) << "\n"
-      << fmt::format("使用配置 mysql_port : {}", p_mysql_port) << "\n"
-      << fmt::format("使用配置 rpc_file_port : {}", p_rpc_file_port) << "\n"
-      << fmt::format("使用配置 rpc_meta_port : {}", p_rpc_meta_port) << "\n"
+      << (p_max_thread > 0
+              ? "没有传入线程池大小"s
+              : fmt::format("使用配置 max_thread : {}", p_max_thread))
+      << "\n"
+      << (p_root.empty() ? "没有传入缓存根路径"s : fmt::format("使用配置 root : {}", p_root)) << "\n"
+      << (p_mysql_ip.empty() ? "没有传入mysql 地址"s : fmt::format("使用配置 mysql_ip : {}", p_mysql_ip)) << "\n"
+      << (p_mysql_user.empty() ? "没有传入mysql用户名"s : fmt::format("使用配置 mysql_user : {}", p_mysql_user)) << "\n"
+      << (p_rpc_setver_ip.empty() ? "没有rpc 服务器地址传入"s : fmt::format("使用配置 rpc_setver_ip : {}", p_rpc_setver_ip)) << "\n"
+      << (p_mysql_port < 0 ? "没有mysql端口传入"s : fmt::format("使用配置 mysql_port : {}", p_mysql_port)) << "\n"
+      << (p_rpc_file_port < 0 ? ""s : fmt::format("使用配置 rpc_file_port : {}", p_rpc_file_port)) << "\n"
+      << (p_rpc_meta_port < 0 ? ""s : fmt::format("使用配置 rpc_meta_port : {}", p_rpc_meta_port)) << "\n"
       << "开始初始化库基础(日志类和程序日期数据库)"
       << "\n"
       << std::endl;
@@ -160,29 +164,54 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   core_set_init k_init{};
   k_init.read_file();
 
-  set.p_max_thread = p_max_thread;
-  set.set_root(p_root);
-  set.set_sql_host(p_mysql_ip);
-  set.set_sql_user(p_mysql_user);
-  set.set_sql_password(p_mysql_pow);
-  set.set_sql_port(p_mysql_port);
-  set.set_server_host(p_rpc_setver_ip);
-  set.set_file_rpc_port(p_rpc_file_port);
-  set.set_meta_rpc_port(p_rpc_meta_port);
+  if (p_max_thread > 0)
+    set.p_max_thread = p_max_thread;
+  if (p_mysql_port > 0)
+    set.set_sql_port(p_mysql_port);
+  if (p_rpc_file_port > 0)
+    set.set_file_rpc_port(p_rpc_file_port);
+  if (p_rpc_meta_port > 0)
+    set.set_meta_rpc_port(p_rpc_meta_port);
 
-  DOODLE_LOG_INFO("配置文件解析为 config_file : {}", p_config_file);
-  DOODLE_LOG_INFO("使用配置 运行gui : {}", p_use_gui)
-  DOODLE_LOG_INFO("使用配置 运行服务 : {}", p_server)
-  DOODLE_LOG_INFO("使用配置 安装服务 : {}", p_install)
-  DOODLE_LOG_INFO("使用配置 max_thread : {}", p_max_thread);
-  DOODLE_LOG_INFO("使用配置 root : {}", p_root);
-  DOODLE_LOG_INFO("使用配置 mysql_ip : {}", p_mysql_ip);
-  DOODLE_LOG_INFO("使用配置 mysql_user : {}", p_mysql_user);
-  DOODLE_LOG_INFO("使用配置 mysql_pow : {}", p_mysql_pow);
-  DOODLE_LOG_INFO("使用配置 rpc_setver_ip : {}", p_rpc_setver_ip);
-  DOODLE_LOG_INFO("使用配置 mysql_port : {}", p_mysql_port);
-  DOODLE_LOG_INFO("使用配置 rpc_file_port : {}", p_rpc_file_port);
-  DOODLE_LOG_INFO("使用配置 rpc_meta_port : {}", p_rpc_meta_port);
+  if (!p_root.empty())
+    set.set_root(p_root);
+  if (!p_mysql_ip.empty())
+    set.set_sql_host(p_mysql_ip);
+  if (!p_mysql_user.empty())
+    set.set_sql_user(p_mysql_user);
+  if (!p_mysql_pow.empty())
+    set.set_sql_password(p_mysql_pow);
+  if (!p_rpc_setver_ip.empty())
+    set.set_server_host(p_rpc_setver_ip);
+  if (!p_config_file.empty())
+    DOODLE_LOG_INFO("配置文件解析为 config_file : {}", p_config_file);
+
+  if (p_server)
+    DOODLE_LOG_INFO("使用配置 运行服务 : {}", p_server);
+  if (p_install)
+    DOODLE_LOG_INFO("使用配置 安装服务 : {}", p_install);
+  if (!p_server && !p_install)
+    DOODLE_LOG_INFO("使用配置 运行gui : {}", p_use_gui);
+
+  if (!p_root.empty())
+    DOODLE_LOG_INFO("使用配置 root : {}", p_root);
+  if (!p_mysql_ip.empty())
+    DOODLE_LOG_INFO("使用配置 mysql_ip : {}", p_mysql_ip);
+  if (!p_mysql_user.empty())
+    DOODLE_LOG_INFO("使用配置 mysql_user : {}", p_mysql_user);
+  if (!p_mysql_pow.empty())
+    DOODLE_LOG_INFO("使用配置 mysql_pow : {}", p_mysql_pow);
+  if (!p_rpc_setver_ip.empty())
+    DOODLE_LOG_INFO("使用配置 rpc_setver_ip : {}", p_rpc_setver_ip);
+
+  if (p_max_thread > 0)
+    DOODLE_LOG_INFO("使用配置 max_thread : {}", p_max_thread);
+  if (p_mysql_port > 0)
+    DOODLE_LOG_INFO("使用配置 mysql_port : {}", p_mysql_port);
+  if (p_rpc_file_port > 0)
+    DOODLE_LOG_INFO("使用配置 rpc_file_port : {}", p_rpc_file_port);
+  if (p_rpc_meta_port > 0)
+    DOODLE_LOG_INFO("使用配置 rpc_meta_port : {}", p_rpc_meta_port);
   DOODLE_LOG_INFO("初始化完成");
 
   return true;
