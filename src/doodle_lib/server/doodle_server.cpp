@@ -40,10 +40,12 @@ bool doodle_server::install_server() {
       nullptr,
       nullptr,
       true);
+  return true;
 }
 
 bool doodle_server::uninstall_server() {
   UninstallService(server_name().c_str());
+  return true;
 }
 
 void doodle_server::OnStart(DWORD dwArgc, PWSTR *pszArgv) {

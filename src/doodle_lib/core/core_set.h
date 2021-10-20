@@ -37,8 +37,6 @@ class DOODLELIB_API core_set : public details::no_copy {
  public:
   static core_set &getSet();
 
-  void findMaya();
-
   //获得运行程序目录
   static FSys::path program_location();
   static FSys::path program_location(const FSys::path &path);
@@ -158,7 +156,7 @@ class DOODLELIB_API core_set_init {
  public:
   core_set_init();
 
-
+  bool find_maya();
   bool read_file();
   bool write_file();
   bool find_cache_dir();

@@ -14,6 +14,7 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
   static doodle_lib* p_install;
 
   thread_pool_ptr p_thread_pool;
+  logger_ctr_ptr p_log;
   project_ptr p_curr_project;
   rpc_metadata_client_ptr p_rpc_metadata_clien;
   rpc_file_system_client_ptr p_rpc_file_system_client;

@@ -21,14 +21,13 @@ doodle_lib* doodle_lib::p_install = nullptr;
 
 doodle_lib::doodle_lib()
     : p_thread_pool(new_object<thread_pool>(core_set::getSet().p_max_thread)),
+      p_log(new_object<logger_ctrl>()),
       p_curr_project(),
       p_rpc_metadata_clien(),
       p_rpc_file_system_client(),
       p_metadata_factory(),
       long_task_list(),
       mutex() {
-  core_set::getSet();
-
 #ifdef _WIN32
   /// 在这里我们初始化date tz 时区数据库
   auto k_path = create_time_database();
@@ -73,7 +72,6 @@ thread_pool_ptr doodle_lib::get_thread_pool() {
 doodle_lib::~doodle_lib() {
   p_project_vector.clear();
   p_curr_project.reset();
-
 }
 void doodle_lib::init_gui() {
   auto k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().get_meta_rpc_port());

@@ -34,12 +34,12 @@ class DOODLELIB_API logger_ctrl {
   std::string p_log_name;
 
   void init_temp_log();
-  logger_ctrl();
   static logger_ctrl* _self;
 
   void init_log();
 
  public:
+  logger_ctrl();
   virtual ~logger_ctrl();
 
   enum log_type {
@@ -57,6 +57,5 @@ class DOODLELIB_API logger_ctrl {
   bool set_log_name(const std::string& in_name);
   virtual void post_constructor();
 };
-
 
 }  // namespace doodle

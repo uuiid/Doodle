@@ -17,6 +17,7 @@ program_options::program_options()
       p_opt_server("doodle config server"),
       p_opt_general("doodle config general"),
       p_opt_advanced("doodle general config"),
+      p_lib(new_object<doodle_lib>()),
       p_use_gui(true),
       p_server(false),
       p_install(false),
@@ -33,7 +34,13 @@ program_options::program_options()
       p_mysql_port(core_set::getSet().get_sql_port()),
       p_rpc_file_port(core_set::getSet().get_file_rpc_port()),
       p_rpc_meta_port(core_set::getSet().get_meta_rpc_port()) {
-  std::cout << "开始构建命令行" << std::endl;
+  DOODLE_LOG_INFO("开始初始化基本配置");
+
+  core_set_init k_init{};
+  k_init.find_cache_dir();
+  p_root = core_set::getSet().get_root();
+
+  DOODLE_LOG_INFO("开始构建命令行");
   p_opt_general.add_options()(
       "help,h",
       boost::program_options::bool_switch(&p_help)->default_value(p_help),
@@ -95,7 +102,7 @@ program_options::program_options()
 }
 bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   p_arg = in_arg;
-  std::cout << "开始解析命令行" << std::endl;
+  DOODLE_LOG_INFO("开始解析命令行");
   boost::program_options::command_line_parser k_p{in_arg};
 
   k_p.options(p_opt_all).allow_unregistered().style(
@@ -149,8 +156,10 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
     p_use_gui = false;
   }
 
+  auto& set = core_set::getSet();
+  core_set_init k_init{};
+  k_init.read_file();
 
-  auto& set        = core_set::getSet();
   set.p_max_thread = p_max_thread;
   set.set_root(p_root);
   set.set_sql_host(p_mysql_ip);
@@ -160,8 +169,6 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   set.set_server_host(p_rpc_setver_ip);
   set.set_file_rpc_port(p_rpc_file_port);
   set.set_meta_rpc_port(p_rpc_meta_port);
-
-  p_lib = new_object<doodle_lib>();
 
   DOODLE_LOG_INFO("配置文件解析为 config_file : {}", p_config_file);
   DOODLE_LOG_INFO("使用配置 运行gui : {}", p_use_gui)
@@ -177,6 +184,7 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   DOODLE_LOG_INFO("使用配置 rpc_file_port : {}", p_rpc_file_port);
   DOODLE_LOG_INFO("使用配置 rpc_meta_port : {}", p_rpc_meta_port);
   DOODLE_LOG_INFO("初始化完成");
+  k_init.write_file();
 
   return true;
 }
@@ -190,6 +198,8 @@ doodle_app_ptr program_options::make_app() {
     return nullptr;
   }
   if (p_server) {
+    DOODLE_LOG_INFO("初始化服务器日志");
+    logger_ctrl::get_log().set_log_name("doodle_server.txt");
     DOODLE_LOG_INFO("开始运行服务");
     doodle_server k_ser{L"doodle_rpc_server"};
     k_ser.SetCommandLine(0, nullptr);
@@ -201,6 +211,8 @@ doodle_app_ptr program_options::make_app() {
     return nullptr;
   }
   if (p_use_gui) {
+    DOODLE_LOG_INFO("初始化gui日志");
+    logger_ctrl::get_log().set_log_name("doodle_gui.txt");
     DOODLE_LOG_INFO("开始gui初始化");
     p_lib->init_gui();
     DOODLE_LOG_INFO("开始gui显示gui界面");

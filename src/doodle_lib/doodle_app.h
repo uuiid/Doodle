@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include <Windows.h>
 #include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <Windows.h>
 
 #include <boost/signals2.hpp>
 namespace doodle {
@@ -19,7 +19,7 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   win_class p_win_class;
   static doodle_app* self;
 
-  virtual base_widget_ptr get_main_windows() const; 
+  virtual base_widget_ptr get_main_windows() const;
 
  public:
   doodle_app();
@@ -34,8 +34,8 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   std::shared_ptr<long_time_tasks_widget> long_task_widgets;
   widget_register_ptr wregister;
 
-  inline widget_register_ptr get_register(){return wregister;};
-  inline const widget_register_ptr get_register() const {return wregister;};
+  inline widget_register_ptr get_register() { return wregister; };
+  inline const widget_register_ptr get_register() const { return wregister; };
 
   bool valid() const;
 

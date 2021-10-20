@@ -4,15 +4,12 @@
 
 #include "doodle_app_base.h"
 
-#include <doodle_lib/core/program_options.h>
+#include <doodle_lib/core/doodle_lib.h>
+
 namespace doodle {
 
 doodle_app_base::doodle_app_base()
-    : p_program_options(new_object<program_options>()) {
-  
-}
-std::int32_t doodle_app_base::run() {
-  return 0;
+    : p_lib(new_object<doodle_lib>()) {
 }
 
 }  // namespace doodle

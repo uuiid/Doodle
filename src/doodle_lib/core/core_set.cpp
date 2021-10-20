@@ -58,16 +58,6 @@ core_set &core_set::getSet() {
   return install;
 }
 
-void core_set::findMaya() {
-  if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
-    p_mayaPath = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
-  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
-    p_mayaPath = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
-  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
-    p_mayaPath = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
-  }
-}
-
 bool core_set::has_maya() const noexcept {
   return !p_mayaPath.empty();
 }
@@ -156,6 +146,7 @@ void core_set::set_root(const FSys::path &in_path) {
   p_root      = in_path;
   _root_cache = p_root / "cache";
   _root_data  = p_root / "data";
+  DOODLE_LOG_INFO("设置缓存目录",p_root);
 }
 
 FSys::path core_set::get_cache_root() const {
@@ -245,7 +236,25 @@ core_set_init::core_set_init()
     FSys::create_directories(p_set.get_data_root());
   }
 }
+bool core_set_init::find_maya() {
+  DOODLE_LOG_INFO("寻找maya");
+
+  if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
+    p_set.p_mayaPath = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
+    return true;
+  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
+    p_set.p_mayaPath = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
+    return true;
+  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
+    p_set.p_mayaPath = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
+    return true;
+  }
+  return false;
+}
+
 bool core_set_init::read_file() {
+  DOODLE_LOG_INFO("读取配置文件");
+
   static FSys::path l_k_setting_file_name = p_set.get_doc() / p_set.config_file_name();
   if (FSys::exists(l_k_setting_file_name)) {
     FSys::path l_str_file(l_k_setting_file_name);
@@ -253,7 +262,7 @@ bool core_set_init::read_file() {
 
     boost::archive::text_iarchive l_out{l_in_josn};
     try {
-      l_out >> p_set;
+      l_out >> core_set::getSet();
     } catch (const boost::archive::archive_exception &err) {
       DOODLE_LOG_DEBUG(err.what());
       return false;
@@ -263,6 +272,8 @@ bool core_set_init::read_file() {
   return false;
 }
 bool core_set_init::write_file() {
+  DOODLE_LOG_INFO("写入配置文件");
+
   p_set.p_ue4_setting.test_value();
   if (p_set.p_ue4_setting.has_path() && !FSys::exists(p_set.p_ue4_setting.get_path() / staticValue::ue_path_obj())) {
     p_set.p_ue4_setting.set_path({});
@@ -278,6 +289,8 @@ bool core_set_init::write_file() {
   return true;
 }
 bool core_set_init::find_cache_dir() {
+  DOODLE_LOG_INFO("寻找缓存路径");
+
   const static std::vector<FSys::path> dirs{"D:/",
                                             "E:/",
                                             "F:/",

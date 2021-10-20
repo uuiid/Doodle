@@ -293,7 +293,9 @@ class doodle_app;
 class ue4_project_async;
 class image_sequence_async;
 class program_options;
+class logger_ctrl;
 
+using logger_ctr_ptr             = std::shared_ptr<logger_ctrl>;
 using program_options_ptr        = std::shared_ptr<program_options>;
 
 using image_sequence_async_ptr   = std::shared_ptr<image_sequence_async>;
