@@ -146,7 +146,7 @@ void core_set::set_root(const FSys::path &in_path) {
   p_root      = in_path;
   _root_cache = p_root / "cache";
   _root_data  = p_root / "data";
-  DOODLE_LOG_INFO("设置缓存目录",p_root);
+  DOODLE_LOG_INFO("设置缓存目录", p_root);
 }
 
 FSys::path core_set::get_cache_root() const {
@@ -273,6 +273,14 @@ bool core_set_init::read_file() {
 }
 bool core_set_init::write_file() {
   DOODLE_LOG_INFO("写入配置文件");
+
+  if (p_set.p_ue4_setting.has_path() && !FSys::exists(p_set.p_ue4_setting.get_path() / staticValue::ue_path_obj())) {
+    p_set.p_ue4_setting.set_path({});
+    DOODLE_LOG_INFO("在路径中没有找到ue");
+  }
+  if (!FSys::exists(p_set.p_mayaPath / "maya.exe")) {
+    DOODLE_LOG_INFO("在路径中没有找到maya");
+  }
   FSys::ofstream l_ofstream{p_set.p_doc / p_set.config_file_name(), std::ios::out | std::ios::binary};
   boost::archive::text_oarchive l_out{l_ofstream};
   l_out << p_set;

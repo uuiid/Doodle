@@ -184,7 +184,6 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   DOODLE_LOG_INFO("使用配置 rpc_file_port : {}", p_rpc_file_port);
   DOODLE_LOG_INFO("使用配置 rpc_meta_port : {}", p_rpc_meta_port);
   DOODLE_LOG_INFO("初始化完成");
-  k_init.write_file();
 
   return true;
 }
@@ -205,7 +204,6 @@ doodle_app_ptr program_options::make_app() {
     k_ser.SetCommandLine(0, nullptr);
     if (!doodle_server::Run(k_ser)) {
       DWORD dwErr = GetLastError();
-
       DOODLE_LOG_ERROR("Service failed to run with error code: {}", dwErr);
     }
     return nullptr;
@@ -214,6 +212,8 @@ doodle_app_ptr program_options::make_app() {
     DOODLE_LOG_INFO("初始化gui日志");
     logger_ctrl::get_log().set_log_name("doodle_gui.txt");
     DOODLE_LOG_INFO("开始gui初始化");
+    core_set_init k_init{};
+    k_init.write_file();
     p_lib->init_gui();
     DOODLE_LOG_INFO("开始gui显示gui界面");
     auto k_gui = new_object<doodle_app>();
