@@ -186,4 +186,11 @@
  * @li 添加maya插件回调
  * @li 更加提前的初始化， 更加清晰明了的日志记录
  * @li maya fbx相机插件导出更加智能的算法， 并且添加了排序功能
+ *
+ * @subsubsection updata_log_318 版本3.1.8
+ * @li 修复maya安装插件问题
+ *
+ * @subsubsection updata_log_319 版本3.1.9
+ * @li 修复配置文件写入权限不够导致失败的错误
+ *
  */

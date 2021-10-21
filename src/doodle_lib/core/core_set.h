@@ -160,6 +160,7 @@ class DOODLELIB_API core_set_init {
   bool read_file();
   bool write_file();
   bool find_cache_dir();
+  bool config_to_user();
 };
 
 

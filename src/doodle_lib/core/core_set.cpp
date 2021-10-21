@@ -314,4 +314,12 @@ bool core_set_init::find_cache_dir() {
   });
   return l_item;
 }
+
+bool core_set_init::config_to_user() {
+  p_set.p_doc = get_pwd() / "doodle";
+  if (!FSys::exists(p_set.p_doc)) {
+    FSys::create_directories(p_set.p_doc);
+  }
+  return true;
+}
 }  // namespace doodle
