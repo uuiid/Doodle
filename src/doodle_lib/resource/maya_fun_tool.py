@@ -211,6 +211,11 @@ class camera:
             # offScreen=True
         )
 
+    def unlock_cam(self):
+        for att in ["tx","ty","tz","rx","ry","rz","sx","sy","sz","v","coi","sa","fd","fl","vfa","hfa","lsr","fs"]:
+            if self.maya_cam.attr(att).isLocked():
+                self.maya_cam.attr(att).unlock()
+
     def export(self, export_path):
 
         # 如果不符合就直接返回
@@ -230,6 +235,8 @@ class camera:
             pymel.core.bakeResults(self.maya_cam, sm=True,
                                    t=(doodle_work_space.raneg.start,
                                       doodle_work_space.raneg.end))
+
+        self.unlock_cam()
 
         mel_name = "{path}/{name}_camera_{start}-{end}.fbx".format(
             path=export_path,
