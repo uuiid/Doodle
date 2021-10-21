@@ -196,4 +196,7 @@
  * @subsubsection updata_log_3110 版本3.1.10
  * @li 添加maya导出时加载所有引用选项
  * @li 添加maya 相机解锁属性
+ *
+ * @subsubsection updata_log_3111 版本3.1.11
+ * @li 将maya文件同时还复制到导出文件夹
  */

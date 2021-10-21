@@ -800,7 +800,15 @@ class fbx_export():
         for obj in self.fbx_group:
             obj.export_fbx()
 
+    def save(self):
+        path = doodle_work_space.maya_file.abs_path / doodle_work_space.maya_file.name_not_ex  # type: pymel.core.util.path
+        path.makedirs_p()
+        pymel.core.system.saveAs("{}/{}.ma".format(
+        path,
+        doodle_work_space.maya_file.name_not_ex))
+
     def __call__(self):
+        self.save()
         self.export_fbx_mesh()
 
 
