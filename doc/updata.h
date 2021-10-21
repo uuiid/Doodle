@@ -199,4 +199,7 @@
  *
  * @subsubsection updata_log_3111 版本3.1.11
  * @li 将maya文件同时还复制到导出文件夹
+ * 
+ * @subsubsection updata_log_3112 版本3.1.12
+ * @li 修复配置文件文件夹获取错误
  */

@@ -243,6 +243,8 @@ doodle_app_ptr program_options::make_app() {
     DOODLE_LOG_INFO("开始gui初始化");
     core_set_init k_init{};
     k_init.config_to_user();
+    k_init.find_maya();
+    k_init.read_file();
     k_init.write_file();
     p_lib->init_gui();
     DOODLE_LOG_INFO("开始gui显示gui界面");
