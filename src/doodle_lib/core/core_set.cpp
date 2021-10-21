@@ -33,18 +33,18 @@ namespace doodle {
 FSys::path get_pwd()
 #ifdef _WIN32
 {
-  // ///这里我们手动做一些工作
-  // ///获取环境变量 FOLDERID_Documents
-  // PWSTR pManager;
-  // SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
-  // if (!pManager) {
-  //   std::cout << "unable to find a save path" << std::endl;
-  //   throw doodle_error("无法找到保存路径");
-  // }
+  ///这里我们手动做一些工作
+  ///获取环境变量 FOLDERID_Documents
+  PWSTR pManager;
+  SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
+  if (!pManager) {
+    std::cout << "unable to find a save path" << std::endl;
+    throw doodle_error("无法找到保存路径");
+  }
 
-  // auto k_path = FSys::path{pManager};
-  // CoTaskMemFree(pManager);
-  return FSys::current_path();
+  auto k_path = FSys::path{pManager};
+  CoTaskMemFree(pManager);
+  return k_path;
 }
 #else
 {

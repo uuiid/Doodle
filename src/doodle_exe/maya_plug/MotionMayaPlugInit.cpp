@@ -33,7 +33,7 @@ MStatus doodleCreate::doIt(const MArgList& list) {
     doodleCreate::d_ptr_ = new doodle_data;
   }
   if (doodleCreate::d_ptr_ && !doodleCreate::d_ptr_->p_doodle_lib) {
-    doodleCreate::d_ptr_->p_doodle_lib = make_doodle_lib();
+    doodleCreate::d_ptr_->p_doodle_lib = new_object<doodle_lib>();
     doodleCreate::d_ptr_->p_doodle_lib->init_gui();
   }
   if (!(d_ptr_->p_doodle_app)) {
