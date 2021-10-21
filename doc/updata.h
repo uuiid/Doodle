@@ -193,4 +193,7 @@
  * @subsubsection updata_log_319 版本3.1.9
  * @li 修复配置文件写入权限不够导致失败的错误
  *
+ * @subsubsection updata_log_3110 版本3.1.10
+ * @li 添加maya导出时加载所有引用选项
+ * @li 添加maya 相机解锁属性
  */

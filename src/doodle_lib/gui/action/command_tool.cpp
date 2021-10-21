@@ -21,7 +21,9 @@
 #include <boost/range/algorithm.hpp>
 namespace doodle {
 
-comm_export_fbx::comm_export_fbx() {
+comm_export_fbx::comm_export_fbx()
+    : p_files(),
+      p_use_all_ref(false) {
   p_name = "导出fbx";
 }
 
@@ -45,10 +47,16 @@ bool comm_export_fbx::render() {
       dear::Selectable(f.generic_string());
     }
   };
+  imgui::Checkbox("直接加载所有引用", &p_use_all_ref);
   if (imgui::Button("导出")) {
     auto maya = new_object<maya_file_async>();
     std::for_each(p_files.begin(), p_files.end(),
-                  [maya](const auto& i) { maya->export_fbx_file(i); });
+                  [maya, this](const auto& i) {
+                    auto k_arg         = new_object<maya_file::export_fbx_arg>();
+                    k_arg->file_path   = i;
+                    k_arg->use_all_ref = this->p_use_all_ref;
+                    maya->export_fbx_file(k_arg);
+                  });
   }
   return true;
 }

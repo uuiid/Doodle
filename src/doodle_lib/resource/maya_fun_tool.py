@@ -928,9 +928,67 @@ class analyseFileName():
         return pymel.core.Path(path)
 
 
-class open_file():
-    def __init__(self, file_path):
-        self.file_path = pymel.core.Path(file_path)
+class config(object):
+    def __init__(self):
+        self._path = pymel.core.Path()
+        self.export_path = pymel.core.Path()
+
+    @property
+    def path(self):
+        # type()->pymel.core.system.Path
+
+        return self._path
+
+    @path.setter
+    def path(self, anys):
+        self._path = pymel.core.Path(anys)
+
+
+class sim_config(config):
+    def __init__(self):
+        super(sim_config,self).__init__()
+        self.qcloth_assets_path = pymel.core.Path()
+        self.only_sim = False
+
+
+class fbx_config(config):
+    def __init__(self):
+        super(fbx_config,self).__init__()
+        self.use_all_ref = False
+
+
+def __load_config__(obj):
+    if "qcloth_assets_path" in obj:
+        k_con = sim_config()
+        k_con.path = obj["path"]
+        k_con.qcloth_assets_path = obj["qcloth_assets_path"]
+        k_con.export_path = obj["export_path"]
+        k_con.only_sim = obj["only_sim"]
+        return k_con
+    elif "use_all_ref" in obj:
+        k_con = fbx_config()
+        k_con.path = obj["path"]
+        k_con.export_path = obj["export_path"]
+        k_con.use_all_ref = obj["use_all_ref"]
+        return k_con
+
+
+class open_file(object):
+    def __init__(self, in_config=None):
+        # type:(str,config)->None
+        self.cfg = in_config  # type: config
+        self.file_path = None
+        if self.cfg:
+            self.file_path = self.cfg.path
+
+    @property
+    def config_(self):
+        return self.cfg
+
+    @config_.setter
+    def config_(self, in_str):
+        self.cfg = json.loads(in_str, object_hook=__load_config__)[0]
+        self.file_path = self.cfg.path
 
     def load_plug(self, str_list):
         # type: (list[str])->None
@@ -939,9 +997,18 @@ class open_file():
 
     def open(self):
         maya_workspace.set_workspace_static(self.file_path.dirname())
-
         pymel.core.system.newFile(force=True)
-        pymel.core.system.openFile(self.file_path)
+
+        k_ref_ = None
+        if isinstance(self.cfg, fbx_config) and self.cfg.use_all_ref:
+            k_ref_ = "all"
+        if k_ref_:
+            pymel.core.system.openFile(
+                self.file_path, loadReferenceDepth=k_ref_)
+        else:
+            pymel.core.system.openFile(
+                self.file_path)
+
         if pymel.core.mel.eval("currentTimeUnitToFPS") != 25.0:
             print("frame rate is not 25 is {}".format(
                 pymel.core.mel.eval("currentTimeUnitToFPS")
@@ -951,7 +1018,7 @@ class open_file():
         doodle_work_space.reset()
         doodle_work_space.set_workspace()
 
-    def get_cloth_sim(self, qcloth_path):
+    def get_cloth_sim(self, qcloth_path=None):
         # type: (str) -> cloth_export
         self.load_plug(["AbcExport", "AbcImport", "qualoth_2019_x64"])
         self.open()
@@ -959,10 +1026,26 @@ class open_file():
         pymel.core.currentTime(950)
         doodle_work_space.reset()
 
-        return cloth_export(qcloth_path)
+        assert(isinstance(self.cfg, sim_config))
+        qcloth_path = pymel.core.Path(self.cfg.qcloth_assets_path)
+        k_cl = cloth_export(qcloth_path)
+        if self.cfg.only_sim:
+            k_cl.sim_and_export()
+        else:
+            k_cl()
 
     def get_fbx_export(self):
         # type: () -> fbx_export
+        assert(isinstance(self.cfg, fbx_config))
+
         self.load_plug(["fbxmaya"])
         self.open()
-        return fbx_export()
+        fbx_export()()
+
+    def __call__(self):
+        if isinstance(self.cfg, sim_config):
+            self.get_cloth_sim()
+        elif isinstance(self.cfg, fbx_config):
+            self.get_fbx_export()
+        else:
+            print("not config")

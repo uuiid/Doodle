@@ -10,6 +10,7 @@ namespace doodle {
 class DOODLELIB_API comm_export_fbx : public command_base {
   std::vector<FSys::path> p_files;
 
+  bool  p_use_all_ref;
  public:
   comm_export_fbx();
   bool is_async() override;

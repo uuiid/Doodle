@@ -1,5 +1,7 @@
 #pragma once
+
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/lib_warp/json_warp.h>
 
 #include <boost/signals2.hpp>
 namespace doodle {
@@ -21,10 +23,44 @@ class DOODLELIB_API maya_file
     ~qcloth_arg() = default;
     FSys::path sim_path;
     FSys::path qcloth_assets_path;
+    FSys::path export_path;
 
     bool only_sim;
+    friend void to_json(nlohmann::json& nlohmann_json_j, const qcloth_arg& nlohmann_json_t) {
+      nlohmann_json_j["path"]               = nlohmann_json_t.sim_path;
+      nlohmann_json_j["export_path"]        = nlohmann_json_t.export_path;
+      nlohmann_json_j["qcloth_assets_path"] = nlohmann_json_t.qcloth_assets_path;
+      nlohmann_json_j["only_sim"]           = nlohmann_json_t.only_sim;
+    };
   };
   using qcloth_arg_ptr = std::shared_ptr<qcloth_arg>;
+
+  class DOODLELIB_API export_fbx_arg {
+   public:
+    export_fbx_arg()  = default;
+    ~export_fbx_arg() = default;
+    /**
+     * @brief maya文件源路径(文件路径)
+     *
+     */
+    FSys::path file_path;
+    /**
+     * @brief 导出文件的路径(目录)
+     *
+     */
+    FSys::path export_path;
+    /**
+     * @brief 是否导出所有引用
+     *
+     */
+    bool use_all_ref;
+    friend void to_json(nlohmann::json& nlohmann_json_j, const export_fbx_arg& nlohmann_json_t) {
+      nlohmann_json_j["path"]        = nlohmann_json_t.file_path;
+      nlohmann_json_j["export_path"] = nlohmann_json_t.export_path;
+      nlohmann_json_j["use_all_ref"] = nlohmann_json_t.use_all_ref;
+    };
+  };
+  using export_fbx_arg_ptr = std::shared_ptr<export_fbx_arg>;
 
   explicit maya_file(FSys::path mayaPath = {});
 
@@ -35,6 +71,13 @@ class DOODLELIB_API maya_file
    * @return 是否导出成功
    */
   void export_fbx_file(const FSys::path& file_path, const FSys::path& export_path, const long_term_ptr& in_ptr);
+  /**
+   * 导出maya文件中的fbx
+   * @param file_path 输入的maya路径
+   * @param export_path 导出的路径
+   * @return 是否导出成功
+   */
+  void export_fbx_file(const export_fbx_arg_ptr& in_arg, const long_term_ptr& in_ptr);
 
   /**
    * @brief 批量解算qcloth 文件
@@ -66,6 +109,7 @@ class DOODLELIB_API maya_file_async : public details::no_copy {
   maya_file_async();
 
   long_term_ptr export_fbx_file(const FSys::path& file_path, const FSys::path& export_path = {});
+  long_term_ptr export_fbx_file(maya_file::export_fbx_arg_ptr& in_arg);
   long_term_ptr qcloth_sim_file(maya_file::qcloth_arg_ptr& in_arg);
 };
 
