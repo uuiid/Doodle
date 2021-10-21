@@ -12,9 +12,8 @@ namespace doodle::maya_plug {
 
 void maya_windwos::main_menu_tool() {
   main_windows::main_menu_tool();
-  auto k_task = win_cast<tool_box_widget>(p_tool_box);
-  if (dear::MenuItem("maya引用工具") && k_task)
-    k_task->set_tool_widget(new_object<reference_attr_setting>());
+  if (dear::MenuItem("maya引用工具") && p_tool_box_)
+    p_tool_box_->set_tool_widget(new_object<reference_attr_setting>());
 }
 
 maya_windwos::maya_windwos()

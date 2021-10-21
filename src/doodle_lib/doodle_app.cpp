@@ -150,15 +150,21 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   }
   return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
+#include <fmt/core.h>
 #include <toolkit/toolkit.h>
 #include <windows.h>
-
 namespace doodle {
 
 doodle_app* doodle_app::self;
 
 doodle_app::doodle_app()
     : p_hwnd{},
+      p_title(conv::utf_to_utf<wchar_t>(fmt::format(
+          "doodle {}.{}.{}.{}",
+          Doodle_VERSION_MAJOR,
+          Doodle_VERSION_MINOR,
+          Doodle_VERSION_PATCH,
+          Doodle_VERSION_TWEAK))),
       p_win_class{sizeof(WNDCLASSEX),
                   CS_CLASSDC, WndProc,
                   0L,
@@ -176,7 +182,7 @@ doodle_app::doodle_app()
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassEx(&p_win_class);
   p_hwnd = ::CreateWindow(p_win_class.lpszClassName,
-                          _T("doodle main"),
+                          p_title.c_str(),
                           WS_OVERLAPPEDWINDOW,
                           100, 100, 1280, 800,
                           nullptr, nullptr,
@@ -334,6 +340,7 @@ std::int32_t doodle_app::run() {
     g_pSwapChain->Present(1, 0);  // Present with vsync
                                   // g_pSwapChain->Present(0, 0); // Present without vsync
   }
+
   ::ShowWindow(p_hwnd, SW_HIDE);
   return 0;
 }

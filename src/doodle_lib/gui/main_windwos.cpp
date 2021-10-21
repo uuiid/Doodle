@@ -17,6 +17,14 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/toolkit/toolkit.h>
 namespace doodle {
+
+template <class T>
+T *main_windows::create_windwos(bool is_show) {
+  auto t = new_object<windows_warp<T>>(true);
+  p_list_windwos.push_back(t);
+  return win_cast<T>(t).get();
+}
+
 main_windows::main_windows()
     : p_debug_show(new_object<bool>(false)),
       p_about_show(new_object<bool>(false)),
@@ -27,38 +35,44 @@ main_windows::main_windows()
           Doodle_VERSION_MINOR,
           Doodle_VERSION_PATCH,
           Doodle_VERSION_TWEAK)),
-      p_ass(new_object<assets_widget>()),
-      p_prj(new_object<project_widget>()),
+      p_ass_(nullptr),
+      p_prj_(nullptr),
+      p_setting_(nullptr),
+      p_attr_(nullptr),
+      p_long_task_(nullptr),
+      p_edit_windows_(nullptr),
+      p_tool_box_(nullptr),
+      p_list_windwos() {
+  p_prj_          = create_windwos<project_widget>(true);
+  p_ass_          = create_windwos<assets_widget>(true);
+  p_attr_         = create_windwos<assets_file_widgets>(true);
+  p_setting_      = create_windwos<setting_windows>(true);
+  p_long_task_    = create_windwos<long_time_tasks_widget>(true);
+  p_edit_windows_ = create_windwos<edit_widgets>(true);
+  p_tool_box_     = create_windwos<tool_box_widget>(true);
+  for (auto &i : p_list_windwos) {
+    i->load_show();
+  }
 
-      p_setting(new_object<windows_warp<setting_windows>>()),
-      p_attr(new_object<windows_warp<assets_file_widgets>>(true)),
-      p_long_task(new_object<windows_warp<long_time_tasks_widget>>(true)),
-      p_edit_windows(new_object<windows_warp<edit_widgets>>(true)),
-      p_tool_box(new_object<windows_warp<tool_box_widget>>(true)) {
-  p_prj->select_change.connect([this](auto in) {
-    p_ass->set_metadata(in);
-    win_cast<edit_widgets>(p_edit_windows)->set_factort(p_prj->get_factory());
+  p_prj_->select_change.connect([this](auto in) {
+    p_ass_->set_metadata(in);
+    p_edit_windows_->set_factort(p_prj_->get_factory());
   });
-  p_ass->select_change.connect([this](auto in) {
-    win_cast<assets_file_widgets>(p_attr)->set_metadata(in);
-    win_cast<edit_widgets>(p_edit_windows)->set_factort(p_ass->get_factory());
+  p_ass_->select_change.connect([this](auto in) {
+    p_attr_->set_metadata(in);
+    p_edit_windows_->set_factort(p_ass_->get_factory());
   });
-  win_cast<assets_file_widgets>(p_attr)->select_change.connect(
+  p_attr_->select_change.connect(
       [this](auto in) {
-        win_cast<edit_widgets>(
-            p_edit_windows)
-            ->set_factort(
-                win_cast<assets_file_widgets>(p_attr)->get_factory());
+        p_edit_windows_->set_factort(p_attr_->get_factory());
       });
 
-  win_cast<edit_widgets>(p_edit_windows)->set_factort(p_prj->get_factory());
+  p_edit_windows_->set_factort(p_prj_->get_factory());
 }
 void main_windows::frame_render() {
-  p_setting->frame_render();
-  p_long_task->frame_render();
-  p_attr->frame_render();
-  p_edit_windows->frame_render();
-  p_tool_box->frame_render();
+  for (auto &i : p_list_windwos) {
+    i->frame_render();
+  }
 
   if (*p_debug_show) imgui::ShowMetricsWindow(p_debug_show.get());
   if (*p_about_show) imgui::ShowAboutWindow(p_about_show.get());
@@ -67,31 +81,19 @@ void main_windows::frame_render() {
       imgui::ShowStyleEditor();
     };
   }
-
-  dear::Begin{
-      p_title.c_str(),
-      nullptr,
-      ImGuiWindowFlags_MenuBar} &&
+  dear::MainMenuBar{} &&
       [this]() {
-        dear::MenuBar{} && [this]() {
-          dear::Menu{"文件"} && [this]() { this->main_menu_file(); };
-          dear::Menu{"窗口"} && [this]() { this->main_menu_windows(); };
-          dear::Menu{"编辑"} && [this]() { this->main_menu_edit(); };
-          dear::Menu{"工具"} && [this]() { this->main_menu_tool(); };
-        };
+        dear::Menu{"文件"} && [this]() { this->main_menu_file(); };
+        dear::Menu{"窗口"} && [this]() { this->main_menu_windows(); };
+        dear::Menu{"编辑"} && [this]() { this->main_menu_edit(); };
+        dear::Menu{"工具"} && [this]() { this->main_menu_tool(); };
 #ifndef NDEBUG
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text("%.3f ms/%.1f FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 #endif
-        p_prj->frame_render();
-        p_ass->frame_render();
         //        imgui::SameLine();
       };
 }
 void main_windows::main_menu_file() {
-  dear::MenuItem(
-      win_cast<setting_windows>(p_setting)->get_class_name().c_str(),
-      win_warp_cast<setting_windows>(p_setting)->p_show.get());
-
   ImGui::Separator();
   dear::MenuItem(u8"调试", p_debug_show.get());
   dear::MenuItem(u8"样式设置", p_style_show.get());
@@ -113,7 +115,7 @@ void main_windows::main_menu_tool() {
         "select_ue_project",
         ".uproject",
         ".");
-    doodle_app::Get()->main_loop.connect_extended([](const doodle_app::connection& in) {
+    doodle_app::Get()->main_loop.connect_extended([](const doodle_app::connection &in) {
       dear::OpenFileDialog{"ChooseDirDlgKey"} && [in]() {
         auto ig = ImGuiFileDialog::Instance();
         if (ig->IsOk()) {
@@ -130,19 +132,13 @@ void main_windows::main_menu_tool() {
     toolkit::modifyUeCachePath();
 }
 void main_windows::main_menu_windows() {
-  dear::MenuItem(
-      win_cast<assets_file_widgets>(p_attr)->get_class_name().c_str(),
-      win_warp_cast<assets_file_widgets>(p_attr)->p_show.get());
-  dear::MenuItem(
-      win_cast<long_time_tasks_widget>(p_long_task)->get_class_name().c_str(),
-      win_warp_cast<long_time_tasks_widget>(p_long_task)->p_show.get());
-  dear::MenuItem(
-      win_cast<edit_widgets>(p_edit_windows)->get_class_name().c_str(),
-      win_warp_cast<edit_widgets>(p_edit_windows)->p_show.get());
+  for (auto &i : p_list_windwos) {
+    dear::MenuItem(i->get_class_name(), i->p_show.get());
+  }
 }
 
 void main_windows::main_menu_edit() {
-  auto k_task = win_cast<tool_box_widget>(p_tool_box);
+  auto k_task = p_tool_box_;
   if (dear::MenuItem(u8"导出fbx"))
     k_task->set_tool_widget(new_object<comm_export_fbx>());
   if (dear::MenuItem(u8"解算布料"))
@@ -152,5 +148,10 @@ void main_windows::main_menu_edit() {
   if (dear::MenuItem(u8"ue工具"))
     k_task->set_tool_widget(new_object<comm_import_ue_files>());
 }
-
+main_windows::~main_windows() {
+  for (auto &i : p_list_windwos) {
+    i->save_show();
+  }
+  core_set_init{}.write_file();
+}
 }  // namespace doodle

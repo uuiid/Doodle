@@ -20,7 +20,7 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   static doodle_app* self;
 
   virtual base_widget_ptr get_main_windows() const;
-
+  std::wstring p_title;
  public:
   doodle_app();
   std::atomic_bool p_done;
