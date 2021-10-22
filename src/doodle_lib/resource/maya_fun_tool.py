@@ -828,18 +828,22 @@ class cloth_export():
             i) for i in self.colth_ref if i.is_valid()]
 
     def select_sim_references_file(self):
-        meta = pymel.core.modeling.getMetadata(
-            channelName="doodle_sim_json", streamName="json_stream", memberName="json", scene=True, index="0")
-        if meta:
-            obj_dirt = json.loads(meta[0])
-            k_colth_ref = []  # type: list[references_file]
-            for i in obj_dirt:
-                k_colth_ref.append(references_file.form_map(i))
-            self.colth_ref = [i for i in k_colth_ref if i.use_sim]
+        try:
+            meta = pymel.core.modeling.getMetadata(
+                channelName="doodle_sim_json", streamName="json_stream", memberName="json", scene=True, index="0")
+            if meta:
+                obj_dirt = json.loads(meta[0])
+                k_colth_ref = []  # type: list[references_file]
+                for i in obj_dirt:
+                    k_colth_ref.append(references_file.form_map(i))
+                self.colth_ref = [i for i in k_colth_ref if i.use_sim]
 
-        else:
+            else:
+                self.colth_ref = [references_file(i)
+                                  for i in pymel.core.listReferences()]
+        except RuntimeError:
             self.colth_ref = [references_file(i)
-                              for i in pymel.core.listReferences()]
+                                  for i in pymel.core.listReferences()]
 
     def replace_file(self):
         for qc in self.qcolth_group:
