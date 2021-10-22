@@ -43,10 +43,11 @@ main_windows::main_windows()
       p_edit_windows_(nullptr),
       p_tool_box_(nullptr),
       p_list_windwos() {
+  p_class_name    = "main_doodle";
   p_prj_          = create_windwos<project_widget>(true);
   p_ass_          = create_windwos<assets_widget>(true);
   p_attr_         = create_windwos<assets_file_widgets>(true);
-  p_setting_      = create_windwos<setting_windows>(true);
+  p_setting_         = create_windwos<setting_windows>(false);
   p_long_task_    = create_windwos<long_time_tasks_widget>(true);
   p_edit_windows_ = create_windwos<edit_widgets>(true);
   p_tool_box_     = create_windwos<tool_box_widget>(true);
@@ -139,9 +140,7 @@ void main_windows::main_menu_windows() {
 
 void main_windows::main_menu_edit() {
   auto k_task = p_tool_box_;
-  if (dear::MenuItem(u8"导出fbx"))
-    k_task->set_tool_widget(new_object<comm_export_fbx>());
-  if (dear::MenuItem(u8"解算布料"))
+  if (dear::MenuItem(u8"maya 工具"))
     k_task->set_tool_widget(new_object<comm_qcloth_sim>());
   if (dear::MenuItem(u8"创建视频"))
     k_task->set_tool_widget(new_object<comm_create_video>());
@@ -153,5 +152,8 @@ main_windows::~main_windows() {
     i->save_show();
   }
   core_set_init{}.write_file();
+  for (auto &i : p_list_windwos) {
+    *(i->p_show) = false;
+  }
 }
 }  // namespace doodle

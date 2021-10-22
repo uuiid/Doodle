@@ -21,6 +21,10 @@ class DOODLELIB_API doodle_app : public details::no_copy {
 
   virtual base_widget_ptr get_main_windows() const;
   std::wstring p_title;
+
+
+  void set_imgui_dock_space(const FSys::path& in_path) const;
+
  public:
   doodle_app();
   std::atomic_bool p_done;

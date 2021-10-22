@@ -34,6 +34,13 @@ MStatus doodleCreate::doIt(const MArgList& list) {
   }
   if (doodleCreate::d_ptr_ && !doodleCreate::d_ptr_->p_doodle_lib) {
     doodleCreate::d_ptr_->p_doodle_lib = new_object<doodle_lib>();
+    logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
+    core_set_init k_init{};
+    k_init.find_cache_dir();
+    k_init.config_to_user();
+    k_init.find_maya();
+    k_init.read_file();
+
     doodleCreate::d_ptr_->p_doodle_lib->init_gui();
   }
   if (!(d_ptr_->p_doodle_app)) {

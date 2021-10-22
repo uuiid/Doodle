@@ -22,6 +22,7 @@ class DOODLELIB_API comm_qcloth_sim : public command_base {
   std::shared_ptr<std::string> p_text;
   std::vector<FSys::path> p_sim_path;
   bool p_only_sim;
+  bool p_use_all_ref;
 
  public:
   comm_qcloth_sim();

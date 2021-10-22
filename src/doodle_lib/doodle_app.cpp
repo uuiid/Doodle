@@ -248,6 +248,15 @@ base_widget_ptr doodle_app::get_main_windows() const {
   return new_object<main_windows>();
 }
 
+void doodle_app::set_imgui_dock_space(const FSys::path& in_path) const {
+  auto k_f = cmrc::DoodleLibResource::get_filesystem().open("resource/imgui.ini");
+  if (FSys::exists(in_path))
+    return;
+  FSys::ofstream l_ofs{in_path, std::ios::out | std::ios::binary};
+  if (l_ofs)
+    l_ofs.write(k_f.begin(), k_f.size());
+}
+
 void doodle_app::post_constructor() {
   doodle_app::self = this;
 }
@@ -269,7 +278,8 @@ std::int32_t doodle_app::run() {
   // ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
   // IM_ASSERT(font != NULL);
   static string imgui_file_path{(core_set::getSet().get_cache_root("imgui") / "imgui.ini").generic_string()};
-
+  set_imgui_dock_space(imgui_file_path);
+  
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
@@ -277,6 +287,7 @@ std::int32_t doodle_app::run() {
   auto k_main_windows = get_main_windows();
 
   ImVec4 clear_color  = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+  bool show_info      = false;
   // Main loop
   while (!p_done) {
     // Poll and handle messages (inputs, window resize, etc.)
@@ -300,7 +311,6 @@ std::int32_t doodle_app::run() {
     ImGui::NewFrame();
 
     imgui::DockSpaceOverViewport(imgui::GetMainViewport());
-    static bool show_info = false;
     static std::string str{};
     try {
       k_main_windows->frame_render();

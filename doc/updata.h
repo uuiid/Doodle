@@ -202,4 +202,9 @@
  * 
  * @subsubsection updata_log_3112 版本3.1.12
  * @li 修复配置文件文件夹获取错误
+ * 
+ * @subsubsection updata_log_3113 版本3.1.13
+ * @li 修复初始化配置界面杂乱现象
+ * @li 将fbx导出和解算合成为一个界面
+ * @li 更新布局方式， 添加更加方便的布局
  */

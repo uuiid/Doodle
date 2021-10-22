@@ -37,6 +37,6 @@ set(DOODLE_RE_FILES_LIST
         resource/Ue4CraeteLevel.py
         resource/ue4Icon.png
         resource/zhtopy.txt
-
+        resource/imgui.ini
         PARENT_SCOPE
 )
