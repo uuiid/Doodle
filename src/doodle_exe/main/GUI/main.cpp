@@ -16,31 +16,31 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
                               int nCmdShow) try {
   //  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF );
   //  std::locale::global(std::locale{".UTF8"});
-  //  std::setlocale(LC_NUMERIC, "C");
-  //  std::setlocale(LC_TIME, "C");
-  //  std::setlocale(LC_MONETARY, "C");
   //  std::locale::global(std::locale::classic());
   //  std::wcout.imbue(std::locale{".UTF8"});
-  //  std::setlocale(LC_CTYPE, ".UTF8");
   boost::locale::generator k_gen{};
   k_gen.categories(boost::locale::all_categories ^
                    boost::locale::formatting_facet ^
                    boost::locale::parsing_facet);
   std::locale::global(k_gen("zh_CN.UTF-8"));
+  std::setlocale(LC_NUMERIC, "C");
+  std::setlocale(LC_COLLATE, "C");
+  std::setlocale(LC_TIME, "C");
+  std::setlocale(LC_MONETARY, "C");
+  std::setlocale(LC_CTYPE, ".UTF8");
 
   doodle::program_options p_opt{};
   p_opt.command_line_parser(strCmdLine);
+#ifndef NDEBUG
+  auto& set                = doodle::core_set::getSet();
+  auto p_rpc_server_handle = std::make_shared<doodle::rpc_server_handle>();
+  p_rpc_server_handle->run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
+#endif
   auto k_app = p_opt.make_app();
-  if (k_app)
+  if (k_app) {
     return k_app->run();
-  else
+  } else
     return 0;
-
-  // #ifndef NDEBUG
-  //   auto& set                = doodle::core_set::getSet();
-  //   auto p_rpc_server_handle = std::make_shared<doodle::rpc_server_handle>();
-  //   p_rpc_server_handle->run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
-  // #endif
 
 } catch (const std::exception& err) {
   std::cout << err.what() << std::endl;

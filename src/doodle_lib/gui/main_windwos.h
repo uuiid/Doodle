@@ -43,11 +43,11 @@ class tool_box_widget;
  * @subsubsection doodle_attr_assets 编辑操作
  * @copydetails doodle::attr_assets
  *
- * @subsection doodle_assets_attr_widget 属性窗口
- * @copydetails doodle::assets_attr_widget
+ * @subsection doodle_assets_attr_widget 文件窗口
+ * @copydetails doodle::assets_file_widgets
  *
  * @subsubsection doodle_assets_attr_widget_memu 编辑操作
- * @copydetails doodle::menu_factory_assets_attr
+ * @copydetails doodle::attr_assets_file
  *
  */
 

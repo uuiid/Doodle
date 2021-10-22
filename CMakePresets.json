@@ -82,18 +82,17 @@
     },
     {
       "name": "debug_doodle",
+      "description": "debug doodle exe",
+      "displayName": "doodle exe",
       "inherits": "debug",
       "targets": "DoodleExe"
     },
     {
-      "name": "debug_doodle_plug",
+      "name": "doxy",
+      "description": "生成文档",
+      "displayName": "文档",
       "inherits": "debug",
-      "targets": "doodle_plug"
-    },
-    {
-      "name": "debug_doodle_server",
-      "inherits": "debug",
-      "targets": "doodleServerExe"
+      "targets": "Doxygen"
     },
     {
       "name": "release",
@@ -107,11 +106,15 @@
     },
     {
       "name": "cpack_doodle",
+      "description": "使用cpack打包",
+      "displayName": "打包",
       "inherits": "release",
       "targets": "cpack_Doodle"
     },
     {
       "name": "doodle_maya_plug",
+      "description": "maya插件只能使用release调试",
+      "displayName": "debug maya plug",
       "inherits": "release_plug",
       "targets": "doodle_plug"
     }

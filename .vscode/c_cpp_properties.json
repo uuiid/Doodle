@@ -4,6 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/src",
+                "${workspaceFolder}/src/doodle_exe",
+                "${workspaceFolder}/src/doodle_lib",
                 "E:/vcpkg/installed/x64-windows/include"
             ],
             "defines": [
@@ -15,7 +17,6 @@
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-msvc-x64",
-            "configurationProvider": "ms-vscode.cmake-tools",
             "compileCommands": "${workspaceFolder}/build/Ninja_debug/compile_commands.json",
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,

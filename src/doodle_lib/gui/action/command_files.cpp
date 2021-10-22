@@ -23,14 +23,15 @@ comm_files_select::comm_files_select()
                                "添加",
                                "替换",
                                "相对路径",
-                               "路径列表");
+                               "路径列表",
+                               "获得文件");
 }
 
 bool comm_files_select::render() {
   if (p_root) {
     if (imgui::Button(p_show_str["添加文件"].c_str())) {
       open_file_dialog{
-          "open_get_files",
+          p_show_str["获得文件"].c_str(),
           "获得文件",
           ".*",
           ".",
@@ -41,14 +42,16 @@ bool comm_files_select::render() {
                 p_file = in_p.front();
                 p_list_paths->get().clear();
                 p_comm_sub = p_list_paths->add_file(p_file, *p_use_relative);
-                p_comm_sub->add_data(p_root, p_list_paths);
+                if (p_comm_sub)
+                  p_comm_sub->add_data(p_root, p_list_paths);
               });
     }
     imgui::SameLine();
     if (imgui::Checkbox(p_show_str["相对路径"].c_str(), p_use_relative.get())) {
       p_list_paths->get().clear();
       p_comm_sub = p_list_paths->add_file(p_file, *p_use_relative);
-      p_comm_sub->add_data(p_root, p_list_paths);
+      if (p_comm_sub)
+        p_comm_sub->add_data(p_root, p_list_paths);
     }
 
     dear::ListBox{
