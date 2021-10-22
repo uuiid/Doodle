@@ -76,6 +76,8 @@ bool comm_project_add::set_child() {
       *p_prj_name = p_root->get_name();
       *p_prj_path = p_root->get_path().generic_string();
     }
+  } else {
+    p_root.reset();
   }
   return true;
 }
@@ -141,6 +143,8 @@ bool comm_ass_eps::set_child() {
   if (std::holds_alternative<episodes_ptr>(p_var)) {
     p_root = std::get<episodes_ptr>(p_var);
     p_data = p_root->get_episodes();
+  } else {
+    p_root.reset();
   }
   return true;
 }
@@ -219,6 +223,8 @@ bool comm_ass_shot::set_child() {
     p_root    = std::get<shot_ptr>(p_var);
     p_data    = p_root->get_shot();
     p_shot_ab = p_root->get_shot_ab();
+  } else {
+    p_root.reset();
   }
   return true;
 }
@@ -270,6 +276,8 @@ bool comm_assets::set_child() {
   if (std::holds_alternative<assets_ptr>(p_var)) {
     p_root = std::get<assets_ptr>(p_var);
     p_data = p_root->get_name1();
+  } else {
+    p_root.reset();
   }
   return true;
 }
@@ -337,6 +345,8 @@ bool comm_ass_season::set_child() {
   if (std::holds_alternative<season_ptr>(p_var)) {
     p_root = std::get<season_ptr>(p_var);
     p_data = p_root->get_season();
+  } else {
+    p_root.reset();
   }
   return true;
 }
@@ -402,6 +412,8 @@ bool comm_ass_file_attr::set_child() {
       p_root->set_path_file(new_object<assets_path_vector>());
     p_comm = p_root->get_comment();
     p_time_widget->set_time(p_root->get_time());
+  } else {
+    p_root.reset();
   }
   return true;
 }
