@@ -127,6 +127,21 @@ bool comm_qcloth_sim::render() {
                       maya->qcloth_sim_file(arg);
                     });
     }
+    if (imgui::Button("解算并导出fbx")) {
+      auto maya = new_object<maya_file_async>();
+      std::for_each(p_sim_path.begin(), p_sim_path.end(),
+                    [this, maya](const FSys::path& in_path) {
+                      auto arg                = new_object<maya_file::qcloth_arg>();
+                      arg->sim_path           = in_path;
+                      arg->qcloth_assets_path = p_cloth_path;
+                      arg->only_sim           = p_only_sim;
+                      maya->qcloth_sim_file(arg);
+                      auto k_arg         = new_object<maya_file::export_fbx_arg>();
+                      k_arg->file_path   = in_path;
+                      k_arg->use_all_ref = this->p_use_all_ref;
+                      maya->export_fbx_file(k_arg);
+                    });
+    }
   };
   dear::TreeNode{"fbx导出"} && [this]() {
     imgui::Checkbox("直接加载所有引用", &p_use_all_ref);

@@ -144,7 +144,7 @@ class camera:
         if not self.maya_cam:
             return
         if not out_path:
-            out_path = doodle_work_space.maya_file.abs_path / "mov"
+            out_path = doodle_work_space.work.path / "mov"
         tmp_path = pymel.core.Path(out_path)
         if not tmp_path.exists():
             tmp_path.makedirs_p()
@@ -212,7 +212,7 @@ class camera:
         )
 
     def unlock_cam(self):
-        for att in ["tx","ty","tz","rx","ry","rz","sx","sy","sz","v","coi","sa","fd","fl","vfa","hfa","lsr","fs"]:
+        for att in ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v", "coi", "sa", "fd", "fl", "vfa", "hfa", "lsr", "fs"]:
             if self.maya_cam.attr(att).isLocked():
                 self.maya_cam.attr(att).unlock()
 
@@ -309,7 +309,7 @@ class camera:
 
     def __call__(self, str=None):
         if not str:
-            str = doodle_work_space.work.getPath() / \
+            str = doodle_work_space.work.path / \
                 doodle_work_space.maya_file.name_not_ex
         self.export(str)
 
@@ -474,7 +474,6 @@ class geometryInfo():
             self.maya_mesh_obj = maya_mesh_obj
 
         self.name = self.maya_mesh_obj.getTransform().name()
-        self.out_path = doodle_work_space.maya_file.abs_path
         self.materals = []  # type: list[meateral]
 
         self._getMaterals_()
@@ -583,7 +582,7 @@ class export_group(object):
         if not mesh:
             return
 
-        path = doodle_work_space.work.getPath() \
+        path = doodle_work_space.work.path \
             / doodle_work_space.maya_file.name_not_ex   # type: pymel.core.Path
 
         name = "{}_{}_{}-{}.fbx".format(doodle_work_space.maya_file.name_not_ex,
@@ -684,7 +683,7 @@ class cloth_group_file(export_group):
 
         # 创建路径
         if not export_path:
-            export_path = doodle_work_space.work.getPath() / "abc"
+            export_path = doodle_work_space.work.path / "abc"
         path = export_path  # type: pymel.core.Path
 
         path.makedirs_p()
@@ -762,7 +761,7 @@ class cloth_group_file(export_group):
         # 创建路径
         if not export_path:
             export_path = doodle_work_space.work.getPath(
-            ) / "abc" / doodle_work_space.maya_file.name_not_ex
+            ) / doodle_work_space.maya_file.name_not_ex
         path = export_path  # type: pymel.core.Path
         self.export_select_abc(
             path,
@@ -801,11 +800,12 @@ class fbx_export():
             obj.export_fbx()
 
     def save(self):
-        path = doodle_work_space.maya_file.abs_path / doodle_work_space.maya_file.name_not_ex  # type: pymel.core.util.path
+        path = doodle_work_space.work.path / \
+            doodle_work_space.maya_file.name_not_ex  # type: pymel.core.util.path
         path.makedirs_p()
         pymel.core.system.saveAs("{}/{}.ma".format(
-        path,
-        doodle_work_space.maya_file.name_not_ex))
+            path,
+            doodle_work_space.maya_file.name_not_ex))
 
     def __call__(self):
         self.save()
@@ -843,7 +843,7 @@ class cloth_export():
                                   for i in pymel.core.listReferences()]
         except RuntimeError:
             self.colth_ref = [references_file(i)
-                                  for i in pymel.core.listReferences()]
+                              for i in pymel.core.listReferences()]
 
     def replace_file(self):
         for qc in self.qcolth_group:
@@ -861,7 +861,7 @@ class cloth_export():
             1001,
             doodle_work_space.raneg.end))
         self.cam.create_move(
-            out_path=doodle_work_space.maya_file.abs_path / "mov",
+            out_path=doodle_work_space.work.path / "mov",
             start_frame=1001
         )
 
@@ -881,7 +881,7 @@ class cloth_export():
 
     def save(self, override=False):
         if not override:
-            path = doodle_work_space.maya_file.abs_path / "ma"  # type: pymel.core.util.path
+            path = doodle_work_space.work.path / "cloth_ma"  # type: pymel.core.util.path
             path.makedirs_p()
 
             pymel.core.system.saveAs("{}/{}_sim_colth.ma".format(
@@ -965,14 +965,14 @@ class config(object):
 
 class sim_config(config):
     def __init__(self):
-        super(sim_config,self).__init__()
+        super(sim_config, self).__init__()
         self.qcloth_assets_path = pymel.core.Path()
         self.only_sim = False
 
 
 class fbx_config(config):
     def __init__(self):
-        super(fbx_config,self).__init__()
+        super(fbx_config, self).__init__()
         self.use_all_ref = False
 
 
