@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-
+# -*- coding: utf-8 -*-\n
 import maya_fun_tool
-k_f = maya_fun_tool.open_file("E:/tmp/test2/DBXY_ep165_sc004_an.ma")
-# k_f.get_cloth_sim("V:/03_Workflow/Assets/CFX/cloth")()
-sim = k_f.get_cloth_sim("V:/03_Workflow/Assets/CFX")
-sim()
+k_f =  maya_fun_tool.open_file()
+k_f.config_ = """[{"export_path":"","path":"E:/tmp/test_10_21/DBXY_EP171_SC111_AN.ma","use_all_ref":true}]"""
+k_f()
 quit()
-# sim.sim_and_export()

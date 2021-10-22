@@ -1,13 +1,13 @@
+#include <Logger/logger.h>
 #include <doodle_lib/Exception/exception.h>
-#include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/core/filesystem_extend.h>
+#include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/lib_warp/boost_locale_warp.h>
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <doodle_lib/thread_pool/long_term.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
-#include <Logger/logger.h>
 
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
@@ -64,34 +64,6 @@ bool maya_file::checkFile() {
 bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_term) {
   boost::process::ipstream k_in{};
   boost::process::ipstream k_in2{};
-  // k_in.imbue();
-  // boost::asio::io_context ios{};
-  // std::vector<char> v_out(128 << 10);
-  // auto out_buff{boost::asio::buffer(v_out)};
-  // boost::process::async_pipe pip_out{ios};
-
-  // std::function<void(const boost::system::error_code& ec, std::size_t n)> on_sut;
-
-  // on_sut = [&in_term, &v_out, &pip_out, &out_buff, &on_sut](const boost::system::error_code& ec, std::size_t n) {
-  //   in_term->sig_message_result(string{v_out.begin(), v_out.begin() + n}, long_term::warning);
-  //   if (!ec) {
-  //     boost::asio::async_read(pip_out, out_buff, on_sut);
-  //   }
-  // };
-
-  // std::vector<char> v_err(128 << 10);
-  // auto err_buff{boost::asio::buffer(v_err)};
-  // boost::process::async_pipe pip_err{ios};
-  // std::function<void(const boost::system::error_code& ec, std::size_t n)> on_err;
-  // on_err = [&in_term, &v_err, &pip_err, &err_buff, &on_err](const boost::system::error_code& ec, std::size_t n) {
-  //   in_term->sig_message_result(string{v_err.begin(), v_err.begin() + n}, long_term::level::info);
-  //   if (!ec) {
-  //     boost::asio::async_read(pip_err, err_buff, on_err);
-  //   }
-  // };
-
-  //   boost::process::child k_c{str.str(), boost::process::windows::hide};
-  //   auto com = fmt::format(LR"(cmd.exe /c "{}")",in_com);
   DOODLE_LOG_INFO("命令 {}", boost::locale::conv::utf_to_utf<char>(in_com));
   boost::process::child k_c{
       boost::process::cmd = in_com,
@@ -102,14 +74,8 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
       boost::process::windows::hide
 #endif  //_WIN32
   };
-
-  // boost::asio::async_read(pip_err, err_buff, on_err);
-  // boost::asio::async_read(pip_out, out_buff, on_sut);
-  // ios.run();
-  // k_c.wait();
-  // return k_c.exit_code() == 0;
   auto fun  = std::async(std::launch::async,
-                        [&k_c, &k_in, &in_term]() {
+                         [&k_c, &k_in, &in_term]() {
                           auto str_r = std::string{};
                           while (k_c.running()) {
                             if (std::getline(k_in, str_r) && !str_r.empty()) {
@@ -117,7 +83,7 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
                               in_term->sig_progress(rational_int{1, 50});
                             }
                           }
-                        });
+                         });
   auto fun2 = std::async(std::launch::async,
                          [&k_c, &k_in2, &in_term, &in_com]() {
                            auto str_r2 = std::string{};
@@ -156,7 +122,16 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
 void maya_file::export_fbx_file(const FSys::path& file_path,
                                 const FSys::path& export_path,
                                 const long_term_ptr& in_ptr) {
-  if (!FSys::exists(file_path)) {
+  auto k_arg         = new_object<export_fbx_arg>();
+  k_arg->file_path   = file_path;
+  k_arg->export_path = export_path;
+  k_arg->use_all_ref = false;
+  export_fbx_file(k_arg, in_ptr);
+}
+
+void maya_file::export_fbx_file(const export_fbx_arg_ptr& in_arg,
+                                const long_term_ptr& in_ptr) {
+  if (!FSys::exists(in_arg->file_path)) {
     if (in_ptr) {
       in_ptr->sig_finished();
       in_ptr->sig_message_result("不存在文件 \n", long_term::warning);
@@ -170,12 +145,15 @@ void maya_file::export_fbx_file(const FSys::path& file_path,
     in_ptr->sig_progress(rational_int{1, 40});
   //生成导出文件
   auto str_script = fmt::format(
-      "# -*- coding: utf-8 -*-\n"
-      "\n"
-      "import maya_fun_tool\n"
-      "k_f =  maya_fun_tool.open_file(\"{}\")\n"
-      "k_f.get_fbx_export()()",
-      file_path.generic_string());
+      R"(# -*- coding: utf-8 -*-\n
+import maya_fun_tool
+k_f =  maya_fun_tool.open_file()
+k_f.config_ = """{}"""
+k_f()
+quit()
+)",
+      nlohmann::json{*in_arg}.dump());
+
   auto run_path = warit_tmp_file(str_script);
   if (in_ptr)
     in_ptr->sig_progress(rational_int{1, 40});
@@ -214,16 +192,14 @@ void maya_file::qcloth_sim_file(const qcloth_arg_ptr& in_arg,
     in_ptr->sig_progress(rational_int{1, 40});
 
   auto str_script = fmt::format(
-      "# -*- coding: utf-8 -*-\n"
-      "import maya_fun_tool\n"
-      "k_f =  maya_fun_tool.open_file(\"{}\")\n"
-      "sim = k_f.get_cloth_sim(\"{}\")\n",
-      in_arg->sim_path.generic_string(),
-      in_arg->qcloth_assets_path.generic_string());
-  if (in_arg->only_sim)
-    str_script.append("sim.sim_and_export()\n");
-  else
-    str_script.append("sim()\n");
+      R"(# -*- coding: utf-8 -*-\n
+import maya_fun_tool
+k_f =  maya_fun_tool.open_file()
+k_f.config_ = """{}"""
+k_f()
+quit())",
+
+      nlohmann::json{*in_arg}.dump());
 
   auto run_path = warit_tmp_file(str_script);
   if (in_ptr)
@@ -258,6 +234,17 @@ long_term_ptr maya_file_async::export_fbx_file(const FSys::path& file_path, cons
   auto k_f = doodle_lib::Get().get_thread_pool()->enqueue(
       [self = p_maya_file, file_path, export_path, k_term]() {
         self->export_fbx_file(file_path, export_path, k_term);
+      });
+  k_term->p_list.emplace_back(std::move(k_f));
+  return k_term;
+}
+long_term_ptr maya_file_async::export_fbx_file(maya_file::export_fbx_arg_ptr& in_arg) {
+  p_maya_file = new_object<maya_file>();
+  auto k_term = new_object<long_term>();
+  k_term->set_name(in_arg->file_path.filename().generic_string());
+  auto k_f = doodle_lib::Get().get_thread_pool()->enqueue(
+      [self = p_maya_file, in_arg, k_term]() {
+        self->export_fbx_file(in_arg, k_term);
       });
   k_term->p_list.emplace_back(std::move(k_f));
   return k_term;

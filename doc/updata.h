@@ -186,4 +186,25 @@
  * @li 添加maya插件回调
  * @li 更加提前的初始化， 更加清晰明了的日志记录
  * @li maya fbx相机插件导出更加智能的算法， 并且添加了排序功能
+ *
+ * @subsubsection updata_log_318 版本3.1.8
+ * @li 修复maya安装插件问题
+ *
+ * @subsubsection updata_log_319 版本3.1.9
+ * @li 修复配置文件写入权限不够导致失败的错误
+ *
+ * @subsubsection updata_log_3110 版本3.1.10
+ * @li 添加maya导出时加载所有引用选项
+ * @li 添加maya 相机解锁属性
+ *
+ * @subsubsection updata_log_3111 版本3.1.11
+ * @li 将maya文件同时还复制到导出文件夹
+ * 
+ * @subsubsection updata_log_3112 版本3.1.12
+ * @li 修复配置文件文件夹获取错误
+ * 
+ * @subsubsection updata_log_3113 版本3.1.13
+ * @li 修复初始化配置界面杂乱现象
+ * @li 将fbx导出和解算合成为一个界面
+ * @li 更新布局方式， 添加更加方便的布局
  */

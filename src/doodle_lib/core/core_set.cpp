@@ -253,16 +253,15 @@ bool core_set_init::find_maya() {
 }
 
 bool core_set_init::read_file() {
-  DOODLE_LOG_INFO("读取配置文件");
-
-  static FSys::path l_k_setting_file_name = p_set.get_doc() / p_set.config_file_name();
+  FSys::path l_k_setting_file_name = p_set.get_doc() / p_set.config_file_name();
+  DOODLE_LOG_INFO("读取配置文件 {}", l_k_setting_file_name);
   if (FSys::exists(l_k_setting_file_name)) {
     FSys::path l_str_file(l_k_setting_file_name);
     FSys::ifstream l_in_josn{l_k_setting_file_name, std::ifstream::binary};
 
     boost::archive::text_iarchive l_out{l_in_josn};
     try {
-      l_out >> core_set::getSet();
+      l_out >> p_set;
     } catch (const boost::archive::archive_exception &err) {
       DOODLE_LOG_DEBUG(err.what());
       return false;
@@ -272,7 +271,7 @@ bool core_set_init::read_file() {
   return false;
 }
 bool core_set_init::write_file() {
-  DOODLE_LOG_INFO("写入配置文件");
+  DOODLE_LOG_INFO("写入配置文件 {}", p_set.p_doc / p_set.config_file_name());
 
   if (p_set.p_ue4_setting.has_path() && !FSys::exists(p_set.p_ue4_setting.get_path() / staticValue::ue_path_obj())) {
     p_set.p_ue4_setting.set_path({});
@@ -313,5 +312,13 @@ bool core_set_init::find_cache_dir() {
     return false;
   });
   return l_item;
+}
+
+bool core_set_init::config_to_user() {
+  p_set.p_doc = get_pwd() / "doodle";
+  if (!FSys::exists(p_set.p_doc)) {
+    FSys::create_directories(p_set.p_doc);
+  }
+  return true;
 }
 }  // namespace doodle

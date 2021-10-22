@@ -109,6 +109,8 @@ class DOODLELIB_API core_set : public details::no_copy {
    */
   std::condition_variable p_condition;
 
+  std::map<string, bool> widget_show;
+
  private:
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
@@ -151,8 +153,8 @@ class DOODLELIB_API core_set : public details::no_copy {
 };
 
 class DOODLELIB_API core_set_init {
+  core_set &p_set;
 
-  core_set& p_set;
  public:
   core_set_init();
 
@@ -160,8 +162,8 @@ class DOODLELIB_API core_set_init {
   bool read_file();
   bool write_file();
   bool find_cache_dir();
+  bool config_to_user();
 };
-
 
 template <class Archive>
 void core_set::serialize(Archive &ar, std::uint32_t const version) {
@@ -178,10 +180,16 @@ void core_set::serialize(Archive &ar, std::uint32_t const version) {
         boost::serialization::make_nvp("ue4_setting", p_ue4_setting) &
         boost::serialization::make_nvp("maya_Path", p_mayaPath) &
         boost::serialization::make_nvp("p_max_thread", p_max_thread);
+  if (version == 9) {
+    ar &BOOST_SERIALIZATION_NVP(p_user_);
+    ar &BOOST_SERIALIZATION_NVP(p_department_);
+    ar &BOOST_SERIALIZATION_NVP(p_ue4_setting);
+    ar &BOOST_SERIALIZATION_NVP(p_mayaPath);
+    ar &BOOST_SERIALIZATION_NVP(p_max_thread);
+    ar &BOOST_SERIALIZATION_NVP(widget_show);
+  }
 }
 FSys::path DOODLELIB_API get_pwd();
-
-
 
 }  // namespace doodle
 namespace cereal {
@@ -194,5 +202,5 @@ void load_minimal(Archive const &, doodle::department &department, std::string c
   department = magic_enum::enum_cast<doodle::department>(value).value_or(doodle::department::None_);
 };
 }  // namespace cereal
-BOOST_CLASS_VERSION(doodle::core_set, 8);
+BOOST_CLASS_VERSION(doodle::core_set, 9);
 BOOST_CLASS_EXPORT_KEY(doodle::core_set);

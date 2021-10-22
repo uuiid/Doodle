@@ -21,7 +21,9 @@
 #include <boost/range/algorithm.hpp>
 namespace doodle {
 
-comm_export_fbx::comm_export_fbx() {
+comm_export_fbx::comm_export_fbx()
+    : p_files(),
+      p_use_all_ref(false) {
   p_name = "导出fbx";
 }
 
@@ -45,10 +47,16 @@ bool comm_export_fbx::render() {
       dear::Selectable(f.generic_string());
     }
   };
+  imgui::Checkbox("直接加载所有引用", &p_use_all_ref);
   if (imgui::Button("导出")) {
     auto maya = new_object<maya_file_async>();
     std::for_each(p_files.begin(), p_files.end(),
-                  [maya](const auto& i) { maya->export_fbx_file(i); });
+                  [maya, this](const auto& i) {
+                    auto k_arg         = new_object<maya_file::export_fbx_arg>();
+                    k_arg->file_path   = i;
+                    k_arg->use_all_ref = this->p_use_all_ref;
+                    maya->export_fbx_file(k_arg);
+                  });
   }
   return true;
 }
@@ -61,29 +69,14 @@ comm_qcloth_sim::comm_qcloth_sim()
     : p_cloth_path(),
       p_text(new_object<std::string>()),
       p_sim_path(),
-      p_only_sim(false) {
-  p_name = "解算布料";
+      p_only_sim(false),
+      p_use_all_ref(false) {
+  p_name = "maya工具";
 }
 bool comm_qcloth_sim::is_async() {
   return true;
 }
 bool comm_qcloth_sim::render() {
-  imgui::InputText("解算资产", p_text.get(), ImGuiInputTextFlags_ReadOnly);
-  imgui::SameLine();
-  if (imgui::Button("选择")) {
-    open_file_dialog{
-        "open_get_sim_cloth_path_ass",
-        "open_get_sim_cloth_path_ass",
-        nullptr,
-        ".",
-        "",
-        1}
-        .show(
-            [this](const std::vector<FSys::path>& in_p) {
-              p_cloth_path = in_p.front();
-              *p_text      = p_cloth_path.generic_string();
-            });
-  }
   if (imgui::Button("maya文件")) {
     p_sim_path.clear();
     open_file_dialog{
@@ -104,18 +97,50 @@ bool comm_qcloth_sim::render() {
       dear::Selectable(f.generic_string());
     }
   };
-  imgui::Checkbox("只解算不替换引用", &p_only_sim);
-  if (imgui::Button("解算")) {
-    auto maya = new_object<maya_file_async>();
-    std::for_each(p_sim_path.begin(), p_sim_path.end(),
-                  [this, maya](const FSys::path& in_path) {
-                    auto arg                = new_object<maya_file::qcloth_arg>();
-                    arg->sim_path           = in_path;
-                    arg->qcloth_assets_path = p_cloth_path;
-                    arg->only_sim           = p_only_sim;
-                    maya->qcloth_sim_file(arg);
-                  });
-  }
+
+  dear::TreeNode{"解算"} && [this]() {
+    imgui::InputText("解算资产", p_text.get(), ImGuiInputTextFlags_ReadOnly);
+    imgui::SameLine();
+    if (imgui::Button("选择")) {
+      open_file_dialog{
+          "open_get_sim_cloth_path_ass",
+          "open_get_sim_cloth_path_ass",
+          nullptr,
+          ".",
+          "",
+          1}
+          .show(
+              [this](const std::vector<FSys::path>& in_p) {
+                p_cloth_path = in_p.front();
+                *p_text      = p_cloth_path.generic_string();
+              });
+    }
+    imgui::Checkbox("只解算不替换引用", &p_only_sim);
+    if (imgui::Button("解算")) {
+      auto maya = new_object<maya_file_async>();
+      std::for_each(p_sim_path.begin(), p_sim_path.end(),
+                    [this, maya](const FSys::path& in_path) {
+                      auto arg                = new_object<maya_file::qcloth_arg>();
+                      arg->sim_path           = in_path;
+                      arg->qcloth_assets_path = p_cloth_path;
+                      arg->only_sim           = p_only_sim;
+                      maya->qcloth_sim_file(arg);
+                    });
+    }
+  };
+  dear::TreeNode{"fbx导出"} && [this]() {
+    imgui::Checkbox("直接加载所有引用", &p_use_all_ref);
+    if (imgui::Button("导出")) {
+      auto maya = new_object<maya_file_async>();
+      std::for_each(p_sim_path.begin(), p_sim_path.end(),
+                    [maya, this](const auto& i) {
+                      auto k_arg         = new_object<maya_file::export_fbx_arg>();
+                      k_arg->file_path   = i;
+                      k_arg->use_all_ref = this->p_use_all_ref;
+                      maya->export_fbx_file(k_arg);
+                    });
+    }
+  };
 
   return true;
 }
