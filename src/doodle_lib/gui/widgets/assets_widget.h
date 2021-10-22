@@ -8,7 +8,12 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
-
+/**
+ * @brief 资产显示树
+ * @image html attr_project.jpg 资产树 
+ * @li 这里只显示资产树, 可以类比为文件夹树
+ * 
+ */
 class DOODLELIB_API assets_widget : public metadata_widget {
   metadata_ptr p_root;
   /**

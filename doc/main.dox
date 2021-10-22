@@ -1,25 +1,27 @@
 /**
  * @mainpage doodle 工具包
  * @tableofcontents
- * 
- * @ref doodle_windwos \n 
- * @ref doodle_windwos_setting \n 
- * @ref doodle_main_boolbox \n 
- * 
- * 
+ *
+ * @ref doodle_windwos \n
+ * @ref doodle_windwos_setting \n
+ * @ref doodle_main_boolbox \n
+ *
+ *
  * 基本上是按照版本控制语义来的 <https://semver.org/>
- * 
+ *
  * <a href="./file/Doodle-3.1.14-win64.msi">下载稳定版(  Doodle-3.1.14-win64.msi )</a> \n
  * <a href="./file/@doodle_exe_file">下载开发版(  @doodle_exe_file )</a>
  *
  * @section main_management_tool 主要窗口
  * @image html doodle_image/main_windows.jpg 主要面板 width=30%
- * 
- * 
- * 
+ *
+ *
+ *
  * @section installation_steps 安装步骤
- * 
+ *
  * @image html doodle_image/install.jpg 安装图像 width=30%
  * 基本上直接安装， 中途不会有问题， 但是要注意使用时需要联网
  * @warning 尽量在安装路径中不要出现中文
+ *
+ *
  */

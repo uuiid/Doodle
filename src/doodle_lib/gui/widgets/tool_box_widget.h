@@ -9,6 +9,9 @@
 namespace doodle {
 /**
  * @page doodle_main_boolbox 工具窗口
+ * @b 工具箱中的所有工具是可以不依赖主面板使用的独立小工具集合
+ *
+ *
  * @copydetails doodle::tool_box_widget
  * @tableofcontents
  *
@@ -19,7 +22,7 @@ namespace doodle {
  *
  * @subpage vide_rool "视频工具"
  * @copydetails doodle::comm_create_video
- * 
+ *
  * @subpage comm_import_ue "导入ue工具"
  * @copydetails doodle::comm_import_ue_files
  */
