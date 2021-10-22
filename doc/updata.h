@@ -199,15 +199,19 @@
  *
  * @subsubsection updata_log_3111 版本3.1.11
  * @li 将maya文件同时还复制到导出文件夹
- * 
+ *
  * @subsubsection updata_log_3112 版本3.1.12
  * @li 修复配置文件文件夹获取错误
- * 
+ *
  * @subsubsection updata_log_3113 版本3.1.13
  * @li 修复初始化配置界面杂乱现象
  * @li 将fbx导出和解算合成为一个界面
  * @li 更新布局方式， 添加更加方便的布局
- * 
+ *
  * @subsubsection updata_log_3114 版本3.1.14
  * @li 修复没有元数据是pymel抛出的异常
+ *
+ * @subsubsection updata_log_3115 版本3.1.15
+ * @li 添加导出fbx并解算按钮
+ * @li 并将fbx导出和解算输出文件夹统一在一起
  */
