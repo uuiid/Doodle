@@ -13,6 +13,5 @@ class DOODLELIB_API comm_video : public command_base {
   /* data */
  public:
   comm_video();
-  ~comm_video();
 };
 }  // namespace doodle
