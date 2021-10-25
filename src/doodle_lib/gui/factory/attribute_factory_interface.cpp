@@ -5,6 +5,7 @@
 #include "attribute_factory_interface.h"
 
 #include <doodle_lib/gui/action/command_meta.h>
+#include <doodle_lib/gui/action/command_video.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 namespace doodle {
@@ -33,6 +34,7 @@ attr_assets::attr_assets()
   k_l->p_list.push_back(new_object<comm_ass_shot>());
   k_l->p_list.push_back(new_object<comm_assets>());
   k_l->p_list.push_back(new_object<comm_ass_ue4_create_shot>());
+  k_l->p_list.push_back(new_object<comm_video>());
   p_comm = k_l;
 }
 

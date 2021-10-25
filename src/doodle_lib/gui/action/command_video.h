@@ -10,8 +10,11 @@
 namespace doodle {
 class DOODLELIB_API comm_video : public command_base {
  private:
-  /* data */
+  metadata_ptr p_root;
+
  public:
   comm_video();
+  virtual bool render() override;
+  virtual bool set_data(const std::any& in_any) override;
 };
 }  // namespace doodle
