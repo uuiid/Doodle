@@ -4,18 +4,18 @@
 
 #include "assets_path.h"
 
-#include <logger/logger.h>
-#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/file_warp/video_sequence.h>
+#include <doodle_lib/gui/action/command_files.h>
 #include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/rpc/rpc_trans_path.h>
-#include <doodle_lib/gui/action/command_files.h>
+#include <logger/logger.h>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path)
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path_vector)
@@ -101,7 +101,7 @@ std::string assets_path::str() const {
 void assets_path_vector::set_metadata(const std::weak_ptr<metadata> &in_meta) {
   leaf_meta::set_metadata(in_meta);
   boost::remove_erase_if(paths, [](auto i) { return !i; });
-  
+
   for (auto &i : get()) {
     i->set_metadata(in_meta);
   }
@@ -114,6 +114,7 @@ command_ptr assets_path_vector::add_file(
   k_path->set_metadata(p_meta);
 
   if (ue4_project::is_ue4_file(in_path)) {
+    get_meta<assets_file>()->set_file_type(assets_file_type::ue4_prj);
     // 添加基本路径(ue4 prj 路径)
     k_path->set_path(in_path, p_meta.lock(), in_using_lexically_relative);
     // 添加内容路径
@@ -124,6 +125,7 @@ command_ptr assets_path_vector::add_file(
   }
 
   if (image_sequence::is_image_sequence(FSys::list_files(in_path.parent_path()))) {
+    get_meta<assets_file>()->set_file_type(assets_file_type::ue4_prj);
     // 添加文件的父路径, 序列文件夹
     k_path->set_path(in_path.parent_path(), p_meta.lock(), in_using_lexically_relative);
     k_comm = new_object<comm_file_image_to_move>();

@@ -102,6 +102,41 @@ bool comm_files_select::add_files() {
   return false;
 }
 
+comm_files_up::comm_files_up()
+    : command_base(),
+      p_file(),
+      p_list_paths() {
+  p_show_str = make_imgui_name(this, "添加");
+}
+
+bool comm_files_up::add_files() {
+  auto k_f = p_list_paths->get_meta<assets_file>();
+  k_f->set_path_file(p_list_paths);
+  k_f->up_version();
+  k_f->updata_db();
+  auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(p_list_paths->make_up_path());
+  (*k_up)();
+  return false;
+}
+
+bool comm_files_up::render() {
+  if (imgui::Button(p_show_str["添加"].c_str())) {
+    if (!p_list_paths->get().empty()) {
+      add_files();
+    }
+  }
+  return true;
+}
+
+bool comm_files_up::set_child() {
+  if (std::holds_alternative<assets_path_vector_ptr>(p_var)) {
+    p_list_paths = std::get<assets_path_vector_ptr>(p_var);
+  } else {
+    p_list_paths.reset();
+  }
+  return true;
+}
+
 void comm_file_image_to_move::init() {
   p_name         = "视频选项";
   p_show_str     = make_imgui_name(this, "不上传", "上传视频", "不上传源文件");

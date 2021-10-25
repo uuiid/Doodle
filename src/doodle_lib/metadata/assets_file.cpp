@@ -8,10 +8,9 @@
 ///这个工厂类必须在所有导入的后面
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/metadata/metadata_factory.h>
+#include <google/protobuf/util/time_util.h>
 #include <metadata/time_point_wrap.h>
 #include <pin_yin/convert.h>
-#include <google/protobuf/util/time_util.h>
-
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_file)
 namespace doodle {
@@ -32,7 +31,8 @@ assets_file::assets_file()
       p_department(core_set::getSet().get_department_enum()),
       p_comment(new_object<comment_vector>()),
       p_version(1),
-      p_need_time(false) {
+      p_need_time(false),
+      p_file_type(assets_file_type::none) {
   p_type = meta_type::file;
 }
 
@@ -46,7 +46,8 @@ assets_file::assets_file(std::weak_ptr<metadata> in_metadata, std::string showNa
       p_department(core_set::getSet().get_department_enum()),
       p_comment(new_object<comment_vector>()),
       p_version(1),
-      p_need_time(false) {
+      p_need_time(false),
+      p_file_type(assets_file_type::none) {
   p_type   = meta_type::file;
   p_parent = std::move(in_metadata);
   if (p_name.empty())
@@ -132,6 +133,14 @@ int assets_file::find_max_version() const {
   else
     k_int = 1;
   return boost::numeric_cast<std::int32_t>(k_int);
+}
+
+const assets_file_type& assets_file::get_file_type() const noexcept {
+  return p_file_type;
+}
+
+void assets_file::set_file_type(const assets_file_type& in_file_type) noexcept {
+  p_file_type = in_file_type;
 }
 
 department assets_file::get_department() const {

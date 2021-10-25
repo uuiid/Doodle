@@ -22,7 +22,6 @@ class comm_file_image_to_move : public command_base {
 
   string p_text;
 
-
   void init();
   bool set_child() override;
   bool updata_file();
@@ -41,15 +40,18 @@ class comm_file_image_to_move : public command_base {
   bool render() override;
 };
 
-//class DOODLELIB_API comm_files_up : public command_base {
-// private:
-//  assets_path_vector_ptr p_list_paths;
-//  FSys::path p_file;
-//
-// public:
-//  comm_files_up();
-//  bool render() override;
-//};
+class DOODLELIB_API comm_files_up : public command_base {
+ private:
+  assets_path_vector_ptr p_list_paths;
+  FSys::path p_file;
+
+ protected:
+  bool add_files();
+  bool set_child();
+ public:
+  comm_files_up();
+  bool render() override;
+};
 
 class DOODLELIB_API comm_files_select : public command_base {
  private:

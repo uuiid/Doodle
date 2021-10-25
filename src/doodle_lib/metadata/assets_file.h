@@ -8,13 +8,24 @@
 #include <doodle_lib/metadata/metadata.h>
 
 namespace doodle {
+enum class assets_file_type : std::uint32_t {
+  none = 0,
+  maya_file,
+  maya_rig,
+  fbx,
+  abc,
+  move,
+  ue4_prj
+
+};
+
 /**
  * @brief 这个类代表着服务端的文件条目
  *
  */
-
-
 class DOODLELIB_API assets_file : public metadata {
+ public:
+ private:
   std::string p_name;
   std::string p_ShowName;
   time_wrap_ptr p_time;
@@ -25,6 +36,7 @@ class DOODLELIB_API assets_file : public metadata {
   std::uint64_t p_version;
 
   bool p_need_time;
+  assets_file_type p_file_type;
 
   void serialize_check();
 
@@ -73,6 +85,9 @@ class DOODLELIB_API assets_file : public metadata {
   };
 
   int find_max_version() const;
+
+  const assets_file_type& get_file_type() const noexcept;
+  void set_file_type(const assets_file_type& in_file_type) noexcept;
 
   virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr) override;
 
