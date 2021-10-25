@@ -28,7 +28,7 @@ class data {
 using data_ptr = std::shared_ptr<data>;
 }  // namespace reference_attr
 
-class reference_attr_setting : public command_base {
+class reference_attr_setting : public command_base_tool {
   std::vector<reference_attr::data_ptr> p_list;
 
   bool add_channel() const;
