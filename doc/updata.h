@@ -214,4 +214,8 @@
  * @subsubsection updata_log_3115 版本3.1.15
  * @li 添加导出fbx并解算按钮
  * @li 并将fbx导出和解算输出文件夹统一在一起
+ *
+ * @subsubsection updata_log_3116 版本3.1.16
+ * @li 解算主动结束任务，超时设置为1小时
+ *
  */
