@@ -30,6 +30,7 @@ set(
     gui/action/command_meta.h
     gui/action/command_tool.h
     gui/action/command_ue4.h
+    gui/action/command_video.h
     gui/widgets/assets_file_widgets.h
     gui/widgets/assets_widget.h
     gui/widgets/edit_widgets.h
@@ -116,6 +117,7 @@ set(
     gui/action/command_meta.cpp
     gui/action/command_tool.cpp
     gui/action/command_ue4.cpp
+    gui/action/command_video.cpp
     gui/widgets/assets_file_widgets.cpp
     gui/widgets/assets_widget.cpp
     gui/widgets/edit_widgets.cpp

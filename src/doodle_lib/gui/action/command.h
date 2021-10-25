@@ -6,6 +6,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <any>
 #include <boost/hana.hpp>
 namespace doodle {
 
@@ -22,51 +23,33 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
  protected:
   std::string p_name;
   std::map<string, string> p_show_str;
-  using metadata_variant = std::variant<
-      episodes_ptr,
-      shot_ptr,
-      season_ptr,
-      assets_ptr,
-      assets_file_ptr,
-      project_ptr,
-      std::nullptr_t>;
   metadata_ptr p_meta_var;
-  virtual bool set_child() { return false; };
-
-  using data_variant = std::variant<
-      episodes_ptr,
-      shot_ptr,
-      season_ptr,
-      assets_ptr,
-      assets_file_ptr,
-      project_ptr,
-      assets_path_vector_ptr>;
-
-  data_variant p_var;
 
  public:
   virtual const std::string& class_name() { return p_name; };
   virtual bool is_async() { return false; };
-  virtual bool render() = 0;
-
-  template <class... Args>
-  bool add_data(const Args&... in_args) {
-    using namespace boost::hana::literals;
-    auto k_arg            = boost::hana::make_tuple(in_args...);
-    auto constexpr k_size = decltype(boost::hana::size(k_arg))::value;
-
-    if constexpr (k_size == 0) {
-      return false;
-    } else if (k_size == 2) {
-      p_meta_var = k_arg[0_c];
-      if constexpr (boost::hana::typeid_(k_arg[1_c]) != boost::hana::type_c<std::nullptr_t>) {
-        p_var = k_arg[1_c];
-        return this->set_child();
-      } else
-        return false;
-    }
-    return false;
-  };
+  virtual bool render()                         = 0;
+  virtual bool set_data(const std::any& in_any) = 0;
+  virtual bool clear()                          = 0;
+  virtual bool set_parent(const metadata_ptr& in_ptr);
 };
 
+class DOODLELIB_API command_base_tool : public command_base {
+    bool set_data(const std::any& in_any) override {};
+  bool clear() override {};
+  bool set_parent(const metadata_ptr& in_ptr) override {};
+ public:
+  command_base_tool() = default;
+};
+
+class DOODLELIB_API command_base_list : public command_base {
+ public:
+  std::vector<std::shared_ptr<command_base>> p_list;
+
+  command_base_list() = default;
+  bool render() override;
+  bool set_data(const std::any& in_any) override;
+  bool clear() override;
+  bool set_parent(const metadata_ptr& in_ptr) override;
+};
 }  // namespace doodle

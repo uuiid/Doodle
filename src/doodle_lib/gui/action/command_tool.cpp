@@ -337,7 +337,7 @@ bool comm_import_ue_files::render() {
       dear::Selectable(in.filename().generic_string());
   };
 
-  return command_base::add_data();
+  return true;
 }
 
 }  // namespace doodle

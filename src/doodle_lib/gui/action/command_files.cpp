@@ -42,16 +42,20 @@ bool comm_files_select::render() {
                 p_file = in_p.front();
                 p_list_paths->get().clear();
                 p_comm_sub = p_list_paths->add_file(p_file, *p_use_relative);
-                if (p_comm_sub)
-                  p_comm_sub->add_data(p_root, p_list_paths);
+                if (p_comm_sub) {
+                  p_comm_sub->set_parent(p_root);
+                  p_comm_sub->set_data(p_list_paths);
+                }
               });
     }
     imgui::SameLine();
     if (imgui::Checkbox(p_show_str["相对路径"].c_str(), p_use_relative.get())) {
       p_list_paths->get().clear();
       p_comm_sub = p_list_paths->add_file(p_file, *p_use_relative);
-      if (p_comm_sub)
-        p_comm_sub->add_data(p_root, p_list_paths);
+      if (p_comm_sub) {
+        p_comm_sub->set_parent(p_root);
+        p_comm_sub->set_data(p_list_paths);
+      }
     }
 
     dear::ListBox{
@@ -67,25 +71,13 @@ bool comm_files_select::render() {
     if (p_comm_sub) {
       p_comm_sub->render();
     }
-    if (imgui::Button(p_show_str["添加"].c_str())) {
-      if (!p_list_paths->get().empty()) {
-        add_files();
-      }
-    }
-    imgui::SameLine();
-    if (imgui::Button(p_show_str["替换"].c_str())) {
-      if (!p_list_paths->get().empty()) {
-        p_root->get_path_file()->get().clear();
-        add_files();
-      }
-    }
   }
   return true;
 }
 
-bool comm_files_select::set_child() {
-  if (std::holds_alternative<assets_file_ptr>(p_var)) {
-    p_root = std::get<assets_file_ptr>(p_var);
+bool comm_files_select::set_data(const std::any& in_data) {
+  if (in_data.type() == typeid(assets_file_ptr)) {
+    p_root = std::any_cast<assets_file_ptr>(in_data);
     p_list_paths->set_metadata(p_root);
     if (p_root && !p_root->get_path_file()) {
       p_root->set_path_file(new_object<assets_path_vector>());
@@ -120,17 +112,19 @@ bool comm_files_up::add_files() {
 }
 
 bool comm_files_up::render() {
-  if (imgui::Button(p_show_str["添加"].c_str())) {
-    if (!p_list_paths->get().empty()) {
-      add_files();
+  if (p_list_paths) {
+    if (imgui::Button(p_show_str["添加"].c_str())) {
+      if (!p_list_paths->get().empty()) {
+        add_files();
+      }
     }
   }
   return true;
 }
 
-bool comm_files_up::set_child() {
-  if (std::holds_alternative<assets_path_vector_ptr>(p_var)) {
-    p_list_paths = std::get<assets_path_vector_ptr>(p_var);
+bool comm_files_up::set_data(const std::any& in_data) {
+  if (in_data.type() == typeid(assets_path_vector_ptr)) {
+    p_list_paths = std::any_cast<assets_path_vector_ptr>(in_data);
   } else {
     p_list_paths.reset();
   }
@@ -143,12 +137,14 @@ void comm_file_image_to_move::init() {
   p_image_create = new_object<image_sequence_async>();
 }
 
-bool comm_file_image_to_move::set_child() {
-  if (std::holds_alternative<assets_path_vector_ptr>(p_var)) {
-    p_list_paths = std::get<assets_path_vector_ptr>(p_var);
+bool comm_file_image_to_move::set_data(const std::any& in_data) {
+  if (in_data.type() == typeid(assets_path_vector_ptr)) {
+    p_list_paths = std::any_cast<assets_path_vector_ptr>(in_data);
     p_image      = p_image_create->set_path(p_list_paths);
     p_out_file   = p_image->get_out_path();
     p_text       = fmt::format("本地生成路径 {}", p_out_file);
+  } else {
+    p_list_paths.reset();
   }
   return false;
 }

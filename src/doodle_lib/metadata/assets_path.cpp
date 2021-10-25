@@ -108,7 +108,7 @@ void assets_path_vector::set_metadata(const std::weak_ptr<metadata> &in_meta) {
 }
 command_ptr assets_path_vector::add_file(
     const FSys::path &in_path, bool in_using_lexically_relative) {
-  command_ptr k_comm{};
+  command_ptr k_comm{new_object<comm_files_up>()};
 
   auto k_path = new_object<assets_path>();
   k_path->set_metadata(p_meta);

@@ -21,11 +21,10 @@ class DOODLELIB_API comm_project_add : public command_base {
   project_ptr p_root;
 
  protected:
-  virtual bool set_child() override;
-
  public:
   comm_project_add();
   bool render() override;
+  virtual bool set_data(const std::any& in_data) override;
 };
 
 class DOODLELIB_API comm_ass_eps : public command_base {
@@ -39,11 +38,10 @@ class DOODLELIB_API comm_ass_eps : public command_base {
   void add_eps(const std::vector<std::int32_t>& p_eps);
 
  protected:
-  virtual bool set_child() override;
-
  public:
   comm_ass_eps();
   bool render() override;
+  virtual bool set_data(const std::any& in_data) override;
 };
 
 class DOODLELIB_API comm_ass_shot : public command_base {
@@ -59,11 +57,10 @@ class DOODLELIB_API comm_ass_shot : public command_base {
   void add_shot(const std::vector<std::int32_t>& p_shots);
 
  protected:
-  virtual bool set_child() override;
-
  public:
   comm_ass_shot();
   bool render() override;
+  virtual bool set_data(const std::any& in_data) override;
 };
 
 class DOODLELIB_API comm_assets : public command_base {
@@ -74,11 +71,10 @@ class DOODLELIB_API comm_assets : public command_base {
   void add_ass(std::vector<string> in_Str);
 
  protected:
-  virtual bool set_child() override;
-
  public:
   comm_assets();
   bool render() override;
+  virtual bool set_data(const std::any& in_data) override;
 };
 
 class DOODLELIB_API comm_ass_season : public command_base {
@@ -91,11 +87,10 @@ class DOODLELIB_API comm_ass_season : public command_base {
   void add_season(const std::vector<std::int32_t>& in);
 
  protected:
-  virtual bool set_child() override;
-
  public:
   comm_ass_season();
   bool render() override;
+  virtual bool set_data(const std::any& in_data) override;
 };
 
 class DOODLELIB_API comm_ass_file_attr : public command_base {
@@ -110,44 +105,37 @@ class DOODLELIB_API comm_ass_file_attr : public command_base {
   string_ptr p_comm_str;
 
  protected:
-  virtual bool set_child() override;
-
  public:
   comm_ass_file_attr();
   bool render() override;
+  virtual bool set_data(const std::any& in_data) override;
 };
 
-template <class... in_comm>
-class DOODLELIB_API comm_compound : public command_base {
-  boost::hana::tuple<in_comm...> p_val;
+// template <class... in_comm>
+// class DOODLELIB_API comm_compound : public command_base {
+//   boost::hana::tuple<in_comm...> p_val;
 
- protected:
-  virtual bool set_child() override {
-    boost::hana::for_each(p_val, [&](auto& in_) { in_.add_data(p_meta_var, p_var); });
-    return false;
-  };
+//  public:
+//   comm_compound() : command_base(), p_val(){};
+//   bool render() override {
+//     boost::hana::for_each(p_val, [](auto& in) {
+//       dear::TreeNode{in.class_name().c_str()} && [&]() {
+//         in.render();
+//       };
+//     });
+//     return true;
+//   };
+// };
 
- public:
-  comm_compound() : command_base(), p_val(){};
-  bool render() override {
-    boost::hana::for_each(p_val, [](auto& in) {
-      dear::TreeNode{in.class_name().c_str()} && [&]() {
-        in.render();
-      };
-    });
-    return true;
-  };
-};
+// using comm_ass = comm_compound<
+//     comm_ass_season,
+//     comm_ass_eps,
+//     comm_ass_shot,
+//     comm_assets,
+//     comm_ass_ue4_create_shot>;
 
-using comm_ass = comm_compound<
-    comm_ass_season,
-    comm_ass_eps,
-    comm_ass_shot,
-    comm_assets,
-    comm_ass_ue4_create_shot>;
-
-using comm_assets_file = comm_compound<
-    comm_ass_file_attr,
-    comm_files_select>;
+// using comm_assets_file = comm_compound<
+//     comm_ass_file_attr,
+//     comm_files_select>;
 
 }  // namespace doodle

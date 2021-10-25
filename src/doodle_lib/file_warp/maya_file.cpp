@@ -165,6 +165,7 @@ quit()
   if (in_ptr)
     in_ptr->sig_progress(rational_int{1, 40});
 
+  std::this_thread::sleep_for(chrono::seconds{3});
   this->run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr);
 
   if (in_ptr) {
@@ -210,6 +211,8 @@ quit())",
       run_path.generic_string());
   if (in_ptr)
     in_ptr->sig_progress(rational_int{1, 40});
+
+  std::this_thread::sleep_for(chrono::seconds{3});
   run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr);
   if (in_ptr) {
     in_ptr->sig_progress(rational_int{1, 40});

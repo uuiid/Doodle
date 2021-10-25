@@ -7,7 +7,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/action/command.h>
 namespace doodle {
-class DOODLELIB_API comm_export_fbx : public command_base {
+class DOODLELIB_API comm_export_fbx : public command_base_tool {
   std::vector<FSys::path> p_files;
 
   bool p_use_all_ref;
@@ -48,7 +48,7 @@ class DOODLELIB_API comm_export_fbx : public command_base {
  *
  *
  */
-class DOODLELIB_API comm_qcloth_sim : public command_base {
+class DOODLELIB_API comm_qcloth_sim : public command_base_tool {
   FSys::path p_cloth_path;
   std::shared_ptr<std::string> p_text;
   std::vector<FSys::path> p_sim_path;
@@ -83,7 +83,7 @@ class DOODLELIB_API comm_qcloth_sim : public command_base {
  * 选择视频, 后点击连接视频进行连接
  *
  */
-class DOODLELIB_API comm_create_video : public command_base {
+class DOODLELIB_API comm_create_video : public command_base_tool {
   struct image_paths {
     std::vector<FSys::path> p_path_list;
     FSys::path p_out_path;
@@ -106,7 +106,7 @@ class DOODLELIB_API comm_create_video : public command_base {
  * @li @b 选择导入 选择ue4 项目中
  *
  */
-class DOODLELIB_API comm_import_ue_files : public command_base {
+class DOODLELIB_API comm_import_ue_files : public command_base_tool {
   FSys::path p_ue4_prj;
   std::shared_ptr<std::string> p_ue4_show;
 

@@ -23,7 +23,6 @@ class comm_file_image_to_move : public command_base {
   string p_text;
 
   void init();
-  bool set_child() override;
   bool updata_file();
 
  public:
@@ -38,6 +37,7 @@ class comm_file_image_to_move : public command_base {
     init();
   };
   bool render() override;
+  bool set_data(const std::any& in) override;
 };
 
 class DOODLELIB_API comm_files_up : public command_base {
@@ -46,11 +46,12 @@ class DOODLELIB_API comm_files_up : public command_base {
   FSys::path p_file;
 
  protected:
-  bool add_files();
-  bool set_child();
+  virtual bool add_files();
+
  public:
   comm_files_up();
   bool render() override;
+  bool set_data(const std::any& in) override;
 };
 
 class DOODLELIB_API comm_files_select : public command_base {
@@ -62,13 +63,13 @@ class DOODLELIB_API comm_files_select : public command_base {
 
   command_ptr p_comm_sub;
 
-  bool set_child();
   bool add_files();
 
  public:
   comm_files_select();
 
   bool render() override;
+  bool set_data(const std::any& in) override;
 };
 
 }  // namespace doodle

@@ -69,9 +69,9 @@ bool comm_project_add::render() {
 
   return true;
 }
-bool comm_project_add::set_child() {
-  if (std::holds_alternative<project_ptr>(p_var)) {
-    p_root = std::get<project_ptr>(p_var);
+bool comm_project_add::set_data(const std::any& in_data) {
+  if (in_data.type() == typeid(project_ptr)) {
+    p_root = std::any_cast<project_ptr>(in_data);
     if (p_root) {
       *p_prj_name = p_root->get_name();
       *p_prj_path = p_root->get_path().generic_string();
@@ -139,9 +139,9 @@ bool comm_ass_eps::render() {
   }
   return true;
 }
-bool comm_ass_eps::set_child() {
-  if (std::holds_alternative<episodes_ptr>(p_var)) {
-    p_root = std::get<episodes_ptr>(p_var);
+bool comm_ass_eps::set_data(const std::any& in_data) {
+  if (in_data.type() == typeid(episodes_ptr)) {
+    p_root = std::any_cast<episodes_ptr>(in_data);
     p_data = p_root->get_episodes();
   } else {
     p_root.reset();
@@ -218,9 +218,9 @@ bool comm_ass_shot::render() {
 
   return true;
 }
-bool comm_ass_shot::set_child() {
-  if (std::holds_alternative<shot_ptr>(p_var)) {
-    p_root    = std::get<shot_ptr>(p_var);
+bool comm_ass_shot::set_data(const std::any& in_data) {
+  if (in_data.type() == typeid(shot_ptr)) {
+    p_root    = std::any_cast<shot_ptr>(in_data);
     p_data    = p_root->get_shot();
     p_shot_ab = p_root->get_shot_ab();
   } else {
@@ -272,9 +272,9 @@ bool comm_assets::render() {
 
   return true;
 }
-bool comm_assets::set_child() {
-  if (std::holds_alternative<assets_ptr>(p_var)) {
-    p_root = std::get<assets_ptr>(p_var);
+bool comm_assets::set_data(const std::any& in_data) {
+  if (in_data.type() == typeid(assets_ptr)) {
+    p_root = std::any_cast<assets_ptr>(in_data);
     p_data = p_root->get_name1();
   } else {
     p_root.reset();
@@ -341,9 +341,9 @@ bool comm_ass_season::render() {
 
   return true;
 }
-bool comm_ass_season::set_child() {
-  if (std::holds_alternative<season_ptr>(p_var)) {
-    p_root = std::get<season_ptr>(p_var);
+bool comm_ass_season::set_data(const std::any& in_data) {
+  if (in_data.type() == typeid(season_ptr)) {
+    p_root = std::any_cast<season_ptr>(in_data);
     p_data = p_root->get_season();
   } else {
     p_root.reset();
@@ -402,9 +402,9 @@ bool comm_ass_file_attr::render() {
 
   return true;
 }
-bool comm_ass_file_attr::set_child() {
-  if (std::holds_alternative<assets_file_ptr>(p_var)) {
-    p_root = std::get<assets_file_ptr>(p_var);
+bool comm_ass_file_attr::set_data(const std::any& in_data) {
+  if (in_data.type() == typeid(assets_file_ptr)) {
+    p_root = std::any_cast<assets_file_ptr>(in_data);
 
     if (!p_root->get_comment())
       p_root->set_comment(new_object<comment_vector>());
