@@ -101,13 +101,13 @@ FSys::path ue4_project::find_ue4_skeleton(const FSys::path& in_path) const {
     auto k_ch    = k_match[1].str();
     auto k_sk_ch = fmt::format("SK_{}_Skeleton", k_ch);
     auto k_it    = std::find_if(
-        FSys::recursive_directory_iterator{k_ch_dir},
-        FSys::recursive_directory_iterator{},
-        [k_sk_ch](const FSys::directory_entry& in_path) {
+           FSys::recursive_directory_iterator{k_ch_dir},
+           FSys::recursive_directory_iterator{},
+           [k_sk_ch](const FSys::directory_entry& in_path) {
           auto k_p = in_path.path().stem().generic_string();
           // std::transform(k_p.begin(), k_p.end(), k_p.begin(), [](unsigned char c) { return std::tolower(c); });
           return in_path.path().stem() == k_sk_ch;
-        });
+           });
     if (k_it != FSys::recursive_directory_iterator{}) {
       k_r = k_it->path();
       DOODLE_LOG_INFO("寻找到sk {}", k_r);
@@ -165,9 +165,9 @@ void ue4_project::create_shot_folder(const std::vector<shot_ptr>& inShotList,
     auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0]->get_episodes_ptr()->str();
     for (const auto& k_shot : inShotList) {
       auto k_string         = fmt::format("{}{:04d}_{}",
-                                  k_prj->show_str(),
-                                  k_shot->get_episodes_ptr()->get_episodes(),
-                                  k_shot->str());
+                                          k_prj->show_str(),
+                                          k_shot->get_episodes_ptr()->get_episodes(),
+                                          k_shot->str());
 
       auto k_shot_path      = k_episodes_path / k_string;
       auto k_game_shot_path = k_game_episodes_path / k_string;
@@ -270,6 +270,7 @@ ue4_project_async::ue4_project_async()
 }
 long_term_ptr ue4_project_async::import_file(const FSys::path& in_paths) {
   auto k_term = new_object<long_term>();
+  k_term->set_name(fmt::format("导入文件 {}", in_paths.filename()));
   k_term->p_list.emplace_back(doodle_lib::Get().get_thread_pool()->enqueue(
       [k_term, in_paths, self = p_ue4]() {
         self->import_file(in_paths, k_term);
@@ -281,6 +282,8 @@ void ue4_project_async::set_ue4_project(const FSys::path& in_paths) {
 }
 long_term_ptr ue4_project_async::create_shot_folder(const std::vector<shot_ptr>& in_vector) {
   auto k_term = new_object<long_term>();
+  k_term->set_name("创建序列");
+
   k_term->p_list.emplace_back(doodle_lib::Get().get_thread_pool()->enqueue(
       [k_term, in_vector, self = p_ue4]() {
         self->create_shot_folder(in_vector, k_term);

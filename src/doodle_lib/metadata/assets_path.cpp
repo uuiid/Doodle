@@ -54,7 +54,7 @@ void assets_path::set_path(const FSys::path &in_path, const metadata_const_ptr &
     auto k_prj       = in_metadata->find_parent_class<project>();
     auto k_root_path = in_metadata->find_parent_class<project>()->get_path();
     auto k_path      = in_path.lexically_relative(k_root_path);
-    k_path           = FSys::path{k_prj->str()} / k_path;
+    k_path           = FSys::path{k_prj->str()} / k_path / in_path.filename();
     set_path(in_path, k_path);
   } else {
     /// 这里使用树,向上寻找,组合路径
@@ -112,6 +112,7 @@ command_ptr assets_path_vector::add_file(
 
   auto k_path = new_object<assets_path>();
   k_path->set_metadata(p_meta);
+  get().push_back(k_path);
 
   if (ue4_project::is_ue4_file(in_path)) {
     get_meta<assets_file>()->set_file_type(assets_file_type::ue4_prj);
@@ -130,10 +131,18 @@ command_ptr assets_path_vector::add_file(
     k_path->set_path(in_path.parent_path(), p_meta.lock(), in_using_lexically_relative);
     k_comm = new_object<comm_file_image_to_move>();
   }
-  get().push_back(k_path);
-
   return k_comm;
 }
+
+void assets_path_vector::add_file_raw(const FSys::path &in_path, bool in_using_lexically_relative){
+  auto k_path = new_object<assets_path>();
+  k_path->set_metadata(p_meta);
+  get().push_back(k_path);
+      k_path->set_path(in_path, p_meta.lock(), in_using_lexically_relative);
+
+}
+
+
 rpc_trans_path_ptr_list assets_path_vector::make_up_path() const {
   rpc_trans_path_ptr_list k_list{};
   for (auto &i : paths)

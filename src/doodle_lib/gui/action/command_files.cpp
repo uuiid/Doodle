@@ -150,6 +150,7 @@ bool comm_file_image_to_move::set_data(const std::any& in_data) {
 }
 
 bool comm_file_image_to_move::updata_file() {
+  /// @todo 合成视频后需要上传视频
   if (*p_not_up_file)
     return true;
 
@@ -182,7 +183,7 @@ bool comm_file_image_to_move::render() {
       k_term->sig_finished.connect([k_not_up = *p_not_up_file, k_out_file = p_out_file, k_list = p_list_paths]() {
         if (k_not_up)
           k_list->get().clear();
-        k_list->add_file(k_out_file);
+        k_list->add_file_raw(k_out_file);
         auto k_m = std::dynamic_pointer_cast<assets_file>(k_list->get_metadata().lock());
         k_m->up_version();
         k_m->set_path_file(k_list);

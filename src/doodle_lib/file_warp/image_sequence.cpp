@@ -7,9 +7,9 @@
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/lib_warp/std_warp.h>
+#include <doodle_lib/metadata/assets_path.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 #include <pin_yin/convert.h>
-#include <doodle_lib/metadata/assets_path.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/assign.hpp>
@@ -24,7 +24,7 @@
 namespace doodle {
 
 namespace details {
-const std::vector<std::int32_t>& image_file::extract_num() {
+const std::vector<std::int32_t> &image_file::extract_num() {
   static std::regex reg{R"(\d+)"};
   std::smatch k_match{};
 
@@ -208,7 +208,7 @@ void image_sequence::create_video(const image_sequence::asyn_arg_ptr &in_arg) {
         int thickness    = 2;
         int baseline     = 0;
         auto textSize    = cv::getTextSize(in_arg->Text, fontFace,
-                                        fontScale, thickness, &baseline);
+                                           fontScale, thickness, &baseline);
         baseline += thickness;
         textSize.width += baseline;
         textSize.height += baseline;
@@ -368,6 +368,7 @@ long_term_ptr image_sequence_async::create_video(const FSys::path &out_file) {
 }
 long_term_ptr image_sequence_async::create_video() {
   auto k_term = new_object<long_term>();
+  k_term->set_name(fmt::format("合成视频 {}", p_image_sequence->get_out_path().filename()));
   k_term->p_list.emplace_back(
       doodle_lib::Get().get_thread_pool()->enqueue(
           [self = p_image_sequence, k_term]() {

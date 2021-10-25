@@ -17,8 +17,11 @@ bool command_base::set_parent(const metadata_ptr& in_ptr) {
 
 bool command_base_list::render() {
   auto k_ = true;
-  for (auto i : p_list)
-    k_ &= i->render();
+  for (auto i : p_list) {
+    dear::TreeNode{i->class_name().c_str()} && [&]() {
+      k_ &= i->render();
+    };
+  }
   return k_;
 }
 bool command_base_list::set_data(const std::any& in_any) {
@@ -27,8 +30,6 @@ bool command_base_list::set_data(const std::any& in_any) {
     k_ &= i->set_data(in_any);
   return k_;
 }
-
-
 
 bool command_base_list::set_parent(const metadata_ptr& in_ptr) {
   auto k_ = true;

@@ -97,6 +97,7 @@ class DOODLELIB_API assets_path_vector
   inline void end_clear(){};
 
   command_ptr add_file(const FSys::path &in_path, bool in_using_lexically_relative = false);
+  void add_file_raw(const FSys::path &in_path, bool in_using_lexically_relative = false);
 
   inline void merge(const assets_path_vector &in) {
     paths.insert(paths.end(), in.paths.begin(), in.paths.end());
