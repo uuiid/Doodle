@@ -74,6 +74,7 @@ target_link_libraries(doodle_lib
         Boost::program_options
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}
+        EnTT::EnTT
         spdlog::spdlog
         csv
         Catch2::Catch2

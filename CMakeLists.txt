@@ -84,6 +84,8 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
 find_package(cereal CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(EnTT CONFIG REQUIRED)
+
 #find_package(cxxopts CONFIG REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
