@@ -10,7 +10,7 @@
 int main(int argc, char *argv[]) {
   //初始化测试环境
   std::setlocale(LC_CTYPE, ".UTF8");
-  auto k_doodle = doodle::make_doodle_lib();
+  auto k_doodle = doodle::new_object<doodle::doodle_lib>();
 
   int k_r = Catch::Session().run(argc, argv);
   return k_r;
