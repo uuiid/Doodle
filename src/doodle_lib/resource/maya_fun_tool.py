@@ -648,6 +648,10 @@ class cloth_group_file(export_group):
             qcloth_obj = pymel.core.selected()[0]
             path = pymel.core.Path(
                 "cache") / doodle_work_space.maya_file.name_not_ex / self.maya_name_space / select_str
+            # 这里要删除缓存
+            l_path_ = doodle_work_space.work.path / path # type: pymel.core.Path
+            l_path_.remove_p()
+  
             doodle_work_space.work.mkdir(doodle_work_space.work.path / path)
             print(path)
             print(qcloth_obj)
