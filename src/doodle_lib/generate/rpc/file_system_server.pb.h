@@ -36,7 +36,7 @@
 #include <google/protobuf/wrappers.pb.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
-#define PROTOBUF_INTERNAL_EXPORT_file_5fsystem_5fserver_2eproto
+#define PROTOBUF_INTERNAL_EXPORT_file_5fsystem_5fserver_2eproto DOODLELIB_API
 PROTOBUF_NAMESPACE_OPEN
 namespace internal {
 class AnyMetadata;
@@ -44,7 +44,7 @@ class AnyMetadata;
 PROTOBUF_NAMESPACE_CLOSE
 
 // Internal implementation detail -- do not use these members.
-struct TableStruct_file_5fsystem_5fserver_2eproto {
+struct DOODLELIB_API TableStruct_file_5fsystem_5fserver_2eproto {
   static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTableField entries[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
@@ -55,29 +55,29 @@ struct TableStruct_file_5fsystem_5fserver_2eproto {
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
   static const ::PROTOBUF_NAMESPACE_ID::uint32 offsets[];
 };
-extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_file_5fsystem_5fserver_2eproto;
-::PROTOBUF_NAMESPACE_ID::Metadata descriptor_table_file_5fsystem_5fserver_2eproto_metadata_getter(int index);
+extern DOODLELIB_API const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_file_5fsystem_5fserver_2eproto;
+DOODLELIB_API ::PROTOBUF_NAMESPACE_ID::Metadata descriptor_table_file_5fsystem_5fserver_2eproto_metadata_getter(int index);
 namespace doodle {
 class file_info_move_server;
 struct file_info_move_serverDefaultTypeInternal;
-extern file_info_move_serverDefaultTypeInternal _file_info_move_server_default_instance_;
+DOODLELIB_API extern file_info_move_serverDefaultTypeInternal _file_info_move_server_default_instance_;
 class file_info_server;
 struct file_info_serverDefaultTypeInternal;
-extern file_info_serverDefaultTypeInternal _file_info_server_default_instance_;
+DOODLELIB_API extern file_info_serverDefaultTypeInternal _file_info_server_default_instance_;
 class file_stream_server;
 struct file_stream_serverDefaultTypeInternal;
-extern file_stream_serverDefaultTypeInternal _file_stream_server_default_instance_;
+DOODLELIB_API extern file_stream_serverDefaultTypeInternal _file_stream_server_default_instance_;
 }  // namespace doodle
 PROTOBUF_NAMESPACE_OPEN
-template<> ::doodle::file_info_move_server* Arena::CreateMaybeMessage<::doodle::file_info_move_server>(Arena*);
-template<> ::doodle::file_info_server* Arena::CreateMaybeMessage<::doodle::file_info_server>(Arena*);
-template<> ::doodle::file_stream_server* Arena::CreateMaybeMessage<::doodle::file_stream_server>(Arena*);
+template<> DOODLELIB_API ::doodle::file_info_move_server* Arena::CreateMaybeMessage<::doodle::file_info_move_server>(Arena*);
+template<> DOODLELIB_API ::doodle::file_info_server* Arena::CreateMaybeMessage<::doodle::file_info_server>(Arena*);
+template<> DOODLELIB_API ::doodle::file_stream_server* Arena::CreateMaybeMessage<::doodle::file_stream_server>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace doodle {
 
 // ===================================================================
 
-class file_info_server PROTOBUF_FINAL :
+class DOODLELIB_API file_info_server PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:doodle.file_info_server) */ {
  public:
   inline file_info_server() : file_info_server(nullptr) {}
@@ -294,7 +294,7 @@ class file_info_server PROTOBUF_FINAL :
 };
 // -------------------------------------------------------------------
 
-class file_stream_server PROTOBUF_FINAL :
+class DOODLELIB_API file_stream_server PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:doodle.file_stream_server) */ {
  public:
   inline file_stream_server() : file_stream_server(nullptr) {}
@@ -460,7 +460,7 @@ class file_stream_server PROTOBUF_FINAL :
 };
 // -------------------------------------------------------------------
 
-class file_info_move_server PROTOBUF_FINAL :
+class DOODLELIB_API file_info_move_server PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:doodle.file_info_move_server) */ {
  public:
   inline file_info_move_server() : file_info_move_server(nullptr) {}

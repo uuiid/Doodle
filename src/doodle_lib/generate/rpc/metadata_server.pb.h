@@ -38,7 +38,7 @@
 #include "user_message.pb.h"
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
-#define PROTOBUF_INTERNAL_EXPORT_metadata_5fserver_2eproto
+#define PROTOBUF_INTERNAL_EXPORT_metadata_5fserver_2eproto DOODLELIB_API
 PROTOBUF_NAMESPACE_OPEN
 namespace internal {
 class AnyMetadata;
@@ -46,7 +46,7 @@ class AnyMetadata;
 PROTOBUF_NAMESPACE_CLOSE
 
 // Internal implementation detail -- do not use these members.
-struct TableStruct_metadata_5fserver_2eproto {
+struct DOODLELIB_API TableStruct_metadata_5fserver_2eproto {
   static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTableField entries[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
@@ -57,23 +57,23 @@ struct TableStruct_metadata_5fserver_2eproto {
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
   static const ::PROTOBUF_NAMESPACE_ID::uint32 offsets[];
 };
-extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_metadata_5fserver_2eproto;
-::PROTOBUF_NAMESPACE_ID::Metadata descriptor_table_metadata_5fserver_2eproto_metadata_getter(int index);
+extern DOODLELIB_API const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_metadata_5fserver_2eproto;
+DOODLELIB_API ::PROTOBUF_NAMESPACE_ID::Metadata descriptor_table_metadata_5fserver_2eproto_metadata_getter(int index);
 namespace doodle {
 class metadata_database;
 struct metadata_databaseDefaultTypeInternal;
-extern metadata_databaseDefaultTypeInternal _metadata_database_default_instance_;
+DOODLELIB_API extern metadata_databaseDefaultTypeInternal _metadata_database_default_instance_;
 class metadata_database_filter;
 struct metadata_database_filterDefaultTypeInternal;
-extern metadata_database_filterDefaultTypeInternal _metadata_database_filter_default_instance_;
+DOODLELIB_API extern metadata_database_filterDefaultTypeInternal _metadata_database_filter_default_instance_;
 class metadata_database_meta_type_value;
 struct metadata_database_meta_type_valueDefaultTypeInternal;
-extern metadata_database_meta_type_valueDefaultTypeInternal _metadata_database_meta_type_value_default_instance_;
+DOODLELIB_API extern metadata_database_meta_type_valueDefaultTypeInternal _metadata_database_meta_type_value_default_instance_;
 }  // namespace doodle
 PROTOBUF_NAMESPACE_OPEN
-template<> ::doodle::metadata_database* Arena::CreateMaybeMessage<::doodle::metadata_database>(Arena*);
-template<> ::doodle::metadata_database_filter* Arena::CreateMaybeMessage<::doodle::metadata_database_filter>(Arena*);
-template<> ::doodle::metadata_database_meta_type_value* Arena::CreateMaybeMessage<::doodle::metadata_database_meta_type_value>(Arena*);
+template<> DOODLELIB_API ::doodle::metadata_database* Arena::CreateMaybeMessage<::doodle::metadata_database>(Arena*);
+template<> DOODLELIB_API ::doodle::metadata_database_filter* Arena::CreateMaybeMessage<::doodle::metadata_database_filter>(Arena*);
+template<> DOODLELIB_API ::doodle::metadata_database_meta_type_value* Arena::CreateMaybeMessage<::doodle::metadata_database_meta_type_value>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace doodle {
 
@@ -87,12 +87,12 @@ enum metadata_database_meta_type : int {
   metadata_database_meta_type_metadata_database_meta_type_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
   metadata_database_meta_type_metadata_database_meta_type_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
-bool metadata_database_meta_type_IsValid(int value);
+DOODLELIB_API bool metadata_database_meta_type_IsValid(int value);
 constexpr metadata_database_meta_type metadata_database_meta_type_meta_type_MIN = metadata_database_meta_type_unknown_file;
 constexpr metadata_database_meta_type metadata_database_meta_type_meta_type_MAX = metadata_database_meta_type_animation_lib_root;
 constexpr int metadata_database_meta_type_meta_type_ARRAYSIZE = metadata_database_meta_type_meta_type_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* metadata_database_meta_type_descriptor();
+DOODLELIB_API const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* metadata_database_meta_type_descriptor();
 template<typename T>
 inline const std::string& metadata_database_meta_type_Name(T enum_t_value) {
   static_assert(::std::is_same<T, metadata_database_meta_type>::value ||
@@ -108,7 +108,7 @@ inline bool metadata_database_meta_type_Parse(
 }
 // ===================================================================
 
-class metadata_database_meta_type_value PROTOBUF_FINAL :
+class DOODLELIB_API metadata_database_meta_type_value PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:doodle.metadata_database.meta_type_value) */ {
  public:
   inline metadata_database_meta_type_value() : metadata_database_meta_type_value(nullptr) {}
@@ -245,7 +245,7 @@ class metadata_database_meta_type_value PROTOBUF_FINAL :
 };
 // -------------------------------------------------------------------
 
-class metadata_database PROTOBUF_FINAL :
+class DOODLELIB_API metadata_database PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:doodle.metadata_database) */ {
  public:
   inline metadata_database() : metadata_database(nullptr) {}
@@ -520,7 +520,7 @@ class metadata_database PROTOBUF_FINAL :
 };
 // -------------------------------------------------------------------
 
-class metadata_database_filter PROTOBUF_FINAL :
+class DOODLELIB_API metadata_database_filter PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:doodle.metadata_database_filter) */ {
  public:
   inline metadata_database_filter() : metadata_database_filter(nullptr) {}

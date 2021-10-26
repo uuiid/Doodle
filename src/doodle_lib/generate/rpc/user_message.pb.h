@@ -34,7 +34,7 @@
 #include <google/protobuf/any.pb.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
-#define PROTOBUF_INTERNAL_EXPORT_user_5fmessage_2eproto
+#define PROTOBUF_INTERNAL_EXPORT_user_5fmessage_2eproto DOODLELIB_API
 PROTOBUF_NAMESPACE_OPEN
 namespace internal {
 class AnyMetadata;
@@ -42,7 +42,7 @@ class AnyMetadata;
 PROTOBUF_NAMESPACE_CLOSE
 
 // Internal implementation detail -- do not use these members.
-struct TableStruct_user_5fmessage_2eproto {
+struct DOODLELIB_API TableStruct_user_5fmessage_2eproto {
   static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTableField entries[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
@@ -53,25 +53,25 @@ struct TableStruct_user_5fmessage_2eproto {
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
   static const ::PROTOBUF_NAMESPACE_ID::uint32 offsets[];
 };
-extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_user_5fmessage_2eproto;
-::PROTOBUF_NAMESPACE_ID::Metadata descriptor_table_user_5fmessage_2eproto_metadata_getter(int index);
+extern DOODLELIB_API const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_user_5fmessage_2eproto;
+DOODLELIB_API ::PROTOBUF_NAMESPACE_ID::Metadata descriptor_table_user_5fmessage_2eproto_metadata_getter(int index);
 namespace doodle {
 class user_database;
 struct user_databaseDefaultTypeInternal;
-extern user_databaseDefaultTypeInternal _user_database_default_instance_;
+DOODLELIB_API extern user_databaseDefaultTypeInternal _user_database_default_instance_;
 class user_database_filter;
 struct user_database_filterDefaultTypeInternal;
-extern user_database_filterDefaultTypeInternal _user_database_filter_default_instance_;
+DOODLELIB_API extern user_database_filterDefaultTypeInternal _user_database_filter_default_instance_;
 }  // namespace doodle
 PROTOBUF_NAMESPACE_OPEN
-template<> ::doodle::user_database* Arena::CreateMaybeMessage<::doodle::user_database>(Arena*);
-template<> ::doodle::user_database_filter* Arena::CreateMaybeMessage<::doodle::user_database_filter>(Arena*);
+template<> DOODLELIB_API ::doodle::user_database* Arena::CreateMaybeMessage<::doodle::user_database>(Arena*);
+template<> DOODLELIB_API ::doodle::user_database_filter* Arena::CreateMaybeMessage<::doodle::user_database_filter>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace doodle {
 
 // ===================================================================
 
-class user_database PROTOBUF_FINAL :
+class DOODLELIB_API user_database PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:doodle.user_database) */ {
  public:
   inline user_database() : user_database(nullptr) {}
@@ -275,7 +275,7 @@ class user_database PROTOBUF_FINAL :
 };
 // -------------------------------------------------------------------
 
-class user_database_filter PROTOBUF_FINAL :
+class DOODLELIB_API user_database_filter PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:doodle.user_database_filter) */ {
  public:
   inline user_database_filter() : user_database_filter(nullptr) {}
