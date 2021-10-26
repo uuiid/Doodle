@@ -10,6 +10,12 @@
 #include <doodle_lib/metadata/tree_adapter.h>
 
 #include <any>
+#include <boost/intrusive/intrusive_fwd.hpp>
+#include <boost/intrusive/link_mode.hpp>
+#include <boost/intrusive/list.hpp>
+#include <boost/intrusive/pack_options.hpp>
+#include <boost/intrusive/set.hpp>
+#include <boost/intrusive/trivial_value_traits.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/signals2.hpp>
 #include <optional>
@@ -364,12 +370,14 @@ void metadata::serialize(Archive &ar, const std::uint32_t version) {
   }
 }
 
-class DOODLELIB_API tree_relationship {
+class DOODLELIB_API tree_relationship
+    /* : public boost::intrusive::set_base_hook<> */ {
  private:
   entt::entity p_parent;
 
  public:
   std::vector<entt::entity> p_child;
+  // boost::intrusive::set<> p_child;
 
   tree_relationship::tree_relationship()
       : p_parent(entt::null),

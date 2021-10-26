@@ -4,6 +4,8 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
+
+#include <ostream>
 namespace doodle {
 /**
  * 父亲负责加载孩子，在加载父亲时，孩子会同时加载完成， 这样， 父亲会知道是否加载玩成孩子
@@ -29,6 +31,13 @@ class DOODLELIB_API metadata_factory : public std::enable_shared_from_this<metad
    */
   virtual void updata_db(metadata* in_metadata) const;
   virtual void select_indb(metadata* in_metadata) const;
+};
+
+class DOODLELIB_API metadata_serialize : public std::enable_shared_from_this<metadata_serialize> {
+  std::weak_ptr<rpc_metadata_client> p_rpcClien;
+
+ public:
+  metadata_serialize();
 };
 
 }  // namespace doodle

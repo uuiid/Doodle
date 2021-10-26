@@ -60,4 +60,9 @@ void metadata_factory::delete_data(const metadata *in_metadata) const {
   k_p->updata_db();
 }
 
+metadata_serialize::metadata_serialize()
+    : p_rpcClien(doodle_lib::Get().get_rpc_metadata_client()){
+
+      };
+
 }  // namespace doodle

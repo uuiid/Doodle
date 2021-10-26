@@ -320,6 +320,7 @@ database::database()
       p_updata_type(false),
       p_need_load(false),
       p_need_save(false) {
+  core_set::getSet().reg.data();
 }
 
 }  // namespace doodle
