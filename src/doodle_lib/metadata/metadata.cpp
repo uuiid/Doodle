@@ -434,4 +434,23 @@ database::operator doodle::metadata_database() const {
   }
   return k_tmp;
 }
+
+FSys::path database::get_url_uuid() const {
+  auto &l_reg  = core_set::getSet().reg;
+  auto l_ent   = entt::to_entity(l_reg, *this);
+  // 找到本身的树类
+  auto &l_tree = l_reg.get<tree_relationship>(l_ent);
+  // 找到根的数据库类
+  auto &k_data = l_reg.get<database>(l_tree.get_root());
+
+  // 组合路径
+  auto path    = FSys::path{k_data.p_uuid};
+  path /= p_uuid.substr(0, 3);
+  path /= p_uuid;
+  return path;
+}
+
+bool database::has_parent() const {
+  return p_parent_id.has_value();
+}
 }  // namespace doodle
