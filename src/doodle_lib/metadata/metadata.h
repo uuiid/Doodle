@@ -411,7 +411,7 @@ class DOODLELIB_API database {
 
  public:
   database();
-  ~database();
+  ~database() = default;
 
   std::size_t p_has_child;
   std::size_t p_has_file;

@@ -18,6 +18,7 @@
 #include <boost/archive/polymorphic_text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/hana/ext/std.hpp>
 #include <boost/range/algorithm/count_if.hpp>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::metadata)
@@ -399,13 +400,15 @@ database &database::operator=(const metadata_database &in_) {
     });
     boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
       if (in_ptr) {
-        l_reg.emplace_or_replace<decltype(*in_ptr)>(l_ent, *in_ptr);
+        l_reg->emplace_or_replace<
+            std::remove_pointer_t<std::decay_t<decltype(in_ptr)>>>(l_ent, *in_ptr);
       }
     });
   }
   p_type = magic_enum::enum_cast<metadata::meta_type>(
                magic_enum::enum_integer(in_.m_type().value()))
                .value_or(metadata::meta_type::unknown_file);
+  return *this;
 }
 database::operator doodle::metadata_database() const {
   metadata_database k_tmp{};
@@ -424,6 +427,7 @@ database::operator doodle::metadata_database() const {
     k_archive << BOOST_SERIALIZATION_NVP(*this);
 
     auto &k_tu = l_reg->try_get<project, episodes, shot, season, assets, assets_file>(l_ent);
+    // auto k_boost_tu = boost::hana::to_tuple(k_tu);
     boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
       k_archive << in_ptr;
     });
@@ -437,7 +441,4 @@ database::operator doodle::metadata_database() const {
   return k_tmp;
 }
 
-bool database::has_parent() const {
-  return p_parent_id.has_value();
-}
 }  // namespace doodle

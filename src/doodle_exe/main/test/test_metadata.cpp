@@ -5,14 +5,26 @@
 
 #include <catch.hpp>
 
-TEST_CASE("convert", "[metadata]"){
+TEST_CASE("convert", "[metadata]") {
   using namespace doodle;
-  auto& k_reg = core_set::getSet().reg;
-  
+  entt::registry reg{};
+  auto k_prj = reg.create();
+  auto& k_p  = reg.emplace<project>(k_prj);
+  k_p.set_name("etst");
+  reg.emplace<tree_relationship>(k_prj);
+  auto& k_d = reg.emplace<database>(k_prj);
 
+  metadata_database k_data{k_d};
+  std::cout << k_data.DebugString() << std::endl;
 
+  auto k_s = reg.create();
+  auto& s  = reg.emplace<shot>(k_s);
+  s.set_shot(1);
+  s.set_shot_ab(shot::shot_ab_enum::A);
+
+  reg.emplace<tree_relationship>(k_s, k_prj);
+  reg.emplace<database>(k_s);
 }
-
 
 TEST_CASE("time duration", "[metadata]") {
   using namespace doodle;
@@ -68,7 +80,7 @@ TEST_CASE("time duration", "[metadata]") {
       my_t2.set_local_time(k_sys_time2);
       REQUIRE(my_t.work_duration(my_t2).count() == (36.583_a).epsilon(0.01));
     }
-    SECTION("ond day time"){
+    SECTION("ond day time") {
       k_sys_time1 = chrono::local_days(2021_y / 6 / 23_d) + 17h + 8min + 48s;
       k_sys_time2 = chrono::local_days(2021_y / 6 / 23_d) + 20h + 8min + 48s;
       my_t.set_local_time(k_sys_time1);
@@ -213,76 +225,76 @@ TEST_CASE("test create metadata", "[server][metadata]") {
 }
 
 TEST_CASE("gui action metadata", "[metadata][gui]") {
-//  using namespace doodle;
-//  using namespace doodle::chrono::literals;
-//  auto k_server = RpcServerHandle{};
-//  auto& set     = CoreSet::getSet();
-//  k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
-//
-//  doodle_lib::Get().init_gui();
-//  auto k_fa = std::make_shared<MetadataFactory>();
-//
-//  SECTION("export excel") {
-//    auto k_ex = std::make_shared<actn_export_excel>();
-//
-//    k_ex->sig_get_arg.connect([]() {
-//      actn_export_excel::arg k_arg{};
-//      auto k_time_b = std::make_shared<time_point_wrap>();
-//      k_time_b->set_local_time(chrono::local_days(2021_y / 6 / 1_d));
-//      auto k_time_end = std::make_shared<time_point_wrap>();
-//      k_time_end->set_local_time(chrono::local_days(2021_y / 6 / 30_d));
-//      k_arg.p_time_range = std::make_pair(k_time_b, k_time_end);
-//
-//      k_arg.date = FSys::temp_directory_path() / "doodle_tset";
-//      if (FSys::exists(k_arg.date))
-//        FSys::create_directories(k_arg.date);
-//
-//      return k_arg;
-//    });
-//
-//    (*k_ex)({}, {});
-//  }
+  //  using namespace doodle;
+  //  using namespace doodle::chrono::literals;
+  //  auto k_server = RpcServerHandle{};
+  //  auto& set     = CoreSet::getSet();
+  //  k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
+  //
+  //  doodle_lib::Get().init_gui();
+  //  auto k_fa = std::make_shared<MetadataFactory>();
+  //
+  //  SECTION("export excel") {
+  //    auto k_ex = std::make_shared<actn_export_excel>();
+  //
+  //    k_ex->sig_get_arg.connect([]() {
+  //      actn_export_excel::arg k_arg{};
+  //      auto k_time_b = std::make_shared<time_point_wrap>();
+  //      k_time_b->set_local_time(chrono::local_days(2021_y / 6 / 1_d));
+  //      auto k_time_end = std::make_shared<time_point_wrap>();
+  //      k_time_end->set_local_time(chrono::local_days(2021_y / 6 / 30_d));
+  //      k_arg.p_time_range = std::make_pair(k_time_b, k_time_end);
+  //
+  //      k_arg.date = FSys::temp_directory_path() / "doodle_tset";
+  //      if (FSys::exists(k_arg.date))
+  //        FSys::create_directories(k_arg.date);
+  //
+  //      return k_arg;
+  //    });
+  //
+  //    (*k_ex)({}, {});
+  //  }
 }
-//TEST(DSTD, map_netDir) {
-//  NETRESOURCE resources{};
-//  resources.dwType       = RESOURCETYPE_DISK;
-//  resources.lpLocalName  = (LPWSTR)L"S:";
-//  resources.lpProvider   = 0;
-//  resources.lpRemoteName = (LPWSTR)LR"(\\192.168.10.250\public\CangFeng)";
-//  DWORD r                = WNetAddConnection2(&resources, NULL, NULL,
-//                               CONNECT_TEMPORARY | CONNECT_INTERACTIVE | CONNECT_COMMANDLINE | CONNECT_CRED_RESET);
-//  if (r != NO_ERROR) {
-//    std::cout << r << std::endl;
-//  }
-//  ASSERT_TRUE(r == NO_ERROR);
-//}
+// TEST(DSTD, map_netDir) {
+//   NETRESOURCE resources{};
+//   resources.dwType       = RESOURCETYPE_DISK;
+//   resources.lpLocalName  = (LPWSTR)L"S:";
+//   resources.lpProvider   = 0;
+//   resources.lpRemoteName = (LPWSTR)LR"(\\192.168.10.250\public\CangFeng)";
+//   DWORD r                = WNetAddConnection2(&resources, NULL, NULL,
+//                                CONNECT_TEMPORARY | CONNECT_INTERACTIVE | CONNECT_COMMANDLINE | CONNECT_CRED_RESET);
+//   if (r != NO_ERROR) {
+//     std::cout << r << std::endl;
+//   }
+//   ASSERT_TRUE(r == NO_ERROR);
+// }
 //
-//TEST(DSTD, gset_netDir_name) {
-//  TCHAR szDeviceName[150];
-//  DWORD dwResult, cchBuff = sizeof(szDeviceName);
+// TEST(DSTD, gset_netDir_name) {
+//   TCHAR szDeviceName[150];
+//   DWORD dwResult, cchBuff = sizeof(szDeviceName);
 //
-//  dwResult = WNetGetConnection(L"V:", szDeviceName, &cchBuff);
+//   dwResult = WNetGetConnection(L"V:", szDeviceName, &cchBuff);
 //
-//  ASSERT_TRUE(dwResult == NO_ERROR);
+//   ASSERT_TRUE(dwResult == NO_ERROR);
 //
-//  std::wcout << std::wstring{szDeviceName} << std::endl;
-//  auto rules_n = SetVolumeLabel(L"V:\\", L"test");
-//  if (rules_n == 0) {
-//    auto err = GetLastError();
-//    std::cout << err << std::endl;
-//  }
-//  // ASSERT_TRUE(rules_n != 0);
+//   std::wcout << std::wstring{szDeviceName} << std::endl;
+//   auto rules_n = SetVolumeLabel(L"V:\\", L"test");
+//   if (rules_n == 0) {
+//     auto err = GetLastError();
+//     std::cout << err << std::endl;
+//   }
+//   // ASSERT_TRUE(rules_n != 0);
 //
-//  wchar_t VolumeName[80];
-//  auto rules = GetVolumeInformation(L"V:\\", VolumeName, sizeof(VolumeName), NULL, NULL, NULL, NULL, 0);
-//  ASSERT_TRUE(rules);
-//  std::cout << VolumeName << std::endl;
-//}
+//   wchar_t VolumeName[80];
+//   auto rules = GetVolumeInformation(L"V:\\", VolumeName, sizeof(VolumeName), NULL, NULL, NULL, NULL, 0);
+//   ASSERT_TRUE(rules);
+//   std::cout << VolumeName << std::endl;
+// }
 //
-//TEST(DSTD, canclel_netDir) {
-//  DWORD r = WNetCancelConnection2(L"S:", CONNECT_UPDATE_PROFILE, true);
-//  if (r != NO_ERROR) {
-//    std::cout << r << std::endl;
-//  }
-//  ASSERT_TRUE(r == NO_ERROR);
-//}
+// TEST(DSTD, canclel_netDir) {
+//   DWORD r = WNetCancelConnection2(L"S:", CONNECT_UPDATE_PROFILE, true);
+//   if (r != NO_ERROR) {
+//     std::cout << r << std::endl;
+//   }
+//   ASSERT_TRUE(r == NO_ERROR);
+// }
