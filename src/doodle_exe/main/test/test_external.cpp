@@ -63,3 +63,62 @@ TEST_CASE("type_erasure", "[boost]") {
   x.push_back(1);
   any_cast<int>(x);
 }
+
+struct test_external {
+  std::float_t x;
+  std::float_t y;
+  template <class Archive>
+  void serialize(Archive& ar, const std::uint32_t version) {
+    ar& BOOST_SERIALIZATION_NVP(x);
+    ar& BOOST_SERIALIZATION_NVP(y);
+  };
+};
+BOOST_CLASS_EXPORT(test_external);
+
+class serializeion_warp {
+ public:
+  serializeion_warp() = default;
+
+  void operator()(entt::entity in) {
+    std::cout << 1 << std::endl;
+  };
+  void operator()(std::underlying_type_t<entt::entity> in) {
+    std::cout << 1 << std::endl;
+  };
+  template <class T>
+  void operator()(entt::entity in, const T& t) {
+    std::cout << 1 << std::endl;
+  };
+
+  void operator()(entt::entity& in) {
+    std::cout << 1 << std::endl;
+  };
+  void operator()(std::underlying_type_t<entt::entity>& in) {
+    std::cout << 1 << std::endl;
+  };
+  template <class T>
+  void operator()(entt::entity& in, const T& t) {
+    std::cout << 1 << std::endl;
+  };
+};
+
+TEST_CASE("entt load", "[boost]") {
+  using namespace doodle;
+  auto& set = core_set::getSet();
+  auto& reg = set.reg;
+
+  auto a = reg.create();
+  reg.emplace<test_external>(a, 1.f, 1.f);
+  auto &k_s = reg.emplace<shot>(a);
+
+  serializeion_warp output;
+
+  reg.destroy(reg.create());
+
+  auto e1 = reg.create();
+  auto e3 = reg.create();
+  reg.emplace<entt::tag<"empty"_hs>>(e3);
+
+  reg.emplace<test_external>(e1, .8f, .0f);
+  entt::snapshot{reg}.entities(output).component<test_external, entt::tag<"empty"_hs>>(output);
+}

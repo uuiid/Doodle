@@ -46,5 +46,6 @@
 #include <date/date.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+#include <entt/entt.hpp>
 
 #include <boost/numeric/conversion/cast.hpp>

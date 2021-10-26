@@ -111,6 +111,7 @@ class DOODLELIB_API core_set : public details::no_copy {
 
   std::map<string, bool> widget_show;
 
+  entt::registry reg;
  private:
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的

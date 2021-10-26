@@ -157,8 +157,7 @@ class database_action {
  */
 class DOODLELIB_API metadata
     : public std::enable_shared_from_this<metadata>,
-      public database_action<metadata, metadata_factory>,
-      public details::no_copy {
+      public database_action<metadata, metadata_factory> {
  public:
   /**
    * @brief 这个枚举是数据库中的枚举， 更改请慎重
@@ -213,7 +212,7 @@ class DOODLELIB_API metadata
 
   void add_child(const metadata_ptr &val);
 
-  inline vector_adapter<std::vector<metadata_ptr>,metadata> get_child() {
+  inline vector_adapter<std::vector<metadata_ptr>, metadata> get_child() {
     return make_vector_adapter(child_item, *this);
   };
   /**
@@ -314,7 +313,7 @@ class DOODLELIB_API metadata
     return {};
   };
 
-    template <class parent_class>
+  template <class parent_class>
   std::shared_ptr<const parent_class> find_parent_class() const {
     auto k_m = this->shared_from_this();
     while (k_m) {
@@ -365,6 +364,54 @@ void metadata::serialize(Archive &ar, const std::uint32_t version) {
   }
 }
 
+class DOODLELIB_API tree_relationship {
+ private:
+  entt::entity p_parent;
+
+ public:
+  std::vector<entt::entity> p_child;
+
+  tree_relationship::tree_relationship()
+      : p_parent(entt::null),
+        p_child() {
+  }
+  tree_relationship(entt::entity in_parent)
+      : tree_relationship() {
+    set_parent(std::move(in_parent));
+  }
+
+  [[nodiscard]] const entt::entity &get_parent() const noexcept;
+  void set_parent(const entt::entity &in_parent) noexcept;
+
+  [[nodiscard]] const std::vector<entt::entity> &get_child() const noexcept;
+  [[nodiscard]] std::vector<entt::entity> &get_child() noexcept;
+  void set_child(const std::vector<entt::entity> &in_child) noexcept;
+};
+
+class DOODLELIB_API database {
+ private:
+  std::uint64_t p_id;
+  std::optional<uint64_t> p_parent_id;
+  metadata::meta_type p_type;
+  std::string p_uuid;
+
+ public:
+  database();
+  ~database();
+
+  std::size_t p_has_child;
+  std::size_t p_has_file;
+  bool p_updata_parent_id;
+  bool p_updata_type;
+  /**
+   * @brief 需要加载
+   */
+  bool p_need_load;
+  /**
+   * @brief 需要保存
+   */
+  bool p_need_save;
+};
 }  // namespace doodle
 
 // CEREAL_REGISTER_TYPE(doodle::metadata)

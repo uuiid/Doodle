@@ -98,7 +98,8 @@ core_set::core_set()
       p_condition(),
       p_root(FSys::temp_directory_path() / "Doodle"),
       _root_cache(p_root / "cache"),
-      _root_data(p_root / "data") {
+      _root_data(p_root / "data"),
+      reg() {
 }
 
 boost::uuids::uuid core_set::get_uuid() {
@@ -321,4 +322,5 @@ bool core_set_init::config_to_user() {
   }
   return true;
 }
+
 }  // namespace doodle

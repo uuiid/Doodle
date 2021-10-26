@@ -58,10 +58,10 @@ std::shared_ptr<metadata> metadata::get_parent() const {
 }
 
 void metadata::sort_child_items(bool is_launch_sig) {
-//  std::sort(child_item.begin(), child_item.end(),
-//            [](const metadata_ptr &r, const metadata_ptr &l) {
-//              return *r < *l;
-//            });
+  //  std::sort(child_item.begin(), child_item.end(),
+  //            [](const metadata_ptr &r, const metadata_ptr &l) {
+  //              return *r < *l;
+  //            });
 }
 
 bool metadata::has_parent() const {
@@ -288,6 +288,38 @@ std::uint64_t metadata::get_parent_id() const {
 }
 bool metadata::has_parent_id() const {
   return p_parent_id.has_value();
+}
+
+const entt::entity &tree_relationship::get_parent() const noexcept {
+  return p_parent;
+}
+void tree_relationship::set_parent(const entt::entity &in_parent) noexcept {
+  p_parent = in_parent;
+}
+
+const std::vector<entt::entity> &tree_relationship::get_child() const noexcept {
+  return p_child;
+}
+
+std::vector<entt::entity> &tree_relationship::get_child() noexcept {
+  return p_child;
+}
+
+void tree_relationship::set_child(const std::vector<entt::entity> &in_child) noexcept {
+  p_child = in_child;
+}
+
+database::database()
+    : p_id(0),
+      p_parent_id(),
+      p_type(metadata::meta_type::unknown_file),
+      p_uuid(core_set::getSet().get_uuid_str()),
+      p_has_child(0),
+      p_has_file(0),
+      p_updata_parent_id(false),
+      p_updata_type(false),
+      p_need_load(false),
+      p_need_save(false) {
 }
 
 }  // namespace doodle

@@ -36,6 +36,9 @@ class no_copy {
   no_copy()                = default;
   no_copy(const no_copy &) = delete;
   no_copy &operator=(const no_copy &) = delete;
+
+  no_copy( no_copy &&) = default;
+  no_copy &operator=( no_copy &&) = default;
 };
 /**
  * @brief 判断是否是智能指针
@@ -251,7 +254,7 @@ DOODLELIB_API std::string file_hash_sha224(const path &in_file);
 DOODLELIB_API std::vector<path> list_files(const path &in_dir);
 
 }  // namespace FSys
-
+using namespace entt::literals;
 class core_set;
 class project;
 class episodes;
