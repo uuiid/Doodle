@@ -10,7 +10,6 @@
 namespace doodle {
 
 class DOODLELIB_API doodle_lib : public details::no_copy {
-
   static doodle_lib* p_install;
 
   thread_pool_ptr p_thread_pool;
@@ -28,7 +27,7 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
 
   static doodle_lib& Get();
   virtual void post_constructor();
-  
+
   void set_thread_pool_size();
   thread_pool_ptr get_thread_pool();
 
@@ -44,5 +43,6 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
   std::vector<long_term_ptr> long_task_list;
   std::recursive_mutex mutex;
 
+  std::shared_ptr<entt::registry> reg;
 };
 }  // namespace doodle

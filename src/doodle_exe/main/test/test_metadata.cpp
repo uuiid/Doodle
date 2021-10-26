@@ -5,6 +5,15 @@
 
 #include <catch.hpp>
 
+TEST_CASE("convert", "[metadata]"){
+  using namespace doodle;
+  auto& k_reg = core_set::getSet().reg;
+  
+
+
+}
+
+
 TEST_CASE("time duration", "[metadata]") {
   using namespace doodle;
   using namespace doodle::chrono::literals;

@@ -27,7 +27,8 @@ doodle_lib::doodle_lib()
       p_rpc_file_system_client(),
       p_metadata_factory(),
       long_task_list(),
-      mutex() {
+      mutex(),
+      reg(new_object<entt::registry>()) {
 #ifdef _WIN32
   /// 在这里我们初始化date tz 时区数据库
   auto k_path = create_time_database();

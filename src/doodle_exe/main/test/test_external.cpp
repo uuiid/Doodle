@@ -108,16 +108,13 @@ void fun(const entt::registry& in_reg,entt::entity in){}
 
 TEST_CASE("entt load", "[boost]") {
   using namespace doodle;
-  auto& set = core_set::getSet();
-  auto& reg = set.reg;
+  // auto& set = core_set::getSet();
+  entt::registry reg {};
 
   auto a = reg.create();
   reg.emplace<test_external>(a, 1.f, 1.f);
   auto &k_s = reg.emplace<shot>(a);
 
-
-  
-  
 
   serializeion_warp output;
 
