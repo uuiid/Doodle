@@ -309,6 +309,22 @@ void tree_relationship::set_child(const std::vector<entt::entity> &in_child) noe
   p_child = in_child;
 }
 
+entt::entity tree_relationship::get_root() const {
+  auto &reg = core_set::getSet().reg;
+  const tree_relationship *k_t{this};
+  entt::entity k_parent{p_parent};
+  while (k_parent != entt::null) {
+    k_t      = reg.try_get<tree_relationship>(k_parent);
+    k_parent = k_t->p_parent;
+  }
+  return k_parent;
+  // if (k_t->has_parent())
+  //   return reg.get<tree_relationship>(p_parent);
+  // else {
+  //   return entt::to_entity(reg, *this);
+  // }
+}
+
 database::database()
     : p_id(0),
       p_parent_id(),
@@ -319,8 +335,50 @@ database::database()
       p_updata_parent_id(false),
       p_updata_type(false),
       p_need_load(false),
-      p_need_save(false) {
-  core_set::getSet().reg.data();
+      p_need_save(false),
+      p_boost_serialize_vesion(0) {
 }
 
+FSys::path database::get_url_uuid() const {
+  auto &l_reg  = core_set::getSet().reg;
+  auto l_ent   = entt::to_entity(l_reg, *this);
+  // 找到本身的树类
+  auto &l_tree = l_reg.get<tree_relationship>(l_ent);
+  // 找到根的数据库类
+  auto &k_data = l_reg.get<database>(l_tree.get_root());
+
+  // 组合路径
+  auto path    = FSys::path{k_data.p_uuid};
+  path /= p_uuid.substr(0, 3);
+  path /= p_uuid;
+  return path;
+}
+
+bool database::has_parent() const {
+  return p_parent_id.has_value();
+}
+
+database &database::operator=(const metadata_database &in) {
+}
+database::operator doodle::metadata_database() const {
+  metadata_database k_tmp{};
+  k_tmp.set_id(p_id);
+  k_tmp.set_uuid_path(get_url_uuid().generic_string());
+
+  vector_container my_data{};
+  auto &l_reg = core_set::getSet().reg;
+  auto l_m    = entt::meta<project>();
+  auto l_ent  = entt::to_entity(l_reg, *this);
+
+  {
+    vector_iostream kt{my_data};
+    boost::archive::text_oarchive k_archive{kt};
+    k_archive << *this;
+
+    auto k_tu = l_reg.try_get<project, episodes, shot, season, assets, assets_file>(l_ent);
+    boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
+      k_archive << in_ptr;
+    });
+  }
+}
 }  // namespace doodle

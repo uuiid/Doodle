@@ -371,7 +371,7 @@ void metadata::serialize(Archive &ar, const std::uint32_t version) {
 }
 
 class DOODLELIB_API tree_relationship
-    /* : public boost::intrusive::set_base_hook<> */ {
+/* : public boost::intrusive::set_base_hook<> */ {
  private:
   entt::entity p_parent;
 
@@ -387,6 +387,9 @@ class DOODLELIB_API tree_relationship
       : tree_relationship() {
     set_parent(std::move(in_parent));
   }
+  bool has_parent() const {
+    return p_parent != entt::null;
+  };
 
   [[nodiscard]] const entt::entity &get_parent() const noexcept;
   void set_parent(const entt::entity &in_parent) noexcept;
@@ -394,6 +397,8 @@ class DOODLELIB_API tree_relationship
   [[nodiscard]] const std::vector<entt::entity> &get_child() const noexcept;
   [[nodiscard]] std::vector<entt::entity> &get_child() noexcept;
   void set_child(const std::vector<entt::entity> &in_child) noexcept;
+
+  entt::entity get_root() const;
 };
 
 class DOODLELIB_API database {
@@ -402,6 +407,7 @@ class DOODLELIB_API database {
   std::optional<uint64_t> p_parent_id;
   metadata::meta_type p_type;
   std::string p_uuid;
+  std::uint32_t p_boost_serialize_vesion;
 
  public:
   database();
@@ -419,6 +425,38 @@ class DOODLELIB_API database {
    * @brief 需要保存
    */
   bool p_need_save;
+
+  FSys::path get_url_uuid() const;
+  bool has_parent() const;
+
+  database &operator=(const metadata_database &in);
+  explicit operator metadata_database() const;
+
+  friend class boost::serialization::access;
+  template <class Archive>
+  void save(Archive &ar, const std::uint32_t version) const {
+    ar &BOOST_SERIALIZATION_NVP(p_id);
+    ar &BOOST_SERIALIZATION_NVP(p_parent_id);
+    ar &BOOST_SERIALIZATION_NVP(p_type);
+    ar &BOOST_SERIALIZATION_NVP(p_uuid);
+    ar &BOOST_SERIALIZATION_NVP(p_has_child);
+    ar &BOOST_SERIALIZATION_NVP(p_has_file);
+  };
+
+  template <class Archive>
+  void load(Archive &ar, const std::uint32_t version) {
+    p_boost_serialize_vesion = version;
+    if (version == 1) {
+      ar &BOOST_SERIALIZATION_NVP(p_id);
+      ar &BOOST_SERIALIZATION_NVP(p_parent_id);
+      ar &BOOST_SERIALIZATION_NVP(p_type);
+      ar &BOOST_SERIALIZATION_NVP(p_uuid);
+      ar &BOOST_SERIALIZATION_NVP(p_has_child);
+      ar &BOOST_SERIALIZATION_NVP(p_has_file);
+    }
+  };
+
+  BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 }  // namespace doodle
 
@@ -427,3 +465,7 @@ class DOODLELIB_API database {
 BOOST_CLASS_VERSION(doodle::metadata, 3)
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(doodle::metadata)
 BOOST_CLASS_EXPORT_KEY(doodle::metadata)
+
+BOOST_CLASS_VERSION(doodle::database, 1)
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(doodle::database)
+BOOST_CLASS_EXPORT_KEY(doodle::database)
