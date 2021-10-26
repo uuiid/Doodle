@@ -38,6 +38,8 @@ class DOODLELIB_API metadata_serialize : public std::enable_shared_from_this<met
 
  public:
   metadata_serialize();
+
+  
 };
 
 }  // namespace doodle
