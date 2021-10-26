@@ -7,23 +7,26 @@
 
 TEST_CASE("convert", "[metadata]") {
   using namespace doodle;
-  entt::registry reg{};
-  auto k_prj = reg.create();
-  auto& k_p  = reg.emplace<project>(k_prj);
-  k_p.set_name("etst");
-  reg.emplace<tree_relationship>(k_prj);
-  auto& k_d = reg.emplace<database>(k_prj);
+  auto reg   = doodle_lib::Get().reg;
+  auto k_prj = reg->create();
+  auto& k_p  = reg->emplace<project>(k_prj);
+  REQUIRE(entt::to_entity(*reg, k_p) == k_prj);
+
+  // k_p.set_name("etst");
+  reg->emplace<tree_relationship>(k_prj);
+  auto& k_d = reg->emplace<database>(k_prj);
+  REQUIRE(entt::to_entity(*reg, k_d) == k_prj);
 
   metadata_database k_data{k_d};
   std::cout << k_data.DebugString() << std::endl;
 
-  auto k_s = reg.create();
-  auto& s  = reg.emplace<shot>(k_s);
+  auto k_s = reg->create();
+  auto& s  = reg->emplace<shot>(k_s);
   s.set_shot(1);
   s.set_shot_ab(shot::shot_ab_enum::A);
 
-  reg.emplace<tree_relationship>(k_s, k_prj);
-  reg.emplace<database>(k_s);
+  reg->emplace<tree_relationship>(k_s, k_prj);
+  reg->emplace<database>(k_s);
 }
 
 TEST_CASE("time duration", "[metadata]") {

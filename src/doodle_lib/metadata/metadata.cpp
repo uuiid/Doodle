@@ -320,7 +320,7 @@ entt::entity tree_relationship::get_root() const {
     k_t      = k_reg->try_get<tree_relationship>(k_parent);
     k_parent = k_t->p_parent;
   }
-  return k_parent;
+  return entt::to_entity(*(doodle_lib::Get().reg), *this);
   // if (k_t->has_parent())
   //   return reg.get<tree_relationship>(p_parent);
   // else {
@@ -345,6 +345,7 @@ database::database()
 FSys::path database::get_url_uuid() const {
   auto l_reg   = doodle_lib::Get().reg;
   auto l_ent   = entt::to_entity(*l_reg, *this);
+
   // 找到本身的树类
   auto &l_tree = l_reg->get<tree_relationship>(l_ent);
   // 找到根的数据库类

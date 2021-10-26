@@ -88,6 +88,7 @@ target_compile_definitions(doodle_lib
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         PRIVATE
+        ENTT_API_EXPORT
         )
 target_compile_options(doodle_lib
         PUBLIC
