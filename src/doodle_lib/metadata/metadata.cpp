@@ -383,6 +383,10 @@ std::int32_t database::get_meta_type_int() const {
   return magic_enum::enum_integer(p_type);
 }
 
+std::uint64_t database::get_id() const {
+  return p_id;
+}
+
 database &database::operator=(const metadata_database &in_) {
   auto k_data = in_.metadata_cereal().value();
   vector_container my_data{k_data.begin(), k_data.end()};
@@ -440,6 +444,13 @@ database::operator doodle::metadata_database() const {
         magic_enum::enum_cast<doodle::metadata_database::meta_type>(get_meta_type_int()).value());
   }
   return k_tmp;
+}
+bool database::operator==(const database &in_rhs) const {
+  return std::tie(p_id, p_uuid) == std::tie(in_rhs.p_id, in_rhs.p_uuid);
+}
+
+bool database::operator!=(const database &in_rhs) const {
+  return !(*this == in_rhs);
 }
 
 }  // namespace doodle

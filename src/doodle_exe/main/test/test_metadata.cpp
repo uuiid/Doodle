@@ -26,7 +26,20 @@ TEST_CASE("convert", "[metadata]") {
   s.set_shot_ab(shot::shot_ab_enum::A);
 
   reg->emplace<tree_relationship>(k_s, k_prj);
-  reg->emplace<database>(k_s);
+  auto& k_d2 = reg->emplace<database>(k_s);
+  
+
+  metadata_database k_data2{k_d2};
+  std::cout << k_data2.DebugString() << std::endl;
+
+  auto k_tmp2 = reg->create();
+  reg->emplace<tree_relationship>(k_tmp2, k_prj);
+  auto& k_d3 = reg->emplace<database>(k_tmp2);
+  k_d3       = k_data2;
+
+  std::cout << "k_d3 id: " << k_d3.get_url_uuid() << std::endl;
+  std::cout << "k_d2 id: " << k_d2.get_url_uuid() << std::endl;
+  REQUIRE(k_d3 == k_d2);
 }
 
 TEST_CASE("time duration", "[metadata]") {

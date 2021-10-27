@@ -429,6 +429,12 @@ class DOODLELIB_API database {
   FSys::path get_url_uuid() const;
   bool has_parent() const;
   std::int32_t get_meta_type_int() const;
+  /**
+   * @brief 获得数据库id
+   *
+   * @return std::int32_t
+   */
+  std::uint64_t get_id() const;
 
   /**
    * @brief 设置数据库中的类型
@@ -439,9 +445,10 @@ class DOODLELIB_API database {
   void set_meta_typp(const std::string &in_meta);
   void set_meta_type(std::int32_t in_);
 
-
   database &operator=(const metadata_database &in);
   explicit operator metadata_database() const;
+  bool operator==(const database &in_rhs) const;
+  bool operator!=(const database &in_rhs) const;
 
   friend class boost::serialization::access;
   template <class Archive>
