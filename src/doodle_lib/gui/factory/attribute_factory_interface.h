@@ -19,6 +19,13 @@ class DOODLELIB_API attribute_factory_interface
   virtual void show_attribute(const assets_ptr& in){};
   virtual void show_attribute(const season_ptr& in){};
   virtual void show_attribute(const assets_file_ptr& in){};
+
+  virtual void show_attribute(const episodes* in){};
+  virtual void show_attribute(const project* in){};
+  virtual void show_attribute(const shot* in){};
+  virtual void show_attribute(const assets* in){};
+  virtual void show_attribute(const season* in){};
+  virtual void show_attribute(const assets_file* in){};
 };
 
 /**
@@ -77,7 +84,7 @@ class DOODLELIB_API attr_project : public attribute_factory_interface {
  *
  */
 class DOODLELIB_API attr_assets : public attribute_factory_interface {
-  metadata_ptr p_data;
+  entt::entity p_data;
   command_ptr p_comm;
 
  public:

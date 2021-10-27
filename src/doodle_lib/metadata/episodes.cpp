@@ -7,15 +7,11 @@ BOOST_CLASS_EXPORT_IMPLEMENT(doodle::episodes)
 namespace doodle {
 
 episodes::episodes()
-    : metadata(),
-      p_episodes(-1) {
-  p_type = meta_type::folder;
+    :      p_episodes(-1) {
 }
 
-episodes::episodes(std::weak_ptr<metadata> in_metadata, int64_t in_episodes)
-    : metadata(std::move(in_metadata)),
-      p_episodes(in_episodes) {
-  p_type = meta_type::folder;
+episodes::episodes( int64_t in_episodes)
+    :       p_episodes(in_episodes) {
   if (p_episodes < 0)
     throw doodle_error("集数无法为负");
 }
@@ -33,7 +29,6 @@ void episodes::set_episodes(const int64_t& Episodes_) {
   if (Episodes_ <= 0)
     throw doodle_error("集数无法为负");
   p_episodes = Episodes_;
-  saved(true);
 }
 
 std::string episodes::str() const {
@@ -73,7 +68,7 @@ episodes_ptr episodes::analysis_static(const std::string& in_path) {
 }
 
 void episodes::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<episodes>(shared_from_this()));
+  in_factoryPtr->show_attribute(this);
 }
 
 }  // namespace doodle

@@ -8,18 +8,18 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle {
-class DOODLELIB_API assets : public metadata {
+class DOODLELIB_API assets {
   std::string p_name;
   std::string p_name_enus;
 
  public:
   assets();
-  explicit assets(std::weak_ptr<metadata> in_metadata, std::string in_name);
+  explicit assets(std::string in_name);
   // ~Assets();
   DOODLE_MOVE(assets);
 
-  [[nodiscard]] std::string str() const override;
-  [[nodiscard]] std::string show_str() const override;
+  [[nodiscard]] std::string str() const;
+  [[nodiscard]] std::string show_str() const;
 
   const std::string& get_name1() const;
   void set_name1(const std::string& in_name);
@@ -30,19 +30,13 @@ class DOODLELIB_API assets : public metadata {
   bool operator>(const assets& in_rhs) const;
   bool operator<=(const assets& in_rhs) const;
   bool operator>=(const assets& in_rhs) const;
-  void attribute_widget(const attribute_factory_ptr& in_factoryPtr) override;
+  void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
 
  private:
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version) {
-    ;
-    if (version == 1) {
-      ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(metadata);
-      ar& BOOST_SERIALIZATION_NVP(p_name);
-    }
     if (version == 2) {
-      ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(metadata);
       ar& BOOST_SERIALIZATION_NVP(p_name);
       ar& BOOST_SERIALIZATION_NVP(p_name_enus);
     }

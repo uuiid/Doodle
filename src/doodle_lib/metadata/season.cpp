@@ -9,17 +9,15 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::season)
 namespace doodle {
 season::season()
-    : metadata(),
+    : 
       p_int(0) {
 }
-season::season(std::weak_ptr<metadata> in_metadata, std::int32_t in_)
-    : metadata(in_metadata),
-      p_int(in_) {
+season::season(std::int32_t in_)
+    :       p_int(in_) {
 }
 
 void season::set_season(std::int32_t in_) {
   p_int = in_;
-  saved(true);
 }
 
 std::int32_t season::get_season() const {
@@ -29,6 +27,6 @@ std::string season::str() const {
   return fmt::format("seas_{}", p_int);
 }
 void season::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<season>(shared_from_this()));
+  in_factoryPtr->show_attribute(this);
 }
 }  // namespace doodle

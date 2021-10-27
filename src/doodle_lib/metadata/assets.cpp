@@ -10,17 +10,13 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets)
 namespace doodle {
 assets::assets()
-    : metadata(),
-      p_name(),
+    : p_name(),
       p_name_enus() {
-  p_type = meta_type::folder;
 }
 
-assets::assets(std::weak_ptr<metadata> in_metadata, std::string in_name)
-    : metadata(std::move(in_metadata)),
-      p_name(std::move(in_name)),
+assets::assets(std::string in_name)
+    : p_name(std::move(in_name)),
       p_name_enus(convert::Get().toEn(p_name)) {
-  p_type = meta_type::folder;
 }
 
 // Assets::~Assets() {
@@ -58,16 +54,14 @@ void assets::set_name1(const std::string& in_name) {
   p_name = in_name;
   if (p_name_enus.empty())
     p_name_enus = convert::Get().toEn(p_name);
-  saved(true);
 }
 const std::string& assets::get_name_enus() const {
   return p_name_enus;
 }
 void assets::set_name_enus(const std::string& in_nameEnus) {
   p_name_enus = in_nameEnus;
-  saved(true);
 }
 void assets::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<assets>(shared_from_this()));
+  in_factoryPtr->show_attribute(this);
 }
 }  // namespace doodle

@@ -4,20 +4,20 @@
 
 namespace doodle {
 
-class DOODLELIB_API episodes : public metadata {
+class DOODLELIB_API episodes {
   int64_t p_episodes;
 
  public:
   episodes();
-  explicit episodes(std::weak_ptr<metadata> in_metadata, int64_t in_episodes);
+  explicit episodes(int64_t in_episodes);
   // ~Episodes();
   DOODLE_MOVE(episodes);
   [[nodiscard]] const int64_t &get_episodes() const noexcept;
   void set_episodes(const int64_t &Episodes_);
 
-  [[nodiscard]] std::string str() const override;
+  [[nodiscard]] std::string str() const;
 
-  void attribute_widget(const attribute_factory_ptr &in_factoryPtr) override;
+  void attribute_widget(const attribute_factory_ptr &in_factoryPtr);
 
   bool operator<(const episodes &in_rhs) const;
   bool operator>(const episodes &in_rhs) const;
@@ -42,8 +42,7 @@ class DOODLELIB_API episodes : public metadata {
 template <class Archive>
 void episodes::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
-    ar &boost::serialization::make_nvp("metadata", boost::serialization::base_object<metadata>(*this)) &
-        p_episodes;
+    ar &BOOST_SERIALIZATION_NVP(p_episodes);
 }
 }  // namespace doodle
 

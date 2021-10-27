@@ -1,26 +1,23 @@
+#include "shot.h"
+
 #include <doodle_lib/Exception/exception.h>
+#include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/metadata_factory.h>
-#include <doodle_lib/metadata/shot.h>
-
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::shot)
 namespace doodle {
 
 shot::shot()
-    : metadata(),
-      p_shot(-1),
+    : p_shot(-1),
       p_shot_ab("None") {
-  p_type = meta_type::folder;
 }
 
-shot::shot(std::weak_ptr<metadata> in_metadata,
-           decltype(p_shot) in_shot,
-           decltype(p_shot_ab) in_shot_ab)
-    : metadata(std::move(in_metadata)),
-      p_shot(in_shot),
+shot::shot(
+    decltype(p_shot) in_shot,
+    decltype(p_shot_ab) in_shot_ab)
+    : p_shot(in_shot),
       p_shot_ab(std::move(in_shot_ab)) {
-  p_type = meta_type::folder;
   if (p_shot < 0)
     throw doodle_error{"shot无法为负"};
 }
@@ -34,7 +31,6 @@ void shot::set_shot(const int64_t& in_shot) {
     throw doodle_error{"shot无法为负"};
 
   p_shot = in_shot;
-  saved(true);
 }
 
 const std::string& shot::get_shot_ab() const noexcept {
@@ -47,18 +43,14 @@ shot::shot_ab_enum shot::get_shot_ab_enum() const noexcept {
 
 void shot::set_shot_ab(const std::string& ShotAb) noexcept {
   p_shot_ab = ShotAb;
-  saved(true);
 }
-episodes_ptr shot::get_episodes_ptr() const {
-  auto k_ptr = std::dynamic_pointer_cast<episodes>(get_parent());
-  if (!k_ptr)
-    throw nullptr_error("没有集数");
-  return k_ptr;
+episodes* shot::get_episodes_ptr() const {
+  auto k_reg  = g_reg();
+  auto k_ent  = make_handle(*this);
+  auto &k_tree = k_ent.get<tree_relationship>();
+  return k_tree.find_parent_class<episodes>();
 }
 
-void shot::set_episodes_ptr(const episodes_ptr& Episodes_) noexcept {
-  Episodes_->get_child().push_back(shared_from_this());
-}
 std::string shot::str() const {
   return fmt::format("sc{:04d}{}", p_shot, p_shot_ab == "None" ? "" : p_shot_ab);
 }
@@ -96,7 +88,7 @@ shot_ptr shot::analysis_static(const std::string& in_path) {
 }
 
 void shot::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<shot>(shared_from_this()));
+  in_factoryPtr->show_attribute(this);
 }
 
 }  // namespace doodle

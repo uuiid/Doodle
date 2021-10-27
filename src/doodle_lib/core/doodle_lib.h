@@ -14,10 +14,9 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
 
   thread_pool_ptr p_thread_pool;
   logger_ctr_ptr p_log;
-  project_ptr p_curr_project;
   rpc_metadata_client_ptr p_rpc_metadata_clien;
   rpc_file_system_client_ptr p_rpc_file_system_client;
-  metadata_factory_ptr p_metadata_factory;
+  metadata_serialize_ptr p_metadata_factory;
 
   FSys::path create_time_database();
 
@@ -31,21 +30,20 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
   void set_thread_pool_size();
   thread_pool_ptr get_thread_pool();
 
-  using project_vector = std::vector<project_ptr>;
-  observable_container<project_vector> p_project_vector;
+  std::vector<entt::entity> p_project_vector;
 
   void init_gui();
 
   [[nodiscard]] rpc_metadata_client_ptr get_rpc_metadata_client() const;
   [[nodiscard]] rpc_file_system_client_ptr get_rpc_file_system_client() const;
-  [[nodiscard]] metadata_factory_ptr get_metadata_factory() const;
+  [[nodiscard]] metadata_serialize_ptr get_metadata_factory() const;
 
   std::vector<long_term_ptr> long_task_list;
   std::recursive_mutex mutex;
 
-  std::shared_ptr<entt::registry> reg;
+  registry_ptr reg;
 };
-inline std::shared_ptr<entt::registry> g_reg() {
+inline registry_ptr& g_reg() {
   return doodle_lib::Get().reg;
 }
 

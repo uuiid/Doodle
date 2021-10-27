@@ -13,7 +13,6 @@ namespace doodle {
 
 project_widget::project_widget()
     : p_current_select() {
-  p_factory    = new_object<attr_project>();
   p_class_name = "项目";
 }
 void project_widget::frame_render() {
@@ -26,19 +25,18 @@ void project_widget::frame_render() {
     const auto& k_prj_list = doodle_lib::Get().p_project_vector;
 
     for (const auto& p : k_prj_list) {
+      auto k_h = make_handle(p);
       imgui::TableNextRow();
       imgui::TableNextColumn();
-      if (dear::Selectable(p->show_str(),
+      if (dear::Selectable(k_h.get<project>().show_str(),
                            p == p_current_select,
                            ImGuiSelectableFlags_SpanAllColumns)) {
         p_current_select = p;
-        p_factory->show_attribute(p_current_select);
-        select_change(p_current_select);
       }
       imgui::TableNextColumn();
-      dear::Text(p->get_path().generic_string());
+      dear::Text(k_h.get<project>().get_path().generic_string());
       imgui::TableNextColumn();
-      dear::Text(p->str());
+      dear::Text(k_h.get<project>().str());
     }
   };
 }

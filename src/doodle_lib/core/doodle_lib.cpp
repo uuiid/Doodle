@@ -22,7 +22,6 @@ doodle_lib* doodle_lib::p_install = nullptr;
 doodle_lib::doodle_lib()
     : p_thread_pool(new_object<thread_pool>(core_set::getSet().p_max_thread)),
       p_log(new_object<logger_ctrl>()),
-      p_curr_project(),
       p_rpc_metadata_clien(),
       p_rpc_file_system_client(),
       p_metadata_factory(),
@@ -72,7 +71,6 @@ thread_pool_ptr doodle_lib::get_thread_pool() {
 
 doodle_lib::~doodle_lib() {
   p_project_vector.clear();
-  p_curr_project.reset();
 }
 void doodle_lib::init_gui() {
   auto k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().get_meta_rpc_port());
@@ -90,18 +88,8 @@ void doodle_lib::init_gui() {
         grpc::CreateChannel(k_ip,
                             grpc::InsecureChannelCredentials()));
 
-    p_metadata_factory = new_object<metadata_factory>();
-    p_project_vector   = p_metadata_factory->getAllProject();
-    if (!p_project_vector.empty())
-      if (p_curr_project) {
-        auto it = std::find_if(p_project_vector.begin(), p_project_vector.end(),
-                               [this](const project_ptr& in_ptr) { return in_ptr->getId() == this->p_curr_project->getId(); });
-        if (it != p_project_vector.end())
-          p_curr_project = *it;
-        else
-          p_curr_project = p_project_vector.front();
-      } else
-        p_curr_project = p_project_vector.front();
+    p_metadata_factory = new_object<metadata_serialize>();
+    p_project_vector   = p_metadata_factory->get_all_prj();
   } catch (doodle_error& err) {
     p_rpc_file_system_client.reset();
     p_rpc_metadata_clien.reset();
@@ -115,7 +103,7 @@ rpc_file_system_client_ptr doodle_lib::get_rpc_file_system_client() const {
   return p_rpc_file_system_client;
 }
 
-metadata_factory_ptr doodle_lib::get_metadata_factory() const {
+metadata_serialize_ptr doodle_lib::get_metadata_factory() const {
   return p_metadata_factory;
 }
 }  // namespace doodle

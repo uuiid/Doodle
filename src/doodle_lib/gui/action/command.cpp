@@ -10,7 +10,7 @@
 
 namespace doodle {
 
-bool command_base::set_parent(const metadata_ptr& in_ptr) {
+bool command_base::set_parent(const entt::entity& in_ptr) {
   p_meta_var = in_ptr;
   return true;
 }
@@ -31,7 +31,7 @@ bool command_base_list::set_data(const std::any& in_any) {
   return k_;
 }
 
-bool command_base_list::set_parent(const metadata_ptr& in_ptr) {
+bool command_base_list::set_parent(const entt::entity& in_ptr) {
   auto k_ = true;
   for (auto i : p_list)
     k_ &= i->set_parent(in_ptr);

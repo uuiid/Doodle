@@ -29,7 +29,7 @@ using table_column_ptr = std::shared_ptr<table_column>;
  *
  */
 class DOODLELIB_API assets_file_widgets : public metadata_widget {
-  metadata_ptr p_root;
+  entt::entity p_root;
   assets_file_ptr p_current_select;
 
   std::vector<details::table_column_ptr> p_colum_list;
@@ -42,8 +42,8 @@ class DOODLELIB_API assets_file_widgets : public metadata_widget {
   /**
    *
    */
-  void set_metadata(const metadata_ptr& in_ptr);
+  void set_metadata(const entt::entity& in_ptr);
 
-  boost::signals2::signal<void(const metadata_ptr&)> select_change;
+  boost::signals2::signal<void(const entt::entity&)> select_change;
 };
 }  // namespace doodle

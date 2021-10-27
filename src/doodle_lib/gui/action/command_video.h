@@ -10,7 +10,7 @@
 namespace doodle {
 class DOODLELIB_API comm_video : public command_base {
  private:
-  metadata_ptr p_root;
+  entt::entity p_root;
 
  public:
   comm_video();

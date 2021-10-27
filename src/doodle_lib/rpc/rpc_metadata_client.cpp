@@ -24,89 +24,10 @@ rpc_metadata_client::rpc_metadata_client(const std::shared_ptr<grpc::Channel>& i
 {
   //  auto k_s = p_channel->GetState(true);
 }
-std::vector<project_ptr> rpc_metadata_client::get_project() {
-  auto k_filter = new_object<rpc_filter::filter>();
-  k_filter->set_meta_type(metadata::meta_type::project_root);
-  auto k_list = filter_metadata(k_filter);
-  std::vector<project_ptr> k_out_list{};
-  std::transform(
-      k_list.begin(), k_list.end(), std::back_inserter(k_out_list),
-      [](const metadata_ptr& in) {
-        return std::dynamic_pointer_cast<project>(in);
-      });
-  return k_out_list;
-}
-std::vector<metadata_ptr> rpc_metadata_client::get_child(const metadata_const_ptr& in_metadataPtr) {
-  auto k_filter = new_object<rpc_filter::filter>();
-  k_filter->set_parent_id(in_metadataPtr->getId());
-  return filter_metadata(k_filter);
-}
-// void RpcMetadataClient::GetMetadata(const MetadataPtr& in_metadataPtr) {
-//   auto k_filter = new_object<rpc_filter::filter>();
-//   k_filter->set_id(in_metadataPtr->getId());
-//   FilterMetadata(k_filter).front();
 
-// }
-void rpc_metadata_client::install_metadata(const metadata_ptr& in_metadataPtr) {
-  if (in_metadataPtr->is_install())
-    return;
 
-  grpc::ClientContext k_context{};
-  metadata_database k_in_db{*in_metadataPtr};
-  metadata_database k_out_db{};
-  auto k_status = p_stub->install_metadata(&k_context, k_in_db, &k_out_db);
-  if (k_status.ok()) {
-    in_metadataPtr->p_id = k_out_db.id();
-  } else {
-    throw doodle_error{k_status.error_message()};
-  }
-  update_metadata(in_metadataPtr, false);
-}
-void rpc_metadata_client::delete_metadata(const metadata_const_ptr& in_metadataPtr) {
-  if (!in_metadataPtr->is_install())
-    return;
 
-  grpc::ClientContext k_context{};
-  metadata_database k_in_db{};
-  k_in_db.set_id(in_metadataPtr->getId());
-  k_in_db.set_uuid_path(in_metadataPtr->get_url_uuid().generic_string());
 
-  metadata_database k_out_db{};
-  auto k_status = p_stub->delete_metadata(&k_context, k_in_db, &k_out_db);
-  DOODLE_LOG_WARN("删除数据 : {} 路径 {}", in_metadataPtr->getId(), in_metadataPtr->get_url_uuid())
-  if (!k_status.ok()) {
-    throw doodle_error{k_status.error_message()};
-  }
-}
-
-void rpc_metadata_client::update_metadata(const metadata_const_ptr& in_metadataPtr, bool b_update_parent_id) {
-  if (!in_metadataPtr->is_install())
-    return;
-
-  grpc::ClientContext k_context{};
-  metadata_database k_in_db{*in_metadataPtr};
-  metadata_database k_out_db{};
-  auto k_status = p_stub->update_metadata(&k_context, k_in_db, &k_out_db);
-  if (!k_status.ok()) {
-    throw doodle_error{k_status.error_message()};
-  }
-}
-std::vector<metadata_ptr> rpc_metadata_client::filter_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr) {
-  std::vector<metadata_ptr> k_list{};
-  grpc::ClientContext k_context{};
-  metadata_database_filter k_filter{std::move(*in_filter_ptr)};
-  auto k_r = p_stub->filter_metadata(&k_context, k_filter);
-  metadata_database k_db;
-  while (k_r->Read(&k_db)) {
-    if (auto k_i = metadata::from_DataDb(k_db); k_i)
-      k_list.push_back(k_i);
-  }
-  auto status = k_r->Finish();
-
-  if (!status.ok())
-    throw doodle_error{status.error_message()};
-  return k_list;
-}
 
 void rpc_metadata_client::install_metadata(const database& in_database) {
   grpc::ClientContext k_context{};
@@ -189,7 +110,7 @@ void rpc_filter::filter::set_id(uint64_t in_id) {
 void rpc_filter::filter::set_parent_id(std::int64_t in_patent_id) {
   _parent_id = in_patent_id;
 }
-void rpc_filter::filter::set_meta_type(metadata::meta_type in_meta_type) {
+void rpc_filter::filter::set_meta_type(metadata_type in_meta_type) {
   _meta_type = in_meta_type;
 }
 void rpc_filter::filter::set_begin_time(const rpc_filter::filter::time_point& in_time) {

@@ -5,7 +5,7 @@
 
 #include <magic_enum.hpp>
 namespace doodle {
-class DOODLELIB_API shot : public metadata {
+class DOODLELIB_API shot {
  public:
   enum class shot_ab_enum;
 
@@ -15,8 +15,7 @@ class DOODLELIB_API shot : public metadata {
 
  public:
   shot();
-  shot(std::weak_ptr<metadata> in_metadata,
-       decltype(p_shot) in_shot,
+  shot(decltype(p_shot) in_shot,
        decltype(p_shot_ab) in_shot_ab = {});
   DOODLE_MOVE(shot);
   // clang-format off
@@ -33,11 +32,10 @@ class DOODLELIB_API shot : public metadata {
     set_shot_ab(std::string{magic_enum::enum_name(ShotAb)});
   };
 
-  [[nodiscard]] episodes_ptr get_episodes_ptr() const;
-  void set_episodes_ptr(const episodes_ptr &Episodes_) noexcept;
+  [[nodiscard]] episodes *get_episodes_ptr() const;
 
-  [[nodiscard]] std::string str() const override;
-  virtual void attribute_widget(const attribute_factory_ptr &in_factoryPtr) override;
+  [[nodiscard]] std::string str() const;
+  virtual void attribute_widget(const attribute_factory_ptr &in_factoryPtr);
   bool operator<(const shot &rhs) const;
   bool operator>(const shot &rhs) const;
   bool operator<=(const shot &rhs) const;

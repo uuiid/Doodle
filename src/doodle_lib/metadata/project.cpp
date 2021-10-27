@@ -15,13 +15,11 @@ project::project()
       p_path("C:/"),
       p_en_str(),
       p_shor_str() {
-  p_type = meta_type::project_root;
 }
 
 project::project(FSys::path in_path, std::string in_name)
     : p_name(std::move(in_name)),
       p_path(std::move(in_path)) {
-  p_type = meta_type::project_root;
 }
 
 void project::set_name(const std::string& Name) noexcept {
@@ -29,7 +27,6 @@ void project::set_name(const std::string& Name) noexcept {
     return;
   p_name = Name;
   init();
-  saved(true);
 }
 
 const FSys::path& project::get_path() const noexcept {
@@ -43,7 +40,6 @@ void project::set_path(const FSys::path& Path) {
     return;
 
   p_path = Path;
-  saved(true);
 }
 
 std::string project::str() const {
@@ -89,7 +85,7 @@ const std::string& project::get_name() const {
 }
 
 void project::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<project>(shared_from_this()));
+  in_factoryPtr->show_attribute(this);
 }
 void project::init() {
   p_en_str = boost::algorithm::to_lower_copy(
