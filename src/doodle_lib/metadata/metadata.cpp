@@ -4,14 +4,14 @@
 
 #include "metadata.h"
 
-#include <Exception/exception.h>
-#include <Metadata/metadata_cpp.h>
-#include <core/ContainerDevice.h>
-#include <core/core_set.h>
-#include <doodle_lib/Logger/logger.h>
+#include <doodle_lib/core/ContainerDevice.h>
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/logger/logger.h>
 #include <doodle_lib/metadata/metadata_factory.h>
+#include <exception/exception.h>
 #include <google/protobuf/util/time_util.h>
+#include <metadata/metadata_cpp.h>
 
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/archive/polymorphic_text_iarchive.hpp>
@@ -26,6 +26,11 @@ namespace doodle {
 const entt::entity &tree_relationship::get_parent() const noexcept {
   return p_parent;
 }
+
+entt::handle tree_relationship::get_parent_h() const noexcept {
+  return make_handle(p_parent);
+}
+
 void tree_relationship::set_parent(const entt::entity &in_parent) noexcept {
   p_parent = in_parent;
 }
@@ -58,9 +63,18 @@ entt::entity tree_relationship::get_root() const {
   //   return entt::to_entity(reg, *this);
   // }
 }
+bool tree_relationship::has_parent() const {
+  return p_parent != entt::null;
+}
+
+void database::set_id(std::uint64_t in_id) const {
+  p_id     = in_id;
+  p_id_str = fmt::format("id {}", p_id);
+}
 
 database::database()
     : p_id(0),
+      p_id_str("id 0"),
       p_parent_id(),
       p_type(metadata_type::unknown_file),
       p_uuid(core_set::getSet().get_uuid_str()),
@@ -176,7 +190,7 @@ database::operator doodle::metadata_database() const {
     boost::archive::text_oarchive k_archive{kt};
     k_archive << BOOST_SERIALIZATION_NVP(*this);
 
-    auto &k_tu = l_reg->try_get<DOODLE_SERIALIZATION>(l_ent);
+    auto k_tu = l_reg->try_get<DOODLE_SERIALIZATION>(l_ent);
     // auto k_boost_tu = boost::hana::to_tuple(k_tu);
     boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
       k_archive << in_ptr;
@@ -199,6 +213,39 @@ bool database::operator==(const database &in_rhs) const {
 
 bool database::operator!=(const database &in_rhs) const {
   return !(*this == in_rhs);
+}
+bool database::has_child() const {
+  return p_has_child > 0;
+}
+bool database::has_file() const {
+  return p_has_file > 0;
+}
+const std::string &database::get_uuid() const {
+  return p_uuid;
+}
+const string &database::get_id_str() const {
+  return p_id_str;
+}
+
+string to_str::get() const {
+  auto k_h   = make_handle(*this);
+  auto k_tup = k_h.try_get<project,
+                           episodes,
+                           shot,
+                           season,
+                           assets,
+                           assets_file>();
+
+  string l_str{};
+  boost::for_each(k_tup, [&](auto ptr) {
+    if (ptr && l_str.empty())
+      l_str = ptr->str();
+  });
+  return l_str;
+}
+
+to_str::operator string &() const{
+  return get();
 }
 
 }  // namespace doodle

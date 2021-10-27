@@ -35,7 +35,7 @@ void rpc_metadata_client::install_metadata(const database& in_database) {
   metadata_database k_out_db{};
   auto k_status = p_stub->install_metadata(&k_context, k_in_db, &k_out_db);
   if (k_status.ok()) {
-    in_database.p_id = k_out_db.id();
+    in_database.set_id(k_out_db.id());
   } else {
     throw doodle_error{k_status.error_message()};
   }

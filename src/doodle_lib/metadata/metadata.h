@@ -49,18 +49,16 @@ class DOODLELIB_API tree_relationship
       : tree_relationship() {
     set_parent(std::move(in_parent));
   }
-  bool has_parent() const {
-    return p_parent != entt::null;
-  };
+  bool has_parent() const;
 
   template <class parent_class>
   parent_class *find_parent_class() {
     auto k_p = p_parent;
     auto k_r = g_reg();
     while (k_p != entt::null) {
-      auto k = make_handle(k_p);
+      auto k     = make_handle(k_p);
       auto k_eps = k.try_get<episodes>();
-      if(k_eps)
+      if (k_eps)
         return k_eps;
       k_p = k.get<tree_relationship>().get_parent();
     }
@@ -68,6 +66,7 @@ class DOODLELIB_API tree_relationship
   }
 
   [[nodiscard]] const entt::entity &get_parent() const noexcept;
+  [[nodiscard]] entt::handle get_parent_h() const noexcept;
   void set_parent(const entt::entity &in_parent) noexcept;
 
   [[nodiscard]] const std::vector<entt::entity> &get_child() const noexcept;
@@ -82,10 +81,13 @@ class DOODLELIB_API database {
 
  private:
   mutable std::uint64_t p_id;
+  mutable string p_id_str;
   std::optional<uint64_t> p_parent_id;
   metadata_type p_type;
   std::string p_uuid;
   std::uint32_t p_boost_serialize_vesion;
+
+  void set_id(std::uint64_t in_id) const;
 
  public:
   database();
@@ -110,6 +112,13 @@ class DOODLELIB_API database {
   bool has_parent() const;
   std::int32_t get_meta_type_int() const;
   bool is_install() const;
+  const string &get_id_str() const;
+
+  [[nodiscard]] bool has_child() const;
+  [[nodiscard]] bool has_file() const;
+
+  const std::string &get_uuid() const;
+
   /**
    * @brief 获得数据库id
    *
@@ -157,6 +166,21 @@ class DOODLELIB_API database {
 
   BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
+
+// using to_str = entt::tag<"to_str"_hs>;
+
+class DOODLELIB_API to_str {
+ private:
+  std::int32_t p_i;
+
+ public:
+  to_str() = default;
+  DOODLE_MOVE(to_str);
+
+  string get() const;
+  operator string &() const;
+};
+
 }  // namespace doodle
 
 // CEREAL_REGISTER_TYPE(doodle::metadata)

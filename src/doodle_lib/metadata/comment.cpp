@@ -24,7 +24,6 @@ const std::string& comment::get_comment() const {
 }
 void comment::set_comment(const std::string& in_comment) {
   p_comment = in_comment;
-  p_meta.lock()->saved(true);
 }
 const std::string& comment::get_user() const {
   return p_user;
@@ -33,11 +32,5 @@ void comment::set_user(const std::string& in_user) {
   p_user = in_user;
 }
 
-void comment_vector::set_metadata(const std::weak_ptr<metadata>& in_meta) {
-  leaf_meta::set_metadata(in_meta);
-  for (auto& i : get()) {
-    i->set_metadata(in_meta);
-  }
-}
 
 }  // namespace doodle

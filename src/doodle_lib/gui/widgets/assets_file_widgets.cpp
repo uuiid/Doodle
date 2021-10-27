@@ -7,9 +7,12 @@
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
+
+#include <entt/entt.hpp>
+
 namespace doodle {
 namespace details {
-void table_column::frame_render(const assets_file_ptr& in_ptr) {
+void table_column::frame_render(const entt::handle& in_ptr) {
   imgui::TableNextColumn();
   p_render(in_ptr);
 }
@@ -19,12 +22,11 @@ bool assets_file_widgets::add_colum_render() {
   auto k_col      = p_colum_list.emplace_back(new_object<details::table_column>());
   k_col->p_name   = "id";
   k_col->p_width  = 6;
-  k_col->p_render = [this](const assets_file_ptr& in_) -> bool {
-    if (dear::Selectable(in_->get_id_str(),
-                         in_ == p_current_select,
+  k_col->p_render = [this](const entt::handle& in_) -> bool {
+    if (dear::Selectable(in_.get<database>().get_id_str(),
+                         in_.entity() == p_current_select,
                          ImGuiSelectableFlags_SpanAllColumns)) {
       p_current_select = in_;
-      p_current_select->attribute_widget(p_factory);
       select_change(p_current_select);
     }
     return true;
@@ -33,15 +35,15 @@ bool assets_file_widgets::add_colum_render() {
   k_col           = p_colum_list.emplace_back(new_object<details::table_column>());
   k_col->p_name   = "版本";
   k_col->p_width  = 6;
-  k_col->p_render = [this](const assets_file_ptr& in_) -> bool {
-    dear::Text(in_->get_version_str());
+  k_col->p_render = [this](const entt::handle& in_) -> bool {
+    dear::Text(in_.get<assets_file>().get_version_str());
     return true;
   };
 
   k_col           = p_colum_list.emplace_back(new_object<details::table_column>());
   k_col->p_name   = "评论";
-  k_col->p_render = [this](const assets_file_ptr& in_) -> bool {
-    auto com = in_->get_comment();
+  k_col->p_render = [this](const entt::handle& in_) -> bool {
+    auto com = in_.try_get<comment_vector>();
 
     if (com)
       dear::Text(com->get().empty() ? std::string{} : com->get().front()->get_comment());
@@ -53,8 +55,8 @@ bool assets_file_widgets::add_colum_render() {
   k_col           = p_colum_list.emplace_back(new_object<details::table_column>());
   k_col->p_name   = "路径";
   k_col->p_width  = 13;
-  k_col->p_render = [](const assets_file_ptr& in_) -> bool {
-    auto k_path = in_->get_path_file();
+  k_col->p_render = [](const entt::handle& in_) -> bool {
+    auto k_path = in_.try_get<assets_path_vector>();
     string k_all_str{};
     string k_line_str{};
 
@@ -73,15 +75,15 @@ bool assets_file_widgets::add_colum_render() {
   k_col           = p_colum_list.emplace_back(new_object<details::table_column>());
   k_col->p_name   = "时间";
   k_col->p_width  = 6;
-  k_col->p_render = [this](const assets_file_ptr& in_) -> bool {
-    dear::Text(in_->get_time()->show_str());
+  k_col->p_render = [this](const entt::handle& in_) -> bool {
+    dear::Text(in_.get<time_point_wrap>().show_str());
     return true;
   };
   k_col           = p_colum_list.emplace_back(new_object<details::table_column>());
   k_col->p_name   = "制作人";
   k_col->p_width  = 6;
-  k_col->p_render = [this](const assets_file_ptr& in_) -> bool {
-    dear::Text(in_->get_user());
+  k_col->p_render = [this](const entt::handle& in_) -> bool {
+    dear::Text(in_.get<assets_file>().get_user());
     return true;
   };
 
@@ -117,14 +119,23 @@ void assets_file_widgets::frame_render() {
         }
 
         imgui::TableHeadersRow();
-        if (p_root) {
-          for (const auto& i : p_root->get_child()) {
-            if (details::is_class<assets_file>(i)) {
-              auto k = std::dynamic_pointer_cast<assets_file>(i);
+        list_data l_data{};
+        boost::hana::for_each(l_data, [&](auto& in_item) {
+          auto l_ptr = reg->template try_ctx<
+              std::remove_pointer_t<std::decay_t<decltype(in_item)>>>();
+          if (l_ptr)
+            p_root = to_entity((*l_ptr).get());
+        });
+
+        if (p_root != entt::null) {
+          auto& l_database = reg->get<database>(p_root);
+          auto& l_tree     = reg->get<tree_relationship>(p_root);
+          for (const auto& i : l_tree.get_child()) {
+            auto l_h        = make_handle(i);
+            if (l_h.try_get<assets_file>()) {
               imgui::TableNextRow();
-              ///添加每行渲染
-              for (auto& i : p_colum_list)
-                i->frame_render(k);
+              for (auto& l_i : p_colum_list)
+                l_i->frame_render(l_h);
             }
           }
         }
@@ -133,7 +144,6 @@ void assets_file_widgets::frame_render() {
 
 void assets_file_widgets::set_metadata(const entt::entity& in_ptr) {
   p_root = in_ptr;
-  p_root->select_indb();
 }
 
 }  // namespace doodle

@@ -15,8 +15,7 @@ namespace doodle {
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
-class DOODLELIB_API time_point_wrap
-    : public leaf_meta {
+class DOODLELIB_API time_point_wrap {
   /**
    * @brief 这个是内部的utc时间
    *
@@ -39,7 +38,6 @@ class DOODLELIB_API time_point_wrap
    *  每次创建时都会重新获取当前的时区，并和系统时间组合为本地时间
    */
   const date::time_zone* p_time_zone;
-  std::weak_ptr<metadata> p_meta;
 
  public:
   using time_point = chrono::sys_time_pos;

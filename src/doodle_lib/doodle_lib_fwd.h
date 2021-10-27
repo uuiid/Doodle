@@ -318,8 +318,6 @@ using string_matrix2_ptr         = std::shared_ptr<string_matrix2>;
 
 using string_list_ptr            = std::shared_ptr<string_list>;
 
-using season_ptr                 = std::shared_ptr<season>;
-
 using rpc_metadata_client_ptr    = std::shared_ptr<rpc_metadata_client>;
 
 using rpc_metadata_server_ptr    = std::shared_ptr<rpc_metadaata_server>;
@@ -330,6 +328,7 @@ using rpc_file_system_server_ptr = std::shared_ptr<rpc_file_system_server>;
 
 using rpc_file_system_client_ptr = std::shared_ptr<rpc_file_system_client>;
 
+using season_ptr                 = std::shared_ptr<season>;
 using project_ptr                = std::shared_ptr<project>;
 
 using episodes_ptr               = std::shared_ptr<episodes>;
@@ -340,6 +339,7 @@ using assets_ptr                 = std::shared_ptr<assets>;
 
 using assets_file_ptr            = std::shared_ptr<assets_file>;
 
+using season_ref                 = std::reference_wrapper<season>;
 using project_ref                = std::reference_wrapper<project>;
 using episodes_ref               = std::reference_wrapper<episodes>;
 using shot_ref                   = std::reference_wrapper<shot>;
