@@ -14,7 +14,8 @@ class DOODLELIB_API season
  public:
   season();
   explicit season(std::weak_ptr<metadata> in_metadata, std::int32_t in_);
-
+  DOODLE_MOVE(season);
+  
   void set_season(std::int32_t in_);
   std::int32_t get_season() const;
 

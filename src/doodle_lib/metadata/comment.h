@@ -32,8 +32,7 @@ class DOODLELIB_API comment : public leaf_meta {
 };
 
 class DOODLELIB_API comment_vector
-    : public details::no_copy,
-      public leaf_meta {
+    : public leaf_meta {
  public:
   comment_vector() : comm(){};
 
@@ -41,7 +40,7 @@ class DOODLELIB_API comment_vector
 
   void end_push_back(const comment_ptr& in) {
     in->set_metadata(p_meta);
-    //p_meta.lock()->saved(true);
+    // p_meta.lock()->saved(true);
   };
 
   void end_erase(const comment_ptr& in){};

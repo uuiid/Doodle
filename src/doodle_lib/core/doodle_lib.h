@@ -45,4 +45,8 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
 
   std::shared_ptr<entt::registry> reg;
 };
+inline std::shared_ptr<entt::registry> g_reg() {
+  return doodle_lib::Get().reg;
+}
+
 }  // namespace doodle

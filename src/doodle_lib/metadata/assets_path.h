@@ -76,10 +76,10 @@ class DOODLELIB_API assets_path : public leaf_meta {
 };
 
 class DOODLELIB_API assets_path_vector
-    : public details::no_copy,
-      public leaf_meta {
+    : public leaf_meta {
  public:
   assets_path_vector() : paths(){};
+  DOODLE_MOVE(assets_path_vector);
   using path_list = std::vector<assets_path_ptr>;
   path_list paths;
 
@@ -92,7 +92,7 @@ class DOODLELIB_API assets_path_vector
   inline void end_push_back(const assets_path_ptr &in) {
     if (!p_meta.expired())
       in->set_metadata(p_meta);
-    //p_meta.lock()->saved(true);
+    // p_meta.lock()->saved(true);
   };
   inline void end_clear(){};
 
@@ -104,7 +104,7 @@ class DOODLELIB_API assets_path_vector
   };
 
   [[nodiscard]] rpc_trans_path_ptr_list make_up_path() const;
-  //operator rpc_trans_path_ptr_list() const;
+  // operator rpc_trans_path_ptr_list() const;
 
  private:
   //这里是序列化的代码

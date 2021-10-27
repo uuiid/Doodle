@@ -46,7 +46,7 @@ class DOODLELIB_API assets_file : public metadata {
    *
    */
   assets_file();
-
+  DOODLE_MOVE(assets_file);
   /**
    * @brief 构造一个条目并添加一些必要的属性
    *

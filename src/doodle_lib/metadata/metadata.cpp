@@ -312,7 +312,7 @@ void tree_relationship::set_child(const std::vector<entt::entity> &in_child) noe
 }
 
 entt::entity tree_relationship::get_root() const {
-  auto k_reg = doodle_lib::Get().reg;
+  auto k_reg = g_reg();
 
   const tree_relationship *k_t{this};
   entt::entity k_parent{p_parent};
@@ -320,7 +320,7 @@ entt::entity tree_relationship::get_root() const {
     k_t      = k_reg->try_get<tree_relationship>(k_parent);
     k_parent = k_t->p_parent;
   }
-  return entt::to_entity(*(doodle_lib::Get().reg), *this);
+  return entt::to_entity(*(g_reg()), *this);
   // if (k_t->has_parent())
   //   return reg.get<tree_relationship>(p_parent);
   // else {
@@ -343,7 +343,7 @@ database::database()
 }
 
 FSys::path database::get_url_uuid() const {
-  auto l_reg   = doodle_lib::Get().reg;
+  auto l_reg   = g_reg();
   auto l_ent   = entt::to_entity(*l_reg, *this);
 
   // 找到本身的树类
@@ -387,11 +387,21 @@ std::uint64_t database::get_id() const {
   return p_id;
 }
 
+#define DOODLE_SERIALIZATION project,            \
+                             episodes,           \
+                             shot,               \
+                             season,             \
+                             assets,             \
+                             assets_file,        \
+                             assets_path_vector, \
+                             time_point_wrap,    \
+                             comment_vector
+
 database &database::operator=(const metadata_database &in_) {
   auto k_data = in_.metadata_cereal().value();
   vector_container my_data{k_data.begin(), k_data.end()};
   {
-    auto l_reg = doodle_lib::Get().reg;
+    auto l_reg = g_reg();
     auto l_m   = entt::meta<project>();
     auto l_ent = entt::to_entity(*l_reg, *this);
     vector_istream k_i{my_data};
@@ -399,14 +409,14 @@ database &database::operator=(const metadata_database &in_) {
     k_archive >> *this;
 
     // std::tuple<> k_tu;
-    decltype(l_reg->try_get<project, episodes, shot, season, assets, assets_file>(l_ent)) k_tu{};
+    decltype(l_reg->try_get<DOODLE_SERIALIZATION>(l_ent)) k_tu{};
     boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
       k_archive >> in_ptr;
     });
     boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
       if (in_ptr) {
         l_reg->emplace_or_replace<
-            std::remove_pointer_t<std::decay_t<decltype(in_ptr)>>>(l_ent, *in_ptr);
+            std::remove_pointer_t<std::decay_t<decltype(in_ptr)>>>(l_ent, std::move(*in_ptr));
       }
     });
   }
@@ -424,14 +434,14 @@ database::operator doodle::metadata_database() const {
 
   vector_container my_data{};
   {
-    auto l_reg = doodle_lib::Get().reg;
+    auto l_reg = g_reg();
     auto l_m   = entt::meta<project>();
     auto l_ent = entt::to_entity(*l_reg, *this);
     vector_iostream kt{my_data};
     boost::archive::text_oarchive k_archive{kt};
     k_archive << BOOST_SERIALIZATION_NVP(*this);
 
-    auto &k_tu = l_reg->try_get<project, episodes, shot, season, assets, assets_file>(l_ent);
+    auto &k_tu = l_reg->try_get<DOODLE_SERIALIZATION>(l_ent);
     // auto k_boost_tu = boost::hana::to_tuple(k_tu);
     boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
       k_archive << in_ptr;
@@ -445,6 +455,9 @@ database::operator doodle::metadata_database() const {
   }
   return k_tmp;
 }
+
+#undef DOODLE_SERIALIZATION
+
 bool database::operator==(const database &in_rhs) const {
   return std::tie(p_id, p_uuid) == std::tie(in_rhs.p_id, in_rhs.p_uuid);
 }

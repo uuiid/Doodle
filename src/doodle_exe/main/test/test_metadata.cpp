@@ -7,7 +7,7 @@
 
 TEST_CASE("convert", "[metadata]") {
   using namespace doodle;
-  auto reg   = doodle_lib::Get().reg;
+  auto reg   = g_reg();
   auto k_prj = reg->create();
   auto& k_p  = reg->emplace<project>(k_prj);
   REQUIRE(entt::to_entity(*reg, k_p) == k_prj);

@@ -17,7 +17,7 @@ class DOODLELIB_API project : public metadata {
  public:
   project();
   explicit project(FSys::path in_path, std::string in_name = {});
-
+  DOODLE_MOVE(project)
   const std::string& get_name() const;
   void set_name(const std::string& Name) noexcept;
 

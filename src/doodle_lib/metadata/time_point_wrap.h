@@ -16,8 +16,7 @@ namespace doodle {
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
 class DOODLELIB_API time_point_wrap
-    : public details::no_copy,
-      public leaf_meta {
+    : public leaf_meta {
   /**
    * @brief 这个是内部的utc时间
    *
@@ -47,7 +46,6 @@ class DOODLELIB_API time_point_wrap
 
   time_point_wrap();
   explicit time_point_wrap(time_point in_utc_timePoint);
-
 
   [[nodiscard]] std::uint16_t get_year() const;
   void set_year(std::uint16_t in_year);

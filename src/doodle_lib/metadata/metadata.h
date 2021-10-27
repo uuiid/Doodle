@@ -379,6 +379,8 @@ class DOODLELIB_API tree_relationship
   std::vector<entt::entity> p_child;
   // boost::intrusive::set<> p_child;
 
+  DOODLE_MOVE(tree_relationship)
+
   tree_relationship::tree_relationship()
       : p_parent(entt::null),
         p_child() {
@@ -412,6 +414,8 @@ class DOODLELIB_API database {
  public:
   database();
   ~database() = default;
+
+  DOODLE_MOVE(database);
 
   std::size_t p_has_child;
   std::size_t p_has_file;

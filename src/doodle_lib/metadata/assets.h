@@ -16,6 +16,7 @@ class DOODLELIB_API assets : public metadata {
   assets();
   explicit assets(std::weak_ptr<metadata> in_metadata, std::string in_name);
   // ~Assets();
+  DOODLE_MOVE(assets);
 
   [[nodiscard]] std::string str() const override;
   [[nodiscard]] std::string show_str() const override;
@@ -34,7 +35,7 @@ class DOODLELIB_API assets : public metadata {
  private:
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, std::uint32_t const version){
+  void serialize(Archive& ar, std::uint32_t const version) {
     ;
     if (version == 1) {
       ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(metadata);
