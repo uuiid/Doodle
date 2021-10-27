@@ -146,8 +146,9 @@ void rpc_metadata_client::update_metadata(const database& in_database) {
     throw doodle_error{k_status.error_message()};
   }
 }
-std::vector<entt::entity> rpc_metadata_client::select_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr) {
-  std::vector<entt::entity> k_list{};
+
+std::vector<metadata_database> rpc_metadata_client::select_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr) {
+  std::vector<metadata_database> k_list{};
   grpc::ClientContext k_context{};
   metadata_database_filter k_filter{std::move(*in_filter_ptr)};
   auto k_r = p_stub->filter_metadata(&k_context, k_filter);
@@ -155,15 +156,24 @@ std::vector<entt::entity> rpc_metadata_client::select_metadata(const rpc_filter:
 
   auto k_reg = g_reg();
   while (k_r->Read(&k_db)) {
-    auto k_e  = k_reg->create();
-    auto& k_d = k_reg->emplace<database>(k_e);
-    k_d       = k_db;
-    k_list.push_back(k_e);
+    k_list.push_back(std::move(k_db));
   }
   auto status = k_r->Finish();
 
   if (!status.ok())
     throw doodle_error{status.error_message()};
+  return k_list;
+}
+
+std::vector<entt::entity> rpc_metadata_client::select_entity(const rpc_filter::rpc_filter_ptr& in_filter_ptr) {
+  std::vector<entt::entity> k_list{};
+  auto k_reg = g_reg();
+  for (auto& k_db : select_metadata(in_filter_ptr)) {
+    auto k_e  = k_reg->create();
+    auto& k_d = k_reg->emplace<database>(k_e);
+    k_d       = k_db;
+    k_list.push_back(k_e);
+  }
   return k_list;
 }
 rpc_filter::filter::filter()

@@ -81,6 +81,7 @@ class DOODLELIB_API rpc_metadata_client {
   void install_metadata(const database& in_database);
   void delete_metadata(const database& in_database);
   void update_metadata(const database& in_database);
-  [[nodiscard]] std::vector<entt::entity> select_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr);
+  [[nodiscard]] std::vector<metadata_database> select_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr);
+  [[nodiscard]] std::vector<entt::entity> select_entity(const rpc_filter::rpc_filter_ptr& in_filter_ptr);
 };
 }  // namespace doodle

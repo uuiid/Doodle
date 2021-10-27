@@ -38,6 +38,8 @@ class DOODLELIB_API metadata_serialize : public std::enable_shared_from_this<met
 
  public:
   metadata_serialize();
+
+  virtual std::vector<entt::entity> get_all_prj() const;
   virtual bool insert_into(entt::entity in) const;
   virtual void delete_data(entt::entity in) const;
   /**
