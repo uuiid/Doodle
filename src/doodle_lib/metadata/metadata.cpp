@@ -387,6 +387,10 @@ std::uint64_t database::get_id() const {
   return p_id;
 }
 
+bool database::is_install() const {
+  return p_id > 0;
+}
+
 #define DOODLE_SERIALIZATION project,            \
                              episodes,           \
                              shot,               \

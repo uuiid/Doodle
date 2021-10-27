@@ -38,8 +38,14 @@ class DOODLELIB_API metadata_serialize : public std::enable_shared_from_this<met
 
  public:
   metadata_serialize();
-
-  
+  virtual bool insert_into(entt::entity in) const;
+  virtual void delete_data(entt::entity in) const;
+  /**
+   * @brief 在这里测试使用具有父级， 并且如果有父级， 还要更新父id， 那么就可以断定也要更新父级的记录
+   * @param in_metadata
+   */
+  virtual void updata_db(entt::entity in) const;
+  virtual void select_indb(entt::entity in) const;
 };
 
 }  // namespace doodle

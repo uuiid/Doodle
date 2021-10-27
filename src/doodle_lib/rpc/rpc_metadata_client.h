@@ -53,7 +53,7 @@ class DOODLELIB_API rpc_metadata_client {
   [[nodiscard]] std::vector<project_ptr> get_project();
   /**
    * @brief 这个函数时获得子项， 但是我们获得数据库中的数据也就是id和父id填充数据并且也获取他们的序列化数据
-   * 
+   *
    * @param in_metadataPtr 要获得子物体的物体的数据
    * @return std::vector<MetadataPtr>  子物体数据集合
    */
@@ -69,13 +69,18 @@ class DOODLELIB_API rpc_metadata_client {
 
   /**
    * @brief 这里是插入数据库数据
-   * 插入时回去检查id是否大于0， 大于0则代表已近插入我们将取消插入 
-   * 
+   * 插入时回去检查id是否大于0， 大于0则代表已近插入我们将取消插入
+   *
    * @param in_metadataPtr 要插入的数据
    */
   void install_metadata(const metadata_ptr& in_metadataPtr);
   void delete_metadata(const metadata_const_ptr& in_metadataPtr);
   void update_metadata(const metadata_const_ptr& in_metadataPtr, bool b_update_parent_id);
   [[nodiscard]] std::vector<metadata_ptr> filter_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr);
+ 
+  void install_metadata(const database& in_database);
+  void delete_metadata(const database& in_database);
+  void update_metadata(const database& in_database);
+  [[nodiscard]] std::vector<entt::entity> select_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr);
 };
 }  // namespace doodle

@@ -404,8 +404,10 @@ class DOODLELIB_API tree_relationship
 };
 
 class DOODLELIB_API database {
+  friend rpc_metadata_client;
+
  private:
-  std::uint64_t p_id;
+  mutable std::uint64_t p_id;
   std::optional<uint64_t> p_parent_id;
   metadata::meta_type p_type;
   std::string p_uuid;
@@ -433,6 +435,7 @@ class DOODLELIB_API database {
   FSys::path get_url_uuid() const;
   bool has_parent() const;
   std::int32_t get_meta_type_int() const;
+  bool is_install() const;
   /**
    * @brief 获得数据库id
    *

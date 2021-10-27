@@ -65,4 +65,21 @@ metadata_serialize::metadata_serialize()
 
       };
 
+bool metadata_serialize::insert_into(entt::entity in) const {
+  auto k_reg  = g_reg();
+  auto k_data = k_reg->try_get<database>(in);
+  if(k_data){
+    
+  }
+}
+
+void metadata_serialize::delete_data(entt::entity in) const {
+}
+
+void metadata_serialize::updata_db(entt::entity in) const {
+}
+
+void metadata_serialize::select_indb(entt::entity in) const {
+}
+
 }  // namespace doodle

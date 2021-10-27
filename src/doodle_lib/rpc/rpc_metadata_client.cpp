@@ -12,6 +12,7 @@
 #include <doodle_lib/core/ContainerDevice.h>
 //#include <consoleapi.h>
 //#include <consoleapi2.h>
+#include <doodle_lib/core/doodle_lib.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>
 
@@ -99,6 +100,65 @@ std::vector<metadata_ptr> rpc_metadata_client::filter_metadata(const rpc_filter:
   while (k_r->Read(&k_db)) {
     if (auto k_i = metadata::from_DataDb(k_db); k_i)
       k_list.push_back(k_i);
+  }
+  auto status = k_r->Finish();
+
+  if (!status.ok())
+    throw doodle_error{status.error_message()};
+  return k_list;
+}
+
+void rpc_metadata_client::install_metadata(const database& in_database) {
+  grpc::ClientContext k_context{};
+  metadata_database k_in_db{in_database};
+  metadata_database k_out_db{};
+  auto k_status = p_stub->install_metadata(&k_context, k_in_db, &k_out_db);
+  if (k_status.ok()) {
+    in_database.p_id = k_out_db.id();
+  } else {
+    throw doodle_error{k_status.error_message()};
+  }
+}
+
+void rpc_metadata_client::delete_metadata(const database& in_database) {
+  if (!in_database.is_install())
+    return;
+
+  grpc::ClientContext k_context{};
+  metadata_database k_in_db{in_database};
+  metadata_database k_out_db{};
+  auto k_status = p_stub->delete_metadata(&k_context, k_in_db, &k_out_db);
+  DOODLE_LOG_WARN("删除数据 : {} 路径 {}", in_database.get_id(), in_database.get_url_uuid())
+  if (!k_status.ok()) {
+    throw doodle_error{k_status.error_message()};
+  }
+}
+
+void rpc_metadata_client::update_metadata(const database& in_database) {
+  if (!in_database.is_install())
+    return;
+
+  grpc::ClientContext k_context{};
+  metadata_database k_in_db{in_database};
+  metadata_database k_out_db{};
+  auto k_status = p_stub->update_metadata(&k_context, k_in_db, &k_out_db);
+  if (!k_status.ok()) {
+    throw doodle_error{k_status.error_message()};
+  }
+}
+std::vector<entt::entity> rpc_metadata_client::select_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr) {
+  std::vector<entt::entity> k_list{};
+  grpc::ClientContext k_context{};
+  metadata_database_filter k_filter{std::move(*in_filter_ptr)};
+  auto k_r = p_stub->filter_metadata(&k_context, k_filter);
+  metadata_database k_db;
+
+  auto k_reg = g_reg();
+  while (k_r->Read(&k_db)) {
+    auto k_e  = k_reg->create();
+    auto& k_d = k_reg->emplace<database>(k_e);
+    k_d       = k_db;
+    k_list.push_back(k_e);
   }
   auto status = k_r->Finish();
 
