@@ -4,15 +4,16 @@
 
 #include "doodle_lib.h"
 
-#include <Exception/exception.h>
-#include <Logger/logger.h>
-#include <Metadata/metadata_factory.h>
-#include <core/core_set.h>
 #include <date/tz.h>
+#include <doodle_lib/exception/exception.h>
+#include <doodle_lib/Logger/logger.h>
+#include <doodle_lib/metadata/metadata_factory.h>
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/metadata/metadata_cpp.h>
+#include <doodle_lib/rpc/rpc_file_system_client.h>
+#include <doodle_lib/rpc/rpc_metadata_client.h>
+#include <doodle_lib/thread_pool/thread_pool.h>
 #include <grpcpp/grpcpp.h>
-#include <rpc/rpc_file_system_client.h>
-#include <rpc/rpc_metadata_client.h>
-#include <thread_pool/thread_pool.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 namespace doodle {
@@ -53,13 +54,6 @@ doodle_lib::doodle_lib()
 
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<database>>();
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<tree_relationship>>();
-
-  
-
-
-
-
-
 }
 
 FSys::path doodle_lib::create_time_database() {

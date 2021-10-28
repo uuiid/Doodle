@@ -23,19 +23,22 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
  protected:
   std::string p_name;
   std::map<string, string> p_show_str;
-  entt::entity p_meta_var;
+  entt::handle p_meta_var;
+
+  registry_ptr reg;
 
  public:
+  command_base();
   virtual const std::string& class_name() { return p_name; };
   virtual bool is_async() { return false; };
-  virtual bool render()                         = 0;
-  virtual bool set_data(const std::any& in_any) = 0;
-  virtual bool set_parent(const entt::entity& in_ptr);
+  virtual bool render()                             = 0;
+  virtual bool set_data(const entt::handle& in_any) = 0;
+  virtual bool set_parent(const entt::handle& in_ptr);
 };
 
 class DOODLELIB_API command_base_tool : public command_base {
-  bool set_data(const std::any& in_any) override { return false; };
-  bool set_parent(const entt::entity& in_ptr) override { return false; };
+  bool set_data(const entt::handle& in_any) override { return false; };
+  bool set_parent(const entt::handle& in_ptr) override { return false; };
 
  public:
   command_base_tool() = default;
@@ -47,7 +50,7 @@ class DOODLELIB_API command_base_list : public command_base {
 
   command_base_list() = default;
   bool render() override;
-  bool set_data(const std::any& in_any) override;
-  bool set_parent(const entt::entity& in_ptr) override;
+  bool set_data(const entt::handle& in_any) override;
+  bool set_parent(const entt::handle& in_ptr) override;
 };
 }  // namespace doodle

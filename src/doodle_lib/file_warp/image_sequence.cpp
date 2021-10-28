@@ -144,7 +144,7 @@ void image_sequence::set_text(const std::string &text) {
   p_Text = clearString(text);
 }
 
-std::string image_sequence::set_shot_and_eps(const shot_ptr &in_shot, const episodes_ptr &in_episodes) {
+std::string image_sequence::set_shot_and_eps(const shot* in_shot, const episodes* in_episodes) {
   auto k_str = core_set::getSet().get_user_en();  /// 基本水印, 名称
   /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
   if (in_shot && in_episodes) {
@@ -351,15 +351,13 @@ image_sequence_ptr image_sequence_async::set_path(const std::vector<FSys::path> 
   p_image_sequence->set_path(image_path_list);
   return p_image_sequence;
 }
-image_sequence_ptr image_sequence_async::set_path(const assets_path_vector_ptr &in_path) {
-  set_path(in_path->get().front()->get_local_path());
-  auto k_out_dir = in_path->get().front()->get_cache_path();
+image_sequence_ptr image_sequence_async::set_path(const entt::handle &in_path) {
+  set_path(in_path.get<assets_path_vector>().get().front()->get_local_path());
+  auto k_out_dir = in_path.get<assets_path_vector>().get().front()->get_cache_path();
   p_image_sequence->set_out_dir(k_out_dir);
-  auto k_meta = in_path->get_metadata();
-  if (!k_meta.expired()) {
-    auto k_m = k_meta.lock();
-    p_image_sequence->set_shot_and_eps(k_m->find_parent_class<shot>(), k_m->find_parent_class<episodes>());
-  }
+
+  p_image_sequence->set_shot_and_eps(in_path.get<tree_relationship>().find_parent_class<shot>(), in_path.get<tree_relationship>().find_parent_class<episodes>());
+
   return p_image_sequence;
 }
 long_term_ptr image_sequence_async::create_video(const FSys::path &out_file) {

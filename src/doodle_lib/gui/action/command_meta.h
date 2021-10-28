@@ -18,18 +18,18 @@ class DOODLELIB_API comm_project_add : public command_base {
   string_ptr p_prj_name;
   string_ptr p_prj_name_short;
   string_ptr p_prj_path;
-  project_ptr p_root;
+  entt::handle p_root;
 
  protected:
  public:
   comm_project_add();
   bool render() override;
-  virtual bool set_data(const std::any& in_data) override;
+  virtual bool set_data(const entt::handle& in_data) override;
 };
 
 class DOODLELIB_API comm_ass_eps : public command_base {
  private:
-  episodes_ptr p_root;
+  entt::handle p_root;
 
   std::int32_t p_data;
   std::int32_t p_end;
@@ -41,12 +41,12 @@ class DOODLELIB_API comm_ass_eps : public command_base {
  public:
   comm_ass_eps();
   bool render() override;
-  virtual bool set_data(const std::any& in_data) override;
+  virtual bool set_data(const entt::handle& in_data) override;
 };
 
 class DOODLELIB_API comm_ass_shot : public command_base {
  private:
-  shot_ptr p_root;
+  entt::handle p_root;
 
   std::int32_t p_data;
   std::int32_t p_end;
@@ -60,12 +60,12 @@ class DOODLELIB_API comm_ass_shot : public command_base {
  public:
   comm_ass_shot();
   bool render() override;
-  virtual bool set_data(const std::any& in_data) override;
+  virtual bool set_data(const entt::handle& in_data) override;
 };
 
 class DOODLELIB_API comm_assets : public command_base {
  private:
-  assets_ptr p_root;
+  entt::handle p_root;
 
   string p_data;
   void add_ass(std::vector<string> in_Str);
@@ -74,12 +74,12 @@ class DOODLELIB_API comm_assets : public command_base {
  public:
   comm_assets();
   bool render() override;
-  virtual bool set_data(const std::any& in_data) override;
+  virtual bool set_data(const entt::handle& in_data) override;
 };
 
 class DOODLELIB_API comm_ass_season : public command_base {
  private:
-  season_ptr p_root;
+  entt::handle p_root;
 
   std::int32_t p_data;
   std::int32_t p_end;
@@ -90,15 +90,14 @@ class DOODLELIB_API comm_ass_season : public command_base {
  public:
   comm_ass_season();
   bool render() override;
-  virtual bool set_data(const std::any& in_data) override;
+  virtual bool set_data(const entt::handle& in_data) override;
 };
 
 class DOODLELIB_API comm_ass_file_attr : public command_base {
  private:
-  assets_file_ptr p_root;
+  entt::handle p_root;
 
   chrono::local_time_pos p_time;
-  comment_vector_ptr p_comm;
   bool has_file;
 
   time_widget_ptr p_time_widget;
@@ -108,7 +107,7 @@ class DOODLELIB_API comm_ass_file_attr : public command_base {
  public:
   comm_ass_file_attr();
   bool render() override;
-  virtual bool set_data(const std::any& in_data) override;
+  virtual bool set_data(const entt::handle& in_data) override;
 };
 
 // template <class... in_comm>

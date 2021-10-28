@@ -20,7 +20,8 @@ class DOODLELIB_API comment  {
   void set_comment(const std::string& in_comment);
   [[nodiscard]] const std::string& get_user() const;
   void set_user(const std::string& in_user);
-
+  DOODLE_MOVE(comment);
+  
  private:
   friend class boost::serialization::access;
   template <class Archive>
@@ -36,20 +37,20 @@ class DOODLELIB_API comment_vector
  public:
   comment_vector() : comm(){};
 
-  std::vector<comment_ptr> comm;
+  std::vector<comment> comm;
 
-  void end_push_back(const comment_ptr& in) {
+  void end_push_back(const comment& in) {
     // p_meta.lock()->saved(true);
   };
 
-  void end_erase(const comment_ptr& in){};
+  void end_erase(const comment& in){};
   void end_clear(){};
 
-  inline vector_adapter<std::vector<comment_ptr>, comment_vector> get() {
+  inline vector_adapter<std::vector<comment>, comment_vector> get() {
     return make_vector_adapter(comm, *this);
   };
-  // inline const vector_adapter<comment_ptr, comment_vector> get() const {
-  //   return vector_adapter<comment_ptr, comment_vector>{comm, *this};
+  // inline const vector_adapter<comment, comment_vector> get() const {
+  //   return vector_adapter<comment, comment_vector>{comm, *this};
   // };
 
 

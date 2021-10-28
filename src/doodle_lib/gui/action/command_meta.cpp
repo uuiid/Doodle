@@ -33,21 +33,21 @@ bool comm_project_add::render() {
   auto& k_d_lib = doodle_lib::Get();
 
   if (imgui::Button(p_show_str["添加"].c_str())) {
-    auto k_prj = new_object<project>(*p_prj_path, *p_prj_name);
-    k_prj->updata_db(k_d_lib.get_metadata_factory());
-    k_d_lib.p_project_vector = k_d_lib.get_metadata_factory()->getAllProject();
+    auto k_en = make_handle(reg->create());
+    k_en.emplace<project>(*p_prj_path, *p_prj_name);
+    k_en.emplace<need_save>();
+    k_d_lib.p_project_vector.push_back(k_en);
   }
   if (p_root) {
     imgui::SameLine();
     if (imgui::Button(p_show_str["修改"].c_str())) {
-      p_root->set_name(*p_prj_name);
-      p_root->set_path(*p_prj_path);
-      p_root->updata_db();
+      p_root.get<project>().set_name(*p_prj_name);
+      p_root.get<project>().set_path(*p_prj_path);
+      p_root.emplace<need_save>();
     }
     imgui::SameLine();
     if (imgui::Button(p_show_str["删除"].c_str())) {
-      p_root->deleteData();
-      k_d_lib.p_project_vector = k_d_lib.get_metadata_factory()->getAllProject();
+      p_root.emplace<need_delete>();
     }
   }
 
@@ -69,24 +69,26 @@ bool comm_project_add::render() {
 
   return true;
 }
-bool comm_project_add::set_data(const std::any& in_data) {
-  if (in_data.type() == typeid(project_ptr)) {
-    p_root = std::any_cast<project_ptr>(in_data);
+bool comm_project_add::set_data(const entt::handle& in_data) {
+  if (in_data.any_of<project>()) {
+    p_root = in_data;
     if (p_root) {
-      *p_prj_name = p_root->get_name();
-      *p_prj_path = p_root->get_path().generic_string();
+      *p_prj_name = p_root.get<project>().get_name();
+      *p_prj_path = p_root.get<project>().get_path().generic_string();
     }
   } else {
-    p_root.reset();
+    p_root = entt::null;
   }
   return true;
 }
 
 void comm_ass_eps::add_eps(const std::vector<std::int32_t>& p_eps) {
   for (auto i : p_eps) {
-    auto eps = new_object<episodes>(p_meta_var, i);
-    p_meta_var->get_child().push_back(eps);
-    eps->insert_into();
+    auto eps = make_handle(reg->create());
+    eps.emplace<episodes>(i);
+    eps.emplace<need_save>();
+    p_meta_var.get<tree_relationship>().get_child().push_back(eps);
+    p_meta_var.emplace<need_save>();
   }
 }
 
@@ -118,16 +120,14 @@ bool comm_ass_eps::render() {
     if (p_root) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["修改"].c_str())) {
-        p_root->set_episodes(p_data);
-        p_root->updata_db();
+        p_root.patch<episodes>([&](auto& eps) { eps.set_episodes(p_data) });
+        p_root.emplace<need_save>();
       }
 
-      if (!p_root->has_child() && !p_root->has_file()) {
+      if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
-          auto k_parent = p_root->get_parent();
-          k_parent->get_child().erase(p_root);
-          p_root->deleteData();
+          p_root.emplace<need_delete>();
         }
       }
     }
@@ -139,23 +139,24 @@ bool comm_ass_eps::render() {
   }
   return true;
 }
-bool comm_ass_eps::set_data(const std::any& in_data) {
-  if (in_data.type() == typeid(episodes_ptr)) {
-    p_root = std::any_cast<episodes_ptr>(in_data);
-    p_data = p_root->get_episodes();
+bool comm_ass_eps::set_data(const entt::handle& in_data) {
+  if (in_data.any_of<episodes>()) {
+    p_root = in_data;
+    p_data = p_root.get<episodes>().get_episodes();
   } else {
-    p_root.reset();
+    p_root = entt::null;
   }
   return true;
 }
 
 void comm_ass_shot::add_shot(const std::vector<std::int32_t>& p_shots) {
   for (auto s : p_shots) {
-    auto k_s = new_object<shot>();
-    k_s->set_shot(s);
-    k_s->set_shot_ab(std::string{p_shot_ab});
-    p_meta_var->get_child().push_back(k_s);
-    k_s->insert_into();
+    auto k_h = make_handle(reg->create());
+    k_h.emplace<shot>(s);
+    k_h.get<shot>().set_shot_ab(std::string{p_shot_ab});
+    k_h.emplace<need_save>();
+    p_meta_var.get<tree_relationship>().get_child().push_back(k_h);
+    p_meta_var.emplace<need_save>();
   }
 }
 
@@ -187,19 +188,18 @@ bool comm_ass_shot::render() {
     if (p_root) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["修改"].c_str())) {
-        p_root->set_shot(p_data);
-        p_root->set_shot_ab(magic_enum::enum_cast<shot::shot_ab_enum>(
-                                p_shot_ab)
-                                .value_or(shot::shot_ab_enum::None));
-        p_root->updata_db();
+        p_root.patch<shot>([&](shot& in) {
+          in.set_shot(p_data);
+          in.set_shot_ab(magic_enum::enum_cast<shot::shot_ab_enum>(
+                             p_shot_ab)
+                             .value_or(shot::shot_ab_enum::None));
+        });
+        p_root.emplace<need_save>();
       }
-      if (!p_root->has_child() && !p_root->has_file()) {
+      if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
-          auto k_parent = p_root->get_parent();
-          k_parent->get_child().erase(p_root);
-          p_root->deleteData();
-          p_shot_ab = {};
+          p_root.emplace<need_delete>();
         }
       }
     }
@@ -218,23 +218,26 @@ bool comm_ass_shot::render() {
 
   return true;
 }
-bool comm_ass_shot::set_data(const std::any& in_data) {
-  if (in_data.type() == typeid(shot_ptr)) {
-    p_root    = std::any_cast<shot_ptr>(in_data);
-    p_data    = p_root->get_shot();
-    p_shot_ab = p_root->get_shot_ab();
+bool comm_ass_shot::set_data(const entt::handle& in_data) {
+  if (in_data.any_of<shot>()) {
+    p_root    = in_data;
+    p_data    = p_root.get<shot>().get_shot();
+    p_shot_ab = p_root.get<shot>().get_shot_ab();
   } else {
-    p_root.reset();
+    p_root = entt::null;
   }
   return true;
 }
 
 void comm_assets::add_ass(std::vector<string> in_Str) {
   for (auto& i : in_Str) {
-    auto k_ass = new_object<assets>();
-    k_ass->set_name1(i);
-    p_meta_var->get_child().push_back(k_ass);
-    k_ass->insert_into();
+    auto k_h = make_handle(reg->create());
+    k_h.emplace<assets>(i);
+    p_meta_var.patch<tree_relationship>([&](tree_relationship& in) {
+      in.get_child().push_back(k_h);
+    });
+    k_h.emplace<need_save>();
+    p_meta_var.emplace<need_save>();
   }
 }
 
@@ -255,15 +258,15 @@ bool comm_assets::render() {
     if (p_root) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["修改"].c_str())) {
-        p_root->set_name1(p_data);
-        p_root->updata_db();
+        p_root.patch<assets>([&](assets& in) {
+          in.set_name1(p_data);
+        });
+        p_root.emplace<need_save>();
       }
-      if (!p_root->has_child() && !p_root->has_file()) {
+      if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
-          auto k_parent = p_root->get_parent();
-          k_parent->get_child().erase(p_root);
-          p_root->deleteData();
+          p_root.emplace<need_delete>();
         }
       }
     }
@@ -272,22 +275,26 @@ bool comm_assets::render() {
 
   return true;
 }
-bool comm_assets::set_data(const std::any& in_data) {
-  if (in_data.type() == typeid(assets_ptr)) {
-    p_root = std::any_cast<assets_ptr>(in_data);
-    p_data = p_root->get_name1();
+bool comm_assets::set_data(const entt::handle& in_data) {
+  if (in_data.any_of<assets>()) {
+    p_root = in_data;
+    p_data = p_root.get<assets>().get_name1();
   } else {
-    p_root.reset();
+    p_root = entt::null;
   }
   return true;
 }
 
 void comm_ass_season::add_season(const std::vector<std::int32_t>& in) {
   for (auto& i : in) {
-    auto s = new_object<season>();
-    s->set_season(i);
-    p_meta_var->get_child().push_back(s);
-    s->insert_into();
+    auto k_h = make_handle(reg->create());
+    k_h.emplace<season>();
+    p_meta_var.patch<tree_relationship>([k_h](tree_relationship& in_) {
+      in_.get_child().push_back(k_h);
+    });
+
+    k_h.emplace<need_save>();
+    p_meta_var.emplace<need_save>();
   }
 }
 
@@ -319,16 +326,16 @@ bool comm_ass_season::render() {
     if (p_root) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["修改"].c_str())) {
-        p_root->set_season(p_data);
-        p_root->updata_db();
+        p_root.patch<season>([p_data = p_data](season& in) {
+          in.set_season(p_data);
+        });
+        p_root.emplace<need_save>();
       }
 
-      if (!p_root->has_child() && !p_root->has_file()) {
+      if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
-          auto k_parent = p_root->get_parent();
-          k_parent->get_child().erase(p_root);
-          p_root->deleteData();
+          p_root.emplace<need_delete>();
         }
       }
     }
@@ -341,12 +348,12 @@ bool comm_ass_season::render() {
 
   return true;
 }
-bool comm_ass_season::set_data(const std::any& in_data) {
-  if (in_data.type() == typeid(season_ptr)) {
-    p_root = std::any_cast<season_ptr>(in_data);
-    p_data = p_root->get_season();
+bool comm_ass_season::set_data(const entt::handle& in_data) {
+  if (in_data.any_of<season>()) {
+    p_root = in_data;
+    p_data = p_root.get<season>().get_season();
   } else {
-    p_root.reset();
+    p_root = entt::null;
   }
   return true;
 }
@@ -354,7 +361,6 @@ bool comm_ass_season::set_data(const std::any& in_data) {
 comm_ass_file_attr::comm_ass_file_attr()
     : p_root(),
       p_time(),
-      p_comm(),
       has_file(false),
       p_time_widget(new_object<time_widget>()),
       p_comm_str(new_object<string>()) {
@@ -363,29 +369,24 @@ comm_ass_file_attr::comm_ass_file_attr()
                                "更改",
                                "删除", "注释",
                                "添加注释");
-  p_time_widget->sig_time_change.connect([this]() {
-    p_root->updata_db();
-  });
 }
 
 bool comm_ass_file_attr::render() {
   if (p_meta_var) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
-      auto ass = new_object<assets_file>();
-      p_meta_var->get_child().push_back(ass);
-      ass->insert_into();
+      auto k_h = make_handle(reg->create());
+      k_h.emplace<assets_file>();
+      p_meta_var.patch<tree_relationship>([k_h](tree_relationship& in) {
+        in.get_child().push_back(k_h);
+      });
+      k_h.emplace<need_save>();
     }
     if (p_root) {
       imgui::SameLine();
-      if (imgui::Button(p_show_str["更改"].c_str())) {
-        p_root->updata_db();
-      }
-      if (!p_root->has_child()) {
+      if (!p_root.get<database>().has_child()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
-          auto k_parent = p_root->get_parent();
-          k_parent->get_child().erase(p_root);
-          p_root->deleteData();
+          p_root.emplace<need_delete>();
         }
       }
     }
@@ -394,26 +395,21 @@ bool comm_ass_file_attr::render() {
     imgui::InputText(p_show_str["注释"].c_str(), p_comm_str.get());
     imgui::SameLine();
     if (imgui::Button(p_show_str["添加注释"].c_str())) {
-      auto k_com = p_comm->get().emplace_back(new_object<comment>());
-      k_com->set_comment(*p_comm_str);
-      p_root->updata_db();
+      auto k_com = comment{};
+      k_com.set_comment(*p_comm_str);
+      p_root.get_or_emplace<comment_vector>().get().push_back(std::move(k_com));
+      p_root.emplace_or_replace<need_save>();
     }
   }
 
   return true;
 }
-bool comm_ass_file_attr::set_data(const std::any& in_data) {
-  if (in_data.type() == typeid(assets_file_ptr)) {
-    p_root = std::any_cast<assets_file_ptr>(in_data);
-
-    if (!p_root->get_comment())
-      p_root->set_comment(new_object<comment_vector>());
-    if (!p_root->get_path_file())
-      p_root->set_path_file(new_object<assets_path_vector>());
-    p_comm = p_root->get_comment();
-    p_time_widget->set_time(p_root->get_time());
+bool comm_ass_file_attr::set_data(const entt::handle& in_data) {
+  if (in_data.all_of<assets_file,time_point_wrap>()) {
+    p_root = in_data;
+    p_time_widget->set_time(p_root);
   } else {
-    p_root.reset();
+    p_root = entt::null;
   }
   return true;
 }

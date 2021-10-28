@@ -21,6 +21,6 @@ class DOODLELIB_API project_widget : public metadata_widget {
 
   entt::entity p_current_select;
 
-
+  boost::signals2::signal<void(const entt::entity&)> select_change;
 };
 }  // namespace doodle

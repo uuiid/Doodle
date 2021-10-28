@@ -328,17 +328,6 @@ using rpc_file_system_server_ptr = std::shared_ptr<rpc_file_system_server>;
 
 using rpc_file_system_client_ptr = std::shared_ptr<rpc_file_system_client>;
 
-using season_ptr                 = std::shared_ptr<season>;
-using project_ptr                = std::shared_ptr<project>;
-
-using episodes_ptr               = std::shared_ptr<episodes>;
-
-using shot_ptr                   = std::shared_ptr<shot>;
-
-using assets_ptr                 = std::shared_ptr<assets>;
-
-using assets_file_ptr            = std::shared_ptr<assets_file>;
-
 using season_ref                 = std::reference_wrapper<season>;
 using project_ref                = std::reference_wrapper<project>;
 using episodes_ref               = std::reference_wrapper<episodes>;
@@ -347,8 +336,6 @@ using assets_ref                 = std::reference_wrapper<assets>;
 using assets_file_ref            = std::reference_wrapper<assets_file>;
 
 using metadata_serialize_ptr     = std::shared_ptr<metadata_serialize>;
-
-using time_wrap_ptr              = std::shared_ptr<time_point_wrap>;
 
 using comment_ptr                = std::shared_ptr<comment>;
 
@@ -365,16 +352,13 @@ using long_term_ptr              = std::shared_ptr<long_term>;
 using image_sequence_ptr         = std::shared_ptr<image_sequence>;
 
 using registry_ptr               = std::shared_ptr<entt::registry>;
-
 class time_widget;
 registry_ptr &g_reg();
-
 template <class Component,
           std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
 entt::handle make_handle(const Component &instance) {
   return entt::handle{*(g_reg()), entt::to_entity(*(g_reg()), instance)};
 };
-
 template <class Component,
           std::enable_if_t<std::is_same_v<entt::entity, Component>, bool> = true>
 entt::handle make_handle(const Component &instance) {
@@ -393,9 +377,6 @@ using bool_ptr                = std::shared_ptr<bool>;
 using string                  = std::string;
 using string_ptr              = std::shared_ptr<string>;
 
-using command_ptr             = std::shared_ptr<command_base>;
-using comment_vector_ptr      = std::shared_ptr<comment_vector>;
-using assets_path_vector_ptr  = std::shared_ptr<assets_path_vector>;
 using time_widget_ptr         = std::shared_ptr<time_widget>;
 using widget_register_ptr     = std::shared_ptr<widget_register>;
 

@@ -5,9 +5,9 @@
 namespace doodle {
 
 class DOODLELIB_API episodes {
-  int64_t p_episodes;
 
  public:
+  int64_t p_episodes;
   episodes();
   explicit episodes(int64_t in_episodes);
   // ~Episodes();

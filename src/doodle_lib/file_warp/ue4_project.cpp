@@ -10,6 +10,7 @@
 #include <doodle_lib/thread_pool/long_term.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 
+#include <boost/algorithm/cxx11/all_of.hpp>
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
 #include <doodle_lib/lib_warp/WinReg.hpp>
@@ -121,10 +122,12 @@ FSys::path ue4_project::find_ue4_skeleton(const FSys::path& in_path) const {
   return k_r;
 }
 
-void ue4_project::create_shot_folder(const std::vector<shot_ptr>& inShotList,
+void ue4_project::create_shot_folder(const std::vector<entt::handle>& inShotList,
                                      const long_term_ptr& in_ptr) const {
   in_ptr->start();
-  if (inShotList.empty())
+  if (inShotList.empty() ||
+      boost::algorithm::all_of(inShotList,
+                               [](entt::handle& in) { return in.any_of<shot>(); }))
     return;
 
   //添加python插件
@@ -137,7 +140,7 @@ void ue4_project::create_shot_folder(const std::vector<shot_ptr>& inShotList,
 
   auto& set            = core_set::getSet();
   //创建集数文件夹
-  auto k_episodes_path = k_createDir / inShotList[0]->get_episodes_ptr()->str();
+  auto k_episodes_path = k_createDir / inShotList[0].get<shot>().get_episodes_ptr()->str();
   if (!FSys::exists(k_episodes_path))
     FSys::create_directory(k_episodes_path);
 
@@ -156,13 +159,13 @@ void ue4_project::create_shot_folder(const std::vector<shot_ptr>& inShotList,
     FSys::fstream file{k_tmp_file_path, std::ios_base::out | std::ios::binary};
     file.write(tmp_f.begin(), tmp_f.size());
   }
-  auto k_prj = inShotList[0]->find_parent_class<project>();
+  auto k_prj = inShotList[0].get<tree_relationship>().find_parent_class<project>();
   {  //这个是后续追加写入
     FSys::fstream file{k_tmp_file_path, std::ios_base::out | std::ios_base::app};
 
     file << std::endl;
 
-    auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0]->get_episodes_ptr()->str();
+    auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0].get<shot>()->get_episodes_ptr()->str();
     for (const auto& k_shot : inShotList) {
       auto k_string         = fmt::format("{}{:04d}_{}",
                                           k_prj->show_str(),
@@ -280,7 +283,7 @@ long_term_ptr ue4_project_async::import_file(const FSys::path& in_paths) {
 void ue4_project_async::set_ue4_project(const FSys::path& in_paths) {
   p_ue4 = new_object<ue4_project>(in_paths);
 }
-long_term_ptr ue4_project_async::create_shot_folder(const std::vector<shot_ptr>& in_vector) {
+long_term_ptr ue4_project_async::create_shot_folder(const std::vector<entt::handle>& in_vector) {
   auto k_term = new_object<long_term>();
   k_term->set_name("创建序列");
 
