@@ -165,12 +165,12 @@ void ue4_project::create_shot_folder(const std::vector<entt::handle>& inShotList
 
     file << std::endl;
 
-    auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0].get<shot>()->get_episodes_ptr()->str();
+    auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0].get<shot>().get_episodes_ptr()->str();
     for (const auto& k_shot : inShotList) {
       auto k_string         = fmt::format("{}{:04d}_{}",
                                           k_prj->show_str(),
-                                          k_shot->get_episodes_ptr()->get_episodes(),
-                                          k_shot->str());
+                                          k_shot.get<shot>().get_episodes_ptr()->get_episodes(),
+                                          k_shot.get<shot>().str());
 
       auto k_shot_path      = k_episodes_path / k_string;
       auto k_game_shot_path = k_game_episodes_path / k_string;
