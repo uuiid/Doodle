@@ -84,6 +84,7 @@ class DOODLELIB_API tree_relationship
 
 class DOODLELIB_API database {
   friend rpc_metadata_client;
+  friend tree_relationship;
 
  private:
   mutable std::uint64_t p_id;

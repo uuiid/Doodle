@@ -49,11 +49,15 @@ void tree_relationship::set_parent(const entt::entity &in_parent) noexcept {
   auto l_p_h = make_handle(in_parent);
   if (l_p_h.all_of<tree_relationship, database>()) {
     l_p_h.get<tree_relationship>().p_child.push_back(this_h);
-    auto &k_d = l_p_h.get<database>();
+    auto &k_d                          = l_p_h.get<database>();
+    // 设置父id
+    this_h.get<database>().p_parent_id = k_d.get_id();
+    // 设置父物体中储存的子数据
     ++(k_d.p_has_child);
     if (this_h.all_of<assets_file>())
       ++(k_d.p_has_file);
   }
+  
 }
 
 const std::vector<entt::entity> &tree_relationship::get_child() const noexcept {
