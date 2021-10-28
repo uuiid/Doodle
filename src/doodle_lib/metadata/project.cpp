@@ -19,7 +19,10 @@ project::project()
 
 project::project(FSys::path in_path, std::string in_name)
     : p_name(std::move(in_name)),
-      p_path(std::move(in_path)) {
+      p_path(std::move(in_path)),
+      p_en_str(),
+      p_shor_str() {
+  init();
 }
 
 void project::set_name(const std::string& Name) noexcept {

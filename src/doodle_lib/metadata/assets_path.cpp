@@ -52,9 +52,9 @@ const FSys::path &assets_path::get_backup_path() const {
 void assets_path::set_path(const FSys::path &in_path, const entt::handle &in_metadata, bool in_using_lexically_relative) {
   if (in_using_lexically_relative) {
     auto k_prj       = in_metadata.get<tree_relationship>().find_parent_class<project>();
-    auto k_root_path = in_metadata.get<tree_relationship>().find_parent_class<project>()->get_path();
+    auto k_root_path = k_prj->get_path();
     auto k_path      = in_path.lexically_relative(k_root_path);
-    k_path           = FSys::path{k_prj->str()} / k_path / in_path.filename();
+    k_path           = FSys::path{k_prj->str()} / (k_path.empty() ? in_path.filename() : k_path);
     set_path(in_path, k_path);
   } else {
     /// 这里使用树,向上寻找,组合路径
@@ -67,15 +67,13 @@ void assets_path::set_path(const FSys::path &in_path, const entt::handle &in_met
     else
       k_m = in_metadata;
 
-
-
     FSys::path k_path{k_m.get_or_emplace<to_str>().get()};
     while (k_m.get<tree_relationship>().has_parent()) {
       k_m = k_m.get<tree_relationship>().get_parent_h();
       if (k_m.get<tree_relationship>().has_parent())
-        k_path = FSys::path{k_m.get<to_str>().get()} / k_path;
+        k_path = FSys::path{k_m.get_or_emplace<to_str>().get()} / k_path;
       else
-        k_path = FSys::path{k_m.get<to_str>().get()} / k_path;
+        k_path = FSys::path{k_m.get_or_emplace<to_str>().get()} / k_path;
     }
     k_path /= core_set::getSet().get_department();
     k_path /= in_path.filename();
@@ -105,13 +103,13 @@ command_ptr assets_path_vector::add_file(
     const FSys::path &in_path, bool in_using_lexically_relative) {
   command_ptr k_comm{new_object<comm_files_up>()};
 
-  auto k_path = assets_path{};
+  assets_path_ref k_path = paths.emplace_back(assets_path{});
 
-  auto k_h = make_handle(*this);
+  auto k_h               = make_handle(*this);
   if (ue4_project::is_ue4_file(in_path)) {
     k_h.get<assets_file>().set_file_type(assets_file_type::ue4_prj);
     // 添加基本路径(ue4 prj 路径)
-    k_path.set_path(in_path, k_h, in_using_lexically_relative);
+    k_path.get().set_path(in_path, k_h, in_using_lexically_relative);
     // 添加内容路径
     auto k_ = assets_path{};
     k_.set_path(in_path.parent_path() / ue4_project::Content, k_h, in_using_lexically_relative);
@@ -121,10 +119,9 @@ command_ptr assets_path_vector::add_file(
   if (image_sequence::is_image_sequence(FSys::list_files(in_path.parent_path()))) {
     k_h.get<assets_file>().set_file_type(assets_file_type::ue4_prj);
     // 添加文件的父路径, 序列文件夹
-    k_path.set_path(in_path.parent_path(), k_h, in_using_lexically_relative);
+    k_path.get().set_path(in_path.parent_path(), k_h, in_using_lexically_relative);
     k_comm = new_object<comm_file_image_to_move>();
   }
-  get().push_back(std::move(k_path));
   return k_comm;
 }
 

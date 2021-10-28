@@ -96,36 +96,108 @@ TEST_CASE("core path ", "[fun][path]") {
 }
 
 TEST_CASE("core create_path", "[fun][create_path]") {
-  // using namespace doodle;
+  using namespace doodle;
+  auto k_prj = make_handle(g_reg()->create());
+  k_prj.emplace<project>("D:/", "ttt");
+  auto k_ass = make_handle(g_reg()->create());
+  k_ass.emplace<assets>("assets");
+  k_ass.get<tree_relationship>().set_parent(k_prj);
 
-  // auto k_1 = std::make_shared<project>("D:/", "ttt");
-  // auto k_2 = std::make_shared<assets>(k_1, "ttt");
-  // k_1->get_child().push_back(k_2);
-  // auto k_3 = std::make_shared<assets>(k_2, "eee");
-  // k_2->get_child().push_back(k_3);
-  // auto path = assets_path("D:/file/ex2.ma", k_3);
-  // SECTION("dir ") {
-  //   REQUIRE(path.get_local_path() == FSys::path{"D:/file/ex2.ma"});
-  //   REQUIRE(path.get_server_path() == FSys::path{"ttt/ttt/eee/ex2.ma"});
-  // }
-  // SECTION("ip path") {
-  //   k_1->set_path("//192.168.10.250/public/changanhuanjie");
-  //   REQUIRE(path.get_local_path() == FSys::path{"D:/file/ex2.ma"});
-  //   REQUIRE(path.get_server_path() == FSys::path{"ttt/ttt/eee/ex2.ma"});
-  // }
-  // SECTION("ip path2") {
-  //   auto path2 = assets_path("//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma", k_3);
-  //   k_1->set_path("//192.168.10.250/public/changanhuanjie");
-  //   REQUIRE(path2.get_local_path() == FSys::path{"//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma"});
-  //   REQUIRE(path2.get_server_path() == FSys::path{"ttt/ttt/eee/Ch001A_Rig_lyq.ma"});
-  // }
+  auto k_ass2 = make_handle(g_reg()->create());
+  k_ass2.emplace<assets>("eee");
+  k_ass2.get<tree_relationship>().set_parent(k_ass);
+
+  auto k_ass_file = make_handle(g_reg()->create());
+  k_ass_file.emplace<assets_file>("eee");
+  k_ass_file.get<tree_relationship>().set_parent(k_ass2);
+
+  auto& k_p = k_ass_file.emplace<assets_path>();
+  SECTION("dir") {
+    k_p.set_path("E:/tmp/ref/Gumu_rig_cloth.ma", k_ass2);
+    std::cout << k_p.get_local_path() << std::endl;
+    std::cout << k_p.get_server_path() << std::endl;
+    REQUIRE(k_p.get_local_path() == FSys::path{"E:/tmp/ref/Gumu_rig_cloth.ma"});
+    REQUIRE(k_p.get_server_path() == FSys::path{"ttt\\assets/eee/None_/Gumu_rig_cloth.ma"});
+  }
+  SECTION("ip path") {
+    k_p.set_path("//192.168.10.250/public/changanhuanjie", k_ass2);
+    std::cout << k_p.get_local_path() << std::endl;
+    std::cout << k_p.get_server_path() << std::endl;
+    REQUIRE(k_p.get_local_path() ==
+            FSys::path{"//192.168.10.250/public/changanhuanjie"});
+    REQUIRE(k_p.get_server_path() ==
+            FSys::path{"ttt\\assets\\eee\\None_\\changanhuanjie"});
+  }
+  SECTION("ip path2") {
+    k_p.set_path("//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma", k_ass2);
+    std::cout << k_p.get_local_path() << std::endl;
+    std::cout << k_p.get_server_path() << std::endl;
+    REQUIRE(k_p.get_local_path() ==
+            FSys::path{"//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma"});
+    REQUIRE(k_p.get_server_path() ==
+            FSys::path{"ttt\\assets\\eee\\None_\\Ch001A_Rig_lyq.ma"});
+  }
+  SECTION("ue4_file") {
+    FSys::path l_ue{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject"};
+    auto& k_pv = k_ass_file.emplace<assets_path_vector>();
+    SECTION("not use repath") {
+      k_pv.add_file(l_ue);
+      std::cout << " k_pv.paths.front().get_local_path()  :" << k_pv.paths.front().get_local_path() << std::endl;
+      std::cout << " k_pv.paths.front().get_server_path() :" << k_pv.paths.front().get_server_path() << std::endl;
+      std::cout << " k_pv.paths.front().get_backup_path() :" << k_pv.paths.front().get_backup_path() << std::endl;
+      std::cout << " k_pv.paths.front().get_cache_path()  :" << k_pv.paths.front().get_cache_path() << std::endl;
+      REQUIRE(k_pv.paths.front().get_local_path() ==
+              FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject"});
+      REQUIRE(k_pv.paths.front().get_server_path() ==
+              FSys::path{"ttt\\assets\\eee\\None_\\test_tmp.uproject"});
+      std::cout << " k_pv.paths[1].get_local_path()  :" << k_pv.paths[1].get_local_path() << std::endl;
+      std::cout << " k_pv.paths[1].get_server_path() :" << k_pv.paths[1].get_server_path() << std::endl;
+      REQUIRE(k_pv.paths[1].get_local_path() ==
+              FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content"});
+      REQUIRE(k_pv.paths[1].get_server_path() ==
+              FSys::path{"ttt\\assets\\eee\\None_\\Content"});
+    }
+    SECTION("using repath") {
+      SECTION("root not eq") {
+        k_pv.add_file(l_ue, true);
+        std::cout << " k_pv.paths.front().get_local_path()  :" << k_pv.paths.front().get_local_path() << std::endl;
+        std::cout << " k_pv.paths.front().get_server_path() :" << k_pv.paths.front().get_server_path() << std::endl;
+        REQUIRE(k_pv.paths.front().get_local_path() ==
+                FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject"});
+        REQUIRE(k_pv.paths.front().get_server_path() ==
+                FSys::path{"ttt\\test_tmp.uproject"});
+        std::cout << " k_pv.paths[1].get_local_path()  :" << k_pv.paths[1].get_local_path() << std::endl;
+        std::cout << " k_pv.paths[1].get_server_path() :" << k_pv.paths[1].get_server_path() << std::endl;
+        REQUIRE(k_pv.paths[1].get_local_path() ==
+                FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content"});
+        REQUIRE(k_pv.paths[1].get_server_path() ==
+                FSys::path{"ttt\\Content"});
+      }
+      SECTION("root eq") {
+        k_prj.get<project>().set_path("F:/");
+        k_pv.add_file(l_ue, true);
+        std::cout << " k_pv.paths.front().get_local_path()  :" << k_pv.paths.front().get_local_path() << std::endl;
+        std::cout << " k_pv.paths.front().get_server_path() :" << k_pv.paths.front().get_server_path() << std::endl;
+        REQUIRE(k_pv.paths.front().get_local_path() ==
+                FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject"});
+        REQUIRE(k_pv.paths.front().get_server_path() ==
+                FSys::path{"ttt\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject"});
+        std::cout << " k_pv.paths[1].get_local_path()  :" << k_pv.paths[1].get_local_path() << std::endl;
+        std::cout << " k_pv.paths[1].get_server_path() :" << k_pv.paths[1].get_server_path() << std::endl;
+        REQUIRE(k_pv.paths[1].get_local_path() ==
+                FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content"});
+        REQUIRE(k_pv.paths[1].get_server_path() ==
+                FSys::path{"ttt\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\Content"});
+      }
+    }
+  }
 }
 
 #include <boost/locale/generator.hpp>
 #include <opencv2/opencv.hpp>
 TEST_CASE("core opencv", "[fun]") {
   using namespace doodle;
-  const FSys::path path{R"(D:\tmp\tmp)"};
+  const FSys::path path{R"(D:\tmp\image_test_ep002_sc001)"};
   std::fstream file{};
   int i      = 0;
 
@@ -168,10 +240,10 @@ TEST_CASE("maya get log", "[maya]") {
 
 TEST_CASE("ThreadPool", "[core][ThreadPool]") {
   using namespace doodle;
-  thread_pool th{4};
-  for (int k_i = 0; k_i < 100; ++k_i) {
-    th.enqueue([k_i]() {
+  for (int k_i = 0; k_i < 10; ++k_i) {
+    doodle_lib::Get().get_thread_pool()->enqueue([k_i]() {
       std::cout << k_i << std::endl;
+      return;
     });
   }
 }
@@ -213,76 +285,13 @@ TEST_CASE("std regex", "[std][regex]") {
   std::cout << std::regex_search(L"致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存",
                                  fatal_error_znch)
             << std::endl;
+  REQUIRE(std::regex_search(L"致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存",
+                            fatal_error_znch));
   std::cout << std::regex_search(L"Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma",
                                  fatal_error_en_us)
             << std::endl;
-}
-
-TEST_CASE("core archive", "[fun][archives]") {
-  // using namespace doodle;
-  // //  auto& set           = CoreSet::getSet();
-  // //  auto& ue_set        = Ue4Setting::Get();
-  // auto str_stream     = std::stringstream{};
-  // auto str_stream_bin = std::stringstream{};
-  // SECTION("archive") {
-  //   doodle::metadata_ptr k_val = std::make_shared<doodle::project>("D:/", "test22333");
-  //   {
-  //     boost::archive::text_oarchive json{str_stream};
-  //     //      boost::archive::xml_oarchive xml{str_stream_bin};
-  //     //      boost::archive::polymorphic_text_oarchive json{str_stream};
-  //     json << boost::serialization::make_nvp("metadata1", k_val);
-  //     //      xml << boost::serialization::make_nvp("mainset", k_val);
-  //     // cereal::BinaryOutputArchive binary{std::cout};
-  //     //      cereal::BinaryOutputArchive binary2{str_stream_bin};
-  //     //      binary2(k_val);
-  //   }
-  //   std::cout << str_stream.str() << std::endl;
-  //   std::cout << str_stream_bin.str() << std::endl;
-  //   k_val.reset();
-  //   {
-  //     boost::archive::text_iarchive json{str_stream};
-  //     //      boost::archive::xml_iarchive xml{str_stream_bin};
-  //     //      boost::archive::polymorphic_text_iarchive json{str_stream};
-  //     json >> k_val;
-  //     //      xml >> k_val;
-  //     //      cereal::BinaryInputArchive binary{str_stream_bin};
-  //     //      binary(k_val);
-  //   }
-  //   // REQUIRE(k_val->getPath() == FSys::path{"D:/"});
-  //   // REQUIRE(k_val->getName() == FSys::path{"test22333"});
-  //   REQUIRE(k_val->show_str() == FSys::path{"test22333"});
-  //   str_stream.clear();
-  //   str_stream_bin.clear();
-  //   SECTION("archive polymorphism") {
-  //     {
-  //       doodle::metadata_ptr k_m1 = std::make_shared<doodle::project>("D:/", "测试1");
-  //       doodle::metadata_ptr k_m2 = std::make_shared<doodle::project>("F:/", "测试2");
-  //       boost::archive::text_oarchive json{str_stream};
-  //       //        boost::archive::polymorphic_text_oarchive json{str_stream};
-  //       json << boost::serialization::make_nvp("metadata1", k_m1) << boost::serialization::make_nvp("metadata12", k_m2);
-  //       // cereal::BinaryOutputArchive binary{std::cout};
-  //       //        cereal::BinaryOutputArchive binary2{str_stream_bin};
-  //       //        binary2(boost::serialization::make_nvp("metadata1", k_m1),
-  //       //                boost::serialization::make_nvp("metadata12", k_m2));
-  //     }
-  //     std::cout << str_stream.str() << std::endl;
-  //     std::cout << str_stream_bin.str() << std::endl;
-  //     {
-  //       doodle::metadata_ptr k1;
-  //       doodle::metadata_ptr k2;
-
-  //       boost::archive::text_iarchive json{str_stream};
-  //       //        boost::archive::polymorphic_text_iarchive json{str_stream};
-  //       json >> k1 >> k2;
-  //       //        cereal::BinaryInputArchive binary{str_stream_bin};
-  //       //        binary(k1, k2);
-  //       REQUIRE(std::dynamic_pointer_cast<project>(k1)->get_path() == FSys::path{"D:/"});
-  //       REQUIRE(std::dynamic_pointer_cast<project>(k1)->get_name() == "测试1");
-  //       REQUIRE(std::dynamic_pointer_cast<project>(k2)->get_path() == FSys::path{"F:/"});
-  //       REQUIRE(std::dynamic_pointer_cast<project>(k2)->get_name() == "测试2");
-  //     }
-  //   }
-  // }
+  REQUIRE(std::regex_search(L"Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma",
+                            fatal_error_en_us));
 }
 
 TEST_CASE("temp fun", "[core]") {
@@ -292,61 +301,6 @@ TEST_CASE("temp fun", "[core]") {
   REQUIRE(doodle_lib::Get().long_task_list.size() == 1);
 }
 
-TEST_CASE("gen_path", "[core]") {
-  // using namespace doodle;
-  // FSys::path ue4path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject"};
-
-  // auto k_prj = new_object<project>();
-  // k_prj->set_name("ret");
-  // k_prj->set_path("F:/");
-
-  // auto k_s = new_object<season>();
-  // k_s->set_season(3);
-  // k_prj->get_child().push_back(k_s);
-
-  // auto k_eps = new_object<episodes>();
-  // k_eps->set_episodes(1);
-  // k_s->get_child().push_back(k_eps);
-
-  // auto k_shot = new_object<shot>();
-  // k_shot->set_shot(10);
-  // k_shot->set_shot_ab("A");
-  // k_eps->get_child().push_back(k_shot);
-
-  // auto k_ass = new_object<assets>();
-  // k_ass->set_name1("测试");
-
-  // k_shot->get_child().push_back(k_ass);
-
-  // auto k_file = new_object<assets_file>();
-  // k_ass->get_child().push_back(k_file);
-
-  // SECTION("ue4_file") {
-  //   SECTION("not use repath") {
-  //     k_file->get_path_file()->add_file(ue4path);
-  //     auto k_path = k_file->get_path_file()->paths;
-  //     REQUIRE(k_path.size() == 2);
-  //     REQUIRE(k_path[0]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject");
-  //     REQUIRE(k_path[0]->get_server_path() == "ret\\seas_3\\ep0001\\sc0010A\\ceshi\\VFX\\test_tmp.uproject");
-  //     REQUIRE(k_path[1]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content");
-  //     REQUIRE(k_path[1]->get_server_path() == "ret\\seas_3\\ep0001\\sc0010A\\ceshi\\VFX\\Content");
-
-  //     SECTION("fmt assets path list") {
-  //       auto str = fmt::format("{}", *(k_file->get_path_file()));
-  //       std::cout << str << std::endl;
-  //     }
-  //   }
-  //   SECTION("using repath") {
-  //     k_file->get_path_file()->add_file(ue4path, true);
-  //     auto k_path = k_file->get_path_file()->paths;
-  //     REQUIRE(k_path.size() == 2);
-  //     REQUIRE(k_path[0]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject");
-  //     REQUIRE(k_path[0]->get_server_path() == "ret\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject");
-  //     REQUIRE(k_path[1]->get_local_path() == "F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content");
-  //     REQUIRE(k_path[1]->get_server_path() == "ret\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\Content");
-  //   }
-  // }
-}
 TEST_CASE("path iter", "[core]") {
   using namespace doodle;
   FSys::path k_path{"Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject"};

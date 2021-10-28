@@ -334,6 +334,7 @@ using episodes_ref               = std::reference_wrapper<episodes>;
 using shot_ref                   = std::reference_wrapper<shot>;
 using assets_ref                 = std::reference_wrapper<assets>;
 using assets_file_ref            = std::reference_wrapper<assets_file>;
+using assets_path_ref            = std::reference_wrapper<assets_path>;
 
 using metadata_serialize_ptr     = std::shared_ptr<metadata_serialize>;
 
@@ -362,7 +363,7 @@ entt::handle make_handle(const Component &instance) {
 template <class Component,
           std::enable_if_t<std::is_same_v<entt::entity, Component>, bool> = true>
 entt::handle make_handle(const Component &instance) {
-  return entt::handle{*(g_reg()), entt::to_entity(*(g_reg()), instance)};
+  return entt::handle{*(g_reg()), instance};
 };
 template <class Component>
 entt::entity to_entity(const Component &instance) {
