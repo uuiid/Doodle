@@ -23,7 +23,7 @@
 
 namespace doodle {
 
-const entt::entity &tree_relationship::get_parent() const noexcept {
+entt::entity tree_relationship::get_parent() const noexcept {
   return p_parent;
 }
 
@@ -236,7 +236,7 @@ const string &to_str::get() const {
                            assets,
                            assets_file>();
 
-  boost::for_each(k_tup, [&](auto ptr) {
+  boost::hana::for_each(k_tup, [&](auto ptr) {
     if (ptr)
       p_str = ptr->str();
   });

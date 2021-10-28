@@ -337,7 +337,7 @@ using assets_file_ref            = std::reference_wrapper<assets_file>;
 
 using metadata_serialize_ptr     = std::shared_ptr<metadata_serialize>;
 
-using comment_ptr                = std::shared_ptr<comment>;
+using command_ptr                = std::shared_ptr<command_base>;
 
 using assets_path_ptr            = std::shared_ptr<assets_path>;
 

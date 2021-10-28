@@ -21,7 +21,7 @@ bool comm_video::render() {
   }
   return false;
 }
-bool comm_video::set_data(const std::any& in_any) {
+bool comm_video::set_data(const entt::handle& in_any) {
   return false;
 }
 }  // namespace doodle

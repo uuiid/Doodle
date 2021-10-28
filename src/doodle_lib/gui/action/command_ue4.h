@@ -12,7 +12,7 @@ class DOODLELIB_API comm_ass_ue4_create_shot : public command_base_tool {
  private:
   string_ptr p_ue4_prj_path;
 
-  std::vector<shot_ptr> p_shot_list;
+  std::vector<entt::handle> p_shot_list;
 
   ue4_project_async_ptr p_ue4;
 

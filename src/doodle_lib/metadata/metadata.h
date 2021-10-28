@@ -53,19 +53,25 @@ class DOODLELIB_API tree_relationship
 
   template <class parent_class>
   parent_class *find_parent_class() {
-    auto k_p = p_parent;
-    auto k_r = g_reg();
-    while (k_p != entt::null) {
-      auto k     = make_handle(k_p);
-      auto k_eps = k.try_get<episodes>();
-      if (k_eps)
-        return k_eps;
-      k_p = k.get<tree_relationship>().get_parent();
+    entt::handle k_h = find_parent_class_h<parent_class>();
+    if (k_h) {
+      return k_h.try_get<parent_class>();
     }
     return nullptr;
   }
 
-  [[nodiscard]] const entt::entity &get_parent() const noexcept;
+  template <class parent_class>
+  entt::handle find_parent_class_h() {
+    auto k_p = make_handle(p_parent);
+    while (k_p) {
+      if (k_p.any_of<parent_class>())
+        return k_p;
+      k_p = k_p.get<tree_relationship>().get_parent_h();
+    }
+    return {};
+  }
+
+  [[nodiscard]] entt::entity get_parent() const noexcept;
   [[nodiscard]] entt::handle get_parent_h() const noexcept;
   void set_parent(const entt::entity &in_parent) noexcept;
 
@@ -168,8 +174,8 @@ class DOODLELIB_API database {
 };
 
 // using to_str = entt::tag<"to_str"_hs>;
-using need_load = entt::tag<"need_load"_hs>;
-using need_save = entt::tag<"need_save"_hs>;
+using need_load   = entt::tag<"need_load"_hs>;
+using need_save   = entt::tag<"need_save"_hs>;
 using need_delete = entt::tag<"need_delete"_hs>;
 
 class DOODLELIB_API to_str {

@@ -29,8 +29,8 @@ class DOODLELIB_API episodes {
   };
   bool analysis(const std::string &in_path);
 
-  static episodes analysis_static(const std::string &in_path);
-  inline static episodes analysis_static(const FSys::path &in_path) {
+  static std::optional<episodes> analysis_static(const std::string &in_path);
+  inline static std::optional<episodes> analysis_static(const FSys::path &in_path) {
     return analysis_static(in_path.generic_string());
   };
 

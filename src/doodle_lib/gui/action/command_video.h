@@ -15,6 +15,6 @@ class DOODLELIB_API comm_video : public command_base {
  public:
   comm_video();
   virtual bool render() override;
-  virtual bool set_data(const std::any& in_any) override;
+  virtual bool set_data(const entt::handle& in_any) override;
 };
 }  // namespace doodle

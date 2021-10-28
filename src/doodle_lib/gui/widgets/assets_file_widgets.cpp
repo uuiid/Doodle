@@ -46,7 +46,7 @@ bool assets_file_widgets::add_colum_render() {
     auto com = in_.try_get<comment_vector>();
 
     if (com)
-      dear::Text(com->get().empty() ? std::string{} : com->get().front()->get_comment());
+      dear::Text(com->get().empty() ? std::string{} : com->get().front().get_comment());
     else
       dear::Text(std::string{});
     return true;
@@ -61,7 +61,7 @@ bool assets_file_widgets::add_colum_render() {
     string k_line_str{};
 
     if (k_path && !k_path->get().empty()) {
-      k_line_str = k_path->get().front()->get_server_path().generic_string();
+      k_line_str = k_path->get().front().get_server_path().generic_string();
       k_all_str  = fmt::format("{}", *k_path);
     }
     dear::Text(k_line_str.c_str());

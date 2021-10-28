@@ -182,7 +182,7 @@
 		"testMate.cpp.test.workingDirectory": "${absDirpath}",
 		"editor.formatOnSaveMode": "modifications",
 		"todo-tree.regex.regexCaseSensitive": false,
-		"todo-tree.regex.regex": "((\\* @|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])",
+		"todo-tree.regex.regex": "((@|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])",
 		"todo-tree.tree.showBadges": true,
 		"markdownlint.config": {
 			"MD033": false

@@ -143,98 +143,98 @@ TEST_CASE("observable_container", "[metadata][observable]") {
 #include <sstream>
 #include <string>
 TEST_CASE("test create metadata", "[server][metadata]") {
-  using namespace doodle;
-  std::string user{
-      "宦倩冰 邰小溪 孔佳晨 顾柏文 乌书竹 邱媛女 冷梓颖"
-      " 乔平良 闻爱萍 堵乐然 钭如之 屠宵月 农曦秀 苍佳洁 索优悦 黎晶晶"
-      " 杜珠玉 苏若美 宦修美 弓博敏 巴沛蓝 邵河灵 靳佩兰 张子丹 鱼绮丽"
-      " 胡怀亦 幸艳芳 衡韶丽 薛友绿 耿丝琪 杜俊慧 双芮悦 欧妙菡 陆梅雪"
-      " 寿江红 益小凝 燕洮洮 古逸雅 宁梦华 扶倩愉 国宇丞 魏梅雪 冯诗蕊"
-      " 刘秋双 宰怡丞 须奇文 蓟言文 邹心诺 陈曦秀 谢绣文 充靖柔 红凡梦"
-      " 冷霞绮 郏怡若 庄书萱 谭布侬 罗芷蕾 籍子琳 吕向莉 贺颜落 蔚元瑶"
-      " 冷绮云 家密思 钱云琼 养茵茵 鄂曼吟 璩静恬 步幸瑶 仰陶宁 秦芸静"
-      " 温玉兰 潘华楚 金初瑶 孔蔚然 朱诗晗 相夏槐 秦小之 焦念薇 陆丽英"
-      " 程香洁 万陶然 浦迎荷 隆智敏 潘蔓蔓 曾子芸 乌滢滢 古笑雯 顾半烟"
-      " 宫津童 彭灵波 翟诗桃 须思聪 方碧玉 梁羡丽 漕闲华 韩皎月 扈晴丽"
-      " 温燕平 冀冬梅 赖代容"};
-  std::istringstream iss{user};
-  string_list user_list{std::istream_iterator<std::string>(iss),
-                        std::istream_iterator<std::string>()};
-  std::random_device rd;
-  std::mt19937 mt(rd());
-  std::uniform_int_distribution<int> dist{1, 30};
+  // using namespace doodle;
+  // std::string user{
+  //     "宦倩冰 邰小溪 孔佳晨 顾柏文 乌书竹 邱媛女 冷梓颖"
+  //     " 乔平良 闻爱萍 堵乐然 钭如之 屠宵月 农曦秀 苍佳洁 索优悦 黎晶晶"
+  //     " 杜珠玉 苏若美 宦修美 弓博敏 巴沛蓝 邵河灵 靳佩兰 张子丹 鱼绮丽"
+  //     " 胡怀亦 幸艳芳 衡韶丽 薛友绿 耿丝琪 杜俊慧 双芮悦 欧妙菡 陆梅雪"
+  //     " 寿江红 益小凝 燕洮洮 古逸雅 宁梦华 扶倩愉 国宇丞 魏梅雪 冯诗蕊"
+  //     " 刘秋双 宰怡丞 须奇文 蓟言文 邹心诺 陈曦秀 谢绣文 充靖柔 红凡梦"
+  //     " 冷霞绮 郏怡若 庄书萱 谭布侬 罗芷蕾 籍子琳 吕向莉 贺颜落 蔚元瑶"
+  //     " 冷绮云 家密思 钱云琼 养茵茵 鄂曼吟 璩静恬 步幸瑶 仰陶宁 秦芸静"
+  //     " 温玉兰 潘华楚 金初瑶 孔蔚然 朱诗晗 相夏槐 秦小之 焦念薇 陆丽英"
+  //     " 程香洁 万陶然 浦迎荷 隆智敏 潘蔓蔓 曾子芸 乌滢滢 古笑雯 顾半烟"
+  //     " 宫津童 彭灵波 翟诗桃 须思聪 方碧玉 梁羡丽 漕闲华 韩皎月 扈晴丽"
+  //     " 温燕平 冀冬梅 赖代容"};
+  // std::istringstream iss{user};
+  // string_list user_list{std::istream_iterator<std::string>(iss),
+  //                       std::istream_iterator<std::string>()};
+  // std::random_device rd;
+  // std::mt19937 mt(rd());
+  // std::uniform_int_distribution<int> dist{1, 30};
 
-  auto k_server = rpc_server_handle{};
-  auto& set     = core_set::getSet();
-  k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
+  // auto k_server = rpc_server_handle{};
+  // auto& set     = core_set::getSet();
+  // k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
 
-  doodle_lib::Get().init_gui();
-  auto k_fa = std::make_shared<metadata_factory>();
+  // doodle_lib::Get().init_gui();
+  // auto k_fa = std::make_shared<metadata_factory>();
 
-  std::vector<metadata_ptr> k_delete_id;
-  SECTION("create project") {
-    auto k_prj = std::make_shared<project>("D:/tmp", "case_tset");
-    k_prj->insert_into(k_fa);
-    REQUIRE(k_prj->getId() != 0);
-    DOODLE_LOG_INFO("prj id is {} ", k_prj->getId());
+  // std::vector<metadata_ptr> k_delete_id;
+  // SECTION("create project") {
+  //   auto k_prj = std::make_shared<project>("D:/tmp", "case_tset");
+  //   k_prj->insert_into(k_fa);
+  //   REQUIRE(k_prj->getId() != 0);
+  //   DOODLE_LOG_INFO("prj id is {} ", k_prj->getId());
 
-    k_delete_id.push_back(k_prj);
+  //   k_delete_id.push_back(k_prj);
 
-    SECTION("create other") {
-      episodes_ptr k_eps{};
-      shot_ptr k_shot_ptr{};
-      assets_ptr k_assets_ptr{};
-      auto i = 1;
-      /// 生成集数
-      for (int k_i = 0; k_i < 10; ++k_i) {
-        k_eps = std::make_shared<episodes>(k_prj, k_i);
-        k_prj->get_child().push_back(k_eps);
-        k_eps->updata_db(k_fa);
+  //   SECTION("create other") {
+  //     episodes_ptr k_eps{};
+  //     shot_ptr k_shot_ptr{};
+  //     assets_ptr k_assets_ptr{};
+  //     auto i = 1;
+  //     /// 生成集数
+  //     for (int k_i = 0; k_i < 10; ++k_i) {
+  //       k_eps = std::make_shared<episodes>(k_prj, k_i);
+  //       k_prj->get_child().push_back(k_eps);
+  //       k_eps->updata_db(k_fa);
 
-        k_delete_id.push_back(k_eps);
-        if (k_i % 2 == 0) {
-          /// 生成镜头
-          for (int k_j = 0; k_j < 10; ++k_j) {
-            k_shot_ptr = std::make_shared<shot>(k_eps, k_j);
-            k_eps->get_child().push_back(k_shot_ptr);
-            k_shot_ptr->updata_db(k_fa);
+  //       k_delete_id.push_back(k_eps);
+  //       if (k_i % 2 == 0) {
+  //         /// 生成镜头
+  //         for (int k_j = 0; k_j < 10; ++k_j) {
+  //           k_shot_ptr = std::make_shared<shot>(k_eps, k_j);
+  //           k_eps->get_child().push_back(k_shot_ptr);
+  //           k_shot_ptr->updata_db(k_fa);
 
-            k_delete_id.push_back(k_shot_ptr);
+  //           k_delete_id.push_back(k_shot_ptr);
 
-            if (k_j % 3 == 0) {
-              /// 生成人名
-              for (int k_k = 0; k_k < 10; ++k_k) {
-                k_assets_ptr = std::make_shared<assets>(k_shot_ptr, fmt::format("tset_{}", k_k));
-                k_shot_ptr->get_child().push_back(k_assets_ptr);
-                k_assets_ptr->updata_db(k_fa);
+  //           if (k_j % 3 == 0) {
+  //             /// 生成人名
+  //             for (int k_k = 0; k_k < 10; ++k_k) {
+  //               k_assets_ptr = std::make_shared<assets>(k_shot_ptr, fmt::format("tset_{}", k_k));
+  //               k_shot_ptr->get_child().push_back(k_assets_ptr);
+  //               k_assets_ptr->updata_db(k_fa);
 
-                k_delete_id.push_back(k_assets_ptr);
-                if (k_k % 3 == 0) {
-                  ///  生成具体条目
-                  for (int k_l = 0; k_l < 20; ++k_l) {
-                    auto k_file = std::make_shared<assets_file>(k_assets_ptr, k_assets_ptr->show_str());
-                    k_assets_ptr->get_child().push_back(k_file);
+  //               k_delete_id.push_back(k_assets_ptr);
+  //               if (k_k % 3 == 0) {
+  //                 ///  生成具体条目
+  //                 for (int k_l = 0; k_l < 20; ++k_l) {
+  //                   auto k_file = std::make_shared<assets_file>(k_assets_ptr, k_assets_ptr->show_str());
+  //                   k_assets_ptr->get_child().push_back(k_file);
 
-                    using namespace chrono::literals;
-                    auto k_time = std::make_shared<time_point_wrap>(chrono::system_clock::now() - 3h * i);
-                    DOODLE_LOG_INFO("生成时间 {} ", k_time->show_str());
-                    ++i;
+  //                   using namespace chrono::literals;
+  //                   auto k_time = std::make_shared<time_point_wrap>(chrono::system_clock::now() - 3h * i);
+  //                   DOODLE_LOG_INFO("生成时间 {} ", k_time->show_str());
+  //                   ++i;
 
-                    auto k_u_i = dist(mt);
-                    k_file->set_time(k_time);
-                    k_file->set_user(user_list[k_u_i]);
-                    k_file->set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
-                    /// 插入数据
-                    k_file->updata_db(k_fa);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  //                   auto k_u_i = dist(mt);
+  //                   k_file->set_time(k_time);
+  //                   k_file->set_user(user_list[k_u_i]);
+  //                   k_file->set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
+  //                   /// 插入数据
+  //                   k_file->updata_db(k_fa);
+  //                 }
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
   //  for (auto& k_m : k_delete_id) {
   //    k_m->deleteData(k_fa);
   //  }

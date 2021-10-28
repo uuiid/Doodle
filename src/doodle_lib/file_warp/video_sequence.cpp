@@ -63,13 +63,29 @@ void video_sequence::connect_video(const FSys::path& path, const long_term_ptr& 
   }
 }
 
-std::string video_sequence::set_shot_and_eps(const shot_ptr& in_shot, const episodes_ptr& in_episodes) {
+std::string video_sequence::set_shot_and_eps(const entt::handle& in_shot, const entt::handle& in_episodes) {
   if (in_shot && in_episodes) {
-    p_name = fmt::format("{}_{}.mp4", in_episodes->str(), in_shot->str());
+    p_name = fmt::format("{}_{}.mp4", in_episodes.get<episodes>().str(), in_shot.get<shot>().str());
   } else if (in_shot) {
-    p_name = fmt::format("{}.mp4", in_shot->str());
+    p_name = fmt::format("{}.mp4", in_shot.get<shot>().str());
   } else if (in_episodes) {
-    p_name = fmt::format("{}.mp4", in_episodes->str());
+    p_name = fmt::format("{}.mp4", in_episodes.get<episodes>().str());
+  }
+  return p_name;
+}
+
+std::string video_sequence::set_shot_and_eps(const FSys::path& in_path) {
+  shot k_s{};
+  episodes k_ep{};
+  const auto k_b_s = k_s.analysis(in_path);
+  const auto k_b_e = k_ep.analysis(in_path);
+
+  if (k_b_s && k_b_e) {
+    p_name = fmt::format("{}_{}.mp4", k_ep.str(), k_s.str());
+  } else if (k_b_s) {
+    p_name = fmt::format("{}.mp4", k_s.str());
+  } else if (k_b_e) {
+    p_name = fmt::format("{}.mp4", k_ep.str());
   }
   return p_name;
 }

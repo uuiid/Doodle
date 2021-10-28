@@ -28,11 +28,8 @@ class DOODLELIB_API assets_file {
  private:
   std::string p_name;
   std::string p_ShowName;
-  time_wrap_ptr p_time;
   std::string p_user;
   department p_department;
-  assets_path_vector_ptr p_path_files;
-  comment_vector_ptr p_comment;
   std::uint64_t p_version;
 
   bool p_need_time;
@@ -100,11 +97,8 @@ void assets_file::serialize(Archive& ar, const std::uint32_t version) {
   if (version == 3) {
     ar& BOOST_SERIALIZATION_NVP(p_name);
     ar& BOOST_SERIALIZATION_NVP(p_ShowName);
-    ar& BOOST_SERIALIZATION_NVP(p_path_files);
-    ar& BOOST_SERIALIZATION_NVP(p_time);
     ar& BOOST_SERIALIZATION_NVP(p_user);
     ar& BOOST_SERIALIZATION_NVP(p_department);
-    ar& BOOST_SERIALIZATION_NVP(p_comment);
     ar& BOOST_SERIALIZATION_NVP(p_version);
   }
 }

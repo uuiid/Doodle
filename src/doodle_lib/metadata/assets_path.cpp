@@ -105,39 +105,39 @@ command_ptr assets_path_vector::add_file(
     const FSys::path &in_path, bool in_using_lexically_relative) {
   command_ptr k_comm{new_object<comm_files_up>()};
 
-  auto k_path = new_object<assets_path>();
-  get().push_back(k_path);
+  auto k_path = assets_path{};
 
   auto k_h = make_handle(*this);
   if (ue4_project::is_ue4_file(in_path)) {
     k_h.get<assets_file>().set_file_type(assets_file_type::ue4_prj);
     // 添加基本路径(ue4 prj 路径)
-    k_path->set_path(in_path, k_h, in_using_lexically_relative);
+    k_path.set_path(in_path, k_h, in_using_lexically_relative);
     // 添加内容路径
-    k_path = new_object<assets_path>();
-    k_path->set_path(in_path.parent_path() / ue4_project::Content, k_h, in_using_lexically_relative);
-    get().push_back(k_path);
+    auto k_ = assets_path{};
+    k_.set_path(in_path.parent_path() / ue4_project::Content, k_h, in_using_lexically_relative);
+    get().push_back(std::move(k_));
   }
 
   if (image_sequence::is_image_sequence(FSys::list_files(in_path.parent_path()))) {
     k_h.get<assets_file>().set_file_type(assets_file_type::ue4_prj);
     // 添加文件的父路径, 序列文件夹
-    k_path->set_path(in_path.parent_path(), k_h, in_using_lexically_relative);
+    k_path.set_path(in_path.parent_path(), k_h, in_using_lexically_relative);
     k_comm = new_object<comm_file_image_to_move>();
   }
+  get().push_back(std::move(k_path));
   return k_comm;
 }
 
 void assets_path_vector::add_file_raw(const FSys::path &in_path, bool in_using_lexically_relative) {
-  auto k_path = new_object<assets_path>();
-  get().push_back(k_path);
-  k_path->set_path(in_path, make_handle(*this), in_using_lexically_relative);
+  auto k_path = assets_path{};
+  k_path.set_path(in_path, make_handle(*this), in_using_lexically_relative);
+  get().push_back(std::move(k_path));
 }
 
 rpc_trans_path_ptr_list assets_path_vector::make_up_path() const {
   rpc_trans_path_ptr_list k_list{};
   for (auto &i : paths)
-    k_list.emplace_back(std::make_unique<rpc_trans_path>(i->get_local_path(), i->get_server_path(), i->get_backup_path()));
+    k_list.emplace_back(std::make_unique<rpc_trans_path>(i.get_local_path(), i.get_server_path(), i.get_backup_path()));
   return k_list;
 }
 FSys::path assets_path::get_cache_path() const {

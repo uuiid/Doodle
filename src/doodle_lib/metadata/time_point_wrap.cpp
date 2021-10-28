@@ -179,8 +179,7 @@ void time_point_wrap::disassemble(const chrono::sys_time_pos& in_utc_timePoint) 
   p_hours   = k_hh_mm_ss.hours();
   p_minutes = k_hh_mm_ss.minutes();
   p_seconds = k_hh_mm_ss.seconds();
-  if (!p_meta.expired())
-    p_meta.lock()->saved(true);
+
 }
 time_point_wrap::operator time_point() {
   return p_time;

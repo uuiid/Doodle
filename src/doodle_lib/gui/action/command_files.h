@@ -12,11 +12,10 @@ namespace doodle {
 
 class comm_file_image_to_move : public command_base {
  private:
-  assets_path_vector_ptr p_list_paths;
   FSys::path p_out_file;
   bool_ptr p_not_up_file;
   bool_ptr p_not_up_source_file;
-  assets_file_ptr p_root;
+  entt::handle p_root;
   image_sequence_async_ptr p_image_create;
   image_sequence_ptr p_image;
 
@@ -27,8 +26,7 @@ class comm_file_image_to_move : public command_base {
 
  public:
   comm_file_image_to_move()
-      : p_list_paths(),
-        p_out_file(),
+      :         p_out_file(),
         p_not_up_file(new_object<bool>(false)),
         p_not_up_source_file(new_object<bool>(false)),
         p_root(),
@@ -37,12 +35,12 @@ class comm_file_image_to_move : public command_base {
     init();
   };
   bool render() override;
-  bool set_data(const std::any& in) override;
+  bool set_data(const entt::handle& in) override;
 };
 
 class DOODLELIB_API comm_files_up : public command_base {
  private:
-  assets_path_vector_ptr p_list_paths;
+  entt::handle p_list_paths;
   FSys::path p_file;
 
  protected:
@@ -51,14 +49,14 @@ class DOODLELIB_API comm_files_up : public command_base {
  public:
   comm_files_up();
   bool render() override;
-  bool set_data(const std::any& in) override;
+  bool set_data(const entt::handle& in) override;
 };
 
 class DOODLELIB_API comm_files_select : public command_base {
  private:
-  assets_file_ptr p_root;
+  entt::handle p_root;
   bool_ptr p_use_relative;
-  assets_path_vector_ptr p_list_paths;
+  entt::handle p_list_paths;
   FSys::path p_file;
 
   command_ptr p_comm_sub;
@@ -69,7 +67,7 @@ class DOODLELIB_API comm_files_select : public command_base {
   comm_files_select();
 
   bool render() override;
-  bool set_data(const std::any& in) override;
+  bool set_data(const entt::handle& in) override;
 };
 
 }  // namespace doodle

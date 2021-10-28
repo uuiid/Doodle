@@ -79,7 +79,7 @@ class DOODLELIB_API assets_path_vector {
  public:
   assets_path_vector() : paths(){};
   DOODLE_MOVE(assets_path_vector);
-  using path_list = std::vector<assets_path_ptr>;
+  using path_list = std::vector<assets_path>;
   path_list paths;
 
   inline vector_adapter<path_list, assets_path_vector> get() {
@@ -87,7 +87,7 @@ class DOODLELIB_API assets_path_vector {
   };
 
 
-  inline void end_push_back(const assets_path_ptr &in) {
+  inline void end_push_back(const assets_path &in) {
   };
   inline void end_clear(){};
 
@@ -130,7 +130,7 @@ struct fmt::formatter<doodle::assets_path_vector> : fmt::formatter<fmt::string_v
   auto format(const doodle::assets_path_vector &in_, FormatContext &ctx) -> decltype(ctx.out()) {
     std::string str;
     for (auto &i : in_.paths) {
-      str += fmt::format("{}\n", i->get_server_path().generic_string());
+      str += fmt::format("{}\n", i.get_server_path().generic_string());
     }
 
     return formatter<string_view>::format(

@@ -77,7 +77,7 @@ bool comm_project_add::set_data(const entt::handle& in_data) {
       *p_prj_path = p_root.get<project>().get_path().generic_string();
     }
   } else {
-    p_root = entt::null;
+    p_root = entt::handle{};
   }
   return true;
 }
@@ -120,7 +120,7 @@ bool comm_ass_eps::render() {
     if (p_root) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["修改"].c_str())) {
-        p_root.patch<episodes>([&](auto& eps) { eps.set_episodes(p_data) });
+        p_root.patch<episodes>([&](auto& eps) { eps.set_episodes(p_data); });
         p_root.emplace<need_save>();
       }
 
@@ -144,7 +144,7 @@ bool comm_ass_eps::set_data(const entt::handle& in_data) {
     p_root = in_data;
     p_data = p_root.get<episodes>().get_episodes();
   } else {
-    p_root = entt::null;
+    p_root = entt::handle{};
   }
   return true;
 }
@@ -224,7 +224,7 @@ bool comm_ass_shot::set_data(const entt::handle& in_data) {
     p_data    = p_root.get<shot>().get_shot();
     p_shot_ab = p_root.get<shot>().get_shot_ab();
   } else {
-    p_root = entt::null;
+    p_root = entt::handle{};
   }
   return true;
 }
@@ -280,7 +280,7 @@ bool comm_assets::set_data(const entt::handle& in_data) {
     p_root = in_data;
     p_data = p_root.get<assets>().get_name1();
   } else {
-    p_root = entt::null;
+    p_root = entt::handle{};
   }
   return true;
 }
@@ -353,7 +353,7 @@ bool comm_ass_season::set_data(const entt::handle& in_data) {
     p_root = in_data;
     p_data = p_root.get<season>().get_season();
   } else {
-    p_root = entt::null;
+    p_root = entt::handle{};
   }
   return true;
 }
@@ -405,11 +405,11 @@ bool comm_ass_file_attr::render() {
   return true;
 }
 bool comm_ass_file_attr::set_data(const entt::handle& in_data) {
-  if (in_data.all_of<assets_file,time_point_wrap>()) {
+  if (in_data.all_of<assets_file, time_point_wrap>()) {
     p_root = in_data;
     p_time_widget->set_time(p_root);
   } else {
-    p_root = entt::null;
+    p_root = entt::handle{};
   }
   return true;
 }

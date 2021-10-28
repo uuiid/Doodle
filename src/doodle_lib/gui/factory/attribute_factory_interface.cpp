@@ -18,11 +18,8 @@ void attr_project::render() {
   p_comm->render();
 }
 
-void attr_project::show_attribute(const project_ptr& in) {
-  if (in != p_prj) {
-    p_prj = in;
-    p_comm->set_data(p_prj);
-  }
+void attr_project::show_attribute(const project* in) {
+
 }
 
 attr_assets::attr_assets()
@@ -42,32 +39,24 @@ void attr_assets::render() {
   p_comm->render();
 }
 
-void attr_assets::show_attribute(const episodes_ptr& in) {
-  //  p_comm = new_object<comm_ass_eps>();
-  p_comm->set_parent(in);
-  p_comm->set_data(in);
+void attr_assets::show_attribute(const episodes* in) {
+
 }
 
-void attr_assets::show_attribute(const project_ptr& in) {
-  p_comm->set_parent(in);
-  p_comm->set_data(nullptr);
+void attr_assets::show_attribute(const project* in) {
+
 }
 
-void attr_assets::show_attribute(const shot_ptr& in) {
-  //  p_comm = new_object<comm_ass_shot>();
-  p_comm->set_parent(in);
-  p_comm->set_data(in);
+void attr_assets::show_attribute(const shot* in) {
+
 }
 
-void attr_assets::show_attribute(const assets_ptr& in) {
-  //  p_comm = new_object<comm_assets>();
-  p_comm->set_parent(in);
-  p_comm->set_data(in);
+void attr_assets::show_attribute(const assets* in) {
+
 }
 
-void attr_assets::show_attribute(const season_ptr& in) {
-  p_comm->set_parent(in);
-  p_comm->set_data(in);
+void attr_assets::show_attribute(const season* in) {
+
 }
 
 attr_assets_file::attr_assets_file()
@@ -83,11 +72,7 @@ void attr_assets_file::render() {
   p_comm->render();
 }
 
-void attr_assets_file::show_attribute(const assets_file_ptr& in) {
-  if (in->has_parent()) {
-    p_comm->set_parent(in->get_parent());
-    p_comm->set_data(in);
-  }
+void attr_assets_file::show_attribute(const assets_file* in) {
 }
 
 }  // namespace doodle

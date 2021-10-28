@@ -14,21 +14,13 @@
 
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_file)
 namespace doodle {
-void assets_file::serialize_check() {
-  if (!p_path_files)
-    p_path_files = new_object<assets_path_vector>();
-  if (!p_comment)
-    p_comment = new_object<comment_vector>();
-}
+
 
 assets_file::assets_file()
     : p_name(),
       p_ShowName(),
-      p_path_files(new_object<assets_path_vector>()),
-      p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
       p_user(core_set::getSet().get_user()),
       p_department(core_set::getSet().get_department_enum()),
-      p_comment(new_object<comment_vector>()),
       p_version(1),
       p_need_time(false),
       p_file_type(assets_file_type::none) {
@@ -37,11 +29,8 @@ assets_file::assets_file()
 assets_file::assets_file(std::string showName, std::string name)
     : p_name(std::move(name)),
       p_ShowName(std::move(showName)),
-      p_path_files(new_object<assets_path_vector>()),
-      p_time(new_object<time_point_wrap>(std::chrono::system_clock::now())),
       p_user(core_set::getSet().get_user()),
       p_department(core_set::getSet().get_department_enum()),
-      p_comment(new_object<comment_vector>()),
       p_version(1),
       p_need_time(false),
       p_file_type(assets_file_type::none) {
@@ -109,5 +98,9 @@ department assets_file::get_department() const {
 }
 void assets_file::set_department(department in_department) {
   p_department = in_department;
+}
+
+void assets_file::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
+  in_factoryPtr->show_attribute(this);
 }
 }  // namespace doodle

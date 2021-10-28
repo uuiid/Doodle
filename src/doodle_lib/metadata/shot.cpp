@@ -79,7 +79,7 @@ bool shot::analysis(const std::string& in_path) {
   return k_r;
 }
 
-shot shot::analysis_static(const std::string& in_path) {
+std::optional<shot> shot::analysis_static(const std::string& in_path) {
   auto k_shot = shot{};
   if (k_shot.analysis(in_path))
     return k_shot;

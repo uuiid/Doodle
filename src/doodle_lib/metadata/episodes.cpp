@@ -59,7 +59,7 @@ bool episodes::analysis(const std::string& in_path) {
   return k_r;
 }
 
-episodes episodes::analysis_static(const std::string& in_path) {
+std::optional<episodes> episodes::analysis_static(const std::string& in_path) {
   auto k_eps = episodes{};
   if (k_eps.analysis(in_path))
     return k_eps;

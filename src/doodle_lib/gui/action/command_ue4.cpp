@@ -47,14 +47,16 @@ bool comm_ass_ue4_create_shot::render() {
         p_shot_list.clear();
         boost::copy(
             k_all |
-                boost::adaptors::filtered([](auto in) {
-                  return details::is_class<shot>(in);
-                }) |
                 boost::adaptors::transformed([](auto in) {
-                  return std::dynamic_pointer_cast<shot>(in);
+                  return make_handle(in);
+                }) |
+                boost::adaptors::filtered([](auto in) {
+                  return in.any_of<shot>();
                 }),
             std::back_inserter(p_shot_list));
-        boost::sort(p_shot_list, boost::less_pointees_t<shot_ptr>{});
+        boost::sort(p_shot_list, [](const entt::handle& in_r, const entt::handle& in_l) {
+          return in_r.get<shot>() < in_l.get<shot>();
+        });
       }
     }
     imgui::SameLine();
@@ -67,7 +69,7 @@ bool comm_ass_ue4_create_shot::render() {
 
     dear::ListBox{p_show_str["shot列表"].c_str()} && [this]() {
       for (const auto& s : p_shot_list) {
-        dear::Selectable(s->show_str());
+        dear::Selectable(s.get<shot>().str());
       }
     };
   }
@@ -80,6 +82,5 @@ comm_ass_ue4_import::comm_ass_ue4_import() {
 bool comm_ass_ue4_import::render() {
   return true;
 }
-
 
 }  // namespace doodle

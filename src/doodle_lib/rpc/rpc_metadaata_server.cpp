@@ -158,9 +158,9 @@ grpc::Status rpc_metadaata_server::filter_metadata(grpc::ServerContext *context,
     k_select.where.add(k_tab.updateTime > k_time_begin && k_tab.updateTime < k_time_end);
   }
   if (request->has_m_type()) {
-    auto k_type = magic_enum::enum_cast<metadata::meta_type>(
+    auto k_type = magic_enum::enum_cast<metadata_type>(
                       magic_enum::enum_integer(request->m_type().value()))
-                      .value_or(metadata::meta_type::unknown_file);
+                      .value_or(metadata_type::unknown_file);
     k_select.where.add(k_tab.metaType == magic_enum::enum_integer(k_type));
   }
   if (request->id() != 0) {

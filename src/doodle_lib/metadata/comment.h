@@ -52,7 +52,7 @@ class DOODLELIB_API comment_vector
   // inline const vector_adapter<comment, comment_vector> get() const {
   //   return vector_adapter<comment, comment_vector>{comm, *this};
   // };
-
+  DOODLE_MOVE(comment_vector);
 
  private:
   friend class boost::serialization::access;

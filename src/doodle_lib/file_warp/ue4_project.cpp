@@ -127,7 +127,7 @@ void ue4_project::create_shot_folder(const std::vector<entt::handle>& inShotList
   in_ptr->start();
   if (inShotList.empty() ||
       boost::algorithm::all_of(inShotList,
-                               [](entt::handle& in) { return in.any_of<shot>(); }))
+                               [](const entt::handle& in) { return in.any_of<shot>(); }))
     return;
 
   //添加python插件

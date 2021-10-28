@@ -46,8 +46,8 @@ class DOODLELIB_API shot {
   };
   bool analysis(const std::string &in_path);
 
-  static shot analysis_static(const std::string &in_path);
-  inline static shot analysis_static(const FSys::path &in_path) {
+  static std::optional<shot> analysis_static(const std::string &in_path);
+  inline static std::optional<shot> analysis_static(const FSys::path &in_path) {
     return analysis_static(in_path.generic_string());
   };
 
@@ -58,10 +58,10 @@ class DOODLELIB_API shot {
 };
 template <class Archive>
 void shot::serialize(Archive &ar, const std::uint32_t version) {
-  if (version == 1)
-    ar &boost::serialization::make_nvp("metadata", boost::serialization::base_object<metadata>(*this)) &
-        p_shot &
-            p_shot_ab;
+  if (version == 1) {
+    ar &BOOST_SERIALIZATION_NVP(p_shot);
+    ar &BOOST_SERIALIZATION_NVP(p_shot_ab);
+  }
 }
 }  // namespace doodle
 

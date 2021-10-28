@@ -144,15 +144,15 @@ void image_sequence::set_text(const std::string &text) {
   p_Text = clearString(text);
 }
 
-std::string image_sequence::set_shot_and_eps(const shot* in_shot, const episodes* in_episodes) {
+std::string image_sequence::set_shot_and_eps(const entt::handle &in_shot, const entt::handle &in_episodes) {
   auto k_str = core_set::getSet().get_user_en();  /// 基本水印, 名称
   /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
   if (in_shot && in_episodes) {
-    k_str += fmt::format(" : {}_{}", in_episodes->str(), in_shot->str());
+    k_str += fmt::format(" : {}_{}", in_episodes.get<episodes>().str(), in_shot.get<shot>().str());
   } else if (in_shot) {
-    k_str += fmt::format(" : {}", in_shot->str());
+    k_str += fmt::format(" : {}", in_shot.get<shot>().str());
   } else if (in_episodes) {
-    k_str += fmt::format(" : {}", in_episodes->str());
+    k_str += fmt::format(" : {}", in_episodes.get<episodes>().str());
   }
   p_Text = k_str;
 
@@ -162,9 +162,37 @@ std::string image_sequence::set_shot_and_eps(const shot* in_shot, const episodes
   k_str += ".mp4";
 
   if (in_episodes && !p_out_path.empty())
-    p_out_path /= in_episodes->str();
+    p_out_path /= in_episodes.get<episodes>().str();
   p_name = k_str;
   return p_Text;
+}
+std::string image_sequence::set_shot_and_eps(const FSys::path &in_path) {
+  shot k_s{};
+  episodes k_ep{};
+  const auto k_b_s = k_s.analysis(in_path);
+  const auto k_b_e = k_ep.analysis(in_path);
+
+  auto k_str = core_set::getSet().get_user_en();  /// 基本水印, 名称
+  /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
+  if (k_b_s && k_b_e) {
+    k_str += fmt::format(" : {}_{}", k_ep.str(), k_s.str());
+  } else if (k_b_s) {
+    k_str += fmt::format(" : {}", k_s.str());
+  } else if (k_b_e) {
+    k_str += fmt::format(" : {}", k_ep.str());
+  }
+  p_Text = k_str;
+
+  /// 添加文件路径名称
+  boost::replace_all(k_str, " ", "");   /// 替换不好的文件名称组件
+  boost::replace_all(k_str, ":", "_");  /// 替换不好的文件名称组件
+  k_str += ".mp4";
+
+  if (k_b_e && !p_out_path.empty())
+    p_out_path /= k_ep.str();
+  p_name = k_str;
+  return p_Text;
+
 }
 
 void image_sequence::create_video(const image_sequence::asyn_arg_ptr &in_arg) {
@@ -352,11 +380,13 @@ image_sequence_ptr image_sequence_async::set_path(const std::vector<FSys::path> 
   return p_image_sequence;
 }
 image_sequence_ptr image_sequence_async::set_path(const entt::handle &in_path) {
-  set_path(in_path.get<assets_path_vector>().get().front()->get_local_path());
-  auto k_out_dir = in_path.get<assets_path_vector>().get().front()->get_cache_path();
+  set_path(in_path.get<assets_path_vector>().get().front().get_local_path());
+  auto k_out_dir = in_path.get<assets_path_vector>().get().front().get_cache_path();
   p_image_sequence->set_out_dir(k_out_dir);
 
-  p_image_sequence->set_shot_and_eps(in_path.get<tree_relationship>().find_parent_class<shot>(), in_path.get<tree_relationship>().find_parent_class<episodes>());
+  p_image_sequence->set_shot_and_eps(
+      in_path.get<tree_relationship>().find_parent_class_h<shot>(),
+      in_path.get<tree_relationship>().find_parent_class_h<episodes>());
 
   return p_image_sequence;
 }
