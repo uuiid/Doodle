@@ -46,8 +46,8 @@ class DOODLELIB_API shot {
   };
   bool analysis(const std::string &in_path);
 
-  static shot_ptr analysis_static(const std::string &in_path);
-  inline static shot_ptr analysis_static(const FSys::path &in_path) {
+  static shot analysis_static(const std::string &in_path);
+  inline static shot analysis_static(const FSys::path &in_path) {
     return analysis_static(in_path.generic_string());
   };
 
