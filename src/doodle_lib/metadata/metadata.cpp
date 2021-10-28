@@ -227,7 +227,7 @@ const string &database::get_id_str() const {
   return p_id_str;
 }
 
-string to_str::get() const {
+const string &to_str::get() const {
   auto k_h   = make_handle(*this);
   auto k_tup = k_h.try_get<project,
                            episodes,
@@ -236,15 +236,14 @@ string to_str::get() const {
                            assets,
                            assets_file>();
 
-  string l_str{};
   boost::for_each(k_tup, [&](auto ptr) {
-    if (ptr && l_str.empty())
-      l_str = ptr->str();
+    if (ptr)
+      p_str = ptr->str();
   });
-  return l_str;
+  return p_str;
 }
 
-to_str::operator string &() const{
+to_str::operator string() const {
   return get();
 }
 

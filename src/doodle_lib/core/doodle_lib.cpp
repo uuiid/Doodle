@@ -34,6 +34,32 @@ doodle_lib::doodle_lib()
   date::set_install(k_path.generic_string());
   DOODLE_LOG_INFO("初始化时区数据库: {}", k_path.generic_string());
 #endif
+
+  /// 创建依赖性
+  reg->on_construct<project>().connect<&entt::registry::get_or_emplace<database>>();
+  reg->on_construct<project>().connect<&entt::registry::get_or_emplace<tree_relationship>>();
+
+  reg->on_construct<season>().connect<&entt::registry::get_or_emplace<database>>();
+  reg->on_construct<season>().connect<&entt::registry::get_or_emplace<tree_relationship>>();
+
+  reg->on_construct<episodes>().connect<&entt::registry::get_or_emplace<database>>();
+  reg->on_construct<episodes>().connect<&entt::registry::get_or_emplace<tree_relationship>>();
+
+  reg->on_construct<shot>().connect<&entt::registry::get_or_emplace<database>>();
+  reg->on_construct<shot>().connect<&entt::registry::get_or_emplace<tree_relationship>>();
+
+  reg->on_construct<assets>().connect<&entt::registry::get_or_emplace<database>>();
+  reg->on_construct<assets>().connect<&entt::registry::get_or_emplace<tree_relationship>>();
+
+  reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<database>>();
+  reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<tree_relationship>>();
+
+  
+
+
+
+
+
 }
 
 FSys::path doodle_lib::create_time_database() {

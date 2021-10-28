@@ -171,14 +171,14 @@ class DOODLELIB_API database {
 
 class DOODLELIB_API to_str {
  private:
-  std::int32_t p_i;
+  mutable std::string p_str;
 
  public:
   to_str() = default;
   DOODLE_MOVE(to_str);
 
-  string get() const;
-  operator string &() const;
+  const string &get() const;
+  operator string() const;
 };
 
 }  // namespace doodle
