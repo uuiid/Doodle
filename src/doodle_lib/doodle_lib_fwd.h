@@ -262,7 +262,6 @@ class shot;
 class assets;
 class core_sql;
 class assets_file;
-class metadata_factory;
 class metadata_serialize;
 class time_point_wrap;
 class comment;
@@ -365,6 +364,12 @@ template <class Component,
 entt::handle make_handle(const Component &instance) {
   return entt::handle{*(g_reg()), instance};
 };
+
+inline entt::handle make_handle() {
+  return entt::handle{*(g_reg()), g_reg()->create()};
+};
+
+
 template <class Component>
 entt::entity to_entity(const Component &instance) {
   return entt::to_entity(*(g_reg()), instance);

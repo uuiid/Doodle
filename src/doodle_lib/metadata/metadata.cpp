@@ -32,20 +32,41 @@ entt::handle tree_relationship::get_parent_h() const noexcept {
 }
 
 void tree_relationship::set_parent(const entt::entity &in_parent) noexcept {
-  p_parent = in_parent;
+  auto l_old_p_h = make_handle(p_parent);
+  auto this_h    = make_handle(*this);
+  if (l_old_p_h && l_old_p_h.all_of<tree_relationship, database>()) {
+    boost::remove_erase_if(l_old_p_h.get<tree_relationship>().p_child,
+                           [&](auto in) {
+                             return this_h.entity() == in;
+                           });
+    auto &k_d = l_old_p_h.get<database>();
+    --(k_d.p_has_child);
+    if (this_h.all_of<assets_file>())
+      --(k_d.p_has_file);
+  }
+
+  p_parent   = in_parent;
+  auto l_p_h = make_handle(in_parent);
+  if (l_p_h.all_of<tree_relationship, database>()) {
+    l_p_h.get<tree_relationship>().p_child.push_back(this_h);
+    auto &k_d = l_p_h.get<database>();
+    ++(k_d.p_has_child);
+    if (this_h.all_of<assets_file>())
+      ++(k_d.p_has_file);
+  }
 }
 
 const std::vector<entt::entity> &tree_relationship::get_child() const noexcept {
   return p_child;
 }
 
-std::vector<entt::entity> &tree_relationship::get_child() noexcept {
-  return p_child;
-}
+// std::vector<entt::entity> &tree_relationship::get_child() noexcept {
+//   return p_child;
+// }
 
-void tree_relationship::set_child(const std::vector<entt::entity> &in_child) noexcept {
-  p_child = in_child;
-}
+// void tree_relationship::set_child(const std::vector<entt::entity> &in_child) noexcept {
+//   p_child = in_child;
+// }
 
 entt::entity tree_relationship::get_root() const {
   auto k_reg = g_reg();

@@ -8,34 +8,29 @@
 TEST_CASE("convert", "[metadata]") {
   using namespace doodle;
   auto reg   = g_reg();
-  auto k_prj = reg->create();
-  auto& k_p  = reg->emplace<project>(k_prj);
-  REQUIRE(entt::to_entity(*reg, k_p) == k_prj);
+  auto k_prj = make_handle(reg->create());
+  auto& k_p  = k_prj.emplace<project>();
+  REQUIRE(k_prj.all_of<project, tree_relationship, database>());
 
-  // k_p.set_name("etst");
-  reg->emplace<tree_relationship>(k_prj);
-  auto& k_d = reg->emplace<database>(k_prj);
-  REQUIRE(entt::to_entity(*reg, k_d) == k_prj);
+  auto& k_d = k_prj.get<database>();
 
   metadata_database k_data{k_d};
   std::cout << k_data.DebugString() << std::endl;
 
-  auto k_s = reg->create();
-  auto& s  = reg->emplace<shot>(k_s);
+  auto k_s = make_handle(reg->create());
+  auto& s  = k_s.emplace<shot>();
   s.set_shot(1);
   s.set_shot_ab(shot::shot_ab_enum::A);
+  REQUIRE(k_s.all_of<shot, tree_relationship, database>());
 
-  reg->emplace<tree_relationship>(k_s, k_prj);
-  auto& k_d2 = reg->emplace<database>(k_s);
-  
+  auto& k_d2 = reg->get<database>(k_s);
 
   metadata_database k_data2{k_d2};
   std::cout << k_data2.DebugString() << std::endl;
 
-  auto k_tmp2 = reg->create();
-  reg->emplace<tree_relationship>(k_tmp2, k_prj);
-  auto& k_d3 = reg->emplace<database>(k_tmp2);
-  k_d3       = k_data2;
+  auto k_tmp2 = make_handle(reg->create());
+  auto& k_d3  = k_tmp2.get_or_emplace<database>();
+  k_d3        = k_data2;
 
   std::cout << "k_d3 id: " << k_d3.get_url_uuid() << std::endl;
   std::cout << "k_d2 id: " << k_d2.get_url_uuid() << std::endl;
@@ -106,138 +101,116 @@ TEST_CASE("time duration", "[metadata]") {
   }
 }
 
-TEST_CASE("observable_container", "[metadata][observable]") {
-  using namespace doodle;
-  //  using my_str = observable_container<std::vector<std::string>, details::pre<std::vector<std::string> > >;
-  //  details::pre<std::vector<std::string> > k_pre{};
-  //  my_str test{&k_pre};
-
-  using my_str = observable_container<std::vector<std::string> >;
-  my_str test{};
-
-  test.sig_clear.connect([]() { std::cout << "clear" << std::endl; });
-  test.sig_insert.connect([](const std::string& val) { std::cout << val << std::endl; });
-  test.sig_erase.connect([](const std::string& val) { std::cout << val << std::endl; });
-  test.sig_push_back.connect([](const std::string& val) { std::cout << val << std::endl; });
-  test.sig_resize.connect([](std::size_t where) { std::cout << where << std::endl; });
-  test.sig_swap.connect([](const std::vector<std::string>& strs) {
-    for (auto& s : strs) {
-      std::cout << s << ",";
-    }
-    std::cout << std::endl;
-  });
-
-  test.push_back_sig({"test"});
-  test.push_back_sig({"tesat"});
-  test.push_back_sig({"22222"});
-  test.insert_sig(test.begin(), {"11111"});
-  test.erase_sig(test.begin());
-  test.resize_sig(2);
-  auto k_other = std::vector<std::string>{"1", "2", "3", "4"};
-  test.swap_sig(k_other);
-  test.clear_sig();
-}
 #include <algorithm>
 #include <iostream>
 #include <iterator>
 #include <sstream>
 #include <string>
 TEST_CASE("test create metadata", "[server][metadata]") {
-  // using namespace doodle;
-  // std::string user{
-  //     "宦倩冰 邰小溪 孔佳晨 顾柏文 乌书竹 邱媛女 冷梓颖"
-  //     " 乔平良 闻爱萍 堵乐然 钭如之 屠宵月 农曦秀 苍佳洁 索优悦 黎晶晶"
-  //     " 杜珠玉 苏若美 宦修美 弓博敏 巴沛蓝 邵河灵 靳佩兰 张子丹 鱼绮丽"
-  //     " 胡怀亦 幸艳芳 衡韶丽 薛友绿 耿丝琪 杜俊慧 双芮悦 欧妙菡 陆梅雪"
-  //     " 寿江红 益小凝 燕洮洮 古逸雅 宁梦华 扶倩愉 国宇丞 魏梅雪 冯诗蕊"
-  //     " 刘秋双 宰怡丞 须奇文 蓟言文 邹心诺 陈曦秀 谢绣文 充靖柔 红凡梦"
-  //     " 冷霞绮 郏怡若 庄书萱 谭布侬 罗芷蕾 籍子琳 吕向莉 贺颜落 蔚元瑶"
-  //     " 冷绮云 家密思 钱云琼 养茵茵 鄂曼吟 璩静恬 步幸瑶 仰陶宁 秦芸静"
-  //     " 温玉兰 潘华楚 金初瑶 孔蔚然 朱诗晗 相夏槐 秦小之 焦念薇 陆丽英"
-  //     " 程香洁 万陶然 浦迎荷 隆智敏 潘蔓蔓 曾子芸 乌滢滢 古笑雯 顾半烟"
-  //     " 宫津童 彭灵波 翟诗桃 须思聪 方碧玉 梁羡丽 漕闲华 韩皎月 扈晴丽"
-  //     " 温燕平 冀冬梅 赖代容"};
-  // std::istringstream iss{user};
-  // string_list user_list{std::istream_iterator<std::string>(iss),
-  //                       std::istream_iterator<std::string>()};
-  // std::random_device rd;
-  // std::mt19937 mt(rd());
-  // std::uniform_int_distribution<int> dist{1, 30};
+  using namespace doodle;
+  std::string user{
+      "宦倩冰 邰小溪 孔佳晨 顾柏文 乌书竹 邱媛女 冷梓颖"
+      " 乔平良 闻爱萍 堵乐然 钭如之 屠宵月 农曦秀 苍佳洁 索优悦 黎晶晶"
+      " 杜珠玉 苏若美 宦修美 弓博敏 巴沛蓝 邵河灵 靳佩兰 张子丹 鱼绮丽"
+      " 胡怀亦 幸艳芳 衡韶丽 薛友绿 耿丝琪 杜俊慧 双芮悦 欧妙菡 陆梅雪"
+      " 寿江红 益小凝 燕洮洮 古逸雅 宁梦华 扶倩愉 国宇丞 魏梅雪 冯诗蕊"
+      " 刘秋双 宰怡丞 须奇文 蓟言文 邹心诺 陈曦秀 谢绣文 充靖柔 红凡梦"
+      " 冷霞绮 郏怡若 庄书萱 谭布侬 罗芷蕾 籍子琳 吕向莉 贺颜落 蔚元瑶"
+      " 冷绮云 家密思 钱云琼 养茵茵 鄂曼吟 璩静恬 步幸瑶 仰陶宁 秦芸静"
+      " 温玉兰 潘华楚 金初瑶 孔蔚然 朱诗晗 相夏槐 秦小之 焦念薇 陆丽英"
+      " 程香洁 万陶然 浦迎荷 隆智敏 潘蔓蔓 曾子芸 乌滢滢 古笑雯 顾半烟"
+      " 宫津童 彭灵波 翟诗桃 须思聪 方碧玉 梁羡丽 漕闲华 韩皎月 扈晴丽"
+      " 温燕平 冀冬梅 赖代容"};
+  std::istringstream iss{user};
+  string_list user_list{std::istream_iterator<std::string>(iss),
+                        std::istream_iterator<std::string>()};
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_int_distribution<int> dist{1, 30};
 
-  // auto k_server = rpc_server_handle{};
-  // auto& set     = core_set::getSet();
-  // k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
+  auto k_server = rpc_server_handle{};
+  auto& set     = core_set::getSet();
+  k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
+  doodle_lib::Get().init_gui();
 
-  // doodle_lib::Get().init_gui();
-  // auto k_fa = std::make_shared<metadata_factory>();
+  SECTION("create project") {
+    auto k_prj = make_handle();
+    k_prj.emplace<project>("D:/tmp", "case_tset");
+    k_prj.emplace<need_save>();
+    entt::handle k_season = make_handle();
+    k_season.emplace<season>(1);
+    k_season.emplace<need_save>();
+    k_season.get<tree_relationship>().set_parent(k_prj);
 
-  // std::vector<metadata_ptr> k_delete_id;
-  // SECTION("create project") {
-  //   auto k_prj = std::make_shared<project>("D:/tmp", "case_tset");
-  //   k_prj->insert_into(k_fa);
-  //   REQUIRE(k_prj->getId() != 0);
-  //   DOODLE_LOG_INFO("prj id is {} ", k_prj->getId());
+    entt::handle k_ep;       /// 集数
+    entt::handle k_shot;     /// 镜头
+    entt::handle k_ass;      /// 资产
+    entt::handle k_assfile;  /// 资产文件
+    ///创建集数
+    for (int k_i = 0; k_i < 10; ++k_i) {
+      k_ep = make_handle();
+      k_ep.emplace<episodes>(k_i);
+      k_ep.emplace<need_save>();
+      k_ep.get<tree_relationship>().set_parent(k_season);
+    }
+    /// 创建镜头
+    for (size_t i = 0; i < 10; ++i) {
+      k_shot      = make_handle();
+      auto& k_sho = k_shot.emplace<shot>(i);
+      k_shot.emplace<need_save>();
+      if (i % 2 == 0) {
+        k_sho.set_shot_ab(shot::shot_ab_enum::B);
+      }
+      k_shot.get<tree_relationship>().set_parent(k_ep);
+    }
+    /// 创建资产
+    for (size_t i = 0; i < 10; ++i) {
+      k_ass = make_handle();
+      k_ass.emplace<assets>(fmt::format("test{}", i));
+      k_ass.emplace<need_save>();
+      k_ass.get<tree_relationship>().set_parent(k_shot);
+    }
 
-  //   k_delete_id.push_back(k_prj);
+    for (size_t i = 0; i < 10; ++i) {
+      using namespace chrono::literals;
+      k_assfile = make_handle();
+      k_assfile.emplace<assets_file>();
+      k_assfile.emplace<need_save>();
+      k_assfile.get<tree_relationship>().set_parent(k_ass);
+      k_assfile.get<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
+      auto k_u_i = dist(mt);
+      k_assfile.get<assets_file>().set_user(user_list[k_u_i]);
+      k_assfile.get<assets_file>().set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
+    }
+    SECTION("str meta tree") {
+      std::function<void(const entt::handle& in, std::int32_t&)> k_fun{};
+      std::int32_t k_i{0};
+      k_fun = [&](const entt::handle& in, std::int32_t& in_dep) {
+        auto k = in.try_get<tree_relationship>();
+        if (!k)
+          return;
 
-  //   SECTION("create other") {
-  //     episodes_ptr k_eps{};
-  //     shot_ptr k_shot_ptr{};
-  //     assets_ptr k_assets_ptr{};
-  //     auto i = 1;
-  //     /// 生成集数
-  //     for (int k_i = 0; k_i < 10; ++k_i) {
-  //       k_eps = std::make_shared<episodes>(k_prj, k_i);
-  //       k_prj->get_child().push_back(k_eps);
-  //       k_eps->updata_db(k_fa);
-
-  //       k_delete_id.push_back(k_eps);
-  //       if (k_i % 2 == 0) {
-  //         /// 生成镜头
-  //         for (int k_j = 0; k_j < 10; ++k_j) {
-  //           k_shot_ptr = std::make_shared<shot>(k_eps, k_j);
-  //           k_eps->get_child().push_back(k_shot_ptr);
-  //           k_shot_ptr->updata_db(k_fa);
-
-  //           k_delete_id.push_back(k_shot_ptr);
-
-  //           if (k_j % 3 == 0) {
-  //             /// 生成人名
-  //             for (int k_k = 0; k_k < 10; ++k_k) {
-  //               k_assets_ptr = std::make_shared<assets>(k_shot_ptr, fmt::format("tset_{}", k_k));
-  //               k_shot_ptr->get_child().push_back(k_assets_ptr);
-  //               k_assets_ptr->updata_db(k_fa);
-
-  //               k_delete_id.push_back(k_assets_ptr);
-  //               if (k_k % 3 == 0) {
-  //                 ///  生成具体条目
-  //                 for (int k_l = 0; k_l < 20; ++k_l) {
-  //                   auto k_file = std::make_shared<assets_file>(k_assets_ptr, k_assets_ptr->show_str());
-  //                   k_assets_ptr->get_child().push_back(k_file);
-
-  //                   using namespace chrono::literals;
-  //                   auto k_time = std::make_shared<time_point_wrap>(chrono::system_clock::now() - 3h * i);
-  //                   DOODLE_LOG_INFO("生成时间 {} ", k_time->show_str());
-  //                   ++i;
-
-  //                   auto k_u_i = dist(mt);
-  //                   k_file->set_time(k_time);
-  //                   k_file->set_user(user_list[k_u_i]);
-  //                   k_file->set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
-  //                   /// 插入数据
-  //                   k_file->updata_db(k_fa);
-  //                 }
-  //               }
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  //  for (auto& k_m : k_delete_id) {
-  //    k_m->deleteData(k_fa);
-  //  }
+        auto k_i_ = in_dep + 1;
+        for (auto& i : k->get_child()) {
+          auto k_h = make_handle(i);
+          std::cout << std::setiosflags(std::ios::right)
+                    << std::setw(k_i_ * 5)
+                    << k_h.get_or_emplace<to_str>().get() << std::endl;
+          k_fun(k_h, k_i_);
+        }
+      };
+      auto k_prj = g_reg()->view<project>();
+      for (auto& k : k_prj) {
+        k_fun(make_handle(k), k_i);
+      }
+    }
+    SECTION("install database") {
+      auto k_f = doodle_lib::Get().get_metadata_factory();
+      for (auto k : g_reg()->view<need_save, database>()) {
+        k_f->insert_into(k);
+      }
+    }
+  }
 }
 
 TEST_CASE("gui action metadata", "[metadata][gui]") {

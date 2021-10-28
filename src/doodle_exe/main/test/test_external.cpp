@@ -26,7 +26,6 @@ TEST_CASE("type_erasure", "[boost]") {
   // x = 1;
   x = std::vector<int>{};
   x.push_back(1);
-  any_cast<int>(x);
 }
 
 struct test_external {

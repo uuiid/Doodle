@@ -5,11 +5,11 @@
 #include "doodle_lib.h"
 
 #include <date/tz.h>
-#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/Logger/logger.h>
-#include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
+#include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/rpc/rpc_file_system_client.h>
 #include <doodle_lib/rpc/rpc_metadata_client.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
@@ -54,6 +54,7 @@ doodle_lib::doodle_lib()
 
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<database>>();
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<tree_relationship>>();
+  reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 }
 
 FSys::path doodle_lib::create_time_database() {

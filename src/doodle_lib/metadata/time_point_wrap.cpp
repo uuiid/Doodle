@@ -179,7 +179,6 @@ void time_point_wrap::disassemble(const chrono::sys_time_pos& in_utc_timePoint) 
   p_hours   = k_hh_mm_ss.hours();
   p_minutes = k_hh_mm_ss.minutes();
   p_seconds = k_hh_mm_ss.seconds();
-
 }
 time_point_wrap::operator time_point() {
   return p_time;
@@ -234,6 +233,16 @@ void time_point_wrap::set_local_time(const date::local_time<chrono::seconds>& in
   auto k_time = chrono::make_zoned(p_time_zone, in_time);
   disassemble(k_time.get_sys_time());
 }
+
+void time_point_wrap::set_time(const chrono::sys_time_pos& in_time) {
+  disassemble(in_time);
+}
+
+void time_point_wrap::set_time(const chrono::local_time_pos& in_time) {
+  auto k_time = chrono::make_zoned(p_time_zone, in_time);
+  disassemble(k_time.get_sys_time());
+}
+
 std::time_t time_point_wrap::get_local_time_t() const {
   auto k_time = get_local_time();
   return chrono::to_time_t(k_time);

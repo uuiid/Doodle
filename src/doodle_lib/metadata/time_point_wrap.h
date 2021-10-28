@@ -73,7 +73,8 @@ class DOODLELIB_API time_point_wrap {
   [[nodiscard]] std::time_t get_local_time_t() const;
   [[nodiscard]] std::time_t get_utc_time_t() const;
   void set_local_time(const chrono::local_time<chrono::seconds>& in_time);
-
+  void set_time(const chrono::sys_time_pos& in_time);
+  void set_time(const chrono::local_time_pos& in_time);
   /**
    *
    * @param in 结束的时间

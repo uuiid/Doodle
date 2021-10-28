@@ -76,8 +76,8 @@ class DOODLELIB_API tree_relationship
   void set_parent(const entt::entity &in_parent) noexcept;
 
   [[nodiscard]] const std::vector<entt::entity> &get_child() const noexcept;
-  [[nodiscard]] std::vector<entt::entity> &get_child() noexcept;
-  void set_child(const std::vector<entt::entity> &in_child) noexcept;
+  // [[nodiscard]] std::vector<entt::entity> &get_child() noexcept;
+  // void set_child(const std::vector<entt::entity> &in_child) noexcept;
 
   entt::entity get_root() const;
 };

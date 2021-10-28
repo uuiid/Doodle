@@ -87,7 +87,7 @@ void comm_ass_eps::add_eps(const std::vector<std::int32_t>& p_eps) {
     auto eps = make_handle(reg->create());
     eps.emplace<episodes>(i);
     eps.emplace<need_save>();
-    p_meta_var.get<tree_relationship>().get_child().push_back(eps);
+    eps.get<tree_relationship>().set_parent(p_meta_var);
     p_meta_var.emplace<need_save>();
   }
 }
@@ -155,7 +155,8 @@ void comm_ass_shot::add_shot(const std::vector<std::int32_t>& p_shots) {
     k_h.emplace<shot>(s);
     k_h.get<shot>().set_shot_ab(std::string{p_shot_ab});
     k_h.emplace<need_save>();
-    p_meta_var.get<tree_relationship>().get_child().push_back(k_h);
+    k_h.get<tree_relationship>().set_parent(p_meta_var);
+
     p_meta_var.emplace<need_save>();
   }
 }
@@ -233,8 +234,8 @@ void comm_assets::add_ass(std::vector<string> in_Str) {
   for (auto& i : in_Str) {
     auto k_h = make_handle(reg->create());
     k_h.emplace<assets>(i);
-    p_meta_var.patch<tree_relationship>([&](tree_relationship& in) {
-      in.get_child().push_back(k_h);
+    k_h.patch<tree_relationship>([&](tree_relationship& in) {
+      in.set_parent(p_meta_var);
     });
     k_h.emplace<need_save>();
     p_meta_var.emplace<need_save>();
@@ -289,8 +290,8 @@ void comm_ass_season::add_season(const std::vector<std::int32_t>& in) {
   for (auto& i : in) {
     auto k_h = make_handle(reg->create());
     k_h.emplace<season>();
-    p_meta_var.patch<tree_relationship>([k_h](tree_relationship& in_) {
-      in_.get_child().push_back(k_h);
+    k_h.patch<tree_relationship>([&](tree_relationship& in_) {
+      in_.set_parent(p_meta_var);
     });
 
     k_h.emplace<need_save>();
@@ -376,8 +377,8 @@ bool comm_ass_file_attr::render() {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       auto k_h = make_handle(reg->create());
       k_h.emplace<assets_file>();
-      p_meta_var.patch<tree_relationship>([k_h](tree_relationship& in) {
-        in.get_child().push_back(k_h);
+      p_meta_var.patch<tree_relationship>([&](tree_relationship& in) {
+        in.set_parent(p_meta_var);
       });
       k_h.emplace<need_save>();
     }
