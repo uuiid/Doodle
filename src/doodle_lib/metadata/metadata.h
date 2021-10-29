@@ -39,9 +39,12 @@ enum class metadata_type {
 
 class DOODLELIB_API tree_relationship
 /* : public boost::intrusive::set_base_hook<> */ {
+  friend metadata_serialize;
  private:
   entt::entity p_parent;
 
+
+  void set_parent_raw(const entt::handle &in_parent);
  public:
   std::vector<entt::entity> p_child;
   // boost::intrusive::set<> p_child;

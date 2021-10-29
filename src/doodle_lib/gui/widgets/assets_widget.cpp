@@ -46,9 +46,12 @@ void assets_widget::load_meta(const entt::handle& in_ptr) {
   if (l_data.has_child()) {
     /// 加载数据
     if (!in_ptr.all_of<is_load>())
-      in_ptr.emplace<need_load>();
+      in_ptr.get_or_emplace<need_load>();
     for (const auto& i : l_tree.get_child()) {
-      auto k_ch  = make_handle(i);
+      auto k_ch = make_handle(i);
+      if (k_ch.all_of<assets_file>())
+        continue;
+
       auto flsge = base_flags;
       if (is_select(k_ch))
         flsge |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;

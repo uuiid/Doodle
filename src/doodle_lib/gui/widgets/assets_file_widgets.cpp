@@ -122,10 +122,10 @@ void assets_file_widgets::frame_render() {
         list_data l_data{};
 
         if (p_root) {
-          auto& l_database = reg->get<database>(p_root);
-          auto& l_tree     = reg->get<tree_relationship>(p_root);
+          auto& l_database = p_root.get<database>();
+          auto& l_tree     = p_root.get<tree_relationship>();
           for (const auto& i : l_tree.get_child()) {
-            auto l_h        = make_handle(i);
+            auto l_h = make_handle(i);
             if (l_h.try_get<assets_file>()) {
               imgui::TableNextRow();
               for (auto& l_i : p_colum_list)
@@ -137,7 +137,9 @@ void assets_file_widgets::frame_render() {
 }
 
 void assets_file_widgets::set_metadata(const entt::entity& in_ptr) {
-  p_root = make_handle(in_ptr);
+  auto k_h = make_handle(in_ptr);
+  if (k_h.all_of<tree_relationship, database, assets_file>())
+    p_root = k_h;
 }
 
 }  // namespace doodle

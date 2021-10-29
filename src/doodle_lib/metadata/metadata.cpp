@@ -22,7 +22,11 @@
 #include <boost/range/algorithm/count_if.hpp>
 
 namespace doodle {
-
+void tree_relationship::set_parent_raw(const entt::handle &in_parent) {
+  p_parent     = in_parent;
+  auto &k_tree = in_parent.get<tree_relationship>();
+  k_tree.p_child.push_back(to_entity(*this));
+}
 entt::entity tree_relationship::get_parent() const noexcept {
   return p_parent;
 }
@@ -266,8 +270,6 @@ void set_stauts(entt::registry &in_reg, entt::entity in_ent) {
     k_h.remove<is_load>();
   } else if (k_h.any_of<is_load>()) {
     k_h.remove<need_load>();
-  } else if (k_h.any_of<need_save, need_delete>()) {
-    k_h.remove<need_load, is_load>();
   }
 }
 

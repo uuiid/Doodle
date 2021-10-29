@@ -28,6 +28,8 @@ std::vector<entt::entity> metadata_serialize::get_all_prj() const {
 
 bool metadata_serialize::insert_into(entt::entity in) const {
   auto k_h = make_handle(in);
+  if (!k_h)
+    return false;
   if (!k_h.all_of<tree_relationship, database>())
     throw doodle_error{"缺失组件"};
 
@@ -50,11 +52,14 @@ bool metadata_serialize::insert_into(entt::entity in) const {
   } else
     k_c->update_metadata(k_data);
   k_h.emplace<is_load>();
+  k_h.remove<need_load>();
   return true;
 }
 
 void metadata_serialize::delete_data(entt::entity in) const {
   auto k_h = make_handle(in);
+  if (!k_h)
+    return;
   if (!k_h.all_of<tree_relationship, database>())
     throw doodle_error{"缺失组件"};
 
@@ -71,6 +76,8 @@ void metadata_serialize::delete_data(entt::entity in) const {
 
 void metadata_serialize::updata_db(entt::entity in) const {
   auto k_h = make_handle(in);
+  if (!k_h)
+    return;
   if (!k_h.all_of<tree_relationship, database>())
     throw doodle_error{"缺失组件"};
 
@@ -79,10 +86,14 @@ void metadata_serialize::updata_db(entt::entity in) const {
   auto k_c     = this->p_rpcClien.lock();
   k_c->update_metadata(k_data);
   k_h.emplace<is_load>();
+  k_h.remove<need_load>();
+
 }
 
 void metadata_serialize::select_indb(entt::entity in) const {
   auto k_h = make_handle(in);
+  if (!k_h)
+    return;
   if (!k_h.all_of<database, tree_relationship>())
     throw doodle_error{"缺失组件"};
 
@@ -101,9 +112,11 @@ void metadata_serialize::select_indb(entt::entity in) const {
   k_filter->set_parent_id(k_data.get_id());
   auto k_v = k_c->select_entity(k_filter);
   for (auto &i : k_v) {
-    make_handle(i).get_or_emplace<tree_relationship>().set_parent(in);
+    make_handle(i).get_or_emplace<tree_relationship>().set_parent_raw(k_h);
   }
   k_h.emplace<is_load>();
+  k_h.remove<need_load>();
+
 }
 
 }  // namespace doodle
