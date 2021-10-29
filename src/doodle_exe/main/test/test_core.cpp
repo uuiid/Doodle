@@ -241,7 +241,7 @@ TEST_CASE("maya get log", "[maya]") {
 TEST_CASE("ThreadPool", "[core][ThreadPool]") {
   using namespace doodle;
   for (int k_i = 0; k_i < 10; ++k_i) {
-    doodle_lib::Get().get_thread_pool()->enqueue([k_i]() {
+    auto k_fun = doodle_lib::Get().get_thread_pool()->enqueue([k_i]() {
       std::cout << k_i << std::endl;
       return;
     });
