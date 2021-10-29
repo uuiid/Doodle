@@ -13,7 +13,7 @@
     {
       "label": "run test",
       "type": "shell",
-      "command": "${command:cmake.launchTargetPath} \"test*\" -r console -c gui_action_metadata",
+      "command": "${command:cmake.launchTargetPath} -r console --order lex load_meta",
       "options": {
         "cwd": "${command:cmake.getLaunchTargetDirectory}"
       },

@@ -7,7 +7,7 @@
 #include <Windows.h>
 #include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-
+#include <imgui.h>
 #include <boost/signals2.hpp>
 namespace doodle {
 using win_handle = HWND;
@@ -21,7 +21,6 @@ class DOODLELIB_API doodle_app : public details::no_copy {
 
   virtual base_widget_ptr get_main_windows() const;
   std::wstring p_title;
-
 
   void set_imgui_dock_space(const FSys::path& in_path) const;
 
@@ -43,7 +42,19 @@ class DOODLELIB_API doodle_app : public details::no_copy {
 
   bool valid() const;
 
-  std::int32_t run();
+  virtual std::int32_t run();
   ~doodle_app();
+
+ private:
+  void metadata_load() const;
+  void metadata_save() const;
+  void metadata_delete() const;
+
+  void metadata_loop_one() const;
+
+ protected:
+  virtual base_widget_ptr loop_begin();
+  virtual void loop_end();
+  virtual void loop_one(base_widget_ptr& in_ptr, bool& show_err, ImGuiIO& in_io);
 };
 }  // namespace doodle
