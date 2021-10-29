@@ -42,13 +42,14 @@ bool metadata_serialize::insert_into(entt::entity in) const {
         insert_into(k_p_h);
         k_data.p_parent_id = k_p_h.get<database>().get_id();
       }
-      if(k_data.p_parent_id == 0){
+      if (k_data.p_parent_id == 0) {
         k_data.p_parent_id = k_p_h.get<database>().get_id();
       }
     }
     k_c->install_metadata(k_data);
   } else
     k_c->update_metadata(k_data);
+  k_h.remove<need_save>();
 }
 
 void metadata_serialize::delete_data(entt::entity in) const {
@@ -64,6 +65,7 @@ void metadata_serialize::delete_data(entt::entity in) const {
 
   auto k_c = this->p_rpcClien.lock();
   k_c->delete_metadata(k_data);
+  k_h.remove<need_delete>();
 }
 
 void metadata_serialize::updata_db(entt::entity in) const {
@@ -75,6 +77,7 @@ void metadata_serialize::updata_db(entt::entity in) const {
   auto &k_data = k_h.get<database>();
   auto k_c     = this->p_rpcClien.lock();
   k_c->update_metadata(k_data);
+  k_h.remove<need_save>();
 }
 
 void metadata_serialize::select_indb(entt::entity in) const {
@@ -99,6 +102,7 @@ void metadata_serialize::select_indb(entt::entity in) const {
   for (auto &i : k_v) {
     make_handle(i).get_or_emplace<tree_relationship>().set_parent(in);
   }
+  k_h.remove<need_load>();
 }
 
 }  // namespace doodle
