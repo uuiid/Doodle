@@ -66,7 +66,7 @@ grpc::Status rpc_metadaata_server::install_metadata(grpc::ServerContext *context
 
   auto k_in = sqlpp::dynamic_insert_into(*k_conn, k_tab).dynamic_set();
   k_in.insert_list.add(k_tab.uuidPath = request->uuid_path());
-  k_in.insert_list.add(k_tab.metaType = magic_enum::enum_integer(request->m_type().value()));
+  k_in.insert_list.add(k_tab.metaType = request->m_type().value());
   if (request->has_parent()) {
     k_in.insert_list.add(k_tab.parent = request->parent().value());
   }
@@ -128,8 +128,7 @@ grpc::Status rpc_metadaata_server::update_metadata(grpc::ServerContext *context,
     k_sql.assignments.add(k_tab.updateTime = k_time);
   }
   if (request->has_m_type()) {
-    auto k_t = magic_enum::enum_integer(request->m_type().value());
-    k_sql.assignments.add(k_tab.metaType = k_t);
+    k_sql.assignments.add(k_tab.metaType = request->m_type().value());
   }
 
   if (request->has_parent() || request->has_update_time() || request->has_m_type())
@@ -158,10 +157,8 @@ grpc::Status rpc_metadaata_server::filter_metadata(grpc::ServerContext *context,
     k_select.where.add(k_tab.updateTime > k_time_begin && k_tab.updateTime < k_time_end);
   }
   if (request->has_m_type()) {
-    auto k_type = magic_enum::enum_cast<metadata_type>(
-                      magic_enum::enum_integer(request->m_type().value()))
-                      .value_or(metadata_type::unknown_file);
-    k_select.where.add(k_tab.metaType == magic_enum::enum_integer(k_type));
+
+    k_select.where.add(k_tab.metaType == request->m_type().value());
   }
   if (request->id() != 0) {
     k_select.where.add(k_tab.id == request->id());
@@ -175,9 +172,7 @@ grpc::Status rpc_metadaata_server::filter_metadata(grpc::ServerContext *context,
     k_db.set_id(row.id.value());
     k_db.mutable_parent()->set_value(row.parent.value());
     k_db.set_uuid_path(std::string{row.uuidPath.value()});
-    k_db.mutable_m_type()->set_value(
-        magic_enum::enum_cast<doodle::metadata_database::meta_type>(row.metaType.value())
-            .value_or(doodle::metadata_database::meta_type::metadata_database_meta_type_unknown_file));
+    k_db.mutable_m_type()->set_value(row.metaType.value());
     auto k_time      = std::chrono::system_clock::time_point{row.updateTime.value()};
     auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
         std::chrono::system_clock::to_time_t(k_time));

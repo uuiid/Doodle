@@ -15,15 +15,13 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_file)
 namespace doodle {
 
-
 assets_file::assets_file()
     : p_name(),
       p_ShowName(),
       p_user(core_set::getSet().get_user()),
       p_department(core_set::getSet().get_department_enum()),
       p_version(1),
-      p_need_time(false),
-      p_file_type(assets_file_type::none) {
+      p_need_time(false) {
 }
 
 assets_file::assets_file(std::string showName, std::string name)
@@ -32,8 +30,7 @@ assets_file::assets_file(std::string showName, std::string name)
       p_user(core_set::getSet().get_user()),
       p_department(core_set::getSet().get_department_enum()),
       p_version(1),
-      p_need_time(false),
-      p_file_type(assets_file_type::none) {
+      p_need_time(false) {
   if (p_name.empty())
     p_name = convert::Get().toEn(p_ShowName);
 }
@@ -82,15 +79,6 @@ std::string assets_file::get_version_str() const {
 
 void assets_file::set_version(const std::uint64_t& in_Version) noexcept {
   p_version = in_Version;
-}
-
-
-const assets_file_type& assets_file::get_file_type() const noexcept {
-  return p_file_type;
-}
-
-void assets_file::set_file_type(const assets_file_type& in_file_type) noexcept {
-  p_file_type = in_file_type;
 }
 
 department assets_file::get_department() const {

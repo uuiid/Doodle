@@ -107,7 +107,7 @@ command_ptr assets_path_vector::add_file(
 
   auto k_h               = make_handle(*this);
   if (ue4_project::is_ue4_file(in_path)) {
-    k_h.get<assets_file>().set_file_type(assets_file_type::ue4_prj);
+    k_h.get<database>().set_meta_type(metadata_type::ue4_prj);
     // 添加基本路径(ue4 prj 路径)
     k_path.get().set_path(in_path, k_h, in_using_lexically_relative);
     // 添加内容路径
@@ -117,7 +117,7 @@ command_ptr assets_path_vector::add_file(
   }
 
   if (image_sequence::is_image_sequence(FSys::list_files(in_path.parent_path()))) {
-    k_h.get<assets_file>().set_file_type(assets_file_type::ue4_prj);
+    k_h.get<database>().set_meta_type(metadata_type::ue4_prj);
     // 添加文件的父路径, 序列文件夹
     k_path.get().set_path(in_path.parent_path(), k_h, in_using_lexically_relative);
     k_comm = new_object<comm_file_image_to_move>();

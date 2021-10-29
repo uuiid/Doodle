@@ -57,7 +57,6 @@ void tree_relationship::set_parent(const entt::entity &in_parent) noexcept {
     if (this_h.all_of<assets_file>())
       ++(k_d.p_has_file);
   }
-  
 }
 
 const std::vector<entt::entity> &tree_relationship::get_child() const noexcept {
@@ -132,12 +131,12 @@ bool database::has_parent() const {
   return p_parent_id.has_value();
 }
 
-void database::set_meta_typp(const metadata_type &in_meta) {
+void database::set_meta_type(const metadata_type &in_meta) {
   p_type        = in_meta;
   p_updata_type = true;
 };
 
-void database::set_meta_typp(const std::string &in_meta) {
+void database::set_meta_type(const std::string &in_meta) {
   p_type = magic_enum::enum_cast<metadata_type>(in_meta)
                .value_or(metadata_type::unknown_file);
   p_updata_type = true;
@@ -195,8 +194,7 @@ database &database::operator=(const metadata_database &in_) {
     });
   }
   p_id   = in_.id();
-  p_type = magic_enum::enum_cast<metadata_type>(
-               magic_enum::enum_integer(in_.m_type().value()))
+  p_type = magic_enum::enum_cast<metadata_type>(in_.m_type().value())
                .value_or(metadata_type::unknown_file);
   return *this;
 }
@@ -225,8 +223,7 @@ database::operator doodle::metadata_database() const {
   k_tmp.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
 
   if (p_updata_type || p_id == 0) {
-    k_tmp.mutable_m_type()->set_value(
-        magic_enum::enum_cast<doodle::metadata_database::meta_type>(get_meta_type_int()).value());
+    k_tmp.mutable_m_type()->set_value(get_meta_type_int());
   }
   return k_tmp;
 }

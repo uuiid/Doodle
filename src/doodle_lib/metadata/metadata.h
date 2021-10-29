@@ -27,7 +27,14 @@ enum class metadata_type {
   file               = 2,
   folder             = 3,
   derive_file        = 4,
-  animation_lib_root = 5
+  animation_lib_root = 5,
+  maya_file          = 6,
+  maya_rig           = 7,
+  fbx                = 8,
+  abc                = 9,
+  move               = 10,
+  ue4_prj            = 11
+
 };
 
 class DOODLELIB_API tree_relationship
@@ -85,6 +92,7 @@ class DOODLELIB_API tree_relationship
 class DOODLELIB_API database {
   friend rpc_metadata_client;
   friend tree_relationship;
+  friend metadata_serialize;
 
  private:
   mutable std::uint64_t p_id;
@@ -138,8 +146,8 @@ class DOODLELIB_API database {
    *
    * @param in_meta 类型
    */
-  void set_meta_typp(const metadata_type &in_meta);
-  void set_meta_typp(const std::string &in_meta);
+  void set_meta_type(const metadata_type &in_meta);
+  void set_meta_type(const std::string &in_meta);
   void set_meta_type(std::int32_t in_);
 
   database &operator=(const metadata_database &in);

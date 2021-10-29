@@ -27,57 +27,54 @@ std::vector<entt::entity> metadata_serialize::get_all_prj() const {
 }
 
 bool metadata_serialize::insert_into(entt::entity in) const {
-  auto k_reg  = g_reg();
-  auto k_tree = k_reg->try_get<tree_relationship>(in);
+  auto k_h = make_handle(in);
+  if (k_h.all_of<tree_relationship, database>())
+    throw doodle_error{"缺失组件"};
 
-  auto k_data = k_reg->try_get<database>(in);
-  if (k_data) {
-    if (k_tree) {
-      if (k_tree->has_parent()) {
-        updata_db(k_tree->get_parent());
+  auto &k_tree = k_h.get<tree_relationship>();
+  auto &k_data = k_h.get<database>();
+
+  auto k_c     = this->p_rpcClien.lock();
+  if (!k_data.is_install()) {
+    auto k_p_h = k_tree.get_parent_h();
+    if (k_p_h) {
+      if (!k_p_h.get<database>().is_install()) {
+        insert_into(k_p_h);
+        k_data.p_parent_id = k_p_h.get<database>().get_id();
+      }
+      if(k_data.p_parent_id == 0){
+        k_data.p_parent_id = k_p_h.get<database>().get_id();
       }
     }
-    auto k_c = this->p_rpcClien.lock();
-    if (!k_data->is_install())
-      k_c->install_metadata(*k_data);
-    else
-      k_c->update_metadata(*k_data);
+    k_c->install_metadata(k_data);
   } else
-    throw doodle_error{"没有数据库组件"};
+    k_c->update_metadata(k_data);
 }
 
 void metadata_serialize::delete_data(entt::entity in) const {
-  auto k_reg  = g_reg();
-  auto k_tree = k_reg->try_get<tree_relationship>(in);
+  auto k_h = make_handle(in);
+  if (k_h.all_of<tree_relationship, database>())
+    throw doodle_error{"缺失组件"};
 
-  auto k_data = k_reg->try_get<database>(in);
-  if (k_data) {
-    if (k_tree) {
-      if (k_tree->has_parent()) {
-        updata_db(k_tree->get_parent());
-      }
-    }
-    auto k_c = this->p_rpcClien.lock();
-    k_c->delete_metadata(*k_data);
+  auto &k_tree = k_h.get<tree_relationship>();
+  auto &k_data = k_h.get<database>();
+  if (k_tree.has_parent()) {
+    updata_db(k_tree.get_parent());
   }
+
+  auto k_c = this->p_rpcClien.lock();
+  k_c->delete_metadata(k_data);
 }
 
 void metadata_serialize::updata_db(entt::entity in) const {
-  auto k_reg  = g_reg();
-  auto k_tree = k_reg->try_get<tree_relationship>(in);
+  auto k_h = make_handle(in);
+  if (k_h.all_of<tree_relationship, database>())
+    throw doodle_error{"缺失组件"};
 
-  auto k_data = k_reg->try_get<database>(in);
-  if (k_data) {
-    if (k_data->p_need_save) {
-      if (k_tree) {
-        if (k_tree->has_parent()) {
-          updata_db(k_tree->get_parent());
-        }
-      }
-      auto k_c = this->p_rpcClien.lock();
-      k_c->update_metadata(*k_data);
-    }
-  }
+  auto &k_tree = k_h.get<tree_relationship>();
+  auto &k_data = k_h.get<database>();
+  auto k_c     = this->p_rpcClien.lock();
+  k_c->update_metadata(k_data);
 }
 
 void metadata_serialize::select_indb(entt::entity in) const {
@@ -86,10 +83,9 @@ void metadata_serialize::select_indb(entt::entity in) const {
     throw doodle_error{"缺失组件"};
 
   auto k_c      = this->p_rpcClien.lock();
-  auto k_reg    = g_reg();
-  auto k_tree   = k_reg->try_get<tree_relationship>(in);
+  auto &k_tree  = k_h.get<tree_relationship>();
 
-  auto k_data   = k_reg->try_get<database>(in);
+  auto &k_data  = k_h.get<database>();
   auto k_filter = new_object<rpc_filter::filter>();
   /// 选择自身本身并更新
 
@@ -98,11 +94,10 @@ void metadata_serialize::select_indb(entt::entity in) const {
   // k_filter->reset();
 
   /// 选择子物体并更新
-  k_filter->set_parent_id(k_data->get_id());
+  k_filter->set_parent_id(k_data.get_id());
   auto k_v = k_c->select_entity(k_filter);
   for (auto &i : k_v) {
-    auto &k = k_reg->get_or_emplace<tree_relationship>(i);
-    k.set_parent(in);
+    make_handle(i).get_or_emplace<tree_relationship>().set_parent(in);
   }
 }
 

@@ -130,8 +130,7 @@ rpc_filter::filter::operator metadata_database_filter() const {
   if (_parent_id)
     k_tmp.mutable_parent()->set_value(*_parent_id);
   if (_meta_type)
-    k_tmp.mutable_m_type()->set_value(
-        magic_enum::enum_cast<metadata_database::meta_type>(magic_enum::enum_integer(*_meta_type)).value());
+    k_tmp.mutable_m_type()->set_value(magic_enum::enum_integer(*_meta_type));
   if (_begin && _end) {
     auto k_begin_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
         chrono::to_time_t(*_begin));
