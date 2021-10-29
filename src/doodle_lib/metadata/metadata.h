@@ -86,7 +86,7 @@ class DOODLELIB_API tree_relationship
   // [[nodiscard]] std::vector<entt::entity> &get_child() noexcept;
   // void set_child(const std::vector<entt::entity> &in_child) noexcept;
 
-  entt::entity get_root() const;
+  entt::handle get_root() const;
 };
 
 class DOODLELIB_API database {
@@ -109,7 +109,7 @@ class DOODLELIB_API database {
   ~database() = default;
 
   DOODLE_MOVE(database);
-
+  static void set_enum(entt::registry &in_reg, entt::entity in_ent);
   std::size_t p_has_child;
   std::size_t p_has_file;
   bool p_updata_parent_id;

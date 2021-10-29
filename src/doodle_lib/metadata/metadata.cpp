@@ -71,21 +71,16 @@ const std::vector<entt::entity> &tree_relationship::get_child() const noexcept {
 //   p_child = in_child;
 // }
 
-entt::entity tree_relationship::get_root() const {
-  auto k_reg = g_reg();
-
-  const tree_relationship *k_t{this};
-  entt::entity k_parent{p_parent};
-  while (k_parent != entt::null) {
-    k_t      = k_reg->try_get<tree_relationship>(k_parent);
-    k_parent = k_t->p_parent;
+entt::handle tree_relationship::get_root() const {
+  auto k_h = make_handle(*this);
+  while (k_h) {
+    auto &k_tree = k_h.get<tree_relationship>();
+    if (!k_tree.has_parent())
+      return k_h;
+    k_h = k_tree.get_parent_h();
   }
-  return entt::to_entity(*(g_reg()), *this);
-  // if (k_t->has_parent())
-  //   return reg.get<tree_relationship>(p_parent);
-  // else {
-  //   return entt::to_entity(reg, *this);
-  // }
+  return k_h;
+
 }
 bool tree_relationship::has_parent() const {
   return p_parent != entt::null;
@@ -111,14 +106,31 @@ database::database()
       p_boost_serialize_vesion(0) {
 }
 
+void database::set_enum(entt::registry &in_reg, entt::entity in_ent) {
+  auto k_h        = entt::handle{in_reg, in_ent};
+  auto [k_p, k_f] = k_h.try_get<project, assets_file>();
+  auto &k_data    = k_h.get<database>();
+
+  if (k_p)
+    k_data.p_type = metadata_type::project_root;
+  else if (k_f) {
+    k_data.p_type = metadata_type::file;
+  } else
+    k_data.p_type = metadata_type::folder;
+}
+
 FSys::path database::get_url_uuid() const {
+  auto k_h = make_handle(*this);
+
+
+
   auto l_reg   = g_reg();
   auto l_ent   = entt::to_entity(*l_reg, *this);
 
   // 找到本身的树类
-  auto &l_tree = l_reg->get<tree_relationship>(l_ent);
+  auto &l_tree = k_h.get<tree_relationship>();
   // 找到根的数据库类
-  auto &k_data = l_reg->get<database>(l_tree.get_root());
+  auto &k_data = l_tree.get_root().get<database>();
 
   // 组合路径
   auto path    = FSys::path{k_data.p_uuid};
