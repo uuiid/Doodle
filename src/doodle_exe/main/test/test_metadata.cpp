@@ -212,7 +212,47 @@ TEST_CASE("test create metadata", "[server][metadata]") {
     }
   }
 }
+TEST_CASE("load_meta", "[metadata]") {
+  using namespace doodle;
+  auto k_server = rpc_server_handle{};
+  auto& set     = core_set::getSet();
+  k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
+  doodle_lib::Get().init_gui();
+  SECTION("load_meta") {
+    std::function<void(const entt::handle& in, std::int32_t&)> k_fun{};
+    std::function<void()> k_load{};
+    std::int32_t k_i{0};
+    k_fun = [&k_load, &k_fun](const entt::handle& in, std::int32_t& in_dep) {
+      auto k = in.try_get<tree_relationship>();
+      k_load();
+      if (!k)
+        return;
 
+      auto k_i_ = in_dep + 1;
+      for (auto& i : k->get_child()) {
+        auto k_h = make_handle(i);
+        k_h.emplace<need_load>();
+        std::cout << std::setiosflags(std::ios::right)
+                  << std::setw(k_i_ * 5)
+                  << k_h.get_or_emplace<to_str>().get() << std::endl;
+        k_fun(k_h, k_i_);
+      }
+    };
+    k_load = []() {
+      auto k_v = g_reg()->view<need_load, database, tree_relationship>();
+      auto k_f = doodle_lib::Get().get_metadata_factory();
+      for (auto k : k_v) {
+        k_f->select_indb(k);
+      }
+    };
+    auto& k_lib = doodle_lib::Get();
+    k_lib.init_gui();
+    REQUIRE(k_lib.p_project_vector.size() >= 1);
+    auto k = make_handle(k_lib.p_project_vector.front());
+    k.emplace<need_load>();
+    k_fun(k, k_i);
+  }
+}
 TEST_CASE("gui action metadata", "[metadata][gui]") {
   //  using namespace doodle;
   //  using namespace doodle::chrono::literals;
