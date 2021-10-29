@@ -13,7 +13,6 @@
 
 namespace doodle {
 
-
 metadata_serialize::metadata_serialize()
     : p_rpcClien(doodle_lib::Get().get_rpc_metadata_client()) {
 }
@@ -82,6 +81,10 @@ void metadata_serialize::updata_db(entt::entity in) const {
 }
 
 void metadata_serialize::select_indb(entt::entity in) const {
+  auto k_h = make_handle(in);
+  if (!k_h.all_of<database, tree_relationship>())
+    throw doodle_error{"缺失组件"};
+
   auto k_c      = this->p_rpcClien.lock();
   auto k_reg    = g_reg();
   auto k_tree   = k_reg->try_get<tree_relationship>(in);

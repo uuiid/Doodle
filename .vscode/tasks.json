@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "show all test",
+      "type": "shell",
+      "command": "${command:cmake.launchTargetPath} -l",
+      "options": {
+        "cwd": "${command:cmake.getLaunchTargetDirectory}"
+      },
+      "group": "test"
+    },
+    {
+      "label": "run test",
+      "type": "shell",
+      "command": "${command:cmake.launchTargetPath} \"test*\" -r console -c gui_action_metadata",
+      "options": {
+        "cwd": "${command:cmake.getLaunchTargetDirectory}"
+      },
+      "group": "test"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "arg_input",
+      "type": "promptString",
+      "description": "input arg",
+      "default": "test create metadata"
+    }
+  ]
+}

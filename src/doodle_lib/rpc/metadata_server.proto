@@ -15,16 +15,9 @@ message metadata_database{
   google.protobuf.UInt64Value parent = 3;
   google.protobuf.Timestamp update_time = 4;
   google.protobuf.Any Metadata_cereal = 5;
-  enum meta_type{
-    unknown_file = 0;
-    project_root = 1;
-    file = 2;
-    folder = 3;
-    derive_file = 4;
-    animation_lib_root = 5;
-  }
+
   message meta_type_value{
-    meta_type value = 1;
+    uint64 value = 1;
   }
   meta_type_value m_type = 6;
 }

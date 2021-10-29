@@ -30,7 +30,6 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>  // IWYU pragma: export
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
-#include <google/protobuf/generated_enum_reflection.h>
 #include <google/protobuf/unknown_field_set.h>
 #include <google/protobuf/timestamp.pb.h>
 #include <google/protobuf/any.pb.h>
@@ -77,35 +76,6 @@ template<> DOODLELIB_API ::doodle::metadata_database_meta_type_value* Arena::Cre
 PROTOBUF_NAMESPACE_CLOSE
 namespace doodle {
 
-enum metadata_database_meta_type : int {
-  metadata_database_meta_type_unknown_file = 0,
-  metadata_database_meta_type_project_root = 1,
-  metadata_database_meta_type_file = 2,
-  metadata_database_meta_type_folder = 3,
-  metadata_database_meta_type_derive_file = 4,
-  metadata_database_meta_type_animation_lib_root = 5,
-  metadata_database_meta_type_metadata_database_meta_type_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
-  metadata_database_meta_type_metadata_database_meta_type_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
-};
-DOODLELIB_API bool metadata_database_meta_type_IsValid(int value);
-constexpr metadata_database_meta_type metadata_database_meta_type_meta_type_MIN = metadata_database_meta_type_unknown_file;
-constexpr metadata_database_meta_type metadata_database_meta_type_meta_type_MAX = metadata_database_meta_type_animation_lib_root;
-constexpr int metadata_database_meta_type_meta_type_ARRAYSIZE = metadata_database_meta_type_meta_type_MAX + 1;
-
-DOODLELIB_API const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* metadata_database_meta_type_descriptor();
-template<typename T>
-inline const std::string& metadata_database_meta_type_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, metadata_database_meta_type>::value ||
-    ::std::is_integral<T>::value,
-    "Incorrect type passed to function metadata_database_meta_type_Name.");
-  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    metadata_database_meta_type_descriptor(), enum_t_value);
-}
-inline bool metadata_database_meta_type_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, metadata_database_meta_type* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<metadata_database_meta_type>(
-    metadata_database_meta_type_descriptor(), name, value);
-}
 // ===================================================================
 
 class DOODLELIB_API metadata_database_meta_type_value PROTOBUF_FINAL :
@@ -223,13 +193,13 @@ class DOODLELIB_API metadata_database_meta_type_value PROTOBUF_FINAL :
   enum : int {
     kValueFieldNumber = 1,
   };
-  // .doodle.metadata_database.meta_type value = 1;
+  // uint64 value = 1;
   void clear_value();
-  ::doodle::metadata_database_meta_type value() const;
-  void set_value(::doodle::metadata_database_meta_type value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 value() const;
+  void set_value(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::doodle::metadata_database_meta_type _internal_value() const;
-  void _internal_set_value(::doodle::metadata_database_meta_type value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_value() const;
+  void _internal_set_value(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
   // @@protoc_insertion_point(class_scope:doodle.metadata_database.meta_type_value)
@@ -239,7 +209,7 @@ class DOODLELIB_API metadata_database_meta_type_value PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
-  int value_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 value_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_metadata_5fserver_2eproto;
 };
@@ -356,44 +326,6 @@ class DOODLELIB_API metadata_database PROTOBUF_FINAL :
   // nested types ----------------------------------------------------
 
   typedef metadata_database_meta_type_value meta_type_value;
-
-  typedef metadata_database_meta_type meta_type;
-  static constexpr meta_type unknown_file =
-    metadata_database_meta_type_unknown_file;
-  static constexpr meta_type project_root =
-    metadata_database_meta_type_project_root;
-  static constexpr meta_type file =
-    metadata_database_meta_type_file;
-  static constexpr meta_type folder =
-    metadata_database_meta_type_folder;
-  static constexpr meta_type derive_file =
-    metadata_database_meta_type_derive_file;
-  static constexpr meta_type animation_lib_root =
-    metadata_database_meta_type_animation_lib_root;
-  static inline bool meta_type_IsValid(int value) {
-    return metadata_database_meta_type_IsValid(value);
-  }
-  static constexpr meta_type meta_type_MIN =
-    metadata_database_meta_type_meta_type_MIN;
-  static constexpr meta_type meta_type_MAX =
-    metadata_database_meta_type_meta_type_MAX;
-  static constexpr int meta_type_ARRAYSIZE =
-    metadata_database_meta_type_meta_type_ARRAYSIZE;
-  static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
-  meta_type_descriptor() {
-    return metadata_database_meta_type_descriptor();
-  }
-  template<typename T>
-  static inline const std::string& meta_type_Name(T enum_t_value) {
-    static_assert(::std::is_same<T, meta_type>::value ||
-      ::std::is_integral<T>::value,
-      "Incorrect type passed to function meta_type_Name.");
-    return metadata_database_meta_type_Name(enum_t_value);
-  }
-  static inline bool meta_type_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
-      meta_type* value) {
-    return metadata_database_meta_type_Parse(name, value);
-  }
 
   // accessors -------------------------------------------------------
 
@@ -746,22 +678,22 @@ class DOODLELIB_API metadata_database_filter PROTOBUF_FINAL :
 #endif  // __GNUC__
 // metadata_database_meta_type_value
 
-// .doodle.metadata_database.meta_type value = 1;
+// uint64 value = 1;
 inline void metadata_database_meta_type_value::clear_value() {
-  value_ = 0;
+  value_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::doodle::metadata_database_meta_type metadata_database_meta_type_value::_internal_value() const {
-  return static_cast< ::doodle::metadata_database_meta_type >(value_);
+inline ::PROTOBUF_NAMESPACE_ID::uint64 metadata_database_meta_type_value::_internal_value() const {
+  return value_;
 }
-inline ::doodle::metadata_database_meta_type metadata_database_meta_type_value::value() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 metadata_database_meta_type_value::value() const {
   // @@protoc_insertion_point(field_get:doodle.metadata_database.meta_type_value.value)
   return _internal_value();
 }
-inline void metadata_database_meta_type_value::_internal_set_value(::doodle::metadata_database_meta_type value) {
+inline void metadata_database_meta_type_value::_internal_set_value(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   value_ = value;
 }
-inline void metadata_database_meta_type_value::set_value(::doodle::metadata_database_meta_type value) {
+inline void metadata_database_meta_type_value::set_value(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_value(value);
   // @@protoc_insertion_point(field_set:doodle.metadata_database.meta_type_value.value)
 }
@@ -1514,16 +1446,6 @@ inline void metadata_database_filter::set_allocated_parent(PROTOBUF_NAMESPACE_ID
 // @@protoc_insertion_point(namespace_scope)
 
 }  // namespace doodle
-
-PROTOBUF_NAMESPACE_OPEN
-
-template <> struct is_proto_enum< ::doodle::metadata_database_meta_type> : ::std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::doodle::metadata_database_meta_type>() {
-  return ::doodle::metadata_database_meta_type_descriptor();
-}
-
-PROTOBUF_NAMESPACE_CLOSE
 
 // @@protoc_insertion_point(global_scope)
 

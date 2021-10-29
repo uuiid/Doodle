@@ -19,8 +19,7 @@ PROTOBUF_PRAGMA_INIT_SEG
 namespace doodle {
 constexpr metadata_database_meta_type_value::metadata_database_meta_type_value(
   ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
-  : value_(0)
-{}
+  : value_(PROTOBUF_ULONGLONG(0)){}
 struct metadata_database_meta_type_valueDefaultTypeInternal {
   constexpr metadata_database_meta_type_valueDefaultTypeInternal()
     : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
@@ -65,7 +64,7 @@ struct metadata_database_filterDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT metadata_database_filterDefaultTypeInternal _metadata_database_filter_default_instance_;
 }  // namespace doodle
 static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_metadata_5fserver_2eproto[3];
-static const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* file_level_enum_descriptors_metadata_5fserver_2eproto[1];
+static constexpr ::PROTOBUF_NAMESPACE_ID::EnumDescriptor const** file_level_enum_descriptors_metadata_5fserver_2eproto = nullptr;
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_metadata_5fserver_2eproto = nullptr;
 
 const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_metadata_5fserver_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
@@ -113,40 +112,36 @@ const char descriptor_table_protodef_metadata_5fserver_2eproto[] PROTOBUF_SECTIO
   "\n\025metadata_server.proto\022\006doodle\032\037google/"
   "protobuf/timestamp.proto\032\031google/protobu"
   "f/any.proto\032\036google/protobuf/wrappers.pr"
-  "oto\032\022user_message.proto\"\262\003\n\021metadata_dat"
+  "oto\032\022user_message.proto\"\235\002\n\021metadata_dat"
   "abase\022\n\n\002id\030\001 \001(\004\022\021\n\tuuid_path\030\002 \001(\t\022,\n\006"
   "parent\030\003 \001(\0132\034.google.protobuf.UInt64Val"
   "ue\022/\n\013update_time\030\004 \001(\0132\032.google.protobu"
   "f.Timestamp\022-\n\017Metadata_cereal\030\005 \001(\0132\024.g"
   "oogle.protobuf.Any\0229\n\006m_type\030\006 \001(\0132).doo"
-  "dle.metadata_database.meta_type_value\032E\n"
-  "\017meta_type_value\0222\n\005value\030\001 \001(\0162#.doodle"
-  ".metadata_database.meta_type\"n\n\tmeta_typ"
-  "e\022\020\n\014unknown_file\020\000\022\020\n\014project_root\020\001\022\010\n"
-  "\004file\020\002\022\n\n\006folder\020\003\022\017\n\013derive_file\020\004\022\026\n\022"
-  "animation_lib_root\020\005\"\355\001\n\030metadata_databa"
-  "se_filter\022\n\n\002id\030\001 \001(\004\022.\n\nbegin_time\030\002 \001("
-  "\0132\032.google.protobuf.Timestamp\022,\n\010end_tim"
-  "e\030\003 \001(\0132\032.google.protobuf.Timestamp\0229\n\006m"
-  "_type\030\004 \001(\0132).doodle.metadata_database.m"
-  "eta_type_value\022,\n\006parent\030\005 \001(\0132\034.google."
-  "protobuf.UInt64Value2\350\004\n\017metadata_server"
-  "\022J\n\020install_metadata\022\031.doodle.metadata_d"
-  "atabase\032\031.doodle.metadata_database\"\000\022I\n\017"
-  "delete_metadata\022\031.doodle.metadata_databa"
-  "se\032\031.doodle.metadata_database\"\000\022I\n\017updat"
-  "e_metadata\022\031.doodle.metadata_database\032\031."
-  "doodle.metadata_database\"\000\022R\n\017filter_met"
-  "adata\022 .doodle.metadata_database_filter\032"
-  "\031.doodle.metadata_database\"\0000\001\022C\n\021instal"
-  "l_user_date\022\025.doodle.user_database\032\025.doo"
-  "dle.user_database\"\000\022B\n\020update_user_date\022"
-  "\025.doodle.user_database\032\025.doodle.user_dat"
-  "abase\"\000\022I\n\020delete_user_date\022\034.doodle.use"
-  "r_database_filter\032\025.doodle.user_database"
-  "\"\000\022K\n\020filter_user_date\022\034.doodle.user_dat"
-  "abase_filter\032\025.doodle.user_database\"\0000\001b"
-  "\006proto3"
+  "dle.metadata_database.meta_type_value\032 \n"
+  "\017meta_type_value\022\r\n\005value\030\001 \001(\004\"\355\001\n\030meta"
+  "data_database_filter\022\n\n\002id\030\001 \001(\004\022.\n\nbegi"
+  "n_time\030\002 \001(\0132\032.google.protobuf.Timestamp"
+  "\022,\n\010end_time\030\003 \001(\0132\032.google.protobuf.Tim"
+  "estamp\0229\n\006m_type\030\004 \001(\0132).doodle.metadata"
+  "_database.meta_type_value\022,\n\006parent\030\005 \001("
+  "\0132\034.google.protobuf.UInt64Value2\350\004\n\017meta"
+  "data_server\022J\n\020install_metadata\022\031.doodle"
+  ".metadata_database\032\031.doodle.metadata_dat"
+  "abase\"\000\022I\n\017delete_metadata\022\031.doodle.meta"
+  "data_database\032\031.doodle.metadata_database"
+  "\"\000\022I\n\017update_metadata\022\031.doodle.metadata_"
+  "database\032\031.doodle.metadata_database\"\000\022R\n"
+  "\017filter_metadata\022 .doodle.metadata_datab"
+  "ase_filter\032\031.doodle.metadata_database\"\0000"
+  "\001\022C\n\021install_user_date\022\025.doodle.user_dat"
+  "abase\032\025.doodle.user_database\"\000\022B\n\020update"
+  "_user_date\022\025.doodle.user_database\032\025.dood"
+  "le.user_database\"\000\022I\n\020delete_user_date\022\034"
+  ".doodle.user_database_filter\032\025.doodle.us"
+  "er_database\"\000\022K\n\020filter_user_date\022\034.dood"
+  "le.user_database_filter\032\025.doodle.user_da"
+  "tabase\"\0000\001b\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_metadata_5fserver_2eproto_deps[4] = {
   &::descriptor_table_google_2fprotobuf_2fany_2eproto,
@@ -156,7 +151,7 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_metadata_5fserver_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_metadata_5fserver_2eproto = {
-  false, false, 1447, descriptor_table_protodef_metadata_5fserver_2eproto, "metadata_server.proto", 
+  false, false, 1298, descriptor_table_protodef_metadata_5fserver_2eproto, "metadata_server.proto", 
   &descriptor_table_metadata_5fserver_2eproto_once, descriptor_table_metadata_5fserver_2eproto_deps, 4, 3,
   schemas, file_default_instances, TableStruct_metadata_5fserver_2eproto::offsets,
   file_level_metadata_metadata_5fserver_2eproto, file_level_enum_descriptors_metadata_5fserver_2eproto, file_level_service_descriptors_metadata_5fserver_2eproto,
@@ -170,35 +165,6 @@ descriptor_table_metadata_5fserver_2eproto_metadata_getter(int index) {
 // Force running AddDescriptors() at dynamic initialization time.
 PROTOBUF_ATTRIBUTE_INIT_PRIORITY static ::PROTOBUF_NAMESPACE_ID::internal::AddDescriptorsRunner dynamic_init_dummy_metadata_5fserver_2eproto(&descriptor_table_metadata_5fserver_2eproto);
 namespace doodle {
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* metadata_database_meta_type_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_metadata_5fserver_2eproto);
-  return file_level_enum_descriptors_metadata_5fserver_2eproto[0];
-}
-bool metadata_database_meta_type_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-      return true;
-    default:
-      return false;
-  }
-}
-
-#if (__cplusplus < 201703) && (!defined(_MSC_VER) || _MSC_VER >= 1900)
-constexpr metadata_database_meta_type metadata_database::unknown_file;
-constexpr metadata_database_meta_type metadata_database::project_root;
-constexpr metadata_database_meta_type metadata_database::file;
-constexpr metadata_database_meta_type metadata_database::folder;
-constexpr metadata_database_meta_type metadata_database::derive_file;
-constexpr metadata_database_meta_type metadata_database::animation_lib_root;
-constexpr metadata_database_meta_type metadata_database::meta_type_MIN;
-constexpr metadata_database_meta_type metadata_database::meta_type_MAX;
-constexpr int metadata_database::meta_type_ARRAYSIZE;
-#endif  // (__cplusplus < 201703) && (!defined(_MSC_VER) || _MSC_VER >= 1900)
 
 // ===================================================================
 
@@ -220,7 +186,7 @@ metadata_database_meta_type_value::metadata_database_meta_type_value(const metad
 }
 
 void metadata_database_meta_type_value::SharedCtor() {
-value_ = 0;
+value_ = PROTOBUF_ULONGLONG(0);
 }
 
 metadata_database_meta_type_value::~metadata_database_meta_type_value() {
@@ -249,7 +215,7 @@ void metadata_database_meta_type_value::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  value_ = 0;
+  value_ = PROTOBUF_ULONGLONG(0);
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -260,12 +226,11 @@ const char* metadata_database_meta_type_value::_InternalParse(const char* ptr, :
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // .doodle.metadata_database.meta_type value = 1;
+      // uint64 value = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
-          ::PROTOBUF_NAMESPACE_ID::uint64 val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          value_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
-          _internal_set_value(static_cast<::doodle::metadata_database_meta_type>(val));
         } else goto handle_unusual;
         continue;
       default: {
@@ -296,11 +261,10 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .doodle.metadata_database.meta_type value = 1;
+  // uint64 value = 1;
   if (this->value() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumToArray(
-      1, this->_internal_value(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->_internal_value(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -319,10 +283,11 @@ size_t metadata_database_meta_type_value::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .doodle.metadata_database.meta_type value = 1;
+  // uint64 value = 1;
   if (this->value() != 0) {
     total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->_internal_value());
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
+        this->_internal_value());
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
