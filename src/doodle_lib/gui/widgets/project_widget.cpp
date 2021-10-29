@@ -37,8 +37,7 @@ void project_widget::frame_render() {
                            ImGuiSelectableFlags_SpanAllColumns)) {
         p_current_select = p;
         select_change(p_current_select);
-        command_ k_com{comm_project_add{}};
-        k_com.render();
+        command k_com{command_base_list{}};
       }
       imgui::TableNextColumn();
       dear::Text(k_h.get<project>().get_path().generic_string());

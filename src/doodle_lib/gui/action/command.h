@@ -61,6 +61,7 @@ class DOODLELIB_API command_base_list : public command_base {
 
   command_base_list() = default;
   bool render() override;
+  bool test_r();
   bool set_data(const entt::handle& in_any) override;
   bool set_parent(const entt::handle& in_ptr) override;
 };
@@ -87,7 +88,7 @@ class DOODLELIB_API command_list {
 
 BOOST_TYPE_ERASURE_MEMBER(render);
 
-using command_ = boost::type_erasure::any<
+using command = boost::type_erasure::any<
     boost::mpl::vector<
         has_render<bool()>,
         boost::type_erasure::copy_constructible<>,
