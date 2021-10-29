@@ -85,22 +85,6 @@ class DOODLELIB_API command_list {
   };
 };
 
-class command_interface
-    : public entt::type_list<
-          bool()> {
- public:
-  command_interface() = default;
-  template <typename Base>
-  class type : public Base {
-   public:
-    bool render() {
-      return entt::poly_call<0>(*this);
-    }
-  };
-  template <typename Type>
-  using impl = entt::value_list<&Type::render>;
-};
-
 BOOST_TYPE_ERASURE_MEMBER(render);
 
 using command_ = boost::type_erasure::any<
