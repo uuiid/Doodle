@@ -48,9 +48,52 @@ class DOODLELIB_API command_base_list : public command_base {
  public:
   std::vector<std::shared_ptr<command_base>> p_list;
 
+  std::vector<std::shared_ptr<command_base>>& get() {
+    return p_list;
+  }
+
   command_base_list() = default;
   bool render() override;
   bool set_data(const entt::handle& in_any) override;
   bool set_parent(const entt::handle& in_ptr) override;
 };
+
+template <class... arg>
+class DOODLELIB_API command_list {
+ public:
+  boost::hana::tuple<arg...> list;
+
+  command_list() : list(){};
+
+  bool render() {
+    bool k_r{true};
+    boost::hana::for_each(
+        list,
+        [&](auto& in) {
+          dear::TreeNode{in.class_name().c_str()} && [&]() {
+            k_r &= in.render();
+          };
+        });
+    return k_r;
+  };
+};
+
+class command_interface
+    : public entt::type_list<
+          bool()> {
+ public:
+  command_interface() = default;
+  template <typename Base>
+  class type : public Base {
+   public:
+    bool render() {
+      return entt::poly_call<0>(*this);
+    }
+  };
+  template <typename Type>
+  using impl = entt::value_list<&Type::render>;
+};
+
+using command_ = entt::poly<command_interface>;
+
 }  // namespace doodle

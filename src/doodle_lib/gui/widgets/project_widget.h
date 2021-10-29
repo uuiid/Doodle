@@ -15,6 +15,8 @@ namespace doodle {
  *
  */
 class DOODLELIB_API project_widget : public metadata_widget {
+  
+ 
  public:
   project_widget();
   void frame_render() override;

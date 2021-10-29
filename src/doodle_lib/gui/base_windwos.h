@@ -25,9 +25,10 @@ class DOODLELIB_API base_widget
 class DOODLELIB_API metadata_widget : public base_widget {
  protected:
   attribute_factory_ptr p_factory;
-
+  command_ptr p_comm;
  public:
   virtual attribute_factory_ptr get_factory();
+  virtual command_ptr get_comm();
 };
 
 class DOODLELIB_API windows_warp_base : public base_widget {
