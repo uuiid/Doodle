@@ -8,6 +8,13 @@
 
 #include <any>
 #include <boost/hana.hpp>
+#include <boost/type_erasure/any.hpp>
+#include <boost/type_erasure/any_cast.hpp>
+#include <boost/type_erasure/builtin.hpp>
+#include <boost/type_erasure/free.hpp>
+#include <boost/type_erasure/member.hpp>
+#include <boost/type_erasure/operators.hpp>
+
 namespace doodle {
 
 namespace details {
@@ -93,7 +100,16 @@ class command_interface
   template <typename Type>
   using impl = entt::value_list<&Type::render>;
 };
+BOOST_TYPE_ERASURE_MEMBER(push_back);
+BOOST_TYPE_ERASURE_MEMBER(render);
 
-using command_ = entt::poly<command_interface>;
+using command_ = boost::type_erasure::any<
+    boost::mpl::vector<
+        has_render<bool()>,
+        boost::type_erasure::copy_constructible<>,
+        boost::type_erasure::typeid_<>,
+        boost::type_erasure::relaxed>>;
+
+// using command_ = entt::poly<command_interface>;
 
 }  // namespace doodle
