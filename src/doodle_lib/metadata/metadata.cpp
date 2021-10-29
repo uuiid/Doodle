@@ -206,7 +206,7 @@ database &database::operator=(const metadata_database &in_) {
       }
     });
   }
-  p_id   = in_.id();
+  set_id(in_.id());
   p_type = magic_enum::enum_cast<metadata_type>(in_.m_type().value())
                .value_or(metadata_type::unknown_file);
   return *this;

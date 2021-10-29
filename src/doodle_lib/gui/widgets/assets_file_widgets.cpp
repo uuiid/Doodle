@@ -126,7 +126,7 @@ void assets_file_widgets::frame_render() {
           auto& l_tree     = p_root.get<tree_relationship>();
           for (const auto& i : l_tree.get_child()) {
             auto l_h = make_handle(i);
-            if (l_h.try_get<assets_file>()) {
+            if (l_h.all_of<database, tree_relationship, assets_file>()) {
               imgui::TableNextRow();
               for (auto& l_i : p_colum_list)
                 l_i->frame_render(l_h);
@@ -137,9 +137,7 @@ void assets_file_widgets::frame_render() {
 }
 
 void assets_file_widgets::set_metadata(const entt::entity& in_ptr) {
-  auto k_h = make_handle(in_ptr);
-  if (k_h.all_of<tree_relationship, database, assets_file>())
-    p_root = k_h;
+  p_root = make_handle(in_ptr);
 }
 
 }  // namespace doodle
