@@ -100,7 +100,7 @@ class command_interface
   template <typename Type>
   using impl = entt::value_list<&Type::render>;
 };
-BOOST_TYPE_ERASURE_MEMBER(push_back);
+
 BOOST_TYPE_ERASURE_MEMBER(render);
 
 using command_ = boost::type_erasure::any<

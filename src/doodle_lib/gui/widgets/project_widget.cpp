@@ -38,7 +38,7 @@ void project_widget::frame_render() {
         p_current_select = p;
         select_change(p_current_select);
         command_ k_com{comm_project_add{}};
-        k_com->render();
+        k_com.render();
       }
       imgui::TableNextColumn();
       dear::Text(k_h.get<project>().get_path().generic_string());
