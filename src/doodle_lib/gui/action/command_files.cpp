@@ -76,7 +76,7 @@ bool comm_files_select::render() {
 }
 
 bool comm_files_select::set_data(const entt::handle& in_data) {
-  if (in_data.any_of<assets_file_type>()) {
+  if (in_data.any_of<assets_file>()) {
     p_root = in_data;
   }
   return true;
