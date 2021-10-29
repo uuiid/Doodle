@@ -28,7 +28,7 @@ std::vector<entt::entity> metadata_serialize::get_all_prj() const {
 
 bool metadata_serialize::insert_into(entt::entity in) const {
   auto k_h = make_handle(in);
-  if (k_h.all_of<tree_relationship, database>())
+  if (!k_h.all_of<tree_relationship, database>())
     throw doodle_error{"缺失组件"};
 
   auto &k_tree = k_h.get<tree_relationship>();
@@ -54,7 +54,7 @@ bool metadata_serialize::insert_into(entt::entity in) const {
 
 void metadata_serialize::delete_data(entt::entity in) const {
   auto k_h = make_handle(in);
-  if (k_h.all_of<tree_relationship, database>())
+  if (!k_h.all_of<tree_relationship, database>())
     throw doodle_error{"缺失组件"};
 
   auto &k_tree = k_h.get<tree_relationship>();
@@ -70,7 +70,7 @@ void metadata_serialize::delete_data(entt::entity in) const {
 
 void metadata_serialize::updata_db(entt::entity in) const {
   auto k_h = make_handle(in);
-  if (k_h.all_of<tree_relationship, database>())
+  if (!k_h.all_of<tree_relationship, database>())
     throw doodle_error{"缺失组件"};
 
   auto &k_tree = k_h.get<tree_relationship>();
