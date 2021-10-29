@@ -32,6 +32,7 @@ void project_widget::frame_render() {
                            p == p_current_select,
                            ImGuiSelectableFlags_SpanAllColumns)) {
         p_current_select = p;
+        select_change(p_current_select);
       }
       imgui::TableNextColumn();
       dear::Text(k_h.get<project>().get_path().generic_string());

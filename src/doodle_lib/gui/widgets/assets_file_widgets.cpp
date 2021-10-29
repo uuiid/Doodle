@@ -120,14 +120,8 @@ void assets_file_widgets::frame_render() {
 
         imgui::TableHeadersRow();
         list_data l_data{};
-        boost::hana::for_each(l_data, [&](auto& in_item) {
-          auto l_ptr = reg->template try_ctx<
-              std::remove_pointer_t<std::decay_t<decltype(in_item)>>>();
-          if (l_ptr)
-            p_root = to_entity((*l_ptr).get());
-        });
 
-        if (p_root != entt::null) {
+        if (p_root) {
           auto& l_database = reg->get<database>(p_root);
           auto& l_tree     = reg->get<tree_relationship>(p_root);
           for (const auto& i : l_tree.get_child()) {
@@ -143,7 +137,7 @@ void assets_file_widgets::frame_render() {
 }
 
 void assets_file_widgets::set_metadata(const entt::entity& in_ptr) {
-  p_root = in_ptr;
+  p_root = make_handle(in_ptr);
 }
 
 }  // namespace doodle

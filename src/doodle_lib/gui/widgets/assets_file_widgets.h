@@ -29,7 +29,7 @@ using table_column_ptr = std::shared_ptr<table_column>;
  *
  */
 class DOODLELIB_API assets_file_widgets : public metadata_widget {
-  entt::entity p_root;
+  entt::handle p_root;
   entt::entity p_current_select;
 
   std::vector<details::table_column_ptr> p_colum_list;
