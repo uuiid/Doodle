@@ -37,13 +37,17 @@ void assets_widget::load_meta(const entt::handle& in_ptr) {
   static auto base_flags{ImGuiTreeNodeFlags_OpenOnArrow |
                          ImGuiTreeNodeFlags_OpenOnDoubleClick |
                          ImGuiTreeNodeFlags_SpanAvailWidth};
-
-  auto l_tree = in_ptr.try_get<tree_relationship>();
-  if (!l_tree)
+  if (!in_ptr.all_of<tree_relationship, database>())
     return;
+
+  auto& l_tree = in_ptr.get<tree_relationship>();
+
   auto& l_data = in_ptr.get<database>();
-  if (l_tree && l_data.has_child()) {
-    for (const auto& i : l_tree->get_child()) {
+  if (l_data.has_child()) {
+    /// 加载数据
+    if (!in_ptr.all_of<is_load>())
+      in_ptr.emplace<need_load>();
+    for (const auto& i : l_tree.get_child()) {
       auto k_ch  = make_handle(i);
       auto flsge = base_flags;
       if (is_select(k_ch))

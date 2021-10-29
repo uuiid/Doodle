@@ -80,7 +80,6 @@ entt::handle tree_relationship::get_root() const {
     k_h = k_tree.get_parent_h();
   }
   return k_h;
-
 }
 bool tree_relationship::has_parent() const {
   return p_parent != entt::null;
@@ -120,9 +119,7 @@ void database::set_enum(entt::registry &in_reg, entt::entity in_ent) {
 }
 
 FSys::path database::get_url_uuid() const {
-  auto k_h = make_handle(*this);
-
-
+  auto k_h     = make_handle(*this);
 
   auto l_reg   = g_reg();
   auto l_ent   = entt::to_entity(*l_reg, *this);
@@ -261,6 +258,20 @@ const std::string &database::get_uuid() const {
 const string &database::get_id_str() const {
   return p_id_str;
 }
+
+namespace database_stauts {
+void set_stauts(entt::registry &in_reg, entt::entity in_ent) {
+  auto k_h = entt::handle{in_reg, in_ent};
+  if (k_h.any_of<need_load>()) {
+    k_h.remove<is_load>();
+  } else if (k_h.any_of<is_load>()) {
+    k_h.remove<need_load>();
+  } else if (k_h.any_of<need_save, need_delete>()) {
+    k_h.remove<need_load, is_load>();
+  }
+}
+
+}  // namespace database_stauts
 
 const string &to_str::get() const {
   auto k_h   = make_handle(*this);

@@ -61,6 +61,11 @@ doodle_lib::doodle_lib()
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<tree_relationship>>();
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
   reg->on_construct<assets_file>().connect<&database::set_enum>();
+
+  reg->on_construct<need_load>().connect<&database_stauts::set_stauts>();
+  reg->on_construct<is_load>().connect<&database_stauts::set_stauts>();
+  reg->on_construct<need_save>().connect<&database_stauts::set_stauts>();
+  reg->on_construct<need_delete>().connect<&database_stauts::set_stauts>();
 }
 
 FSys::path doodle_lib::create_time_database() {
