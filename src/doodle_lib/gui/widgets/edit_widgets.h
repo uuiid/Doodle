@@ -11,7 +11,7 @@
 namespace doodle {
 class DOODLELIB_API edit_widgets  : public base_widget{
   entt::entity p_meta_parent;
-  attribute_factory_ptr p_factory;
+
   public:
   edit_widgets();
   virtual void frame_render() override;

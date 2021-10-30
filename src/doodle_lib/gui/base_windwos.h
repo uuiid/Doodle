@@ -5,6 +5,12 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
+#include <boost/type_erasure/any.hpp>
+#include <boost/type_erasure/any_cast.hpp>
+#include <boost/type_erasure/builtin.hpp>
+#include <boost/type_erasure/free.hpp>
+#include <boost/type_erasure/member.hpp>
+#include <boost/type_erasure/operators.hpp>
 
 #include <boost/hana/experimental/printable.hpp>
 namespace doodle {
@@ -94,5 +100,13 @@ std::shared_ptr<widget> win_cast(const base_widget_ptr& in) {
   else
     return nullptr;
 }
+BOOST_TYPE_ERASURE_MEMBER(render);
+
+using widget_ = boost::type_erasure::any<
+    boost::mpl::vector<
+        has_render<bool()>,
+        boost::type_erasure::copy_constructible<>,
+        boost::type_erasure::typeid_<>,
+        boost::type_erasure::relaxed>>;
 
 }  // namespace doodle

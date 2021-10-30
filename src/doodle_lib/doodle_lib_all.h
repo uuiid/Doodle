@@ -48,6 +48,7 @@
 #include <doodle_lib/lib_warp/cache.hpp>
 #include <doodle_lib/lib_warp/cache_policy.hpp>
 #include <doodle_lib/lib_warp/cmrcWarp.h>
+#include <doodle_lib/lib_warp/entt_warp.h>
 #include <doodle_lib/lib_warp/fifo_cache_policy.hpp>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/lib_warp/json_warp.h>

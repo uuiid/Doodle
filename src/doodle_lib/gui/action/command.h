@@ -8,12 +8,6 @@
 
 #include <any>
 #include <boost/hana.hpp>
-#include <boost/type_erasure/any.hpp>
-#include <boost/type_erasure/any_cast.hpp>
-#include <boost/type_erasure/builtin.hpp>
-#include <boost/type_erasure/free.hpp>
-#include <boost/type_erasure/member.hpp>
-#include <boost/type_erasure/operators.hpp>
 
 namespace doodle {
 
@@ -86,14 +80,6 @@ class DOODLELIB_API command_list {
   };
 };
 
-BOOST_TYPE_ERASURE_MEMBER(render);
-
-using command = boost::type_erasure::any<
-    boost::mpl::vector<
-        has_render<bool()>,
-        boost::type_erasure::copy_constructible<>,
-        boost::type_erasure::typeid_<>,
-        boost::type_erasure::relaxed>>;
 
 // using command_ = entt::poly<command_interface>;
 

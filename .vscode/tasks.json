@@ -13,7 +13,7 @@
     {
       "label": "run test",
       "type": "shell",
-      "command": "${command:cmake.launchTargetPath} -r console --order lex load_meta",
+      "command": "${command:cmake.launchTargetPath} -r console --order lex type_erasure",
       "options": {
         "cwd": "${command:cmake.getLaunchTargetDirectory}"
       },

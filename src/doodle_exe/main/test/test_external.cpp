@@ -5,7 +5,6 @@
 
 #include <catch.hpp>
 
-
 TEST_CASE("date time", "[time]") {
   using namespace doodle;
   date::current_zone();
@@ -18,15 +17,27 @@ TEST_CASE("date time", "[time]") {
 #include <boost/type_erasure/operators.hpp>
 BOOST_TYPE_ERASURE_MEMBER(push_back)
 
+class test_to_entt {
+  std::int32_t p_t;
+
+ public:
+  bool render() {
+    using namespace doodle;
+    auto k_h = make_handle(*this);
+    REQUIRE(k_h);
+    return true;
+  }
+};
 
 TEST_CASE("type_erasure", "[boost]") {
-  namespace mpl = boost::mpl;
-  using namespace boost::type_erasure;
-  any<mpl::vector<has_push_back<void(int)>, copy_constructible<>, typeid_<>, relaxed>> x{};
-  // boost::hana::if_;
-  // x = 1;
-  x = std::vector<int>{};
-  x.push_back(1);
+  using namespace doodle;
+  auto reg  = g_reg();
+  auto k_h  = make_handle(reg->create());
+  auto& k_w = k_h.emplace<test_to_entt>(test_to_entt{});
+  REQUIRE(to_entity(k_w) == k_h.entity());
+  k_w.render();
+  std::any k_any;
+  entt::enum_as_bitmask<metadata_type>{};
 }
 
 struct test_external {
@@ -67,19 +78,16 @@ class serializeion_warp {
   };
 };
 
-void fun(const entt::registry& in_reg,entt::entity in){}
-
-
+void fun(const entt::registry& in_reg, entt::entity in) {}
 
 TEST_CASE("entt load", "[boost]") {
   using namespace doodle;
   // auto& set = core_set::getSet();
-  entt::registry reg {};
+  entt::registry reg{};
 
   auto a = reg.create();
   reg.emplace<test_external>(a, 1.f, 1.f);
-  auto &k_s = reg.emplace<shot>(a);
-
+  auto& k_s = reg.emplace<shot>(a);
 
   serializeion_warp output;
 
