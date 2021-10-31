@@ -222,4 +222,6 @@
  * @subsubsection updata_log_3117 版本3.1.17
  * @li 解算时自动删除缓存文件修复
  * 
+ * @subsubsection updata_log_3118 版本3.1.18
+ * @li 解算时自动时缓存文件夹不存在时抛出异常问题
  */
