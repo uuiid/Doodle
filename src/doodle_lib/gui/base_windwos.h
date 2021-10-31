@@ -5,14 +5,14 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
+
+#include <boost/hana/experimental/printable.hpp>
 #include <boost/type_erasure/any.hpp>
 #include <boost/type_erasure/any_cast.hpp>
 #include <boost/type_erasure/builtin.hpp>
 #include <boost/type_erasure/free.hpp>
 #include <boost/type_erasure/member.hpp>
 #include <boost/type_erasure/operators.hpp>
-
-#include <boost/hana/experimental/printable.hpp>
 namespace doodle {
 class DOODLELIB_API base_widget
     : public details::no_copy,
@@ -21,6 +21,22 @@ class DOODLELIB_API base_widget
   string p_class_name;
 
   virtual bool use_register() { return true; };
+
+  template <class in_class>
+  bool render_tmp(registry_ptr& in) {
+    auto k_v = in->view<in_class>();
+    bool k_{true};
+    for (auto k_i : k_v) {
+      k_ &= k_v.get<in_class>(k_i).render();
+    }
+    return true;
+  }
+
+  template <class... arg>
+  bool render_() {
+    auto k_reg = g_reg();
+    return (render_tmp<arg>(k_reg) && ...);
+  }
 
  public:
   virtual void post_constructor();
@@ -32,6 +48,7 @@ class DOODLELIB_API metadata_widget : public base_widget {
  protected:
   attribute_factory_ptr p_factory;
   command_ptr p_comm;
+
  public:
   virtual attribute_factory_ptr get_factory();
   virtual command_ptr get_comm();

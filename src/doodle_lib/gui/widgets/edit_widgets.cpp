@@ -27,19 +27,12 @@ edit_widgets::edit_widgets()
 }
 
 void edit_widgets::frame_render() {
-  auto k_reg = g_reg();
-  // {
-  //   auto k_v = k_reg->view<comm_project_add>();
-  //   for (auto& k_i : k_v) {
-  //     k_v.get<comm_project_add>(k_i).render();
-  //   }
-  // }
-  DOODLE_ENTT_RENDER(comm_project_add);
-  DOODLE_ENTT_RENDER(comm_ass_season);
-  DOODLE_ENTT_RENDER(comm_ass_eps);
-  DOODLE_ENTT_RENDER(comm_ass_shot);
-  DOODLE_ENTT_RENDER(comm_assets);
-  DOODLE_ENTT_RENDER(comm_ass_ue4_create_shot);
+  render_<comm_project_add,
+          comm_ass_season,
+          comm_ass_eps,
+          comm_ass_shot,
+          comm_assets,
+          comm_ass_ue4_create_shot>();
 }
 
 void edit_widgets::set_factort(const attribute_factory_ptr& in_factory) {
