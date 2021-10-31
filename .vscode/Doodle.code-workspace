@@ -187,7 +187,32 @@
 		"markdownlint.config": {
 			"MD033": false
 		},
-		"git.fetchOnPull": true
+		"git.fetchOnPull": true,
+		"taskExplorer.exclude": [
+			"**/.vscode-test/**",
+			"**/bin/**",
+			"**/build/**",
+			"**/CompiledOutput/**",
+			"**/dist/**",
+			"**/doc/**",
+			"**/ext/**",
+			"**/out/**",
+			"**/output/**",
+			"**/packages/**",
+			"**/release/**",
+			"**/releases/**",
+			"**/samples/**",
+			"**/sdks/**",
+			"**/static/**",
+			"**/target/**",
+			"**/test/**",
+			"**/third_party/**",
+			"**/vendor/**",
+			"**/work/**",
+			"**/external/**",
+			"**/resource/**",
+			"**/.venv/**"
+		]
 	},
 	"launch": {
 		"version": "0.2.0",
