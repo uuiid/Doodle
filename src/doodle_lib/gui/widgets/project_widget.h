@@ -15,8 +15,27 @@ namespace doodle {
  *
  */
 class DOODLELIB_API project_widget : public metadata_widget {
-  
- 
+  template <typename... arg>
+  class add_comm_guard {
+   private:
+    entt::handle p_curr;
+
+   public:
+    add_comm_guard() : p_curr(){};
+
+    add_comm_guard& operator=(entt::handle in) {
+      if (p_curr) {
+        p_curr.remove<arg...>();
+      }
+      p_curr = in;
+      p_curr.get_or_emplace<arg...>();
+    };
+
+    operator entt::entity() const {
+      return p_curr;
+    }
+  };
+
  public:
   project_widget();
   void frame_render() override;
