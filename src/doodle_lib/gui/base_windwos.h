@@ -14,6 +14,43 @@
 #include <boost/type_erasure/member.hpp>
 #include <boost/type_erasure/operators.hpp>
 namespace doodle {
+namespace widget_n {
+// template <typename... arg>
+// class command_guard {
+//  private:
+//   entt::handle p_curr;
+
+//  public:
+//   command_guard() : p_curr(){};
+
+//   command_guard& operator=(entt::handle in) {
+//     if (p_curr) {
+//       (p_curr.remove<arg>(), ...);
+//     }
+//     p_curr = in;
+//     (p_curr.emplace<arg>(), ...);
+//     return *this;
+//   };
+
+//   bool operator==(const command_guard& in_rhs) const {
+//     return p_curr == in_rhs.p_curr;
+//   }
+//   bool operator!=(const command_guard& in_rhs) const {
+//     return !(in_rhs == *this);
+//   }
+//   bool operator==(const entt::handle& in_rhs) const {
+//     return p_curr == in_rhs;
+//   }
+//   bool operator!=(const entt::handle& in_rhs) const {
+//     return !(in_rhs == *this);
+//   }
+
+//   operator entt::entity() const {
+//     return p_curr;
+//   }
+// };
+}  // namespace widget_n
+
 class DOODLELIB_API base_widget
     : public details::no_copy,
       public std::enable_shared_from_this<base_widget> {
@@ -27,7 +64,9 @@ class DOODLELIB_API base_widget
     auto k_v = in->view<in_class>();
     bool k_{true};
     for (auto k_i : k_v) {
-      k_ &= k_v.get<in_class>(k_i).render();
+      dear::TreeNode{k_v.get<in_class>(k_i).class_name().c_str()} && [&] {
+        k_ &= k_v.get<in_class>(k_i).render();
+      };
     }
     return true;
   }

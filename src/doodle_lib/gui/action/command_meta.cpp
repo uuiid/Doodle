@@ -70,6 +70,7 @@ bool comm_project_add::render() {
   return true;
 }
 bool comm_project_add::set_data(const entt::handle& in_data) {
+  command_base::set_data(in_data);
   if (in_data.any_of<project>()) {
     p_root = in_data;
     if (p_root) {
@@ -106,7 +107,6 @@ comm_ass_eps::comm_ass_eps()
 }
 
 bool comm_ass_eps::render() {
-  ImGui::BulletText("%s", p_name.c_str());
   if (p_meta_var) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       if (!(*use_batch)) {
@@ -140,6 +140,7 @@ bool comm_ass_eps::render() {
   return true;
 }
 bool comm_ass_eps::set_data(const entt::handle& in_data) {
+  command_base::set_data(in_data);
   if (in_data.any_of<episodes>()) {
     p_root = in_data;
     p_data = p_root.get<episodes>().get_episodes();
@@ -220,6 +221,7 @@ bool comm_ass_shot::render() {
   return true;
 }
 bool comm_ass_shot::set_data(const entt::handle& in_data) {
+  command_base::set_data(in_data);
   if (in_data.any_of<shot>()) {
     p_root    = in_data;
     p_data    = p_root.get<shot>().get_shot();
@@ -277,6 +279,7 @@ bool comm_assets::render() {
   return true;
 }
 bool comm_assets::set_data(const entt::handle& in_data) {
+  command_base::set_data(in_data);
   if (in_data.any_of<assets>()) {
     p_root = in_data;
     p_data = p_root.get<assets>().get_name1();
@@ -350,6 +353,7 @@ bool comm_ass_season::render() {
   return true;
 }
 bool comm_ass_season::set_data(const entt::handle& in_data) {
+  command_base::set_data(in_data);
   if (in_data.any_of<season>()) {
     p_root = in_data;
     p_data = p_root.get<season>().get_season();
@@ -406,6 +410,7 @@ bool comm_ass_file_attr::render() {
   return true;
 }
 bool comm_ass_file_attr::set_data(const entt::handle& in_data) {
+  command_base::set_data(in_data);
   if (in_data.all_of<assets_file, time_point_wrap>()) {
     p_root = in_data;
     p_time_widget->set_time(p_root);

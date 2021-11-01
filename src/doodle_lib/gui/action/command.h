@@ -32,9 +32,17 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
   command_base();
   virtual const std::string& class_name() { return p_name; };
   virtual bool is_async() { return false; };
-  virtual bool render()                             = 0;
-  virtual bool set_data(const entt::handle& in_any) = 0;
+  virtual bool render() = 0;
+  virtual bool set_data(const entt::handle& in_any) {
+    return set_parent(in_any);
+  };
   virtual bool set_parent(const entt::handle& in_ptr);
+
+  template <class in_class>
+  static void on_construct_slot(entt::registry& in_reg, entt::entity in_ent) {
+    auto k_h = entt::handle{in_reg, in_ent};
+    k_h.get<in_class>().set_data(k_h);
+  };
 };
 
 class DOODLELIB_API command_base_tool : public command_base {
@@ -78,8 +86,17 @@ class DOODLELIB_API command_list {
         });
     return k_r;
   };
-};
 
+  bool set_data(const entt::handle& in_any) {
+    bool k_r{true};
+    boost::hana::for_each(
+        list,
+        [&](auto& in) {
+          k_r &= in.set_data(in_any);
+        });
+    return k_r;
+  }
+};
 
 // using command_ = entt::poly<command_interface>;
 

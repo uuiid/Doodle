@@ -14,9 +14,9 @@
 namespace doodle {
 
 project_widget::project_widget()
-    : p_current_select() {
+    : p_c() {
   p_class_name = "项目";
-  auto k_com = new_object<command_base_list>();
+  auto k_com   = new_object<command_base_list>();
   k_com->get();
 }
 void project_widget::frame_render() {
@@ -33,10 +33,19 @@ void project_widget::frame_render() {
       imgui::TableNextRow();
       imgui::TableNextColumn();
       if (dear::Selectable(k_h.get<project>().show_str(),
-                           p == p_current_select,
+                           k_h == p_c,
                            ImGuiSelectableFlags_SpanAllColumns)) {
-        p_current_select = p;
-        select_change(p_current_select);
+        p_c         = k_h;
+        auto k_comm = command_list<
+            comm_project_add,
+            comm_ass_eps,
+            comm_ass_shot,
+            comm_assets,
+            comm_ass_season>{};
+        k_comm.set_data(p_c);
+        g_reg()->set<widget_>(k_comm);
+
+        select_change(p_c);
       }
       imgui::TableNextColumn();
       dear::Text(k_h.get<project>().get_path().generic_string());

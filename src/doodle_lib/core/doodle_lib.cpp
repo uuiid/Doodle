@@ -8,6 +8,8 @@
 #include <doodle_lib/Logger/logger.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/exception/exception.h>
+#include <doodle_lib/gui/action/command.h>
+#include <doodle_lib/gui/action/command_meta.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/rpc/rpc_file_system_client.h>
