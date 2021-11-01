@@ -15,8 +15,7 @@ namespace doodle {
 comm_files_select::comm_files_select()
     : p_root(),
       p_use_relative(new_object<bool>(false)),
-      p_file(),
-      p_list_paths() {
+      p_file(){
   p_name     = "添加文件";
   p_show_str = make_imgui_name(this,
                                "添加文件",
@@ -62,7 +61,7 @@ bool comm_files_select::render() {
         p_show_str["路径列表"].c_str(),
         ImVec2{-FLT_MIN, 5 * imgui::GetTextLineHeightWithSpacing()}} &&
         [this]() {
-          for (auto& i : p_list_paths.get<assets_path_vector>().get()) {
+          for (auto& i : p_root.get_or_emplace<assets_path_vector>().get()) {
             auto str = fmt::format("本地 {} \n服务器 {}", i.get_local_path(),
                                    i.get_server_path());
             imgui::Selectable(str.c_str());

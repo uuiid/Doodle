@@ -4,6 +4,9 @@
 
 #include "assets_file_widgets.h"
 
+#include <doodle_lib/gui/action/command.h>
+#include <doodle_lib/gui/action/command_files.h>
+#include <doodle_lib/gui/action/command_meta.h>
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
@@ -27,6 +30,11 @@ bool assets_file_widgets::add_colum_render() {
                          in_.entity() == p_current_select,
                          ImGuiSelectableFlags_SpanAllColumns)) {
       p_current_select = in_;
+      auto comm        = command_list<comm_ass_file_attr,
+                               comm_files_select>{};
+                               
+      comm.set_data(in_);
+      g_reg()->set<widget_>(comm);
       select_change(p_current_select);
     }
     return true;

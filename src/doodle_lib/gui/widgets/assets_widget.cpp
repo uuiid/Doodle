@@ -5,6 +5,8 @@
 #include "assets_widget.h"
 
 #include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/gui/action/command.h>
+#include <doodle_lib/gui/action/command_meta.h>
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
@@ -125,7 +127,16 @@ void assets_widget::check_item_clicked(const entt::handle& in_ptr) {
   }
 }
 void assets_widget::set_select(const entt::handle& in_ptr) {
-  p_meta = in_ptr;
+  p_meta     = in_ptr;
+  auto k_reg = g_reg();
+  auto comm  = command_list<comm_ass_eps,
+                           comm_ass_shot,
+                           comm_assets,
+                           comm_ass_season,
+                           comm_ass_ue4_create_shot>{};
+  comm.set_data(p_meta);
+  k_reg->set<widget_>(comm);
+
   p_all_selected.insert(p_meta);
   select_change(p_meta);
 }

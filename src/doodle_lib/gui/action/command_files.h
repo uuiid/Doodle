@@ -56,7 +56,6 @@ class DOODLELIB_API comm_files_select : public command_base {
  private:
   entt::handle p_root;
   bool_ptr p_use_relative;
-  entt::handle p_list_paths;
   FSys::path p_file;
 
   command_ptr p_comm_sub;

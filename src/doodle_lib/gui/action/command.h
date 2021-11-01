@@ -46,11 +46,11 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
 };
 
 class DOODLELIB_API command_base_tool : public command_base {
-  bool set_data(const entt::handle& in_any) override { return false; };
-  bool set_parent(const entt::handle& in_ptr) override { return false; };
 
  public:
   command_base_tool() = default;
+  bool set_data(const entt::handle& in_any) override { return false; };
+  bool set_parent(const entt::handle& in_ptr) override { return false; };
 };
 
 class DOODLELIB_API command_base_list : public command_base {
