@@ -13,7 +13,7 @@ $map_item = @(
     @("C:\sy\JianJi_8", "\\192.168.10.250\public\11-剪辑", "8幢_剪辑"),
     @("C:\sy\HouQi_8", "\\192.168.10.250\public\HouQi", "8幢_后期"),
     @("C:\sy\MeiYiGiao_8", "\\192.168.10.250\public\美易高", "美易高"),
-    @("C:\sy\LianQiShiWanNian_8", "\\192.168.10.250\public\LianQiShiWanNian", "8幢_念气十万年"),
+    @("C:\sy\LianQiShiWanNian_8", "\\192.168.10.250\public\LianQiShiWanNian", "8幢_炼气十万年"),
     @("C:\sy\WuJinShenYu_8", "\\192.168.10.250\public\WuJinShenYu", "8幢_无尽神域"),
 
     @("C:\sy\WanYuFengShen_9", "\\192.168.10.218\WanYuFengShen", "9幢_万域封神"),
