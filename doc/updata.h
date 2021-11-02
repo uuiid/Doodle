@@ -224,4 +224,9 @@
  * 
  * @subsubsection updata_log_3118 版本3.1.18
  * @li 解算时自动时缓存文件夹不存在时抛出异常问题
+ * 
+ * 
+ * @subsubsection updata_log_3119 版本3.1.19
+ * @li 修复gui初始化中错误的线程池线程数
+ * @li 添加解锁后烘培相机方案
  */
