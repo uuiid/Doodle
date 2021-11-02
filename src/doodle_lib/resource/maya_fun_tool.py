@@ -231,12 +231,12 @@ class camera:
                 self.bakeAnm()
             except:
                 print("back camera fail")
-        else:
-            pymel.core.bakeResults(self.maya_cam, sm=True,
+        print("unlock camera")
+        self.unlock_cam()
+        print("bake Results camera")
+        pymel.core.bakeResults(self.maya_cam, sm=True,
                                    t=(doodle_work_space.raneg.start,
                                       doodle_work_space.raneg.end))
-
-        self.unlock_cam()
 
         mel_name = "{path}/{name}_camera_{start}-{end}.fbx".format(
             path=export_path,
