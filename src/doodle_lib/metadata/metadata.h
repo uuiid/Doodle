@@ -19,6 +19,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/signals2.hpp>
 #include <optional>
+
 namespace doodle {
 
 enum class metadata_type {
@@ -40,11 +41,12 @@ enum class metadata_type {
 class DOODLELIB_API tree_relationship
 /* : public boost::intrusive::set_base_hook<> */ {
   friend metadata_serialize;
+
  private:
   entt::entity p_parent;
 
-
   void set_parent_raw(const entt::handle &in_parent);
+
  public:
   std::vector<entt::entity> p_child;
   // boost::intrusive::set<> p_child;
@@ -190,9 +192,33 @@ using need_load   = entt::tag<"need_load"_hs>;
 using is_load     = entt::tag<"is_load"_hs>;
 using need_save   = entt::tag<"need_save"_hs>;
 using need_delete = entt::tag<"need_delete"_hs>;
-namespace database_stauts {
-void set_stauts(entt::registry &in_reg, entt::entity in_ent);
-}
+
+class DOODLELIB_API database_stauts {
+  std::int32_t p_statu;
+
+ public:
+  template <class in_statu>
+  void set() {
+    p_statu = in_statu::value;
+  };
+  template <class in_statu>
+  bool is() const {
+    return p_statu == in_statu::value;
+  }
+
+  template <class in_class>
+  class DOODLELIB_API set_status {
+   public:
+    set_status() = default;
+    template <class in_comm>
+    void operator()(in_comm &in){
+      in.set<in_class>();
+    };
+  };
+};
+
+template<class in_class>
+using database_set_stauts =database_stauts::set_status<in_class>; 
 
 class DOODLELIB_API to_str {
  private:

@@ -47,8 +47,10 @@ void assets_widget::load_meta(const entt::handle& in_ptr) {
   auto& l_data = in_ptr.get<database>();
   if (l_data.has_child()) {
     /// 加载数据
-    if (!in_ptr.all_of<is_load>())
-      in_ptr.get_or_emplace<need_load>();
+    if (!in_ptr.get<database_stauts>().is<is_load>())
+      in_ptr.patch<database_stauts>([](auto& in) {
+        in.set<need_load>();
+      });
     for (const auto& i : l_tree.get_child()) {
       auto k_ch = make_handle(i);
       if (k_ch.all_of<assets_file>())

@@ -66,6 +66,7 @@ set(
     metadata/metadata.h
     metadata/metadata_cpp.h
     metadata/metadata_factory.h
+    metadata/metadata_state.h
     metadata/project.h
     metadata/season.h
     metadata/shot.h

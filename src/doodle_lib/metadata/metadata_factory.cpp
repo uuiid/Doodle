@@ -51,8 +51,8 @@ bool metadata_serialize::insert_into(entt::entity in) const {
     k_c->install_metadata(k_data);
   } else
     k_c->update_metadata(k_data);
-  k_h.emplace<is_load>();
-  k_h.remove<need_load>();
+
+  k_h.get<database_stauts>().set<is_load>();
   return true;
 }
 
@@ -71,7 +71,8 @@ void metadata_serialize::delete_data(entt::entity in) const {
 
   auto k_c = this->p_rpcClien.lock();
   k_c->delete_metadata(k_data);
-  k_h.remove<need_delete>();
+  k_h.get<database_stauts>().set<is_load>();
+  k_h.destroy();
 }
 
 void metadata_serialize::updata_db(entt::entity in) const {
@@ -85,9 +86,7 @@ void metadata_serialize::updata_db(entt::entity in) const {
   auto &k_data = k_h.get<database>();
   auto k_c     = this->p_rpcClien.lock();
   k_c->update_metadata(k_data);
-  k_h.emplace<is_load>();
-  k_h.remove<need_load>();
-
+  k_h.get<database_stauts>().set<is_load>();
 }
 
 void metadata_serialize::select_indb(entt::entity in) const {
@@ -114,9 +113,8 @@ void metadata_serialize::select_indb(entt::entity in) const {
   for (auto &i : k_v) {
     make_handle(i).get_or_emplace<tree_relationship>().set_parent_raw(k_h);
   }
-  k_h.emplace<is_load>();
-  k_h.remove<need_load>();
 
+  k_h.get<database_stauts>().set<is_load>();
 }
 
 }  // namespace doodle

@@ -35,7 +35,7 @@ bool comm_project_add::render() {
   if (imgui::Button(p_show_str["添加"].c_str())) {
     auto k_en = make_handle(reg->create());
     k_en.emplace<project>(*p_prj_path, *p_prj_name);
-    k_en.emplace<need_save>();
+    k_en.patch<database_stauts>(database_set_stauts<need_save>{});
     k_d_lib.p_project_vector.push_back(k_en);
   }
   if (p_root) {
@@ -43,11 +43,11 @@ bool comm_project_add::render() {
     if (imgui::Button(p_show_str["修改"].c_str())) {
       p_root.get<project>().set_name(*p_prj_name);
       p_root.get<project>().set_path(*p_prj_path);
-      p_root.emplace<need_save>();
+      p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
     imgui::SameLine();
     if (imgui::Button(p_show_str["删除"].c_str())) {
-      p_root.emplace<need_delete>();
+      p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
     }
   }
 
@@ -87,9 +87,9 @@ void comm_ass_eps::add_eps(const std::vector<std::int32_t>& p_eps) {
   for (auto i : p_eps) {
     auto eps = make_handle(reg->create());
     eps.emplace<episodes>(i);
-    eps.emplace<need_save>();
+    eps.patch<database_stauts>(database_set_stauts<need_save>{});
     eps.get<tree_relationship>().set_parent(p_meta_var);
-    p_meta_var.emplace<need_save>();
+    p_meta_var.patch<database_stauts>(database_set_stauts<need_save>{});
   }
 }
 
@@ -121,13 +121,13 @@ bool comm_ass_eps::render() {
       imgui::SameLine();
       if (imgui::Button(p_show_str["修改"].c_str())) {
         p_root.patch<episodes>([&](auto& eps) { eps.set_episodes(p_data); });
-        p_root.emplace<need_save>();
+        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
       }
 
       if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
-          p_root.emplace<need_delete>();
+          p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
         }
       }
     }
@@ -155,10 +155,10 @@ void comm_ass_shot::add_shot(const std::vector<std::int32_t>& p_shots) {
     auto k_h = make_handle(reg->create());
     k_h.emplace<shot>(s);
     k_h.get<shot>().set_shot_ab(std::string{p_shot_ab});
-    k_h.emplace<need_save>();
+    k_h.patch<database_stauts>(database_set_stauts<need_save>{});
     k_h.get<tree_relationship>().set_parent(p_meta_var);
 
-    p_meta_var.emplace<need_save>();
+    p_meta_var.patch<database_stauts>(database_set_stauts<need_save>{});
   }
 }
 
@@ -196,12 +196,12 @@ bool comm_ass_shot::render() {
                              p_shot_ab)
                              .value_or(shot::shot_ab_enum::None));
         });
-        p_root.emplace<need_save>();
+        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
       }
       if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
-          p_root.emplace<need_delete>();
+          p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
         }
       }
     }
@@ -239,8 +239,8 @@ void comm_assets::add_ass(std::vector<string> in_Str) {
     k_h.patch<tree_relationship>([&](tree_relationship& in) {
       in.set_parent(p_meta_var);
     });
-    k_h.emplace<need_save>();
-    p_meta_var.emplace<need_save>();
+    k_h.patch<database_stauts>(database_set_stauts<need_save>{});
+    p_meta_var.patch<database_stauts>(database_set_stauts<need_save>{});
   }
 }
 
@@ -264,12 +264,12 @@ bool comm_assets::render() {
         p_root.patch<assets>([&](assets& in) {
           in.set_name1(p_data);
         });
-        p_root.emplace<need_save>();
+        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
       }
       if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
-          p_root.emplace<need_delete>();
+          p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
         }
       }
     }
@@ -297,8 +297,8 @@ void comm_ass_season::add_season(const std::vector<std::int32_t>& in) {
       in_.set_parent(p_meta_var);
     });
 
-    k_h.emplace<need_save>();
-    p_meta_var.emplace<need_save>();
+    k_h.patch<database_stauts>(database_set_stauts<need_save>{});
+    p_meta_var.patch<database_stauts>(database_set_stauts<need_save>{});
   }
 }
 
@@ -333,13 +333,13 @@ bool comm_ass_season::render() {
         p_root.patch<season>([p_data = p_data](season& in) {
           in.set_season(p_data);
         });
-        p_root.emplace<need_save>();
+        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
       }
 
       if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
-          p_root.emplace<need_delete>();
+          p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
         }
       }
     }
@@ -384,14 +384,14 @@ bool comm_ass_file_attr::render() {
       p_meta_var.patch<tree_relationship>([&](tree_relationship& in) {
         in.set_parent(p_meta_var);
       });
-      k_h.emplace<need_save>();
+      k_h.patch<database_stauts>(database_set_stauts<need_save>{});
     }
     if (p_root) {
       imgui::SameLine();
       if (!p_root.get<database>().has_child()) {
         imgui::SameLine();
         if (imgui::Button(p_show_str["删除"].c_str())) {
-          p_root.emplace<need_delete>();
+          p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
         }
       }
     }
@@ -403,7 +403,7 @@ bool comm_ass_file_attr::render() {
       auto k_com = comment{};
       k_com.set_comment(*p_comm_str);
       p_root.get_or_emplace<comment_vector>().get().push_back(std::move(k_com));
-      p_root.emplace_or_replace<need_save>();
+      p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
   }
 

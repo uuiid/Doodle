@@ -382,6 +382,16 @@ entt::entity to_entity(const Component &instance) {
   return entt::to_entity(*(g_reg()), instance);
 };
 
+class DOODLELIB_API null_fun {
+ public:
+  null_fun() = default;
+  template <class in_class>
+  void operator()(in_class &in){
+
+  };
+};
+static null_fun null_fun_t{};
+
 using maya_file_ptr           = std::shared_ptr<maya_file>;
 using setting_windows_ptr     = std::shared_ptr<setting_windows>;
 using ue4_project_async_ptr   = std::shared_ptr<ue4_project_async>;

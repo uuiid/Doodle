@@ -69,6 +69,7 @@
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/metadata/metadata_factory.h>
+#include <doodle_lib/metadata/metadata_state.h>
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/metadata/season.h>
 #include <doodle_lib/metadata/shot.h>

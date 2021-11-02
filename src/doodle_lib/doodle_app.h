@@ -23,6 +23,7 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   std::wstring p_title;
 
   void set_imgui_dock_space(const FSys::path& in_path) const;
+  entt::observer k_metadata_obs;
 
  public:
   doodle_app();
@@ -46,11 +47,11 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   ~doodle_app();
 
  private:
-  void metadata_load() const;
+  void metadata_load();
   void metadata_save() const;
   void metadata_delete() const;
 
-  void metadata_loop_one() const;
+  void metadata_loop_one();
 
  protected:
   virtual base_widget_ptr loop_begin();

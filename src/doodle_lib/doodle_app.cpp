@@ -281,26 +281,26 @@ doodle_app* doodle_app::Get() {
 bool doodle_app::valid() const {
   return this->p_hwnd != nullptr;
 }
-void doodle_app::metadata_load() const {
+void doodle_app::metadata_load() {
   auto k_f = doodle_lib::Get().get_metadata_factory();
-  for (auto i : g_reg()->view<need_load>()) {
-    k_f->select_indb(i);
+  for (auto& k_i : k_metadata_obs) {
+    auto k_h = make_handle(k_i);
+    if (k_h.get<database_stauts>().is<need_load>()) {
+      k_f->select_indb(k_h);
+    } else if (k_h.get<database_stauts>().is<need_save>()) {
+      k_f->insert_into(k_h);
+    } else if (k_h.get<database_stauts>().is<need_delete>()) {
+      k_f->delete_data(k_h);
+    }
   }
+  k_metadata_obs.clear();
 }
 void doodle_app::metadata_save() const {
-  auto k_f = doodle_lib::Get().get_metadata_factory();
-  for (auto i : g_reg()->view<need_save>()) {
-    k_f->insert_into(i);
-  }
 }
 void doodle_app::metadata_delete() const {
-  auto k_f = doodle_lib::Get().get_metadata_factory();
-  for (auto i : g_reg()->view<need_delete>()) {
-    k_f->delete_data(i);
-  }
 }
 
-void doodle_app::metadata_loop_one() const {
+void doodle_app::metadata_loop_one() {
   metadata_save();
   metadata_load();
   metadata_delete();
@@ -328,7 +328,8 @@ base_widget_ptr doodle_app::loop_begin() {
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
-  io.IniFilename      = imgui_file_path.c_str();
+  io.IniFilename = imgui_file_path.c_str();
+  k_metadata_obs.connect(*g_reg(), entt::collector.update<database_stauts>());
   return get_main_windows();
 }
 
