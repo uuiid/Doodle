@@ -7,6 +7,7 @@ namespace doodle::maya_plug {
 
 class comm_check_scenes : public command_base_tool {
  public:
+  comm_check_scenes();
   virtual bool render() override;
 };
 }  // namespace doodle::maya_plug

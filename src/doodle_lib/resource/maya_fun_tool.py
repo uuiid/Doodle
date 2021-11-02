@@ -2,8 +2,6 @@
 import pymel.core
 import pymel.core.system
 import pymel.core.nodetypes
-import argparse
-import os
 import re
 import json
 
@@ -651,10 +649,10 @@ class cloth_group_file(export_group):
             # 这里要删除缓存
             l_path_ = doodle_work_space.work.path / path # type: pymel.core.Path
             if l_path_.exists():
-                l_path_.removedirs_p()
+                l_path_.rmtree()
+                print("delete path {}".format(l_path_))
   
             doodle_work_space.work.mkdir(doodle_work_space.work.path / path)
-            print(path)
             print(qcloth_obj)
             qcloth_obj.setAttr("cacheFolder", str(path))
             qcloth_obj.setAttr("cacheName", select_str)
