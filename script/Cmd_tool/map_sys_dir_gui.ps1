@@ -1,4 +1,4 @@
-Write-Host " 准备测试服务器 .... 请点击确认按钮并等待完成..."
+﻿Write-Host " 准备测试服务器 .... 请点击确认按钮并等待完成..."
 
 class map_dir {
   [string] $link
@@ -61,9 +61,11 @@ $file.Attributes = 'Archive, System, Hidden'
 
 
 $log_f = $env:TMP + "/doodle_map.txt";
-$l_p = Get-Item -Path $log_f 
-if ($l_p.Exists) {
-  $l_p.Delete()
+if (Test-Path $log_f) {
+  $l_p = Get-Item -Path $log_f 
+  if ($l_p.Exists) {
+    $l_p.Delete()
+  }
 }
 foreach ($item in $map_item) {
   try {
