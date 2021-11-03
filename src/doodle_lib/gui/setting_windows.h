@@ -61,6 +61,7 @@ class DOODLELIB_API setting_windows : public base_widget {
   std::shared_ptr<std::string> p_ue_path;
   std::shared_ptr<std::string> p_ue_version;
   std::shared_ptr<std::int32_t> p_batch_max;
+  std::shared_ptr<std::int32_t> p_timeout;
 
  public:
   setting_windows();

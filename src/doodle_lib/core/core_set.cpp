@@ -99,7 +99,7 @@ core_set::core_set()
       p_root(FSys::temp_directory_path() / "Doodle"),
       _root_cache(p_root / "cache"),
       _root_data(p_root / "data"),
-      reg() {
+      timeout(3600) {
 }
 
 boost::uuids::uuid core_set::get_uuid() {

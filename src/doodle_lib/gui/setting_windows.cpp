@@ -20,7 +20,8 @@ setting_windows::setting_windows()
       p_maya_path(new_object<std::string>(core_set::getSet().maya_path().generic_string())),
       p_ue_path(new_object<std::string>(core_set::getSet().get_ue4_setting().get_path().generic_string())),
       p_ue_version(new_object<std::string>(core_set::getSet().get_ue4_setting().get_version())),
-      p_batch_max(new_object<std::int32_t>(core_set::getSet().p_max_thread)) {
+      p_batch_max(new_object<std::int32_t>(core_set::getSet().p_max_thread)),
+      p_timeout(new_object<std::int32_t>(core_set::getSet().timeout)) {
   p_class_name = "设置";
 }
 void setting_windows::frame_render() {
@@ -43,6 +44,7 @@ void setting_windows::frame_render() {
   imgui::InputInt("batch 操作线程数", p_batch_max.get());
   imgui::SameLine();
   dear::HelpMarker{"更改线程池大小需要一定时间,以及风险"};
+  imgui::InputInt("超时结束", p_timeout.get());
 
   if (imgui::Button("save"))
     save();
@@ -55,6 +57,7 @@ void setting_windows::save() {
   set.set_max_tread(*p_batch_max);
   set.get_ue4_setting().set_path(*p_ue_path);
   set.get_ue4_setting().set_version(*p_ue_version);
+  set.timeout = *p_timeout;
   core_set_init{}.write_file();
   doodle_lib::Get().set_thread_pool_size();
 }

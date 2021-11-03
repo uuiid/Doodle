@@ -85,13 +85,14 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
   const static std::wregex fatal_error_en_us{
       LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab])"};
 
+  std::atomic_int16_t k_time_i{0};
   auto k_fun  = std::async([&]() {
-    std::size_t i{0};
-    for (; (i < 3600 && k_c.running()); ++i) {
+    const auto k_time = core_set::getSet().timeout;
+    for (; (k_time_i < k_time && k_c.running()); ++k_time_i) {
       using namespace std::chrono_literals;
       std::this_thread::sleep_for(1s);
     }
-    if (i > 3600) {
+    if (k_time_i > k_time) {
       in_term->set_state(long_term::fail);
       auto info_str = "解算文件超时， 请检查文件";
       DOODLE_LOG_WARN(info_str);
@@ -105,12 +106,14 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
 
   auto k_fun2 = std::async([&]() {
     while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
+      k_time_i = 0;
       in_term->sig_message_result(conv::to_utf<char>(str_r, "GBK") + "\n", long_term::warning);
       in_term->sig_progress(rational_int{1, 50});
     }
   });
 
   while (k_c.running() && std::getline(k_in2, str_r2) && !str_r2.empty()) {
+    k_time_i = 0;
     auto str = conv::to_utf<char>(str_r2, "GBK");
     in_term->sig_message_result(str + "\n", long_term::info);
     auto wstr = conv::utf_to_utf<wchar_t>(str);
@@ -176,18 +179,12 @@ quit()
     in_ptr->sig_progress(rational_int{1, 40});
 
   std::this_thread::sleep_for(chrono::seconds{3});
+  in_ptr->sig_progress(rational_int{1, 40});
+  in_ptr->sig_finished();
   if (this->run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr)) {
-    if (in_ptr) {
-      in_ptr->sig_progress(rational_int{1, 40});
-      in_ptr->sig_finished();
-      in_ptr->sig_message_result("导出完成 \n", long_term::warning);
-    }
+    in_ptr->sig_message_result("导出完成 \n", long_term::warning);
   } else {
-    if (in_ptr) {
-      in_ptr->sig_progress(rational_int{1, 40});
-      in_ptr->sig_finished();
-      in_ptr->sig_message_result(fmt::format("失败 {}\n", in_arg->file_path), long_term::warning);
-    }
+    in_ptr->sig_message_result(fmt::format("失败 {}\n", in_arg->file_path), long_term::warning);
   }
 }
 
@@ -229,18 +226,12 @@ quit())",
     in_ptr->sig_progress(rational_int{1, 40});
 
   std::this_thread::sleep_for(chrono::seconds{3});
+  in_ptr->sig_progress(rational_int{1, 40});
+  in_ptr->sig_finished();
   if (this->run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr)) {
-    if (in_ptr) {
-      in_ptr->sig_progress(rational_int{1, 40});
-      in_ptr->sig_finished();
-      in_ptr->sig_message_result("导出完成 \n", long_term::warning);
-    }
+    in_ptr->sig_message_result("导出完成 \n", long_term::warning);
   } else {
-    if (in_ptr) {
-      in_ptr->sig_progress(rational_int{1, 40});
-      in_ptr->sig_finished();
-      in_ptr->sig_message_result(fmt::format("失败 {}\n", in_arg->sim_path), long_term::warning);
-    }
+    in_ptr->sig_message_result(fmt::format("失败 {}\n", in_arg->sim_path), long_term::warning);
   }
 }
 
