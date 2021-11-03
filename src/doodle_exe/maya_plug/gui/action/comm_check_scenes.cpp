@@ -132,19 +132,33 @@ MStatus comm_check_scenes::multilateral_surface(bool use_select) {
     MFnDagNode k_dag_node{k_dag_path, &k_s};
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-    auto k_name = k_dag_node.name(&k_s);
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    // auto k_name = k_dag_node.name(&k_s);
+    // CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-    MItMeshFaceVertex k_iter_face{k_dag_path, MObject::kNullObj, &k_s};
+    // MItMeshFaceVertex k_iter_face{k_dag_path, MObject::kNullObj, &k_s};
+    // CHECK_MSTATUS_AND_RETURN_IT(k_s);
     MItMeshPolygon k_iter_poly{k_dag_path, MObject::kNullObj, &k_s};
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
-    MGlobal::displayInfo(k_iter_face.faceVertex().apiTypeStr());
-    // for (; !k_iter_face.isDone(); k_iter_face.next()) {
-    //   k_iter_face.faceId();
-    // }
+    std::uint32_t k_face_num{};
+    for (; !k_iter_poly.isDone(); k_iter_poly.next()) {
+      k_face_num = k_iter_poly.polygonVertexCount(&k_s);
+      CHECK_MSTATUS_AND_RETURN_IT(k_s);
+      // std::cout << k_iter_poly.getPoints() << std::endl;
+      if (k_face_num > 4) {
+        p_multilateral_surface = true;
+        k_s                    = k_select.add(k_dag_path, k_iter_poly.currentItem());
+        CHECK_MSTATUS_AND_RETURN_IT(k_s);
+      }
+    }
 
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    // MFnMesh k_mesh{k_dag_path, &k_s};
+    // CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+    // MItMeshEdge k_iter_edge{k_dag_path, MObject::kNullObj, &k_s};
+    // CHECK_MSTATUS_AND_RETURN_IT(k_s);
   }
+  if (use_select)
+    MGlobal::setActiveSelectionList(k_select);
 
   return k_s;
 }
@@ -197,6 +211,12 @@ bool comm_check_scenes::render() {
     CHECK_MSTATUS(k_s);
   }
   dear::Text(fmt::format("多边面 {}", p_multilateral_surface));
+  imgui::SameLine();
+  if (imgui::Button("选择多边面")) {
+    MStatus k_s{};
+    k_s = multilateral_surface(true);
+    CHECK_MSTATUS(k_s);
+  }
   dear::Text(fmt::format("多个uv集 {}", p_multilateral_surface));
   dear::Text(fmt::format("错误 (1) {}", p_multilateral_surface));
   imgui::SameLine();
