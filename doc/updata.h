@@ -232,4 +232,10 @@
  * 
  * @subsubsection updata_log_3120 版本3.1.20
  * @li maya 无论如何都要删除缓存目录
+ * 
+ * @subsubsection updata_log_3121 版本3.1.21
+ * @li maya 解算超时设置添加
+ * @li 更加智能的解算超时算法
+ * @li 解算超时后直接进行失败提示
+ * 
  */
