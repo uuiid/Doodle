@@ -50,6 +50,7 @@ MStatus comm_check_scenes::run_maya_py_script(const string& in_script) {
 }
 MStatus comm_check_scenes::unlock_normal() {
   MStatus k_s{};
+
   MItDag k_iter{MItDag::kDepthFirst, MFn::kMesh, &k_s};
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
   MSelectionList k_select{};
@@ -63,44 +64,23 @@ MStatus comm_check_scenes::unlock_normal() {
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
     if (!k_dag_path.hasFn(MFn::kMesh))
-      DOODLE_LOG_INFO("错误的类型")
-
-    MFnMesh k_mesh{k_dag_path, &k_s};
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-    MIntArray k_vex_cout{};
-    MIntArray k_vex_arr{};
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-    MItMeshVertex k_iter_vex{k_dag_path, MObject::kNullObj, &k_s};
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-    // MItMeshEdge k_iter_edge{k_dag_path, MObject::kNullObj, &k_s};
-    k_select.clear();
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
-    for (; !k_iter_vex.isDone(); k_iter_vex.next()) {
-      k_s = k_select.add(k_dag_path,k_iter_vex.currentItem(), true);
-      CHECK_MSTATUS_AND_RETURN_IT(k_s);
-    }
-    MItMeshPolygon k_iter_poly{k_dag_path, MObject::kNullObj, &k_s};
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-    k_s = k_mesh.getVertices(k_vex_cout, k_vex_arr);
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
-    /// 开始解锁法线
-    k_s = k_mesh.unlockVertexNormals(k_vex_arr);
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+      DOODLE_LOG_INFO("错误的类型");
 
     /// 开始软化边
-    k_s = MGlobal::setActiveSelectionList(k_select);
+    k_s = MGlobal::select(k_dag_path, MObject::kNullObj, MGlobal::kReplaceList);
+
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
     k_s = run_maya_py_script(R"(import pymel.core
+pymel.core.polyNormalPerVertex(unFreezeNormal=True)
 pymel.core.polySoftEdge(angle=180, constructionHistory=True)
     )");
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
     p_unlock_normal &= (k_s != MStatus::kSuccess);
   }
+  k_s = MGlobal::clearSelectionList();
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
   return k_s;
 }
 
