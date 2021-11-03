@@ -25,6 +25,10 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   void set_imgui_dock_space(const FSys::path& in_path) const;
   entt::observer k_metadata_obs;
 
+  bool p_show_err;
+  base_widget_ptr p_main_win;
+
+  
  public:
   doodle_app();
   std::atomic_bool p_done;
@@ -46,6 +50,10 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   virtual std::int32_t run();
   ~doodle_app();
 
+  virtual base_widget_ptr loop_begin();
+  virtual void loop_one();
+
+  virtual void hide_windows();
  private:
   void metadata_load();
   void metadata_save() const;
@@ -54,8 +62,5 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   void metadata_loop_one();
 
  protected:
-  virtual base_widget_ptr loop_begin();
-  virtual void loop_end();
-  virtual void loop_one(base_widget_ptr& in_ptr, bool& show_err, ImGuiIO& in_io);
 };
 }  // namespace doodle

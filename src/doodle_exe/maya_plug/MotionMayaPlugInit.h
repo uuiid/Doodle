@@ -15,11 +15,7 @@ class doodleCreate : public MPxCommand {
 
   virtual MStatus doIt(const MArgList& list) override;
   virtual bool isUndoable() const override;
-
-  static void clear_();
-
  private:
-  struct doodle_data;
-  static doodle_data* d_ptr_;
+
 };
 }  // namespace doodle::MayaPlug

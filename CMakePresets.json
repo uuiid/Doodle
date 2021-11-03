@@ -116,7 +116,7 @@
       "description": "maya插件只能使用release调试",
       "displayName": "debug maya plug",
       "inherits": "release_plug",
-      "targets": "doodle_plug"
+      "targets": "Doodle_maya_plug"
     }
   ],
   "testPresets": [

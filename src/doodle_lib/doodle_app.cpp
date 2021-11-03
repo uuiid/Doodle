@@ -179,7 +179,9 @@ doodle_app::doodle_app()
                   _T("doodle"),
                   nullptr},
       p_done(false),
-      wregister(new_object<widget_register>()) {
+      wregister(new_object<widget_register>()),
+      p_show_err(false),
+      p_main_win() {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassEx(&p_win_class);
@@ -264,13 +266,11 @@ void doodle_app::post_constructor() {
 }
 
 std::int32_t doodle_app::run() {
-  auto k_p       = loop_begin();
-  bool show_info = false;
-  ImGuiIO& io    = ImGui::GetIO();
+  loop_begin();
   while (!p_done) {
-    loop_one(k_p, show_info, io);
+    loop_one();
   }
-  loop_end();
+  hide_windows();
   return 0;
 }
 
@@ -330,15 +330,17 @@ base_widget_ptr doodle_app::loop_begin() {
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.IniFilename = imgui_file_path.c_str();
   k_metadata_obs.connect(*g_reg(), entt::collector.update<database_stauts>());
-  return get_main_windows();
+  p_main_win = get_main_windows();
+  return p_main_win;
 }
 
-void doodle_app::loop_end() {
-  ::ShowWindow(p_hwnd, SW_HIDE);
+void doodle_app::hide_windows() {
+  if (p_done)
+    ::ShowWindow(p_hwnd, SW_HIDE);
 }
 
 // Main loop
-void doodle_app::loop_one(base_widget_ptr& in_ptr, bool& show_err, ImGuiIO& in_io) {
+void doodle_app::loop_one() {
   // Poll and handle messages (inputs, window resize, etc.)
   // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
   // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
@@ -362,12 +364,12 @@ void doodle_app::loop_one(base_widget_ptr& in_ptr, bool& show_err, ImGuiIO& in_i
   imgui::DockSpaceOverViewport(imgui::GetMainViewport());
   static std::string str{};
   try {
-    in_ptr->frame_render();
+    p_main_win->frame_render();
     main_loop();
     metadata_loop_one();
   } catch (doodle_error& err) {
-    show_err = true;
-    str      = err.what();
+    p_show_err = true;
+    str        = err.what();
     imgui::OpenPopup("警告");
   }
   //    catch (std::runtime_error& err) {
@@ -377,7 +379,7 @@ void doodle_app::loop_one(base_widget_ptr& in_ptr, bool& show_err, ImGuiIO& in_i
   //
   //      imgui::OpenPopup("警告");
   //    }
-  dear::PopupModal{"警告", &show_err} && [str1 = str]() {
+  dear::PopupModal{"警告", &p_show_err} && [str1 = str]() {
     dear::Text(str);
     if (ImGui::Button("OK")) {
       ImGui::CloseCurrentPopup();
@@ -396,7 +398,7 @@ void doodle_app::loop_one(base_widget_ptr& in_ptr, bool& show_err, ImGuiIO& in_i
   ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
   // Update and Render additional Platform Windows
-  if (in_io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+  if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
   }

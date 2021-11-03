@@ -105,5 +105,16 @@ struct HelpMarker : public ScopeWrapper<HelpMarker, true> {
   static void dtor() noexcept {};
 };
 
+struct Disabled : public ScopeWrapper<HelpMarker> {
+  Disabled(bool in_disabled = true) noexcept
+      : ScopeWrapper<HelpMarker>(in_disabled) {
+    imgui::BeginDisabled(in_disabled);
+  };
+  
+  static void dtor() noexcept {
+    imgui::EndDisabled();
+  };
+};
+
 }  // namespace dear
 }  // namespace doodle
