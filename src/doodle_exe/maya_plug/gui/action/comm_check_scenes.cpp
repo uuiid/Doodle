@@ -4,16 +4,20 @@
 
 #include "comm_check_scenes.h"
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
+#include <maya/MCallbackIdArray.h>
 #include <maya/MDagPath.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnMesh.h>
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
+#include <maya/MItDependencyNodes.h>
 #include <maya/MItMeshEdge.h>
 #include <maya/MItMeshFaceVertex.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MItMeshVertex.h>
+#include <maya/MMessage.h>
 #include <maya/MSelectionList.h>
 
 namespace doodle::maya_plug {
@@ -80,7 +84,7 @@ pymel.core.polySoftEdge(angle=180, constructionHistory=True)
   }
   k_s = MGlobal::clearSelectionList();
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
+  p_unlock_normal = (k_s == MStatus::kSuccess);
   return k_s;
 }
 
@@ -198,15 +202,131 @@ for p in pymel.core.lsUI(panels=True):
 }
 
 MStatus comm_check_scenes::err_2() {
+  MStatus k_s{};
+  /// 获取Maya中的所有模型编辑器并重置 editorChanged 事件
+  k_s     = run_maya_py_script(R"(import pymel.core
+for item in pymel.core.lsUI(editors=True):
+   if isinstance(item, pymel.core.ui.ModelEditor):
+       pymel.core.modelEditor(item, edit=True, editorChanged="")
+  )");
+  p_err_2 = (k_s == MStatus::kSuccess);
   return MStatus::kSuccess;
 }
 
 MStatus comm_check_scenes::err_3() {
+  MStatus k_s{};
+  /// 获取Maya中的所有模型编辑器并重置 editorChanged 事件
+  k_s     = run_maya_py_script(R"(import pymel.core
+for item in pymel.core.lsUI(editors=True):
+   if isinstance(item, pymel.core.ui.ModelEditor):
+       pymel.core.modelEditor(item, edit=True, editorChanged="")
+  )");
+  p_err_3 = (k_s == MStatus::kSuccess);
   return MStatus::kSuccess;
 }
 
 MStatus comm_check_scenes::err_4() {
+  MStatus k_s{};
+  /// 去除无用的未知插件需求和去除贼健康问题
+  k_s = run_maya_py_script(R"doodle_script(import pymel.core
+not_nu_plug = ["mayaHlK"]
+un_know_plugs = pymel.core.unknownPlugin(query=True, list=True)
+if un_know_plugs:
+    for un_plug in un_know_plugs:
+        if un_plug in not_nu_plug:
+            continue
+        print("Remove unknown plugin {}".format(un_plug))
+        pymel.core.unknownPlugin(un_plug, remove=True)
+plugs = pymel.core.pluginInfo(query=True, listPlugins=True)
+if plugs:
+    for plug in plugs:
+        if plug in not_nu_plug:
+            continue
+        print("Cancel {} Automatic loading of plug-in writing".format(plug))
+        pymel.core.pluginInfo(plug, edit=True, writeRequires=False)
+print("=" * 30 + "clear ok" + "=" * 30)
+
+for job in pymel.core.scriptJob(listJobs=True):
+  if job.find("leukocyte.antivirus()") > 0:
+    num = re.findall("""\d+""",job)[0]
+    print(num)
+    pymel.core.scriptJob(kill=int(num),force=True)
+
+if 'leukocyte' in globals():
+  del leukocyte
+  )doodle_script");
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+  MItDependencyNodes k_iter{MFn::kScript, &k_s};
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  MObject k_node{};
+  std::vector<MObject> k_obj_set{};
+  for (; !k_iter.isDone(); k_iter.next()) {
+    MDagPath k_dag_path{};
+
+    k_node = k_iter.thisNode(&k_s);
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+    MFnDependencyNode k_dag_node{k_node, &k_s};
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+    if (k_dag_node.name() == "vaccine_gene" ||
+        k_dag_node.name() == "breed_gene") {
+      k_obj_set.push_back(k_dag_node.object());
+    }
+  }
+  for (auto k_obj : k_obj_set) {
+    k_s = MGlobal::deleteNode(k_obj);
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  }
+
+  auto k_maya_script = doodle::get_pwd() / "maya" / "scripts";
+  if (FSys::exists(k_maya_script)) {
+    auto k_user = k_maya_script / "userSetup.py";
+    auto k_var  = k_maya_script / "vaccine.py";
+    auto k_varc = k_maya_script / "vaccine.pyc";
+    MString k_str{};
+    if (FSys::exists(k_user)) {
+      k_str.setUTF8(fmt::format("删除 {}", k_user).c_str());
+      MGlobal::displayInfo(k_str);
+      FSys::remove(k_user);
+    }
+    if (FSys::exists(k_var)) {
+      k_str.setUTF8(fmt::format("删除 {}", k_var).c_str());
+      MGlobal::displayInfo(k_str);
+      FSys::remove(k_var);
+    }
+    if (FSys::exists(k_varc)) {
+      k_str.setUTF8(fmt::format("删除 {}", k_varc).c_str());
+      MGlobal::displayInfo(k_str);
+      FSys::remove(k_varc);
+    }
+  }
+
+  p_err_4 = (k_s == MStatus::kSuccess);
   return MStatus::kSuccess;
+}
+
+MStatus comm_check_scenes::print_mfn() {
+  MStatus k_s{};
+  MSelectionList k_select{};
+  k_s = MGlobal::getActiveSelectionList(k_select);
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  if (!k_select.isEmpty()) {
+    MFnDependencyNode k_dag_path{};
+    MObject k_dag_obj{};
+    k_s = k_select.getDependNode(0, k_dag_obj);
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+    k_s = k_dag_path.setObject(k_dag_obj);
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+    std::cout << k_dag_path.type() << std::endl;
+    std::cout << k_dag_path.typeId().className() << std::endl;
+    std::cout << k_dag_path.typeId().id() << std::endl;
+    std::cout << k_dag_path.typeName() << std::endl;
+  }
+  return k_s;
 }
 
 bool comm_check_scenes::render() {
@@ -244,6 +364,12 @@ bool comm_check_scenes::render() {
     CHECK_MSTATUS(k_s);
   }
   dear::Text(fmt::format("多个uv集 {}", p_uv_set));
+  imgui::SameLine();
+  if (imgui::Button("选择多uv集")) {
+    MStatus k_s{};
+    k_s = uv_set(true);
+    CHECK_MSTATUS(k_s);
+  }
   dear::Text(fmt::format("错误 (1) {}", p_err_1));
   imgui::SameLine();
   dear::HelpMarker("(1)", "大纲错误");

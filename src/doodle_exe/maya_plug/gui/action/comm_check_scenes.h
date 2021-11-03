@@ -27,6 +27,8 @@ class comm_check_scenes : public command_base_tool {
   MStatus err_2();  // (2)onModelChange3dc
   MStatus err_3();  // (3)CgAbBlastPanelOptChangeCallback
   MStatus err_4();  // (4)贼健康
+
+  MStatus print_mfn();
  public:
   comm_check_scenes();
   virtual bool render() override;
