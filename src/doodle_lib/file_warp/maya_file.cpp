@@ -92,7 +92,7 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
       using namespace std::chrono_literals;
       std::this_thread::sleep_for(1s);
     }
-    if (k_time_i > k_time) {
+    if (k_time_i >= k_time) {
       in_term->set_state(long_term::fail);
       auto info_str = "解算文件超时， 请检查文件";
       DOODLE_LOG_WARN(info_str);
