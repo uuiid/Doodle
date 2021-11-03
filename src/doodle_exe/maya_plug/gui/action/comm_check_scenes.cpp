@@ -132,11 +132,6 @@ MStatus comm_check_scenes::multilateral_surface(bool use_select) {
     MFnDagNode k_dag_node{k_dag_path, &k_s};
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-    // auto k_name = k_dag_node.name(&k_s);
-    // CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-    // MItMeshFaceVertex k_iter_face{k_dag_path, MObject::kNullObj, &k_s};
-    // CHECK_MSTATUS_AND_RETURN_IT(k_s);
     MItMeshPolygon k_iter_poly{k_dag_path, MObject::kNullObj, &k_s};
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
     std::uint32_t k_face_num{};
@@ -150,12 +145,6 @@ MStatus comm_check_scenes::multilateral_surface(bool use_select) {
         CHECK_MSTATUS_AND_RETURN_IT(k_s);
       }
     }
-
-    // MFnMesh k_mesh{k_dag_path, &k_s};
-    // CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-    // MItMeshEdge k_iter_edge{k_dag_path, MObject::kNullObj, &k_s};
-    // CHECK_MSTATUS_AND_RETURN_IT(k_s);
   }
   if (use_select)
     MGlobal::setActiveSelectionList(k_select);
@@ -164,10 +153,47 @@ MStatus comm_check_scenes::multilateral_surface(bool use_select) {
 }
 
 MStatus comm_check_scenes::uv_set(bool use_select) {
+  MStatus k_s{};
+  MItDag k_iter{MItDag::kDepthFirst, MFn::kMesh, &k_s};
+  MSelectionList k_select{};
+
+  for (; !k_iter.isDone(); k_iter.next()) {
+    MDagPath k_dag_path{};
+
+    k_s = k_iter.getPath(k_dag_path);
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+    MFnDagNode k_dag_node{k_dag_path, &k_s};
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+    if (!k_dag_path.hasFn(MFn::kMesh))
+      DOODLE_LOG_INFO("错误的类型");
+
+    MFnMesh k_mesh{k_dag_path, &k_s};
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+    if (k_mesh.numUVSets(&k_s) > 1) {
+      p_uv_set = true;
+      k_s      = k_select.add(k_dag_path);
+      CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    }
+  }
+  if (use_select) {
+    MGlobal::setActiveSelectionList(k_select);
+  }
   return MStatus::kSuccess;
 }
 
 MStatus comm_check_scenes::err_1() {
+  MStatus k_s{};
+  /// 获得所有的大纲视图， 将选择回调设置为空
+  k_s     = run_maya_py_script(R"(import pymel.core
+import re
+for p in pymel.core.lsUI(panels=True):
+    if re.findall("outlinerPanel",p.name()):
+        pymel.core.outlinerEditor(p,edit=True, selectCommand="")
+  )");
+  p_err_1 = (k_s == MStatus::kSuccess);
   return MStatus::kSuccess;
 }
 
@@ -217,20 +243,20 @@ bool comm_check_scenes::render() {
     k_s = multilateral_surface(true);
     CHECK_MSTATUS(k_s);
   }
-  dear::Text(fmt::format("多个uv集 {}", p_multilateral_surface));
-  dear::Text(fmt::format("错误 (1) {}", p_multilateral_surface));
+  dear::Text(fmt::format("多个uv集 {}", p_uv_set));
+  dear::Text(fmt::format("错误 (1) {}", p_err_1));
   imgui::SameLine();
   dear::HelpMarker("(1)", "大纲错误");
 
-  dear::Text(fmt::format("错误 (2) {}", p_multilateral_surface));
+  dear::Text(fmt::format("错误 (2) {}", p_err_2));
   imgui::SameLine();
   dear::HelpMarker("(1)", "onModelChange3dc 错误");
 
-  dear::Text(fmt::format("错误 (3) {}", p_multilateral_surface));
+  dear::Text(fmt::format("错误 (3) {}", p_err_3));
   imgui::SameLine();
   dear::HelpMarker("(1)", "CgAbBlastPanelOptChangeCallback 错误");
 
-  dear::Text(fmt::format("错误 (4) {}", p_multilateral_surface));
+  dear::Text(fmt::format("错误 (4) {}", p_err_4));
   imgui::SameLine();
   dear::HelpMarker("(1)", "贼健康问题");
 
