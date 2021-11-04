@@ -23,10 +23,12 @@
         "microsoft.com/VisualStudioSettings/CMake/1.0": {
           "hostOS": [
             "Windows"
-          ]
+          ],
+          "disableExternalAnalysis": true
         }
       },
-      "cmakeExecutable": "E:\\vcpkg\\downloads\\tools\\cmake-3.21.1-windows\\cmake-3.21.1-windows-i386\\bin\\cmake.exe"
+      "cmakeExecutable": "E:\\vcpkg\\downloads\\tools\\cmake-3.21.1-windows\\cmake-3.21.1-windows-i386\\bin\\cmake.exe",
+      "hidden": true
     },
     {
       "name": "Ninja_release",
@@ -78,7 +80,8 @@
     {
       "name": "debug",
       "configurePreset": "Ninja_debug",
-      "jobs": 10
+      "jobs": 10,
+      "hidden": true
     },
     {
       "name": "debug_doodle",
