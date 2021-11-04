@@ -1,0 +1,16 @@
+//
+// Created by TD on 2021/11/4.
+//
+
+#ifndef DOODLE_SRC_DOODLE_LIB_GUI_WIDGETS_OPENCV_PLAYER_H_
+#define DOODLE_SRC_DOODLE_LIB_GUI_WIDGETS_OPENCV_PLAYER_H_
+
+
+
+class opencv_player {
+
+};
+
+
+
+#endif //DOODLE_SRC_DOODLE_LIB_GUI_WIDGETS_OPENCV_PLAYER_H_
