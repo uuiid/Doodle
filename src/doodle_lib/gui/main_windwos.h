@@ -17,9 +17,6 @@ class edit_widgets;
 class tool_box_widget;
 
 /**
- *
- *
- *
  * @page  doodle_windwos 主要窗口
  * @tableofcontents
  *

@@ -7,6 +7,24 @@
 #include <maya/MSelectionList.h>
 namespace doodle::maya_plug {
 
+
+
+
+/**
+ * @brief maya检查场景功能
+ * 
+ * @li 检查maya场景一共有一下几项
+ * * 检查所有
+ * * 解锁法线
+ * * 检查重名
+ * * 检查大于四边面
+ * * 检查UV集
+ * * 去除大纲错误 
+ * * 去除onModelChange3dc错误
+ * * 去除CgAbBlastPanelOptChangeCallback错误
+ * * 去除贼健康错误
+ * 
+ */
 class comm_check_scenes : public command_base_tool {
   bool p_unlock_normal;
   bool p_duplicate_name;

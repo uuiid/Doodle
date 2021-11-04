@@ -28,6 +28,13 @@ class data {
 using data_ptr = std::shared_ptr<data>;
 }  // namespace reference_attr
 
+/**
+ * @brief 引用文件标签命令
+ *
+ * @li 添加引用文件解算标签
+ * @li 在没有引用文件标记时， 使用所有载入的应用进行解算
+ *
+ */
 class reference_attr_setting : public command_base_tool {
   std::vector<reference_attr::data_ptr> p_list;
 

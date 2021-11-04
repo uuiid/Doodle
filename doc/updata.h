@@ -238,4 +238,17 @@
  * @li 更加智能的解算超时算法
  * @li 解算超时后直接进行失败提示
  * 
+ * 
+ * @subsubsection updata_log_3122 版本3.1.22
+ * @li 添加maya检查场景功能
+ *  * 检查所有
+ *  * 解锁法线
+ *  * 检查重名
+ *  * 检查大于四边面
+ *  * 检查UV集
+ *  * 去除大纲错误 
+ *  * 去除onModelChange3dc错误
+ *  * 去除CgAbBlastPanelOptChangeCallback错误
+ *  * 去除贼健康错误
+ * 
  */
