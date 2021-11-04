@@ -12,7 +12,7 @@
 namespace doodle::maya_plug {
 
 void maya_windwos::main_menu_tool() {
-  main_windows::main_menu_tool();
+  // main_windows::main_menu_tool();
   if (dear::MenuItem("maya引用工具") && p_tool_box_)
     p_tool_box_->set_tool_widget(new_object<reference_attr_setting>());
   if (dear::MenuItem("maya场景检查工具") && p_tool_box_)

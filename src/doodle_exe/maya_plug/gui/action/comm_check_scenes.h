@@ -6,10 +6,6 @@
 #include <maya/MStatus.h>
 #include <maya/MSelectionList.h>
 namespace doodle::maya_plug {
-
-
-
-
 /**
  * @brief maya检查场景功能
  * 
