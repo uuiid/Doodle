@@ -8,8 +8,9 @@
 #include <doodle_lib/gui/base_windwos.h>
 
 namespace doodle {
-class DOODLELIBA_API opencv_player : public base_widget {
+class DOODLELIB_API opencv_player : public base_widget {
   public:
+  opencv_player();
   void frame_render() override;
-}
+};
 }  // namespace doodle

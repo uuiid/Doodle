@@ -10,6 +10,8 @@
 #include <imgui.h>
 
 #include <boost/signals2.hpp>
+struct ID3D11Device;
+
 namespace doodle {
 using win_handle = HWND;
 using win_class  = WNDCLASSEX;
