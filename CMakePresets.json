@@ -85,10 +85,17 @@
     },
     {
       "name": "debug_doodle",
-      "description": "debug doodle exe",
-      "displayName": "doodle exe",
+      "description": "调试 exe",
+      "displayName": "调试 doodle exe",
       "inherits": "debug",
       "targets": "DoodleExe"
+    },
+    {
+      "name": "debug_test",
+      "description": "调试 test",
+      "displayName": "调试 doodle test",
+      "inherits": "debug",
+      "targets": "doodle_test"
     },
     {
       "name": "doxy",

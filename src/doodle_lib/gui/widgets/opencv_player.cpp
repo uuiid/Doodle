@@ -19,9 +19,10 @@ void opencv_player::frame_render() {
       continue;
 
     auto [k_v, k_s] = k_open.read(1);
-    imgui::Image(k_v, ImVec2{
-                          boost::numeric_cast<std::float_t>(k_s.first),
-                          boost::numeric_cast<std::float_t>(k_s.second)});
+    imgui::Image(k_v, imgui::GetContentRegionAvail());
+    // imgui::Image(k_v, ImVec2{
+    //                       boost::numeric_cast<std::float_t>(k_s.first),
+    //                       boost::numeric_cast<std::float_t>(k_s.second)});
   }
 }
 

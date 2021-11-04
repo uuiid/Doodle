@@ -13,6 +13,7 @@ int main(int argc, char *argv[]) {
   doodle::core_set_init k_init{};
   k_init.config_to_user();
   k_init.find_cache_dir();
+  doodle::logger_ctrl::get_log().set_log_name("doodle_test.txt");
   int k_r = Catch::Session().run(argc, argv);
   return k_r;
 }

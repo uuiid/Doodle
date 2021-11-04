@@ -19,7 +19,8 @@ class DOODLELIB_API opencv_read_player {
   cv::VideoCapture p_video;
  public:
   opencv_read_player();
-
+  DOODLE_MOVE(opencv_read_player)
+  
   bool is_open() const;
 
   bool open_file(const FSys::path& in_path);

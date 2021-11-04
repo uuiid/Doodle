@@ -64,7 +64,6 @@ MStatus initializePlugin(MObject obj) {
   doodle::core_set_init k_init{};
   k_init.find_cache_dir();
   k_init.config_to_user();
-  k_init.find_maya();
   k_init.read_file();
   p_doodle_lib->init_gui();
 

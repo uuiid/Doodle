@@ -29,7 +29,8 @@ std::tuple<void*, std::pair<std::int32_t, std::int32_t> > opencv_read_player::re
   std::int32_t k_width{boost::numeric_cast<std::int32_t>(p_video.get(cv::CAP_PROP_FRAME_WIDTH))};
   std::int32_t k_height{boost::numeric_cast<std::int32_t>(p_video.get(cv::CAP_PROP_FRAME_HEIGHT))};
   cv::Mat p_mat{};
-  if (p_video.retrieve(p_mat, in_frame)) {
+  p_video.set(cv::CAP_PROP_POS_FRAMES, boost::numeric_cast<std::double_t>(in_frame));
+  if (p_video.read(p_mat)) {
     /// 转换图像
     cv::cvtColor(p_mat, p_mat, cv::COLOR_BGR2RGBA);
     //
