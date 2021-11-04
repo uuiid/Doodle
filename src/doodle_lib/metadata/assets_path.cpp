@@ -137,6 +137,21 @@ rpc_trans_path_ptr_list assets_path_vector::make_up_path() const {
     k_list.emplace_back(std::make_unique<rpc_trans_path>(i.get_local_path(), i.get_server_path(), i.get_backup_path()));
   return k_list;
 }
+
+rpc_trans_path_ptr_list assets_path_vector::make_down_path(const FSys::path &in_down_path) const {
+  rpc_trans_path_ptr_list k_list{};
+  if (!in_down_path.empty()) {
+    for (auto &i : paths) {
+      auto k_p = in_down_path / i.get_server_path().filename();
+      k_list.emplace_back(std::make_unique<rpc_trans_path>(k_p, i.get_server_path(), i.get_backup_path()));
+    }
+  } else {
+    for (auto &i : paths)
+      k_list.emplace_back(std::make_unique<rpc_trans_path>(i.get_local_path(), i.get_server_path(), i.get_backup_path()));
+  }
+  return k_list;
+}
+
 FSys::path assets_path::get_cache_path() const {
   auto k_path = core_set::getSet().get_cache_root();
   k_path /= p_lexically_relative;

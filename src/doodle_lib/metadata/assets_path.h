@@ -99,6 +99,7 @@ class DOODLELIB_API assets_path_vector {
   };
 
   [[nodiscard]] rpc_trans_path_ptr_list make_up_path() const;
+  [[nodiscard]] rpc_trans_path_ptr_list make_down_path(const FSys::path& in_down_path) const;
   // operator rpc_trans_path_ptr_list() const;
 
  private:
