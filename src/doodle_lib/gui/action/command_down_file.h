@@ -2,15 +2,4 @@
 // Created by TD on 2021/11/4.
 //
 
-#ifndef DOODLE_SRC_DOODLE_LIB_GUI_ACTION_COMMAND_DOWN_FILE_H_
-#define DOODLE_SRC_DOODLE_LIB_GUI_ACTION_COMMAND_DOWN_FILE_H_
 
-
-
-class command_down_file {
-
-};
-
-
-
-#endif //DOODLE_SRC_DOODLE_LIB_GUI_ACTION_COMMAND_DOWN_FILE_H_

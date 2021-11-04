@@ -80,18 +80,9 @@ bool comm_files_select::set_data(const entt::handle& in_data) {
   }
   return true;
 }
-bool comm_files_select::add_files() {
-  p_root.get<assets_file>().up_version();
-  auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(
-      p_root.get<assets_path_vector>().make_up_path());
-  (*k_up)();
-  p_root.patch<database_stauts>(database_set_stauts<need_save>{});
-  return false;
-}
 
 comm_files_up::comm_files_up()
     : command_base(),
-      p_file(),
       p_list_paths() {
   p_show_str = make_imgui_name(this, "添加");
 }

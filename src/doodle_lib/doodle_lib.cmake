@@ -26,6 +26,7 @@ set(
     gui/widget_register.h
     gui/factory/attribute_factory_interface.h
     gui/action/command.h
+    gui/action/command_down_file.h
     gui/action/command_files.h
     gui/action/command_meta.h
     gui/action/command_tool.h
@@ -115,6 +116,7 @@ set(
     gui/widget_register.cpp
     gui/factory/attribute_factory_interface.cpp
     gui/action/command.cpp
+    gui/action/command_down_file.cpp
     gui/action/command_files.cpp
     gui/action/command_meta.cpp
     gui/action/command_tool.cpp

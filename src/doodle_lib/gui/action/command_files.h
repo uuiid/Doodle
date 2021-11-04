@@ -10,6 +10,37 @@
 
 namespace doodle {
 
+class DOODLELIB_API comm_files_select : public command_base {
+ private:
+  entt::handle p_root;
+  bool_ptr p_use_relative;
+  FSys::path p_file;
+
+  command_ptr p_comm_sub;
+
+
+ public:
+  comm_files_select();
+
+  bool render() override;
+  bool set_data(const entt::handle& in) override;
+};
+
+
+class DOODLELIB_API comm_files_up : public command_base {
+ private:
+  entt::handle p_list_paths;
+
+ protected:
+  virtual bool add_files();
+
+ public:
+  comm_files_up();
+  bool render() override;
+  bool set_data(const entt::handle& in) override;
+};
+
+
 class comm_file_image_to_move : public command_base {
  private:
   FSys::path p_out_file;
@@ -38,35 +69,6 @@ class comm_file_image_to_move : public command_base {
   bool set_data(const entt::handle& in) override;
 };
 
-class DOODLELIB_API comm_files_up : public command_base {
- private:
-  entt::handle p_list_paths;
-  FSys::path p_file;
 
- protected:
-  virtual bool add_files();
-
- public:
-  comm_files_up();
-  bool render() override;
-  bool set_data(const entt::handle& in) override;
-};
-
-class DOODLELIB_API comm_files_select : public command_base {
- private:
-  entt::handle p_root;
-  bool_ptr p_use_relative;
-  FSys::path p_file;
-
-  command_ptr p_comm_sub;
-
-  bool add_files();
-
- public:
-  comm_files_select();
-
-  bool render() override;
-  bool set_data(const entt::handle& in) override;
-};
 
 }  // namespace doodle
