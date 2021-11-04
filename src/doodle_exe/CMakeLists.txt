@@ -65,6 +65,7 @@ add_executable(
         main/test/test_external.cpp
         main/test/test_metadata.cpp
         main/test/test_server.cpp
+        main/test/test_gui.cpp
         main/doodle.manifest
         main/icon.ico
         main/win_exe.rc
