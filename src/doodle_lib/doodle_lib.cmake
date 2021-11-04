@@ -18,6 +18,7 @@ set(
     file_sys/file_system.h
     file_warp/image_sequence.h
     file_warp/maya_file.h
+    file_warp/opencv_read_player.h
     file_warp/ue4_project.h
     file_warp/video_sequence.h
     gui/base_windwos.h
@@ -36,6 +37,7 @@ set(
     gui/widgets/assets_widget.h
     gui/widgets/edit_widgets.h
     gui/widgets/long_time_tasks_widget.h
+    gui/widgets/opencv_player.h
     gui/widgets/project_widget.h
     gui/widgets/time_widget.h
     gui/widgets/tool_box_widget.h
@@ -108,6 +110,7 @@ set(
     file_sys/file_system.cpp
     file_warp/image_sequence.cpp
     file_warp/maya_file.cpp
+    file_warp/opencv_read_player.cpp
     file_warp/ue4_project.cpp
     file_warp/video_sequence.cpp
     gui/base_windwos.cpp
@@ -126,6 +129,7 @@ set(
     gui/widgets/assets_widget.cpp
     gui/widgets/edit_widgets.cpp
     gui/widgets/long_time_tasks_widget.cpp
+    gui/widgets/opencv_player.cpp
     gui/widgets/project_widget.cpp
     gui/widgets/time_widget.cpp
     gui/widgets/tool_box_widget.cpp

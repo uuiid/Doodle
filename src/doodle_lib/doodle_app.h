@@ -8,6 +8,7 @@
 #include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <imgui.h>
+
 #include <boost/signals2.hpp>
 namespace doodle {
 using win_handle = HWND;
@@ -28,7 +29,6 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   bool p_show_err;
   base_widget_ptr p_main_win;
 
-  
  public:
   doodle_app();
   std::atomic_bool p_done;
@@ -41,6 +41,7 @@ class DOODLELIB_API doodle_app : public details::no_copy {
 
   std::shared_ptr<long_time_tasks_widget> long_task_widgets;
   widget_register_ptr wregister;
+  ID3D11Device* p_pd3dDevice;
 
   inline widget_register_ptr get_register() { return wregister; };
   inline const widget_register_ptr get_register() const { return wregister; };
@@ -54,6 +55,7 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   virtual void loop_one();
 
   virtual void hide_windows();
+
  private:
   void metadata_load();
   void metadata_save() const;

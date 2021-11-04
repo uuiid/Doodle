@@ -181,7 +181,8 @@ doodle_app::doodle_app()
       p_done(false),
       wregister(new_object<widget_register>()),
       p_show_err(false),
-      p_main_win() {
+      p_main_win(),
+      p_pd3dDevice(nullptr) {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassEx(&p_win_class);
@@ -235,6 +236,7 @@ doodle_app::doodle_app()
   // Setup Platform/Renderer backends
   ImGui_ImplWin32_Init(p_hwnd);
   ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
+  p_pd3dDevice = g_pd3dDevice;
 }
 doodle_app::~doodle_app() {
   p_hwnd = static_cast<HWND>(p_hwnd);
