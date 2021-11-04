@@ -180,12 +180,12 @@ quit()
 
   std::this_thread::sleep_for(chrono::seconds{3});
   in_ptr->sig_progress(rational_int{1, 40});
-  in_ptr->sig_finished();
   if (this->run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr)) {
     in_ptr->sig_message_result("导出完成 \n", long_term::warning);
   } else {
     in_ptr->sig_message_result(fmt::format("失败 {}\n", in_arg->file_path), long_term::warning);
   }
+  in_ptr->sig_finished();
 }
 
 void maya_file::qcloth_sim_file(const qcloth_arg_ptr& in_arg,
@@ -227,12 +227,12 @@ quit())",
 
   std::this_thread::sleep_for(chrono::seconds{3});
   in_ptr->sig_progress(rational_int{1, 40});
-  in_ptr->sig_finished();
   if (this->run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr)) {
     in_ptr->sig_message_result("导出完成 \n", long_term::warning);
   } else {
     in_ptr->sig_message_result(fmt::format("失败 {}\n", in_arg->sim_path), long_term::warning);
   }
+  in_ptr->sig_finished();
 }
 
 bool maya_file::is_maya_file(const FSys::path& in_path) {
