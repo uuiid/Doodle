@@ -251,4 +251,7 @@
  *  * 去除CgAbBlastPanelOptChangeCallback错误
  *  * 去除贼健康错误
  * 
+ * 
+ * @subsubsection updata_log_3123 版本3.1.23
+ * @li 修复maya显示进度错误
  */
