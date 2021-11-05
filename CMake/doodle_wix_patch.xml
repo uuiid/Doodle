@@ -1,0 +1,14 @@
+<CPackWiXPatch>
+  <CPackWiXFragment Id="#PRODUCT">
+		<MajorUpgrade
+  	          Schedule="afterInstallValidate"
+  	          AllowSameVersionUpgrades="yes"
+  	          DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit."/>
+  	</CPackWiXFragment>
+		<!-- <CPackWiXFragment ID="MajorUpgrade">
+			<MajorUpgrade
+  	      Schedule="afterInstallValidate"
+  	      AllowSameVersionUpgrades="yes"
+  	      DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit."/>
+		</CPackWiXFragment> -->
+</CPackWiXPatch>

@@ -254,4 +254,8 @@
  * 
  * @subsubsection updata_log_3123 版本3.1.23
  * @li 修复maya显示进度错误
+ * 
+ * @subsubsection updata_log_3124 版本3.1.24
+ * @li 更新安装程序 在安装新版本的同时，允许安装旧版 
+ * @li 安装时会完全删除旧版本
  */
