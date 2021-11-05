@@ -35,7 +35,6 @@ std::tuple<void*, std::pair<std::int32_t, std::int32_t> > opencv_read_player::re
     cv::cvtColor(p_mat, p_mat, cv::COLOR_BGR2RGBA);
     //
     ID3D11ShaderResourceView* _out_{nullptr};
-    ID3D11ShaderResourceView** out_srv{&_out_};
 
     auto k_g = doodle_app::Get()->p_pd3dDevice;
     D3D11_TEXTURE2D_DESC k_tex_desc{};
@@ -64,8 +63,9 @@ std::tuple<void*, std::pair<std::int32_t, std::int32_t> > opencv_read_player::re
     k_srv.Texture2D.MipLevels       = k_tex_desc.MipLevels;
     k_srv.Texture2D.MostDetailedMip = 0;
 
-    k_g->CreateShaderResourceView(k_tex, &k_srv, out_srv);
+    k_g->CreateShaderResourceView(k_tex, &k_srv, &_out_);
     k_tex->Release();
+    
     return std::make_tuple(
         (void*)_out_,
         std::pair<std::int32_t, std::int32_t>{
