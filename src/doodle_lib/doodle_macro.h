@@ -6,12 +6,21 @@
 
 #define DOODLE_USE_MOVE(class_name)             \
   class_name(class_name &&) noexcept = default; \
-  class_name &operator=(class_name &&) = default;
+  class_name &operator=(class_name &&) noexcept = default;
 
 #define DOODLE_DIS_COPY(class_name)           \
   class_name(class_name &) noexcept = delete; \
-  class_name &operator=(class_name &) = delete;
+  class_name &operator=(class_name &) noexcept = delete;
 
 #define DOODLE_MOVE(class_name) \
   DOODLE_USE_MOVE(class_name)   \
   DOODLE_DIS_COPY(class_name)
+
+#define DOODLE_IMP_MOVE(class_name)              \
+  class_name(class_name &&) noexcept;            \
+  class_name &operator=(class_name &&) noexcept; \
+  DOODLE_DIS_COPY(class_name)
+
+#define DOODLE_MOVE_CPP(class_name)                         \
+  class_name::class_name(class_name &&) noexcept = default; \
+  class_name &class_name::operator=(class_name &&) noexcept = default;

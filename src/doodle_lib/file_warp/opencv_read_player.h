@@ -5,45 +5,16 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-
-#include <opencv2/opencv.hpp>
-namespace cv {
-class VideoCapture;
-}
-namespace doodle {
-using video_capture_ptr = std::shared_ptr<cv::VideoCapture>;
-};
-
-struct ID3D11ShaderResourceView;
-
 namespace doodle {
 
 class DOODLELIB_API opencv_read_player {
-  cv::VideoCapture p_video;
-  template <class T>
-  struct win_ptr_delete {
-    void operator()(T* ptr) const {
-      ptr->Release();
-    }
-  };
-
-  struct frame {
-    std::unique_ptr<ID3D11ShaderResourceView,
-                    win_ptr_delete<ID3D11ShaderResourceView>>
-        p_d3d_view;
-    std::uint32_t p_frame;
-    std::uint32_t p_width;
-    std::uint32_t p_height;
-    DOODLE_MOVE(frame);
-  };
-  std::map<std::uint32_t, frame> p_image;
-
   bool load_frame(std::int32_t in_frame);
   bool clear_cache();
 
  public:
   opencv_read_player();
-  DOODLE_MOVE(opencv_read_player)
+  ~opencv_read_player();
+  DOODLE_IMP_MOVE(opencv_read_player)
 
   bool is_open() const;
 
@@ -58,5 +29,9 @@ class DOODLELIB_API opencv_read_player {
    * 图像大小
    */
   std::tuple<void*, std::pair<std::int32_t, std::int32_t>> read(std::int32_t in_frame);
+
+ private:
+  class impl;
+  std::unique_ptr<impl> p_data;
 };
 }  // namespace doodle

@@ -136,7 +136,7 @@ struct player_ : public msm::front::state_machine_def<player_> {
     template <class EVT, class FSM, class SourceState, class TargetState>
     bool operator()(EVT const& evt, FSM&, SourceState&, TargetState&) {
       // to test a guard condition, let's say we understand only CDs, not DVD
-      if (evt.disc_type != DISK_CD) {
+      if (false) {
         std::cout << "wrong disk, sorry" << std::endl;
         return false;
       }
@@ -158,28 +158,28 @@ struct player_ : public msm::front::state_machine_def<player_> {
   };
 
   /// 开始定义转换表
-  struct transition_table
-      : public boost::mpl::vector<
-            // clang-format off
-            //              Start      Event         Next      Action                         Guard
-            //+------------+----------+-------------+---------+------------------------------+--------------
-            msm::front::Row<empty,     open_file,    playing,  msm::front::none,              msm::front::none>,
+  // struct transition_table
+  //     : public boost::mpl::vector<
+  //           // clang-format off
+  //           //              Start      Event         Next      Action                         Guard
+  //           //+------------+----------+-------------+---------+------------------------------+--------------
+  //           msm::front::Row<empty,     open_file,    playing,  msm::front::none,              msm::front::none>,
 
-            //+------------+----------+-------------+---------+------------------------------+--------------
-            msm::front::Row<stopped,   play,         playing,  msm::front::ActionSequence_<
-                                                                  boost::mpl::vector<
-                                                                     start_playback>>,        dummy_guard     >,
-            msm::front::Row<stopped,   stop,         stopped,  msm::front::none,              msm::front::none>,
-            //+------------+----------+-------------+---------+------------------------------+--------------
-            msm::front::Row<playing,   play,         playing,  msm::front::none,              msm::front::none>,
-            msm::front::Row<playing,   stop,         stopped,  msm::front::none,              msm::front::none>,
-            msm::front::Row<playing,   pause,        paused,   msm::front::none,              msm::front::none>,
+  //           //+------------+----------+-------------+---------+------------------------------+--------------
+  //           // msm::front::Row<stopped,   play,         playing,  msm::front::ActionSequence_<
+  //           //                                                       boost::mpl::vector<
+  //           //                                                          start_playback>>,        dummy_guard     >,
+  //           msm::front::Row<stopped,   stop,         stopped,  msm::front::none,              msm::front::none>,
+  //           //+------------+----------+-------------+---------+------------------------------+--------------
+  //           msm::front::Row<playing,   play,         playing,  msm::front::none,              msm::front::none>,
+  //           msm::front::Row<playing,   stop,         stopped,  msm::front::none,              msm::front::none>,
+  //           msm::front::Row<playing,   pause,        paused,   msm::front::none,              msm::front::none>,
 
-            //+------------+----------+-------------+---------+------------------------------+--------------
-            msm::front::Row<paused,    stop,         stopped,  msm::front::none,              msm::front::none>,
-            msm::front::Row<paused,    play,         playing,  msm::front::none,              msm::front::none>
-            // clang-format on
-            > {};
+  //           //+------------+----------+-------------+---------+------------------------------+--------------
+  //           msm::front::Row<paused,    stop,         stopped,  msm::front::none,              msm::front::none>,
+  //           msm::front::Row<paused,    play,         playing,  msm::front::none,              msm::front::none>
+  //           // clang-format on
+  //           > {};
 
   // 替换默认的无转换响应
   template <class FSM, class Event>
