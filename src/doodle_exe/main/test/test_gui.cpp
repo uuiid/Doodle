@@ -19,8 +19,7 @@ TEST_CASE("test_gui", "[gui]") {
   auto k_reg   = g_reg();
 
   auto k_h     = make_handle(k_reg->create());
-  auto& k_open = k_h.emplace<opencv_read_player>();
-  k_open.open_file(k_voide_file1);
+  k_h.emplace<opencv_read_player>().open_file(k_voide_file1);
 
   k_h = make_handle(k_reg->create());
   k_h.emplace<opencv_read_player>().open_file(k_voide_file2);

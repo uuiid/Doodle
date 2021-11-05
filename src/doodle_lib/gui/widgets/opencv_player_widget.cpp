@@ -213,7 +213,7 @@ void compute_size(std::vector<opencv::frame>& in_size, const ImVec2& in_v2) {
   // if (in_size.empty())
   //   return;
 
-  auto& k_f      = in_size.front();
+  auto& k_f = in_size.front();
   // auto k_v_      = in_v2.x / in_v2.y;
   // auto k_v_image = k_f.width / (std::float_t)k_f.height;
   // std::float_t k_proportional{0};
@@ -235,7 +235,12 @@ void compute_size(std::vector<opencv::frame>& in_size, const ImVec2& in_v2) {
   //   }
   //   k_line = !k_line;
   // }
-    imgui::Image(k_f.data, in_v2);
+  auto k_s  = in_v2;
+  k_s.x     = in_v2.x / 4;
+  k_s.y     = in_v2.y / 4;
+  imgui::Image(k_f.data, in_v2);
+  // imgui::Image(k_f.data, k_s);
+  // imgui::Image(in_size[1].data, k_s);
 }
 
 void opencv_player_widget::frame_render() {
