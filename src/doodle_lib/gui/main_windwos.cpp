@@ -12,7 +12,7 @@
 #include <doodle_lib/gui/widgets/assets_widget.h>
 #include <doodle_lib/gui/widgets/edit_widgets.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
-#include <doodle_lib/gui/widgets/opencv_player.h>
+#include <doodle_lib/gui/widgets/opencv_player_widget.h>
 #include <doodle_lib/gui/widgets/project_widget.h>
 #include <doodle_lib/gui/widgets/tool_box_widget.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
@@ -53,7 +53,7 @@ main_windows::main_windows()
   p_long_task_    = create_windwos<long_time_tasks_widget>(true);
   p_edit_windows_ = create_windwos<edit_widgets>(true);
   p_tool_box_     = create_windwos<tool_box_widget>(true);
-  p_opencv_        = create_windwos<opencv_player>(false);
+  p_opencv_        = create_windwos<opencv_player_widget>(false);
 
   for (auto &i : p_list_windwos) {
     i->load_show();
