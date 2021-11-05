@@ -7,6 +7,24 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle {
 
+namespace opencv {
+
+class frame {
+ public:
+  std::uint32_t width;
+  std::uint32_t height;
+  std::uint32_t frame_num;
+  void* data;
+
+  template <class T>
+  frame& multiply(const T& t) {
+    width  = width * t;
+    height = height * t;
+    return *this;
+  }
+};
+};  // namespace opencv
+
 class DOODLELIB_API opencv_read_player {
   bool load_frame(std::int32_t in_frame);
   bool clear_cache();
@@ -26,9 +44,9 @@ class DOODLELIB_API opencv_read_player {
    * @return std::tuple<void*, std::pair<std::int32_t,std::int32_t> >
    *
    * imhui 需要的指针
-   * 图像大小
+   * 图像大小 width height
    */
-  std::tuple<void*, std::pair<std::int32_t, std::int32_t>> read(std::int32_t in_frame);
+  opencv::frame read(std::int32_t in_frame);
 
  private:
   class impl;
