@@ -208,21 +208,17 @@ void compute_size(std::vector<opencv::frame>& in_size, const ImVec2& in_v2) {
   // 解算
   // 特效
   // 灯光
-  // const auto& size = in_size.size();
-
-  // if (in_size.empty())
-  //   return;
-
-  auto& k_f = in_size.front();
-  auto k_v_      = in_v2.x / in_v2.y;
-  auto k_v_image = k_f.width / (std::float_t)k_f.height;
-  std::float_t k_proportional{0};
-  if (k_v_image >= 0) {
-    k_proportional = k_f.width / in_v2.x;
-  } else {
-    k_proportional = k_f.height / in_v2.y;
+  auto k_f = in_size.front();
+  std::float_t k_proportional{1};
+  if (k_f.width > in_v2.x) {
+    k_proportional = k_proportional * (in_v2.x / k_f.width);
+    k_f.multiply(k_proportional);
   }
-  k_proportional = k_proportional / 4;
+
+  if (k_f.height > in_v2.y) {
+    k_proportional = k_proportional * (in_v2.y / k_f.height);
+  }
+  k_proportional = k_proportional / 2;
 
   bool k_line    = true;
   for (auto& f : in_size) {
@@ -235,12 +231,6 @@ void compute_size(std::vector<opencv::frame>& in_size, const ImVec2& in_v2) {
     }
     k_line = !k_line;
   }
-  // auto k_s  = in_v2;
-  // k_s.x     = in_v2.x / 4;
-  // k_s.y     = in_v2.y / 4;
-  // imgui::Image(k_f.data, in_v2);
-  // imgui::Image(k_f.data, k_s);
-  // imgui::Image(in_size[1].data, k_s);
 }
 
 void opencv_player_widget::frame_render() {
