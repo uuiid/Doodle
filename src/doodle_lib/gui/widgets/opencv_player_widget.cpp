@@ -203,13 +203,16 @@ opencv_player_widget::opencv_player_widget() {
   p_class_name = "视频播放";
 }
 
-void compute_size(std::vector<opencv::frame>& in_size, const ImVec2& in_v2) {
+std::float_t compute_size(std::vector<opencv::frame>& in_size, const ImVec2& in_v2) {
   // 动画
   // 解算
   // 特效
   // 灯光
-  auto k_f = in_size.front();
   std::float_t k_proportional{1};
+  if (in_size.empty())
+    return k_proportional;
+
+  auto k_f = in_size.front();
   if (k_f.width > in_v2.x) {
     k_proportional = k_proportional * (in_v2.x / k_f.width);
     k_f.multiply(k_proportional);
@@ -219,18 +222,7 @@ void compute_size(std::vector<opencv::frame>& in_size, const ImVec2& in_v2) {
     k_proportional = k_proportional * (in_v2.y / k_f.height);
   }
   k_proportional = k_proportional / 2;
-
-  bool k_line    = true;
-  for (auto& f : in_size) {
-    f.multiply(k_proportional);
-    imgui::Image(f.data, ImVec2{
-                             boost::numeric_cast<std::float_t>(f.width),
-                             boost::numeric_cast<std::float_t>(f.height)});
-    if (k_line) {
-      imgui::SameLine();
-    }
-    k_line = !k_line;
-  }
+  return k_proportional;
 }
 
 void opencv_player_widget::frame_render() {
@@ -246,7 +238,18 @@ void opencv_player_widget::frame_render() {
     //                       boost::numeric_cast<std::float_t>(k_s.first),
     //                       boost::numeric_cast<std::float_t>(k_s.second)});
   }
-  compute_size(k_list, imgui::GetContentRegionAvail());
+  auto k_s    = compute_size(k_list, imgui::GetContentRegionAvail());
+  bool k_line = true;
+  for (auto& f : k_list) {
+    f.multiply(k_s);
+    imgui::Image(f.data, ImVec2{
+                             boost::numeric_cast<std::float_t>(f.width),
+                             boost::numeric_cast<std::float_t>(f.height)});
+    if (k_line) {
+      imgui::SameLine();
+    }
+    k_line = !k_line;
+  }
 }
 
 }  // namespace doodle
