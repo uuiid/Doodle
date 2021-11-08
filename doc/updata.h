@@ -258,4 +258,8 @@
  * @subsubsection updata_log_3124 版本3.1.24
  * @li 更新安装程序 在安装新版本的同时，允许安装旧版 
  * @li 安装时会完全删除旧版本
- */
+ * 
+ * @subsubsection updata_log_3125 版本3.1.25
+ * @li 更新maya插件在批处理模式下正确运行
+ * 
+ * /
