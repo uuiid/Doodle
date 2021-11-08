@@ -28,6 +28,14 @@ class filter : details::no_copy {
   void set_id(uint64_t in_id);
   void set_parent_id(std::int64_t in_patent_id);
   void set_meta_type(metadata_type in_meta_type);
+
+  std::optional<std::int64_t> _episodes;
+  std::optional<std::int64_t> _shot;
+  std::optional<string> _assets;
+
+  std::int64_t off;
+  std::uint16_t size;
+  
   void set_begin_time(const time_point& in_time);
   void set_end_time(const time_point& in_time);
   void set_range(const time_point& in_begin, const time_point& in_end);

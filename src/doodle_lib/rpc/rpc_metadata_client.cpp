@@ -25,10 +25,6 @@ rpc_metadata_client::rpc_metadata_client(const std::shared_ptr<grpc::Channel>& i
   //  auto k_s = p_channel->GetState(true);
 }
 
-
-
-
-
 void rpc_metadata_client::install_metadata(const database& in_database) {
   grpc::ClientContext k_context{};
   metadata_database k_in_db{in_database};
@@ -139,6 +135,16 @@ rpc_filter::filter::operator metadata_database_filter() const {
     k_tmp.mutable_begin_time()->CopyFrom(k_begin_timestamp);
     k_tmp.mutable_end_time()->CopyFrom(k_end_timestamp);
   }
+  if (_episodes) {
+    k_tmp.mutable_episode()->set_value(*_episodes);
+  }
+  if (_shot) {
+    k_tmp.mutable_shot()->set_value(*_shot);
+  }
+  if (_assets) {
+    k_tmp.mutable_assets()->set_value(*_assets);
+  }
+
   return k_tmp;
 }
 void rpc_filter::filter::reset() {

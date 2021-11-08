@@ -16,10 +16,13 @@ message metadata_database{
   google.protobuf.Timestamp update_time = 4;
   google.protobuf.Any Metadata_cereal = 5;
 
-  message meta_type_value{
-    uint64 value = 1;
-  }
-  meta_type_value m_type = 6;
+  google.protobuf.UInt64Value m_type = 6;
+
+  google.protobuf.UInt64Value episode = 7;
+  google.protobuf.UInt64Value shot = 8;
+  google.protobuf.UInt64Value season = 9;
+  google.protobuf.StringValue assets = 10;
+
 }
 
 
@@ -27,8 +30,18 @@ message metadata_database_filter{
   uint64 id = 1;
   google.protobuf.Timestamp begin_time = 2;
   google.protobuf.Timestamp end_time = 3;
-  metadata_database.meta_type_value m_type = 4;
+  google.protobuf.UInt64Value m_type = 4;
   google.protobuf.UInt64Value parent = 5;
+  
+  google.protobuf.UInt64Value episode = 6;
+  google.protobuf.UInt64Value shot = 7;
+  google.protobuf.UInt64Value season = 8;
+  google.protobuf.StringValue assets = 9;
+  
+  
+  uint64 off = 10;
+  uint64 size = 11;
+
 }
 
 service metadata_server{
