@@ -59,52 +59,63 @@ MStatus initializePlugin(MObject obj) {
   // )");
   //   MGlobal::executePythonCommand("doodleCreateMenu()", pythonResult);
 
-  p_doodle_lib = doodle::new_object<doodle::doodle_lib>();
-  doodle::logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
-  doodle::core_set_init k_init{};
-  k_init.find_cache_dir();
-  k_init.config_to_user();
-  k_init.read_file();
-  p_doodle_lib->init_gui();
-
-  p_doodle_app = doodle::new_object<doodle::maya_plug::maya_plug_app>();
-  p_doodle_app->p_done = true;
-  p_doodle_app->hide_windows();
-
-  //注册命令
-  status       = k_plugin.registerCommand(doodle_create.c_str(), doodle::MayaPlug::doodleCreate::create);
+  auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  //添加菜单项
-  k_plugin.addMenuItem(doodle_windows.c_str(),
-                       doodle_win_path.c_str(),
-                       doodle_create.c_str(),
-                       "",
-                       false,
-                       nullptr,
-                       &status);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  switch (k_st) {
+    case MGlobal::MMayaState::kInteractive: {
+      p_doodle_lib = doodle::new_object<doodle::doodle_lib>();
+      doodle::logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
+      doodle::core_set_init k_init{};
+      k_init.find_cache_dir();
+      k_init.config_to_user();
+      k_init.read_file();
+      p_doodle_lib->init_gui();
 
-  clear_callback_id = MSceneMessage::addCallback(
-      MSceneMessage::Message::kMayaExiting,
-      [](void* in) {
-        doodle_maya_clear();
-      },
-      nullptr,
-      &status);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  app_run_id = MTimerMessage::addTimerCallback(
-      0.001,
-      [](float elapsedTime, float lastTime, void* clientData) {
-        if (p_doodle_app->p_done) {
-          p_doodle_app->hide_windows();
-          return;
-        }
-        p_doodle_app->loop_one();
-      },
-      nullptr, &status);
+      p_doodle_app         = doodle::new_object<doodle::maya_plug::maya_plug_app>();
+      p_doodle_app->p_done = true;
+      p_doodle_app->hide_windows();
 
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+      //注册命令
+      status = k_plugin.registerCommand(doodle_create.c_str(), doodle::MayaPlug::doodleCreate::create);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+
+      //添加菜单项
+      k_plugin.addMenuItem(doodle_windows.c_str(),
+                           doodle_win_path.c_str(),
+                           doodle_create.c_str(),
+                           "",
+                           false,
+                           nullptr,
+                           &status);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+
+      clear_callback_id = MSceneMessage::addCallback(
+          MSceneMessage::Message::kMayaExiting,
+          [](void* in) {
+            doodle_maya_clear();
+          },
+          nullptr,
+          &status);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+      app_run_id = MTimerMessage::addTimerCallback(
+          0.001,
+          [](float elapsedTime, float lastTime, void* clientData) {
+            if (p_doodle_app->p_done) {
+              p_doodle_app->hide_windows();
+              return;
+            }
+            p_doodle_app->loop_one();
+          },
+          nullptr, &status);
+
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+      break;
+    }
+
+    default:
+      return status;
+  }
   return status;
 }
 
@@ -112,36 +123,48 @@ MStatus uninitializePlugin(MObject obj) {
   MStatus status = MStatus::MStatusCode::kFailure;
 
   MFnPlugin k_plugin{obj};
-  //这里要关闭窗口
-  doodle_maya_clear();
 
-  //删除回调
-  status = MMessage::removeCallback(clear_callback_id);
+  auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  status = MMessage::removeCallback(app_run_id);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  switch (k_st) {
+    case MGlobal::MMayaState::kInteractive: {
+      //这里要关闭窗口
+      doodle_maya_clear();
 
-  //这一部分是删除菜单项的
-  MStringArray menuItems{};
-  menuItems.append(doodle_windows.c_str());
-  status = k_plugin.removeMenuItem(menuItems);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+      //删除回调
+      status = MMessage::removeCallback(clear_callback_id);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  //   MString pythonResult{};
-  //   MGlobal::executePythonCommand(R"(import maya.cmds
-  // def doodleDeleteMenu():
-  //     for me in maya.cmds.lsUI(menus=True,long=True):
-  //     	  if maya.cmds.menu(me,q=True,label=True) == "doodle":
-  //     		    maya.cmds.menu(me,e=True,deleteAllItems=True)
-  //     		    maya.cmds.deleteUI(me)
-  // )");
+      status = MMessage::removeCallback(app_run_id);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  //   MGlobal::executePythonCommand("doodleDeleteMenu()");
-  //   CHECK_MSTATUS_AND_RETURN_IT(status);
+      //这一部分是删除菜单项的
+      MStringArray menuItems{};
+      menuItems.append(doodle_windows.c_str());
+      status = k_plugin.removeMenuItem(menuItems);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  // 卸载命令
-  status = k_plugin.deregisterCommand(doodle_create.c_str());
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+      //   MString pythonResult{};
+      //   MGlobal::executePythonCommand(R"(import maya.cmds
+      // def doodleDeleteMenu():
+      //     for me in maya.cmds.lsUI(menus=True,long=True):
+      //     	  if maya.cmds.menu(me,q=True,label=True) == "doodle":
+      //     		    maya.cmds.menu(me,e=True,deleteAllItems=True)
+      //     		    maya.cmds.deleteUI(me)
+      // )");
+
+      //   MGlobal::executePythonCommand("doodleDeleteMenu()");
+      //   CHECK_MSTATUS_AND_RETURN_IT(status);
+
+      // 卸载命令
+      status = k_plugin.deregisterCommand(doodle_create.c_str());
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+      break;
+    }
+    default:
+      return status;
+  }
+
   return status;
 }
