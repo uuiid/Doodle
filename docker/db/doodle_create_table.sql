@@ -47,19 +47,18 @@ create table if not exists metadatatab
     uuidPath    text                               null,
     update_time datetime default CURRENT_TIMESTAMP not null,
     meta_type   bigint   default 0                 null,
+    episode     int                                null,
+    shot        int                                null,
+    season      int                                null,
+    assets_p    text                               null,
     constraint fk_test_id
-        foreign key (parent)
-            references metadatatab (id)
+        foreign key (parent) references metadatatab (id)
             on delete cascade
 );
 call createindex('doodle','metadatatab','Metadata_id_index','id');
 call createindex('doodle','metadatatab','Metadata_parent_index','parent');
-
-# create index Metadata_id_index
-#     on metadatatab (id);
-
-# create index Metadata_parent_index
-#     on metadatatab (parent);
+call createindex('doodle','metadatatab','metadatatab_episode_index','episode');
+call createindex('doodle','metadatatab','metadatatab_shot_index','shot');
 
 create table if not exists usertab
 (
@@ -73,12 +72,5 @@ create table if not exists usertab
 call createindex('doodle','usertab','usertab_id_index','id');
 call createindex('doodle','usertab','usertab_permission_group_index','permission_group');
 call createindex('doodle','usertab','usertab_user_name_index','user_name(512)');
-# create index usertab_id_index
-#     on usertab (id);
-#
-# create index usertab_permission_group_index
-#     on usertab (permission_group);
-#
-# create index usertab_user_name_index
-#     on usertab (user_name(512))
+
 
