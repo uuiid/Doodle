@@ -174,22 +174,6 @@ TEST_CASE("test create metadata", "[server][metadata]") {
     }
 
     SECTION("str meta tree") {
-      std::function<void(const entt::handle& in, std::int32_t&)> k_fun{};
-      std::int32_t k_i{0};
-      k_fun = [&](const entt::handle& in, std::int32_t& in_dep) {
-        auto k = in.try_get<tree_relationship>();
-        if (!k)
-          return;
-
-        auto k_i_ = in_dep + 1;
-        for (auto& i : k->get_child()) {
-          auto k_h = make_handle(i);
-          std::cout << std::setiosflags(std::ios::right)
-                    << std::setw(k_i_ * 5)
-                    << k_h.get_or_emplace<to_str>().get() << std::endl;
-          k_fun(k_h, k_i_);
-        }
-      };
       auto k_reg = g_reg();
       {
         auto k_v = k_reg->view<project>();
@@ -238,38 +222,46 @@ TEST_CASE("load_meta", "[metadata]") {
   k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
   doodle_lib::Get().init_gui();
   SECTION("load_meta") {
-    std::function<void(const entt::handle& in, std::int32_t&)> k_fun{};
-    std::function<void()> k_load{};
-    std::int32_t k_i{0};
-    k_fun = [&k_load, &k_fun](const entt::handle& in, std::int32_t& in_dep) {
-      auto k = in.try_get<tree_relationship>();
-      k_load();
-      if (!k)
-        return;
-
-      auto k_i_ = in_dep + 1;
-      for (auto& i : k->get_child()) {
-        auto k_h = make_handle(i);
-        k_h.emplace<need_load>();
-        std::cout << std::setiosflags(std::ios::right)
-                  << std::setw(k_i_ * 5)
-                  << k_h.get_or_emplace<to_str>().get() << std::endl;
-        k_fun(k_h, k_i_);
-      }
-    };
-    k_load = []() {
-      auto k_v = g_reg()->view<need_load, database, tree_relationship>();
-      auto k_f = doodle_lib::Get().get_metadata_factory();
-      for (auto k : k_v) {
-        k_f->select_indb(k);
-      }
-    };
     auto& k_lib = doodle_lib::Get();
     k_lib.init_gui();
     REQUIRE(k_lib.p_project_vector.size() >= 1);
-    auto k = make_handle(k_lib.p_project_vector.front());
-    k.emplace<need_load>();
-    k_fun(k, k_i);
+    auto k   = make_handle(k_lib.p_project_vector.front());
+
+    auto k_f = k_lib.get_metadata_factory();
+    k_f->select_indb_by_root(k);
+
+    auto k_reg = g_reg();
+    {
+      auto k_v = k_reg->view<project>();
+      for (auto& k : k_v) {
+        std::cout << k_v.get<project>(k).get_name() << std::endl;
+      }
+    }
+    {
+      auto k_v = k_reg->view<season>();
+      for (auto& k : k_v) {
+        std::cout << k_v.get<season>(k).str() << std::endl;
+      }
+    }
+
+    {
+      auto k_v = k_reg->view<episodes>();
+      for (auto& k : k_v) {
+        std::cout << k_v.get<episodes>(k).str() << std::endl;
+      }
+    }
+    {
+      auto k_v = k_reg->view<shot>();
+      for (auto& k : k_v) {
+        std::cout << k_v.get<shot>(k).str() << std::endl;
+      }
+    }
+    {
+      auto k_v = k_reg->view<assets>();
+      for (auto& k : k_v) {
+        std::cout << k_v.get<assets>(k).str() << std::endl;
+      }
+    }
   }
 }
 TEST_CASE("gui action metadata", "[metadata][gui]") {
