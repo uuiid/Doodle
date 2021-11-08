@@ -44,7 +44,7 @@ bool metadata_serialize::insert_into(entt::entity in) const {
         insert_into(k_p_h);
         k_data.p_parent_id = k_p_h.get<database>().get_id();
       }
-      if (k_data.p_parent_id == 0) {
+      if (!(k_data.p_parent_id) || k_data.p_parent_id == 0) {
         k_data.p_parent_id = k_p_h.get<database>().get_id();
       }
     }

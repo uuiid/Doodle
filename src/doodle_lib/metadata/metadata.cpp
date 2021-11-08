@@ -94,7 +94,7 @@ void database::set_id(std::uint64_t in_id) const {
   p_id_str = fmt::format("id {}", p_id);
 }
 
-const std::uint64_t& database_root::get_current_id() const{
+const std::uint64_t &database_root::get_current_id() const {
   return p_current_id;
 }
 
@@ -134,10 +134,8 @@ FSys::path database::get_url_uuid() const {
   auto l_reg   = g_reg();
   auto l_ent   = entt::to_entity(*l_reg, *this);
 
-  // 找到本身的树类
-  auto &l_tree = k_h.get<tree_relationship>();
   // 找到根的数据库类
-  auto &k_data = l_tree.get_root().get<database>();
+  auto &k_data = k_h.get<root_ref>().root_handle().get<database>();
 
   // 组合路径
   auto path    = FSys::path{k_data.p_uuid};
@@ -245,6 +243,10 @@ database::operator doodle::metadata_database() const {
     });
   }
   k_tmp.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
+
+  if (p_parent_id)
+    k_tmp.mutable_parent()->set_value(*p_parent_id);
+
 
   ///设置类型id
   k_tmp.mutable_m_type()->set_value(get_meta_type_int());

@@ -136,23 +136,24 @@ TEST_CASE("test create metadata", "[server][metadata]") {
   SECTION("create project") {
     auto k_prj = make_handle();
     k_prj.emplace<project>("D:/tmp", "case_tset");
-    k_prj.emplace<need_save>();
+    k_prj.get<database_stauts>().set<need_save>();
     k_prj.get<root_ref>().set_root(k_prj);
 
     for (size_t i = 0; i < 20; ++i) {
       if (i > 15) {
         auto k_ass = make_handle();
         k_ass.emplace<assets>(fmt::format("test{}", i));
-        k_ass.emplace<need_save>();
+        k_ass.get<database_stauts>().set<need_save>();
         k_ass.get<root_ref>().set_root(k_prj);
 
       } else {
         entt::handle k_i1 = make_handle();
         k_i1.emplace<season>(std::int32_t(i % 5));
+        k_i1.get<database_stauts>().set<need_save>();
         k_i1.emplace<episodes>(i);
         k_i1.get<root_ref>().set_root(k_prj);
 
-        for (size_t k = 0; k < 100; ++i) {
+        for (size_t k = 0; k < 100; ++k) {
           entt::handle k_i2 = make_handle();
           k_i2.emplace<season>(std::int32_t(i % 5));
           k_i2.emplace<episodes>(k);
@@ -162,7 +163,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
           }
           using namespace chrono::literals;
           k_i2.emplace<assets_file>();
-          k_i2.emplace<need_save>();
+          k_i2.get<database_stauts>().set<need_save>();
           k_i2.get<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
           auto k_u_i = dist(mt);
           k_i2.get<assets_file>().set_user(user_list[k_u_i]);
@@ -224,7 +225,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
     }
     SECTION("install database") {
       auto k_f = doodle_lib::Get().get_metadata_factory();
-      for (auto k : g_reg()->view<need_save, database>()) {
+      for (auto k : g_reg()->view<database_stauts, database>()) {
         k_f->insert_into(k);
       }
     }
