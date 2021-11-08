@@ -137,51 +137,41 @@ TEST_CASE("test create metadata", "[server][metadata]") {
     auto k_prj = make_handle();
     k_prj.emplace<project>("D:/tmp", "case_tset");
     k_prj.emplace<need_save>();
-    entt::handle k_season = make_handle();
-    k_season.emplace<season>(1);
-    k_season.emplace<need_save>();
-    k_season.get<tree_relationship>().set_parent(k_prj);
+    k_prj.get<root_ref>().set_root(k_prj);
 
-    entt::handle k_ep;       /// 集数
-    entt::handle k_shot;     /// 镜头
-    entt::handle k_ass;      /// 资产
-    entt::handle k_assfile;  /// 资产文件
-    ///创建集数
-    for (int k_i = 0; k_i < 10; ++k_i) {
-      k_ep = make_handle();
-      k_ep.emplace<episodes>(k_i);
-      k_ep.emplace<need_save>();
-      k_ep.get<tree_relationship>().set_parent(k_season);
-    }
-    /// 创建镜头
-    for (size_t i = 0; i < 10; ++i) {
-      k_shot      = make_handle();
-      auto& k_sho = k_shot.emplace<shot>(i);
-      k_shot.emplace<need_save>();
-      if (i % 2 == 0) {
-        k_sho.set_shot_ab(shot::shot_ab_enum::B);
+    for (size_t i = 0; i < 20; ++i) {
+      if (i > 15) {
+        auto k_ass = make_handle();
+        k_ass.emplace<assets>(fmt::format("test{}", i));
+        k_ass.emplace<need_save>();
+        k_ass.get<root_ref>().set_root(k_prj);
+
+      } else {
+        entt::handle k_i1 = make_handle();
+        k_i1.emplace<season>(std::int32_t(i % 5));
+        k_i1.emplace<episodes>(i);
+        k_i1.get<root_ref>().set_root(k_prj);
+
+        for (size_t k = 0; k < 100; ++i) {
+          entt::handle k_i2 = make_handle();
+          k_i2.emplace<season>(std::int32_t(i % 5));
+          k_i2.emplace<episodes>(k);
+          auto& k_sho = k_i2.emplace<shot>(k);
+          if (i % 2 == 0) {
+            k_sho.set_shot_ab(shot::shot_ab_enum::B);
+          }
+          using namespace chrono::literals;
+          k_i2.emplace<assets_file>();
+          k_i2.emplace<need_save>();
+          k_i2.get<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
+          auto k_u_i = dist(mt);
+          k_i2.get<assets_file>().set_user(user_list[k_u_i]);
+          k_i2.get<assets_file>().set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
+          k_i2.get<root_ref>().set_root(k_prj);
+        }
       }
-      k_shot.get<tree_relationship>().set_parent(k_ep);
-    }
-    /// 创建资产
-    for (size_t i = 0; i < 10; ++i) {
-      k_ass = make_handle();
-      k_ass.emplace<assets>(fmt::format("test{}", i));
-      k_ass.emplace<need_save>();
-      k_ass.get<tree_relationship>().set_parent(k_shot);
     }
 
-    for (size_t i = 0; i < 10; ++i) {
-      using namespace chrono::literals;
-      k_assfile = make_handle();
-      k_assfile.emplace<assets_file>();
-      k_assfile.emplace<need_save>();
-      k_assfile.get<tree_relationship>().set_parent(k_ass);
-      k_assfile.get<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
-      auto k_u_i = dist(mt);
-      k_assfile.get<assets_file>().set_user(user_list[k_u_i]);
-      k_assfile.get<assets_file>().set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
-    }
     SECTION("str meta tree") {
       std::function<void(const entt::handle& in, std::int32_t&)> k_fun{};
       std::int32_t k_i{0};
@@ -199,9 +189,37 @@ TEST_CASE("test create metadata", "[server][metadata]") {
           k_fun(k_h, k_i_);
         }
       };
-      auto k_prj = g_reg()->view<project>();
-      for (auto& k : k_prj) {
-        k_fun(make_handle(k), k_i);
+      auto k_reg = g_reg();
+      {
+        auto k_v = k_reg->view<project>();
+        for (auto& k : k_v) {
+          std::cout << k_v.get<project>(k).get_name() << std::endl;
+        }
+      }
+      {
+        auto k_v = k_reg->view<season>();
+        for (auto& k : k_v) {
+          std::cout << k_v.get<season>(k).str() << std::endl;
+        }
+      }
+
+      {
+        auto k_v = k_reg->view<episodes>();
+        for (auto& k : k_v) {
+          std::cout << k_v.get<episodes>(k).str() << std::endl;
+        }
+      }
+      {
+        auto k_v = k_reg->view<shot>();
+        for (auto& k : k_v) {
+          std::cout << k_v.get<shot>(k).str() << std::endl;
+        }
+      }
+      {
+        auto k_v = k_reg->view<assets>();
+        for (auto& k : k_v) {
+          std::cout << k_v.get<assets>(k).str() << std::endl;
+        }
       }
     }
     SECTION("install database") {
