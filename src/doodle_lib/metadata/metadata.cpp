@@ -104,8 +104,6 @@ database::database()
       p_has_file(0),
       p_updata_parent_id(false),
       p_updata_type(false),
-      p_need_load(false),
-      p_need_save(false),
       p_boost_serialize_vesion(0) {
 }
 
@@ -184,50 +182,55 @@ bool database::is_install() const {
                              comment_vector
 
 database &database::operator=(const metadata_database &in_) {
+  auto k_h    = make_handle(*this);
+  /// 转换序列化数据
   auto k_data = in_.metadata_cereal().value();
   vector_container my_data{k_data.begin(), k_data.end()};
   {
-    auto l_reg = g_reg();
-    auto l_m   = entt::meta<project>();
-    auto l_ent = entt::to_entity(*l_reg, *this);
     vector_istream k_i{my_data};
     boost::archive::text_iarchive k_archive{k_i};
     k_archive >> *this;
 
     // std::tuple<> k_tu;
-    decltype(l_reg->try_get<DOODLE_SERIALIZATION>(l_ent)) k_tu{};
+    decltype(k_h.try_get<DOODLE_SERIALIZATION>()) k_tu{};
     boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
       k_archive >> in_ptr;
     });
     boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
       if (in_ptr) {
-        l_reg->emplace_or_replace<
-            std::remove_pointer_t<std::decay_t<decltype(in_ptr)>>>(l_ent, std::move(*in_ptr));
+        k_h.emplace_or_replace<
+            std::remove_pointer_t<std::decay_t<decltype(in_ptr)>>>(std::move(*in_ptr));
       }
     });
   }
+  /// 转换id
   set_id(in_.id());
+  /// 转化类型
   p_type = magic_enum::enum_cast<metadata_type>(in_.m_type().value())
                .value_or(metadata_type::unknown_file);
+
+  /// 确认转换可索引数据
+
   return *this;
 }
 database::operator doodle::metadata_database() const {
-  metadata_database k_tmp{};
-  k_tmp.set_id(p_id);
-  k_tmp.set_uuid_path(get_url_uuid().generic_string());
-  if (has_parent() && (p_updata_parent_id || p_id == 0))
-    k_tmp.mutable_parent()->set_value(*p_parent_id);
+  auto k_h = make_handle(*this);
 
+  metadata_database k_tmp{};
+  ///转换id
+  if (p_id != 0)
+    k_tmp.set_id(p_id);
+  ///设置序列化数据储存位置
+  k_tmp.set_uuid_path(get_url_uuid().generic_string());
+
+  /// 设置序列化数据
   vector_container my_data{};
   {
-    auto l_reg = g_reg();
-    auto l_m   = entt::meta<project>();
-    auto l_ent = entt::to_entity(*l_reg, *this);
     vector_iostream kt{my_data};
     boost::archive::text_oarchive k_archive{kt};
     k_archive << BOOST_SERIALIZATION_NVP(*this);
 
-    auto k_tu = l_reg->try_get<DOODLE_SERIALIZATION>(l_ent);
+    auto k_tu = k_h.try_get<DOODLE_SERIALIZATION>();
     // auto k_boost_tu = boost::hana::to_tuple(k_tu);
     boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
       k_archive << in_ptr;
@@ -235,9 +238,22 @@ database::operator doodle::metadata_database() const {
   }
   k_tmp.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
 
-  if (p_updata_type || p_id == 0) {
-    k_tmp.mutable_m_type()->set_value(get_meta_type_int());
+  ///设置类型id
+  k_tmp.mutable_m_type()->set_value(get_meta_type_int());
+  /// 设置可索引数据
+  if (k_h.any_of<season>()) {
+    k_tmp.mutable_season()->set_value(k_h.get<season>().get_season());
   }
+  if (k_h.any_of<episodes>()) {
+    k_tmp.mutable_episode()->set_value(k_h.get<episodes>().get_episodes());
+  }
+  if (k_h.any_of<shot>()) {
+    k_tmp.mutable_episode()->set_value(k_h.get<shot>().get_shot());
+  }
+  if (k_h.any_of<assets>()) {
+    k_tmp.mutable_assets()->set_value(k_h.get<assets>().get_name1());
+  }
+
   return k_tmp;
 }
 

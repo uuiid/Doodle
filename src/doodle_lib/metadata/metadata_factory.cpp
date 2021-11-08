@@ -30,16 +30,16 @@ bool metadata_serialize::insert_into(entt::entity in) const {
   auto k_h = make_handle(in);
   if (!k_h)
     return false;
-  if (!k_h.all_of<tree_relationship, database>())
+  if (!k_h.all_of<root_ref, database>())
     throw doodle_error{"缺失组件"};
 
-  auto &k_tree = k_h.get<tree_relationship>();
+  auto &k_tree = k_h.get<root_ref>();
   auto &k_data = k_h.get<database>();
 
   auto k_c     = this->p_rpcClien.lock();
   if (!k_data.is_install()) {
-    auto k_p_h = k_tree.get_parent_h();
-    if (k_p_h) {
+    auto k_p_h = k_tree.root_handle();
+    if (k_p_h && k_p_h != k_h) {
       if (!k_p_h.get<database>().is_install()) {
         insert_into(k_p_h);
         k_data.p_parent_id = k_p_h.get<database>().get_id();
@@ -60,16 +60,12 @@ void metadata_serialize::delete_data(entt::entity in) const {
   auto k_h = make_handle(in);
   if (!k_h)
     return;
-  if (!k_h.all_of<tree_relationship, database>())
+  if (!k_h.all_of<database>())
     throw doodle_error{"缺失组件"};
 
-  auto &k_tree = k_h.get<tree_relationship>();
   auto &k_data = k_h.get<database>();
-  if (k_tree.has_parent()) {
-    updata_db(k_tree.get_parent());
-  }
 
-  auto k_c = this->p_rpcClien.lock();
+  auto k_c     = this->p_rpcClien.lock();
   k_c->delete_metadata(k_data);
   k_h.get<database_stauts>().set<is_load>();
   k_h.destroy();
@@ -79,10 +75,9 @@ void metadata_serialize::updata_db(entt::entity in) const {
   auto k_h = make_handle(in);
   if (!k_h)
     return;
-  if (!k_h.all_of<tree_relationship, database>())
+  if (!k_h.all_of<database>())
     throw doodle_error{"缺失组件"};
 
-  auto &k_tree = k_h.get<tree_relationship>();
   auto &k_data = k_h.get<database>();
   auto k_c     = this->p_rpcClien.lock();
   k_c->update_metadata(k_data);
@@ -93,11 +88,11 @@ void metadata_serialize::select_indb(entt::entity in) const {
   auto k_h = make_handle(in);
   if (!k_h)
     return;
-  if (!k_h.all_of<database, tree_relationship>())
+  if (!k_h.all_of<database, root_ref>())
     throw doodle_error{"缺失组件"};
 
   auto k_c      = this->p_rpcClien.lock();
-  auto &k_tree  = k_h.get<tree_relationship>();
+  auto &k_tree  = k_h.get<root_ref>();
 
   auto &k_data  = k_h.get<database>();
   auto k_filter = new_object<rpc_filter::filter>();
@@ -111,7 +106,7 @@ void metadata_serialize::select_indb(entt::entity in) const {
   k_filter->set_parent_id(k_data.get_id());
   auto k_v = k_c->select_entity(k_filter);
   for (auto &i : k_v) {
-    make_handle(i).get_or_emplace<tree_relationship>().set_parent_raw(k_h);
+    make_handle(i).get_or_emplace<root_ref>().set_root(k_tree.p_root);
   }
 
   k_h.get<database_stauts>().set<is_load>();

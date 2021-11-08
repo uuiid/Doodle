@@ -94,6 +94,19 @@ class DOODLELIB_API tree_relationship
   entt::handle get_root() const;
 };
 
+class DOODLELIB_API root_ref {
+ public:
+  entt::entity p_root;
+
+  inline entt::handle root_handle(){
+    return make_handle(p_root);
+  }
+
+  inline void set_root(entt::entity in_root){
+    p_root = in_root;
+  }
+};
+
 class DOODLELIB_API database {
   friend rpc_metadata_client;
   friend tree_relationship;
@@ -119,14 +132,6 @@ class DOODLELIB_API database {
   std::size_t p_has_file;
   bool p_updata_parent_id;
   bool p_updata_type;
-  /**
-   * @brief 需要加载
-   */
-  bool p_need_load;
-  /**
-   * @brief 需要保存
-   */
-  bool p_need_save;
 
   FSys::path get_url_uuid() const;
   bool has_parent() const;
@@ -211,14 +216,14 @@ class DOODLELIB_API database_stauts {
    public:
     set_status() = default;
     template <class in_comm>
-    void operator()(in_comm &in){
+    void operator()(in_comm &in) {
       in.set<in_class>();
     };
   };
 };
 
-template<class in_class>
-using database_set_stauts =database_stauts::set_status<in_class>; 
+template <class in_class>
+using database_set_stauts = database_stauts::set_status<in_class>;
 
 class DOODLELIB_API to_str {
  private:
