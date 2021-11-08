@@ -212,7 +212,7 @@ grpc::Status rpc_metadaata_server::filter_metadata(grpc::ServerContext *context,
     k_select.where.add(k_tab.assetsP.like(request->assets().value()));
   }
   if (request->has_beg_off_id()) {
-    k_select.where.add(k_tab.id >= request->beg_off_id().value());
+    k_select.where.add(k_tab.id > request->beg_off_id().value());
     if (request->has_off_size()) {
       k_select.limit(request->off_size().value());
     } else {

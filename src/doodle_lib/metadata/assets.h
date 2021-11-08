@@ -16,7 +16,6 @@ class DOODLELIB_API assets {
   assets();
   explicit assets(std::string in_name);
   // ~Assets();
-  DOODLE_MOVE(assets);
 
   [[nodiscard]] std::string str() const;
   [[nodiscard]] std::string show_str() const;

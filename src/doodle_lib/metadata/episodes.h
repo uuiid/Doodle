@@ -11,7 +11,6 @@ class DOODLELIB_API episodes {
   episodes();
   explicit episodes(int64_t in_episodes);
   // ~Episodes();
-  DOODLE_MOVE(episodes);
   [[nodiscard]] const int64_t &get_episodes() const noexcept;
   void set_episodes(const int64_t &Episodes_);
 

@@ -293,9 +293,9 @@ void doodle_app::metadata_load() {
       k_f->insert_into(k_h);
     } else if (k_h.get<database_stauts>().is<need_delete>()) {
       k_f->delete_data(k_h);
-    } else if(k_h.get<database_stauts>().is<need_root_load>()){
+    } else if (k_h.get<database_stauts>().is<need_root_load>()) {
       k_f->select_indb_by_root(k_h);
-    } 
+    }
   }
   k_metadata_obs.clear();
 }
@@ -368,9 +368,11 @@ void doodle_app::loop_one() {
   imgui::DockSpaceOverViewport(imgui::GetMainViewport());
   static std::string str{};
   try {
-    p_main_win->frame_render();
-    main_loop();
-    metadata_loop_one();
+    if (!p_show_err) {
+      p_main_win->frame_render();
+      main_loop();
+      metadata_loop_one();
+    }
   } catch (doodle_error& err) {
     p_show_err = true;
     str        = err.what();
@@ -383,9 +385,10 @@ void doodle_app::loop_one() {
   //
   //      imgui::OpenPopup("警告");
   //    }
-  dear::PopupModal{"警告", &p_show_err} && [str1 = str]() {
+  dear::PopupModal{"警告", &p_show_err} && [str1 = str, this]() {
     dear::Text(str);
     if (ImGui::Button("OK")) {
+      this->p_show_err = false;
       ImGui::CloseCurrentPopup();
     }
   };

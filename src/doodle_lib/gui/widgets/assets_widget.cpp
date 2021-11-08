@@ -27,19 +27,19 @@ assets_widget::assets_widget()
 }
 void assets_widget::frame_render() {
   /// 加载数据
-  if (!p_root.get<database_root>().is_end())
-    p_root.patch<database_stauts>(database_set_stauts<need_load>{});
+  if (p_root && !p_root.get<database_root>().is_end())
+    p_root.patch<database_stauts>(database_set_stauts<need_root_load>{});
   load_meta(p_root);
   p_all_old_selected = p_all_selected;
 }
 
 void assets_widget::set_metadata(const entt::entity& in_ptr) {
   auto k_h = make_handle(in_ptr);
-  if (p_root.all_of<database_root, database, database_stauts>())
+  if (!k_h.all_of<database_root, database, database_stauts>())
     throw doodle_error{"缺失组件"};
-
+  p_root = k_h;
   if (!p_root.get<database_root>().is_end())
-    p_root.patch<database_stauts>(database_set_stauts<need_load>{});
+    p_root.patch<database_stauts>(database_set_stauts<need_root_load>{});
 }
 
 class assets_widget::node {
@@ -50,7 +50,7 @@ class assets_widget::node {
   entt::handle ent;
 
   template <class T>
-  static std::vector<node> load_node(assets_widget* self) {
+  static std::vector<T> load_node(assets_widget* self) {
     static auto base_flags{ImGuiTreeNodeFlags_OpenOnArrow |
                            ImGuiTreeNodeFlags_OpenOnDoubleClick |
                            ImGuiTreeNodeFlags_SpanAvailWidth};
@@ -104,13 +104,7 @@ void assets_widget::load_meta(const entt::handle& in_ptr) {
   auto k_shot     = node::load_node<shot>(this);
   auto k_assets   = node::load_node<assets>(this);
 
-  node::load_(this, k_season, [&]() {
-    node::load_(this, k_episodes, [&]() {
-      node::load_(this, k_shot, [&]() {});
-    });
-  });
 
-  node::load_(this, k_assets, {});
 }
 
 bool assets_widget::is_select(const entt::handle& in_ptr) {

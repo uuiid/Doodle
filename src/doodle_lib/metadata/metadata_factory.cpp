@@ -11,6 +11,7 @@
 #include <doodle_lib/rpc/rpc_metadata_client.h>
 #include <grpcpp/grpcpp.h>
 
+#include <boost/fusion/algorithm/iteration/for_each.hpp>
 namespace doodle {
 
 metadata_serialize::metadata_serialize()
@@ -23,6 +24,10 @@ std::vector<entt::entity> metadata_serialize::get_all_prj() const {
   auto k_filter = new_object<rpc_filter::filter>();
   k_filter->set_meta_type(metadata_type::project_root);
   auto k_list = k_c->select_entity(k_filter);
+  boost::for_each(k_list, [](const entt::entity &in) {
+    auto k_h = make_handle(in);
+    k_h.get<root_ref>().set_root(k_h);
+  });
   return k_list;
 }
 
@@ -125,10 +130,12 @@ void metadata_serialize::select_indb_by_root(entt::entity in_root) const {
   auto k_c = this->p_rpcClien.lock();
   auto k_v = k_c->select_entity(k_filter);
   k_h.patch<database_root>([&](database_root &in) {
-    in.p_end        = k_v.empty();
-    auto &k_data    = make_handle(k_v.back()).get<database>();
-    in.p_current_id = k_data.get_id();
-    in.p_cout_rows += k_v.size();
+    in.p_end = k_v.empty();
+    if (!in.p_end) {
+      auto &k_data    = make_handle(k_v.back()).get<database>();
+      in.p_current_id = k_data.get_id();
+      in.p_cout_rows += k_v.size();
+    }
   });
   k_h.get<database_root>().p_end = k_v.empty();
   for (auto &i : k_v) {
