@@ -98,13 +98,29 @@ class DOODLELIB_API root_ref {
  public:
   entt::entity p_root;
 
-  inline entt::handle root_handle(){
+  inline entt::handle root_handle() {
     return make_handle(p_root);
   }
 
-  inline void set_root(entt::entity in_root){
+  inline void set_root(entt::entity in_root) {
     p_root = in_root;
   }
+};
+
+class DOODLELIB_API database_root {
+ public:
+  std::uint64_t p_current_id;
+  std::uint64_t p_cout_rows;
+
+  bool p_end;
+  database_root()
+      : p_current_id(0),
+        p_cout_rows(0),
+        p_end(false) {}
+
+  [[nodiscard]] bool is_end() const;
+  [[nodiscard]] const std::uint64_t& get_current_id() const; 
+
 };
 
 class DOODLELIB_API database {
@@ -194,6 +210,7 @@ class DOODLELIB_API database {
 
 // using to_str = entt::tag<"to_str"_hs>;
 using need_load   = entt::tag<"need_load"_hs>;
+using need_root_load   = entt::tag<"need_root_load"_hs>;
 using is_load     = entt::tag<"is_load"_hs>;
 using need_save   = entt::tag<"need_save"_hs>;
 using need_delete = entt::tag<"need_delete"_hs>;

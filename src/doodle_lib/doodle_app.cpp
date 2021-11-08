@@ -293,7 +293,9 @@ void doodle_app::metadata_load() {
       k_f->insert_into(k_h);
     } else if (k_h.get<database_stauts>().is<need_delete>()) {
       k_f->delete_data(k_h);
-    }
+    } else if(k_h.get<database_stauts>().is<need_root_load>()){
+      k_f->select_indb_by_root(k_h);
+    } 
   }
   k_metadata_obs.clear();
 }

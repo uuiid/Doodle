@@ -98,7 +98,13 @@ rpc_filter::filter::filter()
       _parent_id(),
       _meta_type(),
       _begin(),
-      _end() {
+      _end(),
+
+      _episodes(),
+      _shot(),
+      _assets(),
+      _beg_off_id(0),
+      p_size(1000) {
 }
 void rpc_filter::filter::set_id(uint64_t in_id) {
   _id = in_id;
@@ -109,6 +115,11 @@ void rpc_filter::filter::set_parent_id(std::int64_t in_patent_id) {
 void rpc_filter::filter::set_meta_type(metadata_type in_meta_type) {
   _meta_type = in_meta_type;
 }
+
+void rpc_filter::filter::set_beg_off_is(const std::uint64_t& in_id) {
+  _beg_off_id = in_id;
+}
+
 void rpc_filter::filter::set_begin_time(const rpc_filter::filter::time_point& in_time) {
   _begin = in_time;
 }
@@ -143,6 +154,10 @@ rpc_filter::filter::operator metadata_database_filter() const {
   }
   if (_assets) {
     k_tmp.mutable_assets()->set_value(*_assets);
+  }
+  if (_beg_off_id) {
+    k_tmp.mutable_beg_off_id()->set_value(*_beg_off_id);
+    k_tmp.mutable_off_size()->set_value(p_size);
   }
 
   return k_tmp;

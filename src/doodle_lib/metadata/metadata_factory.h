@@ -32,6 +32,8 @@ class DOODLELIB_API metadata_serialize : public std::enable_shared_from_this<met
    */
   virtual void updata_db(entt::entity in) const;
   virtual void select_indb(entt::entity in) const;
+
+  virtual void select_indb_by_root(entt::entity in_root) const;
 };
 
 }  // namespace doodle

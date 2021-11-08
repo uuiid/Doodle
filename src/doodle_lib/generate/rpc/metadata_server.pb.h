@@ -510,6 +510,8 @@ class DOODLELIB_API metadata_database_filter PROTOBUF_FINAL :
     kShotFieldNumber = 7,
     kSeasonFieldNumber = 8,
     kAssetsFieldNumber = 9,
+    kBegOffIdFieldNumber = 10,
+    kOffSizeFieldNumber = 11,
     kIdFieldNumber = 1,
   };
   // .google.protobuf.Timestamp begin_time = 2;
@@ -656,6 +658,42 @@ class DOODLELIB_API metadata_database_filter PROTOBUF_FINAL :
       PROTOBUF_NAMESPACE_ID::StringValue* assets);
   PROTOBUF_NAMESPACE_ID::StringValue* unsafe_arena_release_assets();
 
+  // .google.protobuf.UInt64Value beg_off_id = 10;
+  bool has_beg_off_id() const;
+  private:
+  bool _internal_has_beg_off_id() const;
+  public:
+  void clear_beg_off_id();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& beg_off_id() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_beg_off_id();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_beg_off_id();
+  void set_allocated_beg_off_id(PROTOBUF_NAMESPACE_ID::UInt64Value* beg_off_id);
+  private:
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_beg_off_id() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_beg_off_id();
+  public:
+  void unsafe_arena_set_allocated_beg_off_id(
+      PROTOBUF_NAMESPACE_ID::UInt64Value* beg_off_id);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_beg_off_id();
+
+  // .google.protobuf.UInt64Value off_size = 11;
+  bool has_off_size() const;
+  private:
+  bool _internal_has_off_size() const;
+  public:
+  void clear_off_size();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& off_size() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_off_size();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_off_size();
+  void set_allocated_off_size(PROTOBUF_NAMESPACE_ID::UInt64Value* off_size);
+  private:
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_off_size() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_off_size();
+  public:
+  void unsafe_arena_set_allocated_off_size(
+      PROTOBUF_NAMESPACE_ID::UInt64Value* off_size);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_off_size();
+
   // uint64 id = 1;
   void clear_id();
   ::PROTOBUF_NAMESPACE_ID::uint64 id() const;
@@ -680,6 +718,8 @@ class DOODLELIB_API metadata_database_filter PROTOBUF_FINAL :
   PROTOBUF_NAMESPACE_ID::UInt64Value* shot_;
   PROTOBUF_NAMESPACE_ID::UInt64Value* season_;
   PROTOBUF_NAMESPACE_ID::StringValue* assets_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* beg_off_id_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* off_size_;
   ::PROTOBUF_NAMESPACE_ID::uint64 id_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_metadata_5fserver_2eproto;
@@ -2030,6 +2070,160 @@ inline void metadata_database_filter::set_allocated_assets(PROTOBUF_NAMESPACE_ID
   }
   assets_ = assets;
   // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database_filter.assets)
+}
+
+// .google.protobuf.UInt64Value beg_off_id = 10;
+inline bool metadata_database_filter::_internal_has_beg_off_id() const {
+  return this != internal_default_instance() && beg_off_id_ != nullptr;
+}
+inline bool metadata_database_filter::has_beg_off_id() const {
+  return _internal_has_beg_off_id();
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::_internal_beg_off_id() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = beg_off_id_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::beg_off_id() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database_filter.beg_off_id)
+  return _internal_beg_off_id();
+}
+inline void metadata_database_filter::unsafe_arena_set_allocated_beg_off_id(
+    PROTOBUF_NAMESPACE_ID::UInt64Value* beg_off_id) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(beg_off_id_);
+  }
+  beg_off_id_ = beg_off_id;
+  if (beg_off_id) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database_filter.beg_off_id)
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::release_beg_off_id() {
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = beg_off_id_;
+  beg_off_id_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::unsafe_arena_release_beg_off_id() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database_filter.beg_off_id)
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = beg_off_id_;
+  beg_off_id_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::_internal_mutable_beg_off_id() {
+  
+  if (beg_off_id_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
+    beg_off_id_ = p;
+  }
+  return beg_off_id_;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::mutable_beg_off_id() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database_filter.beg_off_id)
+  return _internal_mutable_beg_off_id();
+}
+inline void metadata_database_filter::set_allocated_beg_off_id(PROTOBUF_NAMESPACE_ID::UInt64Value* beg_off_id) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(beg_off_id_);
+  }
+  if (beg_off_id) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(beg_off_id)->GetArena();
+    if (message_arena != submessage_arena) {
+      beg_off_id = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, beg_off_id, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  beg_off_id_ = beg_off_id;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database_filter.beg_off_id)
+}
+
+// .google.protobuf.UInt64Value off_size = 11;
+inline bool metadata_database_filter::_internal_has_off_size() const {
+  return this != internal_default_instance() && off_size_ != nullptr;
+}
+inline bool metadata_database_filter::has_off_size() const {
+  return _internal_has_off_size();
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::_internal_off_size() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = off_size_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::off_size() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database_filter.off_size)
+  return _internal_off_size();
+}
+inline void metadata_database_filter::unsafe_arena_set_allocated_off_size(
+    PROTOBUF_NAMESPACE_ID::UInt64Value* off_size) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(off_size_);
+  }
+  off_size_ = off_size;
+  if (off_size) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database_filter.off_size)
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::release_off_size() {
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = off_size_;
+  off_size_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::unsafe_arena_release_off_size() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database_filter.off_size)
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = off_size_;
+  off_size_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::_internal_mutable_off_size() {
+  
+  if (off_size_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
+    off_size_ = p;
+  }
+  return off_size_;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::mutable_off_size() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database_filter.off_size)
+  return _internal_mutable_off_size();
+}
+inline void metadata_database_filter::set_allocated_off_size(PROTOBUF_NAMESPACE_ID::UInt64Value* off_size) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(off_size_);
+  }
+  if (off_size) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(off_size)->GetArena();
+    if (message_arena != submessage_arena) {
+      off_size = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, off_size, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  off_size_ = off_size;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database_filter.off_size)
 }
 
 #ifdef __GNUC__

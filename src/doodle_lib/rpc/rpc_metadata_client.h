@@ -33,9 +33,11 @@ class filter : details::no_copy {
   std::optional<std::int64_t> _shot;
   std::optional<string> _assets;
 
-  std::int64_t off;
-  std::uint16_t size;
-  
+  std::optional<std::uint64_t> _beg_off_id;
+  std::uint16_t p_size;
+
+
+  void set_beg_off_is(const std::uint64_t& in_id);
   void set_begin_time(const time_point& in_time);
   void set_end_time(const time_point& in_time);
   void set_range(const time_point& in_begin, const time_point& in_end);

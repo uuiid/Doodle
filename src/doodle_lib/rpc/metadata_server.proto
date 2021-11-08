@@ -39,8 +39,8 @@ message metadata_database_filter{
   google.protobuf.StringValue assets = 9;
   
   
-  uint64 off = 10;
-  uint64 size = 11;
+  google.protobuf.UInt64Value beg_off_id = 10;
+  google.protobuf.UInt64Value off_size = 11;
 
 }
 

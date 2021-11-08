@@ -94,6 +94,14 @@ void database::set_id(std::uint64_t in_id) const {
   p_id_str = fmt::format("id {}", p_id);
 }
 
+const std::uint64_t& database_root::get_current_id() const{
+  return p_current_id;
+}
+
+bool database_root::is_end() const {
+  return p_end;
+}
+
 database::database()
     : p_id(0),
       p_id_str("id 0"),
@@ -272,6 +280,7 @@ bool database::has_child() const {
 bool database::has_file() const {
   return p_has_file > 0;
 }
+
 const std::string &database::get_uuid() const {
   return p_uuid;
 }

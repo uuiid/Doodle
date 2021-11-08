@@ -97,19 +97,45 @@ void metadata_serialize::select_indb(entt::entity in) const {
   auto &k_data  = k_h.get<database>();
   auto k_filter = new_object<rpc_filter::filter>();
   /// 选择自身本身并更新
-
-  // k_filter->set_id(k_data->get_id());
-  // *k_data = k_c->select_metadata(k_filter).front();
+  k_filter->set_id(k_data.get_id());
+  k_data = k_c->select_metadata(k_filter).front();
   // k_filter->reset();
 
   /// 选择子物体并更新
-  k_filter->set_parent_id(k_data.get_id());
-  auto k_v = k_c->select_entity(k_filter);
-  for (auto &i : k_v) {
-    make_handle(i).get_or_emplace<root_ref>().set_root(k_tree.p_root);
-  }
+  // k_filter->set_parent_id(k_data.get_id());
+  // auto k_v = k_c->select_entity(k_filter);
+  // for (auto &i : k_v) {
+  //   make_handle(i).get_or_emplace<root_ref>().set_root(k_tree.p_root);
+  // }
 
   k_h.get<database_stauts>().set<is_load>();
+}
+void metadata_serialize::select_indb_by_root(entt::entity in_root) const {
+  auto k_h = make_handle(in_root);
+
+  if (!k_h.all_of<database_root, database>())
+    throw doodle_error{"缺失组件"};
+
+  auto &k_data  = k_h.get<database>();
+
+  auto k_filter = new_object<rpc_filter::filter>();
+  k_filter->set_parent_id(k_data.get_id());
+  k_filter->set_beg_off_is(k_h.get<database_root>().get_current_id());
+
+  auto k_c = this->p_rpcClien.lock();
+  auto k_v = k_c->select_entity(k_filter);
+  k_h.patch<database_root>([&](database_root &in) {
+    in.p_end        = k_v.empty();
+    auto &k_data    = make_handle(k_v.back()).get<database>();
+    in.p_current_id = k_data.get_id();
+    in.p_cout_rows += k_v.size();
+  });
+  k_h.get<database_root>().p_end = k_v.empty();
+  for (auto &i : k_v) {
+    auto k_i_h = make_handle(i);
+    k_i_h.get_or_emplace<root_ref>().set_root(in_root);
+    k_i_h.get_or_emplace<database_stauts>().set<is_load>();
+  }
 }
 
 }  // namespace doodle

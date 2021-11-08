@@ -26,75 +26,91 @@ assets_widget::assets_widget()
   p_class_name = "资产";
 }
 void assets_widget::frame_render() {
-  dear::TreeNode{"assets_widget"} && [this]() {
-    load_meta(p_root);
-  };
+  /// 加载数据
+  if (!p_root.get<database_root>().is_end())
+    p_root.patch<database_stauts>(database_set_stauts<need_load>{});
+  load_meta(p_root);
   p_all_old_selected = p_all_selected;
 }
 
 void assets_widget::set_metadata(const entt::entity& in_ptr) {
-  p_root = make_handle(in_ptr);
+  auto k_h = make_handle(in_ptr);
+  if (p_root.all_of<database_root, database, database_stauts>())
+    throw doodle_error{"缺失组件"};
+
+  if (!p_root.get<database_root>().is_end())
+    p_root.patch<database_stauts>(database_set_stauts<need_load>{});
 }
+
+class assets_widget::node {
+ public:
+  ImGuiTreeNodeFlags flage;
+  string show_str;
+  string uuid;
+  entt::handle ent;
+
+  template <class T>
+  static std::vector<node> load_node(assets_widget* self) {
+    static auto base_flags{ImGuiTreeNodeFlags_OpenOnArrow |
+                           ImGuiTreeNodeFlags_OpenOnDoubleClick |
+                           ImGuiTreeNodeFlags_SpanAvailWidth};
+    auto k_reg = g_reg();
+    std::vector<node> k_list;
+    for (auto& k_s : k_reg->view<T>()) {
+      node k_node{};
+      auto k_h   = make_handle(k_s);
+      k_node.ent = k_h;
+      if (self->is_select(k_h)) {
+        k_node.flage |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+      }
+      k_node.show_str = k_h.get_or_emplace<to_str>().get();
+      k_node.uuid     = k_h.get<database>().get_uuid();
+      k_list.push_back(std::move(k_node));
+    }
+    return k_list;
+  }
+
+  static void load_(assets_widget* self,
+                    const std::vector<node>& in_list,
+                    std::function<void()>&& in_fun) {
+    for (auto& k_n : in_list) {
+      bool checked = false;
+      dear::TreeNodeEx{
+          k_n.uuid.c_str(),
+          k_n.flage,
+          k_n.show_str.c_str()} &&
+          [&]() {
+            if (!checked) {
+              self->check_item_clicked(k_n.ent);
+              checked = true;
+            }
+            if (in_fun)
+              in_fun();
+          };
+      if (!checked)
+        self->check_item_clicked(k_n.ent);
+      self->check_item(k_n.ent);
+    }
+  }
+};
+
 void assets_widget::load_meta(const entt::handle& in_ptr) {
   static auto base_flags{ImGuiTreeNodeFlags_OpenOnArrow |
                          ImGuiTreeNodeFlags_OpenOnDoubleClick |
                          ImGuiTreeNodeFlags_SpanAvailWidth};
-  if (!in_ptr.all_of<tree_relationship, database>())
-    return;
 
-  auto& l_tree = in_ptr.get<tree_relationship>();
+  auto k_season   = node::load_node<season>(this);
+  auto k_episodes = node::load_node<episodes>(this);
+  auto k_shot     = node::load_node<shot>(this);
+  auto k_assets   = node::load_node<assets>(this);
 
-  auto& l_data = in_ptr.get<database>();
-  if (l_data.has_child()) {
-    /// 加载数据
-    if (!in_ptr.get<database_stauts>().is<is_load>())
-      in_ptr.patch<database_stauts>([](auto& in) {
-        in.set<need_load>();
-      });
-    for (const auto& i : l_tree.get_child()) {
-      auto k_ch = make_handle(i);
-      if (k_ch.all_of<assets_file>())
-        continue;
+  node::load_(this, k_season, [&]() {
+    node::load_(this, k_episodes, [&]() {
+      node::load_(this, k_shot, [&]() {});
+    });
+  });
 
-      auto flsge = base_flags;
-      if (is_select(k_ch))
-        flsge |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
-
-      auto& l_data1  = k_ch.get<database>();
-      auto l_str_com = k_ch.try_get<season, episodes, shot, assets>();
-      string l_str{k_ch.get_or_emplace<to_str>()};
-
-      if (l_data1.has_child() || l_data1.has_file()) {
-        bool checked = false;  //使用这个变量标记为只检查一次
-        dear::TreeNodeEx{
-            l_data1.get_uuid().c_str(),
-            flsge,
-            l_str.c_str()} &&
-            [&l_data1, i, this, k_ch, &checked]() {
-              if (!checked) {
-                check_item_clicked(k_ch);
-                checked = true;
-              }
-              //添加文件标志
-              if (l_data1.has_file())
-                imgui::BulletText("files");
-              load_meta(k_ch);
-            };
-        if (!checked)
-          check_item_clicked(k_ch);
-        check_item(k_ch);
-      } else {
-        dear::TreeNodeEx{
-            l_data1.get_uuid().c_str(),
-            flsge | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen,
-            l_str.c_str()} &&
-            [this, k_ch]() {
-            };
-        check_item_clicked(k_ch);
-        check_item(k_ch);
-      }
-    }
-  }
+  node::load_(this, k_assets, {});
 }
 
 bool assets_widget::is_select(const entt::handle& in_ptr) {

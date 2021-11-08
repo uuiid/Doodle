@@ -16,6 +16,9 @@ namespace doodle {
  */
 class DOODLELIB_API assets_widget : public metadata_widget {
   registry_ptr reg;
+  class node;
+
+
   entt::handle p_root;
   /**
    * @brief  我们在这里使用上一帧的选中物体开始测试是否选中而不是使用这一帧的

@@ -89,7 +89,7 @@ grpc::Status rpc_metadaata_server::install_metadata(grpc::ServerContext *context
     k_in.insert_list.add(k_tab.season = request->season().value());
   }
   if (request->has_assets()) {
-    k_in.insert_list.add(k_tab.assetsP = request->season().value());
+    k_in.insert_list.add(k_tab.assetsP = request->assets().value());
   }
 
   auto k_id = (*k_conn)(k_in);
@@ -159,7 +159,7 @@ grpc::Status rpc_metadaata_server::update_metadata(grpc::ServerContext *context,
     k_sql.assignments.add(k_tab.season = request->season().value());
   }
   if (request->has_assets()) {
-    k_sql.assignments.add(k_tab.assetsP = request->season().value());
+    k_sql.assignments.add(k_tab.assetsP = request->assets().value());
   }
 
   if (request->has_parent() || request->has_update_time() || request->has_m_type())
@@ -209,7 +209,15 @@ grpc::Status rpc_metadaata_server::filter_metadata(grpc::ServerContext *context,
     k_select.where.add(k_tab.season == request->season().value());
   }
   if (request->has_assets()) {
-    k_select.where.add(k_tab.assetsP.like(request->season().value()));
+    k_select.where.add(k_tab.assetsP.like(request->assets().value()));
+  }
+  if (request->has_beg_off_id()) {
+    k_select.where.add(k_tab.id >= request->beg_off_id().value());
+    if (request->has_off_size()) {
+      k_select.limit(request->off_size().value());
+    } else {
+      k_select.limit(1000u);
+    }
   }
 
   for (const auto &row : (*k_conn)(k_select)) {
@@ -251,7 +259,6 @@ grpc::Status rpc_metadaata_server::filter_metadata(grpc::ServerContext *context,
 
   return grpc::Status::OK;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////                                             /////////////////////////////////////
