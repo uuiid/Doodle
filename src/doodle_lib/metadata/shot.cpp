@@ -44,12 +44,6 @@ shot::shot_ab_enum shot::get_shot_ab_enum() const noexcept {
 void shot::set_shot_ab(const std::string& ShotAb) noexcept {
   p_shot_ab = ShotAb;
 }
-episodes* shot::get_episodes_ptr() const {
-  auto k_reg  = g_reg();
-  auto k_ent  = make_handle(*this);
-  auto &k_tree = k_ent.get<tree_relationship>();
-  return k_tree.find_parent_class<episodes>();
-}
 
 std::string shot::str() const {
   return fmt::format("sc{:04d}{}", p_shot, p_shot_ab == "None" ? "" : p_shot_ab);

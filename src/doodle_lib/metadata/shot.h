@@ -32,7 +32,6 @@ class DOODLELIB_API shot {
     set_shot_ab(std::string{magic_enum::enum_name(ShotAb)});
   };
 
-  [[nodiscard]] episodes *get_episodes_ptr() const;
 
   [[nodiscard]] std::string str() const;
   virtual void attribute_widget(const attribute_factory_ptr &in_factoryPtr);

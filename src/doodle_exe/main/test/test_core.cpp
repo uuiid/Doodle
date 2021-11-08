@@ -307,6 +307,14 @@ TEST_CASE("path iter", "[core]") {
   for (auto& i : k_path) {
     std::cout << i << std::endl;
   }
+  FSys::path k_path2{"\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject"};
+  for (auto& i : k_path2) {
+    std::cout << i << std::endl;
+  }
+  FSys::path k_path3{"C:\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject"};
+  for (auto& i : k_path3) {
+    std::cout << i << std::endl;
+  }
 }
 TEST_CASE("image sequence", "[core]") {
   using namespace doodle;
