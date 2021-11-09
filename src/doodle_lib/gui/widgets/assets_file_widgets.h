@@ -15,7 +15,7 @@ class DOODLELIB_API table_column {
   string p_name;
   std::uint32_t p_width;
   std::function<bool(const entt::handle&)> p_render;
-  virtual void frame_render(const entt::handle& in_ptr);
+  void render(const entt::handle& in_ptr);
 };
 using table_column_ptr = std::shared_ptr<table_column>;
 }  // namespace details
@@ -29,15 +29,19 @@ using table_column_ptr = std::shared_ptr<table_column>;
  *
  */
 class DOODLELIB_API assets_file_widgets : public metadata_widget {
+  class table_column ;
+  using column_ptr = std::shared_ptr<table_column>;
+  class impl;
   entt::handle p_root;
   entt::entity p_current_select;
 
   std::vector<details::table_column_ptr> p_colum_list;
   registry_ptr reg;
-  bool add_colum_render();
+  std::unique_ptr<impl> p_impl;
 
  public:
-  using list_data = boost::hana::tuple<season_ref*, episodes_ref*, shot_ref*, assets_ref*>;
+
+  using list_data  = boost::hana::tuple<season_ref*, episodes_ref*, shot_ref*, assets_ref*>;
 
   assets_file_widgets();
   virtual void frame_render() override;
@@ -47,5 +51,7 @@ class DOODLELIB_API assets_file_widgets : public metadata_widget {
   void set_metadata(const entt::entity& in_ptr);
 
   boost::signals2::signal<void(const entt::entity&)> select_change;
+
+ public:
 };
 }  // namespace doodle
