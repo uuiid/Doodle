@@ -15,22 +15,14 @@ namespace doodle {
  * 
  */
 class DOODLELIB_API assets_widget : public metadata_widget {
-  registry_ptr reg;
-  class node;
-
-
-  entt::handle p_root;
+  class impl;
+  std::unique_ptr<impl> p_impl;
   /**
    * @brief  我们在这里使用上一帧的选中物体开始测试是否选中而不是使用这一帧的
    * 
    */
   std::set<entt::handle> p_all_old_selected;
-  /**
-   * @brief 递归的加载树节点
-   * 
-   * @param in_ptr 传入父物体
-   */
-  void load_meta(const entt::handle& in_ptr);
+
   /**
    * @brief 判断是否是选中对象,
    * 
@@ -56,6 +48,7 @@ class DOODLELIB_API assets_widget : public metadata_widget {
 
  public:
   assets_widget();
+  ~assets_widget() ;
   void frame_render() override;
   /**
    * @brief 设置这个小部件要创建的树的根属性

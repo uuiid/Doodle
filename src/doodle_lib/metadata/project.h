@@ -38,6 +38,8 @@ class DOODLELIB_API project {
   bool operator>(const project& in_rhs) const;
   bool operator<=(const project& in_rhs) const;
   bool operator>=(const project& in_rhs) const;
+  bool operator==(const project& in_rhs) const;
+  bool operator!=(const project& in_rhs) const;
 
  private:
   [[nodiscard]] FSys::path DBRoot() const;

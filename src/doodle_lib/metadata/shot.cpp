@@ -84,5 +84,12 @@ std::optional<shot> shot::analysis_static(const std::string& in_path) {
 void shot::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(this);
 }
+bool shot::operator==(const shot& in_rhs) const {
+  return p_shot == in_rhs.p_shot &&
+         p_shot_ab == in_rhs.p_shot_ab;
+}
+bool shot::operator!=(const shot& in_rhs) const {
+  return !(in_rhs == *this);
+}
 
 }  // namespace doodle

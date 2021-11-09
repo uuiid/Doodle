@@ -39,7 +39,8 @@ class DOODLELIB_API shot {
   bool operator>(const shot &rhs) const;
   bool operator<=(const shot &rhs) const;
   bool operator>=(const shot &rhs) const;
-
+  bool operator==(const shot &in_rhs) const;
+  bool operator!=(const shot &in_rhs) const;
   inline bool analysis(const FSys::path &in_path) {
     return analysis(in_path.generic_string());
   };

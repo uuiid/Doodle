@@ -22,7 +22,8 @@ class DOODLELIB_API episodes {
   bool operator>(const episodes &in_rhs) const;
   bool operator<=(const episodes &in_rhs) const;
   bool operator>=(const episodes &in_rhs) const;
-
+  bool operator==(const episodes &in_rhs) const;
+  bool operator!=(const episodes &in_rhs) const;
   inline bool analysis(const FSys::path &in_path) {
     return analysis(in_path.generic_string());
   };

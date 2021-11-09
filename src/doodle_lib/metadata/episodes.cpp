@@ -70,6 +70,12 @@ std::optional<episodes> episodes::analysis_static(const std::string& in_path) {
 void episodes::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(this);
 }
+bool episodes::operator==(const episodes& in_rhs) const {
+  return p_episodes == in_rhs.p_episodes;
+}
+bool episodes::operator!=(const episodes& in_rhs) const {
+  return !(in_rhs == *this);
+}
 
 }  // namespace doodle
 

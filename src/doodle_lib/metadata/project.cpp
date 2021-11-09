@@ -103,5 +103,11 @@ void project::init() {
   DOODLE_LOG_INFO(str)
   p_shor_str = boost::algorithm::to_upper_copy(str.substr(0, 2));
 }
+bool project::operator==(const project & in_rhs) const{
+return std::tie(p_name, p_en_str, p_shor_str, p_path) == std::tie(in_rhs.p_name, in_rhs.p_en_str, in_rhs.p_shor_str, in_rhs.p_path);
+}bool project::operator!=(const project & in_rhs) const{
+ return !(in_rhs == *this);
+}
+
 
 }  // namespace doodle

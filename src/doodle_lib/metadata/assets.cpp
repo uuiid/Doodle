@@ -64,4 +64,10 @@ void assets::set_name_enus(const std::string& in_nameEnus) {
 void assets::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(this);
 }
+bool assets::operator==(const assets& in_rhs) const {
+  return std::tie(p_name, p_name_enus) == std::tie(in_rhs.p_name, in_rhs.p_name_enus);
+}
+bool assets::operator!=(const assets& in_rhs) const {
+  return !(in_rhs == *this);
+}
 }  // namespace doodle

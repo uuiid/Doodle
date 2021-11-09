@@ -19,6 +19,12 @@ class DOODLELIB_API season {
 
   virtual std::string str() const ;
   virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr) ;
+  bool operator<(const season& in_rhs) const;
+  bool operator>(const season& in_rhs) const;
+  bool operator<=(const season& in_rhs) const;
+  bool operator>=(const season& in_rhs) const;
+  bool operator==(const season& in_rhs) const;
+  bool operator!=(const season& in_rhs) const;
 
  private:
   friend class boost::serialization::access;

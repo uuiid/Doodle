@@ -29,4 +29,22 @@ std::string season::str() const {
 void season::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(this);
 }
+bool season::operator<(const season& in_rhs) const {
+  return p_int < in_rhs.p_int;
+}
+bool season::operator>(const season& in_rhs) const {
+  return in_rhs < *this;
+}
+bool season::operator<=(const season& in_rhs) const {
+  return !(in_rhs < *this);
+}
+bool season::operator>=(const season& in_rhs) const {
+  return !(*this < in_rhs);
+}
+bool season::operator==(const season& in_rhs) const {
+  return p_int == in_rhs.p_int;
+}
+bool season::operator!=(const season& in_rhs) const {
+  return !(in_rhs == *this);
+}
 }  // namespace doodle
