@@ -30,7 +30,7 @@ class assets_widget::impl {
     std::set<episodes> p_eps;
     std::set<entt::handle> p_list;
   };
-  
+
 
   using select_obj = std::variant<season,
                                   episodes,
@@ -107,9 +107,12 @@ class assets_widget::impl {
     auto k_g = g_reg();
     auto k_v = k_g->view<season>();
     std::set<season> k_list;
+    std::multimap<season,entt::handle> k_map;
     for (auto& k_ : k_v) {
       k_list.insert(k_v.get<season>(k_));
+      k_map.insert(std::make_pair(k_v.get<season>(k_),make_handle(k_)));
     }
+    
 
     for (auto& k_season : k_list) {
       auto k_f = base_flags;
@@ -128,6 +131,7 @@ class assets_widget::impl {
             if (k_v.get<season>(k_i) == k_season)
               k_handle_list.push_back(make_handle(k_i));
           }
+          
           set_select(k_handle_list, k_season);
         }
         k_node&& [&]() {
