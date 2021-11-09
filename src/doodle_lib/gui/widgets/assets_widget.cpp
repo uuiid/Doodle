@@ -31,7 +31,6 @@ class assets_widget::impl {
     std::set<entt::handle> p_list;
   };
 
-
   using select_obj = std::variant<season,
                                   episodes,
                                   shot,
@@ -107,12 +106,11 @@ class assets_widget::impl {
     auto k_g = g_reg();
     auto k_v = k_g->view<season>();
     std::set<season> k_list;
-    std::multimap<season,entt::handle> k_map;
+    std::multimap<season, entt::handle> k_map;
     for (auto& k_ : k_v) {
       k_list.insert(k_v.get<season>(k_));
-      k_map.insert(std::make_pair(k_v.get<season>(k_),make_handle(k_)));
+      k_map.insert(std::make_pair(k_v.get<season>(k_), make_handle(k_)));
     }
-    
 
     for (auto& k_season : k_list) {
       auto k_f = base_flags;
@@ -126,28 +124,34 @@ class assets_widget::impl {
                                 k_season.str().c_str()};
 
         if (imgui::IsItemClicked()) {
-          std::vector<entt::handle> k_handle_list{};
-          for (auto& k_i : k_v) {
-            if (k_v.get<season>(k_i) == k_season)
-              k_handle_list.push_back(make_handle(k_i));
-          }
-          
-          set_select(k_handle_list, k_season);
+          auto k_r = k_map.equal_range(k_season);
+          handle_list k_list{};
+          std::transform(k_r.first, k_r.second, std::back_inserter(k_list),
+                         [](auto& in) {
+                           return in.second;
+                         });
+          set_select(k_list, k_season);
         }
         k_node&& [&]() {
-          render_eps(k_season);
+          auto k_r = k_map.equal_range(k_season);
+          handle_list k_list{};
+          std::transform(k_r.first, k_r.second, std::back_inserter(k_list),
+                         [](auto& in) {
+                           return in.second;
+                         });
+          render_eps(k_list);
         };
       }
     }
   }
-  void render_eps(const season& in_season) {
-    auto k_g = g_reg();
-    auto k_v = k_g->view<episodes>();
+  void render_eps(const handle_list& in_list) {
     std::set<episodes> k_list;
-    for (auto& k_e : k_v) {
-      auto k_h = make_handle(k_e);
-      if (k_h.all_of<season>() && k_h.get<season>() == in_season)
-        k_list.insert(k_v.get<episodes>(k_e));
+    std::multimap<episodes, entt::handle> k_map;
+    for (auto& k_e : in_list) {
+      if (k_e.all_of<episodes>()) {
+        k_list.insert(k_e.get<episodes>());
+        k_map.insert(std::make_pair(k_e.get<episodes>(), k_e));
+      }
     }
 
     for (auto& k_episodes : k_list) {
@@ -160,33 +164,34 @@ class assets_widget::impl {
                                 k_f,
                                 k_episodes.str().c_str()};
         if (imgui::IsItemClicked()) {
-          std::vector<entt::handle> k_handle_list{};
-          for (auto& k_i : k_v) {
-            auto k_h = make_handle(k_i);
-            if (k_v.get<episodes>(k_i) == k_episodes &&
-                k_h.all_of<season>() &&
-                k_h.get<season>() == in_season)
-              k_handle_list.push_back(make_handle(k_i));
-          }
-          set_select(k_handle_list, k_episodes);
+          auto k_r = k_map.equal_range(k_episodes);
+          handle_list k_list{};
+          std::transform(k_r.first, k_r.second, std::back_inserter(k_list),
+                         [](auto& in) {
+                           return in.second;
+                         });
+          set_select(k_list, k_episodes);
         }
         k_node&& [&]() {
-          render_shot(k_episodes, in_season);
+          auto k_r = k_map.equal_range(k_episodes);
+          handle_list k_list{};
+          std::transform(k_r.first, k_r.second, std::back_inserter(k_list),
+                         [](auto& in) {
+                           return in.second;
+                         });
+          render_shot(k_list);
         };
       }
     }
   }
-  void render_shot(const episodes& in_eps, const season& in_season) {
-    auto k_g = g_reg();
-    auto k_v = k_g->view<shot>();
+  void render_shot(const handle_list& in_list) {
     std::set<shot> k_list;
-    for (auto& k_e : k_v) {
-      auto k_h = make_handle(k_e);
-      if (k_h.all_of<episodes>() &&
-          k_h.get<episodes>() == in_eps &&
-          k_h.all_of<season>() &&
-          k_h.get<season>() == in_season)
-        k_list.insert(k_v.get<shot>(k_e));
+    std::multimap<shot, entt::handle> k_map;
+    for (auto& k_e : in_list) {
+      if (k_e.all_of<shot>()) {
+        k_list.insert(k_e.get<shot>());
+        k_map.insert(std::make_pair(k_e.get<shot>(), k_e));
+      }
     }
 
     for (auto& k_shot : k_list) {
@@ -199,17 +204,13 @@ class assets_widget::impl {
             k_f | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen,
             k_shot.str().c_str()};
         if (imgui::IsItemClicked()) {
-          std::vector<entt::handle> k_handle_list{};
-          for (auto& k_i : k_v) {
-            auto k_h = make_handle(k_i);
-            if (k_v.get<shot>(k_i) == k_shot &&
-                k_h.all_of<episodes>() &&
-                k_h.get<episodes>() == in_eps &&
-                k_h.all_of<season>() &&
-                k_h.get<season>() == in_season)
-              k_handle_list.push_back(make_handle(k_i));
-          }
-          set_select(k_handle_list, k_shot);
+          auto k_r = k_map.equal_range(k_shot);
+          handle_list k_list{};
+          std::transform(k_r.first, k_r.second, std::back_inserter(k_list),
+                         [](auto& in) {
+                           return in.second;
+                         });
+          set_select(k_list, k_shot);
         }
       }
     }
