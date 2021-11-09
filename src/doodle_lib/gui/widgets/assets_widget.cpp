@@ -24,79 +24,21 @@ class assets_widget::impl {
                                   shot,
                                   assets>;
 
-  std::set<season> p_season;
-  std::set<episodes> p_episodes;
-  std::set<shot> p_shot;
   std::set<assets> p_assets;
   entt::handle p_root;
   std::set<select_obj> p_all_selected;
   std::set<select_obj> p_all_old_selected;
 
-  entt::observer p_season_obs;
-  entt::observer p_episodes_obs;
-  entt::observer p_shot_obs;
-  entt::observer p_assets_obs;
-
   assets_widget* self;
   impl(assets_widget* in)
       : self(in),
-        p_season(),
-        p_episodes(),
-        p_shot(),
         p_assets(),
-        p_root() {
-    p_season_obs.connect(*g_reg(), entt::collector.group<season>());
-    p_episodes_obs.connect(*g_reg(), entt::collector.group<episodes>());
-    p_shot_obs.connect(*g_reg(), entt::collector.group<shot>());
-    p_assets_obs.connect(*g_reg(), entt::collector.group<assets>());
-  };
-
-  template <class T>
-  static void _get_select(std::set<entt::entity>& in_h, const T& in_) {
-    auto k_reg = g_reg();
-    auto k_v   = k_reg->view<T>();
-    for (auto& k_ : k_v) {
-      if (k_v.get<T>(k_) == in_)
-        in_h.insert(k_);
-    }
-  };
-
-  std::vector<entt::handle> get_selects() const {
-    std::set<entt::entity> k_h;
-    auto k_reg = g_reg();
-    entt::overloaded k_fun{
-        std::bind(&_get_select<season>, std::ref(k_h), std::placeholders::_1),
-        std::bind(&_get_select<episodes>, std::ref(k_h), std::placeholders::_1),
-        std::bind(&_get_select<shot>, std::ref(k_h), std::placeholders::_1),
-        std::bind(&_get_select<assets>, std::ref(k_h), std::placeholders::_1)};
-    for (auto& k_s : p_all_selected)
-      std::visit(k_fun, k_s);
-    std::vector<entt::handle> k_r;
-    boost::transform(k_h, std::back_inserter(k_r), [](auto& k_) { return make_handle(k_); });
-    return k_r;
-  }
-
-  void load() {
-    auto k_reg = g_reg();
-    {
-      for (auto& k_s : p_season_obs) {
-        p_season.insert(make_handle(k_s).get<season>());
-      }
-    }
-    {
-      for (auto& k_s : p_episodes_obs) {
-        p_episodes.insert(make_handle(k_s).get<episodes>());
-      }
-    }
-    {
-      for (auto& k_s : p_shot_obs) {
-        p_shot.insert(make_handle(k_s).get<shot>());
-      }
-    }
-    p_season_obs.clear();
-    p_episodes_obs.clear();
-    p_shot_obs.clear();
-  }
+        p_root(){
+            // p_season_obs.connect(*g_reg(), entt::collector.group<season>());
+            // p_episodes_obs.connect(*g_reg(), entt::collector.group<episodes>());
+            // p_shot_obs.connect(*g_reg(), entt::collector.group<shot>());
+            // p_assets_obs.connect(*g_reg(), entt::collector.group<assets>());
+        };
 
   bool is_select(const select_obj& in_ptr) {
     return std::any_of(p_all_old_selected.begin(), p_all_old_selected.end(),
@@ -125,14 +67,14 @@ class assets_widget::impl {
         p_all_selected.erase(in_ptr);
         return;
       }
-      set_select(in_ptr);
     }
   }
 
-  void set_select(const select_obj& in_ptr) {
-    p_all_selected.insert(in_ptr);
+  void set_select(const std::vector<entt::handle>& in_ptr, const select_obj& in_obj) {
+    p_all_selected.clear();
+    p_all_selected.insert(in_obj);
     auto k_reg = g_reg();
-    k_reg->set<handle_list>(get_selects());
+    k_reg->set<handle_list>(in_ptr);
     // auto comm  = command_list<comm_ass_eps,
     //                          comm_ass_shot,
     //                          comm_assets,
@@ -144,13 +86,19 @@ class assets_widget::impl {
    *
    */
   void render() {
-    load();
     render_season();
     p_all_old_selected = p_all_selected;
   }
 
   void render_season() {
-    for (auto& k_season : p_season) {
+    auto k_g = g_reg();
+    auto k_v = k_g->view<season>();
+    std::set<season> k_list;
+    for (auto& k_ : k_v) {
+      k_list.insert(k_v.get<season>(k_));
+    }
+
+    for (auto& k_season : k_list) {
       auto k_f = base_flags;
 
       if (is_select(k_season))
@@ -161,16 +109,31 @@ class assets_widget::impl {
                                 k_f,
                                 k_season.str().c_str()};
 
-        check_item_clicked(k_season);
-        check_item(k_season);
+        if (imgui::IsItemClicked()) {
+          std::vector<entt::handle> k_handle_list{};
+          for (auto& k_i : k_v) {
+            if (k_v.get<season>(k_i) == k_season)
+              k_handle_list.push_back(make_handle(k_i));
+          }
+          set_select(k_handle_list, k_season);
+        }
         k_node&& [&]() {
-          render_eps();
+          render_eps(k_season);
         };
       }
     }
   }
-  void render_eps() {
-    for (auto& k_episodes : p_episodes) {
+  void render_eps(const season& in_season) {
+    auto k_g = g_reg();
+    auto k_v = k_g->view<episodes>();
+    std::set<episodes> k_list;
+    for (auto& k_e : k_v) {
+      auto k_h = make_handle(k_e);
+      if (k_h.all_of<season>() && k_h.get<season>() == in_season)
+        k_list.insert(k_v.get<episodes>(k_e));
+    }
+
+    for (auto& k_episodes : k_list) {
       auto k_f = base_flags;
 
       if (is_select(k_episodes))
@@ -179,26 +142,59 @@ class assets_widget::impl {
         dear::TreeNodeEx k_node{k_episodes.str().c_str(),
                                 k_f,
                                 k_episodes.str().c_str()};
-
-        check_item_clicked(k_episodes);
-        check_item(k_episodes);
+        if (imgui::IsItemClicked()) {
+          std::vector<entt::handle> k_handle_list{};
+          for (auto& k_i : k_v) {
+            auto k_h = make_handle(k_i);
+            if (k_v.get<episodes>(k_i) == k_episodes &&
+                k_h.all_of<season>() &&
+                k_h.get<season>() == in_season)
+              k_handle_list.push_back(make_handle(k_i));
+          }
+          set_select(k_handle_list, k_episodes);
+        }
         k_node&& [&]() {
-          render_shot();
+          render_shot(k_episodes, in_season);
         };
       }
     }
   }
-  void render_shot() {
-    for (auto& k_shot : p_shot) {
+  void render_shot(const episodes& in_eps, const season& in_season) {
+    auto k_g = g_reg();
+    auto k_v = k_g->view<shot>();
+    std::set<shot> k_list;
+    for (auto& k_e : k_v) {
+      auto k_h = make_handle(k_e);
+      if (k_h.all_of<episodes>() &&
+          k_h.get<episodes>() == in_eps &&
+          k_h.all_of<season>() &&
+          k_h.get<season>() == in_season)
+        k_list.insert(k_v.get<shot>(k_e));
+    }
+
+    for (auto& k_shot : k_list) {
       auto k_f = base_flags;
       if (is_select(k_shot))
         k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
-      dear::TreeNodeEx{
-          k_shot.str().c_str(),
-          k_f | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen,
-          k_shot.str().c_str()};
-      check_item_clicked(k_shot);
-      check_item(k_shot);
+      {
+        dear::TreeNodeEx k_node{
+            k_shot.str().c_str(),
+            k_f | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen,
+            k_shot.str().c_str()};
+        if (imgui::IsItemClicked()) {
+          std::vector<entt::handle> k_handle_list{};
+          for (auto& k_i : k_v) {
+            auto k_h = make_handle(k_i);
+            if (k_v.get<shot>(k_i) == k_shot &&
+                k_h.all_of<episodes>() &&
+                k_h.get<episodes>() == in_eps &&
+                k_h.all_of<season>() &&
+                k_h.get<season>() == in_season)
+              k_handle_list.push_back(make_handle(k_i));
+          }
+          set_select(k_handle_list, k_shot);
+        }
+      }
     }
   }
 };
@@ -221,7 +217,7 @@ void assets_widget::frame_render() {
   p_impl->render();
 }
 std::vector<entt::handle> assets_widget::get_selects() const {
-  return p_impl->get_selects();
+  return {};
 }
 
 void assets_widget::set_metadata(const entt::entity& in_ptr) {

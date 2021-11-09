@@ -35,6 +35,7 @@ bool comm_project_add::render() {
   if (imgui::Button(p_show_str["添加"].c_str())) {
     auto k_en = make_handle(reg->create());
     k_en.emplace<project>(*p_prj_path, *p_prj_name);
+    k_en.get<root_ref>().set_root(k_en);
     k_en.patch<database_stauts>(database_set_stauts<need_save>{});
     k_d_lib.p_project_vector.push_back(k_en);
   }

@@ -35,13 +35,11 @@ void project_widget::frame_render() {
       if (dear::Selectable(k_h.get<project>().show_str(),
                            k_h == p_c,
                            ImGuiSelectableFlags_SpanAllColumns)) {
-        p_c         = k_h;
-        auto k_comm = command_list<
-            comm_project_add,
-            comm_ass_eps,
-            comm_ass_shot,
-            comm_assets,
-            comm_ass_season>{};
+        p_c = k_h;
+        auto k_reg = g_reg();
+        auto k_v = k_reg->view<assets, season, episodes, shot, assets_file>();
+        g_reg()->destroy(k_v.begin(),k_v.end());
+        comm_project_add k_comm{};
         k_comm.set_data(p_c);
         g_reg()->set<widget_>(k_comm);
 
