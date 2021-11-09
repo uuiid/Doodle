@@ -19,6 +19,19 @@ class assets_widget::impl {
  public:
   static ImGuiTreeNodeFlags base_flags;
 
+  struct shot_set : shot {
+    std::set<entt::handle> p_list;
+  };
+  struct episodes_set : episodes {
+    std::set<entt::handle> p_list;
+  };
+
+  struct season_set : season {
+    std::set<episodes> p_eps;
+    std::set<entt::handle> p_list;
+  };
+  
+
   using select_obj = std::variant<season,
                                   episodes,
                                   shot,

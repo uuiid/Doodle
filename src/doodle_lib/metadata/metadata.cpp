@@ -102,6 +102,12 @@ bool database_root::is_end() const {
   return p_end;
 }
 
+void database_root::reset() {
+  p_current_id = 0;
+  p_cout_rows  = 0;
+  p_end        = false;
+}
+
 database::database()
     : p_id(0),
       p_id_str("id 0"),
@@ -246,7 +252,6 @@ database::operator doodle::metadata_database() const {
 
   if (p_parent_id)
     k_tmp.mutable_parent()->set_value(*p_parent_id);
-
 
   ///设置类型id
   k_tmp.mutable_m_type()->set_value(get_meta_type_int());

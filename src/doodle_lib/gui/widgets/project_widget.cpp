@@ -28,6 +28,8 @@ void project_widget::frame_render() {
 
     const auto& k_prj_list = doodle_lib::Get().p_project_vector;
 
+    bool k_chick{false};
+
     for (const auto& p : k_prj_list) {
       auto k_h = make_handle(p);
       imgui::TableNextRow();
@@ -35,20 +37,34 @@ void project_widget::frame_render() {
       if (dear::Selectable(k_h.get<project>().show_str(),
                            k_h == p_c,
                            ImGuiSelectableFlags_SpanAllColumns)) {
-        p_c = k_h;
-        auto k_reg = g_reg();
-        auto k_v = k_reg->view<assets, season, episodes, shot, assets_file>();
-        g_reg()->destroy(k_v.begin(),k_v.end());
-        comm_project_add k_comm{};
-        k_comm.set_data(p_c);
-        g_reg()->set<widget_>(k_comm);
-
-        select_change(p_c);
+        p_c     = k_h;
+        k_chick = true;
       }
       imgui::TableNextColumn();
       dear::Text(k_h.get<project>().get_path().generic_string());
       imgui::TableNextColumn();
       dear::Text(k_h.get<project>().str());
+    }
+    if (k_chick) {
+      auto k_reg = g_reg();
+      auto k_v1  = k_reg->view<assets>();
+      k_reg->destroy(k_v1.begin(), k_v1.end());
+      auto k_v2 = k_reg->view<season>();
+      k_reg->destroy(k_v2.begin(), k_v2.end());
+      auto k_v3 = k_reg->view<episodes>();
+      k_reg->destroy(k_v3.begin(), k_v3.end());
+      auto k_v4 = k_reg->view<shot>();
+      k_reg->destroy(k_v4.begin(), k_v4.end());
+      auto k_v5 = k_reg->view<assets_file>();
+      k_reg->destroy(k_v5.begin(), k_v5.end());
+
+      p_c.get<database_root>().reset();
+
+      comm_project_add k_comm{};
+      k_comm.set_data(p_c);
+      k_reg->set<widget_>(k_comm);
+
+      select_change(p_c);
     }
   };
 }
