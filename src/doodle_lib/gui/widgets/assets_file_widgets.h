@@ -8,15 +8,115 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
+
+class assets_file_widgets;
 namespace details {
 class DOODLELIB_API table_column {
+ protected:
+  void set_select(const entt::handle& in_);
+  assets_file_widgets* table;
+
+  bool virtual frame_render(const entt::handle& in_ptr) = 0;
+
  public:
-  table_column() : p_name(), p_render(), p_width(0){};
+  table_column(assets_file_widgets* in) : table(in), p_name(), p_render(), p_width(0){};
   string p_name;
   std::uint32_t p_width;
   std::function<bool(const entt::handle&)> p_render;
   void render(const entt::handle& in_ptr);
 };
+
+class column_id : public table_column {
+ public:
+  column_id(assets_file_widgets* in_table)
+      : table_column(in_table) {
+    p_name  = "id";
+    p_width = 6;
+  };
+  bool frame_render(const entt::handle& in_ptr);
+};
+class column_version : public table_column {
+ public:
+  column_version(assets_file_widgets* in_table)
+      : table_column(in_table) {
+    p_name  = "版本";
+    p_width = 6;
+  };
+  bool frame_render(const entt::handle& in_ptr);
+};
+class column_comment : public table_column {
+ public:
+  column_comment(assets_file_widgets* in_table)
+      : table_column(in_table) {
+    p_name  = "评论";
+    p_width = 6;
+  };
+  bool frame_render(const entt::handle& in_ptr);
+};
+class column_path : public table_column {
+ public:
+  column_path(assets_file_widgets* in_table)
+      : table_column(in_table) {
+    p_name  = "路径";
+    p_width = 6;
+  };
+  bool frame_render(const entt::handle& in_ptr);
+};
+class column_time : public table_column {
+ public:
+  column_time(assets_file_widgets* in_table)
+      : table_column(in_table) {
+    p_name  = "时间";
+    p_width = 6;
+  };
+  bool frame_render(const entt::handle& in_ptr);
+};
+class column_user : public table_column {
+ public:
+  column_user(assets_file_widgets* in_table)
+      : table_column(in_table) {
+    p_name  = "制作人";
+    p_width = 6;
+  };
+  bool frame_render(const entt::handle& in_ptr);
+};
+class column_assets : public table_column {
+ public:
+  column_assets(assets_file_widgets* in_table)
+      : table_column(in_table) {
+    p_name  = "资产";
+    p_width = 6;
+  };
+  bool frame_render(const entt::handle& in_ptr);
+};
+class column_season : public table_column {
+ public:
+  column_season(assets_file_widgets* in_table)
+      : table_column(in_table) {
+    p_name  = "季数";
+    p_width = 6;
+  };
+  bool frame_render(const entt::handle& in_ptr);
+};
+class column_episodes : public table_column {
+ public:
+  column_episodes(assets_file_widgets* in_table)
+      : table_column(in_table) {
+    p_name  = "集数";
+    p_width = 6;
+  };
+  bool frame_render(const entt::handle& in_ptr);
+};
+class column_shot : public table_column {
+ public:
+  column_shot(assets_file_widgets* in_table)
+      : table_column(in_table) {
+    p_name  = "镜头";
+    p_width = 6;
+  };
+  bool frame_render(const entt::handle& in_ptr);
+};
+
 using table_column_ptr = std::shared_ptr<table_column>;
 }  // namespace details
 
@@ -29,19 +129,18 @@ using table_column_ptr = std::shared_ptr<table_column>;
  *
  */
 class DOODLELIB_API assets_file_widgets : public metadata_widget {
-  class table_column ;
-  using column_ptr = std::shared_ptr<table_column>;
-  class impl;
+ 
+  friend details::table_column_ptr;
+
   entt::handle p_root;
-  entt::entity p_current_select;
 
   std::vector<details::table_column_ptr> p_colum_list;
-  registry_ptr reg;
-  std::unique_ptr<impl> p_impl;
+
+  void set_select(const entt::handle& in_);
 
  public:
-
-  using list_data  = boost::hana::tuple<season_ref*, episodes_ref*, shot_ref*, assets_ref*>;
+  entt::entity p_current_select;
+  using list_data = boost::hana::tuple<season_ref*, episodes_ref*, shot_ref*, assets_ref*>;
 
   assets_file_widgets();
   virtual void frame_render() override;

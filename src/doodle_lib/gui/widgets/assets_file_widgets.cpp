@@ -14,194 +14,109 @@
 #include <entt/entt.hpp>
 
 namespace doodle {
-class assets_file_widgets::impl {
- public:
-  assets_file_widgets* self;
-  impl(assets_file_widgets* in)
-      : self(in) {
-  }
-  std::vector<column_ptr> p_colum_list;
-  entt::handle p_current_select;
-  bool set_select(const entt::handle& in_select) {
-    p_current_select = in_select;
-    self->select_change(p_current_select);
-  }
-};
-
-class assets_file_widgets::table_column {
- public:
-  impl* p_table;
-  table_column(impl* in_table) : p_table(in_table), p_name(), p_width(0){};
-  string p_name;
-  std::uint32_t p_width;
-  void render(const entt::handle& in_ptr) {
-    imgui::TableNextColumn();
-    frame_render(in_ptr);
-  }
-  virtual void frame_render(const entt::handle& in_ptr) = 0;
-
-  class column_id : public assets_file_widgets::table_column {
-   public:
-    column_id(impl* in_table)
-        : assets_file_widgets::table_column(in_table) {
-      p_name  = "id";
-      p_width = 6;
-    };
-    void frame_render(const entt::handle& in_ptr) {
-      if (dear::Selectable(in_ptr.get<database>().get_id_str(),
-                           in_ptr == p_table->p_current_select,
-                           ImGuiSelectableFlags_SpanAllColumns)) {
-        p_table->set_select(in_ptr);
-      }
-    };
-  };
-  class column_version : public assets_file_widgets::table_column {
-   public:
-    column_version(impl* in_table)
-        : assets_file_widgets::table_column(in_table) {
-      p_name  = "版本";
-      p_width = 6;
-    };
-    void frame_render(const entt::handle& in_ptr) {
-      if (in_ptr.all_of<assets_file>())
-        dear::Text(in_ptr.get<assets_file>().get_version_str());
-    };
-  };
-  class column_comment : public assets_file_widgets::table_column {
-   public:
-    column_comment(impl* in_table)
-        : assets_file_widgets::table_column(in_table) {
-      p_name  = "评论";
-      p_width = 6;
-    };
-    void frame_render(const entt::handle& in_ptr) {
-      if (in_ptr.all_of<comment_vector>()) {
-        auto& k_com = in_ptr.get<comment_vector>();
-        dear::Text(k_com.get().empty() ? std::string{} : k_com.get().front().get_comment());
-      } else {
-        dear::Text(std::string{});
-      }
-    };
-  };
-  class column_path : public assets_file_widgets::table_column {
-   public:
-    column_path(impl* in_table)
-        : assets_file_widgets::table_column(in_table) {
-      p_name  = "路径";
-      p_width = 6;
-    };
-    void frame_render(const entt::handle& in_ptr) {
-      if (in_ptr.all_of<assets_path_vector>()) {
-        auto& k_path = in_ptr.get<assets_path_vector>();
-        string k_all_str{};
-        string k_line_str{};
-
-        if (!k_path.get().empty()) {
-          k_line_str = k_path.get().front().get_server_path().generic_string();
-          k_all_str  = fmt::format("{}", k_path);
-        }
-        dear::Text(k_line_str.c_str());
-        if (!k_all_str.empty()) {
-          imgui::SameLine();
-          dear::HelpMarker{"(...)", k_all_str.c_str()};
-        }
-      }
-    };
-  };
-  class column_time : public assets_file_widgets::table_column {
-   public:
-    column_time(impl* in_table)
-        : assets_file_widgets::table_column(in_table) {
-      p_name  = "时间";
-      p_width = 6;
-    };
-    void frame_render(const entt::handle& in_ptr) {
-      if (in_ptr.all_of<time_point_wrap>())
-        dear::Text(in_ptr.get<time_point_wrap>().show_str());
-    };
-  };
-  class column_user : public assets_file_widgets::table_column {
-   public:
-    column_user(impl* in_table)
-        : assets_file_widgets::table_column(in_table) {
-      p_name  = "制作人";
-      p_width = 6;
-    };
-    void frame_render(const entt::handle& in_ptr) {
-      if (in_ptr.all_of<assets_file>())
-        dear::Text(in_ptr.get<assets_file>().get_user());
-    };
-  };
-  class column_assets : public assets_file_widgets::table_column {
-   public:
-    column_assets(impl* in_table)
-        : assets_file_widgets::table_column(in_table) {
-      p_name  = "资产";
-      p_width = 6;
-    };
-    void frame_render(const entt::handle& in_ptr){
-
-    };
-  };
-  class column_season : public assets_file_widgets::table_column {
-   public:
-    column_season(impl* in_table)
-        : assets_file_widgets::table_column(in_table) {
-      p_name  = "季数";
-      p_width = 6;
-    };
-    void frame_render(const entt::handle& in_ptr){
-
-    };
-  };
-  class column_episodes : public assets_file_widgets::table_column {
-   public:
-    column_episodes(impl* in_table)
-        : assets_file_widgets::table_column(in_table) {
-      p_name  = "集数";
-      p_width = 6;
-    };
-    void frame_render(const entt::handle& in_ptr){
-
-    };
-  };
-  class column_shot : public assets_file_widgets::table_column {
-   public:
-    column_shot(impl* in_table)
-        : assets_file_widgets::table_column(in_table) {
-      p_name  = "镜头";
-      p_width = 6;
-    };
-    void frame_render(const entt::handle& in_ptr){
-
-    };
-  };
-};
-
 namespace details {
 void table_column::render(const entt::handle& in_ptr) {
   imgui::TableNextColumn();
-  p_render(in_ptr);
+  frame_render(in_ptr);
 }
+void table_column::set_select(const entt::handle& in_) {
+  table->p_current_select = in_;
+  table->select_change(in_);
+}
+
+bool column_id::frame_render(const entt::handle& in_ptr) {
+  if (dear::Selectable(in_ptr.get<database>().get_id_str(),
+                       in_ptr == table->p_current_select,
+                       ImGuiSelectableFlags_SpanAllColumns)) {
+    set_select(in_ptr);
+  }
+  return true;
+}
+bool column_version::frame_render(const entt::handle& in_ptr) {
+  if (in_ptr.all_of<assets_file>())
+    dear::Text(in_ptr.get<assets_file>().get_version_str());
+  return true;
+}
+bool column_comment::frame_render(const entt::handle& in_ptr) {
+  if (in_ptr.all_of<comment_vector>()) {
+    auto& k_com = in_ptr.get<comment_vector>();
+    dear::Text(k_com.get().empty() ? std::string{} : k_com.get().front().get_comment());
+  } else {
+    dear::Text(std::string{});
+  }
+  return true;
+}
+bool column_path::frame_render(const entt::handle& in_ptr) {
+  if (in_ptr.all_of<assets_path_vector>()) {
+    auto& k_path = in_ptr.get<assets_path_vector>();
+    string k_all_str{};
+    string k_line_str{};
+
+    if (!k_path.get().empty()) {
+      k_line_str = k_path.get().front().get_server_path().generic_string();
+      k_all_str  = fmt::format("{}", k_path);
+    }
+    dear::Text(k_line_str.c_str());
+    if (!k_all_str.empty()) {
+      imgui::SameLine();
+      dear::HelpMarker{"(...)", k_all_str.c_str()};
+    }
+  }
+  return true;
+}
+bool column_time::frame_render(const entt::handle& in_ptr) {
+  if (in_ptr.all_of<time_point_wrap>())
+    dear::Text(in_ptr.get<time_point_wrap>().show_str());
+  return true;
+}
+bool column_user::frame_render(const entt::handle& in_ptr) {
+  if (in_ptr.all_of<assets_file>())
+    dear::Text(in_ptr.get<assets_file>().get_user());
+  return true;
+}
+bool column_assets::frame_render(const entt::handle& in_ptr) {
+  if (in_ptr.all_of<assets>())
+    dear::Text(in_ptr.get<assets>().str());
+
+  return true;
+}
+bool column_season::frame_render(const entt::handle& in_ptr) {
+  if (in_ptr.all_of<season>())
+    dear::Text(in_ptr.get<season>().str());
+  return true;
+}
+bool column_episodes::frame_render(const entt::handle& in_ptr) {
+  if (in_ptr.all_of<episodes>())
+    dear::Text(in_ptr.get<episodes>().str());
+  return true;
+}
+bool column_shot::frame_render(const entt::handle& in_ptr) {
+  if (in_ptr.all_of<shot>())
+    dear::Text(in_ptr.get<shot>().str());
+  return true;
+}
+
 }  // namespace details
+
+void assets_file_widgets::set_select(const entt::handle& in) {
+}
 
 assets_file_widgets::assets_file_widgets()
     : p_root(),
       p_current_select(),
-      p_colum_list(),
-      p_impl(std::make_unique<impl>()) {
+      p_colum_list() {
   p_class_name = "文件列表";
   p_factory    = new_object<attr_assets_file>();
-  p_impl->p_colum_list.emplace_back(new_object<table_column::column_id>(p_impl.get()));
-  p_impl->p_colum_list.emplace_back(new_object<table_column::column_version>(p_impl.get()));
-  p_impl->p_colum_list.emplace_back(new_object<table_column::column_comment>(p_impl.get()));
-  p_impl->p_colum_list.emplace_back(new_object<table_column::column_path>(p_impl.get()));
-  p_impl->p_colum_list.emplace_back(new_object<table_column::column_time>(p_impl.get()));
-  p_impl->p_colum_list.emplace_back(new_object<table_column::column_user>(p_impl.get()));
-  p_impl->p_colum_list.emplace_back(new_object<table_column::column_assets>(p_impl.get()));
-  p_impl->p_colum_list.emplace_back(new_object<table_column::column_season>(p_impl.get()));
-  p_impl->p_colum_list.emplace_back(new_object<table_column::column_episodes>(p_impl.get()));
-  p_impl->p_colum_list.emplace_back(new_object<table_column::column_shot>(p_impl.get()));
+  p_colum_list.emplace_back(new_object<details::column_id>(this));
+  p_colum_list.emplace_back(new_object<details::column_assets>(this));
+  p_colum_list.emplace_back(new_object<details::column_season>(this));
+  p_colum_list.emplace_back(new_object<details::column_episodes>(this));
+  p_colum_list.emplace_back(new_object<details::column_shot>(this));
+  p_colum_list.emplace_back(new_object<details::column_version>(this));
+  p_colum_list.emplace_back(new_object<details::column_comment>(this));
+  p_colum_list.emplace_back(new_object<details::column_path>(this));
+  p_colum_list.emplace_back(new_object<details::column_time>(this));
+  p_colum_list.emplace_back(new_object<details::column_user>(this));
 }
 
 void assets_file_widgets::frame_render() {
