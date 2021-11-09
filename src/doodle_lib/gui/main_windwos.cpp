@@ -53,7 +53,7 @@ main_windows::main_windows()
   p_long_task_    = create_windwos<long_time_tasks_widget>(true);
   p_edit_windows_ = create_windwos<edit_widgets>(true);
   p_tool_box_     = create_windwos<tool_box_widget>(true);
-  p_opencv_        = create_windwos<opencv_player_widget>(false);
+  p_opencv_       = create_windwos<opencv_player_widget>(false);
 
   for (auto &i : p_list_windwos) {
     i->load_show();

@@ -32,7 +32,7 @@ bool assets_file_widgets::add_colum_render() {
       p_current_select = in_;
       auto comm        = command_list<comm_ass_file_attr,
                                comm_files_select>{};
-                               
+
       comm.set_data(in_);
       g_reg()->set<widget_>(comm);
       select_change(p_current_select);
@@ -114,34 +114,33 @@ void assets_file_widgets::frame_render() {
                     ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody |
                     ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
                     ImGuiTableFlags_::ImGuiTableFlags_ScrollY};
-  dear::Table{"attribute_widgets",
-              boost::numeric_cast<std::int32_t>(p_colum_list.size()),
-              flags} &&
-      [this]() {
-        /// 添加表头
-        for (auto& i : p_colum_list) {
-          if (i->p_width != 0)
-            imgui::TableSetupColumn(i->p_name.c_str(), 0, imgui::GetFontSize() * i->p_width);
-          else
-            imgui::TableSetupColumn(i->p_name.c_str());
-        }
+  auto k_ = g_reg()->try_ctx<handle_list>();
+  if (k_) {
+    auto& k_list = *k_;
+    dear::Table{"attribute_widgets",
+                boost::numeric_cast<std::int32_t>(p_colum_list.size()),
+                flags} &&
+        [this, &k_list]() {
+          /// 添加表头
+          for (auto& i : p_colum_list) {
+            if (i->p_width != 0)
+              imgui::TableSetupColumn(i->p_name.c_str(), 0, imgui::GetFontSize() * i->p_width);
+            else
+              imgui::TableSetupColumn(i->p_name.c_str());
+          }
 
-        imgui::TableHeadersRow();
-        list_data l_data{};
+          imgui::TableHeadersRow();
+          list_data l_data{};
 
-        if (p_root) {
-          auto& l_database = p_root.get<database>();
-          auto& l_tree     = p_root.get<tree_relationship>();
-          for (const auto& i : l_tree.get_child()) {
-            auto l_h = make_handle(i);
-            if (l_h.all_of<database, tree_relationship, assets_file>()) {
+          for (auto& k_h : k_list) {
+            if (k_h.all_of<assets_file>()) {
               imgui::TableNextRow();
               for (auto& l_i : p_colum_list)
-                l_i->frame_render(l_h);
+                l_i->frame_render(k_h);
             }
           }
-        }
-      };
+        };
+  }
 }
 
 void assets_file_widgets::set_metadata(const entt::entity& in_ptr) {

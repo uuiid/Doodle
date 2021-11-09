@@ -40,23 +40,24 @@ bool comm_ass_ue4_create_shot::render() {
           *p_ue4_prj_path = in_path.front().generic_string();
         });
   if (imgui::Button(p_show_str["获得选择"].c_str())) {
-    auto k_ass = doodle_app::Get()->get_register()->get_widget<assets_widget>();
-    if (k_ass) {
-      auto k_all = k_ass->p_all_selected;
-      p_shot_list.clear();
-      boost::copy(
-          k_all |
-              boost::adaptors::transformed([](auto in) {
-                return make_handle(in);
-              }) |
-              boost::adaptors::filtered([](auto in) {
-                return in.any_of<shot>();
-              }),
-          std::back_inserter(p_shot_list));
-      boost::sort(p_shot_list, [](const entt::handle& in_r, const entt::handle& in_l) {
-        return in_r.get<shot>() < in_l.get<shot>();
-      });
-    }
+    // @todo: 添加多个选择时的获取方案
+    // auto k_ass = doodle_app::Get()->get_register()->get_widget<assets_widget>();
+    // if (k_ass) {
+    //   auto k_all = k_ass->p_all_selected;
+    //   p_shot_list.clear();
+    //   boost::copy(
+    //       k_all |
+    //           boost::adaptors::transformed([](auto in) {
+    //             return make_handle(in);
+    //           }) |
+    //           boost::adaptors::filtered([](auto in) {
+    //             return in.any_of<shot>();
+    //           }),
+    //       std::back_inserter(p_shot_list));
+    //   boost::sort(p_shot_list, [](const entt::handle& in_r, const entt::handle& in_l) {
+    //     return in_r.get<shot>() < in_l.get<shot>();
+    //   });
+    // }
   }
   imgui::SameLine();
   if (imgui::Button(p_show_str["创建镜头序列"].c_str())) {

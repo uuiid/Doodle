@@ -29,7 +29,6 @@ class assets_widget::impl {
   std::set<shot> p_shot;
   std::set<assets> p_assets;
   entt::handle p_root;
-  select_obj p_select;
   std::set<select_obj> p_all_selected;
   std::set<select_obj> p_all_old_selected;
 
@@ -51,6 +50,31 @@ class assets_widget::impl {
     p_shot_obs.connect(*g_reg(), entt::collector.group<shot>());
     p_assets_obs.connect(*g_reg(), entt::collector.group<assets>());
   };
+
+  template <class T>
+  static void _get_select(std::set<entt::entity>& in_h, const T& in_) {
+    auto k_reg = g_reg();
+    auto k_v   = k_reg->view<T>();
+    for (auto& k_ : k_v) {
+      if (k_v.get<T>(k_) == in_)
+        in_h.insert(k_);
+    }
+  };
+
+  std::vector<entt::handle> get_selects() const {
+    std::set<entt::entity> k_h;
+    auto k_reg = g_reg();
+    entt::overloaded k_fun{
+        std::bind(&_get_select<season>, std::ref(k_h), std::placeholders::_1),
+        std::bind(&_get_select<episodes>, std::ref(k_h), std::placeholders::_1),
+        std::bind(&_get_select<shot>, std::ref(k_h), std::placeholders::_1),
+        std::bind(&_get_select<assets>, std::ref(k_h), std::placeholders::_1)};
+    for (auto& k_s : p_all_selected)
+      std::visit(k_fun, k_s);
+    std::vector<entt::handle> k_r;
+    boost::transform(k_h, std::back_inserter(k_r), [](auto& k_) { return make_handle(k_); });
+    return k_r;
+  }
 
   void load() {
     auto k_reg = g_reg();
@@ -106,8 +130,9 @@ class assets_widget::impl {
   }
 
   void set_select(const select_obj& in_ptr) {
-    p_select = in_ptr;
-    // auto k_reg = g_reg();
+    p_all_selected.insert(in_ptr);
+    auto k_reg = g_reg();
+    k_reg->set<handle_list>(get_selects());
     // auto comm  = command_list<comm_ass_eps,
     //                          comm_ass_shot,
     //                          comm_assets,
@@ -121,49 +146,46 @@ class assets_widget::impl {
   void render() {
     load();
     render_season();
+    p_all_old_selected = p_all_selected;
   }
 
   void render_season() {
     for (auto& k_season : p_season) {
-      auto k_f     = base_flags;
-      bool checked = false;
+      auto k_f = base_flags;
+
       if (is_select(k_season))
         k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
 
-      dear::TreeNodeEx{k_season.str().c_str(),
-                       k_f,
-                       k_season.str().c_str()} &&
-          [&]() {
-            if (!checked) {
-              check_item_clicked(k_season);
-              checked = true;
-            }
-            render_eps();
-          };
-      if (!checked)
+      {
+        dear::TreeNodeEx k_node{k_season.str().c_str(),
+                                k_f,
+                                k_season.str().c_str()};
+
         check_item_clicked(k_season);
-      check_item(k_season);
+        check_item(k_season);
+        k_node&& [&]() {
+          render_eps();
+        };
+      }
     }
   }
   void render_eps() {
     for (auto& k_episodes : p_episodes) {
-      auto k_f     = base_flags;
-      bool checked = false;
+      auto k_f = base_flags;
+
       if (is_select(k_episodes))
         k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
-      dear::TreeNodeEx{k_episodes.str().c_str(),
-                       k_f,
-                       k_episodes.str().c_str()} &&
-          [&]() {
-            if (!checked) {
-              check_item_clicked(k_episodes);
-              checked = true;
-            }
-            render_shot();
-          };
-      if (!checked)
+      {
+        dear::TreeNodeEx k_node{k_episodes.str().c_str(),
+                                k_f,
+                                k_episodes.str().c_str()};
+
         check_item_clicked(k_episodes);
-      check_item(k_episodes);
+        check_item(k_episodes);
+        k_node&& [&]() {
+          render_shot();
+        };
+      }
     }
   }
   void render_shot() {
@@ -185,10 +207,7 @@ ImGuiTreeNodeFlags assets_widget::impl::base_flags{ImGuiTreeNodeFlags_OpenOnArro
                                                    ImGuiTreeNodeFlags_SpanAvailWidth};
 
 assets_widget::assets_widget()
-    : p_meta(),
-      p_all_old_selected(),
-      p_all_selected(),
-      p_impl(std::make_unique<impl>(this)) {
+    : p_impl(std::make_unique<impl>(this)) {
   p_factory    = new_object<attr_assets>();
   p_class_name = "资产";
 }
@@ -200,7 +219,9 @@ void assets_widget::frame_render() {
     p_impl->p_root.patch<database_stauts>(database_set_stauts<need_root_load>{});
   /// 渲染数据
   p_impl->render();
-  p_all_old_selected = p_all_selected;
+}
+std::vector<entt::handle> assets_widget::get_selects() const {
+  return p_impl->get_selects();
 }
 
 void assets_widget::set_metadata(const entt::entity& in_ptr) {
@@ -210,49 +231,4 @@ void assets_widget::set_metadata(const entt::entity& in_ptr) {
   p_impl->p_root = k_h;
 }
 
-bool assets_widget::is_select(const entt::handle& in_ptr) {
-  return std::any_of(p_all_old_selected.begin(), p_all_old_selected.end(),
-                     [&](const entt::handle& in_) {
-                       return in_ == in_ptr;
-                     });
-}
-
-void assets_widget::check_item(const entt::handle& in_ptr) {
-  // if (imgui::IsItemHovered()) {
-  //   DOODLE_LOG_DEBUG("ok");
-  // }
-  if (imgui::GetIO().KeyShift && imgui::IsItemHovered()) {
-    p_all_selected.insert(in_ptr);
-  }
-  // if (imgui::GetIO().KeyCtrl && imgui::IsItemHovered()) {
-  //   p_all_selected.erase(in_ptr);
-  // }
-}
-
-void assets_widget::check_item_clicked(const entt::handle& in_ptr) {
-  if (imgui::IsItemClicked()) {
-    if (!imgui::GetIO().KeyCtrl) {
-      p_all_selected.clear();
-      p_all_old_selected.clear();
-    } else {
-      p_all_selected.erase(in_ptr);
-      return;
-    }
-    set_select(in_ptr);
-  }
-}
-void assets_widget::set_select(const entt::handle& in_ptr) {
-  p_meta     = in_ptr;
-  auto k_reg = g_reg();
-  auto comm  = command_list<comm_ass_eps,
-                           comm_ass_shot,
-                           comm_assets,
-                           comm_ass_season,
-                           comm_ass_ue4_create_shot>{};
-  comm.set_data(p_meta);
-  k_reg->set<widget_>(comm);
-
-  p_all_selected.insert(p_meta);
-  select_change(p_meta);
-}
 }  // namespace doodle

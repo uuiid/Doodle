@@ -307,6 +307,8 @@ class comm_ass_file_attr;
 class opencv_read_player;
 class opencv_player_widget;
 
+
+using handle_list = std::vector<entt::handle>;
 using logger_ctr_ptr             = std::shared_ptr<logger_ctrl>;
 using program_options_ptr        = std::shared_ptr<program_options>;
 
