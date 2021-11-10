@@ -40,7 +40,6 @@ bool comm_project_add::render() {
     k_d_lib.p_project_vector.push_back(k_en);
   }
   if (p_root) {
-    imgui::SameLine();
     if (imgui::Button(p_show_str["修改"].c_str())) {
       p_root.get<project>().set_name(*p_prj_name);
       p_root.get<project>().set_path(*p_prj_path);
@@ -103,7 +102,6 @@ bool comm_ass_eps::render() {
       p_root.get<root_ref>().set_root(g_reg()->ctx<root_ref>().root_handle());
     }
   } else {
-    imgui::SameLine();
     if (imgui::Button(p_show_str["修改"].c_str())) {
       p_root.patch<episodes>([&](auto& eps) { eps.set_episodes(p_data); });
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
@@ -149,7 +147,6 @@ bool comm_ass_shot::render() {
       p_root.get<root_ref>().set_root(g_reg()->ctx<root_ref>().root_handle());
     }
   } else {
-    imgui::SameLine();
     if (imgui::Button(p_show_str["修改"].c_str())) {
       p_root.patch<shot>([&](shot& in) {
         in.set_shot(p_data);
@@ -203,7 +200,6 @@ bool comm_assets::render() {
       p_root.get<root_ref>().set_root(g_reg()->ctx<root_ref>().root_handle());
     }
   } else {
-    imgui::SameLine();
     if (imgui::Button(p_show_str["修改"].c_str())) {
       p_root.patch<assets>([&](assets& in) {
         in.set_name1(p_data);
@@ -250,7 +246,6 @@ bool comm_ass_season::render() {
       p_root.get<root_ref>().set_root(g_reg()->ctx<root_ref>().root_handle());
     }
   } else {
-    imgui::SameLine();
     if (imgui::Button(p_show_str["修改"].c_str())) {
       p_root.patch<season>([p_data = p_data](season& in) {
         in.set_season(p_data);
