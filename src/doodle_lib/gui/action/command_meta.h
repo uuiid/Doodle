@@ -34,7 +34,6 @@ class DOODLELIB_API comm_ass_eps : public command_base {
   std::int32_t p_data;
   std::int32_t p_end;
 
-
  protected:
  public:
   comm_ass_eps();
@@ -50,7 +49,6 @@ class DOODLELIB_API comm_ass_shot : public command_base {
   std::int32_t p_end;
 
   std::string_view p_shot_ab;
-
 
  protected:
  public:
@@ -99,6 +97,21 @@ class DOODLELIB_API comm_ass_file_attr : public command_base {
  protected:
  public:
   comm_ass_file_attr();
+  bool render() override;
+  virtual bool set_data(const entt::handle& in_data) override;
+};
+
+class DOODLELIB_API comm_assets_add : public command_base {
+  command_list<
+  comm_ass_season,
+               comm_ass_eps,
+               comm_ass_shot,
+               comm_assets,
+               comm_ass_file_attr>
+      p_list;
+
+ public:
+  comm_assets_add();
   bool render() override;
   virtual bool set_data(const entt::handle& in_data) override;
 };

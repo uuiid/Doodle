@@ -319,4 +319,25 @@ bool comm_ass_file_attr::set_data(const entt::handle& in_data) {
   return true;
 }
 
+comm_assets_add::comm_assets_add()
+    : p_list() {
+  p_show_str = make_imgui_name(this, "添加条目");
+}
+
+bool comm_assets_add::render() {
+  if (!g_reg()->try_ctx<root_ref>())
+    return;
+  if (imgui::Button(p_show_str["添加条目"].c_str())) {
+    auto k_reg = g_reg();
+    auto k_h   = make_handle(g_reg()->create());
+    k_h.emplace<database>();
+    k_h.get_or_emplace<root_ref>(g_reg()->ctx<root_ref>().root_handle());
+  }
+  return p_list.render();
+}
+
+bool comm_assets_add::set_data(const entt::handle& in_data) {
+  return p_list.set_data(in_data);
+}
+
 }  // namespace doodle
