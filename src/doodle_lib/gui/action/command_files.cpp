@@ -102,7 +102,7 @@ bool comm_files_up::add_files() {
 bool comm_files_up::render() {
   if (p_list_paths) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
-      if (p_list_paths.get<assets_path_vector>()) {
+      if (!p_list_paths.get<assets_path_vector>().get_server_path().empty()) {
         add_files();
       }
     }
@@ -128,7 +128,7 @@ void comm_file_image_to_move::init() {
 bool comm_file_image_to_move::set_data(const entt::handle& in_data) {
   if (in_data.any_of<assets_path_vector>()) {
     p_root     = in_data;
-    p_image    = p_image_create->set_path(p_root);
+    p_image    = p_image_create->set_path(p_root.get<assets_path_vector>().get_local_path());
     p_out_file = p_image->get_out_path();
     p_text     = fmt::format("本地生成路径 {}", p_out_file);
   } else {
@@ -143,7 +143,7 @@ bool comm_file_image_to_move::updata_file() {
     return true;
 
   if (*p_not_up_source_file)
-    p_root.get<assets_path_vector>().get().clear();
+    p_root.get<assets_path_vector>().clear();
   p_root.get<assets_path_vector>().add_file(p_out_file);
   p_root.get<assets_file>().up_version();
   p_root.patch<database_stauts>(database_set_stauts<need_save>{});

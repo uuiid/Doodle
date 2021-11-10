@@ -22,6 +22,8 @@ BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path_vector)
 
 namespace doodle {
 
+assets_path_vector::assets_path_vector() {}
+
 const FSys::path &assets_path_vector::get_local_path() const {
   return p_local_path;
 }
@@ -36,7 +38,7 @@ const FSys::path &assets_path_vector::get_backup_path() const {
 
 bool assets_path_vector::make_path() {
   auto k_h = make_handle(*this);
-  make_path(k_h);
+  return make_path(k_h);
 }
 
 bool assets_path_vector::make_path(const entt::handle &in_metadata) {
@@ -57,19 +59,21 @@ bool assets_path_vector::make_path(const entt::handle &in_metadata) {
   p_backup_path /= FSys::add_time_stamp(k_path);
   DOODLE_LOG_INFO("设置服务路径: {}, 备份路径: {}",
                   p_server_path, p_backup_path);
+  return true;
 }
 
 bool assets_path_vector::make_path(const entt::handle &in_metadata, const FSys::path &in_path) {
   FSys::path k_path{};
   auto &k_prj      = in_metadata.get<root_ref>().root_handle().get<project>();
   auto k_root_path = k_prj.get_path();
-  auto k_path      = in_path.lexically_relative(k_root_path);
+  k_path           = in_path.lexically_relative(k_root_path);
   k_path           = FSys::path{k_prj.str()} / (k_path.empty() ? in_path.filename() : k_path);
 
   p_server_path    = k_path;
   p_backup_path /= FSys::add_time_stamp(k_path);
   DOODLE_LOG_INFO("设置服务路径: {}, 备份路径: {}",
                   p_server_path, p_backup_path);
+  return true;
 }
 
 command_ptr assets_path_vector::add_file(

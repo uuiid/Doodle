@@ -162,7 +162,7 @@ TEST_CASE("core create_path", "[fun][create_path]") {
     SECTION("using repath") {
       SECTION("root not eq") {
         k_pv.make_path(k_ass_file,l_ue);
-        k_pv.add_file(k_ass_file,l_ue);
+        k_pv.add_file(l_ue);
         std::cout << " k_pv.get_local_path()  :" << k_pv.get_local_path() << std::endl;
         std::cout << " k_pv.get_server_path() :" << k_pv.get_server_path() << std::endl;
         REQUIRE(k_pv.get_local_path() ==
