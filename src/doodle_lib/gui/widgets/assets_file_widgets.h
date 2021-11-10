@@ -132,7 +132,6 @@ class DOODLELIB_API assets_file_widgets : public metadata_widget {
   friend details::table_column_ptr;
 
   entt::handle p_root;
-  handle_list p_list;
   std::vector<details::table_column_ptr> p_colum_list;
 
   void set_select(const entt::handle& in_);

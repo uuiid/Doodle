@@ -113,8 +113,7 @@ void assets_file_widgets::set_select(const entt::handle& in) {
 assets_file_widgets::assets_file_widgets()
     : p_root(),
       p_current_select(),
-      p_colum_list(),
-      p_list() {
+      p_colum_list(){
   p_class_name = "文件列表";
   p_factory    = new_object<attr_assets_file>();
   p_colum_list.emplace_back(new_object<details::column_id>(this));
@@ -139,31 +138,31 @@ void assets_file_widgets::frame_render() {
                     ImGuiTableFlags_::ImGuiTableFlags_ScrollY};
   auto k_ = g_reg()->try_ctx<handle_list>();
   if (k_) {
-    p_list = *k_;
-  }
-  dear::Table{"attribute_widgets",
-              boost::numeric_cast<std::int32_t>(p_colum_list.size()),
-              flags} &&
-      [this]() {
-        /// 添加表头
-        for (auto& i : p_colum_list) {
-          if (i->p_width != 0)
-            imgui::TableSetupColumn(i->p_name.c_str(), 0, imgui::GetFontSize() * i->p_width);
-          else
-            imgui::TableSetupColumn(i->p_name.c_str());
-        }
-
-        imgui::TableHeadersRow();
-        list_data l_data{};
-
-        for (auto& k_h : p_list) {
-          if (k_h.all_of<assets_file>()) {
-            imgui::TableNextRow();
-            for (auto& l_i : p_colum_list)
-              l_i->render(k_h);
+    auto& k_list = *k_;
+    dear::Table{"attribute_widgets",
+                boost::numeric_cast<std::int32_t>(p_colum_list.size()),
+                flags} &&
+        [this, &k_list]() {
+          /// 添加表头
+          for (auto& i : p_colum_list) {
+            if (i->p_width != 0)
+              imgui::TableSetupColumn(i->p_name.c_str(), 0, imgui::GetFontSize() * i->p_width);
+            else
+              imgui::TableSetupColumn(i->p_name.c_str());
           }
-        }
-      };
+
+          imgui::TableHeadersRow();
+          list_data l_data{};
+
+          for (auto& k_h : k_list) {
+            if (k_h.all_of<assets_file>()) {
+              imgui::TableNextRow();
+              for (auto& l_i : p_colum_list)
+                l_i->render(k_h);
+            }
+          }
+        };
+  }
 }
 
 void assets_file_widgets::set_metadata(const entt::entity& in_ptr) {
