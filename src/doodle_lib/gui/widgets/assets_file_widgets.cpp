@@ -111,8 +111,7 @@ void assets_file_widgets::set_select(const entt::handle& in) {
 }
 
 assets_file_widgets::assets_file_widgets()
-    : p_root(),
-      p_current_select(),
+    :      p_current_select(),
       p_colum_list(){
   p_class_name = "文件列表";
   p_factory    = new_object<attr_assets_file>();
@@ -137,7 +136,8 @@ void assets_file_widgets::frame_render() {
                     ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
                     ImGuiTableFlags_::ImGuiTableFlags_ScrollY};
   auto k_ = g_reg()->try_ctx<handle_list>();
-  if (k_) {
+
+  if (k_ && k_->front().valid()) {
     auto& k_list = *k_;
     dear::Table{"attribute_widgets",
                 boost::numeric_cast<std::int32_t>(p_colum_list.size()),
@@ -165,8 +165,6 @@ void assets_file_widgets::frame_render() {
   }
 }
 
-void assets_file_widgets::set_metadata(const entt::entity& in_ptr) {
-  p_root = make_handle(in_ptr);
-}
+
 
 }  // namespace doodle

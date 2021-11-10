@@ -131,7 +131,6 @@ using table_column_ptr = std::shared_ptr<table_column>;
 class DOODLELIB_API assets_file_widgets : public metadata_widget {
   friend details::table_column_ptr;
 
-  entt::handle p_root;
   std::vector<details::table_column_ptr> p_colum_list;
 
   void set_select(const entt::handle& in_);
@@ -142,13 +141,8 @@ class DOODLELIB_API assets_file_widgets : public metadata_widget {
 
   assets_file_widgets();
   virtual void frame_render() override;
-  /**
-   *
-   */
-  void set_metadata(const entt::entity& in_ptr);
 
   boost::signals2::signal<void(const entt::entity&)> select_change;
 
- public:
 };
 }  // namespace doodle

@@ -64,7 +64,6 @@ main_windows::main_windows()
     p_edit_windows_->set_factort(p_prj_->get_factory());
   });
   p_ass_->select_change.connect([this](auto in) {
-    p_attr_->set_metadata(in);
     p_edit_windows_->set_factort(p_ass_->get_factory());
   });
   p_attr_->select_change.connect(
