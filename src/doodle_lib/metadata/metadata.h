@@ -33,7 +33,7 @@ enum class metadata_type {
   maya_rig           = 7,
   fbx                = 8,
   abc                = 9,
-  move               = 10,
+  movie               = 10,
   ue4_prj            = 11
 
 };

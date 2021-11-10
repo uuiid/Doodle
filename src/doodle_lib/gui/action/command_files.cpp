@@ -42,7 +42,6 @@ bool comm_files_select::render() {
                 p_root.get<assets_path_vector>().get().clear();
                 p_comm_sub = p_root.get<assets_path_vector>().add_file(p_file, *p_use_relative);
                 if (p_comm_sub) {
-                  p_comm_sub->set_parent(p_root);
                   p_comm_sub->set_data(p_root);
                 }
               });
@@ -52,7 +51,6 @@ bool comm_files_select::render() {
       p_root.get<assets_path_vector>().get().clear();
       p_comm_sub = p_root.get<assets_path_vector>().add_file(p_file, *p_use_relative);
       if (p_comm_sub) {
-        p_comm_sub->set_parent(p_root);
         p_comm_sub->set_data(p_root);
       }
     }

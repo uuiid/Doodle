@@ -7,17 +7,14 @@
 #include <doodle_lib/metadata/leaf_meta.h>
 #include <doodle_lib/metadata/tree_adapter.h>
 namespace doodle {
-class DOODLELIB_API assets_path  {
+
+
+class DOODLELIB_API assets_path_vector {
   /**
    * @brief 上传时的本地路径
    *
    */
   FSys::path p_local_path;
-  /**
-   * @brief 上传时相对本地根的路径
-   *
-   */
-  FSys::path p_lexically_relative;
   /**
    * @brief 服务器路径
    *
@@ -29,28 +26,7 @@ class DOODLELIB_API assets_path  {
    */
   FSys::path p_backup_path;
 
- public:
-  assets_path();
-  /**
-   * @brief 生成一个类
-   *
-   * @param in_path 输入路径，这个会调用 AssetsPath::set_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
-   */
-  explicit assets_path(const FSys::path &in_path, const entt::handle &in_metadata);
-
-  [[nodiscard]] const FSys::path &get_local_path() const;
-  [[nodiscard]] FSys::path get_cache_path() const;
-  [[nodiscard]] const FSys::path &get_server_path() const;
-  [[nodiscard]] const FSys::path &get_backup_path() const;
-  /**
-   * @brief 设置资产的本地文件的路径，根据元数据产生路径
-   *
-   * 会产生根据元数据标签产生的路径
-   *
-   * @param in_path  本地文件的路径
-   * @param in_metadata 元数据指针，
-   */
-  void set_path(const FSys::path &in_path, const entt::handle &in_metadata, bool in_using_lexically_relative = false);
+  std::vector<FSys::path> p_file_list;
 
   /**
    * @brief设置资产的本地文件的路径，直接设置服务器路径
@@ -60,46 +36,54 @@ class DOODLELIB_API assets_path  {
    */
   void set_path(const FSys::path &in_local_path, const FSys::path &in_server_path);
 
-  std::string str() const;
-  //  void open();
- private:
-  //这里是序列化的代码
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &ar, std::uint32_t const version) {
-    if (version == 3)
-      ar &boost::serialization::make_nvp("local_path", p_local_path) &
-          boost::serialization::make_nvp("lexically_relative", p_lexically_relative) &
-          boost::serialization::make_nvp("server_path", p_server_path) &
-          boost::serialization::make_nvp("backup_path", p_backup_path);
-  };
-};
-
-class DOODLELIB_API assets_path_vector {
  public:
-  assets_path_vector() : paths(){};
+  assets_path_vector() ;
   DOODLE_MOVE(assets_path_vector);
-  using path_list = std::vector<assets_path>;
-  path_list paths;
+  /**
+   * @brief 按照所在组件的实体之间生成路径
+   *
+   * @return true
+   * @return false
+   */
+  bool make_path();
+  /**
+   * @brief 给定实体,生成路径
+   *
+   * @param in_metadata
+   * @return true
+   * @return false
+   */
 
-  inline vector_adapter<path_list, assets_path_vector> get() {
-    return make_vector_adapter(paths, *this);
-  };
+  bool make_path(const entt::handle &in_metadata);
+  /**
+   * @brief 给定实体和本地路径，生成相对路径的服务器路径
+   *
+   * @param in_metadata
+   * @param in_path
+   * @return true
+   * @return false
+   */
+  bool make_path(const entt::handle &in_metadata, const FSys::path &in_path);
+
+  [[nodiscard]] const FSys::path &get_local_path() const;
+  [[nodiscard]] FSys::path get_cache_path() const;
+  [[nodiscard]] const FSys::path &get_server_path() const;
+  [[nodiscard]] const FSys::path &get_backup_path() const;
 
 
-  inline void end_push_back(const assets_path &in) {
-  };
+
+  inline void end_push_back(const assets_path &in){};
   inline void end_clear(){};
 
-  command_ptr add_file(const FSys::path &in_path, bool in_using_lexically_relative = false);
-  void add_file_raw(const FSys::path &in_path, bool in_using_lexically_relative = false);
+  command_ptr add_file(const FSys::path &in_path);
+  void add_file_raw(const FSys::path &in_path);
 
   inline void merge(const assets_path_vector &in) {
     paths.insert(paths.end(), in.paths.begin(), in.paths.end());
   };
 
   [[nodiscard]] rpc_trans_path_ptr_list make_up_path() const;
-  [[nodiscard]] rpc_trans_path_ptr_list make_down_path(const FSys::path& in_down_path) const;
+  [[nodiscard]] rpc_trans_path_ptr_list make_down_path(const FSys::path &in_down_path) const;
   // operator rpc_trans_path_ptr_list() const;
 
  private:
@@ -107,8 +91,12 @@ class DOODLELIB_API assets_path_vector {
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
-    if (version == 1)
-      ar &boost::serialization::make_nvp("paths", paths);
+    if (version == 2) {
+      ar &BOOST_SERIALIZATION_NVP(p_local_path);
+      ar &BOOST_SERIALIZATION_NVP(p_server_path);
+      ar &BOOST_SERIALIZATION_NVP(p_backup_path);
+      ar &BOOST_SERIALIZATION_NVP(p_file_list);
+    }
   };
 };
 
@@ -116,15 +104,6 @@ class DOODLELIB_API assets_path_vector {
 
 namespace fmt {
 
-template <>
-struct fmt::formatter<doodle::assets_path> : fmt::formatter<fmt::string_view> {
-  template <typename FormatContext>
-  auto format(const doodle::assets_path &in_, FormatContext &ctx) {
-    return formatter<string_view>::format(
-        in_.get_server_path().generic_string(),
-        ctx);
-  }
-};
 template <>
 struct fmt::formatter<doodle::assets_path_vector> : fmt::formatter<fmt::string_view> {
   template <typename FormatContext>
@@ -144,5 +123,5 @@ struct fmt::formatter<doodle::assets_path_vector> : fmt::formatter<fmt::string_v
 
 BOOST_CLASS_VERSION(doodle::assets_path, 3)
 BOOST_CLASS_EXPORT_KEY(doodle::assets_path)
-BOOST_CLASS_VERSION(doodle::assets_path_vector, 1)
+BOOST_CLASS_VERSION(doodle::assets_path_vector, 2)
 BOOST_CLASS_EXPORT_KEY(doodle::assets_path_vector)
