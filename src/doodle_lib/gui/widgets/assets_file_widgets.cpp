@@ -22,11 +22,7 @@ void table_column::render(const entt::handle& in_ptr) {
 void table_column::set_select(const entt::handle& in_) {
   table->p_current_select = in_;
   auto k_reg              = g_reg();
-  auto k_comm             = command_list<comm_ass_season,
-                             comm_ass_eps,
-                             comm_ass_shot,
-                             comm_assets,
-                             comm_ass_file_attr>{};
+  auto k_comm             = comm_assets_add{};
   k_comm.set_data(in_);
   k_reg->set<widget_>(k_comm);
 

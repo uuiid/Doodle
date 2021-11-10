@@ -60,7 +60,7 @@ void project_widget::frame_render() {
 
       p_c.get<database_root>().reset();
 
-      comm_project_add k_comm{};
+      command_list<comm_project_add, comm_assets_add> k_comm{};
       k_comm.set_data(p_c);
       k_reg->set<widget_>(k_comm);
       k_reg->set<root_ref>(p_c);

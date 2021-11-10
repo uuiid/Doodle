@@ -193,7 +193,7 @@ comm_assets::comm_assets()
 }
 
 bool comm_assets::render() {
-  if (p_root.all_of<assets>()) {
+  if (!p_root.all_of<assets>()) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       p_root.emplace<assets>(p_data);
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
@@ -321,17 +321,19 @@ bool comm_ass_file_attr::set_data(const entt::handle& in_data) {
 
 comm_assets_add::comm_assets_add()
     : p_list() {
+  p_name     = "资产";
   p_show_str = make_imgui_name(this, "添加条目");
 }
 
 bool comm_assets_add::render() {
   if (!g_reg()->try_ctx<root_ref>())
-    return;
+    return false;
   if (imgui::Button(p_show_str["添加条目"].c_str())) {
     auto k_reg = g_reg();
     auto k_h   = make_handle(g_reg()->create());
     k_h.emplace<database>();
-    k_h.get_or_emplace<root_ref>(g_reg()->ctx<root_ref>().root_handle());
+    k_h.get_or_emplace<root_ref>().set_root(g_reg()->ctx<root_ref>().root_handle());
+    p_list.set_data(k_h);
   }
   return p_list.render();
 }
