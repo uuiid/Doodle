@@ -254,6 +254,12 @@ class DOODLELIB_API to_str {
   operator string() const;
 };
 
+template <class in_class>
+class DOODLELIB_API handle_warp {
+ public:
+  entt::handle handle_;
+};
+
 }  // namespace doodle
 
 // CEREAL_REGISTER_TYPE(doodle::metadata)

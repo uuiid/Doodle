@@ -21,6 +21,15 @@ void table_column::render(const entt::handle& in_ptr) {
 }
 void table_column::set_select(const entt::handle& in_) {
   table->p_current_select = in_;
+  auto k_reg              = g_reg();
+  auto k_comm             = command_list<comm_ass_season,
+                             comm_ass_eps,
+                             comm_ass_shot,
+                             comm_assets,
+                             comm_ass_file_attr>{};
+  k_comm.set_data(in_);
+  k_reg->set<widget_>(k_comm);
+
   table->select_change(in_);
 }
 
@@ -130,7 +139,7 @@ void assets_file_widgets::frame_render() {
                     ImGuiTableFlags_::ImGuiTableFlags_ScrollY};
   auto k_ = g_reg()->try_ctx<handle_list>();
   if (k_) {
-    p_list       = *k_;
+    p_list = *k_;
   }
   dear::Table{"attribute_widgets",
               boost::numeric_cast<std::int32_t>(p_colum_list.size()),

@@ -63,6 +63,7 @@ void project_widget::frame_render() {
       comm_project_add k_comm{};
       k_comm.set_data(p_c);
       k_reg->set<widget_>(k_comm);
+      k_reg->set<root_ref>(p_c);
 
       select_change(p_c);
     }

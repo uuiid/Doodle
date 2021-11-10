@@ -33,9 +33,7 @@ class DOODLELIB_API comm_ass_eps : public command_base {
 
   std::int32_t p_data;
   std::int32_t p_end;
-  bool_ptr use_batch;
 
-  void add_eps(const std::vector<std::int32_t>& p_eps);
 
  protected:
  public:
@@ -50,11 +48,9 @@ class DOODLELIB_API comm_ass_shot : public command_base {
 
   std::int32_t p_data;
   std::int32_t p_end;
-  bool_ptr use_batch;
 
   std::string_view p_shot_ab;
 
-  void add_shot(const std::vector<std::int32_t>& p_shots);
 
  protected:
  public:
@@ -68,7 +64,6 @@ class DOODLELIB_API comm_assets : public command_base {
   entt::handle p_root;
 
   string p_data;
-  void add_ass(std::vector<string> in_Str);
 
  protected:
  public:
@@ -83,8 +78,6 @@ class DOODLELIB_API comm_ass_season : public command_base {
 
   std::int32_t p_data;
   std::int32_t p_end;
-  bool_ptr use_batch;
-  void add_season(const std::vector<std::int32_t>& in);
 
  protected:
  public:

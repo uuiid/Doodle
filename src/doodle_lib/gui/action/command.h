@@ -33,9 +33,7 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
   virtual const std::string& class_name() { return p_name; };
   virtual bool is_async() { return false; };
   virtual bool render() = 0;
-  virtual bool set_data(const entt::handle& in_any) {
-    return set_parent(in_any);
-  };
+  virtual bool set_data(const entt::handle& in_any) { return false; };
   virtual bool set_parent(const entt::handle& in_ptr);
 
   template <class in_class>
@@ -46,7 +44,6 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
 };
 
 class DOODLELIB_API command_base_tool : public command_base {
-
  public:
   command_base_tool() = default;
   bool set_data(const entt::handle& in_any) override { return false; };
