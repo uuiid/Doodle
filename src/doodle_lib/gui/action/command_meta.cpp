@@ -286,7 +286,7 @@ comm_ass_file_attr::comm_ass_file_attr()
 }
 
 bool comm_ass_file_attr::render() {
-  if (p_root.all_of<assets_file, time_point_wrap>()) {
+  if (!p_root.all_of<assets_file>()) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       p_root.emplace<assets_file>();
       p_root.get<root_ref>().set_root(g_reg()->ctx<root_ref>().root_handle());
@@ -294,7 +294,6 @@ bool comm_ass_file_attr::render() {
     }
   } else {
     if (!p_root.get<database>().has_child()) {
-      imgui::SameLine();
       if (imgui::Button(p_show_str["删除"].c_str())) {
         p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
       }
@@ -314,7 +313,7 @@ bool comm_ass_file_attr::render() {
 }
 bool comm_ass_file_attr::set_data(const entt::handle& in_data) {
   p_root = in_data;
-  if (in_data.all_of<assets_file, time_point_wrap>()) {
+  if (in_data.all_of<time_point_wrap>()) {
     p_time_widget->set_time(p_root);
   }
   return true;
