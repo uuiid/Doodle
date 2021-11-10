@@ -243,9 +243,6 @@ comm_ass_season::comm_ass_season()
 }
 
 bool comm_ass_season::render() {
-  if (!p_meta_var)
-    return true;
-
   if (!p_root.all_of<season>()) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
       p_root.emplace<season>(p_data);
