@@ -16,8 +16,7 @@ namespace doodle {
 project_widget::project_widget()
     : p_c() {
   p_class_name = "项目";
-  auto k_com   = new_object<command_base_list>();
-  k_com->get();
+
 }
 void project_widget::frame_render() {
   dear::Table{"project", 3} && [this]() {

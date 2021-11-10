@@ -35,7 +35,7 @@ using data_ptr = std::shared_ptr<data>;
  * @li 在没有引用文件标记时， 使用所有载入的应用进行解算
  *
  */
-class reference_attr_setting : public command_base_tool {
+class reference_attr_setting : public command_base {
   std::vector<reference_attr::data_ptr> p_list;
 
   bool add_channel() const;

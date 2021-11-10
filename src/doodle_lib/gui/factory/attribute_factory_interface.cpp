@@ -25,14 +25,6 @@ void attr_project::show_attribute(const project* in) {
 attr_assets::attr_assets()
     : p_data(),
       p_comm() {
-  auto k_l = new_object<command_base_list>();
-  k_l->p_list.push_back(new_object<comm_ass_season>());
-  k_l->p_list.push_back(new_object<comm_ass_eps>());
-  k_l->p_list.push_back(new_object<comm_ass_shot>());
-  k_l->p_list.push_back(new_object<comm_assets>());
-  k_l->p_list.push_back(new_object<comm_ass_ue4_create_shot>());
-  k_l->p_list.push_back(new_object<comm_video>());
-  p_comm = k_l;
 }
 
 void attr_assets::render() {
@@ -62,10 +54,6 @@ void attr_assets::show_attribute(const season* in) {
 attr_assets_file::attr_assets_file()
     : p_data(),
       p_comm() {
-  auto k_l = new_object<command_base_list>();
-  k_l->p_list.push_back(new_object<comm_ass_file_attr>());
-  k_l->p_list.push_back(new_object<comm_files_select>());
-  p_comm = k_l;
 }
 
 void attr_assets_file::render() {

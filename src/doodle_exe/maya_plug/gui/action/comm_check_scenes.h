@@ -21,7 +21,7 @@ namespace doodle::maya_plug {
  * * 去除贼健康错误
  * 
  */
-class comm_check_scenes : public command_base_tool {
+class comm_check_scenes : public command_base {
   bool p_unlock_normal;
   bool p_duplicate_name;
   bool p_multilateral_surface;

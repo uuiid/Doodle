@@ -24,9 +24,6 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
  protected:
   std::string p_name;
   std::map<string, string> p_show_str;
-  entt::handle p_meta_var;
-
-  registry_ptr reg;
 
  public:
   command_base();
@@ -34,7 +31,6 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
   virtual bool is_async() { return false; };
   virtual bool render() = 0;
   virtual bool set_data(const entt::handle& in_any) { return false; };
-  virtual bool set_parent(const entt::handle& in_ptr);
 
   template <class in_class>
   static void on_construct_slot(entt::registry& in_reg, entt::entity in_ent) {
@@ -43,27 +39,6 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
   };
 };
 
-class DOODLELIB_API command_base_tool : public command_base {
- public:
-  command_base_tool() = default;
-  bool set_data(const entt::handle& in_any) override { return false; };
-  bool set_parent(const entt::handle& in_ptr) override { return false; };
-};
-
-class DOODLELIB_API command_base_list : public command_base {
- public:
-  std::vector<std::shared_ptr<command_base>> p_list;
-
-  std::vector<std::shared_ptr<command_base>>& get() {
-    return p_list;
-  }
-
-  command_base_list() = default;
-  bool render() override;
-  bool test_r();
-  bool set_data(const entt::handle& in_any) override;
-  bool set_parent(const entt::handle& in_ptr) override;
-};
 
 template <class... arg>
 class DOODLELIB_API command_list {

@@ -27,7 +27,7 @@ bool data::operator!=(const data& in_rhs) const {
 }  // namespace reference_attr
 
 reference_attr_setting::reference_attr_setting()
-    : command_base_tool(),
+    : command_base(),
       p_list() {
   p_name     = "引用编辑";
   p_show_str = make_imgui_name(this,

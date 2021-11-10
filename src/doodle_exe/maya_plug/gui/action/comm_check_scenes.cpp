@@ -23,7 +23,7 @@
 namespace doodle::maya_plug {
 
 comm_check_scenes::comm_check_scenes()
-    : command_base_tool(),
+    : command_base(),
       p_unlock_normal(),
       p_duplicate_name(),
       p_multilateral_surface(),
