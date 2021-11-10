@@ -110,7 +110,7 @@ class DOODLELIB_API image_sequence_async : public details::no_copy {
    *
    * @param image_dir 图片序列
    */
-  image_sequence_ptr set_path(const entt::handle& in_path);
+  // image_sequence_ptr set_path(const entt::handle& in_path);
 
   long_term_ptr create_video(const FSys::path& out_file);
   long_term_ptr create_video();

@@ -18,7 +18,6 @@
 #include <doodle_lib/rpc/rpc_trans_path.h>
 #include <logger/logger.h>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path)
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path_vector)
 
 namespace doodle {
@@ -33,17 +32,6 @@ const FSys::path &assets_path_vector::get_server_path() const {
 
 const FSys::path &assets_path_vector::get_backup_path() const {
   return p_backup_path;
-}
-
-void assets_path_vector::set_path(const FSys::path &in_local_path, const FSys::path &in_server_path) {
-  if (!FSys::exists(in_local_path))
-    throw doodle_error{"不存在文件"};
-  p_local_path            = in_local_path;
-  const auto &k_root_path = in_local_path.root_path();
-  p_server_path           = in_server_path;
-  p_backup_path /= FSys::add_time_stamp(in_server_path);
-  DOODLE_LOG_INFO("本地路径: {}, 设置服务路径: {}, 备份路径: {}",
-                  p_local_path, p_server_path, p_backup_path);
 }
 
 bool assets_path_vector::make_path() {
@@ -90,6 +78,7 @@ command_ptr assets_path_vector::add_file(
 
   auto k_h = make_handle(*this);
   if (ue4_project::is_ue4_file(in_path)) {
+    p_local_path = in_path.parent_path();
     k_h.get<database>().set_meta_type(metadata_type::ue4_prj);
     // 添加基本路径(ue4 prj 路径)
     p_file_list.push_back(in_path.filename());
@@ -98,6 +87,7 @@ command_ptr assets_path_vector::add_file(
   }
 
   if (image_sequence::is_image_sequence(FSys::list_files(in_path.parent_path()))) {
+    p_local_path = in_path.parent_path();
     k_h.get<database>().set_meta_type(metadata_type::movie);
     // 添加文件的父路径, 序列文件夹
     p_file_list.push_back(in_path.parent_path().filename());
@@ -112,8 +102,13 @@ void assets_path_vector::add_file_raw(const FSys::path &in_path) {
 
 rpc_trans_path_ptr_list assets_path_vector::make_up_path() const {
   rpc_trans_path_ptr_list k_list{};
-  for (auto &i : p_file_list)
-    k_list.emplace_back(std::make_unique<rpc_trans_path>(get_local_path() / i, get_server_path() / i, get_backup_path()));
+
+  if (p_file_list.size() != p_local_paths.size())
+    throw doodle_error{"错误的上传路径"};
+  for (size_t i = 0; i < p_file_list.size(); ++i) {
+    k_list.emplace_back(std::make_unique<rpc_trans_path>(p_local_paths[i], get_server_path() / p_file_list[i], get_backup_path()));
+  }
+
   return k_list;
 }
 
@@ -129,6 +124,15 @@ FSys::path assets_path_vector::get_cache_path() const {
   auto k_path = core_set::getSet().get_cache_root();
   k_path /= p_server_path;
   return k_path;
+}
+
+std::vector<FSys::path> assets_path_vector::list() {
+  std::vector<FSys::path> k_l;
+  std::transform(p_file_list.begin(), p_file_list.end(), std::back_inserter(k_l),
+                 [this](auto &p) {
+                   return get_server_path() / p;
+                 });
+  return k_l;
 }
 
 }  // namespace doodle

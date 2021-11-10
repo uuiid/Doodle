@@ -265,7 +265,7 @@ class assets_file;
 class metadata_serialize;
 class time_point_wrap;
 class comment;
-class assets_path;
+
 
 class rpc_metadata_client;
 class rpc_metadaata_server;
@@ -344,13 +344,11 @@ using episodes_ref               = std::reference_wrapper<episodes>;
 using shot_ref                   = std::reference_wrapper<shot>;
 using assets_ref                 = std::reference_wrapper<assets>;
 using assets_file_ref            = std::reference_wrapper<assets_file>;
-using assets_path_ref            = std::reference_wrapper<assets_path>;
 
 using metadata_serialize_ptr     = std::shared_ptr<metadata_serialize>;
 
 using command_ptr                = std::shared_ptr<command_base>;
 
-using assets_path_ptr            = std::shared_ptr<assets_path>;
 
 using doodle_lib_ptr             = std::shared_ptr<doodle_lib>;
 

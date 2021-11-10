@@ -172,7 +172,7 @@ std::string image_sequence::set_shot_and_eps(const FSys::path &in_path) {
   const auto k_b_s = k_s.analysis(in_path);
   const auto k_b_e = k_ep.analysis(in_path);
 
-  auto k_str = core_set::getSet().get_user_en();  /// 基本水印, 名称
+  auto k_str       = core_set::getSet().get_user_en();  /// 基本水印, 名称
   /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
   if (k_b_s && k_b_e) {
     k_str += fmt::format(" : {}_{}", k_ep.str(), k_s.str());
@@ -192,7 +192,6 @@ std::string image_sequence::set_shot_and_eps(const FSys::path &in_path) {
     p_out_path /= k_ep.str();
   p_name = k_str;
   return p_Text;
-
 }
 
 void image_sequence::create_video(const image_sequence::asyn_arg_ptr &in_arg) {
@@ -379,17 +378,17 @@ image_sequence_ptr image_sequence_async::set_path(const std::vector<FSys::path> 
   p_image_sequence->set_path(image_path_list);
   return p_image_sequence;
 }
-image_sequence_ptr image_sequence_async::set_path(const entt::handle &in_path) {
-  set_path(in_path.get<assets_path_vector>().get().front().get_local_path());
-  auto k_out_dir = in_path.get<assets_path_vector>().get().front().get_cache_path();
-  p_image_sequence->set_out_dir(k_out_dir);
+// image_sequence_ptr image_sequence_async::set_path(const entt::handle &in_path) {
+//   set_path(in_path.get<assets_path_vector>().get_local_path());
+//   auto k_out_dir = in_path.get<assets_path_vector>().get().front().get_cache_path();
+//   p_image_sequence->set_out_dir(k_out_dir);
 
-  p_image_sequence->set_shot_and_eps(
-      in_path.get<tree_relationship>().find_parent_class_h<shot>(),
-      in_path.get<tree_relationship>().find_parent_class_h<episodes>());
+//   p_image_sequence->set_shot_and_eps(
+//       in_path.get<tree_relationship>().find_parent_class_h<shot>(),
+//       in_path.get<tree_relationship>().find_parent_class_h<episodes>());
 
-  return p_image_sequence;
-}
+//   return p_image_sequence;
+// }
 long_term_ptr image_sequence_async::create_video(const FSys::path &out_file) {
   p_image_sequence->set_path(out_file);
   return create_video();

@@ -17,7 +17,6 @@ class DOODLELIB_API rpc_trans_path : public details::no_copy {
       : local_path(std::move(in_local)),
         server_path(std::move(in_server)),
         backup_path(std::move(in_backup_path)){};
-  explicit rpc_trans_path(const assets_path_ptr& in_ptr);
 
   FSys::path local_path;
   FSys::path server_path;

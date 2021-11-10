@@ -7,14 +7,12 @@
 #include <doodle_lib/metadata/leaf_meta.h>
 #include <doodle_lib/metadata/tree_adapter.h>
 namespace doodle {
-
-
 class DOODLELIB_API assets_path_vector {
   /**
    * @brief 上传时的本地路径
    *
    */
-  FSys::path p_local_path;
+  std::vector<FSys::path> p_local_paths;
   /**
    * @brief 服务器路径
    *
@@ -28,16 +26,11 @@ class DOODLELIB_API assets_path_vector {
 
   std::vector<FSys::path> p_file_list;
 
-  /**
-   * @brief设置资产的本地文件的路径，直接设置服务器路径
-   *
-   * @param in_local_path 本地路径
-   * @param in_server_path 服务器路径
-   */
-  void set_path(const FSys::path &in_local_path, const FSys::path &in_server_path);
 
  public:
-  assets_path_vector() ;
+  FSys::path p_local_path;
+
+  assets_path_vector();
   DOODLE_MOVE(assets_path_vector);
   /**
    * @brief 按照所在组件的实体之间生成路径
@@ -70,17 +63,14 @@ class DOODLELIB_API assets_path_vector {
   [[nodiscard]] const FSys::path &get_server_path() const;
   [[nodiscard]] const FSys::path &get_backup_path() const;
 
-
-
-  inline void end_push_back(const assets_path &in){};
-  inline void end_clear(){};
-
   command_ptr add_file(const FSys::path &in_path);
   void add_file_raw(const FSys::path &in_path);
 
-  inline void merge(const assets_path_vector &in) {
-    paths.insert(paths.end(), in.paths.begin(), in.paths.end());
+  void clear() {
+    p_file_list.clear();
   };
+
+  std::vector<FSys::path> list() ;
 
   [[nodiscard]] rpc_trans_path_ptr_list make_up_path() const;
   [[nodiscard]] rpc_trans_path_ptr_list make_down_path(const FSys::path &in_down_path) const;
@@ -92,7 +82,6 @@ class DOODLELIB_API assets_path_vector {
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
     if (version == 2) {
-      ar &BOOST_SERIALIZATION_NVP(p_local_path);
       ar &BOOST_SERIALIZATION_NVP(p_server_path);
       ar &BOOST_SERIALIZATION_NVP(p_backup_path);
       ar &BOOST_SERIALIZATION_NVP(p_file_list);
@@ -108,10 +97,7 @@ template <>
 struct fmt::formatter<doodle::assets_path_vector> : fmt::formatter<fmt::string_view> {
   template <typename FormatContext>
   auto format(const doodle::assets_path_vector &in_, FormatContext &ctx) -> decltype(ctx.out()) {
-    std::string str;
-    for (auto &i : in_.paths) {
-      str += fmt::format("{}\n", i.get_server_path().generic_string());
-    }
+    std::string str{in_.get_server_path().generic_string()};
 
     return formatter<string_view>::format(
         str,
@@ -121,7 +107,5 @@ struct fmt::formatter<doodle::assets_path_vector> : fmt::formatter<fmt::string_v
 
 }  // namespace fmt
 
-BOOST_CLASS_VERSION(doodle::assets_path, 3)
-BOOST_CLASS_EXPORT_KEY(doodle::assets_path)
 BOOST_CLASS_VERSION(doodle::assets_path_vector, 2)
 BOOST_CLASS_EXPORT_KEY(doodle::assets_path_vector)

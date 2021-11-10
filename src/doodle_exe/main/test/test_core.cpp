@@ -111,16 +111,17 @@ TEST_CASE("core create_path", "[fun][create_path]") {
   k_ass_file.emplace<assets_file>("eee");
   k_ass_file.get<tree_relationship>().set_parent(k_ass2);
 
-  auto& k_p = k_ass_file.emplace<assets_path>();
+  auto& k_p = k_ass_file.emplace<assets_path_vector>();
+  k_p.make_path();
   SECTION("dir") {
-    k_p.set_path("E:/tmp/ref/Gumu_rig_cloth.ma", k_ass2);
+    k_p.add_file("E:/tmp/ref/Gumu_rig_cloth.ma");
     std::cout << k_p.get_local_path() << std::endl;
     std::cout << k_p.get_server_path() << std::endl;
     REQUIRE(k_p.get_local_path() == FSys::path{"E:/tmp/ref/Gumu_rig_cloth.ma"});
     REQUIRE(k_p.get_server_path() == FSys::path{"ttt\\assets/eee/None_/Gumu_rig_cloth.ma"});
   }
   SECTION("ip path") {
-    k_p.set_path("//192.168.10.250/public/changanhuanjie", k_ass2);
+    k_p.add_file("//192.168.10.250/public/changanhuanjie");
     std::cout << k_p.get_local_path() << std::endl;
     std::cout << k_p.get_server_path() << std::endl;
     REQUIRE(k_p.get_local_path() ==
@@ -129,7 +130,7 @@ TEST_CASE("core create_path", "[fun][create_path]") {
             FSys::path{"ttt\\assets\\eee\\None_\\changanhuanjie"});
   }
   SECTION("ip path2") {
-    k_p.set_path("//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma", k_ass2);
+    k_p.add_file("//192.168.10.250/public/changanhuanjie/5-moxing/Ch/Ch001A/Rig/Ch001A_Rig_lyq.ma");
     std::cout << k_p.get_local_path() << std::endl;
     std::cout << k_p.get_server_path() << std::endl;
     REQUIRE(k_p.get_local_path() ==
@@ -141,52 +142,55 @@ TEST_CASE("core create_path", "[fun][create_path]") {
     FSys::path l_ue{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject"};
     auto& k_pv = k_ass_file.emplace<assets_path_vector>();
     SECTION("not use repath") {
+      k_pv.make_path();
       k_pv.add_file(l_ue);
-      std::cout << " k_pv.paths.front().get_local_path()  :" << k_pv.paths.front().get_local_path() << std::endl;
-      std::cout << " k_pv.paths.front().get_server_path() :" << k_pv.paths.front().get_server_path() << std::endl;
-      std::cout << " k_pv.paths.front().get_backup_path() :" << k_pv.paths.front().get_backup_path() << std::endl;
-      std::cout << " k_pv.paths.front().get_cache_path()  :" << k_pv.paths.front().get_cache_path() << std::endl;
-      REQUIRE(k_pv.paths.front().get_local_path() ==
+      std::cout << " k_pv.get_local_path()  :" << k_pv.get_local_path() << std::endl;
+      std::cout << " k_pv.get_server_path() :" << k_pv.get_server_path() << std::endl;
+      std::cout << " k_pv.get_backup_path() :" << k_pv.get_backup_path() << std::endl;
+      std::cout << " k_pv.get_cache_path()  :" << k_pv.get_cache_path() << std::endl;
+      REQUIRE(k_pv.get_local_path() ==
               FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject"});
-      REQUIRE(k_pv.paths.front().get_server_path() ==
+      REQUIRE(k_pv.get_server_path() ==
               FSys::path{"ttt\\assets\\eee\\None_\\test_tmp.uproject"});
-      std::cout << " k_pv.paths[1].get_local_path()  :" << k_pv.paths[1].get_local_path() << std::endl;
-      std::cout << " k_pv.paths[1].get_server_path() :" << k_pv.paths[1].get_server_path() << std::endl;
-      REQUIRE(k_pv.paths[1].get_local_path() ==
+      std::cout << " k_pv.get_local_path()  :" << k_pv.get_local_path() << std::endl;
+      std::cout << " k_pv.get_server_path() :" << k_pv.get_server_path() << std::endl;
+      REQUIRE(k_pv.get_local_path() ==
               FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content"});
-      REQUIRE(k_pv.paths[1].get_server_path() ==
+      REQUIRE(k_pv.get_server_path() ==
               FSys::path{"ttt\\assets\\eee\\None_\\Content"});
     }
     SECTION("using repath") {
       SECTION("root not eq") {
-        k_pv.add_file(l_ue, true);
-        std::cout << " k_pv.paths.front().get_local_path()  :" << k_pv.paths.front().get_local_path() << std::endl;
-        std::cout << " k_pv.paths.front().get_server_path() :" << k_pv.paths.front().get_server_path() << std::endl;
-        REQUIRE(k_pv.paths.front().get_local_path() ==
+        k_pv.make_path(k_ass_file,l_ue);
+        k_pv.add_file(k_ass_file,l_ue);
+        std::cout << " k_pv.get_local_path()  :" << k_pv.get_local_path() << std::endl;
+        std::cout << " k_pv.get_server_path() :" << k_pv.get_server_path() << std::endl;
+        REQUIRE(k_pv.get_local_path() ==
                 FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject"});
-        REQUIRE(k_pv.paths.front().get_server_path() ==
+        REQUIRE(k_pv.get_server_path() ==
                 FSys::path{"ttt\\test_tmp.uproject"});
-        std::cout << " k_pv.paths[1].get_local_path()  :" << k_pv.paths[1].get_local_path() << std::endl;
-        std::cout << " k_pv.paths[1].get_server_path() :" << k_pv.paths[1].get_server_path() << std::endl;
-        REQUIRE(k_pv.paths[1].get_local_path() ==
+        std::cout << " k_pv.get_local_path()  :" << k_pv.get_local_path() << std::endl;
+        std::cout << " k_pv.get_server_path() :" << k_pv.get_server_path() << std::endl;
+        REQUIRE(k_pv.get_local_path() ==
                 FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content"});
-        REQUIRE(k_pv.paths[1].get_server_path() ==
+        REQUIRE(k_pv.get_server_path() ==
                 FSys::path{"ttt\\Content"});
       }
       SECTION("root eq") {
         k_prj.get<project>().set_path("F:/");
-        k_pv.add_file(l_ue, true);
-        std::cout << " k_pv.paths.front().get_local_path()  :" << k_pv.paths.front().get_local_path() << std::endl;
-        std::cout << " k_pv.paths.front().get_server_path() :" << k_pv.paths.front().get_server_path() << std::endl;
-        REQUIRE(k_pv.paths.front().get_local_path() ==
+        k_pv.make_path(k_ass_file,l_ue);
+        k_pv.add_file(l_ue);
+        std::cout << " k_pv.get_local_path()  :" << k_pv.get_local_path() << std::endl;
+        std::cout << " k_pv.get_server_path() :" << k_pv.get_server_path() << std::endl;
+        REQUIRE(k_pv.get_local_path() ==
                 FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/test_tmp.uproject"});
-        REQUIRE(k_pv.paths.front().get_server_path() ==
+        REQUIRE(k_pv.get_server_path() ==
                 FSys::path{"ttt\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject"});
-        std::cout << " k_pv.paths[1].get_local_path()  :" << k_pv.paths[1].get_local_path() << std::endl;
-        std::cout << " k_pv.paths[1].get_server_path() :" << k_pv.paths[1].get_server_path() << std::endl;
-        REQUIRE(k_pv.paths[1].get_local_path() ==
+        std::cout << " k_pv.get_local_path()  :" << k_pv.get_local_path() << std::endl;
+        std::cout << " k_pv.get_server_path() :" << k_pv.get_server_path() << std::endl;
+        REQUIRE(k_pv.get_local_path() ==
                 FSys::path{"F:/Users/teXiao/Documents/Unreal_Projects/test_tmp/Content"});
-        REQUIRE(k_pv.paths[1].get_server_path() ==
+        REQUIRE(k_pv.get_server_path() ==
                 FSys::path{"ttt\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\Content"});
       }
     }

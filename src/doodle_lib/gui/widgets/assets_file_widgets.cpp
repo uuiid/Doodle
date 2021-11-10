@@ -54,18 +54,14 @@ bool column_comment::frame_render(const entt::handle& in_ptr) {
 bool column_path::frame_render(const entt::handle& in_ptr) {
   if (in_ptr.all_of<assets_path_vector>()) {
     auto& k_path = in_ptr.get<assets_path_vector>();
-    string k_all_str{};
-    string k_line_str{};
+    // string k_all_str{};
+    string k_line_str{fmt::format("{}", k_path)};
 
-    if (!k_path.get().empty()) {
-      k_line_str = k_path.get().front().get_server_path().generic_string();
-      k_all_str  = fmt::format("{}", k_path);
-    }
     dear::Text(k_line_str.c_str());
-    if (!k_all_str.empty()) {
-      imgui::SameLine();
-      dear::HelpMarker{"(...)", k_all_str.c_str()};
-    }
+    // if (!k_all_str.empty()) {
+    //   imgui::SameLine();
+    //   dear::HelpMarker{"(...)", k_all_str.c_str()};
+    // }
   }
   return true;
 }

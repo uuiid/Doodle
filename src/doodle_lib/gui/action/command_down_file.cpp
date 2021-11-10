@@ -27,9 +27,9 @@ bool comm_file_down::render() {
   return false;
 }
 bool comm_file_down::set_data(const entt::handle& in_any) {
-  if (in_any.all_of<assets_path_vector>() && !in_any.get<assets_path_vector>().get().empty()) {
+  if (in_any.all_of<assets_path_vector>()) {
     p_root = in_any;
-    *p_str = p_root.get<assets_path_vector>().get().front().get_cache_path().parent_path().generic_string();
+    *p_str = p_root.get<assets_path_vector>().get_cache_path().generic_string();
   } else {
     p_root = entt::handle{};
     return false;

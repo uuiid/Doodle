@@ -15,7 +15,7 @@ namespace doodle {
 comm_files_select::comm_files_select()
     : p_root(),
       p_use_relative(new_object<bool>(false)),
-      p_file(){
+      p_file() {
   p_name     = "添加文件";
   p_show_str = make_imgui_name(this,
                                "添加文件",
@@ -38,9 +38,12 @@ bool comm_files_select::render() {
           1}
           .show(
               [this](const std::vector<FSys::path>& in_p) {
-                p_file = in_p.front();
-                p_root.get<assets_path_vector>().get().clear();
-                p_comm_sub = p_root.get<assets_path_vector>().add_file(p_file, *p_use_relative);
+                p_file       = in_p.front();
+                auto& k_path = p_root.get<assets_path_vector>();
+                k_path.clear();
+                if (*p_use_relative)
+                  k_path.make_path(p_root, p_file);
+                p_comm_sub = k_path.add_file(p_file);
                 if (p_comm_sub) {
                   p_comm_sub->set_data(p_root);
                 }
@@ -48,8 +51,11 @@ bool comm_files_select::render() {
     }
     imgui::SameLine();
     if (imgui::Checkbox(p_show_str["相对路径"].c_str(), p_use_relative.get())) {
-      p_root.get<assets_path_vector>().get().clear();
-      p_comm_sub = p_root.get<assets_path_vector>().add_file(p_file, *p_use_relative);
+      auto& k_path = p_root.get<assets_path_vector>();
+      k_path.clear();
+      if (*p_use_relative)
+        k_path.make_path(p_root, p_file);
+      p_comm_sub = k_path.add_file(p_file);
       if (p_comm_sub) {
         p_comm_sub->set_data(p_root);
       }
@@ -59,9 +65,8 @@ bool comm_files_select::render() {
         p_show_str["路径列表"].c_str(),
         ImVec2{-FLT_MIN, 5 * imgui::GetTextLineHeightWithSpacing()}} &&
         [this]() {
-          for (auto& i : p_root.get_or_emplace<assets_path_vector>().get()) {
-            auto str = fmt::format("本地 {} \n服务器 {}", i.get_local_path(),
-                                   i.get_server_path());
+          for (auto& i : p_root.get_or_emplace<assets_path_vector>().list()) {
+            auto str = fmt::format("{}", i);
             imgui::Selectable(str.c_str());
           }
         };
@@ -97,7 +102,7 @@ bool comm_files_up::add_files() {
 bool comm_files_up::render() {
   if (p_list_paths) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
-      if (!p_list_paths.get<assets_path_vector>().get().empty()) {
+      if (p_list_paths.get<assets_path_vector>()) {
         add_files();
       }
     }
