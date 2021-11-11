@@ -262,4 +262,8 @@
  * @subsubsection updata_log_3125 版本3.1.25
  * @li 更新maya插件在批处理模式下正确运行
  * 
+ * @subsubsection updata_log_3125 版本3.1.25
+ * @li 完成了基本的项目视图方案
+ * @li 更新服务器
+ * 
  * /
