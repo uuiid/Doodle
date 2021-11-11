@@ -16,7 +16,8 @@ namespace doodle {
 project_widget::project_widget()
     : p_c() {
   p_class_name = "项目";
-
+  comm_project_add k_{};
+  g_reg()->set<widget_>(k_);
 }
 void project_widget::frame_render() {
   dear::Table{"project", 3} && [this]() {
