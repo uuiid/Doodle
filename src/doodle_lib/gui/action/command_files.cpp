@@ -28,11 +28,14 @@ comm_files_select::comm_files_select()
 
 bool comm_files_select::render() {
   if (p_root) {
+    static bool use_folder{false};
+    imgui::Checkbox("选择目录", &use_folder);
+    imgui::SameLine();
     if (imgui::Button(p_show_str["添加文件"].c_str())) {
       open_file_dialog{
           p_show_str["获得文件"].c_str(),
           "获得文件",
-          ".*",
+          use_folder ? nullptr : ".*",
           ".",
           "",
           1}
@@ -43,6 +46,8 @@ bool comm_files_select::render() {
                 k_path.clear();
                 if (*p_use_relative)
                   k_path.make_path(p_root, p_file);
+                else
+                  k_path.make_path();
                 p_comm_sub = k_path.add_file(p_file);
                 if (p_comm_sub) {
                   p_comm_sub->set_data(p_root);
@@ -55,6 +60,8 @@ bool comm_files_select::render() {
       k_path.clear();
       if (*p_use_relative)
         k_path.make_path(p_root, p_file);
+      else
+        k_path.make_path();
       p_comm_sub = k_path.add_file(p_file);
       if (p_comm_sub) {
         p_comm_sub->set_data(p_root);

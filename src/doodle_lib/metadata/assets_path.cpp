@@ -83,6 +83,9 @@ command_ptr assets_path_vector::add_file(
   auto k_h = make_handle(*this);
   if (ue4_project::is_ue4_file(in_path)) {
     p_local_path = in_path.parent_path();
+    p_local_paths.push_back(in_path);
+    p_local_paths.push_back(in_path.parent_path() / ue4_project::Content);
+
     k_h.get<database>().set_meta_type(metadata_type::ue4_prj);
     // 添加基本路径(ue4 prj 路径)
     p_file_list.push_back(in_path.filename());
@@ -92,6 +95,7 @@ command_ptr assets_path_vector::add_file(
 
   if (image_sequence::is_image_sequence(FSys::list_files(in_path.parent_path()))) {
     p_local_path = in_path.parent_path();
+    p_local_paths.push_back(in_path.parent_path());
     k_h.get<database>().set_meta_type(metadata_type::movie);
     // 添加文件的父路径, 序列文件夹
     p_file_list.push_back(in_path.parent_path().filename());
