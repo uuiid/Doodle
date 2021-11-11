@@ -99,6 +99,8 @@ comm_files_up::comm_files_up()
 
 bool comm_files_up::add_files() {
   p_list_paths.get<assets_file>().up_version();
+  p_list_paths.get<time_point_wrap>().set_time(chrono::system_clock::now());
+
   auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(
       p_list_paths.get<assets_path_vector>().make_up_path());
   (*k_up)();
@@ -108,8 +110,8 @@ bool comm_files_up::add_files() {
 
 bool comm_files_up::render() {
   if (p_list_paths) {
-    if (imgui::Button(p_show_str["添加"].c_str())) {
-      if (!p_list_paths.get<assets_path_vector>().get_server_path().empty()) {
+    if (!p_list_paths.get<assets_path_vector>().get_server_path().empty()) {
+      if (imgui::Button(p_show_str["添加"].c_str())) {
         add_files();
       }
     }
@@ -153,6 +155,7 @@ bool comm_file_image_to_move::updata_file() {
     p_root.get<assets_path_vector>().clear();
   p_root.get<assets_path_vector>().add_file(p_out_file);
   p_root.get<assets_file>().up_version();
+  p_root.get<time_point_wrap>().set_time(chrono::system_clock::now());
   p_root.patch<database_stauts>(database_set_stauts<need_save>{});
   auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(p_root.get<assets_path_vector>().make_up_path());
   (*k_up)();
