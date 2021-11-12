@@ -233,8 +233,8 @@ class camera:
         self.unlock_cam()
         print("bake Results camera")
         pymel.core.bakeResults(self.maya_cam, sm=True,
-                                   t=(doodle_work_space.raneg.start,
-                                      doodle_work_space.raneg.end))
+                               t=(doodle_work_space.raneg.start,
+                                  doodle_work_space.raneg.end))
 
         mel_name = "{path}/{name}_camera_{start}-{end}.fbx".format(
             path=export_path,
@@ -647,11 +647,11 @@ class cloth_group_file(export_group):
             path = pymel.core.Path(
                 "cache") / doodle_work_space.maya_file.name_not_ex / self.maya_name_space / select_str
             # 这里要删除缓存
-            l_path_ = doodle_work_space.work.path / path # type: pymel.core.Path
+            l_path_ = doodle_work_space.work.path / path  # type: pymel.core.Path
             if l_path_.exists():
                 l_path_.rmtree()
                 print("delete path {}".format(l_path_))
-  
+
             doodle_work_space.work.mkdir(doodle_work_space.work.path / path)
             print(qcloth_obj)
             qcloth_obj.setAttr("cacheFolder", str(path))
@@ -803,12 +803,15 @@ class fbx_export():
             obj.export_fbx()
 
     def save(self):
-        path = doodle_work_space.work.path / \
-            doodle_work_space.maya_file.name_not_ex  # type: pymel.core.util.path
-        path.makedirs_p()
-        pymel.core.system.saveAs("{}/{}.ma".format(
-            path,
-            doodle_work_space.maya_file.name_not_ex))
+        try:
+            path = doodle_work_space.work.path / \
+                doodle_work_space.maya_file.name_not_ex  # type: pymel.core.util.path
+            path.makedirs_p()
+            pymel.core.system.saveAs("{}/{}.ma".format(
+                path,
+                doodle_work_space.maya_file.name_not_ex))
+        except RuntimeError as err:
+            print("not save file" + str(err))
 
     def __call__(self):
         self.save()
@@ -883,15 +886,19 @@ class cloth_export():
             obj.export_abc(repeat=False)
 
     def save(self, override=False):
-        if not override:
-            path = doodle_work_space.work.path / "cloth_ma"  # type: pymel.core.util.path
-            path.makedirs_p()
+        try:
+            if not override:
+                path = doodle_work_space.work.path / "cloth_ma"  # type: pymel.core.util.path
+                path.makedirs_p()
 
-            pymel.core.system.saveAs("{}/{}_sim_colth.ma".format(
-                path,
-                doodle_work_space.maya_file.name_not_ex))
-        else:
-            pymel.core.system.saveFile(force=True)
+                pymel.core.system.saveAs("{}/{}_sim_colth.ma".format(
+                    path,
+                    doodle_work_space.maya_file.name_not_ex))
+            else:
+                pymel.core.system.saveFile(force=True)
+
+        except RuntimeError as err:
+            print("not save file " + str(err))
 
     def sim_and_export(self):
         self.set_qcloth_attr()
