@@ -109,7 +109,7 @@ bool comm_ass_eps::render() {
     if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["删除"].c_str())) {
-        p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
+        p_root.remove<episodes>();
       }
     }
   }
@@ -158,7 +158,7 @@ bool comm_ass_shot::render() {
     if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["删除"].c_str())) {
-        p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
+        p_root.remove<shot>();
       }
     }
   }
@@ -209,7 +209,7 @@ bool comm_assets::render() {
     if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["删除"].c_str())) {
-        p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
+        p_root.remove<assets>();
       }
     }
   }
@@ -256,7 +256,7 @@ bool comm_ass_season::render() {
     if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
       imgui::SameLine();
       if (imgui::Button(p_show_str["删除"].c_str())) {
-        p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
+        p_root.remove<season>();
       }
     }
   }
@@ -295,7 +295,7 @@ bool comm_ass_file_attr::render() {
   } else {
     if (!p_root.get<database>().has_child()) {
       if (imgui::Button(p_show_str["删除"].c_str())) {
-        p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
+        p_root.remove<assets_file>();
       }
     }
     p_time_widget->frame_render();

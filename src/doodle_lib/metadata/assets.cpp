@@ -21,7 +21,9 @@ assets::assets(FSys::path in_name)
 }
 
 void assets::set_path_component() {
-  p_component = decltype(p_component){p_path.begin(), p_path.end()};
+  for (auto& in : p_path) {
+    p_component.push_back(in.generic_string());
+  }
 }
 std::string assets::str() const {
   return p_path.filename().generic_string();

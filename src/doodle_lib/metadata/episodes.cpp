@@ -7,11 +7,11 @@ BOOST_CLASS_EXPORT_IMPLEMENT(doodle::episodes)
 namespace doodle {
 
 episodes::episodes()
-    :      p_episodes(-1) {
+    : p_episodes(-1) {
 }
 
-episodes::episodes( int64_t in_episodes)
-    :       p_episodes(in_episodes) {
+episodes::episodes(int64_t in_episodes)
+    : p_episodes(in_episodes) {
   if (p_episodes < 0)
     throw doodle_error("集数无法为负");
 }
@@ -26,7 +26,7 @@ const int64_t& episodes::get_episodes() const noexcept {
 }
 
 void episodes::set_episodes(const int64_t& Episodes_) {
-  if (Episodes_ <= 0)
+  if (Episodes_ < 0)
     throw doodle_error("集数无法为负");
   p_episodes = Episodes_;
 }
@@ -78,4 +78,3 @@ bool episodes::operator!=(const episodes& in_rhs) const {
 }
 
 }  // namespace doodle
-

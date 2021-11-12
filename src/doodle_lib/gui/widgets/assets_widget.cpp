@@ -18,24 +18,11 @@ class assets_widget::impl {
  public:
   static ImGuiTreeNodeFlags base_flags;
 
-  struct shot_set : shot {
-    std::set<entt::handle> p_list;
-  };
-  struct episodes_set : episodes {
-    std::set<entt::handle> p_list;
-  };
-
-  struct season_set : season {
-    std::set<episodes> p_eps;
-    std::set<entt::handle> p_list;
-  };
-
   using select_obj = std::variant<season,
                                   episodes,
                                   shot,
-                                  assets>;
+                                  string>;
 
-  std::set<assets> p_assets;
   entt::handle p_root;
   std::set<select_obj> p_all_selected;
   std::set<select_obj> p_all_old_selected;
@@ -48,7 +35,6 @@ class assets_widget::impl {
   assets_widget* self;
   impl(assets_widget* in)
       : self(in),
-        p_assets(),
         p_root() {
     p_season_obs.connect(*g_reg(), entt::collector.group<season>());
     p_episodes_obs.connect(*g_reg(), entt::collector.group<episodes>());
@@ -134,8 +120,75 @@ class assets_widget::impl {
    */
   void render() {
     render_season();
+    render_assets();
     observer_main();
+
     p_all_old_selected = p_all_selected;
+  }
+
+  void render_assets() {
+    handle_list k_list{};
+    for (auto& in : g_reg()->view<assets>()) {
+      k_list.push_back(make_handle(in));
+    }
+    render_assets_recursion(k_list, 0);
+  }
+
+  void render_assets_recursion(const std::vector<entt::handle>& in_list, std::size_t in_deep) {
+    if (in_list.empty())
+      return;
+
+    std::set<string> k_list;
+    std::multimap<string, entt::handle> k_map;
+    bool is_leaf{true};
+
+    for (auto& k_h : in_list) {
+      if (!k_h.all_of<assets>())
+        continue;
+      auto& k_ass = k_h.get<assets>();
+      if (k_ass.get_path_component().size() <= in_deep)
+        continue;
+
+      is_leaf &= ((k_ass.get_path_component().size() - 1) == in_deep);
+      k_list.insert(k_ass.get_path_component()[in_deep]);
+      k_map.insert(std::make_pair(k_ass.get_path_component()[in_deep], k_h));
+    }
+
+    if (k_list.empty())
+      return;
+
+    for (auto& k_ass : k_list) {
+      auto k_f = base_flags;
+
+      if (is_select(k_ass)) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+      if (is_leaf)
+        k_f = k_f | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+      {
+        dear::TreeNodeEx k_node{fmt::format("{}##{}{}", k_ass, k_ass, in_deep).c_str(),
+                                k_f,
+                                k_ass.c_str()};
+        if (imgui::IsItemClicked()) {
+          auto k_r = k_map.equal_range(k_ass);
+          handle_list k_h_list{};
+          std::transform(k_r.first, k_r.second, std::back_inserter(k_h_list),
+                         [](auto& in) {
+                           return in.second;
+                         });
+          set_select(k_h_list, k_ass);
+        }
+        k_node&& [&]() {
+          auto k_r = k_map.equal_range(k_ass);
+          handle_list k_h_list{};
+          std::transform(k_r.first, k_r.second, std::back_inserter(k_h_list),
+                         [](auto& in) {
+                           return in.second;
+                         });
+          if (k_h_list.empty())
+            return;
+          render_assets_recursion(k_h_list, ++in_deep);
+        };
+      }
+    }
   }
 
   void render_season() {

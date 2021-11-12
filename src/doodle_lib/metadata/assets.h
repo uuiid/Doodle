@@ -9,18 +9,23 @@
 
 namespace doodle {
 class DOODLELIB_API assets {
-  std::string p_name_show_str;
   FSys::path p_path;
 
   void set_path_component();
 
+  std::vector<string> p_component;
+
  public:
-  std::vector<FSys::path> p_component;
+  std::string p_name_show_str;
   assets();
   explicit assets(FSys::path in_name);
   // ~Assets();
 
   [[nodiscard]] std::string str() const;
+
+  const std::vector<string>& get_path_component() {
+    return p_component;
+  };
 
   void set_path(const FSys::path& in_path);
   const FSys::path& get_path() const;
@@ -39,6 +44,14 @@ class DOODLELIB_API assets {
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version) {
+    if (version == 2) {
+      string name;
+      string name_enus;
+      ar& BOOST_SERIALIZATION_NVP(name);
+      ar& BOOST_SERIALIZATION_NVP(name_enus);
+      p_path = name;
+      set_path_component();
+    }
     if (version == 3) {
       ar& BOOST_SERIALIZATION_NVP(p_path);
       ar& BOOST_SERIALIZATION_NVP(p_name_show_str);

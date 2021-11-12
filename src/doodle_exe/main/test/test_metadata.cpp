@@ -141,11 +141,12 @@ TEST_CASE("test create metadata", "[server][metadata]") {
 
     for (size_t i = 0; i < 20; ++i) {
       if (i > 15) {
-        auto k_ass = make_handle();
-        k_ass.emplace<assets>(fmt::format("test{}", i));
-        k_ass.get<database_stauts>().set<need_save>();
-        k_ass.get<root_ref>().set_root(k_prj);
-
+        for (size_t k = 0; k < 20; ++k) {
+          auto k_ass = make_handle();
+          k_ass.emplace<assets>(fmt::format("ues{}/a{}/test{}", i, k, i));
+          k_ass.get<database_stauts>().set<need_save>();
+          k_ass.get<root_ref>().set_root(k_prj);
+        }
       } else {
         entt::handle k_i1 = make_handle();
         k_i1.emplace<season>(std::int32_t(i % 5));

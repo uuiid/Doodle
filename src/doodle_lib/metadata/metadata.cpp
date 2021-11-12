@@ -203,9 +203,14 @@ database &database::operator=(const metadata_database &in_) {
 
     // std::tuple<> k_tu;
     decltype(k_h.try_get<DOODLE_SERIALIZATION>()) k_tu{};
-    boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
-      k_archive >> in_ptr;
-    });
+    try {
+      boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
+        k_archive >> in_ptr;
+      });
+    } catch (const boost::archive::archive_exception &e) {
+      DOODLE_LOG_ERROR(e.what());
+    }
+
     boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
       if (in_ptr) {
         k_h.emplace_or_replace<
