@@ -11,10 +11,6 @@
 #include <doodle_lib/metadata/shot.h>
 #include <doodle_lib/toolkit/toolkit.h>
 
-#include <boost/algorithm/string.hpp>
-#include <regex>
-#include <string>
-
 #if defined(_WIN32)
 
 #include <ShlObj.h>

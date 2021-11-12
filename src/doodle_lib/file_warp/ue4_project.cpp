@@ -10,7 +10,6 @@
 #include <doodle_lib/thread_pool/long_term.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 
-#include <boost/algorithm/cxx11/all_of.hpp>
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
 #include <doodle_lib/lib_warp/WinReg.hpp>
@@ -126,8 +125,8 @@ void ue4_project::create_shot_folder(const std::vector<entt::handle>& inShotList
                                      const long_term_ptr& in_ptr) const {
   in_ptr->start();
   if (inShotList.empty() ||
-      boost::algorithm::all_of(inShotList,
-                               [](const entt::handle& in) { return in.any_of<shot>(); }))
+      std::all_of(inShotList.begin(), inShotList.end(),
+                  [](const entt::handle& in) { return in.any_of<shot>(); }))
     return;
 
   //添加python插件

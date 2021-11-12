@@ -11,7 +11,6 @@
 #include <doodle_lib/thread_pool/thread_pool.h>
 #include <pin_yin/convert.h>
 
-#include <boost/algorithm/string.hpp>
 #include <boost/assign.hpp>
 #include <boost/range.hpp>
 #include <boost/range/adaptor/filtered.hpp>

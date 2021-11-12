@@ -12,7 +12,6 @@
 #include <grpcpp/grpcpp.h>
 #include <sqlpp11/mysql/mysql.h>
 
-#include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/process.hpp>

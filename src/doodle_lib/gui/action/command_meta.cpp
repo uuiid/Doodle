@@ -12,7 +12,6 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 
-#include <boost/algorithm/algorithm.hpp>
 #include <boost/range.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/range/irange.hpp>

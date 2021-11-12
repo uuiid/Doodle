@@ -11,7 +11,6 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 
-#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/hana/ext/std.hpp>
 #include <boost/range/any_range.hpp>
 namespace doodle {
@@ -40,17 +39,22 @@ class assets_widget::impl {
   entt::handle p_root;
   std::set<select_obj> p_all_selected;
   std::set<select_obj> p_all_old_selected;
+  handle_list p_ctx_list;
+  entt::observer p_season_obs;
+  entt::observer p_episodes_obs;
+  entt::observer p_shot_obs;
+  entt::observer p_assets_obs;
 
   assets_widget* self;
   impl(assets_widget* in)
       : self(in),
         p_assets(),
-        p_root(){
-            // p_season_obs.connect(*g_reg(), entt::collector.group<season>());
-            // p_episodes_obs.connect(*g_reg(), entt::collector.group<episodes>());
-            // p_shot_obs.connect(*g_reg(), entt::collector.group<shot>());
-            // p_assets_obs.connect(*g_reg(), entt::collector.group<assets>());
-        };
+        p_root() {
+    p_season_obs.connect(*g_reg(), entt::collector.group<season>());
+    p_episodes_obs.connect(*g_reg(), entt::collector.group<episodes>());
+    p_shot_obs.connect(*g_reg(), entt::collector.group<shot>());
+    p_assets_obs.connect(*g_reg(), entt::collector.group<assets>());
+  };
 
   bool is_select(const select_obj& in_ptr) {
     return std::any_of(p_all_old_selected.begin(), p_all_old_selected.end(),
@@ -86,13 +90,23 @@ class assets_widget::impl {
     p_all_selected.clear();
     p_all_selected.insert(in_obj);
     auto k_reg = g_reg();
-    k_reg->set<handle_list>(in_ptr);
+    p_ctx_list = in_ptr;
+    k_reg->set<handle_list>(p_ctx_list);
     // auto comm  = command_list<comm_ass_eps,
     //                          comm_ass_shot,
     //                          comm_assets,
     //                          comm_ass_season,
     //                          comm_ass_ue4_create_shot>{};
   }
+  void observer_() {
+    for (auto& i : p_assets_obs) {
+      auto k_h = make_handle(i);
+      if (!std::any_of(p_ctx_list.begin(), p_ctx_list.end(), [&](auto& in) { return k_h == in; })) {
+        p_ctx_list.push_back(make_handle(k_h));
+      }
+    }
+  }
+
   /**
    * @brief  加载树节点
    *

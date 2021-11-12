@@ -5,6 +5,22 @@
 #pragma once
 
 #include <boost/algorithm/algorithm.hpp>
+#include <boost/algorithm/apply_permutation.hpp>
+#include <boost/algorithm/clamp.hpp>
+#include <boost/algorithm/find_backward.hpp>
+#include <boost/algorithm/find_not.hpp>
+#include <boost/algorithm/gather.hpp>
+#include <boost/algorithm/hex.hpp>
+#include <boost/algorithm/is_palindrome.hpp>
+#include <boost/algorithm/is_partitioned_until.hpp>
+#include <boost/algorithm/minmax.hpp>
+#include <boost/algorithm/minmax_element.hpp>
+#include <boost/algorithm/searching/boyer_moore.hpp>
+#include <boost/algorithm/searching/boyer_moore_horspool.hpp>
+#include <boost/algorithm/searching/knuth_morris_pratt.hpp>
+#include <boost/algorithm/sort_subrange.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string_regex.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream_buffer.hpp>

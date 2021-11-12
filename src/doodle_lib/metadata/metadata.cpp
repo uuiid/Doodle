@@ -13,13 +13,11 @@
 #include <google/protobuf/util/time_util.h>
 #include <metadata/metadata_cpp.h>
 
-#include <boost/algorithm/algorithm.hpp>
 #include <boost/archive/polymorphic_text_iarchive.hpp>
 #include <boost/archive/polymorphic_text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/hana/ext/std.hpp>
-#include <boost/range/algorithm/count_if.hpp>
 
 namespace doodle {
 void tree_relationship::set_parent_raw(const entt::handle &in_parent) {

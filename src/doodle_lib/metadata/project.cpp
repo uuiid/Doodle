@@ -5,7 +5,6 @@
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <pin_yin/convert.h>
 
-#include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::project)
 namespace doodle {
