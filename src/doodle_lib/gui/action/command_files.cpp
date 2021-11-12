@@ -43,11 +43,10 @@ bool comm_files_select::render() {
               [this](const std::vector<FSys::path>& in_p) {
                 p_file       = in_p.front();
                 auto& k_path = p_root.get<assets_path_vector>();
-                k_path.clear();
                 if (*p_use_relative)
                   k_path.make_path(p_root, p_file);
                 else
-                  k_path.make_path();
+                  k_path.make_path(p_root);
                 p_comm_sub = k_path.add_file(p_file);
                 if (p_comm_sub) {
                   p_comm_sub->set_data(p_root);
@@ -57,11 +56,10 @@ bool comm_files_select::render() {
     imgui::SameLine();
     if (imgui::Checkbox(p_show_str["相对路径"].c_str(), p_use_relative.get())) {
       auto& k_path = p_root.get<assets_path_vector>();
-      k_path.clear();
       if (*p_use_relative)
         k_path.make_path(p_root, p_file);
       else
-        k_path.make_path();
+        k_path.make_path(p_root);
       p_comm_sub = k_path.add_file(p_file);
       if (p_comm_sub) {
         p_comm_sub->set_data(p_root);
@@ -151,8 +149,9 @@ bool comm_file_image_to_move::updata_file() {
   if (*p_not_up_file)
     return true;
 
-  if (*p_not_up_source_file)
-    p_root.get<assets_path_vector>().clear();
+  /// @todo 不上传源文件动作
+  // if (*p_not_up_source_file)
+  //   p_root.get<assets_path_vector>().clear();
   p_root.get<assets_path_vector>().add_file(p_out_file);
   p_root.get<assets_file>().up_version();
   p_root.get<time_point_wrap>().set_time(chrono::system_clock::now());
@@ -179,7 +178,7 @@ bool comm_file_image_to_move::render() {
       k_term->sig_finished.connect([k_not_up = *p_not_up_file, k_out_file = p_out_file, k_root = p_root]() {
         if (k_not_up)
           return;
-        k_root.get<assets_path_vector>().add_file_raw(k_out_file);
+        k_root.get<assets_path_vector>().p_local_paths.push_back(k_out_file);
         k_root.get<assets_file>().up_version();
         k_root.patch<database_stauts>(database_set_stauts<need_save>{});
         auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(k_root.get<assets_path_vector>().make_up_path());

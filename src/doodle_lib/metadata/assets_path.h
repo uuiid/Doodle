@@ -7,12 +7,8 @@
 #include <doodle_lib/metadata/leaf_meta.h>
 #include <doodle_lib/metadata/tree_adapter.h>
 namespace doodle {
+
 class DOODLELIB_API assets_path_vector {
-  /**
-   * @brief 上传时的本地路径
-   *
-   */
-  std::vector<FSys::path> p_local_paths;
   /**
    * @brief 服务器路径
    *
@@ -24,10 +20,14 @@ class DOODLELIB_API assets_path_vector {
    */
   FSys::path p_backup_path;
 
-  std::vector<FSys::path> p_file_list;
-
+  void init();
 
  public:
+  /**
+   * @brief 上传时的本地路径
+   *
+   */
+  std::vector<FSys::path> p_local_paths;
   FSys::path p_local_path;
 
   assets_path_vector();
@@ -64,11 +64,6 @@ class DOODLELIB_API assets_path_vector {
   [[nodiscard]] const FSys::path &get_backup_path() const;
 
   command_ptr add_file(const FSys::path &in_path);
-  void add_file_raw(const FSys::path &in_path);
-
-  void clear() {
-    p_file_list.clear();
-  };
 
   std::vector<FSys::path> list() ;
 
@@ -84,7 +79,7 @@ class DOODLELIB_API assets_path_vector {
     if (version == 2) {
       ar &BOOST_SERIALIZATION_NVP(p_server_path);
       ar &BOOST_SERIALIZATION_NVP(p_backup_path);
-      ar &BOOST_SERIALIZATION_NVP(p_file_list);
+      ar &BOOST_SERIALIZATION_NVP(p_local_paths);
     }
   };
 };
