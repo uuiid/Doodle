@@ -156,8 +156,9 @@ TEST_CASE("test create metadata", "[server][metadata]") {
         for (size_t k = 0; k < 100; ++k) {
           entt::handle k_i2 = make_handle();
           k_i2.emplace<season>(std::int32_t(i % 5));
-          k_i2.emplace<episodes>(k);
-          auto& k_sho = k_i2.emplace<shot>(k);
+          k_i2.emplace<episodes>().set_episodes(k);
+          auto& k_sho = k_i2.emplace<shot>();
+          k_sho.set_shot(k);
           if (i % 2 == 0) {
             k_sho.set_shot_ab(shot::shot_ab_enum::B);
           }

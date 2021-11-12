@@ -12,11 +12,10 @@ class DOODLELIB_API shot {
  private:
   int64_t p_shot;
   std::string p_shot_ab;
+  shot_ab_enum p_shot_enum;
 
  public:
   shot();
-  shot(decltype(p_shot) in_shot,
-       decltype(p_shot_ab) in_shot_ab = {});
 
   // clang-format off
   enum class shot_ab_enum { None, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
@@ -25,13 +24,12 @@ class DOODLELIB_API shot {
   [[nodiscard]] const std::int64_t &get_shot() const noexcept;
   void set_shot(const std::int64_t &in_shot);
 
-  [[nodiscard]] const std::string &get_shot_ab() const noexcept;
+  [[nodiscard]] std::string get_shot_ab() const noexcept;
   [[nodiscard]] shot_ab_enum get_shot_ab_enum() const noexcept;
   void set_shot_ab(const std::string &ShotAb) noexcept;
   inline void set_shot_ab(const shot_ab_enum &ShotAb) {
     set_shot_ab(std::string{magic_enum::enum_name(ShotAb)});
   };
-
 
   [[nodiscard]] std::string str() const;
   virtual void attribute_widget(const attribute_factory_ptr &in_factoryPtr);
@@ -61,20 +59,14 @@ void shot::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1) {
     ar &BOOST_SERIALIZATION_NVP(p_shot);
     ar &BOOST_SERIALIZATION_NVP(p_shot_ab);
+    set_shot_ab(p_shot_ab);
+  }
+  if (version == 2) {
+    ar &BOOST_SERIALIZATION_NVP(p_shot);
+    ar &BOOST_SERIALIZATION_NVP(p_shot_enum);
   }
 }
 }  // namespace doodle
 
-namespace cereal {
-template <class Archive>
-std::string save_minimal(Archive const &, doodle::shot::shot_ab_enum const &shotab) {
-  return std::string{magic_enum::enum_name(shotab)};
-}
-template <class Archive>
-void load_minimal(Archive const &, doodle::shot::shot_ab_enum &shotab, std::string const &value) {
-  shotab = magic_enum::enum_cast<doodle::shot::shot_ab_enum>(value).value_or(doodle::shot::shot_ab_enum::A);
-};
-}  // namespace cereal
-
-BOOST_CLASS_VERSION(doodle::shot, 1)
+BOOST_CLASS_VERSION(doodle::shot, 2)
 BOOST_CLASS_EXPORT_KEY(doodle::shot)

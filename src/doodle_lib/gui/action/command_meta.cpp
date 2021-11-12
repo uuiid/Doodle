@@ -141,7 +141,7 @@ comm_ass_shot::comm_ass_shot()
 bool comm_ass_shot::render() {
   if (!p_root.all_of<shot>()) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
-      p_root.emplace<shot>(p_data);
+      p_root.emplace<shot>().set_shot(p_data);
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
       p_root.get<root_ref>().set_root(g_reg()->ctx<root_ref>().root_handle());
     }

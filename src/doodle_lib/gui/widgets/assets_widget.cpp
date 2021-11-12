@@ -98,13 +98,34 @@ class assets_widget::impl {
     //                          comm_ass_season,
     //                          comm_ass_ue4_create_shot>{};
   }
-  void observer_() {
-    for (auto& i : p_assets_obs) {
+
+  void observer_main() {
+    observer_(p_season_obs);
+    observer_(p_episodes_obs);
+    observer_(p_shot_obs);
+    observer_(p_assets_obs);
+  }
+  void observer_(entt::observer& in_obs) {
+    /// 检查创建的大小， 太多不显示， 之间清除
+    if (in_obs.size() > 10) {
+      in_obs.clear();
+      return;
+    }
+    bool set_ctx{false};
+    for (auto i : in_obs) {
       auto k_h = make_handle(i);
+      /// 开始测试是否在选择中包含
       if (!std::any_of(p_ctx_list.begin(), p_ctx_list.end(), [&](auto& in) { return k_h == in; })) {
+        set_ctx = true;
         p_ctx_list.push_back(make_handle(k_h));
       }
     }
+    /// 测试成功后添加到上下文中
+    if (set_ctx) {
+      g_reg()->set<handle_list>(p_ctx_list);
+    }
+
+    in_obs.clear();
   }
 
   /**
@@ -113,6 +134,7 @@ class assets_widget::impl {
    */
   void render() {
     render_season();
+    observer_main();
     p_all_old_selected = p_all_selected;
   }
 

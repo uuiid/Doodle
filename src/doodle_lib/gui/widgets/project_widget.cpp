@@ -47,16 +47,8 @@ void project_widget::frame_render() {
     }
     if (k_chick) {
       auto k_reg = g_reg();
-      auto k_v1  = k_reg->view<assets>();
+      auto k_v1 = k_reg->view<database>(entt::exclude<project>);
       k_reg->destroy(k_v1.begin(), k_v1.end());
-      auto k_v2 = k_reg->view<season>();
-      k_reg->destroy(k_v2.begin(), k_v2.end());
-      auto k_v3 = k_reg->view<episodes>();
-      k_reg->destroy(k_v3.begin(), k_v3.end());
-      auto k_v4 = k_reg->view<shot>();
-      k_reg->destroy(k_v4.begin(), k_v4.end());
-      auto k_v5 = k_reg->view<assets_file>();
-      k_reg->destroy(k_v5.begin(), k_v5.end());
 
       p_c.get<database_root>().reset();
 

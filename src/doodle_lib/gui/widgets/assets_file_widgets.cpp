@@ -103,8 +103,8 @@ void assets_file_widgets::set_select(const entt::handle& in) {
 }
 
 assets_file_widgets::assets_file_widgets()
-    :      p_current_select(),
-      p_colum_list(){
+    : p_current_select(),
+      p_colum_list() {
   p_class_name = "文件列表";
   p_factory    = new_object<attr_assets_file>();
   p_colum_list.emplace_back(new_object<details::column_id>(this));
@@ -147,7 +147,7 @@ void assets_file_widgets::frame_render() {
           list_data l_data{};
 
           for (auto& k_h : k_list) {
-            if (k_h.all_of<assets_file>()) {
+            if (k_h && k_h.all_of<database>()) {
               imgui::TableNextRow();
               for (auto& l_i : p_colum_list)
                 l_i->render(k_h);
@@ -156,7 +156,5 @@ void assets_file_widgets::frame_render() {
         };
   }
 }
-
-
 
 }  // namespace doodle
