@@ -201,7 +201,8 @@ bool comm_assets::render() {
   } else {
     if (imgui::Button(p_show_str["修改"].c_str())) {
       p_root.patch<assets>([&](assets& in) {
-        in.set_name1(p_data);
+        /// @todo 设置路径
+        // in.set_name1(p_data);
       });
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
@@ -219,7 +220,7 @@ bool comm_assets::render() {
 bool comm_assets::set_data(const entt::handle& in_data) {
   p_root = in_data;
   if (in_data.any_of<assets>()) {
-    p_data = p_root.get<assets>().get_name1();
+    p_data = p_root.get<assets>().get_path().generic_string();
   }
   return true;
 }

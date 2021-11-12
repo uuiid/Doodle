@@ -9,21 +9,23 @@
 
 namespace doodle {
 class DOODLELIB_API assets {
-  std::string p_name;
-  std::string p_name_enus;
+  std::string p_name_show_str;
+  FSys::path p_path;
+
+  void set_path_component();
 
  public:
+  std::vector<FSys::path> p_component;
   assets();
-  explicit assets(std::string in_name);
+  explicit assets(FSys::path in_name);
   // ~Assets();
 
   [[nodiscard]] std::string str() const;
-  [[nodiscard]] std::string show_str() const;
 
-  const std::string& get_name1() const;
-  void set_name1(const std::string& in_name);
-  const std::string& get_name_enus() const;
-  void set_name_enus(const std::string& in_nameEnus);
+  void set_path(const FSys::path& in_path);
+  const FSys::path& get_path() const;
+
+  [[nodiscard]] std::string show_str() const;
 
   bool operator<(const assets& in_rhs) const;
   bool operator>(const assets& in_rhs) const;
@@ -37,13 +39,14 @@ class DOODLELIB_API assets {
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version) {
-    if (version == 2) {
-      ar& BOOST_SERIALIZATION_NVP(p_name);
-      ar& BOOST_SERIALIZATION_NVP(p_name_enus);
+    if (version == 3) {
+      ar& BOOST_SERIALIZATION_NVP(p_path);
+      ar& BOOST_SERIALIZATION_NVP(p_name_show_str);
+      set_path_component();
     }
   };
 };
 }  // namespace doodle
 
-BOOST_CLASS_VERSION(doodle::assets, 2)
+BOOST_CLASS_VERSION(doodle::assets, 3)
 BOOST_CLASS_EXPORT_KEY(doodle::assets)

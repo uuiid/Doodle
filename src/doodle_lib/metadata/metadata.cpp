@@ -264,7 +264,7 @@ database::operator doodle::metadata_database() const {
     k_tmp.mutable_episode()->set_value(k_h.get<shot>().get_shot());
   }
   if (k_h.any_of<assets>()) {
-    k_tmp.mutable_assets()->set_value(k_h.get<assets>().get_name1());
+    k_tmp.mutable_assets()->set_value(k_h.get<assets>().get_path().generic_string());
   }
 
   return k_tmp;
