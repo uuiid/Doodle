@@ -8,7 +8,9 @@
 #include "Engine/World.h"
 
 #if WITH_EDITOR
+#if ENGINE_MINOR_VERSION >= 26
 #include "AssetRegistry/AssetRegistryModule.h"
+#endif
 #include "AssetToolsModule.h"
 #include "ContentBrowserModule.h"
 #include "IContentBrowserSingleton.h"
@@ -17,7 +19,7 @@
 #define LOCTEXT_NAMESPACE "doodle"
 
 ADoodleConfigLightActor::ADoodleConfigLightActor()
-    : p_skin_mesh(), p_light(), use_clear(true) {
+    : p_skin_mesh(), use_clear(true), p_light() {
   auto rootComponent =
       CreateDefaultSubobject<USceneComponent>("DefaultSceneRoot");
   rootComponent->SetMobility(EComponentMobility::Stationary);
@@ -96,7 +98,12 @@ void ADoodleConfigLightActor::SaveConfig() {
   }
   const FString NewAssetName =
       FPackageName::GetLongPackageAssetName(NewPackageName);
+#if ENGINE_MINOR_VERSION >= 26
   UPackage* NewPackage = CreatePackage(*NewPackageName);
+
+#else if ENGINE_MINOR_VERSION < 26
+  UPackage* NewPackage = CreatePackage(nullptr,*NewPackageName);
+#endif
 
   UDoodleConfigLight* NewPreset = NewObject<UDoodleConfigLight>(
       NewPackage, UDoodleConfigLight::StaticClass(), *NewAssetName,
@@ -113,8 +120,9 @@ void ADoodleConfigLightActor::SaveConfig() {
       }
     }
     NewPreset->MarkPackageDirty();
+#if ENGINE_MINOR_VERSION >= 26
     FAssetRegistryModule::AssetCreated(NewPreset);
-
+#endif
     p_light = NewPreset;
   }
 #endif  // WITH_EDITOR
@@ -125,12 +133,13 @@ void ADoodleConfigLightActor::SaveConfig() {
 void ADoodleConfigLightActor::PostEditChangeProperty(
     struct FPropertyChangedEvent& PropertyChangeEvent) {
   Super::PostEditChangeProperty(PropertyChangeEvent);
-  //auto name2 = PropertyChangeEvent.GetPropertyName();
+  // auto name2 = PropertyChangeEvent.GetPropertyName();
   auto name = PropertyChangeEvent.MemberProperty
                   ? PropertyChangeEvent.MemberProperty->GetFName()
                   : NAME_None;
-  //UE_LOG(LogTemp, Log, TEXT("chick name: %s"), *(name.ToString()));
-  //UE_LOG(LogTemp, Log, TEXT("chick MemberProperty: %s"), *(name2.ToString()));
+  // UE_LOG(LogTemp, Log, TEXT("chick name: %s"), *(name.ToString()));
+  // UE_LOG(LogTemp, Log, TEXT("chick MemberProperty: %s"),
+  // *(name2.ToString()));
 
   if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_light)) {
     if (!p_light) return;
@@ -178,3 +187,5 @@ void ADoodleConfigLightActor::PostEditChangeProperty(
 }
 
 #endif  // WITH_EDITOR
+
+#undef LOCTEXT_NAMESPACE

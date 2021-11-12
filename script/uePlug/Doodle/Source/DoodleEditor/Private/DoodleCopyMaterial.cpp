@@ -174,6 +174,8 @@ FReply DoodleCopyMat::CopyMateral() {
 
       UE_LOG(LogTemp, Log, TEXT("确认并加载为几何物体 %s"),
              *(copyTrange->GetPathName()));
+      ENGINE_MINOR_VERSION;
+#if ENGINE_MINOR_VERSION == 27
       TArray<FSkeletalMaterial> trangeMat = copyTrange->GetMaterials();
       if (copySoureSkinObj)
         for (int m = 0; m < trangeMat.Num(); m++) {
@@ -183,6 +185,17 @@ FReply DoodleCopyMat::CopyMateral() {
           //材质插槽命名
         }
       copyTrange->SetMaterials(trangeMat);
+#else if ENGINE_MINOR_VERSION <= 26
+      TArray<FSkeletalMaterial> trangeMat = copyTrange->Materials;
+      if (copySoureSkinObj)
+        for (int m = 0; m < trangeMat.Num(); m++) {
+          trangeMat[m] = copySoureSkinObj->Materials[m];
+          UE_LOG(LogTemp, Log, TEXT("%s"),
+                 *(trangeMat[m].MaterialInterface->GetPathName()));
+          //材质插槽命名
+        }
+      copyTrange->Materials = trangeMat;
+#endif
 
     }  //如果是几何缓存就复制几何缓存
     else if (selectedAss[i].GetClass() == UGeometryCache::StaticClass()) {
@@ -238,9 +251,10 @@ FReply DoodleCopyMat::BathImport() {
     // 	auto abcImportTask = UAbcImportSettings::Get();
     // 	abcImportTask->ImportType = EAlembicImportType::GeometryCache;
     // 	abcImportTask->GeometryCacheSettings.bApplyConstantTopologyOptimizations
-    // = 		true; 	abcImportTask->GeometryCacheSettings.bFlattenTracks = true;
-    // 	abcImportTask->GeometryCacheSettings.CompressedPositionPrecision =
-    // 0.01f; 	abcImportTask->SamplingSettings.FrameStart = 1001;
+    // = 		true;
+    // abcImportTask->GeometryCacheSettings.bFlattenTracks = true;
+    // abcImportTask->GeometryCacheSettings.CompressedPositionPrecision = 0.01f;
+    // abcImportTask->SamplingSettings.FrameStart = 1001;
     // 	abcImportTask->SamplingSettings.FrameEnd = 1200;
     // 	abcImportTask->SamplingSettings.bSkipEmpty = true;
     // 	abcImportTask->SamplingSettings.FrameSteps = 25.f;
@@ -257,13 +271,16 @@ FReply DoodleCopyMat::BathImport() {
     // 		auto end_f = FCString::Atoi(*myMatch.GetCaptureGroup(4));
 
     // 		UE_LOG(LogTemp, Log, TEXT("集数 %s"),
-    // *(myMatch.GetCaptureGroup(1))); 		UE_LOG(LogTemp, Log, TEXT("镜头号 %s"),
-    // *(myMatch.GetCaptureGroup(2))); 		UE_LOG(LogTemp, Log, TEXT("开始帧 %s"),
-    // *(myMatch.GetCaptureGroup(3))); 		UE_LOG(LogTemp, Log, TEXT("结束帧 %s"),
+    // *(myMatch.GetCaptureGroup(1))); 		UE_LOG(LogTemp, Log,
+    // TEXT("镜头号 %s"),
+    // *(myMatch.GetCaptureGroup(2))); 		UE_LOG(LogTemp, Log,
+    // TEXT("开始帧 %s"),
+    // *(myMatch.GetCaptureGroup(3))); 		UE_LOG(LogTemp, Log,
+    // TEXT("结束帧 %s"),
     // *(myMatch.GetCaptureGroup(4))); 		uePath =
-    // 			FString::Printf(TEXT("/Game/Shot/Ep%03i/Sc%04i/Ren"), eps,
-    // shot); 		UE_LOG(LogTemp, Log, TEXT("导入路径 %s"), *(uePath));
-    // 		AssetImportTask->DestinationPath = uePath;
+    // 			FString::Printf(TEXT("/Game/Shot/Ep%03i/Sc%04i/Ren"),
+    // eps, shot); 		UE_LOG(LogTemp, Log, TEXT("导入路径 %s"),
+    // *(uePath)); 		AssetImportTask->DestinationPath = uePath;
     // 		abcImportTask->SamplingSettings.FrameEnd = end_f;
     // 	}
     // 	AssetImportTask->Options = abcImportTask;
@@ -354,13 +371,21 @@ FReply DoodleCopyMat::BathReameAss() {
       if (skinObj == nullptr)
         UE_LOG(LogTemp, Log, TEXT("不是骨骼物体 %s"),
                *(skinObj->GetPathName()));
-
+#if ENGINE_MINOR_VERSION == 27
       for (auto &mat : skinObj->GetMaterials()) {
         if (mat.ImportedMaterialSlotName.IsValid()) {
           set_material_attr(mat.MaterialInterface,
                             mat.ImportedMaterialSlotName.ToString());
         }
       }
+#else if ENGINE_MINOR_VERSION <= 26
+      for (auto &mat : skinObj->Materials) {
+        if (mat.ImportedMaterialSlotName.IsValid()) {
+          set_material_attr(mat.MaterialInterface,
+                            mat.ImportedMaterialSlotName.ToString());
+        }
+      }
+#endif
     } else if (item.GetClass()->IsChildOf<UStaticMesh>()) {
       UStaticMesh *k_st = Cast<UStaticMesh>(loadObj);
       UE_LOG(LogTemp, Log, TEXT("确认物体, 并进行转换 %s"),
@@ -369,12 +394,22 @@ FReply DoodleCopyMat::BathReameAss() {
         UE_LOG(LogTemp, Log, TEXT("不是静态网格体 %s"), *(k_st->GetPathName()));
         continue;
       }
+#if ENGINE_MINOR_VERSION == 27
       for (auto &mat : k_st->GetStaticMaterials()) {
         if (mat.ImportedMaterialSlotName.IsValid()) {
           set_material_attr(mat.MaterialInterface,
                             mat.ImportedMaterialSlotName.ToString());
         }
       }
+      
+#else if ENGINE_MINOR_VERSION <= 26
+      for (auto &mat : k_st->StaticMaterials) {
+        if (mat.ImportedMaterialSlotName.IsValid()) {
+          set_material_attr(mat.MaterialInterface,
+                            mat.ImportedMaterialSlotName.ToString());
+        }
+      }
+#endif
     } else {
       UE_LOG(LogTemp, Log, TEXT("不支持的类型"));
       continue;
@@ -411,9 +446,10 @@ FReply DoodleCopyMat::importAbcFile() {
   //	auto abcImportTask = UAbcImportSettings::Get();
   //	abcImportTask->ImportType = EAlembicImportType::GeometryCache;
   //	abcImportTask->GeometryCacheSettings.bApplyConstantTopologyOptimizations
-  //		= true; 	abcImportTask->GeometryCacheSettings.bFlattenTracks =
-  //true; 	abcImportTask->GeometryCacheSettings.CompressedPositionPrecision =
-  //		0.01f; 	abcImportTask->SamplingSettings.FrameStart = 1001;
+  //		= true;
+  // abcImportTask->GeometryCacheSettings.bFlattenTracks = true;
+  // abcImportTask->GeometryCacheSettings.CompressedPositionPrecision
+  // = 		0.01f; 	abcImportTask->SamplingSettings.FrameStart = 1001;
   //	abcImportTask->SamplingSettings.FrameEnd = 1200;
   //	abcImportTask->SamplingSettings.bSkipEmpty = true;
   //	abcImportTask->SamplingSettings.FrameSteps = 25.f;
@@ -428,11 +464,14 @@ FReply DoodleCopyMat::importAbcFile() {
   //		auto start_f = FCString::Atoi(*myMatch.GetCaptureGroup(3));
   //		auto end_f = FCString::Atoi(*myMatch.GetCaptureGroup(4));
   //		UE_LOG(LogTemp, Log, TEXT("集数 %s"),
-  //*(myMatch.GetCaptureGroup(1))); 		UE_LOG(LogTemp, Log, TEXT("镜头号 %s"),
-  //*(myMatch.GetCaptureGroup(2))); 		UE_LOG(LogTemp, Log, TEXT("开始帧 %s"),
-  //*(myMatch.GetCaptureGroup(3))); 		UE_LOG(LogTemp, Log, TEXT("结束帧 %s"),
+  //*(myMatch.GetCaptureGroup(1))); 		UE_LOG(LogTemp, Log,
+  // TEXT("镜头号 %s"),
+  //*(myMatch.GetCaptureGroup(2))); 		UE_LOG(LogTemp, Log,
+  // TEXT("开始帧 %s"),
+  //*(myMatch.GetCaptureGroup(3))); 		UE_LOG(LogTemp, Log,
+  // TEXT("结束帧 %s"),
   //*(myMatch.GetCaptureGroup(4))); 		uePath =
-  //FString::Printf(TEXT("/Game/Shot/ep%03i/sc%04i/Ren"), eps, shot);
+  // FString::Printf(TEXT("/Game/Shot/ep%03i/sc%04i/Ren"), eps, shot);
   //		UE_LOG(LogTemp, Log, TEXT("导入路径 %s"), *(uePath));
   //		AssetImportTask->DestinationPath = uePath;
   //		abcImportTask->SamplingSettings.FrameEnd = end_f;
