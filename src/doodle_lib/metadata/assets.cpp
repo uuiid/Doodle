@@ -21,6 +21,7 @@ assets::assets(FSys::path in_name)
 }
 
 void assets::set_path_component() {
+  p_component.clear();
   for (auto& in : p_path) {
     p_component.push_back(in.generic_string());
   }
