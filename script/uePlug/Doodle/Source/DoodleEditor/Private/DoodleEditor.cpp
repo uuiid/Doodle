@@ -70,7 +70,7 @@ TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(const FSpawnTabArgs &
 
 void FdoodleEditorModule::PluginButtonClicked()
 {
-    FGlobalTabmanager::Get()->InvokeTab(doodleTabName);
+    FGlobalTabmanager::Get()->TryInvokeTab(doodleTabName);
 }
 
 void FdoodleEditorModule::RegisterMenus()

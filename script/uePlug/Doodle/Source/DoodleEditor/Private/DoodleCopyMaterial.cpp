@@ -369,7 +369,7 @@ FReply DoodleCopyMat::BathReameAss() {
         UE_LOG(LogTemp, Log, TEXT("不是静态网格体 %s"), *(k_st->GetPathName()));
         continue;
       }
-      for (auto &mat : k_st->StaticMaterials) {
+      for (auto &mat : k_st->GetStaticMaterials()) {
         if (mat.ImportedMaterialSlotName.IsValid()) {
           set_material_attr(mat.MaterialInterface,
                             mat.ImportedMaterialSlotName.ToString());
