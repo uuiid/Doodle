@@ -11,6 +11,7 @@
 	"MarketplaceURL": "",
 	"SupportURL": "",
 	"EngineVersion": "4.27.0",
+	"EnabledByDefault": true,
 	"CanContainContent": true,
 	"Installed": false,
 	"Modules": [
