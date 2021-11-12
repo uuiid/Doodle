@@ -96,7 +96,7 @@ void ADoodleConfigLightActor::SaveConfig() {
   }
   const FString NewAssetName =
       FPackageName::GetLongPackageAssetName(NewPackageName);
-  UPackage* NewPackage = CreatePackage(nullptr, *NewPackageName);
+  UPackage* NewPackage = CreatePackage(*NewPackageName);
 
   UDoodleConfigLight* NewPreset = NewObject<UDoodleConfigLight>(
       NewPackage, UDoodleConfigLight::StaticClass(), *NewAssetName,
@@ -125,12 +125,12 @@ void ADoodleConfigLightActor::SaveConfig() {
 void ADoodleConfigLightActor::PostEditChangeProperty(
     struct FPropertyChangedEvent& PropertyChangeEvent) {
   Super::PostEditChangeProperty(PropertyChangeEvent);
-  auto name2 = PropertyChangeEvent.GetPropertyName();
+  //auto name2 = PropertyChangeEvent.GetPropertyName();
   auto name = PropertyChangeEvent.MemberProperty
                   ? PropertyChangeEvent.MemberProperty->GetFName()
                   : NAME_None;
-  UE_LOG(LogTemp, Log, TEXT("chick name: %s"), *(name.ToString()));
-  UE_LOG(LogTemp, Log, TEXT("chick MemberProperty: %s"), *(name2.ToString()));
+  //UE_LOG(LogTemp, Log, TEXT("chick name: %s"), *(name.ToString()));
+  //UE_LOG(LogTemp, Log, TEXT("chick MemberProperty: %s"), *(name2.ToString()));
 
   if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_light)) {
     if (!p_light) return;
