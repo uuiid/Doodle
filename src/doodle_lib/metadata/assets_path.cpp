@@ -97,7 +97,6 @@ command_ptr assets_path_vector::add_file(
     k_h.get<database>().set_meta_type(metadata_type::movie);
     // 添加文件的父路径, 序列文件夹
     p_file_list.push_back(in_path.parent_path().filename());
-    k_comm = new_object<comm_file_image_to_move>();
   } else {
     p_local_path = in_path;
     p_local_paths.push_back(in_path);

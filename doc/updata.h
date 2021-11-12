@@ -270,6 +270,9 @@
  * @li 添加在无内容时初始化基本的添加工具
  * 
  * @subsubsection updata_log_3128 版本3.1.28
- * @li 添加ue 4.27插件
+ * @li 添加ue4 4.27插件
  * 
+ * @subsubsection updata_log_3128 版本3.1.28
+ * @li 修复maya导出时无法保存文件导致的崩溃(未知节点导致无法保存)
+ * @li 添加ue4 灯光配置文件类
  * /
