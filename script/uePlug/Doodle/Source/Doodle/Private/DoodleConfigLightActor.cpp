@@ -3,13 +3,16 @@
 #include "DoodleConfigLightActor.h"
 
 #include "Animation/SkeletalMeshActor.h"
-#include "AssetRegistry/AssetRegistryModule.h"
-#include "AssetToolsModule.h"
-#include "ContentBrowserModule.h"
 #include "DoodleConfigLight.h"
 #include "Engine/Light.h"
 #include "Engine/World.h"
+
+#if WITH_EDITOR
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetToolsModule.h"
+#include "ContentBrowserModule.h"
 #include "IContentBrowserSingleton.h"
+#endif
 
 #define LOCTEXT_NAMESPACE "doodle"
 
