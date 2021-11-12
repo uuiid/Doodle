@@ -1,0 +1,8 @@
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya
+DESTINATION plug)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/4.25
+DESTINATION plug/4.25)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/4.26
+DESTINATION plug/4.26)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/4.27
+DESTINATION plug/4.27)
