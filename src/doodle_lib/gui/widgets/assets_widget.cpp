@@ -128,7 +128,7 @@ class assets_widget::impl {
 
   void render_assets() {
     handle_list k_list{};
-    for (auto& in : g_reg()->view<assets>()) {
+    for (auto& in : g_reg()->view<assets>(entt::exclude<season, episodes, shot>)) {
       k_list.push_back(make_handle(in));
     }
     render_assets_recursion(k_list, 0);
@@ -138,8 +138,8 @@ class assets_widget::impl {
     if (in_list.empty())
       return;
 
-    std::set<string> k_list;
-    std::multimap<string, entt::handle> k_map;
+    std::set<string> k_list{};
+    std::multimap<string, entt::handle> k_map{};
     bool is_leaf{true};
 
     for (auto& k_h : in_list) {
@@ -154,30 +154,29 @@ class assets_widget::impl {
       k_map.insert(std::make_pair(k_ass.get_path_component()[in_deep], k_h));
     }
 
-    if (k_list.empty())
-      return;
-
-    for (auto& k_ass : k_list) {
+    for (auto& k_ass_str : k_list) {
       auto k_f = base_flags;
 
-      if (is_select(k_ass)) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+      if (is_select(k_ass_str))
+        k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+
       if (is_leaf)
         k_f = k_f | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
       {
-        dear::TreeNodeEx k_node{fmt::format("{}##{}{}", k_ass, k_ass, in_deep).c_str(),
+        dear::TreeNodeEx k_node{k_ass_str.c_str(),
                                 k_f,
-                                k_ass.c_str()};
+                                k_ass_str.c_str()};
         if (imgui::IsItemClicked()) {
-          auto k_r = k_map.equal_range(k_ass);
+          auto k_r = k_map.equal_range(k_ass_str);
           handle_list k_h_list{};
           std::transform(k_r.first, k_r.second, std::back_inserter(k_h_list),
                          [](auto& in) {
                            return in.second;
                          });
-          set_select(k_h_list, k_ass);
+          set_select(k_h_list, k_ass_str);
         }
         k_node&& [&]() {
-          auto k_r = k_map.equal_range(k_ass);
+          auto k_r = k_map.equal_range(k_ass_str);
           handle_list k_h_list{};
           std::transform(k_r.first, k_r.second, std::back_inserter(k_h_list),
                          [](auto& in) {
@@ -185,7 +184,7 @@ class assets_widget::impl {
                          });
           if (k_h_list.empty())
             return;
-          render_assets_recursion(k_h_list, ++in_deep);
+          render_assets_recursion(k_h_list, in_deep + 1);
         };
       }
     }
@@ -285,22 +284,40 @@ class assets_widget::impl {
 
     for (auto& k_shot : k_list) {
       auto k_f = base_flags;
-      if (is_select(k_shot))
-        k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
       {
+        if (is_select(k_shot))
+          k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+
+        handle_list k_list{};
+        boost::copy(
+            k_map.equal_range(k_shot) |
+                boost::adaptors::transformed([](auto& k_p) {
+                  return k_p.second;
+                }) |
+                boost::adaptors::filtered([](const entt::handle& in) {
+                  return in.all_of<assets>();
+                }),
+            std::back_inserter(k_list));
+        if (k_list.empty())
+          k_f = k_f | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
         dear::TreeNodeEx k_node{
             k_shot.str().c_str(),
-            k_f | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen,
+            k_f,
             k_shot.str().c_str()};
         if (imgui::IsItemClicked()) {
           auto k_r = k_map.equal_range(k_shot);
-          handle_list k_list{};
-          std::transform(k_r.first, k_r.second, std::back_inserter(k_list),
+          handle_list k_list_s{};
+          std::transform(k_r.first, k_r.second, std::back_inserter(k_list_s),
                          [](auto& in) {
                            return in.second;
                          });
-          set_select(k_list, k_shot);
+          set_select(k_list_s, k_shot);
         }
+
+        k_node&& [&]() {
+          render_assets_recursion(k_list, 0);
+        };
       }
     }
   }
