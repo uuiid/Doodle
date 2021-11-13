@@ -100,3 +100,16 @@ TEST_CASE("entt load", "[boost]") {
   reg.emplace<test_external>(e1, .8f, .0f);
   entt::snapshot{reg}.entities(output).component<test_external, entt::tag<"empty"_hs>>(output);
 }
+
+template <typename Type>
+[[nodiscard]] constexpr auto stripped_type_name() ENTT_NOEXCEPT {
+  std::string_view pretty_function{__FUNCSIG__};
+  return pretty_function;
+}
+
+TEST_CASE("entt stripped_type_name", "[entt]") {
+  auto k_l = entt::internal::stripped_type_name<doodle::project>();
+  std::cout << k_l << std::endl;
+  auto k_l2 = stripped_type_name<doodle::project>();
+  std::cout << k_l2 << std::endl;
+}

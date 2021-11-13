@@ -201,6 +201,11 @@ void core_set::serialize(Archive &ar, std::uint32_t const version) {
     ar &BOOST_SERIALIZATION_NVP(timeout);
   }
 }
+
+namespace win {
+/// @todo 添加一个字体目录获得函数
+/// FOLDERID_Fonts
+}
 FSys::path DOODLELIB_API get_pwd();
 
 }  // namespace doodle
