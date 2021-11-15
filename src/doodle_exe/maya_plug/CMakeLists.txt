@@ -19,6 +19,8 @@ set(doodle_maya_plug_cpp
         gui/widgets/maya_tool_widget.h
         maya_render/hud_render_override.h
         maya_render/hud_render_override.cpp
+        maya_render/hud_render_node.h
+        maya_render/hud_render_node.cpp
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
 foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)

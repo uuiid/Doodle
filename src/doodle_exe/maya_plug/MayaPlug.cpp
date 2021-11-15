@@ -136,12 +136,13 @@ MStatus initializePlugin(MObject obj) {
         // std::cout << k_stander_hud_next->inputTargets() << std::endl;
         // std::cout << k_stander_hud_next->outputTargets() << std::endl;
 
-        doodle_hud_render = new hud_render{MRenderOperation::kStandardHUDName};
-        // doodle_hud_render = new hud_render{doolde_hud_render_override.c_str()};
+        doodle_hud_render = new hud_render{doolde_hud_render_override.c_str()};
 
         if (doodle_hud_render) {
           doodle_hud_render->setEnabled(true);
-          mOperations.insertAfter(MRenderOperation::kStandardHUDName, doodle_hud_render);
+          // auto k_f = mOperations.replace(MRenderOperation::kStandardHUDName, doodle_hud_render);
+          auto k_f = mOperations.insertAfter(MRenderOperation::kStandardHUDName, doodle_hud_render);
+          std::cout << k_f << std::endl;
         }
       }
       break;

@@ -44,7 +44,13 @@ class hud_render_override : public MHWRender::MRenderOverride {
   int mCurrentOperation;
 };
 
-class hud_render : public MHWRender::MHUDRender {
+
+
+
+
+
+
+class hud_render : public MHWRender::MUserRenderOperation {
  public:
   hud_render(const MString& in_name);
 
@@ -53,15 +59,23 @@ class hud_render : public MHWRender::MHUDRender {
       MHWRender::MUIDrawManager& drawManager2D,
       const MHWRender::MFrameContext& frameContext) override;
   const MFloatPoint* viewportRectangleOverride() override;
-  bool getInputTargetDescription(
-      const MString& name,
-      MRenderTargetDescription& description) override;
-  MRenderTarget* const* targetOverrideList(
-      unsigned int& listSize) override;
+
+  /// 测试MUserRenderOperation所需覆盖方法
+  bool requiresLightData() const override {
+    return false;
+  }
+
+  MStatus execute(const MHWRender::MDrawContext& drawContext) override {
+    return MStatus::kSuccess;
+  }
+  // bool getInputTargetDescription(
+  //     const MString& name,
+  //     MRenderTargetDescription& description) override;
+  // MRenderTarget* const* targetOverrideList(
+  //     unsigned int& listSize) override;
 
  private:
   MFloatPoint mViewRectangle;
-  MHWRender::MRenderTarget** mTargets;
 };
 
 }  // namespace doodle
