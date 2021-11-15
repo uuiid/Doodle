@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @page updata_log 更新日志
+ * @page doodle_updata_log 更新日志
  * @tableofcontents
  * @section updata_log_3 版本3
  * @subsection updata_log_30 版本3.0
@@ -284,4 +284,4 @@
  * @li maya输出路径更改
  * @li 修复安装ue插件无法找到路径问题
  * 
- * /
+ */
