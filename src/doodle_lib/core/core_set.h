@@ -94,7 +94,6 @@ class DOODLELIB_API core_set : public details::no_copy {
 
   std::string get_server_host();
 
-
   std::uint32_t timeout;
   std::uint16_t p_max_thread;
   void set_max_tread(std::uint16_t in);
@@ -112,7 +111,6 @@ class DOODLELIB_API core_set : public details::no_copy {
   std::condition_variable p_condition;
 
   std::map<string, bool> widget_show;
-
 
  private:
   /**
@@ -205,8 +203,11 @@ void core_set::serialize(Archive &ar, std::uint32_t const version) {
 namespace win {
 /// @todo 添加一个字体目录获得函数
 /// FOLDERID_Fonts
-}
+FSys::path DOODLELIB_API get_font();
 FSys::path DOODLELIB_API get_pwd();
+
+}  // namespace win
+
 
 }  // namespace doodle
 namespace cereal {

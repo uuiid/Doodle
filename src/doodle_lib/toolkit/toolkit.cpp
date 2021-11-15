@@ -19,7 +19,7 @@
 namespace doodle {
 
 void toolkit::installMayaPath() {
-  auto mayadoc = get_pwd();
+  auto mayadoc = win::get_pwd();
   mayadoc /= "maya";
   mayadoc /= "modules";
   mayadoc /= "doodle";

@@ -280,7 +280,7 @@ if 'leukocyte' in globals():
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
   }
 
-  auto k_maya_script = doodle::get_pwd() / "maya" / "scripts";
+  auto k_maya_script = doodle::win::get_pwd() / "maya" / "scripts";
   if (FSys::exists(k_maya_script)) {
     auto k_user = k_maya_script / "userSetup.py";
     auto k_var  = k_maya_script / "vaccine.py";
