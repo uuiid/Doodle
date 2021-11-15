@@ -14,7 +14,7 @@ const static std::string doodle_windows{"doodle_windows"};
 const static std::string doodle_win_path{"MayaWindow|mainWindowMenu"};
 const static std::string doodle_create{"doodleCreate"};
 const static std::string doolde_hud_render_override{"doolde_hud_render_override"};
-static std::unique_ptr<doodle::hud_render> doodle_hud_render{nullptr};
+static doodle::hud_render* doodle_hud_render{nullptr};
 
 static MCallbackId clear_callback_id{0};
 static MCallbackId app_run_id{0};
@@ -123,15 +123,25 @@ MStatus initializePlugin(MObject obj) {
       //     CHECK_MSTATUS_AND_RETURN_IT(status);
       //   }
       // }
-      MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
-      if (k_r) {
-        MRenderOperationList mOperations;
-        k_r->getStandardViewportOperations(mOperations);
-        doodle_hud_render = std::make_unique<hud_render>(doolde_hud_render_override.c_str());
-        if (doodle_hud_render)
-          mOperations.insertAfter(MRenderOperation::kStandardHUDName, doodle_hud_render.get());
-      }
-      break;
+      // MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
+      // if (k_r) {
+      //   MRenderOperationList mOperations;
+      //   k_r->getStandardViewportOperations(mOperations);
+      //   // auto k_stander_hud_index = mOperations.indexOf(MRenderOperation::kStandardHUDName);
+      //   // auto k_stander_hud       = mOperations[k_stander_hud_index];
+
+      //   // std::cout << k_stander_hud->inputTargets() << std::endl;
+      //   // std::cout << k_stander_hud->outputTargets() << std::endl;
+      //   // auto k_stander_hud_next = mOperations[k_stander_hud_index + 1];
+      //   // std::cout << k_stander_hud_next->inputTargets() << std::endl;
+      //   // std::cout << k_stander_hud_next->outputTargets() << std::endl;
+
+      //   doodle_hud_render = new hud_render{doolde_hud_render_override.c_str()};
+
+      //   if (doodle_hud_render)
+      //     mOperations.insertAfter(MRenderOperation::kStandardHUDName, doodle_hud_render);
+      // }
+      // break;
     }
 
     default:
@@ -191,12 +201,12 @@ MStatus uninitializePlugin(MObject obj) {
       //     delete k_o_r;
       //   }
       // }
-      MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
-      if (k_r) {
-        MRenderOperationList mOperations;
-        k_r->getStandardViewportOperations(mOperations);
-        mOperations.remove(doolde_hud_render_override.c_str());
-      }
+      // MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
+      // if (k_r) {
+      //   MRenderOperationList mOperations;
+      //   k_r->getStandardViewportOperations(mOperations);
+      //   mOperations.remove(doolde_hud_render_override.c_str());
+      // }
       break;
     }
     default:
