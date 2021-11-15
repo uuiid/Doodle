@@ -101,6 +101,18 @@ class maya_workspace():
     def __str__(self):
         return "{} ,{}".format(str(self.maya_file), str(self.raneg))
 
+    def get_abc_folder(self):
+        # type: () -> pymel.core.Path
+        path = self.work.path / "abc" / self.maya_file.name_not_ex  # type: pymel.core.Path
+        path.makedirs_p()
+        return path
+
+    def get_fbx_folder(self):
+        # type: () -> pymel.core.Path
+        path = self.work.path / "fbx" / self.maya_file.name_not_ex  # type: pymel.core.Path
+        path.makedirs_p()
+        return path
+
 
 class export_log(object):
     """
@@ -305,11 +317,8 @@ class camera:
         self.newCam.rename(name)
         self.maya_cam = self.newCam
 
-    def __call__(self, str=None):
-        if not str:
-            str = doodle_work_space.work.path / \
-                doodle_work_space.maya_file.name_not_ex
-        self.export(str)
+    def __call__(self, in_path):
+        self.export(in_path)
 
     def __str__(self):
         return "camera is {}, priority num is {}".format(
@@ -580,14 +589,12 @@ class export_group(object):
         if not mesh:
             return
 
-        path = doodle_work_space.work.path \
-            / doodle_work_space.maya_file.name_not_ex   # type: pymel.core.Path
+        path = doodle_work_space.get_fbx_folder()   # type: pymel.core.Path
 
         name = "{}_{}_{}-{}.fbx".format(doodle_work_space.maya_file.name_not_ex,
                                         self.maya_name_space,
                                         doodle_work_space.raneg.start,
                                         doodle_work_space.raneg.end)
-        path.makedirs_p()
         path = path / name
         print("export path : {}".format(path.abspath()).replace("\\", "/"))
         pymel.core.bakeResults(simulation=True,
@@ -763,8 +770,7 @@ class cloth_group_file(export_group):
     def export_abc(self, export_path=pymel.core.Path(), repeat=False):
         # 创建路径
         if not export_path:
-            export_path = doodle_work_space.work.getPath(
-            ) / doodle_work_space.maya_file.name_not_ex
+            export_path = doodle_work_space.get_abc_folder()
         path = export_path  # type: pymel.core.Path
         self.export_select_abc(
             path,
@@ -795,18 +801,16 @@ class fbx_export():
                 self.ref.append(k_ref)
         for ref_obj in self.ref:
             self.fbx_group.append(fbx_group_file(ref_obj))
-        self.cam = camera_filter()()
+        self.cam = camera_filter()() # type: camera
 
     def export_fbx_mesh(self):
-        self.cam()
+        self.cam(doodle_work_space.get_fbx_folder())
         for obj in self.fbx_group:
             obj.export_fbx()
 
     def save(self):
         try:
-            path = doodle_work_space.work.path / \
-                doodle_work_space.maya_file.name_not_ex  # type: pymel.core.util.path
-            path.makedirs_p()
+            path =doodle_work_space.get_fbx_folder()  # type: pymel.core.util.path
             pymel.core.system.saveAs("{}/{}.ma".format(
                 path,
                 doodle_work_space.maya_file.name_not_ex))
