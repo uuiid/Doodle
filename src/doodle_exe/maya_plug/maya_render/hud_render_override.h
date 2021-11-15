@@ -11,7 +11,7 @@ namespace doodle {
 class hud_render_override : public MHWRender::MRenderOverride {
  private:
  public:
-  hud_render_override(const MString& name);
+  hud_render_override(const MString& in_name);
   ~hud_render_override();
 
   MHWRender::DrawAPI supportedDrawAPIs() const override;
@@ -34,7 +34,10 @@ class hud_render_override : public MHWRender::MRenderOverride {
   // UI name
   MString mUIName;
   // Operations and operation names
-  std::array<MHWRender::MRenderOperation*, 2> mOperations;
+  std::array<
+      std::unique_ptr<MHWRender::MRenderOperation>,
+      2>
+      mOperations;
   std::array<MString, 2> mOperationNames;
 
   // Temporary of operation iteration
@@ -43,7 +46,16 @@ class hud_render_override : public MHWRender::MRenderOverride {
 
 class hud_render : public MHWRender::MHUDRender {
  public:
-  hud_render(const MString& name);
+  hud_render(const MString& in_name);
+
+  bool hasUIDrawables() const override;
+  void addUIDrawables(
+      MHWRender::MUIDrawManager& drawManager2D,
+      const MHWRender::MFrameContext& frameContext) override;
+  const MFloatPoint* viewportRectangleOverride() override;
+
+ private:
+  MFloatPoint mViewRectangle;
 };
 
 }  // namespace doodle

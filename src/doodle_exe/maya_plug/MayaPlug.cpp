@@ -7,11 +7,15 @@
 #include <maya/MTimerMessage.h>
 #include <maya_plug/MotionMayaPlugInit.h>
 #include <maya_plug/gui/maya_plug_app.h>
+#include <maya_plug/maya_render/hud_render_override.h>
 
 namespace {
 const static std::string doodle_windows{"doodle_windows"};
 const static std::string doodle_win_path{"MayaWindow|mainWindowMenu"};
 const static std::string doodle_create{"doodleCreate"};
+const static std::string doolde_hud_render_override{"doolde_hud_render_override"};
+static std::unique_ptr<doodle::hud_render> doodle_hud_render{nullptr};
+
 static MCallbackId clear_callback_id{0};
 static MCallbackId app_run_id{0};
 
@@ -110,6 +114,23 @@ MStatus initializePlugin(MObject obj) {
           nullptr, &status);
 
       CHECK_MSTATUS_AND_RETURN_IT(status);
+
+      // MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
+      // if (k_r) {
+      //   auto k_o_r = new hud_render_override(doolde_hud_render_override.c_str());
+      //   if (k_o_r) {
+      //     status = k_r->registerOverride(k_o_r);
+      //     CHECK_MSTATUS_AND_RETURN_IT(status);
+      //   }
+      // }
+      MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
+      if (k_r) {
+        MRenderOperationList mOperations;
+        k_r->getStandardViewportOperations(mOperations);
+        doodle_hud_render = std::make_unique<hud_render>(doolde_hud_render_override.c_str());
+        if (doodle_hud_render)
+          mOperations.insertAfter(MRenderOperation::kStandardHUDName, doodle_hud_render.get());
+      }
       break;
     }
 
@@ -160,6 +181,22 @@ MStatus uninitializePlugin(MObject obj) {
       // 卸载命令
       status = k_plugin.deregisterCommand(doodle_create.c_str());
       CHECK_MSTATUS_AND_RETURN_IT(status);
+
+      // MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
+      // if (k_r) {
+      //   auto k_o_r = k_r->findRenderOverride(doolde_hud_render_override.c_str());
+      //   if (k_o_r) {
+      //     status = k_r->deregisterOverride(k_o_r);
+      //     CHECK_MSTATUS_AND_RETURN_IT(status);
+      //     delete k_o_r;
+      //   }
+      // }
+      MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
+      if (k_r) {
+        MRenderOperationList mOperations;
+        k_r->getStandardViewportOperations(mOperations);
+        mOperations.remove(doolde_hud_render_override.c_str());
+      }
       break;
     }
     default:
