@@ -23,6 +23,20 @@ class assets_widget::impl {
                                   shot,
                                   string>;
 
+  std::deque<string> p_select_curr_path_;
+  std::deque<string> p_select_path_;
+
+  struct select_guard {
+    impl* self;
+    select_guard(impl* in_self, const string& in_str)
+        : self(in_self) {
+      self->p_select_curr_path_.push_back(in_str);
+    };
+    ~select_guard() {
+      self->p_select_curr_path_.pop_back();
+    };
+  };
+
   entt::handle p_root;
   std::set<select_obj> p_all_selected;
   std::set<select_obj> p_all_old_selected;
@@ -42,11 +56,12 @@ class assets_widget::impl {
     p_assets_obs.connect(*g_reg(), entt::collector.group<assets>());
   };
 
-  bool is_select(const select_obj& in_ptr) {
-    return std::any_of(p_all_old_selected.begin(), p_all_old_selected.end(),
-                       [&](const select_obj& in_) {
-                         return in_ == in_ptr;
-                       });
+  bool is_select() {
+    return p_select_curr_path_ == p_select_path_;
+    // return std::any_of(p_all_old_selected.begin(), p_all_old_selected.end(),
+    //                    [&](const select_obj& in_) {
+    //                      return in_ == in_ptr;
+    //                    });
   }
 
   void check_item(const select_obj& in_ptr) {
@@ -73,8 +88,9 @@ class assets_widget::impl {
   }
 
   void set_select(const std::vector<entt::handle>& in_ptr, const select_obj& in_obj) {
-    p_all_selected.clear();
-    p_all_selected.insert(in_obj);
+    p_select_path_ = p_select_curr_path_;
+    // p_all_selected.clear();
+    // p_all_selected.insert(in_obj);
     auto k_reg = g_reg();
     p_ctx_list = in_ptr;
     k_reg->set<handle_list>(p_ctx_list);
@@ -156,8 +172,9 @@ class assets_widget::impl {
 
     for (auto& k_ass_str : k_list) {
       auto k_f = base_flags;
+      select_guard k_guard{this, k_ass_str};
 
-      if (is_select(k_ass_str))
+      if (is_select())
         k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
 
       if (is_leaf)
@@ -202,8 +219,9 @@ class assets_widget::impl {
 
     for (auto& k_season : k_list) {
       auto k_f = base_flags;
+      select_guard k_guard{this, k_season.str()};
 
-      if (is_select(k_season))
+      if (is_select())
         k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
 
       {
@@ -244,8 +262,9 @@ class assets_widget::impl {
 
     for (auto& k_episodes : k_list) {
       auto k_f = base_flags;
+      select_guard k_guard{this, k_episodes.str()};
 
-      if (is_select(k_episodes))
+      if (is_select())
         k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
       {
         dear::TreeNodeEx k_node{k_episodes.str().c_str(),
@@ -285,7 +304,8 @@ class assets_widget::impl {
     for (auto& k_shot : k_list) {
       auto k_f = base_flags;
       {
-        if (is_select(k_shot))
+        select_guard k_guard{this, k_shot.str()};
+        if (is_select())
           k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
 
         handle_list k_list{};
