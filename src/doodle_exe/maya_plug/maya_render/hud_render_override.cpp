@@ -119,4 +119,14 @@ const MFloatPoint *hud_render::viewportRectangleOverride() {
   mViewRectangle[3] = 0.75f;
   return &mViewRectangle;
 }
+bool hud_render::getInputTargetDescription(
+    const MString &name,
+    MRenderTargetDescription &description) {
+  return MHUDRender::getInputTargetDescription(name, description);
+}
+
+MRenderTarget *const *hud_render::targetOverrideList(
+    unsigned int &listSize) {
+  return MHUDRender::targetOverrideList(listSize);
+}
 }  // namespace doodle

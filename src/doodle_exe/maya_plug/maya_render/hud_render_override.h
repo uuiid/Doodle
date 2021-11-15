@@ -53,9 +53,15 @@ class hud_render : public MHWRender::MHUDRender {
       MHWRender::MUIDrawManager& drawManager2D,
       const MHWRender::MFrameContext& frameContext) override;
   const MFloatPoint* viewportRectangleOverride() override;
+  bool getInputTargetDescription(
+      const MString& name,
+      MRenderTargetDescription& description) override;
+  MRenderTarget* const* targetOverrideList(
+      unsigned int& listSize) override;
 
  private:
   MFloatPoint mViewRectangle;
+  MHWRender::MRenderTarget** mTargets;
 };
 
 }  // namespace doodle
