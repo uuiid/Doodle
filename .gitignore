@@ -73,5 +73,4 @@ cmake-build-debug/
 .vscode/**.VC.**
 build
 *.mll
-*.manifest
 /imgui.ini
