@@ -61,8 +61,8 @@ class DOODLELIB_API comm_assets : public command_base {
  private:
   entt::handle p_root;
 
-  string p_data;
-
+  std::vector<string_ptr> p_path_list;
+  FSys::path get_path();
  protected:
  public:
   comm_assets();

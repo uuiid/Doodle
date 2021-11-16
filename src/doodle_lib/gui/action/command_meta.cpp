@@ -183,18 +183,28 @@ bool comm_ass_shot::set_data(const entt::handle& in_data) {
 }
 
 comm_assets::comm_assets()
-    : p_root() {
+    : p_root(),
+      p_path_list() {
   p_name     = "资产";
   p_show_str = make_imgui_name(this, "添加",
                                "修改",
                                "删除",
-                               "名称");
+                               "名称",
+                               "删除条目",
+                               "添加条目");
+}
+FSys::path comm_assets::get_path() {
+  FSys::path k_path{};
+  for (auto& k_p : p_path_list) {
+    k_path /= *k_p;
+  }
+  return k_path;
 }
 
 bool comm_assets::render() {
   if (!p_root.all_of<assets>()) {
     if (imgui::Button(p_show_str["添加"].c_str())) {
-      p_root.emplace<assets>(p_data);
+      p_root.emplace<assets>(get_path());
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
       p_root.get<root_ref>().set_root(g_reg()->ctx<root_ref>().root_handle());
     }
@@ -202,7 +212,7 @@ bool comm_assets::render() {
     if (imgui::Button(p_show_str["修改"].c_str())) {
       p_root.patch<assets>([&](assets& in) {
         /// @todo 设置路径
-        // in.set_name1(p_data);
+        in.set_path(get_path());
       });
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
@@ -212,15 +222,31 @@ bool comm_assets::render() {
         p_root.remove<assets>();
       }
     }
+    if (imgui::Button(p_show_str["添加条目"].c_str())) {
+      p_path_list.push_back(std::make_shared<string>("none"));
+    }
   }
-  imgui::InputText(p_show_str["名称"].c_str(), &p_data);
+
+  decltype(p_path_list) k_l{};
+  for (auto& k_p : p_path_list) {
+    imgui::InputText(fmt::format("##{}", fmt::ptr(k_p.get())).c_str(), k_p.get());
+    imgui::SameLine();
+    if (imgui::Button(p_show_str["删除条目"].c_str())) {
+      k_l.push_back(k_p);
+    }
+  }
+  for (auto& k_p : k_l) {
+    boost::remove_erase_if(p_path_list, [&](auto& in) { return in == k_p; });
+  }
 
   return true;
 }
 bool comm_assets::set_data(const entt::handle& in_data) {
   p_root = in_data;
   if (in_data.any_of<assets>()) {
-    p_data = p_root.get<assets>().get_path().generic_string();
+    for (auto& k_path : p_root.get<assets>().get_path()) {
+      p_path_list.push_back(std::make_shared<string>(k_path.generic_string()));
+    }
   }
   return true;
 }
