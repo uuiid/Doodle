@@ -291,4 +291,6 @@
  * @li maya工具导出时直接从1001 开始
  * @li 更加舒适的资产类排序
  *
+ * @subsubsection updata_log_3133 版本3.1.33
+ * @li 修复ue4 面板显示
  */
