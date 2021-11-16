@@ -19,6 +19,10 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/hana/ext/std.hpp>
 
+BOOST_CLASS_VERSION(doodle::database::impl, 1)
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(doodle::database::impl)
+BOOST_CLASS_EXPORT_KEY(doodle::database::impl)
+
 namespace doodle {
 void tree_relationship::set_parent_raw(const entt::handle &in_parent) {
   p_parent     = in_parent;
@@ -106,6 +110,32 @@ void database_root::reset() {
   p_end        = false;
 }
 
+class database::impl {
+ public:
+  mutable std::uint64_t p_id;
+  mutable string p_id_str;
+  metadata_type p_type;
+  std::string p_uuid;
+
+  database *self;
+  impl(database *in_self)
+      : self(in_self) {}
+
+  friend class boost::serialization::access;
+  template <class Archive>
+  void save(Archive &ar, const std::uint32_t version) const {
+
+  };
+
+  template <class Archive>
+  void load(Archive &ar, const std::uint32_t version) {
+    if (version == 1) {
+    }
+  };
+
+  BOOST_SERIALIZATION_SPLIT_MEMBER()
+};
+
 database::database()
     : p_id(0),
       p_id_str("id 0"),
@@ -116,8 +146,13 @@ database::database()
       p_has_file(0),
       p_updata_parent_id(false),
       p_updata_type(false),
-      p_boost_serialize_vesion(0) {
+      p_boost_serialize_vesion(0),
+      p_impl(std::make_unique<impl>(this)) {
 }
+
+database::~database() = default;
+
+DOODLE_MOVE_CPP(database);
 
 void database::set_enum(entt::registry &in_reg, entt::entity in_ent) {
   auto k_h        = entt::handle{in_reg, in_ent};
@@ -197,7 +232,7 @@ database &database::operator=(const metadata_database &in_) {
   auto k_data = in_.metadata_cereal().value();
   vector_container my_data{k_data.begin(), k_data.end()};
   {
-    vector_istream k_i{my_data};
+    vector_iostream k_i{my_data};
     boost::archive::text_iarchive k_archive{k_i};
     k_archive >> *this;
 
@@ -205,7 +240,8 @@ database &database::operator=(const metadata_database &in_) {
     decltype(k_h.try_get<DOODLE_SERIALIZATION>()) k_tu{};
     try {
       boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
-        k_archive >> in_ptr;
+        if ((my_data.size() - 1) != k_i.tellg())
+          k_archive >> in_ptr;
       });
     } catch (const boost::archive::archive_exception &e) {
       DOODLE_LOG_ERROR(e.what());

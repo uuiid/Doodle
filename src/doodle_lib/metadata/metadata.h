@@ -33,7 +33,7 @@ enum class metadata_type {
   maya_rig           = 7,
   fbx                = 8,
   abc                = 9,
-  movie               = 10,
+  movie              = 10,
   ue4_prj            = 11
 
 };
@@ -128,7 +128,10 @@ class DOODLELIB_API database {
   friend tree_relationship;
   friend metadata_serialize;
 
+  class impl;
+
  private:
+  std::unique_ptr<impl> p_impl;
   mutable std::uint64_t p_id;
   mutable string p_id_str;
   std::optional<uint64_t> p_parent_id;
@@ -140,9 +143,9 @@ class DOODLELIB_API database {
 
  public:
   database();
-  ~database() = default;
+  ~database();
 
-  DOODLE_MOVE(database);
+  DOODLE_IMP_MOVE(database);
   static void set_enum(entt::registry &in_reg, entt::entity in_ent);
   std::size_t p_has_child;
   std::size_t p_has_file;
