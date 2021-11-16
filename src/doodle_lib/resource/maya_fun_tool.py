@@ -248,17 +248,20 @@ class camera:
                                t=(doodle_work_space.raneg.start,
                                   doodle_work_space.raneg.end))
 
+        # FIXME 导出时值为1001
         mel_name = "{path}/{name}_camera_{start}-{end}.fbx".format(
             path=export_path,
             name=doodle_work_space.maya_file.name_not_ex,
-            start=int(doodle_work_space.raneg.start),
+            start=int(1001),
             end=int(doodle_work_space.raneg.end))
         mel_name = pymel.core.Path(mel_name)
         pymel.core.select(self.maya_cam)
         print("Prepare export path --> {}".format(mel_name))
 
+        # pymel.core.mel.eval(
+        #     "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
         pymel.core.mel.eval(
-            "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
+            "FBXExportBakeComplexStart -v {}".format(1001))
         pymel.core.mel.eval(
             "FBXExportBakeComplexEnd -v {}".format(doodle_work_space.raneg.end))
         pymel.core.mel.eval("FBXExportBakeComplexAnimation -v true")
@@ -605,8 +608,9 @@ class export_group(object):
                                disableImplicitControl=True,
                                preserveOutsideKeys=False,
                                sparseAnimCurveBake=False)
+        # FIXME: 修复开始帧
         pymel.core.mel.eval(
-            "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
+            "FBXExportBakeComplexStart -v {}".format(1001))
         pymel.core.mel.eval(
             "FBXExportBakeComplexEnd -v {}".format(doodle_work_space.raneg.end))
         pymel.core.mel.eval("FBXExportBakeComplexAnimation -v true")
@@ -801,7 +805,7 @@ class fbx_export():
                 self.ref.append(k_ref)
         for ref_obj in self.ref:
             self.fbx_group.append(fbx_group_file(ref_obj))
-        self.cam = camera_filter()() # type: camera
+        self.cam = camera_filter()()  # type: camera
 
     def export_fbx_mesh(self):
         self.cam(doodle_work_space.get_fbx_folder())
@@ -810,7 +814,7 @@ class fbx_export():
 
     def save(self):
         try:
-            path =doodle_work_space.get_fbx_folder()  # type: pymel.core.util.path
+            path = doodle_work_space.get_fbx_folder()  # type: pymel.core.util.path
             pymel.core.system.saveAs("{}/{}.ma".format(
                 path,
                 doodle_work_space.maya_file.name_not_ex))
