@@ -10,17 +10,12 @@ $map_item = @(
     @("WanGuShenHua", "\\192.168.10.250\public\WanGuShenHua", "8幢_万古神话"),
     @("RenJianZuiDeYi", "\\192.168.10.250\public\renjianzuideyi", "8幢_人间最得意"),
     @("WuDiJianHun", "\\192.168.10.250\public\WuDiJianHun", "8幢_无敌剑魂"),
-    @("JianJi", "\\192.168.10.250\public\11-剪辑", "8幢_剪辑"),
-    @("HouQi", "\\192.168.10.250\public\HouQi", "8幢_后期"),
     @("MeiYiGiao", "\\192.168.10.250\public\美易高", "美易高"),
     @("LianQiShiWanNian", "\\192.168.10.250\public\LianQiShiWanNian", "8幢_炼气十万年"),
     @("WuJinShenYu", "\\192.168.10.250\public\WuJinShenYu", "8幢_无尽神域"),
 
     @("WanYuFengShen", "\\192.168.10.218\WanYuFengShen", "9幢_万域封神"),
-    @("KuangShenMoZun", "\\192.168.10.218\KuangShenMoZun", "9幢_狂神魔尊"),
-    @("JianJi", "\\192.168.10.218\jianji", "9幢_剪辑"),
-    @("HouQi", "\\192.168.10.218\houqi", "9幢_后期")
-    
+    @("KuangShenMoZun", "\\192.168.10.218\KuangShenMoZun", "9幢_狂神魔尊")
 )
 # Get-ItemProperty "D:\Autodesk\test\Gumu.ma"
 
@@ -42,20 +37,12 @@ $map_item = @(
 
 foreach ($item in $map_item) {
     try {
-        Get-Childitem -Path $item[1] -ErrorAction Stop
-        if (Test-Path $item[1]) {
-            if (Test-Path $item[0]) {
-                $fod = Get-Item -Path $item[0]
-                $fod.Delete()
-            }
-            New-Item -ItemType SymbolicLink -Path $PWD/$item[0] -Target $item[1]
-        }
+        $k_p = $PWD.Path + "\" + $item[0] + " to " + $item[1]
+        Write-Host $k_p
+        New-Item -ItemType SymbolicLink -Path $item[0] -Target $item[1]
     }
     catch [System.Management.Automation.ActionPreferenceStopException] {
         Write-Host "目录" $item[1] "没有访问权限， 取消映射"
-    }
-    catch {
-        Write-Host "catch all 目录 " $item[1] " 没有访问权限， 取消映射"
     }
 }
 
