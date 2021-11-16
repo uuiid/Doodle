@@ -27,6 +27,34 @@
                     "${workspaceFolder}/src/doodle_lib"
                 ]
             }
+        },
+        {
+            "name": "Win32_Maya",
+            "includePath": [
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/src/doodle_exe",
+                "${workspaceFolder}/src/doodle_lib",
+                "E:/vcpkg/installed/x64-windows/include"
+            ],
+            "defines": [
+                "UNICODE",
+                "_UNICODE",
+                "DOODLELIB_API="
+            ],
+            "windowsSdkVersion": "10.0.18362.0",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30037/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64",
+            "compileCommands": "${workspaceFolder}/build/Ninja_release_plug/compile_commands.json",
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db",
+                "path": [
+                    "${workspaceFolder}/src/doodle_exe",
+                    "${workspaceFolder}/src/doodle_lib"
+                ]
+            }
         }
     ],
     "version": 4

@@ -2,19 +2,20 @@
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/doodle_app.h>
 #include <doodle_lib/lib_warp/std_warp.h>
+#include <maya/MDrawRegistry.h>
 #include <maya/MFnPlugin.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MTimerMessage.h>
 #include <maya_plug/MotionMayaPlugInit.h>
 #include <maya_plug/gui/maya_plug_app.h>
+#include <maya_plug/maya_render/hud_render_node.h>
 #include <maya_plug/maya_render/hud_render_override.h>
 
 namespace {
 const static std::string doodle_windows{"doodle_windows"};
 const static std::string doodle_win_path{"MayaWindow|mainWindowMenu"};
 const static std::string doodle_create{"doodleCreate"};
-const static std::string doolde_hud_render_override{"doolde_hud_render_override"};
-static doodle::hud_render* doodle_hud_render{nullptr};
+const static std::string doolde_hud_render_node{"doolde_hud_render_node"};
 
 static MCallbackId clear_callback_id{0};
 static MCallbackId app_run_id{0};
@@ -115,6 +116,21 @@ MStatus initializePlugin(MObject obj) {
 
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
+      /// 注册自定义节点
+      status = k_plugin.registerNode(
+          doolde_hud_render_node.c_str(),
+          doodle_info_node::doodle_id,
+          &doodle_info_node::creator,
+          &doodle_info_node::initialize,
+          MPxNode::kLocatorNode,
+          &doodle_info_node::drawDbClassification);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+      status = MHWRender::MDrawRegistry::registerDrawOverrideCreator(
+          doodle_info_node::drawDbClassification,
+          doodle_info_node::drawRegistrantId,
+          doodle_info_node_draw_override::Creator);
+
+      CHECK_MSTATUS_AND_RETURN_IT(status);
       // MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
       // if (k_r) {
       //   auto k_o_r = new hud_render_override(doolde_hud_render_override.c_str());
@@ -123,28 +139,7 @@ MStatus initializePlugin(MObject obj) {
       //     CHECK_MSTATUS_AND_RETURN_IT(status);
       //   }
       // }
-      MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
-      if (k_r) {
-        MRenderOperationList mOperations;
-        k_r->getStandardViewportOperations(mOperations);
-        // auto k_stander_hud_index = mOperations.indexOf(MRenderOperation::kStandardHUDName);
-        // auto k_stander_hud       = mOperations[k_stander_hud_index];
 
-        // std::cout << k_stander_hud->inputTargets() << std::endl;
-        // std::cout << k_stander_hud->outputTargets() << std::endl;
-        // auto k_stander_hud_next = mOperations[k_stander_hud_index + 1];
-        // std::cout << k_stander_hud_next->inputTargets() << std::endl;
-        // std::cout << k_stander_hud_next->outputTargets() << std::endl;
-
-        doodle_hud_render = new hud_render{doolde_hud_render_override.c_str()};
-
-        if (doodle_hud_render) {
-          doodle_hud_render->setEnabled(true);
-          // auto k_f = mOperations.replace(MRenderOperation::kStandardHUDName, doodle_hud_render);
-          auto k_f = mOperations.insertAfter(MRenderOperation::kStandardHUDName, doodle_hud_render);
-          std::cout << k_f << std::endl;
-        }
-      }
       break;
     }
 
@@ -195,7 +190,12 @@ MStatus uninitializePlugin(MObject obj) {
       // 卸载命令
       status = k_plugin.deregisterCommand(doodle_create.c_str());
       CHECK_MSTATUS_AND_RETURN_IT(status);
-
+      status = MDrawRegistry::deregisterGeometryOverrideCreator(
+          doodle_info_node::drawDbClassification,
+          doodle_info_node::drawRegistrantId);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+      status = k_plugin.deregisterNode(doodle_info_node::doodle_id);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
       // MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
       // if (k_r) {
       //   auto k_o_r = k_r->findRenderOverride(doolde_hud_render_override.c_str());
@@ -205,12 +205,6 @@ MStatus uninitializePlugin(MObject obj) {
       //     delete k_o_r;
       //   }
       // }
-      MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
-      if (k_r) {
-        MRenderOperationList mOperations;
-        k_r->getStandardViewportOperations(mOperations);
-        mOperations.remove(doolde_hud_render_override.c_str());
-      }
       break;
     }
     default:
