@@ -3,6 +3,8 @@
 /**
  * @page doodle_updata_log 更新日志
  * @tableofcontents
+ * <!--
+ *
  * @section updata_log_3 版本3
  * @subsection updata_log_30 版本3.0
  *
@@ -111,7 +113,7 @@
  *
  * @subsubsection updata_log_3032 版本3.0.32
  * @li 更新maya 解算工具: 更改更加合理的创建缓存的方式
- *
+ * -->
  *
  * @subsection updata_log_31 版本3.1
  *
@@ -288,5 +290,5 @@
  * @li 修复maya 标签难以使用的默认值
  * @li maya工具导出时直接从1001 开始
  * @li 更加舒适的资产类排序
- * 
+ *
  */
