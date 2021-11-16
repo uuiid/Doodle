@@ -221,24 +221,24 @@
  *
  * @subsubsection updata_log_3117 版本3.1.17
  * @li 解算时自动删除缓存文件修复
- * 
+ *
  * @subsubsection updata_log_3118 版本3.1.18
  * @li 解算时自动时缓存文件夹不存在时抛出异常问题
- * 
- * 
+ *
+ *
  * @subsubsection updata_log_3119 版本3.1.19
  * @li 修复gui初始化中错误的线程池线程数
  * @li 添加解锁后烘培相机方案
- * 
+ *
  * @subsubsection updata_log_3120 版本3.1.20
  * @li maya 无论如何都要删除缓存目录
- * 
+ *
  * @subsubsection updata_log_3121 版本3.1.21
  * @li maya 解算超时设置添加
  * @li 更加智能的解算超时算法
  * @li 解算超时后直接进行失败提示
- * 
- * 
+ *
+ *
  * @subsubsection updata_log_3122 版本3.1.22
  * @li 添加maya检查场景功能
  *  * 检查所有
@@ -246,42 +246,47 @@
  *  * 检查重名
  *  * 检查大于四边面
  *  * 检查UV集
- *  * 去除大纲错误 
+ *  * 去除大纲错误
  *  * 去除onModelChange3dc错误
  *  * 去除CgAbBlastPanelOptChangeCallback错误
  *  * 去除贼健康错误
- * 
- * 
+ *
+ *
  * @subsubsection updata_log_3123 版本3.1.23
  * @li 修复maya显示进度错误
- * 
+ *
  * @subsubsection updata_log_3124 版本3.1.24
- * @li 更新安装程序 在安装新版本的同时，允许安装旧版 
+ * @li 更新安装程序 在安装新版本的同时，允许安装旧版
  * @li 安装时会完全删除旧版本
- * 
+ *
  * @subsubsection updata_log_3125 版本3.1.25
  * @li 更新maya插件在批处理模式下正确运行
- * 
+ *
  * @subsubsection updata_log_3125 版本3.1.25
  * @li 完成了基本的项目视图方案
  * @li 更新服务器
- * 
+ *
  * @subsubsection updata_log_3127 版本3.1.27
  * @li 添加在无内容时初始化基本的添加工具
- * 
+ *
  * @subsubsection updata_log_3128 版本3.1.28
  * @li 添加ue4 4.27插件
- * 
+ *
  * @subsubsection updata_log_3129 版本3.1.29
  * @li 修复maya导出时无法保存文件导致的崩溃(未知节点导致无法保存)
  * @li 添加ue4 灯光配置文件类
- * 
+ *
  * @subsubsection updata_log_3130 版本3.1.30
  * @li 更改ue插件安装后默认加载
  * @li 客户端优化镜头显示
- * 
- * @subsubsection updata_log_3130 版本3.1.30
+ *
+ * @subsubsection updata_log_3131 版本3.1.31
  * @li maya输出路径更改
  * @li 修复安装ue插件无法找到路径问题
+ *
+ * @subsubsection updata_log_3132 版本3.1.32
+ * @li 修复maya 标签难以使用的默认值
+ * @li maya工具导出时直接从1001 开始
+ * @li 更加舒适的资产类排序
  * 
  */
