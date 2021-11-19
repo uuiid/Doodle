@@ -13,10 +13,12 @@
 #include <maya/MAnimControl.h>
 #include <maya/MDagPath.h>
 #include <maya/MDrawContext.h>
+#include <maya/MFnCamera.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
 #include <maya/MViewport2Renderer.h>
+
 namespace doodle::maya_plug {
 string comm_play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
 
@@ -70,7 +72,8 @@ FSys::path comm_play_blast::get_file_dir() {
 }
 FSys::path comm_play_blast::get_file_path(const MTime& in_time) {
   auto k_cache_path = get_file_dir();
-  k_cache_path /= fmt::format("{}_{}.png", p_uuid, in_time.as(MTime::uiUnit()));
+  k_cache_path /= fmt::format("{}_{:05d}.png", p_uuid,
+                              boost::numeric_cast<std::int32_t>(in_time.as(MTime::uiUnit())));
   return k_cache_path;
 }
 
@@ -100,6 +103,23 @@ MStatus comm_play_blast::play_blast(const MTime& in_start, const MTime& in_end) 
   k_s = k_view.setCamera(k_camera_path);
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
+  struct comm_play_blast_guard {
+    comm_play_blast_guard() {}
+  };
+
+  MFnCamera k_cam_fn{k_camera_path, &k_s};
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  k_s = k_cam_fn.setFilmFit(MFnCamera::FilmFit::kFillFilmFit);
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  k_s = k_cam_fn.setDisplayFilmGate(false);
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  k_s = k_cam_fn.setDisplayGateMask(false);
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  auto k_displayResolution = k_cam_fn.findPlug("displayResolution", true, &k_s);
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  k_s = k_displayResolution.setBool(false);
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
   auto k_render = MHWRender::MRenderer::theRenderer();
   k_render->addNotification(&comm_play_blast::captureCallback,
                             p_post_render_notification_name.c_str(),
@@ -113,7 +133,7 @@ MStatus comm_play_blast::play_blast(const MTime& in_start, const MTime& in_end) 
          p_current_time <= in_end;
          ++p_current_time) {
       MAnimControl::setCurrentTime(p_current_time);
-      k_view.refresh(true, true);
+      k_view.refresh(false, true);
     }
   }
   k_render->removeNotification(p_post_render_notification_name.c_str(),

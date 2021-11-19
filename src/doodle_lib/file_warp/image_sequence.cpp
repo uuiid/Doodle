@@ -156,11 +156,11 @@ void watermark::set_text(const string &in_string) {
 }  // namespace details
 
 image_sequence::image_sequence()
-    : p_paths(){
+    : p_paths() {
 }
 image_sequence::image_sequence(const FSys::path &path_dir)
     : std::enable_shared_from_this<image_sequence>(),
-      p_paths(){
+      p_paths() {
   set_path(path_dir);
 }
 
@@ -213,15 +213,12 @@ void image_sequence::create_video(const long_term_ptr &in_ptr) {
 
   {
     const static cv::Size k_size{1920, 1280};
-    auto video           = cv::VideoWriter{p_out_path.generic_string(),
+    auto video      = cv::VideoWriter{p_out_path.generic_string(),
                                  cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
                                  25,
                                  k_size};
-    auto k_image         = cv::Mat{};
-    auto k_image_resized = cv::Mat{};
-    auto k_clone         = cv::Mat{};
-
-    auto k_size_len      = p_paths.size();
+    auto k_image    = cv::Mat{};
+    auto k_size_len = p_paths.size();
 
     //排序图片
     std::sort(p_paths.begin(), p_paths.end(),
@@ -234,16 +231,14 @@ void image_sequence::create_video(const long_term_ptr &in_ptr) {
       if (k_image.empty())
         throw doodle_error("open cv not read image");
       if (k_image.cols != k_size.width || k_image.rows != k_size.height)
-        cv::resize(k_image, k_image_resized, k_size);
-      else
-        k_image_resized = k_image;
+        cv::resize(k_image, k_image, k_size);
 
       for (auto &k_w : p_watermark_list) {
-        k_w.p_impl->add_to_image(k_image_resized);
+        k_w.p_impl->add_to_image(k_image);
       }
       in_ptr->sig_progress(rational_int{1, k_size_len});
 
-      video << k_image_resized;
+      video << k_image;
     }
   }
   in_ptr->sig_finished();
