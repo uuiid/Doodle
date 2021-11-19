@@ -67,14 +67,14 @@ bool reference_attr_setting::get_file_info() {
   for (auto i = 0; i < file_list.length(); ++i) {
     auto k_r     = new_object<reference_attr::data>();
     k_r->path    = file_list[i].asUTF8();
-    k_r->use_sim = true;
+    k_r->use_sim = false;
     p_list.push_back(k_r);
   }
 #elif MAYA_API_VERSION > 20190000 && MAYA_API_VERSION < 20200000
   for (auto& in : file_list) {
     auto k_r     = new_object<reference_attr::data>();
     k_r->path    = in.asUTF8();
-    k_r->use_sim = true;
+    k_r->use_sim = false;
     p_list.push_back(k_r);
   }
 #elif MAYA_API_VERSION > 20200000
@@ -84,7 +84,7 @@ bool reference_attr_setting::get_file_info() {
                  [](const MString& in) -> reference_attr::data_ptr {
                    auto k_r     = new_object<reference_attr::data>();
                    k_r->path    = in.asUTF8();
-                   k_r->use_sim = true;
+                   k_r->use_sim = false;
                    return k_r;
                  });
 
