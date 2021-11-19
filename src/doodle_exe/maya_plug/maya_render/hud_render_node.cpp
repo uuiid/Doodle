@@ -4,9 +4,14 @@
 
 #include "hud_render_node.h"
 
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/doodle_lib_fwd.h>
+#include <fmt/chrono.h>
+#include <maya/MAnimControl.h>
+#include <maya/MFnCamera.h>
+#include <maya/MFnDagNode.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MTextureManager.h>
-
 namespace doodle {
 MTypeId doodle_info_node::doodle_id{0x0008002B};
 MString doodle_info_node::drawDbClassification{"drawdb/geometry/doodle_info_node"};
@@ -100,41 +105,112 @@ void doodle_info_node_draw_override::addUIDrawables(
   // MStringArray k_names{};
   // drawManager.getIconNames(k_names);
   // std::cout << k_names << std::endl;
+  MStatus k_s{};
+
+  auto k_view = M3dView::active3dView(&k_s);
+  if (!k_s) {
+    std::cout << k_s.errorString() << std::endl;
+    return;
+  }
+
+  MDagPath k_cam{};
+  k_s = k_view.getCamera(k_cam);
+  if (!k_s) {
+    std::cout << k_s.errorString() << std::endl;
+    return;
+  }
+
+  static std::int32_t s_font_size{20};
+  std::int32_t s_font_size_{13};
 
   // Start draw UI
   drawManager.beginDrawable();
   // Set font color
-  drawManager.setColor(MColor(0.455f, 0.212f, 0.596f));
+  drawManager.setColor(MColor(0.99f, 0.01f, 0.01f));
   // Set font size
-  drawManager.setFontSize(20);
+  drawManager.setFontSize(s_font_size);
 
   // Draw renderer name
   int x = 0, y = 0, w = 0, h = 0;
   frameContext.getViewportDimensions(x, y, w, h);
-  MString k_str{"Renderer Override Options Tester"};
-  std::int32_t k_size[] = {(std::int32_t)k_str.numChars() * 20, 30};
   MColor k_color{0.2f, 0.2f, 0.2f, 0.5f};
-  drawManager.text2d(
-      MPoint(w * 0.5f, h * 0.91f),
-      k_str,
-      MHWRender::MUIDrawManager::kCenter,
-      k_size,
-      &k_color);
 
-  // Draw viewport information
-  MString viewportInfoText("Viewport information: x= ");
-  viewportInfoText += x;
-  viewportInfoText += ", y= ";
-  viewportInfoText += y;
-  viewportInfoText += ", w= ";
-  viewportInfoText += w;
-  viewportInfoText += ", h= ";
-  viewportInfoText += h;
-  drawManager.text2d(
-      MPoint(w * 0.5f, h * 0.85f),
-      viewportInfoText,
-      MHWRender::MUIDrawManager::kCenter);
-  // drawManager.setTexture(nullptr);
+  {
+    /// 绘制相机名称
+    MFnDagNode k_cam_node{k_cam.transform()};
+    auto k_str            = k_cam_node.name(&k_s);
+    std::int32_t k_size[] = {(std::int32_t)k_str.numChars() * s_font_size_, 30};
+    drawManager.text2d(
+        MPoint(w * 0.1f, h * 0.91f),
+        k_str,
+        MHWRender::MUIDrawManager::kCenter,
+        k_size,
+        &k_color);
+  }
+
+  {
+    /// 绘制当前帧和总帧数
+    auto k_len   = MAnimControl::maxTime() - MAnimControl::minTime();
+    auto k_curr  = MAnimControl::currentTime();
+    auto _k_time = fmt::format("{}/{}", k_curr.as(MTime::uiUnit()), k_len.as(MTime::uiUnit()));
+    MString k_time{_k_time.c_str()};
+    std::int32_t k_size[] = {(std::int32_t)k_time.numChars() * s_font_size_, 30};
+    drawManager.text2d(
+        MPoint(w * 0.5f, h * 0.91f),
+        k_time,
+        MHWRender::MUIDrawManager::kCenter,
+        k_size,
+        &k_color
+        );
+  }
+
+  /// 绘制摄像机avo
+  {
+    MFnCamera k_fn_cam{k_cam};
+    auto k_f = k_fn_cam.focalLength(&k_s);
+    if (!k_s) {
+      std::cout << k_s.errorString() << std::endl;
+      return;
+    }
+
+    auto _k_s_ = fmt::format("FOV: {:.3f}", k_f);
+    MString k_s{_k_s_.c_str()};
+    std::int32_t k_size[] = {(std::int32_t)k_s.numChars() * s_font_size_, 30};
+    drawManager.text2d(
+        MPoint(w * 0.91f, h * 0.91f),
+        k_s,
+        MHWRender::MUIDrawManager::kCenter,
+        k_size,
+        &k_color);
+  }
+
+  {
+    /// 拍屏日期
+    auto k_time = chrono::floor<chrono::minutes>(chrono::system_clock::now());
+    auto _k_s_  = fmt::format("{}", k_time);
+    MString k_s{_k_s_.c_str()};
+    std::int32_t k_size[] = {(std::int32_t)k_s.numChars() * s_font_size_, 30};
+    drawManager.text2d(
+        MPoint(w * 0.1f, h * 0.1f),
+        k_s,
+        MHWRender::MUIDrawManager::kCenter,
+        k_size,
+        &k_color);
+  }
+
+  /// 制作人姓名
+  {
+    auto _k_s_ = fmt::format("{}", core_set::getSet().get_user());
+    MString k_s{_k_s_.c_str()};
+    std::int32_t k_size[] = {(std::int32_t)k_s.numChars() * s_font_size_, 30};
+    drawManager.text2d(
+        MPoint(w * 0.5f, h * 0.1f),
+        k_s,
+        MHWRender::MUIDrawManager::kCenter,
+        k_size,
+        &k_color);
+  }
+
   drawManager.endDrawable();
 }
 
