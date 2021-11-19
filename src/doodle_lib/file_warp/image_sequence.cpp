@@ -212,7 +212,7 @@ void image_sequence::create_video(const long_term_ptr &in_ptr) {
     FSys::create_directories(p_out_path.parent_path());
 
   {
-    const static cv::Size k_size{1920, 1080};
+    const static cv::Size k_size{1920, 1280};
     auto video           = cv::VideoWriter{p_out_path.generic_string(),
                                  cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
                                  25,

@@ -28,7 +28,7 @@ void video_sequence::connect_video(const FSys::path& path, const long_term_ptr& 
     FSys::create_directories(path.parent_path());
 
   auto k_video_input = cv::VideoCapture{};
-  const static cv::Size k_size{1920, 1080};
+  const static cv::Size k_size{1920, 1280};
   auto k_video_out     = cv::VideoWriter{path.generic_string(),
                                      cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
                                      25,
