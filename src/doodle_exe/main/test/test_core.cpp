@@ -335,7 +335,9 @@ TEST_CASE("image sequence", "[core]") {
     auto k_w = details::watermark{};
     k_w.path_to_ep_sc(p_list.front());
     k_image.add_watermark(k_w);
-    k_image.set_out_path("D:\\tmp\\image_test_sc001\\test.mp4");
+    k_image.set_out_path("D:\\tmp\\image_test_sc001_test.mp4");
+    auto k_ptr = new_object<long_term>();
+    k_image.create_video(k_ptr);
   }
 }
 //#include <boost/algorithm/string.hpp>
