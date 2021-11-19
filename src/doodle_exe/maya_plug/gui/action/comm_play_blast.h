@@ -25,7 +25,6 @@ class comm_play_blast : public command_base {
   string p_uuid;
 
   static string p_post_render_notification_name;
-  static string p_post_render_notification_semantic;
 
   static void captureCallback(MHWRender::MDrawContext& context, void* clientData);
   bool init();

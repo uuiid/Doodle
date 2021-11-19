@@ -6,17 +6,20 @@
 
 #include <doodle_lib/gui/widgets/tool_box_widget.h>
 #include <maya/MFileIO.h>
-#include <maya_plug/gui/action/reference_attr_setting.h>
 #include <maya_plug/gui/action/comm_check_scenes.h>
+#include <maya_plug/gui/action/comm_play_blast.h>
+#include <maya_plug/gui/action/reference_attr_setting.h>
 #include <maya_plug/gui/maya_plug_app.h>
 namespace doodle::maya_plug {
 
 void maya_windwos::main_menu_tool() {
   // main_windows::main_menu_tool();
-  if (dear::MenuItem("maya引用工具") && p_tool_box_)
+  if (dear::MenuItem("引用工具") && p_tool_box_)
     p_tool_box_->set_tool_widget(new_object<reference_attr_setting>());
-  if (dear::MenuItem("maya场景检查工具") && p_tool_box_)
+  if (dear::MenuItem("场景检查工具") && p_tool_box_)
     p_tool_box_->set_tool_widget(new_object<comm_check_scenes>());
+  if (dear::MenuItem("拍屏工具") && p_tool_box_)
+    p_tool_box_->set_tool_widget(new_object<comm_play_blast>());
 }
 
 maya_windwos::maya_windwos()
