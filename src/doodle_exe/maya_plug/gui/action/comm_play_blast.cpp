@@ -4,13 +4,15 @@
 
 #include "comm_play_blast.h"
 
-#include <Maya/MDrawContext.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/exception/exception.h>
+#include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_lib/thread_pool/long_term.h>
 #include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
 #include <maya/MDagPath.h>
+#include <maya/MDrawContext.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
@@ -19,7 +21,6 @@ namespace doodle::maya_plug {
 string comm_play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
 
 void comm_play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientData) {
-  MGlobal::displayInfo("开始捕获视频");
   MStatus k_s{};
   auto self     = static_cast<comm_play_blast*>(clientData);
   auto k_render = MHWRender::MRenderer::theRenderer();
@@ -36,6 +37,7 @@ void comm_play_blast::captureCallback(MHWRender::MDrawContext& context, void* cl
   auto k_tex        = context.copyCurrentColorRenderTargetToTexture();
   if (k_tex) {
     k_s = k_texManager->saveTexture(k_tex, k_path);
+    k_texManager->releaseTexture(k_tex);
   }
 
   MString k_tmp{};
@@ -69,6 +71,12 @@ FSys::path comm_play_blast::get_file_dir() {
 FSys::path comm_play_blast::get_file_path(const MTime& in_time) {
   auto k_cache_path = get_file_dir();
   k_cache_path /= fmt::format("{}_{}.png", p_uuid, in_time.as(MTime::uiUnit()));
+  return k_cache_path;
+}
+
+FSys::path comm_play_blast::get_out_path() const {
+  auto k_cache_path = core_set::getSet().get_cache_root("maya_play_blast/tmp");
+  k_cache_path /= (p_uuid + ".mp4");
   return k_cache_path;
 }
 
@@ -114,9 +122,22 @@ MStatus comm_play_blast::play_blast(const MTime& in_start, const MTime& in_end) 
   k_render->unsetOutputTargetOverrideSize();
 
   auto k_f = get_file_dir();
-  
 
-
+  image_sequence k_image{};
+  k_image.set_path(k_f);
+  k_image.set_out_path(get_out_path());
+  auto k_ptr = new_object<long_term>();
+  k_ptr->sig_progress.connect([](rational_int in_rational_int) {
+    MString k_str{};
+    k_str.setUTF8(fmt::format("合成拍屏进度 : {}", boost::rational_cast<std::int32_t>(in_rational_int)).c_str());
+    MGlobal::displayInfo(k_str);
+  });
+  k_ptr->sig_finished.connect([this]() {
+    MString k_str{};
+    k_str.setUTF8(fmt::format("完成拍屏合成 : {}", get_out_path()).c_str());
+    MGlobal::displayInfo(k_str);
+  });
+  k_image.create_video(k_ptr);
   return k_s;
 }
 bool comm_play_blast::init() {

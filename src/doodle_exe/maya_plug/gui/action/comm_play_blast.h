@@ -31,6 +31,8 @@ class comm_play_blast : public command_base {
 
   FSys::path get_file_path(const MTime& in_time);
   FSys::path get_file_dir();
+  FSys::path get_out_path() const;
+
  public:
   comm_play_blast();
 
