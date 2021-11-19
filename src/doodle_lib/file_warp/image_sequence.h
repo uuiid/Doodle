@@ -1,8 +1,6 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/thread_pool/long_term.h>
-
-#include <boost/signals2.hpp>
 namespace doodle {
 
 namespace details {
@@ -40,7 +38,18 @@ class DOODLELIB_API image_file {
 using image_file_ptr = std::shared_ptr<image_file>;
 
 class DOODLELIB_API watermark {
+  friend image_sequence;
+  class impl;
+
+  std::shared_ptr<impl> p_impl;
+
  public:
+  watermark();
+  ~watermark();
+
+  void path_to_ep_sc(const FSys::path& in_path);
+  string get_clear_str() const;
+  void set_text(const string& in_string);
 };
 
 }  // namespace details
@@ -51,39 +60,22 @@ class DOODLELIB_API image_sequence
   std::string p_Text;
   FSys::path p_out_path;
   std::string p_name;
-  struct asyn_arg {
-    std::vector<FSys::path> paths;
-    std::string Text;
-    long_term_ptr long_sig;
+  std::vector<details::watermark> p_watermark_list;
 
-    FSys::path out_path;
-  };
-  using asyn_arg_ptr = std::shared_ptr<asyn_arg>;
-  static void create_video(const asyn_arg_ptr& in_arg);
-  static std::string clearString(const std::string& str);
 
   bool seanDir(const FSys::path& dir);
+  static std::string show_str(const std::vector<FSys::path>& in_images);
 
  public:
   image_sequence();
-  explicit image_sequence(const FSys::path& path_dir, const std::string& text = {});
+  explicit image_sequence(const FSys::path& path_dir);
 
   bool has_sequence();
   void set_path(const FSys::path& dir);
   void set_path(const std::vector<FSys::path>& in_images);
-  void set_text(const std::string& text);
-  void set_out_dir(const FSys::path& out_dir);
+  void set_out_path(const FSys::path& out_dir);
   FSys::path get_out_path() const;
-  static std::string show_str(const std::vector<FSys::path>& in_images);
-  /**
-   * @brief 使用这个可以将镜头和和集数还有水印， 路径等一起设置完成
-   *
-   * @param in_shot 要使用的镜头元数据
-   * @param in_episodes 要使用的集数元数据
-   * @return std::string 生成的水印
-   */
-  std::string set_shot_and_eps(const entt::handle& in_shot, const entt::handle& in_episodes);
-  std::string set_shot_and_eps(const FSys::path& in_path);
+  void add_watermark(const details::watermark& in_watermark);
   void create_video(const long_term_ptr& in_ptr);
 
   static bool is_image_sequence(const std::vector<FSys::path>& in_file_list);

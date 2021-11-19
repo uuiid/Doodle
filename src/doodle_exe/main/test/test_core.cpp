@@ -161,7 +161,7 @@ TEST_CASE("core create_path", "[fun][create_path]") {
     }
     SECTION("using repath") {
       SECTION("root not eq") {
-        k_pv.make_path(k_ass_file,l_ue);
+        k_pv.make_path(k_ass_file, l_ue);
         k_pv.add_file(l_ue);
         std::cout << " k_pv.get_local_path()  :" << k_pv.get_local_path() << std::endl;
         std::cout << " k_pv.get_server_path() :" << k_pv.get_server_path() << std::endl;
@@ -178,7 +178,7 @@ TEST_CASE("core create_path", "[fun][create_path]") {
       }
       SECTION("root eq") {
         k_prj.get<project>().set_path("F:/");
-        k_pv.make_path(k_ass_file,l_ue);
+        k_pv.make_path(k_ass_file, l_ue);
         k_pv.add_file(l_ue);
         std::cout << " k_pv.get_local_path()  :" << k_pv.get_local_path() << std::endl;
         std::cout << " k_pv.get_server_path() :" << k_pv.get_server_path() << std::endl;
@@ -329,6 +329,14 @@ TEST_CASE("image sequence", "[core]") {
 
   std::cout << fmt::format("{}", fmt::join(p_list, " \n")) << std::endl;
   REQUIRE(image_sequence::is_image_sequence(p_list));
+  SECTION("make video") {
+    auto k_image = image_sequence{};
+    k_image.set_path(p_list);
+    auto k_w = details::watermark{};
+    k_w.path_to_ep_sc(p_list.front());
+    k_image.add_watermark(k_w);
+    k_image.set_out_path("D:\\tmp\\image_test_sc001\\test.mp4");
+  }
 }
 //#include <boost/algorithm/string.hpp>
 //#include <boost/archive/iterators/base64_from_binary.hpp>

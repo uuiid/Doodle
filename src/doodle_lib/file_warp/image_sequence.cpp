@@ -86,23 +86,81 @@ bool image_file::operator==(const image_file &in_rhs) const {
 bool image_file::operator!=(const image_file &in_rhs) const {
   return !(in_rhs == *this);
 }
+
+class watermark::impl {
+ public:
+  string p_text;
+
+  void add_to_image(cv::Mat &in_image);
+};
+
+void watermark::impl::add_to_image(cv::Mat &in_image) {
+  auto l_image     = in_image;
+  int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+  double fontScale = 1;
+  int thickness    = 2;
+  int baseline     = 0;
+  auto textSize    = cv::getTextSize(p_text, fontFace,
+                                     fontScale, thickness, &baseline);
+  baseline += thickness;
+  textSize.width += baseline;
+  textSize.height += baseline;
+  // center the text
+  cv::Point textOrg((in_image.cols - textSize.width) / 8,
+                    (in_image.rows + textSize.height) / 8);
+
+  // draw the box
+  cv::rectangle(l_image, textOrg + cv::Point(0, baseline),
+                textOrg + cv::Point(textSize.width, -textSize.height),
+                cv::Scalar(0, 0, 0), -1);
+
+  cv::addWeighted(l_image, 0.7, in_image, 0.3, 0, in_image);
+  // then put the text itself
+  cv::putText(in_image, p_text, textOrg, fontFace, fontScale,
+              cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+}
+
+watermark::watermark()
+    : p_impl(std::make_unique<impl>()) {
+}
+void watermark::path_to_ep_sc(const FSys::path &in_path) {
+  shot k_s{};
+  episodes k_ep{};
+  const auto k_b_s = k_s.analysis(in_path);
+  const auto k_b_e = k_ep.analysis(in_path);
+
+  auto k_str       = core_set::getSet().get_user_en();  /// 基本水印, 名称
+  /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
+  if (k_b_s && k_b_e) {
+    k_str += fmt::format(" : {}_{}", k_ep.str(), k_s.str());
+  } else if (k_b_s) {
+    k_str += fmt::format(" : {}", k_s.str());
+  } else if (k_b_e) {
+    k_str += fmt::format(" : {}", k_ep.str());
+  }
+  p_impl->p_text = k_str;
+}
+string watermark::get_clear_str() const {
+  auto k_str = p_impl->p_text;
+  boost::replace_all(k_str, " ", "");   /// 替换不好的文件名称组件
+  boost::replace_all(k_str, ":", "_");  /// 替换不好的文件名称组件
+  return convert::Get().toEn(k_str);
+}
+
+watermark::~watermark() = default;
+
+void watermark::set_text(const string &in_string) {
+  p_impl->p_text = in_string;
+}
+
 }  // namespace details
 
-std::string image_sequence::clearString(const std::string &str) {
-  auto &con  = convert::Get();
-  auto str_r = std::string{};
-  str_r      = con.toEn(str);
-
-  return str_r;
-}
 image_sequence::image_sequence()
-    : p_paths(),
-      p_Text() {
+    : p_paths(){
 }
-image_sequence::image_sequence(const FSys::path &path_dir, const std::string &text)
+image_sequence::image_sequence(const FSys::path &path_dir)
     : std::enable_shared_from_this<image_sequence>(),
-      p_paths(),
-      p_Text(std::move(clearString(text))) {
+      p_paths(){
   set_path(path_dir);
 }
 
@@ -139,70 +197,23 @@ bool image_sequence::seanDir(const FSys::path &dir) {
   return true;
 }
 
-void image_sequence::set_text(const std::string &text) {
-  p_Text = clearString(text);
+void image_sequence::set_path(const std::vector<FSys::path> &in_images) {
+  p_paths = in_images;
 }
-
-std::string image_sequence::set_shot_and_eps(const entt::handle &in_shot, const entt::handle &in_episodes) {
-  auto k_str = core_set::getSet().get_user_en();  /// 基本水印, 名称
-  /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
-  if (in_shot && in_episodes) {
-    k_str += fmt::format(" : {}_{}", in_episodes.get<episodes>().str(), in_shot.get<shot>().str());
-  } else if (in_shot) {
-    k_str += fmt::format(" : {}", in_shot.get<shot>().str());
-  } else if (in_episodes) {
-    k_str += fmt::format(" : {}", in_episodes.get<episodes>().str());
-  }
-  p_Text = k_str;
-
-  /// 添加文件路径名称
-  boost::replace_all(k_str, " ", "");   /// 替换不好的文件名称组件
-  boost::replace_all(k_str, ":", "_");  /// 替换不好的文件名称组件
-  k_str += ".mp4";
-
-  if (in_episodes && !p_out_path.empty())
-    p_out_path /= in_episodes.get<episodes>().str();
-  p_name = k_str;
-  return p_Text;
+void image_sequence::set_out_path(const FSys::path &out_dir) {
+  p_out_path = out_dir;
 }
-std::string image_sequence::set_shot_and_eps(const FSys::path &in_path) {
-  shot k_s{};
-  episodes k_ep{};
-  const auto k_b_s = k_s.analysis(in_path);
-  const auto k_b_e = k_ep.analysis(in_path);
-
-  auto k_str       = core_set::getSet().get_user_en();  /// 基本水印, 名称
-  /// 如果可以找到集数和镜头号直接添加上去, 否者就这样了
-  if (k_b_s && k_b_e) {
-    k_str += fmt::format(" : {}_{}", k_ep.str(), k_s.str());
-  } else if (k_b_s) {
-    k_str += fmt::format(" : {}", k_s.str());
-  } else if (k_b_e) {
-    k_str += fmt::format(" : {}", k_ep.str());
-  }
-  p_Text = k_str;
-
-  /// 添加文件路径名称
-  boost::replace_all(k_str, " ", "");   /// 替换不好的文件名称组件
-  boost::replace_all(k_str, ":", "_");  /// 替换不好的文件名称组件
-  k_str += ".mp4";
-
-  if (k_b_e && !p_out_path.empty())
-    p_out_path /= k_ep.str();
-  p_name = k_str;
-  return p_Text;
-}
-
-void image_sequence::create_video(const image_sequence::asyn_arg_ptr &in_arg) {
-  std::this_thread::sleep_for(std::chrono::milliseconds{10});
-  in_arg->long_sig->start();
+void image_sequence::create_video(const long_term_ptr &in_ptr) {
+  if (!this->has_sequence())
+    throw doodle_error{"not Sequence"};
+  in_ptr->start();
   //检查父路径存在
-  if (!FSys::exists(in_arg->out_path.parent_path()))
-    FSys::create_directories(in_arg->out_path.parent_path());
+  if (!FSys::exists(p_out_path.parent_path()))
+    FSys::create_directories(p_out_path.parent_path());
 
   {
     const static cv::Size k_size{1920, 1080};
-    auto video           = cv::VideoWriter{in_arg->out_path.generic_string(),
+    auto video           = cv::VideoWriter{p_out_path.generic_string(),
                                  cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
                                  25,
                                  k_size};
@@ -210,15 +221,15 @@ void image_sequence::create_video(const image_sequence::asyn_arg_ptr &in_arg) {
     auto k_image_resized = cv::Mat{};
     auto k_clone         = cv::Mat{};
 
-    auto k_size_len      = in_arg->paths.size();
+    auto k_size_len      = p_paths.size();
 
     //排序图片
-    std::sort(in_arg->paths.begin(), in_arg->paths.end(),
+    std::sort(p_paths.begin(), p_paths.end(),
               [](const FSys::path &k_r, const FSys::path &k_l) -> bool {
                 return k_r.stem() < k_l.stem();
               });
 
-    for (auto &&path : in_arg->paths) {
+    for (auto &&path : p_paths) {
       k_image = cv::imread(path.generic_string());
       if (k_image.empty())
         throw doodle_error("open cv not read image");
@@ -227,55 +238,16 @@ void image_sequence::create_video(const image_sequence::asyn_arg_ptr &in_arg) {
       else
         k_image_resized = k_image;
 
-      {  //创建水印
-        k_clone          = k_image_resized.clone();
-        int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
-        double fontScale = 1;
-        int thickness    = 2;
-        int baseline     = 0;
-        auto textSize    = cv::getTextSize(in_arg->Text, fontFace,
-                                           fontScale, thickness, &baseline);
-        baseline += thickness;
-        textSize.width += baseline;
-        textSize.height += baseline;
-        // center the text
-        cv::Point textOrg((k_image_resized.cols - textSize.width) / 8,
-                          (k_image_resized.rows + textSize.height) / 8);
-
-        // draw the box
-        cv::rectangle(k_clone, textOrg + cv::Point(0, baseline),
-                      textOrg + cv::Point(textSize.width, -textSize.height),
-                      cv::Scalar(0, 0, 0), -1);
-
-        cv::addWeighted(k_clone, 0.7, k_image_resized, 0.3, 0, k_image_resized);
-        // then put the text itself
-        cv::putText(k_image_resized, in_arg->Text, textOrg, fontFace, fontScale,
-                    cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+      for (auto &k_w : p_watermark_list) {
+        k_w.p_impl->add_to_image(k_image_resized);
       }
-
-      in_arg->long_sig->sig_progress(rational_int{1, k_size_len});
+      in_ptr->sig_progress(rational_int{1, k_size_len});
 
       video << k_image_resized;
     }
   }
-  in_arg->long_sig->sig_finished();
-  in_arg->long_sig->sig_message_result(fmt::format("成功创建视频 {}\n", in_arg->out_path), long_term::warning);
-}
-void image_sequence::set_path(const std::vector<FSys::path> &in_images) {
-  p_paths = in_images;
-}
-void image_sequence::set_out_dir(const FSys::path &out_dir) {
-  p_out_path = out_dir;
-}
-void image_sequence::create_video(const long_term_ptr &in_ptr) {
-  if (!this->has_sequence())
-    throw doodle_error{"not Sequence"};
-  auto k_arg      = new_object<asyn_arg>();
-  k_arg->out_path = p_out_path / p_name;
-  k_arg->paths    = p_paths;
-  k_arg->long_sig = in_ptr;
-  k_arg->Text     = p_Text;
-  image_sequence::create_video(k_arg);
+  in_ptr->sig_finished();
+  in_ptr->sig_message_result(fmt::format("成功创建视频 {}\n", p_out_path), long_term::warning);
 }
 bool image_sequence::is_image_sequence(const std::vector<FSys::path> &in_file_list) {
   std::vector<details::image_file_ptr> k_files{};
@@ -364,6 +336,9 @@ std::string image_sequence::show_str(const std::vector<FSys::path> &in_images) {
 FSys::path image_sequence::get_out_path() const {
   return p_out_path / p_name;
 }
+void image_sequence::add_watermark(const details::watermark &in_watermark) {
+  p_watermark_list.push_back(std::move(in_watermark));
+}
 
 image_sequence_async::image_sequence_async()
     : p_image_sequence() {}
@@ -380,11 +355,7 @@ image_sequence_ptr image_sequence_async::set_path(const std::vector<FSys::path> 
 // image_sequence_ptr image_sequence_async::set_path(const entt::handle &in_path) {
 //   set_path(in_path.get<assets_path_vector>().get_local_path());
 //   auto k_out_dir = in_path.get<assets_path_vector>().get().front().get_cache_path();
-//   p_image_sequence->set_out_dir(k_out_dir);
-
-//   p_image_sequence->set_shot_and_eps(
-//       in_path.get<tree_relationship>().find_parent_class_h<shot>(),
-//       in_path.get<tree_relationship>().find_parent_class_h<episodes>());
+//   p_image_sequence->set_out_path(k_out_dir);
 
 //   return p_image_sequence;
 // }

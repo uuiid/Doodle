@@ -241,8 +241,10 @@ bool comm_create_video::render() {
       } else {
         ptr = image->set_path(i.p_path_list);
       }
-      ptr->set_out_dir(*p_out_path);
-      ptr->set_shot_and_eps(i.p_path_list.front());
+      ptr->set_out_path(*p_out_path);
+      auto l_w = details::watermark{};
+      l_w.path_to_ep_sc(i.p_path_list.front());
+      ptr->add_watermark(l_w);
       image->create_video(*p_out_path);
     }
   }
