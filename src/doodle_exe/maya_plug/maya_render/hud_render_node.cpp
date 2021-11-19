@@ -126,7 +126,7 @@ void doodle_info_node_draw_override::addUIDrawables(
   // Start draw UI
   drawManager.beginDrawable();
   // Set font color
-  drawManager.setColor(MColor(0.99f, 0.01f, 0.01f));
+  drawManager.setColor(MColor(0.1f, 0.9f, 0.01f));
   // Set font size
   drawManager.setFontSize(s_font_size);
 
