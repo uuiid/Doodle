@@ -38,6 +38,11 @@ class DOODLELIB_API image_file {
   operator bool() const;
 };
 using image_file_ptr = std::shared_ptr<image_file>;
+
+class DOODLELIB_API watermark {
+ public:
+};
+
 }  // namespace details
 
 class DOODLELIB_API image_sequence
@@ -114,6 +119,5 @@ class DOODLELIB_API image_sequence_async : public details::no_copy {
 
   long_term_ptr create_video(const FSys::path& out_file);
   long_term_ptr create_video();
-
 };
 }  // namespace doodle

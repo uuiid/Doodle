@@ -58,13 +58,16 @@ comm_play_blast::comm_play_blast()
                                "创建",
                                "选择相机");
 }
-
-FSys::path comm_play_blast::get_file_path(const MTime& in_time) {
+FSys::path comm_play_blast::get_file_dir() {
   auto k_cache_path = core_set::getSet().get_cache_root("maya_play_blast/tmp");
   k_cache_path /= p_uuid.substr(0, 3);
   if (!FSys::exists(k_cache_path)) {
     FSys::create_directories(k_cache_path);
   }
+  return k_cache_path;
+}
+FSys::path comm_play_blast::get_file_path(const MTime& in_time) {
+  auto k_cache_path = get_file_dir();
   k_cache_path /= fmt::format("{}_{}.png", p_uuid, in_time.as(MTime::uiUnit()));
   return k_cache_path;
 }
@@ -109,6 +112,11 @@ MStatus comm_play_blast::play_blast(const MTime& in_start, const MTime& in_end) 
                                MPassContext::kEndSceneRenderSemantic);
   k_render->setPresentOnScreen(true);
   k_render->unsetOutputTargetOverrideSize();
+
+  auto k_f = get_file_dir();
+  
+
+
   return k_s;
 }
 bool comm_play_blast::init() {

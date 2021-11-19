@@ -30,7 +30,7 @@ class comm_play_blast : public command_base {
   bool init();
 
   FSys::path get_file_path(const MTime& in_time);
-
+  FSys::path get_file_dir();
  public:
   comm_play_blast();
 
