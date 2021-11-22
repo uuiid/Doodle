@@ -4,6 +4,7 @@
 
 #include "comm_play_blast.h"
 
+#include <doodle_exe/maya_plug/command/play_blast.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/exception/exception.h>
 #include <doodle_lib/file_warp/image_sequence.h>
@@ -19,265 +20,33 @@
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
 #include <maya/MViewport2Renderer.h>
-
 namespace doodle::maya_plug {
-bool camera_filter::camera::operator<(const camera_filter::camera& in_rhs) const {
-  return priority < in_rhs.priority;
-}
-bool camera_filter::camera::operator>(const camera_filter::camera& in_rhs) const {
-  return in_rhs < *this;
-}
-bool camera_filter::camera::operator<=(const camera_filter::camera& in_rhs) const {
-  return !(in_rhs < *this);
-}
-bool camera_filter::camera::operator>=(const camera_filter::camera& in_rhs) const {
-  return !(*this < in_rhs);
-}
-
-string comm_play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
-
-bool camera_filter::chick_cam(MDagPath& in_path) {
-  MStatus k_s{};
-  string k_path{in_path.fullPathName(&k_s).asUTF8()};
-  CHECK_MSTATUS_AND_RETURN(k_s, false);
-  const static std::vector reg_list{
-      regex_priority_pair{std::regex{"(front|persp|side|top|camera)"}, -1000},
-      regex_priority_pair{std::regex{R"(ep\d+_sc\d+)", std::regex::icase}, 30},
-      regex_priority_pair{std::regex{R"(ep\d+)", std::regex::icase}, 10},
-      regex_priority_pair{std::regex{R"(sc\d+)", std::regex::icase}, 10},
-      regex_priority_pair{std::regex{R"(ep_\d+_sc_\d+)", std::regex::icase}, 10},
-      regex_priority_pair{std::regex{R"(ep_\d+)", std::regex::icase}, 5},
-      regex_priority_pair{std::regex{R"(sc_\d+)", std::regex::icase}, 5},
-      regex_priority_pair{std::regex{R"(^[A-Z]+_)"}, 2},
-      regex_priority_pair{std::regex{R"(_\d+_\d+)", std::regex::icase}, 2}};
-
-  camera k_cam{in_path.node(), 0};
-
-  for (const auto& k_reg : reg_list) {
-    if (std::regex_search(k_path, k_reg.reg)) {
-      k_cam.priority += k_reg.priority;
-    }
-  }
-  p_list.push_back(std::move(k_cam));
-  return true;
-}
-
-camera_filter::camera_filter()
-    : p_list() {
-}
-MObject camera_filter::get() const {
-  if (p_list.empty())
-    return MObject::kNullObj;
-  auto& k_obj = p_list.front();
-  if (k_obj.priority > 0)
-    return k_obj.p_dag_path;
-  else
-    return MObject::kNullObj;
-}
-bool camera_filter::conjecture() {
-  MStatus k_s;
-  MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
-  CHECK_MSTATUS_AND_RETURN(k_s, false);
-  p_list.clear();
-  for (; !k_it.isDone(); k_it.next()) {
-    MDagPath k_path{};
-    k_s = k_it.getPath(k_path);
-    CHECK_MSTATUS_AND_RETURN(k_s, false);
-    chick_cam(k_path);
-  }
-  std::sort(p_list.begin(), p_list.end(), [](auto& in_l, auto& in_r) {
-    return in_l > in_r;
-  });
-  return true;
-}
-
-void comm_play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientData) {
-  MStatus k_s{};
-  auto self     = static_cast<comm_play_blast*>(clientData);
-  auto k_render = MHWRender::MRenderer::theRenderer();
-  if (!self || !k_render) return;
-
-  auto k_p = self->get_file_path(self->p_current_time);
-
-  MString k_path{};
-  k_path.setUTF8(k_p.generic_string().c_str());
-
-  if (k_path.length() == 0)
-    return;
-  auto k_texManager = k_render->getTextureManager();
-  auto k_tex        = context.copyCurrentColorRenderTargetToTexture();
-  if (k_tex) {
-    k_s = k_texManager->saveTexture(k_tex, k_path);
-    k_texManager->releaseTexture(k_tex);
-  }
-
-  MString k_tmp{};
-  if (!k_s) {
-    k_tmp = k_s.errorString();
-    k_tmp += " error path -> ";
-    MGlobal::displayError(k_tmp + k_path);
-  } else {
-    k_tmp.setUTF8("捕获的颜色渲染目标到: ");
-    MGlobal::displayInfo(k_tmp + k_path);
-  }
-}
 
 comm_play_blast::comm_play_blast()
     : command_base(),
       use_conjecture_cam(true),
-      p_save_path(core_set::getSet().get_cache_root("maya_play_blast").generic_string()) {
+      p_save_path(core_set::getSet().get_cache_root("maya_play_blast").generic_string()),
+      p_play_balst(new_object<play_blast>()) {
   p_show_str = make_imgui_name(this,
                                "保存路径",
                                "拍摄",
                                "创建",
                                "选择相机",
-                               "推测相机");
-}
-FSys::path comm_play_blast::get_file_dir() {
-  auto k_cache_path = core_set::getSet().get_cache_root("maya_play_blast/tmp");
-  k_cache_path /= p_uuid.substr(0, 3);
-  if (!FSys::exists(k_cache_path)) {
-    FSys::create_directories(k_cache_path);
-  }
-  return k_cache_path;
-}
-
-FSys::path comm_play_blast::get_file_path(const MTime& in_time) {
-  auto k_cache_path = get_file_dir();
-  k_cache_path /= fmt::format("{}_{:05d}.png", p_uuid,
-                              boost::numeric_cast<std::int32_t>(in_time.as(MTime::uiUnit())));
-  return k_cache_path;
-}
-
-FSys::path comm_play_blast::get_out_path() const {
-  auto k_cache_path = core_set::getSet().get_cache_root("maya_play_blast") /
-                      fmt::format("{}", p_eps);
-  if (!FSys::exists(k_cache_path))
-    FSys::create_directories(k_cache_path);
-  k_cache_path /= fmt::format("{}_{}.mp4", p_eps, p_shot);
-  return k_cache_path;
-}
-
-bool comm_play_blast::conjecture_camera() {
-  camera_filter k_f{};
-  k_f.conjecture();
-  auto k_c = k_f.get();
-  if (k_c.isNull()) {
-    MString k_str{};
-    k_str.setUTF8("无法推测相机， 没有符合要求的相机");
-    MGlobal::displayError(k_str);
-    throw doodle_error{"无法推测相机， 没有符合要求的相机"};
-  }
-
-  MFnDagNode k_path{k_c};
-  p_camera_path = k_path.fullPathName();
-  return true;
-}
-
-MStatus comm_play_blast::play_blast(const MTime& in_start, const MTime& in_end) {
-  MStatus k_s{};
-  MSelectionList k_select{};
-
-  k_select.add(p_camera_path);
-  if (k_select.isEmpty()) {
-    MString k_str{};
-    k_str.setUTF8("没有相机可供拍摄");
-    MGlobal::displayError(k_str);
-    throw doodle_error{"没有相机可供拍摄"};
-  }
-  if (p_save_path.empty()) {
-    MString k_str{};
-    k_str.setUTF8("输出路径为空");
-    MGlobal::displayError(k_str);
-    throw doodle_error{"输出路径为空"};
-  }
-
-  auto k_view = M3dView::active3dView(&k_s);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-  MDagPath k_camera_path{};
-  k_s = k_select.getDagPath(0, k_camera_path);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-  k_s = k_view.setCamera(k_camera_path);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-  struct comm_play_blast_guard {
-    comm_play_blast_guard() {}
-  };
-
-  MFnCamera k_cam_fn{k_camera_path, &k_s};
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  k_s = k_cam_fn.setFilmFit(MFnCamera::FilmFit::kFillFilmFit);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  k_s = k_cam_fn.setDisplayFilmGate(false);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  k_s = k_cam_fn.setDisplayGateMask(false);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  auto k_displayResolution = k_cam_fn.findPlug("displayResolution", true, &k_s);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  k_s = k_displayResolution.setBool(false);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-  auto k_render = MHWRender::MRenderer::theRenderer();
-  k_render->addNotification(&comm_play_blast::captureCallback,
-                            p_post_render_notification_name.c_str(),
-                            MPassContext::kEndSceneRenderSemantic,
-                            (void*)this);
-  k_render->setOutputTargetOverrideSize(1920, 1280);
-  k_render->setPresentOnScreen(false);
-  {
-    ///  开始后播放拍屏，并输出文件
-    for (p_current_time = in_start;
-         p_current_time <= in_end;
-         ++p_current_time) {
-      MAnimControl::setCurrentTime(p_current_time);
-      k_view.refresh(false, true);
-    }
-  }
-  k_render->removeNotification(p_post_render_notification_name.c_str(),
-                               MPassContext::kEndSceneRenderSemantic);
-  k_render->setPresentOnScreen(true);
-  k_render->unsetOutputTargetOverrideSize();
-
-  auto k_f = get_file_dir();
-
-  image_sequence k_image{};
-  k_image.set_path(k_f);
-  k_image.set_out_path(get_out_path());
-  auto k_ptr = new_object<long_term>();
-  k_ptr->sig_progress.connect([](rational_int in_rational_int) {
-    MString k_str{};
-    k_str.setUTF8(fmt::format("合成拍屏进度 : {}", boost::rational_cast<std::int32_t>(in_rational_int)).c_str());
-    MGlobal::displayInfo(k_str);
-  });
-  k_ptr->sig_finished.connect([this]() {
-    MString k_str{};
-    k_str.setUTF8(fmt::format("完成拍屏合成 : {}", get_out_path()).c_str());
-    MGlobal::displayInfo(k_str);
-  });
-  k_image.create_video(k_ptr);
-  k_view.refresh(true, true);
-  return k_s;
-}
-
-bool comm_play_blast::conjecture_ep_sc() {
-  FSys::path p_current_path{MFileIO::currentFile().asUTF8()};
-  return p_eps.analysis(p_current_path) &&
-         p_shot.analysis(p_current_path);
-}
-
-bool comm_play_blast::init() {
-  return true;
+                               "推测相机",
+                               "打开文件夹",
+                               "打开上一次拍屏");
 }
 
 bool comm_play_blast::render() {
   if (imgui::Button(p_show_str["创建"].c_str())) {
-    if (this->conjecture_ep_sc()) {
-      if (use_conjecture_cam)
-        conjecture_camera();
-      p_uuid = core_set::getSet().get_uuid_str();
-      play_blast(MAnimControl::minTime(), MAnimControl::maxTime());
+    if (use_conjecture_cam)
+      p_play_balst->conjecture_camera();
+    else
+      p_play_balst->set_camera(p_camera_path);
+
+    if (p_play_balst->conjecture_ep_sc()) {
+      p_play_balst->set_save_path(p_save_path);
+      p_play_balst->play_blast_(MAnimControl::minTime(), MAnimControl::maxTime());
     } else {
       MString k_s{};
       k_s.setUTF8("无法分析路径得到镜头号和集数， 请重新设置文件路径");
@@ -286,6 +55,16 @@ bool comm_play_blast::render() {
   }
 
   imgui::Checkbox(p_show_str["推测相机"].c_str(), &use_conjecture_cam);
+
+  if (imgui::Button(p_show_str["打开上一次拍屏"].c_str())) {
+    p_play_balst->conjecture_ep_sc();
+    FSys::open_explorer(p_play_balst->get_out_path());
+  }
+  imgui::SameLine();
+  if (imgui::Button(p_show_str["打开文件夹"].c_str())) {
+    p_play_balst->conjecture_ep_sc();
+    FSys::open_explorer(p_play_balst->get_out_path().parent_path());
+  }
 
   if (!use_conjecture_cam) {
     dear::Combo{p_show_str["选择相机"].c_str(), p_camera_path.asUTF8()} && [&]() {
@@ -322,4 +101,22 @@ bool comm_play_blast::render() {
   return false;
 }
 
+MString comm_play_blast_maya::comm_name{"comm_play_blast_maya"};
+
+MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
+  play_blast k_p{};
+  MString k_str{};
+  k_str.setUTF8("开始从推测相机");
+  MGlobal::displayInfo(k_str);
+  k_p.conjecture_camera();
+  k_str.setUTF8("开始推测集数和镜头");
+  MGlobal::displayInfo(k_str);
+  k_p.conjecture_ep_sc();
+  k_str.setUTF8("开始拍屏");
+  MGlobal::displayInfo(k_str);
+  return k_p.play_blast_(MAnimControl::minTime(), MAnimControl::maxTime());
+}
+void* comm_play_blast_maya::creator() {
+  return new comm_play_blast_maya{};
+}
 }  // namespace doodle::maya_plug

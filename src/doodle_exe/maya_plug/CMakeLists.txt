@@ -5,6 +5,7 @@ set(MAYA_VERSION_LIST 2018 2020 1)
 
 set(doodle_maya_plug_cpp
         MayaPlug.cpp
+        maya_plug_fwd.h
         MotionMayaPlugInit.cpp
         MotionMayaPlugInit.h
         gui/maya_plug_app.cpp
