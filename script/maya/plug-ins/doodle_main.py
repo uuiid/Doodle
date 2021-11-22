@@ -18,7 +18,6 @@ def initializePlugin(plugin):
         k_ver = str(pymel.versions.current())[0:4]
         pymel.core.loadPlugin("doodle_plug_{}".format(k_ver))
         scripts.Doodle_shelf.DoodleUIManage.creation()
-
     except:
         pass
         raise
