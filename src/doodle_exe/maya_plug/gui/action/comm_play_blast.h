@@ -13,6 +13,39 @@
 #include <maya/MTime.h>
 namespace doodle::maya_plug {
 
+class camera_filter {
+  bool chick_cam(MDagPath& in_path);
+
+  class regex_priority_pair {
+   public:
+    std::regex reg;
+    std::int32_t priority;
+  };
+
+ public:
+  class camera {
+   public:
+    MObject p_dag_path;
+    std::int32_t priority;
+    bool operator<(const camera& in_rhs) const;
+    bool operator>(const camera& in_rhs) const;
+    bool operator<=(const camera& in_rhs) const;
+    bool operator>=(const camera& in_rhs) const;
+  };
+
+  std::vector<camera> p_list;
+
+  camera_filter();
+  /**
+   * @brief 获得最高优先级的cam
+   *
+   * @return MObject
+   */
+  MObject get() const;
+
+  bool conjecture();
+};
+
 class comm_play_blast : public command_base {
   bool use_override;
   string p_save_path;
@@ -33,10 +66,13 @@ class comm_play_blast : public command_base {
   FSys::path get_file_dir();
   FSys::path get_out_path() const;
 
+  bool conjecture_camera();
+
  public:
   comm_play_blast();
 
   MStatus play_blast(const MTime& in_start, const MTime& in_end);
+  bool conjecture_ep_sc();
   bool render() override;
 };
 }  // namespace doodle::maya_plug

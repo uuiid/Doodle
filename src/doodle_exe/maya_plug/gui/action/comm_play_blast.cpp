@@ -13,6 +13,7 @@
 #include <maya/MAnimControl.h>
 #include <maya/MDagPath.h>
 #include <maya/MDrawContext.h>
+#include <maya/MFileIO.h>
 #include <maya/MFnCamera.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MGlobal.h>
@@ -20,7 +21,69 @@
 #include <maya/MViewport2Renderer.h>
 
 namespace doodle::maya_plug {
+bool camera_filter::camera::operator<(const camera_filter::camera& in_rhs) const {
+  return priority < in_rhs.priority;
+}
+bool camera_filter::camera::operator>(const camera_filter::camera& in_rhs) const {
+  return in_rhs < *this;
+}
+bool camera_filter::camera::operator<=(const camera_filter::camera& in_rhs) const {
+  return !(in_rhs < *this);
+}
+bool camera_filter::camera::operator>=(const camera_filter::camera& in_rhs) const {
+  return !(*this < in_rhs);
+}
+
 string comm_play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
+
+bool camera_filter::chick_cam(MDagPath& in_path) {
+  MStatus k_s{};
+  string k_path{in_path.fullPathName(&k_s).asUTF8()};
+  CHECK_MSTATUS_AND_RETURN(k_s, false);
+  const static std::vector reg_list{
+      regex_priority_pair{std::regex{"(front|persp|side|top|camera)"}, -1000},
+      regex_priority_pair{std::regex{R"(ep\d+_sc\d+)", std::regex::icase}, 30},
+      regex_priority_pair{std::regex{R"(ep\d+)", std::regex::icase}, 10},
+      regex_priority_pair{std::regex{R"(sc\d+)", std::regex::icase}, 10},
+      regex_priority_pair{std::regex{R"(ep_\d+_sc_\d+)", std::regex::icase}, 10},
+      regex_priority_pair{std::regex{R"(ep_\d+)", std::regex::icase}, 5},
+      regex_priority_pair{std::regex{R"(sc_\d+)", std::regex::icase}, 5},
+      regex_priority_pair{std::regex{R"(^[A-Z]+_)"}, 2},
+      regex_priority_pair{std::regex{R"(_\d+_\d+)", std::regex::icase}, 2}};
+
+  camera k_cam{in_path.node(), 0};
+
+  for (const auto& k_reg : reg_list) {
+    if (std::regex_search(k_path, k_reg.reg)) {
+      k_cam.priority += k_reg.priority;
+      return true;
+    }
+  }
+  p_list.push_back(std::move(k_cam));
+}
+
+camera_filter::camera_filter()
+    : p_list() {
+}
+MObject camera_filter::get() const {
+  ;
+}
+bool camera_filter::conjecture() {
+  MStatus k_s;
+  MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
+  CHECK_MSTATUS_AND_RETURN(k_s, false);
+  p_list.clear();
+  for (; !k_it.isDone(); k_it.next()) {
+    MDagPath k_path{};
+    k_s = k_it.getPath(k_path);
+    CHECK_MSTATUS_AND_RETURN(k_s, false);
+    chick_cam(k_path);
+  }
+  std::sort(p_list.begin(), p_list.end(), [](auto& in_l, auto& in_r) {
+    return in_l < in_r;
+  });
+  return true;
+}
 
 void comm_play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientData) {
   MStatus k_s{};
@@ -70,6 +133,7 @@ FSys::path comm_play_blast::get_file_dir() {
   }
   return k_cache_path;
 }
+
 FSys::path comm_play_blast::get_file_path(const MTime& in_time) {
   auto k_cache_path = get_file_dir();
   k_cache_path /= fmt::format("{}_{:05d}.png", p_uuid,
@@ -78,9 +142,15 @@ FSys::path comm_play_blast::get_file_path(const MTime& in_time) {
 }
 
 FSys::path comm_play_blast::get_out_path() const {
-  auto k_cache_path = core_set::getSet().get_cache_root("maya_play_blast/tmp");
-  k_cache_path /= (p_uuid + ".mp4");
+  auto k_cache_path = core_set::getSet().get_cache_root("maya_play_blast") /
+                      fmt::format("{}", p_eps);
+  if (!FSys::exists(k_cache_path))
+    FSys::create_directories(k_cache_path);
+  k_cache_path /= fmt::format("{}_{}.mp4", p_eps, p_shot);
   return k_cache_path;
+}
+
+bool comm_play_blast::conjecture_camera() {
 }
 
 MStatus comm_play_blast::play_blast(const MTime& in_start, const MTime& in_end) {
@@ -160,14 +230,27 @@ MStatus comm_play_blast::play_blast(const MTime& in_start, const MTime& in_end) 
   k_image.create_video(k_ptr);
   return k_s;
 }
+
+bool comm_play_blast::conjecture_ep_sc() {
+  FSys::path p_current_path{MFileIO::currentFile().asUTF8()};
+  return p_eps.analysis(p_current_path) &&
+         p_shot.analysis(p_current_path);
+}
+
 bool comm_play_blast::init() {
   return true;
 }
 
 bool comm_play_blast::render() {
   if (imgui::Button(p_show_str["创建"].c_str())) {
-    p_uuid = core_set::getSet().get_uuid_str();
-    play_blast(MAnimControl::minTime(), MAnimControl::maxTime());
+    if (this->conjecture_ep_sc()) {
+      p_uuid = core_set::getSet().get_uuid_str();
+      play_blast(MAnimControl::minTime(), MAnimControl::maxTime());
+    } else {
+      MString k_s{};
+      k_s.setUTF8("无法分析路径得到镜头号和集数， 请重新设置文件路径");
+      MGlobal::displayError(k_s);
+    }
   }
 
   dear::Combo{p_show_str["选择相机"].c_str(), p_camera_path.asUTF8()} && [&]() {
@@ -201,5 +284,6 @@ bool comm_play_blast::render() {
       &p_save_path);
   return false;
 }
+
 
 }  // namespace doodle::maya_plug
