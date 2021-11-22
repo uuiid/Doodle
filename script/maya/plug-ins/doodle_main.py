@@ -1,58 +1,38 @@
 import sys
-import maya.api.OpenMaya as om
-import maya.OpenMayaMPx as OpenMayaMPx
+import maya.api.OpenMaya as open_maya
 import scripts.Doodle_shelf
-
-#
-# def maya_useNewAPI():
-#     """
-#     The presence of this function tells Maya that the plugin produces, and
-#     expects to be passed, objects created using the Maya Python API 2.0.
-#     """
-#     pass
+import pymel.core
 
 
-# command
-class PyHelloWorldCmd(OpenMayaMPx.MPxCommand):
-
-    kPluginCmdName = "Doodle_main"
-
-    def __init__(self):
-        OpenMayaMPx.MPxCommand.__init__(self)
-
-    @staticmethod
-    def cmdCreator():
-        return PyHelloWorldCmd()
-
-    def doIt(self, args):
-        print("load")
+def maya_useNewAPI():
+    """
+    The presence of this function tells Maya that the plugin produces, and
+    expects to be passed, objects created using the Maya Python API 2.0.
+    """
+    pass
 
 
 # Initialize the plug-in
 def initializePlugin(plugin):
-    pluginFn = OpenMayaMPx.MFnPlugin(plugin, "doodle", "1.0.0")
-    dle_plugin_ui = OpenMayaMPx.MFnPlugin(plugin, "doodleUI", "1.0.0")
     try:
-        pluginFn.registerCommand(
-            PyHelloWorldCmd.kPluginCmdName, PyHelloWorldCmd.cmdCreator
-        )
-        dle_plugin_ui.registerUI(
-            scripts.Doodle_shelf.DoodleUIManage.creation, scripts.Doodle_shelf.DoodleUIManage.deleteSelf
-        )
+        k_ver = str(pymel.versions.current())[0:4]
+        pymel.core.loadPlugin("doodle_plug_{}".format(k_ver))
+        scripts.Doodle_shelf.DoodleUIManage.creation()
+
     except:
-        sys.stderr.write(
-            "Failed to register command: %s\n" % PyHelloWorldCmd.kPluginCmdName
-        )
+        pass
         raise
 
 
 # Uninitialize the plug-in
 def uninitializePlugin(plugin):
-    pluginFn = OpenMayaMPx.MFnPlugin(plugin)
+    # pluginFn = OpenMayaMPx.MFnPlugin(plugin)
     try:
-        pluginFn.deregisterCommand(PyHelloWorldCmd.kPluginCmdName)
+        k_ver = str(pymel.versions.current())[0:4]
+        pymel.core.unloadPlugin("doodle_plug_{}".format(k_ver))
+        scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
+        pass
+
     except:
-        sys.stderr.write(
-            "Failed to unregister command: %s\n" % PyHelloWorldCmd.kPluginCmdName
-        )
+        pass
         raise
