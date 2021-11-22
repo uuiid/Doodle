@@ -56,10 +56,10 @@ bool camera_filter::chick_cam(MDagPath& in_path) {
   for (const auto& k_reg : reg_list) {
     if (std::regex_search(k_path, k_reg.reg)) {
       k_cam.priority += k_reg.priority;
-      return true;
     }
   }
   p_list.push_back(std::move(k_cam));
+  return true;
 }
 
 camera_filter::camera_filter()
@@ -86,7 +86,7 @@ bool camera_filter::conjecture() {
     chick_cam(k_path);
   }
   std::sort(p_list.begin(), p_list.end(), [](auto& in_l, auto& in_r) {
-    return in_l < in_r;
+    return in_l > in_r;
   });
   return true;
 }
@@ -124,12 +124,14 @@ void comm_play_blast::captureCallback(MHWRender::MDrawContext& context, void* cl
 
 comm_play_blast::comm_play_blast()
     : command_base(),
+      use_conjecture_cam(true),
       p_save_path(core_set::getSet().get_cache_root("maya_play_blast").generic_string()) {
   p_show_str = make_imgui_name(this,
                                "保存路径",
                                "拍摄",
                                "创建",
-                               "选择相机");
+                               "选择相机",
+                               "推测相机");
 }
 FSys::path comm_play_blast::get_file_dir() {
   auto k_cache_path = core_set::getSet().get_cache_root("maya_play_blast/tmp");
@@ -157,7 +159,19 @@ FSys::path comm_play_blast::get_out_path() const {
 }
 
 bool comm_play_blast::conjecture_camera() {
-  
+  camera_filter k_f{};
+  k_f.conjecture();
+  auto k_c = k_f.get();
+  if (k_c.isNull()) {
+    MString k_str{};
+    k_str.setUTF8("无法推测相机， 没有符合要求的相机");
+    MGlobal::displayError(k_str);
+    throw doodle_error{"无法推测相机， 没有符合要求的相机"};
+  }
+
+  MFnDagNode k_path{k_c};
+  p_camera_path = k_path.fullPathName();
+  return true;
 }
 
 MStatus comm_play_blast::play_blast(const MTime& in_start, const MTime& in_end) {
@@ -243,6 +257,7 @@ MStatus comm_play_blast::play_blast(const MTime& in_start, const MTime& in_end) 
     MGlobal::displayInfo(k_str);
   });
   k_image.create_video(k_ptr);
+  k_view.refresh(true, true);
   return k_s;
 }
 
@@ -259,6 +274,8 @@ bool comm_play_blast::init() {
 bool comm_play_blast::render() {
   if (imgui::Button(p_show_str["创建"].c_str())) {
     if (this->conjecture_ep_sc()) {
+      if (use_conjecture_cam)
+        conjecture_camera();
       p_uuid = core_set::getSet().get_uuid_str();
       play_blast(MAnimControl::minTime(), MAnimControl::maxTime());
     } else {
@@ -268,32 +285,37 @@ bool comm_play_blast::render() {
     }
   }
 
-  dear::Combo{p_show_str["选择相机"].c_str(), p_camera_path.asUTF8()} && [&]() {
-    MStatus k_s;
-    MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
-    CHECK_MSTATUS_AND_RETURN(k_s, false);
-    for (; !k_it.isDone(); k_it.next()) {
-      MDagPath k_path;
-      k_s = k_it.getPath(k_path);
-      CHECK_MSTATUS_AND_RETURN(k_s, false);
+  imgui::Checkbox(p_show_str["推测相机"].c_str(), &use_conjecture_cam);
 
-      auto k_obj_tran = k_path.transform(&k_s);
+  if (!use_conjecture_cam) {
+    dear::Combo{p_show_str["选择相机"].c_str(), p_camera_path.asUTF8()} && [&]() {
+      MStatus k_s;
+      MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
       CHECK_MSTATUS_AND_RETURN(k_s, false);
-      MFnDagNode k_node{k_obj_tran, &k_s};
-      CHECK_MSTATUS_AND_RETURN(k_s, false);
+      for (; !k_it.isDone(); k_it.next()) {
+        MDagPath k_path;
+        k_s = k_it.getPath(k_path);
+        CHECK_MSTATUS_AND_RETURN(k_s, false);
 
-      auto k_name = k_node.absoluteName(&k_s);
-      CHECK_MSTATUS_AND_RETURN(k_s, false);
-      auto k_u8        = k_name.asUTF8();
-      auto k_is_select = (k_name == p_camera_path);
-      if (imgui::Selectable(k_u8, k_is_select)) {
-        p_camera_path = k_u8;
+        auto k_obj_tran = k_path.transform(&k_s);
+        CHECK_MSTATUS_AND_RETURN(k_s, false);
+        MFnDagNode k_node{k_obj_tran, &k_s};
+        CHECK_MSTATUS_AND_RETURN(k_s, false);
+
+        auto k_name = k_node.absoluteName(&k_s);
+        CHECK_MSTATUS_AND_RETURN(k_s, false);
+        auto k_u8        = k_name.asUTF8();
+        auto k_is_select = (k_name == p_camera_path);
+        if (imgui::Selectable(k_u8, k_is_select)) {
+          p_camera_path = k_u8;
+        }
+        if (k_is_select)
+          ImGui::SetItemDefaultFocus();
       }
-      if (k_is_select)
-        ImGui::SetItemDefaultFocus();
-    }
-    return true;
-  };
+      return true;
+    };
+  }
+
   imgui::InputText(
       p_show_str["保存路径"].c_str(),
       &p_save_path);

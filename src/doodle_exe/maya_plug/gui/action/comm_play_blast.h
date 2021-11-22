@@ -48,7 +48,7 @@ class camera_filter {
 };
 
 class comm_play_blast : public command_base {
-  bool use_override;
+  bool use_conjecture_cam;
   string p_save_path;
   MString p_camera_path;
 
