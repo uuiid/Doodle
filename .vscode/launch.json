@@ -13,11 +13,19 @@
             "environment": [
                 {
                     "name": "MAYA_PLUG_IN_PATH",
-                    "value": "${workspaceFolder}/build/Ninja_release_plug/bin"
+                    "value": "${workspaceFolder}/build/Ninja_release_plug/bin;${workspaceFolder}/script/maya/plug-ins"
                 },
                 {
                     "name": "PATH",
                     "value": "${env:PATH};${workspaceFolder}/build/Ninja_release_plug/bin"
+                },
+                {
+                    "name": "PYTHONPATH",
+                    "value": "${env:PYTHONPATH};${workspaceFolder}/src/doodle_lib/resource;${workspaceFolder}/script/maya/scripts/scripts;${workspaceFolder}/script/maya/scripts"
+                },
+                {
+                    "name": "XBMLANGPATH",
+                    "value": "${workspaceFolder}/script/maya/icons"
                 }
             ],
             "console": "internalConsole",

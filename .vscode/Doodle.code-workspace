@@ -155,11 +155,15 @@
 		],
 		"python.autoComplete.extraPaths": [
 			"c:\\Users\\TD\\.vscode\\extensions\\fxtd-odyssey.mayapy-1.0.4\\mayaSDK",
-			"${workspaceFolder}/src/DoodleLib/resource"
+			"${workspaceFolder}/src/doodle_lib/resource",
+			"${workspaceFolder}/script/maya/scripts",
+			"${workspaceFolder}/script/maya/scripts/scripts"
 		],
 		"python.analysis.extraPaths": [
 			"c:\\Users\\TD\\.vscode\\extensions\\fxtd-odyssey.mayapy-1.0.4\\mayaSDK",
-			"${workspaceFolder}/src/DoodleLib/resource"
+			"${workspaceFolder}/src/doodle_lib/resource",
+			"${workspaceFolder}/script/maya/scripts",
+			"${workspaceFolder}/script/maya/scripts/scripts"
 		],
 		"editor.tabSize": 2,
 		"editor.fontFamily": " 'Fira Code',Consolas, monospace",
