@@ -38,6 +38,7 @@ class camera_filter {
   camera_filter();
   /**
    * @brief 获得最高优先级的cam
+   * @warning 可能为空obj
    *
    * @return MObject
    */
@@ -66,8 +67,8 @@ class comm_play_blast : public command_base {
   FSys::path get_file_dir();
   FSys::path get_out_path() const;
 
-  bool conjecture_camera();
 
+  bool conjecture_camera();
  public:
   comm_play_blast();
 

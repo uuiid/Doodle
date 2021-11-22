@@ -66,7 +66,13 @@ camera_filter::camera_filter()
     : p_list() {
 }
 MObject camera_filter::get() const {
-  ;
+  if (p_list.empty())
+    return MObject::kNullObj;
+  auto& k_obj = p_list.front();
+  if (k_obj.priority > 0)
+    return k_obj.p_dag_path;
+  else
+    return MObject::kNullObj;
 }
 bool camera_filter::conjecture() {
   MStatus k_s;
@@ -151,6 +157,7 @@ FSys::path comm_play_blast::get_out_path() const {
 }
 
 bool comm_play_blast::conjecture_camera() {
+  
 }
 
 MStatus comm_play_blast::play_blast(const MTime& in_start, const MTime& in_end) {
@@ -158,10 +165,18 @@ MStatus comm_play_blast::play_blast(const MTime& in_start, const MTime& in_end) 
   MSelectionList k_select{};
 
   k_select.add(p_camera_path);
-  if (k_select.isEmpty())
+  if (k_select.isEmpty()) {
+    MString k_str{};
+    k_str.setUTF8("没有相机可供拍摄");
+    MGlobal::displayError(k_str);
     throw doodle_error{"没有相机可供拍摄"};
-  if (p_save_path.empty())
+  }
+  if (p_save_path.empty()) {
+    MString k_str{};
+    k_str.setUTF8("输出路径为空");
+    MGlobal::displayError(k_str);
     throw doodle_error{"输出路径为空"};
+  }
 
   auto k_view = M3dView::active3dView(&k_s);
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
@@ -284,6 +299,5 @@ bool comm_play_blast::render() {
       &p_save_path);
   return false;
 }
-
 
 }  // namespace doodle::maya_plug
