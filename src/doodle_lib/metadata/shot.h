@@ -68,5 +68,17 @@ void shot::serialize(Archive &ar, const std::uint32_t version) {
 }
 }  // namespace doodle
 
+namespace fmt {
+template <>
+struct fmt::formatter<::doodle::shot> : fmt::formatter<fmt::string_view> {
+  template <typename FormatContext>
+  auto format(const ::doodle::shot &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+    return formatter<string_view>::format(
+        in_.str(),
+        ctx);
+  }
+};
+}  // namespace fmt
+
 BOOST_CLASS_VERSION(doodle::shot, 2)
 BOOST_CLASS_EXPORT_KEY(doodle::shot)

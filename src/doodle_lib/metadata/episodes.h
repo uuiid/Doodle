@@ -5,7 +5,6 @@
 namespace doodle {
 
 class DOODLELIB_API episodes {
-
  public:
   int64_t p_episodes;
   episodes();
@@ -44,7 +43,20 @@ void episodes::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
     ar &BOOST_SERIALIZATION_NVP(p_episodes);
 }
+
 }  // namespace doodle
+
+namespace fmt {
+template <>
+struct fmt::formatter<::doodle::episodes> : fmt::formatter<fmt::string_view> {
+  template <typename FormatContext>
+  auto format(const ::doodle::episodes &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+    return formatter<string_view>::format(
+        in_.str(),
+        ctx);
+  }
+};
+}  // namespace fmt
 
 BOOST_CLASS_VERSION(doodle::episodes, 1)
 BOOST_CLASS_EXPORT_KEY(doodle::episodes)
