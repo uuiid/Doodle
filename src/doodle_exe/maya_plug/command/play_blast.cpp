@@ -247,9 +247,9 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   k_image.set_path(k_f);
   k_image.set_out_path(get_out_path());
   auto k_ptr = new_object<long_term>();
-  k_ptr->sig_progress.connect([](rational_int in_rational_int) {
+  k_ptr->sig_progress.connect([&](rational_int in_rational_int) {
     MString k_str{};
-    k_str.setUTF8(fmt::format("合成拍屏进度 : {}", boost::rational_cast<std::int32_t>(in_rational_int)).c_str());
+    k_str.setUTF8(fmt::format("合成拍屏进度 : {}%", k_ptr->get_progress_int()).c_str());
     MGlobal::displayInfo(k_str);
   });
   k_ptr->sig_finished.connect([this]() {
