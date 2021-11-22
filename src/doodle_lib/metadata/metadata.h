@@ -128,10 +128,8 @@ class DOODLELIB_API database {
   friend tree_relationship;
   friend metadata_serialize;
 
-  class impl;
 
  private:
-  std::unique_ptr<impl> p_impl;
   mutable std::uint64_t p_id;
   mutable string p_id_str;
   std::optional<uint64_t> p_parent_id;
