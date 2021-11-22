@@ -13,7 +13,7 @@
 #include <maya/MFnDependencyNode.h>
 #include <maya/MTextureManager.h>
 namespace doodle {
-MTypeId doodle_info_node::doodle_id{0x0008002B};
+MTypeId doodle_info_node::doodle_id{0x0005002B};
 MString doodle_info_node::drawDbClassification{"drawdb/geometry/doodle_info_node"};
 MString doodle_info_node::drawRegistrantId{"doodle_info_node_draw_override"};
 
