@@ -8,7 +8,7 @@
 #include <maya/MPxLocatorNode.h>
 #include <maya/MUserData.h>
 
-namespace doodle {
+namespace doodle::maya_plug {
 
 class doodle_info_node : public MPxLocatorNode {
  public:

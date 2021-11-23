@@ -119,16 +119,16 @@ MStatus initializePlugin(MObject obj) {
       /// 注册自定义节点
       status = k_plugin.registerNode(
           doolde_hud_render_node.c_str(),
-          doodle_info_node::doodle_id,
-          &doodle_info_node::creator,
-          &doodle_info_node::initialize,
+          doodle::maya_plug::doodle_info_node::doodle_id,
+          &doodle::maya_plug::doodle_info_node::creator,
+          &doodle::maya_plug::doodle_info_node::initialize,
           MPxNode::kLocatorNode,
-          &doodle_info_node::drawDbClassification);
+          &doodle::maya_plug::doodle_info_node::drawDbClassification);
       CHECK_MSTATUS_AND_RETURN_IT(status);
       status = MHWRender::MDrawRegistry::registerDrawOverrideCreator(
-          doodle_info_node::drawDbClassification,
-          doodle_info_node::drawRegistrantId,
-          doodle_info_node_draw_override::Creator);
+          doodle::maya_plug::doodle_info_node::drawDbClassification,
+          doodle::maya_plug::doodle_info_node::drawRegistrantId,
+          doodle::maya_plug::doodle_info_node_draw_override::Creator);
 
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
@@ -197,10 +197,10 @@ MStatus uninitializePlugin(MObject obj) {
       status = k_plugin.deregisterCommand(doodle_create.c_str());
       CHECK_MSTATUS_AND_RETURN_IT(status);
       status = MDrawRegistry::deregisterGeometryOverrideCreator(
-          doodle_info_node::drawDbClassification,
-          doodle_info_node::drawRegistrantId);
+          doodle::maya_plug::doodle_info_node::drawDbClassification,
+          doodle::maya_plug::doodle_info_node::drawRegistrantId);
       CHECK_MSTATUS_AND_RETURN_IT(status);
-      status = k_plugin.deregisterNode(doodle_info_node::doodle_id);
+      status = k_plugin.deregisterNode(doodle::maya_plug::doodle_info_node::doodle_id);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       status = k_plugin.deregisterCommand(
