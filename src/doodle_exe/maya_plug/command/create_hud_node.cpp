@@ -32,7 +32,7 @@ bool create_hud_node::operator()() const {
     MGlobal::displayInfo(k_str);
   } else {
     k_str.setUTF8("节点(doodle_hud)已经存在， 不需要重复创建");
-    MGlobal::displayInfo(k_str);
+    MGlobal::displayWarning(k_str);
   }
   return true;
 }

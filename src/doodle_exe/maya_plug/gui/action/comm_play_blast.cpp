@@ -20,6 +20,7 @@
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
 #include <maya/MViewport2Renderer.h>
+#include <maya_plug/command/create_hud_node.h>
 namespace doodle::maya_plug {
 
 comm_play_blast::comm_play_blast()
@@ -30,7 +31,8 @@ comm_play_blast::comm_play_blast()
   p_show_str = make_imgui_name(this,
                                "保存路径",
                                "拍摄",
-                               "创建",
+                               "拍屏",
+                               "hud",
                                "选择相机",
                                "推测相机",
                                "打开文件夹",
@@ -38,7 +40,7 @@ comm_play_blast::comm_play_blast()
 }
 
 bool comm_play_blast::render() {
-  if (imgui::Button(p_show_str["创建"].c_str())) {
+  if (imgui::Button(p_show_str["拍屏"].c_str())) {
     if (use_conjecture_cam)
       p_play_balst->conjecture_camera();
     else
@@ -52,6 +54,10 @@ bool comm_play_blast::render() {
       k_s.setUTF8("无法分析路径得到镜头号和集数， 请重新设置文件路径");
       MGlobal::displayError(k_s);
     }
+  }
+  if (imgui::Button(p_show_str["hud"].c_str())) {
+    create_hud_node k_c{};
+    k_c();
   }
 
   imgui::Checkbox(p_show_str["推测相机"].c_str(), &use_conjecture_cam);
