@@ -242,20 +242,13 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");
   {
     auto k_target_manager = k_render->getRenderTargetManager();
-    auto k_format         = MHWRender::kR8G8B8A8_UINT;
-    for (auto k_i = 0; k_i < MHWRender::kNumberOfRasterFormats; ++k_i) {
-      if (k_target_manager->formatSupportsSRGBWrite((MHWRender::MRasterFormat)k_i)) {
-        MGlobal::displayInfo(fmt::format("Format {} supports SRGBwrite", k_i).c_str());
-        k_format = (MHWRender::MRasterFormat)k_i;
-      }
-    }
     auto k_target = k_target_manager->acquireRenderTarget(
         MRenderTargetDescription{
             "doodle",
             1920,
             1280,
             1,
-            k_format,
+            MHWRender::kR8G8B8A8_UINT,
             1,
             false});
     auto _k_cam_str = fmt::format("batch:{}", k_cam_fn.name().asUTF8());
