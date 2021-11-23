@@ -4,12 +4,37 @@
 
 #include "create_hud_node.h"
 
+#include <maya/MFnAttribute.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
 #include <maya_plug/maya_render/hud_render_node.h>
 namespace doodle::maya_plug {
 create_hud_node::create_hud_node() = default;
+
+bool create_hud_node::hide(bool hide) const {
+  MStatus k_s;
+  MItDag k_it{MItDag::kBreadthFirst, MFn::kLocator, &k_s};
+  CHECK_MSTATUS_AND_RETURN(k_s, false);
+
+  for (; !k_it.isDone(); k_it.next()) {
+    MFnDagNode k_node{k_it.currentItem(&k_s)};
+    CHECK_MSTATUS_AND_RETURN(k_s, false);
+    if (k_node.typeId() != doodle_info_node::doodle_id) {
+      MDagPath k_path{};
+      k_s = k_node.getPath(k_path);
+      CHECK_MSTATUS_AND_RETURN(k_s, false);
+      MFnDagNode k_tran{k_path.transform(&k_s)};
+      CHECK_MSTATUS_AND_RETURN(k_s, false);
+      // MFnAttribute k_vis{k_tran.attribute("visibility")};
+      MPlug k_vis{k_tran.object(), k_tran.attribute("visibility")};
+      k_s = k_vis.setBool(hide);
+      CHECK_MSTATUS_AND_RETURN(k_s, false);
+    }
+  }
+  return true;
+}
+
 bool create_hud_node::operator()() const {
   MStatus k_s;
   MItDag k_it{MItDag::kBreadthFirst, MFn::kLocator, &k_s};
