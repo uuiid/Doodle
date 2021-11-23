@@ -1011,6 +1011,7 @@ def __load_config__(obj):
 
 
 class open_file(object):
+    maya_version = str(pymel.versions.current())[0:4]
     def __init__(self, in_config=None):
         # type:(str,config)->None
         self.cfg = in_config  # type: config
@@ -1057,7 +1058,8 @@ class open_file(object):
 
     def get_cloth_sim(self, qcloth_path=None):
         # type: (str) -> cloth_export
-        self.load_plug(["AbcExport", "AbcImport", "qualoth_2019_x64"])
+
+        self.load_plug(["AbcExport", "AbcImport", "qualoth_{}_x64".format(open_file.maya_version)])
         self.open()
         pymel.core.playbackOptions(animationStartTime=950, min=950)
         pymel.core.currentTime(950)
