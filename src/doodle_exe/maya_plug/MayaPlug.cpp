@@ -7,6 +7,7 @@
 #include <maya/MSceneMessage.h>
 #include <maya/MTimerMessage.h>
 #include <maya_plug/MotionMayaPlugInit.h>
+#include <maya_plug/command/create_hud_node.h>
 #include <maya_plug/gui/action/comm_play_blast.h>
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/maya_render/hud_render_node.h>
@@ -137,6 +138,11 @@ MStatus initializePlugin(MObject obj) {
           &::doodle::maya_plug::comm_play_blast_maya::creator);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
+      status = k_plugin.registerCommand(
+          ::doodle::maya_plug::create_hud_node_maya::comm_name,
+          &::doodle::maya_plug::create_hud_node_maya::creator);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+
       // MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();
       // if (k_r) {
       //   auto k_o_r = new hud_render_override(doolde_hud_render_override.c_str());
@@ -205,6 +211,10 @@ MStatus uninitializePlugin(MObject obj) {
 
       status = k_plugin.deregisterCommand(
           ::doodle::maya_plug::comm_play_blast_maya::comm_name);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+
+      status = k_plugin.deregisterCommand(
+          ::doodle::maya_plug::create_hud_node_maya::comm_name);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       // MHWRender::MRenderer* k_r = MHWRender::MRenderer::theRenderer();

@@ -48,6 +48,8 @@ class DlsShelf(shelfBase._shelf):
                       command=self.randomColor)
         self.addButon("play", "icons/comm_play_inco.png",
                       command=pymel.core.comm_play_blast_maya)
+        self.addButon("play", "icons/create_hud.png",
+                      command=pymel.core.create_hud_node_maya)
 
 
     def polyremesh(self):
