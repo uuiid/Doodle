@@ -12,6 +12,8 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MTextureManager.h>
+#include <maya_plug/command/play_blast.h>
+
 namespace doodle::maya_plug {
 MTypeId doodle_info_node::doodle_id{0x0005002B};
 MString doodle_info_node::drawDbClassification{"drawdb/geometry/doodle_info_node"};
@@ -47,9 +49,10 @@ doodle_info_node_draw_override::~doodle_info_node_draw_override() = default;
 
 MHWRender::DrawAPI doodle_info_node_draw_override::supportedDrawAPIs() const {
   // this plugin supports both GL and DX
-  return (MHWRender::DrawAPI::kOpenGL |
-          MHWRender::DrawAPI::kDirectX11 |
-          MHWRender::DrawAPI::kOpenGLCoreProfile);
+  return (MHWRender::DrawAPI::kAllDevices);
+  // return (MHWRender::DrawAPI::kOpenGL |
+  //         MHWRender::DrawAPI::kDirectX11 |
+  //         MHWRender::DrawAPI::kOpenGLCoreProfile);
 }
 
 bool doodle_info_node_draw_override::isBounded(
@@ -117,7 +120,20 @@ void doodle_info_node_draw_override::addUIDrawables(
   k_s = k_view.getCamera(k_cam);
   if (!k_s) {
     std::cout << k_s.errorString() << std::endl;
-    return;
+
+    camera_filter k_f{};
+    k_f.conjecture();
+    auto k_m = k_f.get();
+    if (k_m.isNull()) {
+      std::cout << "not find cam" << std::endl;
+      return;
+    }
+    MFnDagNode k_node{k_m};
+    k_s = k_node.getPath(k_cam);
+    if (!k_s) {
+      std::cout << k_s.errorString() << std::endl;
+      return;
+    }
   }
 
   static std::int32_t s_font_size{20};
@@ -160,8 +176,7 @@ void doodle_info_node_draw_override::addUIDrawables(
         k_time,
         MHWRender::MUIDrawManager::kCenter,
         k_size,
-        &k_color
-        );
+        &k_color);
   }
 
   /// 绘制摄像机avo
@@ -214,4 +229,4 @@ void doodle_info_node_draw_override::addUIDrawables(
   drawManager.endDrawable();
 }
 
-}  // namespace doodle
+}  // namespace doodle::maya_plug
