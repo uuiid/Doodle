@@ -193,15 +193,15 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     throw doodle_error{"输出路径为空"};
   }
 
-  auto k_view = M3dView::active3dView(&k_s);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  // auto k_view = M3dView::active3dView(&k_s);
+  // CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
   MDagPath k_camera_path{};
   k_s = k_select.getDagPath(0, k_camera_path);
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-  k_s = k_view.setCamera(k_camera_path);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  // k_s = k_view.setCamera(k_camera_path);
+  // CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
   struct play_blast_guard {
     play_blast_guard() {}
@@ -221,23 +221,49 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
   auto k_render = MHWRender::MRenderer::theRenderer();
-  k_render->addNotification(&play_blast::captureCallback,
-                            p_post_render_notification_name.c_str(),
-                            MPassContext::kEndSceneRenderSemantic,
-                            (void*)this);
+  k_s           = k_render->addNotification(&play_blast::captureCallback,
+                                            p_post_render_notification_name.c_str(),
+                                            MPassContext::kEndSceneRenderSemantic,
+                                            (void*)this);
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
   k_render->setOutputTargetOverrideSize(1920, 1280);
   k_render->setPresentOnScreen(false);
   {
+    auto k_target_manager = k_render->getRenderTargetManager();
+    auto k_format         = MHWRender::kR8G8B8A8_UINT;
+    for (auto k_i = 0; k_i < MHWRender::kNumberOfRasterFormats; ++k_i) {
+      if (k_target_manager->formatSupportsSRGBWrite((MHWRender::MRasterFormat)k_i)) {
+        MGlobal::displayInfo(fmt::format("Format {} supports SRGBwrite", k_i).c_str());
+        k_format = (MHWRender::MRasterFormat)k_i;
+      }
+    }
+    auto k_target = k_target_manager->acquireRenderTarget(
+        MRenderTargetDescription{
+            "doodle",
+            1920,
+            1280,
+            1,
+            k_format,
+            1,
+            false});
     ///  开始后播放拍屏，并输出文件
     for (p_current_time = in_start;
          p_current_time <= in_end;
          ++p_current_time) {
-      MAnimControl::setCurrentTime(p_current_time);
-      k_view.refresh(false, true);
+      k_s = MAnimControl::setCurrentTime(p_current_time);
+      CHECK_MSTATUS_AND_RETURN_IT(k_s);
+      auto k_r = k_render->render("batch:ep0001_scShape2", &k_target, 1);
+      if (!k_r)
+        MGlobal::displayError("not render");
+
+      // k_s = k_view.refresh(false, true);
     }
+    k_target_manager->releaseRenderTarget(k_target);
   }
-  k_render->removeNotification(p_post_render_notification_name.c_str(),
-                               MPassContext::kEndSceneRenderSemantic);
+  k_s = k_render->removeNotification(p_post_render_notification_name.c_str(),
+                                     MPassContext::kEndSceneRenderSemantic);
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
   k_render->setPresentOnScreen(true);
   k_render->unsetOutputTargetOverrideSize();
 
@@ -258,7 +284,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     MGlobal::displayInfo(k_str);
   });
   k_image.create_video(k_ptr);
-  k_view.scheduleRefresh();
+  // k_view.scheduleRefresh();
   return k_s;
 }
 
