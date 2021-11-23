@@ -258,13 +258,17 @@ colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");
             k_format,
             1,
             false});
+    auto _k_cam_str = fmt::format("batch:{}", k_cam_fn.name().asUTF8());
+    MString k_cam_str{};
+    k_cam_str.setUTF8(_k_cam_str.c_str());
     ///  开始后播放拍屏，并输出文件
     for (p_current_time = in_start;
          p_current_time <= in_end;
          ++p_current_time) {
       k_s = MAnimControl::setCurrentTime(p_current_time);
       CHECK_MSTATUS_AND_RETURN_IT(k_s);
-      auto k_r = k_render->render("batch:ep0001_scShape2", &k_target, 1);
+
+      auto k_r = k_render->render(k_cam_str, &k_target, 1);
       if (!k_r)
         MGlobal::displayError("not render");
 
