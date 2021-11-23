@@ -68,18 +68,17 @@ MStatus initializePlugin(MObject obj) {
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
+  p_doodle_lib = doodle::new_object<doodle::doodle_lib>();
+  doodle::logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
+  doodle::core_set_init k_init{};
+  k_init.find_cache_dir();
+  k_init.config_to_user();
+  k_init.read_file();
+  p_doodle_lib->init_gui();
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode: {
     }
     case MGlobal::MMayaState::kInteractive: {
-      p_doodle_lib = doodle::new_object<doodle::doodle_lib>();
-      doodle::logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
-      doodle::core_set_init k_init{};
-      k_init.find_cache_dir();
-      k_init.config_to_user();
-      k_init.read_file();
-      p_doodle_lib->init_gui();
-
       p_doodle_app         = doodle::new_object<doodle::maya_plug::maya_plug_app>();
       p_doodle_app->p_done = true;
       p_doodle_app->hide_windows();
@@ -167,13 +166,12 @@ MStatus uninitializePlugin(MObject obj) {
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
+  //这里要关闭窗口或者清理库
+  doodle_maya_clear();
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode: {
     }
     case MGlobal::MMayaState::kInteractive: {
-      //这里要关闭窗口
-      doodle_maya_clear();
-
       //删除回调
       status = MMessage::removeCallback(clear_callback_id);
       CHECK_MSTATUS_AND_RETURN_IT(status);
