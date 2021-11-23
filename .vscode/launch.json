@@ -6,7 +6,10 @@
             "request": "launch",
             "program": "C:/Program Files/Autodesk/Maya2020/bin/maya.exe",
             "args": [
-                "-noAutoloadPlugins"
+                "-noAutoloadPlugins",
+                "-batch",
+                "-script",
+                "C:/Users/TD/Source/Doodle/tools/test.mel"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -31,15 +34,22 @@
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
+
+
         {
             "name": "Python maya debug",
             "type": "python",
             "request": "launch",
-            "python": "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayapy.exe",
+            "python": "C:\\Program Files\\Autodesk\\Maya2020\\bin\\mayapy.exe",
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [],
             "cwd": "${workspaceFolder}",
+            "env": {
+                "MAYA_PLUG_IN_PATH": "${workspaceFolder}/build/Ninja_release_plug/bin;${workspaceFolder}/script/maya/plug-ins",
+                "PATH": "${env:PATH};${workspaceFolder}/build/Ninja_release_plug/bin",
+                "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}/src/doodle_lib/resource;${workspaceFolder}/script/maya/scripts/scripts;${workspaceFolder}/script/maya/scripts"
+            }
         },
         {
             "name": "Doodle_debug",

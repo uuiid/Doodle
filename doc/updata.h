@@ -293,4 +293,10 @@
  *
  * @subsubsection updata_log_3133 版本3.1.33
  * @li 修复ue4 面板显示
+ * 
+ * @subsubsection updata_log_3133 版本3.1.33
+ * @li 更改maya 标签默认值
+ * @li 添加maya拍屏工具
+ * 
+ * 
  */
