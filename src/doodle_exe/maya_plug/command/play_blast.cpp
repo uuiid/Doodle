@@ -9,6 +9,7 @@
 #include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/thread_pool/long_term.h>
+#include <fmt/chrono.h>
 #include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
 #include <maya/MDagPath.h>
@@ -19,6 +20,7 @@
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
 #include <maya/MViewport2Renderer.h>
+#include <maya_plug/command/create_hud_node.h>
 namespace doodle::maya_plug {
 
 bool camera_filter::camera::operator<(const camera_filter::camera& in_rhs) const {
@@ -204,8 +206,16 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   // CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
   struct play_blast_guard {
-    play_blast_guard() {}
+    play_blast_guard() {
+      create_hud_node k_node{};
+      k_node.hide(false);
+    }
+    ~play_blast_guard() {
+      create_hud_node k_node{};
+      k_node.hide(true);
+    }
   };
+  play_blast_guard k_play_blast_guard{};
 
   MFnCamera k_cam_fn{k_camera_path, &k_s};
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
@@ -228,6 +238,8 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
   k_render->setOutputTargetOverrideSize(1920, 1280);
   k_render->setPresentOnScreen(false);
+  MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled true -outputTarget "renderer";
+colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");
   {
     auto k_target_manager = k_render->getRenderTargetManager();
     auto k_format         = MHWRender::kR8G8B8A8_UINT;
@@ -272,6 +284,57 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   image_sequence k_image{};
   k_image.set_path(k_f);
   k_image.set_out_path(get_out_path());
+  {
+    ///添加水印
+    details::watermark k_w{};
+    k_w.set_text(k_cam_fn.name().asUTF8());
+    k_w.set_text_point(0.1, 0.1);
+    k_w.set_text_color(25, 220, 2);
+    k_image.add_watermark(k_w);
+  }
+  {
+    ///添加水印
+    details::watermark k_w{};
+    /// 绘制当前帧和总帧数
+    auto k_len = MAnimControl::maxTime() - MAnimControl::minTime();
+    auto k_min = MAnimControl::minTime();
+    k_w.set_text([=](std::int32_t in_frame) -> string {
+      return fmt::format("{}/{}", k_min.as(MTime::uiUnit()) + in_frame, k_len.as(MTime::uiUnit()));
+    });
+    k_w.set_text_point(0.5, 0.1);
+    k_w.set_text_color(25, 220, 2);
+    k_image.add_watermark(k_w);
+  }
+  {
+    ///添加水印
+    /// 绘制摄像机avo
+    details::watermark k_w{};
+    k_w.set_text(fmt::format("FOV: {:.3f}", k_cam_fn.focalLength()));
+    k_w.set_text_point(0.91, 0.1);
+    k_w.set_text_color(25, 220, 2);
+    k_image.add_watermark(k_w);
+  }
+  {
+    ///添加水印
+    /// 绘制摄像机avo
+    details::watermark k_w{};
+    auto k_time = chrono::floor<chrono::minutes>(chrono::system_clock::now());
+    k_w.set_text(fmt::format("{}", k_time));
+    k_w.set_text_point(0.1, 0.91);
+    k_w.set_text_color(25, 220, 2);
+    k_image.add_watermark(k_w);
+  }
+  {
+    {
+      /// 制作人姓名
+      details::watermark k_w{};
+      k_w.set_text(fmt::format("{}", core_set::getSet().get_user_en()));
+      k_w.set_text_point(0.5, 0.91);
+      k_w.set_text_color(25, 220, 2);
+      k_image.add_watermark(k_w);
+    }
+  }
+
   auto k_ptr = new_object<long_term>();
   k_ptr->sig_progress.connect([&](rational_int in_rational_int) {
     MString k_str{};

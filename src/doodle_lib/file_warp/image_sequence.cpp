@@ -90,24 +90,32 @@ bool image_file::operator!=(const image_file &in_rhs) const {
 class watermark::impl {
  public:
   string p_text;
+  std::function<string(std::int32_t in_frame)> p_text_fun;
 
-  void add_to_image(cv::Mat &in_image);
+  std::double_t p_width_proportion;
+  std::double_t p_height_proportion;
+
+  cv::Scalar color{};
+
+  void add_to_image(cv::Mat &in_image, std::int32_t in_frame);
 };
 
-void watermark::impl::add_to_image(cv::Mat &in_image) {
+void watermark::impl::add_to_image(cv::Mat &in_image, std::int32_t in_frame) {
+  auto k_text      = p_text_fun ? p_text_fun(in_frame) : p_text;
+
   auto l_image     = in_image;
   int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
   double fontScale = 1;
   int thickness    = 2;
   int baseline     = 0;
-  auto textSize    = cv::getTextSize(p_text, fontFace,
+  auto textSize    = cv::getTextSize(k_text, fontFace,
                                      fontScale, thickness, &baseline);
   baseline += thickness;
   textSize.width += baseline;
   textSize.height += baseline;
   // center the text
-  cv::Point textOrg((in_image.cols - textSize.width) / 8,
-                    (in_image.rows + textSize.height) / 8);
+  cv::Point textOrg((in_image.cols - textSize.width) * this->p_width_proportion,
+                    (in_image.rows + textSize.height) * this->p_height_proportion);
 
   // draw the box
   cv::rectangle(l_image, textOrg + cv::Point(0, baseline),
@@ -116,12 +124,14 @@ void watermark::impl::add_to_image(cv::Mat &in_image) {
 
   cv::addWeighted(l_image, 0.7, in_image, 0.3, 0, in_image);
   // then put the text itself
-  cv::putText(in_image, p_text, textOrg, fontFace, fontScale,
-              cv::Scalar{0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+  cv::putText(in_image, k_text, textOrg, fontFace, fontScale,
+              this->color, thickness, cv::LineTypes::LINE_AA);
 }
 
 watermark::watermark()
     : p_impl(std::make_unique<impl>()) {
+  set_text_point(0.125, 0.125);
+  set_text_color(0, 255, 255);
 }
 void watermark::path_to_ep_sc(const FSys::path &in_path) {
   shot k_s{};
@@ -151,6 +161,21 @@ watermark::~watermark() = default;
 
 void watermark::set_text(const string &in_string) {
   p_impl->p_text = in_string;
+}
+
+void watermark::set_text_point(std::double_t in_width_proportion,
+                               std::double_t in_height_proportion) {
+  p_impl->p_height_proportion = in_height_proportion;
+  p_impl->p_width_proportion  = in_width_proportion;
+}
+void watermark::set_text_color(std::double_t v0,
+                               std::double_t v1,
+                               std::double_t v2,
+                               std::double_t v3) {
+  p_impl->color = {v0, v1, v2, v3};
+}
+void watermark::set_text(std::function<string(std::int32_t in_frame)> &&in_) {
+  p_impl->p_text_fun = std::move(in_);
 }
 
 }  // namespace details
@@ -226,15 +251,16 @@ void image_sequence::create_video(const long_term_ptr &in_ptr) {
                 return k_r.stem() < k_l.stem();
               });
 
-    for (auto &&path : p_paths) {
-      k_image = cv::imread(path.generic_string());
+    for (std::int32_t i = 0; i < p_paths.size(); ++i) {
+      auto path = p_paths[i];
+      k_image   = cv::imread(path.generic_string());
       if (k_image.empty())
         throw doodle_error("open cv not read image");
       if (k_image.cols != k_size.width || k_image.rows != k_size.height)
         cv::resize(k_image, k_image, k_size);
 
       for (auto &k_w : p_watermark_list) {
-        k_w.p_impl->add_to_image(k_image);
+        k_w.p_impl->add_to_image(k_image, i);
       }
       in_ptr->sig_progress(rational_int{1, k_size_len});
 

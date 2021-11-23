@@ -50,6 +50,12 @@ class DOODLELIB_API watermark {
   void path_to_ep_sc(const FSys::path& in_path);
   string get_clear_str() const;
   void set_text(const string& in_string);
+  void set_text(std::function<string(std::int32_t in_frame)>&& in_);
+  void set_text_point(std::double_t in_width_proportion, std::double_t in_height_proportion);
+  void set_text_color(std::double_t v0,
+                      std::double_t v1,
+                      std::double_t v2,
+                      std::double_t v3 = (0.0));
 };
 
 }  // namespace details
@@ -61,7 +67,6 @@ class DOODLELIB_API image_sequence
   FSys::path p_out_path;
   std::string p_name;
   std::vector<details::watermark> p_watermark_list;
-
 
   bool seanDir(const FSys::path& dir);
   static std::string show_str(const std::vector<FSys::path>& in_images);
