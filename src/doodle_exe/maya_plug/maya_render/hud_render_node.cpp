@@ -216,7 +216,8 @@ void doodle_info_node_draw_override::addUIDrawables(
   /// 制作人姓名
   {
     auto _k_s_ = fmt::format("{}", core_set::getSet().get_user());
-    MString k_s{_k_s_.c_str()};
+    MString k_s{};
+    k_s.setUTF8(_k_s_.c_str());
     std::int32_t k_size[] = {(std::int32_t)k_s.numChars() * s_font_size_, 30};
     drawManager.text2d(
         MPoint(w * 0.5f, h * 0.1f),

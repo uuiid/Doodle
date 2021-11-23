@@ -293,12 +293,16 @@
  *
  * @subsubsection updata_log_3133 版本3.1.33
  * @li 修复ue4 面板显示
- * 
+ *
  * @subsubsection updata_log_3134 版本3.1.34
  * @li 更改maya 标签默认值
  * @li 添加maya拍屏工具
- * 
+ *
  * @subsubsection updata_log_3135 版本3.1.35
  * @li 使maya后台拍屏和手动拍屏效果一致
- * 
+ *
+ *
+ * @subsubsection updata_log_3136 版本3.1.36
+ * @li 修正中文名称显示错误
+ * @li 修正opencv无法读取格式错误
  */
