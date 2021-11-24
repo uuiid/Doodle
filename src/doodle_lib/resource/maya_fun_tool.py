@@ -176,50 +176,37 @@ class camera:
         for cam in pymel.core.listCameras():
             pymel.core.ls(cam)[0].renderable.set(False)
         self.maya_cam.renderable.set(True)
-        # pymel.core.mel.eval(
-        #     "lookThroughModelPanel {} modelPanel1;".format(self.maya_cam.fullPath()))
-        # try:
-        #     # type: pymel.core.nodetypes.RenderGlobals
-        #     # pymel.core.hwRender(camera=self.maya_cam, h=1280, w=1920)
-        #     pymel.core.playblast(
-        #         viewer=False,
-        #         startTime=start_frame,
-        #         endTime=end_frame,
-        #         filename="{path}/{base_name}_playblast_{start}-{end}"
-        #         .format(
-        #             path=out_path,
-        #             base_name=doodle_work_space.maya_file.name_not_ex,
-        #             start=start_frame,
-        #             end=end_frame
-        #         ),
-        #         percent=100,
-        #         quality=100,
-        #         # offScreen=True,
-        #         # editorPanelName="modelPanel1",
-        #         format="qt",
-        #         compression="H.264",
-        #         widthHeight=(1920, 1280)
-        #     )
-        # except RuntimeError:
-        pymel.core.system.warning("QuickTime not found, use default value")
+
         print("create move {}".format(out_path))
-        pymel.core.playblast(
-            viewer=False,
-            startTime=start_frame,
-            endTime=end_frame,
-            filename="{path}/{base_name}_playblast_{start}-{end}"
-            .format(
-                path=out_path,
-                base_name=doodle_work_space.maya_file.name_not_ex,
-                start=start_frame,
-                end=end_frame
-            ),
-            percent=100,
-            quality=100,
-            widthHeight=(1920, 1280)
-            # editorPanelName="modelPanel4"
-            # offScreen=True
-        )
+        try:
+            pymel.core.comm_play_blast_maya(
+                startTime=start_frame,
+                endTime=end_frame,
+                filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
+                .format(
+                    path=out_path,
+                    base_name=doodle_work_space.maya_file.name_not_ex,
+                    start=start_frame,
+                    end=end_frame
+                )
+            )
+        except AttributeError as err:
+            print(str(err))
+            pymel.core.playblast(
+                viewer=False,
+                startTime=start_frame,
+                endTime=end_frame,
+                filename="{path}/{base_name}_playblast_{start}-{end}"
+                .format(
+                    path=out_path,
+                    base_name=doodle_work_space.maya_file.name_not_ex,
+                    start=start_frame,
+                    end=end_frame
+                ),
+                percent=100,
+                quality=100,
+                widthHeight=(1920, 1280)
+            )
 
     def unlock_cam(self):
         for att in ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v", "coi", "sa", "fd", "fl", "vfa", "hfa", "lsr", "fs"]:
@@ -1012,6 +999,7 @@ def __load_config__(obj):
 
 class open_file(object):
     maya_version = str(pymel.versions.current())[0:4]
+
     def __init__(self, in_config=None):
         # type:(str,config)->None
         self.cfg = in_config  # type: config
@@ -1030,6 +1018,13 @@ class open_file(object):
 
     def load_plug(self, str_list):
         # type: (list[str])->None
+        try:
+            # 这里加载一下我们自己的插件
+            pymel.core.system.loadPlugin(
+                "doodle_plug_{}".format(open_file.maya_version))
+        except RuntimeError as err:
+            print(str(err))
+
         for plug in str_list:
             pymel.core.system.loadPlugin(plug)
 
@@ -1059,7 +1054,8 @@ class open_file(object):
     def get_cloth_sim(self, qcloth_path=None):
         # type: (str) -> cloth_export
 
-        self.load_plug(["AbcExport", "AbcImport", "qualoth_{}_x64".format(open_file.maya_version)])
+        self.load_plug(["AbcExport", "AbcImport",
+                       "qualoth_{}_x64".format(open_file.maya_version)])
         self.open()
         pymel.core.playbackOptions(animationStartTime=950, min=950)
         pymel.core.currentTime(950)
