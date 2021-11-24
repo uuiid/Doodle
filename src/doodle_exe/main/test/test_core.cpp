@@ -26,6 +26,9 @@ TEST_CASE("core fmt", "[fun][fmt]") {
   REQUIRE(str == "0002");
   str = fmt::format("{}", doodle::FSys::path{"test"});
   REQUIRE(str == R"("test")");
+
+  str = fmt::to_string(doodle::episodes{1});
+  REQUIRE(str == R"(ep0001)");
 }
 
 TEST_CASE("core path ", "[fun][path]") {
