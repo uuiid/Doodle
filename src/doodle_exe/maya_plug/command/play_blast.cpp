@@ -145,7 +145,7 @@ void play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientD
 }
 
 play_blast::play_blast()
-    : p_save_path(core_set::getSet().get_cache_root("maya_play_blast").generic_string()),
+    : p_save_path(core_set::getSet().get_cache_root("maya_play_blast")),
       p_camera_path(),
       p_eps(),
       p_shot(),
@@ -172,13 +172,25 @@ FSys::path play_blast::get_file_path() const {
   k_cache_path /= fmt::format("{}_", p_uuid);
   return k_cache_path;
 }
+FSys::path play_blast::set_save_path(const FSys::path& in_save_path) {
+  p_save_path = in_save_path;
+  return get_out_path();
+}
+FSys::path play_blast::set_save_dir(const FSys::path& in_save_dir) {
+  p_save_path = in_save_dir / p_save_path.filename();
+  return get_out_path();
+}
+
+FSys::path play_blast::set_save_filename(const FSys::path& in_save_filename) {
+  p_save_path.replace_filename(in_save_filename);
+  return get_out_path();
+}
 
 FSys::path play_blast::get_out_path() const {
-  auto k_cache_path = p_save_path / fmt::format("{}", p_eps);
-  if (!FSys::exists(k_cache_path))
-    FSys::create_directories(k_cache_path);
-  k_cache_path /= fmt::format("{}_{}.mp4", p_eps, p_shot);
-  return k_cache_path;
+  if (!FSys::exists(p_save_path.parent_path()))
+    FSys::create_directories(p_save_path.parent_path());
+  // k_cache_path /= fmt::format("{}_{}.mp4", p_eps, p_shot);
+  return p_save_path;
 }
 
 void play_blast::set_camera(const MString& in_dag_path) {
@@ -408,13 +420,10 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
 bool play_blast::conjecture_ep_sc() {
   FSys::path p_current_path{MFileIO::currentFile().asUTF8()};
-  return p_eps.analysis(p_current_path) &&
-         p_shot.analysis(p_current_path);
-}
-
-FSys::path play_blast::set_save_path(const FSys::path& in_save_path) {
-  p_save_path = in_save_path;
-  return get_out_path();
+  auto k_r = p_eps.analysis(p_current_path) &&
+             p_shot.analysis(p_current_path);
+  set_save_filename(p_current_path.filename());
+  return k_r;
 }
 
 }  // namespace doodle::maya_plug

@@ -66,7 +66,6 @@ class play_blast {
   FSys::path get_file_path(const MTime& in_time) const;
   FSys::path get_file_path() const;
   FSys::path get_file_dir() const;
-  
 
  public:
   play_blast();
@@ -76,8 +75,11 @@ class play_blast {
 
   bool conjecture_camera();
   bool conjecture_ep_sc();
-  
+
   FSys::path set_save_path(const FSys::path& in_save_path);
+  FSys::path set_save_dir(const FSys::path& in_save_dir);
+  FSys::path set_save_filename(const FSys::path& in_save_filename);
+
   FSys::path get_out_path() const;
 };
 
