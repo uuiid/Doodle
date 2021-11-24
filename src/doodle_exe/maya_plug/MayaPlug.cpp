@@ -148,7 +148,8 @@ MStatus initializePlugin(MObject obj) {
   /// 注册拍屏命令
   status = k_plugin.registerCommand(
       ::doodle::maya_plug::comm_play_blast_maya::comm_name,
-      &::doodle::maya_plug::comm_play_blast_maya::creator);
+      &::doodle::maya_plug::comm_play_blast_maya::creator,
+      &::doodle::maya_plug::comm_play_blast_maya::syntax);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   /// 注册创建hud命令
   status = k_plugin.registerCommand(
