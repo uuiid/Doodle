@@ -308,4 +308,8 @@
  *
  * @subsubsection updata_log_3137 版本3.1.37
  * @li 修复再复杂的场景中无法得到输出（未知问题，采用其他方案渲染）
+ * 
+ * @subsubsection updata_log_3137 版本3.1.37
+ * @li 修改批处理中maya的拍屏方法
+ * 
  */
