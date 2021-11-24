@@ -305,4 +305,7 @@
  * @subsubsection updata_log_3136 版本3.1.36
  * @li 修正中文名称显示错误
  * @li 修正opencv无法读取格式错误
+ *
+ * @subsubsection updata_log_3137 版本3.1.37
+ * @li 修复再复杂的场景中无法得到输出（未知问题，采用其他方案渲染）
  */
