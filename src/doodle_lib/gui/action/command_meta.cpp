@@ -110,6 +110,7 @@ bool comm_ass_eps::render() {
       imgui::SameLine();
       if (imgui::Button(p_show_str["删除"].c_str())) {
         p_root.remove<episodes>();
+        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
       }
     }
   }
@@ -159,6 +160,7 @@ bool comm_ass_shot::render() {
       imgui::SameLine();
       if (imgui::Button(p_show_str["删除"].c_str())) {
         p_root.remove<shot>();
+        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
       }
     }
   }
@@ -220,6 +222,7 @@ bool comm_assets::render() {
       imgui::SameLine();
       if (imgui::Button(p_show_str["删除"].c_str())) {
         p_root.remove<assets>();
+        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
       }
     }
     if (imgui::Button(p_show_str["添加条目"].c_str())) {
@@ -283,6 +286,7 @@ bool comm_ass_season::render() {
       imgui::SameLine();
       if (imgui::Button(p_show_str["删除"].c_str())) {
         p_root.remove<season>();
+        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
       }
     }
   }
@@ -322,6 +326,7 @@ bool comm_ass_file_attr::render() {
     if (!p_root.get<database>().has_child()) {
       if (imgui::Button(p_show_str["删除"].c_str())) {
         p_root.remove<assets_file>();
+        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
       }
     }
     p_time_widget->frame_render();

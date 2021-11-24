@@ -91,8 +91,8 @@ class assets_widget::impl {
     p_select_path_ = p_select_curr_path_;
     // p_all_selected.clear();
     // p_all_selected.insert(in_obj);
-    auto k_reg = g_reg();
-    p_ctx_list = in_ptr;
+    auto k_reg     = g_reg();
+    p_ctx_list     = in_ptr;
     k_reg->set<handle_list>(p_ctx_list);
     // auto comm  = command_list<comm_ass_eps,
     //                          comm_ass_shot,
@@ -136,6 +136,17 @@ class assets_widget::impl {
    */
   void render() {
     render_season();
+    handle_list k_l{};
+    auto k_g = g_reg();
+    for (auto& k : k_g->view<episodes, shot>(entt::exclude<season>)) {
+      k_l.push_back(make_handle(k));
+    }
+    render_eps(k_l);
+    k_l.clear();
+    for (auto& k : k_g->view<shot>(entt::exclude<season, episodes>)) {
+      k_l.push_back(make_handle(k));
+    }
+    render_shot(k_l);
     render_assets();
     observer_main();
 
@@ -209,7 +220,7 @@ class assets_widget::impl {
 
   void render_season() {
     auto k_g = g_reg();
-    auto k_v = k_g->view<season>();
+    auto k_v = k_g->view<season, episodes, shot>();
     std::set<season> k_list;
     std::multimap<season, entt::handle> k_map;
     for (auto& k_ : k_v) {
@@ -250,6 +261,7 @@ class assets_widget::impl {
       }
     }
   }
+
   void render_eps(const handle_list& in_list) {
     std::set<episodes> k_list;
     std::multimap<episodes, entt::handle> k_map;
