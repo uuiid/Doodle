@@ -9,18 +9,17 @@
 #include <doodle_lib/exception/exception.h>
 #include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
-#include <doodle_lib/thread_pool/long_term.h>
 #include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
 #include <maya/MDagPath.h>
 #include <maya/MDrawContext.h>
 #include <maya/MFileIO.h>
 #include <maya/MFnCamera.h>
-#include <maya/MFnDagNode.h>
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
-#include <maya/MViewport2Renderer.h>
 #include <maya_plug/command/create_hud_node.h>
+
+
 namespace doodle::maya_plug {
 
 comm_play_blast::comm_play_blast()

@@ -399,6 +399,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     MString k_str{};
     k_str.setUTF8(fmt::format("完成拍屏合成 : {}", get_out_path()).c_str());
     MGlobal::displayInfo(k_str);
+    FSys::remove_all(get_file_dir());
   });
   k_image.create_video(k_ptr);
   // k_view.scheduleRefresh();
