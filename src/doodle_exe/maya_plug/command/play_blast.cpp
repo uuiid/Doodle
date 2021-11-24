@@ -15,6 +15,7 @@
 #include <maya/MDagPath.h>
 #include <maya/MDrawContext.h>
 #include <maya/MFileIO.h>
+#include <maya/MFnAttribute.h>
 #include <maya/MFnCamera.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MGlobal.h>
@@ -91,6 +92,25 @@ bool camera_filter::conjecture() {
   return true;
 }
 
+MStatus camera_filter::set_render_cam(const MObject& in_obj) {
+  MStatus k_s;
+  MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  for (; !k_it.isDone(); k_it.next()) {
+    MDagPath k_path{};
+    k_s = k_it.getPath(k_path);
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+    MFnDagNode k_cam_fn{k_path, &k_s};
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+    auto k_plug = k_cam_fn.findPlug("renderable", &k_s);
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    k_plug.setBool(k_cam_fn.object() == in_obj);
+  }
+  return k_s;
+}
+
 string play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
 
 void play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientData) {
@@ -147,6 +167,11 @@ FSys::path play_blast::get_file_path(const MTime& in_time) const {
                               boost::numeric_cast<std::int32_t>(in_time.as(MTime::uiUnit())));
   return k_cache_path;
 }
+FSys::path play_blast::get_file_path() const {
+  auto k_cache_path = get_file_dir();
+  k_cache_path /= fmt::format("{}_", p_uuid);
+  return k_cache_path;
+}
 
 FSys::path play_blast::get_out_path() const {
   auto k_cache_path = p_save_path / fmt::format("{}", p_eps);
@@ -195,15 +220,9 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     throw doodle_error{"输出路径为空"};
   }
 
-  // auto k_view = M3dView::active3dView(&k_s);
-  // CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
   MDagPath k_camera_path{};
   k_s = k_select.getDagPath(0, k_camera_path);
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-  // k_s = k_view.setCamera(k_camera_path);
-  // CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
   struct play_blast_guard {
     play_blast_guard() {
@@ -229,52 +248,90 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
   k_s = k_displayResolution.setBool(false);
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-  auto k_render = MHWRender::MRenderer::theRenderer();
-  k_s           = k_render->addNotification(&play_blast::captureCallback,
-                                            p_post_render_notification_name.c_str(),
-                                            MPassContext::kEndSceneRenderSemantic,
-                                            (void*)this);
+  k_s = camera_filter::set_render_cam(k_cam_fn.object());
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  k_render->setOutputTargetOverrideSize(1920, 1280);
-  k_render->setPresentOnScreen(false);
-  MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled true -outputTarget "renderer";
-colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");
-  {
-    auto k_target_manager = k_render->getRenderTargetManager();
-    auto k_target = k_target_manager->acquireRenderTarget(
-        MRenderTargetDescription{
-            "doodle",
-            1920,
-            1280,
-            1,
-            MHWRender::kR8G8B8A8_UINT,
-            1,
-            false});
-    auto _k_cam_str = fmt::format("batch:{}", k_cam_fn.name().asUTF8());
-    MString k_cam_str{};
-    k_cam_str.setUTF8(_k_cam_str.c_str());
-    ///  开始后播放拍屏，并输出文件
-    for (p_current_time = in_start;
-         p_current_time <= in_end;
-         ++p_current_time) {
-      k_s = MAnimControl::setCurrentTime(p_current_time);
-      CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-      auto k_r = k_render->render(k_cam_str, &k_target, 1);
-      if (!k_r)
-        MGlobal::displayError("not render");
+  k_s = MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled true -outputTarget "renderer";
+  colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-      // k_s = k_view.refresh(false, true);
+  auto k_view = M3dView::active3dView(&k_s);
+  if (k_s) {
+    k_s = k_view.setCamera(k_camera_path);
+    CHECK_MSTATUS(k_s);
+    if (!k_s) {
+      MGlobal::displayError("not set cam view");
     }
-    k_target_manager->releaseRenderTarget(k_target);
+  } else {
+    MGlobal::displayError("not find view");
   }
-  k_s = k_render->removeNotification(p_post_render_notification_name.c_str(),
-                                     MPassContext::kEndSceneRenderSemantic);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-  k_render->setPresentOnScreen(true);
-  k_render->unsetOutputTargetOverrideSize();
+  //   auto k_render = MHWRender::MRenderer::theRenderer();
+  //   k_s           = k_render->addNotification(&play_blast::captureCallback,
+  //                                             p_post_render_notification_name.c_str(),
+  //                                             MPassContext::kEndSceneRenderSemantic,
+  //                                             (void*)this);
+  //   CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  //   k_render->setOutputTargetOverrideSize(1920, 1280);
+  //   k_render->setPresentOnScreen(false);
+  //   {
+  //     auto k_target_manager = k_render->getRenderTargetManager();
+  //     auto k_target         = k_target_manager->acquireRenderTarget(
+  //                 MRenderTargetDescription{
+  //             "doodle",
+  //             1920,
+  //             1280,
+  //             1,
+  //             MHWRender::kR8G8B8A8_UINT,
+  //             1,
+  //             false});
+
+  //     auto _k_cam_str = fmt::format("batch:{}", MFnDagNode{k_camera_path.transform()}.name().asUTF8());
+  //     MString k_cam_str{};
+  //     k_cam_str.setUTF8(_k_cam_str.c_str());
+  //     MGlobal::displayInfo(k_cam_str);
+  //     ///  开始后播放拍屏，并输出文件
+  //     for (p_current_time = in_start;
+  //          p_current_time <= in_end;
+  //          ++p_current_time) {
+  //       k_s = MAnimControl::setCurrentTime(p_current_time);
+  //       CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+  //       auto k_r = k_render->render(k_cam_str, &k_target, 1);
+  //       if (!k_r)
+  //         MGlobal::displayError("not render");
+
+  //       // k_s = k_view.refresh(false, true);
+  //     }
+  //     k_target_manager->releaseRenderTarget(k_target);
+  //   }
+  //   k_s = k_render->removeNotification(p_post_render_notification_name.c_str(),
+  //                                      MPassContext::kEndSceneRenderSemantic);
+  //   CHECK_MSTATUS_AND_RETURN_IT(k_s);
+
+  //   k_render->setPresentOnScreen(true);
+  //   k_render->unsetOutputTargetOverrideSize();
+
+  auto k_mel = fmt::format(R"(playblast 
+-compression "png" 
+-filename "{}" 
+-format "image" 
+-height 1280 
+-offScreen 
+-percent 100 
+-quality 100 
+-viewer false 
+-width 1920
+-startTime {}
+-endTime {}
+;
+)",
+                           get_file_path().generic_string(),
+                           in_start.as(MTime::uiUnit()),
+                           in_end.as(MTime::uiUnit()));
+  k_s        = MGlobal::executeCommand(k_mel.c_str());
+  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled false -outputTarget "renderer";)");
 
   auto k_f = get_file_dir();
 
@@ -284,7 +341,7 @@ colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");
   {
     ///添加水印
     details::watermark k_w{};
-    k_w.set_text(k_cam_fn.name().asUTF8());
+    k_w.set_text(MFnDagNode{k_camera_path.transform()}.name().asUTF8());
     k_w.set_text_point(0.1, 0.1);
     k_w.set_text_color(25, 220, 2);
     k_image.add_watermark(k_w);

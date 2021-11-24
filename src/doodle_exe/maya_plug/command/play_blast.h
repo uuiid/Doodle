@@ -45,6 +45,8 @@ class camera_filter {
   MObject get() const;
 
   bool conjecture();
+
+  static MStatus set_render_cam(const MObject& in_obj);
 };
 
 class play_blast {
@@ -62,7 +64,9 @@ class play_blast {
   static void captureCallback(MHWRender::MDrawContext& context, void* clientData);
 
   FSys::path get_file_path(const MTime& in_time) const;
+  FSys::path get_file_path() const;
   FSys::path get_file_dir() const;
+  
 
  public:
   play_blast();
