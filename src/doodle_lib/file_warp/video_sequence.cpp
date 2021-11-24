@@ -1,10 +1,10 @@
-#include <doodle_lib/exception/exception.h>
-#include <doodle_lib/file_warp/video_sequence.h>
-#include <doodle_lib/metadata/episodes.h>
-#include <doodle_lib/metadata/shot.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/exception/exception.h>
+#include <doodle_lib/file_warp/video_sequence.h>
 #include <doodle_lib/lib_warp/std_warp.h>
+#include <doodle_lib/metadata/episodes.h>
+#include <doodle_lib/metadata/shot.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 
 #include <opencv2/opencv.hpp>
@@ -27,15 +27,15 @@ void video_sequence::connect_video(const FSys::path& path, const long_term_ptr& 
   if (!FSys::exists(path.parent_path()))
     FSys::create_directories(path.parent_path());
 
-  auto k_video_input   = cv::VideoCapture{};
-  const static cv::Size k_size{1920, 1080};
+  auto k_video_input = cv::VideoCapture{};
+  const static cv::Size k_size{1920, 1280};
   auto k_video_out     = cv::VideoWriter{path.generic_string(),
                                      cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
                                      25,
                                      k_size};
   auto k_image         = cv::Mat{};
   auto k_image_resized = cv::Mat{};
-  const auto k_len = p_paths.size();
+  const auto k_len     = p_paths.size();
 
   for (const auto& path : p_paths) {
     if (k_video_input.open(path.generic_string())) {
@@ -63,13 +63,29 @@ void video_sequence::connect_video(const FSys::path& path, const long_term_ptr& 
   }
 }
 
-std::string video_sequence::set_shot_and_eps(const shot_ptr& in_shot, const episodes_ptr& in_episodes) {
+std::string video_sequence::set_shot_and_eps(const entt::handle& in_shot, const entt::handle& in_episodes) {
   if (in_shot && in_episodes) {
-    p_name = fmt::format("{}_{}.mp4", in_episodes->str(), in_shot->str());
+    p_name = fmt::format("{}_{}.mp4", in_episodes.get<episodes>().str(), in_shot.get<shot>().str());
   } else if (in_shot) {
-    p_name = fmt::format("{}.mp4", in_shot->str());
+    p_name = fmt::format("{}.mp4", in_shot.get<shot>().str());
   } else if (in_episodes) {
-    p_name = fmt::format("{}.mp4", in_episodes->str());
+    p_name = fmt::format("{}.mp4", in_episodes.get<episodes>().str());
+  }
+  return p_name;
+}
+
+std::string video_sequence::set_shot_and_eps(const FSys::path& in_path) {
+  shot k_s{};
+  episodes k_ep{};
+  const auto k_b_s = k_s.analysis(in_path);
+  const auto k_b_e = k_ep.analysis(in_path);
+
+  if (k_b_s && k_b_e) {
+    p_name = fmt::format("{}_{}.mp4", k_ep.str(), k_s.str());
+  } else if (k_b_s) {
+    p_name = fmt::format("{}.mp4", k_s.str());
+  } else if (k_b_e) {
+    p_name = fmt::format("{}.mp4", k_ep.str());
   }
   return p_name;
 }
@@ -91,7 +107,8 @@ long_term_ptr video_sequence_async::connect_video(const FSys::path& path) const 
     k_out_path = path;
 
   auto k_term = new_object<long_term>();
-  auto k_fut  = doodle_lib::Get().get_thread_pool()->enqueue(
+  k_term->set_name(fmt::format("连接视频"));
+  auto k_fut = doodle_lib::Get().get_thread_pool()->enqueue(
       [self = p_video, k_out_path, k_term]() { self->connect_video(k_out_path, k_term); });
   k_term->p_list.push_back(std::move(k_fut));
   return k_term;

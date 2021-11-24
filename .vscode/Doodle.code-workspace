@@ -135,30 +135,35 @@
 			"xstring": "cpp",
 			"xtr1common": "cpp",
 			"xtree": "cpp",
-			"xutility": "cpp"
+			"xutility": "cpp",
+			"*.ipp": "cpp"
 		},
 		"testMate.cpp.log.logSentry": "disable_3",
 		"testMate.cpp.test.advancedExecutables": [
 			{
 				"name": "doodle_test",
-				"pattern": "b_Ninja_VS19_Ni_64_qt515_Debug/**/doodle_test.exe",
+				"pattern": "build/Ninja_debug/**/doodle_test.exe",
 				"cwd": "${absDirpath}"
 			}
 		],
 		"cmake.buildDirectory": "${workspaceFolder}/build/b_${generator}_${buildKit}_${buildType}",
 		"cmake.configureSettings": {},
-		"python.envFile": "${workspaceFolder}/.env",
+		"python.envFile": "${workspaceFolder}/env.env",
 		"python.formatting.autopep8Args": [
 			"--ignore",
 			"E402"
 		],
 		"python.autoComplete.extraPaths": [
 			"c:\\Users\\TD\\.vscode\\extensions\\fxtd-odyssey.mayapy-1.0.4\\mayaSDK",
-			"${workspaceFolder}/src/DoodleLib/resource"
+			"${workspaceFolder}/src/doodle_lib/resource",
+			"${workspaceFolder}/script/maya/scripts",
+			"${workspaceFolder}/script/maya/scripts/scripts"
 		],
 		"python.analysis.extraPaths": [
 			"c:\\Users\\TD\\.vscode\\extensions\\fxtd-odyssey.mayapy-1.0.4\\mayaSDK",
-			"${workspaceFolder}/src/DoodleLib/resource"
+			"${workspaceFolder}/src/doodle_lib/resource",
+			"${workspaceFolder}/script/maya/scripts",
+			"${workspaceFolder}/script/maya/scripts/scripts"
 		],
 		"editor.tabSize": 2,
 		"editor.fontFamily": " 'Fira Code',Consolas, monospace",
@@ -181,12 +186,40 @@
 		"testMate.cpp.test.workingDirectory": "${absDirpath}",
 		"editor.formatOnSaveMode": "modifications",
 		"todo-tree.regex.regexCaseSensitive": false,
-		"todo-tree.regex.regex": "((\\* @|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])",
+		"todo-tree.regex.regex": "((@|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])",
 		"todo-tree.tree.showBadges": true,
 		"markdownlint.config": {
 			"MD033": false
 		},
-		"git.fetchOnPull": true
+		"vscode-cppinsights.path": "C:\\insights.exe",
+		"vscode-cppinsights.buildDirectory": "${workspaceFolder}/build/Ninja_debug/",
+		"vscode-cppinsights.buildDirectoryPrioritizeCMake": false,
+		"git.fetchOnPull": true,
+		"taskExplorer.exclude": [
+			"**/.vscode-test/**",
+			"**/bin/**",
+			"**/build/**",
+			"**/CompiledOutput/**",
+			"**/dist/**",
+			"**/doc/**",
+			"**/ext/**",
+			"**/out/**",
+			"**/output/**",
+			"**/packages/**",
+			"**/release/**",
+			"**/releases/**",
+			"**/samples/**",
+			"**/sdks/**",
+			"**/static/**",
+			"**/target/**",
+			"**/test/**",
+			"**/third_party/**",
+			"**/vendor/**",
+			"**/work/**",
+			"**/external/**",
+			"**/resource/**",
+			"**/.venv/**"
+		]
 	},
 	"launch": {
 		"version": "0.2.0",

@@ -7,15 +7,6 @@
 #include <maya/MObject.h>
 #include <maya_plug/gui/maya_plug_app.h>
 namespace doodle::MayaPlug {
-doodleCreate::doodle_data* doodleCreate::d_ptr_ = nullptr;
-
-struct doodleCreate::doodle_data {
- public:
-  static doodle_lib_ptr p_doodle_lib;
-  static std::shared_ptr<doodle_app> p_doodle_app;
-};
-doodle_lib_ptr doodleCreate::doodle_data::p_doodle_lib              = nullptr;
-std::shared_ptr<doodle_app> doodleCreate::doodle_data::p_doodle_app = nullptr;
 
 doodleCreate::doodleCreate()
     : MPxCommand() {
@@ -29,47 +20,17 @@ void* doodleCreate::create() {
 
 MStatus doodleCreate::doIt(const MArgList& list) {
   using namespace doodle;
-  if (!doodleCreate::d_ptr_) {
-    doodleCreate::d_ptr_ = new doodle_data;
+  // bool k_d = doodle::doodle_app::Get()->p_done;
+  if (doodle::doodle_app::Get()->p_done) {
+    doodle::doodle_app::Get()->loop_begin();
+    doodle::doodle_app::Get()->p_done = false;
   }
-  if (doodleCreate::d_ptr_ && !doodleCreate::d_ptr_->p_doodle_lib) {
-    doodleCreate::d_ptr_->p_doodle_lib = new_object<doodle_lib>();
-    logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
-    core_set_init k_init{};
-    k_init.find_cache_dir();
-    k_init.config_to_user();
-    k_init.find_maya();
-    k_init.read_file();
 
-    doodleCreate::d_ptr_->p_doodle_lib->init_gui();
-  }
-  if (!(d_ptr_->p_doodle_app)) {
-    d_ptr_->p_doodle_app = new_object<::doodle::maya_plug::maya_plug_app>();
-  }
-  if (!d_ptr_->p_doodle_app->valid()) {
-    d_ptr_->p_doodle_app = new_object<::doodle::maya_plug::maya_plug_app>();
-  }
-  if (d_ptr_->p_doodle_app->p_done) {
-    d_ptr_->p_doodle_app->p_done = false;
-  }
-  d_ptr_->p_doodle_app->run();
-
-  return MStatus::kFailure;
+  return MStatus::kSuccess;
 }
 
 bool doodleCreate::isUndoable() const {
   return false;
-}
-
-void doodleCreate::clear_() {
-  if (doodleCreate::d_ptr_) {
-    if (d_ptr_->p_doodle_app)
-      d_ptr_->p_doodle_app->p_done = true;
-    doodle::core_set::getSet().p_stop = true;
-    d_ptr_->p_doodle_app.reset();
-    doodleCreate::d_ptr_->p_doodle_lib.reset();
-    delete d_ptr_;
-  }
 }
 
 }  // namespace doodle::MayaPlug

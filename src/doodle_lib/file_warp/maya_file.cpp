@@ -62,6 +62,7 @@ bool maya_file::checkFile() {
 // };
 
 bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_term) {
+  bool k_r{true};
   boost::process::ipstream k_in{};
   boost::process::ipstream k_in2{};
   DOODLE_LOG_INFO("命令 {}", boost::locale::conv::utf_to_utf<char>(in_com));
@@ -74,49 +75,60 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
       boost::process::windows::hide
 #endif  //_WIN32
   };
-  auto fun  = std::async(std::launch::async,
-                         [&k_c, &k_in, &in_term]() {
-                          auto str_r = std::string{};
-                          while (k_c.running()) {
-                            if (std::getline(k_in, str_r) && !str_r.empty()) {
-                              in_term->sig_message_result(conv::to_utf<char>(str_r, "GBK") + "\n", long_term::warning);
-                              in_term->sig_progress(rational_int{1, 50});
-                            }
-                          }
-                         });
-  auto fun2 = std::async(std::launch::async,
-                         [&k_c, &k_in2, &in_term, &in_com]() {
-                           auto str_r2 = std::string{};
-                           //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
-                           const static std::wregex fatal_error_znch{
-                               LR"(致命错误.尝试在 C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab] 中保存)"};
+  std::string str_r{};
+  std::string str_r2{};
+  //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
+  const static std::wregex fatal_error_znch{
+      LR"(致命错误.尝试在 C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab] 中保存)"};
 
-                           // Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
-                           const static std::wregex fatal_error_en_us{
-                               LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab])"};
+  // Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
+  const static std::wregex fatal_error_en_us{
+      LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab])"};
 
-                           while (k_c.running()) {
-                             if (std::getline(k_in2, str_r2) && !str_r2.empty()) {
-                               auto str = conv::to_utf<char>(str_r2, "GBK");
-                               in_term->sig_message_result(str + "\n", long_term::info);
-                               auto wstr = conv::utf_to_utf<wchar_t>(str);
-                               if (std::regex_search(wstr.c_str(), fatal_error_znch) || std::regex_search(wstr.c_str(), fatal_error_en_us)) {
-                                 auto info_str = fmt::format("检测到maya结束崩溃,结束进程: 解算命令是 {}", conv::utf_to_utf<char>(in_com));
-                                 DOODLE_LOG_WARN(info_str);
-                                 in_term->sig_message_result(info_str, long_term::warning);
-                                 k_c.terminate();
-                                 in_term->set_state(long_term::fail);
-                               }
-                               in_term->sig_progress(rational_int{1, 5000});
-                             }
-                           }
-                         });
-  using namespace chrono;
-  while (!k_c.wait_for(1s)) {
+  std::atomic_int16_t k_time_i{0};
+  auto k_fun  = std::async([&]() {
+    const auto k_time = core_set::getSet().timeout;
+    for (; (k_time_i < k_time && k_c.running()); ++k_time_i) {
+      using namespace std::chrono_literals;
+      std::this_thread::sleep_for(1s);
+    }
+    if (k_time_i >= k_time) {
+      in_term->set_state(long_term::fail);
+      auto info_str = "解算文件超时， 请检查文件";
+      DOODLE_LOG_WARN(info_str);
+      in_term->sig_message_result(info_str, long_term::warning);
+      k_r = false;
+    }
+    k_c.terminate();
+    k_in.close();
+    k_in2.close();
+   });
+
+  auto k_fun2 = std::async([&]() {
+    while (k_c.running() && std::getline(k_in, str_r) && !str_r.empty()) {
+      k_time_i = 0;
+      in_term->sig_message_result(conv::to_utf<char>(str_r, "GBK") + "\n", long_term::warning);
+      in_term->sig_progress(rational_int{1, 50});
+    }
+  });
+
+  while (k_c.running() && std::getline(k_in2, str_r2) && !str_r2.empty()) {
+    k_time_i = 0;
+    auto str = conv::to_utf<char>(str_r2, "GBK");
+    in_term->sig_message_result(str + "\n", long_term::info);
+    auto wstr = conv::utf_to_utf<wchar_t>(str);
+    if (std::regex_search(wstr.c_str(), fatal_error_znch) || std::regex_search(wstr.c_str(), fatal_error_en_us)) {
+      auto info_str = fmt::format("检测到maya结束崩溃,结束进程: 解算命令是 {}", conv::utf_to_utf<char>(in_com));
+      DOODLE_LOG_WARN(info_str);
+      in_term->sig_message_result(info_str, long_term::warning);
+      k_c.terminate();
+      in_term->set_state(long_term::fail);
+      k_r = false;
+    }
+    in_term->sig_progress(rational_int{1, 5000});
   }
-  k_in.close();
-  k_in2.close();
-  return true;
+
+  return k_r;
 }
 
 void maya_file::export_fbx_file(const FSys::path& file_path,
@@ -166,13 +178,14 @@ quit()
   if (in_ptr)
     in_ptr->sig_progress(rational_int{1, 40});
 
-  this->run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr);
-
-  if (in_ptr) {
-    in_ptr->sig_progress(rational_int{1, 40});
-    in_ptr->sig_finished();
+  std::this_thread::sleep_for(chrono::seconds{3});
+  in_ptr->sig_progress(rational_int{1, 40});
+  if (this->run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr)) {
     in_ptr->sig_message_result("导出完成 \n", long_term::warning);
+  } else {
+    in_ptr->sig_message_result(fmt::format("失败 {}\n", in_arg->file_path), long_term::warning);
   }
+  in_ptr->sig_finished();
 }
 
 void maya_file::qcloth_sim_file(const qcloth_arg_ptr& in_arg,
@@ -211,12 +224,15 @@ quit())",
       run_path.generic_string());
   if (in_ptr)
     in_ptr->sig_progress(rational_int{1, 40});
-  run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr);
-  if (in_ptr) {
-    in_ptr->sig_progress(rational_int{1, 40});
-    in_ptr->sig_finished();
-    in_ptr->sig_message_result(fmt::format("完成导出 :{} \n", in_arg->sim_path.generic_string()), long_term::warning);
+
+  std::this_thread::sleep_for(chrono::seconds{3});
+  in_ptr->sig_progress(rational_int{1, 40});
+  if (this->run_comm(conv::utf_to_utf<wchar_t>(run_com), in_ptr)) {
+    in_ptr->sig_message_result("导出完成 \n", long_term::warning);
+  } else {
+    in_ptr->sig_message_result(fmt::format("失败 {}\n", in_arg->sim_path), long_term::warning);
   }
+  in_ptr->sig_finished();
 }
 
 bool maya_file::is_maya_file(const FSys::path& in_path) {

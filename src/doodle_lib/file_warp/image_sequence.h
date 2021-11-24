@@ -1,8 +1,6 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/thread_pool/long_term.h>
-
-#include <boost/signals2.hpp>
 namespace doodle {
 
 namespace details {
@@ -38,6 +36,28 @@ class DOODLELIB_API image_file {
   operator bool() const;
 };
 using image_file_ptr = std::shared_ptr<image_file>;
+
+class DOODLELIB_API watermark {
+  friend image_sequence;
+  class impl;
+
+  std::shared_ptr<impl> p_impl;
+
+ public:
+  watermark();
+  ~watermark();
+
+  void path_to_ep_sc(const FSys::path& in_path);
+  string get_clear_str() const;
+  void set_text(const string& in_string);
+  void set_text(std::function<string(std::int32_t in_frame)>&& in_);
+  void set_text_point(std::double_t in_width_proportion, std::double_t in_height_proportion);
+  void set_text_color(std::double_t v0,
+                      std::double_t v1,
+                      std::double_t v2,
+                      std::double_t v3 = (0.0));
+};
+
 }  // namespace details
 
 class DOODLELIB_API image_sequence
@@ -46,38 +66,23 @@ class DOODLELIB_API image_sequence
   std::string p_Text;
   FSys::path p_out_path;
   std::string p_name;
-  struct asyn_arg {
-    std::vector<FSys::path> paths;
-    std::string Text;
-    long_term_ptr long_sig;
-
-    FSys::path out_path;
-  };
-  using asyn_arg_ptr = std::shared_ptr<asyn_arg>;
-  static void create_video(const asyn_arg_ptr& in_arg);
-  static std::string clearString(const std::string& str);
+  std::vector<details::watermark> p_watermark_list;
+  std::optional<std::double_t> p_pow;
 
   bool seanDir(const FSys::path& dir);
+  static std::string show_str(const std::vector<FSys::path>& in_images);
 
  public:
   image_sequence();
-  explicit image_sequence(const FSys::path& path_dir, const std::string& text = {});
+  explicit image_sequence(const FSys::path& path_dir);
 
   bool has_sequence();
+  void set_gamma(std::double_t in_pow);
   void set_path(const FSys::path& dir);
   void set_path(const std::vector<FSys::path>& in_images);
-  void set_text(const std::string& text);
-  void set_out_dir(const FSys::path& out_dir);
+  void set_out_path(const FSys::path& out_dir);
   FSys::path get_out_path() const;
-  static std::string show_str(const std::vector<FSys::path>& in_images);
-  /**
-   * @brief 使用这个可以将镜头和和集数还有水印， 路径等一起设置完成
-   *
-   * @param in_shot 要使用的镜头元数据
-   * @param in_episodes 要使用的集数元数据
-   * @return std::string 生成的水印
-   */
-  std::string set_shot_and_eps(const shot_ptr& in_shot, const episodes_ptr& in_episodes);
+  void add_watermark(const details::watermark& in_watermark);
   void create_video(const long_term_ptr& in_ptr);
 
   static bool is_image_sequence(const std::vector<FSys::path>& in_file_list);
@@ -109,10 +114,9 @@ class DOODLELIB_API image_sequence_async : public details::no_copy {
    *
    * @param image_dir 图片序列
    */
-  image_sequence_ptr set_path(const assets_path_vector_ptr& in_path);
+  // image_sequence_ptr set_path(const entt::handle& in_path);
 
   long_term_ptr create_video(const FSys::path& out_file);
   long_term_ptr create_video();
-
 };
 }  // namespace doodle

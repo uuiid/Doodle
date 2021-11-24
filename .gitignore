@@ -65,18 +65,12 @@ cmake-build-debug/
 /core/doodle_core.xmind
 /.idea/
 /.venv/
-/b_N*/
 /install*
-/script/tools/.*
-/script/tools/b_Ninja_*
 
 *.exp
-/script/uePlug/*/Plugins/Doodle/Intermediate/*
 #忽略python文件
 *.pyc
 .vscode/**.VC.**
-**/Plugins/Doodle/Binaries/**
 build
 *.mll
-*.manifest
 /imgui.ini

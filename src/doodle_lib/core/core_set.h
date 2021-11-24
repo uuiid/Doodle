@@ -94,6 +94,7 @@ class DOODLELIB_API core_set : public details::no_copy {
 
   std::string get_server_host();
 
+  std::uint32_t timeout;
   std::uint16_t p_max_thread;
   void set_max_tread(std::uint16_t in);
   /**
@@ -188,8 +189,25 @@ void core_set::serialize(Archive &ar, std::uint32_t const version) {
     ar &BOOST_SERIALIZATION_NVP(p_max_thread);
     ar &BOOST_SERIALIZATION_NVP(widget_show);
   }
+  if (version == 10) {
+    ar &BOOST_SERIALIZATION_NVP(p_user_);
+    ar &BOOST_SERIALIZATION_NVP(p_department_);
+    ar &BOOST_SERIALIZATION_NVP(p_ue4_setting);
+    ar &BOOST_SERIALIZATION_NVP(p_mayaPath);
+    ar &BOOST_SERIALIZATION_NVP(p_max_thread);
+    ar &BOOST_SERIALIZATION_NVP(widget_show);
+    ar &BOOST_SERIALIZATION_NVP(timeout);
+  }
 }
+
+namespace win {
+/// @todo 添加一个字体目录获得函数
+/// FOLDERID_Fonts
+FSys::path DOODLELIB_API get_font();
 FSys::path DOODLELIB_API get_pwd();
+
+}  // namespace win
+
 
 }  // namespace doodle
 namespace cereal {
@@ -202,5 +220,5 @@ void load_minimal(Archive const &, doodle::department &department, std::string c
   department = magic_enum::enum_cast<doodle::department>(value).value_or(doodle::department::None_);
 };
 }  // namespace cereal
-BOOST_CLASS_VERSION(doodle::core_set, 9);
+BOOST_CLASS_VERSION(doodle::core_set, 10);
 BOOST_CLASS_EXPORT_KEY(doodle::core_set);

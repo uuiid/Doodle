@@ -5,6 +5,38 @@
 
 #include <catch.hpp>
 
+TEST_CASE("convert", "[metadata]") {
+  using namespace doodle;
+  auto reg   = g_reg();
+  auto k_prj = make_handle(reg->create());
+  auto& k_p  = k_prj.emplace<project>();
+  REQUIRE(k_prj.all_of<project, tree_relationship, database>());
+
+  auto& k_d = k_prj.get<database>();
+
+  metadata_database k_data{k_d};
+  std::cout << k_data.DebugString() << std::endl;
+
+  auto k_s = make_handle(reg->create());
+  auto& s  = k_s.emplace<shot>();
+  s.set_shot(1);
+  s.set_shot_ab(shot::shot_ab_enum::A);
+  REQUIRE(k_s.all_of<shot, tree_relationship, database>());
+
+  auto& k_d2 = reg->get<database>(k_s);
+
+  metadata_database k_data2{k_d2};
+  std::cout << k_data2.DebugString() << std::endl;
+
+  auto k_tmp2 = make_handle(reg->create());
+  auto& k_d3  = k_tmp2.get_or_emplace<database>();
+  k_d3        = k_data2;
+
+  std::cout << "k_d3 id: " << k_d3.get_url_uuid() << std::endl;
+  std::cout << "k_d2 id: " << k_d2.get_url_uuid() << std::endl;
+  REQUIRE(k_d3 == k_d2);
+}
+
 TEST_CASE("time duration", "[metadata]") {
   using namespace doodle;
   using namespace doodle::chrono::literals;
@@ -59,7 +91,7 @@ TEST_CASE("time duration", "[metadata]") {
       my_t2.set_local_time(k_sys_time2);
       REQUIRE(my_t.work_duration(my_t2).count() == (36.583_a).epsilon(0.01));
     }
-    SECTION("ond day time"){
+    SECTION("ond day time") {
       k_sys_time1 = chrono::local_days(2021_y / 6 / 23_d) + 17h + 8min + 48s;
       k_sys_time2 = chrono::local_days(2021_y / 6 / 23_d) + 20h + 8min + 48s;
       my_t.set_local_time(k_sys_time1);
@@ -69,37 +101,6 @@ TEST_CASE("time duration", "[metadata]") {
   }
 }
 
-TEST_CASE("observable_container", "[metadata][observable]") {
-  using namespace doodle;
-  //  using my_str = observable_container<std::vector<std::string>, details::pre<std::vector<std::string> > >;
-  //  details::pre<std::vector<std::string> > k_pre{};
-  //  my_str test{&k_pre};
-
-  using my_str = observable_container<std::vector<std::string> >;
-  my_str test{};
-
-  test.sig_clear.connect([]() { std::cout << "clear" << std::endl; });
-  test.sig_insert.connect([](const std::string& val) { std::cout << val << std::endl; });
-  test.sig_erase.connect([](const std::string& val) { std::cout << val << std::endl; });
-  test.sig_push_back.connect([](const std::string& val) { std::cout << val << std::endl; });
-  test.sig_resize.connect([](std::size_t where) { std::cout << where << std::endl; });
-  test.sig_swap.connect([](const std::vector<std::string>& strs) {
-    for (auto& s : strs) {
-      std::cout << s << ",";
-    }
-    std::cout << std::endl;
-  });
-
-  test.push_back_sig({"test"});
-  test.push_back_sig({"tesat"});
-  test.push_back_sig({"22222"});
-  test.insert_sig(test.begin(), {"11111"});
-  test.erase_sig(test.begin());
-  test.resize_sig(2);
-  auto k_other = std::vector<std::string>{"1", "2", "3", "4"};
-  test.swap_sig(k_other);
-  test.clear_sig();
-}
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -130,150 +131,269 @@ TEST_CASE("test create metadata", "[server][metadata]") {
   auto k_server = rpc_server_handle{};
   auto& set     = core_set::getSet();
   k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
-
   doodle_lib::Get().init_gui();
-  auto k_fa = std::make_shared<metadata_factory>();
 
-  std::vector<metadata_ptr> k_delete_id;
   SECTION("create project") {
-    auto k_prj = std::make_shared<project>("D:/tmp", "case_tset");
-    k_prj->insert_into(k_fa);
-    REQUIRE(k_prj->getId() != 0);
-    DOODLE_LOG_INFO("prj id is {} ", k_prj->getId());
+    auto k_prj = make_handle();
+    k_prj.emplace<project>("D:/tmp", "case_tset");
+    k_prj.get<database_stauts>().set<need_save>();
+    k_prj.get<root_ref>().set_root(k_prj);
 
-    k_delete_id.push_back(k_prj);
+    for (size_t i = 0; i < 20; ++i) {
+      if (i > 15) {
+        for (size_t k = 0; k < 20; ++k) {
+          auto k_ass = make_handle();
+          k_ass.emplace<assets>(fmt::format("ues{}/a{}/test{}", i, k, i));
+          k_ass.get<database_stauts>().set<need_save>();
+          k_ass.get<root_ref>().set_root(k_prj);
+        }
+      } else {
+        entt::handle k_i1 = make_handle();
+        k_i1.emplace<season>(std::int32_t(i % 5));
+        k_i1.get<database_stauts>().set<need_save>();
+        k_i1.emplace<episodes>(i);
+        k_i1.get<root_ref>().set_root(k_prj);
 
-    SECTION("create other") {
-      episodes_ptr k_eps{};
-      shot_ptr k_shot_ptr{};
-      assets_ptr k_assets_ptr{};
-      auto i = 1;
-      /// 生成集数
-      for (int k_i = 0; k_i < 10; ++k_i) {
-        k_eps = std::make_shared<episodes>(k_prj, k_i);
-        k_prj->get_child().push_back(k_eps);
-        k_eps->updata_db(k_fa);
-
-        k_delete_id.push_back(k_eps);
-        if (k_i % 2 == 0) {
-          /// 生成镜头
-          for (int k_j = 0; k_j < 10; ++k_j) {
-            k_shot_ptr = std::make_shared<shot>(k_eps, k_j);
-            k_eps->get_child().push_back(k_shot_ptr);
-            k_shot_ptr->updata_db(k_fa);
-
-            k_delete_id.push_back(k_shot_ptr);
-
-            if (k_j % 3 == 0) {
-              /// 生成人名
-              for (int k_k = 0; k_k < 10; ++k_k) {
-                k_assets_ptr = std::make_shared<assets>(k_shot_ptr, fmt::format("tset_{}", k_k));
-                k_shot_ptr->get_child().push_back(k_assets_ptr);
-                k_assets_ptr->updata_db(k_fa);
-
-                k_delete_id.push_back(k_assets_ptr);
-                if (k_k % 3 == 0) {
-                  ///  生成具体条目
-                  for (int k_l = 0; k_l < 20; ++k_l) {
-                    auto k_file = std::make_shared<assets_file>(k_assets_ptr, k_assets_ptr->show_str());
-                    k_assets_ptr->get_child().push_back(k_file);
-
-                    using namespace chrono::literals;
-                    auto k_time = std::make_shared<time_point_wrap>(chrono::system_clock::now() - 3h * i);
-                    DOODLE_LOG_INFO("生成时间 {} ", k_time->show_str());
-                    ++i;
-
-                    auto k_u_i = dist(mt);
-                    k_file->set_time(k_time);
-                    k_file->set_user(user_list[k_u_i]);
-                    k_file->set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
-                    /// 插入数据
-                    k_file->updata_db(k_fa);
-                  }
-                }
-              }
-            }
+        for (size_t k = 0; k < 100; ++k) {
+          entt::handle k_i2 = make_handle();
+          k_i2.emplace<season>(std::int32_t(i % 5));
+          k_i2.emplace<episodes>().set_episodes(k);
+          auto& k_sho = k_i2.emplace<shot>();
+          k_sho.set_shot(k);
+          if (i % 2 == 0) {
+            k_sho.set_shot_ab(shot::shot_ab_enum::B);
           }
+          using namespace chrono::literals;
+          k_i2.emplace<assets_file>();
+          k_i2.get<database_stauts>().set<need_save>();
+          k_i2.get<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
+          auto k_u_i = dist(mt);
+          k_i2.get<assets_file>().set_user(user_list[k_u_i]);
+          k_i2.get<assets_file>().set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
+          k_i2.get<root_ref>().set_root(k_prj);
         }
       }
     }
+
+    SECTION("str meta tree") {
+      auto k_reg = g_reg();
+      {
+        auto k_v = k_reg->view<project>();
+        for (auto& k : k_v) {
+          std::cout << k_v.get<project>(k).get_name() << std::endl;
+        }
+      }
+      {
+        auto k_v = k_reg->view<season>();
+        for (auto& k : k_v) {
+          std::cout << k_v.get<season>(k).str() << std::endl;
+        }
+      }
+
+      {
+        auto k_v = k_reg->view<episodes>();
+        for (auto& k : k_v) {
+          std::cout << k_v.get<episodes>(k).str() << std::endl;
+        }
+      }
+      {
+        auto k_v = k_reg->view<shot>();
+        for (auto& k : k_v) {
+          std::cout << k_v.get<shot>(k).str() << std::endl;
+        }
+      }
+      {
+        auto k_v = k_reg->view<assets>();
+        for (auto& k : k_v) {
+          std::cout << k_v.get<assets>(k).str() << std::endl;
+        }
+      }
+    }
+    SECTION("install database") {
+      auto k_f = doodle_lib::Get().get_metadata_factory();
+      for (auto k : g_reg()->view<database_stauts, database>()) {
+        k_f->insert_into(k);
+      }
+    }
   }
-  //  for (auto& k_m : k_delete_id) {
-  //    k_m->deleteData(k_fa);
-  //  }
+}
+TEST_CASE("load_meta", "[metadata]") {
+  using namespace doodle;
+  auto k_server = rpc_server_handle{};
+  auto& set     = core_set::getSet();
+  k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
+  doodle_lib::Get().init_gui();
+  SECTION("load_meta") {
+    auto& k_lib = doodle_lib::Get();
+    k_lib.init_gui();
+    REQUIRE(k_lib.p_project_vector.size() >= 1);
+    auto k   = make_handle(k_lib.p_project_vector.front());
+
+    auto k_f = k_lib.get_metadata_factory();
+    k_f->select_indb_by_root(k);
+
+    auto k_reg = g_reg();
+    {
+      auto k_v = k_reg->view<project>();
+      for (auto& k : k_v) {
+        std::cout << k_v.get<project>(k).get_name() << std::endl;
+      }
+    }
+    {
+      auto k_v = k_reg->view<season>();
+      for (auto& k : k_v) {
+        std::cout << k_v.get<season>(k).str() << std::endl;
+      }
+    }
+
+    {
+      auto k_v = k_reg->view<episodes>();
+      for (auto& k : k_v) {
+        std::cout << k_v.get<episodes>(k).str() << std::endl;
+      }
+    }
+    {
+      auto k_v = k_reg->view<shot>();
+      for (auto& k : k_v) {
+        std::cout << k_v.get<shot>(k).str() << std::endl;
+      }
+    }
+    {
+      auto k_v = k_reg->view<assets>();
+      for (auto& k : k_v) {
+        std::cout << k_v.get<assets>(k).str() << std::endl;
+      }
+    }
+  }
+}
+
+#include <doodle_lib/lib_warp/boost_serialization_warp.h>
+
+#include <boost/archive/polymorphic_text_iarchive.hpp>
+#include <boost/archive/polymorphic_text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+
+TEST_CASE("boost metadata load") {
+  std::string k_data{};
+  {
+    doodle::vector_container my_data{};
+    {
+      doodle::vector_iostream k_i{my_data};
+      boost::archive::text_oarchive k_archive{k_i};
+      std::shared_ptr<doodle::shot> k_test1{new doodle::shot()};
+      k_test1->set_shot(1);
+      std::shared_ptr<doodle::shot> k_test2{new doodle::shot()};
+      k_test2->set_shot(1);
+      std::shared_ptr<doodle::shot> k_test3{new doodle::shot()};
+      k_test3->set_shot(1);
+
+      k_archive << k_test1
+                << k_test2
+                << k_test3;
+    }
+    k_data = {my_data.data(), my_data.size()};
+  }
+  std::cout << k_data << std::endl;
+  {
+    doodle::vector_container my_data{k_data.begin(), k_data.end()};
+    doodle::vector_iostream k_i{my_data};
+    boost::archive::text_iarchive k_archive{k_i};
+    std::shared_ptr<doodle::shot> k_test1{};
+    std::shared_ptr<doodle::shot> k_test2{};
+    std::shared_ptr<doodle::shot> k_test3{};
+
+    k_archive >> k_test1;
+    std::cout << std::boolalpha
+              << "k_i.tellg() " << (k_i.tellg()) << "\n"
+              << "(my_data.size() -1) == k_i.tellg() " << ((my_data.size() - 1) == k_i.tellg()) << "\n";
+    k_archive >> k_test2 >> k_test3;
+
+    std::shared_ptr<doodle::shot> k_test4{};
+    std::cout << std::boolalpha
+              << "k_i.good() " << k_i.good() << "\n"
+              << "k_i.tellp() " << (k_i.tellp()) << "\n"
+              << "my_data.size() " << (my_data.size()) << "\n"
+              << "k_i.end == k_i.tellp() " << (k_i.end == k_i.tellp()) << "\n"
+              << "(my_data.size() -1) == k_i.tellp() " << ((my_data.size() - 1) == k_i.tellp()) << "\n"
+              << "(my_data.size() -1) == k_i.tellg() " << ((my_data.size() - 1) == k_i.tellg()) << "\n"
+              << std::endl;
+
+    k_archive >> k_test4;
+  }
 }
 
 TEST_CASE("gui action metadata", "[metadata][gui]") {
-//  using namespace doodle;
-//  using namespace doodle::chrono::literals;
-//  auto k_server = RpcServerHandle{};
-//  auto& set     = CoreSet::getSet();
-//  k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
-//
-//  doodle_lib::Get().init_gui();
-//  auto k_fa = std::make_shared<MetadataFactory>();
-//
-//  SECTION("export excel") {
-//    auto k_ex = std::make_shared<actn_export_excel>();
-//
-//    k_ex->sig_get_arg.connect([]() {
-//      actn_export_excel::arg k_arg{};
-//      auto k_time_b = std::make_shared<time_point_wrap>();
-//      k_time_b->set_local_time(chrono::local_days(2021_y / 6 / 1_d));
-//      auto k_time_end = std::make_shared<time_point_wrap>();
-//      k_time_end->set_local_time(chrono::local_days(2021_y / 6 / 30_d));
-//      k_arg.p_time_range = std::make_pair(k_time_b, k_time_end);
-//
-//      k_arg.date = FSys::temp_directory_path() / "doodle_tset";
-//      if (FSys::exists(k_arg.date))
-//        FSys::create_directories(k_arg.date);
-//
-//      return k_arg;
-//    });
-//
-//    (*k_ex)({}, {});
-//  }
+  //  using namespace doodle;
+  //  using namespace doodle::chrono::literals;
+  //  auto k_server = RpcServerHandle{};
+  //  auto& set     = CoreSet::getSet();
+  //  k_server.runServer(set.getMetaRpcPort(), set.getFileRpcPort());
+  //
+  //  doodle_lib::Get().init_gui();
+  //  auto k_fa = std::make_shared<MetadataFactory>();
+  //
+  //  SECTION("export excel") {
+  //    auto k_ex = std::make_shared<actn_export_excel>();
+  //
+  //    k_ex->sig_get_arg.connect([]() {
+  //      actn_export_excel::arg k_arg{};
+  //      auto k_time_b = std::make_shared<time_point_wrap>();
+  //      k_time_b->set_local_time(chrono::local_days(2021_y / 6 / 1_d));
+  //      auto k_time_end = std::make_shared<time_point_wrap>();
+  //      k_time_end->set_local_time(chrono::local_days(2021_y / 6 / 30_d));
+  //      k_arg.p_time_range = std::make_pair(k_time_b, k_time_end);
+  //
+  //      k_arg.date = FSys::temp_directory_path() / "doodle_tset";
+  //      if (FSys::exists(k_arg.date))
+  //        FSys::create_directories(k_arg.date);
+  //
+  //      return k_arg;
+  //    });
+  //
+  //    (*k_ex)({}, {});
+  //  }
 }
-//TEST(DSTD, map_netDir) {
-//  NETRESOURCE resources{};
-//  resources.dwType       = RESOURCETYPE_DISK;
-//  resources.lpLocalName  = (LPWSTR)L"S:";
-//  resources.lpProvider   = 0;
-//  resources.lpRemoteName = (LPWSTR)LR"(\\192.168.10.250\public\CangFeng)";
-//  DWORD r                = WNetAddConnection2(&resources, NULL, NULL,
-//                               CONNECT_TEMPORARY | CONNECT_INTERACTIVE | CONNECT_COMMANDLINE | CONNECT_CRED_RESET);
-//  if (r != NO_ERROR) {
-//    std::cout << r << std::endl;
-//  }
-//  ASSERT_TRUE(r == NO_ERROR);
-//}
+// TEST(DSTD, map_netDir) {
+//   NETRESOURCE resources{};
+//   resources.dwType       = RESOURCETYPE_DISK;
+//   resources.lpLocalName  = (LPWSTR)L"S:";
+//   resources.lpProvider   = 0;
+//   resources.lpRemoteName = (LPWSTR)LR"(\\192.168.10.250\public\CangFeng)";
+//   DWORD r                = WNetAddConnection2(&resources, NULL, NULL,
+//                                CONNECT_TEMPORARY | CONNECT_INTERACTIVE | CONNECT_COMMANDLINE | CONNECT_CRED_RESET);
+//   if (r != NO_ERROR) {
+//     std::cout << r << std::endl;
+//   }
+//   ASSERT_TRUE(r == NO_ERROR);
+// }
 //
-//TEST(DSTD, gset_netDir_name) {
-//  TCHAR szDeviceName[150];
-//  DWORD dwResult, cchBuff = sizeof(szDeviceName);
+// TEST(DSTD, gset_netDir_name) {
+//   TCHAR szDeviceName[150];
+//   DWORD dwResult, cchBuff = sizeof(szDeviceName);
 //
-//  dwResult = WNetGetConnection(L"V:", szDeviceName, &cchBuff);
+//   dwResult = WNetGetConnection(L"V:", szDeviceName, &cchBuff);
 //
-//  ASSERT_TRUE(dwResult == NO_ERROR);
+//   ASSERT_TRUE(dwResult == NO_ERROR);
 //
-//  std::wcout << std::wstring{szDeviceName} << std::endl;
-//  auto rules_n = SetVolumeLabel(L"V:\\", L"test");
-//  if (rules_n == 0) {
-//    auto err = GetLastError();
-//    std::cout << err << std::endl;
-//  }
-//  // ASSERT_TRUE(rules_n != 0);
+//   std::wcout << std::wstring{szDeviceName} << std::endl;
+//   auto rules_n = SetVolumeLabel(L"V:\\", L"test");
+//   if (rules_n == 0) {
+//     auto err = GetLastError();
+//     std::cout << err << std::endl;
+//   }
+//   // ASSERT_TRUE(rules_n != 0);
 //
-//  wchar_t VolumeName[80];
-//  auto rules = GetVolumeInformation(L"V:\\", VolumeName, sizeof(VolumeName), NULL, NULL, NULL, NULL, 0);
-//  ASSERT_TRUE(rules);
-//  std::cout << VolumeName << std::endl;
-//}
+//   wchar_t VolumeName[80];
+//   auto rules = GetVolumeInformation(L"V:\\", VolumeName, sizeof(VolumeName), NULL, NULL, NULL, NULL, 0);
+//   ASSERT_TRUE(rules);
+//   std::cout << VolumeName << std::endl;
+// }
 //
-//TEST(DSTD, canclel_netDir) {
-//  DWORD r = WNetCancelConnection2(L"S:", CONNECT_UPDATE_PROFILE, true);
-//  if (r != NO_ERROR) {
-//    std::cout << r << std::endl;
-//  }
-//  ASSERT_TRUE(r == NO_ERROR);
-//}
+// TEST(DSTD, canclel_netDir) {
+//   DWORD r = WNetCancelConnection2(L"S:", CONNECT_UPDATE_PROFILE, true);
+//   if (r != NO_ERROR) {
+//     std::cout << r << std::endl;
+//   }
+//   ASSERT_TRUE(r == NO_ERROR);
+// }

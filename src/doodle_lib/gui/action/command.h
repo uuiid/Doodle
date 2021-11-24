@@ -6,7 +6,9 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <any>
 #include <boost/hana.hpp>
+
 namespace doodle {
 
 namespace details {
@@ -22,51 +24,52 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
  protected:
   std::string p_name;
   std::map<string, string> p_show_str;
-  using metadata_variant = std::variant<
-      episodes_ptr,
-      shot_ptr,
-      season_ptr,
-      assets_ptr,
-      assets_file_ptr,
-      project_ptr,
-      std::nullptr_t>;
-  metadata_ptr p_meta_var;
-  virtual bool set_child() { return false; };
-
-  using data_variant = std::variant<
-      episodes_ptr,
-      shot_ptr,
-      season_ptr,
-      assets_ptr,
-      assets_file_ptr,
-      project_ptr,
-      assets_path_vector_ptr>;
-
-  data_variant p_var;
 
  public:
+  command_base();
   virtual const std::string& class_name() { return p_name; };
   virtual bool is_async() { return false; };
   virtual bool render() = 0;
+  virtual bool set_data(const entt::handle& in_any) { return false; };
 
-  template <class... Args>
-  bool add_data(const Args&... in_args) {
-    using namespace boost::hana::literals;
-    auto k_arg            = boost::hana::make_tuple(in_args...);
-    auto constexpr k_size = decltype(boost::hana::size(k_arg))::value;
-
-    if constexpr (k_size == 0) {
-      return false;
-    } else if (k_size == 2) {
-      p_meta_var = k_arg[0_c];
-      if constexpr (boost::hana::typeid_(k_arg[1_c]) != boost::hana::type_c<std::nullptr_t>) {
-        p_var = k_arg[1_c];
-        return this->set_child();
-      } else
-        return false;
-    }
-    return false;
+  template <class in_class>
+  static void on_construct_slot(entt::registry& in_reg, entt::entity in_ent) {
+    auto k_h = entt::handle{in_reg, in_ent};
+    k_h.get<in_class>().set_data(k_h);
   };
 };
+
+
+template <class... arg>
+class DOODLELIB_API command_list {
+ public:
+  boost::hana::tuple<arg...> list;
+
+  command_list() : list(){};
+
+  bool render() {
+    bool k_r{true};
+    boost::hana::for_each(
+        list,
+        [&](auto& in) {
+          dear::TreeNode{in.class_name().c_str()} && [&]() {
+            k_r &= in.render();
+          };
+        });
+    return k_r;
+  };
+
+  bool set_data(const entt::handle& in_any) {
+    bool k_r{true};
+    boost::hana::for_each(
+        list,
+        [&](auto& in) {
+          k_r &= in.set_data(in_any);
+        });
+    return k_r;
+  }
+};
+
+// using command_ = entt::poly<command_interface>;
 
 }  // namespace doodle

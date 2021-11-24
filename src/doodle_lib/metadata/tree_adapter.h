@@ -38,9 +38,8 @@ class DOODLELIB_API vector_adapter {
     _self.end_push_back(in);
   };
   void push_back(value_type&& in) {
-    auto k_ = in;
+    _self.end_push_back(in);
     _list.push_back(std::move(in));
-    _self.end_push_back(k_);
   };
 
   auto emplace_back(value_type&& in_ptr) {
@@ -66,10 +65,10 @@ class DOODLELIB_API vector_adapter {
   [[nodiscard]] bool empty() const noexcept {
     return _list.empty();
   };
-  [[nodiscard]] auto front() const noexcept {
+  [[nodiscard]] decltype(_list.front()) front() const noexcept {
     return _list.front();
   }
-  [[nodiscard]] auto front() noexcept {
+  [[nodiscard]] decltype(_list.front()) front() noexcept {
     return _list.front();
   }
   [[nodiscard]] iterator begin() noexcept { return _list.begin(); };

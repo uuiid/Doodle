@@ -13,12 +13,12 @@ class DOODLELIB_API attribute_factory_interface
  public:
   virtual void render() = 0;
 
-  virtual void show_attribute(const episodes_ptr& in){};
-  virtual void show_attribute(const project_ptr& in){};
-  virtual void show_attribute(const shot_ptr& in){};
-  virtual void show_attribute(const assets_ptr& in){};
-  virtual void show_attribute(const season_ptr& in){};
-  virtual void show_attribute(const assets_file_ptr& in){};
+  virtual void show_attribute(const episodes* in){};
+  virtual void show_attribute(const project* in){};
+  virtual void show_attribute(const shot* in){};
+  virtual void show_attribute(const assets* in){};
+  virtual void show_attribute(const season* in){};
+  virtual void show_attribute(const assets_file* in){};
 };
 
 /**
@@ -29,14 +29,14 @@ class DOODLELIB_API attribute_factory_interface
  * @li 删除项目 删除项目只有在项目为空的时候才可以使用
  */
 class DOODLELIB_API attr_project : public attribute_factory_interface {
-  project_ptr p_prj;
+  project* p_prj;
   command_ptr p_comm;
 
  public:
   attr_project();
 
   void render() override;
-  void show_attribute(const project_ptr& in) override;
+  void show_attribute(const project*  in) override;
 };
 /**
  * @brief 产生编辑资产动作命令类
@@ -77,18 +77,17 @@ class DOODLELIB_API attr_project : public attribute_factory_interface {
  *
  */
 class DOODLELIB_API attr_assets : public attribute_factory_interface {
-  metadata_ptr p_data;
+  entt::entity p_data;
   command_ptr p_comm;
-
  public:
   attr_assets();
 
   void render() override;
-  void show_attribute(const episodes_ptr& in) override;
-  void show_attribute(const project_ptr& in) override;
-  void show_attribute(const shot_ptr& in) override;
-  void show_attribute(const assets_ptr& in) override;
-  void show_attribute(const season_ptr& in) override;
+  void show_attribute(const episodes*  in) override;
+  void show_attribute(const project*  in) override;
+  void show_attribute(const shot*  in) override;
+  void show_attribute(const assets*  in) override;
+  void show_attribute(const season*  in) override;
 };
 
 /**
@@ -138,18 +137,18 @@ class DOODLELIB_API attr_assets : public attribute_factory_interface {
  *
  */
 class DOODLELIB_API attr_assets_file : public attribute_factory_interface {
-  assets_file_ptr p_data;
+  assets_file* p_data;
   command_ptr p_comm;
 
  public:
   attr_assets_file();
 
   void render() override;
-  // void show_attribute(const episodes_ptr& in) override;
-  // void show_attribute(const shot_ptr& in) override;
-  // void show_attribute(const assets_ptr& in) override;
-  // void show_attribute(const season_ptr& in) override;
-  void show_attribute(const assets_file_ptr& in) override;
+  // void show_attribute(const episodes*  in) override;
+  // void show_attribute(const shot*  in) override;
+  // void show_attribute(const assets*  in) override;
+  // void show_attribute(const season*  in) override;
+  void show_attribute(const assets_file*  in) override;
 };
 
 }  // namespace  doodle

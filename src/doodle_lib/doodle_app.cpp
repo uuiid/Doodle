@@ -5,6 +5,7 @@
 #include "doodle_app.h"
 
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/gui/main_windwos.h>
 #include <doodle_lib/gui/widget_register.h>
 #include <doodle_lib/lib_warp/boost_locale_warp.h>
@@ -23,6 +24,7 @@ void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 bool CreateDeviceD3D(HWND hWnd) {
   // Setup swap chain
   DXGI_SWAP_CHAIN_DESC sd;
@@ -150,6 +152,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   }
   return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
+
 #include <fmt/core.h>
 #include <toolkit/toolkit.h>
 #include <windows.h>
@@ -177,7 +180,10 @@ doodle_app::doodle_app()
                   _T("doodle"),
                   nullptr},
       p_done(false),
-      wregister(new_object<widget_register>()) {
+      wregister(new_object<widget_register>()),
+      p_show_err(false),
+      p_main_win(),
+      p_pd3dDevice(nullptr) {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassEx(&p_win_class);
@@ -231,6 +237,7 @@ doodle_app::doodle_app()
   // Setup Platform/Renderer backends
   ImGui_ImplWin32_Init(p_hwnd);
   ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
+  p_pd3dDevice = g_pd3dDevice;
 }
 doodle_app::~doodle_app() {
   p_hwnd = static_cast<HWND>(p_hwnd);
@@ -262,6 +269,49 @@ void doodle_app::post_constructor() {
 }
 
 std::int32_t doodle_app::run() {
+  loop_begin();
+  while (!p_done) {
+    loop_one();
+  }
+  hide_windows();
+  return 0;
+}
+
+doodle_app* doodle_app::Get() {
+  return doodle_app::self;
+}
+
+bool doodle_app::valid() const {
+  return this->p_hwnd != nullptr;
+}
+void doodle_app::metadata_load() {
+  auto k_f = doodle_lib::Get().get_metadata_factory();
+  for (auto& k_i : k_metadata_obs) {
+    auto k_h = make_handle(k_i);
+    if (k_h.get<database_stauts>().is<need_load>()) {
+      k_f->select_indb(k_h);
+    } else if (k_h.get<database_stauts>().is<need_save>()) {
+      k_f->insert_into(k_h);
+    } else if (k_h.get<database_stauts>().is<need_delete>()) {
+      k_f->delete_data(k_h);
+    } else if (k_h.get<database_stauts>().is<need_root_load>()) {
+      k_f->select_indb_by_root(k_h);
+    }
+  }
+  k_metadata_obs.clear();
+}
+void doodle_app::metadata_save() const {
+}
+void doodle_app::metadata_delete() const {
+}
+
+void doodle_app::metadata_loop_one() {
+  metadata_save();
+  metadata_load();
+  metadata_delete();
+}
+
+base_widget_ptr doodle_app::loop_begin() {
   ::ShowWindow(p_hwnd, SW_SHOW);
   // Load Fonts
   // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -279,87 +329,89 @@ std::int32_t doodle_app::run() {
   // IM_ASSERT(font != NULL);
   static string imgui_file_path{(core_set::getSet().get_cache_root("imgui") / "imgui.ini").generic_string()};
   set_imgui_dock_space(imgui_file_path);
-  
+
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
-  io.IniFilename      = imgui_file_path.c_str();
-  auto k_main_windows = get_main_windows();
+  io.IniFilename = imgui_file_path.c_str();
+  k_metadata_obs.connect(*g_reg(), entt::collector.update<database_stauts>());
+  p_main_win = get_main_windows();
+  return p_main_win;
+}
 
-  ImVec4 clear_color  = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-  bool show_info      = false;
-  // Main loop
-  while (!p_done) {
-    // Poll and handle messages (inputs, window resize, etc.)
-    // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-    // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-    // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-    // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-    MSG msg;
-    while (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
-      ::TranslateMessage(&msg);
-      ::DispatchMessage(&msg);
-      if (msg.message == WM_QUIT)
-        p_done = true;
-    }
-    if (p_done)
-      break;
+void doodle_app::hide_windows() {
+  if (p_done)
+    ::ShowWindow(p_hwnd, SW_HIDE);
+}
 
-    // Start the Dear ImGui frame
-    ImGui_ImplDX11_NewFrame();
-    ImGui_ImplWin32_NewFrame();
-    ImGui::NewFrame();
+// Main loop
+void doodle_app::loop_one() {
+  // Poll and handle messages (inputs, window resize, etc.)
+  // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+  // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
+  // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
+  // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+  MSG msg;
+  while (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
+    ::TranslateMessage(&msg);
+    ::DispatchMessage(&msg);
+    if (msg.message == WM_QUIT)
+      p_done = true;
+  }
+  if (p_done)
+    return;
 
-    imgui::DockSpaceOverViewport(imgui::GetMainViewport());
-    static std::string str{};
-    try {
-      k_main_windows->frame_render();
+  // Start the Dear ImGui frame
+  ImGui_ImplDX11_NewFrame();
+  ImGui_ImplWin32_NewFrame();
+  ImGui::NewFrame();
+
+  imgui::DockSpaceOverViewport(imgui::GetMainViewport());
+  static std::string str{};
+  try {
+    if (!p_show_err) {
+      p_main_win->frame_render();
       main_loop();
-    } catch (doodle_error& err) {
-      show_info = true;
-      str       = err.what();
-      imgui::OpenPopup("警告");
+      metadata_loop_one();
     }
-    //    catch (std::runtime_error& err) {
-    //      show_info = true;
-    //      std::wstring str2{err.what(), err.what() + std::strlen(err.what())};
-    //      str = conv::locale_to_utf<char>(str2);
-    //
-    //      imgui::OpenPopup("警告");
-    //    }
-    dear::PopupModal{"警告", &show_info} && [str1 = str]() {
-      dear::Text(str);
-      if (ImGui::Button("OK")) {
-        ImGui::CloseCurrentPopup();
-      }
-    };
-
-    // Rendering
-    ImGui::Render();
-    const float clear_color_with_alpha[4] = {clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w};
-    g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
-    g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
-    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-    // Update and Render additional Platform Windows
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-      ImGui::UpdatePlatformWindows();
-      ImGui::RenderPlatformWindowsDefault();
+  } catch (doodle_error& err) {
+    p_show_err = true;
+    str        = err.what();
+    imgui::OpenPopup("警告");
+  }
+  //    catch (std::runtime_error& err) {
+  //      show_info = true;
+  //      std::wstring str2{err.what(), err.what() + std::strlen(err.what())};
+  //      str = conv::locale_to_utf<char>(str2);
+  //
+  //      imgui::OpenPopup("警告");
+  //    }
+  dear::PopupModal{"警告", &p_show_err} && [str1 = str, this]() {
+    dear::Text(str);
+    if (ImGui::Button("OK")) {
+      this->p_show_err = false;
+      ImGui::CloseCurrentPopup();
     }
+  };
 
-    g_pSwapChain->Present(1, 0);  // Present with vsync
-                                  // g_pSwapChain->Present(0, 0); // Present without vsync
+  // Rendering
+  ImGui::Render();
+  ImVec4 clear_color                    = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+  const float clear_color_with_alpha[4] = {clear_color.x * clear_color.w,
+                                           clear_color.y * clear_color.w,
+                                           clear_color.z * clear_color.w,
+                                           clear_color.w};
+  g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
+  g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
+  ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+  // Update and Render additional Platform Windows
+  if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+    ImGui::UpdatePlatformWindows();
+    ImGui::RenderPlatformWindowsDefault();
   }
 
-  ::ShowWindow(p_hwnd, SW_HIDE);
-  return 0;
-}
-
-doodle_app* doodle_app::Get() {
-  return doodle_app::self;
-}
-
-bool doodle_app::valid() const {
-  return this->p_hwnd != nullptr;
+  g_pSwapChain->Present(1, 0);  // Present with vsync
+                                // g_pSwapChain->Present(0, 0); // Present without vsync
 }
 }  // namespace doodle

@@ -4,144 +4,145 @@
 
 #include "assets_path.h"
 
-#include <logger/logger.h>
-#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/file_warp/video_sequence.h>
+#include <doodle_lib/gui/action/command_files.h>
 #include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/metadata/metadata.h>
+#include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/rpc/rpc_trans_path.h>
-#include <doodle_lib/gui/action/command_files.h>
+#include <logger/logger.h>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path)
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path_vector)
 
 namespace doodle {
-assets_path::assets_path()
-    : p_local_path(),
-      p_lexically_relative(),
-      p_server_path(),
-      p_backup_path("backup/") {
+
+assets_path_vector::assets_path_vector() {}
+
+void assets_path_vector::init() {
+  p_local_paths.clear();
+  p_server_path.clear();
+  p_backup_path.clear();
+  p_local_path.clear();
 }
-assets_path::assets_path(const FSys::path &in_path, const metadata_const_ptr &in_metadata)
-    : p_local_path(),
-      p_lexically_relative(),
-      p_server_path(),
-      p_backup_path("backup/") {
-  if (in_metadata)
-    this->set_path(in_path, in_metadata);
-  else
-    throw doodle_error{"空指针"};
-}
-const FSys::path &assets_path::get_local_path() const {
+
+const FSys::path &assets_path_vector::get_local_path() const {
   return p_local_path;
 }
 
-const FSys::path &assets_path::get_server_path() const {
+const FSys::path &assets_path_vector::get_server_path() const {
   return p_server_path;
 }
 
-const FSys::path &assets_path::get_backup_path() const {
+const FSys::path &assets_path_vector::get_backup_path() const {
   return p_backup_path;
 }
 
-void assets_path::set_path(const FSys::path &in_path, const metadata_const_ptr &in_metadata, bool in_using_lexically_relative) {
-  if (in_using_lexically_relative) {
-    auto k_prj       = in_metadata->find_parent_class<project>();
-    auto k_root_path = in_metadata->find_parent_class<project>()->get_path();
-    auto k_path      = in_path.lexically_relative(k_root_path);
-    k_path           = FSys::path{k_prj->str()} / k_path;
-    set_path(in_path, k_path);
-  } else {
-    /// 这里使用树,向上寻找,组合路径
-    metadata_const_ptr k_m{};
-    if (details::is_class<assets_file>(in_metadata))
-      k_m = in_metadata->get_parent();
-    else
-      k_m = in_metadata;
-
-    FSys::path k_path{k_m->str()};
-    while (k_m->has_parent()) {
-      k_m = k_m->get_parent();
-      if (k_m->has_parent())
-        k_path = FSys::path{k_m->str()} / k_path;
-      else
-        k_path = FSys::path{k_m->str()} / k_path;
-    }
-    k_path /= core_set::getSet().get_department();
-    k_path /= in_path.filename();
-    set_path(in_path, k_path);
-  }
+bool assets_path_vector::make_path() {
+  auto k_h = make_handle(*this);
+  return make_path(k_h);
 }
 
-void assets_path::set_path(const FSys::path &in_local_path, const FSys::path &in_server_path) {
-  if (!FSys::exists(in_local_path))
-    throw doodle_error{"不存在文件"};
-  p_local_path           = in_local_path;
-  const auto k_root_path = in_local_path.root_path();
-  p_lexically_relative   = in_local_path.lexically_relative(k_root_path);
-  p_server_path          = in_server_path;
-  p_backup_path /= FSys::add_time_stamp(in_server_path);
-  DOODLE_LOG_INFO("本地路径: {}, 设置服务路径: {}, 相对路径: {} , 备份路径: {}",
-                  p_local_path, p_server_path, p_lexically_relative, p_backup_path);
-  if (!p_meta.expired())
-    p_meta.lock()->saved(true);
+bool assets_path_vector::make_path(const entt::handle &in_metadata) {
+  init();
+  FSys::path k_path{};
+  k_path /= in_metadata.get<root_ref>().root_handle().get<project>().str();
+  if (in_metadata.all_of<season>())
+    k_path /= in_metadata.get<season>().str();
+  if (in_metadata.all_of<episodes>())
+    k_path /= in_metadata.get<episodes>().str();
+  if (in_metadata.all_of<shot>())
+    k_path /= in_metadata.get<shot>().str();
+
+  if (in_metadata.all_of<assets>())
+    k_path /= in_metadata.get<assets>().str();
+
+  k_path /= core_set::getSet().get_department();
+  p_server_path = k_path;
+  p_backup_path /= FSys::add_time_stamp(k_path);
+  DOODLE_LOG_INFO("设置服务路径: {}, 备份路径: {}",
+                  p_server_path, p_backup_path);
+  return true;
 }
 
-std::string assets_path::str() const {
-  return fmt::format("本地路径 {}\n服务器路径 {}",
-                     p_local_path,
-                     p_server_path);
+bool assets_path_vector::make_path(const entt::handle &in_metadata, const FSys::path &in_path) {
+  init();
+
+  FSys::path k_path{};
+  auto &k_prj      = in_metadata.get<root_ref>().root_handle().get<project>();
+  auto k_root_path = k_prj.get_path();
+  k_path           = in_path.lexically_relative(k_root_path);
+  k_path           = FSys::path{k_prj.str()} / (k_path.empty() ? in_path.filename() : k_path);
+
+  p_server_path    = k_path;
+  p_backup_path /= FSys::add_time_stamp(k_path);
+  DOODLE_LOG_INFO("设置服务路径: {}, 备份路径: {}",
+                  p_server_path, p_backup_path);
+  return true;
 }
 
-void assets_path_vector::set_metadata(const std::weak_ptr<metadata> &in_meta) {
-  leaf_meta::set_metadata(in_meta);
-  boost::remove_erase_if(paths, [](auto i) { return !i; });
-  
-  for (auto &i : get()) {
-    i->set_metadata(in_meta);
-  }
-}
 command_ptr assets_path_vector::add_file(
-    const FSys::path &in_path, bool in_using_lexically_relative) {
-  command_ptr k_comm{};
+    const FSys::path &in_path) {
+  command_ptr k_comm{new_object<comm_files_up>()};
 
-  auto k_path = new_object<assets_path>();
-  k_path->set_metadata(p_meta);
-
+  auto k_h = make_handle(*this);
+  p_local_paths.clear();
   if (ue4_project::is_ue4_file(in_path)) {
+    p_local_path = in_path.parent_path();
+
+    k_h.get<database>().set_meta_type(metadata_type::ue4_prj);
     // 添加基本路径(ue4 prj 路径)
-    k_path->set_path(in_path, p_meta.lock(), in_using_lexically_relative);
+    p_local_paths.push_back(in_path);
     // 添加内容路径
-    k_path = new_object<assets_path>();
-    k_path->set_metadata(p_meta.lock());
-    k_path->set_path(in_path.parent_path() / ue4_project::Content, p_meta.lock(), in_using_lexically_relative);
-    get().push_back(k_path);
-  }
-
-  if (image_sequence::is_image_sequence(FSys::list_files(in_path.parent_path()))) {
+    p_local_paths.push_back(in_path.parent_path() / ue4_project::Content);
+  } else if (image_sequence::is_image_sequence(FSys::list_files(in_path.parent_path()))) {
+    p_local_path = in_path.parent_path();
+    k_h.get<database>().set_meta_type(metadata_type::movie);
     // 添加文件的父路径, 序列文件夹
-    k_path->set_path(in_path.parent_path(), p_meta.lock(), in_using_lexically_relative);
-    k_comm = new_object<comm_file_image_to_move>();
+    p_local_paths.push_back(in_path.parent_path());
+  } else {
+    p_local_path = in_path;
+    p_local_paths.push_back(in_path);
   }
-  get().push_back(k_path);
-
   return k_comm;
 }
+
 rpc_trans_path_ptr_list assets_path_vector::make_up_path() const {
   rpc_trans_path_ptr_list k_list{};
-  for (auto &i : paths)
-    k_list.emplace_back(std::make_unique<rpc_trans_path>(i->get_local_path(), i->get_server_path(), i->get_backup_path()));
+  for (auto &k_p : p_local_paths) {
+    k_list.emplace_back(std::make_unique<rpc_trans_path>(k_p, get_server_path() / k_p.filename(), get_backup_path()));
+  }
   return k_list;
 }
-FSys::path assets_path::get_cache_path() const {
+
+rpc_trans_path_ptr_list assets_path_vector::make_down_path(const FSys::path &in_down_path) const {
+  rpc_trans_path_ptr_list k_list{};
+  for (auto &i : p_local_paths) {
+    k_list.emplace_back(std::make_unique<rpc_trans_path>(in_down_path / i.filename(),
+                                                         get_server_path() / i.filename(),
+                                                         get_backup_path()));
+  }
+  return k_list;
+}
+
+FSys::path assets_path_vector::get_cache_path() const {
   auto k_path = core_set::getSet().get_cache_root();
-  k_path /= p_lexically_relative;
+  k_path /= p_server_path;
   return k_path;
+}
+
+std::vector<FSys::path> assets_path_vector::list() {
+  std::vector<FSys::path> k_l;
+  std::transform(p_local_paths.begin(), p_local_paths.end(), std::back_inserter(k_l),
+                 [this](auto &p) {
+                   return get_server_path() / p.filename();
+                 });
+  return k_l;
 }
 
 }  // namespace doodle

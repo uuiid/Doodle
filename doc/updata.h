@@ -1,8 +1,10 @@
 #pragma once
 
 /**
- * @page updata_log 更新日志
+ * @page doodle_updata_log 更新日志
  * @tableofcontents
+ * <!--
+ *
  * @section updata_log_3 版本3
  * @subsection updata_log_30 版本3.0
  *
@@ -111,7 +113,7 @@
  *
  * @subsubsection updata_log_3032 版本3.0.32
  * @li 更新maya 解算工具: 更改更加合理的创建缓存的方式
- *
+ * -->
  *
  * @subsection updata_log_31 版本3.1
  *
@@ -214,4 +216,100 @@
  * @subsubsection updata_log_3115 版本3.1.15
  * @li 添加导出fbx并解算按钮
  * @li 并将fbx导出和解算输出文件夹统一在一起
+ *
+ * @subsubsection updata_log_3116 版本3.1.16
+ * @li 解算主动结束任务，超时设置为1小时
+ * @li 解算时自动删除缓存文件
+ *
+ * @subsubsection updata_log_3117 版本3.1.17
+ * @li 解算时自动删除缓存文件修复
+ *
+ * @subsubsection updata_log_3118 版本3.1.18
+ * @li 解算时自动时缓存文件夹不存在时抛出异常问题
+ *
+ *
+ * @subsubsection updata_log_3119 版本3.1.19
+ * @li 修复gui初始化中错误的线程池线程数
+ * @li 添加解锁后烘培相机方案
+ *
+ * @subsubsection updata_log_3120 版本3.1.20
+ * @li maya 无论如何都要删除缓存目录
+ *
+ * @subsubsection updata_log_3121 版本3.1.21
+ * @li maya 解算超时设置添加
+ * @li 更加智能的解算超时算法
+ * @li 解算超时后直接进行失败提示
+ *
+ *
+ * @subsubsection updata_log_3122 版本3.1.22
+ * @li 添加maya检查场景功能
+ *  * 检查所有
+ *  * 解锁法线
+ *  * 检查重名
+ *  * 检查大于四边面
+ *  * 检查UV集
+ *  * 去除大纲错误
+ *  * 去除onModelChange3dc错误
+ *  * 去除CgAbBlastPanelOptChangeCallback错误
+ *  * 去除贼健康错误
+ *
+ *
+ * @subsubsection updata_log_3123 版本3.1.23
+ * @li 修复maya显示进度错误
+ *
+ * @subsubsection updata_log_3124 版本3.1.24
+ * @li 更新安装程序 在安装新版本的同时，允许安装旧版
+ * @li 安装时会完全删除旧版本
+ *
+ * @subsubsection updata_log_3125 版本3.1.25
+ * @li 更新maya插件在批处理模式下正确运行
+ *
+ * @subsubsection updata_log_3125 版本3.1.25
+ * @li 完成了基本的项目视图方案
+ * @li 更新服务器
+ *
+ * @subsubsection updata_log_3127 版本3.1.27
+ * @li 添加在无内容时初始化基本的添加工具
+ *
+ * @subsubsection updata_log_3128 版本3.1.28
+ * @li 添加ue4 4.27插件
+ *
+ * @subsubsection updata_log_3129 版本3.1.29
+ * @li 修复maya导出时无法保存文件导致的崩溃(未知节点导致无法保存)
+ * @li 添加ue4 灯光配置文件类
+ *
+ * @subsubsection updata_log_3130 版本3.1.30
+ * @li 更改ue插件安装后默认加载
+ * @li 客户端优化镜头显示
+ *
+ * @subsubsection updata_log_3131 版本3.1.31
+ * @li maya输出路径更改
+ * @li 修复安装ue插件无法找到路径问题
+ *
+ * @subsubsection updata_log_3132 版本3.1.32
+ * @li 修复maya 标签难以使用的默认值
+ * @li maya工具导出时直接从1001 开始
+ * @li 更加舒适的资产类排序
+ *
+ * @subsubsection updata_log_3133 版本3.1.33
+ * @li 修复ue4 面板显示
+ *
+ * @subsubsection updata_log_3134 版本3.1.34
+ * @li 更改maya 标签默认值
+ * @li 添加maya拍屏工具
+ *
+ * @subsubsection updata_log_3135 版本3.1.35
+ * @li 使maya后台拍屏和手动拍屏效果一致
+ *
+ *
+ * @subsubsection updata_log_3136 版本3.1.36
+ * @li 修正中文名称显示错误
+ * @li 修正opencv无法读取格式错误
+ *
+ * @subsubsection updata_log_3137 版本3.1.37
+ * @li 修复再复杂的场景中无法得到输出（未知问题，采用其他方案渲染）
+ * 
+ * @subsubsection updata_log_3137 版本3.1.37
+ * @li 修改批处理中maya的拍屏方法
+ * 
  */

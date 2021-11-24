@@ -241,10 +241,10 @@ bool comm_create_video::render() {
       } else {
         ptr = image->set_path(i.p_path_list);
       }
-      ptr->set_out_dir(*p_out_path);
-      ptr->set_shot_and_eps(shot::analysis_static(i.p_path_list.front()),
-                            episodes::analysis_static(i.p_path_list.front()));
-
+      ptr->set_out_path(*p_out_path);
+      auto l_w = details::watermark{};
+      l_w.path_to_ep_sc(i.p_path_list.front());
+      ptr->add_watermark(l_w);
       image->create_video(*p_out_path);
     }
   }
@@ -271,8 +271,7 @@ bool comm_create_video::render() {
   if (imgui::Button("连接视频")) {
     auto video  = new_object<video_sequence_async>();
     auto k_v    = video->set_video_list(p_video_path);
-    auto k_name = k_v->set_shot_and_eps(shot::analysis_static(p_video_path.front()),
-                                        episodes::analysis_static(p_video_path.front()));
+    auto k_name = k_v->set_shot_and_eps(p_video_path.front());
     video->connect_video(k_name.empty() ? FSys::path{} : FSys::path{*p_out_path} / k_name);
   }
 
@@ -337,7 +336,7 @@ bool comm_import_ue_files::render() {
       dear::Selectable(in.filename().generic_string());
   };
 
-  return command_base::add_data();
+  return true;
 }
 
 }  // namespace doodle

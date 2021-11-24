@@ -11,5 +11,6 @@
 
 #include <doodle_lib/generate/rpc/file_system_server.grpc.pb.h>
 #include <doodle_lib/generate/rpc/metadata_server.grpc.pb.h>
+#include <doodle_lib/generate/rpc/user_message.grpc.pb.h>
 
 #pragma warning(pop)

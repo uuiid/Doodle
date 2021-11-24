@@ -10,36 +10,40 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets)
 namespace doodle {
 assets::assets()
-    : metadata(),
-      p_name(),
-      p_name_enus() {
-  p_type = meta_type::folder;
+    : p_path(),
+      p_name_show_str() {
 }
 
-assets::assets(std::weak_ptr<metadata> in_metadata, std::string in_name)
-    : metadata(std::move(in_metadata)),
-      p_name(std::move(in_name)),
-      p_name_enus(convert::Get().toEn(p_name)) {
-  p_type = meta_type::folder;
+assets::assets(FSys::path in_name)
+    : p_path(std::move(in_name)),
+      p_name_show_str() {
+  set_path_component();
 }
 
-// Assets::~Assets() {
-//   if (p_metadata_flctory_ptr_)
-//     updata_db(p_metadata_flctory_ptr_);
-// }
-
+void assets::set_path_component() {
+  p_component.clear();
+  for (auto& in : p_path) {
+    p_component.push_back(in.generic_string());
+  }
+}
 std::string assets::str() const {
-  if (p_name_enus.empty())
-    return convert::Get().toEn(p_name);
-  return p_name_enus;
+  return p_path.filename().generic_string();
 }
+void assets::set_path(const FSys::path& in_path) {
+  p_path = in_path;
+  set_path_component();
+}
+const FSys::path& assets::get_path() const {
+  return p_path;
+}
+
 std::string assets::show_str() const {
-  return p_name;
+  return p_name_show_str;
 }
 
 bool assets::operator<(const assets& in_rhs) const {
   //  return std::tie(static_cast<const doodle::metadata&>(*this), p_name) < std::tie(static_cast<const doodle::metadata&>(in_rhs), in_rhs.p_name);
-  return std::tie(p_name) < std::tie(in_rhs.p_name);
+  return std::tie(p_path) < std::tie(in_rhs.p_path);
 }
 bool assets::operator>(const assets& in_rhs) const {
   return in_rhs < *this;
@@ -51,23 +55,13 @@ bool assets::operator>=(const assets& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-const std::string& assets::get_name1() const {
-  return p_name;
-}
-void assets::set_name1(const std::string& in_name) {
-  p_name = in_name;
-  if (p_name_enus.empty())
-    p_name_enus = convert::Get().toEn(p_name);
-  saved(true);
-}
-const std::string& assets::get_name_enus() const {
-  return p_name_enus;
-}
-void assets::set_name_enus(const std::string& in_nameEnus) {
-  p_name_enus = in_nameEnus;
-  saved(true);
-}
 void assets::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(std::dynamic_pointer_cast<assets>(shared_from_this()));
+  in_factoryPtr->show_attribute(this);
+}
+bool assets::operator==(const assets& in_rhs) const {
+  return std::tie(p_path) == std::tie(in_rhs.p_path);
+}
+bool assets::operator!=(const assets& in_rhs) const {
+  return !(in_rhs == *this);
 }
 }  // namespace doodle

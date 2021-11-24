@@ -1,0 +1,57 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+
+// clang-format off
+#include "DoodleConfigLightActor.generated.h"
+// clang-format on
+
+class ASkeletalMeshActor;
+class ALight;
+class UDoodleConfigLight;
+
+UCLASS()
+class DOODLE_API ADoodleConfigLightActor : public AActor {
+  GENERATED_BODY()
+
+#if WITH_EDITOR
+  bool OpenSaveDialog(const FString& InDefaultPath,
+                      const FString& InNewNameSuggestion,
+                      FString& OutPackageName);
+#endif  // WITH_EDITOR
+ public:
+  ADoodleConfigLightActor();
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle",
+            DisplayName = "骨骼物体")
+  ASkeletalMeshActor* p_skin_mesh;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle",
+            DisplayName = "骨骼插槽名称")
+  FName p_solt;
+
+  UFUNCTION(BlueprintCallable,
+            meta = (CallInEditor = "true", OverrideNativeName = "保存",
+                    Category = "Doodle", Tooltip = "保存灯光预设"))
+  virtual void SaveConfig();
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle",
+            DisplayName = "重新附加时清除")
+  bool use_clear;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle",
+            DisplayName = "灯光配置文件")
+  UDoodleConfigLight* p_light;
+
+  UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "灯光组")
+  TArray<TWeakObjectPtr<ALight>> p_light_list;
+  // TWeakObjectPtr<ALight> _p;
+
+#if WITH_EDITOR
+  void PostEditChangeProperty(
+      FPropertyChangedEvent& PropertyChangeEvent) override;
+#endif  // WITH_EDITOR
+};

@@ -7,7 +7,50 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
 #include <boost/hana/experimental/printable.hpp>
+#include <boost/type_erasure/any.hpp>
+#include <boost/type_erasure/any_cast.hpp>
+#include <boost/type_erasure/builtin.hpp>
+#include <boost/type_erasure/free.hpp>
+#include <boost/type_erasure/member.hpp>
+#include <boost/type_erasure/operators.hpp>
 namespace doodle {
+namespace widget_n {
+// template <typename... arg>
+// class command_guard {
+//  private:
+//   entt::handle p_curr;
+
+//  public:
+//   command_guard() : p_curr(){};
+
+//   command_guard& operator=(entt::handle in) {
+//     if (p_curr) {
+//       (p_curr.remove<arg>(), ...);
+//     }
+//     p_curr = in;
+//     (p_curr.emplace<arg>(), ...);
+//     return *this;
+//   };
+
+//   bool operator==(const command_guard& in_rhs) const {
+//     return p_curr == in_rhs.p_curr;
+//   }
+//   bool operator!=(const command_guard& in_rhs) const {
+//     return !(in_rhs == *this);
+//   }
+//   bool operator==(const entt::handle& in_rhs) const {
+//     return p_curr == in_rhs;
+//   }
+//   bool operator!=(const entt::handle& in_rhs) const {
+//     return !(in_rhs == *this);
+//   }
+
+//   operator entt::entity() const {
+//     return p_curr;
+//   }
+// };
+}  // namespace widget_n
+
 class DOODLELIB_API base_widget
     : public details::no_copy,
       public std::enable_shared_from_this<base_widget> {
@@ -15,6 +58,24 @@ class DOODLELIB_API base_widget
   string p_class_name;
 
   virtual bool use_register() { return true; };
+
+  template <class in_class>
+  bool render_tmp(registry_ptr& in) {
+    auto k_v = in->view<in_class>();
+    bool k_{true};
+    for (auto k_i : k_v) {
+      dear::TreeNode{k_v.get<in_class>(k_i).class_name().c_str()} && [&] {
+        k_ &= k_v.get<in_class>(k_i).render();
+      };
+    }
+    return true;
+  }
+
+  template <class... arg>
+  bool render_() {
+    auto k_reg = g_reg();
+    return (render_tmp<arg>(k_reg) && ...);
+  }
 
  public:
   virtual void post_constructor();
@@ -25,9 +86,11 @@ class DOODLELIB_API base_widget
 class DOODLELIB_API metadata_widget : public base_widget {
  protected:
   attribute_factory_ptr p_factory;
+  command_ptr p_comm;
 
  public:
   virtual attribute_factory_ptr get_factory();
+  virtual command_ptr get_comm();
 };
 
 class DOODLELIB_API windows_warp_base : public base_widget {
@@ -93,5 +156,13 @@ std::shared_ptr<widget> win_cast(const base_widget_ptr& in) {
   else
     return nullptr;
 }
+BOOST_TYPE_ERASURE_MEMBER(render);
+
+using widget_ = boost::type_erasure::any<
+    boost::mpl::vector<
+        has_render<bool()>,
+        boost::type_erasure::copy_constructible<>,
+        boost::type_erasure::typeid_<>,
+        boost::type_erasure::relaxed>>;
 
 }  // namespace doodle

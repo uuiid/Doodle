@@ -74,6 +74,7 @@ target_link_libraries(doodle_lib
         Boost::program_options
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}
+        EnTT::EnTT
         spdlog::spdlog
         csv
         Catch2::Catch2
@@ -87,6 +88,7 @@ target_compile_definitions(doodle_lib
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         PRIVATE
+        ENTT_API_EXPORT
         )
 target_compile_options(doodle_lib
         PUBLIC

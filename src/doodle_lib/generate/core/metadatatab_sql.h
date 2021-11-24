@@ -90,6 +90,70 @@ namespace doodle
       };
       using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
     };
+    struct Episode
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "episode";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T episode;
+            T& operator()() { return episode; }
+            const T& operator()() const { return episode; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct Shot
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "shot";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T shot;
+            T& operator()() { return shot; }
+            const T& operator()() const { return shot; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct Season
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "season";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T season;
+            T& operator()() { return season; }
+            const T& operator()() const { return season; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct AssetsP
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "assets_p";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T assetsP;
+            T& operator()() { return assetsP; }
+            const T& operator()() const { return assetsP; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
   } // namespace Metadatatab_
 
   struct Metadatatab: sqlpp::table_t<Metadatatab,
@@ -97,7 +161,11 @@ namespace doodle
                Metadatatab_::Parent,
                Metadatatab_::UuidPath,
                Metadatatab_::UpdateTime,
-               Metadatatab_::MetaType>
+               Metadatatab_::MetaType,
+               Metadatatab_::Episode,
+               Metadatatab_::Shot,
+               Metadatatab_::Season,
+               Metadatatab_::AssetsP>
   {
     struct _alias_t
     {

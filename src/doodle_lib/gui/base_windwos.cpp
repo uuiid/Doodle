@@ -18,5 +18,8 @@ void base_widget::post_constructor() {
 attribute_factory_ptr metadata_widget::get_factory() {
   return p_factory;
 }
+command_ptr metadata_widget::get_comm() {
+  return p_comm;
+}
 
 }  // namespace doodle

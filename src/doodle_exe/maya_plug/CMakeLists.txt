@@ -5,6 +5,7 @@ set(MAYA_VERSION_LIST 2018 2020 1)
 
 set(doodle_maya_plug_cpp
         MayaPlug.cpp
+        maya_plug_fwd.h
         MotionMayaPlugInit.cpp
         MotionMayaPlugInit.h
         gui/maya_plug_app.cpp
@@ -13,8 +14,21 @@ set(doodle_maya_plug_cpp
         gui/maya_windwos.h
         gui/action/reference_attr_setting.cpp
         gui/action/reference_attr_setting.h
+        gui/action/comm_check_scenes.h
+        gui/action/comm_check_scenes.cpp
+        gui/action/comm_play_blast.h
+        gui/action/comm_play_blast.cpp
         gui/widgets/maya_tool_widget.cpp
         gui/widgets/maya_tool_widget.h
+        maya_render/hud_render_override.h
+        maya_render/hud_render_override.cpp
+        maya_render/hud_render_node.h
+        maya_render/hud_render_node.cpp
+        command/play_blast.h
+        command/play_blast.cpp
+        command/create_hud_node.h
+        command/create_hud_node.cpp
+
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
 foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)

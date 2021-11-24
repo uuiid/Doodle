@@ -11,10 +11,6 @@
 #include <doodle_lib/metadata/shot.h>
 #include <doodle_lib/toolkit/toolkit.h>
 
-#include <boost/algorithm/string.hpp>
-#include <regex>
-#include <string>
-
 #if defined(_WIN32)
 
 #include <ShlObj.h>
@@ -23,7 +19,7 @@
 namespace doodle {
 
 void toolkit::installMayaPath() {
-  auto mayadoc = get_pwd();
+  auto mayadoc = win::get_pwd();
   mayadoc /= "maya";
   mayadoc /= "modules";
   mayadoc /= "doodle";

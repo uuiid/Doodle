@@ -12,7 +12,6 @@
 #include <grpcpp/grpcpp.h>
 #include <sqlpp11/mysql/mysql.h>
 
-#include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/process.hpp>
@@ -30,7 +29,7 @@ BOOST_CLASS_EXPORT_IMPLEMENT(doodle::core_set)
 
 namespace doodle {
 
-FSys::path get_pwd()
+FSys::path win::get_pwd()
 #ifdef _WIN32
 {
   ///这里我们手动做一些工作
@@ -52,6 +51,21 @@ FSys::path get_pwd()
   return FSys::path{pw};
 };
 #endif  // _WIN32
+
+FSys::path win::get_font() {
+  ///这里我们手动做一些工作
+  ///获取环境变量 FOLDERID_Documents
+  PWSTR pManager;
+  SHGetKnownFolderPath(FOLDERID_Fonts, NULL, nullptr, &pManager);
+  if (!pManager) {
+    std::cout << "unable to find a save path" << std::endl;
+    throw doodle_error("无法找到保存路径");
+  }
+
+  auto k_path = FSys::path{pManager};
+  CoTaskMemFree(pManager);
+  return k_path;
+}
 
 core_set &core_set::getSet() {
   static core_set install;
@@ -98,7 +112,8 @@ core_set::core_set()
       p_condition(),
       p_root(FSys::temp_directory_path() / "Doodle"),
       _root_cache(p_root / "cache"),
-      _root_data(p_root / "data") {
+      _root_data(p_root / "data"),
+      timeout(3600) {
 }
 
 boost::uuids::uuid core_set::get_uuid() {
@@ -315,10 +330,11 @@ bool core_set_init::find_cache_dir() {
 }
 
 bool core_set_init::config_to_user() {
-  p_set.p_doc = get_pwd() / "doodle";
+  p_set.p_doc = win::get_pwd() / "doodle";
   if (!FSys::exists(p_set.p_doc)) {
     FSys::create_directories(p_set.p_doc);
   }
   return true;
 }
+
 }  // namespace doodle

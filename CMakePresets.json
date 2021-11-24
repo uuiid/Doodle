@@ -23,10 +23,12 @@
         "microsoft.com/VisualStudioSettings/CMake/1.0": {
           "hostOS": [
             "Windows"
-          ]
+          ],
+          "disableExternalAnalysis": true
         }
       },
-      "cmakeExecutable": "E:\\vcpkg\\downloads\\tools\\cmake-3.21.1-windows\\cmake-3.21.1-windows-i386\\bin\\cmake.exe"
+      "cmakeExecutable": "E:\\vcpkg\\downloads\\tools\\cmake-3.21.1-windows\\cmake-3.21.1-windows-i386\\bin\\cmake.exe",
+      "hidden": true
     },
     {
       "name": "Ninja_release",
@@ -78,14 +80,22 @@
     {
       "name": "debug",
       "configurePreset": "Ninja_debug",
-      "jobs": 10
+      "jobs": 10,
+      "hidden": true
     },
     {
       "name": "debug_doodle",
-      "description": "debug doodle exe",
-      "displayName": "doodle exe",
+      "description": "调试 exe",
+      "displayName": "调试 doodle exe",
       "inherits": "debug",
       "targets": "DoodleExe"
+    },
+    {
+      "name": "debug_test",
+      "description": "调试 test",
+      "displayName": "调试 doodle test",
+      "inherits": "debug",
+      "targets": "doodle_test"
     },
     {
       "name": "doxy",
@@ -93,6 +103,13 @@
       "displayName": "文档",
       "inherits": "debug",
       "targets": "Doxygen"
+    },
+    {
+      "name": "list_file",
+      "description": "列出lib文件",
+      "displayName": "列出文件",
+      "inherits": "debug",
+      "targets": "create_list_doodle_cmake"
     },
     {
       "name": "release",
@@ -116,7 +133,7 @@
       "description": "maya插件只能使用release调试",
       "displayName": "debug maya plug",
       "inherits": "release_plug",
-      "targets": "doodle_plug"
+      "targets": "Doodle_maya_plug"
     }
   ],
   "testPresets": [

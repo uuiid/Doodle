@@ -30,7 +30,6 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>  // IWYU pragma: export
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
-#include <google/protobuf/generated_enum_reflection.h>
 #include <google/protobuf/unknown_field_set.h>
 #include <google/protobuf/timestamp.pb.h>
 #include <google/protobuf/any.pb.h>
@@ -38,7 +37,7 @@
 #include "user_message.pb.h"
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
-#define PROTOBUF_INTERNAL_EXPORT_metadata_5fserver_2eproto
+#define PROTOBUF_INTERNAL_EXPORT_metadata_5fserver_2eproto DOODLELIB_API
 PROTOBUF_NAMESPACE_OPEN
 namespace internal {
 class AnyMetadata;
@@ -46,206 +45,36 @@ class AnyMetadata;
 PROTOBUF_NAMESPACE_CLOSE
 
 // Internal implementation detail -- do not use these members.
-struct TableStruct_metadata_5fserver_2eproto {
+struct DOODLELIB_API TableStruct_metadata_5fserver_2eproto {
   static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTableField entries[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[3]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[2]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
   static const ::PROTOBUF_NAMESPACE_ID::uint32 offsets[];
 };
-extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_metadata_5fserver_2eproto;
-::PROTOBUF_NAMESPACE_ID::Metadata descriptor_table_metadata_5fserver_2eproto_metadata_getter(int index);
+extern DOODLELIB_API const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_metadata_5fserver_2eproto;
+DOODLELIB_API ::PROTOBUF_NAMESPACE_ID::Metadata descriptor_table_metadata_5fserver_2eproto_metadata_getter(int index);
 namespace doodle {
 class metadata_database;
 struct metadata_databaseDefaultTypeInternal;
-extern metadata_databaseDefaultTypeInternal _metadata_database_default_instance_;
+DOODLELIB_API extern metadata_databaseDefaultTypeInternal _metadata_database_default_instance_;
 class metadata_database_filter;
 struct metadata_database_filterDefaultTypeInternal;
-extern metadata_database_filterDefaultTypeInternal _metadata_database_filter_default_instance_;
-class metadata_database_meta_type_value;
-struct metadata_database_meta_type_valueDefaultTypeInternal;
-extern metadata_database_meta_type_valueDefaultTypeInternal _metadata_database_meta_type_value_default_instance_;
+DOODLELIB_API extern metadata_database_filterDefaultTypeInternal _metadata_database_filter_default_instance_;
 }  // namespace doodle
 PROTOBUF_NAMESPACE_OPEN
-template<> ::doodle::metadata_database* Arena::CreateMaybeMessage<::doodle::metadata_database>(Arena*);
-template<> ::doodle::metadata_database_filter* Arena::CreateMaybeMessage<::doodle::metadata_database_filter>(Arena*);
-template<> ::doodle::metadata_database_meta_type_value* Arena::CreateMaybeMessage<::doodle::metadata_database_meta_type_value>(Arena*);
+template<> DOODLELIB_API ::doodle::metadata_database* Arena::CreateMaybeMessage<::doodle::metadata_database>(Arena*);
+template<> DOODLELIB_API ::doodle::metadata_database_filter* Arena::CreateMaybeMessage<::doodle::metadata_database_filter>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace doodle {
 
-enum metadata_database_meta_type : int {
-  metadata_database_meta_type_unknown_file = 0,
-  metadata_database_meta_type_project_root = 1,
-  metadata_database_meta_type_file = 2,
-  metadata_database_meta_type_folder = 3,
-  metadata_database_meta_type_derive_file = 4,
-  metadata_database_meta_type_animation_lib_root = 5,
-  metadata_database_meta_type_metadata_database_meta_type_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
-  metadata_database_meta_type_metadata_database_meta_type_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
-};
-bool metadata_database_meta_type_IsValid(int value);
-constexpr metadata_database_meta_type metadata_database_meta_type_meta_type_MIN = metadata_database_meta_type_unknown_file;
-constexpr metadata_database_meta_type metadata_database_meta_type_meta_type_MAX = metadata_database_meta_type_animation_lib_root;
-constexpr int metadata_database_meta_type_meta_type_ARRAYSIZE = metadata_database_meta_type_meta_type_MAX + 1;
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* metadata_database_meta_type_descriptor();
-template<typename T>
-inline const std::string& metadata_database_meta_type_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, metadata_database_meta_type>::value ||
-    ::std::is_integral<T>::value,
-    "Incorrect type passed to function metadata_database_meta_type_Name.");
-  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    metadata_database_meta_type_descriptor(), enum_t_value);
-}
-inline bool metadata_database_meta_type_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, metadata_database_meta_type* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<metadata_database_meta_type>(
-    metadata_database_meta_type_descriptor(), name, value);
-}
 // ===================================================================
 
-class metadata_database_meta_type_value PROTOBUF_FINAL :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:doodle.metadata_database.meta_type_value) */ {
- public:
-  inline metadata_database_meta_type_value() : metadata_database_meta_type_value(nullptr) {}
-  virtual ~metadata_database_meta_type_value();
-  explicit constexpr metadata_database_meta_type_value(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
-
-  metadata_database_meta_type_value(const metadata_database_meta_type_value& from);
-  metadata_database_meta_type_value(metadata_database_meta_type_value&& from) noexcept
-    : metadata_database_meta_type_value() {
-    *this = ::std::move(from);
-  }
-
-  inline metadata_database_meta_type_value& operator=(const metadata_database_meta_type_value& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  inline metadata_database_meta_type_value& operator=(metadata_database_meta_type_value&& from) noexcept {
-    if (GetArena() == from.GetArena()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-
-  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
-    return GetDescriptor();
-  }
-  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
-    return GetMetadataStatic().descriptor;
-  }
-  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
-    return GetMetadataStatic().reflection;
-  }
-  static const metadata_database_meta_type_value& default_instance() {
-    return *internal_default_instance();
-  }
-  static inline const metadata_database_meta_type_value* internal_default_instance() {
-    return reinterpret_cast<const metadata_database_meta_type_value*>(
-               &_metadata_database_meta_type_value_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    0;
-
-  friend void swap(metadata_database_meta_type_value& a, metadata_database_meta_type_value& b) {
-    a.Swap(&b);
-  }
-  inline void Swap(metadata_database_meta_type_value* other) {
-    if (other == this) return;
-    if (GetArena() == other->GetArena()) {
-      InternalSwap(other);
-    } else {
-      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
-    }
-  }
-  void UnsafeArenaSwap(metadata_database_meta_type_value* other) {
-    if (other == this) return;
-    GOOGLE_DCHECK(GetArena() == other->GetArena());
-    InternalSwap(other);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline metadata_database_meta_type_value* New() const final {
-    return CreateMaybeMessage<metadata_database_meta_type_value>(nullptr);
-  }
-
-  metadata_database_meta_type_value* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
-    return CreateMaybeMessage<metadata_database_meta_type_value>(arena);
-  }
-  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
-  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
-  void CopyFrom(const metadata_database_meta_type_value& from);
-  void MergeFrom(const metadata_database_meta_type_value& from);
-  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
-  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
-      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  inline void SharedCtor();
-  inline void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(metadata_database_meta_type_value* other);
-  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
-  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "doodle.metadata_database.meta_type_value";
-  }
-  protected:
-  explicit metadata_database_meta_type_value(::PROTOBUF_NAMESPACE_ID::Arena* arena);
-  private:
-  static void ArenaDtor(void* object);
-  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
-  public:
-
-  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
-  private:
-  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
-    return ::descriptor_table_metadata_5fserver_2eproto_metadata_getter(kIndexInFileMessages);
-  }
-
-  public:
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  enum : int {
-    kValueFieldNumber = 1,
-  };
-  // .doodle.metadata_database.meta_type value = 1;
-  void clear_value();
-  ::doodle::metadata_database_meta_type value() const;
-  void set_value(::doodle::metadata_database_meta_type value);
-  private:
-  ::doodle::metadata_database_meta_type _internal_value() const;
-  void _internal_set_value(::doodle::metadata_database_meta_type value);
-  public:
-
-  // @@protoc_insertion_point(class_scope:doodle.metadata_database.meta_type_value)
- private:
-  class _Internal;
-
-  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
-  typedef void InternalArenaConstructable_;
-  typedef void DestructorSkippable_;
-  int value_;
-  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-  friend struct ::TableStruct_metadata_5fserver_2eproto;
-};
-// -------------------------------------------------------------------
-
-class metadata_database PROTOBUF_FINAL :
+class DOODLELIB_API metadata_database PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:doodle.metadata_database) */ {
  public:
   inline metadata_database() : metadata_database(nullptr) {}
@@ -288,7 +117,7 @@ class metadata_database PROTOBUF_FINAL :
                &_metadata_database_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    1;
+    0;
 
   friend void swap(metadata_database& a, metadata_database& b) {
     a.Swap(&b);
@@ -355,46 +184,6 @@ class metadata_database PROTOBUF_FINAL :
 
   // nested types ----------------------------------------------------
 
-  typedef metadata_database_meta_type_value meta_type_value;
-
-  typedef metadata_database_meta_type meta_type;
-  static constexpr meta_type unknown_file =
-    metadata_database_meta_type_unknown_file;
-  static constexpr meta_type project_root =
-    metadata_database_meta_type_project_root;
-  static constexpr meta_type file =
-    metadata_database_meta_type_file;
-  static constexpr meta_type folder =
-    metadata_database_meta_type_folder;
-  static constexpr meta_type derive_file =
-    metadata_database_meta_type_derive_file;
-  static constexpr meta_type animation_lib_root =
-    metadata_database_meta_type_animation_lib_root;
-  static inline bool meta_type_IsValid(int value) {
-    return metadata_database_meta_type_IsValid(value);
-  }
-  static constexpr meta_type meta_type_MIN =
-    metadata_database_meta_type_meta_type_MIN;
-  static constexpr meta_type meta_type_MAX =
-    metadata_database_meta_type_meta_type_MAX;
-  static constexpr int meta_type_ARRAYSIZE =
-    metadata_database_meta_type_meta_type_ARRAYSIZE;
-  static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
-  meta_type_descriptor() {
-    return metadata_database_meta_type_descriptor();
-  }
-  template<typename T>
-  static inline const std::string& meta_type_Name(T enum_t_value) {
-    static_assert(::std::is_same<T, meta_type>::value ||
-      ::std::is_integral<T>::value,
-      "Incorrect type passed to function meta_type_Name.");
-    return metadata_database_meta_type_Name(enum_t_value);
-  }
-  static inline bool meta_type_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
-      meta_type* value) {
-    return metadata_database_meta_type_Parse(name, value);
-  }
-
   // accessors -------------------------------------------------------
 
   enum : int {
@@ -403,6 +192,10 @@ class metadata_database PROTOBUF_FINAL :
     kUpdateTimeFieldNumber = 4,
     kMetadataCerealFieldNumber = 5,
     kMTypeFieldNumber = 6,
+    kEpisodeFieldNumber = 7,
+    kShotFieldNumber = 8,
+    kSeasonFieldNumber = 9,
+    kAssetsFieldNumber = 10,
     kIdFieldNumber = 1,
   };
   // string uuid_path = 2;
@@ -475,23 +268,95 @@ class metadata_database PROTOBUF_FINAL :
       PROTOBUF_NAMESPACE_ID::Any* metadata_cereal);
   PROTOBUF_NAMESPACE_ID::Any* unsafe_arena_release_metadata_cereal();
 
-  // .doodle.metadata_database.meta_type_value m_type = 6;
+  // .google.protobuf.UInt64Value m_type = 6;
   bool has_m_type() const;
   private:
   bool _internal_has_m_type() const;
   public:
   void clear_m_type();
-  const ::doodle::metadata_database_meta_type_value& m_type() const;
-  ::doodle::metadata_database_meta_type_value* release_m_type();
-  ::doodle::metadata_database_meta_type_value* mutable_m_type();
-  void set_allocated_m_type(::doodle::metadata_database_meta_type_value* m_type);
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& m_type() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_m_type();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_m_type();
+  void set_allocated_m_type(PROTOBUF_NAMESPACE_ID::UInt64Value* m_type);
   private:
-  const ::doodle::metadata_database_meta_type_value& _internal_m_type() const;
-  ::doodle::metadata_database_meta_type_value* _internal_mutable_m_type();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_m_type() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_m_type();
   public:
   void unsafe_arena_set_allocated_m_type(
-      ::doodle::metadata_database_meta_type_value* m_type);
-  ::doodle::metadata_database_meta_type_value* unsafe_arena_release_m_type();
+      PROTOBUF_NAMESPACE_ID::UInt64Value* m_type);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_m_type();
+
+  // .google.protobuf.UInt64Value episode = 7;
+  bool has_episode() const;
+  private:
+  bool _internal_has_episode() const;
+  public:
+  void clear_episode();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& episode() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_episode();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_episode();
+  void set_allocated_episode(PROTOBUF_NAMESPACE_ID::UInt64Value* episode);
+  private:
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_episode() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_episode();
+  public:
+  void unsafe_arena_set_allocated_episode(
+      PROTOBUF_NAMESPACE_ID::UInt64Value* episode);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_episode();
+
+  // .google.protobuf.UInt64Value shot = 8;
+  bool has_shot() const;
+  private:
+  bool _internal_has_shot() const;
+  public:
+  void clear_shot();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& shot() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_shot();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_shot();
+  void set_allocated_shot(PROTOBUF_NAMESPACE_ID::UInt64Value* shot);
+  private:
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_shot() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_shot();
+  public:
+  void unsafe_arena_set_allocated_shot(
+      PROTOBUF_NAMESPACE_ID::UInt64Value* shot);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_shot();
+
+  // .google.protobuf.UInt64Value season = 9;
+  bool has_season() const;
+  private:
+  bool _internal_has_season() const;
+  public:
+  void clear_season();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& season() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_season();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_season();
+  void set_allocated_season(PROTOBUF_NAMESPACE_ID::UInt64Value* season);
+  private:
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_season() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_season();
+  public:
+  void unsafe_arena_set_allocated_season(
+      PROTOBUF_NAMESPACE_ID::UInt64Value* season);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_season();
+
+  // .google.protobuf.StringValue assets = 10;
+  bool has_assets() const;
+  private:
+  bool _internal_has_assets() const;
+  public:
+  void clear_assets();
+  const PROTOBUF_NAMESPACE_ID::StringValue& assets() const;
+  PROTOBUF_NAMESPACE_ID::StringValue* release_assets();
+  PROTOBUF_NAMESPACE_ID::StringValue* mutable_assets();
+  void set_allocated_assets(PROTOBUF_NAMESPACE_ID::StringValue* assets);
+  private:
+  const PROTOBUF_NAMESPACE_ID::StringValue& _internal_assets() const;
+  PROTOBUF_NAMESPACE_ID::StringValue* _internal_mutable_assets();
+  public:
+  void unsafe_arena_set_allocated_assets(
+      PROTOBUF_NAMESPACE_ID::StringValue* assets);
+  PROTOBUF_NAMESPACE_ID::StringValue* unsafe_arena_release_assets();
 
   // uint64 id = 1;
   void clear_id();
@@ -513,14 +378,18 @@ class metadata_database PROTOBUF_FINAL :
   PROTOBUF_NAMESPACE_ID::UInt64Value* parent_;
   PROTOBUF_NAMESPACE_ID::Timestamp* update_time_;
   PROTOBUF_NAMESPACE_ID::Any* metadata_cereal_;
-  ::doodle::metadata_database_meta_type_value* m_type_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* m_type_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* episode_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* shot_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* season_;
+  PROTOBUF_NAMESPACE_ID::StringValue* assets_;
   ::PROTOBUF_NAMESPACE_ID::uint64 id_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_metadata_5fserver_2eproto;
 };
 // -------------------------------------------------------------------
 
-class metadata_database_filter PROTOBUF_FINAL :
+class DOODLELIB_API metadata_database_filter PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:doodle.metadata_database_filter) */ {
  public:
   inline metadata_database_filter() : metadata_database_filter(nullptr) {}
@@ -563,7 +432,7 @@ class metadata_database_filter PROTOBUF_FINAL :
                &_metadata_database_filter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    1;
 
   friend void swap(metadata_database_filter& a, metadata_database_filter& b) {
     a.Swap(&b);
@@ -637,6 +506,12 @@ class metadata_database_filter PROTOBUF_FINAL :
     kEndTimeFieldNumber = 3,
     kMTypeFieldNumber = 4,
     kParentFieldNumber = 5,
+    kEpisodeFieldNumber = 6,
+    kShotFieldNumber = 7,
+    kSeasonFieldNumber = 8,
+    kAssetsFieldNumber = 9,
+    kBegOffIdFieldNumber = 10,
+    kOffSizeFieldNumber = 11,
     kIdFieldNumber = 1,
   };
   // .google.protobuf.Timestamp begin_time = 2;
@@ -675,23 +550,23 @@ class metadata_database_filter PROTOBUF_FINAL :
       PROTOBUF_NAMESPACE_ID::Timestamp* end_time);
   PROTOBUF_NAMESPACE_ID::Timestamp* unsafe_arena_release_end_time();
 
-  // .doodle.metadata_database.meta_type_value m_type = 4;
+  // .google.protobuf.UInt64Value m_type = 4;
   bool has_m_type() const;
   private:
   bool _internal_has_m_type() const;
   public:
   void clear_m_type();
-  const ::doodle::metadata_database_meta_type_value& m_type() const;
-  ::doodle::metadata_database_meta_type_value* release_m_type();
-  ::doodle::metadata_database_meta_type_value* mutable_m_type();
-  void set_allocated_m_type(::doodle::metadata_database_meta_type_value* m_type);
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& m_type() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_m_type();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_m_type();
+  void set_allocated_m_type(PROTOBUF_NAMESPACE_ID::UInt64Value* m_type);
   private:
-  const ::doodle::metadata_database_meta_type_value& _internal_m_type() const;
-  ::doodle::metadata_database_meta_type_value* _internal_mutable_m_type();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_m_type() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_m_type();
   public:
   void unsafe_arena_set_allocated_m_type(
-      ::doodle::metadata_database_meta_type_value* m_type);
-  ::doodle::metadata_database_meta_type_value* unsafe_arena_release_m_type();
+      PROTOBUF_NAMESPACE_ID::UInt64Value* m_type);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_m_type();
 
   // .google.protobuf.UInt64Value parent = 5;
   bool has_parent() const;
@@ -711,6 +586,114 @@ class metadata_database_filter PROTOBUF_FINAL :
       PROTOBUF_NAMESPACE_ID::UInt64Value* parent);
   PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_parent();
 
+  // .google.protobuf.UInt64Value episode = 6;
+  bool has_episode() const;
+  private:
+  bool _internal_has_episode() const;
+  public:
+  void clear_episode();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& episode() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_episode();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_episode();
+  void set_allocated_episode(PROTOBUF_NAMESPACE_ID::UInt64Value* episode);
+  private:
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_episode() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_episode();
+  public:
+  void unsafe_arena_set_allocated_episode(
+      PROTOBUF_NAMESPACE_ID::UInt64Value* episode);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_episode();
+
+  // .google.protobuf.UInt64Value shot = 7;
+  bool has_shot() const;
+  private:
+  bool _internal_has_shot() const;
+  public:
+  void clear_shot();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& shot() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_shot();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_shot();
+  void set_allocated_shot(PROTOBUF_NAMESPACE_ID::UInt64Value* shot);
+  private:
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_shot() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_shot();
+  public:
+  void unsafe_arena_set_allocated_shot(
+      PROTOBUF_NAMESPACE_ID::UInt64Value* shot);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_shot();
+
+  // .google.protobuf.UInt64Value season = 8;
+  bool has_season() const;
+  private:
+  bool _internal_has_season() const;
+  public:
+  void clear_season();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& season() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_season();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_season();
+  void set_allocated_season(PROTOBUF_NAMESPACE_ID::UInt64Value* season);
+  private:
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_season() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_season();
+  public:
+  void unsafe_arena_set_allocated_season(
+      PROTOBUF_NAMESPACE_ID::UInt64Value* season);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_season();
+
+  // .google.protobuf.StringValue assets = 9;
+  bool has_assets() const;
+  private:
+  bool _internal_has_assets() const;
+  public:
+  void clear_assets();
+  const PROTOBUF_NAMESPACE_ID::StringValue& assets() const;
+  PROTOBUF_NAMESPACE_ID::StringValue* release_assets();
+  PROTOBUF_NAMESPACE_ID::StringValue* mutable_assets();
+  void set_allocated_assets(PROTOBUF_NAMESPACE_ID::StringValue* assets);
+  private:
+  const PROTOBUF_NAMESPACE_ID::StringValue& _internal_assets() const;
+  PROTOBUF_NAMESPACE_ID::StringValue* _internal_mutable_assets();
+  public:
+  void unsafe_arena_set_allocated_assets(
+      PROTOBUF_NAMESPACE_ID::StringValue* assets);
+  PROTOBUF_NAMESPACE_ID::StringValue* unsafe_arena_release_assets();
+
+  // .google.protobuf.UInt64Value beg_off_id = 10;
+  bool has_beg_off_id() const;
+  private:
+  bool _internal_has_beg_off_id() const;
+  public:
+  void clear_beg_off_id();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& beg_off_id() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_beg_off_id();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_beg_off_id();
+  void set_allocated_beg_off_id(PROTOBUF_NAMESPACE_ID::UInt64Value* beg_off_id);
+  private:
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_beg_off_id() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_beg_off_id();
+  public:
+  void unsafe_arena_set_allocated_beg_off_id(
+      PROTOBUF_NAMESPACE_ID::UInt64Value* beg_off_id);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_beg_off_id();
+
+  // .google.protobuf.UInt64Value off_size = 11;
+  bool has_off_size() const;
+  private:
+  bool _internal_has_off_size() const;
+  public:
+  void clear_off_size();
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& off_size() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* release_off_size();
+  PROTOBUF_NAMESPACE_ID::UInt64Value* mutable_off_size();
+  void set_allocated_off_size(PROTOBUF_NAMESPACE_ID::UInt64Value* off_size);
+  private:
+  const PROTOBUF_NAMESPACE_ID::UInt64Value& _internal_off_size() const;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* _internal_mutable_off_size();
+  public:
+  void unsafe_arena_set_allocated_off_size(
+      PROTOBUF_NAMESPACE_ID::UInt64Value* off_size);
+  PROTOBUF_NAMESPACE_ID::UInt64Value* unsafe_arena_release_off_size();
+
   // uint64 id = 1;
   void clear_id();
   ::PROTOBUF_NAMESPACE_ID::uint64 id() const;
@@ -729,8 +712,14 @@ class metadata_database_filter PROTOBUF_FINAL :
   typedef void DestructorSkippable_;
   PROTOBUF_NAMESPACE_ID::Timestamp* begin_time_;
   PROTOBUF_NAMESPACE_ID::Timestamp* end_time_;
-  ::doodle::metadata_database_meta_type_value* m_type_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* m_type_;
   PROTOBUF_NAMESPACE_ID::UInt64Value* parent_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* episode_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* shot_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* season_;
+  PROTOBUF_NAMESPACE_ID::StringValue* assets_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* beg_off_id_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* off_size_;
   ::PROTOBUF_NAMESPACE_ID::uint64 id_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_metadata_5fserver_2eproto;
@@ -744,30 +733,6 @@ class metadata_database_filter PROTOBUF_FINAL :
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
-// metadata_database_meta_type_value
-
-// .doodle.metadata_database.meta_type value = 1;
-inline void metadata_database_meta_type_value::clear_value() {
-  value_ = 0;
-}
-inline ::doodle::metadata_database_meta_type metadata_database_meta_type_value::_internal_value() const {
-  return static_cast< ::doodle::metadata_database_meta_type >(value_);
-}
-inline ::doodle::metadata_database_meta_type metadata_database_meta_type_value::value() const {
-  // @@protoc_insertion_point(field_get:doodle.metadata_database.meta_type_value.value)
-  return _internal_value();
-}
-inline void metadata_database_meta_type_value::_internal_set_value(::doodle::metadata_database_meta_type value) {
-  
-  value_ = value;
-}
-inline void metadata_database_meta_type_value::set_value(::doodle::metadata_database_meta_type value) {
-  _internal_set_value(value);
-  // @@protoc_insertion_point(field_set:doodle.metadata_database.meta_type_value.value)
-}
-
-// -------------------------------------------------------------------
-
 // metadata_database
 
 // uint64 id = 1;
@@ -1082,30 +1047,24 @@ inline void metadata_database::set_allocated_metadata_cereal(PROTOBUF_NAMESPACE_
   // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database.Metadata_cereal)
 }
 
-// .doodle.metadata_database.meta_type_value m_type = 6;
+// .google.protobuf.UInt64Value m_type = 6;
 inline bool metadata_database::_internal_has_m_type() const {
   return this != internal_default_instance() && m_type_ != nullptr;
 }
 inline bool metadata_database::has_m_type() const {
   return _internal_has_m_type();
 }
-inline void metadata_database::clear_m_type() {
-  if (GetArena() == nullptr && m_type_ != nullptr) {
-    delete m_type_;
-  }
-  m_type_ = nullptr;
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database::_internal_m_type() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = m_type_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
 }
-inline const ::doodle::metadata_database_meta_type_value& metadata_database::_internal_m_type() const {
-  const ::doodle::metadata_database_meta_type_value* p = m_type_;
-  return p != nullptr ? *p : reinterpret_cast<const ::doodle::metadata_database_meta_type_value&>(
-      ::doodle::_metadata_database_meta_type_value_default_instance_);
-}
-inline const ::doodle::metadata_database_meta_type_value& metadata_database::m_type() const {
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database::m_type() const {
   // @@protoc_insertion_point(field_get:doodle.metadata_database.m_type)
   return _internal_m_type();
 }
 inline void metadata_database::unsafe_arena_set_allocated_m_type(
-    ::doodle::metadata_database_meta_type_value* m_type) {
+    PROTOBUF_NAMESPACE_ID::UInt64Value* m_type) {
   if (GetArena() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(m_type_);
   }
@@ -1117,42 +1076,42 @@ inline void metadata_database::unsafe_arena_set_allocated_m_type(
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database.m_type)
 }
-inline ::doodle::metadata_database_meta_type_value* metadata_database::release_m_type() {
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::release_m_type() {
   
-  ::doodle::metadata_database_meta_type_value* temp = m_type_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = m_type_;
   m_type_ = nullptr;
   if (GetArena() != nullptr) {
     temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
   }
   return temp;
 }
-inline ::doodle::metadata_database_meta_type_value* metadata_database::unsafe_arena_release_m_type() {
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::unsafe_arena_release_m_type() {
   // @@protoc_insertion_point(field_release:doodle.metadata_database.m_type)
   
-  ::doodle::metadata_database_meta_type_value* temp = m_type_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = m_type_;
   m_type_ = nullptr;
   return temp;
 }
-inline ::doodle::metadata_database_meta_type_value* metadata_database::_internal_mutable_m_type() {
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::_internal_mutable_m_type() {
   
   if (m_type_ == nullptr) {
-    auto* p = CreateMaybeMessage<::doodle::metadata_database_meta_type_value>(GetArena());
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
     m_type_ = p;
   }
   return m_type_;
 }
-inline ::doodle::metadata_database_meta_type_value* metadata_database::mutable_m_type() {
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::mutable_m_type() {
   // @@protoc_insertion_point(field_mutable:doodle.metadata_database.m_type)
   return _internal_mutable_m_type();
 }
-inline void metadata_database::set_allocated_m_type(::doodle::metadata_database_meta_type_value* m_type) {
+inline void metadata_database::set_allocated_m_type(PROTOBUF_NAMESPACE_ID::UInt64Value* m_type) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
   if (message_arena == nullptr) {
-    delete m_type_;
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(m_type_);
   }
   if (m_type) {
     ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-      ::PROTOBUF_NAMESPACE_ID::Arena::GetArena(m_type);
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(m_type)->GetArena();
     if (message_arena != submessage_arena) {
       m_type = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
           message_arena, m_type, submessage_arena);
@@ -1163,6 +1122,314 @@ inline void metadata_database::set_allocated_m_type(::doodle::metadata_database_
   }
   m_type_ = m_type;
   // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database.m_type)
+}
+
+// .google.protobuf.UInt64Value episode = 7;
+inline bool metadata_database::_internal_has_episode() const {
+  return this != internal_default_instance() && episode_ != nullptr;
+}
+inline bool metadata_database::has_episode() const {
+  return _internal_has_episode();
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database::_internal_episode() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = episode_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database::episode() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database.episode)
+  return _internal_episode();
+}
+inline void metadata_database::unsafe_arena_set_allocated_episode(
+    PROTOBUF_NAMESPACE_ID::UInt64Value* episode) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(episode_);
+  }
+  episode_ = episode;
+  if (episode) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database.episode)
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::release_episode() {
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = episode_;
+  episode_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::unsafe_arena_release_episode() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database.episode)
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = episode_;
+  episode_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::_internal_mutable_episode() {
+  
+  if (episode_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
+    episode_ = p;
+  }
+  return episode_;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::mutable_episode() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database.episode)
+  return _internal_mutable_episode();
+}
+inline void metadata_database::set_allocated_episode(PROTOBUF_NAMESPACE_ID::UInt64Value* episode) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(episode_);
+  }
+  if (episode) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(episode)->GetArena();
+    if (message_arena != submessage_arena) {
+      episode = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, episode, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  episode_ = episode;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database.episode)
+}
+
+// .google.protobuf.UInt64Value shot = 8;
+inline bool metadata_database::_internal_has_shot() const {
+  return this != internal_default_instance() && shot_ != nullptr;
+}
+inline bool metadata_database::has_shot() const {
+  return _internal_has_shot();
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database::_internal_shot() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = shot_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database::shot() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database.shot)
+  return _internal_shot();
+}
+inline void metadata_database::unsafe_arena_set_allocated_shot(
+    PROTOBUF_NAMESPACE_ID::UInt64Value* shot) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(shot_);
+  }
+  shot_ = shot;
+  if (shot) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database.shot)
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::release_shot() {
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = shot_;
+  shot_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::unsafe_arena_release_shot() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database.shot)
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = shot_;
+  shot_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::_internal_mutable_shot() {
+  
+  if (shot_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
+    shot_ = p;
+  }
+  return shot_;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::mutable_shot() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database.shot)
+  return _internal_mutable_shot();
+}
+inline void metadata_database::set_allocated_shot(PROTOBUF_NAMESPACE_ID::UInt64Value* shot) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(shot_);
+  }
+  if (shot) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(shot)->GetArena();
+    if (message_arena != submessage_arena) {
+      shot = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, shot, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  shot_ = shot;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database.shot)
+}
+
+// .google.protobuf.UInt64Value season = 9;
+inline bool metadata_database::_internal_has_season() const {
+  return this != internal_default_instance() && season_ != nullptr;
+}
+inline bool metadata_database::has_season() const {
+  return _internal_has_season();
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database::_internal_season() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = season_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database::season() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database.season)
+  return _internal_season();
+}
+inline void metadata_database::unsafe_arena_set_allocated_season(
+    PROTOBUF_NAMESPACE_ID::UInt64Value* season) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(season_);
+  }
+  season_ = season;
+  if (season) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database.season)
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::release_season() {
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = season_;
+  season_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::unsafe_arena_release_season() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database.season)
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = season_;
+  season_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::_internal_mutable_season() {
+  
+  if (season_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
+    season_ = p;
+  }
+  return season_;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database::mutable_season() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database.season)
+  return _internal_mutable_season();
+}
+inline void metadata_database::set_allocated_season(PROTOBUF_NAMESPACE_ID::UInt64Value* season) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(season_);
+  }
+  if (season) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(season)->GetArena();
+    if (message_arena != submessage_arena) {
+      season = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, season, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  season_ = season;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database.season)
+}
+
+// .google.protobuf.StringValue assets = 10;
+inline bool metadata_database::_internal_has_assets() const {
+  return this != internal_default_instance() && assets_ != nullptr;
+}
+inline bool metadata_database::has_assets() const {
+  return _internal_has_assets();
+}
+inline const PROTOBUF_NAMESPACE_ID::StringValue& metadata_database::_internal_assets() const {
+  const PROTOBUF_NAMESPACE_ID::StringValue* p = assets_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::StringValue&>(
+      PROTOBUF_NAMESPACE_ID::_StringValue_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::StringValue& metadata_database::assets() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database.assets)
+  return _internal_assets();
+}
+inline void metadata_database::unsafe_arena_set_allocated_assets(
+    PROTOBUF_NAMESPACE_ID::StringValue* assets) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(assets_);
+  }
+  assets_ = assets;
+  if (assets) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database.assets)
+}
+inline PROTOBUF_NAMESPACE_ID::StringValue* metadata_database::release_assets() {
+  
+  PROTOBUF_NAMESPACE_ID::StringValue* temp = assets_;
+  assets_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::StringValue* metadata_database::unsafe_arena_release_assets() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database.assets)
+  
+  PROTOBUF_NAMESPACE_ID::StringValue* temp = assets_;
+  assets_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::StringValue* metadata_database::_internal_mutable_assets() {
+  
+  if (assets_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::StringValue>(GetArena());
+    assets_ = p;
+  }
+  return assets_;
+}
+inline PROTOBUF_NAMESPACE_ID::StringValue* metadata_database::mutable_assets() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database.assets)
+  return _internal_mutable_assets();
+}
+inline void metadata_database::set_allocated_assets(PROTOBUF_NAMESPACE_ID::StringValue* assets) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(assets_);
+  }
+  if (assets) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(assets)->GetArena();
+    if (message_arena != submessage_arena) {
+      assets = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, assets, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  assets_ = assets;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database.assets)
 }
 
 // -------------------------------------------------------------------
@@ -1343,30 +1610,24 @@ inline void metadata_database_filter::set_allocated_end_time(PROTOBUF_NAMESPACE_
   // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database_filter.end_time)
 }
 
-// .doodle.metadata_database.meta_type_value m_type = 4;
+// .google.protobuf.UInt64Value m_type = 4;
 inline bool metadata_database_filter::_internal_has_m_type() const {
   return this != internal_default_instance() && m_type_ != nullptr;
 }
 inline bool metadata_database_filter::has_m_type() const {
   return _internal_has_m_type();
 }
-inline void metadata_database_filter::clear_m_type() {
-  if (GetArena() == nullptr && m_type_ != nullptr) {
-    delete m_type_;
-  }
-  m_type_ = nullptr;
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::_internal_m_type() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = m_type_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
 }
-inline const ::doodle::metadata_database_meta_type_value& metadata_database_filter::_internal_m_type() const {
-  const ::doodle::metadata_database_meta_type_value* p = m_type_;
-  return p != nullptr ? *p : reinterpret_cast<const ::doodle::metadata_database_meta_type_value&>(
-      ::doodle::_metadata_database_meta_type_value_default_instance_);
-}
-inline const ::doodle::metadata_database_meta_type_value& metadata_database_filter::m_type() const {
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::m_type() const {
   // @@protoc_insertion_point(field_get:doodle.metadata_database_filter.m_type)
   return _internal_m_type();
 }
 inline void metadata_database_filter::unsafe_arena_set_allocated_m_type(
-    ::doodle::metadata_database_meta_type_value* m_type) {
+    PROTOBUF_NAMESPACE_ID::UInt64Value* m_type) {
   if (GetArena() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(m_type_);
   }
@@ -1378,42 +1639,42 @@ inline void metadata_database_filter::unsafe_arena_set_allocated_m_type(
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database_filter.m_type)
 }
-inline ::doodle::metadata_database_meta_type_value* metadata_database_filter::release_m_type() {
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::release_m_type() {
   
-  ::doodle::metadata_database_meta_type_value* temp = m_type_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = m_type_;
   m_type_ = nullptr;
   if (GetArena() != nullptr) {
     temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
   }
   return temp;
 }
-inline ::doodle::metadata_database_meta_type_value* metadata_database_filter::unsafe_arena_release_m_type() {
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::unsafe_arena_release_m_type() {
   // @@protoc_insertion_point(field_release:doodle.metadata_database_filter.m_type)
   
-  ::doodle::metadata_database_meta_type_value* temp = m_type_;
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = m_type_;
   m_type_ = nullptr;
   return temp;
 }
-inline ::doodle::metadata_database_meta_type_value* metadata_database_filter::_internal_mutable_m_type() {
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::_internal_mutable_m_type() {
   
   if (m_type_ == nullptr) {
-    auto* p = CreateMaybeMessage<::doodle::metadata_database_meta_type_value>(GetArena());
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
     m_type_ = p;
   }
   return m_type_;
 }
-inline ::doodle::metadata_database_meta_type_value* metadata_database_filter::mutable_m_type() {
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::mutable_m_type() {
   // @@protoc_insertion_point(field_mutable:doodle.metadata_database_filter.m_type)
   return _internal_mutable_m_type();
 }
-inline void metadata_database_filter::set_allocated_m_type(::doodle::metadata_database_meta_type_value* m_type) {
+inline void metadata_database_filter::set_allocated_m_type(PROTOBUF_NAMESPACE_ID::UInt64Value* m_type) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
   if (message_arena == nullptr) {
-    delete m_type_;
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(m_type_);
   }
   if (m_type) {
     ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-      ::PROTOBUF_NAMESPACE_ID::Arena::GetArena(m_type);
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(m_type)->GetArena();
     if (message_arena != submessage_arena) {
       m_type = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
           message_arena, m_type, submessage_arena);
@@ -1503,27 +1764,477 @@ inline void metadata_database_filter::set_allocated_parent(PROTOBUF_NAMESPACE_ID
   // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database_filter.parent)
 }
 
+// .google.protobuf.UInt64Value episode = 6;
+inline bool metadata_database_filter::_internal_has_episode() const {
+  return this != internal_default_instance() && episode_ != nullptr;
+}
+inline bool metadata_database_filter::has_episode() const {
+  return _internal_has_episode();
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::_internal_episode() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = episode_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::episode() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database_filter.episode)
+  return _internal_episode();
+}
+inline void metadata_database_filter::unsafe_arena_set_allocated_episode(
+    PROTOBUF_NAMESPACE_ID::UInt64Value* episode) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(episode_);
+  }
+  episode_ = episode;
+  if (episode) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database_filter.episode)
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::release_episode() {
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = episode_;
+  episode_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::unsafe_arena_release_episode() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database_filter.episode)
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = episode_;
+  episode_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::_internal_mutable_episode() {
+  
+  if (episode_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
+    episode_ = p;
+  }
+  return episode_;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::mutable_episode() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database_filter.episode)
+  return _internal_mutable_episode();
+}
+inline void metadata_database_filter::set_allocated_episode(PROTOBUF_NAMESPACE_ID::UInt64Value* episode) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(episode_);
+  }
+  if (episode) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(episode)->GetArena();
+    if (message_arena != submessage_arena) {
+      episode = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, episode, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  episode_ = episode;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database_filter.episode)
+}
+
+// .google.protobuf.UInt64Value shot = 7;
+inline bool metadata_database_filter::_internal_has_shot() const {
+  return this != internal_default_instance() && shot_ != nullptr;
+}
+inline bool metadata_database_filter::has_shot() const {
+  return _internal_has_shot();
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::_internal_shot() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = shot_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::shot() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database_filter.shot)
+  return _internal_shot();
+}
+inline void metadata_database_filter::unsafe_arena_set_allocated_shot(
+    PROTOBUF_NAMESPACE_ID::UInt64Value* shot) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(shot_);
+  }
+  shot_ = shot;
+  if (shot) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database_filter.shot)
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::release_shot() {
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = shot_;
+  shot_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::unsafe_arena_release_shot() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database_filter.shot)
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = shot_;
+  shot_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::_internal_mutable_shot() {
+  
+  if (shot_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
+    shot_ = p;
+  }
+  return shot_;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::mutable_shot() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database_filter.shot)
+  return _internal_mutable_shot();
+}
+inline void metadata_database_filter::set_allocated_shot(PROTOBUF_NAMESPACE_ID::UInt64Value* shot) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(shot_);
+  }
+  if (shot) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(shot)->GetArena();
+    if (message_arena != submessage_arena) {
+      shot = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, shot, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  shot_ = shot;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database_filter.shot)
+}
+
+// .google.protobuf.UInt64Value season = 8;
+inline bool metadata_database_filter::_internal_has_season() const {
+  return this != internal_default_instance() && season_ != nullptr;
+}
+inline bool metadata_database_filter::has_season() const {
+  return _internal_has_season();
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::_internal_season() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = season_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::season() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database_filter.season)
+  return _internal_season();
+}
+inline void metadata_database_filter::unsafe_arena_set_allocated_season(
+    PROTOBUF_NAMESPACE_ID::UInt64Value* season) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(season_);
+  }
+  season_ = season;
+  if (season) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database_filter.season)
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::release_season() {
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = season_;
+  season_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::unsafe_arena_release_season() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database_filter.season)
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = season_;
+  season_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::_internal_mutable_season() {
+  
+  if (season_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
+    season_ = p;
+  }
+  return season_;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::mutable_season() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database_filter.season)
+  return _internal_mutable_season();
+}
+inline void metadata_database_filter::set_allocated_season(PROTOBUF_NAMESPACE_ID::UInt64Value* season) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(season_);
+  }
+  if (season) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(season)->GetArena();
+    if (message_arena != submessage_arena) {
+      season = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, season, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  season_ = season;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database_filter.season)
+}
+
+// .google.protobuf.StringValue assets = 9;
+inline bool metadata_database_filter::_internal_has_assets() const {
+  return this != internal_default_instance() && assets_ != nullptr;
+}
+inline bool metadata_database_filter::has_assets() const {
+  return _internal_has_assets();
+}
+inline const PROTOBUF_NAMESPACE_ID::StringValue& metadata_database_filter::_internal_assets() const {
+  const PROTOBUF_NAMESPACE_ID::StringValue* p = assets_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::StringValue&>(
+      PROTOBUF_NAMESPACE_ID::_StringValue_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::StringValue& metadata_database_filter::assets() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database_filter.assets)
+  return _internal_assets();
+}
+inline void metadata_database_filter::unsafe_arena_set_allocated_assets(
+    PROTOBUF_NAMESPACE_ID::StringValue* assets) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(assets_);
+  }
+  assets_ = assets;
+  if (assets) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database_filter.assets)
+}
+inline PROTOBUF_NAMESPACE_ID::StringValue* metadata_database_filter::release_assets() {
+  
+  PROTOBUF_NAMESPACE_ID::StringValue* temp = assets_;
+  assets_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::StringValue* metadata_database_filter::unsafe_arena_release_assets() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database_filter.assets)
+  
+  PROTOBUF_NAMESPACE_ID::StringValue* temp = assets_;
+  assets_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::StringValue* metadata_database_filter::_internal_mutable_assets() {
+  
+  if (assets_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::StringValue>(GetArena());
+    assets_ = p;
+  }
+  return assets_;
+}
+inline PROTOBUF_NAMESPACE_ID::StringValue* metadata_database_filter::mutable_assets() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database_filter.assets)
+  return _internal_mutable_assets();
+}
+inline void metadata_database_filter::set_allocated_assets(PROTOBUF_NAMESPACE_ID::StringValue* assets) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(assets_);
+  }
+  if (assets) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(assets)->GetArena();
+    if (message_arena != submessage_arena) {
+      assets = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, assets, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  assets_ = assets;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database_filter.assets)
+}
+
+// .google.protobuf.UInt64Value beg_off_id = 10;
+inline bool metadata_database_filter::_internal_has_beg_off_id() const {
+  return this != internal_default_instance() && beg_off_id_ != nullptr;
+}
+inline bool metadata_database_filter::has_beg_off_id() const {
+  return _internal_has_beg_off_id();
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::_internal_beg_off_id() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = beg_off_id_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::beg_off_id() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database_filter.beg_off_id)
+  return _internal_beg_off_id();
+}
+inline void metadata_database_filter::unsafe_arena_set_allocated_beg_off_id(
+    PROTOBUF_NAMESPACE_ID::UInt64Value* beg_off_id) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(beg_off_id_);
+  }
+  beg_off_id_ = beg_off_id;
+  if (beg_off_id) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database_filter.beg_off_id)
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::release_beg_off_id() {
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = beg_off_id_;
+  beg_off_id_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::unsafe_arena_release_beg_off_id() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database_filter.beg_off_id)
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = beg_off_id_;
+  beg_off_id_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::_internal_mutable_beg_off_id() {
+  
+  if (beg_off_id_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
+    beg_off_id_ = p;
+  }
+  return beg_off_id_;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::mutable_beg_off_id() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database_filter.beg_off_id)
+  return _internal_mutable_beg_off_id();
+}
+inline void metadata_database_filter::set_allocated_beg_off_id(PROTOBUF_NAMESPACE_ID::UInt64Value* beg_off_id) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(beg_off_id_);
+  }
+  if (beg_off_id) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(beg_off_id)->GetArena();
+    if (message_arena != submessage_arena) {
+      beg_off_id = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, beg_off_id, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  beg_off_id_ = beg_off_id;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database_filter.beg_off_id)
+}
+
+// .google.protobuf.UInt64Value off_size = 11;
+inline bool metadata_database_filter::_internal_has_off_size() const {
+  return this != internal_default_instance() && off_size_ != nullptr;
+}
+inline bool metadata_database_filter::has_off_size() const {
+  return _internal_has_off_size();
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::_internal_off_size() const {
+  const PROTOBUF_NAMESPACE_ID::UInt64Value* p = off_size_;
+  return p != nullptr ? *p : reinterpret_cast<const PROTOBUF_NAMESPACE_ID::UInt64Value&>(
+      PROTOBUF_NAMESPACE_ID::_UInt64Value_default_instance_);
+}
+inline const PROTOBUF_NAMESPACE_ID::UInt64Value& metadata_database_filter::off_size() const {
+  // @@protoc_insertion_point(field_get:doodle.metadata_database_filter.off_size)
+  return _internal_off_size();
+}
+inline void metadata_database_filter::unsafe_arena_set_allocated_off_size(
+    PROTOBUF_NAMESPACE_ID::UInt64Value* off_size) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(off_size_);
+  }
+  off_size_ = off_size;
+  if (off_size) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:doodle.metadata_database_filter.off_size)
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::release_off_size() {
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = off_size_;
+  off_size_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::unsafe_arena_release_off_size() {
+  // @@protoc_insertion_point(field_release:doodle.metadata_database_filter.off_size)
+  
+  PROTOBUF_NAMESPACE_ID::UInt64Value* temp = off_size_;
+  off_size_ = nullptr;
+  return temp;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::_internal_mutable_off_size() {
+  
+  if (off_size_ == nullptr) {
+    auto* p = CreateMaybeMessage<PROTOBUF_NAMESPACE_ID::UInt64Value>(GetArena());
+    off_size_ = p;
+  }
+  return off_size_;
+}
+inline PROTOBUF_NAMESPACE_ID::UInt64Value* metadata_database_filter::mutable_off_size() {
+  // @@protoc_insertion_point(field_mutable:doodle.metadata_database_filter.off_size)
+  return _internal_mutable_off_size();
+}
+inline void metadata_database_filter::set_allocated_off_size(PROTOBUF_NAMESPACE_ID::UInt64Value* off_size) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(off_size_);
+  }
+  if (off_size) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(off_size)->GetArena();
+    if (message_arena != submessage_arena) {
+      off_size = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, off_size, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  off_size_ = off_size;
+  // @@protoc_insertion_point(field_set_allocated:doodle.metadata_database_filter.off_size)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
-// -------------------------------------------------------------------
-
 // -------------------------------------------------------------------
 
 
 // @@protoc_insertion_point(namespace_scope)
 
 }  // namespace doodle
-
-PROTOBUF_NAMESPACE_OPEN
-
-template <> struct is_proto_enum< ::doodle::metadata_database_meta_type> : ::std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::doodle::metadata_database_meta_type>() {
-  return ::doodle::metadata_database_meta_type_descriptor();
-}
-
-PROTOBUF_NAMESPACE_CLOSE
 
 // @@protoc_insertion_point(global_scope)
 

@@ -8,46 +8,58 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle {
-class DOODLELIB_API assets : public metadata {
-  std::string p_name;
-  std::string p_name_enus;
+class DOODLELIB_API assets {
+  FSys::path p_path;
+
+  void set_path_component();
+
+  std::vector<string> p_component;
 
  public:
+  std::string p_name_show_str;
   assets();
-  explicit assets(std::weak_ptr<metadata> in_metadata, std::string in_name);
+  explicit assets(FSys::path in_name);
   // ~Assets();
 
-  [[nodiscard]] std::string str() const override;
-  [[nodiscard]] std::string show_str() const override;
+  [[nodiscard]] std::string str() const;
 
-  const std::string& get_name1() const;
-  void set_name1(const std::string& in_name);
-  const std::string& get_name_enus() const;
-  void set_name_enus(const std::string& in_nameEnus);
+  const std::vector<string>& get_path_component() {
+    return p_component;
+  };
+
+  void set_path(const FSys::path& in_path);
+  const FSys::path& get_path() const;
+
+  [[nodiscard]] std::string show_str() const;
 
   bool operator<(const assets& in_rhs) const;
   bool operator>(const assets& in_rhs) const;
   bool operator<=(const assets& in_rhs) const;
   bool operator>=(const assets& in_rhs) const;
-  void attribute_widget(const attribute_factory_ptr& in_factoryPtr) override;
+  bool operator==(const assets& in_rhs) const;
+  bool operator!=(const assets& in_rhs) const;
+  void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
 
  private:
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, std::uint32_t const version){
-    ;
-    if (version == 1) {
-      ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(metadata);
-      ar& BOOST_SERIALIZATION_NVP(p_name);
-    }
+  void serialize(Archive& ar, std::uint32_t const version) {
     if (version == 2) {
-      ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(metadata);
-      ar& BOOST_SERIALIZATION_NVP(p_name);
-      ar& BOOST_SERIALIZATION_NVP(p_name_enus);
+      string name;
+      string name_enus;
+      ar& BOOST_SERIALIZATION_NVP(name);
+      ar& BOOST_SERIALIZATION_NVP(name_enus);
+      p_path = name;
+      set_path_component();
+    }
+    if (version == 3) {
+      ar& BOOST_SERIALIZATION_NVP(p_path);
+      ar& BOOST_SERIALIZATION_NVP(p_name_show_str);
+      set_path_component();
     }
   };
 };
 }  // namespace doodle
 
-BOOST_CLASS_VERSION(doodle::assets, 2)
+BOOST_CLASS_VERSION(doodle::assets, 3)
 BOOST_CLASS_EXPORT_KEY(doodle::assets)

@@ -10,8 +10,9 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 class DOODLELIB_API edit_widgets  : public base_widget{
-  metadata_ptr p_meta_parent;
-  attribute_factory_ptr p_factory;
+  entt::entity p_meta_parent;
+
+  registry_ptr p_reg;
   public:
   edit_widgets();
   virtual void frame_render() override;

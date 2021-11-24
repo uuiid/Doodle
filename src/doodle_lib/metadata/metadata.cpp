@@ -4,290 +4,323 @@
 
 #include "metadata.h"
 
-#include <Exception/exception.h>
-#include <Metadata/metadata_cpp.h>
-#include <core/ContainerDevice.h>
-#include <core/core_set.h>
-#include <doodle_lib/Logger/logger.h>
+#include <doodle_lib/core/ContainerDevice.h>
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/logger/logger.h>
 #include <doodle_lib/metadata/metadata_factory.h>
+#include <exception/exception.h>
 #include <google/protobuf/util/time_util.h>
+#include <metadata/metadata_cpp.h>
 
-#include <boost/algorithm/algorithm.hpp>
 #include <boost/archive/polymorphic_text_iarchive.hpp>
 #include <boost/archive/polymorphic_text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/range/algorithm/count_if.hpp>
+#include <boost/hana/ext/std.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::metadata)
 namespace doodle {
-metadata::metadata()
-    : database_action<metadata, metadata_factory>(this),
-      std::enable_shared_from_this<metadata>(),
-      p_parent(),
-      p_parent_id(),
-      p_uuid(std::move(core_set::getSet().get_uuid_str())),
-      p_updata_parent_id(false),
-      p_has_child(0),
-      p_has_file(0),
-      child_item(),
-      p_type(meta_type::unknown_file),
-      p_updata_type(false),
-      child_item_is_sort(false) {
+void tree_relationship::set_parent_raw(const entt::handle &in_parent) {
+  p_parent     = in_parent;
+  auto &k_tree = in_parent.get<tree_relationship>();
+  k_tree.p_child.push_back(to_entity(*this));
+}
+entt::entity tree_relationship::get_parent() const noexcept {
+  return p_parent;
 }
 
-metadata::metadata(std::weak_ptr<metadata> in_metadata)
-    : database_action<metadata, metadata_factory>(this),
-      std::enable_shared_from_this<metadata>(),
-      p_parent(std::move(in_metadata)),
-      p_parent_id(p_parent.lock()->p_id),
-      p_uuid(std::move(core_set::getSet().get_uuid_str())),
-      p_updata_parent_id(false),
-      p_has_child(0),
-      p_has_file(0),
-      child_item(),
-      p_type(meta_type::unknown_file),
-      p_updata_type(false),
-      child_item_is_sort(false) {
+entt::handle tree_relationship::get_parent_h() const noexcept {
+  return make_handle(p_parent);
 }
 
-metadata::~metadata() = default;
-
-std::shared_ptr<metadata> metadata::get_parent() const {
-  return p_parent.lock();
-}
-
-void metadata::sort_child_items(bool is_launch_sig) {
-//  std::sort(child_item.begin(), child_item.end(),
-//            [](const metadata_ptr &r, const metadata_ptr &l) {
-//              return *r < *l;
-//            });
-}
-
-bool metadata::has_parent() const {
-  return !p_parent.expired();
-}
-bool metadata::has_child() const {
-  return p_has_child > 0;
-}
-
-bool metadata::has_file() const {
-  return p_has_file > 0;
-}
-std::string metadata::show_str() const {
-  return str();
-}
-const std::string &metadata::get_uuid() const {
-  return p_uuid;
-}
-
-const metadata_factory_ptr &metadata::get_metadata_factory() const {
-  return p_factory;
-}
-bool metadata::check_parent(const metadata &in_metadata) const {
-  return p_parent_id == in_metadata.p_id;
-}
-
-bool metadata::operator<(const metadata &in_rhs) const {
-  return str() < str();
-}
-bool metadata::operator>(const metadata &in_rhs) const {
-  return in_rhs < *this;
-}
-bool metadata::operator<=(const metadata &in_rhs) const {
-  return !(in_rhs < *this);
-}
-bool metadata::operator>=(const metadata &in_rhs) const {
-  return !(*this < in_rhs);
-}
-metadata_const_ptr metadata::get_root_parent() const {
-  auto k_p = shared_from_this();
-  while (!k_p->p_parent.expired()) {
-    k_p = k_p->p_parent.lock()->get_root_parent();
+void tree_relationship::set_parent(const entt::entity &in_parent) noexcept {
+  auto l_old_p_h = make_handle(p_parent);
+  auto this_h    = make_handle(*this);
+  if (l_old_p_h && l_old_p_h.all_of<tree_relationship, database>()) {
+    boost::remove_erase_if(l_old_p_h.get<tree_relationship>().p_child,
+                           [&](auto in) {
+                             return this_h.entity() == in;
+                           });
+    auto &k_d = l_old_p_h.get<database>();
+    --(k_d.p_has_child);
+    if (this_h.all_of<assets_file>())
+      --(k_d.p_has_file);
   }
-  return k_p;
-  //  if(p_parent.expired())
-  //    return shared_from_this();
-  //  else
-  //    return p_parent.lock()->getRootParent();
+
+  p_parent   = in_parent;
+  auto l_p_h = make_handle(in_parent);
+  if (l_p_h.all_of<tree_relationship, database>()) {
+    l_p_h.get<tree_relationship>().p_child.push_back(this_h);
+    auto &k_d                          = l_p_h.get<database>();
+    // 设置父id
+    this_h.get<database>().p_parent_id = k_d.get_id();
+    // 设置父物体中储存的子数据
+    ++(k_d.p_has_child);
+    if (this_h.all_of<assets_file>())
+      ++(k_d.p_has_file);
+  }
 }
 
-FSys::path metadata::get_url_uuid() const {
-  auto name = FSys::path{get_root_parent()->get_uuid()};
-  name /= p_uuid.substr(0, 3);
-  name /= p_uuid;
-  return name;
+const std::vector<entt::entity> &tree_relationship::get_child() const noexcept {
+  return p_child;
 }
 
-void metadata::set_meta_typp(const meta_type &in_meta) {
+// std::vector<entt::entity> &tree_relationship::get_child() noexcept {
+//   return p_child;
+// }
+
+// void tree_relationship::set_child(const std::vector<entt::entity> &in_child) noexcept {
+//   p_child = in_child;
+// }
+
+entt::handle tree_relationship::get_root() const {
+  auto k_h = make_handle(*this);
+  while (k_h) {
+    auto &k_tree = k_h.get<tree_relationship>();
+    if (!k_tree.has_parent())
+      return k_h;
+    k_h = k_tree.get_parent_h();
+  }
+  return k_h;
+}
+bool tree_relationship::has_parent() const {
+  return p_parent != entt::null;
+}
+
+void database::set_id(std::uint64_t in_id) const {
+  p_id     = in_id;
+  p_id_str = fmt::format("id {}", p_id);
+}
+
+const std::uint64_t &database_root::get_current_id() const {
+  return p_current_id;
+}
+
+bool database_root::is_end() const {
+  return p_end;
+}
+
+void database_root::reset() {
+  p_current_id = 0;
+  p_cout_rows  = 0;
+  p_end        = false;
+}
+
+database::database()
+    : p_id(0),
+      p_id_str("id 0"),
+      p_parent_id(),
+      p_type(metadata_type::unknown_file),
+      p_uuid(core_set::getSet().get_uuid_str()),
+      p_has_child(0),
+      p_has_file(0),
+      p_updata_parent_id(false),
+      p_updata_type(false),
+      p_boost_serialize_vesion(0) {
+}
+
+database::~database() = default;
+
+DOODLE_MOVE_CPP(database);
+
+void database::set_enum(entt::registry &in_reg, entt::entity in_ent) {
+  auto k_h        = entt::handle{in_reg, in_ent};
+  auto [k_p, k_f] = k_h.try_get<project, assets_file>();
+  auto &k_data    = k_h.get<database>();
+
+  if (k_p)
+    k_data.p_type = metadata_type::project_root;
+  else if (k_f) {
+    k_data.p_type = metadata_type::file;
+  } else
+    k_data.p_type = metadata_type::folder;
+}
+
+FSys::path database::get_url_uuid() const {
+  auto k_h     = make_handle(*this);
+
+  auto l_reg   = g_reg();
+  auto l_ent   = entt::to_entity(*l_reg, *this);
+
+  // 找到根的数据库类
+  auto &k_data = k_h.get<root_ref>().root_handle().get<database>();
+
+  // 组合路径
+  auto path    = FSys::path{k_data.p_uuid};
+  path /= p_uuid.substr(0, 3);
+  path /= p_uuid;
+  return path;
+}
+
+bool database::has_parent() const {
+  return p_parent_id.has_value();
+}
+
+void database::set_meta_type(const metadata_type &in_meta) {
   p_type        = in_meta;
   p_updata_type = true;
-}
+};
 
-void metadata::set_meta_typp(const std::string &in_meta) {
-  p_type        = magic_enum::enum_cast<meta_type>(in_meta).value_or(meta_type::unknown_file);
+void database::set_meta_type(const std::string &in_meta) {
+  p_type = magic_enum::enum_cast<metadata_type>(in_meta)
+               .value_or(metadata_type::unknown_file);
   p_updata_type = true;
-}
+};
 
-void metadata::set_meta_type(std::int32_t in_) {
-  p_type        = magic_enum::enum_cast<meta_type>(in_).value_or(meta_type::unknown_file);
+void database::set_meta_type(std::int32_t in_) {
+  p_type = magic_enum::enum_cast<metadata_type>(in_)
+               .value_or(metadata_type::unknown_file);
   p_updata_type = true;
-}
+};
 
-metadata::meta_type metadata::get_meta_type() const {
-  return p_type;
-}
-
-std::string metadata::get_meta_type_str() const {
-  return std::string{magic_enum::enum_name(p_type)};
-}
-
-std::int32_t metadata::get_meta_type_int() const {
+std::int32_t database::get_meta_type_int() const {
   return magic_enum::enum_integer(p_type);
 }
-bool metadata::operator==(const metadata &in_rhs) const {
-  return std::tie(p_id) == std::tie(in_rhs.p_id);
-}
-bool metadata::operator!=(const metadata &in_rhs) const {
-  return std::tie(p_id) != std::tie(in_rhs.p_id);
+
+std::uint64_t database::get_id() const {
+  return p_id;
 }
 
-void metadata::end_push_back(const metadata_ptr &in_val) {
-  add_child(in_val);
-  switch (in_val->p_type) {
-    case meta_type::unknown_file:
-    case meta_type::project_root:
-    case meta_type::animation_lib_root:
-      break;
-    case meta_type::folder:
-      ++p_has_child;
-      break;
-    case meta_type::derive_file:
-    case meta_type::file: {
-      ++p_has_file;
-      break;
+bool database::is_install() const {
+  return p_id > 0;
+}
+
+#define DOODLE_SERIALIZATION project,            \
+                             episodes,           \
+                             shot,               \
+                             season,             \
+                             assets,             \
+                             assets_file,        \
+                             assets_path_vector, \
+                             time_point_wrap,    \
+                             comment_vector
+
+database &database::operator=(const metadata_database &in_) {
+  auto k_h    = make_handle(*this);
+  /// 转换序列化数据
+  auto k_data = in_.metadata_cereal().value();
+  vector_container my_data{k_data.begin(), k_data.end()};
+  {
+    vector_iostream k_i{my_data};
+    boost::archive::text_iarchive k_archive{k_i};
+    k_archive >> *this;
+
+    // std::tuple<> k_tu;
+    decltype(k_h.try_get<DOODLE_SERIALIZATION>()) k_tu{};
+    try {
+      boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
+        if ((my_data.size() - 1) != k_i.tellg())
+          k_archive >> in_ptr;
+      });
+    } catch (const boost::archive::archive_exception &e) {
+      DOODLE_LOG_ERROR(e.what());
     }
-    default:
-      break;
+
+    boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
+      if (in_ptr) {
+        k_h.emplace_or_replace<
+            std::remove_pointer_t<std::decay_t<decltype(in_ptr)>>>(std::move(*in_ptr));
+      }
+    });
   }
+  /// 转换id
+  set_id(in_.id());
+  /// 转化类型
+  p_type = magic_enum::enum_cast<metadata_type>(in_.m_type().value())
+               .value_or(metadata_type::unknown_file);
 
-  saved(true);
+  /// 确认转换可索引数据
+
+  return *this;
 }
+database::operator doodle::metadata_database() const {
+  auto k_h = make_handle(*this);
 
-void metadata::end_erase(const metadata_ptr &in_val) {
-  switch (in_val->p_type) {
-    case meta_type::unknown_file:
-    case meta_type::project_root:
-    case meta_type::animation_lib_root:
-      break;
-    case meta_type::folder:
-      --p_has_child;
-      break;
-    case meta_type::derive_file:
-    case meta_type::file: {
-      --p_has_file;
-      break;
-    }
-    default:
-      break;
-  }
-  saved(true);
-}
-
-void metadata::end_clear() {
-  for (const auto &k_i : this->child_item) {
-    k_i->p_id = 0;
-  }
-  p_has_child = 0;
-  saved(true);
-}
-void metadata::add_child(const metadata_ptr &val) {
-  /// 先查看是否有父级关联
-  if (val->has_parent()) {
-    /// 有关联并且父物体不是指向自己的话
-    /// 那么我们要同时记录子项要更新父id属性和要保存所有属性
-    if (val->p_parent.lock() != shared_from_this()) {
-      /// 设置保存指向父的id需求
-      val->p_updata_parent_id = true;
-      /// 设置为需求保存
-      val->saved(true);
-      /// 在父物体上调用清除子物体信号
-      val->p_parent.lock()->get_child().erase(val);
-    }
-  }
-
-  /// 这里将所有的子级要继承的父级属性给上
-  val->p_parent      = weak_from_this();
-  val->p_parent_id   = p_id;
-  val->p_factory     = p_factory;
-  child_item_is_sort = false;
-
-  DOODLE_LOG_INFO(fmt::format("插入子数据： {}", val->show_str()))
-}
-metadata::operator metadata_database() const {
   metadata_database k_tmp{};
-  this->to_DataDb(k_tmp);
+  ///转换id
+  if (p_id != 0)
+    k_tmp.set_id(p_id);
+  ///设置序列化数据储存位置
+  k_tmp.set_uuid_path(get_url_uuid().generic_string());
+
+  /// 设置序列化数据
+  vector_container my_data{};
+  {
+    vector_iostream kt{my_data};
+    boost::archive::text_oarchive k_archive{kt};
+    k_archive << BOOST_SERIALIZATION_NVP(*this);
+
+    auto k_tu = k_h.try_get<DOODLE_SERIALIZATION>();
+    // auto k_boost_tu = boost::hana::to_tuple(k_tu);
+    boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
+      k_archive << in_ptr;
+    });
+  }
+  k_tmp.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
+
+  if (p_parent_id)
+    k_tmp.mutable_parent()->set_value(*p_parent_id);
+
+  ///设置类型id
+  k_tmp.mutable_m_type()->set_value(get_meta_type_int());
+  /// 设置可索引数据
+  if (k_h.any_of<season>()) {
+    k_tmp.mutable_season()->set_value(k_h.get<season>().get_season());
+  }
+  if (k_h.any_of<episodes>()) {
+    k_tmp.mutable_episode()->set_value(k_h.get<episodes>().get_episodes());
+  }
+  if (k_h.any_of<shot>()) {
+    k_tmp.mutable_episode()->set_value(k_h.get<shot>().get_shot());
+  }
+  if (k_h.any_of<assets>()) {
+    k_tmp.mutable_assets()->set_value(k_h.get<assets>().get_path().generic_string());
+  }
+
   return k_tmp;
 }
 
-void metadata::to_DataDb(metadata_database &in_) const {
-  in_.set_id(p_id);
-  in_.set_uuid_path(get_url_uuid().generic_string());
-  if (has_parent() && (p_updata_parent_id || p_id == 0))
-    in_.mutable_parent()->set_value(*p_parent_id);
+#undef DOODLE_SERIALIZATION
 
-  //  auto k_time      = std::chrono::system_clock::now();
-  //  auto k_timestamp = google::protobuf::util::TimeUtil::TimeTToTimestamp(
-  //      std::chrono::system_clock::to_time_t(k_time));
-  //  in_.mutable_update_time()->CopyFrom(k_timestamp);
-  if (p_id != 0) {
-    vector_container my_data{};
-    {
-      vector_iostream kt{my_data};
-      boost::archive::text_oarchive k_archive{kt};
-      auto k_ptr = shared_from_this();
-      k_archive << boost::serialization::make_nvp("meta", k_ptr);
-    }
-    in_.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
-  }
-
-  if (p_updata_type || p_id == 0)
-    in_.mutable_m_type()->set_value(magic_enum::enum_cast<doodle::metadata_database::meta_type>(get_meta_type_int()).value());
+bool database::operator==(const database &in_rhs) const {
+  return std::tie(p_id, p_uuid) == std::tie(in_rhs.p_id, in_rhs.p_uuid);
 }
-metadata_ptr metadata::from_DataDb(const metadata_database &in_) {
-  metadata_ptr k_ptr{};
-  try {
-    auto k_data = in_.metadata_cereal().value();
-    vector_container my_data{k_data.begin(), k_data.end()};
-    {
-      vector_istream k_i{my_data};
-      boost::archive::text_iarchive k_archive{k_i};
-      k_archive >> k_ptr;
-    }
 
-    if (k_ptr->p_id != in_.id())
-      throw doodle_error{fmt::format("验证出错 id 不相同 {} == {}", k_ptr->p_id, in_.id())};
-
-    if (in_.parent().value() != 0) {  ///  不为零的情况下, 比较验证值, 不相同就返回空指针
-      if (k_ptr->p_parent_id != in_.parent().value())
-        throw doodle_error{fmt::format("验证出错, 父id不相同 {} == {}", k_ptr->p_parent_id.value(), in_.parent().value())};
-    } else {
-      if (k_ptr->p_parent_id)  /// 是零就是默认值, 没有值, 如果父id有值就直接返回空
-        throw doodle_error{fmt::format("验证出错, 没有父id, 但是传入父id {} ", in_.parent().value())};
-    }
-
-    k_ptr->set_meta_type(magic_enum::enum_integer(in_.m_type().value()));
-  } catch (boost::archive::archive_exception &err) {
-    DOODLE_LOG_WARN(err.what());
-  }
-
-  return k_ptr;
+bool database::operator!=(const database &in_rhs) const {
+  return !(*this == in_rhs);
 }
-std::uint64_t metadata::get_parent_id() const {
-  return *p_parent_id;
+bool database::has_child() const {
+  return p_has_child > 0;
 }
-bool metadata::has_parent_id() const {
-  return p_parent_id.has_value();
+bool database::has_file() const {
+  return p_has_file > 0;
+}
+
+const std::string &database::get_uuid() const {
+  return p_uuid;
+}
+const string &database::get_id_str() const {
+  return p_id_str;
+}
+
+const string &to_str::get() const {
+  auto k_h   = make_handle(*this);
+  auto k_tup = k_h.try_get<project,
+                           episodes,
+                           shot,
+                           season,
+                           assets,
+                           assets_file>();
+
+  boost::hana::for_each(k_tup, [&](auto ptr) {
+    if (ptr)
+      p_str = ptr->str();
+  });
+  return p_str;
+}
+
+to_str::operator string() const {
+  return get();
 }
 
 }  // namespace doodle

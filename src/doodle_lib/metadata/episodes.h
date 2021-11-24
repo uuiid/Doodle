@@ -4,33 +4,32 @@
 
 namespace doodle {
 
-class DOODLELIB_API episodes : public metadata {
-  int64_t p_episodes;
-
+class DOODLELIB_API episodes {
  public:
+  int64_t p_episodes;
   episodes();
-  explicit episodes(std::weak_ptr<metadata> in_metadata, int64_t in_episodes);
+  explicit episodes(int64_t in_episodes);
   // ~Episodes();
-
   [[nodiscard]] const int64_t &get_episodes() const noexcept;
   void set_episodes(const int64_t &Episodes_);
 
-  [[nodiscard]] std::string str() const override;
+  [[nodiscard]] std::string str() const;
 
-  void attribute_widget(const attribute_factory_ptr &in_factoryPtr) override;
+  void attribute_widget(const attribute_factory_ptr &in_factoryPtr);
 
   bool operator<(const episodes &in_rhs) const;
   bool operator>(const episodes &in_rhs) const;
   bool operator<=(const episodes &in_rhs) const;
   bool operator>=(const episodes &in_rhs) const;
-
+  bool operator==(const episodes &in_rhs) const;
+  bool operator!=(const episodes &in_rhs) const;
   inline bool analysis(const FSys::path &in_path) {
     return analysis(in_path.generic_string());
   };
   bool analysis(const std::string &in_path);
 
-  static episodes_ptr analysis_static(const std::string &in_path);
-  inline static episodes_ptr analysis_static(const FSys::path &in_path) {
+  static std::optional<episodes> analysis_static(const std::string &in_path);
+  inline static std::optional<episodes> analysis_static(const FSys::path &in_path) {
     return analysis_static(in_path.generic_string());
   };
 
@@ -42,10 +41,22 @@ class DOODLELIB_API episodes : public metadata {
 template <class Archive>
 void episodes::serialize(Archive &ar, const std::uint32_t version) {
   if (version == 1)
-    ar &boost::serialization::make_nvp("metadata", boost::serialization::base_object<metadata>(*this)) &
-        p_episodes;
+    ar &BOOST_SERIALIZATION_NVP(p_episodes);
 }
+
 }  // namespace doodle
+
+namespace fmt {
+template <>
+struct fmt::formatter<::doodle::episodes> : fmt::formatter<fmt::string_view> {
+  template <typename FormatContext>
+  auto format(const ::doodle::episodes &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+    return formatter<string_view>::format(
+        in_.str(),
+        ctx);
+  }
+};
+}  // namespace fmt
 
 BOOST_CLASS_VERSION(doodle::episodes, 1)
 BOOST_CLASS_EXPORT_KEY(doodle::episodes)

@@ -12,6 +12,7 @@
 #include <doodle_lib/gui/widgets/assets_widget.h>
 #include <doodle_lib/gui/widgets/edit_widgets.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
+#include <doodle_lib/gui/widgets/opencv_player_widget.h>
 #include <doodle_lib/gui/widgets/project_widget.h>
 #include <doodle_lib/gui/widgets/tool_box_widget.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
@@ -42,15 +43,18 @@ main_windows::main_windows()
       p_long_task_(nullptr),
       p_edit_windows_(nullptr),
       p_tool_box_(nullptr),
+      p_opencv_(nullptr),
       p_list_windwos() {
   p_class_name    = "main_doodle";
   p_prj_          = create_windwos<project_widget>(true);
   p_ass_          = create_windwos<assets_widget>(true);
   p_attr_         = create_windwos<assets_file_widgets>(true);
-  p_setting_         = create_windwos<setting_windows>(false);
+  p_setting_      = create_windwos<setting_windows>(false);
   p_long_task_    = create_windwos<long_time_tasks_widget>(true);
   p_edit_windows_ = create_windwos<edit_widgets>(true);
   p_tool_box_     = create_windwos<tool_box_widget>(true);
+  p_opencv_       = create_windwos<opencv_player_widget>(false);
+
   for (auto &i : p_list_windwos) {
     i->load_show();
   }
@@ -60,7 +64,6 @@ main_windows::main_windows()
     p_edit_windows_->set_factort(p_prj_->get_factory());
   });
   p_ass_->select_change.connect([this](auto in) {
-    p_attr_->set_metadata(in);
     p_edit_windows_->set_factort(p_ass_->get_factory());
   });
   p_attr_->select_change.connect(

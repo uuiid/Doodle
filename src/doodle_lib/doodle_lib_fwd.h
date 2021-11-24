@@ -36,6 +36,9 @@ class no_copy {
   no_copy()                = default;
   no_copy(const no_copy &) = delete;
   no_copy &operator=(const no_copy &) = delete;
+
+  no_copy(no_copy &&)                 = default;
+  no_copy &operator=(no_copy &&) = default;
 };
 /**
  * @brief 判断是否是智能指针
@@ -251,19 +254,18 @@ DOODLELIB_API std::string file_hash_sha224(const path &in_file);
 DOODLELIB_API std::vector<path> list_files(const path &in_dir);
 
 }  // namespace FSys
-
+using namespace entt::literals;
 class core_set;
 class project;
 class episodes;
 class shot;
-class metadata;
 class assets;
 class core_sql;
 class assets_file;
-class metadata_factory;
+class metadata_serialize;
 class time_point_wrap;
 class comment;
-class assets_path;
+
 
 class rpc_metadata_client;
 class rpc_metadaata_server;
@@ -294,170 +296,103 @@ class ue4_project_async;
 class image_sequence_async;
 class program_options;
 class logger_ctrl;
+class comm_video;
 
+class comm_project_add;
+class comm_ass_eps;
+class comm_ass_shot;
+class comm_assets;
+class comm_ass_season;
+class comm_ass_file_attr;
+class opencv_read_player;
+class opencv_player_widget;
+
+
+using handle_list = std::vector<entt::handle>;
 using logger_ctr_ptr             = std::shared_ptr<logger_ctrl>;
 using program_options_ptr        = std::shared_ptr<program_options>;
 
 using image_sequence_async_ptr   = std::shared_ptr<image_sequence_async>;
 
-/**
- * @brief 数据库连接指针
- *
- */
 using conn_ptr                   = std::unique_ptr<sqlpp::mysql::connection>;
-/**
- * @brief Ue4Project智能g'x指针
- *
- */
+
 using ue4_project_ptr            = std::shared_ptr<ue4_project>;
-/**
- * @brief VideoSequence 智能共享指针
- *
- */
+
 using video_sequence_ptr         = std::shared_ptr<video_sequence>;
 
-/**
- * @brief std 智能共享指针
- *
- */
 using string_list                = std::vector<std::string>;
-/**
- * @brief string_list 智能共享指针
- *
- */
+
 using string_matrix2             = std::vector<string_list>;
-/**
- * @brief string_matrix2 智能共享指针
- *
- */
+
 using string_matrix2_ptr         = std::shared_ptr<string_matrix2>;
-/**
- * @brief string_list 智能共享指针
- *
- */
+
 using string_list_ptr            = std::shared_ptr<string_list>;
 
-/**
- * @brief season 智能共享指针
- *
- */
-using season_ptr                 = std::shared_ptr<season>;
-/**
- * @brief metadata 智能共享指针
- *
- */
-using metadata_ptr               = std::shared_ptr<metadata>;
-/**
- * @brief const 智能共享指针
- *
- */
-using metadata_const_ptr         = std::shared_ptr<const metadata>;
-/**
- * @brief RpcMetadataClient 智能共享指针
- *
- */
 using rpc_metadata_client_ptr    = std::shared_ptr<rpc_metadata_client>;
-/**
- * @brief RpcMetadaataServer 智能共享指针
- *
- */
+
 using rpc_metadata_server_ptr    = std::shared_ptr<rpc_metadaata_server>;
-/**
- * @brief RpcServerHandle 智能共享指针
- *
- */
+
 using rpc_server_handle_ptr      = std::shared_ptr<rpc_server_handle>;
-/**
- * @brief RpcFileSystemServer 智能共享指针
- *
- */
+
 using rpc_file_system_server_ptr = std::shared_ptr<rpc_file_system_server>;
-/**
- * @brief RpcFileSystemClient 智能共享指针
- *
- */
+
 using rpc_file_system_client_ptr = std::shared_ptr<rpc_file_system_client>;
-/**
- * @brief Project 智能共享指针
- *
- */
-using project_ptr                = std::shared_ptr<project>;
-/**
- * @brief Episodes 智能共享指针
- *
- */
-using episodes_ptr               = std::shared_ptr<episodes>;
-/**
- * @brief Shot 智能共享指针
- *
- */
-using shot_ptr                   = std::shared_ptr<shot>;
-/**
- * @brief Assets 智能共享指针
- *
- */
-using assets_ptr                 = std::shared_ptr<assets>;
-/**
- * @brief AssetsFile 智能共享指针
- *
- */
-using assets_file_ptr            = std::shared_ptr<assets_file>;
-/**
- * @brief CoreSql 智能共享指针
- *
- */
-using core_sql_ptr               = std::shared_ptr<core_sql>;
 
-/**
- * @brief MetadataFactory 智能共享指针
- *
- */
-using metadata_factory_ptr       = std::shared_ptr<metadata_factory>;
-/**
- * @brief TimeDuration 智能共享指针
- *
- */
-using time_wrap_ptr              = std::shared_ptr<time_point_wrap>;
-/**
- * @brief Comment 智能共享指针
- *
- */
-using comment_ptr                = std::shared_ptr<comment>;
-/**
- * @brief AssetsPath 智能共享指针
- *
- */
-using assets_path_ptr            = std::shared_ptr<assets_path>;
+using season_ref                 = std::reference_wrapper<season>;
+using project_ref                = std::reference_wrapper<project>;
+using episodes_ref               = std::reference_wrapper<episodes>;
+using shot_ref                   = std::reference_wrapper<shot>;
+using assets_ref                 = std::reference_wrapper<assets>;
+using assets_file_ref            = std::reference_wrapper<assets_file>;
 
-/**
- * @brief doodle_lib 智能共享指针
- *
- */
+using metadata_serialize_ptr     = std::shared_ptr<metadata_serialize>;
+
+using command_ptr                = std::shared_ptr<command_base>;
+
+
 using doodle_lib_ptr             = std::shared_ptr<doodle_lib>;
-/**
- * @brief ThreadPool 智能共享指针
- *
- */
+
 using thread_pool_ptr            = std::shared_ptr<thread_pool>;
-/**
- * @brief attribute_factory_interface 智能共享指针
- *
- */
+
 using attribute_factory_ptr      = std::shared_ptr<attribute_factory_interface>;
-/**
- * @brief long_term 智能共享指针
- *
- */
+
 using long_term_ptr              = std::shared_ptr<long_term>;
-/**
- * @brief ImageSequence 智能共享指针
- *
- */
+
 using image_sequence_ptr         = std::shared_ptr<image_sequence>;
-/**
- * @brief MayaFile 智能共享指针
- */
+
+using registry_ptr               = std::shared_ptr<entt::registry>;
 class time_widget;
+registry_ptr &g_reg();
+template <class Component,
+          std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
+entt::handle make_handle(const Component &instance) {
+  return entt::handle{*(g_reg()), entt::to_entity(*(g_reg()), instance)};
+};
+template <class Component,
+          std::enable_if_t<std::is_same_v<entt::entity, Component>, bool> = true>
+entt::handle make_handle(const Component &instance) {
+  return entt::handle{*(g_reg()), instance};
+};
+
+inline entt::handle make_handle() {
+  return entt::handle{*(g_reg()), g_reg()->create()};
+};
+
+
+template <class Component>
+entt::entity to_entity(const Component &instance) {
+  return entt::to_entity(*(g_reg()), instance);
+};
+
+class DOODLELIB_API null_fun {
+ public:
+  null_fun() = default;
+  template <class in_class>
+  void operator()(in_class &in){
+
+  };
+};
+static null_fun null_fun_t{};
 
 using maya_file_ptr           = std::shared_ptr<maya_file>;
 using setting_windows_ptr     = std::shared_ptr<setting_windows>;
@@ -467,9 +402,6 @@ using bool_ptr                = std::shared_ptr<bool>;
 using string                  = std::string;
 using string_ptr              = std::shared_ptr<string>;
 
-using command_ptr             = std::shared_ptr<command_base>;
-using comment_vector_ptr      = std::shared_ptr<comment_vector>;
-using assets_path_vector_ptr  = std::shared_ptr<assets_path_vector>;
 using time_widget_ptr         = std::shared_ptr<time_widget>;
 using widget_register_ptr     = std::shared_ptr<widget_register>;
 

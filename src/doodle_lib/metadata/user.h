@@ -19,6 +19,7 @@ class user {
 
  public:
   user();
+  DOODLE_MOVE(user);
   explicit user(std::string in_string);
   explicit user(std::string in_string, std::string in_ENUS);
 

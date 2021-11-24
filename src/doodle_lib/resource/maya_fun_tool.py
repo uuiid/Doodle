@@ -2,8 +2,6 @@
 import pymel.core
 import pymel.core.system
 import pymel.core.nodetypes
-import argparse
-import os
 import re
 import json
 
@@ -103,6 +101,18 @@ class maya_workspace():
     def __str__(self):
         return "{} ,{}".format(str(self.maya_file), str(self.raneg))
 
+    def get_abc_folder(self):
+        # type: () -> pymel.core.Path
+        path = self.work.path / "abc" / self.maya_file.name_not_ex  # type: pymel.core.Path
+        path.makedirs_p()
+        return path
+
+    def get_fbx_folder(self):
+        # type: () -> pymel.core.Path
+        path = self.work.path / "fbx" / self.maya_file.name_not_ex  # type: pymel.core.Path
+        path.makedirs_p()
+        return path
+
 
 class export_log(object):
     """
@@ -166,50 +176,37 @@ class camera:
         for cam in pymel.core.listCameras():
             pymel.core.ls(cam)[0].renderable.set(False)
         self.maya_cam.renderable.set(True)
-        # pymel.core.mel.eval(
-        #     "lookThroughModelPanel {} modelPanel1;".format(self.maya_cam.fullPath()))
-        # try:
-        #     # type: pymel.core.nodetypes.RenderGlobals
-        #     # pymel.core.hwRender(camera=self.maya_cam, h=1280, w=1920)
-        #     pymel.core.playblast(
-        #         viewer=False,
-        #         startTime=start_frame,
-        #         endTime=end_frame,
-        #         filename="{path}/{base_name}_playblast_{start}-{end}"
-        #         .format(
-        #             path=out_path,
-        #             base_name=doodle_work_space.maya_file.name_not_ex,
-        #             start=start_frame,
-        #             end=end_frame
-        #         ),
-        #         percent=100,
-        #         quality=100,
-        #         # offScreen=True,
-        #         # editorPanelName="modelPanel1",
-        #         format="qt",
-        #         compression="H.264",
-        #         widthHeight=(1920, 1280)
-        #     )
-        # except RuntimeError:
-        pymel.core.system.warning("QuickTime not found, use default value")
+
         print("create move {}".format(out_path))
-        pymel.core.playblast(
-            viewer=False,
-            startTime=start_frame,
-            endTime=end_frame,
-            filename="{path}/{base_name}_playblast_{start}-{end}"
-            .format(
-                path=out_path,
-                base_name=doodle_work_space.maya_file.name_not_ex,
-                start=start_frame,
-                end=end_frame
-            ),
-            percent=100,
-            quality=100,
-            widthHeight=(1920, 1280)
-            # editorPanelName="modelPanel4"
-            # offScreen=True
-        )
+        try:
+            pymel.core.comm_play_blast_maya(
+                startTime=start_frame,
+                endTime=end_frame,
+                filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
+                .format(
+                    path=out_path,
+                    base_name=doodle_work_space.maya_file.name_not_ex,
+                    start=start_frame,
+                    end=end_frame
+                )
+            )
+        except AttributeError as err:
+            print(str(err))
+            pymel.core.playblast(
+                viewer=False,
+                startTime=start_frame,
+                endTime=end_frame,
+                filename="{path}/{base_name}_playblast_{start}-{end}"
+                .format(
+                    path=out_path,
+                    base_name=doodle_work_space.maya_file.name_not_ex,
+                    start=start_frame,
+                    end=end_frame
+                ),
+                percent=100,
+                quality=100,
+                widthHeight=(1920, 1280)
+            )
 
     def unlock_cam(self):
         for att in ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v", "coi", "sa", "fd", "fl", "vfa", "hfa", "lsr", "fs"]:
@@ -231,24 +228,27 @@ class camera:
                 self.bakeAnm()
             except:
                 print("back camera fail")
-        else:
-            pymel.core.bakeResults(self.maya_cam, sm=True,
-                                   t=(doodle_work_space.raneg.start,
-                                      doodle_work_space.raneg.end))
-
+        print("unlock camera")
         self.unlock_cam()
+        print("bake Results camera")
+        pymel.core.bakeResults(self.maya_cam, sm=True,
+                               t=(doodle_work_space.raneg.start,
+                                  doodle_work_space.raneg.end))
 
+        # FIXME 导出时值为1001
         mel_name = "{path}/{name}_camera_{start}-{end}.fbx".format(
             path=export_path,
             name=doodle_work_space.maya_file.name_not_ex,
-            start=int(doodle_work_space.raneg.start),
+            start=int(1001),
             end=int(doodle_work_space.raneg.end))
         mel_name = pymel.core.Path(mel_name)
         pymel.core.select(self.maya_cam)
         print("Prepare export path --> {}".format(mel_name))
 
+        # pymel.core.mel.eval(
+        #     "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
         pymel.core.mel.eval(
-            "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
+            "FBXExportBakeComplexStart -v {}".format(1001))
         pymel.core.mel.eval(
             "FBXExportBakeComplexEnd -v {}".format(doodle_work_space.raneg.end))
         pymel.core.mel.eval("FBXExportBakeComplexAnimation -v true")
@@ -307,11 +307,8 @@ class camera:
         self.newCam.rename(name)
         self.maya_cam = self.newCam
 
-    def __call__(self, str=None):
-        if not str:
-            str = doodle_work_space.work.path / \
-                doodle_work_space.maya_file.name_not_ex
-        self.export(str)
+    def __call__(self, in_path):
+        self.export(in_path)
 
     def __str__(self):
         return "camera is {}, priority num is {}".format(
@@ -582,14 +579,12 @@ class export_group(object):
         if not mesh:
             return
 
-        path = doodle_work_space.work.path \
-            / doodle_work_space.maya_file.name_not_ex   # type: pymel.core.Path
+        path = doodle_work_space.get_fbx_folder()   # type: pymel.core.Path
 
         name = "{}_{}_{}-{}.fbx".format(doodle_work_space.maya_file.name_not_ex,
                                         self.maya_name_space,
                                         doodle_work_space.raneg.start,
                                         doodle_work_space.raneg.end)
-        path.makedirs_p()
         path = path / name
         print("export path : {}".format(path.abspath()).replace("\\", "/"))
         pymel.core.bakeResults(simulation=True,
@@ -600,8 +595,9 @@ class export_group(object):
                                disableImplicitControl=True,
                                preserveOutsideKeys=False,
                                sparseAnimCurveBake=False)
+        # FIXME: 修复开始帧
         pymel.core.mel.eval(
-            "FBXExportBakeComplexStart -v {}".format(doodle_work_space.raneg.start))
+            "FBXExportBakeComplexStart -v {}".format(1001))
         pymel.core.mel.eval(
             "FBXExportBakeComplexEnd -v {}".format(doodle_work_space.raneg.end))
         pymel.core.mel.eval("FBXExportBakeComplexAnimation -v true")
@@ -648,8 +644,13 @@ class cloth_group_file(export_group):
             qcloth_obj = pymel.core.selected()[0]
             path = pymel.core.Path(
                 "cache") / doodle_work_space.maya_file.name_not_ex / self.maya_name_space / select_str
+            # 这里要删除缓存
+            l_path_ = doodle_work_space.work.path / path  # type: pymel.core.Path
+            if l_path_.exists():
+                l_path_.rmtree()
+                print("delete path {}".format(l_path_))
+
             doodle_work_space.work.mkdir(doodle_work_space.work.path / path)
-            print(path)
             print(qcloth_obj)
             qcloth_obj.setAttr("cacheFolder", str(path))
             qcloth_obj.setAttr("cacheName", select_str)
@@ -760,8 +761,7 @@ class cloth_group_file(export_group):
     def export_abc(self, export_path=pymel.core.Path(), repeat=False):
         # 创建路径
         if not export_path:
-            export_path = doodle_work_space.work.getPath(
-            ) / doodle_work_space.maya_file.name_not_ex
+            export_path = doodle_work_space.get_abc_folder()
         path = export_path  # type: pymel.core.Path
         self.export_select_abc(
             path,
@@ -792,20 +792,21 @@ class fbx_export():
                 self.ref.append(k_ref)
         for ref_obj in self.ref:
             self.fbx_group.append(fbx_group_file(ref_obj))
-        self.cam = camera_filter()()
+        self.cam = camera_filter()()  # type: camera
 
     def export_fbx_mesh(self):
-        self.cam()
+        self.cam(doodle_work_space.get_fbx_folder())
         for obj in self.fbx_group:
             obj.export_fbx()
 
     def save(self):
-        path = doodle_work_space.work.path / \
-            doodle_work_space.maya_file.name_not_ex  # type: pymel.core.util.path
-        path.makedirs_p()
-        pymel.core.system.saveAs("{}/{}.ma".format(
-            path,
-            doodle_work_space.maya_file.name_not_ex))
+        try:
+            path = doodle_work_space.get_fbx_folder()  # type: pymel.core.util.path
+            pymel.core.system.saveAs("{}/{}.ma".format(
+                path,
+                doodle_work_space.maya_file.name_not_ex))
+        except RuntimeError as err:
+            print("not save file" + str(err))
 
     def __call__(self):
         self.save()
@@ -880,15 +881,19 @@ class cloth_export():
             obj.export_abc(repeat=False)
 
     def save(self, override=False):
-        if not override:
-            path = doodle_work_space.work.path / "cloth_ma"  # type: pymel.core.util.path
-            path.makedirs_p()
+        try:
+            if not override:
+                path = doodle_work_space.work.path / "cloth_ma"  # type: pymel.core.util.path
+                path.makedirs_p()
 
-            pymel.core.system.saveAs("{}/{}_sim_colth.ma".format(
-                path,
-                doodle_work_space.maya_file.name_not_ex))
-        else:
-            pymel.core.system.saveFile(force=True)
+                pymel.core.system.saveAs("{}/{}_sim_colth.ma".format(
+                    path,
+                    doodle_work_space.maya_file.name_not_ex))
+            else:
+                pymel.core.system.saveFile(force=True)
+
+        except RuntimeError as err:
+            print("not save file " + str(err))
 
     def sim_and_export(self):
         self.set_qcloth_attr()
@@ -993,6 +998,8 @@ def __load_config__(obj):
 
 
 class open_file(object):
+    maya_version = str(pymel.versions.current())[0:4]
+
     def __init__(self, in_config=None):
         # type:(str,config)->None
         self.cfg = in_config  # type: config
@@ -1011,6 +1018,13 @@ class open_file(object):
 
     def load_plug(self, str_list):
         # type: (list[str])->None
+        try:
+            # 这里加载一下我们自己的插件
+            pymel.core.system.loadPlugin(
+                "doodle_plug_{}".format(open_file.maya_version))
+        except RuntimeError as err:
+            print(str(err))
+
         for plug in str_list:
             pymel.core.system.loadPlugin(plug)
 
@@ -1039,7 +1053,9 @@ class open_file(object):
 
     def get_cloth_sim(self, qcloth_path=None):
         # type: (str) -> cloth_export
-        self.load_plug(["AbcExport", "AbcImport", "qualoth_2019_x64"])
+
+        self.load_plug(["AbcExport", "AbcImport",
+                       "qualoth_{}_x64".format(open_file.maya_version)])
         self.open()
         pymel.core.playbackOptions(animationStartTime=950, min=950)
         pymel.core.currentTime(950)

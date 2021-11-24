@@ -35,7 +35,7 @@ function(doodle_grpc_generate out_lists)
                 COMMAND protobuf::protoc
                 ARGS --proto_path=${Z_VCPKG_ROOT_DIR}/installed/${VCPKG_TARGET_TRIPLET}/include
                 --proto_path=${_DIRECTORY}
-                --cpp_out=${CMAKE_CURRENT_LIST_DIR}/generate/rpc
+                --cpp_out=dllexport_decl=DOODLELIB_API:${CMAKE_CURRENT_LIST_DIR}/generate/rpc
                 --grpc_out=${CMAKE_CURRENT_LIST_DIR}/generate/rpc
                 --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
                 ${_NAME}
@@ -63,6 +63,7 @@ function(doodle_sqlpp_generate out_lists)
     foreach (LIST ${DOODLE_GRPC_GENERATE_LISTS_FILES})
         file(REAL_PATH ${LIST} _PATH)
         get_filename_component(_NAME_WE ${_PATH} NAME_WE)
+        
         get_filename_component(_NAME ${_PATH} NAME)
         get_filename_component(_DIRECTORY ${_PATH} DIRECTORY)
         # cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)

@@ -17,9 +17,6 @@ class edit_widgets;
 class tool_box_widget;
 
 /**
- *
- *
- *
  * @page  doodle_windwos 主要窗口
  * @tableofcontents
  *
@@ -77,6 +74,7 @@ class DOODLELIB_API main_windows : public base_widget {
   edit_widgets *p_edit_windows_;
   setting_windows *p_setting_;
   tool_box_widget *p_tool_box_;
+  opencv_player_widget *p_opencv_;
 
   std::vector<std::shared_ptr<windows_warp_base>> p_list_windwos;
 

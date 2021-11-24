@@ -1,14 +1,12 @@
 ﻿#include "DoodleEditor.h"
 
-#include "DoodleStyle.h"
 #include "DoodleCommands.h"
-
+#include "DoodleStyle.h"
 #include "LevelEditor.h"
+#include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
-#include "ToolMenus.h"
-
 #include "doodleCopyMaterial.h"
 // #include "fireLight.h"
 // #include "DoodleDirectionalLightDome.h"
@@ -19,83 +17,94 @@
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
 
-void FdoodleEditorModule::StartupModule()
-{
-    FdoodleStyle::Initialize();
-    FdoodleStyle::ReloadTextures();
+void FdoodleEditorModule::StartupModule() {
+  FdoodleStyle::Initialize();
+  FdoodleStyle::ReloadTextures();
 
-    FdoodleCommands::Register();
+  FdoodleCommands::Register();
 
-    PluginCommands = MakeShareable(new FUICommandList);
+  PluginCommands = MakeShareable(new FUICommandList);
 
-    PluginCommands->MapAction(
-        FdoodleCommands::Get().OpenPluginWindow,
-        FExecuteAction::CreateRaw(this, &FdoodleEditorModule::PluginButtonClicked),
-        FCanExecuteAction());
+  PluginCommands->MapAction(
+      FdoodleCommands::Get().OpenPluginWindow,
+      FExecuteAction::CreateRaw(this,
+                                &FdoodleEditorModule::PluginButtonClicked),
+      FCanExecuteAction());
 
-    UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FdoodleEditorModule::RegisterMenus));
+  UToolMenus::RegisterStartupCallback(
+      FSimpleMulticastDelegate::FDelegate::CreateRaw(
+          this, &FdoodleEditorModule::RegisterMenus));
 
-    FGlobalTabmanager::Get()->RegisterNomadTabSpawner(doodleTabName, FOnSpawnTab::CreateRaw(this, &FdoodleEditorModule::OnSpawnPluginTab)).SetDisplayName(LOCTEXT("FdoodleTabTitle", "doodle")).SetMenuType(ETabSpawnerMenuType::Hidden);
+  FGlobalTabmanager::Get()
+      ->RegisterNomadTabSpawner(
+          doodleTabName,
+          FOnSpawnTab::CreateRaw(this, &FdoodleEditorModule::OnSpawnPluginTab))
+      .SetDisplayName(LOCTEXT("FdoodleTabTitle", "doodle"))
+      .SetMenuType(ETabSpawnerMenuType::Hidden);
 }
 
-void FdoodleEditorModule::ShutdownModule()
-{
-    UToolMenus::UnRegisterStartupCallback(this);
+void FdoodleEditorModule::ShutdownModule() {
+  UToolMenus::UnRegisterStartupCallback(this);
 
-    UToolMenus::UnregisterOwner(this);
+  UToolMenus::UnregisterOwner(this);
 
-    FdoodleStyle::Shutdown();
+  FdoodleStyle::Shutdown();
 
-    FdoodleCommands::Unregister();
+  FdoodleCommands::Unregister();
 
-    FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
+  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
 }
-TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(const FSpawnTabArgs &SpawnTabArgs)
-{
-    FText WidgetText = FText::Format(
-        LOCTEXT("WindowWidgetText", "Add code to {0} in {1} to override this window's contents"),
-        FText::FromString(TEXT("FdoodleEditorModule::OnSpawnPluginTab")),
-        FText::FromString(TEXT("doodle.cpp")));
+TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
+    const FSpawnTabArgs &SpawnTabArgs) {
+  FText WidgetText = FText::Format(
+      LOCTEXT("WindowWidgetText",
+              "Add code to {0} in {1} to override this window's contents"),
+      FText::FromString(TEXT("FdoodleEditorModule::OnSpawnPluginTab")),
+      FText::FromString(TEXT("doodle.cpp")));
 
-    return SNew(SDockTab)
-        .TabRole(ETabRole::NomadTab)
-            [
-                // Put your tab content here!
-                SNew(SBox)
-                    .HAlign(HAlign_Left)
-                    .VAlign(VAlign_Top)
-                        [SNew(DoodleCopyMat) //这里创建我们自己的界面
-    ]];
+  return SNew(SDockTab).TabRole(ETabRole::NomadTab)[
+      // Put your tab content here!
+      SNew(SBox)
+          .HAlign(HAlign_Left)
+          .VAlign(VAlign_Top)[SNew(DoodleCopyMat)  //这里创建我们自己的界面
+  ]];
 }
 
-void FdoodleEditorModule::PluginButtonClicked()
-{
-    FGlobalTabmanager::Get()->InvokeTab(doodleTabName);
+void FdoodleEditorModule::PluginButtonClicked() {
+#if ENGINE_MINOR_VERSION == 27
+  FGlobalTabmanager::Get()->TryInvokeTab(doodleTabName);
+#else if ENGINE_MINOR_VERSION < 27
+  FGlobalTabmanager::Get()->InvokeTab(doodleTabName);
+#endif
 }
 
-void FdoodleEditorModule::RegisterMenus()
-{
-    // Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
-    FToolMenuOwnerScoped OwnerScoped(this);
+void FdoodleEditorModule::RegisterMenus() {
+  // Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
+  FToolMenuOwnerScoped OwnerScoped(this);
 
+  {
+    UToolMenu *Menu =
+        UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
     {
-        UToolMenu *Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
-        {
-            FToolMenuSection &Section = Menu->FindOrAddSection("WindowLayout");
-            Section.AddMenuEntryWithCommandList(FdoodleCommands::Get().OpenPluginWindow, PluginCommands);
-        }
+      FToolMenuSection &Section = Menu->FindOrAddSection("WindowLayout");
+      Section.AddMenuEntryWithCommandList(
+          FdoodleCommands::Get().OpenPluginWindow, PluginCommands);
     }
+  }
 
+  {
+    UToolMenu *ToolbarMenu =
+        UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar");
     {
-        UToolMenu *ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar");
-        {
-            FToolMenuSection &Section = ToolbarMenu->FindOrAddSection("Settings");
-            {
-                FToolMenuEntry &Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FdoodleCommands::Get().OpenPluginWindow));
-                Entry.SetCommandList(PluginCommands);
-            }
-        }
+      FToolMenuSection &Section = ToolbarMenu->FindOrAddSection("Settings");
+      {
+        FToolMenuEntry &Entry =
+            Section.AddEntry(FToolMenuEntry::InitToolBarButton(
+                FdoodleCommands::Get().OpenPluginWindow));
+        Entry.SetCommandList(PluginCommands);
+      }
     }
+  }
 }
 
 #undef LOCTEXT_NAMESPACE

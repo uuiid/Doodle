@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 
 project(Doodle
-        VERSION 3.1.15.0
+        VERSION 3.1.38.0
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -84,6 +84,8 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
 find_package(cereal CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(EnTT CONFIG REQUIRED)
+
 #find_package(cxxopts CONFIG REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
@@ -180,6 +182,7 @@ list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
 
 
 if (RUN_COPY)
+    add_subdirectory(script)
     # #复制资源
     # install(DIRECTORY ${CMAKE_SOURCE_DIR}/resource/
     # DESTINATION resource)
@@ -192,10 +195,10 @@ if (RUN_COPY)
     # #复制插件
     # install(FILES ${CMAKE_SOURCE_DIR}/script/Cmd_tool/run2.exe 
     # DESTINATION ${CMAKE_SOURCE_DIR}/script/maya)
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya
-            DESTINATION plug)
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug
-            DESTINATION plug)
+#     install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya
+#             DESTINATION plug)
+#     install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug
+#             DESTINATION plug)
 endif (RUN_COPY)
 
 
@@ -220,9 +223,12 @@ set(CPACK_CREATE_DESKTOP_LINKS DoodleExe)
 set(CPACK_PACKAGE_VENDOR uuiid)
 set(CPACK_PACKAGE_INSTALL_DIRECTORY uuiid/doodle${PROJECT_VERSION_MAJOR}${PROJECT_VERSION_MINOR})
 set(CPACK_WIX_UPGRADE_GUID 3E490EAC-2FC7-49BF-A521-20F2F93E320A)
+set(CPACK_WIX_TEMPLATE ${PROJECT_SOURCE_DIR}/CMake/WIX.template.in)
+# set(CPACK_WIX_PROPERTY_Schedule afterInstallValidate)
+# set(CPACK_WIX_PATCH_FILE ${PROJECT_SOURCE_DIR}/CMake/doodle_wix_patch.xml)
 # set(CPACK_WIX_PRODUCT_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 # set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
-# set(CPACK_WIX_CULTURES zh_CN)
+set(CPACK_WIX_CULTURES zh-CN)
 include(CPack REQUIRED)
 
 add_custom_target(cpack_${PROJECT_NAME} 
@@ -238,6 +244,7 @@ add_dependencies(cpack_${PROJECT_NAME} DoodleExe DoodleServerExe Doxygen ${PROJE
 # "D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Rocket -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.25\Plugins -VS2019 -CreateSubFolder
 # "D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.25\Plugins\Doodle -VS2019
 # "D:\Program Files\Epic Games\UE_4.26\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.26\Plugins\Doodle -VS2019
+# "D:\Program Files\Epic Games\UE_4.27\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.27\Plugins\Doodle -VS2019
 # $env:VCPKG_DEFAULT_TRIPLET="x64-windows"
 # .\vcpkg.exe install boost sqlpp11 catch2 opencv date cereal spdlog cryptopp grpc magic-enum nlohmann-json sqlpp11-connector-mysql opencv[ffmpeg,contrib] imgui[win32-binding,dx11-binding,docking-experimental]
 # imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"

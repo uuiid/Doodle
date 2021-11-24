@@ -7,19 +7,24 @@
 #include <doodle_lib/metadata/metadata.h>
 namespace doodle {
 
-class DOODLELIB_API season
-    : public metadata {
+class DOODLELIB_API season {
   std::int32_t p_int;
 
  public:
   season();
-  explicit season(std::weak_ptr<metadata> in_metadata, std::int32_t in_);
+  explicit season( std::int32_t in_);
 
   void set_season(std::int32_t in_);
   std::int32_t get_season() const;
 
-  virtual std::string str() const override;
-  virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr) override;
+  virtual std::string str() const ;
+  virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr) ;
+  bool operator<(const season& in_rhs) const;
+  bool operator>(const season& in_rhs) const;
+  bool operator<=(const season& in_rhs) const;
+  bool operator>=(const season& in_rhs) const;
+  bool operator==(const season& in_rhs) const;
+  bool operator!=(const season& in_rhs) const;
 
  private:
   friend class boost::serialization::access;
@@ -30,9 +35,7 @@ class DOODLELIB_API season
 template <class Archive>
 void season::serialize(Archive& ar, std::uint32_t const version) {
   if (version == 1)
-    ar&
-        boost::serialization::make_nvp("metadata", boost::serialization::base_object<metadata>(*this))&
-        p_int;
+    ar& BOOST_SERIALIZATION_NVP(p_int);
 }
 }  // namespace doodle
 

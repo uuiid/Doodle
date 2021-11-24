@@ -24,6 +24,7 @@ target_link_libraries(DoodleServerExe
 target_compile_definitions(DoodleServerExe
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
+        # ENTT_API_IMPORT
         )
 
 add_executable(
@@ -48,6 +49,7 @@ target_compile_definitions(DoodleExe
         #            _WIN32_WINNT=0x0A00
         #            WIN32_LEAN_AND_MEAN
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
+        # ENTT_API_IMPORT
         )
 #if (unofficial-nana_FOUND)
 #
@@ -63,6 +65,7 @@ add_executable(
         main/test/test_external.cpp
         main/test/test_metadata.cpp
         main/test/test_server.cpp
+        main/test/test_gui.cpp
         main/doodle.manifest
         main/icon.ico
         main/win_exe.rc
@@ -76,6 +79,7 @@ target_link_libraries(doodle_test
 target_compile_definitions(doodle_test
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
+        # ENTT_API_IMPORT
         )
 target_compile_options(doodle_test PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)# $<$<CXX_COMPILER_ID:GNU>: -Wa,-mbig-obj>
 include(Catch)
