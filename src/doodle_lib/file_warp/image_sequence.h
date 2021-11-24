@@ -67,6 +67,7 @@ class DOODLELIB_API image_sequence
   FSys::path p_out_path;
   std::string p_name;
   std::vector<details::watermark> p_watermark_list;
+  std::optional<std::double_t> p_pow;
 
   bool seanDir(const FSys::path& dir);
   static std::string show_str(const std::vector<FSys::path>& in_images);
@@ -76,6 +77,7 @@ class DOODLELIB_API image_sequence
   explicit image_sequence(const FSys::path& path_dir);
 
   bool has_sequence();
+  void set_gamma(std::double_t in_pow);
   void set_path(const FSys::path& dir);
   void set_path(const std::vector<FSys::path>& in_images);
   void set_out_path(const FSys::path& out_dir);

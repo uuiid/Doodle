@@ -181,7 +181,8 @@ void watermark::set_text(std::function<string(std::int32_t in_frame)> &&in_) {
 }  // namespace details
 
 image_sequence::image_sequence()
-    : p_paths() {
+    : p_paths(),
+      p_pow() {
 }
 image_sequence::image_sequence(const FSys::path &path_dir)
     : std::enable_shared_from_this<image_sequence>(),
@@ -221,7 +222,9 @@ bool image_sequence::seanDir(const FSys::path &dir) {
     throw doodle_error("空目录");
   return true;
 }
-
+void image_sequence::set_gamma(std::double_t in_pow) {
+  p_pow = in_pow;
+}
 void image_sequence::set_path(const std::vector<FSys::path> &in_images) {
   p_paths = in_images;
 }
@@ -263,6 +266,13 @@ void image_sequence::create_video(const long_term_ptr &in_ptr) {
         k_w.p_impl->add_to_image(k_image, i);
       }
       in_ptr->sig_progress(rational_int{1, k_size_len});
+
+      if (p_pow) {
+        cv::Mat k_d{};
+        k_image.convertTo(k_d,CV_64F);
+        cv::pow(k_d, *p_pow, k_d);
+        k_d.convertTo(k_image,CV_8U);
+      }
 
       video << k_image;
     }
