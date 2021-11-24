@@ -30,7 +30,9 @@ class comm_play_blast_maya : public MPxCommand {
  public:
   static MString comm_name;
   MStatus doIt(const MArgList& in_arg) override;
+  
   static void* creator();
+  static MSyntax syntax();
 };
 
 }  // namespace doodle::maya_plug

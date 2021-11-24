@@ -11,14 +11,15 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
+#include <maya/MArgDatabase.h>
 #include <maya/MDagPath.h>
 #include <maya/MDrawContext.h>
 #include <maya/MFileIO.h>
 #include <maya/MFnCamera.h>
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
+#include <maya/MSyntax.h>
 #include <maya_plug/command/create_hud_node.h>
-
 
 namespace doodle::maya_plug {
 
@@ -46,7 +47,7 @@ bool comm_play_blast::render() {
       p_play_balst->set_camera(p_camera_path);
 
     if (p_play_balst->conjecture_ep_sc()) {
-      p_play_balst->set_save_path(p_save_path);
+      p_play_balst->set_save_dir(p_save_path);
       p_play_balst->play_blast_(MAnimControl::minTime(), MAnimControl::maxTime());
     } else {
       MString k_s{};
@@ -108,20 +109,71 @@ bool comm_play_blast::render() {
 
 MString comm_play_blast_maya::comm_name{"comm_play_blast_maya"};
 
+#define doodle_filepath "-filepath"
+#define doodle_startTime "-startTime"
+#define doodle_endTime "-endTime"
+#define doodle_width "-width"
+#define doodle_height "-height"
+
 MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
+  MStatus k_s;
   play_blast k_p{};
   MString k_str{};
+  MArgDatabase k_prase{syntax(), in_arg};
+
   k_str.setUTF8("开始从推测相机");
   MGlobal::displayInfo(k_str);
   k_p.conjecture_camera();
+
   k_str.setUTF8("开始推测集数和镜头");
   MGlobal::displayInfo(k_str);
   k_p.conjecture_ep_sc();
+
+  if (k_prase.isFlagSet(doodle_filepath, &k_s)) {
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    auto k_path = k_prase.flagArgumentString(doodle_filepath, 0, &k_s);
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    k_p.set_save_path(k_path.asUTF8());
+  }
+
   k_str.setUTF8("开始拍屏");
   MGlobal::displayInfo(k_str);
-  return k_p.play_blast_(MAnimControl::minTime(), MAnimControl::maxTime());
+
+  MTime k_start_time{};
+  if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    k_start_time = k_prase.flagArgumentMTime(doodle_startTime, 0, &k_s);
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  } else {
+    k_start_time = MAnimControl::minTime();
+  }
+  MTime k_end_time{};
+  if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    k_end_time = k_prase.flagArgumentMTime(doodle_endTime, 0, &k_s);
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  } else {
+    k_end_time = MAnimControl::minTime();
+  }
+
+  k_s = k_p.play_blast_(k_start_time, k_end_time);
+  return k_s;
 }
 void* comm_play_blast_maya::creator() {
   return new comm_play_blast_maya{};
 }
+MSyntax comm_play_blast_maya::syntax() {
+  MSyntax syntax{};
+  syntax.addFlag("-fp", doodle_filepath, MSyntax::kString);
+  syntax.addFlag("-st", doodle_startTime, MSyntax::kTime);
+  syntax.addFlag("-et", doodle_endTime, MSyntax::kTime);
+  // syntax.addFlag("-w", doodle_width, MSyntax::kUnsigned);
+  // syntax.addFlag("-h", doodle_height, MSyntax::kUnsigned);
+  return syntax;
+}
+#undef doodle_filepath
+#undef doodle_startTime
+#undef doodle_endTime
+#undef doodle_width
+#undef doodle_height
 }  // namespace doodle::maya_plug
