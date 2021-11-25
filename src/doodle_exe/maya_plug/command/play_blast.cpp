@@ -274,7 +274,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     if (!k_s) {
       MGlobal::displayError("not set cam view");
     }
-    k_view.setDisplayStyle(M3dView::DisplayStyle::kFlatShaded);
+    k_view.setDisplayStyle(M3dView::DisplayStyle::kGouraudShaded);
     k_view.setObjectDisplay(M3dView::DisplayObjects::kDisplayLocators | M3dView::DisplayObjects::kDisplayMeshes);
     k_view.refresh(false, true);
   } else {
