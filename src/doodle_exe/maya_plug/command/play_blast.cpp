@@ -239,7 +239,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   struct play_blast_guard {
     play_blast_guard() {
       create_hud_node k_node{};
-      k_node.hide(false);
+      k_node.hide(true);
     }
     ~play_blast_guard() {
       create_hud_node k_node{};
