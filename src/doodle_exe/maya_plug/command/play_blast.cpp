@@ -343,9 +343,8 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
                              in_start.as(MTime::uiUnit()),
                              in_end.as(MTime::uiUnit()));
     return MStatus::kSuccess;
-  }
-
-  auto k_mel = fmt::format(R"(playblast 
+  } else {
+    auto k_mel = fmt::format(R"(playblast 
 -compression "png" 
 -filename "{}" 
 -format "image" 
@@ -359,84 +358,85 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 -endTime {}
 ;
 )",
-                           get_file_path().generic_string(),
-                           in_start.as(MTime::uiUnit()),
-                           in_end.as(MTime::uiUnit()));
-  k_s        = MGlobal::executeCommand(k_mel.c_str());
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled false -outputTarget "renderer";)");
+                             get_file_path().generic_string(),
+                             in_start.as(MTime::uiUnit()),
+                             in_end.as(MTime::uiUnit()));
+    k_s        = MGlobal::executeCommand(k_mel.c_str());
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled false -outputTarget "renderer";)");
 
-  auto k_f = get_file_dir();
+    auto k_f = get_file_dir();
 
-  image_sequence k_image{};
-  k_image.set_path(k_f);
-  k_image.set_out_path(get_out_path());
-  {
-    ///添加水印
-    details::watermark k_w{};
-    k_w.set_text(MFnDagNode{k_camera_path.transform()}.name().asUTF8());
-    k_w.set_text_point(0.1, 0.1);
-    k_w.set_text_color(25, 220, 2);
-    k_image.add_watermark(k_w);
-  }
-  {
-    ///添加水印
-    details::watermark k_w{};
-    /// 绘制当前帧和总帧数
-    auto k_len = MAnimControl::maxTime() - MAnimControl::minTime();
-    auto k_min = MAnimControl::minTime();
-    k_w.set_text([=](std::int32_t in_frame) -> string {
-      return fmt::format("{}/{}", k_min.as(MTime::uiUnit()) + in_frame, k_len.as(MTime::uiUnit()));
-    });
-    k_w.set_text_point(0.5, 0.1);
-    k_w.set_text_color(25, 220, 2);
-    k_image.add_watermark(k_w);
-  }
-  {
-    ///添加水印
-    /// 绘制摄像机avo
-    details::watermark k_w{};
-    k_w.set_text(fmt::format("FOV: {:.3f}", k_cam_fn.focalLength()));
-    k_w.set_text_point(0.91, 0.1);
-    k_w.set_text_color(25, 220, 2);
-    k_image.add_watermark(k_w);
-  }
-  {
-    ///添加水印
-    /// 绘制摄像机avo
-    details::watermark k_w{};
-    auto k_time = chrono::floor<chrono::minutes>(chrono::system_clock::now());
-    k_w.set_text(fmt::format("{}", k_time));
-    k_w.set_text_point(0.1, 0.91);
-    k_w.set_text_color(25, 220, 2);
-    k_image.add_watermark(k_w);
-  }
-  {
+    image_sequence k_image{};
+    k_image.set_path(k_f);
+    k_image.set_out_path(get_out_path());
     {
-      /// 制作人姓名
+      ///添加水印
       details::watermark k_w{};
-      k_w.set_text(fmt::format("{}", core_set::getSet().get_user_en()));
-      k_w.set_text_point(0.5, 0.91);
+      k_w.set_text(MFnDagNode{k_camera_path.transform()}.name().asUTF8());
+      k_w.set_text_point(0.1, 0.1);
       k_w.set_text_color(25, 220, 2);
       k_image.add_watermark(k_w);
     }
-  }
+    {
+      ///添加水印
+      details::watermark k_w{};
+      /// 绘制当前帧和总帧数
+      auto k_len = MAnimControl::maxTime() - MAnimControl::minTime();
+      auto k_min = MAnimControl::minTime();
+      k_w.set_text([=](std::int32_t in_frame) -> string {
+        return fmt::format("{}/{}", k_min.as(MTime::uiUnit()) + in_frame, k_len.as(MTime::uiUnit()));
+      });
+      k_w.set_text_point(0.5, 0.1);
+      k_w.set_text_color(25, 220, 2);
+      k_image.add_watermark(k_w);
+    }
+    {
+      ///添加水印
+      /// 绘制摄像机avo
+      details::watermark k_w{};
+      k_w.set_text(fmt::format("FOV: {:.3f}", k_cam_fn.focalLength()));
+      k_w.set_text_point(0.91, 0.1);
+      k_w.set_text_color(25, 220, 2);
+      k_image.add_watermark(k_w);
+    }
+    {
+      ///添加水印
+      /// 绘制摄像机avo
+      details::watermark k_w{};
+      auto k_time = chrono::floor<chrono::minutes>(chrono::system_clock::now());
+      k_w.set_text(fmt::format("{}", k_time));
+      k_w.set_text_point(0.1, 0.91);
+      k_w.set_text_color(25, 220, 2);
+      k_image.add_watermark(k_w);
+    }
+    {
+      {
+        /// 制作人姓名
+        details::watermark k_w{};
+        k_w.set_text(fmt::format("{}", core_set::getSet().get_user_en()));
+        k_w.set_text_point(0.5, 0.91);
+        k_w.set_text_color(25, 220, 2);
+        k_image.add_watermark(k_w);
+      }
+    }
 
-  auto k_ptr = new_object<long_term>();
-  k_ptr->sig_progress.connect([&](rational_int in_rational_int) {
-    MString k_str{};
-    k_str.setUTF8(fmt::format("合成拍屏进度 : {}%", k_ptr->get_progress_int()).c_str());
-    MGlobal::displayInfo(k_str);
-  });
-  k_ptr->sig_finished.connect([this]() {
-    MString k_str{};
-    k_str.setUTF8(fmt::format("完成拍屏合成 : {}", get_out_path()).c_str());
-    MGlobal::displayInfo(k_str);
-    FSys::remove_all(get_file_dir());
-  });
-  k_image.create_video(k_ptr);
-  // k_view.scheduleRefresh();
-  return k_s;
+    auto k_ptr = new_object<long_term>();
+    k_ptr->sig_progress.connect([&](rational_int in_rational_int) {
+      MString k_str{};
+      k_str.setUTF8(fmt::format("合成拍屏进度 : {}%", k_ptr->get_progress_int()).c_str());
+      MGlobal::displayInfo(k_str);
+    });
+    k_ptr->sig_finished.connect([this]() {
+      MString k_str{};
+      k_str.setUTF8(fmt::format("完成拍屏合成 : {}", get_out_path()).c_str());
+      MGlobal::displayInfo(k_str);
+      FSys::remove_all(get_file_dir());
+    });
+    k_image.create_video(k_ptr);
+    // k_view.scheduleRefresh();
+    return k_s;
+  }
 }
 
 bool play_blast::conjecture_ep_sc() {
