@@ -191,7 +191,7 @@ class camera:
                 )
             )
         except AttributeError as err:
-            print(str(err))
+            # print(err)
             pymel.core.playblast(
                 viewer=False,
                 startTime=start_frame,
@@ -796,6 +796,9 @@ class fbx_export():
 
     def export_fbx_mesh(self):
         self.cam(doodle_work_space.get_fbx_folder())
+        self.cam.create_move(
+            out_path=doodle_work_space.work.path / "mov",
+            start_frame=1001)
         for obj in self.fbx_group:
             obj.export_fbx()
 
@@ -999,6 +1002,8 @@ def __load_config__(obj):
 
 class open_file(object):
     maya_version = str(pymel.versions.current())[0:4]
+    doodle_plug = "doodle_plug_{}".format(str(pymel.versions.current())[0:4])
+    qcloth = "qualoth_{}_x64".format(str(pymel.versions.current())[0:4])
 
     def __init__(self, in_config=None):
         # type:(str,config)->None
@@ -1020,10 +1025,10 @@ class open_file(object):
         # type: (list[str])->None
         try:
             # 这里加载一下我们自己的插件
-            pymel.core.system.loadPlugin(
-                "doodle_plug_{}".format(open_file.maya_version))
+            pymel.core.system.loadPlugin(open_file.doodle_plug)
         except RuntimeError as err:
-            print(str(err))
+            # print(err)
+            print("not load {}".format(open_file.doodle_plug))
 
         for plug in str_list:
             pymel.core.system.loadPlugin(plug)
@@ -1054,8 +1059,7 @@ class open_file(object):
     def get_cloth_sim(self, qcloth_path=None):
         # type: (str) -> cloth_export
 
-        self.load_plug(["AbcExport", "AbcImport",
-                       "qualoth_{}_x64".format(open_file.maya_version)])
+        self.load_plug(["AbcExport", "AbcImport", open_file.qcloth])
         self.open()
         pymel.core.playbackOptions(animationStartTime=950, min=950)
         pymel.core.currentTime(950)
