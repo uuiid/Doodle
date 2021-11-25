@@ -157,6 +157,11 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
   }
 
   k_s = k_p.play_blast_(k_start_time, k_end_time);
+  if (MGlobal::mayaState(&k_s) == MGlobal::kInteractive) {
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    FSys::open_explorer(k_p.get_out_path());
+  }
+
   return k_s;
 }
 void* comm_play_blast_maya::creator() {

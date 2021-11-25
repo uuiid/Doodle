@@ -309,7 +309,11 @@
  * @subsubsection updata_log_3137 版本3.1.37
  * @li 修复再复杂的场景中无法得到输出（未知问题，采用其他方案渲染）
  * 
- * @subsubsection updata_log_3137 版本3.1.37
+ * @subsubsection updata_log_3138 版本3.1.38
  * @li 修改批处理中maya的拍屏方法
+ * 
+ * @subsubsection updata_log_3139 版本3.1.39
+ * @li 修复拍屏命令结束帧默认值的问题
+ * @li 修复拓展名称错误问题
  * 
  */
