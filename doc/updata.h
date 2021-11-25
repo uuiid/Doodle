@@ -308,21 +308,28 @@
  *
  * @subsubsection updata_log_3137 版本3.1.37
  * @li 修复再复杂的场景中无法得到输出（未知问题，采用其他方案渲染）
- * 
+ *
  * @subsubsection updata_log_3138 版本3.1.38
  * @li 修改批处理中maya的拍屏方法
- * 
+ *
  * @subsubsection updata_log_3139 版本3.1.39
  * @li 修复拍屏命令结束帧默认值的问题
  * @li 修复拓展名称错误问题
- * 
+ *
  * @subsubsection updata_log_3140 版本3.1.40
  * @li 修复添加ui节点时显示定位器种类
  * @li 添加相机名称显示过大过长时出现的问题
- * 
+ *
  * @subsubsection updata_log_3141 版本3.1.41
  * @li 更改ui拍屏方式
- * 
+ *
  * @subsubsection updata_log_3142 版本3.1.42
  * @li ui拍屏时强制更新并只显示模型和定位器
+ *
+ * @subsubsection updata_log_3143 版本3.1.43
+ * @li 更改maya插件安装方式，防止错误的dll加载
+ * 
+ * 
+ * @subsubsection updata_log_3144 版本3.1.44
+ * @li 修复合成拍屏错误的大小
  */
