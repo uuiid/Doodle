@@ -274,6 +274,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     if (!k_s) {
       MGlobal::displayError("not set cam view");
     }
+    k_view.scheduleRefresh();
   } else {
     MGlobal::displayError("not find view");
   }
@@ -323,6 +324,26 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
   //   k_render->setPresentOnScreen(true);
   //   k_render->unsetOutputTargetOverrideSize();
+
+  if (MGlobal::mayaState(&k_s) == MGlobal::kBaseUIMode) {
+    auto k_mel = fmt::format(R"(playblast 
+-compression "H.264" 
+-filename "{}" 
+-format "qt" 
+-height 1280 
+-percent 100 
+-quality 100 
+-viewer true 
+-width 1920
+-startTime {}
+-endTime {}
+;
+)",
+                             get_out_path().replace_extension("").generic_string(),
+                             in_start.as(MTime::uiUnit()),
+                             in_end.as(MTime::uiUnit()));
+    return MStatus::kSuccess;
+  }
 
   auto k_mel = fmt::format(R"(playblast 
 -compression "png" 
