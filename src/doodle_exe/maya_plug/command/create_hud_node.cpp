@@ -47,10 +47,13 @@ bool create_hud_node::operator()() const {
     has_node &= (k_node.typeId() != doodle_info_node::doodle_id);
   }
 
-  auto k_v = M3dView::active3dView(&k_s);
-  if(k_s){
+  for (size_t i = 0; i < M3dView::numberOf3dViews(); ++i) {
+    M3dView k_v{};
+    k_s = M3dView::get3dView(i, k_v);
+    CHECK_MSTATUS_AND_RETURN(k_s, false);
     k_v.setObjectDisplay(k_v.objectDisplay(&k_s) | M3dView::kDisplayLocators);
   }
+  M3dView::scheduleRefreshAllViews();
 
   MString k_str{};
   if (has_node) {
