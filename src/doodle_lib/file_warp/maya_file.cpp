@@ -66,8 +66,13 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
   boost::process::ipstream k_in{};
   boost::process::ipstream k_in2{};
   DOODLE_LOG_INFO("命令 {}", boost::locale::conv::utf_to_utf<char>(in_com));
+
+  auto env = boost::this_process::wenvironment();
+  env[L"PATH"].clear();
+
   boost::process::child k_c{
       boost::process::cmd = in_com,
+      env,
       boost::process::std_out > k_in,
       boost::process::std_err > k_in2
 #ifdef _WIN32
