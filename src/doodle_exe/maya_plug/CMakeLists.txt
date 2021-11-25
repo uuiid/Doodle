@@ -46,8 +46,8 @@ foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)
     #        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
     #        )
     set_target_properties(doodle_plug_${MAYA_VERSION} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
             )
     target_link_libraries(doodle_plug_${MAYA_VERSION} PRIVATE doodle_lib maya::maya_${MAYA_VERSION}_all)
     target_include_directories(doodle_plug_${MAYA_VERSION} PUBLIC ${PROJECT_SOURCE_DIR}/src/doodle_exe)
