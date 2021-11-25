@@ -422,7 +422,7 @@ bool play_blast::conjecture_ep_sc() {
   FSys::path p_current_path{MFileIO::currentFile().asUTF8()};
   auto k_r = p_eps.analysis(p_current_path) &&
              p_shot.analysis(p_current_path);
-  set_save_filename(p_current_path.filename());
+  set_save_filename(p_current_path.filename().replace_extension(".mp4"));
   return k_r;
 }
 
