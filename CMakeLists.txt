@@ -183,22 +183,6 @@ list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
 
 if (RUN_COPY)
     add_subdirectory(script)
-    # #复制资源
-    # install(DIRECTORY ${CMAKE_SOURCE_DIR}/resource/
-    # DESTINATION resource)
-    # #复制tool
-    # install(DIRECTORY ${CMAKE_SOURCE_DIR}/tools/
-    # DESTINATION tools)
-    # #复制我自己写的一些工具
-    # install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/Cmd_tool
-    # DESTINATION tools)
-    # #复制插件
-    # install(FILES ${CMAKE_SOURCE_DIR}/script/Cmd_tool/run2.exe 
-    # DESTINATION ${CMAKE_SOURCE_DIR}/script/maya)
-#     install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya
-#             DESTINATION plug)
-#     install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug
-#             DESTINATION plug)
 endif (RUN_COPY)
 
 
@@ -212,9 +196,8 @@ endif (RUN_fixup)
 
 
 #install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/ DESTINATION plug)
-install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/ DESTINATION bin
-        #PATTERN "*.manifest" EXCLUDE
-        )
+install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/ DESTINATION bin)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/ DESTINATION plug)
 
 
 set(CPACK_GENERATOR "WIX")
