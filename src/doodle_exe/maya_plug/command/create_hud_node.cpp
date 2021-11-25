@@ -47,6 +47,11 @@ bool create_hud_node::operator()() const {
     has_node &= (k_node.typeId() != doodle_info_node::doodle_id);
   }
 
+  auto k_v = M3dView::active3dView(&k_s);
+  if(k_s){
+    k_v.setObjectDisplay(k_v.objectDisplay(&k_s) | M3dView::kDisplayLocators);
+  }
+
   MString k_str{};
   if (has_node) {
     MFnDagNode k_node{};
