@@ -153,7 +153,7 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
     k_end_time = k_prase.flagArgumentMTime(doodle_endTime, 0, &k_s);
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
   } else {
-    k_end_time = MAnimControl::minTime();
+    k_end_time = MAnimControl::maxTime();
   }
 
   k_s = k_p.play_blast_(k_start_time, k_end_time);
