@@ -322,4 +322,7 @@
  * 
  * @subsubsection updata_log_3141 版本3.1.41
  * @li 更改ui拍屏方式
+ * 
+ * @subsubsection updata_log_3141 版本3.1.41
+ * @li ui拍屏时强制更新并只显示模型和定位器
  */

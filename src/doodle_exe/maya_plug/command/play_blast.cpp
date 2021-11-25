@@ -274,7 +274,9 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     if (!k_s) {
       MGlobal::displayError("not set cam view");
     }
-    k_view.scheduleRefresh();
+    k_view.setDisplayStyle(M3dView::DisplayStyle::kFlatShaded);
+    k_view.setObjectDisplay(M3dView::DisplayObjects::kDisplayLocators | M3dView::DisplayObjects::kDisplayMeshes);
+    k_view.refresh(false, true);
   } else {
     MGlobal::displayError("not find view");
   }
@@ -325,7 +327,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   //   k_render->setPresentOnScreen(true);
   //   k_render->unsetOutputTargetOverrideSize();
 
-  if (MGlobal::mayaState(&k_s) == MGlobal::kBaseUIMode) {
+  if (MGlobal::mayaState(&k_s) == MGlobal::kInteractive) {
     auto k_mel = fmt::format(R"(playblast 
 -compression "H.264" 
 -filename "{}" 
@@ -333,7 +335,8 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 -height 1280 
 -percent 100 
 -quality 100 
--viewer true 
+-viewer false 
+-forceOverwrite
 -width 1920
 -startTime {}
 -endTime {}
@@ -342,6 +345,8 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
                              get_out_path().replace_extension("").generic_string(),
                              in_start.as(MTime::uiUnit()),
                              in_end.as(MTime::uiUnit()));
+    k_s        = MGlobal::executeCommand(k_mel.c_str());
+    CHECK_MSTATUS_AND_RETURN_IT(k_s);
     return MStatus::kSuccess;
   } else {
     auto k_mel = fmt::format(R"(playblast 
