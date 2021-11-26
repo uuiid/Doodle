@@ -319,7 +319,9 @@ void up_file::run(const long_term_ptr& in_term) {
   auto k_google_time = google::protobuf::util::TimeUtil::TimeTToTimestamp(FSys::last_write_time_t(_param->local_path));
   k_in_info.mutable_info()->mutable_update_time()->CopyFrom(k_google_time);
   auto k_in = _self->p_stub->upload(&k_context, &k_out_info);
-  k_in->Write(k_in_info);
+  if (!k_in->Write(k_in_info)) {
+    throw doodle_error{k_in->Finish().error_message()};
+  }
 
   auto s_size = core_set::get_block_size();
   const std::size_t k_num2{s_size > k_sz ? 1 : (s_size / k_sz)};
@@ -340,7 +342,7 @@ void up_file::run(const long_term_ptr& in_term) {
     k_in_info.mutable_data()->set_value(std::move(k_value));
     in_term->sig_progress(rational_int(k_num2));
     if (!k_in->Write(k_in_info))
-      throw doodle_error{"write stream errors"};
+      throw doodle_error{k_in->Finish().error_message()};
   }
   /// @warning 这里必须调用 WritesDone用来区分写入完成
   k_in->WritesDone();
