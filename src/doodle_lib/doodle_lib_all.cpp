@@ -55,35 +55,34 @@ std::time_t last_write_time_t(const path &in_path) {
   k_sys_time_pos -= S_epoch_diff;
   return chrono::system_clock::to_time_t(k_sys_time_pos);
 #endif
-
-  //  const filetime_duration asDuration{0};
-  //    return system_clock::time_point{
-  //        duration_cast<system_clock::duration>(withUnixEpoch)};
-  //  return static_cast<time_t>(k_time.time_since_epoch().count() / 10000000ULL - 11644473600ULL);
-
-  //  const filetime_duration asDuration{static_cast<int64_t>(
-  //                                         (static_cast<uint64_t>(fileTime.dwHighDateTime) << 32)
-  //                                             | fileTime.dwLowDateTime)};
-
-  //  auto k_h    = CreateFile(in_path.generic_wstring().c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
-  //  if (k_h == INVALID_HANDLE_VALUE) {
-  //    auto k_err_code = GetLastError();
-  //    DOODLE_LOG_WARN("获得错误: {}", k_err_code);
-  //    throw std::runtime_error(fmt::format("获得错误: {}", k_err_code));
-  //  }
-  //  FILETIME k_f_l;
-  //  if (!GetFileTime(k_h, nullptr, nullptr, &k_f_l)) {
-  //    auto k_err_code = GetLastError();
-  //    DOODLE_LOG_WARN("获得错误: {}", k_err_code);
-  //    throw std::runtime_error(fmt::format("获得错误: {}", k_err_code));
-  //  }
-  //  ULARGE_INTEGER ull{};
-  //  ull.LowPart  = k_f_l.dwLowDateTime;
-  //  ull.HighPart = k_f_l.dwHighDateTime;
-  //
-  //  return static_cast<time_t>(ull.QuadPart / 10000000ULL - 11644473600ULL);
 }
 
+chrono::sys_time_pos last_write_time_point(const path &in_path) {
+  auto k_time = last_write_time(in_path);
+#if defined(_WIN32) && defined(_MSC_VER)
+
+  /// 这个在Windows上获得的是FILETIME结构转换的int64值的时间点,
+  /// https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-filetime
+  /// 我们先把它转换为以100纳秒为单位的时间段,
+  const filetime_duration asDuration{static_cast<int64_t>(k_time.time_since_epoch().count())};
+  /// 然后我们进行加法运算, 加上 11644473600秒。
+  /// 从公元 1601 年到公元 1970 年有 369 年的差异，转换为 11644473600秒
+  const auto withUnixEpoch = asDuration + nt_to_unix_epoch;
+  /// 最后我们强制转换为时间系统时间点
+  return chrono::system_clock::time_point{chrono::duration_cast<chrono::system_clock::duration>(withUnixEpoch)};
+#elif defined(__linux__) && defined(__GNUC__)
+  chrono::sys_time_pos k_sys_time_pos{k_time.time_since_epoch()};
+  k_sys_time_pos -= S_epoch_diff;
+  return k_sys_time_pos;
+#endif
+}
+void last_write_time_point(const path &in_path, const std::chrono::system_clock::time_point &in_time_point) {
+  const auto asDuration = chrono::duration_cast<filetime_duration>(
+      in_time_point.time_since_epoch());
+  const auto withNtEpoch = asDuration - nt_to_unix_epoch;
+  std::filesystem::file_time_type  k_time{withNtEpoch};
+  std::filesystem::last_write_time(in_path,k_time);
+}
 void open_explorer(const path &in_path) {
 #if defined(_WIN32)
   DOODLE_LOG_INFO("打开路径: {}", in_path.generic_string());

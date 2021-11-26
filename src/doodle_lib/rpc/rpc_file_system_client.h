@@ -119,6 +119,7 @@ class DOODLELIB_API rpc_file_system_client : public details::no_copy {
 
  public:
   using trans_file_ptr = std::shared_ptr<rpc_trans::trans_file>;
+  using time_point = chrono::sys_time_pos;
 
  protected:
   std::unique_ptr<file_system_server::Stub> p_stub;
@@ -132,13 +133,13 @@ class DOODLELIB_API rpc_file_system_client : public details::no_copy {
    *                    std::optional<bool>,  是否需要下载
    *                    std::optional<bool>,  服务器文件是否存在
    *                    std::size_t,          文件大小
-   *                   > 
+   *                    time                  服务器文件时间
+   *                   >
    */
-  std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
+  std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t,time_point> compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path);
   std::string get_hash(const FSys::path& in_path);
 
  public:
-  using time_point = chrono::sys_time_pos;
   /**
    *@brief 这个时用来判读是否进行同步或者下载的函子别名
    * std::tuple<std::optional<bool>,  是否相等

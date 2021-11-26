@@ -244,9 +244,11 @@ DOODLELIB_API inline path make_path(const std::string &in_string) {
   return path{convert.from_bytes(in_string)};
 }
 DOODLELIB_API std::time_t last_write_time_t(const path &in_path);
-DOODLELIB_API inline chrono::sys_time_pos last_write_time_point(const path &in_path) {
-  return std::chrono::system_clock::from_time_t(last_write_time_t(in_path));
-}
+// DOODLELIB_API inline chrono::sys_time_pos last_write_time_point(const path &in_path) {
+//   return std::chrono::system_clock::from_time_t(last_write_time_t(in_path));
+// }
+DOODLELIB_API chrono::sys_time_pos last_write_time_point(const path &in_path);
+DOODLELIB_API void last_write_time_point(const path &in_path, const std::chrono::system_clock::time_point &in_time_point);
 DOODLELIB_API path add_time_stamp(const path &in_path);
 DOODLELIB_API void open_explorer(const path &in_path);
 DOODLELIB_API void backup_file(const path &source);
@@ -265,7 +267,6 @@ class assets_file;
 class metadata_serialize;
 class time_point_wrap;
 class comment;
-
 
 class rpc_metadata_client;
 class rpc_metadaata_server;
@@ -307,8 +308,7 @@ class comm_ass_file_attr;
 class opencv_read_player;
 class opencv_player_widget;
 
-
-using handle_list = std::vector<entt::handle>;
+using handle_list                = std::vector<entt::handle>;
 using logger_ctr_ptr             = std::shared_ptr<logger_ctrl>;
 using program_options_ptr        = std::shared_ptr<program_options>;
 
@@ -349,7 +349,6 @@ using metadata_serialize_ptr     = std::shared_ptr<metadata_serialize>;
 
 using command_ptr                = std::shared_ptr<command_base>;
 
-
 using doodle_lib_ptr             = std::shared_ptr<doodle_lib>;
 
 using thread_pool_ptr            = std::shared_ptr<thread_pool>;
@@ -377,7 +376,6 @@ entt::handle make_handle(const Component &instance) {
 inline entt::handle make_handle() {
   return entt::handle{*(g_reg()), g_reg()->create()};
 };
-
 
 template <class Component>
 entt::entity to_entity(const Component &instance) {

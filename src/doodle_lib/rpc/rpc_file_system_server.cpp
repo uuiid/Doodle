@@ -4,8 +4,8 @@
 
 #include "rpc_file_system_server.h"
 
-#include <doodle_lib/core/core_set.h>
 #include <Logger/logger.h>
+#include <doodle_lib/core/core_set.h>
 #include <lib_warp/protobuf_warp_cpp.h>
 
 namespace doodle {
@@ -198,43 +198,49 @@ grpc::Status rpc_file_system_server::upload(grpc::ServerContext* context, grpc::
   reader->Read(&k_file_stream);
   FSys::path k_path = p_set.get_data_root() / k_file_stream.info().path();
   auto k_ex         = FSys::exists(k_path.parent_path());
-
-  DOODLE_LOG_DEBUG(fmt::format("upload path: {}", k_path));
-
-  if (!k_ex)
-    FSys::create_directories(k_path.parent_path());
-
-  auto k_dir = FSys::is_directory(k_path);
-  if (k_dir)
-    return {grpc::StatusCode::CANCELLED, fmt::format("{} is dir", k_path.generic_string())};
+  if (!k_file_stream.info().has_update_time()) {
+    return {grpc::StatusCode::RESOURCE_EXHAUSTED, "not has time ", "Please upload time"};
+  }
+  auto k_time = std::chrono::system_clock::from_time_t(google::protobuf::util::TimeUtil::TimestampToTimeT(k_file_stream.info().update_time()));
 
   {
-    auto k_m = get_mutex(k_path);
-    std::lock_guard k_lock{k_m->mutex()};
-    FSys::ofstream k_file{k_path, std::ios::out | std::ios::binary};
+    DOODLE_LOG_DEBUG(fmt::format("upload path: {}", k_path));
+    if (!k_ex)
+      FSys::create_directories(k_path.parent_path());
 
-    if (!k_file.is_open() || !k_file.good()) {
-      DOODLE_LOG_ERROR(fmt::format("eofbit: %b; failbit: %b; badbit: %b;", k_file.eof(),
-                                   k_file.fail(),
-                                   k_file.bad()))
-      return {grpc::StatusCode::RESOURCE_EXHAUSTED,
-              fmt::format("eofbit: %b; failbit: %b; badbit: %b;", k_file.eof(),
-                          k_file.fail(),
-                          k_file.bad())};
-    }
+    auto k_dir = FSys::is_directory(k_path);
+    if (k_dir)
+      return {grpc::StatusCode::CANCELLED, fmt::format("{} is dir", k_path.generic_string())};
 
-    while (reader->Read(&k_file_stream)) {
-      auto& str = k_file_stream.data().value();
-      k_file.write(str.data(), str.size());
+    {
+      auto k_m = get_mutex(k_path);
+      std::lock_guard k_lock{k_m->mutex()};
+      FSys::ofstream k_file{k_path, std::ios::out | std::ios::binary};
+
+      if (!k_file.is_open() || !k_file.good()) {
+        DOODLE_LOG_ERROR(fmt::format("eofbit: %b; failbit: %b; badbit: %b;", k_file.eof(),
+                                     k_file.fail(),
+                                     k_file.bad()))
+        return {grpc::StatusCode::RESOURCE_EXHAUSTED,
+                fmt::format("eofbit: %b; failbit: %b; badbit: %b;", k_file.eof(),
+                            k_file.fail(),
+                            k_file.bad())};
+      }
+
+      while (reader->Read(&k_file_stream)) {
+        auto& str = k_file_stream.data().value();
+        k_file.write(str.data(), str.size());
+      }
     }
   }
+  FSys::last_write_time_point(k_path, k_time);
 
   return grpc::Status::OK;
 }
 
 grpc::Status rpc_file_system_server::move(grpc::ServerContext* context,
-                                       const file_info_move_server* request,
-                                       file_info_server* response) {
+                                          const file_info_move_server* request,
+                                          file_info_server* response) {
   if (!request->has_source()) {
     DOODLE_LOG_WARN("传入参数无效, 必须来源路径")
     return {grpc::StatusCode::CANCELLED, "传入参数无效, 必须来源路径"};

@@ -17,7 +17,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 
 namespace doodle {
-std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> rpc_file_system_client::compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path) {
+std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t, time_point> rpc_file_system_client::compare_file_is_down(const FSys::path& in_local_path, const FSys::path& in_server_path) {
   auto k_l_ex                            = FSys::exists(in_local_path);
   auto k_l_dir                           = k_l_ex && FSys::is_directory(in_local_path);
   auto k_l_sz                            = k_l_ex ? FSys::file_size(in_local_path) : 0;
@@ -28,25 +28,25 @@ std::tuple<std::optional<bool>, std::optional<bool>, bool, std::size_t> rpc_file
   auto [k_s_sz, k_s_ex, k_s_ti, k_s_dir] = get_info(in_server_path);
   if (k_l_ex && k_s_ex) {                                   /// 本地文件和服务器文件都存在
     if (k_l_dir || k_s_dir) {                               /// 两个任意一个为目录我们都没有办法确定上传和下载的方案
-      return {{}, {}, k_s_ex, 0};                           /// 所以返回无
+      return {{}, {}, k_s_ex, 0, {}};                       /// 所以返回无
     }                                                       ///
     auto k_l_hash = FSys::file_hash_sha224(in_local_path);  ///
     auto k_s_hash = get_hash(in_server_path);               ///
     if (k_l_hash == k_s_hash) {                             /// 我们比较两个文件的时间和大小都相同的时候， 直接表示两个文件相同， 既不上穿也不下载
-      return {true, {}, k_s_ex, k_l_sz};                    /// 所以返回无
+      return {true, {}, k_s_ex, k_l_sz, k_s_ti};            /// 所以返回无
     } else {                                                ///
       if (k_l_ti < k_s_ti) {                                /// 本地文件的修改时间小于服务器时间 那么就是本地文件比较旧 服务器文件新， 需要下载
-        return {false, true, k_s_ex, k_s_sz};               /// 返回 true
+        return {false, true, k_s_ex, k_s_sz, k_s_ti};       /// 返回 true
       } else {                                              /// 本地文件的修改时间大于服务器时间 那么就是本地文件比较新 服务时间比较旧, 需要上传
-        return {false, false, k_s_ex, k_l_sz};              /// 返回 false
+        return {false, false, k_s_ex, k_l_sz, k_s_ti};      /// 返回 false
       }                                                     ///
     }                                                       ///
   } else if (k_l_ex) {                                      /// 本地文件存在和服务器文件不存在
-    return {false, false, k_s_ex, k_l_sz};                  /// 返回 false
+    return {false, false, k_s_ex, k_l_sz, k_s_ti};          /// 返回 false
   } else if (k_s_ex) {                                      /// 本地文件不存在和服务器存在
-    return {false, true, k_s_ex, k_s_sz};                   /// 返回 true
+    return {false, true, k_s_ex, k_s_sz, k_s_ti};           /// 返回 true
   } else {                                                  /// 本地和服务器文件都不存在
-    return {{}, {}, k_s_ex, 0};
+    return {{}, {}, k_s_ex, 0, {}};
   }
 }
 
@@ -212,7 +212,7 @@ long_term_ptr trans_file::operator()() {
       k_term->sig_message_result(error.what(), long_term::warning);
       throw error;
     }
-  });
+      });
   return k_term;
 }
 
@@ -221,7 +221,7 @@ down_file::down_file(rpc_file_system_client* in_self)
 }
 
 void down_file::run(const long_term_ptr& in_term) {
-  auto [k_is_eq, k_is_down, k_s_ex, k_sz] = _self->compare_file_is_down(_param->local_path, _param->server_path);
+  auto [k_is_eq, k_is_down, k_s_ex, k_sz, k_st] = _self->compare_file_is_down(_param->local_path, _param->server_path);
   if (!k_is_eq) {
     in_term->sig_progress(0);
     in_term->sig_finished();
@@ -241,31 +241,35 @@ void down_file::run(const long_term_ptr& in_term) {
   if (!FSys::exists(_param->local_path.parent_path()))
     FSys::create_directories(_param->local_path.parent_path());
 
-  grpc::ClientContext k_context{};
+  {
+    grpc::ClientContext k_context{};
 
-  file_info_server k_in_info{};
-  file_stream_server k_out_info{};
+    file_info_server k_in_info{};
+    file_stream_server k_out_info{};
 
-  FSys::ofstream k_file{_param->local_path, std::ios::out | std::ios::binary};
-  if (!k_file)
-    throw doodle_error{"not create file"};
+    FSys::ofstream k_file{_param->local_path, std::ios::out | std::ios::binary};
+    if (!k_file)
+      throw doodle_error{"not create file"};
 
-  k_in_info.set_path(_param->server_path.generic_string());
-  auto k_out = _self->p_stub->download(&k_context, k_in_info);
+    k_in_info.set_path(_param->server_path.generic_string());
+    auto k_out = _self->p_stub->download(&k_context, k_in_info);
 
-  const std::size_t k_num2{core_set::get_block_size() > k_sz
-                               ? 1
-                               : (core_set::get_block_size() / k_sz)};
-  while (k_out->Read(&k_out_info)) {
-    auto& str = k_out_info.data().value();
-    k_file.write(str.data(), str.size());
-    in_term->sig_progress(rational_int{1, k_num2});
+    const std::size_t k_num2{core_set::get_block_size() > k_sz
+                                 ? 1
+                                 : (core_set::get_block_size() / k_sz)};
+    while (k_out->Read(&k_out_info)) {
+      auto& str = k_out_info.data().value();
+      k_file.write(str.data(), str.size());
+      in_term->sig_progress(rational_int{1, k_num2});
+    }
+
+    auto status = k_out->Finish();
+
+    if (!status.ok())
+      throw doodle_error{status.error_message()};
   }
+  FSys::last_write_time_point(_param->local_path, k_st);
 
-  auto status = k_out->Finish();
-
-  if (!status.ok())
-    throw doodle_error{status.error_message()};
   in_term->sig_finished();
   in_term->sig_message_result(fmt::format("完成 local_path: {} server_path: {}\n", _param->local_path, _param->server_path), long_term::warning);
 }
@@ -276,7 +280,7 @@ up_file::up_file(rpc_file_system_client* in_self)
     : trans_file(in_self) {
 }
 void up_file::run(const long_term_ptr& in_term) {
-  auto [k_is_eq, k_is_down, k_s_ex, k_sz] = _self->compare_file_is_down(_param->local_path, _param->server_path);
+  auto [k_is_eq, k_is_down, k_s_ex, k_sz, k_st] = _self->compare_file_is_down(_param->local_path, _param->server_path);
   if (!k_is_eq) {
     in_term->sig_progress(0);
     in_term->sig_finished();
@@ -312,6 +316,8 @@ void up_file::run(const long_term_ptr& in_term) {
   file_stream_server k_in_info{};
 
   k_in_info.mutable_info()->set_path(_param->server_path.generic_string());
+  auto k_google_time = google::protobuf::util::TimeUtil::TimeTToTimestamp(FSys::last_write_time_t(_param->local_path));
+  k_in_info.mutable_info()->mutable_update_time()->CopyFrom(k_google_time);
   auto k_in = _self->p_stub->upload(&k_context, &k_out_info);
   k_in->Write(k_in_info);
 
