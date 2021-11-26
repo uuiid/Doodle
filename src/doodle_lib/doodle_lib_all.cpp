@@ -69,7 +69,9 @@ chrono::sys_time_pos last_write_time_point(const path &in_path) {
   /// 从公元 1601 年到公元 1970 年有 369 年的差异，转换为 11644473600秒
   const auto withUnixEpoch = asDuration + nt_to_unix_epoch;
   /// 最后我们强制转换为时间系统时间点
-  return chrono::system_clock::time_point{chrono::duration_cast<chrono::system_clock::duration>(withUnixEpoch)};
+  return chrono::system_clock::time_point{chrono::duration_cast<chrono::system_clock::duration>(
+      chrono::floor<std::chrono::seconds>(withUnixEpoch)
+      )};
 #elif defined(__linux__) && defined(__GNUC__)
   chrono::sys_time_pos k_sys_time_pos{k_time.time_since_epoch()};
   k_sys_time_pos -= S_epoch_diff;

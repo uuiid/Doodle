@@ -59,13 +59,22 @@ TEST_CASE("core path ", "[fun][path]") {
     if (_wstat64(source_path.generic_wstring().c_str(), &fileInfo) != 0) {
       std::cout << "Error : not find last_write_time " << std::endl;
     }
-    auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
+    auto k_t  = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
+    auto k_t2 = FSys::last_write_time_point(source_path);
 #elif defined(__linux__)
     struct stat fileInfo {};
     stat(source_path.generic_string().c_str(), &fileInfo);
     auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
 #endif
-    REQUIRE(k_t == FSys::last_write_time_point(source_path));
+    REQUIRE(k_t == k_t2);
+
+    auto k_s2 = source_path.replace_filename("测试文件2");
+    {
+      FSys::ofstream k_f{k_s2};
+      k_f << "1";
+    }
+    FSys::last_write_time_point(k_s2, k_t2);
+    REQUIRE(FSys::last_write_time_point(k_s2) == k_t2);
   }
   SECTION("folder time") {
 #if defined(_WIN32)
@@ -74,12 +83,13 @@ TEST_CASE("core path ", "[fun][path]") {
     if (_wstat64(root.generic_wstring().c_str(), &fileInfo) != 0) {
       std::cout << "Error : not find last_write_time " << std::endl;
     }
-    auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
+    auto k_t  = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
+    auto k_t2 = FSys::last_write_time_point(root);
 #elif defined(__linux__)
     struct stat fileInfo {};
     stat(root.generic_string().c_str(), &fileInfo);
 #endif
-    REQUIRE(k_t == FSys::last_write_time_point(root));
+    REQUIRE(k_t == k_t2);
   }
   SECTION("file sys append") {
     auto k_path = source_path.replace_extension(".txt.backup");
