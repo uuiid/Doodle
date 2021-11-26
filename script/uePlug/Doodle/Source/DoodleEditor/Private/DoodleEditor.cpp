@@ -11,8 +11,10 @@
 // #include "fireLight.h"
 // #include "DoodleDirectionalLightDome.h"
 // #include "DoodleCopySpline.h"
-
+#include "ContentBrowserAssetDataSource.h"
 // #include "IPlacementModeModule.h"
+#include "AssetRegistry/IAssetRegistry.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
@@ -41,6 +43,14 @@ void FdoodleEditorModule::StartupModule() {
           FOnSpawnTab::CreateRaw(this, &FdoodleEditorModule::OnSpawnPluginTab))
       .SetDisplayName(LOCTEXT("FdoodleTabTitle", "doodle"))
       .SetMenuType(ETabSpawnerMenuType::Hidden);
+
+  // AssetDataSource.Reset(NewObject<UContentBrowserAssetDataSource>(
+  //    GetTransientPackage(), "doodle_AssetData"));
+  // AssetDataSource->Initialize(R"(/doodle/test)");
+  //auto AssetRegistry = &FModuleManager::LoadModuleChecked<FAssetRegistryModule>(
+  //                          AssetRegistryConstants::ModuleName)
+  //                          .Get();
+  //AssetRegistry->AddPath(R"(/../../tmp2/Content/)");
 }
 
 void FdoodleEditorModule::ShutdownModule() {
@@ -53,6 +63,7 @@ void FdoodleEditorModule::ShutdownModule() {
   FdoodleCommands::Unregister();
 
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
+  AssetDataSource.Reset();
 }
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
     const FSpawnTabArgs &SpawnTabArgs) {
