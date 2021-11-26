@@ -75,6 +75,15 @@ MStatus initializePlugin(MObject obj) {
   k_init.config_to_user();
   k_init.read_file();
   p_doodle_lib->init_gui();
+
+  clear_callback_id = MSceneMessage::addCallback(
+      MSceneMessage::Message::kMayaExiting,
+      [](void* in) {
+        doodle_maya_clear();
+      },
+      nullptr,
+      &status);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode: {
     }
@@ -97,14 +106,6 @@ MStatus initializePlugin(MObject obj) {
                            &status);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
-      clear_callback_id = MSceneMessage::addCallback(
-          MSceneMessage::Message::kMayaExiting,
-          [](void* in) {
-            doodle_maya_clear();
-          },
-          nullptr,
-          &status);
-      CHECK_MSTATUS_AND_RETURN_IT(status);
       app_run_id = MTimerMessage::addTimerCallback(
           0.001,
           [](float elapsedTime, float lastTime, void* clientData) {
@@ -166,17 +167,15 @@ MStatus uninitializePlugin(MObject obj) {
 
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-
+  //删除回调
+  status = MMessage::removeCallback(clear_callback_id);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
   //这里要关闭窗口或者清理库
   doodle_maya_clear();
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode: {
     }
     case MGlobal::MMayaState::kInteractive: {
-      //删除回调
-      status = MMessage::removeCallback(clear_callback_id);
-      CHECK_MSTATUS_AND_RETURN_IT(status);
-
       status = MMessage::removeCallback(app_run_id);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 

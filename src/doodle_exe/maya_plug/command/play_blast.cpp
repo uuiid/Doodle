@@ -239,11 +239,11 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   struct play_blast_guard {
     play_blast_guard() {
       create_hud_node k_node{};
-      k_node.hide(true);
+      // k_node.hide(true);
     }
     ~play_blast_guard() {
       create_hud_node k_node{};
-      k_node.hide(true);
+      // k_node.hide(true);
     }
   };
   play_blast_guard k_play_blast_guard{};
@@ -287,7 +287,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   //                                             MPassContext::kEndSceneRenderSemantic,
   //                                             (void*)this);
   //   CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  //   k_render->setOutputTargetOverrideSize(1920, 1280);
+  //   k_render->setOutputTargetOverrideSize(1920, 1080);
   //   k_render->setPresentOnScreen(false);
   //   {
   //     auto k_target_manager = k_render->getRenderTargetManager();
@@ -295,7 +295,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   //                 MRenderTargetDescription{
   //             "doodle",
   //             1920,
-  //             1280,
+  //             1080,
   //             1,
   //             MHWRender::kR8G8B8A8_UINT,
   //             1,
@@ -332,7 +332,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 -compression "H.264" 
 -filename "{}" 
 -format "qt" 
--height 1280 
+-height 1080 
 -percent 100 
 -quality 100 
 -viewer false 
@@ -353,7 +353,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 -compression "png" 
 -filename "{}" 
 -format "image" 
--height 1280 
+-height 1080 
 -offScreen 
 -percent 100 
 -quality 100 

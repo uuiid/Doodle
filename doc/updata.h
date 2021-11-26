@@ -332,4 +332,9 @@
  * 
  * @subsubsection updata_log_3144 版本3.1.44
  * @li 修复合成拍屏错误的大小
+ * 
+ * @subsubsection updata_log_3145 版本3.1.45
+ * @li 修复maya插件无法正确退出的问题(应该是库函数没有正确析构)
+ * 
+ * 
  */
