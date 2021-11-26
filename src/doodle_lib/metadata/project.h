@@ -11,14 +11,14 @@ class DOODLELIB_API project {
   std::string p_en_str;
   std::string p_shor_str;
   FSys::path p_path;
-
+  FSys::path p_sim_path;
   void init_name();
 
  public:
   project();
   explicit project(FSys::path in_path, std::string in_name = {});
 
-  const std::string& get_name() const;
+  [[nodiscard]] const std::string& get_name() const;
   void set_name(const std::string& Name) noexcept;
 
   [[nodiscard]] const FSys::path& get_path() const noexcept;
@@ -29,8 +29,8 @@ class DOODLELIB_API project {
 
   [[nodiscard]] std::string short_str() const;
 
-
-
+  [[nodiscard]] const FSys::path& get_vfx_cloth_sim_path() const;
+  void set_vfx_cloth_sim_path(const FSys::path& in_path);
 
   virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
 
@@ -49,13 +49,18 @@ class DOODLELIB_API project {
 
 template <class Archive>
 void project::serialize(Archive& ar, std::uint32_t const version) {
-  if (version == 2){
+  if (version == 2) {
     ar& BOOST_SERIALIZATION_NVP(p_name);
-  ar& BOOST_SERIALIZATION_NVP(p_path);}
-
+    ar& BOOST_SERIALIZATION_NVP(p_path);
+  }
+  if (version == 3) {
+    ar& BOOST_SERIALIZATION_NVP(p_name);
+    ar& BOOST_SERIALIZATION_NVP(p_path);
+    ar& BOOST_SERIALIZATION_NVP(p_sim_path);
+  }
   init_name();
 }
 
 }  // namespace doodle
-BOOST_CLASS_VERSION(doodle::project, 2);
+BOOST_CLASS_VERSION(doodle::project, 3);
 BOOST_CLASS_EXPORT_KEY(doodle::project)

@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-#include <Exception/exception.h>
-#include <Metadata/metadata_factory.h>
-#include <Metadata/project.h>
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
+#include <exception/exception.h>
+#include <metadata/metadata_factory.h>
+#include <metadata/project.h>
 #include <pin_yin/convert.h>
 
 #include <boost/locale.hpp>
@@ -13,14 +13,14 @@ project::project()
     : p_name("none"),
       p_path("C:/"),
       p_en_str(),
-      p_shor_str() {
+      p_shor_str(),
+      p_sim_path() {
 }
 
 project::project(FSys::path in_path, std::string in_name)
-    : p_name(std::move(in_name)),
-      p_path(std::move(in_path)),
-      p_en_str(),
-      p_shor_str() {
+    : project() {
+  p_name = std::move(in_name);
+  p_path = std::move(in_path);
   init_name();
 }
 
@@ -90,11 +90,17 @@ void project::init_name() {
   DOODLE_LOG_INFO(str)
   p_shor_str = boost::algorithm::to_upper_copy(str.substr(0, 2));
 }
-bool project::operator==(const project & in_rhs) const{
-return std::tie(p_name, p_en_str, p_shor_str, p_path) == std::tie(in_rhs.p_name, in_rhs.p_en_str, in_rhs.p_shor_str, in_rhs.p_path);
-}bool project::operator!=(const project & in_rhs) const{
- return !(in_rhs == *this);
+bool project::operator==(const project& in_rhs) const {
+  return std::tie(p_name, p_en_str, p_shor_str, p_path) == std::tie(in_rhs.p_name, in_rhs.p_en_str, in_rhs.p_shor_str, in_rhs.p_path);
 }
-
+bool project::operator!=(const project& in_rhs) const {
+  return !(in_rhs == *this);
+}
+const FSys::path& project::get_vfx_cloth_sim_path() const {
+  return p_sim_path;
+}
+void project::set_vfx_cloth_sim_path(const FSys::path& in_path) {
+  p_sim_path = in_path;
+}
 
 }  // namespace doodle
