@@ -15,7 +15,7 @@ else()
 endif()
 
 vcpkg_configure_cmake(
-    SOURCE_PATH ${SOURCE_PATH}9
+    SOURCE_PATH ${SOURCE_PATH}
     DISABLE_PARALLEL_CONFIGURE
     PREFER_NINJA
     OPTIONS
