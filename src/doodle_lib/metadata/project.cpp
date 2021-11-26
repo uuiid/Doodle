@@ -21,14 +21,14 @@ project::project(FSys::path in_path, std::string in_name)
       p_path(std::move(in_path)),
       p_en_str(),
       p_shor_str() {
-  init();
+  init_name();
 }
 
 void project::set_name(const std::string& Name) noexcept {
   if (Name == p_name)
     return;
   p_name = Name;
-  init();
+  init_name();
 }
 
 const FSys::path& project::get_path() const noexcept {
@@ -55,18 +55,6 @@ std::string project::short_str() const {
 std::string project::show_str() const {
   return this->p_name;
 }
-std::string project::get_config_file_folder() {
-  static std::string str{".doodle_config"};
-  return str;
-}
-
-std::string project::get_config_file_name() {
-  static std::string str{"doodle_config.dole"};
-  return str;
-}
-FSys::path project::DBRoot() const {
-  return p_path / "_._root";
-}
 
 bool project::operator<(const project& in_rhs) const {
   //  return std::tie(static_cast<const doodle::metadata&>(*this), p_name, p_path) < std::tie(static_cast<const doodle::metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_path);
@@ -89,7 +77,7 @@ const std::string& project::get_name() const {
 void project::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
   in_factoryPtr->show_attribute(this);
 }
-void project::init() {
+void project::init_name() {
   p_en_str = boost::algorithm::to_lower_copy(
       convert::Get().toEn(this->p_name));
   auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);

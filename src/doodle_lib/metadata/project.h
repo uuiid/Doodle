@@ -12,7 +12,7 @@ class DOODLELIB_API project {
   std::string p_shor_str;
   FSys::path p_path;
 
-  void init();
+  void init_name();
 
  public:
   project();
@@ -29,8 +29,8 @@ class DOODLELIB_API project {
 
   [[nodiscard]] std::string short_str() const;
 
-  static std::string get_config_file_name();
-  static std::string get_config_file_folder();
+
+
 
   virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
 
@@ -42,8 +42,6 @@ class DOODLELIB_API project {
   bool operator!=(const project& in_rhs) const;
 
  private:
-  [[nodiscard]] FSys::path DBRoot() const;
-
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version);
@@ -55,7 +53,7 @@ void project::serialize(Archive& ar, std::uint32_t const version) {
     ar& BOOST_SERIALIZATION_NVP(p_name);
   ar& BOOST_SERIALIZATION_NVP(p_path);}
 
-  init();
+  init_name();
 }
 
 }  // namespace doodle
