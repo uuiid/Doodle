@@ -335,5 +335,7 @@
  * 
  * @subsubsection updata_log_3145 版本3.1.45
  * @li 修复maya插件无法正确退出的问题(应该是库函数没有正确析构)
- * 
+ *
+ * @subsubsection updata_log_3146 版本3.1.46
+ * @li 无法保存时跳过不保存
  */

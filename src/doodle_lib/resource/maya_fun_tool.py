@@ -809,7 +809,7 @@ class fbx_export():
                 path,
                 doodle_work_space.maya_file.name_not_ex))
         except RuntimeError as err:
-            print("not save file" + str(err))
+            print("not save file")
 
     def __call__(self):
         self.save()
@@ -896,7 +896,7 @@ class cloth_export():
                 pymel.core.system.saveFile(force=True)
 
         except RuntimeError as err:
-            print("not save file " + str(err))
+            print("not save file ")
 
     def sim_and_export(self):
         self.set_qcloth_attr()
