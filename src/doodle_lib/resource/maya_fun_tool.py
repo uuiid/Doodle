@@ -191,7 +191,7 @@ class camera:
                 )
             )
         except AttributeError as err:
-            # print(err)
+            print("arrt error use pymel.core.playblast")
             pymel.core.playblast(
                 viewer=False,
                 startTime=start_frame,

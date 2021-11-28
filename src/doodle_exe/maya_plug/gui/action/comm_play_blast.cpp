@@ -109,9 +109,12 @@ bool comm_play_blast::render() {
 
 MString comm_play_blast_maya::comm_name{"comm_play_blast_maya"};
 
-#define doodle_filepath "-filepath"
-#define doodle_startTime "-startTime"
-#define doodle_endTime "-endTime"
+#define doodle_filepath "-fp"
+#define doodle_startTime "-st"
+#define doodle_endTime "-et"
+#define doodle_filepath_long "-filepath"
+#define doodle_startTime_long "-startTime"
+#define doodle_endTime_long "-endTime"
 #define doodle_width "-width"
 #define doodle_height "-height"
 
@@ -133,6 +136,10 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
     auto k_path = k_prase.flagArgumentString(doodle_filepath, 0, &k_s);
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    MString k_str{};
+    k_str.setUTF8("获得传入路径: ");
+    k_str += k_path;
+    MGlobal::displayInfo(k_str);
     k_p.set_save_path(k_path.asUTF8());
   }
 
@@ -169,9 +176,9 @@ void* comm_play_blast_maya::creator() {
 }
 MSyntax comm_play_blast_maya::syntax() {
   MSyntax syntax{};
-  syntax.addFlag("-fp", doodle_filepath, MSyntax::kString);
-  syntax.addFlag("-st", doodle_startTime, MSyntax::kTime);
-  syntax.addFlag("-et", doodle_endTime, MSyntax::kTime);
+  syntax.addFlag(doodle_filepath, doodle_filepath_long, MSyntax::kString);
+  syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
+  syntax.addFlag(doodle_endTime, doodle_endTime_long, MSyntax::kTime);
   // syntax.addFlag("-w", doodle_width, MSyntax::kUnsigned);
   // syntax.addFlag("-h", doodle_height, MSyntax::kUnsigned);
   return syntax;
@@ -179,6 +186,9 @@ MSyntax comm_play_blast_maya::syntax() {
 #undef doodle_filepath
 #undef doodle_startTime
 #undef doodle_endTime
+#undef doodle_filepath_long
+#undef doodle_startTime_long
+#undef doodle_endTime_long
 #undef doodle_width
 #undef doodle_height
 }  // namespace doodle::maya_plug

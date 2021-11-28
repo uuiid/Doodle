@@ -281,52 +281,6 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     MGlobal::displayError("not find view");
   }
 
-  //   auto k_render = MHWRender::MRenderer::theRenderer();
-  //   k_s           = k_render->addNotification(&play_blast::captureCallback,
-  //                                             p_post_render_notification_name.c_str(),
-  //                                             MPassContext::kEndSceneRenderSemantic,
-  //                                             (void*)this);
-  //   CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  //   k_render->setOutputTargetOverrideSize(1920, 1080);
-  //   k_render->setPresentOnScreen(false);
-  //   {
-  //     auto k_target_manager = k_render->getRenderTargetManager();
-  //     auto k_target         = k_target_manager->acquireRenderTarget(
-  //                 MRenderTargetDescription{
-  //             "doodle",
-  //             1920,
-  //             1080,
-  //             1,
-  //             MHWRender::kR8G8B8A8_UINT,
-  //             1,
-  //             false});
-
-  //     auto _k_cam_str = fmt::format("batch:{}", MFnDagNode{k_camera_path.transform()}.name().asUTF8());
-  //     MString k_cam_str{};
-  //     k_cam_str.setUTF8(_k_cam_str.c_str());
-  //     MGlobal::displayInfo(k_cam_str);
-  //     ///  开始后播放拍屏，并输出文件
-  //     for (p_current_time = in_start;
-  //          p_current_time <= in_end;
-  //          ++p_current_time) {
-  //       k_s = MAnimControl::setCurrentTime(p_current_time);
-  //       CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-  //       auto k_r = k_render->render(k_cam_str, &k_target, 1);
-  //       if (!k_r)
-  //         MGlobal::displayError("not render");
-
-  //       // k_s = k_view.refresh(false, true);
-  //     }
-  //     k_target_manager->releaseRenderTarget(k_target);
-  //   }
-  //   k_s = k_render->removeNotification(p_post_render_notification_name.c_str(),
-  //                                      MPassContext::kEndSceneRenderSemantic);
-  //   CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-  //   k_render->setPresentOnScreen(true);
-  //   k_render->unsetOutputTargetOverrideSize();
-
   if (MGlobal::mayaState(&k_s) == MGlobal::kInteractive) {
     auto k_mel = fmt::format(R"(playblast 
 -compression "H.264" 
