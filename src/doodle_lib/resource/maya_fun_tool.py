@@ -1,4 +1,5 @@
 ﻿# -*- coding: utf-8 -*-
+from maya import cmds
 import pymel.core
 import pymel.core.system
 import pymel.core.nodetypes
@@ -179,7 +180,7 @@ class camera:
 
         print("create move {}".format(out_path))
         try:
-            pymel.core.comm_play_blast_maya(
+            cmds.comm_play_blast_maya(
                 startTime=start_frame,
                 endTime=end_frame,
                 filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
@@ -1025,13 +1026,13 @@ class open_file(object):
         # type: (list[str])->None
         try:
             # 这里加载一下我们自己的插件
-            pymel.core.system.loadPlugin(open_file.doodle_plug)
+            cmds.loadPlugin(open_file.doodle_plug)
         except RuntimeError as err:
             # print(err)
             print("not load {}".format(open_file.doodle_plug))
 
         for plug in str_list:
-            pymel.core.system.loadPlugin(plug)
+            cmds.loadPlugin(plug)
 
     def open(self):
         maya_workspace.set_workspace_static(self.file_path.dirname())

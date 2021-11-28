@@ -328,14 +328,18 @@
  *
  * @subsubsection updata_log_3143 版本3.1.43
  * @li 更改maya插件安装方式，防止错误的dll加载
- * 
- * 
+ *
+ *
  * @subsubsection updata_log_3144 版本3.1.44
  * @li 修复合成拍屏错误的大小
- * 
+ *
  * @subsubsection updata_log_3145 版本3.1.45
  * @li 修复maya插件无法正确退出的问题(应该是库函数没有正确析构)
  *
  * @subsubsection updata_log_3146 版本3.1.46
  * @li 无法保存时跳过不保存
+ *
+ * @subsubsection updata_log_3147 版本3.1.47
+ * @li 更改maya插件加载方式（pymel 加载插件会出现回调错误）
+ * @li 更改maya自定义拍屏方案（pymel 关键字会无故传递出错）
  */
