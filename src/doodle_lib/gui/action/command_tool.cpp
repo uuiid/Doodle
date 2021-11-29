@@ -32,7 +32,7 @@ comm_maya_tool::comm_maya_tool()
   auto k_prj = g_reg()->try_ctx<root_ref>();
   if (!k_prj)
     throw doodle_error{"没有项目选中"};
-  p_text = k_prj->root_handle().get<project>().get_vfx_cloth_sim_path().generic_string();
+  p_text = k_prj->root_handle().get<project>().get_vfx_cloth_config()->vfx_cloth_sim_path.generic_string();
 }
 bool comm_maya_tool::is_async() {
   return true;

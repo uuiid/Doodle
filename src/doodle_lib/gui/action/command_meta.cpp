@@ -17,12 +17,27 @@
 #include <boost/range/irange.hpp>
 namespace doodle {
 
+class comm_project_add::impl {
+ public:
+  string p_prj_name;
+  string p_prj_name_short;
+  string p_prj_path;
+
+  string p_vfx_cloth_sim_path;
+  std::double_t p_high_resolution;
+  entt::handle p_root;
+  impl()
+      : p_prj_name("none"),
+        p_prj_name_short("none"),
+        p_prj_path("C:/"),
+        p_vfx_cloth_sim_path("C:/"),
+        p_high_resolution(100),
+        p_root() {
+  }
+};
+
 comm_project_add::comm_project_add()
-    : p_prj_name(new_object<string>("none")),
-      p_prj_name_short(new_object<string>("none")),
-      p_prj_path(new_object<string>("C:/")),
-      p_vfx_cloth_sim_path(new_object<string>("C:/")),
-      p_root() {
+    : p_impl(std::make_unique<impl>()) {
   p_name     = "项目";
   p_show_str = make_imgui_name(this, "删除", "添加",
                                "修改", "名称",
@@ -35,26 +50,26 @@ bool comm_project_add::render() {
 
   if (imgui::Button(p_show_str["添加"].c_str())) {
     auto k_en = make_handle(g_reg()->create());
-    k_en.emplace<project>(*p_prj_path, *p_prj_name);
+    k_en.emplace<project>(p_impl->p_prj_path, p_impl->p_prj_name);
     k_en.get<root_ref>().set_root(k_en);
     k_en.patch<database_stauts>(database_set_stauts<need_save>{});
     k_d_lib.p_project_vector.push_back(k_en);
   }
-  if (p_root) {
+  if (p_impl->p_root) {
     if (imgui::Button(p_show_str["修改"].c_str())) {
-      p_root.patch<database_stauts>(database_set_stauts<need_save>{});
+      p_impl->p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
     imgui::SameLine();
     if (imgui::Button(p_show_str["删除"].c_str())) {
-      p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
+      p_impl->p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
     }
   }
 
-  if (imgui::InputText(p_show_str["名称"].c_str(), p_prj_name.get())) {
-    p_root.get<project>().set_name(*p_prj_name);
+  if (imgui::InputText(p_show_str["名称"].c_str(), &(p_impl->p_prj_name))) {
+    p_impl->p_root.get<project>().set_name(p_impl->p_prj_name);
   }
-  if (imgui::InputText(p_show_str["路径"].c_str(), p_prj_path.get())) {
-    p_root.get<project>().set_path(*p_prj_path);
+  if (imgui::InputText(p_show_str["路径"].c_str(), &(p_impl->p_prj_path))) {
+    p_impl->p_root.get<project>().set_path(p_impl->p_prj_path);
   }
   imgui::SameLine();
   if (imgui::Button(p_show_str["选择"].c_str())) {
@@ -66,23 +81,26 @@ bool comm_project_add::render() {
                      1}
         .show(
             [this](const std::vector<FSys::path>& in) {
-              *p_prj_path = in.front().generic_string();
+              p_impl->p_prj_path = in.front().generic_string();
             });
   }
-  if (imgui::InputText(p_show_str["解算路径"].c_str(), p_vfx_cloth_sim_path.get())) {
-    p_root.get<project>().set_vfx_cloth_sim_path(*p_vfx_cloth_sim_path);
+  if (imgui::InputText(p_show_str["解算路径"].c_str(), &(p_impl->p_vfx_cloth_sim_path))) {
+    p_impl->p_root.get<project>().get_vfx_cloth_config()->vfx_cloth_sim_path = p_impl->p_vfx_cloth_sim_path;
   }
   return true;
 }
 bool comm_project_add::set_data(const entt::handle& in_data) {
   if (in_data.any_of<project>()) {
-    p_root = in_data;
-    if (p_root) {
-      *p_prj_name = p_root.get<project>().get_name();
-      *p_prj_path = p_root.get<project>().get_path().generic_string();
+    p_impl->p_root = in_data;
+    if (p_impl->p_root) {
+      auto& k_prj           = p_impl->p_root.get<project>();
+      p_impl->p_prj_name           = k_prj.get_name();
+      p_impl->p_prj_path           = k_prj.get_path().generic_string();
+      p_impl->p_vfx_cloth_sim_path = k_prj.get_vfx_cloth_config()->vfx_cloth_sim_path.generic_string();
+      p_impl->p_high_resolution     = k_prj.get_vfx_cloth_config()->high_resolution;
     }
   } else {
-    p_root = entt::handle{};
+    p_impl->p_root = entt::handle{};
   }
   return true;
 }

@@ -7,14 +7,19 @@
 
 #include <boost/locale.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(doodle::project)
+BOOST_CLASS_EXPORT_IMPLEMENT(doodle::project::cloth_config)
 namespace doodle {
+project::cloth_config::cloth_config()
+    : vfx_cloth_sim_path("C:/"),
+      high_resolution(100) {}
 
 project::project()
     : p_name("none"),
       p_path("C:/"),
       p_en_str(),
       p_shor_str(),
-      p_sim_path() {
+      p_sim_path(),
+      p_cloth_config(std::make_shared<cloth_config>()) {
 }
 
 project::project(FSys::path in_path, std::string in_name)
@@ -96,11 +101,8 @@ bool project::operator==(const project& in_rhs) const {
 bool project::operator!=(const project& in_rhs) const {
   return !(in_rhs == *this);
 }
-const FSys::path& project::get_vfx_cloth_sim_path() const {
-  return p_sim_path;
-}
-void project::set_vfx_cloth_sim_path(const FSys::path& in_path) {
-  p_sim_path = in_path;
+project::cloth_config_ptr project::get_vfx_cloth_config() const {
+  return p_cloth_config;
 }
 
 }  // namespace doodle

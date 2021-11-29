@@ -15,12 +15,8 @@ namespace doodle {
 
 class DOODLELIB_API comm_project_add : public command_base {
  private:
-  string_ptr p_prj_name;
-  string_ptr p_prj_name_short;
-  string_ptr p_prj_path;
-
-  string_ptr p_vfx_cloth_sim_path;
-  entt::handle p_root;
+  class impl;
+  std::unique_ptr<impl> p_impl;
 
  protected:
  public:
@@ -65,6 +61,7 @@ class DOODLELIB_API comm_assets : public command_base {
 
   std::vector<string_ptr> p_path_list;
   FSys::path get_path();
+
  protected:
  public:
   comm_assets();
@@ -105,11 +102,11 @@ class DOODLELIB_API comm_ass_file_attr : public command_base {
 
 class DOODLELIB_API comm_assets_add : public command_base {
   command_list<
-  comm_ass_season,
-               comm_ass_eps,
-               comm_ass_shot,
-               comm_assets,
-               comm_ass_file_attr>
+      comm_ass_season,
+      comm_ass_eps,
+      comm_ass_shot,
+      comm_assets,
+      comm_ass_file_attr>
       p_list;
 
  public:
