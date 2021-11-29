@@ -110,11 +110,15 @@ struct Disabled : public ScopeWrapper<HelpMarker> {
       : ScopeWrapper<HelpMarker>(in_disabled) {
     imgui::BeginDisabled(in_disabled);
   };
-  
+
   static void dtor() noexcept {
     imgui::EndDisabled();
   };
 };
-
+bool InputText(const char* label,
+               std::filesystem::path* str,
+               ImGuiInputTextFlags flags       = 0,
+               ImGuiInputTextCallback callback = nullptr,
+               void* user_data                 = nullptr);
 }  // namespace dear
 }  // namespace doodle
