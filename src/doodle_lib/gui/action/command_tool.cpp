@@ -22,50 +22,6 @@
 #include <boost/range/algorithm.hpp>
 namespace doodle {
 
-comm_export_fbx::comm_export_fbx()
-    : p_files(),
-      p_use_all_ref(false) {
-  p_name = "导出fbx";
-}
-
-bool comm_export_fbx::render() {
-  if (imgui::Button("选择maya文件路径")) {
-    p_files.clear();
-    open_file_dialog{
-        "open_get_fbx",
-        "select_maya_file",
-        ".ma,.mb",
-        ".",
-        "",
-        0}
-        .show(
-            [this](const std::vector<FSys::path>& in_p) {
-              p_files = in_p;
-            });
-  }
-  dear::ListBox{"file_list"} && [this]() {
-    for (const auto& f : p_files) {
-      dear::Selectable(f.generic_string());
-    }
-  };
-  imgui::Checkbox("直接加载所有引用", &p_use_all_ref);
-  if (imgui::Button("导出")) {
-    auto maya = new_object<maya_file_async>();
-    std::for_each(p_files.begin(), p_files.end(),
-                  [maya, this](const auto& i) {
-                    auto k_arg         = new_object<maya_file::export_fbx_arg>();
-                    k_arg->file_path   = i;
-                    k_arg->use_all_ref = this->p_use_all_ref;
-                    maya->export_fbx_file(k_arg);
-                  });
-  }
-  return true;
-}
-
-bool comm_export_fbx::is_async() {
-  return true;
-}
-
 comm_qcloth_sim::comm_qcloth_sim()
     : p_cloth_path(),
       p_text(new_object<std::string>()),

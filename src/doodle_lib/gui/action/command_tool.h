@@ -7,16 +7,6 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/action/command.h>
 namespace doodle {
-class DOODLELIB_API comm_export_fbx : public command_base {
-  std::vector<FSys::path> p_files;
-
-  bool p_use_all_ref;
-
- public:
-  comm_export_fbx();
-  bool is_async() override;
-  bool render() override;
-};
 
 /**
  * @brief maya工具类
