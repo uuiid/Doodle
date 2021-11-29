@@ -29,8 +29,6 @@ class DOODLELIB_API project {
   std::string p_en_str;
   std::string p_shor_str;
   FSys::path p_path;
-  FSys::path p_sim_path;
-  cloth_config_ptr p_cloth_config;
   void init_name();
 
  public:
@@ -48,7 +46,7 @@ class DOODLELIB_API project {
 
   [[nodiscard]] std::string short_str() const;
 
-  cloth_config_ptr get_vfx_cloth_config() const;
+  cloth_config& get_vfx_cloth_config() const;
 
   virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
 
@@ -71,16 +69,12 @@ void project::serialize(Archive& ar, std::uint32_t const version) {
     ar& BOOST_SERIALIZATION_NVP(p_name);
     ar& BOOST_SERIALIZATION_NVP(p_path);
   }
-  if (version == 3) {
-    ar& BOOST_SERIALIZATION_NVP(p_name);
-    ar& BOOST_SERIALIZATION_NVP(p_path);
-    ar& BOOST_SERIALIZATION_NVP(p_cloth_config);
-  }
+
   init_name();
 }
 
 }  // namespace doodle
-BOOST_CLASS_VERSION(doodle::project, 3);
+BOOST_CLASS_VERSION(doodle::project, 2);
 BOOST_CLASS_EXPORT_KEY(doodle::project)
 BOOST_CLASS_VERSION(doodle::project::cloth_config, 1);
 BOOST_CLASS_EXPORT_KEY(doodle::project::cloth_config)

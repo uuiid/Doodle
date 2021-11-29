@@ -17,9 +17,7 @@ project::project()
     : p_name("none"),
       p_path("C:/"),
       p_en_str(),
-      p_shor_str(),
-      p_sim_path(),
-      p_cloth_config(std::make_shared<cloth_config>()) {
+      p_shor_str(){
 }
 
 project::project(FSys::path in_path, std::string in_name)
@@ -101,8 +99,12 @@ bool project::operator==(const project& in_rhs) const {
 bool project::operator!=(const project& in_rhs) const {
   return !(in_rhs == *this);
 }
-project::cloth_config_ptr project::get_vfx_cloth_config() const {
-  return p_cloth_config;
+
+project::cloth_config& project::get_vfx_cloth_config() const {
+  auto k_h = make_handle(this);
+  if (!k_h.any_of<cloth_config>())
+    throw doodle_error{"缺失组件"};
+  return k_h.get<cloth_config>();
 }
 
 }  // namespace doodle
