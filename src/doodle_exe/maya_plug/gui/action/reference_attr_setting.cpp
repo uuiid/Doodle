@@ -90,8 +90,7 @@ bool reference_attr_setting::get_file_info() {
 
 #endif
   add_channel();
-  auto k_m = MFileIO::metadata(&k_status);
-  // adsk::Debug::Print k_p{std::cout};
+
   adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
   CHECK_MSTATUS_AND_RETURN(k_status, false);
   auto k_channel = k_meta.channel("doodle_sim_json");
@@ -136,9 +135,6 @@ bool reference_attr_setting::render() {
 
     MStatus k_status{};
     /// 获取文件元数据
-    auto k_m = MFileIO::metadata(&k_status);
-    CHECK_MSTATUS_AND_RETURN(k_status, false);
-
     /// 转换元数据
     adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
     CHECK_MSTATUS_AND_RETURN(k_status, false);
