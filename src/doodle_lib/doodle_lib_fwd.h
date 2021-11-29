@@ -382,15 +382,13 @@ entt::entity to_entity(const Component &instance) {
   return entt::to_entity(*(g_reg()), instance);
 };
 
-class DOODLELIB_API null_fun {
+class DOODLELIB_API null_fun_t {
  public:
-  null_fun() = default;
+  null_fun_t() = default;
   template <class in_class>
-  void operator()(in_class &in){
-
-  };
+  inline void operator()(in_class &in){};
 };
-static null_fun null_fun_t{};
+static null_fun_t null_fun{};
 
 using maya_file_ptr           = std::shared_ptr<maya_file>;
 using setting_windows_ptr     = std::shared_ptr<setting_windows>;
