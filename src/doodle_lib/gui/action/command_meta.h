@@ -9,8 +9,6 @@
 #include <doodle_lib/gui/action/command_files.h>
 #include <doodle_lib/gui/action/command_ue4.h>
 
-#include <boost/hana.hpp>
-#include <boost/hana/tuple.hpp>
 namespace doodle {
 
 class DOODLELIB_API comm_project_add : public command_base {
@@ -21,6 +19,10 @@ class DOODLELIB_API comm_project_add : public command_base {
  protected:
  public:
   comm_project_add();
+  ~comm_project_add() noexcept;
+  comm_project_add(const comm_project_add& in_add) noexcept;
+  comm_project_add& operator=(const comm_project_add& in_add) noexcept;
+
   bool render() override;
   virtual bool set_data(const entt::handle& in_data) override;
 };

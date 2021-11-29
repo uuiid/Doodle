@@ -23,15 +23,13 @@ class comm_project_add::impl {
   string p_prj_name_short;
   string p_prj_path;
 
-  string p_vfx_cloth_sim_path;
-  std::double_t p_high_resolution;
   entt::handle p_root;
+
+  project::cloth_config cloth_config;
   impl()
       : p_prj_name("none"),
         p_prj_name_short("none"),
         p_prj_path("C:/"),
-        p_vfx_cloth_sim_path("C:/"),
-        p_high_resolution(100),
         p_root() {
   }
 };
@@ -84,8 +82,10 @@ bool comm_project_add::render() {
               p_impl->p_prj_path = in.front().generic_string();
             });
   }
-  if (imgui::InputText(p_show_str["解算路径"].c_str(), &(p_impl->p_vfx_cloth_sim_path))) {
-    p_impl->p_root.get<project>().get_vfx_cloth_config()->vfx_cloth_sim_path = p_impl->p_vfx_cloth_sim_path;
+  if (dear::InputText(p_show_str["解算路径"].c_str(), &(p_impl->cloth_config.vfx_cloth_sim_path))) {
+    p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
+      in.vfx_cloth_sim_path = p_impl->cloth_config.vfx_cloth_sim_path;
+    });
   }
   return true;
 }
@@ -93,17 +93,26 @@ bool comm_project_add::set_data(const entt::handle& in_data) {
   if (in_data.any_of<project>()) {
     p_impl->p_root = in_data;
     if (p_impl->p_root) {
-      auto& k_prj           = p_impl->p_root.get<project>();
-      p_impl->p_prj_name           = k_prj.get_name();
-      p_impl->p_prj_path           = k_prj.get_path().generic_string();
-      p_impl->p_vfx_cloth_sim_path = k_prj.get_vfx_cloth_config()->vfx_cloth_sim_path.generic_string();
-      p_impl->p_high_resolution     = k_prj.get_vfx_cloth_config()->high_resolution;
+      auto& k_prj          = p_impl->p_root.get<project>();
+      p_impl->p_prj_name   = k_prj.get_name();
+      p_impl->p_prj_path   = k_prj.get_path().generic_string();
+      p_impl->cloth_config = k_prj.get_vfx_cloth_config();
     }
   } else {
     p_impl->p_root = entt::handle{};
   }
   return true;
 }
+comm_project_add::comm_project_add(const comm_project_add& in_add) noexcept
+    : command_base(in_add),
+      p_impl() {
+  p_impl = std::make_unique<impl>(*(in_add.p_impl));
+}
+comm_project_add& comm_project_add::operator=(const comm_project_add& in_add) noexcept {
+  p_impl = std::make_unique<impl>(*(in_add.p_impl));
+  return *this;
+}
+comm_project_add::~comm_project_add() = default;
 
 comm_ass_eps::comm_ass_eps()
     : p_root(),
