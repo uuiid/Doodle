@@ -18,6 +18,8 @@ class DOODLELIB_API comm_project_add : public command_base {
   string_ptr p_prj_name;
   string_ptr p_prj_name_short;
   string_ptr p_prj_path;
+
+  string_ptr p_vfx_cloth_sim_path;
   entt::handle p_root;
 
  protected:

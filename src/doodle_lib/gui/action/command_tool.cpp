@@ -12,6 +12,7 @@
 #include <doodle_lib/file_warp/video_sequence.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/episodes.h>
+#include <doodle_lib/metadata/project.h>
 #include <doodle_lib/metadata/shot.h>
 
 #include <boost/assign.hpp>
@@ -71,7 +72,9 @@ comm_qcloth_sim::comm_qcloth_sim()
       p_sim_path(),
       p_only_sim(false),
       p_use_all_ref(false) {
-  p_name = "maya工具";
+  p_name      = "maya工具";
+  auto& k_prj = g_reg()->ctx<root_ref>();
+  *p_text     = k_prj.root_handle().get<project>().get_vfx_cloth_sim_path().generic_string();
 }
 bool comm_qcloth_sim::is_async() {
   return true;
@@ -100,21 +103,6 @@ bool comm_qcloth_sim::render() {
 
   dear::TreeNode{"解算"} && [this]() {
     imgui::InputText("解算资产", p_text.get(), ImGuiInputTextFlags_ReadOnly);
-    imgui::SameLine();
-    if (imgui::Button("选择")) {
-      open_file_dialog{
-          "open_get_sim_cloth_path_ass",
-          "open_get_sim_cloth_path_ass",
-          nullptr,
-          ".",
-          "",
-          1}
-          .show(
-              [this](const std::vector<FSys::path>& in_p) {
-                p_cloth_path = in_p.front();
-                *p_text      = p_cloth_path.generic_string();
-              });
-    }
     imgui::Checkbox("只解算不替换引用", &p_only_sim);
     if (imgui::Button("解算")) {
       auto maya = new_object<maya_file_async>();

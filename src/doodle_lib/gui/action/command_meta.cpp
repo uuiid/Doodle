@@ -18,9 +18,10 @@
 namespace doodle {
 
 comm_project_add::comm_project_add()
-    : p_prj_name(new_object<string>()),
-      p_prj_name_short(new_object<string>()),
-      p_prj_path(new_object<string>()),
+    : p_prj_name(new_object<string>("none")),
+      p_prj_name_short(new_object<string>("none")),
+      p_prj_path(new_object<string>("C:/")),
+      p_vfx_cloth_sim_path(new_object<string>("C:/")),
       p_root() {
   p_name     = "项目";
   p_show_str = make_imgui_name(this, "删除", "添加",
@@ -40,8 +41,6 @@ bool comm_project_add::render() {
   }
   if (p_root) {
     if (imgui::Button(p_show_str["修改"].c_str())) {
-      p_root.get<project>().set_name(*p_prj_name);
-      p_root.get<project>().set_path(*p_prj_path);
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
     imgui::SameLine();
@@ -50,8 +49,12 @@ bool comm_project_add::render() {
     }
   }
 
-  imgui::InputText(p_show_str["名称"].c_str(), p_prj_name.get());
-  imgui::InputText(p_show_str["路径"].c_str(), p_prj_path.get());
+  if (imgui::InputText(p_show_str["名称"].c_str(), p_prj_name.get())) {
+    p_root.get<project>().set_name(*p_prj_name);
+  }
+  if (imgui::InputText(p_show_str["路径"].c_str(), p_prj_path.get())) {
+    p_root.get<project>().set_path(*p_prj_path);
+  }
   imgui::SameLine();
   if (imgui::Button(p_show_str["选择"].c_str())) {
     open_file_dialog{"open_select_path",
@@ -63,6 +66,22 @@ bool comm_project_add::render() {
         .show(
             [this](const std::vector<FSys::path>& in) {
               *p_prj_path = in.front().generic_string();
+              p_root.get<project>().set_vfx_cloth_sim_path(*p_vfx_cloth_sim_path);
+            });
+  }
+  imgui::InputText(p_show_str["解算路径"].c_str(), p_vfx_cloth_sim_path.get());
+  imgui::SameLine();
+  if (imgui::Button("选择")) {
+    open_file_dialog{
+        "open_get_sim_cloth_path_ass",
+        "open_get_sim_cloth_path_ass",
+        nullptr,
+        ".",
+        "",
+        1}
+        .show(
+            [this](const std::vector<FSys::path>& in_p) {
+              *p_vfx_cloth_sim_path = in_p.front().generic_string();
             });
   }
 
