@@ -1,15 +1,18 @@
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <DoodleConfig.h>
+#include <doodle_lib_export.h>
 
+#include <filesystem>
 #include <stdexcept>
+#include <string>
 
 namespace doodle {
 class DOODLELIB_API doodle_error : public std::runtime_error {
  public:
   explicit doodle_error(const std::string& message) : std::runtime_error(message){};
 };
-//iterators
+// iterators
 class DOODLELIB_API error_iterator : public std::runtime_error {
  public:
   explicit error_iterator(const std::string& message) : std::runtime_error(message){};
@@ -17,17 +20,17 @@ class DOODLELIB_API error_iterator : public std::runtime_error {
 // 空指针错误
 class DOODLELIB_API nullptr_error : public doodle_error {
  public:
-  explicit nullptr_error(const std::string &err) : doodle_error(err){};
+  explicit nullptr_error(const std::string& err) : doodle_error(err){};
 };
 // fileErr
 class DOODLELIB_API file_error : public doodle_error {
-  FSys::path p_path;
+  std::filesystem::path p_path;
 
  public:
-  file_error(FSys::path path, const std::string& message)
+  file_error(std::filesystem::path path, const std::string& message)
       : doodle_error(path.generic_string().append(message)),
-       p_path(std::move(path)){};
+        p_path(std::move(path)){};
 };
-//doodl err
+// doodl err
 
-}
+}  // namespace doodle
