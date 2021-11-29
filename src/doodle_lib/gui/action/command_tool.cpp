@@ -22,7 +22,7 @@
 #include <boost/range/algorithm.hpp>
 namespace doodle {
 
-comm_qcloth_sim::comm_qcloth_sim()
+comm_maya_tool::comm_maya_tool()
     : p_cloth_path(),
       p_text(new_object<std::string>()),
       p_sim_path(),
@@ -32,10 +32,10 @@ comm_qcloth_sim::comm_qcloth_sim()
   auto& k_prj = g_reg()->ctx<root_ref>();
   *p_text     = k_prj.root_handle().get<project>().get_vfx_cloth_sim_path().generic_string();
 }
-bool comm_qcloth_sim::is_async() {
+bool comm_maya_tool::is_async() {
   return true;
 }
-bool comm_qcloth_sim::render() {
+bool comm_maya_tool::render() {
   if (imgui::Button("maya文件")) {
     p_sim_path.clear();
     open_file_dialog{

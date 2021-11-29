@@ -144,7 +144,7 @@ void main_windows::main_menu_windows() {
 void main_windows::main_menu_edit() {
   auto k_task = p_tool_box_;
   if (dear::MenuItem(u8"maya 工具"))
-    k_task->set_tool_widget(new_object<comm_qcloth_sim>());
+    k_task->set_tool_widget(new_object<comm_maya_tool>());
   if (dear::MenuItem(u8"创建视频"))
     k_task->set_tool_widget(new_object<comm_create_video>());
   if (dear::MenuItem(u8"ue工具"))

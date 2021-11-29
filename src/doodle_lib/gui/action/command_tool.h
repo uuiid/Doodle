@@ -38,7 +38,7 @@ namespace doodle {
  *
  *
  */
-class DOODLELIB_API comm_qcloth_sim : public command_base {
+class DOODLELIB_API comm_maya_tool : public command_base {
   FSys::path p_cloth_path;
   std::shared_ptr<std::string> p_text;
   std::vector<FSys::path> p_sim_path;
@@ -46,7 +46,7 @@ class DOODLELIB_API comm_qcloth_sim : public command_base {
   bool p_use_all_ref;
 
  public:
-  comm_qcloth_sim();
+  comm_maya_tool();
   bool is_async() override;
   bool render() override;
 };

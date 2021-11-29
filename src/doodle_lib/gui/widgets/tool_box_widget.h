@@ -18,7 +18,7 @@ namespace doodle {
  * 这个窗口是工具窗口， 也是基本不用联网就可以使用的几个窗口之一
  *
  * @subpage maya_tool "maya工具"
- * @copydetails doodle::comm_qcloth_sim
+ * @copydetails doodle::comm_maya_tool
  *
  * @subpage vide_rool "视频工具"
  * @copydetails doodle::comm_create_video
