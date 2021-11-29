@@ -19,62 +19,72 @@
 namespace doodle {
 
 void toolkit::installMayaPath() {
-  auto mayadoc = win::get_pwd();
-  mayadoc /= "maya";
-  mayadoc /= "modules";
-  mayadoc /= "doodle";
+  try {
+    auto mayadoc = win::get_pwd();
+    mayadoc /= "maya";
+    mayadoc /= "modules";
+    mayadoc /= "doodle";
 
-  auto sourePath = core_set::program_location().parent_path();
-  sourePath /= "plug/maya";
+    auto sourePath = core_set::program_location().parent_path();
+    sourePath /= "plug/maya";
 
-  if (!FSys::exists(mayadoc)) {
-    FSys::create_directories(mayadoc);
-  } else
-    FSys::remove_all(mayadoc);
+    if (!FSys::exists(mayadoc)) {
+      FSys::create_directories(mayadoc);
+    } else
+      FSys::remove_all(mayadoc);
 
-  file_system::local_copy(sourePath, mayadoc, false);
-  file_system::local_copy(core_set::program_location(), mayadoc / "plug-ins", false);
+    file_system::local_copy(sourePath, mayadoc, false);
+    file_system::local_copy(core_set::program_location(), mayadoc / "plug-ins", false);
 
-  auto k_tmp_path = mayadoc / "scripts" / "scripts" / "maya_fun_tool.py";
-  if (FSys::exists(k_tmp_path))
-    return;
+    auto k_tmp_path = mayadoc / "scripts" / "scripts" / "maya_fun_tool.py";
+    if (FSys::exists(k_tmp_path))
+      return;
 
-  auto k_file_py = cmrc::DoodleLibResource::get_filesystem().open("resource/maya_fun_tool.py");
-  {  //写入文件后直接关闭
-    FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
-    file.write(k_file_py.begin(), boost::numeric_cast<std::int64_t>(k_file_py.size()));
-  }
+    auto k_file_py = cmrc::DoodleLibResource::get_filesystem().open("resource/maya_fun_tool.py");
+    {  //写入文件后直接关闭
+      FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
+      file.write(k_file_py.begin(), boost::numeric_cast<std::int64_t>(k_file_py.size()));
+    }
 
-  static std::string k_mod{R"(+ doodle 1.1 .\doodle
+    static std::string k_mod{R"(+ doodle 1.1 .\doodle
 MYMODULE_LOCATION:= .
 PATH+:= plug-ins
 PYTHONPATH+:= scripts
 )"};
-  {
-    auto k_p = mayadoc.parent_path() / "doodle.mod";
-    DOODLE_LOG_INFO("写入 {}", k_p);
-    FSys::ofstream k_file{k_p};
-    k_file << k_mod;
+    {
+      auto k_p = mayadoc.parent_path() / "doodle.mod";
+      DOODLE_LOG_INFO("写入 {}", k_p);
+      FSys::ofstream k_file{k_p};
+      k_file << k_mod;
+    }
+  } catch (FSys::filesystem_error &err) {
+    DOODLE_LOG_ERROR(err.what());
+    throw doodle_error{err.what()};
   }
 }
 
 void toolkit::installUePath(const FSys::path &path) {
-  auto &set       = core_set::getSet();
+  try {
+    auto &set       = core_set::getSet();
 
-  auto sourePath  = FSys::current_path().parent_path();
-  sourePath       = sourePath / "plug" / "uePlug";
-  sourePath       = sourePath / set.get_ue4_setting().get_version();
-  sourePath       = sourePath / "Plugins" / "Doodle";
-  auto targetPath = path / "Plugins" / "Doodle";
+    auto sourePath  = FSys::current_path().parent_path();
+    sourePath       = sourePath / "plug" / "uePlug";
+    sourePath       = sourePath / set.get_ue4_setting().get_version();
+    sourePath       = sourePath / "Plugins" / "Doodle";
+    auto targetPath = path / "Plugins" / "Doodle";
 
-  if (FSys::exists(targetPath)) {
-    FSys::remove_all(targetPath);
-  } else {
-    FSys::create_directories(targetPath);
+    if (FSys::exists(targetPath)) {
+      FSys::remove_all(targetPath);
+    } else {
+      FSys::create_directories(targetPath);
+    }
+
+    DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, targetPath));
+    file_system::local_copy(sourePath, targetPath, false);
+  } catch (FSys::filesystem_error &error) {
+    DOODLE_LOG_ERROR(error.what());
+    throw doodle_error{error.what()};
   }
-
-  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, targetPath));
-  file_system::local_copy(sourePath, targetPath, false);
 }
 
 bool toolkit::update() {
@@ -106,7 +116,8 @@ bool toolkit::deleteUeCache() {
   //获取环境变量
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, nullptr, &pManager);
-  if (!pManager) throw doodle_error("无法找到保存路径");
+  if (!pManager)
+    throw doodle_error("无法找到保存路径");
 
   FSys::path path{pManager};
   CoTaskMemFree(pManager);
