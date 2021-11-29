@@ -61,17 +61,13 @@ main_windows::main_windows()
 
   p_prj_->select_change.connect([this](auto in) {
     p_ass_->set_metadata(in);
-    p_edit_windows_->set_factort(p_prj_->get_factory());
+    p_tool_box_->set_tool_widget(nullptr);
   });
   p_ass_->select_change.connect([this](auto in) {
-    p_edit_windows_->set_factort(p_ass_->get_factory());
   });
   p_attr_->select_change.connect(
       [this](auto in) {
-        p_edit_windows_->set_factort(p_attr_->get_factory());
       });
-
-  p_edit_windows_->set_factort(p_prj_->get_factory());
 }
 void main_windows::frame_render() {
   for (auto &i : p_list_windwos) {

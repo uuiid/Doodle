@@ -106,7 +106,6 @@ assets_file_widgets::assets_file_widgets()
     : p_current_select(),
       p_colum_list() {
   p_class_name = "文件列表";
-  p_factory    = new_object<attr_assets_file>();
   p_colum_list.emplace_back(new_object<details::column_id>(this));
   p_colum_list.emplace_back(new_object<details::column_assets>(this));
   p_colum_list.emplace_back(new_object<details::column_season>(this));

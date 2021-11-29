@@ -26,6 +26,4 @@ void edit_widgets::frame_render() {
     k_ctx->render();
 }
 
-void edit_widgets::set_factort(const attribute_factory_ptr& in_factory) {
-}
 }  // namespace doodle

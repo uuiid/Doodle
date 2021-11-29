@@ -360,7 +360,6 @@ ImGuiTreeNodeFlags assets_widget::impl::base_flags{ImGuiTreeNodeFlags_OpenOnArro
 
 assets_widget::assets_widget()
     : p_impl(std::make_unique<impl>(this)) {
-  p_factory    = new_object<attr_assets>();
   p_class_name = "资产";
 }
 assets_widget::~assets_widget() = default;

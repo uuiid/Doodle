@@ -8,48 +8,10 @@
 
 #include <boost/hana/experimental/printable.hpp>
 #include <boost/type_erasure/any.hpp>
-#include <boost/type_erasure/any_cast.hpp>
-#include <boost/type_erasure/builtin.hpp>
 #include <boost/type_erasure/free.hpp>
 #include <boost/type_erasure/member.hpp>
-#include <boost/type_erasure/operators.hpp>
+
 namespace doodle {
-namespace widget_n {
-// template <typename... arg>
-// class command_guard {
-//  private:
-//   entt::handle p_curr;
-
-//  public:
-//   command_guard() : p_curr(){};
-
-//   command_guard& operator=(entt::handle in) {
-//     if (p_curr) {
-//       (p_curr.remove<arg>(), ...);
-//     }
-//     p_curr = in;
-//     (p_curr.emplace<arg>(), ...);
-//     return *this;
-//   };
-
-//   bool operator==(const command_guard& in_rhs) const {
-//     return p_curr == in_rhs.p_curr;
-//   }
-//   bool operator!=(const command_guard& in_rhs) const {
-//     return !(in_rhs == *this);
-//   }
-//   bool operator==(const entt::handle& in_rhs) const {
-//     return p_curr == in_rhs;
-//   }
-//   bool operator!=(const entt::handle& in_rhs) const {
-//     return !(in_rhs == *this);
-//   }
-
-//   operator entt::entity() const {
-//     return p_curr;
-//   }
-// };
-}  // namespace widget_n
 
 class DOODLELIB_API base_widget
     : public details::no_copy,
@@ -83,16 +45,6 @@ class DOODLELIB_API base_widget
   virtual const string& get_class_name() const;
 };
 
-class DOODLELIB_API metadata_widget : public base_widget {
- protected:
-  attribute_factory_ptr p_factory;
-  command_ptr p_comm;
-
- public:
-  virtual attribute_factory_ptr get_factory();
-  virtual command_ptr get_comm();
-};
-
 class DOODLELIB_API windows_warp_base : public base_widget {
  public:
   bool_ptr p_show;
@@ -100,7 +52,6 @@ class DOODLELIB_API windows_warp_base : public base_widget {
       : p_show(new_object<bool>(init_show)){};
   virtual bool load_show()                                = 0;
   virtual void save_show() const                          = 0;
-  virtual std::shared_ptr<base_widget> get_widget() const = 0;
 };
 
 template <class widget>
@@ -137,9 +88,6 @@ class DOODLELIB_API windows_warp : public windows_warp_base {
   void save_show() const override {
     auto& set                               = core_set::getSet();
     set.widget_show[this->get_class_name()] = *p_show;
-  }
-  std::shared_ptr<base_widget> get_widget() const override {
-    return p_widget;
   }
 };
 

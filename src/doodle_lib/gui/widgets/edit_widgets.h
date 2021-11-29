@@ -16,7 +16,5 @@ class DOODLELIB_API edit_widgets  : public base_widget{
   public:
   edit_widgets();
   virtual void frame_render() override;
-
-  void set_factort(const attribute_factory_ptr& in_factory);
 };
 }  // namespace doodle

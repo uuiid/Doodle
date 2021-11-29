@@ -15,11 +15,4 @@ void base_widget::post_constructor() {
     doodle_app::Get()->get_register()->get().insert(std::make_pair(std::type_index{typeid(*this)}, this->weak_from_this()));
 }
 
-attribute_factory_ptr metadata_widget::get_factory() {
-  return p_factory;
-}
-command_ptr metadata_widget::get_comm() {
-  return p_comm;
-}
-
 }  // namespace doodle
