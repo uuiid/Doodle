@@ -1,7 +1,8 @@
 ﻿#pragma once
 
 #include <DoodleConfig.h>
-#include <doodle_lib/Logger/logger.h>
+#include <doodle_lib/logger/logger.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/doodle_lib_pch.h>
 #include <doodle_lib/doodle_macro.h>
 #include <doodle_lib/lib_warp/boost_serialization_warp.h>
@@ -379,6 +380,15 @@ inline entt::handle make_handle() {
 
 template <class Component>
 entt::entity to_entity(const Component &instance) {
+  return entt::to_entity(*(g_reg()), instance);
+};
+
+
+template <class Component_to,class Component_From>
+entt::entity to_comm(const Component_From &instance) {
+  auto k_h = make_handle(instance);
+  if(!k_h.any<Component_to>())
+    throw doodle_error{"缺失组件"};
   return entt::to_entity(*(g_reg()), instance);
 };
 
