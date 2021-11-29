@@ -40,7 +40,7 @@ namespace doodle {
  */
 class DOODLELIB_API comm_maya_tool : public command_base {
   FSys::path p_cloth_path;
-  std::shared_ptr<std::string> p_text;
+  std::string p_text;
   std::vector<FSys::path> p_sim_path;
   bool p_only_sim;
   bool p_use_all_ref;

@@ -24,13 +24,15 @@ namespace doodle {
 
 comm_maya_tool::comm_maya_tool()
     : p_cloth_path(),
-      p_text(new_object<std::string>()),
+      p_text(),
       p_sim_path(),
       p_only_sim(false),
       p_use_all_ref(false) {
-  p_name      = "maya工具";
-  auto& k_prj = g_reg()->ctx<root_ref>();
-  *p_text     = k_prj.root_handle().get<project>().get_vfx_cloth_sim_path().generic_string();
+  p_name     = "maya工具";
+  auto k_prj = g_reg()->try_ctx<root_ref>();
+  if (!k_prj)
+    throw doodle_error{"没有项目选中"};
+  p_text = k_prj->root_handle().get<project>().get_vfx_cloth_sim_path().generic_string();
 }
 bool comm_maya_tool::is_async() {
   return true;
@@ -58,7 +60,7 @@ bool comm_maya_tool::render() {
   };
 
   dear::TreeNode{"解算"} && [this]() {
-    imgui::InputText("解算资产", p_text.get(), ImGuiInputTextFlags_ReadOnly);
+    dear::Text(fmt::format("解算资产: {}",p_text));
     imgui::Checkbox("只解算不替换引用", &p_only_sim);
     if (imgui::Button("解算")) {
       auto maya = new_object<maya_file_async>();

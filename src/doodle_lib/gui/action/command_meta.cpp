@@ -26,7 +26,8 @@ comm_project_add::comm_project_add()
   p_name     = "项目";
   p_show_str = make_imgui_name(this, "删除", "添加",
                                "修改", "名称",
-                               "路径", "选择");
+                               "路径", "选择",
+                               "解算路径");
 }
 
 bool comm_project_add::render() {
@@ -66,25 +67,11 @@ bool comm_project_add::render() {
         .show(
             [this](const std::vector<FSys::path>& in) {
               *p_prj_path = in.front().generic_string();
-              p_root.get<project>().set_vfx_cloth_sim_path(*p_vfx_cloth_sim_path);
             });
   }
-  imgui::InputText(p_show_str["解算路径"].c_str(), p_vfx_cloth_sim_path.get());
-  imgui::SameLine();
-  if (imgui::Button("选择")) {
-    open_file_dialog{
-        "open_get_sim_cloth_path_ass",
-        "open_get_sim_cloth_path_ass",
-        nullptr,
-        ".",
-        "",
-        1}
-        .show(
-            [this](const std::vector<FSys::path>& in_p) {
-              *p_vfx_cloth_sim_path = in_p.front().generic_string();
-            });
+  if (imgui::InputText(p_show_str["解算路径"].c_str(), p_vfx_cloth_sim_path.get())) {
+    p_root.get<project>().set_vfx_cloth_sim_path(*p_vfx_cloth_sim_path);
   }
-
   return true;
 }
 bool comm_project_add::set_data(const entt::handle& in_data) {
