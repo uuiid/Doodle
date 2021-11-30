@@ -70,7 +70,6 @@ class DOODLELIB_API database_root {
 
 class DOODLELIB_API database {
   friend rpc_metadata_client;
-  friend tree_relationship;
   friend metadata_serialize;
 
  private:

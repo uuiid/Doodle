@@ -167,7 +167,7 @@ void ue4_project::create_shot_folder(const std::vector<entt::handle>& inShotList
     auto k_game_episodes_path = FSys::path{"/Game"} / ContentShot / inShotList[0].get<episodes>().str();
     for (const auto& k_shot : inShotList) {
       auto k_string         = fmt::format("{}{:04d}_{}",
-                                          k_prj->show_str(),
+                                          k_prj.show_str(),
                                           k_shot.get<episodes>().get_episodes(),
                                           k_shot.get<shot>().str());
 

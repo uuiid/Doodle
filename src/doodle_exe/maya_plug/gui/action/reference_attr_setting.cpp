@@ -127,6 +127,12 @@ bool reference_attr_setting::render() {
       imgui::Checkbox(i->path.c_str(), &(i->use_sim));
     }
   };
+
+  dear::TreeNode{p_show_str["引用列表"].c_str()} && []() {
+
+
+  };
+
   if (imgui::Button(p_show_str["保存"].c_str())) {
     add_channel();
     std::vector<reference_attr::data> k_l;
