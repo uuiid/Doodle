@@ -193,7 +193,8 @@ bool database::is_install() const {
                              assets_file,        \
                              assets_path_vector, \
                              time_point_wrap,    \
-                             comment_vector
+                             comment_vector,     \
+                             project::cloth_config
 
 database &database::operator=(const metadata_database &in_) {
   auto k_h    = make_handle(*this);

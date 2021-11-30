@@ -104,10 +104,8 @@ bool project::operator!=(const project& in_rhs) const {
 }
 
 project::cloth_config& project::get_vfx_cloth_config() const {
-  auto k_h = make_handle(this);
-  if (!k_h.any_of<cloth_config>())
-    throw doodle_error{"缺失组件"};
-  return k_h.get<cloth_config>();
+  auto k_h = make_handle(*this);
+  return k_h.get_or_emplace<cloth_config>();
 }
 
 }  // namespace doodle

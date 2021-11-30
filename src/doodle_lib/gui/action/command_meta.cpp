@@ -22,6 +22,7 @@ class comm_project_add::impl {
   string p_prj_name;
   string p_prj_name_short;
   string p_prj_path;
+  string vfx_cloth_sim_path;
 
   entt::handle p_root;
 
@@ -87,12 +88,12 @@ bool comm_project_add::render() {
               p_impl->p_prj_path = in.front().generic_string();
             });
   }
-  if (!p_impl->p_root.any_of<project::cloth_config>())
+  if (!p_impl->p_root || !p_impl->p_root.any_of<project::cloth_config>())
     return true;
   dear::TreeNode{p_show_str["解算配置"].c_str()} && [&]() {
-    if (dear::InputText(p_show_str["解算路径"].c_str(), &(p_impl->cloth_config.vfx_cloth_sim_path))) {
+    if (imgui::InputText(p_show_str["解算路径"].c_str(), &(p_impl->vfx_cloth_sim_path))) {
       p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
-        in.vfx_cloth_sim_path = p_impl->cloth_config.vfx_cloth_sim_path;
+        in.vfx_cloth_sim_path = p_impl->vfx_cloth_sim_path;
       });
     }
     if (imgui::Checkbox(p_show_str["simple_subsampling"].c_str(), &(p_impl->cloth_config.simple_subsampling))) {
@@ -100,18 +101,18 @@ bool comm_project_add::render() {
         in.simple_subsampling = p_impl->cloth_config.simple_subsampling;
       });
     }
-    if (imgui::SliderFloat(p_show_str["frame_samples"].c_str(), &(p_impl->cloth_config.frame_samples), 0.01f, 1.0f)) {
+    if (imgui::SliderFloat(p_show_str["frame_samples"].c_str(), &(p_impl->cloth_config.frame_samples), 0.f, 1000.f)) {
       p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
         in.frame_samples = p_impl->cloth_config.frame_samples;
       });
     }
 
-    if (imgui::SliderFloat(p_show_str["time_scale"].c_str(), &(p_impl->cloth_config.time_scale), 0.01f, 1.0f)) {
+    if (imgui::SliderFloat(p_show_str["time_scale"].c_str(), &(p_impl->cloth_config.time_scale), 0.f, 1000.f)) {
       p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
         in.time_scale = p_impl->cloth_config.time_scale;
       });
     }
-    if (imgui::SliderFloat(p_show_str["length_scale"].c_str(), &(p_impl->cloth_config.length_scale), 0.01f, 1.0f)) {
+    if (imgui::SliderFloat(p_show_str["length_scale"].c_str(), &(p_impl->cloth_config.length_scale), 0.f, 1000.f)) {
       p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
         in.length_scale = p_impl->cloth_config.length_scale;
       });
@@ -124,10 +125,11 @@ bool comm_project_add::set_data(const entt::handle& in_data) {
   if (in_data.any_of<project>()) {
     p_impl->p_root = in_data;
     if (p_impl->p_root) {
-      auto& k_prj          = p_impl->p_root.get<project>();
-      p_impl->p_prj_name   = k_prj.get_name();
-      p_impl->p_prj_path   = k_prj.get_path().generic_string();
-      p_impl->cloth_config = k_prj.get_vfx_cloth_config();
+      auto& k_prj                = p_impl->p_root.get<project>();
+      p_impl->p_prj_name         = k_prj.get_name();
+      p_impl->p_prj_path         = k_prj.get_path().generic_string();
+      p_impl->cloth_config       = k_prj.get_vfx_cloth_config();
+      p_impl->vfx_cloth_sim_path = p_impl->cloth_config.vfx_cloth_sim_path.generic_string();
     }
   } else {
     p_impl->p_root = entt::handle{};

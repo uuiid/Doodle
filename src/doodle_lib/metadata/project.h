@@ -65,19 +65,23 @@ class DOODLELIB_API project {
 
  private:
   friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive& ar, std::uint32_t const version);
-};
 
-template <class Archive>
-void project::serialize(Archive& ar, std::uint32_t const version) {
-  if (version == 2) {
+  template <class Archive>
+  void save(Archive& ar, const std::uint32_t version) const {
     ar& BOOST_SERIALIZATION_NVP(p_name);
     ar& BOOST_SERIALIZATION_NVP(p_path);
   }
 
-  init_name();
-}
+  template <class Archive>
+  void load(Archive& ar, const std::uint32_t version) {
+    if (version == 2) {
+      ar& BOOST_SERIALIZATION_NVP(p_name);
+      ar& BOOST_SERIALIZATION_NVP(p_path);
+    }
+    init_name();
+  }
+  BOOST_SERIALIZATION_SPLIT_MEMBER()
+};
 
 }  // namespace doodle
 BOOST_CLASS_VERSION(doodle::project, 2);
