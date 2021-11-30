@@ -38,61 +38,6 @@ enum class metadata_type {
 
 };
 
-class DOODLELIB_API tree_relationship
-/* : public boost::intrusive::set_base_hook<> */ {
-  friend metadata_serialize;
-
- private:
-  entt::entity p_parent;
-
-  void set_parent_raw(const entt::handle &in_parent);
-
- public:
-  std::vector<entt::entity> p_child;
-  // boost::intrusive::set<> p_child;
-
-  DOODLE_MOVE(tree_relationship)
-
-  tree_relationship::tree_relationship()
-      : p_parent(entt::null),
-        p_child() {
-  }
-  tree_relationship(entt::entity in_parent)
-      : tree_relationship() {
-    set_parent(std::move(in_parent));
-  }
-  bool has_parent() const;
-
-  template <class parent_class>
-  parent_class *find_parent_class() {
-    entt::handle k_h = find_parent_class_h<parent_class>();
-    if (k_h) {
-      return k_h.try_get<parent_class>();
-    }
-    return nullptr;
-  }
-
-  template <class parent_class>
-  entt::handle find_parent_class_h() {
-    auto k_p = make_handle(p_parent);
-    while (k_p) {
-      if (k_p.any_of<parent_class>())
-        return k_p;
-      k_p = k_p.get<tree_relationship>().get_parent_h();
-    }
-    return {};
-  }
-
-  [[nodiscard]] entt::entity get_parent() const noexcept;
-  [[nodiscard]] entt::handle get_parent_h() const noexcept;
-  void set_parent(const entt::entity &in_parent) noexcept;
-
-  [[nodiscard]] const std::vector<entt::entity> &get_child() const noexcept;
-  // [[nodiscard]] std::vector<entt::entity> &get_child() noexcept;
-  // void set_child(const std::vector<entt::entity> &in_child) noexcept;
-
-  entt::handle get_root() const;
-};
 
 class DOODLELIB_API root_ref {
  public:
