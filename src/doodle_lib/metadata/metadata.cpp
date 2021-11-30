@@ -111,11 +111,8 @@ database::database()
       p_id_str("id 0"),
       p_parent_id(),
       p_type(metadata_type::unknown_file),
-      p_uuid(core_set::getSet().get_uuid_str()),
-      p_has_child(0),
-      p_has_file(0),
-      p_updata_parent_id(false),
-      p_updata_type(false),
+      p_uuid_(core_set::getSet().get_uuid()),
+      p_uuid(boost::uuids::to_string(p_uuid_)),
       p_boost_serialize_vesion(0) {
 }
 
@@ -140,7 +137,6 @@ FSys::path database::get_url_uuid() const {
   auto k_h     = make_handle(*this);
 
   auto l_reg   = g_reg();
-  auto l_ent   = entt::to_entity(*l_reg, *this);
 
   // 找到根的数据库类
   auto &k_data = k_h.get<root_ref>().root_handle().get<database>();
@@ -227,8 +223,17 @@ database &database::operator=(const metadata_database &in_) {
 
   return *this;
 }
+
+bool database::has_components() const {
+  auto k_h = make_handle(*this);
+  return k_h.any_of<DOODLE_SERIALIZATION>();
+}
+
 database::operator doodle::metadata_database() const {
   auto k_h = make_handle(*this);
+
+  if (!k_h.any_of<DOODLE_SERIALIZATION>())
+    throw serialization_error{"空组件"};
 
   metadata_database k_tmp{};
   ///转换id

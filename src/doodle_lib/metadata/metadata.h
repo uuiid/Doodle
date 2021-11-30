@@ -142,10 +142,10 @@ class DOODLELIB_API database {
   database();
   ~database();
 
+  bool has_components() const;
+
   DOODLE_IMP_MOVE(database);
   static void set_enum(entt::registry &in_reg, entt::entity in_ent);
-  std::size_t p_has_child;
-  std::size_t p_has_file;
 
   FSys::path get_url_uuid() const;
   std::int32_t get_meta_type_int() const;
@@ -182,8 +182,6 @@ class DOODLELIB_API database {
     ar &BOOST_SERIALIZATION_NVP(p_parent_id);
     ar &BOOST_SERIALIZATION_NVP(p_type);
     ar &BOOST_SERIALIZATION_NVP(p_uuid_);
-    ar &BOOST_SERIALIZATION_NVP(p_has_child);
-    ar &BOOST_SERIALIZATION_NVP(p_has_file);
   };
 
   template <class Archive>
@@ -194,8 +192,10 @@ class DOODLELIB_API database {
       ar &BOOST_SERIALIZATION_NVP(p_parent_id);
       ar &BOOST_SERIALIZATION_NVP(p_type);
       ar &BOOST_SERIALIZATION_NVP(p_uuid);
-      ar &BOOST_SERIALIZATION_NVP(p_has_child);
-      ar &BOOST_SERIALIZATION_NVP(p_has_file);
+      std::size_t k_1;
+      std::size_t k_2;
+      ar &BOOST_SERIALIZATION_NVP(k_1);
+      ar &BOOST_SERIALIZATION_NVP(k_2);
       p_uuid_ = boost::lexical_cast<boost::uuids::uuid>(p_uuid);
     }
     if (version == 2) {
@@ -203,8 +203,6 @@ class DOODLELIB_API database {
       ar &BOOST_SERIALIZATION_NVP(p_parent_id);
       ar &BOOST_SERIALIZATION_NVP(p_type);
       ar &BOOST_SERIALIZATION_NVP(p_uuid_);
-      ar &BOOST_SERIALIZATION_NVP(p_has_child);
-      ar &BOOST_SERIALIZATION_NVP(p_has_file);
       p_uuid = boost::uuids::to_string(p_uuid_);
     }
   };

@@ -38,8 +38,13 @@ bool metadata_serialize::insert_into(entt::entity in) const {
   if (!k_h.all_of<root_ref, database>())
     throw doodle_error{"缺失组件"};
 
-  auto &k_tree = k_h.get<root_ref>();
   auto &k_data = k_h.get<database>();
+  if (!k_data.has_components()) {
+    DOODLE_LOG_WARN("没有可供序列化的组件")
+    return false;
+  }
+
+  auto &k_tree = k_h.get<root_ref>();
 
   auto k_c     = this->p_rpcClien.lock();
   if (!k_data.is_install()) {
@@ -84,9 +89,13 @@ void metadata_serialize::updata_db(entt::entity in) const {
     throw doodle_error{"缺失组件"};
 
   auto &k_data = k_h.get<database>();
-  auto k_c     = this->p_rpcClien.lock();
-  k_c->update_metadata(k_data);
-  k_h.get<database_stauts>().set<is_load>();
+  if (k_data.has_components()) {
+    auto k_c = this->p_rpcClien.lock();
+    k_c->update_metadata(k_data);
+    k_h.get<database_stauts>().set<is_load>();
+  } else {
+    delete_data(in);
+  }
 }
 
 void metadata_serialize::select_indb(entt::entity in) const {
