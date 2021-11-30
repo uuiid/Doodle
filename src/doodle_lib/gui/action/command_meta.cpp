@@ -87,6 +87,8 @@ bool comm_project_add::render() {
               p_impl->p_prj_path = in.front().generic_string();
             });
   }
+  if (!p_impl->p_root.any_of<project::cloth_config>())
+    return true;
   dear::TreeNode{p_show_str["解算配置"].c_str()} && [&]() {
     if (dear::InputText(p_show_str["解算路径"].c_str(), &(p_impl->cloth_config.vfx_cloth_sim_path))) {
       p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
