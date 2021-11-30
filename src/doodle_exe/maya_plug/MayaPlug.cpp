@@ -20,6 +20,7 @@ const static std::string doolde_hud_render_node{"doolde_hud_render_node"};
 
 static MCallbackId clear_callback_id{0};
 static MCallbackId app_run_id{0};
+static MCallbackId create_hud_id{0};
 
 using namespace doodle;
 static doodle_lib_ptr p_doodle_lib              = nullptr;
@@ -93,7 +94,8 @@ MStatus initializePlugin(MObject obj) {
       p_doodle_app->hide_windows();
 
       //注册命令
-      status = k_plugin.registerCommand(doodle_create.c_str(), doodle::MayaPlug::doodleCreate::create);
+      status = k_plugin.registerCommand(doodle_create.c_str(),
+                                        doodle::MayaPlug::doodleCreate::create);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       //添加菜单项
@@ -118,6 +120,17 @@ MStatus initializePlugin(MObject obj) {
           nullptr, &status);
 
       CHECK_MSTATUS_AND_RETURN_IT(status);
+
+      create_hud_id = MSceneMessage::addCallback(
+          MSceneMessage::Message::kAfterOpen,
+          [](void* clientData) {
+            ::doodle::maya_plug::create_hud_node k_c{};
+            k_c();
+          },
+          nullptr,
+          &status);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+
       break;
     }
 
@@ -177,6 +190,8 @@ MStatus uninitializePlugin(MObject obj) {
     }
     case MGlobal::MMayaState::kInteractive: {
       status = MMessage::removeCallback(app_run_id);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+      status = MMessage::removeCallback(create_hud_id);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       //这一部分是删除菜单项的
