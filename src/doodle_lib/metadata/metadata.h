@@ -152,7 +152,6 @@ class DOODLELIB_API database {
   bool is_install() const;
   const string &get_id_str() const;
 
-  const std::string &get_uuid() const;
   const boost::uuids::uuid &uuid() const;
   /**
    * @brief 获得数据库id

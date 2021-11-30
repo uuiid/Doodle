@@ -41,10 +41,10 @@ void tree_relationship::set_parent(const entt::entity &in_parent) noexcept {
                            [&](auto in) {
                              return this_h.entity() == in;
                            });
-    auto &k_d = l_old_p_h.get<database>();
-    --(k_d.p_has_child);
-    if (this_h.all_of<assets_file>())
-      --(k_d.p_has_file);
+//    auto &k_d = l_old_p_h.get<database>();
+//    --(k_d.p_has_child);
+//    if (this_h.all_of<assets_file>())
+//      --(k_d.p_has_file);
   }
 
   p_parent   = in_parent;
@@ -55,9 +55,9 @@ void tree_relationship::set_parent(const entt::entity &in_parent) noexcept {
     // 设置父id
     this_h.get<database>().p_parent_id = k_d.get_id();
     // 设置父物体中储存的子数据
-    ++(k_d.p_has_child);
-    if (this_h.all_of<assets_file>())
-      ++(k_d.p_has_file);
+//    ++(k_d.p_has_child);
+//    if (this_h.all_of<assets_file>())
+//      ++(k_d.p_has_file);
   }
 }
 
@@ -282,17 +282,14 @@ database::operator doodle::metadata_database() const {
 #undef DOODLE_SERIALIZATION
 
 bool database::operator==(const database &in_rhs) const {
-  return std::tie(p_id, p_uuid) == std::tie(in_rhs.p_id, in_rhs.p_uuid);
+  return std::tie(p_id, p_uuid_) == std::tie(in_rhs.p_id, in_rhs.p_uuid_);
 }
 
 bool database::operator!=(const database &in_rhs) const {
   return !(*this == in_rhs);
 }
 
-const std::string &database::get_uuid() const {
-  return p_uuid;
-}
-const boost::uuids::uuid &uuid() const {
+const boost::uuids::uuid &database::uuid() const {
   return p_uuid_;
 }
 
