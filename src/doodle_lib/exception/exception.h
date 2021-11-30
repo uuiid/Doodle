@@ -22,6 +22,13 @@ class DOODLELIB_API nullptr_error : public doodle_error {
  public:
   explicit nullptr_error(const std::string& err) : doodle_error(err){};
 };
+
+// 空指针错误
+class DOODLELIB_API serialization_error : public doodle_error {
+ public:
+  explicit serialization_error(const std::string& err) : doodle_error(err){};
+};
+
 // fileErr
 class DOODLELIB_API file_error : public doodle_error {
   std::filesystem::path p_path;
