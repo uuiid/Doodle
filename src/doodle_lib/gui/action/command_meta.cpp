@@ -171,13 +171,10 @@ bool comm_ass_eps::render() {
       p_root.patch<episodes>([&](auto& eps) { eps.set_episodes(p_data); });
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
-
-    if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
-      imgui::SameLine();
-      if (imgui::Button(p_show_str["删除"].c_str())) {
-        p_root.remove<episodes>();
-        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
-      }
+    imgui::SameLine();
+    if (imgui::Button(p_show_str["删除"].c_str())) {
+      p_root.remove<episodes>();
+      p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
   }
   imgui::InputInt(p_show_str["集数"].c_str(), &p_data, 1, 9999);
@@ -222,12 +219,10 @@ bool comm_ass_shot::render() {
       });
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
-    if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
-      imgui::SameLine();
-      if (imgui::Button(p_show_str["删除"].c_str())) {
-        p_root.remove<shot>();
-        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
-      }
+    imgui::SameLine();
+    if (imgui::Button(p_show_str["删除"].c_str())) {
+      p_root.remove<shot>();
+      p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
   }
   imgui::InputInt(p_show_str["镜头"].c_str(), &p_data, 1, 9999);
@@ -284,12 +279,10 @@ bool comm_assets::render() {
       });
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
-    if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
-      imgui::SameLine();
-      if (imgui::Button(p_show_str["删除"].c_str())) {
-        p_root.remove<assets>();
-        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
-      }
+    imgui::SameLine();
+    if (imgui::Button(p_show_str["删除"].c_str())) {
+      p_root.remove<assets>();
+      p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
     if (imgui::Button(p_show_str["添加条目"].c_str())) {
       p_path_list.push_back(std::make_shared<string>("none"));
@@ -347,13 +340,10 @@ bool comm_ass_season::render() {
       });
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
-
-    if (!p_root.get<database>().has_child() && !p_root.get<database>().has_file()) {
-      imgui::SameLine();
-      if (imgui::Button(p_show_str["删除"].c_str())) {
-        p_root.remove<season>();
-        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
-      }
+    imgui::SameLine();
+    if (imgui::Button(p_show_str["删除"].c_str())) {
+      p_root.remove<season>();
+      p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
   }
   imgui::InputInt(p_show_str["季数"].c_str(), &p_data, 1, 9999);
@@ -389,11 +379,9 @@ bool comm_ass_file_attr::render() {
       p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
   } else {
-    if (!p_root.get<database>().has_child()) {
-      if (imgui::Button(p_show_str["删除"].c_str())) {
-        p_root.remove<assets_file>();
-        p_root.patch<database_stauts>(database_set_stauts<need_save>{});
-      }
+    if (imgui::Button(p_show_str["删除"].c_str())) {
+      p_root.remove<assets_file>();
+      p_root.patch<database_stauts>(database_set_stauts<need_save>{});
     }
     p_time_widget->frame_render();
     imgui::InputText(p_show_str["注释"].c_str(), p_comm_str.get());
