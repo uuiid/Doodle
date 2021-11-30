@@ -128,7 +128,6 @@ class DOODLELIB_API database {
   friend tree_relationship;
   friend metadata_serialize;
 
-
  private:
   mutable std::uint64_t p_id;
   mutable string p_id_str;
@@ -136,7 +135,7 @@ class DOODLELIB_API database {
   metadata_type p_type;
   std::string p_uuid;
   std::uint32_t p_boost_serialize_vesion;
-
+  boost::uuids::uuid p_uuid_;
   void set_id(std::uint64_t in_id) const;
 
  public:
@@ -147,20 +146,14 @@ class DOODLELIB_API database {
   static void set_enum(entt::registry &in_reg, entt::entity in_ent);
   std::size_t p_has_child;
   std::size_t p_has_file;
-  bool p_updata_parent_id;
-  bool p_updata_type;
 
   FSys::path get_url_uuid() const;
-  bool has_parent() const;
   std::int32_t get_meta_type_int() const;
   bool is_install() const;
   const string &get_id_str() const;
 
-  [[nodiscard]] bool has_child() const;
-  [[nodiscard]] bool has_file() const;
-
   const std::string &get_uuid() const;
-
+  const boost::uuids::uuid &uuid() const;
   /**
    * @brief 获得数据库id
    *
@@ -188,7 +181,7 @@ class DOODLELIB_API database {
     ar &BOOST_SERIALIZATION_NVP(p_id);
     ar &BOOST_SERIALIZATION_NVP(p_parent_id);
     ar &BOOST_SERIALIZATION_NVP(p_type);
-    ar &BOOST_SERIALIZATION_NVP(p_uuid);
+    ar &BOOST_SERIALIZATION_NVP(p_uuid_);
     ar &BOOST_SERIALIZATION_NVP(p_has_child);
     ar &BOOST_SERIALIZATION_NVP(p_has_file);
   };
@@ -203,6 +196,16 @@ class DOODLELIB_API database {
       ar &BOOST_SERIALIZATION_NVP(p_uuid);
       ar &BOOST_SERIALIZATION_NVP(p_has_child);
       ar &BOOST_SERIALIZATION_NVP(p_has_file);
+      p_uuid_ = boost::lexical_cast<boost::uuids::uuid>(p_uuid);
+    }
+    if (version == 2) {
+      ar &BOOST_SERIALIZATION_NVP(p_id);
+      ar &BOOST_SERIALIZATION_NVP(p_parent_id);
+      ar &BOOST_SERIALIZATION_NVP(p_type);
+      ar &BOOST_SERIALIZATION_NVP(p_uuid_);
+      ar &BOOST_SERIALIZATION_NVP(p_has_child);
+      ar &BOOST_SERIALIZATION_NVP(p_has_file);
+      p_uuid = boost::uuids::to_string(p_uuid_);
     }
   };
 
@@ -266,6 +269,6 @@ class DOODLELIB_API handle_warp {
 // CEREAL_REGISTER_TYPE(doodle::metadata)
 // CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::metadata>, doodle::metadata)
 
-BOOST_CLASS_VERSION(doodle::database, 1)
+BOOST_CLASS_VERSION(doodle::database, 2)
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(doodle::database)
 BOOST_CLASS_EXPORT_KEY(doodle::database)

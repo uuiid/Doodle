@@ -152,25 +152,18 @@ FSys::path database::get_url_uuid() const {
   return path;
 }
 
-bool database::has_parent() const {
-  return p_parent_id.has_value();
-}
-
 void database::set_meta_type(const metadata_type &in_meta) {
-  p_type        = in_meta;
-  p_updata_type = true;
+  p_type = in_meta;
 };
 
 void database::set_meta_type(const std::string &in_meta) {
   p_type = magic_enum::enum_cast<metadata_type>(in_meta)
                .value_or(metadata_type::unknown_file);
-  p_updata_type = true;
 };
 
 void database::set_meta_type(std::int32_t in_) {
   p_type = magic_enum::enum_cast<metadata_type>(in_)
                .value_or(metadata_type::unknown_file);
-  p_updata_type = true;
 };
 
 std::int32_t database::get_meta_type_int() const {
@@ -290,16 +283,14 @@ bool database::operator==(const database &in_rhs) const {
 bool database::operator!=(const database &in_rhs) const {
   return !(*this == in_rhs);
 }
-bool database::has_child() const {
-  return p_has_child > 0;
-}
-bool database::has_file() const {
-  return p_has_file > 0;
-}
 
 const std::string &database::get_uuid() const {
   return p_uuid;
 }
+const boost::uuids::uuid &uuid() const {
+  return p_uuid_;
+}
+
 const string &database::get_id_str() const {
   return p_id_str;
 }
