@@ -28,7 +28,6 @@ class DOODLELIB_API project {
       }
     }
   };
-  using cloth_config_ptr = std::shared_ptr<cloth_config>;
 
  private:
   std::string p_name;
