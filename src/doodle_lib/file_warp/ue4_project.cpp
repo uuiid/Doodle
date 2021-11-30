@@ -158,7 +158,7 @@ void ue4_project::create_shot_folder(const std::vector<entt::handle>& inShotList
     FSys::fstream file{k_tmp_file_path, std::ios_base::out | std::ios::binary};
     file.write(tmp_f.begin(), tmp_f.size());
   }
-  auto k_prj = inShotList[0].get<tree_relationship>().find_parent_class<project>();
+  auto& k_prj = inShotList[0].get<root_ref>().root_handle().get<project>();
   {  //这个是后续追加写入
     FSys::fstream file{k_tmp_file_path, std::ios_base::out | std::ios_base::app};
 

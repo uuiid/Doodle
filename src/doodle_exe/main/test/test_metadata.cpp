@@ -10,7 +10,7 @@ TEST_CASE("convert", "[metadata]") {
   auto reg   = g_reg();
   auto k_prj = make_handle(reg->create());
   auto& k_p  = k_prj.emplace<project>();
-  REQUIRE(k_prj.all_of<project, tree_relationship, database>());
+  REQUIRE(k_prj.all_of<project, database>());
 
   auto& k_d = k_prj.get<database>();
 
@@ -21,7 +21,7 @@ TEST_CASE("convert", "[metadata]") {
   auto& s  = k_s.emplace<shot>();
   s.set_shot(1);
   s.set_shot_ab(shot::shot_ab_enum::A);
-  REQUIRE(k_s.all_of<shot, tree_relationship, database>());
+  REQUIRE(k_s.all_of<shot, database>());
 
   auto& k_d2 = reg->get<database>(k_s);
 

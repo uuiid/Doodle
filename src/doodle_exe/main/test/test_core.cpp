@@ -114,15 +114,12 @@ TEST_CASE("core create_path", "[fun][create_path]") {
   k_prj.emplace<project>("D:/", "ttt");
   auto k_ass = make_handle(g_reg()->create());
   k_ass.emplace<assets>("assets");
-  k_ass.get<tree_relationship>().set_parent(k_prj);
 
   auto k_ass2 = make_handle(g_reg()->create());
   k_ass2.emplace<assets>("eee");
-  k_ass2.get<tree_relationship>().set_parent(k_ass);
 
   auto k_ass_file = make_handle(g_reg()->create());
   k_ass_file.emplace<assets_file>("eee");
-  k_ass_file.get<tree_relationship>().set_parent(k_ass2);
 
   auto& k_p = k_ass_file.emplace<assets_path_vector>();
   k_p.make_path();
