@@ -12,13 +12,19 @@ class DOODLELIB_API project {
    public:
     cloth_config();
     FSys::path vfx_cloth_sim_path;
-    std::double_t high_resolution;
+    bool simple_subsampling;
+    std::float_t frame_samples;
+    std::float_t time_scale;
+    std::float_t length_scale;
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive& ar, std::uint32_t const version) {
       if (version == 1) {
         ar& BOOST_SERIALIZATION_NVP(vfx_cloth_sim_path);
-        ar& BOOST_SERIALIZATION_NVP(high_resolution);
+        ar& BOOST_SERIALIZATION_NVP(simple_subsampling);
+        ar& BOOST_SERIALIZATION_NVP(frame_samples);
+        ar& BOOST_SERIALIZATION_NVP(time_scale);
+        ar& BOOST_SERIALIZATION_NVP(length_scale);
       }
     }
   };

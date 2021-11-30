@@ -11,13 +11,16 @@ BOOST_CLASS_EXPORT_IMPLEMENT(doodle::project::cloth_config)
 namespace doodle {
 project::cloth_config::cloth_config()
     : vfx_cloth_sim_path("C:/"),
-      high_resolution(100) {}
+      simple_subsampling(true),
+      frame_samples(10),
+      time_scale(0.1),
+      length_scale(0.4) {}
 
 project::project()
     : p_name("none"),
       p_path("C:/"),
       p_en_str(),
-      p_shor_str(){
+      p_shor_str() {
 }
 
 project::project(FSys::path in_path, std::string in_name)
