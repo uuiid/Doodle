@@ -11,14 +11,16 @@
 #include <doodle_lib/metadata/metadata_factory.h>
 #include <exception/exception.h>
 #include <google/protobuf/util/time_util.h>
+// clang-format off
 #include <metadata/metadata_cpp.h>
-
 #include <boost/archive/polymorphic_text_iarchive.hpp>
 #include <boost/archive/polymorphic_text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/hana/ext/std.hpp>
+#include <doodle_lib/lib_warp/entt_warp.h>
+// clang-format on
 
+#include <boost/hana/ext/std.hpp>
 namespace doodle {
 void database::set_id(std::uint64_t in_id) const {
   p_id     = in_id;
@@ -107,7 +109,8 @@ bool database::is_install() const {
   return p_id > 0;
 }
 
-#define DOODLE_SERIALIZATION project,            \
+#define DOODLE_SERIALIZATION database,           \
+                             project,            \
                              episodes,           \
                              shot,               \
                              season,             \
@@ -126,25 +129,12 @@ database &database::operator=(const metadata_database &in_) {
   {
     vector_iostream k_i{my_data};
     boost::archive::text_iarchive k_archive{k_i};
-    k_archive >> *this;
 
-    // std::tuple<> k_tu;
-    decltype(k_h.try_get<DOODLE_SERIALIZATION>()) k_tu{};
     try {
-      boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
-        if ((my_data.size() - 1) != k_i.tellg())
-          k_archive >> in_ptr;
-      });
+      entt_tool::load_comm<DOODLE_SERIALIZATION>(k_h, k_archive);
     } catch (const boost::archive::archive_exception &e) {
       DOODLE_LOG_ERROR(e.what());
     }
-
-    boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
-      if (in_ptr) {
-        k_h.emplace_or_replace<
-            std::remove_pointer_t<std::decay_t<decltype(in_ptr)>>>(std::move(*in_ptr));
-      }
-    });
   }
   /// 转换id
   set_id(in_.id());
@@ -180,16 +170,10 @@ database::operator doodle::metadata_database() const {
   {
     vector_iostream kt{my_data};
     boost::archive::text_oarchive k_archive{kt};
-    k_archive << BOOST_SERIALIZATION_NVP(*this);
-
-    auto k_tu = k_h.try_get<DOODLE_SERIALIZATION>();
-    // auto k_boost_tu = boost::hana::to_tuple(k_tu);
-    boost::hana::for_each(k_tu, [&](auto &in_ptr) -> void {
-      k_archive << in_ptr;
-    });
+    entt_tool::save_comm<DOODLE_SERIALIZATION>(k_h, k_archive);
   }
-  k_tmp.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
 
+  k_tmp.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
   if (p_parent_id)
     k_tmp.mutable_parent()->set_value(*p_parent_id);
 
