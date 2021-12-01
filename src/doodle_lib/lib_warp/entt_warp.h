@@ -6,6 +6,7 @@
 
 #include <DoodleConfig.h>
 
+#include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <entt/entt.hpp>
 namespace doodle::entt_tool {
@@ -18,21 +19,10 @@ void _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
   }
 }
 
-template <class... Component, class Archive, std::size_t... Index>
-void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
-  decltype(sizeof...(Index)) k_size{sizeof...(Index)};
-  in_archive << boost::make_nvp(typeid(k_size).name(), k_size);
-
-  std::array<std::size_t, sizeof...(Index)> size{};
-  ((in_handle.template any_of<Component>() ? ++(size[Index]) : 0u), ...);
-  (_save_<Component>(in_handle, size[Index], in_archive), ...);
-}
 template <class Component, class Archive>
 void _load_(entt::handle &in_handle, Archive &in_archive) {
   std::size_t l_size{};
   in_archive >> boost::make_nvp(typeid(l_size).name(), l_size);
-
-  
 
   while (l_size--) {
     Component l_component{};
@@ -42,11 +32,24 @@ void _load_(entt::handle &in_handle, Archive &in_archive) {
 }
 
 template <class... Component, class Archive, std::size_t... Index>
-void _load_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
-  std::size_t k_size{};
-  in_archive >> boost::make_nvp(typeid(k_size).name(), k_size);
+void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
+  std::set<string> k_set{(boost::serialization::guid<Component>(), ...)};
+  in_archive << boost::make_nvp(typeid(k_set).name(), k_set);
 
-  (((Index < k_size) ? _load_<Component>(in_handle, in_archive) : 0u), ...);
+  std::array<std::size_t, sizeof...(Index)> size{};
+  ((in_handle.template any_of<Component>() ? ++(size[Index]) : 0u), ...);
+  (_save_<Component>(in_handle, size[Index], in_archive), ...);
+}
+
+template <class... Component, class Archive, std::size_t... Index>
+void _load_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
+  std::set<string> k_set{};  //(boost::serialization::guid<Component>(), ...)
+  in_archive >> boost::make_nvp(typeid(k_set).name(), k_set);
+
+  (((k_set.template count(boost::serialization::guid<Component>()) > 1)
+        ? _load_<Component>(in_handle, in_archive)
+        : 0u),
+   ...);
 }
 
 }  // namespace detail
