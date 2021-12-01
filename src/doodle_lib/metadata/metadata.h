@@ -130,17 +130,6 @@ class DOODLELIB_API database {
   template <class Archive>
   void load(Archive &ar, const std::uint32_t version) {
     p_boost_serialize_vesion = version;
-    if (version == 1) {
-      ar &BOOST_SERIALIZATION_NVP(p_id);
-      ar &BOOST_SERIALIZATION_NVP(p_parent_id);
-      ar &BOOST_SERIALIZATION_NVP(p_type);
-      ar &BOOST_SERIALIZATION_NVP(p_uuid);
-      std::size_t k_1;
-      std::size_t k_2;
-      ar &BOOST_SERIALIZATION_NVP(k_1);
-      ar &BOOST_SERIALIZATION_NVP(k_2);
-      p_uuid_ = boost::lexical_cast<boost::uuids::uuid>(p_uuid);
-    }
     if (version == 2) {
       ar &BOOST_SERIALIZATION_NVP(p_id);
       ar &BOOST_SERIALIZATION_NVP(p_parent_id);
