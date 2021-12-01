@@ -47,8 +47,9 @@ database::database()
       p_parent_id(),
       p_type(metadata_type::unknown_file),
       p_uuid_(core_set::getSet().get_uuid()),
-      p_uuid(boost::uuids::to_string(p_uuid_)),
+      p_uuid(),
       p_boost_serialize_vesion(0) {
+  p_uuid = boost::uuids::to_string(p_uuid_);
 }
 
 database::~database() = default;
