@@ -80,6 +80,9 @@ class DOODLELIB_API project {
     init_name();
   }
   BOOST_SERIALIZATION_SPLIT_MEMBER()
+
+
+
 };
 
 }  // namespace doodle

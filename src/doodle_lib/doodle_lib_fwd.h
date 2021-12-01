@@ -1,14 +1,14 @@
 ﻿#pragma once
 
 #include <DoodleConfig.h>
-#include <doodle_lib/logger/logger.h>
-#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/doodle_lib_pch.h>
 #include <doodle_lib/doodle_macro.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/lib_warp/boost_serialization_warp.h>
 #include <doodle_lib/lib_warp/cmrcWarp.h>
 #include <doodle_lib/lib_warp/sqlppWarp.h>
 #include <doodle_lib/lib_warp/std_warp.h>
+#include <doodle_lib/logger/logger.h>
 #include <doodle_lib_export.h>
 
 // namespace fmt {
@@ -362,6 +362,9 @@ using image_sequence_ptr         = std::shared_ptr<image_sequence>;
 
 using registry_ptr               = std::shared_ptr<entt::registry>;
 class time_widget;
+
+using uuid = boost::uuids::uuid;
+
 registry_ptr &g_reg();
 template <class Component,
           std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
@@ -383,11 +386,10 @@ entt::entity to_entity(const Component &instance) {
   return entt::to_entity(*(g_reg()), instance);
 };
 
-
-template <class Component_to,class Component_From>
+template <class Component_to, class Component_From>
 entt::entity to_comm(const Component_From &instance) {
   auto k_h = make_handle(instance);
-  if(!k_h.any<Component_to>())
+  if (!k_h.any<Component_to>())
     throw doodle_error{"缺失组件"};
   return entt::to_entity(*(g_reg()), instance);
 };

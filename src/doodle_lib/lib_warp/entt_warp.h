@@ -30,7 +30,10 @@ void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequen
 template <class Component, class Archive>
 void _load_(entt::handle &in_handle, Archive &in_archive) {
   std::size_t l_size{};
-  in_archive >> boost::make_nvp(typeid(l_size).name(), l_size);;
+  in_archive >> boost::make_nvp(typeid(l_size).name(), l_size);
+
+  
+
   while (l_size--) {
     Component l_component{};
     in_archive >> boost::make_nvp(typeid(l_component).name(), l_component);

@@ -8,8 +8,7 @@
 #include <doodle_lib/lib_warp/protobuf_warp.h>
 #include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/metadata/tree_adapter.h>
-
-#include <any>
+#include <google/protobuf/message.h>
 #include <boost/intrusive/intrusive_fwd.hpp>
 #include <boost/intrusive/link_mode.hpp>
 #include <boost/intrusive/list.hpp>
