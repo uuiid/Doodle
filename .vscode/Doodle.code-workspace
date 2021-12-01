@@ -191,7 +191,10 @@
 		"markdownlint.config": {
 			"MD033": false
 		},
-		"vscode-cppinsights.path": "C:\\insights.exe",
+		"vscode-cppinsights.args": [
+			"-IE:/vcpkg/installed/x64-windows/include"
+		],
+		"vscode-cppinsights.path": "C:/insights.exe",
 		"vscode-cppinsights.buildDirectory": "${workspaceFolder}/build/Ninja_debug/",
 		"vscode-cppinsights.buildDirectoryPrioritizeCMake": false,
 		"git.fetchOnPull": true,
