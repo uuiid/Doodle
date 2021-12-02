@@ -6,6 +6,8 @@
 namespace doodle::maya_plug {
 
 class reference_file {
+  uuid prj_ref;
+
  public:
   string path;
   bool use_sim;
@@ -13,9 +15,8 @@ class reference_file {
   std::vector<string> collision_ref_file;
   std::vector<string> collision_model;
 
-  uuid prj_ref;
-
-  reference_file(){};
+  reference_file();
+  reference_file(const uuid &in_uuid);
 
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {
