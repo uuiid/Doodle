@@ -31,9 +31,6 @@ void _load_(entt::handle &in_handle, Archive &in_archive) {
 
 template <class... Component, class Archive, std::size_t... Index>
 void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
-  std::set<string> k_set{(typeid(Component).name(), ...)};
-  in_archive["comm_set"] = k_set;
-
   std::array<std::size_t, sizeof...(Index)> size{};
   ((in_handle.template any_of<Component>() ? ++(size[Index]) : 0u), ...);
   (_save_<Component>(in_handle, size[Index], in_archive[typeid(Component).name()]), ...);
@@ -41,12 +38,7 @@ void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequen
 
 template <class... Component, class Archive, std::size_t... Index>
 void _load_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
-  auto &k_set = in_archive["comm_set"].get<std::set<string>>();
-
-  (((k_set.count(typeid(Component).name()) > 1)
-        ? _load_<Component>(in_handle, in_archive[typeid(Component).name()])
-        : 0u),
-   ...);
+  (_load_<Component>(in_handle, in_archive[typeid(Component).name()]), ...);
 }
 
 }  // namespace detail
