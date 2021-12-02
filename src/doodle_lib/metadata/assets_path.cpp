@@ -18,7 +18,7 @@
 #include <doodle_lib/rpc/rpc_trans_path.h>
 #include <logger/logger.h>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_path_vector)
+
 
 namespace doodle {
 

@@ -13,10 +13,6 @@
 #include <google/protobuf/util/time_util.h>
 // clang-format off
 #include <metadata/metadata_cpp.h>
-#include <boost/archive/polymorphic_text_iarchive.hpp>
-#include <boost/archive/polymorphic_text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 #include <doodle_lib/lib_warp/entt_warp.h>
 // clang-format on
 

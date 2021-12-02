@@ -12,7 +12,7 @@
 #include <metadata/time_point_wrap.h>
 #include <pin_yin/convert.h>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets_file)
+
 namespace doodle {
 
 assets_file::assets_file()

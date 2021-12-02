@@ -6,7 +6,7 @@
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <pin_yin/convert.h>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::user)
+
 namespace doodle {
 user::user()
     : p_string_(),

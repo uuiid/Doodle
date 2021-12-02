@@ -151,10 +151,11 @@ class DOODLELIB_API core_set : public details::no_copy {
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
-
-
+  friend void to_json(nlohmann::json &j, const core_set &p);
+  friend void from_json(const nlohmann::json &j, core_set &p);
 };
-
+void to_json(nlohmann::json &j, const core_set &p);
+void from_json(const nlohmann::json &j, core_set &p);
 class DOODLELIB_API core_set_init {
   core_set &p_set;
 
@@ -210,7 +211,6 @@ FSys::path DOODLELIB_API get_pwd();
 
 }  // namespace win
 
-
 }  // namespace doodle
 namespace cereal {
 template <class Archive>
@@ -222,5 +222,3 @@ void load_minimal(Archive const &, doodle::department &department, std::string c
   department = magic_enum::enum_cast<doodle::department>(value).value_or(doodle::department::None_);
 };
 }  // namespace cereal
-BOOST_CLASS_VERSION(doodle::core_set, 10);
-BOOST_CLASS_EXPORT_KEY(doodle::core_set);

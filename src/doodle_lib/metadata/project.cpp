@@ -6,8 +6,7 @@
 #include <pin_yin/convert.h>
 
 #include <boost/locale.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::project)
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::project::cloth_config)
+
 namespace doodle {
 project::cloth_config::cloth_config()
     : vfx_cloth_sim_path("C:/"),

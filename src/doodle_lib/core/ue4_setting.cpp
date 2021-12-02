@@ -1,10 +1,10 @@
+#include <Exception/exception.h>
 #include <doodle_lib/core/ue4_setting.h>
 #include <doodle_lib/lib_warp/boost_locale_warp.h>
-#include <Exception/exception.h>
 
 #include <lib_warp/WinReg.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::ue4_setting)
+
 namespace doodle {
 ue4_setting::ue4_setting()
     : ue4_path(),
@@ -55,6 +55,19 @@ void ue4_setting::test_value() {
     }
   }
 #endif
+}
+
+void to_json(nlohmann::json& j, const ue4_setting& p) {
+  j["ue4_path"]    = p.ue4_path;
+  j["ue4_version"] = p.ue4_version;
+  j["shot_start"]  = p.shot_start;
+  j["shot_end"]    = p.shot_end;
+}
+void from_json(const nlohmann::json& j, ue4_setting& p) {
+  j.at("ue4_path").get_to(p.ue4_path);
+  j.at("ue4_version").get_to(p.ue4_version);
+  j.at("shot_start").get_to(p.shot_start);
+  j.at("shot_end").get_to(p.shot_end);
 }
 
 }  // namespace doodle

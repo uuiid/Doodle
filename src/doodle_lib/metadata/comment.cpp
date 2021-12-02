@@ -6,8 +6,6 @@
 #include <doodle_lib/metadata/comment.h>
 #include <doodle_lib/metadata/metadata.h>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::comment)
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::comment_vector)
 namespace doodle {
 comment::comment()
     : p_comment(),

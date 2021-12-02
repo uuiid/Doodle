@@ -7,7 +7,7 @@
 #include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/pin_yin/convert.h>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::assets)
+
 namespace doodle {
 assets::assets()
     : p_path(),

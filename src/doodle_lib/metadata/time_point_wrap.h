@@ -134,5 +134,3 @@ class DOODLELIB_API time_point_wrap {
 //   };
 // }
 }  // namespace doodle
-BOOST_CLASS_VERSION(doodle::time_point_wrap, 1)
-BOOST_CLASS_EXPORT_KEY(doodle::time_point_wrap)

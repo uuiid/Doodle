@@ -70,5 +70,4 @@ class DOODLELIB_API assets {
 };
 }  // namespace doodle
 
-BOOST_CLASS_VERSION(doodle::assets, 3)
-BOOST_CLASS_EXPORT_KEY(doodle::assets)
+

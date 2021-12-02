@@ -109,7 +109,4 @@ class DOODLELIB_API project {
 };
 
 }  // namespace doodle
-BOOST_CLASS_VERSION(doodle::project, 2);
-BOOST_CLASS_EXPORT_KEY(doodle::project)
-BOOST_CLASS_VERSION(doodle::project::cloth_config, 1);
-BOOST_CLASS_EXPORT_KEY(doodle::project::cloth_config)
+

@@ -88,6 +88,3 @@ struct fmt::formatter<::doodle::shot> : fmt::formatter<fmt::string_view> {
   }
 };
 }  // namespace fmt
-
-BOOST_CLASS_VERSION(doodle::shot, 2)
-BOOST_CLASS_EXPORT_KEY(doodle::shot)

@@ -89,7 +89,3 @@ struct formatter<doodle::comment> : formatter<string_view> {
   }
 };
 }  // namespace fmt
-BOOST_CLASS_VERSION(doodle::comment, 1)
-BOOST_CLASS_EXPORT_KEY(doodle::comment)
-BOOST_CLASS_VERSION(doodle::comment_vector, 1)
-BOOST_CLASS_EXPORT_KEY(doodle::comment_vector)

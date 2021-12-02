@@ -65,5 +65,3 @@ struct fmt::formatter<::doodle::episodes> : fmt::formatter<fmt::string_view> {
 };
 }  // namespace fmt
 
-BOOST_CLASS_VERSION(doodle::episodes, 1)
-BOOST_CLASS_EXPORT_KEY(doodle::episodes)

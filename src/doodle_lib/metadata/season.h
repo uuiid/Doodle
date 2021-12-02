@@ -45,6 +45,3 @@ void season::serialize(Archive& ar, std::uint32_t const version) {
     ar& BOOST_SERIALIZATION_NVP(p_int);
 }
 }  // namespace doodle
-
-BOOST_CLASS_VERSION(doodle::season, 1)
-BOOST_CLASS_EXPORT_KEY(doodle::season)

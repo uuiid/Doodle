@@ -25,7 +25,7 @@
 #include <unistd.h>
 #endif  // _WIN32
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::core_set)
+
 
 namespace doodle {
 
@@ -186,7 +186,7 @@ FSys::path core_set::program_location(const FSys::path &path) {
   return program_location() / path;
 }
 std::string core_set::config_file_name() {
-  static std::string str{"doodle_config.bin"};
+  static std::string str{"doodle_config"};
   return str;
 }
 std::string core_set::get_uuid_str() {
@@ -274,10 +274,10 @@ bool core_set_init::read_file() {
     FSys::path l_str_file(l_k_setting_file_name);
     FSys::ifstream l_in_josn{l_k_setting_file_name, std::ifstream::binary};
 
-    boost::archive::text_iarchive l_out{l_in_josn};
     try {
-      l_out >> p_set;
-    } catch (const boost::archive::archive_exception &err) {
+      auto k_j = nlohmann::json::parse(l_in_josn);
+      k_j.at("setting").get_to(p_set);
+    } catch (const nlohmann::json::parse_error &err) {
       DOODLE_LOG_DEBUG(err.what());
       return false;
     }
@@ -296,8 +296,9 @@ bool core_set_init::write_file() {
     DOODLE_LOG_INFO("在路径中没有找到maya");
   }
   FSys::ofstream l_ofstream{p_set.p_doc / p_set.config_file_name(), std::ios::out | std::ios::binary};
-  boost::archive::text_oarchive l_out{l_ofstream};
-  l_out << p_set;
+  nlohmann::json k_j{};
+  k_j["setting"] = p_set;
+  l_ofstream << k_j.dump();
   return true;
 }
 bool core_set_init::find_cache_dir() {
@@ -337,4 +338,22 @@ bool core_set_init::config_to_user() {
   return true;
 }
 
+void to_json(nlohmann::json &j, const core_set &p) {
+  j["user_"]       = p.p_user_;
+  j["department_"] = p.p_department_;
+  j["ue4_setting"] = p.p_ue4_setting;
+  j["mayaPath"]    = p.p_mayaPath;
+  j["max_thread"]  = p.p_max_thread;
+  j["widget_show"] = p.widget_show;
+  j["timeout"]     = p.timeout;
+}
+void from_json(const nlohmann::json &j, core_set &p) {
+  j.at("user_").get_to(p.p_user_);
+  j.at("department_").get_to(p.p_department_);
+  j.at("ue4_setting").get_to(p.p_ue4_setting);
+  j.at("mayaPath").get_to(p.p_mayaPath);
+  j.at("max_thread").get_to(p.p_max_thread);
+  j.at("widget_show").get_to(p.widget_show);
+  j.at("timeout").get_to(p.timeout);
+}
 }  // namespace doodle

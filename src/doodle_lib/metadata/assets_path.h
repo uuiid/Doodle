@@ -113,5 +113,4 @@ struct fmt::formatter<doodle::assets_path_vector> : fmt::formatter<fmt::string_v
 
 }  // namespace fmt
 
-BOOST_CLASS_VERSION(doodle::assets_path_vector, 2)
-BOOST_CLASS_EXPORT_KEY(doodle::assets_path_vector)
+

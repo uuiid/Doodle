@@ -6,7 +6,7 @@
 
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::season)
+
 namespace doodle {
 season::season()
     : 

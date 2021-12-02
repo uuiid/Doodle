@@ -109,5 +109,4 @@ void assets_file::serialize(Archive& ar, const std::uint32_t version) {
 
 }  // namespace doodle
 
-BOOST_CLASS_VERSION(doodle::assets_file, 3)
-BOOST_CLASS_EXPORT_KEY(doodle::assets_file)
+

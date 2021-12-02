@@ -212,6 +212,4 @@ class DOODLELIB_API handle_warp {
 // CEREAL_REGISTER_TYPE(doodle::metadata)
 // CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::metadata>, doodle::metadata)
 
-BOOST_CLASS_VERSION(doodle::database, 2)
-BOOST_SERIALIZATION_ASSUME_ABSTRACT(doodle::database)
-BOOST_CLASS_EXPORT_KEY(doodle::database)
+

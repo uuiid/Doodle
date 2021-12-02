@@ -3,7 +3,7 @@
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/metadata_factory.h>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(doodle::episodes)
+
 namespace doodle {
 
 episodes::episodes()
