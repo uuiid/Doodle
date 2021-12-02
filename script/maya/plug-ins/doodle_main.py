@@ -14,22 +14,23 @@ def maya_useNewAPI():
 
 # Initialize the plug-in
 def initializePlugin(plugin):
+    k_ver = str(pymel.versions.current())[0:4]
+    # pymel.core.loadPlugin("doodle_plug_{}".format(k_ver))
+    dle_plugin_ui = open_maya.MFnPlugin(plugin, "doodleUI", "1.0.0")
     try:
-        k_ver = str(pymel.versions.current())[0:4]
-        pymel.core.loadPlugin("doodle_plug_{}".format(k_ver))
-        scripts.Doodle_shelf.DoodleUIManage.creation()
+        dle_plugin_ui.registerUI(
+            scripts.Doodle_shelf.DoodleUIManage.creation, scripts.Doodle_shelf.DoodleUIManage.deleteSelf
+        )
     except:
-        pass
         raise
 
 
 # Uninitialize the plug-in
 def uninitializePlugin(plugin):
-    # pluginFn = OpenMayaMPx.MFnPlugin(plugin)
+    k_ver = str(pymel.versions.current())[0:4]
+    # pymel.core.unloadPlugin("doodle_plug_{}".format(k_ver))
+
     try:
-        k_ver = str(pymel.versions.current())[0:4]
-        pymel.core.unloadPlugin("doodle_plug_{}".format(k_ver))
-        scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
-    except:
         pass
+    except:
         raise
