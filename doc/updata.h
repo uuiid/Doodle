@@ -346,4 +346,7 @@
  * @subsubsection updata_log_320 版本3.2.0
  * @li 更改maya插件加载方式
  * @li 更改拍屏使用方式（使用eval回调）
+ * 
+ * @subsubsection updata_log_321 版本3.2.1
+ * 
  */
