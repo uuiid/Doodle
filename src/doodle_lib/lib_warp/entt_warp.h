@@ -6,27 +6,24 @@
 
 #include <DoodleConfig.h>
 
-#include <boost/serialization/export.hpp>
-#include <boost/serialization/nvp.hpp>
 #include <entt/entt.hpp>
 namespace doodle::entt_tool {
 namespace detail {
 template <class Component, class Archive>
 void _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
-  in_archive << boost::make_nvp(typeid(in_size).name(), in_size);
+  in_archive[typeid(in_size).name()] = in_size;
   while (in_size--) {
-    in_archive << boost::make_nvp(typeid(Component).name(), in_handle.template get<Component>());
+    in_archive[typeid(Component).name()] = in_handle.template get<Component>();
   }
 }
 
 template <class Component, class Archive>
 void _load_(entt::handle &in_handle, Archive &in_archive) {
   std::size_t l_size{};
-  in_archive >> boost::make_nvp(typeid(l_size).name(), l_size);
+  l_size = in_archive[typeid(l_size).name()].template get<std::size_t>();
 
   while (l_size--) {
-    Component l_component{};
-    in_archive >> boost::make_nvp(typeid(l_component).name(), l_component);
+    auto &l_component = in_archive[typeid(Component).name()].template get<Component>();
     in_handle.template emplace_or_replace<Component>(std::move(l_component));
   }
 }
@@ -34,7 +31,7 @@ void _load_(entt::handle &in_handle, Archive &in_archive) {
 template <class... Component, class Archive, std::size_t... Index>
 void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
   std::set<string> k_set{(boost::serialization::guid<Component>(), ...)};
-  in_archive << boost::make_nvp(typeid(k_set).name(), k_set);
+  in_archive[typeid(k_set).name()] = k_set;
 
   std::array<std::size_t, sizeof...(Index)> size{};
   ((in_handle.template any_of<Component>() ? ++(size[Index]) : 0u), ...);
@@ -43,8 +40,7 @@ void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequen
 
 template <class... Component, class Archive, std::size_t... Index>
 void _load_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
-  std::set<string> k_set{};  //(boost::serialization::guid<Component>(), ...)
-  in_archive >> boost::make_nvp(typeid(k_set).name(), k_set);
+  auto &k_set = in_archive[typeid(std::set<string>).name()].template get<std::set<string>>();
 
   (((k_set.template count(boost::serialization::guid<Component>()) > 1)
         ? _load_<Component>(in_handle, in_archive)
