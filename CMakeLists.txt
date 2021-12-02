@@ -233,3 +233,4 @@ add_dependencies(cpack_${PROJECT_NAME} DoodleExe DoodleServerExe Doxygen ${PROJE
 # imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 # install imguiwrap --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 # install imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
+# .\vcpkg.exe update --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
