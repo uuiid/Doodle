@@ -342,4 +342,8 @@
  * @subsubsection updata_log_3147 版本3.1.47
  * @li 更改maya插件加载方式（pymel 加载插件会出现回调错误）
  * @li 更改maya自定义拍屏方案（pymel 关键字会无故传递出错）
+ *
+ * @subsubsection updata_log_320 版本3.2.0
+ * @li 更改maya插件加载方式
+ * @li 更改拍屏使用方式（使用eval回调）
  */
