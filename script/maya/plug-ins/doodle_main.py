@@ -29,7 +29,6 @@ def initializePlugin(plugin):
 def uninitializePlugin(plugin):
     k_ver = str(pymel.versions.current())[0:4]
     # pymel.core.unloadPlugin("doodle_plug_{}".format(k_ver))
-
     try:
         pass
     except:

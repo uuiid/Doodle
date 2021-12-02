@@ -180,24 +180,44 @@ MStatus uninitializePlugin(MObject obj) {
 
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  //删除回调
-  status = MMessage::removeCallback(clear_callback_id);
+
+  /// 去掉hud命令
+  status = k_plugin.deregisterCommand(
+      ::doodle::maya_plug::create_hud_node_maya::comm_name);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  //这里要关闭窗口或者清理库
-  doodle_maya_clear();
+  /// 去掉拍屏命令
+  status = k_plugin.deregisterCommand(
+      ::doodle::maya_plug::comm_play_blast_maya::comm_name);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+  /// 去掉渲染覆盖命令
+  status = MDrawRegistry::deregisterGeometryOverrideCreator(
+      doodle::maya_plug::doodle_info_node::drawDbClassification,
+      doodle::maya_plug::doodle_info_node::drawRegistrantId);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+  /// 去掉hud节点
+  status = k_plugin.deregisterNode(doodle::maya_plug::doodle_info_node::doodle_id);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode: {
     }
     case MGlobal::MMayaState::kInteractive: {
-      status = MMessage::removeCallback(app_run_id);
-      CHECK_MSTATUS_AND_RETURN_IT(status);
+      /// 去除hud回调
       status = MMessage::removeCallback(create_hud_id);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+
+      /// 去除运行回调
+      status = MMessage::removeCallback(app_run_id);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       //这一部分是删除菜单项的
       MStringArray menuItems{};
       menuItems.append(doodle_windows.c_str());
       status = k_plugin.removeMenuItem(menuItems);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+
+      ///去除命令
+      status = k_plugin.deregisterCommand(doodle_create.c_str());
       CHECK_MSTATUS_AND_RETURN_IT(status);
       break;
     }
@@ -212,22 +232,12 @@ MStatus uninitializePlugin(MObject obj) {
       break;
   }
   // 卸载命令
-  status = k_plugin.deregisterCommand(doodle_create.c_str());
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = MDrawRegistry::deregisterGeometryOverrideCreator(
-      doodle::maya_plug::doodle_info_node::drawDbClassification,
-      doodle::maya_plug::doodle_info_node::drawRegistrantId);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = k_plugin.deregisterNode(doodle::maya_plug::doodle_info_node::doodle_id);
+  //删除清除回调回调
+  status = MMessage::removeCallback(clear_callback_id);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  status = k_plugin.deregisterCommand(
-      ::doodle::maya_plug::comm_play_blast_maya::comm_name);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-
-  status = k_plugin.deregisterCommand(
-      ::doodle::maya_plug::create_hud_node_maya::comm_name);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  //这里要关闭窗口或者清理库
+  doodle_maya_clear();
 
   return status;
 }

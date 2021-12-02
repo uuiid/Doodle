@@ -146,10 +146,12 @@ class camera:
     def create_move(self, out_path=None,
                     start_frame=None,
                     end_frame=None):
+        k_start_frame = start_frame
         if not start_frame:
-            start_frame = doodle_work_space.raneg.start
+            k_start_frame = doodle_work_space.raneg.start
+        k_end_frame = end_frame
         if not end_frame:
-            end_frame = doodle_work_space.raneg.end
+            k_end_frame = doodle_work_space.raneg.end
         # 创建视频
         # 如果不符合就直接返回
         if not self.maya_cam:
@@ -180,29 +182,29 @@ class camera:
 
         print("create move {}".format(out_path))
         try:
-            cmds.comm_play_blast_maya(
-                startTime=start_frame,
-                endTime=end_frame,
+            cmds.eval("""
+comm_play_blast_maya -startTime {startTime} -endTime {endTime} -filepath {filepath};
+""".format(startTime=k_start_frame,
+                endTime=k_end_frame,
                 filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
                 .format(
                     path=out_path,
                     base_name=doodle_work_space.maya_file.name_not_ex,
-                    start=start_frame,
-                    end=end_frame
-                )
-            )
-        except AttributeError as err:
+                    start=k_start_frame,
+                    end=k_end_frame
+                )))
+        except RuntimeError as err:
             print("arrt error use pymel.core.playblast")
             pymel.core.playblast(
                 viewer=False,
-                startTime=start_frame,
-                endTime=end_frame,
+                startTime=k_start_frame,
+                endTime=k_end_frame,
                 filename="{path}/{base_name}_playblast_{start}-{end}"
                 .format(
                     path=out_path,
                     base_name=doodle_work_space.maya_file.name_not_ex,
                     start=start_frame,
-                    end=end_frame
+                    end=k_end_frame
                 ),
                 percent=100,
                 quality=100,
