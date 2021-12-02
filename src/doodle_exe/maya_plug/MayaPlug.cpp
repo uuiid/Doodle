@@ -170,6 +170,19 @@ MStatus initializePlugin(MObject obj) {
       ::doodle::maya_plug::create_hud_node_maya::comm_name,
       &::doodle::maya_plug::create_hud_node_maya::creator);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+
+  /// 等所有命令完成后加载工具架
+  switch (k_st) {
+    case MGlobal::MMayaState::kInteractive:
+      status = MGlobal::executePythonCommand(R"(import scripts.Doodle_shelf
+scripts.Doodle_shelf.DoodleUIManage.creation()
+)");
+      CHECK_MSTATUS(status);
+      break;
+    default:
+      break;
+  }
+
   return status;
 }
 
@@ -180,6 +193,18 @@ MStatus uninitializePlugin(MObject obj) {
 
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+
+  ///先删除工具架
+  switch (k_st) {
+    case MGlobal::MMayaState::kInteractive:
+      status = MGlobal::executePythonCommand(R"(import scripts.Doodle_shelf
+scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
+)");
+      CHECK_MSTATUS(status);
+      break;
+    default:
+      break;
+  }
 
   /// 去掉hud命令
   status = k_plugin.deregisterCommand(
