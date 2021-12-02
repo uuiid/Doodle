@@ -50,10 +50,6 @@ class DOODLELIB_API shot {
   };
 
  private:
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &ar, std::uint32_t const version);
-
   friend void to_json(nlohmann::json &j, const shot &p) {
     j["shot"]      = p.p_shot;
     j["shot_enum"] = p.p_shot_enum;
@@ -63,18 +59,7 @@ class DOODLELIB_API shot {
     j.at("shot_enum").get_to(p.p_shot_enum);
   }
 };
-template <class Archive>
-void shot::serialize(Archive &ar, const std::uint32_t version) {
-  if (version == 1) {
-    ar &BOOST_SERIALIZATION_NVP(p_shot);
-    ar &BOOST_SERIALIZATION_NVP(p_shot_ab);
-    set_shot_ab(p_shot_ab);
-  }
-  if (version == 2) {
-    ar &BOOST_SERIALIZATION_NVP(p_shot);
-    ar &BOOST_SERIALIZATION_NVP(p_shot_enum);
-  }
-}
+
 }  // namespace doodle
 
 namespace fmt {

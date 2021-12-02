@@ -34,9 +34,6 @@ class DOODLELIB_API episodes {
   };
 
  private:
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &ar, std::uint32_t const version);
 
   friend void to_json(nlohmann::json &j, const episodes &p) {
     j["episodes"] = p.p_episodes;
@@ -45,11 +42,7 @@ class DOODLELIB_API episodes {
     j.at("episodes").get_to(p.p_episodes);
   }
 };
-template <class Archive>
-void episodes::serialize(Archive &ar, const std::uint32_t version) {
-  if (version == 1)
-    ar &BOOST_SERIALIZATION_NVP(p_episodes);
-}
+
 
 }  // namespace doodle
 

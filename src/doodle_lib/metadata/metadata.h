@@ -117,28 +117,7 @@ class DOODLELIB_API database {
   bool operator==(const database &in_rhs) const;
   bool operator!=(const database &in_rhs) const;
 
-  friend class boost::serialization::access;
-  template <class Archive>
-  void save(Archive &ar, const std::uint32_t version) const {
-    ar &BOOST_SERIALIZATION_NVP(p_id);
-    ar &BOOST_SERIALIZATION_NVP(p_parent_id);
-    ar &BOOST_SERIALIZATION_NVP(p_type);
-    ar &BOOST_SERIALIZATION_NVP(p_uuid_);
-  };
 
-  template <class Archive>
-  void load(Archive &ar, const std::uint32_t version) {
-    p_boost_serialize_vesion = version;
-    if (version == 2) {
-      ar &BOOST_SERIALIZATION_NVP(p_id);
-      ar &BOOST_SERIALIZATION_NVP(p_parent_id);
-      ar &BOOST_SERIALIZATION_NVP(p_type);
-      ar &BOOST_SERIALIZATION_NVP(p_uuid_);
-      p_uuid = boost::uuids::to_string(p_uuid_);
-    }
-  };
-
-  BOOST_SERIALIZATION_SPLIT_MEMBER()
 
   friend void to_json(nlohmann::json &j, const database &p) {
     j["id"]        = p.p_id;

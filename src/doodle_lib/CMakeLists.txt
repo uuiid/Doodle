@@ -70,7 +70,6 @@ target_link_libraries(doodle_lib
         magic_enum::magic_enum
         Boost::locale
         Boost::filesystem
-        Boost::serialization
         Boost::program_options
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}

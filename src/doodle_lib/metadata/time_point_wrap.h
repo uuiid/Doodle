@@ -112,13 +112,6 @@ class DOODLELIB_API time_point_wrap {
   void disassemble(const chrono::sys_time_pos& in_utc_timePoint);
 
   //这里是序列化的代码
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive& ar, const std::uint32_t version) {
-    if (version == 1)
-      ar& boost::serialization::make_nvp("time", p_time);
-    disassemble(p_time);
-  };
 
   friend void to_json(nlohmann::json& j, const time_point_wrap& p) {
     j["time"] = p.p_time;

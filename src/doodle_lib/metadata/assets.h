@@ -41,23 +41,7 @@ class DOODLELIB_API assets {
   void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
 
  private:
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive& ar, std::uint32_t const version) {
-    if (version == 2) {
-      string name;
-      string name_enus;
-      ar& BOOST_SERIALIZATION_NVP(name);
-      ar& BOOST_SERIALIZATION_NVP(name_enus);
-      p_path = name;
-      set_path_component();
-    }
-    if (version == 3) {
-      ar& BOOST_SERIALIZATION_NVP(p_path);
-      ar& BOOST_SERIALIZATION_NVP(p_name_show_str);
-      set_path_component();
-    }
-  };
+
 
   friend void to_json(nlohmann::json& j, const assets& p) {
     j["path"]          = p.p_path;

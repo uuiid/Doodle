@@ -18,17 +18,7 @@ class DOODLELIB_API project {
     std::float_t frame_samples;
     std::float_t time_scale;
     std::float_t length_scale;
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, std::uint32_t const version) {
-      if (version == 1) {
-        ar& BOOST_SERIALIZATION_NVP(vfx_cloth_sim_path);
-        ar& BOOST_SERIALIZATION_NVP(simple_subsampling);
-        ar& BOOST_SERIALIZATION_NVP(frame_samples);
-        ar& BOOST_SERIALIZATION_NVP(time_scale);
-        ar& BOOST_SERIALIZATION_NVP(length_scale);
-      }
-    }
+
     friend void to_json(nlohmann::json& j, const cloth_config& p) {
       j["vfx_cloth_sim_path"] = p.vfx_cloth_sim_path;
       j["simple_subsampling"] = p.simple_subsampling;
@@ -79,23 +69,7 @@ class DOODLELIB_API project {
   bool operator!=(const project& in_rhs) const;
 
  private:
-  friend class boost::serialization::access;
 
-  template <class Archive>
-  void save(Archive& ar, const std::uint32_t version) const {
-    ar& BOOST_SERIALIZATION_NVP(p_name);
-    ar& BOOST_SERIALIZATION_NVP(p_path);
-  }
-
-  template <class Archive>
-  void load(Archive& ar, const std::uint32_t version) {
-    if (version == 2) {
-      ar& BOOST_SERIALIZATION_NVP(p_name);
-      ar& BOOST_SERIALIZATION_NVP(p_path);
-    }
-    init_name();
-  }
-  BOOST_SERIALIZATION_SPLIT_MEMBER()
 
   friend void to_json(nlohmann::json& j, const project& p) {
     j["name"] = p.p_name;

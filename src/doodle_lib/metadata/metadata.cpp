@@ -125,7 +125,7 @@ database &database::operator=(const metadata_database &in_) {
   try {
     *this = k_json["database"];
     entt_tool::load_comm<DOODLE_SERIALIZATION>(k_h, k_json);
-  } catch (const boost::archive::archive_exception &e) {
+  } catch (const nlohmann::json::parse_error &e) {
     DOODLE_LOG_ERROR(e.what());
   }
 

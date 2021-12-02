@@ -23,13 +23,7 @@ class DOODLELIB_API comment {
   DOODLE_MOVE(comment);
 
  private:
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive& ar, const std::uint32_t version) {
-    if (version == 1)
-      ar& BOOST_SERIALIZATION_NVP(p_comment) &
-          BOOST_SERIALIZATION_NVP(p_user);
-  };
+
 
   friend void to_json(nlohmann::json& j, const comment& p) {
     j["comment"] = p.p_comment;
@@ -63,12 +57,7 @@ class DOODLELIB_API comment_vector {
   DOODLE_MOVE(comment_vector);
 
  private:
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive& ar, const std::uint32_t version) {
-    if (version == 1)
-      ar& BOOST_SERIALIZATION_NVP(comm);
-  };
+
   friend void to_json(nlohmann::json& j, const comment_vector& p) {
     j["vector"] = p.comm;
   }

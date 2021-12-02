@@ -148,9 +148,7 @@ class DOODLELIB_API core_set : public details::no_copy {
   std::string p_sql_password;  ///< mysql 用户密码
 
   //这里是序列化的代码
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &ar, std::uint32_t const version);
+
   friend void to_json(nlohmann::json &j, const core_set &p);
   friend void from_json(const nlohmann::json &j, core_set &p);
 };
@@ -169,39 +167,6 @@ class DOODLELIB_API core_set_init {
   bool config_to_user();
 };
 
-template <class Archive>
-void core_set::serialize(Archive &ar, std::uint32_t const version) {
-  if (version == 7)
-    ar &
-            boost::serialization::make_nvp("user", p_user_) &
-        boost::serialization::make_nvp("department", p_department_) &
-        boost::serialization::make_nvp("ue4_setting", p_ue4_setting) &
-        boost::serialization::make_nvp("maya_Path", p_mayaPath);
-  if (version == 8)
-    ar &
-            boost::serialization::make_nvp("user", p_user_) &
-        boost::serialization::make_nvp("department", p_department_) &
-        boost::serialization::make_nvp("ue4_setting", p_ue4_setting) &
-        boost::serialization::make_nvp("maya_Path", p_mayaPath) &
-        boost::serialization::make_nvp("p_max_thread", p_max_thread);
-  if (version == 9) {
-    ar &BOOST_SERIALIZATION_NVP(p_user_);
-    ar &BOOST_SERIALIZATION_NVP(p_department_);
-    ar &BOOST_SERIALIZATION_NVP(p_ue4_setting);
-    ar &BOOST_SERIALIZATION_NVP(p_mayaPath);
-    ar &BOOST_SERIALIZATION_NVP(p_max_thread);
-    ar &BOOST_SERIALIZATION_NVP(widget_show);
-  }
-  if (version == 10) {
-    ar &BOOST_SERIALIZATION_NVP(p_user_);
-    ar &BOOST_SERIALIZATION_NVP(p_department_);
-    ar &BOOST_SERIALIZATION_NVP(p_ue4_setting);
-    ar &BOOST_SERIALIZATION_NVP(p_mayaPath);
-    ar &BOOST_SERIALIZATION_NVP(p_max_thread);
-    ar &BOOST_SERIALIZATION_NVP(widget_show);
-    ar &BOOST_SERIALIZATION_NVP(timeout);
-  }
-}
 
 namespace win {
 /// @todo 添加一个字体目录获得函数
@@ -212,13 +177,4 @@ FSys::path DOODLELIB_API get_pwd();
 }  // namespace win
 
 }  // namespace doodle
-namespace cereal {
-template <class Archive>
-std::string save_minimal(Archive const &, doodle::department const &department) {
-  return std::string{magic_enum::enum_name(department)};
-}
-template <class Archive>
-void load_minimal(Archive const &, doodle::department &department, std::string const &value) {
-  department = magic_enum::enum_cast<doodle::department>(value).value_or(doodle::department::None_);
-};
-}  // namespace cereal
+

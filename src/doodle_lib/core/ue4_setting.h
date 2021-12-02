@@ -24,10 +24,7 @@ class DOODLELIB_API ue4_setting : public details::no_copy {
   void test_value();
 
  private:
-  friend class boost::serialization::access;
 
-  template <class Archive>
-  void serialize(Archive& ar, std::uint32_t const version);
   friend void to_json(nlohmann::json& j, const ue4_setting& p);
   friend void from_json(const nlohmann::json& j, ue4_setting& p);
 };
@@ -35,15 +32,6 @@ class DOODLELIB_API ue4_setting : public details::no_copy {
 void to_json(nlohmann::json& j, const ue4_setting& p);
 void from_json(const nlohmann::json& j, ue4_setting& p);
 
-template <class Archive>
-void ue4_setting::serialize(Archive& ar, std::uint32_t const version) {
-  if (version == 1)
-    ar&
-            boost::serialization::make_nvp("ue4_path", ue4_path) &
-        boost::serialization::make_nvp("ue4_version", ue4_version) &
-        boost::serialization::make_nvp("shot_start", shot_start) &
-        boost::serialization::make_nvp("shot_end", shot_end);
-}
 
 }  // namespace doodle
 

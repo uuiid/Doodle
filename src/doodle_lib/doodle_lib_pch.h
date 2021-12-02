@@ -54,7 +54,6 @@
 #include <date/date.h>
 #include <doodle_lib/doodle_macro.h>
 #include <doodle_lib/lib_warp/boost_locale_warp.h>
-#include <doodle_lib/lib_warp/boost_serialization_warp.h>
 #include <doodle_lib/lib_warp/boost_uuid_warp.h>
 #include <doodle_lib/lib_warp/cmrcWarp.h>
 #include <doodle_lib/lib_warp/sqlppWarp.h>

@@ -73,15 +73,6 @@ class DOODLELIB_API assets_path_vector {
 
  private:
   //这里是序列化的代码
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &ar, std::uint32_t const version) {
-    if (version == 2) {
-      ar &BOOST_SERIALIZATION_NVP(p_server_path);
-      ar &BOOST_SERIALIZATION_NVP(p_backup_path);
-      ar &BOOST_SERIALIZATION_NVP(p_local_paths);
-    }
-  };
 
   friend void to_json(nlohmann::json &j, const assets_path_vector &p) {
     j["server_path"] = p.p_server_path;

@@ -27,9 +27,6 @@ class DOODLELIB_API season {
   bool operator!=(const season& in_rhs) const;
 
  private:
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive& ar, std::uint32_t const version);
 
   friend void to_json(nlohmann::json &j, const season &p) {
     j["season"] = p.p_int;
@@ -39,9 +36,4 @@ class DOODLELIB_API season {
   }
 };
 
-template <class Archive>
-void season::serialize(Archive& ar, std::uint32_t const version) {
-  if (version == 1)
-    ar& BOOST_SERIALIZATION_NVP(p_int);
-}
 }  // namespace doodle

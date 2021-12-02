@@ -345,60 +345,53 @@ TEST_CASE("load_meta", "[metadata]") {
   }
 }
 
-#include <doodle_lib/lib_warp/boost_serialization_warp.h>
-
-#include <boost/archive/polymorphic_text_iarchive.hpp>
-#include <boost/archive/polymorphic_text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-
 TEST_CASE("boost metadata load") {
-  std::string k_data{};
-  {
-    doodle::vector_container my_data{};
-    {
-      doodle::vector_iostream k_i{my_data};
-      boost::archive::text_oarchive k_archive{k_i};
-      std::shared_ptr<doodle::shot> k_test1{new doodle::shot()};
-      k_test1->set_shot(1);
-      std::shared_ptr<doodle::shot> k_test2{new doodle::shot()};
-      k_test2->set_shot(1);
-      std::shared_ptr<doodle::shot> k_test3{new doodle::shot()};
-      k_test3->set_shot(1);
+  // std::string k_data{};
+  // {
+  //   doodle::vector_container my_data{};
+  //   {
+  //     doodle::vector_iostream k_i{my_data};
+  //     boost::archive::text_oarchive k_archive{k_i};
+  //     std::shared_ptr<doodle::shot> k_test1{new doodle::shot()};
+  //     k_test1->set_shot(1);
+  //     std::shared_ptr<doodle::shot> k_test2{new doodle::shot()};
+  //     k_test2->set_shot(1);
+  //     std::shared_ptr<doodle::shot> k_test3{new doodle::shot()};
+  //     k_test3->set_shot(1);
 
-      k_archive << k_test1
-                << k_test2
-                << k_test3;
-    }
-    k_data = {my_data.data(), my_data.size()};
-  }
-  std::cout << k_data << std::endl;
-  {
-    doodle::vector_container my_data{k_data.begin(), k_data.end()};
-    doodle::vector_iostream k_i{my_data};
-    boost::archive::text_iarchive k_archive{k_i};
-    std::shared_ptr<doodle::shot> k_test1{};
-    std::shared_ptr<doodle::shot> k_test2{};
-    std::shared_ptr<doodle::shot> k_test3{};
+  //     k_archive << k_test1
+  //               << k_test2
+  //               << k_test3;
+  //   }
+  //   k_data = {my_data.data(), my_data.size()};
+  // }
+  // std::cout << k_data << std::endl;
+  // {
+  //   doodle::vector_container my_data{k_data.begin(), k_data.end()};
+  //   doodle::vector_iostream k_i{my_data};
+  //   boost::archive::text_iarchive k_archive{k_i};
+  //   std::shared_ptr<doodle::shot> k_test1{};
+  //   std::shared_ptr<doodle::shot> k_test2{};
+  //   std::shared_ptr<doodle::shot> k_test3{};
 
-    k_archive >> k_test1;
-    std::cout << std::boolalpha
-              << "k_i.tellg() " << (k_i.tellg()) << "\n"
-              << "(my_data.size() -1) == k_i.tellg() " << ((my_data.size() - 1) == k_i.tellg()) << "\n";
-    k_archive >> k_test2 >> k_test3;
+  //   k_archive >> k_test1;
+  //   std::cout << std::boolalpha
+  //             << "k_i.tellg() " << (k_i.tellg()) << "\n"
+  //             << "(my_data.size() -1) == k_i.tellg() " << ((my_data.size() - 1) == k_i.tellg()) << "\n";
+  //   k_archive >> k_test2 >> k_test3;
 
-    std::shared_ptr<doodle::shot> k_test4{};
-    std::cout << std::boolalpha
-              << "k_i.good() " << k_i.good() << "\n"
-              << "k_i.tellp() " << (k_i.tellp()) << "\n"
-              << "my_data.size() " << (my_data.size()) << "\n"
-              << "k_i.end == k_i.tellp() " << (k_i.end == k_i.tellp()) << "\n"
-              << "(my_data.size() -1) == k_i.tellp() " << ((my_data.size() - 1) == k_i.tellp()) << "\n"
-              << "(my_data.size() -1) == k_i.tellg() " << ((my_data.size() - 1) == k_i.tellg()) << "\n"
-              << std::endl;
+  //   std::shared_ptr<doodle::shot> k_test4{};
+  //   std::cout << std::boolalpha
+  //             << "k_i.good() " << k_i.good() << "\n"
+  //             << "k_i.tellp() " << (k_i.tellp()) << "\n"
+  //             << "my_data.size() " << (my_data.size()) << "\n"
+  //             << "k_i.end == k_i.tellp() " << (k_i.end == k_i.tellp()) << "\n"
+  //             << "(my_data.size() -1) == k_i.tellp() " << ((my_data.size() - 1) == k_i.tellp()) << "\n"
+  //             << "(my_data.size() -1) == k_i.tellg() " << ((my_data.size() - 1) == k_i.tellg()) << "\n"
+  //             << std::endl;
 
-    k_archive >> k_test4;
-  }
+  //   k_archive >> k_test4;
+  // }
 }
 
 TEST_CASE("gui action metadata", "[metadata][gui]") {

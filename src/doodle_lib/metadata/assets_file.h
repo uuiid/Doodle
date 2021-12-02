@@ -76,9 +76,7 @@ class DOODLELIB_API assets_file {
   bool operator>=(const assets_file& in_rhs) const;
 
  private:
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive& ar, std::uint32_t const version);
+
 
   friend void to_json(nlohmann::json& j, const assets_file& p) {
     j["name"]       = p.p_name;
@@ -96,16 +94,6 @@ class DOODLELIB_API assets_file {
   }
 };
 
-template <class Archive>
-void assets_file::serialize(Archive& ar, const std::uint32_t version) {
-  if (version == 3) {
-    ar& BOOST_SERIALIZATION_NVP(p_name);
-    ar& BOOST_SERIALIZATION_NVP(p_ShowName);
-    ar& BOOST_SERIALIZATION_NVP(p_user);
-    ar& BOOST_SERIALIZATION_NVP(p_department);
-    ar& BOOST_SERIALIZATION_NVP(p_version);
-  }
-}
 
 }  // namespace doodle
 

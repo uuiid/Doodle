@@ -12,19 +12,7 @@
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib_export.h>
 
-// namespace fmt {
-// namespace FSys = std::filesystem;
-// template <class Char>
-// struct formatter<FSys::path, Char> : formatter<basic_string_view<Char>, Char> {
-//   template <typename FormatContext>
-//   auto format(const FSys::path &in_path, FormatContext &ctx) {
-//     if constexpr (std::is_same_v<Char, char>)
-//       return formatter<basic_string_view<Char>, Char>::format(in_path.generic_string(), ctx);
-//     else if constexpr (std::is_same_v<Char, wchar_t>)
-//       return formatter<basic_string_view<Char>, Char>::format(in_path.generic_wstring(), ctx);
-//   }
-// };
-// }  // namespace fmt
+
 
 //开始我们的名称空间
 namespace doodle {
@@ -441,39 +429,4 @@ std::map<string, string> make_imgui_name(const in_type *in_ptr, Args &&...in_arg
 };
 }  // namespace doodle
 
-namespace boost::serialization {
-// class _Rep, class _Period
-template <class Archive, class Clock, class Duration>
-inline void serialize(Archive &ar, doodle::chrono::time_point<Clock, Duration> &t, const unsigned int file_version) {
-  split_free(ar, t, file_version);
-}
 
-template <class Archive, class Clock, class Duration>
-inline void save(Archive &ar, const doodle::chrono::time_point<Clock, Duration> &time, const std::uint32_t version) {
-  ar &boost::serialization::make_nvp("time", time.time_since_epoch());
-}
-template <class Archive, class Clock, class Duration>
-inline void load(Archive &ar, doodle::chrono::time_point<Clock, Duration> &time, const std::uint32_t version) {
-  Duration time_since_epoch;
-  ar &boost::serialization::make_nvp("time", time_since_epoch);
-  time = doodle::chrono::time_point<Clock, Duration>{time_since_epoch};
-}
-
-template <class Archive, class Rep, class Period>
-inline void serialize(Archive &ar, doodle::chrono::duration<Rep, Period> &t, const unsigned int file_version) {
-  split_free(ar, t, file_version);
-}
-
-template <class Archive, class Rep, class Period>
-inline void save(Archive &ar, const doodle::chrono::duration<Rep, Period> &dur, const std::uint32_t version) {
-  auto count = dur.count();
-  ar &boost::serialization::make_nvp("duration", count);
-}
-template <class Archive, class Rep, class Period>
-inline void load(Archive &ar, doodle::chrono::duration<Rep, Period> &dur, const std::uint32_t version) {
-  Rep count;
-  ar &boost::serialization::make_nvp("duration", count);
-  dur = doodle::chrono::duration<Rep, Period>{count};
-}
-
-}  // namespace boost::serialization
