@@ -119,6 +119,13 @@ class DOODLELIB_API time_point_wrap {
       ar& boost::serialization::make_nvp("time", p_time);
     disassemble(p_time);
   };
+
+  friend void to_json(nlohmann::json& j, const time_point_wrap& p) {
+    j["time"] = p.p_time;
+  }
+  friend void from_json(const nlohmann::json& j, time_point_wrap& p) {
+    j.at("time").get_to(p.p_time);
+  }
 };
 
 // class time_point : public std::chrono::time_point<std::chrono::system_clock> {

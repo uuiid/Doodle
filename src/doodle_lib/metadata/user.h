@@ -40,6 +40,19 @@ class user {
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version);
+
+  friend void to_json(nlohmann::json& j, const user& p) {
+    j["string_"]   = p.p_string_;
+    j["ENUS"]      = p.p_ENUS;
+    j["time_rest"] = p.p_time_rest;
+    j["time_work"] = p.p_time_work;
+  }
+  friend void from_json(const nlohmann::json& j, user& p) {
+    j.at("string_").get_to(p.p_string_);
+    j.at("ENUS").get_to(p.p_ENUS);
+    j.at("time_rest").get_to(p.p_time_rest);
+    j.at("time_work").get_to(p.p_time_work);
+  }
 };
 template <class Archive>
 void user::serialize(Archive& ar, const std::uint32_t version) {

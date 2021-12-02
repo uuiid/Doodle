@@ -9,7 +9,7 @@
 
 namespace doodle {
 
-class DOODLELIB_API comment  {
+class DOODLELIB_API comment {
   std::string p_comment;
   std::string p_user;
 
@@ -21,7 +21,7 @@ class DOODLELIB_API comment  {
   [[nodiscard]] const std::string& get_user() const;
   void set_user(const std::string& in_user);
   DOODLE_MOVE(comment);
-  
+
  private:
   friend class boost::serialization::access;
   template <class Archive>
@@ -30,17 +30,25 @@ class DOODLELIB_API comment  {
       ar& BOOST_SERIALIZATION_NVP(p_comment) &
           BOOST_SERIALIZATION_NVP(p_user);
   };
+
+  friend void to_json(nlohmann::json& j, const comment& p) {
+    j["comment"] = p.p_comment;
+    j["user"]    = p.p_user;
+  }
+  friend void from_json(const nlohmann::json& j, comment& p) {
+    j.at("comment").get_to(p.p_comment);
+    j.at("user").get_to(p.p_user);
+  }
 };
 
-class DOODLELIB_API comment_vector
-    {
+class DOODLELIB_API comment_vector {
  public:
   comment_vector() : comm(){};
 
   std::vector<comment> comm;
 
-  void end_push_back(const comment& in) {
-    // p_meta.lock()->saved(true);
+  void end_push_back(const comment& in){
+      // p_meta.lock()->saved(true);
   };
 
   void end_erase(const comment& in){};
@@ -61,6 +69,12 @@ class DOODLELIB_API comment_vector
     if (version == 1)
       ar& BOOST_SERIALIZATION_NVP(comm);
   };
+  friend void to_json(nlohmann::json& j, const comment_vector& p) {
+    j["vector"] = p.comm;
+  }
+  friend void from_json(const nlohmann::json& j, comment_vector& p) {
+    j.at("vector").get_to(p.comm);
+  }
 };
 }  // namespace doodle
 

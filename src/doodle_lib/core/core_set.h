@@ -151,6 +151,8 @@ class DOODLELIB_API core_set : public details::no_copy {
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
+
+
 };
 
 class DOODLELIB_API core_set_init {

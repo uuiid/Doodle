@@ -2,6 +2,8 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/metadata/metadata.h>
 
+#include <nlohmann/json.hpp>
+
 namespace doodle {
 /**
  * 项目信息类
@@ -26,6 +28,20 @@ class DOODLELIB_API project {
         ar& BOOST_SERIALIZATION_NVP(time_scale);
         ar& BOOST_SERIALIZATION_NVP(length_scale);
       }
+    }
+    friend void to_json(nlohmann::json& j, const cloth_config& p) {
+      j["vfx_cloth_sim_path"] = p.vfx_cloth_sim_path;
+      j["simple_subsampling"] = p.simple_subsampling;
+      j["frame_samples"]      = p.frame_samples;
+      j["time_scale"]         = p.time_scale;
+      j["length_scale"]       = p.length_scale;
+    }
+    friend void from_json(const nlohmann::json& j, cloth_config& p) {
+      j.at("vfx_cloth_sim_path").get_to(p.vfx_cloth_sim_path);
+      j.at("simple_subsampling").get_to(p.simple_subsampling);
+      j.at("frame_samples").get_to(p.frame_samples);
+      j.at("time_scale").get_to(p.time_scale);
+      j.at("length_scale").get_to(p.length_scale);
     }
   };
 
@@ -80,9 +96,6 @@ class DOODLELIB_API project {
     init_name();
   }
   BOOST_SERIALIZATION_SPLIT_MEMBER()
-
-
-
 };
 
 }  // namespace doodle

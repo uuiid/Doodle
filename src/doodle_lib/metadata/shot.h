@@ -53,6 +53,15 @@ class DOODLELIB_API shot {
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version);
+
+  friend void to_json(nlohmann::json &j, const shot &p) {
+    j["shot"]      = p.p_shot;
+    j["shot_enum"] = p.p_shot_enum;
+  }
+  friend void from_json(const nlohmann::json &j, shot &p) {
+    j.at("shot").get_to(p.p_shot);
+    j.at("shot_enum").get_to(p.p_shot_enum);
+  }
 };
 template <class Archive>
 void shot::serialize(Archive &ar, const std::uint32_t version) {

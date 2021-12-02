@@ -49,8 +49,8 @@ class DOODLELIB_API assets_file {
   explicit assets_file(std::string showName, std::string Name = {});
   // ~AssetsFile();
 
-  [[nodiscard]] std::string str() const ;
-  [[nodiscard]] std::string show_str() const ;
+  [[nodiscard]] std::string str() const;
+  [[nodiscard]] std::string show_str() const;
 
   [[nodiscard]] const std::string& get_user() const;
   void set_user(const std::string& in_user);
@@ -68,19 +68,32 @@ class DOODLELIB_API assets_file {
 
   int find_max_version() const;
 
-
-  virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr) ;
+  virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
 
   bool operator<(const assets_file& in_rhs) const;
   bool operator>(const assets_file& in_rhs) const;
   bool operator<=(const assets_file& in_rhs) const;
   bool operator>=(const assets_file& in_rhs) const;
 
-
  private:
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version);
+
+  friend void to_json(nlohmann::json& j, const assets_file& p) {
+    j["name"]       = p.p_name;
+    j["ShowName"]   = p.p_ShowName;
+    j["user"]       = p.p_user;
+    j["department"] = p.p_department;
+    j["version"]    = p.p_version;
+  }
+  friend void from_json(const nlohmann::json& j, assets_file& p) {
+    j.at("name").get_to(p.p_name);
+    j.at("ShowName").get_to(p.p_ShowName);
+    j.at("user").get_to(p.p_user);
+    j.at("department").get_to(p.p_department);
+    j.at("version").get_to(p.p_version);
+  }
 };
 
 template <class Archive>

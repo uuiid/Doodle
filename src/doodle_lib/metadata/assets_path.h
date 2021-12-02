@@ -65,7 +65,7 @@ class DOODLELIB_API assets_path_vector {
 
   command_ptr add_file(const FSys::path &in_path);
 
-  std::vector<FSys::path> list() ;
+  std::vector<FSys::path> list();
 
   [[nodiscard]] rpc_trans_path_ptr_list make_up_path() const;
   [[nodiscard]] rpc_trans_path_ptr_list make_down_path(const FSys::path &in_down_path) const;
@@ -82,6 +82,17 @@ class DOODLELIB_API assets_path_vector {
       ar &BOOST_SERIALIZATION_NVP(p_local_paths);
     }
   };
+
+  friend void to_json(nlohmann::json &j, const assets_path_vector &p) {
+    j["server_path"] = p.p_server_path;
+    j["backup_path"] = p.p_backup_path;
+    j["local_paths"] = p.p_local_paths;
+  }
+  friend void from_json(const nlohmann::json &j, assets_path_vector &p) {
+    j.at("server_path").get_to(p.p_server_path);
+    j.at("backup_path").get_to(p.p_backup_path);
+    j.at("local_paths").get_to(p.p_local_paths);
+  }
 };
 
 }  // namespace doodle
