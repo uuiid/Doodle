@@ -69,7 +69,7 @@
             "name": "Python maya debug",
             "type": "python",
             "request": "launch",
-            "python": "C:\\Program Files\\Autodesk\\Maya2020\\bin\\mayapy.exe",
+            "python": "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayapy.exe",
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [],

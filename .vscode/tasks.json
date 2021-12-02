@@ -18,6 +18,22 @@
         "cwd": "${command:cmake.getLaunchTargetDirectory}"
       },
       "group": "test"
+    },
+    {
+      "label": "run py19",
+      "type": "shell",
+      "command": "C:/Program Files/Autodesk/Maya2019/bin/mayapy.exe",
+      "args": [
+        "${file}"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
     }
   ],
   "inputs": [
