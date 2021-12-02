@@ -26,7 +26,7 @@ std::vector<entt::entity> metadata_serialize::get_all_prj() const {
   auto k_list = k_c->select_entity(k_filter);
   boost::for_each(k_list, [](const entt::entity &in) {
     auto k_h = make_handle(in);
-    k_h.get<root_ref>().set_root(k_h);
+    k_h.emplace_or_replace<root_ref>(k_h);
   });
   return k_list;
 }
