@@ -17,6 +17,8 @@ def initializePlugin(plugin):
     k_ver = str(pymel.versions.current())[0:4]
     # pymel.core.loadPlugin("doodle_plug_{}".format(k_ver))
     dle_plugin_ui = open_maya.MFnPlugin(plugin, "doodleUI", "1.0.0")
+    open_maya.MGlobal.executeCommandOnIdle(
+        "loadPlugin doodle_plug_{};".format(k_ver))
     try:
         dle_plugin_ui.registerUI(
             scripts.Doodle_shelf.DoodleUIManage.creation, scripts.Doodle_shelf.DoodleUIManage.deleteSelf
