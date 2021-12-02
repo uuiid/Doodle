@@ -9,6 +9,7 @@
 #include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/metadata/tree_adapter.h>
 #include <google/protobuf/message.h>
+
 #include <boost/intrusive/intrusive_fwd.hpp>
 #include <boost/intrusive/link_mode.hpp>
 #include <boost/intrusive/list.hpp>
@@ -36,7 +37,6 @@ enum class metadata_type {
   ue4_prj            = 11
 
 };
-
 
 class DOODLELIB_API root_ref {
  public:
@@ -139,6 +139,20 @@ class DOODLELIB_API database {
   };
 
   BOOST_SERIALIZATION_SPLIT_MEMBER()
+
+  friend void to_json(nlohmann::json &j, const database &p) {
+    j["id"]        = p.p_id;
+    j["parent_id"] = p.p_parent_id;
+    j["type"]      = p.p_type;
+    j["uuid_"]     = p.p_uuid_;
+  }
+  friend void from_json(const nlohmann::json &j, database &p) {
+    j.at("id").get_to(p.p_id);
+    j.at("parent_id").get_to(p.p_parent_id);
+    j.at("type").get_to(p.p_type);
+    j.at("uuid_").get_to(p.p_uuid_);
+    p.p_uuid = boost::uuids::to_string(p.p_uuid_);
+  }
 };
 
 // using to_str = entt::tag<"to_str"_hs>;

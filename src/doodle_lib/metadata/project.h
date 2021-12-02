@@ -96,6 +96,16 @@ class DOODLELIB_API project {
     init_name();
   }
   BOOST_SERIALIZATION_SPLIT_MEMBER()
+
+  friend void to_json(nlohmann::json& j, const project& p) {
+    j["name"] = p.p_name;
+    j["path"] = p.p_path;
+  }
+  friend void from_json(const nlohmann::json& j, project& p) {
+    j.at("name").get_to(p.p_name);
+    j.at("path").get_to(p.p_path);
+    p.init_name();
+  }
 };
 
 }  // namespace doodle

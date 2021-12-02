@@ -6,6 +6,7 @@
 #include <doodle_lib/exception/exception.h>
 #include <doodle_lib/lib_warp/boost_serialization_warp.h>
 #include <doodle_lib/lib_warp/cmrcWarp.h>
+#include <doodle_lib/lib_warp/json_warp.h>
 #include <doodle_lib/lib_warp/sqlppWarp.h>
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <doodle_lib/logger/logger.h>

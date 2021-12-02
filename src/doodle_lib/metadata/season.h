@@ -30,6 +30,13 @@ class DOODLELIB_API season {
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, std::uint32_t const version);
+
+  friend void to_json(nlohmann::json &j, const season &p) {
+    j["season"] = p.p_int;
+  }
+  friend void from_json(const nlohmann::json &j, season &p) {
+    j.at("season").get_to(p.p_int);
+  }
 };
 
 template <class Archive>

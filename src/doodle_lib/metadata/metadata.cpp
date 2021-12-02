@@ -110,8 +110,7 @@ bool database::is_install() const {
   return p_id > 0;
 }
 
-#define DOODLE_SERIALIZATION database,           \
-                             project,            \
+#define DOODLE_SERIALIZATION project,            \
                              episodes,           \
                              shot,               \
                              season,             \
@@ -126,17 +125,14 @@ database &database::operator=(const metadata_database &in_) {
   auto k_h    = make_handle(*this);
   /// 转换序列化数据
   auto k_data = in_.metadata_cereal().value();
-  vector_container my_data{k_data.begin(), k_data.end()};
-  {
-    vector_iostream k_i{my_data};
-    boost::archive::text_iarchive k_archive{k_i};
-
-    try {
-      entt_tool::load_comm<DOODLE_SERIALIZATION>(k_h, k_archive);
-    } catch (const boost::archive::archive_exception &e) {
-      DOODLE_LOG_ERROR(e.what());
-    }
+  auto k_json = nlohmann::json ::parse(k_data);
+  try {
+    *this = k_json["database"];
+    entt_tool::load_comm<DOODLE_SERIALIZATION>(k_h, k_json);
+  } catch (const boost::archive::archive_exception &e) {
+    DOODLE_LOG_ERROR(e.what());
   }
+
   /// 转换id
   set_id(in_.id());
   /// 转化类型
@@ -166,15 +162,13 @@ database::operator doodle::metadata_database() const {
   ///设置序列化数据储存位置
   k_tmp.set_uuid_path(get_url_uuid().generic_string());
 
-  /// 设置序列化数据
-  vector_container my_data{};
+  nlohmann::json k_json{};
   {
-    vector_iostream kt{my_data};
-    boost::archive::text_oarchive k_archive{kt};
-    entt_tool::save_comm<DOODLE_SERIALIZATION>(k_h, k_archive);
+    k_json["database"] = *this;
+    entt_tool::save_comm<DOODLE_SERIALIZATION>(k_h, k_json);
   }
 
-  k_tmp.mutable_metadata_cereal()->set_value(my_data.data(), my_data.size());
+  k_tmp.mutable_metadata_cereal()->set_value(k_json.dump());
   if (p_parent_id)
     k_tmp.mutable_parent()->set_value(*p_parent_id);
 
