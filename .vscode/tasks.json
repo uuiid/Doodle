@@ -33,6 +33,18 @@
         "panel": "shared",
         "showReuseMessage": true,
         "clear": false
+      },
+      "problemMatcher": {
+        "owner": "py",
+        "fileLocation":"autoDetect",
+        "pattern":[
+          {
+            "regexp": "^([^\\\\s].*)\\\\((\\\\d+,\\\\d+)\\\\):\\\\s*(.*)$",
+            "file": 1,
+            "location": 2,
+            "message": 3
+          }
+        ]
       }
     }
   ],
