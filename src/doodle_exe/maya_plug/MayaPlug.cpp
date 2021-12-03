@@ -174,7 +174,7 @@ MStatus initializePlugin(MObject obj) {
   /// 等所有命令完成后加载工具架
   switch (k_st) {
     case MGlobal::MMayaState::kInteractive:
-      status = MGlobal::executePythonCommand(R"(import scripts.Doodle_shelf
+      status = MGlobal::executePythonCommandOnIdle(R"(import scripts.Doodle_shelf
 scripts.Doodle_shelf.DoodleUIManage.creation()
 )");
       CHECK_MSTATUS(status);
