@@ -121,9 +121,9 @@ database &database::operator=(const metadata_database &in_) {
   auto k_h    = make_handle(*this);
   /// 转换序列化数据
   auto k_data = in_.metadata_cereal().value();
-  auto k_json = nlohmann::json ::parse(k_data);
   try {
-    *this = k_json["database"];
+    auto k_json = nlohmann::json ::parse(k_data);
+    *this       = k_json["database"];
     entt_tool::load_comm<DOODLE_SERIALIZATION>(k_h, k_json);
   } catch (const nlohmann::json::parse_error &e) {
     DOODLE_LOG_ERROR(e.what());

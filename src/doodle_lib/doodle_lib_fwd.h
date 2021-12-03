@@ -383,7 +383,9 @@ entt::entity to_comm(const Component_From &instance) {
 
 template <class... Component>
 void chick_component(const entt::handle &t) {
-  if (t && t.any_of<Component...>())
+  if (!t)
+    throw doodle_error{"无效句柄"};
+  if (!t.any_of<Component...>())
     throw component_error{"缺失组件"};
 }
 
