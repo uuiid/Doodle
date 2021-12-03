@@ -348,5 +348,9 @@
  * @li 更改拍屏使用方式（使用eval回调）
  * 
  * @subsubsection updata_log_321 版本3.2.1
- * 
+ * @li 更新积累
+ *
+ * @subsubsection updata_log_322 版本3.2.2
+ * @li 修复hud时间长度显示和拍屏时间长度显示
+ *
  */
