@@ -119,14 +119,12 @@ bool reference_attr_setting::get_file_info() {
     auto k_j = nlohmann::json::parse(k_h.str(0));
 
     for (auto& l_i : p_handle) {
-      auto l_p = l_i.get<reference_file>().path;
+      auto& k_ref = l_i.get<reference_file>();
+      auto l_p    = k_ref.path;
       if (k_j.contains(l_p))
         entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
+      l_i.get<reference_file>().init_show_name();
     }
-
-    
-
-
   }
   decltype(k_meta)::Debug(&k_meta, k_p);
   k_p.endSection();
@@ -137,7 +135,7 @@ bool reference_attr_setting::render() {
   if (imgui::Button(p_show_str["解析引用"].c_str())) {
     get_file_info();
   }
-
+  MStatus k_s{};
   auto k_ref_view = g_reg()->view<reference_file>();
   for (auto k_e : k_ref_view) {
     auto& k_ref = k_ref_view.get<reference_file>(k_e);
@@ -148,13 +146,16 @@ bool reference_attr_setting::render() {
 
       imgui::Checkbox("高精度配置", &(k_ref.high_speed_sim));
       if (imgui::Button("替换")) {
-        add_collision(make_handle(k_e));
+        MSelectionList l_select{};
+        k_s = MGlobal::getActiveSelectionList(l_select);
+        DOODLE_CHICK(k_s);
+        k_ref.set_collision_model(l_select);
       }
       if (imgui::Button("获取")) {
-        get_collision(make_handle(k_e));
+        MGlobal::setActiveSelectionList(k_ref.get_collision_model());
       }
       dear::Text("解算碰撞");
-      for (const auto& k_f : p_names)
+      for (const auto& k_f : k_ref.collision_model_show_str)
         dear::Text(k_f);
     };
   }
@@ -194,51 +195,6 @@ bool reference_attr_setting::render() {
     decltype(k_meta)::Debug(&k_meta, k_p);
     k_p.endSection();
   }
-  return true;
-}
-bool reference_attr_setting::add_collision(const entt::handle& in_ref) {
-  if (!in_ref.any_of<reference_file>())
-    throw component_error{"缺失组件"};
-
-  auto& k_ref = in_ref.get<reference_file>();
-
-  MStatus k_s{};
-  k_s = MGlobal::getActiveSelectionList(p_select);
-  DOODLE_CHICK(k_s);
-  if (p_select.length() > 30) {
-    MString k_str{};
-    k_str.setUTF8("太多的选择");
-    MGlobal::displayWarning(k_str);
-    return false;
-  }
-
-  MDagPath l_path{};
-  MFnDagNode l_node{};
-  k_ref.collision_model.clear();
-  p_names.clear();
-  for (MItSelectionList l_it{p_select, MFn::Type::kMesh, &k_s};
-       !l_it.isDone(&k_s);
-       l_it.next()) {
-    DOODLE_CHICK(k_s);
-    k_s = l_it.getDagPath(l_path);
-    DOODLE_CHICK(k_s);
-    auto k_obj = l_path.transform(&k_s);
-    DOODLE_CHICK(k_s);
-    k_s = l_node.setObject(k_obj);
-    DOODLE_CHICK(k_s);
-    p_names.emplace_back(l_node.name(&k_s).asUTF8());
-    DOODLE_CHICK(k_s);
-
-    k_ref.collision_model.emplace_back(l_node.uuid(&k_s).asString().asUTF8());
-    DOODLE_CHICK(k_s);
-  }
-
-  return true;
-}
-bool reference_attr_setting::get_collision(const entt::handle& in_ref) const {
-  MStatus k_s{};
-  k_s = MGlobal::setActiveSelectionList(p_select);
-  DOODLE_CHICK(k_s);
   return true;
 }
 

@@ -39,13 +39,8 @@ using data_ptr = std::shared_ptr<data>;
  */
 class reference_attr_setting : public command_base {
   std::vector<entt::handle> p_handle;
-  MSelectionList p_select;
-  std::vector<string> p_names;
   bool add_channel() const;
   bool get_file_info();
-
-  bool add_collision(const entt::handle& in_ref);
-  bool get_collision(const entt::handle& in_ref) const;
 
  public:
   reference_attr_setting();
