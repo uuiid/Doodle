@@ -376,10 +376,16 @@ entt::entity to_entity(const Component &instance) {
 template <class Component_to, class Component_From>
 entt::entity to_comm(const Component_From &instance) {
   auto k_h = make_handle(instance);
-  if (!k_h.any<Component_to>())
-    throw doodle_error{"缺失组件"};
+  if (!k_h.any_of<Component_to>())
+    throw component_error{"缺失组件"};
   return entt::to_entity(*(g_reg()), instance);
 };
+
+template <class... Component>
+void chick_component(const entt::handle &t) {
+  if (t && t.any_of<Component...>())
+    throw component_error{"缺失组件"};
+}
 
 class DOODLELIB_API null_fun_t {
  public:
