@@ -43,7 +43,7 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
 
   registry_ptr reg;
 };
-inline registry_ptr& g_reg() {
+DOODLELIB_API inline registry_ptr& g_reg() {
   return doodle_lib::Get().reg;
 }
 

@@ -12,8 +12,6 @@
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib_export.h>
 
-
-
 //开始我们的名称空间
 namespace doodle {
 namespace details {
@@ -354,7 +352,7 @@ class time_widget;
 
 using uuid = boost::uuids::uuid;
 
-registry_ptr &g_reg();
+DOODLELIB_API registry_ptr &g_reg();
 template <class Component,
           std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
 entt::handle make_handle(const Component &instance) {
@@ -428,5 +426,3 @@ std::map<string, string> make_imgui_name(const in_type *in_ptr, Args &&...in_arg
   return std::map<string, string>{details::make_show_shr(in_args, in_ptr)...};
 };
 }  // namespace doodle
-
-
