@@ -16,7 +16,7 @@ class reference_file {
   std::vector<string> collision_model;
 
   reference_file();
-  explicit reference_file(const uuid &in_uuid, const string &in_u8_path);
+  explicit reference_file(const entt::handle &in_uuid, const string &in_u8_path);
 
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {

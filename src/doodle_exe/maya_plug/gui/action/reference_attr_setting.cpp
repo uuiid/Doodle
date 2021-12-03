@@ -4,7 +4,9 @@
 
 #include "reference_attr_setting.h"
 
+#include <doodle_lib/lib_warp/entt_warp.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_lib/metadata/metadata.h>
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
 #include <maya/adskDataAssociations.h>
@@ -28,7 +30,6 @@ bool data::operator!=(const data& in_rhs) const {
 
 reference_attr_setting::reference_attr_setting()
     : command_base(),
-      p_list(),
       p_handle() {
   p_name          = "引用编辑";
   p_show_str      = make_imgui_name(this,
@@ -37,7 +38,8 @@ reference_attr_setting::reference_attr_setting()
                                     "设置场景",
                                     "保存");
   auto k_ref_view = g_reg()->view<reference_file>();
-  std::transform(k_ref_view.begin(), k_ref_view.end(), std::back_inserter(p_handle),
+  std::transform(k_ref_view.begin(), k_ref_view.end(),
+                 std::back_inserter(p_handle),
                  [](auto& in_e) {
                    return make_handle(in_e);
                  });
@@ -67,30 +69,29 @@ bool reference_attr_setting::get_file_info() {
   MStatus k_status{};
   k_status = MFileIO::getReferences(file_list);
   CHECK_MSTATUS_AND_RETURN(k_status, false);
-  p_list.clear();
+  for (auto& k_h : p_handle) {
+    k_h.destroy();
+  }
 
 #if MAYA_API_VERSION > 20180000 && MAYA_API_VERSION < 20190000
   for (auto i = 0; i < file_list.length(); ++i) {
-    auto k_r     = new_object<reference_attr::data>();
-    k_r->path    = file_list[i].asUTF8();
-    k_r->use_sim = false;
-    p_list.push_back(k_r);
+    auto k_r = make_handle();
+    k_r.emplace<reference_file>(g_reg()->ctx<root_ref>().root_handle(), std::string{file_list[i].asUTF8()});
+    p_handle.push_back(k_r);
   }
 #elif MAYA_API_VERSION > 20190000 && MAYA_API_VERSION < 20200000
   for (auto& in : file_list) {
-    auto k_r     = new_object<reference_attr::data>();
-    k_r->path    = in.asUTF8();
-    k_r->use_sim = false;
-    p_list.push_back(k_r);
+    auto k_r = make_handle();
+    k_r.emplace<reference_file>(g_reg()->ctx<root_ref>().root_handle(), std::string{in.asUTF8()});
+    p_handle.push_back(k_r);
   }
 #elif MAYA_API_VERSION > 20200000
   std::transform(file_list.begin(),
                  file_list.end(),
-                 std::back_inserter(p_list),
-                 [](const MString& in) -> reference_attr::data_ptr {
-                   auto k_r     = new_object<reference_attr::data>();
-                   k_r->path    = in.asUTF8();
-                   k_r->use_sim = false;
+                 std::back_inserter(p_handle),
+                 [](const MString& in) -> entt::handle {
+                   auto k_r = make_handle();
+                   k_r.emplace<reference_file>(g_reg()->ctx<root_ref>().root_handle(), std::string{in.asUTF8()});
                    return k_r;
                  });
 
@@ -110,12 +111,11 @@ bool reference_attr_setting::get_file_info() {
       return false;
 
     auto k_j = nlohmann::json::parse(k_h.str(0));
-    for (auto& k_i : k_j) {
-      auto k_d = k_i.get<reference_attr::data>();
-      for (auto& j : p_list) {
-        if (*j == k_d)
-          j->use_sim = k_d.use_sim;
-      }
+
+    for (auto& l_i : p_handle) {
+      auto l_p = l_i.get<reference_file>().path;
+      if (k_j.contains(l_p))
+        entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
     }
   }
   decltype(k_meta)::Debug(&k_meta, k_p);
@@ -144,9 +144,12 @@ bool reference_attr_setting::render() {
     add_channel();
 
     nlohmann::json k_j{};
+
     std::transform(k_ref_view.begin(), k_ref_view.end(),
-                   std::back_inserter(k_j), [&](auto& in_e) {
-                     return k_ref_view.get<reference_file>(in_e);
+                   std::back_inserter(k_j),
+                   [&](auto& in_e) -> nlohmann::json::object_t::value_type {
+                     auto& k_ref_file = k_ref_view.get<reference_file>(in_e);
+                     return {k_ref_file.path, k_ref_file};
                    });
 
     MStatus k_status{};
