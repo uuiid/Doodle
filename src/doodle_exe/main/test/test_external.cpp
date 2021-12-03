@@ -6,7 +6,7 @@
 #include <catch.hpp>
 
 TEST_CASE("date time", "[time]") {
-  using namespace doodle;
+  using namespace doodle; 
   date::current_zone();
 }
 #include <boost/type_erasure/any.hpp>
