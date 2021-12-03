@@ -9,8 +9,10 @@
 #include <doodle_lib/metadata/metadata.h>
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
+#include <maya/MFnDagNode.h>
 #include <maya/MGlobal.h>
 #include <maya/MItSelectionList.h>
+#include <maya/MUuid.h>
 #include <maya/adskDataAssociations.h>
 #include <maya/adskDataStream.h>
 #include <maya/adskDebugPrint.h>
@@ -75,6 +77,7 @@ bool reference_attr_setting::get_file_info() {
   for (auto& k_h : p_handle) {
     k_h.destroy();
   }
+  p_handle.clear();
 
 #if MAYA_API_VERSION > 20180000 && MAYA_API_VERSION < 20190000
   for (auto i = 0; i < file_list.length(); ++i) {
@@ -120,6 +123,10 @@ bool reference_attr_setting::get_file_info() {
       if (k_j.contains(l_p))
         entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
     }
+
+    
+
+
   }
   decltype(k_meta)::Debug(&k_meta, k_p);
   k_p.endSection();
@@ -147,7 +154,7 @@ bool reference_attr_setting::render() {
         get_collision(make_handle(k_e));
       }
       dear::Text("解算碰撞");
-      for (const auto& k_f : k_ref.collision_model)
+      for (const auto& k_f : p_names)
         dear::Text(k_f);
     };
   }
@@ -155,12 +162,15 @@ bool reference_attr_setting::render() {
   if (imgui::Button(p_show_str["保存"].c_str())) {
     add_channel();
     nlohmann::json k_j{};
-    std::transform(k_ref_view.begin(), k_ref_view.end(),
-                   std::back_inserter(k_j),
-                   [&](auto& in_e) -> nlohmann::json::object_t::value_type {
-                     auto& k_ref_file = k_ref_view.get<reference_file>(in_e);
-                     return {k_ref_file.path, k_ref_file};
-                   });
+    for (auto& k : p_handle) {
+      entt_tool::save_comm<reference_file>(k, k_j[k.get<reference_file>().path]);
+    }
+    // std::transform(k_ref_view.begin(), k_ref_view.end(),
+    //                std::back_inserter(k_j),
+    //                [&](auto& in_e) -> nlohmann::json::object_t::value_type {
+    //                  auto& k_ref_file = k_ref_view.get<reference_file>(in_e);
+    //                  return {k_ref_file.path, k_ref_file};
+    //                });
 
     MStatus k_status{};
     /// 获取文件元数据
@@ -186,16 +196,16 @@ bool reference_attr_setting::render() {
   }
   return true;
 }
-bool reference_attr_setting::add_collision(const entt::handle& in_ref) const {
+bool reference_attr_setting::add_collision(const entt::handle& in_ref) {
   if (!in_ref.any_of<reference_file>())
     throw component_error{"缺失组件"};
 
   auto& k_ref = in_ref.get<reference_file>();
-  MSelectionList k_list;
+
   MStatus k_s{};
-  k_s = MGlobal::getActiveSelectionList(k_list);
+  k_s = MGlobal::getActiveSelectionList(p_select);
   DOODLE_CHICK(k_s);
-  if (k_list.length() > 30) {
+  if (p_select.length() > 30) {
     MString k_str{};
     k_str.setUTF8("太多的选择");
     MGlobal::displayWarning(k_str);
@@ -203,27 +213,31 @@ bool reference_attr_setting::add_collision(const entt::handle& in_ref) const {
   }
 
   MDagPath l_path{};
-  for (MItSelectionList l_it{k_list, MFn::Type::kMesh, &k_s};
+  MFnDagNode l_node{};
+  k_ref.collision_model.clear();
+  p_names.clear();
+  for (MItSelectionList l_it{p_select, MFn::Type::kMesh, &k_s};
        !l_it.isDone(&k_s);
        l_it.next()) {
     DOODLE_CHICK(k_s);
     k_s = l_it.getDagPath(l_path);
     DOODLE_CHICK(k_s);
-    k_ref.collision_model.emplace_back(l_path.fullPathName(&k_s).asUTF8());
+    auto k_obj = l_path.transform(&k_s);
+    DOODLE_CHICK(k_s);
+    k_s = l_node.setObject(k_obj);
+    DOODLE_CHICK(k_s);
+    p_names.emplace_back(l_node.name(&k_s).asUTF8());
+    DOODLE_CHICK(k_s);
+
+    k_ref.collision_model.emplace_back(l_node.uuid(&k_s).asString().asUTF8());
     DOODLE_CHICK(k_s);
   }
 
   return true;
 }
 bool reference_attr_setting::get_collision(const entt::handle& in_ref) const {
-  chick_component<reference_file>(in_ref);
-  auto& k_ref = in_ref.get<reference_file>();
-  MSelectionList k_list;
   MStatus k_s{};
-  for (auto& l_i : k_ref.collision_model) {
-    k_list.add(MString{l_i.c_str()}, true);
-  }
-  k_s = MGlobal::setActiveSelectionList(k_list);
+  k_s = MGlobal::setActiveSelectionList(p_select);
   DOODLE_CHICK(k_s);
   return true;
 }
