@@ -29,7 +29,7 @@ bool data::operator!=(const data& in_rhs) const {
 reference_attr_setting::reference_attr_setting()
     : command_base(),
       p_list(),
-      p_handle(){
+      p_handle() {
   p_name          = "引用编辑";
   p_show_str      = make_imgui_name(this,
                                     "解析引用",
@@ -37,7 +37,10 @@ reference_attr_setting::reference_attr_setting()
                                     "设置场景",
                                     "保存");
   auto k_ref_view = g_reg()->view<reference_file>();
-  p_handle.assign(k_ref_view.begin(), k_ref_view.end());
+  std::transform(k_ref_view.begin(), k_ref_view.end(), std::back_inserter(p_handle),
+                 [](auto& in_e) {
+                   return make_handle(in_e);
+                 });
 }
 
 bool reference_attr_setting::add_channel() const {
