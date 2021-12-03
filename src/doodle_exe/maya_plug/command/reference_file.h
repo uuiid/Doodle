@@ -12,7 +12,6 @@ class reference_file {
   string path;
   bool use_sim;
   bool high_speed_sim;
-  std::vector<string> collision_ref_file;
   std::vector<string> collision_model;
 
   reference_file();
@@ -23,7 +22,6 @@ class reference_file {
     j["path"]               = p.path;
     j["use_sim"]            = p.use_sim;
     j["high_speed_sim"]     = p.high_speed_sim;
-    j["collision_ref_file"] = p.collision_ref_file;
     j["collision_model"]    = p.collision_model;
     j["prj_ref"]            = p.prj_ref;
   }
@@ -32,7 +30,6 @@ class reference_file {
     j.at("use_sim").get_to(p.use_sim);
     j.at("prj_ref").get_to(p.prj_ref);
     j.at("high_speed_sim").get_to(p.high_speed_sim);
-    j.at("collision_ref_file").get_to(p.collision_ref_file);
     j.at("collision_model").get_to(p.collision_model);
   }
 };

@@ -11,7 +11,6 @@ reference_file::reference_file()
       path(),
       use_sim(false),
       high_speed_sim(false),
-      collision_ref_file(),
       collision_model(){};
 
 reference_file::reference_file(const entt::handle &in_uuid, const string &in_u8_path)
