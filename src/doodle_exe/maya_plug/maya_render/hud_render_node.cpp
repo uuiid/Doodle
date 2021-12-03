@@ -166,7 +166,7 @@ void doodle_info_node_draw_override::addUIDrawables(
 
   {
     /// 绘制当前帧和总帧数
-    auto k_len   = MAnimControl::maxTime() - MAnimControl::minTime();
+    auto k_len   = MAnimControl::maxTime() - MAnimControl::minTime() + 1;
     auto k_curr  = MAnimControl::currentTime();
     auto _k_time = fmt::format("{}/{}", k_curr.as(MTime::uiUnit()), k_len.as(MTime::uiUnit()));
     MString k_time{_k_time.c_str()};
