@@ -15,6 +15,7 @@ reference_file::reference_file()
 
 reference_file::reference_file(const entt::handle &in_uuid, const string &in_u8_path)
     : reference_file() {
+  chick_component<database>(in_uuid);
   prj_ref = in_uuid.get<database>().uuid();
   path    = in_u8_path;
 }
