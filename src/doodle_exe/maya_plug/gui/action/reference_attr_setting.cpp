@@ -7,12 +7,15 @@
 #include <doodle_lib/lib_warp/entt_warp.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata.h>
+#include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
+#include <maya/MItSelectionList.h>
 #include <maya/adskDataAssociations.h>
 #include <maya/adskDataStream.h>
 #include <maya/adskDebugPrint.h>
 #include <maya_plug/command/reference_file.h>
+#include <maya_plug/maya_plug_fwd.h>
 
 #include <nlohmann/json.hpp>
 
@@ -137,14 +140,21 @@ bool reference_attr_setting::render() {
         return;
 
       imgui::Checkbox("高精度配置", &(k_ref.high_speed_sim));
+      if (imgui::Button("替换")) {
+        add_collision(make_handle(k_e));
+      }
+      if (imgui::Button("获取")) {
+        get_collision(make_handle(k_e));
+      }
+      dear::Text("解算碰撞");
+      for (const auto& k_f : k_ref.collision_model)
+        dear::Text(k_f);
     };
   }
 
   if (imgui::Button(p_show_str["保存"].c_str())) {
     add_channel();
-
     nlohmann::json k_j{};
-
     std::transform(k_ref_view.begin(), k_ref_view.end(),
                    std::back_inserter(k_j),
                    [&](auto& in_e) -> nlohmann::json::object_t::value_type {
@@ -174,6 +184,47 @@ bool reference_attr_setting::render() {
     decltype(k_meta)::Debug(&k_meta, k_p);
     k_p.endSection();
   }
+  return true;
+}
+bool reference_attr_setting::add_collision(const entt::handle& in_ref) const {
+  if (!in_ref.any_of<reference_file>())
+    throw component_error{"缺失组件"};
+
+  auto& k_ref = in_ref.get<reference_file>();
+  MSelectionList k_list;
+  MStatus k_s{};
+  k_s = MGlobal::getActiveSelectionList(k_list);
+  DOODLE_CHICK(k_s);
+  if (k_list.length() > 30) {
+    MString k_str{};
+    k_str.setUTF8("太多的选择");
+    MGlobal::displayWarning(k_str);
+    return false;
+  }
+
+  MDagPath l_path{};
+  for (MItSelectionList l_it{k_list, MFn::Type::kMesh, &k_s};
+       !l_it.isDone(&k_s);
+       l_it.next()) {
+    DOODLE_CHICK(k_s);
+    k_s = l_it.getDagPath(l_path);
+    DOODLE_CHICK(k_s);
+    k_ref.collision_model.emplace_back(l_path.fullPathName(&k_s).asUTF8());
+    DOODLE_CHICK(k_s);
+  }
+
+  return true;
+}
+bool reference_attr_setting::get_collision(const entt::handle& in_ref) const {
+  chick_component<reference_file>(in_ref);
+  auto& k_ref = in_ref.get<reference_file>();
+  MSelectionList k_list;
+  MStatus k_s{};
+  for (auto& l_i : k_ref.collision_model) {
+    k_list.add(MString{l_i.c_str()}, true);
+  }
+  k_s = MGlobal::setActiveSelectionList(k_list);
+  DOODLE_CHICK(k_s);
   return true;
 }
 
