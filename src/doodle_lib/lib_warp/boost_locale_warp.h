@@ -6,9 +6,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
-#include <boost/locale/util.hpp>
-namespace doodle {
-namespace conv {
+namespace doodle::conv {
 using namespace boost::locale::conv;
 
 template <class CharOut, class CharIn>
@@ -40,7 +38,5 @@ utf_to_locale(std::basic_string<CharIn> const &str, method_type how = default_me
   ::boost::split(strs, locale_str, boost::is_any_of("."));
   return from_utf<CharOut>(str, gen(strs.back()), how);
 }
-
-}  // namespace conv
 
 }  // namespace doodle
