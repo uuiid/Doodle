@@ -20,11 +20,11 @@ void _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
 template <class Component, class Archive>
 void _load_(entt::handle &in_handle, Archive &in_archive) {
   std::size_t l_size{};
-  l_size = in_archive["size"].template get<std::size_t>();
+  l_size = in_archive.at("size").template get<std::size_t>();
 
   while (l_size--) {
     Component l_component{};
-    in_archive[typeid(Component).name()].get_to(l_component);
+    in_archive.at(typeid(Component).name()).get_to(l_component);
     in_handle.template emplace_or_replace<Component>(std::move(l_component));
   }
 }
@@ -38,7 +38,10 @@ void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequen
 
 template <class... Component, class Archive, std::size_t... Index>
 void _load_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
-  (_load_<Component>(in_handle, in_archive[typeid(Component).name()]), ...);
+  ((in_archive.contains(typeid(Component).name())
+        ? _load_<Component>(in_handle, in_archive.at(typeid(Component).name()))
+        : 0U),
+   ...);
 }
 
 }  // namespace detail
