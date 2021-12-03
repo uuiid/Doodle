@@ -9,6 +9,8 @@
 #include <nlohmann/json.hpp>
 
 namespace doodle::maya_plug {
+class reference_file;
+
 namespace reference_attr {
 class data {
  public:
@@ -38,6 +40,7 @@ using data_ptr = std::shared_ptr<data>;
 class reference_attr_setting : public command_base {
   std::vector<reference_attr::data_ptr> p_list;
 
+  std::vector<entt::handle> p_handle;
   bool add_channel() const;
   bool get_file_info();
 

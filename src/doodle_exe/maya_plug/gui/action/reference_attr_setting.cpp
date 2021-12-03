@@ -8,9 +8,9 @@
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
 #include <maya/adskDataAssociations.h>
-#include <maya/adskDataHandle.h>
 #include <maya/adskDataStream.h>
 #include <maya/adskDebugPrint.h>
+#include <maya_plug/command/reference_file.h>
 
 #include <nlohmann/json.hpp>
 
@@ -28,13 +28,16 @@ bool data::operator!=(const data& in_rhs) const {
 
 reference_attr_setting::reference_attr_setting()
     : command_base(),
-      p_list() {
-  p_name     = "引用编辑";
-  p_show_str = make_imgui_name(this,
-                               "解析引用",
-                               "引用",
-                               "设置场景",
-                               "保存");
+      p_list(),
+      p_handle(){
+  p_name          = "引用编辑";
+  p_show_str      = make_imgui_name(this,
+                                    "解析引用",
+                                    "引用",
+                                    "设置场景",
+                                    "保存");
+  auto k_ref_view = g_reg()->view<reference_file>();
+  p_handle.assign(k_ref_view.begin(), k_ref_view.end());
 }
 
 bool reference_attr_setting::add_channel() const {
@@ -122,22 +125,26 @@ bool reference_attr_setting::render() {
     get_file_info();
   }
 
-  dear::ListBox{p_show_str["引用"].c_str()} && [this]() {
-    for (auto& i : p_list) {
-      imgui::Checkbox(i->path.c_str(), &(i->use_sim));
-    }
-  };
+  auto k_ref_view = g_reg()->view<reference_file>();
+  for (auto k_e : k_ref_view) {
+    auto& k_ref = k_ref_view.get<reference_file>(k_e);
+    dear::TreeNode{k_ref.path.c_str()} && [&]() {
+      imgui::Checkbox("解算", &(k_ref.use_sim));
+      if (!k_ref.use_sim)
+        return;
 
-  dear::TreeNode{p_show_str["引用列表"].c_str()} && []() {
-
-
-  };
+      imgui::Checkbox("高精度配置", &(k_ref.high_speed_sim));
+    };
+  }
 
   if (imgui::Button(p_show_str["保存"].c_str())) {
     add_channel();
-    std::vector<reference_attr::data> k_l;
+
     nlohmann::json k_j{};
-    std::transform(p_list.begin(), p_list.end(), std::back_inserter(k_j), [](auto& i) { return *i; });
+    std::transform(k_ref_view.begin(), k_ref_view.end(),
+                   std::back_inserter(k_j), [&](auto& in_e) {
+                     return k_ref_view.get<reference_file>(in_e);
+                   });
 
     MStatus k_status{};
     /// 获取文件元数据
