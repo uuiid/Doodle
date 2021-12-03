@@ -341,7 +341,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       ///添加水印
       details::watermark k_w{};
       /// 绘制当前帧和总帧数
-      auto k_len = MAnimControl::maxTime() - MAnimControl::minTime();
+      auto k_len = MAnimControl::maxTime() - MAnimControl::minTime() + 1;
       auto k_min = MAnimControl::minTime();
       k_w.set_text([=](std::int32_t in_frame) -> string {
         return fmt::format("{}/{}", k_min.as(MTime::uiUnit()) + in_frame, k_len.as(MTime::uiUnit()));
