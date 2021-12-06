@@ -175,6 +175,13 @@ bool reference_attr_setting::render() {
     }
     replace_channel_date(k_j.dump());
   }
+
+#if 1
+  if (imgui::Button("debug")) {
+    std::cout << MFileIO::currentFile() << std::endl;
+  }
+#endif
+
   return true;
 }
 
