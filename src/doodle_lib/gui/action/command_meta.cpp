@@ -46,7 +46,12 @@ comm_project_add::comm_project_add()
                                "frame_samples",
                                "time_scale",
                                "length_scale",
-                               "解算配置");
+                               "解算配置",
+                               "布料代理",
+                               "布料节点",
+                               "导出节点"
+
+  );
 }
 
 bool comm_project_add::render() {
@@ -115,6 +120,21 @@ bool comm_project_add::render() {
     if (imgui::SliderFloat(p_show_str["length_scale"].c_str(), &(p_impl->cloth_config.length_scale), 0.f, 1000.f)) {
       p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
         in.length_scale = p_impl->cloth_config.length_scale;
+      });
+    }
+    if (imgui::InputText(p_show_str["布料代理"].c_str(), &(p_impl->cloth_config.cloth_proxy))) {
+      p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
+        in.cloth_proxy = p_impl->cloth_config.cloth_proxy;
+      });
+    }
+    if (imgui::InputText(p_show_str["布料节点"].c_str(), &(p_impl->cloth_config.cloth_proxy))) {
+      p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
+        in.cloth_proxy = p_impl->cloth_config.cloth_proxy;
+      });
+    }
+    if (imgui::InputText(p_show_str["导出节点"].c_str(), &(p_impl->cloth_config.export_group))) {
+      p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
+        in.export_group = p_impl->cloth_config.export_group;
       });
     }
   };
