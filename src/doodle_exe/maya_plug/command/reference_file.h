@@ -10,6 +10,8 @@ class reference_file {
   uuid prj_ref;
   string ref_file_uuid;
 
+  MObject k_ref_node;
+
  public:
   string path;
   bool use_sim;
@@ -22,6 +24,7 @@ class reference_file {
   explicit reference_file(const entt::handle &in_uuid, const MObject &in_ref_node);
 
   void init_show_name();
+
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
   string get_namespace();
@@ -33,6 +36,7 @@ class reference_file {
     j["high_speed_sim"]  = p.high_speed_sim;
     j["collision_model"] = p.collision_model;
     j["prj_ref"]         = p.prj_ref;
+    j["ref_file_uuid"]   = p.ref_file_uuid;
   }
   friend void from_json(const nlohmann::json &j, reference_file &p) {
     j.at("path").get_to(p.path);
@@ -40,6 +44,7 @@ class reference_file {
     j.at("prj_ref").get_to(p.prj_ref);
     j.at("high_speed_sim").get_to(p.high_speed_sim);
     j.at("collision_model").get_to(p.collision_model);
+    j.at("ref_file_uuid").get_to(p.ref_file_uuid);
   }
 };
 

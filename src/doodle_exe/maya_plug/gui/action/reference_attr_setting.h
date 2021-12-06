@@ -39,7 +39,9 @@ using data_ptr = std::shared_ptr<data>;
  */
 class reference_attr_setting : public command_base {
   std::vector<entt::handle> p_handle;
-  bool add_channel() const;
+  bool chick_channel() const;
+  bool replace_channel_date(const string& in_string) const;
+  string get_channel_date() const;
   bool get_file_info();
 
  public:

@@ -9,9 +9,8 @@
 #include <doodle_lib/metadata/metadata.h>
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
-#include <maya/MFnDagNode.h>
-#include <maya/MGlobal.h>
-#include <maya/MItSelectionList.h>
+#include <maya/MFnReference.h>
+#include <maya/MItDependencyNodes.h>
 #include <maya/MUuid.h>
 #include <maya/adskDataAssociations.h>
 #include <maya/adskDataStream.h>
@@ -50,10 +49,10 @@ reference_attr_setting::reference_attr_setting()
                  });
 }
 
-bool reference_attr_setting::add_channel() const {
+bool reference_attr_setting::chick_channel() const {
   MStatus k_status{};
   adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
-  CHECK_MSTATUS_AND_RETURN(k_status, false);
+  DOODLE_CHICK(k_status);
   auto k_channel = k_meta.channel("doodle_sim_json");
   if (!k_channel.dataStream("json_stream")) {
     auto k_s = adsk::Data::Structure::create();              // 添加结构
@@ -67,68 +66,72 @@ bool reference_attr_setting::add_channel() const {
   }
   return true;
 }
-
-bool reference_attr_setting::get_file_info() {
-  adsk::Debug::Print k_p{std::cout};
-  MStringArray file_list;
+bool reference_attr_setting::replace_channel_date(const string& in_string) const {
+  chick_channel();
   MStatus k_status{};
-  k_status = MFileIO::getReferences(file_list);
-  CHECK_MSTATUS_AND_RETURN(k_status, false);
-  for (auto& k_h : p_handle) {
-    k_h.destroy();
-  }
-  p_handle.clear();
-
-#if MAYA_API_VERSION > 20180000 && MAYA_API_VERSION < 20190000
-  for (auto i = 0; i < file_list.length(); ++i) {
-    auto k_r = make_handle();
-    k_r.emplace<reference_file>(g_reg()->ctx<root_ref>().root_handle(), std::string{file_list[i].asUTF8()});
-    p_handle.push_back(k_r);
-  }
-#elif MAYA_API_VERSION > 20190000 && MAYA_API_VERSION < 20200000
-  for (auto& in : file_list) {
-    auto k_r = make_handle();
-    k_r.emplace<reference_file>(g_reg()->ctx<root_ref>().root_handle(), std::string{in.asUTF8()});
-    p_handle.push_back(k_r);
-  }
-#elif MAYA_API_VERSION > 20200000
-  std::transform(file_list.begin(),
-                 file_list.end(),
-                 std::back_inserter(p_handle),
-                 [](const MString& in) -> entt::handle {
-                   auto k_r = make_handle();
-                   k_r.emplace<reference_file>(g_reg()->ctx<root_ref>().root_handle(), std::string{in.asUTF8()});
-                   return k_r;
-                 });
-
-#endif
-  add_channel();
-
   adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
   CHECK_MSTATUS_AND_RETURN(k_status, false);
+  auto k_json   = k_meta.channel("doodle_sim_json");  /// 获得元数据通道
+  auto k_stream = k_json.dataStream("json_stream");   /// 获得元数据流
+
+  adsk::Data::Handle k_h{k_stream->structure()};
+
+  string str_err{};
+  DOODLE_LOG_INFO(in_string);
+  k_h.fromStr(in_string, 0, str_err);
+  DOODLE_LOG_ERROR(str_err);
+  k_stream->setElement(0, k_h);
+  MFileIO::setMetadata(k_meta);
+
+  adsk::Debug::Print k_p{std::cout};
+  decltype(k_meta)::Debug(&k_meta, k_p);
+  k_p.endSection();
+}
+string reference_attr_setting::get_channel_date() const {
+  MStatus k_status{};
+  adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
+  DOODLE_CHICK(k_status);
   auto k_channel = k_meta.channel("doodle_sim_json");
   if (!k_channel.empty()) {
     auto k_stream = k_channel.dataStream("json_stream");
     adsk::Data::Handle k_h{k_stream->element(0)};
     if (!k_h.hasData())
-      return false;
+      return {};
     auto k_str = k_h.str(0);
     if (k_str.empty())
-      return false;
-
-    auto k_j = nlohmann::json::parse(k_h.str(0));
-
-    for (auto& l_i : p_handle) {
-      auto& k_ref = l_i.get<reference_file>();
-      auto l_p    = k_ref.path;
-      if (k_j.contains(l_p))
-        entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
-      l_i.get<reference_file>().init_show_name();
-    }
+      return {};
+    return k_h.str(0);
   }
-  decltype(k_meta)::Debug(&k_meta, k_p);
-  k_p.endSection();
-  return true;
+  return {};
+}
+bool reference_attr_setting::get_file_info() {
+  adsk::Debug::Print k_p{std::cout};
+  MStatus k_status{};
+  DOODLE_CHICK(k_status);
+  for (auto& k_h : p_handle) {
+    k_h.destroy();
+  }
+  p_handle.clear();
+
+  MStatus k_s{};
+  MFnReference k_ref{};
+  for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
+    k_s = k_ref.setObject(refIter.thisNode());
+    DOODLE_CHICK(k_s);
+    auto k_h = make_handle();
+    k_h.emplace<reference_file>(g_reg()->ctx<root_ref>().root_handle(), refIter.thisNode(&k_s));
+    DOODLE_CHICK(k_s);
+  }
+
+  auto k_j = nlohmann::json::parse(get_channel_date());
+
+  for (auto& l_i : p_handle) {
+    auto& k_ref = l_i.get<reference_file>();
+    auto l_p    = k_ref.path;
+    if (k_j.contains(l_p))
+      entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
+    l_i.get<reference_file>().init_show_name();
+  }
 }
 
 bool reference_attr_setting::render() {
@@ -161,39 +164,12 @@ bool reference_attr_setting::render() {
   }
 
   if (imgui::Button(p_show_str["保存"].c_str())) {
-    add_channel();
+    chick_channel();
     nlohmann::json k_j{};
     for (auto& k : p_handle) {
       entt_tool::save_comm<reference_file>(k, k_j[k.get<reference_file>().path]);
     }
-    // std::transform(k_ref_view.begin(), k_ref_view.end(),
-    //                std::back_inserter(k_j),
-    //                [&](auto& in_e) -> nlohmann::json::object_t::value_type {
-    //                  auto& k_ref_file = k_ref_view.get<reference_file>(in_e);
-    //                  return {k_ref_file.path, k_ref_file};
-    //                });
-
-    MStatus k_status{};
-    /// 获取文件元数据
-    /// 转换元数据
-    adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
-    CHECK_MSTATUS_AND_RETURN(k_status, false);
-    auto k_json   = k_meta.channel("doodle_sim_json");  /// 获得元数据通道
-    auto k_stream = k_json.dataStream("json_stream");   /// 获得元数据流
-
-    adsk::Data::Handle k_h{k_stream->structure()};
-
-    string str_err{};
-    auto str = k_j.dump();
-    DOODLE_LOG_INFO(str);
-    k_h.fromStr(str, 0, str_err);
-    DOODLE_LOG_ERROR(str_err);
-    k_stream->setElement(0, k_h);
-    MFileIO::setMetadata(k_meta);
-
-    adsk::Debug::Print k_p{std::cout};
-    decltype(k_meta)::Debug(&k_meta, k_p);
-    k_p.endSection();
+    replace_channel_date(k_j);
   }
   return true;
 }

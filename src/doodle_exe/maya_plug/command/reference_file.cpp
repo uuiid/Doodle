@@ -19,7 +19,10 @@ reference_file::reference_file()
       path(),
       use_sim(false),
       high_speed_sim(false),
-      collision_model(){};
+      collision_model(),
+      ref_file_uuid(),
+      k_ref_node(){};
+
 reference_file::reference_file(const entt::handle &in_uuid, const MObject &in_ref_node)
     : reference_file() {
   chick_component<database>(in_uuid);
@@ -27,7 +30,11 @@ reference_file::reference_file(const entt::handle &in_uuid, const MObject &in_re
   MStatus k_s{};
   MFnReference k_ref{in_ref_node, &k_s};
   DOODLE_CHICK(k_s);
-  k_ref.fileName();
+  auto k_m_str = k_ref.fileName(true, true, false, &k_s);
+  DOODLE_CHICK(k_s);
+  path          = k_m_str.asUTF8();
+  ref_file_uuid = k_ref.uuid().asString().asUTF8();
+  k_ref_node    = in_ref_node;
 }
 reference_file::reference_file(const entt::handle &in_uuid, const string &in_u8_path)
     : reference_file() {
