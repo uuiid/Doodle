@@ -32,6 +32,11 @@ try {
 
   auto doodleLib = doodle::new_object<doodle::doodle_lib>();
   auto& set                = doodle::core_set::getSet();
+  doodle::core_set_init k_init{};
+  k_init.find_cache_dir();
+  k_init.config_to_user();
+  k_init.read_file();
+
   auto p_rpc_server_handle = std::make_shared<doodle::rpc_server_handle>();
   p_rpc_server_handle->run_server_wait(set.get_meta_rpc_port(), set.get_file_rpc_port());
 
