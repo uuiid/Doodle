@@ -204,6 +204,12 @@ const boost::uuids::uuid &database::uuid() const {
 const string &database::get_id_str() const {
   return p_id_str;
 }
+bool database::operator==(const boost::uuids::uuid &in_rhs) const {
+  return p_uuid_ == in_rhs;
+}
+bool database::operator!=(const boost::uuids::uuid &in_rhs) const {
+  return !(*this == in_rhs);
+}
 
 const string &to_str::get() const {
   auto k_h   = make_handle(*this);

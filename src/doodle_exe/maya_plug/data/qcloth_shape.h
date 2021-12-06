@@ -16,5 +16,7 @@ class qcloth_shape {
   qcloth_shape();
   explicit qcloth_shape(const entt::handle& in_ref_file);
 
+
+
 };
 }  // namespace doodle::maya_plug

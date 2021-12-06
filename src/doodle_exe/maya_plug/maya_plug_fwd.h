@@ -8,18 +8,40 @@
 #include <doodle_lib/exception/exception.h>
 #include <maya/MGlobal.h>
 #include <maya/MStatus.h>
+#include <maya/MString.h>
 namespace doodle::maya_plug {
 class play_blast;
 using play_blast_ptr = std::shared_ptr<play_blast>;
 
-//inline void chick_maya_status(const MStatus& in_status) {
-//  if (in_status != MStatus::MStatusCode::kSuccess) {
-//    const MString& l_string = in_status.errorString();
-//    MGlobal::displayError(l_string);
-//    DOODLE_LOG_ERROR(l_string.asUTF8());
-//    throw doodle_error{l_string.asUTF8()};
-//  }
-//};
+class d_str {
+ public:
+  string p_u8_str{};
+  explicit d_str(const MString& in)
+      : p_u8_str(in.asUTF8()){};
+  d_str(const string& in_u8_str)
+      : p_u8_str(in_u8_str) {
+  }
+
+  inline operator MString() const {
+    MString k_r{};
+    k_r.setUTF8(p_u8_str.c_str());
+  }
+  inline operator string() const {
+    return p_u8_str;
+  }
+  inline string str() const {
+    return p_u8_str;
+  }
+};
+
+// inline void chick_maya_status(const MStatus& in_status) {
+//   if (in_status != MStatus::MStatusCode::kSuccess) {
+//     const MString& l_string = in_status.errorString();
+//     MGlobal::displayError(l_string);
+//     DOODLE_LOG_ERROR(l_string.asUTF8());
+//     throw doodle_error{l_string.asUTF8()};
+//   }
+// };
 
 #define DOODLE_CHICK(in_status)                          \
   {                                                      \

@@ -115,7 +115,9 @@ class DOODLELIB_API database {
   database &operator=(const metadata_database &in);
   explicit operator metadata_database() const;
   bool operator==(const database &in_rhs) const;
+  bool operator==(const boost::uuids::uuid &in_rhs) const;
   bool operator!=(const database &in_rhs) const;
+  bool operator!=(const boost::uuids::uuid &in_rhs) const;
 
 
 

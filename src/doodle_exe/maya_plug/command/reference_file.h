@@ -10,7 +10,10 @@ class reference_file {
   uuid prj_ref;
   string ref_file_uuid;
 
-  MObject k_ref_node;
+  MObject p_m_object;
+
+  void chick_mobject();
+  void chick_mobject() const;
 
  public:
   string path;
@@ -20,14 +23,20 @@ class reference_file {
   std::vector<string> collision_model_show_str;
 
   reference_file();
-  explicit reference_file(const entt::handle &in_uuid, const string &in_u8_path);
   explicit reference_file(const entt::handle &in_uuid, const MObject &in_ref_node);
 
   void init_show_name();
 
+  entt::handle get_prj() const;
+
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
-  string get_namespace();
+  [[nodiscard]] string get_namespace() const;
+  [[nodiscard]] string get_namespace();
+  /*
+   * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况
+   */
+  bool replace_sim_assets_file();
 
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {
@@ -45,6 +54,7 @@ class reference_file {
     j.at("high_speed_sim").get_to(p.high_speed_sim);
     j.at("collision_model").get_to(p.collision_model);
     j.at("ref_file_uuid").get_to(p.ref_file_uuid);
+    p.chick_mobject();
   }
 };
 
