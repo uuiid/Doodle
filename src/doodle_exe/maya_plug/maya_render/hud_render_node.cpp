@@ -189,11 +189,11 @@ void doodle_info_node_draw_override::addUIDrawables(
     }
 
     auto _k_s_ = fmt::format("FOV: {:.3f}", k_f);
-    MString k_s{_k_s_.c_str()};
-    std::int32_t k_size[] = {(std::int32_t)k_s.numChars() * s_font_size_, 30};
+    MString k_str{_k_s_.c_str()};
+    std::int32_t k_size[] = {(std::int32_t)k_str.numChars() * s_font_size_, 30};
     drawManager.text2d(
         MPoint(w * 0.91f, h * 0.91f),
-        k_s,
+        k_str,
         MHWRender::MUIDrawManager::kRight,
         k_size,
         &k_color);
@@ -203,11 +203,11 @@ void doodle_info_node_draw_override::addUIDrawables(
     /// 拍屏日期
     auto k_time = chrono::floor<chrono::minutes>(chrono::system_clock::now());
     auto _k_s_  = fmt::format("{}", k_time);
-    MString k_s{_k_s_.c_str()};
-    std::int32_t k_size[] = {(std::int32_t)k_s.numChars() * s_font_size_, 30};
+    MString k_str{_k_s_.c_str()};
+    std::int32_t k_size[] = {(std::int32_t)k_str.numChars() * s_font_size_, 30};
     drawManager.text2d(
         MPoint(w * 0.1f, h * 0.1f),
-        k_s,
+        k_str,
         MHWRender::MUIDrawManager::kCenter,
         k_size,
         &k_color);
@@ -216,12 +216,12 @@ void doodle_info_node_draw_override::addUIDrawables(
   /// 制作人姓名
   {
     auto _k_s_ = fmt::format("{}", core_set::getSet().get_user());
-    MString k_s{};
-    k_s.setUTF8(_k_s_.c_str());
-    std::int32_t k_size[] = {(std::int32_t)k_s.numChars() * s_font_size_ * 2, 35};
+    MString k_str{};
+    k_str.setUTF8(_k_s_.c_str());
+    std::int32_t k_size[] = {(std::int32_t)k_str.numChars() * s_font_size_ * 2, 35};
     drawManager.text2d(
         MPoint(w * 0.5f, h * 0.1f),
-        k_s,
+        k_str,
         MHWRender::MUIDrawManager::kCenter,
         k_size,
         &k_color);

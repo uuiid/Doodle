@@ -27,16 +27,20 @@ class reference_file {
 
   void init_show_name();
 
-  entt::handle get_prj() const;
+  [[nodiscard]] entt::handle get_prj() const;
 
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
   [[nodiscard]] string get_namespace() const;
   [[nodiscard]] string get_namespace();
-  /*
+  /**
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况
    */
   bool replace_sim_assets_file();
+
+  bool create_cache() const;
+  bool rename_material() const;
+  bool export_abc() const;
 
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {

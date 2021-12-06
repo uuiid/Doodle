@@ -4,19 +4,21 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
-
+#include <maya/MObject.h>
 namespace doodle::maya_plug {
 class reference_file;
 
 class qcloth_shape {
  private:
   entt::handle p_ref_file;
+  MObject obj;
+  MObject sim_obj;
 
  public:
   qcloth_shape();
-  explicit qcloth_shape(const entt::handle& in_ref_file);
+  explicit qcloth_shape(const entt::handle& in_ref_file, const MObject& in_object);
 
-
-
+  bool set_cache_folder() const;
+  bool create_cache() const;
 };
 }  // namespace doodle::maya_plug

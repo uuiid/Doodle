@@ -16,9 +16,12 @@ using play_blast_ptr = std::shared_ptr<play_blast>;
 class d_str {
  public:
   string p_u8_str{};
-  template <class MStr, std::enable_if<std::is_same_v<MStr, MString>, bool> = true>
+  template <class MStr, std::enable_if_t<std::is_same_v<MString, MStr>, bool> = true>
   explicit d_str(const MStr& in)
       : p_u8_str(in.asUTF8()){};
+
+  //  explicit d_str(const MString& in)
+  //      : p_u8_str(in.asUTF8()){};
 
   d_str(const string& in_u8_str)
       : p_u8_str(in_u8_str) {
@@ -27,6 +30,7 @@ class d_str {
   inline operator MString() const {
     MString k_r{};
     k_r.setUTF8(p_u8_str.c_str());
+    return k_r;
   }
   inline operator string() const {
     return p_u8_str;

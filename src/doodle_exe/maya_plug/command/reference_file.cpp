@@ -132,7 +132,6 @@ bool reference_file::replace_sim_assets_file() {
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
 
-
   if (!k_ref.isLoaded(&k_s)) {
     DOODLE_CHICK(k_s);
     return false;
@@ -150,12 +149,13 @@ bool reference_file::replace_sim_assets_file() {
   auto k_comm = fmt::format(R"(
 file -loadReference "{}" "{}";
 )",
-                            d_str{k_ref.name()}.str(), "");
+                            d_str{k_ref.name()}.str(), k_vfx_path.generic_string(), true);
 
   k_s         = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
-  return false;
+  return true;
 }
+
 entt::handle reference_file::get_prj() const {
   auto k_prj_view = g_reg()->view<project>();
   for (auto k_e : k_prj_view) {
