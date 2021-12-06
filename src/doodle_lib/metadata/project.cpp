@@ -13,7 +13,10 @@ project::cloth_config::cloth_config()
       simple_subsampling(true),
       frame_samples(10),
       time_scale(0.1),
-      length_scale(0.4) {}
+      length_scale(0.4),
+      cloth_shape("_cloth_proxy"),
+      cloth_proxy("_clothShape"),
+      export_group("UE4") {}
 
 project::project()
     : p_name("none"),
