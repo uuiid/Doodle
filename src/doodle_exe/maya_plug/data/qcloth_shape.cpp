@@ -9,6 +9,7 @@
 #include <maya/MFnDependencyNode.h>
 #include <maya/MPlug.h>
 #include <maya_plug/command/reference_file.h>
+#include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/maya_plug_fwd.h>
 namespace doodle::maya_plug {
 qcloth_shape::qcloth_shape() = default;
@@ -47,10 +48,10 @@ bool qcloth_shape::set_cache_folder() const {
   {
     auto k_cache = k_node.findPlug(d_str{"cacheFolder"}, true, &k_s);
     DOODLE_CHICK(k_s);
-    string k_file_name = MFileIO::currentFile().asUTF8();
+    auto k_file_name   = maya_file_io::get_current_path();
     string k_namespace = p_ref_file.get<reference_file>().get_namespace();
     DOODLE_CHICK(k_s);
-    k_cache.setString(d_str{fmt::format("cache/{}/{}/{}", k_file_name, k_namespace, k_node_name)});
+    k_cache.setString(d_str{fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name)});
   }
   {
     auto k_cache = k_node.findPlug(d_str{"cacheName"}, true, &k_s);
