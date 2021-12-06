@@ -30,6 +30,8 @@ set(doodle_maya_plug_cpp
         command/create_hud_node.cpp
         command/reference_file.h
         command/reference_file.cpp
+        data/qcloth_shape.cpp
+        data/qcloth_shape.h
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
 foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)

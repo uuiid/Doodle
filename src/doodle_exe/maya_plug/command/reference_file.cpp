@@ -7,6 +7,8 @@
 #include <doodle_lib/metadata/metadata.h>
 #include <maya/MDagPath.h>
 #include <maya/MFnDagNode.h>
+#include <maya/MFnReference.h>
+#include <maya/MItDependencyNodes.h>
 #include <maya/MItSelectionList.h>
 #include <maya/MString.h>
 #include <maya/MUuid.h>
@@ -18,7 +20,15 @@ reference_file::reference_file()
       use_sim(false),
       high_speed_sim(false),
       collision_model(){};
-
+reference_file::reference_file(const entt::handle &in_uuid, const MObject &in_ref_node)
+    : reference_file() {
+  chick_component<database>(in_uuid);
+  prj_ref = in_uuid.get<database>().uuid();
+  MStatus k_s{};
+  MFnReference k_ref{in_ref_node, &k_s};
+  DOODLE_CHICK(k_s);
+  k_ref.fileName();
+}
 reference_file::reference_file(const entt::handle &in_uuid, const string &in_u8_path)
     : reference_file() {
   chick_component<database>(in_uuid);
@@ -51,7 +61,7 @@ void reference_file::set_collision_model(const MSelectionList &in_list) {
     collision_model_show_str.emplace_back(l_node.name(&k_s).asUTF8());
     DOODLE_CHICK(k_s);
 
-    collision_model.push_back(l_node.fullPathName(&k_s).asUTF8());
+    collision_model.emplace_back(l_node.fullPathName(&k_s).asUTF8());
     DOODLE_CHICK(k_s);
   }
 }
@@ -75,5 +85,18 @@ void reference_file::init_show_name() {
     DOODLE_CHICK(k_s);
   }
 }
+string reference_file::get_namespace() {
+}
+
+// void reference_file::set_mfn_ref() {
+//   MStatus k_s{};
+//   MFnReference k_ref{};
+//   for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
+//     k_s = k_ref.setObject(refIter.thisNode());
+//     DOODLE_CHICK(k_s);
+//     if (k_ref.fileName(true, true, true, &k_s).asUTF8() == path) {
+//     }
+//   }
+// }
 
 }  // namespace doodle::maya_plug

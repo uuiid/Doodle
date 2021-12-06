@@ -8,6 +8,7 @@ namespace doodle::maya_plug {
 
 class reference_file {
   uuid prj_ref;
+  string ref_file_uuid;
 
  public:
   string path;
@@ -18,10 +19,12 @@ class reference_file {
 
   reference_file();
   explicit reference_file(const entt::handle &in_uuid, const string &in_u8_path);
+  explicit reference_file(const entt::handle &in_uuid, const MObject &in_ref_node);
 
   void init_show_name();
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
+  string get_namespace();
 
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {
