@@ -30,7 +30,7 @@ reference_file::reference_file(const entt::handle &in_uuid, const MObject &in_re
   MStatus k_s{};
   MFnReference k_ref{in_ref_node, &k_s};
   DOODLE_CHICK(k_s);
-  auto k_m_str = k_ref.fileName(true, true, false, &k_s);
+  auto k_m_str = k_ref.fileName(true, true, true, &k_s);
   DOODLE_CHICK(k_s);
   path          = k_m_str.asUTF8();
   ref_file_uuid = k_ref.uuid().asString().asUTF8();
@@ -93,17 +93,7 @@ void reference_file::init_show_name() {
   }
 }
 string reference_file::get_namespace() {
+  return {};
 }
-
-// void reference_file::set_mfn_ref() {
-//   MStatus k_s{};
-//   MFnReference k_ref{};
-//   for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
-//     k_s = k_ref.setObject(refIter.thisNode());
-//     DOODLE_CHICK(k_s);
-//     if (k_ref.fileName(true, true, true, &k_s).asUTF8() == path) {
-//     }
-//   }
-// }
 
 }  // namespace doodle::maya_plug

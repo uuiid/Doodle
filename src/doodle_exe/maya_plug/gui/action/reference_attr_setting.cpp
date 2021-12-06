@@ -86,8 +86,9 @@ bool reference_attr_setting::replace_channel_date(const string& in_string) const
   adsk::Debug::Print k_p{std::cout};
   decltype(k_meta)::Debug(&k_meta, k_p);
   k_p.endSection();
+  return true;
 }
-string reference_attr_setting::get_channel_date() const {
+string reference_attr_setting::get_channel_date() {
   MStatus k_status{};
   adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
   DOODLE_CHICK(k_status);
@@ -96,9 +97,6 @@ string reference_attr_setting::get_channel_date() const {
     auto k_stream = k_channel.dataStream("json_stream");
     adsk::Data::Handle k_h{k_stream->element(0)};
     if (!k_h.hasData())
-      return {};
-    auto k_str = k_h.str(0);
-    if (k_str.empty())
       return {};
     return k_h.str(0);
   }
@@ -114,16 +112,20 @@ bool reference_attr_setting::get_file_info() {
   p_handle.clear();
 
   MStatus k_s{};
-  MFnReference k_ref{};
+  MFnReference k_ref_file{};
   for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
-    k_s = k_ref.setObject(refIter.thisNode());
+    k_s = k_ref_file.setObject(refIter.thisNode());
     DOODLE_CHICK(k_s);
     auto k_h = make_handle();
     k_h.emplace<reference_file>(g_reg()->ctx<root_ref>().root_handle(), refIter.thisNode(&k_s));
     DOODLE_CHICK(k_s);
+    p_handle.push_back(std::move(k_h));
   }
 
-  auto k_j = nlohmann::json::parse(get_channel_date());
+  auto k_j_str = get_channel_date();
+  if (k_j_str.empty())
+    return true;
+  auto k_j = nlohmann::json::parse(k_j_str);
 
   for (auto& l_i : p_handle) {
     auto& k_ref = l_i.get<reference_file>();
@@ -132,6 +134,7 @@ bool reference_attr_setting::get_file_info() {
       entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
     l_i.get<reference_file>().init_show_name();
   }
+  return true;
 }
 
 bool reference_attr_setting::render() {
@@ -139,7 +142,9 @@ bool reference_attr_setting::render() {
     get_file_info();
   }
   MStatus k_s{};
+  MSelectionList l_select{};
   auto k_ref_view = g_reg()->view<reference_file>();
+
   for (auto k_e : k_ref_view) {
     auto& k_ref = k_ref_view.get<reference_file>(k_e);
     dear::TreeNode{k_ref.path.c_str()} && [&]() {
@@ -149,7 +154,6 @@ bool reference_attr_setting::render() {
 
       imgui::Checkbox("高精度配置", &(k_ref.high_speed_sim));
       if (imgui::Button("替换")) {
-        MSelectionList l_select{};
         k_s = MGlobal::getActiveSelectionList(l_select);
         DOODLE_CHICK(k_s);
         k_ref.set_collision_model(l_select);
@@ -169,7 +173,7 @@ bool reference_attr_setting::render() {
     for (auto& k : p_handle) {
       entt_tool::save_comm<reference_file>(k, k_j[k.get<reference_file>().path]);
     }
-    replace_channel_date(k_j);
+    replace_channel_date(k_j.dump());
   }
   return true;
 }

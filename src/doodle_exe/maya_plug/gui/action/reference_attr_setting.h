@@ -41,12 +41,12 @@ class reference_attr_setting : public command_base {
   std::vector<entt::handle> p_handle;
   bool chick_channel() const;
   bool replace_channel_date(const string& in_string) const;
-  string get_channel_date() const;
   bool get_file_info();
 
  public:
   reference_attr_setting();
   bool render() override;
+  static string get_channel_date();
 };
 
 }  // namespace doodle::maya_plug
