@@ -16,6 +16,7 @@
 #include <maya/adskDataStream.h>
 #include <maya/adskDebugPrint.h>
 #include <maya_plug/command/reference_file.h>
+#include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/maya_plug_fwd.h>
 
 #include <nlohmann/json.hpp>
@@ -178,7 +179,7 @@ bool reference_attr_setting::render() {
 
 #if 1
   if (imgui::Button("debug")) {
-    std::cout << MFileIO::currentFile() << std::endl;
+    std::cout << maya_file_io::work_path() << std::endl;
   }
 #endif
 
