@@ -4,7 +4,7 @@
 
 #include "rpc_metadaata_server.h"
 
-#include <doodle_lib/Logger/logger.h>
+#include <doodle_lib/logger/logger.h>
 #include <doodle_lib/core/core_sql.h>
 #include <doodle_lib/generate/core/metadatatab_sql.h>
 #include <doodle_lib/generate/core/usertab_sql.h>
