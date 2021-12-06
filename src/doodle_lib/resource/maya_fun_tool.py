@@ -663,7 +663,7 @@ class cloth_group_file(export_group):
             for m_attr in obj.getShapes():
                 m_attr.outMesh.evaluate()
 
-    def hide_other(self):
+    def hide_other(self): 
         pymel.core.select("{}:*UE4".format(self.maya_name_space))
         pymel.core.hide(pymel.core.selected())
 
