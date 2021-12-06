@@ -10,7 +10,9 @@ namespace doodle::maya_plug {
 class maya_file_io {
  private:
  public:
-  static FSys::path get_current_path() const;
+  static FSys::path get_current_path();
+
+  static FSys::path work_path(const FSys::path& in_path = ".");
 };
 
 }  // namespace doodle::maya_plug
