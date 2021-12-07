@@ -9,7 +9,7 @@ namespace doodle::maya_plug {
 class reference_file {
   uuid prj_ref;
   string ref_file_uuid;
-
+  std::vector<entt::handle> p_cloth_shape;
   MObject p_m_object;
 
   void chick_mobject();
@@ -40,7 +40,7 @@ class reference_file {
 
   bool create_cache() const;
   bool rename_material() const;
-  bool export_abc() const;
+  bool export_abc(const MTime &in_start, const MTime &in_endl) const;
 
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {

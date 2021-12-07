@@ -12,9 +12,16 @@
 #include <maya/MFnReference.h>
 #include <maya/MItDependencyNodes.h>
 #include <maya/MItSelectionList.h>
+#include <maya/MObjectArray.h>
+#include <maya/MPlug.h>
+#include <maya/MPlugArray.h>
 #include <maya/MString.h>
+#include <maya/MTime.h>
 #include <maya/MUuid.h>
+#include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/maya_plug_fwd.h>
+
 namespace doodle::maya_plug {
 reference_file::reference_file()
     : prj_ref(boost::uuids::nil_uuid()),
@@ -132,28 +139,46 @@ bool reference_file::replace_sim_assets_file() {
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
 
+  /// \brief 检查各种必须属性
   if (!k_ref.isLoaded(&k_s)) {
     DOODLE_CHICK(k_s);
     return false;
   }
-
   auto k_prj = get_prj();
   if (!k_prj)
     return false;
-
   chick_component<project::cloth_config>(k_prj);
-  auto k_vfx_path = k_prj.get<project::cloth_config>().vfx_cloth_sim_path / path;
+  auto &k_cfg     = k_prj.get<project::cloth_config>();
+  auto k_vfx_path = k_cfg.vfx_cloth_sim_path / path;
   if (!FSys::exists(k_vfx_path))
     return false;
 
+  /// \brief 替换引用文件
   auto k_comm = fmt::format(R"(
 file -loadReference "{}" "{}";
 )",
                             d_str{k_ref.name()}.str(), k_vfx_path.generic_string(), true);
-
   k_s         = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
-  return true;
+
+  {  /// \brief 添加qcloth 布料节点
+    p_cloth_shape.clear();
+    MSelectionList k_qcloth_list{};
+    k_s = k_qcloth_list.add(
+        d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.cloth_proxy)},
+        true);
+    DOODLE_CHICK(k_s);
+    MDagPath k_path{};
+    for (MItSelectionList k_iter{k_qcloth_list}; !k_iter.isDone(); k_iter.next()) {
+      auto k_h = make_handle();
+      k_s      = k_iter.getDagPath(k_path);
+      DOODLE_CHICK(k_s);
+      auto &k_q = k_h.emplace<qcloth_shape>(make_handle(*this), k_path);
+      k_q.set_cache_folder();
+      p_cloth_shape.push_back(std::move(k_h));
+    }
+  }
+  return !p_cloth_shape.empty();
 }
 
 entt::handle reference_file::get_prj() const {
@@ -165,5 +190,94 @@ entt::handle reference_file::get_prj() const {
     }
   }
   return entt::handle{};
+}
+bool reference_file::create_cache() const {
+  for (auto &k_h : p_cloth_shape) {
+    k_h.get<qcloth_shape>().create_cache();
+  }
+  return true;
+}
+bool reference_file::rename_material() const {
+  MStatus k_s{};
+  MFnReference k_ref{p_m_object, &k_s};
+  MObjectArray k_list{};
+  k_ref.nodes(k_list, &k_s);
+  DOODLE_CHICK(k_s);
+  MFnDependencyNode k_node;
+  for (auto k_obj : k_list) {
+    if (k_obj.hasFn(MFn::Type::kShadingEngine)) {  /// \brief 找到符合的着色集
+
+      k_node.setObject(k_obj);
+      auto k_plug = k_node.findPlug(d_str{"surfaceShader"}, true, &k_s);
+      DOODLE_CHICK(k_s);
+      MPlugArray l_m_plug_array{};
+      k_plug.destinations(l_m_plug_array, &k_s);
+      DOODLE_CHICK(k_s);
+      if (l_m_plug_array.length() == 1) {
+        auto k_mat = l_m_plug_array[0].node(&k_s);  /// \brief 从属性链接获得材质名称
+        DOODLE_CHICK(k_s);
+
+        MFnDependencyNode k_mat_node{};
+        k_mat_node.setObject(k_mat);
+        string k_mat_node_name = d_str{k_mat_node.name(&k_s)};
+        DOODLE_CHICK(k_s);
+
+        /// \brief 重命名材质名称
+        k_mat_node.setName(d_str{fmt::format("{}_mat", k_mat_node_name)}, false, &k_s);
+        DOODLE_CHICK(k_s);
+        k_node.setName(d_str{k_mat_node_name}, false, &k_s);
+      }
+    }
+  }
+
+  return true;
+}
+bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) const {
+  MSelectionList k_select{};
+  MStatus k_s{};
+  auto &k_cfg = get_prj().get<project::cloth_config>();
+  k_s         = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
+  DOODLE_CHICK(k_s);
+
+  if (k_select.isEmpty())
+    return false;
+
+  auto k_name = fmt::format("{}_export_abc", get_namespace());
+  k_s         = MGlobal::setActiveSelectionList(k_select);
+  DOODLE_CHICK(k_s);
+  k_s = MGlobal::executeCommand(
+      d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" group1;)",
+                        k_name)});
+  DOODLE_CHICK(k_s);
+
+  k_select.clear();
+  k_s = k_select.add(d_str{k_name}, true);
+  DOODLE_CHICK(k_s);
+  if (k_select.isEmpty())
+    return false;
+
+  MDagPath k_mesh_path{};
+  k_s = k_select.getDagPath(0, k_mesh_path);
+  DOODLE_CHICK(k_s);
+
+  auto k_seance_name = maya_file_io::get_current_path().stem().generic_string();
+  auto k_path        = maya_file_io::work_path(fmt::format("abc/{}", k_seance_name));
+
+  if (exists(k_path)) {
+    create_directories(k_path);
+  }
+  k_path /= fmt::format("{}_{}_{}-{}.abc", k_seance_name, get_namespace(), in_start.as(MTime::uiUnit()), in_endl.as(MTime::uiUnit()));
+
+  /// \brief 导出abc命令
+  k_s = MGlobal::executeCommand(d_str{
+      fmt::format(R"(
+AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa -root {} -file {}";
+)",
+                  in_start.as(MTime::uiUnit()),                 /// \brief 开始时间
+                  in_endl.as(MTime::uiUnit()),                  /// \brief 结束时间
+                  d_str{k_mesh_path.fullPathName(&k_s)}.str(),  /// \brief 导出物体的根路径
+                  k_path.generic_string())});                   /// \brief 导出文件路径，包含文件名和文件路径
+  DOODLE_CHICK(k_s);
+  return true;
 }
 }  // namespace doodle::maya_plug

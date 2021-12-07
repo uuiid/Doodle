@@ -5,8 +5,11 @@
 #include "qcloth_shape.h"
 
 #include <doodle_lib/metadata/project.h>
+#include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
+#include <maya/MFnDagNode.h>
 #include <maya/MFnDependencyNode.h>
+#include <maya/MFnMesh.h>
 #include <maya/MPlug.h>
 #include <maya_plug/command/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -75,9 +78,23 @@ bool qcloth_shape::set_cache_folder() const {
 bool qcloth_shape::create_cache() const {
   if (obj.isNull())
     throw doodle_error{"空组件"};
+  MStatus k_s{};
+  MFnDagNode k_fn_done{obj, &k_s};
+  DOODLE_CHICK(k_s);
 
+  MDagPath k_dag_path{};
+  k_s = k_fn_done.getPath(k_dag_path);
+  DOODLE_CHICK(k_s);
+  k_s = k_dag_path.extendToShape();
+  DOODLE_CHICK(k_s);
 
-  return false;
+  MFnMesh k_shape{k_dag_path, &k_s};
+  DOODLE_CHICK(k_s);
+  k_s = k_shape.updateSurface();
+  DOODLE_CHICK(k_s);
+  k_s = k_shape.syncObject();
+  DOODLE_CHICK(k_s);
+  return true;
 }
 
 }  // namespace doodle::maya_plug
