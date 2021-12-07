@@ -8,8 +8,7 @@
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/gui/main_windwos.h>
 #include <doodle_lib/gui/widget_register.h>
-#include <doodle_lib/lib_warp/boost_locale_warp.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_lib/metadata/metadata.h>
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>

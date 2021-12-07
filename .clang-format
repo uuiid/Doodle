@@ -1,5 +1,5 @@
 BasedOnStyle: Google
-# SortIncludes: false 
+SortIncludes: Never
 ColumnLimit: 0
 AlignConsecutiveAssignments: AcrossEmptyLinesAndComments
 AlignAfterOpenBracket: Align
