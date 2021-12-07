@@ -14,8 +14,8 @@ project::cloth_config::cloth_config()
       frame_samples(10),
       time_scale(0.1),
       length_scale(0.4),
-      cloth_shape("_cloth_proxy"),
-      cloth_proxy("_clothShape"),
+      cloth_shape("_clothShape"),
+      cloth_proxy("_cloth_proxy"),
       export_group("UE4") {}
 
 project::project()
