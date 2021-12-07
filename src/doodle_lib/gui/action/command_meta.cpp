@@ -127,9 +127,9 @@ bool comm_project_add::render() {
         in.cloth_proxy = p_impl->cloth_config.cloth_proxy;
       });
     }
-    if (imgui::InputText(p_show_str["布料节点"].c_str(), &(p_impl->cloth_config.cloth_proxy))) {
+    if (imgui::InputText(p_show_str["布料节点"].c_str(), &(p_impl->cloth_config.cloth_shape))) {
       p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
-        in.cloth_proxy = p_impl->cloth_config.cloth_proxy;
+        in.cloth_shape = p_impl->cloth_config.cloth_shape;
       });
     }
     if (imgui::InputText(p_show_str["导出节点"].c_str(), &(p_impl->cloth_config.export_group))) {
