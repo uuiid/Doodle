@@ -39,10 +39,18 @@ reference_file::reference_file(const entt::handle &in_uuid, const MObject &in_re
   MStatus k_s{};
   MFnReference k_ref{in_ref_node, &k_s};
   DOODLE_CHICK(k_s);
-  auto k_m_str = k_ref.fileName(true, true, true, &k_s);
+  auto k_m_str = k_ref.fileName(false, true, true, &k_s);
   DOODLE_CHICK(k_s);
-  path          = k_m_str.asUTF8();
-  ref_file_uuid = k_ref.uuid().asString().asUTF8();
+  path          = d_str{k_m_str};
+  // if (!k_ref.isLoaded(&k_s)) {
+  //   DOODLE_CHICK(k_s)
+  // } else {
+  //   DOODLE_CHICK(k_s);
+  //   path = d_str{k_ref.associatedNamespace(false, &k_s)};
+  //   DOODLE_CHICK(k_s);
+  // }
+
+  ref_file_uuid = d_str{k_ref.uuid().asString()};
   p_m_object    = in_ref_node;
 }
 
@@ -148,8 +156,15 @@ bool reference_file::replace_sim_assets_file() {
   if (!k_prj)
     return false;
   chick_component<project::cloth_config>(k_prj);
-  auto &k_cfg     = k_prj.get<project::cloth_config>();
-  auto k_vfx_path = k_cfg.vfx_cloth_sim_path / path;
+  auto &k_cfg  = k_prj.get<project::cloth_config>();
+  auto k_m_str = k_ref.fileName(true, false, false, &k_s);
+  DOODLE_CHICK(k_s);
+  auto k_vfx_path = k_cfg.vfx_cloth_sim_path / k_m_str.asUTF8();
+  {
+    auto k_log = fmt::format("推测资产路径 {}", k_vfx_path);
+    MGlobal::displayInfo(d_str{k_log});
+    DOODLE_LOG_INFO(k_log);
+  }
   if (!FSys::exists(k_vfx_path))
     return false;
 
