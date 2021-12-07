@@ -177,7 +177,7 @@ bool reference_attr_setting::render() {
     replace_channel_date(k_j.dump());
   }
 
-#if 1
+#if 0
   if (imgui::Button("debug")) {
     std::cout << maya_file_io::work_path() << std::endl;
   }

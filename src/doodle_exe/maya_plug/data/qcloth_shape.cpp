@@ -32,9 +32,11 @@ bool qcloth_shape::set_cache_folder() const {
   k_s = l_selection_list.add(d_str{k_name}, true);
   DOODLE_CHICK(k_s);
   if (l_selection_list.length(&k_s) > 1) {
+    DOODLE_CHICK(k_s);
     throw doodle_error{"出现重名物体"};
   }
   if (l_selection_list.isEmpty(&k_s)) {
+    DOODLE_CHICK(k_s);
     throw doodle_error{"没有找到解算布料节点"};
   }
 
@@ -45,22 +47,36 @@ bool qcloth_shape::set_cache_folder() const {
   k_s = k_node.setObject(k_shape);
   DOODLE_CHICK(k_s);
   string k_node_name = k_node.name(&k_s).asUTF8();
+  DOODLE_CHICK(k_s);
   {
     auto k_cache = k_node.findPlug(d_str{"cacheFolder"}, true, &k_s);
     DOODLE_CHICK(k_s);
-    auto k_file_name   = maya_file_io::get_current_path();
-    string k_namespace = p_ref_file.get<reference_file>().get_namespace();
+    auto k_file_name       = maya_file_io::get_current_path();
+    string k_namespace     = p_ref_file.get<reference_file>().get_namespace();
+    /// \brief 使用各种信息确认缓存相对路径
+    const string& l_string = fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name);
+    /// \brief 删除已经缓存的目录
+    auto k_path            = maya_file_io::work_path(l_string);
+    if (FSys::exists(k_path)) {
+      FSys::remove_all(k_path);
+    } else {
+      FSys::create_directories(k_path);
+    }
+    k_s = k_cache.setString(d_str{l_string});
     DOODLE_CHICK(k_s);
-    k_cache.setString(d_str{fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name)});
   }
   {
     auto k_cache = k_node.findPlug(d_str{"cacheName"}, true, &k_s);
     DOODLE_CHICK(k_s);
     k_cache.setString(d_str{k_node_name});
   }
-  return false;
+  return true;
 }
 bool qcloth_shape::create_cache() const {
+  if (obj.isNull())
+    throw doodle_error{"空组件"};
+
+
   return false;
 }
 

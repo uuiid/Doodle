@@ -12,12 +12,15 @@ class qcloth_shape {
  private:
   entt::handle p_ref_file;
   MObject obj;
-  MObject sim_obj;
 
  public:
   qcloth_shape();
   explicit qcloth_shape(const entt::handle& in_ref_file, const MObject& in_object);
 
+  /**
+   * @brief 设置qcloth缓存路径,如果存在缓存文件,还会删除缓存文件
+   * @return 完成设置
+   */
   bool set_cache_folder() const;
   bool create_cache() const;
 };
