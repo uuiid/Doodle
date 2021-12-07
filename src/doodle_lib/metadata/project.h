@@ -1,8 +1,5 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/metadata/metadata.h>
-
-#include <nlohmann/json.hpp>
 
 namespace doodle {
 /**
