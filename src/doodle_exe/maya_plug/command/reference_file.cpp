@@ -173,7 +173,7 @@ file -loadReference "{}" "{}";
       auto k_h = make_handle();
       k_s      = k_iter.getDagPath(k_path);
       DOODLE_CHICK(k_s);
-      auto &k_q = k_h.emplace<qcloth_shape>(make_handle(*this), k_path);
+      auto &k_q = k_h.emplace<qcloth_shape>(make_handle(*this), k_path.node());
       k_q.set_cache_folder();
       p_cloth_shape.push_back(std::move(k_h));
     }
@@ -205,7 +205,8 @@ bool reference_file::rename_material() const {
   k_ref.nodes(k_list, &k_s);
   DOODLE_CHICK(k_s);
   MFnDependencyNode k_node;
-  for (auto k_obj : k_list) {
+  for (auto i = 0; i < k_list.length(); ++i) {
+    auto k_obj = k_list[i];
     if (k_obj.hasFn(MFn::Type::kShadingEngine)) {  /// \brief 找到符合的着色集
 
       k_node.setObject(k_obj);
