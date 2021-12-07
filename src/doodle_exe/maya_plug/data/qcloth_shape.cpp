@@ -14,6 +14,8 @@
 #include <maya_plug/command/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/maya_plug_fwd.h>
+#include <maya/MNamespace.h>
+
 namespace doodle::maya_plug {
 qcloth_shape::qcloth_shape() = default;
 
@@ -26,10 +28,17 @@ qcloth_shape::qcloth_shape(const entt::handle& in_ref_file, const MObject& in_ob
 bool qcloth_shape::set_cache_folder() const {
   MStatus k_s{};
   MFnDependencyNode k_node{obj, &k_s};
-  string k_name{k_node.name().asUTF8()};
-  auto& k_cfg = p_ref_file.get<reference_file>().get_prj().get<project::cloth_config>();
-  boost::replace_all_copy(k_name, k_cfg.cloth_proxy, k_cfg.cloth_shape);
-
+  DOODLE_CHICK(k_s);
+  string k_name{d_str{k_node.name(&k_s)}};
+  DOODLE_CHICK(k_s);
+  string k_namespace = p_ref_file.get<reference_file>().get_namespace();
+  auto& k_cfg        = p_ref_file.get<reference_file>().get_prj().get<project::cloth_config>();
+  boost::replace_all(k_name, k_cfg.cloth_proxy, k_cfg.cloth_shape);
+  {
+    auto k_str = fmt::format("推测布料节点 {}", k_name);
+    MGlobal::displayInfo(d_str{k_str});
+    DOODLE_LOG_INFO(k_str);
+  }
   /// 选择解算节点
   MSelectionList l_selection_list{};
   k_s = l_selection_list.add(d_str{k_name}, true);
@@ -49,17 +58,23 @@ bool qcloth_shape::set_cache_folder() const {
   DOODLE_CHICK(k_s);
   k_s = k_node.setObject(k_shape);
   DOODLE_CHICK(k_s);
-  string k_node_name = k_node.name(&k_s).asUTF8();
+  string k_node_name = d_str{MNamespace::stripNamespaceFromName(k_node.name(), &k_s)};
   DOODLE_CHICK(k_s);
   {
-    auto k_cache = k_node.findPlug(d_str{"cacheFolder"}, true, &k_s);
+    auto k_cache = k_node.findPlug(d_str{"cacheFolder"}, false, &k_s);
     DOODLE_CHICK(k_s);
     auto k_file_name       = maya_file_io::get_current_path();
-    string k_namespace     = p_ref_file.get<reference_file>().get_namespace();
     /// \brief 使用各种信息确认缓存相对路径
-    const string& l_string = fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name);
+    const string& l_string = fmt::format("cache/{}/{}/{}",
+                                         k_file_name.stem().generic_string(),
+                                         k_namespace,
+                                         k_node_name);
+    {
+      MGlobal::displayInfo(d_str{fmt::format("设置缓存路径 {}", l_string)});
+      DOODLE_LOG_INFO(fmt::format("设置缓存路径 {}", l_string));
+    }
     /// \brief 删除已经缓存的目录
-    auto k_path            = maya_file_io::work_path(l_string);
+    auto k_path = maya_file_io::work_path(l_string);
     if (FSys::exists(k_path)) {
       FSys::remove_all(k_path);
     } else {

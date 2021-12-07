@@ -156,10 +156,10 @@ bool reference_file::replace_sim_assets_file() {
   if (!k_prj)
     return false;
   chick_component<project::cloth_config>(k_prj);
-  auto &k_cfg  = k_prj.get<project::cloth_config>();
-  auto k_m_str = k_ref.fileName(true, false, false, &k_s);
+  auto &k_cfg = k_prj.get<project::cloth_config>();
+  FSys::path k_m_str{d_str{k_ref.fileName(true, true, false, &k_s)}.str()};
   DOODLE_CHICK(k_s);
-  auto k_vfx_path = k_cfg.vfx_cloth_sim_path / k_m_str.asUTF8();
+  auto k_vfx_path = k_cfg.vfx_cloth_sim_path / fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
   {
     auto k_log = fmt::format("推测资产路径 {}", k_vfx_path);
     MGlobal::displayInfo(d_str{k_log});
