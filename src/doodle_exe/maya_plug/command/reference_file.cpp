@@ -198,6 +198,7 @@ bool reference_file::create_cache() const {
   return true;
 }
 bool reference_file::rename_material() const {
+  chick_mobject();
   MStatus k_s{};
   MFnReference k_ref{p_m_object, &k_s};
   MObjectArray k_list{};
@@ -233,6 +234,7 @@ bool reference_file::rename_material() const {
   return true;
 }
 bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) const {
+  rename_material();
   MSelectionList k_select{};
   MStatus k_s{};
   auto &k_cfg = get_prj().get<project::cloth_config>();

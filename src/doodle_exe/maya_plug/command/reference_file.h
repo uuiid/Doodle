@@ -37,8 +37,15 @@ class reference_file {
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况
    */
   bool replace_sim_assets_file();
-
+  /**
+   * @brief 创建当前帧的缓存
+   * @return
+   */
   bool create_cache() const;
+  /**
+   * @brief 将着色集和材质名称调换为导出abc做准备
+   * @return
+   */
   bool rename_material() const;
   bool export_abc(const MTime &in_start, const MTime &in_endl) const;
 
