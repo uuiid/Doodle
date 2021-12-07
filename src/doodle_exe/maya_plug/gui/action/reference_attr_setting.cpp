@@ -117,10 +117,17 @@ bool reference_attr_setting::get_file_info() {
   for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
     k_s = k_ref_file.setObject(refIter.thisNode());
     DOODLE_CHICK(k_s);
-    auto k_h = make_handle();
-    k_h.emplace<reference_file>(g_reg()->ctx<root_ref>().root_handle(), refIter.thisNode(&k_s));
+    auto k_obj = refIter.thisNode(&k_s);
     DOODLE_CHICK(k_s);
-    p_handle.push_back(std::move(k_h));
+    auto k_h = make_handle();
+    try {
+      k_h.emplace<reference_file>(g_reg()->ctx<root_ref>().root_handle(), k_obj);
+      DOODLE_CHICK(k_s);
+      p_handle.push_back(std::move(k_h));
+    } catch (maya_error& err) {
+      MGlobal::displayWarning(d_str{"跳过无效的引用"});
+      k_h.destroy();
+    }
   }
 
   auto k_j_str = get_channel_date();
@@ -165,6 +172,10 @@ bool reference_attr_setting::render() {
       dear::Text("解算碰撞");
       for (const auto& k_f : k_ref.collision_model_show_str)
         dear::Text(k_f);
+
+      if (imgui::Button("test")) {
+        k_ref.replace_sim_assets_file();
+      }
     };
   }
 
@@ -176,12 +187,6 @@ bool reference_attr_setting::render() {
     }
     replace_channel_date(k_j.dump());
   }
-
-#if 0
-  if (imgui::Button("debug")) {
-    std::cout << maya_file_io::work_path() << std::endl;
-  }
-#endif
 
   return true;
 }
