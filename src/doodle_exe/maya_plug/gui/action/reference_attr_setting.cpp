@@ -7,6 +7,7 @@
 #include <doodle_lib/lib_warp/entt_warp.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata.h>
+#include <maya/MTime.h>
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
 #include <maya/MFnReference.h>
@@ -15,6 +16,7 @@
 #include <maya/adskDataAssociations.h>
 #include <maya/adskDataStream.h>
 #include <maya/adskDebugPrint.h>
+
 #include <maya_plug/command/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/maya_plug_fwd.h>
@@ -175,6 +177,8 @@ bool reference_attr_setting::render() {
 
       if (imgui::Button("test")) {
         k_ref.replace_sim_assets_file();
+        k_ref.create_cache();
+        k_ref.export_abc(MTime{950, MTime::uiUnit()}, MTime{1010, MTime::uiUnit()});
       }
     };
   }

@@ -264,8 +264,9 @@ bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) con
   k_s         = MGlobal::setActiveSelectionList(k_select);
   DOODLE_CHICK(k_s);
   k_s = MGlobal::executeCommand(
-      d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" group1;)",
-                        k_name)});
+      d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}";)",
+                        k_name)},
+      true);
   DOODLE_CHICK(k_s);
 
   k_select.clear();
@@ -281,20 +282,21 @@ bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) con
   auto k_seance_name = maya_file_io::get_current_path().stem().generic_string();
   auto k_path        = maya_file_io::work_path(fmt::format("abc/{}", k_seance_name));
 
-  if (exists(k_path)) {
+  if (!exists(k_path)) {
     create_directories(k_path);
   }
   k_path /= fmt::format("{}_{}_{}-{}.abc", k_seance_name, get_namespace(), in_start.as(MTime::uiUnit()), in_endl.as(MTime::uiUnit()));
 
   /// \brief 导出abc命令
   k_s = MGlobal::executeCommand(d_str{
-      fmt::format(R"(
+                                    fmt::format(R"(
 AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa -root {} -file {}";
 )",
-                  in_start.as(MTime::uiUnit()),                 /// \brief 开始时间
-                  in_endl.as(MTime::uiUnit()),                  /// \brief 结束时间
-                  d_str{k_mesh_path.fullPathName(&k_s)}.str(),  /// \brief 导出物体的根路径
-                  k_path.generic_string())});                   /// \brief 导出文件路径，包含文件名和文件路径
+                                                in_start.as(MTime::uiUnit()),                 /// \brief 开始时间
+                                                in_endl.as(MTime::uiUnit()),                  /// \brief 结束时间
+                                                d_str{k_mesh_path.fullPathName(&k_s)}.str(),  /// \brief 导出物体的根路径
+                                                k_path.generic_string())},
+                                true);  /// \brief 导出文件路径，包含文件名和文件路径
   DOODLE_CHICK(k_s);
   return true;
 }
