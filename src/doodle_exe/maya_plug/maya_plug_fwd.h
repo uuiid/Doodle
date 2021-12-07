@@ -9,6 +9,14 @@
 #include <maya/MGlobal.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>
+
+namespace doodle {
+class maya_error : public doodle_error {
+ public:
+  explicit maya_error(const std::string& err) : doodle_error(err){};
+};
+}  // namespace doodle
+
 namespace doodle::maya_plug {
 class play_blast;
 using play_blast_ptr = std::shared_ptr<play_blast>;
@@ -49,14 +57,14 @@ class d_str {
 //   }
 // };
 
-#define DOODLE_CHICK(in_status)                          \
-  {                                                      \
-    if (in_status != MStatus::MStatusCode::kSuccess) {   \
-      const MString& l_string = in_status.errorString(); \
-      MGlobal::displayError(l_string);                   \
-      DOODLE_LOG_ERROR(l_string.asUTF8());               \
-      throw doodle_error{l_string.asUTF8()};             \
-    }                                                    \
+#define DOODLE_CHICK(in_status)                        \
+  {                                                    \
+    if (in_status != MStatus::MStatusCode::kSuccess) { \
+      auto l_string = d_str{in_status.errorString()};  \
+      MGlobal::displayError(l_string);                 \
+      DOODLE_LOG_ERROR(l_string.str());                \
+      throw maya_error{l_string};                      \
+    }                                                  \
   };
 
 }  // namespace doodle::maya_plug
