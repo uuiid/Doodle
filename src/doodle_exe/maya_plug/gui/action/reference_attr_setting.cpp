@@ -303,6 +303,12 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
       auto l_p    = k_ref.path;
       if (k_j.contains(l_p))
         entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
+      try {
+        if (k_j.contains(k_ref.get_unique_name()))
+          k_ref.use_sim = k_j.at(k_ref.get_unique_name()).at("use_sim").get<bool>();
+      } catch (nlohmann::json::exception& err) {
+        DOODLE_LOG_ERROR(err.what());
+      }
     }
 
     for (auto& k_i : l_list) {

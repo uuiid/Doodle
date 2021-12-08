@@ -14,8 +14,6 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MObjectArray.h>
 #include <maya/MPlug.h>
-#include <maya/MPlugArray.h>
-#include <maya/MString.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -193,7 +191,7 @@ file -loadReference "{}" "{}";
       DOODLE_CHICK(k_s);
       auto &k_q = k_h.emplace<qcloth_shape>(make_handle(*this), k_path.node());
       k_q.set_cache_folder();
-      p_cloth_shape.push_back(std::move(k_h));
+      p_cloth_shape.push_back(k_h);
     }
   }
   return !p_cloth_shape.empty();
@@ -302,5 +300,14 @@ AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldS
                                 true);  /// \brief 导出文件路径，包含文件名和文件路径
   DOODLE_CHICK(k_s);
   return true;
+}
+string reference_file::get_unique_name() const {
+  chick_mobject();
+  MFnReference k_ref{p_m_object};
+  MStatus k_s{};
+
+  auto k_name = k_ref.fileName(false, false, true, &k_s);
+  DOODLE_CHICK(k_s);
+  return d_str{k_name};
 }
 }  // namespace doodle::maya_plug
