@@ -77,9 +77,8 @@ bool qcloth_shape::set_cache_folder() const {
     auto k_path = maya_file_io::work_path(l_string);
     if (FSys::exists(k_path)) {
       FSys::remove_all(k_path);
-    } else {
-      FSys::create_directories(k_path);
     }
+    FSys::create_directories(k_path);
     k_s = k_cache.setString(d_str{l_string});
     DOODLE_CHICK(k_s);
   }
