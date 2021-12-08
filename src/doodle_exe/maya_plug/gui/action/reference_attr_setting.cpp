@@ -208,6 +208,8 @@ MString sim_cloth::comm_name{"doodle_sim_cloth"};
 #define doodle_default_uuid "-u"
 #define doodle_export_abc "-ea"
 #define doodle_export_abc_long "-exportABC"
+#define doodle_sim_cloth "-sim"
+#define doodle_sim_cloth_long "-simCloth"
 
 #define doodle_default_uuid_long "-uuid"
 #define doodle_startTime_long "-startTime"
@@ -217,21 +219,27 @@ MString sim_cloth::comm_name{"doodle_sim_cloth"};
 MStatus sim_cloth::doIt(const MArgList& in_arg) {
   MStatus k_s;
   MArgDatabase k_prase{syntax(), in_arg};
-  string k_export_type{"not"};
+  bool k_ex_abc{false};
+  bool k_sim_cloth{false};
   entt::handle k_def_prj;
 
-  MTime k_sim_s{950, MTime::uiUnit()};
+  MTime k_sim_start{950, MTime::uiUnit()};
   MTime k_start{1001, MTime::uiUnit()};
   MTime k_end = MAnimControl::maxTime();
 
   if (k_prase.isFlagSet(doodle_export_abc, &k_s)) {
     DOODLE_CHICK(k_s);
-    k_export_type = d_str{k_prase.flagArgumentString(doodle_export_abc, 0, &k_s)};
+    k_s = k_prase.getFlagArgument(doodle_export_abc, 0, k_ex_abc);
+    DOODLE_CHICK(k_s);
+  }
+  if (k_prase.isFlagSet(doodle_sim_cloth, &k_s)) {
+    DOODLE_CHICK(k_s);
+    k_s = k_prase.getFlagArgument(doodle_export_abc, 0, k_sim_cloth);
     DOODLE_CHICK(k_s);
   }
   if (k_prase.isFlagSet(doodle_sim_startTime, &k_s)) {
     DOODLE_CHICK(k_s);
-    k_s = k_prase.getFlagArgument(doodle_export_abc, 0, k_sim_s);
+    k_s = k_prase.getFlagArgument(doodle_export_abc, 0, k_sim_start);
     DOODLE_CHICK(k_s);
   }
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
@@ -259,46 +267,64 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
     }
   }
   {
-    auto k_log = fmt::format("解算开始时间 {} 导出abc时间 {} 结束时间 {} 导出方案是 {}",
-                             k_sim_s.value(), k_start.value(), k_end.value(), k_export_type);
+    auto k_log = fmt::format("解算开始时间 {} 导出abc时间 {} 结束时间 {} 解算文件 {} 导出abc {} ",
+                             k_sim_start.value(), k_start.value(), k_end.value(), k_sim_cloth, k_ex_abc);
     MGlobal::displayInfo(d_str{k_log});
     DOODLE_LOG_INFO(k_log);
   }
-
-  std::vector<entt::handle> l_list{};
-  MFnReference k_ref_file{};
-  auto k_j_str = reference_attr_setting::get_channel_date();
-  if (k_j_str.empty() && !k_def_prj) {
-    MGlobal::displayError(d_str{"找不到默认配置， 并且文件中也找不到解算元数据"});
-    DOODLE_LOG_ERROR("找不到默认配置， 并且文件中也找不到解算元数据");
-    return MStatus::kFailure;
-  }
-  for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
-    k_s = k_ref_file.setObject(refIter.thisNode());
-    DOODLE_CHICK(k_s);
-    auto k_obj = refIter.thisNode(&k_s);
-    DOODLE_CHICK(k_s);
-    auto k_h = make_handle();
-    try {
-      k_h.emplace<reference_file>(k_def_prj, k_obj);
+  if (k_sim_cloth) {
+    std::vector<entt::handle> l_list{};
+    MFnReference k_ref_file{};
+    auto k_j_str = reference_attr_setting::get_channel_date();
+    if (k_j_str.empty() && !k_def_prj) {
+      MGlobal::displayError(d_str{"找不到默认配置， 并且文件中也找不到解算元数据"});
+      DOODLE_LOG_ERROR("找不到默认配置， 并且文件中也找不到解算元数据");
+      return MStatus::kFailure;
+    }
+    for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
+      k_s = k_ref_file.setObject(refIter.thisNode());
       DOODLE_CHICK(k_s);
-      l_list.push_back(k_h);
-    } catch (maya_error& err) {
-      MGlobal::displayWarning(d_str{"跳过无效的引用"});
-      k_h.destroy();
+      auto k_obj = refIter.thisNode(&k_s);
+      DOODLE_CHICK(k_s);
+      auto k_h = make_handle();
+      try {
+        k_h.emplace<reference_file>(k_def_prj, k_obj);
+        DOODLE_CHICK(k_s);
+        l_list.push_back(k_h);
+      } catch (maya_error& err) {
+        MGlobal::displayWarning(d_str{"跳过无效的引用"});
+        k_h.destroy();
+      }
+    }
+
+    auto k_j = nlohmann::json::parse(k_j_str);
+    for (auto& l_i : l_list) {
+      auto& k_ref = l_i.get<reference_file>();
+      auto l_p    = k_ref.path;
+      if (k_j.contains(l_p))
+        entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
+    }
+
+    for (auto& k_i : l_list) {
+      if (!k_i.get<reference_file>().replace_sim_assets_file()) {
+        k_i.destroy();
+      }
+    }
+    boost::remove_erase_if(l_list, [](auto k_h) -> bool { return !k_h; });
+    for (auto& k_i : l_list) {
+      for (MTime k_t = k_sim_start; k_t <= k_end; ++k_t) {
+        MAnimControl::setCurrentTime(k_t);
+        k_i.get<reference_file>().create_cache();
+      }
     }
   }
-
-  auto k_j = nlohmann::json::parse(k_j_str);
-  for (auto& l_i : l_list) {
-    auto& k_ref = l_i.get<reference_file>();
-    auto l_p    = k_ref.path;
-    if (k_j.contains(l_p))
-      entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
+  if (k_ex_abc) {
+    auto k_view = g_reg()->view<reference_file>();
+    for (auto&& [k_e, k_r] : k_view.each()) {
+      k_r.export_abc(k_start, k_end);
+    }
   }
-
-
-
+  return k_s;
 }
 
 void* sim_cloth::creator() {
@@ -310,7 +336,8 @@ MSyntax sim_cloth::syntax() {
   syntax.addFlag(doodle_endTime, doodle_endTime_long, MSyntax::kTime);
   syntax.addFlag(doodle_sim_startTime, doodle_sim_startTime_long, MSyntax::kTime);
   syntax.addFlag(doodle_default_uuid, doodle_default_uuid_long, MSyntax::kString);
-  syntax.addFlag(doodle_export_abc, doodle_export_abc_long, MSyntax::kString);
+  syntax.addFlag(doodle_export_abc, doodle_export_abc_long, MSyntax::kBoolean);
+  syntax.addFlag(doodle_sim_cloth, doodle_sim_cloth_long, MSyntax::kBoolean);
 
   return syntax;
 }
@@ -319,7 +346,9 @@ MSyntax sim_cloth::syntax() {
 #undef doodle_sim_startTime
 #undef doodle_default_uuid
 #undef doodle_export_abc
+#undef doodle_sim_cloth
 
+#undef doodle_sim_cloth_long
 #undef doodle_export_abc_long
 #undef doodle_default_uuid_long
 #undef doodle_startTime_long
