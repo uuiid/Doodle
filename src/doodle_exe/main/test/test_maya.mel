@@ -1,0 +1,1 @@
+python("execfile('C:/Users/TD/Source/Doodle/src/doodle_exe/main/test/test_maya.py')")
