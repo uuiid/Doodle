@@ -2,15 +2,18 @@
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/doodle_app.h>
 #include <doodle_lib/lib_warp/std_warp.h>
+
 #include <maya/MDrawRegistry.h>
 #include <maya/MFnPlugin.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MTimerMessage.h>
+
 #include <maya_plug/MotionMayaPlugInit.h>
 #include <maya_plug/command/create_hud_node.h>
 #include <maya_plug/gui/action/comm_play_blast.h>
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/maya_render/hud_render_node.h>
+#include <maya_plug/gui/action/reference_attr_setting.h>
 #include <maya_plug/maya_render/hud_render_override.h>
 namespace {
 const static std::string doodle_windows{"doodle_windows"};
@@ -171,6 +174,12 @@ MStatus initializePlugin(MObject obj) {
       &::doodle::maya_plug::create_hud_node_maya::creator);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
+  ///
+  status = k_plugin.registerCommand(
+      ::doodle::maya_plug::sim_cloth::comm_name,
+      &::doodle::maya_plug::sim_cloth::creator);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+
   /// 等所有命令完成后加载工具架
   switch (k_st) {
     case MGlobal::MMayaState::kInteractive:
@@ -205,6 +214,10 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
     default:
       break;
   }
+  /// 去除解算命令
+  status = k_plugin.deregisterCommand(
+      ::doodle::maya_plug::sim_cloth::comm_name);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 去掉hud命令
   status = k_plugin.deregisterCommand(
