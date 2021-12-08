@@ -76,6 +76,9 @@ bool qcloth_shape::set_cache_folder() const {
     /// \brief 删除已经缓存的目录
     auto k_path = maya_file_io::work_path(l_string);
     if (FSys::exists(k_path)) {
+      auto k_log = fmt::format("发现缓存目录, 主动删除 {}", k_path);
+      MGlobal::displayInfo(d_str{k_log});
+      DOODLE_LOG_INFO(k_log);
       FSys::remove_all(k_path);
     }
     FSys::create_directories(k_path);

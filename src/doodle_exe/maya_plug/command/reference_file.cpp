@@ -245,6 +245,11 @@ bool reference_file::rename_material() const {
         /// \brief 重命名材质名称
         k_mat_node.setName(d_str{fmt::format("{}_mat", k_mat_node_name)}, false, &k_s);
         DOODLE_CHICK(k_s);
+        {
+          auto k_log = fmt::format("重命名材质 {} -> {}", d_str{k_node.name()}, k_mat_node_name);
+          MGlobal::displayInfo(d_str{k_log});
+          DOODLE_LOG_INFO(k_log);
+        }
         k_node.setName(d_str{k_mat_node_name}, false, &k_s);
       }
     }
