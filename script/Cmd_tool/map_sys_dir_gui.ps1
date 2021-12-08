@@ -88,7 +88,7 @@ function Add-SymLink {
     }
     
     Write-Host "开始标准化路径 从" $pathstring" 到 " $map_item[$value].link
-    New-Item -ItemType SymbolicLink -Path $item.link -Target $pathstring
+    New-Item -ItemType SymbolicLink -Path $map_item[$value].link -Target $pathstring
   }
   catch {
     Write-Host "出现异常， 请联系自作人员"
