@@ -19,3 +19,4 @@ class doodle_main(object):
 def doodle_test():
     print("run test")
     maya_fun_tool.open_file()
+    raw_input("Please enter your name: ")
