@@ -152,6 +152,7 @@ bool reference_file::replace_sim_assets_file() {
   /// \brief 检查各种必须属性
   if (!k_ref.isLoaded(&k_s)) {
     DOODLE_CHICK(k_s);
+    MGlobal::displayWarning(d_str{"引用没有加载, 跳过!"});
     return false;
   }
   auto k_prj = get_prj();
