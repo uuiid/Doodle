@@ -16,11 +16,12 @@
 #include <maya/adskDataAssociations.h>
 #include <maya/adskDataStream.h>
 #include <maya/adskDebugPrint.h>
+#include <maya/MSyntax.h>
+#include <maya/MArgDatabase.h>
 
 #include <maya_plug/command/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/maya_plug_fwd.h>
-
 #include <nlohmann/json.hpp>
 
 namespace doodle::maya_plug {
@@ -195,4 +196,35 @@ bool reference_attr_setting::render() {
   return true;
 }
 
+MString sim_cloth::comm_name{"doodle_sim_cloth"};
+
+#define doodle_startTime "-st"
+#define doodle_endTime "-et"
+#define doodle_startTime_long "-startTime"
+#define doodle_endTime_long "-endTime"
+#define doodle_sim_startTime "-ss"
+#define doodle_sim_startTime_long "-simStartTime"
+
+MStatus sim_cloth::doIt(const MArgList& in_arg) {
+  MStatus k_s;
+  MString k_str{};
+  MArgDatabase k_prase{syntax(), in_arg};
+}
+
+void* sim_cloth::creator() {
+  return new sim_cloth{};
+}
+MSyntax sim_cloth::syntax() {
+  MSyntax syntax{};
+  syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
+  syntax.addFlag(doodle_endTime, doodle_endTime_long, MSyntax::kTime);
+  syntax.addFlag(doodle_sim_startTime, doodle_sim_startTime_long, MSyntax::kTime);
+  return syntax;
+}
+#undef doodle_startTime
+#undef doodle_endTime
+#undef doodle_startTime_long
+#undef doodle_endTime_long
+#undef doodle_sim_startTime
+#undef doodle_sim_startTime_long
 }  // namespace doodle::maya_plug

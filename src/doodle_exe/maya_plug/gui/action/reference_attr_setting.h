@@ -6,7 +6,7 @@
 
 #include <doodle_lib/gui/action/command.h>
 #include <maya/MSelectionList.h>
-
+#include <maya/MPxCommand.h>
 #include <nlohmann/json.hpp>
 namespace doodle::maya_plug {
 class reference_file;
@@ -47,6 +47,15 @@ class reference_attr_setting : public command_base {
   reference_attr_setting();
   bool render() override;
   static string get_channel_date();
+};
+
+class sim_cloth : public MPxCommand {
+ public:
+  static MString comm_name;
+  MStatus doIt(const MArgList& in_arg) override;
+
+  static void* creator();
+  static MSyntax syntax();
 };
 
 }  // namespace doodle::maya_plug
