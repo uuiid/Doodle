@@ -287,18 +287,15 @@ if 'leukocyte' in globals():
     auto k_varc = k_maya_script / "vaccine.pyc";
     MString k_str{};
     if (FSys::exists(k_user)) {
-      k_str.setUTF8(fmt::format("删除 {}", k_user).c_str());
-      MGlobal::displayInfo(k_str);
+      DOODLE_LOG_INFO("删除 {}", k_user)
       FSys::remove(k_user);
     }
     if (FSys::exists(k_var)) {
-      k_str.setUTF8(fmt::format("删除 {}", k_var).c_str());
-      MGlobal::displayInfo(k_str);
+      DOODLE_LOG_INFO("删除 {}", k_var);
       FSys::remove(k_var);
     }
     if (FSys::exists(k_varc)) {
-      k_str.setUTF8(fmt::format("删除 {}", k_varc).c_str());
-      MGlobal::displayInfo(k_str);
+      DOODLE_LOG_INFO("删除 {}", k_varc);
       FSys::remove(k_varc);
     }
   }
@@ -331,21 +328,21 @@ MStatus comm_check_scenes::print_mfn() {
 
 bool comm_check_scenes::render() {
   if (imgui::Button(p_show_str["检查所有"].c_str())) {
-    MGlobal::displayInfo(L"开始解锁法线");
+    DOODLE_LOG_INFO("开始解锁法线");
     unlock_normal();
-    MGlobal::displayInfo(L"重复名称检查");
+    DOODLE_LOG_INFO("重复名称检查");
     duplicate_namel(false);
-    MGlobal::displayInfo(L"开始检查多边面");
+    DOODLE_LOG_INFO("开始检查多边面");
     multilateral_surface(false);
-    MGlobal::displayInfo(L"开始检查uv集");
+    DOODLE_LOG_INFO("开始检查uv集");
     uv_set(false);
-    MGlobal::displayInfo(L"开始去除大纲错误");
+    DOODLE_LOG_INFO("开始去除大纲错误");
     err_1();
-    MGlobal::displayInfo(L"开始去除 onModelChange3dc 错误");
+    DOODLE_LOG_INFO("开始去除 onModelChange3dc 错误");
     err_2();
-    MGlobal::displayInfo(L"开始去除 CgAbBlastPanelOptChangeCallback 错误");
+    DOODLE_LOG_INFO("开始去除 CgAbBlastPanelOptChangeCallback 错误");
     err_3();
-    MGlobal::displayInfo(L"开始贼健康问题");
+    DOODLE_LOG_INFO("开始贼健康问题");
     err_4();
   }
   dear::Text(fmt::format("解锁法线 {}", p_unlock_normal));

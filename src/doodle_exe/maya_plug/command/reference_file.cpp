@@ -139,9 +139,7 @@ string reference_file::get_namespace() {
 }
 bool reference_file::replace_sim_assets_file() {
   if (!use_sim) {
-    auto k_log = fmt::format("跳过不解算的文件 {}", path);
-    MGlobal::displayWarning(d_str{k_log});
-    DOODLE_LOG_WARN(k_log);
+    DOODLE_LOG_WARN("跳过不解算的文件 {}", path);
     return false;
   }
 
@@ -152,7 +150,7 @@ bool reference_file::replace_sim_assets_file() {
   /// \brief 检查各种必须属性
   if (!k_ref.isLoaded(&k_s)) {
     DOODLE_CHICK(k_s);
-    MGlobal::displayWarning(d_str{"引用没有加载, 跳过!"});
+    DOODLE_LOG_WARN("引用没有加载, 跳过!");
     return false;
   }
   auto k_prj = get_prj();
@@ -163,11 +161,7 @@ bool reference_file::replace_sim_assets_file() {
   FSys::path k_m_str{d_str{k_ref.fileName(true, true, false, &k_s)}.str()};
   DOODLE_CHICK(k_s);
   auto k_vfx_path = k_cfg.vfx_cloth_sim_path / fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
-  {
-    auto k_log = fmt::format("推测资产路径 {}", k_vfx_path);
-    MGlobal::displayInfo(d_str{k_log});
-    DOODLE_LOG_INFO(k_log);
-  }
+  DOODLE_LOG_INFO("推测资产路径 {}", k_vfx_path);
   if (!FSys::exists(k_vfx_path))
     return false;
 
@@ -245,11 +239,8 @@ bool reference_file::rename_material() const {
         /// \brief 重命名材质名称
         k_mat_node.setName(d_str{fmt::format("{}_mat", k_mat_node_name)}, false, &k_s);
         DOODLE_CHICK(k_s);
-        {
-          auto k_log = fmt::format("重命名材质 {} -> {}", d_str{k_node.name()}, k_mat_node_name);
-          MGlobal::displayInfo(d_str{k_log});
-          DOODLE_LOG_INFO(k_log);
-        }
+        DOODLE_LOG_INFO("重命名材质 {} -> {}", d_str{k_node.name()}.str(), k_mat_node_name);
+
         k_node.setName(d_str{k_mat_node_name}, false, &k_s);
       }
     }

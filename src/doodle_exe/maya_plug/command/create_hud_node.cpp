@@ -3,6 +3,7 @@
 //
 
 #include "create_hud_node.h"
+#include <maya_plug/maya_plug_fwd.h>
 
 #include <maya/MFnAttribute.h>
 #include <maya/MFnDagNode.h>
@@ -55,17 +56,14 @@ bool create_hud_node::operator()() const {
   }
   M3dView::scheduleRefreshAllViews();
 
-  MString k_str{};
   if (has_node) {
     MFnDagNode k_node{};
-    k_str.setUTF8("doodle_hud");
-    auto k_obj = k_node.create(doodle_info_node::doodle_id, k_str);
 
-    k_str.setUTF8("完成创建节点 doodle_hud");
-    MGlobal::displayInfo(k_str);
+    auto k_obj = k_node.create(doodle_info_node::doodle_id, d_str{doodle_hud});
+
+    DOODLE_LOG_INFO("完成创建节点 doodle_hud");
   } else {
-    k_str.setUTF8("节点(doodle_hud)已经存在， 不需要重复创建");
-    MGlobal::displayWarning(k_str);
+    DOODLE_LOG_WARN("节点(doodle_hud)已经存在， 不需要重复创建")
   }
   return true;
 }

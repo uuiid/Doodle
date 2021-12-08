@@ -34,11 +34,8 @@ bool qcloth_shape::set_cache_folder() const {
   string k_namespace = p_ref_file.get<reference_file>().get_namespace();
   auto& k_cfg        = p_ref_file.get<reference_file>().get_prj().get<project::cloth_config>();
   boost::replace_all(k_name, k_cfg.cloth_proxy, k_cfg.cloth_shape);
-  {
-    auto k_str = fmt::format("推测布料节点 {}", k_name);
-    MGlobal::displayInfo(d_str{k_str});
-    DOODLE_LOG_INFO(k_str);
-  }
+  DOODLE_LOG_INFO("推测布料节点 {}", k_name);
+
   /// 选择解算节点
   MSelectionList l_selection_list{};
   k_s = l_selection_list.add(d_str{k_name}, true);
@@ -69,16 +66,11 @@ bool qcloth_shape::set_cache_folder() const {
                                          k_file_name.stem().generic_string(),
                                          k_namespace,
                                          k_node_name);
-    {
-      MGlobal::displayInfo(d_str{fmt::format("设置缓存路径 {}", l_string)});
-      DOODLE_LOG_INFO(fmt::format("设置缓存路径 {}", l_string));
-    }
+    DOODLE_LOG_INFO("设置缓存路径 {}", l_string);
     /// \brief 删除已经缓存的目录
     auto k_path = maya_file_io::work_path(l_string);
     if (FSys::exists(k_path)) {
-      auto k_log = fmt::format("发现缓存目录, 主动删除 {}", k_path);
-      MGlobal::displayInfo(d_str{k_log});
-      DOODLE_LOG_INFO(k_log);
+      DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
       FSys::remove_all(k_path);
     }
     FSys::create_directories(k_path);

@@ -15,6 +15,7 @@
 #include <maya_plug/maya_render/hud_render_node.h>
 #include <maya_plug/gui/action/reference_attr_setting.h>
 #include <maya_plug/maya_render/hud_render_override.h>
+#include <maya_plug/logger/maya_logger_info.h>
 namespace {
 const static std::string doodle_windows{"doodle_windows"};
 const static std::string doodle_win_path{"MayaWindow|mainWindowMenu"};
@@ -74,6 +75,7 @@ MStatus initializePlugin(MObject obj) {
 
   p_doodle_lib = doodle::new_object<doodle::doodle_lib>();
   doodle::logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
+  doodle::logger_ctrl::get_log().add_log_sink(new_object<::doodle::maya_plug::maya_msg_mt>());
   doodle::core_set_init k_init{};
   k_init.find_cache_dir();
   k_init.config_to_user();

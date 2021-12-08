@@ -50,9 +50,7 @@ bool comm_play_blast::render() {
       p_play_balst->set_save_dir(p_save_path);
       p_play_balst->play_blast_(MAnimControl::minTime(), MAnimControl::maxTime());
     } else {
-      MString k_s{};
-      k_s.setUTF8("无法分析路径得到镜头号和集数， 请重新设置文件路径");
-      MGlobal::displayError(k_s);
+      DOODLE_LOG_ERROR("无法分析路径得到镜头号和集数， 请重新设置文件路径");
     }
   }
   if (imgui::Button(p_show_str["hud"].c_str())) {
@@ -121,30 +119,23 @@ MString comm_play_blast_maya::comm_name{"comm_play_blast_maya"};
 MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
   MStatus k_s;
   play_blast k_p{};
-  MString k_str{};
   MArgDatabase k_prase{syntax(), in_arg};
 
-  k_str.setUTF8("开始从推测相机");
-  MGlobal::displayInfo(k_str);
+  DOODLE_LOG_INFO("开始从推测相机");
   k_p.conjecture_camera();
 
-  k_str.setUTF8("开始推测集数和镜头");
-  MGlobal::displayInfo(k_str);
+  DOODLE_LOG_INFO("开始推测集数和镜头");
   k_p.conjecture_ep_sc();
 
   if (k_prase.isFlagSet(doodle_filepath, &k_s)) {
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
     auto k_path = k_prase.flagArgumentString(doodle_filepath, 0, &k_s);
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
-    MString k_str{};
-    k_str.setUTF8("获得传入路径: ");
-    k_str += k_path;
-    MGlobal::displayInfo(k_str);
+    DOODLE_LOG_INFO("获得传入路径: {}", k_path);
     k_p.set_save_path(k_path.asUTF8());
   }
 
-  k_str.setUTF8("开始拍屏");
-  MGlobal::displayInfo(k_str);
+  DOODLE_LOG_INFO("开始拍屏");
 
   MTime k_start_time = MAnimControl::minTime();
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {

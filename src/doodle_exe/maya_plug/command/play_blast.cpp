@@ -113,36 +113,34 @@ MStatus camera_filter::set_render_cam(const MObject& in_obj) {
 
 string play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
 
-void play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientData) {
-  MStatus k_s{};
-  auto self     = static_cast<play_blast*>(clientData);
-  auto k_render = MHWRender::MRenderer::theRenderer();
-  if (!self || !k_render) return;
-
-  auto k_p = self->get_file_path(self->p_current_time);
-
-  MString k_path{};
-  k_path.setUTF8(k_p.generic_string().c_str());
-
-  if (k_path.length() == 0)
-    return;
-  auto k_texManager = k_render->getTextureManager();
-  auto k_tex        = context.copyCurrentColorRenderTargetToTexture();
-  if (k_tex) {
-    k_s = k_texManager->saveTexture(k_tex, k_path);
-    k_texManager->releaseTexture(k_tex);
-  }
-
-  MString k_tmp{};
-  if (!k_s) {
-    k_tmp = k_s.errorString();
-    k_tmp += " error path -> ";
-    MGlobal::displayError(k_tmp + k_path);
-  } else {
-    k_tmp.setUTF8("捕获的颜色渲染目标到: ");
-    MGlobal::displayInfo(k_tmp + k_path);
-  }
-}
+// void play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientData) {
+//   MStatus k_s{};
+//   auto self     = static_cast<play_blast*>(clientData);
+//   auto k_render = MHWRender::MRenderer::theRenderer();
+//   if (!self || !k_render) return;
+//
+//   auto k_p = self->get_file_path(self->p_current_time);
+//
+//   MString k_path{};
+//   k_path.setUTF8(k_p.generic_string().c_str());
+//
+//   if (k_path.length() == 0)
+//     return;
+//   auto k_texManager = k_render->getTextureManager();
+//   auto k_tex        = context.copyCurrentColorRenderTargetToTexture();
+//   if (k_tex) {
+//     k_s = k_texManager->saveTexture(k_tex, k_path);
+//     k_texManager->releaseTexture(k_tex);
+//   }
+//
+//   MString k_tmp{};
+//   if (!k_s) {
+//     k_tmp = k_s.errorString();
+//     k_tmp += " error path -> ";
+//   } else {
+//     k_tmp.setUTF8("捕获的颜色渲染目标到: ");
+//   }
+// }
 
 play_blast::play_blast()
     : p_save_path(core_set::getSet().get_cache_root("maya_play_blast")),
@@ -202,9 +200,7 @@ bool play_blast::conjecture_camera() {
   k_f.conjecture();
   auto k_c = k_f.get();
   if (k_c.isNull()) {
-    MString k_str{};
-    k_str.setUTF8("无法推测相机， 没有符合要求的相机");
-    MGlobal::displayError(k_str);
+    DOODLE_LOG_ERROR("无法推测相机， 没有符合要求的相机")
     throw doodle_error{"无法推测相机， 没有符合要求的相机"};
   }
 
@@ -220,15 +216,11 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
   k_select.add(p_camera_path);
   if (k_select.isEmpty()) {
-    MString k_str{};
-    k_str.setUTF8("没有相机可供拍摄");
-    MGlobal::displayError(k_str);
+    DOODLE_LOG_ERROR("没有相机可供拍摄")
     throw doodle_error{"没有相机可供拍摄"};
   }
   if (p_save_path.empty()) {
-    MString k_str{};
-    k_str.setUTF8("输出路径为空");
-    MGlobal::displayError(k_str);
+    DOODLE_LOG_ERROR("输出路径为空");
     throw doodle_error{"输出路径为空"};
   }
 
@@ -272,13 +264,13 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     k_s = k_view.setCamera(k_camera_path);
     CHECK_MSTATUS(k_s);
     if (!k_s) {
-      MGlobal::displayError("not set cam view");
+      DOODLE_LOG_WARN("not set cam view");
     }
     k_view.setDisplayStyle(M3dView::DisplayStyle::kGouraudShaded);
     k_view.setObjectDisplay(M3dView::DisplayObjects::kDisplayLocators | M3dView::DisplayObjects::kDisplayMeshes);
     k_view.refresh(false, true);
   } else {
-    MGlobal::displayError("not find view");
+    DOODLE_LOG_WARN("not find view");
   }
 
   if (MGlobal::mayaState(&k_s) == MGlobal::kInteractive) {
@@ -382,14 +374,10 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
     auto k_ptr = new_object<long_term>();
     k_ptr->sig_progress.connect([&](rational_int in_rational_int) {
-      MString k_str{};
-      k_str.setUTF8(fmt::format("合成拍屏进度 : {}%", k_ptr->get_progress_int()).c_str());
-      MGlobal::displayInfo(k_str);
+      DOODLE_LOG_INFO("合成拍屏进度 : {}%", k_ptr->get_progress_int());
     });
     k_ptr->sig_finished.connect([this]() {
-      MString k_str{};
-      k_str.setUTF8(fmt::format("完成拍屏合成 : {}", get_out_path()).c_str());
-      MGlobal::displayInfo(k_str);
+      DOODLE_LOG_INFO("完成拍屏合成 : {}", get_out_path());
       FSys::remove_all(get_file_dir());
     });
     k_image.create_video(k_ptr);

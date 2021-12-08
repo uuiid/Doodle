@@ -133,7 +133,7 @@ bool reference_attr_setting::get_file_info() {
       DOODLE_CHICK(k_s);
       p_handle.push_back(k_h);
     } catch (maya_error& err) {
-      MGlobal::displayWarning(d_str{"跳过无效的引用"});
+      DOODLE_LOG_WARN("跳过无效的引用");
       k_h.destroy();
     }
   }
@@ -269,18 +269,15 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
       }
     }
   }
-  {
-    auto k_log = fmt::format("解算开始时间 {} 导出abc时间 {} 结束时间 {} 解算文件 {} 导出abc {} ",
-                             k_sim_start.value(), k_start.value(), k_end.value(), k_sim_cloth, k_ex_abc);
-    MGlobal::displayInfo(d_str{k_log});
-    DOODLE_LOG_INFO(k_log);
-  }
+  DOODLE_LOG_INFO(
+      "解算开始时间 {} 导出abc时间 {} 结束时间 {} 解算文件 {} 导出abc {} ",
+      k_sim_start.value(), k_start.value(), k_end.value(), k_sim_cloth, k_ex_abc);
+
   if (k_sim_cloth) {
     std::vector<entt::handle> l_list{};
     MFnReference k_ref_file{};
     auto k_j_str = reference_attr_setting::get_channel_date();
     if (k_j_str.empty() && !k_def_prj) {
-      MGlobal::displayError(d_str{"找不到默认配置， 并且文件中也找不到解算元数据"});
       DOODLE_LOG_ERROR("找不到默认配置， 并且文件中也找不到解算元数据");
       return MStatus::kFailure;
     }
@@ -295,7 +292,7 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
         DOODLE_CHICK(k_s);
         l_list.push_back(k_h);
       } catch (maya_error& err) {
-        MGlobal::displayWarning(d_str{"跳过无效的引用"});
+        DOODLE_LOG_WARN("跳过无效的引用");
         k_h.destroy();
       }
     }
@@ -305,9 +302,7 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
       auto& k_ref = l_i.get<reference_file>();
       auto l_p    = k_ref.path;
       if (k_j.contains(l_p)) {
-        auto k_log = fmt::format("加载元数据 {}", l_p);
-        MGlobal::displayInfo(d_str{k_log});
-        DOODLE_LOG_INFO(k_log);
+        DOODLE_LOG_INFO("加载元数据 {}", l_p);
         entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
       }
       try {

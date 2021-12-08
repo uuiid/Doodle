@@ -55,6 +55,7 @@ class DOODLELIB_API logger_ctrl {
    * @return 是否成功
    */
   bool set_log_name(const std::string& in_name);
+  bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr);
   virtual void post_constructor();
 };
 

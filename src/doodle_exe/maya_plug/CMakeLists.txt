@@ -34,6 +34,7 @@ set(doodle_maya_plug_cpp
         data/qcloth_shape.h
         data/maya_file_io.cpp
         data/maya_file_io.h
+        logger/maya_logger_info.h
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
 foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)

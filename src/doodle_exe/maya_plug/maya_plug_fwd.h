@@ -57,14 +57,12 @@ class d_str {
 //   }
 // };
 
-#define DOODLE_CHICK(in_status)                        \
-  {                                                    \
-    if (in_status != MStatus::MStatusCode::kSuccess) { \
-      auto l_string = d_str{in_status.errorString()};  \
-      MGlobal::displayError(l_string);                 \
-      DOODLE_LOG_ERROR(l_string.str());                \
-      throw maya_error{l_string};                      \
-    }                                                  \
+#define DOODLE_CHICK(in_status)                           \
+  {                                                       \
+    if (in_status != MStatus::MStatusCode::kSuccess) {    \
+      DOODLE_LOG_ERROR(in_status.errorString().asUTF8()); \
+      throw maya_error{in_status.errorString().asUTF8()}; \
+    }                                                     \
   };
 
 }  // namespace doodle::maya_plug

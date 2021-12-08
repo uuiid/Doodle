@@ -100,4 +100,8 @@ void logger_ctrl::post_constructor() {
 logger_ctrl::~logger_ctrl() {
   spdlog::shutdown();
 }
+bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink> &in_ptr) {
+  spdlog::get("doodle_lib")->sinks().push_back(in_ptr);
+  return true;
+}
 }  // namespace doodle
