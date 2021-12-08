@@ -59,7 +59,7 @@ bool create_hud_node::operator()() const {
   if (has_node) {
     MFnDagNode k_node{};
 
-    auto k_obj = k_node.create(doodle_info_node::doodle_id, d_str{doodle_hud});
+    auto k_obj = k_node.create(doodle_info_node::doodle_id, d_str{"doodle_hud"});
 
     DOODLE_LOG_INFO("完成创建节点 doodle_hud");
   } else {
