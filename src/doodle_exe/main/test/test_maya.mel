@@ -1,1 +1,2 @@
-python("execfile('C:/Users/TD/Source/Doodle/src/doodle_exe/main/test/test_maya.py')")
+python("import test_maya");
+python("test_maya.doodle_test()");
