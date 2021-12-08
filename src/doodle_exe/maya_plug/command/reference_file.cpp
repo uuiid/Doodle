@@ -63,14 +63,16 @@ MSelectionList reference_file::get_collision_model() const {
 }
 
 void reference_file::chick_mobject() {
-  if (p_m_object.isNull() && !ref_file_uuid.empty()) {
-    MStatus k_s;
-    MFnReference k_file;
-    for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
-      k_s = k_file.setObject(refIter.thisNode());
-      DOODLE_CHICK(k_s);
-      if (k_file.uuid().asString().asUTF8() == ref_file_uuid) {
-        p_m_object = refIter.thisNode();
+  if (p_m_object.isNull()) {
+    if (!ref_file_uuid.empty()) {
+      MStatus k_s;
+      MFnReference k_file;
+      for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
+        k_s = k_file.setObject(refIter.thisNode());
+        DOODLE_CHICK(k_s);
+        if (k_file.uuid().asString().asUTF8() == ref_file_uuid) {
+          p_m_object = refIter.thisNode();
+        }
       }
     }
     if (p_m_object.isNull())

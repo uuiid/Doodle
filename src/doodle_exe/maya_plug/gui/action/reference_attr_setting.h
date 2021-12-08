@@ -51,6 +51,11 @@ class reference_attr_setting : public command_base {
 
 class sim_cloth : public MPxCommand {
  public:
+  enum class export_abc_enum {
+    export,
+    only,
+    not,
+  };
   static MString comm_name;
   MStatus doIt(const MArgList& in_arg) override;
 
