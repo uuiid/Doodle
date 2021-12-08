@@ -96,8 +96,8 @@ core_set::core_set()
       p_server_host("dev.rpc.server.doodle.com"),
 #endif
       p_sql_port(3306),
-      p_meta_rpc_port(60999),
-      p_file_rpc_port(60998),
+      p_meta_rpc_port(10999),
+      p_file_rpc_port(10998),
 #ifdef NDEBUG
       p_sql_host("mysql.server.doodle.com"),
 #else

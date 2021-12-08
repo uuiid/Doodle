@@ -54,7 +54,6 @@ class sim_cloth : public MPxCommand {
 
   static MString comm_name;
   MStatus doIt(const MArgList& in_arg) override;
-
   static void* creator();
   static MSyntax syntax();
 };
