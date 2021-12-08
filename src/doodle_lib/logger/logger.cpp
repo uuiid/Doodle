@@ -5,6 +5,7 @@
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/sinks/daily_file_sink.h>
 
 namespace doodle {
 namespace details {
@@ -87,7 +88,7 @@ bool logger_ctrl::set_log_name(const std::string &in_name) {
   auto l_log  = spdlog::get("doodle_lib");
   auto &l_v   = l_log->sinks();
   auto l_path = p_log_path / p_log_name;
-  auto l_file = new_object<spdlog::sinks::rotating_file_sink_mt>(l_path.generic_string(), 1024 * 1024, 100, true);
+  auto l_file = new_object<spdlog::sinks::daily_file_sink_mt>(l_path.generic_string(), 0u, 0u);
   l_v.push_back(l_file);
   /// 去除掉临时的的文件记录器
   l_v.erase(l_v.begin());
