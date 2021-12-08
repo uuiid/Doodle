@@ -1,39 +1,26 @@
 ﻿Write-Host " 准备测试服务器 .... 请点击确认按钮并等待完成..."
 
 class map_dir {
-  [string] $link
-  [string] $source
-  [string] $name
+  [string]$link
+  [string]$source
+  [string]$name
 }
-# @("", "", "8幢_独步逍遥v3")
-# @("C:\sy\ChengXv_8", "\\192.168.10.250\public\Prism_projects", "8幢_程序开发"),
-# @("C:\sy\donghuagongxiang_8", "\\192.168.10.250\public\动画共享", "8幢_动画共享"),
-# @("C:\sy\CangFeng_8", "\\192.168.10.250\public\CangFeng", "8幢_藏锋"),
-# @("C:\sy\WanGuShenHua_8", "\\192.168.10.250\public\WanGuShenHua", "8幢_万古神话"),
-# @("C:\sy\RenJianZuiDeYi_8", "\\192.168.10.250\public\renjianzuideyi", "8幢_人间最得意"),
-# @("C:\sy\WuDiJianHun_8", "\\192.168.10.250\public\WuDiJianHun", "8幢_无敌剑魂"),
-# @("C:\sy\JianJi_8", "\\192.168.10.250\public\11-剪辑", "8幢_剪辑"),
-# @("C:\sy\HouQi_8", "\\192.168.10.250\public\HouQi", "8幢_后期"),
-# @("C:\sy\MeiYiGiao_8", "\\192.168.10.250\public\美易高", "美易高"),
-# @("C:\sy\LianQiShiWanNian_8", "\\192.168.10.250\public\LianQiShiWanNian", "8幢_炼气十万年"),
-# @("C:\sy\WuJinShenYu_8", "\\192.168.10.250\public\WuJinShenYu", "8幢_无尽神域"),
 
-# @("C:\sy\WanYuFengShen_9", "\\192.168.10.218\WanYuFengShen", "9幢_万域封神"),
-# @("C:\sy\KuangShenMoZun_9", "\\192.168.10.218\KuangShenMoZun", "9幢_狂神魔尊"),
-# @("C:\sy\JianJi_9", "\\192.168.10.218\jianji", "9幢_剪辑"),
-# @("C:\sy\HouQi_9", "\\192.168.10.218\houqi", "9幢_后期")
 $map_item = @(
-  [map_dir]@{link = "C:\sy\WuDiJianHun_8"; source = ""; name = "无敌剑魂" }
+  [map_dir]@{link = "C:\sy\DuBuXiaoYao_8"; source = ""; name = "独步逍遥" },
+  [map_dir]@{link = "C:\sy\WuDiJianHun_8"; source = ""; name = "无敌剑魂" },
+  [map_dir]@{link = "C:\sy\CangFeng_8"; source = ""; name = "藏锋" },
+  [map_dir]@{link = "C:\sy\WanGuShenHua_8"; source = ""; name = "万古神话" },
+  [map_dir]@{link = "C:\sy\RenJianZuiDeYi_8"; source = ""; name = "人间最得意" },
+  [map_dir]@{link = "C:\sy\LianQiShiWanNian_8"; source = ""; name = "炼气十万年" },
+  [map_dir]@{link = "C:\sy\WuJinShenYu_8"; source = ""; name = "无尽神域" },
+  [map_dir]@{link = "C:\sy\WanYuFengShen_9"; source = ""; name = "万域封神" },
+  [map_dir]@{link = "C:\sy\KuangShenMoZun_9"; source = ""; name = "狂神魔尊" }
+
 )
 
-
-if ( Test-Path -Path "C:\sy") {
-}
-else {
-  New-Item "C:\sy" -ItemType Directory
-}
-
-$main_ini = @"
+function Add-SyDir {
+  $main_ini = @"
 [.ShellClassInfo]
 InfoTip=@Shell32.dll,-12688
 IconFile=%SystemRoot%\system32\mydocs.dll
@@ -53,42 +40,60 @@ Vid = {137E7700-3573-11CF-AE69-08002B2E1262}
 FolderType=
 Logo =
 
-"@
-
-Set-Content -Path "C:\sy\desktop.ini" -Value $main_ini -Encoding "unicode" -Force
-$file = Get-Item -Path "C:\sy\desktop.ini" -Force
-$file.Attributes = 'Archive, System, Hidden'
-
-
-$log_f = $env:TMP + "/doodle_map.txt";
-if (Test-Path $log_f) {
-  $l_p = Get-Item -Path $log_f 
-  if ($l_p.Exists) {
-    $l_p.Delete()
+"@;
+  if ( Test-Path -Path "C:\sy") {
   }
-}
-foreach ($item in $map_item) {
-  try {
-    $t_dir = Read-Host "输入"  $item.name "路径"
-    Add-Content -Path $log_f -Value $t_dir -Encoding "unicode" -Force
-    if ($t_dir.Length -gt 0) {
-      $log = Get-Childitem -Path $t_dir -ErrorAction Stop
-      Add-Content -Path $log_f -Value $log -Encoding "unicode" -Force
-      if (Test-Path $t_dir) {
-        if (Test-Path $item.link) {
-          $fod = Get-Item -Path $item.link
-          $fod.Delete()
-        }
-        $log = New-Item -ItemType SymbolicLink -Path $item.link -Target $t_dir
-        Add-Content -Path $log_f -Value $log -Encoding "unicode" -Force
-      }
+  else {
+    New-Item "C:\sy" -ItemType Directory
+  }
+  Set-Content -Path "C:\sy\desktop.ini" -Value $main_ini -Encoding "unicode" -Force
+  $file = Get-Item -Path "C:\sy\desktop.ini" -Force
+  $file.Attributes = 'Archive, System, Hidden'
+  
+  $log_f = $env:TMP + "/doodle_map.txt";
+  if (Test-Path $log_f) {
+    $l_p = Get-Item -Path $log_f 
+    if ($l_p.Exists) {
+      $l_p.Delete()
     }
   }
-  catch [System.Management.Automation.ActionPreferenceStopException] {
-    Write-Host "目录 " $item.source "没有访问权限， 取消映射"
+}
+
+# $map_item |Format-Table -Property @{name="index";expression={$global:index;$global:index+=1}},name;
+
+function Add-SymLink {
+  try {
+    $map_item | Format-Table -Property @{name = "index"; expression = { $map_item.IndexOf($_) } }, name;
+    $indexstring = Read-Host "选择项目进行路径标准化(请输入索引)";
+    $value = $indexstring -as [Double];
+    if ($value -cge $map_item.Length) {
+      Read-Host "没有这个项目 按任意键后退出";
+      exit;
+    }
+    $pathstring = Read-Host "输入项目"$map_item[$value].name"所在位置";
+    
+    if (Test-Path $map_item[$value].link) {
+      Write-Host "检查到已存在"$map_item[$value].link",删除路径后重新标准化"
+      $fod = Get-Item -Path $map_item[$value].link
+      $fod.Delete()
+    }
+    
+    if (Test-Path $pathstring) {
+      $path = Get-Item -Path $pathstring;
+      $pathstring = $path.FullName;
+    }
+    else {
+      Read-Host "没有从目录中检查到路径" $pathstring ", 按任意键后退出";
+      exit;
+    }
+    
+    Write-Host "开始标准化路径 从" $pathstring" 到 " $map_item[$value].link
+    New-Item -ItemType SymbolicLink -Path $item.link -Target $pathstring
   }
   catch {
-    Write-Host "项目 " $item.name " 未知原因， 无法创建"
+    Write-Host "出现异常， 请联系自作人员"
   }
 }
+Add-SyDir;
+Add-SymLink;
 # ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_sys_dir_gui.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\map.exe -requireAdmin -noConsole
