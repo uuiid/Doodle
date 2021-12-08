@@ -1065,20 +1065,17 @@ class open_file(object):
         doodle_work_space.reset()
 
         assert(isinstance(self.cfg, sim_config))
-        # qcloth_path = pymel.core.Path(self.cfg.qcloth_assets_path)
-        # k_cl = cloth_export(qcloth_path)
-
-        cmds.doodle_sim_cloth(exportABC=False, simCloth=True, endTime=1005)
-        cmds.comm_play_blast_maya(startTime=950,
-                                  endTime=1005,
+        cmds.doodle_sim_cloth(exportABC=False, simCloth=True)
+        cmds.comm_play_blast_maya(startTime=doodle_work_space.raneg.start,
+                                  endTime=doodle_work_space.raneg.end,
                                   filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
                                   .format(
-                                      path="D:/tmp",
+                                      path=doodle_work_space.get_abc_folder(),
                                       base_name=doodle_work_space.maya_file.name_not_ex,
-                                      start=950,
-                                      end=1005
+                                      start=doodle_work_space.raneg.start,
+                                      end=doodle_work_space.raneg.end
                                   ))
-        cmds.doodle_sim_cloth(exportABC=True, simCloth=False, endTime=1005)
+        cmds.doodle_sim_cloth(exportABC=True, simCloth=False, endTime=doodle_work_space.raneg.end)
 
     def get_fbx_export(self):
         # type: () -> fbx_export
