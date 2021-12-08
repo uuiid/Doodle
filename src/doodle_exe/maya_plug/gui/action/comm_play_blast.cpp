@@ -146,21 +146,17 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
   k_str.setUTF8("开始拍屏");
   MGlobal::displayInfo(k_str);
 
-  MTime k_start_time{};
+  MTime k_start_time = MAnimControl::minTime();
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
     k_start_time = k_prase.flagArgumentMTime(doodle_startTime, 0, &k_s);
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  } else {
-    k_start_time = MAnimControl::minTime();
   }
-  MTime k_end_time{};
+  MTime k_end_time = MAnimControl::maxTime();
   if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
     k_end_time = k_prase.flagArgumentMTime(doodle_endTime, 0, &k_s);
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  } else {
-    k_end_time = MAnimControl::maxTime();
   }
 
   k_s = k_p.play_blast_(k_start_time, k_end_time);
