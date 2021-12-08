@@ -4,7 +4,7 @@
             "name": "maya",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "C:/Program Files/Autodesk/Maya2020/bin/maya.exe",
+            "program": "C:/Program Files/Autodesk/Maya2019/bin/maya.exe",
             "args": [
                 "-noAutoloadPlugins"
             ],
@@ -35,7 +35,7 @@
             "name": "maya_cmd",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "C:/Program Files/Autodesk/Maya2020/bin/maya.exe",
+            "program": "C:/Program Files/Autodesk/Maya2019/bin/maya.exe",
             "args": [
                 "-noAutoloadPlugins",
                 "-batch",
@@ -47,7 +47,38 @@
             "environment": [
                 {
                     "name": "MAYA_PLUG_IN_PATH",
-                    "value": "${workspaceFolder}/build/Ninja_release_plug/bin;${workspaceFolder}/script/maya/plug-ins"
+                    "value": "${workspaceFolder}/script/maya/plug-ins;${workspaceFolder}/build/Ninja_release_plug/plug/maya/plug-ins"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${env:PATH};${workspaceFolder}/build/Ninja_release_plug/bin"
+                },
+                {
+                    "name": "PYTHONPATH",
+                    "value": "${env:PYTHONPATH};${workspaceFolder}/src/doodle_lib/resource;${workspaceFolder}/script/maya/scripts/scripts;${workspaceFolder}/script/maya/scripts;${workspaceFolder}/src/doodle_exe/main/test"
+                },
+                {
+                    "name": "XBMLANGPATH",
+                    "value": "${workspaceFolder}/script/maya/icons"
+                }
+            ],
+            "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
+        },
+        {
+            "name": "mayapy_cmd",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "C:/Program Files/Autodesk/Maya2019/bin/mayapy.exe",
+            "args": [
+                "${workspaceFolder}/src/doodle_exe/main/test/test_maya.py"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "MAYA_PLUG_IN_PATH",
+                    "value": "${workspaceFolder}/script/maya/plug-ins;${workspaceFolder}/build/Ninja_release_plug/plug/maya/plug-ins"
                 },
                 {
                     "name": "PATH",

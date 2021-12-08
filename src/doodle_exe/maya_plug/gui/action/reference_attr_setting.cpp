@@ -21,6 +21,7 @@
 #include <maya/MSyntax.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MAnimControl.h>
+#include <maya/MArgList.h>
 
 #include <maya_plug/command/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -218,7 +219,9 @@ MString sim_cloth::comm_name{"doodle_sim_cloth"};
 
 MStatus sim_cloth::doIt(const MArgList& in_arg) {
   MStatus k_s;
-  MArgDatabase k_prase{syntax(), in_arg};
+  MArgParser k_prase{syntax(), in_arg, &k_s};
+  DOODLE_CHICK(k_s);
+
   bool k_ex_abc{false};
   bool k_sim_cloth{false};
   entt::handle k_def_prj;
@@ -234,22 +237,22 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
   }
   if (k_prase.isFlagSet(doodle_sim_cloth, &k_s)) {
     DOODLE_CHICK(k_s);
-    k_s = k_prase.getFlagArgument(doodle_export_abc, 0, k_sim_cloth);
+    k_s = k_prase.getFlagArgument(doodle_sim_cloth, 0, k_sim_cloth);
     DOODLE_CHICK(k_s);
   }
   if (k_prase.isFlagSet(doodle_sim_startTime, &k_s)) {
     DOODLE_CHICK(k_s);
-    k_s = k_prase.getFlagArgument(doodle_export_abc, 0, k_sim_start);
+    k_s = k_prase.getFlagArgument(doodle_sim_startTime, 0, k_sim_start);
     DOODLE_CHICK(k_s);
   }
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
     DOODLE_CHICK(k_s);
-    k_s = k_prase.getFlagArgument(doodle_export_abc, 0, k_start);
+    k_s = k_prase.getFlagArgument(doodle_startTime, 0, k_start);
     DOODLE_CHICK(k_s);
   }
   if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
     DOODLE_CHICK(k_s);
-    k_s = k_prase.getFlagArgument(doodle_export_abc, 0, k_end);
+    k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
     DOODLE_CHICK(k_s);
   }
   if (k_prase.isFlagSet(doodle_default_uuid, &k_s)) {
@@ -262,7 +265,7 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
     for (auto& k_e : k_prj_view) {
       auto k_h = make_handle(k_e);
       if (k_h.get<database>() == k_def_uuid) {
-        k_def_prj = make_handle(k_e);
+        k_def_prj = k_h;
       }
     }
   }
@@ -288,7 +291,7 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
       DOODLE_CHICK(k_s);
       auto k_h = make_handle();
       try {
-        k_h.emplace<reference_file>(k_def_prj, k_obj);
+        k_h.emplace<reference_file>().set_path(k_obj);
         DOODLE_CHICK(k_s);
         l_list.push_back(k_h);
       } catch (maya_error& err) {
@@ -301,8 +304,12 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
     for (auto& l_i : l_list) {
       auto& k_ref = l_i.get<reference_file>();
       auto l_p    = k_ref.path;
-      if (k_j.contains(l_p))
+      if (k_j.contains(l_p)) {
+        auto k_log = fmt::format("加载元数据 {}", l_p);
+        MGlobal::displayInfo(d_str{k_log});
+        DOODLE_LOG_INFO(k_log);
         entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
+      }
       try {
         if (k_j.contains(k_ref.get_unique_name()))
           k_ref.use_sim = k_j.at(k_ref.get_unique_name()).at("use_sim").get<bool>();
@@ -317,8 +324,8 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
       }
     }
     boost::remove_erase_if(l_list, [](auto k_h) -> bool { return !k_h; });
-    for (auto& k_i : l_list) {
-      for (MTime k_t = k_sim_start; k_t <= k_end; ++k_t) {
+    for (MTime k_t = k_sim_start; k_t <= k_end; ++k_t) {
+      for (auto& k_i : l_list) {
         MAnimControl::setCurrentTime(k_t);
         k_i.get<reference_file>().create_cache();
       }

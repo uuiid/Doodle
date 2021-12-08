@@ -663,7 +663,7 @@ class cloth_group_file(export_group):
             for m_attr in obj.getShapes():
                 m_attr.outMesh.evaluate()
 
-    def hide_other(self): 
+    def hide_other(self):
         pymel.core.select("{}:*UE4".format(self.maya_name_space))
         pymel.core.hide(pymel.core.selected())
 
@@ -1026,12 +1026,8 @@ class open_file(object):
 
     def load_plug(self, str_list):
         # type: (list[str])->None
-        try:
-            # 这里加载一下我们自己的插件
-            cmds.loadPlugin(open_file.doodle_plug)
-        except RuntimeError as err:
-            # print(err)
-            print("not load {}".format(open_file.doodle_plug))
+        # 这里加载一下我们自己的插件
+        cmds.loadPlugin(open_file.doodle_plug)
 
         for plug in str_list:
             cmds.loadPlugin(plug)
@@ -1069,12 +1065,20 @@ class open_file(object):
         doodle_work_space.reset()
 
         assert(isinstance(self.cfg, sim_config))
-        qcloth_path = pymel.core.Path(self.cfg.qcloth_assets_path)
-        k_cl = cloth_export(qcloth_path)
-        if self.cfg.only_sim:
-            k_cl.sim_and_export()
-        else:
-            k_cl()
+        # qcloth_path = pymel.core.Path(self.cfg.qcloth_assets_path)
+        # k_cl = cloth_export(qcloth_path)
+
+        cmds.doodle_sim_cloth(exportABC=False, simCloth=True, endTime=1010)
+        cmds.comm_play_blast_maya(startTime=950,
+                                  endTime=1010,
+                                  filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
+                                  .format(
+                                      path="D:/tmp",
+                                      base_name=doodle_work_space.maya_file.name_not_ex,
+                                      start=950,
+                                      end=1010
+                                  ))
+        cmds.doodle_sim_cloth(exportABC=True, simCloth=False, endTime=1010)
 
     def get_fbx_export(self):
         # type: () -> fbx_export

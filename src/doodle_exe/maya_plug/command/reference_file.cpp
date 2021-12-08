@@ -34,20 +34,15 @@ reference_file::reference_file(const entt::handle &in_uuid, const MObject &in_re
     : reference_file() {
   chick_component<database>(in_uuid);
   prj_ref = in_uuid.get<database>().uuid();
+  set_path(in_ref_node);
+}
+
+void reference_file::set_path(const MObject &in_ref_node) {
   MStatus k_s{};
   MFnReference k_ref{in_ref_node, &k_s};
   DOODLE_CHICK(k_s);
-  auto k_m_str = k_ref.fileName(false, true, true, &k_s);
+  path = d_str{k_ref.fileName(false, true, true, &k_s)};
   DOODLE_CHICK(k_s);
-  path          = d_str{k_m_str};
-  // if (!k_ref.isLoaded(&k_s)) {
-  //   DOODLE_CHICK(k_s)
-  // } else {
-  //   DOODLE_CHICK(k_s);
-  //   path = d_str{k_ref.associatedNamespace(false, &k_s)};
-  //   DOODLE_CHICK(k_s);
-  // }
-
   ref_file_uuid = d_str{k_ref.uuid().asString()};
   p_m_object    = in_ref_node;
 }
@@ -143,6 +138,13 @@ string reference_file::get_namespace() {
   return k_r;
 }
 bool reference_file::replace_sim_assets_file() {
+  if (!use_sim) {
+    auto k_log = fmt::format("跳过不解算的文件 {}", path);
+    MGlobal::displayWarning(d_str{k_log});
+    DOODLE_LOG_WARN(k_log);
+    return false;
+  }
+
   chick_mobject();
   MFnReference k_ref{p_m_object};
   MStatus k_s{};

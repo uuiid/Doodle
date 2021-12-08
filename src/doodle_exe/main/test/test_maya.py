@@ -18,5 +18,13 @@ class doodle_main(object):
 
 def doodle_test():
     print("run test")
-    maya_fun_tool.open_file()
-    raw_input("Please enter your name: ")
+    k_f = maya_fun_tool.open_file()
+    k_f.config_ = """[{"export_path":"",
+    "only_sim":false,
+    "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN1.ma",
+    "qcloth_assets_path":"V:/03_Workflow/Assets/CFX"}]"""
+    k_f()
+
+
+if __name__ == '__main__':
+    doodle_test()

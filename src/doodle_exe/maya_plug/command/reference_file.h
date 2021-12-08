@@ -26,6 +26,7 @@ class reference_file {
   explicit reference_file(const entt::handle &in_uuid, const MObject &in_ref_node);
 
   void init_show_name();
+  void set_path(const MObject &in_ref_node);
 
   [[nodiscard]] entt::handle get_prj() const;
 

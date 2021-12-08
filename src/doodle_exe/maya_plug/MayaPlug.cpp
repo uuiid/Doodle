@@ -177,7 +177,8 @@ MStatus initializePlugin(MObject obj) {
   ///
   status = k_plugin.registerCommand(
       ::doodle::maya_plug::sim_cloth::comm_name,
-      &::doodle::maya_plug::sim_cloth::creator);
+      &::doodle::maya_plug::sim_cloth::creator,
+      &::doodle::maya_plug::sim_cloth::syntax);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 等所有命令完成后加载工具架
