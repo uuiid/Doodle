@@ -62,12 +62,14 @@ Logo =
 # $map_item |Format-Table -Property @{name="index";expression={$global:index;$global:index+=1}},name;
 
 function Add-SymLink {
+
+
   try {
     $map_item | Format-Table -Property @{name = "index"; expression = { $map_item.IndexOf($_) } }, name;
     $indexstring = Read-Host "选择项目进行路径标准化(请输入索引)";
     $value = $indexstring -as [Double];
     if ($value -cge $map_item.Length) {
-      Read-Host "没有这个项目 按任意键后退出";
+      Read-Host "没有这个项目 按Enter键后退出";
       exit;
     }
     $pathstring = Read-Host "输入项目"$map_item[$value].name"所在位置";
@@ -83,16 +85,36 @@ function Add-SymLink {
       $pathstring = $path.FullName;
     }
     else {
-      Read-Host "没有从目录中检查到路径" $pathstring ", 按任意键后退出";
+      Read-Host "没有从目录中检查到路径" $pathstring ", 按Enter键后退出";
       exit;
     }
     
     Write-Host "开始标准化路径 从" $pathstring" 到 " $map_item[$value].link
+    $name = $map_item[$value].name
+    $con = @"
+[.ShellClassInfo]
+InfoTip=@Shell32.dll,-12688
+IconFile=%SystemRoot%\system32\mydocs.dll
+IconIndex=-101
+IconResource=C:\WINDOWS\System32\SHELL32.dll,43
+
+[{F29F85E0-4FF9-1068-AB91-08002B27B3D9}]
+    Prop2 = 31,$name
+    Prop3 = 31,secret
+    Prop4 = 31,John Doe
+    Prop5 = 31,how it works
+    Prop6 = 31,this is comment
+
+"@;
+    Set-Content -Path $pathstring"\desktop.ini" -Value $con -Encoding "unicode" -Force
+    $file = Get-Item -Path $pathstring"\desktop.ini" -Force
+    $file.Attributes = 'Archive, System, Hidden'
     New-Item -ItemType SymbolicLink -Path $map_item[$value].link -Target $pathstring
   }
   catch {
     Write-Host "出现异常， 请联系自作人员"
   }
+  Read-Host "标准化路径完成, 按Enter键后退出"
 }
 Add-SyDir;
 Add-SymLink;
