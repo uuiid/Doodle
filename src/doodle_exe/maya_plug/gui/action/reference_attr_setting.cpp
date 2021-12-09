@@ -205,19 +205,11 @@ bool reference_attr_setting::render() {
 
 #define doodle_startTime "-st"
 #define doodle_endTime "-et"
-#define doodle_sim_startTime "-ss"
 #define doodle_default_uuid "-u"
-#define doodle_export_abc "-ea"
-#define doodle_sim_cloth "-sim"
-#define doodle_replace_file "-rf"
 
-#define doodle_replace_file_long "-replaceFile"
-#define doodle_export_abc_long "-exportABC"
-#define doodle_sim_cloth_long "-simCloth"
 #define doodle_default_uuid_long "-uuid"
 #define doodle_startTime_long "-startTime"
 #define doodle_endTime_long "-endTime"
-#define doodle_sim_startTime_long "-simStartTime"
 
 MSyntax create_ref_syntax() {
   MSyntax syntax{};
@@ -381,17 +373,10 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
   return k_s;
 }
 }  // namespace doodle::maya_plug
-
 #undef doodle_startTime
 #undef doodle_endTime
-#undef doodle_sim_startTime
 #undef doodle_default_uuid
-#undef doodle_export_abc
-#undef doodle_sim_cloth
 
-#undef doodle_sim_cloth_long
-#undef doodle_export_abc_long
 #undef doodle_default_uuid_long
 #undef doodle_startTime_long
 #undef doodle_endTime_long
-#undef doodle_sim_startTime_long
