@@ -87,8 +87,8 @@ bool reference_attr_setting::replace_channel_date(const string& in_string) const
 
   string str_err{};
   DOODLE_LOG_INFO(in_string);
-  k_h.fromStr(in_string, 0, str_err);
-  DOODLE_LOG_ERROR(str_err);
+  if (k_h.fromStr(in_string, 0, str_err) != 0)
+    DOODLE_LOG_ERROR(str_err);
   k_stream->setElement(0, k_h);
   MFileIO::setMetadata(k_meta);
 
