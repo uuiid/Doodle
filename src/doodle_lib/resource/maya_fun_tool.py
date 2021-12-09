@@ -1089,7 +1089,7 @@ class open_file(object):
                                       end=doodle_work_space.raneg.end
                                   ))
         cmds.doodle_ref_file_export(
-            1000,
+            startTime=1000,
             endTime=doodle_work_space.raneg.end)
 
     def get_fbx_export(self):

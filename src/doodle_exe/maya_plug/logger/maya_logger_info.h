@@ -19,7 +19,8 @@ class maya_msg : public spdlog::sinks::base_sink<Mutex> {
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
     auto k_str{fmt::to_string(formatted)};
     k_str.pop_back();
-    MString k_m_str{d_str{k_str}};
+    MString k_m_str{};
+    k_m_str.setUTF8(k_str.data());
     std::cout << k_m_str << "\n";
     switch (msg.level) {
       case spdlog::level::err: {
