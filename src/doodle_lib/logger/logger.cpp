@@ -88,10 +88,8 @@ bool logger_ctrl::set_log_name(const std::string &in_name) {
   auto l_log  = spdlog::get("doodle_lib");
   auto &l_v   = l_log->sinks();
   auto l_path = p_log_path / p_log_name;
-  auto l_file = new_object<spdlog::sinks::daily_file_sink_mt>(l_path.generic_string(), 0u, 0u);
-  l_v.push_back(l_file);
   /// 去除掉临时的的文件记录器
-  l_v.erase(l_v.begin());
+  l_v[0] = new_object<spdlog::sinks::daily_file_sink_mt>(l_path.generic_string(), 0u, 0u);
   return true;
 }
 void logger_ctrl::post_constructor() {

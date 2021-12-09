@@ -21,7 +21,7 @@ def doodle_test():
     k_f = maya_fun_tool.open_file()
     k_f.config_ = """[{"export_path":"",
     "only_sim":false,
-    "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN1.ma",
+    "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN2.ma",
     "qcloth_assets_path":"V:/03_Workflow/Assets/CFX"}]"""
     k_f()
 

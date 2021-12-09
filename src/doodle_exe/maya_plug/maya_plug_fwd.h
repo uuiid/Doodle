@@ -87,8 +87,9 @@ template <>
 struct fmt::formatter<MString> : fmt::formatter<fmt::string_view> {
   template <typename FormatContext>
   auto format(const MString& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    std::string k_str = in_.asUTF8();
     return formatter<string_view>::format(
-        in_.asUTF8(),
+        k_str,
         ctx);
   }
 };
