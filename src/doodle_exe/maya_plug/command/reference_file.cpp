@@ -225,24 +225,24 @@ bool reference_file::rename_material() const {
       auto k_plug = k_node.findPlug(d_str{"surfaceShader"}, true, &k_s);
       DOODLE_CHICK(k_s);
       MPlugArray l_m_plug_array{};
-      k_plug.destinations(l_m_plug_array, &k_s);
+      auto k_source = k_plug.source(&k_s);
       DOODLE_CHICK(k_s);
-      if (l_m_plug_array.length() == 1) {
-        auto k_mat = l_m_plug_array[0].node(&k_s);  /// \brief 从属性链接获得材质名称
-        DOODLE_CHICK(k_s);
-
-        MFnDependencyNode k_mat_node{};
-        k_mat_node.setObject(k_mat);
-        string k_mat_node_name = d_str{k_mat_node.name(&k_s)};
-        DOODLE_CHICK(k_s);
-
-        /// \brief 重命名材质名称
-        k_mat_node.setName(d_str{fmt::format("{}_mat", k_mat_node_name)}, false, &k_s);
-        DOODLE_CHICK(k_s);
-        DOODLE_LOG_INFO("重命名材质 {} -> {}", d_str{k_node.name()}.str(), k_mat_node_name);
-
-        k_node.setName(d_str{k_mat_node_name}, false, &k_s);
+      if (k_source.isNull(&k_s)) {
+        continue;
       }
+      DOODLE_CHICK(k_s);
+      auto k_mat = k_source.node(&k_s);  /// \brief 从属性链接获得材质名称
+      DOODLE_CHICK(k_s);
+      MFnDependencyNode k_mat_node{};
+      k_mat_node.setObject(k_mat);
+      string k_mat_node_name = d_str{k_mat_node.name(&k_s)};
+      DOODLE_CHICK(k_s);
+      /// \brief 重命名材质名称
+      k_mat_node.setName(d_str{fmt::format("{}_mat", k_mat_node_name)}, false, &k_s);
+      DOODLE_CHICK(k_s);
+      DOODLE_LOG_INFO("重命名材质 {} -> {}", d_str{k_node.name()}.str(), k_mat_node_name);
+
+      k_node.setName(d_str{k_mat_node_name}, false, &k_s);
     }
   }
 
