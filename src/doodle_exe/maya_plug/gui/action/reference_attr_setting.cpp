@@ -318,6 +318,15 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
         k_i.destroy();
       }
     }
+    /// \brief 在这里我们保存引用
+    try {
+      auto k_save_file = maya_file_io::work_path("ma") / maya_file_io::get_current_path().filename();
+      k_s              = MFileIO::saveAs(d_str{k_save_file.generic_string()}, nullptr, true);
+      DOODLE_CHICK(k_s);
+      DOODLE_LOG_INFO("保存文件到 {}", k_save_file);
+    } catch (maya_error& error) {
+      DOODLE_LOG_WARN("无法保存文件: {}", error);
+    }
     boost::remove_erase_if(l_list, [](auto k_h) -> bool { return !k_h; });
     for (MTime k_t = k_sim_start; k_t <= k_end; ++k_t) {
       for (auto& k_i : l_list) {

@@ -13,7 +13,12 @@
 namespace doodle {
 class maya_error : public doodle_error {
  public:
-  explicit maya_error(const std::string& err) : doodle_error(err){};
+  explicit maya_error(const std::string& err)
+      : doodle_error(err){};
+  explicit maya_error(const MString& in_m_string)
+      : doodle_error(in_m_string.asUTF8()){};
+  explicit maya_error(const MStatus& in_status)
+      : maya_error(in_status.errorString()){};
 };
 }  // namespace doodle
 
@@ -57,12 +62,35 @@ class d_str {
 //   }
 // };
 
-#define DOODLE_CHICK(in_status)                           \
-  {                                                       \
-    if (in_status != MStatus::MStatusCode::kSuccess) {    \
-      DOODLE_LOG_ERROR(in_status.errorString().asUTF8()); \
-      throw maya_error{in_status.errorString().asUTF8()}; \
-    }                                                     \
+#define DOODLE_CHICK(in_status)                        \
+  {                                                    \
+    if (in_status != MStatus::MStatusCode::kSuccess) { \
+      DOODLE_LOG_ERROR(in_status.errorString());       \
+      throw maya_error{in_status};                     \
+    }                                                  \
   };
 
 }  // namespace doodle::maya_plug
+
+namespace fmt {
+template <>
+struct fmt::formatter<::doodle::maya_error> : fmt::formatter<fmt::string_view> {
+  template <typename FormatContext>
+  auto format(const ::doodle::maya_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    return formatter<string_view>::format(
+        in_.what(),
+        ctx);
+  }
+};
+
+template <>
+struct fmt::formatter<MString> : fmt::formatter<fmt::string_view> {
+  template <typename FormatContext>
+  auto format(const MString& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    return formatter<string_view>::format(
+        in_.asUTF8(),
+        ctx);
+  }
+};
+
+}  // namespace fmt

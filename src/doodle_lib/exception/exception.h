@@ -44,5 +44,17 @@ class DOODLELIB_API file_error : public doodle_error {
         p_path(std::move(path)){};
 };
 // doodl err
-
 }  // namespace doodle
+
+#include <fmt/format.h>
+namespace fmt {
+template <>
+struct fmt::formatter<::doodle::doodle_error> : fmt::formatter<fmt::string_view> {
+  template <typename FormatContext>
+  auto format(const ::doodle::doodle_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    return formatter<string_view>::format(
+        in_.what(),
+        ctx);
+  }
+};
+}  // namespace fmt
