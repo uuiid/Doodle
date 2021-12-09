@@ -190,6 +190,9 @@ file -loadReference "{}" "{}";
       p_cloth_shape.push_back(k_h);
     }
   }
+  if (!p_cloth_shape.empty())
+    this->add_collision();
+
   return !p_cloth_shape.empty();
 }
 
@@ -307,5 +310,17 @@ string reference_file::get_unique_name() const {
   auto k_name = k_ref.fileName(false, false, true, &k_s);
   DOODLE_CHICK(k_s);
   return d_str{k_name};
+}
+bool reference_file::add_collision() const {
+  if (collision_model.empty())
+    return true;
+
+  MStatus k_s{};
+  auto l_item = this->get_collision_model();
+  k_s         = l_item.add(d_str{fmt::format("{}:qlSolver*")}, true);
+  DOODLE_CHICK(k_s);
+  k_s = MGlobal::executeCommand("qlCreateCollider;");
+  DOODLE_CHICK(k_s);
+  return true;
 }
 }  // namespace doodle::maya_plug

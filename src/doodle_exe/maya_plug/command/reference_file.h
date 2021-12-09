@@ -50,6 +50,7 @@ class reference_file {
    */
   bool rename_material() const;
   bool export_abc(const MTime &in_start, const MTime &in_endl) const;
+  bool add_collision() const;
 
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {
