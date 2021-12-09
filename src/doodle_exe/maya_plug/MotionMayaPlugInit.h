@@ -1,21 +1,18 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <maya/MApiNamespace.h>
 #include <maya/MGlobal.h>
-#include <maya/MPxCommand.h>
+#include <maya/MTemplateCommand.h>
 
 namespace doodle::MayaPlug {
-class doodleCreate : public MPxCommand {
+constexpr char doodleCreate_name[] = "doodleCreate";
+class doodleCreate : public MTemplateAction<
+                         doodleCreate,
+                         doodleCreate_name,
+                         MTemplateCommand_nullSyntax> {
  public:
   doodleCreate();
   ~doodleCreate() override;
-
-  static void* create();
-
   virtual MStatus doIt(const MArgList& list) override;
-  virtual bool isUndoable() const override;
- private:
-
 };
 }  // namespace doodle::MayaPlug

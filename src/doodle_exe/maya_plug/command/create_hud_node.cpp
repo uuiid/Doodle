@@ -68,14 +68,9 @@ bool create_hud_node::operator()() const {
   return true;
 }
 
-MString create_hud_node_maya::comm_name{"create_hud_node_maya"};
 
 MStatus create_hud_node_maya::doIt(const MArgList& in_arg) {
   create_hud_node k_c{};
   return k_c() ? MStatus::kSuccess : MStatus::kFailure;
-}
-
-void* create_hud_node_maya::creator() {
-  return new create_hud_node_maya{};
 }
 }  // namespace doodle::maya_plug

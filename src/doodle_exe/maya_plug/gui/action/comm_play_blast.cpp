@@ -105,7 +105,6 @@ bool comm_play_blast::render() {
   return false;
 }
 
-MString comm_play_blast_maya::comm_name{"comm_play_blast_maya"};
 
 #define doodle_filepath "-fp"
 #define doodle_startTime "-st"
@@ -158,10 +157,8 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
 
   return k_s;
 }
-void* comm_play_blast_maya::creator() {
-  return new comm_play_blast_maya{};
-}
-MSyntax comm_play_blast_maya::syntax() {
+
+MSyntax comm_play_blast_maya_syntax() {
   MSyntax syntax{};
   syntax.addFlag(doodle_filepath, doodle_filepath_long, MSyntax::kString);
   syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);

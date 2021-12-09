@@ -8,15 +8,11 @@
 #include <maya_plug/gui/maya_plug_app.h>
 namespace doodle::MayaPlug {
 
-doodleCreate::doodleCreate()
-    : MPxCommand() {
-}
+doodleCreate::doodleCreate()  = default;
 
 doodleCreate::~doodleCreate() = default;
 
-void* doodleCreate::create() {
-  return new doodleCreate();
-}
+
 
 MStatus doodleCreate::doIt(const MArgList& list) {
   using namespace doodle;
@@ -27,10 +23,6 @@ MStatus doodleCreate::doIt(const MArgList& list) {
   }
 
   return MStatus::kSuccess;
-}
-
-bool doodleCreate::isUndoable() const {
-  return false;
 }
 
 }  // namespace doodle::MayaPlug
