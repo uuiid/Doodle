@@ -81,7 +81,8 @@ class ref_file_sim_command : public TemplateAction<
 };
 class ref_file_export_command : public TemplateAction<
                                     ref_file_export_command,
-                                    ref_file_export_command_name> {
+                                    ref_file_export_command_name,
+                                    ref_file_sim_syntax> {
  public:
   MStatus doIt(const MArgList&) override;
 };

@@ -181,13 +181,13 @@ bool reference_attr_setting::render() {
       for (const auto& k_f : k_ref.collision_model_show_str)
         dear::Text(k_f);
 
-      if (imgui::Button("test")) {
-        try {
-          k_ref.replace_sim_assets_file();
-        } catch (const maya_error& e) {
-          std::cerr << e.what() << '\n';
-        }
-      }
+      // if (imgui::Button("test")) {
+      //   try {
+      //     k_ref.replace_sim_assets_file();
+      //   } catch (const maya_error& e) {
+      //     std::cerr << e.what() << '\n';
+      //   }
+      // }
     };
   }
 
@@ -301,6 +301,8 @@ MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
   for (auto&& [k_e, k_ref] : k_view.each()) {
     if (!k_ref.replace_sim_assets_file()) {
       k_delete.push_back(k_e);
+    } else {
+      k_ref.chick_cloth_proxy();
     }
   }
   g_reg()->destroy(k_delete.begin(), k_delete.end());
@@ -338,6 +340,11 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   DOODLE_LOG_INFO(
       "解算开始时间 {}  结束时间 {}  ",
       k_start.value(), k_end.value());
+
+  for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
+    k_ref.set_cloth_cache_dir();
+    k_ref.add_collision();
+  }
 
   for (MTime k_t = k_start; k_t <= k_end; ++k_t) {
     for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {

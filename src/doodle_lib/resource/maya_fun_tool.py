@@ -1072,9 +1072,13 @@ class open_file(object):
         doodle_work_space.reset()
 
         assert(isinstance(self.cfg, sim_config))
-        cmds.doodle_sim_cloth(uuid=self.cfg.uuid,
-                              exportABC=False,
-                              simCloth=True)
+        cmds.doodle_create_ref_file(uuid=self.cfg.uuid)
+        if not self.cfg.only_sim:
+            cmds.doodle_ref_file_load()
+        cmds.doodle_ref_file_sim(
+            startTime=doodle_work_space.raneg.start,
+            endTime=doodle_work_space.raneg.end)
+
         cmds.comm_play_blast_maya(startTime=doodle_work_space.raneg.start,
                                   endTime=doodle_work_space.raneg.end,
                                   filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
@@ -1084,10 +1088,9 @@ class open_file(object):
                                       start=doodle_work_space.raneg.start,
                                       end=doodle_work_space.raneg.end
                                   ))
-        cmds.doodle_sim_cloth(uuid=self.cfg.uuid,
-                              exportABC=True,
-                              simCloth=False,
-                              endTime=doodle_work_space.raneg.end)
+        cmds.doodle_ref_file_export(
+            1000,
+            endTime=doodle_work_space.raneg.end)
 
     def get_fbx_export(self):
         # type: () -> fbx_export

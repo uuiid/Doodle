@@ -19,23 +19,27 @@ class maya_msg : public spdlog::sinks::base_sink<Mutex> {
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
     auto k_str{fmt::to_string(formatted)};
     k_str.pop_back();
+    MString k_m_str{d_str{k_str}};
+    std::cout << k_m_str << "\n";
     switch (msg.level) {
       case spdlog::level::err: {
-        MGlobal::displayError(d_str{k_str});
+        MGlobal::displayError(k_m_str);
         break;
       }
       case spdlog::level::warn: {
-        MGlobal::displayWarning(d_str{k_str});
+        MGlobal::displayWarning(k_m_str);
         break;
       }
       default: {
-        MGlobal::displayWarning(d_str{k_str});
+        MGlobal::displayInfo(k_m_str);
         break;
       }
     }
   }
 
-  void flush_() override {}
+  void flush_() override {
+    std::cout.flush();
+  }
 };
 using maya_msg_mt = maya_msg<std::mutex>;
 }  // namespace doodle::maya_plug
