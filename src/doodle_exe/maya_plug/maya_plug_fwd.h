@@ -9,7 +9,8 @@
 #include <maya/MGlobal.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>
-
+#include <maya/MSyntax.h>
+#include <maya/MPxCommand.h>
 namespace doodle {
 class maya_error : public doodle_error {
  public:
@@ -20,6 +21,31 @@ class maya_error : public doodle_error {
   explicit maya_error(const MStatus& in_status)
       : maya_error(in_status.errorString()){};
 };
+
+inline MSyntax null_syntax_t() { return {}; };
+
+using CreateSyntaxFunction = std::add_pointer_t<MSyntax()>;
+template <class ActionClass, const char* CommandName, CreateSyntaxFunction CommandSyntax = null_syntax_t>
+class TemplateAction : public MPxCommand {
+ public:
+  TemplateAction() = default;
+
+  virtual MStatus doIt(const MArgList&) {
+    return MStatus::kFailure;
+  }
+  static void* creator() {
+    return new ActionClass;
+  }
+  template <class FNPLUG>
+  static MStatus registerCommand(FNPLUG& obj) {
+    return obj.registerCommand(CommandName, creator, CommandSyntax);
+  }
+  template <class FNPLUG>
+  static MStatus deregisterCommand(FNPLUG& obj) {
+    return obj.deregisterCommand(CommandName);
+  }
+};
+
 }  // namespace doodle
 
 namespace doodle::maya_plug {

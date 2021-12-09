@@ -82,7 +82,7 @@ MStatus initializePlugin(MObject obj) {
       p_doodle_app->hide_windows();
 
       //注册命令
-      status = ::doodle::MayaPlug::doodleCreate::registerCommand(obj);
+      status = ::doodle::MayaPlug::doodleCreate::registerCommand(k_plugin);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       //添加菜单项
@@ -147,19 +147,19 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 注册拍屏命令
-  status = ::doodle::maya_plug::comm_play_blast_maya::registerCommand(obj);
+  status = ::doodle::maya_plug::comm_play_blast_maya::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   /// 注册创建hud命令
-  status = ::doodle::maya_plug::create_hud_node_maya::registerCommand(obj);
+  status = ::doodle::maya_plug::create_hud_node_maya::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  status = ::doodle::maya_plug::create_ref_file_command::registerCommand(obj);
+  status = ::doodle::maya_plug::create_ref_file_command::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_load_command::registerCommand(obj);
+  status = ::doodle::maya_plug::ref_file_load_command::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_sim_command::registerCommand(obj);
+  status = ::doodle::maya_plug::ref_file_sim_command::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_export_command::registerCommand(obj);
+  status = ::doodle::maya_plug::ref_file_export_command::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 等所有命令完成后加载工具架
@@ -197,20 +197,20 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
       break;
   }
   /// 去除解算命令
-  status = ::doodle::maya_plug::create_ref_file_command::deregisterCommand(obj);
+  status = ::doodle::maya_plug::create_ref_file_command::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_load_command::deregisterCommand(obj);
+  status = ::doodle::maya_plug::ref_file_load_command::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_sim_command::deregisterCommand(obj);
+  status = ::doodle::maya_plug::ref_file_sim_command::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_export_command::deregisterCommand(obj);
+  status = ::doodle::maya_plug::ref_file_export_command::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 去掉hud命令
-  status = ::doodle::maya_plug::create_hud_node_maya::deregisterCommand(obj);
+  status = ::doodle::maya_plug::create_hud_node_maya::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   /// 去掉拍屏命令
-  status = ::doodle::maya_plug::comm_play_blast_maya::deregisterCommand(obj);
+  status = ::doodle::maya_plug::comm_play_blast_maya::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   /// 去掉渲染覆盖命令
   status = MDrawRegistry::deregisterGeometryOverrideCreator(
@@ -240,7 +240,7 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       ///去除命令
-      status = ::doodle::MayaPlug::doodleCreate::deregisterCommand(obj);
+      status = ::doodle::MayaPlug::doodleCreate::deregisterCommand(k_plugin);
       CHECK_MSTATUS_AND_RETURN_IT(status);
       break;
     }

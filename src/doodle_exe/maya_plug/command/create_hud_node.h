@@ -5,7 +5,7 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <maya/MTemplateCommand.h>
+#include <maya_plug/maya_plug_fwd.h>
 
 namespace doodle::maya_plug {
 class create_hud_node {
@@ -16,10 +16,9 @@ class create_hud_node {
   bool operator()() const;
 };
 constexpr char create_hud_node_maya_name[] = "create_hud_node_maya";
-class create_hud_node_maya : public MTemplateAction<
+class create_hud_node_maya : public TemplateAction<
                                  create_hud_node_maya,
-                                 create_hud_node_maya_name,
-                                 MTemplateCommand_nullSyntax> {
+                                 create_hud_node_maya_name > {
  public:
   MStatus doIt(const MArgList& in_arg) override;
 };

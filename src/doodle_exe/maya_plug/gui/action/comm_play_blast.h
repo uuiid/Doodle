@@ -7,7 +7,6 @@
 #include <doodle_lib/gui/action/command.h>
 #include <maya_plug/maya_plug_fwd.h>
 
-#include <maya/MTemplateCommand.h>
 namespace doodle::maya_plug {
 
 class comm_play_blast : public command_base {
@@ -25,7 +24,7 @@ class comm_play_blast : public command_base {
 
 MSyntax comm_play_blast_maya_syntax();
 constexpr char comm_play_blast_maya_name[] = "comm_play_blast_maya";
-class comm_play_blast_maya : public MTemplateAction<
+class comm_play_blast_maya : public TemplateAction<
                                  comm_play_blast_maya,
                                  comm_play_blast_maya_name,
                                  comm_play_blast_maya_syntax> {
