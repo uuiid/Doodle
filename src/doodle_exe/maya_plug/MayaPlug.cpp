@@ -160,11 +160,13 @@ MStatus initializePlugin(MObject obj) {
       &::doodle::maya_plug::create_hud_node_maya::creator);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  ///
-  status = k_plugin.registerCommand(
-      ::doodle::maya_plug::sim_cloth::comm_name,
-      &::doodle::maya_plug::sim_cloth::creator,
-      &::doodle::maya_plug::sim_cloth::syntax);
+  status = ::doodle::maya_plug::create_ref_file_command::registerCommand(obj);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = ::doodle::maya_plug::ref_file_load_command::registerCommand(obj);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = ::doodle::maya_plug::ref_file_sim_command::registerCommand(obj);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = ::doodle::maya_plug::ref_file_export_command::registerCommand(obj);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 等所有命令完成后加载工具架
@@ -202,8 +204,13 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
       break;
   }
   /// 去除解算命令
-  status = k_plugin.deregisterCommand(
-      ::doodle::maya_plug::sim_cloth::comm_name);
+  status = ::doodle::maya_plug::create_ref_file_command::deregisterCommand(obj);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = ::doodle::maya_plug::ref_file_load_command::deregisterCommand(obj);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = ::doodle::maya_plug::ref_file_sim_command::deregisterCommand(obj);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = ::doodle::maya_plug::ref_file_export_command::deregisterCommand(obj);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 去掉hud命令

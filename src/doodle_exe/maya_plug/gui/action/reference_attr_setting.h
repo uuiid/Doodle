@@ -6,8 +6,9 @@
 
 #include <doodle_lib/gui/action/command.h>
 #include <maya/MSelectionList.h>
-#include <maya/MPxCommand.h>
 #include <nlohmann/json.hpp>
+#include <maya/MTemplateCommand.h>
+
 namespace doodle::maya_plug {
 class reference_file;
 
@@ -49,13 +50,41 @@ class reference_attr_setting : public command_base {
   static string get_channel_date();
 };
 
-class sim_cloth : public MPxCommand {
+namespace {
+constexpr char create_ref_file_command_name[] = "doodle_create_ref_file";
+constexpr char ref_file_load_command_name[]   = "doodle_ref_file_load";
+constexpr char ref_file_sim_command_name[]    = "doodle_ref_file_sim";
+constexpr char ref_file_export_command_name[] = "doodle_ref_file_export";
+}  // namespace
+MSyntax create_ref_syntax();
+MSyntax ref_file_sim_syntax();
+class create_ref_file_command : public MTemplateAction<
+                                    create_ref_file_command,
+                                    create_ref_file_command_name,
+                                    create_ref_syntax> {
  public:
-
-  static MString comm_name;
-  MStatus doIt(const MArgList& in_arg) override;
-  static void* creator();
-  static MSyntax syntax();
+  MStatus doIt(const MArgList&) override;
 };
 
+class ref_file_load_command : public MTemplateAction<
+                                  ref_file_load_command,
+                                  ref_file_load_command_name,
+                                  MTemplateCommand_nullSyntax> {
+ public:
+  MStatus doIt(const MArgList&) override;
+};
+class ref_file_sim_command : public MTemplateAction<
+                                 ref_file_sim_command,
+                                 ref_file_sim_command_name,
+                                 ref_file_sim_syntax> {
+ public:
+  MStatus doIt(const MArgList&) override;
+};
+class ref_file_export_command : public MTemplateAction<
+                                    ref_file_export_command,
+                                    ref_file_export_command_name,
+                                    MTemplateCommand_nullSyntax> {
+ public:
+  MStatus doIt(const MArgList&) override;
+};
 }  // namespace doodle::maya_plug
