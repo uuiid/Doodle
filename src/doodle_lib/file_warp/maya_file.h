@@ -24,13 +24,15 @@ class DOODLELIB_API maya_file
     FSys::path sim_path;
     FSys::path qcloth_assets_path;
     FSys::path export_path;
-
+    uuid uuid_p;
     bool only_sim;
+
     friend void to_json(nlohmann::json& nlohmann_json_j, const qcloth_arg& nlohmann_json_t) {
       nlohmann_json_j["path"]               = nlohmann_json_t.sim_path;
       nlohmann_json_j["export_path"]        = nlohmann_json_t.export_path;
       nlohmann_json_j["qcloth_assets_path"] = nlohmann_json_t.qcloth_assets_path;
       nlohmann_json_j["only_sim"]           = nlohmann_json_t.only_sim;
+      nlohmann_json_j["uuid"]               = boost::lexical_cast<string>(nlohmann_json_t.uuid_p);
     };
   };
   using qcloth_arg_ptr = std::shared_ptr<qcloth_arg>;

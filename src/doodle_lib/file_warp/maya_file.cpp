@@ -8,7 +8,7 @@
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <doodle_lib/thread_pool/long_term.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
-
+#include <doodle_lib/metadata/metadata.h>
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
 #ifdef _WIN32
@@ -202,6 +202,9 @@ void maya_file::qcloth_sim_file(const qcloth_arg_ptr& in_arg,
     }
     return;
   }
+
+  in_arg->uuid_p = g_reg()->ctx<root_ref>().root_handle().get<database>().uuid();
+
   if (in_ptr)
     in_ptr->start();
   // 写入文件

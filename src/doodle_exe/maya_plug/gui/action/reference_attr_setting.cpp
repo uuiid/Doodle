@@ -268,6 +268,7 @@ MStatus sim_cloth::doIt(const MArgList& in_arg) {
       auto k_h = make_handle(k_e);
       if (k_h.get<database>() == k_def_uuid) {
         k_def_prj = k_h;
+        g_reg()->set<root_ref>(k_h);
       }
     }
   }
