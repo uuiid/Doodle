@@ -114,6 +114,12 @@ class maya_workspace():
         path.makedirs_p()
         return path
 
+    def get_move_folder(self):
+        # type: () -> pymel.core.Path
+        path = self.work.path / "mov"  # type: pymel.core.Path
+        path.makedirs_p()
+        return path
+
 
 class export_log(object):
     """
@@ -1070,12 +1076,13 @@ class open_file(object):
                                   endTime=doodle_work_space.raneg.end,
                                   filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
                                   .format(
-                                      path=doodle_work_space.get_abc_folder(),
+                                      path=doodle_work_space.get_move_folder(),
                                       base_name=doodle_work_space.maya_file.name_not_ex,
                                       start=doodle_work_space.raneg.start,
                                       end=doodle_work_space.raneg.end
                                   ))
-        cmds.doodle_sim_cloth(exportABC=True, simCloth=False, endTime=doodle_work_space.raneg.end)
+        cmds.doodle_sim_cloth(exportABC=True, simCloth=False,
+                              endTime=doodle_work_space.raneg.end)
 
     def get_fbx_export(self):
         # type: () -> fbx_export
