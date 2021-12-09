@@ -19,10 +19,12 @@ class doodle_main(object):
 def doodle_test():
     print("run test")
     k_f = maya_fun_tool.open_file()
-    k_f.config_ = """[{"export_path":"",
-    "only_sim":false,
-    "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN2.ma",
-    "qcloth_assets_path":"V:/03_Workflow/Assets/CFX"}]"""
+    k_f.config_ = """[{
+        "export_path":"",
+        "only_sim":false,
+        "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN2.ma",
+        "qcloth_assets_path":"",
+        "uuid":"9a59669d-37db-4a69-a1ad-3a584a1c5367"}]"""
     k_f()
 
 

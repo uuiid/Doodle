@@ -54,22 +54,6 @@ MStatus initializePlugin(MObject obj) {
                          .c_str(),
                      fmt::format("{}", MAYA_API_VERSION).c_str()};
 
-  //   //创建菜单项
-  //   MString pythonResult{};
-  //   MGlobal::executePythonCommand(R"(
-  // import maya.cmds
-  // def doodleCreateMenu():
-  //     for me in maya.cmds.lsUI(menus=True,long=True):
-  //     	  if maya.cmds.menu(me,q=True,label=True) == "doodle":
-  //     		    maya.cmds.menu(me,e=True,deleteAllItems=True)
-  //     		    maya.cmds.deleteUI(me)
-
-  //     menu = maya.cmds.menu(parent="MayaWindow",label = "doodle",tearOff=True)
-  //     maya.cmds.showWindow()
-  //     return menu
-  // )");
-  //   MGlobal::executePythonCommand("doodleCreateMenu()", pythonResult);
-
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 

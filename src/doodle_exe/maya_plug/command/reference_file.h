@@ -29,6 +29,11 @@ class reference_file {
   void set_path(const MObject &in_ref_node);
 
   [[nodiscard]] entt::handle get_prj() const;
+  void set_project(const entt::handle &in_prj);
+  [[nodiscard]] bool has_ref_project() const;
+
+  bool chick_cloth_proxy();
+  void set_cloth_cache_dir();
 
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);

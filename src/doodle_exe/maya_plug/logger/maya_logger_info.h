@@ -29,7 +29,7 @@ class maya_msg : public spdlog::sinks::base_sink<Mutex> {
         break;
       }
       default: {
-        MGlobal::displayInfo(d_str{k_str});
+        MGlobal::displayWarning(d_str{k_str});
         break;
       }
     }
