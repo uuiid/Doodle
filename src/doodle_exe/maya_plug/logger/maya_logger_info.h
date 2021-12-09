@@ -17,23 +17,19 @@ class maya_msg : public spdlog::sinks::base_sink<Mutex> {
   void sink_it_(const spdlog::details::log_msg &msg) override {
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+    auto k_str{fmt::to_string(formatted)};
+    k_str.pop_back();
     switch (msg.level) {
       case spdlog::level::err: {
-        MGlobal::displayError(MString{boost::locale::conv::utf_to_utf<wchar_t>(
-                                          fmt::to_string(formatted))
-                                          .c_str()});
+        MGlobal::displayError(d_str{k_str});
         break;
       }
       case spdlog::level::warn: {
-        MGlobal::displayWarning(MString{boost::locale::conv::utf_to_utf<wchar_t>(
-                                            fmt::to_string(formatted))
-                                            .c_str()});
+        MGlobal::displayWarning(d_str{k_str});
         break;
       }
       default: {
-        MGlobal::displayInfo(MString{boost::locale::conv::utf_to_utf<wchar_t>(
-                                         fmt::to_string(formatted))
-                                         .c_str()});
+        MGlobal::displayInfo(d_str{k_str});
         break;
       }
     }
