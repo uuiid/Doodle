@@ -4,7 +4,7 @@
 
 #include <doodle_lib/doodle_lib_all.h>
 #define CATCH_CONFIG_RUNNER
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 int main(int argc, char *argv[]) {
   //初始化测试环境

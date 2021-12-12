@@ -9,16 +9,23 @@
 #endif
 #include <catch.hpp>
 
-TEST_CASE("core pinyi", "[fun][pingyin]") {
-  auto trs = doodle::convert::Get().toEn("aa大.?小d多dd53少");
+class test_pinyin {
+ public:
+  std::string data{"aa大.?小d多dd53少"};
+  std::string data2{"林奇"};
+  std::string data3{"李叶华"};
+};
+
+TEST_CASE_METHOD(test_pinyin, "core pin_yi", "[fun][pingyin]") {
+  auto trs = doodle::convert::Get().toEn(data);
   REQUIRE(trs == "aada.?xiaodduodd53shao");
-  std::cout << trs << std::endl;
-  trs = doodle::convert::Get().toEn("林奇");
+  INFO(trs);
+  trs = doodle::convert::Get().toEn(data2);
   REQUIRE(trs == "linqi");
-  std::cout << trs << std::endl;
-  trs = doodle::convert::Get().toEn("李叶华");
+  INFO(trs);
+  trs = doodle::convert::Get().toEn(data3);
+  INFO(trs);
   REQUIRE(trs == "liyehua");
-  std::cout << trs << std::endl;
 }
 
 TEST_CASE("core fmt", "[fun][fmt]") {
