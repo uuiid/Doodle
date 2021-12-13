@@ -10,6 +10,7 @@
 
 #include <maya_plug/MotionMayaPlugInit.h>
 #include "data/create_hud_node.h"
+#include "play_blash_comm.h"
 #include <maya_plug/gui/action/comm_play_blast.h>
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/maya_render/hud_render_node.h>
@@ -147,7 +148,7 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 注册拍屏命令
-  status = ::doodle::maya_plug::comm_play_blast_maya::registerCommand(k_plugin);
+  status = maya_plug::comm_play_blast_maya::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   /// 注册创建hud命令
   status = ::doodle::maya_plug::create_hud_node_maya::registerCommand(k_plugin);
@@ -210,7 +211,7 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
   status = ::doodle::maya_plug::create_hud_node_maya::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   /// 去掉拍屏命令
-  status = ::doodle::maya_plug::comm_play_blast_maya::deregisterCommand(k_plugin);
+  status = maya_plug::comm_play_blast_maya::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   /// 去掉渲染覆盖命令
   status = MDrawRegistry::deregisterGeometryOverrideCreator(

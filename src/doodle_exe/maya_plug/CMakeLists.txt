@@ -37,6 +37,14 @@ set(doodle_maya_plug_cpp
         logger/maya_logger_info.h
         data/maya_camera.h
         data/maya_camera.cpp
+        maya_comm/fbx_comm.cpp
+        maya_comm/fbx_comm.h
+        maya_comm/open_doodle_main.cpp
+        maya_comm/open_doodle_main.h
+        maya_comm/sim_comm.cpp
+        maya_comm/sim_comm.h
+        maya_comm/play_blash_comm.h
+        maya_comm/play_blash_comm.cpp
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
 foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)
