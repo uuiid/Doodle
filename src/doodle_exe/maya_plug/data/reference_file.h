@@ -54,7 +54,22 @@ class reference_file {
    * @return
    */
   bool rename_material() const;
+  /**
+   * @brief 导出到abc文件中
+   * 这个函数会修改模型和材质名称, 使导出的abc符合ue4导入的标准
+   * @param in_start 开始时间
+   * @param in_endl 结束时间
+   * @return 只有在使用maya选择时没有选中物体时返回失败，即推测的导出列表为空时会返回false
+   * @throw maya_error maya返回值非成功
+   *
+   */
   bool export_abc(const MTime &in_start, const MTime &in_endl) const;
+  /**
+   * @brief 在这个解算引用中添加一些标记的碰撞
+   * @return 返回值只有true , 就算标记碰撞体为空也会返回true 这种情况我们认为正常
+   * @throw maya_error maya返回值非成功
+   *
+   */
   bool add_collision() const;
 
  private:
