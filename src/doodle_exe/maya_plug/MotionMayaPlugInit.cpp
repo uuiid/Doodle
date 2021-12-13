@@ -8,22 +8,7 @@
 #include <maya_plug/gui/maya_plug_app.h>
 namespace doodle::MayaPlug {
 
-doodleCreate::doodleCreate()  = default;
 
-doodleCreate::~doodleCreate() = default;
-
-
-
-MStatus doodleCreate::doIt(const MArgList& list) {
-  using namespace doodle;
-  // bool k_d = doodle::doodle_app::Get()->p_done;
-  if (doodle::doodle_app::Get()->p_done) {
-    doodle::doodle_app::Get()->loop_begin();
-    doodle::doodle_app::Get()->p_done = false;
-  }
-
-  return MStatus::kSuccess;
-}
 
 }  // namespace doodle::MayaPlug
 

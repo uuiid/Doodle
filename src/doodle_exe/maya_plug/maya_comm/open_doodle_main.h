@@ -4,11 +4,16 @@
 
 #pragma once
 
-
+#include <maya_plug/maya_plug_fwd.h>
 namespace doodle::maya_plug {
 
-
-class open_doodle_main {
+constexpr char doodleCreate_name[] = "doodleCreate";
+class open_doodle_main : public TemplateAction<
+                             open_doodle_main,
+                             doodleCreate_name> {
+ public:
+  open_doodle_main();
+  ~open_doodle_main() override;
+  virtual MStatus doIt(const MArgList& list) override;
 };
-
-}
+}  // namespace doodle::maya_plug

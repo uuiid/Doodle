@@ -9,8 +9,12 @@
 #include <maya/MTimerMessage.h>
 
 #include <maya_plug/MotionMayaPlugInit.h>
-#include "data/create_hud_node.h"
-#include "play_blash_comm.h"
+#include <maya_plug/maya_comm/fbx_comm.h>
+#include <maya_plug/maya_comm/open_doodle_main.h>
+#include <maya_plug/maya_comm/play_blash_comm.h>
+#include <maya_plug/maya_comm/sim_comm.h>
+#include <maya_plug/data/create_hud_node.h>
+
 #include <maya_plug/gui/action/comm_play_blast.h>
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/maya_render/hud_render_node.h>
@@ -18,17 +22,17 @@
 #include <maya_plug/maya_render/hud_render_override.h>
 #include <maya_plug/logger/maya_logger_info.h>
 namespace {
-const static std::string doodle_windows{"doodle_windows"};
-const static std::string doodle_win_path{"MayaWindow|mainWindowMenu"};
-const static std::string doolde_hud_render_node{"doolde_hud_render_node"};
+const std::string doodle_windows{"doodle_windows"};
+const std::string doodle_win_path{"MayaWindow|mainWindowMenu"};
+const std::string doolde_hud_render_node{"doolde_hud_render_node"};
 
-static MCallbackId clear_callback_id{0};
-static MCallbackId app_run_id{0};
-static MCallbackId create_hud_id{0};
+MCallbackId clear_callback_id{0};
+MCallbackId app_run_id{0};
+MCallbackId create_hud_id{0};
 
 using namespace doodle;
-static doodle_lib_ptr p_doodle_lib              = nullptr;
-static std::shared_ptr<doodle_app> p_doodle_app = nullptr;
+doodle_lib_ptr p_doodle_lib              = nullptr;
+std::shared_ptr<doodle_app> p_doodle_app = nullptr;
 
 void doodle_maya_clear() {
   if (p_doodle_app) {
@@ -83,13 +87,13 @@ MStatus initializePlugin(MObject obj) {
       p_doodle_app->hide_windows();
 
       //注册命令
-      status = ::doodle::MayaPlug::doodleCreate::registerCommand(k_plugin);
+      status = ::doodle::maya_plug::open_doodle_main::registerCommand(k_plugin);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       //添加菜单项
       k_plugin.addMenuItem(doodle_windows.c_str(),
                            doodle_win_path.c_str(),
-                           ::doodle::MayaPlug::doodleCreate_name,
+                           ::doodle::maya_plug::doodleCreate_name,
                            "",
                            false,
                            nullptr,
@@ -241,7 +245,7 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       ///去除命令
-      status = ::doodle::MayaPlug::doodleCreate::deregisterCommand(k_plugin);
+      status = ::doodle::maya_plug::open_doodle_main::deregisterCommand(k_plugin);
       CHECK_MSTATUS_AND_RETURN_IT(status);
       break;
     }
