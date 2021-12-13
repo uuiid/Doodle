@@ -127,7 +127,7 @@ bool maya_camera::unlock_attr() {
 
   return false;
 }
-bool maya_camera::conjecture() {
+void maya_camera::conjecture() {
   const static std::vector reg_list{
       regex_priority_pair{std::regex{"(front|persp|side|top|camera)"}, -1000},
       regex_priority_pair{std::regex{R"(ep\d+_sc\d+)", std::regex::icase}, 30},

@@ -46,7 +46,7 @@ class maya_camera {
   bool back_camera(const MTime& in_start, const MTime& in_end);
   bool unlock_attr();
 
-  bool conjecture();
+  void conjecture();
   void set_render_cam() const;
   void set_play_attr();
   std::double_t focalLength() const;

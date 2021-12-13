@@ -20,6 +20,7 @@
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
+#include <maya_plug/maya_plug_fwd.h>
 
 namespace doodle::maya_plug {
 
