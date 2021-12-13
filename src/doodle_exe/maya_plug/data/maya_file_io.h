@@ -13,6 +13,9 @@ class maya_file_io {
   static FSys::path get_current_path();
 
   static FSys::path work_path(const FSys::path& in_path = ".");
+  static string get_channel_date();
+  static bool chick_channel();
+  static bool replace_channel_date(const string& in_string);
 };
 
 }  // namespace doodle::maya_plug

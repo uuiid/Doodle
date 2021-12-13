@@ -40,50 +40,14 @@ using data_ptr = std::shared_ptr<data>;
  */
 class reference_attr_setting : public command_base {
   std::vector<entt::handle> p_handle;
-  bool chick_channel() const;
-  bool replace_channel_date(const string& in_string) const;
+
+
   bool get_file_info();
 
  public:
   reference_attr_setting();
   bool render() override;
-  static string get_channel_date();
+
 };
 
-namespace {
-constexpr char create_ref_file_command_name[] = "doodle_create_ref_file";
-constexpr char ref_file_load_command_name[]   = "doodle_ref_file_load";
-constexpr char ref_file_sim_command_name[]    = "doodle_ref_file_sim";
-constexpr char ref_file_export_command_name[] = "doodle_ref_file_export";
-}  // namespace
-MSyntax create_ref_syntax();
-MSyntax ref_file_sim_syntax();
-class create_ref_file_command : public TemplateAction<
-                                    create_ref_file_command,
-                                    create_ref_file_command_name,
-                                    create_ref_syntax> {
- public:
-  MStatus doIt(const MArgList&) override;
-};
-
-class ref_file_load_command : public TemplateAction<
-                                  ref_file_load_command,
-                                  ref_file_load_command_name> {
- public:
-  MStatus doIt(const MArgList&) override;
-};
-class ref_file_sim_command : public TemplateAction<
-                                 ref_file_sim_command,
-                                 ref_file_sim_command_name,
-                                 ref_file_sim_syntax> {
- public:
-  MStatus doIt(const MArgList&) override;
-};
-class ref_file_export_command : public TemplateAction<
-                                    ref_file_export_command,
-                                    ref_file_export_command_name,
-                                    ref_file_sim_syntax> {
- public:
-  MStatus doIt(const MArgList&) override;
-};
 }  // namespace doodle::maya_plug
