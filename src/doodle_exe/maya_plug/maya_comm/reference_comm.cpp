@@ -143,8 +143,8 @@ MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
 MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   MStatus k_s{};
   MArgParser k_prase{syntax(), in_arg, &k_s};
-  MTime k_start{MAnimControl::minTime()};
-  MTime k_end = MAnimControl::maxTime();
+  auto k_start = MAnimControl::minTime();
+  auto k_end   = MAnimControl::maxTime();
   /// \brief 在这里我们保存引用
   try {
     auto k_save_file = maya_file_io::work_path("ma");
@@ -210,7 +210,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     MString k_k_export_type_s{};
     k_s = k_prase.getFlagArgument(doodle_export_type, 0, k_k_export_type_s);
     DOODLE_CHICK(k_s);
-    k_export_type = magic_enum::enum_cast<export_type>(d_str{k_k_export_type_s}.str()).value_or(export_type::abc);
+    k_export_type = magic_enum::enum_cast<export_type>(d_str{k_k_export_type_s}.str()).value();
   }
 
   DOODLE_LOG_INFO(
