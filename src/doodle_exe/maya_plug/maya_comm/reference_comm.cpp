@@ -22,10 +22,15 @@
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
+
+#include <magic_enum.hpp>
+
 #define doodle_startTime "-st"
 #define doodle_endTime "-et"
 #define doodle_default_uuid "-u"
+#define doodle_export_type "-ef"
 
+#define doodle_export_type_long "-exportType"
 #define doodle_default_uuid_long "-uuid"
 #define doodle_startTime_long "-startTime"
 #define doodle_endTime_long "-endTime"
@@ -41,6 +46,13 @@ MSyntax ref_file_sim_syntax() {
   MSyntax syntax{};
   syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
   syntax.addFlag(doodle_endTime, doodle_endTime_long, MSyntax::kTime);
+  return syntax;
+}
+MSyntax ref_file_export_syntax() {
+  MSyntax syntax{};
+  syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
+  syntax.addFlag(doodle_endTime, doodle_endTime_long, MSyntax::kTime);
+  syntax.addFlag(doodle_export_type, doodle_export_type_long, MSyntax::kString);
   return syntax;
 }
 MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
@@ -181,6 +193,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
   MArgParser k_prase{syntax(), in_arg, &k_s};
   MTime k_start{MAnimControl::minTime()};
   MTime k_end = MAnimControl::maxTime();
+  export_type k_export_type{};
 
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
     DOODLE_CHICK(k_s);
@@ -192,12 +205,30 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
     DOODLE_CHICK(k_s);
   }
+  if (k_prase.isFlagSet(doodle_export_type, &k_s)) {
+    DOODLE_CHICK(k_s);
+    MString k_k_export_type_s{};
+    k_s = k_prase.getFlagArgument(doodle_export_type, 0, k_k_export_type_s);
+    DOODLE_CHICK(k_s);
+    k_export_type = magic_enum::enum_cast<export_type>(d_str{k_k_export_type_s}.str()).value_or(export_type::abc);
+  }
+
   DOODLE_LOG_INFO(
-      "导出开始时间 {}  结束时间 {}  ",
-      k_start.value(), k_end.value());
+      "导出开始时间 {}  结束时间 {} 导出类型 {} ",
+      k_start.value(), k_end.value(), magic_enum::enum_name(k_export_type));
 
   for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
-    k_r.export_abc(k_start, k_end);
+    switch (k_export_type) {
+      case export_type::abc:
+        k_r.export_abc(k_start, k_end);
+        break;
+      case export_type::fbx:
+        k_r.export_fbx(k_start, k_end);
+        break;
+      default:
+        throw doodle_error{"未知类型"};
+        break;
+    }
   }
   return k_s;
 }

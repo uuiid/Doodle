@@ -8,7 +8,7 @@
 #include <maya/MSceneMessage.h>
 #include <maya/MTimerMessage.h>
 
-#include <maya_plug/maya_comm/fbx_comm.h>
+#include <maya_plug/maya_comm/cam_comm.h>
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/play_blash_comm.h>
 #include <maya_plug/maya_comm/reference_comm.h>
