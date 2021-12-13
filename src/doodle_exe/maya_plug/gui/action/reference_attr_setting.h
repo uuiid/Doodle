@@ -5,9 +5,6 @@
 #pragma once
 
 #include <doodle_lib/gui/action/command.h>
-#include <maya/MSelectionList.h>
-#include <nlohmann/json.hpp>
-#include <maya_plug/maya_plug_fwd.h>
 
 namespace doodle::maya_plug {
 class reference_file;
@@ -41,13 +38,11 @@ using data_ptr = std::shared_ptr<data>;
 class reference_attr_setting : public command_base {
   std::vector<entt::handle> p_handle;
 
-
   bool get_file_info();
 
  public:
   reference_attr_setting();
   bool render() override;
-
 };
 
 }  // namespace doodle::maya_plug
