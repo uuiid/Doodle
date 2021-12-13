@@ -3,16 +3,12 @@
 //
 
 #include "create_hud_node.h"
-#include "maya_plug_fwd.h"
 
-#include <maya/MFnAttribute.h>
 #include <maya/MFnDagNode.h>
-#include <maya/MGlobal.h>
 #include <maya/MItDag.h>
-#include "maya_render/hud_render_node.h"
+#include <maya_plug/maya_render/hud_render_node.h>
 namespace doodle::maya_plug {
 create_hud_node::create_hud_node() = default;
-
 bool create_hud_node::hide(bool hide) const {
   MStatus k_s;
   MItDag k_it{MItDag::kBreadthFirst, MFn::kLocator, &k_s};
@@ -68,9 +64,4 @@ bool create_hud_node::operator()() const {
   return true;
 }
 
-
-MStatus create_hud_node_maya::doIt(const MArgList& in_arg) {
-  create_hud_node k_c{};
-  return k_c() ? MStatus::kSuccess : MStatus::kFailure;
-}
 }  // namespace doodle::maya_plug

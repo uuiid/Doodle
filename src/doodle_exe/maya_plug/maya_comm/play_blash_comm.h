@@ -17,4 +17,14 @@ class comm_play_blast_maya : public doodle::TemplateAction<
  public:
   MStatus doIt(const MArgList& in_arg) override;
 };
+
+
+constexpr char create_hud_node_maya_name[] = "create_hud_node_maya";
+class create_hud_node_maya : public TemplateAction<
+                                 create_hud_node_maya,
+                                 create_hud_node_maya_name > {
+ public:
+  MStatus doIt(const MArgList& in_arg) override;
+};
+
 }

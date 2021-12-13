@@ -4,8 +4,9 @@
 
 #include "play_blash_comm.h"
 #include <maya_plug/data/play_blast.h>
+#include <maya_plug/data/create_hud_node.h>
+
 #include <maya/MArgDatabase.h>
-#include <maya/MTime.h>
 #include <maya/MAnimControl.h>
 
 namespace doodle::maya_plug {
@@ -79,4 +80,9 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
 #undef doodle_endTime_long
 #undef doodle_width
 #undef doodle_height
+
+MStatus create_hud_node_maya::doIt(const MArgList& in_arg) {
+  create_hud_node k_c{};
+  return k_c() ? MStatus::kSuccess : MStatus::kFailure;
+}
 }  // namespace doodle::maya_plug

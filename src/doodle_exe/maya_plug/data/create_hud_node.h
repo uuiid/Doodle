@@ -15,11 +15,5 @@ class create_hud_node {
 
   bool operator()() const;
 };
-constexpr char create_hud_node_maya_name[] = "create_hud_node_maya";
-class create_hud_node_maya : public TemplateAction<
-                                 create_hud_node_maya,
-                                 create_hud_node_maya_name > {
- public:
-  MStatus doIt(const MArgList& in_arg) override;
-};
+
 }  // namespace doodle::maya_plug
