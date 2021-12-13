@@ -11,7 +11,7 @@
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnMesh.h>
 #include <maya/MPlug.h>
-#include <maya_plug/command/reference_file.h>
+#include "reference_file.h"
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/maya_plug_fwd.h>
 #include <maya/MNamespace.h>

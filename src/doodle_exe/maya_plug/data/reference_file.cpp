@@ -4,8 +4,8 @@
 
 #include "reference_file.h"
 
-#include <doodle_lib/metadata/metadata.h>
-#include <doodle_lib/metadata/project.h>
+#include "doodle_lib/metadata/metadata.h"
+#include "doodle_lib/metadata/project.h"
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
 #include <maya/MFnDagNode.h>
@@ -16,9 +16,9 @@
 #include <maya/MPlug.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
-#include <maya_plug/data/maya_file_io.h>
-#include <maya_plug/data/qcloth_shape.h>
-#include <maya_plug/maya_plug_fwd.h>
+#include "maya_file_io.h"
+#include "qcloth_shape.h"
+#include "maya_plug_fwd.h"
 
 namespace doodle::maya_plug {
 reference_file::reference_file()

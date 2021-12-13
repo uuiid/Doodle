@@ -9,7 +9,7 @@
 #include <maya/MTimerMessage.h>
 
 #include <maya_plug/MotionMayaPlugInit.h>
-#include <maya_plug/command/create_hud_node.h>
+#include "data/create_hud_node.h"
 #include <maya_plug/gui/action/comm_play_blast.h>
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/maya_render/hud_render_node.h>

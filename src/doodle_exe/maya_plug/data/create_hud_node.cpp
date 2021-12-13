@@ -3,13 +3,13 @@
 //
 
 #include "create_hud_node.h"
-#include <maya_plug/maya_plug_fwd.h>
+#include "maya_plug_fwd.h"
 
 #include <maya/MFnAttribute.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
-#include <maya_plug/maya_render/hud_render_node.h>
+#include "maya_render/hud_render_node.h"
 namespace doodle::maya_plug {
 create_hud_node::create_hud_node() = default;
 

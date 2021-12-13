@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/metadata/episodes.h>
-#include <doodle_lib/metadata/shot.h>
+#include "doodle_lib/doodle_lib_fwd.h"
+#include "doodle_lib/metadata/episodes.h"
+#include "doodle_lib/metadata/shot.h"
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>

@@ -4,7 +4,7 @@
 
 #include "comm_play_blast.h"
 
-#include <doodle_exe/maya_plug/command/play_blast.h>
+#include "data/play_blast.h"
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/exception/exception.h>
 #include <doodle_lib/file_warp/image_sequence.h>
@@ -19,7 +19,7 @@
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
 #include <maya/MSyntax.h>
-#include <maya_plug/command/create_hud_node.h>
+#include "data/create_hud_node.h"
 
 namespace doodle::maya_plug {
 

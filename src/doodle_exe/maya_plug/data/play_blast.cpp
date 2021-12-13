@@ -4,11 +4,11 @@
 
 #include "play_blast.h"
 
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/exception/exception.h>
-#include <doodle_lib/file_warp/image_sequence.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
-#include <doodle_lib/thread_pool/long_term.h>
+#include "doodle_lib/core/core_set.h"
+#include "doodle_lib/exception/exception.h"
+#include "doodle_lib/file_warp/image_sequence.h"
+#include "doodle_lib/lib_warp/imgui_warp.h"
+#include "doodle_lib/thread_pool/long_term.h"
 #include <fmt/chrono.h>
 #include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
@@ -21,7 +21,7 @@
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
 #include <maya/MViewport2Renderer.h>
-#include <maya_plug/command/create_hud_node.h>
+#include "create_hud_node.h"
 namespace doodle::maya_plug {
 
 bool camera_filter::camera::operator<(const camera_filter::camera& in_rhs) const {

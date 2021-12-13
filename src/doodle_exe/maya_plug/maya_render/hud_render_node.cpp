@@ -12,7 +12,7 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MTextureManager.h>
-#include <maya_plug/command/play_blast.h>
+#include "data/play_blast.h"
 
 namespace doodle::maya_plug {
 MTypeId doodle_info_node::doodle_id{0x0005002B};

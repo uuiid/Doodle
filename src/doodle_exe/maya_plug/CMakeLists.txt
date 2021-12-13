@@ -24,12 +24,12 @@ set(doodle_maya_plug_cpp
         maya_render/hud_render_override.cpp
         maya_render/hud_render_node.h
         maya_render/hud_render_node.cpp
-        command/play_blast.h
-        command/play_blast.cpp
-        command/create_hud_node.h
-        command/create_hud_node.cpp
-        command/reference_file.h
-        command/reference_file.cpp
+        data/play_blast.h
+        data/play_blast.cpp
+        data/create_hud_node.h
+        data/create_hud_node.cpp
+        data/reference_file.h
+        data/reference_file.cpp
         data/qcloth_shape.cpp
         data/qcloth_shape.h
         data/maya_file_io.cpp
