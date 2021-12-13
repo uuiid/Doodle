@@ -9,6 +9,7 @@
 #include <doodle_lib/exception/exception.h>
 #include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
+
 #include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
@@ -19,8 +20,9 @@
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
 #include <maya/MSyntax.h>
-#include "data/create_hud_node.h"
-#include "play_blash_comm.h"
+
+#include <maya_plug/data/create_hud_node.h>
+#include <maya_plug/data/play_blast.h>
 
 namespace doodle::maya_plug {
 

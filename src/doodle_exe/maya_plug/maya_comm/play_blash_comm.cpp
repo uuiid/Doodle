@@ -6,6 +6,8 @@
 #include <maya_plug/data/play_blast.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MTime.h>
+#include <maya/MAnimControl.h>
+
 namespace doodle::maya_plug {
 #define doodle_filepath "-fp"
 #define doodle_startTime "-st"
