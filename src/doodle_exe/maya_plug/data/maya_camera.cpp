@@ -7,12 +7,15 @@
 #include <maya/MSelectionList.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MPlug.h>
+#include <maya/MItDag.h>
+#include <maya/MFnDagNode.h>
+#include <maya/MFnCamera.h>
 
 #include <doodle_lib/metadata/metadata.h>
 
 #include <maya_plug/maya_plug_fwd.h>
 #include <maya_plug/data/maya_file_io.h>
-
+#include <regex>
 namespace doodle::maya_plug {
 
 maya_camera::maya_camera() = default;
@@ -124,5 +127,109 @@ bool maya_camera::unlock_attr() {
 
   return false;
 }
+bool maya_camera::conjecture() {
+  const static std::vector reg_list{
+      regex_priority_pair{std::regex{"(front|persp|side|top|camera)"}, -1000},
+      regex_priority_pair{std::regex{R"(ep\d+_sc\d+)", std::regex::icase}, 30},
+      regex_priority_pair{std::regex{R"(ep\d+)", std::regex::icase}, 10},
+      regex_priority_pair{std::regex{R"(sc\d+)", std::regex::icase}, 10},
+      regex_priority_pair{std::regex{R"(ep_\d+_sc_\d+)", std::regex::icase}, 10},
+      regex_priority_pair{std::regex{R"(ep_\d+)", std::regex::icase}, 5},
+      regex_priority_pair{std::regex{R"(sc_\d+)", std::regex::icase}, 5},
+      regex_priority_pair{std::regex{R"(^[A-Z]+_)"}, 2},
+      regex_priority_pair{std::regex{R"(_\d+_\d+)", std::regex::icase}, 2}};
 
+
+  MStatus k_s;
+  MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
+  DOODLE_CHICK(k_s);
+
+  std::vector<camera> k_list{};
+  for (; !k_it.isDone(); k_it.next()) {
+    MDagPath k_path{};
+    k_s = k_it.getPath(k_path);
+    DOODLE_CHICK(k_s);
+    string k_path_str = d_str{k_path.fullPathName(&k_s)};
+    DOODLE_CHICK(k_s);
+
+    camera k_cam{k_path, 0};
+
+    for (const auto& k_reg : reg_list) {
+      if (std::regex_search(k_path_str, k_reg.reg)) {
+        k_cam.priority += k_reg.priority;
+      }
+    }
+    k_list.push_back(std::move(k_cam));
+  }
+
+  std::sort(k_list.begin(), k_list.end(), [](auto& in_l, auto& in_r) {
+    return in_l > in_r;
+  });
+  if (k_list.empty())
+    throw doodle_error{"没有找到任何相机"};
+
+
+  auto k_cam_ptr = g_reg()->try_ctx<maya_camera>();
+  if (k_cam_ptr) {
+    k_cam_ptr->p_path = k_list.front().p_dag_path;
+  } else {
+    this->p_path = k_list.front().p_dag_path;
+    g_reg()->set<maya_camera>(*this);
+  }
+}
+void maya_camera::set_render_cam() const {
+  MStatus k_s;
+  MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
+  DOODLE_CHICK(k_s);
+  for (; !k_it.isDone(); k_it.next()) {
+    MDagPath k_path{};
+    k_s = k_it.getPath(k_path);
+    DOODLE_CHICK(k_s);
+
+    MFnDagNode k_cam_fn{k_path, &k_s};
+    DOODLE_CHICK(k_s);
+
+    auto k_plug = k_cam_fn.findPlug("renderable", true, &k_s);
+    DOODLE_CHICK(k_s);
+    k_s = k_plug.setBool(k_cam_fn.object() == p_path.node(&k_s));
+    DOODLE_CHICK(k_s);
+  }
+}
+void maya_camera::set_play_attr() {
+  MStatus k_s;
+  MFnCamera k_cam_fn{p_path, &k_s};
+  DOODLE_CHICK(k_s);
+  k_s = k_cam_fn.setFilmFit(MFnCamera::FilmFit::kFillFilmFit);
+  DOODLE_CHICK(k_s);
+  k_s = k_cam_fn.setDisplayFilmGate(false);
+  DOODLE_CHICK(k_s);
+  k_s = k_cam_fn.setDisplayGateMask(false);
+  DOODLE_CHICK(k_s);
+  auto k_displayResolution = k_cam_fn.findPlug("displayResolution", true, &k_s);
+  DOODLE_CHICK(k_s);
+  k_s = k_displayResolution.setBool(false);
+  DOODLE_CHICK(k_s);
+  set_render_cam();
+}
+std::double_t maya_camera::focalLength() const {
+  MStatus k_s;
+  MFnCamera k_cam_fn{p_path, &k_s};
+  DOODLE_CHICK(k_s);
+  auto k_r = k_cam_fn.focalLength(&k_s);
+  DOODLE_CHICK(k_s);
+  return k_r;
+}
+
+bool maya_camera::camera::operator<(const maya_camera::camera& in_rhs) const {
+  return priority < in_rhs.priority;
+}
+bool maya_camera::camera::operator>(const maya_camera::camera& in_rhs) const {
+  return in_rhs < *this;
+}
+bool maya_camera::camera::operator<=(const maya_camera::camera& in_rhs) const {
+  return !(in_rhs < *this);
+}
+bool maya_camera::camera::operator>=(const maya_camera::camera& in_rhs) const {
+  return !(*this < in_rhs);
+}
 }  // namespace doodle::maya_plug

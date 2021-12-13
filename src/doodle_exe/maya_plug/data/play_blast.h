@@ -13,42 +13,6 @@
 #include <maya/MTime.h>
 namespace doodle::maya_plug {
 
-class camera_filter {
-  bool chick_cam(MDagPath& in_path);
-
-  class regex_priority_pair {
-   public:
-    std::regex reg;
-    std::int32_t priority;
-  };
-
- public:
-  class camera {
-   public:
-    MObject p_dag_path;
-    std::int32_t priority;
-    bool operator<(const camera& in_rhs) const;
-    bool operator>(const camera& in_rhs) const;
-    bool operator<=(const camera& in_rhs) const;
-    bool operator>=(const camera& in_rhs) const;
-  };
-
-  std::vector<camera> p_list;
-
-  camera_filter();
-  /**
-   * @brief 获得最高优先级的cam
-   * @warning 可能为空obj
-   *
-   * @return MObject
-   */
-  MObject get() const;
-
-  bool conjecture();
-
-  static MStatus set_render_cam(const MObject& in_obj);
-};
-
 class play_blast {
  private:
   FSys::path p_save_path;

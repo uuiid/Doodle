@@ -6,8 +6,9 @@
 
 #include <maya_plug/maya_plug_fwd.h>
 namespace doodle::maya_plug {
-
+namespace {
 constexpr char doodleCreate_name[] = "doodleCreate";
+}
 class open_doodle_main : public TemplateAction<
                              open_doodle_main,
                              doodleCreate_name> {

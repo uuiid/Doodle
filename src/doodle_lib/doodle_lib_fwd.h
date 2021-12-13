@@ -389,6 +389,12 @@ void chick_component(const entt::handle &t) {
     throw component_error{"缺失组件"};
 }
 
+template <class Component>
+void chick_ctx() {
+  if (!g_reg()->template try_ctx<Component>())
+    throw doodle_error{"缺失上下文"};
+}
+
 class DOODLELIB_API null_fun_t {
  public:
   null_fun_t() = default;

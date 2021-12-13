@@ -9,9 +9,24 @@ namespace doodle::maya_plug {
 class maya_camera {
   void chick() const;
 
+  class regex_priority_pair {
+   public:
+    std::regex reg;
+    std::int32_t priority;
+  };
+
+  class camera {
+   public:
+    MDagPath p_dag_path;
+    std::int32_t priority;
+    bool operator<(const camera& in_rhs) const;
+    bool operator>(const camera& in_rhs) const;
+    bool operator<=(const camera& in_rhs) const;
+    bool operator>=(const camera& in_rhs) const;
+  };
+
  public:
   MDagPath p_path;
-
   maya_camera();
   maya_camera(const MDagPath& in_path);
   /**
@@ -30,6 +45,11 @@ class maya_camera {
    */
   bool back_camera(const MTime& in_start, const MTime& in_end);
   bool unlock_attr();
+
+  bool conjecture();
+  void set_render_cam() const;
+  void set_play_attr();
+  std::double_t focalLength() const;
 };
 
 }  // namespace doodle::maya_plug

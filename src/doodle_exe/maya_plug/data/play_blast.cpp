@@ -9,6 +9,8 @@
 #include "doodle_lib/file_warp/image_sequence.h"
 #include "doodle_lib/lib_warp/imgui_warp.h"
 #include "doodle_lib/thread_pool/long_term.h"
+#include <maya_plug/data/maya_camera.h>
+
 #include <fmt/chrono.h>
 #include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
@@ -23,93 +25,6 @@
 #include <maya/MViewport2Renderer.h>
 #include "create_hud_node.h"
 namespace doodle::maya_plug {
-
-bool camera_filter::camera::operator<(const camera_filter::camera& in_rhs) const {
-  return priority < in_rhs.priority;
-}
-bool camera_filter::camera::operator>(const camera_filter::camera& in_rhs) const {
-  return in_rhs < *this;
-}
-bool camera_filter::camera::operator<=(const camera_filter::camera& in_rhs) const {
-  return !(in_rhs < *this);
-}
-bool camera_filter::camera::operator>=(const camera_filter::camera& in_rhs) const {
-  return !(*this < in_rhs);
-}
-
-bool camera_filter::chick_cam(MDagPath& in_path) {
-  MStatus k_s{};
-  string k_path{in_path.fullPathName(&k_s).asUTF8()};
-  CHECK_MSTATUS_AND_RETURN(k_s, false);
-  const static std::vector reg_list{
-      regex_priority_pair{std::regex{"(front|persp|side|top|camera)"}, -1000},
-      regex_priority_pair{std::regex{R"(ep\d+_sc\d+)", std::regex::icase}, 30},
-      regex_priority_pair{std::regex{R"(ep\d+)", std::regex::icase}, 10},
-      regex_priority_pair{std::regex{R"(sc\d+)", std::regex::icase}, 10},
-      regex_priority_pair{std::regex{R"(ep_\d+_sc_\d+)", std::regex::icase}, 10},
-      regex_priority_pair{std::regex{R"(ep_\d+)", std::regex::icase}, 5},
-      regex_priority_pair{std::regex{R"(sc_\d+)", std::regex::icase}, 5},
-      regex_priority_pair{std::regex{R"(^[A-Z]+_)"}, 2},
-      regex_priority_pair{std::regex{R"(_\d+_\d+)", std::regex::icase}, 2}};
-
-  camera k_cam{in_path.node(), 0};
-
-  for (const auto& k_reg : reg_list) {
-    if (std::regex_search(k_path, k_reg.reg)) {
-      k_cam.priority += k_reg.priority;
-    }
-  }
-  p_list.push_back(std::move(k_cam));
-  return true;
-}
-
-camera_filter::camera_filter()
-    : p_list() {
-}
-MObject camera_filter::get() const {
-  if (p_list.empty())
-    return MObject::kNullObj;
-  auto& k_obj = p_list.front();
-  if (k_obj.priority > 0)
-    return k_obj.p_dag_path;
-  else
-    return MObject::kNullObj;
-}
-bool camera_filter::conjecture() {
-  MStatus k_s;
-  MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
-  CHECK_MSTATUS_AND_RETURN(k_s, false);
-  p_list.clear();
-  for (; !k_it.isDone(); k_it.next()) {
-    MDagPath k_path{};
-    k_s = k_it.getPath(k_path);
-    CHECK_MSTATUS_AND_RETURN(k_s, false);
-    chick_cam(k_path);
-  }
-  std::sort(p_list.begin(), p_list.end(), [](auto& in_l, auto& in_r) {
-    return in_l > in_r;
-  });
-  return true;
-}
-
-MStatus camera_filter::set_render_cam(const MObject& in_obj) {
-  MStatus k_s;
-  MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  for (; !k_it.isDone(); k_it.next()) {
-    MDagPath k_path{};
-    k_s = k_it.getPath(k_path);
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-    MFnDagNode k_cam_fn{k_path, &k_s};
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-    auto k_plug = k_cam_fn.findPlug("renderable", &k_s);
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
-    k_plug.setBool(k_cam_fn.object() == in_obj);
-  }
-  return k_s;
-}
 
 string play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
 
@@ -196,16 +111,9 @@ void play_blast::set_camera(const MString& in_dag_path) {
 }
 
 bool play_blast::conjecture_camera() {
-  camera_filter k_f{};
-  k_f.conjecture();
-  auto k_c = k_f.get();
-  if (k_c.isNull()) {
-    DOODLE_LOG_ERROR("无法推测相机， 没有符合要求的相机")
-    throw doodle_error{"无法推测相机， 没有符合要求的相机"};
-  }
-
-  MFnDagNode k_path{k_c};
-  set_camera(k_path.fullPathName());
+  auto k_cam = g_reg()->ctx_or_set<maya_camera>();
+  k_cam.conjecture();
+  set_camera(k_cam.p_path.fullPathName());
   return true;
 }
 
@@ -240,20 +148,15 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   };
   play_blast_guard k_play_blast_guard{};
 
-  MFnCamera k_cam_fn{k_camera_path, &k_s};
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  k_s = k_cam_fn.setFilmFit(MFnCamera::FilmFit::kFillFilmFit);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  k_s = k_cam_fn.setDisplayFilmGate(false);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  k_s = k_cam_fn.setDisplayGateMask(false);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  auto k_displayResolution = k_cam_fn.findPlug("displayResolution", true, &k_s);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  k_s = k_displayResolution.setBool(false);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  k_s = camera_filter::set_render_cam(k_cam_fn.object());
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  try {
+    chick_ctx<maya_camera>();
+  } catch (const doodle_error& err) {
+    g_reg()->set<maya_camera>().conjecture();
+  }
+  auto& k_cam = g_reg()->ctx<maya_camera>();
+  k_cam.conjecture();
+  k_cam.set_render_cam();
+  k_cam.set_play_attr();
 
   k_s = MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled true -outputTarget "renderer";
   colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");
@@ -346,7 +249,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       ///添加水印
       /// 绘制摄像机avo
       details::watermark k_w{};
-      k_w.set_text(fmt::format("FOV: {:.3f}", k_cam_fn.focalLength()));
+      k_w.set_text(fmt::format("FOV: {:.3f}", k_cam.focalLength()));
       k_w.set_text_point(0.91, 0.1);
       k_w.set_text_color(25, 220, 2);
       k_image.add_watermark(k_w);

@@ -11,12 +11,11 @@
 #include <maya_plug/maya_comm/fbx_comm.h>
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/play_blash_comm.h>
-#include <maya_plug/maya_comm/sim_comm.h>
+#include <maya_plug/maya_comm/reference_comm.h>
 #include <maya_plug/data/create_hud_node.h>
 
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/maya_render/hud_render_node.h>
-#include <maya_plug/gui/action/reference_attr_setting.h>
 #include <maya_plug/maya_render/hud_render_override.h>
 #include <maya_plug/logger/maya_logger_info.h>
 namespace {

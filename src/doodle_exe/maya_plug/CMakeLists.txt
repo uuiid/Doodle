@@ -39,8 +39,8 @@ set(doodle_maya_plug_cpp
         maya_comm/fbx_comm.h
         maya_comm/open_doodle_main.cpp
         maya_comm/open_doodle_main.h
-        maya_comm/sim_comm.cpp
-        maya_comm/sim_comm.h
+        maya_comm/reference_comm.cpp
+        maya_comm/reference_comm.h
         maya_comm/play_blash_comm.h
         maya_comm/play_blash_comm.cpp
         )

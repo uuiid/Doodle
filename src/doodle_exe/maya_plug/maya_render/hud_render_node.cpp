@@ -13,6 +13,7 @@
 #include <maya/MFnDependencyNode.h>
 #include <maya/MTextureManager.h>
 #include "data/play_blast.h"
+#include <maya_plug/maya_plug_fwd.h>
 
 namespace doodle::maya_plug {
 MTypeId doodle_info_node::doodle_id{0x0005002B};
@@ -111,30 +112,11 @@ void doodle_info_node_draw_override::addUIDrawables(
   MStatus k_s{};
 
   auto k_view = M3dView::active3dView(&k_s);
-  if (!k_s) {
-    std::cout << k_s.errorString() << std::endl;
-    return;
-  }
+  DOODLE_CHICK(k_s);
 
   MDagPath k_cam{};
   k_s = k_view.getCamera(k_cam);
-  if (!k_s) {
-    std::cout << k_s.errorString() << std::endl;
-
-    camera_filter k_f{};
-    k_f.conjecture();
-    auto k_m = k_f.get();
-    if (k_m.isNull()) {
-      std::cout << "not find cam" << std::endl;
-      return;
-    }
-    MFnDagNode k_node{k_m};
-    k_s = k_node.getPath(k_cam);
-    if (!k_s) {
-      std::cout << k_s.errorString() << std::endl;
-      return;
-    }
-  }
+  DOODLE_CHICK(k_s);
 
   static std::int32_t s_font_size{20};
   std::int32_t s_font_size_{13};
@@ -182,11 +164,8 @@ void doodle_info_node_draw_override::addUIDrawables(
   /// 绘制摄像机avo
   {
     MFnCamera k_fn_cam{k_cam};
-    auto k_f = k_fn_cam.focalLength(&k_s);
-    if (!k_s) {
-      std::cout << k_s.errorString() << std::endl;
-      return;
-    }
+    auto k_f   = k_fn_cam.focalLength(&k_s);
+    DOODLE_CHICK(k_s);
 
     auto _k_s_ = fmt::format("FOV: {:.3f}", k_f);
     MString k_str{_k_s_.c_str()};

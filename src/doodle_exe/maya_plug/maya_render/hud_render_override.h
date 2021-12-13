@@ -44,12 +44,6 @@ class hud_render_override : public MHWRender::MRenderOverride {
   int mCurrentOperation;
 };
 
-
-
-
-
-
-
 class hud_render : public MHWRender::MUserRenderOperation {
  public:
   hud_render(const MString& in_name);
