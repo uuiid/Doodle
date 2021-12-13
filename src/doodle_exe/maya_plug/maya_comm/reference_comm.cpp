@@ -122,7 +122,7 @@ MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
     if (!k_ref.replace_sim_assets_file()) {
       k_delete.push_back(k_e);
     } else {
-      k_ref.chick_cloth_proxy();
+      k_ref.generate_cloth_proxy();
     }
   }
   g_reg()->destroy(k_delete.begin(), k_delete.end());

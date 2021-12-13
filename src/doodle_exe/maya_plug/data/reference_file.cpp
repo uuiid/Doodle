@@ -313,7 +313,7 @@ bool reference_file::add_collision() const {
   DOODLE_CHICK(k_s);
   return true;
 }
-bool reference_file::chick_cloth_proxy() {
+bool reference_file::generate_cloth_proxy() {
   auto k_prj = get_prj();
   if (!k_prj)
     throw doodle_error{"无法找到项目配置"};
