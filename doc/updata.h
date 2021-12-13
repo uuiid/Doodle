@@ -353,4 +353,10 @@
  * @subsubsection updata_log_322 版本3.2.2
  * @li 修复hud时间长度显示和拍屏时间长度显示
  *
+ * 
+ * @subsubsection  updata_log_323 版本3.2.3
+ * @li 解算命令重写， 更加稳定
+ * @li 开启多个doodle时发生的日志冲突问题解决
+ * @li maya插件稳定性提升
+ * 
  */
