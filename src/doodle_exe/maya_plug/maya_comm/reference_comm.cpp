@@ -21,7 +21,7 @@
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
-
+#include <maya_plug/data/qcloth_shape.h>
 #define doodle_startTime "-st"
 #define doodle_endTime "-et"
 #define doodle_default_uuid "-u"
@@ -70,11 +70,6 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
 
   std::vector<entt::handle> l_list{};
   MFnReference k_ref_file{};
-  auto k_j_str = maya_file_io::get_channel_date();
-  if (k_j_str.empty() && !k_def_prj) {
-    DOODLE_LOG_ERROR("找不到默认配置， 并且文件中也找不到解算元数据");
-    return MStatus::kFailure;
-  }
   for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
     k_s = k_ref_file.setObject(refIter.thisNode());
     DOODLE_CHICK(k_s);
@@ -90,10 +85,19 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
       k_h.destroy();
     }
   }
+  return k_s;
+}
+MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
+  MStatus k_s{};
+  chick_ctx<root_ref>();
+  auto k_def_prj = g_reg()->ctx<root_ref>().root_handle();
+  auto k_j_str   = maya_file_io::get_channel_date();
+  std::vector<entt::entity> k_delete{};
+
   auto k_j = nlohmann::json::parse(k_j_str);
-  for (auto& l_i : l_list) {
-    auto& k_ref = l_i.get<reference_file>();
-    auto l_p    = k_ref.path;
+  for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
+    auto l_i = make_handle(k_e);
+    auto l_p = k_ref.path;
     if (k_j.contains(l_p)) {
       DOODLE_LOG_INFO("加载元数据 {}", l_p);
       entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
@@ -110,15 +114,11 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
       DOODLE_LOG_ERROR(err.what());
     }
     if (!l_i.get<reference_file>().use_sim)
-      l_i.destroy();
+      k_delete.push_back(l_i);
   }
-  return k_s;
-}
-MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
-  MStatus k_s{};
-  auto k_view = g_reg()->view<reference_file>();
-  std::vector<entt::entity> k_delete{};
-  for (auto&& [k_e, k_ref] : k_view.each()) {
+  g_reg()->destroy(k_delete.begin(), k_delete.end());
+
+  for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
     if (!k_ref.replace_sim_assets_file()) {
       k_delete.push_back(k_e);
     } else {
@@ -162,12 +162,14 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
       k_start.value(), k_end.value());
 
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
-    k_ref.set_cloth_cache_dir();
     k_ref.add_collision();
+  }
+  for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
+    k_qs.set_cache_folder();
   }
 
   for (MTime k_t = k_start; k_t <= k_end; ++k_t) {
-    for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
+    for (auto&& [k_e, k_ref] : g_reg()->view<qcloth_shape>().each()) {
       MAnimControl::setCurrentTime(k_t);
       k_ref.create_cache();
     }

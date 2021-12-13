@@ -194,12 +194,6 @@ bool reference_file::has_ref_project() const {
   return !prj_ref.is_nil();
 }
 
-bool reference_file::create_cache() const {
-  for (auto &k_h : p_cloth_shape) {
-    k_h.get<qcloth_shape>().create_cache();
-  }
-  return true;
-}
 bool reference_file::rename_material() const {
   chick_mobject();
   MStatus k_s{};
@@ -313,7 +307,7 @@ bool reference_file::add_collision() const {
   DOODLE_CHICK(k_s);
   return true;
 }
-bool reference_file::generate_cloth_proxy() {
+void reference_file::generate_cloth_proxy() {
   auto k_prj = get_prj();
   if (!k_prj)
     throw doodle_error{"无法找到项目配置"};
@@ -321,7 +315,6 @@ bool reference_file::generate_cloth_proxy() {
   chick_component<project::cloth_config>(k_prj);
   auto &k_cfg = k_prj.get<project::cloth_config>();
   MStatus k_s{};
-  p_cloth_shape.clear();
   MSelectionList k_qcloth_list{};
   k_s = k_qcloth_list.add(
       d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.cloth_proxy)},
@@ -333,13 +326,8 @@ bool reference_file::generate_cloth_proxy() {
     k_s      = k_iter.getDagPath(k_path);
     DOODLE_CHICK(k_s);
     auto &k_q = k_h.emplace<qcloth_shape>(make_handle(*this), k_path.node());
-    p_cloth_shape.push_back(k_h);
   }
-  return !p_cloth_shape.empty();
-}
-void reference_file::set_cloth_cache_dir() {
-  for (auto &k_h : p_cloth_shape)
-    k_h.get<qcloth_shape>().set_cache_folder();
+  return;
 }
 void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
   MSelectionList k_select{};

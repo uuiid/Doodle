@@ -9,7 +9,6 @@ namespace doodle::maya_plug {
 class reference_file {
   uuid prj_ref;
   string ref_file_uuid;
-  std::vector<entt::handle> p_cloth_shape;
   MObject p_m_object;
 
   void chick_mobject();
@@ -32,8 +31,7 @@ class reference_file {
   void set_project(const entt::handle &in_prj);
   [[nodiscard]] bool has_ref_project() const;
 
-  bool generate_cloth_proxy();
-  void set_cloth_cache_dir();
+  void generate_cloth_proxy();
 
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
@@ -44,11 +42,6 @@ class reference_file {
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况
    */
   bool replace_sim_assets_file();
-  /**
-   * @brief 创建当前帧的缓存
-   * @return
-   */
-  bool create_cache() const;
   /**
    * @brief 将着色集和材质名称调换为导出abc做准备
    * @return
@@ -64,7 +57,6 @@ class reference_file {
    *
    */
   bool export_abc(const MTime &in_start, const MTime &in_end) const;
-
 
   void export_fbx(const MTime &in_start, const MTime &in_end) const;
   /**
