@@ -250,13 +250,13 @@ bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) con
   if (k_select.isEmpty())
     return false;
 
-  auto k_name = fmt::format("{}_export_abc", get_namespace());
-  k_s         = MGlobal::setActiveSelectionList(k_select);
+  k_s = MGlobal::setActiveSelectionList(k_select);
   DOODLE_CHICK(k_s);
-  k_s = MGlobal::executeCommand(
-      d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}";)",
-                        k_name)},
-      true);
+  auto k_name = fmt::format("{}_export_abc", get_namespace());
+  k_s         = MGlobal::executeCommand(
+              d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}";)",
+                                k_name)},
+              true);
   DOODLE_CHICK(k_s);
 
   k_select.clear();
@@ -340,6 +340,52 @@ bool reference_file::chick_cloth_proxy() {
 void reference_file::set_cloth_cache_dir() {
   for (auto &k_h : p_cloth_shape)
     k_h.get<qcloth_shape>().set_cache_folder();
+}
+void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
+  MSelectionList k_select{};
+  MStatus k_s{};
+  auto &k_cfg = get_prj().get<project::cloth_config>();
+  k_s         = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
+  DOODLE_CHICK(k_s);
+
+  if (k_select.isEmpty()) {
+    DOODLE_LOG_WARN("没有选中的物体, 不进行输出")
+    return;
+  }
+
+  k_s = MGlobal::setActiveSelectionList(k_select);
+  DOODLE_CHICK(k_s);
+
+  auto k_file_path = maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem();
+
+  if (!FSys::exists(k_file_path))
+    FSys::create_directories(k_file_path);
+
+  k_file_path /= fmt::format("{}_{}_{}-{}.fbx",
+                             maya_file_io::get_current_path().stem().generic_string(),
+                             get_namespace(),
+                             in_start.value(),
+                             in_end.value());
+
+  auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
+  k_s         = MGlobal::executeCommand(d_str{k_comm});
+  DOODLE_CHICK(k_s);
+
+  k_comm = fmt::format("FBXExportBakeComplexEnd -v {};", in_end.value());
+  k_s    = MGlobal::executeCommand(d_str{k_comm});
+  DOODLE_CHICK(k_s);
+
+  k_comm = string{"FBXExportBakeComplexAnimation -v true;"};
+  k_s    = MGlobal::executeCommand(d_str{k_comm});
+  DOODLE_CHICK(k_s);
+
+  k_comm = string{"FBXExportConstraints -v true;"};
+  k_s    = MGlobal::executeCommand(d_str{k_comm});
+  DOODLE_CHICK(k_s);
+
+  k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
+  k_s    = MGlobal::executeCommand(d_str{k_comm});
+  DOODLE_CHICK(k_s);
 }
 
 }  // namespace doodle::maya_plug

@@ -42,6 +42,8 @@ bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
   MSelectionList k_select{};
   k_s = k_select.add(p_path);
   DOODLE_CHICK(k_s);
+  k_s = MGlobal::setActiveSelectionList(k_select);
+  DOODLE_CHICK(k_s);
   /// \brief 开始创建路径并进行导出
   auto k_file_path = maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem();
   if (!FSys::exists(k_file_path))
