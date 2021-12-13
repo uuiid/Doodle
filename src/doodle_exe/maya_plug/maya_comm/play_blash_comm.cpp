@@ -40,9 +40,9 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
   k_p.conjecture_ep_sc();
 
   if (k_prase.isFlagSet(doodle_filepath, &k_s)) {
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    DOODLE_CHICK(k_s);
     auto k_path = k_prase.flagArgumentString(doodle_filepath, 0, &k_s);
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    DOODLE_CHICK(k_s);
     DOODLE_LOG_INFO("获得传入路径: {}", k_path);
     k_p.set_save_path(k_path.asUTF8());
   }
@@ -51,20 +51,20 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
 
   MTime k_start_time = MAnimControl::minTime();
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    DOODLE_CHICK(k_s);
     k_start_time = k_prase.flagArgumentMTime(doodle_startTime, 0, &k_s);
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    DOODLE_CHICK(k_s);
   }
   MTime k_end_time = MAnimControl::maxTime();
   if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    DOODLE_CHICK(k_s);
     k_end_time = k_prase.flagArgumentMTime(doodle_endTime, 0, &k_s);
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    DOODLE_CHICK(k_s);
   }
 
   k_s = k_p.play_blast_(k_start_time, k_end_time);
   if (MGlobal::mayaState(&k_s) == MGlobal::kInteractive) {
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
+    DOODLE_CHICK(k_s);
     FSys::open_explorer(k_p.get_out_path());
   }
 

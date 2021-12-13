@@ -6,23 +6,15 @@
 
 #include "data/play_blast.h"
 #include <doodle_lib/core/core_set.h>
-#include <doodle_lib/exception/exception.h>
-#include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
-#include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
-#include <maya/MArgDatabase.h>
-#include <maya/MDagPath.h>
 #include <maya/MDrawContext.h>
 #include <maya/MFileIO.h>
 #include <maya/MFnCamera.h>
-#include <maya/MGlobal.h>
 #include <maya/MItDag.h>
-#include <maya/MSyntax.h>
 
 #include <maya_plug/data/create_hud_node.h>
-#include <maya_plug/data/play_blast.h>
 
 namespace doodle::maya_plug {
 
