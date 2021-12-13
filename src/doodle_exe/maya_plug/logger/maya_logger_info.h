@@ -21,20 +21,27 @@ class maya_msg : public spdlog::sinks::base_sink<Mutex> {
     k_str.pop_back();
     MString k_m_str{};
     k_m_str.setUTF8(k_str.data());
-    std::cout << k_m_str << "\n";
-    switch (msg.level) {
-      case spdlog::level::err: {
-        MGlobal::displayError(k_m_str);
+    switch (MGlobal::mayaState()) {
+      case MGlobal::MMayaState::kInteractive: {
+        switch (msg.level) {
+          case spdlog::level::err: {
+            MGlobal::displayError(k_m_str);
+            break;
+          }
+          case spdlog::level::warn: {
+            MGlobal::displayWarning(k_m_str);
+            break;
+          }
+          default: {
+            MGlobal::displayInfo(k_m_str);
+            break;
+          }
+        }
         break;
       }
-      case spdlog::level::warn: {
-        MGlobal::displayWarning(k_m_str);
+      default:
+        std::cout << k_m_str << "\n";
         break;
-      }
-      default: {
-        MGlobal::displayInfo(k_m_str);
-        break;
-      }
     }
   }
 
