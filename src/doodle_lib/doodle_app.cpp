@@ -374,17 +374,21 @@ void doodle_app::loop_one() {
       metadata_loop_one();
     }
   } catch (doodle_error& err) {
+    DOODLE_LOG_ERROR("捕获 doodle_error异常 {}", err.what());
+    p_show_err = true;
+    str        = err.what();
+    imgui::OpenPopup("警告");
+  } catch (std::runtime_error& err) {
+    DOODLE_LOG_ERROR("捕获 runtime_error异常 {}", err.what());
+    p_show_err = true;
+    str        = err.what();
+    imgui::OpenPopup("警告");
+  } catch (std::exception& err) {
+    DOODLE_LOG_ERROR("捕获 exception异常 {}", err.what());
     p_show_err = true;
     str        = err.what();
     imgui::OpenPopup("警告");
   }
-  //    catch (std::runtime_error& err) {
-  //      show_info = true;
-  //      std::wstring str2{err.what(), err.what() + std::strlen(err.what())};
-  //      str = conv::locale_to_utf<char>(str2);
-  //
-  //      imgui::OpenPopup("警告");
-  //    }
   dear::PopupModal{"警告", &p_show_err} && [str1 = str, this]() {
     dear::Text(str);
     if (ImGui::Button("OK")) {
