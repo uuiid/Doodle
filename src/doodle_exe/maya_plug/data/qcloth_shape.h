@@ -7,6 +7,23 @@
 #include <maya/MObject.h>
 namespace doodle::maya_plug {
 class reference_file;
+namespace qcloth_shape_n {
+class low_shape;
+class high_shape;
+}  // namespace qcloth_shape_n
+
+namespace qcloth_shape_n {
+class low_shape {
+ public:
+  MObject obj;
+  std::vector<entt::handle> high_shape_list;
+};
+
+class high_shape {
+ public:
+  MObject obj;
+};
+}  // namespace qcloth_shape_n
 
 class qcloth_shape {
  private:
@@ -23,5 +40,7 @@ class qcloth_shape {
    */
   bool set_cache_folder() const;
   bool create_cache() const;
+
+  void create_sim_cloth(const entt::handle& in_low_spahe);
 };
 }  // namespace doodle::maya_plug

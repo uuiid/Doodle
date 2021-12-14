@@ -105,5 +105,8 @@ bool qcloth_shape::create_cache() const {
   DOODLE_CHICK(k_s);
   return true;
 }
+void qcloth_shape::create_sim_cloth(const entt::handle& in_low_spahe) {
+
+}
 
 }  // namespace doodle::maya_plug
