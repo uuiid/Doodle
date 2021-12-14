@@ -29,10 +29,10 @@ class DlsShelf(shelfBase._shelf):
 
     def build(self):
         # self.addButon("export_cam", icon="icons/OUTcam.png", command=self.exportCam)
-        self.addButon("export_abc", icon="icons/OUTabc.png",
-                      command=self.exportAbc)
-        self.addButon("back_cam", icon="icons/back_cam.png",
-                      command=self.BakeAimCam)
+        # self.addButon("export_abc", icon="icons/OUTabc.png",
+        #               command=self.exportAbc)
+        # self.addButon("back_cam", icon="icons/back_cam.png",
+        #               command=self.BakeAimCam)
 
         self.addButon("remesh", icon="icons/remesh.png",
                       command=self.polyremesh)
@@ -44,8 +44,8 @@ class DlsShelf(shelfBase._shelf):
 
         self.addButon("randomColor", icon="icons/randomColor.png",
                       command=self.randomColor)
-        self.addButon("play", "icons/create_hud.png",
-                      command=pymel.core.create_hud_node_maya)
+        self.addButon("hud", "icons/create_hud.png",
+                      command=cmds.create_hud_node_maya)
 
     def polyremesh(self):
         self.re()
