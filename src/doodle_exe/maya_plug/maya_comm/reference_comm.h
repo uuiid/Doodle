@@ -41,7 +41,7 @@ class ref_file_export_command : public TemplateAction<
                                     ref_file_export_command_name,
                                     ref_file_export_syntax> {
  public:
-  enum export_type {
+  enum export_type : std::uint32_t {
     abc = 0,
     fbx = 1
   };

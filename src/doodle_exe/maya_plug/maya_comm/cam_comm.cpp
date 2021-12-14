@@ -6,7 +6,7 @@
 
 #include <maya/MArgParser.h>
 #include <maya/MAnimControl.h>
-
+#include <maya_plug/data/maya_camera.h>
 #define doodle_startTime "-st"
 #define doodle_endTime "-et"
 
@@ -35,10 +35,10 @@ MStatus export_camera_command::doIt(const MArgList &in_arg) {
     k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
     DOODLE_CHICK(k_s);
   }
-
-
-
-
+  auto &k_cam = g_reg()->ctx_or_set<maya_camera>();
+  k_cam.conjecture();
+  k_cam.back_camera(k_start, k_end);
+  k_cam.export_file(k_start, k_end);
 
   return k_s;
 }
