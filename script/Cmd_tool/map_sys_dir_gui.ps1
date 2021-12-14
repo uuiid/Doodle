@@ -1,4 +1,5 @@
 ﻿Write-Host " 准备测试服务器 .... 请点击确认按钮并等待完成..."
+# 这个是外部使用的脚本
 
 class map_dir {
   [string]$link
@@ -49,21 +50,11 @@ Logo =
   Set-Content -Path "C:\sy\desktop.ini" -Value $main_ini -Encoding "unicode" -Force
   $file = Get-Item -Path "C:\sy\desktop.ini" -Force
   $file.Attributes = 'Archive, System, Hidden'
-  
-  $log_f = $env:TMP + "/doodle_map.txt";
-  if (Test-Path $log_f) {
-    $l_p = Get-Item -Path $log_f 
-    if ($l_p.Exists) {
-      $l_p.Delete()
-    }
-  }
 }
 
 # $map_item |Format-Table -Property @{name="index";expression={$global:index;$global:index+=1}},name;
 
 function Add-SymLink {
-
-
   try {
     $map_item | Format-Table -Property @{name = "index"; expression = { $map_item.IndexOf($_) } }, name;
     $indexstring = Read-Host "选择项目进行路径标准化(请输入索引)";
@@ -90,7 +81,6 @@ function Add-SymLink {
     }
     
     Write-Host "开始标准化路径 从" $pathstring" 到 " $map_item[$value].link
-    $name = $map_item[$value].name
     $con = @"
 [.ShellClassInfo]
 InfoTip=@Shell32.dll,-12688
@@ -99,7 +89,7 @@ IconIndex=-101
 IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 
 [{F29F85E0-4FF9-1068-AB91-08002B27B3D9}]
-    Prop2 = 31,$name
+    Prop2 = 31,$($item.name)
     Prop3 = 31,secret
     Prop4 = 31,John Doe
     Prop5 = 31,how it works

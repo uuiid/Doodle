@@ -1,5 +1,5 @@
 ﻿Write-Host " 准备测试服务器 .... 请点击确认按钮并等待完成..."
-
+# 这个是服务器使用的脚本
 
 $map_item = @(
     @("ChangAnHuanJie", "\\192.168.10.250\public\changanhuanjie\03_Workflow", "8幢_长安幻街"),

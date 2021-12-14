@@ -16,13 +16,14 @@ namespace qcloth_shape_n {
 class low_shape {
  public:
   MObject obj;
-  std::vector<entt::handle> high_shape_list;
 };
 
 class high_shape {
  public:
   MObject obj;
 };
+using high_shape_list = std::vector<high_shape>;
+
 }  // namespace qcloth_shape_n
 
 class qcloth_shape {
