@@ -4,7 +4,7 @@
 
 #include "main_windwos.h"
 
-#include <doodle_lib/Exception/exception.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/doodle_app.h>
 #include <doodle_lib/gui/action/command_tool.h>
 #include <doodle_lib/gui/setting_windows.h>
@@ -15,7 +15,6 @@
 #include <doodle_lib/gui/widgets/opencv_player_widget.h>
 #include <doodle_lib/gui/widgets/project_widget.h>
 #include <doodle_lib/gui/widgets/tool_box_widget.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/toolkit/toolkit.h>
 namespace doodle {
 
