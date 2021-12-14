@@ -47,77 +47,18 @@ class DlsShelf(shelfBase._shelf):
         self.addButon("play", "icons/create_hud.png",
                       command=pymel.core.create_hud_node_maya)
 
-
     def polyremesh(self):
         self.re()
         Doodle_PolyRemesh.myRemesh()
 
     def exportCam(self):
-        Doodle_fun_tool.doodle_work_space = Doodle_fun_tool.maya_workspace()
-        cam = self.get_tool_cam()
-        if cam:
-            cam()
+        pass
 
     def exportAbc(self):
-        Doodle_fun_tool.doodle_work_space = Doodle_fun_tool.maya_workspace()
-        self.re()
-        ref_file = None  # type: Doodle_fun_tool.references_file
-        k_map = {"Q:/": "人间最得意",
-                 "R:/": "万古神话",
-                 "S:/": "藏锋",
-                 "T:/": "狂神魔尊",
-                 "U:/": "万域封神",
-                 "V:/": "独步逍遥v3",
-                 "X:/": "长安幻街",
-                 "y_abc": "本地",
-                 "z_quit": "取消"}
-        box = QtWidgets.QMessageBox()
-        buttens = {}  # type: map[str,QtWidgets.QPushButton]
-        for p, n in k_map.iteritems():
-            butten = QtWidgets.QPushButton()
-            butten.setText(n)
-            buttens[butten] = p
-            box.addButton(butten, QtWidgets.QMessageBox.AcceptRole)
-
-        box.exec_()
-        path = pymel.core.Path()
-        for b, p in buttens.iteritems():
-            if b == box.clickedButton():
-                path = p
-        if str(path) == "z_quir":
-            return
-        elif str(path) == "y_abc":
-            path = pymel.core.Path()
-        else:
-            path = pymel.core.Path(path)
-            path = path / Doodle_fun_tool.analyseFileName().path()
-        k_select = pymel.core.selected()
-
-        if not k_select:
-            return
-
-        for s in k_select:
-            ref = self.get_select_refFile(s)
-            if ref:
-                ref_file = Doodle_fun_tool.references_file(ref)
-
-        if not ref_file:
-            ref_file = Doodle_fun_tool.references_file(None)
-            try:
-                ref_file.namespace = k_select[0].namespaceList()[0]
-            except IndexError:
-                pymel.core.warning("not find namespace")
-
-        ex = Doodle_fun_tool.cloth_group_file(ref_file)
-        ex.export_select_abc(
-            export_path=path, select_obj=k_select)
+        pass
 
     def BakeAimCam(self):
-        Doodle_fun_tool.doodle_work_space = Doodle_fun_tool.maya_workspace()
-        cam = self.get_tool_cam()
-        if cam:
-            cam.bakeAnm()
-
+        pass
 
     def deleteWeightPoint(self):
         self.re()
@@ -149,18 +90,6 @@ class DlsShelf(shelfBase._shelf):
             reload(deleteAttr)
             reload(export_usd)
             reload(Doodle_fun_tool)
-
-    def get_select_refFile(self, maya_obj):
-        # type: (Any)->pymel.core.FileReference
-        try:
-            ref = pymel.core.referenceQuery(
-                maya_obj, referenceNode=True, topReference=True)
-            if ref:
-                return pymel.core.FileReference(ref)
-            else:
-                return
-        except RuntimeError:
-            return
 
 
 class DoodleUIManage(object):
