@@ -17,6 +17,7 @@ namespace doodle {
 class DOODLELIB_API project_widget : public base_widget {
  public:
   project_widget();
+  virtual ~project_widget();
   void frame_render() override;
 
 

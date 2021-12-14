@@ -37,8 +37,6 @@ class DlsShelf(shelfBase._shelf):
         self.addButon("remesh", icon="icons/remesh.png",
                       command=self.polyremesh)
 
-        self.addButon("clear", icon="icons/clear.png", command=self.clearScane)
-
         self.addButon("delect Weight", icon="icons/ue_delete_weight.png",
                       command=self.deleteWeightPoint)
         self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
@@ -46,8 +44,6 @@ class DlsShelf(shelfBase._shelf):
 
         self.addButon("randomColor", icon="icons/randomColor.png",
                       command=self.randomColor)
-        # self.addButon("play", "icons/comm_play_inco.png",
-        #               command=pymel.core.comm_play_blast_maya)
         self.addButon("play", "icons/create_hud.png",
                       command=pymel.core.create_hud_node_maya)
 
@@ -122,9 +118,6 @@ class DlsShelf(shelfBase._shelf):
         if cam:
             cam.bakeAnm()
 
-    def clearScane(self):
-        self.re()
-        Doodle_clear.clearAndUpload().clearScane()
 
     def deleteWeightPoint(self):
         self.re()
@@ -167,25 +160,6 @@ class DlsShelf(shelfBase._shelf):
             else:
                 return
         except RuntimeError:
-            return
-
-    def get_tool_cam(self):
-        # type: ()->Doodle_fun_tool.camera
-        Doodle_fun_tool.doodle_work_space = Doodle_fun_tool.maya_workspace()
-        Doodle_fun_tool.log = Doodle_fun_tool.export_log()
-
-        cam = Doodle_fun_tool.camera()
-        try:
-            selects = pymel.core.selected()
-            if not isinstance(selects[0].getShapes()[0], pymel.core.nodetypes.Camera):
-                return
-            cam.maya_cam = pymel.core.selected()[0]
-            return cam
-        except IndexError:
-            pymel.core.warning("未选中有效cam")
-            return
-        except AttributeError:
-            pymel.core.warning("选择物体类型不是cam")
             return
 
 

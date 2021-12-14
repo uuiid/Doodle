@@ -50,8 +50,11 @@ class DOODLELIB_API windows_warp_base : public base_widget {
   bool_ptr p_show;
   windows_warp_base(bool init_show = false)
       : p_show(new_object<bool>(init_show)){};
-  virtual bool load_show()                                = 0;
-  virtual void save_show() const                          = 0;
+  virtual ~windows_warp_base() {
+    *p_show = false;
+  }
+  virtual bool load_show()       = 0;
+  virtual void save_show() const = 0;
 };
 
 template <class widget>

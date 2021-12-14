@@ -73,7 +73,11 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
         g_reg()->set<root_ref>(k_h);
       }
     }
+  } else {
+    chick_ctx<root_ref>();
   }
+
+  k_def_prj = g_reg()->ctx<root_ref>().root_handle();
 
   DOODLE_LOG_INFO(
       "获得默认项目 {}", bool(k_def_prj));

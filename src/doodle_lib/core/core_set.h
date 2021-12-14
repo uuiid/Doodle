@@ -112,6 +112,8 @@ class DOODLELIB_API core_set : public details::no_copy {
 
   std::map<string, bool> widget_show;
 
+  uuid default_project;
+
  private:
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
@@ -148,10 +150,10 @@ class DOODLELIB_API core_set : public details::no_copy {
   std::string p_sql_password;  ///< mysql 用户密码
 
   //这里是序列化的代码
-
   friend void to_json(nlohmann::json &j, const core_set &p);
   friend void from_json(const nlohmann::json &j, core_set &p);
 };
+
 void to_json(nlohmann::json &j, const core_set &p);
 void from_json(const nlohmann::json &j, core_set &p);
 class DOODLELIB_API core_set_init {
@@ -165,8 +167,8 @@ class DOODLELIB_API core_set_init {
   bool write_file();
   bool find_cache_dir();
   bool config_to_user();
+  bool init_default_project();
 };
-
 
 namespace win {
 /// @todo 添加一个字体目录获得函数
@@ -177,4 +179,3 @@ FSys::path DOODLELIB_API get_pwd();
 }  // namespace win
 
 }  // namespace doodle
-

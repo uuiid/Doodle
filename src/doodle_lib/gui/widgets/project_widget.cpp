@@ -18,6 +18,8 @@ project_widget::project_widget()
   p_class_name = "项目";
   comm_project_add k_{};
   g_reg()->set<widget_>(k_);
+  if (core_set_init{}.init_default_project())
+    p_c = g_reg()->ctx<root_ref>().root_handle();
 }
 void project_widget::frame_render() {
   dear::Table{"project", 3} && [this]() {
@@ -47,7 +49,7 @@ void project_widget::frame_render() {
     }
     if (k_chick) {
       auto k_reg = g_reg();
-      auto k_v1 = k_reg->view<database>(entt::exclude<project>);
+      auto k_v1  = k_reg->view<database>(entt::exclude<project>);
       k_reg->destroy(k_v1.begin(), k_v1.end());
 
       p_c.get<database_root>().reset();
@@ -56,10 +58,14 @@ void project_widget::frame_render() {
       k_comm.set_data(p_c);
       k_reg->set<widget_>(k_comm);
       k_reg->set<root_ref>(p_c);
-
+      core_set::getSet().default_project = p_c.get<database>().uuid();
+      core_set_init{}.write_file();
       select_change(p_c);
     }
   };
+}
+project_widget::~project_widget() {
+  core_set::getSet().default_project = p_c.get<database>().uuid();
 }
 
 }  // namespace doodle

@@ -12,7 +12,6 @@
 #include <grpcpp/grpcpp.h>
 #include <sqlpp11/mysql/mysql.h>
 
-
 #include <boost/process.hpp>
 #include <magic_enum.hpp>
 #include <nlohmann/json.hpp>
@@ -23,8 +22,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #endif  // _WIN32
-
-
 
 namespace doodle {
 
@@ -336,15 +333,27 @@ bool core_set_init::config_to_user() {
   }
   return true;
 }
+bool core_set_init::init_default_project() {
+  if (p_set.default_project.is_nil())
+    return false;
+  for (auto &&[k_e, k_prj, k_d] : g_reg()->view<project, database>().each()) {
+    if (k_d.uuid() == p_set.default_project) {
+      g_reg()->set<root_ref>(make_handle(k_e));
+      return true;
+    }
+  }
+  return false;
+}
 
 void to_json(nlohmann::json &j, const core_set &p) {
-  j["user_"]       = p.p_user_;
-  j["department_"] = p.p_department_;
-  j["ue4_setting"] = p.p_ue4_setting;
-  j["mayaPath"]    = p.p_mayaPath;
-  j["max_thread"]  = p.p_max_thread;
-  j["widget_show"] = p.widget_show;
-  j["timeout"]     = p.timeout;
+  j["user_"]           = p.p_user_;
+  j["department_"]     = p.p_department_;
+  j["ue4_setting"]     = p.p_ue4_setting;
+  j["mayaPath"]        = p.p_mayaPath;
+  j["max_thread"]      = p.p_max_thread;
+  j["widget_show"]     = p.widget_show;
+  j["timeout"]         = p.timeout;
+  j["default_project"] = p.default_project;
 }
 void from_json(const nlohmann::json &j, core_set &p) {
   j.at("user_").get_to(p.p_user_);
@@ -354,5 +363,7 @@ void from_json(const nlohmann::json &j, core_set &p) {
   j.at("max_thread").get_to(p.p_max_thread);
   j.at("widget_show").get_to(p.widget_show);
   j.at("timeout").get_to(p.timeout);
+  if (j.contains("default_project"))
+    j.at("default_project").get_to(p.default_project);
 }
 }  // namespace doodle

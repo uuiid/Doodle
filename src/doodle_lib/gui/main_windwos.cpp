@@ -150,9 +150,7 @@ main_windows::~main_windows() {
   for (auto &i : p_list_windwos) {
     i->save_show();
   }
+  p_list_windwos.clear();
   core_set_init{}.write_file();
-  for (auto &i : p_list_windwos) {
-    *(i->p_show) = false;
-  }
 }
 }  // namespace doodle
