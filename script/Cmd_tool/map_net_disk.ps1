@@ -5,15 +5,14 @@ $Net_MAPS = @(
     @("V:", "\\192.168.10.250\public\DuBuXiaoYao_3", "独步逍遥v3_250"),
     @("U:", "\\192.168.10.218\WanYuFengShen", "万域封神_218"),
     @("T:", "\\192.168.10.218\KuangShenMoZun", "狂神魔尊_218"),
-    @("S:", "\\192.168.10.240\public\CangFeng", "240_藏锋"),
-    @("R:", "\\192.168.10.240\public\WanGuShenHua", "240_万古神话"),
+    @("S:", "\\192.168.10.240\public\CangFeng", "藏锋_240"),
+    @("R:", "\\192.168.10.240\public\WanGuShenHua", "万古神话_240"),
     @("Q:", "\\192.168.10.250\public\renjianzuideyi", "人间最得意_250"),
-    @("O:", "\\192.168.10.240\public\11-剪辑", "240_剪辑"),
+    @("O:", "\\192.168.10.240\public\11-剪辑", "剪辑_240"),
     @("N:", "\\192.168.10.250\public\HouQi", "后期_250"),
     @("M:", "\\192.168.10.218\jianji", "剪辑_218"),
     @("L:", "\\192.168.10.218\houqi", "后期_218"),
     @("K:", "\\192.168.10.250\public\美易高", "美易高")
-    
 )
 
 
@@ -52,11 +51,4 @@ $My_Str += "`n`n即将重启文件管理器"
 Write-Host $My_Str
 
 Start-Process explorer
-# ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_net_disk.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\run2.exe -noConsole
-# try {
-#     Get-Childitem -Path \\192.168.10.218\zhipian -ErrorAction Stop
-# }
-# catch [System.UnauthorizedAccessException]{
-#     Write-Host "not file"
-# }
-# Get-Childitem -Path \\192.168.10.218\houqi 
+# ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_net_disk.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\run2.exe

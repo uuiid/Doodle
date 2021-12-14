@@ -54,10 +54,3 @@ foreach ($item in $map_item) {
 
 
 # ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_sysDir.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\run4.exe -requireAdmin
-# try {
-#     Get-Childitem -Path \\192.168.10.218\zhipian -ErrorAction Stop
-# }
-# catch [System.UnauthorizedAccessException]{
-#     Write-Host "not file"
-# }
-# Get-Childitem -Path \\192.168.10.218\houqi 
