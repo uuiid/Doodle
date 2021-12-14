@@ -43,6 +43,8 @@ set(doodle_maya_plug_cpp
         maya_comm/reference_comm.h
         maya_comm/play_blash_comm.h
         maya_comm/play_blash_comm.cpp
+        data/sim_cloth_tools.cpp
+        data/sim_cloth_tools.h
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
 foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)
@@ -53,12 +55,6 @@ foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)
             ${doodle_maya_plug_cpp}
             ${PROJECT_SOURCE_DIR}/stl.natvis
             )
-
-
-    #set_target_properties(doodle_plug PROPERTIES
-    #        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
-    #        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
-    #        )
     set_target_properties(doodle_plug_${MAYA_VERSION} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
             LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
