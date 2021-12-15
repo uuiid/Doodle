@@ -45,6 +45,8 @@ set(doodle_maya_plug_cpp
         maya_comm/play_blash_comm.cpp
         data/sim_cloth_tools.cpp
         data/sim_cloth_tools.h
+        maya_comm/file_comm.cpp
+        maya_comm/file_comm.h
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
 foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)

@@ -77,4 +77,10 @@ bool maya_file_io::replace_channel_date(const string& in_string) {
   k_p.endSection();
   return true;
 }
+bool maya_file_io::save_file(const FSys::path& in_file_path) {
+  MStatus k_s{};
+  k_s = MFileIO::saveAs(d_str{in_file_path.generic_string()}, nullptr, true);
+  DOODLE_CHICK(k_s);
+  return false;
+}
 }  // namespace doodle::maya_plug

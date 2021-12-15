@@ -12,6 +12,7 @@
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/play_blash_comm.h>
 #include <maya_plug/maya_comm/reference_comm.h>
+#include <maya_plug/maya_comm/file_comm.h>
 #include <maya_plug/data/create_hud_node.h>
 
 #include <maya_plug/gui/maya_plug_app.h>
@@ -166,6 +167,9 @@ MStatus initializePlugin(MObject obj) {
   /// 导出相机命令注册
   status = ::doodle::maya_plug::export_camera_command::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+  /// 保存文件命令
+  status = ::doodle::maya_plug::comm_file_save::registerCommand(k_plugin);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 等所有命令完成后加载工具架
   switch (k_st) {
@@ -201,6 +205,10 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
     default:
       break;
   }
+  /// 保存文件命令取消注册
+  status = ::doodle::maya_plug::comm_file_save::deregisterCommand(k_plugin);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+
   /// 导出相机命令取消注册
   status = ::doodle::maya_plug::export_camera_command::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
