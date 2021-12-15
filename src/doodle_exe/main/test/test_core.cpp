@@ -18,7 +18,7 @@ class test_pinyin {
 
 class test_regex {
  public:
-  std::string regex_{R"(\{(\w+)(:[^\{\}]?[<>\^]?[\+-]?#?0?(?:\d+|(?:\{\w+\}))?\.?(?:\d+|(?:\{\w+\}))?L?[\w]?)\})"};
+  std::string regex_{R"(\{(\w+)(:[^{}]?[<>^]?[+-]?#?0?(?:\d+|(\{\w+\}))?\.?(?:\d+|(\{\w+\}))?L?[\w]?)\})"};
   std::string str1_{"dsad_{eps:d<+#0{asd}.{asd}Ld}_{shot:d<+#{asd}.{asd}Ld}_{end:.{asd}Ld}_{start:d<{asd}.{asd}d}"};
   //  std::string str2{""};
   //  std::string str3{""};
