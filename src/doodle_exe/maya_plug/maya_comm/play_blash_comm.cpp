@@ -19,7 +19,7 @@ namespace doodle::maya_plug {
 #define doodle_width "-width"
 #define doodle_height "-height"
 
-MSyntax comm_play_blast_maya_syntax() {
+MSyntax details::comm_play_blast_maya_syntax() {
   MSyntax syntax{};
   syntax.addFlag(doodle_filepath, doodle_filepath_long, MSyntax::kString);
   syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
