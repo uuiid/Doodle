@@ -59,7 +59,6 @@ string play_blast::p_post_render_notification_name{"doodle_lib_maya_notification
 
 play_blast::play_blast()
     : p_save_path(core_set::getSet().get_cache_root("maya_play_blast")),
-      p_camera_path(),
       p_eps(),
       p_shot(),
       p_current_time(),
@@ -106,47 +105,15 @@ FSys::path play_blast::get_out_path() const {
   return p_save_path;
 }
 
-void play_blast::set_camera(const MString& in_dag_path) {
-  p_camera_path = in_dag_path;
-}
-
 bool play_blast::conjecture_camera() {
-  auto k_cam = g_reg()->ctx_or_set<maya_camera>();
+  auto& k_cam = g_reg()->ctx_or_set<maya_camera>();
   k_cam.conjecture();
-  set_camera(k_cam.p_path.fullPathName());
   return true;
 }
 
 MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   p_uuid = core_set::getSet().get_uuid_str();
   MStatus k_s{};
-  MSelectionList k_select{};
-
-  k_select.add(p_camera_path);
-  if (k_select.isEmpty()) {
-    DOODLE_LOG_ERROR("没有相机可供拍摄")
-    throw doodle_error{"没有相机可供拍摄"};
-  }
-  if (p_save_path.empty()) {
-    DOODLE_LOG_ERROR("输出路径为空");
-    throw doodle_error{"输出路径为空"};
-  }
-
-  MDagPath k_camera_path{};
-  k_s = k_select.getDagPath(0, k_camera_path);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-  struct play_blast_guard {
-    play_blast_guard() {
-      create_hud_node k_node{};
-      // k_node.hide(true);
-    }
-    ~play_blast_guard() {
-      create_hud_node k_node{};
-      // k_node.hide(true);
-    }
-  };
-  play_blast_guard k_play_blast_guard{};
 
   try {
     chick_ctx<maya_camera>();
@@ -177,14 +144,14 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   }
 
   if (MGlobal::mayaState(&k_s) == MGlobal::kInteractive) {
-    auto k_mel = fmt::format(R"(playblast 
--compression "H.264" 
--filename "{}" 
--format "qt" 
--height 1080 
--percent 100 
--quality 100 
--viewer false 
+    auto k_mel = fmt::format(R"(playblast
+-compression "H.264"
+-filename "{}"
+-format "qt"
+-height 1080
+-percent 100
+-quality 100
+-viewer false
 -forceOverwrite
 -width 1920
 -startTime {}
@@ -198,15 +165,15 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
     return MStatus::kSuccess;
   } else {
-    auto k_mel = fmt::format(R"(playblast 
--compression "png" 
--filename "{}" 
--format "image" 
--height 1080 
--offScreen 
--percent 100 
--quality 100 
--viewer false 
+    auto k_mel = fmt::format(R"(playblast
+-compression "png"
+-filename "{}"
+-format "image"
+-height 1080
+-offScreen
+-percent 100
+-quality 100
+-viewer false
 -width 1920
 -startTime {}
 -endTime {}

@@ -35,7 +35,6 @@ class play_blast {
   play_blast();
 
   MStatus play_blast_(const MTime& in_start, const MTime& in_end);
-  void set_camera(const MString& in_dag_path);
 
   bool conjecture_camera();
   bool conjecture_ep_sc();

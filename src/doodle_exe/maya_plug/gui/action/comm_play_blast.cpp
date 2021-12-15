@@ -36,10 +36,6 @@ comm_play_blast::comm_play_blast()
 
 bool comm_play_blast::render() {
   if (imgui::Button(p_show_str["拍屏"].c_str())) {
-    if (use_conjecture_cam)
-      p_play_balst->conjecture_camera();
-    else
-      p_play_balst->set_camera(p_camera_path);
 
     if (p_play_balst->conjecture_ep_sc()) {
       p_play_balst->set_save_dir(p_save_path);
