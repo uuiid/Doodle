@@ -14,7 +14,7 @@
 #define doodle_endTime_long "-endTime"
 namespace doodle::maya_plug {
 
-MSyntax export_camera_syntax() {
+MSyntax details::export_camera_syntax() {
   MSyntax syntax{};
   syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
   syntax.addFlag(doodle_endTime, doodle_endTime_long, MSyntax::kTime);

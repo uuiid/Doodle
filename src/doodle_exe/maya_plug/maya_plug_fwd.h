@@ -14,12 +14,13 @@
 namespace doodle {
 class maya_error : public doodle_error {
  public:
-  explicit maya_error(const std::string& err)
-      : doodle_error(err){};
-  explicit maya_error(const MString& in_m_string)
-      : doodle_error(in_m_string.asUTF8()){};
+  MStatus maya_status;
+  explicit maya_error(const MStatus& in_status, const std::string& err)
+      : doodle_error(err), maya_status(in_status){};
+  explicit maya_error(const MStatus& in_status, const MString& in_m_string)
+      : doodle_error(in_m_string.asUTF8()), maya_status(in_status){};
   explicit maya_error(const MStatus& in_status)
-      : maya_error(in_status.errorString()){};
+      : maya_error(in_status,in_status.errorString()){};
 };
 
 inline MSyntax null_syntax_t() { return {}; };

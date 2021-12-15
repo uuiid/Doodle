@@ -333,8 +333,16 @@ void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) cons
   MSelectionList k_select{};
   MStatus k_s{};
   auto &k_cfg = get_prj().get<project::cloth_config>();
-  k_s         = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
-  DOODLE_CHICK(k_s);
+  try {
+    k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
+    DOODLE_CHICK(k_s);
+  } catch (const maya_error &err) {
+    if (err.maya_status == MStatus::MStatusCode::kInvalidParameter) {
+      DOODLE_LOG_WARN("没有物体被选中")
+      return;
+    } else
+      throw;
+  }
 
   if (k_select.isEmpty()) {
     DOODLE_LOG_WARN("没有选中的物体, 不进行输出")

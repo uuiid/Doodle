@@ -73,10 +73,8 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
         g_reg()->set<root_ref>(k_h);
       }
     }
-  } else {
-    chick_ctx<root_ref>();
   }
-
+  chick_ctx<root_ref>();
   k_def_prj = g_reg()->ctx<root_ref>().root_handle();
 
   DOODLE_LOG_INFO(
@@ -93,7 +91,7 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
     DOODLE_CHICK(k_s);
     auto k_h = make_handle();
     try {
-      k_h.emplace<reference_file>().set_path(k_obj);
+      k_h.emplace<reference_file>(k_def_prj, k_obj);
       DOODLE_CHICK(k_s);
       l_list.push_back(k_h);
     } catch (maya_error& err) {
@@ -149,19 +147,6 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   MArgParser k_prase{syntax(), in_arg, &k_s};
   auto k_start = MAnimControl::minTime();
   auto k_end   = MAnimControl::maxTime();
-  /// \brief 在这里我们保存引用
-  try {
-    auto k_save_file = maya_file_io::work_path("ma");
-    if (!FSys::exists(k_save_file)) {
-      FSys::create_directories(k_save_file);
-    }
-    k_save_file /= maya_file_io::get_current_path().filename();
-    k_s = MFileIO::saveAs(d_str{k_save_file.generic_string()}, nullptr, true);
-    DOODLE_LOG_INFO("保存文件到 {}", k_save_file);
-    DOODLE_CHICK(k_s);
-  } catch (maya_error& error) {
-    DOODLE_LOG_WARN("无法保存文件: {}", error);
-  }
 
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
     DOODLE_CHICK(k_s);
@@ -182,6 +167,20 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   }
   for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
     k_qs.set_cache_folder();
+  }
+
+  /// \brief 在这里我们保存引用
+  try {
+    auto k_save_file = maya_file_io::work_path("ma");
+    if (!FSys::exists(k_save_file)) {
+      FSys::create_directories(k_save_file);
+    }
+    k_save_file /= maya_file_io::get_current_path().filename();
+    k_s = MFileIO::saveAs(d_str{k_save_file.generic_string()}, nullptr, true);
+    DOODLE_LOG_INFO("保存文件到 {}", k_save_file);
+    DOODLE_CHICK(k_s);
+  } catch (maya_error& error) {
+    DOODLE_LOG_WARN("无法保存文件: {}", error);
   }
 
   for (MTime k_t = k_start; k_t <= k_end; ++k_t) {

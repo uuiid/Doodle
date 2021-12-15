@@ -7,14 +7,14 @@
 namespace doodle::maya_plug {
 namespace {
 constexpr char export_camera_command_name[] = "doodle_export_camera";
-
-MSyntax export_camera_syntax();
 }  // namespace
-
+namespace details{
+MSyntax export_camera_syntax();
+}
 class export_camera_command : public TemplateAction<
                                   export_camera_command,
                                   export_camera_command_name,
-                                  export_camera_syntax> {
+                                  details::export_camera_syntax> {
  public:
   MStatus doIt(const MArgList&) override;
 };

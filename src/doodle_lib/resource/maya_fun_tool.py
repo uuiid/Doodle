@@ -36,7 +36,7 @@ class maya_file():
         self.name_not_ex = self.file_name.splitext()[0]
         self.abs_path = self.maya_path_class.dirname()  # type: pymel.util.path
 
-    def save_as_cloth(self):
+    def save(self):
         pass
 
     def __str__(self):
@@ -267,6 +267,15 @@ class open_file(object):
 
         self.load_plug(["fbxmaya"])
         self.open()
+        cmds.comm_play_blast_maya(startTime=doodle_work_space.raneg.start,
+                                  endTime=doodle_work_space.raneg.end,
+                                  filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
+                                  .format(
+                                      path=doodle_work_space.get_move_folder(),
+                                      base_name=doodle_work_space.maya_file.name_not_ex,
+                                      start=doodle_work_space.raneg.start,
+                                      end=doodle_work_space.raneg.end
+                                  ))
         cmds.doodle_create_ref_file(uuid=self.cfg.uuid)
         cmds.doodle_ref_file_export(
             startTime=1001,

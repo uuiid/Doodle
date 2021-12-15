@@ -163,6 +163,9 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS_AND_RETURN_IT(status);
   status = ::doodle::maya_plug::ref_file_export_command::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+  /// 导出相机命令注册
+  status = ::doodle::maya_plug::export_camera_command::registerCommand(k_plugin);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 等所有命令完成后加载工具架
   switch (k_st) {
@@ -198,6 +201,10 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
     default:
       break;
   }
+  /// 导出相机命令取消注册
+  status = ::doodle::maya_plug::export_camera_command::deregisterCommand(k_plugin);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+
   /// 去除解算命令
   status = ::doodle::maya_plug::create_ref_file_command::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
