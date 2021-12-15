@@ -38,6 +38,52 @@ TEST_CASE_METHOD(test_regex, "test_regex_1", "[core][regex]") {
   }
 }
 
+struct point {
+  double x, y;
+};
+
+template <>
+struct fmt::formatter<point> {
+  // Presentation format: 'f' - fixed, 'e' - exponential.
+  char presentation = 'f';
+
+  // Parses format specifications of the form ['f' | 'e'].
+  constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+    // [ctx.begin(), ctx.end()) is a character range that contains a part of
+    // the format string starting from the format specifications to be parsed,
+    // e.g. in
+    //
+    //   fmt::format("{:f} - point of interest", point{1, 2});
+    //
+    // the range will contain "f} - point of interest". The formatter should
+    // parse specifiers until '}' or the end of the range. In this example
+    // the formatter should parse the 'f' specifier and return an iterator
+    // pointing to '}'.
+
+    // Parse the presentation format and store it in the formatter:
+    auto it = ctx.begin(), end = ctx.end();
+    if (it != end && (*it == 'f' || *it == 'e')) presentation = *it++;
+
+    // Check if reached the end of the range:
+    if (it != end && *it != '}')
+      throw format_error("invalid format");
+
+    // Return an iterator past the end of the parsed range:
+    return it;
+  }
+
+  // Formats the point p using the parsed format specification (presentation)
+  // stored in this formatter.
+  template <typename FormatContext>
+  auto format(const point& p, FormatContext& ctx) -> decltype(ctx.out()) {
+    // ctx.out() is an output iterator to write to.
+    return format_to(
+        ctx.out(),
+        presentation == 'f' ? "({:.1f}, {:.1f})" : "({:.1e}, {:.1e})",
+        p.x, p.y);
+  }
+};
+
 TEST_CASE_METHOD(test_pinyin, "core pin_yi", "[fun][pingyin]") {
   auto trs = doodle::convert::Get().toEn(data);
   REQUIRE(trs == "aada.?xiaodduodd53shao");
@@ -58,6 +104,9 @@ TEST_CASE("core fmt", "[fun][fmt]") {
 
   str = fmt::to_string(doodle::episodes{1});
   REQUIRE(str == R"(ep0001)");
+  point p = {1, 2};
+  str = fmt::format("{:f}", p);
+  INFO(str);
 }
 
 TEST_CASE("core path ", "[fun][path]") {
