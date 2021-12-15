@@ -267,8 +267,8 @@ class open_file(object):
 
         self.load_plug(["fbxmaya"])
         self.open()
-        cmds.file(doodle_work_space.get_fbx_folder() /
-                  doodle_work_space.maya_file.file_name, force=True)
+        cmds.doodle_comm_file_save()
+        cmds.doodle_create_ref_file(uuid=self.cfg.uuid)
         cmds.comm_play_blast_maya(startTime=doodle_work_space.raneg.start,
                                   endTime=doodle_work_space.raneg.end,
                                   filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
@@ -278,7 +278,6 @@ class open_file(object):
                                       start=doodle_work_space.raneg.start,
                                       end=doodle_work_space.raneg.end
                                   ))
-        cmds.doodle_create_ref_file(uuid=self.cfg.uuid)
         cmds.doodle_ref_file_export(
             startTime=1001,
             endTime=doodle_work_space.raneg.end,
