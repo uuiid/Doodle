@@ -139,7 +139,6 @@ void maya_camera::conjecture() {
       regex_priority_pair{std::regex{R"(^[A-Z]+_)"}, 2},
       regex_priority_pair{std::regex{R"(_\d+_\d+)", std::regex::icase}, 2}};
 
-
   MStatus k_s;
   MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
   DOODLE_CHICK(k_s);
@@ -167,7 +166,6 @@ void maya_camera::conjecture() {
   });
   if (k_list.empty())
     throw doodle_error{"没有找到任何相机"};
-
 
   auto k_cam_ptr = g_reg()->try_ctx<maya_camera>();
   if (k_cam_ptr) {
@@ -218,6 +216,16 @@ std::double_t maya_camera::focalLength() const {
   auto k_r = k_cam_fn.focalLength(&k_s);
   DOODLE_CHICK(k_s);
   return k_r;
+}
+string maya_camera::get_transform_name() const {
+  MStatus k_s{};
+  auto k_obj = p_path.transform(&k_s);
+  DOODLE_CHICK(k_s);
+  MFnDagNode k_node{k_obj, &k_s};
+  DOODLE_CHICK(k_s);
+  auto k_str = k_node.name(&k_s);
+  DOODLE_CHICK(k_s);
+  return d_str{k_str};
 }
 
 bool maya_camera::camera::operator<(const maya_camera::camera& in_rhs) const {

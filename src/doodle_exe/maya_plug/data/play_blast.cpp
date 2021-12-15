@@ -129,21 +129,20 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-  auto k_view = M3dView::active3dView(&k_s);
-  if (k_s) {
-    k_s = k_view.setCamera(k_camera_path);
-    CHECK_MSTATUS(k_s);
-    if (!k_s) {
-      DOODLE_LOG_WARN("not set cam view");
-    }
-    k_view.setDisplayStyle(M3dView::DisplayStyle::kGouraudShaded);
-    k_view.setObjectDisplay(M3dView::DisplayObjects::kDisplayLocators | M3dView::DisplayObjects::kDisplayMeshes);
-    k_view.refresh(false, true);
-  } else {
-    DOODLE_LOG_WARN("not find view");
-  }
-
   if (MGlobal::mayaState(&k_s) == MGlobal::kInteractive) {
+    auto k_view = M3dView::active3dView(&k_s);
+    if (k_s) {
+      k_s = k_view.setCamera(k_cam.p_path);
+      CHECK_MSTATUS(k_s);
+      if (!k_s) {
+        DOODLE_LOG_WARN("not set cam view");
+      }
+      k_view.setDisplayStyle(M3dView::DisplayStyle::kGouraudShaded);
+      k_view.setObjectDisplay(M3dView::DisplayObjects::kDisplayLocators | M3dView::DisplayObjects::kDisplayMeshes);
+      k_view.refresh(false, true);
+    } else {
+      DOODLE_LOG_WARN("not find view");
+    }
     auto k_mel = fmt::format(R"(playblast
 -compression "H.264"
 -filename "{}"
@@ -194,7 +193,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     {
       ///添加水印
       details::watermark k_w{};
-      k_w.set_text(MFnDagNode{k_camera_path.transform()}.name().asUTF8());
+      k_w.set_text(k_cam.get_transform_name());
       k_w.set_text_point(0.1, 0.1);
       k_w.set_text_color(25, 220, 2);
       k_image.add_watermark(k_w);
