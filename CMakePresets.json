@@ -98,6 +98,13 @@
       "targets": "doodle_test"
     },
     {
+      "name": "debug_maya_plug",
+      "description": "调试 maya 插件",
+      "displayName": "调试 doodle maya",
+      "inherits": "debug",
+      "targets": "Doodle_maya_plug"
+    },
+    {
       "name": "doxy",
       "description": "生成文档",
       "displayName": "文档",

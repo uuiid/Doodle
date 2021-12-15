@@ -175,6 +175,7 @@ def __load_config__(obj):
         k_con.path = obj["path"]
         k_con.export_path = obj["export_path"]
         k_con.use_all_ref = obj["use_all_ref"]
+        k_con.uuid = obj["uuid"]
         return k_con
 
 

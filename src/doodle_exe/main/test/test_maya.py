@@ -28,6 +28,17 @@ def doodle_test():
     k_f()
 
 
+def doodle_test_fbx():
+    print("run test")
+    k_f = maya_fun_tool.open_file()
+    k_f.config_ = """[{
+        "export_path":"",
+        "use_all_ref":false,
+        "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN2.ma",
+        "uuid":"9a59669d-37db-4a69-a1ad-3a584a1c5367"}]"""
+    k_f()
+
+
 if __name__ == '__main__':
-    doodle_test()
- 
+    # doodle_test()
+    doodle_test_fbx()
