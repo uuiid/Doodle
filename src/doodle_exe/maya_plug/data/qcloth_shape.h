@@ -8,22 +8,31 @@
 namespace doodle::maya_plug {
 class reference_file;
 namespace qcloth_shape_n {
-class low_shape;
-class high_shape;
+class maya_mesh;
 }  // namespace qcloth_shape_n
 
 namespace qcloth_shape_n {
-class low_shape {
+/**
+ * @brief 这个是个maya 节点 obj的小型包装类, 构造函数会提取节点的名称, 可以用来显示
+ */
+class maya_mesh {
  public:
+  maya_mesh();
+  explicit maya_mesh(const MObject& in_object);
   MObject obj;
+  string p_name;
 };
+template <class T>
+using shape_list           = std::vector<maya_mesh>;
 
-class high_shape {
- public:
-  MObject obj;
-};
-using high_shape_list = std::vector<high_shape>;
-
+/**
+ * @brief 一个用来创建布料解算高模的列表
+ */
+using high_shape_list      = shape_list<entt::tag<"high_shape_list"_hs>>;
+/**
+ * @brief 一个用来创建碰撞体的列表
+ */
+using collision_shape_list = shape_list<entt::tag<"collision_shape_list"_hs>>;
 }  // namespace qcloth_shape_n
 
 class qcloth_shape {
@@ -41,7 +50,18 @@ class qcloth_shape {
    */
   bool set_cache_folder() const;
   bool create_cache() const;
-
-  void create_sim_cloth(const entt::handle& in_low_spahe);
+  /**
+   * @brief 从传入的实体创建一个绑定节点
+   * @param in_handle 传入的一个实体,
+   * 必须具备 qcloth_shape_n::maya_mesh, qcloth_shape_n::high_shape_list组件
+   * 可选的具备 qcloth_shape_n::collision_shape_list组件
+   *
+   *
+   * @note
+   * * 创建一个空的mesh 节点作为绑定动画的输出;（将动画outMesh链接到inMesh）
+   * * 从新的的网格体创建布料
+   * * 创建一个高模的复制体, 将低模和高模进行包裹变形
+   */
+  void create_sim_cloth(const entt::handle& in_handle);
 };
 }  // namespace doodle::maya_plug

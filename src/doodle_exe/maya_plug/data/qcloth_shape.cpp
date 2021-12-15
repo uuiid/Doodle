@@ -5,18 +5,31 @@
 #include "qcloth_shape.h"
 
 #include <doodle_lib/metadata/project.h>
+
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
-#include <maya/MFnDagNode.h>
-#include <maya/MFnDependencyNode.h>
 #include <maya/MFnMesh.h>
 #include <maya/MPlug.h>
-#include "reference_file.h"
-#include <maya_plug/data/maya_file_io.h>
-#include <maya_plug/maya_plug_fwd.h>
 #include <maya/MNamespace.h>
 
+#include <maya_plug/data/reference_file.h>
+#include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/maya_plug_fwd.h>
+
 namespace doodle::maya_plug {
+
+namespace qcloth_shape_n {
+maya_mesh::maya_mesh() = default;
+maya_mesh::maya_mesh(const MObject& in_object) {
+  obj = in_object;
+  MStatus k_s;
+  MFnDependencyNode k_node{in_object, &k_s};
+  DOODLE_CHICK(k_s);
+  p_name = d_str{k_node.name(&k_s)};
+  DOODLE_CHICK(k_s);
+}
+}  // namespace qcloth_shape_n
+
 qcloth_shape::qcloth_shape() = default;
 
 qcloth_shape::qcloth_shape(const entt::handle& in_ref_file, const MObject& in_object)
@@ -84,6 +97,7 @@ bool qcloth_shape::set_cache_folder() const {
   }
   return true;
 }
+
 bool qcloth_shape::create_cache() const {
   if (obj.isNull())
     throw doodle_error{"空组件"};
@@ -106,7 +120,8 @@ bool qcloth_shape::create_cache() const {
   return true;
 }
 
-void qcloth_shape::create_sim_cloth(const entt::handle& in_low_spahe) {
+void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
+  chick_component<qcloth_shape_n::maya_mesh, qcloth_shape_n::high_shape_list>(in_handle);
 
 }
 
