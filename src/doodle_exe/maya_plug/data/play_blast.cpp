@@ -5,25 +5,14 @@
 #include "play_blast.h"
 
 #include "doodle_lib/core/core_set.h"
-#include "doodle_lib/exception/exception.h"
 #include "doodle_lib/file_warp/image_sequence.h"
-#include "doodle_lib/lib_warp/imgui_warp.h"
-#include "doodle_lib/thread_pool/long_term.h"
 #include <maya_plug/data/maya_camera.h>
 
-#include <fmt/chrono.h>
 #include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
-#include <maya/MDagPath.h>
 #include <maya/MDrawContext.h>
 #include <maya/MFileIO.h>
-#include <maya/MFnAttribute.h>
-#include <maya/MFnCamera.h>
-#include <maya/MFnDagNode.h>
 #include <maya/MGlobal.h>
-#include <maya/MItDag.h>
-#include <maya/MViewport2Renderer.h>
-#include "create_hud_node.h"
 namespace doodle::maya_plug {
 
 string play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
