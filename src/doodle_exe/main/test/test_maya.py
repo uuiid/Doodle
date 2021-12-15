@@ -24,7 +24,7 @@ def doodle_test():
         "only_sim":false,
         "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN2.ma",
         "qcloth_assets_path":"",
-        "uuid":"9a59669d-37db-4a69-a1ad-3a584a1c5367"}]"""
+        "uuid":"59ff34b9-1a97-464b-a3e8-304c8733000e"}]"""
     k_f()
 
 
@@ -35,7 +35,7 @@ def doodle_test_fbx():
         "export_path":"",
         "use_all_ref":false,
         "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN2.ma",
-        "uuid":"9a59669d-37db-4a69-a1ad-3a584a1c5367"}]"""
+        "uuid":"59ff34b9-1a97-464b-a3e8-304c8733000e"}]"""
     k_f()
 
 

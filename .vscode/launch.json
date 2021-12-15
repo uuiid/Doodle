@@ -109,11 +109,11 @@
             "environment": [
                 {
                     "name": "MAYA_PLUG_IN_PATH",
-                    "value": "${workspaceFolder}/script/maya/plug-ins;${workspaceFolder}/build/Ninja_plug/plug/maya/plug-ins"
+                    "value": "${workspaceFolder}/script/maya/plug-ins;${workspaceFolder}/build/Ninja_debug/plug/maya/plug-ins"
                 },
                 {
                     "name": "PATH",
-                    "value": "${env:PATH};${workspaceFolder}/build/Ninja_plug/bin"
+                    "value": "${env:PATH};${workspaceFolder}/build/Ninja_debug/bin"
                 },
                 {
                     "name": "PYTHONPATH",
