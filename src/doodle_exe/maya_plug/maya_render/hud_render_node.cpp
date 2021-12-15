@@ -7,12 +7,15 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <fmt/chrono.h>
+
 #include <maya/MAnimControl.h>
 #include <maya/MFnCamera.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MTextureManager.h>
-#include "data/play_blast.h"
+
+#include <maya_plug/data/play_blast.h>
+#include <maya_plug/data/maya_camera.h>
 #include <maya_plug/maya_plug_fwd.h>
 
 namespace doodle::maya_plug {
@@ -110,13 +113,19 @@ void doodle_info_node_draw_override::addUIDrawables(
   // drawManager.getIconNames(k_names);
   // std::cout << k_names << std::endl;
   MStatus k_s{};
-
-  auto k_view = M3dView::active3dView(&k_s);
-  DOODLE_CHICK(k_s);
-
   MDagPath k_cam{};
-  k_s = k_view.getCamera(k_cam);
-  DOODLE_CHICK(k_s);
+  if (MGlobal::mayaState(&k_s) == MGlobal::kInteractive) {
+    auto k_view = M3dView::active3dView(&k_s);
+    DOODLE_CHICK(k_s);
+
+    k_s = k_view.getCamera(k_cam);
+    DOODLE_CHICK(k_s);
+  } else {
+    if (g_reg()->try_ctx<maya_camera>())
+      k_cam = g_reg()->ctx<maya_camera>().p_path;
+    else
+      return;
+  }
 
   static std::int32_t s_font_size{20};
   std::int32_t s_font_size_{13};
@@ -164,7 +173,7 @@ void doodle_info_node_draw_override::addUIDrawables(
   /// 绘制摄像机avo
   {
     MFnCamera k_fn_cam{k_cam};
-    auto k_f   = k_fn_cam.focalLength(&k_s);
+    auto k_f = k_fn_cam.focalLength(&k_s);
     DOODLE_CHICK(k_s);
 
     auto _k_s_ = fmt::format("FOV: {:.3f}", k_f);
