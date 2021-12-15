@@ -17,9 +17,10 @@ project_widget::project_widget()
     : p_c() {
   p_class_name = "项目";
   comm_project_add k_{};
-  g_reg()->set<widget_>(k_);
-  if (core_set_init{}.init_default_project())
-    p_c = g_reg()->ctx<root_ref>().root_handle();
+  auto k_reg = g_reg();
+  k_reg->set<widget_>(k_);
+  if (k_reg->try_ctx<root_ref>())
+    p_c = k_reg->ctx<root_ref>().root_handle();
 }
 void project_widget::frame_render() {
   dear::Table{"project", 3} && [this]() {

@@ -118,6 +118,7 @@ void doodle_lib::init_gui() {
 
     p_metadata_factory = new_object<metadata_serialize>();
     p_project_vector   = p_metadata_factory->get_all_prj();
+    core_set_init{}.init_default_project();
   } catch (doodle_error& err) {
     p_rpc_file_system_client.reset();
     p_rpc_metadata_clien.reset();
