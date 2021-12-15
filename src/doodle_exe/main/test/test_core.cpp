@@ -16,6 +16,28 @@ class test_pinyin {
   std::string data3{"李叶华"};
 };
 
+class test_regex {
+ public:
+  std::string regex_{R"(\{(\w+)(:[^\{\}]?[<>\^]?[\+-]?#?0?(?:\d+|(?:\{\w+\}))?\.?(?:\d+|(?:\{\w+\}))?L?[\w]?)\})"};
+  std::string str1_{"dsad_{eps:d<+#0{asd}.{asd}Ld}_{shot:d<+#{asd}.{asd}Ld}_{end:.{asd}Ld}_{start:d<{asd}.{asd}d}"};
+  //  std::string str2{""};
+  //  std::string str3{""};
+};
+
+TEST_CASE_METHOD(test_regex, "test_regex_1", "[core][regex]") {
+  std::regex k_reg{regex_};
+  for (std::sregex_iterator i = std::sregex_iterator(str1_.begin(), str1_.end(), k_reg);
+       i != std::sregex_iterator();
+       ++i) {
+    std::smatch m = *i;
+    std::cout << '\n';
+    std::cout << " Match size: " << m.size() << '\n';
+    std::cout << "Match value: " << m.str() << " at Position " << m.position() << '\n';
+    std::cout << "    Capture: " << m[1].str() << " at Position " << m.position(1) << '\n';
+    std::cout << "     Format: " << m.format("$` <<< $& >>>  $'") << '\n';
+  }
+}
+
 TEST_CASE_METHOD(test_pinyin, "core pin_yi", "[fun][pingyin]") {
   auto trs = doodle::convert::Get().toEn(data);
   REQUIRE(trs == "aada.?xiaodduodd53shao");
