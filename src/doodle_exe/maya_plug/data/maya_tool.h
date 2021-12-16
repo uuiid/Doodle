@@ -1,0 +1,11 @@
+//
+// Created by TD on 2021/12/16.
+//
+
+#ifndef DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_DATA_MAYA_TOOL_H_
+#define DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_DATA_MAYA_TOOL_H_
+
+class maya_tool {
+};
+
+#endif  // DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_DATA_MAYA_TOOL_H_
