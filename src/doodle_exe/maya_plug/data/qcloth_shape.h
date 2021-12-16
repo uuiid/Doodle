@@ -8,37 +8,53 @@
 namespace doodle::maya_plug {
 class reference_file;
 namespace qcloth_shape_n {
-class maya_mesh;
+class maya_obj;
 }  // namespace qcloth_shape_n
 
 namespace qcloth_shape_n {
 /**
  * @brief 这个是个maya 节点 obj的小型包装类, 构造函数会提取节点的名称, 可以用来显示
  */
-class maya_mesh {
+class maya_obj {
  public:
-  maya_mesh();
-  explicit maya_mesh(const MObject& in_object);
+  maya_obj();
+  explicit maya_obj(const MObject& in_object);
   MObject obj;
   string p_name;
 };
 template <class T>
-using shape_list           = std::vector<maya_mesh>;
+using maya_obj_list        = std::vector<maya_obj>;
 
 /**
  * @brief 一个用来创建布料解算高模的列表
  */
-using high_shape_list      = shape_list<entt::tag<"high_shape_list"_hs>>;
+using high_shape_list      = maya_obj_list<entt::tag<"high_shape_list"_hs>>;
 /**
  * @brief 一个用来创建碰撞体的列表
  */
-using collision_shape_list = shape_list<entt::tag<"collision_shape_list"_hs>>;
+using collision_shape_list = maya_obj_list<entt::tag<"collision_shape_list"_hs>>;
+
 }  // namespace qcloth_shape_n
 
 class qcloth_shape {
+ public:
+  class cloth_group {
+   public:
+    MObject cfx_grp;
+    MObject anim_grp;
+    MObject constraint_grp;
+    MObject collider_grp;
+    MObject deform_grp;
+    MObject export_grp;
+  };
+
+  static cloth_group get_cloth_group();
+
  private:
   entt::handle p_ref_file;
   MObject obj;
+
+  static void add_child(const MObject& in_praent, MObject& in_child);
 
  public:
   qcloth_shape();
@@ -58,10 +74,10 @@ class qcloth_shape {
    *
    *
    * @note
-   * * 创建一个空的mesh 节点作为绑定动画的输出;（将动画outMesh链接到inMesh）
-   * * 从新的的网格体创建布料
-   * * 创建一个高模的复制体, 将低模和高模进行包裹变形
-   * * 将复制出来的高模物体链接到绑定文件中（这个以后做  中间需要插入一个切换表达式节点用来切换动画和解算）
+   * * 创建一个空的mesh 节点作为绑定动画的输出;（将动画 outMesh 链接到 inMesh ） \n
+   * * 从新的的网格体创建布料 \n
+   * * 创建一个高模的复制体, 将低模和高模进行包裹变形 \n
+   * * 将复制出来的高模物体链接到绑定文件中（这个以后做  中间需要插入一个切换表达式节点用来切换动画和解算） \n
    *
    *  需要读取配置文件中的各个属性, 进行标准的重命名
    */

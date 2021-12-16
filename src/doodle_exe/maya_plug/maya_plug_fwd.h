@@ -11,6 +11,8 @@
 #include <maya/MString.h>
 #include <maya/MSyntax.h>
 #include <maya/MPxCommand.h>
+
+#include <maya_plug/data/maya_tool.h>
 namespace doodle {
 class maya_error : public doodle_error {
  public:
@@ -20,7 +22,7 @@ class maya_error : public doodle_error {
   explicit maya_error(const MStatus& in_status, const MString& in_m_string)
       : doodle_error(in_m_string.asUTF8()), maya_status(in_status){};
   explicit maya_error(const MStatus& in_status)
-      : maya_error(in_status,in_status.errorString()){};
+      : maya_error(in_status, in_status.errorString()){};
 };
 
 inline MSyntax null_syntax_t() { return {}; };

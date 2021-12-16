@@ -69,7 +69,7 @@ bool reference_attr_setting::get_file_info() {
     DOODLE_CHICK(k_s);
     auto k_h = make_handle();
     try {
-      k_h.emplace<reference_file>(g_reg()->ctx<root_ref>().root_handle(), k_obj);
+      k_h.emplace<reference_file>(g_reg()->ctx<root_ref>(), k_obj);
       DOODLE_CHICK(k_s);
       p_handle.push_back(k_h);
     } catch (maya_error& err) {

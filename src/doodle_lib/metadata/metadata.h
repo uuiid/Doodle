@@ -119,8 +119,6 @@ class DOODLELIB_API database {
   bool operator!=(const database &in_rhs) const;
   bool operator!=(const boost::uuids::uuid &in_rhs) const;
 
-
-
   friend void to_json(nlohmann::json &j, const database &p) {
     j["id"]        = p.p_id;
     j["parent_id"] = p.p_parent_id;
@@ -192,5 +190,3 @@ class DOODLELIB_API handle_warp {
 
 // CEREAL_REGISTER_TYPE(doodle::metadata)
 // CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::metadata>, doodle::metadata)
-
-

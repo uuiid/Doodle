@@ -43,12 +43,9 @@ bool metadata_serialize::insert_into(entt::entity in) const {
     DOODLE_LOG_WARN("没有可供序列化的组件")
     return false;
   }
-
-  auto &k_tree = k_h.get<root_ref>();
-
-  auto k_c     = this->p_rpcClien.lock();
+  auto k_p_h = k_h.get<root_ref>();
+  auto k_c   = this->p_rpcClien.lock();
   if (!k_data.is_install()) {
-    auto k_p_h = k_tree.root_handle();
     if (k_p_h && k_p_h != k_h) {
       if (!k_p_h.get<database>().is_install()) {
         insert_into(k_p_h);

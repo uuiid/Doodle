@@ -3,6 +3,7 @@
 //
 
 #include "qcloth_shape.h"
+#include "doodle_lib/metadata/metadata.h"
 
 #include <doodle_lib/metadata/project.h>
 
@@ -11,16 +12,19 @@
 #include <maya/MFnMesh.h>
 #include <maya/MPlug.h>
 #include <maya/MNamespace.h>
+#include <maya/MItDag.h>
+#include <maya/MDagModifier.h>
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/maya_plug_fwd.h>
+#include <magic_enum.hpp>
 
 namespace doodle::maya_plug {
 
 namespace qcloth_shape_n {
-maya_mesh::maya_mesh() = default;
-maya_mesh::maya_mesh(const MObject& in_object) {
+maya_obj::maya_obj() = default;
+maya_obj::maya_obj(const MObject& in_object) {
   obj = in_object;
   MStatus k_s;
   MFnDependencyNode k_node{in_object, &k_s};
@@ -121,8 +125,141 @@ bool qcloth_shape::create_cache() const {
 }
 
 void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
-  chick_component<qcloth_shape_n::maya_mesh, qcloth_shape_n::high_shape_list>(in_handle);
+  chick_component<qcloth_shape_n::maya_obj, qcloth_shape_n::high_shape_list>(in_handle);
+  chick_ctx<root_ref>();
 
+  MStatus k_s{};
+  MFnDagNode l_node{};
+  MDagModifier l_modifier{};
+
+  auto& k_maya_anim_mesh = in_handle.get<qcloth_shape_n::maya_obj>();
+  k_s                    = l_node.setObject(k_maya_anim_mesh.obj);
+  DOODLE_CHICK(k_s);
+  auto k_proxy_node = l_node.duplicate(false, false, &k_s);
+  {  ///重命名节点
+    k_s = l_node.setObject(k_proxy_node);
+    DOODLE_CHICK(k_s);
+    l_node.setName(d_str{""}, false, &k_s);
+    DOODLE_CHICK(k_s);
+  }
+  DOODLE_CHICK(k_s);
+  auto& k_maya_high_mesh = in_handle.get<qcloth_shape_n::high_shape_list>();
+  std::vector<MObject> l_high_mesh{};
+  {
+    std::transform(k_maya_high_mesh.begin(), k_maya_high_mesh.end(),
+                   std::back_inserter(l_high_mesh),
+                   [&](const MObject& in_object) -> MObject {
+                     k_s = l_node.setObject(in_object);
+                     DOODLE_CHICK(k_s);
+                     auto l_r = l_node.duplicate(false, false, &k_s);
+                     DOODLE_CHICK(k_s);
+                     return l_r;
+                   });
+  }
+  MDagPath l_path{};
+  {
+    /// 连接两个属性的输入和输出
+    k_s = l_modifier.connect(get_plug(k_maya_anim_mesh.obj, "outMesh"),
+                             get_plug(k_proxy_node, "inMesh"));
+    DOODLE_CHICK(k_s);
+    k_s = l_modifier.doIt();
+    DOODLE_CHICK(k_s);
+  }
+}
+
+qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
+  MStatus k_s{};
+  qcloth_shape::cloth_group k_r{};
+  MFnDagNode k_node{};
+
+  for (MItDag i{MItDag::kDepthFirst, MFn::Type::kTransform, &k_s}; !i.isDone(); i.next()) {
+    DOODLE_CHICK(k_s);
+    k_s = k_node.setObject(i.currentItem());
+    DOODLE_CHICK(k_s);
+    if (k_node.name(&k_s) == "cfx_grp") {
+      DOODLE_CHICK(k_s);
+      k_r.cfx_grp = i.currentItem(&k_s);
+      DOODLE_CHICK(k_s);
+    } else if (k_node.name(&k_s) == "anim_grp") {
+      DOODLE_CHICK(k_s);
+      k_r.anim_grp = i.currentItem(&k_s);
+      DOODLE_CHICK(k_s);
+    } else if (k_node.name(&k_s) == "constraint_grp") {
+      DOODLE_CHICK(k_s);
+      k_r.constraint_grp = i.currentItem(&k_s);
+      DOODLE_CHICK(k_s);
+    } else if (k_node.name(&k_s) == "collider_grp") {
+      DOODLE_CHICK(k_s);
+      k_r.collider_grp = i.currentItem(&k_s);
+      DOODLE_CHICK(k_s);
+    } else if (k_node.name(&k_s) == "deform_grp") {
+      DOODLE_CHICK(k_s);
+      k_r.deform_grp = i.currentItem(&k_s);
+      DOODLE_CHICK(k_s);
+    } else if (k_node.name(&k_s) == "export_grp") {
+      DOODLE_CHICK(k_s);
+      k_r.export_grp = i.currentItem(&k_s);
+      DOODLE_CHICK(k_s);
+    }
+  }
+  MDagModifier k_m{};
+  if (k_r.cfx_grp.isNull()) {
+    k_r.cfx_grp = k_m.createNode(d_str{"transform"}, MObject::kNullObj, &k_s);
+    DOODLE_CHICK(k_s);
+    k_s = k_m.renameNode(k_r.cfx_grp, "cfx_grp");
+    DOODLE_CHICK(k_s);
+    k_s = k_m.doIt();
+    DOODLE_CHICK(k_s);
+  }
+  if (k_r.anim_grp.isNull()) {
+    k_r.anim_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
+    DOODLE_CHICK(k_s);
+    k_s = k_m.renameNode(k_r.anim_grp, "anim_grp");
+    DOODLE_CHICK(k_s);
+    k_s = k_m.doIt();
+    DOODLE_CHICK(k_s);
+  }
+  if (k_r.constraint_grp.isNull()) {
+    k_r.constraint_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
+    DOODLE_CHICK(k_s);
+    k_s = k_m.renameNode(k_r.constraint_grp, "constraint_grp");
+    DOODLE_CHICK(k_s);
+    k_s = k_m.doIt();
+    DOODLE_CHICK(k_s);
+  }
+  if (k_r.collider_grp.isNull()) {
+    k_r.collider_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
+    DOODLE_CHICK(k_s);
+    k_s = k_m.renameNode(k_r.collider_grp, "collider_grp");
+    DOODLE_CHICK(k_s);
+    k_s = k_m.doIt();
+    DOODLE_CHICK(k_s);
+  }
+  if (k_r.deform_grp.isNull()) {
+    k_r.deform_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
+    DOODLE_CHICK(k_s);
+    k_s = k_m.renameNode(k_r.deform_grp, "deform_grp");
+    DOODLE_CHICK(k_s);
+    k_s = k_m.doIt();
+    DOODLE_CHICK(k_s);
+  }
+  if (k_r.export_grp.isNull()) {
+    k_r.export_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
+    DOODLE_CHICK(k_s);
+    k_s = k_m.renameNode(k_r.export_grp, "export_grp");
+    DOODLE_CHICK(k_s);
+    k_s = k_m.doIt();
+    DOODLE_CHICK(k_s);
+  }
+
+  return k_r;
+}
+void qcloth_shape::add_child(const MObject& in_praent, MObject& in_child) {
+  MStatus k_s{};
+  MFnDagNode k_node{in_praent, &k_s};
+  DOODLE_CHICK(k_s);
+  k_s = k_node.addChild(in_child);
+  DOODLE_CHICK(k_s);
 }
 
 }  // namespace doodle::maya_plug
