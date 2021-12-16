@@ -29,8 +29,10 @@
 #define doodle_endTime "-et"
 #define doodle_default_uuid "-u"
 #define doodle_export_type "-ef"
+#define doodle_export_use_select "-s"
 
 #define doodle_export_type_long "-exportType"
+#define doodle_export_use_select "-select"
 #define doodle_default_uuid_long "-uuid"
 #define doodle_startTime_long "-startTime"
 #define doodle_endTime_long "-endTime"
@@ -53,6 +55,7 @@ MSyntax ref_file_export_syntax() {
   syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
   syntax.addFlag(doodle_endTime, doodle_endTime_long, MSyntax::kTime);
   syntax.addFlag(doodle_export_type, doodle_export_type_long, MSyntax::kString);
+  syntax.addFlag(doodle_export_use_select, doodle_export_use_select, MSyntax::kBoolean);
   return syntax;
 }
 MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
@@ -62,6 +65,7 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   if (k_prase.isFlagSet(doodle_default_uuid, &k_s)) {
     DOODLE_CHICK(k_s);
     string k_str = d_str{k_prase.flagArgumentString(doodle_default_uuid, 0, &k_s)};
+    DOODLE_LOG_INFO("获得了默认项目的uuid {}", k_str);
     DOODLE_CHICK(k_s);
     auto k_def_uuid = boost::lexical_cast<uuid>(k_str);
 
@@ -91,9 +95,10 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
     DOODLE_CHICK(k_s);
     auto k_h = make_handle();
     try {
-      k_h.emplace<reference_file>(k_def_prj, k_obj);
+      auto& k_info = k_h.emplace<reference_file>(k_def_prj, k_obj);
       DOODLE_CHICK(k_s);
       l_list.push_back(k_h);
+      DOODLE_LOG_INFO("获得引用文件 {}", k_info.path);
     } catch (maya_error& err) {
       DOODLE_LOG_WARN("跳过无效的引用");
       k_h.destroy();
@@ -127,8 +132,10 @@ MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
     } catch (nlohmann::json::exception& err) {
       DOODLE_LOG_ERROR(err.what());
     }
-    if (!l_i.get<reference_file>().use_sim)
+    if (!l_i.get<reference_file>().use_sim) {
+      DOODLE_LOG_INFO("引用文件{}不解算", l_i.get<reference_file>().path);
       k_delete.push_back(l_i);
+    }
   }
   g_reg()->destroy(k_delete.begin(), k_delete.end());
 
@@ -163,9 +170,11 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
       k_start.value(), k_end.value());
 
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
+    DOODLE_LOG_INFO("引用文件{}发现需要设置解算碰撞体", k_ref.path)
     k_ref.add_collision();
   }
   for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
+    DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹")
     k_qs.set_cache_folder();
   }
 
@@ -196,6 +205,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
   MArgParser k_prase{syntax(), in_arg, &k_s};
   MTime k_start{MAnimControl::minTime()};
   MTime k_end = MAnimControl::maxTime();
+  bool use_select{false};
   export_type k_export_type{};
 
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
@@ -215,24 +225,52 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     DOODLE_CHICK(k_s);
     k_export_type = magic_enum::enum_cast<export_type>(d_str{k_k_export_type_s}.str()).value();
   }
+  if (k_prase.isFlagSet(doodle_export_use_select, &k_s)) {
+    DOODLE_CHICK(k_s);
+    k_s = k_prase.getFlagArgument(doodle_export_use_select, 0, use_select);
+    DOODLE_CHICK(k_s);
+  }
 
   DOODLE_LOG_INFO(
       "导出开始时间 {}  结束时间 {} 导出类型 {} ",
       k_start.value(), k_end.value(), magic_enum::enum_name(k_export_type));
 
-  for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
-    switch (k_export_type) {
-      case export_type::abc:
-        k_r.export_abc(k_start, k_end);
-        break;
-      case export_type::fbx:
-        k_r.export_fbx(k_start, k_end);
-        break;
-      default:
-        throw doodle_error{"未知类型"};
-        break;
+  if (use_select) {
+    DOODLE_LOG_INFO("开始使用交互式导出");
+    MSelectionList k_select{};
+    k_s = MGlobal::getActiveSelectionList(k_select);
+    for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
+      if (k_r.has_node(k_select)) {
+        switch (k_export_type) {
+          case export_type::abc:
+            k_r.export_abc(k_start, k_end);
+            break;
+          case export_type::fbx:
+            k_r.export_fbx(k_start, k_end);
+            break;
+          default:
+            throw doodle_error{"未知类型"};
+            break;
+        }
+      }
+    }
+  } else {
+    DOODLE_LOG_INFO("全部的引用文件导出")
+    for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
+      switch (k_export_type) {
+        case export_type::abc:
+          k_r.export_abc(k_start, k_end);
+          break;
+        case export_type::fbx:
+          k_r.export_fbx(k_start, k_end);
+          break;
+        default:
+          throw doodle_error{"未知类型"};
+          break;
+      }
     }
   }
+
   return k_s;
 }
 }  // namespace doodle::maya_plug

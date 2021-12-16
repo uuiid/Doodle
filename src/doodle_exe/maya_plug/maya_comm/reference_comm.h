@@ -47,4 +47,5 @@ class ref_file_export_command : public TemplateAction<
   };
   MStatus doIt(const MArgList&) override;
 };
+
 }  // namespace doodle::maya_plug

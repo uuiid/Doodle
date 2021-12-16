@@ -6,6 +6,7 @@
 
 #include "doodle_lib/metadata/metadata.h"
 #include "doodle_lib/metadata/project.h"
+
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
 #include <maya/MFnDagNode.h>
@@ -16,9 +17,11 @@
 #include <maya/MPlug.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
-#include "maya_file_io.h"
-#include "qcloth_shape.h"
-#include "maya_plug_fwd.h"
+#include <maya/MFn.h>
+
+#include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/data/qcloth_shape.h>
+#include <maya_plug/maya_plug_fwd.h>
 
 namespace doodle::maya_plug {
 reference_file::reference_file()
@@ -139,16 +142,6 @@ string reference_file::get_namespace() const {
 string reference_file::get_namespace() {
   chick_mobject();
   return std::as_const(*this).get_namespace();
-}
-string reference_file::get_ref_file_name() const {
-  //  chick_mobject();
-  //  MFnReference k_ref{p_m_object};
-  //  MStatus k_s{};
-  //  string k_r = d_str{k_ref.fileName(true, true, true, &k_s)};
-  //  DOODLE_CHICK(k_s);
-  //  boost::replace_all(k_r, " ", "_");
-  //  return k_r;
-  return get_namespace();
 }
 bool reference_file::replace_sim_assets_file() {
   if (!use_sim) {
@@ -396,6 +389,23 @@ void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) cons
   k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
+}
+bool reference_file::has_node(const MSelectionList &in_list) {
+  chick_mobject();
+  MFnReference k_ref{p_m_object};
+  MStatus k_s{};
+  MObject k_node{};
+  for (MItSelectionList k_iter{in_list, MFn::Type::kDependencyNode, &k_s};
+       !k_iter.isDone();
+       k_iter.next()) {
+    k_s = k_iter.getDependNode(k_node);
+    DOODLE_CHICK(k_s);
+    if (k_ref.containsNode(k_node, &k_s)) {
+      return true;
+      DOODLE_CHICK(k_s);
+    }
+  }
+  return false;
 }
 
 }  // namespace doodle::maya_plug

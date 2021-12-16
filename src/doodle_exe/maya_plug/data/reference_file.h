@@ -37,7 +37,8 @@ class reference_file {
   void set_collision_model(const MSelectionList &in_list);
   [[nodiscard]] string get_namespace() const;
   [[nodiscard]] string get_namespace();
-  [[nodiscard]] string get_ref_file_name() const;
+
+  bool has_node(const MSelectionList &in_list);
 
   [[nodiscard]] string get_unique_name() const;
   /**

@@ -128,6 +128,7 @@ bool maya_camera::unlock_attr() {
   return false;
 }
 void maya_camera::conjecture() {
+  DOODLE_LOG_INFO("开始测量相机优先级");
   const static std::vector reg_list{
       regex_priority_pair{std::regex{"(front|persp|side|top|camera)"}, -1000},
       regex_priority_pair{std::regex{R"(ep\d+_sc\d+)", std::regex::icase}, 30},
@@ -152,7 +153,6 @@ void maya_camera::conjecture() {
     DOODLE_CHICK(k_s);
 
     camera k_cam{k_path, 0};
-
     for (const auto& k_reg : reg_list) {
       if (std::regex_search(k_path_str, k_reg.reg)) {
         k_cam.priority += k_reg.priority;
@@ -164,6 +164,11 @@ void maya_camera::conjecture() {
   std::sort(k_list.begin(), k_list.end(), [](auto& in_l, auto& in_r) {
     return in_l > in_r;
   });
+
+  for (const auto& k_c : k_list) {
+    DOODLE_LOG_INFO("相机 {} 优先级是 {}", k_c.p_dag_path.fullPathName(), k_c.priority);
+  }
+
   if (k_list.empty())
     throw doodle_error{"没有找到任何相机"};
 
