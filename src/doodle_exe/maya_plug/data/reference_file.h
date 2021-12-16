@@ -37,6 +37,8 @@ class reference_file {
   void set_collision_model(const MSelectionList &in_list);
   [[nodiscard]] string get_namespace() const;
   [[nodiscard]] string get_namespace();
+  [[nodiscard]] string get_ref_file_name() const;
+
   [[nodiscard]] string get_unique_name() const;
   /**
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况

@@ -132,7 +132,9 @@ bool maya_file::run_comm(const std::wstring& in_com, const long_term_ptr& in_ter
     }
     in_term->sig_progress(rational_int{1, 5000});
   }
-
+  k_c.terminate();
+  k_fun.wait();
+  k_fun2.wait();
   return k_r;
 }
 
@@ -157,6 +159,7 @@ void maya_file::export_fbx_file(const export_fbx_arg_ptr& in_arg,
   }
   if (in_ptr)
     in_ptr->start();
+  in_arg->uuid_p = g_reg()->ctx<root_ref>().root_handle().get<database>().uuid();
   write_maya_tool_file();
   if (in_ptr)
     in_ptr->sig_progress(rational_int{1, 40});

@@ -79,6 +79,9 @@ bool maya_file_io::replace_channel_date(const string& in_string) {
 }
 bool maya_file_io::save_file(const FSys::path& in_file_path) {
   MStatus k_s{};
+  if (!exists(in_file_path.parent_path())) {
+    create_directories(in_file_path.parent_path());
+  }
   k_s = MFileIO::saveAs(d_str{in_file_path.generic_string()}, nullptr, true);
   DOODLE_CHICK(k_s);
   return false;

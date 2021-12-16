@@ -4,10 +4,13 @@
 
 #include "play_blast.h"
 
-#include "doodle_lib/core/core_set.h"
-#include "doodle_lib/file_warp/image_sequence.h"
-#include <maya_plug/data/maya_camera.h>
+#include <fmt/ostream.h>
+#include <fmt/chrono.h>
 
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/file_warp/image_sequence.h>
+
+#include <maya_plug/data/maya_camera.h>
 #include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
 #include <maya/MDrawContext.h>

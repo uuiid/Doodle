@@ -93,10 +93,10 @@ void reference_file::set_collision_model(const MSelectionList &in_list) {
     DOODLE_CHICK(k_s);
     k_s = l_node.setObject(k_obj);
     DOODLE_CHICK(k_s);
-    collision_model_show_str.emplace_back(l_node.name(&k_s).asUTF8());
+    collision_model_show_str.emplace_back(d_str{l_node.name(&k_s)});
     DOODLE_CHICK(k_s);
 
-    collision_model.emplace_back(l_node.fullPathName(&k_s).asUTF8());
+    collision_model.emplace_back(d_str{l_node.fullPathName(&k_s)});
     DOODLE_CHICK(k_s);
   }
 }
@@ -116,7 +116,7 @@ void reference_file::init_show_name() {
     DOODLE_CHICK(k_s);
     k_s = l_node.setObject(k_obj);
     DOODLE_CHICK(k_s);
-    collision_model_show_str.emplace_back(l_node.name(&k_s).asUTF8());
+    collision_model_show_str.emplace_back(d_str{l_node.name(&k_s)});
     DOODLE_CHICK(k_s);
   }
 }
@@ -124,17 +124,31 @@ string reference_file::get_namespace() const {
   chick_mobject();
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
-  auto k_r = k_ref.associatedNamespace(false, &k_s).asUTF8();
+  string k_r = d_str{k_ref.associatedNamespace(false, &k_s)};
   DOODLE_CHICK(k_s);
+  /// \brief 再没有名称空间时, 我们使用引用名称计算并映射到导出名称中去
+  if (k_r.empty()) {
+    //    k_r = d_str{k_ref.fileName(true, true, true, &k_s)};
+    //    DOODLE_CHICK(k_s);
+    //    throw;
+    DOODLE_LOG_WARN("名称空间为空, 可能是引用时未使用时未使用");
+    throw doodle_error{"名称空间为空, 可能是引用时未使用时未使用"};
+  }
   return k_r;
 }
 string reference_file::get_namespace() {
   chick_mobject();
-  MFnReference k_ref{p_m_object};
-  MStatus k_s{};
-  auto k_r = k_ref.associatedNamespace(false, &k_s).asUTF8();
-  DOODLE_CHICK(k_s);
-  return k_r;
+  return std::as_const(*this).get_namespace();
+}
+string reference_file::get_ref_file_name() const {
+  //  chick_mobject();
+  //  MFnReference k_ref{p_m_object};
+  //  MStatus k_s{};
+  //  string k_r = d_str{k_ref.fileName(true, true, true, &k_s)};
+  //  DOODLE_CHICK(k_s);
+  //  boost::replace_all(k_r, " ", "_");
+  //  return k_r;
+  return get_namespace();
 }
 bool reference_file::replace_sim_assets_file() {
   if (!use_sim) {
