@@ -28,11 +28,12 @@ class DlsShelf(shelfBase._shelf):
     #     self.cloth_to_fbx = None
 
     def build(self):
-        # self.addButon("export_cam", icon="icons/OUTcam.png", command=self.exportCam)
-        # self.addButon("export_abc", icon="icons/OUTabc.png",
-        #               command=self.exportAbc)
-        # self.addButon("back_cam", icon="icons/back_cam.png",
-        #               command=self.BakeAimCam)
+        self.addButon("cam", icon="icons/OUTcam.png",
+                      command=self.export_cam)
+        self.addButon("export_abc", icon="icons/OUTabc.png",
+                      command=self.exportAbc)
+        self.addButon("OUTfbx", icon="icons/OUTfbx.png",
+                      command=self.exportFbx)
 
         self.addButon("remesh", icon="icons/remesh.png",
                       command=self.polyremesh)
@@ -51,14 +52,16 @@ class DlsShelf(shelfBase._shelf):
         self.re()
         Doodle_PolyRemesh.myRemesh()
 
-    def exportCam(self):
-        pass
+    def export_cam(self):
+        cmds.doodle_export_camera()
 
     def exportAbc(self):
-        pass
+        cmds.doodle_create_ref_file()
+        cmds.doodle_ref_file_export(exportType="abc", select=True)
 
-    def BakeAimCam(self):
-        pass
+    def exportFbx(self):
+        cmds.doodle_create_ref_file()
+        cmds.doodle_ref_file_export(exportType="fbx", select=True)
 
     def deleteWeightPoint(self):
         self.re()

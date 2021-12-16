@@ -83,6 +83,7 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
 
   DOODLE_LOG_INFO(
       "获得默认项目 {}", bool(k_def_prj));
+  DOODLE_LOG_INFO("开始清除引用实体")
   auto k_view = g_reg()->view<reference_file>();
   g_reg()->destroy(k_view.begin(), k_view.end());
 
