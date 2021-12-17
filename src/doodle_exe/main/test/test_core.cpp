@@ -105,8 +105,20 @@ TEST_CASE("core fmt", "[fun][fmt]") {
   str = fmt::to_string(doodle::episodes{1});
   REQUIRE(str == R"(ep0001)");
   point p = {1, 2};
-  str = fmt::format("{:f}", p);
+  str     = fmt::format("{:f}", p);
   INFO(str);
+
+  using han_warp = doodle::temp_warp<entt::handle, entt::tag<21342343u>>;
+  entt::handle k_h{};
+  entt::handle k_h2{k_h};
+  han_warp k_w{k_h};
+  han_warp k_w2{std::move(k_h)};
+  k_w = entt::handle{};
+  k_h = k_w;
+  k_w = std::move(k_h);
+  k_h = std::move(k_w);
+
+
 }
 
 TEST_CASE("core path ", "[fun][path]") {
