@@ -72,14 +72,14 @@ bool comm_project_add::render() {
     if (imgui::Button(p_show_str["删除"].c_str())) {
       p_impl->p_root.patch<database_stauts>(database_set_stauts<need_delete>{});
     }
+    if (imgui::InputText(p_show_str["名称"].c_str(), &(p_impl->p_prj_name))) {
+      p_impl->p_root.get<project>().set_name(p_impl->p_prj_name);
+    }
+    if (imgui::InputText(p_show_str["路径"].c_str(), &(p_impl->p_prj_path))) {
+      p_impl->p_root.get<project>().set_path(p_impl->p_prj_path);
+    }
   }
 
-  if (imgui::InputText(p_show_str["名称"].c_str(), &(p_impl->p_prj_name))) {
-    p_impl->p_root.get<project>().set_name(p_impl->p_prj_name);
-  }
-  if (imgui::InputText(p_show_str["路径"].c_str(), &(p_impl->p_prj_path))) {
-    p_impl->p_root.get<project>().set_path(p_impl->p_prj_path);
-  }
   imgui::SameLine();
   if (imgui::Button(p_show_str["选择"].c_str())) {
     open_file_dialog{"open_select_path",
