@@ -78,21 +78,21 @@ bool comm_project_add::render() {
     if (imgui::InputText(p_show_str["路径"].c_str(), &(p_impl->p_prj_path))) {
       p_impl->p_root.get<project>().set_path(p_impl->p_prj_path);
     }
+    imgui::SameLine();
+    if (imgui::Button(p_show_str["选择"].c_str())) {
+      open_file_dialog{"open_select_path",
+                       "选择路径",
+                       nullptr,
+                       ".",
+                       "",
+                       1}
+          .show(
+              [this](const std::vector<FSys::path>& in) {
+                p_impl->p_prj_path = in.front().generic_string();
+              });
+    }
   }
 
-  imgui::SameLine();
-  if (imgui::Button(p_show_str["选择"].c_str())) {
-    open_file_dialog{"open_select_path",
-                     "选择路径",
-                     nullptr,
-                     ".",
-                     "",
-                     1}
-        .show(
-            [this](const std::vector<FSys::path>& in) {
-              p_impl->p_prj_path = in.front().generic_string();
-            });
-  }
   if (!p_impl->p_root || !p_impl->p_root.any_of<project::cloth_config>())
     return true;
   dear::TreeNode{p_show_str["解算配置"].c_str()} && [&]() {
