@@ -55,35 +55,35 @@ inline void throw_maya_exception(const MStatus& in_status, const ::spdlog::sourc
     case MStatus::MStatusCode::kSuccess:
       break;
     case MStatus::MStatusCode::kFailure: {
-      spdlog::default_logger_raw()->log(in_location, spdlog::level::err, in_status.errorString());
+      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       throw maya_Failure{in_status.errorString()};
     }
     case MStatus::MStatusCode::kInsufficientMemory: {
-      spdlog::default_logger_raw()->log(in_location, spdlog::level::err, in_status.errorString());
+      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       throw maya_InsufficientMemory{in_status.errorString()};
     }
     case MStatus::MStatusCode::kInvalidParameter: {
-      spdlog::default_logger_raw()->log(in_location, spdlog::level::err, in_status.errorString());
+      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       throw maya_InvalidParameter{in_status.errorString()};
     }
     case MStatus::MStatusCode::kLicenseFailure: {
-      spdlog::default_logger_raw()->log(in_location, spdlog::level::err, in_status.errorString());
+      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       throw maya_LicenseFailure{in_status.errorString()};
     }
     case MStatus::MStatusCode::kUnknownParameter: {
-      spdlog::default_logger_raw()->log(in_location, spdlog::level::err, in_status.errorString());
+      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       throw maya_UnknownParameter{in_status.errorString()};
     }
     case MStatus::MStatusCode::kNotImplemented: {
-      spdlog::default_logger_raw()->log(in_location, spdlog::level::err, in_status.errorString());
+      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       throw maya_NotImplemented{in_status.errorString()};
     }
     case MStatus::MStatusCode::kNotFound: {
-      spdlog::default_logger_raw()->log(in_location, spdlog::level::err, in_status.errorString());
+      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       throw maya_NotFound{in_status.errorString()};
     }
     case MStatus::MStatusCode::kEndOfFile: {
-      spdlog::default_logger_raw()->log(in_location, spdlog::level::err, in_status.errorString());
+      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       throw maya_EndOfFile{in_status.errorString()};
     }
     default:
