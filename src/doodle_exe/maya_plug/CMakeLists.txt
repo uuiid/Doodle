@@ -51,6 +51,7 @@ set(doodle_maya_plug_cpp
         data/maya_tool.cpp
         gui/action/create_sim_cloth.h
         gui/action/create_sim_cloth.cpp
+        exception/exception.h
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
 foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)

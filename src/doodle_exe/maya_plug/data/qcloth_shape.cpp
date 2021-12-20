@@ -95,6 +95,36 @@ bool qcloth_shape::create_cache() const {
   DOODLE_CHICK(k_s);
   k_s = k_shape.syncObject();
   DOODLE_CHICK(k_s);
+
+  auto in_status = k_s;
+  switch (in_status.statusCode()) {
+    case MStatus::MStatusCode::kSuccess:
+      break;
+    case MStatus::MStatusCode::kFailure:
+      break;
+    case MStatus::MStatusCode::kInsufficientMemory:
+      break;
+    case MStatus::MStatusCode::kInvalidParameter:
+      break;
+    case MStatus::MStatusCode::kLicenseFailure:
+      break;
+    case MStatus::MStatusCode::kUnknownParameter:
+      break;
+    case MStatus::MStatusCode::kNotImplemented:
+      break;
+    case MStatus::MStatusCode::kNotFound:
+      break;
+    case MStatus::MStatusCode::kEndOfFile:
+      break;
+    default:
+      doodle_error{"未知选项"};
+      break;
+  }
+  if (in_status != MStatus::MStatusCode::kSuccess) {
+    DOODLE_LOG_ERROR(in_status.errorString());
+    throw maya_error{in_status};
+  }
+
   return true;
 }
 

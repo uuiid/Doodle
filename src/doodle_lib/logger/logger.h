@@ -24,6 +24,9 @@
 #define DOODLE_LOG_ERROR(...) \
   SPDLOG_ERROR(__VA_ARGS__);
 
+#define DOODLE_SOURCE_LOC \
+  ::spdlog::source_loc { __FILE__, __LINE__, SPDLOG_FUNCTION }
+
 namespace doodle {
 
 /**

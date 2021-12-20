@@ -13,17 +13,8 @@
 #include <maya/MPxCommand.h>
 
 #include <maya_plug/data/maya_tool.h>
+#include <maya_plug/exception/exception.h>
 namespace doodle {
-class maya_error : public doodle_error {
- public:
-  MStatus maya_status;
-  explicit maya_error(const MStatus& in_status, const std::string& err)
-      : doodle_error(err), maya_status(in_status){};
-  explicit maya_error(const MStatus& in_status, const MString& in_m_string)
-      : doodle_error(in_m_string.asUTF8()), maya_status(in_status){};
-  explicit maya_error(const MStatus& in_status)
-      : maya_error(in_status, in_status.errorString()){};
-};
 
 inline MSyntax null_syntax_t() { return {}; };
 
@@ -91,27 +82,20 @@ class d_str {
 //   }
 // };
 
-#define DOODLE_CHICK(in_status)                        \
-  {                                                    \
-    if (in_status != MStatus::MStatusCode::kSuccess) { \
-      DOODLE_LOG_ERROR(in_status.errorString());       \
-      throw maya_error{in_status};                     \
-    }                                                  \
-  };
-
-
+#define DOODLE_CHICK(in_status) \
+  throw_maya_exception(in_status, DOODLE_SOURCE_LOC);
 }  // namespace doodle::maya_plug
 
 namespace fmt {
-template <>
-struct fmt::formatter<::doodle::maya_error> : fmt::formatter<fmt::string_view> {
-  template <typename FormatContext>
-  auto format(const ::doodle::maya_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
-    return formatter<string_view>::format(
-        in_.what(),
-        ctx);
-  }
-};
+// template <>
+// struct fmt::formatter<::doodle::maya_plug::maya_error> : fmt::formatter<fmt::string_view> {
+//   template <typename FormatContext>
+//   auto format(const ::doodle::maya_plug::maya_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+//     return formatter<string_view>::format(
+//         in_.what(),
+//         ctx);
+//   }
+// };
 
 template <>
 struct fmt::formatter<MString> : fmt::formatter<fmt::string_view> {
