@@ -148,8 +148,8 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   {
     std::transform(k_maya_high_mesh.begin(), k_maya_high_mesh.end(),
                    std::back_inserter(l_high_mesh),
-                   [&](const MObject& in_object) -> MObject {
-                     k_s = l_node.setObject(in_object);
+                   [&](const qcloth_shape_n::maya_obj& in_object) -> MObject {
+                     k_s = l_node.setObject(in_object.obj);
                      DOODLE_CHICK(k_s);
                      auto l_r = l_node.duplicate(false, false, &k_s);
                      DOODLE_CHICK(k_s);

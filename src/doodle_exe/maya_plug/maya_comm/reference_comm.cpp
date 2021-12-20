@@ -32,7 +32,7 @@
 #define doodle_export_use_select "-s"
 
 #define doodle_export_type_long "-exportType"
-#define doodle_export_use_select "-select"
+#define doodle_export_use_select_long "-select"
 #define doodle_default_uuid_long "-uuid"
 #define doodle_startTime_long "-startTime"
 #define doodle_endTime_long "-endTime"
@@ -55,7 +55,7 @@ MSyntax ref_file_export_syntax() {
   syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
   syntax.addFlag(doodle_endTime, doodle_endTime_long, MSyntax::kTime);
   syntax.addFlag(doodle_export_type, doodle_export_type_long, MSyntax::kString);
-  syntax.addFlag(doodle_export_use_select, doodle_export_use_select, MSyntax::kBoolean);
+  syntax.addFlag(doodle_export_use_select, doodle_export_use_select_long, MSyntax::kBoolean);
   return syntax;
 }
 MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
