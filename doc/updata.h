@@ -113,7 +113,6 @@
  *
  * @subsubsection updata_log_3032 版本3.0.32
  * @li 更新maya 解算工具: 更改更加合理的创建缓存的方式
- * -->
  *
  * @subsection updata_log_31 版本3.1
  *
@@ -338,6 +337,7 @@
  *
  * @subsubsection updata_log_3146 版本3.1.46
  * @li 无法保存时跳过不保存
+ * -->
  *
  * @subsubsection updata_log_3147 版本3.1.47
  * @li 更改maya插件加载方式（pymel 加载插件会出现回调错误）
