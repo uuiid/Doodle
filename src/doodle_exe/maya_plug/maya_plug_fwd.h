@@ -99,13 +99,6 @@ class d_str {
     }                                                  \
   };
 
-template <class MfnT>
-MfnT get_mfn(const MObject& in_object) {
-  MfnT k_mfn{};
-  auto k_s = k_mfn.setObject(in_object);
-  DOODLE_CHICK(k_s);
-  return k_mfn;
-}
 
 }  // namespace doodle::maya_plug
 

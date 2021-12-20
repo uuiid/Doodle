@@ -11,6 +11,7 @@
 #include <maya_plug/gui/action/comm_play_blast.h>
 #include <maya_plug/gui/action/reference_attr_setting.h>
 #include <maya_plug/gui/maya_plug_app.h>
+#include <maya_plug/gui/action/create_sim_cloth.h>
 namespace doodle::maya_plug {
 
 void maya_windwos::main_menu_tool() {
@@ -25,6 +26,8 @@ void maya_windwos::main_menu_tool() {
     p_tool_box_->set_tool_widget(new_object<comm_check_scenes>());
   if (dear::MenuItem("拍屏工具") && p_tool_box_)
     p_tool_box_->set_tool_widget(new_object<comm_play_blast>());
+  if (dear::MenuItem("qcloth布料制作") && p_tool_box_)
+    p_tool_box_->set_tool_widget(new_object<create_sim_cloth>());
 }
 
 maya_windwos::maya_windwos()

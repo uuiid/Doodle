@@ -212,7 +212,6 @@ bool reference_file::rename_material() const {
   for (auto i = 0; i < k_list.length(); ++i) {
     auto k_obj = k_list[i];
     if (k_obj.hasFn(MFn::Type::kShadingEngine)) {  /// \brief 找到符合的着色集
-
       k_node.setObject(k_obj);
       auto k_plug = k_node.findPlug(d_str{"surfaceShader"}, true, &k_s);
       DOODLE_CHICK(k_s);
@@ -334,7 +333,7 @@ void reference_file::generate_cloth_proxy() {
     DOODLE_CHICK(k_s);
     auto &k_q = k_h.emplace<qcloth_shape>(make_handle(*this), k_path.node());
   }
-  return;
+
 }
 void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
   MSelectionList k_select{};

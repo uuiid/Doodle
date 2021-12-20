@@ -14,6 +14,7 @@
 #include <maya/MNamespace.h>
 #include <maya/MItDag.h>
 #include <maya/MDagModifier.h>
+#include <maya/MFnSet.h>
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -145,7 +146,12 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   {  ///重命名节点
     k_s = l_node.setObject(k_proxy_node);
     DOODLE_CHICK(k_s);
-    l_node.setName(d_str{fmt::format("{}_{}", k_anim_mesh_name, k_ref.cloth_proxy)}, false, &k_s);
+    l_node.setName(d_str{fmt::format("{}{}", k_anim_mesh_name, k_ref.cloth_proxy)}, false, &k_s);
+    DOODLE_CHICK(k_s);
+    /// 设置材质
+    MFnSet l_mat{get_shading_engine(k_anim_mesh.obj), &k_s};
+    DOODLE_CHICK(k_s);
+    k_s = l_mat.addMember(k_proxy_node);
     DOODLE_CHICK(k_s);
   }
   DOODLE_CHICK(k_s);
@@ -159,6 +165,11 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
                      k_s = l_node.setObject(in_object.obj);
                      DOODLE_CHICK(k_s);
                      auto l_r = l_node.duplicate(false, false, &k_s);
+                     DOODLE_CHICK(k_s);
+                     /// 设置材质
+                     MFnSet l_mat{get_shading_engine(in_object.obj), &k_s};
+                     DOODLE_CHICK(k_s);
+                     k_s = l_mat.addMember(k_proxy_node);
                      DOODLE_CHICK(k_s);
                      return l_r;
                    });
