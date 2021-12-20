@@ -45,33 +45,14 @@ qcloth_shape::qcloth_shape(const entt::handle& in_ref_file, const MObject& in_ob
 }
 bool qcloth_shape::set_cache_folder() const {
   MStatus k_s{};
+  /// \brief 获得解算节点fn
   MFnDependencyNode k_node{obj, &k_s};
   DOODLE_CHICK(k_s);
   string k_name{d_str{k_node.name(&k_s)}};
   DOODLE_CHICK(k_s);
   string k_namespace = p_ref_file.get<reference_file>().get_namespace();
   auto& k_cfg        = p_ref_file.get<reference_file>().get_prj().get<project::cloth_config>();
-  boost::replace_all(k_name, k_cfg.cloth_proxy, k_cfg.cloth_shape);
-  DOODLE_LOG_INFO("推测布料节点 {}", k_name);
 
-  /// 选择解算节点
-  MSelectionList l_selection_list{};
-  k_s = l_selection_list.add(d_str{k_name}, true);
-  DOODLE_CHICK(k_s);
-  if (l_selection_list.length(&k_s) > 1) {
-    DOODLE_CHICK(k_s);
-    throw doodle_error{"出现重名物体"};
-  }
-  if (l_selection_list.isEmpty(&k_s)) {
-    DOODLE_CHICK(k_s);
-    throw doodle_error{"没有找到解算布料节点"};
-  }
-
-  /// \brief 获得解算节点fn
-  MObject k_shape{};
-  k_s = l_selection_list.getDependNode(0, k_shape);
-  DOODLE_CHICK(k_s);
-  k_s = k_node.setObject(k_shape);
   DOODLE_CHICK(k_s);
   string k_node_name = d_str{MNamespace::stripNamespaceFromName(k_node.name(), &k_s)};
   DOODLE_CHICK(k_s);
@@ -107,16 +88,8 @@ bool qcloth_shape::create_cache() const {
   if (obj.isNull())
     throw doodle_error{"空组件"};
   MStatus k_s{};
-  MFnDagNode k_fn_done{obj, &k_s};
-  DOODLE_CHICK(k_s);
-
-  MDagPath k_dag_path{};
-  k_s = k_fn_done.getPath(k_dag_path);
-  DOODLE_CHICK(k_s);
-  k_s = k_dag_path.extendToShape();
-  DOODLE_CHICK(k_s);
-
-  MFnMesh k_shape{k_dag_path, &k_s};
+  /// 直接使用 MItDependencyGraph 搜素 kMesh 类型并同步
+  MFnMesh k_shape{get_first_mesh(obj), &k_s};
   DOODLE_CHICK(k_s);
   k_s = k_shape.updateSurface();
   DOODLE_CHICK(k_s);
@@ -288,6 +261,7 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
 
   return k_r;
 }
+
 void qcloth_shape::add_child(const MObject& in_praent, MObject& in_child) {
   MStatus k_s{};
   MFnDagNode k_node{in_praent, &k_s};

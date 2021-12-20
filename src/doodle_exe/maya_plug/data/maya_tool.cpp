@@ -83,4 +83,33 @@ MObject get_shading_engine(const MObject& in_node) {
 //  }
   throw doodle_error{"没有找到节点"};
 }
+MObject get_first_mesh(const MObject& in_node) {
+  MStatus k_s{};
+  MObject k_obj = in_node;
+  if (in_node.hasFn(MFn::kDagNode)) {
+    MFnDagNode l_dag_node{in_node, &k_s};
+    DOODLE_CHICK(k_s);
+    MDagPath l_path{};
+    k_s = l_dag_node.getPath(l_path);
+    DOODLE_CHICK(k_s);
+    k_s = l_path.extendToShape();
+    DOODLE_CHICK(k_s);
+    k_obj = l_path.node(&k_s);
+    DOODLE_CHICK(k_s);
+    return k_obj;
+  }
+  for (MItDependencyGraph i{k_obj,
+                            MFn::Type::kMesh,
+                            MItDependencyGraph::Direction::kDownstream,
+                            MItDependencyGraph::Traversal::kDepthFirst,
+                            MItDependencyGraph::Level::kNodeLevel,
+                            &k_s};
+       !i.isDone();
+       i.next()) {
+    DOODLE_CHICK(k_s);
+    auto obj = i.currentItem(&k_s);
+    return obj;
+  }
+  return MObject();
+}
 }  // namespace doodle::maya_plug

@@ -46,6 +46,9 @@ class qcloth_shape {
 
  private:
   entt::handle p_ref_file;
+  /**
+   * @brief qlClothShape 类型 节点
+   */
   MObject obj;
 
   static void add_child(const MObject& in_praent, MObject& in_child);

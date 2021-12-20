@@ -319,21 +319,17 @@ void reference_file::generate_cloth_proxy() {
     throw doodle_error{"无法找到项目配置"};
 
   chick_component<project::cloth_config>(k_prj);
-  auto &k_cfg = k_prj.get<project::cloth_config>();
+  /// 这里我们使用节点类名称寻找 qlClothShape ;
   MStatus k_s{};
-  MSelectionList k_qcloth_list{};
-  k_s = k_qcloth_list.add(
-      d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.cloth_proxy)},
-      true);
-  DOODLE_CHICK(k_s);
-  MDagPath k_path{};
-  for (MItSelectionList k_iter{k_qcloth_list}; !k_iter.isDone(); k_iter.next()) {
-    auto k_h = make_handle();
-    k_s      = k_iter.getDagPath(k_path);
-    DOODLE_CHICK(k_s);
-    auto &k_q = k_h.emplace<qcloth_shape>(make_handle(*this), k_path.node());
+  for (MItDependencyNodes i{MFn::Type::kPluginLocatorNode}; !i.isDone(); i.next()) {
+    auto k_obj = i.thisNode(&k_s);
+    MFnDependencyNode k_dep{k_obj};
+    MFnReference k_ref{p_m_object};
+    if (k_dep.typeName(&k_s) == "qlClothShape" && k_ref.containsNode(k_obj, &k_s)) {
+      auto k_h = make_handle();
+      k_h.emplace<qcloth_shape>(make_handle(*this), k_obj);
+    }
   }
-
 }
 void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
   MSelectionList k_select{};

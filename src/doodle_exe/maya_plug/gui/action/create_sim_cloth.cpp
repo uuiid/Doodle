@@ -14,6 +14,7 @@
 #include <maya/MGlobal.h>
 #include <maya/MSelectionList.h>
 #include <maya/MItSelectionList.h>
+#include <maya/MItDependencyNodes.h>
 #include <maya/MFnDependencyNode.h>
 
 namespace doodle::maya_plug {
@@ -70,9 +71,15 @@ bool create_sim_cloth::render() {
     auto k_s = MGlobal::getActiveSelectionList(k_list);
     DOODLE_CHICK(k_s);
     MObject k_node{};
-    for (MItSelectionList i{k_list}; !i.isDone(); i.next()) {
-      k_s = i.getDependNode(k_node);
-      get_shading_engine(k_node);
+
+    for (MItDependencyNodes i{MFn::Type::kPluginLocatorNode}; !i.isDone(); i.next()) {
+      auto k_obj = i.thisNode(&k_s);
+      DOODLE_LOG_INFO(k_obj.apiTypeStr());
+      MFnDependencyNode k_dep{k_obj};
+      DOODLE_LOG_INFO("{}",k_dep.typeId(&k_s).id());
+      auto k_name = k_dep.typeName(&k_s);
+      DOODLE_CHICK(k_s);
+      DOODLE_LOG_INFO("{}", d_str{k_name}.str());
     }
   }
   return false;
