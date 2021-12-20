@@ -87,15 +87,15 @@ class d_str {
 }  // namespace doodle::maya_plug
 
 namespace fmt {
-// template <>
-// struct fmt::formatter<::doodle::maya_plug::maya_error> : fmt::formatter<fmt::string_view> {
-//   template <typename FormatContext>
-//   auto format(const ::doodle::maya_plug::maya_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
-//     return formatter<string_view>::format(
-//         in_.what(),
-//         ctx);
-//   }
-// };
+ template <>
+ struct fmt::formatter<::doodle::maya_plug::maya_error> : fmt::formatter<fmt::string_view> {
+   template <typename FormatContext>
+   auto format(const ::doodle::maya_plug::maya_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+     return formatter<string_view>::format(
+         in_.what(),
+         ctx);
+   }
+ };
 
 template <>
 struct fmt::formatter<MString> : fmt::formatter<fmt::string_view> {

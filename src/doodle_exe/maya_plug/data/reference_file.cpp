@@ -338,12 +338,9 @@ void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) cons
   try {
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
     DOODLE_CHICK(k_s);
-  } catch (const maya_error &err) {
-    if (err.maya_status == MStatus::MStatusCode::kInvalidParameter) {
-      DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出")
-      return;
-    } else
-      throw;
+  } catch (const maya_InvalidParameter &err) {
+    DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出")
+    return;
   }
 
   if (k_select.isEmpty()) {

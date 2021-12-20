@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <spdlog/common.h>
 
 namespace doodle {
 class DOODLELIB_API doodle_error : public std::runtime_error {
