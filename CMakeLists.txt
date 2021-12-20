@@ -1,18 +1,13 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 
 project(Doodle
-        VERSION 3.2.3.0
+        VERSION 3.2.4.0
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-#设置qt自动参数
-#set(CMAKE_AUTOUIC ON)
-#set(CMAKE_AUTOMOC ON)
-#set(CMAKE_AUTORCC ON)
 
-#add_compile_definitions(QT_NO_KEYWORDS NOMINMAX)
 add_compile_definitions(QT_NO_KEYWORDS UNICODE _UNICODE NOMINMAX)
 #add_compile_options(/W4)
 
@@ -63,7 +58,7 @@ find_package(Boost 1.75 REQUIRED COMPONENTS
         locale
         iostreams
         serialization
-        program_options 
+        program_options
         )
 find_package(Sqlpp11 REQUIRED)
 find_package(Catch2 CONFIG )
@@ -100,8 +95,8 @@ find_package(Autodesk_FBX 2020 )
 
 #google序列化库
 # find_package(protobuf CONFIG REQUIRED)
-# target_link_libraries(main 
-# PRIVATE protobuf::libprotoc 
+# target_link_libraries(main
+# PRIVATE protobuf::libprotoc
 # protobuf::libprotobuf
 # protobuf::libprotobuf-lite)
 #Google rpc库
@@ -214,7 +209,7 @@ set(CPACK_WIX_TEMPLATE ${PROJECT_SOURCE_DIR}/CMake/WIX.template.in)
 set(CPACK_WIX_CULTURES zh-CN)
 include(CPack REQUIRED)
 
-add_custom_target(cpack_${PROJECT_NAME} 
+add_custom_target(cpack_${PROJECT_NAME}
         COMMAND ${CMAKE_CPACK_COMMAND} --build ${PROJECT_BINARY_DIR} --target package)
 add_custom_command(
         TARGET cpack_${PROJECT_NAME}
