@@ -12,20 +12,8 @@
             "cwd": "${workspaceFolder}",
             "environment": [
                 {
-                    "name": "MAYA_PLUG_IN_PATH",
-                    "value": "${workspaceFolder}/script/maya/plug-ins;${workspaceFolder}/build/Ninja_release_plug/plug/maya/plug-ins"
-                },
-                {
-                    "name": "PATH",
-                    "value": "${env:PATH};${workspaceFolder}/build/Ninja_release_plug/bin"
-                },
-                {
-                    "name": "PYTHONPATH",
-                    "value": "${env:PYTHONPATH};${workspaceFolder}/src/doodle_lib/resource;${workspaceFolder}/script/maya/scripts/scripts;${workspaceFolder}/script/maya/scripts"
-                },
-                {
-                    "name": "XBMLANGPATH",
-                    "value": "${workspaceFolder}/script/maya/icons"
+                    "name": "MAYA_MODULE_PATH",
+                    "value": "${workspaceFolder}/Ninja_release_plug/plug/maya"
                 }
             ],
             "console": "internalConsole",
@@ -46,20 +34,8 @@
             "cwd": "${workspaceFolder}",
             "environment": [
                 {
-                    "name": "MAYA_PLUG_IN_PATH",
-                    "value": "${workspaceFolder}/script/maya/plug-ins;${workspaceFolder}/build/Ninja_release_plug/plug/maya/plug-ins"
-                },
-                {
-                    "name": "PATH",
-                    "value": "${env:PATH};${workspaceFolder}/build/Ninja_release_plug/bin"
-                },
-                {
-                    "name": "PYTHONPATH",
-                    "value": "${env:PYTHONPATH};${workspaceFolder}/src/doodle_lib/resource;${workspaceFolder}/script/maya/scripts/scripts;${workspaceFolder}/script/maya/scripts;${workspaceFolder}/src/doodle_exe/main/test"
-                },
-                {
-                    "name": "XBMLANGPATH",
-                    "value": "${workspaceFolder}/script/maya/icons"
+                    "name": "MAYA_MODULE_PATH",
+                    "value": "${workspaceFolder}/Ninja_release_plug/plug/maya"
                 }
             ],
             "console": "internalConsole",
@@ -77,20 +53,8 @@
             "cwd": "${workspaceFolder}",
             "environment": [
                 {
-                    "name": "MAYA_PLUG_IN_PATH",
-                    "value": "${workspaceFolder}/script/maya/plug-ins;${workspaceFolder}/build/Ninja_release_plug/plug/maya/plug-ins"
-                },
-                {
-                    "name": "PATH",
-                    "value": "${env:PATH};${workspaceFolder}/build/Ninja_release_plug/bin"
-                },
-                {
-                    "name": "PYTHONPATH",
-                    "value": "${env:PYTHONPATH};${workspaceFolder}/src/doodle_lib/resource;${workspaceFolder}/script/maya/scripts/scripts;${workspaceFolder}/script/maya/scripts;${workspaceFolder}/src/doodle_exe/main/test"
-                },
-                {
-                    "name": "XBMLANGPATH",
-                    "value": "${workspaceFolder}/script/maya/icons"
+                    "name": "MAYA_MODULE_PATH",
+                    "value": "${workspaceFolder}/Ninja_release_plug/plug/maya"
                 }
             ],
             "console": "internalConsole",
@@ -108,20 +72,8 @@
             "cwd": "${workspaceFolder}",
             "environment": [
                 {
-                    "name": "MAYA_PLUG_IN_PATH",
-                    "value": "${workspaceFolder}/script/maya/plug-ins;${workspaceFolder}/build/Ninja_debug/plug/maya/plug-ins"
-                },
-                {
-                    "name": "PATH",
-                    "value": "${env:PATH};${workspaceFolder}/build/Ninja_debug/bin"
-                },
-                {
-                    "name": "PYTHONPATH",
-                    "value": "${env:PYTHONPATH};${workspaceFolder}/src/doodle_lib/resource;${workspaceFolder}/script/maya/scripts/scripts;${workspaceFolder}/script/maya/scripts;${workspaceFolder}/src/doodle_exe/main/test"
-                },
-                {
-                    "name": "XBMLANGPATH",
-                    "value": "${workspaceFolder}/script/maya/icons"
+                    "name": "MAYA_MODULE_PATH",
+                    "value": "${workspaceFolder}/Ninja_release_plug/plug/maya"
                 }
             ],
             "console": "internalConsole",
@@ -137,9 +89,7 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "env": {
-                "MAYA_PLUG_IN_PATH": "${workspaceFolder}/build/Ninja_release_plug/bin;${workspaceFolder}/build/Ninja_release_plug/plug/maya/plug-ins/;${workspaceFolder}/script/maya/plug-ins",
-                "PATH": "${env:PATH};${workspaceFolder}/build/Ninja_release_plug/bin",
-                "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}/src/doodle_lib/resource;${workspaceFolder}/script/maya/scripts/scripts;${workspaceFolder}/script/maya/scripts;${workspaceFolder}/src/doodle_exe/main/test"
+                "MAYA_MODULE_PATH": "${workspaceFolder}/Ninja_release_plug/plug/maya"
             }
         },
         {
