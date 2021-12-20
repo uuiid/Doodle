@@ -125,27 +125,34 @@ bool qcloth_shape::create_cache() const {
 }
 
 void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
-  chick_component<qcloth_shape_n::maya_obj, qcloth_shape_n::high_shape_list>(in_handle);
+  chick_component<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>(in_handle);
   chick_ctx<root_ref>();
+  auto& k_ref  = g_reg()->ctx<root_ref>().root_handle().get<project::cloth_config>();
+  auto l_group = get_cloth_group();
 
   MStatus k_s{};
   MFnDagNode l_node{};
   MDagModifier l_modifier{};
 
-  auto& k_maya_anim_mesh = in_handle.get<qcloth_shape_n::maya_obj>();
-  k_s                    = l_node.setObject(k_maya_anim_mesh.obj);
+  /// \brief 主要的动画输出节点(需要输入到解算输入端)
+  auto& k_anim_mesh = in_handle.get<qcloth_shape_n::maya_obj>();
+  k_s               = l_node.setObject(k_anim_mesh.obj);
   DOODLE_CHICK(k_s);
+  string k_anim_mesh_name = d_str{l_node.name(&k_s)};
+  DOODLE_CHICK(k_s);
+  /// \brief 主要的输入节点
   auto k_proxy_node = l_node.duplicate(false, false, &k_s);
   {  ///重命名节点
     k_s = l_node.setObject(k_proxy_node);
     DOODLE_CHICK(k_s);
-    l_node.setName(d_str{""}, false, &k_s);
+    l_node.setName(d_str{fmt::format("{}_{}", k_anim_mesh_name, k_ref.cloth_proxy)}, false, &k_s);
     DOODLE_CHICK(k_s);
   }
   DOODLE_CHICK(k_s);
-  auto& k_maya_high_mesh = in_handle.get<qcloth_shape_n::high_shape_list>();
+  auto& k_maya_high_mesh = in_handle.get<qcloth_shape_n::shape_list>();
   std::vector<MObject> l_high_mesh{};
   {
+    /// 复制高模节点作为输出
     std::transform(k_maya_high_mesh.begin(), k_maya_high_mesh.end(),
                    std::back_inserter(l_high_mesh),
                    [&](const qcloth_shape_n::maya_obj& in_object) -> MObject {
@@ -157,13 +164,29 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
                    });
   }
   MDagPath l_path{};
-  {
+  {  /// 创建动画网格和解算网络的输入
     /// 连接两个属性的输入和输出
-    k_s = l_modifier.connect(get_plug(k_maya_anim_mesh.obj, "outMesh"),
+    k_s = l_modifier.connect(get_plug(k_anim_mesh.obj, "outMesh"),
                              get_plug(k_proxy_node, "inMesh"));
     DOODLE_CHICK(k_s);
     k_s = l_modifier.doIt();
     DOODLE_CHICK(k_s);
+  }
+  {
+    /// 创建解算网络
+    MSelectionList l_selection_list{};
+    k_s = l_selection_list.add(k_proxy_node);
+    DOODLE_CHICK(k_s);
+    k_s = MGlobal::setActiveSelectionList(l_selection_list);
+    DOODLE_CHICK(k_s);
+    k_s = MGlobal::executeCommand(d_str{"qlCreateCloth;"});
+    DOODLE_CHICK(k_s);
+  }
+  {
+      /// 创建解算网络的输出
+
+  } {
+    /// 创建包裹变形
   }
 }
 

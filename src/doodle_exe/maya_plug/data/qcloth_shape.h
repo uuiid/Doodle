@@ -22,17 +22,11 @@ class maya_obj {
   MObject obj;
   string p_name;
 };
-template <class T>
-using maya_obj_list        = std::vector<maya_obj>;
 
 /**
- * @brief 一个用来创建布料解算高模的列表
+ * @brief 一个maya obj列表
  */
-using high_shape_list      = maya_obj_list<entt::tag<"high_shape_list"_hs>>;
-/**
- * @brief 一个用来创建碰撞体的列表
- */
-using collision_shape_list = maya_obj_list<entt::tag<"collision_shape_list"_hs>>;
+using shape_list = std::vector<maya_obj>;
 
 }  // namespace qcloth_shape_n
 
