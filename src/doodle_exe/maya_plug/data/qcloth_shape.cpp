@@ -287,14 +287,10 @@ bool qcloth_shape::create_cache() const {
   if (obj.isNull())
     throw doodle_error{"空组件"};
   MStatus k_s{};
-  /// 直接使用 MItDependencyGraph 搜素 kMesh 类型并同步
-  MFnMesh k_shape{get_first_mesh(obj), &k_s};
+  MFnDependencyNode l_node{obj, &k_s};
+  auto k_plug = get_plug(obj, "outputMesh");
+  k_plug.asMObject(&k_s);
   DOODLE_CHICK(k_s);
-  k_s = k_shape.updateSurface();
-  DOODLE_CHICK(k_s);
-  k_s = k_shape.syncObject();
-  DOODLE_CHICK(k_s);
-
   return true;
 }
 
