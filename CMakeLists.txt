@@ -25,7 +25,7 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 option(RUN_QT_TOOL "run qt windeployqt" OFF)
 option(RUN_fixup "run fixup " OFF)
 option(RUN_COPY "run copy tools" OFF)
-
+option(BUILD_SHARED_LIBS "build doodle lib is SHARED" OFF)
 
 #配置版本文件
 configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)

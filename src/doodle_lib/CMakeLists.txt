@@ -27,7 +27,7 @@ doodle_grpc_generate(
 )
 
 add_library(doodle_lib
-        SHARED
+#        SHARED
 #        $<$<CXX_COMPILER_ID:MSVC>:SHARED>
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
@@ -46,7 +46,7 @@ add_library(doodle_lib
 
 target_precompile_headers(doodle_lib
         PUBLIC [[<doodle_lib/doodle_lib_pch.h>]])
-        
+
 include(GenerateExportHeader)
 set(MY_CUSTOM_CONTENT "")
 generate_export_header(doodle_lib
@@ -87,7 +87,7 @@ target_compile_definitions(doodle_lib
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         PRIVATE
-        ENTT_API_EXPORT
+        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
         )
 target_compile_options(doodle_lib
         PUBLIC
@@ -102,5 +102,8 @@ target_include_directories(doodle_lib
         )
 if (NOT RUN_COPY)
     target_compile_options(doodle_lib PRIVATE /Zi)
-    target_link_options(doodle_lib PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF) 
+    target_link_options(doodle_lib PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF)
 endif()
+
+#add_custom_target(genexdebug
+#        COMMAND ${CMAKE_COMMAND} -E echo "$<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:'is lib'>")
