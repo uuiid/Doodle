@@ -39,6 +39,12 @@ maya_obj::maya_obj(const MObject& in_object) {
 }  // namespace qcloth_shape_n
 
 namespace {
+/**
+ * @brief 复制并制作低模
+ * @param in_object 传入的低模物体
+ * @param in_parent 传入低模的父物体
+ * @return 复制的低模
+ */
 MObject make_low_node(const MObject& in_object, const MObject& in_parent) {
   MStatus l_s{};
   MFnDagNode l_node{};
@@ -71,6 +77,12 @@ MObject make_low_node(const MObject& in_object, const MObject& in_parent) {
   return l_r;
 }
 
+/**
+ * @brief 复制一次高模并将高模重新设置为父物体
+ * @param in_high_node 传入的高模
+ * @param in_parent 传入的父物体
+ * @return 复制出来的高模列表
+ */
 std::vector<MObject> make_high_node(const qcloth_shape_n::shape_list& in_high_node, const MObject& in_parent) {
   MStatus l_s{};
   std::vector<MObject> l_r{};
@@ -107,7 +119,11 @@ std::vector<MObject> make_high_node(const qcloth_shape_n::shape_list& in_high_no
                  });
   return l_r;
 }
-
+/**
+ * @brief 将低模使用包裹变形包裹高模
+ * @param in_low 传入的低模节点
+ * @param in_high_node 传入的高模节点
+ */
 void warp_model(const MObject& in_low, const std::vector<MObject>& in_high_node) {
   MStatus l_s{};
 
@@ -129,6 +145,14 @@ void warp_model(const MObject& in_low, const std::vector<MObject>& in_high_node)
   DOODLE_CHICK(l_s);
 }
 
+/**
+ * @brief 使用混合变形将解算节点的动态传递给动画节点
+ * 并且会将动画节点的皮肤簇设置为无效,并将解算的动态设置为1
+ *
+ * @param in_sim_node 传入的解算节点
+ * @param in_anim_node 传入的动画节点
+ *
+ */
 void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
   MStatus l_s{};
   MObject l_skin_cluster{};
