@@ -141,10 +141,10 @@ MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
   g_reg()->destroy(k_delete.begin(), k_delete.end());
 
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
-    if (!k_ref.replace_sim_assets_file()) {
-      k_delete.push_back(k_e);
-    } else {
+    if (k_ref.replace_sim_assets_file()) {
       k_ref.generate_cloth_proxy();
+    } else {
+      k_delete.push_back(k_e);
     }
   }
   g_reg()->destroy(k_delete.begin(), k_delete.end());
