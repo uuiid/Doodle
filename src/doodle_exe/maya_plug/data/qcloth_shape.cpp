@@ -171,6 +171,43 @@ void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
   MGlobal::executeCommand(d_str{fmt::format(R"(setAttr "{}.{}" 1;)",
                                             l_blend[0], l_sim_name)});
 };
+/**
+ * @brief 检查组节点名称
+ * @param in_node 传入的节点
+ * @param in_name 节点名称
+ * @return 不符合名称的话返回空节点, 否则返回传入节点
+ */
+MObject chick_group(const MFnDagNode& in_node,
+                    const string& in_name) {
+  MStatus l_s{};
+  if (in_node.name(&l_s) == d_str{in_name}) {
+    DOODLE_CHICK(l_s);
+    auto l_obj = in_node.object(&l_s);
+    DOODLE_CHICK(l_s);
+    return l_obj;
+  }
+  return {};
+}
+
+/**
+ * @brief 创建组节点,并根据传入的名称和父对象进行设置
+ * @param in_modifier 传入的管理器
+ * @param in_name 传入的名称
+ * @param in_parent 传入的父物体
+ * @return 创建的maya组节点
+ */
+MObject make_group(MDagModifier& in_modifier,
+                   const string& in_name,
+                   const MObject& in_parent) {
+  MStatus l_s{};
+  auto l_r = in_modifier.createNode(d_str{"transform"}, in_parent, &l_s);
+  DOODLE_CHICK(l_s);
+  l_s = in_modifier.renameNode(l_r, d_str{in_name});
+  DOODLE_CHICK(l_s);
+  l_s = in_modifier.doIt();
+  DOODLE_CHICK(l_s);
+  return l_r;
+}
 }  // namespace
 
 qcloth_shape::qcloth_shape() = default;
@@ -305,93 +342,35 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
     DOODLE_CHICK(k_s);
     k_s = k_node.setObject(i.currentItem());
     DOODLE_CHICK(k_s);
-    if (k_node.name(&k_s) == "cfx_grp") {
-      DOODLE_CHICK(k_s);
-      k_r.cfx_grp = i.currentItem(&k_s);
-      DOODLE_CHICK(k_s);
-    } else if (k_node.name(&k_s) == "solver_grp") {
-      DOODLE_CHICK(k_s);
-      k_r.solver_grp = i.currentItem(&k_s);
-      DOODLE_CHICK(k_s);
-    } else if (k_node.name(&k_s) == "anim_grp") {
-      DOODLE_CHICK(k_s);
-      k_r.anim_grp = i.currentItem(&k_s);
-      DOODLE_CHICK(k_s);
-    } else if (k_node.name(&k_s) == "constraint_grp") {
-      DOODLE_CHICK(k_s);
-      k_r.constraint_grp = i.currentItem(&k_s);
-      DOODLE_CHICK(k_s);
-    } else if (k_node.name(&k_s) == "collider_grp") {
-      DOODLE_CHICK(k_s);
-      k_r.collider_grp = i.currentItem(&k_s);
-      DOODLE_CHICK(k_s);
-    } else if (k_node.name(&k_s) == "deform_grp") {
-      DOODLE_CHICK(k_s);
-      k_r.deform_grp = i.currentItem(&k_s);
-      DOODLE_CHICK(k_s);
-    } else if (k_node.name(&k_s) == "export_grp") {
-      DOODLE_CHICK(k_s);
-      k_r.export_grp = i.currentItem(&k_s);
-      DOODLE_CHICK(k_s);
-    }
+    k_r.cfx_grp        = chick_group(k_node, "cfx_grp");
+    k_r.solver_grp     = chick_group(k_node, "solver_grp");
+    k_r.anim_grp       = chick_group(k_node, "anim_grp");
+    k_r.constraint_grp = chick_group(k_node, "constraint_grp");
+    k_r.collider_grp   = chick_group(k_node, "collider_grp");
+    k_r.deform_grp     = chick_group(k_node, "deform_grp");
+    k_r.export_grp     = chick_group(k_node, "export_grp");
   }
   MDagModifier k_m{};
-  if (k_r.cfx_grp.isNull()) {
-    k_r.cfx_grp = k_m.createNode(d_str{"transform"}, MObject::kNullObj, &k_s);
-    DOODLE_CHICK(k_s);
-    k_s = k_m.renameNode(k_r.cfx_grp, "cfx_grp");
-    DOODLE_CHICK(k_s);
-    k_s = k_m.doIt();
-    DOODLE_CHICK(k_s);
-  }
-  if (k_r.solver_grp.isNull()) {
-    k_r.solver_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
-    DOODLE_CHICK(k_s);
-    k_s = k_m.renameNode(k_r.solver_grp, "solver_grp");
-    DOODLE_CHICK(k_s);
-    k_s = k_m.doIt();
-    DOODLE_CHICK(k_s);
-  }
-  if (k_r.anim_grp.isNull()) {
-    k_r.anim_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
-    DOODLE_CHICK(k_s);
-    k_s = k_m.renameNode(k_r.anim_grp, "anim_grp");
-    DOODLE_CHICK(k_s);
-    k_s = k_m.doIt();
-    DOODLE_CHICK(k_s);
-  }
-  if (k_r.constraint_grp.isNull()) {
-    k_r.constraint_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
-    DOODLE_CHICK(k_s);
-    k_s = k_m.renameNode(k_r.constraint_grp, "constraint_grp");
-    DOODLE_CHICK(k_s);
-    k_s = k_m.doIt();
-    DOODLE_CHICK(k_s);
-  }
-  if (k_r.collider_grp.isNull()) {
-    k_r.collider_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
-    DOODLE_CHICK(k_s);
-    k_s = k_m.renameNode(k_r.collider_grp, "collider_grp");
-    DOODLE_CHICK(k_s);
-    k_s = k_m.doIt();
-    DOODLE_CHICK(k_s);
-  }
-  if (k_r.deform_grp.isNull()) {
-    k_r.deform_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
-    DOODLE_CHICK(k_s);
-    k_s = k_m.renameNode(k_r.deform_grp, "deform_grp");
-    DOODLE_CHICK(k_s);
-    k_s = k_m.doIt();
-    DOODLE_CHICK(k_s);
-  }
-  if (k_r.export_grp.isNull()) {
-    k_r.export_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
-    DOODLE_CHICK(k_s);
-    k_s = k_m.renameNode(k_r.export_grp, "export_grp");
-    DOODLE_CHICK(k_s);
-    k_s = k_m.doIt();
-    DOODLE_CHICK(k_s);
-  }
+  if (k_r.cfx_grp.isNull())
+    k_r.cfx_grp = make_group(k_m, "cfx_grp", MObject::kNullObj);
+
+  if (k_r.solver_grp.isNull())
+    k_r.solver_grp = make_group(k_m, "solver_grp", k_r.solver_grp);
+
+  if (k_r.anim_grp.isNull())
+    k_r.anim_grp = make_group(k_m, "anim_grp", k_r.anim_grp);
+
+  if (k_r.constraint_grp.isNull())
+    k_r.constraint_grp = make_group(k_m, "constraint_grp", k_r.constraint_grp);
+
+  if (k_r.collider_grp.isNull())
+    k_r.collider_grp = make_group(k_m, "collider_grp", k_r.collider_grp);
+
+  if (k_r.deform_grp.isNull())
+    k_r.deform_grp = make_group(k_m, "deform_grp", k_r.deform_grp);
+
+  if (k_r.export_grp.isNull())
+    k_r.export_grp = make_group(k_m, "export_grp", k_r.export_grp);
 
   return k_r;
 }
