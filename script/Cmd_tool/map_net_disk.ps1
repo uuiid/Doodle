@@ -8,7 +8,7 @@ $Net_MAPS = @(
     @("S:", "\\192.168.10.240\public\CangFeng", "藏锋_240"),
     @("R:", "\\192.168.10.240\public\WanGuShenHua", "万古神话_240"),
     @("Q:", "\\192.168.10.250\public\renjianzuideyi", "人间最得意_250"),
-    @("O:", "\\192.168.10.240\public\11-剪辑", "剪辑_240"),
+    @("O:", "\\192.168.10.240\public\剪辑_240", "剪辑_240"),
     @("N:", "\\192.168.10.250\public\HouQi", "后期_250"),
     @("M:", "\\192.168.10.218\jianji", "剪辑_218"),
     @("L:", "\\192.168.10.218\houqi", "后期_218"),
@@ -51,4 +51,4 @@ $My_Str += "`n`n即将重启文件管理器"
 Write-Host $My_Str
 
 Start-Process explorer
-# ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_net_disk.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\run2.exe
+# ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_net_disk.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\run2.1.exe

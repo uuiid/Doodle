@@ -20,7 +20,7 @@ $map_item = @(
     [map_dir]@{link = "C:\sy\WanGuShenHua_8"; source = "\\192.168.10.240\public\WanGuShenHua"; name = "万古神话_240" },
     [map_dir]@{link = "C:\sy\LianQiShiWanNian_8"; source = "\\192.168.10.240\public\LianQiShiWanNian"; name = "炼气十万年_240" },
     [map_dir]@{link = "C:\sy\CangFeng_8"; source = "\\192.168.10.240\public\CangFeng"; name = "藏锋_240" },
-    [map_dir]@{link = "C:\sy\JianJi_8"; source = "\\192.168.10.240\public\11-剪辑"; name = "剪辑_240" },
+    [map_dir]@{link = "C:\sy\JianJi_8"; source = "\\192.168.10.240\public\剪辑_240"; name = "剪辑_240" },
     
     [map_dir]@{link = "C:\sy\WanYuFengShen_9"; source = "\\192.168.10.218\WanYuFengShen"; name = "万域封神_218" },
     [map_dir]@{link = "C:\sy\KuangShenMoZun_9"; source = "\\192.168.10.218\KuangShenMoZun"; name = "狂神魔尊_218" },
