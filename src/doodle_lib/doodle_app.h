@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Windows.h>
-#include <doodle_lib/Exception/exception.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <imgui.h>
 
