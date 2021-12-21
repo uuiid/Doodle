@@ -13,7 +13,7 @@
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/Ninja_release_plug/plug/maya"
+                    "value": "${workspaceFolder}/build/Ninja_release_plug/plug/maya"
                 }
             ],
             "console": "internalConsole",
@@ -35,7 +35,7 @@
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/Ninja_release_plug/plug/maya"
+                    "value": "${workspaceFolder}/build/Ninja_release_plug/plug/maya"
                 }
             ],
             "console": "internalConsole",
@@ -54,26 +54,11 @@
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/Ninja_release_plug/plug/maya"
-                }
-            ],
-            "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
-        },
-        {
-            "name": "mayapy_debug_cmd",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "C:/Program Files/Autodesk/Maya2019/bin/mayapy.exe",
-            "args": [
-                "${workspaceFolder}/src/doodle_exe/main/test/test_maya.py"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [
+                    "value": "${workspaceFolder}/build/Ninja_release_plug/plug/maya"
+                },
                 {
-                    "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/Ninja_release_plug/plug/maya"
+                    "name": "PYTHONPATH",
+                    "value": "${env:PYTHONPATH};${workspaceFolder}/src/doodle_lib/resource;"
                 }
             ],
             "console": "internalConsole",
@@ -89,7 +74,7 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "env": {
-                "MAYA_MODULE_PATH": "${workspaceFolder}/Ninja_release_plug/plug/maya"
+                "MAYA_MODULE_PATH": "${workspaceFolder}/build/Ninja_release_plug/plug/maya"
             }
         },
         {
