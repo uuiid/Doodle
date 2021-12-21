@@ -12,18 +12,6 @@
 #include <doodle_lib_export.h>
 #include <spdlog/spdlog.h>
 
-#define DOODLE_LOG_DEBUG(...) \
-  SPDLOG_INFO(__VA_ARGS__);
-
-#define DOODLE_LOG_INFO(...) \
-  SPDLOG_INFO(__VA_ARGS__);
-
-#define DOODLE_LOG_WARN(...) \
-  SPDLOG_WARN(__VA_ARGS__);
-
-#define DOODLE_LOG_ERROR(...) \
-  SPDLOG_ERROR(__VA_ARGS__);
-
 #define DOODLE_SOURCE_LOC \
   ::spdlog::source_loc { __FILE__, __LINE__, SPDLOG_FUNCTION }
 
@@ -62,4 +50,30 @@ class DOODLELIB_API logger_ctrl {
   virtual void post_constructor();
 };
 
+template <class throw_T, class FormatString, class... Args>
+inline void chick_true(const bool& in, const ::spdlog::source_loc& in_loc, const FormatString& fmt, Args&&... args) {
+  if (!in) {
+    if constexpr (sizeof...(args) > 0) {
+      spdlog::log(in_loc, spdlog::level::warn, fmt, std::forward<Args>(args)...);
+      throw throw_T{fmt::format(fmt::to_string_view(fmt), fmt::make_format_args(args...))};
+    } else {
+      spdlog::log(in_loc, spdlog::level::warn, fmt);
+      throw throw_T{fmt::to_string(fmt)};
+    }
+  }
+}
+
 }  // namespace doodle
+#define DOODLE_LOG_DEBUG(...) \
+  SPDLOG_INFO(__VA_ARGS__);
+
+#define DOODLE_LOG_INFO(...) \
+  SPDLOG_INFO(__VA_ARGS__);
+
+#define DOODLE_LOG_WARN(...) \
+  SPDLOG_WARN(__VA_ARGS__);
+
+#define DOODLE_LOG_ERROR(...) \
+  SPDLOG_ERROR(__VA_ARGS__);
+#define DOODLE_CHICK_TRUE(exp, ...) \
+  ::doodle::chick_true<doodle::doodle_error>(exp, DOODLE_SOURCE_LOC, __VA_ARGS__)
