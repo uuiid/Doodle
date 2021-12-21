@@ -151,8 +151,8 @@ foreach (MAYA_LIB ${MAYA_LIBS_TO_FIND})
         target_include_directories(maya_${Maya_FIND_VERSION}_${MAYA_LIB} INTERFACE ${MAYA_INCLUDE_DIR_${Maya_FIND_VERSION}})
 
         set_target_properties(maya_${Maya_FIND_VERSION}_${MAYA_LIB} PROPERTIES
-                IMPORTED_LOCATION_DEBUG "${MAYA_${MAYA_LIB}_LIBRARY_dll_${Maya_FIND_VERSION}}"
-                IMPORTED_IMPLIB_DEBUG "${MAYA_${MAYA_LIB}_LIBRARY_${Maya_FIND_VERSION}}"
+                IMPORTED_LOCATION "${MAYA_${MAYA_LIB}_LIBRARY_dll_${Maya_FIND_VERSION}}"
+                IMPORTED_IMPLIB "${MAYA_${MAYA_LIB}_LIBRARY_${Maya_FIND_VERSION}}"
                 )
         target_link_libraries(maya_${Maya_FIND_VERSION}_all INTERFACE maya_${Maya_FIND_VERSION}_${MAYA_LIB})
     endif ()
