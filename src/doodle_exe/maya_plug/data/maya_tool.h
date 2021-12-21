@@ -20,4 +20,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name);
 MObject get_shading_engine(const MObject& in_node);
 
 MObject get_first_mesh(const MObject& in_node);
+
+MObject get_shape(const MObject& in_object);
+MObject get_transform(const MObject& in_object);
 }  // namespace doodle::maya_plug

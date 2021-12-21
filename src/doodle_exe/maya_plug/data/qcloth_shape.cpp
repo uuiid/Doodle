@@ -16,6 +16,7 @@
 #include <maya/MDagModifier.h>
 #include <maya/MFnSet.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MFnBlendShapeDeformer.h>
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -101,7 +102,6 @@ bool qcloth_shape::create_cache() const {
   return true;
 }
 
-
 void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   chick_component<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>(in_handle);
   chick_ctx<root_ref>();
@@ -146,7 +146,7 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
                      /// 设置材质
                      MFnSet l_mat{get_shading_engine(in_object.obj), &k_s};
                      DOODLE_CHICK(k_s);
-                     k_s = l_mat.addMember(k_proxy_node);
+                     k_s = l_mat.addMember(l_r);
                      DOODLE_CHICK(k_s);
                      return l_r;
                    });
@@ -181,7 +181,8 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
                   });
     /// 低模需要遍历寻找
     MObject k_low{};
-    for (MItDependencyGraph i{k_proxy_node, MFn::kMesh};
+    auto l_shape = get_shape(k_proxy_node);
+    for (MItDependencyGraph i{l_shape, MFn::kMesh};
          !i.isDone();
          i.next()) {
       k_low = i.currentItem(&k_s);
@@ -190,7 +191,7 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
     if (k_low.isNull())
       throw doodle_error{"没有找到低模"};
 
-    k_s = k_select.add(k_low, false);
+    k_s = k_select.add(get_transform(k_low), false);
     DOODLE_CHICK(k_s);
     /// 设置选择
     k_s = MGlobal::setActiveSelectionList(k_select);
@@ -200,10 +201,19 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   }
   {
     /// 创建解算网络的输出 这个可以用融合变形(其中先选择主动变形物体, 再选择被变形物体)
-    chick_true<maya_error>(l_high_mesh.size() == k_maya_high_mesh.size(),DOODLE_SOURCE_LOC,"a");
+    chick_true<maya_error>(l_high_mesh.size() == k_maya_high_mesh.size(), DOODLE_SOURCE_LOC, "节点数量不一致");
     for (int l_i = 0; l_i < l_high_mesh.size(); ++l_i) {
       auto& l_aim = k_maya_high_mesh[l_i].obj;
       auto& l_sim = l_high_mesh[l_i];
+      /// 先将高模权重重置为0;
+      MFnBlendShapeDeformer k_b{l_aim, &k_s};
+      MIntArray l_array{};
+      k_s = k_b.weightIndexList(l_array);
+      DOODLE_CHICK(k_s);
+      for (int l_j = 0; l_j < l_array.length(); ++l_j) {
+        k_b.setWeight(l_array[l_j], 0);
+      }
+      /// 创建选择列表
       MSelectionList l_list{};
       k_s = l_list.add(l_sim);
       DOODLE_CHICK(k_s);
@@ -211,6 +221,22 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
       DOODLE_CHICK(k_s);
       k_s = MGlobal::setActiveSelectionList(l_list);
       DOODLE_CHICK(k_s);
+      /// 这个设置包裹
+      k_s = MGlobal::executeCommand(d_str{R"(blendShape -automatic;)"});
+      DOODLE_CHICK(k_s);
+      /// 开始设置权重
+      MFnDependencyNode l_node1{l_aim, &k_s};
+      DOODLE_CHICK(k_s);
+      string l_aim_name = d_str{l_node.name(&k_s)};
+      DOODLE_CHICK(k_s);
+
+      k_s = l_node.setObject(l_sim);
+      DOODLE_CHICK(k_s);
+
+      string l_sim_name = d_str{l_node.name(&k_s)};
+      DOODLE_CHICK(k_s);
+      MGlobal::executeCommand(d_str{fmt::format(R"(setAttr "{}.{}" 1;)",
+                                                l_aim_name, l_sim_name)});
     }
   }
 }

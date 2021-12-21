@@ -39,7 +39,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
       DOODLE_LOG_INFO("节点下方没有 shape 形状节点, 不需要寻找形状节点")
     }
   }
-  if(l_plug.isNull(&k_s)){
+  if (l_plug.isNull(&k_s)) {
     DOODLE_CHICK(k_s);
     throw doodle_error{"无法找到属性"};
   }
@@ -98,8 +98,8 @@ MObject get_shading_engine(const MObject& in_node) {
 MObject get_first_mesh(const MObject& in_node) {
   MStatus k_s{};
   MObject k_obj = in_node;
-  if (in_node.hasFn(MFn::kDagNode)) {
-    MFnDagNode l_dag_node{in_node, &k_s};
+  if (k_obj.hasFn(MFn::kDagNode)) {
+    MFnDagNode l_dag_node{k_obj, &k_s};
     DOODLE_CHICK(k_s);
     MDagPath l_path{};
     k_s = l_dag_node.getPath(l_path);
@@ -123,5 +123,39 @@ MObject get_first_mesh(const MObject& in_node) {
     return obj;
   }
   return MObject();
+}
+MObject get_shape(const MObject& in_object) {
+  MStatus k_s{};
+  MObject k_obj = in_object;
+  MObject k_r{};
+  if (k_obj.hasFn(MFn::kDagNode)) {
+    MFnDagNode l_dag_node{k_obj, &k_s};
+    DOODLE_CHICK(k_s);
+    MDagPath l_path{};
+    k_s = l_dag_node.getPath(l_path);
+    DOODLE_CHICK(k_s);
+    k_s = l_path.extendToShape();
+    DOODLE_CHICK(k_s);
+    k_r = l_path.node(&k_s);
+    DOODLE_CHICK(k_s);
+  }
+  chick_true<maya_error>(!k_r.isNull(), DOODLE_SOURCE_LOC, "没有找到形状");
+  return k_r;
+}
+MObject get_transform(const MObject& in_object) {
+  MStatus k_s{};
+  MObject k_obj = in_object;
+  MObject k_r{};
+  if (k_obj.hasFn(MFn::kDagNode)) {
+    MFnDagNode l_dag_node{k_obj, &k_s};
+    DOODLE_CHICK(k_s);
+    MDagPath l_path{};
+    k_s = l_dag_node.getPath(l_path);
+    DOODLE_CHICK(k_s);
+    k_r = l_path.transform(&k_s);
+    DOODLE_CHICK(k_s);
+  }
+  chick_true<maya_error>(!k_r.isNull(), DOODLE_SOURCE_LOC, "没有找到变换");
+  return k_r;
 }
 }  // namespace doodle::maya_plug
