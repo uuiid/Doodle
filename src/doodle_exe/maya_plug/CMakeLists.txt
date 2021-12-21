@@ -72,10 +72,10 @@ foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)
     set_target_properties(
             doodle_plug_${MAYA_VERSION} PROPERTIES SUFFIX ".mll"
     )
-    if (NOT RUN_COPY)
-        target_compile_options(doodle_plug_${MAYA_VERSION} PRIVATE /Zi)
-        target_link_options(doodle_plug_${MAYA_VERSION} PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF)
-    endif ()
+#    if (NOT RUN_COPY)
+#        target_compile_options(doodle_plug_${MAYA_VERSION} PRIVATE /Zi)
+#        target_link_options(doodle_plug_${MAYA_VERSION} PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF)
+#    endif ()
     add_dependencies(${PROJECT_NAME}_maya_plug doodle_plug_${MAYA_VERSION})
 endforeach ()
 
