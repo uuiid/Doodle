@@ -156,53 +156,63 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 #include <toolkit/toolkit.h>
 #include <windows.h>
 namespace doodle {
+using win_handle = HWND;
+using win_class  = WNDCLASSEX;
+
+class doodle_app::impl {
+ public:
+  win_handle p_hwnd;
+  win_class p_win_class;
+  impl()
+      : p_hwnd(),
+        p_win_class({sizeof(WNDCLASSEX),
+                     CS_CLASSDC, WndProc,
+                     0L,
+                     0L,
+                     GetModuleHandle(nullptr),
+                     nullptr,
+                     nullptr,
+                     nullptr,
+                     nullptr,
+                     _T("doodle"),
+                     nullptr}) {}
+};
 
 doodle_app* doodle_app::self;
 
 doodle_app::doodle_app()
-    : p_hwnd{},
-      p_title(conv::utf_to_utf<wchar_t>(fmt::format(
+    : p_title(conv::utf_to_utf<wchar_t>(fmt::format(
           "doodle {}.{}.{}.{}",
           Doodle_VERSION_MAJOR,
           Doodle_VERSION_MINOR,
           Doodle_VERSION_PATCH,
           Doodle_VERSION_TWEAK))),
-      p_win_class{sizeof(WNDCLASSEX),
-                  CS_CLASSDC, WndProc,
-                  0L,
-                  0L,
-                  GetModuleHandle(nullptr),
-                  nullptr,
-                  nullptr,
-                  nullptr,
-                  nullptr,
-                  _T("doodle"),
-                  nullptr},
       p_done(false),
       wregister(new_object<widget_register>()),
       p_show_err(false),
       p_main_win(),
-      p_pd3dDevice(nullptr) {
+      p_pd3dDevice(nullptr),
+      p_impl(std::make_unique<impl>()) {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
-  ::RegisterClassEx(&p_win_class);
-  p_hwnd = ::CreateWindow(p_win_class.lpszClassName,
-                          p_title.c_str(),
-                          WS_OVERLAPPEDWINDOW,
-                          100, 100, 1280, 800,
-                          nullptr, nullptr,
-                          p_win_class.hInstance,
-                          nullptr);
+  ::RegisterClassEx(&p_impl->p_win_class);
+  p_impl->p_hwnd = ::CreateWindow(p_impl->p_win_class.lpszClassName,
+                                  p_title.c_str(),
+                                  WS_OVERLAPPEDWINDOW,
+                                  100, 100, 1280, 800,
+                                  nullptr, nullptr,
+                                  p_impl->p_win_class.hInstance,
+                                  nullptr);
 
   // Initialize Direct3D
-  if (!CreateDeviceD3D(p_hwnd)) {
+  if (!CreateDeviceD3D(p_impl->p_hwnd)) {
     CleanupDeviceD3D();
-    ::UnregisterClass(p_win_class.lpszClassName, p_win_class.hInstance);
+    ::UnregisterClass(p_impl->p_win_class.lpszClassName, p_impl->p_win_class.hInstance);
   }
 
   // Show the window
-  ::ShowWindow(p_hwnd, SW_SHOWDEFAULT);
-  ::UpdateWindow(p_hwnd);
+  ::ShowWindow(p_impl->p_hwnd, SW_SHOWDEFAULT);
+  ::UpdateWindow(p_impl->p_hwnd);
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
@@ -234,20 +244,19 @@ doodle_app::doodle_app()
   }
 
   // Setup Platform/Renderer backends
-  ImGui_ImplWin32_Init(p_hwnd);
+  ImGui_ImplWin32_Init(p_impl->p_hwnd);
   ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
   p_pd3dDevice = g_pd3dDevice;
 }
 doodle_app::~doodle_app() {
-  p_hwnd = static_cast<HWND>(p_hwnd);
   // Cleanup
   ImGui_ImplDX11_Shutdown();
   ImGui_ImplWin32_Shutdown();
   ImGui::DestroyContext();
 
   CleanupDeviceD3D();
-  ::DestroyWindow(p_hwnd);
-  ::UnregisterClass(p_win_class.lpszClassName, p_win_class.hInstance);
+  ::DestroyWindow(p_impl->p_hwnd);
+  ::UnregisterClass(p_impl->p_win_class.lpszClassName, p_impl->p_win_class.hInstance);
 }
 
 base_widget_ptr doodle_app::get_main_windows() const {
@@ -281,7 +290,7 @@ doodle_app* doodle_app::Get() {
 }
 
 bool doodle_app::valid() const {
-  return this->p_hwnd != nullptr;
+  return this->p_impl->p_hwnd != nullptr;
 }
 void doodle_app::metadata_load() {
   auto k_f = doodle_lib::Get().get_metadata_factory();
@@ -311,7 +320,7 @@ void doodle_app::metadata_loop_one() {
 }
 
 base_widget_ptr doodle_app::loop_begin() {
-  ::ShowWindow(p_hwnd, SW_SHOW);
+  ::ShowWindow(p_impl->p_hwnd, SW_SHOW);
   // Load Fonts
   // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
   // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
@@ -340,7 +349,7 @@ base_widget_ptr doodle_app::loop_begin() {
 
 void doodle_app::hide_windows() {
   if (p_done)
-    ::ShowWindow(p_hwnd, SW_HIDE);
+    ::ShowWindow(p_impl->p_hwnd, SW_HIDE);
 }
 
 // Main loop

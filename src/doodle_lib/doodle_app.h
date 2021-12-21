@@ -4,22 +4,19 @@
 
 #pragma once
 
-#include <Windows.h>
 #include <doodle_lib/exception/exception.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <imgui.h>
 
 #include <boost/signals2.hpp>
 struct ID3D11Device;
 
 namespace doodle {
-using win_handle = HWND;
-using win_class  = WNDCLASSEX;
 
 class long_time_tasks_widget;
 class DOODLELIB_API doodle_app : public details::no_copy {
-  win_handle p_hwnd;
-  win_class p_win_class;
+  class impl;
+
+  std::unique_ptr<impl> p_impl;
   static doodle_app* self;
 
   virtual base_widget_ptr get_main_windows() const;
