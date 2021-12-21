@@ -16,7 +16,7 @@
 #include <maya/MDagModifier.h>
 #include <maya/MFnSet.h>
 #include <maya/MItDependencyGraph.h>
-#include <maya/MFnBlendShapeDeformer.h>
+#include <maya/MFnSkinCluster.h>
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -37,6 +37,141 @@ maya_obj::maya_obj(const MObject& in_object) {
   DOODLE_CHICK(k_s);
 }
 }  // namespace qcloth_shape_n
+
+namespace {
+MObject make_low_node(const MObject& in_object, const MObject& in_parent) {
+  MStatus l_s{};
+  MFnDagNode l_node{};
+  /// \brief 返回的结果, 复制出来的obj
+  MObject l_r{};
+
+  // 复制传入节点
+  l_s = l_node.setObject(in_object);
+  DOODLE_CHICK(l_s);
+  l_r = l_node.duplicate(false, false, &l_s);
+  chick_true<maya_error>(!l_r.isNull(), DOODLE_SOURCE_LOC, "无法复制节点");
+
+  // 设置复制节点的名称
+  string k_anim_mesh_name = d_str{l_node.name(&l_s)};
+  DOODLE_CHICK(l_s);
+  l_node.setName(d_str{fmt::format("{}_input", k_anim_mesh_name)}, false, &l_s);
+  DOODLE_CHICK(l_s);
+
+  // 设置材质属性
+  MFnSet l_mat{get_shading_engine(in_object), &l_s};
+  DOODLE_CHICK(l_s);
+  l_s = l_mat.addMember(l_r);
+  DOODLE_CHICK(l_s);
+
+  /// 将复制节点添加为父节点的子物体
+  l_s = l_node.setObject(in_parent);
+  DOODLE_CHICK(l_s);
+  l_s = l_node.addChild(l_r);
+  DOODLE_CHICK(l_s);
+  return l_r;
+}
+
+std::vector<MObject> make_high_node(const qcloth_shape_n::shape_list& in_high_node, const MObject& in_parent) {
+  MStatus l_s{};
+  std::vector<MObject> l_r{};
+  MFnDagNode l_node{};
+  /// 复制高模节点作为输出
+  std::transform(in_high_node.begin(), in_high_node.end(),
+                 std::back_inserter(l_r),
+                 [&](const qcloth_shape_n::maya_obj& in_object) -> MObject {
+                   /// 复制模型
+                   l_s = l_node.setObject(in_object.obj);
+                   DOODLE_CHICK(l_s);
+                   auto l_r = l_node.duplicate(false, false, &l_s);
+                   DOODLE_CHICK(l_s);
+
+                   // 设置复制节点的名称
+                   string k_anim_mesh_name = d_str{l_node.name(&l_s)};
+                   DOODLE_CHICK(l_s);
+                   l_node.setName(d_str{fmt::format("{}_out_mesh", k_anim_mesh_name)}, false, &l_s);
+                   DOODLE_CHICK(l_s);
+
+                   /// 设置材质
+                   MFnSet l_mat{get_shading_engine(in_object.obj), &l_s};
+                   DOODLE_CHICK(l_s);
+                   l_s = l_mat.addMember(l_r);
+                   DOODLE_CHICK(l_s);
+
+                   /// 将复制节点添加为父节点的子物体
+                   l_s = l_node.setObject(in_parent);
+                   DOODLE_CHICK(l_s);
+                   l_s = l_node.addChild(l_r);
+                   DOODLE_CHICK(l_s);
+
+                   return l_r;
+                 });
+  return l_r;
+}
+
+void warp_model(const MObject& in_low, const std::vector<MObject>& in_high_node) {
+  MStatus l_s{};
+
+  /// 创建包裹变形(maya的包裹变形需要先选择高模, 可以多个, 然后选中低模) 包裹时需要添加独占式绑定参数
+  MSelectionList k_select{};
+  /// 添加高模
+  std::for_each(in_high_node.begin(), in_high_node.end(),
+                [&](const MObject& in_obj) -> void {
+                  l_s = k_select.add(in_obj, false);
+                  DOODLE_CHICK(l_s);
+                });
+
+  l_s = k_select.add(in_low, false);
+  DOODLE_CHICK(l_s);
+  /// 设置选择
+  l_s = MGlobal::setActiveSelectionList(k_select);
+  DOODLE_CHICK(l_s);
+  l_s = MGlobal::executeCommand(d_str{R"(doWrapArgList "4" {"1","0","0.1", "1","1"};)"});
+  DOODLE_CHICK(l_s);
+}
+
+void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
+  MStatus l_s{};
+  MObject l_skin_cluster{};
+  MFnDagNode l_node{};
+  /// 寻找高模的皮肤簇
+  auto l_shape = get_shape(in_anim_node);
+  for (MItDependencyGraph i{l_shape,
+                            MFn::kSkinClusterFilter,
+                            MItDependencyGraph::Direction::kUpstream};
+       !i.isDone();
+       i.next()) {
+    l_skin_cluster = i.currentItem(&l_s);
+    DOODLE_CHICK(l_s);
+  }
+  chick_true<maya_error>(!l_skin_cluster.isNull(), DOODLE_SOURCE_LOC, "没有找到混合变形节点");
+  /// 先将高模的皮肤簇权重重置为0;
+  MFnSkinCluster l_fn_skin_cluster{l_skin_cluster, &l_s};
+  l_s = l_fn_skin_cluster.setEnvelope(0);
+  DOODLE_CHICK(l_s);
+
+  ///  获得名称进行格式化命令
+  MFnDagNode l_node1{in_anim_node, &l_s};
+  DOODLE_CHICK(l_s);
+  string l_aim_name = d_str{l_node.name(&l_s)};
+  DOODLE_CHICK(l_s);
+
+  l_s = l_node.setObject(in_sim_node);
+  DOODLE_CHICK(l_s);
+
+  string l_sim_name = d_str{l_node.name(&l_s)};
+  DOODLE_CHICK(l_s);
+  /// 这个设置包裹
+  MStringArray l_blend{};
+  l_s = MGlobal::executeCommand(d_str{
+                                    fmt::format(R"(blendShape -automatic {} {};)",
+                                                l_sim_name, l_aim_name)},
+                                l_blend, true);
+  DOODLE_CHICK(l_s);
+  //      /// 开始设置权重
+  MGlobal::executeCommand(d_str{fmt::format(R"(setAttr "{}.{}" 1;)",
+                                            l_blend[0], l_sim_name)});
+};
+}  // namespace
 
 qcloth_shape::qcloth_shape() = default;
 
@@ -113,44 +248,13 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   MDagModifier l_modifier{};
 
   /// \brief 主要的动画输出节点(需要输入到解算输入端)
-  auto& k_anim_mesh = in_handle.get<qcloth_shape_n::maya_obj>();
-  k_s               = l_node.setObject(k_anim_mesh.obj);
-  DOODLE_CHICK(k_s);
-  string k_anim_mesh_name = d_str{l_node.name(&k_s)};
-  DOODLE_CHICK(k_s);
+  auto& k_anim_mesh      = in_handle.get<qcloth_shape_n::maya_obj>();
   /// \brief 主要的输入节点
-  auto k_proxy_node = l_node.duplicate(false, false, &k_s);
-  {  ///重命名节点
-    k_s = l_node.setObject(k_proxy_node);
-    DOODLE_CHICK(k_s);
-    l_node.setName(d_str{fmt::format("{}{}", k_anim_mesh_name, k_ref.cloth_proxy)}, false, &k_s);
-    DOODLE_CHICK(k_s);
-    /// 设置材质
-    MFnSet l_mat{get_shading_engine(k_anim_mesh.obj), &k_s};
-    DOODLE_CHICK(k_s);
-    k_s = l_mat.addMember(k_proxy_node);
-    DOODLE_CHICK(k_s);
-  }
-  DOODLE_CHICK(k_s);
+  auto k_proxy_node      = make_low_node(k_anim_mesh.obj, l_group.anim_grp);
+  /// \brief 动画高模
   auto& k_maya_high_mesh = in_handle.get<qcloth_shape_n::shape_list>();
-  std::vector<MObject> l_high_mesh{};
-  {
-    /// 复制高模节点作为输出
-    std::transform(k_maya_high_mesh.begin(), k_maya_high_mesh.end(),
-                   std::back_inserter(l_high_mesh),
-                   [&](const qcloth_shape_n::maya_obj& in_object) -> MObject {
-                     k_s = l_node.setObject(in_object.obj);
-                     DOODLE_CHICK(k_s);
-                     auto l_r = l_node.duplicate(false, false, &k_s);
-                     DOODLE_CHICK(k_s);
-                     /// 设置材质
-                     MFnSet l_mat{get_shading_engine(in_object.obj), &k_s};
-                     DOODLE_CHICK(k_s);
-                     k_s = l_mat.addMember(l_r);
-                     DOODLE_CHICK(k_s);
-                     return l_r;
-                   });
-  }
+  auto l_high_mesh       = make_high_node(k_maya_high_mesh, l_group.deform_grp);
+
   MDagPath l_path{};
   {  /// 创建动画网格和解算网络的输入
     /// 连接两个属性的输入和输出
@@ -171,15 +275,7 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
     DOODLE_CHICK(k_s);
   }
   {
-    /// 创建包裹变形(maya的包裹变形需要先选择高模, 可以多个, 然后选中低模) 包裹时需要添加独占式绑定参数
-    MSelectionList k_select{};
-    /// 添加高模
-    std::for_each(l_high_mesh.begin(), l_high_mesh.end(),
-                  [&](const MObject& in_obj) -> void {
-                    k_s = k_select.add(in_obj, false);
-                    DOODLE_CHICK(k_s);
-                  });
-    /// 低模需要遍历寻找
+    ///  这里由于是使用解算命令创建出来的， 所以需要寻找新的低模
     MObject k_low{};
     auto l_shape = get_shape(k_proxy_node);
     for (MItDependencyGraph i{l_shape, MFn::kMesh};
@@ -188,55 +284,14 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
       k_low = i.currentItem(&k_s);
       DOODLE_CHICK(k_s);
     }
-    if (k_low.isNull())
-      throw doodle_error{"没有找到低模"};
-
-    k_s = k_select.add(get_transform(k_low), false);
-    DOODLE_CHICK(k_s);
-    /// 设置选择
-    k_s = MGlobal::setActiveSelectionList(k_select);
-    DOODLE_CHICK(k_s);
-    k_s = MGlobal::executeCommand(d_str{R"(doWrapArgList "4" {"1","0","0.1", "1","1"};)"});
-    DOODLE_CHICK(k_s);
+    chick_true<maya_error>(!k_low.isNull(), DOODLE_SOURCE_LOC, "没有找到解算输出的模型");
+    warp_model(k_low, l_high_mesh);
   }
   {
     /// 创建解算网络的输出 这个可以用融合变形(其中先选择主动变形物体, 再选择被变形物体)
     chick_true<maya_error>(l_high_mesh.size() == k_maya_high_mesh.size(), DOODLE_SOURCE_LOC, "节点数量不一致");
     for (int l_i = 0; l_i < l_high_mesh.size(); ++l_i) {
-      auto& l_aim = k_maya_high_mesh[l_i].obj;
-      auto& l_sim = l_high_mesh[l_i];
-      /// 先将高模权重重置为0;
-      MFnBlendShapeDeformer k_b{l_aim, &k_s};
-      MIntArray l_array{};
-      k_s = k_b.weightIndexList(l_array);
-      DOODLE_CHICK(k_s);
-      for (int l_j = 0; l_j < l_array.length(); ++l_j) {
-        k_b.setWeight(l_array[l_j], 0);
-      }
-      /// 创建选择列表
-      MSelectionList l_list{};
-      k_s = l_list.add(l_sim);
-      DOODLE_CHICK(k_s);
-      k_s = l_list.add(l_aim);
-      DOODLE_CHICK(k_s);
-      k_s = MGlobal::setActiveSelectionList(l_list);
-      DOODLE_CHICK(k_s);
-      /// 这个设置包裹
-      k_s = MGlobal::executeCommand(d_str{R"(blendShape -automatic;)"});
-      DOODLE_CHICK(k_s);
-      /// 开始设置权重
-      MFnDependencyNode l_node1{l_aim, &k_s};
-      DOODLE_CHICK(k_s);
-      string l_aim_name = d_str{l_node.name(&k_s)};
-      DOODLE_CHICK(k_s);
-
-      k_s = l_node.setObject(l_sim);
-      DOODLE_CHICK(k_s);
-
-      string l_sim_name = d_str{l_node.name(&k_s)};
-      DOODLE_CHICK(k_s);
-      MGlobal::executeCommand(d_str{fmt::format(R"(setAttr "{}.{}" 1;)",
-                                                l_aim_name, l_sim_name)});
+      transfer_dynamic(l_high_mesh[l_i], k_maya_high_mesh[l_i].obj);
     }
   }
 }
@@ -253,6 +308,10 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
     if (k_node.name(&k_s) == "cfx_grp") {
       DOODLE_CHICK(k_s);
       k_r.cfx_grp = i.currentItem(&k_s);
+      DOODLE_CHICK(k_s);
+    } else if (k_node.name(&k_s) == "solver_grp") {
+      DOODLE_CHICK(k_s);
+      k_r.solver_grp = i.currentItem(&k_s);
       DOODLE_CHICK(k_s);
     } else if (k_node.name(&k_s) == "anim_grp") {
       DOODLE_CHICK(k_s);
@@ -281,6 +340,14 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
     k_r.cfx_grp = k_m.createNode(d_str{"transform"}, MObject::kNullObj, &k_s);
     DOODLE_CHICK(k_s);
     k_s = k_m.renameNode(k_r.cfx_grp, "cfx_grp");
+    DOODLE_CHICK(k_s);
+    k_s = k_m.doIt();
+    DOODLE_CHICK(k_s);
+  }
+  if (k_r.solver_grp.isNull()) {
+    k_r.solver_grp = k_m.createNode(d_str{"transform"}, k_r.cfx_grp, &k_s);
+    DOODLE_CHICK(k_s);
+    k_s = k_m.renameNode(k_r.solver_grp, "solver_grp");
     DOODLE_CHICK(k_s);
     k_s = k_m.doIt();
     DOODLE_CHICK(k_s);

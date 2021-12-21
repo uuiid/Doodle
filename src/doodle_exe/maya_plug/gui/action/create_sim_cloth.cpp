@@ -38,6 +38,7 @@ bool create_sim_cloth::render() {
       DOODLE_CHICK(k_s);
       k_h.emplace<qcloth_shape_n::maya_obj>(k_node);
       k_h.emplace<qcloth_shape>();
+      k_h.emplace<qcloth_shape_n::shape_list>();
       p_list.push_back(k_h);
     }
   }
@@ -56,6 +57,9 @@ bool create_sim_cloth::render() {
           l_list.emplace_back(k_node);
         }
         l_h.emplace<qcloth_shape_n::shape_list>(l_list);
+      }
+      for (auto& k_hig_mesh : l_h.get<qcloth_shape_n::shape_list>()) {
+        dear::Text(k_hig_mesh.p_name);
       }
     };
   }
@@ -76,7 +80,7 @@ bool create_sim_cloth::render() {
       auto k_obj = i.thisNode(&k_s);
       DOODLE_LOG_INFO(k_obj.apiTypeStr());
       MFnDependencyNode k_dep{k_obj};
-      DOODLE_LOG_INFO("{}",k_dep.typeId(&k_s).id());
+      DOODLE_LOG_INFO("{}", k_dep.typeId(&k_s).id());
       auto k_name = k_dep.typeName(&k_s);
       DOODLE_CHICK(k_s);
       DOODLE_LOG_INFO("{}", d_str{k_name}.str());

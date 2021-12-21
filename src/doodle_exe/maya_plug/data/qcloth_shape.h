@@ -35,6 +35,7 @@ class qcloth_shape {
   class cloth_group {
    public:
     MObject cfx_grp;
+    MObject solver_grp;
     MObject anim_grp;
     MObject constraint_grp;
     MObject collider_grp;
