@@ -15,10 +15,12 @@
 #include <maya/MItDag.h>
 #include <maya/MDagModifier.h>
 #include <maya/MFnSet.h>
+#include <maya/MItDependencyGraph.h>
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/maya_plug_fwd.h>
+
 #include <magic_enum.hpp>
 
 namespace doodle::maya_plug {
@@ -99,6 +101,7 @@ bool qcloth_shape::create_cache() const {
   return true;
 }
 
+
 void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   chick_component<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>(in_handle);
   chick_ctx<root_ref>();
@@ -168,10 +171,47 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
     DOODLE_CHICK(k_s);
   }
   {
-      /// 创建解算网络的输出
+    /// 创建包裹变形(maya的包裹变形需要先选择高模, 可以多个, 然后选中低模) 包裹时需要添加独占式绑定参数
+    MSelectionList k_select{};
+    /// 添加高模
+    std::for_each(l_high_mesh.begin(), l_high_mesh.end(),
+                  [&](const MObject& in_obj) -> void {
+                    k_s = k_select.add(in_obj, false);
+                    DOODLE_CHICK(k_s);
+                  });
+    /// 低模需要遍历寻找
+    MObject k_low{};
+    for (MItDependencyGraph i{k_proxy_node, MFn::kMesh};
+         !i.isDone();
+         i.next()) {
+      k_low = i.currentItem(&k_s);
+      DOODLE_CHICK(k_s);
+    }
+    if (k_low.isNull())
+      throw doodle_error{"没有找到低模"};
 
-  } {
-    /// 创建包裹变形
+    k_s = k_select.add(k_low, false);
+    DOODLE_CHICK(k_s);
+    /// 设置选择
+    k_s = MGlobal::setActiveSelectionList(k_select);
+    DOODLE_CHICK(k_s);
+    k_s = MGlobal::executeCommand(d_str{R"(doWrapArgList "4" {"1","0","0.1", "1","1"};)"});
+    DOODLE_CHICK(k_s);
+  }
+  {
+    /// 创建解算网络的输出 这个可以用融合变形(其中先选择主动变形物体, 再选择被变形物体)
+    chick_true<maya_error>(l_high_mesh.size() == k_maya_high_mesh.size(),DOODLE_SOURCE_LOC,"a");
+    for (int l_i = 0; l_i < l_high_mesh.size(); ++l_i) {
+      auto& l_aim = k_maya_high_mesh[l_i].obj;
+      auto& l_sim = l_high_mesh[l_i];
+      MSelectionList l_list{};
+      k_s = l_list.add(l_sim);
+      DOODLE_CHICK(k_s);
+      k_s = l_list.add(l_aim);
+      DOODLE_CHICK(k_s);
+      k_s = MGlobal::setActiveSelectionList(l_list);
+      DOODLE_CHICK(k_s);
+    }
   }
 }
 
