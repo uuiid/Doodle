@@ -148,8 +148,7 @@ bool database::has_components() const {
 database::operator doodle::metadata_database() const {
   auto k_h = make_handle(*this);
 
-  if (!k_h.any_of<DOODLE_SERIALIZATION>())
-    throw serialization_error{"空组件"};
+  chick_true<serialization_error>(k_h.any_of<DOODLE_SERIALIZATION>(), DOODLE_LOC, "组件缺失");
 
   metadata_database k_tmp{};
   ///转换id

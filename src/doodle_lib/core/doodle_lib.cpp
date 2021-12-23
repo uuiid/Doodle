@@ -5,7 +5,7 @@
 #include "doodle_lib.h"
 
 #include <date/tz.h>
-#include <doodle_lib/Logger/logger.h>
+#include <doodle_lib/logger/logger.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/exception/exception.h>
 #include <doodle_lib/gui/action/command.h>
@@ -70,13 +70,10 @@ FSys::path doodle_lib::create_time_database() {
     for (const auto& i : k_path) {
       FSys::ofstream k_ofstream{k_local_path / i.filename(), std::ios::out | std::ios::binary};
       DOODLE_LOG_INFO("开始创建数据库 {}", k_local_path / i.filename());
-      if (k_ofstream) {
-        auto k_file = cmrc::DoodleLibResource::get_filesystem().open("resource/tzdata/" + i.filename());
-        k_ofstream.write(k_file.begin(), boost::numeric_cast<std::int64_t>(k_file.size()));
-      } else {
-        DOODLE_LOG_INFO("无法创建数据库 {}", k_local_path / i.filename());
-        throw doodle_error{fmt::format("无法创建数据库 {}", k_local_path / i.filename())};
-      }
+
+      chick_true<doodle_error>(k_ofstream, DOODLE_LOC, "无法创建数据库 {}", k_local_path / i.filename());
+      auto k_file = cmrc::DoodleLibResource::get_filesystem().open("resource/tzdata/" + i.filename());
+      k_ofstream.write(k_file.begin(), boost::numeric_cast<std::int64_t>(k_file.size()));
     }
   }
   return k_local_path;

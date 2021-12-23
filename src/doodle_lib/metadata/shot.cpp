@@ -19,8 +19,8 @@ const int64_t& shot::get_shot() const noexcept {
 }
 
 void shot::set_shot(const int64_t& in_shot) {
-  if (in_shot < 0)
-    throw doodle_error{"shot无法为负"};
+
+  chick_true<doodle_error>(in_shot > 0, DOODLE_LOC, "shot无法为负");
 
   p_shot = in_shot;
 }

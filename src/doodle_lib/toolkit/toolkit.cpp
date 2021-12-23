@@ -59,7 +59,7 @@ PYTHONPATH+:= scripts
     }
   } catch (FSys::filesystem_error &err) {
     DOODLE_LOG_ERROR(err.what());
-    throw doodle_error{err.what()};
+    throw;
   }
 }
 
@@ -83,7 +83,7 @@ void toolkit::installUePath(const FSys::path &path) {
     file_system::local_copy(sourePath, targetPath, false);
   } catch (FSys::filesystem_error &error) {
     DOODLE_LOG_ERROR(error.what());
-    throw doodle_error{error.what()};
+    throw;
   }
 }
 
@@ -116,8 +116,7 @@ bool toolkit::deleteUeCache() {
   //获取环境变量
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, nullptr, &pManager);
-  if (!pManager)
-    throw doodle_error("无法找到保存路径");
+  chick_true<doodle_error>(pManager, DOODLE_LOC, "无法找到保存路径");
 
   FSys::path path{pManager};
   CoTaskMemFree(pManager);

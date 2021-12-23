@@ -377,8 +377,10 @@ std::vector<entt::handle> assets_widget::get_selects() const {
 
 void assets_widget::set_metadata(const entt::entity& in_ptr) {
   auto k_h = make_handle(in_ptr);
-  if (!k_h.all_of<database_root, database, database_stauts>())
-    throw doodle_error{"缺失组件"};
+  chick_true<doodle_error>(k_h.all_of<database_root, database, database_stauts>(),
+                           DOODLE_LOC,
+                           "缺失组件");
+
   p_impl->p_root = k_h;
 }
 

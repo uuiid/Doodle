@@ -4,7 +4,6 @@
 #include <doodle_lib/doodle_lib_pch.h>
 #include <doodle_lib/doodle_macro.h>
 #include <doodle_lib/exception/exception.h>
-#include <doodle_lib/lib_warp/boost_serialization_warp.h>
 #include <doodle_lib/lib_warp/cmrcWarp.h>
 #include <doodle_lib/lib_warp/json_warp.h>
 #include <doodle_lib/lib_warp/sqlppWarp.h>
@@ -376,23 +375,21 @@ entt::entity to_entity(const Component &instance) {
 template <class Component_to, class Component_From>
 entt::entity to_comm(const Component_From &instance) {
   auto k_h = make_handle(instance);
-  if (!k_h.any_of<Component_to>())
-    throw component_error{"缺失组件"};
+  chick_true<component_error>(k_h.any_of<Component_to>(), DOODLE_LOC, "缺失组件");
   return entt::to_entity(*(g_reg()), instance);
 };
 
 template <class... Component>
 void chick_component(const entt::handle &t) {
-  if (!t)
-    throw doodle_error{"无效句柄"};
-  if (!t.any_of<Component...>())
-    throw component_error{"缺失组件"};
+  chick_true<doodle_error>(t, DOODLE_LOC, "无效句柄");
+  chick_true<component_error>(t.any_of<Component...>(), DOODLE_LOC, "缺失组件");
 }
 
 template <class Component>
 void chick_ctx() {
-  if (!g_reg()->template try_ctx<Component>())
-    throw doodle_error{"缺失上下文"};
+  chick_true<component_error>(
+      g_reg()->template try_ctx<Component>(),
+      DOODLE_LOC, "缺失上下文");
 }
 
 class DOODLELIB_API null_fun_t {

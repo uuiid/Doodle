@@ -28,14 +28,12 @@ maya_camera::maya_camera(const MDagPath& in_path)
 
 void maya_camera::chick() const {
   MStatus k_s{};
-  if (!p_path.isValid(&k_s)) {
-    DOODLE_CHICK(k_s);
-    throw doodle_error{"无效的dag 路径"};
-  }
-  if (!p_path.hasFn(MFn::Type::kCamera, &k_s)) {
-    DOODLE_CHICK(k_s);
-    throw doodle_error{"dag 路径不兼容 MFn::Type::kCamera"};
-  }
+  chick_true<doodle_error>(p_path.isValid(&k_s), DOODLE_SOURCE_LOC, "无效的dag 路径");
+  DOODLE_CHICK(k_s);
+  chick_true<doodle_error>(p_path.hasFn(MFn::Type::kCamera, &k_s),
+                           DOODLE_SOURCE_LOC,
+                           "dag 路径不兼容 MFn::Type::kCamera");
+  DOODLE_CHICK(k_s);
 }
 
 bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
@@ -169,8 +167,7 @@ void maya_camera::conjecture() {
     DOODLE_LOG_INFO("相机 {} 优先级是 {}", k_c.p_dag_path.fullPathName(), k_c.priority);
   }
 
-  if (k_list.empty())
-    throw doodle_error{"没有找到任何相机"};
+  chick_true<doodle_error>(!k_list.empty(), DOODLE_SOURCE_LOC, "没有找到任何相机");
 
   auto k_cam_ptr = g_reg()->try_ctx<maya_camera>();
   if (k_cam_ptr) {

@@ -10,62 +10,60 @@
 #include <boost/iostreams/detail/ios.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 
-namespace doodle{
-
+namespace doodle {
 
 /**
  * @brief 这个是从std 兼容的序列中读取数据的后端
  * @tparam Container 容器类
  */
-template<class Container>
+template <class Container>
 class container_source {
  public:
   using char_type = typename Container::value_type;
   using category  = boost::iostreams::source_tag;
   explicit container_source(Container& container)
-      : container_(container), pos_(0)
-  { }
-  std::streamsize read(char_type* s, std::streamsize n)
-  {
+      : container_(container), pos_(0) {}
+  std::streamsize read(char_type* s, std::streamsize n) {
     using namespace std;
     auto amt =
         static_cast<std::streamsize>(container_.size() - pos_);
     std::streamsize result = (min)(n, amt);
     if (result != 0) {
-      std::copy( container_.begin() + pos_,
-                 container_.begin() + pos_ + result,
-                 s );
+      std::copy(container_.begin() + pos_,
+                container_.begin() + pos_ + result,
+                s);
       pos_ += result;
       return result;
     } else {
-      return -1; // EOF
+      return -1;  // EOF
     }
   }
   Container& container() { return container_; }
   container_source operator=(const container_source&) = delete;
+
  private:
   using size_type = typename Container::size_type;
-  Container&  container_;
-  size_type   pos_;
+  Container& container_;
+  size_type pos_;
 };
 
 /**
  * @brief 这个是从std 兼容的序列中写入数据的后端
  * @tparam Container 容器类
  */
-template<typename Container>
+template <typename Container>
 class container_sink {
  public:
   using char_type = typename Container::value_type;
   using category  = boost::iostreams::sink_tag;
-  explicit container_sink(Container& container) : container_(container) { }
-  std::streamsize write(const char_type* s, std::streamsize n)
-  {
+  explicit container_sink(Container& container) : container_(container) {}
+  std::streamsize write(const char_type* s, std::streamsize n) {
     container_.insert(container_.end(), s, s + n);
     return n;
   }
   Container& container() { return container_; }
   container_sink operator=(const container_sink&) = delete;
+
  private:
   Container& container_;
 };
@@ -75,33 +73,30 @@ class container_sink {
  * @warning 这个容器的迭代器必须支持随机访问, 是随机访问迭代器
  * @tparam Container 支持随机访问的容器
  */
-template<typename Container>
+template <typename Container>
 class container_device {
  public:
   using char_type = typename Container::value_type;
   using category  = boost::iostreams::seekable_device_tag;
   explicit container_device(Container& container)
-      : container_(container), pos_(0)
-  { }
+      : container_(container), pos_(0) {}
 
-  std::streamsize read(char_type* s, std::streamsize n)
-  {
+  std::streamsize read(char_type* s, std::streamsize n) {
     using namespace std;
     auto amt =
         static_cast<std::streamsize>(container_.size() - pos_);
     std::streamsize result = (min)(n, amt);
     if (result != 0) {
-      std::copy( container_.begin() + pos_,
-                 container_.begin() + pos_ + result,
-                 s );
+      std::copy(container_.begin() + pos_,
+                container_.begin() + pos_ + result,
+                s);
       pos_ += result;
       return result;
     } else {
-      return -1; // EOF
+      return -1;  // EOF
     }
   }
-  std::streamsize write(const char_type* s, std::streamsize n)
-  {
+  std::streamsize write(const char_type* s, std::streamsize n) {
     using namespace std;
     std::streamsize result = 0;
     if (pos_ != container_.size()) {
@@ -117,9 +112,7 @@ class container_device {
     }
     return n;
   }
-  boost::iostreams::stream_offset seek(boost::iostreams::stream_offset off, BOOST_IOS::seekdir way)
-  {
-
+  boost::iostreams::stream_offset seek(boost::iostreams::stream_offset off, BOOST_IOS::seekdir way) {
     using namespace std;
 
     // Determine new value of pos_
@@ -131,12 +124,14 @@ class container_device {
     } else if (way == BOOST_IOS::end) {
       next = container_.size() + off - 1;
     } else {
-      throw BOOST_IOSTREAMS_FAILURE("bad seek direction");
+      chick_true<BOOST_IOSTREAMS_FAILURE>(false, DOODLE_LOC, "bad seek direction");
+      //      throw BOOST_IOSTREAMS_FAILURE("bad seek direction");
     }
 
     // Check for errors
     if (next < 0 || next > static_cast<boost::iostreams::stream_offset>(container_.size()))
-      throw BOOST_IOSTREAMS_FAILURE("bad seek offset");
+      chick_true<BOOST_IOSTREAMS_FAILURE>(false, DOODLE_LOC, "bad seek offset");
+    //      throw BOOST_IOSTREAMS_FAILURE("bad seek offset");
 
     pos_ = next;
     return pos_;
@@ -144,54 +139,53 @@ class container_device {
 
   Container& container() { return container_; }
   container_device operator=(const container_device&) = delete;
+
  private:
   using size_type = typename Container::size_type;
-  Container&  container_;
-  size_type   pos_;
+  Container& container_;
+  size_type pos_;
 };
 
-template <class CharT  = char,
-    class Container = std::vector<CharT>,
-    class Device = container_source<Container>,
-    class Buffer = boost::iostreams::stream_buffer<Device>
->
+template <class CharT     = char,
+          class Container = std::vector<CharT>,
+          class Device    = container_source<Container>,
+          class Buffer    = boost::iostreams::stream_buffer<Device> >
 class base_vector_istream : public std::istream {
   Buffer _vector_buffer;
+
  public:
-  explicit base_vector_istream(Container &cnt)
+  explicit base_vector_istream(Container& cnt)
       : std::istream(std::addressof(_vector_buffer)),
         _vector_buffer(Device(cnt)) {}
 };
 
-template <class CharT  = char,
-    class Container = std::vector<CharT>,
-    class Device = container_sink<Container>,
-    class Buffer = boost::iostreams::stream_buffer<Device>
->
+template <class CharT     = char,
+          class Container = std::vector<CharT>,
+          class Device    = container_sink<Container>,
+          class Buffer    = boost::iostreams::stream_buffer<Device> >
 class base_vector_ostream : public std::ostream {
   Buffer _vector_buffer;
 
  public:
-  explicit base_vector_ostream(Container &cnt)
+  explicit base_vector_ostream(Container& cnt)
       : _vector_buffer(Device(cnt)),
         std::ostream(std::addressof(_vector_buffer)) {}
 };
 
-template <class CharT  = char,
-    class Container = std::vector<CharT>,
-    class Device = container_device<Container>,
-    class Buffer = boost::iostreams::stream_buffer<Device>
->
+template <class CharT     = char,
+          class Container = std::vector<CharT>,
+          class Device    = container_device<Container>,
+          class Buffer    = boost::iostreams::stream_buffer<Device> >
 class base_vector_iostream : public std::iostream {
   Buffer _vector_buffer;
+
  public:
-  explicit base_vector_iostream(Container &cnt)
+  explicit base_vector_iostream(Container& cnt)
       : _vector_buffer(Device(cnt)),
-        std::iostream(std::addressof(_vector_buffer))
-  {}
+        std::iostream(std::addressof(_vector_buffer)) {}
 };
 using vector_container = std::vector<char>;
-using vector_istream  = base_vector_istream<char>;
-using vector_ostream  = base_vector_ostream<char>;
-using vector_iostream = base_vector_iostream<char>;
-}
+using vector_istream   = base_vector_istream<char>;
+using vector_ostream   = base_vector_ostream<char>;
+using vector_iostream  = base_vector_iostream<char>;
+}  // namespace doodle

@@ -30,11 +30,8 @@ void rpc_metadata_client::install_metadata(const database& in_database) {
   metadata_database k_in_db{in_database};
   metadata_database k_out_db{};
   auto k_status = p_stub->install_metadata(&k_context, k_in_db, &k_out_db);
-  if (k_status.ok()) {
-    in_database.set_id(k_out_db.id());
-  } else {
-    throw doodle_error{k_status.error_message()};
-  }
+  chick_true<doodle_error>(k_status.ok(), DOODLE_LOC, k_status.error_message());
+  in_database.set_id(k_out_db.id());
 }
 
 void rpc_metadata_client::delete_metadata(const database& in_database) {
@@ -46,9 +43,8 @@ void rpc_metadata_client::delete_metadata(const database& in_database) {
   metadata_database k_out_db{};
   auto k_status = p_stub->delete_metadata(&k_context, k_in_db, &k_out_db);
   DOODLE_LOG_WARN("删除数据 : {} 路径 {}", in_database.get_id(), in_database.get_url_uuid())
-  if (!k_status.ok()) {
-    throw doodle_error{k_status.error_message()};
-  }
+
+  chick_true<doodle_error>(k_status.ok(), DOODLE_LOC, k_status.error_message());
 }
 
 void rpc_metadata_client::update_metadata(const database& in_database) {
@@ -59,9 +55,8 @@ void rpc_metadata_client::update_metadata(const database& in_database) {
   metadata_database k_in_db{in_database};
   metadata_database k_out_db{};
   auto k_status = p_stub->update_metadata(&k_context, k_in_db, &k_out_db);
-  if (!k_status.ok()) {
-    throw doodle_error{k_status.error_message()};
-  }
+
+  chick_true<doodle_error>(k_status.ok(), DOODLE_LOC, k_status.error_message());
 }
 
 std::vector<metadata_database> rpc_metadata_client::select_metadata(const rpc_filter::rpc_filter_ptr& in_filter_ptr) {
@@ -76,9 +71,8 @@ std::vector<metadata_database> rpc_metadata_client::select_metadata(const rpc_fi
     k_list.push_back(std::move(k_db));
   }
   auto status = k_r->Finish();
+  chick_true<doodle_error>(status.ok(), DOODLE_LOC, status.error_message());
 
-  if (!status.ok())
-    throw doodle_error{status.error_message()};
   return k_list;
 }
 

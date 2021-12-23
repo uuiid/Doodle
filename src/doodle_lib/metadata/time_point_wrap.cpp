@@ -7,7 +7,6 @@
 #include <date/tz.h>
 #include <doodle_lib/metadata/time_point_wrap.h>
 
-
 namespace doodle {
 
 time_point_wrap::time_point_wrap()
@@ -208,7 +207,7 @@ chrono::hours_double time_point_wrap::one_day_works_hours(const chrono::local_ti
   } else if (in_point > k_end_2) {                           /// 下午下班后提交
     k_h = chrono::hours_double{8};                           ///
   } else {
-    throw doodle_error{"未知时间"};
+    chick_true<doodle_error>(false, DOODLE_LOC, "未知时间");
   }
   return k_h;
 }

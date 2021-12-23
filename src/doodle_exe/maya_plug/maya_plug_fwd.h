@@ -14,6 +14,7 @@
 
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/exception/exception.h>
+#include <maya_plug/fmt/fmt_warp.h>
 namespace doodle {
 
 inline MSyntax null_syntax_t() { return {}; };
@@ -97,15 +98,6 @@ namespace fmt {
    }
  };
 
-template <>
-struct fmt::formatter<MString> : fmt::formatter<fmt::string_view> {
-  template <typename FormatContext>
-  auto format(const MString& in_, FormatContext& ctx) -> decltype(ctx.out()) {
-    std::string k_str = in_.asUTF8();
-    return formatter<string_view>::format(
-        k_str,
-        ctx);
-  }
-};
+
 
 }  // namespace fmt

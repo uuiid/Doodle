@@ -20,15 +20,13 @@ class DOODLELIB_API rpc_metadaata_server final : public metadata_server::Service
   caches::fixed_sized_cache<std::string, std::string, caches::LRUCachePolicy<std::string>> p_cache;
 
   [[nodiscard]] inline FSys::path getPath(const std::string& in_string) const {
-    if (in_string.empty()) {
-      throw doodle_error{"str 是空的"};
-    }
+    chick_true<doodle_error>(!in_string.empty(), DOODLE_LOC, "str 是空的");
+
     return p_set.get_cache_root() / in_string;
   };
 
   [[nodiscard]] inline FSys::path get_delete_path(const std::string& in_string) const {
-    if (in_string.empty())
-      throw doodle_error{"str 是空的"};
+    chick_true<doodle_error>(!in_string.empty(), DOODLE_LOC, "str 是空的");
     return p_set.get_cache_root("delete") / in_string;
   };
 

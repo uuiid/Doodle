@@ -35,8 +35,7 @@ bool metadata_serialize::insert_into(entt::entity in) const {
   auto k_h = make_handle(in);
   if (!k_h)
     return false;
-  if (!k_h.all_of<root_ref, database>())
-    throw doodle_error{"缺失组件"};
+  chick_true<doodle_error>(k_h.all_of<root_ref, database>(), DOODLE_LOC, "缺失组件");
 
   auto &k_data = k_h.get<database>();
   if (!k_data.has_components()) {
@@ -67,9 +66,8 @@ void metadata_serialize::delete_data(entt::entity in) const {
   auto k_h = make_handle(in);
   if (!k_h)
     return;
-  if (!k_h.all_of<database>())
-    throw doodle_error{"缺失组件"};
 
+  chick_true<doodle_error>(k_h.all_of<database>(), DOODLE_LOC, "缺失组件");
   auto &k_data = k_h.get<database>();
 
   auto k_c     = this->p_rpcClien.lock();
@@ -82,8 +80,8 @@ void metadata_serialize::updata_db(entt::entity in) const {
   auto k_h = make_handle(in);
   if (!k_h)
     return;
-  if (!k_h.all_of<database>())
-    throw doodle_error{"缺失组件"};
+
+  chick_true<doodle_error>(k_h.all_of<database>(), DOODLE_LOC, "缺失组件");
 
   auto &k_data = k_h.get<database>();
   if (k_data.has_components()) {
@@ -99,9 +97,8 @@ void metadata_serialize::select_indb(entt::entity in) const {
   auto k_h = make_handle(in);
   if (!k_h)
     return;
-  if (!k_h.all_of<database, root_ref>())
-    throw doodle_error{"缺失组件"};
 
+  chick_true<doodle_error>(k_h.all_of<database, root_ref>(), DOODLE_LOC, "缺失组件");
   auto k_c      = this->p_rpcClien.lock();
   auto &k_tree  = k_h.get<root_ref>();
 
@@ -124,9 +121,7 @@ void metadata_serialize::select_indb(entt::entity in) const {
 void metadata_serialize::select_indb_by_root(entt::entity in_root) const {
   auto k_h = make_handle(in_root);
 
-  if (!k_h.all_of<database_root, database>())
-    throw doodle_error{"缺失组件"};
-
+  chick_true<doodle_error>(k_h.all_of<database_root, database>(), DOODLE_LOC, "缺失组件");
   auto &k_data  = k_h.get<database>();
 
   auto k_filter = new_object<rpc_filter::filter>();

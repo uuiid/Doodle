@@ -70,8 +70,7 @@ chrono::sys_time_pos last_write_time_point(const path &in_path) {
   const auto withUnixEpoch = asDuration + nt_to_unix_epoch;
   /// 最后我们强制转换为时间系统时间点
   return chrono::system_clock::time_point{chrono::duration_cast<chrono::system_clock::duration>(
-      chrono::floor<std::chrono::seconds>(withUnixEpoch)
-      )};
+      chrono::floor<std::chrono::seconds>(withUnixEpoch))};
 #elif defined(__linux__) && defined(__GNUC__)
   chrono::sys_time_pos k_sys_time_pos{k_time.time_since_epoch()};
   k_sys_time_pos -= S_epoch_diff;
@@ -82,25 +81,20 @@ void last_write_time_point(const path &in_path, const std::chrono::system_clock:
   const auto asDuration = chrono::duration_cast<filetime_duration>(
       in_time_point.time_since_epoch());
   const auto withNtEpoch = asDuration - nt_to_unix_epoch;
-  std::filesystem::file_time_type  k_time{withNtEpoch};
-  std::filesystem::last_write_time(in_path,k_time);
+  std::filesystem::file_time_type k_time{withNtEpoch};
+  std::filesystem::last_write_time(in_path, k_time);
 }
 void open_explorer(const path &in_path) {
-#if defined(_WIN32)
   DOODLE_LOG_INFO("打开路径: {}", in_path.generic_string());
   ShellExecute(nullptr, _T("open"), in_path.generic_wstring().c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
   // std::system(fmt::format(R"(explorer.exe {})", in_path.generic_string()).c_str());
-#else
-  throw DoodleError{"没有这个函数"};
-#endif
 }
 void backup_file(const path &source) {
   auto backup_path = source.parent_path() / "backup" / add_time_stamp(source).filename();
   if (!exists(backup_path.parent_path()))
     create_directories(backup_path.parent_path());
   rename(source, backup_path);
-  if (exists(source))
-    throw doodle_error{"无法备份文件"};
+  chick_true<doodle_error>(exists(source), DOODLE_LOC, "无法备份文件");
 }
 path add_time_stamp(const path &in_path) {
   auto k_fn = in_path.stem();
@@ -110,28 +104,23 @@ path add_time_stamp(const path &in_path) {
   return k_path;
 }
 std::string file_hash_sha224(const path &in_file) {
-  if (exists(in_file) && is_regular_file(in_file)) {
-    CryptoPP::SHA224 k_sha_224;
-    std::string k_string;
-    ifstream k_ifstream{in_file, std::ios::binary | std::ios::in};
-    if (!k_ifstream) {
-      DOODLE_LOG_INFO("{} 无法打开", in_file)
-      throw filesystem_error{fmt::format("{} 无法打开", in_file), in_file,
-                             std::make_error_code(std::errc::bad_file_descriptor)};
-    }
-    CryptoPP::FileSource k_file{
-        k_ifstream,
-        true,
-        new CryptoPP::HashFilter{
-            k_sha_224,
-            new CryptoPP::HexEncoder{
-                new CryptoPP::StringSink{k_string}}}};
-    return k_string;
-  } else {
-    DOODLE_LOG_INFO("{} 文件不存在或者不是文件", in_file)
-    throw filesystem_error{fmt::format("{} 文件不存在或者不是文件", in_file), in_file,
-                           std::make_error_code(std::errc::no_such_file_or_directory)};
-  }
+  chick_true<doodle_error>(
+      exists(in_file) && is_regular_file(in_file),
+      DOODLE_LOC,
+      "{} 文件不存在或者不是文件", in_file);
+  CryptoPP::SHA224 k_sha_224;
+  std::string k_string;
+  ifstream k_ifstream{in_file, std::ios::binary | std::ios::in};
+  chick_true<doodle_error>(k_ifstream, DOODLE_LOC, "{} 无法打开", in_file);
+
+  CryptoPP::FileSource k_file{
+      k_ifstream,
+      true,
+      new CryptoPP::HashFilter{
+          k_sha_224,
+          new CryptoPP::HexEncoder{
+              new CryptoPP::StringSink{k_string}}}};
+  return k_string;
 }
 std::vector<path> list_files(const path &in_dir) {
   return std::vector<path>{

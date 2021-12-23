@@ -44,8 +44,7 @@ const FSys::path& project::get_path() const noexcept {
 }
 
 void project::set_path(const FSys::path& Path) {
-  if (Path.empty())
-    throw doodle_error{"项目路径不能为空"};
+  chick_true<doodle_error>(!Path.empty(), DOODLE_LOC, "项目路径不能为空");
   if (p_path == Path)
     return;
 

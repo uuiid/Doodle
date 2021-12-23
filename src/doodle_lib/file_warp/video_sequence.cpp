@@ -14,8 +14,10 @@ video_sequence::video_sequence(std::vector<FSys::path> paths)
       p_name() {
   for (auto&& path : p_paths) {
     auto ex = path.extension();
-    if (ex != ".mp4" && ex != ".avi")
-      throw doodle_error("不是可以处理的视频文件, 暂时不支持");
+    chick_true<doodle_error>(
+        ex != ".mp4" && ex != ".avi",
+        DOODLE_LOC,
+        "不是可以处理的视频文件, 暂时不支持");
   }
   // 这里开始排序
   std::sort(p_paths.begin(), p_paths.end(),
@@ -38,23 +40,21 @@ void video_sequence::connect_video(const FSys::path& path, const long_term_ptr& 
   const auto k_len     = p_paths.size();
 
   for (const auto& path : p_paths) {
-    if (k_video_input.open(path.generic_string())) {
-      //获得总帧数
-      std::size_t k_frame_count = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT);
+    auto k_r = k_video_input.open(path.generic_string());
+    chick_true<doodle_error>(k_r, DOODLE_LOC, "不支持的格式");
+    //获得总帧数
+    std::size_t k_frame_count = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT);
 
-      while (k_video_input.read(k_image)) {
-        std::size_t k_frame = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
-        if (k_image.cols != k_size.width || k_image.rows != k_size.height)
-          cv::resize(k_image, k_image_resized, k_size);
-        else
-          k_image_resized = k_image;
+    while (k_video_input.read(k_image)) {
+      std::size_t k_frame = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
+      if (k_image.cols != k_size.width || k_image.rows != k_size.height)
+        cv::resize(k_image, k_image_resized, k_size);
+      else
+        k_image_resized = k_image;
 
-        k_video_out << k_image_resized;
-        if (in_ptr)
-          in_ptr->sig_progress(rational_int{1, k_frame_count * k_len});
-      }
-    } else {
-      throw doodle_error("不支持的格式");
+      k_video_out << k_image_resized;
+      if (in_ptr)
+        in_ptr->sig_progress(rational_int{1, k_frame_count * k_len});
     }
   }
   if (in_ptr) {

@@ -4,7 +4,6 @@
 
 #include <lib_warp/WinReg.hpp>
 
-
 namespace doodle {
 ue4_setting::ue4_setting()
     : ue4_path(),
@@ -39,10 +38,7 @@ void ue4_setting::set_path(const FSys::path& Path) noexcept {
 }
 
 void ue4_setting::test_value() {
-  if (shot_end <= shot_start) {
-    throw doodle_error{"结束镜头小于开始镜头!"};
-  }
-#ifdef _WIN32
+  chick_true<doodle_error>(shot_end > shot_start, DOODLE_LOC, "结束镜头小于开始镜头!");
   if (ue4_path.empty()) {
     auto key_str = conv::utf_to_utf<wchar_t>(fmt::format(R"(SOFTWARE\EpicGames\Unreal Engine\{})", ue4_setting::Get().get_version()));
     try {
@@ -54,7 +50,6 @@ void ue4_setting::test_value() {
       DOODLE_LOG_WARN(e.what());
     }
   }
-#endif
 }
 
 void to_json(nlohmann::json& j, const ue4_setting& p) {

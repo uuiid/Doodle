@@ -15,6 +15,9 @@
 #define DOODLE_SOURCE_LOC \
   ::spdlog::source_loc { __FILE__, __LINE__, SPDLOG_FUNCTION }
 
+#define DOODLE_LOC \
+  ::spdlog::source_loc { __FILE__, __LINE__, SPDLOG_FUNCTION }
+
 namespace doodle {
 
 /**
@@ -50,19 +53,24 @@ class DOODLELIB_API logger_ctrl {
   virtual void post_constructor();
 };
 
-template <class throw_T, class FormatString, class... Args>
-inline void chick_true(const bool& in, const ::spdlog::source_loc& in_loc, const FormatString& fmt, Args&&... args) {
+template <class throw_T,
+          class BOOL_T,
+          class FormatString, class... Args>
+inline void chick_true(const BOOL_T& in, const ::spdlog::source_loc& in_loc, const FormatString& fmt, Args&&... args) {
   if (!in) {
     if constexpr (sizeof...(args) > 0) {
       spdlog::log(in_loc, spdlog::level::warn, fmt, std::forward<Args>(args)...);
-      throw throw_T{fmt::format(fmt::to_string_view(fmt), fmt::make_format_args(args...))};
+      throw throw_T{fmt::format(fmt::to_string_view(fmt), std::forward<Args>(args)...)};
     } else {
       spdlog::log(in_loc, spdlog::level::warn, fmt);
       throw throw_T{fmt::to_string(fmt)};
     }
   }
 }
-
+template <class throw_T, class FormatString, class... Args>
+inline void chick_false(const bool& in, const ::spdlog::source_loc& in_loc, const FormatString& fmt, Args&&... args) {
+  chick_true<throw_T>(!in, in_loc, fmt, args...);
+}
 }  // namespace doodle
 #define DOODLE_LOG_DEBUG(...) \
   SPDLOG_INFO(__VA_ARGS__);

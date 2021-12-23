@@ -250,7 +250,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
             k_r.export_fbx(k_start, k_end);
             break;
           default:
-            throw doodle_error{"未知类型"};
+            chick_true<doodle_error>(false, DOODLE_LOC, "未知类型");
             break;
         }
       }
@@ -266,7 +266,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
           k_r.export_fbx(k_start, k_end);
           break;
         default:
-          throw doodle_error{"未知类型"};
+          chick_true<doodle_error>(false, DOODLE_LOC, "未知类型");
           break;
       }
     }

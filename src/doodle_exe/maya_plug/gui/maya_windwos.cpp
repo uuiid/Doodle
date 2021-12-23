@@ -17,9 +17,8 @@ namespace doodle::maya_plug {
 void maya_windwos::main_menu_tool() {
   // main_windows::main_menu_tool();
   if (dear::MenuItem("引用工具") && p_tool_box_) {
-    if (!g_reg()->try_ctx<root_ref>()) {
-      throw doodle_error{"没有选中项目， 缺失上下文"};
-    }
+    chick_true<doodle_error>(g_reg()->try_ctx<root_ref>(),
+                             DOODLE_LOC, "没有选中项目， 缺失上下文");
     p_tool_box_->set_tool_widget(new_object<reference_attr_setting>());
   }
   if (dear::MenuItem("场景检查工具") && p_tool_box_)

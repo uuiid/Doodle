@@ -4,6 +4,8 @@
 
 #pragma once
 #include <doodle_lib/exception/exception.h>
+#include <doodle_lib/logger/logger.h>
+#include <maya_plug/fmt/fmt_warp.h>
 
 #include <maya/MStatus.h>
 #include <maya/MString.h>
@@ -19,35 +21,35 @@ class maya_error : public doodle_error {
 
 class maya_Failure : public maya_error {
  public:
-  explicit maya_Failure(const MString& in_str) : maya_error(in_str){};
+  explicit maya_Failure(const std::string& in_str) : maya_error(in_str){};
 };
 class maya_InsufficientMemory : public maya_error {
  public:
-  explicit maya_InsufficientMemory(const MString& in_str) : maya_error(in_str){};
+  explicit maya_InsufficientMemory(const std::string& in_str) : maya_error(in_str){};
 };
 class maya_InvalidParameter : public maya_error {
  public:
-  explicit maya_InvalidParameter(const MString& in_str) : maya_error(in_str){};
+  explicit maya_InvalidParameter(const std::string& in_str) : maya_error(in_str){};
 };
 class maya_LicenseFailure : public maya_error {
  public:
-  explicit maya_LicenseFailure(const MString& in_str) : maya_error(in_str){};
+  explicit maya_LicenseFailure(const std::string& in_str) : maya_error(in_str){};
 };
 class maya_UnknownParameter : public maya_error {
  public:
-  explicit maya_UnknownParameter(const MString& in_str) : maya_error(in_str){};
+  explicit maya_UnknownParameter(const std::string& in_str) : maya_error(in_str){};
 };
 class maya_NotImplemented : public maya_error {
  public:
-  explicit maya_NotImplemented(const MString& in_str) : maya_error(in_str){};
+  explicit maya_NotImplemented(const std::string& in_str) : maya_error(in_str){};
 };
 class maya_NotFound : public maya_error {
  public:
-  explicit maya_NotFound(const MString& in_str) : maya_error(in_str){};
+  explicit maya_NotFound(const std::string& in_str) : maya_error(in_str){};
 };
 class maya_EndOfFile : public maya_error {
  public:
-  explicit maya_EndOfFile(const MString& in_str) : maya_error(in_str){};
+  explicit maya_EndOfFile(const std::string& in_str) : maya_error(in_str){};
 };
 
 inline void throw_maya_exception(const MStatus& in_status, const ::spdlog::source_loc& in_location) {
@@ -56,38 +58,38 @@ inline void throw_maya_exception(const MStatus& in_status, const ::spdlog::sourc
       break;
     case MStatus::MStatusCode::kFailure: {
       ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
-      throw maya_Failure{in_status.errorString()};
+      chick_true<maya_Failure>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kInsufficientMemory: {
       ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
-      throw maya_InsufficientMemory{in_status.errorString()};
+      chick_true<maya_InsufficientMemory>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kInvalidParameter: {
       ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
-      throw maya_InvalidParameter{in_status.errorString()};
+      chick_true<maya_InvalidParameter>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kLicenseFailure: {
       ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
-      throw maya_LicenseFailure{in_status.errorString()};
+      chick_true<maya_LicenseFailure>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kUnknownParameter: {
       ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
-      throw maya_UnknownParameter{in_status.errorString()};
+      chick_true<maya_UnknownParameter>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kNotImplemented: {
       ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
-      throw maya_NotImplemented{in_status.errorString()};
+      chick_true<maya_NotImplemented>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kNotFound: {
       ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
-      throw maya_NotFound{in_status.errorString()};
+      chick_true<maya_NotFound>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kEndOfFile: {
       ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
-      throw maya_EndOfFile{in_status.errorString()};
+      chick_true<maya_EndOfFile>(false, in_location, in_status.errorString());
     }
     default:
-      throw doodle_error{"未知选项"};
+      chick_true<doodle_error>(false, in_location, "未知选项");
   }
 }
 }  // namespace doodle::maya_plug

@@ -39,11 +39,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
       DOODLE_LOG_INFO("节点下方没有 shape 形状节点, 不需要寻找形状节点")
     }
   }
-  if (l_plug.isNull(&k_s)) {
-    DOODLE_CHICK(k_s);
-    throw doodle_error{"无法找到属性"};
-  }
-
+  chick_true<doodle_error>(!l_plug.isNull(), DOODLE_SOURCE_LOC, "无法找到属性");
   return l_plug;
 }
 MObject get_shading_engine(const MObject& in_node) {
@@ -60,7 +56,7 @@ MObject get_shading_engine(const MObject& in_node) {
     k_obj = l_path.node(&k_s);
     DOODLE_CHICK(k_s);
   }
-
+  MObject obj{};
   for (MItDependencyGraph i{k_obj,
                             MFn::Type::kShadingEngine,
                             MItDependencyGraph::Direction::kDownstream,
@@ -70,30 +66,15 @@ MObject get_shading_engine(const MObject& in_node) {
        !i.isDone();
        i.next()) {
     DOODLE_CHICK(k_s);
-    auto obj = i.currentItem(&k_s);
+    obj = i.currentItem(&k_s);
     //    DOODLE_CHICK(k_s);
     //    MFnDependencyNode k_node{};
     //    k_node.setObject(obj);
     //    DOODLE_LOG_INFO(fmt::format("找到节点 {}", d_str{k_node.name()}.str()));
-    return obj;
+    break;
   }
-  //  for (MItDependencyGraph i{k_obj,
-  //                            MFn::Type::kInvalid,
-  //                            MItDependencyGraph::Direction::kUpstream,
-  //                            MItDependencyGraph::Traversal::kDepthFirst,
-  //                            MItDependencyGraph::Level::kNodeLevel,
-  //                            &k_s};
-  //       !i.isDone();
-  //       i.next()) {
-  //    DOODLE_CHICK(k_s);
-  //    auto obj = i.currentItem(&k_s);
-  //    DOODLE_CHICK(k_s);
-  //    MFnDependencyNode k_node{};
-  //    k_node.setObject(obj);
-  //    DOODLE_LOG_INFO(fmt::format("找到节点 {}", d_str{k_node.name()}.str()));
-  //    //    return obj;
-  //  }
-  throw doodle_error{"没有找到节点"};
+  chick_true<doodle_error>(!obj.isNull(), DOODLE_SOURCE_LOC, "没有找到节点");
+  return obj;
 }
 MObject get_first_mesh(const MObject& in_node) {
   MStatus k_s{};

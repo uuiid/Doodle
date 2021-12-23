@@ -32,10 +32,7 @@ FSys::path win::get_pwd()
   ///获取环境变量 FOLDERID_Documents
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
-  if (!pManager) {
-    std::cout << "unable to find a save path" << std::endl;
-    throw doodle_error("无法找到保存路径");
-  }
+  chick_true<doodle_error>(pManager,DOODLE_LOC,"unable to find a save path");
 
   auto k_path = FSys::path{pManager};
   CoTaskMemFree(pManager);
@@ -53,10 +50,7 @@ FSys::path win::get_font() {
   ///获取环境变量 FOLDERID_Documents
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Fonts, NULL, nullptr, &pManager);
-  if (!pManager) {
-    std::cout << "unable to find a save path" << std::endl;
-    throw doodle_error("无法找到保存路径");
-  }
+  chick_true<doodle_error>(pManager,DOODLE_LOC,"unable to find a save path");
 
   auto k_path = FSys::path{pManager};
   CoTaskMemFree(pManager);

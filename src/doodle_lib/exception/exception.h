@@ -37,12 +37,9 @@ class DOODLELIB_API component_error : public doodle_error {
 
 // fileErr
 class DOODLELIB_API file_error : public doodle_error {
-  std::filesystem::path p_path;
-
  public:
-  file_error(std::filesystem::path path, const std::string& message)
-      : doodle_error(path.generic_string().append(message)),
-        p_path(std::move(path)){};
+  file_error(const std::string& message)
+      : doodle_error(message){};
 };
 // doodl err
 }  // namespace doodle

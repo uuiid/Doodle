@@ -1,4 +1,4 @@
-#include <doodle_lib/Exception/exception.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/core/filesystem_extend.h>
@@ -51,8 +51,7 @@ void ue4_project::addUe4ProjectPlugins(const std::vector<std::string>& in_strs) 
 
 void ue4_project::run_cmd_scipt(const std::string& run_com) const {
   auto k_ue4_cmd = p_ue_path / UE4PATH;
-  if (!FSys::exists(k_ue4_cmd))
-    throw doodle_error{"找不到ue运行文件"};
+  chick_true<doodle_error>(exists(k_ue4_cmd), DOODLE_LOC, "找不到ue运行文件");
 
   auto k_comm = fmt::format(R"({} {} {})",
                             k_ue4_cmd,          // ue路径

@@ -63,8 +63,8 @@ std::tuple<std::size_t, bool, chrono::sys_time_pos, bool> rpc_file_system_client
   k_in_info.set_path(in_server_path.generic_string());
   file_info_server k_out_info;
   auto status = p_stub->get_info(&k_context, k_in_info, &k_out_info);
-  if (!status.ok())
-    throw doodle_error{status.error_message()};
+
+  chick_true<doodle_error>(status.ok(), DOODLE_LOC, status.error_message());
 
   auto k_t = std::chrono::system_clock::from_time_t(google::protobuf::util::TimeUtil::TimestampToTimeT(k_out_info.update_time()));
   return {k_out_info.size(), k_out_info.exist(), k_t, k_out_info.is_folder()};
@@ -77,8 +77,7 @@ std::size_t rpc_file_system_client::get_size(const FSys::path& in_server_path) {
   k_in_info.set_path(in_server_path.generic_string());
   file_info_server k_out_info;
   auto status = p_stub->get_size(&k_context, k_in_info, &k_out_info);
-  if (!status.ok())
-    throw doodle_error{status.error_message()};
+  chick_true<doodle_error>(status.ok(), DOODLE_LOC, status.error_message());
 
   return k_out_info.size();
 }
@@ -90,8 +89,7 @@ std::tuple<bool, bool> rpc_file_system_client::is_folder(const FSys::path& in_se
   k_in_info.set_path(in_server_path.generic_string());
   file_info_server k_out_info;
   auto status = p_stub->is_folder(&k_context, k_in_info, &k_out_info);
-  if (!status.ok())
-    throw doodle_error{status.error_message()};
+  chick_true<doodle_error>(status.ok(), DOODLE_LOC, status.error_message());
 
   return {k_out_info.exist(), k_out_info.is_folder()};
 }
@@ -103,8 +101,7 @@ chrono::sys_time_pos rpc_file_system_client::get_timestamp(const FSys::path& in_
   k_in_info.set_path(in_server_path.generic_string());
   file_info_server k_out_info;
   auto status = p_stub->get_timestamp(&k_context, k_in_info, &k_out_info);
-  if (!status.ok())
-    throw doodle_error{status.error_message()};
+  chick_true<doodle_error>(status.ok(), DOODLE_LOC, status.error_message());
   auto k_t = std::chrono::system_clock::from_time_t(google::protobuf::util::TimeUtil::TimestampToTimeT(k_out_info.update_time()));
 
   return k_t;
@@ -117,8 +114,7 @@ bool rpc_file_system_client::is_exist(const FSys::path& in_server_path) {
   k_in_info.set_path(in_server_path.generic_string());
   file_info_server k_out_info;
   auto status = p_stub->is_exist(&k_context, k_in_info, &k_out_info);
-  if (!status.ok())
-    throw doodle_error{status.error_message()};
+  chick_true<doodle_error>(status.ok(), DOODLE_LOC, status.error_message());
 
   return k_out_info.exist();
 }
@@ -148,9 +144,8 @@ rpc_file_system_client::trans_file_ptr rpc_file_system_client::upload(std::vecto
 }
 rpc_file_system_client::trans_file_ptr rpc_file_system_client::download(std::unique_ptr<rpc_trans_path>& in_vector) {
   auto [k_ex, k_dir] = is_folder(in_vector->server_path);
-  if (!k_ex)
-    throw doodle_error{"服务器中不存在文件或者目录"};
 
+  chick_true<doodle_error>(k_ex, DOODLE_LOC, "服务器中不存在文件或者目录");
   trans_file_ptr k_down;
   if (k_dir)
     k_down = new_object<rpc_trans::down_dir>(this);
@@ -161,9 +156,7 @@ rpc_file_system_client::trans_file_ptr rpc_file_system_client::download(std::uni
   return k_down;
 }
 rpc_file_system_client::trans_file_ptr rpc_file_system_client::upload(std::unique_ptr<rpc_trans_path>& in_vector) {
-  if (!FSys::exists(in_vector->local_path))
-    throw doodle_error{"本地中不存在文件或者目录"};
-
+  chick_true<doodle_error>(exists(in_vector->local_path), DOODLE_LOC, "本地中不存在文件或者目录");
   trans_file_ptr k_up;
   if (FSys::is_directory(in_vector->local_path))
     k_up = new_object<rpc_trans::up_dir>(this);
@@ -180,8 +173,7 @@ std::string rpc_file_system_client::get_hash(const FSys::path& in_path) {
   k_in_info.set_path(in_path.generic_string());
   file_info_server k_out_info;
   auto status = p_stub->get_hash(&k_context, k_in_info, &k_out_info);
-  if (!status.ok())
-    throw doodle_error{status.error_message()};
+  chick_true<doodle_error>(status.ok(), DOODLE_LOC, status.error_message());
   return k_out_info.hash().value();
 }
 
@@ -205,12 +197,11 @@ long_term_ptr trans_file::operator()() {
       k_term->set_name(self->_param->local_path.filename().generic_string());
       self->run(k_term);
     } catch (doodle_error& error) {
-      DOODLE_LOG_WARN(error.what());
       k_term->start();
       k_term->sig_progress(0);
       k_term->sig_finished();
       k_term->sig_message_result(error.what(), long_term::warning);
-      throw error;
+      chick_true<doodle_error>(false, DOODLE_LOC, error.what());
     }
       });
   return k_term;
@@ -248,8 +239,7 @@ void down_file::run(const long_term_ptr& in_term) {
     file_stream_server k_out_info{};
 
     FSys::ofstream k_file{_param->local_path, std::ios::out | std::ios::binary};
-    if (!k_file)
-      throw doodle_error{"not create file"};
+    chick_true<doodle_error>(k_file, DOODLE_LOC, "not create file");
 
     k_in_info.set_path(_param->server_path.generic_string());
     auto k_out = _self->p_stub->download(&k_context, k_in_info);
@@ -265,8 +255,7 @@ void down_file::run(const long_term_ptr& in_term) {
 
     auto status = k_out->Finish();
 
-    if (!status.ok())
-      throw doodle_error{status.error_message()};
+    chick_true<doodle_error>(status.ok(), DOODLE_LOC, status.error_message());
   }
   FSys::last_write_time_point(_param->local_path, k_st);
 
@@ -304,10 +293,7 @@ void up_file::run(const long_term_ptr& in_term) {
     k_info.mutable_target()->set_path(std::move(_param->backup_path.generic_string()));
 
     auto k_s = _self->p_stub->move(&k_context, k_info, &k_out_info);
-    if (!k_s.ok()) {
-      DOODLE_LOG_WARN(k_s.error_message());
-      throw doodle_error(k_s.error_message());
-    }
+    chick_true<doodle_error>(k_s.ok(), DOODLE_LOC, k_s.error_message());
   }
 
   grpc::ClientContext k_context{};
@@ -319,16 +305,17 @@ void up_file::run(const long_term_ptr& in_term) {
   auto k_google_time = google::protobuf::util::TimeUtil::TimeTToTimestamp(FSys::last_write_time_t(_param->local_path));
   k_in_info.mutable_info()->mutable_update_time()->CopyFrom(k_google_time);
   auto k_in = _self->p_stub->upload(&k_context, &k_out_info);
-  if (!k_in->Write(k_in_info)) {
-    throw doodle_error{k_in->Finish().error_message()};
-  }
+
+  if (!k_in->Write(k_in_info))
+    chick_true<doodle_error>(
+        false, DOODLE_LOC,
+        k_in->Finish().error_message());
 
   auto s_size = core_set::get_block_size();
   const std::size_t k_num2{s_size > k_sz ? 1 : (s_size / k_sz)};
   FSys::ifstream k_file{_param->local_path, std::ios::in | std::ios::binary};
-  if (!k_file)
-    throw doodle_error{"not read file"};
 
+  chick_true<doodle_error>(k_file, DOODLE_LOC, "not read file");
   while (k_file) {
     std::string k_value{};
     k_value.resize(s_size);
@@ -341,14 +328,16 @@ void up_file::run(const long_term_ptr& in_term) {
 
     k_in_info.mutable_data()->set_value(std::move(k_value));
     in_term->sig_progress(rational_int(k_num2));
+    chick_true<doodle_error>(k_in->Write(k_in_info),
+                             DOODLE_LOC, k_in->Finish().error_message());
     if (!k_in->Write(k_in_info))
-      throw doodle_error{k_in->Finish().error_message()};
+      chick_true<doodle_error>(false, DOODLE_LOC, k_in->Finish().error_message());
   }
   /// @warning 这里必须调用 WritesDone用来区分写入完成
   k_in->WritesDone();
   auto status = k_in->Finish();
-  if (!status.ok())
-    throw doodle_error{status.error_message()};
+  chick_true<doodle_error>(status.ok(), DOODLE_LOC, status.error_message());
+
   in_term->sig_finished();
   in_term->sig_message_result(fmt::format("完成 local_path: {}\n server_path: {}\n", _param->local_path, _param->server_path), long_term::warning);
 }
@@ -413,8 +402,7 @@ rpc_trans_path_ptr_list down_dir::down(const std::unique_ptr<rpc_trans_path>& in
     }
   }
   auto status = k_out->Finish();
-  if (!status.ok())
-    throw doodle_error{status.error_message()};
+  chick_true<doodle_error>(status.ok(), DOODLE_LOC, status.error_message());
   return _stack;
 }
 void down_dir::wait() {
@@ -428,8 +416,7 @@ up_dir::up_dir(rpc_file_system_client* in_self)
       _up_list() {
 }
 void up_dir::run(const long_term_ptr& in_term) {
-  if (!FSys::exists(_param->local_path))
-    throw doodle_error{"未找到上传文件夹"};
+  chick_true<doodle_error>(exists(_param->local_path), DOODLE_LOC, "未找到上传文件夹");
 
   auto message_str = fmt::format("{}目录扫描完成", _param->local_path);
   rpc_trans_path_ptr_list _stack{};

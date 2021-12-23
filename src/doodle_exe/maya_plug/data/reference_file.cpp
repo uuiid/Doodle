@@ -70,14 +70,11 @@ void reference_file::chick_mobject() {
         }
       }
     }
-    if (p_m_object.isNull())
-      throw doodle_error{"无法找到引用"};
+    chick_true<doodle_error>(!p_m_object.isNull(), DOODLE_SOURCE_LOC, "无法找到引用");
   }
 }
 void reference_file::chick_mobject() const {
-  if (p_m_object.isNull()) {
-    throw doodle_error{"没有初始化mobject"};
-  }
+  chick_true<doodle_error>(!p_m_object.isNull(), DOODLE_LOC, "没有初始化mobject");
 }
 void reference_file::set_collision_model(const MSelectionList &in_list) {
   collision_model.clear();
@@ -130,13 +127,7 @@ string reference_file::get_namespace() const {
   string k_r = d_str{k_ref.associatedNamespace(false, &k_s)};
   DOODLE_CHICK(k_s);
   /// \brief 再没有名称空间时, 我们使用引用名称计算并映射到导出名称中去
-  if (k_r.empty()) {
-    //    k_r = d_str{k_ref.fileName(true, true, true, &k_s)};
-    //    DOODLE_CHICK(k_s);
-    //    throw;
-    DOODLE_LOG_WARN("名称空间为空, 可能是引用时未使用时未使用");
-    throw doodle_error{"名称空间为空, 可能是引用时未使用时未使用"};
-  }
+  chick_true<doodle_error>(!k_r.empty(), DOODLE_LOC, "名称空间为空, 可能是引用时未使用时未使用");
   return k_r;
 }
 string reference_file::get_namespace() {
@@ -160,8 +151,8 @@ bool reference_file::replace_sim_assets_file() {
     return false;
   }
   auto k_prj = get_prj();
-  if (!k_prj)
-    throw doodle_error{"无法找到项目配置"};
+
+  chick_true<doodle_error>(k_prj, DOODLE_LOC, "无法找到项目配置");
 
   chick_component<project::cloth_config>(k_prj);
   auto &k_cfg = k_prj.get<project::cloth_config>();
@@ -315,8 +306,7 @@ bool reference_file::add_collision() const {
 }
 void reference_file::generate_cloth_proxy() {
   auto k_prj = get_prj();
-  if (!k_prj)
-    throw doodle_error{"无法找到项目配置"};
+  chick_true<doodle_error>(k_prj,DOODLE_LOC,"无法找到项目配置");
 
   chick_component<project::cloth_config>(k_prj);
   /// 这里我们使用节点类名称寻找 qlClothShape ;

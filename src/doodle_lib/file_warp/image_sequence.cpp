@@ -197,15 +197,12 @@ bool image_sequence::has_sequence() {
 void image_sequence::set_path(const FSys::path &dir) {
   this->seanDir(dir);
   for (auto &path : p_paths) {
-    if (!FSys::is_regular_file(path)) {
-      throw doodle_error("不是文件, 无法识别");
-    }
+    chick_true<doodle_error>(is_regular_file(path), DOODLE_LOC, "不是文件, 无法识别");
   }
 }
 
 bool image_sequence::seanDir(const FSys::path &dir) {
-  if (!FSys::is_directory(dir))
-    throw file_error{dir, "file not is a directory"};
+  chick_true<file_error>(is_directory(dir), DOODLE_LOC, "{} file not is a directory", dir);
 
   FSys::path ex{};
   for (auto &path : FSys::directory_iterator(dir)) {
@@ -218,8 +215,7 @@ bool image_sequence::seanDir(const FSys::path &dir) {
       }
     }
   }
-  if (p_paths.empty())
-    throw doodle_error("空目录");
+  chick_true<file_error>(!p_paths.empty(), DOODLE_LOC, "{} 中没有找到支持的文件", dir);
   return true;
 }
 void image_sequence::set_gamma(std::double_t in_pow) {
@@ -232,8 +228,7 @@ void image_sequence::set_out_path(const FSys::path &out_dir) {
   p_out_path = out_dir;
 }
 void image_sequence::create_video(const long_term_ptr &in_ptr) {
-  if (!this->has_sequence())
-    throw doodle_error{"not Sequence"};
+  chick_true<doodle_error>(this->has_sequence(), DOODLE_LOC, "不是序列");
   in_ptr->start();
   //检查父路径存在
   if (!FSys::exists(p_out_path.parent_path()))
@@ -257,8 +252,7 @@ void image_sequence::create_video(const long_term_ptr &in_ptr) {
     for (std::int32_t i = 0; i < p_paths.size(); ++i) {
       auto path = p_paths[i];
       k_image   = cv::imread(path.generic_string());
-      if (k_image.empty())
-        throw doodle_error("open cv not read image");
+      chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
       if (k_image.cols != k_size.width || k_image.rows != k_size.height)
         cv::resize(k_image, k_image, k_size);
 
@@ -269,9 +263,9 @@ void image_sequence::create_video(const long_term_ptr &in_ptr) {
 
       if (p_pow) {
         cv::Mat k_d{};
-        k_image.convertTo(k_d,CV_64F);
+        k_image.convertTo(k_d, CV_64F);
         cv::pow(k_d, *p_pow, k_d);
-        k_d.convertTo(k_image,CV_8U);
+        k_d.convertTo(k_image, CV_8U);
       }
 
       video << k_image;

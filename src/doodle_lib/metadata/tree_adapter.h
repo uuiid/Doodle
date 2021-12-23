@@ -50,8 +50,8 @@ class DOODLELIB_API vector_adapter {
 
   iterator erase(const value_type& in) {
     auto it = std::find(_list.begin(), _list.end(), in);
-    if (it == _list.end())
-      throw error_iterator{"错误的迭代器"};
+    chick_true<error_iterator>(it != _list.end(), DOODLE_LOC, "错误的迭代器");
+
     auto k_r = _list.erase(it);
     _self.end_erase(in);
     return k_r;

@@ -3,7 +3,6 @@
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/metadata_factory.h>
 
-
 namespace doodle {
 
 episodes::episodes()
@@ -12,8 +11,7 @@ episodes::episodes()
 
 episodes::episodes(int64_t in_episodes)
     : p_episodes(in_episodes) {
-  if (p_episodes < 0)
-    throw doodle_error("集数无法为负");
+  chick_true<doodle_error>(p_episodes > 0, DOODLE_LOC, "集数无法为负");
 }
 
 // Episodes::~Episodes() {
@@ -26,8 +24,7 @@ const int64_t& episodes::get_episodes() const noexcept {
 }
 
 void episodes::set_episodes(const int64_t& Episodes_) {
-  if (Episodes_ < 0)
-    throw doodle_error("集数无法为负");
+  chick_true<doodle_error>(p_episodes > 0, DOODLE_LOC, "集数无法为负");
   p_episodes = Episodes_;
 }
 

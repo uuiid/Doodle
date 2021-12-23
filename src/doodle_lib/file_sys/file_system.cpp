@@ -11,14 +11,13 @@ void file_system::local_copy(const FSys::path& in_sourcePath, const FSys::path& 
   boost::asio::thread_pool pool(std::thread::hardware_concurrency());
   //验证文件存在
   // if (FSys::exists(targetPath)) return false;
-  if (!FSys::exists(in_sourcePath))
-    throw file_error(in_sourcePath, "不存在路径");
+  chick_true<doodle_error>(exists(in_sourcePath), DOODLE_LOC, "不存在路径");
   if (!FSys::exists(targetPath.parent_path()))
     FSys::create_directories(targetPath.parent_path());
   FSys::path backup_path{};
   std::string time_str{};
   if (backup) {
-    auto time = std::chrono::system_clock::now();
+    auto time   = std::chrono::system_clock::now();
 
     time_str    = date::format("%Y_%m_%d_%H_%M_%S", time);
     backup_path = targetPath.parent_path() / "backup" / time_str /
