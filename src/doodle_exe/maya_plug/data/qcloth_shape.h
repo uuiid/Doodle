@@ -52,7 +52,6 @@ class qcloth_shape {
    */
   MObject obj;
 
-  static void add_child(const MObject& in_praent, MObject& in_child);
 
  public:
   qcloth_shape();

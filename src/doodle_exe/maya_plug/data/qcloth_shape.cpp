@@ -379,7 +379,7 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   /// \brief 主要的输入节点
   auto k_proxy_node_input  = make_low_node(k_anim_mesh.obj, l_group.anim_grp, "input");
   /// \brief 主要的输出节点
-  auto k_proxy_node_output = make_low_node(k_anim_mesh.obj, l_group.anim_grp, "input");
+  auto k_proxy_node_output = make_low_node(k_anim_mesh.obj, l_group.deform_grp, "output");
   /// \brief 动画高模
   auto& k_maya_high_mesh   = in_handle.get<qcloth_shape_n::shape_list>();
   auto l_high_mesh         = make_high_node(k_maya_high_mesh, l_group.export_grp);
@@ -394,46 +394,21 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
     DOODLE_CHICK(k_s);
   }
 
-  {
-    /// 创建解算网络
-    MSelectionList l_selection_list{};
-    k_s = l_selection_list.add(k_proxy_node_input);
-    DOODLE_CHICK(k_s);
-    k_s = MGlobal::setActiveSelectionList(l_selection_list);
-    DOODLE_CHICK(k_s);
-    MString l_cloth_shape{};
-    k_s = MGlobal::executeCommand(d_str{"qlCreateCloth;"}, l_cloth_shape);
-    DOODLE_CHICK(k_s);
-    k_s = l_selection_list.clear();
-    DOODLE_CHICK(k_s);
-
-    k_s = l_selection_list.add(l_cloth_shape, true);
-    DOODLE_CHICK(k_s);
-
-    k_s = l_selection_list.getDependNode(0, obj);
+  auto [l_ql, l_mesh_out] = qlCreateCloth(k_proxy_node_input);
+  {  /// 整理层级关系
+    auto l_ql_tran       = get_transform(l_ql);
+    auto l_mesh_out_tran = get_transform(l_mesh_out);
+    add_child(l_group.solver_grp, l_ql_tran);
+    add_child(l_ql_tran, l_mesh_out_tran);
   }
-
   {  /// 将解算的输出网格连接到代理输出中去
-    k_s = l_modifier.connect(get_plug(k_anim_mesh.obj, "outMesh"),
-                             get_plug(k_proxy_node_input, "inMesh"));
+    k_s = l_modifier.connect(get_plug(l_mesh_out, "outMesh"),
+                             get_plug(k_proxy_node_output, "inMesh"));
     DOODLE_CHICK(k_s);
     k_s = l_modifier.doIt();
     DOODLE_CHICK(k_s);
   }
-
-  {
-    ///  这里由于是使用解算命令创建出来的， 所以需要寻找新的低模
-    MObject k_low{};
-    auto l_plug = get_plug(obj, "outputMesh");
-    for (MItDependencyGraph i{l_plug, MFn::kMesh};
-         !i.isDone();
-         i.next()) {
-      k_low = i.currentItem(&k_s);
-      DOODLE_CHICK(k_s);
-    }
-    chick_true<maya_error>(!k_low.isNull(), DOODLE_SOURCE_LOC, "没有找到解算输出的模型");
-    warp_model(k_low, l_high_mesh);
-  }
+  warp_model(k_proxy_node_output, l_high_mesh);
   {
     /// 创建解算网络的输出 这个可以用融合变形(其中先选择主动变形物体, 再选择被变形物体)
     chick_true<maya_error>(l_high_mesh.size() == k_maya_high_mesh.size(), DOODLE_SOURCE_LOC, "节点数量不一致");
@@ -491,13 +466,6 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
   return k_r;
 }
 
-void qcloth_shape::add_child(const MObject& in_praent, MObject& in_child) {
-  MStatus k_s{};
-  MFnDagNode k_node{in_praent, &k_s};
-  DOODLE_CHICK(k_s);
-  k_s = k_node.addChild(in_child);
-  DOODLE_CHICK(k_s);
-}
 void qcloth_shape::set_all_active(bool in_active) {
 }
 void qcloth_shape::set_all_attraction_method(bool in_) {
