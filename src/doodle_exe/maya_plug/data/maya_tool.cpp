@@ -130,4 +130,11 @@ MObject get_transform(const MObject& in_object) {
   chick_true<maya_error>(!k_r.isNull(), DOODLE_SOURCE_LOC, "没有找到变换");
   return k_r;
 }
+void add_child(const MObject& in_praent, MObject& in_child) {
+  MStatus k_s{};
+  MFnDagNode k_node{in_praent, &k_s};
+  DOODLE_CHICK(k_s);
+  k_s = k_node.addChild(in_child);
+  DOODLE_CHICK(k_s);
+}
 }  // namespace doodle::maya_plug

@@ -23,4 +23,8 @@ MObject get_first_mesh(const MObject& in_node);
 
 MObject get_shape(const MObject& in_object);
 MObject get_transform(const MObject& in_object);
+
+
+void add_child(const MObject& in_praent, MObject& in_child);
+
 }  // namespace doodle::maya_plug
