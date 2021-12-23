@@ -80,5 +80,8 @@ class qcloth_shape {
    *  需要读取配置文件中的各个属性, 进行标准的重命名
    */
   void create_sim_cloth(const entt::handle& in_handle);
+
+  static void set_all_active(bool in_active);
+  static void set_all_attraction_method(bool in_);
 };
 }  // namespace doodle::maya_plug

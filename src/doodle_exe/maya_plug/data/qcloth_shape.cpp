@@ -284,7 +284,7 @@ bool qcloth_shape::set_cache_folder() const {
 }
 
 bool qcloth_shape::create_cache() const {
-  chick_true<doodle_error>(!obj.isNull(), DOODLE_SOURCE_LOC,"空组件");
+  chick_true<doodle_error>(!obj.isNull(), DOODLE_SOURCE_LOC, "空组件");
   MStatus k_s{};
   MFnDependencyNode l_node{obj, &k_s};
   auto k_plug = get_plug(obj, "outputMesh");
@@ -400,6 +400,10 @@ void qcloth_shape::add_child(const MObject& in_praent, MObject& in_child) {
   DOODLE_CHICK(k_s);
   k_s = k_node.addChild(in_child);
   DOODLE_CHICK(k_s);
+}
+void qcloth_shape::set_all_active(bool in_active) {
+}
+void qcloth_shape::set_all_attraction_method(bool in_) {
 }
 
 }  // namespace doodle::maya_plug

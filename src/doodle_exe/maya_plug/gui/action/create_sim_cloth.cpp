@@ -42,6 +42,9 @@ bool create_sim_cloth::render() {
       p_list.push_back(k_h);
     }
   }
+  if (imgui::Button(p_show_str["清理"].c_str())) {
+    g_reg()->destroy(p_list.begin(), p_list.end());
+  }
 
   for (auto& l_h : p_list) {
     dear::TreeNode{l_h.get<qcloth_shape_n::maya_obj>().p_name.c_str()} && [&]() {
@@ -70,22 +73,6 @@ bool create_sim_cloth::render() {
     }
   }
 
-  if (imgui::Button("test")) {
-    MSelectionList k_list{};
-    auto k_s = MGlobal::getActiveSelectionList(k_list);
-    DOODLE_CHICK(k_s);
-    MObject k_node{};
-
-    for (MItDependencyNodes i{MFn::Type::kPluginLocatorNode}; !i.isDone(); i.next()) {
-      auto k_obj = i.thisNode(&k_s);
-      DOODLE_LOG_INFO(k_obj.apiTypeStr());
-      MFnDependencyNode k_dep{k_obj};
-      DOODLE_LOG_INFO("{}", k_dep.typeId(&k_s).id());
-      auto k_name = k_dep.typeName(&k_s);
-      DOODLE_CHICK(k_s);
-      DOODLE_LOG_INFO("{}", d_str{k_name}.str());
-    }
-  }
   return false;
 }
 }  // namespace doodle::maya_plug
