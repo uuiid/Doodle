@@ -22,7 +22,8 @@ namespace doodle::maya_plug {
 create_sim_cloth::create_sim_cloth() {
   p_show_str  = make_imgui_name(this,
                                 "获得低模",
-                                "制作布料");
+                                "制作布料",
+                                "清理");
   auto k_view = g_reg()->view<qcloth_shape>();
   g_reg()->destroy(k_view.begin(), k_view.end());
 }
@@ -42,8 +43,12 @@ bool create_sim_cloth::render() {
       p_list.push_back(k_h);
     }
   }
+  imgui::SameLine();
   if (imgui::Button(p_show_str["清理"].c_str())) {
-    g_reg()->destroy(p_list.begin(), p_list.end());
+    for (auto& h : p_list) {
+      h.destroy();
+    }
+    p_list.clear();
   }
 
   for (auto& l_h : p_list) {
