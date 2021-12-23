@@ -226,6 +226,45 @@ void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
   MGlobal::executeCommand(d_str{fmt::format(R"(setAttr "{}.{}" 1;)",
                                             l_blend[0], l_sim_name)});
 };
+
+/**
+ * @brief
+ * @param in_object 要创建解算网格的网格体
+ * @return 解算网格创建的 qlClothShape 和他的下一个标准输出端 kMesh 类型
+ */
+std::tuple<MObject, MObject> qlCreateCloth(const MObject& in_object) {
+  MObject l_mesh{};
+  MStatus l_s{};
+  /// 创建解算网络
+  MSelectionList l_selection_list{};
+  l_s = l_selection_list.add(in_object);
+  DOODLE_CHICK(l_s);
+  l_s = MGlobal::setActiveSelectionList(l_selection_list);
+  DOODLE_CHICK(l_s);
+  MString l_cloth_shape_name{};
+  l_s = MGlobal::executeCommand(d_str{"qlCreateCloth;"}, l_cloth_shape_name);
+  DOODLE_CHICK(l_s);
+  l_s = l_selection_list.clear();
+  DOODLE_CHICK(l_s);
+
+  l_s = l_selection_list.add(l_cloth_shape_name, true);
+  DOODLE_CHICK(l_s);
+
+  MObject l_cloth_shape{};
+  l_s = l_selection_list.getDependNode(0, l_cloth_shape);
+  DOODLE_CHICK(l_s);
+  auto l_plug = get_plug(l_cloth_shape, "outputMesh");
+  for (MItDependencyGraph i{l_plug, MFn::kMesh};
+       !i.isDone();
+       i.next()) {
+    l_mesh = i.currentItem(&l_s);
+    DOODLE_CHICK(l_s);
+  }
+  chick_true<maya_error>(!l_mesh.isNull(), DOODLE_SOURCE_LOC, "找不到解算网格的输出端");
+
+  return std::make_tuple(l_cloth_shape, l_mesh);
+}
+
 /**
  * @brief 检查组节点名称
  * @param in_node 传入的节点
@@ -373,6 +412,15 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
 
     k_s = l_selection_list.getDependNode(0, obj);
   }
+
+  {  /// 将解算的输出网格连接到代理输出中去
+    k_s = l_modifier.connect(get_plug(k_anim_mesh.obj, "outMesh"),
+                             get_plug(k_proxy_node_input, "inMesh"));
+    DOODLE_CHICK(k_s);
+    k_s = l_modifier.doIt();
+    DOODLE_CHICK(k_s);
+  }
+
   {
     ///  这里由于是使用解算命令创建出来的， 所以需要寻找新的低模
     MObject k_low{};
