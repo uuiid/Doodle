@@ -22,9 +22,9 @@ def doodle_test():
     k_f.config_ = """[{
         "export_path":"",
         "only_sim":false,
-        "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN2.ma",
+        "path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma",
         "qcloth_assets_path":"",
-        "uuid":"fa589d1b-3130-462f-b486-9faf90fe7909"}]"""
+        "uuid":"587c5eca-7dae-47c5-947e-de9ded2eae4f"}]"""
     k_f()
 
 
