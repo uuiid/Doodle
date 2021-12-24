@@ -29,11 +29,9 @@ void project_widget::frame_render() {
     imgui::TableSetupColumn("字母名称");
     imgui::TableHeadersRow();
 
-    const auto& k_prj_list = doodle_lib::Get().p_project_vector;
-
     bool k_chick{false};
 
-    for (const auto& p : k_prj_list) {
+    for (const auto& p : g_reg()->view<project>()) {
       auto k_h = make_handle(p);
       imgui::TableNextRow();
       imgui::TableNextColumn();
@@ -66,7 +64,8 @@ void project_widget::frame_render() {
   };
 }
 project_widget::~project_widget() {
-  core_set::getSet().default_project = p_c.get<database>().uuid();
+  if (p_c)
+    core_set::getSet().default_project = p_c.get<database>().uuid();
 }
 
 }  // namespace doodle
