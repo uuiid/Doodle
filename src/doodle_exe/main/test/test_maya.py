@@ -21,8 +21,8 @@ def doodle_test():
     k_f = maya_fun_tool.open_file()
     k_f.config_ = """[{
         "export_path":"",
-        "only_sim":false,
-        "path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma",
+        "only_sim":true,
+        "path":"E:/tmp/cloth_test/ma/TEST_EP001_SC001_AN.ma",
         "qcloth_assets_path":"",
         "uuid":"587c5eca-7dae-47c5-947e-de9ded2eae4f"}]"""
     k_f()
