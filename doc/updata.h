@@ -364,4 +364,7 @@
  *
  * @subsubsection  updata_log_325 版本3.2.5
  * @li 布料解算工具完成
+ *
+ * @subsubsection  updata_log_326 版本3.2.6
+ * @li 修复maya安装错误
  */

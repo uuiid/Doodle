@@ -80,7 +80,7 @@ foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)
     add_dependencies(${PROJECT_NAME}_maya_plug doodle_plug_${MAYA_VERSION})
 endforeach ()
 
-configure_file(doodle.mod.in ${PROJECT_BINARY_DIR}/plug/maya/doodle.mod)
+configure_file(doodle.mod.in ${PROJECT_BINARY_DIR}/doodle.mod)
 add_custom_command(
         TARGET ${PROJECT_NAME}_maya_plug
         PRE_BUILD

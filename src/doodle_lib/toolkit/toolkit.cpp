@@ -34,17 +34,6 @@ void toolkit::installMayaPath() {
       FSys::remove_all(mayadoc);
 
     file_system::local_copy(sourePath, mayadoc, false);
-    file_system::local_copy(core_set::program_location(), mayadoc / "plug-ins", false);
-
-    auto k_tmp_path = mayadoc / "scripts" / "scripts" / "maya_fun_tool.py";
-    if (FSys::exists(k_tmp_path))
-      return;
-
-    auto k_file_py = cmrc::DoodleLibResource::get_filesystem().open("resource/maya_fun_tool.py");
-    {  //写入文件后直接关闭
-      FSys::fstream file{k_tmp_path, std::ios::out | std::ios::binary};
-      file.write(k_file_py.begin(), boost::numeric_cast<std::int64_t>(k_file_py.size()));
-    }
 
     static std::string k_mod{R"(+ doodle 1.1 .\doodle
 MYMODULE_LOCATION:= .
