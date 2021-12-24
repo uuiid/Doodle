@@ -31,7 +31,7 @@ class reference_file {
   void set_project(const entt::handle &in_prj);
   [[nodiscard]] bool has_ref_project() const;
 
-  void generate_cloth_proxy();
+  void generate_cloth_proxy() const;
 
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
@@ -44,7 +44,7 @@ class reference_file {
   /**
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况
    */
-  bool replace_sim_assets_file();
+  bool replace_sim_assets_file() const;
   /**
    * @brief 将着色集和材质名称调换为导出abc做准备
    * @return

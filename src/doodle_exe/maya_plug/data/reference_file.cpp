@@ -134,7 +134,7 @@ string reference_file::get_namespace() {
   chick_mobject();
   return std::as_const(*this).get_namespace();
 }
-bool reference_file::replace_sim_assets_file() {
+bool reference_file::replace_sim_assets_file() const {
   if (!use_sim) {
     DOODLE_LOG_WARN("跳过不解算的文件 {}", path);
     return false;
@@ -304,7 +304,7 @@ bool reference_file::add_collision() const {
   DOODLE_CHICK(k_s);
   return true;
 }
-void reference_file::generate_cloth_proxy() {
+void reference_file::generate_cloth_proxy() const {
   auto k_prj = get_prj();
   chick_true<doodle_error>(k_prj,DOODLE_LOC,"无法找到项目配置");
 

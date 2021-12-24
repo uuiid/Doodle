@@ -144,7 +144,6 @@ MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
 
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
     if (k_ref.replace_sim_assets_file()) {
-      k_ref.generate_cloth_proxy();
     } else {
       k_delete.push_back(k_e);
     }
@@ -174,6 +173,7 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
 
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
     DOODLE_LOG_INFO("引用文件{}发现需要设置解算碰撞体", k_ref.path)
+    k_ref.generate_cloth_proxy();
     k_ref.add_collision();
   }
   for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
