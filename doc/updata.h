@@ -378,6 +378,7 @@
  * @li 更改abc按钮位置
  * @li 更改手动导出时的起始帧
  *
- *
- *
+ * @subsubsection  updata_log_3210 版本3.2.10
+ * @li 更改一些默认设置
+ * @li 去除一些gui按钮
  */

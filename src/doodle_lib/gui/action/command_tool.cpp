@@ -59,24 +59,26 @@ bool comm_maya_tool::render() {
     }
   };
 
-  dear::TreeNode{"解算"} && [this]() {
-    dear::Text(fmt::format("解算资产: {}", p_text));
+  dear::Text(fmt::format("解算资产: {}", p_text));
+
+  dear::TreeNode{"解算设置"} && [this]() {
     imgui::Checkbox("只解算不替换引用", &p_only_sim);
-    if (imgui::Button("解算")) {
-      auto maya = new_object<maya_file_async>();
-      std::for_each(p_sim_path.begin(), p_sim_path.end(),
-                    [this, maya](const FSys::path& in_path) {
-                      auto arg                = new_object<maya_file::qcloth_arg>();
-                      arg->sim_path           = in_path;
-                      arg->qcloth_assets_path = p_cloth_path;
-                      arg->only_sim           = p_only_sim;
-                      maya->qcloth_sim_file(arg);
-                    });
-    }
   };
   dear::TreeNode{"fbx导出设置"} && [&]() {
     imgui::Checkbox("直接加载所有引用", &p_use_all_ref);
   };
+
+  if (imgui::Button("解算")) {
+    auto maya = new_object<maya_file_async>();
+    std::for_each(p_sim_path.begin(), p_sim_path.end(),
+                  [this, maya](const FSys::path& in_path) {
+                    auto arg                = new_object<maya_file::qcloth_arg>();
+                    arg->sim_path           = in_path;
+                    arg->qcloth_assets_path = p_cloth_path;
+                    arg->only_sim           = p_only_sim;
+                    maya->qcloth_sim_file(arg);
+                  });
+  }
   if (imgui::Button("fbx导出")) {
     auto maya = new_object<maya_file_async>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
