@@ -361,4 +361,7 @@
  *
  * @subsubsection  updata_log_324 版本3.2.4
  * @li doodle 积累更新
+ *
+ * @subsubsection  updata_log_325 版本3.2.5
+ * @li 布料解算工具完成
  */
