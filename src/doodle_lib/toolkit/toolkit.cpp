@@ -1,5 +1,4 @@
 #include <doodle_lib/core/core_set.h>
-#include <doodle_lib/file_sys/file_system.h>
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/toolkit/toolkit.h>
 
@@ -25,7 +24,8 @@ void toolkit::installMayaPath() {
     } else
       FSys::remove_all(mayadoc);
 
-    file_system::local_copy(sourePath, mayadoc, false);
+    DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, mayadoc));
+    copy(sourePath, mayadoc, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 
     static std::string k_mod{R"(+ doodle 1.1 .\doodle
 MYMODULE_LOCATION:= .
@@ -61,7 +61,7 @@ void toolkit::installUePath(const FSys::path &path) {
     }
 
     DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, targetPath));
-    file_system::local_copy(sourePath, targetPath, false);
+    copy(sourePath, targetPath, FSys::copy_options::recursive | FSys::copy_options::update_existing);
   } catch (FSys::filesystem_error &error) {
     DOODLE_LOG_ERROR(error.what());
     throw;

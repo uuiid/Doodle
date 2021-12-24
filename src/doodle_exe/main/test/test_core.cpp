@@ -9,6 +9,8 @@
 #endif
 #include <catch.hpp>
 
+using namespace doodle;
+
 class test_pinyin {
  public:
   std::string data{"aa大.?小d多dd53少"};
@@ -117,85 +119,85 @@ TEST_CASE("core fmt", "[fun][fmt]") {
   k_h = k_w;
   k_w = std::move(k_h);
   k_h = std::move(k_w);
-
-
 }
 
-TEST_CASE("core path ", "[fun][path]") {
-  using namespace doodle;
-#if defined(_WIN32)
+class test_path_ {
+ public:
   FSys::path source_path{L"F:/测试文件.mp4"};
   FSys::path root{"D:/"};
   FSys::path p1{L"D:\\9-houqi\\Content\\Character"};
-#elif defined(__linux__)
-  FSys::path p1{"/mnt/d/9-houqi/Content/Character"};
-  FSys::path root{"/mnt/d/"};
-  FSys::path source_path{"/mnt/f/测试文件.mp4"};
-#endif
+};
 
-  SECTION("lexically_normal path") {
-    FSys::path subdir("../configuration/instance");
-    FSys::path cfgfile("../instance/myfile.cfg");
-    root /= "tmp";
-    root /= "test";
-    root /= "ttt";
-    FSys::path tmp(root / subdir / cfgfile);
-    REQUIRE(tmp.generic_string() == FSys::path{"D:/tmp/test/ttt/../configuration/instance/../instance/myfile.cfg"}.generic_string());
-    REQUIRE(tmp.lexically_normal() == FSys::path{"D:/tmp/test/configuration/instance/myfile.cfg"}.generic_string());
-  }
-  SECTION("file time") {
-#if defined(_WIN32)
-    struct _stat64 fileInfo {};
-    if (_wstat64(source_path.generic_wstring().c_str(), &fileInfo) != 0) {
-      std::cout << "Error : not find last_write_time " << std::endl;
-    }
-    auto k_t  = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
-    auto k_t2 = FSys::last_write_time_point(source_path);
-#elif defined(__linux__)
-    struct stat fileInfo {};
-    stat(source_path.generic_string().c_str(), &fileInfo);
-    auto k_t = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
-#endif
-    REQUIRE(k_t == k_t2);
+class test_path_2 : public test_path_ {
+ public:
+  FSys::path subdir{"../configuration/instance"};
+  FSys::path cfgfile{"../instance/myfile.cfg"};
+};
 
-    auto k_s2 = source_path.replace_filename("测试文件2");
-    {
-      FSys::ofstream k_f{k_s2};
-      k_f << "1";
-    }
-    FSys::last_write_time_point(k_s2, k_t2);
-    REQUIRE(FSys::last_write_time_point(k_s2) == k_t2);
+TEST_CASE_METHOD(test_path_2, "test_path_1", "[fun][path]") {
+  root /= "tmp";
+  root /= "test";
+  root /= "ttt";
+  FSys::path tmp(root / subdir / cfgfile);
+  REQUIRE(tmp.generic_string() == FSys::path{"D:/tmp/test/ttt/../configuration/instance/../instance/myfile.cfg"}.generic_string());
+  REQUIRE(tmp.lexically_normal() == FSys::path{"D:/tmp/test/configuration/instance/myfile.cfg"}.generic_string());
+}
+
+TEST_CASE_METHOD(test_path_, "test_path_2_time", "[fun][path]") {
+  struct _stat64 fileInfo {};
+  if (_wstat64(source_path.generic_wstring().c_str(), &fileInfo) != 0) {
+    std::cout << "Error : not find last_write_time " << std::endl;
   }
-  SECTION("folder time") {
-#if defined(_WIN32)
-    struct _stat64 fileInfo {};
-    root /= "tmp";
-    if (_wstat64(root.generic_wstring().c_str(), &fileInfo) != 0) {
-      std::cout << "Error : not find last_write_time " << std::endl;
-    }
-    auto k_t  = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
-    auto k_t2 = FSys::last_write_time_point(root);
-#elif defined(__linux__)
-    struct stat fileInfo {};
-    stat(root.generic_string().c_str(), &fileInfo);
-#endif
-    REQUIRE(k_t == k_t2);
+  auto k_t  = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
+  auto k_t2 = FSys::last_write_time_point(source_path);
+
+  REQUIRE(k_t == k_t2);
+
+  auto k_s2 = source_path.replace_filename("测试文件2");
+  {
+    FSys::ofstream k_f{k_s2};
+    k_f << "1";
   }
-  SECTION("file sys append") {
-    auto k_path = source_path.replace_extension(".txt.backup");
-    REQUIRE(k_path == FSys::path{"F:/测试文件.txt.backup"});
+  FSys::last_write_time_point(k_s2, k_t2);
+  REQUIRE(FSys::last_write_time_point(k_s2) == k_t2);
+}
+
+TEST_CASE_METHOD(test_path_, "test_path_3_folder_time", "[fun][path]") {
+  struct _stat64 fileInfo {};
+  root /= "tmp";
+  if (_wstat64(root.generic_wstring().c_str(), &fileInfo) != 0) {
+    std::cout << "Error : not find last_write_time " << std::endl;
   }
-  SECTION("path relative") {
-    auto k_p = p1.root_name() / p1.root_directory() / p1.relative_path();
-    REQUIRE(k_p == FSys::path{"D:/9-houqi/Content/Character"});
-    REQUIRE(p1.root_path() == FSys::path{"D:/"});
-    REQUIRE(p1.root_directory() == FSys::path{"/"});
-    REQUIRE(p1.lexically_relative(root) == FSys::path{"9-houqi/Content/Character"});
-  }
-  SECTION("path open ex") {
-    FSys::open_explorer(source_path.parent_path());
-    FSys::open_explorer(root);
-  }
+  auto k_t  = std::chrono::system_clock::from_time_t(fileInfo.st_mtime);
+  auto k_t2 = FSys::last_write_time_point(root);
+  REQUIRE(k_t == k_t2);
+}
+TEST_CASE_METHOD(test_path_, "test_path_3_file_sys_append", "[fun][path]") {
+  auto k_path = source_path.replace_extension(".txt.backup");
+  REQUIRE(k_path == FSys::path{"F:/测试文件.txt.backup"});
+}
+
+TEST_CASE_METHOD(test_path_, "test_path_3_path_relative", "[fun][path]") {
+  auto k_p = p1.root_name() / p1.root_directory() / p1.relative_path();
+  REQUIRE(k_p == FSys::path{"D:/9-houqi/Content/Character"});
+  REQUIRE(p1.root_path() == FSys::path{"D:/"});
+  REQUIRE(p1.root_directory() == FSys::path{"/"});
+  REQUIRE(p1.lexically_relative(root) == FSys::path{"9-houqi/Content/Character"});
+}
+
+TEST_CASE_METHOD(test_path_, "test_path_3_path_open_ex", "[fun][path]") {
+  FSys::open_explorer(source_path.parent_path());
+  FSys::open_explorer(root);
+}
+
+class test_path_3 : public test_path_ {
+ public:
+  FSys::path dir_s{"D:/tmp"};
+  FSys::path dir_d{"D:/tmp2"};
+};
+
+TEST_CASE_METHOD(test_path_3, "test_path_copy", "[fun][path]") {
+  copy(dir_s, dir_d, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 }
 
 TEST_CASE("core create_path", "[fun][create_path]") {

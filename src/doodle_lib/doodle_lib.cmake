@@ -15,7 +15,6 @@ set(
     core/ue4_setting.h
     core/util.h
     exception/exception.h
-    file_sys/file_system.h
     file_warp/image_sequence.h
     file_warp/maya_file.h
     file_warp/opencv_read_player.h
@@ -37,7 +36,7 @@ set(
     gui/widgets/assets_widget.h
     gui/widgets/edit_widgets.h
     gui/widgets/long_time_tasks_widget.h
-        gui/widgets/opencv_player_widget.h
+    gui/widgets/opencv_player_widget.h
     gui/widgets/project_widget.h
     gui/widgets/time_widget.h
     gui/widgets/tool_box_widget.h
@@ -107,7 +106,6 @@ set(
     core/tree_container.cpp
     core/ue4_setting.cpp
     core/util.cpp
-    file_sys/file_system.cpp
     file_warp/image_sequence.cpp
     file_warp/maya_file.cpp
     file_warp/opencv_read_player.cpp
@@ -129,7 +127,7 @@ set(
     gui/widgets/assets_widget.cpp
     gui/widgets/edit_widgets.cpp
     gui/widgets/long_time_tasks_widget.cpp
-        gui/widgets/opencv_player_widget.cpp
+    gui/widgets/opencv_player_widget.cpp
     gui/widgets/project_widget.cpp
     gui/widgets/time_widget.cpp
     gui/widgets/tool_box_widget.cpp
