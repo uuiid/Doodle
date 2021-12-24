@@ -28,10 +28,10 @@ class DlsShelf(shelfBase._shelf):
     #     self.cloth_to_fbx = None
 
     def build(self):
-        self.addButon("cam", icon="icons/OUTcam.png",
-                      command=self.export_cam)
         self.addButon("export_abc", icon="icons/OUTabc.png",
                       command=self.exportAbc)
+        self.addButon("cam", icon="icons/OUTcam.png",
+                      command=self.export_cam)
         self.addButon("OUTfbx", icon="icons/OUTfbx.png",
                       command=self.exportFbx)
 
@@ -57,11 +57,13 @@ class DlsShelf(shelfBase._shelf):
 
     def exportAbc(self):
         cmds.doodle_create_ref_file()
-        cmds.doodle_ref_file_export(exportType="abc", select=True)
+        cmds.doodle_ref_file_export(
+            startTime=1000, exportType="abc", select=True)
 
     def exportFbx(self):
         cmds.doodle_create_ref_file()
-        cmds.doodle_ref_file_export(exportType="fbx", select=True)
+        cmds.doodle_ref_file_export(
+            startTime=1001, exportType="fbx", select=True)
 
     def deleteWeightPoint(self):
         self.re()

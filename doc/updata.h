@@ -370,4 +370,14 @@
  *
  * @subsubsection  updata_log_327 版本3.2.7
  * @li 修复maya启动器检查问题
+ *
+ * @subsubsection  updata_log_328 版本3.2.8
+ * @li 修正mayay元数据加载失败问题
+ *
+ * @subsubsection  updata_log_329 版本3.2.9
+ * @li 更改abc按钮位置
+ * @li 更改手动导出时的起始帧
+ *
+ *
+ *
  */
