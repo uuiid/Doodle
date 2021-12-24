@@ -114,25 +114,27 @@ MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
   auto k_j_str   = maya_file_io::get_channel_date();
   std::vector<entt::entity> k_delete{};
 
-  auto k_j = nlohmann::json::parse(k_j_str);
+  nlohmann::json k_j{};
+  try {
+    k_j = nlohmann::json::parse(k_j_str);
+  } catch (const nlohmann::json::exception& error) {
+    DOODLE_LOG_WARN("解析元数据错误 {}, 取消解析元数据，使用默认元数据", error.what())
+  }
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
     auto l_i = make_handle(k_e);
     auto l_p = k_ref.path;
     if (k_j.contains(l_p)) {
       DOODLE_LOG_INFO("加载元数据 {}", l_p);
       entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
+    } else {
+      l_i.get<reference_file>().use_sim = true;
     }
     if (!l_i.get<reference_file>().has_ref_project()) {
       l_i.patch<reference_file>([&](reference_file& in) {
         in.set_project(k_def_prj);
       });
     }
-    try {
-      if (k_j.contains(k_ref.get_unique_name()))
-        k_ref.use_sim = k_j.at(k_ref.get_unique_name()).at("use_sim").get<bool>();
-    } catch (nlohmann::json::exception& err) {
-      DOODLE_LOG_ERROR(err.what());
-    }
+
     if (!l_i.get<reference_file>().use_sim) {
       DOODLE_LOG_INFO("引用文件{}不解算", l_i.get<reference_file>().path);
       k_delete.push_back(l_i);
