@@ -247,7 +247,7 @@ class open_file(object):
             startTime=doodle_work_space.raneg.start,
             endTime=doodle_work_space.raneg.end)
 
-        cmds.comm_play_blast_maya(startTime=doodle_work_space.raneg.start,
+        cmds.comm_play_blast_maya(startTime=1001,
                                   endTime=doodle_work_space.raneg.end,
                                   filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
                                   .format(
