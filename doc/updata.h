@@ -367,4 +367,7 @@
  *
  * @subsubsection  updata_log_326 版本3.2.6
  * @li 修复maya安装错误
+ *
+ * @subsubsection  updata_log_327 版本3.2.7
+ * @li 修复maya启动器检查问题
  */
