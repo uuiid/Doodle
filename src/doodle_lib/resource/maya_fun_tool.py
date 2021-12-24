@@ -253,7 +253,7 @@ class open_file(object):
                                   .format(
                                       path=doodle_work_space.get_move_folder(),
                                       base_name=doodle_work_space.maya_file.name_not_ex,
-                                      start=doodle_work_space.raneg.start,
+                                      start=1001,
                                       end=doodle_work_space.raneg.end
                                   ))
         cmds.doodle_ref_file_export(

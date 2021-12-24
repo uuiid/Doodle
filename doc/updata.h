@@ -381,4 +381,8 @@
  * @subsubsection  updata_log_3210 版本3.2.10
  * @li 更改一些默认设置
  * @li 去除一些gui按钮
+ *
+ * @subsubsection  updata_log_3211 版本3.2.11
+ * @li 修改名称失误
+ *
  */
