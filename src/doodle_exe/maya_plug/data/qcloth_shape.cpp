@@ -17,6 +17,7 @@
 #include <maya/MFnSet.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MFnSkinCluster.h>
+#include <maya/MItDependencyNodes.h>
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -266,6 +267,68 @@ std::tuple<MObject, MObject> qlCreateCloth(const MObject& in_object) {
 }
 
 /**
+ * @brief 在整个文件中全局搜素 解算核心节点
+ * @return 解算核心
+ */
+MObject get_ql_solver() {
+  MStatus l_status{};
+  MObject l_object{};
+  for (MItDependencyNodes i{
+           MFn::kPluginLocatorNode, &l_status};
+       !i.isDone(); i.next()) {
+    auto k_obj = i.thisNode(&l_status);
+    MFnDependencyNode k_dep{k_obj};
+    if (k_dep.typeName(&l_status) == "qlSolverShape") {
+      l_object = k_obj;
+    }
+  }
+  chick_true<maya_error>(!l_object.isNull(), DOODLE_LOC, "没有找到qlSolver解算核心");
+  return l_object;
+}
+/**
+ * @brief 创建碰撞体
+ * @param in_collider 传入要创建碰撞体的 mobj
+ * @return 碰撞体和碰撞偏移物体
+ */
+std::tuple<MObject, MObject> _add_collider_(const MObject& in_collider) {
+  MStatus l_status{};
+  /// 创建碰撞体
+  auto l_ql_solver = get_ql_solver();
+  MSelectionList l_list{};
+  l_status = l_list.add(l_ql_solver);
+  DOODLE_CHICK(l_status);
+  l_status = l_list.add(in_collider);
+  DOODLE_CHICK(l_status);
+  l_status = MGlobal::setActiveSelectionList(l_list);
+  DOODLE_CHICK(l_status);
+  MString l_collider_name{};
+  l_status = MGlobal::executeCommand("qlCreateCollider;", l_collider_name);
+  DOODLE_CHICK(l_status);
+
+  /// 获取创建出来的碰撞体和解算体
+  l_status = l_list.clear();
+  l_status = l_list.add(l_collider_name);
+  MObject l_collider{};
+  l_status = l_list.getDependNode(0, l_collider);
+
+  MObject l_collider_offset{};
+
+  auto l_out_plug = get_plug(l_collider, "output");
+  MPlugArray l_plug_array{};
+  l_out_plug.destinations(l_plug_array, &l_status);
+  DOODLE_CHICK(l_status);
+  for (int l_i = 0; l_i < l_plug_array.length(); ++l_i) {
+    auto l_node = l_plug_array[l_i].node(&l_status);
+    DOODLE_CHICK(l_status);
+    if (l_node.hasFn(MFn::kMesh))
+      l_collider_offset = l_node;
+  }
+
+  chick_true<maya_error>(!l_collider.isNull() && !l_collider_offset.isNull(), DOODLE_LOC, "寻找的的解算网格体和偏移网格体不一致");
+  return std::make_tuple(l_collider, l_collider_offset);
+}
+
+/**
  * @brief 检查组节点名称
  * @param in_node 传入的节点
  * @param in_name 节点名称
@@ -469,6 +532,24 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
 void qcloth_shape::set_all_active(bool in_active) {
 }
 void qcloth_shape::set_all_attraction_method(bool in_) {
+}
+void qcloth_shape::add_collider(const entt::handle& in_handle) {
+  chick_true<component_error>(
+      in_handle.any_of<qcloth_shape_n::shape_list>(), DOODLE_LOC, "缺失组件");
+  auto l_group   = get_cloth_group();
+  auto l_ql      = get_ql_solver();
+  auto l_ql_tran = get_transform(l_ql);
+
+  add_child(l_group.cfx_grp, l_ql_tran);
+
+  for (auto& l_item : in_handle.get<qcloth_shape_n::shape_list>()) {
+    auto [l_col, l_col_off] = _add_collider_(l_item.obj);
+    auto l_col_tran         = get_transform(l_col);
+    auto l_col_off_tran     = get_transform(l_col_off);
+    add_child(l_group.collider_grp, l_col_tran);
+    add_child(l_group.collider_grp, l_col_off_tran);
+  }
+
 }
 
 }  // namespace doodle::maya_plug

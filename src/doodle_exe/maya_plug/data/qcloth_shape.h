@@ -80,6 +80,8 @@ class qcloth_shape {
    */
   void create_sim_cloth(const entt::handle& in_handle);
 
+  void add_collider(const entt::handle& in_handle);
+
   static void set_all_active(bool in_active);
   static void set_all_attraction_method(bool in_);
 };
