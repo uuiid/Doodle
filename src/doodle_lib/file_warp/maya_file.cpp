@@ -22,10 +22,10 @@
 namespace doodle {
 maya_file::maya_file(FSys::path mayaPath)
     : p_path(std::move(mayaPath)) {
+  p_path = core_set::getSet().maya_path();
   chick_true<doodle_error>(exists(p_path) && core_set::getSet().has_maya(),
                            DOODLE_LOC,
                            "无法找到maya启动器");
-  p_path = core_set::getSet().maya_path();
 }
 
 void maya_file::write_maya_tool_file() {
