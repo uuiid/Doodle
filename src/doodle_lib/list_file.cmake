@@ -22,6 +22,7 @@ doodle_get_source(
         ${CMAKE_CURRENT_LIST_DIR}/thread_pool
         ${CMAKE_CURRENT_LIST_DIR}/toolkit
         ${CMAKE_CURRENT_LIST_DIR}/server
+        ${CMAKE_CURRENT_LIST_DIR}/exe_warp
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
@@ -37,10 +38,10 @@ file(WRITE doodle_lib_all.h [[//
 // Created by TD on 2021/5/9.
 //
 
-#pragma once]] )
+#pragma once]])
 foreach (_HEADER IN LISTS DOODLELIB_HEADER)
     if (${_HEADER} STREQUAL doodle_lib_all.h)
-    else()
+    else ()
         file(APPEND doodle_lib_all.h "\n#include <doodle_lib/${_HEADER}>")
     endif ()
 endforeach ()
