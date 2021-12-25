@@ -64,4 +64,5 @@ class DOODLELIB_API doodle_app : public details::no_copy {
 
  protected:
 };
+
 }  // namespace doodle

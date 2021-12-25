@@ -350,8 +350,12 @@ using registry_ptr               = std::shared_ptr<entt::registry>;
 class time_widget;
 
 using uuid = boost::uuids::uuid;
-
+template <class Derived>
+using process_t   = entt::process<Derived, std::chrono::system_clock::duration>;
+using scheduler_t = entt::scheduler<std::chrono::system_clock::duration>;
 DOODLELIB_API registry_ptr &g_reg();
+scheduler_t& DOODLELIB_API g_main_loop();
+
 template <class Component,
           std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
 entt::handle make_handle(const Component &instance) {
@@ -415,9 +419,7 @@ using rpc_trans_path_ptr      = std::unique_ptr<rpc_trans_path>;
 using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
 using doodle_app_ptr          = std::shared_ptr<doodle_app>;
 
-template <class Derived>
-using process_t   = entt::process<Derived, std::chrono::system_clock::duration>;
-using scheduler_t = entt::scheduler<std::chrono::system_clock::duration>;
+
 
 namespace rpc_trans {
 class down_file;

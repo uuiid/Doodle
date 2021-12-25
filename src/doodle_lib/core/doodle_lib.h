@@ -31,7 +31,7 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
   thread_pool_ptr get_thread_pool();
 
   std::vector<entt::entity> p_project_vector;
-
+  scheduler_t loop;
   void init_gui();
 
   [[nodiscard]] rpc_metadata_client_ptr get_rpc_metadata_client() const;
@@ -46,5 +46,7 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
 DOODLELIB_API inline registry_ptr& g_reg() {
   return doodle_lib::Get().reg;
 }
-
+DOODLELIB_API inline scheduler_t& g_main_loop() {
+  return doodle_app::Get()->loop;
+}
 }  // namespace doodle

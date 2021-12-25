@@ -376,11 +376,15 @@ void doodle_app::loop_one() {
 
   imgui::DockSpaceOverViewport(imgui::GetMainViewport());
   static std::string str{};
+  static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};
+  decltype(chrono::system_clock::now()) l_now{chrono::system_clock::now()};
   try {
     if (!p_show_err) {
       p_main_win->frame_render();
       main_loop();
       metadata_loop_one();
+      g_main_loop().update(l_now - s_now, nullptr);
+      s_now = l_now;
     }
   } catch (doodle_error& err) {
     DOODLE_LOG_ERROR("捕获 doodle_error异常 {}", err.what());
