@@ -415,6 +415,10 @@ using rpc_trans_path_ptr      = std::unique_ptr<rpc_trans_path>;
 using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
 using doodle_app_ptr          = std::shared_ptr<doodle_app>;
 
+template <class Derived>
+using process_t   = entt::process<Derived, std::chrono::system_clock::duration>;
+using scheduler_t = entt::scheduler<std::chrono::system_clock::duration>;
+
 namespace rpc_trans {
 class down_file;
 class down_dir;
