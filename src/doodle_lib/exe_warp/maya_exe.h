@@ -62,9 +62,9 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   //  void succeed() noexcept;
   //  void fail() noexcept;
   //  void pause() noexcept;
-  explicit maya_exe(const entt::handle &in_handle, const string &in_comm);
-  explicit maya_exe(const entt::handle &in_handle, const qcloth_arg &in_comm);
-  explicit maya_exe(const entt::handle &in_handle, const export_fbx_arg &in_comm);
+  explicit maya_exe(const entt::handle &in_handle, const string &in_file);
+  explicit maya_exe(const entt::handle &in_handle, const qcloth_arg &in_arg);
+  explicit maya_exe(const entt::handle &in_handle, const export_fbx_arg &in_arg);
   ~maya_exe() override;
 
   void init();

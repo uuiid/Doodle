@@ -332,16 +332,15 @@ TEST_CASE("core opencv image", "[fun]") {
 }
 
 TEST_CASE("maya get log", "[maya]") {
-  using namespace doodle;
-  auto k_maya = maya_file();
-  auto k_arg  = std::make_shared<maya_file::qcloth_arg>();
-  //  k_arg->only_sim           = false;
-  //  k_arg->qcloth_assets_path = FSys::path{R"(V:\03_Workflow\Assets\CFX\cloth)"};
-  //  k_arg->sim_path           = FSys::path{"F:\\data\\DBXY_163_052.ma"};
-  //  auto k_term               = k_maya.qcloth_sim_file(k_arg);
-  //  k_term->sig_message_result.connect([](const std::string& in_, long_term::level in_level) { DOODLE_LOG_INFO(in_); });
-  //  k_term->sig_progress.connect([](auto in_) { DOODLE_LOG_INFO(in_); });
-  //  k_term->p_list[0].get();
+  scheduler_t k_loop{};
+  auto k_mesg = make_handle();
+  k_mesg.emplace<process_message>();
+  g_main_loop().attach<details::maya_exe>(
+      k_mesg,
+      "C:\\Users\\TD\\Source\\Doodle\\src\\doodle_exe\\main\\test\\test_maya_null.py");
+  while (!g_main_loop().empty()) {
+    g_main_loop().update({}, nullptr);
+  }
 }
 
 TEST_CASE("ThreadPool", "[core][ThreadPool]") {
