@@ -337,7 +337,7 @@ TEST_CASE("maya get log", "[maya]") {
   k_mesg.emplace<process_message>();
   g_main_loop().attach<details::maya_exe>(
       k_mesg,
-      "C:\\Users\\TD\\Source\\Doodle\\src\\doodle_exe\\main\\test\\test_maya_null.py");
+      R"(C:\Users\TD\Source\Doodle\src\doodle_exe\main\test\test_maya_null.py)");
   while (!g_main_loop().empty()) {
     g_main_loop().update({}, nullptr);
   }

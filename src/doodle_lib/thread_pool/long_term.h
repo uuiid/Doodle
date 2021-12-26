@@ -123,8 +123,8 @@ class DOODLELIB_API process_message {
 
   process_message(process_message&&) noexcept;
   process_message& operator=(process_message&&) noexcept;
-  process_message(process_message&) noexcept;
-  process_message& operator=(process_message&) noexcept;
+  process_message(const process_message&) noexcept;
+  process_message& operator=(const process_message&) noexcept;
 
   [[nodiscard]] const std::string& get_name() const;
   void set_name(const std::string& in_string);

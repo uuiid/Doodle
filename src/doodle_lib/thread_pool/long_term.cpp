@@ -180,25 +180,25 @@ chrono::sys_time_pos::duration process_message::get_time() const {
   return p_end ? (*p_end - p_time) : (chrono::system_clock::now() - p_time);
 }
 process_message::process_message(process_message&& in) noexcept {
-  p_time     = std::move(in.p_time);
-  p_end      = std::move(in.p_end);
+  p_time     = in.p_time;
+  p_end      = in.p_end;
   p_err      = std::move(in.p_err);
   p_log      = std::move(in.p_log);
   p_name     = std::move(in.p_name);
-  p_state    = std::move(in.p_state);
-  p_progress = std::move(in.p_progress);
+  p_state    = in.p_state;
+  p_progress = in.p_progress;
 }
 process_message& process_message::operator=(process_message&& in) noexcept {
-  p_time     = std::move(in.p_time);
-  p_end      = std::move(in.p_end);
+  p_time     = in.p_time;
+  p_end      = in.p_end;
   p_err      = std::move(in.p_err);
   p_log      = std::move(in.p_log);
   p_name     = std::move(in.p_name);
-  p_state    = std::move(in.p_state);
-  p_progress = std::move(in.p_progress);
+  p_state    = in.p_state;
+  p_progress = in.p_progress;
   return *this;
 }
-process_message::process_message(process_message& in) noexcept {
+process_message::process_message(const process_message& in) noexcept {
   p_time     = in.p_time;
   p_end      = in.p_end;
   p_err      = in.p_err;
@@ -207,7 +207,7 @@ process_message::process_message(process_message& in) noexcept {
   p_state    = in.p_state;
   p_progress = in.p_progress;
 }
-process_message& process_message::operator=(process_message& in) noexcept {
+process_message& process_message::operator=(const process_message& in) noexcept {
   p_time     = in.p_time;
   p_end      = in.p_end;
   p_err      = in.p_err;
