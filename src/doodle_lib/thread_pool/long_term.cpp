@@ -126,4 +126,56 @@ void long_term::start() {
 void long_term::set_state(long_term::state in_state) {
   p_state = in_state;
 }
+
+process_message::process_message()
+    : p_state(state::wait),
+      p_time(chrono::system_clock::now()) {
+}
+const std::string& process_message::get_name() const {
+  std::lock_guard _lock{_mutex};
+  return p_name;
+}
+void process_message::set_name(const string& in_string) {
+  std::lock_guard _lock{_mutex};
+  p_name = in_string;
+}
+void process_message::progress_step(const rational_int& in_rational_int) {
+  std::lock_guard _lock{_mutex};
+  p_progress += in_rational_int;
+}
+void process_message::message(const string& in_string, const level& in_level_enum) {
+  spdlog::debug(in_string);
+  std::lock_guard _lock{_mutex};
+  switch (in_level_enum) {
+    case level::warning:
+      p_err += in_string;
+    default:
+      p_log += in_string;
+      break;
+  }
+}
+void process_message::set_state(state in_state) {
+  std::lock_guard _lock{_mutex};
+  p_state = in_state;
+}
+std::string_view process_message::message() const {
+  std::lock_guard _lock{_mutex};
+  return p_err;
+}
+std::string_view process_message::log() const {
+  std::lock_guard _lock{_mutex};
+  return p_log;
+}
+rational_int process_message::get_progress() const {
+  std::lock_guard _lock{_mutex};
+  return p_progress;
+}
+const process_message::state& process_message::get_state() const {
+  std::lock_guard _lock{_mutex};
+  return p_state;
+}
+const chrono::sys_time_pos::duration& process_message::get_time() const {
+  std::lock_guard _lock{_mutex};
+  return p_end ? (*p_end - p_time) : (chrono::system_clock::now() - p_time);
+}
 }  // namespace doodle

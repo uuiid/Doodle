@@ -95,4 +95,47 @@ class DOODLELIB_API long_term
   std::vector<std::shared_future<void>> p_list;
 };
 
+class DOODLELIB_API process_message {
+ public:
+  enum level {
+    info    = 0,
+    warning = 1,
+  };
+  enum state {
+    success = 1,
+    fail    = 2,
+    wait    = 3,
+    run     = 4
+  };
+
+ private:
+  chrono::sys_time_pos p_time;
+  std::optional<chrono::sys_time_pos> p_end;
+  std::string p_err;
+  std::string p_log;
+  std::string p_name;
+  state p_state;
+  rational_int p_progress;
+  std::mutex _mutex;
+
+ public:
+  process_message();
+  [[nodiscard]] const std::string& get_name() const;
+  void set_name(const std::string& in_string);
+
+  void progress_step(const rational_int& in_rational_int);
+  void message(const string& in_string, const level& in_level_enum);
+
+  void set_state(state in_state);
+  [[nodiscard]] std::string_view message() const;
+  [[nodiscard]] std::string_view log() const;
+
+  [[nodiscard]] rational_int get_progress() const;
+  [[nodiscard]] const state& get_state() const;
+  [[nodiscard]] const chrono::sys_time_pos::duration& get_time() const;
+
+  [[nodiscard]] inline bool is_run() const { return get_state() == state::run; }
+  [[nodiscard]] inline bool is_wait() const { return get_state() == state::wait; }
+};
+
 }  // namespace doodle

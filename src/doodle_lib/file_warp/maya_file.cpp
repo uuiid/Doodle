@@ -1,5 +1,3 @@
-#include <Logger/logger.h>
-#include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/core/filesystem_extend.h>

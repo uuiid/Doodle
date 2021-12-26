@@ -47,6 +47,6 @@ DOODLELIB_API inline registry_ptr& g_reg() {
   return doodle_lib::Get().reg;
 }
 DOODLELIB_API inline scheduler_t& g_main_loop() {
-  return doodle_app::Get()->loop;
+  return doodle_lib::Get().loop;
 }
 }  // namespace doodle
