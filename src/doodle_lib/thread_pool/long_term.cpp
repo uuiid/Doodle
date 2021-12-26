@@ -131,8 +131,9 @@ process_message::process_message()
     : p_state(state::wait),
       p_time(chrono::system_clock::now()) {
 }
+
 const std::string& process_message::get_name() const {
-  std::lock_guard _lock{_mutex};
+  //  std::lock_guard _lock{_mutex};
   return p_name;
 }
 void process_message::set_name(const string& in_string) {
@@ -159,23 +160,61 @@ void process_message::set_state(state in_state) {
   p_state = in_state;
 }
 std::string_view process_message::message() const {
-  std::lock_guard _lock{_mutex};
+  //  std::lock_guard _lock{_mutex};
   return p_err;
 }
 std::string_view process_message::log() const {
-  std::lock_guard _lock{_mutex};
+  //  std::lock_guard _lock{_mutex};
   return p_log;
 }
 rational_int process_message::get_progress() const {
-  std::lock_guard _lock{_mutex};
+  //  std::lock_guard _lock{_mutex};
   return p_progress;
 }
 const process_message::state& process_message::get_state() const {
-  std::lock_guard _lock{_mutex};
+  //  std::lock_guard _lock{_mutex};
   return p_state;
 }
-const chrono::sys_time_pos::duration& process_message::get_time() const {
-  std::lock_guard _lock{_mutex};
+chrono::sys_time_pos::duration process_message::get_time() const {
+  //  std::lock_guard _lock{_mutex};
   return p_end ? (*p_end - p_time) : (chrono::system_clock::now() - p_time);
+}
+process_message::process_message(process_message&& in) noexcept {
+  p_time     = std::move(in.p_time);
+  p_end      = std::move(in.p_end);
+  p_err      = std::move(in.p_err);
+  p_log      = std::move(in.p_log);
+  p_name     = std::move(in.p_name);
+  p_state    = std::move(in.p_state);
+  p_progress = std::move(in.p_progress);
+}
+process_message& process_message::operator=(process_message&& in) noexcept {
+  p_time     = std::move(in.p_time);
+  p_end      = std::move(in.p_end);
+  p_err      = std::move(in.p_err);
+  p_log      = std::move(in.p_log);
+  p_name     = std::move(in.p_name);
+  p_state    = std::move(in.p_state);
+  p_progress = std::move(in.p_progress);
+  return *this;
+}
+process_message::process_message(process_message& in) noexcept {
+  p_time     = in.p_time;
+  p_end      = in.p_end;
+  p_err      = in.p_err;
+  p_log      = in.p_log;
+  p_name     = in.p_name;
+  p_state    = in.p_state;
+  p_progress = in.p_progress;
+}
+process_message& process_message::operator=(process_message& in) noexcept {
+  p_time     = in.p_time;
+  p_end      = in.p_end;
+  p_err      = in.p_err;
+  p_log      = in.p_log;
+  p_name     = in.p_name;
+  p_state    = in.p_state;
+  p_progress = in.p_progress;
+  return *this;
 }
 }  // namespace doodle

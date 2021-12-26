@@ -120,6 +120,12 @@ class DOODLELIB_API process_message {
 
  public:
   process_message();
+
+  process_message(process_message&&) noexcept;
+  process_message& operator=(process_message&&) noexcept;
+  process_message(process_message&) noexcept;
+  process_message& operator=(process_message&) noexcept;
+
   [[nodiscard]] const std::string& get_name() const;
   void set_name(const std::string& in_string);
 
@@ -132,7 +138,7 @@ class DOODLELIB_API process_message {
 
   [[nodiscard]] rational_int get_progress() const;
   [[nodiscard]] const state& get_state() const;
-  [[nodiscard]] const chrono::sys_time_pos::duration& get_time() const;
+  [[nodiscard]] chrono::sys_time_pos::duration get_time() const;
 
   [[nodiscard]] inline bool is_run() const { return get_state() == state::run; }
   [[nodiscard]] inline bool is_wait() const { return get_state() == state::wait; }
