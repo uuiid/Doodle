@@ -48,4 +48,8 @@ DOODLELIB_API inline registry_ptr& g_reg() {
 DOODLELIB_API inline scheduler_t& g_main_loop() {
   return doodle_lib::Get().loop;
 }
+DOODLELIB_API inline thread_pool& g_thread_pool() {
+  return *(doodle_lib::Get().get_thread_pool());
+};
+
 }  // namespace doodle

@@ -355,7 +355,8 @@ template <class Derived>
 using process_t   = entt::process<Derived, std::chrono::system_clock::duration>;
 using scheduler_t = entt::scheduler<std::chrono::system_clock::duration>;
 DOODLELIB_API registry_ptr &g_reg();
-scheduler_t &DOODLELIB_API g_main_loop();
+DOODLELIB_API scheduler_t &g_main_loop();
+DOODLELIB_API thread_pool &g_thread_pool();
 
 template <class Component,
           std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
