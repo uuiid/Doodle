@@ -7,6 +7,10 @@
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/core/core_set.h>
 
+//#include <doodle_lib/core/doodle_lib.h>
+//#include <doodle_lib/thread_pool/thread_pool.h>
+//#include <type_traits>
+
 #include <boost/process.hpp>
 #ifdef _WIN32
 #include <boost/process/windows.hpp>
@@ -28,6 +32,8 @@ const std::wregex fatal_error_en_us{
 class maya_exe::impl {
  public:
   std::string in_comm;
+  //  boost::process::async_pipe p_out;
+  //  boost::process::async_pipe p_err;
   boost::process::ipstream p_out;
   boost::process::ipstream p_err;
 
@@ -143,7 +149,8 @@ void maya_exe::init() {
         p_i->p_process.terminate();
         p_i->p_out.close();
         p_i->p_err.close();
-      })
+      }),
+      doodle_lib::Get().get_thread_pool()->get_io_context()
 #ifdef _WIN32
           ,
       boost::process::windows::hide
@@ -156,22 +163,24 @@ void maya_exe::init() {
 }
 void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
   string k_out{};
+  p_i->p_out.get();
   if (!p_i->p_out.eof()) {
     getline(p_i->p_out, k_out);
-    if(!k_out.empty()) {
-      auto k_str  = conv::to_utf<char>(k_out, "GBK");
+    if (!k_out.empty()) {
+      auto k_str = conv::to_utf<char>(k_out, "GBK");
       k_str.pop_back();
 
       p_i->p_time = chrono::system_clock::now();
       p_i->p_mess.patch<process_message>([&](process_message &in) {
-        in.progress_step({1, 200});
+        in.progress_step({1, 300});
         in.message(k_str, in.warning);
       });
     }
   }
+  p_i->p_err.get();
   if (!p_i->p_err.eof()) {
     getline(p_i->p_err, k_out);
-    if(!k_out.empty()){
+    if (!k_out.empty()) {
       auto k_str = conv::to_utf<char>(k_out, "GBK");
 
       k_str.pop_back();
@@ -185,10 +194,19 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
       }
       p_i->p_time = chrono::system_clock::now();
       p_i->p_mess.patch<process_message>([&](process_message &in) {
-        in.progress_step({1, 200});
+        in.progress_step({1, 20000});
         in.message(k_str, in.info);
       });
     }
+  }
+
+  auto k_time = chrono::system_clock::now() - p_i->p_time;
+  if (core_set::getSet().timeout < chrono::floor<chrono::seconds>(k_time).count()) {
+    p_i->p_process.terminate();
+    p_i->p_mess.patch<process_message>([&](process_message &in) {
+      in.message("进程超时, 主动结束任务", in.warning);
+    });
+    this->fail();
   }
 
   if (!p_i->p_process.running() && p_i->p_out.eof() && p_i->p_err.eof()) {

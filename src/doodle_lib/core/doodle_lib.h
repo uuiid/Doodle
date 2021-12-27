@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <doodle_lib/core/observable_container.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle {

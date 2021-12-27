@@ -11,7 +11,6 @@ class export_fbx_arg;
 }  // namespace details
 
 class DOODLELIB_API maya_file_async : public details::no_copy {
-
  public:
   maya_file_async();
 

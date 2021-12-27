@@ -15,7 +15,7 @@
 
 namespace doodle {
 
-//namespace details {
+// namespace details {
 class DOODLELIB_API thread_pool : public details::no_copy {
  public:
   explicit thread_pool(size_t);
@@ -23,6 +23,10 @@ class DOODLELIB_API thread_pool : public details::no_copy {
   auto enqueue(F&& f, Args&&... args)
       -> std::future<typename std::invoke_result<F, Args...>::type>;
   ~thread_pool();
+
+  boost::asio::io_context& get_io_context() {
+    return io_context;
+  };
 
  private:
   // need to keep track of threads so we can join them
@@ -49,7 +53,7 @@ template <class F, class... Args>
     -> std::future<typename std::invoke_result<F, Args...>::type> {
   using return_type = typename std::invoke_result<F, Args...>::type;
 
-  auto task = new_object<std::packaged_task<return_type()> >(
+  auto task         = new_object<std::packaged_task<return_type()> >(
       std::bind(std::forward<F>(f), std::forward<Args>(args)...));
   std::future<return_type> res = task->get_future();
   boost::asio::post(io_context, [task]() { (*task)(); });
@@ -63,5 +67,5 @@ inline thread_pool::~thread_pool() {
 }
 //}  // namespace details
 
-//using ThreadPool = details::ThreadPool;
+// using ThreadPool = details::ThreadPool;
 }  // namespace doodle
