@@ -156,32 +156,37 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
   string k_out{};
   if (!p_i->p_out.eof()) {
     getline(p_i->p_out, k_out);
-    auto k_str = conv::to_utf<char>(k_out, "GBK");
-    k_str.pop_back();
+    if(!k_out.empty()) {
+      auto k_str  = conv::to_utf<char>(k_out, "GBK");
+      k_str.pop_back();
 
-    p_i->p_time = chrono::system_clock::now();
-    p_i->p_mess.patch<process_message>([&](process_message &in) {
-      in.progress_step({1, 200});
-      in.message(k_str, in.warning);
-    });
+      p_i->p_time = chrono::system_clock::now();
+      p_i->p_mess.patch<process_message>([&](process_message &in) {
+        in.progress_step({1, 200});
+        in.message(k_str, in.warning);
+      });
+    }
   }
   if (!p_i->p_err.eof()) {
     getline(p_i->p_err, k_out);
-    auto k_str = conv::to_utf<char>(k_out, "GBK");
-    k_str.pop_back();
+    if(!k_out.empty()){
+      auto k_str = conv::to_utf<char>(k_out, "GBK");
 
-    auto k_w_str = conv::to_utf<wchar_t>(k_out, "GBK");
-    if (std::regex_search(k_w_str, fatal_error_znch) ||
-        std::regex_search(k_w_str, fatal_error_en_us)) {
-      DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算命令是 {}", p_i->in_comm);
-      fail();
-      return;
+      k_str.pop_back();
+
+      auto k_w_str = conv::to_utf<wchar_t>(k_out, "GBK");
+      if (std::regex_search(k_w_str, fatal_error_znch) ||
+          std::regex_search(k_w_str, fatal_error_en_us)) {
+        DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算命令是 {}", p_i->in_comm);
+        fail();
+        return;
+      }
+      p_i->p_time = chrono::system_clock::now();
+      p_i->p_mess.patch<process_message>([&](process_message &in) {
+        in.progress_step({1, 200});
+        in.message(k_str, in.info);
+      });
     }
-    p_i->p_time = chrono::system_clock::now();
-    p_i->p_mess.patch<process_message>([&](process_message &in) {
-      in.progress_step({1, 200});
-      in.message(k_str, in.info);
-    });
   }
 
   if (!p_i->p_process.running() && p_i->p_out.eof() && p_i->p_err.eof()) {
