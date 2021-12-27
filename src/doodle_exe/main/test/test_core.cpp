@@ -299,7 +299,6 @@ TEST_CASE("core create_path", "[fun][create_path]") {
   }
 }
 
-#include <boost/locale/generator.hpp>
 #include <opencv2/opencv.hpp>
 TEST_CASE("core opencv", "[fun]") {
   using namespace doodle;
@@ -394,9 +393,6 @@ TEST_CASE("ThreadPool", "[core][ThreadPool]") {
   }
 }
 
-#include <boost/locale.hpp>
-#include <boost/locale/info.hpp>
-#include <boost/locale/util.hpp>
 TEST_CASE("sys encoding", "[sys]") {
   auto k_ = boost::locale::util::get_system_locale();
   std::cout << k_ << std::endl;
@@ -408,8 +404,6 @@ TEST_CASE("sys encoding", "[sys]") {
   std::cout << std::use_facet<boost::locale::info>(k_lo).variant() << std::endl;
   //  std::cout << k_.c_str() << std::endl;
 }
-
-#include <boost/rational.hpp>
 
 TEST_CASE("boost rational", "[boost][rational]") {
   using rati = boost::rational<std::uint64_t>;
@@ -449,15 +443,15 @@ TEST_CASE("temp fun", "[core]") {
 
 TEST_CASE("path iter", "[core]") {
   using namespace doodle;
-  FSys::path k_path{"Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject"};
+  FSys::path k_path{R"(Users\teXiao\Documents\Unreal_Projects\test_tmp\test_tmp.uproject)"};
   for (auto& i : k_path) {
     std::cout << i << std::endl;
   }
-  FSys::path k_path2{"\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject"};
+  FSys::path k_path2{R"(\Users\teXiao\Documents\Unreal_Projects\test_tmp\test_tmp.uproject)"};
   for (auto& i : k_path2) {
     std::cout << i << std::endl;
   }
-  FSys::path k_path3{"C:\\Users\\teXiao\\Documents\\Unreal_Projects\\test_tmp\\test_tmp.uproject"};
+  FSys::path k_path3{R"(C:\Users\teXiao\Documents\Unreal_Projects\test_tmp\test_tmp.uproject)"};
   for (auto& i : k_path3) {
     std::cout << i << std::endl;
   }
