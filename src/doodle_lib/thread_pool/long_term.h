@@ -115,6 +115,7 @@ class DOODLELIB_API process_message {
   std::string p_log;
   std::string p_str_end;
   std::string p_name;
+  std::string p_name_id;
   state p_state;
   rational_int p_progress;
   std::mutex _mutex;
@@ -128,6 +129,7 @@ class DOODLELIB_API process_message {
   process_message& operator=(const process_message&) noexcept;
 
   [[nodiscard]] const std::string& get_name() const;
+  [[nodiscard]] const std::string& get_name_id() const;
   void set_name(const std::string& in_string);
 
   void progress_step(const rational_int& in_rational_int);

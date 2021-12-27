@@ -47,7 +47,7 @@ void long_time_tasks_widget::frame_render() {
       auto k_h = make_handle(e);
       imgui::TableNextRow();
       imgui::TableNextColumn();
-      if (dear::Selectable(msg.get_name(),
+      if (dear::Selectable(msg.get_name_id(),
                            p_current_select == k_h,
                            ImGuiSelectableFlags_SpanAllColumns)) {
         p_current_select = k_h;
@@ -64,7 +64,7 @@ void long_time_tasks_widget::frame_render() {
 
       imgui::TableNextColumn();
       using namespace std::literals;
-      dear::Text(msg.is_wait() ? "..."s : fmt::format("{}", msg.get_time()));
+      dear::Text(msg.is_wait() ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time()));
     }
   };
   dear::Text("主要日志");

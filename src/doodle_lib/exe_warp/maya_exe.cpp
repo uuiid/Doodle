@@ -81,7 +81,7 @@ quit()
   auto run_path = FSys::write_tmp_file("maya", str_script, ".py");
 
   p_i->p_mess.patch<process_message>([&](process_message &in) {
-    in.message(fmt::format("开始写入配置文件 {} ", run_path), in.warning);
+    in.message(fmt::format("开始写入配置文件 {} \n", run_path), in.warning);
     in.progress_step({1, 40});
   });
 
@@ -113,7 +113,7 @@ quit()
 
   auto run_path = FSys::write_tmp_file("maya", str_script, ".py");
   p_i->p_mess.patch<process_message>([&](process_message &in) {
-    in.message(fmt::format("开始写入配置文件 {} ", run_path), in.warning);
+    in.message(fmt::format("开始写入配置文件 {} \n", run_path), in.warning);
     in.progress_step({1, 40});
   });
 
@@ -173,6 +173,7 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
         if (!k_out.empty()) {
           auto k_str = conv::to_utf<char>(k_out, "GBK");
           k_str.pop_back();
+          k_str.push_back('\n');
 
           p_i->p_time = chrono::system_clock::now();
           p_i->p_mess.patch<process_message>([&](process_message &in) {
@@ -203,10 +204,11 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
         if (!k_out.empty()) {
           auto k_str = conv::to_utf<char>(k_out, "GBK");
           k_str.pop_back();
+          k_str.push_back('\n');
           auto k_w_str = conv::to_utf<wchar_t>(k_out, "GBK");
           if (std::regex_search(k_w_str, fatal_error_znch) ||
               std::regex_search(k_w_str, fatal_error_en_us)) {
-            DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算命令是 {}", p_i->in_comm);
+            DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算命令是 {}\n", p_i->in_comm);
             fail();
             return;
           }
@@ -236,7 +238,7 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
   if (core_set::getSet().timeout < chrono::floor<chrono::seconds>(k_time).count()) {
     p_i->p_process.terminate();
     p_i->p_mess.patch<process_message>([&](process_message &in) {
-      in.message("进程超时, 主动结束任务", in.warning);
+      in.message("进程超时, 主动结束任务\n", in.warning);
     });
     this->fail();
   }
@@ -253,14 +255,14 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
 void maya_exe::succeeded() {
   p_i->p_mess.patch<process_message>([&](process_message &in) {
     in.set_state(in.success);
-    auto k_str = fmt::format("成功完成任务");
+    auto k_str = fmt::format("成功完成任务\n");
     in.message(k_str, in.warning);
   });
 }
 void maya_exe::failed() {
   p_i->p_mess.patch<process_message>([&](process_message &in) {
     in.set_state(in.fail);
-    auto k_str = fmt::format("进程失败,退出代码是 {} ", p_i->p_process.exit_code());
+    auto k_str = fmt::format("进程失败,退出代码是 {} \n", p_i->p_process.exit_code());
     in.message(k_str, in.warning);
   });
 }
@@ -268,7 +270,7 @@ void maya_exe::aborted() {
   p_i->p_process.terminate();
   p_i->p_mess.patch<process_message>([&](process_message &in) {
     in.set_state(in.fail);
-    auto k_str = fmt::format("进程被主动结束 ", p_i->p_process.exit_code());
+    auto k_str = fmt::format("进程被主动结束 \n", p_i->p_process.exit_code());
     in.message(k_str, in.warning);
   });
 }

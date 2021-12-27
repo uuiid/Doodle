@@ -138,7 +138,8 @@ const std::string& process_message::get_name() const {
 }
 void process_message::set_name(const string& in_string) {
   std::lock_guard _lock{_mutex};
-  p_name = in_string;
+  p_name    = in_string;
+  p_name_id = fmt::format("{}##{}", get_name(), fmt::ptr(this));
 }
 void process_message::progress_step(const rational_int& in_rational_int) {
   std::lock_guard _lock{_mutex};
@@ -158,6 +159,16 @@ void process_message::message(const string& in_string, const level& in_level_enu
 }
 void process_message::set_state(state in_state) {
   std::lock_guard _lock{_mutex};
+  switch (in_state) {
+    case run:
+    case wait:
+      break;
+    case success:
+    case fail:
+      p_end      = chrono::system_clock::now();
+      p_progress = {1, 1};
+      break;
+  }
   p_state = in_state;
 }
 std::string_view process_message::err() const {
@@ -221,6 +232,9 @@ process_message& process_message::operator=(const process_message& in) noexcept 
   p_state    = in.p_state;
   p_progress = in.p_progress;
   return *this;
+}
+const std::string& process_message::get_name_id() const {
+  return p_name_id;
 }
 
 }  // namespace doodle
