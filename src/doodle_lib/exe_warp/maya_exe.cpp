@@ -7,8 +7,8 @@
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/core/core_set.h>
 
-//#include <doodle_lib/core/doodle_lib.h>
-//#include <doodle_lib/thread_pool/thread_pool.h>
+#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/thread_pool/thread_pool.h>
 //#include <type_traits>
 
 #include <boost/process.hpp>
@@ -33,9 +33,11 @@ class maya_exe::impl {
  public:
   std::string in_comm;
   //  boost::process::async_pipe p_out;
-  //  boost::process::async_pipe p_err;
+  //    boost::process::async_pipe p_erra;
   boost::process::ipstream p_out;
   boost::process::ipstream p_err;
+  std::future<std::string> p_out_str;
+  std::future<std::string> p_err_str;
 
   boost::process::child p_process;
   entt::handle p_mess;
@@ -149,8 +151,7 @@ void maya_exe::init() {
         p_i->p_process.terminate();
         p_i->p_out.close();
         p_i->p_err.close();
-      }),
-      doodle_lib::Get().get_thread_pool()->get_io_context()
+      })
 #ifdef _WIN32
           ,
       boost::process::windows::hide
@@ -162,42 +163,73 @@ void maya_exe::init() {
   p_i->p_time = chrono::system_clock::now();
 }
 void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
+  using namespace chrono::literals;
+
   string k_out{};
-  p_i->p_out.get();
-  if (!p_i->p_out.eof()) {
-    getline(p_i->p_out, k_out);
-    if (!k_out.empty()) {
-      auto k_str = conv::to_utf<char>(k_out, "GBK");
-      k_str.pop_back();
+  if (p_i->p_out_str.valid()) {  /// 异步有效, 是否可以读取
+    switch (p_i->p_out_str.wait_for(1ns)) {
+      case std::future_status::ready: {
+        k_out = p_i->p_out_str.get();
+        if (!k_out.empty()) {
+          auto k_str = conv::to_utf<char>(k_out, "GBK");
+          k_str.pop_back();
 
-      p_i->p_time = chrono::system_clock::now();
-      p_i->p_mess.patch<process_message>([&](process_message &in) {
-        in.progress_step({1, 300});
-        in.message(k_str, in.warning);
-      });
-    }
-  }
-  p_i->p_err.get();
-  if (!p_i->p_err.eof()) {
-    getline(p_i->p_err, k_out);
-    if (!k_out.empty()) {
-      auto k_str = conv::to_utf<char>(k_out, "GBK");
-
-      k_str.pop_back();
-
-      auto k_w_str = conv::to_utf<wchar_t>(k_out, "GBK");
-      if (std::regex_search(k_w_str, fatal_error_znch) ||
-          std::regex_search(k_w_str, fatal_error_en_us)) {
-        DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算命令是 {}", p_i->in_comm);
-        fail();
-        return;
+          p_i->p_time = chrono::system_clock::now();
+          p_i->p_mess.patch<process_message>([&](process_message &in) {
+            in.progress_step({1, 300});
+            in.message(k_str, in.warning);
+          });
+        }
+        goto sub_out;
+        break;
       }
-      p_i->p_time = chrono::system_clock::now();
-      p_i->p_mess.patch<process_message>([&](process_message &in) {
-        in.progress_step({1, 20000});
-        in.message(k_str, in.info);
-      });
+      default:
+        break;
     }
+  } else {  /// 提交新的读取函数
+  sub_out:
+    p_i->p_out_str = std::move(doodle_lib::Get().get_thread_pool()->enqueue(
+        [&]() -> string {
+          string k_str{};
+          getline(p_i->p_out, k_str);
+          return k_str;
+        }));
+  }
+
+  if (p_i->p_err_str.valid()) {  /// 异步有效, 是否可以读取
+    switch (p_i->p_err_str.wait_for(1ns)) {
+      case std::future_status::ready: {
+        k_out = p_i->p_err_str.get();
+        if (!k_out.empty()) {
+          auto k_str = conv::to_utf<char>(k_out, "GBK");
+          k_str.pop_back();
+          auto k_w_str = conv::to_utf<wchar_t>(k_out, "GBK");
+          if (std::regex_search(k_w_str, fatal_error_znch) ||
+              std::regex_search(k_w_str, fatal_error_en_us)) {
+            DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算命令是 {}", p_i->in_comm);
+            fail();
+            return;
+          }
+          p_i->p_time = chrono::system_clock::now();
+          p_i->p_mess.patch<process_message>([&](process_message &in) {
+            in.progress_step({1, 20000});
+            in.message(k_str, in.info);
+          });
+        }
+        goto sub_err;
+        break;
+      }
+      default:
+        break;
+    }
+  } else {  /// 提交新的读取函数
+  sub_err:
+    p_i->p_err_str = std::move(doodle_lib::Get().get_thread_pool()->enqueue(
+        [&]() -> string {
+          string k_str{};
+          getline(p_i->p_err, k_str);
+          return k_str;
+        }));
   }
 
   auto k_time = chrono::system_clock::now() - p_i->p_time;

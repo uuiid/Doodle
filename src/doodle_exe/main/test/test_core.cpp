@@ -338,6 +338,13 @@ TEST_CASE("std basic_ios eof", "[std]") {
   l_iostream.get();
   std::cout << std::boolalpha << l_iostream.eof() << std::endl;
 }
+TEST_CASE("std future", "[std]") {
+  std::future<std::string> p_out_str{};
+  using namespace chrono::literals;
+  std::cout << std::boolalpha;
+  std::cout << p_out_str.valid() << std::endl;
+  //  std::cout << magic_enum::enum_name(p_out_str.wait_for(1ns)) << std::endl;
+}
 
 TEST_CASE("maya get log", "[maya]") {
   core_set_init{}.read_file();
@@ -348,11 +355,11 @@ TEST_CASE("maya get log", "[maya]") {
   g_main_loop().attach<details::maya_exe>(
       k_mesg,
       R"(C:\Users\TD\Source\Doodle\src\doodle_exe\main\test\test_maya_null.py)");
-  std::int32_t i{0};
+//  std::int32_t i{0};
   while (!g_main_loop().empty()) {
-    DOODLE_LOG_INFO("{}", i);
+//    DOODLE_LOG_INFO("{}", i);
     g_main_loop().update({}, nullptr);
-    ++i;
+//    ++i;
   }
 }
 TEST_CASE("maya time out", "[maya]") {
@@ -365,11 +372,11 @@ TEST_CASE("maya time out", "[maya]") {
   g_main_loop().attach<details::maya_exe>(
       k_mesg,
       R"(C:\Users\TD\Source\Doodle\src\doodle_exe\main\test\test_maya_null.py)");
-  std::int32_t i{0};
+//  std::int32_t i{0};
   while (!g_main_loop().empty()) {
-    DOODLE_LOG_INFO("{}", i);
+//    DOODLE_LOG_INFO("{}", i);
     g_main_loop().update({}, nullptr);
-    ++i;
+//    ++i;
   }
 }
 
