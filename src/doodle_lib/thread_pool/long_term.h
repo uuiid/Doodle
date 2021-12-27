@@ -1,11 +1,9 @@
 #pragma once
 
-#include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/rational.hpp>
 #include <boost/signals2.hpp>
-#include <optional>
 namespace doodle {
 
 using rational_int = boost::rational<std::size_t>;
