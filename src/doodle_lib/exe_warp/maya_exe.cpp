@@ -154,16 +154,21 @@ void maya_exe::init() {
 }
 void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
   string k_out{};
-  while (getline(p_i->p_out, k_out)) {
-    auto k_str  = conv::to_utf<char>(k_out, "GBK");
+  if (!p_i->p_out.eof()) {
+    getline(p_i->p_out, k_out);
+    auto k_str = conv::to_utf<char>(k_out, "GBK");
+    k_str.pop_back();
+
     p_i->p_time = chrono::system_clock::now();
     p_i->p_mess.patch<process_message>([&](process_message &in) {
       in.progress_step({1, 200});
       in.message(k_str, in.warning);
     });
   }
-  while (getline(p_i->p_err, k_out)) {
-    auto k_str   = conv::to_utf<char>(k_out, "GBK");
+  if (!p_i->p_err.eof()) {
+    getline(p_i->p_err, k_out);
+    auto k_str = conv::to_utf<char>(k_out, "GBK");
+    k_str.pop_back();
 
     auto k_w_str = conv::to_utf<wchar_t>(k_out, "GBK");
     if (std::regex_search(k_w_str, fatal_error_znch) ||
@@ -179,7 +184,7 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
     });
   }
 
-  if (!p_i->p_process.running()) {
+  if (!p_i->p_process.running() && p_i->p_out.eof() && p_i->p_err.eof()) {
     if (p_i->p_process.exit_code() == 0) {
       this->succeed();
     } else {

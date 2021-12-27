@@ -332,14 +332,19 @@ TEST_CASE("core opencv image", "[fun]") {
 }
 
 TEST_CASE("maya get log", "[maya]") {
+  core_set_init{}.read_file();
+
   scheduler_t k_loop{};
   auto k_mesg = make_handle();
   k_mesg.emplace<process_message>();
   g_main_loop().attach<details::maya_exe>(
       k_mesg,
       R"(C:\Users\TD\Source\Doodle\src\doodle_exe\main\test\test_maya_null.py)");
+  std::int32_t i{0};
   while (!g_main_loop().empty()) {
+    DOODLE_LOG_INFO("{}", i);
     g_main_loop().update({}, nullptr);
+    ++i;
   }
 }
 

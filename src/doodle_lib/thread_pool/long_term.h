@@ -84,8 +84,8 @@ class DOODLELIB_API long_term
 
   [[nodiscard]] bool fulfil() const;
   [[nodiscard]] std::string message_result() const;
-  [[nodiscard]] const std::deque<std::string> message() const;
-  [[nodiscard]] const std::deque<std::string> log() const;
+  [[nodiscard]] const std::deque<std::string>& message() const;
+  [[nodiscard]] const std::deque<std::string>& log() const;
 
   [[nodiscard]] rational_int get_progress() const;
   [[nodiscard]] std::double_t get_progress_int() const;

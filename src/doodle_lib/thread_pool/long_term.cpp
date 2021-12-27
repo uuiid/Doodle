@@ -113,10 +113,10 @@ std::string long_term::get_time_str() const {
                           chrono::floor<chrono::seconds>(chrono::system_clock::now() - p_time));
   }
 }
-const std::deque<std::string> long_term::message() const {
+const std::deque<std::string>& long_term::message() const {
   return p_str;
 }
-const std::deque<std::string> long_term::log() const {
+const std::deque<std::string>& long_term::log() const {
   return p_log;
 }
 void long_term::start() {
