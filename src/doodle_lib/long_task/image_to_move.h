@@ -14,6 +14,6 @@ class DOODLELIB_API image_to_move : public process_t<image_to_move> {
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();
   [[maybe_unused]] void aborted();
-  void update(base_type::delta_type, void *data);
+  [[maybe_unused]] void update(base_type::delta_type, void *data);
 };
 }  // namespace doodle::details
