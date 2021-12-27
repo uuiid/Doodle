@@ -140,7 +140,7 @@ void maya_exe::add_maya_fun_tool() const {
     }
   }
 }
-void maya_exe::init() {
+[[maybe_unused]] void maya_exe::init() {
   add_maya_fun_tool();
   DOODLE_LOG_INFO("命令 {}", p_i->in_comm);
   p_i->p_process = boost::process::child{

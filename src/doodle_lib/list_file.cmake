@@ -23,6 +23,7 @@ doodle_get_source(
         ${CMAKE_CURRENT_LIST_DIR}/toolkit
         ${CMAKE_CURRENT_LIST_DIR}/server
         ${CMAKE_CURRENT_LIST_DIR}/exe_warp
+        ${CMAKE_CURRENT_LIST_DIR}/long_task
         ${CMAKE_CURRENT_LIST_DIR}
 )
 

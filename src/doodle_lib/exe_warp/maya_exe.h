@@ -62,15 +62,39 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   //  void succeed() noexcept;
   //  void fail() noexcept;
   //  void pause() noexcept;
+  /**
+   * @brief 运行mayapy 任意python脚本
+   * @param in_handle 具有消息组件的的句柄
+   * @param in_file py文件路径
+   *
+   * 检查 process_message 和 core_set::getSet().has_maya()
+   *
+   */
   explicit maya_exe(const entt::handle &in_handle, const string &in_file);
+  /**
+   * @brief 使用配置进行qcloth操作
+   * @param in_handle 具有消息组件的的句柄
+   * @param in_arg qcloth 配置类
+   *
+   * 检查 process_message 和 core_set::getSet().has_maya()
+   *
+   */
   explicit maya_exe(const entt::handle &in_handle, const qcloth_arg &in_arg);
+  /**
+   * @brief 使用配置进行fbx导出
+   * @param in_handle 具有消息组件的的句柄
+   * @param in_arg 导出fbx 配置类
+   *
+   * 检查 process_message 和 core_set::getSet().has_maya()
+   *
+   */
   explicit maya_exe(const entt::handle &in_handle, const export_fbx_arg &in_arg);
   ~maya_exe() override;
 
-  void init();
-  void succeeded();
-  void failed();
-  void aborted();
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
   void update(base_type::delta_type, void *data);
 };
 }  // namespace doodle::details
