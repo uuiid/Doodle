@@ -355,11 +355,11 @@ TEST_CASE("maya get log", "[maya]") {
   g_main_loop().attach<details::maya_exe>(
       k_mesg,
       R"(C:\Users\TD\Source\Doodle\src\doodle_exe\main\test\test_maya_null.py)");
-//  std::int32_t i{0};
+  //  std::int32_t i{0};
   while (!g_main_loop().empty()) {
-//    DOODLE_LOG_INFO("{}", i);
+    //    DOODLE_LOG_INFO("{}", i);
     g_main_loop().update({}, nullptr);
-//    ++i;
+    //    ++i;
   }
 }
 TEST_CASE("maya time out", "[maya]") {
@@ -372,12 +372,16 @@ TEST_CASE("maya time out", "[maya]") {
   g_main_loop().attach<details::maya_exe>(
       k_mesg,
       R"(C:\Users\TD\Source\Doodle\src\doodle_exe\main\test\test_maya_null.py)");
-//  std::int32_t i{0};
-  while (!g_main_loop().empty()) {
-//    DOODLE_LOG_INFO("{}", i);
-    g_main_loop().update({}, nullptr);
-//    ++i;
-  }
+  g_main_loop().update({}, nullptr);
+  g_main_loop().update({}, nullptr);
+  k_mesg.get<process_message>().aborted();
+  g_main_loop().update({}, nullptr);
+  g_main_loop().update({}, nullptr);
+  k_mesg.get<process_message>().aborted();
+  g_main_loop().update({}, nullptr);
+  g_main_loop().update({}, nullptr);
+  k_mesg.get<process_message>().aborted();
+  g_main_loop().update({}, nullptr);
 }
 
 TEST_CASE("ThreadPool", "[core][ThreadPool]") {

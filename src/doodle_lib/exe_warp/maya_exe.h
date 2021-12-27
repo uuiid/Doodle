@@ -54,7 +54,7 @@ class DOODLELIB_API export_fbx_arg {
 class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   class impl;
   std::unique_ptr<impl> p_i;
-  void add_maya_fun_tool() const;
+  static void add_maya_fun_tool() ;
 
  public:
   using base_type = process_t<maya_exe>;

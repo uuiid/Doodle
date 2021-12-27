@@ -47,10 +47,7 @@ maya_exe::maya_exe(const entt::handle &in_handle, const string &in_comm)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
   chick_true<doodle_error>(core_set::getSet().has_maya(), DOODLE_LOC, "没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin)");
-  p_i->p_mess = in_handle;
-  p_i->p_mess.patch<process_message>([](process_message &in) {
-    in.set_state(in.run);
-  });
+  p_i->p_mess  = in_handle;
 
   //生成命令
   p_i->in_comm = fmt::format(
@@ -62,11 +59,8 @@ maya_exe::maya_exe(const entt::handle &in_handle, const qcloth_arg &in_arg)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
   chick_true<doodle_error>(core_set::getSet().has_maya(), DOODLE_LOC, "没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin)");
-  p_i->p_mess = in_handle;
+  p_i->p_mess     = in_handle;
 
-  p_i->p_mess.patch<process_message>([](process_message &in) {
-    in.set_state(in.run);
-  });
   //生成导出文件
   auto str_script = fmt::format(
       R"(# -*- coding: utf-8 -*-\n
@@ -82,7 +76,6 @@ quit()
 
   p_i->p_mess.patch<process_message>([&](process_message &in) {
     in.message(fmt::format("开始写入配置文件 {} \n", run_path), in.warning);
-    in.progress_step({1, 40});
   });
 
   //生成命令
@@ -95,11 +88,8 @@ maya_exe::maya_exe(const entt::handle &in_handle, const export_fbx_arg &in_arg)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
   chick_true<doodle_error>(core_set::getSet().has_maya(), DOODLE_LOC, "没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin)");
-  p_i->p_mess = in_handle;
+  p_i->p_mess     = in_handle;
 
-  p_i->p_mess.patch<process_message>([](process_message &in) {
-    in.set_state(in.run);
-  });
   //生成导出文件
   auto str_script = fmt::format(
       R"(# -*- coding: utf-8 -*-\n
@@ -114,7 +104,6 @@ quit()
   auto run_path = FSys::write_tmp_file("maya", str_script, ".py");
   p_i->p_mess.patch<process_message>([&](process_message &in) {
     in.message(fmt::format("开始写入配置文件 {} \n", run_path), in.warning);
-    in.progress_step({1, 40});
   });
 
   //生成命令
@@ -125,7 +114,7 @@ quit()
 }
 maya_exe::~maya_exe() = default;
 
-void maya_exe::add_maya_fun_tool() const {
+void maya_exe::add_maya_fun_tool() {
   const auto tmp_path = core_set::getSet().get_cache_root(
       fmt::format("maya\\v{}{}{}",
                   Doodle_VERSION_MAJOR,
@@ -141,6 +130,10 @@ void maya_exe::add_maya_fun_tool() const {
   }
 }
 [[maybe_unused]] void maya_exe::init() {
+  auto &l_mag = p_i->p_mess.patch<process_message>();
+  l_mag.set_state(l_mag.run);
+  l_mag.aborted_function = [self = this]() {if(self) self->abort(); };
+
   add_maya_fun_tool();
   DOODLE_LOG_INFO("命令 {}", p_i->in_comm);
   p_i->p_process = boost::process::child{
@@ -167,7 +160,7 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
 
   string k_out{};
   if (p_i->p_out_str.valid()) {  /// 异步有效, 是否可以读取
-    switch (p_i->p_out_str.wait_for(1ns)) {
+    switch (p_i->p_out_str.wait_for(0ns)) {
       case std::future_status::ready: {
         k_out = p_i->p_out_str.get();
         if (!k_out.empty()) {
@@ -198,7 +191,7 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
   }
 
   if (p_i->p_err_str.valid()) {  /// 异步有效, 是否可以读取
-    switch (p_i->p_err_str.wait_for(1ns)) {
+    switch (p_i->p_err_str.wait_for(0ns)) {
       case std::future_status::ready: {
         k_out = p_i->p_err_str.get();
         if (!k_out.empty()) {
