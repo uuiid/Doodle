@@ -141,6 +141,8 @@ void maya_exe::init() {
       boost::process::std_err > p_i->p_err,
       boost::process::on_exit([&](auto...) {
         p_i->p_process.terminate();
+        p_i->p_out.close();
+        p_i->p_err.close();
       })
 #ifdef _WIN32
           ,

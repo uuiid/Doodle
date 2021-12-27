@@ -269,7 +269,6 @@ class image_sequence;
 class season;
 class video_sequence;
 class ue4_project;
-class maya_file;
 class setting_windows;
 class base_widget;
 class comment_vector;
@@ -404,7 +403,6 @@ class DOODLELIB_API null_fun_t {
 };
 static null_fun_t null_fun{};
 
-using maya_file_ptr           = std::shared_ptr<maya_file>;
 using setting_windows_ptr     = std::shared_ptr<setting_windows>;
 using ue4_project_async_ptr   = std::shared_ptr<ue4_project_async>;
 using bool_ptr                = std::shared_ptr<bool>;

@@ -5,21 +5,14 @@
 #include "command_tool.h"
 
 #include <doodle_lib/core/open_file_dialog.h>
-#include <doodle_lib/doodle_app.h>
 #include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/file_warp/video_sequence.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/project.h>
-#include <doodle_lib/metadata/shot.h>
+#include <doodle_lib/exe_warp/maya_exe.h>
 
-#include <boost/assign.hpp>
-#include <boost/range.hpp>
-#include <boost/range/adaptor/transformed.hpp>
-#include <boost/range/adaptors.hpp>
-#include <boost/range/algorithm.hpp>
 namespace doodle {
 
 comm_maya_tool::comm_maya_tool()
@@ -72,21 +65,21 @@ bool comm_maya_tool::render() {
     auto maya = new_object<maya_file_async>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
                   [this, maya](const FSys::path& in_path) {
-                    auto arg                = new_object<maya_file::qcloth_arg>();
-                    arg->sim_path           = in_path;
-                    arg->qcloth_assets_path = p_cloth_path;
-                    arg->only_sim           = p_only_sim;
-                    maya->qcloth_sim_file(arg);
+                    auto arg               = details::qcloth_arg{};
+                    arg.sim_path           = in_path;
+                    arg.qcloth_assets_path = p_cloth_path;
+                    arg.only_sim           = p_only_sim;
+                    maya->qcloth_sim_file(make_handle(), arg);
                   });
   }
   if (imgui::Button("fbx导出")) {
     auto maya = new_object<maya_file_async>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
                   [maya, this](const auto& i) {
-                    auto k_arg         = new_object<maya_file::export_fbx_arg>();
-                    k_arg->file_path   = i;
-                    k_arg->use_all_ref = this->p_use_all_ref;
-                    maya->export_fbx_file(k_arg);
+                    auto k_arg        = details::export_fbx_arg{};
+                    k_arg.file_path   = i;
+                    k_arg.use_all_ref = this->p_use_all_ref;
+                    maya->export_fbx_file(make_handle(), k_arg);
                   });
   }
 
