@@ -147,6 +147,11 @@ class DOODLELIB_API process_message {
 
   [[nodiscard]] inline bool is_run() const { return get_state() == state::run; }
   [[nodiscard]] inline bool is_wait() const { return get_state() == state::wait; }
+
+  inline void aborted() const {
+    if (aborted_function) aborted_function();
+  };
+  std::function<void()> aborted_function;
 };
 
 }  // namespace doodle
