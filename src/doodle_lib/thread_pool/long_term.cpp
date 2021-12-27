@@ -152,6 +152,7 @@ void process_message::message(const string& in_string, const level& in_level_enu
       p_err += in_string;
     default:
       p_log += in_string;
+      p_str_end = in_string;
       break;
   }
 }
@@ -159,7 +160,7 @@ void process_message::set_state(state in_state) {
   std::lock_guard _lock{_mutex};
   p_state = in_state;
 }
-std::string_view process_message::message() const {
+std::string_view process_message::err() const {
   //  std::lock_guard _lock{_mutex};
   return p_err;
 }
@@ -179,6 +180,10 @@ chrono::sys_time_pos::duration process_message::get_time() const {
   //  std::lock_guard _lock{_mutex};
   return p_end ? (*p_end - p_time) : (chrono::system_clock::now() - p_time);
 }
+const std::string& process_message::message_back() const {
+  return p_str_end;
+}
+
 process_message::process_message(process_message&& in) noexcept {
   p_time     = in.p_time;
   p_end      = in.p_end;
@@ -217,4 +222,5 @@ process_message& process_message::operator=(const process_message& in) noexcept 
   p_progress = in.p_progress;
   return *this;
 }
+
 }  // namespace doodle

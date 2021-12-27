@@ -113,6 +113,7 @@ class DOODLELIB_API process_message {
   std::optional<chrono::sys_time_pos> p_end;
   std::string p_err;
   std::string p_log;
+  std::string p_str_end;
   std::string p_name;
   state p_state;
   rational_int p_progress;
@@ -131,12 +132,16 @@ class DOODLELIB_API process_message {
 
   void progress_step(const rational_int& in_rational_int);
   void message(const string& in_string, const level& in_level_enum);
+  [[nodiscard]] const std::string& message_back() const;
 
   void set_state(state in_state);
-  [[nodiscard]] std::string_view message() const;
+  [[nodiscard]] std::string_view err() const;
   [[nodiscard]] std::string_view log() const;
 
   [[nodiscard]] rational_int get_progress() const;
+  [[nodiscard]] inline std::double_t get_progress_f() const {
+    return boost::rational_cast<std::double_t>(get_progress() * rational_int{100});
+  };
   [[nodiscard]] const state& get_state() const;
   [[nodiscard]] chrono::sys_time_pos::duration get_time() const;
 

@@ -12,6 +12,8 @@
 
 #include <boost/range.hpp>
 #include <boost/range/algorithm_ext.hpp>
+#include <fmt/chrono.h>
+
 namespace doodle {
 
 long_time_tasks_widget::long_time_tasks_widget()
@@ -28,20 +30,6 @@ long_time_tasks_widget::long_time_tasks_widget()
 }
 
 void long_time_tasks_widget::frame_render() {
-  auto& k_ = doodle_lib::Get();
-  {
-    std::lock_guard k_guard{k_.mutex};
-    if (k_.long_task_list.size() > 100) {
-      boost::remove_erase_if(k_.long_task_list, [](const long_term_ptr& in) {
-        return in->fulfil();
-      });
-      // std::remove_if()
-    }
-    task = k_.long_task_list;
-  }
-  if (p_command_tool_ptr_)
-    p_command_tool_ptr_->render();
-
   static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
                     ImGuiTableFlags_::ImGuiTableFlags_Resizable |
                     ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
@@ -55,43 +43,45 @@ void long_time_tasks_widget::frame_render() {
     imgui::TableSetupColumn("时间");
     imgui::TableHeadersRow();
 
-    for (const auto& i : task) {
+    for (const auto&& [e, msg] : g_reg()->view<process_message>().each()) {
+      auto k_h = make_handle(e);
       imgui::TableNextRow();
       imgui::TableNextColumn();
-      if (dear::Selectable(i->get_id(),
-                           p_current_select == i,
+      if (dear::Selectable(msg.get_name(),
+                           p_current_select == k_h,
                            ImGuiSelectableFlags_SpanAllColumns)) {
-        p_current_select = i;
-        p_main_log       = main_log{};
-        p_info_log       = info_log{};
-        link_main_log();
-        link_info_log();
+        p_current_select = k_h;
       }
 
       imgui::TableNextColumn();
-      dear::Text(fmt::format("{:04f}%", i->get_progress_int()));
+      dear::Text(fmt::format("{:04f}%", msg.get_progress_f()));
 
       imgui::TableNextColumn();
-      dear::Text(i->message_result());
+      dear::Text(msg.message_back());
 
       imgui::TableNextColumn();
-      dear::Text(i->get_state_str().data());
+      dear::Text(string{magic_enum::enum_name(msg.get_state())});
 
       imgui::TableNextColumn();
-      dear::Text(i->get_time_str());
+      using namespace std::literals;
+      dear::Text(msg.is_wait() ? "..."s : fmt::format("{}", msg.get_time()));
     }
   };
   dear::Text("主要日志");
   dear::Child{"main_log", ImVec2{0, 266}, true} && [this]() {
-    imgui::TextUnformatted(p_main_log.p_log.begin(), p_main_log.p_log.end());
+    if (p_current_select && p_current_select.any_of<process_message>()) {
+      auto msg_str = p_current_select.get<process_message>().err();
+      imgui::TextUnformatted(msg_str.data(), msg_str.data() + msg_str.size());
+    }
     // dear::TextWrapPos{0.0f} && [this]() {
     // };
   };
   dear::Text("全部信息");
   dear::Child{"info_log", ImVec2{0, 266}, true} && [this]() {
-    imgui::TextUnformatted(p_info_log.p_log.begin(), p_info_log.p_log.end());
-    // dear::TextWrapPos{0.0f} && [this]() {
-    // };
+    if (p_current_select && p_current_select.any_of<process_message>()) {
+      auto msg_str = p_current_select.get<process_message>().log();
+      imgui::TextUnformatted(msg_str.data(), msg_str.data() + msg_str.size());
+    }
   };
 }
 void long_time_tasks_widget::push_back(const long_term_ptr& in_term) {
@@ -101,28 +91,7 @@ void long_time_tasks_widget::set_tool_widget(const command_ptr& in_ptr) {
   p_command_tool_ptr_ = in_ptr;
 }
 void long_time_tasks_widget::link_main_log() {
-  for (const auto& i : p_current_select->message()) {
-    p_main_log.p_log.append(i.data(), i.data() + i.size());
-  }
-  p_main_log.p_conn_list.emplace_back(
-      boost::signals2::scoped_connection{
-          p_current_select->sig_message_result.connect(
-              [this](const std::string& in_string, long_term::level in_level) {
-                if (in_level == long_term::warning)
-                  p_main_log.p_log.append(in_string.data(),
-                                          in_string.data() + in_string.size());
-              })});
 }
 void long_time_tasks_widget::link_info_log() {
-  for (const auto& i : p_current_select->log()) {
-    p_info_log.p_log.append(i.data(), i.data() + i.size());
-  }
-  p_info_log.p_conn_list.emplace_back(
-      boost::signals2::scoped_connection{
-          p_current_select->sig_message_result.connect(
-              [this](const std::string& in_string, long_term::level in_level) {
-                p_info_log.p_log.append(in_string.data(),
-                                        in_string.data() + in_string.size());
-              })});
 }
 }  // namespace doodle

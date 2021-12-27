@@ -244,6 +244,8 @@ DOODLELIB_API std::vector<path> list_files(const path &in_dir);
 
 }  // namespace FSys
 using namespace entt::literals;
+using namespace std::literals;
+using namespace chrono::literals;
 class core_set;
 class project;
 class episodes;
@@ -353,7 +355,7 @@ template <class Derived>
 using process_t   = entt::process<Derived, std::chrono::system_clock::duration>;
 using scheduler_t = entt::scheduler<std::chrono::system_clock::duration>;
 DOODLELIB_API registry_ptr &g_reg();
-scheduler_t& DOODLELIB_API g_main_loop();
+scheduler_t &DOODLELIB_API g_main_loop();
 
 template <class Component,
           std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
@@ -416,8 +418,6 @@ using widget_register_ptr     = std::shared_ptr<widget_register>;
 using rpc_trans_path_ptr      = std::unique_ptr<rpc_trans_path>;
 using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
 using doodle_app_ptr          = std::shared_ptr<doodle_app>;
-
-
 
 namespace rpc_trans {
 class down_file;

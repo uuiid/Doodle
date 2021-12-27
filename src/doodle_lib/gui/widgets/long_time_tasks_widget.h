@@ -28,7 +28,7 @@ class DOODLELIB_API long_time_tasks_widget : public base_widget {
     std::vector<boost::signals2::scoped_connection> p_conn_list;
   };
   std::vector<long_term_ptr> task;
-  long_term_ptr p_current_select;
+  entt::handle p_current_select;
 
   command_ptr p_command_tool_ptr_;
   main_log p_main_log;
