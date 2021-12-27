@@ -1,8 +1,8 @@
-#include <Logger/logger.h>
-#include <Metadata/episodes.h>
-#include <Metadata/shot.h>
+#include <logger/logger.h>
+#include <metadata/episodes.h>
+#include <metadata/shot.h>
 #include <core/doodle_lib.h>
-#include <doodle_lib/Exception/exception.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/file_warp/image_sequence.h>
@@ -11,14 +11,7 @@
 #include <doodle_lib/thread_pool/thread_pool.h>
 #include <pin_yin/convert.h>
 
-#include <boost/assign.hpp>
-#include <boost/range.hpp>
-#include <boost/range/adaptor/filtered.hpp>
-#include <boost/range/adaptor/transformed.hpp>
-#include <boost/range/adaptors.hpp>
-#include <boost/range/algorithm.hpp>
-#include <boost/range/algorithm/copy.hpp>
-#include <boost/range/algorithm_ext.hpp>
+
 #include <opencv2/opencv.hpp>
 namespace doodle {
 
