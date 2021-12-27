@@ -167,7 +167,7 @@ void warp_model(const MObject& in_low, const std::vector<MObject>& in_high_node)
   /// 设置选择
   l_s = MGlobal::setActiveSelectionList(k_select);
   DOODLE_CHICK(l_s);
-  l_s = MGlobal::executeCommand(d_str{R"(doWrapArgList "4" {"1","0","1", "1","1"};)"});
+  l_s = MGlobal::executeCommand(d_str{R"(doWrapArgList "7" {"1","0","1", "2","1","1","0","0"};)"});
   DOODLE_CHICK(l_s);
 }
 
@@ -549,7 +549,6 @@ void qcloth_shape::add_collider(const entt::handle& in_handle) {
     add_child(l_group.collider_grp, l_col_tran);
     add_child(l_group.collider_grp, l_col_off_tran);
   }
-
 }
 
 }  // namespace doodle::maya_plug
