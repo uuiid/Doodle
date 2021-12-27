@@ -385,4 +385,8 @@
  * @subsubsection  updata_log_3211 版本3.2.11
  * @li 修改名称失误
  *
+ * @subsubsection  updata_log_3212 版本3.2.12
+ * @li 修改包maya插件裹命令
+ * @li 添加主循环task提交
+ *
  */
