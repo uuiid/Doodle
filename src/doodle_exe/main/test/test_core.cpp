@@ -7,7 +7,9 @@
 #elif defined(__linux__)
 #include <sys/stat.h>
 #endif
-#include <catch.hpp>
+#define CATCH_CONFIG_RUNNER
+#include <catch2/catch.hpp>
+
 
 using namespace doodle;
 
@@ -493,3 +495,16 @@ TEST_CASE("image sequence", "[core]") {
 //    return c == '\0';
 //  });
 //}
+
+int main(int argc, char *argv[]) {
+  //初始化测试环境
+  std::setlocale(LC_CTYPE, ".UTF8");
+  auto k_doodle = doodle::new_object<doodle::doodle_lib>();
+  doodle::core_set_init k_init{};
+  k_init.config_to_user();
+  k_init.find_cache_dir();
+  doodle::logger_ctrl::get_log().set_log_name("doodle_test.txt");
+  int k_r = ::Catch::Session().run(argc, argv);
+  return k_r;
+}
+

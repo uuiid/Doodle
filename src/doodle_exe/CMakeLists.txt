@@ -57,30 +57,5 @@ target_compile_definitions(DoodleExe
 #    #    add_executable(doodle_exe ALIAS DoodleServerExe )
 #endif ()
 add_subdirectory(maya_plug)
+add_subdirectory(main/test)
 
-add_executable(
-        doodle_test
-        main/test/main.cpp
-        main/test/test_core.cpp
-        main/test/test_external.cpp
-        main/test/test_metadata.cpp
-        main/test/test_server.cpp
-        main/test/test_gui.cpp
-        main/doodle.manifest
-        main/icon.ico
-        main/win_exe.rc
-)
-set_target_properties(doodle_test
-        PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-target_link_libraries(doodle_test
-        PUBLIC
-        doodle_lib
-        )
-target_compile_definitions(doodle_test
-        PUBLIC
-        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
-        # ENTT_API_IMPORT
-        )
-target_compile_options(doodle_test PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)# $<$<CXX_COMPILER_ID:GNU>: -Wa,-mbig-obj>
-include(Catch)
-catch_discover_tests(doodle_test)
