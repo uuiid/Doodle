@@ -68,17 +68,25 @@ bool comm_maya_tool::render() {
   };
 
   if (imgui::Button("解算")) {
-    maya_file_async l_maya_file_async{};
-    auto arg               = details::qcloth_arg{};
-    arg.qcloth_assets_path = p_cloth_path;
-    arg.only_sim           = p_only_sim;
-    l_maya_file_async.qcloth_sim_file(p_sim_path, arg, p_max_th);
+    auto maya = new_object<maya_file_async>();
+    std::for_each(p_sim_path.begin(), p_sim_path.end(),
+                  [this, maya](const FSys::path& in_path) {
+                    auto arg               = details::qcloth_arg{};
+                    arg.sim_path           = in_path;
+                    arg.qcloth_assets_path = p_cloth_path;
+                    arg.only_sim           = p_only_sim;
+                    maya->qcloth_sim_file(make_handle(), arg);
+                  });
   }
   if (imgui::Button("fbx导出")) {
-    maya_file_async l_maya_file_async{};
-    auto k_arg        = details::export_fbx_arg{};
-    k_arg.use_all_ref = this->p_use_all_ref;
-    l_maya_file_async.export_fbx_file(p_sim_path, k_arg, p_max_th);
+    auto maya = new_object<maya_file_async>();
+    std::for_each(p_sim_path.begin(), p_sim_path.end(),
+                  [maya, this](const auto& i) {
+                    auto k_arg        = details::export_fbx_arg{};
+                    k_arg.file_path   = i;
+                    k_arg.use_all_ref = this->p_use_all_ref;
+                    maya->export_fbx_file(make_handle(), k_arg);
+                  });
   }
 
   return true;

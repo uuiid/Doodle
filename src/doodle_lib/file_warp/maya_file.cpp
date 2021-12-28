@@ -32,78 +32,27 @@ struct l_data2 {
 };
 
 }  // namespace
-void maya_file_async::export_fbx_file(const std::vector<FSys::path>& in_vector,
-                                      const details::export_fbx_arg& in_arg,
-                                      const std::int32_t in_max_th) {
-  std::vector<l_data2> l_data_vector;
-  for (auto& k_path : in_vector) {
-    l_data2 l_data1{};
-    l_data1.p_handle = make_handle();
+void maya_file_async::export_fbx_file(const entt::handle& in_handle, const details::export_fbx_arg& in_arg) {
+  if (!in_handle.any_of<process_message>())
+    in_handle.emplace<process_message>();
 
-    l_data1.p_handle.emplace<process_message>().set_name(k_path.filename().generic_string());
-    l_data1.arg           = in_arg;
-    l_data1.arg.file_path = k_path;
-    l_data_vector.push_back(std::move(l_data1));
-  }
-  g_main_loop().attach(
-      [in_data = l_data_vector, in_max_th](auto delta, void*, auto succeed, auto fail) mutable {
-        auto k_run_size = std::count_if(in_data.begin(), in_data.end(), [&](auto&& in_e) {
-          return in_e.p_handle.get<process_message>().is_run();
-        });
+  in_handle.patch<process_message>([&](process_message& in) {
+    in.set_name(in_arg.file_path.filename().generic_string());
+  });
 
-        if (k_run_size >= in_max_th)
-          return;
-
-        for (int l_i = 0; l_i < (in_max_th - k_run_size); ++l_i) {
-          auto& l_item = in_data.front();
-          if (l_item.p_handle.template get<process_message>().is_run())
-            break;
-          g_main_loop().attach<details::maya_exe>(l_item.p_handle, l_item.arg);
-          std::rotate(in_data.begin(), in_data.begin() + 1, in_data.end());
-        }
-        if (std::any_of(in_data.begin(), in_data.end(), [&](auto&& in_item) {
-              return !in_item.p_handle.get<process_message>().is_wait();
-            })) {
-          succeed();
-        }
-      });
+  chick_true<doodle_error>(!in_arg.file_path.empty(), DOODLE_LOC, "没有文件");
+  g_bounded_pool().attach<details::maya_exe>(in_handle, in_arg);
 }
-void maya_file_async::qcloth_sim_file(const std::vector<FSys::path>& in_vector,
-                                      const details::qcloth_arg& in_arg,
-                                      const std::int32_t in_max_th) {
-  std::vector<l_data> l_data_vector;
-  for (auto& k_path : in_vector) {
-    l_data l_data1{};
-    l_data1.p_handle = make_handle();
+void maya_file_async::qcloth_sim_file(const entt::handle& in_handle, const details::qcloth_arg& in_arg) {
+  if (!in_handle.any_of<process_message>())
+    in_handle.emplace<process_message>();
 
-    l_data1.p_handle.emplace<process_message>().set_name(k_path.filename().generic_string());
-    l_data1.arg          = in_arg;
-    l_data1.arg.sim_path = k_path;
-    l_data_vector.push_back(std::move(l_data1));
-  }
-  g_main_loop().attach(
-      [in_data = l_data_vector, in_max_th](auto delta, void*, auto succeed, auto fail) mutable {
-        auto k_run_size = std::count_if(in_data.begin(), in_data.end(), [&](auto&& in_e) {
-          return in_e.p_handle.get<process_message>().is_run();
-        });
+  in_handle.patch<process_message>([&](process_message& in) {
+    in.set_name(in_arg.sim_path.filename().generic_string());
+  });
 
-        if (k_run_size > in_max_th)
-          return;
-
-        for (int l_i = 0; l_i < (in_max_th - k_run_size + 1); ++l_i) {
-          auto& l_item = in_data.front();
-          if (l_item.p_handle.template get<process_message>().is_run())
-            break;
-          g_main_loop().attach<details::maya_exe>(l_item.p_handle, l_item.arg);
-
-          std::rotate(in_data.begin(), in_data.begin() + 1, in_data.end());
-        }
-        if (std::all_of(in_data.begin(), in_data.end(), [&](auto&& in_item) {
-              return !in_item.p_handle.get<process_message>().is_wait();
-            })) {
-          succeed();
-        }
-      });
+  chick_true<doodle_error>(!in_arg.sim_path.empty(), DOODLE_LOC, "没有文件");
+  g_bounded_pool().attach<details::maya_exe>(in_handle, in_arg);
 }
 
 }  // namespace doodle
