@@ -13,7 +13,7 @@
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/core/core_set.h>
-
+#include <doodle_lib/core/doodle_lib.h>
 namespace doodle {
 
 comm_maya_tool::comm_maya_tool()
@@ -21,7 +21,6 @@ comm_maya_tool::comm_maya_tool()
       p_text(),
       p_sim_path(),
       p_only_sim(false),
-      p_max_th(core_set::getSet().p_max_thread),
       p_use_all_ref(false) {
   p_name     = "maya工具";
   auto k_prj = g_reg()->try_ctx<root_ref>();
@@ -56,9 +55,6 @@ bool comm_maya_tool::render() {
 
   dear::Text(fmt::format("解算资产: {}", p_text));
 
-  dear::TreeNode{"通用设置"} && [this]() {
-    imgui::SliderInt("最大任务数", &(p_max_th), 0u, 64u);
-  };
 
   dear::TreeNode{"解算设置"} && [this]() {
     imgui::Checkbox("只解算不替换引用", &p_only_sim);

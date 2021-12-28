@@ -384,6 +384,7 @@ void doodle_app::loop_one() {
       main_loop();
       metadata_loop_one();
       g_main_loop().update(l_now - s_now, nullptr);
+      g_bounded_pool().update(l_now - s_now, nullptr);
       s_now = l_now;
     }
   } catch (doodle_error& err) {

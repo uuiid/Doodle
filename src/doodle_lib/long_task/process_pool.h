@@ -4,11 +4,10 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <entt/process/process.hpp>
 
 namespace doodle {
 template <class Delta>
-class DOODLELIB_API bounded_pool {
+class bounded_pool {
   struct process_handler {
     using instance_type  = std::unique_ptr<void, void (*)(void *)>;
     using update_fn_type = bool(process_handler &, Delta, void *);
@@ -218,7 +217,7 @@ class DOODLELIB_API bounded_pool {
   void update(const Delta delta, void *data = nullptr) {
     auto sz = handlers.size();
 
-    for (std::size_t pos = max_process; pos; --pos) {
+    for (std::size_t pos = ((max_process > sz) ? sz : max_process); pos; --pos) {
       auto &handler = handlers[pos - 1];
 
       if (const auto dead = handler.update(handler, delta, data); dead) {
@@ -249,6 +248,10 @@ class DOODLELIB_API bounded_pool {
 
     std::move(handlers.begin(), handlers.end(), std::back_inserter(exec));
     handlers.swap(exec);
+  }
+
+  void set_bounded(const std::int16_t in_int_16) {
+    max_process = in_int_16;
   }
 
  private:

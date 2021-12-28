@@ -97,8 +97,9 @@ doodle_lib::~doodle_lib() {
   p_project_vector.clear();
 }
 void doodle_lib::init_gui() {
-  p_thread_pool = new_object<thread_pool>(core_set::getSet().p_max_thread);
-  auto k_ip     = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().get_meta_rpc_port());
+  p_thread_pool = new_object<thread_pool>(std::thread::hardware_concurrency());
+  loop_bounded_pool.set_bounded(core_set::getSet().p_max_thread);
+  auto k_ip = fmt::format("{}:{:d}", core_set::getSet().get_server_host(), core_set::getSet().get_meta_rpc_port());
 
   DOODLE_LOG_DEBUG(k_ip);
 

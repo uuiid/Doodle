@@ -49,7 +49,7 @@ DOODLELIB_API inline registry_ptr& g_reg() {
 DOODLELIB_API inline scheduler_t& g_main_loop() {
   return doodle_lib::Get().loop;
 }
-DOODLELIB_API bounded_pool_t &g_bounded_pool(){
+DOODLELIB_API inline bounded_pool_t &g_bounded_pool(){
   return doodle_lib::Get().loop_bounded_pool;
 }
 
