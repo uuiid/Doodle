@@ -12,6 +12,7 @@
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/core/core_set.h>
 
 namespace doodle {
 
@@ -20,6 +21,7 @@ comm_maya_tool::comm_maya_tool()
       p_text(),
       p_sim_path(),
       p_only_sim(false),
+      p_max_th(core_set::getSet().p_max_thread),
       p_use_all_ref(false) {
   p_name     = "maya工具";
   auto k_prj = g_reg()->try_ctx<root_ref>();
@@ -54,6 +56,10 @@ bool comm_maya_tool::render() {
 
   dear::Text(fmt::format("解算资产: {}", p_text));
 
+  dear::TreeNode{"通用设置"} && [this]() {
+    imgui::SliderInt("最大任务数", &(p_max_th), 0u, 64u);
+  };
+
   dear::TreeNode{"解算设置"} && [this]() {
     imgui::Checkbox("只解算不替换引用", &p_only_sim);
   };
@@ -62,25 +68,17 @@ bool comm_maya_tool::render() {
   };
 
   if (imgui::Button("解算")) {
-    auto maya = new_object<maya_file_async>();
-    std::for_each(p_sim_path.begin(), p_sim_path.end(),
-                  [this, maya](const FSys::path& in_path) {
-                    auto arg               = details::qcloth_arg{};
-                    arg.sim_path           = in_path;
-                    arg.qcloth_assets_path = p_cloth_path;
-                    arg.only_sim           = p_only_sim;
-                    maya->qcloth_sim_file(make_handle(), arg);
-                  });
+    maya_file_async l_maya_file_async{};
+    auto arg               = details::qcloth_arg{};
+    arg.qcloth_assets_path = p_cloth_path;
+    arg.only_sim           = p_only_sim;
+    l_maya_file_async.qcloth_sim_file(p_sim_path, arg, p_max_th);
   }
   if (imgui::Button("fbx导出")) {
-    auto maya = new_object<maya_file_async>();
-    std::for_each(p_sim_path.begin(), p_sim_path.end(),
-                  [maya, this](const auto& i) {
-                    auto k_arg        = details::export_fbx_arg{};
-                    k_arg.file_path   = i;
-                    k_arg.use_all_ref = this->p_use_all_ref;
-                    maya->export_fbx_file(make_handle(), k_arg);
-                  });
+    maya_file_async l_maya_file_async{};
+    auto k_arg        = details::export_fbx_arg{};
+    k_arg.use_all_ref = this->p_use_all_ref;
+    l_maya_file_async.export_fbx_file(p_sim_path, k_arg, p_max_th);
   }
 
   return true;

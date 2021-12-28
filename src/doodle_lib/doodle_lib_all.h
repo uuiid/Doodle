@@ -95,6 +95,8 @@
 #include <doodle_lib/exe_warp/ue4_exe.h>
 #include <doodle_lib/long_task/image_to_move.h>
 #include <doodle_lib/long_task/join_move.h>
+#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_lib/long_task/restricted_task.h>
 #include <doodle_lib/doodle_app.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/doodle_lib_pch.h>

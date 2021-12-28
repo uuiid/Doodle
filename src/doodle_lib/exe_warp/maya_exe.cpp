@@ -7,7 +7,6 @@
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/core/core_set.h>
 
-#include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 //#include <type_traits>
 
@@ -182,7 +181,7 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
     }
   } else {  /// 提交新的读取函数
   sub_out:
-    p_i->p_out_str = std::move(doodle_lib::Get().get_thread_pool()->enqueue(
+    p_i->p_out_str = std::move(g_thread_pool().enqueue(
         [&]() -> string {
           string k_str{};
           getline(p_i->p_out, k_str);
@@ -219,7 +218,7 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
     }
   } else {  /// 提交新的读取函数
   sub_err:
-    p_i->p_err_str = std::move(doodle_lib::Get().get_thread_pool()->enqueue(
+    p_i->p_err_str = std::move(g_thread_pool().enqueue(
         [&]() -> string {
           string k_str{};
           getline(p_i->p_err, k_str);

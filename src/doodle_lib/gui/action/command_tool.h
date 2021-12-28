@@ -43,6 +43,7 @@ class DOODLELIB_API comm_maya_tool : public command_base {
   std::string p_text;
   std::vector<FSys::path> p_sim_path;
   bool p_only_sim;
+  std::int32_t p_max_th;
   bool p_use_all_ref;
 
  public:

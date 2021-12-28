@@ -92,6 +92,8 @@ set(
     exe_warp/ue4_exe.h
     long_task/image_to_move.h
     long_task/join_move.h
+    long_task/process_pool.h
+    long_task/restricted_task.h
     doodle_app.h
     doodle_lib_all.h
     doodle_lib_fwd.h
@@ -167,5 +169,7 @@ set(
     exe_warp/ue4_exe.cpp
     long_task/image_to_move.cpp
     long_task/join_move.cpp
+    long_task/process_pool.cpp
+    long_task/restricted_task.cpp
     doodle_app.cpp
     doodle_lib_all.cpp)
