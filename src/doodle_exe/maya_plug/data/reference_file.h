@@ -70,6 +70,8 @@ class reference_file {
    */
   bool add_collision() const;
 
+  bool is_loaded() const;
+
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {
     j["path"]            = p.path;

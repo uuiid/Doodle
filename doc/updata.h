@@ -397,4 +397,8 @@
  *
  * @subsubsection  updata_log_3215 版本3.2.15
  * @li 调整多线程空指针
+ *
+ * @subsubsection  updata_log_3216 版本3.2.16
+ * @li 更新不加载时不导出fbx，而不是导出所有
+ *
  */

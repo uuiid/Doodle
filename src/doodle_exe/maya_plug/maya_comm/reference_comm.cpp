@@ -63,7 +63,7 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   MArgParser k_prase{syntax(), in_arg, &k_s};
   entt::handle k_def_prj;
 
-  chick_true<doodle_error>(g_reg()->try_ctx<root_ref>(),DOODLE_LOC,"没有获取到项目");
+  chick_true<doodle_error>(g_reg()->try_ctx<root_ref>(), DOODLE_LOC, "没有获取到项目");
   k_def_prj = g_reg()->ctx<root_ref>().root_handle();
 
   DOODLE_LOG_INFO(
@@ -250,7 +250,8 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
           k_r.export_abc(k_start, k_end);
           break;
         case export_type::fbx:
-          k_r.export_fbx(k_start, k_end);
+          if (k_r.is_loaded())
+            k_r.export_fbx(k_start, k_end);
           break;
         default:
           chick_true<doodle_error>(false, DOODLE_LOC, "未知类型");

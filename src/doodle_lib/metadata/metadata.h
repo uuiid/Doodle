@@ -137,7 +137,7 @@ class DOODLELIB_API database {
 // using to_str = entt::tag<"to_str"_hs>;
 using need_load      = entt::tag<"need_load"_hs>;
 using need_root_load = entt::tag<"need_root_load"_hs>;
-using is_load        = entt::tag<"is_load"_hs>;
+using is_load        = entt::tag<"is_loaded"_hs>;
 using need_save      = entt::tag<"need_save"_hs>;
 using need_delete    = entt::tag<"need_delete"_hs>;
 

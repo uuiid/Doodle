@@ -306,7 +306,7 @@ bool reference_file::add_collision() const {
 }
 void reference_file::generate_cloth_proxy() const {
   auto k_prj = get_prj();
-  chick_true<doodle_error>(k_prj,DOODLE_LOC,"无法找到项目配置");
+  chick_true<doodle_error>(k_prj, DOODLE_LOC, "无法找到项目配置");
 
   chick_component<project::cloth_config>(k_prj);
   /// 这里我们使用节点类名称寻找 qlClothShape ;
@@ -388,6 +388,14 @@ bool reference_file::has_node(const MSelectionList &in_list) {
     }
   }
   return false;
+}
+bool reference_file::is_loaded() const {
+  chick_mobject();
+  MFnReference k_ref{p_m_object};
+  MStatus k_s{};
+  auto k_r = k_ref.isLoaded(&k_s);
+  DOODLE_CHICK(k_s);
+  return k_r;
 }
 
 }  // namespace doodle::maya_plug
