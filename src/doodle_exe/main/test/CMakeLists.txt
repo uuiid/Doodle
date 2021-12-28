@@ -5,6 +5,7 @@ set(doodle_test_list
         test_metadata.cpp
         test_server.cpp
         test_gui.cpp
+        test_image.cpp
         )
 include(Catch)
 

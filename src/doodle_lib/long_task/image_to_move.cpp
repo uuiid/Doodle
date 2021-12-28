@@ -6,9 +6,10 @@
 #include <doodle_lib/thread_pool/long_term.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/shot.h>
-#include <opencv2/opencv.hpp>
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 
+#include <opencv2/opencv.hpp>
 namespace doodle {
 namespace details {
 namespace {
@@ -52,6 +53,10 @@ class image_to_move::impl {
 image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<entt::handle> &in_vector)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
+  chick_true<doodle_error>(in_handle.any_of<FSys::path>(), DOODLE_LOC, "缺失输出文件路径");
+
+  p_i->p_out_path = in_handle.get<FSys::path>();
+  //  p_i->p_out_path = in_handle.get_or_emplace<FSys::path>(core_set::getSet().get_cache_root("image"));
 
   std::for_each(in_vector.begin(), in_vector.end(), [](const entt::handle &in) {
     chick_true<doodle_error>(in.any_of<image_file_attribute>(), DOODLE_LOC, "缺失文件属性");

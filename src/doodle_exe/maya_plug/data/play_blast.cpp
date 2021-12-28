@@ -179,6 +179,12 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
     auto k_f = get_file_dir();
 
+    //    std::vector<entt::handle> l_handle_list{};
+    //    for (auto& l_path : FSys::list_files(k_f)) {
+    //      auto k_h = make_handle();
+    //
+    //    }
+
     image_sequence k_image{};
     k_image.set_path(k_f);
     k_image.set_out_path(get_out_path());

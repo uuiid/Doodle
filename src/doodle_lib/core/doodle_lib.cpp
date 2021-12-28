@@ -132,4 +132,8 @@ rpc_file_system_client_ptr doodle_lib::get_rpc_file_system_client() const {
 metadata_serialize_ptr doodle_lib::get_metadata_factory() const {
   return p_metadata_factory;
 }
+
+thread_pool& g_thread_pool() {
+  return *(doodle_lib::Get().get_thread_pool());
+};
 }  // namespace doodle
