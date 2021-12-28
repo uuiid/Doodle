@@ -58,7 +58,7 @@ void maya_file_async::export_fbx_file(const std::vector<FSys::path>& in_vector,
           auto& l_item = in_data.front();
           if (l_item.p_handle.template get<process_message>().is_run())
             break;
-          g_main_loop().template attach<details::maya_exe>(l_item.p_handle, l_item.arg);
+          g_main_loop().attach<details::maya_exe>(l_item.p_handle, l_item.arg);
           std::rotate(in_data.begin(), in_data.begin() + 1, in_data.end());
         }
         if (std::any_of(in_data.begin(), in_data.end(), [&](auto&& in_item) {
@@ -87,18 +87,18 @@ void maya_file_async::qcloth_sim_file(const std::vector<FSys::path>& in_vector,
           return in_e.p_handle.get<process_message>().is_run();
         });
 
-        if (k_run_size >= in_max_th)
+        if (k_run_size > in_max_th)
           return;
 
-        for (int l_i = 0; l_i < (in_max_th - k_run_size); ++l_i) {
+        for (int l_i = 0; l_i < (in_max_th - k_run_size + 1); ++l_i) {
           auto& l_item = in_data.front();
           if (l_item.p_handle.template get<process_message>().is_run())
             break;
-          g_main_loop().template attach<details::maya_exe>(l_item.p_handle, l_item.arg);
+          g_main_loop().attach<details::maya_exe>(l_item.p_handle, l_item.arg);
 
           std::rotate(in_data.begin(), in_data.begin() + 1, in_data.end());
         }
-        if (std::any_of(in_data.begin(), in_data.end(), [&](auto&& in_item) {
+        if (std::all_of(in_data.begin(), in_data.end(), [&](auto&& in_item) {
               return !in_item.p_handle.get<process_message>().is_wait();
             })) {
           succeed();

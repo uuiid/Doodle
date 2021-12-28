@@ -351,11 +351,18 @@ using registry_ptr               = std::shared_ptr<entt::registry>;
 class time_widget;
 
 using uuid = boost::uuids::uuid;
+template <class Delta>
+class DOODLELIB_API bounded_pool;
+
 template <class Derived>
 using process_t   = entt::process<Derived, std::chrono::system_clock::duration>;
 using scheduler_t = entt::scheduler<std::chrono::system_clock::duration>;
+
+using bounded_pool_t = bounded_pool<std::chrono::system_clock::duration>;
+
 DOODLELIB_API registry_ptr &g_reg();
 DOODLELIB_API scheduler_t &g_main_loop();
+DOODLELIB_API bounded_pool_t &g_bounded_pool();
 DOODLELIB_API thread_pool &g_thread_pool();
 
 template <class Component,
