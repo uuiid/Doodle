@@ -77,7 +77,6 @@ class DOODLELIB_API image_sequence
   explicit image_sequence(const FSys::path& path_dir);
 
   bool has_sequence();
-  void set_gamma(std::double_t in_pow);
   void set_path(const FSys::path& dir);
   void set_path(const std::vector<FSys::path>& in_images);
   void set_out_path(const FSys::path& out_dir);

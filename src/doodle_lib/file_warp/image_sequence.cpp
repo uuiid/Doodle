@@ -211,9 +211,6 @@ bool image_sequence::seanDir(const FSys::path &dir) {
   chick_true<file_error>(!p_paths.empty(), DOODLE_LOC, "{} 中没有找到支持的文件", dir);
   return true;
 }
-void image_sequence::set_gamma(std::double_t in_pow) {
-  p_pow = in_pow;
-}
 void image_sequence::set_path(const std::vector<FSys::path> &in_images) {
   p_paths = in_images;
 }
