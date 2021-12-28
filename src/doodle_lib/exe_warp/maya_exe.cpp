@@ -141,8 +141,6 @@ void maya_exe::add_maya_fun_tool() {
       boost::process::std_err > p_i->p_err,
       boost::process::on_exit([&](auto...) {
         p_i->p_process.terminate();
-        p_i->p_out.close();
-        p_i->p_err.close();
       })
 #ifdef _WIN32
           ,
@@ -181,12 +179,14 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
     }
   } else {  /// 提交新的读取函数
   sub_out:
-    p_i->p_out_str = std::move(g_thread_pool().enqueue(
-        [&]() -> string {
-          string k_str{};
-          getline(p_i->p_out, k_str);
-          return k_str;
-        }));
+    if (p_i->p_out)
+      p_i->p_out_str = std::move(g_thread_pool().enqueue(
+          [self = p_i.get()]() -> string {
+            string k_str{};
+            if (self && self->p_out)
+              getline(self->p_out, k_str);
+            return k_str;
+          }));
   }
 
   if (p_i->p_err_str.valid()) {  /// 异步有效, 是否可以读取
@@ -218,12 +218,14 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
     }
   } else {  /// 提交新的读取函数
   sub_err:
-    p_i->p_err_str = std::move(g_thread_pool().enqueue(
-        [&]() -> string {
-          string k_str{};
-          getline(p_i->p_err, k_str);
-          return k_str;
-        }));
+    if (p_i->p_err)
+      p_i->p_err_str = std::move(g_thread_pool().enqueue(
+          [self = p_i.get()]() -> string {
+            string k_str{};
+            if (self && self->p_err)
+              getline(self->p_err, k_str);
+            return k_str;
+          }));
   }
 
   auto k_time = chrono::system_clock::now() - p_i->p_time;

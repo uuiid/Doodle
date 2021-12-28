@@ -394,4 +394,7 @@
  *
  * @subsubsection  updata_log_3214 版本3.2.14
  * @li 将创建主进程受限池, 并将线程池直接调整为硬件大小
+ *
+ * @subsubsection  updata_log_3215 版本3.2.15
+ * @li 调整多线程空指针
  */
