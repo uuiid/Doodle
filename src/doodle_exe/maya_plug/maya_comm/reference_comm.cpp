@@ -62,23 +62,8 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   MStatus k_s;
   MArgParser k_prase{syntax(), in_arg, &k_s};
   entt::handle k_def_prj;
-  if (k_prase.isFlagSet(doodle_default_uuid, &k_s)) {
-    DOODLE_CHICK(k_s);
-    string k_str = d_str{k_prase.flagArgumentString(doodle_default_uuid, 0, &k_s)};
-    DOODLE_LOG_INFO("获得了默认项目的uuid {}", k_str);
-    DOODLE_CHICK(k_s);
-    auto k_def_uuid = boost::lexical_cast<uuid>(k_str);
 
-    auto k_prj_view = g_reg()->view<project>();
-    for (auto& k_e : k_prj_view) {
-      auto k_h = make_handle(k_e);
-      if (k_h.get<database>() == k_def_uuid) {
-        k_def_prj = k_h;
-        g_reg()->set<root_ref>(k_h);
-      }
-    }
-  }
-  chick_ctx<root_ref>();
+  chick_true<doodle_error>(g_reg()->try_ctx<root_ref>(),DOODLE_LOC,"没有获取到项目");
   k_def_prj = g_reg()->ctx<root_ref>().root_handle();
 
   DOODLE_LOG_INFO(
