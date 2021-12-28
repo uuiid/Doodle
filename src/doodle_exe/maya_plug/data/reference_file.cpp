@@ -122,6 +122,7 @@ void reference_file::init_show_name() {
 }
 string reference_file::get_namespace() const {
   chick_mobject();
+  chick_true<maya_error>(is_loaded(), DOODLE_LOC, "必须先加载才可以获得名称空间");
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
   string k_r = d_str{k_ref.associatedNamespace(false, &k_s)};
@@ -322,6 +323,7 @@ void reference_file::generate_cloth_proxy() const {
   }
 }
 void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
+  chick_true<doodle_error>(is_loaded(), DOODLE_LOC, "需要导出fbx的引用必须加载");
   MSelectionList k_select{};
   MStatus k_s{};
   auto &k_cfg = get_prj().get<project::cloth_config>();
@@ -351,6 +353,7 @@ void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) cons
                              get_namespace(),
                              in_start.value(),
                              in_end.value());
+  DOODLE_LOG_INFO("导出fbx文件路径 {}", k_file_path);
 
   auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
   k_s         = MGlobal::executeCommand(d_str{k_comm});
