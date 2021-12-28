@@ -161,6 +161,7 @@ void process_message::set_state(state in_state) {
   std::lock_guard _lock{_mutex};
   switch (in_state) {
     case run:
+      p_time = chrono::system_clock::now();
     case wait:
       break;
     case success:

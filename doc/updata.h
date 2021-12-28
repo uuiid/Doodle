@@ -391,4 +391,7 @@
  *
  * @subsubsection  updata_log_3213 版本3.2.13
  * @li 更正maya项目中获取默认项目的方式
+ *
+ * @subsubsection  updata_log_3214 版本3.2.14
+ * @li 将创建主进程受限池, 并将线程池直接调整为硬件大小
  */

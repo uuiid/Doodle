@@ -58,7 +58,8 @@ void setting_windows::save() {
   set.get_ue4_setting().set_path(*p_ue_path);
   set.get_ue4_setting().set_version(*p_ue_version);
   set.timeout = *p_timeout;
+  g_bounded_pool().set_bounded(*p_batch_max);
   core_set_init{}.write_file();
-  doodle_lib::Get().set_thread_pool_size();
+
 }
 }  // namespace doodle
