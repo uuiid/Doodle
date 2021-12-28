@@ -389,4 +389,6 @@
  * @li 修改包maya插件裹命令
  * @li 添加主循环task提交
  *
+ * @subsubsection  updata_log_3213 版本3.2.13
+ * @li 更正maya项目中获取默认项目的方式
  */
