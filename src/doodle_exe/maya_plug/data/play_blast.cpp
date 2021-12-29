@@ -173,9 +173,10 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 ;
 )",
                              get_file_path().generic_string(),
-                             in_start.as(MTime::uiUnit()),
-                             in_end.as(MTime::uiUnit()));
-    k_s        = MGlobal::executeCommand(k_mel.c_str());
+                             in_start.value(),
+                             in_end.value());
+    DOODLE_LOG_INFO("开始生成图片序列 {}", get_file_path());
+    k_s = MGlobal::executeCommand(k_mel.c_str());
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
     MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled false -outputTarget "renderer";)");
 
@@ -189,10 +190,9 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       /// \brief 相机名称
       k_image.watermarks.emplace_back(k_cam.get_transform_name(), 0.1, 0.1, cv::Scalar{25, 220, 2});
       /// \brief 当前帧和总帧数
-      auto k_len = MAnimControl::maxTime() - MAnimControl::minTime() + 1;
-      auto k_min = MAnimControl::minTime();
+      auto k_len = in_end - in_start + 1;
       k_image.watermarks.emplace_back(
-          fmt::format("{}/{}", k_min.value() + k_frame, k_len.value()),
+          fmt::format("{}/{}", in_start.value() + k_frame, k_len.value()),
           0.5, 0.1,
           cv::Scalar{25, 220, 2});
       ++k_frame;
@@ -211,6 +211,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
           core_set::getSet().get_user_en(),
           0.5, 0.91,
           cv::Scalar{25, 220, 2});
+      l_handle_list.push_back(k_h);
     }
     auto k_msg = make_handle();
     k_msg.emplace<process_message>().set_name("制作拍屏");
@@ -218,9 +219,15 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     k_msg.emplace<episodes>(p_eps);
     k_msg.emplace<shot>(p_shot);
 
+    DOODLE_LOG_INFO("开始视频合成 {}");
     g_bounded_pool().attach<details::image_to_move>(k_msg, l_handle_list);
-
-    // k_view.scheduleRefresh();
+    if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
+      DOODLE_LOG_INFO("检查为非交互模式, 进行同步视频合成");
+      while (!g_bounded_pool().empty())
+        g_bounded_pool().update({}, nullptr);
+    }
+    DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", get_out_path(), k_f);
+    FSys::remove_all(k_f);
     return k_s;
   }
 }

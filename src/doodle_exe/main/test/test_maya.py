@@ -1,4 +1,13 @@
 import maya.cmds
+import sys
+import os
+
+curr_dir = os.path.dirname(os.path.realpath(__file__))
+doodle_src = os.path.dirname(os.path.dirname(os.path.dirname(curr_dir)))
+res_dir = doodle_src + """/doodle_lib/resource"""
+sys.path.append(res_dir)
+print (res_dir)
+
 import maya_fun_tool
 
 
@@ -22,7 +31,7 @@ def doodle_test():
     k_f.config_ = """[{
         "export_path":"",
         "only_sim":false,
-        "path":"E:/tmp/test_sim_12_29/CF_EP002_SC073_AN.ma",
+        "path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma",
         "qcloth_assets_path":""
         }]"""
     k_f()

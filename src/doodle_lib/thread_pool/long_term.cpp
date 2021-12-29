@@ -146,7 +146,7 @@ void process_message::progress_step(const rational_int& in_rational_int) {
   p_progress += in_rational_int;
 }
 void process_message::message(const string& in_string, const level& in_level_enum) {
-  spdlog::debug(in_string);
+  spdlog::info(in_string);
   std::lock_guard _lock{_mutex};
   switch (in_level_enum) {
     case level::warning:

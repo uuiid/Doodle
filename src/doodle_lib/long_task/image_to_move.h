@@ -8,6 +8,11 @@
 namespace doodle {
 class DOODLELIB_API image_watermark {
  public:
+  image_watermark() = default;
+  image_watermark(const string &in_p_text,
+                  double_t in_p_width_proportion,
+                  double_t in_p_height_proportion,
+                  const cv::Scalar &in_rgba);
   string p_text;
   std::double_t p_width_proportion;
   std::double_t p_height_proportion;

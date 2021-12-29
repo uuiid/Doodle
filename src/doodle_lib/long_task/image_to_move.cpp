@@ -86,10 +86,18 @@ void image_to_move::init() {
   l_mag.aborted_function = [self = this]() {if(self) self->abort(); };
 
   /// \brief 这里我们检查 shot，episode 进行路径的组合
-  p_i->p_out_path /= fmt::format(
-      "{}_{}.mp4",
-      p_i->p_h.any_of<episodes>() ? fmt::to_string(p_i->p_h.get<episodes>()) : "eps_none"s,
-      p_i->p_h.any_of<shot>() ? fmt::to_string(p_i->p_h.get<shot>()) : "sh_none"s);
+  if (!p_i->p_out_path.has_extension())
+    p_i->p_out_path /= fmt::format(
+        "{}_{}.mp4",
+        p_i->p_h.any_of<episodes>() ? fmt::to_string(p_i->p_h.get<episodes>()) : "eps_none"s,
+        p_i->p_h.any_of<shot>() ? fmt::to_string(p_i->p_h.get<shot>()) : "sh_none"s);
+  else
+    chick_true<doodle_error>(p_i->p_out_path.extension() == ".mp4", DOODLE_LOC, "扩展名称不是MP4");
+
+  if (exists(p_i->p_out_path.parent_path()))
+    create_directories(p_i->p_out_path.parent_path());
+
+  DOODLE_LOG_INFO("开始创建视频 {}", p_i->p_out_path);
 
   auto k_fun = [&]() -> void {
     const static cv::Size k_size{1920, 1080};
@@ -167,4 +175,12 @@ void image_to_move::aborted() {
   }
 }
 }  // namespace details
+image_watermark::image_watermark(const string &in_p_text,
+                                 double_t in_p_width_proportion,
+                                 double_t in_p_height_proportion,
+                                 const cv::Scalar &in_rgba)
+    : p_text(in_p_text),
+      p_width_proportion(in_p_width_proportion),
+      p_height_proportion(in_p_height_proportion),
+      rgba(in_rgba) {}
 }  // namespace doodle

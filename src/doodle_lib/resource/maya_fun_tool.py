@@ -168,14 +168,12 @@ def __load_config__(obj):
         k_con.qcloth_assets_path = obj["qcloth_assets_path"]
         k_con.export_path = obj["export_path"]
         k_con.only_sim = obj["only_sim"]
-        k_con.uuid = obj["uuid"]
         return k_con
     elif "use_all_ref" in obj:
         k_con = fbx_config()
         k_con.path = obj["path"]
         k_con.export_path = obj["export_path"]
         k_con.use_all_ref = obj["use_all_ref"]
-        k_con.uuid = obj["uuid"]
         return k_con
 
 
@@ -240,7 +238,7 @@ class open_file(object):
         doodle_work_space.reset()
 
         assert(isinstance(self.cfg, sim_config))
-        cmds.doodle_create_ref_file(uuid=self.cfg.uuid)
+        cmds.doodle_create_ref_file()
         if not self.cfg.only_sim:
             cmds.doodle_ref_file_load()
         cmds.doodle_ref_file_sim(
@@ -268,7 +266,7 @@ class open_file(object):
         self.load_plug(["fbxmaya"])
         self.open()
         cmds.doodle_comm_file_save()
-        cmds.doodle_create_ref_file(uuid=self.cfg.uuid)
+        cmds.doodle_create_ref_file( )
         cmds.comm_play_blast_maya(startTime=doodle_work_space.raneg.start,
                                   endTime=doodle_work_space.raneg.end,
                                   filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
