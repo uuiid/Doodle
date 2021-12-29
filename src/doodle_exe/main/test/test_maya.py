@@ -21,10 +21,10 @@ def doodle_test():
     k_f = maya_fun_tool.open_file()
     k_f.config_ = """[{
         "export_path":"",
-        "only_sim":true,
-        "path":"E:/tmp/cloth_test/ma/TEST_EP001_SC001_AN.ma",
-        "qcloth_assets_path":"",
-        "uuid":"587c5eca-7dae-47c5-947e-de9ded2eae4f"}]"""
+        "only_sim":false,
+        "path":"E:/tmp/test_sim_12_29/CF_EP002_SC073_AN.ma",
+        "qcloth_assets_path":""
+        }]"""
     k_f()
 
 
@@ -34,8 +34,8 @@ def doodle_test_fbx():
     k_f.config_ = """[{
         "export_path":"",
         "use_all_ref":false,
-        "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN2.ma",
-        "uuid":"fa589d1b-3130-462f-b486-9faf90fe7909"}]"""
+        "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN2.ma"
+        }]"""
     k_f()
 
 
