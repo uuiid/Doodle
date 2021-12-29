@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 
 project(Doodle
-        VERSION 3.2.16.0
+        VERSION 3.2.17.0
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -61,8 +61,8 @@ find_package(Boost 1.75 REQUIRED COMPONENTS
         program_options
         )
 find_package(Sqlpp11 REQUIRED)
-find_package(Catch2 CONFIG )
-find_package(Doxygen )
+find_package(Catch2 CONFIG)
+find_package(Doxygen)
 # 寻找opencv
 find_package(OpenCV CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
@@ -84,7 +84,7 @@ find_package(EnTT CONFIG REQUIRED)
 #find_package(cxxopts CONFIG REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
-find_package(Autodesk_FBX 2020 )
+find_package(Autodesk_FBX 2020)
 
 #服务器库
 #应该会用其中一个
@@ -146,8 +146,8 @@ set(DOXYGEN_GENERATE_TREEVIEW YES)
 # set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 0)
 # set(DOXYGEN_HTML_DYNAMIC_SECTIONS YES)
 set(DOXYGEN_ALIASES
-    "doodle_exe_file=${DOODLE_EXE_MSI_FILE_NAME}"
-)
+        "doodle_exe_file=${DOODLE_EXE_MSI_FILE_NAME}"
+        )
 set(DOXYGEN_EXAMPLE_PATH ${PROJECT_SOURCE_DIR}/src)
 set(DOXYGEN_HTML_EXTRA_STYLESHEET ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.css)
 doxygen_add_docs(Doxygen
@@ -157,42 +157,25 @@ doxygen_add_docs(Doxygen
 
 
 enable_testing()
-include(Dart)
 add_subdirectory(src)
 
 #=====================安装打包过程===============================
-# list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
-# include(mypack)
-
-
-#====================一些非qt组件的搜索和安装=============
-
-if (RUN_fixup)
-    #第一种搜索方式
-    set(CMAKE_INSTALL_UCRT_LIBRARIES "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64")
-    include(InstallRequiredSystemLibraries)
-endif (RUN_fixup)
+include(InstallRequiredSystemLibraries)
 
 list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
+add_subdirectory(script)
 
 
-if (RUN_COPY)
-    add_subdirectory(script)
-endif (RUN_COPY)
-
-
-if (RUN_fixup)
-    #最后实现camke修复
-    install(CODE "
+#最后实现camke修复
+install(CODE "
         include(BundleUtilities)
         fixup_bundle(\"$<TARGET_FILE:DoodleExe>\"   \"\"   \"${DIRS}\")
         ")
-endif (RUN_fixup)
-
-
-#install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/ DESTINATION plug)
-install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/ DESTINATION bin)
-install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/ DESTINATION plug)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
+        DESTINATION bin
+        )
+install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/
+        DESTINATION plug)
 
 
 set(CPACK_GENERATOR "WIX")
@@ -217,8 +200,8 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_EXE_MSI_FILE_NAME} ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_EXE_MSI_FILE_NAME}
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/docker/doodle_server/bin
-        )
-add_dependencies(cpack_${PROJECT_NAME} DoodleExe DoodleServerExe Doxygen ${PROJECT_NAME}_maya_plug )
+)
+add_dependencies(cpack_${PROJECT_NAME} DoodleExe DoodleServerExe Doxygen ${PROJECT_NAME}_maya_plug)
 # "D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Rocket -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.25\Plugins -VS2019 -CreateSubFolder
 # "D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.25\Plugins\Doodle -VS2019
 # "D:\Program Files\Epic Games\UE_4.26\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.26\Plugins\Doodle -VS2019

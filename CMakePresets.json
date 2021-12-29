@@ -34,14 +34,6 @@
       "name": "Ninja_release",
       "inherits": "Ninja_build",
       "cacheVariables": {
-        "RUN_fixup": {
-          "type": "BOOL",
-          "value": "ON"
-        },
-        "RUN_COPY": {
-          "type": "BOOL",
-          "value": "ON"
-        },
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
@@ -49,14 +41,6 @@
       "name": "Ninja_release_plug",
       "inherits": "Ninja_build",
       "cacheVariables": {
-        "RUN_fixup": {
-          "type": "BOOL",
-          "value": "OFF"
-        },
-        "RUN_COPY": {
-          "type": "BOOL",
-          "value": "OFF"
-        },
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
@@ -64,14 +48,6 @@
       "name": "Ninja_debug",
       "inherits": "Ninja_build",
       "cacheVariables": {
-        "RUN_fixup": {
-          "type": "BOOL",
-          "value": "OFF"
-        },
-        "RUN_COPY": {
-          "type": "BOOL",
-          "value": "OFF"
-        },
         "CMAKE_BUILD_TYPE": "Debug"
       }
     }
