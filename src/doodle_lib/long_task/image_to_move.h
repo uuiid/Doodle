@@ -42,7 +42,7 @@ class DOODLELIB_API image_to_move : public process_t<image_to_move> {
   using base_type = process_t<image_to_move>;
   /**
    * @brief 将传入的图片序列连接为视频
-   * @param in_handle 具有消息组件, 和 *输出路径文件夹* 组件的的句柄
+   * @param in_handle 具有消息组件, 和 *输出路径文件夹* 组件的的句柄 可选的 shot， episode 组件
    * @param in_vector 图片序列的句柄, 不需要排序, 会根据名称自动排序
    *
    * @note 在传入的 in_handle 中， 我们会测试 shot， episode 组件， 如果具有这些组件，将会组合并进行重置输出路径的句柄

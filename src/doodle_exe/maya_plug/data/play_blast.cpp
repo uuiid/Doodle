@@ -9,6 +9,8 @@
 
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/file_warp/image_sequence.h>
+#include <doodle_lib/long_task/image_to_move.h>
+#include <doodle_lib/long_task/process_pool.h>
 
 #include <maya_plug/data/maya_camera.h>
 #include <maya/M3dView.h>
@@ -179,75 +181,45 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
     auto k_f = get_file_dir();
 
-    //    std::vector<entt::handle> l_handle_list{};
-    //    for (auto& l_path : FSys::list_files(k_f)) {
-    //      auto k_h = make_handle();
-    //
-    //    }
-
-    image_sequence k_image{};
-    k_image.set_path(k_f);
-    k_image.set_out_path(get_out_path());
-    {
-      ///添加水印
-      details::watermark k_w{};
-      k_w.set_text(k_cam.get_transform_name());
-      k_w.set_text_point(0.1, 0.1);
-      k_w.set_text_color(25, 220, 2);
-      k_image.add_watermark(k_w);
-    }
-    {
-      ///添加水印
-      details::watermark k_w{};
-      /// 绘制当前帧和总帧数
+    std::vector<entt::handle> l_handle_list{};
+    std::double_t k_frame{0};
+    for (auto& l_path : FSys::list_files(k_f)) {
+      auto k_h      = make_handle();
+      auto& k_image = k_h.emplace<image_file_attribute>(l_path);
+      /// \brief 相机名称
+      k_image.watermarks.emplace_back(k_cam.get_transform_name(), 0.1, 0.1, cv::Scalar{25, 220, 2});
+      /// \brief 当前帧和总帧数
       auto k_len = MAnimControl::maxTime() - MAnimControl::minTime() + 1;
       auto k_min = MAnimControl::minTime();
-      k_w.set_text([=](std::int32_t in_frame) -> string {
-        return fmt::format("{}/{}", k_min.as(MTime::uiUnit()) + in_frame, k_len.as(MTime::uiUnit()));
-      });
-      k_w.set_text_point(0.5, 0.1);
-      k_w.set_text_color(25, 220, 2);
-      k_image.add_watermark(k_w);
+      k_image.watermarks.emplace_back(
+          fmt::format("{}/{}", k_min.value() + k_frame, k_len.value()),
+          0.5, 0.1,
+          cv::Scalar{25, 220, 2});
+      ++k_frame;
+      /// \brief 绘制摄像机avo
+      k_image.watermarks.emplace_back(
+          fmt::format("FOV: {:.3f}", k_cam.focalLength()),
+          0.91, 0.1,
+          cv::Scalar{25, 220, 2});
+      /// \brief 当前时间节点
+      k_image.watermarks.emplace_back(
+          fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())),
+          0.1, 0.91,
+          cv::Scalar{25, 220, 2});
+      /// \brief 制作人姓名
+      k_image.watermarks.emplace_back(
+          core_set::getSet().get_user_en(),
+          0.5, 0.91,
+          cv::Scalar{25, 220, 2});
     }
-    {
-      ///添加水印
-      /// 绘制摄像机avo
-      details::watermark k_w{};
-      k_w.set_text(fmt::format("FOV: {:.3f}", k_cam.focalLength()));
-      k_w.set_text_point(0.91, 0.1);
-      k_w.set_text_color(25, 220, 2);
-      k_image.add_watermark(k_w);
-    }
-    {
-      ///添加水印
-      /// 绘制摄像机avo
-      details::watermark k_w{};
-      auto k_time = chrono::floor<chrono::minutes>(chrono::system_clock::now());
-      k_w.set_text(fmt::format("{}", k_time));
-      k_w.set_text_point(0.1, 0.91);
-      k_w.set_text_color(25, 220, 2);
-      k_image.add_watermark(k_w);
-    }
-    {
-      {
-        /// 制作人姓名
-        details::watermark k_w{};
-        k_w.set_text(fmt::format("{}", core_set::getSet().get_user_en()));
-        k_w.set_text_point(0.5, 0.91);
-        k_w.set_text_color(25, 220, 2);
-        k_image.add_watermark(k_w);
-      }
-    }
+    auto k_msg = make_handle();
+    k_msg.emplace<process_message>().set_name("制作拍屏");
+    k_msg.emplace<FSys::path>(get_out_path());
+    k_msg.emplace<episodes>(p_eps);
+    k_msg.emplace<shot>(p_shot);
 
-    auto k_ptr = new_object<long_term>();
-    k_ptr->sig_progress.connect([&](rational_int in_rational_int) {
-      DOODLE_LOG_INFO("合成拍屏进度 : {}%", k_ptr->get_progress_int());
-    });
-    k_ptr->sig_finished.connect([this]() {
-      DOODLE_LOG_INFO("完成拍屏合成 : {}", get_out_path());
-      FSys::remove_all(get_file_dir());
-    });
-    k_image.create_video(k_ptr);
+    g_bounded_pool().attach<details::image_to_move>(k_msg, l_handle_list);
+
     // k_view.scheduleRefresh();
     return k_s;
   }
