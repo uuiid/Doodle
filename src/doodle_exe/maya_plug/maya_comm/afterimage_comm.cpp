@@ -90,11 +90,20 @@ MStatus afterimage_comm::doIt(const MArgList &) {
     k_list.add(k_path);
     DOODLE_CHICK(k_s);
 
+    /// \brief 先删除父级变换
     auto k_root = l_dag_node.parent(0, &k_s);
     DOODLE_CHICK(k_s);
     k_s = l_dag_node.setObject(k_root);
     DOODLE_CHICK(k_s);
     k_s = l_dag_node.removeChild(k_one_obj);
+    DOODLE_CHICK(k_s);
+
+    /// \brief 将删除的父级变换为世界级子物体
+    k_root = l_dag_node.dagRoot(&k_s);
+    DOODLE_CHICK(k_s);
+    k_s = l_dag_node.setObject(k_root);
+    DOODLE_CHICK(k_s);
+    k_s = l_dag_node.addChild(k_one_obj);
     DOODLE_CHICK(k_s);
   }
 
