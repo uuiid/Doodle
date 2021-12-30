@@ -411,4 +411,6 @@
  * @subsubsection  updata_log_3219 版本3.2.19
  * @li maya解算补丁
  *
+ * @subsubsection  updata_log_3220 版本3.2.20
+ * @li maya致命错误提示
  */

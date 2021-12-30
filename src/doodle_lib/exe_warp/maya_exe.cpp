@@ -201,6 +201,10 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
           if (std::regex_search(k_w_str, fatal_error_znch) ||
               std::regex_search(k_w_str, fatal_error_en_us)) {
             DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算命令是 {}\n", p_i->in_comm);
+            p_i->p_mess.patch<process_message>([&](process_message &in) {
+              auto k_str = fmt::format("检测到maya结束崩溃,结束进程: 解算命令是 {}\n", p_i->in_comm);
+              in.message(k_str, in.warning);
+            });
             fail();
             return;
           }
