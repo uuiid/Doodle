@@ -32,7 +32,7 @@ MSyntax details::comm_play_blast_maya_syntax() {
 MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
   MStatus k_s;
   play_blast k_p{};
-  MArgDatabase k_prase{syntax(), in_arg};
+  MArgDatabase l_database{syntax(), in_arg};
 
   DOODLE_LOG_INFO("开始从推测相机");
   k_p.conjecture_camera();
@@ -40,9 +40,9 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
   DOODLE_LOG_INFO("开始推测集数和镜头");
   k_p.conjecture_ep_sc();
 
-  if (k_prase.isFlagSet(doodle_filepath, &k_s)) {
+  if (l_database.isFlagSet(doodle_filepath, &k_s)) {
     DOODLE_CHICK(k_s);
-    auto k_path = k_prase.flagArgumentString(doodle_filepath, 0, &k_s);
+    auto k_path = l_database.flagArgumentString(doodle_filepath, 0, &k_s);
     DOODLE_CHICK(k_s);
     DOODLE_LOG_INFO("获得传入路径: {}", k_path);
     k_p.set_save_path(k_path.asUTF8());
@@ -51,15 +51,15 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
   DOODLE_LOG_INFO("开始拍屏");
 
   MTime k_start_time = MAnimControl::minTime();
-  if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
+  if (l_database.isFlagSet(doodle_startTime, &k_s)) {
     DOODLE_CHICK(k_s);
-    k_start_time = k_prase.flagArgumentMTime(doodle_startTime, 0, &k_s);
+    k_start_time = l_database.flagArgumentMTime(doodle_startTime, 0, &k_s);
     DOODLE_CHICK(k_s);
   }
   MTime k_end_time = MAnimControl::maxTime();
-  if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
+  if (l_database.isFlagSet(doodle_endTime, &k_s)) {
     DOODLE_CHICK(k_s);
-    k_end_time = k_prase.flagArgumentMTime(doodle_endTime, 0, &k_s);
+    k_end_time = l_database.flagArgumentMTime(doodle_endTime, 0, &k_s);
     DOODLE_CHICK(k_s);
   }
 
