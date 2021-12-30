@@ -257,6 +257,7 @@ class bounded_pool {
   template <typename Proc, typename... Args>
   static void wait(Args &&...args) {
     bounded_pool k_b{};
+    k_b.set_bounded(std::thread::hardware_concurrency());
     k_b.template attach<Proc>(std::forward<Args>(args)...);
     while (!k_b.empty())
       k_b.update({}, nullptr);
