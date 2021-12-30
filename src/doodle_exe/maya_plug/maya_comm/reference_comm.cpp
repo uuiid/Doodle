@@ -79,15 +79,17 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
     DOODLE_CHICK(k_s);
     auto k_obj = refIter.thisNode(&k_s);
     DOODLE_CHICK(k_s);
-    auto k_h = make_handle();
     try {
-      auto& k_info = k_h.emplace<reference_file>(k_def_prj, k_obj);
-      DOODLE_CHICK(k_s);
-      l_list.push_back(k_h);
-      DOODLE_LOG_INFO("获得引用文件 {}", k_info.path);
+      reference_file k_ref{k_def_prj, k_obj};
+      if (k_ref.is_loaded()) {
+        auto k_h = make_handle();
+        k_h.emplace<reference_file>(k_ref_file);
+        DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
+      } else
+        DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
+
     } catch (maya_error& err) {
       DOODLE_LOG_WARN("跳过无效的引用");
-      k_h.destroy();
     }
   }
   return k_s;
