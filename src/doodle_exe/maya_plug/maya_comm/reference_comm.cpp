@@ -83,8 +83,8 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
       reference_file k_ref{k_def_prj, k_obj};
       if (k_ref.is_loaded()) {
         auto k_h = make_handle();
-        k_h.emplace<reference_file>(k_ref_file);
         DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
+        k_h.emplace<reference_file>(std::move(k_ref));
       } else
         DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
 
