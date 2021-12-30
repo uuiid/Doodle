@@ -354,9 +354,13 @@ using uuid = boost::uuids::uuid;
 template <class Delta>
 class DOODLELIB_API bounded_pool;
 
+template <class Delta>
+class DOODLELIB_API scheduler;
+
+
 template <class Derived>
 using process_t   = entt::process<Derived, std::chrono::system_clock::duration>;
-using scheduler_t = entt::scheduler<std::chrono::system_clock::duration>;
+using scheduler_t = scheduler<std::chrono::system_clock::duration>;
 
 using bounded_pool_t = bounded_pool<std::chrono::system_clock::duration>;
 
