@@ -3,12 +3,17 @@
 //
 
 #include "maya_tool.h"
+
 #include <maya/MPlug.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MDagPath.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MFnSet.h>
 
 #include <maya_plug/maya_plug_fwd.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
+
 namespace doodle::maya_plug {
 
 MPlug get_plug(const MObject& in_node, const std::string& in_name) {
@@ -136,5 +141,13 @@ void add_child(const MObject& in_praent, MObject& in_child) {
   DOODLE_CHICK(k_s);
   k_s = k_node.addChild(in_child);
   DOODLE_CHICK(k_s);
+}
+void add_mat(const MObject& in_object, MObject& in_ref_obj) {
+  MStatus l_s{};
+  auto k_mat = get_shading_engine(in_ref_obj);
+  chick_true<maya_error>(k_mat.hasFn(MFn::kShadingEngine), DOODLE_LOC, "没有找到着色集");
+  MFnSet l_set{k_mat, &l_s};
+  DOODLE_CHICK(l_s);
+  l_set.addMember(in_object);
 }
 }  // namespace doodle::maya_plug

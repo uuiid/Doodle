@@ -10,6 +10,9 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MFnTransform.h>
 #include <maya/MVector.h>
+#include <maya/MDagPath.h>
+
+#include <maya_plug/data/maya_tool.h>
 
 namespace doodle::maya_plug {
 
@@ -33,6 +36,7 @@ MStatus afterimage_comm::doIt(const MArgList &) {
 
   MFnDagNode k_node{};
   MObject k_obj{};
+  std::vector<string> k_name_s{};
   for (MItSelectionList l_it{p_i->p_select_list};
        !l_it.isDone(&k_s);
        l_it.next()) {
@@ -44,26 +48,55 @@ MStatus afterimage_comm::doIt(const MArgList &) {
 
     auto k_copy_obj = k_node.duplicate(false, false, &k_s);
     DOODLE_CHICK(k_s);
-    p_i->p_copy_list.add(k_copy_obj);
+
+    /// 将复制节点的材质属性设置好
+    add_mat(k_copy_obj, k_obj);
+
+    k_s = p_i->p_copy_list.add(k_copy_obj, true);
+    DOODLE_CHICK(k_s);
+    k_s = k_node.setObject(k_copy_obj);
+    DOODLE_CHICK(k_s);
+    k_name_s.push_back(d_str{k_node.name()});
   }
 
-  k_s = MGlobal::setActiveSelectionList(p_i->p_copy_list);
-  DOODLE_CHICK(k_s);
-
-  auto k_name = fmt::format("doodle_{}", "");
-
-  MStringArray k_r{};
-  k_s = MGlobal::executeCommand(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot;)", k_r);
-  DOODLE_CHICK(k_s);
-
+  MDagPath k_path{};
   MSelectionList k_list{};
-  k_s = k_list.add(k_r[0], true);
 
-  chick_true<maya_error>(!k_list.isEmpty(&k_s), DOODLE_LOC, "没有找到合并对象");
+  if (p_i->p_select_list.length(&k_s) > 1) {
+    DOODLE_CHICK(k_s);
+    MStringArray k_r{};
+    k_s = MGlobal::executeCommand(d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot {};)",
+                                                    fmt::join(k_name_s, " "))},
+                                  k_r);
+    DOODLE_CHICK(k_s);
 
-  k_s = k_list.getDependNode(0, p_i->p_util_obj);
+    k_s = k_list.add(k_r[0], true);
 
-  chick_true<maya_error>(p_i->p_util_obj.hasFn(MFn::kTransform), DOODLE_LOC, " 没有找到符合的 Transform 节点");
+    chick_true<maya_error>(!k_list.isEmpty(&k_s), DOODLE_LOC, "没有找到合并对象");
+
+    k_s = k_list.getDependNode(0, p_i->p_util_obj);
+    DOODLE_CHICK(k_s);
+    k_s = k_list.getDagPath(0, k_path);
+    DOODLE_CHICK(k_s);
+    chick_true<maya_error>(p_i->p_util_obj.hasFn(MFn::kTransform), DOODLE_LOC, " 没有找到符合的 Transform 节点");
+  } else {
+    MObject k_one_obj{};
+    k_s = p_i->p_copy_list.getDependNode(0, k_one_obj);
+    DOODLE_CHICK(k_s);
+    MFnDagNode l_dag_node{k_one_obj, &k_s};
+    DOODLE_CHICK(k_s);
+    k_s = l_dag_node.getPath(k_path);
+    DOODLE_CHICK(k_s);
+    k_list.add(k_path);
+    DOODLE_CHICK(k_s);
+
+    auto k_root = l_dag_node.parent(0, &k_s);
+    DOODLE_CHICK(k_s);
+    k_s = l_dag_node.setObject(k_root);
+    DOODLE_CHICK(k_s);
+    k_s = l_dag_node.removeChild(k_one_obj);
+    DOODLE_CHICK(k_s);
+  }
 
   k_s = MGlobal::setActiveSelectionList(k_list);
   DOODLE_CHICK(k_s);
@@ -73,10 +106,12 @@ MStatus afterimage_comm::doIt(const MArgList &) {
   DOODLE_CHICK(k_s);
 
   /// 将变换转换为中心
-  MFnTransform k_tran{};
-  k_s = k_tran.setObject(p_i->p_util_obj);
+  MFnTransform k_tran{k_path, &k_s};
   DOODLE_CHICK(k_s);
-  k_s = k_tran.setTranslation({0, 0, 0}, MSpace::Space::kWorld);
+  auto k_tran_vector = MVector{k_tran.scalePivot(MSpace::Space::kWorld, &k_s)};
+
+  DOODLE_CHICK(k_s);
+  k_s = k_tran.translateBy(-k_tran_vector, MSpace::Space::kWorld);
   DOODLE_CHICK(k_s);
 
   k_s = MGlobal::executeCommand("DeleteHistory;");
