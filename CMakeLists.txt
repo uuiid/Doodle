@@ -130,32 +130,6 @@ add_custom_target(
 
 )
 
-#添加文档生成
-set(DOODLE_EXE_MSI_FILE_NAME Doodle-${Doodle_VERSION_MAJOR}.${Doodle_VERSION_MINOR}.${Doodle_VERSION_PATCH}-win64.msi)
-set(DOXYGEN_WARNINGS YES)
-set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
-set(DOXYGEN_WARN_IF_DOC_ERROR YES)
-set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
-set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR}/doc)
-set(DOXYGEN_EXCLUDE_PATTERNS
-        */external)
-set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
-set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
-# set(DOXYGEN_DISABLE_INDEX YES)
-set(DOXYGEN_GENERATE_TREEVIEW YES)
-# set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 0)
-# set(DOXYGEN_HTML_DYNAMIC_SECTIONS YES)
-set(DOXYGEN_ALIASES
-        "doodle_exe_file=${DOODLE_EXE_MSI_FILE_NAME}"
-        )
-set(DOXYGEN_EXAMPLE_PATH ${PROJECT_SOURCE_DIR}/src)
-set(DOXYGEN_HTML_EXTRA_STYLESHEET ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.css)
-doxygen_add_docs(Doxygen
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR}/doc
-        )
-
-
 enable_testing()
 add_subdirectory(src)
 
@@ -178,30 +152,62 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/
         DESTINATION plug)
 
 
-set(CPACK_GENERATOR "WIX")
+set(CPACK_GENERATOR "WIX;7Z;ZIP")
 set(CPACK_PACKAGE_EXECUTABLES DoodleExe;Doodle)
 set(CPACK_CREATE_DESKTOP_LINKS DoodleExe)
 set(CPACK_PACKAGE_VENDOR uuiid)
 set(CPACK_PACKAGE_INSTALL_DIRECTORY uuiid/doodle${PROJECT_VERSION_MAJOR}${PROJECT_VERSION_MINOR})
 set(CPACK_WIX_UPGRADE_GUID 3E490EAC-2FC7-49BF-A521-20F2F93E320A)
 set(CPACK_WIX_TEMPLATE ${PROJECT_SOURCE_DIR}/CMake/WIX.template.in)
+set(CPACK_ARCHIVE_THREADS 0)
 # set(CPACK_WIX_PROPERTY_Schedule afterInstallValidate)
 # set(CPACK_WIX_PATCH_FILE ${PROJECT_SOURCE_DIR}/CMake/doodle_wix_patch.xml)
 # set(CPACK_WIX_PRODUCT_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 # set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 set(CPACK_WIX_CULTURES zh-CN)
 include(CPack REQUIRED)
+set(DOODLE_PACKAGE_NAME ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME})
+
 
 add_custom_target(cpack_${PROJECT_NAME}
         COMMAND ${CMAKE_CPACK_COMMAND} --build ${PROJECT_BINARY_DIR} --target package)
 add_custom_command(
         TARGET cpack_${PROJECT_NAME}
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_EXE_MSI_FILE_NAME} ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_EXE_MSI_FILE_NAME}
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.msi ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.msi
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.7z  ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.7z
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.zip ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.zip
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/docker/doodle_server/bin
 )
 add_dependencies(cpack_${PROJECT_NAME} DoodleExe DoodleServerExe Doxygen ${PROJECT_NAME}_maya_plug)
+
+
+#=====================文档过程===============================
+#添加文档生成
+set(DOXYGEN_WARNINGS YES)
+set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
+set(DOXYGEN_WARN_IF_DOC_ERROR YES)
+set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
+set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR}/doc)
+set(DOXYGEN_EXCLUDE_PATTERNS
+        */external)
+set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
+set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
+# set(DOXYGEN_DISABLE_INDEX YES)
+set(DOXYGEN_GENERATE_TREEVIEW YES)
+# set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 0)
+# set(DOXYGEN_HTML_DYNAMIC_SECTIONS YES)
+set(DOXYGEN_ALIASES
+        "doodle_exe_file=${DOODLE_PACKAGE_NAME}"
+        )
+set(DOXYGEN_EXAMPLE_PATH ${PROJECT_SOURCE_DIR}/src)
+set(DOXYGEN_HTML_EXTRA_STYLESHEET ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.css)
+doxygen_add_docs(Doxygen
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/doc
+        )
+
 # "D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Rocket -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.25\Plugins -VS2019 -CreateSubFolder
 # "D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.25\Plugins\Doodle -VS2019
 # "D:\Program Files\Epic Games\UE_4.26\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.26\Plugins\Doodle -VS2019
