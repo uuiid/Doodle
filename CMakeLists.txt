@@ -175,7 +175,7 @@ add_custom_command(
         TARGET cpack_${PROJECT_NAME}
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.msi ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.msi
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.7z  ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.7z
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.7z ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.7z
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.zip ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.zip
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/docker/doodle_server/bin
@@ -207,6 +207,36 @@ doxygen_add_docs(Doxygen
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/doc
         )
+
+#file(GLOB _DOODLE_LIST_7Z
+#        LIST_DIRECTORIES false
+#        RELATIVE ${PROJECT_SOURCE_DIR}/build/html/file
+#        ${PROJECT_SOURCE_DIR}/build/html/file/*.7z)
+#file(GLOB _DOODLE_LIST_ZIP
+#        LIST_DIRECTORIES false
+#        RELATIVE ${PROJECT_SOURCE_DIR}/build/html/file
+#        ${PROJECT_SOURCE_DIR}/build/html/file/*.zip)
+#file(GLOB _DOODLE_LIST_MSI
+#        LIST_DIRECTORIES false
+#        RELATIVE ${PROJECT_SOURCE_DIR}/build/html/file
+#        ${PROJECT_SOURCE_DIR}/build/html/file/*.msi)
+#
+#set(DOODLE_FILE_DOWN " * \n")
+#
+#foreach (_DOODLE_EXE_FILE IN ZIP_LISTS _DOODLE_LIST_7Z _DOODLE_LIST_ZIP _DOODLE_LIST_MSI)
+#    if (DEFINED _DOODLE_EXE_FILE_0)
+#        string(APPEND DOODLE_FILE_DOWN " * <a href=\"${_DOODLE_EXE_FILE_0}\">下载(  ${_DOODLE_EXE_FILE_0} )</a> \\n\n")
+#    endif ()
+#
+#    if (DEFINED _DOODLE_EXE_FILE_1)
+#        string(APPEND DOODLE_FILE_DOWN " * <a href=\"${_DOODLE_EXE_FILE_1}\">下载(  ${_DOODLE_EXE_FILE_1} )</a> \\n\n")
+#    endif ()
+#
+#    if (DEFINED _DOODLE_EXE_FILE_2)
+#        string(APPEND DOODLE_FILE_DOWN " * <a href=\"${_DOODLE_EXE_FILE_2}\">下载(  ${_DOODLE_EXE_FILE_2} )</a> \\n\n")
+#    endif ()
+#endforeach ()
+
 
 # "D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Rocket -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.25\Plugins -VS2019 -CreateSubFolder
 # "D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.25\Plugins\Doodle -VS2019
