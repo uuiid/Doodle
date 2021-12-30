@@ -47,6 +47,8 @@ class DlsShelf(shelfBase._shelf):
                       command=self.randomColor)
         self.addButon("hud", "icons/create_hud.png",
                       command=cmds.create_hud_node_maya)
+        self.addButon("af","icons/doodle_afterimage.png",
+                      command=cmds.doodle_afterimage)
 
     def polyremesh(self):
         self.re()
