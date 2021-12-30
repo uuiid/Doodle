@@ -401,4 +401,10 @@
  * @subsubsection  updata_log_3216 版本3.2.16
  * @li 更新不加载时不导出fbx，而不是导出所有
  *
+ * @subsubsection  updata_log_3217 版本3.2.17
+ * @li 安装方式的小更改
+ *
+ * @subsubsection  updata_log_3218 版本3.2.18
+ * @li maya解算补丁
+ *
  */
