@@ -17,7 +17,6 @@
 #include <maya/MPlug.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
-#include <maya/MFn.h>
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>

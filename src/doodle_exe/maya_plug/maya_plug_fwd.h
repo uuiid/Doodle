@@ -5,7 +5,6 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/exception/exception.h>
 #include <maya/MGlobal.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>
@@ -25,7 +24,7 @@ class TemplateAction : public MPxCommand {
  public:
   TemplateAction() = default;
 
-  virtual MStatus doIt(const MArgList&) {
+  virtual MStatus doIt(const MArgList&) override {
     return MStatus::kFailure;
   }
   static void* creator() {
@@ -39,6 +38,9 @@ class TemplateAction : public MPxCommand {
   static MStatus deregisterCommand(FNPLUG& obj) {
     return obj.deregisterCommand(CommandName);
   }
+  [[nodiscard]] bool hasSyntax() const override {
+    return true;
+  };
 };
 
 }  // namespace doodle
@@ -88,16 +90,14 @@ class d_str {
 }  // namespace doodle::maya_plug
 
 namespace fmt {
- template <>
- struct fmt::formatter<::doodle::maya_plug::maya_error> : fmt::formatter<fmt::string_view> {
-   template <typename FormatContext>
-   auto format(const ::doodle::maya_plug::maya_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
-     return formatter<string_view>::format(
-         in_.what(),
-         ctx);
-   }
- };
-
-
+template <>
+struct fmt::formatter<::doodle::maya_plug::maya_error> : fmt::formatter<fmt::string_view> {
+  template <typename FormatContext>
+  auto format(const ::doodle::maya_plug::maya_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    return formatter<string_view>::format(
+        in_.what(),
+        ctx);
+  }
+};
 
 }  // namespace fmt
