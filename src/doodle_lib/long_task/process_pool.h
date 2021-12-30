@@ -254,6 +254,18 @@ class bounded_pool {
     max_process = in_int_16;
   }
 
+  template <typename Proc, typename... Args>
+  static void wait(Args &&...args) {
+    bounded_pool k_b{};
+    k_b.template attach<Proc>(std::forward<Args>(args)...);
+    while (!k_b.empty())
+      k_b.update({}, nullptr);
+  };
+  //  template <typename Proc, typename... Args>
+  //  static void wait(Args &&...args) {
+  //    wait<Proc>(nullptr, std::forward<Args>(args)...);
+  //  };
+
  private:
   std::vector<process_handler> handlers{};
   std::atomic_int16_t max_process{};
