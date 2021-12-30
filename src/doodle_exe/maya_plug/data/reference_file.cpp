@@ -17,6 +17,7 @@
 #include <maya/MPlug.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
+#include <maya/MItDag.h>
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
@@ -241,20 +242,41 @@ bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) con
   if (k_select.isEmpty())
     return false;
 
-  k_s = MGlobal::setActiveSelectionList(k_select);
-  DOODLE_CHICK(k_s);
+  /// \brief 进行dag遍历提取需要的节点
+  std::vector<std::string> l_names{};
+  {
+    MDagPath k_root{};
+    k_s = k_select.getDagPath(0, k_root);
+    DOODLE_CHICK(k_s);
+    MItDag k_it{};
+    k_s = k_it.reset(k_root, MItDag::kDepthFirst, MFn::Type::kMesh);
+    DOODLE_CHICK(k_s);
+    for (; !k_it.isDone(&k_s); k_it.next()) {
+      DOODLE_CHICK(k_s);
+      k_s = k_it.getPath(k_root);
+      DOODLE_CHICK(k_s);
+      l_names.push_back(d_str{k_root.fullPathName(&k_s)});
+      DOODLE_CHICK(k_s);
+    }
+  }
+
+  MStringArray k_r_s{};
   auto k_name = fmt::format("{}_export_abc", get_namespace());
   k_s         = MGlobal::executeCommand(
-              d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}";)",
-                                k_name)},
+              d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)",
+                                k_name,
+                                fmt::join(l_names, " "))},
+              k_r_s,
               true);
   DOODLE_CHICK(k_s);
 
   k_select.clear();
-  k_s = k_select.add(d_str{k_name}, true);
+  k_s = k_select.add(k_r_s[0], true);
   DOODLE_CHICK(k_s);
-  if (k_select.isEmpty())
+  if (k_select.isEmpty()) {
+    DOODLE_LOG_INFO("没有找到合并对象")
     return false;
+  }
 
   MDagPath k_mesh_path{};
   k_s = k_select.getDagPath(0, k_mesh_path);
