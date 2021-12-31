@@ -3,15 +3,20 @@
 //
 
 #include "doodle_app.h"
-
+#include <doodle_lib/exception/exception.h>
+#include <doodle_lib/logger/logger.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/gui/main_windwos.h>
 #include <doodle_lib/gui/widget_register.h>
 #include <doodle_lib/metadata/metadata.h>
+#include <doodle_lib/platform/win/drop_manager.h>
+
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>
+#include <shellapi.h>
+
 // Data
 static ID3D11Device* g_pd3dDevice                     = nullptr;
 static ID3D11DeviceContext* g_pd3dDeviceContext       = nullptr;
@@ -131,6 +136,25 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       doodle::core_set::getSet().p_condition.notify_all();
       return 0;
     }
+      //    case WM_DROPFILES: {
+      //      const auto hdrop = reinterpret_cast<::HDROP>(wParam);
+      //      auto file_size   = DragQueryFile(hdrop, 0xFFFFFFFF, nullptr, 0);
+      //      std::vector<doodle::FSys::path> l_vector{};
+      //
+      //      //我们可以同时拖动多个文件，所以我们必须在这里循环
+      //      for (UINT i = 0; i < file_size; i++) {
+      //        std::size_t l_len = DragQueryFile(hdrop, i, nullptr, 0) + 1;
+      //        std::unique_ptr<wchar_t[]> varbuf{new wchar_t[l_len]};
+      //
+      //        UINT cch = DragQueryFile(hdrop, i, varbuf.get(), l_len);
+      //        doodle::chick_true<doodle::doodle_error>(cch != 0, DOODLE_LOC, "拖拽文件获取失败");
+      //        l_vector.emplace_back(varbuf.get());
+      //      }
+      //      DragFinish(hdrop);
+      //      DOODLE_LOG_INFO("查询到文件拖拽 :\n{}", fmt::join(l_vector, "\n"));
+      //
+      //      break;
+      //    }
       //    case WM_IME_CHAR: {
       //      auto& io    = ImGui::GetIO();
       //      DWORD wChar = wParam;
@@ -163,6 +187,7 @@ class doodle_app::impl {
  public:
   win_handle p_hwnd;
   win_class p_win_class;
+  win::drop_manager p_drop_manager;
   impl()
       : p_hwnd(),
         p_win_class({sizeof(WNDCLASSEX),
@@ -247,6 +272,14 @@ doodle_app::doodle_app()
   ImGui_ImplWin32_Init(p_impl->p_hwnd);
   ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
   p_pd3dDevice = g_pd3dDevice;
+
+  /// 初始化文件拖拽
+  //  DragAcceptFiles(p_impl->p_hwnd, true);
+  //  OleInitialize(nullptr);
+  //  auto k_r = RegisterDragDrop(p_impl->p_hwnd, new win::drop_manager{});
+  //  chick_true<doodle_error>(k_r == S_OK, DOODLE_LOC, "无法注册拖拽com");
+  /// \brief 设置本地静态变量
+  doodle_app::self = this;
 }
 doodle_app::~doodle_app() {
   // Cleanup
@@ -257,6 +290,7 @@ doodle_app::~doodle_app() {
   CleanupDeviceD3D();
   ::DestroyWindow(p_impl->p_hwnd);
   ::UnregisterClass(p_impl->p_win_class.lpszClassName, p_impl->p_win_class.hInstance);
+//  OleUninitialize();
 }
 
 base_widget_ptr doodle_app::get_main_windows() const {
@@ -270,10 +304,6 @@ void doodle_app::set_imgui_dock_space(const FSys::path& in_path) const {
   FSys::ofstream l_ofs{in_path, std::ios::out | std::ios::binary};
   if (l_ofs)
     l_ofs.write(k_f.begin(), k_f.size());
-}
-
-void doodle_app::post_constructor() {
-  doodle_app::self = this;
 }
 
 std::int32_t doodle_app::run() {
@@ -344,6 +374,7 @@ base_widget_ptr doodle_app::loop_begin() {
   io.IniFilename = imgui_file_path.c_str();
   k_metadata_obs.connect(*g_reg(), entt::collector.update<database_stauts>());
   p_main_win = get_main_windows();
+
   return p_main_win;
 }
 

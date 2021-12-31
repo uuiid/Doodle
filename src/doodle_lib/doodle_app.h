@@ -33,7 +33,6 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   std::atomic_bool p_done;
 
   using connection = boost::signals2::connection;
-  virtual void post_constructor();
 
   static doodle_app* Get();
   boost::signals2::signal<void()> main_loop;

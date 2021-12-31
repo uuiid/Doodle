@@ -94,6 +94,7 @@ set(
     long_task/join_move.h
     long_task/process_pool.h
     long_task/restricted_task.h
+    platform/win/drop_manager.h
     doodle_app.h
     doodle_lib_all.h
     doodle_lib_fwd.h
@@ -171,5 +172,6 @@ set(
     long_task/join_move.cpp
     long_task/process_pool.cpp
     long_task/restricted_task.cpp
+    platform/win/drop_manager.cpp
     doodle_app.cpp
     doodle_lib_all.cpp)
