@@ -18,6 +18,7 @@
 #include <maya/MItDependencyGraph.h>
 #include <maya/MFnSkinCluster.h>
 #include <maya/MItDependencyNodes.h>
+#include <maya/MAnimControl.h>
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -430,7 +431,9 @@ bool qcloth_shape::create_cache() const {
 void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   chick_component<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>(in_handle);
   chick_ctx<root_ref>();
-  auto& k_ref  = g_reg()->ctx<root_ref>().root_handle().get<project::cloth_config>();
+
+  auto& k_ref = g_reg()->ctx<root_ref>().root_handle().get<project::cloth_config>();
+  MAnimControl::setMinTime(MTime{950, MTime::uiUnit()});
   auto l_group = get_cloth_group();
 
   MStatus k_s{};
