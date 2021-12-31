@@ -28,9 +28,6 @@ comm_maya_tool::comm_maya_tool()
 
   p_text = k_prj->root_handle().get<project>().get_vfx_cloth_config().vfx_cloth_sim_path.generic_string();
 }
-bool comm_maya_tool::is_async() {
-  return true;
-}
 bool comm_maya_tool::render() {
   if (imgui::Button("maya文件")) {
     p_sim_path.clear();
@@ -93,9 +90,6 @@ comm_create_video::comm_create_video()
       p_image_path(),
       p_out_path(new_object<std::string>()) {
   p_name = "创建视频";
-}
-bool comm_create_video::is_async() {
-  return true;
 }
 bool comm_create_video::render() {
   imgui::InputText("输出文件夹", p_out_path.get());
@@ -215,9 +209,6 @@ comm_import_ue_files::comm_import_ue_files()
     : p_ue4_prj(),
       p_ue4_show(new_object<std::string>()) {
   p_name = "ue工具";
-}
-bool comm_import_ue_files::is_async() {
-  return true;
 }
 bool comm_import_ue_files::render() {
   imgui::InputText("ue项目", p_ue4_show.get());

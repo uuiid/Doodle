@@ -21,16 +21,11 @@ namespace doodle {
  * 解算时有解算资源所在路径选项的要求， 这个是必须填写的项目，
  * 在使用只解算时是不会替换解算引用的
  * @warning
- *  * 需要 在解算文件中具有 _cloth_proxy 后缀的解算体, 我们使用它设置缓存目录和创建缓存文件
- *  * 需要 maya版本为2019
  *  * 需要 有 UE4 后缀的组, 使用这个组来输出abc文件
  *  * 需要 解算从950开始
  *  * 需要帧率时25fps
- *  * 需要 cloth 后缀的 物体来设置解算缓存文件的路径 , 他的形状节点必须时 clothShape后缀(默认即可)
  *  * 最好有一台摄像机用来创建拍屏
  *  * 最好具有标记元数据, 使用这个元数据来确认解算的人物
- *  * 最好有 _skin_proxy 结尾的物体, 我们使用他来校验有效性
- *  * 只解算和导出选项是不兼容的
  *
  * @li @b 导出fbx子项 \n
  * 导出fbx时是按照保存是引用保存时的状态加载的，
@@ -47,7 +42,6 @@ class DOODLELIB_API comm_maya_tool : public command_base {
 
  public:
   comm_maya_tool();
-  bool is_async() override;
   bool render() override;
 };
 
@@ -86,7 +80,6 @@ class DOODLELIB_API comm_create_video : public command_base {
 
  public:
   comm_create_video();
-  bool is_async() override;
   bool render() override;
 };
 /**
@@ -104,7 +97,6 @@ class DOODLELIB_API comm_import_ue_files : public command_base {
 
  public:
   comm_import_ue_files();
-  bool is_async() override;
   bool render() override;
 };
 

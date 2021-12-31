@@ -5,7 +5,7 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-
+#include <doodle_lib/lib_warp/entt_warp.h>
 #include <any>
 #include <boost/hana.hpp>
 
@@ -28,17 +28,10 @@ class DOODLELIB_API command_base /* : public details::no_copy  */ {
  public:
   command_base();
   virtual const std::string& class_name() { return p_name; };
-  virtual bool is_async() { return false; };
+  ;
   virtual bool render() = 0;
   virtual bool set_data(const entt::handle& in_any) { return false; };
-
-  template <class in_class>
-  static void on_construct_slot(entt::registry& in_reg, entt::entity in_ent) {
-    auto k_h = entt::handle{in_reg, in_ent};
-    k_h.get<in_class>().set_data(k_h);
-  };
 };
-
 
 template <class... arg>
 class DOODLELIB_API command_list {
