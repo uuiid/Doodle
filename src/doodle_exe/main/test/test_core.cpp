@@ -386,15 +386,6 @@ TEST_CASE("maya time out", "[maya]") {
   g_main_loop().update({}, nullptr);
 }
 
-TEST_CASE("ThreadPool", "[core][ThreadPool]") {
-  using namespace doodle;
-  for (int k_i = 0; k_i < 10; ++k_i) {
-    auto k_fun = doodle_lib::Get().get_thread_pool()->enqueue([k_i]() {
-      std::cout << k_i << std::endl;
-      return;
-    });
-  }
-}
 
 TEST_CASE("sys encoding", "[sys]") {
   auto k_ = boost::locale::util::get_system_locale();
@@ -437,12 +428,6 @@ TEST_CASE("std regex", "[std][regex]") {
                             fatal_error_en_us));
 }
 
-TEST_CASE("temp fun", "[core]") {
-  using namespace doodle;
-
-  auto ter = new_object<long_term>();
-  REQUIRE(doodle_lib::Get().long_task_list.size() == 1);
-}
 
 TEST_CASE("path iter", "[core]") {
   using namespace doodle;
@@ -459,26 +444,7 @@ TEST_CASE("path iter", "[core]") {
     std::cout << i << std::endl;
   }
 }
-TEST_CASE("image sequence", "[core]") {
-  using namespace doodle;
 
-  std::vector<FSys::path> p_list{
-      FSys::directory_iterator{"D:\\tmp\\image_test_sc001"},
-      FSys::directory_iterator{}};
-
-  std::cout << fmt::format("{}", fmt::join(p_list, " \n")) << std::endl;
-  REQUIRE(image_sequence::is_image_sequence(p_list));
-  SECTION("make video") {
-    auto k_image = image_sequence{};
-    k_image.set_path(p_list);
-    auto k_w = details::watermark{};
-    k_w.path_to_ep_sc(p_list.front());
-    k_image.add_watermark(k_w);
-    k_image.set_out_path("D:\\tmp\\image_test_sc001_test.mp4");
-    auto k_ptr = new_object<long_term>();
-    k_image.create_video(k_ptr);
-  }
-}
 
 
 //#include <boost/algorithm/string.hpp>
