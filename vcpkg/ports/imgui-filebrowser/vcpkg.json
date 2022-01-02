@@ -1,0 +1,7 @@
+{
+  "name": "imgui-filebrowser",
+  "version": "3.9.0",
+  "port-version": 1,
+  "description": "imgui-filebrowser is a header-only file browser implementation for dear-imgui. C++ 17 is required.",
+  "homepage": "https://github.com/AirGuanZ/imgui-filebrowser"
+}
