@@ -6,7 +6,7 @@ set(CMAKE_DEBUG_POSTFIX d)
 
 add_library(${PROJECT_NAME} INTERFACE)
 
-target_sources(${PROJECT_NAME} INTERFACE imfilebrowser.h)
+target_sources(${PROJECT_NAME} INTERFACE  ${PROJECT_SOURCE_DIR}/imfilebrowser.h)
 
 install(FILES
         ${PROJECT_SOURCE_DIR}/imfilebrowser.h
