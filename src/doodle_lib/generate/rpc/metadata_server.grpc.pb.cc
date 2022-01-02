@@ -34,30 +34,30 @@ static const char* metadata_server_method_names[] = {
 
 std::unique_ptr< metadata_server::Stub> metadata_server::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
   (void)options;
-  std::unique_ptr< metadata_server::Stub> stub(new metadata_server::Stub(channel));
+  std::unique_ptr< metadata_server::Stub> stub(new metadata_server::Stub(channel, options));
   return stub;
 }
 
-metadata_server::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_install_metadata_(metadata_server_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_delete_metadata_(metadata_server_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_update_metadata_(metadata_server_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_filter_metadata_(metadata_server_method_names[3], ::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
-  , rpcmethod_install_user_date_(metadata_server_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_update_user_date_(metadata_server_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_delete_user_date_(metadata_server_method_names[6], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_filter_user_date_(metadata_server_method_names[7], ::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
+metadata_server::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options)
+  : channel_(channel), rpcmethod_install_metadata_(metadata_server_method_names[0], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_delete_metadata_(metadata_server_method_names[1], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_update_metadata_(metadata_server_method_names[2], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_filter_metadata_(metadata_server_method_names[3], options.suffix_for_stats(),::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
+  , rpcmethod_install_user_date_(metadata_server_method_names[4], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_update_user_date_(metadata_server_method_names[5], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_delete_user_date_(metadata_server_method_names[6], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_filter_user_date_(metadata_server_method_names[7], options.suffix_for_stats(),::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
   {}
 
 ::grpc::Status metadata_server::Stub::install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database& request, ::doodle::metadata_database* response) {
   return ::grpc::internal::BlockingUnaryCall< ::doodle::metadata_database, ::doodle::metadata_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_install_metadata_, context, request, response);
 }
 
-void metadata_server::Stub::experimental_async::install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)> f) {
+void metadata_server::Stub::async::install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)> f) {
   ::grpc::internal::CallbackUnaryCall< ::doodle::metadata_database, ::doodle::metadata_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_install_metadata_, context, request, response, std::move(f));
 }
 
-void metadata_server::Stub::experimental_async::install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+void metadata_server::Stub::async::install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::ClientUnaryReactor* reactor) {
   ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_install_metadata_, context, request, response, reactor);
 }
 
@@ -76,11 +76,11 @@ void metadata_server::Stub::experimental_async::install_metadata(::grpc::ClientC
   return ::grpc::internal::BlockingUnaryCall< ::doodle::metadata_database, ::doodle::metadata_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_delete_metadata_, context, request, response);
 }
 
-void metadata_server::Stub::experimental_async::delete_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)> f) {
+void metadata_server::Stub::async::delete_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)> f) {
   ::grpc::internal::CallbackUnaryCall< ::doodle::metadata_database, ::doodle::metadata_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_delete_metadata_, context, request, response, std::move(f));
 }
 
-void metadata_server::Stub::experimental_async::delete_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+void metadata_server::Stub::async::delete_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::ClientUnaryReactor* reactor) {
   ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_delete_metadata_, context, request, response, reactor);
 }
 
@@ -99,11 +99,11 @@ void metadata_server::Stub::experimental_async::delete_metadata(::grpc::ClientCo
   return ::grpc::internal::BlockingUnaryCall< ::doodle::metadata_database, ::doodle::metadata_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_update_metadata_, context, request, response);
 }
 
-void metadata_server::Stub::experimental_async::update_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)> f) {
+void metadata_server::Stub::async::update_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)> f) {
   ::grpc::internal::CallbackUnaryCall< ::doodle::metadata_database, ::doodle::metadata_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_update_metadata_, context, request, response, std::move(f));
 }
 
-void metadata_server::Stub::experimental_async::update_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+void metadata_server::Stub::async::update_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::ClientUnaryReactor* reactor) {
   ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_update_metadata_, context, request, response, reactor);
 }
 
@@ -122,7 +122,7 @@ void metadata_server::Stub::experimental_async::update_metadata(::grpc::ClientCo
   return ::grpc::internal::ClientReaderFactory< ::doodle::metadata_database>::Create(channel_.get(), rpcmethod_filter_metadata_, context, request);
 }
 
-void metadata_server::Stub::experimental_async::filter_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database_filter* request, ::grpc::experimental::ClientReadReactor< ::doodle::metadata_database>* reactor) {
+void metadata_server::Stub::async::filter_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database_filter* request, ::grpc::ClientReadReactor< ::doodle::metadata_database>* reactor) {
   ::grpc::internal::ClientCallbackReaderFactory< ::doodle::metadata_database>::Create(stub_->channel_.get(), stub_->rpcmethod_filter_metadata_, context, request, reactor);
 }
 
@@ -138,11 +138,11 @@ void metadata_server::Stub::experimental_async::filter_metadata(::grpc::ClientCo
   return ::grpc::internal::BlockingUnaryCall< ::doodle::user_database, ::doodle::user_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_install_user_date_, context, request, response);
 }
 
-void metadata_server::Stub::experimental_async::install_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, std::function<void(::grpc::Status)> f) {
+void metadata_server::Stub::async::install_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, std::function<void(::grpc::Status)> f) {
   ::grpc::internal::CallbackUnaryCall< ::doodle::user_database, ::doodle::user_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_install_user_date_, context, request, response, std::move(f));
 }
 
-void metadata_server::Stub::experimental_async::install_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+void metadata_server::Stub::async::install_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::ClientUnaryReactor* reactor) {
   ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_install_user_date_, context, request, response, reactor);
 }
 
@@ -161,11 +161,11 @@ void metadata_server::Stub::experimental_async::install_user_date(::grpc::Client
   return ::grpc::internal::BlockingUnaryCall< ::doodle::user_database, ::doodle::user_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_update_user_date_, context, request, response);
 }
 
-void metadata_server::Stub::experimental_async::update_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, std::function<void(::grpc::Status)> f) {
+void metadata_server::Stub::async::update_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, std::function<void(::grpc::Status)> f) {
   ::grpc::internal::CallbackUnaryCall< ::doodle::user_database, ::doodle::user_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_update_user_date_, context, request, response, std::move(f));
 }
 
-void metadata_server::Stub::experimental_async::update_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+void metadata_server::Stub::async::update_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::ClientUnaryReactor* reactor) {
   ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_update_user_date_, context, request, response, reactor);
 }
 
@@ -184,11 +184,11 @@ void metadata_server::Stub::experimental_async::update_user_date(::grpc::ClientC
   return ::grpc::internal::BlockingUnaryCall< ::doodle::user_database_filter, ::doodle::user_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_delete_user_date_, context, request, response);
 }
 
-void metadata_server::Stub::experimental_async::delete_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response, std::function<void(::grpc::Status)> f) {
+void metadata_server::Stub::async::delete_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response, std::function<void(::grpc::Status)> f) {
   ::grpc::internal::CallbackUnaryCall< ::doodle::user_database_filter, ::doodle::user_database, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_delete_user_date_, context, request, response, std::move(f));
 }
 
-void metadata_server::Stub::experimental_async::delete_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+void metadata_server::Stub::async::delete_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response, ::grpc::ClientUnaryReactor* reactor) {
   ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_delete_user_date_, context, request, response, reactor);
 }
 
@@ -207,7 +207,7 @@ void metadata_server::Stub::experimental_async::delete_user_date(::grpc::ClientC
   return ::grpc::internal::ClientReaderFactory< ::doodle::user_database>::Create(channel_.get(), rpcmethod_filter_user_date_, context, request);
 }
 
-void metadata_server::Stub::experimental_async::filter_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::grpc::experimental::ClientReadReactor< ::doodle::user_database>* reactor) {
+void metadata_server::Stub::async::filter_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::grpc::ClientReadReactor< ::doodle::user_database>* reactor) {
   ::grpc::internal::ClientCallbackReaderFactory< ::doodle::user_database>::Create(stub_->channel_.get(), stub_->rpcmethod_filter_user_date_, context, request, reactor);
 }
 

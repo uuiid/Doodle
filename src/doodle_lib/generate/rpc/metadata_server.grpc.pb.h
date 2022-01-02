@@ -7,7 +7,6 @@
 #include "metadata_server.pb.h"
 
 #include <functional>
-#include <grpc/impl/codegen/port_platform.h>
 #include <grpcpp/impl/codegen/async_generic_service.h>
 #include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
@@ -96,64 +95,28 @@ class metadata_server final {
     std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::user_database>> PrepareAsyncfilter_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::doodle::user_database>>(PrepareAsyncfilter_user_dateRaw(context, request, cq));
     }
-    class experimental_async_interface {
+    class async_interface {
      public:
-      virtual ~experimental_async_interface() {}
+      virtual ~async_interface() {}
       virtual void install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void delete_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void delete_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void delete_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void update_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void update_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void update_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void filter_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database_filter* request, ::grpc::ClientReadReactor< ::doodle::metadata_database>* reactor) = 0;
-      #else
-      virtual void filter_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database_filter* request, ::grpc::experimental::ClientReadReactor< ::doodle::metadata_database>* reactor) = 0;
-      #endif
       virtual void install_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void install_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void install_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void update_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void update_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void update_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void delete_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void delete_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void delete_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void filter_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::grpc::ClientReadReactor< ::doodle::user_database>* reactor) = 0;
-      #else
-      virtual void filter_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::grpc::experimental::ClientReadReactor< ::doodle::user_database>* reactor) = 0;
-      #endif
     };
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    typedef class experimental_async_interface async_interface;
-    #endif
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    async_interface* async() { return experimental_async(); }
-    #endif
-    virtual class experimental_async_interface* experimental_async() { return nullptr; }
-  private:
+    typedef class async_interface experimental_async_interface;
+    virtual class async_interface* async() { return nullptr; }
+    class async_interface* experimental_async() { return async(); }
+   private:
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::metadata_database>* Asyncinstall_metadataRaw(::grpc::ClientContext* context, const ::doodle::metadata_database& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::metadata_database>* PrepareAsyncinstall_metadataRaw(::grpc::ClientContext* context, const ::doodle::metadata_database& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::doodle::metadata_database>* Asyncdelete_metadataRaw(::grpc::ClientContext* context, const ::doodle::metadata_database& request, ::grpc::CompletionQueue* cq) = 0;
@@ -175,7 +138,7 @@ class metadata_server final {
   };
   class Stub final : public StubInterface {
    public:
-    Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel);
+    Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
     ::grpc::Status install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database& request, ::doodle::metadata_database* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::metadata_database>> Asyncinstall_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::doodle::metadata_database>>(Asyncinstall_metadataRaw(context, request, cq));
@@ -236,66 +199,34 @@ class metadata_server final {
     std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::user_database>> PrepareAsyncfilter_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncReader< ::doodle::user_database>>(PrepareAsyncfilter_user_dateRaw(context, request, cq));
     }
-    class experimental_async final :
-      public StubInterface::experimental_async_interface {
+    class async final :
+      public StubInterface::async_interface {
      public:
       void install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void install_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void delete_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void delete_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void delete_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void update_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void update_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void update_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void filter_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database_filter* request, ::grpc::ClientReadReactor< ::doodle::metadata_database>* reactor) override;
-      #else
-      void filter_metadata(::grpc::ClientContext* context, const ::doodle::metadata_database_filter* request, ::grpc::experimental::ClientReadReactor< ::doodle::metadata_database>* reactor) override;
-      #endif
       void install_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void install_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void install_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void update_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void update_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void update_user_date(::grpc::ClientContext* context, const ::doodle::user_database* request, ::doodle::user_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void delete_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void delete_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void delete_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void filter_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::grpc::ClientReadReactor< ::doodle::user_database>* reactor) override;
-      #else
-      void filter_user_date(::grpc::ClientContext* context, const ::doodle::user_database_filter* request, ::grpc::experimental::ClientReadReactor< ::doodle::user_database>* reactor) override;
-      #endif
      private:
       friend class Stub;
-      explicit experimental_async(Stub* stub): stub_(stub) { }
+      explicit async(Stub* stub): stub_(stub) { }
       Stub* stub() { return stub_; }
       Stub* stub_;
     };
-    class experimental_async_interface* experimental_async() override { return &async_stub_; }
+    class async* async() override { return &async_stub_; }
 
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
-    class experimental_async async_stub_{this};
+    class async async_stub_{this};
     ::grpc::ClientAsyncResponseReader< ::doodle::metadata_database>* Asyncinstall_metadataRaw(::grpc::ClientContext* context, const ::doodle::metadata_database& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::doodle::metadata_database>* PrepareAsyncinstall_metadataRaw(::grpc::ClientContext* context, const ::doodle::metadata_database& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::doodle::metadata_database>* Asyncdelete_metadataRaw(::grpc::ClientContext* context, const ::doodle::metadata_database& request, ::grpc::CompletionQueue* cq) override;
@@ -500,36 +431,22 @@ class metadata_server final {
   };
   typedef WithAsyncMethod_install_metadata<WithAsyncMethod_delete_metadata<WithAsyncMethod_update_metadata<WithAsyncMethod_filter_metadata<WithAsyncMethod_install_user_date<WithAsyncMethod_update_user_date<WithAsyncMethod_delete_user_date<WithAsyncMethod_filter_user_date<Service > > > > > > > > AsyncService;
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_install_metadata : public BaseClass {
+  class WithCallbackMethod_install_metadata : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_install_metadata() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(0,
+    WithCallbackMethod_install_metadata() {
+      ::grpc::Service::MarkMethodCallback(0,
           new ::grpc::internal::CallbackUnaryHandler< ::doodle::metadata_database, ::doodle::metadata_database>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response) { return this->install_metadata(context, request, response); }));}
+                   ::grpc::CallbackServerContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response) { return this->install_metadata(context, request, response); }));}
     void SetMessageAllocatorFor_install_metadata(
-        ::grpc::experimental::MessageAllocator< ::doodle::metadata_database, ::doodle::metadata_database>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        ::grpc::MessageAllocator< ::doodle::metadata_database, ::doodle::metadata_database>* allocator) {
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(0);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(0);
-    #endif
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::metadata_database, ::doodle::metadata_database>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_install_metadata() override {
+    ~WithCallbackMethod_install_metadata() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -537,46 +454,26 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* install_metadata(
-      ::grpc::CallbackServerContext* /*context*/, const ::doodle::metadata_database* /*request*/, ::doodle::metadata_database* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* install_metadata(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::metadata_database* /*request*/, ::doodle::metadata_database* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::doodle::metadata_database* /*request*/, ::doodle::metadata_database* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_delete_metadata : public BaseClass {
+  class WithCallbackMethod_delete_metadata : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_delete_metadata() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(1,
+    WithCallbackMethod_delete_metadata() {
+      ::grpc::Service::MarkMethodCallback(1,
           new ::grpc::internal::CallbackUnaryHandler< ::doodle::metadata_database, ::doodle::metadata_database>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response) { return this->delete_metadata(context, request, response); }));}
+                   ::grpc::CallbackServerContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response) { return this->delete_metadata(context, request, response); }));}
     void SetMessageAllocatorFor_delete_metadata(
-        ::grpc::experimental::MessageAllocator< ::doodle::metadata_database, ::doodle::metadata_database>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        ::grpc::MessageAllocator< ::doodle::metadata_database, ::doodle::metadata_database>* allocator) {
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(1);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(1);
-    #endif
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::metadata_database, ::doodle::metadata_database>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_delete_metadata() override {
+    ~WithCallbackMethod_delete_metadata() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -584,46 +481,26 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* delete_metadata(
-      ::grpc::CallbackServerContext* /*context*/, const ::doodle::metadata_database* /*request*/, ::doodle::metadata_database* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* delete_metadata(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::metadata_database* /*request*/, ::doodle::metadata_database* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::doodle::metadata_database* /*request*/, ::doodle::metadata_database* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_update_metadata : public BaseClass {
+  class WithCallbackMethod_update_metadata : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_update_metadata() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(2,
+    WithCallbackMethod_update_metadata() {
+      ::grpc::Service::MarkMethodCallback(2,
           new ::grpc::internal::CallbackUnaryHandler< ::doodle::metadata_database, ::doodle::metadata_database>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response) { return this->update_metadata(context, request, response); }));}
+                   ::grpc::CallbackServerContext* context, const ::doodle::metadata_database* request, ::doodle::metadata_database* response) { return this->update_metadata(context, request, response); }));}
     void SetMessageAllocatorFor_update_metadata(
-        ::grpc::experimental::MessageAllocator< ::doodle::metadata_database, ::doodle::metadata_database>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        ::grpc::MessageAllocator< ::doodle::metadata_database, ::doodle::metadata_database>* allocator) {
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(2);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(2);
-    #endif
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::metadata_database, ::doodle::metadata_database>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_update_metadata() override {
+    ~WithCallbackMethod_update_metadata() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -631,37 +508,21 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* update_metadata(
-      ::grpc::CallbackServerContext* /*context*/, const ::doodle::metadata_database* /*request*/, ::doodle::metadata_database* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* update_metadata(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::metadata_database* /*request*/, ::doodle::metadata_database* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::doodle::metadata_database* /*request*/, ::doodle::metadata_database* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_filter_metadata : public BaseClass {
+  class WithCallbackMethod_filter_metadata : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_filter_metadata() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(3,
+    WithCallbackMethod_filter_metadata() {
+      ::grpc::Service::MarkMethodCallback(3,
           new ::grpc::internal::CallbackServerStreamingHandler< ::doodle::metadata_database_filter, ::doodle::metadata_database>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::doodle::metadata_database_filter* request) { return this->filter_metadata(context, request); }));
+                   ::grpc::CallbackServerContext* context, const ::doodle::metadata_database_filter* request) { return this->filter_metadata(context, request); }));
     }
-    ~ExperimentalWithCallbackMethod_filter_metadata() override {
+    ~WithCallbackMethod_filter_metadata() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -669,46 +530,26 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerWriteReactor< ::doodle::metadata_database>* filter_metadata(
-      ::grpc::CallbackServerContext* /*context*/, const ::doodle::metadata_database_filter* /*request*/)
-    #else
-    virtual ::grpc::experimental::ServerWriteReactor< ::doodle::metadata_database>* filter_metadata(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::metadata_database_filter* /*request*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::doodle::metadata_database_filter* /*request*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_install_user_date : public BaseClass {
+  class WithCallbackMethod_install_user_date : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_install_user_date() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(4,
+    WithCallbackMethod_install_user_date() {
+      ::grpc::Service::MarkMethodCallback(4,
           new ::grpc::internal::CallbackUnaryHandler< ::doodle::user_database, ::doodle::user_database>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::doodle::user_database* request, ::doodle::user_database* response) { return this->install_user_date(context, request, response); }));}
+                   ::grpc::CallbackServerContext* context, const ::doodle::user_database* request, ::doodle::user_database* response) { return this->install_user_date(context, request, response); }));}
     void SetMessageAllocatorFor_install_user_date(
-        ::grpc::experimental::MessageAllocator< ::doodle::user_database, ::doodle::user_database>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        ::grpc::MessageAllocator< ::doodle::user_database, ::doodle::user_database>* allocator) {
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(4);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(4);
-    #endif
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::user_database, ::doodle::user_database>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_install_user_date() override {
+    ~WithCallbackMethod_install_user_date() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -716,46 +557,26 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* install_user_date(
-      ::grpc::CallbackServerContext* /*context*/, const ::doodle::user_database* /*request*/, ::doodle::user_database* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* install_user_date(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::user_database* /*request*/, ::doodle::user_database* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::doodle::user_database* /*request*/, ::doodle::user_database* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_update_user_date : public BaseClass {
+  class WithCallbackMethod_update_user_date : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_update_user_date() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(5,
+    WithCallbackMethod_update_user_date() {
+      ::grpc::Service::MarkMethodCallback(5,
           new ::grpc::internal::CallbackUnaryHandler< ::doodle::user_database, ::doodle::user_database>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::doodle::user_database* request, ::doodle::user_database* response) { return this->update_user_date(context, request, response); }));}
+                   ::grpc::CallbackServerContext* context, const ::doodle::user_database* request, ::doodle::user_database* response) { return this->update_user_date(context, request, response); }));}
     void SetMessageAllocatorFor_update_user_date(
-        ::grpc::experimental::MessageAllocator< ::doodle::user_database, ::doodle::user_database>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        ::grpc::MessageAllocator< ::doodle::user_database, ::doodle::user_database>* allocator) {
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(5);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(5);
-    #endif
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::user_database, ::doodle::user_database>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_update_user_date() override {
+    ~WithCallbackMethod_update_user_date() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -763,46 +584,26 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* update_user_date(
-      ::grpc::CallbackServerContext* /*context*/, const ::doodle::user_database* /*request*/, ::doodle::user_database* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* update_user_date(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::user_database* /*request*/, ::doodle::user_database* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::doodle::user_database* /*request*/, ::doodle::user_database* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_delete_user_date : public BaseClass {
+  class WithCallbackMethod_delete_user_date : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_delete_user_date() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(6,
+    WithCallbackMethod_delete_user_date() {
+      ::grpc::Service::MarkMethodCallback(6,
           new ::grpc::internal::CallbackUnaryHandler< ::doodle::user_database_filter, ::doodle::user_database>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::doodle::user_database_filter* request, ::doodle::user_database* response) { return this->delete_user_date(context, request, response); }));}
+                   ::grpc::CallbackServerContext* context, const ::doodle::user_database_filter* request, ::doodle::user_database* response) { return this->delete_user_date(context, request, response); }));}
     void SetMessageAllocatorFor_delete_user_date(
-        ::grpc::experimental::MessageAllocator< ::doodle::user_database_filter, ::doodle::user_database>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        ::grpc::MessageAllocator< ::doodle::user_database_filter, ::doodle::user_database>* allocator) {
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(6);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(6);
-    #endif
       static_cast<::grpc::internal::CallbackUnaryHandler< ::doodle::user_database_filter, ::doodle::user_database>*>(handler)
               ->SetMessageAllocator(allocator);
     }
-    ~ExperimentalWithCallbackMethod_delete_user_date() override {
+    ~WithCallbackMethod_delete_user_date() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -810,37 +611,21 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* delete_user_date(
-      ::grpc::CallbackServerContext* /*context*/, const ::doodle::user_database_filter* /*request*/, ::doodle::user_database* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* delete_user_date(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::user_database_filter* /*request*/, ::doodle::user_database* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::doodle::user_database_filter* /*request*/, ::doodle::user_database* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithCallbackMethod_filter_user_date : public BaseClass {
+  class WithCallbackMethod_filter_user_date : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithCallbackMethod_filter_user_date() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(7,
+    WithCallbackMethod_filter_user_date() {
+      ::grpc::Service::MarkMethodCallback(7,
           new ::grpc::internal::CallbackServerStreamingHandler< ::doodle::user_database_filter, ::doodle::user_database>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::doodle::user_database_filter* request) { return this->filter_user_date(context, request); }));
+                   ::grpc::CallbackServerContext* context, const ::doodle::user_database_filter* request) { return this->filter_user_date(context, request); }));
     }
-    ~ExperimentalWithCallbackMethod_filter_user_date() override {
+    ~WithCallbackMethod_filter_user_date() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -848,20 +633,11 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerWriteReactor< ::doodle::user_database>* filter_user_date(
-      ::grpc::CallbackServerContext* /*context*/, const ::doodle::user_database_filter* /*request*/)
-    #else
-    virtual ::grpc::experimental::ServerWriteReactor< ::doodle::user_database>* filter_user_date(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::doodle::user_database_filter* /*request*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::doodle::user_database_filter* /*request*/)  { return nullptr; }
   };
-  #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-  typedef ExperimentalWithCallbackMethod_install_metadata<ExperimentalWithCallbackMethod_delete_metadata<ExperimentalWithCallbackMethod_update_metadata<ExperimentalWithCallbackMethod_filter_metadata<ExperimentalWithCallbackMethod_install_user_date<ExperimentalWithCallbackMethod_update_user_date<ExperimentalWithCallbackMethod_delete_user_date<ExperimentalWithCallbackMethod_filter_user_date<Service > > > > > > > > CallbackService;
-  #endif
-
-  typedef ExperimentalWithCallbackMethod_install_metadata<ExperimentalWithCallbackMethod_delete_metadata<ExperimentalWithCallbackMethod_update_metadata<ExperimentalWithCallbackMethod_filter_metadata<ExperimentalWithCallbackMethod_install_user_date<ExperimentalWithCallbackMethod_update_user_date<ExperimentalWithCallbackMethod_delete_user_date<ExperimentalWithCallbackMethod_filter_user_date<Service > > > > > > > > ExperimentalCallbackService;
+  typedef WithCallbackMethod_install_metadata<WithCallbackMethod_delete_metadata<WithCallbackMethod_update_metadata<WithCallbackMethod_filter_metadata<WithCallbackMethod_install_user_date<WithCallbackMethod_update_user_date<WithCallbackMethod_delete_user_date<WithCallbackMethod_filter_user_date<Service > > > > > > > > CallbackService;
+  typedef CallbackService ExperimentalCallbackService;
   template <class BaseClass>
   class WithGenericMethod_install_metadata : public BaseClass {
    private:
@@ -1159,27 +935,17 @@ class metadata_server final {
     }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_install_metadata : public BaseClass {
+  class WithRawCallbackMethod_install_metadata : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_install_metadata() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(0,
+    WithRawCallbackMethod_install_metadata() {
+      ::grpc::Service::MarkMethodRawCallback(0,
           new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->install_metadata(context, request, response); }));
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->install_metadata(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_install_metadata() override {
+    ~WithRawCallbackMethod_install_metadata() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -1187,37 +953,21 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* install_metadata(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* install_metadata(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_delete_metadata : public BaseClass {
+  class WithRawCallbackMethod_delete_metadata : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_delete_metadata() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(1,
+    WithRawCallbackMethod_delete_metadata() {
+      ::grpc::Service::MarkMethodRawCallback(1,
           new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->delete_metadata(context, request, response); }));
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->delete_metadata(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_delete_metadata() override {
+    ~WithRawCallbackMethod_delete_metadata() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -1225,37 +975,21 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* delete_metadata(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* delete_metadata(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_update_metadata : public BaseClass {
+  class WithRawCallbackMethod_update_metadata : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_update_metadata() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(2,
+    WithRawCallbackMethod_update_metadata() {
+      ::grpc::Service::MarkMethodRawCallback(2,
           new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->update_metadata(context, request, response); }));
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->update_metadata(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_update_metadata() override {
+    ~WithRawCallbackMethod_update_metadata() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -1263,37 +997,21 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* update_metadata(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* update_metadata(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_filter_metadata : public BaseClass {
+  class WithRawCallbackMethod_filter_metadata : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_filter_metadata() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(3,
+    WithRawCallbackMethod_filter_metadata() {
+      ::grpc::Service::MarkMethodRawCallback(3,
           new ::grpc::internal::CallbackServerStreamingHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const::grpc::ByteBuffer* request) { return this->filter_metadata(context, request); }));
+                   ::grpc::CallbackServerContext* context, const::grpc::ByteBuffer* request) { return this->filter_metadata(context, request); }));
     }
-    ~ExperimentalWithRawCallbackMethod_filter_metadata() override {
+    ~WithRawCallbackMethod_filter_metadata() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -1301,37 +1019,21 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerWriteReactor< ::grpc::ByteBuffer>* filter_metadata(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)
-    #else
-    virtual ::grpc::experimental::ServerWriteReactor< ::grpc::ByteBuffer>* filter_metadata(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_install_user_date : public BaseClass {
+  class WithRawCallbackMethod_install_user_date : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_install_user_date() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(4,
+    WithRawCallbackMethod_install_user_date() {
+      ::grpc::Service::MarkMethodRawCallback(4,
           new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->install_user_date(context, request, response); }));
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->install_user_date(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_install_user_date() override {
+    ~WithRawCallbackMethod_install_user_date() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -1339,37 +1041,21 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* install_user_date(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* install_user_date(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_update_user_date : public BaseClass {
+  class WithRawCallbackMethod_update_user_date : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_update_user_date() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(5,
+    WithRawCallbackMethod_update_user_date() {
+      ::grpc::Service::MarkMethodRawCallback(5,
           new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->update_user_date(context, request, response); }));
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->update_user_date(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_update_user_date() override {
+    ~WithRawCallbackMethod_update_user_date() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -1377,37 +1063,21 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* update_user_date(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* update_user_date(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_delete_user_date : public BaseClass {
+  class WithRawCallbackMethod_delete_user_date : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_delete_user_date() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(6,
+    WithRawCallbackMethod_delete_user_date() {
+      ::grpc::Service::MarkMethodRawCallback(6,
           new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->delete_user_date(context, request, response); }));
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->delete_user_date(context, request, response); }));
     }
-    ~ExperimentalWithRawCallbackMethod_delete_user_date() override {
+    ~WithRawCallbackMethod_delete_user_date() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -1415,37 +1085,21 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerUnaryReactor* delete_user_date(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* delete_user_date(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_filter_user_date : public BaseClass {
+  class WithRawCallbackMethod_filter_user_date : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
-    ExperimentalWithRawCallbackMethod_filter_user_date() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(7,
+    WithRawCallbackMethod_filter_user_date() {
+      ::grpc::Service::MarkMethodRawCallback(7,
           new ::grpc::internal::CallbackServerStreamingHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const::grpc::ByteBuffer* request) { return this->filter_user_date(context, request); }));
+                   ::grpc::CallbackServerContext* context, const::grpc::ByteBuffer* request) { return this->filter_user_date(context, request); }));
     }
-    ~ExperimentalWithRawCallbackMethod_filter_user_date() override {
+    ~WithRawCallbackMethod_filter_user_date() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
@@ -1453,14 +1107,8 @@ class metadata_server final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     virtual ::grpc::ServerWriteReactor< ::grpc::ByteBuffer>* filter_user_date(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)
-    #else
-    virtual ::grpc::experimental::ServerWriteReactor< ::grpc::ByteBuffer>* filter_user_date(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)
-    #endif
-      { return nullptr; }
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)  { return nullptr; }
   };
   template <class BaseClass>
   class WithStreamedUnaryMethod_install_metadata : public BaseClass {

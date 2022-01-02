@@ -22,7 +22,7 @@ constexpr file_info_server::file_info_server(
   : path_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
   , update_time_(nullptr)
   , hash_(nullptr)
-  , size_(PROTOBUF_ULONGLONG(0))
+  , size_(uint64_t{0u})
   , is_folder_(false)
   , exist_(false){}
 struct file_info_serverDefaultTypeInternal {
@@ -71,6 +71,7 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_file_5fsystem_5fserver_2eproto
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::doodle::file_info_server, path_),
   PROTOBUF_FIELD_OFFSET(::doodle::file_info_server, is_folder_),
   PROTOBUF_FIELD_OFFSET(::doodle::file_info_server, exist_),
@@ -82,6 +83,7 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_file_5fsystem_5fserver_2eproto
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::doodle::file_stream_server, info_),
   PROTOBUF_FIELD_OFFSET(::doodle::file_stream_server, data_),
   ~0u,  // no _has_bits_
@@ -89,13 +91,14 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_file_5fsystem_5fserver_2eproto
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::doodle::file_info_move_server, source_),
   PROTOBUF_FIELD_OFFSET(::doodle::file_info_move_server, target_),
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::doodle::file_info_server)},
-  { 11, -1, sizeof(::doodle::file_stream_server)},
-  { 18, -1, sizeof(::doodle::file_info_move_server)},
+  { 0, -1, -1, sizeof(::doodle::file_info_server)},
+  { 12, -1, -1, sizeof(::doodle::file_stream_server)},
+  { 20, -1, -1, sizeof(::doodle::file_info_move_server)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -149,10 +152,8 @@ const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_file_5
   schemas, file_default_instances, TableStruct_file_5fsystem_5fserver_2eproto::offsets,
   file_level_metadata_file_5fsystem_5fserver_2eproto, file_level_enum_descriptors_file_5fsystem_5fserver_2eproto, file_level_service_descriptors_file_5fsystem_5fserver_2eproto,
 };
-PROTOBUF_ATTRIBUTE_WEAK ::PROTOBUF_NAMESPACE_ID::Metadata
-descriptor_table_file_5fsystem_5fserver_2eproto_metadata_getter(int index) {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_file_5fsystem_5fserver_2eproto);
-  return descriptor_table_file_5fsystem_5fserver_2eproto.file_level_metadata[index];
+PROTOBUF_ATTRIBUTE_WEAK const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable* descriptor_table_file_5fsystem_5fserver_2eproto_getter() {
+  return &descriptor_table_file_5fsystem_5fserver_2eproto;
 }
 
 // Force running AddDescriptors() at dynamic initialization time.
@@ -163,34 +164,37 @@ namespace doodle {
 
 class file_info_server::_Internal {
  public:
-  static const PROTOBUF_NAMESPACE_ID::Timestamp& update_time(const file_info_server* msg);
-  static const PROTOBUF_NAMESPACE_ID::StringValue& hash(const file_info_server* msg);
+  static const ::PROTOBUF_NAMESPACE_ID::Timestamp& update_time(const file_info_server* msg);
+  static const ::PROTOBUF_NAMESPACE_ID::StringValue& hash(const file_info_server* msg);
 };
 
-const PROTOBUF_NAMESPACE_ID::Timestamp&
+const ::PROTOBUF_NAMESPACE_ID::Timestamp&
 file_info_server::_Internal::update_time(const file_info_server* msg) {
   return *msg->update_time_;
 }
-const PROTOBUF_NAMESPACE_ID::StringValue&
+const ::PROTOBUF_NAMESPACE_ID::StringValue&
 file_info_server::_Internal::hash(const file_info_server* msg) {
   return *msg->hash_;
 }
 void file_info_server::clear_update_time() {
-  if (GetArena() == nullptr && update_time_ != nullptr) {
+  if (GetArenaForAllocation() == nullptr && update_time_ != nullptr) {
     delete update_time_;
   }
   update_time_ = nullptr;
 }
 void file_info_server::clear_hash() {
-  if (GetArena() == nullptr && hash_ != nullptr) {
+  if (GetArenaForAllocation() == nullptr && hash_ != nullptr) {
     delete hash_;
   }
   hash_ = nullptr;
 }
-file_info_server::file_info_server(::PROTOBUF_NAMESPACE_ID::Arena* arena)
-  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
+file_info_server::file_info_server(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
   SharedCtor();
-  RegisterArenaDtor(arena);
+  if (!is_message_owned) {
+    RegisterArenaDtor(arena);
+  }
   // @@protoc_insertion_point(arena_constructor:doodle.file_info_server)
 }
 file_info_server::file_info_server(const file_info_server& from)
@@ -199,15 +203,15 @@ file_info_server::file_info_server(const file_info_server& from)
   path_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (!from._internal_path().empty()) {
     path_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_path(), 
-      GetArena());
+      GetArenaForAllocation());
   }
   if (from._internal_has_update_time()) {
-    update_time_ = new PROTOBUF_NAMESPACE_ID::Timestamp(*from.update_time_);
+    update_time_ = new ::PROTOBUF_NAMESPACE_ID::Timestamp(*from.update_time_);
   } else {
     update_time_ = nullptr;
   }
   if (from._internal_has_hash()) {
-    hash_ = new PROTOBUF_NAMESPACE_ID::StringValue(*from.hash_);
+    hash_ = new ::PROTOBUF_NAMESPACE_ID::StringValue(*from.hash_);
   } else {
     hash_ = nullptr;
   }
@@ -227,12 +231,13 @@ path_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlready
 
 file_info_server::~file_info_server() {
   // @@protoc_insertion_point(destructor:doodle.file_info_server)
+  if (GetArenaForAllocation() != nullptr) return;
   SharedDtor();
   _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-void file_info_server::SharedDtor() {
-  GOOGLE_DCHECK(GetArena() == nullptr);
+inline void file_info_server::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
   path_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (this != internal_default_instance()) delete update_time_;
   if (this != internal_default_instance()) delete hash_;
@@ -255,11 +260,11 @@ void file_info_server::Clear() {
   (void) cached_has_bits;
 
   path_.ClearToEmpty();
-  if (GetArena() == nullptr && update_time_ != nullptr) {
+  if (GetArenaForAllocation() == nullptr && update_time_ != nullptr) {
     delete update_time_;
   }
   update_time_ = nullptr;
-  if (GetArena() == nullptr && hash_ != nullptr) {
+  if (GetArenaForAllocation() == nullptr && hash_ != nullptr) {
     delete hash_;
   }
   hash_ = nullptr;
@@ -274,7 +279,6 @@ const char* file_info_server::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPA
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-    CHK_(ptr);
     switch (tag >> 3) {
       // string path = 1;
       case 1:
@@ -283,62 +287,69 @@ const char* file_info_server::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPA
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "doodle.file_info_server.path"));
           CHK_(ptr);
-        } else goto handle_unusual;
+        } else
+          goto handle_unusual;
         continue;
       // bool is_folder = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
           is_folder_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
-        } else goto handle_unusual;
+        } else
+          goto handle_unusual;
         continue;
       // bool exist = 3;
       case 3:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
           exist_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
-        } else goto handle_unusual;
+        } else
+          goto handle_unusual;
         continue;
       // .google.protobuf.Timestamp update_time = 4;
       case 4:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
           ptr = ctx->ParseMessage(_internal_mutable_update_time(), ptr);
           CHK_(ptr);
-        } else goto handle_unusual;
+        } else
+          goto handle_unusual;
         continue;
       // uint64 size = 5;
       case 5:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 40)) {
           size_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
-        } else goto handle_unusual;
+        } else
+          goto handle_unusual;
         continue;
       // .google.protobuf.StringValue hash = 6;
       case 6:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 50)) {
           ptr = ctx->ParseMessage(_internal_mutable_hash(), ptr);
           CHK_(ptr);
-        } else goto handle_unusual;
+        } else
+          goto handle_unusual;
         continue;
-      default: {
-      handle_unusual:
-        if ((tag & 7) == 4 || tag == 0) {
-          ctx->SetLastTag(tag);
-          goto success;
-        }
-        ptr = UnknownFieldParse(tag,
-            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
-            ptr, ctx);
-        CHK_(ptr != nullptr);
-        continue;
-      }
+      default:
+        goto handle_unusual;
     }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
   }  // while
-success:
+message_done:
   return ptr;
 failure:
   ptr = nullptr;
-  goto success;
+  goto message_done;
 #undef CHK_
 }
 
@@ -349,7 +360,7 @@ failure:
   (void) cached_has_bits;
 
   // string path = 1;
-  if (this->path().size() > 0) {
+  if (!this->_internal_path().empty()) {
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
       this->_internal_path().data(), static_cast<int>(this->_internal_path().length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
@@ -359,19 +370,19 @@ failure:
   }
 
   // bool is_folder = 2;
-  if (this->is_folder() != 0) {
+  if (this->_internal_is_folder() != 0) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteBoolToArray(2, this->_internal_is_folder(), target);
   }
 
   // bool exist = 3;
-  if (this->exist() != 0) {
+  if (this->_internal_exist() != 0) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteBoolToArray(3, this->_internal_exist(), target);
   }
 
   // .google.protobuf.Timestamp update_time = 4;
-  if (this->has_update_time()) {
+  if (this->_internal_has_update_time()) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       InternalWriteMessage(
@@ -379,13 +390,13 @@ failure:
   }
 
   // uint64 size = 5;
-  if (this->size() != 0) {
+  if (this->_internal_size() != 0) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(5, this->_internal_size(), target);
   }
 
   // .google.protobuf.StringValue hash = 6;
-  if (this->has_hash()) {
+  if (this->_internal_has_hash()) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       InternalWriteMessage(
@@ -409,99 +420,82 @@ size_t file_info_server::ByteSizeLong() const {
   (void) cached_has_bits;
 
   // string path = 1;
-  if (this->path().size() > 0) {
+  if (!this->_internal_path().empty()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
         this->_internal_path());
   }
 
   // .google.protobuf.Timestamp update_time = 4;
-  if (this->has_update_time()) {
+  if (this->_internal_has_update_time()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
         *update_time_);
   }
 
   // .google.protobuf.StringValue hash = 6;
-  if (this->has_hash()) {
+  if (this->_internal_has_hash()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
         *hash_);
   }
 
   // uint64 size = 5;
-  if (this->size() != 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
-        this->_internal_size());
+  if (this->_internal_size() != 0) {
+    total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64SizePlusOne(this->_internal_size());
   }
 
   // bool is_folder = 2;
-  if (this->is_folder() != 0) {
+  if (this->_internal_is_folder() != 0) {
     total_size += 1 + 1;
   }
 
   // bool exist = 3;
-  if (this->exist() != 0) {
+  if (this->_internal_exist() != 0) {
     total_size += 1 + 1;
   }
 
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
-        _internal_metadata_, total_size, &_cached_size_);
-  }
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_cached_size_);
 }
 
-void file_info_server::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:doodle.file_info_server)
-  GOOGLE_DCHECK_NE(&from, this);
-  const file_info_server* source =
-      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<file_info_server>(
-          &from);
-  if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:doodle.file_info_server)
-    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:doodle.file_info_server)
-    MergeFrom(*source);
-  }
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData file_info_server::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSizeCheck,
+    file_info_server::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*file_info_server::GetClassData() const { return &_class_data_; }
+
+void file_info_server::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message* to,
+                      const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+  static_cast<file_info_server *>(to)->MergeFrom(
+      static_cast<const file_info_server &>(from));
 }
+
 
 void file_info_server::MergeFrom(const file_info_server& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:doodle.file_info_server)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.path().size() > 0) {
+  if (!from._internal_path().empty()) {
     _internal_set_path(from._internal_path());
   }
-  if (from.has_update_time()) {
-    _internal_mutable_update_time()->PROTOBUF_NAMESPACE_ID::Timestamp::MergeFrom(from._internal_update_time());
+  if (from._internal_has_update_time()) {
+    _internal_mutable_update_time()->::PROTOBUF_NAMESPACE_ID::Timestamp::MergeFrom(from._internal_update_time());
   }
-  if (from.has_hash()) {
-    _internal_mutable_hash()->PROTOBUF_NAMESPACE_ID::StringValue::MergeFrom(from._internal_hash());
+  if (from._internal_has_hash()) {
+    _internal_mutable_hash()->::PROTOBUF_NAMESPACE_ID::StringValue::MergeFrom(from._internal_hash());
   }
-  if (from.size() != 0) {
+  if (from._internal_size() != 0) {
     _internal_set_size(from._internal_size());
   }
-  if (from.is_folder() != 0) {
+  if (from._internal_is_folder() != 0) {
     _internal_set_is_folder(from._internal_is_folder());
   }
-  if (from.exist() != 0) {
+  if (from._internal_exist() != 0) {
     _internal_set_exist(from._internal_exist());
   }
-}
-
-void file_info_server::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:doodle.file_info_server)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void file_info_server::CopyFrom(const file_info_server& from) {
@@ -517,8 +511,14 @@ bool file_info_server::IsInitialized() const {
 
 void file_info_server::InternalSwap(file_info_server* other) {
   using std::swap;
-  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
-  path_.Swap(&other->path_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &path_, lhs_arena,
+      &other->path_, rhs_arena
+  );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(file_info_server, exist_)
       + sizeof(file_info_server::exist_)
@@ -528,36 +528,40 @@ void file_info_server::InternalSwap(file_info_server* other) {
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata file_info_server::GetMetadata() const {
-  return GetMetadataStatic();
+  return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
+      &descriptor_table_file_5fsystem_5fserver_2eproto_getter, &descriptor_table_file_5fsystem_5fserver_2eproto_once,
+      file_level_metadata_file_5fsystem_5fserver_2eproto[0]);
 }
-
 
 // ===================================================================
 
 class file_stream_server::_Internal {
  public:
   static const ::doodle::file_info_server& info(const file_stream_server* msg);
-  static const PROTOBUF_NAMESPACE_ID::Any& data(const file_stream_server* msg);
+  static const ::PROTOBUF_NAMESPACE_ID::Any& data(const file_stream_server* msg);
 };
 
 const ::doodle::file_info_server&
 file_stream_server::_Internal::info(const file_stream_server* msg) {
   return *msg->info_;
 }
-const PROTOBUF_NAMESPACE_ID::Any&
+const ::PROTOBUF_NAMESPACE_ID::Any&
 file_stream_server::_Internal::data(const file_stream_server* msg) {
   return *msg->data_;
 }
 void file_stream_server::clear_data() {
-  if (GetArena() == nullptr && data_ != nullptr) {
+  if (GetArenaForAllocation() == nullptr && data_ != nullptr) {
     delete data_;
   }
   data_ = nullptr;
 }
-file_stream_server::file_stream_server(::PROTOBUF_NAMESPACE_ID::Arena* arena)
-  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
+file_stream_server::file_stream_server(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
   SharedCtor();
-  RegisterArenaDtor(arena);
+  if (!is_message_owned) {
+    RegisterArenaDtor(arena);
+  }
   // @@protoc_insertion_point(arena_constructor:doodle.file_stream_server)
 }
 file_stream_server::file_stream_server(const file_stream_server& from)
@@ -569,7 +573,7 @@ file_stream_server::file_stream_server(const file_stream_server& from)
     info_ = nullptr;
   }
   if (from._internal_has_data()) {
-    data_ = new PROTOBUF_NAMESPACE_ID::Any(*from.data_);
+    data_ = new ::PROTOBUF_NAMESPACE_ID::Any(*from.data_);
   } else {
     data_ = nullptr;
   }
@@ -585,12 +589,13 @@ void file_stream_server::SharedCtor() {
 
 file_stream_server::~file_stream_server() {
   // @@protoc_insertion_point(destructor:doodle.file_stream_server)
+  if (GetArenaForAllocation() != nullptr) return;
   SharedDtor();
   _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-void file_stream_server::SharedDtor() {
-  GOOGLE_DCHECK(GetArena() == nullptr);
+inline void file_stream_server::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
   if (this != internal_default_instance()) delete info_;
   if (this != internal_default_instance()) delete data_;
 }
@@ -611,11 +616,11 @@ void file_stream_server::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArena() == nullptr && info_ != nullptr) {
+  if (GetArenaForAllocation() == nullptr && info_ != nullptr) {
     delete info_;
   }
   info_ = nullptr;
-  if (GetArena() == nullptr && data_ != nullptr) {
+  if (GetArenaForAllocation() == nullptr && data_ != nullptr) {
     delete data_;
   }
   data_ = nullptr;
@@ -627,41 +632,43 @@ const char* file_stream_server::_InternalParse(const char* ptr, ::PROTOBUF_NAMES
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-    CHK_(ptr);
     switch (tag >> 3) {
       // .doodle.file_info_server info = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
           ptr = ctx->ParseMessage(_internal_mutable_info(), ptr);
           CHK_(ptr);
-        } else goto handle_unusual;
+        } else
+          goto handle_unusual;
         continue;
       // .google.protobuf.Any data = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
           ptr = ctx->ParseMessage(_internal_mutable_data(), ptr);
           CHK_(ptr);
-        } else goto handle_unusual;
+        } else
+          goto handle_unusual;
         continue;
-      default: {
-      handle_unusual:
-        if ((tag & 7) == 4 || tag == 0) {
-          ctx->SetLastTag(tag);
-          goto success;
-        }
-        ptr = UnknownFieldParse(tag,
-            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
-            ptr, ctx);
-        CHK_(ptr != nullptr);
-        continue;
-      }
+      default:
+        goto handle_unusual;
     }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
   }  // while
-success:
+message_done:
   return ptr;
 failure:
   ptr = nullptr;
-  goto success;
+  goto message_done;
 #undef CHK_
 }
 
@@ -672,7 +679,7 @@ failure:
   (void) cached_has_bits;
 
   // .doodle.file_info_server info = 1;
-  if (this->has_info()) {
+  if (this->_internal_has_info()) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       InternalWriteMessage(
@@ -680,7 +687,7 @@ failure:
   }
 
   // .google.protobuf.Any data = 2;
-  if (this->has_data()) {
+  if (this->_internal_has_data()) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       InternalWriteMessage(
@@ -704,63 +711,48 @@ size_t file_stream_server::ByteSizeLong() const {
   (void) cached_has_bits;
 
   // .doodle.file_info_server info = 1;
-  if (this->has_info()) {
+  if (this->_internal_has_info()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
         *info_);
   }
 
   // .google.protobuf.Any data = 2;
-  if (this->has_data()) {
+  if (this->_internal_has_data()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
         *data_);
   }
 
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
-        _internal_metadata_, total_size, &_cached_size_);
-  }
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_cached_size_);
 }
 
-void file_stream_server::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:doodle.file_stream_server)
-  GOOGLE_DCHECK_NE(&from, this);
-  const file_stream_server* source =
-      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<file_stream_server>(
-          &from);
-  if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:doodle.file_stream_server)
-    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:doodle.file_stream_server)
-    MergeFrom(*source);
-  }
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData file_stream_server::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSizeCheck,
+    file_stream_server::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*file_stream_server::GetClassData() const { return &_class_data_; }
+
+void file_stream_server::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message* to,
+                      const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+  static_cast<file_stream_server *>(to)->MergeFrom(
+      static_cast<const file_stream_server &>(from));
 }
+
 
 void file_stream_server::MergeFrom(const file_stream_server& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:doodle.file_stream_server)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.has_info()) {
+  if (from._internal_has_info()) {
     _internal_mutable_info()->::doodle::file_info_server::MergeFrom(from._internal_info());
   }
-  if (from.has_data()) {
-    _internal_mutable_data()->PROTOBUF_NAMESPACE_ID::Any::MergeFrom(from._internal_data());
+  if (from._internal_has_data()) {
+    _internal_mutable_data()->::PROTOBUF_NAMESPACE_ID::Any::MergeFrom(from._internal_data());
   }
-}
-
-void file_stream_server::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:doodle.file_stream_server)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void file_stream_server::CopyFrom(const file_stream_server& from) {
@@ -776,7 +768,7 @@ bool file_stream_server::IsInitialized() const {
 
 void file_stream_server::InternalSwap(file_stream_server* other) {
   using std::swap;
-  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(file_stream_server, data_)
       + sizeof(file_stream_server::data_)
@@ -786,9 +778,10 @@ void file_stream_server::InternalSwap(file_stream_server* other) {
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata file_stream_server::GetMetadata() const {
-  return GetMetadataStatic();
+  return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
+      &descriptor_table_file_5fsystem_5fserver_2eproto_getter, &descriptor_table_file_5fsystem_5fserver_2eproto_once,
+      file_level_metadata_file_5fsystem_5fserver_2eproto[1]);
 }
-
 
 // ===================================================================
 
@@ -806,10 +799,13 @@ const ::doodle::file_info_server&
 file_info_move_server::_Internal::target(const file_info_move_server* msg) {
   return *msg->target_;
 }
-file_info_move_server::file_info_move_server(::PROTOBUF_NAMESPACE_ID::Arena* arena)
-  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
+file_info_move_server::file_info_move_server(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
   SharedCtor();
-  RegisterArenaDtor(arena);
+  if (!is_message_owned) {
+    RegisterArenaDtor(arena);
+  }
   // @@protoc_insertion_point(arena_constructor:doodle.file_info_move_server)
 }
 file_info_move_server::file_info_move_server(const file_info_move_server& from)
@@ -837,12 +833,13 @@ void file_info_move_server::SharedCtor() {
 
 file_info_move_server::~file_info_move_server() {
   // @@protoc_insertion_point(destructor:doodle.file_info_move_server)
+  if (GetArenaForAllocation() != nullptr) return;
   SharedDtor();
   _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-void file_info_move_server::SharedDtor() {
-  GOOGLE_DCHECK(GetArena() == nullptr);
+inline void file_info_move_server::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
   if (this != internal_default_instance()) delete source_;
   if (this != internal_default_instance()) delete target_;
 }
@@ -863,11 +860,11 @@ void file_info_move_server::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArena() == nullptr && source_ != nullptr) {
+  if (GetArenaForAllocation() == nullptr && source_ != nullptr) {
     delete source_;
   }
   source_ = nullptr;
-  if (GetArena() == nullptr && target_ != nullptr) {
+  if (GetArenaForAllocation() == nullptr && target_ != nullptr) {
     delete target_;
   }
   target_ = nullptr;
@@ -879,41 +876,43 @@ const char* file_info_move_server::_InternalParse(const char* ptr, ::PROTOBUF_NA
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-    CHK_(ptr);
     switch (tag >> 3) {
       // .doodle.file_info_server source = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
           ptr = ctx->ParseMessage(_internal_mutable_source(), ptr);
           CHK_(ptr);
-        } else goto handle_unusual;
+        } else
+          goto handle_unusual;
         continue;
       // .doodle.file_info_server target = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
           ptr = ctx->ParseMessage(_internal_mutable_target(), ptr);
           CHK_(ptr);
-        } else goto handle_unusual;
+        } else
+          goto handle_unusual;
         continue;
-      default: {
-      handle_unusual:
-        if ((tag & 7) == 4 || tag == 0) {
-          ctx->SetLastTag(tag);
-          goto success;
-        }
-        ptr = UnknownFieldParse(tag,
-            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
-            ptr, ctx);
-        CHK_(ptr != nullptr);
-        continue;
-      }
+      default:
+        goto handle_unusual;
     }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
   }  // while
-success:
+message_done:
   return ptr;
 failure:
   ptr = nullptr;
-  goto success;
+  goto message_done;
 #undef CHK_
 }
 
@@ -924,7 +923,7 @@ failure:
   (void) cached_has_bits;
 
   // .doodle.file_info_server source = 1;
-  if (this->has_source()) {
+  if (this->_internal_has_source()) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       InternalWriteMessage(
@@ -932,7 +931,7 @@ failure:
   }
 
   // .doodle.file_info_server target = 2;
-  if (this->has_target()) {
+  if (this->_internal_has_target()) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       InternalWriteMessage(
@@ -956,63 +955,48 @@ size_t file_info_move_server::ByteSizeLong() const {
   (void) cached_has_bits;
 
   // .doodle.file_info_server source = 1;
-  if (this->has_source()) {
+  if (this->_internal_has_source()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
         *source_);
   }
 
   // .doodle.file_info_server target = 2;
-  if (this->has_target()) {
+  if (this->_internal_has_target()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
         *target_);
   }
 
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
-        _internal_metadata_, total_size, &_cached_size_);
-  }
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_cached_size_);
 }
 
-void file_info_move_server::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:doodle.file_info_move_server)
-  GOOGLE_DCHECK_NE(&from, this);
-  const file_info_move_server* source =
-      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<file_info_move_server>(
-          &from);
-  if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:doodle.file_info_move_server)
-    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:doodle.file_info_move_server)
-    MergeFrom(*source);
-  }
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData file_info_move_server::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSizeCheck,
+    file_info_move_server::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*file_info_move_server::GetClassData() const { return &_class_data_; }
+
+void file_info_move_server::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message* to,
+                      const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+  static_cast<file_info_move_server *>(to)->MergeFrom(
+      static_cast<const file_info_move_server &>(from));
 }
+
 
 void file_info_move_server::MergeFrom(const file_info_move_server& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:doodle.file_info_move_server)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.has_source()) {
+  if (from._internal_has_source()) {
     _internal_mutable_source()->::doodle::file_info_server::MergeFrom(from._internal_source());
   }
-  if (from.has_target()) {
+  if (from._internal_has_target()) {
     _internal_mutable_target()->::doodle::file_info_server::MergeFrom(from._internal_target());
   }
-}
-
-void file_info_move_server::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:doodle.file_info_move_server)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void file_info_move_server::CopyFrom(const file_info_move_server& from) {
@@ -1028,7 +1012,7 @@ bool file_info_move_server::IsInitialized() const {
 
 void file_info_move_server::InternalSwap(file_info_move_server* other) {
   using std::swap;
-  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(file_info_move_server, target_)
       + sizeof(file_info_move_server::target_)
@@ -1038,9 +1022,10 @@ void file_info_move_server::InternalSwap(file_info_move_server* other) {
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata file_info_move_server::GetMetadata() const {
-  return GetMetadataStatic();
+  return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
+      &descriptor_table_file_5fsystem_5fserver_2eproto_getter, &descriptor_table_file_5fsystem_5fserver_2eproto_once,
+      file_level_metadata_file_5fsystem_5fserver_2eproto[2]);
 }
-
 
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace doodle

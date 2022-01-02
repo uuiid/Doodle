@@ -3,6 +3,7 @@
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/wrappers.proto";
+
 import "user_message.proto";
 package doodle;
 
@@ -29,13 +30,13 @@ message metadata_database_filter{
   google.protobuf.Timestamp end_time = 3;
   google.protobuf.UInt64Value m_type = 4;
   google.protobuf.UInt64Value parent = 5;
-  
+
   google.protobuf.UInt64Value episode = 6;
   google.protobuf.UInt64Value shot = 7;
   google.protobuf.UInt64Value season = 8;
   google.protobuf.StringValue assets = 9;
-  
-  
+
+
   google.protobuf.UInt64Value beg_off_id = 10;
   google.protobuf.UInt64Value off_size = 11;
 

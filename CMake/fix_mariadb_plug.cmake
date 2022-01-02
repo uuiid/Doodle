@@ -34,7 +34,7 @@ function(FIX_MARIADB_PLUG)
         find_file(
                 _PLUG_${VAR}
                 NAMES ${VAR}.dll
-                HINTS /plugin/libmariadb/
+                HINTS /plugins/libmariadb/
                 REQUIRED
         )
 #        set(CMAKE_FIND_DEBUG_MODE FALSE)
