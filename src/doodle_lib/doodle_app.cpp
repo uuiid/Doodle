@@ -271,7 +271,7 @@ doodle_app::doodle_app()
   // Setup Platform/Renderer backends
   ImGui_ImplWin32_Init(p_impl->p_hwnd);
   ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
-  p_pd3dDevice = g_pd3dDevice;
+  p_pd3dDevice     = g_pd3dDevice;
 
   /// 初始化文件拖拽
   //  DragAcceptFiles(p_impl->p_hwnd, true);
@@ -290,7 +290,7 @@ doodle_app::~doodle_app() {
   CleanupDeviceD3D();
   ::DestroyWindow(p_impl->p_hwnd);
   ::UnregisterClass(p_impl->p_win_class.lpszClassName, p_impl->p_win_class.hInstance);
-//  OleUninitialize();
+  //  OleUninitialize();
 }
 
 base_widget_ptr doodle_app::get_main_windows() const {
@@ -351,6 +351,16 @@ void doodle_app::metadata_loop_one() {
 
 base_widget_ptr doodle_app::loop_begin() {
   ::ShowWindow(p_impl->p_hwnd, SW_SHOW);
+  //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
+  //                                     MONITOR_DEFAULTTONEAREST);
+  //  MONITORINFO mi = {sizeof(mi)};
+  //  auto k_r       = GetMonitorInfo(hmon, &mi);
+  //  chick_true<doodle_error>(k_r != 0, DOODLE_LOC, "无法设置全屏");
+  //  SetWindowPos(p_impl->p_hwnd, nullptr, mi.rcMonitor.left,
+  //               mi.rcMonitor.top,
+  //               mi.rcMonitor.right - mi.rcMonitor.left,
+  //               mi.rcMonitor.bottom - mi.rcMonitor.top,
+  //               SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
   // Load Fonts
   // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
   // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
