@@ -423,7 +423,25 @@ bool qcloth_shape::create_cache() const {
   MStatus k_s{};
   MFnDependencyNode l_node{obj, &k_s};
   auto k_plug = get_plug(obj, "outputMesh");
-  k_plug.asMObject(&k_s);
+  /// \brief 不使用这种方式评估网格
+  //  k_plug.asMObject(&k_s);
+
+  //  k_s         = MGlobal::executeCommand(d_str{fmt::format("dgeval {}.outputMesh", l_node.name())});
+  //  DOODLE_CHICK(k_s);
+  /// \brief 使用qcloth的输出网格体进行评估, 这样的速度会块很多
+  MPlugArray k_dis{};
+  auto k_has_out = k_plug.destinations(k_dis, &k_s);
+  chick_true<maya_error>(k_has_out, DOODLE_LOC, "找不到连接的插头");
+  auto k_mesh_obj = k_dis[0].node(&k_s);
+  DOODLE_CHICK(k_s);
+
+  chick_true<maya_error>(k_mesh_obj.hasFn(MFn::kMesh), DOODLE_LOC, "连接网格节点不兼容kMesh");
+  MFnMesh k_mesh{};
+  k_s = k_mesh.setObject(k_mesh_obj);
+  DOODLE_CHICK(k_s);
+  k_s = k_mesh.syncObject();
+  DOODLE_CHICK(k_s);
+  k_s = k_mesh.updateSurface();
   DOODLE_CHICK(k_s);
   return true;
 }
