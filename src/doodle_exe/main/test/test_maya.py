@@ -25,13 +25,13 @@ class doodle_main(object):
         pass
 
 
-def doodle_test():
+def doodle_test_sim():
     print("run test")
     k_f = maya_fun_tool.open_file()
     k_f.config_ = """[{
         "export_path":"",
         "only_sim":false,
-        "path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma",
+        "path":"E:/tmp/test_sim_1_2/RJ_EP031_SC012_AN.ma",
         "qcloth_assets_path":""
         }]"""
     k_f()
@@ -49,5 +49,5 @@ def doodle_test_fbx():
 
 
 if __name__ == '__main__':
-    doodle_test()
+    doodle_test_sim()
     # doodle_test_fbx()
