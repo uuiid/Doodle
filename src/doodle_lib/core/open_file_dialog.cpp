@@ -4,8 +4,6 @@
 
 #include "open_file_dialog.h"
 
-#include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/doodle_app.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
 #include <imfilebrowser.h>
@@ -17,7 +15,6 @@ class file_dialog::impl {
  public:
   explicit impl(::ImGuiFileBrowserFlags in_flags) : p_file_dialog(in_flags){};
   imgui::FileBrowser p_file_dialog;
-  imgui::FileDialog p_dialog{};
   select_sig p_sig;
 };
 file_dialog::file_dialog(const file_dialog::select_sig &in_sig,
@@ -73,17 +70,17 @@ void file_dialog::update(chrono::duration<chrono::system_clock::rep, chrono::sys
                    }},
                p_i->p_sig);
   }
-  if (!p_i->p_file_dialog.IsOpened()){
+  if (!p_i->p_file_dialog.IsOpened()) {
     this->succeed();
   }
 }
 void file_dialog::succeeded() {
-  p_i->p_dialog.Close();
+  p_i->p_file_dialog.Close();
 }
 void file_dialog::failed() {
-  p_i->p_dialog.Close();
+  p_i->p_file_dialog.Close();
 }
 void file_dialog::aborted() {
-  p_i->p_dialog.Close();
+  p_i->p_file_dialog.Close();
 }
 }  // namespace doodle
