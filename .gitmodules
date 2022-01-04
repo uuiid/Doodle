@@ -7,10 +7,6 @@
 [submodule "external/doxygen-awesome-css"]
 	path = external/doxygen-awesome-css
 	url = https://github.com/jothepro/doxygen-awesome-css.git
-[submodule "src/doodle_lib/external/ImGuiFileDialog"]
-	path = src/doodle_lib/external/ImGuiFileDialog
-	url = https://github.com/aiekick/ImGuiFileDialog.git
-	branch = Lib_Only
 [submodule "src/doodle_lib/external/service-base"]
 	path = src/doodle_lib/external/service-base
 	url = https://github.com/tromgy/service-base.git
