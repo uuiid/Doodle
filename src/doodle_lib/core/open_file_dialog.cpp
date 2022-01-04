@@ -80,6 +80,7 @@ file_dialog::file_dialog(const file_dialog::select_sig &in_function,
 file_dialog::~file_dialog() = default;
 
 void file_dialog::init() {
+  p_i->p_file_dialog.Open();
 }
 void file_dialog::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
   p_i->p_file_dialog.Display();
@@ -94,7 +95,9 @@ void file_dialog::update(chrono::duration<chrono::system_clock::rep, chrono::sys
                      this->succeed();
                    }},
                p_i->p_sig);
-
+  }
+  if (!p_i->p_file_dialog.IsOpened()){
+    this->succeed();
   }
 }
 void file_dialog::succeeded() {
