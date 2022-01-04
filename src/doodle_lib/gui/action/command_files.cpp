@@ -28,30 +28,24 @@ comm_files_select::comm_files_select()
 
 bool comm_files_select::render() {
   if (p_root) {
-    static bool use_folder{false};
-    imgui::Checkbox("选择目录", &use_folder);
-    imgui::SameLine();
+    //    static bool use_folder{false};
+    //    imgui::Checkbox("选择目录", &use_folder);
+    //    imgui::SameLine();
     if (imgui::Button(p_show_str["添加文件"].c_str())) {
-      open_file_dialog{
-          p_show_str["获得文件"].c_str(),
-          "获得文件",
-          use_folder ? nullptr : ".*",
-          ".",
-          "",
-          1}
-          .show(
-              [this](const std::vector<FSys::path>& in_p) {
-                p_file       = in_p.front();
-                auto& k_path = p_root.get<assets_path_vector>();
-                if (*p_use_relative)
-                  k_path.make_path(p_root, p_file);
-                else
-                  k_path.make_path(p_root);
-                p_comm_sub = k_path.add_file(p_file);
-                if (p_comm_sub) {
-                  p_comm_sub->set_data(p_root);
-                }
-              });
+      g_main_loop().attach<file_dialog>(
+          [this](const FSys::path& in_p) {
+            p_file       = in_p;
+            auto& k_path = p_root.get<assets_path_vector>();
+            if (*p_use_relative)
+              k_path.make_path(p_root, p_file);
+            else
+              k_path.make_path(p_root);
+            p_comm_sub = k_path.add_file(p_file);
+            if (p_comm_sub) {
+              p_comm_sub->set_data(p_root);
+            }
+          },
+          "获得目录");
     }
     imgui::SameLine();
     if (imgui::Checkbox(p_show_str["相对路径"].c_str(), p_use_relative.get())) {

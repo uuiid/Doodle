@@ -30,15 +30,12 @@ bool comm_ass_ue4_create_shot::render() {
   imgui::InputText(p_show_str["ue路径"].c_str(), p_ue4_prj_path.get());
   imgui::SameLine();
   if (imgui::Button(p_show_str["选择"].c_str()))
-    open_file_dialog{"open_ue4_path",
-                     "打开文件路径",
-                     ".uproject",
-                     ".",
-                     "",
-                     1}
-        .show([this](const std::vector<FSys::path>& in_path) {
+    g_main_loop().attach<file_dialog>(
+        [this](const std::vector<FSys::path>& in_path) {
           *p_ue4_prj_path = in_path.front().generic_string();
-        });
+        },
+        "打开文件路径",
+        string_list{".uproject"});
   if (imgui::Button(p_show_str["获得选择"].c_str())) {
     // @todo: 添加多个选择时的获取方案
     // auto k_ass = doodle_app::Get()->get_register()->get_widget<assets_widget>();

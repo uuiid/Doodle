@@ -31,17 +31,12 @@ comm_maya_tool::comm_maya_tool()
 bool comm_maya_tool::render() {
   if (imgui::Button("maya文件")) {
     p_sim_path.clear();
-    open_file_dialog{
-        "open_get_ma",
+    g_main_loop().attach<file_dialog>(
+        [this](const std::vector<FSys::path>& in_p) {
+          p_sim_path = in_p;
+        },
         "select_maya_file",
-        ".ma,.mb",
-        ".",
-        "",
-        0}
-        .show(
-            [this](const std::vector<FSys::path>& in_p) {
-              p_sim_path = in_p;
-            });
+        std::vector<string>{".ma", ".mb"});
   }
 
   dear::ListBox{"file_list"} && [this]() {
@@ -51,7 +46,6 @@ bool comm_maya_tool::render() {
   };
 
   dear::Text(fmt::format("解算资产: {}", p_text));
-
 
   dear::TreeNode{"解算设置"} && [this]() {
     imgui::Checkbox("只解算不替换引用", &p_only_sim);
@@ -95,58 +89,42 @@ bool comm_create_video::render() {
   imgui::InputText("输出文件夹", p_out_path.get());
   imgui::SameLine();
   if (imgui::Button("选择")) {
-    open_file_dialog{
-        "comm_create_video",
-        "选择目录",
-        nullptr,
-        ".",
-        "",
-        1}
-        .show(
-            [this](const std::vector<FSys::path>& in_p) {
-              if (!in_p.empty())
-                *p_out_path = in_p.front().generic_string();
-            });
+    g_main_loop().attach<file_dialog>(
+        [this](const FSys::path& in_p) {
+          *p_out_path = in_p.generic_string();
+        },
+        "选择目录");
   }
 
   if (imgui::Button("选择图片")) {
-    open_file_dialog{
-        "select_image_comm_create_video",
-        "选择序列",
-        ".png,.jpg",
-        ".",
-        "",
-        0}
-        .show([this](const std::vector<FSys::path>& in) {
+    g_main_loop().attach<file_dialog>(
+        [this](const std::vector<FSys::path>& in) {
           image_paths k_image_paths{};
           k_image_paths.use_dir     = false;
           k_image_paths.p_path_list = in;
           k_image_paths.p_show_name = k_image_paths.p_path_list.front().parent_path().generic_string();
           p_image_path.emplace_back(std::move(k_image_paths));
-        });
+        },
+        "选择序列",
+        string_list{".png", ".jpg"});
   }
   imgui::SameLine();
   if (imgui::Button("选择文件夹")) {
-    open_file_dialog{"comm_create_video",
-                     "select dir",
-                     nullptr,
-                     ".",
-                     "",
-                     0}
-        .show(
-            [this](const std::vector<FSys::path>& in) {
-              boost::copy(in | boost::adaptors::transformed(
-                                   [](const FSys::path& in_path) {
-                                     image_paths k_image_paths{};
-                                     k_image_paths.use_dir = true;
-                                     k_image_paths.p_path_list.emplace_back(in_path);
-                                     k_image_paths.p_show_name = fmt::format("{}##{}",
-                                                                             k_image_paths.p_path_list.back().generic_string(),
-                                                                             fmt::ptr(&k_image_paths));
-                                     return k_image_paths;
-                                   }),
-                          std::back_inserter(p_image_path));
-            });
+    g_main_loop().attach<file_dialog>(
+        [this](const std::vector<FSys::path>& in) {
+          boost::copy(in | boost::adaptors::transformed(
+                               [](const FSys::path& in_path) {
+                                 image_paths k_image_paths{};
+                                 k_image_paths.use_dir = true;
+                                 k_image_paths.p_path_list.emplace_back(in_path);
+                                 k_image_paths.p_show_name = fmt::format("{}##{}",
+                                                                         k_image_paths.p_path_list.back().generic_string(),
+                                                                         fmt::ptr(&k_image_paths));
+                                 return k_image_paths;
+                               }),
+                      std::back_inserter(p_image_path));
+        },
+        "select dir");
   }
 
   imgui::SameLine();
@@ -178,16 +156,12 @@ bool comm_create_video::render() {
   };
 
   if (imgui::Button("选择视频")) {
-    open_file_dialog{"comm_create_video",
-                     "select dir",
-                     ".mp4",
-                     ".",
-                     "",
-                     0}
-        .show(
-            [this](const std::vector<FSys::path>& in) {
-              p_video_path = in;
-            });
+    g_main_loop().attach<file_dialog>(
+        [this](const std::vector<FSys::path>& in) {
+          p_video_path = in;
+        },
+        "select mp4 file",
+        string_list{".mp4"});
   }
   imgui::SameLine();
   if (imgui::Button("连接视频")) {
@@ -214,34 +188,24 @@ bool comm_import_ue_files::render() {
   imgui::InputText("ue项目", p_ue4_show.get());
   imgui::SameLine();
   if (imgui::Button("选择")) {
-    open_file_dialog{
-        "comm_create_video",
-        "选择",
-        ".uproject",
-        ".",
-        "",
-        1}
-        .show(
-            [this](const std::vector<FSys::path>& in_p) {
-              if (!in_p.empty()) {
-                *p_ue4_show = in_p.front().generic_string();
-                p_ue4_prj   = in_p.front();
-              }
-            });
+    g_main_loop().attach<file_dialog>(
+        [this](const FSys::path& in_p) {
+          if (!in_p.empty()) {
+            *p_ue4_show = in_p.generic_string();
+            p_ue4_prj   = in_p;
+          }
+        },
+        "select",
+        string_list{".uproject"});
   }
   imgui::SameLine();
   if (imgui::Button("选择导入")) {
-    open_file_dialog{
-        "comm_create_video",
-        "选择",
-        "files (*.abc *.fbx){.fbx,.abc}",
-        ".",
-        "",
-        0}
-        .show(
-            [this](const std::vector<FSys::path>& in_p) {
-              p_import_list = in_p;
-            });
+    g_main_loop().attach<file_dialog>(
+        [this](const std::vector<FSys::path>& in_p) {
+          p_import_list = in_p;
+        },
+        "select",
+        string_list{".fbx", ".abc"});
   }
   if (imgui::Button("导入")) {
     auto ue = new_object<ue4_project_async>();

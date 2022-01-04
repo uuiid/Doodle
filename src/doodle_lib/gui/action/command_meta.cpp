@@ -82,16 +82,11 @@ bool comm_project_add::render() {
     }
     imgui::SameLine();
     if (imgui::Button(p_show_str["选择"].c_str())) {
-      open_file_dialog{"open_select_path",
-                       "选择路径",
-                       nullptr,
-                       ".",
-                       "",
-                       1}
-          .show(
-              [this](const std::vector<FSys::path>& in) {
-                p_impl->p_prj_path = in.front().generic_string();
-              });
+      g_main_loop().attach<file_dialog>(
+          [this](const FSys::path& in) {
+            p_impl->p_prj_path = in.generic_string();
+          },
+          "选择路径");
     }
   }
 
