@@ -1,9 +1,9 @@
 
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
-        REPO AirGuanZ/imgui-filebrowser
-        REF 3b3e44a686350602f5b731c9a803429b281db195 #v0.0.1
-        SHA512 613b1d992fe9467c26cb1c95cc2a9f661b2c214d69921702b52facb0666e4178832a73648cb58d6278017f115b291a9819e40397c8cb302b5f598c06e85e21c3
+        REPO uuiid/imgui-filebrowser
+        REF b5a056366ff95ef5a1d277a62387f7d2a93db6b1 #v0.0.1
+        SHA512 835a3020666ea1abbb5133416c10b3ff9062a9f996bdb90abc43fb8cfe95a639a7b88e348873dd3608537af1ba836065e24f9f81e6b24072920de4671b110b69
         HEAD_REF master
 )
 
