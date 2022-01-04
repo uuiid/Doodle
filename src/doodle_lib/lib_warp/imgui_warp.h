@@ -59,20 +59,6 @@ struct OpenPopup : public ScopeWrapper<OpenPopup> {
   };
 };
 
-struct OpenFileDialog : public ScopeWrapper<OpenFileDialog> {
-  template <class... Args>
-  OpenFileDialog(const std::string& vKey, Args&&... in_args) noexcept
-      : ScopeWrapper<OpenFileDialog>(
-            ImGuiFileDialog::Instance()->Display(
-                vKey.c_str(),
-                std::forward<Args>(in_args)...)) {
-  }
-
-  static void dtor() noexcept {
-    ImGuiFileDialog::Instance()->Close();
-  };
-};
-
 struct TextWrapPos : public ScopeWrapper<TextWrapPos, true> {
   TextWrapPos(float wrap_pos_x)
       : ScopeWrapper<TextWrapPos, true>(true) {
