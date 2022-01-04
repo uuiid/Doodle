@@ -71,8 +71,7 @@ class DOODLELIB_API file_dialog : public process_t<file_dialog> {
    */
   explicit file_dialog(
       const select_sig& in_function,
-      const std::string& in_title,
-      const FSys::path& in_pwd = FSys::current_path());
+      const std::string& in_title);
 
   /**
    * @brief 传入时使用单文件目录选择, 默认过滤器

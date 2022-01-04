@@ -11,7 +11,6 @@
       <file path="$PROJECT_DIR$/build" />
       <file path="$PROJECT_DIR$/external" />
       <file path="$PROJECT_DIR$/external/csv-parser/tests" />
-      <file path="$PROJECT_DIR$/src/doodle_lib/external" />
       <file path="$PROJECT_DIR$/tools/grpc_test" />
     </excludeRoots>
   </component>

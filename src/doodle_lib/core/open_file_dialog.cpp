@@ -55,8 +55,7 @@ file_dialog::file_dialog(const file_dialog::select_sig &in_sig,
   p_i->p_file_dialog.SetPwd(in_pwd);
 }
 file_dialog::file_dialog(const file_dialog::select_sig &in_function,
-                         const string &in_title,
-                         const FSys::path &in_pwd)
+                         const string &in_title)
     : file_dialog(in_function,
                   in_title,
                   (in_function.index() == 1
@@ -64,7 +63,7 @@ file_dialog::file_dialog(const file_dialog::select_sig &in_function,
                        : flags::ImGuiFileBrowserFlags_SelectDirectory) |
                       flags::ImGuiFileBrowserFlags_SelectDirectory,
                   {},
-                  in_pwd) {
+                  FSys::current_path()) {
 }
 file_dialog::file_dialog(const file_dialog::select_sig &in_function,
                          const string &in_title,
@@ -81,7 +80,6 @@ file_dialog::file_dialog(const file_dialog::select_sig &in_function,
 file_dialog::~file_dialog() = default;
 
 void file_dialog::init() {
-  p_i->p_file_dialog.Open();
 }
 void file_dialog::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
   p_i->p_file_dialog.Display();
@@ -98,12 +96,14 @@ void file_dialog::update(chrono::duration<chrono::system_clock::rep, chrono::sys
                p_i->p_sig);
 
   }
-
 }
 void file_dialog::succeeded() {
+  p_i->p_dialog.Close();
 }
 void file_dialog::failed() {
+  p_i->p_dialog.Close();
 }
 void file_dialog::aborted() {
+  p_i->p_dialog.Close();
 }
 }  // namespace doodle
