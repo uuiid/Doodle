@@ -28,7 +28,9 @@ create_sim_cloth::create_sim_cloth()
                                 "添加碰撞",
                                 "碰撞物体");
   auto k_view = g_reg()->view<qcloth_shape>();
-  g_reg()->destroy(k_view.begin(), k_view.end());
+  std::transform(k_view.begin(), k_view.end(),
+                 std::back_inserter(p_list),
+                 [](auto& in) -> entt::handle { return make_handle(in); });
 }
 bool create_sim_cloth::render() {
   if (imgui::Button(p_show_str["获得低模"].c_str())) {
@@ -112,7 +114,8 @@ bool create_sim_cloth::render() {
 create_sim_cloth::~create_sim_cloth() {
   p_coll.destroy();
   for (auto& h : p_list) {
-    h.destroy();
+    if (h)
+      h.destroy();
   }
 }
 }  // namespace doodle::maya_plug
