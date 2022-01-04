@@ -34,9 +34,6 @@ add_library(doodle_lib
         ${OUT_LISTS_sqlpp}
         ${OUT_LISTS_GRPC}
         ${PROJECT_SOURCE_DIR}/stl.natvis
-        external/ImGuiFileDialog/ImGuiFileDialog.cpp
-        external/ImGuiFileDialog/ImGuiFileDialog.h
-        external/ImGuiFileDialog/ImGuiFileDialogConfig.h
         external/service-base/ServiceBase.cpp
         external/service-base/ServiceBase.h
         external/service-base/ServiceInstaller.cpp
@@ -87,7 +84,7 @@ target_compile_definitions(doodle_lib
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         PRIVATE
-        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
+#        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
         )
 target_compile_options(doodle_lib
         PUBLIC
