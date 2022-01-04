@@ -16,6 +16,8 @@
 #include <doodle_lib/gui/widgets/project_widget.h>
 #include <doodle_lib/gui/widgets/tool_box_widget.h>
 #include <doodle_lib/toolkit/toolkit.h>
+#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_lib/core/open_file_dialog.h>
 namespace doodle {
 
 template <class T>
@@ -109,21 +111,12 @@ void main_windows::main_menu_tool() {
     toolkit::installUePath(core_set::getSet().get_ue4_setting().get_path() / "Engine");
 
   if (dear::MenuItem("安装ue4项目插件")) {
-    imgui::FileDialog::Instance()->OpenModal(
-        "ChooseDirDlgKey",
+    g_main_loop().attach<file_dialog>(
+        [](const FSys::path &in_path) {
+          toolkit::installUePath(in_path);
+        },
         "select_ue_project",
-        ".uproject",
-        ".");
-    doodle_app::Get()->main_loop.connect_extended([](const doodle_app::connection &in) {
-      dear::OpenFileDialog{"ChooseDirDlgKey"} && [in]() {
-        auto ig = ImGuiFileDialog::Instance();
-        if (ig->IsOk()) {
-          FSys::path k_path = ig->GetCurrentPath();
-          toolkit::installUePath(k_path);
-        }
-        in.disconnect();
-      };
-    });
+        string_list{".uproject"});
   }
   if (dear::MenuItem("删除ue4缓存"))
     toolkit::deleteUeCache();
