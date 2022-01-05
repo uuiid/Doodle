@@ -247,7 +247,7 @@ void file_browser::set_filter(const std::vector<string>& in_vector) {
   std::vector<filter_attr> k_all;
   std::transform(in_vector.begin(), in_vector.end(), std::back_inserter(k_all),
                  [](auto& in) -> filter_attr {
-                   return {in};
+                   return filter_attr{in};
                  });
   p_i->filter_list.emplace(fmt::to_string(fmt::join(in_vector, ",")), k_all);
 }
