@@ -135,14 +135,14 @@ void file_browser::render() {
   this->render_file_list();
   this->render_buffer();
   this->render_filter();
-  if(imgui::Button("ok")){
+  if (imgui::Button("ok")) {
     p_i->is_ok = true;
-    p_i->show = false;
+    p_i->show  = false;
   }
   imgui::SameLine();
-  if(imgui::Button("cancel")){
+  if (imgui::Button("cancel")) {
     p_i->is_ok = false;
-    p_i->show = false;
+    p_i->show  = false;
   }
 }
 void file_browser::render_path() {
@@ -174,15 +174,24 @@ void file_browser::scan_director(const FSys::path& in_path) {
   }
   /// \brief 去除无效的
   boost::remove_erase_if(k_list, [](auto in) -> bool { return in; });
+
+
   /// \brief 去除不符合过滤器的
-  boost::remove_erase_if(k_list, [&](const path_attr& in) -> bool {
-    return !in.is_dir && !std::any_of(
-                             p_i->current_filter_list.begin(),
-                             p_i->current_filter_list.end(),
-                             [&](const filter_attr& in_filter) -> bool {
-                               return in_filter.extension == in.path.extension();
-                             });
-  });
+  if (p_i->enum_flags & flags_::file_browser_flags_SelectDirectory)  /// \brief 包含选中目录时直接排除所有文件
+    boost::remove_erase_if(k_list, [&](const path_attr& in) {
+      return !in.is_dir;
+    });
+  else  /// \brief 否则进行文件筛选
+    boost::remove_erase_if(k_list, [&](const path_attr& in) -> bool {
+      return !in.is_dir &&                         /// \brief 首先目录不参加排除 所以所有的目录直接返回 false
+             !p_i->current_filter_list.empty() &&  /// \brief 然后如果当前过滤器为空,那么所有文件不参与排除 直接返回false
+             !std::any_of(                         /// \brief 最后进行过滤器的排除方案 只要找到后缀名相等的 就不排除返回 false
+                 p_i->current_filter_list.begin(),
+                 p_i->current_filter_list.end(),
+                 [&](const filter_attr& in_filter) -> bool {
+                   return in_filter.extension == in.path.extension();
+                 });
+    });
   /// 进行排序
   std::sort(k_list.begin(), k_list.end());
 }
@@ -286,7 +295,7 @@ void file_browser::render_filter() {
     for (auto& k_f : p_i->filter_list) {
       if (dear::Selectable(k_f.first)) {
         p_i->current_filter_list = k_f.second;
-        p_i->filter_show_name = k_f.first;
+        p_i->filter_show_name    = k_f.first;
       }
     }
   };
