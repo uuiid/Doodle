@@ -143,7 +143,6 @@ void assets_file_widgets::frame_render() {
           }
 
           imgui::TableHeadersRow();
-          list_data l_data{};
 
           for (auto& k_h : k_list) {
             if (k_h && k_h.all_of<database>()) {
