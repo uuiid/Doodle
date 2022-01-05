@@ -25,5 +25,8 @@ class DOODLELIB_API file_browser {
   explicit file_browser(flags in_flags = 0);
 
   void render();
+  void render_path();
+  void scan_director(const FSys::path& in_path);
+  void render_file_list();
 };
 }  // namespace doodle
