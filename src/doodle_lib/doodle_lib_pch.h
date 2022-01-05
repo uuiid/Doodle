@@ -60,8 +60,17 @@
 #include <doodle_lib/lib_warp/sqlppWarp.h>
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <doodle_lib_export.h>
+
+#include <fmt/core.h>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <fmt/chrono.h>
+#include <fmt/compile.h>
+#include <fmt/color.h>
+#include <fmt/os.h>
 #include <fmt/ostream.h>
+#include <fmt/printf.h>
+#include <fmt/xchar.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <entt/entt.hpp>
