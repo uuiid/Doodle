@@ -183,8 +183,8 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   }
 
   for (MTime k_t = k_start; k_t <= k_end; ++k_t) {
+    MAnimControl::setCurrentTime(k_t);
     for (auto&& [k_e, k_ref] : g_reg()->view<qcloth_shape>().each()) {
-      MAnimControl::setCurrentTime(k_t);
       k_ref.create_cache();
     }
   }

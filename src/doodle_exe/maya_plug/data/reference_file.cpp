@@ -335,9 +335,11 @@ void reference_file::generate_cloth_proxy() const {
   MStatus k_s{};
   for (MItDependencyNodes i{MFn::Type::kPluginLocatorNode}; !i.isDone(); i.next()) {
     auto k_obj = i.thisNode(&k_s);
+    DOODLE_CHICK(k_s);
     MFnDependencyNode k_dep{k_obj};
     MFnReference k_ref{p_m_object};
     if (k_dep.typeName(&k_s) == "qlClothShape" && k_ref.containsNode(k_obj, &k_s)) {
+      DOODLE_CHICK(k_s);
       auto k_h = make_handle();
       k_h.emplace<qcloth_shape>(make_handle(*this), k_obj);
     }
