@@ -173,7 +173,7 @@ void file_browser::scan_director(const FSys::path& in_path) {
     k_list.emplace_back(k_p);
   }
   /// \brief 去除无效的
-  boost::remove_erase_if(k_list, [](auto in) -> bool { return in; });
+  boost::remove_erase_if(k_list, [](auto in) -> bool { return !in; });
 
 
   /// \brief 去除不符合过滤器的
