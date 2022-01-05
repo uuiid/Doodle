@@ -72,6 +72,9 @@ class filter_attr {
   explicit filter_attr(const string& in_filter)
       : show_name(in_filter),
         extension(in_filter){};
+  explicit filter_attr(const FSys::path& in_filter)
+      : show_name(in_filter.generic_string()),
+        extension(in_filter){};
   string show_name;
   FSys::path extension;
 };
@@ -85,9 +88,13 @@ class file_browser::impl {
         show(false),
         pwd(FSys::current_path()),
         path_list(),
-        filter_list(),
         select_index(0),
-        begin_fun_list(){};
+        filter_show_name("*.*"),
+        current_filter_list(),
+        filter_list(),
+        begin_fun_list(),
+        is_ok(false),
+        buffer(){};
   std::int32_t enum_flags;
 
   bool show;
@@ -95,9 +102,14 @@ class file_browser::impl {
 
   std::vector<path_attr> path_list;
   std::size_t select_index{};
-  std::vector<filter_attr> filter_list;
+  string filter_show_name;
+  std::vector<filter_attr> current_filter_list;
+  std::map<string, std::vector<filter_attr>> filter_list;
 
   std::vector<std::function<void()>> begin_fun_list;
+
+  bool is_ok;
+  string buffer;
 };
 
 file_browser::file_browser(flags in_flags)
@@ -121,6 +133,17 @@ void file_browser::render() {
 
   this->render_path();
   this->render_file_list();
+  this->render_buffer();
+  this->render_filter();
+  if(imgui::Button("ok")){
+    p_i->is_ok = true;
+    p_i->show = false;
+  }
+  imgui::SameLine();
+  if(imgui::Button("cancel")){
+    p_i->is_ok = false;
+    p_i->show = false;
+  }
 }
 void file_browser::render_path() {
   std::int32_t k_i{0};
@@ -153,9 +176,12 @@ void file_browser::scan_director(const FSys::path& in_path) {
   boost::remove_erase_if(k_list, [](auto in) -> bool { return in; });
   /// \brief 去除不符合过滤器的
   boost::remove_erase_if(k_list, [&](const path_attr& in) -> bool {
-    return !std::any_of(p_i->filter_list.begin(), p_i->filter_list.end(), [&](const FSys::path& in_filter) -> bool {
-      return in_filter == in.path.extension();
-    });
+    return !in.is_dir && !std::any_of(
+                             p_i->current_filter_list.begin(),
+                             p_i->current_filter_list.end(),
+                             [&](const filter_attr& in_filter) -> bool {
+                               return in_filter.extension == in.path.extension();
+                             });
   });
   /// 进行排序
   std::sort(k_list.begin(), k_list.end());
@@ -178,7 +204,7 @@ void file_browser::render_file_list() {
 
           imgui::TableNextColumn();
           /// \brief 设置文件名序列
-          if (dear::Selectable(fmt::format("{} {}", k_p.is_dir ? "[dir]"s : "[file]"s, k_p.show_name), k_p.has_select, ImGuiSelectableFlags_SpanAllColumns)) {
+          if (dear::Selectable(k_p.show_name, k_p.has_select, ImGuiSelectableFlags_SpanAllColumns)) {
             if (imgui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)) {  /// \brief 双击函数
               p_i->begin_fun_list.emplace_back(
                   [=, in_path = k_p.path]() {
@@ -205,4 +231,65 @@ void file_browser::render_file_list() {
         }
       };
 }
+void file_browser::show() {
+  p_i->show = true;
+}
+void file_browser::close() {
+  p_i->show = false;
+}
+
+void file_browser::set_filter(const std::vector<string>& in_vector) {
+  p_i->filter_list.clear();
+  std::transform(in_vector.begin(), in_vector.end(), std::inserter(p_i->filter_list, p_i->filter_list.begin()),
+                 [](const string& in) -> std::pair<string, std::vector<filter_attr>> {
+                   return std::make_pair(in, std::vector<filter_attr>{filter_attr{in}});
+                 });
+  std::vector<filter_attr> k_all;
+  std::transform(in_vector.begin(), in_vector.end(), std::back_inserter(k_all),
+                 [](auto& in) -> filter_attr {
+                   return {in};
+                 });
+  p_i->filter_list.emplace(fmt::to_string(fmt::join(in_vector, ",")), k_all);
+}
+void file_browser::set_flags(file_browser::flags in_flags) {
+  p_i->enum_flags = in_flags;
+}
+void file_browser::set_pwd_path(const FSys::path& in_path) {
+  p_i->pwd = in_path;
+  this->scan_director(p_i->pwd);
+}
+bool file_browser::is_ok() const {
+  return p_i->is_ok;
+}
+
+FSys::path file_browser::get_select() const {
+  return p_i->path_list.at(p_i->select_index).path;
+}
+std::vector<FSys::path> file_browser::get_selects() const {
+  std::vector<FSys::path> k_r{};
+  boost::copy(p_i->path_list |
+                  boost::adaptors::filtered([](const path_attr& in_attr) {
+                    return in_attr.has_select;
+                  }) |
+                  boost::adaptors::transformed([](const path_attr& in_attr) {
+                    return in_attr.path;
+                  }),
+              std::back_inserter(k_r));
+  return k_r;
+}
+void file_browser::render_buffer() {
+  dear::Text(p_i->buffer);
+}
+void file_browser::render_filter() {
+  imgui::SameLine();
+  dear::Combo{"filter", p_i->filter_show_name.c_str()} && [&]() {
+    for (auto& k_f : p_i->filter_list) {
+      if (dear::Selectable(k_f.first)) {
+        p_i->current_filter_list = k_f.second;
+        p_i->filter_show_name = k_f.first;
+      }
+    }
+  };
+}
+
 }  // namespace doodle

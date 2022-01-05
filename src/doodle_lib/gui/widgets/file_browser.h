@@ -23,10 +23,55 @@ class DOODLELIB_API file_browser {
   };
   using flags = std::int32_t;
   explicit file_browser(flags in_flags = 0);
+  /**
+   * @brief 显示文件管理器
+   */
+  void show();
+  /**
+   * @brief 关闭文件管理器
+   */
+  void close();
+  /**
+   * @brief 设置过滤器
+   *
+   * @param in_vector
+   */
+  void set_filter(const std::vector<string>& in_vector);
 
+  /**
+   * @brief 修改标志
+   *
+   * @param in_flags 标志
+   */
+  void set_flags(flags in_flags);
+
+  /**
+   * @brief 设置当前路径
+  */
+  void set_pwd_path(const FSys::path& in_path);
+
+  /**
+   * @brief 查询操作: 是否有选择 ok
+   * @return 是否有选择 ok 并不会判断选择是否为空
+   */
+  bool is_ok() const;
+
+  /**
+   * @brief 查询操作： 选择的文件
+   */
+  FSys::path get_select() const;
+  /**
+   * @brief 查询操作： 多个选中的文件
+   */
+  std::vector<FSys::path> get_selects() const;
+
+
+ private:
   void render();
   void render_path();
   void scan_director(const FSys::path& in_path);
   void render_file_list();
+  void render_buffer();
+  void render_filter();
 };
 }  // namespace doodle
