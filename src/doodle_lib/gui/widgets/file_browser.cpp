@@ -11,21 +11,23 @@ class path_attr {
  public:
   explicit path_attr(const FSys::path& in_path)
       : path(in_path),
-        show_name(in_path.filename().generic_string()),
         is_dir(is_directory(in_path)),
+        show_name(fmt::format("{} {}", is_directory(in_path) ? "[dir]"s : "file"s, path.filename().generic_string())),
         size(file_size(in_path)),
-        last_time(FSys::last_write_time_point(in_path)){};
+        last_time(FSys::last_write_time_point(in_path)),
+        has_select(false){};
 
   explicit path_attr(const FSys::directory_iterator& in_iterator)
       : path(in_iterator->path()),
-        show_name(path.filename().generic_string()),
         is_dir(in_iterator->is_directory()),
+        show_name(fmt::format("{} {}", in_iterator->is_directory() ? "[dir]"s : "file"s, path.filename().generic_string())),
         size(in_iterator->file_size()),
-        last_time(FSys::last_write_time_point(path)){};
+        last_time(FSys::last_write_time_point(path)),
+        has_select(false){};
 
   FSys::path path;
-  string show_name;
   bool is_dir;
+  string show_name;
   std::size_t size;
   doodle::chrono::sys_time_pos last_time;
   bool has_select;
@@ -78,19 +80,24 @@ class filter_attr {
 
 class file_browser::impl {
  public:
-  impl()
+  explicit impl()
       : enum_flags(),
+        show(false),
         pwd(FSys::current_path()),
-        select_path(),
         path_list(),
         filter_list(),
-        select_index(0){};
+        select_index(0),
+        begin_fun_list(){};
   std::int32_t enum_flags;
+
+  bool show;
   FSys::path pwd;
-  std::vector<FSys::path> select_path;
+
   std::vector<path_attr> path_list;
   std::size_t select_index{};
   std::vector<filter_attr> filter_list;
+
+  std::vector<std::function<void()>> begin_fun_list;
 };
 
 file_browser::file_browser(flags in_flags)
@@ -99,6 +106,9 @@ file_browser::file_browser(flags in_flags)
   this->scan_director(p_i->pwd);
 }
 void file_browser::render() {
+  for (auto&& k_fun : p_i->begin_fun_list)
+    k_fun();
+
   if (imgui::Button("drive")) {
     auto k_dir = win::list_drive();
     p_i->path_list.clear();
@@ -124,9 +134,11 @@ void file_browser::render_path() {
         --k_j;
         if (k_j < 0) break;
       }
-      p_i->pwd = k_r;
-      this->scan_director(p_i->pwd);
-      p_i->select_path.clear();
+      p_i->begin_fun_list.emplace_back([this, in_path = k_r]() {
+        p_i->pwd          = in_path;
+        p_i->select_index = 0;
+        this->scan_director(in_path);
+      });
     }
     ++k_i;
   }
@@ -167,7 +179,11 @@ void file_browser::render_file_list() {
           imgui::TableNextColumn();
           /// \brief 设置文件名序列
           if (dear::Selectable(fmt::format("{} {}", k_p.is_dir ? "[dir]"s : "[file]"s, k_p.show_name), k_p.has_select, ImGuiSelectableFlags_SpanAllColumns)) {
-            if (imgui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)) {   /// \brief 双击函数
+            if (imgui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)) {  /// \brief 双击函数
+              p_i->begin_fun_list.emplace_back(
+                  [=, in_path = k_p.path]() {
+                    this->scan_director(in_path);
+                  });
             } else if (imgui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)) {  /// \brief 单击函数
               auto& k_io = imgui::GetIO();
               if (k_io.KeyCtrl)
