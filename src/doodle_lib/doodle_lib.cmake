@@ -35,6 +35,7 @@ set(
     gui/widgets/assets_file_widgets.h
     gui/widgets/assets_widget.h
     gui/widgets/edit_widgets.h
+    gui/widgets/file_browser.h
     gui/widgets/long_time_tasks_widget.h
     gui/widgets/opencv_player_widget.h
     gui/widgets/project_widget.h
@@ -134,6 +135,7 @@ set(
     gui/widgets/assets_file_widgets.cpp
     gui/widgets/assets_widget.cpp
     gui/widgets/edit_widgets.cpp
+    gui/widgets/file_browser.cpp
     gui/widgets/long_time_tasks_widget.cpp
     gui/widgets/opencv_player_widget.cpp
     gui/widgets/project_widget.cpp

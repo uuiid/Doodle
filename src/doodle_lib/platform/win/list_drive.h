@@ -6,5 +6,5 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle::win {
-std::vector<FSys::path> list_drive();
+std::vector<FSys::path> DOODLELIB_API list_drive();
 }
