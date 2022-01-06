@@ -24,7 +24,8 @@ file_dialog::file_dialog(const file_dialog::select_sig &in_sig,
                          const FSys::path &in_pwd)
     : p_i(std::make_unique<impl>()) {
   p_i->p_sig = in_sig;
-//  p_i->p_file_dialog.(in_title);
+  p_i->p_file_dialog.set_flags(in_flags);
+  p_i->p_file_dialog.set_title(in_title);
   p_i->p_file_dialog.set_filter(in_filters);
   p_i->p_file_dialog.set_pwd_path(in_pwd);
 }
@@ -69,10 +70,11 @@ void file_dialog::update(chrono::duration<chrono::system_clock::rep, chrono::sys
                      this->succeed();
                    }},
                p_i->p_sig);
-  }else{
-    this->fail();
   }
 
+  if(!p_i->p_file_dialog.is_open()){
+    this->fail();
+  }
 }
 void file_dialog::succeeded() {
   p_i->p_file_dialog.close();

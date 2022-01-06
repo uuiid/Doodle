@@ -23,6 +23,7 @@ class DOODLELIB_API file_browser {
   };
   using flags = std::int32_t;
   explicit file_browser(flags in_flags = 0);
+  ~file_browser();
   /**
    * @brief 显示文件管理器
    */
@@ -44,6 +45,11 @@ class DOODLELIB_API file_browser {
    * @param in_flags 标志
    */
   void set_flags(flags in_flags);
+  /**
+   * @brief 设置标题, id会自动根据标题生成
+   * @param in_string
+   */
+  void set_title(const string& in_string);
 
   /**
    * @brief 设置当前路径
@@ -64,9 +70,13 @@ class DOODLELIB_API file_browser {
    * @brief 查询操作： 多个选中的文件
    */
   [[nodiscard]] std::vector<FSys::path> get_selects() const;
-
-
+  /**
+   * @brief 查询是否显示
+   * @return 是否显示
+   */
+  [[nodiscard]] bool is_open()const;
   void render();
+
  private:
   void render_path();
   void scan_director(const FSys::path& in_path);

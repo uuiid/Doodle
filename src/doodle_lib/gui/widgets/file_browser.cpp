@@ -12,7 +12,10 @@ class path_attr {
   explicit path_attr(const FSys::path& in_path)
       : path(in_path),
         is_dir(is_directory(in_path)),
-        show_name(fmt::format("{} {}", is_directory(in_path) ? "[dir]"s : "file"s, path.filename().generic_string())),
+        show_name(
+            fmt::format("{} {}",
+                        is_directory(in_path) ? "[dir]"s : "[file]"s,
+                        path.has_filename() ? path.filename().generic_string() : path.generic_string())),
         size(file_size(in_path)),
         last_time(FSys::last_write_time_point(in_path)),
         has_select(false){};
@@ -20,7 +23,10 @@ class path_attr {
   explicit path_attr(const FSys::directory_iterator& in_iterator)
       : path(in_iterator->path()),
         is_dir(in_iterator->is_directory()),
-        show_name(fmt::format("{} {}", in_iterator->is_directory() ? "[dir]"s : "file"s, path.filename().generic_string())),
+        show_name(
+            fmt::format("{} {}",
+                        in_iterator->is_directory() ? "[dir]"s : "file"s,
+                        path.has_filename() ? path.filename().generic_string() : path.generic_string())),
         size(in_iterator->file_size()),
         last_time(FSys::last_write_time_point(path)),
         has_select(false){};
@@ -85,6 +91,7 @@ class file_browser::impl {
  public:
   explicit impl()
       : enum_flags(),
+        title(),
         b_open(false),
         pwd(FSys::current_path()),
         path_list(),
@@ -96,6 +103,7 @@ class file_browser::impl {
         is_ok(false),
         buffer(){};
   std::int32_t enum_flags;
+  string title;
 
   bool b_open;
   FSys::path pwd;
@@ -113,6 +121,7 @@ class file_browser::impl {
 
   bool is_ok;
   string buffer;
+
   void set_multiple_select(path_attr& k_p) {
     auto& k_io = imgui::GetIO();
     if (k_io.KeyCtrl)
@@ -123,15 +132,14 @@ class file_browser::impl {
                     [this](path_attr& in_attr) {
                       in_attr.has_select = this->select_match_filter(in_attr);
                     });
-    }
-    generate_buffer();
+    } else
+      this->set_one_select(k_p);
   }
   void set_one_select(path_attr& k_p) {
     std::for_each(path_list.begin(), path_list.end(), [](auto& in) {
       in.has_select = false;
     });
     k_p.has_select = this->select_match_filter(k_p);
-    generate_buffer();
   }
   void generate_buffer() {
     if (std::any_of(path_list.begin(), path_list.end(), [](const path_attr& in) -> bool { return in.has_select; })) {
@@ -140,16 +148,17 @@ class file_browser::impl {
         buffer = fmt::format("选中了 {} 个路径", l_size);
       } else {
         auto k_p = std::find_if(path_list.begin(), path_list.end(), [](const path_attr& in) -> bool { return in.has_select; });
-        buffer   = k_p->show_name;
+        buffer   = k_p->path.filename().generic_string();
       }
     } else {
       buffer.clear();
     }
   }
   /**
-   * @brief 首先判断传入标志, 要是目录的话就只有目录符合标志
+   * @brief首先判断传入标志, 要是目录的话就只有目录符合标志
    * 然后判断其他类型
-   * @param in_attr
+   * @note 这个是判断选中是否符合过滤器的，而不是在扫描时判断的
+   * @param in_attr 传入的路径属性
    */
   bool select_match_filter(const path_attr& in_attr) {
     if (enum_flags & flags_::file_browser_flags_SelectDirectory) {
@@ -170,12 +179,16 @@ file_browser::file_browser(flags in_flags)
   p_i->enum_flags = in_flags;
   this->scan_director(p_i->pwd);
 }
+file_browser::~file_browser() = default;
+
 void file_browser::render() {
   for (auto&& k_fun : p_i->begin_fun_list)
     k_fun();
   p_i->begin_fun_list.clear();
 
-  dear::PopupModal{"", &p_i->b_open} && [&]() {
+  //  if (p_i->b_open)
+
+  dear::PopupModal{p_i->title.c_str(), &(p_i->b_open)} && [&]() {
     if (imgui::Button("drive")) {
       auto k_dir = win::list_drive();
       p_i->path_list.clear();
@@ -189,7 +202,6 @@ void file_browser::render() {
     this->render_path();
     this->render_file_list();
     this->render_buffer();
-    this->render_filter();
     if (imgui::Button("ok")) {
       p_i->is_ok  = true;
       p_i->b_open = false;
@@ -201,10 +213,19 @@ void file_browser::render() {
       p_i->b_open = false;
       imgui::CloseCurrentPopup();
     }
+    this->render_filter();
   };
-
 }
 void file_browser::render_path() {
+  if (!p_i->pwd.empty()) {
+    imgui::SameLine();
+    if (imgui::Button(p_i->pwd.root_path().generic_string().c_str())) {
+      p_i->begin_fun_list.emplace_back([this, in_path = p_i->pwd.root_path()]() {
+        this->scan_director(in_path);
+      });
+    }
+  }
+
   std::int32_t k_i{0};
   for (auto& k_p : p_i->pwd.relative_path()) {
     imgui::SameLine();
@@ -217,8 +238,6 @@ void file_browser::render_path() {
         if (k_j < 0) break;
       }
       p_i->begin_fun_list.emplace_back([this, in_path = k_r]() {
-        p_i->pwd          = in_path;
-        p_i->select_index = 0;
         this->scan_director(in_path);
       });
     }
@@ -226,14 +245,22 @@ void file_browser::render_path() {
   }
 }
 void file_browser::scan_director(const FSys::path& in_path) {
+  if (!is_directory(in_path))
+    return;
+
   /// \brief 清除数据
+  p_i->pwd = in_path;
   p_i->path_list.clear();
   p_i->select_index = 0;
   p_i->buffer.clear();
 
   decltype(p_i->path_list) k_list;
   for (auto& k_p : FSys::directory_iterator{in_path}) {
-    k_list.emplace_back(k_p);
+    try {
+      k_list.emplace_back(k_p);
+    } catch (const FSys::filesystem_error& error) {
+      DOODLE_LOG_ERROR(error.what());
+    }
   }
   /// \brief 去除无效的
   boost::remove_erase_if(k_list, [](auto in) -> bool { return !in; });
@@ -256,44 +283,48 @@ void file_browser::scan_director(const FSys::path& in_path) {
     });
   /// 进行排序
   std::sort(k_list.begin(), k_list.end());
+  p_i->path_list = std::move(k_list);
 }
 void file_browser::render_file_list() {
-  static auto table_flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
-                          ImGuiTableFlags_::ImGuiTableFlags_Resizable |
-                          ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
-                          ImGuiTableFlags_::ImGuiTableFlags_BordersV |
-                          ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody |
-                          ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
-                          ImGuiTableFlags_::ImGuiTableFlags_ScrollY};
+  static auto table_flags{
+      ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
+      ImGuiTableFlags_::ImGuiTableFlags_Resizable |
+      ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
+      ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
+      ImGuiTableFlags_::ImGuiTableFlags_ScrollY};
   dear::Table{
       "file list",
       3,
-      table_flags} &&
+      table_flags,
+      ImVec2(0.0f, -ImGui::GetTextLineHeightWithSpacing() * 3)} &&
       [&]() {
         for (auto& k_p : p_i->path_list) {
           imgui::TableNextRow();
 
-          imgui::TableNextColumn();
           /// \brief 设置文件名序列
-          if (dear::Selectable(k_p.show_name, k_p.has_select, ImGuiSelectableFlags_SpanAllColumns)) {
-            if (imgui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)) {  /// \brief 双击函数
+          imgui::TableNextColumn();
+          if (dear::Selectable(k_p.show_name, k_p.has_select, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick)) {
+            if (imgui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) && k_p.is_dir) {  /// \brief 双击函数
               p_i->begin_fun_list.emplace_back(
                   [=, in_path = k_p.path]() {
                     this->scan_director(in_path);
                   });
-            } else if (imgui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)) {  /// \brief 单击函数
+            } else /*(imgui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))*/ {  /// \brief 单击函数
               /// \brief 多选时的方法
               if (p_i->enum_flags & flags_::file_browser_flags_MultipleSelection) {
                 p_i->set_multiple_select(k_p);
               } else {
                 p_i->set_one_select(k_p);
               }
-              p_i->select_index = std::distance(p_i->path_list.begin(), std::find(p_i->path_list.begin(), p_i->path_list.end(), k_p)) - 1;
+              p_i->generate_buffer();
+              p_i->select_index = std::distance(p_i->path_list.begin(), std::find(p_i->path_list.begin(), p_i->path_list.end(), k_p));
             }
           }
           /// \brief 文件大小
+          imgui::TableNextColumn();
           dear::Text(fmt::format("{}", k_p.size));
           /// \brief 最后写入时间
+          imgui::TableNextColumn();
           dear::Text(fmt::format("{}", k_p.last_time));
         }
       };
@@ -301,6 +332,11 @@ void file_browser::render_file_list() {
 
 void file_browser::open() {
   p_i->b_open = true;
+  render();
+  p_i->begin_fun_list.emplace_back([this]() {
+    imgui::OpenPopup(p_i->title.c_str());
+    imgui::SetNextWindowSize({640, 360});
+  });
 }
 void file_browser::close() {
   p_i->b_open = false;
@@ -318,12 +354,12 @@ void file_browser::set_filter(const std::vector<string>& in_vector) {
                    return filter_attr{in};
                  });
   p_i->filter_list.emplace(fmt::to_string(fmt::join(in_vector, ",")), k_all);
+  p_i->filter_list.emplace("*.*"s, std::vector<filter_attr>{});
 }
 void file_browser::set_flags(file_browser::flags in_flags) {
   p_i->enum_flags = in_flags;
 }
 void file_browser::set_pwd_path(const FSys::path& in_path) {
-  p_i->pwd = in_path;
   this->scan_director(p_i->pwd);
 }
 bool file_browser::is_ok() const {
@@ -346,11 +382,11 @@ std::vector<FSys::path> file_browser::get_selects() const {
   return k_r;
 }
 void file_browser::render_buffer() {
-  dear::Text(p_i->buffer);
+  imgui::InputText("file", &(p_i->buffer));
 }
 void file_browser::render_filter() {
   imgui::SameLine();
-  dear::Combo{"filter", p_i->filter_show_name.c_str()} && [&]() {
+  dear::Combo{"##filter", p_i->filter_show_name.c_str()} && [&]() {
     for (auto& k_f : p_i->filter_list) {
       if (dear::Selectable(k_f.first)) {
         p_i->current_filter_list = k_f.second;
@@ -361,6 +397,12 @@ void file_browser::render_filter() {
       }
     }
   };
+}
+void file_browser::set_title(const string& in_string) {
+  p_i->title = fmt::format("{0}##{0}_{1}", in_string, fmt::ptr(this));
+}
+bool file_browser::is_open() const {
+  return p_i->b_open;
 }
 
 }  // namespace doodle
