@@ -103,6 +103,9 @@ class file_browser::impl {
   std::vector<path_attr> path_list;
   std::size_t select_index{};
   string filter_show_name;
+  /**
+   * @brief 当前过滤器， 为空时不进行任何过滤， 返回所有
+   */
   std::vector<filter_attr> current_filter_list;
   std::map<string, std::vector<filter_attr>> filter_list;
 
@@ -113,12 +116,12 @@ class file_browser::impl {
   void set_multiple_select(path_attr& k_p) {
     auto& k_io = imgui::GetIO();
     if (k_io.KeyCtrl)
-      k_p.has_select = !(k_p.has_select);
+      k_p.has_select = !(k_p.has_select) && this->select_match_filter(k_p);
     else if (k_io.KeyShift) {
       std::for_each(path_list.begin() + boost::numeric_cast<int64_t>(select_index),
                     std::find(path_list.begin(), path_list.end(), k_p),
-                    [](path_attr& in_attr) {
-                      in_attr.has_select = true;
+                    [this](path_attr& in_attr) {
+                      in_attr.has_select = this->select_match_filter(in_attr);
                     });
     }
     generate_buffer();
@@ -127,7 +130,7 @@ class file_browser::impl {
     std::for_each(path_list.begin(), path_list.end(), [](auto& in) {
       in.has_select = false;
     });
-    k_p.has_select = true;
+    k_p.has_select = this->select_match_filter(k_p);
     generate_buffer();
   }
   void generate_buffer() {
@@ -136,12 +139,29 @@ class file_browser::impl {
       if (l_size > 1) {
         buffer = fmt::format("选中了 {} 个路径", l_size);
       } else {
-        auto k_p = std::find_if(path_list.begin(), path_list.end(),[](const path_attr& in) -> bool { return in.has_select; });
-        buffer = k_p->show_name;
+        auto k_p = std::find_if(path_list.begin(), path_list.end(), [](const path_attr& in) -> bool { return in.has_select; });
+        buffer   = k_p->show_name;
       }
     } else {
       buffer.clear();
     }
+  }
+  /**
+   * @brief 首先判断传入标志, 要是目录的话就只有目录符合标志
+   * 然后判断其他类型
+   * @param in_attr
+   */
+  bool select_match_filter(const path_attr& in_attr) {
+    if (enum_flags & flags_::file_browser_flags_SelectDirectory) {
+      return in_attr.is_dir;
+    } else {
+      if (current_filter_list.empty())
+        return true;
+      return std::any_of(current_filter_list.begin(), current_filter_list.end(), [&](const filter_attr& in_filter_attr) {
+        return in_filter_attr.extension == in_attr.path.extension();
+      });
+    }
+    return false;
   }
 };
 
@@ -201,8 +221,12 @@ void file_browser::render_path() {
   }
 }
 void file_browser::scan_director(const FSys::path& in_path) {
-  decltype(p_i->path_list) k_list;
+  /// \brief 清除数据
   p_i->path_list.clear();
+  p_i->select_index = 0;
+  p_i->buffer.clear();
+
+  decltype(p_i->path_list) k_list;
   for (auto& k_p : FSys::directory_iterator{in_path}) {
     k_list.emplace_back(k_p);
   }
