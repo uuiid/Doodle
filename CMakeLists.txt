@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 
 project(Doodle
-        VERSION 3.2.21.0
+        VERSION 3.2.22.0
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -153,7 +153,7 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/
         DESTINATION plug)
 
 
-set(CPACK_GENERATOR "WIX;7Z;ZIP")
+set(CPACK_GENERATOR "WIX;7Z")
 set(CPACK_PACKAGE_EXECUTABLES DoodleExe;Doodle)
 set(CPACK_CREATE_DESKTOP_LINKS DoodleExe)
 set(CPACK_PACKAGE_VENDOR uuiid)
