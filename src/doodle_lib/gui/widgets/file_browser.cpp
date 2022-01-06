@@ -110,6 +110,24 @@ class file_browser::impl {
 
   bool is_ok;
   string buffer;
+  void set_multiple_select(path_attr& k_p) {
+    auto& k_io = imgui::GetIO();
+    if (k_io.KeyCtrl)
+      k_p.has_select = !(k_p.has_select);
+    else if (k_io.KeyShift) {
+      std::for_each(path_list.begin() + boost::numeric_cast<int64_t>(select_index),
+                    std::find(path_list.begin(), path_list.end(), k_p),
+                    [](path_attr& in_attr) {
+                      in_attr.has_select = true;
+                    });
+    }
+  }
+  void set_one_select(path_attr& k_p) {
+    std::for_each(path_list.begin(), path_list.end(), [](auto& in) {
+      in.has_select = false;
+    });
+    k_p.has_select = true;
+  }
 };
 
 file_browser::file_browser(flags in_flags)
@@ -120,6 +138,7 @@ file_browser::file_browser(flags in_flags)
 void file_browser::render() {
   for (auto&& k_fun : p_i->begin_fun_list)
     k_fun();
+  p_i->begin_fun_list.clear();
 
   if (imgui::Button("drive")) {
     auto k_dir = win::list_drive();
@@ -175,7 +194,6 @@ void file_browser::scan_director(const FSys::path& in_path) {
   /// \brief 去除无效的
   boost::remove_erase_if(k_list, [](auto in) -> bool { return !in; });
 
-
   /// \brief 去除不符合过滤器的
   if (p_i->enum_flags & flags_::file_browser_flags_SelectDirectory)  /// \brief 包含选中目录时直接排除所有文件
     boost::remove_erase_if(k_list, [&](const path_attr& in) {
@@ -220,15 +238,11 @@ void file_browser::render_file_list() {
                     this->scan_director(in_path);
                   });
             } else if (imgui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)) {  /// \brief 单击函数
-              auto& k_io = imgui::GetIO();
-              if (k_io.KeyCtrl)
-                k_p.has_select = !(k_p.has_select);
-              else if (k_io.KeyShift) {
-                std::for_each(p_i->path_list.begin() + boost::numeric_cast<std::int64_t>(p_i->select_index),
-                              std::find(p_i->path_list.begin(), p_i->path_list.end(), k_p),
-                              [](path_attr& in_attr) {
-                                in_attr.has_select = true;
-                              });
+              /// \brief 多选时的方法
+              if (p_i->enum_flags & flags_::file_browser_flags_MultipleSelection) {
+                p_i->set_multiple_select(k_p);
+              } else {
+                p_i->set_one_select(k_p);
               }
               p_i->select_index = std::distance(p_i->path_list.begin(), std::find(p_i->path_list.begin(), p_i->path_list.end(), k_p)) - 1;
             }
@@ -240,6 +254,7 @@ void file_browser::render_file_list() {
         }
       };
 }
+
 void file_browser::show() {
   p_i->show = true;
 }
@@ -296,6 +311,9 @@ void file_browser::render_filter() {
       if (dear::Selectable(k_f.first)) {
         p_i->current_filter_list = k_f.second;
         p_i->filter_show_name    = k_f.first;
+        p_i->begin_fun_list.emplace_back([this]() {
+          scan_director(p_i->pwd);
+        });
       }
     }
   };
