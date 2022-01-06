@@ -16,9 +16,12 @@ class path_attr {
             fmt::format("{} {}",
                         is_directory(in_path) ? "[dir]"s : "[file]"s,
                         path.has_filename() ? path.filename().generic_string() : path.generic_string())),
-        size(file_size(in_path)),
+        size(is_regular_file(in_path) ? file_size(in_path) : 0u),
+        size_string(),
         last_time(FSys::last_write_time_point(in_path)),
-        has_select(false){};
+        has_select(false) {
+    set_size_str();
+  };
 
   explicit path_attr(const FSys::directory_iterator& in_iterator)
       : path(in_iterator->path()),
@@ -27,16 +30,29 @@ class path_attr {
             fmt::format("{} {}",
                         in_iterator->is_directory() ? "[dir]"s : "file"s,
                         path.has_filename() ? path.filename().generic_string() : path.generic_string())),
-        size(in_iterator->file_size()),
+        size(in_iterator->is_regular_file() ? in_iterator->file_size() : 0u),
+        size_string(),
         last_time(FSys::last_write_time_point(path)),
-        has_select(false){};
+        has_select(false) {
+    set_size_str();
+  };
 
   FSys::path path;
   bool is_dir;
   string show_name;
   std::size_t size;
+  string size_string;
   doodle::chrono::sys_time_pos last_time;
   bool has_select;
+
+  void set_size_str() {
+    std::int16_t i{};
+    std::double_t mantissa = size;
+    for (; mantissa >= 1024.; mantissa /= 1024., ++i) {
+    }
+    mantissa    = std::ceil(mantissa * 10.) / 10.;
+    size_string = fmt::format("{} {}B", mantissa, i == 0 ? ""s : string{"BKMGTPE"[i]});
+  }
 
   operator bool() const {
     return !show_name.empty() && !path.empty();
@@ -93,7 +109,7 @@ class file_browser::impl {
       : enum_flags(),
         title(),
         b_open(false),
-        pwd(FSys::current_path()),
+        pwd(),
         path_list(),
         select_index(0),
         filter_show_name("*.*"),
@@ -177,7 +193,6 @@ class file_browser::impl {
 file_browser::file_browser(flags in_flags)
     : p_i(std::make_unique<impl>()) {
   p_i->enum_flags = in_flags;
-  this->scan_director(p_i->pwd);
 }
 file_browser::~file_browser() = default;
 
@@ -248,14 +263,21 @@ void file_browser::scan_director(const FSys::path& in_path) {
   if (!is_directory(in_path))
     return;
 
+  static FSys::path l_path_old{};
+  FSys::path l_path{in_path};
+  if (l_path.empty())
+    l_path = l_path_old;
+  if (l_path.empty())
+    return;
+
   /// \brief 清除数据
-  p_i->pwd = in_path;
+  p_i->pwd = l_path;
   p_i->path_list.clear();
   p_i->select_index = 0;
   p_i->buffer.clear();
 
   decltype(p_i->path_list) k_list;
-  for (auto& k_p : FSys::directory_iterator{in_path}) {
+  for (auto& k_p : FSys::directory_iterator{l_path}) {
     try {
       k_list.emplace_back(k_p);
     } catch (const FSys::filesystem_error& error) {
@@ -298,9 +320,14 @@ void file_browser::render_file_list() {
       table_flags,
       ImVec2(0.0f, -ImGui::GetTextLineHeightWithSpacing() * 3)} &&
       [&]() {
+        /// \brief 设置题头元素
+        imgui::TableSetupColumn("file name");
+        imgui::TableSetupColumn("size");
+        imgui::TableSetupColumn("last write time");
+        imgui::TableHeadersRow();
+
         for (auto& k_p : p_i->path_list) {
           imgui::TableNextRow();
-
           /// \brief 设置文件名序列
           imgui::TableNextColumn();
           if (dear::Selectable(k_p.show_name, k_p.has_select, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick)) {
@@ -322,7 +349,7 @@ void file_browser::render_file_list() {
           }
           /// \brief 文件大小
           imgui::TableNextColumn();
-          dear::Text(fmt::format("{}", k_p.size));
+          dear::Text(k_p.size_string);
           /// \brief 最后写入时间
           imgui::TableNextColumn();
           dear::Text(fmt::format("{}", k_p.last_time));
@@ -360,7 +387,7 @@ void file_browser::set_flags(file_browser::flags in_flags) {
   p_i->enum_flags = in_flags;
 }
 void file_browser::set_pwd_path(const FSys::path& in_path) {
-  this->scan_director(p_i->pwd);
+  this->scan_director(in_path);
 }
 bool file_browser::is_ok() const {
   return p_i->is_ok;

@@ -13,7 +13,7 @@ namespace doodle {
 
 class file_dialog::impl {
  public:
-//  explicit impl() : p_file_dialog(in_flags){};
+  //  explicit impl() : p_file_dialog(in_flags){};
   file_browser p_file_dialog;
   select_sig p_sig;
 };
@@ -72,7 +72,7 @@ void file_dialog::update(chrono::duration<chrono::system_clock::rep, chrono::sys
                p_i->p_sig);
   }
 
-  if(!p_i->p_file_dialog.is_open()){
+  if (!p_i->p_file_dialog.is_open()) {
     this->fail();
   }
 }
