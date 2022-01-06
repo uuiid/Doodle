@@ -85,7 +85,7 @@ class file_browser::impl {
  public:
   explicit impl()
       : enum_flags(),
-        show(false),
+        b_open(false),
         pwd(FSys::current_path()),
         path_list(),
         select_index(0),
@@ -97,7 +97,7 @@ class file_browser::impl {
         buffer(){};
   std::int32_t enum_flags;
 
-  bool show;
+  bool b_open;
   FSys::path pwd;
 
   std::vector<path_attr> path_list;
@@ -175,29 +175,34 @@ void file_browser::render() {
     k_fun();
   p_i->begin_fun_list.clear();
 
-  if (imgui::Button("drive")) {
-    auto k_dir = win::list_drive();
-    p_i->path_list.clear();
-    p_i->pwd.clear();
-    std::transform(k_dir.begin(), k_dir.end(), std::back_inserter(p_i->path_list),
-                   [](auto& in_path) -> path_attr {
-                     return path_attr{in_path};
-                   });
-  }
+  dear::PopupModal{"", &p_i->b_open} && [&]() {
+    if (imgui::Button("drive")) {
+      auto k_dir = win::list_drive();
+      p_i->path_list.clear();
+      p_i->pwd.clear();
+      std::transform(k_dir.begin(), k_dir.end(), std::back_inserter(p_i->path_list),
+                     [](auto& in_path) -> path_attr {
+                       return path_attr{in_path};
+                     });
+    }
 
-  this->render_path();
-  this->render_file_list();
-  this->render_buffer();
-  this->render_filter();
-  if (imgui::Button("ok")) {
-    p_i->is_ok = true;
-    p_i->show  = false;
-  }
-  imgui::SameLine();
-  if (imgui::Button("cancel")) {
-    p_i->is_ok = false;
-    p_i->show  = false;
-  }
+    this->render_path();
+    this->render_file_list();
+    this->render_buffer();
+    this->render_filter();
+    if (imgui::Button("ok")) {
+      p_i->is_ok  = true;
+      p_i->b_open = false;
+      imgui::CloseCurrentPopup();
+    }
+    imgui::SameLine();
+    if (imgui::Button("cancel")) {
+      p_i->is_ok  = false;
+      p_i->b_open = false;
+      imgui::CloseCurrentPopup();
+    }
+  };
+
 }
 void file_browser::render_path() {
   std::int32_t k_i{0};
@@ -294,11 +299,11 @@ void file_browser::render_file_list() {
       };
 }
 
-void file_browser::show() {
-  p_i->show = true;
+void file_browser::open() {
+  p_i->b_open = true;
 }
 void file_browser::close() {
-  p_i->show = false;
+  p_i->b_open = false;
 }
 
 void file_browser::set_filter(const std::vector<string>& in_vector) {

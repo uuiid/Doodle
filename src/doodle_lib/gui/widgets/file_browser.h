@@ -26,7 +26,7 @@ class DOODLELIB_API file_browser {
   /**
    * @brief 显示文件管理器
    */
-  void show();
+  void open();
   /**
    * @brief 关闭文件管理器
    */
@@ -54,20 +54,20 @@ class DOODLELIB_API file_browser {
    * @brief 查询操作: 是否有选择 ok
    * @return 是否有选择 ok 并不会判断选择是否为空
    */
-  bool is_ok() const;
+  [[nodiscard]] bool is_ok() const;
 
   /**
    * @brief 查询操作： 选择的文件
    */
-  FSys::path get_select() const;
+  [[nodiscard]] FSys::path get_select() const;
   /**
    * @brief 查询操作： 多个选中的文件
    */
-  std::vector<FSys::path> get_selects() const;
+  [[nodiscard]] std::vector<FSys::path> get_selects() const;
 
 
- private:
   void render();
+ private:
   void render_path();
   void scan_director(const FSys::path& in_path);
   void render_file_list();
