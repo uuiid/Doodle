@@ -121,12 +121,27 @@ class file_browser::impl {
                       in_attr.has_select = true;
                     });
     }
+    generate_buffer();
   }
   void set_one_select(path_attr& k_p) {
     std::for_each(path_list.begin(), path_list.end(), [](auto& in) {
       in.has_select = false;
     });
     k_p.has_select = true;
+    generate_buffer();
+  }
+  void generate_buffer() {
+    if (std::any_of(path_list.begin(), path_list.end(), [](const path_attr& in) -> bool { return in.has_select; })) {
+      auto l_size = std::count_if(path_list.begin(), path_list.end(), [](const path_attr& in) -> bool { return in.has_select; });
+      if (l_size > 1) {
+        buffer = fmt::format("选中了 {} 个路径", l_size);
+      } else {
+        auto k_p = std::find_if(path_list.begin(), path_list.end(),[](const path_attr& in) -> bool { return in.has_select; });
+        buffer = k_p->show_name;
+      }
+    } else {
+      buffer.clear();
+    }
   }
 };
 
