@@ -443,14 +443,20 @@ struct adl_render {};
 
 template <class T,
           std::enable_if_t<!std::is_same_v<entt::handle, T>, bool> = true>
-bool render(const T &in_data) {
+bool render(T &in_data) {
   return adl_render<T>::render(in_data);
 };
 
 template <class T>
 bool render(const entt::handle &in_handle) {
-  if (in_handle.template any_of<T>())
-    return render(in_handle.template get<T>());
+  if (in_handle.template any_of<T>()) {
+    if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle), decltype(in_handle.template get<T>())>)
+      return adl_render<T>::render(in_handle, in_handle.template get<T>());
+    else if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle)>)
+      return adl_render<T>::render(in_handle);
+    else
+      return adl_render<T>::render(in_handle.template get<T>());
+  }
   return false;
 };
 }  // namespace gui

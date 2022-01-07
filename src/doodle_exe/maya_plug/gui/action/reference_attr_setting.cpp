@@ -23,7 +23,8 @@
 #include <maya_plug/maya_plug_fwd.h>
 #include <maya_plug/data/sim_overr_attr.h>
 
-namespace doodle::maya_plug {
+namespace doodle {
+namespace maya_plug {
 
 namespace reference_attr {
 
@@ -153,5 +154,6 @@ bool reference_attr_setting::render() {
 
   return true;
 }
+}  // namespace maya_plug
 
-}  // namespace doodle::maya_plug
+}  // namespace doodle

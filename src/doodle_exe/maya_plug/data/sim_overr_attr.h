@@ -5,7 +5,8 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-namespace doodle::maya_plug {
+namespace doodle {
+namespace maya_plug {
 
 class sim_overr_attr {
  private:
@@ -34,7 +35,7 @@ class sim_overr_attr {
   /**
    * @brief 尖锐碰撞 true
    */
-  bool sharp_feature;
+  bool sharp_feature{};
 
  private:
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(sim_overr_attr,
@@ -59,5 +60,12 @@ class sim_overr_attr {
   //    j.at("sharp_feature").get_to(p.sharp_feature);
   //  }
 };
+}  // namespace maya_plug
+namespace gui {
+template <>
+struct adl_render<maya_plug::sim_overr_attr> {
+  static bool render(const entt::handle& in_handle);
+};
 
-}  // namespace doodle::maya_plug
+}  // namespace gui
+}  // namespace doodle
