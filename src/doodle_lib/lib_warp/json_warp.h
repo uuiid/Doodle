@@ -11,16 +11,16 @@
 #include <optional>
 // partial specialization (full specialization works too)
 namespace nlohmann {
-template <>
-struct adl_serializer<std::filesystem::path> {
-  static void to_json(json& j, const std::filesystem::path& in_path) {
-    j = in_path.generic_string();
-  }
-
-  static void from_json(const json& j, std::filesystem::path& in_path) {
-    in_path = j.get<std::string>();
-  }
-};
+// template <>
+// struct adl_serializer<std::filesystem::path> {
+//   static void to_json(json& j, const std::filesystem::path& in_path) {
+//     j = in_path.generic_string();
+//   }
+//
+//   static void from_json(const json& j, std::filesystem::path& in_path) {
+//     in_path = j.get<std::string>();
+//   }
+// };
 template <class Rep, class Period>
 struct adl_serializer<std::chrono::duration<Rep, Period>> {
   using time_duration = std::chrono::duration<Rep, Period>;
