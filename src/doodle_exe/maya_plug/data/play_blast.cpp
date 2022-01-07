@@ -182,11 +182,11 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
     auto k_f = get_file_dir();
 
-    std::vector<entt::handle> l_handle_list{};
+    std::vector<image_file_attribute> l_handle_list{};
     std::double_t k_frame{0};
-    for (auto& l_path : FSys::list_files(k_f)) {
-      auto k_h      = make_handle();
-      auto& k_image = k_h.emplace<image_file_attribute>(l_path);
+    for (auto& l_path : FSys::directory_iterator{k_f}) {
+      image_file_attribute k_image{};
+      k_image.file_path = l_path;
       /// \brief 相机名称
       k_image.watermarks.emplace_back(k_cam.get_transform_name(), 0.1, 0.1, cv::Scalar{25, 220, 2});
       /// \brief 当前帧和总帧数
@@ -211,7 +211,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
           core_set::getSet().get_user_en(),
           0.5, 0.91,
           cv::Scalar{25, 220, 2});
-      l_handle_list.push_back(k_h);
+      l_handle_list.push_back(std::move(k_image));
     }
     auto k_msg = make_handle();
     k_msg.emplace<process_message>().set_name("制作拍屏");

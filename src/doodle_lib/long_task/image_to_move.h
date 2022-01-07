@@ -24,18 +24,10 @@ class DOODLELIB_API image_file_attribute {
   FSys::path file_path;
   std::vector<image_watermark> watermarks;
 
-  inline bool operator<(const image_file_attribute &in_rhs) const {
-    return file_path < in_rhs.file_path;
-  }
-  inline bool operator>(const image_file_attribute &in_rhs) const {
-    return in_rhs < *this;
-  }
-  inline bool operator<=(const image_file_attribute &in_rhs) const {
-    return !(in_rhs < *this);
-  }
-  inline bool operator>=(const image_file_attribute &in_rhs) const {
-    return !(*this < in_rhs);
-  }
+  bool operator<(const image_file_attribute &in_rhs) const;
+  bool operator>(const image_file_attribute &in_rhs) const;
+  bool operator<=(const image_file_attribute &in_rhs) const;
+  bool operator>=(const image_file_attribute &in_rhs) const;
 };
 namespace details {
 
@@ -55,6 +47,8 @@ class DOODLELIB_API image_to_move : public process_t<image_to_move> {
    */
   explicit image_to_move(const entt::handle &in_handle,
                          const std::vector<entt::handle> &in_vector);
+  explicit image_to_move(const entt::handle &in_handle,
+                          const std::vector<image_file_attribute>& in_vector);
   ~image_to_move() override;
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();

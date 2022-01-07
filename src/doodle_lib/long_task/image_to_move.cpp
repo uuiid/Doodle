@@ -42,6 +42,7 @@ void watermark_add_image(cv::Mat &in_image, const image_watermark &in_watermark)
 
 class image_to_move::impl {
  public:
+  impl() = default;
   std::vector<image_file_attribute> p_image;
   FSys::path p_out_path;
   entt::handle p_h;
@@ -71,6 +72,31 @@ image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<en
   std::for_each(p_i->p_image.begin(), p_i->p_image.end(), [](const image_file_attribute &in) {
     chick_true<doodle_error>(exists(in.file_path), DOODLE_LOC, "找不到路径指向的文件");
   });
+  chick_true<doodle_error>(!p_i->p_image.empty(), DOODLE_LOC, "没有传入任何的图片");
+
+  /// \brief 这里排序组件
+  std::sort(p_i->p_image.begin(), p_i->p_image.end());
+
+  DOODLE_LOG_INFO("获得图片路径 {}", p_i->p_image.front().file_path.parent_path());
+}
+image_to_move::image_to_move(const entt::handle &in_handle,
+                             const std::vector<image_file_attribute> &in_vector)
+    : p_i(std::make_unique<impl>()){
+  chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
+  chick_true<doodle_error>(in_handle.any_of<FSys::path>(), DOODLE_LOC, "缺失输出文件路径");
+
+  p_i->p_out_path = in_handle.get<FSys::path>();
+  //  p_i->p_out_path = in_handle.get_or_emplace<FSys::path>(core_set::getSet().get_cache_root("image"));
+
+  //  std::for_each(in_vector.begin(), in_vector.end(), [](const image_file_attribute &in) {
+  //    chick_true<doodle_error>(exists(in.file_path), DOODLE_LOC, "找不到路径指向的文件");
+  //  });
+  for (auto &k_i : in_vector) {
+    chick_true<doodle_error>(exists(k_i.file_path), DOODLE_LOC, "找不到路径指向的文件");
+  }
+  p_i->p_image = in_vector;
+  p_i->p_h     = in_handle;
+
   chick_true<doodle_error>(!p_i->p_image.empty(), DOODLE_LOC, "没有传入任何的图片");
 
   /// \brief 这里排序组件
@@ -174,6 +200,7 @@ void image_to_move::aborted() {
     throw;
   }
 }
+
 }  // namespace details
 image_watermark::image_watermark(const string &in_p_text,
                                  double_t in_p_width_proportion,
@@ -183,4 +210,16 @@ image_watermark::image_watermark(const string &in_p_text,
       p_width_proportion(in_p_width_proportion),
       p_height_proportion(in_p_height_proportion),
       rgba(in_rgba) {}
+bool image_file_attribute::operator<(const image_file_attribute &in_rhs) const {
+  return file_path < in_rhs.file_path;
+}
+bool image_file_attribute::operator>(const image_file_attribute &in_rhs) const {
+  return in_rhs < *this;
+}
+bool image_file_attribute::operator<=(const image_file_attribute &in_rhs) const {
+  return !(in_rhs < *this);
+}
+bool image_file_attribute::operator>=(const image_file_attribute &in_rhs) const {
+  return !(*this < in_rhs);
+}
 }  // namespace doodle
