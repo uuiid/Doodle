@@ -68,7 +68,7 @@ find_package(Doxygen)
 # 寻找opencv
 find_package(OpenCV CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
-find_package(imguiwrap CONFIG REQUIRED)
+#find_package(imguiwrap CONFIG REQUIRED)
 
 #这两个是我自己写的寻找库的方法
 #find_package(SqlppSqlite REQUIRED)
