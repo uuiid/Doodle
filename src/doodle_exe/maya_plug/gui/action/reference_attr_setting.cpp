@@ -7,6 +7,7 @@
 #include <doodle_lib/lib_warp/entt_warp.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata.h>
+#include <doodle_lib/lib_warp/entt_warp.h>
 
 #include <maya/MTime.h>
 #include <maya/MDagPath.h>
@@ -103,6 +104,7 @@ bool reference_attr_setting::render() {
   MStatus k_s{};
   MSelectionList l_select{};
   auto k_ref_view = g_reg()->view<reference_file>();
+  scoped_function l_scoped_function{};
 
   for (auto k_e : k_ref_view) {
     auto& k_ref = k_ref_view.get<reference_file>(k_e);
@@ -113,11 +115,10 @@ bool reference_attr_setting::render() {
 
       if (imgui::Checkbox("高精度配置", &(k_ref.high_speed_sim))) {
         auto k_h = make_handle(k_e);
-        if (k_ref.high_speed_sim) {
-          //          auto& k_sim = k_h.get_or_emplace<sim_overr_attr>();
-          gui::render<sim_overr_attr>(k_h);
-        } else {
-          k_h.erase<sim_overr_attr>();
+        if (!k_ref.high_speed_sim) {
+          l_scoped_function.fun_list.emplace_back([=]() {
+            k_h.erase<sim_overr_attr>();
+          });
         }
       }
       if (imgui::Button("添加碰撞")) {
@@ -132,6 +133,7 @@ bool reference_attr_setting::render() {
       dear::Text("解算碰撞: ");
       for (const auto& k_f : k_ref.collision_model_show_str)
         dear::Text(k_f);
+      gui::render<sim_overr_attr>(make_handle(k_e));
 
       // if (imgui::Button("test")) {
       //   try {
