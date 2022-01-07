@@ -159,10 +159,6 @@ std::vector<IntType> range(IntType start, IntType stop, IntType step = 1) {
 };
 
 namespace FSys {
-// namespace details{
-// using namespace std::filesystem;
-//
-// }
 using namespace std::filesystem;
 using fstream  = std::fstream;
 using istream  = std::istream;
@@ -243,6 +239,7 @@ DOODLELIB_API std::string file_hash_sha224(const path &in_file);
 DOODLELIB_API std::vector<path> list_files(const path &in_dir);
 
 }  // namespace FSys
+
 using namespace entt::literals;
 using namespace std::literals;
 using namespace chrono::literals;
@@ -357,10 +354,9 @@ class DOODLELIB_API bounded_pool;
 template <class Delta>
 class DOODLELIB_API scheduler;
 
-
 template <class Derived>
-using process_t   = entt::process<Derived, std::chrono::system_clock::duration>;
-using scheduler_t = scheduler<std::chrono::system_clock::duration>;
+using process_t      = entt::process<Derived, std::chrono::system_clock::duration>;
+using scheduler_t    = scheduler<std::chrono::system_clock::duration>;
 
 using bounded_pool_t = bounded_pool<std::chrono::system_clock::duration>;
 
@@ -440,7 +436,24 @@ class trans_file;
 class trans_files;
 using trans_file_ptr = std::shared_ptr<trans_file>;
 }  // namespace rpc_trans
-class Doodle;
+
+namespace gui {
+template <class T>
+struct adl_render {};
+
+template <class T,
+          std::enable_if_t<!std::is_same_v<entt::handle, T>, bool> = true>
+bool render(const T &in_data) {
+  return adl_render<T>::render(in_data);
+};
+
+template <class T>
+bool render(const entt::handle &in_handle) {
+  if (in_handle.template any_of<T>())
+    return render(in_handle.template get<T>());
+  return false;
+};
+}  // namespace gui
 
 namespace details {
 template <class in_type>

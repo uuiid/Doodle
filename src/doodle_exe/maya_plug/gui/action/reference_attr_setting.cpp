@@ -21,6 +21,7 @@
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/maya_plug_fwd.h>
+#include <maya_plug/data/sim_overr_attr.h>
 
 namespace doodle::maya_plug {
 
@@ -109,7 +110,15 @@ bool reference_attr_setting::render() {
       if (!k_ref.use_sim)
         return;
 
-      imgui::Checkbox("高精度配置", &(k_ref.high_speed_sim));
+      if (imgui::Checkbox("高精度配置", &(k_ref.high_speed_sim))) {
+        auto k_h = make_handle(k_e);
+        if (k_ref.high_speed_sim) {
+          //          auto& k_sim = k_h.get_or_emplace<sim_overr_attr>();
+          gui::render<sim_overr_attr>(k_h);
+        } else {
+          k_h.erase<sim_overr_attr>();
+        }
+      }
       if (imgui::Button("添加碰撞")) {
         k_s = MGlobal::getActiveSelectionList(l_select);
         DOODLE_CHICK(k_s);
@@ -119,7 +128,7 @@ bool reference_attr_setting::render() {
       if (imgui::Button("选择已添加")) {
         MGlobal::setActiveSelectionList(k_ref.get_collision_model());
       }
-      dear::Text("解算碰撞");
+      dear::Text("解算碰撞: ");
       for (const auto& k_f : k_ref.collision_model_show_str)
         dear::Text(k_f);
 
