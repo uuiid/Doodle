@@ -5,12 +5,17 @@
 #pragma once
 
 #include <imgui.h>
+#include <imgui_internal.h>
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
+#include <imgui_stdlib.h>
 namespace doodle {
 namespace imgui {
 using namespace ::ImGui;
 }  // namespace imgui
 
 namespace dear {
+using namespace ::ImGui;
 static const ImVec2 Zero(0.0f, 0.0f);
 
 // scoped_effect is a helper that uses automatic object lifetime to control
