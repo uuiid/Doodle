@@ -142,6 +142,7 @@ set(
     gui/widgets/time_widget.cpp
     gui/widgets/tool_box_widget.cpp
     lib_warp/boost_serialization_warp.cpp
+    lib_warp/entt_warp.cpp
     lib_warp/imgui_warp.cpp
     logger/logger.cpp
     metadata/assets.cpp

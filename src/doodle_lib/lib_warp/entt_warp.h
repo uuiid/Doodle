@@ -7,7 +7,9 @@
 #include <DoodleConfig.h>
 
 #include <entt/entt.hpp>
-namespace doodle::entt_tool {
+namespace doodle {
+namespace entt_tool {
+
 namespace detail {
 template <class Component, class Archive>
 void _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
@@ -56,4 +58,12 @@ void load_comm(entt::handle &in_handle, Archive &in_archive) {
   detail::_load_comm_<Component...>(in_handle, in_archive, std::index_sequence_for<Component...>{});
 }
 
-}  // namespace doodle::entt_tool
+class scoped_function {
+ public:
+  std::vector<std::function<void()>> fun_list;
+  scoped_function() = default;
+  inline ~scoped_function();
+};
+}  // namespace entt_tool
+using scoped_function = entt_tool::scoped_function;
+}  // namespace doodle
