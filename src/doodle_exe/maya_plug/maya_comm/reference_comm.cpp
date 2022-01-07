@@ -248,9 +248,11 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     DOODLE_LOG_INFO("全部的引用文件导出")
     for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
       switch (k_export_type) {
-        case export_type::abc:
-          k_r.export_abc(k_start, k_end);
+        case export_type::abc: {
+          if (k_r.has_sim_cloth())
+            k_r.export_abc(k_start, k_end);
           break;
+        }
         case export_type::fbx:
           if (k_r.is_loaded())
             k_r.export_fbx(k_start, k_end);

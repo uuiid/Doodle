@@ -41,6 +41,7 @@ class reference_file {
   bool has_node(const MSelectionList &in_list);
 
   [[nodiscard]] string get_unique_name() const;
+  bool has_sim_cloth();
   /**
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况
    */

@@ -231,6 +231,7 @@ bool reference_file::rename_material() const {
 
   return true;
 }
+
 bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) const {
   rename_material();
   MSelectionList k_select{};
@@ -422,6 +423,24 @@ bool reference_file::is_loaded() const {
   auto k_r = k_ref.isLoaded(&k_s);
   DOODLE_CHICK(k_s);
   return k_r;
+}
+bool reference_file::has_sim_cloth() {
+  chick_mobject();
+  MFnReference k_ref{p_m_object};
+  MStatus k_s{};
+  MObjectArray k_objs{};
+  k_ref.nodes(k_objs, &k_s);
+  DOODLE_CHICK(k_s);
+  MFnDependencyNode k_node{};
+  for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
+    k_s = k_node.setObject(k_objs[l_i]);
+    DOODLE_CHICK(k_s);
+    if (k_node.typeName(&k_s) == "qlSolverShape") {
+      DOODLE_CHICK(k_s);
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace doodle::maya_plug
