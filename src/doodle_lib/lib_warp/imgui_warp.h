@@ -47,7 +47,7 @@ struct ScopeWrapper {
   // operator&& will excute 'code' if the predicate supplied during
   // construction was true.
   template <typename PassthruFn>
-  constexpr bool operator&&(PassthruFn passthru) const noexcept {
+  constexpr bool operator&&(PassthruFn passthru) const {
     if (ok_)
       passthru();
     return ok_;
