@@ -98,37 +98,7 @@ bool comm_project_add::render() {
         in.vfx_cloth_sim_path = p_impl->vfx_cloth_sim_path;
       });
     }
-    if (imgui::Checkbox(p_show_str["simple_subsampling"].c_str(), &(p_impl->cloth_config.simple_subsampling))) {
-      p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
-        in.simple_subsampling = p_impl->cloth_config.simple_subsampling;
-      });
-    }
-    if (imgui::SliderFloat(p_show_str["frame_samples"].c_str(), &(p_impl->cloth_config.frame_samples), 0.f, 1000.f)) {
-      p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
-        in.frame_samples = p_impl->cloth_config.frame_samples;
-      });
-    }
 
-    if (imgui::SliderFloat(p_show_str["time_scale"].c_str(), &(p_impl->cloth_config.time_scale), 0.f, 1000.f)) {
-      p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
-        in.time_scale = p_impl->cloth_config.time_scale;
-      });
-    }
-    if (imgui::SliderFloat(p_show_str["length_scale"].c_str(), &(p_impl->cloth_config.length_scale), 0.f, 1000.f)) {
-      p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
-        in.length_scale = p_impl->cloth_config.length_scale;
-      });
-    }
-    if (imgui::InputText(p_show_str["布料代理"].c_str(), &(p_impl->cloth_config.cloth_proxy))) {
-      p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
-        in.cloth_proxy = p_impl->cloth_config.cloth_proxy;
-      });
-    }
-    if (imgui::InputText(p_show_str["布料节点"].c_str(), &(p_impl->cloth_config.cloth_shape))) {
-      p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
-        in.cloth_shape = p_impl->cloth_config.cloth_shape;
-      });
-    }
     if (imgui::InputText(p_show_str["导出节点"].c_str(), &(p_impl->cloth_config.export_group))) {
       p_impl->p_root.patch<project::cloth_config>([&](project::cloth_config& in) {
         in.export_group = p_impl->cloth_config.export_group;

@@ -10,12 +10,6 @@
 namespace doodle {
 project::cloth_config::cloth_config()
     : vfx_cloth_sim_path("C:/"),
-      simple_subsampling(true),
-      frame_samples(10),
-      time_scale(0.1),
-      length_scale(0.4),
-      cloth_shape("_clothShape"),
-      cloth_proxy("_cloth_proxy"),
       export_group("UE4") {}
 
 project::project()

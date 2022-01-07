@@ -13,6 +13,8 @@ add_compile_definitions(QT_NO_KEYWORDS UNICODE _UNICODE NOMINMAX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 #添加模块文件
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
@@ -32,26 +34,10 @@ option(Boost_NO_WARN_NEW_VERSIONS "boost warn OFF " ON)
 #配置版本文件
 configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)
 include_directories(${CMAKE_BINARY_DIR}/configure)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# #添加qt路径
-# list(APPEND CMAKE_PREFIX_PATH F:/Qt/5.12.9/msvc2017_64)
 
 #首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(CMakeRC)
-
-#find_package(Qt5 CONFIG COMPONENTS Core Widgets gui LinguistTools  REQUIRED)
-#GUI 库
-#find_package(wxWidgets REQUIRED)
-
-#find_package(EnTT CONFIG REQUIRED)
-# find_package(CURL REQUIRED)
-#find_package(GTest CONFIG REQUIRED)
-#target_link_libraries(main PRIVATE Catch2::Catch2)
-#find_package(FFMPEG REQUIRED)
-#find_package(rttr CONFIG REQUIRED)
-# find_package(pugixml CONFIG REQUIRED)
 
 find_package(Boost 1.75 REQUIRED COMPONENTS
         filesystem
@@ -76,14 +62,13 @@ find_package(SqlppMySql REQUIRED)
 
 #仅头库
 find_package(magic_enum CONFIG REQUIRED)
-#find_package(jsoncpp CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
 find_package(cereal CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 
-#find_package(cxxopts CONFIG REQUIRED)
+
 find_package(cryptopp CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 
