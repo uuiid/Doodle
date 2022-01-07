@@ -419,4 +419,8 @@
  *
  * @subsubsection updata_log_3222 版本3.2.22
  * @li 更新文件选择器
+ *
+ * @subsubsection updata_log_3223 版本3.2.23
+ * @li 修复奇异的maya库和doodle库之间的bug
+ *
  */
