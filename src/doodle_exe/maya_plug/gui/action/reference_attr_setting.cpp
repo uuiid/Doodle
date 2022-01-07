@@ -110,12 +110,13 @@ bool reference_attr_setting::render() {
         return;
 
       imgui::Checkbox("高精度配置", &(k_ref.high_speed_sim));
-      if (imgui::Button("替换")) {
+      if (imgui::Button("添加碰撞")) {
         k_s = MGlobal::getActiveSelectionList(l_select);
         DOODLE_CHICK(k_s);
         k_ref.set_collision_model(l_select);
       }
-      if (imgui::Button("获取")) {
+      ImGui::SameLine();
+      if (imgui::Button("选择已添加")) {
         MGlobal::setActiveSelectionList(k_ref.get_collision_model());
       }
       dear::Text("解算碰撞");

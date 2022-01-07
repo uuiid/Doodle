@@ -28,12 +28,13 @@ class doodle_main(object):
 def doodle_test_sim():
     print("run test")
     k_f = maya_fun_tool.open_file()
-    k_f.config_ = """[{
-        "export_path":"",
-        "only_sim":false,
-        "path":"E:/tmp/test_sim_1_2/RJ_EP031_SC012_AN.ma",
-        "qcloth_assets_path":""
-        }]"""
+    k_f.config_ = """
+[
+{"export_path":"",
+"only_sim":false,
+"path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN_mate.ma",
+"qcloth_assets_path":"",
+"uuid":"00000000-0000-0000-0000-000000000000"}]"""
     k_f()
 
 
