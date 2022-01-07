@@ -7,16 +7,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/protobuf_warp.h>
 #include <doodle_lib/metadata/metadata_factory.h>
-#include <doodle_lib/metadata/tree_adapter.h>
-#include <google/protobuf/message.h>
 
-#include <boost/intrusive/intrusive_fwd.hpp>
-#include <boost/intrusive/link_mode.hpp>
-#include <boost/intrusive/list.hpp>
-#include <boost/intrusive/pack_options.hpp>
-#include <boost/intrusive/set.hpp>
-#include <boost/intrusive/trivial_value_traits.hpp>
-#include <boost/serialization/export.hpp>
 #include <boost/signals2.hpp>
 #include <optional>
 
