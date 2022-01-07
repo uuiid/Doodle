@@ -23,8 +23,7 @@ file(DOWNLOAD
         SHOW_PROGRESS)
 file(DOWNLOAD
         https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
-        ${tzdata}
-        SHOW_PROGRESS)
+        ${tzdata})
 execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${tzdata}
         WORKING_DIRECTORY ${tzdata_dir}
         RESULT_VARIABLE rv)
