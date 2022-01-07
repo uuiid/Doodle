@@ -177,7 +177,7 @@ add_custom_command(
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.msi ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.msi
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.7z ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.7z
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.zip ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.zip
+#        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.zip ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.zip
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/docker/doodle_server/bin
 )
