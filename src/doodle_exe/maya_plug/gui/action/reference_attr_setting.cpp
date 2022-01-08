@@ -8,6 +8,7 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/lib_warp/entt_warp.h>
+#include <doodle_lib/long_task/process_pool.h>
 
 #include <maya/MTime.h>
 #include <maya/MDagPath.h>
@@ -104,7 +105,6 @@ bool reference_attr_setting::render() {
   MStatus k_s{};
   MSelectionList l_select{};
   auto k_ref_view = g_reg()->view<reference_file>();
-  scoped_function l_scoped_function{};
 
   for (auto k_e : k_ref_view) {
     auto& k_ref = k_ref_view.get<reference_file>(k_e);
@@ -116,7 +116,7 @@ bool reference_attr_setting::render() {
       if (imgui::Checkbox("高精度配置", &(k_ref.high_speed_sim))) {
         auto k_h = make_handle(k_e);
         if (!k_ref.high_speed_sim) {
-          l_scoped_function.fun_list.emplace_back([=]() {
+          g_main_loop().attach([=]() {
             k_h.erase<sim_overr_attr>();
           });
         }
