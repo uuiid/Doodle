@@ -266,29 +266,4 @@ void ue4_project::import_file(const FSys::path& in_paths, const long_term_ptr& i
   }
 }
 
-ue4_project_async::ue4_project_async()
-    : p_ue4() {
-}
-long_term_ptr ue4_project_async::import_file(const FSys::path& in_paths) {
-  auto k_term = new_object<long_term>();
-  k_term->set_name(fmt::format("导入文件 {}", in_paths.filename()));
-  k_term->p_list.emplace_back(doodle_lib::Get().get_thread_pool()->enqueue(
-      [k_term, in_paths, self = p_ue4]() {
-        self->import_file(in_paths, k_term);
-      }));
-  return k_term;
-}
-void ue4_project_async::set_ue4_project(const FSys::path& in_paths) {
-  p_ue4 = new_object<ue4_project>(in_paths);
-}
-long_term_ptr ue4_project_async::create_shot_folder(const std::vector<entt::handle>& in_vector) {
-  auto k_term = new_object<long_term>();
-  k_term->set_name("创建序列");
-
-  k_term->p_list.emplace_back(doodle_lib::Get().get_thread_pool()->enqueue(
-      [k_term, in_vector, self = p_ue4]() {
-        self->create_shot_folder(in_vector, k_term);
-      }));
-  return k_term;
-}
 }  // namespace doodle

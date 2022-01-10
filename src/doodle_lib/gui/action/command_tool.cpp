@@ -133,20 +133,6 @@ bool comm_create_video::render() {
   }
   imgui::SameLine();
   if (imgui::Button("创建视频")) {
-    auto image = new_object<image_sequence_async>();
-    for (const auto& i : p_image_path) {
-      image_sequence_ptr ptr{};
-      if (i.use_dir) {
-        ptr = image->set_path(i.p_path_list.front());
-      } else {
-        ptr = image->set_path(i.p_path_list);
-      }
-      ptr->set_out_path(*p_out_path);
-      auto l_w = details::watermark{};
-      l_w.path_to_ep_sc(i.p_path_list.front());
-      ptr->add_watermark(l_w);
-      image->create_video(*p_out_path);
-    }
   }
 
   dear::ListBox{"image_list"} && [this]() {
@@ -208,11 +194,6 @@ bool comm_import_ue_files::render() {
         string_list{".fbx", ".abc"});
   }
   if (imgui::Button("导入")) {
-    auto ue = new_object<ue4_project_async>();
-    ue->set_ue4_project(p_ue4_prj);
-    for (const auto& i : p_import_list) {
-      ue->import_file(i);
-    }
   }
   dear::ListBox{"文件列表"} && [this]() {
     for (const auto& in : p_import_list)

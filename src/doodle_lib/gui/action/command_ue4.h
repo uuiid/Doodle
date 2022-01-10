@@ -14,7 +14,7 @@ class DOODLELIB_API comm_ass_ue4_create_shot : public command_base {
 
   std::vector<entt::handle> p_shot_list;
 
-  ue4_project_async_ptr p_ue4;
+
 
  public:
   comm_ass_ue4_create_shot();

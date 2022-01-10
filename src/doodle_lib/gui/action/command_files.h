@@ -18,14 +18,12 @@ class DOODLELIB_API comm_files_select : public command_base {
 
   command_ptr p_comm_sub;
 
-
  public:
   comm_files_select();
 
   bool render() override;
   bool set_data(const entt::handle& in) override;
 };
-
 
 class DOODLELIB_API comm_files_up : public command_base {
  private:
@@ -40,15 +38,12 @@ class DOODLELIB_API comm_files_up : public command_base {
   bool set_data(const entt::handle& in) override;
 };
 
-
 class comm_file_image_to_move : public command_base {
  private:
   FSys::path p_out_file;
   bool_ptr p_not_up_file;
   bool_ptr p_not_up_source_file;
   entt::handle p_root;
-  image_sequence_async_ptr p_image_create;
-  image_sequence_ptr p_image;
 
   string p_text;
 
@@ -56,19 +51,9 @@ class comm_file_image_to_move : public command_base {
   bool updata_file();
 
  public:
-  comm_file_image_to_move()
-      :         p_out_file(),
-        p_not_up_file(new_object<bool>(false)),
-        p_not_up_source_file(new_object<bool>(false)),
-        p_root(),
-        p_image_create(),
-        p_image() {
-    init();
-  };
+  comm_file_image_to_move();
   bool render() override;
   bool set_data(const entt::handle& in) override;
 };
-
-
 
 }  // namespace doodle

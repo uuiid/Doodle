@@ -4,6 +4,13 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle::details {
+/**
+ * @brief
+ *
+ * @note
+ *  * 查看 FSequencer::CreateCamera() 和 MovieSceneToolHelpers::CreateCameraCutSectionForCamera 以及 UMovieScene::AddCameraCutTrack 函数进行创建ue4 定序器 camera
+ *  *
+ */
 class DOODLELIB_API ue4_exe : public process_t<ue4_exe> {
  public:
   using base_type = process_t<ue4_exe>;

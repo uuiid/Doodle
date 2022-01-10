@@ -15,8 +15,7 @@
 #include <doodle_lib/metadata/metadata_cpp.h>
 namespace doodle {
 comm_ass_ue4_create_shot::comm_ass_ue4_create_shot()
-    : p_ue4(new_object<ue4_project_async>()),
-      p_ue4_prj_path(new_object<string>()) {
+    : p_ue4_prj_path(new_object<string>()) {
   p_name     = "创建ue4镜头";
   p_show_str = make_imgui_name(this,
                                "创建镜头序列",
@@ -37,31 +36,9 @@ bool comm_ass_ue4_create_shot::render() {
         "打开文件路径",
         string_list{".uproject"});
   if (imgui::Button(p_show_str["获得选择"].c_str())) {
-    // @todo: 添加多个选择时的获取方案
-    // auto k_ass = doodle_app::Get()->get_register()->get_widget<assets_widget>();
-    // if (k_ass) {
-    //   auto k_all = k_ass->p_all_selected;
-    //   p_shot_list.clear();
-    //   boost::copy(
-    //       k_all |
-    //           boost::adaptors::transformed([](auto in) {
-    //             return make_handle(in);
-    //           }) |
-    //           boost::adaptors::filtered([](auto in) {
-    //             return in.any_of<shot>();
-    //           }),
-    //       std::back_inserter(p_shot_list));
-    //   boost::sort(p_shot_list, [](const entt::handle& in_r, const entt::handle& in_l) {
-    //     return in_r.get<shot>() < in_l.get<shot>();
-    //   });
-    // }
   }
   imgui::SameLine();
   if (imgui::Button(p_show_str["创建镜头序列"].c_str())) {
-    if (!p_shot_list.empty()) {
-      p_ue4->set_ue4_project(*p_ue4_prj_path);
-      p_ue4->create_shot_folder(p_shot_list);
-    }
   }
 
   dear::ListBox{p_show_str["shot列表"].c_str()} && [this]() {

@@ -107,7 +107,6 @@ class DOODLELIB_API ue4_project
   void run_python_script(const std::string& python_str) const;
   void run_python_script(const FSys::path& python_file) const;
 
-
  public:
   const static std::string Content;
   const static std::string ContentShot;
@@ -169,16 +168,5 @@ class DOODLELIB_API ue4_project
    * @warning 返回的路径都是以 /Game/开头的ue4路径
    */
   static FSys::path analysis_path_to_gamepath(const FSys::path& in_path);
-};
-
-class ue4_project_async : public details::no_copy {
-  ue4_project_ptr p_ue4;
-
- public:
-  ue4_project_async();
-
-  void set_ue4_project(const FSys::path& in_paths);
-  long_term_ptr import_file(const FSys::path& in_paths);
-  long_term_ptr create_shot_folder(const std::vector<entt::handle>& in_vector);
 };
 }  // namespace doodle

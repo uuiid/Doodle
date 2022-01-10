@@ -10,6 +10,7 @@
 #include <doodle_lib/thread_pool/thread_pool.h>
 
 #include <opencv2/opencv.hpp>
+#include <utility>
 namespace doodle {
 namespace details {
 namespace {
@@ -55,16 +56,11 @@ image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<en
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
   chick_true<doodle_error>(in_handle.any_of<FSys::path>(), DOODLE_LOC, "缺失输出文件路径");
-
   p_i->p_out_path = in_handle.get<FSys::path>();
-  //  p_i->p_out_path = in_handle.get_or_emplace<FSys::path>(core_set::getSet().get_cache_root("image"));
-
   std::for_each(in_vector.begin(), in_vector.end(), [](const entt::handle &in) {
     chick_true<doodle_error>(in.any_of<image_file_attribute>(), DOODLE_LOC, "缺失文件属性");
   });
-
   p_i->p_h = in_handle;
-
   std::transform(in_vector.begin(), in_vector.end(), std::back_inserter(p_i->p_image),
                  [](const entt::handle &in) -> image_file_attribute {
                    return in.get<image_file_attribute>();
@@ -73,43 +69,37 @@ image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<en
     chick_true<doodle_error>(exists(in.file_path), DOODLE_LOC, "找不到路径指向的文件");
   });
   chick_true<doodle_error>(!p_i->p_image.empty(), DOODLE_LOC, "没有传入任何的图片");
-
-  /// \brief 这里排序组件
-  std::sort(p_i->p_image.begin(), p_i->p_image.end());
-
-  DOODLE_LOG_INFO("获得图片路径 {}", p_i->p_image.front().file_path.parent_path());
 }
 image_to_move::image_to_move(const entt::handle &in_handle,
                              const std::vector<image_file_attribute> &in_vector)
-    : p_i(std::make_unique<impl>()){
+    : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
   chick_true<doodle_error>(in_handle.any_of<FSys::path>(), DOODLE_LOC, "缺失输出文件路径");
-
   p_i->p_out_path = in_handle.get<FSys::path>();
-  //  p_i->p_out_path = in_handle.get_or_emplace<FSys::path>(core_set::getSet().get_cache_root("image"));
-
-  //  std::for_each(in_vector.begin(), in_vector.end(), [](const image_file_attribute &in) {
-  //    chick_true<doodle_error>(exists(in.file_path), DOODLE_LOC, "找不到路径指向的文件");
-  //  });
-  for (auto &k_i : in_vector) {
-    chick_true<doodle_error>(exists(k_i.file_path), DOODLE_LOC, "找不到路径指向的文件");
-  }
+  std::for_each(in_vector.begin(), in_vector.end(), [](const image_file_attribute &in) {
+    chick_true<doodle_error>(exists(in.file_path), DOODLE_LOC, "找不到路径指向的文件");
+  });
   p_i->p_image = in_vector;
   p_i->p_h     = in_handle;
 
   chick_true<doodle_error>(!p_i->p_image.empty(), DOODLE_LOC, "没有传入任何的图片");
-
-  /// \brief 这里排序组件
-  std::sort(p_i->p_image.begin(), p_i->p_image.end());
-
-  DOODLE_LOG_INFO("获得图片路径 {}", p_i->p_image.front().file_path.parent_path());
 }
 image_to_move::~image_to_move() = default;
 
 void image_to_move::init() {
+  /// \brief 这里排序组件
+  image_file_attribute::extract_num(p_i->p_image);
+  std::sort(p_i->p_image.begin(), p_i->p_image.end());
+  DOODLE_LOG_INFO("获得图片路径 {}", p_i->p_image.front().file_path.parent_path());
+  /// \brief 这里进行消息初始化
   auto &l_mag = p_i->p_h.patch<process_message>();
   l_mag.set_state(l_mag.run);
-  l_mag.aborted_function = [self = this]() {if(self) self->abort(); };
+  l_mag.aborted_function = [self = this]() {
+    if (self) {
+      self->p_i->stop = true;
+      self->abort();
+    }
+  };
 
   /// \brief 这里我们检查 shot，episode 进行路径的组合
   if (!p_i->p_out_path.has_extension())
@@ -202,16 +192,16 @@ void image_to_move::aborted() {
 }
 
 }  // namespace details
-image_watermark::image_watermark(const string &in_p_text,
+image_watermark::image_watermark(string in_p_text,
                                  double_t in_p_width_proportion,
                                  double_t in_p_height_proportion,
-                                 const cv::Scalar &in_rgba)
-    : p_text(in_p_text),
+                                 cv::Scalar in_rgba)
+    : p_text(std::move(in_p_text)),
       p_width_proportion(in_p_width_proportion),
       p_height_proportion(in_p_height_proportion),
-      rgba(in_rgba) {}
+      rgba(std::move(in_rgba)) {}
 bool image_file_attribute::operator<(const image_file_attribute &in_rhs) const {
-  return file_path < in_rhs.file_path;
+  return num < in_rhs.num;
 }
 bool image_file_attribute::operator>(const image_file_attribute &in_rhs) const {
   return in_rhs < *this;
@@ -221,5 +211,46 @@ bool image_file_attribute::operator<=(const image_file_attribute &in_rhs) const 
 }
 bool image_file_attribute::operator>=(const image_file_attribute &in_rhs) const {
   return !(*this < in_rhs);
+}
+void image_file_attribute::extract_num_list() {
+  static std::regex reg{R"(\d+)"};
+  std::smatch k_match{};
+
+  auto k_name = file_path.filename().generic_string();
+
+  auto k_b    = std::sregex_iterator{k_name.begin(), k_name.end(), reg};
+
+  for (auto it = k_b; it != std::sregex_iterator{}; ++it) {
+    k_match = *it;
+    num_list.push_back(std::stoi(k_match.str()));
+  }
+}
+void image_file_attribute::extract_num(std::vector<image_file_attribute> &in_image_list) {
+  for (auto &in : in_image_list)
+    in.extract_num_list();
+
+  const auto k_size = in_image_list.front().num_list.size();
+
+  chick_true<doodle_error>(
+      std::all_of(in_image_list.begin(), in_image_list.end(),
+                  [k_size](const image_file_attribute &in) -> bool {
+                    return in.num_list.size() == k_size;
+                  }),
+      DOODLE_LOC, "序列不匹配");
+
+  auto &one   = in_image_list[0];
+  auto &tow   = in_image_list[1];
+  auto k_diff = std::mismatch(one.num_list.begin(), one.num_list.end(), tow.num_list.begin());
+  chick_true<doodle_error>(k_diff.first != k_diff.second, DOODLE_LOC, "没有找到帧索引");
+  auto k_dis = std::distance(one.num_list.begin(), k_diff.first);
+  std::for_each(in_image_list.begin(), in_image_list.end(),
+                [&](image_file_attribute &in_attribute) {
+                  in_attribute.num = in_attribute.num_list[k_dis];
+                });
+}
+image_file_attribute::image_file_attribute() : num(){};
+image_file_attribute::image_file_attribute(FSys::path in_path)
+    : image_file_attribute() {
+  file_path = std::move(in_path);
 }
 }  // namespace doodle

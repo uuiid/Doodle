@@ -86,31 +86,6 @@ bool assets_path_vector::make_path(const entt::handle &in_metadata, const FSys::
   return true;
 }
 
-command_ptr assets_path_vector::add_file(
-    const FSys::path &in_path) {
-  command_ptr k_comm{new_object<comm_files_up>()};
-
-  auto k_h = make_handle(*this);
-  p_local_paths.clear();
-  if (ue4_project::is_ue4_file(in_path)) {
-    p_local_path = in_path.parent_path();
-
-    k_h.get<database>().set_meta_type(metadata_type::ue4_prj);
-    // 添加基本路径(ue4 prj 路径)
-    p_local_paths.push_back(in_path);
-    // 添加内容路径
-    p_local_paths.push_back(in_path.parent_path() / ue4_project::Content);
-  } else if (image_sequence::is_image_sequence(FSys::list_files(in_path.parent_path()))) {
-    p_local_path = in_path.parent_path();
-    k_h.get<database>().set_meta_type(metadata_type::movie);
-    // 添加文件的父路径, 序列文件夹
-    p_local_paths.push_back(in_path.parent_path());
-  } else {
-    p_local_path = in_path;
-    p_local_paths.push_back(in_path);
-  }
-  return k_comm;
-}
 
 rpc_trans_path_ptr_list assets_path_vector::make_up_path() const {
   rpc_trans_path_ptr_list k_list{};

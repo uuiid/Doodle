@@ -121,17 +121,14 @@ bool comm_files_up::set_data(const entt::handle& in_data) {
 }
 
 void comm_file_image_to_move::init() {
-  p_name         = "视频选项";
-  p_show_str     = make_imgui_name(this, "不上传", "上传视频", "不上传源文件");
-  p_image_create = new_object<image_sequence_async>();
+  p_name     = "视频选项";
+  p_show_str = make_imgui_name(this, "不上传", "上传视频", "不上传源文件");
 }
 
 bool comm_file_image_to_move::set_data(const entt::handle& in_data) {
   if (in_data.any_of<assets_path_vector>()) {
-    p_root     = in_data;
-    p_image    = p_image_create->set_path(p_root.get<assets_path_vector>().get_local_path());
-    p_out_file = p_image->get_out_path();
-    p_text     = fmt::format("本地生成路径 {}", p_out_file);
+    p_root = in_data;
+    p_text = fmt::format("本地生成路径 {}", p_out_file);
   } else {
     p_root = entt::handle{};
   }
@@ -162,24 +159,20 @@ bool comm_file_image_to_move::render() {
     imgui::SameLine();
     imgui::Checkbox(p_show_str["不上传源文件"].c_str(), p_not_up_file.get());
 
-    imgui::Text(p_text.c_str());
+    dear::Text(p_text);
 
     if (imgui::Button(p_show_str["上传视频"].c_str())) {
-      auto k_term = p_image_create->create_video();
       if (*p_not_up_file)
         return true;
-
-      k_term->sig_finished.connect([k_not_up = *p_not_up_file, k_out_file = p_out_file, k_root = p_root]() {
-        if (k_not_up)
-          return;
-        k_root.get<assets_path_vector>().p_local_paths.push_back(k_out_file);
-        k_root.get<assets_file>().up_version();
-        k_root.patch<database_stauts>(database_set_stauts<need_save>{});
-        auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(k_root.get<assets_path_vector>().make_up_path());
-        (*k_up)();
-      });
     }
   }
   return false;
+}
+comm_file_image_to_move::comm_file_image_to_move()
+    : p_out_file(),
+      p_not_up_file(new_object<bool>(false)),
+      p_not_up_source_file(new_object<bool>(false)),
+      p_root() {
+  init();
 }
 }  // namespace doodle

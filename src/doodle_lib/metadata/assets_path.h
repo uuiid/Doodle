@@ -63,7 +63,6 @@ class DOODLELIB_API assets_path_vector {
   [[nodiscard]] const FSys::path &get_server_path() const;
   [[nodiscard]] const FSys::path &get_backup_path() const;
 
-  command_ptr add_file(const FSys::path &in_path);
 
   std::vector<FSys::path> list();
 

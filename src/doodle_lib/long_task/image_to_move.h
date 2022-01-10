@@ -9,10 +9,10 @@ namespace doodle {
 class DOODLELIB_API image_watermark {
  public:
   image_watermark() = default;
-  image_watermark(const string &in_p_text,
+  image_watermark(string in_p_text,
                   double_t in_p_width_proportion,
                   double_t in_p_height_proportion,
-                  const cv::Scalar &in_rgba);
+                  cv::Scalar in_rgba);
   string p_text;
   std::double_t p_width_proportion;
   std::double_t p_height_proportion;
@@ -20,10 +20,18 @@ class DOODLELIB_API image_watermark {
 };
 
 class DOODLELIB_API image_file_attribute {
+  void extract_num_list();
+
  public:
+  image_file_attribute();
+  explicit image_file_attribute(FSys::path in_path);
   FSys::path file_path;
   std::vector<image_watermark> watermarks;
+  std::vector<std::int32_t> num_list;
+  std::int32_t num;
 
+  static void extract_num(std::vector<image_file_attribute> &in_image_list);
+//  static bool is_image_list(const FSys::path &in_dir_path);
   bool operator<(const image_file_attribute &in_rhs) const;
   bool operator>(const image_file_attribute &in_rhs) const;
   bool operator<=(const image_file_attribute &in_rhs) const;
@@ -47,8 +55,13 @@ class DOODLELIB_API image_to_move : public process_t<image_to_move> {
    */
   explicit image_to_move(const entt::handle &in_handle,
                          const std::vector<entt::handle> &in_vector);
+  /**
+   * @brief 将传入的图片序列连接为视频
+   * @param in_handle 具有消息组件, 和 *输出路径文件夹* 组件的的句柄 可选的 shot， episode 组件
+   * @param in_vector 这个就是之前传入图片属性
+   */
   explicit image_to_move(const entt::handle &in_handle,
-                          const std::vector<image_file_attribute>& in_vector);
+                         const std::vector<image_file_attribute> &in_vector);
   ~image_to_move() override;
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();

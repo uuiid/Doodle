@@ -264,7 +264,6 @@ class doodle_lib;
 class thread_pool;
 class attribute_factory_interface;
 class long_term;
-class image_sequence;
 class season;
 class video_sequence;
 class ue4_project;
@@ -278,8 +277,6 @@ class command_base;
 class rpc_trans_path;
 class doodle_app;
 
-class ue4_project_async;
-class image_sequence_async;
 class program_options;
 class logger_ctrl;
 class comm_video;
@@ -296,8 +293,6 @@ class opencv_player_widget;
 using handle_list                = std::vector<entt::handle>;
 using logger_ctr_ptr             = std::shared_ptr<logger_ctrl>;
 using program_options_ptr        = std::shared_ptr<program_options>;
-
-using image_sequence_async_ptr   = std::shared_ptr<image_sequence_async>;
 
 using conn_ptr                   = std::unique_ptr<sqlpp::mysql::connection>;
 
@@ -341,8 +336,6 @@ using thread_pool_ptr            = std::shared_ptr<thread_pool>;
 using attribute_factory_ptr      = std::shared_ptr<attribute_factory_interface>;
 
 using long_term_ptr              = std::shared_ptr<long_term>;
-
-using image_sequence_ptr         = std::shared_ptr<image_sequence>;
 
 using registry_ptr               = std::shared_ptr<entt::registry>;
 class time_widget;
@@ -414,7 +407,7 @@ class DOODLELIB_API null_fun_t {
 static null_fun_t null_fun{};
 
 using setting_windows_ptr     = std::shared_ptr<setting_windows>;
-using ue4_project_async_ptr   = std::shared_ptr<ue4_project_async>;
+
 using bool_ptr                = std::shared_ptr<bool>;
 
 using string                  = std::string;

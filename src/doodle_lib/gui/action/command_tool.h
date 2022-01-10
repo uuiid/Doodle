@@ -92,7 +92,6 @@ class DOODLELIB_API comm_create_video : public command_base {
 class DOODLELIB_API comm_import_ue_files : public command_base {
   FSys::path p_ue4_prj;
   std::shared_ptr<std::string> p_ue4_show;
-
   std::vector<FSys::path> p_import_list;
 
  public:
