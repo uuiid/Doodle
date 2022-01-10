@@ -116,8 +116,9 @@ bool reference_attr_setting::render() {
       if (imgui::Checkbox("高精度配置", &(k_ref.high_speed_sim))) {
         auto k_h = make_handle(k_e);
         if (!k_ref.high_speed_sim) {
-          g_main_loop().attach([=]() {
+          g_main_loop().attach([=](auto, auto, auto s, auto f) {
             k_h.erase<sim_overr_attr>();
+            s();
           });
         }
       }
