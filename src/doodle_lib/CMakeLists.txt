@@ -5,7 +5,9 @@ cmrc_add_resource_library(
 )
 include(doodle_exe)
 include(doodle_lib.cmake)
+
 include(${PROJECT_SOURCE_DIR}/CMake/fix_mariadb_plug.cmake)
+
 add_custom_target(
         create_list_doodle_cmake
         COMMAND ${CMAKE_COMMAND} -DDOODLE_INCLUDE_CMAKE=${PROJECT_SOURCE_DIR} -P list_file.cmake
@@ -18,21 +20,20 @@ doodle_sqlpp_generate(
         core/000-metadatatab.sql
         core/001-usertab.sql
 )
-doodle_grpc_generate(
-        OUT_LISTS_GRPC
-        LISTS_FILES
-        rpc/metadata_server.proto
-        rpc/file_system_server.proto
-        rpc/user_message.proto
-)
+#doodle_grpc_generate(
+#        OUT_LISTS_GRPC
+#        LISTS_FILES
+#        rpc/metadata_server.proto
+#        rpc/file_system_server.proto
+#        rpc/user_message.proto
+#)
 
 add_library(doodle_lib
-#        SHARED
-#        $<$<CXX_COMPILER_ID:MSVC>:SHARED>
+        #        SHARED
+        #        $<$<CXX_COMPILER_ID:MSVC>:SHARED>
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
         ${OUT_LISTS_sqlpp}
-        ${OUT_LISTS_GRPC}
         ${PROJECT_SOURCE_DIR}/stl.natvis
         external/service-base/ServiceBase.cpp
         external/service-base/ServiceBase.h
@@ -74,9 +75,10 @@ target_link_libraries(doodle_lib
         spdlog::spdlog
         csv
         Catch2::Catch2
-        SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
+        #        SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
+        SqlppSqlite #这个是我们自己寻找的sqlite sqlpp连接器
         imgui::imgui
-        gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
+        #        gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
         cryptopp-static
         d3d11.lib
         )
@@ -84,7 +86,7 @@ target_compile_definitions(doodle_lib
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         PRIVATE
-#        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
+        #        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
         )
 target_compile_options(doodle_lib
         PUBLIC

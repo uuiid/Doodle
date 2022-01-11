@@ -3,16 +3,27 @@
 //
 
 #pragma once
-#include <doodle_lib/core/observable_container.h>
+
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/lib_warp/protobuf_warp.h>
+#include <doodle_lib/core/observable_container.h>
 #include <doodle_lib/metadata/metadata_factory.h>
 
 #include <boost/signals2.hpp>
 #include <optional>
 
 namespace doodle {
-
+class DOODLELIB_API metadata_database {
+ public:
+  std::string user_data;
+  std::uint64_t id;
+  std::optional<std::int32_t> parent;
+  std::int32_t m_type;
+  std::string uuid_path;
+  std::optional<std::int32_t> season;
+  std::optional<std::int32_t> episode;
+  std::optional<std::int32_t> shot;
+  std::optional<std::string> assets;
+};
 enum class metadata_type {
   unknown_file       = 0,
   project_root       = 1,
@@ -141,7 +152,7 @@ class DOODLELIB_API database_stauts {
     p_statu = in_statu::value;
   };
   template <class in_statu>
-  bool is() const {
+  [[nodiscard]] bool is() const {
     return p_statu == in_statu::value;
   }
 
@@ -151,7 +162,7 @@ class DOODLELIB_API database_stauts {
     set_status() = default;
     template <class in_comm>
     void operator()(in_comm &in) {
-      in.set<in_class>();
+      in.template set<in_class>();
     };
   };
 };

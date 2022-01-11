@@ -12,12 +12,14 @@
 #include <doodle_lib/gui/action/command_meta.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/metadata/metadata_factory.h>
-#include <doodle_lib/rpc/rpc_file_system_client.h>
-#include <doodle_lib/rpc/rpc_metadata_client.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
-#include <grpcpp/grpcpp.h>
 
 #include <boost/numeric/conversion/cast.hpp>
+
+#ifdef DOODLE_GRPC
+#include <grpcpp/grpcpp.h>
+#endif
+
 namespace doodle {
 
 doodle_lib* doodle_lib::p_install = nullptr;
@@ -104,6 +106,7 @@ void doodle_lib::init_gui() {
   DOODLE_LOG_DEBUG(k_ip);
 
   try {
+#ifdef DOODLE_GRPC
     p_rpc_metadata_clien = new_object<rpc_metadata_client>(
         grpc::CreateChannel(k_ip,
                             grpc::InsecureChannelCredentials()));
@@ -113,6 +116,7 @@ void doodle_lib::init_gui() {
     p_rpc_file_system_client = new_object<rpc_file_system_client>(
         grpc::CreateChannel(k_ip,
                             grpc::InsecureChannelCredentials()));
+#endif
 
     p_metadata_factory = new_object<metadata_serialize>();
     p_project_vector   = p_metadata_factory->get_all_prj();

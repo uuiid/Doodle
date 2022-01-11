@@ -29,6 +29,7 @@ option(RUN_fixup "run fixup " OFF)
 option(RUN_COPY "run copy tools" OFF)
 option(BUILD_SHARED_LIBS "build doodle lib is SHARED" OFF)
 option(Boost_NO_WARN_NEW_VERSIONS "boost warn OFF " ON)
+option(USE_RPC_SERVER "use grpc build doodle" OFF)
 
 
 #配置版本文件
@@ -57,8 +58,8 @@ find_package(imgui CONFIG REQUIRED)
 #find_package(imguiwrap CONFIG REQUIRED)
 
 #这两个是我自己写的寻找库的方法
-#find_package(SqlppSqlite REQUIRED)
-find_package(SqlppMySql REQUIRED)
+#    find_package(SqlppMySql REQUIRED)
+find_package(SqlppSqlite REQUIRED)
 
 #仅头库
 find_package(magic_enum CONFIG REQUIRED)
@@ -162,7 +163,7 @@ add_custom_command(
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.msi ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.msi
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.7z ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.7z
-#        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.zip ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.zip
+        #        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.zip ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.zip
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/docker/doodle_server/bin
 )

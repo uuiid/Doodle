@@ -118,11 +118,10 @@ bool database::is_install() const {
                              project::cloth_config
 
 database &database::operator=(const metadata_database &in_) {
-  auto k_h    = make_handle(*this);
+  auto k_h = make_handle(*this);
   /// 转换序列化数据
-  auto k_data = in_.metadata_cereal().value();
   try {
-    auto k_json = nlohmann::json ::parse(k_data);
+    auto k_json = nlohmann::json ::parse(in_.user_data);
     *this       = k_json["database"];
     entt_tool::load_comm<DOODLE_SERIALIZATION>(k_h, k_json);
   } catch (const nlohmann::json::parse_error &e) {
@@ -132,7 +131,7 @@ database &database::operator=(const metadata_database &in_) {
   /// 转换id
   set_id(in_.id());
   /// 转化类型
-  p_type = magic_enum::enum_cast<metadata_type>(in_.m_type().value())
+  p_type = magic_enum::enum_cast<metadata_type>(in_.m_type)
                .value_or(metadata_type::unknown_file);
 
   /// 确认转换可索引数据
@@ -153,9 +152,9 @@ database::operator metadata_database() const {
   metadata_database k_tmp{};
   ///转换id
   if (p_id != 0)
-    k_tmp.set_id(p_id);
+    k_tmp.id = p_id;
   ///设置序列化数据储存位置
-  k_tmp.set_uuid_path(get_url_uuid().generic_string());
+  k_tmp.uuid_path = get_url_uuid().generic_string();
 
   nlohmann::json k_json{};
   {
@@ -163,24 +162,23 @@ database::operator metadata_database() const {
     entt_tool::save_comm<DOODLE_SERIALIZATION>(k_h, k_json);
   }
 
-  k_tmp.mutable_metadata_cereal()->set_value(k_json.dump());
-  if (p_parent_id)
-    k_tmp.mutable_parent()->set_value(*p_parent_id);
+  k_tmp.user_data = k_json.dump();
+  k_tmp.parent    = p_parent_id;
 
   ///设置类型id
-  k_tmp.mutable_m_type()->set_value(get_meta_type_int());
+  k_tmp.m_type    = get_meta_type_int();
   /// 设置可索引数据
   if (k_h.any_of<season>()) {
-    k_tmp.mutable_season()->set_value(k_h.get<season>().get_season());
+    k_tmp.season = k_h.get<season>().get_season();
   }
   if (k_h.any_of<episodes>()) {
-    k_tmp.mutable_episode()->set_value(k_h.get<episodes>().get_episodes());
+    k_tmp.episode = k_h.get<episodes>().get_episodes();
   }
   if (k_h.any_of<shot>()) {
-    k_tmp.mutable_episode()->set_value(k_h.get<shot>().get_shot());
+    k_tmp.shot = k_h.get<shot>().get_shot();
   }
   if (k_h.any_of<assets>()) {
-    k_tmp.mutable_assets()->set_value(k_h.get<assets>().get_path().generic_string());
+    k_tmp.assets = k_h.get<assets>().get_path().generic_string();
   }
 
   return k_tmp;

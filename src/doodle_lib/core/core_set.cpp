@@ -1,22 +1,16 @@
-#include <Metadata/metadata_factory.h>
-#include <date/tz.h>
-#include <doodle_lib/Exception/exception.h>
-#include <doodle_lib/Logger/logger.h>
+#include <doodle_lib/exception/exception.h>
+#include <doodle_lib/logger/logger.h>
 #include <doodle_lib/core/core_set.h>
-#include <doodle_lib/core/core_sql.h>
 #include <doodle_lib/core/static_value.h>
 #include <doodle_lib/pin_yin/convert.h>
-#include <doodle_lib/rpc/rpc_file_system_client.h>
-#include <doodle_lib/rpc/rpc_metadata_client.h>
-#include <google/protobuf/service.h>
-#include <grpcpp/grpcpp.h>
-#include <sqlpp11/mysql/mysql.h>
 
-#include <boost/process.hpp>
-#include <magic_enum.hpp>
-#include <nlohmann/json.hpp>
+
+
+
+
 #ifdef _WIN32
 #include <ShlObj.h>
+#include <metadata/metadata.h>
 #else
 #include <pwd.h>
 #include <sys/types.h>

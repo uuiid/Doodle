@@ -8,8 +8,6 @@
 #include <doodle_lib/core/open_file_dialog.h>
 #include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
-#include <doodle_lib/rpc/rpc_file_system_client.h>
-#include <doodle_lib/rpc/rpc_trans_path.h>
 
 namespace doodle {
 comm_files_select::comm_files_select()

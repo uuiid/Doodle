@@ -7,7 +7,6 @@
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
-#include <doodle_lib/rpc/rpc_file_system_client.h>
 namespace doodle {
 
 comm_video::comm_video()

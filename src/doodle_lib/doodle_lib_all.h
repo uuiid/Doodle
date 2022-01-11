@@ -80,12 +80,6 @@
 #include <doodle_lib/metadata/tree_adapter.h>
 #include <doodle_lib/metadata/user.h>
 #include <doodle_lib/pin_yin/convert.h>
-#include <doodle_lib/rpc/rpc_file_system_client.h>
-#include <doodle_lib/rpc/rpc_file_system_server.h>
-#include <doodle_lib/rpc/rpc_metadaata_server.h>
-#include <doodle_lib/rpc/rpc_metadata_client.h>
-#include <doodle_lib/rpc/rpc_server_handle.h>
-#include <doodle_lib/rpc/rpc_trans_path.h>
 #include <doodle_lib/screenshot_widght/screenshot_action.h>
 #include <doodle_lib/screenshot_widght/screenshot_widght.h>
 #include <doodle_lib/thread_pool/long_term.h>

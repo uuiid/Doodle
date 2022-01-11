@@ -54,8 +54,6 @@ set(
     lib_warp/json_warp.h
     lib_warp/lfu_cache_policy.hpp
     lib_warp/lru_cache_policy.hpp
-    lib_warp/protobuf_warp.h
-    lib_warp/protobuf_warp_cpp.h
     lib_warp/sqlppWarp.h
     lib_warp/std_warp.h
     logger/LoggerTemplate.h
@@ -77,12 +75,6 @@ set(
     metadata/tree_adapter.h
     metadata/user.h
     pin_yin/convert.h
-    rpc/rpc_file_system_client.h
-    rpc/rpc_file_system_server.h
-    rpc/rpc_metadaata_server.h
-    rpc/rpc_metadata_client.h
-    rpc/rpc_server_handle.h
-    rpc/rpc_trans_path.h
     screenshot_widght/screenshot_action.h
     screenshot_widght/screenshot_widght.h
     thread_pool/long_term.h
@@ -102,6 +94,7 @@ set(
     doodle_lib_fwd.h
     doodle_lib_pch.h
     doodle_macro.h)
+
 set(
     DOODLELIB_SOURCE
     core/core_set.cpp
@@ -141,7 +134,6 @@ set(
     gui/widgets/project_widget.cpp
     gui/widgets/time_widget.cpp
     gui/widgets/tool_box_widget.cpp
-    lib_warp/boost_serialization_warp.cpp
     lib_warp/entt_warp.cpp
     lib_warp/imgui_warp.cpp
     logger/logger.cpp
@@ -159,12 +151,6 @@ set(
     metadata/time_point_wrap.cpp
     metadata/user.cpp
     pin_yin/convert.cpp
-    rpc/rpc_file_system_client.cpp
-    rpc/rpc_file_system_server.cpp
-    rpc/rpc_metadaata_server.cpp
-    rpc/rpc_metadata_client.cpp
-    rpc/rpc_server_handle.cpp
-    rpc/rpc_trans_path.cpp
     screenshot_widght/screenshot_action.cpp
     screenshot_widght/screenshot_widght.cpp
     thread_pool/long_term.cpp
