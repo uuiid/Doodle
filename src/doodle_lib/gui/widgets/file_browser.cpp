@@ -3,8 +3,12 @@
 //
 
 #include "file_browser.h"
+
+#include <magic_enum.hpp>
+
 #include <lib_warp/imgui_warp.h>
 #include <platform/win/list_drive.h>
+
 namespace doodle {
 namespace {
 class path_attr {
@@ -68,13 +72,13 @@ class path_attr {
                is_dir,
                last_time,
                size,
-               show_name
+               path
                //
                ) < std::tie(  //
                        in_rhs.is_dir,
                        in_rhs.last_time,
                        in_rhs.size,
-                       in_rhs.show_name
+                       in_rhs.path
                        //
                    );
   }
@@ -118,6 +122,13 @@ class file_browser::impl {
         begin_fun_list(),
         is_ok(false),
         buffer(){};
+  enum sort_by : std::int16_t {
+    none = 0,
+    name = 1,
+    size = 2,
+    time = 3,
+  };
+
   std::int32_t enum_flags;
   string title;
 
@@ -188,6 +199,37 @@ class file_browser::impl {
     }
     return false;
   }
+
+  void sort_file_attr(const sort_by& in_sort, bool in_reverse = false) {
+    switch (in_sort) {
+      case sort_by::name:
+        std::sort(path_list.begin(), path_list.end(),
+                  [](const path_attr& in_l, const path_attr& in_r) -> bool {
+                    return in_l.path.filename() < in_r.path.filename();
+                  });
+        break;
+      case sort_by::size:
+        std::sort(path_list.begin(), path_list.end(),
+                  [](const path_attr& in_l, const path_attr& in_r) -> bool {
+                    return in_l.size < in_r.size;
+                  });
+        break;
+      case sort_by::time:
+        std::sort(path_list.begin(), path_list.end(),
+                  [](const path_attr& in_l, const path_attr& in_r) -> bool {
+                    return in_l.last_time < in_r.last_time;
+                  });
+        break;
+      default:
+        std::sort(path_list.begin(), path_list.end());
+        break;
+    }
+    /// \brief 将目录和文件进行分区
+    std::stable_partition(path_list.begin(), path_list.end(), [](const path_attr& in) -> bool { return in.is_dir; });
+    if (in_reverse)
+      std::reverse(path_list.begin(), path_list.end());
+    select_index = 0;
+  };
 };
 
 file_browser::file_browser(flags in_flags)
@@ -304,8 +346,8 @@ void file_browser::scan_director(const FSys::path& in_path) {
                  });
     });
   /// 进行排序
-  std::sort(k_list.begin(), k_list.end());
   p_i->path_list = std::move(k_list);
+  p_i->sort_file_attr(p_i->none);
 }
 void file_browser::render_file_list() {
   static auto table_flags{
@@ -313,7 +355,8 @@ void file_browser::render_file_list() {
       ImGuiTableFlags_::ImGuiTableFlags_Resizable |
       ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
       ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
-      ImGuiTableFlags_::ImGuiTableFlags_ScrollY};
+      ImGuiTableFlags_::ImGuiTableFlags_ScrollY |
+      ImGuiTableFlags_::ImGuiTableFlags_Sortable};
   dear::Table{
       "file list",
       3,
@@ -321,10 +364,22 @@ void file_browser::render_file_list() {
       ImVec2(0.0f, -ImGui::GetTextLineHeightWithSpacing() * 3)} &&
       [&]() {
         /// \brief 设置题头元素
-        imgui::TableSetupColumn("file name");
-        imgui::TableSetupColumn("size");
-        imgui::TableSetupColumn("last write time");
+        imgui::TableSetupColumn("file name", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_WidthFixed, 0.0f, p_i->name);
+        imgui::TableSetupColumn("size", ImGuiTableColumnFlags_WidthFixed, 0.0f, p_i->size);
+        imgui::TableSetupColumn("last write time", ImGuiTableColumnFlags_WidthFixed, 0.0f, p_i->time);
         imgui::TableHeadersRow();
+
+        /// \brief 这里进行排序
+        if (auto* l_sorts_specs = dear::TableGetSortSpecs()) {
+          if (l_sorts_specs->SpecsDirty) {
+            p_i->sort_file_attr(
+                magic_enum::enum_cast<impl::sort_by>(
+                    boost::numeric_cast<impl::sort_by>(l_sorts_specs->Specs[0].ColumnUserID))
+                    .value(),
+                l_sorts_specs->Specs[0].SortDirection == ImGuiSortDirection_Ascending);
+          }
+          l_sorts_specs->SpecsDirty = false;
+        }
 
         for (auto& k_p : p_i->path_list) {
           imgui::TableNextRow();
