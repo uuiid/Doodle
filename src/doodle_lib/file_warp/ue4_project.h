@@ -7,7 +7,7 @@
 #include <doodle_lib/thread_pool/long_term.h>
 
 namespace doodle {
-
+#ifdef 0
 class DOODLELIB_API ue4_project
     : public std::enable_shared_from_this<ue4_project> {
   class DOODLELIB_API Ue4ProjectFilePulgins {
@@ -169,4 +169,6 @@ class DOODLELIB_API ue4_project
    */
   static FSys::path analysis_path_to_gamepath(const FSys::path& in_path);
 };
+#endif
+
 }  // namespace doodle

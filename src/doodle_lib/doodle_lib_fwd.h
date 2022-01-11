@@ -265,7 +265,6 @@ class thread_pool;
 class attribute_factory_interface;
 class long_term;
 class season;
-class video_sequence;
 class ue4_project;
 class setting_windows;
 class base_widget;
@@ -297,9 +296,6 @@ using program_options_ptr        = std::shared_ptr<program_options>;
 using conn_ptr                   = std::unique_ptr<sqlpp::mysql::connection>;
 
 using ue4_project_ptr            = std::shared_ptr<ue4_project>;
-
-using video_sequence_ptr         = std::shared_ptr<video_sequence>;
-
 using string_list                = std::vector<std::string>;
 
 using string_matrix2             = std::vector<string_list>;

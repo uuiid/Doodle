@@ -15,7 +15,7 @@
 #include <doodle_lib/lib_warp/WinReg.hpp>
 
 namespace doodle {
-
+#ifdef 0
 const std::string ue4_project::Content     = "Content";
 const std::string ue4_project::ContentShot = "Shot";
 const std::string ue4_project::UE4PATH     = "Engine/Binaries/Win64/UE4Editor.exe";
@@ -265,5 +265,5 @@ void ue4_project::import_file(const FSys::path& in_paths, const long_term_ptr& i
         long_term::warning);
   }
 }
-
+#endif
 }  // namespace doodle

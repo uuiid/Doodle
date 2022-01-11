@@ -151,10 +151,6 @@ bool comm_create_video::render() {
   }
   imgui::SameLine();
   if (imgui::Button("连接视频")) {
-    auto video  = new_object<video_sequence_async>();
-    auto k_v    = video->set_video_list(p_video_path);
-    auto k_name = k_v->set_shot_and_eps(p_video_path.front());
-    video->connect_video(k_name.empty() ? FSys::path{} : FSys::path{*p_out_path} / k_name);
   }
 
   dear::ListBox{"video_list"} && [this]() {
