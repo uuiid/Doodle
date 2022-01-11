@@ -45,7 +45,6 @@ database::database()
       p_uuid_(core_set::getSet().get_uuid()),
       p_uuid(),
       p_boost_serialize_vesion(0) {
-  p_uuid = boost::uuids::to_string(p_uuid_);
 }
 
 database::~database() = default;
@@ -65,19 +64,8 @@ void database::set_enum(entt::registry &in_reg, entt::entity in_ent) {
     k_data.p_type = metadata_type::folder;
 }
 
-FSys::path database::get_url_uuid() const {
-  auto k_h     = make_handle(*this);
-
-  auto l_reg   = g_reg();
-
-  // 找到根的数据库类
-  auto &k_data = k_h.get<root_ref>().root_handle().get<database>();
-
-  // 组合路径
-  auto path    = FSys::path{k_data.p_uuid};
-  path /= p_uuid.substr(0, 3);
-  path /= p_uuid;
-  return path;
+const FSys::path &database::get_url_uuid() const {
+  return p_uuid;
 }
 
 void database::set_meta_type(const metadata_type &in_meta) {
@@ -129,7 +117,7 @@ database &database::operator=(const metadata_database &in_) {
   }
 
   /// 转换id
-  set_id(in_.id());
+  set_id(in_.id);
   /// 转化类型
   p_type = magic_enum::enum_cast<metadata_type>(in_.m_type)
                .value_or(metadata_type::unknown_file);

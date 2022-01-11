@@ -293,7 +293,7 @@ using handle_list                = std::vector<entt::handle>;
 using logger_ctr_ptr             = std::shared_ptr<logger_ctrl>;
 using program_options_ptr        = std::shared_ptr<program_options>;
 
-using conn_ptr                   = std::unique_ptr<sqlpp::mysql::connection>;
+using conn_ptr                   = std::unique_ptr<sqlpp::sqlite3::connection>;
 
 using ue4_project_ptr            = std::shared_ptr<ue4_project>;
 using string_list                = std::vector<std::string>;

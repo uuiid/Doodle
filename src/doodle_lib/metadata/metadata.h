@@ -78,7 +78,7 @@ class DOODLELIB_API database {
   mutable string p_id_str;
   std::optional<uint64_t> p_parent_id;
   metadata_type p_type;
-  std::string p_uuid;
+  FSys::path p_uuid;
   std::uint32_t p_boost_serialize_vesion;
   boost::uuids::uuid p_uuid_;
   void set_id(std::uint64_t in_id) const;
@@ -92,7 +92,7 @@ class DOODLELIB_API database {
   DOODLE_IMP_MOVE(database);
   static void set_enum(entt::registry &in_reg, entt::entity in_ent);
 
-  FSys::path get_url_uuid() const;
+  const FSys::path &get_url_uuid() const;
   std::int32_t get_meta_type_int() const;
   bool is_install() const;
   const string &get_id_str() const;

@@ -8,16 +8,39 @@
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
+
+#ifdef DOODLE_GRPC
 #include <doodle_lib/rpc/rpc_metadata_client.h>
 #include <grpcpp/grpcpp.h>
+#endif
 
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 namespace doodle {
 
-metadata_serialize::metadata_serialize()
-    : p_rpcClien(doodle_lib::Get().get_rpc_metadata_client()) {
-}
+class metadata_serialize::impl {
+ public:
 
+#ifdef DOODLE_GRPC
+  std::weak_ptr<rpc_metadata_client> p_rpcClien;
+#endif
+};
+
+metadata_serialize::metadata_serialize()
+    : p_i(std::make_unique<impl>()) {
+}
+metadata_serialize::~metadata_serialize() = default;
+
+
+
+
+
+
+
+
+
+
+
+#ifdef DOODLE_GRPC
 std::vector<entt::entity> metadata_serialize::get_all_prj() const {
   auto k_c      = this->p_rpcClien.lock();
 
@@ -145,5 +168,6 @@ void metadata_serialize::select_indb_by_root(entt::entity in_root) const {
     k_i_h.get_or_emplace<database_stauts>().set<is_load>();
   }
 }
+#endif
 
 }  // namespace doodle

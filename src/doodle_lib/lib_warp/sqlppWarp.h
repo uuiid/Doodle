@@ -4,7 +4,14 @@
 
 #pragma once
 // 添加数据库连接项
-namespace sqlpp::mysql {
+namespace sqlpp {
+namespace mysql {
 class connection;
 struct connection_config;
-}  // namespace sqlpp::mysql
+}  // namespace mysql
+
+namespace sqlite3{
+class connection;
+struct connection_config;
+}
+}  // namespace sqlpp

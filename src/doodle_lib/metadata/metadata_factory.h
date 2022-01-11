@@ -8,7 +8,6 @@
 #include <ostream>
 namespace doodle {
 
-
 /**
  * 父亲负责加载孩子，在加载父亲时，孩子会同时加载完成， 这样， 父亲会知道是否加载玩成孩子
  * 在保存时，保存路径是： prjRoot /父亲的root（uuid）/孩子的（root）uuid（文件）
@@ -18,10 +17,12 @@ namespace doodle {
  * @warning 我们在更改父亲时， 要同时移动文件和保存更改
  */
 class DOODLELIB_API metadata_serialize : public std::enable_shared_from_this<metadata_serialize> {
-  std::weak_ptr<rpc_metadata_client> p_rpcClien;
+  class impl;
+  std::unique_ptr<impl> p_i;
 
  public:
   metadata_serialize();
+  ~metadata_serialize();
 
   virtual std::vector<entt::entity> get_all_prj() const;
   virtual bool insert_into(entt::entity in) const;
