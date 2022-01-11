@@ -50,7 +50,7 @@ class DOODLELIB_API project {
 
   [[nodiscard]] std::string short_str() const;
 
-  cloth_config& get_vfx_cloth_config() const;
+  [[nodiscard]] cloth_config& get_vfx_cloth_config() const;
 
   virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
 

@@ -113,6 +113,7 @@ class DOODLELIB_API core_set : public details::no_copy {
   std::map<string, bool> widget_show;
 
   uuid default_project;
+  std::array<FSys::path, 10> project_root;
 
  private:
   /**

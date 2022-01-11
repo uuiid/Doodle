@@ -1,0 +1,11 @@
+//
+// Created by TD on 2022/1/11.
+//
+
+#ifndef DOODLE_SRC_DOODLE_LIB_LONG_TASK_DATABASE_TASK_H_
+#define DOODLE_SRC_DOODLE_LIB_LONG_TASK_DATABASE_TASK_H_
+
+class database_task {
+};
+
+#endif  // DOODLE_SRC_DOODLE_LIB_LONG_TASK_DATABASE_TASK_H_
