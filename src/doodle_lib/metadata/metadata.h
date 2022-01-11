@@ -24,7 +24,7 @@ class DOODLELIB_API metadata_database {
   std::optional<std::int32_t> shot;
   std::optional<std::string> assets;
 };
-enum class metadata_type {
+enum class metadata_type : std::int32_t {
   unknown_file       = 0,
   project_root       = 1,
   file               = 2,

@@ -58,6 +58,22 @@ namespace doodle
       };
       using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
     };
+    struct UserData
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "user_data";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T userData;
+            T& operator()() { return userData; }
+            const T& operator()() const { return userData; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
     struct UpdateTime
     {
       struct _alias_t
@@ -160,6 +176,7 @@ namespace doodle
                Metadatatab_::Id,
                Metadatatab_::Parent,
                Metadatatab_::UuidPath,
+               Metadatatab_::UserData,
                Metadatatab_::UpdateTime,
                Metadatatab_::MetaType,
                Metadatatab_::Episode,
