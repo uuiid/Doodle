@@ -145,7 +145,7 @@ bool database::has_components() const {
   return k_h.any_of<DOODLE_SERIALIZATION>();
 }
 
-database::operator doodle::metadata_database() const {
+database::operator metadata_database() const {
   auto k_h = make_handle(*this);
 
   chick_true<serialization_error>(k_h.any_of<DOODLE_SERIALIZATION>(), DOODLE_LOC, "组件缺失");
