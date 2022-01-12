@@ -250,7 +250,6 @@ class shot;
 class assets;
 class core_sql;
 class assets_file;
-class metadata_serialize;
 class time_point_wrap;
 class comment;
 
@@ -320,8 +319,6 @@ using episodes_ref               = std::reference_wrapper<episodes>;
 using shot_ref                   = std::reference_wrapper<shot>;
 using assets_ref                 = std::reference_wrapper<assets>;
 using assets_file_ref            = std::reference_wrapper<assets_file>;
-
-using metadata_serialize_ptr     = std::shared_ptr<metadata_serialize>;
 
 using command_ptr                = std::shared_ptr<command_base>;
 

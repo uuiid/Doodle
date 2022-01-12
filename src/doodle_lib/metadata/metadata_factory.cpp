@@ -20,39 +20,14 @@
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 namespace doodle {
 
+
+#ifdef DOODLE_GRPC
 class metadata_serialize::impl {
  public:
 #ifdef DOODLE_GRPC
   std::weak_ptr<rpc_metadata_client> p_rpcClien;
 #endif
 };
-
-metadata_serialize::metadata_serialize()
-    : p_i(std::make_unique<impl>()) {
-}
-std::vector<entt::entity> metadata_serialize::get_all_prj() const {
-  auto k_h = make_handle();
-  k_h.emplace<process_message>();
-
-
-
-
-  return std::vector<entt::entity>();
-}
-bool metadata_serialize::insert_into(entt::entity in) const {
-  return false;
-}
-void metadata_serialize::delete_data(entt::entity in) const {
-}
-void metadata_serialize::updata_db(entt::entity in) const {
-}
-void metadata_serialize::select_indb(entt::entity in) const {
-}
-void metadata_serialize::select_indb_by_root(entt::entity in_root) const {
-}
-metadata_serialize::~metadata_serialize() = default;
-
-#ifdef DOODLE_GRPC
 std::vector<entt::entity> metadata_serialize::get_all_prj() const {
   auto k_c      = this->p_rpcClien.lock();
 

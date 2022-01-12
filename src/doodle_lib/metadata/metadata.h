@@ -70,8 +70,6 @@ class DOODLELIB_API database_root {
 };
 
 class DOODLELIB_API database {
-  friend rpc_metadata_client;
-  friend metadata_serialize;
 
  private:
   mutable std::uint64_t p_id;
