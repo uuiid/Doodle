@@ -371,6 +371,29 @@ void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) cons
 
   if (!FSys::exists(k_file_path))
     FSys::create_directories(k_file_path);
+  auto l_comm = fmt::format(R"(
+bakeResults
+ -simulation true
+ -t "{}:{}"
+ -hierarchy below
+ -sampleBy 1
+ -oversamplingRate 1
+ -disableImplicitControl true
+ -preserveOutsideKeys true
+ -sparseAnimCurveBake false
+ -removeBakedAttributeFromLayer false
+ -removeBakedAnimFromLayer false
+ -bakeOnOverrideLayer false
+ -minimizeRotation true
+ -controlPoints false
+ -shape true
+ "{}:*{}";
+)",
+                            in_start.value(), in_end.value(), get_namespace(), k_cfg.export_group);
+  DOODLE_LOG_INFO("开始主动烘培动画帧");
+
+  k_s = MGlobal::executeCommand(d_str{l_comm});
+  DOODLE_CHICK(k_s);
 
   k_file_path /= fmt::format("{}_{}_{}-{}.fbx",
                              maya_file_io::get_current_path().stem().generic_string(),
