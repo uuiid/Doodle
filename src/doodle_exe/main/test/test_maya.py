@@ -32,9 +32,10 @@ def doodle_test_sim():
 [
 {"export_path":"",
 "only_sim":false,
-"path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN_mate.ma",
+"path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma",
 "qcloth_assets_path":"",
-"uuid":"00000000-0000-0000-0000-000000000000"}]"""
+"uuid":"00000000-0000-0000-0000-000000000000"}
+]"""
     k_f()
 
 
@@ -44,11 +45,11 @@ def doodle_test_fbx():
     k_f.config_ = """[{
         "export_path":"",
         "use_all_ref":false,
-        "path":"C:/Users/TD/Documents/maya/projects/default/scenes/DBXY_EP171_SC068A_AN2.ma"
+        "path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma"
         }]"""
     k_f()
 
 
 if __name__ == '__main__':
-    doodle_test_sim()
-    # doodle_test_fbx()
+    # doodle_test_sim()
+    doodle_test_fbx()

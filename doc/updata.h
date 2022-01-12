@@ -423,4 +423,9 @@
  * @subsubsection updata_log_3223 版本3.2.23
  * @li 修复奇异的maya库和doodle库之间的bug
  *
+ * @subsubsection updata_log_3224 版本3.2.24
+ * @li 添加cam解锁
+ * @li 添加cam属性解锁和主动烘培
+ * @li 添加主动烘培
+ * @li 更新测试
  */

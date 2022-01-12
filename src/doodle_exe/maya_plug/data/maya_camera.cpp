@@ -78,6 +78,11 @@ bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
 bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {
   chick();
   MStatus k_s{};
+
+  MFnDagNode k_tran_node{};
+  k_s = k_tran_node.setObject(p_path.transform());
+  DOODLE_CHICK(k_s);
+
   auto k_comm = fmt::format(R"(bakeResults
 -simulation true
 -t "{}:{}"
@@ -95,7 +100,7 @@ bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {
 -shape true
 {{"{}"}};
 )",
-                            in_start.value(), in_end.value(), d_str{p_path.fullPathName(&k_s)}.str());
+                            in_start.value(), in_end.value(), d_str{k_tran_node.fullPathName()}.str());
   DOODLE_CHICK(k_s);
   k_s = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
@@ -103,6 +108,7 @@ bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {
 }
 bool maya_camera::unlock_attr() {
   chick();
+  DOODLE_LOG_INFO("开始解除相机属性锁定");
   MStatus k_s{};
   MFnDependencyNode k_node{};
   {
@@ -116,8 +122,29 @@ bool maya_camera::unlock_attr() {
   for (int l_i = 0; l_i < k_size; ++l_i) {
     auto k_attr = k_node.attribute(l_i, &k_s);
     DOODLE_CHICK(k_s);
-    auto k_plug = k_node.findPlug(k_attr, true, &k_s);
+    auto k_plug = k_node.findPlug(k_attr, false, &k_s);
+    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
     if (k_plug.isLocked(&k_s)) {
+      DOODLE_CHICK(k_s);
+      k_s = k_plug.setLocked(false);
+      DOODLE_CHICK(k_s);
+    }
+  }
+  {
+    auto k_obj = p_path.transform(&k_s);
+    DOODLE_CHICK(k_s);
+    k_s = k_node.setObject(k_obj);
+    DOODLE_CHICK(k_s);
+  }
+  const auto& k_size2 = k_node.attributeCount(&k_s);
+  DOODLE_CHICK(k_s);
+  for (int l_i = 0; l_i < k_size2; ++l_i) {
+    auto k_attr = k_node.attribute(l_i, &k_s);
+    DOODLE_CHICK(k_s);
+    auto k_plug = k_node.findPlug(k_attr, false, &k_s);
+    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
+    if (k_plug.isLocked(&k_s)) {
+      DOODLE_CHICK(k_s);
       k_s = k_plug.setLocked(false);
       DOODLE_CHICK(k_s);
     }

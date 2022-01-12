@@ -37,6 +37,7 @@ MStatus export_camera_command::doIt(const MArgList &in_arg) {
   }
   auto &k_cam = g_reg()->ctx_or_set<maya_camera>();
   k_cam.conjecture();
+  k_cam.unlock_attr();
   k_cam.back_camera(k_start, k_end);
   k_cam.export_file(k_start, k_end);
 

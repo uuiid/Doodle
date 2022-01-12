@@ -44,8 +44,8 @@ class DOODLELIB_API export_fbx_arg {
 
   uuid uuid_p;
   friend void to_json(nlohmann::json &nlohmann_json_j, const export_fbx_arg &nlohmann_json_t) {
-    nlohmann_json_j["path"]        = nlohmann_json_t.file_path;
-    nlohmann_json_j["export_path"] = nlohmann_json_t.export_path;
+    nlohmann_json_j["path"]        = nlohmann_json_t.file_path.generic_string();
+    nlohmann_json_j["export_path"] = nlohmann_json_t.export_path.generic_string();
     nlohmann_json_j["use_all_ref"] = nlohmann_json_t.use_all_ref;
     nlohmann_json_j["uuid"]        = boost::lexical_cast<string>(nlohmann_json_t.uuid_p);
   };
