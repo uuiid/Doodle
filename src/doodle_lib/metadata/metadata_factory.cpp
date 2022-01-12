@@ -8,6 +8,9 @@
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
+#include <doodle_lib/thread_pool/long_term.h>
+
+#include <long_task/database_task.h>
 
 #ifdef DOODLE_GRPC
 #include <doodle_lib/rpc/rpc_metadata_client.h>
@@ -28,7 +31,9 @@ metadata_serialize::metadata_serialize()
     : p_i(std::make_unique<impl>()) {
 }
 std::vector<entt::entity> metadata_serialize::get_all_prj() const {
-  std::vector<entt::entity> l_vector;
+  auto k_h = make_handle();
+  k_h.emplace<process_message>();
+  g_main_loop().attach<database_task_select>(k_h,)
 
 
 

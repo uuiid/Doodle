@@ -519,7 +519,7 @@ class scheduler {
 
     handlers.erase(handlers.begin() + sz, handlers.end());
 
-    std::move(handlers_next.begin(), handlers_next.end(),std::back_inserter(handlers));
+    std::move(handlers_next.begin(), handlers_next.end(), std::back_inserter(handlers));
     handlers_next.clear();
   }
 
@@ -548,6 +548,17 @@ class scheduler {
  private:
   std::vector<process_handler> handlers{};
   decltype(handlers) handlers_next{};
+};
+
+class DOODLELIB_API null_process_t : public process_t<null_process_t> {
+ public:
+  null_process_t() = default;
+  using base_type  = process_t<null_process_t>;
+  [[maybe_unused]] inline void init(){};
+  [[maybe_unused]] inline void succeeded(){};
+  [[maybe_unused]] inline void failed(){};
+  [[maybe_unused]] inline void aborted(){};
+  [[maybe_unused]] inline void update(base_type::delta_type, void *data){};
 };
 
 }  // namespace doodle
