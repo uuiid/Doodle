@@ -32,23 +32,34 @@ filter::filter()
 
 }  // namespace database_n
 
-class database_task::impl {
+class database_task_select::impl {
  public:
   database_n::filter filter_;
   entt::handle handle_;
   std::vector<metadata_database> list;
   std::future<void> result;
   std::atomic_bool stop = false;
+  FSys::path prj_root;
 };
-database_task::database_task(const entt::handle& in_handle, const database_n::filter& in_filter)
+database_task_select::database_task_select(const entt::handle& in_handle, const database_n::filter& in_filter)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
-  p_i->filter_ = in_filter;
-  p_i->handle_ = in_handle;
+  p_i->filter_  = in_filter;
+  p_i->handle_  = in_handle;
+  p_i->prj_root = g_reg()->ctx<project>().get_path() / "doodle_db";
 }
-database_task::~database_task() = default;
-void database_task::select_db() {
-  auto k_conn = core_sql::Get().get_connection(g_reg()->ctx<project>().get_path() / "doodle_db");
+
+database_task_select::database_task_select(const entt::handle& in_handle, const FSys::path& in_prj_root) {
+  chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
+  p_i->filter_._meta_type = metadata_type::project_root;
+  p_i->handle_            = in_handle;
+  p_i->prj_root           = in_prj_root / "doodle_db";
+}
+
+database_task_select::~database_task_select() = default;
+
+void database_task_select::select_db() {
+  auto k_conn = core_sql::Get().get_connection(p_i->prj_root);
   Metadatatab l_metadatatab{};
 
   auto l_select = sqlpp::dynamic_select(*k_conn, sqlpp::all_of(l_metadatatab)).from(l_metadatatab).dynamic_where();
@@ -85,7 +96,8 @@ void database_task::select_db() {
       l_data.parent = row.parent.value();
   }
 }
-void database_task::init() {
+
+void database_task_select::init() {
   p_i->handle_.patch<process_message>([](process_message& in) {
                 in.set_name("加载文件");
                 in.set_state(in.run);
@@ -98,7 +110,7 @@ void database_task::init() {
   };
   p_i->result = doodle_lib::Get().get_thread_pool()->enqueue([this]() { this->select_db(); });
 }
-void database_task::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+void database_task_select::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   if (p_i->result.valid())
     switch (p_i->result.wait_for(0ns)) {
       case std::future_status::ready: {
@@ -123,11 +135,11 @@ void database_task::update(chrono::duration<chrono::system_clock::rep, chrono::s
   }
 }
 
-void database_task::succeeded() {
+void database_task_select::succeeded() {
 }
-void database_task::failed() {
+void database_task_select::failed() {
 }
-void database_task::aborted() {
+void database_task_select::aborted() {
   DOODLE_LOG_ERROR("用户主动结束进程");
 }
 
