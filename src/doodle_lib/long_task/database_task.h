@@ -38,6 +38,7 @@ class DOODLELIB_API database_task : public process_t<database_task> {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
+  void select_db();
 
  public:
   using base_type = process_t<database_task>;
