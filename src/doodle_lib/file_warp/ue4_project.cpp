@@ -15,7 +15,7 @@
 #include <doodle_lib/lib_warp/WinReg.hpp>
 
 namespace doodle {
-#ifdef 0
+#ifdef DOODLE_DIS_FUN
 const std::string ue4_project::Content     = "Content";
 const std::string ue4_project::ContentShot = "Shot";
 const std::string ue4_project::UE4PATH     = "Engine/Binaries/Win64/UE4Editor.exe";
