@@ -81,13 +81,14 @@ class DOODLELIB_API database {
   FSys::path p_uuid;
   std::uint32_t p_boost_serialize_vesion;
   boost::uuids::uuid p_uuid_;
-  void set_id(std::uint64_t in_id) const;
 
  public:
   database();
+  //  explicit database(const metadata_database &in_metadata_database);
   ~database();
 
   bool has_components() const;
+  void set_id(std::uint64_t in_id) const;
 
   DOODLE_IMP_MOVE(database);
   static void set_enum(entt::registry &in_reg, entt::entity in_ent);
@@ -115,7 +116,7 @@ class DOODLELIB_API database {
   void set_meta_type(std::int32_t in_);
 
   database &operator=(const metadata_database &in);
-  explicit operator metadata_database() const;
+  operator metadata_database() const;
   bool operator==(const database &in_rhs) const;
   bool operator==(const boost::uuids::uuid &in_rhs) const;
   bool operator!=(const database &in_rhs) const;

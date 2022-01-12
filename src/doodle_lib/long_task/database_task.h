@@ -68,4 +68,85 @@ class DOODLELIB_API database_task_select : public process_t<database_task_select
   [[maybe_unused]] void update(base_type::delta_type, void* data);
 };
 
+class DOODLELIB_API database_task_update : public process_t<database_task_update> {
+ private:
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+  void update_db();
+ public:
+  using base_type = process_t<database_task_update>;
+  /**
+   * @brief 更新在数据库中的实体
+   *
+   * @param in_handle in_handle 具有消息组件,
+   * @param in_list 需要更新的组件
+   *
+   * @note 由于这个使用上下文获取项目, 所以使用这个获取项目本身时要小心
+   *
+   */
+  explicit database_task_update(const entt::handle& in_handle, const std::vector<entt::handle>& in_list);
+
+  ~database_task_update() override;
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(base_type::delta_type, void* data);
+};
+
+class DOODLELIB_API database_task_delete : public process_t<database_task_delete> {
+ private:
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+  void delete_db();
+ public:
+  using base_type = process_t<database_task_delete>;
+  /**
+   * @brief 使用线程提取数据库的数据, 这个是获取项目数据以外的数据的使用情况
+   *
+   * @param in_handle in_handle 具有消息组件,
+   * @param in_list 过滤器组件，筛选数据库中的数据
+   *
+   * @note 由于这个使用上下文获取项目, 所以使用这个获取项目本身时要小心
+   *
+   */
+  explicit database_task_delete(const entt::handle& in_handle, const std::vector<entt::handle>& in_list);
+
+  ~database_task_delete() override;
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(base_type::delta_type, void* data);
+};
+
+class DOODLELIB_API database_task_install : public process_t<database_task_install> {
+ private:
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+  void install_db();
+ public:
+  using base_type = process_t<database_task_install>;
+  /**
+   * @brief 使用线程提取数据库的数据, 这个是获取项目数据以外的数据的使用情况
+   *
+   * @param in_handle in_handle 具有消息组件,
+   * @param in_list 过滤器组件，筛选数据库中的数据
+   *
+   * @note 由于这个使用上下文获取项目, 所以使用这个获取项目本身时要小心
+   *
+   */
+  explicit database_task_install(const entt::handle& in_handle, const std::vector<entt::handle>& in_list);
+
+  ~database_task_install() override;
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(base_type::delta_type, void* data);
+};
+
 }  // namespace doodle
