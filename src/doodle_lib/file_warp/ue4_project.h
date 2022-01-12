@@ -7,7 +7,7 @@
 #include <doodle_lib/thread_pool/long_term.h>
 
 namespace doodle {
-#ifdef 0
+#ifdef DOODLE_DIS_FUN
 class DOODLELIB_API ue4_project
     : public std::enable_shared_from_this<ue4_project> {
   class DOODLELIB_API Ue4ProjectFilePulgins {

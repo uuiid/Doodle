@@ -16,9 +16,9 @@ class DOODLELIB_API qcloth_arg {
   bool only_sim;
 
   friend void to_json(nlohmann::json &nlohmann_json_j, const qcloth_arg &nlohmann_json_t) {
-    nlohmann_json_j["path"]               = nlohmann_json_t.sim_path;
-    nlohmann_json_j["export_path"]        = nlohmann_json_t.export_path;
-    nlohmann_json_j["qcloth_assets_path"] = nlohmann_json_t.qcloth_assets_path;
+    nlohmann_json_j["path"]               = nlohmann_json_t.sim_path.generic_string();
+    nlohmann_json_j["export_path"]        = nlohmann_json_t.export_path.generic_string();
+    nlohmann_json_j["qcloth_assets_path"] = nlohmann_json_t.qcloth_assets_path.generic_string();
     nlohmann_json_j["only_sim"]           = nlohmann_json_t.only_sim;
     nlohmann_json_j["uuid"]               = boost::lexical_cast<string>(nlohmann_json_t.uuid_p);
   };
