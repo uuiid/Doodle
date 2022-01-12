@@ -75,8 +75,10 @@ void database_task_select::select_db() {
   if (p_i->filter_._parent_id)
     l_select.where.add(l_metadatatab.parent == p_i->filter_._parent_id);
 
-  l_select.where.add(l_metadatatab.id > p_i->filter_._beg_off_id);
-  l_select.limit(p_i->filter_._off_size);
+  if(p_i->filter_._off_size) {
+    l_select.where.add(l_metadatatab.id > p_i->filter_._beg_off_id);
+    l_select.limit(*(p_i->filter_._off_size));
+  }
   for (const auto& row : (*k_conn)(l_select)) {
     if (p_i->stop)
       return;
@@ -319,7 +321,7 @@ void database_task_install::install_db() {
     if (k_data.assets)
       k_sql.insert_list.add(l_metadatatab.assetsP == *k_data.assets);
     auto id = (*k_conn)(k_sql);
-    in.patch<database>([&](database& in){
+    in.patch<database>([&](database& in) {
       in.set_id(id);
     });
   }
@@ -370,5 +372,53 @@ void database_task_install::update(chrono::duration<chrono::system_clock::rep, c
     default:
       break;
   }
+}
+class database_task_obs::impl {
+ public:
+  entt::observer obs;
+  entt::handle msg_handle;
+};
+database_task_obs::database_task_obs()
+    : p_i(std::make_unique<impl>()) {
+}
+database_task_obs::~database_task_obs() = default;
+
+void database_task_obs::init() {
+  p_i->obs.connect(*g_reg(), entt::collector.update<database_stauts>());
+  p_i->msg_handle = make_handle();
+  p_i->msg_handle.emplace<process_message>();
+}
+void database_task_obs::succeeded() {
+  p_i->obs.disconnect();
+}
+void database_task_obs::failed() {
+  p_i->obs.disconnect();
+}
+void database_task_obs::aborted() {
+  p_i->obs.disconnect();
+}
+void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+  if (p_i->obs.empty())
+    return;
+  std::vector<entt::handle> k_handle_list{};
+  auto& k_obs = p_i->obs;
+  std::transform(k_obs.begin(), k_obs.end(), std::back_inserter(k_handle_list), [](auto& in_item) { return make_handle(in_item); });
+  {
+    std::vector<entt::handle> k_h{};
+    std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(k_h),
+                 [](const entt::handle& in_handle) {
+                   return in_handle.get<database_stauts>().is<need_save>();
+                 });
+    g_main_loop().attach<database_task_update>(p_i->msg_handle, k_h);
+  }
+  {
+    std::vector<entt::handle> k_h{};
+    std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(k_h),
+                 [](const entt::handle& in_handle) {
+                   return in_handle.get<database_stauts>().is<need_delete>();
+                 });
+    g_main_loop().attach<database_task_delete>(p_i->msg_handle, k_h);
+  }
+  p_i->obs.clear();
 }
 }  // namespace doodle

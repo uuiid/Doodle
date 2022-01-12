@@ -30,7 +30,7 @@ class DOODLELIB_API filter {
   /**
    * @brief 提取数据的条数，默认为 1000
    */
-  std::uint16_t _off_size;
+  std::optional<std::uint16_t> _off_size;
 };
 }  // namespace database_n
 
@@ -74,6 +74,7 @@ class DOODLELIB_API database_task_update : public process_t<database_task_update
   std::unique_ptr<impl> p_i;
 
   void update_db();
+
  public:
   using base_type = process_t<database_task_update>;
   /**
@@ -101,6 +102,7 @@ class DOODLELIB_API database_task_delete : public process_t<database_task_delete
   std::unique_ptr<impl> p_i;
 
   void delete_db();
+
  public:
   using base_type = process_t<database_task_delete>;
   /**
@@ -128,6 +130,7 @@ class DOODLELIB_API database_task_install : public process_t<database_task_insta
   std::unique_ptr<impl> p_i;
 
   void install_db();
+
  public:
   using base_type = process_t<database_task_install>;
   /**
@@ -149,4 +152,20 @@ class DOODLELIB_API database_task_install : public process_t<database_task_insta
   [[maybe_unused]] void update(base_type::delta_type, void* data);
 };
 
+class DOODLELIB_API database_task_obs : public process_t<database_task_obs> {
+ private:
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+ public:
+  using base_type = process_t<database_task_install>;
+  database_task_obs();
+  ~database_task_obs() override;
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(base_type::delta_type, void* data);
+
+};
 }  // namespace doodle

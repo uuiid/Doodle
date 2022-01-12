@@ -322,22 +322,7 @@ doodle_app* doodle_app::Get() {
 bool doodle_app::valid() const {
   return this->p_impl->p_hwnd != nullptr;
 }
-void doodle_app::metadata_load() {
-  auto k_f = doodle_lib::Get().get_metadata_factory();
-  for (auto& k_i : k_metadata_obs) {
-    auto k_h = make_handle(k_i);
-    if (k_h.get<database_stauts>().is<need_load>()) {
-      k_f->select_indb(k_h);
-    } else if (k_h.get<database_stauts>().is<need_save>()) {
-      k_f->insert_into(k_h);
-    } else if (k_h.get<database_stauts>().is<need_delete>()) {
-      k_f->delete_data(k_h);
-    } else if (k_h.get<database_stauts>().is<need_root_load>()) {
-      k_f->select_indb_by_root(k_h);
-    }
-  }
-  k_metadata_obs.clear();
-}
+
 void doodle_app::metadata_save() const {
 }
 void doodle_app::metadata_delete() const {

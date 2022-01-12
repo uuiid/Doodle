@@ -63,7 +63,7 @@ bool comm_project_add::render() {
     k_en.emplace<project>(p_impl->p_prj_path, fmt::format("{}_{}", p_impl->p_prj_name, g_reg()->view<project>().size()));
     k_en.get<root_ref>().set_root(k_en);
     k_en.patch<database_stauts>(database_set_stauts<need_save>{});
-    k_d_lib.p_project_vector.push_back(k_en);
+
     p_impl->p_root = k_en;
   }
   if (p_impl->p_root) {

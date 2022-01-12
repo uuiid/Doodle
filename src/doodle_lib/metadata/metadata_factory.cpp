@@ -33,7 +33,6 @@ metadata_serialize::metadata_serialize()
 std::vector<entt::entity> metadata_serialize::get_all_prj() const {
   auto k_h = make_handle();
   k_h.emplace<process_message>();
-  g_main_loop().attach<database_task_select>(k_h,)
 
 
 

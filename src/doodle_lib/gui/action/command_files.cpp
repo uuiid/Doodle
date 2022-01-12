@@ -91,10 +91,7 @@ bool comm_files_up::add_files() {
   p_list_paths.get<assets_file>().up_version();
   p_list_paths.get<time_point_wrap>().set_time(chrono::system_clock::now());
 
-  //  auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(
-  //      p_list_paths.get<assets_path_vector>().make_up_path());
-  //  (*k_up)();
-  //  p_list_paths.patch<database_stauts>(database_set_stauts<need_save>{});
+
   return false;
 }
 
@@ -145,8 +142,7 @@ bool comm_file_image_to_move::updata_file() {
   p_root.get<assets_file>().up_version();
   p_root.get<time_point_wrap>().set_time(chrono::system_clock::now());
   p_root.patch<database_stauts>(database_set_stauts<need_save>{});
-  //  auto k_up = doodle_lib::Get().get_rpc_file_system_client()->upload(p_root.get<assets_path_vector>().make_up_path());
-  //  (*k_up)();
+
 
   return true;
 }

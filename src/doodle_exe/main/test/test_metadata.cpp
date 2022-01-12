@@ -213,10 +213,10 @@ TEST_CASE("test create metadata", "[server][metadata]") {
       }
     }
     SECTION("install database") {
-      auto k_f = doodle_lib::Get().get_metadata_factory();
-      for (auto k : g_reg()->view<database_stauts, database>()) {
-        k_f->insert_into(k);
-      }
+//      auto k_f = doodle_lib::Get().get_metadata_factory();
+//      for (auto k : g_reg()->view<database_stauts, database>()) {
+//        k_f->insert_into(k);
+//      }
     }
   }
 }
@@ -289,26 +289,20 @@ TEST_CASE("test str metadata", "[server][metadata][str]") {
     }
   }
 
-  auto k_f = doodle_lib::Get().get_metadata_factory();
-  for (auto k : g_reg()->view<database_stauts, database>()) {
-    k_f->insert_into(k);
-  }
+//  auto k_f = doodle_lib::Get().get_metadata_factory();
+//  for (auto k : g_reg()->view<database_stauts, database>()) {
+//    k_f->insert_into(k);
+//  }
 }
 
 TEST_CASE("load_meta", "[metadata]") {
   using namespace doodle;
-  auto k_server = rpc_server_handle{};
-  auto& set     = core_set::getSet();
-  k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
+
   doodle_lib::Get().init_gui();
   SECTION("load_meta") {
     auto& k_lib = doodle_lib::Get();
     k_lib.init_gui();
-    REQUIRE(k_lib.p_project_vector.size() >= 1);
-    auto k   = make_handle(k_lib.p_project_vector.front());
-
-    auto k_f = k_lib.get_metadata_factory();
-    k_f->select_indb_by_root(k);
+//    auto k   = make_handle(k_lib.p_project_vector.front());
 
     auto k_reg = g_reg();
     {

@@ -3,10 +3,7 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/static_value.h>
 #include <doodle_lib/pin_yin/convert.h>
-
-
-
-
+#include <doodle_lib/platform/win/list_drive.h>
 
 #ifdef _WIN32
 #include <ShlObj.h>
@@ -26,7 +23,7 @@ FSys::path win::get_pwd()
   ///获取环境变量 FOLDERID_Documents
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
-  chick_true<doodle_error>(pManager,DOODLE_LOC,"unable to find a save path");
+  chick_true<doodle_error>(pManager, DOODLE_LOC, "unable to find a save path");
 
   auto k_path = FSys::path{pManager};
   CoTaskMemFree(pManager);
@@ -44,7 +41,7 @@ FSys::path win::get_font() {
   ///获取环境变量 FOLDERID_Documents
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Fonts, NULL, nullptr, &pManager);
-  chick_true<doodle_error>(pManager,DOODLE_LOC,"unable to find a save path");
+  chick_true<doodle_error>(pManager, DOODLE_LOC, "unable to find a save path");
 
   auto k_path = FSys::path{pManager};
   CoTaskMemFree(pManager);
@@ -287,17 +284,9 @@ bool core_set_init::write_file() {
 }
 bool core_set_init::find_cache_dir() {
   DOODLE_LOG_INFO("寻找缓存路径");
-
-  const static std::vector<FSys::path> dirs{"D:/",
-                                            "E:/",
-                                            "F:/",
-                                            "G:/",
-                                            "H:/",
-                                            "I:/",
-                                            "J:/",
-                                            "K:/",
-                                            "L:/"};
-  auto l_item = std::any_of(dirs.begin(), dirs.end(), [this](const FSys::path &in_path) {
+  auto k_dirs = win::list_drive();
+  std::rotate(k_dirs.begin(), k_dirs.begin() + 1, k_dirs.end());
+  auto l_item = std::any_of(k_dirs.begin(), k_dirs.end(), [this](const FSys::path &in_path) {
     try {
       if (FSys::exists(in_path)) {
         auto info = FSys::space(in_path);

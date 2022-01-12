@@ -19,8 +19,7 @@ bool comm_video::render() {
   if (p_root) {
     if (imgui::Button(p_show_str["观看拍屏"].c_str())) {
       auto& k_f   = p_root.get<assets_path_vector>();
-      auto k_down = doodle_lib::Get().get_rpc_file_system_client()->download(k_f.make_down_path({}));
-      (*k_down)();
+
     }
   }
   return false;
