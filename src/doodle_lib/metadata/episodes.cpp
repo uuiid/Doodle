@@ -11,7 +11,7 @@ episodes::episodes()
 
 episodes::episodes(int64_t in_episodes)
     : p_episodes(in_episodes) {
-  chick_true<doodle_error>(p_episodes > 0, DOODLE_LOC, "集数无法为负");
+  chick_true<doodle_error>(p_episodes >= 0, DOODLE_LOC, "集数无法为负");
 }
 
 // Episodes::~Episodes() {
@@ -24,7 +24,7 @@ const int64_t& episodes::get_episodes() const noexcept {
 }
 
 void episodes::set_episodes(const int64_t& Episodes_) {
-  chick_true<doodle_error>(p_episodes > 0, DOODLE_LOC, "集数无法为负");
+  chick_true<doodle_error>(Episodes_ >= 0, DOODLE_LOC, "集数无法为负");
   p_episodes = Episodes_;
 }
 

@@ -99,7 +99,7 @@ void main_windows::main_menu_file() {
   if (dear::MenuItem("新项目"s)) {
     g_main_loop().attach<file_dialog>(
         [](const FSys::path &in_path) {
-          core::client::add_project(in_path);
+          core::client{}.add_project(in_path);
         },
         "选择目录"s);
   }

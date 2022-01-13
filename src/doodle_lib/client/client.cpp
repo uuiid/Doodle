@@ -4,14 +4,23 @@
 
 #include "client.h"
 
-#include <core/core_sql.h>
+#include <doodle_lib/core/core_sql.h>
+#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_lib/long_task/database_task.h>
+#include <doodle_lib/thread_pool/long_term.h>
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/ppgen.h>
 
+#pragma warning(disable : 4003)
+// clang-format off
 SQLPP_DECLARE_TABLE(
     (doodle_info),
-    (version_major, int, SQLPP_NULL)(version_minor, int, SQLPP_NULL));
+    (version_major, int, SQLPP_NULL)
+    (version_minor, int, SQLPP_NULL)
+    );
+// clang-format on
+#pragma warning(default : 4003)
 
 namespace doodle::core {
 void client::add_project(const std::filesystem::path& in_path) {
@@ -86,6 +95,11 @@ create table if not exists doodle_info
     (*k_conn)(sqlpp::insert_into(l_info)
                   .set(l_info.version_major = Doodle_VERSION_MAJOR,
                        l_info.version_minor = Doodle_VERSION_MINOR));
+}
+void client::open_project(const FSys::path& in_path) {
+  auto k_h = make_handle();
+  k_h.emplace<process_message>();
+  g_main_loop().attach<database_task_select>(k_h, in_path);
 }
 
 }  // namespace doodle::core

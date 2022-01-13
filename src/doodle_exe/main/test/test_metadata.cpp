@@ -6,9 +6,6 @@
 #include <catch.hpp>
 
 using namespace doodle;
-TEST_CASE("create_prj") {
-  core::client::add_project("D:/tmp");
-}
 
 TEST_CASE("convert", "[metadata]") {
   using namespace doodle;
@@ -33,15 +30,106 @@ TEST_CASE("convert", "[metadata]") {
 
   REQUIRE(k_s.all_of<shot, database>());
 
-  auto& k_d2  = k_s.get<database>();
+  auto& k_d2 = k_s.get<database>();
+  metadata_database k_data2;
+  k_data2     = k_d2;
 
   auto k_tmp2 = make_handle(reg->create());
   k_tmp2.emplace_or_replace<root_ref>(k_prj);
   auto& k_d3 = k_tmp2.get_or_emplace<database>();
+  k_d3       = k_data2;
 
   std::cout << "k_d3 id: " << k_d3.get_url_uuid() << std::endl;
   std::cout << "k_d2 id: " << k_d2.get_url_uuid() << std::endl;
   REQUIRE(k_d3 == k_d2);
+}
+
+TEST_CASE("create_prj") {
+  core::client{}.add_project("D:/tmp");
+}
+
+TEST_CASE("open project") {
+  core::client{}.open_project("D:/tmp");
+  while (!g_main_loop().empty())
+    g_main_loop().update({}, nullptr);
+}
+
+class name_data {
+ public:
+  name_data() {
+    std::string user{
+        "宦倩冰 邰小溪 孔佳晨 顾柏文 乌书竹 邱媛女 冷梓颖"
+        " 乔平良 闻爱萍 堵乐然 钭如之 屠宵月 农曦秀 苍佳洁 索优悦 黎晶晶"
+        " 杜珠玉 苏若美 宦修美 弓博敏 巴沛蓝 邵河灵 靳佩兰 张子丹 鱼绮丽"
+        " 胡怀亦 幸艳芳 衡韶丽 薛友绿 耿丝琪 杜俊慧 双芮悦 欧妙菡 陆梅雪"
+        " 寿江红 益小凝 燕洮洮 古逸雅 宁梦华 扶倩愉 国宇丞 魏梅雪 冯诗蕊"
+        " 刘秋双 宰怡丞 须奇文 蓟言文 邹心诺 陈曦秀 谢绣文 充靖柔 红凡梦"
+        " 冷霞绮 郏怡若 庄书萱 谭布侬 罗芷蕾 籍子琳 吕向莉 贺颜落 蔚元瑶"
+        " 冷绮云 家密思 钱云琼 养茵茵 鄂曼吟 璩静恬 步幸瑶 仰陶宁 秦芸静"
+        " 温玉兰 潘华楚 金初瑶 孔蔚然 朱诗晗 相夏槐 秦小之 焦念薇 陆丽英"
+        " 程香洁 万陶然 浦迎荷 隆智敏 潘蔓蔓 曾子芸 乌滢滢 古笑雯 顾半烟"
+        " 宫津童 彭灵波 翟诗桃 须思聪 方碧玉 梁羡丽 漕闲华 韩皎月 扈晴丽"
+        " 温燕平 冀冬梅 赖代容"};
+    std::istringstream iss{user};
+    user_list.insert(user_list.begin(),
+                     std::istream_iterator<std::string>(iss),
+                     std::istream_iterator<std::string>());
+
+    std::random_device rd;
+    mt.discard(rd());
+  }
+  string_list user_list;
+  std::uniform_int_distribution<int> dist{1, 30};
+  std::mt19937 mt;
+
+  void crete_prj() {
+    auto& set = core_set::getSet();
+    doodle_lib::Get().init_gui();
+    auto k_prj = make_handle();
+    k_prj.emplace<project>("D:/tmp", "case_tset");
+    k_prj.get<database_stauts>().set<need_save>();
+    k_prj.get<root_ref>().set_root(k_prj);
+
+    for (size_t i = 0; i < 20; ++i) {
+      if (i > 15) {
+        for (size_t k = 0; k < 20; ++k) {
+          auto k_ass = make_handle();
+          k_ass.emplace<assets>(fmt::format("ues{}/a{}/test{}", i, k, i));
+          k_ass.get<database_stauts>().set<need_save>();
+          k_ass.get<root_ref>().set_root(k_prj);
+        }
+      } else {
+        entt::handle k_i1 = make_handle();
+        k_i1.emplace<season>(std::int32_t(i % 5));
+        k_i1.get<database_stauts>().set<need_save>();
+        k_i1.emplace<episodes>(i);
+        k_i1.get<root_ref>().set_root(k_prj);
+
+        for (size_t k = 0; k < 100; ++k) {
+          entt::handle k_i2 = make_handle();
+          k_i2.emplace<season>(std::int32_t(i % 5));
+          k_i2.emplace<episodes>().set_episodes(k);
+          auto& k_sho = k_i2.emplace<shot>();
+          k_sho.set_shot(k);
+          if (i % 2 == 0) {
+            k_sho.set_shot_ab(shot::shot_ab_enum::B);
+          }
+          using namespace chrono::literals;
+          k_i2.emplace<assets_file>();
+          k_i2.get<database_stauts>().set<need_save>();
+          k_i2.get<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
+          auto k_u_i = dist(mt);
+          k_i2.get<assets_file>().set_user(user_list[k_u_i]);
+          k_i2.get<assets_file>().set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
+          k_i2.get<root_ref>().set_root(k_prj);
+        }
+      }
+    }
+  }
+};
+
+TEST_CASE_METHOD(name_data, "install project data") {
+  crete_prj();
 }
 
 TEST_CASE("time duration", "[metadata]") {
