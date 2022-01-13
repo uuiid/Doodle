@@ -165,6 +165,9 @@ TEST_CASE_METHOD(name_data, "install project data") {
     g_main_loop().update({}, nullptr);
 }
 
+//TEST_CASE("load project data all") {
+//}
+
 TEST_CASE("time duration", "[metadata]") {
   auto k_new   = chrono::sys_days{2021_y / 06 / 16} + 10h + 34min + 37s;
   auto k_local = chrono::local_days{2021_y / 06 / 16} + 18h + 34min + 37s;
