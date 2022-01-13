@@ -41,3 +41,13 @@ create index IF NOT EXISTS usertab_uuid_path_index
     on usertab (uuid_path);
 create index IF NOT EXISTS usertab_user_name_index
     on usertab (user_name);
+
+
+create table if not exists doodle_info
+(
+    version_major integer not null ,
+    version_minor integer not null
+);
+
+insert into doodle_info (version_major, version_minor)
+values (0,0);
