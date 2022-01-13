@@ -2,8 +2,13 @@
 // Created by TD on 2021/7/27.
 //
 #include <doodle_lib/doodle_lib_all.h>
-
+#include <doodle_lib/client/client.h>
 #include <catch.hpp>
+
+using namespace doodle;
+TEST_CASE("create_prj") {
+  core::client::add_project("D:/tmp");
+}
 
 TEST_CASE("convert", "[metadata]") {
   using namespace doodle;
@@ -17,11 +22,8 @@ TEST_CASE("convert", "[metadata]") {
 
   auto& k_d = k_prj.get<database>();
 
-  metadata_database k_data{k_d};
-  std::cout << k_data.DebugString() << std::endl;
-
-  auto k_s = make_handle(reg->create());
-  auto& s  = k_s.emplace<shot>();
+  auto k_s  = make_handle(reg->create());
+  auto& s   = k_s.emplace<shot>();
 
   s.set_shot(1);
   s.set_shot_ab(shot::shot_ab_enum::A);
@@ -31,15 +33,11 @@ TEST_CASE("convert", "[metadata]") {
 
   REQUIRE(k_s.all_of<shot, database>());
 
-  auto& k_d2 = k_s.get<database>();
-
-  metadata_database k_data2{k_d2};
-  std::cout << k_data2.DebugString() << std::endl;
+  auto& k_d2  = k_s.get<database>();
 
   auto k_tmp2 = make_handle(reg->create());
   k_tmp2.emplace_or_replace<root_ref>(k_prj);
   auto& k_d3 = k_tmp2.get_or_emplace<database>();
-  k_d3       = k_data2;
 
   std::cout << "k_d3 id: " << k_d3.get_url_uuid() << std::endl;
   std::cout << "k_d2 id: " << k_d2.get_url_uuid() << std::endl;
@@ -131,9 +129,7 @@ TEST_CASE("test create metadata", "[server][metadata]") {
   std::mt19937 mt(rd());
   std::uniform_int_distribution<int> dist{1, 30};
 
-  auto k_server = rpc_server_handle{};
-  auto& set     = core_set::getSet();
-  k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
+  auto& set = core_set::getSet();
   doodle_lib::Get().init_gui();
 
   SECTION("create project") {
@@ -213,10 +209,10 @@ TEST_CASE("test create metadata", "[server][metadata]") {
       }
     }
     SECTION("install database") {
-//      auto k_f = doodle_lib::Get().get_metadata_factory();
-//      for (auto k : g_reg()->view<database_stauts, database>()) {
-//        k_f->insert_into(k);
-//      }
+      //      auto k_f = doodle_lib::Get().get_metadata_factory();
+      //      for (auto k : g_reg()->view<database_stauts, database>()) {
+      //        k_f->insert_into(k);
+      //      }
     }
   }
 }
@@ -243,9 +239,7 @@ TEST_CASE("test str metadata", "[server][metadata][str]") {
   std::mt19937 mt(rd());
   std::uniform_int_distribution<int> dist{1, 30};
 
-  auto k_server = rpc_server_handle{};
-  auto& set     = core_set::getSet();
-  k_server.run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
+  auto& set = core_set::getSet();
   doodle_lib::Get().init_gui();
 
   auto k_prj = make_handle();
@@ -289,10 +283,10 @@ TEST_CASE("test str metadata", "[server][metadata][str]") {
     }
   }
 
-//  auto k_f = doodle_lib::Get().get_metadata_factory();
-//  for (auto k : g_reg()->view<database_stauts, database>()) {
-//    k_f->insert_into(k);
-//  }
+  //  auto k_f = doodle_lib::Get().get_metadata_factory();
+  //  for (auto k : g_reg()->view<database_stauts, database>()) {
+  //    k_f->insert_into(k);
+  //  }
 }
 
 TEST_CASE("load_meta", "[metadata]") {
@@ -302,7 +296,7 @@ TEST_CASE("load_meta", "[metadata]") {
   SECTION("load_meta") {
     auto& k_lib = doodle_lib::Get();
     k_lib.init_gui();
-//    auto k   = make_handle(k_lib.p_project_vector.front());
+    //    auto k   = make_handle(k_lib.p_project_vector.front());
 
     auto k_reg = g_reg();
     {

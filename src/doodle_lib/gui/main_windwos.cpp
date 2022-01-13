@@ -18,6 +18,7 @@
 #include <doodle_lib/toolkit/toolkit.h>
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/core/open_file_dialog.h>
+#include <doodle_lib/client/client.h>
 namespace doodle {
 
 template <class T>
@@ -95,6 +96,14 @@ void main_windows::frame_render() {
       };
 }
 void main_windows::main_menu_file() {
+  if (dear::MenuItem("新项目"s)) {
+    g_main_loop().attach<file_dialog>(
+        [](const FSys::path &in_path) {
+          core::client::add_project(in_path);
+        },
+        "选择目录"s);
+  }
+
   ImGui::Separator();
   dear::MenuItem(u8"调试", p_debug_show.get());
   dear::MenuItem(u8"样式设置", p_style_show.get());

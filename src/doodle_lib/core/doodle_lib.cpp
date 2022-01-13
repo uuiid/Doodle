@@ -64,7 +64,6 @@ doodle_lib::doodle_lib()
 
   reg->on_construct<database>().connect<&entt::registry::get_or_emplace<database_stauts>>();
   p_install = this;
-  core_sql::Get();
 }
 
 FSys::path doodle_lib::create_time_database() {

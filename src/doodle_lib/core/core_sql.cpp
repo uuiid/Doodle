@@ -27,15 +27,22 @@ core_sql::core_sql()
 #endif
 }
 
-
-
-conn_ptr core_sql::get_connection(const FSys::path& in_path) const {
+conn_ptr core_sql::get_connection(const FSys::path& in_path) {
+  if (!exists(in_path))
+    p_i->config.flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+  else
+    p_i->config.flags = SQLITE_OPEN_READWRITE;
   p_i->config.path_to_database = in_path.generic_string();
   return std::make_unique<sqlpp::sqlite3::connection>(p_i->config);
 }
 core_sql& core_sql::Get() {
   static core_sql install;
   return install;
+}
+conn_ptr core_sql::get_connection_const(const FSys::path& in_path) const {
+  p_i->config.flags            = SQLITE_OPEN_READONLY;
+  p_i->config.path_to_database = in_path.generic_string();
+  return std::make_unique<sqlpp::sqlite3::connection>(p_i->config);
 }
 core_sql::~core_sql() = default;
 

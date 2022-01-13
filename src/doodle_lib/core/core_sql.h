@@ -16,7 +16,8 @@ class DOODLELIB_API core_sql : public details::no_copy {
   ~core_sql();
 
   [[nodiscard]] static core_sql& Get();
-  [[nodiscard]] conn_ptr get_connection(const FSys::path& in_path) const;
+  [[nodiscard]] conn_ptr get_connection(const FSys::path& in_path);
+  [[nodiscard]] conn_ptr get_connection_const(const FSys::path& in_path) const;
 };
 
 }  // namespace doodle
