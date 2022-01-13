@@ -3,6 +3,8 @@
 //
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/client/client.h>
+#include <doodle_lib/long_task/database_task.h>
+
 #include <catch.hpp>
 
 using namespace doodle;
@@ -54,27 +56,42 @@ TEST_CASE("open project") {
     g_main_loop().update({}, nullptr);
 }
 
+TEST_CASE("install project") {
+  doodle_lib::Get().init_gui();
+  auto k_h = make_handle();
+  k_h.emplace<process_message>();
+  std::vector<entt::handle> k_l{};
+  auto k_prj_h = make_handle();
+  auto& k_prj  = k_prj_h.emplace<project>("D:/tmp", "test1");
+  g_reg()->set<project>(k_prj);
+  k_l.push_back(k_prj_h);
+  g_main_loop().attach<database_task_install>(k_h, k_l);
+
+  while (!g_main_loop().empty())
+    g_main_loop().update({}, nullptr);
+}
+
 class name_data {
  public:
   name_data() {
-    std::string user{
-        "宦倩冰 邰小溪 孔佳晨 顾柏文 乌书竹 邱媛女 冷梓颖"
-        " 乔平良 闻爱萍 堵乐然 钭如之 屠宵月 农曦秀 苍佳洁 索优悦 黎晶晶"
-        " 杜珠玉 苏若美 宦修美 弓博敏 巴沛蓝 邵河灵 靳佩兰 张子丹 鱼绮丽"
-        " 胡怀亦 幸艳芳 衡韶丽 薛友绿 耿丝琪 杜俊慧 双芮悦 欧妙菡 陆梅雪"
-        " 寿江红 益小凝 燕洮洮 古逸雅 宁梦华 扶倩愉 国宇丞 魏梅雪 冯诗蕊"
-        " 刘秋双 宰怡丞 须奇文 蓟言文 邹心诺 陈曦秀 谢绣文 充靖柔 红凡梦"
-        " 冷霞绮 郏怡若 庄书萱 谭布侬 罗芷蕾 籍子琳 吕向莉 贺颜落 蔚元瑶"
-        " 冷绮云 家密思 钱云琼 养茵茵 鄂曼吟 璩静恬 步幸瑶 仰陶宁 秦芸静"
-        " 温玉兰 潘华楚 金初瑶 孔蔚然 朱诗晗 相夏槐 秦小之 焦念薇 陆丽英"
-        " 程香洁 万陶然 浦迎荷 隆智敏 潘蔓蔓 曾子芸 乌滢滢 古笑雯 顾半烟"
-        " 宫津童 彭灵波 翟诗桃 须思聪 方碧玉 梁羡丽 漕闲华 韩皎月 扈晴丽"
-        " 温燕平 冀冬梅 赖代容"};
-    std::istringstream iss{user};
-    user_list.insert(user_list.begin(),
-                     std::istream_iterator<std::string>(iss),
-                     std::istream_iterator<std::string>());
-
+    //    std::string user{
+    //        "宦倩冰 邰小溪 孔佳晨 顾柏文 乌书竹 邱媛女 冷梓颖"
+    //        " 乔平良 闻爱萍 堵乐然 钭如之 屠宵月 农曦秀 苍佳洁 索优悦 黎晶晶"
+    //        " 杜珠玉 苏若美 宦修美 弓博敏 巴沛蓝 邵河灵 靳佩兰 张子丹 鱼绮丽"
+    //        " 胡怀亦 幸艳芳 衡韶丽 薛友绿 耿丝琪 杜俊慧 双芮悦 欧妙菡 陆梅雪"
+    //        " 寿江红 益小凝 燕洮洮 古逸雅 宁梦华 扶倩愉 国宇丞 魏梅雪 冯诗蕊"
+    //        " 刘秋双 宰怡丞 须奇文 蓟言文 邹心诺 陈曦秀 谢绣文 充靖柔 红凡梦"
+    //        " 冷霞绮 郏怡若 庄书萱 谭布侬 罗芷蕾 籍子琳 吕向莉 贺颜落 蔚元瑶"
+    //        " 冷绮云 家密思 钱云琼 养茵茵 鄂曼吟 璩静恬 步幸瑶 仰陶宁 秦芸静"
+    //        " 温玉兰 潘华楚 金初瑶 孔蔚然 朱诗晗 相夏槐 秦小之 焦念薇 陆丽英"
+    //        " 程香洁 万陶然 浦迎荷 隆智敏 潘蔓蔓 曾子芸 乌滢滢 古笑雯 顾半烟"
+    //        " 宫津童 彭灵波 翟诗桃 须思聪 方碧玉 梁羡丽 漕闲华 韩皎月 扈晴丽"
+    //        " 温燕平 冀冬梅 赖代容"};
+    //    std::istringstream iss{user};
+    //    user_list.insert(user_list.begin(),
+    //                     std::istream_iterator<std::string>(iss),
+    //                     std::istream_iterator<std::string>());
+    //
     std::random_device rd;
     mt.discard(rd());
   }
@@ -88,7 +105,7 @@ class name_data {
     auto k_prj = make_handle();
     k_prj.emplace<project>("D:/tmp", "case_tset");
     k_prj.get<database_stauts>().set<need_save>();
-    k_prj.get<root_ref>().set_root(k_prj);
+    g_reg()->set<project>(k_prj.get<project>());
 
     for (size_t i = 0; i < 20; ++i) {
       if (i > 15) {
@@ -96,16 +113,14 @@ class name_data {
           auto k_ass = make_handle();
           k_ass.emplace<assets>(fmt::format("ues{}/a{}/test{}", i, k, i));
           k_ass.get<database_stauts>().set<need_save>();
-          k_ass.get<root_ref>().set_root(k_prj);
         }
       } else {
         entt::handle k_i1 = make_handle();
         k_i1.emplace<season>(std::int32_t(i % 5));
         k_i1.get<database_stauts>().set<need_save>();
         k_i1.emplace<episodes>(i);
-        k_i1.get<root_ref>().set_root(k_prj);
 
-        for (size_t k = 0; k < 100; ++k) {
+        for (size_t k = 0; k < 30; ++k) {
           entt::handle k_i2 = make_handle();
           k_i2.emplace<season>(std::int32_t(i % 5));
           k_i2.emplace<episodes>().set_episodes(k);
@@ -114,27 +129,37 @@ class name_data {
           if (i % 2 == 0) {
             k_sho.set_shot_ab(shot::shot_ab_enum::B);
           }
-          using namespace chrono::literals;
           k_i2.emplace<assets_file>();
           k_i2.get<database_stauts>().set<need_save>();
           k_i2.get<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
           auto k_u_i = dist(mt);
-          k_i2.get<assets_file>().set_user(user_list[k_u_i]);
+          k_i2.get<assets_file>().set_user(fmt::format("user_{}", k_u_i));
           k_i2.get<assets_file>().set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
-          k_i2.get<root_ref>().set_root(k_prj);
         }
       }
     }
   }
 };
 
+TEST_CASE_METHOD(name_data, "create project data") {
+  crete_prj();
+}
 TEST_CASE_METHOD(name_data, "install project data") {
   crete_prj();
+  auto k_h = make_handle();
+  k_h.emplace<process_message>();
+  std::vector<entt::handle> k_l{};
+  auto k_view = g_reg()->view<database>();
+  std::transform(k_view.begin(), k_view.end(), std::back_inserter(k_l),
+                 [](auto& in) {
+                   return make_handle(in);
+                 });
+  g_main_loop().attach<database_task_install>(k_h, k_l);
+  while (!g_main_loop().empty())
+    g_main_loop().update({}, nullptr);
 }
 
 TEST_CASE("time duration", "[metadata]") {
-  using namespace doodle;
-  using namespace doodle::chrono::literals;
   auto k_new   = chrono::sys_days{2021_y / 06 / 16} + 10h + 34min + 37s;
   auto k_local = chrono::local_days{2021_y / 06 / 16} + 18h + 34min + 37s;
   //  REQUIRE(doodle::TimeDuration{}.getUTCTime() == chrono::system_clock::now());
@@ -195,6 +220,7 @@ TEST_CASE("time duration", "[metadata]") {
     }
   }
 }
+
 TEST_CASE("test create metadata", "[server][metadata]") {
   using namespace doodle;
   std::string user{
