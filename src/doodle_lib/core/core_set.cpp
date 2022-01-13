@@ -269,7 +269,7 @@ bool core_set_init::read_file() {
 bool core_set_init::write_file() {
   DOODLE_LOG_INFO("写入配置文件 {}", p_set.p_doc / p_set.config_file_name());
 
-  if (p_set.p_ue4_setting.has_path() && !FSys::exists(p_set.p_ue4_setting.get_path() / staticValue::ue_path_obj())) {
+  if (p_set.p_ue4_setting.has_path() && !FSys::exists(p_set.p_ue4_setting.get_path() / doodle_config::ue_path_obj)) {
     p_set.p_ue4_setting.set_path({});
     DOODLE_LOG_INFO("在路径中没有找到ue");
   }

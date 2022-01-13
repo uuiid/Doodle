@@ -1,5 +1,6 @@
 set(
         DOODLELIB_HEADER
+        client/client.h
         core/ContainerDevice.h
         core/core_set.h
         core/core_sql.h
@@ -98,6 +99,7 @@ set(
 
 set(
         DOODLELIB_SOURCE
+        client/client.cpp
         core/core_set.cpp
         core/core_sql.cpp
         core/doodle_app_base.cpp
