@@ -58,8 +58,8 @@ create index IF NOT EXISTS usertab_user_name_index
 
 create table if not exists doodle_info
 (
-    version_major integer not null ,
-    version_minor integer not null
+    version_major integer null ,
+    version_minor integer null
 );
 
 insert into doodle_info (version_major, version_minor)
