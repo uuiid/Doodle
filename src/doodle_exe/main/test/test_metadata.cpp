@@ -14,9 +14,6 @@ TEST_CASE("convert", "[metadata]") {
   auto reg   = g_reg();
   auto k_prj = make_handle(reg->create());
   auto& k_p  = k_prj.emplace<project>();
-  k_prj.patch<root_ref>([&](root_ref& in) {
-    in.p_root = k_prj;
-  });
   REQUIRE(k_prj.all_of<project, database>());
 
   auto& k_d = k_prj.get<database>();
@@ -26,9 +23,6 @@ TEST_CASE("convert", "[metadata]") {
 
   s.set_shot(1);
   s.set_shot_ab(shot::shot_ab_enum::A);
-  k_s.patch<root_ref>([&](root_ref& in) {
-    in.p_root = k_prj;
-  });
 
   REQUIRE(k_s.all_of<shot, database>());
 
@@ -37,9 +31,8 @@ TEST_CASE("convert", "[metadata]") {
   k_data2     = k_d2;
 
   auto k_tmp2 = make_handle(reg->create());
-  k_tmp2.emplace_or_replace<root_ref>(k_prj);
-  auto& k_d3 = k_tmp2.get_or_emplace<database>();
-  k_d3       = k_data2;
+  auto& k_d3  = k_tmp2.get_or_emplace<database>();
+  k_d3        = k_data2;
 
   std::cout << "k_d3 id: " << k_d3.get_url_uuid() << std::endl;
   std::cout << "k_d2 id: " << k_d2.get_url_uuid() << std::endl;
@@ -69,6 +62,19 @@ TEST_CASE("install project") {
 
   while (!g_main_loop().empty())
     g_main_loop().update({}, nullptr);
+}
+TEST_CASE("load project data") {
+  doodle_lib::Get().init_gui();
+  auto k_h = make_handle();
+  k_h.emplace<process_message>();
+
+  g_main_loop().attach<database_task_select>(k_h, "D:/tmp");
+  while (!g_main_loop().empty())
+    g_main_loop().update({}, nullptr);
+
+  for (auto&& [e, p] : g_reg()->view<project>().each()) {
+    std::cout << p.get_name() << std::endl;
+  }
 }
 
 class name_data {
