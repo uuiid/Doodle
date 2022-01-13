@@ -28,7 +28,7 @@ class DOODLELIB_API filter {
 
   std::uint64_t _beg_off_id;
   /**
-   * @brief 提取数据的条数，默认为 1000
+   * @brief 提取数据的条数
    */
   std::optional<std::uint16_t> _off_size;
 };

@@ -27,7 +27,7 @@ filter::filter()
       _shot(),
       _assets(),
       _beg_off_id(0u),
-      _off_size(1000u) {
+      _off_size() {
 }
 
 }  // namespace database_n
@@ -52,7 +52,7 @@ database_task_select::database_task_select(const entt::handle& in_handle, const 
 database_task_select::database_task_select(const entt::handle& in_handle, const FSys::path& in_prj_root)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
-  p_i->filter_._meta_type = metadata_type::project_root;
+//  p_i->filter_._meta_type = metadata_type::project_root;
   p_i->handle_            = in_handle;
   p_i->prj_root           = in_prj_root / doodle_config::doodle_db_name;
 }
@@ -79,6 +79,7 @@ void database_task_select::select_db() {
     l_select.where.add(l_metadatatab.id > p_i->filter_._beg_off_id);
     l_select.limit(*p_i->filter_._off_size);
   }
+
   for (const auto& row : (*k_conn)(l_select)) {
     if (p_i->stop)
       return;
