@@ -46,7 +46,7 @@ database_task_select::database_task_select(const entt::handle& in_handle, const 
   chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
   p_i->filter_  = in_filter;
   p_i->handle_  = in_handle;
-  p_i->prj_root = g_reg()->ctx<project>().get_path() / "doodle_db";
+  p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
 }
 
 database_task_select::database_task_select(const entt::handle& in_handle, const FSys::path& in_prj_root)
@@ -54,7 +54,7 @@ database_task_select::database_task_select(const entt::handle& in_handle, const 
   chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
   p_i->filter_._meta_type = metadata_type::project_root;
   p_i->handle_            = in_handle;
-  p_i->prj_root           = in_prj_root / "doodle_db";
+  p_i->prj_root           = in_prj_root / doodle_config::doodle_db_name;
 }
 
 database_task_select::~database_task_select() = default;
@@ -158,7 +158,7 @@ class database_task_update::impl {
 database_task_update::database_task_update(const entt::handle& in_handle, const std::vector<entt::handle>& in_list)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
-  p_i->prj_root = g_reg()->ctx<project>().get_path() / "doodle_db";
+  p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
   p_i->handle_  = in_handle;
   p_i->list     = in_list;
 }
@@ -248,7 +248,7 @@ database_task_delete::database_task_delete(
     const std::vector<entt::handle>& in_list)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
-  p_i->prj_root = g_reg()->ctx<project>().get_path() / "doodle_db";
+  p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
   p_i->handle_  = in_handle;
   p_i->list     = in_list;
 }
@@ -331,7 +331,7 @@ database_task_install::database_task_install(
     const std::vector<entt::handle>& in_list)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
-  p_i->prj_root = g_reg()->ctx<project>().get_path() / "doodle_db";
+  p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
   p_i->handle_  = in_handle;
   p_i->list     = in_list;
 }
