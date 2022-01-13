@@ -28,9 +28,8 @@ void client::add_project(const std::filesystem::path& in_path) {
   k_conn->execute(R"(
 create table if not exists metadatatab
 (
-    id          bigint unsigned auto_increment
-        primary key,
-    parent      bigint unsigned    null,
+    id          integer primary key,
+    parent      integer            null,
     uuidPath    text               null,
     user_data   text               null,
     update_time datetime default CURRENT_TIMESTAMP not null,
@@ -44,10 +43,7 @@ create table if not exists metadatatab
             on delete cascade
 );
 )");
-  k_conn->execute(R"(
-create index IF NOT EXISTS Metadata_id_index
-    on metadatatab (id);
-)");
+
   k_conn->execute(R"(
 create index IF NOT EXISTS Metadata_parent_index
     on metadatatab (parent);
@@ -67,13 +63,13 @@ create index IF NOT EXISTS Metadata_uuidPath_index
   k_conn->execute(R"(
 create table if not exists usertab
 (
-    id               bigint unsigned auto_increment
-        primary key,
+    id               integer primary key,
     user_name        text not null,
     uuid_path        text null,
     user_data        text null,
     permission_group bigint default 0 not null
 );
+
 )");
   k_conn->execute(R"(
 create index IF NOT EXISTS usertab_uuid_path_index
@@ -86,8 +82,8 @@ create index IF NOT EXISTS usertab_user_name_index
   k_conn->execute(R"(
 create table if not exists doodle_info
 (
-    version_major integer null ,
-    version_minor integer null
+    version_major integer not null,
+    version_minor integer not null
 );
 )");
   doodle_info::doodle_info l_info{};

@@ -1,8 +1,7 @@
 create table if not exists metadatatab
 (
-    id          bigint unsigned auto_increment
-        primary key,
-    parent      bigint unsigned    null,
+    id          integer primary key,
+    parent      integer            null,
     uuidPath    text               null,
     user_data   text               null,
     update_time datetime default CURRENT_TIMESTAMP not null,
@@ -16,8 +15,6 @@ create table if not exists metadatatab
             on delete cascade
 );
 
-create index IF NOT EXISTS Metadata_id_index
-    on metadatatab (id);
 create index IF NOT EXISTS Metadata_parent_index
     on metadatatab (parent);
 create index IF NOT EXISTS Metadata_episode_index
@@ -29,8 +26,7 @@ create index IF NOT EXISTS Metadata_uuidPath_index
 
 create table if not exists usertab
 (
-    id               bigint unsigned auto_increment
-        primary key,
+    id               integer primary key,
     user_name        text not null,
     uuid_path        text null,
     user_data        text null,
@@ -45,9 +41,9 @@ create index IF NOT EXISTS usertab_user_name_index
 
 create table if not exists doodle_info
 (
-    version_major integer not null ,
+    version_major integer not null,
     version_minor integer not null
 );
 
 insert into doodle_info (version_major, version_minor)
-values (0,0);
+values (0, 0);
