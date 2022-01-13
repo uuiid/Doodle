@@ -309,6 +309,7 @@ void database_task_install::install_db() {
     auto k_sql = sqlpp::dynamic_insert_into(*k_conn, l_metadatatab).dynamic_set();
     k_sql.insert_list.add(l_metadatatab.metaType = k_data.m_type);
     k_sql.insert_list.add(l_metadatatab.uuidPath = k_data.uuid_path);
+    k_sql.insert_list.add(l_metadatatab.userData = k_data.user_data);
 
     if (k_data.parent)
       k_sql.insert_list.add(l_metadatatab.parent = *k_data.parent);
