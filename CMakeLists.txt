@@ -121,6 +121,7 @@ enable_testing()
 add_subdirectory(src)
 
 #=====================安装打包过程===============================
+set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE )
 include(InstallRequiredSystemLibraries)
 
 list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
