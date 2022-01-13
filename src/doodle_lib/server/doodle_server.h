@@ -10,7 +10,7 @@
 namespace doodle {
 
 class DOODLELIB_API doodle_server : public CServiceBase {
-  rpc_server_handle_ptr p_h;
+//  rpc_server_handle_ptr p_h;
 
   static std::wstring& server_name();
 

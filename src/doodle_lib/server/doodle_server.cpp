@@ -26,7 +26,7 @@ doodle_server::doodle_server(PCWSTR pszServiceName,
                    fCanPauseContinue,
                    dwErrorEventId,
                    wErrorCategoryId) {
-  p_h = new_object<rpc_server_handle>();
+//  p_h = new_object<rpc_server_handle>();
 }
 
 bool doodle_server::install_server() {
@@ -50,10 +50,10 @@ bool doodle_server::uninstall_server() {
 
 void doodle_server::OnStart(DWORD dwArgc, PWSTR *pszArgv) {
   auto &k_set = core_set::getSet();
-  p_h->run_server(k_set.get_meta_rpc_port(), k_set.get_file_rpc_port());
+  //  p_h->run_server(k_set.get_meta_rpc_port(), k_set.get_file_rpc_port());
 }
 
 void doodle_server::OnStop() {
-  p_h->stop();
+  //  p_h->stop();
 }
 }  // namespace doodle

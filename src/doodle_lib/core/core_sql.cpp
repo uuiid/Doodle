@@ -15,27 +15,23 @@ namespace doodle {
 
 class core_sql::impl {
  public:
-  std::shared_ptr<sqlpp::sqlite3::connection_config> config;
+  sqlpp::sqlite3::connection_config config;
 };
 
 core_sql::core_sql()
-    : p_i(std::unique_ptr<impl>()) {
-  Init();
-}
-
-void core_sql::Init() {
-  auto& set = core_set::getSet();
-
+    : p_i(std::make_unique<impl>()) {
 #ifdef NDEBUG
   p_i->config->debug = false;
 #else
-  p_i->config->debug = true;
+  p_i->config.debug = true;
 #endif
 }
 
+
+
 conn_ptr core_sql::get_connection(const FSys::path& in_path) const {
-  p_i->config->path_to_database = in_path.generic_string();
-  return std::make_unique<sqlpp::sqlite3::connection>(*(p_i->config));
+  p_i->config.path_to_database = in_path.generic_string();
+  return std::make_unique<sqlpp::sqlite3::connection>(p_i->config);
 }
 core_sql& core_sql::Get() {
   static core_sql install;

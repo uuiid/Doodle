@@ -15,7 +15,6 @@ class DOODLELIB_API core_sql : public details::no_copy {
  public:
   ~core_sql();
 
-  void Init();
   [[nodiscard]] static core_sql& Get();
   [[nodiscard]] conn_ptr get_connection(const FSys::path& in_path) const;
 };
