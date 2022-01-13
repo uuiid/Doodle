@@ -76,7 +76,8 @@ target_link_libraries(doodle_lib
         csv
         Catch2::Catch2
         #        SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
-        SqlppSqlite #这个是我们自己寻找的sqlite sqlpp连接器
+        sqlpp11::sqlite3
+        sqlpp11::sqlpp11
         imgui::imgui
         #        gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
         cryptopp-static

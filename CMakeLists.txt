@@ -49,7 +49,7 @@ find_package(Boost 1.75 REQUIRED COMPONENTS
         serialization
         program_options
         )
-find_package(Sqlpp11 REQUIRED)
+
 find_package(Catch2 CONFIG)
 find_package(Doxygen)
 # 寻找opencv
@@ -59,7 +59,7 @@ find_package(imgui CONFIG REQUIRED)
 
 #这两个是我自己写的寻找库的方法
 #    find_package(SqlppMySql REQUIRED)
-find_package(SqlppSqlite REQUIRED)
+#find_package(SqlppSqlite REQUIRED)
 
 #仅头库
 find_package(magic_enum CONFIG REQUIRED)
@@ -68,7 +68,9 @@ find_package(date CONFIG REQUIRED)
 find_package(cereal CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
-
+find_package(Sqlpp11 CONFIG REQUIRED
+        COMPONENTS
+        sqlite3)
 
 find_package(cryptopp CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
@@ -121,7 +123,7 @@ enable_testing()
 add_subdirectory(src)
 
 #=====================安装打包过程===============================
-set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE )
+set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 include(InstallRequiredSystemLibraries)
 
 list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
@@ -239,5 +241,5 @@ install imguiwrap --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 install imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 .\vcpkg.exe upgrade entt --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 .\vcpkg.exe upgrade entt --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports" --no-dry-run
-
+sqlpp11[sqlite3-connector]
 ]==]
