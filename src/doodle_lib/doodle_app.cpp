@@ -323,17 +323,6 @@ bool doodle_app::valid() const {
   return this->p_impl->p_hwnd != nullptr;
 }
 
-void doodle_app::metadata_save() const {
-}
-void doodle_app::metadata_delete() const {
-}
-
-void doodle_app::metadata_loop_one() {
-  metadata_save();
-  metadata_load();
-  metadata_delete();
-}
-
 base_widget_ptr doodle_app::loop_begin() {
   ::ShowWindow(p_impl->p_hwnd, SW_SHOW);
   //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
@@ -408,7 +397,6 @@ void doodle_app::loop_one() {
     if (!p_show_err) {
       p_main_win->frame_render();
       main_loop();
-      metadata_loop_one();
       g_main_loop().update(l_now - s_now, nullptr);
       g_bounded_pool().update(l_now - s_now, nullptr);
       s_now = l_now;

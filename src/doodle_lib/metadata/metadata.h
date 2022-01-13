@@ -16,7 +16,7 @@ class DOODLELIB_API metadata_database {
  public:
   std::string user_data;
   std::uint64_t id;
-  std::optional<std::int32_t> parent;
+  std::optional<std::uint32_t> parent;
   std::int32_t m_type;
   std::string uuid_path;
   std::optional<std::int32_t> season;
@@ -74,7 +74,7 @@ class DOODLELIB_API database {
  private:
   mutable std::uint64_t p_id;
   mutable string p_id_str;
-  std::optional<uint64_t> p_parent_id;
+  std::optional<uint32_t> p_parent_id;
   metadata_type p_type;
   FSys::path p_uuid;
   std::uint32_t p_boost_serialize_vesion;

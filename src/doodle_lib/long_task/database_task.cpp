@@ -69,15 +69,15 @@ void database_task_select::select_db() {
                        l_metadatatab.updateTime < *p_i->filter_._end);
   }
   if (p_i->filter_._meta_type)
-    l_select.where.add(l_metadatatab.metaType == p_i->filter_._meta_type);
+    l_select.where.add(l_metadatatab.metaType == magic_enum::enum_integer(*p_i->filter_._meta_type));
   if (p_i->filter_._id)
-    l_select.where.add(l_metadatatab.id == p_i->filter_._id);
+    l_select.where.add(l_metadatatab.id == *p_i->filter_._id);
   if (p_i->filter_._parent_id)
-    l_select.where.add(l_metadatatab.parent == p_i->filter_._parent_id);
+    l_select.where.add(l_metadatatab.parent == *p_i->filter_._parent_id);
 
-  if(p_i->filter_._off_size) {
+  if (p_i->filter_._off_size) {
     l_select.where.add(l_metadatatab.id > p_i->filter_._beg_off_id);
-    l_select.limit(*(p_i->filter_._off_size));
+    l_select.limit(*p_i->filter_._off_size);
   }
   for (const auto& row : (*k_conn)(l_select)) {
     if (p_i->stop)
@@ -240,7 +240,7 @@ void database_task_delete::delete_db() {
   for (auto& in : p_i->list) {
     if (p_i->stop)
       return;
-    auto k_r = (*k_conn)(sqlpp::remove_from(l_metadatatab).where(l_metadatatab.id = in.get<database>().get_id()));
+    auto k_r = (*k_conn)(sqlpp::remove_from(l_metadatatab).where(l_metadatatab.id == in.get<database>().get_id()));
   }
 }
 database_task_delete::database_task_delete(
@@ -307,19 +307,19 @@ void database_task_install::install_db() {
       return;
     k_data     = in.get<database>();
     auto k_sql = sqlpp::dynamic_insert_into(*k_conn, l_metadatatab).dynamic_set();
-    k_sql.insert_list.add(l_metadatatab.metaType == k_data.m_type);
-    k_sql.insert_list.add(l_metadatatab.uuidPath == k_data.uuid_path);
+    k_sql.insert_list.add(l_metadatatab.metaType = k_data.m_type);
+    k_sql.insert_list.add(l_metadatatab.uuidPath = k_data.uuid_path);
 
     if (k_data.parent)
-      k_sql.insert_list.add(l_metadatatab.parent == *k_data.parent);
+      k_sql.insert_list.add(l_metadatatab.parent = *k_data.parent);
     if (k_data.season)
-      k_sql.insert_list.add(l_metadatatab.season == *k_data.season);
+      k_sql.insert_list.add(l_metadatatab.season = *k_data.season);
     if (k_data.episode)
-      k_sql.insert_list.add(l_metadatatab.episode == *k_data.episode);
+      k_sql.insert_list.add(l_metadatatab.episode = *k_data.episode);
     if (k_data.shot)
-      k_sql.insert_list.add(l_metadatatab.shot == *k_data.shot);
+      k_sql.insert_list.add(l_metadatatab.shot = *k_data.shot);
     if (k_data.assets)
-      k_sql.insert_list.add(l_metadatatab.assetsP == *k_data.assets);
+      k_sql.insert_list.add(l_metadatatab.assetsP = *k_data.assets);
     auto id = (*k_conn)(k_sql);
     in.patch<database>([&](database& in) {
       in.set_id(id);

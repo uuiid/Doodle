@@ -31,11 +31,7 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
 
   doodle::program_options p_opt{};
   p_opt.command_line_parser(strCmdLine);
-#ifndef NDEBUG
-  auto& set                = doodle::core_set::getSet();
-  auto p_rpc_server_handle = std::make_shared<doodle::rpc_server_handle>();
-  p_rpc_server_handle->run_server(set.get_meta_rpc_port(), set.get_file_rpc_port());
-#endif
+
   auto k_app = p_opt.make_app();
   if (k_app) {
     return k_app->run();

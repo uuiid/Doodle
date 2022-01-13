@@ -104,12 +104,9 @@ void doodle_lib::init_gui() {
     for (auto& l_p : core_set::getSet().project_root) {
       k_then.then<database_task_select>(k_h, l_p);
     }
-    k_then.then([]() {
-      core_set_init{}.init_default_project();
-    });
-    while (!g_main_loop().empty())
-      g_main_loop().update({}, nullptr);
-
+    //    k_then.then([]() {
+    //      core_set_init{}.init_default_project();
+    //    });
   } catch (doodle_error& err) {
     DOODLE_LOG_ERROR(err.what());
   }

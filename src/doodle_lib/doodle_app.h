@@ -55,11 +55,6 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   virtual void hide_windows();
 
  private:
-  void metadata_save() const;
-  void metadata_delete() const;
-
-  void metadata_loop_one();
-
  protected:
 };
 
