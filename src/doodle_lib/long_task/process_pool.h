@@ -390,7 +390,7 @@ class scheduler {
    * @return True if there are scheduled processes, false otherwise.
    */
   [[nodiscard]] bool empty() const ENTT_NOEXCEPT {
-    return handlers.empty();
+    return handlers.empty() && handlers_next.empty();
   }
 
   /**
