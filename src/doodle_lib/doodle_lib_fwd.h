@@ -10,7 +10,7 @@
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib_export.h>
-
+#include <doodle_lib/core/static_value.h>
 //开始我们的名称空间
 namespace doodle {
 namespace details {

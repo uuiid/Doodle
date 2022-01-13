@@ -3,9 +3,9 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
-namespace doodle::staticValue{
-std::string fun_obj();
-std::string server_obj();
-std::string ue_path_obj();
-}
+namespace doodle {
+namespace doodle_config {
+constexpr const char doodle_db_name[] = "project.doodle_db";
+constexpr const char ue_path_obj[]    = "Engine/Binaries/Win64/UE4Editor.exe";
+}  // namespace doodle_config
+}  // namespace doodle
