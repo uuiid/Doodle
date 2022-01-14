@@ -52,9 +52,9 @@ database_task_select::database_task_select(const entt::handle& in_handle, const 
 database_task_select::database_task_select(const entt::handle& in_handle, const FSys::path& in_prj_root)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
-//  p_i->filter_._meta_type = metadata_type::project_root;
-  p_i->handle_            = in_handle;
-  p_i->prj_root           = in_prj_root / doodle_config::doodle_db_name;
+  //  p_i->filter_._meta_type = metadata_type::project_root;
+  p_i->handle_  = in_handle;
+  p_i->prj_root = in_prj_root / doodle_config::doodle_db_name;
 }
 
 database_task_select::~database_task_select() = default;
@@ -139,12 +139,23 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
 }
 
 void database_task_select::succeeded() {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.success);
+    in.message("成功完成数据读取", in.warning);
+  });
 }
 void database_task_select::failed() {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.fail);
+    in.message("任务失败", in.warning);
+  });
 }
 void database_task_select::aborted() {
   p_i->stop = true;
-  DOODLE_LOG_ERROR("用户主动结束进程");
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.fail);
+    in.message("用户主动结束任务", in.warning);
+  });
 }
 
 class database_task_update::impl {
@@ -200,12 +211,21 @@ void database_task_update::update_db() {
   }
 }
 void database_task_update::succeeded() {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.success);
+    in.message("成功完成数据读取", in.warning);
+  });
 }
 void database_task_update::failed() {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.fail);
+    in.message("任务失败", in.warning);
+  });
 }
 void database_task_update::aborted() {
   p_i->stop = true;
-  p_i->handle_.patch<process_message>([&](process_message& in) {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.fail);
     in.message("用户主动结束任务", in.warning);
   });
 }
@@ -264,12 +284,21 @@ void database_task_delete::init() {
   p_i->result           = g_thread_pool().enqueue([this]() { this->delete_db(); });
 }
 void database_task_delete::succeeded() {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.success);
+    in.message("成功完成数据读取", in.warning);
+  });
 }
 void database_task_delete::failed() {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.fail);
+    in.message("任务失败", in.warning);
+  });
 }
 void database_task_delete::aborted() {
   p_i->stop = true;
-  p_i->handle_.patch<process_message>([&](process_message& in) {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.fail);
     in.message("用户主动结束任务", in.warning);
   });
 }
@@ -350,12 +379,21 @@ void database_task_install::init() {
   p_i->result           = g_thread_pool().enqueue([this]() { this->install_db(); });
 }
 void database_task_install::succeeded() {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.success);
+    in.message("成功完成数据读取", in.warning);
+  });
 }
 void database_task_install::failed() {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.fail);
+    in.message("任务失败", in.warning);
+  });
 }
 void database_task_install::aborted() {
   p_i->stop = true;
-  p_i->handle_.patch<process_message>([&](process_message& in) {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.fail);
     in.message("用户主动结束任务", in.warning);
   });
 }
@@ -377,8 +415,11 @@ void database_task_install::update(chrono::duration<chrono::system_clock::rep, c
 }
 class database_task_obs::impl {
  public:
+  ~impl() {
+    obs.disconnect();
+  }
   entt::observer obs;
-  entt::handle msg_handle;
+  entt::handle handle_;
 };
 database_task_obs::database_task_obs()
     : p_i(std::make_unique<impl>()) {
@@ -387,17 +428,27 @@ database_task_obs::~database_task_obs() = default;
 
 void database_task_obs::init() {
   p_i->obs.connect(*g_reg(), entt::collector.update<database_stauts>());
-  p_i->msg_handle = make_handle();
-  p_i->msg_handle.emplace<process_message>();
+  p_i->handle_ = make_handle();
+  p_i->handle_.emplace<process_message>();
 }
 void database_task_obs::succeeded() {
-  p_i->obs.disconnect();
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.success);
+    in.message("成功完成数据读取", in.warning);
+  });
 }
 void database_task_obs::failed() {
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.fail);
+    in.message("任务失败", in.warning);
+  });
   p_i->obs.disconnect();
 }
 void database_task_obs::aborted() {
-  p_i->obs.disconnect();
+  p_i->handle_.patch<process_message>([](process_message& in) {
+    in.set_state(in.fail);
+    in.message("用户主动结束任务", in.warning);
+  });
 }
 void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   if (p_i->obs.empty())
@@ -411,7 +462,7 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                  [](const entt::handle& in_handle) {
                    return in_handle.get<database_stauts>().is<need_save>();
                  });
-    g_main_loop().attach<database_task_update>(p_i->msg_handle, k_h);
+    g_main_loop().attach<database_task_update>(p_i->handle_, k_h);
   }
   {
     std::vector<entt::handle> k_h{};
@@ -419,7 +470,7 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                  [](const entt::handle& in_handle) {
                    return in_handle.get<database_stauts>().is<need_delete>();
                  });
-    g_main_loop().attach<database_task_delete>(p_i->msg_handle, k_h);
+    g_main_loop().attach<database_task_delete>(p_i->handle_, k_h);
   }
   p_i->obs.clear();
 }
