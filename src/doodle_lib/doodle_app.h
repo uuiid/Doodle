@@ -23,31 +23,23 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   std::wstring p_title;
 
   void set_imgui_dock_space(const FSys::path& in_path) const;
-  entt::observer k_metadata_obs;
 
   bool p_show_err;
   base_widget_ptr p_main_win;
 
  public:
   doodle_app();
+  ~doodle_app();
+
   std::atomic_bool p_done;
 
-  using connection = boost::signals2::connection;
-
   static doodle_app* Get();
-  boost::signals2::signal<void()> main_loop;
 
-  std::shared_ptr<long_time_tasks_widget> long_task_widgets;
-  widget_register_ptr wregister;
   ID3D11Device* p_pd3dDevice;
-
-  inline widget_register_ptr get_register() { return wregister; };
-  inline const widget_register_ptr get_register() const { return wregister; };
 
   bool valid() const;
 
   virtual std::int32_t run();
-  ~doodle_app();
 
   virtual base_widget_ptr loop_begin();
   virtual void loop_one();

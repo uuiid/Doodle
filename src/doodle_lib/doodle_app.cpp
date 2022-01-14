@@ -356,7 +356,6 @@ base_widget_ptr doodle_app::loop_begin() {
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.IniFilename = imgui_file_path.c_str();
-  k_metadata_obs.connect(*g_reg(), entt::collector.update<database_stauts>());
   p_main_win = get_main_windows();
 
   return p_main_win;
@@ -396,7 +395,6 @@ void doodle_app::loop_one() {
   try {
     if (!p_show_err) {
       p_main_win->frame_render();
-      main_loop();
       g_main_loop().update(l_now - s_now, nullptr);
       g_bounded_pool().update(l_now - s_now, nullptr);
       s_now = l_now;

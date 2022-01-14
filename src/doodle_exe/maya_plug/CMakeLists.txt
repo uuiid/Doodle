@@ -1,6 +1,6 @@
 
 
-set(MAYA_VERSION_LIST 2018 2020 1)
+set(MAYA_VERSION_LIST 2018 2019 2020 )
 
 
 set(doodle_maya_plug_cpp
