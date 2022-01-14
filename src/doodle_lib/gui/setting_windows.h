@@ -51,7 +51,7 @@ namespace doodle {
  * @brief 设置主窗口
  *
  */
-class DOODLELIB_API setting_windows : public base_widget {
+class DOODLELIB_API setting_windows : public process_t<setting_windows> {
   decltype(magic_enum::enum_names<department>()) p_dep_list;
   std::int32_t p_cur_dep_index;
   std::shared_ptr<std::string> p_user;
@@ -65,7 +65,14 @@ class DOODLELIB_API setting_windows : public base_widget {
 
  public:
   setting_windows();
-  virtual void frame_render() override;
+  ~setting_windows() override;
+
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(delta_type, void* data);
+
   void save();
 };
 }  // namespace doodle

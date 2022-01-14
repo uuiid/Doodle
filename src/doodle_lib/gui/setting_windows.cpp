@@ -22,9 +22,38 @@ setting_windows::setting_windows()
       p_ue_version(new_object<std::string>(core_set::getSet().get_ue4_setting().get_version())),
       p_batch_max(new_object<std::int32_t>(core_set::getSet().p_max_thread)),
       p_timeout(new_object<std::int32_t>(core_set::getSet().timeout)) {
-  p_class_name = "设置";
 }
-void setting_windows::frame_render() {
+
+void setting_windows::save() {
+  auto& set = core_set::getSet();
+  set.set_department(magic_enum::enum_cast<department>(p_cur_dep_index).value());
+  set.set_user(*p_user);
+  set.set_maya_path(*p_maya_path);
+  set.set_max_tread(*p_batch_max);
+  set.get_ue4_setting().set_path(*p_ue_path);
+  set.get_ue4_setting().set_version(*p_ue_version);
+  set.timeout = *p_timeout;
+  g_bounded_pool().set_bounded(*p_batch_max);
+  core_set_init{}.write_file();
+}
+setting_windows::~setting_windows() = default;
+
+void setting_windows::init() {
+  g_reg()->set<setting_windows&>(*this);
+}
+void setting_windows::succeeded() {
+  save();
+}
+void setting_windows::failed() {
+  save();
+}
+void setting_windows::aborted() {
+  save();
+}
+void setting_windows::update(
+    chrono::duration<chrono::system_clock::rep,
+                     chrono::system_clock::period>,
+    void* data) {
   dear::Combo{"部门", p_dep_list[p_cur_dep_index].data()} && [this]() {
     for (int k_i = 0; k_i < p_dep_list.size(); ++k_i) {
       const bool is_select = p_cur_dep_index == k_i;
@@ -48,18 +77,5 @@ void setting_windows::frame_render() {
 
   if (imgui::Button("save"))
     save();
-}
-void setting_windows::save() {
-  auto& set = core_set::getSet();
-  set.set_department(magic_enum::enum_cast<department>(p_cur_dep_index).value());
-  set.set_user(*p_user);
-  set.set_maya_path(*p_maya_path);
-  set.set_max_tread(*p_batch_max);
-  set.get_ue4_setting().set_path(*p_ue_path);
-  set.get_ue4_setting().set_version(*p_ue_version);
-  set.timeout = *p_timeout;
-  g_bounded_pool().set_bounded(*p_batch_max);
-  core_set_init{}.write_file();
-
 }
 }  // namespace doodle
