@@ -115,7 +115,11 @@ void main_status_bar::update(
   if (auto l_msg = g_reg()->try_ctx<process_message>(); l_msg) {
     const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
     const ImU32 bg  = ImGui::GetColorU32(ImGuiCol_Button);
-    imgui::BufferingBar(l_msg->get_name_id().c_str(), l_msg->get_progress_f(), ImVec2(400, 6), bg, col);
+    imgui::BufferingBar(l_msg->get_name_id().c_str(),
+                        boost::numeric_cast<std::float_t>(l_msg->get_progress_f()),
+                        ImVec2(400, 6),
+                        bg,
+                        col);
   }
 }
 main_status_bar::~main_status_bar() = default;
