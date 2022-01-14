@@ -97,7 +97,7 @@ void database_task_select::select_db() {
     if (!row.shot.is_null())
       l_data.shot = row.shot.value();
     if (!row.parent.is_null())
-      l_data.parent = row.parent.value();
+      l_data.parent = boost::numeric_cast<decltype(l_data.parent)::value_type>(row.parent.value());
   }
 }
 
