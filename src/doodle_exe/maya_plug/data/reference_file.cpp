@@ -371,6 +371,20 @@ void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) cons
 
   if (!FSys::exists(k_file_path))
     FSys::create_directories(k_file_path);
+  /**
+   *
+   * @brief
+   * pymel.core.bakeResults(simulation=True,
+   *  time=(doodle_work_space.raneg.start,
+   *        doodle_work_space.raneg.end),
+   *  hierarchy="below",
+   *  sampleBy=1,
+   *  disableImplicitControl=True,
+   *  preserveOutsideKeys=False,
+   *  sparseAnimCurveBake=False)
+   *
+   *  preserveOutsideKeys 这个选项会导致眼睛出现问题
+   */
   auto l_comm = fmt::format(R"(
 bakeResults
  -simulation true
@@ -379,7 +393,7 @@ bakeResults
  -sampleBy 1
  -oversamplingRate 1
  -disableImplicitControl true
- -preserveOutsideKeys true
+ -preserveOutsideKeys false
  -sparseAnimCurveBake false
  -removeBakedAttributeFromLayer false
  -removeBakedAnimFromLayer false
