@@ -119,7 +119,7 @@ void main_windows::main_menu_file() {
     for (int l_i = 0; l_i < k_list.size(); ++l_i) {
       auto &l_p = k_list[l_i];
       if (!l_p.empty())
-        if (dear::MenuItem(fmt::format("{0}##{0}{1}", l_p.generic_string(), l_i))) {
+        if (dear::MenuItem(fmt::format("{0}##{1}", l_p.generic_string(), l_i))) {
           g_reg()->set<project>(l_p, "temp_project");
           core::client{}.open_project(l_p);
         }

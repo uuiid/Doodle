@@ -286,7 +286,7 @@ void file_browser::render_path() {
   std::int32_t k_i{0};
   for (auto& k_p : p_i->pwd.relative_path()) {
     imgui::SameLine();
-    if (imgui::Button(fmt::format("{0}##{0}_{1}", k_p.generic_string(), k_i).c_str())) {
+    if (imgui::Button(fmt::format("{0}##{1}", k_p.generic_string(), k_i).c_str())) {
       auto k_r = p_i->pwd.root_path();
       auto k_j{k_i};
       for (const auto& l_p : p_i->pwd.relative_path()) {
@@ -481,7 +481,7 @@ void file_browser::render_filter() {
   };
 }
 void file_browser::set_title(const string& in_string) {
-  p_i->title = fmt::format("{0}##{0}_{1}", in_string, fmt::ptr(this));
+  p_i->title = fmt::format("{0}##{1}", in_string, fmt::ptr(this));
 }
 bool file_browser::is_open() const {
   return p_i->b_open;
