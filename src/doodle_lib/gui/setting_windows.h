@@ -54,18 +54,20 @@ namespace doodle {
 class DOODLELIB_API setting_windows : public process_t<setting_windows> {
   decltype(magic_enum::enum_names<department>()) p_dep_list;
   std::int32_t p_cur_dep_index;
-  std::shared_ptr<std::string> p_user;
-  std::shared_ptr<std::string> p_cache;
-  std::shared_ptr<std::string> p_doc;
-  std::shared_ptr<std::string> p_maya_path;
-  std::shared_ptr<std::string> p_ue_path;
-  std::shared_ptr<std::string> p_ue_version;
-  std::shared_ptr<std::int32_t> p_batch_max;
-  std::shared_ptr<std::int32_t> p_timeout;
+  std::string p_user;
+  std::string p_cache;
+  std::string p_doc;
+  std::string p_maya_path;
+  std::string p_ue_path;
+  std::string p_ue_version;
+  std::int32_t p_batch_max;
+  std::int32_t p_timeout;
 
  public:
   setting_windows();
   ~setting_windows() override;
+
+  constexpr static std::string_view name{"设置窗口"};
 
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
