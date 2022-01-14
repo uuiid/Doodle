@@ -129,7 +129,8 @@ void long_term::set_state(long_term::state in_state) {
 
 process_message::process_message()
     : p_state(state::wait),
-      p_time(chrono::system_clock::now()) {
+      p_time(chrono::system_clock::now()),
+      p_name_id("##none") {
 }
 
 const std::string& process_message::get_name() const {
