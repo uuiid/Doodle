@@ -108,7 +108,7 @@ void main_windows::main_menu_file() {
     g_main_loop().attach<file_dialog>(
         [](const FSys::path &in_path) {
           g_reg()->set<project>(in_path, "temp_project");
-          core::client{}.open_project(in_path / doodle_config::doodle_db_name);
+          core::client{}.open_project(in_path);
         },
         "选择目录"s);
   }
@@ -119,7 +119,7 @@ void main_windows::main_menu_file() {
       if (!l_p.empty())
         if (dear::MenuItem(fmt::format("{0}##{0}{1}", l_p.generic_string(), l_i))) {
           g_reg()->set<project>(l_p, "temp_project");
-          core::client{}.open_project(l_p / doodle_config::doodle_db_name);
+          core::client{}.open_project(l_p);
         }
     }
   };
