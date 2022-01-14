@@ -25,6 +25,7 @@ set(
         gui/main_windwos.h
         gui/setting_windows.h
         gui/widget_register.h
+        gui/main_menu_bar.h
         gui/factory/attribute_factory_interface.h
         gui/action/command.h
         gui/action/command_down_file.h
@@ -120,6 +121,7 @@ set(
         gui/main_windwos.cpp
         gui/setting_windows.cpp
         gui/widget_register.cpp
+        gui/main_menu_bar.cpp
         gui/factory/attribute_factory_interface.cpp
         gui/action/command.cpp
         gui/action/command_down_file.cpp
