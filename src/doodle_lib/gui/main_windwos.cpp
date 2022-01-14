@@ -101,6 +101,7 @@ void main_windows::main_menu_file() {
         [](const FSys::path &in_path) {
           core::client{}.add_project(in_path);
           g_reg()->set<project>(in_path, "none");
+          core_set::getSet().add_recent_project(in_path);
         },
         "选择目录"s);
   }
@@ -109,6 +110,7 @@ void main_windows::main_menu_file() {
         [](const FSys::path &in_path) {
           g_reg()->set<project>(in_path, "temp_project");
           core::client{}.open_project(in_path);
+          core_set::getSet().add_recent_project(in_path);
         },
         "选择目录"s);
   }

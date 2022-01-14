@@ -343,4 +343,8 @@ void from_json(const nlohmann::json &j, core_set &p) {
   if (j.contains("default_project"))
     j.at("default_project").get_to(p.default_project);
 }
+void core_set::add_recent_project(const FSys::path &in) {
+  std::rotate(project_root.rbegin(), project_root.rbegin() + 1, project_root.rend());
+  project_root[0] = in;
+}
 }  // namespace doodle

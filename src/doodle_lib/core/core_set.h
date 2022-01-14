@@ -114,7 +114,7 @@ class DOODLELIB_API core_set : public details::no_copy {
 
   uuid default_project;
   std::array<FSys::path, 10> project_root;
-
+  void add_recent_project(const FSys::path& in);
  private:
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
