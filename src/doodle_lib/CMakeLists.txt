@@ -74,7 +74,7 @@ target_link_libraries(doodle_lib
         spdlog::spdlog
         csv
         Catch2::Catch2
-        SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
+        unofficial::libmariadb
         imgui::imgui
         gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
         cryptopp-static
