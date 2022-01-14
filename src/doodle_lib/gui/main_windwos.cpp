@@ -4,7 +4,6 @@
 
 #include "main_windwos.h"
 
-#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/doodle_app.h>
 #include <doodle_lib/gui/action/command_tool.h>
 #include <doodle_lib/gui/setting_windows.h>
@@ -19,6 +18,7 @@
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/core/open_file_dialog.h>
 #include <doodle_lib/client/client.h>
+
 namespace doodle {
 
 template <class T>
@@ -100,9 +100,29 @@ void main_windows::main_menu_file() {
     g_main_loop().attach<file_dialog>(
         [](const FSys::path &in_path) {
           core::client{}.add_project(in_path);
+          g_reg()->set<project>(in_path, "none");
         },
         "选择目录"s);
   }
+  if (dear::MenuItem("打开项目"s)) {
+    g_main_loop().attach<file_dialog>(
+        [](const FSys::path &in_path) {
+          g_reg()->set<project>(in_path, "temp_project");
+          core::client{}.open_project(in_path / doodle_config::doodle_db_name);
+        },
+        "选择目录"s);
+  }
+  dear::Menu{"最近的项目"} && []() {
+    auto &k_list = core_set::getSet().project_root;
+    for (int l_i = 0; l_i < k_list.size(); ++l_i) {
+      auto &l_p = k_list[l_i];
+      if (!l_p.empty())
+        if (dear::MenuItem(fmt::format("{0}##{0}{1}", l_p.generic_string(), l_i))) {
+          g_reg()->set<project>(l_p, "temp_project");
+          core::client{}.open_project(l_p / doodle_config::doodle_db_name);
+        }
+    }
+  };
 
   ImGui::Separator();
   dear::MenuItem(u8"调试", p_debug_show.get());
