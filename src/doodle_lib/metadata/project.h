@@ -37,7 +37,7 @@ class DOODLELIB_API project {
 
  public:
   project();
-  explicit project(FSys::path in_path, std::string in_name = {});
+  explicit project(FSys::path in_path, std::string in_name);
 
   [[nodiscard]] const std::string& get_name() const;
   void set_name(const std::string& Name) noexcept;
