@@ -49,6 +49,7 @@ bool BufferingBar(const char* label, float value, const ImVec2& size_arg, const 
   window->DrawList->AddCircleFilled(ImVec2(pos.x + circleEnd - o1, bb.Min.y + r), r, bg_col);
   window->DrawList->AddCircleFilled(ImVec2(pos.x + circleEnd - o2, bb.Min.y + r), r, bg_col);
   window->DrawList->AddCircleFilled(ImVec2(pos.x + circleEnd - o3, bb.Min.y + r), r, bg_col);
+  return false;
 }
 
 bool Spinner(const char* label, float radius, int thickness, const ImU32& color) {
@@ -86,6 +87,7 @@ bool Spinner(const char* label, float radius, int thickness, const ImU32& color)
   }
 
   window->DrawList->PathStroke(color, false, thickness);
+  return false;
 }
 }  // namespace ImGui
 
