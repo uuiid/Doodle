@@ -544,6 +544,9 @@ void qcloth_shape::add_collider(const entt::handle& in_handle) {
   auto l_ql      = get_ql_solver();
   auto l_ql_tran = get_transform(l_ql);
 
+  /// \brief 鉴于有些文件会锁定默认着色组, 我们需要进行解锁
+  auto k_s       = MGlobal::executeCommand(d_str{R"(lockNode -l false -lu false ":initialShadingGroup;")"});
+  DOODLE_CHICK(k_s);
   add_child(l_group.cfx_grp, l_ql_tran);
 
   for (auto& l_item : in_handle.get<qcloth_shape_n::shape_list>()) {

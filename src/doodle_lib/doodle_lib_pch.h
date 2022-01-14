@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <ciso646>
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/algorithm/apply_permutation.hpp>
 #include <boost/algorithm/clamp.hpp>
