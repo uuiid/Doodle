@@ -60,7 +60,7 @@ database_task_select::database_task_select(const entt::handle& in_handle, const 
 database_task_select::~database_task_select() = default;
 
 void database_task_select::select_db() {
-  auto k_conn = core_sql::Get().get_connection(p_i->prj_root);
+  auto k_conn = core_sql::Get().get_connection_const(p_i->prj_root);
   Metadatatab l_metadatatab{};
 
   auto l_select = sqlpp::dynamic_select(*k_conn, sqlpp::all_of(l_metadatatab)).from(l_metadatatab).dynamic_where();
