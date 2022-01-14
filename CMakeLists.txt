@@ -58,7 +58,8 @@ find_package(imgui CONFIG REQUIRED)
 
 #这两个是我自己写的寻找库的方法
 #find_package(SqlppSqlite REQUIRED)
-find_package(SqlppMySql REQUIRED)
+find_package(Sqlpp11 CONFIG REQUIRED)
+find_package(unofficial-libmariadb CONFIG REQUIRED)
 
 #仅头库
 find_package(magic_enum CONFIG REQUIRED)
@@ -120,7 +121,7 @@ enable_testing()
 add_subdirectory(src)
 
 #=====================安装打包过程===============================
-set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE )
+set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 include(InstallRequiredSystemLibraries)
 
 list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
@@ -163,7 +164,7 @@ add_custom_command(
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.msi ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.msi
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.7z ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.7z
-#        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.zip ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.zip
+        #        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.zip ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.zip
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/docker/doodle_server/bin
 )
