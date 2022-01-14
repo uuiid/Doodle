@@ -429,7 +429,7 @@
  * @li 添加主动烘培
  * @li 更新测试
  *
- *  @subsubsection updata_log_3225 版本3.2.25
- *  @li preserveOutsideKeys 这个选项会导致眼睛出现问题 需要改为false
+ * @subsubsection updata_log_3225 版本3.2.25
+ * @li preserveOutsideKeys 这个选项会导致眼睛出现问题 需要改为false
  *
  */
