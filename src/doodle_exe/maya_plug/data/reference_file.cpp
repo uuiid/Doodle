@@ -318,6 +318,9 @@ bool reference_file::add_collision() const {
     return true;
 
   MStatus k_s{};
+  k_s = MGlobal::executeCommand(d_str{R"(lockNode -l false -lu false ":initialShadingGroup;")"});
+  DOODLE_CHICK(k_s);
+
   auto l_item = this->get_collision_model();
   k_s         = l_item.add(d_str{fmt::format("{}:qlSolver1", get_namespace())}, true);
   DOODLE_CHICK(k_s);
