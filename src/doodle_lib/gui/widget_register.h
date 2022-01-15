@@ -9,6 +9,7 @@
 
 namespace doodle {
 
+#ifdef DOODLE_DEPRECATED
 class DOODLELIB_API widget_register : public details::no_copy {
  public:
   using widget_map = std::map<std::type_index, std::weak_ptr<base_widget> >;
@@ -26,4 +27,5 @@ class DOODLELIB_API widget_register : public details::no_copy {
     return std::dynamic_pointer_cast<widget_type>(ptr.lock());
   };
 };
+#endif
 }  // namespace doodle

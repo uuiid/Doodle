@@ -213,7 +213,6 @@ doodle_app::doodle_app()
           Doodle_VERSION_PATCH,
           Doodle_VERSION_TWEAK))),
       p_done(false),
-      wregister(new_object<widget_register>()),
       p_show_err(false),
       p_main_win(),
       p_pd3dDevice(nullptr),
