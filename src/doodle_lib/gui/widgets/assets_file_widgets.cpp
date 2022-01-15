@@ -11,6 +11,7 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 
+
 #include <entt/entt.hpp>
 
 namespace doodle {
@@ -105,7 +106,9 @@ void assets_file_widgets::set_select(const entt::handle& in) {
 assets_file_widgets::assets_file_widgets()
     : p_current_select(),
       p_colum_list() {
-  p_class_name = "文件列表";
+}
+void assets_file_widgets::init() {
+  g_reg()->set<assets_file_widgets&>(*this);
   p_colum_list.emplace_back(new_object<details::column_id>(this));
   p_colum_list.emplace_back(new_object<details::column_assets>(this));
   p_colum_list.emplace_back(new_object<details::column_season>(this));
@@ -117,8 +120,13 @@ assets_file_widgets::assets_file_widgets()
   p_colum_list.emplace_back(new_object<details::column_time>(this));
   p_colum_list.emplace_back(new_object<details::column_user>(this));
 }
-
-void assets_file_widgets::frame_render() {
+void assets_file_widgets::succeeded() {
+}
+void assets_file_widgets::failed() {
+}
+void assets_file_widgets::aborted() {
+}
+void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
                     ImGuiTableFlags_::ImGuiTableFlags_Resizable |
                     ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
@@ -154,5 +162,6 @@ void assets_file_widgets::frame_render() {
         };
   }
 }
+assets_file_widgets::~assets_file_widgets() = default;
 
 }  // namespace doodle

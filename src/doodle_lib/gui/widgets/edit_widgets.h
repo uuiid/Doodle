@@ -9,12 +9,18 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
-class DOODLELIB_API edit_widgets  : public base_widget{
-  entt::entity p_meta_parent;
+class DOODLELIB_API edit_widgets : public process_t<edit_widgets> {
 
-  registry_ptr p_reg;
-  public:
+
+ public:
   edit_widgets();
-  virtual void frame_render() override;
+
+  constexpr static std::string_view name{"编辑"};
+
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(delta_type, void* data);
 };
 }  // namespace doodle

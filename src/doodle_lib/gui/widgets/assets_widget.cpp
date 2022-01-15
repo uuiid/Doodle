@@ -360,20 +360,8 @@ ImGuiTreeNodeFlags assets_widget::impl::base_flags{ImGuiTreeNodeFlags_OpenOnArro
 
 assets_widget::assets_widget()
     : p_impl(std::make_unique<impl>(this)) {
-  p_class_name = "资产";
 }
 assets_widget::~assets_widget() = default;
-
-void assets_widget::frame_render() {
-  /// 加载数据
-  if (p_impl->p_root && !p_impl->p_root.get<database_root>().is_end())
-    p_impl->p_root.patch<database_stauts>(database_set_stauts<need_root_load>{});
-  /// 渲染数据
-  p_impl->render();
-}
-std::vector<entt::handle> assets_widget::get_selects() const {
-  return {};
-}
 
 void assets_widget::set_metadata(const entt::entity& in_ptr) {
   auto k_h = make_handle(in_ptr);
@@ -382,6 +370,22 @@ void assets_widget::set_metadata(const entt::entity& in_ptr) {
                            "缺失组件");
 
   p_impl->p_root = k_h;
+}
+void assets_widget::init() {
+  g_reg()->set<assets_widget&>(*this);
+}
+void assets_widget::succeeded() {
+}
+void assets_widget::failed() {
+}
+void assets_widget::aborted() {
+}
+void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+  /// 加载数据
+  if (p_impl->p_root && !p_impl->p_root.get<database_root>().is_end())
+    p_impl->p_root.patch<database_stauts>(database_set_stauts<need_root_load>{});
+  /// 渲染数据
+  p_impl->render();
 }
 
 }  // namespace doodle

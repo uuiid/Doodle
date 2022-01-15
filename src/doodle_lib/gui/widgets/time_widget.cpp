@@ -17,11 +17,10 @@ time_widget::time_widget()
       p_minutes(0),
       p_second(0),
       p_day_max(31) {
-  p_class_name = "时间";
 }
 
 void time_widget::frame_render() {
-  dear::TreeNode{p_class_name.c_str()} && [this]() {
+  dear::TreeNode{"时间"} && [this]() {
     imgui::SliderInt("年", &p_year, 0, 2050);
     imgui::SliderInt("月", &p_month, 1, 12);
     imgui::SliderInt("日", &p_day, 0, p_day_max);

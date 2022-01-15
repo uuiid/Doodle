@@ -200,7 +200,6 @@ using player = msm::back::state_machine<player_>;
 using player = opencv_player_ns::player;
 
 opencv_player_widget::opencv_player_widget() {
-  p_class_name = "视频播放";
 }
 
 std::float_t compute_size(std::vector<opencv::frame>& in_size, const ImVec2& in_v2) {
@@ -225,7 +224,16 @@ std::float_t compute_size(std::vector<opencv::frame>& in_size, const ImVec2& in_
   return k_proportional;
 }
 
-void opencv_player_widget::frame_render() {
+void opencv_player_widget::init() {
+  g_reg()->set<opencv_player_widget&>(*this);
+}
+void opencv_player_widget::succeeded() {
+}
+void opencv_player_widget::failed() {
+}
+void opencv_player_widget::aborted() {
+}
+void opencv_player_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   auto k_view = g_reg()->view<opencv_read_player>();
   std::vector<opencv::frame> k_list{};
   for (auto& k_i : k_view) {

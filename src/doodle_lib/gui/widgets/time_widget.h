@@ -8,7 +8,7 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
-class DOODLELIB_API time_widget : public base_widget {
+class DOODLELIB_API time_widget {
   entt::handle p_time;
 
   std::int32_t p_year;
@@ -19,9 +19,11 @@ class DOODLELIB_API time_widget : public base_widget {
   std::int32_t p_second;
 
   std::int32_t p_day_max;
+
  public:
   time_widget();
-  void frame_render() override;
+  void frame_render();
+  constexpr static std::string_view name{"时间"};
 
   void set_time(const entt::handle& in_time);
   boost::signals2::signal<void()> sig_time_change;

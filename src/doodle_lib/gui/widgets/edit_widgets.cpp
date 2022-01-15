@@ -1,3 +1,4 @@
+
 //
 // Created by TD on 2021/9/23.
 //
@@ -12,17 +13,21 @@
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/metadata/metadata.h>
 
-
 namespace doodle {
-edit_widgets::edit_widgets()
-    : p_meta_parent(),
-    p_reg(g_reg()) {
-  p_class_name = "编辑";
+edit_widgets::edit_widgets() {
 }
 
-void edit_widgets::frame_render() {
-  auto k_ctx = p_reg->try_ctx<widget_>();
-  if (k_ctx)
+void edit_widgets::init() {
+  g_reg()->set<edit_widgets &>(*this);
+}
+void edit_widgets::succeeded() {
+}
+void edit_widgets::failed() {
+}
+void edit_widgets::aborted() {
+}
+void edit_widgets::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
+  if (auto k_ctx = g_reg() try_ctx<widget_>(); k_ctx)
     k_ctx->render();
 }
 

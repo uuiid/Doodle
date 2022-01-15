@@ -32,13 +32,20 @@ namespace doodle {
  * @image html comm_maya_tool.jpg 工具窗口
  *
  */
-class DOODLELIB_API tool_box_widget : public base_widget {
+class DOODLELIB_API tool_box_widget : public process_t<tool_box_widget> {
   command_ptr p_command_tool_ptr_;
 
  public:
   tool_box_widget();
-  void frame_render() override;
   void set_tool_widget(const command_ptr& in_ptr);
+
+  constexpr static std::string_view name{"工具箱"};
+
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(delta_type, void* data);
 };
 
 }  // namespace doodle

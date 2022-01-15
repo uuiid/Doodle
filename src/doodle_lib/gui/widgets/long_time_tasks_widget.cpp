@@ -17,19 +17,19 @@
 namespace doodle {
 
 long_time_tasks_widget::long_time_tasks_widget()
-    : task(),
-      p_current_select(),
-      p_command_tool_ptr_(),
-      p_main_log(),
-      p_info_log() {
-  p_class_name = "队列";
-  //  for (int k_i = 0; k_i < 5000; ++k_i) {
-  //    p_main_log.p_log.append("p_main_log test\n");
-  //    p_info_log.p_log.append("p_info_log test\n");
-  //  }
+    : p_current_select() {
 }
 
-void long_time_tasks_widget::frame_render() {
+void long_time_tasks_widget::init() {
+  g_reg()->set<long_time_tasks_widget&>(*this);
+}
+void long_time_tasks_widget::succeeded() {
+}
+void long_time_tasks_widget::failed() {
+}
+void long_time_tasks_widget::aborted() {
+}
+void long_time_tasks_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
                     ImGuiTableFlags_::ImGuiTableFlags_Resizable |
                     ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
@@ -83,15 +83,5 @@ void long_time_tasks_widget::frame_render() {
       imgui::TextUnformatted(msg_str.data(), msg_str.data() + msg_str.size());
     }
   };
-}
-void long_time_tasks_widget::push_back(const long_term_ptr& in_term) {
-  task.push_back(in_term);
-}
-void long_time_tasks_widget::set_tool_widget(const command_ptr& in_ptr) {
-  p_command_tool_ptr_ = in_ptr;
-}
-void long_time_tasks_widget::link_main_log() {
-}
-void long_time_tasks_widget::link_info_log() {
 }
 }  // namespace doodle

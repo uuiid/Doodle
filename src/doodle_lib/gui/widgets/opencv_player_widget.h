@@ -8,11 +8,18 @@
 #include <doodle_lib/gui/base_windwos.h>
 
 namespace doodle {
-class DOODLELIB_API opencv_player_widget : public base_widget {
+class DOODLELIB_API opencv_player_widget : public process_t<opencv_player_widget> {
   class impl;
 
  public:
   opencv_player_widget();
-  void frame_render() override;
+
+  constexpr static std::string_view name{"视频播放"};
+
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(delta_type, void* data);
 };
 }  // namespace doodle

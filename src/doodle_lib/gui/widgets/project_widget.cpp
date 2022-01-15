@@ -15,14 +15,30 @@ namespace doodle {
 
 project_widget::project_widget()
     : p_c() {
-  p_class_name = "项目";
   comm_project_add k_{};
   auto k_reg = g_reg();
   k_reg->set<widget_>(k_);
   if (k_reg->try_ctx<root_ref>())
     p_c = k_reg->ctx<root_ref>().root_handle();
 }
-void project_widget::frame_render() {
+
+project_widget::~project_widget() = default;
+void project_widget::init() {
+  g_reg()->set<project_widget&>(*this);
+}
+void project_widget::succeeded() {
+  if (p_c)
+    core_set::getSet().default_project = p_c.get<database>().uuid();
+}
+void project_widget::failed() {
+  if (p_c)
+    core_set::getSet().default_project = p_c.get<database>().uuid();
+}
+void project_widget::aborted() {
+  if (p_c)
+    core_set::getSet().default_project = p_c.get<database>().uuid();
+}
+void project_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   dear::Table{"project", 3} && [this]() {
     imgui::TableSetupColumn("名称");
     imgui::TableSetupColumn("路径");
@@ -62,10 +78,6 @@ void project_widget::frame_render() {
       select_change(p_c);
     }
   };
-}
-project_widget::~project_widget() {
-  if (p_c)
-    core_set::getSet().default_project = p_c.get<database>().uuid();
 }
 
 }  // namespace doodle

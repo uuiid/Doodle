@@ -8,18 +8,24 @@
 
 namespace doodle {
 tool_box_widget::tool_box_widget()
-    : base_widget(),
-      p_command_tool_ptr_() {
-  p_class_name = "工具箱";
-}
-
-void tool_box_widget::frame_render() {
-  if (p_command_tool_ptr_) {
-    p_command_tool_ptr_->render();
-  }
+    : p_command_tool_ptr_() {
 }
 
 void tool_box_widget::set_tool_widget(const command_ptr& in_ptr) {
   p_command_tool_ptr_ = in_ptr;
+}
+void tool_box_widget::init() {
+  g_reg->set<tool_box_widget&>(*this);
+}
+void tool_box_widget::succeeded() {
+}
+void tool_box_widget::failed() {
+}
+void tool_box_widget::aborted() {
+}
+void tool_box_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+  if (p_command_tool_ptr_) {
+    p_command_tool_ptr_->render();
+  }
 }
 }  // namespace doodle

@@ -14,13 +14,18 @@ namespace doodle {
  * 这个窗口显示了项目的各种参数
  *
  */
-class DOODLELIB_API project_widget : public base_widget {
+class DOODLELIB_API project_widget : public process_t<project_widget> {
  public:
   project_widget();
-  virtual ~project_widget();
-  void frame_render() override;
+  ~project_widget() override;
 
+  constexpr static std::string_view name{"项目"};
 
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(delta_type, void* data);
   entt::handle p_c;
 
   boost::signals2::signal<void(const entt::entity&)> select_change;
