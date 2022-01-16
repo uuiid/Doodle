@@ -1,5 +1,5 @@
 //
-// Created by TD on 2021/9/14.
+// github https://github.com/kfsone/imguiwrap
 //
 
 #pragma once
@@ -38,7 +38,7 @@ struct ScopeWrapper {
   // constructor takes a predicate that may be used to determine if
   // additional calls can be made, and a function/lambda/callable to
   // be invoked from the destructor.
-  constexpr ScopeWrapper(bool ok) noexcept : ok_{ok} {}
+  constexpr explicit ScopeWrapper(bool ok) noexcept : ok_{ok} {}
 
   // destructor always invokes the supplied destructor function.
   ~ScopeWrapper() noexcept {
@@ -46,7 +46,7 @@ struct ScopeWrapper {
       if (!ok_)
         return;
     }
-    Base::dtor();
+    wrapped_type::dtor();
   }
 
   // operator&& will excute 'code' if the predicate supplied during
@@ -68,17 +68,17 @@ struct ScopeWrapper {
 // Wrapper for ImGui::Begin ... End, which will always call End.
 struct Begin : public ScopeWrapper<Begin, true> {
   // Invoke Begin and guarantee that 'End' will be called.
-  Begin(const char* title, bool* open = nullptr, ImGuiWindowFlags flags = 0) noexcept
+  explicit Begin(const char* title, bool* open = nullptr, ImGuiWindowFlags flags = 0) noexcept
       : ScopeWrapper(ImGui::Begin(title, open, flags)) {}
   static void dtor() noexcept { ImGui::End(); }
 };
 
 // Wrapper for ImGui::BeginChild ... EndChild, which will always call EndChild.
 struct Child : public ScopeWrapper<Child, true> {
-  Child(const char* title, const ImVec2& size = Zero, bool border = false,
+  explicit Child(const char* title, const ImVec2& size = Zero, bool border = false,
         ImGuiWindowFlags flags = 0) noexcept
       : ScopeWrapper(ImGui::BeginChild(title, size, border, flags)) {}
-  Child(ImGuiID id, const ImVec2& size = Zero, bool border = false,
+  explicit Child(ImGuiID id, const ImVec2& size = Zero, bool border = false,
         ImGuiWindowFlags flags = 0) noexcept
       : ScopeWrapper(ImGui::BeginChild(id, size, border, flags)) {}
   static void dtor() noexcept { ImGui::EndChild(); }

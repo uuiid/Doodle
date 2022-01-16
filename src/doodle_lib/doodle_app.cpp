@@ -355,7 +355,7 @@ base_widget_ptr doodle_app::loop_begin() {
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.IniFilename = imgui_file_path.c_str();
-  p_main_win = get_main_windows();
+  p_main_win     = get_main_windows();
 
   return p_main_win;
 }
@@ -441,5 +441,7 @@ void doodle_app::loop_one() {
 
   g_pSwapChain->Present(1, 0);  // Present with vsync
                                 // g_pSwapChain->Present(0, 0); // Present without vsync
+}
+void doodle_app::load_windows() {
 }
 }  // namespace doodle

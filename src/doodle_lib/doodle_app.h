@@ -48,6 +48,7 @@ class DOODLELIB_API doodle_app : public details::no_copy {
 
  private:
  protected:
+  virtual void load_windows();
 };
 
 }  // namespace doodle

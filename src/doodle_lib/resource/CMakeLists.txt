@@ -30,7 +30,6 @@ set(DOODLE_RE_FILES_LIST
         resource/tzdata/zone.tab
         resource/tzdata/zone1970.tab
         resource/tzdata/zoneinfo2tdf.pl
-        resource/CMakeLists.txt
         resource/icon.ico
         resource/maya_fun_tool.py
         resource/mayaIcon.png
