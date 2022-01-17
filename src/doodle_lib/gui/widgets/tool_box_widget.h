@@ -32,7 +32,7 @@ namespace doodle {
  * @image html comm_maya_tool.jpg 工具窗口
  *
  */
-class DOODLELIB_API tool_box_widget : publicprocess_t<tool_box_widget> {
+class DOODLELIB_API tool_box_widget : public process_t<tool_box_widget> {
   command_ptr p_command_tool_ptr_;
 
  public:
