@@ -5,13 +5,20 @@
 #include "maya_plug_app.h"
 
 #include <maya_plug/gui/maya_windwos.h>
+#include <doodle_lib/gui/main_status_bar.h>
+#include <doodle_lib/gui/main_menu_bar.h>
+#include <doodle_lib/long_task/database_task.h>
 
 namespace doodle::maya_plug {
-base_widget_ptr maya_plug_app::get_main_windows() const {
-  return new_object<maya_windwos>();
-}
-
 maya_plug_app::maya_plug_app()
     : doodle_app() {
+}
+void maya_plug_app::load_windows() {
+  g_main_loop().attach<main_menu_bar>();
+  g_main_loop().attach<main_status_bar>();
+  g_main_loop().attach<null_process_t>().then([](auto, auto, auto s, auto) {
+    core_set::getSet().load_first_project();
+    s();
+  });
 }
 }  // namespace doodle::maya_plug

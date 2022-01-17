@@ -8,7 +8,8 @@
 namespace doodle::maya_plug {
 class maya_plug_app : public doodle_app {
  protected:
-  base_widget_ptr get_main_windows() const override;
+ private:
+  virtual void load_windows() override;
 
  public:
   maya_plug_app();
