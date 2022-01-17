@@ -8,7 +8,8 @@
 #include <doodle_lib/gui/main_status_bar.h>
 #include <doodle_lib/gui/main_menu_bar.h>
 #include <doodle_lib/long_task/database_task.h>
-
+#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_lib/core/core_set.h>
 namespace doodle::maya_plug {
 maya_plug_app::maya_plug_app()
     : doodle_app() {
