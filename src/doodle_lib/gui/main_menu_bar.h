@@ -6,7 +6,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle {
-class DOODLELIB_API main_menu_bar : public base_window<main_menu_bar> {
+class DOODLELIB_API main_menu_bar : public process_t<main_menu_bar> {
  private:
   class impl;
   std::unique_ptr<impl> p_i;

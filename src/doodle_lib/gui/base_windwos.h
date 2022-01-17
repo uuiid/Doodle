@@ -34,7 +34,7 @@ class DOODLELIB_API base_window : public process_t<base_window<Derived>> {
     static_cast<derived_type*>(this)->aborted();
   }
   [[maybe_unused]] virtual void update(typename base_type::delta_type in_dalta, void* in_data) {
-    dear::Begin{base_type::name, &show} && [&]() {
+    dear::Begin{derived_type::name.data(), &show} && [&]() {
       static_cast<derived_type*>(this)->update(in_dalta, in_data);
     };
   }

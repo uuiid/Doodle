@@ -99,6 +99,7 @@ void main_menu_bar::menu_tool() {
 }
 
 void main_menu_bar::init() {
+  g_reg()->set<main_menu_bar &>(*this);
 }
 void main_menu_bar::succeeded() {
 }
