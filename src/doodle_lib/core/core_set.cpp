@@ -331,6 +331,7 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["widget_show"]     = p.widget_show;
   j["timeout"]         = p.timeout;
   j["default_project"] = p.default_project;
+  j["project_root"]    = p.project_root;
 }
 void from_json(const nlohmann::json &j, core_set &p) {
   j.at("user_").get_to(p.p_user_);
@@ -342,6 +343,8 @@ void from_json(const nlohmann::json &j, core_set &p) {
   j.at("timeout").get_to(p.timeout);
   if (j.contains("default_project"))
     j.at("default_project").get_to(p.default_project);
+  if (j.contains("project_root"))
+    j.at("project_root").get_to(p.project_root);
 }
 void core_set::add_recent_project(const FSys::path &in) {
   std::rotate(project_root.rbegin(), project_root.rbegin() + 1, project_root.rend());

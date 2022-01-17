@@ -45,6 +45,8 @@ class DOODLELIB_API doodle_app : public details::no_copy {
 
   virtual void hide_windows();
 
+
+  static  void init_project();
  private:
   void load_windows();
 

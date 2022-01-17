@@ -190,6 +190,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 #include <gui/widgets/tool_box_widget.h>
 #include <gui/widgets/opencv_player_widget.h>
 #include <gui/widgets/assets_file_widgets.h>
+#include <long_task/database_task.h>
+#include <thread_pool/long_term.h>
 namespace doodle {
 using win_handle = HWND;
 using win_class  = WNDCLASSEX;
@@ -450,6 +452,22 @@ void doodle_app::loop_one() {
 void doodle_app::load_windows() {
   g_main_loop().attach<main_menu_bar>();
   g_main_loop().attach<main_status_bar>();
+  g_main_loop().attach<null_process_t>().then([](auto, auto, auto s, auto) {
+                                          auto& k_prj  = core_set::getSet().project_root;
+                                          auto k_msg_h = make_handle();
+                                          k_msg_h.template emplace<process_message>();
+                                          if (!k_prj.empty())
+                                            g_main_loop().template attach<database_task_select>(k_msg_h, k_prj[0]);
+                                          s();
+                                        })
+      .then([](auto, auto, auto s, auto) {
+        auto k_prj = g_reg()->template view<project>();
+        if (!k_prj.empty())
+          g_reg()->template set<project>(k_prj.template get<project>(k_prj[0]));
+        s();
+      });
+}
+void doodle_app::init_project() {
 }
 
 }  // namespace doodle
