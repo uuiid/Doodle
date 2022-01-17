@@ -15,6 +15,7 @@ namespace doodle {
 template <class Panel>
 class DOODLELIB_API base_window : public process_t<base_window<Panel>> {
  public:
+  using self_type    = base_window<Panel>;
   using base_type    = process_t<base_window<Panel>>;
   using derived_type = Panel;
 
@@ -25,7 +26,7 @@ class DOODLELIB_API base_window : public process_t<base_window<Panel>> {
   Panel panel_;
   bool show{true};
   [[maybe_unused]] virtual void init() {
-    g_reg()->template set<Panel&>(panel_);
+    g_reg()->template set<self_type&>(*this);
     panel_.init();
   }
   [[maybe_unused]] virtual void succeeded() {

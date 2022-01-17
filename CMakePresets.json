@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 20,
@@ -28,7 +28,7 @@
           "disableExternalAnalysis": true
         }
       },
-      "cmakeExecutable": "E:\\vcpkg\\downloads\\tools\\cmake-3.21.1-windows\\cmake-3.21.1-windows-i386\\bin\\cmake.exe",
+      "cmakeExecutable": "C:\\Program Files\\CMake\\bin\\cmake.exe",
       "hidden": true
     },
     {

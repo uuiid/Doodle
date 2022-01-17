@@ -28,6 +28,7 @@ void comm_maya_tool::init() {
   chick_true<doodle_error>(k_prj, DOODLE_LOC, "没有项目选中");
 
   p_text = k_prj->root_handle().get<project>().get_vfx_cloth_config().vfx_cloth_sim_path.generic_string();
+  g_reg()->set<comm_maya_tool&>(*this);
 }
 void comm_maya_tool::succeeded() {
 }
@@ -93,6 +94,8 @@ comm_create_video::comm_create_video()
       p_out_path(new_object<std::string>()) {
 }
 void comm_create_video::init() {
+  g_reg()->set<comm_create_video&>(*this);
+
 }
 void comm_create_video::succeeded() {
 }
@@ -183,6 +186,8 @@ comm_import_ue_files::comm_import_ue_files()
       p_ue4_show(new_object<std::string>()) {
 }
 void comm_import_ue_files::init() {
+  g_reg()->set<comm_import_ue_files&>(*this);
+
 }
 void comm_import_ue_files::succeeded() {
 }

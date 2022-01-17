@@ -78,22 +78,47 @@ void main_menu_bar::menu_file() {
 
 void main_menu_bar::menu_windows() {
   //  auto k_prj = g_reg()->try_ctx<project_widget>();
-  if (dear::MenuItem(project_widget::name.data()))
-    g_main_loop().attach<project_widget>();
-  if (dear::MenuItem(assets_widget::name.data()))
-    g_main_loop().attach<assets_widget>();
-  if (dear::MenuItem(assets_file_widgets::name.data()))
-    g_main_loop().attach<assets_file_widgets>();
-  if (dear::MenuItem(setting_windows::name.data()))
-    g_main_loop().attach<setting_windows>();
-  if (dear::MenuItem(long_time_tasks_widget::name.data()))
-    g_main_loop().attach<long_time_tasks_widget>();
-  if (dear::MenuItem(edit_widgets::name.data()))
-    g_main_loop().attach<edit_widgets>();
-  if (dear::MenuItem(tool_box_widget::name.data()))
-    g_main_loop().attach<tool_box_widget>();
-  if (dear::MenuItem(opencv_player_widget::name.data()))
-    g_main_loop().attach<opencv_player_widget>();
+
+  {
+    auto k_win = g_reg()->try_ctx<base_window<project_widget>>();
+    if (dear::MenuItem(project_widget::name.data(), k_win ? &(k_win->show) : nullptr))
+      make_windows<project_widget>();
+  }
+  {
+    auto k_win = g_reg()->try_ctx<base_window<assets_widget>>();
+    if (dear::MenuItem(assets_widget::name.data(), k_win ? &(k_win->show) : nullptr))
+      make_windows<assets_widget>();
+  }
+  {
+    auto k_win = g_reg()->try_ctx<base_window<assets_file_widgets>>();
+    if (dear::MenuItem(assets_file_widgets::name.data(), k_win ? &(k_win->show) : nullptr))
+      make_windows<assets_file_widgets>();
+  }
+  {
+    auto k_win = g_reg()->try_ctx<base_window<setting_windows>>();
+    if (dear::MenuItem(setting_windows::name.data(), k_win ? &(k_win->show) : nullptr))
+      make_windows<setting_windows>();
+  }
+  {
+    auto k_win = g_reg()->try_ctx<base_window<long_time_tasks_widget>>();
+    if (dear::MenuItem(long_time_tasks_widget::name.data(), k_win ? &(k_win->show) : nullptr))
+      make_windows<long_time_tasks_widget>();
+  }
+  {
+    auto k_win = g_reg()->try_ctx<base_window<edit_widgets>>();
+    if (dear::MenuItem(edit_widgets::name.data(), k_win ? &(k_win->show) : nullptr))
+      make_windows<edit_widgets>();
+  }
+  {
+    auto k_win = g_reg()->try_ctx<base_window<tool_box_widget>>();
+    if (dear::MenuItem(tool_box_widget::name.data(), k_win ? &(k_win->show) : nullptr))
+      make_windows<tool_box_widget>();
+  }
+  {
+    auto k_win = g_reg()->try_ctx<base_window<opencv_player_widget>>();
+    if (dear::MenuItem(opencv_player_widget::name.data(), k_win ? &(k_win->show) : nullptr))
+      make_windows<opencv_player_widget>();
+  }
 }
 void main_menu_bar::menu_edit() {
   if (dear::MenuItem(u8"maya 工具"))

@@ -452,10 +452,10 @@ void doodle_app::load_windows() {
   g_main_loop().attach<main_menu_bar>();
   g_main_loop().attach<main_status_bar>();
 
-  g_main_loop().attach<project_widget>();
-  g_main_loop().attach<assets_widget>();
-  g_main_loop().attach<assets_file_widgets>();
-  g_main_loop().attach<setting_windows>();
-  g_main_loop().attach<long_time_tasks_widget>();
+  make_windows<project_widget>();
+  make_windows<assets_widget>();
+  make_windows<assets_file_widgets>();
+  make_windows<setting_windows>();
+  make_windows<long_time_tasks_widget>();
 }
 }  // namespace doodle
