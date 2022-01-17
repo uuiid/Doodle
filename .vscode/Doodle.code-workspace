@@ -136,7 +136,9 @@
 			"xtr1common": "cpp",
 			"xtree": "cpp",
 			"xutility": "cpp",
-			"*.ipp": "cpp"
+			"*.ipp": "cpp",
+			"ranges": "cpp",
+			"span": "cpp"
 		},
 		"testMate.cpp.log.logSentry": "disable_3",
 		"testMate.cpp.test.advancedExecutables": [
