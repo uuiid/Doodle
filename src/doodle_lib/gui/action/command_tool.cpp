@@ -22,13 +22,23 @@ comm_maya_tool::comm_maya_tool()
       p_sim_path(),
       p_only_sim(false),
       p_use_all_ref(false) {
-  p_name     = "maya工具";
+}
+void comm_maya_tool::init() {
   auto k_prj = g_reg()->try_ctx<root_ref>();
   chick_true<doodle_error>(k_prj, DOODLE_LOC, "没有项目选中");
 
   p_text = k_prj->root_handle().get<project>().get_vfx_cloth_config().vfx_cloth_sim_path.generic_string();
 }
-bool comm_maya_tool::render() {
+void comm_maya_tool::succeeded() {
+}
+void comm_maya_tool::failed() {
+}
+void comm_maya_tool::aborted() {
+}
+void comm_maya_tool::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+  this->render();
+}
+void comm_maya_tool::render() {
   if (imgui::Button("maya文件")) {
     p_sim_path.clear();
     g_main_loop().attach<file_dialog>(
@@ -75,17 +85,25 @@ bool comm_maya_tool::render() {
                     maya->export_fbx_file(make_handle(), k_arg);
                   });
   }
-
-  return true;
 }
 
 comm_create_video::comm_create_video()
     : p_video_path(),
       p_image_path(),
       p_out_path(new_object<std::string>()) {
-  p_name = "创建视频";
 }
-bool comm_create_video::render() {
+void comm_create_video::init() {
+}
+void comm_create_video::succeeded() {
+}
+void comm_create_video::failed() {
+}
+void comm_create_video::aborted() {
+}
+void comm_create_video::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+  this->render();
+}
+void comm_create_video::render() {
   imgui::InputText("输出文件夹", p_out_path.get());
   imgui::SameLine();
   if (imgui::Button("选择")) {
@@ -158,15 +176,24 @@ bool comm_create_video::render() {
       dear::Selectable(i.filename().generic_string());
     }
   };
-
-  return true;
 }
+
 comm_import_ue_files::comm_import_ue_files()
     : p_ue4_prj(),
       p_ue4_show(new_object<std::string>()) {
-  p_name = "ue工具";
 }
-bool comm_import_ue_files::render() {
+void comm_import_ue_files::init() {
+}
+void comm_import_ue_files::succeeded() {
+}
+void comm_import_ue_files::failed() {
+}
+void comm_import_ue_files::aborted() {
+}
+void comm_import_ue_files::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+  this->render();
+}
+void comm_import_ue_files::render() {
   imgui::InputText("ue项目", p_ue4_show.get());
   imgui::SameLine();
   if (imgui::Button("选择")) {
@@ -195,8 +222,6 @@ bool comm_import_ue_files::render() {
     for (const auto& in : p_import_list)
       dear::Selectable(in.filename().generic_string());
   };
-
-  return true;
 }
 
 }  // namespace doodle

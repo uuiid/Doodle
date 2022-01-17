@@ -128,7 +128,7 @@ using table_column_ptr = std::shared_ptr<table_column>;
  * @note 每次上传文件都会递增版本号， 如果需要新的条目请创建新条目
  *
  */
-class DOODLELIB_API assets_file_widgets : public base_window<assets_file_widgets> {
+class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> {
   friend details::table_column_ptr;
 
   std::vector<details::table_column_ptr> p_colum_list;

@@ -6,6 +6,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/action/command.h>
+#include <doodle_lib/gui/base_windwos.h>
 namespace doodle {
 
 /**
@@ -33,7 +34,7 @@ namespace doodle {
  *
  *
  */
-class DOODLELIB_API comm_maya_tool : public command_base {
+class DOODLELIB_API comm_maya_tool : public process_t<comm_maya_tool> {
   FSys::path p_cloth_path;
   std::string p_text;
   std::vector<FSys::path> p_sim_path;
@@ -42,7 +43,15 @@ class DOODLELIB_API comm_maya_tool : public command_base {
 
  public:
   comm_maya_tool();
-  bool render() override;
+  bool show{false};
+  constexpr static std::string_view name{"maya工具"};
+
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(delta_type, void* data);
+  void render();
 };
 
 /**
@@ -67,7 +76,7 @@ class DOODLELIB_API comm_maya_tool : public command_base {
  * 选择视频, 后点击连接视频进行连接
  *
  */
-class DOODLELIB_API comm_create_video : public command_base {
+class DOODLELIB_API comm_create_video : public process_t<comm_create_video> {
   struct image_paths {
     std::vector<FSys::path> p_path_list;
     FSys::path p_out_path;
@@ -80,7 +89,14 @@ class DOODLELIB_API comm_create_video : public command_base {
 
  public:
   comm_create_video();
-  bool render() override;
+  constexpr static std::string_view name{"创建视频"};
+  bool show{false};
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(delta_type, void* data);
+  void render();
 };
 /**
  * @brief 将abc和fbx导入ue4 项目中
@@ -89,14 +105,22 @@ class DOODLELIB_API comm_create_video : public command_base {
  * @li @b 选择导入 选择ue4 项目中
  *
  */
-class DOODLELIB_API comm_import_ue_files : public command_base {
+class DOODLELIB_API comm_import_ue_files : public process_t<comm_import_ue_files> {
   FSys::path p_ue4_prj;
   std::shared_ptr<std::string> p_ue4_show;
   std::vector<FSys::path> p_import_list;
 
  public:
   comm_import_ue_files();
-  bool render() override;
+  constexpr static std::string_view name{"ue工具"};
+  bool show{false};
+
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(delta_type, void* data);
+  void render() ;
 };
 
 }  // namespace doodle

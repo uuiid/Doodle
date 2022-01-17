@@ -12,33 +12,45 @@
 #include <boost/type_erasure/member.hpp>
 
 namespace doodle {
-
-template <class Derived>
-class DOODLELIB_API base_window : public process_t<base_window<Derived>> {
+template <class Panel>
+class DOODLELIB_API base_window : public process_t<base_window<Panel>> {
  public:
-  using base_type    = process_t<base_window<Derived>>;
-  using derived_type = Derived;
+  using base_type    = process_t<base_window<Panel>>;
+  using derived_type = Panel;
 
-  bool show;
+  template <class... Args>
+  explicit base_window(Args&&... args)
+      : panel_(std::forward<Args>(args)...) {}
+
+  Panel panel_;
+  bool show{false};
   [[maybe_unused]] virtual void init() {
-    g_reg()->template set<derived_type&>(*(static_cast<derived_type*>(this)));
-    static_cast<derived_type*>(this)->init();
+    g_reg()->template set<Panel&>(panel_);
+    panel_.init();
   }
   [[maybe_unused]] virtual void succeeded() {
-    static_cast<derived_type*>(this)->succeeded();
+    panel_.succeeded();
   }
   [[maybe_unused]] virtual void failed() {
-    static_cast<derived_type*>(this)->failed();
+    panel_.failed();
   }
   [[maybe_unused]] virtual void aborted() {
-    static_cast<derived_type*>(this)->aborted();
+    panel_.aborted();
   }
   [[maybe_unused]] virtual void update(typename base_type::delta_type in_dalta, void* in_data) {
-    dear::Begin{derived_type::name.data(), &show} && [&]() {
-      static_cast<derived_type*>(this)->update(in_dalta, in_data);
-    };
+    if (!show)
+      this->succeed();
+
+    dear::Begin{panel_.name.data(), &show} &&
+        [&]() {
+          panel_.update(in_dalta, in_data);
+        };
   }
 };
+template <class Panel, class... Args>
+auto make_windows(Args&&... args) {
+  return g_main_loop().attach<base_window<Panel>>(std::forward<Args>(args)...);
+}
 
 BOOST_TYPE_ERASURE_MEMBER(render);
 

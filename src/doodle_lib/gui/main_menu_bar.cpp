@@ -13,7 +13,13 @@
 #include <gui/action/command_tool.h>
 #include <gui/action/command_video.h>
 #include <gui/action/command_meta.h>
+#include <gui/widgets/project_widget.h>
+#include <gui/widgets/assets_widget.h>
+#include <gui/setting_windows.h>
+#include <gui/widgets/long_time_tasks_widget.h>
+#include <gui/widgets/edit_widgets.h>
 #include <gui/widgets/tool_box_widget.h>
+#include <gui/widgets/opencv_player_widget.h>
 namespace doodle {
 class main_menu_bar::impl {
  public:
@@ -70,14 +76,16 @@ void main_menu_bar::menu_file() {
 }
 
 void main_menu_bar::menu_windows() {
+  if (dear::MenuItem("项目窗口"))
+    make_windows<project_widget>();
 }
 void main_menu_bar::menu_edit() {
   if (dear::MenuItem(u8"maya 工具"))
-    g_reg()->ctx<tool_box_widget>().set_tool_widget(new_object<comm_maya_tool>());
+    make_windows<comm_maya_tool>();
   if (dear::MenuItem(u8"创建视频"))
-    g_reg()->ctx<tool_box_widget>().set_tool_widget(new_object<comm_create_video>());
+    make_windows<comm_create_video>();
   if (dear::MenuItem(u8"ue工具"))
-    g_reg()->ctx<tool_box_widget>().set_tool_widget(new_object<comm_import_ue_files>());
+    make_windows<comm_import_ue_files>();
 }
 void main_menu_bar::menu_tool() {
   if (dear::MenuItem("安装maya插件"))

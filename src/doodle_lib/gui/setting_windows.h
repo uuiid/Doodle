@@ -51,7 +51,7 @@ namespace doodle {
  * @brief 设置主窗口
  *
  */
-class DOODLELIB_API setting_windows : public base_window<setting_windows> {
+class DOODLELIB_API setting_windows : public process_t<setting_windows> {
   decltype(magic_enum::enum_names<department>()) p_dep_list;
   std::int32_t p_cur_dep_index;
   std::string p_user;

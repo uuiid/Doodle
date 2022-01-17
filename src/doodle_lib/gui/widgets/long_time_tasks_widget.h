@@ -11,7 +11,7 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 
-class DOODLELIB_API long_time_tasks_widget : public base_window<long_time_tasks_widget> {
+class DOODLELIB_API long_time_tasks_widget : public process_t<long_time_tasks_widget> {
   entt::handle p_current_select;
 
  public:
