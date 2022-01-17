@@ -9,7 +9,7 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
-class DOODLELIB_API edit_widgets : public process_t<edit_widgets> {
+class DOODLELIB_API edit_widgets : public base_window<edit_widgets> {
 
 
  public:

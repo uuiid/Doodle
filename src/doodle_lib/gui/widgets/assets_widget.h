@@ -14,7 +14,7 @@ namespace doodle {
  * @li 这里只显示资产树, 可以类比为文件夹树
  *
  */
-class DOODLELIB_API assets_widget : public process_t<assets_widget> {
+class DOODLELIB_API assets_widget : public base_window<assets_widget> {
   class impl;
   std::unique_ptr<impl> p_impl;
 

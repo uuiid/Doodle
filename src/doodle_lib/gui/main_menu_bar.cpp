@@ -9,7 +9,11 @@
 #include <doodle_lib/client/client.h>
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/core/open_file_dialog.h>
-
+#include <toolkit/toolkit.h>
+#include <gui/action/command_tool.h>
+#include <gui/action/command_video.h>
+#include <gui/action/command_meta.h>
+#include <gui/widgets/tool_box_widget.h>
 namespace doodle {
 class main_menu_bar::impl {
  public:
@@ -64,11 +68,34 @@ void main_menu_bar::menu_file() {
     doodle_app::Get()->p_done = true;
   }
 }
+
 void main_menu_bar::menu_windows() {
 }
 void main_menu_bar::menu_edit() {
+  if (dear::MenuItem(u8"maya 工具"))
+    g_reg()->ctx<tool_box_widget>().set_tool_widget(new_object<comm_maya_tool>());
+  if (dear::MenuItem(u8"创建视频"))
+    g_reg()->ctx<tool_box_widget>().set_tool_widget(new_object<comm_create_video>());
+  if (dear::MenuItem(u8"ue工具"))
+    g_reg()->ctx<tool_box_widget>().set_tool_widget(new_object<comm_import_ue_files>());
 }
 void main_menu_bar::menu_tool() {
+  if (dear::MenuItem("安装maya插件"))
+    toolkit::installMayaPath();
+  if (dear::MenuItem("安装ue4插件"))
+    toolkit::installUePath(core_set::getSet().get_ue4_setting().get_path() / "Engine");
+  if (dear::MenuItem("安装ue4项目插件")) {
+    g_main_loop().attach<file_dialog>(
+        [](const FSys::path &in_path) {
+          toolkit::installUePath(in_path);
+        },
+        "select_ue_project",
+        string_list{".uproject"});
+  }
+  if (dear::MenuItem("删除ue4缓存"))
+    toolkit::deleteUeCache();
+  if (dear::MenuItem("修改ue4缓存位置"))
+    toolkit::modifyUeCachePath();
 }
 
 void main_menu_bar::init() {

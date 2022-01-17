@@ -8,7 +8,7 @@
 #include <doodle_lib/gui/base_windwos.h>
 
 namespace doodle {
-class DOODLELIB_API opencv_player_widget : public process_t<opencv_player_widget> {
+class DOODLELIB_API opencv_player_widget : public base_window<opencv_player_widget> {
   class impl;
 
  public:

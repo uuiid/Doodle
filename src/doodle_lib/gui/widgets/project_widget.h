@@ -14,7 +14,7 @@ namespace doodle {
  * 这个窗口显示了项目的各种参数
  *
  */
-class DOODLELIB_API project_widget : public process_t<project_widget> {
+class DOODLELIB_API project_widget : public base_window<project_widget> {
  public:
   project_widget();
   ~project_widget() override;
