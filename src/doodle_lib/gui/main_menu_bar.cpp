@@ -149,6 +149,32 @@ void main_menu_bar::menu_tool() {
 
 void main_menu_bar::init() {
   g_reg()->set<main_menu_bar &>(*this);
+  auto k_windows_setting = core_set::getSet().widget_show;
+
+  if (k_windows_setting.find(std::string{project_widget::name}) != k_windows_setting.end())
+    if (k_windows_setting[std::string{project_widget::name}])
+      make_windows<project_widget>();
+  if (k_windows_setting.find(std::string{assets_widget::name}) != k_windows_setting.end())
+    if (k_windows_setting[std::string{assets_widget::name}])
+      make_windows<assets_widget>();
+  if (k_windows_setting.find(std::string{assets_file_widgets::name}) != k_windows_setting.end())
+    if (k_windows_setting[std::string{assets_file_widgets::name}])
+      make_windows<assets_file_widgets>();
+  if (k_windows_setting.find(std::string{setting_windows::name}) != k_windows_setting.end())
+    if (k_windows_setting[std::string{setting_windows::name}])
+      make_windows<setting_windows>();
+  if (k_windows_setting.find(std::string{long_time_tasks_widget::name}) != k_windows_setting.end())
+    if (k_windows_setting[std::string{long_time_tasks_widget::name}])
+      make_windows<long_time_tasks_widget>();
+  if (k_windows_setting.find(std::string{edit_widgets::name}) != k_windows_setting.end())
+    if (k_windows_setting[std::string{edit_widgets::name}])
+      make_windows<edit_widgets>();
+  if (k_windows_setting.find(std::string{tool_box_widget::name}) != k_windows_setting.end())
+    if (k_windows_setting[std::string{tool_box_widget::name}])
+      make_windows<tool_box_widget>();
+  if (k_windows_setting.find(std::string{opencv_player_widget::name}) != k_windows_setting.end())
+    if (k_windows_setting[std::string{opencv_player_widget::name}])
+      make_windows<opencv_player_widget>();
 }
 void main_menu_bar::succeeded() {
 }

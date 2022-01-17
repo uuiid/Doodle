@@ -46,9 +46,9 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   virtual void hide_windows();
 
  private:
+  void load_windows();
+
  protected:
-  virtual void load_windows();
-  static void load_setting_windows();
 };
 
 }  // namespace doodle

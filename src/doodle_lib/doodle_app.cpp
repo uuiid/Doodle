@@ -190,7 +190,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 #include <gui/widgets/tool_box_widget.h>
 #include <gui/widgets/opencv_player_widget.h>
 #include <gui/widgets/assets_file_widgets.h>
-
 namespace doodle {
 using win_handle = HWND;
 using win_class  = WNDCLASSEX;
@@ -451,11 +450,6 @@ void doodle_app::loop_one() {
 void doodle_app::load_windows() {
   g_main_loop().attach<main_menu_bar>();
   g_main_loop().attach<main_status_bar>();
-
-  make_windows<project_widget>();
-  make_windows<assets_widget>();
-  make_windows<assets_file_widgets>();
-  make_windows<setting_windows>();
-  make_windows<long_time_tasks_widget>();
 }
+
 }  // namespace doodle
