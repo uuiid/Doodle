@@ -453,19 +453,9 @@ void doodle_app::load_windows() {
   g_main_loop().attach<main_menu_bar>();
   g_main_loop().attach<main_status_bar>();
   g_main_loop().attach<null_process_t>().then([](auto, auto, auto s, auto) {
-                                          auto& k_prj  = core_set::getSet().project_root;
-                                          auto k_msg_h = make_handle();
-                                          k_msg_h.template emplace<process_message>();
-                                          if (!k_prj.empty() && !k_prj[0].empty())
-                                            g_main_loop().template attach<database_task_select>(k_msg_h, k_prj[0]);
-                                          s();
-                                        })
-      .then([](auto, auto, auto s, auto) {
-        auto k_prj = g_reg()->template view<project>();
-        if (!k_prj.empty())
-          g_reg()->template set<project>(k_prj.template get<project>(k_prj[0]));
-        s();
-      });
+    core_set::getSet().load_first_project();
+    s();
+  });
 }
 void doodle_app::init_project() {
 }
