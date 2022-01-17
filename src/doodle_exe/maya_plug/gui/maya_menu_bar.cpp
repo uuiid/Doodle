@@ -3,3 +3,28 @@
 //
 
 #include "maya_menu_bar.h"
+#include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_lib/long_task/process_pool.h>
+
+#include <maya_plug/gui/action/comm_check_scenes.h>
+#include <maya_plug/gui/action/comm_play_blast.h>
+#include <maya_plug/gui/action/reference_attr_setting.h>
+#include <maya_plug/gui/maya_plug_app.h>
+#include <maya_plug/gui/action/create_sim_cloth.h>
+
+namespace doodle::maya_plug {
+
+void maya_menu_bar::menu_edit() {
+  if (dear::MenuItem("引用工具")) {
+    g_main_loop().attach<reference_attr_setting>();
+  }
+  if (dear::MenuItem("场景检查工具"))
+    g_main_loop().attach<comm_check_scenes>();
+
+  if (dear::MenuItem("拍屏工具"))
+    g_main_loop().attach<comm_play_blast>();
+
+  if (dear::MenuItem("qcloth布料制作"))
+    g_main_loop().attach<create_sim_cloth>();
+}
+}  // namespace doodle::maya_plug
