@@ -43,7 +43,7 @@ class DOODLELIB_API comm_maya_tool : public process_t<comm_maya_tool> {
 
  public:
   comm_maya_tool();
-  bool show{false};
+  bool show{true};
   constexpr static std::string_view name{"maya工具"};
 
   [[maybe_unused]] void init();

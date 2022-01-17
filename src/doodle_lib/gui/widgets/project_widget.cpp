@@ -23,7 +23,9 @@ project_widget::project_widget()
 }
 
 project_widget::~project_widget() = default;
+
 void project_widget::init() {
+  g_reg()->set<project_widget&>(*this);
 }
 void project_widget::succeeded() {
   if (p_c)
@@ -38,6 +40,16 @@ void project_widget::aborted() {
     core_set::getSet().default_project = p_c.get<database>().uuid();
 }
 void project_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+
+  if (!show)
+    this->succeed();
+
+  dear::Begin{name.data(), &show} && [&]() {
+    this->render();
+  };
+
+}
+void project_widget::render() {
   dear::Table{"project", 3} && [this]() {
     imgui::TableSetupColumn("名称");
     imgui::TableSetupColumn("路径");

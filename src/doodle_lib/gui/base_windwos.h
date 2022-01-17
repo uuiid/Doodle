@@ -23,7 +23,7 @@ class DOODLELIB_API base_window : public process_t<base_window<Panel>> {
       : panel_(std::forward<Args>(args)...) {}
 
   Panel panel_;
-  bool show{false};
+  bool show{true};
   [[maybe_unused]] virtual void init() {
     g_reg()->template set<Panel&>(panel_);
     panel_.init();
@@ -49,7 +49,8 @@ class DOODLELIB_API base_window : public process_t<base_window<Panel>> {
 };
 template <class Panel, class... Args>
 auto make_windows(Args&&... args) {
-  return g_main_loop().attach<base_window<Panel>>(std::forward<Args>(args)...);
+  if (auto k_panel = g_reg()->try_ctx<Panel>(); !k_panel)
+    g_main_loop().attach<base_window<Panel>>(std::forward<Args>(args)...);
 }
 
 BOOST_TYPE_ERASURE_MEMBER(render);

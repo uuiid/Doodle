@@ -225,6 +225,7 @@ std::float_t compute_size(std::vector<opencv::frame>& in_size, const ImVec2& in_
 }
 
 void opencv_player_widget::init() {
+  g_reg()->set<opencv_player_widget>(*this);
 }
 void opencv_player_widget::succeeded() {
 }

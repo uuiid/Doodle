@@ -36,7 +36,7 @@ void comm_maya_tool::failed() {
 void comm_maya_tool::aborted() {
 }
 void comm_maya_tool::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-  this->render();
+    this->render();
 }
 void comm_maya_tool::render() {
   if (imgui::Button("maya文件")) {
@@ -101,7 +101,7 @@ void comm_create_video::failed() {
 void comm_create_video::aborted() {
 }
 void comm_create_video::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-  this->render();
+    this->render();
 }
 void comm_create_video::render() {
   imgui::InputText("输出文件夹", p_out_path.get());
@@ -191,7 +191,7 @@ void comm_import_ue_files::failed() {
 void comm_import_ue_files::aborted() {
 }
 void comm_import_ue_files::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-  this->render();
+    this->render();
 }
 void comm_import_ue_files::render() {
   imgui::InputText("ue项目", p_ue4_show.get());

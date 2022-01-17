@@ -20,7 +20,7 @@ class DOODLELIB_API assets_widget : public process_t<assets_widget> {
 
  public:
   assets_widget();
-  ~assets_widget();
+  ~assets_widget() override;
   /**
    * @brief 设置这个小部件要创建的树的根属性
    *

@@ -39,6 +39,7 @@ void setting_windows::save() {
 setting_windows::~setting_windows() = default;
 
 void setting_windows::init() {
+  g_reg()->set<setting_windows&>(*this);
 }
 void setting_windows::succeeded() {
   save();

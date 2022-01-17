@@ -20,6 +20,7 @@
 #include <gui/widgets/edit_widgets.h>
 #include <gui/widgets/tool_box_widget.h>
 #include <gui/widgets/opencv_player_widget.h>
+#include <gui/widgets/assets_file_widgets.h>
 namespace doodle {
 class main_menu_bar::impl {
  public:
@@ -76,8 +77,23 @@ void main_menu_bar::menu_file() {
 }
 
 void main_menu_bar::menu_windows() {
-  if (dear::MenuItem("项目窗口"))
-    make_windows<project_widget>();
+  //  auto k_prj = g_reg()->try_ctx<project_widget>();
+  if (dear::MenuItem(project_widget::name.data()))
+    g_main_loop().attach<project_widget>();
+  if (dear::MenuItem(assets_widget::name.data()))
+    g_main_loop().attach<assets_widget>();
+  if (dear::MenuItem(assets_file_widgets::name.data()))
+    g_main_loop().attach<assets_file_widgets>();
+  if (dear::MenuItem(setting_windows::name.data()))
+    g_main_loop().attach<setting_windows>();
+  if (dear::MenuItem(long_time_tasks_widget::name.data()))
+    g_main_loop().attach<long_time_tasks_widget>();
+  if (dear::MenuItem(edit_widgets::name.data()))
+    g_main_loop().attach<edit_widgets>();
+  if (dear::MenuItem(tool_box_widget::name.data()))
+    g_main_loop().attach<tool_box_widget>();
+  if (dear::MenuItem(opencv_player_widget::name.data()))
+    g_main_loop().attach<opencv_player_widget>();
 }
 void main_menu_bar::menu_edit() {
   if (dear::MenuItem(u8"maya 工具"))

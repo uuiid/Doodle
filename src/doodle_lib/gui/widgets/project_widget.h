@@ -21,11 +21,14 @@ class DOODLELIB_API project_widget : public process_t<project_widget> {
 
   constexpr static std::string_view name{"项目"};
 
+  bool show{true};
+
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();
   [[maybe_unused]] void aborted();
   [[maybe_unused]] void update(delta_type, void* data);
+  void render();
   entt::handle p_c;
 
   boost::signals2::signal<void(const entt::entity&)> select_change;
