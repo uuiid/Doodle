@@ -44,11 +44,11 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   virtual void loop_one();
 
   virtual void hide_windows();
+  virtual void show_windows();
 
 
-  static  void init_project();
  private:
-  void load_windows();
+  virtual void load_windows();
 
  protected:
 };
