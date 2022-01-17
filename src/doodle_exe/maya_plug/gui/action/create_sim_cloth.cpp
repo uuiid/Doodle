@@ -21,19 +21,13 @@ namespace doodle::maya_plug {
 
 create_sim_cloth::create_sim_cloth()
     : p_coll(make_handle()) {
-  p_show_str  = make_imgui_name(this,
-                                "获得低模",
-                                "制作布料",
-                                "清理",
-                                "添加碰撞",
-                                "碰撞物体");
   auto k_view = g_reg()->view<qcloth_shape>();
   std::transform(k_view.begin(), k_view.end(),
                  std::back_inserter(p_list),
                  [](auto& in) -> entt::handle { return make_handle(in); });
 }
 bool create_sim_cloth::render() {
-  if (imgui::Button(p_show_str["获得低模"].c_str())) {
+  if (imgui::Button("获得低模")) {
     MSelectionList k_list{};
     auto k_s = MGlobal::getActiveSelectionList(k_list);
     DOODLE_CHICK(k_s);
@@ -49,7 +43,7 @@ bool create_sim_cloth::render() {
     }
   }
   imgui::SameLine();
-  if (imgui::Button(p_show_str["添加碰撞"].c_str())) {
+  if (imgui::Button("添加碰撞")) {
     qcloth_shape_n::shape_list l_list{};
     MSelectionList k_list{};
     auto k_s = MGlobal::getActiveSelectionList(k_list);
@@ -62,7 +56,7 @@ bool create_sim_cloth::render() {
     p_coll.emplace_or_replace<qcloth_shape_n::shape_list>(l_list);
   }
   imgui::SameLine();
-  if (imgui::Button(p_show_str["清理"].c_str())) {
+  if (imgui::Button("清理")) {
     for (auto& h : p_list) {
       h.destroy();
     }
@@ -102,7 +96,7 @@ bool create_sim_cloth::render() {
     }
   }
 
-  if (imgui::Button(p_show_str["制作布料"].c_str())) {
+  if (imgui::Button("制作布料")) {
     for (auto& l_h : p_list) {
       l_h.get<qcloth_shape>().create_sim_cloth(l_h);
     }
@@ -117,5 +111,16 @@ create_sim_cloth::~create_sim_cloth() {
     if (h)
       h.destroy();
   }
+}
+void create_sim_cloth::init() {
+}
+void create_sim_cloth::succeeded() {
+}
+void create_sim_cloth::failed() {
+}
+void create_sim_cloth::aborted() {
+}
+void create_sim_cloth::update(delta_type, void* data) {
+  render();
 }
 }  // namespace doodle::maya_plug

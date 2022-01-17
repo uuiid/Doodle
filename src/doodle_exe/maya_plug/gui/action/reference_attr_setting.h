@@ -35,14 +35,23 @@ using data_ptr = std::shared_ptr<data>;
  * @li 在没有引用文件标记时， 使用所有载入的应用进行解算
  *
  */
-class reference_attr_setting : public command_base {
+class reference_attr_setting : public process_t<reference_attr_setting> {
   std::vector<entt::handle> p_handle;
 
   bool get_file_info();
+  void clear();
 
  public:
   reference_attr_setting();
-  bool render() override;
+  constexpr static std::string_view name{"引用编辑"};
+
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(delta_type, void* data);
+
+  bool render();
 };
 
 }  // namespace doodle::maya_plug

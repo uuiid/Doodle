@@ -39,14 +39,7 @@ bool data::operator!=(const data& in_rhs) const {
 }  // namespace reference_attr
 
 reference_attr_setting::reference_attr_setting()
-    : command_base(),
-      p_handle() {
-  p_name          = "引用编辑";
-  p_show_str      = make_imgui_name(this,
-                                    "解析引用",
-                                    "引用",
-                                    "设置场景",
-                                    "保存");
+    : p_handle() {
   auto k_ref_view = g_reg()->view<reference_file>();
   std::transform(k_ref_view.begin(), k_ref_view.end(),
                  std::back_inserter(p_handle),
@@ -99,7 +92,7 @@ bool reference_attr_setting::get_file_info() {
 }
 
 bool reference_attr_setting::render() {
-  if (imgui::Button(p_show_str["解析引用"].c_str())) {
+  if (imgui::Button("解析引用")) {
     get_file_info();
   }
   MStatus k_s{};
@@ -146,7 +139,7 @@ bool reference_attr_setting::render() {
     };
   }
 
-  if (imgui::Button(p_show_str["保存"].c_str())) {
+  if (imgui::Button("保存")) {
     maya_file_io::chick_channel();
     nlohmann::json k_j{};
     for (auto& k : p_handle) {
@@ -157,6 +150,28 @@ bool reference_attr_setting::render() {
 
   return true;
 }
+
+void reference_attr_setting::clear() {
+  for (auto&& i : p_handle) {
+    if (i) i.destroy();
+  }
+}
+
+void reference_attr_setting::init() {
+}
+void reference_attr_setting::succeeded() {
+  clear();
+}
+void reference_attr_setting::failed() {
+  clear();
+}
+void reference_attr_setting::aborted() {
+  clear();
+}
+void reference_attr_setting::update(delta_type, void* data) {
+  render();
+}
+
 }  // namespace maya_plug
 
 }  // namespace doodle

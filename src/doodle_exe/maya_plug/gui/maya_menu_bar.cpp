@@ -11,20 +11,21 @@
 #include <maya_plug/gui/action/reference_attr_setting.h>
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/gui/action/create_sim_cloth.h>
+#include <doodle_lib/gui/base_windwos.h>
 
 namespace doodle::maya_plug {
 
 void maya_menu_bar::menu_edit() {
   if (dear::MenuItem("引用工具")) {
-    g_main_loop().attach<reference_attr_setting>();
+    make_windows<reference_attr_setting>();
   }
   if (dear::MenuItem("场景检查工具"))
-    g_main_loop().attach<comm_check_scenes>();
+    make_windows<comm_check_scenes>();
 
-  if (dear::MenuItem("拍屏工具"))
-    g_main_loop().attach<comm_play_blast>();
+  // if (dear::MenuItem("拍屏工具"))
+  //   make_windows<comm_play_blast>();
 
   if (dear::MenuItem("qcloth布料制作"))
-    g_main_loop().attach<create_sim_cloth>();
+    make_windows<create_sim_cloth>();
 }
 }  // namespace doodle::maya_plug

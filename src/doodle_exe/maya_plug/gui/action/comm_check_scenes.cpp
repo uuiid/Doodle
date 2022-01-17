@@ -23,8 +23,7 @@
 namespace doodle::maya_plug {
 
 comm_check_scenes::comm_check_scenes()
-    : command_base(),
-      p_unlock_normal(),
+    : p_unlock_normal(),
       p_duplicate_name(),
       p_multilateral_surface(),
       p_uv_set(),
@@ -32,18 +31,6 @@ comm_check_scenes::comm_check_scenes()
       p_err_2(),
       p_err_3(),
       p_err_4() {
-  p_show_str = make_imgui_name(
-      this,
-      "检查所有",
-      "解锁法线"
-      "检查重名"
-      "检查大于四边面"
-      "检查UV集",
-      "去除(1)错误",  // (1)大纲
-      "去除(2)错误",  // (2)onModelChange3dc
-      "去除(3)错误",  // (3)CgAbBlastPanelOptChangeCallback
-      "去除(4)错误"   // (4)贼健康
-  );
 }
 MStatus comm_check_scenes::run_maya_py_script(const string& in_script) {
   MString l_script{};
@@ -327,7 +314,7 @@ MStatus comm_check_scenes::print_mfn() {
 }
 
 bool comm_check_scenes::render() {
-  if (imgui::Button(p_show_str["检查所有"].c_str())) {
+  if (imgui::Button("检查所有")) {
     DOODLE_LOG_INFO("开始解锁法线");
     unlock_normal();
     DOODLE_LOG_INFO("重复名称检查");
@@ -387,6 +374,18 @@ bool comm_check_scenes::render() {
   // };
 
   return false;
+}
+
+void comm_check_scenes::init() {
+}
+void comm_check_scenes::succeeded() {
+}
+void comm_check_scenes::failed() {
+}
+void comm_check_scenes::aborted() {
+}
+void comm_check_scenes::update(delta_type, void* data) {
+  render();
 }
 
 }  // namespace doodle::maya_plug

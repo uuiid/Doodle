@@ -8,20 +8,20 @@
 namespace doodle::maya_plug {
 /**
  * @brief maya检查场景功能
- * 
+ *
  * @li 检查maya场景一共有一下几项
  * * 检查所有
  * * 解锁法线
  * * 检查重名
  * * 检查大于四边面
  * * 检查UV集
- * * 去除大纲错误 
+ * * 去除大纲错误
  * * 去除onModelChange3dc错误
  * * 去除CgAbBlastPanelOptChangeCallback错误
  * * 去除贼健康错误
- * 
+ *
  */
-class comm_check_scenes : public command_base {
+class comm_check_scenes : public process_t<comm_check_scenes> {
   bool p_unlock_normal;
   bool p_duplicate_name;
   bool p_multilateral_surface;
@@ -43,8 +43,16 @@ class comm_check_scenes : public command_base {
   MStatus err_4();  // (4)贼健康
 
   MStatus print_mfn();
+
  public:
   comm_check_scenes();
-  virtual bool render() override;
+  constexpr static std::string_view name{"检查工具"};
+
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(delta_type, void* data);
+  virtual bool render();
 };
 }  // namespace doodle::maya_plug
