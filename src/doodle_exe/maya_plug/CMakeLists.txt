@@ -16,8 +16,6 @@ set(doodle_maya_plug_cpp
         gui/action/comm_check_scenes.cpp
         gui/action/comm_play_blast.h
         gui/action/comm_play_blast.cpp
-        gui/widgets/maya_tool_widget.cpp
-        gui/widgets/maya_tool_widget.h
         maya_render/hud_render_override.h
         maya_render/hud_render_override.cpp
         maya_render/hud_render_node.h

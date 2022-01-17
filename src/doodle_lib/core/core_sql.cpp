@@ -21,7 +21,7 @@ class core_sql::impl {
 core_sql::core_sql()
     : p_i(std::make_unique<impl>()) {
 #ifdef NDEBUG
-  p_i->config->debug = false;
+  p_i->config.debug = false;
 #else
   p_i->config.debug = true;
 #endif

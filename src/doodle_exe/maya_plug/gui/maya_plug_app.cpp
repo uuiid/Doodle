@@ -4,7 +4,6 @@
 
 #include "maya_plug_app.h"
 
-#include <maya_plug/gui/maya_windwos.h>
 #include <doodle_lib/gui/main_status_bar.h>
 #include <doodle_lib/gui/main_menu_bar.h>
 #include <doodle_lib/long_task/database_task.h>
