@@ -108,7 +108,6 @@ assets_file_widgets::assets_file_widgets()
       p_colum_list() {
 }
 void assets_file_widgets::init() {
-  g_reg()->set<assets_file_widgets&>(*this);
   p_colum_list.emplace_back(new_object<details::column_id>(this));
   p_colum_list.emplace_back(new_object<details::column_assets>(this));
   p_colum_list.emplace_back(new_object<details::column_season>(this));

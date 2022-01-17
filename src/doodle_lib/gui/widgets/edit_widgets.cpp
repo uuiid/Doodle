@@ -18,7 +18,6 @@ edit_widgets::edit_widgets() {
 }
 
 void edit_widgets::init() {
-  g_reg()->set<edit_widgets &>(*this);
 }
 void edit_widgets::succeeded() {
 }

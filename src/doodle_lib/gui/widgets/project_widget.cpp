@@ -24,7 +24,6 @@ project_widget::project_widget()
 
 project_widget::~project_widget() = default;
 void project_widget::init() {
-  g_reg()->set<project_widget&>(*this);
 }
 void project_widget::succeeded() {
   if (p_c)

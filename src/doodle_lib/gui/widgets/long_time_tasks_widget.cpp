@@ -21,7 +21,6 @@ long_time_tasks_widget::long_time_tasks_widget()
 }
 
 void long_time_tasks_widget::init() {
-  g_reg()->set<long_time_tasks_widget&>(*this);
 }
 void long_time_tasks_widget::succeeded() {
 }

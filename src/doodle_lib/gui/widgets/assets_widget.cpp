@@ -372,7 +372,6 @@ void assets_widget::set_metadata(const entt::entity& in_ptr) {
   p_impl->p_root = k_h;
 }
 void assets_widget::init() {
-  g_reg()->set<assets_widget&>(*this);
 }
 void assets_widget::succeeded() {
 }

@@ -100,7 +100,6 @@ main_status_bar::main_status_bar()
     : p_i(std::make_unique<impl>()) {}
 
 void main_status_bar::init() {
-  g_reg()->set<main_status_bar&>(*this);
 }
 void main_status_bar::succeeded() {
 }
