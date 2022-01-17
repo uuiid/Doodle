@@ -40,14 +40,12 @@ void project_widget::aborted() {
     core_set::getSet().default_project = p_c.get<database>().uuid();
 }
 void project_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-
   if (!show)
     this->succeed();
 
   dear::Begin{name.data(), &show} && [&]() {
     this->render();
   };
-
 }
 void project_widget::render() {
   dear::Table{"project", 3} && [this]() {
@@ -75,18 +73,10 @@ void project_widget::render() {
     }
     if (k_chick) {
       auto k_reg = g_reg();
-      auto k_v1  = k_reg->view<database>(entt::exclude<project>);
-      k_reg->destroy(k_v1.begin(), k_v1.end());
-
-      p_c.get<database_root>().reset();
 
       command_list<comm_project_add, comm_assets_add> k_comm{};
       k_comm.set_data(p_c);
       k_reg->set<widget_>(k_comm);
-      k_reg->set<root_ref>(p_c);
-      core_set::getSet().default_project = p_c.get<database>().uuid();
-      core_set_init{}.write_file();
-      select_change(p_c);
     }
   };
 }

@@ -456,7 +456,7 @@ void doodle_app::load_windows() {
                                           auto& k_prj  = core_set::getSet().project_root;
                                           auto k_msg_h = make_handle();
                                           k_msg_h.template emplace<process_message>();
-                                          if (!k_prj.empty())
+                                          if (!k_prj.empty() && !k_prj[0].empty())
                                             g_main_loop().template attach<database_task_select>(k_msg_h, k_prj[0]);
                                           s();
                                         })
