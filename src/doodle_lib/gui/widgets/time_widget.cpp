@@ -8,8 +8,7 @@
 #include <doodle_lib/metadata/time_point_wrap.h>
 namespace doodle {
 time_widget::time_widget()
-    : base_widget(),
-      p_time(),
+    : p_time(),
       p_year(2021),
       p_month(1),
       p_day(1),

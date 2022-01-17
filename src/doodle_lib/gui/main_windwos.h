@@ -60,37 +60,5 @@ class tool_box_widget;
  * @warning 这个窗口中的主要功能时需要联网的，如果断网将会失败，只有部分功能可用
  *
  */
-class DOODLELIB_API main_windows : public base_widget {
- protected:
-  std::string p_title;
-  bool_ptr p_debug_show;
-  bool_ptr p_about_show;
-  bool_ptr p_style_show;
-
-  project_widget *p_prj_;
-  assets_widget *p_ass_;
-  assets_file_widgets *p_attr_;
-  long_time_tasks_widget *p_long_task_;
-  edit_widgets *p_edit_windows_;
-  setting_windows *p_setting_;
-  tool_box_widget *p_tool_box_;
-  opencv_player_widget *p_opencv_;
-
-  std::vector<std::shared_ptr<windows_warp_base>> p_list_windwos;
-
-  template <class T>
-  T *create_windwos(bool is_show);
-
- protected:
-  virtual void main_menu_file();
-  virtual void main_menu_tool();
-  virtual void main_menu_windows();
-  virtual void main_menu_edit();
-
- public:
-  main_windows();
-  ~main_windows();
-  void frame_render() override;
-};
 
 }  // namespace doodle

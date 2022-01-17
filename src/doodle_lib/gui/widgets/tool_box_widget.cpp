@@ -15,7 +15,7 @@ void tool_box_widget::set_tool_widget(const command_ptr& in_ptr) {
   p_command_tool_ptr_ = in_ptr;
 }
 void tool_box_widget::init() {
-  g_reg->set<tool_box_widget&>(*this);
+  g_reg()->set<tool_box_widget&>(*this);
 }
 void tool_box_widget::succeeded() {
 }

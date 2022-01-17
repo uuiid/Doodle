@@ -112,15 +112,22 @@ void main_status_bar::update(
     chrono::duration<chrono::system_clock::rep,
                      chrono::system_clock::period>,
     void* data) {
-  if (auto l_msg = g_reg()->try_ctx<process_message>(); l_msg) {
-    const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-    const ImU32 bg  = ImGui::GetColorU32(ImGuiCol_Button);
-    imgui::BufferingBar(l_msg->get_name_id().c_str(),
-                        boost::numeric_cast<std::float_t>(l_msg->get_progress_f()),
-                        ImVec2(400, 6),
-                        bg,
-                        col);
-  }
+  ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+  float height                  = ImGui::GetFrameHeight();
+  dear::ViewportSideBar{"状态栏_main", nullptr, ImGuiDir_Down, height, window_flags} && [&]() {
+    dear::Menu{"状态栏"} && [&]() {
+      if (auto l_msg = g_reg()->try_ctx<process_message>(); l_msg) {
+        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+        const ImU32 bg  = ImGui::GetColorU32(ImGuiCol_Button);
+        imgui::BufferingBar(l_msg->get_name_id().c_str(),
+                            boost::numeric_cast<std::float_t>(l_msg->get_progress_f()),
+                            ImVec2(400, 6),
+                            bg,
+                            col);
+      }
+    };
+  };
+
 }
 main_status_bar::~main_status_bar() = default;
 

@@ -179,6 +179,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 #include <fmt/core.h>
 #include <toolkit/toolkit.h>
 #include <windows.h>
+#include <doodle_lib/gui/main_menu_bar.h>
+#include <doodle_lib/gui/main_status_bar.h>
 namespace doodle {
 using win_handle = HWND;
 using win_class  = WNDCLASSEX;
@@ -292,10 +294,6 @@ doodle_app::~doodle_app() {
   //  OleUninitialize();
 }
 
-base_widget_ptr doodle_app::get_main_windows() const {
-  return new_object<main_windows>();
-}
-
 void doodle_app::set_imgui_dock_space(const FSys::path& in_path) const {
   auto k_f = cmrc::DoodleLibResource::get_filesystem().open("resource/imgui.ini");
   if (FSys::exists(in_path))
@@ -323,7 +321,7 @@ bool doodle_app::valid() const {
 }
 
 base_widget_ptr doodle_app::loop_begin() {
-  ::ShowWindow(p_impl->p_hwnd, SW_SHOW);
+  //  ::ShowWindow(p_impl->p_hwnd, SW_HIDE);
   //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
   //                                     MONITOR_DEFAULTTONEAREST);
   //  MONITORINFO mi = {sizeof(mi)};
@@ -355,8 +353,7 @@ base_widget_ptr doodle_app::loop_begin() {
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.IniFilename = imgui_file_path.c_str();
-  p_main_win     = get_main_windows();
-
+  this->load_windows();
   return p_main_win;
 }
 
@@ -393,7 +390,6 @@ void doodle_app::loop_one() {
   decltype(chrono::system_clock::now()) l_now{chrono::system_clock::now()};
   try {
     if (!p_show_err) {
-      p_main_win->frame_render();
       g_main_loop().update(l_now - s_now, nullptr);
       g_bounded_pool().update(l_now - s_now, nullptr);
       s_now = l_now;
@@ -429,7 +425,7 @@ void doodle_app::loop_one() {
                                            clear_color.y * clear_color.w,
                                            clear_color.z * clear_color.w,
                                            clear_color.w};
-  g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
+  g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
   g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
   ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
@@ -443,5 +439,7 @@ void doodle_app::loop_one() {
                                 // g_pSwapChain->Present(0, 0); // Present without vsync
 }
 void doodle_app::load_windows() {
+  g_main_loop().attach<main_menu_bar>();
+  g_main_loop().attach<main_status_bar>();
 }
 }  // namespace doodle

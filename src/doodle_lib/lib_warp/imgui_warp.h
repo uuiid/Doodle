@@ -76,10 +76,10 @@ struct Begin : public ScopeWrapper<Begin, true> {
 // Wrapper for ImGui::BeginChild ... EndChild, which will always call EndChild.
 struct Child : public ScopeWrapper<Child, true> {
   explicit Child(const char* title, const ImVec2& size = Zero, bool border = false,
-        ImGuiWindowFlags flags = 0) noexcept
+                 ImGuiWindowFlags flags = 0) noexcept
       : ScopeWrapper(ImGui::BeginChild(title, size, border, flags)) {}
   explicit Child(ImGuiID id, const ImVec2& size = Zero, bool border = false,
-        ImGuiWindowFlags flags = 0) noexcept
+                 ImGuiWindowFlags flags = 0) noexcept
       : ScopeWrapper(ImGui::BeginChild(id, size, border, flags)) {}
   static void dtor() noexcept { ImGui::EndChild(); }
 };
@@ -299,6 +299,26 @@ Selectable(const std::string& label, bool* p_selected, ImGuiSelectableFlags flag
   return ImGui::Selectable(label.c_str(), p_selected, flags, size);
 }
 #endif
+
+/**
+ * @brief  BeginViewportSideBar 签名接收 ImGuiViewport* viewport
+ *       你可以改变这个：
+ *                   ImGuiViewportP* viewport = (ImGuiViewportP*)(void*)ImGui::GetMainViewport();
+ *       对此：
+ *                   ImGuiViewport* viewport = ImGui::GetMainViewport();
+ *       但是你可以只传递NULL，因为主视口是默认的。
+ * @warning ImGui::BeginViewportSideBar 使用 ImGui::Begin 因此对 ImGui::End 的调用应该超出 {if 范围}
+ *   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+ *   float height = ImGui::GetFrameHeight();
+ */
+struct ViewportSideBar : public ScopeWrapper<ViewportSideBar, true> {
+  explicit ViewportSideBar(
+      const std::string& in_name,
+      ImGuiViewport* viewport, const ImGuiDir& dir, const float& size, const ImGuiWindowFlags& window_flags)
+      : ScopeWrapper<ViewportSideBar, true>(
+            BeginViewportSideBar(in_name.c_str(), viewport, dir, size, window_flags)) {}
+  static void dtor() noexcept { ImGui::End(); }
+};
 
 struct TreeNodeEx : public ScopeWrapper<TreeNodeEx> {
   bool use_dtor;
