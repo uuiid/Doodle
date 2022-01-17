@@ -124,6 +124,8 @@ void main_status_bar::update(
                             ImVec2(400, 6),
                             bg,
                             col);
+        if(l_msg->is_success())
+          g_reg()->unset<process_message>();
       }
     };
   };
