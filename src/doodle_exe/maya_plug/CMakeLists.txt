@@ -8,8 +8,8 @@ set(doodle_maya_plug_cpp
         maya_plug_fwd.h
         gui/maya_plug_app.cpp
         gui/maya_plug_app.h
-        gui/maya_windwos.cpp
-        gui/maya_windwos.h
+        gui/maya_menu_bar.h
+        gui/maya_menu_bar.cpp
         gui/action/reference_attr_setting.cpp
         gui/action/reference_attr_setting.h
         gui/action/comm_check_scenes.h
