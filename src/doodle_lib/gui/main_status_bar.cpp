@@ -115,7 +115,7 @@ void main_status_bar::update(
   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
   float height                  = ImGui::GetFrameHeight();
   dear::ViewportSideBar{"状态栏_main", nullptr, ImGuiDir_Down, height, window_flags} && [&]() {
-    dear::Menu{"状态栏"} && [&]() {
+    dear::MenuBar{} && [&]() {
       if (auto l_msg = g_reg()->try_ctx<process_message>(); l_msg) {
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
         const ImU32 bg  = ImGui::GetColorU32(ImGuiCol_Button);
