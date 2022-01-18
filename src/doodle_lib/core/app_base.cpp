@@ -7,7 +7,7 @@
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/core/program_options.h>
-
+#include <doodle_lib/thread_pool/thread_pool.h>
 namespace doodle {
 app_base* app_base::self = nullptr;
 app_base::app_base()
@@ -31,6 +31,7 @@ app_base::app_base()
   k_init.find_cache_dir();
   DOODLE_LOG_INFO("寻找用户配置文件目录");
   k_init.config_to_user();
+  k_init.find_maya();
   DOODLE_LOG_INFO("读取配置文件");
   k_init.read_file();
   g_bounded_pool().set_bounded(boost::numeric_cast<std::uint16_t>(core_set::getSet().p_max_thread));
@@ -62,13 +63,18 @@ void app_base::command_line_parser(const std::vector<string>& in_arg) {
   auto& set = core_set::getSet();
   DOODLE_LOG_INFO("初始化gui日志");
   logger_ctrl::get_log().set_log_name("doodle_gui.txt");
-  core_set_init k_init{};
-  k_init.find_maya();
-  k_init.read_file();
+  auto& l_set = core_set::getSet();
+  if (options_->p_root.first)
+    l_set.set_root(options_->p_root.second);
+  if (options_->p_max_thread.first) {
+    l_set.p_max_thread   = options_->p_max_thread.second;
+    p_lib->p_thread_pool = std::make_shared<thread_pool>(l_set.p_max_thread);
+  }
 }
+
 void app_base::command_line_parser(const LPSTR& in_arg) {
   auto k_str = boost::program_options::split_winmain(in_arg);
-  command_line_parser(k_str);
+  return command_line_parser(k_str);
 }
 app_base::~app_base() = default;
 

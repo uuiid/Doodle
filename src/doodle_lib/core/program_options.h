@@ -12,26 +12,26 @@ namespace doodle {
 class DOODLELIB_API program_options {
  public:
   FSys::path p_config_file;
-  std::int32_t p_max_thread;
-  FSys::path p_root;
-  string p_mysql_ip;
-  string p_mysql_user;
-  string p_mysql_pow;
-  std::int32_t p_mysql_port;
-  string p_rpc_setver_ip;
-  std::int32_t p_rpc_file_port;
-  std::int32_t p_rpc_meta_port;
+  std::pair<bool, std::int32_t> p_max_thread;
+  std::pair<bool, FSys::path> p_root;
 
-  bool p_use_gui;
-  bool p_server;
-  bool p_install;
-  bool p_uninstall;
   bool p_help;
   bool p_version;
 
   std::vector<string> p_arg;
 
+
  private:
+  static constexpr char help[]         = "help";
+  static constexpr char help_[]        = "help,h";
+  static constexpr char version[]      = "version";
+  static constexpr char version_[]     = "version,v";
+  static constexpr char config_file[]  = "config_file";
+  static constexpr char config_file_[] = "config_file";
+  static constexpr char root[]         = "root";
+  static constexpr char root_[]        = "root";
+  static constexpr char thread_max[]   = "thread_max";
+  static constexpr char thread_max_[]  = "thread_max";
   /**
    * @brief 所有选项， 命令行选项
    *
@@ -48,11 +48,6 @@ class DOODLELIB_API program_options {
    *
    */
   boost::program_options::options_description p_opt_gui;
-  /**
-   * @brief 服务器选项
-   *
-   */
-  boost::program_options::options_description p_opt_server;
   /**
    * @brief 一般选项
    *

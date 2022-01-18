@@ -15,7 +15,6 @@ class DOODLELIB_API app_base {
   std::atomic_bool stop_;
   win::wnd_instance instance;
   doodle_lib_ptr p_lib;
-  program_options_ptr options_;
 
  public:
   explicit app_base();
@@ -28,6 +27,7 @@ class DOODLELIB_API app_base {
   };
   void command_line_parser(const LPSTR& in_arg);
   virtual void command_line_parser(const std::vector<string>& in_arg);
+  program_options_ptr options_;
 
   /**
    * @brief 直接使用默认配置运行
