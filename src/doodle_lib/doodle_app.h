@@ -40,7 +40,6 @@ class DOODLELIB_API doodle_app : public details::no_copy {
 
   virtual std::int32_t run();
 
-  virtual base_widget_ptr loop_begin();
   virtual void loop_one();
 
   virtual void hide_windows();
