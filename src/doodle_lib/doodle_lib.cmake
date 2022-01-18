@@ -93,7 +93,7 @@ set(
         platform/win/drop_manager.h
         platform/win/list_drive.h
         platform/win/windows_alias.h
-        platform/win/app_base.h
+        core/app_base.h
         doodle_app.h
         doodle_lib_all.h
         doodle_lib_fwd.h
@@ -172,6 +172,6 @@ set(
         long_task/database_task.cpp
         platform/win/drop_manager.cpp
         platform/win/list_drive.cpp
-        platform/win/app_base.cpp
+        core/app_base.cpp
         doodle_app.cpp
         doodle_lib_all.cpp)
