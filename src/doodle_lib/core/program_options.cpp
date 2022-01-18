@@ -24,13 +24,13 @@ program_options::program_options()
   DOODLE_LOG_INFO("开始构建命令行");
   p_opt_general.add_options()(
       help_,
-      boost::program_options::bool_switch(&p_help)->default_value(p_help),
+      boost::program_options::bool_switch(&p_help),
       "help")(
       version_,
-      boost::program_options::bool_switch(&p_version)->default_value(p_version),
+      boost::program_options::bool_switch(&p_version),
       "显示版本")(
       config_file_,
-      boost::program_options::value(&p_config_file)->default_value({}),
+      boost::program_options::value(&p_config_file),
       "配置文件的路径");
 
   p_opt_gui.add_options()(
