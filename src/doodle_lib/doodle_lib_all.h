@@ -6,7 +6,6 @@
 #include <doodle_lib/core/ContainerDevice.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/core_sql.h>
-#include <doodle_lib/core/doodle_app_base.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/core/observable_container.h>
