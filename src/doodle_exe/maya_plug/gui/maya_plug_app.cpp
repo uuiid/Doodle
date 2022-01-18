@@ -11,9 +11,7 @@
 #include <doodle_lib/core/core_set.h>
 #include <maya_plug/gui/maya_menu_bar.h>
 namespace doodle::maya_plug {
-maya_plug_app::maya_plug_app()
-    : app() {
-}
+
 void maya_plug_app::load_windows() {
   g_main_loop().attach<maya_menu_bar>();
   g_main_loop().attach<main_status_bar>();

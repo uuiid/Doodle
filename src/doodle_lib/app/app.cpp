@@ -20,28 +20,22 @@
 #include <imgui.h>
 
 namespace doodle {
-app::app()
-    : app_command_base(),
-      p_hwnd(),
-      p_win_class(),
-      p_show_err(false),
-      d3dDevice(nullptr),
-      d3dDeviceContext(nullptr) {
-}
 
 app::app(const win::wnd_instance& in_instance)
-    : app_command_base(in_instance),
+    : app_command_base(in_instance ? in_instance : (::GetModuleHandleW(nullptr))),
       p_hwnd(),
       p_win_class(),
+      d3d_deve(),
       p_show_err(false),
       d3dDevice(nullptr),
       d3dDeviceContext(nullptr) {
   p_win_class =
       {sizeof(WNDCLASSEX),
-       CS_CLASSDC, win::WndProc,
+       CS_CLASSDC,
+       win::WndProc,
        0L,
        0L,
-       instance ? instance : (::GetModuleHandleW(nullptr)),
+       instance,
        nullptr, nullptr, nullptr, nullptr,
        _T("doodle"),
        nullptr};
@@ -49,19 +43,16 @@ app::app(const win::wnd_instance& in_instance)
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassEx(&p_win_class);
-  p_hwnd = ::CreateWindow(p_win_class.lpszClassName,
-                          p_title.c_str(),
-                          WS_OVERLAPPEDWINDOW,
-                          100, 100, 1280, 800,
-                          nullptr, nullptr,
-                          p_win_class.hInstance,
-                          nullptr);
+  p_hwnd   = ::CreateWindow(p_win_class.lpszClassName,
+                            p_title.c_str(),
+                            WS_OVERLAPPEDWINDOW,
+                            100, 100, 1280, 800,
+                            nullptr, nullptr,
+                            p_win_class.hInstance,
+                            nullptr);
 
   // Initialize Direct3D
-  if (!win::CreateDeviceD3D(p_hwnd)) {
-    win::CleanupDeviceD3D();
-    ::UnregisterClass(p_win_class.lpszClassName, p_win_class.hInstance);
-  }
+  d3d_deve = std::make_shared<win::d3d_device>(p_hwnd);
 
   // Show the window
   ::ShowWindow(p_hwnd, SW_SHOWDEFAULT);
@@ -98,8 +89,8 @@ app::app(const win::wnd_instance& in_instance)
 
   // Setup Platform/Renderer backends
   ImGui_ImplWin32_Init(p_hwnd);
-  ImGui_ImplDX11_Init(win::g_pd3dDevice, win::g_pd3dDeviceContext);
-  d3dDevice = win::g_pd3dDevice;
+  ImGui_ImplDX11_Init(d3d_deve->g_pd3dDevice, d3d_deve->g_pd3dDeviceContext);
+  d3dDevice = d3d_deve->g_pd3dDevice;
   /// 初始化文件拖拽
   //  DragAcceptFiles(p_impl->p_hwnd, true);
   //  OleInitialize(nullptr);
@@ -205,8 +196,8 @@ void app::loop_one() {
                                            clear_color.y * clear_color.w,
                                            clear_color.z * clear_color.w,
                                            clear_color.w};
-  win::g_pd3dDeviceContext->OMSetRenderTargets(1, &win::g_mainRenderTargetView, nullptr);
-  win::g_pd3dDeviceContext->ClearRenderTargetView(win::g_mainRenderTargetView, clear_color_with_alpha);
+  d3d_deve->g_pd3dDeviceContext->OMSetRenderTargets(1, &d3d_deve->g_mainRenderTargetView, nullptr);
+  d3d_deve->g_pd3dDeviceContext->ClearRenderTargetView(d3d_deve->g_mainRenderTargetView, clear_color_with_alpha);
   ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
   // Update and Render additional Platform Windows
@@ -215,8 +206,8 @@ void app::loop_one() {
     ImGui::RenderPlatformWindowsDefault();
   }
 
-  win::g_pSwapChain->Present(1, 0);  // Present with vsync
-                                     // g_pSwapChain->Present(0, 0); // Present without vsync
+  d3d_deve->g_pSwapChain->Present(1, 0);  // Present with vsync
+                                          // g_pSwapChain->Present(0, 0); // Present without vsync
 }
 app& app::Get() {
   return *(dynamic_cast<app*>(self));
@@ -251,7 +242,6 @@ app::~app() {
   ImGui_ImplWin32_Shutdown();
   ImGui::DestroyContext();
 
-  win::CleanupDeviceD3D();
   ::DestroyWindow(p_hwnd);
   ::UnregisterClass(p_win_class.lpszClassName, p_win_class.hInstance);
   //  OleUninitialize();

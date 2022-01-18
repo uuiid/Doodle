@@ -17,5 +17,6 @@ namespace doodle::win {
 using wnd_handle   = ::HWND;
 using wnd_class    = ::WNDCLASSEX;
 using wnd_instance = ::HINSTANCE;
+class d3d_device;
 
 }  // namespace doodle::win

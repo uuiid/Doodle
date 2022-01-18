@@ -12,7 +12,7 @@ class maya_plug_app : public app {
   virtual void load_windows() override;
 
  public:
-  maya_plug_app();
+  using app::app;
   virtual void hide_windows() override;
 };
 }  // namespace doodle::maya_plug

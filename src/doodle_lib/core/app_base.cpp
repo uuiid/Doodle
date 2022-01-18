@@ -17,7 +17,7 @@ app_base::app_base()
           Doodle_VERSION_MINOR,
           Doodle_VERSION_PATCH,
           Doodle_VERSION_TWEAK))),
-      stop_(true),
+      stop_(false),
       instance(::GetModuleHandleW(nullptr)),
       p_lib(std::make_shared<doodle_lib>()),
       options_() {

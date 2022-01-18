@@ -15,14 +15,10 @@
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace doodle::win {
-// namespace {
-// ID3D11Device* g_pd3dDevice                     = nullptr;
-// ID3D11DeviceContext* g_pd3dDeviceContext       = nullptr;
-// IDXGISwapChain* g_pSwapChain                   = nullptr;
-// ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
-// }  // namespace
 
-bool CreateDeviceD3D(HWND hWnd) {
+d3d_device* d3d_device::self = nullptr;
+
+bool d3d_device::CreateDeviceD3D(HWND hWnd) {
   // Setup swap chain
   DXGI_SWAP_CHAIN_DESC sd;
   ZeroMemory(&sd, sizeof(sd));
@@ -54,7 +50,7 @@ bool CreateDeviceD3D(HWND hWnd) {
   return true;
 }
 
-void CleanupDeviceD3D() {
+void d3d_device::CleanupDeviceD3D() {
   CleanupRenderTarget();
   if (g_pSwapChain) {
     g_pSwapChain->Release();
@@ -70,14 +66,14 @@ void CleanupDeviceD3D() {
   }
 }
 
-void CreateRenderTarget() {
+void d3d_device::CreateRenderTarget() {
   ID3D11Texture2D* pBackBuffer;
   g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
   g_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &g_mainRenderTargetView);
   pBackBuffer->Release();
 }
 
-void CleanupRenderTarget() {
+void d3d_device::CleanupRenderTarget() {
   if (g_mainRenderTargetView) {
     g_mainRenderTargetView->Release();
     g_mainRenderTargetView = nullptr;
@@ -90,10 +86,10 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
   switch (msg) {
     case WM_SIZE:
-      if (g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED) {
-        CleanupRenderTarget();
-        g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
-        CreateRenderTarget();
+      if (d3d_device::Get().g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED) {
+        d3d_device::Get().CleanupRenderTarget();
+        d3d_device::Get().g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
+        d3d_device::Get().CreateRenderTarget();
       }
       return 0;
     case WM_SYSCOMMAND:
@@ -159,4 +155,14 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
+d3d_device::d3d_device(wnd_handle const& in_handle) {
+  CreateDeviceD3D(in_handle);
+  self = this;
+}
+d3d_device::~d3d_device() {
+  CleanupDeviceD3D();
+}
+d3d_device& d3d_device::Get() {
+  return *self;
+}
 }  // namespace doodle::win

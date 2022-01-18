@@ -327,7 +327,6 @@ using thread_pool_ptr            = std::shared_ptr<thread_pool>;
 
 using attribute_factory_ptr      = std::shared_ptr<attribute_factory_interface>;
 
-using long_term_ptr              = std::shared_ptr<long_term>;
 
 using registry_ptr               = std::shared_ptr<entt::registry>;
 class time_widget;

@@ -51,23 +51,10 @@ MStatus initializePlugin(MObject obj) {
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  doodle::logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
-  doodle::logger_ctrl::get_log().add_log_sink(new_object<::doodle::maya_plug::maya_msg_mt>());
-
-  clear_callback_id = MSceneMessage::addCallback(
-      MSceneMessage::Message::kMayaExiting,
-      [](void* in) {
-        app::Get().stop();
-        p_doodle_app.reset();
-      },
-      nullptr,
-      &status);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
-      p_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>();
+      p_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(::MhInstPlugin);
       app::Get().hide_windows();
 
       //注册命令
@@ -102,6 +89,18 @@ MStatus initializePlugin(MObject obj) {
       p_doodle_app = std::make_shared<doodle::app_command_base>();
       break;
   }
+  clear_callback_id = MSceneMessage::addCallback(
+      MSceneMessage::Message::kMayaExiting,
+      [](void* in) {
+        app::Get().stop();
+        p_doodle_app.reset();
+      },
+      nullptr,
+      &status);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+  doodle::logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
+  doodle::logger_ctrl::get_log().add_log_sink(new_object<::doodle::maya_plug::maya_msg_mt>());
+
   app_run_id = MTimerMessage::addTimerCallback(
       0.001,
       [](float elapsedTime, float lastTime, void* clientData) {
@@ -231,6 +230,10 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
   status = MMessage::removeCallback(app_run_id);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
+  //删除清除回调回调
+  status = MMessage::removeCallback(clear_callback_id);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
@@ -256,12 +259,10 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
       break;
   }
   // 卸载命令
-  //删除清除回调回调
-  status = MMessage::removeCallback(clear_callback_id);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
 
   //这里要关闭窗口或者清理库
-  doodle_maya_clear();
+  p_doodle_app->stop();
+  p_doodle_app.reset();
 
   return status;
 }
