@@ -262,7 +262,6 @@ class rpc_file_system_server;
 class doodle_lib;
 class thread_pool;
 class attribute_factory_interface;
-class long_term;
 class season;
 class ue4_project;
 class setting_windows;

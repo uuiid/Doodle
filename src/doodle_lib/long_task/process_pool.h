@@ -430,7 +430,7 @@ class scheduler {
    */
   template <typename Proc, typename... Args>
   auto attach(Args &&...args) {
-    static_assert(std::is_base_of_v<entt::process<Proc, Delta>, Proc>, "Invalid process type");
+    //    static_assert(std::is_base_of_v<entt::process<Proc, Delta>, Proc>, "Invalid process type");
     auto proc = typename process_handler::instance_type{new Proc{std::forward<Args>(args)...}, &scheduler::deleter<Proc>};
     process_handler handler{std::move(proc), &scheduler::update<Proc>, &scheduler::abort<Proc>, nullptr};
     // forces the process to exit the uninitialized state
@@ -558,8 +558,8 @@ class DOODLELIB_API null_process_t : public process_t<null_process_t> {
   [[maybe_unused]] inline void succeeded(){};
   [[maybe_unused]] inline void failed(){};
   [[maybe_unused]] inline void aborted(){};
-  [[maybe_unused]] inline void update(base_type::delta_type, void *data){
-      this->succeed();
+  [[maybe_unused]] inline void update(base_type::delta_type, void *data) {
+    this->succeed();
   };
 };
 
