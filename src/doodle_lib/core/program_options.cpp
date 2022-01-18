@@ -35,12 +35,12 @@ program_options::program_options()
 
   p_opt_gui.add_options()(
       root_,
-      boost::program_options::value(&p_root.second)->default_value({}),
+      boost::program_options::value(&p_root.second),
       "数据根目录");
 
   p_opt_advanced.add_options()(
       thread_max_,
-      boost::program_options::value(&p_max_thread.second)->default_value({-1}),
+      boost::program_options::value(&p_max_thread.second),
       "线程池大小\n(默认文硬件最大限制 - 1)");
 
   p_opt_all.add(p_opt_general).add(p_opt_gui).add(p_opt_advanced);

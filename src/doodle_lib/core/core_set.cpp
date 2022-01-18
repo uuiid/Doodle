@@ -315,15 +315,18 @@ bool core_set_init::config_to_user() {
   return true;
 }
 bool core_set_init::init_default_project() {
-  if (p_set.default_project.is_nil())
-    return false;
-  for (auto &&[k_e, k_prj, k_d] : g_reg()->view<project, database>().each()) {
-    if (k_d.uuid() == p_set.default_project) {
-      g_reg()->set<root_ref>(make_handle(k_e));
-      return true;
-    }
-  }
-  return false;
+  auto k_msg_h = make_handle();
+  auto &k_msg  = k_msg_h.emplace<process_message>();
+  g_reg()->set<process_message &>(k_msg);
+  if (!p_set.project_root.empty() && !p_set.project_root[0].empty())
+    g_main_loop().attach<database_task_select>(k_msg_h, p_set.project_root[0]).then([](auto, auto, auto s, auto) {
+      auto k_prj = g_reg()->template view<project>();
+      if (!k_prj.empty())
+        g_reg()->template set<project>(k_prj.template get<project>(k_prj[0]));
+      s();
+    });
+
+  return true;
 }
 
 void to_json(nlohmann::json &j, const core_set &p) {
@@ -353,19 +356,5 @@ void from_json(const nlohmann::json &j, core_set &p) {
 void core_set::add_recent_project(const FSys::path &in) {
   std::rotate(project_root.rbegin(), project_root.rbegin() + 1, project_root.rend());
   project_root[0] = in;
-}
-void core_set::load_first_project() {
-  auto k_msg_h = make_handle();
-  auto &k_msg  = k_msg_h.emplace<process_message>();
-  g_reg()->set<process_message &>(k_msg);
-  if (!project_root.empty() && !project_root[0].empty())
-    g_main_loop().attach<database_task_select>(k_msg_h, project_root[0]).then([](auto, auto, auto s, auto) {
-      auto k_prj = g_reg()->template view<project>();
-      if (!k_prj.empty())
-        g_reg()->template set<project>(k_prj.template get<project>(k_prj[0]));
-      s();
-
-    });
-  ;
 }
 }  // namespace doodle
