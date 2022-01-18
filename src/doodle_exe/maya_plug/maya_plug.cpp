@@ -30,17 +30,8 @@ MCallbackId app_run_id{0};
 MCallbackId create_hud_id{0};
 
 using namespace doodle;
-doodle_lib_ptr p_doodle_lib              = nullptr;
-std::shared_ptr<app> p_doodle_app = nullptr;
+std::shared_ptr<app_base> p_doodle_app = nullptr;
 
-void doodle_maya_clear() {
-  if (p_doodle_app) {
-    p_doodle_app->p_done = true;
-    p_doodle_app.reset();
-  }
-  if (p_doodle_lib)
-    p_doodle_lib.reset();
-}
 }  // namespace
 
 MStatus initializePlugin(MObject obj) {
@@ -60,33 +51,24 @@ MStatus initializePlugin(MObject obj) {
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  p_doodle_lib = doodle::new_object<doodle::doodle_lib>();
   doodle::logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
   doodle::logger_ctrl::get_log().add_log_sink(new_object<::doodle::maya_plug::maya_msg_mt>());
-  doodle::core_set_init k_init{};
-  k_init.find_cache_dir();
-  k_init.config_to_user();
-  k_init.read_file();
-  k_init.init_default_project();
 
   clear_callback_id = MSceneMessage::addCallback(
       MSceneMessage::Message::kMayaExiting,
       [](void* in) {
-        doodle_maya_clear();
+        app::Get().stop();
+        p_doodle_app.reset();
       },
       nullptr,
       &status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-
-
   switch (k_st) {
-    case MGlobal::MMayaState::kBaseUIMode: {
-    }
+    case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
-      p_doodle_app         = doodle::new_object<doodle::maya_plug::maya_plug_app>();
-      p_doodle_app->p_done = true;
-      p_doodle_app->hide_windows();
+      p_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>();
+      app::Get().hide_windows();
 
       //注册命令
       status = ::doodle::maya_plug::open_doodle_main::registerCommand(k_plugin);
@@ -102,19 +84,7 @@ MStatus initializePlugin(MObject obj) {
                            &status);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
-      app_run_id = MTimerMessage::addTimerCallback(
-          0.001,
-          [](float elapsedTime, float lastTime, void* clientData) {
-            if (p_doodle_app->p_done) {
-              p_doodle_app->hide_windows();
-              return;
-            }
-            p_doodle_app->loop_one();
-          },
-          nullptr, &status);
-
-      CHECK_MSTATUS_AND_RETURN_IT(status);
-
+      /// \brief  自定义hud回调
       create_hud_id = MSceneMessage::addCallback(
           MSceneMessage::Message::kAfterOpen,
           [](void* clientData) {
@@ -124,19 +94,26 @@ MStatus initializePlugin(MObject obj) {
           nullptr,
           &status);
       CHECK_MSTATUS_AND_RETURN_IT(status);
-
       break;
     }
-
-    case MGlobal::MMayaState::kBatch: {
-      break;
-    }
-    case MGlobal::MMayaState::kLibraryApp: {
-      break;
-    }
+    case MGlobal::MMayaState::kBatch:
+    case MGlobal::MMayaState::kLibraryApp:
     default:
+      p_doodle_app = std::make_shared<doodle::app_command_base>();
       break;
   }
+  app_run_id = MTimerMessage::addTimerCallback(
+      0.001,
+      [](float elapsedTime, float lastTime, void* clientData) {
+        if (p_doodle_app->stop_) {
+          return;
+        }
+        p_doodle_app->loop_one();
+      },
+      nullptr, &status);
+
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+
   /// 注册自定义hud节点
   status = k_plugin.registerNode(
       doolde_hud_render_node.data(),
@@ -250,16 +227,15 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
   status = k_plugin.deregisterNode(doodle::maya_plug::doodle_info_node::doodle_id);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
+  /// 去除运行回调
+  status = MMessage::removeCallback(app_run_id);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+
   switch (k_st) {
-    case MGlobal::MMayaState::kBaseUIMode: {
-    }
+    case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
       /// 去除hud回调
       status = MMessage::removeCallback(create_hud_id);
-      CHECK_MSTATUS_AND_RETURN_IT(status);
-
-      /// 去除运行回调
-      status = MMessage::removeCallback(app_run_id);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       //这一部分是删除菜单项的
@@ -274,12 +250,8 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
       break;
     }
 
-    case MGlobal::MMayaState::kBatch: {
-      break;
-    }
-    case MGlobal::MMayaState::kLibraryApp: {
-      break;
-    }
+    case MGlobal::MMayaState::kBatch:
+    case MGlobal::MMayaState::kLibraryApp:
     default:
       break;
   }

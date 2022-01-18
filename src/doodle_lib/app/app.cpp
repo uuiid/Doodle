@@ -139,6 +139,11 @@ app::app(const win::wnd_instance& in_instance)
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.IniFilename = imgui_file_path.c_str();
   this->load_windows();
+
+  g_main_loop().attach<null_process_t>().then([](auto, auto, auto s, auto) {
+    core_set_init{}.init_default_project();
+    s();
+  });
 }
 
 void app::loop_one() {
@@ -231,10 +236,6 @@ void app::show_windows() {
 void app::load_windows() {
   g_main_loop().attach<main_menu_bar>();
   g_main_loop().attach<main_status_bar>();
-  g_main_loop().attach<null_process_t>().then([](auto, auto, auto s, auto) {
-    core_set::getSet().load_first_project();
-    s();
-  });
 }
 void app::set_imgui_dock_space(const FSys::path& in_path) const {
   auto k_f = cmrc::DoodleLibResource::get_filesystem().open("resource/imgui.ini");

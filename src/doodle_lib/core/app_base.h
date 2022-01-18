@@ -12,7 +12,6 @@ class DOODLELIB_API app_base {
   static app_base* self;
 
   std::wstring p_title;
-  std::atomic_bool stop_;
   win::wnd_instance instance;
   doodle_lib_ptr p_lib;
 
@@ -36,6 +35,7 @@ class DOODLELIB_API app_base {
   virtual std::int32_t run();
   virtual void loop_one() = 0;
   std::atomic_bool& stop();
+  std::atomic_bool stop_;
   virtual bool valid() const;
 
   DOODLE_DIS_COPY(app_base);

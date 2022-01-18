@@ -273,7 +273,7 @@ class assets_path_vector;
 using base_widget_ptr = std::shared_ptr<base_widget>;
 class command_base;
 class rpc_trans_path;
-class doodle_app;
+class app;
 
 class program_options;
 class logger_ctrl;

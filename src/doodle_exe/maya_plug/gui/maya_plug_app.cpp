@@ -9,19 +9,16 @@
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/core/core_set.h>
+#include <maya_plug/gui/maya_menu_bar.h>
 namespace doodle::maya_plug {
 maya_plug_app::maya_plug_app()
-    : doodle_app() {
+    : app() {
 }
 void maya_plug_app::load_windows() {
-  g_main_loop().attach<main_menu_bar>();
+  g_main_loop().attach<main_menu_bar>(std::move(maya_menu_bar{}));
   g_main_loop().attach<main_status_bar>();
-  g_main_loop().attach<null_process_t>().then([](auto, auto, auto s, auto) {
-    core_set::getSet().load_first_project();
-    s();
-  });
 }
 void maya_plug_app::hide_windows() {
-  ::ShowWindow(p_impl->p_hwnd, SW_HIDE);
+  ::ShowWindow(p_hwnd, SW_HIDE);
 }
 }  // namespace doodle::maya_plug
