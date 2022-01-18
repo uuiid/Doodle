@@ -93,6 +93,7 @@ set(
         long_task/database_task.h
         platform/win/drop_manager.h
         platform/win/list_drive.h
+        platform/win/windows_alias.h
         doodle_app.h
         doodle_lib_all.h
         doodle_lib_fwd.h
