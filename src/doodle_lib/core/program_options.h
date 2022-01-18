@@ -81,8 +81,6 @@ class DOODLELIB_API program_options {
     auto k_str = boost::program_options::split_winmain(in_arg);
     return command_line_parser(k_str);
   };
-
-  doodle_app_ptr make_app();
 };
 
 }  // namespace doodle

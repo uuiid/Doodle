@@ -14,7 +14,7 @@ TEST_CASE("test_gui", "[gui]") {
 
   auto& k_d    = doodle_lib::Get();
 
-  auto k_app   = new_object<doodle_app>();
+  auto k_app   = new_object<app>();
 
   auto k_reg   = g_reg();
 

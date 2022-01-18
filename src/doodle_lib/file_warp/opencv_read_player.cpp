@@ -5,7 +5,7 @@
 #include "opencv_read_player.h"
 
 #include <d3d11.h>
-#include <doodle_lib/doodle_app.h>
+#include <doodle_lib/app/app.h>
 #include <doodle_lib/exception/exception.h>
 
 #include <opencv2/opencv.hpp>
@@ -79,7 +79,7 @@ bool opencv_read_player::load_frame(std::int32_t in_frame) {
                            DOODLE_LOC,
                            "没有打开的视频");
   // 获得全局GPU渲染对象
-  auto k_g = doodle_app::Get()->p_pd3dDevice;
+  auto k_g = app::Get()->p_pd3dDevice;
 
   frame_impl k_f{};
   k_f.frame.height    = boost::numeric_cast<std::int32_t>(p_data->p_video.get(cv::CAP_PROP_FRAME_HEIGHT));

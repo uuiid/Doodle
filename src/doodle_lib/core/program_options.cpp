@@ -102,42 +102,6 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
     DOODLE_LOG_INFO("配置文件解析为 config_file : {}", p_config_file);
 
   return true;
-}
-doodle_app_ptr program_options::make_app() {
-  if (p_install) {
-    doodle_server::install_server();
-    return nullptr;
-  }
-  if (p_uninstall) {
-    doodle_server::uninstall_server();
-    return nullptr;
-  }
-  if (p_server) {
-    DOODLE_LOG_INFO("初始化服务器日志");
-    logger_ctrl::get_log().set_log_name("doodle_server.txt");
-    DOODLE_LOG_INFO("开始运行服务");
-    doodle_server k_ser{L"doodle_rpc_server"};
-    k_ser.SetCommandLine(0, nullptr);
-    if (!doodle_server::Run(k_ser)) {
-      DWORD dwErr = GetLastError();
-      DOODLE_LOG_ERROR("Service failed to run with error code: {}", dwErr);
-    }
-    return nullptr;
-  }
-  if (p_use_gui) {
-    DOODLE_LOG_INFO("初始化gui日志");
-    logger_ctrl::get_log().set_log_name("doodle_gui.txt");
-    DOODLE_LOG_INFO("开始gui初始化");
-    core_set_init k_init{};
-    k_init.config_to_user();
-    k_init.find_maya();
-    k_init.read_file();
-    DOODLE_LOG_INFO("开始gui显示gui界面");
-    auto k_gui = new_object<doodle_app>();
-    return k_gui;
-  }
-
-  return nullptr;
 };
 
 }  // namespace doodle

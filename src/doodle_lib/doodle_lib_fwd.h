@@ -410,7 +410,7 @@ using time_widget_ptr         = std::shared_ptr<time_widget>;
 
 using rpc_trans_path_ptr      = std::unique_ptr<rpc_trans_path>;
 using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
-using doodle_app_ptr          = std::shared_ptr<doodle_app>;
+
 
 namespace rpc_trans {
 class down_file;

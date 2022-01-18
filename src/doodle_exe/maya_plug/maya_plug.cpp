@@ -21,9 +21,9 @@
 #include <maya_plug/maya_render/hud_render_override.h>
 #include <maya_plug/logger/maya_logger_info.h>
 namespace {
-const std::string doodle_windows{"doodle_windows"};
-const std::string doodle_win_path{"MayaWindow|mainWindowMenu"};
-const std::string doolde_hud_render_node{"doolde_hud_render_node"};
+const constexpr std::string_view doodle_windows{"doodle_windows"};
+const constexpr std::string_view doodle_win_path{"MayaWindow|mainWindowMenu"};
+const constexpr std::string_view doolde_hud_render_node{"doolde_hud_render_node"};
 
 MCallbackId clear_callback_id{0};
 MCallbackId app_run_id{0};
@@ -31,7 +31,7 @@ MCallbackId create_hud_id{0};
 
 using namespace doodle;
 doodle_lib_ptr p_doodle_lib              = nullptr;
-std::shared_ptr<doodle_app> p_doodle_app = nullptr;
+std::shared_ptr<app> p_doodle_app = nullptr;
 
 void doodle_maya_clear() {
   if (p_doodle_app) {
@@ -77,6 +77,9 @@ MStatus initializePlugin(MObject obj) {
       nullptr,
       &status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+
+
+
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode: {
     }
@@ -90,8 +93,8 @@ MStatus initializePlugin(MObject obj) {
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       //添加菜单项
-      k_plugin.addMenuItem(doodle_windows.c_str(),
-                           doodle_win_path.c_str(),
+      k_plugin.addMenuItem(doodle_windows.data(),
+                           doodle_win_path.data(),
                            ::doodle::maya_plug::doodleCreate_name,
                            "",
                            false,
@@ -136,7 +139,7 @@ MStatus initializePlugin(MObject obj) {
   }
   /// 注册自定义hud节点
   status = k_plugin.registerNode(
-      doolde_hud_render_node.c_str(),
+      doolde_hud_render_node.data(),
       doodle::maya_plug::doodle_info_node::doodle_id,
       &doodle::maya_plug::doodle_info_node::creator,
       &doodle::maya_plug::doodle_info_node::initialize,
@@ -261,7 +264,7 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
 
       //这一部分是删除菜单项的
       MStringArray menuItems{};
-      menuItems.append(doodle_windows.c_str());
+      menuItems.append(doodle_windows.data());
       status = k_plugin.removeMenuItem(menuItems);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 

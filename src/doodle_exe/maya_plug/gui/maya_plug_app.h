@@ -3,10 +3,10 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_app.h>
+#include <doodle_lib/app/app.h>
 
 namespace doodle::maya_plug {
-class maya_plug_app : public doodle_app {
+class maya_plug_app : public app {
  protected:
  private:
   virtual void load_windows() override;

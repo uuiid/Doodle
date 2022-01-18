@@ -4,7 +4,8 @@
 
 #include "main_menu_bar.h"
 #include <lib_warp/imgui_warp.h>
-#include <doodle_lib/doodle_app.h>
+#include <doodle_lib/app/app.h>
+
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/client/client.h>
 #include <doodle_lib/long_task/process_pool.h>
@@ -72,7 +73,7 @@ void main_menu_bar::menu_file() {
   dear::MenuItem("关于"s, &p_i->p_about_show);
   ImGui::Separator();
   if (dear::MenuItem(u8"退出")) {
-    doodle_app::Get()->p_done = true;
+    app::Get().stop();
   }
 }
 
