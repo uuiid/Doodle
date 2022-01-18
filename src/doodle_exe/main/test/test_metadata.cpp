@@ -50,7 +50,7 @@ TEST_CASE("open project") {
 }
 
 TEST_CASE("install project") {
-  doodle_lib::Get().init_gui();
+
   auto k_h = make_handle();
   k_h.emplace<process_message>();
   std::vector<entt::handle> k_l{};
@@ -64,7 +64,6 @@ TEST_CASE("install project") {
     g_main_loop().update({}, nullptr);
 }
 TEST_CASE("load project data") {
-  doodle_lib::Get().init_gui();
   auto k_h = make_handle();
   k_h.emplace<process_message>();
 
@@ -89,7 +88,6 @@ class name_data {
 
   void crete_prj() {
     auto& set = core_set::getSet();
-    doodle_lib::Get().init_gui();
     auto k_prj = make_handle();
     k_prj.emplace<project>("D:/tmp", "case_tset");
     k_prj.get<database_stauts>().set<need_save>();

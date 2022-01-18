@@ -21,4 +21,7 @@ void maya_plug_app::load_windows() {
     s();
   });
 }
+void maya_plug_app::hide_windows() {
+  ::ShowWindow(p_impl->p_hwnd, SW_HIDE);
+}
 }  // namespace doodle::maya_plug

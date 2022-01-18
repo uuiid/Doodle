@@ -68,7 +68,6 @@ MStatus initializePlugin(MObject obj) {
   k_init.config_to_user();
   k_init.read_file();
   k_init.init_default_project();
-  p_doodle_lib->init_gui();
 
   clear_callback_id = MSceneMessage::addCallback(
       MSceneMessage::Message::kMayaExiting,

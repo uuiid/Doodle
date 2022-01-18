@@ -10,7 +10,7 @@
 namespace doodle {
 
 class DOODLELIB_API program_options {
- private:
+ public:
   FSys::path p_config_file;
   std::int32_t p_max_thread;
   FSys::path p_root;
@@ -29,9 +29,8 @@ class DOODLELIB_API program_options {
   bool p_help;
   bool p_version;
 
-  doodle_lib_ptr p_lib;
-  
   std::vector<string> p_arg;
+
  private:
   /**
    * @brief 所有选项， 命令行选项

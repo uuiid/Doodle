@@ -1,5 +1,6 @@
 set(
         DOODLELIB_HEADER
+        app/app.h
         client/client.h
         core/ContainerDevice.h
         core/core_set.h
@@ -93,6 +94,7 @@ set(
         platform/win/drop_manager.h
         platform/win/list_drive.h
         platform/win/windows_alias.h
+        platform/win/wnd_proc.h
         core/app_base.h
         doodle_app.h
         doodle_lib_all.h
@@ -102,6 +104,7 @@ set(
 
 set(
         DOODLELIB_SOURCE
+        app/app.cpp
         client/client.cpp
         core/core_set.cpp
         core/core_sql.cpp
@@ -172,6 +175,7 @@ set(
         long_task/database_task.cpp
         platform/win/drop_manager.cpp
         platform/win/list_drive.cpp
+        platform/win/wnd_proc.cpp
         core/app_base.cpp
         doodle_app.cpp
         doodle_lib_all.cpp)

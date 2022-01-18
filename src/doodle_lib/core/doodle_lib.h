@@ -21,15 +21,10 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
 
   static doodle_lib& Get();
 
-
   thread_pool_ptr get_thread_pool();
 
   scheduler_t loop;
   bounded_pool_t loop_bounded_pool;
-  void init_gui();
-
-  std::vector<long_term_ptr> long_task_list;
-  std::recursive_mutex mutex;
 
   registry_ptr reg;
 };
@@ -39,7 +34,7 @@ DOODLELIB_API inline registry_ptr& g_reg() {
 DOODLELIB_API inline scheduler_t& g_main_loop() {
   return doodle_lib::Get().loop;
 }
-DOODLELIB_API inline bounded_pool_t &g_bounded_pool(){
+DOODLELIB_API inline bounded_pool_t& g_bounded_pool() {
   return doodle_lib::Get().loop_bounded_pool;
 }
 

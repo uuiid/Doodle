@@ -24,7 +24,6 @@ class DOODLELIB_API doodle_app : public details::no_copy {
   void set_imgui_dock_space(const FSys::path& in_path) const;
 
   bool p_show_err;
-  base_widget_ptr p_main_win;
 
  public:
   doodle_app();

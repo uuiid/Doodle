@@ -17,7 +17,6 @@ program_options::program_options()
       p_opt_server("doodle config server"),
       p_opt_general("doodle config general"),
       p_opt_advanced("doodle general config"),
-      p_lib(new_object<doodle_lib>()),
       p_use_gui(true),
       p_server(false),
       p_install(false),
@@ -26,7 +25,7 @@ program_options::program_options()
       p_version(false),
       p_config_file(),
       p_max_thread(),
-      p_root(),
+      p_root("C:/"),
       p_mysql_ip(),
       p_mysql_user(),
       p_mysql_pow(),
@@ -34,12 +33,6 @@ program_options::program_options()
       p_mysql_port(),
       p_rpc_file_port(),
       p_rpc_meta_port() {
-  DOODLE_LOG_INFO("开始初始化基本配置");
-
-  core_set_init k_init{};
-  k_init.find_cache_dir();
-  p_root = core_set::getSet().get_root();
-
   DOODLE_LOG_INFO("开始构建命令行");
   p_opt_general.add_options()(
       "help,h",
@@ -161,8 +154,6 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   }
 
   auto& set = core_set::getSet();
-  core_set_init k_init{};
-  k_init.read_file();
 
   if (p_max_thread > 0)
     set.p_max_thread = p_max_thread;
@@ -245,7 +236,6 @@ doodle_app_ptr program_options::make_app() {
     k_init.config_to_user();
     k_init.find_maya();
     k_init.read_file();
-    p_lib->init_gui();
     DOODLE_LOG_INFO("开始gui显示gui界面");
     auto k_gui = new_object<doodle_app>();
     return k_gui;

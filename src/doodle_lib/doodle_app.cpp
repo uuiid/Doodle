@@ -118,7 +118,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     case WM_DESTROY: {
       doodle::doodle_app::Get()->p_done = true;
       doodle::core_set::getSet().p_stop = true;
-      doodle::core_set::getSet().p_condition.notify_all();
       // ::PostQuitMessage(0);
       return 0;
     }
@@ -131,9 +130,9 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       }
       break;
     case WM_CLOSE: {
-      doodle::doodle_app::Get()->p_done = true;
-      doodle::core_set::getSet().p_stop = true;
-      doodle::core_set::getSet().p_condition.notify_all();
+      //      doodle::doodle_app::Get()->p_done = true;
+      doodle::doodle_app::Get()->hide_windows();
+      //      ::DestroyWindow(doodle::doodle_app::Get().)
       return 0;
     }
       //    case WM_DROPFILES: {
@@ -226,7 +225,6 @@ doodle_app::doodle_app()
           Doodle_VERSION_TWEAK))),
       p_done(false),
       p_show_err(false),
-      p_main_win(),
       p_pd3dDevice(nullptr),
       p_impl(std::make_unique<impl>()) {
   // Create application window
@@ -291,46 +289,7 @@ doodle_app::doodle_app()
   //  chick_true<doodle_error>(k_r == S_OK, DOODLE_LOC, "无法注册拖拽com");
   /// \brief 设置本地静态变量
   doodle_app::self = this;
-}
-doodle_app::~doodle_app() {
-  // Cleanup
-  ImGui_ImplDX11_Shutdown();
-  ImGui_ImplWin32_Shutdown();
-  ImGui::DestroyContext();
 
-  CleanupDeviceD3D();
-  ::DestroyWindow(p_impl->p_hwnd);
-  ::UnregisterClass(p_impl->p_win_class.lpszClassName, p_impl->p_win_class.hInstance);
-  //  OleUninitialize();
-}
-
-void doodle_app::set_imgui_dock_space(const FSys::path& in_path) const {
-  auto k_f = cmrc::DoodleLibResource::get_filesystem().open("resource/imgui.ini");
-  if (FSys::exists(in_path))
-    return;
-  FSys::ofstream l_ofs{in_path, std::ios::out | std::ios::binary};
-  if (l_ofs)
-    l_ofs.write(k_f.begin(), k_f.size());
-}
-
-std::int32_t doodle_app::run() {
-  loop_begin();
-  while (!p_done) {
-    loop_one();
-  }
-  hide_windows();
-  return 0;
-}
-
-doodle_app* doodle_app::Get() {
-  return doodle_app::self;
-}
-
-bool doodle_app::valid() const {
-  return this->p_impl->p_hwnd != nullptr;
-}
-
-base_widget_ptr doodle_app::loop_begin() {
   //  ::ShowWindow(p_impl->p_hwnd, SW_HIDE);
   //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
   //                                     MONITOR_DEFAULTTONEAREST);
@@ -402,8 +361,9 @@ bool doodle_app::valid() const {
 }
 
 void doodle_app::hide_windows() {
-  if (p_done)
-    ::ShowWindow(p_impl->p_hwnd, SW_HIDE);
+  ::ShowWindow(p_impl->p_hwnd, SW_HIDE);
+  p_done = true;
+  ::DestroyWindow(p_impl->p_hwnd);
 }
 
 // Main loop
@@ -491,7 +451,7 @@ void doodle_app::load_windows() {
   });
 }
 void doodle_app::show_windows() {
-  if (p_done)
+  if (!p_done)
     ::ShowWindow(p_impl->p_hwnd, SW_SHOW);
 }
 

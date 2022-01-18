@@ -28,10 +28,8 @@ namespace doodle {
 doodle_lib* doodle_lib::p_install = nullptr;
 
 doodle_lib::doodle_lib()
-    : p_thread_pool(new_object<thread_pool>(core_set::getSet().p_max_thread)),
+    : p_thread_pool(new_object<thread_pool>(std::thread::hardware_concurrency() - 1)),
       p_log(new_object<logger_ctrl>()),
-      long_task_list(),
-      mutex(),
       reg(new_object<entt::registry>()) {
 #ifdef _WIN32
   /// 在这里我们初始化date tz 时区数据库
@@ -63,6 +61,7 @@ doodle_lib::doodle_lib()
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
   reg->on_construct<database>().connect<&entt::registry::get_or_emplace<database_stauts>>();
+
   p_install = this;
 }
 
@@ -90,25 +89,6 @@ thread_pool_ptr doodle_lib::get_thread_pool() {
 }
 
 doodle_lib::~doodle_lib() = default;
-void doodle_lib::init_gui() {
-  p_thread_pool = new_object<thread_pool>(std::thread::hardware_concurrency() - 1);
-  loop_bounded_pool.set_bounded(boost::numeric_cast<std::uint16_t>(core_set::getSet().p_max_thread));
-
-  //  try {
-  //    //    auto k_h = make_handle();
-  //    //    k_h.emplace<process_message>();
-  //    //    auto k_then = g_main_loop().attach<null_process_t>();
-  //    //    for (auto& l_p : core_set::getSet().project_root) {
-  //    //      k_then.then<database_task_select>(k_h, l_p);
-  //    //    }
-  //    //    k_h.destroy();
-  //    //    k_then.then([]() {
-  //    //      core_set_init{}.init_default_project();
-  //    //    });
-  //  } catch (doodle_error& err) {
-  //    DOODLE_LOG_ERROR(err.what());
-  //  }
-}
 
 thread_pool& g_thread_pool() {
   return *(doodle_lib::Get().get_thread_pool());
