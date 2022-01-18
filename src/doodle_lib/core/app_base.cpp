@@ -20,7 +20,7 @@ app_base::app_base()
       stop_(false),
       instance(::GetModuleHandleW(nullptr)),
       p_lib(std::make_shared<doodle_lib>()),
-      options_() {
+      options_(std::make_shared<program_options>()) {
   self = this;
 
   DOODLE_LOG_INFO("开始初始化基本配置");
