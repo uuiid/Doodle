@@ -12,8 +12,10 @@ class DOODLELIB_API app : public app_command_base {
   win::wnd_class p_win_class;
 
   bool p_show_err;
+
  public:
-  app();
+  explicit app();
+  explicit app(const win::wnd_instance& in_instance);
   ~app() override;
   ::ID3D11Device* d3dDevice;
   ::ID3D11DeviceContext* d3dDeviceContext;

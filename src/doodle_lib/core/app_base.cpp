@@ -70,6 +70,9 @@ void app_base::command_line_parser(const std::vector<string>& in_arg) {
     l_set.p_max_thread   = options_->p_max_thread.second;
     p_lib->p_thread_pool = std::make_shared<thread_pool>(l_set.p_max_thread);
   }
+
+  if (options_->p_help || options_->p_version)
+    stop_ = true;
 }
 
 void app_base::command_line_parser(const LPSTR& in_arg) {

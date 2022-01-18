@@ -23,13 +23,25 @@ namespace doodle {
 app::app()
     : app_command_base(),
       p_hwnd(),
-      p_win_class() {
+      p_win_class(),
+      p_show_err(false),
+      d3dDevice(nullptr),
+      d3dDeviceContext(nullptr) {
+}
+
+app::app(const win::wnd_instance& in_instance)
+    : app_command_base(in_instance),
+      p_hwnd(),
+      p_win_class(),
+      p_show_err(false),
+      d3dDevice(nullptr),
+      d3dDeviceContext(nullptr) {
   p_win_class =
       {sizeof(WNDCLASSEX),
        CS_CLASSDC, win::WndProc,
        0L,
        0L,
-       instance,
+       instance ? instance : (::GetModuleHandleW(nullptr)),
        nullptr, nullptr, nullptr, nullptr,
        _T("doodle"),
        nullptr};
@@ -128,6 +140,7 @@ app::app()
   io.IniFilename = imgui_file_path.c_str();
   this->load_windows();
 }
+
 void app::loop_one() {
   // Poll and handle messages (inputs, window resize, etc.)
   // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.

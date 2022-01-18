@@ -44,6 +44,8 @@ class DOODLELIB_API app_base {
 
 class DOODLELIB_API app_command_base : public app_base {
  public:
+  using app_base::app_base;
+
   void loop_one() override;
   static app_command_base& Get();
 };

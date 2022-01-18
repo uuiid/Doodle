@@ -6,7 +6,7 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
-#include <doodle_lib/doodle_lib_all.h>
+#include <doodle_lib/app/app.h>
 //#include <doodle_lib/DoodleApp.h>
 #include <boost/locale.hpp>
 
@@ -29,21 +29,12 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
   std::setlocale(LC_MONETARY, "C");
   std::setlocale(LC_CTYPE, ".UTF8");
 
-  doodle::program_options p_opt{};
-  p_opt.command_line_parser(strCmdLine);
-
-  auto k_app = p_opt.make_app();
-  if (k_app) {
-    return k_app->run();
-  } else
-    return 0;
-
+  doodle::app app{hInstance};
+  app.command_line_parser(strCmdLine);
+  return app.run();
 } catch (const std::exception& err) {
   std::cout << err.what() << std::endl;
-  //  DOODLE_LOG_ERROR(err.what());
-  //  doodle::CoreSet::getSet().writeDoodleLocalSet();
   return 1;
 } catch (...) {
-  //  doodle::CoreSet::getSet().writeDoodleLocalSet();
   return 1;
 }
