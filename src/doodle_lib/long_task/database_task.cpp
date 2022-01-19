@@ -41,6 +41,7 @@ class database_task_select::impl {
   std::atomic_bool stop = false;
   FSys::path prj_root;
   std::size_t size;
+  std::vector<entt::handle> create_handle;
 };
 database_task_select::database_task_select(const entt::handle& in_handle, const database_n::filter& in_filter)
     : p_i(std::make_unique<impl>()) {
@@ -101,6 +102,10 @@ void database_task_select::select_db() {
       l_data.parent = boost::numeric_cast<decltype(l_data.parent)::value_type>(row.parent.value());
   }
   p_i->size = p_i->list.size();
+  std::vector<entt::entity> l_vector{};
+  l_vector.resize(p_i->list.size());
+  g_reg()->create(l_vector.begin(), l_vector.end());
+  std::transform(l_vector.begin(), l_vector.end(), std::back_inserter(p_i->create_handle), [](const auto& in) { return make_handle(in); });
 }
 
 void database_task_select::init() {
@@ -135,11 +140,18 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
       this->succeed();
       return;
     }
-    make_handle().emplace<database>() = p_i->list.back();
-    p_i->handle_.patch<process_message>([this](process_message& in) {
-      in.progress_step({1, p_i->size});
-    });
-    p_i->list.pop_back();
+    //    make_handle().emplace<database>() = p_i->list.back();
+    for (int l_i = 0; l_i < 3; ++l_i) {
+      if(p_i->create_handle.empty())
+        return;
+
+      p_i->create_handle.back().emplace<database>() = p_i->list.back();
+      p_i->handle_.patch<process_message>([this](process_message& in) {
+        in.progress_step({1, p_i->size});
+      });
+      p_i->create_handle.pop_back();
+      p_i->list.pop_back();
+    }
   }
 }
 
