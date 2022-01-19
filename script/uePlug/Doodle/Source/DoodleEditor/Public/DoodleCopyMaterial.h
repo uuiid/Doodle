@@ -14,12 +14,16 @@ class DoodleCopyMat : public SCompoundWidget, public FGCObject {
   virtual void AddReferencedObjects(FReferenceCollector& collector) override;
 
  private:
+   
   FReply getSelect();
   FReply CopyMateral();
 
   FReply BathImport();
   FReply BathReameAss();
   FReply importAbcFile();
+
+  bool bEnableSeparateTranslucency;
+  FReply set_marteral_deep();
 
   TArray<FString> OpenFileDialog(const FString& DialogTitle, const FString& DefaultPath, const FString& FileTypes);
   FString OpenDirDialog(const FString& DialogTitle,
