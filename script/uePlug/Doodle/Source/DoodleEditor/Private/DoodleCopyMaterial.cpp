@@ -361,7 +361,7 @@ FReply DoodleCopyMat::BathReameAss() {
   contentBrowserModle.Get().GetSelectedAssets(selectedAss);
 
   for (auto &&item : selectedAss) {
-    UObject *loadObj = item.ToSoftObjectPath().TryLoad();
+    UObject *loadObj = item.GetAsset();
     if (loadObj == nullptr) continue;
     if (item.GetClass()->IsChildOf<USkeletalMesh>()) {
       //确认时骨骼物体
