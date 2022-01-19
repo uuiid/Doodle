@@ -550,8 +550,9 @@ void DoodleCopyMat::set_material_attr(UMaterialInterface *in_mat,
 
   if (in_mat->GetMaterial() != nullptr) {
     auto mat_m = in_mat->GetMaterial();
-    mat_m->bUsedWithGeometryCache = true;
-    mat_m->MarkPackageDirty();
+    bool l_tmp{true};
+    mat_m->SetMaterialUsage(l_tmp, EMaterialUsage::MATUSAGE_GeometryCache);
+
     UEditorAssetLibrary::SaveAsset(mat_m->GetPathName());
     UE_LOG(LogTemp, Log, TEXT("使材料支持集合缓存 %s"),
            *(mat_m->GetPathName()));
