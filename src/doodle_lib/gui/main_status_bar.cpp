@@ -118,9 +118,11 @@ void main_status_bar::update(
   dear::ViewportSideBar{"状态栏_main", nullptr, ImGuiDir_Down, height, window_flags} && [&]() {
     dear::MenuBar{} && [&]() {
       if (auto l_msg = g_reg()->try_ctx<process_message>(); l_msg) {
+        dear::Text(l_msg->get_name());
+        dear::SameLine();
         dear::ProgressBar(boost::rational_cast<std::float_t>(l_msg->get_progress()),
                           ImVec2{-FLT_MIN, 0.0f},
-                          l_msg->get_name().c_str());
+                          fmt::format("{:04f}%", l_msg->get_progress_f()).c_str());
         //        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
         //        const ImU32 bg  = ImGui::GetColorU32(ImGuiCol_Button);
         //        imgui::BufferingBar("long_time",
