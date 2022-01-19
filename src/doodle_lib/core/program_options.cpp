@@ -79,9 +79,9 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
       << "\n"
       << (p_max_thread.first
               ? "没有传入线程池大小"s
-              : fmt::format("使用配置 max_thread : {}", p_max_thread))
+              : fmt::format("使用配置 max_thread : {}", p_max_thread.second))
       << "\n"
-      << (p_root.first ? "没有传入缓存根路径"s : fmt::format("使用配置 root : {}", p_root)) << "\n"
+      << (p_root.first ? "没有传入缓存根路径"s : fmt::format("使用配置 root : {}", p_root.second)) << "\n"
       << "开始初始化库基础(日志类和程序日期数据库)"
       << "\n"
       << std::endl;

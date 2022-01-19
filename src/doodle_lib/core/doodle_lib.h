@@ -11,13 +11,13 @@ namespace doodle {
 class DOODLELIB_API doodle_lib : public details::no_copy {
   static doodle_lib* p_install;
 
-  FSys::path create_time_database();
 
  public:
   doodle_lib();
   virtual ~doodle_lib();
 
   static doodle_lib& Get();
+  FSys::path create_time_database();
 
   thread_pool_ptr p_thread_pool;
   logger_ctr_ptr p_log;

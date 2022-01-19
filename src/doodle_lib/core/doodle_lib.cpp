@@ -31,13 +31,6 @@ doodle_lib::doodle_lib()
     : p_thread_pool(new_object<thread_pool>(std::thread::hardware_concurrency() - 1)),
       p_log(new_object<logger_ctrl>()),
       reg(new_object<entt::registry>()) {
-#ifdef _WIN32
-  /// 在这里我们初始化date tz 时区数据库
-  auto k_path = create_time_database();
-  date::set_install(k_path.generic_string());
-  DOODLE_LOG_INFO("初始化时区数据库: {}", k_path.generic_string());
-#endif
-
   /// 创建依赖性
   reg->on_construct<project>().connect<&entt::registry::get_or_emplace<database>>();
   reg->on_construct<project>().connect<&entt::registry::get_or_emplace<database_root>>();
@@ -78,6 +71,8 @@ FSys::path doodle_lib::create_time_database() {
       k_ofstream.write(k_file.begin(), boost::numeric_cast<std::int64_t>(k_file.size()));
     }
   }
+  date::set_install(k_local_path.generic_string());
+  DOODLE_LOG_INFO("初始化时区数据库: {}", k_local_path.generic_string());
   return k_local_path;
 }
 doodle_lib& doodle_lib::Get() {

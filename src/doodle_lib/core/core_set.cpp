@@ -321,8 +321,10 @@ bool core_set_init::init_default_project() {
   if (!p_set.project_root.empty() && !p_set.project_root[0].empty())
     g_main_loop().attach<database_task_select>(k_msg_h, p_set.project_root[0]).then([](auto, auto, auto s, auto) {
       auto k_prj = g_reg()->template view<project>();
-      if (!k_prj.empty())
+      if (!k_prj.empty()) {
         g_reg()->template set<project>(k_prj.template get<project>(k_prj[0]));
+        g_reg()->template set<root_ref>(k_prj[0]);
+      }
       s();
     });
 
