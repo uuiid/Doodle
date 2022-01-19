@@ -5,6 +5,7 @@
 #include "main_status_bar.h"
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/thread_pool/long_term.h>
+#include <doodle_lib/lib_warp/imgui_warp.h>
 
 /// \brief to https://github.com/ocornut/imgui/issues/1901
 namespace ImGui {
@@ -117,14 +118,17 @@ void main_status_bar::update(
   dear::ViewportSideBar{"状态栏_main", nullptr, ImGuiDir_Down, height, window_flags} && [&]() {
     dear::MenuBar{} && [&]() {
       if (auto l_msg = g_reg()->try_ctx<process_message>(); l_msg) {
-        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-        const ImU32 bg  = ImGui::GetColorU32(ImGuiCol_Button);
-        imgui::BufferingBar(l_msg->get_name_id().c_str(),
-                            boost::numeric_cast<std::float_t>(l_msg->get_progress_f()),
-                            ImVec2(400, 6),
-                            bg,
-                            col);
-        if(l_msg->is_success())
+        dear::ProgressBar(boost::rational_cast<std::float_t>(l_msg->get_progress()),
+                          ImVec2{-FLT_MIN, 0.0f},
+                          l_msg->get_name().c_str());
+        //        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+        //        const ImU32 bg  = ImGui::GetColorU32(ImGuiCol_Button);
+        //        imgui::BufferingBar("long_time",
+        //                            boost::rational_cast<std::float_t>(l_msg->get_progress()),
+        //                            ImVec2(600, 5),
+        //                            bg,
+        //                            col);
+        if (l_msg->is_success())
           g_reg()->unset<process_message>();
       }
     };

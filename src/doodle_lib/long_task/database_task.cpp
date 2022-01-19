@@ -40,6 +40,7 @@ class database_task_select::impl {
   std::future<void> result;
   std::atomic_bool stop = false;
   FSys::path prj_root;
+  std::size_t size;
 };
 database_task_select::database_task_select(const entt::handle& in_handle, const database_n::filter& in_filter)
     : p_i(std::make_unique<impl>()) {
@@ -99,6 +100,7 @@ void database_task_select::select_db() {
     if (!row.parent.is_null())
       l_data.parent = boost::numeric_cast<decltype(l_data.parent)::value_type>(row.parent.value());
   }
+  p_i->size = p_i->list.size();
 }
 
 void database_task_select::init() {
@@ -134,6 +136,9 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
       return;
     }
     make_handle().emplace<database>() = p_i->list.back();
+    p_i->handle_.patch<process_message>([this](process_message& in) {
+      in.progress_step({1, p_i->size});
+    });
     p_i->list.pop_back();
   }
 }
