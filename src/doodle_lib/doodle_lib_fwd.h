@@ -327,7 +327,6 @@ using thread_pool_ptr            = std::shared_ptr<thread_pool>;
 
 using attribute_factory_ptr      = std::shared_ptr<attribute_factory_interface>;
 
-
 using registry_ptr               = std::shared_ptr<entt::registry>;
 class time_widget;
 
@@ -409,7 +408,6 @@ using time_widget_ptr         = std::shared_ptr<time_widget>;
 using rpc_trans_path_ptr      = std::unique_ptr<rpc_trans_path>;
 using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
 
-
 namespace rpc_trans {
 class down_file;
 class down_dir;
@@ -421,14 +419,26 @@ using trans_file_ptr = std::shared_ptr<trans_file>;
 }  // namespace rpc_trans
 
 namespace gui {
+
 template <class T>
 struct adl_render {};
+
+template <class T>
+struct adl_render_data {
+  T data;
+  adl_render_data() = default;
+  explicit adl_render_data(const entt::handle &in_handle)
+      : data(in_handle.template get<T>()) {}
+};
 
 template <class T,
           std::enable_if_t<!std::is_same_v<entt::handle, T>, bool> = true>
 bool render(T &in_data) {
   return adl_render<T>::render(in_data);
 };
+
+template <class T>
+using render_ = adl_render<T>;
 
 template <class T>
 bool render(const entt::handle &in_handle) {
