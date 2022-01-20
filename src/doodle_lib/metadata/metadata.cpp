@@ -41,13 +41,15 @@ class database::impl {
         p_parent_id(),
         p_type(metadata_type::unknown_file),
         p_uuid_(core_set::getSet().get_uuid()),
-        p_uuid() {}
+        p_uuid(boost::uuids::to_string(p_uuid_)) {
+
+  }
   mutable std::uint64_t p_id;
   mutable string p_id_str;
   std::optional<uint32_t> p_parent_id;
   metadata_type p_type;
-  FSys::path p_uuid;
   boost::uuids::uuid p_uuid_;
+  FSys::path p_uuid;
 };
 
 database::database()
