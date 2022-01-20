@@ -11,7 +11,7 @@ namespace doodle::maya_plug {
 class create_hud_node {
  public:
   create_hud_node();
-  bool hide(bool hide) const;
+  [[nodiscard]] bool hide(bool hide) const;
 
   bool operator()() const;
 };
