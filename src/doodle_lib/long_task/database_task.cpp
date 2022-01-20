@@ -482,8 +482,10 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                    auto&& k_data = in_handle.get<database>();
                    return k_data.status_ == database::status::need_save && !k_data.is_install();
                  });
-    g_main_loop().attach<database_task_install>(p_i->handle_, k_h);
-    return;
+    if(!k_h.empty()) {
+      g_main_loop().attach<database_task_install>(p_i->handle_, k_h);
+      return;
+    }
   }
   {
     std::vector<entt::handle> k_h{};
