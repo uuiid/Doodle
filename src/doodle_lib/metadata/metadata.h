@@ -71,13 +71,9 @@ class DOODLELIB_API database_root {
 
 class DOODLELIB_API database {
  private:
-  mutable std::uint64_t p_id;
-  mutable string p_id_str;
-  std::optional<uint32_t> p_parent_id;
-  metadata_type p_type;
-  FSys::path p_uuid;
-  std::uint32_t p_boost_serialize_vesion;
-  boost::uuids::uuid p_uuid_;
+  class impl;
+  std::unique_ptr<impl> p_i;
+
 
  public:
   database();
@@ -87,7 +83,12 @@ class DOODLELIB_API database {
   bool has_components() const;
   void set_id(std::uint64_t in_id) const;
 
-  DOODLE_IMP_MOVE(database);
+  database(database &&) noexcept;
+  database &operator            =(database &&) noexcept;
+
+  database(database &) noexcept = delete;
+  database &operator=(database &) noexcept = delete;
+
   static void set_enum(entt::registry &in_reg, entt::entity in_ent);
 
   const FSys::path &get_url_uuid() const;
@@ -129,19 +130,21 @@ class DOODLELIB_API database {
 
   std::atomic<status> status_;
 
-  friend void to_json(nlohmann::json &j, const database &p) {
-    j["id"]        = p.p_id;
-    j["parent_id"] = p.p_parent_id;
-    j["type"]      = p.p_type;
-    j["uuid_"]     = p.p_uuid_;
-  }
-  friend void from_json(const nlohmann::json &j, database &p) {
-    j.at("id").get_to(p.p_id);
-    j.at("parent_id").get_to(p.p_parent_id);
-    j.at("type").get_to(p.p_type);
-    j.at("uuid_").get_to(p.p_uuid_);
-    p.p_uuid = boost::uuids::to_string(p.p_uuid_);
-  }
+  friend void to_json(nlohmann::json &j, const database &p);
+  //  {
+  //    j["id"]        = p.p_id;
+  //    j["parent_id"] = p.p_parent_id;
+  //    j["type"]      = p.p_type;
+  //    j["uuid_"]     = p.p_uuid_;
+  //  }
+  friend void from_json(const nlohmann::json &j, database &p);
+  //  {
+  //    j.at("id").get_to(p.p_id);
+  //    j.at("parent_id").get_to(p.p_parent_id);
+  //    j.at("type").get_to(p.p_type);
+  //    j.at("uuid_").get_to(p.p_uuid_);
+  //    p.p_uuid = boost::uuids::to_string(p.p_uuid_);
+  //  }
 
   class DOODLELIB_API save {
    public:
@@ -168,6 +171,9 @@ class DOODLELIB_API database {
     }
   };
 };
+
+void from_json(const nlohmann::json &j, database &p);
+void to_json(nlohmann::json &j, const database &p);
 
 using need_root_load = entt::tag<"need_root_load"_hs>;
 using is_load        = entt::tag<"is_loaded"_hs>;
