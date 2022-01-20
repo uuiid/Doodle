@@ -9,7 +9,7 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/client/client.h>
 #include <doodle_lib/long_task/process_pool.h>
-#include <doodle_lib/core/open_file_dialog.h>
+#include <gui/open_file_dialog.h>
 #include <toolkit/toolkit.h>
 #include <gui/action/command_tool.h>
 #include <gui/action/command_video.h>

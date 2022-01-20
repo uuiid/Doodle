@@ -5,7 +5,7 @@
 #include "command_ue4.h"
 
 #include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/core/open_file_dialog.h>
+#include <gui/open_file_dialog.h>
 #include <doodle_lib/doodle_app.h>
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/gui/widget_register.h>

@@ -8,7 +8,7 @@ set(
         core/doodle_lib.h
         core/filesystem_extend.h
         core/observable_container.h
-        core/open_file_dialog.h
+        gui/open_file_dialog.h
         core/program_options.h
         core/static_value.h
         core/tools_setting.h
@@ -110,7 +110,7 @@ set(
         core/core_sql.cpp
         core/doodle_lib.cpp
         core/filesystem_extend.cpp
-        core/open_file_dialog.cpp
+        gui/open_file_dialog.cpp
         core/program_options.cpp
         core/static_value.cpp
         core/tree_container.cpp

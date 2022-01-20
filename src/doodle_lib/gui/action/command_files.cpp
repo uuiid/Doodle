@@ -5,7 +5,7 @@
 #include "command_files.h"
 
 #include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/core/open_file_dialog.h>
+#include <gui/open_file_dialog.h>
 #include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 

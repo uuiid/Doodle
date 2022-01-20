@@ -16,7 +16,7 @@
 #include <doodle_lib/gui/widgets/tool_box_widget.h>
 #include <doodle_lib/toolkit/toolkit.h>
 #include <doodle_lib/long_task/process_pool.h>
-#include <doodle_lib/core/open_file_dialog.h>
+#include <gui/open_file_dialog.h>
 #include <doodle_lib/client/client.h>
 
 namespace doodle {
