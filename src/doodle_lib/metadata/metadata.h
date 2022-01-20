@@ -74,7 +74,6 @@ class DOODLELIB_API database {
   class impl;
   std::unique_ptr<impl> p_i;
 
-
  public:
   database();
   //  explicit database(const metadata_database &in_metadata_database);
@@ -131,20 +130,7 @@ class DOODLELIB_API database {
   std::atomic<status> status_;
 
   friend void to_json(nlohmann::json &j, const database &p);
-  //  {
-  //    j["id"]        = p.p_id;
-  //    j["parent_id"] = p.p_parent_id;
-  //    j["type"]      = p.p_type;
-  //    j["uuid_"]     = p.p_uuid_;
-  //  }
   friend void from_json(const nlohmann::json &j, database &p);
-  //  {
-  //    j.at("id").get_to(p.p_id);
-  //    j.at("parent_id").get_to(p.p_parent_id);
-  //    j.at("type").get_to(p.p_type);
-  //    j.at("uuid_").get_to(p.p_uuid_);
-  //    p.p_uuid = boost::uuids::to_string(p.p_uuid_);
-  //  }
 
   class DOODLELIB_API save {
    public:
