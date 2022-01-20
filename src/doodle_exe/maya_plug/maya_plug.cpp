@@ -28,6 +28,7 @@ const constexpr std::string_view doolde_hud_render_node{"doolde_hud_render_node"
 MCallbackId clear_callback_id{0};
 MCallbackId app_run_id{0};
 MCallbackId create_hud_id{0};
+MCallbackId create_hud_id_2{0};
 
 using namespace doodle;
 std::shared_ptr<app_base> p_doodle_app = nullptr;
@@ -74,6 +75,15 @@ MStatus initializePlugin(MObject obj) {
       /// \brief  自定义hud回调
       create_hud_id = MSceneMessage::addCallback(
           MSceneMessage::Message::kAfterOpen,
+          [](void* clientData) {
+            ::doodle::maya_plug::create_hud_node k_c{};
+            k_c();
+          },
+          nullptr,
+          &status);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+      create_hud_id_2 = MSceneMessage::addCallback(
+          MSceneMessage::Message::kAfterNew,
           [](void* clientData) {
             ::doodle::maya_plug::create_hud_node k_c{};
             k_c();
@@ -239,6 +249,8 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
     case MGlobal::MMayaState::kInteractive: {
       /// 去除hud回调
       status = MMessage::removeCallback(create_hud_id);
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+      status = MMessage::removeCallback(create_hud_id_2);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       //这一部分是删除菜单项的

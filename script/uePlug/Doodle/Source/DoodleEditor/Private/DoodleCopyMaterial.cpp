@@ -20,12 +20,21 @@
 #include "Misc/Paths.h"
 #include "ObjectTools.h"
 #include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SCheckBox.h"
+
 //重命名资产
 #include "EditorAssetLibrary.h"
 //保存包需要
 #include "Editor.h"
 //自定义abc导入
 //#include "AbcWrap/DoodleAbcFactory.h"
+// 设置粒子系统材质需要
+#include <Particles/ParticleEmitter.h>
+#include <Particles/ParticleSystem.h>
+
+#include "Particles/ParticleModuleRequired.h"
+// 更改材质属性时的委托发布
+#include "EditorSupportDelegates.h"
 
 void DoodleCopyMat::Construct(const FArguments &Arg) {
   //这个是ue界面的创建方法
@@ -35,16 +44,18 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
        SHorizontalBox::Slot()
            .AutoWidth()
            .HAlign(HAlign_Left)
-           .Padding(FMargin(1.f, 1.f))
-               [SNew(SButton)                                    //创建按钮
-                    .OnClicked(this, &DoodleCopyMat::getSelect)  //添加回调函数
-                        [SNew(STextBlock)
-                             .Text(FText::FromString(
-                                 TEXT("获得选择物体")))  //按钮中的字符
+           .Padding(FMargin(
+               1.f,
+               1.f))[SNew(SButton)  //创建按钮
+                         .OnClicked(this,
+                                    &DoodleCopyMat::getSelect)  //添加回调函数
+                             [SNew(STextBlock)
+                                  .Text(FText::FromString(
+                                      TEXT("获得选择物体")))  //按钮中的字符
   ]
-                    .ToolTipText_Lambda([=]() -> FText {
-                      return FText::FromString(TEXT("获得选中物体"));
-                    })] +
+                         .ToolTipText_Lambda([=]() -> FText {
+                           return FText::FromString(TEXT("获得选中物体"));
+                         })] +
 
        SHorizontalBox::Slot()
            .AutoWidth()
@@ -66,26 +77,31 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
        SHorizontalBox::Slot()
            .AutoWidth()
            .HAlign(HAlign_Left)
-           .Padding(FMargin(1.f, 1.f))
-               [SNew(SButton)
-                    .OnClicked(this, &DoodleCopyMat::BathImport)  // 批量导入
-                        [SNew(STextBlock)
-                             .Text(FText::FromString(TEXT("批量导入")))]
-                    .ToolTipText_Lambda([=]() -> FText {
-                      return FText::FromString(TEXT("批量导入fbx和abc文件"));
-                    })] +
+           .Padding(FMargin(
+               1.f,
+               1.f))[SNew(SButton)
+                         .OnClicked(this,
+                                    &DoodleCopyMat::BathImport)  // 批量导入
+                             [SNew(STextBlock)
+                                  .Text(FText::FromString(TEXT("批量导入")))]
+                         .ToolTipText_Lambda([=]() -> FText {
+                           return FText::FromString(
+                               TEXT("批量导入fbx和abc文件"));
+                         })] +
 
        SHorizontalBox::Slot()
            .AutoWidth()
            .HAlign(HAlign_Left)
            .Padding(FMargin(1.f, 1.f))
                [SNew(SButton)
-                    .OnClicked(this, &DoodleCopyMat::BathReameAss)  //批量重命名
+                    .OnClicked(this,
+                               &DoodleCopyMat::BathReameAss)  //批量重命名
                         [SNew(STextBlock)
                              .Text(FText::FromString(TEXT("批量修改材质名称")))]
                     .ToolTipText_Lambda([=]() -> FText {
-                      return FText::FromString(TEXT(
-                          "选中骨骼物体,会将材料名称和骨骼物体的插槽名称统一"));
+                      return FText::FromString(
+                          TEXT("选中骨骼物体,"
+                               "会将材料名称和骨骼物体的插槽名称统一"));
                     })] +
 
        SHorizontalBox::Slot()
@@ -99,7 +115,32 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
                     .ToolTipText_Lambda([=]() -> FText {
                       return FText::FromString(
                           TEXT("自定义abc导入,带插槽, 有材质名称显示"));
-                    })]];
+                    })] +
+       SHorizontalBox::Slot()
+           .AutoWidth()
+           .HAlign(HAlign_Left)
+           .Padding(
+               FMargin{1.f, 1.f})[SNew(SCheckBox).OnCheckStateChanged_Lambda(
+               [this](const ECheckBoxState &in) /*-> FReply*/ {
+                 this->bEnableSeparateTranslucency =
+                     in == ECheckBoxState::Checked;
+               })] +
+
+       SHorizontalBox::Slot()
+           .AutoWidth()
+           .HAlign(HAlign_Left)
+           .Padding(FMargin{
+               1.f,
+               1.f})[SNew(SButton)
+                         .OnClicked_Lambda([this]() -> FReply {
+                           return this->set_marteral_deep();
+                         })[SNew(STextBlock)
+                                .Text(FText::FromString(TEXT("景深后渲染")))]
+                         .ToolTipText_Lambda([]() -> FText {
+                           return FText::FromString(
+                               TEXT("将选中的粒子系统的材质属性->景深后渲染,"
+                                    "改为前方复选框状态"));
+                         })]];
 }
 
 void DoodleCopyMat::AddReferencedObjects(FReferenceCollector &collector) {
@@ -361,7 +402,7 @@ FReply DoodleCopyMat::BathReameAss() {
   contentBrowserModle.Get().GetSelectedAssets(selectedAss);
 
   for (auto &&item : selectedAss) {
-    UObject *loadObj = item.ToSoftObjectPath().TryLoad();
+    UObject *loadObj = item.GetAsset();
     if (loadObj == nullptr) continue;
     if (item.GetClass()->IsChildOf<USkeletalMesh>()) {
       //确认时骨骼物体
@@ -401,7 +442,7 @@ FReply DoodleCopyMat::BathReameAss() {
                             mat.ImportedMaterialSlotName.ToString());
         }
       }
-      
+
 #else if ENGINE_MINOR_VERSION <= 26
       for (auto &mat : k_st->StaticMaterials) {
         if (mat.ImportedMaterialSlotName.IsValid()) {
@@ -484,6 +525,60 @@ FReply DoodleCopyMat::importAbcFile() {
   return FReply::Handled();
 }
 
+FReply DoodleCopyMat::set_marteral_deep() {
+  FContentBrowserModule &contentBrowserModle =
+      FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(
+          "ContentBrowser");
+  TArray<FAssetData> selectedAss;
+  contentBrowserModle.Get().GetSelectedAssets(selectedAss);
+
+  for (auto &&item : selectedAss) {
+    UObject *loadObj = item.GetAsset();
+    if (loadObj == nullptr) continue;
+    if (loadObj->GetClass()->IsChildOf<UParticleSystem>()) {
+      auto *k_par = Cast<UParticleSystem>(loadObj);
+      for (auto *k_em : k_par->Emitters) {
+        for (auto *k_mat_i : k_em->MeshMaterials) {
+          auto *k_mat = k_mat_i->GetMaterial();
+          if (k_mat) {
+            UE_LOG(LogTemp, Log, TEXT("开始设置材质景深后渲染属性 %s"),
+                   *k_mat->GetName());
+            k_mat->bEnableSeparateTranslucency =
+                this->bEnableSeparateTranslucency;
+            k_mat->ForceRecompileForRendering();
+          }
+        }
+        k_em->UpdateModuleLists();
+        for (auto *k_mod : k_em->ModulesNeedingInstanceData) {
+          if (k_mod->GetClass()->IsChildOf<UParticleModuleRequired>()) {
+            auto k_mod_req = Cast<UParticleModuleRequired>(k_mod);
+            auto *k_mat = k_mod_req->Material->GetMaterial();
+            if (k_mat) {
+              UE_LOG(LogTemp, Log, TEXT("开始设置材质景深后渲染属性 %s"),
+                     *k_mat->GetName());
+              k_mat->bEnableSeparateTranslucency =
+                  this->bEnableSeparateTranslucency;
+              k_mat->ForceRecompileForRendering();
+            }
+          }
+        }
+      }
+      for (auto &k_mat_s : k_par->NamedMaterialSlots) {
+        auto *k_mat = k_mat_s.Material->GetMaterial();
+        if (k_mat) {
+          UE_LOG(LogTemp, Log, TEXT("开始设置材质景深后渲染属性 %s"),
+                 *k_mat->GetName());
+          k_mat->bEnableSeparateTranslucency =
+              this->bEnableSeparateTranslucency;
+          k_mat->ForceRecompileForRendering();
+        }
+      }
+    }
+  }
+
+  return FReply::Handled();
+}
+
 TArray<FString> DoodleCopyMat::OpenFileDialog(const FString &DialogTitle,
                                               const FString &DefaultPath,
                                               const FString &FileTypes) {
@@ -550,8 +645,9 @@ void DoodleCopyMat::set_material_attr(UMaterialInterface *in_mat,
 
   if (in_mat->GetMaterial() != nullptr) {
     auto mat_m = in_mat->GetMaterial();
-    mat_m->bUsedWithGeometryCache = true;
-    mat_m->MarkPackageDirty();
+    bool l_tmp{true};
+    mat_m->SetMaterialUsage(l_tmp, EMaterialUsage::MATUSAGE_GeometryCache);
+
     UEditorAssetLibrary::SaveAsset(mat_m->GetPathName());
     UE_LOG(LogTemp, Log, TEXT("使材料支持集合缓存 %s"),
            *(mat_m->GetPathName()));
