@@ -41,19 +41,19 @@ main_menu_bar::~main_menu_bar() = default;
 
 void main_menu_bar::menu_file() {
   if (dear::MenuItem("新项目"s)) {
+    auto k_h = make_handle();
+    k_h.emplace<project>();
     g_main_loop().attach<file_dialog>(
-                     [](const FSys::path &in_path) {
+                     [=](const FSys::path &in_path) {
                        core::client{}.add_project(in_path);
                        g_reg()->set<project>(in_path, "none");
+                       k_h.patch<project>([&](project &in) {
+                         in.p_path = in_path;
+                       });
                        core_set::getSet().add_recent_project(in_path);
                      },
                      "选择目录"s)
-        .then<get_input_dialog>(
-            [](get_input_dialog *in_dialogn) {
-              auto l_prj = make_handle();
-              l_prj.emplace<project>(g_reg()->ctx<project>());
-              gui::render<project>(l_prj);
-            });
+        .then<get_input_project_dialog>(k_h);
   }
   if (dear::MenuItem("打开项目"s)) {
     g_main_loop().attach<file_dialog>(
