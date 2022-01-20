@@ -121,7 +121,7 @@ class DOODLELIB_API database {
 
   enum class status : std::uint8_t {
     none        = 0,
-    is_load     = 1,
+    is_sync     = 1,
     need_load   = 2,
     need_save   = 3,
     need_delete = 4,
@@ -159,6 +159,12 @@ class DOODLELIB_API database {
    public:
     void operator()(database &in) {
       in.status_ = status::need_load;
+    }
+  };
+  class DOODLELIB_API sync {
+   public:
+    void operator()(database &in) {
+      in.status_ = status::is_sync;
     }
   };
 };

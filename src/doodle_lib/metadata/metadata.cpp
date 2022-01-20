@@ -122,7 +122,6 @@ database &database::operator=(const metadata_database &in_) {
   /// 转化类型
   p_type = magic_enum::enum_cast<metadata_type>(in_.m_type)
                .value_or(metadata_type::unknown_file);
-  status_ = status::is_load;
   /// 确认转换可索引数据
 
   return *this;

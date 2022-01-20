@@ -28,8 +28,9 @@ class DOODLELIB_API app : public app_command_base {
   virtual void hide_windows();
   virtual void show_windows();
 
- private:
+ protected:
   virtual void load_windows();
+  virtual void load_back_end();
 
   void set_imgui_dock_space(const FSys::path& in_path) const;
 };

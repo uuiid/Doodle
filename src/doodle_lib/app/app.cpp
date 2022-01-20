@@ -9,6 +9,7 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/gui/main_menu_bar.h>
 #include <doodle_lib/gui/main_status_bar.h>
+#include <doodle_lib/long_task/database_task.h>
 
 // Helper functions
 #include <d3d11.h>
@@ -245,6 +246,12 @@ app::~app() {
   ::DestroyWindow(p_hwnd);
   ::UnregisterClass(p_win_class.lpszClassName, p_win_class.hInstance);
   //  OleUninitialize();
+}
+void app::load_back_end() {
+  g_main_loop().attach([](auto, auto, auto s, auto) {
+    g_main_loop().template attach<database_task_obs>();
+    s();
+  });
 }
 
 }  // namespace doodle

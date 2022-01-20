@@ -144,8 +144,9 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
     for (int l_i = 0; l_i < 3; ++l_i) {
       if (p_i->create_handle.empty())
         return;
-
-      p_i->create_handle.back().emplace<database>() = p_i->list.back();
+      auto& k_data               = p_i->create_handle.back();
+      k_data.emplace<database>() = p_i->list.back();
+      k_data.patch<database>(database::sync{});
       p_i->handle_.patch<process_message>([this](process_message& in) {
         in.progress_step({1, p_i->size});
       });
@@ -372,6 +373,7 @@ void database_task_install::install_db() {
     in.patch<database>([&](database& in) {
       in.set_id(id);
     });
+    in.patch<database>(database::sync{});
   }
 }
 database_task_install::database_task_install(
@@ -476,16 +478,15 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
   auto& k_obs = p_i->obs;
   std::transform(k_obs.begin(), k_obs.end(), std::back_inserter(k_handle_list), [](auto& in_item) { return make_handle(in_item); });
   {
+    /// \brief 必须首先保证没有需要插入的, 然后才开始更新和插入
+
     std::vector<entt::handle> k_h{};
     std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(k_h),
                  [](const entt::handle& in_handle) {
                    auto&& k_data = in_handle.get<database>();
                    return k_data.status_ == database::status::need_save && !k_data.is_install();
                  });
-    if(!k_h.empty()) {
-      g_main_loop().attach<database_task_install>(p_i->handle_, k_h);
-      return;
-    }
+    g_main_loop().attach<database_task_install>(p_i->handle_, k_h);
   }
   {
     std::vector<entt::handle> k_h{};
