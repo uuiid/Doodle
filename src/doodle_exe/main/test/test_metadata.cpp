@@ -14,12 +14,14 @@ TEST_CASE("convert", "[metadata]") {
   auto reg   = g_reg();
   auto k_prj = make_handle(reg->create());
   auto& k_p  = k_prj.emplace<project>();
+  k_prj.emplace<database>();
   REQUIRE(k_prj.all_of<project, database>());
 
   auto& k_d = k_prj.get<database>();
 
   auto k_s  = make_handle(reg->create());
   auto& s   = k_s.emplace<shot>();
+  k_s.emplace<database>();
 
   s.set_shot(1);
   s.set_shot_ab(shot::shot_ab_enum::A);
@@ -29,7 +31,7 @@ TEST_CASE("convert", "[metadata]") {
   auto& k_d2 = k_s.get<database>();
   metadata_database k_data2;
   k_data2     = k_d2;
-
+  std::cout << k_data2.user_data <<std::endl;
   auto k_tmp2 = make_handle(reg->create());
   auto& k_d3  = k_tmp2.get_or_emplace<database>();
   k_d3        = k_data2;
@@ -50,7 +52,6 @@ TEST_CASE("open project") {
 }
 
 TEST_CASE("install project") {
-
   auto k_h = make_handle();
   k_h.emplace<process_message>();
   std::vector<entt::handle> k_l{};
@@ -87,7 +88,7 @@ class name_data {
   std::mt19937 mt;
 
   void crete_prj() {
-    auto& set = core_set::getSet();
+    auto& set  = core_set::getSet();
     auto k_prj = make_handle();
     k_prj.emplace<project>("D:/tmp", "case_tset");
     k_prj.get<database_stauts>().set<need_save>();
@@ -206,7 +207,6 @@ TEST_CASE("time duration", "[metadata]") {
     }
   }
 }
-
 
 // TEST(DSTD, map_netDir) {
 //   NETRESOURCE resources{};
