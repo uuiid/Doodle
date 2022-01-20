@@ -32,28 +32,28 @@ doodle_lib::doodle_lib()
       p_log(new_object<logger_ctrl>()),
       reg(new_object<entt::registry>()) {
   /// 创建依赖性
-  reg->on_construct<project>().connect<&entt::registry::get_or_emplace<database>>();
-  reg->on_construct<project>().connect<&entt::registry::get_or_emplace<database_root>>();
+  //  reg->on_construct<project>().connect<&entt::registry::get_or_emplace<database>>();
+  //  reg->on_construct<project>().connect<&entt::registry::get_or_emplace<database_root>>();
   //  reg->on_construct<project>().connect<&entt::registry::get_or_emplace<root_ref>>();
-  reg->on_construct<project>().connect<&database::set_enum>();
+    reg->on_construct<database>().connect<&database::set_enum>();
 
-  reg->on_construct<season>().connect<&entt::registry::get_or_emplace<database>>();
+  //  reg->on_construct<season>().connect<&entt::registry::get_or_emplace<database>>();
   //  reg->on_construct<season>().connect<&entt::registry::get_or_emplace<root_ref>>();
 
-  reg->on_construct<episodes>().connect<&entt::registry::get_or_emplace<database>>();
+  //  reg->on_construct<episodes>().connect<&entt::registry::get_or_emplace<database>>();
   //  reg->on_construct<episodes>().connect<&entt::registry::get_or_emplace<root_ref>>();
 
-  reg->on_construct<shot>().connect<&entt::registry::get_or_emplace<database>>();
+  //  reg->on_construct<shot>().connect<&entt::registry::get_or_emplace<database>>();
   //  reg->on_construct<shot>().connect<&entt::registry::get_or_emplace<root_ref>>();
 
-  reg->on_construct<assets>().connect<&entt::registry::get_or_emplace<database>>();
+  //  reg->on_construct<assets>().connect<&entt::registry::get_or_emplace<database>>();
   //  reg->on_construct<assets>().connect<&entt::registry::get_or_emplace<root_ref>>();
 
-  reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<database>>();
+  //  reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<database>>();
   //  reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<root_ref>>();
-  reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
+  //  reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
-  reg->on_construct<database>().connect<&entt::registry::get_or_emplace<database_stauts>>();
+  //  reg->on_construct<database>().connect<&entt::registry::get_or_emplace<database_stauts>>();
 
   p_install = this;
 }

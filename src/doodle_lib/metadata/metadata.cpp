@@ -91,13 +91,12 @@ database &database::operator=(database &&in) noexcept {
 };
 
 void database::set_enum(entt::registry &in_reg, entt::entity in_ent) {
-  auto k_h        = entt::handle{in_reg, in_ent};
-  auto [k_p, k_f] = k_h.try_get<project, assets_file>();
-  auto &k_data    = k_h.get<database>();
+  auto k_h     = entt::handle{in_reg, in_ent};
+  auto &k_data = k_h.get<database>();
 
-  if (k_p)
+  if (k_h.any_of<project>())
     k_data.p_type = metadata_type::project_root;
-  else if (k_f) {
+  else if (k_h.any_of<assets_file>()) {
     k_data.p_type = metadata_type::file;
   } else
     k_data.p_type = metadata_type::folder;
