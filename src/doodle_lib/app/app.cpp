@@ -136,6 +136,7 @@ app::app(const win::wnd_instance& in_instance)
     core_set_init{}.init_default_project();
     s();
   });
+  this->load_back_end();
 }
 
 void app::loop_one() {
