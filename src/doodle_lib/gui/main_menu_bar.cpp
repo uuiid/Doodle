@@ -17,11 +17,14 @@
 #include <gui/widgets/project_widget.h>
 #include <gui/widgets/assets_widget.h>
 #include <gui/setting_windows.h>
+#include <gui/get_input_dialog.h>
 #include <gui/widgets/long_time_tasks_widget.h>
 #include <gui/widgets/edit_widgets.h>
 #include <gui/widgets/tool_box_widget.h>
 #include <gui/widgets/opencv_player_widget.h>
 #include <gui/widgets/assets_file_widgets.h>
+#include <doodle_lib/metadata/project.h>
+
 namespace doodle {
 class main_menu_bar::impl {
  public:
@@ -39,12 +42,18 @@ main_menu_bar::~main_menu_bar() = default;
 void main_menu_bar::menu_file() {
   if (dear::MenuItem("新项目"s)) {
     g_main_loop().attach<file_dialog>(
-        [](const FSys::path &in_path) {
-          core::client{}.add_project(in_path);
-          g_reg()->set<project>(in_path, "none");
-          core_set::getSet().add_recent_project(in_path);
-        },
-        "选择目录"s);
+                     [](const FSys::path &in_path) {
+                       core::client{}.add_project(in_path);
+                       g_reg()->set<project>(in_path, "none");
+                       core_set::getSet().add_recent_project(in_path);
+                     },
+                     "选择目录"s)
+        .then<get_input_dialog>(
+            [](get_input_dialog *in_dialogn) {
+              auto l_prj = make_handle();
+              l_prj.emplace<project>(g_reg()->ctx<project>());
+              gui::render<project>(l_prj);
+            });
   }
   if (dear::MenuItem("打开项目"s)) {
     g_main_loop().attach<file_dialog>(

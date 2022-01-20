@@ -142,7 +142,7 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
     }
     //    make_handle().emplace<database>() = p_i->list.back();
     for (int l_i = 0; l_i < 3; ++l_i) {
-      if(p_i->create_handle.empty())
+      if (p_i->create_handle.empty())
         return;
 
       p_i->create_handle.back().emplace<database>() = p_i->list.back();
@@ -444,28 +444,30 @@ database_task_obs::database_task_obs()
 database_task_obs::~database_task_obs() = default;
 
 void database_task_obs::init() {
-  p_i->obs.connect(*g_reg(), entt::collector.update<database_stauts>());
-  p_i->handle_ = make_handle();
-  p_i->handle_.emplace<process_message>();
+  p_i->obs.connect(*g_reg(), entt::collector.update<database>());
+  g_reg()->set<database_task_obs&>(*this);
+  //  p_i->handle_ = make_handle();
+  //  p_i->handle_.emplace<process_message>();
+  //
 }
 void database_task_obs::succeeded() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.success);
-    in.message("成功完成数据读取", in.warning);
-  });
+  //  p_i->handle_.patch<process_message>([](process_message& in) {
+  //    in.set_state(in.success);
+  //    in.message("成功完成数据读取", in.warning);
+  //  });
 }
 void database_task_obs::failed() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("任务失败", in.warning);
-  });
+  //  p_i->handle_.patch<process_message>([](process_message& in) {
+  //    in.set_state(in.fail);
+  //    in.message("任务失败", in.warning);
+  //  });
   p_i->obs.disconnect();
 }
 void database_task_obs::aborted() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("用户主动结束任务", in.warning);
-  });
+  //  p_i->handle_.patch<process_message>([](process_message& in) {
+  //    in.set_state(in.fail);
+  //    in.message("用户主动结束任务", in.warning);
+  //  });
 }
 void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   if (p_i->obs.empty())
@@ -477,7 +479,18 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
     std::vector<entt::handle> k_h{};
     std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(k_h),
                  [](const entt::handle& in_handle) {
-                   return in_handle.get<database_stauts>().is<need_save>();
+                   auto&& k_data = in_handle.get<database>();
+                   return k_data.status_ == database::status::need_save && !k_data.is_install();
+                 });
+    g_main_loop().attach<database_task_install>(p_i->handle_, k_h);
+    return;
+  }
+  {
+    std::vector<entt::handle> k_h{};
+    std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(k_h),
+                 [](const entt::handle& in_handle) {
+                   auto&& k_data = in_handle.get<database>();
+                   return k_data.status_ == database::status::need_save && k_data.is_install();
                  });
     g_main_loop().attach<database_task_update>(p_i->handle_, k_h);
   }
@@ -485,10 +498,10 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
     std::vector<entt::handle> k_h{};
     std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(k_h),
                  [](const entt::handle& in_handle) {
-                   return in_handle.get<database_stauts>().is<need_delete>();
+                   return in_handle.get<database>().status_ == database::status::need_delete;
                  });
     g_main_loop().attach<database_task_delete>(p_i->handle_, k_h);
   }
-  p_i->obs.clear();
+  k_obs.clear();
 }
 }  // namespace doodle

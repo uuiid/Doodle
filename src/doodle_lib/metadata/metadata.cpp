@@ -44,7 +44,8 @@ database::database()
       p_type(metadata_type::unknown_file),
       p_uuid_(core_set::getSet().get_uuid()),
       p_uuid(),
-      p_boost_serialize_vesion(0) {
+      p_boost_serialize_vesion(0),
+      status_(status::none) {
 }
 
 database::~database() = default;
@@ -121,7 +122,7 @@ database &database::operator=(const metadata_database &in_) {
   /// 转化类型
   p_type = magic_enum::enum_cast<metadata_type>(in_.m_type)
                .value_or(metadata_type::unknown_file);
-
+  status_ = status::is_load;
   /// 确认转换可索引数据
 
   return *this;
@@ -195,8 +196,8 @@ bool database::operator==(const boost::uuids::uuid &in_rhs) const {
 bool database::operator!=(const boost::uuids::uuid &in_rhs) const {
   return !(*this == in_rhs);
 }
-//database::database(const metadata_database &in_metadata_database) {
-//}
+// database::database(const metadata_database &in_metadata_database) {
+// }
 
 const string &to_str::get() const {
   auto k_h   = make_handle(*this);

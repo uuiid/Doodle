@@ -70,7 +70,6 @@ class DOODLELIB_API database_root {
 };
 
 class DOODLELIB_API database {
-
  private:
   mutable std::uint64_t p_id;
   mutable string p_id_str;
@@ -120,6 +119,16 @@ class DOODLELIB_API database {
   bool operator!=(const database &in_rhs) const;
   bool operator!=(const boost::uuids::uuid &in_rhs) const;
 
+  enum class status : std::uint8_t {
+    none        = 0,
+    is_load     = 1,
+    need_load   = 2,
+    need_save   = 3,
+    need_delete = 4,
+  };
+
+  std::atomic<status> status_;
+
   friend void to_json(nlohmann::json &j, const database &p) {
     j["id"]        = p.p_id;
     j["parent_id"] = p.p_parent_id;
@@ -133,10 +142,27 @@ class DOODLELIB_API database {
     j.at("uuid_").get_to(p.p_uuid_);
     p.p_uuid = boost::uuids::to_string(p.p_uuid_);
   }
+
+  class DOODLELIB_API save {
+   public:
+    void operator()(database &in) {
+      in.status_ = status::need_save;
+    }
+  };
+  class DOODLELIB_API delete_ {
+   public:
+    void operator()(database &in) {
+      in.status_ = status::need_delete;
+    }
+  };
+  class DOODLELIB_API load {
+   public:
+    void operator()(database &in) {
+      in.status_ = status::need_load;
+    }
+  };
 };
 
-// using to_str = entt::tag<"to_str"_hs>;
-using need_load      = entt::tag<"need_load"_hs>;
 using need_root_load = entt::tag<"need_root_load"_hs>;
 using is_load        = entt::tag<"is_loaded"_hs>;
 using need_save      = entt::tag<"need_save"_hs>;
