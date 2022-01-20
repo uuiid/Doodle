@@ -50,7 +50,45 @@ database::database()
 
 database::~database() = default;
 
-DOODLE_MOVE_CPP(database);
+database::database(database &&in) noexcept
+    : p_id(in.p_id),
+      p_id_str(in.p_id_str),
+      p_parent_id(in.p_parent_id),
+      p_type(in.p_type),
+      p_uuid_(in.p_uuid_),
+      p_uuid(in.p_uuid),
+      p_boost_serialize_vesion(in.p_boost_serialize_vesion),
+      status_(in.status_.load()) {
+  //  status_     = in.status_.load();
+  in.p_id     = 0;
+  in.p_id_str = "id 0";
+  in.p_parent_id.reset();
+  in.p_type  = metadata_type::unknown_file;
+  in.p_uuid_ = boost::uuids::nil_uuid();
+  in.p_uuid.clear();
+  in.p_boost_serialize_vesion = 0;
+  in.status_                  = status::none;
+};
+database &database::operator=(database &&in) noexcept {
+  p_id                     = in.p_id;
+  p_id_str                 = in.p_id_str;
+  p_parent_id              = in.p_parent_id;
+  p_type                   = in.p_type;
+  p_uuid_                  = in.p_uuid_;
+  p_uuid                   = in.p_uuid;
+  p_boost_serialize_vesion = in.p_boost_serialize_vesion;
+  status_                  = in.status_.load();
+
+  in.p_id                  = 0;
+  in.p_id_str              = "id 0";
+  in.p_parent_id.reset();
+  in.p_type  = metadata_type::unknown_file;
+  in.p_uuid_ = boost::uuids::nil_uuid();
+  in.p_uuid.clear();
+  in.p_boost_serialize_vesion = 0;
+  in.status_                  = status::none;
+  return *this;
+};
 
 void database::set_enum(entt::registry &in_reg, entt::entity in_ent) {
   auto k_h        = entt::handle{in_reg, in_ent};
