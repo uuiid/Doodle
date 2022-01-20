@@ -15,7 +15,8 @@ template <class Component, class Archive>
 void _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
   in_archive["size"] = in_size;
   while (in_size--) {
-    in_archive[in_size] = in_handle.template get<Component>();
+    auto&& k_comm = in_handle.template get<Component>();
+    in_archive["data"] = k_comm;
   }
 }
 
@@ -27,8 +28,8 @@ void _load_(entt::handle &in_handle, Archive &in_archive) {
     Component l_component{};
     if (in_archive.contains(typeid(Component).name()))
       in_archive.at(typeid(Component).name()).get_to(l_component);
-    else
-      in_archive.at(l_size).get_to(l_component);
+    else if (in_archive.contains("data"))
+      in_archive.at("data").get_to(l_component);
     in_handle.template emplace_or_replace<Component>(std::move(l_component));
   }
 }
