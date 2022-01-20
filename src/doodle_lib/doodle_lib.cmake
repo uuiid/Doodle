@@ -29,7 +29,8 @@ set(
         gui/main_status_bar.h
         gui/get_input_dialog.h
         gui/factory/attribute_factory_interface.h
-        gui/gui_ref/path.cpp
+        gui/gui_ref/path.h
+        gui/gui_ref/project.h
 
         gui/action/command.h
         gui/action/command_down_file.h
@@ -133,6 +134,7 @@ set(
         gui/get_input_dialog.cpp
         gui/factory/attribute_factory_interface.cpp
         gui/gui_ref/path.cpp
+        gui/gui_ref/project.cpp
         gui/action/command.cpp
         gui/action/command_down_file.cpp
         gui/action/command_files.cpp

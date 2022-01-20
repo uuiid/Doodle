@@ -3,6 +3,9 @@
 //
 
 #include "project.h"
+
+#include <lib_warp/imgui_warp.h>
+#include <gui/gui_ref/path.h>
 namespace doodle {
 namespace gui {
 bool adl_render<project>::render(const entt::handle& in_handle) {

@@ -5,7 +5,6 @@
 #include <metadata/project.h>
 #include <pin_yin/convert.h>
 
-#include <boost/locale.hpp>
 
 namespace doodle {
 project::cloth_config::cloth_config()

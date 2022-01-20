@@ -28,11 +28,11 @@ class DOODLELIB_API project {
     }
   };
 
- private:
   std::string p_name;
+  FSys::path p_path;
+ private:
   std::string p_en_str;
   std::string p_shor_str;
-  FSys::path p_path;
   void init_name();
 
  public:
@@ -72,5 +72,6 @@ class DOODLELIB_API project {
     p.init_name();
   }
 };
+
 
 }  // namespace doodle
