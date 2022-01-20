@@ -400,10 +400,10 @@ struct Disabled : public ScopeWrapper<HelpMarker> {
     imgui::EndDisabled();
   };
 };
-bool InputText(const char* label,
-               std::filesystem::path* str,
-               ImGuiInputTextFlags flags       = 0,
-               ImGuiInputTextCallback callback = nullptr,
-               void* user_data                 = nullptr);
+// bool InputText(const char* label,
+//                std::filesystem::path* str,
+//                ImGuiInputTextFlags flags       = 0,
+//                ImGuiInputTextCallback callback = nullptr,
+//                void* user_data                 = nullptr);
 }  // namespace dear
 }  // namespace doodle

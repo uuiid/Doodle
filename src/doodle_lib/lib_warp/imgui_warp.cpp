@@ -33,22 +33,22 @@ static int InputTextCallback(ImGuiInputTextCallbackData *data) {
   return 0;
 }
 
-bool InputText(const char *label,
-               std::filesystem::path *in_path,
-               ImGuiInputTextFlags flags,
-               ImGuiInputTextCallback callback,
-               void *user_data) {
-  IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
-  input_text_callback_userdata cb_user_data;
-  cb_user_data.Path                  = in_path;
-  cb_user_data.Str                   = in_path->generic_string();
-  cb_user_data.ChainCallback         = callback;
-  cb_user_data.ChainCallbackUserData = user_data;
-  return ImGui::InputText(label,
-                          (char *)cb_user_data.Str.c_str(),
-                          cb_user_data.Str.capacity() + 1,
-                          flags,
-                          InputTextCallback,
-                          (void *)&cb_user_data);
-}
+//bool InputText(const char *label,
+//               std::filesystem::path *in_path,
+//               ImGuiInputTextFlags flags,
+//               ImGuiInputTextCallback callback,
+//               void *user_data) {
+//  IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
+//  input_text_callback_userdata cb_user_data;
+//  cb_user_data.Path                  = in_path;
+//  cb_user_data.Str                   = in_path->generic_string();
+//  cb_user_data.ChainCallback         = callback;
+//  cb_user_data.ChainCallbackUserData = user_data;
+//  return ImGui::InputText(label,
+//                          (char *)cb_user_data.Str.c_str(),
+//                          cb_user_data.Str.capacity() + 1,
+//                          flags,
+//                          InputTextCallback,
+//                          (void *)&cb_user_data);
+//}
 }  // namespace doodle::dear
