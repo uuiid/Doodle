@@ -153,7 +153,7 @@ void main_menu_bar::menu_tool() {
   if (dear::MenuItem("安装ue4项目插件")) {
     g_main_loop().attach<file_dialog>(
         [](const FSys::path &in_path) {
-          toolkit::installUePath(in_path);
+          toolkit::installUePath(in_path.parent_path());
         },
         "select_ue_project",
         string_list{".uproject"});
