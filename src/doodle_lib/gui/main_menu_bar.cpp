@@ -24,6 +24,7 @@
 #include <gui/widgets/opencv_player_widget.h>
 #include <gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/metadata/project.h>
+#include <doodle_lib/metadata/metadata.h>
 
 namespace doodle {
 class main_menu_bar::impl {
@@ -53,7 +54,13 @@ void main_menu_bar::menu_file() {
                        core_set::getSet().add_recent_project(in_path);
                      },
                      "选择目录"s)
-        .then<get_input_project_dialog>(k_h);
+        .then<get_input_project_dialog>(k_h)
+        .then([=](auto, auto, auto s, auto) {
+          k_h.emplace<database>();
+          k_h.patch<database>(database::save{});
+          g_reg()->set<project>(k_h.get<project>());
+          s();
+        });
   }
   if (dear::MenuItem("打开项目"s)) {
     g_main_loop().attach<file_dialog>(

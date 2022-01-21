@@ -27,10 +27,13 @@ void get_input_dialog::init() {
   });
 }
 void get_input_dialog::succeeded() {
+  imgui::CloseCurrentPopup();
 }
 void get_input_dialog::failed() {
+  imgui::CloseCurrentPopup();
 }
 void get_input_dialog::aborted() {
+  imgui::CloseCurrentPopup();
 }
 void get_input_dialog::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
   for (auto &&i : p_i->begin_fun) {
@@ -78,9 +81,6 @@ get_input_project_dialog::~get_input_project_dialog() = default;
 
 void get_input_project_dialog::succeeded() {
   get_input_dialog::succeeded();
-  prj.emplace<database>();
-  prj.patch<database>(database::save{});
-  g_reg()->set<project>(prj.get<project>());
 }
 void get_input_project_dialog::failed() {
   get_input_dialog::failed();
