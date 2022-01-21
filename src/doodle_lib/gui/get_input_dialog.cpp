@@ -47,20 +47,24 @@ get_input_dialog::~get_input_dialog() = default;
 class get_input_project_dialog::impl {
  public:
   project prj;
+
   std::string path;
+  std::string name{"none"};
 };
 
 void get_input_project_dialog::render() {
-  if (dear::InputText("名称", &p_i->prj.p_name))
+  if (dear::InputText("名称", &(p_i->name)))
     prj.patch<project>([&](project &in) {
-      in.p_name = p_i->prj.p_name;
+      in.set_name(p_i->name);
     });
+
   if (dear::InputText("路径", &p_i->path))
     prj.patch<project>([&](project &in) {
       in.p_path = p_i->path;
     });
 
   if (imgui::Button("ok")) {
+    auto &k_prj = prj.get<project>();
     succeed();
   }
 }
@@ -76,6 +80,7 @@ void get_input_project_dialog::succeeded() {
   get_input_dialog::succeeded();
   prj.emplace<database>();
   prj.patch<database>(database::save{});
+  g_reg()->set<project>(prj.get<project>());
 }
 void get_input_project_dialog::failed() {
   get_input_dialog::failed();
