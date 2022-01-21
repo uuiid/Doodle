@@ -39,7 +39,6 @@ add_library(doodle_lib
         external/service-base/ServiceBase.h
         external/service-base/ServiceInstaller.cpp
         external/service-base/ServiceInstaller.h
-        doodle_lib.manifest
         )
 
 target_precompile_headers(doodle_lib
@@ -53,8 +52,8 @@ generate_export_header(doodle_lib
 
 set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-fix_mariadb_plug(NAME doodle_lib)
+# 如果使用mysql mariadb  连接器则需要这个函数
+#fix_mariadb_plug(NAME doodle_lib)
 
 
 target_link_libraries(doodle_lib
