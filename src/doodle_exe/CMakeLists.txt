@@ -58,5 +58,4 @@ target_compile_definitions(DoodleExe
 #endif ()
 add_subdirectory(maya_plug)
 add_subdirectory(main/test)
-add_subdirectory(main/test_gui)
 
