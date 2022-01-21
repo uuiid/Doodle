@@ -34,9 +34,10 @@ TEST_CASE("test_gui", "[gui]") {
 }
 
 TEST_CASE("test get input") {
-  app l_app{};
+  doodle::app l_app{};
+
   auto k_h = make_handle();
   k_h.emplace<project>();
   g_main_loop().attach<get_input_project_dialog>(k_h);
-  l_app.run();
+  app::Get().run();
 }
