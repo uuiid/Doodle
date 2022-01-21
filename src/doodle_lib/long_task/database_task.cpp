@@ -434,9 +434,6 @@ void database_task_install::update(chrono::duration<chrono::system_clock::rep, c
 }
 class database_task_obs::impl {
  public:
-  ~impl() {
-    obs.disconnect();
-  }
   entt::observer obs;
   entt::handle handle_;
 };
@@ -469,6 +466,7 @@ void database_task_obs::aborted() {
     in.set_state(in.fail);
     in.message("用户主动结束任务", in.warning);
   });
+  p_i->obs.disconnect();
 }
 void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   if (p_i->obs.empty())
