@@ -6,7 +6,7 @@
     name="doodle"
     type="win32"
 />
-<description>wxWidgets application</description>
+<description>doodle application</description>
 <dependency>
     <dependentAssembly>
         <assemblyIdentity
@@ -22,6 +22,7 @@
 <application xmlns="urn:schemas-microsoft-com:asm.v3">
     <windowsSettings xmlns:ws2="http://schemas.microsoft.com/SMI/2016/WindowsSettings">
         <ws2:longPathAware>true</ws2:longPathAware>
+              <activeCodePage xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">UTF-8</activeCodePage>
     </windowsSettings>
 </application>
 </assembly>
