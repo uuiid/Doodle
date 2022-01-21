@@ -56,20 +56,20 @@ void project_widget::render() {
 
     bool k_chick{false};
 
-    for (const auto& p : g_reg()->view<project>()) {
-      auto k_h = make_handle(p);
+    for (const auto&& [e, l_p] : g_reg()->view<project>().each()) {
+      auto k_h = make_handle(e);
       imgui::TableNextRow();
       imgui::TableNextColumn();
-      if (dear::Selectable(k_h.get<project>().show_str(),
+      if (dear::Selectable(l_p.show_str(),
                            k_h == p_c,
                            ImGuiSelectableFlags_SpanAllColumns)) {
         p_c     = k_h;
         k_chick = true;
       }
       imgui::TableNextColumn();
-      dear::Text(k_h.get<project>().get_path().generic_string());
+      dear::Text(l_p.get_path().generic_string());
       imgui::TableNextColumn();
-      dear::Text(k_h.get<project>().str());
+      dear::Text(l_p.str());
     }
     if (k_chick) {
       auto k_reg = g_reg();
