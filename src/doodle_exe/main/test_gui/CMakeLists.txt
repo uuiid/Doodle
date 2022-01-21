@@ -1,6 +1,6 @@
 
 set(doodle_test_list
-
+        get_input.cpp
         )
 
 foreach (_file_ IN LISTS doodle_test_list)
