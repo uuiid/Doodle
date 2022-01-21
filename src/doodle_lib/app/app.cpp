@@ -133,13 +133,12 @@ app::app(const win::wnd_instance& in_instance)
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.IniFilename = imgui_file_path.c_str();
-  this->load_windows();
 
-  g_main_loop().attach<null_process_t>().then([](auto, auto, auto s, auto) {
-    core_set_init{}.init_default_project();
-    s();
+  g_main_loop().attach<one_process_t>([this]() {
+    this->load_windows();
+    this->load_back_end();
   });
-  this->load_back_end();
+
   chick_true<doodle_error>(::IsWindowUnicode(p_hwnd), DOODLE_LOC, "错误的窗口");
 }
 
@@ -254,10 +253,14 @@ app::~app() {
   //  OleUninitialize();
 }
 void app::load_back_end() {
-  g_main_loop().attach([](auto, auto, auto s, auto) {
-    g_main_loop().template attach<database_task_obs>();
-    s();
-  });
+  g_main_loop().attach<null_process_t>().then([](auto, auto, auto s, auto) {
+                                          core_set_init{}.init_default_project();
+                                          s();
+                                        })
+      .then([](auto, auto, auto s, auto) {
+        g_main_loop().template attach<database_task_obs>();
+        s();
+      });
 }
 
 }  // namespace doodle
