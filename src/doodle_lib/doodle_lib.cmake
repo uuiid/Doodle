@@ -15,6 +15,8 @@ set(
         core/tree_container.h
         core/ue4_setting.h
         core/util.h
+        core/image_loader.h
+
         exception/exception.h
         file_warp/image_sequence.h
         file_warp/maya_file.h
@@ -121,6 +123,7 @@ set(
         core/tree_container.cpp
         core/ue4_setting.cpp
         core/util.cpp
+        core/image_loader.cpp
         file_warp/image_sequence.cpp
         file_warp/maya_file.cpp
         file_warp/opencv_read_player.cpp
