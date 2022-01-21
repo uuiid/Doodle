@@ -33,11 +33,23 @@ TEST_CASE("test_gui", "[gui]") {
   k_app->run();
 }
 
-TEST_CASE("test get input") {
-  doodle::app l_app{};
+class test_app : public app {
+ public:
+ protected:
+  void load_windows() override {
+    auto k_h = make_handle();
+    k_h.emplace<project>();
+    g_main_loop()
+        .attach<null_process_t>()
+        .then<get_input_project_dialog>(k_h)
+        .then<one_process_t>([]() {
+          app::Get().stop();
+        });
+  }
+  void load_back_end() override {
+  }
+};
 
-  auto k_h = make_handle();
-  k_h.emplace<project>();
-  g_main_loop().attach<get_input_project_dialog>(k_h);
+TEST_CASE_METHOD(test_app, "test get input") {
   app::Get().run();
 }
