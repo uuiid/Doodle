@@ -81,6 +81,7 @@ set(
         metadata/time_point_wrap.h
         metadata/tree_adapter.h
         metadata/user.h
+        metadata/image_icon.h
         pin_yin/convert.h
         screenshot_widght/screenshot_action.h
         screenshot_widght/screenshot_widght.h
@@ -167,6 +168,7 @@ set(
         metadata/shot.cpp
         metadata/time_point_wrap.cpp
         metadata/user.cpp
+        metadata/image_icon.cpp
         pin_yin/convert.cpp
         screenshot_widght/screenshot_action.cpp
         screenshot_widght/screenshot_widght.cpp
