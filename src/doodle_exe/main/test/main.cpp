@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
   std::setlocale(LC_TIME, "C");
   std::setlocale(LC_MONETARY, "C");
   std::setlocale(LC_CTYPE, ".UTF8");
-  doodle::app_command_base l_app{};
+  //  doodle::app l_app{};
   int k_r = Catch::Session().run(argc, argv);
   return k_r;
 }

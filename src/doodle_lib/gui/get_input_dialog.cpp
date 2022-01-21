@@ -67,7 +67,6 @@ void get_input_project_dialog::render() {
     });
 
   if (imgui::Button("ok")) {
-    auto &k_prj = prj.get<project>();
     succeed();
   }
 }
