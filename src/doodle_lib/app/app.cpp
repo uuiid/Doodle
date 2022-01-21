@@ -43,14 +43,15 @@ app::app(const win::wnd_instance& in_instance)
 
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
-  ::RegisterClassEx(&p_win_class);
-  p_hwnd   = ::CreateWindow(p_win_class.lpszClassName,
-                            p_title.c_str(),
-                            WS_OVERLAPPEDWINDOW,
-                            100, 100, 1280, 800,
-                            nullptr, nullptr,
-                            p_win_class.hInstance,
-                            nullptr);
+  ::RegisterClassExW(&p_win_class);
+  p_hwnd   = ::CreateWindowExW(0L,
+                               p_win_class.lpszClassName,
+                               p_title.c_str(),
+                               WS_OVERLAPPEDWINDOW,
+                               100, 100, 1280, 800,
+                               nullptr, nullptr,
+                               p_win_class.hInstance,
+                               nullptr);
 
   // Initialize Direct3D
   d3d_deve = std::make_shared<win::d3d_device>(p_hwnd);
@@ -137,6 +138,7 @@ app::app(const win::wnd_instance& in_instance)
     s();
   });
   this->load_back_end();
+  chick_true<doodle_error>(::IsWindowUnicode(p_hwnd), DOODLE_LOC, "错误的窗口");
 }
 
 void app::loop_one() {
@@ -188,6 +190,7 @@ void app::loop_one() {
     if (ImGui::Button("OK")) {
       this->p_show_err = false;
       ImGui::CloseCurrentPopup();
+      stop();
     }
   };
 
