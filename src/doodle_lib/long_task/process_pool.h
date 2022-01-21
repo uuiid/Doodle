@@ -562,5 +562,21 @@ class DOODLELIB_API null_process_t : public process_t<null_process_t> {
     this->succeed();
   };
 };
+class DOODLELIB_API one_process_t : public process_t<one_process_t> {
+ public:
+  std::function<void()> one_loop;
+  explicit one_process_t(const std::function<void()> &in_function)
+      : one_loop(in_function){
 
+        };
+  using base_type = process_t<one_process_t>;
+  [[maybe_unused]] inline void init(){};
+  [[maybe_unused]] inline void succeeded(){};
+  [[maybe_unused]] inline void failed(){};
+  [[maybe_unused]] inline void aborted(){};
+  [[maybe_unused]] inline void update(base_type::delta_type, void *data) {
+    one_loop();
+    this->succeed();
+  };
+};
 }  // namespace doodle
