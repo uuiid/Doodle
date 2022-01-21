@@ -16,6 +16,7 @@ class DOODLELIB_API app : public app_command_base {
 
  public:
   explicit app(const win::wnd_instance& in_instance);
+  explicit app();
   ~app() override;
   ::ID3D11Device* d3dDevice;
   ::ID3D11DeviceContext* d3dDeviceContext;

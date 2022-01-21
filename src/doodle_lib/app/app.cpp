@@ -21,7 +21,9 @@
 #include <imgui.h>
 
 namespace doodle {
-
+app::app()
+    : app(GetModuleHandle(nullptr)) {
+}
 app::app(const win::wnd_instance& in_instance)
     : app_command_base(in_instance ? in_instance : (::GetModuleHandleW(nullptr))),
       p_hwnd(),
