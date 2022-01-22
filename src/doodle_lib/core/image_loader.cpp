@@ -82,7 +82,7 @@ bool image_loader::load(const entt::handle& in_handle) {
   chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
   //  winrt::com_ptr<ID3D11ShaderResourceView> k_l;
   in_handle.patch<image_icon>([&](image_icon& in) {
-    in.image = std::shared_ptr<ID3D11ShaderResourceView>(k_out_, win_ptr_delete<ID3D11ShaderResourceView>{});
+    in.image = std::shared_ptr<ID3D11ShaderResourceView>{k_out_, win_ptr_delete<ID3D11ShaderResourceView>{}};
   });
 
   return false;
