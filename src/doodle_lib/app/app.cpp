@@ -197,7 +197,7 @@ void app::loop_one() {
 
   // Rendering
   ImGui::Render();
-  ImVec4 clear_color                    = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+  static ImVec4 clear_color             = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
   const float clear_color_with_alpha[4] = {clear_color.x * clear_color.w,
                                            clear_color.y * clear_color.w,
                                            clear_color.z * clear_color.w,
