@@ -8,7 +8,6 @@
 #include <metadata/image_icon.h>
 #include <app/app.h>
 
-#include <winrt/base.h>
 
 /// \brief 显卡驱动导入
 #include <d3d11.h>
