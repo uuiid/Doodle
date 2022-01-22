@@ -50,6 +50,8 @@ set(
         gui/widgets/project_widget.h
         gui/widgets/time_widget.h
         gui/widgets/tool_box_widget.h
+        gui/widgets/screenshot_widget.h
+
         lib_warp/WinReg.hpp
         lib_warp/boost_locale_warp.h
         lib_warp/boost_serialization_warp.h
@@ -85,8 +87,7 @@ set(
         metadata/user.h
         metadata/image_icon.h
         pin_yin/convert.h
-        screenshot_widght/screenshot_action.h
-        screenshot_widght/screenshot_widght.h
+
         thread_pool/long_term.h
         thread_pool/thread_pool.h
         toolkit/toolkit.h
@@ -155,6 +156,8 @@ set(
         gui/widgets/project_widget.cpp
         gui/widgets/time_widget.cpp
         gui/widgets/tool_box_widget.cpp
+        gui/widgets/screenshot_widget.cpp
+
         lib_warp/entt_warp.cpp
         lib_warp/imgui_warp.cpp
         logger/logger.cpp
@@ -173,8 +176,7 @@ set(
         metadata/user.cpp
         metadata/image_icon.cpp
         pin_yin/convert.cpp
-        screenshot_widght/screenshot_action.cpp
-        screenshot_widght/screenshot_widght.cpp
+
         thread_pool/long_term.cpp
         toolkit/toolkit.cpp
         server/doodle_server.cpp
