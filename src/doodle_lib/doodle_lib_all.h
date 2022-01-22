@@ -79,8 +79,6 @@
 #include <doodle_lib/metadata/tree_adapter.h>
 #include <doodle_lib/metadata/user.h>
 #include <doodle_lib/pin_yin/convert.h>
-#include <doodle_lib/screenshot_widght/screenshot_action.h>
-#include <doodle_lib/screenshot_widght/screenshot_widght.h>
 #include <doodle_lib/thread_pool/long_term.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 #include <doodle_lib/toolkit/toolkit.h>
