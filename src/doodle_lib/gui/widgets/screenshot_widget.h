@@ -8,6 +8,9 @@
 
 namespace doodle {
 class DOODLELIB_API screenshot_widget : public process_t<screenshot_widget> {
+  class impl;
+  std::unique_ptr<impl> p_i;
+
  public:
   screenshot_widget();
   ~screenshot_widget() override;
