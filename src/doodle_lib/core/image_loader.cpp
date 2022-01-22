@@ -29,6 +29,12 @@ struct guard_win_ptr_delete {
   }
 };
 }  // namespace
+
+class image_loader::impl{
+ public:
+};
+
+
 image_loader::image_loader()
     : p_i() {
 }

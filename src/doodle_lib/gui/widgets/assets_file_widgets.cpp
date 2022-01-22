@@ -157,7 +157,6 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
               imgui::TableNextRow();
               for (auto& l_i : p_colum_list)
                 l_i->render(k_h);
-              imgui::ImageButton()
             }
           }
         };
