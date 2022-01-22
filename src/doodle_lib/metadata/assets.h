@@ -50,6 +50,7 @@ class DOODLELIB_API assets {
   friend void from_json(const nlohmann::json& j, assets& p) {
     j.at("path").get_to(p.p_path);
     j.at("name_show_str").get_to(p.p_name_show_str);
+    p.set_path_component();
   }
 };
 }  // namespace doodle
