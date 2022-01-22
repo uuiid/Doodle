@@ -4,6 +4,8 @@
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/gui/get_input_dialog.h>
+#include <doodle_lib/gui/widgets/screenshot_widget.h>
+
 #include <catch.hpp>
 
 using namespace doodle;
@@ -51,5 +53,24 @@ class test_app : public app {
 };
 
 TEST_CASE_METHOD(test_app, "test get input") {
+  app::Get().run();
+}
+
+class test_screenshot_widget_app : public app {
+ public:
+ protected:
+  void load_windows() override {
+    g_main_loop()
+        .attach<null_process_t>()
+        .then<screenshot_widget>()
+        .then<one_process_t>([]() {
+          app::Get().stop();
+        });
+  }
+  void load_back_end() override {
+  }
+};
+
+TEST_CASE_METHOD(test_screenshot_widget_app, "test_screenshot_widget") {
   app::Get().run();
 }
