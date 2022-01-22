@@ -19,5 +19,6 @@ class DOODLELIB_API image_loader {
    * @return 是否加载成功
    */
   bool load(const entt::handle& in_handle);
+  bool save(const entt::handle& in_handle);
 };
 }  // namespace doodle

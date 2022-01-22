@@ -8,7 +8,6 @@
 #include <metadata/image_icon.h>
 #include <app/app.h>
 
-
 /// \brief 显卡驱动导入
 #include <d3d11.h>
 namespace doodle {
@@ -30,10 +29,9 @@ struct guard_win_ptr_delete {
 };
 }  // namespace
 
-class image_loader::impl{
+class image_loader::impl {
  public:
 };
-
 
 image_loader::image_loader()
     : p_i() {
@@ -89,6 +87,14 @@ bool image_loader::load(const entt::handle& in_handle) {
   in_handle.patch<image_icon>([&](image_icon& in) {
     in.image = std::shared_ptr<ID3D11ShaderResourceView>{k_out_, win_ptr_delete<ID3D11ShaderResourceView>{}};
   });
+
+  return false;
+}
+bool image_loader::save(const entt::handle& in_handle) {
+  auto k_reg = g_reg();
+  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+
+  in_handle.get_or_emplace<image_icon>();
 
   return false;
 }
