@@ -11,6 +11,12 @@ class DOODLELIB_API image_icon {
   /**
    * @brief 这个路径是相对于根目录的
    */
+
+  image_icon() = default;
+  explicit image_icon(const FSys::path &in_path)
+      : path(in_path),
+        image(){};
+
   FSys::path path;
   std::shared_ptr<void> image;
 
