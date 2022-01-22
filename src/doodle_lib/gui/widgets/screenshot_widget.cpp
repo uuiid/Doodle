@@ -30,11 +30,12 @@ void screenshot_widget::init() {
   //      RECT desktop;
   //      ::GetWindowRect(hDesktop, &desktop);
   //      SetWindowLong(hwnd, GWL_STYLE,
-  //                    dwStyle & ~WS_OVERLAPPEDWINDOW | WS_EX_LAYERED);
+  //                    dwStyle & ~WS_OVERLAPPEDWINDOW);  // WS_EX_NOREDIRECTIONBITMAP
+  //      ::SetWindowLongW(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
   //      SetWindowPos(hwnd, HWND_TOP,
   //                   desktop.left, desktop.top, desktop.right - desktop.left, desktop.bottom - desktop.top,
   //                   SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-  //      SetLayeredWindowAttributes(hwnd, RGB(0,0,0), 0, LWA_ALPHA);
+  ////      SetLayeredWindowAttributes(hwnd, NULL, 0, LWA_ALPHA);
   //    }
   //  } else {
   //    SetWindowLong(hwnd, GWL_STYLE,
@@ -46,23 +47,29 @@ void screenshot_widget::init() {
   //  }
 
   p_i->begen_loop.emplace_back([&]() {
-    auto& io      = imgui::GetIO();
+    //    auto& io      = imgui::GetIO();
 
     //    imgui::SetNextWindowSize(io.DisplaySize);
-    //    imgui::SetNextWindowPos({0, 0});
-    auto hDesktop = ::GetDesktopWindow();
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    auto hDesktop           = ::GetDesktopWindow();
     RECT desktop;
     ::GetWindowRect(hDesktop, &desktop);
     ImGui::SetNextWindowSize({boost::numeric_cast<std::float_t>(desktop.right - desktop.left),
                               boost::numeric_cast<std::float_t>(desktop.bottom - desktop.top)});
+    imgui::SetNextWindowPos({0, 0});
 
     //    POINT l_point{0, 0};
     //    ::MapWindowPoints(HWND_DESKTOP, app::Get().p_hwnd, (LPPOINT)&l_point, 1);
     //    ImGui::SetNextWindowPos({boost::numeric_cast<std::float_t>(l_point.x), boost::numeric_cast<std::float_t>(l_point.y)});
     //    ImGui::SetNextWindowPos({0, 0});
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    //        ImGui::SetNextWindowPos(viewport->Pos);
+    //        ImGui::SetNextWindowSize(viewport->Size);
+
     ImGui::SetNextWindowViewport(viewport->ID);
-    imgui::OpenPopup(name.data());
+    //    ImGui::SetNextWindowBgAlpha(0.1f);
+    //    imgui::OpenPopup(name.data());
   });
 }
 void screenshot_widget::succeeded() {
@@ -76,13 +83,20 @@ void screenshot_widget::update(chrono::duration<chrono::system_clock::rep, chron
     fun();
   }
   p_i->begen_loop.clear();
-  dear::WithStyleVar{ImGuiStyleVar_WindowRounding, 0.0f} && [&]() {
-    dear::PopupModal{name.data(), nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize} && [&]() {
-      if (imgui::Button("ok")) {
-        imgui::CloseCurrentPopup();
-        this->succeed();
-      }
-    };
-  };
+  //  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.9f, 0.5f, 0.5f, 0.0f));
+  dear::Begin{name.data(),
+              nullptr,
+              ImGuiWindowFlags_NoDecoration |
+                  ImGuiWindowFlags_NoResize |
+                  ImGuiWindowFlags_NoMove} &&
+      [&]() {
+        if (imgui::Button("ok")) {
+          imgui::CloseCurrentPopup();
+          this->succeed();
+        }
+      };
+  //  ImGui::PopStyleColor();
+  //  dear::WithStyleVar{ImGuiStyleVar_WindowRounding, 0.0f} && [&]() {
+  //  };
 }
 }  // namespace doodle
