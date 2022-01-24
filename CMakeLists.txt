@@ -75,6 +75,11 @@ find_package(Sqlpp11 CONFIG REQUIRED
 find_package(cryptopp CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 
+# 寻找d3d辅助工具库
+
+find_package(directxtk CONFIG REQUIRED)
+
+
 #服务器库
 #应该会用其中一个
 #find_package(cppzmq CONFIG REQUIRED)
@@ -235,7 +240,7 @@ doxygen_add_docs(Doxygen
 "D:\Program Files\Epic Games\UE_4.26\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.26\Plugins\Doodle -VS2019
 "D:\Program Files\Epic Games\UE_4.27\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.27\Plugins\Doodle -VS2019
 $env:VCPKG_DEFAULT_TRIPLET="x64-windows"
-.\vcpkg.exe install boost sqlpp11 catch2 opencv date cereal spdlog cryptopp grpc magic-enum nlohmann-json sqlpp11-connector-mysql opencv[ffmpeg,contrib] imgui[win32-binding,dx11-binding,docking-experimental]
+.\vcpkg.exe install boost sqlpp11 directxtk catch2 opencv date cereal spdlog cryptopp magic-enum nlohmann-json  opencv[ffmpeg,contrib] imgui[win32-binding,dx11-binding,docking-experimental]
 imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 install imguiwrap --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 install imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"

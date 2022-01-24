@@ -80,7 +80,10 @@ target_link_libraries(doodle_lib
         imgui::imgui
         #        gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
         cryptopp-static
+        PRIVATE
         d3d11.lib
+        dxgi.lib
+        Microsoft::DirectXTK
         )
 target_compile_definitions(doodle_lib
         PUBLIC
