@@ -5,11 +5,14 @@
 #include "screenshot_widget.h"
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/app/app.h>
+#include <doodle_lib/core/image_loader.h>
+
 namespace doodle {
 
 class screenshot_widget::impl {
  public:
   std::vector<std::function<void()>> begen_loop;
+  std::shared_ptr<void> image_gui;
 };
 
 screenshot_widget::screenshot_widget()
@@ -17,6 +20,8 @@ screenshot_widget::screenshot_widget()
 }
 screenshot_widget::~screenshot_widget() = default;
 void screenshot_widget::init() {
+ p_i->image_gui = image_loader{}.screenshot();
+
   //  auto hwnd                = app::Get().p_hwnd;
   //  auto dwStyle             = GetWindowLong(hwnd, GWL_STYLE);
   //  WINDOWPLACEMENT g_wpPrev = {sizeof(g_wpPrev)};
@@ -90,7 +95,7 @@ void screenshot_widget::update(chrono::duration<chrono::system_clock::rep, chron
                   ImGuiWindowFlags_NoResize |
                   ImGuiWindowFlags_NoMove} &&
       [&]() {
-        if (imgui::Button("ok")) {
+        if (imgui::ImageButton(p_i->image_gui.get(), {1920, 1200})) {
           imgui::CloseCurrentPopup();
           this->succeed();
         }
