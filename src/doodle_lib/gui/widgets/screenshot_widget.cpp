@@ -20,8 +20,6 @@ screenshot_widget::screenshot_widget()
 }
 screenshot_widget::~screenshot_widget() = default;
 void screenshot_widget::init() {
- p_i->image_gui = image_loader{}.screenshot();
-
   //  auto hwnd                = app::Get().p_hwnd;
   //  auto dwStyle             = GetWindowLong(hwnd, GWL_STYLE);
   //  WINDOWPLACEMENT g_wpPrev = {sizeof(g_wpPrev)};
@@ -58,11 +56,18 @@ void screenshot_widget::init() {
     ImGuiViewport* viewport = ImGui::GetMainViewport();
 
     auto hDesktop           = ::GetDesktopWindow();
-    RECT desktop;
-    ::GetWindowRect(hDesktop, &desktop);
+    RECT desktop{
+        GetSystemMetrics(SM_XVIRTUALSCREEN),
+        GetSystemMetrics(SM_YVIRTUALSCREEN),
+        GetSystemMetrics(SM_CXVIRTUALSCREEN),
+        GetSystemMetrics(SM_CYVIRTUALSCREEN)};
+    //    ::GetWindowRect(hDesktop, &desktop);
     ImGui::SetNextWindowSize({boost::numeric_cast<std::float_t>(desktop.right - desktop.left),
                               boost::numeric_cast<std::float_t>(desktop.bottom - desktop.top)});
-    imgui::SetNextWindowPos({0, 0});
+    //    ImGui::SetNextWindowSize({boost::numeric_cast<std::float_t>(GetSystemMetrics(SM_CXVIRTUALSCREEN)),
+    //                              boost::numeric_cast<std::float_t>(GetSystemMetrics(SM_CYVIRTUALSCREEN))});
+    imgui::SetNextWindowPos({boost::numeric_cast<std::float_t>(desktop.left),
+                             boost::numeric_cast<std::float_t>(desktop.top)});
 
     //    POINT l_point{0, 0};
     //    ::MapWindowPoints(HWND_DESKTOP, app::Get().p_hwnd, (LPPOINT)&l_point, 1);
@@ -73,6 +78,8 @@ void screenshot_widget::init() {
     //        ImGui::SetNextWindowSize(viewport->Size);
 
     ImGui::SetNextWindowViewport(viewport->ID);
+    p_i->image_gui = image_loader{}.screenshot();
+
     //    ImGui::SetNextWindowBgAlpha(0.1f);
     //    imgui::OpenPopup(name.data());
   });
@@ -95,7 +102,7 @@ void screenshot_widget::update(chrono::duration<chrono::system_clock::rep, chron
                   ImGuiWindowFlags_NoResize |
                   ImGuiWindowFlags_NoMove} &&
       [&]() {
-        if (imgui::ImageButton(p_i->image_gui.get(), {1920, 1200})) {
+        if (imgui::Button("ok")) {
           imgui::CloseCurrentPopup();
           this->succeed();
         }

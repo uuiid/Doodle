@@ -9,12 +9,12 @@
 #include <app/app.h>
 #include <platform/win/wnd_proc.h>
 
-#include <DirectXTK/ScreenGrab.h>
-#include <wincodec.h>
+//#include <DirectXTK/ScreenGrab.h>
+//#include <wincodec.h>
 
 //#include <winrt/base.h>
-#include <atlbase.h>
-#include <atlwin.h>
+//#include <atlbase.h>
+//#include <atlwin.h>
 /// \brief 显卡驱动导入
 #include <d3d11.h>
 namespace doodle {
@@ -358,12 +358,32 @@ bool image_loader::save(const entt::handle& in_handle) {
 
   return false;
 }
+
+BITMAPINFOHEADER createBitmapHeader(int width, int height) {
+  BITMAPINFOHEADER bi;
+
+  // create a bitmap
+  bi.biSize          = sizeof(BITMAPINFOHEADER);
+  bi.biWidth         = width;
+  bi.biHeight        = -height;  // this is the line that makes it draw upside down or not
+  bi.biPlanes        = 1;
+  bi.biBitCount      = 32;
+  bi.biCompression   = BI_RGB;
+  bi.biSizeImage     = 0;
+  bi.biXPelsPerMeter = 0;
+  bi.biYPelsPerMeter = 0;
+  bi.biClrUsed       = 0;
+  bi.biClrImportant  = 0;
+
+  return bi;
+}
 std::shared_ptr<void> image_loader::screenshot() {
   // 获得全局GPU渲染对象
   auto k_d3d     = app::Get().d3dDevice;
   auto k_ctx     = app::Get().d3dDeviceContext;
   auto k_ded_swp = win::d3d_device::Get().g_pSwapChain;
 
+#if 0
   HRESULT k_r{};
   IDXGIOutputDuplication* l_duplication{};
 #if 0
@@ -466,17 +486,15 @@ std::shared_ptr<void> image_loader::screenshot() {
   chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
   guard_win_ptr_delete _guard_win_ptr_delete{l_image};
 
-  D3D11_TEXTURE2D_DESC ThisDesc;
-  l_image->GetDesc(&ThisDesc);
-
-
 
   k_ctx->CopyResource(l_tex, l_image);
-  l_image->Release();
+  l_duplication->ReleaseFrame();
+  D3D11_TEXTURE2D_DESC ThisDesc;
+  l_tex->GetDesc(&ThisDesc);
 
   /// \brief 保存图片
-  k_r = DirectX::SaveWICTextureToFile(k_ctx, l_tex, GUID_ContainerFormatPng, L"D:/tmp/test_1_24.png");
-  chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
+//  k_r = DirectX::SaveWICTextureToFile(k_ctx, l_tex, GUID_ContainerFormatPng, L"D:/tmp/test_1_24.png");
+//  chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
 
   /// \brief 这里创建gpu资源返回给imgui
   D3D11_SHADER_RESOURCE_VIEW_DESC k_srv{};
@@ -486,10 +504,49 @@ std::shared_ptr<void> image_loader::screenshot() {
   k_srv.Texture2D.MipLevels       = ThisDesc.MipLevels;
 
   ID3D11ShaderResourceView* k_out_{nullptr};
-  k_r = k_d3d->CreateShaderResourceView(l_tex, &k_srv, &(k_out_));
+
+  k_r = k_d3d->CreateShaderResourceView(l_image, &k_srv, &(k_out_));
   chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
 
   return std::shared_ptr<void>(k_out_, win_ptr_delete<ID3D11ShaderResourceView>{});
+#endif
+  auto hwnd = GetDesktopWindow();
+  cv::Mat src{};
+  // get handles to a device context (DC)
+  HDC hwindowDC           = GetDC(hwnd);
+  HDC hwindowCompatibleDC = CreateCompatibleDC(hwindowDC);
+  SetStretchBltMode(hwindowCompatibleDC, COLORONCOLOR);
+  // define scale, height and width
+  int screenx   = GetSystemMetrics(SM_XVIRTUALSCREEN) ;
+  int screeny   = GetSystemMetrics(SM_YVIRTUALSCREEN) ;
+  int width     = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+  int height    = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+  // create mat object
+  src.create(height, width, CV_8UC4);
+
+  // create a bitmap
+  HBITMAP hbwindow    = CreateCompatibleBitmap(hwindowDC, width, height);
+  BITMAPINFOHEADER bi = createBitmapHeader(width, height);
+
+  // use the previously created device context with the bitmap
+  SelectObject(hwindowCompatibleDC, hbwindow);
+
+  // copy from the window device context to the bitmap device context
+  StretchBlt(hwindowCompatibleDC, 0, 0, width, height,
+             hwindowDC, screenx, screeny, width, height,
+             SRCCOPY);  // change SRCCOPY to NOTSRCCOPY for wacky colors !
+  GetDIBits(hwindowCompatibleDC, hbwindow,
+            0, height, src.data,
+            (BITMAPINFO*)&bi, DIB_RGB_COLORS);  // copy from hwindowCompatibleDC to hbwindow
+
+  // avoid memory leak
+  DeleteObject(hbwindow);
+  DeleteDC(hwindowCompatibleDC);
+  ReleaseDC(hwnd, hwindowDC);
+
+  cv::imwrite("D:/tmp/test_1_24.png", src);
+  return {};
 }
 image_loader::~image_loader() = default;
 }  // namespace doodle
